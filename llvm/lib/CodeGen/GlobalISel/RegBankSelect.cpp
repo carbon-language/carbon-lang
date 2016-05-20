@@ -146,6 +146,125 @@ void RegBankSelect::setSafeInsertionPoint(MachineInstr &InsertPt, bool Before) {
   MIRBuilder.setInstr(InsertPt, /*Before*/ Before);
 }
 
+void RegBankSelect::tryAvoidingSplit(
+    RegBankSelect::RepairingPlacement &RepairPt, const MachineOperand &MO,
+    const RegisterBankInfo::ValueMapping &ValMapping) const {
+  const MachineInstr &MI = *MO.getParent();
+  assert(RepairPt.hasSplit() && "We should not have to adjust for split");
+  // Splitting should only occur for PHIs or between terminators,
+  // because we only do local repairing.
+  assert((MI.isPHI() || MI.isTerminator()) && "Why do we split?");
+
+  assert(&MI.getOperand(RepairPt.getOpIdx()) == &MO &&
+         "Repairing placement does not match operand");
+
+  // If we need splitting for phis, that means it is because we
+  // could not find an insertion point before the terminators of
+  // the predecessor block for this argument. In other words,
+  // the input value is defined by one of the terminators.
+  assert((!MI.isPHI() || !MO.isDef()) && "Need split for phi def?");
+
+  // We split to repair the use of a phi or a terminator.
+  if (!MO.isDef()) {
+    if (MI.isTerminator()) {
+      assert(&MI != &(*MI.getParent()->getFirstTerminator()) &&
+             "Need to split for the first terminator?!");
+    } else {
+      // For the PHI case, the split may not be actually required.
+      // In the copy case, a phi is already a copy on the incoming edge,
+      // therefore there is no need to split.
+      if (ValMapping.BreakDown.size() == 1)
+        // This is a already a copy, there is nothing to do.
+        RepairPt.switchTo(RepairingPlacement::RepairingKind::Reassign);
+    }
+    return;
+  }
+
+  // At this point, we need to repair a defintion of a terminator.
+
+  // Technically we need to fix the def of MI on all outgoing
+  // edges of MI to keep the repairing local. In other words, we
+  // will create several definitions of the same register. This
+  // does not work for SSA unless that definition is a physical
+  // register.
+  // However, there are other cases where we can get away with
+  // that while still keeping the repairing local.
+  assert(MI.isTerminator() && MO.isDef() &&
+         "This code is for the def of a terminator");
+
+  // Since we use RPO traversal, if we need to repair a definition
+  // this means this definition could be:
+  // 1. Used by PHIs (i.e., this VReg has been visited as part of the
+  //    uses of a phi.), or
+  // 2. Part of a target specific instruction (i.e., the target applied
+  //    some register class constraints when creating the instruction.)
+  // If the constraints come for #2, the target said that another mapping
+  // is supported so we may just drop them. Indeed, if we do not change
+  // the number of registers holding that value, the uses will get fixed
+  // when we get to them.
+  // Uses in PHIs may have already been proceeded though.
+  // If the constraints come for #1, then, those are weak constraints and
+  // no actual uses may rely on them. However, the problem remains mainly
+  // the same as for #2. If the value stays in one register, we could
+  // just switch the register bank of the definition, but we would need to
+  // account for a repairing cost for each phi we silently change.
+  //
+  // In any case, if the value needs to be broken down into several
+  // registers, the repairing is not local anymore as we need to patch
+  // every uses to rebuild the value in just one register.
+  //
+  // To summarize:
+  // - If the value is in a physical register, we can do the split and
+  //   fix locally.
+  // Otherwise if the value is in a virtual register:
+  // - If the value remains in one register, we do not have to split
+  //   just switching the register bank would do, but we need to account
+  //   in the repairing cost all the phi we changed.
+  // - If the value spans several registers, then we cannot do a local
+  //   repairing.
+
+  // Check if this is a physical or virtual register.
+  unsigned Reg = MO.getReg();
+  if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+    // We are going to split every outgoing edges.
+    // Check that this is possible.
+    // FIXME: The machine representation is currently broken
+    // since it also several terminators in one basic block.
+    // Because of that we would technically need a way to get
+    // the targets of just one terminator to know which edges
+    // we have to split.
+    // Assert that we do not hit the ill-formed representation.
+
+    // If there are other terminators before that one, some of
+    // the outgoing edges may not be dominated by this definition.
+    assert(&MI == &(*MI.getParent()->getFirstTerminator()) &&
+           "Do not know which outgoing edges are relevant");
+    const MachineInstr *Next = MI.getNextNode();
+    assert((!Next || Next->isUnconditionalBranch()) &&
+           "Do not know where each terminator ends up");
+    if (Next)
+      // If the next terminator uses Reg, this means we have
+      // to split right after MI and thus we need a way to ask
+      // which outgoing edges are affected.
+      assert(!Next->readsRegister(Reg) && "Need to split between terminators");
+    // We will split all the edges and repair there.
+  } else {
+    // This is a virtual register defined by a terminator.
+    if (ValMapping.BreakDown.size() == 1) {
+      // There is nothing to repair, but we may actually lie on
+      // the repairing cost because of the PHIs already proceeded
+      // as already stated.
+      // Though the code will be correct.
+      assert(0 && "Repairing cost may not be accurate");
+    } else {
+      // We need to do non-local repairing. Basically, patch all
+      // the uses (i.e., phis) that we already proceeded.
+      // For now, just say this mapping is not possible.
+      RepairPt.switchTo(RepairingPlacement::RepairingKind::Impossible);
+    }
+  }
+}
+
 RegBankSelect::MappingCost RegBankSelect::computeMapping(
     MachineInstr &MI, const RegisterBankInfo::InstructionMapping &InstrMapping,
     SmallVectorImpl<RepairingPlacement> &RepairPts) {
@@ -201,6 +320,12 @@ RegBankSelect::MappingCost RegBankSelect::computeMapping(
     RepairPts.emplace_back(
         RepairingPlacement(MI, OpIdx, *TRI, *this, RepairingPlacement::Insert));
     RepairingPlacement &RepairPt = RepairPts.back();
+
+    // If we need to split a basic block to materialize this insertion point,
+    // we may give a higher cost to this mapping.
+    // Nevertheless, we may get away with the split, so try that first.
+    if (RepairPt.hasSplit())
+      tryAvoidingSplit(RepairPt, MO, ValMapping);
 
     // Check that the materialization of the repairing is possible.
     if (!RepairPt.canMaterialize())

@@ -515,6 +515,18 @@ private:
                  const RegisterBankInfo::InstructionMapping &InstrMapping,
                  SmallVectorImpl<RepairingPlacement> &RepairPts);
 
+  /// When \p RepairPt involves splitting to repair \p MO for the
+  /// given \p ValMapping, try to change the way we repair such that
+  /// the splitting is not required anymore.
+  ///
+  /// \pre \p RepairPt.hasSplit()
+  /// \pre \p MO == MO.getParent()->getOperand(\p RepairPt.getOpIdx())
+  /// \pre \p ValMapping is the mapping of \p MO for MO.getParent()
+  ///      that implied \p RepairPt.
+  void tryAvoidingSplit(RegBankSelect::RepairingPlacement &RepairPt,
+                        const MachineOperand &MO,
+                        const RegisterBankInfo::ValueMapping &ValMapping) const;
+
   /// Apply \p Mapping to \p MI. \p RepairPts represents the different
   /// mapping action that need to happen for the mapping to be
   /// applied.
