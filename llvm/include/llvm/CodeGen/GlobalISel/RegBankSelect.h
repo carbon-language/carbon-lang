@@ -468,30 +468,59 @@ private:
                        bool &OnlyAssign) const;
 
   /// Insert repairing code for \p Reg as specified by \p ValMapping.
-  /// The repairing code is inserted before \p DefUseMI if \p IsDef is false
-  /// and after otherwise.
+  /// The repairing placement is specified by \p RepairPt.
+  /// \p NewVRegs contains all the registers required to remap \p Reg.
+  /// In other words, the number of registers in NewVRegs must be equal
+  /// to ValMapping.BreakDown.size().
+  ///
   /// The transformation could be sketched as:
   /// \code
   /// ... = op Reg
   /// \endcode
   /// Becomes
   /// \code
-  /// <returned reg> = COPY Reg
+  /// <NewRegs> = COPY or extract Reg
   /// ... = op Reg
   /// \endcode
   ///
-  /// \note This is the responsability of the caller to replace \p Reg
-  /// by the returned register.
+  /// and
+  /// \code
+  /// Reg = op ...
+  /// \endcode
+  /// Becomes
+  /// \code
+  /// Reg = op ...
+  /// Reg = COPY or build_sequence <NewRegs>
+  /// \endcode
   ///
-  /// \return The register of the properly mapped value.
-  unsigned repairReg(unsigned Reg,
-                     const RegisterBankInfo::ValueMapping &ValMapping,
-                     MachineInstr &DefUseMI, bool IsDef);
+  /// \pre NewVRegs.size() == ValMapping.BreakDown.size()
+  ///
+  /// \note The caller is supposed to do the rewriting of op if need be.
+  /// I.e., Reg = op ... => <NewRegs> = NewOp ...
+  void repairReg(
+      MachineOperand &MO, const RegisterBankInfo::ValueMapping &ValMapping,
+      RegBankSelect::RepairingPlacement &RepairPt,
+      const iterator_range<SmallVectorImpl<unsigned>::iterator> &NewVRegs);
 
   /// Set the insertion point of the MIRBuilder to a safe point
   /// to insert instructions before (\p Before == true) or after
   /// \p InsertPt.
   void setSafeInsertionPoint(MachineInstr &InsertPt, bool Before);
+
+  /// Compute the cost of mapping \p MI with \p InstrMapping and
+  /// compute the repairing placement for such mapping in \p
+  /// RepairPts.
+  MappingCost
+  computeMapping(MachineInstr &MI,
+                 const RegisterBankInfo::InstructionMapping &InstrMapping,
+                 SmallVectorImpl<RepairingPlacement> &RepairPts);
+
+  /// Apply \p Mapping to \p MI. \p RepairPts represents the different
+  /// mapping action that need to happen for the mapping to be
+  /// applied.
+  void applyMapping(MachineInstr &MI,
+                    const RegisterBankInfo::InstructionMapping &InstrMapping,
+                    SmallVectorImpl<RepairingPlacement> &RepairPts);
 
 public:
   // Ctor, nothing fancy.

@@ -65,76 +65,51 @@ bool RegBankSelect::assignmentMatch(
   return CurRegBank == DesiredRegBrank;
 }
 
-unsigned
-RegBankSelect::repairReg(unsigned Reg,
-                         const RegisterBankInfo::ValueMapping &ValMapping,
-                         MachineInstr &DefUseMI, bool IsDef) {
-  assert(ValMapping.BreakDown.size() == 1 &&
-         "Support for complex break down not supported yet");
-  const RegisterBankInfo::PartialMapping &PartialMap = ValMapping.BreakDown[0];
-  assert(PartialMap.Length ==
-             (TargetRegisterInfo::isPhysicalRegister(Reg)
-                  ? TRI->getMinimalPhysRegClass(Reg)->getSize() * 8
-                  : MRI->getSize(Reg)) &&
-         "Repairing other than copy not implemented yet");
-  // If the MIRBuilder is configured to insert somewhere else than
-  // DefUseMI, we may not use this function like was it first
-  // internded (local repairing), so make sure we pay attention before
-  // we remove the assert.
-  // In particular, it is likely that we will have to properly save
-  // the insertion point of the MIRBuilder and restore it at the end
-  // of this method.
-  assert(&DefUseMI == &(*MIRBuilder.getInsertPt()) &&
-         "Need to save and restore the insertion point");
-  // For use, we will add a copy just in front of the instruction.
-  // For def, we will add a copy just after the instruction.
-  // In either case, the insertion point must be valid. In particular,
-  // make sure we do not insert in the middle of terminators or phis.
-  bool Before = !IsDef;
-  setSafeInsertionPoint(DefUseMI, Before);
-  if (DefUseMI.isTerminator() && Before) {
-    // Check that the insertion point does not happen
-    // before the definition of Reg.
-    // This can happen if Reg is defined by a terminator
-    // and used by another one.
-    // In that case the repairing code is actually more involved
-    // because we have to split the block.
+void RegBankSelect::repairReg(
+    MachineOperand &MO, const RegisterBankInfo::ValueMapping &ValMapping,
+    RegBankSelect::RepairingPlacement &RepairPt,
+    const iterator_range<SmallVectorImpl<unsigned>::iterator> &NewVRegs) {
+  assert(ValMapping.BreakDown.size() == 1 && "Not yet implemented");
+  // Assume we are repairing a use and thus, the original reg will be
+  // the source of the repairing.
+  unsigned Src = MO.getReg();
+  unsigned Dst = *NewVRegs.begin();
+  if (ValMapping.BreakDown.size() == 1)
+    MO.setReg(Dst);
 
-    // Assert that this is not a physical register.
-    // The target independent code does not insert physical registers
-    // on terminators, so if we end up in this situation, this is
-    // likely a bug in the target.
-    assert(!TargetRegisterInfo::isPhysicalRegister(Reg) &&
-           "Check for physical register not implemented");
-    const MachineInstr *RegDef = MRI->getVRegDef(Reg);
-    assert(RegDef && "Reg has more than one definition?");
-    // Assert to make the code more readable; Reg is used by DefUseMI, i.e.,
-    // (Before == !IsDef == true), so DefUseMI != RegDef otherwise we have
-    // a use (that is not a PHI) that is not dominated by its def.
-    assert(&DefUseMI != RegDef && "Def does not dominate all of its uses");
-    if (RegDef->isTerminator() && RegDef->getParent() == DefUseMI.getParent())
-      // By construction, the repairing should happen between two
-      // terminators: RegDef and DefUseMI.
-      // This is not implemented.
-      report_fatal_error("Repairing between terminators not implemented yet");
-  }
-
-  // Create a new temporary to hold the repaired value.
-  unsigned NewReg = MRI->createGenericVirtualRegister(PartialMap.Length);
-  // Set the registers for the source and destination of the copy.
-  unsigned Src = Reg, Dst = NewReg;
-  // If this is a definition that we repair, the copy will be
-  // inverted.
-  if (IsDef)
+  // If we repair a definition, swap the source and destination for
+  // the repairing.
+  if (MO.isDef())
     std::swap(Src, Dst);
-  (void)MIRBuilder.buildInstr(TargetOpcode::COPY, Dst, Src);
 
-  DEBUG(dbgs() << "Repair: " << PrintReg(Reg) << " with: "
-        << PrintReg(NewReg) << '\n');
+  assert((RepairPt.getNumInsertPoints() == 1 ||
+          TargetRegisterInfo::isPhysicalRegister(Dst)) &&
+         "We are about to create several defs for Dst");
 
-  // Restore the insertion point of the MIRBuilder.
-  MIRBuilder.setInstr(DefUseMI, Before);
-  return NewReg;
+  // Build the instruction used to repair, then clone it at the right places.
+  MachineInstr *MI = MIRBuilder.buildInstr(TargetOpcode::COPY, Dst, Src);
+  MI->removeFromParent();
+  DEBUG(dbgs() << "Copy: " << PrintReg(Src) << " to: " << PrintReg(Dst)
+               << '\n');
+  // TODO:
+  // Check if MI is legal. if not, we need to legalize all the
+  // instructions we are going to insert.
+  std::unique_ptr<MachineInstr *[]> NewInstrs(
+      new MachineInstr *[RepairPt.getNumInsertPoints()]);
+  bool IsFirst = true;
+  unsigned Idx = 0;
+  for (const std::unique_ptr<InsertPoint> &InsertPt : RepairPt) {
+    MachineInstr *CurMI;
+    if (IsFirst)
+      CurMI = MI;
+    else
+      CurMI = MIRBuilder.getMF().CloneMachineInstr(MI);
+    InsertPt->insert(*CurMI);
+    NewInstrs[Idx++] = CurMI;
+    IsFirst = false;
+  }
+  // TODO:
+  // Legalize NewInstrs if need be.
 }
 
 void RegBankSelect::setSafeInsertionPoint(MachineInstr &InsertPt, bool Before) {
@@ -171,81 +146,180 @@ void RegBankSelect::setSafeInsertionPoint(MachineInstr &InsertPt, bool Before) {
   MIRBuilder.setInstr(InsertPt, /*Before*/ Before);
 }
 
-void RegBankSelect::assignInstr(MachineInstr &MI) {
-  DEBUG(dbgs() << "Assign: " << MI);
-  const RegisterBankInfo::InstructionMapping DefaultMapping =
-      RBI->getInstrMapping(MI);
-  // Make sure the mapping is valid for MI.
-  assert(DefaultMapping.verify(MI) && "Invalid instruction mapping");
+RegBankSelect::MappingCost RegBankSelect::computeMapping(
+    MachineInstr &MI, const RegisterBankInfo::InstructionMapping &InstrMapping,
+    SmallVectorImpl<RepairingPlacement> &RepairPts) {
 
-  DEBUG(dbgs() << "Mapping: " << DefaultMapping << '\n');
-
-  // Set the insertion point before MI.
-  // This is where we are going to insert the repairing code if any.
-  MIRBuilder.setInstr(MI, /*Before*/ true);
-
-  // For now, do not look for alternative mappings.
-  // Alternative mapping may require to rewrite MI and we do not support
-  // that yet.
-  // Walk the operands and assign then to the chosen mapping, possibly with
-  // the insertion of repair code for uses.
-  for (unsigned OpIdx = 0, EndIdx = MI.getNumOperands(); OpIdx != EndIdx;
+  // If mapped with InstrMapping, MI will have the recorded cost.
+  MappingCost Cost(1);
+  bool Saturated = Cost.addLocalCost(InstrMapping.getCost());
+  assert(!Saturated && "Possible mapping saturated the cost");
+  DEBUG(dbgs() << "Evaluating mapping cost for: " << MI);
+  DEBUG(dbgs() << "With: " << InstrMapping << '\n');
+  RepairPts.clear();
+  // Moreover, to realize this mapping, the register bank of each operand must
+  // match this mapping. In other words, we may need to locally reassign the
+  // register banks. Account for that repairing cost as well.
+  // In this context, local means in the surrounding of MI.
+  for (unsigned OpIdx = 0, EndOpIdx = MI.getNumOperands(); OpIdx != EndOpIdx;
        ++OpIdx) {
-    MachineOperand &MO = MI.getOperand(OpIdx);
-    // Nothing to be done for non-register operands.
+    const MachineOperand &MO = MI.getOperand(OpIdx);
     if (!MO.isReg())
       continue;
     unsigned Reg = MO.getReg();
     if (!Reg)
       continue;
-
+    DEBUG(dbgs() << "Opd" << OpIdx);
     const RegisterBankInfo::ValueMapping &ValMapping =
-        DefaultMapping.getOperandMapping(OpIdx);
-    // If Reg is already properly mapped, move on.
-    bool OnlyAssign;
-    if (assignmentMatch(Reg, ValMapping, OnlyAssign))
+        InstrMapping.getOperandMapping(OpIdx);
+    // If Reg is already properly mapped, this is free.
+    bool Assign;
+    if (assignmentMatch(Reg, ValMapping, Assign)) {
+      DEBUG(dbgs() << " is free (match).\n");
       continue;
-
-    // For uses, we may need to create a new temporary.
-    // Indeed, if Reg is already assigned a register bank, at this
-    // point, we know it is different from the one defined by the
-    // chosen mapping, we need to adjust for that.
-    // For definitions, changing the register bank will affect all
-    // its uses, and in particular the ones we already visited.
-    // Although this is correct, since with the RPO traversal of the
-    // basic blocks the only uses that we already visisted for this
-    // definition are PHIs (i.e., copies), this may not be the best
-    // solution according to the cost model.
-    // Therefore, create a new temporary for Reg.
-    assert(ValMapping.BreakDown.size() == 1 &&
-           "Support for complex break down not supported yet");
-    if (!OnlyAssign) {
-      if (!MO.isDef() && MI.isPHI()) {
-        // Phis are already copies, so there is nothing to repair.
-        // Note: This will not hold when we support break downs with
-        // more than one segment.
-        DEBUG(dbgs() << "Skip PHI use\n");
-        continue;
-      }
-      // If MO is a definition, since repairing after a terminator is
-      // painful, do not repair. Indeed, this is probably not worse
-      // saving the move in the PHIs that will get reassigned.
-      if (!MO.isDef() || !MI.isTerminator())
-        Reg = repairReg(Reg, ValMapping, MI, MO.isDef());
+    }
+    if (Assign) {
+      DEBUG(dbgs() << " is free (simple assignment).\n");
+      RepairPts.emplace_back(RepairingPlacement(MI, OpIdx, *TRI, *this,
+                                                RepairingPlacement::Reassign));
+      continue;
     }
 
-    // If we end up here, MO should be free of encoding constraints,
-    // i.e., we do not have to constrained the RegBank of Reg to
-    // the requirement of the operands.
-    // If that is not the case, this means the code was broken before
-    // hands because we should have found that the assignment match.
-    // This will not hold when we will consider alternative mappings.
-    DEBUG(dbgs() << "Assign: " << *ValMapping.BreakDown[0].RegBank << " to "
-                 << PrintReg(Reg) << '\n');
+    // TODO:
+    // Ask the repairing module how much it would cost to get this mapping.
+    // Use: NewSources <- Val.
+    //     Same size: copy.
+    //     Different size: Src1, Src2, ... =
+    //           extract_value Val, Src1Begin, Src1Len, Src2Begin, Src2Len, ...
+    // Def: Val <- NewDefs
+    //     Same size: copy
+    //     Different size: Val = build_sequence Defs1, Defs2, ...
+    // We should remember that this value is available somewhere else to
+    // coalesce the value.
 
-    MRI->setRegBank(Reg, *ValMapping.BreakDown[0].RegBank);
-    MO.setReg(Reg);
+    // Find the insertion point for the repairing code.
+    RepairPts.emplace_back(
+        RepairingPlacement(MI, OpIdx, *TRI, *this, RepairingPlacement::Insert));
+    RepairingPlacement &RepairPt = RepairPts.back();
+
+    // Check that the materialization of the repairing is possible.
+    if (!RepairPt.canMaterialize())
+      return MappingCost::ImpossibleCost();
+
+    // Account for the split cost and repair cost.
+    // Unless the cost is already saturated.
+    if (Saturated)
+      continue;
+
+    // Sums up the repairing cost of at each insertion point.
+    // TODO: Get the actual repairing cost.
+    uint64_t RepairCost = 1;
+    // Bias used for splitting: 5%.
+    const uint64_t PercentageForBias = 5;
+    uint64_t Bias = (RepairCost * PercentageForBias + 99) / 100;
+    // We should not need more than a couple of instructions to repair
+    // an assignment. In other words, the computation should not
+    // overflow because the repairing cost is free of basic block
+    // frequency.
+    assert(((RepairCost < RepairCost * PercentageForBias) &&
+            (RepairCost * PercentageForBias <
+             RepairCost * PercentageForBias + 99)) &&
+           "Repairing involves more than a billion of instructions?!");
+    for (const std::unique_ptr<InsertPoint> &InsertPt : RepairPt) {
+      assert(InsertPt->canMaterialize() && "We should not have made it here");
+      // We will applied some basic block frequency and those uses uint64_t.
+      if (!InsertPt->isSplit())
+        Saturated = Cost.addLocalCost(RepairCost);
+      else {
+        uint64_t CostForInsertPt = RepairCost;
+        // Again we shouldn't overflow here givent that
+        // CostForInsertPt is frequency free at this point.
+        assert(CostForInsertPt + Bias > CostForInsertPt &&
+               "Repairing + split bias overflows");
+        CostForInsertPt += Bias;
+        uint64_t PtCost = InsertPt->frequency(*this) * CostForInsertPt;
+        // Check if we just overflowed.
+        if ((Saturated = PtCost < CostForInsertPt))
+          Cost.saturate();
+        else
+          Saturated = Cost.addNonLocalCost(PtCost);
+      }
+      // No need to accumulate more cost information.
+      // We need to still gather the repairing information though.
+      if (Saturated)
+        break;
+    }
   }
+  return Cost;
+}
+
+void RegBankSelect::applyMapping(
+    MachineInstr &MI, const RegisterBankInfo::InstructionMapping &InstrMapping,
+    SmallVectorImpl<RegBankSelect::RepairingPlacement> &RepairPts) {
+  assert(InstrMapping.getID() == RegisterBankInfo::DefaultMappingID &&
+         "Rewriting of MI not implemented yet");
+  // First, place the repairing code.
+  bool NeedRewrite = false;
+  SmallVector<unsigned, 8> NewVRegs;
+  for (RepairingPlacement &RepairPt : RepairPts) {
+    assert(RepairPt.canMaterialize() &&
+           RepairPt.getKind() != RepairingPlacement::Impossible &&
+           "This mapping is impossible");
+    assert(RepairPt.getKind() != RepairingPlacement::None &&
+           "This should not make its way in the list");
+    unsigned OpIdx = RepairPt.getOpIdx();
+    MachineOperand &MO = MI.getOperand(OpIdx);
+    const RegisterBankInfo::ValueMapping &ValMapping =
+        InstrMapping.getOperandMapping(OpIdx);
+    unsigned BreakDownSize = ValMapping.BreakDown.size();
+    unsigned Reg = MO.getReg();
+    NeedRewrite = BreakDownSize != 1;
+
+    switch (RepairPt.getKind()) {
+    case RepairingPlacement::Reassign:
+      assert(BreakDownSize == 1 &&
+             "Reassignment should only be for simple mapping");
+      MRI->setRegBank(Reg, *ValMapping.BreakDown[0].RegBank);
+      break;
+    case RepairingPlacement::Insert:
+      // We need as many new virtual registers as the number of partial mapping.
+      for (const RegisterBankInfo::PartialMapping &PartMap :
+           ValMapping.BreakDown) {
+        unsigned Tmp = MRI->createGenericVirtualRegister(PartMap.Length);
+        MRI->setRegBank(Tmp, *PartMap.RegBank);
+        NewVRegs.push_back(Tmp);
+      }
+      repairReg(MO, ValMapping, RepairPt,
+                make_range(NewVRegs.end() - BreakDownSize, NewVRegs.end()));
+      break;
+    default:
+      llvm_unreachable("Other kind should not happen");
+    }
+  }
+  // Second, rewrite the instruction.
+  (void)NeedRewrite;
+  assert(!NeedRewrite && "Not implemented yet");
+}
+
+void RegBankSelect::assignInstr(MachineInstr &MI) {
+  DEBUG(dbgs() << "Assign: " << MI);
+  RegisterBankInfo::InstructionMapping DefaultMapping =
+      RBI->getInstrMapping(MI);
+  // Remember the repairing placement for all the operands.
+  SmallVector<RepairingPlacement, 4> RepairPts;
+
+  MappingCost DefaultCost = computeMapping(MI, DefaultMapping, RepairPts);
+  (void)DefaultCost;
+  assert(DefaultCost != MappingCost::ImpossibleCost() &&
+         "Default mapping is not suited");
+
+  // Make sure the mapping is valid for MI.
+  assert(DefaultMapping.verify(MI) && "Invalid instruction mapping");
+
+  DEBUG(dbgs() << "Mapping: " << DefaultMapping << '\n');
+
+  applyMapping(MI, DefaultMapping, RepairPts);
+
   DEBUG(dbgs() << "Assigned: " << MI);
 }
 
@@ -256,9 +330,13 @@ bool RegBankSelect::runOnMachineFunction(MachineFunction &MF) {
   // Use a RPOT to make sure all registers are assigned before we choose
   // the best mapping of the current instruction.
   ReversePostOrderTraversal<MachineFunction*> RPOT(&MF);
-  for (MachineBasicBlock *MBB : RPOT)
+  for (MachineBasicBlock *MBB : RPOT) {
+    // Set a sensible insertion point so that subsequent calls to
+    // MIRBuilder.
+    MIRBuilder.setMBB(*MBB);
     for (MachineInstr &MI : *MBB)
       assignInstr(MI);
+  }
   return false;
 }
 
