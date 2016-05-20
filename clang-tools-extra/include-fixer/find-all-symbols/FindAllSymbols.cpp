@@ -1,4 +1,4 @@
-//===-- FindAllSymbols.cpp - find all symbols -----------------------------===//
+//===-- FindAllSymbols.cpp - find all symbols--------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -217,7 +217,7 @@ void FindAllSymbols::run(const MatchFinder::MatchResult &Result) {
   llvm::Optional<SymbolInfo> Symbol =
       CreateSymbolInfo(ND, *SM, Collector->getHeaderMappingTable());
   if (Symbol)
-    Reporter->reportResult(
+    Reporter->reportSymbol(
         SM->getFileEntryForID(SM->getMainFileID())->getName(), *Symbol);
 }
 
