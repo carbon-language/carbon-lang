@@ -714,6 +714,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_X86_64_TLSLD:
   case R_X86_64_DTPOFF32:
   case R_X86_64_SIZE32:
+    checkInt<32>(Val, Type);
     write32le(Loc, Val);
     break;
   default:
