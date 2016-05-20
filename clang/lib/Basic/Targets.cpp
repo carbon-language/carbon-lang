@@ -6039,6 +6039,9 @@ public:
           return true;
         }
         break;
+      case 's':
+        // Relocatable constant.
+        return true;
     }
     return false;
   }
