@@ -50,6 +50,10 @@ public:
     return false;
   }
 
+  const std::vector<SymbolInfo>& getSymbols() const {
+    return Symbols;
+  }
+
 private:
   std::vector<SymbolInfo> Symbols;
 };
@@ -125,7 +129,7 @@ public:
     return true;
   }
 
-private:
+protected:
   TestSymbolReporter Reporter;
 };
 
@@ -410,6 +414,8 @@ TEST_F(FindAllSymbolsTest, MacroTestWithIWYU) {
   runFindAllSymbols(Code);
   SymbolInfo Symbol =
       SymbolInfo("X", SymbolInfo::SymbolKind::Macro, "bar.h", 3, {});
+  EXPECT_EQ(3, Reporter.getSymbols().size());
+  EXPECT_EQ("bar.h", Reporter.getSymbols().front().getFilePath());
   EXPECT_TRUE(hasSymbol(Symbol));
 
   Symbol = SymbolInfo("Y", SymbolInfo::SymbolKind::Macro, "bar.h", 4, {});
