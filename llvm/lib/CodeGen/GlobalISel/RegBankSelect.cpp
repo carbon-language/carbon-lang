@@ -41,7 +41,10 @@ void RegBankSelect::init(MachineFunction &MF) {
 }
 
 bool RegBankSelect::assignmentMatch(
-    unsigned Reg, const RegisterBankInfo::ValueMapping &ValMapping) const {
+    unsigned Reg, const RegisterBankInfo::ValueMapping &ValMapping,
+    bool &OnlyAssign) const {
+  // By default we assume we will have to repair something.
+  OnlyAssign = false;
   // Each part of a break down needs to end up in a different register.
   // In other word, Reg assignement does not match.
   if (ValMapping.BreakDown.size() > 1)
@@ -49,6 +52,9 @@ bool RegBankSelect::assignmentMatch(
 
   const RegisterBank *CurRegBank = RBI->getRegBank(Reg, *MRI, *TRI);
   const RegisterBank *DesiredRegBrank = ValMapping.BreakDown[0].RegBank;
+  // Reg is free of assignment, a simple assignment will make the
+  // register bank to match.
+  OnlyAssign = CurRegBank == nullptr;
   DEBUG(dbgs() << "Does assignment already match: ";
         if (CurRegBank) dbgs() << *CurRegBank; else dbgs() << "none";
         dbgs() << " against ";
@@ -194,7 +200,8 @@ void RegBankSelect::assignInstr(MachineInstr &MI) {
     const RegisterBankInfo::ValueMapping &ValMapping =
         DefaultMapping.getOperandMapping(OpIdx);
     // If Reg is already properly mapped, move on.
-    if (assignmentMatch(Reg, ValMapping))
+    bool OnlyAssign;
+    if (assignmentMatch(Reg, ValMapping, OnlyAssign))
       continue;
 
     // For uses, we may need to create a new temporary.
@@ -210,8 +217,7 @@ void RegBankSelect::assignInstr(MachineInstr &MI) {
     // Therefore, create a new temporary for Reg.
     assert(ValMapping.BreakDown.size() == 1 &&
            "Support for complex break down not supported yet");
-    if (TargetRegisterInfo::isPhysicalRegister(Reg) ||
-        MRI->getRegClassOrRegBank(Reg)) {
+    if (!OnlyAssign) {
       if (!MO.isDef() && MI.isPHI()) {
         // Phis are already copies, so there is nothing to repair.
         // Note: This will not hold when we support break downs with

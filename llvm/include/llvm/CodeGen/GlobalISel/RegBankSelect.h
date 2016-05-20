@@ -164,8 +164,12 @@ private:
   void init(MachineFunction &MF);
 
   /// Check if \p Reg is already assigned what is described by \p ValMapping.
+  /// \p OnlyAssign == true means that \p Reg just needs to be assigned a
+  /// register bank.  I.e., no repairing is necessary to have the
+  /// assignment match.
   bool assignmentMatch(unsigned Reg,
-                       const RegisterBankInfo::ValueMapping &ValMapping) const;
+                       const RegisterBankInfo::ValueMapping &ValMapping,
+                       bool &OnlyAssign) const;
 
   /// Insert repairing code for \p Reg as specified by \p ValMapping.
   /// The repairing code is inserted before \p DefUseMI if \p IsDef is false
