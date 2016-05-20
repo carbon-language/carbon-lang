@@ -168,10 +168,10 @@ getSymVA(uint32_t Type, typename ELFT::uint A, typename ELFT::uint P,
   case R_GOTREL:
     return Body.getVA<ELFT>(A) - Out<ELFT>::Got->getVA();
   case R_GOT_FROM_END:
+  case R_RELAX_TLS_GD_TO_IE:
     return Body.getGotOffset<ELFT>() + A -
            Out<ELFT>::Got->getNumEntries() * sizeof(uintX_t);
   case R_GOT:
-  case R_RELAX_TLS_GD_TO_IE:
     return Body.getGotVA<ELFT>() + A;
   case R_GOT_PAGE_PC:
     return getAArch64Page(Body.getGotVA<ELFT>() + A) - getAArch64Page(P);

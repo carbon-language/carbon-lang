@@ -416,8 +416,7 @@ void X86TargetInfo::relaxTlsGdToIe(uint8_t *Loc, uint32_t Type,
       0x03, 0x83, 0x00, 0x00, 0x00, 0x00  // addl 0(%ebx), %eax
   };
   memcpy(Loc - 3, Inst, sizeof(Inst));
-  relocateOne(Loc + 5, R_386_32, Val - Out<ELF32LE>::Got->getVA() -
-                                     Out<ELF32LE>::Got->getNumEntries() * 4);
+  relocateOne(Loc + 5, R_386_32, Val);
 }
 
 // In some conditions, relocations can be optimized to avoid using GOT.
