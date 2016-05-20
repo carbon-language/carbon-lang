@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Support/BlockFrequency.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -452,6 +453,10 @@ void RegBankSelect::assignInstr(MachineInstr &MI) {
 
 bool RegBankSelect::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "Assign register banks for: " << MF.getName() << '\n');
+  const Function *F = MF.getFunction();
+  Mode SaveOptMode = OptMode;
+  if (F->hasFnAttribute(Attribute::OptimizeNone))
+    OptMode = Mode::Fast;
   init(MF);
   // Walk the function and assign register banks to all operands.
   // Use a RPOT to make sure all registers are assigned before we choose
@@ -464,6 +469,7 @@ bool RegBankSelect::runOnMachineFunction(MachineFunction &MF) {
     for (MachineInstr &MI : *MBB)
       assignInstr(MI);
   }
+  OptMode = SaveOptMode;
   return false;
 }
 
