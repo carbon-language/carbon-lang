@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "esan.h"
+#include "esan_flags.h"
 #include "esan_interface_internal.h"
 #include "esan_shadow.h"
 #include "sanitizer_common/sanitizer_common.h"
@@ -29,8 +30,6 @@ namespace __esan {
 bool EsanIsInitialized;
 ToolType WhichTool;
 ShadowMapping Mapping;
-
-static const char EsanOptsEnv[] = "ESAN_OPTIONS";
 
 // We are combining multiple performance tuning tools under the umbrella of
 // one EfficiencySanitizer super-tool.  Most of our tools have very similar
@@ -140,21 +139,6 @@ static void initializeShadow() {
 
     // TODO: Call MmapNoAccess() on in-between regions.
   }
-}
-
-static void initializeFlags() {
-  // Once we add our own flags we'll parse them here.
-  // For now the common ones are sufficient.
-  FlagParser Parser;
-  SetCommonFlagsDefaults();
-  RegisterCommonFlags(&Parser);
-  Parser.ParseString(GetEnv(EsanOptsEnv));
-  InitializeCommonFlags();
-  if (Verbosity())
-    ReportUnrecognizedFlags();
-  if (common_flags()->help)
-    Parser.PrintFlagDescriptions();
-  __sanitizer_set_report_path(common_flags()->log_path);
 }
 
 void initializeLibrary(ToolType Tool) {
