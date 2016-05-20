@@ -128,8 +128,7 @@ static bool clobbersAllYmmRegs(const MachineOperand &MO) {
 }
 
 static bool hasYmmReg(MachineInstr *MI) {
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
+  for (const MachineOperand &MO : MI->operands()) {
     if (MI->isCall() && MO.isRegMask() && !clobbersAllYmmRegs(MO))
       return true;
     if (!MO.isReg())
@@ -145,8 +144,7 @@ static bool hasYmmReg(MachineInstr *MI) {
 /// Check if any YMM register will be clobbered by this instruction.
 static bool callClobbersAnyYmmReg(MachineInstr *MI) {
   assert(MI->isCall() && "Can only be called on call instructions.");
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
+  for (const MachineOperand &MO : MI->operands()) {
     if (!MO.isRegMask())
       continue;
     for (unsigned reg = X86::YMM0; reg <= X86::YMM15; ++reg) {
