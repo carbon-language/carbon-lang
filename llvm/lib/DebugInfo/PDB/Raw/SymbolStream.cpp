@@ -35,7 +35,7 @@ struct DataSym32 {
   ulittle32_t TypIndex; // Type index, or Metadata token if a managed symbol
   ulittle32_t off;
   ulittle16_t seg;
-  char name[1];
+  char Name[1];
 };
 
 // For S_PROCREF symbol type.
@@ -43,7 +43,7 @@ struct RefSym {
   ulittle32_t SumName;   // SUC of the name (?)
   ulittle32_t SymOffset; // Offset of actual symbol in $$Symbols
   ulittle16_t Mod;       // Module containing the actual symbol
-  char name[1];
+  char Name[1];
 };
 }
 
@@ -53,8 +53,6 @@ SymbolStream::SymbolStream(PDBFile &File, uint32_t StreamNum)
 SymbolStream::~SymbolStream() {}
 
 Error SymbolStream::reload() { return Error::success(); }
-
-static StringRef makeStringRef(char *p) { return {p, strlen(p)}; }
 
 Expected<std::string> SymbolStream::getSymbolName(uint32_t Off) const {
   StreamReader Reader(Stream);
@@ -74,9 +72,9 @@ Expected<std::string> SymbolStream::getSymbolName(uint32_t Off) const {
 
   switch (Hdr.Type) {
   case codeview::S_PUB32:
-    return makeStringRef(reinterpret_cast<DataSym32 *>(Buf.data())->name);
+    return reinterpret_cast<DataSym32 *>(Buf.data())->Name;
   case codeview::S_PROCREF:
-    return makeStringRef(reinterpret_cast<RefSym *>(Buf.data())->name);
+    return reinterpret_cast<RefSym *>(Buf.data())->Name;
   default:
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Unknown symbol type");
