@@ -70,6 +70,7 @@
 
 namespace llvm {
 // Forward declarations.
+class BlockFrequency;
 class MachineRegisterInfo;
 class TargetRegisterInfo;
 
@@ -80,6 +81,68 @@ public:
   static char ID;
 
 private:
+  /// Helper class used to represent the cost for mapping an instruction.
+  /// When mapping an instruction, we may introduce some repairing code.
+  /// In most cases, the repairing code is local to the instruction,
+  /// thus, we can omit the basic block frequency from the cost.
+  /// However, some alternatives may produce non-local cost, e.g., when
+  /// repairing a phi, and thus we then need to scale the local cost
+  /// to the non-local cost. This class does this for us.
+  /// \note: We could simply always scale the cost. The problem is that
+  /// there are higher chances that we saturate the cost easier and end
+  /// up having the same cost for actually different alternatives.
+  /// Another option would be to use APInt everywhere.
+  class MappingCost {
+  private:
+    /// Cost of the local instructions.
+    /// This cost is free of basic block frequency.
+    uint64_t LocalCost;
+    /// Cost of the non-local instructions.
+    /// This cost should include the frequency of the related blocks.
+    uint64_t NonLocalCost;
+    /// Frequency of the block where the local instructions live.
+    uint64_t LocalFreq;
+
+    MappingCost(uint64_t LocalCost, uint64_t NonLocalCost, uint64_t LocalFreq)
+        : LocalCost(LocalCost), NonLocalCost(NonLocalCost),
+          LocalFreq(LocalFreq) {}
+
+    /// Check if this cost is saturated.
+    bool isSaturated() const;
+
+  public:
+    /// Create a MappingCost assuming that most of the instructions
+    /// will occur in a basic block with \p LocalFreq frequency.
+    MappingCost(const BlockFrequency &LocalFreq);
+
+    /// Add \p Cost to the local cost.
+    /// \return true if this cost is saturated, false otherwise.
+    bool addLocalCost(uint64_t Cost);
+
+    /// Add \p Cost to the non-local cost.
+    /// Non-local cost should reflect the frequency of their placement.
+    /// \return true if this cost is saturated, false otherwise.
+    bool addNonLocalCost(uint64_t Cost);
+
+    /// Saturate the cost to the maximal representable value.
+    void saturate();
+
+    /// Return an instance of MappingCost that represents an
+    /// impossible mapping.
+    static MappingCost ImpossibleCost();
+
+    /// Check if this is less than \p Cost.
+    bool operator<(const MappingCost &Cost) const;
+    /// Check if this is equal to \p Cost.
+    bool operator==(const MappingCost &Cost) const;
+    /// Check if this is not equal to \p Cost.
+    bool operator!=(const MappingCost &Cost) const { return !(*this == Cost); }
+    /// Check if this is greater than \p Cost.
+    bool operator>(const MappingCost &Cost) const {
+      return *this != Cost && Cost < *this;
+    }
+  };
+
   /// Interface to the target lowering info related
   /// to register banks.
   const RegisterBankInfo *RBI;

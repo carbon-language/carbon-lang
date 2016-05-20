@@ -10,10 +10,11 @@
 /// This file implements the RegBankSelect class.
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/BlockFrequency.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 
@@ -251,4 +252,127 @@ bool RegBankSelect::runOnMachineFunction(MachineFunction &MF) {
     for (MachineInstr &MI : *MBB)
       assignInstr(MI);
   return false;
+}
+
+//------------------------------------------------------------------------------
+//                  Helper Class Implementation
+//------------------------------------------------------------------------------
+RegBankSelect::MappingCost::MappingCost(const BlockFrequency &LocalFreq)
+    : LocalCost(0), NonLocalCost(0), LocalFreq(LocalFreq.getFrequency()) {}
+
+bool RegBankSelect::MappingCost::addLocalCost(uint64_t Cost) {
+  // Check if this overflows.
+  if (LocalCost + Cost < LocalCost) {
+    saturate();
+    return true;
+  }
+  LocalCost += Cost;
+  return isSaturated();
+}
+
+bool RegBankSelect::MappingCost::addNonLocalCost(uint64_t Cost) {
+  // Check if this overflows.
+  if (NonLocalCost + Cost < NonLocalCost) {
+    saturate();
+    return true;
+  }
+  NonLocalCost += Cost;
+  return isSaturated();
+}
+
+bool RegBankSelect::MappingCost::isSaturated() const {
+  return LocalCost == UINT64_MAX - 1 && NonLocalCost == UINT64_MAX &&
+         LocalFreq == UINT64_MAX;
+}
+
+void RegBankSelect::MappingCost::saturate() {
+  *this = ImpossibleCost();
+  --LocalCost;
+}
+
+RegBankSelect::MappingCost RegBankSelect::MappingCost::ImpossibleCost() {
+  return MappingCost(UINT64_MAX, UINT64_MAX, UINT64_MAX);
+}
+
+bool RegBankSelect::MappingCost::operator<(const MappingCost &Cost) const {
+  // Sort out the easy cases.
+  if (*this == Cost)
+    return false;
+  // If one is impossible to realize the other is cheaper unless it is
+  // impossible as well.
+  if ((*this == ImpossibleCost()) || (Cost == ImpossibleCost()))
+    return (*this == ImpossibleCost()) < (Cost == ImpossibleCost());
+  // If one is saturated the other is cheaper, unless it is saturated
+  // as well.
+  if (isSaturated() || Cost.isSaturated())
+    return isSaturated() < Cost.isSaturated();
+  // At this point we know both costs hold sensible values.
+
+  // If both values have a different base frequency, there is no much
+  // we can do but to scale everything.
+  // However, if they have the same base frequency we can avoid making
+  // complicated computation.
+  uint64_t ThisLocalAdjust;
+  uint64_t OtherLocalAdjust;
+  if (LLVM_LIKELY(LocalFreq == Cost.LocalFreq)) {
+
+    // At this point, we know the local costs are comparable.
+    // Do the case that do not involve potential overflow first.
+    if (NonLocalCost == Cost.NonLocalCost)
+      // Since the non-local costs do not discriminate on the result,
+      // just compare the local costs.
+      return LocalCost < Cost.LocalCost;
+
+    // The base costs are comparable so we may only keep the relative
+    // value to increase our chances of avoiding overflows.
+    ThisLocalAdjust = 0;
+    OtherLocalAdjust = 0;
+    if (LocalCost < Cost.LocalCost)
+      OtherLocalAdjust = Cost.LocalCost - LocalCost;
+    else
+      ThisLocalAdjust = LocalCost - Cost.LocalCost;
+
+  } else {
+    ThisLocalAdjust = LocalCost;
+    OtherLocalAdjust = Cost.LocalCost;
+  }
+
+  // The non-local costs are comparable, just keep the relative value.
+  uint64_t ThisNonLocalAdjust = 0;
+  uint64_t OtherNonLocalAdjust = 0;
+  if (NonLocalCost < Cost.NonLocalCost)
+    OtherNonLocalAdjust = Cost.NonLocalCost - NonLocalCost;
+  else
+    ThisNonLocalAdjust = NonLocalCost - Cost.NonLocalCost;
+  // Scale everything to make them comparable.
+  uint64_t ThisScaledCost = ThisLocalAdjust * LocalFreq;
+  // Check for overflow on that operation.
+  bool ThisOverflows = ThisLocalAdjust && (ThisScaledCost < ThisLocalAdjust ||
+                                           ThisScaledCost < LocalFreq);
+  uint64_t OtherScaledCost = OtherLocalAdjust * Cost.LocalFreq;
+  // Check for overflow on the last operation.
+  bool OtherOverflows =
+      OtherLocalAdjust &&
+      (OtherScaledCost < OtherLocalAdjust || OtherScaledCost < Cost.LocalFreq);
+  // Add the non-local costs.
+  ThisOverflows |= ThisNonLocalAdjust &&
+                   ThisScaledCost + ThisNonLocalAdjust < ThisNonLocalAdjust;
+  ThisScaledCost += ThisNonLocalAdjust;
+  OtherOverflows |= OtherNonLocalAdjust &&
+                    OtherScaledCost + OtherNonLocalAdjust < OtherNonLocalAdjust;
+  OtherScaledCost += OtherNonLocalAdjust;
+  // If both overflows, we cannot compare without additional
+  // precision, e.g., APInt. Just give up on that case.
+  if (ThisOverflows && OtherOverflows)
+    return false;
+  // If one overflows but not the other, we can still compare.
+  if (ThisOverflows || OtherOverflows)
+    return ThisOverflows < OtherOverflows;
+  // Otherwise, just compare the values.
+  return ThisScaledCost < OtherScaledCost;
+}
+
+bool RegBankSelect::MappingCost::operator==(const MappingCost &Cost) const {
+  return LocalCost == Cost.LocalCost && NonLocalCost == Cost.NonLocalCost &&
+         LocalFreq == Cost.LocalFreq;
 }
