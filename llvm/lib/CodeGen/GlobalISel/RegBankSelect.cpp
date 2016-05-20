@@ -136,40 +136,6 @@ void RegBankSelect::repairReg(
   // Legalize NewInstrs if need be.
 }
 
-void RegBankSelect::setSafeInsertionPoint(MachineInstr &InsertPt, bool Before) {
-  // Check that we are not looking to insert before a phi.
-  // Indeed, we would need more information on what to do.
-  // By default that should be all the predecessors, but this is
-  // probably not what we want in general.
-  assert((!Before || !InsertPt.isPHI()) &&
-         "Insertion before phis not implemented");
-  // The same kind of observation hold for terminators if we try to
-  // insert after them.
-  assert((Before || !InsertPt.isTerminator()) &&
-         "Insertion after terminatos not implemented");
-  if (InsertPt.isPHI()) {
-    assert(!Before && "Not supported!!");
-    MachineBasicBlock *MBB = InsertPt.getParent();
-    assert(MBB && "Insertion point is not in a basic block");
-    MachineBasicBlock::iterator FirstNonPHIPt = MBB->getFirstNonPHI();
-    if (FirstNonPHIPt == MBB->end()) {
-      // If there is not any non-phi instruction, insert at the end of MBB.
-      MIRBuilder.setMBB(*MBB, /*Beginning*/ false);
-      return;
-    }
-    // The insertion point before the first non-phi instruction.
-    MIRBuilder.setInstr(*FirstNonPHIPt, /*Before*/ true);
-    return;
-  }
-  if (InsertPt.isTerminator()) {
-    MachineBasicBlock *MBB = InsertPt.getParent();
-    assert(MBB && "Insertion point is not in a basic block");
-    MIRBuilder.setInstr(*MBB->getFirstTerminator(), /*Before*/ true);
-    return;
-  }
-  MIRBuilder.setInstr(InsertPt, /*Before*/ Before);
-}
-
 void RegBankSelect::tryAvoidingSplit(
     RegBankSelect::RepairingPlacement &RepairPt, const MachineOperand &MO,
     const RegisterBankInfo::ValueMapping &ValMapping) const {

@@ -525,11 +525,6 @@ private:
       RegBankSelect::RepairingPlacement &RepairPt,
       const iterator_range<SmallVectorImpl<unsigned>::iterator> &NewVRegs);
 
-  /// Set the insertion point of the MIRBuilder to a safe point
-  /// to insert instructions before (\p Before == true) or after
-  /// \p InsertPt.
-  void setSafeInsertionPoint(MachineInstr &InsertPt, bool Before);
-
   /// Compute the cost of mapping \p MI with \p InstrMapping and
   /// compute the repairing placement for such mapping in \p
   /// RepairPts.
