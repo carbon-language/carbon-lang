@@ -228,13 +228,13 @@ int __llvm_profile_write_file(void) {
   GetEnvHook = &getenv;
   /* Check the filename. */
   if (!__llvm_profile_CurrentFilename) {
-    PROF_ERR("LLVM Profile: Failed to write file : %s\n", "Filename not set");
+    PROF_ERR("Failed to write file : %s\n", "Filename not set");
     return -1;
   }
 
   /* Check if there is llvm/runtime version mismatch.  */
   if (GET_VERSION(__llvm_profile_get_version()) != INSTR_PROF_RAW_VERSION) {
-    PROF_ERR("LLVM Profile: runtime and instrumentation version mismatch : "
+    PROF_ERR("Runtime and instrumentation version mismatch : "
              "expected %d, but get %d\n",
              INSTR_PROF_RAW_VERSION,
              (int)GET_VERSION(__llvm_profile_get_version()));
@@ -244,7 +244,7 @@ int __llvm_profile_write_file(void) {
   /* Write the file. */
   rc = writeFileWithName(__llvm_profile_CurrentFilename);
   if (rc)
-    PROF_ERR("LLVM Profile: Failed to write file \"%s\": %s\n",
+    PROF_ERR("Failed to write file \"%s\": %s\n",
             __llvm_profile_CurrentFilename, strerror(errno));
   return rc;
 }
