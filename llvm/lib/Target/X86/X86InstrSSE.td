@@ -6874,7 +6874,7 @@ let Predicates = [HasAVX2, NoVLX] in {
                                   VR256, loadv4i64, i256mem,
                                   SSE_INTMUL_ITINS_P, 1, 0>, VEX_4V, VEX_L;
 }
-let Predicates = [HasAVX2, NoVLX] in {
+let Predicates = [HasAVX2, NoVLX_Or_NoBWI] in {
   defm VPMINSBY  : SS48I_binop_rm<0x38, "vpminsb", smin, v32i8, VR256,
                                   loadv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V, VEX_L;
