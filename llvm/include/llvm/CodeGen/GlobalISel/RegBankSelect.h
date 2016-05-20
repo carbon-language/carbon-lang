@@ -525,6 +525,13 @@ private:
       RegBankSelect::RepairingPlacement &RepairPt,
       const iterator_range<SmallVectorImpl<unsigned>::iterator> &NewVRegs);
 
+  /// Find the best mapping for \p MI from \p PossibleMappings.
+  /// \return a reference on the best mapping in \p PossibleMappings.
+  RegisterBankInfo::InstructionMapping &
+  findBestMapping(MachineInstr &MI,
+                  RegisterBankInfo::InstructionMappings &PossibleMappings,
+                  SmallVectorImpl<RepairingPlacement> &RepairPts);
+
   /// Compute the cost of mapping \p MI with \p InstrMapping and
   /// compute the repairing placement for such mapping in \p
   /// RepairPts.

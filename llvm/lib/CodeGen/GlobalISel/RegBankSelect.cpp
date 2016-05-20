@@ -136,6 +136,27 @@ void RegBankSelect::repairReg(
   // Legalize NewInstrs if need be.
 }
 
+RegisterBankInfo::InstructionMapping &RegBankSelect::findBestMapping(
+    MachineInstr &MI, RegisterBankInfo::InstructionMappings &PossibleMappings,
+    SmallVectorImpl<RepairingPlacement> &RepairPts) {
+
+  RegisterBankInfo::InstructionMapping *BestMapping = nullptr;
+  MappingCost Cost = MappingCost::ImpossibleCost();
+  SmallVector<RepairingPlacement, 4> LocalRepairPts;
+  for (RegisterBankInfo::InstructionMapping &CurMapping : PossibleMappings) {
+    MappingCost CurCost = computeMapping(MI, CurMapping, LocalRepairPts, &Cost);
+    if (CurCost < Cost) {
+      Cost = CurCost;
+      BestMapping = &CurMapping;
+      RepairPts.clear();
+      for (RepairingPlacement &RepairPt : LocalRepairPts)
+        RepairPts.emplace_back(std::move(RepairPt));
+    }
+  }
+  assert(BestMapping && "No suitable mapping for instruction");
+  return *BestMapping;
+}
+
 void RegBankSelect::tryAvoidingSplit(
     RegBankSelect::RepairingPlacement &RepairPt, const MachineOperand &MO,
     const RegisterBankInfo::ValueMapping &ValMapping) const {
@@ -433,22 +454,29 @@ void RegBankSelect::applyMapping(
 
 void RegBankSelect::assignInstr(MachineInstr &MI) {
   DEBUG(dbgs() << "Assign: " << MI);
-  RegisterBankInfo::InstructionMapping DefaultMapping =
-      RBI->getInstrMapping(MI);
   // Remember the repairing placement for all the operands.
   SmallVector<RepairingPlacement, 4> RepairPts;
 
-  MappingCost DefaultCost = computeMapping(MI, DefaultMapping, RepairPts);
-  (void)DefaultCost;
-  assert(DefaultCost != MappingCost::ImpossibleCost() &&
-         "Default mapping is not suited");
-
+  RegisterBankInfo::InstructionMapping BestMapping;
+  if (OptMode == RegBankSelect::Mode::Fast) {
+    BestMapping = RBI->getInstrMapping(MI);
+    MappingCost DefaultCost = computeMapping(MI, BestMapping, RepairPts);
+    (void)DefaultCost;
+    assert(DefaultCost != MappingCost::ImpossibleCost() &&
+           "Default mapping is not suited");
+  } else {
+    RegisterBankInfo::InstructionMappings PossibleMappings =
+        RBI->getInstrPossibleMappings(MI);
+    assert(!PossibleMappings.empty() &&
+           "Do not know how to map this instruction");
+    BestMapping = std::move(findBestMapping(MI, PossibleMappings, RepairPts));
+  }
   // Make sure the mapping is valid for MI.
-  assert(DefaultMapping.verify(MI) && "Invalid instruction mapping");
+  assert(BestMapping.verify(MI) && "Invalid instruction mapping");
 
-  DEBUG(dbgs() << "Mapping: " << DefaultMapping << '\n');
+  DEBUG(dbgs() << "Mapping: " << BestMapping << '\n');
 
-  applyMapping(MI, DefaultMapping, RepairPts);
+  applyMapping(MI, BestMapping, RepairPts);
 
   DEBUG(dbgs() << "Assigned: " << MI);
 }
