@@ -533,10 +533,15 @@ private:
   /// Compute the cost of mapping \p MI with \p InstrMapping and
   /// compute the repairing placement for such mapping in \p
   /// RepairPts.
+  /// \p BestCost is used to specify when the cost becomes too high
+  /// and thus it is not worth computing the RepairPts.  Moreover if
+  /// \p BestCost == nullptr, the mapping cost is actually not
+  /// computed.
   MappingCost
   computeMapping(MachineInstr &MI,
                  const RegisterBankInfo::InstructionMapping &InstrMapping,
-                 SmallVectorImpl<RepairingPlacement> &RepairPts);
+                 SmallVectorImpl<RepairingPlacement> &RepairPts,
+                 const MappingCost *BestCost = nullptr);
 
   /// When \p RepairPt involves splitting to repair \p MO for the
   /// given \p ValMapping, try to change the way we repair such that

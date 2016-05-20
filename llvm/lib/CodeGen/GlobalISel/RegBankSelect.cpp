@@ -291,7 +291,9 @@ void RegBankSelect::tryAvoidingSplit(
 
 RegBankSelect::MappingCost RegBankSelect::computeMapping(
     MachineInstr &MI, const RegisterBankInfo::InstructionMapping &InstrMapping,
-    SmallVectorImpl<RepairingPlacement> &RepairPts) {
+    SmallVectorImpl<RepairingPlacement> &RepairPts,
+    const RegBankSelect::MappingCost *BestCost) {
+  assert((MBFI || !BestCost) && "Costs comparison require MBFI");
 
   // If mapped with InstrMapping, MI will have the recorded cost.
   MappingCost Cost(MBFI ? MBFI->getBlockFreq(MI.getParent()) : 1);
@@ -300,6 +302,9 @@ RegBankSelect::MappingCost RegBankSelect::computeMapping(
   DEBUG(dbgs() << "Evaluating mapping cost for: " << MI);
   DEBUG(dbgs() << "With: " << InstrMapping << '\n');
   RepairPts.clear();
+  if (BestCost && Cost > *BestCost)
+    return Cost;
+
   // Moreover, to realize this mapping, the register bank of each operand must
   // match this mapping. In other words, we may need to locally reassign the
   // register banks. Account for that repairing cost as well.
@@ -356,9 +361,13 @@ RegBankSelect::MappingCost RegBankSelect::computeMapping(
       return MappingCost::ImpossibleCost();
 
     // Account for the split cost and repair cost.
-    // Unless the cost is already saturated.
-    if (Saturated)
+    // Unless the cost is already saturated or we do not care about the cost.
+    if (!BestCost || Saturated)
       continue;
+
+    // To get accurate information we need MBFI and MBPI.
+    // Thus, if we end up here this information should be here.
+    assert(MBFI && MBPI && "Cost computation requires MBFI and MBPI");
 
     // Sums up the repairing cost of at each insertion point.
     // TODO: Get the actual repairing cost.
@@ -393,6 +402,12 @@ RegBankSelect::MappingCost RegBankSelect::computeMapping(
         else
           Saturated = Cost.addNonLocalCost(PtCost);
       }
+
+      // Stop looking into what it takes to repair, this is already
+      // too expensive.
+      if (BestCost && Cost > *BestCost)
+        return Cost;
+
       // No need to accumulate more cost information.
       // We need to still gather the repairing information though.
       if (Saturated)
