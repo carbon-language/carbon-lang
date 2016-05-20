@@ -1571,7 +1571,7 @@ void LiveIntervals::splitSeparateComponents(LiveInterval &LI,
 }
 
 void LiveIntervals::renameDisconnectedComponents() {
-  ConnectedSubRegClasses SubRegClasses(*this, *MRI);
+  ConnectedSubRegClasses SubRegClasses(*this, *MRI, *TII);
 
   // Iterate over all vregs. Note that we query getNumVirtRegs() the newly
   // created vregs end up with higher numbers but do not need to be visited as

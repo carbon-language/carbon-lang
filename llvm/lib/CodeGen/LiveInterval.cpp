@@ -19,13 +19,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/LiveInterval.h"
+
+#include "PHIEliminationUtils.h"
 #include "RegisterCoalescer.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <algorithm>
 using namespace llvm;
@@ -1654,19 +1658,65 @@ void ConnectedSubRegClasses::distribute(const IntEqClasses &Classes,
   }
 }
 
+static bool subRangeLiveAt(const LiveInterval &LI, SlotIndex Pos) {
+  for (const LiveInterval::SubRange &SR : LI.subranges()) {
+    if (SR.liveAt(Pos))
+      return true;
+  }
+  return false;
+}
+
 void ConnectedSubRegClasses::computeMainRangesFixFlags(
     const IntEqClasses &Classes,
     const SmallVectorImpl<SubRangeInfo> &SubRangeInfos,
     const SmallVectorImpl<LiveInterval*> &Intervals) const {
   BumpPtrAllocator &Allocator = LIS.getVNInfoAllocator();
+  const SlotIndexes &Indexes = *LIS.getSlotIndexes();
   for (size_t I = 0, E = Intervals.size(); I < E; ++I) {
-    LiveInterval *LI = Intervals[I];
-    LI->removeEmptySubRanges();
-    if (I == 0)
-      LI->clear();
-    LI->constructMainRangeFromSubranges(*LIS.getSlotIndexes(), Allocator);
+    LiveInterval &LI = *Intervals[I];
+    unsigned Reg = LI.reg;
 
-    for (MachineOperand &MO : MRI.reg_nodbg_operands(LI->reg)) {
+    // There must be a def (or live-in) before every use. Splitting vregs may
+    // violate this principle as the splitted vreg may not have a definition on
+    // every path. Fix this by creating IMPLICIT_DEF instruction as necessary.
+    VNInfo::Allocator &VNInfoAllocator = LIS.getVNInfoAllocator();
+    for (const LiveInterval::SubRange &SR : LI.subranges()) {
+      // Search for "PHI" value numbers in the subranges. We must find a live
+      // value in each predecessor block, add an IMPLICIT_DEF where it is
+      // missing.
+      for (unsigned I = 0; I < SR.valnos.size(); ++I) {
+        const VNInfo &VNI = *SR.valnos[I];
+        if (VNI.isUnused() || !VNI.isPHIDef())
+          continue;
+
+        SlotIndex Def = VNI.def;
+        MachineBasicBlock &MBB = *Indexes.getMBBFromIndex(Def);
+        for (MachineBasicBlock *PredMBB : MBB.predecessors()) {
+          SlotIndex PredEnd = Indexes.getMBBEndIdx(PredMBB);
+          if (subRangeLiveAt(LI, PredEnd.getPrevSlot()))
+            continue;
+
+          MachineBasicBlock::iterator InsertPos =
+            llvm::findPHICopyInsertPoint(PredMBB, &MBB, Reg);
+          const MCInstrDesc &MCDesc = TII.get(TargetOpcode::IMPLICIT_DEF);
+          MachineInstrBuilder ImpDef = BuildMI(*PredMBB, InsertPos,
+                                               DebugLoc(), MCDesc, Reg);
+          SlotIndex DefIdx = LIS.InsertMachineInstrInMaps(*ImpDef);
+          SlotIndex RegDefIdx = DefIdx.getRegSlot();
+          for (LiveInterval::SubRange &SR : LI.subranges()) {
+            VNInfo *SRVNI = SR.getNextValue(RegDefIdx, VNInfoAllocator);
+            SR.addSegment(LiveRange::Segment(RegDefIdx, PredEnd, SRVNI));
+          }
+        }
+      }
+    }
+
+    LI.removeEmptySubRanges();
+    if (I == 0)
+      LI.clear();
+    LI.constructMainRangeFromSubranges(*LIS.getSlotIndexes(), Allocator);
+
+    for (MachineOperand &MO : MRI.reg_nodbg_operands(Reg)) {
       if (!MO.isDef())
         continue;
       unsigned SubRegIdx = MO.getSubReg();
@@ -1677,12 +1727,12 @@ void ConnectedSubRegClasses::computeMainRangesFixFlags(
       // flags in these cases.
       if (!MO.isUndef()) {
         SlotIndex Pos = LIS.getInstructionIndex(*MO.getParent());
-        if (!LI->liveAt(Pos.getBaseIndex()))
+        if (!LI.liveAt(Pos.getBaseIndex()))
           MO.setIsUndef();
       }
       if (!MO.isDead()) {
         SlotIndex Pos = LIS.getInstructionIndex(*MO.getParent());
-        if (!LI->liveAt(Pos.getDeadSlot()))
+        if (!LI.liveAt(Pos.getDeadSlot()))
           MO.setIsDead();
       }
     }

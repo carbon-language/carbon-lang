@@ -896,10 +896,12 @@ namespace llvm {
   class ConnectedSubRegClasses {
     LiveIntervals &LIS;
     MachineRegisterInfo &MRI;
+    const TargetInstrInfo &TII;
 
   public:
-    ConnectedSubRegClasses(LiveIntervals &LIS, MachineRegisterInfo &MRI)
-      : LIS(LIS), MRI(MRI) {}
+    ConnectedSubRegClasses(LiveIntervals &LIS, MachineRegisterInfo &MRI,
+                           const TargetInstrInfo &TII)
+      : LIS(LIS), MRI(MRI), TII(TII) {}
 
     /// Split unrelated subregister components and rename them to new vregs.
     void renameComponents(LiveInterval &LI) const;
