@@ -3,12 +3,14 @@
 // Make sure we don't allow dynamic initialization for device
 // variables, but accept empty constructors allowed by CUDA.
 
-// RUN: %clang_cc1 -triple nvptx64-nvidia-cuda -fcuda-is-device -std=c++11 \
-// RUN:     -I %S/.. -fsyntax-only -verify -o /dev/null %s
+// RUN: %clang_cc1 -verify %s -triple nvptx64-nvidia-cuda -fcuda-is-device -std=c++11 %s
 
-// Counterpart in CodeGen covers valid cases that pass Sema
-// checks. Here we'll only cover cases that trigger errors.
-#include "CodeGenCUDA/device-var-init.cu"
+#ifdef __clang__
+#include "Inputs/cuda.h"
+#endif
+
+// Use the types we share with CodeGen tests.
+#include "Inputs/cuda-initializers.h"
 
 __shared__ int s_v_i = 1;
 // expected-error@-1 {{initialization is not supported for __shared__ variables.}}
