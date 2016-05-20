@@ -33,22 +33,25 @@ namespace {
       initializePartiallyInlineLibCallsPass(*PassRegistry::getPassRegistry());
     }
 
-    void getAnalysisUsage(AnalysisUsage &AU) const override;
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
+      AU.addRequired<TargetTransformInfoWrapperPass>();
+      FunctionPass::getAnalysisUsage(AU);
+    }
+
     bool runOnFunction(Function &F) override;
   };
 
   char PartiallyInlineLibCalls::ID = 0;
 }
 
-INITIALIZE_PASS(PartiallyInlineLibCalls, "partially-inline-libcalls",
-                "Partially inline calls to library functions", false, false)
-
-void PartiallyInlineLibCalls::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<TargetLibraryInfoWrapperPass>();
-  AU.addRequired<TargetTransformInfoWrapperPass>();
-  FunctionPass::getAnalysisUsage(AU);
-}
-
+INITIALIZE_PASS_BEGIN(PartiallyInlineLibCalls, "partially-inline-libcalls",
+                      "Partially inline calls to library functions", false,
+                      false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
+INITIALIZE_PASS_END(PartiallyInlineLibCalls, "partially-inline-libcalls",
+                    "Partially inline calls to library functions", false, false)
 
 static bool optimizeSQRT(CallInst *Call, Function *CalledFunc,
                          BasicBlock &CurrBB, Function::iterator &BB) {
