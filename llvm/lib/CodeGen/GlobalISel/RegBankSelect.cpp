@@ -26,13 +26,18 @@
 using namespace llvm;
 
 char RegBankSelect::ID = 0;
-INITIALIZE_PASS(RegBankSelect, "regbankselect",
-                "Assign register bank of generic virtual registers",
-                false, false);
+INITIALIZE_PASS_BEGIN(RegBankSelect, "regbankselect",
+                      "Assign register bank of generic virtual registers",
+                      false, false);
+INITIALIZE_PASS_DEPENDENCY(MachineBlockFrequencyInfo)
+INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
+INITIALIZE_PASS_END(RegBankSelect, "regbankselect",
+                    "Assign register bank of generic virtual registers", false,
+                    false);
 
 RegBankSelect::RegBankSelect(Mode RunningMode)
-    : MachineFunctionPass(ID), RBI(nullptr), MRI(nullptr),
-      OptMode(RunningMode) {
+    : MachineFunctionPass(ID), RBI(nullptr), MRI(nullptr), TRI(nullptr),
+      MBFI(nullptr), MBPI(nullptr), OptMode(RunningMode) {
   initializeRegBankSelectPass(*PassRegistry::getPassRegistry());
 }
 
@@ -41,8 +46,24 @@ void RegBankSelect::init(MachineFunction &MF) {
   assert(RBI && "Cannot work without RegisterBankInfo");
   MRI = &MF.getRegInfo();
   TRI = MF.getSubtarget().getRegisterInfo();
-  assert(OptMode == Mode::Fast && "Non-fast mode not implemented");
+  if (OptMode != Mode::Fast) {
+    MBFI = &getAnalysis<MachineBlockFrequencyInfo>();
+    MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
+  } else {
+    MBFI = nullptr;
+    MBPI = nullptr;
+  }
   MIRBuilder.setMF(MF);
+}
+
+void RegBankSelect::getAnalysisUsage(AnalysisUsage &AU) const {
+  if (OptMode != Mode::Fast) {
+    // We could preserve the information from these two analysis but
+    // the APIs do not allow to do so yet.
+    AU.addRequired<MachineBlockFrequencyInfo>();
+    AU.addRequired<MachineBranchProbabilityInfo>();
+  }
+  MachineFunctionPass::getAnalysisUsage(AU);
 }
 
 bool RegBankSelect::assignmentMatch(
@@ -273,7 +294,7 @@ RegBankSelect::MappingCost RegBankSelect::computeMapping(
     SmallVectorImpl<RepairingPlacement> &RepairPts) {
 
   // If mapped with InstrMapping, MI will have the recorded cost.
-  MappingCost Cost(1);
+  MappingCost Cost(MBFI ? MBFI->getBlockFreq(MI.getParent()) : 1);
   bool Saturated = Cost.addLocalCost(InstrMapping.getCost());
   assert(!Saturated && "Possible mapping saturated the cost");
   DEBUG(dbgs() << "Evaluating mapping cost for: " << MI);

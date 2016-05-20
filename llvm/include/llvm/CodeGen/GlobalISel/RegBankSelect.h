@@ -71,6 +71,8 @@
 namespace llvm {
 // Forward declarations.
 class BlockFrequency;
+class MachineBranchProbabilityInfo;
+class MachineBlockFrequencyInfo;
 class MachineRegisterInfo;
 class TargetRegisterInfo;
 
@@ -460,6 +462,14 @@ private:
   /// Information on the register classes for the current function.
   const TargetRegisterInfo *TRI;
 
+  /// Get the frequency of blocks.
+  /// This is required for non-fast mode.
+  MachineBlockFrequencyInfo *MBFI;
+
+  /// Get the frequency of the edges.
+  /// This is required for non-fast mode.
+  MachineBranchProbabilityInfo *MBPI;
+
   /// Helper class used for every code morphing.
   MachineIRBuilder MIRBuilder;
 
@@ -554,6 +564,8 @@ public:
   const char *getPassName() const override {
     return "RegBankSelect";
   }
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   /// Walk through \p MF and assign a register bank to every virtual register
   /// that are still mapped to nothing.
