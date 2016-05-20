@@ -308,6 +308,10 @@ public:
   }
 };
 
+#ifndef FREEBSD_CC_VERSION
+#define FREEBSD_CC_VERSION 0U
+#endif
+
 // FreeBSD Target
 template<typename Target>
 class FreeBSDTargetInfo : public OSTargetInfo<Target> {
@@ -318,10 +322,13 @@ protected:
 
     unsigned Release = Triple.getOSMajorVersion();
     if (Release == 0U)
-      Release = 8;
+      Release = 8U;
+    unsigned CCVersion = FREEBSD_CC_VERSION;
+    if (CCVersion == 0U)
+      CCVersion = Release * 100000U + 1U;
 
     Builder.defineMacro("__FreeBSD__", Twine(Release));
-    Builder.defineMacro("__FreeBSD_cc_version", Twine(Release * 100000U + 1U));
+    Builder.defineMacro("__FreeBSD_cc_version", Twine(CCVersion));
     Builder.defineMacro("__KPRINTF_ATTRIBUTE__");
     DefineStd(Builder, "unix", Opts);
     Builder.defineMacro("__ELF__");
