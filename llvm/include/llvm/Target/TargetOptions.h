@@ -17,6 +17,7 @@
 
 #include "llvm/Target/TargetRecip.h"
 #include "llvm/MC/MCTargetOptions.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
   class MachineFunction;
@@ -86,14 +87,6 @@ namespace llvm {
     GDB,      // Tune debug info for gdb.
     LLDB,     // Tune debug info for lldb.
     SCE       // Tune debug info for SCE targets (e.g. PS4).
-  };
-
-  enum class ExceptionHandling {
-    None,     /// No exception support
-    DwarfCFI, /// DWARF-like instruction based exceptions
-    SjLj,     /// setjmp/longjmp based exceptions
-    ARM,      /// ARM EHABI
-    WinEH,    /// Windows Exception Handling
   };
 
   class TargetOptions {
