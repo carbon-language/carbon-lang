@@ -617,7 +617,7 @@ IndexedInstrProfReader::readSummary(IndexedInstrProf::ProfVersion Version,
     InstrProfSummaryBuilder Builder(ProfileSummaryBuilder::DefaultCutoffs);
     // FIXME: This only computes an empty summary. Need to call addRecord for
     // all InstrProfRecords to get the correct summary.
-    this->Summary.reset(Builder.getSummary());
+    this->Summary = Builder.getSummary();
     return Cur;
   }
 }

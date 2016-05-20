@@ -260,5 +260,5 @@ void SampleProfileWriter::computeSummary(
     const FunctionSamples &Profile = I.second;
     Builder.addRecord(Profile);
   }
-  Summary.reset(Builder.getSummary());
+  Summary = Builder.getSummary();
 }

@@ -259,7 +259,7 @@ void InstrProfWriter::writeImpl(ProfOStream &OS) {
       IndexedInstrProf::allocSummary(SummarySize);
   // Compute the Summary and copy the data to the data
   // structure to be serialized out (to disk or buffer).
-  ProfileSummary *PS = ISB.getSummary();
+  std::unique_ptr<ProfileSummary> PS = ISB.getSummary();
   setSummary(TheSummary.get(), *PS);
   InfoObj->SummaryBuilder = 0;
 
