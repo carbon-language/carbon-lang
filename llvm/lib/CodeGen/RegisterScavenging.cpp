@@ -438,7 +438,8 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   // otherwise, use the emergency stack spill slot.
   if (!TRI->saveScavengerRegister(*MBB, I, UseMI, RC, SReg)) {
     // Spill the scavenged register before I.
-    if (Scavenged[SI].FrameIndex < 0) {
+    int FI = Scavenged[SI].FrameIndex;
+    if (FI < FIB || FI >= FIE) {
       Twine Msg = Twine("Error while trying to spill ") + TRI->getName(SReg) +
            " from class " + TRI->getRegClassName(RC) +
            ": Cannot scavenge register without an emergency spill slot!";
