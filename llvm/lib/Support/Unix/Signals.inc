@@ -47,6 +47,17 @@
 #if HAVE_LINK_H
 #include <link.h>
 #endif
+#if HAVE_UNWIND_BACKTRACE
+// FIXME: We should be able to use <unwind.h> for any target that has an
+// _Unwind_Backtrace function, but on FreeBSD the configure test passes
+// despite the function not existing, and on Android, <unwind.h> conflicts
+// with <link.h>.
+#ifdef __GLIBC__
+#include <unwind.h>
+#else
+#undef HAVE_UNWIND_BACKTRACE
+#endif
+#endif
 
 using namespace llvm;
 
@@ -340,17 +351,61 @@ static bool findModulesAndOffsets(void **StackTrace, int Depth,
 }
 #endif // defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES) && ...
 
+#if defined(ENABLE_BACKTRACES) && defined(HAVE_UNWIND_BACKTRACE)
+static int unwindBacktrace(void **StackTrace, int MaxEntries) {
+  if (MaxEntries < 0)
+    return 0;
+
+  // Skip the first frame ('unwindBacktrace' itself).
+  int Entries = -1;
+
+  auto HandleFrame = [&](_Unwind_Context *Context) -> _Unwind_Reason_Code {
+    // Apparently we need to detect reaching the end of the stack ourselves.
+    void *IP = (void *)_Unwind_GetIP(Context);
+    if (!IP)
+      return _URC_END_OF_STACK;
+
+    assert(Entries < MaxEntries && "recursively called after END_OF_STACK?");
+    if (Entries >= 0)
+      StackTrace[Entries] = IP;
+
+    if (++Entries == MaxEntries)
+      return _URC_END_OF_STACK;
+    return _URC_NO_REASON;
+  };
+
+  _Unwind_Backtrace(
+      [](_Unwind_Context *Context, void *Handler) {
+        return (*static_cast<decltype(HandleFrame) *>(Handler))(Context);
+      },
+      static_cast<void *>(&HandleFrame));
+  return std::max(Entries, 0);
+}
+#endif
+
 // PrintStackTrace - In the case of a program crash or fault, print out a stack
 // trace so that the user has an indication of why and where we died.
 //
 // On glibc systems we have the 'backtrace' function, which works nicely, but
 // doesn't demangle symbols.
 void llvm::sys::PrintStackTrace(raw_ostream &OS) {
-#if defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES)
-  static void* StackTrace[256];
+#if defined(ENABLE_BACKTRACES)
+  static void *StackTrace[256];
+  int depth = 0;
+#if defined(HAVE_BACKTRACE)
   // Use backtrace() to output a backtrace on Linux systems with glibc.
-  int depth = backtrace(StackTrace,
+  if (!depth)
+    depth = backtrace(StackTrace, static_cast<int>(array_lengthof(StackTrace)));
+#endif
+#if defined(HAVE_UNWIND_BACKTRACE)
+  // Try _Unwind_Backtrace() if backtrace() failed.
+  if (!depth)
+    depth = unwindBacktrace(StackTrace,
                         static_cast<int>(array_lengthof(StackTrace)));
+#endif
+  if (!depth)
+    return;
+
   if (printSymbolizedStackTrace(StackTrace, depth, OS))
     return;
 #if HAVE_DLFCN_H && __GNUG__
@@ -400,7 +455,7 @@ void llvm::sys::PrintStackTrace(raw_ostream &OS) {
     }
     OS << '\n';
   }
-#else
+#elif defined(HAVE_BACKTRACE)
   backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
 #endif
 #endif
