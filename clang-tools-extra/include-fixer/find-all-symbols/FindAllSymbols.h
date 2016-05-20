@@ -35,7 +35,7 @@ class HeaderMapCollector;
 class FindAllSymbols : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
   explicit FindAllSymbols(SymbolReporter *Reporter,
-                          HeaderMapCollector *Collector)
+                          HeaderMapCollector *Collector = nullptr)
       : Reporter(Reporter), Collector(Collector) {}
 
   void registerMatchers(clang::ast_matchers::MatchFinder *MatchFinder);

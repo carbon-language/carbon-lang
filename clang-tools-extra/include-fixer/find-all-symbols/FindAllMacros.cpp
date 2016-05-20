@@ -27,11 +27,13 @@ void FindAllMacros::MacroDefined(const Token &MacroNameTok,
   if (FilePath.empty())
     return;
 
-  // Check pragma remapping header.
-  auto HeaderMappingTable = Collector->getHeaderMappingTable();
-  auto Iter = HeaderMappingTable.find(FilePath);
-  if (Iter != HeaderMappingTable.end())
-    FilePath = Iter->second;
+  // If Collector is not nullptr, check pragma remapping header.
+  if (Collector) {
+    auto HeaderMappingTable = Collector->getHeaderMappingTable();
+    auto Iter = HeaderMappingTable.find(FilePath);
+    if (Iter != HeaderMappingTable.end())
+      FilePath = Iter->second;
+  }
 
   SymbolInfo Symbol(MacroNameTok.getIdentifierInfo()->getName(),
                     SymbolInfo::SymbolKind::Macro, FilePath.str(),

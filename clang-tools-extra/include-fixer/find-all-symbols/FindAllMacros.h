@@ -25,9 +25,9 @@ class HeaderMapCollector;
 /// preprocessing period.
 class FindAllMacros : public clang::PPCallbacks {
 public:
-  explicit FindAllMacros(SymbolReporter *Reporter,
-                         HeaderMapCollector *Collector, SourceManager *SM)
-      : Reporter(Reporter), Collector(Collector), SM(SM) {}
+  explicit FindAllMacros(SymbolReporter *Reporter, SourceManager *SM,
+                         HeaderMapCollector *Collector = nullptr)
+      : Reporter(Reporter), SM(SM), Collector(Collector) {}
 
   void MacroDefined(const Token &MacroNameTok,
                     const MacroDirective *MD) override;
@@ -35,11 +35,10 @@ public:
 private:
   // Reporter for SymbolInfo.
   SymbolReporter *const Reporter;
+  SourceManager *const SM;
   // A remapping header file collector allowing clients to include a different
   // header.
   HeaderMapCollector *const Collector;
-
-  SourceManager *const SM;
 };
 
 } // namespace find_all_symbols
