@@ -28,8 +28,6 @@
 # include <execinfo.h>         // For backtrace().
 #endif
 #if HAVE_SIGNAL_H
-// FIXME: We unconditionally use symbols from this header below. Do we really
-// need a configure-time check for a POSIX-mandated header in lib/Support/Unix?
 #include <signal.h>
 #endif
 #if HAVE_SYS_STAT_H
@@ -119,6 +117,7 @@ static void RegisterHandler(int Signal) {
   ++NumRegisteredSignals;
 }
 
+#if defined(HAVE_SIGALTSTACK)
 // Hold onto the old alternate signal stack so that it's not reported as a leak.
 // We don't make any attempt to remove our alt signal stack if we remove our
 // signal handlers; that can't be done reliably if someone else is also trying
@@ -143,6 +142,9 @@ static void CreateSigAltStack() {
   if (sigaltstack(&AltStack, &OldAltStack) != 0)
     free(AltStack.ss_sp);
 }
+#else
+static void CreateSigAltStack() {}
+#endif
 
 static void RegisterHandlers() {
   // We need to dereference the signals mutex during handler registration so
