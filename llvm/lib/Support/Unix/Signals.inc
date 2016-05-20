@@ -122,7 +122,7 @@ static void RegisterHandler(int Signal) {
 // We don't make any attempt to remove our alt signal stack if we remove our
 // signal handlers; that can't be done reliably if someone else is also trying
 // to do the same thing.
-static struct sigaltstack OldAltStack;
+static stack_t OldAltStack;
 
 static void CreateSigAltStack() {
   const size_t AltStackSize = MINSIGSTKSZ + 8192;
@@ -136,7 +136,7 @@ static void CreateSigAltStack() {
       (OldAltStack.ss_sp && OldAltStack.ss_size >= AltStackSize))
     return;
 
-  struct sigaltstack AltStack = {};
+  stack_t AltStack = {};
   AltStack.ss_sp = malloc(AltStackSize);
   AltStack.ss_size = AltStackSize;
   if (sigaltstack(&AltStack, &OldAltStack) != 0)
