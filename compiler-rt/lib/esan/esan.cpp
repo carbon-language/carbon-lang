@@ -64,9 +64,27 @@ void processRangeAccess(uptr PC, uptr Addr, int Size, bool IsWrite) {
 #if SANITIZER_DEBUG
 static bool verifyShadowScheme() {
   // Sanity checks for our shadow mapping scheme.
+  uptr AppStart, AppEnd;
+  if (Verbosity() >= 3) {
+    for (int i = 0; getAppRegion(i, &AppStart, &AppEnd); ++i) {
+      VPrintf(3, "App #%d: [%zx-%zx) (%zuGB)\n", i, AppStart, AppEnd,
+              (AppEnd - AppStart) >> 30);
+    }
+  }
   for (int Scale = 0; Scale < 8; ++Scale) {
     Mapping.initialize(Scale);
-    uptr AppStart, AppEnd;
+    if (Verbosity() >= 3) {
+      VPrintf(3, "\nChecking scale %d\n", Scale);
+      uptr ShadowStart, ShadowEnd;
+      for (int i = 0; getShadowRegion(i, &ShadowStart, &ShadowEnd); ++i) {
+        VPrintf(3, "Shadow #%d: [%zx-%zx) (%zuGB)\n", i, ShadowStart,
+                ShadowEnd, (ShadowEnd - ShadowStart) >> 30);
+      }
+      for (int i = 0; getShadowRegion(i, &ShadowStart, &ShadowEnd); ++i) {
+        VPrintf(3, "Shadow(Shadow) #%d: [%zx-%zx)\n", i,
+                appToShadow(ShadowStart), appToShadow(ShadowEnd - 1)+1);
+      }
+    }
     for (int i = 0; getAppRegion(i, &AppStart, &AppEnd); ++i) {
       DCHECK(isAppMem(AppStart));
       DCHECK(!isAppMem(AppStart - 1));
