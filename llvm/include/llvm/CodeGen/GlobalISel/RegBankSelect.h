@@ -80,6 +80,302 @@ class RegBankSelect : public MachineFunctionPass {
 public:
   static char ID;
 
+  /// Abstract class used to represent an insertion point in a CFG.
+  /// This class records an insertion point and materializes it on
+  /// demand.
+  /// It allows to reason about the frequency of this insertion point,
+  /// without having to logically materialize it (e.g., on an edge),
+  /// before we actually need to insert something.
+  class InsertPoint {
+  protected:
+    /// Tell if the insert point has already been materialized.
+    bool WasMaterialized = false;
+    /// Materialize the insertion point.
+    ///
+    /// If isSplit() is true, this involves actually splitting
+    /// the block or edge.
+    ///
+    /// \post getPointImpl() returns a valid iterator.
+    /// \post getInsertMBBImpl() returns a valid basic block.
+    /// \post isSplit() == false ; no more splitting should be required.
+    virtual void materialize() = 0;
+
+    /// Return the materialized insertion basic block.
+    /// Code will be inserted into that basic block.
+    ///
+    /// \pre ::materialize has been called.
+    virtual MachineBasicBlock &getInsertMBBImpl() = 0;
+
+    /// Return the materialized insertion point.
+    /// Code will be inserted before that point.
+    ///
+    /// \pre ::materialize has been called.
+    virtual MachineBasicBlock::iterator getPointImpl() = 0;
+
+  public:
+    virtual ~InsertPoint() {}
+
+    /// The first call to this method will cause the splitting to
+    /// happen if need be, then sub sequent calls just return
+    /// the iterator to that point. I.e., no more splitting will
+    /// occur.
+    ///
+    /// \return The iterator that should be used with
+    /// MachineBasicBlock::insert. I.e., additional code happens
+    /// before that point.
+    MachineBasicBlock::iterator getPoint() {
+      if (!WasMaterialized) {
+        WasMaterialized = true;
+        assert(canMaterialize() && "Impossible to materialize this point");
+        materialize();
+      }
+      // When we materialized the point we should have done the splitting.
+      assert(!isSplit() && "Wrong pre-condition");
+      return getPointImpl();
+    }
+
+    /// The first call to this method will cause the splitting to
+    /// happen if need be, then sub sequent calls just return
+    /// the basic block that contains the insertion point.
+    /// I.e., no more splitting will occur.
+    ///
+    /// \return The basic block should be used with
+    /// MachineBasicBlock::insert and ::getPoint. The new code should
+    /// happen before that point.
+    MachineBasicBlock &getInsertMBB() {
+      if (!WasMaterialized) {
+        WasMaterialized = true;
+        assert(canMaterialize() && "Impossible to materialize this point");
+        materialize();
+      }
+      // When we materialized the point we should have done the splitting.
+      assert(!isSplit() && "Wrong pre-condition");
+      return getInsertMBBImpl();
+    }
+
+    /// Insert \p MI in the just before ::getPoint()
+    MachineBasicBlock::iterator insert(MachineInstr &MI) {
+      return getInsertMBB().insert(getPoint(), &MI);
+    }
+
+    /// Does this point involve splitting an edge or block?
+    /// As soon as ::getPoint is called and thus, the point
+    /// materialized, the point will not require splitting anymore,
+    /// i.e., this will return false.
+    virtual bool isSplit() const { return false; }
+
+    /// Frequency of the insertion point.
+    /// \p P is used to access the various analysis that will help to
+    /// get that information, like MachineBlockFrequencyInfo.  If \p P
+    /// does not contain enough enough to return the actual frequency,
+    /// this returns 1.
+    virtual uint64_t frequency(const Pass &P) const { return 1; }
+
+    /// Check whether this insertion point can be materialized.
+    /// As soon as ::getPoint is called and thus, the point materialized
+    /// calling this method does not make sense.
+    virtual bool canMaterialize() const { return false; }
+  };
+
+  /// Insertion point before or after an instruction.
+  class InstrInsertPoint : public InsertPoint {
+  private:
+    /// Insertion point.
+    MachineInstr &Instr;
+    /// Does the insertion point is before or after Instr.
+    bool Before;
+
+    void materialize() override;
+
+    MachineBasicBlock::iterator getPointImpl() override {
+      if (Before)
+        return Instr;
+      return Instr.getNextNode() ? *Instr.getNextNode()
+                                 : Instr.getParent()->end();
+    }
+
+    MachineBasicBlock &getInsertMBBImpl() override {
+      return *Instr.getParent();
+    }
+
+  public:
+    /// Create an insertion point before (\p Before=true) or after \p Instr.
+    InstrInsertPoint(MachineInstr &Instr, bool Before = true);
+    bool isSplit() const override;
+    uint64_t frequency(const Pass &P) const override;
+
+    // Worst case, we need to slice the basic block, but that is still doable.
+    bool canMaterialize() const override { return true; }
+  };
+
+  /// Insertion point at the beginning or end of a basic block.
+  class MBBInsertPoint : public InsertPoint {
+  private:
+    /// Insertion point.
+    MachineBasicBlock &MBB;
+    /// Does the insertion point is at the beginning or end of MBB.
+    bool Beginning;
+
+    void materialize() override { /*Nothing to do to materialize*/
+    }
+
+    MachineBasicBlock::iterator getPointImpl() override {
+      return Beginning ? MBB.begin() : MBB.end();
+    }
+
+    MachineBasicBlock &getInsertMBBImpl() override { return MBB; }
+
+  public:
+    MBBInsertPoint(MachineBasicBlock &MBB, bool Beginning = true)
+        : InsertPoint(), MBB(MBB), Beginning(Beginning) {
+      // If we try to insert before phis, we should use the insertion
+      // points on the incoming edges.
+      assert((!Beginning || MBB.getFirstNonPHI() == MBB.begin()) &&
+             "Invalid beginning point");
+      // If we try to insert after the terminators, we should use the
+      // points on the outcoming edges.
+      assert((Beginning || MBB.getFirstTerminator() == MBB.end()) &&
+             "Invalid end point");
+    }
+    bool isSplit() const override { return false; }
+    uint64_t frequency(const Pass &P) const override;
+    bool canMaterialize() const override { return true; };
+  };
+
+  /// Insertion point on an edge.
+  class EdgeInsertPoint : public InsertPoint {
+  private:
+    /// Source of the edge.
+    MachineBasicBlock &Src;
+    /// Destination of the edge.
+    /// After the materialization is done, this hold the basic block
+    /// that resulted from the splitting.
+    MachineBasicBlock *DstOrSplit;
+    /// P is used to update the analysis passes as applicable.
+    Pass &P;
+
+    void materialize() override;
+
+    MachineBasicBlock::iterator getPointImpl() override {
+      // DstOrSplit should be the Split block at this point.
+      // I.e., it should have one predecessor, Src, and one successor,
+      // the original Dst.
+      assert(DstOrSplit && DstOrSplit->isPredecessor(&Src) &&
+             DstOrSplit->pred_size() == 1 && DstOrSplit->succ_size() == 1 &&
+             "Did not split?!");
+      return DstOrSplit->begin();
+    }
+
+    MachineBasicBlock &getInsertMBBImpl() override { return *DstOrSplit; }
+
+  public:
+    EdgeInsertPoint(MachineBasicBlock &Src, MachineBasicBlock &Dst, Pass &P)
+        : InsertPoint(), Src(Src), DstOrSplit(&Dst), P(P) {}
+    bool isSplit() const override {
+      return Src.succ_size() > 1 && DstOrSplit->pred_size() > 1;
+    }
+    uint64_t frequency(const Pass &P) const override;
+    bool canMaterialize() const override;
+  };
+
+  /// Struct used to represent the placement of a repairing point for
+  /// a given operand.
+  class RepairingPlacement {
+  public:
+    /// Define the kind of action this repairing needs.
+    enum RepairingKind {
+      /// Nothing to repair, just drop this action.
+      None,
+      /// Reparing code needs to happen before InsertPoints.
+      Insert,
+      /// (Re)assign the register bank of the operand.
+      Reassign,
+      /// Mark this repairing placement as impossible.
+      Impossible
+    };
+
+    /// Convenient types for a list of insertion points.
+    /// @{
+    typedef SmallVector<std::unique_ptr<InsertPoint>, 2> InsertionPoints;
+    typedef InsertionPoints::iterator insertpt_iterator;
+    typedef InsertionPoints::const_iterator const_insertpt_iterator;
+    /// @}
+
+  private:
+    /// Kind of repairing.
+    RepairingKind Kind;
+    /// Index of the operand that will be repaired.
+    unsigned OpIdx;
+    /// Are all the insert points materializeable?
+    bool CanMaterialize;
+    /// Is there any of the insert points needing splitting?
+    bool HasSplit;
+    /// Insertion point for the repair code.
+    /// The repairing code needs to happen just before these points.
+    InsertionPoints InsertPoints;
+    /// Some insertion points may need to update the liveness and such.
+    Pass &P;
+
+  public:
+    /// Create a repairing placement for the \p OpIdx-th operand of
+    /// \p MI. \p TRI is used to make some checks on the register aliases
+    /// if the machine operand is a physical register. \p P is used to
+    /// to update liveness information and such when materializing the
+    /// points.
+    RepairingPlacement(MachineInstr &MI, unsigned OpIdx,
+                       const TargetRegisterInfo &TRI, Pass &P,
+                       RepairingKind Kind = RepairingKind::Insert);
+
+    /// Getters.
+    /// @{
+    RepairingKind getKind() const { return Kind; }
+    unsigned getOpIdx() const { return OpIdx; }
+    bool canMaterialize() const { return CanMaterialize; }
+    bool hasSplit() { return HasSplit; }
+    /// @}
+
+    /// Overloaded methods to add an insertion point.
+    /// @{
+    /// Add a MBBInsertionPoint to the list of InsertPoints.
+    void addInsertPoint(MachineBasicBlock &MBB, bool Beginning);
+    /// Add a InstrInsertionPoint to the list of InsertPoints.
+    void addInsertPoint(MachineInstr &MI, bool Before);
+    /// Add an EdgeInsertionPoint (\p Src, \p Dst) to the list of InsertPoints.
+    void addInsertPoint(MachineBasicBlock &Src, MachineBasicBlock &Dst);
+    /// Add an InsertPoint to the list of insert points.
+    /// This method takes the ownership of &\p Point.
+    void addInsertPoint(InsertPoint &Point);
+    /// @}
+
+    /// Accessors related to the insertion points.
+    /// @{
+    insertpt_iterator begin() { return InsertPoints.begin(); }
+    insertpt_iterator end() { return InsertPoints.end(); }
+
+    const_insertpt_iterator begin() const { return InsertPoints.begin(); }
+    const_insertpt_iterator end() const { return InsertPoints.end(); }
+
+    unsigned getNumInsertPoints() const { return InsertPoints.size(); }
+    /// @}
+
+    /// Change the type of this repairing placement to \p NewKind.
+    /// It is not possible to switch a repairing placement to the
+    /// RepairingKind::Insert. There is no fundamental problem with
+    /// that, but no uses as well, so do not support it for now.
+    ///
+    /// \pre NewKind != RepairingKind::Insert
+    /// \post getKind() == NewKind
+    void switchTo(RepairingKind NewKind) {
+      assert(NewKind != Kind && "Already of the right Kind");
+      Kind = NewKind;
+      InsertPoints.clear();
+      CanMaterialize = NewKind != RepairingKind::Impossible;
+      HasSplit = false;
+      assert(NewKind != RepairingKind::Insert &&
+             "We would need more MI to switch to Insert");
+    }
+  };
+
 private:
   /// Helper class used to represent the cost for mapping an instruction.
   /// When mapping an instruction, we may introduce some repairing code.

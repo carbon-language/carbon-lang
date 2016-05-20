@@ -13,6 +13,8 @@
 #include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
+#include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
+#include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/BlockFrequency.h"
 #include "llvm/Support/Debug.h"
@@ -261,8 +263,220 @@ bool RegBankSelect::runOnMachineFunction(MachineFunction &MF) {
 }
 
 //------------------------------------------------------------------------------
-//                  Helper Class Implementation
+//                  Helper Classes Implementation
 //------------------------------------------------------------------------------
+RegBankSelect::RepairingPlacement::RepairingPlacement(
+    MachineInstr &MI, unsigned OpIdx, const TargetRegisterInfo &TRI, Pass &P,
+    RepairingPlacement::RepairingKind Kind)
+    // Default is, we are going to insert code to repair OpIdx.
+    : Kind(Kind),
+      OpIdx(OpIdx),
+      CanMaterialize(Kind != RepairingKind::Impossible),
+      HasSplit(false),
+      P(P) {
+  const MachineOperand &MO = MI.getOperand(OpIdx);
+  assert(MO.isReg() && "Trying to repair a non-reg operand");
+
+  if (Kind != RepairingKind::Insert)
+    return;
+
+  // Repairings for definitions happen after MI, uses happen before.
+  bool Before = !MO.isDef();
+
+  // Check if we are done with MI.
+  if (!MI.isPHI() && !MI.isTerminator()) {
+    addInsertPoint(MI, Before);
+    // We are done with the initialization.
+    return;
+  }
+
+  // Now, look for the special cases.
+  if (MI.isPHI()) {
+    // - PHI must be the first instructions:
+    //   * Before, we have to split the related incoming edge.
+    //   * After, move the insertion point past the last phi.
+    if (!Before) {
+      MachineBasicBlock::iterator It = MI.getParent()->getFirstNonPHI();
+      if (It != MI.getParent()->end())
+        addInsertPoint(*It, /*Before*/ true);
+      else
+        addInsertPoint(*(--It), /*Before*/ false);
+      return;
+    }
+    // We repair a use of a phi, we may need to split the related edge.
+    MachineBasicBlock &Pred = *MI.getOperand(OpIdx + 1).getMBB();
+    // Check if we can move the insertion point prior to the
+    // terminators of the predecessor.
+    unsigned Reg = MO.getReg();
+    MachineBasicBlock::iterator It = Pred.getLastNonDebugInstr();
+    for (auto Begin = Pred.begin(); It != Begin && It->isTerminator(); --It)
+      if (It->modifiesRegister(Reg, &TRI)) {
+        // We cannot hoist the repairing code in the predecessor.
+        // Split the edge.
+        addInsertPoint(Pred, *MI.getParent());
+        return;
+      }
+    // At this point, we can insert in Pred.
+
+    // - If It is invalid, Pred is empty and we can insert in Pred
+    //   wherever we want.
+    // - If It is valid, It is the first non-terminator, insert after It.
+    if (It == Pred.end())
+      addInsertPoint(Pred, /*Beginning*/ false);
+    else
+      addInsertPoint(*It, /*Before*/ false);
+  } else {
+    // - Terminators must be the last instructions:
+    //   * Before, move the insert point before the first terminator.
+    //   * After, we have to split the outcoming edges.
+    unsigned Reg = MO.getReg();
+    if (Before) {
+      // Check whether Reg is defined by any terminator.
+      MachineBasicBlock::iterator It = MI;
+      for (auto Begin = MI.getParent()->begin();
+           --It != Begin && It->isTerminator();)
+        if (It->modifiesRegister(Reg, &TRI)) {
+          // Insert the repairing code right after the definition.
+          addInsertPoint(*It, /*Before*/ false);
+          return;
+        }
+      addInsertPoint(*It, /*Before*/ true);
+      return;
+    }
+    // Make sure Reg is not redefined by other terminators, otherwise
+    // we do not know how to split.
+    for (MachineBasicBlock::iterator It = MI, End = MI.getParent()->end();
+         ++It != End;)
+      // The machine verifier should reject this kind of code.
+      assert(It->modifiesRegister(Reg, &TRI) && "Do not know where to split");
+    // Split each outcoming edges.
+    MachineBasicBlock &Src = *MI.getParent();
+    for (auto &Succ : Src.successors())
+      addInsertPoint(Src, Succ);
+  }
+}
+
+void RegBankSelect::RepairingPlacement::addInsertPoint(MachineInstr &MI,
+                                                       bool Before) {
+  addInsertPoint(*new InstrInsertPoint(MI, Before));
+}
+
+void RegBankSelect::RepairingPlacement::addInsertPoint(MachineBasicBlock &MBB,
+                                                       bool Beginning) {
+  addInsertPoint(*new MBBInsertPoint(MBB, Beginning));
+}
+
+void RegBankSelect::RepairingPlacement::addInsertPoint(MachineBasicBlock &Src,
+                                                       MachineBasicBlock &Dst) {
+  addInsertPoint(*new EdgeInsertPoint(Src, Dst, P));
+}
+
+void RegBankSelect::RepairingPlacement::addInsertPoint(
+    RegBankSelect::InsertPoint &Point) {
+  CanMaterialize &= Point.canMaterialize();
+  HasSplit |= Point.isSplit();
+  InsertPoints.emplace_back(&Point);
+}
+
+RegBankSelect::InstrInsertPoint::InstrInsertPoint(MachineInstr &Instr,
+                                                  bool Before)
+    : InsertPoint(), Instr(Instr), Before(Before) {
+  // Since we do not support splitting, we do not need to update
+  // liveness and such, so do not do anything with P.
+  assert((!Before || !Instr.isPHI()) &&
+         "Splitting before phis requires more points");
+  assert((!Before || !Instr.getNextNode() || !Instr.getNextNode()->isPHI()) &&
+         "Splitting between phis does not make sense");
+}
+
+void RegBankSelect::InstrInsertPoint::materialize() {
+  if (isSplit()) {
+    // Slice and return the beginning of the new block.
+    // If we need to split between the terminators, we theoritically
+    // need to know where the first and second set of terminators end
+    // to update the successors properly.
+    // Now, in pratice, we should have a maximum of 2 branch
+    // instructions; one conditional and one unconditional. Therefore
+    // we know how to update the successor by looking at the target of
+    // the unconditional branch.
+    // If we end up splitting at some point, then, we should update
+    // the liveness information and such. I.e., we would need to
+    // access P here.
+    // The machine verifier should actually make sure such cases
+    // cannot happen.
+    llvm_unreachable("Not yet implemented");
+  }
+  // Otherwise the insertion point is just the current or next
+  // instruction depending on Before. I.e., there is nothing to do
+  // here.
+}
+
+bool RegBankSelect::InstrInsertPoint::isSplit() const {
+  // If the insertion point is after a terminator, we need to split.
+  if (!Before)
+    return Instr.isTerminator();
+  // If we insert before an instruction that is after a terminator,
+  // we are still after a terminator.
+  return Instr.getPrevNode() && Instr.getPrevNode()->isTerminator();
+}
+
+uint64_t RegBankSelect::InstrInsertPoint::frequency(const Pass &P) const {
+  // Even if we need to split, because we insert between terminators,
+  // this split has actually the same frequency as the instruction.
+  const MachineBlockFrequencyInfo *MBFI =
+      P.getAnalysisIfAvailable<MachineBlockFrequencyInfo>();
+  if (!MBFI)
+    return 1;
+  return MBFI->getBlockFreq(Instr.getParent()).getFrequency();
+}
+
+uint64_t RegBankSelect::MBBInsertPoint::frequency(const Pass &P) const {
+  const MachineBlockFrequencyInfo *MBFI =
+      P.getAnalysisIfAvailable<MachineBlockFrequencyInfo>();
+  if (!MBFI)
+    return 1;
+  return MBFI->getBlockFreq(&MBB).getFrequency();
+}
+
+void RegBankSelect::EdgeInsertPoint::materialize() {
+  // If we end up repairing twice at the same place before materializing the
+  // insertion point, we may think we have to split an edge twice.
+  // We should have a factory for the insert point such that identical points
+  // are the same instance.
+  assert(Src.isSuccessor(DstOrSplit) && DstOrSplit->isPredecessor(&Src) &&
+         "This point has already been split");
+  MachineBasicBlock *NewBB = Src.SplitCriticalEdge(DstOrSplit, P);
+  assert(NewBB && "Invalid call to materialize");
+  // We reuse the destination block to hold the information of the new block.
+  DstOrSplit = NewBB;
+}
+
+uint64_t RegBankSelect::EdgeInsertPoint::frequency(const Pass &P) const {
+  const MachineBlockFrequencyInfo *MBFI =
+      P.getAnalysisIfAvailable<MachineBlockFrequencyInfo>();
+  if (!MBFI)
+    return 1;
+  if (WasMaterialized)
+    return MBFI->getBlockFreq(DstOrSplit).getFrequency();
+
+  const MachineBranchProbabilityInfo *MBPI =
+      P.getAnalysisIfAvailable<MachineBranchProbabilityInfo>();
+  if (!MBPI)
+    return 1;
+  // The basic block will be on the edge.
+  return (MBFI->getBlockFreq(&Src) * MBPI->getEdgeProbability(&Src, DstOrSplit))
+      .getFrequency();
+}
+
+bool RegBankSelect::EdgeInsertPoint::canMaterialize() const {
+  // If this is not a critical edge, we should not have used this insert
+  // point. Indeed, either the successor or the predecessor should
+  // have do.
+  assert(Src.succ_size() > 1 && DstOrSplit->pred_size() > 1 &&
+         "Edge is not critical");
+  return Src.canSplitCriticalEdge(DstOrSplit);
+}
+
 RegBankSelect::MappingCost::MappingCost(const BlockFrequency &LocalFreq)
     : LocalCost(0), NonLocalCost(0), LocalFreq(LocalFreq.getFrequency()) {}
 
