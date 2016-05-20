@@ -29,8 +29,9 @@ INITIALIZE_PASS(RegBankSelect, "regbankselect",
                 "Assign register bank of generic virtual registers",
                 false, false);
 
-RegBankSelect::RegBankSelect()
-    : MachineFunctionPass(ID), RBI(nullptr), MRI(nullptr) {
+RegBankSelect::RegBankSelect(Mode RunningMode)
+    : MachineFunctionPass(ID), RBI(nullptr), MRI(nullptr),
+      OptMode(RunningMode) {
   initializeRegBankSelectPass(*PassRegistry::getPassRegistry());
 }
 
@@ -39,6 +40,7 @@ void RegBankSelect::init(MachineFunction &MF) {
   assert(RBI && "Cannot work without RegisterBankInfo");
   MRI = &MF.getRegInfo();
   TRI = MF.getSubtarget().getRegisterInfo();
+  assert(OptMode == Mode::Fast && "Non-fast mode not implemented");
   MIRBuilder.setMF(MF);
 }
 

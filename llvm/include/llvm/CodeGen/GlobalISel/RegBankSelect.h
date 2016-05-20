@@ -80,6 +80,16 @@ class RegBankSelect : public MachineFunctionPass {
 public:
   static char ID;
 
+  /// List of the modes supported by the RegBankSelect pass.
+  enum Mode {
+    /// Assign the register banks as fast as possible (default).
+    Fast,
+    /// Greedily minimize the cost of assigning register banks.
+    /// This should produce code of greater quality, but will
+    /// require more compile time.
+    Greedy
+  };
+
   /// Abstract class used to represent an insertion point in a CFG.
   /// This class records an insertion point and materializes it on
   /// demand.
@@ -453,6 +463,9 @@ private:
   /// Helper class used for every code morphing.
   MachineIRBuilder MIRBuilder;
 
+  /// Optimization mode of the pass.
+  Mode OptMode;
+
   /// Assign the register bank of each operand of \p MI.
   void assignInstr(MachineInstr &MI);
 
@@ -535,8 +548,8 @@ private:
                     SmallVectorImpl<RepairingPlacement> &RepairPts);
 
 public:
-  // Ctor, nothing fancy.
-  RegBankSelect();
+  /// Create a RegBankSelect pass with the specified \p RunningMode.
+  RegBankSelect(Mode RunningMode = Fast);
 
   const char *getPassName() const override {
     return "RegBankSelect";
