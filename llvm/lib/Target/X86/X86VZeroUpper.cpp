@@ -142,8 +142,7 @@ static bool hasYmmReg(MachineInstr *MI) {
   return false;
 }
 
-/// clobbersAnyYmmReg() - Check if any YMM register will be clobbered by this
-/// instruction.
+/// Check if any YMM register will be clobbered by this instruction.
 static bool callClobbersAnyYmmReg(MachineInstr *MI) {
   assert(MI->isCall() && "Can only be called on call instructions.");
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -158,16 +157,16 @@ static bool callClobbersAnyYmmReg(MachineInstr *MI) {
   return false;
 }
 
-// Insert a vzeroupper instruction before I.
+/// Insert a vzeroupper instruction before I.
 void VZeroUpperInserter::insertVZeroUpper(MachineBasicBlock::iterator I,
-                                              MachineBasicBlock &MBB) {
+                                          MachineBasicBlock &MBB) {
   DebugLoc dl = I->getDebugLoc();
   BuildMI(MBB, I, dl, TII->get(X86::VZEROUPPER));
   ++NumVZU;
   EverMadeChange = true;
 }
 
-// Add MBB to the DirtySuccessors list if it hasn't already been added.
+/// Add MBB to the DirtySuccessors list if it hasn't already been added.
 void VZeroUpperInserter::addDirtySuccessor(MachineBasicBlock &MBB) {
   if (!BlockStates[MBB.getNumber()].AddedToDirtySuccessors) {
     DirtySuccessors.push_back(&MBB);
@@ -175,8 +174,8 @@ void VZeroUpperInserter::addDirtySuccessor(MachineBasicBlock &MBB) {
   }
 }
 
-/// processBasicBlock - Loop over all of the instructions in the basic block,
-/// inserting vzeroupper instructions before function calls.
+/// Loop over all of the instructions in the basic block, inserting vzeroupper
+/// instructions before function calls.
 void VZeroUpperInserter::processBasicBlock(MachineBasicBlock &MBB) {
 
   // Start by assuming that the block PASS_THROUGH, which implies no unguarded
@@ -252,8 +251,8 @@ void VZeroUpperInserter::processBasicBlock(MachineBasicBlock &MBB) {
   BlockStates[MBB.getNumber()].ExitState = CurState;
 }
 
-/// runOnMachineFunction - Loop over all of the basic blocks, inserting
-/// vzeroupper instructions before function calls.
+/// Loop over all of the basic blocks, inserting vzeroupper instructions before
+/// function calls.
 bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
   const X86Subtarget &ST = MF.getSubtarget<X86Subtarget>();
   if (!ST.hasAVX() || ST.hasAVX512() || ST.hasFastPartialYMMWrite())
