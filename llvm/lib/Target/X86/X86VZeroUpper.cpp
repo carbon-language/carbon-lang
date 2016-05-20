@@ -176,7 +176,7 @@ void VZeroUpperInserter::addDirtySuccessor(MachineBasicBlock &MBB) {
 /// instructions before function calls.
 void VZeroUpperInserter::processBasicBlock(MachineBasicBlock &MBB) {
 
-  // Start by assuming that the block PASS_THROUGH, which implies no unguarded
+  // Start by assuming that the block is PASS_THROUGH which implies no unguarded
   // calls.
   BlockExitState CurState = PASS_THROUGH;
   BlockStates[MBB.getNumber()].FirstUnguardedCall = MBB.end();
@@ -212,12 +212,11 @@ void VZeroUpperInserter::processBasicBlock(MachineBasicBlock &MBB) {
     if (MI->isCall() && !callClobbersAnyYmmReg(MI))
       continue;
 
-    // The VZEROUPPER instruction resets the upper 128 bits of all Intel AVX
-    // registers. This instruction has zero latency. In addition, the processor
-    // changes back to Clean state, after which execution of Intel SSE
-    // instructions or Intel AVX instructions has no transition penalty. Add
-    // the VZEROUPPER instruction before any function call/return that might
-    // execute SSE code.
+    // The VZEROUPPER instruction resets the upper 128 bits of all AVX
+    // registers. In addition, the processor changes back to Clean state, after
+    // which execution of SSE instructions or AVX instructions has no transition
+    // penalty. Add the VZEROUPPER instruction before any function call/return
+    // that might execute SSE code.
     // FIXME: In some cases, we may want to move the VZEROUPPER into a
     // predecessor block.
     if (CurState == EXITS_DIRTY) {
@@ -290,7 +289,7 @@ bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineBasicBlock &MBB : MF)
     processBasicBlock(MBB);
 
-  // If any YMM regs are live in to this function, add the entry block to the
+  // If any YMM regs are live-in to this function, add the entry block to the
   // DirtySuccessors list
   if (FnHasLiveInYmm)
     addDirtySuccessor(MF.front());
@@ -308,7 +307,7 @@ bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
     if (BBState.FirstUnguardedCall != MBB.end())
       insertVZeroUpper(BBState.FirstUnguardedCall, MBB);
 
-    // If this successor was a pass-through block then it is now dirty, and its
+    // If this successor was a pass-through block, then it is now dirty. Its
     // successors need to be added to the worklist (if they haven't been
     // already).
     if (BBState.ExitState == PASS_THROUGH) {
