@@ -269,11 +269,6 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   UseDWARF2Bitfields = (DwarfVersion < 4) || tuneForGDB();
 
   Asm->OutStreamer->getContext().setDwarfVersion(DwarfVersion);
-
-  {
-    NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
-    beginModule();
-  }
 }
 
 // Define out of line so we don't have to include DwarfUnit.h in DwarfDebug.h.
@@ -465,6 +460,7 @@ void DwarfDebug::constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
 // global DIEs and emit initial debug info sections. This is invoked by
 // the target AsmPrinter.
 void DwarfDebug::beginModule() {
+  NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
   if (DisableDebugInfoPrinting)
     return;
 
