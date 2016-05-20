@@ -991,10 +991,13 @@ AliasResult BasicAAResult::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
         const Value *GEP1BasePtr =
             DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices,
                                    GEP1MaxLookupReached, DL, &AC, DT);
-
-        assert(GEP1BasePtr == UnderlyingV1 && GEP2BasePtr == UnderlyingV2 &&
-               "DecomposeGEPExpression returned a result different from "
-               "GetUnderlyingObject");
+        // DecomposeGEPExpression and GetUnderlyingObject should return the
+        // same result except when DecomposeGEPExpression has no DataLayout.
+        // FIXME: They always have a DataLayout, so this should become an
+        // assert.
+        if (GEP1BasePtr != UnderlyingV1 || GEP2BasePtr != UnderlyingV2) {
+          return MayAlias;
+        }
         // If the max search depth is reached the result is undefined
         if (GEP2MaxLookupReached || GEP1MaxLookupReached)
           return MayAlias;
@@ -1026,10 +1029,12 @@ AliasResult BasicAAResult::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
         DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices,
                                GEP2MaxLookupReached, DL, &AC, DT);
 
-    assert(GEP1BasePtr == UnderlyingV1 && GEP2BasePtr == UnderlyingV2 &&
-           "DecomposeGEPExpression returned a result different from "
-           "GetUnderlyingObject");
-
+    // DecomposeGEPExpression and GetUnderlyingObject should return the
+    // same result except when DecomposeGEPExpression has no DataLayout.
+    // FIXME: They always have a DataLayout, so this should become an assert.
+    if (GEP1BasePtr != UnderlyingV1 || GEP2BasePtr != UnderlyingV2) {
+      return MayAlias;
+    }
 
     // If we know the two GEPs are based off of the exact same pointer (and not
     // just the same underlying object), see if that tells us anything about
@@ -1076,10 +1081,10 @@ AliasResult BasicAAResult::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
 
     // DecomposeGEPExpression and GetUnderlyingObject should return the
     // same result except when DecomposeGEPExpression has no DataLayout.
-    assert(GEP1BasePtr == UnderlyingV1 &&
-           "DecomposeGEPExpression returned a result different from "
-           "GetUnderlyingObject");
-
+    // FIXME: They always have a DataLayout, so this should become an assert.
+    if (GEP1BasePtr != UnderlyingV1) {
+      return MayAlias;
+    }
     // If the max search depth is reached the result is undefined
     if (GEP1MaxLookupReached)
       return MayAlias;
