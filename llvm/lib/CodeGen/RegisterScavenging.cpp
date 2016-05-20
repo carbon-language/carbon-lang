@@ -400,11 +400,14 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   unsigned NeedAlign = RC->getAlignment();
 
   unsigned SI = Scavenged.size(), Diff = UINT_MAX;
+  int FIB = MFI.getObjectIndexBegin(), FIE = MFI.getObjectIndexEnd();
   for (unsigned I = 0; I < Scavenged.size(); ++I) {
     if (Scavenged[I].Reg != 0)
       continue;
     // Verify that this slot is valid for this register.
     int FI = Scavenged[I].FrameIndex;
+    if (FI < FIB || FI >= FIE)
+      continue;
     unsigned S = MFI.getObjectSize(FI);
     unsigned A = MFI.getObjectAlignment(FI);
     if (NeedSize > S || NeedAlign > A)
@@ -425,7 +428,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   if (SI == Scavenged.size()) {
     // We need to scavenge a register but have no spill slot, the target
     // must know how to do it (if not, we'll assert below).
-    Scavenged.push_back(ScavengedInfo());
+    Scavenged.push_back(ScavengedInfo(FIE));
   }
 
   // Avoid infinite regress
