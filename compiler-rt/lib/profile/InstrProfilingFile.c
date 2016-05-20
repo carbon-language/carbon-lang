@@ -16,8 +16,8 @@
 #include <string.h>
 #ifdef _MSC_VER
 /* For _alloca */
-#endif
 #include <malloc.h>
+#endif
 
 
 #define UNCONST(ptr) ((void *)(uintptr_t)(ptr))
