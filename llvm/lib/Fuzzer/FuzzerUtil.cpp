@@ -288,7 +288,15 @@ size_t GetPeakRSSMb() {
   struct rusage usage;
   if (getrusage(RUSAGE_SELF, &usage))
     return 0;
-  return usage.ru_maxrss >> 10;
+  if (LIBFUZZER_LINUX) {
+    // ru_maxrss is in KiB
+    return usage.ru_maxrss >> 10;
+  } else if (LIBFUZZER_APPLE) {
+    // ru_maxrss is in bytes
+    return usage.ru_maxrss >> 20;
+  }
+  assert(0 && "GetPeakRSSMb() is not implemented for your platform");
+  return 0;
 }
 
 }  // namespace fuzzer
