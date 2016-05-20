@@ -14,6 +14,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _MSC_VER
+/* For _alloca */
+#endif
+#include <malloc.h>
+
 
 #define UNCONST(ptr) ((void *)(uintptr_t)(ptr))
 
@@ -83,10 +88,9 @@ static void truncateCurrentFile(void) {
 
   /* Create the directory holding the file, if needed. */
   if (strchr(Filename, '/') || strchr(Filename, '\\')) {
-    char *Copy = malloc(strlen(Filename) + 1);
+    char *Copy = (char *)COMPILER_RT_ALLOCA(strlen(Filename) + 1);
     strcpy(Copy, Filename);
     __llvm_profile_recursive_mkdir(Copy);
-    free(Copy);
   }
 
   /* Truncate the file.  Later we'll reopen and append. */
