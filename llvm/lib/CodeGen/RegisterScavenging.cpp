@@ -440,13 +440,10 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
     // Spill the scavenged register before I.
     int FI = Scavenged[SI].FrameIndex;
     if (FI < FIB || FI >= FIE) {
-      Twine Msg = Twine("Error while trying to spill ") + TRI->getName(SReg) +
-           " from class " + TRI->getRegClassName(RC) +
-           ": Cannot scavenge register without an emergency spill slot!";
-      // Keep both error functions, since llvm_unreachable prints the call
-      // stack, but it does not terminate program in release mode.
-      llvm_unreachable(Msg.str().c_str());
-      report_fatal_error(Msg);
+      std::string Msg = std::string("Error while trying to spill ") +
+          TRI->getName(SReg) + " from class " + TRI->getRegClassName(RC) +
+          ": Cannot scavenge register without an emergency spill slot!";
+      llvm_unreachable(Msg.c_str());
     }
     TII->storeRegToStackSlot(*MBB, I, SReg, true, Scavenged[SI].FrameIndex,
                              RC, TRI);
