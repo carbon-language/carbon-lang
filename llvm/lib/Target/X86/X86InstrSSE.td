@@ -8617,7 +8617,7 @@ def VEXTRACTI128mr : AVX2AIi8<0x39, MRMDestMem, (outs),
           "vextracti128\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
           Sched<[WriteStore]>, VEX, VEX_L;
 
-let Predicates = [HasAVX2] in {
+let Predicates = [HasAVX2, NoVLX] in {
 def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
           (v2i64 (VEXTRACTI128rr
                     (v4i64 VR256:$src1),
@@ -8634,7 +8634,9 @@ def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
           (v16i8 (VEXTRACTI128rr
                     (v32i8 VR256:$src1),
                     (EXTRACT_get_vextract128_imm VR128:$ext)))>;
+}
 
+let Predicates = [HasAVX2] in {
 def : Pat<(store (v2i64 (vextract128_extract:$ext (v4i64 VR256:$src1),
                          (iPTR imm))), addr:$dst),
           (VEXTRACTI128mr addr:$dst, VR256:$src1,
