@@ -584,6 +584,12 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   if (RI.isSGPRClass(RC)) {
     MFI->setHasSpilledSGPRs();
 
+    if (TargetRegisterInfo::isVirtualRegister(SrcReg) && RC->getSize() == 4) {
+      // m0 may not be allowed for readlane.
+      MachineRegisterInfo &MRI = MF->getRegInfo();
+      MRI.constrainRegClass(SrcReg, &AMDGPU::SReg_32_XM0RegClass);
+    }
+
     // We are only allowed to create one new instruction when spilling
     // registers, so we need to use pseudo instruction for spilling
     // SGPRs.
@@ -677,6 +683,13 @@ void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     // FIXME: Maybe this should not include a memoperand because it will be
     // lowered to non-memory instructions.
     unsigned Opcode = getSGPRSpillRestoreOpcode(RC->getSize());
+
+    if (TargetRegisterInfo::isVirtualRegister(DestReg) && RC->getSize() == 4) {
+      // m0 may not be allowed for readlane.
+      MachineRegisterInfo &MRI = MF->getRegInfo();
+      MRI.constrainRegClass(DestReg, &AMDGPU::SReg_32_XM0RegClass);
+    }
+
     BuildMI(MBB, MI, DL, get(Opcode), DestReg)
       .addFrameIndex(FrameIndex) // frame_idx
       .addMemOperand(MMO);
