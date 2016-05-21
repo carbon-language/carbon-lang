@@ -7817,24 +7817,24 @@ class avx2_broadcast_rr<bits<8> opc, string OpcodeStr, RegisterClass RC,
          [(set RC:$dst, (ResVT (X86VBroadcast (OpVT VR128:$src))))]>,
          Sched<[Sched]>, VEX;
 
-let ExeDomain = SSEPackedSingle in {
+let ExeDomain = SSEPackedSingle, Predicates = [HasAVX, NoVLX] in {
   def VBROADCASTSSrm  : avx_broadcast_rm<0x18, "vbroadcastss", VR128,
                                              f32mem, v4f32, loadf32, WriteLoad>;
   def VBROADCASTSSYrm : avx_broadcast_rm<0x18, "vbroadcastss", VR256,
                                              f32mem, v8f32, loadf32,
                                              WriteFShuffleLd>, VEX_L;
 }
-let ExeDomain = SSEPackedDouble in
+let ExeDomain = SSEPackedDouble, Predicates = [HasAVX, NoVLX] in
 def VBROADCASTSDYrm  : avx_broadcast_rm<0x19, "vbroadcastsd", VR256, f64mem,
                                     v4f64, loadf64, WriteFShuffleLd>, VEX_L;
 
-let ExeDomain = SSEPackedSingle in {
+let ExeDomain = SSEPackedSingle, Predicates = [HasAVX, NoVLX] in {
   def VBROADCASTSSrr  : avx2_broadcast_rr<0x18, "vbroadcastss", VR128,
                                           v4f32, v4f32, WriteFShuffle>;
   def VBROADCASTSSYrr : avx2_broadcast_rr<0x18, "vbroadcastss", VR256,
                                           v8f32, v4f32, WriteFShuffle256>, VEX_L;
 }
-let ExeDomain = SSEPackedDouble in
+let ExeDomain = SSEPackedDouble, Predicates = [HasAVX2, NoVLX] in
 def VBROADCASTSDYrr  : avx2_broadcast_rr<0x19, "vbroadcastsd", VR256,
                                          v4f64, v2f64, WriteFShuffle256>, VEX_L;
 
