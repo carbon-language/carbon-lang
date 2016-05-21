@@ -189,8 +189,7 @@ public:
   /// check is redundant and can be constant-folded away.  The induction
   /// variable is not required to be the canonical {0,+,1} induction variable.
   Optional<Range> computeSafeIterationSpace(ScalarEvolution &SE,
-                                            const SCEVAddRecExpr *IndVar,
-                                            IRBuilder<> &B) const;
+                                            const SCEVAddRecExpr *IndVar) const;
 
   /// Create an inductive range check out of BI if possible, else return
   /// nullptr.
@@ -1296,9 +1295,8 @@ bool LoopConstrainer::run() {
 /// in which the range check can be safely elided.  If it cannot compute such a
 /// range, returns None.
 Optional<InductiveRangeCheck::Range>
-InductiveRangeCheck::computeSafeIterationSpace(ScalarEvolution &SE,
-                                               const SCEVAddRecExpr *IndVar,
-                                               IRBuilder<> &) const {
+InductiveRangeCheck::computeSafeIterationSpace(
+    ScalarEvolution &SE, const SCEVAddRecExpr *IndVar) const {
   // IndVar is of the form "A + B * I" (where "I" is the canonical induction
   // variable, that may or may not exist as a real llvm::Value in the loop) and
   // this inductive range check is a range check on the "C + D * I" ("C" is
@@ -1366,7 +1364,7 @@ InductiveRangeCheck::computeSafeIterationSpace(ScalarEvolution &SE,
 static Optional<InductiveRangeCheck::Range>
 IntersectRange(ScalarEvolution &SE,
                const Optional<InductiveRangeCheck::Range> &R1,
-               const InductiveRangeCheck::Range &R2, IRBuilder<> &B) {
+               const InductiveRangeCheck::Range &R2) {
   if (!R1.hasValue())
     return R2;
   auto &R1Value = R1.getValue();
@@ -1448,10 +1446,10 @@ bool InductiveRangeCheckElimination::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   IRBuilder<> B(ExprInsertPt);
   for (InductiveRangeCheck *IRC : RangeChecks) {
-    auto Result = IRC->computeSafeIterationSpace(SE, IndVar, B);
+    auto Result = IRC->computeSafeIterationSpace(SE, IndVar);
     if (Result.hasValue()) {
       auto MaybeSafeIterRange =
-        IntersectRange(SE, SafeIterRange, Result.getValue(), B);
+          IntersectRange(SE, SafeIterRange, Result.getValue());
       if (MaybeSafeIterRange.hasValue()) {
         RangeChecksToEliminate.push_back(IRC);
         SafeIterRange = MaybeSafeIterRange.getValue();
