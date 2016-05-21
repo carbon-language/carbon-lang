@@ -7984,20 +7984,20 @@ def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
                   (v32i8 VR256:$src1),
                   (EXTRACT_get_vextract128_imm VR128:$ext)))>;
 
-def : Pat<(alignedstore (v2i64 (vextract128_extract:$ext (v4i64 VR256:$src1),
-                                (iPTR imm))), addr:$dst),
+def : Pat<(store (v2i64 (vextract128_extract:$ext (v4i64 VR256:$src1),
+                         (iPTR imm))), addr:$dst),
           (VEXTRACTF128mr addr:$dst, VR256:$src1,
            (EXTRACT_get_vextract128_imm VR128:$ext))>;
-def : Pat<(alignedstore (v4i32 (vextract128_extract:$ext (v8i32 VR256:$src1),
-                                (iPTR imm))), addr:$dst),
+def : Pat<(store (v4i32 (vextract128_extract:$ext (v8i32 VR256:$src1),
+                         (iPTR imm))), addr:$dst),
           (VEXTRACTF128mr addr:$dst, VR256:$src1,
            (EXTRACT_get_vextract128_imm VR128:$ext))>;
-def : Pat<(alignedstore (v8i16 (vextract128_extract:$ext (v16i16 VR256:$src1),
-                                (iPTR imm))), addr:$dst),
+def : Pat<(store (v8i16 (vextract128_extract:$ext (v16i16 VR256:$src1),
+                         (iPTR imm))), addr:$dst),
           (VEXTRACTF128mr addr:$dst, VR256:$src1,
            (EXTRACT_get_vextract128_imm VR128:$ext))>;
-def : Pat<(alignedstore (v16i8 (vextract128_extract:$ext (v32i8 VR256:$src1),
-                                (iPTR imm))), addr:$dst),
+def : Pat<(store (v16i8 (vextract128_extract:$ext (v32i8 VR256:$src1),
+                         (iPTR imm))), addr:$dst),
           (VEXTRACTF128mr addr:$dst, VR256:$src1,
            (EXTRACT_get_vextract128_imm VR128:$ext))>;
 }
