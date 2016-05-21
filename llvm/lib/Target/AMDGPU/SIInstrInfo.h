@@ -30,7 +30,11 @@ private:
   enum BranchPredicate {
     INVALID_BR = 0,
     SCC_TRUE = 1,
-    SCC_FALSE = -1
+    SCC_FALSE = -1,
+    VCCNZ = 2,
+    VCCZ = -2,
+    EXECNZ = -3,
+    EXECZ = 3
   };
 
   static unsigned getBranchOpcode(BranchPredicate Cond);

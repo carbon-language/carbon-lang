@@ -81,8 +81,7 @@ exit:
 ; SI-DAG: buffer_store_dword
 ; SI-DAG: v_cmp_eq_i32_e32 vcc,
 ; SI-DAG: s_and_b64 vcc, exec, vcc
-; SI: s_cbranch_vccnz [[LABEL_EXIT]]
-; SI: s_branch [[LABEL_LOOP]]
+; SI: s_cbranch_vccz [[LABEL_LOOP]]
 ; SI: [[LABEL_EXIT]]:
 ; SI: s_endpgm
 

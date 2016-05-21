@@ -1063,6 +1063,14 @@ unsigned SIInstrInfo::getBranchOpcode(SIInstrInfo::BranchPredicate Cond) {
     return AMDGPU::S_CBRANCH_SCC1;
   case SIInstrInfo::SCC_FALSE:
     return AMDGPU::S_CBRANCH_SCC0;
+  case SIInstrInfo::VCCNZ:
+    return AMDGPU::S_CBRANCH_VCCNZ;
+  case SIInstrInfo::VCCZ:
+    return AMDGPU::S_CBRANCH_VCCZ;
+  case SIInstrInfo::EXECNZ:
+    return AMDGPU::S_CBRANCH_EXECNZ;
+  case SIInstrInfo::EXECZ:
+    return AMDGPU::S_CBRANCH_EXECZ;
   default:
     llvm_unreachable("invalid branch predicate");
   }
@@ -1074,6 +1082,14 @@ SIInstrInfo::BranchPredicate SIInstrInfo::getBranchPredicate(unsigned Opcode) {
     return SCC_FALSE;
   case AMDGPU::S_CBRANCH_SCC1:
     return SCC_TRUE;
+  case AMDGPU::S_CBRANCH_VCCNZ:
+    return VCCNZ;
+  case AMDGPU::S_CBRANCH_VCCZ:
+    return VCCZ;
+  case AMDGPU::S_CBRANCH_EXECNZ:
+    return EXECNZ;
+  case AMDGPU::S_CBRANCH_EXECZ:
+    return EXECZ;
   default:
     return INVALID_BR;
   }
