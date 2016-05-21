@@ -655,13 +655,13 @@ multiclass vextract_for_size<int Opcode,
                                                          (iPTR imm)))]>,
               AVX512AIi8Base, EVEX;
     let mayStore = 1 in {
-      def rm  : AVX512AIi8<Opcode, MRMDestMem, (outs),
+      def mr  : AVX512AIi8<Opcode, MRMDestMem, (outs),
                       (ins To.MemOp:$dst, From.RC:$src1, i32u8imm:$src2),
                       "vextract" # To.EltTypeName # "x" # To.NumElts #
                           "\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                       []>, EVEX;
 
-      def rmk : AVX512AIi8<Opcode, MRMDestMem, (outs),
+      def mrk : AVX512AIi8<Opcode, MRMDestMem, (outs),
                       (ins To.MemOp:$dst, To.KRCWM:$mask,
                                           From.RC:$src1, i32u8imm:$src2),
                        "vextract" # To.EltTypeName # "x" # To.NumElts #
