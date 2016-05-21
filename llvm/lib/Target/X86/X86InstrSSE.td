@@ -8463,21 +8463,23 @@ let Predicates = [HasAVX, NoVLX], AddedComplexity = 20 in {
 
 multiclass avx2_perm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
                      ValueType OpVT, X86FoldableSchedWrite Sched> {
-  def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst),
-                   (ins VR256:$src1, VR256:$src2),
-                   !strconcat(OpcodeStr,
-                       "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   [(set VR256:$dst,
-                     (OpVT (X86VPermv VR256:$src1, VR256:$src2)))]>,
-                   Sched<[Sched]>, VEX_4V, VEX_L;
-  def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
-                   (ins VR256:$src1, i256mem:$src2),
-                   !strconcat(OpcodeStr,
-                       "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   [(set VR256:$dst,
-                     (OpVT (X86VPermv VR256:$src1,
-                            (bitconvert (mem_frag addr:$src2)))))]>,
-                   Sched<[Sched.Folded, ReadAfterLd]>, VEX_4V, VEX_L;
+  let Predicates = [HasAVX2, NoVLX] in {
+    def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst),
+                     (ins VR256:$src1, VR256:$src2),
+                     !strconcat(OpcodeStr,
+                         "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                     [(set VR256:$dst,
+                       (OpVT (X86VPermv VR256:$src1, VR256:$src2)))]>,
+                     Sched<[Sched]>, VEX_4V, VEX_L;
+    def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
+                     (ins VR256:$src1, i256mem:$src2),
+                     !strconcat(OpcodeStr,
+                         "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                     [(set VR256:$dst,
+                       (OpVT (X86VPermv VR256:$src1,
+                              (bitconvert (mem_frag addr:$src2)))))]>,
+                     Sched<[Sched.Folded, ReadAfterLd]>, VEX_4V, VEX_L;
+  }
 }
 
 defm VPERMD : avx2_perm<0x36, "vpermd", loadv4i64, v8i32, WriteShuffle256>;
@@ -8486,21 +8488,23 @@ defm VPERMPS : avx2_perm<0x16, "vpermps", loadv8f32, v8f32, WriteFShuffle256>;
 
 multiclass avx2_perm_imm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
                          ValueType OpVT, X86FoldableSchedWrite Sched> {
-  def Yri : AVX2AIi8<opc, MRMSrcReg, (outs VR256:$dst),
-                     (ins VR256:$src1, u8imm:$src2),
-                     !strconcat(OpcodeStr,
-                         "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                     [(set VR256:$dst,
-                       (OpVT (X86VPermi VR256:$src1, (i8 imm:$src2))))]>,
-                     Sched<[Sched]>, VEX, VEX_L;
-  def Ymi : AVX2AIi8<opc, MRMSrcMem, (outs VR256:$dst),
-                     (ins i256mem:$src1, u8imm:$src2),
-                     !strconcat(OpcodeStr,
-                         "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                     [(set VR256:$dst,
-                       (OpVT (X86VPermi (mem_frag addr:$src1),
-                              (i8 imm:$src2))))]>,
-                     Sched<[Sched.Folded, ReadAfterLd]>, VEX, VEX_L;
+  let Predicates = [HasAVX2, NoVLX] in {
+    def Yri : AVX2AIi8<opc, MRMSrcReg, (outs VR256:$dst),
+                       (ins VR256:$src1, u8imm:$src2),
+                       !strconcat(OpcodeStr,
+                           "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                       [(set VR256:$dst,
+                         (OpVT (X86VPermi VR256:$src1, (i8 imm:$src2))))]>,
+                       Sched<[Sched]>, VEX, VEX_L;
+    def Ymi : AVX2AIi8<opc, MRMSrcMem, (outs VR256:$dst),
+                       (ins i256mem:$src1, u8imm:$src2),
+                       !strconcat(OpcodeStr,
+                           "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                       [(set VR256:$dst,
+                         (OpVT (X86VPermi (mem_frag addr:$src1),
+                                (i8 imm:$src2))))]>,
+                       Sched<[Sched.Folded, ReadAfterLd]>, VEX, VEX_L;
+  }
 }
 
 defm VPERMQ : avx2_perm_imm<0x00, "vpermq", loadv4i64, v4i64,
