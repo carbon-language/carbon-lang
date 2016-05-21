@@ -1166,6 +1166,13 @@ unsigned SIInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   return 2;
 }
 
+bool SIInstrInfo::ReverseBranchCondition(
+  SmallVectorImpl<MachineOperand> &Cond) const {
+  assert(Cond.size() == 1);
+  Cond[0].setImm(-Cond[0].getImm());
+  return false;
+}
+
 static void removeModOperands(MachineInstr &MI) {
   unsigned Opc = MI.getOpcode();
   int Src0ModIdx = AMDGPU::getNamedOperandIdx(Opc,

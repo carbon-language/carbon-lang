@@ -168,10 +168,8 @@ endif:
 
 ; SI-LABEL: {{^}}uniform_if_else_ret:
 ; SI: s_cmp_lg_i32 s{{[0-9]+}}, 0
-; SI-NEXT: s_cbranch_scc1 [[ELSE_LABEL:[0-9_A-Za-z]+]]
-; SI-NEXT: s_branch [[IF_LABEL:[0-9_A-Za-z]+]]
+; SI-NEXT: s_cbranch_scc0 [[IF_LABEL:[0-9_A-Za-z]+]]
 
-; SI: [[ELSE_LABEL]]:
 ; SI: v_mov_b32_e32 [[TWO:v[0-9]+]], 2
 ; SI: buffer_store_dword [[TWO]]
 ; SI: s_endpgm
@@ -199,10 +197,8 @@ if.end:                                           ; preds = %if.else, %if.then
 
 ; SI-LABEL: {{^}}uniform_if_else:
 ; SI: s_cmp_lg_i32 s{{[0-9]+}}, 0
-; SI-NEXT: s_cbranch_scc1 [[ELSE_LABEL:[0-9_A-Za-z]+]]
-; SI-NEXT: s_branch [[IF_LABEL:[0-9_A-Za-z]+]]
+; SI-NEXT: s_cbranch_scc0 [[IF_LABEL:[0-9_A-Za-z]+]]
 
-; SI: [[ELSE_LABEL]]:
 ; SI: v_mov_b32_e32 [[TWO:v[0-9]+]], 2
 ; SI: buffer_store_dword [[TWO]]
 ; SI: s_branch [[ENDIF_LABEL:[0-9_A-Za-z]+]]
