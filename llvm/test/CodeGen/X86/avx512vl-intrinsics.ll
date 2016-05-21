@@ -1026,7 +1026,7 @@ declare < 4 x i64> @llvm.x86.avx512.mask.pmul.dq.256(< 8 x i32>, < 8 x i32>, < 4
 
 define < 2 x i64> @test_mask_mul_epu32_rr_128(< 4 x i32> %a, < 4 x i32> %b) {
   ;CHECK-LABEL: test_mask_mul_epu32_rr_128
-  ;CHECK: vpmuludq %xmm1, %xmm0, %xmm0 ## encoding: [0xc5,0xf9,0xf4,0xc1]
+  ;CHECK: vpmuludq %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0xfd,0x08,0xf4,0xc1]
   %res = call < 2 x i64> @llvm.x86.avx512.mask.pmulu.dq.128(< 4 x i32> %a, < 4 x i32> %b, < 2 x i64> zeroinitializer, i8 -1)
   ret < 2 x i64> %res
 }
@@ -1047,7 +1047,7 @@ define < 2 x i64> @test_mask_mul_epu32_rrkz_128(< 4 x i32> %a, < 4 x i32> %b, i8
 
 define < 2 x i64> @test_mask_mul_epu32_rm_128(< 4 x i32> %a, < 4 x i32>* %ptr_b) {
   ;CHECK-LABEL: test_mask_mul_epu32_rm_128
-  ;CHECK: vpmuludq (%rdi), %xmm0, %xmm0 ## encoding: [0xc5,0xf9,0xf4,0x07]
+  ;CHECK: vpmuludq (%rdi), %xmm0, %xmm0 ## encoding: [0x62,0xf1,0xfd,0x08,0xf4,0x07]
   %b = load < 4 x i32>, < 4 x i32>* %ptr_b
   %res = call < 2 x i64> @llvm.x86.avx512.mask.pmulu.dq.128(< 4 x i32> %a, < 4 x i32> %b, < 2 x i64> zeroinitializer, i8 -1)
   ret < 2 x i64> %res
@@ -1106,7 +1106,7 @@ declare < 2 x i64> @llvm.x86.avx512.mask.pmulu.dq.128(< 4 x i32>, < 4 x i32>, < 
 
 define < 4 x i64> @test_mask_mul_epu32_rr_256(< 8 x i32> %a, < 8 x i32> %b) {
   ;CHECK-LABEL: test_mask_mul_epu32_rr_256
-  ;CHECK: vpmuludq %ymm1, %ymm0, %ymm0 ## encoding: [0xc5,0xfd,0xf4,0xc1]
+  ;CHECK: vpmuludq %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0xfd,0x28,0xf4,0xc1]
   %res = call < 4 x i64> @llvm.x86.avx512.mask.pmulu.dq.256(< 8 x i32> %a, < 8 x i32> %b, < 4 x i64> zeroinitializer, i8 -1)
   ret < 4 x i64> %res
 }
@@ -1127,7 +1127,7 @@ define < 4 x i64> @test_mask_mul_epu32_rrkz_256(< 8 x i32> %a, < 8 x i32> %b, i8
 
 define < 4 x i64> @test_mask_mul_epu32_rm_256(< 8 x i32> %a, < 8 x i32>* %ptr_b) {
   ;CHECK-LABEL: test_mask_mul_epu32_rm_256
-  ;CHECK: vpmuludq (%rdi), %ymm0, %ymm0 ## encoding: [0xc5,0xfd,0xf4,0x07]
+  ;CHECK: vpmuludq (%rdi), %ymm0, %ymm0 ## encoding: [0x62,0xf1,0xfd,0x28,0xf4,0x07]
   %b = load < 8 x i32>, < 8 x i32>* %ptr_b
   %res = call < 4 x i64> @llvm.x86.avx512.mask.pmulu.dq.256(< 8 x i32> %a, < 8 x i32> %b, < 4 x i64> zeroinitializer, i8 -1)
   ret < 4 x i64> %res
