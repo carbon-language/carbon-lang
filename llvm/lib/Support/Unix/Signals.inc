@@ -137,7 +137,7 @@ static void CreateSigAltStack() {
     return;
 
   stack_t AltStack = {};
-  AltStack.ss_sp = malloc(AltStackSize);
+  AltStack.ss_sp = reinterpret_cast<char *>(malloc(AltStackSize));
   AltStack.ss_size = AltStackSize;
   if (sigaltstack(&AltStack, &OldAltStack) != 0)
     free(AltStack.ss_sp);
