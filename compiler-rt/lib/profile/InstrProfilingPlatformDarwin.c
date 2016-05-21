@@ -56,5 +56,5 @@ ValueProfNode *__llvm_profile_begin_vnodes(void) {
   return &VNodesStart;
 }
 COMPILER_RT_VISIBILITY
-ValueProfNode *__llvm_profile_end_vnode(void) { return &VNodesEnd; }
+ValueProfNode *__llvm_profile_end_vnodes(void) { return &VNodesEnd; }
 #endif
