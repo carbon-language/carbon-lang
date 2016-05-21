@@ -126,26 +126,6 @@ define <16 x float> @test_rsqrt_ps_512(<16 x float> %a0) {
 }
 declare <16 x float> @llvm.x86.avx512.rsqrt14.ps.512(<16 x float>, <16 x float>, i16) nounwind readnone
 
-define <4 x float> @test_rsqrt14_ss(<4 x float> %a0) {
-; CHECK-LABEL: test_rsqrt14_ss:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vrsqrt14ss %xmm0, %xmm0, %xmm0
-; CHECK-NEXT:    retq
-  %res = call <4 x float> @llvm.x86.avx512.rsqrt14.ss(<4 x float> %a0, <4 x float> %a0, <4 x float> zeroinitializer, i8 -1) ; <<4 x float>> [#uses=1]
-  ret <4 x float> %res
-}
-declare <4 x float> @llvm.x86.avx512.rsqrt14.ss(<4 x float>, <4 x float>, <4 x float>, i8) nounwind readnone
-
-define <4 x float> @test_rcp14_ss(<4 x float> %a0) {
-; CHECK-LABEL: test_rcp14_ss:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vrcp14ss %xmm0, %xmm0, %xmm0
-; CHECK-NEXT:    retq
-  %res = call <4 x float> @llvm.x86.avx512.rcp14.ss(<4 x float> %a0, <4 x float> %a0, <4 x float> zeroinitializer, i8 -1) ; <<4 x float>> [#uses=1]
-  ret <4 x float> %res
-}
-declare <4 x float> @llvm.x86.avx512.rcp14.ss(<4 x float>, <4 x float>, <4 x float>, i8) nounwind readnone
-
 define <8 x double> @test_sqrt_pd_512(<8 x double> %a0) {
 ; CHECK-LABEL: test_sqrt_pd_512:
 ; CHECK:       ## BB#0:
