@@ -1205,12 +1205,12 @@ void EHOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
 }
 
 template <class ELFT>
-static void writeAlignedCieOrFde(StringRef Data, uint8_t *Buf) {
-  typedef typename ELFT::uint uintX_t;
+static void writeCieFde(uint8_t *Buf, StringRef S) {
+  memcpy(Buf, S.data(), S.size());
+
+  // Fix the size field. -4 since size does not include the size field itself.
   const endianness E = ELFT::TargetEndianness;
-  uint64_t Len = alignTo(Data.size(), sizeof(uintX_t));
-  write32<E>(Buf, Len - 4);
-  memcpy(Buf + 4, Data.data() + 4, Data.size() - 4);
+  write32<E>(Buf, alignTo(S.size(), sizeof(typename ELFT::uint)) - 4);
 }
 
 template <class ELFT> void EHOutputSection<ELFT>::finalize() {
@@ -1234,11 +1234,11 @@ template <class ELFT> void EHOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   const endianness E = ELFT::TargetEndianness;
   for (const Cie<ELFT> &C : Cies) {
     size_t CieOffset = C.S->Offsets[C.Index].second;
-    writeAlignedCieOrFde<ELFT>(C.data(), Buf + CieOffset);
+    writeCieFde<ELFT>(Buf + CieOffset, C.data());
 
     for (const EHRegion<ELFT> &F : C.Fdes) {
       size_t Offset = F.S->Offsets[F.Index].second;
-      writeAlignedCieOrFde<ELFT>(F.data(), Buf + Offset);
+      writeCieFde<ELFT>(Buf + Offset, F.data());
       write32<E>(Buf + Offset + 4, Offset + 4 - CieOffset); // Pointer
 
       Out<ELFT>::EhFrameHdr->addFde(C.FdeEncoding, Offset, Buf + Offset + 8);
