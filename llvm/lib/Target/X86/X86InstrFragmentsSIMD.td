@@ -460,6 +460,7 @@ def X86fmulRnd   : SDNode<"X86ISD::FMUL_RND",  SDTFPBinOpRound>;
 def X86fdivRnd   : SDNode<"X86ISD::FDIV_RND",  SDTFPBinOpRound>;
 def X86fmaxRnd   : SDNode<"X86ISD::FMAX_RND",       SDTFPBinOpRound>;
 def X86scalef    : SDNode<"X86ISD::SCALEF",         SDTFPBinOpRound>;
+def X86scalefs   : SDNode<"X86ISD::SCALEFS",        SDTFPBinOpRound>;
 def X86fminRnd   : SDNode<"X86ISD::FMIN_RND",       SDTFPBinOpRound>;
 def X86fsqrtRnd     : SDNode<"X86ISD::FSQRT_RND",   SDTFPUnaryOpRound>;
 def X86fsqrtRnds    : SDNode<"X86ISD::FSQRT_RND",   SDTFPBinOpRound>;

@@ -21923,6 +21923,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FSQRT_RND:          return "X86ISD::FSQRT_RND";
   case X86ISD::FGETEXP_RND:        return "X86ISD::FGETEXP_RND";
   case X86ISD::SCALEF:             return "X86ISD::SCALEF";
+  case X86ISD::SCALEFS:            return "X86ISD::SCALEFS";
   case X86ISD::ADDS:               return "X86ISD::ADDS";
   case X86ISD::SUBS:               return "X86ISD::SUBS";
   case X86ISD::AVG:                return "X86ISD::AVG";

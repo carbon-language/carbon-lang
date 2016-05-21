@@ -213,6 +213,7 @@ namespace llvm {
       VGETMANT,
       // FP Scale.
       SCALEF,
+      SCALEFS,
 
       // Integer add/sub with unsigned saturation.
       ADDUS,

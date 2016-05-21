@@ -3827,18 +3827,18 @@ multiclass avx512_fp_scalef_scalar<bits<8> opc, string OpcodeStr, SDNode OpNode,
   }//let mayLoad = 1
 }
 
-multiclass avx512_fp_scalef_all<bits<8> opc, bits<8> opcScaler, string OpcodeStr, SDNode OpNode> {
+multiclass avx512_fp_scalef_all<bits<8> opc, bits<8> opcScaler, string OpcodeStr, SDNode OpNode, SDNode OpNodeScal> {
   defm PSZ : avx512_fp_scalef_p<opc, OpcodeStr, OpNode, v16f32_info>,
              avx512_fp_round_packed<opc, OpcodeStr, OpNode, v16f32_info>,
                               EVEX_V512, EVEX_CD8<32, CD8VF>;
   defm PDZ : avx512_fp_scalef_p<opc, OpcodeStr, OpNode, v8f64_info>,
              avx512_fp_round_packed<opc, OpcodeStr, OpNode, v8f64_info>,
                               EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
-  defm SSZ128 : avx512_fp_scalef_scalar<opcScaler, OpcodeStr, OpNode, f32x_info>,
-                avx512_fp_scalar_round<opcScaler, OpcodeStr##"ss", f32x_info, OpNode, SSE_ALU_ITINS_S.s>,
+  defm SSZ128 : avx512_fp_scalef_scalar<opcScaler, OpcodeStr, OpNodeScal, f32x_info>,
+                avx512_fp_scalar_round<opcScaler, OpcodeStr##"ss", f32x_info, OpNodeScal, SSE_ALU_ITINS_S.s>,
                               EVEX_4V,EVEX_CD8<32, CD8VT1>;
-  defm SDZ128 : avx512_fp_scalef_scalar<opcScaler, OpcodeStr, OpNode, f64x_info>,
-                avx512_fp_scalar_round<opcScaler, OpcodeStr##"sd", f64x_info, OpNode, SSE_ALU_ITINS_S.d>,
+  defm SDZ128 : avx512_fp_scalef_scalar<opcScaler, OpcodeStr, OpNodeScal, f64x_info>,
+                avx512_fp_scalar_round<opcScaler, OpcodeStr##"sd", f64x_info, OpNodeScal, SSE_ALU_ITINS_S.d>,
                               EVEX_4V, EVEX_CD8<64, CD8VT1>, VEX_W;
 
   // Define only if AVX512VL feature is present.
@@ -3853,7 +3853,7 @@ multiclass avx512_fp_scalef_all<bits<8> opc, bits<8> opcScaler, string OpcodeStr
                                    EVEX_V256, VEX_W, EVEX_CD8<64, CD8VF>;
   }
 }
-defm VSCALEF : avx512_fp_scalef_all<0x2C, 0x2D, "vscalef", X86scalef>, T8PD;
+defm VSCALEF : avx512_fp_scalef_all<0x2C, 0x2D, "vscalef", X86scalef, X86scalefs>, T8PD;
 
 //===----------------------------------------------------------------------===//
 // AVX-512  VPTESTM instructions
