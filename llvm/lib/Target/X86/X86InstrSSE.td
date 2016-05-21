@@ -7946,7 +7946,7 @@ def VEXTRACTF128mr : AVXAIi8<0x19, MRMDestMem, (outs),
 }
 
 // AVX1 patterns
-let Predicates = [HasAVX] in {
+let Predicates = [HasAVX, NoVLX] in {
 def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
           (v4f32 (VEXTRACTF128rr
                     (v8f32 VR256:$src1),
@@ -8634,9 +8634,7 @@ def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
           (v16i8 (VEXTRACTI128rr
                     (v32i8 VR256:$src1),
                     (EXTRACT_get_vextract128_imm VR128:$ext)))>;
-}
 
-let Predicates = [HasAVX2] in {
 def : Pat<(store (v2i64 (vextract128_extract:$ext (v4i64 VR256:$src1),
                          (iPTR imm))), addr:$dst),
           (VEXTRACTI128mr addr:$dst, VR256:$src1,

@@ -656,17 +656,19 @@ multiclass vextract_for_size<int Opcode,
               AVX512AIi8Base, EVEX;
     let mayStore = 1 in {
       def mr  : AVX512AIi8<Opcode, MRMDestMem, (outs),
-                      (ins To.MemOp:$dst, From.RC:$src1, i32u8imm:$src2),
+                      (ins To.MemOp:$dst, From.RC:$src1, i32u8imm:$idx),
                       "vextract" # To.EltTypeName # "x" # To.NumElts #
-                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      []>, EVEX;
+                          "\t{$idx, $src1, $dst|$dst, $src1, $idx}",
+                      [(store (To.VT (vextract_extract:$idx
+                                      (From.VT From.RC:$src1), (iPTR imm))),
+                               addr:$dst)]>, EVEX;
 
       def mrk : AVX512AIi8<Opcode, MRMDestMem, (outs),
                       (ins To.MemOp:$dst, To.KRCWM:$mask,
-                                          From.RC:$src1, i32u8imm:$src2),
+                                          From.RC:$src1, i32u8imm:$idx),
                        "vextract" # To.EltTypeName # "x" # To.NumElts #
-                            "\t{$src2, $src1, $dst {${mask}}|"
-                            "$dst {${mask}}, $src1, $src2}",
+                            "\t{$idx, $src1, $dst {${mask}}|"
+                            "$dst {${mask}}, $src1, $idx}",
                       []>, EVEX_K, EVEX;
     }//mayStore = 1
   }
@@ -705,11 +707,16 @@ multiclass vextract_for_size_lowering<string InstrStr, X86VectorVTInfo From,
                 SDNodeXForm EXTRACT_get_vextract_imm, list<Predicate> p> :
   vextract_for_size_first_position_lowering<From, To> {
 
-  let Predicates = p in
+  let Predicates = p in {
      def : Pat<(vextract_extract:$ext (From.VT From.RC:$src1), (iPTR imm)),
                (To.VT (!cast<Instruction>(InstrStr#"rr")
                           From.RC:$src1,
                           (EXTRACT_get_vextract_imm To.RC:$ext)))>;
+     def : Pat<(store (To.VT (vextract_extract:$ext (From.VT From.RC:$src1),
+                              (iPTR imm))), addr:$dst),
+               (!cast<Instruction>(InstrStr#"mr") addr:$dst, From.RC:$src1,
+                (EXTRACT_get_vextract_imm To.RC:$ext))>;
+  }
 }
 
 multiclass vextract_for_type<ValueType EltVT32, int Opcode128,
