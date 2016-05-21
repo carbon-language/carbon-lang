@@ -4048,11 +4048,11 @@ defm PAVGW   : PDI_binop_all<0xE3, "pavgw", X86avg, v8i16, v16i16,
 defm PMADDWD : PDI_binop_all_int<0xF5, "pmaddwd", int_x86_sse2_pmadd_wd,
                                  int_x86_avx2_pmadd_wd, SSE_PMADD, 1>;
 
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX, NoVLX_Or_NoBWI] in
 defm VPSADBW : PDI_binop_rm2<0xF6, "vpsadbw", X86psadbw, v2i64, v16i8, VR128,
                              loadv2i64, i128mem, SSE_INTMUL_ITINS_P, 1, 0>,
                              VEX_4V;
-let Predicates = [HasAVX2] in
+let Predicates = [HasAVX2, NoVLX_Or_NoBWI] in
 defm VPSADBWY : PDI_binop_rm2<0xF6, "vpsadbw", X86psadbw, v4i64, v32i8, VR256,
                              loadv4i64, i256mem, SSE_INTMUL_ITINS_P, 1, 0>,
                              VEX_4V, VEX_L;
@@ -4060,11 +4060,11 @@ let Constraints = "$src1 = $dst" in
 defm PSADBW : PDI_binop_rm2<0xF6, "psadbw", X86psadbw, v2i64, v16i8, VR128,
                             memopv2i64, i128mem, SSE_INTALU_ITINS_P, 1>;
 
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX, NoVLX] in
 defm VPMULUDQ : PDI_binop_rm2<0xF4, "vpmuludq", X86pmuludq, v2i64, v4i32, VR128,
                               loadv2i64, i128mem, SSE_INTMUL_ITINS_P, 1, 0>,
                               VEX_4V;
-let Predicates = [HasAVX2] in
+let Predicates = [HasAVX2, NoVLX] in
 defm VPMULUDQY : PDI_binop_rm2<0xF4, "vpmuludq", X86pmuludq, v4i64, v8i32,
                                VR256, loadv4i64, i256mem,
                                SSE_INTMUL_ITINS_P, 1, 0>, VEX_4V, VEX_L;
