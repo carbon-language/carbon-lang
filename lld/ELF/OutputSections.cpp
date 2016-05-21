@@ -1114,6 +1114,19 @@ static typename ELFT::uint readEntryLength(ArrayRef<uint8_t> D) {
   return Len;
 }
 
+// Returns the first relocation that points to a region
+// between Begin and Begin+Size.
+template <class IntTy, class RelTy>
+static const RelTy *getReloc(IntTy Begin, IntTy Size, ArrayRef<RelTy> Rels) {
+  size_t I = 0;
+  size_t E = Rels.size();
+  while (I != E && Rels[I].r_offset < Begin)
+    ++I;
+  if (I == E || Begin + Size <= Rels[I].r_offset)
+    return nullptr;
+  return &Rels[I];
+}
+
 template <class ELFT>
 template <class RelTy>
 void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *S,
@@ -1127,8 +1140,6 @@ void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *S,
   ArrayRef<uint8_t> SecData = S->getSectionData();
   ArrayRef<uint8_t> D = SecData;
   uintX_t Offset = 0;
-  auto RelI = Rels.begin();
-  auto RelE = Rels.end();
 
   DenseMap<unsigned, unsigned> OffsetToIndex;
   while (!D.empty()) {
@@ -1142,11 +1153,6 @@ void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *S,
       break;
     StringRef Entry((const char *)D.data(), Length);
 
-    while (RelI != RelE && RelI->r_offset < Offset)
-      ++RelI;
-    uintX_t NextOffset = Offset + Length;
-    bool HasReloc = RelI != RelE && RelI->r_offset < NextOffset;
-
     uint32_t ID = read32<E>(D.data() + 4);
     if (ID == 0) {
       // CIE
@@ -1155,8 +1161,8 @@ void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *S,
         C.FdeEncoding = getFdeEncoding(D);
 
       SymbolBody *Personality = nullptr;
-      if (HasReloc)
-        Personality = &S->getFile()->getRelocTargetSym(*RelI);
+      if (const RelTy *Rel = getReloc(Offset, Length, Rels))
+        Personality = &S->getFile()->getRelocTargetSym(*Rel);
 
       std::pair<StringRef, SymbolBody *> CieInfo(Entry, Personality);
       auto P = CieMap.insert(std::make_pair(CieInfo, Cies.size()));
@@ -1166,9 +1172,11 @@ void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *S,
       }
       OffsetToIndex[Offset] = P.first->second;
     } else {
-      if (!HasReloc)
+      const RelTy *Rel = getReloc(Offset, Length, Rels);
+      if (!Rel)
         fatal("FDE doesn't reference another section");
-      SymbolBody &B = S->getFile()->getRelocTargetSym(*RelI);
+      SymbolBody &B = S->getFile()->getRelocTargetSym(*Rel);
+
       auto *D = dyn_cast<DefinedRegular<ELFT>>(&B);
       if (D && D->Section) {
         InputSectionBase<ELFT> *Target = D->Section->Repl;
@@ -1184,7 +1192,7 @@ void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *S,
       }
     }
 
-    Offset = NextOffset;
+    Offset += Length;
     D = D.slice(Length);
   }
 }
