@@ -1140,7 +1140,7 @@ void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *S,
   ArrayRef<uint8_t> D = S->getSectionData();
   uintX_t Offset = 0;
 
-  DenseMap<unsigned, unsigned> OffsetToIndex;
+  DenseMap<uintX_t, uintX_t> OffsetToIndex;
   while (!D.empty()) {
     unsigned Index = S->Offsets.size();
     S->Offsets.push_back(std::make_pair(Offset, -1));
