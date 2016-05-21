@@ -1137,8 +1137,7 @@ void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *S,
   this->updateAlign(S->Align);
   Sections.push_back(S);
 
-  ArrayRef<uint8_t> SecData = S->getSectionData();
-  ArrayRef<uint8_t> D = SecData;
+  ArrayRef<uint8_t> D = S->getSectionData();
   uintX_t Offset = 0;
 
   DenseMap<unsigned, unsigned> OffsetToIndex;
