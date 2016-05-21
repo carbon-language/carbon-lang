@@ -31,7 +31,7 @@ extern uint64_t
 
 COMPILER_RT_VISIBILITY
 extern ValueProfNode
-    VNodestart __asm("section$start$__DATA$" INSTR_PROF_VNODES_SECT_NAME_STR);
+    VNodesStart __asm("section$start$__DATA$" INSTR_PROF_VNODES_SECT_NAME_STR);
 COMPILER_RT_VISIBILITY
 extern ValueProfNode
     VNodesEnd __asm("section$end$__DATA$" INSTR_PROF_VNODES_SECT_NAME_STR);
