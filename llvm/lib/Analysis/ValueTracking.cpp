@@ -1500,9 +1500,10 @@ bool isKnownToBeAPowerOfTwo(Value *V, bool OrZero, unsigned Depth,
   if (Constant *C = dyn_cast<Constant>(V)) {
     if (C->isNullValue())
       return OrZero;
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
-      return CI->getValue().isPowerOf2();
-    // TODO: Handle vector constants.
+
+    const APInt *ConstIntOrConstSplatInt;
+    if (match(C, m_APInt(ConstIntOrConstSplatInt)))
+      return ConstIntOrConstSplatInt->isPowerOf2();
   }
 
   // 1 << X is clearly a power of two if the one is not shifted off the end.  If
