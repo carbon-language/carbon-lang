@@ -1072,23 +1072,6 @@ uint8_t EHOutputSection<ELFT>::getFdeEncoding(ArrayRef<uint8_t> D) {
   return DW_EH_PE_absptr;
 }
 
-template <class ELFT> static size_t readRecordSize(ArrayRef<uint8_t> D) {
-  const endianness E = ELFT::TargetEndianness;
-  if (D.size() < 4)
-    fatal("CIE/FDE too small");
-
-  // First 4 bytes of CIE/FDE is the size of the record.
-  // If it is 0xFFFFFFFF, the next 8 bytes contain the size instead,
-  // but we do not support that format yet.
-  uint64_t V = read32<E>(D.data());
-  if (V == UINT32_MAX)
-    fatal("CIE/FDE too large");
-  uint64_t Size = V + 4;
-  if (Size > D.size())
-    fatal("CIE/FIE ends past the end of the section");
-  return Size;
-}
-
 // Returns the first relocation that points to a region
 // between Begin and Begin+Size.
 template <class IntTy, class RelTy>
@@ -1100,24 +1083,6 @@ static const RelTy *getReloc(IntTy Begin, IntTy Size, ArrayRef<RelTy> Rels) {
   if (I == E || Begin + Size <= Rels[I].r_offset)
     return nullptr;
   return &Rels[I];
-}
-
-// .eh_frame is a sequence of CIE or FDE records.
-// This function splits an input section into records and returns them.
-template <class ELFT>
-std::vector<SectionPiece>
-EHOutputSection<ELFT>::splitInputSection(const EHInputSection<ELFT> *Sec) {
-  ArrayRef<uint8_t> Data = Sec->getSectionData();
-  std::vector<SectionPiece> V;
-  for (size_t Off = 0, End = Data.size(); Off != End;) {
-    size_t Size = readRecordSize<ELFT>(Data.slice(Off));
-    // The empty record is the end marker.
-    if (Size == 4)
-      break;
-    V.emplace_back(Off, Data.slice(Off, Size));
-    Off += Size;
-  }
-  return V;
 }
 
 // Search for an existing CIE record or create a new one.
@@ -1206,7 +1171,7 @@ void EHOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   // .eh_frame is a sequence of CIE or FDE records. This function
   // splits it into pieces so that we can call
   // SplitInputSection::getSectionPiece on the section.
-  Sec->Pieces = splitInputSection(Sec);
+  Sec->split();
   if (Sec->Pieces.empty())
     return;
 
