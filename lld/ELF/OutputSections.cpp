@@ -978,10 +978,9 @@ EHRegion<ELFT>::EHRegion(EHInputSection<ELFT> *S, unsigned Index)
 
 template <class ELFT> StringRef EHRegion<ELFT>::data() const {
   ArrayRef<uint8_t> SecData = S->getSectionData();
-  ArrayRef<std::pair<uintX_t, uintX_t>> Offsets = S->Offsets;
-  size_t Start = Offsets[Index].first;
-  size_t End =
-      Index == Offsets.size() - 1 ? SecData.size() : Offsets[Index + 1].first;
+  size_t Start = S->Pieces[Index].InputOff;
+  size_t End = (Index == S->Pieces.size() - 1) ? SecData.size()
+                                               : S->Pieces[Index + 1].InputOff;
   return StringRef((const char *)SecData.data() + Start, End - Start);
 }
 
@@ -1142,8 +1141,8 @@ void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *S,
 
   DenseMap<uintX_t, uintX_t> OffsetToIndex;
   while (!D.empty()) {
-    unsigned Index = S->Offsets.size();
-    S->Offsets.push_back(std::make_pair(Offset, -1));
+    unsigned Index = S->Pieces.size();
+    S->Pieces.emplace_back(Offset);
 
     uintX_t Length = readEntryLength<ELFT>(D);
     // If CIE/FDE data length is zero then Length is 4, this
@@ -1227,11 +1226,11 @@ template <class ELFT> void EHOutputSection<ELFT>::finalize() {
 
   size_t Offset = 0;
   for (const Cie<ELFT> &C : Cies) {
-    C.S->Offsets[C.Index].second = Offset;
+    C.S->Pieces[C.Index].OutputOff = Offset;
     Offset += alignTo(C.data().size(), sizeof(uintX_t));
 
     for (const EHRegion<ELFT> &F : C.Fdes) {
-      F.S->Offsets[F.Index].second = Offset;
+      F.S->Pieces[F.Index].OutputOff = Offset;
       Offset += alignTo(F.data().size(), sizeof(uintX_t));
     }
   }
@@ -1240,11 +1239,11 @@ template <class ELFT> void EHOutputSection<ELFT>::finalize() {
 template <class ELFT> void EHOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   const endianness E = ELFT::TargetEndianness;
   for (const Cie<ELFT> &C : Cies) {
-    size_t CieOffset = C.S->Offsets[C.Index].second;
+    size_t CieOffset = C.S->Pieces[C.Index].OutputOff;
     writeCieFde<ELFT>(Buf + CieOffset, C.data());
 
     for (const EHRegion<ELFT> &F : C.Fdes) {
-      size_t Offset = F.S->Offsets[F.Index].second;
+      size_t Offset = F.S->Pieces[F.Index].OutputOff;
       writeCieFde<ELFT>(Buf + Offset, F.data());
       write32<E>(Buf + Offset + 4, Offset + 4 - CieOffset); // Pointer
 
@@ -1284,32 +1283,30 @@ void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   StringRef Data((const char *)D.data(), D.size());
   uintX_t EntSize = S->getSectionHdr()->sh_entsize;
   this->Header.sh_entsize = EntSize;
-  MutableArrayRef<std::pair<uintX_t, uintX_t>> Offsets = S->Offsets;
 
   // If this is of type string, the contents are null-terminated strings.
   if (this->Header.sh_flags & SHF_STRINGS) {
-    for (unsigned I = 0, N = Offsets.size(); I != N; ++I) {
-      auto &P = Offsets[I];
-      if (P.second == MergeInputSection<ELFT>::PieceDead)
+    for (unsigned I = 0, N = S->Pieces.size(); I != N; ++I) {
+      SectionPiece &Piece = S->Pieces[I];
+      if (!Piece.Live)
         continue;
 
-      uintX_t Start = P.first;
-      uintX_t End = (I == N - 1) ? Data.size() : Offsets[I + 1].first;
+      uintX_t Start = Piece.InputOff;
+      uintX_t End = (I == N - 1) ? Data.size() : S->Pieces[I + 1].InputOff;
       StringRef Entry = Data.substr(Start, End - Start);
       uintX_t OutputOffset = Builder.add(Entry);
-      if (shouldTailMerge())
-        OutputOffset = MergeInputSection<ELFT>::PieceLive;
-      P.second = OutputOffset;
+      if (!shouldTailMerge())
+        Piece.OutputOff = OutputOffset;
     }
     return;
   }
 
   // If this is not of type string, every entry has the same size.
-  for (auto &P : Offsets) {
-    if (P.second == (uintX_t)-1)
+  for (SectionPiece &Piece : S->Pieces) {
+    if (!Piece.Live)
       continue;
-    StringRef Entry = Data.substr(P.first, EntSize);
-    P.second = Builder.add(Entry);
+    StringRef Entry = Data.substr(Piece.InputOff, EntSize);
+    Piece.OutputOff = Builder.add(Entry);
   }
 }
 

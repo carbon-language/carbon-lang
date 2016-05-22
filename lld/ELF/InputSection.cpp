@@ -414,13 +414,12 @@ typename ELFT::uint EHInputSection<ELFT>::getOffset(uintX_t Offset) {
   // identify the start of the output .eh_frame. Handle this special case.
   if (this->getSectionHdr()->sh_size == 0)
     return Offset;
-  std::pair<uintX_t, uintX_t> *I = this->getRangeAndSize(Offset).first;
-  uintX_t Base = I->second;
-  if (Base == uintX_t(-1))
+  SectionPiece *Piece = this->getRangeAndSize(Offset).first;
+  if (Piece->OutputOff == size_t(-1))
     return -1; // Not in the output
 
-  uintX_t Addend = Offset - I->first;
-  return Base + Addend;
+  uintX_t Addend = Offset - Piece->InputOff;
+  return Piece->OutputOff + Addend;
 }
 
 static size_t findNull(StringRef S, size_t EntSize) {
@@ -443,17 +442,14 @@ MergeInputSection<ELFT>::MergeInputSection(elf::ObjectFile<ELFT> *F,
   uintX_t EntSize = Header->sh_entsize;
   ArrayRef<uint8_t> D = this->getSectionData();
   StringRef Data((const char *)D.data(), D.size());
-  std::vector<std::pair<uintX_t, uintX_t>> &Offsets = this->Offsets;
 
-  uintX_t V = Config->GcSections ? MergeInputSection<ELFT>::PieceDead
-                                 : MergeInputSection<ELFT>::PieceLive;
   if (Header->sh_flags & SHF_STRINGS) {
     uintX_t Offset = 0;
     while (!Data.empty()) {
       size_t End = findNull(Data, EntSize);
       if (End == StringRef::npos)
         fatal("string is not null terminated");
-      Offsets.push_back(std::make_pair(Offset, V));
+      this->Pieces.emplace_back(Offset);
       uintX_t Size = End + EntSize;
       Data = Data.substr(Size);
       Offset += Size;
@@ -465,7 +461,7 @@ MergeInputSection<ELFT>::MergeInputSection(elf::ObjectFile<ELFT> *F,
   size_t Size = Data.size();
   assert((Size % EntSize) == 0);
   for (unsigned I = 0, N = Size; I != N; I += EntSize)
-    Offsets.push_back(std::make_pair(I, V));
+    this->Pieces.emplace_back(I);
 }
 
 template <class ELFT>
@@ -474,8 +470,7 @@ bool MergeInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
 }
 
 template <class ELFT>
-std::pair<std::pair<typename ELFT::uint, typename ELFT::uint> *,
-          typename ELFT::uint>
+std::pair<SectionPiece *, typename ELFT::uint>
 SplitInputSection<ELFT>::getRangeAndSize(uintX_t Offset) {
   ArrayRef<uint8_t> D = this->getSectionData();
   StringRef Data((const char *)D.data(), D.size());
@@ -485,37 +480,32 @@ SplitInputSection<ELFT>::getRangeAndSize(uintX_t Offset) {
 
   // Find the element this offset points to.
   auto I = std::upper_bound(
-      Offsets.begin(), Offsets.end(), Offset,
-      [](const uintX_t &A, const std::pair<uintX_t, uintX_t> &B) {
-        return A < B.first;
-      });
-  uintX_t End = I == Offsets.end() ? Data.size() : I->first;
+      Pieces.begin(), Pieces.end(), Offset,
+      [](const uintX_t &A, const SectionPiece &B) { return A < B.InputOff; });
+  uintX_t End = (I == Pieces.end()) ? Data.size() : I->InputOff;
   --I;
-  return std::make_pair(&*I, End);
+  return {&*I, End};
 }
 
 template <class ELFT>
 typename ELFT::uint MergeInputSection<ELFT>::getOffset(uintX_t Offset) {
-  std::pair<std::pair<uintX_t, uintX_t> *, uintX_t> T =
-      this->getRangeAndSize(Offset);
-  std::pair<uintX_t, uintX_t> *I = T.first;
+  std::pair<SectionPiece *, uintX_t> T = this->getRangeAndSize(Offset);
+  SectionPiece &Piece = *T.first;
   uintX_t End = T.second;
-  uintX_t Start = I->first;
+  assert(Piece.Live);
 
   // Compute the Addend and if the Base is cached, return.
-  uintX_t Addend = Offset - Start;
-  uintX_t &Base = I->second;
-  assert(Base != MergeInputSection<ELFT>::PieceDead);
-  if (Base != MergeInputSection<ELFT>::PieceLive)
-    return Base + Addend;
+  uintX_t Addend = Offset - Piece.InputOff;
+  if (Piece.OutputOff != size_t(-1))
+    return Piece.OutputOff + Addend;
 
   // Map the base to the offset in the output section and cache it.
   ArrayRef<uint8_t> D = this->getSectionData();
   StringRef Data((const char *)D.data(), D.size());
-  StringRef Entry = Data.substr(Start, End - Start);
+  StringRef Entry = Data.substr(Piece.InputOff, End - Piece.InputOff);
   auto *MOS = static_cast<MergeOutputSection<ELFT> *>(this->OutSec);
-  Base = MOS->getOffset(Entry);
-  return Base + Addend;
+  Piece.OutputOff = MOS->getOffset(Entry);
+  return Piece.OutputOff + Addend;
 }
 
 template <class ELFT>
