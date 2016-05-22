@@ -1865,8 +1865,8 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
 
   FilterNonExistent NonExistent(Path, D.getVFS());
 
-  // Check for FSF toolchain multilibs
-  MultilibSet FSFMipsMultilibs;
+  // Check for CodeScape MTI toolchain v1.2 and early.
+  MultilibSet MtiMipsMultilibsV1;
   {
     auto MArchMips32 = makeMultilib("/mips32")
                            .flag("+m32")
@@ -1908,7 +1908,7 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
 
     auto Nan2008 = makeMultilib("/nan2008").flag("+mnan=2008");
 
-    FSFMipsMultilibs =
+    MtiMipsMultilibsV1 =
         MultilibSet()
             .Either(MArchMips32, MArchMicroMips, MArchMips64r2, MArchMips64,
                     MArchDefault)
@@ -1984,7 +1984,8 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
         MultilibSet().Either(M32, M64, MAbiN32).FilterOut(NonExistent);
   }
 
-  MultilibSet ImgMultilibs;
+  // Check for CodeScape IMG toolchain v1.2 and early.
+  MultilibSet ImgMultilibsV1;
   {
     auto Mips64r6 = makeMultilib("/mips64r6").flag("+m64").flag("-m32");
 
@@ -1993,7 +1994,7 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
     auto MAbi64 =
         makeMultilib("/64").flag("+mabi=n64").flag("-mabi=n32").flag("-m32");
 
-    ImgMultilibs =
+    ImgMultilibsV1 =
         MultilibSet()
             .Maybe(Mips64r6)
             .Maybe(MAbi64)
@@ -2058,8 +2059,8 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
       TargetTriple.getOS() == llvm::Triple::Linux &&
       TargetTriple.getEnvironment() == llvm::Triple::GNU) {
     // Select mips-img-linux-gnu toolchain.
-    if (ImgMultilibs.select(Flags, Result.SelectedMultilib)) {
-      Result.Multilibs = ImgMultilibs;
+    if (ImgMultilibsV1.select(Flags, Result.SelectedMultilib)) {
+      Result.Multilibs = ImgMultilibsV1;
       return true;
     }
     return false;
@@ -2067,7 +2068,7 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
 
   // Sort candidates. Toolchain that best meets the directories goes first.
   // Then select the first toolchains matches command line flags.
-  MultilibSet *candidates[] = {&DebianMipsMultilibs, &FSFMipsMultilibs};
+  MultilibSet *candidates[] = {&DebianMipsMultilibs, &MtiMipsMultilibsV1};
   std::sort(
       std::begin(candidates), std::end(candidates),
       [](MultilibSet *a, MultilibSet *b) { return a->size() > b->size(); });
