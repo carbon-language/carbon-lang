@@ -977,9 +977,7 @@ EHRegion<ELFT>::EHRegion(EHInputSection<ELFT> *Sec, unsigned Index)
     : Sec(Sec), Index(Index) {}
 
 template <class ELFT> ArrayRef<uint8_t> EHRegion<ELFT>::data() const {
-  ArrayRef<uint8_t> SecData = Sec->getSectionData();
-  SectionPiece &Piece = Sec->Pieces[Index];
-  return SecData.slice(Piece.InputOff, Piece.Size);
+  return Sec->Pieces[Index].Data;
 }
 
 template <class ELFT>
@@ -1147,7 +1145,7 @@ void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *Sec,
     StringRef Entry((const char *)D.data(), Length);
 
     unsigned Index = Sec->Pieces.size();
-    Sec->Pieces.emplace_back(Offset, Length);
+    Sec->Pieces.emplace_back(Offset, D.slice(0, Length));
 
     uint32_t ID = read32<E>(D.data() + 4);
     if (ID == 0) {
@@ -1271,6 +1269,10 @@ template <class ELFT> void MergeOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   }
 }
 
+static StringRef toStringRef(ArrayRef<uint8_t> A) {
+  return {(const char *)A.data(), A.size()};
+}
+
 template <class ELFT>
 void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   auto *Sec = cast<MergeInputSection<ELFT>>(C);
@@ -1286,8 +1288,7 @@ void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
     SectionPiece &Piece = Sec->Pieces[I];
     if (!Piece.Live)
       continue;
-    StringRef Entry = Data.substr(Piece.InputOff, Piece.Size);
-    uintX_t OutputOffset = Builder.add(Entry);
+    uintX_t OutputOffset = Builder.add(toStringRef(Piece.Data));
     if (!IsString || !shouldTailMerge())
       Piece.OutputOff = OutputOffset;
   }

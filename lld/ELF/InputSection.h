@@ -132,11 +132,13 @@ template <class ELFT> InputSectionBase<ELFT> InputSectionBase<ELFT>::Discarded;
 
 // SectionPiece represents a piece of splittable section contents.
 struct SectionPiece {
-  SectionPiece(size_t Off, size_t Size)
-      : InputOff(Off), Size(Size), Live(!Config->GcSections) {}
+  SectionPiece(size_t Off, ArrayRef<uint8_t> Data)
+      : InputOff(Off), Data(Data), Live(!Config->GcSections) {}
+  size_t size() const { return Data.size(); }
+
   size_t InputOff;
-  size_t Size;
   size_t OutputOff = -1;
+  ArrayRef<uint8_t> Data; // slice of the input section
   bool Live;
 };
 
@@ -156,6 +158,7 @@ public:
   // rather than a single large blob of data.
   std::vector<SectionPiece> Pieces;
 
+  // Returns the SectionPiece at a given input section offset.
   SectionPiece *getSectionPiece(uintX_t Offset);
 };
 

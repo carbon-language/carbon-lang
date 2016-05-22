@@ -422,8 +422,9 @@ typename ELFT::uint EHInputSection<ELFT>::getOffset(uintX_t Offset) {
   return Piece->OutputOff + Addend;
 }
 
-static size_t findNull(StringRef S, size_t EntSize) {
+static size_t findNull(ArrayRef<uint8_t> A, size_t EntSize) {
   // Optimize the common case.
+  StringRef S((const char *)A.data(), A.size());
   if (EntSize == 1)
     return S.find(0);
 
@@ -440,8 +441,7 @@ MergeInputSection<ELFT>::MergeInputSection(elf::ObjectFile<ELFT> *F,
                                            const Elf_Shdr *Header)
     : SplitInputSection<ELFT>(F, Header, InputSectionBase<ELFT>::Merge) {
   uintX_t EntSize = Header->sh_entsize;
-  ArrayRef<uint8_t> D = this->getSectionData();
-  StringRef Data((const char *)D.data(), D.size());
+  ArrayRef<uint8_t> Data = this->getSectionData();
 
   if (Header->sh_flags & SHF_STRINGS) {
     uintX_t Offset = 0;
@@ -450,8 +450,8 @@ MergeInputSection<ELFT>::MergeInputSection(elf::ObjectFile<ELFT> *F,
       if (End == StringRef::npos)
         fatal("string is not null terminated");
       uintX_t Size = End + EntSize;
-      this->Pieces.emplace_back(Offset, Size);
-      Data = Data.substr(Size);
+      this->Pieces.emplace_back(Offset, Data.slice(0, Size));
+      Data = Data.slice(Size);
       Offset += Size;
     }
     return;
@@ -461,7 +461,7 @@ MergeInputSection<ELFT>::MergeInputSection(elf::ObjectFile<ELFT> *F,
   size_t Size = Data.size();
   assert((Size % EntSize) == 0);
   for (unsigned I = 0, N = Size; I != N; I += EntSize)
-    this->Pieces.emplace_back(I, EntSize);
+    this->Pieces.emplace_back(I, Data.slice(I, EntSize));
 }
 
 template <class ELFT>
@@ -498,7 +498,7 @@ typename ELFT::uint MergeInputSection<ELFT>::getOffset(uintX_t Offset) {
   // Map the base to the offset in the output section and cache it.
   ArrayRef<uint8_t> D = this->getSectionData();
   StringRef Data((const char *)D.data(), D.size());
-  StringRef Entry = Data.substr(Piece.InputOff, Piece.Size);
+  StringRef Entry = Data.substr(Piece.InputOff, Piece.size());
   auto *MOS = static_cast<MergeOutputSection<ELFT> *>(this->OutSec);
   Piece.OutputOff = MOS->getOffset(Entry);
   return Piece.OutputOff + Addend;
