@@ -328,7 +328,7 @@ private:
 template <class ELFT> struct EHRegion {
   typedef typename ELFT::uint uintX_t;
   EHRegion(EHInputSection<ELFT> *S, unsigned Index);
-  StringRef data() const;
+  ArrayRef<uint8_t> data() const;
   EHInputSection<ELFT> *S;
   unsigned Index;
 };

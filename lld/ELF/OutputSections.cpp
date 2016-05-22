@@ -976,12 +976,12 @@ template <class ELFT>
 EHRegion<ELFT>::EHRegion(EHInputSection<ELFT> *S, unsigned Index)
     : S(S), Index(Index) {}
 
-template <class ELFT> StringRef EHRegion<ELFT>::data() const {
+template <class ELFT> ArrayRef<uint8_t> EHRegion<ELFT>::data() const {
   ArrayRef<uint8_t> SecData = S->getSectionData();
   size_t Start = S->Pieces[Index].InputOff;
   size_t End = (Index == S->Pieces.size() - 1) ? SecData.size()
                                                : S->Pieces[Index + 1].InputOff;
-  return StringRef((const char *)SecData.data() + Start, End - Start);
+  return SecData.slice(Start, End - Start);
 }
 
 template <class ELFT>
@@ -1211,12 +1211,12 @@ void EHOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
 }
 
 template <class ELFT>
-static void writeCieFde(uint8_t *Buf, StringRef S) {
-  memcpy(Buf, S.data(), S.size());
+static void writeCieFde(uint8_t *Buf, ArrayRef<uint8_t> D) {
+  memcpy(Buf, D.data(), D.size());
 
   // Fix the size field. -4 since size does not include the size field itself.
   const endianness E = ELFT::TargetEndianness;
-  write32<E>(Buf, alignTo(S.size(), sizeof(typename ELFT::uint)) - 4);
+  write32<E>(Buf, alignTo(D.size(), sizeof(typename ELFT::uint)) - 4);
 }
 
 template <class ELFT> void EHOutputSection<ELFT>::finalize() {
