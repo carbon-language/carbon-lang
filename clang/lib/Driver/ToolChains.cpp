@@ -2055,6 +2055,17 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
     return false;
   }
 
+  if (TargetTriple.getVendor() == llvm::Triple::MipsTechnologies &&
+      TargetTriple.getOS() == llvm::Triple::Linux &&
+      TargetTriple.getEnvironment() == llvm::Triple::GNU) {
+    // Select mips-mti-linux-gnu toolchain.
+    if (MtiMipsMultilibsV1.select(Flags, Result.SelectedMultilib)) {
+      Result.Multilibs = MtiMipsMultilibsV1;
+      return true;
+    }
+    return false;
+  }
+
   if (TargetTriple.getVendor() == llvm::Triple::ImaginationTechnologies &&
       TargetTriple.getOS() == llvm::Triple::Linux &&
       TargetTriple.getEnvironment() == llvm::Triple::GNU) {
@@ -2066,19 +2077,10 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
     return false;
   }
 
-  // Sort candidates. Toolchain that best meets the directories goes first.
-  // Then select the first toolchains matches command line flags.
-  MultilibSet *candidates[] = {&DebianMipsMultilibs, &MtiMipsMultilibsV1};
-  std::sort(
-      std::begin(candidates), std::end(candidates),
-      [](MultilibSet *a, MultilibSet *b) { return a->size() > b->size(); });
-  for (const auto &candidate : candidates) {
-    if (candidate->select(Flags, Result.SelectedMultilib)) {
-      if (candidate == &DebianMipsMultilibs)
-        Result.BiarchSibling = Multilib();
-      Result.Multilibs = *candidate;
-      return true;
-    }
+  if (DebianMipsMultilibs.select(Flags, Result.SelectedMultilib)) {
+    Result.BiarchSibling = Multilib();
+    Result.Multilibs = DebianMipsMultilibs;
+    return true;
   }
 
   {
