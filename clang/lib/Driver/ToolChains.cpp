@@ -2115,21 +2115,21 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
                       .flag("+msoft-float")
                       .flag("-mmicromips");
     auto BeMicroHard = makeMultilib("/micromips-r6-hard")
-                              .flag("+EB")
-                              .flag("-msoft-float")
-                              .flag("+mmicromips");
+                           .flag("+EB")
+                           .flag("-msoft-float")
+                           .flag("+mmicromips");
     auto BeMicroSoft = makeMultilib("/micromips-r6-soft")
-                              .flag("+EB")
-                              .flag("+msoft-float")
-                              .flag("+mmicromips");
+                           .flag("+EB")
+                           .flag("+msoft-float")
+                           .flag("+mmicromips");
     auto ElMicroHard = makeMultilib("/micromipsel-r6-hard")
-                              .flag("+EL")
-                              .flag("-msoft-float")
-                              .flag("+mmicromips");
+                           .flag("+EL")
+                           .flag("-msoft-float")
+                           .flag("+mmicromips");
     auto ElMicroSoft = makeMultilib("/micromipsel-r6-soft")
-                              .flag("+EL")
-                              .flag("+msoft-float")
-                              .flag("+mmicromips");
+                           .flag("+EL")
+                           .flag("+msoft-float")
+                           .flag("+mmicromips");
 
     auto O32 =
         makeMultilib("/lib").osSuffix("").flag("-mabi=n32").flag("-mabi=n64");
@@ -2138,21 +2138,21 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
     auto N64 =
         makeMultilib("/lib64").osSuffix("").flag("-mabi=n32").flag("+mabi=n64");
 
-    ImgMultilibsV2 = MultilibSet()
-                         .Either({BeHard, BeSoft, ElHard, ElSoft, BeMicroHard,
-                                  BeMicroSoft, ElMicroHard, ElMicroSoft})
-                         .Either(O32, N32, N64)
-                         .FilterOut(NonExistent)
-                         .setIncludeDirsCallback([](const Multilib &M) {
-                           return std::vector<std::string>(
-                               {"/../../../../sysroot" + M.includeSuffix() +
-                                "/../usr/include"});
-                         })
-                         .setFilePathsCallback([](const Multilib &M) {
-                           return std::vector<std::string>(
-                               {"/../../../../mips-img-linux-gnu/lib" +
-                                M.gccSuffix()});
-                         });
+    ImgMultilibsV2 =
+        MultilibSet()
+            .Either({BeHard, BeSoft, ElHard, ElSoft, BeMicroHard, BeMicroSoft,
+                     ElMicroHard, ElMicroSoft})
+            .Either(O32, N32, N64)
+            .FilterOut(NonExistent)
+            .setIncludeDirsCallback([](const Multilib &M) {
+              return std::vector<std::string>({"/../../../../sysroot" +
+                                               M.includeSuffix() +
+                                               "/../usr/include"});
+            })
+            .setFilePathsCallback([](const Multilib &M) {
+              return std::vector<std::string>(
+                  {"/../../../../mips-img-linux-gnu/lib" + M.gccSuffix()});
+            });
   }
 
   StringRef CPUName;
