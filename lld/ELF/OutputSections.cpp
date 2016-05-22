@@ -978,11 +978,8 @@ EHRegion<ELFT>::EHRegion(EHInputSection<ELFT> *Sec, unsigned Index)
 
 template <class ELFT> ArrayRef<uint8_t> EHRegion<ELFT>::data() const {
   ArrayRef<uint8_t> SecData = Sec->getSectionData();
-  size_t Start = Sec->Pieces[Index].InputOff;
-  size_t End = (Index == Sec->Pieces.size() - 1)
-                   ? SecData.size()
-                   : Sec->Pieces[Index + 1].InputOff;
-  return SecData.slice(Start, End - Start);
+  SectionPiece &Piece = Sec->Pieces[Index];
+  return SecData.slice(Piece.InputOff, Piece.Size);
 }
 
 template <class ELFT>
@@ -1279,35 +1276,20 @@ void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   auto *Sec = cast<MergeInputSection<ELFT>>(C);
   Sec->OutSec = this;
   this->updateAlign(Sec->Align);
+  this->Header.sh_entsize = Sec->getSectionHdr()->sh_entsize;
 
   ArrayRef<uint8_t> D = Sec->getSectionData();
   StringRef Data((const char *)D.data(), D.size());
-  uintX_t EntSize = Sec->getSectionHdr()->sh_entsize;
-  this->Header.sh_entsize = EntSize;
+  bool IsString = this->Header.sh_flags & SHF_STRINGS;
 
-  // If this is of type string, the contents are null-terminated strings.
-  if (this->Header.sh_flags & SHF_STRINGS) {
-    for (unsigned I = 0, N = Sec->Pieces.size(); I != N; ++I) {
-      SectionPiece &Piece = Sec->Pieces[I];
-      if (!Piece.Live)
-        continue;
-
-      uintX_t Start = Piece.InputOff;
-      uintX_t End = (I == N - 1) ? Data.size() : Sec->Pieces[I + 1].InputOff;
-      StringRef Entry = Data.substr(Start, End - Start);
-      uintX_t OutputOffset = Builder.add(Entry);
-      if (!shouldTailMerge())
-        Piece.OutputOff = OutputOffset;
-    }
-    return;
-  }
-
-  // If this is not of type string, every entry has the same size.
-  for (SectionPiece &Piece : Sec->Pieces) {
+  for (size_t I = 0, N = Sec->Pieces.size(); I != N; ++I) {
+    SectionPiece &Piece = Sec->Pieces[I];
     if (!Piece.Live)
       continue;
-    StringRef Entry = Data.substr(Piece.InputOff, EntSize);
-    Piece.OutputOff = Builder.add(Entry);
+    StringRef Entry = Data.substr(Piece.InputOff, Piece.Size);
+    uintX_t OutputOffset = Builder.add(Entry);
+    if (!IsString || !shouldTailMerge())
+      Piece.OutputOff = OutputOffset;
   }
 }
 
