@@ -136,15 +136,14 @@ template <class ELFT> static bool isReserved(InputSectionBase<ELFT> *Sec) {
 // Starting from GC-root sections, this function visits all reachable
 // sections to set their "Live" bits.
 template <class ELFT> void elf::markLive() {
-  typedef typename ELFT::uint uintX_t;
   SmallVector<InputSection<ELFT> *, 256> Q;
 
   auto Enqueue = [&](ResolvedReloc<ELFT> R) {
     if (!R.Sec)
       return;
     if (auto *MS = dyn_cast<MergeInputSection<ELFT>>(R.Sec)) {
-      std::pair<SectionPiece *, uintX_t> T = MS->getRangeAndSize(R.Offset);
-      T.first->Live = true;
+      SectionPiece *Piece = MS->getSectionPiece(R.Offset);
+      Piece->Live = true;
     }
     if (R.Sec->Live)
       return;

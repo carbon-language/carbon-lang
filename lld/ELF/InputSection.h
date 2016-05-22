@@ -132,8 +132,10 @@ template <class ELFT> InputSectionBase<ELFT> InputSectionBase<ELFT>::Discarded;
 
 // SectionPiece represents a piece of splittable section contents.
 struct SectionPiece {
-  SectionPiece(size_t I) : InputOff(I), Live(!Config->GcSections) {}
+  SectionPiece(size_t Off, size_t Size)
+      : InputOff(Off), Size(Size), Live(!Config->GcSections) {}
   size_t InputOff;
+  size_t Size;
   size_t OutputOff = -1;
   bool Live;
 };
@@ -154,7 +156,7 @@ public:
   // rather than a single large blob of data.
   std::vector<SectionPiece> Pieces;
 
-  std::pair<SectionPiece *, uintX_t> getRangeAndSize(uintX_t Offset);
+  SectionPiece *getSectionPiece(uintX_t Offset);
 };
 
 // This corresponds to a SHF_MERGE section of an input file.

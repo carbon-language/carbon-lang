@@ -1142,15 +1142,15 @@ void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *Sec,
 
   DenseMap<uintX_t, uintX_t> OffsetToIndex;
   while (!D.empty()) {
-    unsigned Index = Sec->Pieces.size();
-    Sec->Pieces.emplace_back(Offset);
-
     uintX_t Length = readEntryLength<ELFT>(D);
     // If CIE/FDE data length is zero then Length is 4, this
     // shall be considered a terminator and processing shall end.
     if (Length == 4)
       break;
     StringRef Entry((const char *)D.data(), Length);
+
+    unsigned Index = Sec->Pieces.size();
+    Sec->Pieces.emplace_back(Offset, Length);
 
     uint32_t ID = read32<E>(D.data() + 4);
     if (ID == 0) {
