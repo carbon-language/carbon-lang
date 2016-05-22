@@ -354,7 +354,7 @@ private:
   std::vector<SectionPiece> splitInputSection(const EHInputSection<ELFT> *Sec);
 
   template <class RelTy>
-  CieRecord &addCie(SectionPiece &Piece, EHInputSection<ELFT> *Sec,
+  CieRecord *addCie(SectionPiece &Piece, EHInputSection<ELFT> *Sec,
                     ArrayRef<RelTy> Rels);
 
   template <class RelTy>

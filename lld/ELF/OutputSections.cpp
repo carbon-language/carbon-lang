@@ -1125,7 +1125,7 @@ EHOutputSection<ELFT>::splitInputSection(const EHInputSection<ELFT> *Sec) {
 // and where their relocations point to.
 template <class ELFT>
 template <class RelTy>
-CieRecord &EHOutputSection<ELFT>::addCie(SectionPiece &Piece,
+CieRecord *EHOutputSection<ELFT>::addCie(SectionPiece &Piece,
                                          EHInputSection<ELFT> *Sec,
                                          ArrayRef<RelTy> Rels) {
   const endianness E = ELFT::TargetEndianness;
@@ -1137,14 +1137,14 @@ CieRecord &EHOutputSection<ELFT>::addCie(SectionPiece &Piece,
     Personality = &Sec->getFile()->getRelocTargetSym(*Rel);
 
   // Search for an existing CIE by CIE contents/relocation target pair.
-  CieRecord &Cie = CieMap[{Piece.Data, Personality}];
+  CieRecord *Cie = &CieMap[{Piece.Data, Personality}];
 
   // If not found, create a new one.
-  if (Cie.Piece == nullptr) {
-    Cie.Piece = &Piece;
+  if (Cie->Piece == nullptr) {
+    Cie->Piece = &Piece;
     if (Config->EhFrameHdr)
-      Cie.FdeEncoding = getFdeEncoding(Piece.Data);
-    Cies.push_back(&Cie);
+      Cie->FdeEncoding = getFdeEncoding(Piece.Data);
+    Cies.push_back(Cie);
   }
   return Cie;
 }
@@ -1184,14 +1184,14 @@ template <class RelTy>
 void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *Sec,
                                           ArrayRef<RelTy> Rels) {
   SectionPiece &CiePiece = Sec->Pieces[0];
-  CieRecord &Cie = addCie(CiePiece, Sec, Rels);
+  CieRecord *Cie = addCie(CiePiece, Sec, Rels);
 
   for (size_t I = 1, End = Sec->Pieces.size(); I != End; ++I) {
     SectionPiece &FdePiece = Sec->Pieces[I];
     validateFde<ELFT>(FdePiece);
     if (!isFdeLive(FdePiece, Sec, Rels))
       continue;
-    Cie.FdePieces.push_back(&FdePiece);
+    Cie->FdePieces.push_back(&FdePiece);
     Out<ELFT>::EhFrameHdr->reserveFde();
   }
 }
