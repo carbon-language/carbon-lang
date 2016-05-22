@@ -23,6 +23,7 @@ namespace lld {
 namespace elf {
 
 class SymbolBody;
+struct SectionPiece;
 template <class ELFT> class SymbolTable;
 template <class ELFT> class SymbolTableSection;
 template <class ELFT> class StringTableSection;
@@ -324,21 +325,13 @@ private:
   llvm::StringTableBuilder Builder;
 };
 
-// FDE or CIE
-template <class ELFT> struct EHRegion {
-  typedef typename ELFT::uint uintX_t;
-  EHRegion(EHInputSection<ELFT> *Sec, unsigned Index);
-  ArrayRef<uint8_t> data() const;
-  EHInputSection<ELFT> *Sec;
-  unsigned Index;
+struct CieRecord {
+  SectionPiece *Piece = nullptr;
+  std::vector<SectionPiece *> FdePieces;
+  uint8_t FdeEncoding = 0;
 };
 
-template <class ELFT> struct CieRecord : public EHRegion<ELFT> {
-  CieRecord(EHInputSection<ELFT> *S, unsigned Index);
-  std::vector<EHRegion<ELFT>> Fdes;
-  uint8_t FdeEncoding;
-};
-
+// Output section for .eh_frame.
 template <class ELFT>
 class EHOutputSection final : public OutputSectionBase<ELFT> {
 public:
@@ -352,19 +345,30 @@ public:
   void
   forEachInputSection(std::function<void(InputSectionBase<ELFT> *)> F) override;
 
-  template <class RelTy>
-  void addSectionAux(EHInputSection<ELFT> *S, llvm::ArrayRef<RelTy> Rels);
-
   void addSection(InputSectionBase<ELFT> *S) override;
 
 private:
+  template <class RelTy>
+  void addSectionAux(EHInputSection<ELFT> *S, llvm::ArrayRef<RelTy> Rels);
+
+  std::vector<SectionPiece> splitInputSection(const EHInputSection<ELFT> *Sec);
+
+  template <class RelTy>
+  CieRecord &addCie(SectionPiece &Piece, EHInputSection<ELFT> *Sec,
+                    ArrayRef<RelTy> Rels);
+
+  template <class RelTy>
+  bool isFdeLive(SectionPiece &Piece, EHInputSection<ELFT> *Sec,
+                 ArrayRef<RelTy> Rels);
+
   uint8_t getFdeEncoding(ArrayRef<uint8_t> D);
 
   std::vector<EHInputSection<ELFT> *> Sections;
-  std::vector<CieRecord<ELFT>> Cies;
+  std::vector<CieRecord *> Cies;
 
-  // Maps CIE content + personality to a index in Cies.
-  llvm::DenseMap<std::pair<StringRef, SymbolBody *>, uintX_t> CieMap;
+  // CIE records are uniquified by their contents and personality functions.
+  llvm::DenseMap<std::pair<ArrayRef<uint8_t>, SymbolBody *>, CieRecord> CieMap;
+
   bool Finalized = false;
 };
 
