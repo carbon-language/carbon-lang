@@ -1960,60 +1960,6 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
     });
   }
 
-  // Check for Code Sourcery toolchain multilibs
-  MultilibSet CSMipsMultilibs;
-  {
-    auto MArchMips16 = makeMultilib("/mips16").flag("+m32").flag("+mips16");
-
-    auto MArchMicroMips =
-        makeMultilib("/micromips").flag("+m32").flag("+mmicromips");
-
-    auto MArchDefault = makeMultilib("").flag("-mips16").flag("-mmicromips");
-
-    auto UCLibc = makeMultilib("/uclibc").flag("+muclibc");
-
-    auto SoftFloat = makeMultilib("/soft-float").flag("+msoft-float");
-
-    auto Nan2008 = makeMultilib("/nan2008").flag("+mnan=2008");
-
-    auto DefaultFloat =
-        makeMultilib("").flag("-msoft-float").flag("-mnan=2008");
-
-    auto BigEndian = makeMultilib("").flag("+EB").flag("-EL");
-
-    auto LittleEndian = makeMultilib("/el").flag("+EL").flag("-EB");
-
-    // Note that this one's osSuffix is ""
-    auto MAbi64 = makeMultilib("")
-                      .gccSuffix("/64")
-                      .includeSuffix("/64")
-                      .flag("+mabi=n64")
-                      .flag("-mabi=n32")
-                      .flag("-m32");
-
-    CSMipsMultilibs =
-        MultilibSet()
-            .Either(MArchMips16, MArchMicroMips, MArchDefault)
-            .Maybe(UCLibc)
-            .Either(SoftFloat, Nan2008, DefaultFloat)
-            .FilterOut("/micromips/nan2008")
-            .FilterOut("/mips16/nan2008")
-            .Either(BigEndian, LittleEndian)
-            .Maybe(MAbi64)
-            .FilterOut("/mips16.*/64")
-            .FilterOut("/micromips.*/64")
-            .FilterOut(NonExistent)
-            .setIncludeDirsCallback([](const Multilib &M) {
-              std::vector<std::string> Dirs({"/include"});
-              if (StringRef(M.includeSuffix()).startswith("/uclibc"))
-                Dirs.push_back(
-                    "/../../../../mips-linux-gnu/libc/uclibc/usr/include");
-              else
-                Dirs.push_back("/../../../../mips-linux-gnu/libc/usr/include");
-              return Dirs;
-            });
-  }
-
   MultilibSet AndroidMipsMultilibs =
       MultilibSet()
           .Maybe(Multilib("/mips-r2").flag("+march=mips32r2"))
@@ -2121,8 +2067,7 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
 
   // Sort candidates. Toolchain that best meets the directories goes first.
   // Then select the first toolchains matches command line flags.
-  MultilibSet *candidates[] = {&DebianMipsMultilibs, &FSFMipsMultilibs,
-                               &CSMipsMultilibs};
+  MultilibSet *candidates[] = {&DebianMipsMultilibs, &FSFMipsMultilibs};
   std::sort(
       std::begin(candidates), std::end(candidates),
       [](MultilibSet *a, MultilibSet *b) { return a->size() > b->size(); });
