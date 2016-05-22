@@ -3138,14 +3138,21 @@ def VMOVZPQILo2PQIZrm : AVX512XSI<0x7E, MRMSrcMem, (outs VR128X:$dst),
                                  EVEX_CD8<8, CD8VT8>;
 
 let Predicates = [HasAVX512] in {
+  let AddedComplexity = 15 in {
+    def : Pat<(v4i32 (X86vzmovl (v4i32 (scalar_to_vector GR32:$src)))),
+              (VMOVDI2PDIZrr GR32:$src)>;
+
+    def : Pat<(v2i64 (X86vzmovl (v2i64 (scalar_to_vector GR64:$src)))),
+              (VMOV64toPQIZrr GR64:$src)>;
+
+    def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
+                                 (v2i64 (scalar_to_vector GR64:$src)),(iPTR 0)))),
+              (SUBREG_TO_REG (i64 0), (VMOV64toPQIZrr GR64:$src), sub_xmm)>;
+  }
   // AVX 128-bit movd/movq instruction write zeros in the high 128-bit part.
   let AddedComplexity = 20 in {
     def : Pat<(v4i32 (X86vzmovl (v4i32 (scalar_to_vector (loadi32 addr:$src))))),
               (VMOVDI2PDIZrm addr:$src)>;
-    def : Pat<(v2i64 (X86vzmovl (v2i64 (scalar_to_vector GR64:$src)))),
-              (VMOV64toPQIZrr GR64:$src)>;
-    def : Pat<(v4i32 (X86vzmovl (v4i32 (scalar_to_vector GR32:$src)))),
-              (VMOVDI2PDIZrr GR32:$src)>;
 
     def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
               (VMOVDI2PDIZrm addr:$src)>;
@@ -3157,17 +3164,14 @@ let Predicates = [HasAVX512] in {
             (VMOVZPQILo2PQIZrr VR128X:$src)>;
     def : Pat<(v2i64 (X86vzload addr:$src)),
             (VMOVZPQILo2PQIZrm addr:$src)>;
+    def : Pat<(v4i64 (X86vzload addr:$src)),
+              (SUBREG_TO_REG (i64 0), (VMOVZPQILo2PQIZrm addr:$src), sub_xmm)>;
   }
 
   // Use regular 128-bit instructions to match 256-bit scalar_to_vec+zext.
   def : Pat<(v8i32 (X86vzmovl (insert_subvector undef,
                                (v4i32 (scalar_to_vector GR32:$src)),(iPTR 0)))),
             (SUBREG_TO_REG (i32 0), (VMOVDI2PDIZrr GR32:$src), sub_xmm)>;
-  def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
-                               (v2i64 (scalar_to_vector GR64:$src)),(iPTR 0)))),
-            (SUBREG_TO_REG (i64 0), (VMOV64toPQIZrr GR64:$src), sub_xmm)>;
-  def : Pat<(v4i64 (X86vzload addr:$src)),
-            (SUBREG_TO_REG (i64 0), (VMOVZPQILo2PQIZrm addr:$src), sub_xmm)>;
 
   // Use regular 128-bit instructions to match 512-bit scalar_to_vec+zext.
   def : Pat<(v8i64 (X86vzload addr:$src)),
