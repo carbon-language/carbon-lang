@@ -629,19 +629,9 @@ def VINSERTPSzrm: AVX512AIi8<0x21, MRMSrcMem, (outs VR128X:$dst),
 // AVX-512 VECTOR EXTRACT
 //---
 
-multiclass vextract_for_size_first_position_lowering<X86VectorVTInfo From,
-                                                     X86VectorVTInfo To> {
-  // A subvector extract from the first vector position is
-  // a subregister copy that needs no instruction.
-  def NAME # To.NumElts:
-      Pat<(To.VT (extract_subvector (From.VT From.RC:$src),(iPTR 0))),
-          (To.VT (EXTRACT_SUBREG (From.VT From.RC:$src), To.SubRegIdx))>;
-}
-
 multiclass vextract_for_size<int Opcode,
                                     X86VectorVTInfo From, X86VectorVTInfo To,
-                                    PatFrag vextract_extract> :
-  vextract_for_size_first_position_lowering<From, To> {
+                                    PatFrag vextract_extract> {
 
   let hasSideEffects = 0, ExeDomain = To.ExeDomain in {
     // use AVX512_maskable_in_asm (AVX512_maskable can't be used due to
@@ -704,9 +694,7 @@ multiclass vextract_for_size<int Opcode,
 // Codegen pattern for the alternative types
 multiclass vextract_for_size_lowering<string InstrStr, X86VectorVTInfo From,
                 X86VectorVTInfo To, PatFrag vextract_extract,
-                SDNodeXForm EXTRACT_get_vextract_imm, list<Predicate> p> :
-  vextract_for_size_first_position_lowering<From, To> {
-
+                SDNodeXForm EXTRACT_get_vextract_imm, list<Predicate> p> {
   let Predicates = p in {
      def : Pat<(vextract_extract:$ext (From.VT From.RC:$src1), (iPTR imm)),
                (To.VT (!cast<Instruction>(InstrStr#"rr")
@@ -794,9 +782,39 @@ defm : vextract_for_size_lowering<"VEXTRACTI64x4Z", v32i16_info, v16i16x_info,
 defm : vextract_for_size_lowering<"VEXTRACTI64x4Z", v64i8_info, v32i8x_info,
                  vextract256_extract, EXTRACT_get_vextract256_imm, [HasAVX512]>;
 
+// A 128-bit subvector extract from the first 256-bit vector position
+// is a subregister copy that needs no instruction.
+def : Pat<(v2i64 (extract_subvector (v8i64 VR512:$src), (iPTR 0))),
+          (v2i64 (EXTRACT_SUBREG (v8i64 VR512:$src), sub_xmm))>;
+def : Pat<(v2f64 (extract_subvector (v8f64 VR512:$src), (iPTR 0))),
+          (v2f64 (EXTRACT_SUBREG (v8f64 VR512:$src), sub_xmm))>;
+def : Pat<(v4i32 (extract_subvector (v16i32 VR512:$src), (iPTR 0))),
+          (v4i32 (EXTRACT_SUBREG (v16i32 VR512:$src), sub_xmm))>;
+def : Pat<(v4f32 (extract_subvector (v16f32 VR512:$src), (iPTR 0))),
+          (v4f32 (EXTRACT_SUBREG (v16f32 VR512:$src), sub_xmm))>;
+def : Pat<(v8i16 (extract_subvector (v32i16 VR512:$src), (iPTR 0))),
+          (v8i16 (EXTRACT_SUBREG (v32i16 VR512:$src), sub_xmm))>;
+def : Pat<(v16i8 (extract_subvector (v64i8 VR512:$src), (iPTR 0))),
+          (v16i8 (EXTRACT_SUBREG (v64i8 VR512:$src), sub_xmm))>;
+
+// A 256-bit subvector extract from the first 256-bit vector position
+// is a subregister copy that needs no instruction.
+def : Pat<(v4i64 (extract_subvector (v8i64 VR512:$src), (iPTR 0))),
+          (v4i64 (EXTRACT_SUBREG (v8i64 VR512:$src), sub_ymm))>;
+def : Pat<(v4f64 (extract_subvector (v8f64 VR512:$src), (iPTR 0))),
+          (v4f64 (EXTRACT_SUBREG (v8f64 VR512:$src), sub_ymm))>;
+def : Pat<(v8i32 (extract_subvector (v16i32 VR512:$src), (iPTR 0))),
+          (v8i32 (EXTRACT_SUBREG (v16i32 VR512:$src), sub_ymm))>;
+def : Pat<(v8f32 (extract_subvector (v16f32 VR512:$src), (iPTR 0))),
+          (v8f32 (EXTRACT_SUBREG (v16f32 VR512:$src), sub_ymm))>;
+def : Pat<(v16i16 (extract_subvector (v32i16 VR512:$src), (iPTR 0))),
+          (v16i16 (EXTRACT_SUBREG (v32i16 VR512:$src), sub_ymm))>;
+def : Pat<(v32i8 (extract_subvector (v64i8 VR512:$src), (iPTR 0))),
+          (v32i8 (EXTRACT_SUBREG (v64i8 VR512:$src), sub_ymm))>;
+
+let AddedComplexity = 25 in { // to give priority over vinsertf128rm
 // A 128-bit subvector insert to the first 512-bit vector position
 // is a subregister copy that needs no instruction.
-let AddedComplexity = 25 in { // to give priority over vinsertf128rm
 def : Pat<(v8i64 (insert_subvector undef, (v2i64 VR128X:$src), (iPTR 0))),
           (INSERT_SUBREG (v8i64 (IMPLICIT_DEF)), VR128X:$src, sub_xmm)>;
 def : Pat<(v8f64 (insert_subvector undef, (v2f64 VR128X:$src), (iPTR 0))),
@@ -810,6 +828,8 @@ def : Pat<(v32i16 (insert_subvector undef, (v8i16 VR128X:$src), (iPTR 0))),
 def : Pat<(v64i8 (insert_subvector undef, (v16i8 VR128X:$src), (iPTR 0))),
           (INSERT_SUBREG (v64i8 (IMPLICIT_DEF)), VR128X:$src, sub_xmm)>;
 
+// A 256-bit subvector insert to the first 512-bit vector position
+// is a subregister copy that needs no instruction.
 def : Pat<(v8i64 (insert_subvector undef, (v4i64 VR256X:$src), (iPTR 0))),
           (INSERT_SUBREG (v8i64 (IMPLICIT_DEF)), VR256X:$src, sub_ymm)>;
 def : Pat<(v8f64 (insert_subvector undef, (v4f64 VR256X:$src), (iPTR 0))),
