@@ -279,18 +279,14 @@ define <16 x i32> @test14(<16 x i32>%a, <16 x i32>%b) {
 ; KNL-LABEL: test14:
 ; KNL:       ## BB#0:
 ; KNL-NEXT:    vpsubd %zmm1, %zmm0, %zmm1
-; KNL-NEXT:    vpcmpgtd %zmm0, %zmm1, %k0
-; KNL-NEXT:    knotw %k0, %k0
-; KNL-NEXT:    knotw %k0, %k1
+; KNL-NEXT:    vpcmpgtd %zmm0, %zmm1, %k1
 ; KNL-NEXT:    vmovdqa32 %zmm1, %zmm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test14:
 ; SKX:       ## BB#0:
 ; SKX-NEXT:    vpsubd %zmm1, %zmm0, %zmm1
-; SKX-NEXT:    vpcmpgtd %zmm0, %zmm1, %k0
-; SKX-NEXT:    knotw %k0, %k0
-; SKX-NEXT:    knotw %k0, %k1
+; SKX-NEXT:    vpcmpgtd %zmm0, %zmm1, %k1
 ; SKX-NEXT:    vmovdqa32 %zmm1, %zmm0 {%k1} {z}
 ; SKX-NEXT:    retq
   %sub_r = sub <16 x i32> %a, %b
@@ -305,18 +301,14 @@ define <8 x i64> @test15(<8 x i64>%a, <8 x i64>%b) {
 ; KNL-LABEL: test15:
 ; KNL:       ## BB#0:
 ; KNL-NEXT:    vpsubq %zmm1, %zmm0, %zmm1
-; KNL-NEXT:    vpcmpgtq %zmm0, %zmm1, %k0
-; KNL-NEXT:    knotw %k0, %k0
-; KNL-NEXT:    knotw %k0, %k1
+; KNL-NEXT:    vpcmpgtq %zmm0, %zmm1, %k1
 ; KNL-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test15:
 ; SKX:       ## BB#0:
 ; SKX-NEXT:    vpsubq %zmm1, %zmm0, %zmm1
-; SKX-NEXT:    vpcmpgtq %zmm0, %zmm1, %k0
-; SKX-NEXT:    knotb %k0, %k0
-; SKX-NEXT:    knotw %k0, %k1
+; SKX-NEXT:    vpcmpgtq %zmm0, %zmm1, %k1
 ; SKX-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
 ; SKX-NEXT:    retq
   %sub_r = sub <8 x i64> %a, %b

@@ -2761,6 +2761,17 @@ def : Pat<(v16i32 (vselect VK16WM:$mask, (v16i32 immAllZerosV),
                            (v16i32 VR512:$src))),
                   (VMOVDQA32Zrrkz (KNOTWrr VK16WM:$mask), VR512:$src)>;
 
+// These patterns exist to prevent the above patterns from introducing a second
+// mask inversion when one already exists.
+def : Pat<(v8i64 (vselect (xor VK8:$mask, (v8i1 immAllOnesV)),
+                          (bc_v8i64 (v16i32 immAllZerosV)),
+                          (v8i64 VR512:$src))),
+                 (VMOVDQA64Zrrkz VK8:$mask, VR512:$src)>;
+def : Pat<(v16i32 (vselect (xor VK16:$mask, (v16i1 immAllOnesV)),
+                           (v16i32 immAllZerosV),
+                           (v16i32 VR512:$src))),
+                  (VMOVDQA32Zrrkz VK16WM:$mask, VR512:$src)>;
+
 // Move Int Doubleword to Packed Double Int
 //
 def VMOVDI2PDIZrr : AVX512BI<0x6E, MRMSrcReg, (outs VR128X:$dst), (ins GR32:$src),
