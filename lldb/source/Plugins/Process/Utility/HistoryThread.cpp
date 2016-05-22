@@ -75,8 +75,7 @@ lldb::StackFrameListSP
 HistoryThread::GetStackFrameList ()
 {
     // FIXME do not throw away the lock after we acquire it..
-    std::unique_lock<std::mutex> lock(m_framelist_mutex);
-    lock.release();
+    std::lock_guard<std::mutex> lock(m_framelist_mutex);
     if (m_framelist.get() == NULL)
     {
         m_framelist.reset (new StackFrameList (*this, StackFrameListSP(), true));
