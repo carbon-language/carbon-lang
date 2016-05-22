@@ -8984,75 +8984,6 @@ static void AddLibgcc(const llvm::Triple &Triple, const Driver &D,
     CmdArgs.push_back("-ldl");
 }
 
-static std::string getLinuxDynamicLinker(const ArgList &Args,
-                                         const toolchains::Linux &ToolChain) {
-  const llvm::Triple::ArchType Arch = ToolChain.getArch();
-  const llvm::Triple &Triple = ToolChain.getTriple();
-
-  if (Triple.isAndroid())
-    return Triple.isArch64Bit() ? "/system/bin/linker64" : "/system/bin/linker";
-
-  switch (Arch) {
-  default: llvm_unreachable("unsupported architecture");
-
-  case llvm::Triple::aarch64:
-    return "/lib/ld-linux-aarch64.so.1";
-  case llvm::Triple::aarch64_be:
-    return "/lib/ld-linux-aarch64_be.so.1";
-  case llvm::Triple::arm:
-  case llvm::Triple::thumb:
-  case llvm::Triple::armeb:
-  case llvm::Triple::thumbeb: {
-    const bool IsHardFloat =
-        Triple.getEnvironment() == llvm::Triple::GNUEABIHF ||
-        arm::getARMFloatABI(ToolChain, Args) == arm::FloatABI::Hard;
-
-    return IsHardFloat ? "/lib/ld-linux-armhf.so.3" : "/lib/ld-linux.so.3";
-  }
-  case llvm::Triple::mips:
-  case llvm::Triple::mipsel:
-  case llvm::Triple::mips64:
-  case llvm::Triple::mips64el: {
-    bool IsNaN2008 = mips::isNaN2008(Args, Triple);
-    bool LE = (Triple.getArch() == llvm::Triple::mipsel) ||
-              (Triple.getArch() == llvm::Triple::mips64el);
-
-    std::string LibDir = "/lib" + mips::getMipsABILibSuffix(Args, Triple);
-    StringRef LibName;
-    if (mips::isUCLibc(Args))
-      LibName = IsNaN2008 ? "ld-uClibc-mipsn8.so.0" : "ld-uClibc.so.0";
-    else if (!Triple.hasEnvironment() &&
-             Triple.getVendor() == llvm::Triple::VendorType::MipsTechnologies)
-      LibName = LE ? "ld-musl-mipsel.so.1" : "ld-musl-mips.so.1";
-    else
-      LibName = IsNaN2008 ? "ld-linux-mipsn8.so.1" : "ld.so.1";
-
-    return (LibDir + "/" + LibName).str();
-  }
-  case llvm::Triple::ppc:
-    return "/lib/ld.so.1";
-  case llvm::Triple::ppc64:
-    return (ppc::hasPPCAbiArg(Args, "elfv2")) ? "/lib64/ld64.so.2"
-                                              : "/lib64/ld64.so.1";
-  case llvm::Triple::ppc64le:
-    return (ppc::hasPPCAbiArg(Args, "elfv1")) ? "/lib64/ld64.so.1"
-                                              : "/lib64/ld64.so.2";
-  case llvm::Triple::sparc:
-  case llvm::Triple::sparcel:
-    return "/lib/ld-linux.so.2";
-  case llvm::Triple::sparcv9:
-    return "/lib64/ld-linux.so.2";
-  case llvm::Triple::systemz:
-    return "/lib/ld64.so.1";
-  case llvm::Triple::x86:
-    return "/lib/ld-linux.so.2";
-  case llvm::Triple::x86_64:
-    return (Triple.getEnvironment() == llvm::Triple::GNUX32)
-               ? "/libx32/ld-linux-x32.so.2"
-               : "/lib64/ld-linux-x86-64.so.2";
-  }
-}
-
 static void AddRunTimeLibs(const ToolChain &TC, const Driver &D,
                            ArgStringList &CmdArgs, const ArgList &Args) {
   // Make use of compiler-rt if --rtlib option is used
@@ -9212,7 +9143,7 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
     if (!Args.hasArg(options::OPT_shared)) {
       const std::string Loader =
-          D.DyldPrefix + getLinuxDynamicLinker(Args, ToolChain);
+          D.DyldPrefix + ToolChain.getDynamicLinker(Args);
       CmdArgs.push_back("-dynamic-linker");
       CmdArgs.push_back(Args.MakeArgString(Loader));
     }
