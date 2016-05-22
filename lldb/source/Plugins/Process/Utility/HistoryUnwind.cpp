@@ -65,7 +65,8 @@ bool
 HistoryUnwind::DoGetFrameInfoAtIndex (uint32_t frame_idx, lldb::addr_t& cfa, lldb::addr_t& pc)
 {
     // FIXME do not throw away the lock after we acquire it..
-    std::lock_guard<std::recursive_mutex> guard(m_unwind_mutex);
+    std::unique_lock<std::recursive_mutex> guard(m_unwind_mutex);
+    guard.release();
     if (frame_idx < m_pcs.size())
     {
         cfa = frame_idx;
