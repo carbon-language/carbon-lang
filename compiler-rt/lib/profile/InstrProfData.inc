@@ -600,9 +600,9 @@ ValueProfData *serializeValueProfDataFrom(ValueProfRecordClosure *Closure,
 /* Array of pointers. Each pointer points to a list
  * of value nodes associated with one value site.
  */
-#define INSTR_PROF_VALS_SECT_NAME __llvm_prf_values
+#define INSTR_PROF_VALS_SECT_NAME __llvm_prf_vals
 /* Value profile nodes section. */
-#define INSTR_PROF_VNODES_SECT_NAME __llvm_prf_vnodes
+#define INSTR_PROF_VNODES_SECT_NAME __llvm_prf_vnds
 #define INSTR_PROF_COVMAP_SECT_NAME __llvm_covmap
 
 #define INSTR_PROF_DATA_SECT_NAME_STR                                          \
