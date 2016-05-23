@@ -1558,6 +1558,7 @@ def EmptyBasesDocs : Documentation {
   let Content = [{
 The empty_bases attribute permits the compiler to utilize the
 empty-base-optimization more frequently.
+This attribute only applies to struct, class, and union types.
 It is only supported when using the Microsoft C++ ABI.
   }];
 }
@@ -1567,6 +1568,7 @@ def LayoutVersionDocs : Documentation {
   let Content = [{
 The layout_version attribute requests that the compiler utilize the class
 layout rules of a particular compiler version.
+This attribute only applies to struct, class, and union types.
 It is only supported when using the Microsoft C++ ABI.
   }];
 }

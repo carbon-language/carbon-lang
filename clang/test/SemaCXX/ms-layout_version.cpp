@@ -8,3 +8,4 @@ auto z = []() __declspec(layout_version(19)) { return nullptr; }; // expected-wa
 
 struct __declspec(layout_version(18)) X {}; // expected-error{{'layout_version' attribute parameter 18 is out of bounds}}
 struct __declspec(layout_version(20)) Y {}; // expected-error{{'layout_version' attribute parameter 20 is out of bounds}}
+struct __declspec(layout_version) Z {}; // expected-error{{attribute takes one argument}}
