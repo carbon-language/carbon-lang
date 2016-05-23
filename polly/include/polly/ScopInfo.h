@@ -1606,6 +1606,13 @@ private:
   /// @brief Simplify the SCoP representation
   void simplifySCoP(bool AfterHoisting, DominatorTree &DT, LoopInfo &LI);
 
+  /// @brief Return the access for the base ptr of @p MA if any.
+  MemoryAccess *lookupBasePtrAccess(MemoryAccess *MA);
+
+  /// @brief Check if the base ptr of @p MA is in the SCoP but not hoistable.
+  bool hasNonHoistableBasePtrInScop(MemoryAccess *MA,
+                                    __isl_keep isl_union_map *Writes);
+
   /// @brief Create equivalence classes for required invariant accesses.
   ///
   /// These classes will consolidate multiple required invariant loads from the
@@ -2036,10 +2043,16 @@ public:
   const InvariantLoadsSetTy &getRequiredInvariantLoads() const {
     return DC.RequiredILS;
   }
+
+  /// @brief Add @p LI to the set of required invariant loads.
+  void addRequiredInvariantLoad(LoadInst *LI) { DC.RequiredILS.insert(LI); }
+
   const BoxedLoopsSetTy &getBoxedLoops() const { return DC.BoxedLoopsSet; }
+
   bool isNonAffineSubRegion(const Region *R) {
     return DC.NonAffineSubRegionSet.count(R);
   }
+
   const MapInsnToMemAcc &getInsnToMemAccMap() const { return DC.InsnToMemAcc; }
 
   /// @brief Return the (possibly new) ScopArrayInfo object for @p Access.
