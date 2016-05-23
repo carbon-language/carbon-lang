@@ -300,7 +300,7 @@ bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
   if (FnHasLiveInYmm)
     addDirtySuccessor(MF.front());
 
-  // Re-visit all blocks that are successors of EXITS_DIRTY bsocks. Add
+  // Re-visit all blocks that are successors of EXITS_DIRTY blocks. Add
   // vzeroupper instructions to unguarded calls, and propagate EXITS_DIRTY
   // through PASS_THROUGH blocks.
   while (!DirtySuccessors.empty()) {
