@@ -355,8 +355,6 @@ private:
   template <class RelTy>
   void addSectionAux(EHInputSection<ELFT> *S, llvm::ArrayRef<RelTy> Rels);
 
-  std::vector<SectionPiece> splitInputSection(const EHInputSection<ELFT> *Sec);
-
   template <class RelTy>
   CieRecord *addCie(SectionPiece &Piece, EHInputSection<ELFT> *Sec,
                     ArrayRef<RelTy> Rels);
@@ -549,8 +547,6 @@ private:
     uint32_t Pc;
     uint32_t FdeVA;
   };
-
-  uintX_t getFdePc(uintX_t EhVA, const FdeData &F);
 
   std::vector<FdeData> Fdes;
 };
