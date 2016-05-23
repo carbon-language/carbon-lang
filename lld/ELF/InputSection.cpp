@@ -470,7 +470,8 @@ static size_t findNull(ArrayRef<uint8_t> A, size_t EntSize) {
 
 // Split SHF_STRINGS section. Such section is a sequence of
 // null-terminated strings.
-std::vector<SectionPiece> splitStrings(ArrayRef<uint8_t> Data, size_t EntSize) {
+static std::vector<SectionPiece> splitStrings(ArrayRef<uint8_t> Data,
+                                              size_t EntSize) {
   std::vector<SectionPiece> V;
   size_t Off = 0;
   while (!Data.empty()) {
@@ -487,8 +488,8 @@ std::vector<SectionPiece> splitStrings(ArrayRef<uint8_t> Data, size_t EntSize) {
 
 // Split non-SHF_STRINGS section. Such section is a sequence of
 // fixed size records.
-std::vector<SectionPiece>
-splitNonStrings(ArrayRef<uint8_t> Data, size_t EntSize) {
+static std::vector<SectionPiece> splitNonStrings(ArrayRef<uint8_t> Data,
+                                                 size_t EntSize) {
   std::vector<SectionPiece> V;
   size_t Size = Data.size();
   assert((Size % EntSize) == 0);
