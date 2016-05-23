@@ -319,10 +319,8 @@ bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
     if (BBState.ExitState == PASS_THROUGH) {
       DEBUG(dbgs() << "MBB #" << MBB.getNumber()
                    << " was Pass-through, is now Dirty-out.\n");
-      for (MachineBasicBlock::succ_iterator SI = MBB.succ_begin(),
-                                            SE = MBB.succ_end();
-           SI != SE; ++SI)
-        addDirtySuccessor(**SI);
+      for (MachineBasicBlock *Succ : MBB.successors())
+        addDirtySuccessor(*Succ);
     }
   }
 
