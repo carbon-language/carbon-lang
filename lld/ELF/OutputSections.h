@@ -333,13 +333,13 @@ struct CieRecord {
 
 // Output section for .eh_frame.
 template <class ELFT>
-class EHOutputSection final : public OutputSectionBase<ELFT> {
+class EhOutputSection final : public OutputSectionBase<ELFT> {
 public:
   typedef typename ELFT::uint uintX_t;
   typedef typename ELFT::Shdr Elf_Shdr;
   typedef typename ELFT::Rel Elf_Rel;
   typedef typename ELFT::Rela Elf_Rela;
-  EHOutputSection(StringRef Name, uint32_t Type, uintX_t Flags);
+  EhOutputSection(StringRef Name, uint32_t Type, uintX_t Flags);
   void writeTo(uint8_t *Buf) override;
   void finalize() override;
   void
@@ -539,12 +539,12 @@ public:
   void writeTo(uint8_t *Buf) override;
 
   void addFde(uint32_t Pc, uint32_t FdeVA);
-  void add(EHOutputSection<ELFT> *Sec);
+  void add(EhOutputSection<ELFT> *Sec);
   void reserveFde();
 
   bool Live = false;
 
-  EHOutputSection<ELFT> *Sec = nullptr;
+  EhOutputSection<ELFT> *Sec = nullptr;
 
 private:
   struct FdeData {

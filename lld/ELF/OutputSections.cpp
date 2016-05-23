@@ -752,7 +752,7 @@ template <class ELFT> void EhFrameHeader<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
-void EhFrameHeader<ELFT>::add(EHOutputSection<ELFT> *Sec) {
+void EhFrameHeader<ELFT>::add(EhOutputSection<ELFT> *Sec) {
   assert((!this->Sec || this->Sec == Sec) &&
          "multiple .eh_frame sections not supported for .eh_frame_hdr");
   Live = Config->EhFrameHdr;
@@ -921,14 +921,14 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
-EHOutputSection<ELFT>::EHOutputSection(StringRef Name, uint32_t Type,
+EhOutputSection<ELFT>::EhOutputSection(StringRef Name, uint32_t Type,
                                        uintX_t Flags)
     : OutputSectionBase<ELFT>(Name, Type, Flags) {
   Out<ELFT>::EhFrameHdr->add(this);
 }
 
 template <class ELFT>
-void EHOutputSection<ELFT>::forEachInputSection(
+void EhOutputSection<ELFT>::forEachInputSection(
     std::function<void(InputSectionBase<ELFT> *)> F) {
   for (EHInputSection<ELFT> *S : Sections)
     F(S);
@@ -982,7 +982,7 @@ template <class ELFT> static void skipAugP(ArrayRef<uint8_t> &D) {
 }
 
 template <class ELFT>
-uint8_t EHOutputSection<ELFT>::getFdeEncoding(ArrayRef<uint8_t> D) {
+uint8_t EhOutputSection<ELFT>::getFdeEncoding(ArrayRef<uint8_t> D) {
   if (D.size() < 8)
     fatal("CIE too small");
   D = D.slice(8);
@@ -1052,7 +1052,7 @@ static const RelTy *getReloc(IntTy Begin, IntTy Size, ArrayRef<RelTy> Rels) {
 // and where their relocations point to.
 template <class ELFT>
 template <class RelTy>
-CieRecord *EHOutputSection<ELFT>::addCie(SectionPiece &Piece,
+CieRecord *EhOutputSection<ELFT>::addCie(SectionPiece &Piece,
                                          EHInputSection<ELFT> *Sec,
                                          ArrayRef<RelTy> Rels) {
   const endianness E = ELFT::TargetEndianness;
@@ -1088,7 +1088,7 @@ template <class ELFT> static void validateFde(SectionPiece &Piece) {
 // points to a live function.
 template <class ELFT>
 template <class RelTy>
-bool EHOutputSection<ELFT>::isFdeLive(SectionPiece &Piece,
+bool EhOutputSection<ELFT>::isFdeLive(SectionPiece &Piece,
                                       EHInputSection<ELFT> *Sec,
                                       ArrayRef<RelTy> Rels) {
   const RelTy *Rel = getReloc(Piece.InputOff, Piece.size(), Rels);
@@ -1108,7 +1108,7 @@ bool EHOutputSection<ELFT>::isFdeLive(SectionPiece &Piece,
 // one and associates FDEs to the CIE.
 template <class ELFT>
 template <class RelTy>
-void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *Sec,
+void EhOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *Sec,
                                           ArrayRef<RelTy> Rels) {
   SectionPiece &CiePiece = Sec->Pieces[0];
   CieRecord *Cie = addCie(CiePiece, Sec, Rels);
@@ -1124,7 +1124,7 @@ void EHOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *Sec,
 }
 
 template <class ELFT>
-void EHOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
+void EhOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   auto *Sec = cast<EHInputSection<ELFT>>(C);
   Sec->OutSec = this;
   this->updateAlign(Sec->Align);
@@ -1157,7 +1157,7 @@ static void writeCieFde(uint8_t *Buf, ArrayRef<uint8_t> D) {
   write32<E>(Buf, alignTo(D.size(), sizeof(typename ELFT::uint)) - 4);
 }
 
-template <class ELFT> void EHOutputSection<ELFT>::finalize() {
+template <class ELFT> void EhOutputSection<ELFT>::finalize() {
   if (Finalized)
     return;
   Finalized = true;
@@ -1195,7 +1195,7 @@ template <class ELFT> static uint64_t readFdeAddr(uint8_t *Buf, int Size) {
 // Returns the VA to which a given FDE (on a mmap'ed buffer) is applied to.
 // We need it to create .eh_frame_hdr section.
 template <class ELFT>
-typename ELFT::uint EHOutputSection<ELFT>::getFdePc(uint8_t *Buf, size_t FdeOff,
+typename ELFT::uint EhOutputSection<ELFT>::getFdePc(uint8_t *Buf, size_t FdeOff,
                                                     uint8_t Enc) {
   // The starting address to which this FDE applies to is
   // stored at FDE + 8 byte.
@@ -1208,7 +1208,7 @@ typename ELFT::uint EHOutputSection<ELFT>::getFdePc(uint8_t *Buf, size_t FdeOff,
   fatal("unknown FDE size relative encoding");
 }
 
-template <class ELFT> void EHOutputSection<ELFT>::writeTo(uint8_t *Buf) {
+template <class ELFT> void EhOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   const endianness E = ELFT::TargetEndianness;
   for (CieRecord *Cie : Cies) {
     size_t CieOffset = Cie->Piece->OutputOff;
@@ -1774,10 +1774,10 @@ template class OutputSection<ELF32BE>;
 template class OutputSection<ELF64LE>;
 template class OutputSection<ELF64BE>;
 
-template class EHOutputSection<ELF32LE>;
-template class EHOutputSection<ELF32BE>;
-template class EHOutputSection<ELF64LE>;
-template class EHOutputSection<ELF64BE>;
+template class EhOutputSection<ELF32LE>;
+template class EhOutputSection<ELF32BE>;
+template class EhOutputSection<ELF64LE>;
+template class EhOutputSection<ELF64BE>;
 
 template class MipsReginfoOutputSection<ELF32LE>;
 template class MipsReginfoOutputSection<ELF32BE>;
