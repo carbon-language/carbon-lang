@@ -209,8 +209,6 @@ SDValue BPFTargetLowering::LowerFormalArguments(
   return Chain;
 }
 
-const unsigned long BPFTargetLowering::MaxArgs = 5;
-
 SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                      SmallVectorImpl<SDValue> &InVals) const {
   SelectionDAG &DAG = CLI.DAG;
@@ -243,8 +241,9 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
-  if (Outs.size() > MaxArgs)
+  if (Outs.size() >= 6) {
     fail(CLI.DL, DAG, "too many args to ", Callee);
+  }
 
   for (auto &Arg : Outs) {
     ISD::ArgFlagsTy Flags = Arg.Flags;
@@ -258,10 +257,10 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   Chain = DAG.getCALLSEQ_START(
       Chain, DAG.getConstant(NumBytes, CLI.DL, PtrVT, true), CLI.DL);
 
-  SmallVector<std::pair<unsigned, SDValue>, MaxArgs> RegsToPass;
+  SmallVector<std::pair<unsigned, SDValue>, 5> RegsToPass;
 
   // Walk arg assignments
-  for (unsigned i = 0, e = std::min(ArgLocs.size(), MaxArgs); i != e; ++i) {
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
     SDValue Arg = OutVals[i];
 
