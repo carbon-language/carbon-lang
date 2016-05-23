@@ -378,14 +378,89 @@ static Error handleCompressedSection(
   Contents = UncompressedSections.back();
   return Error();
 }
-Error buildDuplicateError(const std::pair<uint64_t, UnitIndexEntry> &PrevE,
-                          const CompileUnitIdentifiers &ID, StringRef DWPName) {
+
+static Error handleSection(
+    const StringMap<std::pair<MCSection *, DWARFSectionKind>> &KnownSections,
+    const MCSection *StrSection, const MCSection *StrOffsetSection,
+    const MCSection *TypesSection, const MCSection *CUIndexSection,
+    const MCSection *TUIndexSection, const SectionRef &Section, MCStreamer &Out,
+    SmallVector<SmallString<32>, 4> &UncompressedSections,
+    uint32_t (&ContributionOffsets)[8], UnitIndexEntry &CurEntry,
+    StringRef &CurStrSection, StringRef &CurStrOffsetSection,
+    std::vector<StringRef> &CurTypesSection, StringRef &InfoSection,
+    StringRef &AbbrevSection, StringRef &CurCUIndexSection,
+    StringRef &CurTUIndexSection) {
+  if (Section.isBSS())
+    return Error();
+
+  if (Section.isVirtual())
+    return Error();
+
+  StringRef Name;
+  if (std::error_code Err = Section.getName(Name))
+    return errorCodeToError(Err);
+
+  Name = Name.substr(Name.find_first_not_of("._"));
+
+  StringRef Contents;
+  if (auto Err = Section.getContents(Contents))
+    return errorCodeToError(Err);
+
+  if (auto Err = handleCompressedSection(UncompressedSections, Name, Contents))
+    return Err;
+
+  auto SectionPair = KnownSections.find(Name);
+  if (SectionPair == KnownSections.end())
+    return Error();
+
+  if (DWARFSectionKind Kind = SectionPair->second.second) {
+    auto Index = Kind - DW_SECT_INFO;
+    if (Kind != DW_SECT_TYPES) {
+      CurEntry.Contributions[Index].Offset = ContributionOffsets[Index];
+      ContributionOffsets[Index] +=
+          (CurEntry.Contributions[Index].Length = Contents.size());
+    }
+
+    switch (Kind) {
+    case DW_SECT_INFO:
+      InfoSection = Contents;
+      break;
+    case DW_SECT_ABBREV:
+      AbbrevSection = Contents;
+      break;
+    default:
+      break;
+    }
+  }
+
+  MCSection *OutSection = SectionPair->second.first;
+  if (OutSection == StrOffsetSection)
+    CurStrOffsetSection = Contents;
+  else if (OutSection == StrSection)
+    CurStrSection = Contents;
+  else if (OutSection == TypesSection)
+    CurTypesSection.push_back(Contents);
+  else if (OutSection == CUIndexSection)
+    CurCUIndexSection = Contents;
+  else if (OutSection == TUIndexSection)
+    CurTUIndexSection = Contents;
+  else {
+    Out.SwitchSection(OutSection);
+    Out.EmitBytes(Contents);
+  }
+  return Error();
+}
+
+static Error
+buildDuplicateError(const std::pair<uint64_t, UnitIndexEntry> &PrevE,
+                    const CompileUnitIdentifiers &ID, StringRef DWPName) {
   return make_error<DWPError>(
       std::string("Duplicate DWO ID (") + utohexstr(PrevE.first) + ") in " +
       buildDWODescription(PrevE.second.Name, PrevE.second.DWPName,
                           PrevE.second.DWOName) +
       " and " + buildDWODescription(ID.Name, DWPName, ID.DWOName));
 }
+
 static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
   const auto &MCOFI = *Out.getContext().getObjectFileInfo();
   MCSection *const StrSection = MCOFI.getDwarfStrDWOSection();
@@ -434,66 +509,14 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
     StringRef CurCUIndexSection;
     StringRef CurTUIndexSection;
 
-    for (const auto &Section : Obj.sections()) {
-      if (Section.isBSS())
-        continue;
-      if (Section.isVirtual())
-        continue;
-
-      StringRef Name;
-      if (std::error_code Err = Section.getName(Name))
-        return errorCodeToError(Err);
-
-      Name = Name.substr(Name.find_first_not_of("._"));
-
-      StringRef Contents;
-      if (auto Err = Section.getContents(Contents))
-        return errorCodeToError(Err);
-
-      if (auto Err =
-              handleCompressedSection(UncompressedSections, Name, Contents))
+    for (const auto &Section : Obj.sections())
+      if (auto Err = handleSection(
+              KnownSections, StrSection, StrOffsetSection, TypesSection,
+              CUIndexSection, TUIndexSection, Section, Out,
+              UncompressedSections, ContributionOffsets, CurEntry,
+              CurStrSection, CurStrOffsetSection, CurTypesSection, InfoSection,
+              AbbrevSection, CurCUIndexSection, CurTUIndexSection))
         return Err;
-
-      auto SectionPair = KnownSections.find(Name);
-      if (SectionPair == KnownSections.end())
-        continue;
-
-      if (DWARFSectionKind Kind = SectionPair->second.second) {
-        auto Index = Kind - DW_SECT_INFO;
-        if (Kind != DW_SECT_TYPES) {
-          CurEntry.Contributions[Index].Offset = ContributionOffsets[Index];
-          ContributionOffsets[Index] +=
-              (CurEntry.Contributions[Index].Length = Contents.size());
-        }
-
-        switch (Kind) {
-        case DW_SECT_INFO:
-          InfoSection = Contents;
-          break;
-        case DW_SECT_ABBREV:
-          AbbrevSection = Contents;
-          break;
-        default:
-          break;
-        }
-      }
-
-      MCSection *OutSection = SectionPair->second.first;
-      if (OutSection == StrOffsetSection)
-        CurStrOffsetSection = Contents;
-      else if (OutSection == StrSection)
-        CurStrSection = Contents;
-      else if (OutSection == TypesSection)
-        CurTypesSection.push_back(Contents);
-      else if (OutSection == CUIndexSection)
-        CurCUIndexSection = Contents;
-      else if (OutSection == TUIndexSection)
-        CurTUIndexSection = Contents;
-      else {
-        Out.SwitchSection(OutSection);
-        Out.EmitBytes(Contents);
-      }
-    }
 
     if (InfoSection.empty())
       continue;
