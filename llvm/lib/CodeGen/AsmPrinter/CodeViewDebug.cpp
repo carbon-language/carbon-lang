@@ -734,25 +734,25 @@ void CodeViewDebug::emitLocalVariable(const LocalVariable &Var) {
       continue;
 
     if (DefRange.InMemory) {
-      DefRangeRegisterRelSym Sym{};
+      DefRangeRegisterRelSym Sym(DefRange.CVRegister, 0, DefRange.DataOffset, 0,
+                                 0, 0, ArrayRef<LocalVariableAddrGap>());
       ulittle16_t SymKind = ulittle16_t(S_DEFRANGE_REGISTER_REL);
-      Sym.BaseRegister = DefRange.CVRegister;
-      Sym.Flags = 0; // Unclear what matters here.
-      Sym.BasePointerOffset = DefRange.DataOffset;
       BytePrefix +=
           StringRef(reinterpret_cast<const char *>(&SymKind), sizeof(SymKind));
-      BytePrefix += StringRef(reinterpret_cast<const char *>(&Sym),
-                              sizeof(Sym) - sizeof(LocalVariableAddrRange));
+      BytePrefix +=
+          StringRef(reinterpret_cast<const char *>(&Sym.Header),
+                    sizeof(Sym.Header) - sizeof(LocalVariableAddrRange));
     } else {
       assert(DefRange.DataOffset == 0 && "unexpected offset into register");
-      DefRangeRegisterSym Sym{};
+      // Unclear what matters here.
+      DefRangeRegisterSym Sym(DefRange.CVRegister, 0, 0, 0, 0,
+                              ArrayRef<LocalVariableAddrGap>());
       ulittle16_t SymKind = ulittle16_t(S_DEFRANGE_REGISTER);
-      Sym.Register = DefRange.CVRegister;
-      Sym.MayHaveNoName = 0; // Unclear what matters here.
       BytePrefix +=
           StringRef(reinterpret_cast<const char *>(&SymKind), sizeof(SymKind));
-      BytePrefix += StringRef(reinterpret_cast<const char *>(&Sym),
-                              sizeof(Sym) - sizeof(LocalVariableAddrRange));
+      BytePrefix +=
+          StringRef(reinterpret_cast<const char *>(&Sym.Header),
+                    sizeof(Sym.Header) - sizeof(LocalVariableAddrRange));
     }
     OS.EmitCVDefRangeDirective(DefRange.Ranges, BytePrefix);
   }
