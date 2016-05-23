@@ -363,6 +363,8 @@ private:
 
   uint8_t getFdeEncoding(ArrayRef<uint8_t> D);
 
+  uintX_t getFdePc(uint8_t *Buf, size_t Off, uint8_t Enc);
+
   std::vector<EHInputSection<ELFT> *> Sections;
   std::vector<CieRecord *> Cies;
 
@@ -536,8 +538,8 @@ public:
   EhFrameHeader();
   void writeTo(uint8_t *Buf) override;
 
-  void addFde(uint8_t Enc, size_t Off, uint8_t *PCRel);
-  void assignEhFrame(EHOutputSection<ELFT> *Sec);
+  void addFde(uint32_t Pc, uint32_t FdeVA);
+  void add(EHOutputSection<ELFT> *Sec);
   void reserveFde();
 
   bool Live = false;
@@ -546,14 +548,13 @@ public:
 
 private:
   struct FdeData {
-    uint8_t Enc;
-    size_t Off;
-    uint8_t *PCRel;
+    uint32_t Pc;
+    uint32_t FdeVA;
   };
 
   uintX_t getFdePc(uintX_t EhVA, const FdeData &F);
 
-  std::vector<FdeData> FdeList;
+  std::vector<FdeData> Fdes;
 };
 
 template <class ELFT> class BuildIdSection : public OutputSectionBase<ELFT> {

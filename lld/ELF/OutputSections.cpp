@@ -720,42 +720,6 @@ EhFrameHeader<ELFT>::EhFrameHeader()
   this->Header.sh_size = 12;
 }
 
-// We have to get PC values of FDEs. They depend on relocations
-// which are target specific, so we run this code after performing
-// all relocations. We read the values from ouput buffer according to the
-// encoding given for FDEs. Return value is an offset to the initial PC value
-// for the FDE.
-template <class ELFT>
-typename EhFrameHeader<ELFT>::uintX_t
-EhFrameHeader<ELFT>::getFdePc(uintX_t EhVA, const FdeData &F) {
-  const endianness E = ELFT::TargetEndianness;
-  uint8_t Size = F.Enc & 0x7;
-  if (Size == DW_EH_PE_absptr)
-    Size = sizeof(uintX_t) == 8 ? DW_EH_PE_udata8 : DW_EH_PE_udata4;
-  uint64_t PC;
-  switch (Size) {
-  case DW_EH_PE_udata2:
-    PC = read16<E>(F.PCRel);
-    break;
-  case DW_EH_PE_udata4:
-    PC = read32<E>(F.PCRel);
-    break;
-  case DW_EH_PE_udata8:
-    PC = read64<E>(F.PCRel);
-    break;
-  default:
-    fatal("unknown FDE size encoding");
-  }
-  switch (F.Enc & 0x70) {
-  case DW_EH_PE_absptr:
-    return PC;
-  case DW_EH_PE_pcrel:
-    return PC + EhVA + F.Off + 8;
-  default:
-    fatal("unknown FDE size relative encoding");
-  }
-}
-
 // .eh_frame_hdr contains a binary search table of pointers to FDEs.
 // Each entry of the search table consists of two values,
 // the starting PC from where FDEs covers, and the FDE's address.
@@ -763,36 +727,32 @@ EhFrameHeader<ELFT>::getFdePc(uintX_t EhVA, const FdeData &F) {
 template <class ELFT> void EhFrameHeader<ELFT>::writeTo(uint8_t *Buf) {
   const endianness E = ELFT::TargetEndianness;
 
-  uintX_t EhVA = Sec->getVA();
-  uintX_t VA = this->getVA();
+  // Sort the FDE list by their PC and uniqueify. Usually there is only
+  // one FDE for a PC (i.e. function), but if ICF merges two functions
+  // into one, there can be more than one FDEs pointing to the address.
+  auto Less = [](const FdeData &A, const FdeData &B) { return A.Pc < B.Pc; };
+  std::stable_sort(Fdes.begin(), Fdes.end(), Less);
+  auto Eq = [](const FdeData &A, const FdeData &B) { return A.Pc == B.Pc; };
+  Fdes.erase(std::unique(Fdes.begin(), Fdes.end(), Eq), Fdes.end());
 
-  // InitialPC -> Offset in .eh_frame, sorted by InitialPC, and deduplicate PCs.
-  // FIXME: Deduplication leaves unneeded null bytes at the end of the section.
-  std::map<uintX_t, size_t> PcToOffset;
-  for (const FdeData &F : FdeList)
-    PcToOffset[getFdePc(EhVA, F)] = F.Off;
-
-  // Write a header.
   Buf[0] = 1;
   Buf[1] = DW_EH_PE_pcrel | DW_EH_PE_sdata4;
   Buf[2] = DW_EH_PE_udata4;
   Buf[3] = DW_EH_PE_datarel | DW_EH_PE_sdata4;
-  uintX_t EhOff = EhVA - VA - 4;
-  write32<E>(Buf + 4, EhOff);
-  write32<E>(Buf + 8, PcToOffset.size());
+  write32<E>(Buf + 4, Sec->getVA() - this->getVA() - 4);
+  write32<E>(Buf + 8, Fdes.size());
   Buf += 12;
 
-  for (auto &I : PcToOffset) {
-    // The first four bytes are an offset to the initial PC value for the FDE.
-    write32<E>(Buf, I.first - VA);
-    // The last four bytes are an offset to the FDE data itself.
-    write32<E>(Buf + 4, EhVA + I.second - VA);
+  uintX_t VA = this->getVA();
+  for (FdeData &Fde : Fdes) {
+    write32<E>(Buf, Fde.Pc - VA);
+    write32<E>(Buf + 4, Fde.FdeVA - VA);
     Buf += 8;
   }
 }
 
 template <class ELFT>
-void EhFrameHeader<ELFT>::assignEhFrame(EHOutputSection<ELFT> *Sec) {
+void EhFrameHeader<ELFT>::add(EHOutputSection<ELFT> *Sec) {
   assert((!this->Sec || this->Sec == Sec) &&
          "multiple .eh_frame sections not supported for .eh_frame_hdr");
   Live = Config->EhFrameHdr;
@@ -800,10 +760,8 @@ void EhFrameHeader<ELFT>::assignEhFrame(EHOutputSection<ELFT> *Sec) {
 }
 
 template <class ELFT>
-void EhFrameHeader<ELFT>::addFde(uint8_t Enc, size_t Off, uint8_t *PCRel) {
-  if (Live && (Enc & 0xF0) == DW_EH_PE_datarel)
-    fatal("DW_EH_PE_datarel encoding unsupported for FDEs by .eh_frame_hdr");
-  FdeList.push_back(FdeData{Enc, Off, PCRel});
+void EhFrameHeader<ELFT>::addFde(uint32_t Pc, uint32_t FdeVA) {
+  Fdes.push_back({Pc, FdeVA});
 }
 
 template <class ELFT> void EhFrameHeader<ELFT>::reserveFde() {
@@ -966,7 +924,7 @@ template <class ELFT>
 EHOutputSection<ELFT>::EHOutputSection(StringRef Name, uint32_t Type,
                                        uintX_t Flags)
     : OutputSectionBase<ELFT>(Name, Type, Flags) {
-  Out<ELFT>::EhFrameHdr->assignEhFrame(this);
+  Out<ELFT>::EhFrameHdr->add(this);
 }
 
 template <class ELFT>
@@ -1217,6 +1175,39 @@ template <class ELFT> void EHOutputSection<ELFT>::finalize() {
   this->Header.sh_size = Off;
 }
 
+template <class ELFT> static uint64_t readFdeAddr(uint8_t *Buf, int Size) {
+  const endianness E = ELFT::TargetEndianness;
+  switch (Size) {
+  case DW_EH_PE_udata2:
+    return read16<E>(Buf);
+  case DW_EH_PE_udata4:
+    return read32<E>(Buf);
+  case DW_EH_PE_udata8:
+    return read64<E>(Buf);
+  case DW_EH_PE_absptr:
+    if (ELFT::Is64Bits)
+      return read64<E>(Buf);
+    return read32<E>(Buf);
+  }
+  fatal("unknown FDE size encoding");
+}
+
+// Returns the VA to which a given FDE (on a mmap'ed buffer) is applied to.
+// We need it to create .eh_frame_hdr section.
+template <class ELFT>
+typename ELFT::uint EHOutputSection<ELFT>::getFdePc(uint8_t *Buf, size_t FdeOff,
+                                                    uint8_t Enc) {
+  // The starting address to which this FDE applies to is
+  // stored at FDE + 8 byte.
+  size_t Off = FdeOff + 8;
+  uint64_t Addr = readFdeAddr<ELFT>(Buf + Off, Enc & 0x7);
+  if ((Enc & 0x70) == DW_EH_PE_absptr)
+    return Addr;
+  if ((Enc & 0x70) == DW_EH_PE_pcrel)
+    return Addr + this->getVA() + Off;
+  fatal("unknown FDE size relative encoding");
+}
+
 template <class ELFT> void EHOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   const endianness E = ELFT::TargetEndianness;
   for (CieRecord *Cie : Cies) {
@@ -1230,12 +1221,22 @@ template <class ELFT> void EHOutputSection<ELFT>::writeTo(uint8_t *Buf) {
       // FDE's second word should have the offset to an associated CIE.
       // Write it.
       write32<E>(Buf + Off + 4, Off + 4 - CieOffset);
-      Out<ELFT>::EhFrameHdr->addFde(Cie->FdeEncoding, Off, Buf + Off + 8);
     }
   }
 
   for (EHInputSection<ELFT> *S : Sections)
     S->relocate(Buf, nullptr);
+
+  // Construct .eh_frame_hdr. .eh_frame_hdr is a binary search table
+  // to get a FDE from an address to which FDE is applied to. So here
+  // we obtain two addresses and pass them to EhFrameHdr object.
+  for (CieRecord *Cie : Cies) {
+    for (SectionPiece *Fde : Cie->FdePieces) {
+      uintX_t Pc = getFdePc(Buf, Fde->OutputOff, Cie->FdeEncoding);
+      uintX_t FdeVA = this->getVA() + Fde->OutputOff;
+      Out<ELFT>::EhFrameHdr->addFde(Pc, FdeVA);
+    }
+  }
 }
 
 template <class ELFT>
