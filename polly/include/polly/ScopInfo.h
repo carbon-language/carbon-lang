@@ -1231,11 +1231,11 @@ public:
   /// @brief Add @p Access to this statement's list of accesses.
   void addAccess(MemoryAccess *Access);
 
-  /// @brief Remove the memory access in @p InvMAs.
+  /// @brief Remove a MemoryAccess from this statement.
   ///
-  /// Note that scalar accesses that are caused by any access in @p InvMAs will
+  /// Note that scalar accesses that are caused by MA will
   /// be eliminated too.
-  void removeMemoryAccesses(InvariantAccessesTy &InvMAs);
+  void removeMemoryAccess(MemoryAccess *MA);
 
   typedef MemoryAccessVec::iterator iterator;
   typedef MemoryAccessVec::const_iterator const_iterator;

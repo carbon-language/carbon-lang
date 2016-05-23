@@ -1706,22 +1706,19 @@ void ScopStmt::print(raw_ostream &OS) const {
 
 void ScopStmt::dump() const { print(dbgs()); }
 
-void ScopStmt::removeMemoryAccesses(InvariantAccessesTy &InvMAs) {
-  // Remove all memory accesses in @p InvMAs from this statement
-  // together with all scalar accesses that were caused by them.
+void ScopStmt::removeMemoryAccess(MemoryAccess *MA) {
+  // Remove the memory accesses from this statement
+  // together with all scalar accesses that were caused by it.
   // MK_Value READs have no access instruction, hence would not be removed by
   // this function. However, it is only used for invariant LoadInst accesses,
   // its arguments are always affine, hence synthesizable, and therefore there
   // are no MK_Value READ accesses to be removed.
-  for (const auto &InvMA : InvMAs) {
-    auto *MA = InvMA.MA;
-    auto Predicate = [&](MemoryAccess *Acc) {
-      return Acc->getAccessInstruction() == MA->getAccessInstruction();
-    };
-    MemAccs.erase(std::remove_if(MemAccs.begin(), MemAccs.end(), Predicate),
-                  MemAccs.end());
-    InstructionToAccess.erase(MA->getAccessInstruction());
-  }
+  auto Predicate = [&](MemoryAccess *Acc) {
+    return Acc->getAccessInstruction() == MA->getAccessInstruction();
+  };
+  MemAccs.erase(std::remove_if(MemAccs.begin(), MemAccs.end(), Predicate),
+                MemAccs.end());
+  InstructionToAccess.erase(MA->getAccessInstruction());
 }
 
 //===----------------------------------------------------------------------===//
@@ -3526,7 +3523,8 @@ void Scop::hoistInvariantLoads() {
         InvariantAccesses.push_back({Access, NHCtx});
 
     // Transfer the memory access from the statement to the SCoP.
-    Stmt.removeMemoryAccesses(InvariantAccesses);
+    for (auto InvMA : InvariantAccesses)
+      Stmt.removeMemoryAccess(InvMA.MA);
     addInvariantLoads(Stmt, InvariantAccesses);
   }
   isl_union_map_free(Writes);
