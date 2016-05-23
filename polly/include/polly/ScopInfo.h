@@ -2292,53 +2292,47 @@ class ScopInfo : public RegionPass {
   ///
   /// @param Inst       The Load/Store instruction that access the memory
   /// @param L          The parent loop of the instruction
-  /// @param R          The region on which to build the data access dictionary.
   ///
   /// @returns True if the access could be built, False otherwise.
-  bool buildAccessMultiDimFixed(MemAccInst Inst, Loop *L, Region *R);
+  bool buildAccessMultiDimFixed(MemAccInst Inst, Loop *L);
 
   /// @brief Try to build a multi-dimensional parameteric sized MemoryAccess
   ///        from the Load/Store instruction.
   ///
   /// @param Inst       The Load/Store instruction that access the memory
   /// @param L          The parent loop of the instruction
-  /// @param R          The region on which to build the data access dictionary.
   ///
   /// @returns True if the access could be built, False otherwise.
-  bool buildAccessMultiDimParam(MemAccInst Inst, Loop *L, Region *R);
+  bool buildAccessMultiDimParam(MemAccInst Inst, Loop *L);
 
   /// @brief Try to build a MemoryAccess for a memory intrinsic.
   ///
   /// @param Inst       The instruction that access the memory
   /// @param L          The parent loop of the instruction
-  /// @param R          The region on which to build the data access dictionary.
   ///
   /// @returns True if the access could be built, False otherwise.
-  bool buildAccessMemIntrinsic(MemAccInst Inst, Loop *L, Region *R);
+  bool buildAccessMemIntrinsic(MemAccInst Inst, Loop *L);
 
   /// @brief Try to build a MemoryAccess for a call instruction.
   ///
   /// @param Inst       The call instruction that access the memory
   /// @param L          The parent loop of the instruction
-  /// @param R          The region on which to build the data access dictionary.
   ///
   /// @returns True if the access could be built, False otherwise.
-  bool buildAccessCallInst(MemAccInst Inst, Loop *L, Region *R);
+  bool buildAccessCallInst(MemAccInst Inst, Loop *L);
 
   /// @brief Build a single-dimensional parameteric sized MemoryAccess
   ///        from the Load/Store instruction.
   ///
   /// @param Inst       The Load/Store instruction that access the memory
   /// @param L          The parent loop of the instruction
-  /// @param R          The region on which to build the data access dictionary.
-  void buildAccessSingleDim(MemAccInst Inst, Loop *L, Region *R);
+  void buildAccessSingleDim(MemAccInst Inst, Loop *L);
 
   /// @brief Build an instance of MemoryAccess from the Load/Store instruction.
   ///
   /// @param Inst       The Load/Store instruction that access the memory
   /// @param L          The parent loop of the instruction
-  /// @param R          The region on which to build the data access dictionary.
-  void buildMemoryAccess(MemAccInst Inst, Loop *L, Region *R);
+  void buildMemoryAccess(MemAccInst Inst, Loop *L);
 
   /// @brief Analyze and extract the cross-BB scalar dependences (or,
   ///        dataflow dependencies) of an instruction.
@@ -2356,35 +2350,31 @@ class ScopInfo : public RegionPass {
   /// @brief Create MemoryAccesses for the given PHI node in the given region.
   ///
   /// @param PHI                The PHI node to be handled
-  /// @param R                  The SCoP region
   /// @param NonAffineSubRegion The non affine sub-region @p PHI is in.
   /// @param IsExitBlock        Flag to indicate that @p PHI is in the exit BB.
-  void buildPHIAccesses(PHINode *PHI, Region &R, Region *NonAffineSubRegion,
+  void buildPHIAccesses(PHINode *PHI, Region *NonAffineSubRegion,
                         bool IsExitBlock = false);
 
   /// @brief Build the access functions for the subregion @p SR.
   ///
-  /// @param R            The SCoP region.
   /// @param SR           A subregion of @p R.
   /// @param InsnToMemAcc The Instruction to MemoryAccess mapping.
-  void buildAccessFunctions(Region &R, Region &SR);
+  void buildAccessFunctions(Region &SR);
 
   /// @brief Create ScopStmt for all BBs and non-affine subregions of @p SR.
   ///
-  /// @param R  The SCoP region.
   /// @param SR A subregion of @p R.
   ///
   /// Some of the statments might be optimized away later when they do not
   /// access any memory and thus have no effect.
-  void buildStmts(Region &R, Region &SR);
+  void buildStmts(Region &SR);
 
   /// @brief Build the access functions for the basic block @p BB
   ///
-  /// @param R                  The SCoP region.
   /// @param BB                 A basic block in @p R.
   /// @param NonAffineSubRegion The non affine sub-region @p BB is in.
   /// @param IsExitBlock        Flag to indicate that @p BB is in the exit BB.
-  void buildAccessFunctions(Region &R, BasicBlock &BB,
+  void buildAccessFunctions(BasicBlock &BB,
                             Region *NonAffineSubRegion = nullptr,
                             bool IsExitBlock = false);
 
