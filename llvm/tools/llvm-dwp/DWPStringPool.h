@@ -6,6 +6,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include <cassert>
 
+namespace llvm {
 class DWPStringPool {
 
   struct CStrDenseMapInfo {
@@ -50,5 +51,6 @@ public:
     return Pair.first->second;
   }
 };
+}
 
 #endif
