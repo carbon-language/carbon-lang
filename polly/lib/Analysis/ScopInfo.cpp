@@ -3074,24 +3074,24 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   return true;
 }
 
-/// @brief Get the smallest loop that contains @p R but is not in @p R.
-static Loop *getLoopSurroundingRegion(Region &R, LoopInfo &LI) {
+/// @brief Get the smallest loop that contains @p S but is not in @p S.
+static Loop *getLoopSurroundingScop(Scop &S, LoopInfo &LI) {
   // Start with the smallest loop containing the entry and expand that
   // loop until it contains all blocks in the region. If there is a loop
   // containing all blocks in the region check if it is itself contained
   // and if so take the parent loop as it will be the smallest containing
   // the region but not contained by it.
-  Loop *L = LI.getLoopFor(R.getEntry());
+  Loop *L = LI.getLoopFor(S.getEntry());
   while (L) {
     bool AllContained = true;
-    for (auto *BB : R.blocks())
+    for (auto *BB : S.blocks())
       AllContained &= L->contains(BB);
     if (AllContained)
       break;
     L = L->getParentLoop();
   }
 
-  return L ? (R.contains(L) ? L->getParentLoop() : L) : nullptr;
+  return L ? (S.contains(L) ? L->getParentLoop() : L) : nullptr;
 }
 
 Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, LoopInfo &LI,
@@ -4086,7 +4086,7 @@ void Scop::addScopStmt(BasicBlock *BB, Region *R) {
 }
 
 void Scop::buildSchedule(LoopInfo &LI) {
-  Loop *L = getLoopSurroundingRegion(getRegion(), LI);
+  Loop *L = getLoopSurroundingScop(*this, LI);
   LoopStackTy LoopStack({LoopStackElementTy(L, nullptr, 0)});
   buildSchedule(getRegion().getNode(), LoopStack, LI);
   assert(LoopStack.size() == 1 && LoopStack.back().L == L);
@@ -4118,7 +4118,7 @@ void Scop::buildSchedule(LoopInfo &LI) {
 /// These region-nodes are then queue and only traverse after the all nodes
 /// within the current loop have been processed.
 void Scop::buildSchedule(Region *R, LoopStackTy &LoopStack, LoopInfo &LI) {
-  Loop *OuterScopLoop = getLoopSurroundingRegion(getRegion(), LI);
+  Loop *OuterScopLoop = getLoopSurroundingScop(*this, LI);
 
   ReversePostOrderTraversal<Region *> RTraversal(R);
   std::deque<RegionNode *> WorkList(RTraversal.begin(), RTraversal.end());
@@ -4284,8 +4284,6 @@ void ScopInfo::buildScalarDependences(Instruction *Inst) {
 }
 
 void ScopInfo::buildEscapingDependences(Instruction *Inst) {
-  Region *R = &scop->getRegion();
-
   // Check for uses of this instruction outside the scop. Because we do not
   // iterate over such instructions and therefore did not "ensure" the existence
   // of a write, we must determine such use here.
@@ -4303,8 +4301,8 @@ void ScopInfo::buildEscapingDependences(Instruction *Inst) {
     // generation inserts new basic blocks before the PHI such that its incoming
     // blocks are not in the scop anymore.
     if (!scop->contains(UseParent) ||
-        (isa<PHINode>(UI) && UserParent == R->getExit() &&
-         R->getExitingBlock())) {
+        (isa<PHINode>(UI) && scop->isExit(UserParent) &&
+         scop->hasSingleExitEdge())) {
       // At least one escaping use found.
       ensureValueWrite(Inst);
       break;
@@ -4837,7 +4835,7 @@ void ScopInfo::buildScop(Region &R, AssumptionCache &AC) {
   // To handle these PHI nodes later we will now model their operands as scalar
   // accesses. Note that we do not model anything in the exit block if we have
   // an exiting block in the region, as there will not be any splitting later.
-  if (!R.getExitingBlock())
+  if (!scop->hasSingleExitEdge())
     buildAccessFunctions(R, *R.getExit(), nullptr,
                          /* IsExitBlock */ true);
 

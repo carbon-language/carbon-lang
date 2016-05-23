@@ -449,17 +449,16 @@ void BlockGenerator::generateScalarStores(ScopStmt &Stmt, LoopToScevMapT &LTS,
 }
 
 void BlockGenerator::createScalarInitialization(Scop &S) {
-  Region &R = S.getRegion();
-  BasicBlock *ExitBB = R.getExit();
+  BasicBlock *ExitBB = S.getExit();
 
   // The split block __just before__ the region and optimized region.
-  BasicBlock *SplitBB = R.getEnteringBlock();
+  BasicBlock *SplitBB = S.getEnteringBlock();
   BranchInst *SplitBBTerm = cast<BranchInst>(SplitBB->getTerminator());
   assert(SplitBBTerm->getNumSuccessors() == 2 && "Bad region entering block!");
 
   // Get the start block of the __optimized__ region.
   BasicBlock *StartBB = SplitBBTerm->getSuccessor(0);
-  if (StartBB == R.getEntry())
+  if (StartBB == S.getEntry())
     StartBB = SplitBBTerm->getSuccessor(1);
 
   Builder.SetInsertPoint(StartBB->getTerminator());
@@ -508,11 +507,11 @@ void BlockGenerator::createScalarInitialization(Scop &S) {
   }
 }
 
-void BlockGenerator::createScalarFinalization(Region &R) {
+void BlockGenerator::createScalarFinalization(Scop &S) {
   // The exit block of the __unoptimized__ region.
-  BasicBlock *ExitBB = R.getExitingBlock();
+  BasicBlock *ExitBB = S.getExitingBlock();
   // The merge block __just after__ the region and the optimized region.
-  BasicBlock *MergeBB = R.getExit();
+  BasicBlock *MergeBB = S.getExit();
 
   // The exit block of the __optimized__ region.
   BasicBlock *OptExitBB = *(pred_begin(MergeBB));
@@ -583,10 +582,8 @@ void BlockGenerator::createExitPHINodeMerges(Scop &S) {
   if (S.hasSingleExitEdge())
     return;
 
-  Region &R = S.getRegion();
-
-  auto *ExitBB = R.getExitingBlock();
-  auto *MergeBB = R.getExit();
+  auto *ExitBB = S.getExitingBlock();
+  auto *MergeBB = S.getExit();
   auto *AfterMergeBB = MergeBB->getSingleSuccessor();
   BasicBlock *OptExitBB = *(pred_begin(MergeBB));
   if (OptExitBB == ExitBB)
@@ -633,7 +630,7 @@ void BlockGenerator::finalizeSCoP(Scop &S) {
   findOutsideUsers(S);
   createScalarInitialization(S);
   createExitPHINodeMerges(S);
-  createScalarFinalization(S.getRegion());
+  createScalarFinalization(S);
 }
 
 VectorBlockGenerator::VectorBlockGenerator(BlockGenerator &BlockGen,
@@ -1117,7 +1114,7 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
   // the same Region object, such that we cannot change the exit of one and not
   // the other.
   BasicBlock *ExitBB = R->getExit();
-  if (!S->hasSingleExitEdge() && ExitBB == S->getRegion().getExit())
+  if (!S->hasSingleExitEdge() && ExitBB == S->getExit())
     ExitBB = *(++pred_begin(ExitBB));
 
   // Iterate over all blocks in the region in a breadth-first search.

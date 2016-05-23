@@ -314,7 +314,7 @@ void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,
   /// are considered local. This leaves only loops that are before the scop, but
   /// do not contain the scop itself.
   Loops.remove_if([this](const Loop *L) {
-    return S.contains(L) || L->contains(S.getRegion().getEntry());
+    return S.contains(L) || L->contains(S.getEntry());
   });
 }
 
@@ -1196,8 +1196,7 @@ void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
   // scop itself, but as the number of such scops may be arbitrarily large we do
   // not generate code for them here, but only at the point of code generation
   // where these values are needed.
-  Region &R = S.getRegion();
-  Loop *L = LI.getLoopFor(R.getEntry());
+  Loop *L = LI.getLoopFor(S.getEntry());
 
   while (L != nullptr && S.contains(L))
     L = L->getParentLoop();

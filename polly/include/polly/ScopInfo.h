@@ -1882,6 +1882,24 @@ public:
   /// @brief Check if @p I is contained in the SCoP.
   bool contains(const Instruction *I) const { return R.contains(I); }
 
+  /// @brief Return the unique exit block of the SCoP.
+  BasicBlock *getExit() const { return R.getExit(); }
+
+  /// @brief Return the unique exiting block of the SCoP if any.
+  BasicBlock *getExitingBlock() const { return R.getExitingBlock(); }
+
+  /// @brief Return the unique entry block of the SCoP.
+  BasicBlock *getEntry() const { return R.getEntry(); }
+
+  /// @brief Return the unique entering block of the SCoP if any.
+  BasicBlock *getEnteringBlock() const { return R.getEnteringBlock(); }
+
+  /// @brief Return true if @p BB is the exit block of the SCoP.
+  bool isExit(BasicBlock *BB) const { return getExit() == BB; }
+
+  /// @brief Return a range of all basic blocks in the SCoP.
+  Region::block_range blocks() const { return R.blocks(); }
+
   /// @brief Get the maximum depth of the loop.
   ///
   /// @return The maximum depth of the loop.
