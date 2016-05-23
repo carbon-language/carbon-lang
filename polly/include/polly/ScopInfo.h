@@ -2053,6 +2053,7 @@ public:
   const_reverse_iterator rend() const { return Stmts.rend(); }
   //@}
 
+  /// @brief Return the set of required invariant loads.
   const InvariantLoadsSetTy &getRequiredInvariantLoads() const {
     return DC.RequiredILS;
   }
@@ -2065,8 +2066,10 @@ public:
     return getRequiredInvariantLoads().count(LI);
   }
 
+  /// @brief Return the set of boxed (thus overapproximated) loops.
   const BoxedLoopsSetTy &getBoxedLoops() const { return DC.BoxedLoopsSet; }
 
+  /// @brief Return true if and only if @p R is a non-affine subregion.
   bool isNonAffineSubRegion(const Region *R) {
     return DC.NonAffineSubRegionSet.count(R);
   }
