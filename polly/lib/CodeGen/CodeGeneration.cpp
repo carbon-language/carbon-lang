@@ -133,7 +133,7 @@ public:
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
-    DL = &S.getRegion().getEntry()->getParent()->getParent()->getDataLayout();
+    DL = &S.getFunction().getParent()->getDataLayout();
     RI = &getAnalysis<RegionInfoPass>().getRegionInfo();
     Region *R = &S.getRegion();
     assert(!R->isTopLevelRegion() && "Top level regions are not supported");

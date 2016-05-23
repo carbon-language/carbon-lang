@@ -1870,6 +1870,9 @@ public:
   inline const Region &getRegion() const { return R; }
   inline Region &getRegion() { return R; }
 
+  /// @brief Return the function this SCoP is in.
+  Function &getFunction() const { return *R.getEntry()->getParent(); }
+
   /// @brief Get the maximum depth of the loop.
   ///
   /// @return The maximum depth of the loop.

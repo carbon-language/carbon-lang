@@ -79,8 +79,7 @@ Value *BlockGenerator::trySynthesizeNewValue(ScopStmt &Stmt, Value *Old,
   VTV.insert(GlobalMap.begin(), GlobalMap.end());
 
   Scop &S = *Stmt.getParent();
-  const DataLayout &DL =
-      S.getRegion().getEntry()->getParent()->getParent()->getDataLayout();
+  const DataLayout &DL = S.getFunction().getParent()->getDataLayout();
   auto IP = Builder.GetInsertPoint();
 
   assert(IP != Builder.GetInsertBlock()->end() &&

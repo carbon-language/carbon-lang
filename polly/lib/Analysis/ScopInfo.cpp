@@ -1876,21 +1876,20 @@ __isl_give isl_set *Scop::addNonEmptyDomainConstraints(isl_set *C) const {
 
 void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
                               LoopInfo &LI) {
-  auto *R = &getRegion();
-  auto &F = *R->getEntry()->getParent();
+  auto &F = getFunction();
   for (auto &Assumption : AC.assumptions()) {
     auto *CI = dyn_cast_or_null<CallInst>(Assumption);
     if (!CI || CI->getNumArgOperands() != 1)
       continue;
 
-    bool InR = R->contains(CI);
-    if (!InR && !DT.dominates(CI->getParent(), R->getEntry()))
+    bool InR = R.contains(CI);
+    if (!InR && !DT.dominates(CI->getParent(), R.getEntry()))
       continue;
 
     auto *L = LI.getLoopFor(CI->getParent());
     auto *Val = CI->getArgOperand(0);
     ParameterSetTy DetectedParams;
-    if (!isAffineConstraint(Val, R, L, *SE, DetectedParams)) {
+    if (!isAffineConstraint(Val, &R, L, *SE, DetectedParams)) {
       emitOptimizationRemarkAnalysis(F.getContext(), DEBUG_TYPE, F,
                                      CI->getDebugLoc(),
                                      "Non-affine user assumption ignored.");
@@ -2971,7 +2970,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     isl_set_free(AGDomain);
   }
 
-  auto &F = *getRegion().getEntry()->getParent();
+  auto &F = getFunction();
   MapVector<const Value *, SmallPtrSet<MemoryAccess *, 8>> ReadOnlyPairs;
   SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
   for (AliasGroupTy &AG : AliasGroups) {
@@ -3540,7 +3539,7 @@ Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *ElementType,
                                ScopArrayInfo::MemoryKind Kind) {
   auto &SAI = ScopArrayInfoMap[std::make_pair(BasePtr, Kind)];
   if (!SAI) {
-    auto &DL = getRegion().getEntry()->getModule()->getDataLayout();
+    auto &DL = getFunction().getParent()->getDataLayout();
     SAI.reset(new ScopArrayInfo(BasePtr, ElementType, getIslCtx(), Sizes, Kind,
                                 DL, this));
   } else {
@@ -3694,7 +3693,7 @@ bool Scop::trackAssumption(AssumptionKind Kind, __isl_keep isl_set *Set,
     }
   }
 
-  auto &F = *getRegion().getEntry()->getParent();
+  auto &F = getFunction();
   auto Suffix = Sign == AS_ASSUMPTION ? " assumption:\t" : " restriction:\t";
   std::string Msg = toString(Kind) + Suffix + stringFromIslObj(Set);
   emitOptimizationRemarkAnalysis(F.getContext(), DEBUG_TYPE, F, Loc, Msg);
@@ -3848,8 +3847,7 @@ void Scop::printArrayInfo(raw_ostream &OS) const {
 }
 
 void Scop::print(raw_ostream &OS) const {
-  OS.indent(4) << "Function: " << getRegion().getEntry()->getParent()->getName()
-               << "\n";
+  OS.indent(4) << "Function: " << getFunction().getName() << "\n";
   OS.indent(4) << "Region: " << getNameStr() << "\n";
   OS.indent(4) << "Max Loop Depth:  " << getMaxLoopDepth() << "\n";
   OS.indent(4) << "Invariant Accesses: {\n";
