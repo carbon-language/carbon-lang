@@ -3052,7 +3052,7 @@ static Loop *getLoopSurroundingRegion(Region &R, LoopInfo &LI) {
 }
 
 Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, LoopInfo &LI,
-           const ScopDetection::DetectionContext &DC)
+           ScopDetection::DetectionContext &DC)
     : SE(&ScalarEvolution), R(R), IsOptimized(false),
       HasSingleExitEdge(R.getExitingBlock()), HasErrorBlock(false),
       MaxLoopDepth(0), DC(DC), IslCtx(isl_ctx_alloc(), isl_ctx_free),

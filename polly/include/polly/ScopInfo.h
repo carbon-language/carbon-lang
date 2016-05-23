@@ -1354,7 +1354,7 @@ private:
   DenseMap<const SCEV *, isl_id *> ParameterIds;
 
   /// @brief The context of the SCoP created during SCoP detection.
-  const ScopDetection::DetectionContext &DC;
+  ScopDetection::DetectionContext &DC;
 
   /// Isl context.
   ///
@@ -1495,7 +1495,7 @@ private:
 
   /// @brief Scop constructor; invoked from ScopInfo::buildScop.
   Scop(Region &R, ScalarEvolution &SE, LoopInfo &LI,
-       const ScopDetection::DetectionContext &DC);
+       ScopDetection::DetectionContext &DC);
 
   /// @brief Get or create the access function set in a BasicBlock
   AccFuncSetType &getOrCreateAccessFunctions(const BasicBlock *BB) {
