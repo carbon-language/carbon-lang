@@ -913,6 +913,18 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
 /// @brief Ordered list type to hold accesses.
 using MemoryAccessList = std::forward_list<MemoryAccess *>;
 
+/// @brief Helper structure for invariant memory accesses.
+struct InvariantAccess {
+  /// @brief The memory access that is (partially) invariant.
+  MemoryAccess *MA;
+
+  /// @brief The context under which the access is not invariant.
+  isl_set *NonHoistableCtx;
+};
+
+/// @brief Ordered container type to hold invariant accesses.
+using InvariantAccessesTy = SmallVector<InvariantAccess, 8>;
+
 /// @brief Type for equivalent invariant accesses and their domain context.
 ///
 /// The first element is the SCEV for the pointer/location that identifies this
@@ -1223,7 +1235,7 @@ public:
   ///
   /// Note that scalar accesses that are caused by any access in @p InvMAs will
   /// be eliminated too.
-  void removeMemoryAccesses(MemoryAccessList &InvMAs);
+  void removeMemoryAccesses(InvariantAccessesTy &InvMAs);
 
   typedef MemoryAccessVec::iterator iterator;
   typedef MemoryAccessVec::const_iterator const_iterator;
@@ -1627,14 +1639,15 @@ private:
   /// invariant location.
   void buildInvariantEquivalenceClasses();
 
-  /// @brief Check if a memory access can be hoisted.
+  /// @brief Return the context under which the access cannot be hoisted.
   ///
-  /// @param Access The access to verify.
+  /// @param Access The access to check.
   /// @param Writes The set of all memory writes in the scop.
   ///
-  /// @return Return true if a memory access can be hoisted.
-  bool isHoistableAccess(MemoryAccess *Access,
-                         __isl_keep isl_union_map *Writes);
+  /// @return Return the context under which the access cannot be hoisted or a
+  ///         nullptr if it cannot be hoisted at all.
+  __isl_give isl_set *getNonHoistableCtx(MemoryAccess *Access,
+                                         __isl_keep isl_union_map *Writes);
 
   /// @brief Verify that all required invariant loads have been hoisted.
   ///
@@ -1673,7 +1686,7 @@ private:
   void hoistInvariantLoads();
 
   /// @brief Add invariant loads listed in @p InvMAs with the domain of @p Stmt.
-  void addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs);
+  void addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs);
 
   /// @brief Create an id for @p Param and store it in the ParameterIds map.
   void createParameterId(const SCEV *Param);
@@ -2046,6 +2059,11 @@ public:
 
   /// @brief Add @p LI to the set of required invariant loads.
   void addRequiredInvariantLoad(LoadInst *LI) { DC.RequiredILS.insert(LI); }
+
+  /// @brief Return true if and only if @p LI is a required invariant load.
+  bool isRequiredInvariantLoad(LoadInst *LI) const {
+    return getRequiredInvariantLoads().count(LI);
+  }
 
   const BoxedLoopsSetTy &getBoxedLoops() const { return DC.BoxedLoopsSet; }
 

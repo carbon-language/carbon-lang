@@ -1711,14 +1711,15 @@ void ScopStmt::print(raw_ostream &OS) const {
 
 void ScopStmt::dump() const { print(dbgs()); }
 
-void ScopStmt::removeMemoryAccesses(MemoryAccessList &InvMAs) {
+void ScopStmt::removeMemoryAccesses(InvariantAccessesTy &InvMAs) {
   // Remove all memory accesses in @p InvMAs from this statement
   // together with all scalar accesses that were caused by them.
   // MK_Value READs have no access instruction, hence would not be removed by
   // this function. However, it is only used for invariant LoadInst accesses,
   // its arguments are always affine, hence synthesizable, and therefore there
   // are no MK_Value READ accesses to be removed.
-  for (MemoryAccess *MA : InvMAs) {
+  for (const auto &InvMA : InvMAs) {
+    auto *MA = InvMA.MA;
     auto Predicate = [&](MemoryAccess *Acc) {
       return Acc->getAccessInstruction() == MA->getAccessInstruction();
     };
@@ -2855,8 +2856,12 @@ MemoryAccess *Scop::lookupBasePtrAccess(MemoryAccess *MA) {
 
 bool Scop::hasNonHoistableBasePtrInScop(MemoryAccess *MA,
                                         __isl_keep isl_union_map *Writes) {
-  if (auto *BasePtrMA = lookupBasePtrAccess(MA))
-    return !isHoistableAccess(BasePtrMA, Writes);
+  if (auto *BasePtrMA = lookupBasePtrAccess(MA)) {
+    auto *NHCtx = getNonHoistableCtx(BasePtrMA, Writes);
+    bool Hoistable = NHCtx != nullptr;
+    isl_set_free(NHCtx);
+    return !Hoistable;
+  }
 
   auto *BaseAddr = SE->getSCEV(MA->getBaseAddr());
   auto *PointerBase = dyn_cast<SCEVUnknown>(SE->getPointerBase(BaseAddr));
@@ -3278,13 +3283,20 @@ InvariantEquivClassTy *Scop::lookupInvariantEquivClass(Value *Val) {
 
 /// @brief Check if @p MA can always be hoisted without execution context.
 static bool canAlwaysBeHoisted(MemoryAccess *MA, bool StmtInvalidCtxIsEmpty,
-                               bool MAInvalidCtxIsEmpty) {
+                               bool MAInvalidCtxIsEmpty,
+                               bool NonHoistableCtxIsEmpty) {
   LoadInst *LInst = cast<LoadInst>(MA->getAccessInstruction());
   const DataLayout &DL = LInst->getParent()->getModule()->getDataLayout();
   // TODO: We can provide more information for better but more expensive
   //       results.
   if (!isDereferenceableAndAlignedPointer(LInst->getPointerOperand(),
                                           LInst->getAlignment(), DL))
+    return false;
+
+  // If the location might be overwritten we do not hoist it unconditionally.
+  //
+  // TODO: This is probably to conservative.
+  if (!NonHoistableCtxIsEmpty)
     return false;
 
   // If a dereferencable load is in a statement that is modeled precisely we can
@@ -3301,7 +3313,7 @@ static bool canAlwaysBeHoisted(MemoryAccess *MA, bool StmtInvalidCtxIsEmpty,
   return true;
 }
 
-void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
+void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
 
   if (InvMAs.empty())
     return;
@@ -3315,9 +3327,11 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
   DomainCtx = isl_set_subtract(DomainCtx, StmtInvalidCtx);
 
   if (isl_set_n_basic_set(DomainCtx) >= MaxDisjunctionsInDomain) {
-    auto *AccInst = InvMAs.front()->getAccessInstruction();
+    auto *AccInst = InvMAs.front().MA->getAccessInstruction();
     invalidate(COMPLEXITY, AccInst->getDebugLoc());
     isl_set_free(DomainCtx);
+    for (auto &InvMA : InvMAs)
+      isl_set_free(InvMA.NonHoistableCtx);
     return;
   }
 
@@ -3326,7 +3340,8 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
   // hoisted loads are executed and we could not determine an order in which to
   // pre-load them. This happens because not only lower bounds are part of the
   // domain but also upper bounds.
-  for (MemoryAccess *MA : InvMAs) {
+  for (auto &InvMA : InvMAs) {
+    auto *MA = InvMA.MA;
     Instruction *AccInst = MA->getAccessInstruction();
     if (SE->isSCEVable(AccInst->getType())) {
       SetVector<Value *> Values;
@@ -3345,7 +3360,10 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
     }
   }
 
-  for (MemoryAccess *MA : InvMAs) {
+  for (auto &InvMA : InvMAs) {
+    auto *MA = InvMA.MA;
+    auto *NHCtx = InvMA.NonHoistableCtx;
+
     // Check for another invariant access that accesses the same location as
     // MA and if found consolidate them. Otherwise create a new equivalence
     // class at the end of InvariantEquivClasses.
@@ -3354,16 +3372,19 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
     const SCEV *PointerSCEV = SE->getSCEV(LInst->getPointerOperand());
 
     auto *MAInvalidCtx = MA->getInvalidContext();
+    bool NonHoistableCtxIsEmpty = isl_set_is_empty(NHCtx);
     bool MAInvalidCtxIsEmpty = isl_set_is_empty(MAInvalidCtx);
 
     isl_set *MACtx;
     // Check if we know that this pointer can be speculatively accessed.
-    if (canAlwaysBeHoisted(MA, StmtInvalidCtxIsEmpty, MAInvalidCtxIsEmpty)) {
+    if (canAlwaysBeHoisted(MA, StmtInvalidCtxIsEmpty, MAInvalidCtxIsEmpty,
+                           NonHoistableCtxIsEmpty)) {
       MACtx = isl_set_universe(isl_set_get_space(DomainCtx));
       isl_set_free(MAInvalidCtx);
+      isl_set_free(NHCtx);
     } else {
       MACtx = isl_set_copy(DomainCtx);
-      MACtx = isl_set_subtract(MACtx, MAInvalidCtx);
+      MACtx = isl_set_subtract(MACtx, isl_set_union(MAInvalidCtx, NHCtx));
       MACtx = isl_set_gist_params(MACtx, getContext());
     }
 
@@ -3418,8 +3439,8 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
   isl_set_free(DomainCtx);
 }
 
-bool Scop::isHoistableAccess(MemoryAccess *Access,
-                             __isl_keep isl_union_map *Writes) {
+__isl_give isl_set *Scop::getNonHoistableCtx(MemoryAccess *Access,
+                                             __isl_keep isl_union_map *Writes) {
   // TODO: Loads that are not loop carried, hence are in a statement with
   //       zero iterators, are by construction invariant, though we
   //       currently "hoist" them anyway. This is necessary because we allow
@@ -3430,7 +3451,7 @@ bool Scop::isHoistableAccess(MemoryAccess *Access,
   BasicBlock *BB = Stmt.getEntryBlock();
 
   if (Access->isScalarKind() || Access->isWrite() || !Access->isAffine())
-    return false;
+    return nullptr;
 
   // Skip accesses that have an invariant base pointer which is defined but
   // not loaded inside the SCoP. This can happened e.g., if a readnone call
@@ -3441,14 +3462,14 @@ bool Scop::isHoistableAccess(MemoryAccess *Access,
   // that it is invariant, thus it will be hoisted too. However, if there is
   // no base pointer origin we check that the base pointer is defined
   // outside the region.
+  auto *LI = cast<LoadInst>(Access->getAccessInstruction());
   if (hasNonHoistableBasePtrInScop(Access, Writes))
-    return false;
+    return nullptr;
 
   // Skip accesses in non-affine subregions as they might not be executed
   // under the same condition as the entry of the non-affine subregion.
-  auto *LI = cast<LoadInst>(Access->getAccessInstruction());
   if (BB != LI->getParent())
-    return false;
+    return nullptr;
 
   isl_map *AccessRelation = Access->getAccessRelation();
   assert(!isl_map_is_empty(AccessRelation));
@@ -3456,7 +3477,7 @@ bool Scop::isHoistableAccess(MemoryAccess *Access,
   if (isl_map_involves_dims(AccessRelation, isl_dim_in, 0,
                             Stmt.getNumIterators())) {
     isl_map_free(AccessRelation);
-    return false;
+    return nullptr;
   }
 
   AccessRelation = isl_map_intersect_domain(AccessRelation, Stmt.getDomain());
@@ -3464,10 +3485,22 @@ bool Scop::isHoistableAccess(MemoryAccess *Access,
 
   isl_union_map *Written = isl_union_map_intersect_range(
       isl_union_map_copy(Writes), isl_union_set_from_set(AccessRange));
-  bool IsWritten = !isl_union_map_is_empty(Written);
-  isl_union_map_free(Written);
+  auto *WrittenCtx = isl_union_map_params(Written);
+  bool IsWritten = !isl_set_is_empty(WrittenCtx);
 
-  return !IsWritten;
+  if (!IsWritten)
+    return WrittenCtx;
+
+  WrittenCtx = isl_set_remove_divs(WrittenCtx);
+  bool TooComplex = isl_set_n_basic_set(WrittenCtx) >= MaxDisjunctionsInDomain;
+  if (TooComplex || !isRequiredInvariantLoad(LI)) {
+    isl_set_free(WrittenCtx);
+    return nullptr;
+  }
+
+  addAssumption(INVARIANTLOAD, isl_set_copy(WrittenCtx), LI->getDebugLoc(),
+                AS_RESTRICTION);
+  return WrittenCtx;
 }
 
 void Scop::verifyInvariantLoads() {
@@ -3488,18 +3521,11 @@ void Scop::hoistInvariantLoads() {
 
   isl_union_map *Writes = getWrites();
   for (ScopStmt &Stmt : *this) {
-    MemoryAccessList InvariantAccesses;
+    InvariantAccessesTy InvariantAccesses;
 
     for (MemoryAccess *Access : Stmt)
-      if (isHoistableAccess(Access, Writes))
-        InvariantAccesses.push_front(Access);
-
-    // We inserted invariant accesses always in the front but need them to be
-    // sorted in a "natural order". The statements are already sorted in
-    // reverse post order and that suffices for the accesses too. The reason
-    // we require an order in the first place is the dependences between
-    // invariant loads that can be caused by indirect loads.
-    InvariantAccesses.reverse();
+      if (auto *NHCtx = getNonHoistableCtx(Access, Writes))
+        InvariantAccesses.push_back({Access, NHCtx});
 
     // Transfer the memory access from the statement to the SCoP.
     Stmt.removeMemoryAccesses(InvariantAccesses);
