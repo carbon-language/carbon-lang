@@ -521,53 +521,10 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
     if (InfoSection.empty())
       continue;
 
-    if (!CurCUIndexSection.empty()) {
-      DWARFUnitIndex CUIndex(DW_SECT_INFO);
-      DataExtractor CUIndexData(CurCUIndexSection, Obj.isLittleEndian(), 0);
-      if (!CUIndex.parse(CUIndexData))
-        return make_error<DWPError>("Failed to parse cu_index");
+    writeStringsAndOffsets(Out, Strings, StrOffsetSection, CurStrSection,
+                           CurStrOffsetSection);
 
-      for (const DWARFUnitIndex::Entry &E : CUIndex.getRows()) {
-        auto *I = E.getOffsets();
-        if (!I)
-          continue;
-        auto P =
-            IndexEntries.insert(std::make_pair(E.getSignature(), CurEntry));
-        Expected<CompileUnitIdentifiers> EID = getCUIdentifiers(
-            getSubsection(AbbrevSection, E, DW_SECT_ABBREV),
-            getSubsection(InfoSection, E, DW_SECT_INFO),
-            getSubsection(CurStrOffsetSection, E, DW_SECT_STR_OFFSETS),
-            CurStrSection);
-        if (!EID)
-          return EID.takeError();
-        const auto &ID = *EID;
-        if (!P.second)
-          return buildDuplicateError(*P.first, ID, Input);
-        auto &NewEntry = P.first->second;
-        NewEntry.Name = ID.Name;
-        NewEntry.DWOName = ID.DWOName;
-        NewEntry.DWPName = Input;
-        for (auto Kind : CUIndex.getColumnKinds()) {
-          auto &C = NewEntry.Contributions[Kind - DW_SECT_INFO];
-          C.Offset += I->Offset;
-          C.Length = I->Length;
-          ++I;
-        }
-      }
-
-      if (!CurTypesSection.empty()) {
-        if (CurTypesSection.size() != 1)
-          return make_error<DWPError>(
-              "multiple type unit sections in .dwp file");
-        DWARFUnitIndex TUIndex(DW_SECT_TYPES);
-        DataExtractor TUIndexData(CurTUIndexSection, Obj.isLittleEndian(), 0);
-        if (!TUIndex.parse(TUIndexData))
-          return make_error<DWPError>("Failed to parse tu_index");
-        addAllTypesFromDWP(Out, TypeIndexEntries, TUIndex, TypesSection,
-                           CurTypesSection.front(), CurEntry,
-                           ContributionOffsets[DW_SECT_TYPES - DW_SECT_INFO]);
-      }
-    } else {
+    if (CurCUIndexSection.empty()) {
       Expected<CompileUnitIdentifiers> EID = getCUIdentifiers(
           AbbrevSection, InfoSection, CurStrOffsetSection, CurStrSection);
       if (!EID)
@@ -580,10 +537,52 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       P.first->second.DWOName = ID.DWOName;
       addAllTypes(Out, TypeIndexEntries, TypesSection, CurTypesSection,
                   CurEntry, ContributionOffsets[DW_SECT_TYPES - DW_SECT_INFO]);
+      continue;
     }
 
-    writeStringsAndOffsets(Out, Strings, StrOffsetSection, CurStrSection,
-                           CurStrOffsetSection);
+    DWARFUnitIndex CUIndex(DW_SECT_INFO);
+    DataExtractor CUIndexData(CurCUIndexSection, Obj.isLittleEndian(), 0);
+    if (!CUIndex.parse(CUIndexData))
+      return make_error<DWPError>("Failed to parse cu_index");
+
+    for (const DWARFUnitIndex::Entry &E : CUIndex.getRows()) {
+      auto *I = E.getOffsets();
+      if (!I)
+        continue;
+      auto P = IndexEntries.insert(std::make_pair(E.getSignature(), CurEntry));
+      Expected<CompileUnitIdentifiers> EID = getCUIdentifiers(
+          getSubsection(AbbrevSection, E, DW_SECT_ABBREV),
+          getSubsection(InfoSection, E, DW_SECT_INFO),
+          getSubsection(CurStrOffsetSection, E, DW_SECT_STR_OFFSETS),
+          CurStrSection);
+      if (!EID)
+        return EID.takeError();
+      const auto &ID = *EID;
+      if (!P.second)
+        return buildDuplicateError(*P.first, ID, Input);
+      auto &NewEntry = P.first->second;
+      NewEntry.Name = ID.Name;
+      NewEntry.DWOName = ID.DWOName;
+      NewEntry.DWPName = Input;
+      for (auto Kind : CUIndex.getColumnKinds()) {
+        auto &C = NewEntry.Contributions[Kind - DW_SECT_INFO];
+        C.Offset += I->Offset;
+        C.Length = I->Length;
+        ++I;
+      }
+    }
+
+    if (!CurTypesSection.empty()) {
+      if (CurTypesSection.size() != 1)
+        return make_error<DWPError>("multiple type unit sections in .dwp file");
+      DWARFUnitIndex TUIndex(DW_SECT_TYPES);
+      DataExtractor TUIndexData(CurTUIndexSection, Obj.isLittleEndian(), 0);
+      if (!TUIndex.parse(TUIndexData))
+        return make_error<DWPError>("Failed to parse tu_index");
+      addAllTypesFromDWP(Out, TypeIndexEntries, TUIndex, TypesSection,
+                         CurTypesSection.front(), CurEntry,
+                         ContributionOffsets[DW_SECT_TYPES - DW_SECT_INFO]);
+    }
   }
 
   // Lie about there being no info contributions so the TU index only includes
