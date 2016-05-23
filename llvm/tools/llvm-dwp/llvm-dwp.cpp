@@ -432,20 +432,17 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
         return errorCodeToError(Err);
 
       if (Name.startswith("zdebug_")) {
+        UncompressedSections.emplace_back();
         uint64_t OriginalSize;
         if (!zlib::isAvailable())
           return make_error<DWPError>("zlib not available");
-        if (!consumeCompressedDebugSectionHeader(Contents, OriginalSize))
+        if (!consumeCompressedDebugSectionHeader(Contents, OriginalSize) ||
+            zlib::uncompress(Contents, UncompressedSections.back(),
+                             OriginalSize) != zlib::StatusOK)
           return make_error<DWPError>(
               ("failure while decompressing compressed section: '" + Name +
                "\'")
                   .str());
-        UncompressedSections.resize(UncompressedSections.size() + 1);
-        if (zlib::uncompress(Contents, UncompressedSections.back(),
-                             OriginalSize) != zlib::StatusOK) {
-          UncompressedSections.pop_back();
-          continue;
-        }
         Name = Name.substr(1);
         Contents = UncompressedSections.back();
       }
