@@ -66,8 +66,6 @@ class Scop;
 class ScopStmt;
 class ScopInfo;
 
-typedef DenseMap<ScopStmt *, Value *> OutgoingValueMapTy;
-
 //===---------------------------------------------------------------------===//
 
 /// @brief Enumeration of assumptions Polly can take.
