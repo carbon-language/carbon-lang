@@ -237,7 +237,7 @@ void BlockGenerator::generateScalarStore(ScopStmt &Stmt, StoreInst *Store,
 bool BlockGenerator::canSyntheziseInStmt(ScopStmt &Stmt, Instruction *Inst) {
   Loop *L = getLoopForStmt(Stmt);
   return (Stmt.isBlockStmt() || !Stmt.getRegion()->contains(L)) &&
-         canSynthesize(Inst, &LI, &SE, &Stmt.getParent()->getRegion(), L);
+         canSynthesize(Inst, *Stmt.getParent(), &LI, &SE, L);
 }
 
 void BlockGenerator::copyInstruction(ScopStmt &Stmt, Instruction *Inst,

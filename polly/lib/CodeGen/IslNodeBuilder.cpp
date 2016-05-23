@@ -180,7 +180,7 @@ int IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
 struct SubtreeReferences {
   LoopInfo &LI;
   ScalarEvolution &SE;
-  Region &R;
+  Scop &S;
   ValueMapT &GlobalMap;
   SetVector<Value *> &Values;
   SetVector<const SCEV *> &SCEVs;
@@ -193,7 +193,7 @@ static int findReferencesInBlock(struct SubtreeReferences &References,
   for (const Instruction &Inst : *BB)
     for (Value *SrcVal : Inst.operands()) {
       auto *Scope = References.LI.getLoopFor(BB);
-      if (canSynthesize(SrcVal, &References.LI, &References.SE, &References.R,
+      if (canSynthesize(SrcVal, References.S, &References.LI, &References.SE,
                         Scope)) {
         References.SCEVs.insert(References.SE.getSCEVAtScope(SrcVal, Scope));
         continue;
@@ -292,7 +292,7 @@ void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,
 
   SetVector<const SCEV *> SCEVs;
   struct SubtreeReferences References = {
-      LI, SE, S.getRegion(), ValueMap, Values, SCEVs, getBlockGenerator()};
+      LI, SE, S, ValueMap, Values, SCEVs, getBlockGenerator()};
 
   for (const auto &I : IDToValue)
     Values.insert(I.second);
