@@ -468,32 +468,45 @@ static size_t findNull(ArrayRef<uint8_t> A, size_t EntSize) {
   return StringRef::npos;
 }
 
+// Split SHF_STRINGS section. Such section is a sequence of
+// null-terminated strings.
+std::vector<SectionPiece> splitStrings(ArrayRef<uint8_t> Data, size_t EntSize) {
+  std::vector<SectionPiece> V;
+  size_t Off = 0;
+  while (!Data.empty()) {
+    size_t End = findNull(Data, EntSize);
+    if (End == StringRef::npos)
+      fatal("string is not null terminated");
+    size_t Size = End + EntSize;
+    V.emplace_back(Off, Data.slice(0, Size));
+    Data = Data.slice(Size);
+    Off += Size;
+  }
+  return V;
+}
+
+// Split non-SHF_STRINGS section. Such section is a sequence of
+// fixed size records.
+std::vector<SectionPiece>
+splitNonStrings(ArrayRef<uint8_t> Data, size_t EntSize) {
+  std::vector<SectionPiece> V;
+  size_t Size = Data.size();
+  assert((Size % EntSize) == 0);
+  for (unsigned I = 0, N = Size; I != N; I += EntSize)
+    V.emplace_back(I, Data.slice(I, EntSize));
+  return V;
+}
+
 template <class ELFT>
 MergeInputSection<ELFT>::MergeInputSection(elf::ObjectFile<ELFT> *F,
                                            const Elf_Shdr *Header)
     : SplitInputSection<ELFT>(F, Header, InputSectionBase<ELFT>::Merge) {
-  uintX_t EntSize = Header->sh_entsize;
   ArrayRef<uint8_t> Data = this->getSectionData();
-
-  if (Header->sh_flags & SHF_STRINGS) {
-    uintX_t Offset = 0;
-    while (!Data.empty()) {
-      size_t End = findNull(Data, EntSize);
-      if (End == StringRef::npos)
-        fatal("string is not null terminated");
-      uintX_t Size = End + EntSize;
-      this->Pieces.emplace_back(Offset, Data.slice(0, Size));
-      Data = Data.slice(Size);
-      Offset += Size;
-    }
-    return;
-  }
-
-  // If this is not of type string, every entry has the same size.
-  size_t Size = Data.size();
-  assert((Size % EntSize) == 0);
-  for (unsigned I = 0, N = Size; I != N; I += EntSize)
-    this->Pieces.emplace_back(I, Data.slice(I, EntSize));
+  uintX_t EntSize = this->Header->sh_entsize;
+  if (this->Header->sh_flags & SHF_STRINGS)
+    this->Pieces = splitStrings(Data, EntSize);
+  else
+    this->Pieces = splitNonStrings(Data, EntSize);
 }
 
 template <class ELFT>
