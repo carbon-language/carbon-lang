@@ -130,7 +130,7 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
 
   // Create singleton output sections.
   DynamicSection<ELFT> Dynamic(*Symtab);
-  EhFrameHeader<ELFT> EhFrameHdr;
+  EhOutputSection<ELFT> EhFrame;
   GotSection<ELFT> Got;
   InterpSection<ELFT> Interp;
   PltSection<ELFT> Plt;
@@ -149,6 +149,7 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
 
   // Instantiate optional output sections if they are needed.
   std::unique_ptr<BuildIdSection<ELFT>> BuildId;
+  std::unique_ptr<EhFrameHeader<ELFT>> EhFrameHdr;
   std::unique_ptr<GnuHashTableSection<ELFT>> GnuHashTab;
   std::unique_ptr<GotPltSection<ELFT>> GotPlt;
   std::unique_ptr<HashTableSection<ELFT>> HashTab;
@@ -165,6 +166,9 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
     BuildId.reset(new BuildIdSha1<ELFT>);
   else if (Config->BuildId == BuildIdKind::Hexstring)
     BuildId.reset(new BuildIdHexstring<ELFT>);
+
+  if (Config->EhFrameHdr)
+    EhFrameHdr.reset(new EhFrameHeader<ELFT>);
 
   if (Config->GnuHash)
     GnuHashTab.reset(new GnuHashTableSection<ELFT>);
@@ -192,7 +196,8 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   Out<ELFT>::DynStrTab = &DynStrTab;
   Out<ELFT>::DynSymTab = &DynSymTab;
   Out<ELFT>::Dynamic = &Dynamic;
-  Out<ELFT>::EhFrameHdr = &EhFrameHdr;
+  Out<ELFT>::EhFrame = &EhFrame;
+  Out<ELFT>::EhFrameHdr = EhFrameHdr.get();
   Out<ELFT>::GnuHashTab = GnuHashTab.get();
   Out<ELFT>::Got = &Got;
   Out<ELFT>::GotPlt = GotPlt.get();
@@ -1174,8 +1179,7 @@ OutputSectionFactory<ELFT>::create(InputSectionBase<ELFT> *C,
     Sec = new OutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
     break;
   case InputSectionBase<ELFT>::EHFrame:
-    Sec = new EhOutputSection<ELFT>;
-    break;
+    return {Out<ELFT>::EhFrame, false};
   case InputSectionBase<ELFT>::Merge:
     Sec = new MergeOutputSection<ELFT>(Key.Name, Key.Type, Key.Flags,
                                        Key.Alignment);
@@ -1368,8 +1372,10 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // Define __rel[a]_iplt_{start,end} symbols if needed.
   addRelIpltSymbols();
 
-  if (Out<ELFT>::EhFrameHdr->Sec)
-    Out<ELFT>::EhFrameHdr->Sec->finalize();
+  if (!Out<ELFT>::EhFrame->empty()) {
+    OutputSections.push_back(Out<ELFT>::EhFrame);
+    Out<ELFT>::EhFrame->finalize();
+  }
 
   // Scan relocations. This must be done after every symbol is declared so that
   // we can correctly decide if a dynamic relocation is needed.
@@ -1515,7 +1521,7 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
     Add(Out<ELFT>::GotPlt);
   if (!Out<ELFT>::Plt->empty())
     Add(Out<ELFT>::Plt);
-  if (Out<ELFT>::EhFrameHdr->Live)
+  if (!Out<ELFT>::EhFrame->empty())
     Add(Out<ELFT>::EhFrameHdr);
 }
 
@@ -1662,7 +1668,7 @@ template <class ELFT> void Writer<ELFT>::createPhdrs() {
     Phdrs.push_back(std::move(RelRo));
 
   // PT_GNU_EH_FRAME is a special section pointing on .eh_frame_hdr.
-  if (Out<ELFT>::EhFrameHdr->Live) {
+  if (!Out<ELFT>::EhFrame->empty() && Out<ELFT>::EhFrameHdr) {
     Phdr &Hdr = *AddHdr(PT_GNU_EH_FRAME,
                         toPhdrFlags(Out<ELFT>::EhFrameHdr->getFlags()));
     AddSec(Hdr, Out<ELFT>::EhFrameHdr);

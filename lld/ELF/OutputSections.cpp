@@ -739,7 +739,7 @@ template <class ELFT> void EhFrameHeader<ELFT>::writeTo(uint8_t *Buf) {
   Buf[1] = DW_EH_PE_pcrel | DW_EH_PE_sdata4;
   Buf[2] = DW_EH_PE_udata4;
   Buf[3] = DW_EH_PE_datarel | DW_EH_PE_sdata4;
-  write32<E>(Buf + 4, Sec->getVA() - this->getVA() - 4);
+  write32<E>(Buf + 4, Out<ELFT>::EhFrame->getVA() - this->getVA() - 4);
   write32<E>(Buf + 8, Fdes.size());
   Buf += 12;
 
@@ -749,14 +749,6 @@ template <class ELFT> void EhFrameHeader<ELFT>::writeTo(uint8_t *Buf) {
     write32<E>(Buf + 4, Fde.FdeVA - VA);
     Buf += 8;
   }
-}
-
-template <class ELFT>
-void EhFrameHeader<ELFT>::add(EhOutputSection<ELFT> *Sec) {
-  assert((!this->Sec || this->Sec == Sec) &&
-         "multiple .eh_frame sections not supported for .eh_frame_hdr");
-  Live = Config->EhFrameHdr;
-  this->Sec = Sec;
 }
 
 template <class ELFT>
@@ -922,9 +914,7 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 EhOutputSection<ELFT>::EhOutputSection()
-    : OutputSectionBase<ELFT>(".eh_frame", SHT_PROGBITS, SHF_ALLOC) {
-  Out<ELFT>::EhFrameHdr->add(this);
-}
+    : OutputSectionBase<ELFT>(".eh_frame", SHT_PROGBITS, SHF_ALLOC) {}
 
 template <class ELFT>
 void EhOutputSection<ELFT>::forEachInputSection(
@@ -1118,7 +1108,8 @@ void EhOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *Sec,
     if (!isFdeLive(FdePiece, Sec, Rels))
       continue;
     Cie->FdePieces.push_back(&FdePiece);
-    Out<ELFT>::EhFrameHdr->reserveFde();
+    if (Out<ELFT>::EhFrameHdr)
+      Out<ELFT>::EhFrameHdr->reserveFde();
   }
 }
 
@@ -1229,11 +1220,13 @@ template <class ELFT> void EhOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   // Construct .eh_frame_hdr. .eh_frame_hdr is a binary search table
   // to get a FDE from an address to which FDE is applied to. So here
   // we obtain two addresses and pass them to EhFrameHdr object.
-  for (CieRecord *Cie : Cies) {
-    for (SectionPiece *Fde : Cie->FdePieces) {
-      uintX_t Pc = getFdePc(Buf, Fde->OutputOff, Cie->FdeEncoding);
-      uintX_t FdeVA = this->getVA() + Fde->OutputOff;
-      Out<ELFT>::EhFrameHdr->addFde(Pc, FdeVA);
+  if (Out<ELFT>::EhFrameHdr) {
+    for (CieRecord *Cie : Cies) {
+      for (SectionPiece *Fde : Cie->FdePieces) {
+        uintX_t Pc = getFdePc(Buf, Fde->OutputOff, Cie->FdeEncoding);
+        uintX_t FdeVA = this->getVA() + Fde->OutputOff;
+        Out<ELFT>::EhFrameHdr->addFde(Pc, FdeVA);
+      }
     }
   }
 }

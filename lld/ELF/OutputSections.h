@@ -343,6 +343,7 @@ public:
   EhOutputSection();
   void writeTo(uint8_t *Buf) override;
   void finalize() override;
+  bool empty() const { return Sections.empty(); }
   void
   forEachInputSection(std::function<void(InputSectionBase<ELFT> *)> F) override;
 
@@ -543,10 +544,6 @@ public:
   void add(EhOutputSection<ELFT> *Sec);
   void reserveFde();
 
-  bool Live = false;
-
-  EhOutputSection<ELFT> *Sec = nullptr;
-
 private:
   struct FdeData {
     uint32_t Pc;
@@ -603,6 +600,7 @@ template <class ELFT> struct Out {
   static BuildIdSection<ELFT> *BuildId;
   static DynamicSection<ELFT> *Dynamic;
   static EhFrameHeader<ELFT> *EhFrameHdr;
+  static EhOutputSection<ELFT> *EhFrame;
   static GnuHashTableSection<ELFT> *GnuHashTab;
   static GotPltSection<ELFT> *GotPlt;
   static GotSection<ELFT> *Got;
@@ -630,6 +628,7 @@ template <class ELFT> struct Out {
 template <class ELFT> BuildIdSection<ELFT> *Out<ELFT>::BuildId;
 template <class ELFT> DynamicSection<ELFT> *Out<ELFT>::Dynamic;
 template <class ELFT> EhFrameHeader<ELFT> *Out<ELFT>::EhFrameHdr;
+template <class ELFT> EhOutputSection<ELFT> *Out<ELFT>::EhFrame;
 template <class ELFT> GnuHashTableSection<ELFT> *Out<ELFT>::GnuHashTab;
 template <class ELFT> GotPltSection<ELFT> *Out<ELFT>::GotPlt;
 template <class ELFT> GotSection<ELFT> *Out<ELFT>::Got;
