@@ -1179,7 +1179,7 @@ template <class ELFT> static uint64_t readFdeAddr(uint8_t *Buf, int Size) {
 template <class ELFT>
 typename ELFT::uint EhOutputSection<ELFT>::getFdePc(uint8_t *Buf, size_t FdeOff,
                                                     uint8_t Enc) {
-  // The starting address to which this FDE applies to is
+  // The starting address to which this FDE applies is
   // stored at FDE + 8 byte.
   size_t Off = FdeOff + 8;
   uint64_t Addr = readFdeAddr<ELFT>(Buf + Off, Enc & 0x7);
@@ -1210,7 +1210,7 @@ template <class ELFT> void EhOutputSection<ELFT>::writeTo(uint8_t *Buf) {
     S->relocate(Buf, nullptr);
 
   // Construct .eh_frame_hdr. .eh_frame_hdr is a binary search table
-  // to get a FDE from an address to which FDE is applied to. So here
+  // to get a FDE from an address to which FDE is applied. So here
   // we obtain two addresses and pass them to EhFrameHdr object.
   if (Out<ELFT>::EhFrameHdr) {
     for (CieRecord *Cie : Cies) {
