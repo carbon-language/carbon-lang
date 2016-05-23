@@ -11,6 +11,8 @@
 // package files).
 //
 //===----------------------------------------------------------------------===//
+#include "DWPError.h"
+#include "DWPStringPool.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSet.h"
@@ -28,6 +30,7 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Compression.h"
 #include "llvm/Support/DataExtractor.h"
+#include "llvm/Support/Error.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -35,9 +38,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Error.h"
 #include "llvm/Target/TargetMachine.h"
-#include "DWPError.h"
 #include <iostream>
 #include <memory>
 
@@ -54,11 +55,10 @@ static opt<std::string> OutputFilename(Required, "o",
                                        value_desc("filename"),
                                        cat(DwpCategory));
 
-static void
-writeStringsAndOffsets(MCStreamer &Out, StringMap<uint32_t> &Strings,
-                       uint32_t &StringOffset, MCSection *StrSection,
-                       MCSection *StrOffsetSection, StringRef CurStrSection,
-                       StringRef CurStrOffsetSection) {
+static void writeStringsAndOffsets(MCStreamer &Out, DWPStringPool &Strings,
+                                   MCSection *StrOffsetSection,
+                                   StringRef CurStrSection,
+                                   StringRef CurStrOffsetSection) {
   // Could possibly produce an error or warning if one of these was non-null but
   // the other was null.
   if (CurStrSection.empty() || CurStrOffsetSection.empty())
@@ -70,15 +70,8 @@ writeStringsAndOffsets(MCStreamer &Out, StringMap<uint32_t> &Strings,
   uint32_t LocalOffset = 0;
   uint32_t PrevOffset = 0;
   while (const char *s = Data.getCStr(&LocalOffset)) {
-    StringRef Str(s, LocalOffset - PrevOffset - 1);
-    auto Pair = Strings.insert(std::make_pair(Str, StringOffset));
-    if (Pair.second) {
-      Out.SwitchSection(StrSection);
-      Out.EmitBytes(
-          StringRef(Pair.first->getKeyData(), Pair.first->getKeyLength() + 1));
-      StringOffset += Str.size() + 1;
-    }
-    OffsetRemapping[PrevOffset] = Pair.first->second;
+    OffsetRemapping[PrevOffset] =
+        Strings.getOffset(s, LocalOffset - PrevOffset);
     PrevOffset = LocalOffset;
   }
 
@@ -193,7 +186,9 @@ struct UnitIndexEntry {
   StringRef DWPName;
 };
 
-StringRef getSubsection(StringRef Section, const DWARFUnitIndex::Entry &Entry, DWARFSectionKind Kind) {
+static StringRef getSubsection(StringRef Section,
+                               const DWARFUnitIndex::Entry &Entry,
+                               DWARFSectionKind Kind) {
   const auto *Off = Entry.getOffset(Kind);
   if (!Off)
     return StringRef();
@@ -393,15 +388,20 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
   MapVector<uint64_t, UnitIndexEntry> IndexEntries;
   MapVector<uint64_t, UnitIndexEntry> TypeIndexEntries;
 
-  StringMap<uint32_t> Strings;
-  uint32_t StringOffset = 0;
-
   uint32_t ContributionOffsets[8] = {};
+
+  DWPStringPool Strings(Out, StrSection);
+
+  SmallVector<OwningBinary<object::ObjectFile>, 128> Objects;
+  Objects.reserve(Inputs.size());
 
   for (const auto &Input : Inputs) {
     auto ErrOrObj = object::ObjectFile::createObjectFile(Input);
     if (!ErrOrObj)
       return ErrOrObj.takeError();
+
+    auto &Obj = *ErrOrObj->getBinary();
+    Objects.push_back(std::move(*ErrOrObj));
 
     UnitIndexEntry CurEntry = {};
 
@@ -415,7 +415,7 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
 
     SmallVector<SmallString<32>, 4> UncompressedSections;
 
-    for (const auto &Section : ErrOrObj->getBinary()->sections()) {
+    for (const auto &Section : Obj.sections()) {
       if (Section.isBSS())
         continue;
       if (Section.isVirtual())
@@ -438,10 +438,11 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
         if (!consumeCompressedDebugSectionHeader(Contents, OriginalSize))
           return make_error<DWPError>(
               ("failure while decompressing compressed section: '" + Name +
-               "\'").str());
+               "\'")
+                  .str());
         UncompressedSections.resize(UncompressedSections.size() + 1);
-        if (zlib::uncompress(Contents, UncompressedSections.back(), OriginalSize) !=
-            zlib::StatusOK) {
+        if (zlib::uncompress(Contents, UncompressedSections.back(),
+                             OriginalSize) != zlib::StatusOK) {
           UncompressedSections.pop_back();
           continue;
         }
@@ -495,8 +496,7 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
 
     if (!CurCUIndexSection.empty()) {
       DWARFUnitIndex CUIndex(DW_SECT_INFO);
-      DataExtractor CUIndexData(CurCUIndexSection,
-                                ErrOrObj->getBinary()->isLittleEndian(), 0);
+      DataExtractor CUIndexData(CurCUIndexSection, Obj.isLittleEndian(), 0);
       if (!CUIndex.parse(CUIndexData))
         return make_error<DWPError>("Failed to parse cu_index");
 
@@ -533,8 +533,7 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
           return make_error<DWPError>(
               "multiple type unit sections in .dwp file");
         DWARFUnitIndex TUIndex(DW_SECT_TYPES);
-        DataExtractor TUIndexData(CurTUIndexSection,
-                                  ErrOrObj->getBinary()->isLittleEndian(), 0);
+        DataExtractor TUIndexData(CurTUIndexSection, Obj.isLittleEndian(), 0);
         if (!TUIndex.parse(TUIndexData))
           return make_error<DWPError>("Failed to parse tu_index");
         addAllTypesFromDWP(Out, TypeIndexEntries, TUIndex, TypesSection,
@@ -556,8 +555,7 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
                   CurEntry, ContributionOffsets[DW_SECT_TYPES - DW_SECT_INFO]);
     }
 
-    writeStringsAndOffsets(Out, Strings, StringOffset, StrSection,
-                           StrOffsetSection, CurStrSection,
+    writeStringsAndOffsets(Out, Strings, StrOffsetSection, CurStrSection,
                            CurStrOffsetSection);
   }
 
