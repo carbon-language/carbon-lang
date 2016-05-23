@@ -713,12 +713,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 EhFrameHeader<ELFT>::EhFrameHeader()
-    : OutputSectionBase<ELFT>(".eh_frame_hdr", llvm::ELF::SHT_PROGBITS,
-                              SHF_ALLOC) {
-  // It's a 4 bytes of header + pointer to the contents of the .eh_frame section
-  // + the number of FDE pointers in the table.
-  this->Header.sh_size = 12;
-}
+    : OutputSectionBase<ELFT>(".eh_frame_hdr", SHT_PROGBITS, SHF_ALLOC) {}
 
 // .eh_frame_hdr contains a binary search table of pointers to FDEs.
 // Each entry of the search table consists of two values,
@@ -751,16 +746,14 @@ template <class ELFT> void EhFrameHeader<ELFT>::writeTo(uint8_t *Buf) {
   }
 }
 
+template <class ELFT> void EhFrameHeader<ELFT>::finalize() {
+  // .eh_frame_hdr has a 12 bytes header followed by an array of FDEs.
+  this->Header.sh_size = 12 + Out<ELFT>::EhFrame->NumFdes * 8;
+}
+
 template <class ELFT>
 void EhFrameHeader<ELFT>::addFde(uint32_t Pc, uint32_t FdeVA) {
   Fdes.push_back({Pc, FdeVA});
-}
-
-template <class ELFT> void EhFrameHeader<ELFT>::reserveFde() {
-  // Each FDE entry is 8 bytes long:
-  // The first four bytes are an offset to the initial PC value for the FDE. The
-  // last four byte are an offset to the FDE data itself.
-  this->Header.sh_size += 8;
 }
 
 template <class ELFT>
@@ -1108,8 +1101,7 @@ void EhOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *Sec,
     if (!isFdeLive(FdePiece, Sec, Rels))
       continue;
     Cie->FdePieces.push_back(&FdePiece);
-    if (Out<ELFT>::EhFrameHdr)
-      Out<ELFT>::EhFrameHdr->reserveFde();
+    NumFdes++;
   }
 }
 

@@ -349,6 +349,8 @@ public:
 
   void addSection(InputSectionBase<ELFT> *S) override;
 
+  size_t NumFdes = 0;
+
 private:
   template <class RelTy>
   void addSectionAux(EHInputSection<ELFT> *S, llvm::ArrayRef<RelTy> Rels);
@@ -538,11 +540,9 @@ class EhFrameHeader final : public OutputSectionBase<ELFT> {
 
 public:
   EhFrameHeader();
+  void finalize() override;
   void writeTo(uint8_t *Buf) override;
-
   void addFde(uint32_t Pc, uint32_t FdeVA);
-  void add(EhOutputSection<ELFT> *Sec);
-  void reserveFde();
 
 private:
   struct FdeData {
