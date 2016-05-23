@@ -334,12 +334,13 @@ struct CieRecord {
 // Output section for .eh_frame.
 template <class ELFT>
 class EhOutputSection final : public OutputSectionBase<ELFT> {
-public:
   typedef typename ELFT::uint uintX_t;
   typedef typename ELFT::Shdr Elf_Shdr;
   typedef typename ELFT::Rel Elf_Rel;
   typedef typename ELFT::Rela Elf_Rela;
-  EhOutputSection(StringRef Name, uint32_t Type, uintX_t Flags);
+
+public:
+  EhOutputSection();
   void writeTo(uint8_t *Buf) override;
   void finalize() override;
   void

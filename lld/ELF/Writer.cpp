@@ -1174,7 +1174,7 @@ OutputSectionFactory<ELFT>::create(InputSectionBase<ELFT> *C,
     Sec = new OutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
     break;
   case InputSectionBase<ELFT>::EHFrame:
-    Sec = new EhOutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
+    Sec = new EhOutputSection<ELFT>;
     break;
   case InputSectionBase<ELFT>::Merge:
     Sec = new MergeOutputSection<ELFT>(Key.Name, Key.Type, Key.Flags,

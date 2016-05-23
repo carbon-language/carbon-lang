@@ -921,9 +921,8 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
-EhOutputSection<ELFT>::EhOutputSection(StringRef Name, uint32_t Type,
-                                       uintX_t Flags)
-    : OutputSectionBase<ELFT>(Name, Type, Flags) {
+EhOutputSection<ELFT>::EhOutputSection()
+    : OutputSectionBase<ELFT>(".eh_frame", SHT_PROGBITS, SHF_ALLOC) {
   Out<ELFT>::EhFrameHdr->add(this);
 }
 
