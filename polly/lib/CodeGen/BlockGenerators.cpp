@@ -1078,8 +1078,6 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
   assert(Stmt.isRegionStmt() &&
          "Only region statements can be copied by the region generator");
 
-  Scop *S = Stmt.getParent();
-
   // Forget all old mappings.
   BlockMap.clear();
   RegionMaps.clear();
@@ -1105,17 +1103,6 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
   for (auto PI = pred_begin(EntryBB), PE = pred_end(EntryBB); PI != PE; ++PI)
     if (!R->contains(*PI))
       BlockMap[*PI] = EntryBBCopy;
-
-  // Determine the original exit block of this subregion. If it the exit block
-  // is also the scop's exit, it it has been changed to polly.merge_new_and_old.
-  // We move one block back to find the original block. This only happens if the
-  // scop required simplification.
-  // If the whole scop consists of only this non-affine region, then they share
-  // the same Region object, such that we cannot change the exit of one and not
-  // the other.
-  BasicBlock *ExitBB = R->getExit();
-  if (!S->hasSingleExitEdge() && ExitBB == S->getExit())
-    ExitBB = *(++pred_begin(ExitBB));
 
   // Iterate over all blocks in the region in a breadth-first search.
   std::deque<BasicBlock *> Blocks;

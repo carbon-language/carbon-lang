@@ -1405,7 +1405,6 @@ void ScopStmt::buildDomain() {
 void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP, LoopInfo &LI) {
   isl_ctx *Ctx = Parent.getIslCtx();
   isl_local_space *LSpace = isl_local_space_from_space(getDomainSpace());
-  Type *Ty = GEP->getPointerOperandType();
   ScalarEvolution &SE = *Parent.getSE();
 
   // The set of loads that are required to be invariant.
@@ -1415,10 +1414,6 @@ void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP, LoopInfo &LI) {
   std::vector<int> Sizes;
 
   std::tie(Subscripts, Sizes) = getIndexExpressionsFromGEP(GEP, SE);
-
-  if (auto *PtrTy = dyn_cast<PointerType>(Ty)) {
-    Ty = PtrTy->getElementType();
-  }
 
   int IndexOffset = Subscripts.size() - Sizes.size();
 
@@ -4397,7 +4392,6 @@ bool ScopInfo::buildAccessMultiDimParam(MemAccInst Inst, Loop *L) {
       dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
 
   assert(BasePointer && "Could not find base pointer");
-  AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
   auto &InsnToMemAcc = scop->getInsnToMemAccMap();
   auto AccItr = InsnToMemAcc.find(Inst);
