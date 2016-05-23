@@ -85,12 +85,16 @@ struct FuncBranchData {
 
   StringRef Name;
   ContainerTy Data;
+  ContainerTy EntryData;
 
   /// Total execution count for the function.
   int64_t ExecutionCount{0};
 
   FuncBranchData(StringRef Name, ContainerTy Data)
       : Name(Name), Data(std::move(Data)) {}
+
+  FuncBranchData(StringRef Name, ContainerTy Data, ContainerTy EntryData)
+      : Name(Name), Data(std::move(Data)), EntryData(std::move(EntryData)) {}
 
   ErrorOr<const BranchInfo &> getBranch(uint64_t From, uint64_t To) const;
 };

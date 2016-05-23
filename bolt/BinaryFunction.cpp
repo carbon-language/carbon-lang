@@ -450,6 +450,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData,
         // or a recursive call.
         bool IsCall = MIA->isCall(Instruction);
         bool IsCondBranch = MIA->isConditionalBranch(Instruction);
+        bool IsInvoke = MIA->isInvoke(Instruction);
         MCSymbol *TargetSymbol{nullptr};
         uint64_t TargetOffset{0};
 
@@ -518,7 +519,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData,
           // Add local branch info.
           LocalBranches.push_back({Offset, TargetOffset});
         }
-        if (IsCondBranch) {
+        if (IsCondBranch /*|| IsInvoke*/) {
           // Add fallthrough branch info.
           FTBranches.push_back({Offset, Offset + Size});
         }
@@ -715,7 +716,8 @@ bool BinaryFunction::buildCFG() {
     addCFIPlaceholders(CFIOffset, InsertBB);
 
     // How well do we detect tail calls here?
-    if (MIA->isTerminator(InstrInfo.second)) {
+    if (MIA->isTerminator(InstrInfo.second) /*||
+        MIA->isInvoke(InstrInfo.second)*/) {
       PrevBB = InsertBB;
       InsertBB = nullptr;
     }
@@ -800,6 +802,8 @@ bool BinaryFunction::buildCFG() {
     if (BB.succ_size() == 0) {
       IsPrevFT = MIA->isTerminator(*LastInstIter) ? false : true;
     } else if (BB.succ_size() == 1) {
+      /*assert(!MIA->isInvoke(*LastInstIter) &&
+             "found throw with assocoated local branch");*/
       IsPrevFT =  MIA->isConditionalBranch(*LastInstIter) ? true : false;
     } else {
       // Ends with 2 branches, with an indirect jump or it is a conditional
@@ -842,6 +846,8 @@ bool BinaryFunction::buildCFG() {
 void BinaryFunction::inferFallThroughCounts() {
   assert(!BasicBlocks.empty() && "basic block list should not be empty");
 
+  auto BranchDataOrErr = BC.DR.getFuncBranchData(getName());
+
   // Compute preliminary execution time for each basic block
   for (auto &CurBB : BasicBlocks) {
     if (&CurBB == &*BasicBlocks.begin()) {
@@ -861,6 +867,17 @@ void BinaryFunction::inferFallThroughCounts() {
       if (SuccCount->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
         Succ->ExecutionCount += SuccCount->Count;
       ++SuccCount;
+    }
+  }
+
+  // Udate execution counts of landing pad blocks.
+  if (!BranchDataOrErr.getError()) {
+    const FuncBranchData &BranchData = BranchDataOrErr.get();
+    for (const auto &I : BranchData.EntryData) {
+      BinaryBasicBlock *BB = getBasicBlockAtOffset(I.To.Offset);
+      if (BB && LandingPads.find(BB->getLabel()) != LandingPads.end()) {
+        BB->ExecutionCount += I.Branches;
+      }
     }
   }
 

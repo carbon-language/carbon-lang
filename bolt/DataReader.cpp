@@ -157,6 +157,7 @@ std::error_code DataReader::parse() {
       bool success;
       std::tie(I, success) = FuncsMap.insert(
           std::make_pair(Name, FuncBranchData(Name,
+                                              FuncBranchData::ContainerTy(),
                                               FuncBranchData::ContainerTy())));
       assert(success && "unexpected result of insert");
     }
@@ -181,6 +182,12 @@ std::error_code DataReader::parse() {
     auto I = GetOrCreateFuncEntry(BI.From.Name);
     I->getValue().Data.emplace_back(std::move(BI));
 
+    // Add entry data for branches from another function.
+    if (BI.To.IsSymbol && !BI.From.Name.equals(BI.To.Name)) {
+      I = GetOrCreateFuncEntry(BI.To.Name);
+      I->getValue().EntryData.emplace_back(std::move(BI));
+    }
+
     // If destination is the function start - update execution count.
     // NB: the data is skewed since we cannot tell tail recursion from
     //     branches to the function start.
@@ -204,7 +211,13 @@ DataReader::getFuncBranchData(StringRef FuncName) const {
 
 void DataReader::dump() const {
   for (const auto &Func : FuncsMap) {
+    Diag << Func.getKey() << " branches:\n";
     for (const auto &BI : Func.getValue().Data) {
+      Diag << BI.From.Name << " " << BI.From.Offset << " " << BI.To.Name << " "
+           << BI.To.Offset << " " << BI.Mispreds << " " << BI.Branches << "\n";
+    }
+    Diag << Func.getKey() << " entry points:\n";
+    for (const auto &BI : Func.getValue().EntryData) {
       Diag << BI.From.Name << " " << BI.From.Offset << " " << BI.To.Name << " "
            << BI.To.Offset << " " << BI.Mispreds << " " << BI.Branches << "\n";
     }
