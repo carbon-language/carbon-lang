@@ -1873,6 +1873,15 @@ public:
   /// @brief Return the function this SCoP is in.
   Function &getFunction() const { return *R.getEntry()->getParent(); }
 
+  /// @brief Check if @p L is contained in the SCoP.
+  bool contains(const Loop *L) const { return R.contains(L); }
+
+  /// @brief Check if @p BB is contained in the SCoP.
+  bool contains(const BasicBlock *BB) const { return R.contains(BB); }
+
+  /// @brief Check if @p I is contained in the SCoP.
+  bool contains(const Instruction *I) const { return R.contains(I); }
+
   /// @brief Get the maximum depth of the loop.
   ///
   /// @return The maximum depth of the loop.

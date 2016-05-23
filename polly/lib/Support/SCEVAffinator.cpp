@@ -437,7 +437,7 @@ __isl_give PWACtx SCEVAffinator::visitAddRecExpr(const SCEVAddRecExpr *Expr) {
 
   // Directly generate isl_pw_aff for Expr if 'start' is zero.
   if (Expr->getStart()->isZero()) {
-    assert(S->getRegion().contains(Expr->getLoop()) &&
+    assert(S->contains(Expr->getLoop()) &&
            "Scop does not contain the loop referenced in this AddRec");
 
     PWACtx Step = visit(Expr->getOperand(1));

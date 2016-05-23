@@ -155,7 +155,7 @@ static const ScopArrayInfo *identifyBasePtrOriginSAI(Scop *S, Value *BasePtr) {
   if (!BasePtrLI)
     return nullptr;
 
-  if (!S->getRegion().contains(BasePtrLI))
+  if (!S->contains(BasePtrLI))
     return nullptr;
 
   ScalarEvolution &SE = *S->getSE();
@@ -1882,8 +1882,8 @@ void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
     if (!CI || CI->getNumArgOperands() != 1)
       continue;
 
-    bool InR = R.contains(CI);
-    if (!InR && !DT.dominates(CI->getParent(), R.getEntry()))
+    bool InScop = contains(CI);
+    if (!InScop && !DT.dominates(CI->getParent(), R.getEntry()))
       continue;
 
     auto *L = LI.getLoopFor(CI->getParent());
@@ -1907,9 +1907,9 @@ void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
     }
 
     SmallVector<isl_set *, 2> ConditionSets;
-    auto *TI = InR ? CI->getParent()->getTerminator() : nullptr;
-    auto &Stmt = InR ? *getStmtFor(CI->getParent()) : *Stmts.begin();
-    auto *Dom = InR ? getDomainConditions(&Stmt) : isl_set_copy(Context);
+    auto *TI = InScop ? CI->getParent()->getTerminator() : nullptr;
+    auto &Stmt = InScop ? *getStmtFor(CI->getParent()) : *Stmts.begin();
+    auto *Dom = InScop ? getDomainConditions(&Stmt) : isl_set_copy(Context);
     bool Valid = buildConditionSets(Stmt, Val, TI, L, Dom, ConditionSets);
     isl_set_free(Dom);
 
@@ -1917,7 +1917,7 @@ void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
       continue;
 
     isl_set *AssumptionCtx = nullptr;
-    if (InR) {
+    if (InScop) {
       AssumptionCtx = isl_set_complement(isl_set_params(ConditionSets[1]));
       isl_set_free(ConditionSets[0]);
     } else {
@@ -2463,14 +2463,14 @@ void Scop::propagateDomainConstraintsToRegionExit(
   auto *RI = R.getRegionInfo();
   auto *BBReg = RI ? RI->getRegionFor(BB) : nullptr;
   auto *ExitBB = BBReg ? BBReg->getExit() : nullptr;
-  if (!BBReg || BBReg->getEntry() != BB || !R.contains(ExitBB))
+  if (!BBReg || BBReg->getEntry() != BB || !contains(ExitBB))
     return;
 
   auto &BoxedLoops = getBoxedLoops();
   // Do not propagate the domain if there is a loop backedge inside the region
   // that would prevent the exit block from beeing executed.
   auto *L = BBLoop;
-  while (L && R.contains(L)) {
+  while (L && contains(L)) {
     SmallVector<BasicBlock *, 4> LatchBBs;
     BBLoop->getLoopLatches(LatchBBs);
     for (auto *LatchBB : LatchBBs)
@@ -2726,7 +2726,7 @@ bool Scop::propagateDomainConstraints(Region *R, DominatorTree &DT,
     Domain = isl_set_align_params(Domain, getParamSpace());
 
     Loop *BBLoop = getRegionNodeLoop(RN, LI);
-    if (BBLoop && BBLoop->getHeader() == BB && getRegion().contains(BBLoop))
+    if (BBLoop && BBLoop->getHeader() == BB && contains(BBLoop))
       if (!addLoopBoundsToHeaderDomain(BBLoop, LI))
         return false;
   }
@@ -2866,7 +2866,7 @@ bool Scop::hasNonHoistableBasePtrInScop(MemoryAccess *MA,
   auto *PointerBase = dyn_cast<SCEVUnknown>(SE->getPointerBase(BaseAddr));
   if (auto *BasePtrInst = dyn_cast<Instruction>(PointerBase->getValue()))
     if (!isa<LoadInst>(BasePtrInst))
-      return R.contains(BasePtrInst);
+      return contains(BasePtrInst);
 
   return false;
 }
@@ -3505,7 +3505,7 @@ __isl_give isl_set *Scop::getNonHoistableCtx(MemoryAccess *Access,
 void Scop::verifyInvariantLoads() {
   auto &RIL = getRequiredInvariantLoads();
   for (LoadInst *LI : RIL) {
-    assert(LI && getRegion().contains(LI));
+    assert(LI && contains(LI));
     ScopStmt *Stmt = getStmtFor(LI);
     if (Stmt && Stmt->getArrayAccessOrNULLFor(LI)) {
       invalidate(INVARIANTLOAD, LI->getDebugLoc());
@@ -4145,7 +4145,7 @@ void Scop::buildSchedule(Region *R, LoopStackTy &LoopStack, LoopInfo &LI) {
     }
 
     Loop *L = getRegionNodeLoop(RN, LI);
-    if (!getRegion().contains(L))
+    if (!contains(L))
       L = OuterScopLoop;
 
     Loop *LastLoop = LoopStack.back().L;
@@ -4302,7 +4302,7 @@ void ScopInfo::buildEscapingDependences(Instruction *Inst) {
     // scop's exit block. This is because region simplification before code
     // generation inserts new basic blocks before the PHI such that its incoming
     // blocks are not in the scop anymore.
-    if (!R->contains(UseParent) ||
+    if (!scop->contains(UseParent) ||
         (isa<PHINode>(UI) && UserParent == R->getExit() &&
          R->getExitingBlock())) {
       // At least one escaping use found.

@@ -127,7 +127,7 @@ Value *BlockGenerator::getNewValue(ScopStmt &Stmt, Value *Old, ValueMapT &BBMap,
 
   // A scop-constant value defined by an instruction executed outside the scop.
   if (const Instruction *Inst = dyn_cast<Instruction>(Old))
-    if (!Stmt.getParent()->getRegion().contains(Inst->getParent()))
+    if (!Stmt.getParent()->contains(Inst->getParent()))
       return Old;
 
   // The scalar dependence is neither available nor SCEVCodegenable.
@@ -369,7 +369,6 @@ void BlockGenerator::handleOutsideUsers(const Scop &S, Instruction *Inst) {
   if (EscapeMap.count(Inst))
     return;
 
-  const auto &R = S.getRegion();
   EscapeUserVectorTy EscapeUsers;
   for (User *U : Inst->users()) {
 
@@ -378,7 +377,7 @@ void BlockGenerator::handleOutsideUsers(const Scop &S, Instruction *Inst) {
     if (!UI)
       continue;
 
-    if (R.contains(UI))
+    if (S.contains(UI))
       continue;
 
     EscapeUsers.push_back(UI);
@@ -477,7 +476,7 @@ void BlockGenerator::createScalarInitialization(Scop &S) {
       auto PHI = cast<PHINode>(Array->getBasePtr());
 
       for (auto BI = PHI->block_begin(), BE = PHI->block_end(); BI != BE; BI++)
-        if (!R.contains(*BI) && *BI != SplitBB)
+        if (!S.contains(*BI) && *BI != SplitBB)
           llvm_unreachable("Incoming edges from outside the scop should always "
                            "come from SplitBB");
 
@@ -493,7 +492,7 @@ void BlockGenerator::createScalarInitialization(Scop &S) {
 
     auto *Inst = dyn_cast<Instruction>(Array->getBasePtr());
 
-    if (Inst && R.contains(Inst))
+    if (Inst && S.contains(Inst))
       continue;
 
     // PHI nodes that are not marked as such in their SAI object are either exit
@@ -556,7 +555,6 @@ void BlockGenerator::createScalarFinalization(Region &R) {
 }
 
 void BlockGenerator::findOutsideUsers(Scop &S) {
-  auto &R = S.getRegion();
   for (auto &Pair : S.arrays()) {
     auto &Array = Pair.second;
 
@@ -574,7 +572,7 @@ void BlockGenerator::findOutsideUsers(Scop &S) {
     // Scop invariant hoisting moves some of the base pointers out of the scop.
     // We can ignore these, as the invariant load hoisting already registers the
     // relevant outside users.
-    if (!R.contains(Inst))
+    if (!S.contains(Inst))
       continue;
 
     handleOutsideUsers(S, Inst);
