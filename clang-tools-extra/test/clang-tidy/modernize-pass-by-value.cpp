@@ -193,10 +193,3 @@ struct S {
   // CHECK-FIXES: S(Movable &&M) : M(M) {}
   Movable M;
 };
-
-// Test that types that are trivially copyable will not use std::move. This will
-// cause problems with misc-move-const-arg, as it will revert it.
-struct T {
-  std::array<int, 10> a_;
-  T(std::array<int, 10> a) : a_(a) {}
-};
