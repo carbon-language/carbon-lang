@@ -1900,6 +1900,9 @@ public:
   /// @brief Return a range of all basic blocks in the SCoP.
   Region::block_range blocks() const { return R.blocks(); }
 
+  /// @brief Return true if and only if @p BB dominates the SCoP.
+  bool isDominatedBy(const DominatorTree &DT, BasicBlock *BB) const;
+
   /// @brief Get the maximum depth of the loop.
   ///
   /// @return The maximum depth of the loop.

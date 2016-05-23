@@ -1874,6 +1874,10 @@ __isl_give isl_set *Scop::addNonEmptyDomainConstraints(isl_set *C) const {
   return isl_set_intersect_params(C, DomainContext);
 }
 
+bool Scop::isDominatedBy(const DominatorTree &DT, BasicBlock *BB) const {
+  return DT.dominates(BB, getEntry());
+}
+
 void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
                               LoopInfo &LI) {
   auto &F = getFunction();
@@ -1883,7 +1887,7 @@ void Scop::addUserAssumptions(AssumptionCache &AC, DominatorTree &DT,
       continue;
 
     bool InScop = contains(CI);
-    if (!InScop && !DT.dominates(CI->getParent(), R.getEntry()))
+    if (!InScop && !isDominatedBy(DT, CI->getParent()))
       continue;
 
     auto *L = LI.getLoopFor(CI->getParent());
