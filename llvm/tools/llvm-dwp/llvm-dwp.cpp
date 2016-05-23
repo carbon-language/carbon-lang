@@ -359,6 +359,25 @@ std::string buildDWODescription(StringRef Name, StringRef DWPName, StringRef DWO
   return Text;
 }
 
+static Error handleCompressedSection(
+    SmallVector<SmallString<32>, 4> &UncompressedSections, StringRef &Name,
+    StringRef &Contents) {
+  if (!Name.startswith("zdebug_"))
+    return Error();
+  UncompressedSections.emplace_back();
+  uint64_t OriginalSize;
+  if (!zlib::isAvailable())
+    return make_error<DWPError>("zlib not available");
+  if (!consumeCompressedDebugSectionHeader(Contents, OriginalSize) ||
+      zlib::uncompress(Contents, UncompressedSections.back(), OriginalSize) !=
+          zlib::StatusOK)
+    return make_error<DWPError>(
+        ("failure while decompressing compressed section: '" + Name + "\'")
+            .str());
+  Name = Name.substr(1);
+  Contents = UncompressedSections.back();
+  return Error();
+}
 Error buildDuplicateError(const std::pair<uint64_t, UnitIndexEntry> &PrevE,
                           const CompileUnitIdentifiers &ID, StringRef DWPName) {
   return make_error<DWPError>(
@@ -431,21 +450,9 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       if (auto Err = Section.getContents(Contents))
         return errorCodeToError(Err);
 
-      if (Name.startswith("zdebug_")) {
-        UncompressedSections.emplace_back();
-        uint64_t OriginalSize;
-        if (!zlib::isAvailable())
-          return make_error<DWPError>("zlib not available");
-        if (!consumeCompressedDebugSectionHeader(Contents, OriginalSize) ||
-            zlib::uncompress(Contents, UncompressedSections.back(),
-                             OriginalSize) != zlib::StatusOK)
-          return make_error<DWPError>(
-              ("failure while decompressing compressed section: '" + Name +
-               "\'")
-                  .str());
-        Name = Name.substr(1);
-        Contents = UncompressedSections.back();
-      }
+      if (auto Err =
+              handleCompressedSection(UncompressedSections, Name, Contents))
+        return Err;
 
       auto SectionPair = KnownSections.find(Name);
       if (SectionPair == KnownSections.end())
