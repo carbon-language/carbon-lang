@@ -768,11 +768,11 @@ template <class ELFT> void EhFrameHeader<ELFT>::writeTo(uint8_t *Buf) {
   for (const FdeData &F : FdeList)
     PcToOffset[getFdePc(EhVA, F)] = F.Off;
 
-  const uint8_t Header[] = {1, DW_EH_PE_pcrel | DW_EH_PE_sdata4,
-                            DW_EH_PE_udata4,
-                            DW_EH_PE_datarel | DW_EH_PE_sdata4};
-  memcpy(Buf, Header, sizeof(Header));
-
+  // Write a header.
+  Buf[0] = 1;
+  Buf[1] = DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+  Buf[2] = DW_EH_PE_udata4;
+  Buf[3] = DW_EH_PE_datarel | DW_EH_PE_sdata4;
   uintX_t EhOff = EhVA - VA - 4;
   write32<E>(Buf + 4, EhOff);
   write32<E>(Buf + 8, PcToOffset.size());
