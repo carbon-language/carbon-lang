@@ -5873,12 +5873,16 @@ static void DumpBitcodeSection(MachOObjectFile *O, const char *sect,
       case XAR_CKSUM_MD5:
         outs() << "XAR_CKSUM_MD5\n";
         break;
+#ifdef XAR_CKSUM_SHA256
       case XAR_CKSUM_SHA256:
         outs() << "XAR_CKSUM_SHA256\n";
         break;
+#endif
+#ifdef XAR_CKSUM_SHA512
       case XAR_CKSUM_SHA512:
         outs() << "XAR_CKSUM_SHA512\n";
         break;
+#endif
       default:
         outs() << XarHeader.cksum_alg << "\n";
     }
