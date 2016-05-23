@@ -114,8 +114,8 @@ public:
     return CallerSym(Kind, RecordOffset, Header, Indices);
   }
 
-  Hdr Header;
   uint32_t RecordOffset;
+  Hdr Header;
   ArrayRef<TypeIndex> Indices;
 };
 
