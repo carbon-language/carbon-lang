@@ -395,6 +395,8 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
   SmallVector<OwningBinary<object::ObjectFile>, 128> Objects;
   Objects.reserve(Inputs.size());
 
+  SmallVector<SmallString<32>, 4> UncompressedSections;
+
   for (const auto &Input : Inputs) {
     auto ErrOrObj = object::ObjectFile::createObjectFile(Input);
     if (!ErrOrObj)
@@ -412,8 +414,6 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
     StringRef AbbrevSection;
     StringRef CurCUIndexSection;
     StringRef CurTUIndexSection;
-
-    SmallVector<SmallString<32>, 4> UncompressedSections;
 
     for (const auto &Section : Obj.sections()) {
       if (Section.isBSS())
