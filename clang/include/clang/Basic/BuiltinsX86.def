@@ -2276,6 +2276,9 @@ TARGET_BUILTIN(__builtin_ia32_cvtusi2sd32, "V2dV2dUi","","avx512f")
 TARGET_BUILTIN(__builtin_ia32_cvtusi2sd64, "V2dV2dULLiIi","","avx512f")
 TARGET_BUILTIN(__builtin_ia32_cvtusi2ss32, "V4fV4fUiIi","","avx512f")
 TARGET_BUILTIN(__builtin_ia32_cvtusi2ss64, "V4fV4fULLiIi","","avx512f")
+TARGET_BUILTIN(__builtin_ia32_vpmultishiftqb512_mask, "V64cV64cV64cV64cULLi","","avx512vbmi")
+TARGET_BUILTIN(__builtin_ia32_vpmultishiftqb128_mask, "V16cV16cV16cV16cUs","","avx512vbmi,avx512vl")
+TARGET_BUILTIN(__builtin_ia32_vpmultishiftqb256_mask, "V32cV32cV32cV32cUi","","avx512vbmi,avx512vl")
 
 // MONITORX/MWAITX
 TARGET_BUILTIN(__builtin_ia32_monitorx, "vv*UiUi", "", "mwaitx")
