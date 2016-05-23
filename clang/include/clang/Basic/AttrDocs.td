@@ -1553,6 +1553,24 @@ manipulating bits of the enumerator when issuing warnings.
   }];
 }
 
+def EmptyBasesDocs : Documentation {
+  let Category = DocCatType;
+  let Content = [{
+The empty_bases attribute permits the compiler to utilize the
+empty-base-optimization more frequently.
+It is only supported when using the Microsoft C++ ABI.
+  }];
+}
+
+def LayoutVersionDocs : Documentation {
+  let Category = DocCatType;
+  let Content = [{
+The layout_version attribute requests that the compiler utilize the class
+layout rules of a particular compiler version.
+It is only supported when using the Microsoft C++ ABI.
+  }];
+}
+
 def MSInheritanceDocs : Documentation {
   let Category = DocCatType;
   let Heading = "__single_inhertiance, __multiple_inheritance, __virtual_inheritance";

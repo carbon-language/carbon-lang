@@ -745,6 +745,12 @@ def Destructor : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+def EmptyBases : InheritableAttr, TargetSpecificAttr<TargetMicrosoftCXXABI> {
+  let Spellings = [Declspec<"empty_bases">];
+  let Subjects = SubjectList<[CXXRecord]>;
+  let Documentation = [EmptyBasesDocs];
+}
+
 def EnableIf : InheritableAttr {
   let Spellings = [GNU<"enable_if">];
   let Subjects = SubjectList<[Function]>;
@@ -866,6 +872,13 @@ def Restrict : InheritableAttr {
   let Spellings = [Declspec<"restrict">, GCC<"malloc">];
   let Subjects = SubjectList<[Function]>;
   let Documentation = [Undocumented];
+}
+
+def LayoutVersion : InheritableAttr, TargetSpecificAttr<TargetMicrosoftCXXABI> {
+  let Spellings = [Declspec<"layout_version">];
+  let Args = [UnsignedArgument<"Version">];
+  let Subjects = SubjectList<[CXXRecord]>;
+  let Documentation = [LayoutVersionDocs];
 }
 
 def MaxFieldAlignment : InheritableAttr {
