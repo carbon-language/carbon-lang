@@ -1,7 +1,9 @@
-; RUN: llvm-pdbdump --dump-headers -dump-tpi-records -dump-tpi-record-bytes -dump-module-syms \
-; RUN:              -dump-sym-record-bytes --dump-publics %p/Inputs/empty.pdb | FileCheck -check-prefix=EMPTY %s
-; RUN: llvm-pdbdump --dump-headers %p/Inputs/big-read.pdb | FileCheck -check-prefix=BIG %s
-; RUN: llvm-pdbdump --dump-headers %p/Inputs/bad-block-size.pdb | FileCheck -check-prefix=BAD-BLOCK-SIZE %s
+; RUN: llvm-pdbdump -raw-headers -raw-tpi-records -raw-tpi-record-bytes -raw-module-syms \
+; RUN:              -raw-sym-record-bytes -raw-publics -raw-module-files -raw-stream-name=/names \
+; RUN:              %p/Inputs/empty.pdb | FileCheck -check-prefix=EMPTY %s
+; RUN: llvm-pdbdump -raw-headers -raw-stream-name=/names -raw-modules -raw-module-files \
+; RUN:              %p/Inputs/big-read.pdb | FileCheck -check-prefix=BIG %s
+; RUN: llvm-pdbdump -raw-headers %p/Inputs/bad-block-size.pdb | FileCheck -check-prefix=BAD-BLOCK-SIZE %s
 
 ; EMPTY:      FileHeaders {
 ; EMPTY-NEXT:   BlockSize: 4096
@@ -105,6 +107,8 @@
 ; EMPTY-NEXT:   Is Stripped: No
 ; EMPTY-NEXT:   Machine Type: x86
 ; EMPTY-NEXT:   Symbol Record Stream Index: 8
+; EMPTY-NEXT:   Public Symbol Stream Index: 7
+; EMPTY-NEXT:   Global Symbol Stream Index: 6
 ; EMPTY-NEXT:   Toolchain Version: 12.0
 ; EMPTY-NEXT:   mspdb120.dll version: 12.0.31101
 ; EMPTY-NEXT:   Modules [
@@ -525,6 +529,8 @@
 ; BIG-NEXT:   Is Stripped: No
 ; BIG-NEXT:   Machine Type: x86
 ; BIG-NEXT:   Symbol Record Stream Index: 9
+; BIG-NEXT:   Public Symbol Stream Index: 8
+; BIG-NEXT:   Global Symbol Stream Index: 7
 ; BIG-NEXT:   Toolchain Version: 14.0
 ; BIG-NEXT:   mspdb140.dll version: 14.0.23918
 ; BIG-NEXT:   Modules [

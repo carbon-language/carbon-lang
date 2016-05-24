@@ -188,6 +188,10 @@ uint16_t DbiStream::getPublicSymbolStreamIndex() const {
   return Header->PublicSymbolStreamIndex;
 }
 
+uint16_t DbiStream::getGlobalSymbolStreamIndex() const {
+  return Header->GlobalSymbolStreamIndex;
+}
+
 bool DbiStream::isIncrementallyLinked() const {
   return (Header->Flags & FlagIncrementalMask) != 0;
 }

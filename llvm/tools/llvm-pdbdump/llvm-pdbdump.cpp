@@ -104,31 +104,38 @@ cl::opt<uint64_t> LoadAddress(
     cl::desc("Assume the module is loaded at the specified address"),
     cl::cat(OtherOptions));
 
-cl::opt<bool> DumpHeaders("dump-headers", cl::desc("dump PDB headers"),
+cl::opt<bool> DumpHeaders("raw-headers", cl::desc("dump PDB headers"),
                           cl::cat(NativeOtions));
-cl::opt<bool> DumpStreamSizes("dump-stream-sizes",
+cl::opt<bool> DumpStreamSizes("raw-stream-sizes",
                               cl::desc("dump PDB stream sizes"),
                               cl::cat(NativeOtions));
-cl::opt<bool> DumpStreamBlocks("dump-stream-blocks",
+cl::opt<bool> DumpStreamBlocks("raw-stream-blocks",
                                cl::desc("dump PDB stream blocks"),
                                cl::cat(NativeOtions));
-cl::opt<bool> DumpTpiRecords("dump-tpi-records",
+cl::opt<bool> DumpTpiRecords("raw-tpi-records",
                              cl::desc("dump CodeView type records"),
                              cl::cat(NativeOtions));
 cl::opt<bool>
-    DumpTpiRecordBytes("dump-tpi-record-bytes",
+    DumpTpiRecordBytes("raw-tpi-record-bytes",
                        cl::desc("dump CodeView type record raw bytes"),
                        cl::cat(NativeOtions));
-cl::opt<std::string> DumpStreamData("dump-stream", cl::desc("dump stream data"),
-                                    cl::cat(NativeOtions));
-cl::opt<bool> DumpModuleSyms("dump-module-syms",
-                             cl::desc("dump module symbols"),
+cl::opt<std::string> DumpStreamDataIdx("raw-stream",
+                                       cl::desc("dump stream data"),
+                                       cl::cat(NativeOtions));
+cl::opt<std::string> DumpStreamDataName("raw-stream-name",
+                                        cl::desc("dump stream data"),
+                                        cl::cat(NativeOtions));
+cl::opt<bool> DumpModules("raw-modules", cl::desc("dump compiland information"),
+                          cl::cat(NativeOtions));
+cl::opt<bool> DumpModuleFiles("raw-module-files",
+                              cl::desc("dump file information"),
+                              cl::cat(NativeOtions));
+cl::opt<bool> DumpModuleSyms("raw-module-syms", cl::desc("dump module symbols"),
                              cl::cat(NativeOtions));
-cl::opt<bool> DumpPublics("dump-publics",
-                          cl::desc("dump Publics stream data"),
+cl::opt<bool> DumpPublics("raw-publics", cl::desc("dump Publics stream data"),
                           cl::cat(NativeOtions));
 cl::opt<bool>
-    DumpSymRecordBytes("dump-sym-record-bytes",
+    DumpSymRecordBytes("raw-sym-record-bytes",
                        cl::desc("dump CodeView symbol record raw bytes"),
                        cl::cat(NativeOtions));
 
@@ -227,28 +234,22 @@ static Error dumpStreamBlocks(ScopedPrinter &P, PDBFile &File) {
 
 static Error dumpStreamData(ScopedPrinter &P, PDBFile &File) {
   uint32_t StreamCount = File.getNumStreams();
-  StringRef DumpStreamStr = opts::DumpStreamData;
+  StringRef DumpStreamStr = opts::DumpStreamDataIdx;
   uint32_t DumpStreamNum;
   if (DumpStreamStr.getAsInteger(/*Radix=*/0U, DumpStreamNum) ||
       DumpStreamNum >= StreamCount)
     return Error::success();
 
-  uint32_t StreamBytesRead = 0;
-  uint32_t StreamSize = File.getStreamByteSize(DumpStreamNum);
-  auto StreamBlocks = File.getStreamBlockList(DumpStreamNum);
-
-  for (uint32_t StreamBlockAddr : StreamBlocks) {
-    uint32_t BytesLeftToReadInStream = StreamSize - StreamBytesRead;
-    if (BytesLeftToReadInStream == 0)
-      break;
-
+  MappedBlockStream S(DumpStreamNum, File);
+  StreamReader R(S);
+  while (R.bytesRemaining() > 0) {
+    ArrayRef<uint8_t> Data;
     uint32_t BytesToReadInBlock = std::min(
-        BytesLeftToReadInStream, static_cast<uint32_t>(File.getBlockSize()));
-    auto StreamBlockData =
-        File.getBlockData(StreamBlockAddr, BytesToReadInBlock);
-
-    outs() << StreamBlockData;
-    StreamBytesRead += StreamBlockData.size();
+        R.bytesRemaining(), static_cast<uint32_t>(File.getBlockSize()));
+    if (auto EC = R.getArrayRef(Data, BytesToReadInBlock))
+      return EC;
+    outs() << StringRef(reinterpret_cast<const char *>(Data.begin()),
+                        Data.size());
   }
   return Error::success();
 }
@@ -268,18 +269,20 @@ static Error dumpInfoStream(ScopedPrinter &P, PDBFile &File) {
   return Error::success();
 }
 
-static Error dumpNamedStream(ScopedPrinter &P, PDBFile &File,
-                             StringRef Stream) {
+static Error dumpNamedStream(ScopedPrinter &P, PDBFile &File) {
+  if (opts::DumpStreamDataName.empty())
+    return Error::success();
+
   auto InfoS = File.getPDBInfoStream();
   if (auto EC = InfoS.takeError())
     return EC;
   InfoStream &IS = InfoS.get();
 
-  uint32_t NameStreamIndex = IS.getNamedStreamIndex(Stream);
+  uint32_t NameStreamIndex = IS.getNamedStreamIndex(opts::DumpStreamDataName);
 
   if (NameStreamIndex != 0) {
     std::string Name("Stream '");
-    Name += Stream;
+    Name += opts::DumpStreamDataName;
     Name += "'";
     DictScope D(P, Name);
     P.printNumber("Index", NameStreamIndex);
@@ -319,6 +322,8 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
   P.printBoolean("Is Stripped", DS.isStripped());
   P.printObject("Machine Type", DS.getMachineType());
   P.printNumber("Symbol Record Stream Index", DS.getSymRecordStreamIndex());
+  P.printNumber("Public Symbol Stream Index", DS.getPublicSymbolStreamIndex());
+  P.printNumber("Global Symbol Stream Index", DS.getGlobalSymbolStreamIndex());
 
   uint16_t Major = DS.getBuildMajorVersion();
   uint16_t Minor = DS.getBuildMinorVersion();
@@ -330,42 +335,48 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
   DllStream.flush();
   P.printVersion(DllName, Major, Minor, DS.getPdbDllVersion());
 
-  ListScope L(P, "Modules");
-  for (auto &Modi : DS.modules()) {
-    DictScope DD(P);
-    P.printString("Name", Modi.Info.getModuleName());
-    P.printNumber("Debug Stream Index", Modi.Info.getModuleStreamIndex());
-    P.printString("Object File Name", Modi.Info.getObjFileName());
-    P.printNumber("Num Files", Modi.Info.getNumberOfFiles());
-    P.printNumber("Source File Name Idx", Modi.Info.getSourceFileNameIndex());
-    P.printNumber("Pdb File Name Idx", Modi.Info.getPdbFilePathNameIndex());
-    P.printNumber("Line Info Byte Size", Modi.Info.getLineInfoByteSize());
-    P.printNumber("C13 Line Info Byte Size",
-                  Modi.Info.getC13LineInfoByteSize());
-    P.printNumber("Symbol Byte Size", Modi.Info.getSymbolDebugInfoByteSize());
-    P.printNumber("Type Server Index", Modi.Info.getTypeServerIndex());
-    P.printBoolean("Has EC Info", Modi.Info.hasECInfo());
-    {
-      std::string FileListName =
-          to_string(Modi.SourceFiles.size()) + " Contributing Source Files";
-      ListScope LL(P, FileListName);
-      for (auto File : Modi.SourceFiles)
-        P.printString(File);
-    }
-    if (opts::DumpModuleSyms || opts::DumpSymRecordBytes) {
-      ListScope SS(P, "Symbols");
-      ModStream ModS(File, Modi.Info);
-      if (auto EC = ModS.reload())
-        return EC;
+  if (opts::DumpModules || opts::DumpModuleSyms || opts::DumpModuleFiles) {
+    ListScope L(P, "Modules");
+    for (auto &Modi : DS.modules()) {
+      DictScope DD(P);
+      P.printString("Name", Modi.Info.getModuleName());
+      P.printNumber("Debug Stream Index", Modi.Info.getModuleStreamIndex());
+      P.printString("Object File Name", Modi.Info.getObjFileName());
+      P.printNumber("Num Files", Modi.Info.getNumberOfFiles());
+      P.printNumber("Source File Name Idx", Modi.Info.getSourceFileNameIndex());
+      P.printNumber("Pdb File Name Idx", Modi.Info.getPdbFilePathNameIndex());
+      P.printNumber("Line Info Byte Size", Modi.Info.getLineInfoByteSize());
+      P.printNumber("C13 Line Info Byte Size",
+                    Modi.Info.getC13LineInfoByteSize());
+      P.printNumber("Symbol Byte Size", Modi.Info.getSymbolDebugInfoByteSize());
+      P.printNumber("Type Server Index", Modi.Info.getTypeServerIndex());
+      P.printBoolean("Has EC Info", Modi.Info.hasECInfo());
+      if (opts::DumpModuleFiles) {
+        std::string FileListName =
+            to_string(Modi.SourceFiles.size()) + " Contributing Source Files";
+        ListScope LL(P, FileListName);
+        for (auto File : Modi.SourceFiles)
+          P.printString(File);
+      }
+      bool HasModuleDI =
+          (Modi.Info.getModuleStreamIndex() < File.getNumStreams());
+      bool ShouldDumpSymbols =
+          (opts::DumpModuleSyms || opts::DumpSymRecordBytes);
+      if (HasModuleDI && ShouldDumpSymbols) {
+        ListScope SS(P, "Symbols");
+        ModStream ModS(File, Modi.Info);
+        if (auto EC = ModS.reload())
+          return EC;
 
-      codeview::CVSymbolDumper SD(P, TD, nullptr, false);
-      for (auto &S : ModS.symbols()) {
-        DictScope DD(P, "");
+        codeview::CVSymbolDumper SD(P, TD, nullptr, false);
+        for (auto &S : ModS.symbols()) {
+          DictScope DD(P, "");
 
-        if (opts::DumpModuleSyms)
-          SD.dump(S);
-        if (opts::DumpSymRecordBytes)
-          P.printBinaryBlock("Bytes", S.Data);
+          if (opts::DumpModuleSyms)
+            SD.dump(S);
+          if (opts::DumpSymRecordBytes)
+            P.printBinaryBlock("Bytes", S.Data);
+        }
       }
     }
   }
@@ -474,7 +485,7 @@ static Error dumpStructure(RawSession &RS) {
   if (auto EC = dumpInfoStream(P, File))
     return EC;
 
-  if (auto EC = dumpNamedStream(P, File, "/names"))
+  if (auto EC = dumpNamedStream(P, File))
     return EC;
 
   codeview::CVTypeDumper TD(P, false);
@@ -486,12 +497,40 @@ static Error dumpStructure(RawSession &RS) {
 
   if (auto EC = dumpPublicsStream(P, File, TD))
     return EC;
-return Error::success();
+  return Error::success();
+}
+
+bool isRawDumpEnabled() {
+  if (opts::DumpHeaders)
+    return true;
+  if (opts::DumpModules)
+    return true;
+  if (opts::DumpModuleFiles)
+    return true;
+  if (opts::DumpModuleSyms)
+    return true;
+  if (!opts::DumpStreamDataIdx.empty())
+    return true;
+  if (!opts::DumpStreamDataName.empty())
+    return true;
+  if (opts::DumpPublics)
+    return true;
+  if (opts::DumpStreamBlocks)
+    return true;
+  if (opts::DumpStreamSizes)
+    return true;
+  if (opts::DumpSymRecordBytes)
+    return true;
+  if (opts::DumpTpiRecordBytes)
+    return true;
+  if (opts::DumpTpiRecords)
+    return true;
+  return false;
 }
 
 static void dumpInput(StringRef Path) {
   std::unique_ptr<IPDBSession> Session;
-  if (opts::DumpHeaders || !opts::DumpStreamData.empty()) {
+  if (isRawDumpEnabled()) {
     auto E = loadDataForPDB(PDB_ReaderType::Raw, Path, Session);
     if (!E) {
       RawSession *RS = static_cast<RawSession *>(Session.get());

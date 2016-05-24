@@ -34,6 +34,7 @@ public:
   PdbRaw_DbiVer getDbiVersion() const;
   uint32_t getAge() const;
   uint16_t getPublicSymbolStreamIndex() const;
+  uint16_t getGlobalSymbolStreamIndex() const;
 
   bool isIncrementallyLinked() const;
   bool hasCTypes() const;
