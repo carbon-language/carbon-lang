@@ -586,8 +586,9 @@ static void resolveWeakForLinkerInIndex(
 
   auto isExported = [&](StringRef ModuleIdentifier, GlobalValue::GUID GUID) {
     const auto &ExportList = ExportLists.find(ModuleIdentifier);
-    assert(ExportList != ExportLists.end() && "Missing export list for module");
-    return ExportList->second.count(GUID) || GUIDPreservedSymbols.count(GUID);
+    return (ExportList != ExportLists.end() &&
+            ExportList->second.count(GUID)) ||
+           GUIDPreservedSymbols.count(GUID);
   };
 
   auto recordNewLinkage = [&](StringRef ModuleIdentifier,
@@ -827,8 +828,9 @@ void ThinLTOCodeGenerator::internalize(Module &TheModule,
   // Internalization
   auto isExported = [&](StringRef ModuleIdentifier, GlobalValue::GUID GUID) {
     const auto &ExportList = ExportLists.find(ModuleIdentifier);
-    assert(ExportList != ExportLists.end() && "Missing export list for module");
-    return ExportList->second.count(GUID) || GUIDPreservedSymbols.count(GUID);
+    return (ExportList != ExportLists.end() &&
+            ExportList->second.count(GUID)) ||
+           GUIDPreservedSymbols.count(GUID);
   };
   thinLTOInternalizeAndPromoteInIndex(Index, isExported);
   thinLTOInternalizeModule(TheModule,
@@ -928,8 +930,9 @@ void ThinLTOCodeGenerator::run() {
 
   auto isExported = [&](StringRef ModuleIdentifier, GlobalValue::GUID GUID) {
     const auto &ExportList = ExportLists.find(ModuleIdentifier);
-    assert(ExportList != ExportLists.end() && "Missing export list for module");
-    return ExportList->second.count(GUID) || GUIDPreservedSymbols.count(GUID);
+    return (ExportList != ExportLists.end() &&
+            ExportList->second.count(GUID)) ||
+           GUIDPreservedSymbols.count(GUID);
   };
 
   // Use global summary-based analysis to identify symbols that can be
