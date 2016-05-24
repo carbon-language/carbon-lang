@@ -75,6 +75,7 @@ class BinaryBasicBlock {
   /// CFG information.
   std::vector<BinaryBasicBlock *> Predecessors;
   std::vector<BinaryBasicBlock *> Successors;
+  std::set<BinaryBasicBlock *> LandingPads;
 
   struct BinaryBranchInfo {
     uint64_t Count;
@@ -236,6 +237,11 @@ public:
                     uint64_t Count = 0,
                     uint64_t MispredictedCount = 0);
 
+  /// Adds block to landing pad list.
+  void addLandingPad(BinaryBasicBlock *LPBlock) {
+    LandingPads.insert(LPBlock);
+  }
+
   /// Remove /p Succ basic block from the list of successors. Update the
   /// list of predecessors of /p Succ and update branch info.
   void removeSuccessor(BinaryBasicBlock *Succ);
@@ -314,7 +320,7 @@ public:
                      const MCSymbol *&FBB,
                      MCInst *&CondBranch,
                      MCInst *&UncondBranch);
-  
+
 private:
 
   /// Adds predecessor to the BB. Most likely you don't need to call this.

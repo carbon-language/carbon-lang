@@ -450,7 +450,6 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData,
         // or a recursive call.
         bool IsCall = MIA->isCall(Instruction);
         bool IsCondBranch = MIA->isConditionalBranch(Instruction);
-        bool IsInvoke = MIA->isInvoke(Instruction);
         MCSymbol *TargetSymbol{nullptr};
         uint64_t TargetOffset{0};
 
@@ -519,11 +518,10 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData,
           // Add local branch info.
           LocalBranches.push_back({Offset, TargetOffset});
         }
-        if (IsCondBranch /*|| IsInvoke*/) {
+        if (IsCondBranch) {
           // Add fallthrough branch info.
           FTBranches.push_back({Offset, Offset + Size});
         }
-
       } else {
         // Should be an indirect call or an indirect branch. Bail out on the
         // latter case.
@@ -715,9 +713,18 @@ bool BinaryFunction::buildCFG() {
       CFIOffset = getSize();
     addCFIPlaceholders(CFIOffset, InsertBB);
 
+    // Store info about associated landing pad.
+    if (MIA->isInvoke(InstrInfo.second)) {
+      const MCSymbol *LP;
+      uint64_t Action;
+      std::tie(LP, Action) = MIA->getEHInfo(InstrInfo.second);
+      if (LP) {
+        LPToBBIndex[LP].push_back(getIndex(InsertBB));
+      }
+    }
+
     // How well do we detect tail calls here?
-    if (MIA->isTerminator(InstrInfo.second) /*||
-        MIA->isInvoke(InstrInfo.second)*/) {
+    if (MIA->isTerminator(InstrInfo.second)) {
       PrevBB = InsertBB;
       InsertBB = nullptr;
     }
@@ -802,8 +809,6 @@ bool BinaryFunction::buildCFG() {
     if (BB.succ_size() == 0) {
       IsPrevFT = MIA->isTerminator(*LastInstIter) ? false : true;
     } else if (BB.succ_size() == 1) {
-      /*assert(!MIA->isInvoke(*LastInstIter) &&
-             "found throw with assocoated local branch");*/
       IsPrevFT =  MIA->isConditionalBranch(*LastInstIter) ? true : false;
     } else {
       // Ends with 2 branches, with an indirect jump or it is a conditional
@@ -817,6 +822,17 @@ bool BinaryFunction::buildCFG() {
   if (!IsPrevFT) {
     // Possibly a call that does not return.
     DEBUG(dbgs() << "last block was marked as a fall-through\n");
+  }
+
+  // Add associated landing pad blocks to each basic block.
+  for (auto &BB : BasicBlocks) {
+    if (LandingPads.find(BB.getLabel()) != LandingPads.end()) {
+      MCSymbol *LP = BB.getLabel();
+      for (unsigned I : LPToBBIndex.at(LP)) {
+        BinaryBasicBlock *ThrowBB = getBasicBlockAtIndex(I);
+        ThrowBB->addLandingPad(&BB);
+      }
+    }
   }
 
   // Infer frequency for non-taken branches
@@ -833,6 +849,7 @@ bool BinaryFunction::buildCFG() {
   clearLabels();
   clearLocalBranches();
   clearFTBranches();
+  clearLPToBBIndex();
 
   // Update the state.
   CurrentState = State::CFG;
@@ -899,14 +916,25 @@ void BinaryFunction::inferFallThroughCounts() {
         ReportedBranches += SuccCount.Count;
     }
 
+    // Calculate frequency of throws from this node according to LBR data
+    // for branching into associated landing pads. Since it is possible
+    // for a landing pad to be associated with more than one basic blocks,
+    // we may overestimate the frequency of throws for such blocks.
+    uint64_t ReportedThrows = 0;
+    for (BinaryBasicBlock *LP: CurBB.LandingPads) {
+      ReportedThrows += LP->ExecutionCount;
+    }
+
+    uint64_t TotalReportedJumps = ReportedBranches + ReportedThrows;
+
     // Infer the frequency of the fall-through edge, representing not taking the
     // branch
     uint64_t Inferred = 0;
-    if (BBExecCount > ReportedBranches)
-      Inferred = BBExecCount - ReportedBranches;
+    if (BBExecCount > TotalReportedJumps)
+      Inferred = BBExecCount - TotalReportedJumps;
 
     DEBUG({
-      if (BBExecCount < ReportedBranches)
+      if (BBExecCount < TotalReportedJumps)
         dbgs()
             << "BOLT-WARNING: Fall-through inference is slightly inconsistent. "
                "exec frequency is less than the outgoing edges frequency ("

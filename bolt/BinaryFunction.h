@@ -209,6 +209,13 @@ private:
     return *this;
   }
 
+  /// Release memory taken by landing pad info.
+  BinaryFunction &clearLPToBBIndex() {
+    LandingPadsMapType TempMap;
+    LPToBBIndex.swap(TempMap);
+    return *this;
+  }
+
   BinaryFunction &updateState(BinaryFunction::State State) {
     CurrentState = State;
     return *this;
@@ -229,6 +236,11 @@ private:
   using LocalBranchesListType = std::vector<std::pair<uint32_t, uint32_t>>;
   LocalBranchesListType LocalBranches;
   LocalBranchesListType FTBranches;
+
+  /// Storage for all landing pads and their corresponding invokes.
+  using LandingPadsMapType = std::map<const MCSymbol *,
+                                      std::vector<unsigned> >;
+  LandingPadsMapType LPToBBIndex;
 
   /// Map offset in the function to a local label.
   using LabelsMapType = std::map<uint32_t, MCSymbol *>;
@@ -387,6 +399,10 @@ public:
   /// Returns the n-th basic block in this function in its original layout, or
   /// nullptr if n >= size().
   const BinaryBasicBlock * getBasicBlockAtIndex(unsigned Index) const {
+    return &BasicBlocks.at(Index);
+  }
+
+  BinaryBasicBlock * getBasicBlockAtIndex(unsigned Index) {
     return &BasicBlocks.at(Index);
   }
 
