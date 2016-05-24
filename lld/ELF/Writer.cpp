@@ -432,7 +432,8 @@ static bool needsPlt(RelExpr Expr) {
 // True if this expression is of the form Sym - X, where X is a position in the
 // file (PC, or GOT for example).
 static bool isRelExpr(RelExpr Expr) {
-  return Expr == R_PC || Expr == R_GOTREL || Expr == R_PAGE_PC;
+  return Expr == R_PC || Expr == R_GOTREL || Expr == R_PAGE_PC ||
+         Expr == R_RELAX_GOT_PC;
 }
 
 template <class ELFT>
@@ -510,10 +511,17 @@ static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
   if (Target->needsThunk(Type, File, Body))
     return R_THUNK;
   bool Preemptible = Body.isPreemptible();
-  if (Body.isGnuIFunc())
+  if (Body.isGnuIFunc()) {
     Expr = toPlt(Expr);
-  else if (needsPlt(Expr) && !Preemptible)
-    Expr = fromPlt(Expr);
+  } else if (!Preemptible) {
+    if (needsPlt(Expr))
+      Expr = fromPlt(Expr);
+    if (Expr == R_RELAXABLE_GOT_PC)
+      Expr = R_RELAX_GOT_PC;
+  }
+
+  if (Expr == R_RELAXABLE_GOT_PC)
+    Expr = R_GOT_PC;
 
   if (IsWrite || isStaticLinkTimeConstant<ELFT>(Expr, Type, Body))
     return Expr;
