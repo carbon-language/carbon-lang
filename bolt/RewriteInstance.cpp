@@ -759,8 +759,6 @@ void RewriteInstance::readSpecialSections() {
       FrameHdrAddress = Section.getAddress();
       FrameHdrContents = SectionContents;
       FrameHdrAlign = Section.getAlignment();
-    } else if (SectionName == ".debug_ranges") {
-      DebugRangesSize = Section.getSize();
     } else if (SectionName == ".debug_loc") {
       DebugLocSize = Section.getSize();
     }
@@ -1436,11 +1434,14 @@ bool RewriteInstance::checkLargeFunctions() {
 }
 
 void RewriteInstance::updateFunctionRanges() {
-  auto addDebugArangesEntry = [&](uint64_t OriginalFunctionAddress,
+  auto addDebugArangesEntry = [&](const BinaryFunction &Function,
                                   uint64_t RangeBegin,
                                   uint64_t RangeSize) {
-    if (auto DebugAranges = BC->DwCtx->getDebugAranges()) {
-      uint32_t CUOffset = DebugAranges->findAddress(OriginalFunctionAddress);
+    // The function potentially has multiple associated CUs because of
+    // the identical code folding optimization. Update all of them with
+    // the range.
+    for (const auto DIECompileUnitPair : Function.getSubprocedureDIEs()) {
+      auto CUOffset = DIECompileUnitPair.second->getOffset();
       if (CUOffset != -1U)
         RangesSectionsWriter.AddRange(CUOffset, RangeBegin, RangeSize);
     }
@@ -1448,15 +1449,18 @@ void RewriteInstance::updateFunctionRanges() {
 
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
+    // If function doesn't have registered DIEs - there's nothting to update.
+    if (Function.getSubprocedureDIEs().empty())
+      continue;
     // Use either new (image) or original size for the function range.
     auto Size = Function.isSimple() ? Function.getImageSize()
                                     : Function.getSize();
-    addDebugArangesEntry(Function.getAddress(),
+    addDebugArangesEntry(Function,
                          Function.getAddress(),
                          Size);
     RangesSectionsWriter.AddRange(&Function, Function.getAddress(), Size);
     if (Function.isSimple() && Function.cold().getImageSize()) {
-      addDebugArangesEntry(Function.getAddress(),
+      addDebugArangesEntry(Function,
                            Function.cold().getAddress(),
                            Function.cold().getImageSize());
       RangesSectionsWriter.AddRange(&Function,
@@ -2129,6 +2133,8 @@ void RewriteInstance::updateDebugInfo() {
 
   updateAddressRangesObjects();
 
+  updateEmptyModuleRanges();
+
   generateDebugRanges();
 
   updateLocationLists();
@@ -2136,17 +2142,28 @@ void RewriteInstance::updateDebugInfo() {
   updateDWARFAddressRanges();
 }
 
+void RewriteInstance::updateEmptyModuleRanges() {
+  const auto &CUAddressRanges = RangesSectionsWriter.getCUAddressRanges();
+  for (const auto &CU : BC->DwCtx->compile_units()) {
+    if (CUAddressRanges.find(CU->getOffset()) != CUAddressRanges.end())
+      continue;
+    auto const &Ranges = CU->getUnitDIE(true)->getAddressRanges(CU.get());
+    for (auto const &Range : Ranges) {
+      RangesSectionsWriter.AddRange(CU->getOffset(),
+                                    Range.first,
+                                    Range.second - Range.first);
+    }
+  }
+}
+
 void RewriteInstance::updateDWARFAddressRanges() {
   // Update DW_AT_ranges for all compilation units.
   for (const auto &CU : BC->DwCtx->compile_units()) {
     const auto CUID = CU->getOffset();
     const auto RSOI = RangesSectionsWriter.getRangesOffsetCUMap().find(CUID);
-    if (RSOI != RangesSectionsWriter.getRangesOffsetCUMap().end()) {
-      auto Offset = RSOI->second;
-      updateDWARFObjectAddressRanges(Offset + DebugRangesSize,
-                                     CU.get(),
-                                     CU->getUnitDIE());
-    }
+    if (RSOI == RangesSectionsWriter.getRangesOffsetCUMap().end())
+      continue;
+    updateDWARFObjectAddressRanges(RSOI->second, CU.get(), CU->getUnitDIE());
   }
 
   // Update address ranges of functions.
@@ -2154,7 +2171,7 @@ void RewriteInstance::updateDWARFAddressRanges() {
     const auto &Function = BFI.second;
     for (const auto DIECompileUnitPair : Function.getSubprocedureDIEs()) {
       updateDWARFObjectAddressRanges(
-          Function.getAddressRangesOffset() + DebugRangesSize,
+          Function.getAddressRangesOffset(),
           DIECompileUnitPair.second,
           DIECompileUnitPair.first);
     }
@@ -2172,7 +2189,7 @@ void RewriteInstance::updateDWARFAddressRanges() {
   // inlined subroutine instances, etc).
   for (const auto &Obj : BC->AddressRangesObjects) {
     updateDWARFObjectAddressRanges(
-        Obj.getAddressRangesOffset() + DebugRangesSize,
+        Obj.getAddressRangesOffset(),
         Obj.getCompileUnit(),
         Obj.getDIE());
   }
@@ -2189,6 +2206,11 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
     return;
   }
 
+  if (DebugRangesOffset == -1U) {
+    errs() << "BOLT-WARNING: using invalid DW_AT_range for DIE at offset 0x"
+           << Twine::utohexstr(DIE->getOffset()) << '\n';
+  }
+
   auto DebugInfoPatcher =
       static_cast<SimpleBinaryPatcher *>(SectionPatchers[".debug_info"].get());
   auto AbbrevPatcher =
@@ -2197,8 +2219,13 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
   assert(DebugInfoPatcher && AbbrevPatcher && "Patchers not initialized.");
 
   const auto *AbbreviationDecl = DIE->getAbbreviationDeclarationPtr();
-  assert(AbbreviationDecl &&
-         "Object's DIE doesn't have an abbreviation: not supported yet.");
+  if (!AbbreviationDecl) {
+    errs() << "BOLT-WARNING: object's DIE doesn't have an abbreviation: "
+           << "skipping update. DIE at offset 0x"
+           << Twine::utohexstr(DIE->getOffset()) << '\n';
+    return;
+  }
+
   auto AbbrevCode = AbbreviationDecl->getCode();
 
   if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_ranges) != -1U) {
@@ -2238,17 +2265,20 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
                                        dwarf::DW_AT_high_pc,
                                        dwarf::DW_AT_producer,
                                        dwarf::DW_FORM_string);
-      assert(LowPCOffset != -1U && LowPCOffset + 8 == HighPCOffset &&
-             "We depend on the compiler putting high_pc right after low_pc.");
+      if (LowPCOffset == -1U || (LowPCOffset + 8 != HighPCOffset)) {
+        errs() << "BOLT-WARNING: we depend on the compiler putting high_pc "
+               << "right after low_pc. Not updating DIE at offset 0x"
+               << Twine::utohexstr(DIE->getOffset()) << '\n';
+        return;
+      }
       DebugInfoPatcher->addLE32Patch(LowPCOffset, DebugRangesOffset);
       std::string ProducerString{"LLVM-BOLT"};
       ProducerString.resize(12, ' ');
       ProducerString.back() = '\0';
-
       DebugInfoPatcher->addBinaryPatch(LowPCOffset + 4, ProducerString);
     } else {
-      DEBUG(errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"
-                   << Twine::utohexstr(DIE->getOffset()) << "\n");
+      errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"
+             << Twine::utohexstr(DIE->getOffset()) << '\n';
     }
   }
 }
@@ -2258,7 +2288,11 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
     return;
 
   auto DebugAranges = BC->DwCtx->getDebugAranges();
-  assert(DebugAranges && "Need .debug_aranges in the input file.");
+  if (!DebugAranges) {
+    errs() << "BOLT-WARNING: need .debug_aranges in the input file to update "
+           << "debug info for non-simple functions.\n";
+    return;
+  }
 
   for (auto It : BinaryFunctions) {
     const auto &Function = It.second;
@@ -2269,8 +2303,9 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
     uint64_t Address = It.first;
     uint32_t CUOffset = DebugAranges->findAddress(Address);
     if (CUOffset == -1U) {
-      DEBUG(errs() << "BOLT-DEBUG: Function does not belong to any compile unit"
-                   << "in .debug_aranges: " << Function.getName() << "\n");
+      errs() << "BOLT-WARNING: function " << Function.getName()
+             << " does not belong to any compile unit in .debug_aranges. "
+             << "Cannot update line number information.\n";
       continue;
     }
     auto Unit = BC->OffsetToDwarfCU[CUOffset];

@@ -83,13 +83,25 @@ void findAddressRangesObjects(
       Tag == dwarf::DW_TAG_inlined_subroutine ||
       Tag == dwarf::DW_TAG_try_block ||
       Tag == dwarf::DW_TAG_catch_block) {
-    AddressRangesObjects.emplace_back(Unit, DIE);
-    auto &Object = AddressRangesObjects.back();
-    for (const auto &Range : DIE->getAddressRanges(Unit)) {
-      if (auto *Function = getBinaryFunctionContainingAddress(Range.first,
-                                                              Functions)) {
-        if (Function->isSimple()) {
+    auto const &Ranges = DIE->getAddressRanges(Unit);
+    if (!Ranges.empty()) {
+      // We have to process all ranges, even for functions that we are not
+      // updating. The primary reason is that abbrev entries are shared
+      // and if we convert one DIE, it may affect the rest. Thus
+      // the conservative approach that does not involve expanding
+      // .debug_abbrev, is to switch all DIEs to use .debug_ranges, even if
+      // they use a single [a,b) range. The secondary reason is that it allows
+      // us to get rid of the original portion of .debug_ranges to save
+      // space in the binary.
+      auto Function = getBinaryFunctionContainingAddress(Ranges.front().first,
+                                                         Functions);
+      AddressRangesObjects.emplace_back(Unit, DIE);
+      auto &Object = AddressRangesObjects.back();
+      for (const auto &Range : Ranges) {
+        if (Function && Function->isSimple()) {
           Object.addAddressRange(*Function, Range.first, Range.second);
+        } else {
+          Object.addAbsoluteRange(Range.first, Range.second);
         }
       }
     }
@@ -101,14 +113,15 @@ void findAddressRangesObjects(
   }
 }
 
-// Recursively finds DWARF DW_TAG_subprogram DIEs and match them with
-// BinaryFunctions. Record DIEs for unknown subprograms (mostly functions that
-// are never called and removed from the binary) in Unknown.
+/// Recursively finds DWARF DW_TAG_subprogram DIEs and match them with
+/// BinaryFunctions. Record DIEs for unknown subprograms (mostly functions that
+/// are never called and removed from the binary) in Unknown.
 void findSubprograms(const DWARFCompileUnit *Unit,
                      const DWARFDebugInfoEntryMinimal *DIE,
                      std::map<uint64_t, BinaryFunction> &BinaryFunctions,
                      BinaryContext::DIECompileUnitVector &Unknown) {
   if (DIE->isSubprogramDIE()) {
+    // TODO: handle DW_AT_ranges.
     uint64_t LowPC, HighPC;
     if (DIE->getLowAndHighPC(Unit, LowPC, HighPC)) {
       auto It = BinaryFunctions.find(LowPC);

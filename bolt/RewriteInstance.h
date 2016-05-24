@@ -210,6 +210,11 @@ private:
   /// Update objects with address ranges after optimization.
   void updateAddressRangesObjects();
 
+  /// If we've never mapped the unit, e.g. because there were no functions
+  /// marked in DWARF, update with the original ranges so that we can free up
+  /// the old part of .debug_ranges.
+  void updateEmptyModuleRanges();
+
   /// Generate new contents for .debug_loc.
   void updateLocationLists();
 
@@ -253,7 +258,8 @@ private:
   /// If we are updating debug info, these are the section we need to overwrite.
   static constexpr const char *DebugSectionsToOverwrite[] = {
     ".debug_aranges",
-    ".debug_line"};
+    ".debug_line",
+    ".debug_ranges"};
 
   /// Huge page size used for alignment.
   static constexpr unsigned PageAlign = 0x200000;
@@ -318,9 +324,6 @@ private:
 
   /// Size of the .debug_loc section in input.
   uint32_t DebugLocSize{0};
-
-  /// Size of the .debug_ranges section on input.
-  uint32_t DebugRangesSize{0};
 
   /// Keep track of which functions didn't fit in their original space in the
   /// last emission, so that we may either decide to split or not optimize them.

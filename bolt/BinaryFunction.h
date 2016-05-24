@@ -173,7 +173,7 @@ private:
 
   /// Offset of this function's address ranges in the .debug_ranges section of
   /// the output binary.
-  uint32_t AddressRangesOffset;
+  uint32_t AddressRangesOffset{-1U};
 
   /// Release storage used by instructions.
   BinaryFunction &clearInstructions() {

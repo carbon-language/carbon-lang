@@ -28,12 +28,19 @@ void BasicBlockOffsetRanges::addAddressRange(BinaryFunction &Function,
                                              const BinaryData *Data) {
   auto FirstBB = Function.getBasicBlockContainingOffset(
       BeginAddress - Function.getAddress());
-  assert(FirstBB && "No basic blocks in the function intersect given range.");
+  if (!FirstBB) {
+    errs() << "BOLT-WARNING: no basic blocks in function "
+           << Function.getName() << " intersect with debug range [0x"
+           << Twine::utohexstr(BeginAddress) << ", 0x"
+           << Twine::utohexstr(EndAddress) << ")\n";
+    return;
+  }
 
   for (auto I = Function.getIndex(FirstBB), S = Function.size(); I != S; ++I) {
     auto BB = Function.getBasicBlockAtIndex(I);
     uint64_t BBAddress = Function.getAddress() + BB->getOffset();
-    if (BBAddress >= EndAddress)
+    // Note the special handling for [a, a) address range.
+    if (BBAddress >= EndAddress && BeginAddress != EndAddress)
       break;
 
     uint64_t InternalAddressRangeBegin = std::max(BBAddress, BeginAddress);

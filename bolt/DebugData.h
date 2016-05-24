@@ -136,14 +136,23 @@ public:
     BBOffsetRanges.addAddressRange(Function, BeginAddress, EndAddress);
   }
 
+  /// Add range that is guaranteed to not change.
+  void addAbsoluteRange(uint64_t BeginAddress,
+                        uint64_t EndAddress) {
+    AbsoluteRanges.emplace_back(std::make_pair(BeginAddress, EndAddress));
+  }
+
   std::vector<std::pair<uint64_t, uint64_t>> getAbsoluteAddressRanges() const {
     auto AddressRangesWithData = BBOffsetRanges.getAbsoluteAddressRanges();
-    std::vector<std::pair<uint64_t, uint64_t>> AddressRanges(
-        AddressRangesWithData.size());
+    std::vector<std::pair<uint64_t, uint64_t>>
+        AddressRanges(AddressRangesWithData.size());
     for (unsigned I = 0, S = AddressRanges.size(); I != S; ++I) {
       AddressRanges[I] = std::make_pair(AddressRangesWithData[I].Begin,
                                         AddressRangesWithData[I].End);
     }
+    std::move(AbsoluteRanges.begin(),
+              AbsoluteRanges.end(),
+              std::back_inserter(AddressRanges));
     return AddressRanges;
   }
 
@@ -160,8 +169,10 @@ private:
 
   BasicBlockOffsetRanges BBOffsetRanges;
 
-  // Offset of the address ranges of this object in the output .debug_ranges.
-  uint32_t AddressRangesOffset;
+  std::vector<std::pair<uint64_t, uint64_t>> AbsoluteRanges;
+
+  /// Offset of the address ranges of this object in the output .debug_ranges.
+  uint32_t AddressRangesOffset{-1U};
 };
 
 
@@ -193,7 +204,7 @@ public:
 private:
   BasicBlockOffsetRanges BBOffsetRanges;
 
-  // Offset of this location list in the input .debug_loc section.
+  /// Offset of this location list in the input .debug_loc section.
   uint32_t DebugLocOffset;
 };
 
@@ -234,19 +245,26 @@ public:
   /// to .debug_ranges
   uint32_t getEmptyRangesListOffset() const { return EmptyRangesListOffset; }
 
-private:
-  // Map from compile unit offset to the list of address intervals that belong
-  // to that compile unit. Each interval is a pair
-  // (first address, interval size).
-  std::map<uint32_t, std::vector<std::pair<uint64_t, uint64_t>>>
-      CUAddressRanges;
+  using CUAddressRangesType =
+    std::map<uint32_t, std::vector<std::pair<uint64_t, uint64_t>>>;
 
-  // Map from BinaryFunction to the list of address intervals that belong
-  // to that function, represented like CUAddressRanges.
+  /// Return ranges for a given CU.
+  const CUAddressRangesType &getCUAddressRanges() const {
+    return CUAddressRanges;
+  }
+
+private:
+  /// Map from compile unit offset to the list of address intervals that belong
+  /// to that compile unit. Each interval is a pair
+  /// (first address, interval size).
+  CUAddressRangesType CUAddressRanges;
+
+  /// Map from BinaryFunction to the list of address intervals that belong
+  /// to that function, represented like CUAddressRanges.
   std::map<AddressRangesOwner *, std::vector<std::pair<uint64_t, uint64_t>>>
       ObjectAddressRanges;
 
-  // Offset of an empty address ranges list.
+  /// Offset of an empty address ranges list.
   uint32_t EmptyRangesListOffset;
 
   /// When writing data to .debug_ranges remember offset per CU.
