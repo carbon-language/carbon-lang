@@ -292,10 +292,6 @@ uint64_t COFFObjectFile::getSectionAlignment(DataRefImpl Ref) const {
   return Sec->getAlignment();
 }
 
-bool COFFObjectFile::isSectionCompressed(DataRefImpl Sec) const {
-  return false;
-}
-
 bool COFFObjectFile::isSectionText(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
   return Sec->Characteristics & COFF::IMAGE_SCN_CNT_CODE;

@@ -222,7 +222,6 @@ protected:
   std::error_code getSectionContents(DataRefImpl Sec,
                                      StringRef &Res) const override;
   uint64_t getSectionAlignment(DataRefImpl Sec) const override;
-  bool isSectionCompressed(DataRefImpl Sec) const override;
   bool isSectionText(DataRefImpl Sec) const override;
   bool isSectionData(DataRefImpl Sec) const override;
   bool isSectionBSS(DataRefImpl Sec) const override;
@@ -582,11 +581,6 @@ ELFObjectFile<ELFT>::getSectionContents(DataRefImpl Sec,
 template <class ELFT>
 uint64_t ELFObjectFile<ELFT>::getSectionAlignment(DataRefImpl Sec) const {
   return getSection(Sec)->sh_addralign;
-}
-
-template <class ELFT>
-bool ELFObjectFile<ELFT>::isSectionCompressed(DataRefImpl Sec) const {
-  return getSection(Sec)->sh_flags & ELF::SHF_COMPRESSED;
 }
 
 template <class ELFT>
