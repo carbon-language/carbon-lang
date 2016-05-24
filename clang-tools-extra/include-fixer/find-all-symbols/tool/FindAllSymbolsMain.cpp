@@ -82,8 +82,6 @@ public:
   }
 
 private:
-  // Directory to write yaml files to.
-  const std::string Directory;
   std::map<std::string, std::set<SymbolInfo>> Symbols;
 };
 
