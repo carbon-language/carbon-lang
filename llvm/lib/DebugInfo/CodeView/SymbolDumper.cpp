@@ -648,8 +648,8 @@ void CVSymbolDumperImpl::visitUDTSym(SymbolKind Kind, UDTSym &UDT) {
 void CVSymbolDumperImpl::visitUnknownSymbol(SymbolKind Kind,
                                             ArrayRef<uint8_t> Data) {
   DictScope S(W, "UnknownSym");
-  W.printEnum("Kind", Kind, makeArrayRef(SymbolTypeNames));
-  W.printNumber("Length", Data.size());
+  W.printEnum("Kind", uint16_t(Kind), makeArrayRef(SymbolTypeNames));
+  W.printNumber("Length", uint32_t(Data.size()));
 }
 
 bool CVSymbolDumper::dump(const SymbolIterator::Record &Record) {
