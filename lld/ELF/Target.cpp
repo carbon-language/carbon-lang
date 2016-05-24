@@ -113,7 +113,6 @@ public:
                 int32_t Index, unsigned RelOff) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 
-  void relaxGot(uint8_t *Loc, uint64_t Val) const override;
   void relaxTlsGdToIe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsIeToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -231,10 +230,6 @@ bool TargetInfo::isTlsLocalDynamicRel(uint32_t Type) const { return false; }
 
 bool TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
   return false;
-}
-
-void TargetInfo::relaxGot(uint8_t *Loc, uint64_t Val) const {
-  llvm_unreachable("Should not have claimed to be relaxable");
 }
 
 void TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint32_t Type,
@@ -521,11 +516,10 @@ RelExpr X86_64TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   case R_X86_64_GOT32:
     return R_GOT_FROM_END;
   case R_X86_64_GOTPCREL:
-  case R_X86_64_GOTTPOFF:
-    return R_GOT_PC;
   case R_X86_64_GOTPCRELX:
   case R_X86_64_REX_GOTPCRELX:
-    return R_RELAXABLE_GOT_PC;
+  case R_X86_64_GOTTPOFF:
+    return R_GOT_PC;
   }
 }
 
@@ -731,11 +725,6 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   default:
     fatal("unrecognized reloc " + Twine(Type));
   }
-}
-
-void X86_64TargetInfo::relaxGot(uint8_t *Loc, uint64_t Val) const {
-  Loc[-2] = 0x8d;
-  relocateOne(Loc, R_X86_64_PC32, Val);
 }
 
 // Relocation masks following the #lo(value), #hi(value), #ha(value),
