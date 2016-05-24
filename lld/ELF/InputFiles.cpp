@@ -755,14 +755,10 @@ template void ArchiveFile::parse<ELF32BE>();
 template void ArchiveFile::parse<ELF64LE>();
 template void ArchiveFile::parse<ELF64BE>();
 
-template void
-BitcodeFile::parse<ELF32LE>(llvm::DenseSet<StringRef> &ComdatGroups);
-template void
-BitcodeFile::parse<ELF32BE>(llvm::DenseSet<StringRef> &ComdatGroups);
-template void
-BitcodeFile::parse<ELF64LE>(llvm::DenseSet<StringRef> &ComdatGroups);
-template void
-BitcodeFile::parse<ELF64BE>(llvm::DenseSet<StringRef> &ComdatGroups);
+template void BitcodeFile::parse<ELF32LE>(llvm::DenseSet<StringRef> &);
+template void BitcodeFile::parse<ELF32BE>(llvm::DenseSet<StringRef> &);
+template void BitcodeFile::parse<ELF64LE>(llvm::DenseSet<StringRef> &);
+template void BitcodeFile::parse<ELF64BE>(llvm::DenseSet<StringRef> &);
 
 template void LazyObjectFile::parse<ELF32LE>();
 template void LazyObjectFile::parse<ELF32BE>();
