@@ -964,14 +964,6 @@ CieRecord *EhOutputSection<ELFT>::addCie(SectionPiece &Piece,
   return Cie;
 }
 
-template <class ELFT> static void validateFde(SectionPiece &Piece) {
-  // We assume that all FDEs refer the first CIE in the same object file.
-  const endianness E = ELFT::TargetEndianness;
-  uint32_t ID = read32<E>(Piece.Data.data() + 4);
-  if (Piece.InputOff + 4 - ID != 0)
-    fatal("invalid CIE reference");
-}
-
 // There is one FDE per function. Returns true if a given FDE
 // points to a live function.
 template <class ELFT>
@@ -998,19 +990,30 @@ template <class ELFT>
 template <class RelTy>
 void EhOutputSection<ELFT>::addSectionAux(EhInputSection<ELFT> *Sec,
                                           ArrayRef<RelTy> Rels) {
-  SectionPiece &CiePiece = Sec->Pieces[0];
-  // The empty record is the end marker.
-  if (CiePiece.Data.size() == 4)
-    return;
+  const endianness E = ELFT::TargetEndianness;
 
-  CieRecord *Cie = addCie(CiePiece, Sec, Rels);
-
-  for (size_t I = 1, End = Sec->Pieces.size(); I != End; ++I) {
-    SectionPiece &FdePiece = Sec->Pieces[I];
-    validateFde<ELFT>(FdePiece);
-    if (!isFdeLive(FdePiece, Sec, Rels))
+  DenseMap<size_t, CieRecord *> OffsetToCie;
+  for (size_t I = 0, End = Sec->Pieces.size(); I != End; ++I) {
+    SectionPiece &Piece = Sec->Pieces[I];
+    // The empty record is the end marker.
+    if (Piece.Data.size() == 4)
       continue;
-    Cie->FdePieces.push_back(&FdePiece);
+
+    size_t Offset = Piece.InputOff;
+    uint32_t ID = read32<E>(Piece.Data.data() + 4);
+    if (ID == 0) {
+      OffsetToCie[Offset] = addCie(Piece, Sec, Rels);
+      continue;
+    }
+
+    uint32_t CieOffset = Offset + 4 - ID;
+    CieRecord *Cie = OffsetToCie[CieOffset];
+    if (!Cie)
+      fatal("invalid CIE reference");
+
+    if (!isFdeLive(Piece, Sec, Rels))
+      continue;
+    Cie->FdePieces.push_back(&Piece);
     NumFdes++;
   }
 }
