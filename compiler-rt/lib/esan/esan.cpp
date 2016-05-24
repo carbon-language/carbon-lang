@@ -179,4 +179,14 @@ int finalizeLibrary() {
   return 0;
 }
 
+void processCompilationUnitInit(void *Ptr) {
+  VPrintf(2, "in esan::%s\n", __FUNCTION__);
+}
+
+// This is called when the containing module is unloaded.
+// For the main executable module, this is called after finalizeLibrary.
+void processCompilationUnitExit(void *Ptr) {
+  VPrintf(2, "in esan::%s\n", __FUNCTION__);
+}
+
 } // namespace __esan
