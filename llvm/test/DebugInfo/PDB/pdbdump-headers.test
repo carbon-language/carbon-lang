@@ -141,7 +141,7 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           CompilerFlags {
+; EMPTY-NEXT:           CompilerFlags3 {
 ; EMPTY-NEXT:             Language: Cpp (0x1)
 ; EMPTY-NEXT:             Flags [ (0x2000)
 ; EMPTY-NEXT:               SecurityChecks (0x2000)
@@ -238,7 +238,7 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           CompilerFlags {
+; EMPTY-NEXT:           CompilerFlags3 {
 ; EMPTY-NEXT:             Language: Link (0x7)
 ; EMPTY-NEXT:             Flags [ (0x0)
 ; EMPTY-NEXT:             ]
@@ -254,9 +254,16 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           UnknownSym {
-; EMPTY-NEXT:             Kind: S_ENVBLOCK (0x113D)
-; EMPTY-NEXT:             Length: 168
+; EMPTY-NEXT:           EnvBlock {
+; EMPTY-NEXT:             Reserved: 0
+; EMPTY-NEXT:             Entries [
+; EMPTY-NEXT:               cwd
+; EMPTY-NEXT:               d:\src\llvm\test\DebugInfo\PDB\Inputs
+; EMPTY-NEXT:               exe
+; EMPTY-NEXT:               C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\BIN\link.exe
+; EMPTY-NEXT:               pdb
+; EMPTY-NEXT:               d:\src\llvm\test\DebugInfo\PDB\Inputs\empty.pdb
+; EMPTY-NEXT:             ]
 ; EMPTY-NEXT:           }
 ; EMPTY-NEXT:           Bytes (
 ; EMPTY-NEXT:             0000: 00637764 00643A5C 7372635C 6C6C766D  |.cwd.d:\src\llvm|
@@ -273,18 +280,27 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           UnknownSym {
-; EMPTY-NEXT:             Kind: S_TRAMPOLINE (0x112C)
-; EMPTY-NEXT:             Length: 16
+; EMPTY-NEXT:           Trampoline {
+; EMPTY-NEXT:             Type: TrampIncremental (0x0)
+; EMPTY-NEXT:             Size: 5
+; EMPTY-NEXT:             ThunkOff: 5
+; EMPTY-NEXT:             TargetOff: 16
+; EMPTY-NEXT:             ThunkSection: 1
+; EMPTY-NEXT:             TargetSection: 1
 ; EMPTY-NEXT:           }
 ; EMPTY-NEXT:           Bytes (
 ; EMPTY-NEXT:             0000: 00000500 05000000 10000000 01000100  |................|
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           UnknownSym {
-; EMPTY-NEXT:             Kind: S_SECTION (0x1136)
-; EMPTY-NEXT:             Length: 24
+; EMPTY-NEXT:           Section {
+; EMPTY-NEXT:             SectionNumber: 1
+; EMPTY-NEXT:             Alignment: 12
+; EMPTY-NEXT:             Reserved: 0
+; EMPTY-NEXT:             Rva: 4096
+; EMPTY-NEXT:             Length: 4122
+; EMPTY-NEXT:             Characteristics: 0x60000020
+; EMPTY-NEXT:             Name: .text
 ; EMPTY-NEXT:           }
 ; EMPTY-NEXT:           Bytes (
 ; EMPTY-NEXT:             0000: 01000C00 00100000 1A100000 20000060  |............ ..`|
@@ -292,9 +308,12 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           UnknownSym {
-; EMPTY-NEXT:             Kind: S_COFFGROUP (0x1137)
-; EMPTY-NEXT:             Length: 24
+; EMPTY-NEXT:           COFF Group {
+; EMPTY-NEXT:             Size: 4122
+; EMPTY-NEXT:             Characteristics: 0x60000020
+; EMPTY-NEXT:             Offset: 0
+; EMPTY-NEXT:             Segment: 1
+; EMPTY-NEXT:             Name: .text$mn
 ; EMPTY-NEXT:           }
 ; EMPTY-NEXT:           Bytes (
 ; EMPTY-NEXT:             0000: 1A100000 20000060 00000000 01002E74  |.... ..`.......t|
@@ -302,9 +321,14 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           UnknownSym {
-; EMPTY-NEXT:             Kind: S_SECTION (0x1136)
-; EMPTY-NEXT:             Length: 24
+; EMPTY-NEXT:           Section {
+; EMPTY-NEXT:             SectionNumber: 2
+; EMPTY-NEXT:             Alignment: 12
+; EMPTY-NEXT:             Reserved: 0
+; EMPTY-NEXT:             Rva: 12288
+; EMPTY-NEXT:             Length: 690
+; EMPTY-NEXT:             Characteristics: 0x40000040
+; EMPTY-NEXT:             Name: .rdata
 ; EMPTY-NEXT:           }
 ; EMPTY-NEXT:           Bytes (
 ; EMPTY-NEXT:             0000: 02000C00 00300000 B2020000 40000040  |.....0......@..@|
@@ -312,9 +336,12 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           UnknownSym {
-; EMPTY-NEXT:             Kind: S_COFFGROUP (0x1137)
-; EMPTY-NEXT:             Length: 24
+; EMPTY-NEXT:           COFF Group {
+; EMPTY-NEXT:             Size: 323
+; EMPTY-NEXT:             Characteristics: 0x40000040
+; EMPTY-NEXT:             Offset: 0
+; EMPTY-NEXT:             Segment: 2
+; EMPTY-NEXT:             Name: .rdata
 ; EMPTY-NEXT:           }
 ; EMPTY-NEXT:           Bytes (
 ; EMPTY-NEXT:             0000: 43010000 40000040 00000000 02002E72  |C...@..@.......r|
@@ -322,9 +349,12 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           UnknownSym {
-; EMPTY-NEXT:             Kind: S_COFFGROUP (0x1137)
-; EMPTY-NEXT:             Length: 24
+; EMPTY-NEXT:           COFF Group {
+; EMPTY-NEXT:             Size: 0
+; EMPTY-NEXT:             Characteristics: 0x40000040
+; EMPTY-NEXT:             Offset: 323
+; EMPTY-NEXT:             Segment: 2
+; EMPTY-NEXT:             Name: .edata
 ; EMPTY-NEXT:           }
 ; EMPTY-NEXT:           Bytes (
 ; EMPTY-NEXT:             0000: 00000000 40000040 43010000 02002E65  |....@..@C......e|
@@ -332,9 +362,12 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           UnknownSym {
-; EMPTY-NEXT:             Kind: S_COFFGROUP (0x1137)
-; EMPTY-NEXT:             Length: 28
+; EMPTY-NEXT:           COFF Group {
+; EMPTY-NEXT:             Size: 366
+; EMPTY-NEXT:             Characteristics: 0x40000040
+; EMPTY-NEXT:             Offset: 324
+; EMPTY-NEXT:             Segment: 2
+; EMPTY-NEXT:             Name: .rdata$debug
 ; EMPTY-NEXT:           }
 ; EMPTY-NEXT:           Bytes (
 ; EMPTY-NEXT:             0000: 6E010000 40000040 44010000 02002E72  |n...@..@D......r|
@@ -342,9 +375,14 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           UnknownSym {
-; EMPTY-NEXT:             Kind: S_SECTION (0x1136)
-; EMPTY-NEXT:             Length: 24
+; EMPTY-NEXT:           Section {
+; EMPTY-NEXT:             SectionNumber: 3
+; EMPTY-NEXT:             Alignment: 12
+; EMPTY-NEXT:             Reserved: 0
+; EMPTY-NEXT:             Rva: 16384
+; EMPTY-NEXT:             Length: 4
+; EMPTY-NEXT:             Characteristics: 0xC0000040
+; EMPTY-NEXT:             Name: .data
 ; EMPTY-NEXT:           }
 ; EMPTY-NEXT:           Bytes (
 ; EMPTY-NEXT:             0000: 03000C00 00400000 04000000 400000C0  |.....@......@...|
@@ -352,9 +390,12 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           UnknownSym {
-; EMPTY-NEXT:             Kind: S_COFFGROUP (0x1137)
-; EMPTY-NEXT:             Length: 20
+; EMPTY-NEXT:           COFF Group {
+; EMPTY-NEXT:             Size: 4
+; EMPTY-NEXT:             Characteristics: 0xC0000080
+; EMPTY-NEXT:             Offset: 0
+; EMPTY-NEXT:             Segment: 3
+; EMPTY-NEXT:             Name: .bss
 ; EMPTY-NEXT:           }
 ; EMPTY-NEXT:           Bytes (
 ; EMPTY-NEXT:             0000: 04000000 800000C0 00000000 03002E62  |...............b|
@@ -362,9 +403,14 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         {
-; EMPTY-NEXT:           UnknownSym {
-; EMPTY-NEXT:             Kind: S_SECTION (0x1136)
-; EMPTY-NEXT:             Length: 24
+; EMPTY-NEXT:           Section {
+; EMPTY-NEXT:             SectionNumber: 4
+; EMPTY-NEXT:             Alignment: 12
+; EMPTY-NEXT:             Reserved: 0
+; EMPTY-NEXT:             Rva: 20480
+; EMPTY-NEXT:             Length: 8
+; EMPTY-NEXT:             Characteristics: 0x42000040
+; EMPTY-NEXT:             Name: .reloc
 ; EMPTY-NEXT:           }
 ; EMPTY-NEXT:           Bytes (
 ; EMPTY-NEXT:             0000: 04000C00 00500000 08000000 40000042  |.....P......@..B|
