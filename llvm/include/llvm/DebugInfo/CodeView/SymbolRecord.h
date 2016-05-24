@@ -334,6 +334,64 @@ private:
   ArrayRef<uint8_t> Annotations;
 };
 
+// S_PUB32
+class PublicSym32 : public SymbolRecord {
+public:
+  struct Hdr {
+    ulittle32_t Index; // Type index, or Metadata token if a managed symbol
+    ulittle32_t Off;
+    ulittle16_t Seg;
+    // Name: The null-terminated name follows.
+  };
+
+  PublicSym32(uint32_t RecordOffset, const Hdr *H, StringRef Name)
+      : SymbolRecord(SymbolRecordKind::PublicSym32), RecordOffset(RecordOffset),
+        Header(*H), Name(Name) {}
+
+  static ErrorOr<PublicSym32> deserialize(SymbolRecordKind Kind,
+                                          uint32_t RecordOffset,
+                                          ArrayRef<uint8_t> &Data) {
+    const Hdr *H = nullptr;
+    StringRef Name;
+    CV_DESERIALIZE(Data, H, Name);
+
+    return PublicSym32(RecordOffset, H, Name);
+  }
+
+  uint32_t RecordOffset;
+  Hdr Header;
+  StringRef Name;
+};
+
+// S_PROCREF
+class ProcRefSym : public SymbolRecord {
+public:
+  struct Hdr {
+    ulittle32_t SumName;   // SUC of the name (?)
+    ulittle32_t SymOffset; // Offset of actual symbol in $$Symbols
+    ulittle16_t Mod;       // Module containing the actual symbol
+                           // Name:  The null-terminated name follows.
+  };
+
+  ProcRefSym(uint32_t RecordOffset, const Hdr *H, StringRef Name)
+      : SymbolRecord(SymbolRecordKind::ProcRefSym), RecordOffset(RecordOffset),
+        Header(*H), Name(Name) {}
+
+  static ErrorOr<ProcRefSym> deserialize(SymbolRecordKind Kind,
+                                         uint32_t RecordOffset,
+                                         ArrayRef<uint8_t> &Data) {
+    const Hdr *H = nullptr;
+    StringRef Name;
+    CV_DESERIALIZE(Data, H, Name);
+
+    return ProcRefSym(RecordOffset, H, Name);
+  }
+
+  uint32_t RecordOffset;
+  Hdr Header;
+  StringRef Name;
+};
+
 // S_LOCAL
 class LocalSym : public SymbolRecord {
 public:

@@ -537,6 +537,23 @@ void CVSymbolDumperImpl::visitInlineSiteSym(SymbolKind Kind,
   }
 }
 
+void CVSymbolDumperImpl::visitPublicSym32(SymbolKind Kind,
+                                          PublicSym32 &Public) {
+  DictScope S(W, "PublicSym");
+  W.printNumber("Type", Public.Header.Index);
+  W.printNumber("Seg", Public.Header.Seg);
+  W.printNumber("Off", Public.Header.Off);
+  W.printString("Name", Public.Name);
+}
+
+void CVSymbolDumperImpl::visitProcRefSym(SymbolKind Kind, ProcRefSym &ProcRef) {
+  DictScope S(W, "ProcRef");
+  W.printNumber("SumName", ProcRef.Header.SumName);
+  W.printNumber("SymOffset", ProcRef.Header.SymOffset);
+  W.printNumber("Mod", ProcRef.Header.Mod);
+  W.printString("Name", ProcRef.Name);
+}
+
 void CVSymbolDumperImpl::visitLabelSym(SymbolKind Kind, LabelSym &Label) {
   DictScope S(W, "Label");
 

@@ -380,7 +380,52 @@
 ; EMPTY-NEXT:   Address Map: [36, 0]
 ; EMPTY-NEXT:   Thunk Map: [4112]
 ; EMPTY-NEXT:   Section Offsets: [4096, 1]
-; EMPTY-NEXT:   Symbols: [?__purecall@@3PAXA, _main]
+; EMPTY-NEXT:   Symbols [
+; EMPTY-NEXT:     {
+; EMPTY-NEXT:       PublicSym {
+; EMPTY-NEXT:         Type: 0
+; EMPTY-NEXT:         Seg: 3
+; EMPTY-NEXT:         Off: 0
+; EMPTY-NEXT:         Name: ?__purecall@@3PAXA
+; EMPTY-NEXT:       }
+; EMPTY-NEXT:       Bytes (
+; EMPTY-NEXT:         0000: 00000000 00000000 03003F5F 5F707572  |..........?__pur|
+; EMPTY-NEXT:         0010: 6563616C 6C404033 50415841 00000000  |ecall@@3PAXA....|
+; EMPTY-NEXT:       )
+; EMPTY-NEXT:     }
+; EMPTY-NEXT:     {
+; EMPTY-NEXT:       PublicSym {
+; EMPTY-NEXT:         Type: 2
+; EMPTY-NEXT:         Seg: 1
+; EMPTY-NEXT:         Off: 16
+; EMPTY-NEXT:         Name: _main
+; EMPTY-NEXT:       }
+; EMPTY-NEXT:       Bytes (
+; EMPTY-NEXT:         0000: 02000000 10000000 01005F6D 61696E00  |.........._main.|
+; EMPTY-NEXT:       )
+; EMPTY-NEXT:     }
+; EMPTY-NEXT:     {
+; EMPTY-NEXT:       ProcRef {
+; EMPTY-NEXT:         SumName: 0
+; EMPTY-NEXT:         SymOffset: 120
+; EMPTY-NEXT:         Mod: 1
+; EMPTY-NEXT:         Name: main
+; EMPTY-NEXT:       }
+; EMPTY-NEXT:       Bytes (
+; EMPTY-NEXT:         0000: 00000000 78000000 01006D61 696E0000  |....x.....main..|
+; EMPTY-NEXT:       )
+; EMPTY-NEXT:     }
+; EMPTY-NEXT:     {
+; EMPTY-NEXT:       DataSym {
+; EMPTY-NEXT:         Type: void* (0x403)
+; EMPTY-NEXT:         DisplayName: __purecall
+; EMPTY-NEXT:       }
+; EMPTY-NEXT:       Bytes (
+; EMPTY-NEXT:         0000: 03040000 00000000 03005F5F 70757265  |..........__pure|
+; EMPTY-NEXT:         0010: 63616C6C 00000000                    |call....|
+; EMPTY-NEXT:       )
+; EMPTY-NEXT:     }
+; EMPTY-NEXT:   ]
 ; EMPTY-NEXT: }
 
 ; BIG:      FileHeaders {

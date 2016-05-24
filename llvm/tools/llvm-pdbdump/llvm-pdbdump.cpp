@@ -425,7 +425,8 @@ static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File,
   return Error::success();
 }
 
-static Error dumpPublicsStream(ScopedPrinter &P, PDBFile &File) {
+static Error dumpPublicsStream(ScopedPrinter &P, PDBFile &File,
+                               codeview::CVTypeDumper &TD) {
   if (!opts::DumpPublics)
     return Error::success();
 
@@ -442,7 +443,15 @@ static Error dumpPublicsStream(ScopedPrinter &P, PDBFile &File) {
   P.printList("Address Map", Publics.getAddressMap());
   P.printList("Thunk Map", Publics.getThunkMap());
   P.printList("Section Offsets", Publics.getSectionOffsets());
-  P.printList("Symbols", Publics.getSymbols());
+  ListScope L(P, "Symbols");
+  codeview::CVSymbolDumper SD(P, TD, nullptr, false);
+  for (auto S : Publics.getSymbols()) {
+    DictScope DD(P, "");
+
+    SD.dump(S);
+    if (opts::DumpSymRecordBytes)
+      P.printBinaryBlock("Bytes", S.Data);
+  }
   return Error::success();
 }
 
@@ -475,7 +484,7 @@ static Error dumpStructure(RawSession &RS) {
   if (auto EC = dumpDbiStream(P, File, TD))
     return EC;
 
-  if (auto EC = dumpPublicsStream(P, File))
+  if (auto EC = dumpPublicsStream(P, File, TD))
     return EC;
 return Error::success();
 }
