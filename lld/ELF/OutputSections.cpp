@@ -963,8 +963,7 @@ template <class ELFT> static void skipAugP(ArrayRef<uint8_t> &D) {
   D = D.slice(Size);
 }
 
-template <class ELFT>
-uint8_t EhOutputSection<ELFT>::getFdeEncoding(ArrayRef<uint8_t> D) {
+template <class ELFT> static uint8_t getFdeEncoding(ArrayRef<uint8_t> D) {
   if (D.size() < 8)
     fatal("CIE too small");
   D = D.slice(8);
@@ -1051,8 +1050,6 @@ CieRecord *EhOutputSection<ELFT>::addCie(SectionPiece &Piece,
   // If not found, create a new one.
   if (Cie->Piece == nullptr) {
     Cie->Piece = &Piece;
-    if (Config->EhFrameHdr)
-      Cie->FdeEncoding = getFdeEncoding(Piece.Data);
     Cies.push_back(Cie);
   }
   return Cie;
@@ -1214,8 +1211,9 @@ template <class ELFT> void EhOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   // we obtain two addresses and pass them to EhFrameHdr object.
   if (Out<ELFT>::EhFrameHdr) {
     for (CieRecord *Cie : Cies) {
+      uint8_t Enc = getFdeEncoding<ELFT>(Cie->Piece->Data);
       for (SectionPiece *Fde : Cie->FdePieces) {
-        uintX_t Pc = getFdePc(Buf, Fde->OutputOff, Cie->FdeEncoding);
+        uintX_t Pc = getFdePc(Buf, Fde->OutputOff, Enc);
         uintX_t FdeVA = this->getVA() + Fde->OutputOff;
         Out<ELFT>::EhFrameHdr->addFde(Pc, FdeVA);
       }
