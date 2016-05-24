@@ -722,8 +722,20 @@ static void TranslateOptArg(Arg *A, llvm::opt::DerivedArgList &DAL,
       }
       break;
     case 'b':
-      if (I + 1 != E && isdigit(OptStr[I + 1]))
+      if (I + 1 != E && isdigit(OptStr[I + 1])) {
+        switch (OptStr[I + 1]) {
+        case '0':
+          DAL.AddFlagArg(A, Opts.getOption(options::OPT_fno_inline));
+          break;
+        case '1':
+          // TODO: Inline calls to 'inline functions' only.
+          break;
+        case '2':
+          DAL.AddFlagArg(A, Opts.getOption(options::OPT_finline_functions));
+          break;
+        }
         ++I;
+      }
       break;
     case 'g':
       break;

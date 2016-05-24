@@ -100,10 +100,6 @@ def _SLASH_J : CLFlag<"J">, HelpText<"Make char type unsigned">,
 def _SLASH_O0 : CLFlag<"O0">, Alias<O0>;
 // /Oy- is handled by the /O option because /Oy- only has an effect on 32-bit.
 def _SLASH_O : CLJoined<"O">, HelpText<"Optimization level">;
-def _SLASH_Ob0 : CLFlag<"Ob0">, HelpText<"Disable inlining">,
-  Alias<fno_inline>;
-def _SLASH_Ob2 : CLFlag<"Ob2">, HelpText<"Enable inlining">,
-  Alias<finline_functions>;
 def _SLASH_Od : CLFlag<"Od">, HelpText<"Disable optimization">, Alias<O0>;
 def _SLASH_Oi : CLFlag<"Oi">, HelpText<"Enable use of builtin functions">,
   Alias<fbuiltin>;
