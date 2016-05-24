@@ -4,7 +4,9 @@ set(LLVM_LINK_COMPONENTS
 
 add_clang_library(findAllSymbols
   FindAllSymbols.cpp
+  FindAllSymbolsAction.cpp
   FindAllMacros.cpp
+  HeaderMapCollector.cpp
   PragmaCommentHandler.cpp
   SymbolInfo.cpp
 
