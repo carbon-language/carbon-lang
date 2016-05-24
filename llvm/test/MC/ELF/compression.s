@@ -3,6 +3,7 @@
 // RUN: llvm-dwarfdump -debug-dump=str %t | FileCheck --check-prefix=STR %s
 // RUN: llvm-mc -filetype=obj -compress-debug-sections -triple i386-pc-linux-gnu < %s \
 // RUN:     | llvm-readobj -symbols - | FileCheck --check-prefix=386-SYMBOLS %s
+// RUN: llvm-readobj -sections %t | FileCheck --check-prefix=ZLIB %s
 
 // REQUIRES: zlib
 
@@ -13,10 +14,14 @@
 
 // CHECK: Contents of section .debug_info:
 
-// CHECK: Contents of section .zdebug_str:
-// Check for the 'ZLIB' file magic at the start of the section only
-// CHECK-NEXT: ZLIB
-// CHECK-NOT: ZLIB
+// Check that debug_line section was not renamed, so it is
+// zlib-style, not zlib-gnu one. Check that SHF_COMPRESSED was set.
+// ZLIB:      Section {
+// ZLIB:        Index:
+// ZLIB:        Name: .debug_str
+// ZLIB-NEXT:   Type: SHT_PROGBITS
+// ZLIB-NEXT:   Flags [
+// ZLIB-NEXT:     SHF_COMPRESSED
 
 // FIXME: Handle compressing alignment fragments to support compressing debug_frame
 // CHECK: Contents of section .debug_frame:
@@ -31,7 +36,7 @@
 // sections, so make sure we handle symbols inside compressed sections
 // 386-SYMBOLS: Name: .Linfo_string0
 // 386-SYMBOLS-NOT: }
-// 386-SYMBOLS: Section: .zdebug_str
+// 386-SYMBOLS: Section: .debug_str
 
 	.section	.debug_line,"",@progbits
 
