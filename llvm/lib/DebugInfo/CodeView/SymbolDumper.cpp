@@ -181,12 +181,10 @@ static const EnumEntry<uint32_t> FrameProcSymFlags[] = {
 /// the visitor out of SymbolDumper.h.
 class CVSymbolDumperImpl : public CVSymbolVisitor<CVSymbolDumperImpl> {
 public:
-  CVSymbolDumperImpl(CVSymbolDumper &CVSD, CVTypeDumper &CVTD,
-                     SymbolDumpDelegate *ObjDelegate, ScopedPrinter &W,
-                     bool PrintRecordBytes)
-      : CVSymbolVisitor(ObjDelegate), CVSD(CVSD), CVTD(CVTD),
-        ObjDelegate(ObjDelegate), W(W), PrintRecordBytes(PrintRecordBytes),
-        InFunctionScope(false) {}
+  CVSymbolDumperImpl(CVTypeDumper &CVTD, SymbolDumpDelegate *ObjDelegate,
+                     ScopedPrinter &W, bool PrintRecordBytes)
+      : CVSymbolVisitor(ObjDelegate), CVTD(CVTD), ObjDelegate(ObjDelegate),
+        W(W), PrintRecordBytes(PrintRecordBytes), InFunctionScope(false) {}
 
 /// CVSymbolVisitor overrides.
 #define SYMBOL_RECORD(EnumName, EnumVal, Name)                                 \
@@ -203,7 +201,6 @@ private:
                                    uint32_t RelocationOffset);
   void printLocalVariableAddrGap(ArrayRef<LocalVariableAddrGap> Gaps);
 
-  CVSymbolDumper &CVSD;
   CVTypeDumper &CVTD;
   SymbolDumpDelegate *ObjDelegate;
   ScopedPrinter &W;
@@ -656,15 +653,13 @@ void CVSymbolDumperImpl::visitUnknownSymbol(SymbolKind Kind,
 }
 
 bool CVSymbolDumper::dump(const SymbolIterator::Record &Record) {
-  CVSymbolDumperImpl Dumper(*this, CVTD, ObjDelegate.get(), W,
-                            PrintRecordBytes);
+  CVSymbolDumperImpl Dumper(CVTD, ObjDelegate.get(), W, PrintRecordBytes);
   Dumper.visitSymbolRecord(Record);
   return !Dumper.hadError();
 }
 
 bool CVSymbolDumper::dump(ArrayRef<uint8_t> Data) {
-  CVSymbolDumperImpl Dumper(*this, CVTD, ObjDelegate.get(), W,
-                            PrintRecordBytes);
+  CVSymbolDumperImpl Dumper(CVTD, ObjDelegate.get(), W, PrintRecordBytes);
   Dumper.visitSymbolStream(Data);
   return !Dumper.hadError();
 }
