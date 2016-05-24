@@ -414,10 +414,10 @@ void EhInputSection<ELFT>::split() {
   ArrayRef<uint8_t> Data = this->getSectionData();
   for (size_t Off = 0, End = Data.size(); Off != End;) {
     size_t Size = readEhRecordSize<ELFT>(Data.slice(Off));
+    this->Pieces.emplace_back(Off, Data.slice(Off, Size));
     // The empty record is the end marker.
     if (Size == 4)
       break;
-    this->Pieces.emplace_back(Off, Data.slice(Off, Size));
     Off += Size;
   }
 }
