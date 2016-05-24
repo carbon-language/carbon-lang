@@ -20,16 +20,6 @@ int has_trivial_assign();
 #endif
 // CHECK: int has_trivial_assign();
 
-#if __has_feature(has_trivial_move_assign)
-int has_trivial_move_assign();
-#endif
-// CHECK: int has_trivial_move_assign();
-
-#if __has_feature(has_trivial_move_constructor)
-int has_trivial_move_constructor();
-#endif
-// CHECK: int has_trivial_move_constructor();
-
 #if __has_feature(has_trivial_copy)
 int has_trivial_copy();
 #endif
@@ -54,11 +44,6 @@ int has_virtual_destructor();
 int is_abstract();
 #endif
 // CHECK: int is_abstract();
-
-#if __has_feature(is_assignable)
-int is_assignable();
-#endif
-// CHECK: int is_assignable();
 
 #if __has_feature(is_base_of)
 int is_base_of();
@@ -114,16 +99,6 @@ int is_union();
 int is_literal();
 #endif
 // CHECK: int is_literal();
-
-#if __has_feature(is_nothrow_assignable)
-int is_nothrow_assignable();
-#endif
-// CHECK: int is_nothrow_assignable();
-
-#if __has_feature(is_nothrow_constructible)
-int is_nothrow_constructible();
-#endif
-// CHECK: int is_nothrow_constructible();
 
 #if __has_feature(is_standard_layout)
 int is_standard_layout();

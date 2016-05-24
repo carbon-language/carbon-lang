@@ -1187,37 +1187,29 @@ static bool HasFeature(const Preprocessor &PP, StringRef Feature) {
       // FIXME: Should this be __has_feature or __has_extension?
       //.Case("raw_invocation_type", LangOpts.CPlusPlus)
       // Type traits
+      // N.B. Additional type traits should not be added to the following list.
+      // Instead, they should be detected by has_extension.
       .Case("has_nothrow_assign", LangOpts.CPlusPlus)
       .Case("has_nothrow_copy", LangOpts.CPlusPlus)
       .Case("has_nothrow_constructor", LangOpts.CPlusPlus)
       .Case("has_trivial_assign", LangOpts.CPlusPlus)
-      .Case("has_trivial_move_assign", LangOpts.CPlusPlus)
       .Case("has_trivial_copy", LangOpts.CPlusPlus)
       .Case("has_trivial_constructor", LangOpts.CPlusPlus)
-      .Case("has_trivial_move_constructor", LangOpts.CPlusPlus)
       .Case("has_trivial_destructor", LangOpts.CPlusPlus)
       .Case("has_virtual_destructor", LangOpts.CPlusPlus)
       .Case("is_abstract", LangOpts.CPlusPlus)
-      .Case("is_assignable", LangOpts.CPlusPlus)
       .Case("is_base_of", LangOpts.CPlusPlus)
       .Case("is_class", LangOpts.CPlusPlus)
       .Case("is_constructible", LangOpts.CPlusPlus)
       .Case("is_convertible_to", LangOpts.CPlusPlus)
-      .Case("is_destructible",
-            LangOpts.CPlusPlus &&LangOpts.MicrosoftExt)
       .Case("is_empty", LangOpts.CPlusPlus)
       .Case("is_enum", LangOpts.CPlusPlus)
       .Case("is_final", LangOpts.CPlusPlus)
       .Case("is_literal", LangOpts.CPlusPlus)
-      .Case("is_nothrow_assignable", LangOpts.CPlusPlus)
-      .Case("is_nothrow_constructible", LangOpts.CPlusPlus)
-      .Case("is_nothrow_destructible",
-            LangOpts.CPlusPlus && LangOpts.MicrosoftExt)
+      .Case("is_standard_layout", LangOpts.CPlusPlus)
       .Case("is_pod", LangOpts.CPlusPlus)
       .Case("is_polymorphic", LangOpts.CPlusPlus)
-      .Case("is_sealed",
-            LangOpts.CPlusPlus && LangOpts.MicrosoftExt)
-      .Case("is_standard_layout", LangOpts.CPlusPlus)
+      .Case("is_sealed", LangOpts.CPlusPlus && LangOpts.MicrosoftExt)
       .Case("is_trivial", LangOpts.CPlusPlus)
       .Case("is_trivially_assignable", LangOpts.CPlusPlus)
       .Case("is_trivially_constructible", LangOpts.CPlusPlus)
