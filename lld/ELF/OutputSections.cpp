@@ -1250,12 +1250,9 @@ void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   this->updateAlign(Sec->Align);
   this->Header.sh_entsize = Sec->getSectionHdr()->sh_entsize;
 
-  ArrayRef<uint8_t> D = Sec->getSectionData();
-  StringRef Data((const char *)D.data(), D.size());
   bool IsString = this->Header.sh_flags & SHF_STRINGS;
 
-  for (size_t I = 0, N = Sec->Pieces.size(); I != N; ++I) {
-    SectionPiece &Piece = Sec->Pieces[I];
+  for (SectionPiece &Piece : Sec->Pieces) {
     if (!Piece.Live)
       continue;
     uintX_t OutputOffset = Builder.add(toStringRef(Piece.Data));
