@@ -7035,6 +7035,7 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
   assert(!isa<TemplateDecl>(Member) && "Only for non-template members");
 
   // Try to find the member we are instantiating.
+  NamedDecl *FoundInstantiation = nullptr;
   NamedDecl *Instantiation = nullptr;
   NamedDecl *InstantiatedFrom = nullptr;
   MemberSpecializationInfo *MSInfo = nullptr;
@@ -7050,6 +7051,7 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
         if (!hasExplicitCallingConv(Adjusted))
           Adjusted = adjustCCAndNoReturn(Adjusted, Method->getType());
         if (Context.hasSameType(Adjusted, Method->getType())) {
+          FoundInstantiation = *I;
           Instantiation = Method;
           InstantiatedFrom = Method->getInstantiatedFromMemberFunction();
           MSInfo = Method->getMemberSpecializationInfo();
@@ -7062,6 +7064,7 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
     if (Previous.isSingleResult() &&
         (PrevVar = dyn_cast<VarDecl>(Previous.getFoundDecl())))
       if (PrevVar->isStaticDataMember()) {
+        FoundInstantiation = Previous.getRepresentativeDecl();
         Instantiation = PrevVar;
         InstantiatedFrom = PrevVar->getInstantiatedFromStaticDataMember();
         MSInfo = PrevVar->getMemberSpecializationInfo();
@@ -7070,6 +7073,7 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
     CXXRecordDecl *PrevRecord;
     if (Previous.isSingleResult() &&
         (PrevRecord = dyn_cast<CXXRecordDecl>(Previous.getFoundDecl()))) {
+      FoundInstantiation = Previous.getRepresentativeDecl();
       Instantiation = PrevRecord;
       InstantiatedFrom = PrevRecord->getInstantiatedFromMemberClass();
       MSInfo = PrevRecord->getMemberSpecializationInfo();
@@ -7078,6 +7082,7 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
     EnumDecl *PrevEnum;
     if (Previous.isSingleResult() &&
         (PrevEnum = dyn_cast<EnumDecl>(Previous.getFoundDecl()))) {
+      FoundInstantiation = Previous.getRepresentativeDecl();
       Instantiation = PrevEnum;
       InstantiatedFrom = PrevEnum->getInstantiatedFromMemberEnum();
       MSInfo = PrevEnum->getMemberSpecializationInfo();
@@ -7106,7 +7111,7 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
     }
 
     Previous.clear();
-    Previous.addDecl(Instantiation);
+    Previous.addDecl(FoundInstantiation);
     return false;
   }
 
@@ -7207,7 +7212,7 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
   // Save the caller the trouble of having to figure out which declaration
   // this specialization matches.
   Previous.clear();
-  Previous.addDecl(Instantiation);
+  Previous.addDecl(FoundInstantiation);
   return false;
 }
 
