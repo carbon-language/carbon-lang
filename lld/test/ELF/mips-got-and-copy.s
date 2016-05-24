@@ -33,8 +33,8 @@
 # CHECK-NEXT:     Entry {
 # CHECK-NEXT:       Address: 0x3000C
 # CHECK-NEXT:       Access: -32740
-# CHECK-NEXT:       Initial: 0x40010
-# CHECK-NEXT:       Value: 0x40010
+# CHECK-NEXT:       Initial: 0x40014
+# CHECK-NEXT:       Value: 0x40014
 # CHECK-NEXT:       Type: Object (0x1)
 # CHECK-NEXT:       Section: .bss (0xC)
 # CHECK-NEXT:       Name: data1@ (7)

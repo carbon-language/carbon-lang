@@ -1055,10 +1055,15 @@ template <class ELFT> static uint32_t getAlignment(SharedSymbol<ELFT> *SS) {
 // Reserve space in .bss for copy relocation.
 template <class ELFT>
 void Writer<ELFT>::addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
+  // Copy relocation against zero-sized symbol doesn't make sense.
+  uintX_t SymSize = SS->template getSize<ELFT>();
+  if (SymSize == 0)
+    fatal("cannot create a copy relocation for " + SS->getName());
+
   ensureBss();
   uintX_t Align = getAlignment(SS);
   uintX_t Off = alignTo(Out<ELFT>::Bss->getSize(), Align);
-  Out<ELFT>::Bss->setSize(Off + SS->template getSize<ELFT>());
+  Out<ELFT>::Bss->setSize(Off + SymSize);
   Out<ELFT>::Bss->updateAlign(Align);
   uintX_t Shndx = SS->Sym.st_shndx;
   uintX_t Value = SS->Sym.st_value;
