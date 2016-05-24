@@ -59,8 +59,11 @@ STATISTIC(NumFastpaths, "Number of instrumented fastpaths");
 STATISTIC(NumAccessesWithIrregularSize,
           "Number of accesses with a size outside our targeted callout sizes");
 
+static const uint64_t EsanCtorAndDtorPriority = 0;
 static const char *const EsanModuleCtorName = "esan.module_ctor";
+static const char *const EsanModuleDtorName = "esan.module_dtor";
 static const char *const EsanInitName = "__esan_init";
+static const char *const EsanExitName = "__esan_exit";
 
 namespace {
 
@@ -90,6 +93,8 @@ public:
 private:
   bool initOnModule(Module &M);
   void initializeCallbacks(Module &M);
+  GlobalVariable *createEsanInitToolGV(Module &M);
+  void createDestructor(Module &M, GlobalVariable *GV);
   bool runOnFunction(Function &F, Module &M);
   bool instrumentLoadOrStore(Instruction *I, const DataLayout &DL);
   bool instrumentMemIntrinsic(MemIntrinsic *MI);
@@ -115,6 +120,7 @@ private:
   Function *EsanUnalignedLoadN, *EsanUnalignedStoreN;
   Function *MemmoveFn, *MemcpyFn, *MemsetFn;
   Function *EsanCtorFunction;
+  Function *EsanDtorFunction;
 };
 } // namespace
 
@@ -173,19 +179,50 @@ void EfficiencySanitizer::initializeCallbacks(Module &M) {
                             IRB.getInt32Ty(), IntptrTy, nullptr));
 }
 
+// Create the tool-specific global variable passed to EsanInit and EsanExit.
+GlobalVariable *EfficiencySanitizer::createEsanInitToolGV(Module &M) {
+  GlobalVariable *GV = nullptr;
+  // FIXME: create the tool specific global variable.
+  if (GV == nullptr) {
+    GV = new GlobalVariable(M, IntptrTy, true, GlobalVariable::InternalLinkage,
+                            Constant::getNullValue(IntptrTy));
+  }
+  return GV;
+}
+
+void EfficiencySanitizer::createDestructor(Module &M, GlobalVariable *GV) {
+  EsanDtorFunction = Function::Create(FunctionType::get(Type::getVoidTy(*Ctx),
+                                                        false),
+                                      GlobalValue::InternalLinkage,
+                                      EsanModuleDtorName, &M);
+  ReturnInst::Create(*Ctx, BasicBlock::Create(*Ctx, "", EsanDtorFunction));
+  IRBuilder<> IRB_Dtor(EsanDtorFunction->getEntryBlock().getTerminator());
+  Function *EsanExit = checkSanitizerInterfaceFunction(
+      M.getOrInsertFunction(EsanExitName, IRB_Dtor.getVoidTy(),
+                            IntptrTy, nullptr));
+  EsanExit->setLinkage(Function::ExternalLinkage);
+  IRB_Dtor.CreateCall(EsanExit,
+                      {IRB_Dtor.CreatePointerCast(GV, IntptrTy)});
+  appendToGlobalDtors(M, EsanDtorFunction, EsanCtorAndDtorPriority);
+}
+
 bool EfficiencySanitizer::initOnModule(Module &M) {
   Ctx = &M.getContext();
   const DataLayout &DL = M.getDataLayout();
   IRBuilder<> IRB(M.getContext());
   IntegerType *OrdTy = IRB.getInt32Ty();
   IntptrTy = DL.getIntPtrType(M.getContext());
+  // Create the variable passed to EsanInit and EsanExit.
+  GlobalVariable *GV = createEsanInitToolGV(M);
+  // Constructor
   std::tie(EsanCtorFunction, std::ignore) = createSanitizerCtorAndInitFunctions(
-      M, EsanModuleCtorName, EsanInitName, /*InitArgTypes=*/{OrdTy},
+      M, EsanModuleCtorName, EsanInitName, /*InitArgTypes=*/{OrdTy, IntptrTy},
       /*InitArgs=*/{
-          ConstantInt::get(OrdTy, static_cast<int>(Options.ToolType))});
+        ConstantInt::get(OrdTy, static_cast<int>(Options.ToolType)),
+        ConstantExpr::getPointerCast(GV, IntptrTy)});
+  appendToGlobalCtors(M, EsanCtorFunction, EsanCtorAndDtorPriority);
 
-  appendToGlobalCtors(M, EsanCtorFunction, 0);
-
+  createDestructor(M, GV);
   return true;
 }
 
@@ -216,7 +253,7 @@ bool EfficiencySanitizer::runOnFunction(Function &F, Module &M) {
   SmallVector<Instruction *, 8> LoadsAndStores;
   SmallVector<Instruction *, 8> MemIntrinCalls;
   bool Res = false;
-  const DataLayout &DL = F.getParent()->getDataLayout();
+  const DataLayout &DL = M.getDataLayout();
 
   for (auto &BB : F) {
     for (auto &Inst : BB) {
