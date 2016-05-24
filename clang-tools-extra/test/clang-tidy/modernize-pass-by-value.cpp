@@ -150,8 +150,7 @@ template <typename T> struct N {
 // Test with value parameter.
 struct O {
   O(Movable M) : M(M) {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: pass by value and use std::move
-  // CHECK-FIXES: O(Movable M) : M(std::move(M)) {}
+  // CHECK-FIXES: O(Movable M) : M(M) {}
   Movable M;
 };
 
@@ -183,8 +182,7 @@ typedef ::Movable RMovable;
 }
 struct R {
   R(ns_R::RMovable M) : M(M) {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: pass by value and use std::move
-  // CHECK-FIXES: R(ns_R::RMovable M) : M(std::move(M)) {}
+  // CHECK-FIXES: R(ns_R::RMovable M) : M(M) {}
   ns_R::RMovable M;
 };
 
@@ -198,6 +196,7 @@ struct S {
 // Test that types that are trivially copyable will not use std::move. This will
 // cause problems with misc-move-const-arg, as it will revert it.
 struct T {
-  std::array<int, 10> a_;
   T(std::array<int, 10> a) : a_(a) {}
+  // CHECK-FIXES: T(std::array<int, 10> a) : a_(a) {} 
+  std::array<int, 10> a_;
 };
