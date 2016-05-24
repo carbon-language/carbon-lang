@@ -993,11 +993,10 @@ void EhOutputSection<ELFT>::addSectionAux(EhInputSection<ELFT> *Sec,
   const endianness E = ELFT::TargetEndianness;
 
   DenseMap<size_t, CieRecord *> OffsetToCie;
-  for (size_t I = 0, End = Sec->Pieces.size(); I != End; ++I) {
-    SectionPiece &Piece = Sec->Pieces[I];
+  for (SectionPiece &Piece : Sec->Pieces) {
     // The empty record is the end marker.
     if (Piece.Data.size() == 4)
-      continue;
+      return;
 
     size_t Offset = Piece.InputOff;
     uint32_t ID = read32<E>(Piece.Data.data() + 4);
