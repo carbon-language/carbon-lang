@@ -1,3 +1,6 @@
+#include <utility>
+#include <array>
+
 // RUN: %check_clang_tidy %s modernize-pass-by-value %t -- -- -std=c++11 -fno-delayed-template-parsing
 
 // CHECK-FIXES: #include <utility>
@@ -17,7 +20,7 @@ struct NotMovable {
 }
 
 struct A {
-  A(const Movable &M) : M(M) {}
+  A(Movable M) : M(std::move(M)) {}
   // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: pass by value and use std::move [modernize-pass-by-value]
   // CHECK-FIXES: A(Movable M) : M(std::move(M)) {}
   Movable M;
@@ -46,17 +49,17 @@ struct C {
 
 // Test that both declaration and definition are updated.
 struct D {
-  D(const Movable &M);
+  D(Movable M);
   // CHECK-FIXES: D(Movable M);
   Movable M;
 };
-D::D(const Movable &M) : M(M) {}
+D::D(Movable M) : M(std::move(M)) {}
 // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: pass by value and use std::move
 // CHECK-FIXES: D::D(Movable M) : M(std::move(M)) {}
 
 // Test with default parameter.
 struct E {
-  E(const Movable &M = Movable()) : M(M) {}
+  E(Movable M = Movable()) : M(std::move(M)) {}
   // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: pass by value and use std::move
   // CHECK-FIXES: E(Movable M = Movable()) : M(std::move(M)) {}
   Movable M;
@@ -71,11 +74,11 @@ struct F {
 
 // Test unnamed parameter in declaration.
 struct G {
-  G(const Movable &);
+  G(Movable );
   // CHECK-FIXES: G(Movable );
   Movable M;
 };
-G::G(const Movable &M) : M(M) {}
+G::G(Movable M) : M(std::move(M)) {}
 // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: pass by value and use std::move
 // CHECK-FIXES: G::G(Movable M) : M(std::move(M)) {}
 
@@ -84,12 +87,12 @@ namespace ns_H {
 typedef ::Movable HMovable;
 }
 struct H {
-  H(const ns_H::HMovable &M);
+  H(ns_H::HMovable M);
   // CHECK-FIXES: H(ns_H::HMovable M);
   ns_H::HMovable M;
 };
 using namespace ns_H;
-H::H(const HMovable &M) : M(M) {}
+H::H(HMovable M) : M(std::move(M)) {}
 // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: pass by value and use std::move
 // CHECK-FIXES: H(HMovable M) : M(std::move(M)) {}
 
@@ -122,14 +125,14 @@ struct K_Movable {
 
 // Test with movable type with an user defined move constructor.
 struct K {
-  K(const K_Movable &M) : M(M) {}
+  K(K_Movable M) : M(std::move(M)) {}
   // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: pass by value and use std::move
   // CHECK-FIXES: K(K_Movable M) : M(std::move(M)) {}
   K_Movable M;
 };
 
 template <typename T> struct L {
-  L(const Movable &M) : M(M) {}
+  L(Movable M) : M(std::move(M)) {}
   // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: pass by value and use std::move
   // CHECK-FIXES: L(Movable M) : M(std::move(M)) {}
   Movable M;
@@ -138,7 +141,7 @@ L<int> l(Movable());
 
 // Test with a non-instantiated template class.
 template <typename T> struct N {
-  N(const Movable &M) : M(M) {}
+  N(Movable M) : M(std::move(M)) {}
   // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: pass by value and use std::move
   // CHECK-FIXES: N(Movable M) : M(std::move(M)) {}
 
@@ -148,7 +151,7 @@ template <typename T> struct N {
 
 // Test with value parameter.
 struct O {
-  O(Movable M) : M(M) {}
+  O(Movable M) : M(std::move(M)) {}
   // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: pass by value and use std::move
   // CHECK-FIXES: O(Movable M) : M(std::move(M)) {}
   Movable M;
@@ -164,8 +167,8 @@ struct P {
 // Test with multiples parameters where some need to be changed and some don't.
 // need to.
 struct Q {
-  Q(const Movable &A, const Movable &B, const Movable &C, double D)
-      : A(A), B(B), C(C), D(D) {}
+  Q(const Movable &A, Movable B, Movable C, double D)
+      : A(A), B(std::move(B)), C(std::move(C)), D(D) {}
   // CHECK-MESSAGES: :[[@LINE-2]]:23: warning: pass by value and use std::move
   // CHECK-MESSAGES: :[[@LINE-3]]:41: warning: pass by value and use std::move
   // CHECK-FIXES:      Q(const Movable &A, Movable B, Movable C, double D)
@@ -181,7 +184,7 @@ namespace ns_R {
 typedef ::Movable RMovable;
 }
 struct R {
-  R(ns_R::RMovable M) : M(M) {}
+  R(ns_R::RMovable M) : M(std::move(M)) {}
   // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: pass by value and use std::move
   // CHECK-FIXES: R(ns_R::RMovable M) : M(std::move(M)) {}
   ns_R::RMovable M;
@@ -192,4 +195,11 @@ struct S {
   S(Movable &&M) : M(M) {}
   // CHECK-FIXES: S(Movable &&M) : M(M) {}
   Movable M;
+};
+
+// Test that types that are trivially copyable will not use std::move. This will
+// cause problems with misc-move-const-arg, as it will revert it.
+struct T {
+  std::array<int, 10> a_;
+  T(std::array<int, 10> a) : a_(a) {}
 };
