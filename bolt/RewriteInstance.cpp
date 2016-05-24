@@ -2249,11 +2249,26 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
         AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_high_pc) != -1U) {
       uint32_t LowPCOffset = -1U;
       uint32_t HighPCOffset = -1U;
-      DWARFFormValue FormValue;
-      DIE->getAttributeValue(Unit, dwarf::DW_AT_low_pc, FormValue,
+      DWARFFormValue LowPCFormValue;
+      DWARFFormValue HighPCFormValue;
+      DIE->getAttributeValue(Unit, dwarf::DW_AT_low_pc, LowPCFormValue,
                              &LowPCOffset);
-      DIE->getAttributeValue(Unit, dwarf::DW_AT_high_pc, FormValue,
+      DIE->getAttributeValue(Unit, dwarf::DW_AT_high_pc, HighPCFormValue,
                              &HighPCOffset);
+      if (LowPCFormValue.getForm() != dwarf::DW_FORM_addr ||
+          (HighPCFormValue.getForm() != dwarf::DW_FORM_addr &&
+           HighPCFormValue.getForm() != dwarf::DW_FORM_data8 &&
+           HighPCFormValue.getForm() != dwarf::DW_FORM_data4)) {
+        errs() << "BOLT-WARNING: unexpected form value. Cannot update DIE "
+                  "at offset 0x" << Twine::utohexstr(DIE->getOffset()) << '\n';
+        return;
+      }
+      if (LowPCOffset == -1U || (LowPCOffset + 8 != HighPCOffset)) {
+        errs() << "BOLT-WARNING: high_pc expected immediately after low_pc. "
+                  "Cannot update DIE at offset 0x"
+               << Twine::utohexstr(DIE->getOffset()) << '\n';
+        return;
+      }
 
       AbbrevPatcher->addAttributePatch(Unit,
                                        AbbrevCode,
@@ -2265,15 +2280,19 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
                                        dwarf::DW_AT_high_pc,
                                        dwarf::DW_AT_producer,
                                        dwarf::DW_FORM_string);
-      if (LowPCOffset == -1U || (LowPCOffset + 8 != HighPCOffset)) {
-        errs() << "BOLT-WARNING: we depend on the compiler putting high_pc "
-               << "right after low_pc. Not updating DIE at offset 0x"
-               << Twine::utohexstr(DIE->getOffset()) << '\n';
-        return;
+      unsigned StringSize = 0;
+      if (HighPCFormValue.getForm() == dwarf::DW_FORM_addr ||
+          HighPCFormValue.getForm() == dwarf::DW_FORM_data8) {
+        StringSize = 12;
+      } else if (HighPCFormValue.getForm() == dwarf::DW_FORM_data4) {
+        StringSize = 8;
+      } else {
+        assert(0 && "unexpected form");
       }
+
       DebugInfoPatcher->addLE32Patch(LowPCOffset, DebugRangesOffset);
       std::string ProducerString{"LLVM-BOLT"};
-      ProducerString.resize(12, ' ');
+      ProducerString.resize(StringSize, ' ');
       ProducerString.back() = '\0';
       DebugInfoPatcher->addBinaryPatch(LowPCOffset + 4, ProducerString);
     } else {
