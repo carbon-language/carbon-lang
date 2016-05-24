@@ -98,7 +98,6 @@ private:
   void scanRelocsForThunks(const elf::ObjectFile<ELFT> &File,
                            ArrayRef<RelTy> Rels);
 
-  void ensureBss();
   void addCommonSymbols(std::vector<DefinedCommon *> &Syms);
   void addCopyRelSymbol(SharedSymbol<ELFT> *Sym);
 
@@ -129,6 +128,7 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   typedef typename ELFT::Ehdr Elf_Ehdr;
 
   // Create singleton output sections.
+  OutputSection<ELFT> Bss(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
   DynamicSection<ELFT> Dynamic(*Symtab);
   EhOutputSection<ELFT> EhFrame;
   GotSection<ELFT> Got;
@@ -192,6 +192,7 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
     MipsRldMap->updateAlign(sizeof(uintX_t));
   }
 
+  Out<ELFT>::Bss = &Bss;
   Out<ELFT>::BuildId = BuildId.get();
   Out<ELFT>::DynStrTab = &DynStrTab;
   Out<ELFT>::DynSymTab = &DynSymTab;
@@ -211,7 +212,6 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   Out<ELFT>::SymTab = SymTabSec.get();
   Out<ELFT>::VerSym = &VerSym;
   Out<ELFT>::VerNeed = &VerNeed;
-  Out<ELFT>::Bss = nullptr;
   Out<ELFT>::MipsRldMap = MipsRldMap.get();
   Out<ELFT>::Opd = nullptr;
   Out<ELFT>::OpdBuf = nullptr;
@@ -1006,17 +1006,6 @@ static bool compareSections(OutputSectionBase<ELFT> *A,
   return false;
 }
 
-// The .bss section does not exist if no input file has a .bss section.
-// This function creates one if that's the case.
-template <class ELFT> void Writer<ELFT>::ensureBss() {
-  if (Out<ELFT>::Bss)
-    return;
-  Out<ELFT>::Bss =
-      new OutputSection<ELFT>(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
-  OwningSections.emplace_back(Out<ELFT>::Bss);
-  OutputSections.push_back(Out<ELFT>::Bss);
-}
-
 // Until this function is called, common symbols do not belong to any section.
 // This function adds them to end of BSS section.
 template <class ELFT>
@@ -1030,7 +1019,6 @@ void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon *> &Syms) {
                      return A->Alignment > B->Alignment;
                    });
 
-  ensureBss();
   uintX_t Off = Out<ELFT>::Bss->getSize();
   for (DefinedCommon *C : Syms) {
     Off = alignTo(Off, C->Alignment);
@@ -1060,7 +1048,6 @@ void Writer<ELFT>::addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
   if (SymSize == 0)
     fatal("cannot create a copy relocation for " + SS->getName());
 
-  ensureBss();
   uintX_t Align = getAlignment(SS);
   uintX_t Off = alignTo(Out<ELFT>::Bss->getSize(), Align);
   Out<ELFT>::Bss->setSize(Off + SymSize);
@@ -1330,9 +1317,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     }
   }
 
-  Out<ELFT>::Bss = static_cast<OutputSection<ELFT> *>(
-      Factory.lookup(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE));
-
   // If we have a .opd section (used under PPC64 for function descriptors),
   // store a pointer to it here so that we can use it later when processing
   // relocations.
@@ -1377,9 +1361,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   // Scan relocations. This must be done after every symbol is declared so that
   // we can correctly decide if a dynamic relocation is needed.
-  // Check size() each time to guard against .bss being created.
-  for (unsigned I = 0; I < OutputSections.size(); ++I) {
-    OutputSectionBase<ELFT> *Sec = OutputSections[I];
+  for (OutputSectionBase<ELFT> *Sec : OutputSections) {
     Sec->forEachInputSection([&](InputSectionBase<ELFT> *S) {
       if (auto *IS = dyn_cast<InputSection<ELFT>>(S)) {
         // Set OutSecOff so that scanRelocs can use it.
@@ -1521,6 +1503,8 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
     Add(Out<ELFT>::Plt);
   if (!Out<ELFT>::EhFrame->empty())
     Add(Out<ELFT>::EhFrameHdr);
+  if (Out<ELFT>::Bss->getSize() > 0)
+    Add(Out<ELFT>::Bss);
 }
 
 // The linker is expected to define SECNAME_start and SECNAME_end
