@@ -599,9 +599,9 @@ void CVSymbolDumperImpl::visitProcSym(SymbolKind Kind, ProcSym &Proc) {
 void CVSymbolDumperImpl::visitScopeEndSym(SymbolKind Kind,
                                           ScopeEndSym &ScopeEnd) {
   if (Kind == SymbolKind::S_END)
-    W.startLine() << "BlockEnd\n";
+    DictScope S(W, "BlockEnd");
   else if (Kind == SymbolKind::S_PROC_ID_END)
-    W.startLine() << "ProcEnd\n";
+    DictScope S(W, "ProcEnd");
   else if (Kind == SymbolKind::S_INLINESITE_END)
     DictScope S(W, "InlineSiteEnd");
 
@@ -648,8 +648,8 @@ void CVSymbolDumperImpl::visitUDTSym(SymbolKind Kind, UDTSym &UDT) {
 void CVSymbolDumperImpl::visitUnknownSymbol(SymbolKind Kind,
                                             ArrayRef<uint8_t> Data) {
   DictScope S(W, "UnknownSym");
-  W.printHex("Kind", unsigned(Kind));
-  W.printHex("Size", Data.size());
+  W.printEnum("Kind", Kind, makeArrayRef(SymbolTypeNames));
+  W.printNumber("Length", Data.size());
 }
 
 bool CVSymbolDumper::dump(const SymbolIterator::Record &Record) {

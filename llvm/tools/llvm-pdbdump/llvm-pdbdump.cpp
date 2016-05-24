@@ -26,6 +26,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
+#include "llvm/DebugInfo/CodeView/SymbolDumper.h"
 #include "llvm/DebugInfo/CodeView/TypeDumper.h"
 #include "llvm/DebugInfo/PDB/GenericError.h"
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
@@ -126,6 +127,10 @@ cl::opt<bool> DumpModuleSyms("dump-module-syms",
 cl::opt<bool> DumpPublics("dump-publics",
                           cl::desc("dump Publics stream data"),
                           cl::cat(NativeOtions));
+cl::opt<bool>
+    DumpSymRecordBytes("dump-sym-record-bytes",
+                       cl::desc("dump CodeView symbol record raw bytes"),
+                       cl::cat(NativeOtions));
 
 cl::list<std::string>
     ExcludeTypes("exclude-types",
@@ -299,7 +304,8 @@ static Error dumpNamedStream(ScopedPrinter &P, PDBFile &File,
   return Error::success();
 }
 
-static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File) {
+static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
+                           codeview::CVTypeDumper &TD) {
   auto DbiS = File.getPDBDbiStream();
   if (auto EC = DbiS.takeError())
     return EC;
@@ -346,40 +352,41 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File) {
       for (auto File : Modi.SourceFiles)
         P.printString(File);
     }
-    if (opts::DumpModuleSyms) {
+    if (opts::DumpModuleSyms || opts::DumpSymRecordBytes) {
       ListScope SS(P, "Symbols");
       ModStream ModS(File, Modi.Info);
       if (auto EC = ModS.reload())
         return EC;
 
+      codeview::CVSymbolDumper SD(P, TD, nullptr, false);
       for (auto &S : ModS.symbols()) {
-        DictScope SD(P);
-        P.printHex("Kind", static_cast<uint32_t>(S.Type));
-        P.printNumber("Length", static_cast<uint32_t>(S.Length));
-        P.printBinaryBlock("Bytes", S.Data);
+        DictScope DD(P, "");
+
+        if (opts::DumpModuleSyms)
+          SD.dump(S);
+        if (opts::DumpSymRecordBytes)
+          P.printBinaryBlock("Bytes", S.Data);
       }
     }
   }
   return Error::success();
 }
 
-static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File) {
-  if (!opts::DumpTpiRecordBytes && !opts::DumpTpiRecords)
-    return Error::success();
-
-  DictScope D(P, "Type Info Stream");
-
-  auto TpiS = File.getPDBTpiStream();
-  if (auto EC = TpiS.takeError())
-    return EC;
-  TpiStream &Tpi = TpiS.get();
-
-  P.printNumber("TPI Version", Tpi.getTpiVersion());
-  P.printNumber("Record count", Tpi.NumTypeRecords());
+static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File,
+                           codeview::CVTypeDumper &TD) {
 
   if (opts::DumpTpiRecordBytes || opts::DumpTpiRecords) {
+    DictScope D(P, "Type Info Stream");
+
+    auto TpiS = File.getPDBTpiStream();
+    if (auto EC = TpiS.takeError())
+      return EC;
+    TpiStream &Tpi = TpiS.get();
+
+    P.printNumber("TPI Version", Tpi.getTpiVersion());
+    P.printNumber("Record count", Tpi.NumTypeRecords());
+
     ListScope L(P, "Records");
-    codeview::CVTypeDumper TD(P, false);
 
     bool HadError = false;
     for (auto &Type : Tpi.types(&HadError)) {
@@ -394,7 +401,27 @@ static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File) {
     if (HadError)
       return make_error<RawError>(raw_error_code::corrupt_file,
                                   "TPI stream contained corrupt record");
+  } else if (opts::DumpModuleSyms) {
+    // Even if the user doesn't want to dump type records, we still need to
+    // iterate them in order to build the list of types so that we can print
+    // them when dumping module symbols. So when they want to dump symbols
+    // but not types, use a null output stream.
+    ScopedPrinter *OldP = TD.getPrinter();
+    TD.setPrinter(nullptr);
+    auto TpiS = File.getPDBTpiStream();
+    if (auto EC = TpiS.takeError())
+      return EC;
+    TpiStream &Tpi = TpiS.get();
+    bool HadError = false;
+    for (auto &Type : Tpi.types(&HadError))
+      TD.dump(Type);
+
+    TD.setPrinter(OldP);
+    if (HadError)
+      return make_error<RawError>(raw_error_code::corrupt_file,
+                                  "TPI stream contained corrupt record");
   }
+
   return Error::success();
 }
 
@@ -441,10 +468,11 @@ static Error dumpStructure(RawSession &RS) {
   if (auto EC = dumpNamedStream(P, File, "/names"))
     return EC;
 
-  if (auto EC = dumpDbiStream(P, File))
+  codeview::CVTypeDumper TD(P, false);
+  if (auto EC = dumpTpiStream(P, File, TD))
     return EC;
 
-  if (auto EC = dumpTpiStream(P, File))
+  if (auto EC = dumpDbiStream(P, File, TD))
     return EC;
 
   if (auto EC = dumpPublicsStream(P, File))

@@ -656,19 +656,26 @@ void CVTypeDumper::printTypeIndex(StringRef FieldName, TypeIndex TI) {
   if (!TI.isNoType())
     TypeName = getTypeName(TI);
   if (!TypeName.empty())
-    W.printHex(FieldName, TypeName, TI.getIndex());
+    W->printHex(FieldName, TypeName, TI.getIndex());
   else
-    W.printHex(FieldName, TI.getIndex());
+    W->printHex(FieldName, TI.getIndex());
 }
 
 bool CVTypeDumper::dump(const TypeIterator::Record &Record) {
-  CVTypeDumperImpl Dumper(*this, W, PrintRecordBytes);
+  assert(W && "printer should not be null");
+  CVTypeDumperImpl Dumper(*this, *W, PrintRecordBytes);
   Dumper.visitTypeRecord(Record);
   return !Dumper.hadError();
 }
 
 bool CVTypeDumper::dump(ArrayRef<uint8_t> Data) {
-  CVTypeDumperImpl Dumper(*this, W, PrintRecordBytes);
+  assert(W && "printer should not be null");
+  CVTypeDumperImpl Dumper(*this, *W, PrintRecordBytes);
   Dumper.visitTypeStream(Data);
   return !Dumper.hadError();
+}
+
+void CVTypeDumper::setPrinter(ScopedPrinter *P) {
+  static ScopedPrinter NullP(llvm::nulls());
+  W = P ? P : &NullP;
 }
