@@ -920,14 +920,21 @@ void EhOutputSection<ELFT>::forEachInputSection(
 // Returns the first relocation that points to a region
 // between Begin and Begin+Size.
 template <class IntTy, class RelTy>
-static const RelTy *getReloc(IntTy Begin, IntTy Size, ArrayRef<RelTy> Rels) {
-  size_t I = 0;
-  size_t E = Rels.size();
-  while (I != E && Rels[I].r_offset < Begin)
-    ++I;
-  if (I == E || Begin + Size <= Rels[I].r_offset)
+static const RelTy *getReloc(IntTy Begin, IntTy Size, ArrayRef<RelTy> &Rels) {
+  for (auto I = Rels.begin(), E = Rels.end(); I != E; ++I) {
+    if (I->r_offset < Begin)
+      continue;
+
+    // Truncate Rels for fast access. That means we expect that the
+    // relocations are sorted and we are looking up symbols in
+    // sequential order. It is naturally satisfied for .eh_frame.
+    Rels = Rels.slice(I - Rels.begin());
+    if (I->r_offset < Begin + Size)
+      return I;
     return nullptr;
-  return &Rels[I];
+  }
+  Rels = ArrayRef<RelTy>();
+  return nullptr;
 }
 
 // Search for an existing CIE record or create a new one.
@@ -937,7 +944,7 @@ template <class ELFT>
 template <class RelTy>
 CieRecord *EhOutputSection<ELFT>::addCie(SectionPiece &Piece,
                                          EhInputSection<ELFT> *Sec,
-                                         ArrayRef<RelTy> Rels) {
+                                         ArrayRef<RelTy> &Rels) {
   const endianness E = ELFT::TargetEndianness;
   if (read32<E>(Piece.Data.data() + 4) != 0)
     fatal("CIE expected at beginning of .eh_frame: " + Sec->getSectionName());
@@ -971,7 +978,7 @@ template <class ELFT>
 template <class RelTy>
 bool EhOutputSection<ELFT>::isFdeLive(SectionPiece &Piece,
                                       EhInputSection<ELFT> *Sec,
-                                      ArrayRef<RelTy> Rels) {
+                                      ArrayRef<RelTy> &Rels) {
   const RelTy *Rel = getReloc(Piece.InputOff, Piece.size(), Rels);
   if (!Rel)
     fatal("FDE doesn't reference another section");
