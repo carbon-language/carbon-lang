@@ -9,6 +9,7 @@
 
 #include "InputSection.h"
 #include "Config.h"
+#include "EhFrame.h"
 #include "Error.h"
 #include "InputFiles.h"
 #include "OutputSections.h"
@@ -407,30 +408,13 @@ bool EHInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
   return S->SectionKind == InputSectionBase<ELFT>::EHFrame;
 }
 
-template <class ELFT> static size_t readRecordSize(ArrayRef<uint8_t> D) {
-  const endianness E = ELFT::TargetEndianness;
-  if (D.size() < 4)
-    fatal("CIE/FDE too small");
-
-  // First 4 bytes of CIE/FDE is the size of the record.
-  // If it is 0xFFFFFFFF, the next 8 bytes contain the size instead,
-  // but we do not support that format yet.
-  uint64_t V = read32<E>(D.data());
-  if (V == UINT32_MAX)
-    fatal("CIE/FDE too large");
-  uint64_t Size = V + 4;
-  if (Size > D.size())
-    fatal("CIE/FIE ends past the end of the section");
-  return Size;
-}
-
 // .eh_frame is a sequence of CIE or FDE records.
 // This function splits an input section into records and returns them.
 template <class ELFT>
 void EHInputSection<ELFT>::split() {
   ArrayRef<uint8_t> Data = this->getSectionData();
   for (size_t Off = 0, End = Data.size(); Off != End;) {
-    size_t Size = readRecordSize<ELFT>(Data.slice(Off));
+    size_t Size = readEhRecordSize<ELFT>(Data.slice(Off));
     // The empty record is the end marker.
     if (Size == 4)
       break;
