@@ -1363,7 +1363,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
         // Now that scan relocs possibly changed the size, update the offset.
         Sec->setSize(Off + S->getSize());
-      } else if (auto *EH = dyn_cast<EHInputSection<ELFT>>(S)) {
+      } else if (auto *EH = dyn_cast<EhInputSection<ELFT>>(S)) {
         if (EH->RelocSection)
           scanRelocs(*EH, *EH->RelocSection);
       }

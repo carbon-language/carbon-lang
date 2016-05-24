@@ -61,7 +61,7 @@ typename ELFT::uint InputSectionBase<ELFT>::getOffset(uintX_t Offset) {
   case Regular:
     return cast<InputSection<ELFT>>(this)->OutSecOff + Offset;
   case EHFrame:
-    return cast<EHInputSection<ELFT>>(this)->getOffset(Offset);
+    return cast<EhInputSection<ELFT>>(this)->getOffset(Offset);
   case Merge:
     return cast<MergeInputSection<ELFT>>(this)->getOffset(Offset);
   case MipsReginfo:
@@ -394,7 +394,7 @@ SplitInputSection<ELFT>::SplitInputSection(
     : InputSectionBase<ELFT>(File, Header, SectionKind) {}
 
 template <class ELFT>
-EHInputSection<ELFT>::EHInputSection(elf::ObjectFile<ELFT> *F,
+EhInputSection<ELFT>::EhInputSection(elf::ObjectFile<ELFT> *F,
                                      const Elf_Shdr *Header)
     : SplitInputSection<ELFT>(F, Header, InputSectionBase<ELFT>::EHFrame) {
   // Mark .eh_frame sections as live by default because there are
@@ -404,14 +404,14 @@ EHInputSection<ELFT>::EHInputSection(elf::ObjectFile<ELFT> *F,
 }
 
 template <class ELFT>
-bool EHInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
+bool EhInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
   return S->SectionKind == InputSectionBase<ELFT>::EHFrame;
 }
 
 // .eh_frame is a sequence of CIE or FDE records.
 // This function splits an input section into records and returns them.
 template <class ELFT>
-void EHInputSection<ELFT>::split() {
+void EhInputSection<ELFT>::split() {
   ArrayRef<uint8_t> Data = this->getSectionData();
   for (size_t Off = 0, End = Data.size(); Off != End;) {
     size_t Size = readEhRecordSize<ELFT>(Data.slice(Off));
@@ -424,7 +424,7 @@ void EHInputSection<ELFT>::split() {
 }
 
 template <class ELFT>
-typename ELFT::uint EHInputSection<ELFT>::getOffset(uintX_t Offset) {
+typename ELFT::uint EhInputSection<ELFT>::getOffset(uintX_t Offset) {
   // The file crtbeginT.o has relocations pointing to the start of an empty
   // .eh_frame that is known to be the first in the link. It does that to
   // identify the start of the output .eh_frame. Handle this special case.
@@ -598,10 +598,10 @@ template class elf::SplitInputSection<ELF32BE>;
 template class elf::SplitInputSection<ELF64LE>;
 template class elf::SplitInputSection<ELF64BE>;
 
-template class elf::EHInputSection<ELF32LE>;
-template class elf::EHInputSection<ELF32BE>;
-template class elf::EHInputSection<ELF64LE>;
-template class elf::EHInputSection<ELF64BE>;
+template class elf::EhInputSection<ELF32LE>;
+template class elf::EhInputSection<ELF32BE>;
+template class elf::EhInputSection<ELF64LE>;
+template class elf::EhInputSection<ELF64BE>;
 
 template class elf::MergeInputSection<ELF32LE>;
 template class elf::MergeInputSection<ELF32BE>;

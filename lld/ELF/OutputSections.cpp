@@ -913,7 +913,7 @@ EhOutputSection<ELFT>::EhOutputSection()
 template <class ELFT>
 void EhOutputSection<ELFT>::forEachInputSection(
     std::function<void(InputSectionBase<ELFT> *)> F) {
-  for (EHInputSection<ELFT> *S : Sections)
+  for (EhInputSection<ELFT> *S : Sections)
     F(S);
 }
 
@@ -936,7 +936,7 @@ static const RelTy *getReloc(IntTy Begin, IntTy Size, ArrayRef<RelTy> Rels) {
 template <class ELFT>
 template <class RelTy>
 CieRecord *EhOutputSection<ELFT>::addCie(SectionPiece &Piece,
-                                         EHInputSection<ELFT> *Sec,
+                                         EhInputSection<ELFT> *Sec,
                                          ArrayRef<RelTy> Rels) {
   const endianness E = ELFT::TargetEndianness;
   if (read32<E>(Piece.Data.data() + 4) != 0)
@@ -970,7 +970,7 @@ template <class ELFT> static void validateFde(SectionPiece &Piece) {
 template <class ELFT>
 template <class RelTy>
 bool EhOutputSection<ELFT>::isFdeLive(SectionPiece &Piece,
-                                      EHInputSection<ELFT> *Sec,
+                                      EhInputSection<ELFT> *Sec,
                                       ArrayRef<RelTy> Rels) {
   const RelTy *Rel = getReloc(Piece.InputOff, Piece.size(), Rels);
   if (!Rel)
@@ -989,7 +989,7 @@ bool EhOutputSection<ELFT>::isFdeLive(SectionPiece &Piece,
 // one and associates FDEs to the CIE.
 template <class ELFT>
 template <class RelTy>
-void EhOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *Sec,
+void EhOutputSection<ELFT>::addSectionAux(EhInputSection<ELFT> *Sec,
                                           ArrayRef<RelTy> Rels) {
   SectionPiece &CiePiece = Sec->Pieces[0];
   CieRecord *Cie = addCie(CiePiece, Sec, Rels);
@@ -1006,7 +1006,7 @@ void EhOutputSection<ELFT>::addSectionAux(EHInputSection<ELFT> *Sec,
 
 template <class ELFT>
 void EhOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
-  auto *Sec = cast<EHInputSection<ELFT>>(C);
+  auto *Sec = cast<EhInputSection<ELFT>>(C);
   Sec->OutSec = this;
   this->updateAlign(Sec->Align);
   Sections.push_back(Sec);
@@ -1105,7 +1105,7 @@ template <class ELFT> void EhOutputSection<ELFT>::writeTo(uint8_t *Buf) {
     }
   }
 
-  for (EHInputSection<ELFT> *S : Sections)
+  for (EhInputSection<ELFT> *S : Sections)
     S->relocate(Buf, nullptr);
 
   // Construct .eh_frame_hdr. .eh_frame_hdr is a binary search table

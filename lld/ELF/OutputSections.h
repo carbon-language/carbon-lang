@@ -27,7 +27,7 @@ struct SectionPiece;
 template <class ELFT> class SymbolTable;
 template <class ELFT> class SymbolTableSection;
 template <class ELFT> class StringTableSection;
-template <class ELFT> class EHInputSection;
+template <class ELFT> class EhInputSection;
 template <class ELFT> class InputSection;
 template <class ELFT> class InputSectionBase;
 template <class ELFT> class MergeInputSection;
@@ -356,19 +356,19 @@ public:
 
 private:
   template <class RelTy>
-  void addSectionAux(EHInputSection<ELFT> *S, llvm::ArrayRef<RelTy> Rels);
+  void addSectionAux(EhInputSection<ELFT> *S, llvm::ArrayRef<RelTy> Rels);
 
   template <class RelTy>
-  CieRecord *addCie(SectionPiece &Piece, EHInputSection<ELFT> *Sec,
+  CieRecord *addCie(SectionPiece &Piece, EhInputSection<ELFT> *Sec,
                     ArrayRef<RelTy> Rels);
 
   template <class RelTy>
-  bool isFdeLive(SectionPiece &Piece, EHInputSection<ELFT> *Sec,
+  bool isFdeLive(SectionPiece &Piece, EhInputSection<ELFT> *Sec,
                  ArrayRef<RelTy> Rels);
 
   uintX_t getFdePc(uint8_t *Buf, size_t Off, uint8_t Enc);
 
-  std::vector<EHInputSection<ELFT> *> Sections;
+  std::vector<EhInputSection<ELFT> *> Sections;
   std::vector<CieRecord *> Cies;
 
   // CIE records are uniquified by their contents and personality functions.
