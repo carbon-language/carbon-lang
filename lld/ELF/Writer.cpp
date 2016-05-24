@@ -64,17 +64,6 @@ private:
   void addPredefinedSections();
   bool needsGot();
 
-  template <class RelTy>
-  void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels);
-
-  void scanRelocs(InputSection<ELFT> &C);
-  void scanRelocs(InputSectionBase<ELFT> &S, const Elf_Shdr &RelSec);
-  RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &S,
-                     bool IsWrite, RelExpr Expr, uint32_t Type);
-  template <class RelTy>
-  uintX_t computeAddend(const elf::ObjectFile<ELFT> &File,
-                        const uint8_t *SectionData, const RelTy *End,
-                        const RelTy &RI, RelExpr Expr, SymbolBody &Body);
   void createPhdrs();
   void assignAddresses();
   void assignFileOffsets();
@@ -94,12 +83,8 @@ private:
   bool isOutputDynamic() const {
     return !Symtab.getSharedFiles().empty() || Config->Pic;
   }
-  template <class RelTy>
-  void scanRelocsForThunks(const elf::ObjectFile<ELFT> &File,
-                           ArrayRef<RelTy> Rels);
 
   void addCommonSymbols(std::vector<DefinedCommon *> &Syms);
-  void addCopyRelSymbol(SharedSymbol<ELFT> *Sym);
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
 
@@ -116,10 +101,6 @@ private:
 
   uintX_t FileSize;
   uintX_t SectionHeaderOff;
-
-  // Flag to force GOT to be in output if we have relocations
-  // that relies on its address.
-  bool HasGotOffRel = false;
 };
 } // anonymous namespace
 
@@ -370,10 +351,9 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
 // Some targets might require creation of thunks for relocations. Now we
 // support only MIPS which requires LA25 thunk to call PIC code from non-PIC
 // one. Scan relocations to find each one requires thunk.
-template <class ELFT>
-template <class RelTy>
-void Writer<ELFT>::scanRelocsForThunks(const elf::ObjectFile<ELFT> &File,
-                                       ArrayRef<RelTy> Rels) {
+template <class ELFT, class RelTy>
+static void scanRelocsForThunks(const elf::ObjectFile<ELFT> &File,
+                                ArrayRef<RelTy> Rels) {
   for (const RelTy &RI : Rels) {
     uint32_t Type = RI.getType(Config->Mips64EL);
     SymbolBody &Body = File.getRelocTargetSym(RI);
@@ -522,10 +502,11 @@ static RelExpr fromPlt(RelExpr Expr) {
   return Expr;
 }
 
+template <class ELFT> static void addCopyRelSymbol(SharedSymbol<ELFT> *SS);
+
 template <class ELFT>
-RelExpr Writer<ELFT>::adjustExpr(const elf::ObjectFile<ELFT> &File,
-                                 SymbolBody &Body, bool IsWrite, RelExpr Expr,
-                                 uint32_t Type) {
+static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
+                          bool IsWrite, RelExpr Expr, uint32_t Type) {
   if (Target->needsThunk(Type, File, Body))
     return R_THUNK;
   bool Preemptible = Body.isPreemptible();
@@ -586,12 +567,13 @@ RelExpr Writer<ELFT>::adjustExpr(const elf::ObjectFile<ELFT> &File,
   return Expr;
 }
 
-template <class ELFT>
-template <class RelTy>
-typename ELFT::uint
-Writer<ELFT>::computeAddend(const elf::ObjectFile<ELFT> &File,
-                            const uint8_t *SectionData, const RelTy *End,
-                            const RelTy &RI, RelExpr Expr, SymbolBody &Body) {
+template <class ELFT, class RelTy>
+static typename ELFT::uint computeAddend(const elf::ObjectFile<ELFT> &File,
+                                         const uint8_t *SectionData,
+                                         const RelTy *End, const RelTy &RI,
+                                         RelExpr Expr, SymbolBody &Body) {
+  typedef typename ELFT::uint uintX_t;
+
   uint32_t Type = RI.getType(Config->Mips64EL);
   uintX_t Addend = getAddend<ELFT>(RI);
   const uint8_t *BufLoc = SectionData + RI.r_offset;
@@ -632,9 +614,10 @@ Writer<ELFT>::computeAddend(const elf::ObjectFile<ELFT> &File,
 // sections. Given that it is ro, we will need an extra PT_LOAD. This
 // complicates things for the dynamic linker and means we would have to reserve
 // space for the extra PT_LOAD even if we end up not using it.
-template <class ELFT>
-template <class RelTy>
-void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
+template <class ELFT, class RelTy>
+void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
+  typedef typename ELFT::uint uintX_t;
+
   uintX_t Flags = C.getSectionHdr()->sh_flags;
   bool IsWrite = Flags & SHF_WRITE;
 
@@ -667,7 +650,7 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     // This relocation does not require got entry, but it is relative to got and
     // needs it to be created. Here we request for that.
     if (Expr == R_GOTONLY_PC || Expr == R_GOTREL || Expr == R_PPC_TOC)
-      HasGotOffRel = true;
+      Out<ELFT>::Got->HasGotOffRel = true;
 
     uintX_t Addend = computeAddend(File, Buf, E, RI, Expr, Body);
 
@@ -774,10 +757,16 @@ void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 
   // Scan relocations for necessary thunks.
   if (Config->EMachine == EM_MIPS)
-    scanRelocsForThunks(File, Rels);
+    scanRelocsForThunks<ELFT>(File, Rels);
 }
 
-template <class ELFT> void Writer<ELFT>::scanRelocs(InputSection<ELFT> &C) {
+template <class ELFT>
+static void scanRelocs(InputSectionBase<ELFT> &S,
+                       const typename ELFT::Shdr &RelSec);
+
+template <class ELFT> static void scanRelocs(InputSection<ELFT> &C) {
+  typedef typename ELFT::Shdr Elf_Shdr;
+
   // Scan all relocations. Each relocation goes through a series
   // of tests to determine if it needs special treatment, such as
   // creating GOT, PLT, copy relocations, etc.
@@ -789,8 +778,8 @@ template <class ELFT> void Writer<ELFT>::scanRelocs(InputSection<ELFT> &C) {
 }
 
 template <class ELFT>
-void Writer<ELFT>::scanRelocs(InputSectionBase<ELFT> &S,
-                              const Elf_Shdr &RelSec) {
+static void scanRelocs(InputSectionBase<ELFT> &S,
+                       const typename ELFT::Shdr &RelSec) {
   ELFFile<ELFT> &EObj = S.getFile()->getObj();
   if (RelSec.sh_type == SHT_RELA)
     scanRelocs(S, EObj.relas(&RelSec));
@@ -1031,7 +1020,7 @@ void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon *> &Syms) {
 }
 
 template <class ELFT> static uint32_t getAlignment(SharedSymbol<ELFT> *SS) {
-  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+  typedef typename ELFT::uint uintX_t;
 
   uintX_t SecAlign = SS->File->getSection(SS->Sym)->sh_addralign;
   uintX_t SymValue = SS->Sym.st_value;
@@ -1041,8 +1030,10 @@ template <class ELFT> static uint32_t getAlignment(SharedSymbol<ELFT> *SS) {
 }
 
 // Reserve space in .bss for copy relocation.
-template <class ELFT>
-void Writer<ELFT>::addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
+template <class ELFT> static void addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
+  typedef typename ELFT::uint uintX_t;
+  typedef typename ELFT::Sym Elf_Sym;
+
   // Copy relocation against zero-sized symbol doesn't make sense.
   uintX_t SymSize = SS->template getSize<ELFT>();
   if (SymSize == 0)
@@ -1061,7 +1052,7 @@ void Writer<ELFT>::addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
     if (S.st_shndx != Shndx || S.st_value != Value)
       continue;
     auto *Alias = dyn_cast_or_null<SharedSymbol<ELFT>>(
-        Symtab.find(check(S.getName(SS->File->getStringTable()))));
+        Symtab<ELFT>::X->find(check(S.getName(SS->File->getStringTable()))));
     if (!Alias)
       continue;
     Alias->OffsetInBss = Off;
@@ -1458,7 +1449,7 @@ template <class ELFT> bool Writer<ELFT>::needsGot() {
 
   // If we have a relocation that is relative to GOT (such as GOTOFFREL),
   // we need to emit a GOT even if it's empty.
-  return HasGotOffRel;
+  return Out<ELFT>::Got->HasGotOffRel;
 }
 
 // This function add Out<ELFT>::* sections to OutputSections.

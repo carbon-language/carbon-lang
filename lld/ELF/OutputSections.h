@@ -134,6 +134,10 @@ public:
   uintX_t getTlsIndexVA() { return Base::getVA() + TlsIndexOff; }
   uint32_t getTlsIndexOff() { return TlsIndexOff; }
 
+  // Flag to force GOT to be in output if we have relocations
+  // that relies on its address.
+  bool HasGotOffRel = false;
+
 private:
   std::vector<const SymbolBody *> Entries;
   uint32_t TlsIndexOff = -1;
