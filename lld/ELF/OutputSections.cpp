@@ -992,6 +992,10 @@ template <class RelTy>
 void EhOutputSection<ELFT>::addSectionAux(EhInputSection<ELFT> *Sec,
                                           ArrayRef<RelTy> Rels) {
   SectionPiece &CiePiece = Sec->Pieces[0];
+  // The empty record is the end marker.
+  if (CiePiece.Data.size() == 4)
+    return;
+
   CieRecord *Cie = addCie(CiePiece, Sec, Rels);
 
   for (size_t I = 1, End = Sec->Pieces.size(); I != End; ++I) {
