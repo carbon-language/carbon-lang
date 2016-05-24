@@ -566,9 +566,8 @@ void GnuHashTableSection<ELFT>::addSymbols(
 }
 
 template <class ELFT>
-DynamicSection<ELFT>::DynamicSection(SymbolTable<ELFT> &SymTab)
-    : OutputSectionBase<ELFT>(".dynamic", SHT_DYNAMIC, SHF_ALLOC | SHF_WRITE),
-      SymTab(SymTab) {
+DynamicSection<ELFT>::DynamicSection()
+    : OutputSectionBase<ELFT>(".dynamic", SHT_DYNAMIC, SHF_ALLOC | SHF_WRITE) {
   Elf_Shdr &Header = this->Header;
   Header.sh_addralign = sizeof(uintX_t);
   Header.sh_entsize = ELFT::Is64Bits ? 16 : 8;
@@ -594,7 +593,8 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   if (!Config->RPath.empty())
     Add({Config->EnableNewDtags ? DT_RUNPATH : DT_RPATH,
          Out<ELFT>::DynStrTab->addString(Config->RPath)});
-  for (const std::unique_ptr<SharedFile<ELFT>> &F : SymTab.getSharedFiles())
+  for (const std::unique_ptr<SharedFile<ELFT>> &F :
+       Symtab<ELFT>::X->getSharedFiles())
     if (F->isNeeded())
       Add({DT_NEEDED, Out<ELFT>::DynStrTab->addString(F->getSoName())});
   if (!Config->SoName.empty())
@@ -639,9 +639,9 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     Add({DT_FINI_ARRAYSZ, (uintX_t)FiniArraySec->getSize()});
   }
 
-  if (SymbolBody *B = SymTab.find(Config->Init))
+  if (SymbolBody *B = Symtab<ELFT>::X->find(Config->Init))
     Add({DT_INIT, B});
-  if (SymbolBody *B = SymTab.find(Config->Fini))
+  if (SymbolBody *B = Symtab<ELFT>::X->find(Config->Fini))
     Add({DT_FINI, B});
 
   uint32_t DtFlags = 0;
@@ -1214,11 +1214,11 @@ template <class ELFT> void StringTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 SymbolTableSection<ELFT>::SymbolTableSection(
-    SymbolTable<ELFT> &Table, StringTableSection<ELFT> &StrTabSec)
+    StringTableSection<ELFT> &StrTabSec)
     : OutputSectionBase<ELFT>(StrTabSec.isDynamic() ? ".dynsym" : ".symtab",
                               StrTabSec.isDynamic() ? SHT_DYNSYM : SHT_SYMTAB,
                               StrTabSec.isDynamic() ? (uintX_t)SHF_ALLOC : 0),
-      StrTabSec(StrTabSec), Table(Table) {
+      StrTabSec(StrTabSec) {
   this->Header.sh_entsize = sizeof(Elf_Sym);
   this->Header.sh_addralign = sizeof(uintX_t);
 }
@@ -1303,7 +1303,8 @@ template <class ELFT>
 void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
   // Iterate over all input object files to copy their local symbols
   // to the output symbol table pointed by Buf.
-  for (const std::unique_ptr<ObjectFile<ELFT>> &File : Table.getObjectFiles()) {
+  for (const std::unique_ptr<ObjectFile<ELFT>> &File :
+       Symtab<ELFT>::X->getObjectFiles()) {
     for (const std::pair<const DefinedRegular<ELFT> *, size_t> &P :
          File->KeptLocalSyms) {
       const DefinedRegular<ELFT> &Body = *P.first;

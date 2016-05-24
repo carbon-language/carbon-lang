@@ -201,8 +201,7 @@ public:
   typedef typename ELFT::Sym Elf_Sym;
   typedef typename ELFT::SymRange Elf_Sym_Range;
   typedef typename ELFT::uint uintX_t;
-  SymbolTableSection(SymbolTable<ELFT> &Table,
-                     StringTableSection<ELFT> &StrTabSec);
+  SymbolTableSection(StringTableSection<ELFT> &StrTabSec);
 
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
@@ -222,8 +221,6 @@ private:
   void writeGlobalSymbols(uint8_t *Buf);
 
   const OutputSectionBase<ELFT> *getOutputSection(SymbolBody *Sym);
-
-  SymbolTable<ELFT> &Table;
 
   // A vector of symbols and their string table offsets.
   std::vector<std::pair<SymbolBody *, size_t>> Symbols;
@@ -485,16 +482,13 @@ class DynamicSection final : public OutputSectionBase<ELFT> {
   std::vector<Entry> Entries;
 
 public:
-  explicit DynamicSection(SymbolTable<ELFT> &SymTab);
+  explicit DynamicSection();
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
 
   OutputSectionBase<ELFT> *PreInitArraySec = nullptr;
   OutputSectionBase<ELFT> *InitArraySec = nullptr;
   OutputSectionBase<ELFT> *FiniArraySec = nullptr;
-
-private:
-  SymbolTable<ELFT> &SymTab;
 };
 
 template <class ELFT>

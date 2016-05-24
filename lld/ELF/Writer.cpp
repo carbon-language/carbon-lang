@@ -110,7 +110,7 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
 
   // Create singleton output sections.
   OutputSection<ELFT> Bss(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
-  DynamicSection<ELFT> Dynamic(*Symtab);
+  DynamicSection<ELFT> Dynamic;
   EhOutputSection<ELFT> EhFrame;
   GotSection<ELFT> Got;
   InterpSection<ELFT> Interp;
@@ -119,7 +119,7 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
                                   Config->ZCombreloc);
   StringTableSection<ELFT> DynStrTab(".dynstr", true);
   StringTableSection<ELFT> ShStrTab(".shstrtab", false);
-  SymbolTableSection<ELFT> DynSymTab(*Symtab, DynStrTab);
+  SymbolTableSection<ELFT> DynSymTab(DynStrTab);
   VersionTableSection<ELFT> VerSym;
   VersionNeedSection<ELFT> VerNeed;
 
@@ -160,7 +160,7 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   RelaPlt.reset(new RelocationSection<ELFT>(S, false /*Sort*/));
   if (!Config->StripAll) {
     StrTab.reset(new StringTableSection<ELFT>(".strtab", false));
-    SymTabSec.reset(new SymbolTableSection<ELFT>(*Symtab, *StrTab));
+    SymTabSec.reset(new SymbolTableSection<ELFT>(*StrTab));
   }
   if (Config->EMachine == EM_MIPS && !Config->Shared) {
     // This is a MIPS specific section to hold a space within the data segment
