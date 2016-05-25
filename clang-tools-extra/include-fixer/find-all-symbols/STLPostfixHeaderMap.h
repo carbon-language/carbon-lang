@@ -15,7 +15,7 @@
 namespace clang {
 namespace find_all_symbols {
 
-extern const HeaderMapCollector::HeaderMap STLPostfixHeaderMap;
+const HeaderMapCollector::HeaderMap* getSTLPostfixHeaderMap();
 
 } // namespace find_all_symbols
 } // namespace clang
