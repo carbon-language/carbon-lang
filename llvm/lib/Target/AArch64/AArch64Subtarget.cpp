@@ -68,11 +68,11 @@ const RegisterBankInfo *AArch64Subtarget::getRegBankInfo() const {
   return GISel->getRegBankInfo();
 }
 
-/// ClassifyGlobalReference - Find the target operand flags that describe
-/// how a global value should be referenced for the current subtarget.
+/// Find the target operand flags that describe how a global value should be
+/// referenced for the current subtarget.
 unsigned char
 AArch64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
-                                        const TargetMachine &TM) const {
+                                          const TargetMachine &TM) const {
   bool isDef = GV->isStrongDefinitionForLinker();
 
   // MachO large model always goes via a GOT, simply to get a single 8-byte
@@ -85,9 +85,9 @@ AArch64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
   if (TM.getCodeModel() == CodeModel::Small && GV->hasExternalWeakLinkage()) {
     // In PIC mode use the GOT, but in absolute mode use a constant pool load.
     if (TM.getRelocationModel() == Reloc::Static)
-        return AArch64II::MO_CONSTPOOL;
+      return AArch64II::MO_CONSTPOOL;
     else
-        return AArch64II::MO_GOT;
+      return AArch64II::MO_GOT;
   }
 
   // If symbol visibility is hidden, the extra load is not needed if
