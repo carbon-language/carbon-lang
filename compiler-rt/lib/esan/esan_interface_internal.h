@@ -28,6 +28,8 @@ extern "C" {
 typedef enum Type : u32 {
   ESAN_None = 0,
   ESAN_CacheFrag,
+  ESAN_WorkingSet,
+  ESAN_Max,
 } ToolType;
 
 // This function should be called at the very beginning of the process,
