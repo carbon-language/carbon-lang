@@ -190,7 +190,8 @@ def alias_discard_locals_X: Flag<["-"], "X">, Alias<discard_locals>;
 def alias_dynamic_list: Joined<["--", "-"], "dynamic-list=">, Alias<dynamic_list>;
 def alias_entry_e : JoinedOrSeparate<["-"], "e">, Alias<entry>;
 def alias_export_dynamic_E: Flag<["-"], "E">, Alias<export_dynamic>;
-def alias_export_dynamic_symbol : Joined<["--", "-"], "export-dynamic-symbol=">;
+def alias_export_dynamic_symbol : Joined<["--", "-"], "export-dynamic-symbol=">,
+    Alias<export_dynamic_symbol>;
 def alias_fini_fini : Joined<["-"], "fini=">, Alias<fini>;
 def alias_hash_style_hash_style : Joined<["--", "-"], "hash-style=">, Alias<hash_style>;
 def alias_init_init : Joined<["-"], "init=">, Alias<init>;
