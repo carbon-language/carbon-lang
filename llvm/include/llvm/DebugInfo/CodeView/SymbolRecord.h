@@ -983,6 +983,34 @@ public:
   std::vector<StringRef> Fields;
 };
 
+// S_EXPORT
+class ExportSym : public SymbolRecord {
+public:
+  struct Hdr {
+    ulittle16_t Ordinal;
+    ulittle16_t Flags; // ExportFlags
+                       // Name: The null-terminated name follows.
+  };
+
+  ExportSym(uint32_t RecordOffset, const Hdr *H, StringRef Name)
+      : SymbolRecord(SymbolRecordKind::ExportSym), RecordOffset(RecordOffset),
+        Header(*H), Name(Name) {}
+
+  static ErrorOr<ExportSym> deserialize(SymbolRecordKind Kind,
+                                        uint32_t RecordOffset,
+                                        ArrayRef<uint8_t> &Data) {
+    const Hdr *H = nullptr;
+    StringRef Name;
+    CV_DESERIALIZE(Data, H, Name);
+
+    return ExportSym(RecordOffset, H, Name);
+  }
+
+  uint32_t RecordOffset;
+  Hdr Header;
+  StringRef Name;
+};
+
 // S_FILESTATIC
 class FileStaticSym : public SymbolRecord {
 public:

@@ -417,6 +417,7 @@ enum class CompileSym2Flags : uint32_t {
   CVTCIL = 1 << 15,
   MSILModule = 1 << 16,
 };
+CV_DEFINE_ENUM_CLASS_FLAGS_OPERATORS(CompileSym2Flags)
 
 /// Corresponds to COMPILESYM3::Flags bitfield.
 enum class CompileSym3Flags : uint32_t {
@@ -433,6 +434,17 @@ enum class CompileSym3Flags : uint32_t {
   PGO = 1 << 18,
   Exp = 1 << 19,
 };
+CV_DEFINE_ENUM_CLASS_FLAGS_OPERATORS(CompileSym3Flags)
+
+enum class ExportFlags : uint16_t {
+  IsConstant = 1 << 0,
+  IsData = 1 << 1,
+  IsPrivate = 1 << 2,
+  HasNoName = 1 << 3,
+  HasExplicitOrdinal = 1 << 4,
+  IsForwarder = 1 << 5
+};
+CV_DEFINE_ENUM_CLASS_FLAGS_OPERATORS(ExportFlags)
 
 // Corresponds to BinaryAnnotationOpcode enum.
 enum class BinaryAnnotationsOpCode : uint32_t {

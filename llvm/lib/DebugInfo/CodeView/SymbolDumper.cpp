@@ -241,6 +241,15 @@ static const EnumEntry<uint32_t> FrameProcSymFlags[] = {
     CV_ENUM_CLASS_ENT(FrameProcedureOptions, GuardCfw),
 };
 
+static const EnumEntry<uint16_t> ExportSymFlags[] = {
+    CV_ENUM_CLASS_ENT(ExportFlags, IsConstant),
+    CV_ENUM_CLASS_ENT(ExportFlags, IsData),
+    CV_ENUM_CLASS_ENT(ExportFlags, IsPrivate),
+    CV_ENUM_CLASS_ENT(ExportFlags, HasNoName),
+    CV_ENUM_CLASS_ENT(ExportFlags, HasExplicitOrdinal),
+    CV_ENUM_CLASS_ENT(ExportFlags, IsForwarder),
+};
+
 static const EnumEntry<uint8_t> ThunkOrdinalNames[] = {
     CV_ENUM_CLASS_ENT(ThunkOrdinal, Standard),
     CV_ENUM_CLASS_ENT(ThunkOrdinal, ThisAdjustor),
@@ -428,6 +437,13 @@ void CVSymbolDumperImpl::visitFileStaticSym(SymbolKind Kind,
   W.printFlags("Flags", uint16_t(FileStatic.Header.Flags),
                makeArrayRef(LocalFlags));
   W.printString("Name", FileStatic.Name);
+}
+
+void CVSymbolDumperImpl::visitExportSym(SymbolKind Kind, ExportSym &Export) {
+  DictScope S(W, "Export");
+  W.printNumber("Ordinal", Export.Header.Ordinal);
+  W.printFlags("Flags", Export.Header.Flags, makeArrayRef(ExportSymFlags));
+  W.printString("Name", Export.Name);
 }
 
 void CVSymbolDumperImpl::visitCompile2Sym(SymbolKind Kind,

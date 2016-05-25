@@ -159,7 +159,6 @@ CV_SYMBOL(S_SEPCODE       , 0x1132)
 CV_SYMBOL(S_LOCAL_2005    , 0x1133)
 CV_SYMBOL(S_DEFRANGE_2005 , 0x1134)
 CV_SYMBOL(S_DEFRANGE2_2005, 0x1135)
-CV_SYMBOL(S_EXPORT        , 0x1138)
 CV_SYMBOL(S_DISCARDED     , 0x113b)
 
 // Current symbol types for most procedures as of this writing.
@@ -194,6 +193,7 @@ SYMBOL_RECORD(S_THUNK32       , 0x1102, Thunk32Sym)
 SYMBOL_RECORD(S_TRAMPOLINE    , 0x112c, TrampolineSym)
 SYMBOL_RECORD(S_SECTION       , 0x1136, SectionSym)
 SYMBOL_RECORD(S_COFFGROUP     , 0x1137, CoffGroupSym)
+SYMBOL_RECORD(S_EXPORT        , 0x1138, ExportSym)
 
 SYMBOL_RECORD(S_LPROC32       , 0x110f, ProcSym)
 SYMBOL_RECORD_ALIAS(S_GPROC32       , 0x1110, GlobalProcSym, ProcSym)
