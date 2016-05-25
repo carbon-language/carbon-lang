@@ -2337,8 +2337,10 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
                                ELF::SHT_PROGBITS,
                                ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
 
-    if (LineTable->lookupAddressRange(Address, Function.getMaxSize() + 1,
+    if (LineTable->lookupAddressRange(Address, Function.getMaxSize(),
                                       Results)) {
+      auto &OutputLineTable =
+          BC->Ctx->getMCDwarfLineTable(CUOffset).getMCLineSections();
       for (auto RowIndex : Results) {
         const auto &Row = LineTable->Rows[RowIndex];
         BC->Ctx->setCurrentDwarfLoc(
@@ -2352,15 +2354,19 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
             Row.Isa,
             Row.Discriminator,
             Row.Address);
-
         auto Loc = BC->Ctx->getCurrentDwarfLoc();
         BC->Ctx->clearDwarfLocSeen();
-
-        auto &OutputLineTable =
-            BC->Ctx->getMCDwarfLineTable(CUOffset).getMCLineSections();
         OutputLineTable.addLineEntry(MCLineEntry{nullptr, Loc},
                                      FunctionSection);
       }
+      // Add an empty entry past the end of the function
+      // for end_sequence mark.
+      BC->Ctx->setCurrentDwarfLoc(0, 0, 0, 0, 0, 0,
+                                  Address + Function.getMaxSize());
+      auto Loc = BC->Ctx->getCurrentDwarfLoc();
+      BC->Ctx->clearDwarfLocSeen();
+      OutputLineTable.addLineEntry(MCLineEntry{nullptr, Loc},
+                                   FunctionSection);
     } else {
       DEBUG(errs() << "BOLT-DEBUG: Function " << Function.getName()
                    << " has no associated line number information.\n");
