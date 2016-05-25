@@ -5665,10 +5665,14 @@ public:
   }
 
   bool setCPU(const std::string &Name) override {
-    if (Name == "generic" || llvm::AArch64::parseCPUArch(Name) != llvm::ARM::AK_INVALID)
-      return true;
-
-    return false;
+    bool CPUKnown = llvm::StringSwitch<bool>(Name)
+                        .Case("generic", true)
+                        .Cases("cortex-a53", "cortex-a57", "cortex-a72",
+                               "cortex-a35", "exynos-m1", true)
+                        .Case("cyclone", true)
+                        .Case("kryo", true)
+                        .Default(false);
+    return CPUKnown;
   }
 
   void getTargetDefines(const LangOptions &Opts,
