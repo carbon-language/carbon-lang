@@ -177,9 +177,10 @@ void Fuzzer::DumpCurrentUnit(const char *Prefix) {
 
 NO_SANITIZE_MEMORY
 void Fuzzer::DeathCallback() {
-  if (!CurrentUnitSize) return;
-  Printf("DEATH:\n");
-  DumpCurrentUnit("crash-");
+  if (CurrentUnitSize) {
+    Printf("DEATH:\n");
+    DumpCurrentUnit("crash-");
+  }
   PrintFinalStats();
 }
 
