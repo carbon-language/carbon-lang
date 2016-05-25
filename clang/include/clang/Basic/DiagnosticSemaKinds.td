@@ -8239,8 +8239,6 @@ def err_omp_firstprivate_distribute_in_teams_reduction : Error<
   "reduction variable in '#pragma omp teams' cannot be firstprivate in '#pragma omp distribute'">;
 def err_omp_depend_clause_thread_simd : Error<
   "'depend' clauses cannot be mixed with '%0' clause">;
-def err_omp_depend_sink_wrong_expr : Error<
-  "expected expression form x[+-d], where x is the loop iteration variable and d is a constant non-negative integer">;
 def err_omp_depend_sink_expected_loop_iteration : Error<
   "expected %0 loop iteration variable">;
 def err_omp_depend_sink_unexpected_expr : Error<
