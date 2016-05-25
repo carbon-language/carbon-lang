@@ -5921,21 +5921,21 @@ __m256i test_mm512_maskz_cvttpd_epu32(__mmask8 __U, __m512d __A) {
 __m512 test_mm512_castpd_ps (__m512d __A)
 {
   // CHECK-LABEL: @test_mm512_castpd_ps 
-  // CHECK: bitcast <8 x double> %1 to <16 x float>
+  // CHECK: bitcast <8 x double> %{{.}} to <16 x float>
   return _mm512_castpd_ps (__A);
 }
 
 __m512d test_mm512_castps_pd (__m512 __A)
 {
   // CHECK-LABEL: @test_mm512_castps_pd 
-  // CHECK: bitcast <16 x float> %1 to <8 x double>
+  // CHECK: bitcast <16 x float> %{{.}} to <8 x double>
   return _mm512_castps_pd (__A);
 }
 
 __m512i test_mm512_castpd_si512 (__m512d __A)
 {
   // CHECK-LABEL: @test_mm512_castpd_si512 
-  // CHECK: bitcast <8 x double> %1 to <8 x i64>
+  // CHECK: bitcast <8 x double> %{{.}} to <8 x i64>
   return _mm512_castpd_si512 (__A);
 }
 
@@ -5961,21 +5961,21 @@ __m512d test_mm512_castpd256_pd512(__m256d a)
 __m256d test_mm512_castpd512_pd256 (__m512d __A)
 {
   // CHECK-LABEL: @test_mm512_castpd512_pd256 
-  // CHECK: shufflevector <8 x double> %1, <8 x double> %2, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  // CHECK: shufflevector <8 x double> %{{.}}, <8 x double> %{{.}}, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
   return _mm512_castpd512_pd256 (__A);
 }
 
 __m256 test_mm512_castps512_ps256 (__m512 __A)
 {
   // CHECK-LABEL: @test_mm512_castps512_ps256 
-  // CHECK: shufflevector <16 x float> %1, <16 x float> %2, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  // CHECK: shufflevector <16 x float> %{{.}}, <16 x float> %{{.}}, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   return _mm512_castps512_ps256 (__A);
 }
 
 __m512i test_mm512_castps_si512 (__m512 __A)
 {
   // CHECK-LABEL: @test_mm512_castps_si512 
-  // CHECK: bitcast <16 x float> %1 to <8 x i64>
+  // CHECK: bitcast <16 x float> %{{.}} to <8 x i64>
   return _mm512_castps_si512 (__A);
 }
 __m512i test_mm512_castsi128_si512(__m128i __A) {
@@ -5993,21 +5993,21 @@ __m512i test_mm512_castsi256_si512(__m256i __A) {
 __m512 test_mm512_castsi512_ps (__m512i __A)
 {
   // CHECK-LABEL: @test_mm512_castsi512_ps 
-  // CHECK: bitcast <8 x i64> %1 to <16 x float>
+  // CHECK: bitcast <8 x i64> %{{.}} to <16 x float>
   return _mm512_castsi512_ps (__A);
 }
 
 __m512d test_mm512_castsi512_pd (__m512i __A)
 {
   // CHECK-LABEL: @test_mm512_castsi512_pd 
-  // CHECK: bitcast <8 x i64> %1 to <8 x double>
+  // CHECK: bitcast <8 x i64> %{{.}} to <8 x double>
   return _mm512_castsi512_pd (__A);
 }
 
 __m128i test_mm512_castsi512_si128 (__m512i __A)
 {
   // CHECK-LABEL: @test_mm512_castsi512_si128 
-  // CHECK: shufflevector <8 x i64> %1, <8 x i64> %2, <2 x i32> <i32 0, i32 1>
+  // CHECK: shufflevector <8 x i64> %{{.}}, <8 x i64> %{{.}}, <2 x i32> <i32 0, i32 1>
   return _mm512_castsi512_si128 (__A);
 }
 
