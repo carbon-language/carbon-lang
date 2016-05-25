@@ -2465,6 +2465,12 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     KnownOne = KnownOne.trunc(BitWidth);
     break;
   }
+  case ISD::BSWAP: {
+    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
+    KnownZero = KnownZero2.byteSwap();
+    KnownOne = KnownOne2.byteSwap();
+    break;
+  }
   case ISD::SMIN:
   case ISD::SMAX:
   case ISD::UMIN:
