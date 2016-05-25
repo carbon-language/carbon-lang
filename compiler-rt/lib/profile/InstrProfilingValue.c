@@ -104,11 +104,13 @@ static ValueProfNode *allocateOneNode(__llvm_profile_data *Data, uint32_t Index,
     return (ValueProfNode *)calloc(1, sizeof(ValueProfNode));
 
   Node = COMPILER_RT_PTR_FETCH_ADD(ValueProfNode, CurrentVNode, 1);
-  if (Node >= EndVNode && (OutOfNodesWarnings ++ < MAX_VP_WARNS)) {
-    PROF_WARN("Unable to track new values: %s. "
-              " Consider using option -mllvm -vp-counters-per-site=<n> to allocate more" 
-              " value profile counters at compile time. \n", 
-              "Running out of static counters");
+  if (Node >= EndVNode) {
+    if (OutOfNodesWarnings++ < MAX_VP_WARNS) {
+      PROF_WARN("Unable to track new values: %s. "
+                " Consider using option -mllvm -vp-counters-per-site=<n> to allocate more"
+                " value profile counters at compile time. \n",
+                "Running out of static counters");
+    }
     return 0;
   }
   return Node;
