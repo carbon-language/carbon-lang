@@ -51,6 +51,8 @@ public:
 
   ArrayRef<ModuleInfoEx> modules() const;
 
+  uint32_t getDebugStreamIndex(DbgHeaderType Type) const;
+
 private:
   Error initializeFileInfo();
 

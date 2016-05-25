@@ -272,6 +272,28 @@ static Error dumpStreamSummary(ScopedPrinter &P, PDBFile &File) {
       Value = "IPI Hash";
     else if (StreamIdx == TIS.getTypeHashStreamAuxIndex())
       Value = "IPI Aux Hash";
+    else if (StreamIdx == DS.getDebugStreamIndex(DbgHeaderType::Exception))
+      Value = "Exception Data";
+    else if (StreamIdx == DS.getDebugStreamIndex(DbgHeaderType::Fixup))
+      Value = "Fixup Data";
+    else if (StreamIdx == DS.getDebugStreamIndex(DbgHeaderType::FPO))
+      Value = "FPO Data";
+    else if (StreamIdx == DS.getDebugStreamIndex(DbgHeaderType::NewFPO))
+      Value = "New FPO Data";
+    else if (StreamIdx == DS.getDebugStreamIndex(DbgHeaderType::OmapFromSrc))
+      Value = "Omap From Source Data";
+    else if (StreamIdx == DS.getDebugStreamIndex(DbgHeaderType::OmapToSrc))
+      Value = "Omap To Source Data";
+    else if (StreamIdx == DS.getDebugStreamIndex(DbgHeaderType::Pdata))
+      Value = "Pdata";
+    else if (StreamIdx == DS.getDebugStreamIndex(DbgHeaderType::SectionHdr))
+      Value = "Section Header Data";
+    else if (StreamIdx == DS.getDebugStreamIndex(DbgHeaderType::SectionHdrOrig))
+      Value = "Section Header Original Data";
+    else if (StreamIdx == DS.getDebugStreamIndex(DbgHeaderType::TokenRidMap))
+      Value = "Token Rid Data";
+    else if (StreamIdx == DS.getDebugStreamIndex(DbgHeaderType::Xdata))
+      Value = "Xdata";
     else {
       auto ModIter = ModStreams.find(StreamIdx);
       auto NSIter = NamedStreams.find(StreamIdx);

@@ -302,3 +302,15 @@ Error DbiStream::initializeFileInfo() {
 
   return Error::success();
 }
+
+uint32_t DbiStream::getDebugStreamIndex(DbgHeaderType Type) const {
+  ArrayRef<uint8_t> DbgData;
+  if (auto EC = DbgHeader.getArrayRef(0, DbgData, DbgHeader.getLength())) {
+    consumeError(std::move(EC));
+    return uint32_t(-1);
+  }
+  ArrayRef<ulittle16_t> DebugStreams(
+      reinterpret_cast<const ulittle16_t *>(DbgData.data()),
+      DbgData.size() / sizeof(ulittle16_t));
+  return DebugStreams[static_cast<uint16_t>(Type)];
+}
