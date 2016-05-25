@@ -979,6 +979,26 @@ ELFObjectWriter::createRelocationSection(MCContext &Ctx,
   return RelaSection;
 }
 
+// Include the debug info compression header:
+// "ZLIB" followed by 8 bytes representing the uncompressed size of the section,
+// useful for consumers to preallocate a buffer to decompress into.
+static bool
+prependCompressionHeader(uint64_t Size,
+                         SmallVectorImpl<char> &CompressedContents) {
+  const StringRef Magic = "ZLIB";
+  if (Size <= Magic.size() + sizeof(Size) + CompressedContents.size())
+    return false;
+  if (sys::IsLittleEndianHost)
+    sys::swapByteOrder(Size);
+  CompressedContents.insert(CompressedContents.begin(),
+                            Magic.size() + sizeof(Size), 0);
+  std::copy(Magic.begin(), Magic.end(), CompressedContents.begin());
+  std::copy(reinterpret_cast<char *>(&Size),
+            reinterpret_cast<char *>(&Size + 1),
+            CompressedContents.begin() + Magic.size());
+  return true;
+}
+
 void ELFObjectWriter::writeSectionData(const MCAssembler &Asm, MCSection &Sec,
                                        const MCAsmLayout &Layout) {
   MCSectionELF &Section = static_cast<MCSectionELF &>(Sec);
@@ -1009,30 +1029,12 @@ void ELFObjectWriter::writeSectionData(const MCAssembler &Asm, MCSection &Sec,
     return;
   }
 
-  uint64_t HdrSize =
-    is64Bit() ? sizeof(ELF::Elf32_Chdr) : sizeof(ELF::Elf64_Chdr);
-  if (UncompressedData.size() <= HdrSize + CompressedContents.size()) {
+  if (!prependCompressionHeader(UncompressedData.size(), CompressedContents)) {
     getStream() << UncompressedData;
     return;
   }
-
-  // Set the compressed flag. That is zlib style.
-  Section.setFlags(Section.getFlags() | ELF::SHF_COMPRESSED);
-
-  // Platform specific header is followed by compressed data.
-  if (is64Bit()) {
-    // Write Elf64_Chdr header.
-    write(static_cast<ELF::Elf64_Word>(ELF::ELFCOMPRESS_ZLIB));
-    write(static_cast<ELF::Elf64_Word>(0)); // ch_reserved field.
-    write(static_cast<ELF::Elf64_Xword>(UncompressedData.size()));
-    write(static_cast<ELF::Elf64_Xword>(Sec.getAlignment()));
-  } else {
-    // Write Elf32_Chdr header otherwise.
-    write(static_cast<ELF::Elf32_Word>(ELF::ELFCOMPRESS_ZLIB));
-    write(static_cast<ELF::Elf32_Word>(UncompressedData.size()));
-    write(static_cast<ELF::Elf32_Word>(Sec.getAlignment()));
-  }
-
+  Asm.getContext().renameELFSection(&Section,
+                                    (".z" + SectionName.drop_front(1)).str());
   getStream() << CompressedContents;
 }
 
