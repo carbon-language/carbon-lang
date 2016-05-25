@@ -537,9 +537,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_storeu_dq : GCCBuiltin<"__builtin_ia32_storedqu">,
               Intrinsic<[], [llvm_ptr_ty,
                          llvm_v16i8_ty], [IntrArgMemOnly]>;
-  def int_x86_sse2_storel_dq : GCCBuiltin<"__builtin_ia32_storelv4si">,
-              Intrinsic<[], [llvm_ptr_ty,
-                         llvm_v4i32_ty], [IntrArgMemOnly]>;
 }
 
 // Misc.

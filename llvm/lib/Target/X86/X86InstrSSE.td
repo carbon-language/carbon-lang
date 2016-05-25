@@ -5022,13 +5022,6 @@ def : InstAlias<"vmovq\t{$src, $dst|$dst, $src}",
 //===---------------------------------------------------------------------===//
 // Store / copy lower 64-bits of a XMM register.
 //
-let Predicates = [HasAVX] in
-def : Pat<(int_x86_sse2_storel_dq addr:$dst, VR128:$src),
-          (VMOVPQI2QImr addr:$dst, VR128:$src)>;
-let Predicates = [UseSSE2] in
-def : Pat<(int_x86_sse2_storel_dq addr:$dst, VR128:$src),
-          (MOVPQI2QImr addr:$dst, VR128:$src)>;
-
 let ExeDomain = SSEPackedInt, isCodeGenOnly = 1, AddedComplexity = 20 in {
 def VMOVZQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                      "vmovq\t{$src, $dst|$dst, $src}",

@@ -189,6 +189,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name == "x86.avx.movnt.dq.256" ||
         Name == "x86.avx.movnt.pd.256" ||
         Name == "x86.avx.movnt.ps.256" ||
+        Name == "x86.sse2.storel.dq" ||
         Name == "x86.sse42.crc32.64.8" ||
         Name == "x86.avx.vbroadcast.ss" ||
         Name == "x86.avx.vbroadcast.ss.256" ||
@@ -418,6 +419,25 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       StoreInst *SI = Builder.CreateStore(Arg1, BC);
       SI->setMetadata(M->getMDKindID("nontemporal"), Node);
       SI->setAlignment(32);
+
+      // Remove intrinsic.
+      CI->eraseFromParent();
+      return;
+    } else if (Name == "llvm.x86.sse2.storel.dq") {
+      IRBuilder<> Builder(C);
+      Builder.SetInsertPoint(CI->getParent(), CI->getIterator());
+
+      Value *Arg0 = CI->getArgOperand(0);
+      Value *Arg1 = CI->getArgOperand(1);
+
+      Type *NewVecTy = VectorType::get(Type::getInt64Ty(C), 2);
+      Value *BC0 = Builder.CreateBitCast(Arg1, NewVecTy, "cast");
+      Value *Elt = Builder.CreateExtractElement(BC0, (uint64_t)0);
+      Value *BC = Builder.CreateBitCast(Arg0,
+                                        PointerType::getUnqual(Elt->getType()),
+                                        "cast");
+      StoreInst *SI = Builder.CreateStore(Elt, BC);
+      SI->setAlignment(1);
 
       // Remove intrinsic.
       CI->eraseFromParent();

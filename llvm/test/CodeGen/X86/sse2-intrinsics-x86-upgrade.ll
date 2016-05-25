@@ -42,3 +42,18 @@ define <2 x i64> @test_x86_sse2_psrl_dq(<2 x i64> %a0) {
   ret <2 x i64> %res
 }
 declare <2 x i64> @llvm.x86.sse2.psrl.dq(<2 x i64>, i32) nounwind readnone
+
+
+define void @test_x86_sse2_storel_dq(i8* %a0, <4 x i32> %a1) {
+; CHECK-LABEL: test_x86_sse2_storel_dq:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movlps %xmm0, (%eax)
+; CHECK-NEXT:    retl
+  call void @llvm.x86.sse2.storel.dq(i8* %a0, <4 x i32> %a1)
+  ret void
+}
+declare void @llvm.x86.sse2.storel.dq(i8*, <4 x i32>) nounwind
+
+
+
