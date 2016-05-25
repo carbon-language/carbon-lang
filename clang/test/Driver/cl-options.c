@@ -99,6 +99,8 @@
 
 // RUN: %clang_cl /Ob2 -### -- %s 2>&1 | FileCheck -check-prefix=Ob2 %s
 // RUN: %clang_cl /Odb2 -### -- %s 2>&1 | FileCheck -check-prefix=Ob2 %s
+// RUN: %clang_cl /O2 /Ob2 -### -- %s 2>&1 | FileCheck -check-prefix=Ob2 %s
+// Ob2-NOT: warning: argument unused during compilation: '/O2'
 // Ob2: -finline-functions
 
 // RUN: %clang_cl /Od -### -- %s 2>&1 | FileCheck -check-prefix=Od %s
