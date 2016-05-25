@@ -32,8 +32,22 @@
 # DISASM-NEXT: 1103f: 8d 05 bc ff ff ff    leal -68(%rip), %eax
 # DISASM-NEXT: 11045: 8b 05 b5 0f 00 00    movl 4021(%rip), %eax
 # DISASM-NEXT: 1104b: 8b 05 af 0f 00 00    movl 4015(%rip), %eax
-# DISASM-NEXT: 11051: ff 15 b1 0f 00 00    callq *4017(%rip)
-# DISASM-NEXT: 11057: ff 25 a3 0f 00 00    jmpq *4003(%rip)
+# DISASM-NEXT: 11051: 67 e8 a9 ff ff ff    callq -87 <foo>
+# DISASM-NEXT: 11057: 67 e8 a3 ff ff ff    callq -93 <foo>
+# DISASM-NEXT: 1105d: 67 e8 9e ff ff ff    callq -98 <hid>
+# DISASM-NEXT: 11063: 67 e8 98 ff ff ff    callq -104 <hid>
+# DISASM-NEXT: 11069: ff 15 91 0f 00 00    callq *3985(%rip)
+# DISASM-NEXT: 1106f: ff 15 8b 0f 00 00    callq *3979(%rip)
+# DISASM-NEXT: 11075: e9 86 ff ff ff       jmp   -122 <foo>
+# DISASM-NEXT: 1107a: 90                   nop
+# DISASM-NEXT: 1107b: e9 80 ff ff ff       jmp   -128 <foo>
+# DISASM-NEXT: 11080: 90                   nop
+# DISASM-NEXT: 11081: e9 7b ff ff ff       jmp   -133 <hid>
+# DISASM-NEXT: 11086: 90                   nop
+# DISASM-NEXT: 11087: e9 75 ff ff ff       jmp   -139 <hid>
+# DISASM-NEXT: 1108c: 90                   nop
+# DISASM-NEXT: 1108d: ff 25 6d 0f 00 00    jmpq  *3949(%rip)
+# DISASM-NEXT: 11093: ff 25 67 0f 00 00    jmpq  *3943(%rip)
 
 .text
 .globl foo
@@ -70,7 +84,15 @@ _start:
  movl ifunc@GOTPCREL(%rip), %eax
  movl ifunc@GOTPCREL(%rip), %eax
 
-## We check few other possible instructions
-## to see that they are not "relaxed" by mistake to lea.
  call *foo@GOTPCREL(%rip)
+ call *foo@GOTPCREL(%rip)
+ call *hid@GOTPCREL(%rip)
+ call *hid@GOTPCREL(%rip)
+ call *ifunc@GOTPCREL(%rip)
+ call *ifunc@GOTPCREL(%rip)
+ jmp *foo@GOTPCREL(%rip)
+ jmp *foo@GOTPCREL(%rip)
+ jmp *hid@GOTPCREL(%rip)
+ jmp *hid@GOTPCREL(%rip)
+ jmp *ifunc@GOTPCREL(%rip)
  jmp *ifunc@GOTPCREL(%rip)

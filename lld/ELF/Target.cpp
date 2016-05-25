@@ -740,14 +740,42 @@ bool X86_64TargetInfo::canRelaxGot(uint32_t Type, const uint8_t *Data,
                                    uint64_t Offset) const {
   if (Type != R_X86_64_GOTPCRELX && Type != R_X86_64_REX_GOTPCRELX)
     return false;
-
-  // Converting mov foo@GOTPCREL(%rip), %reg to lea foo(%rip), %reg
-  // is the only supported relaxation for now.
-  return (Offset >= 2 && Data[Offset - 2] == 0x8b);
+  const uint8_t Op = Data[Offset - 2];
+  const uint8_t ModRm = Data[Offset - 1];
+  // Relax mov.
+  if (Op == 0x8b)
+    return true;
+  // Relax call and jmp.
+  return Op == 0xff && (ModRm == 0x15 || ModRm == 0x25);
 }
 
 void X86_64TargetInfo::relaxGot(uint8_t *Loc, uint64_t Val) const {
-  Loc[-2] = 0x8d;
+  const uint8_t Op = Loc[-2];
+  const uint8_t ModRm = Loc[-1];
+
+  // Convert mov foo@GOTPCREL(%rip), %reg to lea foo(%rip), %reg.
+  if (Op == 0x8b) {
+    *(Loc - 2) = 0x8d;
+    relocateOne(Loc, R_X86_64_PC32, Val);
+    return;
+  }
+
+  assert(Op == 0xff);
+  if (ModRm == 0x15) {
+    // ABI says we can convert call *foo@GOTPCREL(%rip) to nop call foo.
+    // Instead we convert to addr32 call foo, where addr32 is instruction
+    // prefix. That makes result expression to be a single instruction.
+    *(Loc - 2) = 0x67; // addr32 prefix
+    *(Loc - 1) = 0xe8; // call
+  } else {
+    assert(ModRm == 0x25);
+    // Convert jmp *foo@GOTPCREL(%rip) to jmp foo nop.
+    // jmp doesn't return, so it is fine to use nop here, it is just a stub.
+    *(Loc - 2) = 0xe9; // jmp
+    *(Loc + 3) = 0x90; // nop
+    Loc -= 1;
+    Val += 1;
+  }
   relocateOne(Loc, R_X86_64_PC32, Val);
 }
 
