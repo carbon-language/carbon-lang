@@ -3307,7 +3307,7 @@ static const ValueDecl *HandleMemberPointerAccess(EvalInfo &Info,
   assert(BO->getOpcode() == BO_PtrMemD || BO->getOpcode() == BO_PtrMemI);
 
   if (!EvaluateObjectArgument(Info, BO->getLHS(), LV)) {
-    if (Info.keepEvaluatingAfterFailure()) {
+    if (Info.noteFailure()) {
       MemberPtr MemPtr;
       EvaluateMemberPointer(BO->getRHS(), MemPtr, Info);
     }
@@ -3603,7 +3603,7 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
       // FIXME: This isn't quite right; if we're performing aggregate
       // initialization, each braced subexpression is its own full-expression.
       FullExpressionRAII Scope(Info);
-      if (!EvaluateDecl(Info, DclIt) && !Info.keepEvaluatingAfterFailure())
+      if (!EvaluateDecl(Info, DclIt) && !Info.noteFailure())
         return ESR_Failed;
     }
     return ESR_Succeeded;
@@ -3878,7 +3878,7 @@ static bool EvaluateArgs(ArrayRef<const Expr*> Args, ArgVector &ArgValues,
     if (!Evaluate(ArgValues[I - Args.begin()], Info, *I)) {
       // If we're checking for a potential constant expression, evaluate all
       // initializers even if some of them fail.
-      if (!Info.keepEvaluatingAfterFailure())
+      if (!Info.noteFailure())
         return false;
       Success = false;
     }
@@ -4070,7 +4070,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
                                                           *Value, FD))) {
       // If we're checking for a potential constant expression, evaluate all
       // initializers even if some of them fail.
-      if (!Info.keepEvaluatingAfterFailure())
+      if (!Info.noteFailure())
         return false;
       Success = false;
     }
@@ -4917,7 +4917,7 @@ bool LValueExprEvaluator::VisitCompoundAssignOperator(
 
   // The overall lvalue result is the result of evaluating the LHS.
   if (!this->Visit(CAO->getLHS())) {
-    if (Info.keepEvaluatingAfterFailure())
+    if (Info.noteFailure())
       Evaluate(RHS, this->Info, CAO->getRHS());
     return false;
   }
@@ -4938,7 +4938,7 @@ bool LValueExprEvaluator::VisitBinAssign(const BinaryOperator *E) {
   APValue NewVal;
 
   if (!this->Visit(E->getLHS())) {
-    if (Info.keepEvaluatingAfterFailure())
+    if (Info.noteFailure())
       Evaluate(NewVal, this->Info, E->getRHS());
     return false;
   }
@@ -5026,7 +5026,7 @@ bool PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     std::swap(PExp, IExp);
 
   bool EvalPtrOK = EvaluatePointer(PExp, Result, Info);
-  if (!EvalPtrOK && !Info.keepEvaluatingAfterFailure())
+  if (!EvalPtrOK && !Info.noteFailure())
     return false;
 
   llvm::APSInt Offset;
@@ -5536,7 +5536,7 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
       APValue &FieldVal = Result.getStructBase(ElementNo);
       if (!EvaluateInPlace(FieldVal, Info, Subobject, Init)) {
-        if (!Info.keepEvaluatingAfterFailure())
+        if (!Info.noteFailure())
           return false;
         Success = false;
       }
@@ -5574,7 +5574,7 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
     if (!EvaluateInPlace(FieldVal, Info, Subobject, Init) ||
         (Field->isBitField() && !truncateBitfieldValue(Info, Init,
                                                        FieldVal, Field))) {
-      if (!Info.keepEvaluatingAfterFailure())
+      if (!Info.noteFailure())
         return false;
       Success = false;
     }
@@ -6027,7 +6027,7 @@ bool ArrayExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
                          Info, Subobject, Init) ||
         !HandleLValueArrayAdjustment(Info, Init, Subobject,
                                      CAT->getElementType(), 1)) {
-      if (!Info.keepEvaluatingAfterFailure())
+      if (!Info.noteFailure())
         return false;
       Success = false;
     }
@@ -7210,7 +7210,7 @@ bool DataRecursiveIntBinOpEvaluator::
   assert(E->getLHS()->getType()->isIntegralOrEnumerationType() &&
          E->getRHS()->getType()->isIntegralOrEnumerationType());
 
-  if (LHSResult.Failed && !Info.keepEvaluatingAfterFailure())
+  if (LHSResult.Failed && !Info.noteFailure())
     return false; // Ignore RHS;
 
   return true;
@@ -7412,7 +7412,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     } else {
       LHSOK = EvaluateComplex(E->getLHS(), LHS, Info);
     }
-    if (!LHSOK && !Info.keepEvaluatingAfterFailure())
+    if (!LHSOK && !Info.noteFailure())
       return false;
 
     if (E->getRHS()->getType()->isRealFloatingType()) {
@@ -7460,7 +7460,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     APFloat RHS(0.0), LHS(0.0);
 
     bool LHSOK = EvaluateFloat(E->getRHS(), RHS, Info);
-    if (!LHSOK && !Info.keepEvaluatingAfterFailure())
+    if (!LHSOK && !Info.noteFailure())
       return false;
 
     if (!EvaluateFloat(E->getLHS(), LHS, Info) || !LHSOK)
@@ -7494,7 +7494,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       LValue LHSValue, RHSValue;
 
       bool LHSOK = EvaluatePointer(E->getLHS(), LHSValue, Info);
-      if (!LHSOK && !Info.keepEvaluatingAfterFailure())
+      if (!LHSOK && !Info.noteFailure())
         return false;
 
       if (!EvaluatePointer(E->getRHS(), RHSValue, Info) || !LHSOK)
@@ -7711,7 +7711,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     MemberPtr LHSValue, RHSValue;
 
     bool LHSOK = EvaluateMemberPointer(E->getLHS(), LHSValue, Info);
-    if (!LHSOK && !Info.keepEvaluatingAfterFailure())
+    if (!LHSOK && !Info.noteFailure())
       return false;
 
     if (!EvaluateMemberPointer(E->getRHS(), RHSValue, Info) || !LHSOK)
@@ -8283,7 +8283,7 @@ bool FloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
   APFloat RHS(0.0);
   bool LHSOK = EvaluateFloat(E->getLHS(), Result, Info);
-  if (!LHSOK && !Info.keepEvaluatingAfterFailure())
+  if (!LHSOK && !Info.noteFailure())
     return false;
   return EvaluateFloat(E->getRHS(), RHS, Info) && LHSOK &&
          handleFloatFloatBinOp(Info, E, Result, E->getOpcode(), RHS);
@@ -8560,7 +8560,7 @@ bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   } else {
     LHSOK = Visit(E->getLHS());
   }
-  if (!LHSOK && !Info.keepEvaluatingAfterFailure())
+  if (!LHSOK && !Info.noteFailure())
     return false;
 
   ComplexValue RHS;
