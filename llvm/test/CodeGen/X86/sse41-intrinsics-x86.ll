@@ -140,22 +140,6 @@ define <16 x i8> @test_x86_sse41_pblendvb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8
 declare <16 x i8> @llvm.x86.sse41.pblendvb(<16 x i8>, <16 x i8>, <16 x i8>) nounwind readnone
 
 
-define <8 x i16> @test_x86_sse41_pblendw(<8 x i16> %a0, <8 x i16> %a1) {
-; SSE41-LABEL: test_x86_sse41_pblendw:
-; SSE41:       ## BB#0:
-; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2],xmm0[3,4,5,6,7]
-; SSE41-NEXT:    retl
-;
-; KNL-LABEL: test_x86_sse41_pblendw:
-; KNL:       ## BB#0:
-; KNL-NEXT:    vpblendw {{.*#+}} xmm0 = xmm1[0,1,2],xmm0[3,4,5,6,7]
-; KNL-NEXT:    retl
-  %res = call <8 x i16> @llvm.x86.sse41.pblendw(<8 x i16> %a0, <8 x i16> %a1, i8 7) ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %res
-}
-declare <8 x i16> @llvm.x86.sse41.pblendw(<8 x i16>, <8 x i16>, i8) nounwind readnone
-
-
 define <8 x i16> @test_x86_sse41_phminposuw(<8 x i16> %a0) {
 ; SSE41-LABEL: test_x86_sse41_phminposuw:
 ; SSE41:       ## BB#0:
