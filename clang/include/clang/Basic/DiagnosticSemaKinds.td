@@ -2359,7 +2359,10 @@ def err_attribute_aligned_too_great : Error<
   "requested alignment must be %0 bytes or smaller">;
 def warn_redeclaration_without_attribute_prev_attribute_ignored : Warning<
   "%q0 redeclared without %1 attribute: previous %1 ignored">,
-  InGroup<DiagGroup<"inconsistent-dllimport">>;
+  InGroup<MicrosoftInconsistentDllImport>;
+def warn_redeclaration_without_import_attribute : Warning<
+  "%q0 redeclared without 'dllimport' attribute: 'dllexport' attribute added">,
+  InGroup<MicrosoftInconsistentDllImport>;
 def warn_dllimport_dropped_from_inline_function : Warning<
   "%q0 redeclared inline; %1 attribute ignored">,
   InGroup<IgnoredAttributes>;
