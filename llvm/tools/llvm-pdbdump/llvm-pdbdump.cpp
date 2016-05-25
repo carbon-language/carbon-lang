@@ -350,8 +350,9 @@ static Error dumpStreamData(ScopedPrinter &P, PDBFile &File) {
         R.bytesRemaining(), static_cast<uint32_t>(File.getBlockSize()));
     if (auto EC = R.getArrayRef(Data, BytesToReadInBlock))
       return EC;
-    outs() << StringRef(reinterpret_cast<const char *>(Data.begin()),
-                        Data.size());
+    P.printBinaryBlock(
+        "Data",
+        StringRef(reinterpret_cast<const char *>(Data.begin()), Data.size()));
   }
   return Error::success();
 }
