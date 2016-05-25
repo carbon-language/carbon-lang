@@ -28,7 +28,7 @@
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
-#include <algorithm> 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
