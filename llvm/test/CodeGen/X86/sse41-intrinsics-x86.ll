@@ -1,21 +1,5 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=-avx,+sse4.1 | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse4.1 | FileCheck %s
 ; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=knl | FileCheck %s
-
-define <2 x double> @test_x86_sse41_blendpd(<2 x double> %a0, <2 x double> %a1) {
-  ; CHECK: blendpd
-  %res = call <2 x double> @llvm.x86.sse41.blendpd(<2 x double> %a0, <2 x double> %a1, i8 7) ; <<2 x double>> [#uses=1]
-  ret <2 x double> %res
-}
-declare <2 x double> @llvm.x86.sse41.blendpd(<2 x double>, <2 x double>, i8) nounwind readnone
-
-
-define <4 x float> @test_x86_sse41_blendps(<4 x float> %a0, <4 x float> %a1) {
-  ; CHECK: blendps
-  %res = call <4 x float> @llvm.x86.sse41.blendps(<4 x float> %a0, <4 x float> %a1, i8 7) ; <<4 x float>> [#uses=1]
-  ret <4 x float> %res
-}
-declare <4 x float> @llvm.x86.sse41.blendps(<4 x float>, <4 x float>, i8) nounwind readnone
-
 
 define <2 x double> @test_x86_sse41_blendvpd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) {
   ; CHECK: blendvpd
