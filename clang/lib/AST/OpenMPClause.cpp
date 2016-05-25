@@ -526,10 +526,7 @@ OMPDependClause *OMPDependClause::Create(
 }
 
 OMPDependClause *OMPDependClause::CreateEmpty(const ASTContext &C, unsigned N) {
-  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(
-      static_cast<typename llvm::trailing_objects_internal::ExtractSecondType<
-          Expr *, size_t>::type>(N) +
-      1));
+  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(N + 1));
   return new (Mem) OMPDependClause(N);
 }
 
