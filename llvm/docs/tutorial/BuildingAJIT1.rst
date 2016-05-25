@@ -76,13 +76,13 @@ will look like:
 
 .. code-block:: c++
 
-    std::unique_ptr<Module> M = buildModule();
-    JIT J;
-    Handle H = J.addModule(*M);
-    int (*Main)(int, char*[]) =
-      (int(*)(int, char*[])J.findSymbol("main").getAddress();
-    int Result = Main();
-    J.removeModule(H);
+  std::unique_ptr<Module> M = buildModule();
+  JIT J;
+  Handle H = J.addModule(*M);
+  int (*Main)(int, char*[]) =
+    (int(*)(int, char*[])J.findSymbol("main").getAddress();
+  int Result = Main();
+  J.removeModule(H);
 
 The APIs that we build in these tutorials will all be variations on this simple
 theme. Behind the API we will refine the implementation of the JIT to add
@@ -112,32 +112,32 @@ usual include guards and #includes [2]_, we get to the definition of our class:
 
 .. code-block:: c++
 
-    #ifndef LLVM_EXECUTIONENGINE_ORC_KALEIDOSCOPEJIT_H
-    #define LLVM_EXECUTIONENGINE_ORC_KALEIDOSCOPEJIT_H
+  #ifndef LLVM_EXECUTIONENGINE_ORC_KALEIDOSCOPEJIT_H
+  #define LLVM_EXECUTIONENGINE_ORC_KALEIDOSCOPEJIT_H
 
-    #include "llvm/ExecutionEngine/ExecutionEngine.h"
-    #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
-    #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
-    #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
-    #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
-    #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
-    #include "llvm/IR/Mangler.h"
-    #include "llvm/Support/DynamicLibrary.h"
+  #include "llvm/ExecutionEngine/ExecutionEngine.h"
+  #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
+  #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
+  #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
+  #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
+  #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
+  #include "llvm/IR/Mangler.h"
+  #include "llvm/Support/DynamicLibrary.h"
 
-    namespace llvm {
-    namespace orc {
+  namespace llvm {
+  namespace orc {
 
-    class KaleidoscopeJIT {
-    private:
+  class KaleidoscopeJIT {
+  private:
 
-      std::unique_ptr<TargetMachine> TM;
-      const DataLayout DL;
-      ObjectLinkingLayer<> ObjectLayer;
-      IRCompileLayer<decltype(ObjectLayer)> CompileLayer;
+    std::unique_ptr<TargetMachine> TM;
+    const DataLayout DL;
+    ObjectLinkingLayer<> ObjectLayer;
+    IRCompileLayer<decltype(ObjectLayer)> CompileLayer;
 
-    public:
+  public:
 
-      typedef decltype(CompileLayer)::ModuleSetHandleT ModuleHandleT;
+    typedef decltype(CompileLayer)::ModuleSetHandleT ModuleHandleT;
 
 Our class begins with four members: A TargetMachine, TM, which will be used
 to build our LLVM compiler instance; A DataLayout, DL, which will be used for
@@ -162,13 +162,13 @@ this.
 
 .. code-block:: c++
 
-      KaleidoscopeJIT()
-          : TM(EngineBuilder().selectTarget()), DL(TM->createDataLayout()),
-            CompileLayer(ObjectLayer, SimpleCompiler(*TM)) {
-        llvm::sys::DynamicLibrary::LoadLibraryPermanently(nullptr);
-      }
+  KaleidoscopeJIT()
+      : TM(EngineBuilder().selectTarget()), DL(TM->createDataLayout()),
+    CompileLayer(ObjectLayer, SimpleCompiler(*TM)) {
+    llvm::sys::DynamicLibrary::LoadLibraryPermanently(nullptr);
+  }
 
-      TargetMachine &getTargetMachine() { return *TM; }
+  TargetMachine &getTargetMachine() { return *TM; }
 
 Next up we have our class constructor. We begin by initializing TM using the
 EngineBuilder::selectTarget helper method, which constructs a TargetMachine for
