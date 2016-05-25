@@ -1,5 +1,5 @@
 =======================================================
-Kaleidoscope: Building an ORC-based JIT in LLVM
+Building a JIT: Starting out with KaleidoscopeJIT
 =======================================================
 
 .. contents::
