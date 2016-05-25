@@ -350,7 +350,6 @@ class GlobalValueMaterializer final : public ValueMaterializer {
 public:
   GlobalValueMaterializer(IRLinker &TheIRLinker) : TheIRLinker(TheIRLinker) {}
   Value *materializeDeclFor(Value *V) override;
-  void materializeInitFor(GlobalValue *New, GlobalValue *Old) override;
 };
 
 class LocalValueMaterializer final : public ValueMaterializer {
@@ -359,7 +358,6 @@ class LocalValueMaterializer final : public ValueMaterializer {
 public:
   LocalValueMaterializer(IRLinker &TheIRLinker) : TheIRLinker(TheIRLinker) {}
   Value *materializeDeclFor(Value *V) override;
-  void materializeInitFor(GlobalValue *New, GlobalValue *Old) override;
 };
 
 /// Type of the Metadata map in \a ValueToValueMapTy.
@@ -490,8 +488,7 @@ public:
   ~IRLinker() { SharedMDs = std::move(*ValueMap.getMDMap()); }
 
   bool run();
-  Value *materializeDeclFor(Value *V, bool ForAlias);
-  void materializeInitFor(GlobalValue *New, GlobalValue *Old, bool ForAlias);
+  Value *materialize(Value *V, bool ForAlias);
 };
 }
 
@@ -516,45 +513,38 @@ static void forceRenaming(GlobalValue *GV, StringRef Name) {
   }
 }
 
-Value *GlobalValueMaterializer::materializeDeclFor(Value *V) {
-  return TheIRLinker.materializeDeclFor(V, false);
+Value *GlobalValueMaterializer::materializeDeclFor(Value *SGV) {
+  return TheIRLinker.materialize(SGV, false);
 }
 
-void GlobalValueMaterializer::materializeInitFor(GlobalValue *New,
-                                                 GlobalValue *Old) {
-  TheIRLinker.materializeInitFor(New, Old, false);
+Value *LocalValueMaterializer::materializeDeclFor(Value *SGV) {
+  return TheIRLinker.materialize(SGV, true);
 }
 
-Value *LocalValueMaterializer::materializeDeclFor(Value *V) {
-  return TheIRLinker.materializeDeclFor(V, true);
-}
-
-void LocalValueMaterializer::materializeInitFor(GlobalValue *New,
-                                                GlobalValue *Old) {
-  TheIRLinker.materializeInitFor(New, Old, true);
-}
-
-Value *IRLinker::materializeDeclFor(Value *V, bool ForAlias) {
+Value *IRLinker::materialize(Value *V, bool ForAlias) {
   auto *SGV = dyn_cast<GlobalValue>(V);
   if (!SGV)
     return nullptr;
 
-  return linkGlobalValueProto(SGV, ForAlias);
-}
+  Constant *NewProto = linkGlobalValueProto(SGV, ForAlias);
+  if (!NewProto)
+    return NewProto;
 
-void IRLinker::materializeInitFor(GlobalValue *New, GlobalValue *Old,
-                                  bool ForAlias) {
+  GlobalValue *New = dyn_cast<GlobalValue>(NewProto);
+  if (!New)
+    return NewProto;
+
   // If we already created the body, just return.
   if (auto *F = dyn_cast<Function>(New)) {
     if (!F->isDeclaration())
-      return;
+      return New;
   } else if (auto *V = dyn_cast<GlobalVariable>(New)) {
     if (V->hasInitializer() || V->hasAppendingLinkage())
-      return;
+      return New;
   } else {
     auto *A = cast<GlobalAlias>(New);
     if (A->getAliasee())
-      return;
+      return New;
   }
 
   // When linking a global for an alias, it will always be linked. However we
@@ -565,11 +555,13 @@ void IRLinker::materializeInitFor(GlobalValue *New, GlobalValue *Old,
   // different, it means that the value already had a definition in the
   // destination module (linkonce for instance), but we need a new definition
   // for the alias ("New" will be different.
-  if (ForAlias && ValueMap.lookup(Old) == New)
-    return;
+  if (ForAlias && ValueMap.lookup(SGV) == New)
+    return New;
 
-  if (ForAlias || shouldLink(New, *Old))
-    linkGlobalValueBody(*New, *Old);
+  if (ForAlias || shouldLink(New, *SGV))
+    linkGlobalValueBody(*New, *SGV);
+
+  return New;
 }
 
 /// Loop through the global variables in the src module and merge them into the
