@@ -489,25 +489,20 @@ function(llvm_add_library name)
 
   if(CMAKE_VERSION VERSION_LESS 2.8.12)
     # Link libs w/o keywords, assuming PUBLIC.
-    target_link_libraries(${name}
-      ${ARG_LINK_LIBS}
-      ${lib_deps}
-      ${llvm_libs}
-      )
+    set(library_type)
   elseif(ARG_STATIC)
-    target_link_libraries(${name} INTERFACE
-      ${ARG_LINK_LIBS}
-      ${lib_deps}
-      ${llvm_libs}
-      )
+    set(library_type INTERFACE)
+  elseif(APPLE)
+    set(library_type PUBLIC)
   else()
     # We can use PRIVATE since SO knows its dependent libs.
-    target_link_libraries(${name} PRIVATE
+    set(library_type PRIVATE)
+  endif()
+   target_link_libraries(${name} ${library_type}
       ${ARG_LINK_LIBS}
       ${lib_deps}
       ${llvm_libs}
       )
-  endif()
 
   if(LLVM_COMMON_DEPENDS)
     add_dependencies(${name} ${LLVM_COMMON_DEPENDS})
