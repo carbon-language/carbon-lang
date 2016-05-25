@@ -49,7 +49,7 @@ protected:
 public:
   /// This method can be implemented to generate a mapped Value on demand. For
   /// example, if linking lazily. Returns null if the value is not materialized.
-  virtual Value *materializeDeclFor(Value *V) = 0;
+  virtual Value *materialize(Value *V) = 0;
 };
 
 /// These are flags that the value mapping APIs allow.

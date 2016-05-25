@@ -46,7 +46,7 @@ private:
   class LambdaMaterializer final : public ValueMaterializer {
   public:
     LambdaMaterializer(MaterializerFtor M) : M(std::move(M)) {}
-    Value *materializeDeclFor(Value *V) final { return M(V); }
+    Value *materialize(Value *V) final { return M(V); }
 
   private:
     MaterializerFtor M;

@@ -349,7 +349,7 @@ class GlobalValueMaterializer final : public ValueMaterializer {
 
 public:
   GlobalValueMaterializer(IRLinker &TheIRLinker) : TheIRLinker(TheIRLinker) {}
-  Value *materializeDeclFor(Value *V) override;
+  Value *materialize(Value *V) override;
 };
 
 class LocalValueMaterializer final : public ValueMaterializer {
@@ -357,7 +357,7 @@ class LocalValueMaterializer final : public ValueMaterializer {
 
 public:
   LocalValueMaterializer(IRLinker &TheIRLinker) : TheIRLinker(TheIRLinker) {}
-  Value *materializeDeclFor(Value *V) override;
+  Value *materialize(Value *V) override;
 };
 
 /// Type of the Metadata map in \a ValueToValueMapTy.
@@ -513,11 +513,11 @@ static void forceRenaming(GlobalValue *GV, StringRef Name) {
   }
 }
 
-Value *GlobalValueMaterializer::materializeDeclFor(Value *SGV) {
+Value *GlobalValueMaterializer::materialize(Value *SGV) {
   return TheIRLinker.materialize(SGV, false);
 }
 
-Value *LocalValueMaterializer::materializeDeclFor(Value *SGV) {
+Value *LocalValueMaterializer::materialize(Value *SGV) {
   return TheIRLinker.materialize(SGV, true);
 }
 
