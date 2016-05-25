@@ -23,7 +23,6 @@ enum class TypeRecordKind : uint16_t {
 #include "TypeRecords.def"
   // FIXME: Add serialization support
   FieldList = 0x1203,
-  BitField = 0x1205,
 };
 
 /// Duplicate copy of the above enum, but using the official CV names. Useful
