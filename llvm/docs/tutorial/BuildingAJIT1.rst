@@ -305,8 +305,8 @@ like a mini-LLI), feed to next chapter.*
 Full Code Listing
 =================
 
-Here is the complete code listing for our running example, enhanced with
-mutable variables and var/in support. To build this example, use:
+Here is the complete code listing for our running example. To build this
+example, use:
 
 .. code-block:: bash
 
