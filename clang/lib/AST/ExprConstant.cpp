@@ -478,6 +478,9 @@ namespace {
     /// fold (not just why it's not strictly a constant expression)?
     bool HasFoldFailureDiagnostic;
 
+    /// \brief Whether or not we're currently speculatively evaluating.
+    bool IsSpeculativelyEvaluating;
+
     enum EvaluationMode {
       /// Evaluate as a constant expression. Stop if we find that the expression
       /// is not a constant expression.
@@ -542,7 +545,8 @@ namespace {
         BottomFrame(*this, SourceLocation(), nullptr, nullptr, nullptr),
         EvaluatingDecl((const ValueDecl *)nullptr),
         EvaluatingDeclValue(nullptr), HasActiveDiagnostic(false),
-        HasFoldFailureDiagnostic(false), EvalMode(Mode) {}
+        HasFoldFailureDiagnostic(false), IsSpeculativelyEvaluating(false),
+        EvalMode(Mode) {}
 
     void setEvaluatingDecl(APValue::LValueBase Base, APValue &Value) {
       EvaluatingDecl = Base;
@@ -764,6 +768,29 @@ namespace {
       llvm_unreachable("Missed EvalMode case");
     }
 
+    /// Notes that we failed to evaluate an expression that other expressions
+    /// directly depend on, and determine if we should keep evaluating. This
+    /// should only be called if we actually intend to keep evaluating.
+    ///
+    /// Call noteSideEffect() instead if we may be able to ignore the value that
+    /// we failed to evaluate, e.g. if we failed to evaluate Foo() in:
+    ///
+    /// (Foo(), 1)      // use noteSideEffect
+    /// (Foo() || true) // use noteSideEffect
+    /// Foo() + 1       // use noteFailure
+    LLVM_ATTRIBUTE_UNUSED_RESULT bool noteFailure() {
+      // Failure when evaluating some expression often means there is some
+      // subexpression whose evaluation was skipped. Therefore, (because we
+      // don't track whether we skipped an expression when unwinding after an
+      // evaluation failure) every evaluation failure that bubbles up from a
+      // subexpression implies that a side-effect has potentially happened. We
+      // skip setting the HasSideEffects flag to true until we decide to
+      // continue evaluating after that point, which happens here.
+      bool KeepGoing = keepEvaluatingAfterFailure();
+      EvalStatus.HasSideEffects |= KeepGoing;
+      return KeepGoing;
+    }
+
     bool allowInvalidBaseExpr() const {
       return EvalMode == EM_DesignatorFold;
     }
@@ -812,24 +839,52 @@ namespace {
     ~FoldOffsetRAII() { Info.EvalMode = OldMode; }
   };
 
-  /// RAII object used to suppress diagnostics and side-effects from a
-  /// speculative evaluation.
+  /// RAII object used to optionally suppress diagnostics and side-effects from
+  /// a speculative evaluation.
   class SpeculativeEvaluationRAII {
-    EvalInfo &Info;
+    /// Pair of EvalInfo, and a bit that stores whether or not we were
+    /// speculatively evaluating when we created this RAII.
+    llvm::PointerIntPair<EvalInfo *, 1, bool> InfoAndOldSpecEval;
     Expr::EvalStatus Old;
 
+    void moveFromAndCancel(SpeculativeEvaluationRAII &&Other) {
+      InfoAndOldSpecEval = Other.InfoAndOldSpecEval;
+      Old = Other.Old;
+      Other.InfoAndOldSpecEval.setPointer(nullptr);
+    }
+
+    void maybeRestoreState() {
+      EvalInfo *Info = InfoAndOldSpecEval.getPointer();
+      if (!Info)
+        return;
+
+      Info->EvalStatus = Old;
+      Info->IsSpeculativelyEvaluating = InfoAndOldSpecEval.getInt();
+    }
+
   public:
-    SpeculativeEvaluationRAII(EvalInfo &Info,
-                        SmallVectorImpl<PartialDiagnosticAt> *NewDiag = nullptr)
-      : Info(Info), Old(Info.EvalStatus) {
+    SpeculativeEvaluationRAII() = default;
+
+    SpeculativeEvaluationRAII(
+        EvalInfo &Info, SmallVectorImpl<PartialDiagnosticAt> *NewDiag = nullptr)
+        : InfoAndOldSpecEval(&Info, Info.IsSpeculativelyEvaluating),
+          Old(Info.EvalStatus) {
       Info.EvalStatus.Diag = NewDiag;
-      // If we're speculatively evaluating, we may have skipped over some
-      // evaluations and missed out a side effect.
-      Info.EvalStatus.HasSideEffects = true;
+      Info.IsSpeculativelyEvaluating = true;
     }
-    ~SpeculativeEvaluationRAII() {
-      Info.EvalStatus = Old;
+
+    SpeculativeEvaluationRAII(const SpeculativeEvaluationRAII &Other) = delete;
+    SpeculativeEvaluationRAII(SpeculativeEvaluationRAII &&Other) {
+      moveFromAndCancel(std::move(Other));
     }
+
+    SpeculativeEvaluationRAII &operator=(SpeculativeEvaluationRAII &&Other) {
+      maybeRestoreState();
+      moveFromAndCancel(std::move(Other));
+      return *this;
+    }
+
+    ~SpeculativeEvaluationRAII() { maybeRestoreState(); }
   };
 
   /// RAII object wrapping a full-expression or block scope, and handling
@@ -2789,12 +2844,13 @@ static CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E,
   }
 
   // In C++1y, we can't safely access any mutable state when we might be
-  // evaluating after an unmodeled side effect or an evaluation failure.
+  // evaluating after an unmodeled side effect.
   //
   // FIXME: Not all local state is mutable. Allow local constant subobjects
   // to be read here (but take care with 'mutable' fields).
-  if (Frame && Info.getLangOpts().CPlusPlus14 &&
-      (Info.EvalStatus.HasSideEffects || Info.keepEvaluatingAfterFailure()))
+  if ((Frame && Info.getLangOpts().CPlusPlus14 &&
+       Info.EvalStatus.HasSideEffects) ||
+      (AK != AK_Read && Info.IsSpeculativelyEvaluating))
     return CompleteObject();
 
   return CompleteObject(BaseVal, BaseType);
@@ -4049,14 +4105,16 @@ private:
     assert(Info.checkingPotentialConstantExpression());
 
     // Speculatively evaluate both arms.
+    SmallVector<PartialDiagnosticAt, 8> Diag;
     {
-      SmallVector<PartialDiagnosticAt, 8> Diag;
       SpeculativeEvaluationRAII Speculate(Info, &Diag);
-
       StmtVisitorTy::Visit(E->getFalseExpr());
       if (Diag.empty())
         return;
+    }
 
+    {
+      SpeculativeEvaluationRAII Speculate(Info, &Diag);
       Diag.clear();
       StmtVisitorTy::Visit(E->getTrueExpr());
       if (Diag.empty())
@@ -4071,7 +4129,7 @@ private:
   bool HandleConditionalOperator(const ConditionalOperator *E) {
     bool BoolResult;
     if (!EvaluateAsBooleanCondition(E->getCond(), BoolResult, Info)) {
-      if (Info.checkingPotentialConstantExpression())
+      if (Info.checkingPotentialConstantExpression() && Info.noteFailure())
         CheckPotentialConstantConditional(E);
       return false;
     }
@@ -7027,23 +7085,14 @@ class DataRecursiveIntBinOpEvaluator {
     Job() = default;
     Job(Job &&J)
         : E(J.E), LHSResult(J.LHSResult), Kind(J.Kind),
-          StoredInfo(J.StoredInfo), OldEvalStatus(J.OldEvalStatus) {
-      J.StoredInfo = nullptr;
-    }
+          SpecEvalRAII(std::move(J.SpecEvalRAII)) {}
 
     void startSpeculativeEval(EvalInfo &Info) {
-      OldEvalStatus = Info.EvalStatus;
-      Info.EvalStatus.Diag = nullptr;
-      StoredInfo = &Info;
+      SpecEvalRAII = SpeculativeEvaluationRAII(Info);
     }
-    ~Job() {
-      if (StoredInfo) {
-        StoredInfo->EvalStatus = OldEvalStatus;
-      }
-    }
+
   private:
-    EvalInfo *StoredInfo = nullptr; // non-null if status changed.
-    Expr::EvalStatus OldEvalStatus;
+    SpeculativeEvaluationRAII SpecEvalRAII;
   };
 
   SmallVector<Job, 16> Queue;
@@ -7145,7 +7194,7 @@ bool DataRecursiveIntBinOpEvaluator::
       LHSResult.Failed = true;
 
       // Since we weren't able to evaluate the left hand side, it
-      // must have had side effects.
+      // might have had side effects.
       if (!Info.noteSideEffect())
         return false;
 
@@ -7313,10 +7362,34 @@ void DataRecursiveIntBinOpEvaluator::process(EvalResult &Result) {
   llvm_unreachable("Invalid Job::Kind!");
 }
 
+namespace {
+/// Used when we determine that we should fail, but can keep evaluating prior to
+/// noting that we had a failure.
+class DelayedNoteFailureRAII {
+  EvalInfo &Info;
+  bool NoteFailure;
+
+public:
+  DelayedNoteFailureRAII(EvalInfo &Info, bool NoteFailure = true)
+      : Info(Info), NoteFailure(NoteFailure) {}
+  ~DelayedNoteFailureRAII() {
+    if (NoteFailure) {
+      bool ContinueAfterFailure = Info.noteFailure();
+      (void)ContinueAfterFailure;
+      assert(ContinueAfterFailure &&
+             "Shouldn't have kept evaluating on failure.");
+    }
+  }
+};
+}
+
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
+  // We don't call noteFailure immediately because the assignment happens after
+  // we evaluate LHS and RHS.
   if (!Info.keepEvaluatingAfterFailure() && E->isAssignmentOp())
     return Error(E);
 
+  DelayedNoteFailureRAII MaybeNoteFailureLater(Info, E->isAssignmentOp());
   if (DataRecursiveIntBinOpEvaluator::shouldEnqueue(E))
     return DataRecursiveIntBinOpEvaluator(*this, Result).Traverse(E);
 
@@ -7638,7 +7711,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     MemberPtr LHSValue, RHSValue;
 
     bool LHSOK = EvaluateMemberPointer(E->getLHS(), LHSValue, Info);
-    if (!LHSOK && Info.keepEvaluatingAfterFailure())
+    if (!LHSOK && !Info.keepEvaluatingAfterFailure())
       return false;
 
     if (!EvaluateMemberPointer(E->getRHS(), RHSValue, Info) || !LHSOK)
