@@ -56,8 +56,8 @@ struct TpiStream::HeaderInfo {
   EmbeddedBuf HashAdjBuffer;
 };
 
-TpiStream::TpiStream(PDBFile &File)
-    : Pdb(File), Stream(StreamTPI, File), HashFunction(nullptr) {}
+TpiStream::TpiStream(PDBFile &File, uint32_t StreamIdx)
+    : Pdb(File), Stream(StreamIdx, File), HashFunction(nullptr) {}
 
 TpiStream::~TpiStream() {}
 

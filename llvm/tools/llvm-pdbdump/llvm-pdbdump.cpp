@@ -112,13 +112,22 @@ cl::opt<bool> DumpStreamBlocks("raw-stream-blocks",
 cl::opt<bool> DumpStreamSummary("raw-stream-summary",
                                 cl::desc("dump summary of the PDB streams"),
                                 cl::cat(NativeOtions));
-cl::opt<bool> DumpTpiRecords("raw-tpi-records",
-                             cl::desc("dump CodeView type records"),
-                             cl::cat(NativeOtions));
 cl::opt<bool>
-    DumpTpiRecordBytes("raw-tpi-record-bytes",
-                       cl::desc("dump CodeView type record raw bytes"),
-                       cl::cat(NativeOtions));
+    DumpTpiRecords("raw-tpi-records",
+                   cl::desc("dump CodeView type records from TPI stream"),
+                   cl::cat(NativeOtions));
+cl::opt<bool> DumpTpiRecordBytes(
+    "raw-tpi-record-bytes",
+    cl::desc("dump CodeView type record raw bytes from TPI stream"),
+    cl::cat(NativeOtions));
+cl::opt<bool>
+    DumpIpiRecords("raw-ipi-records",
+                   cl::desc("dump CodeView type records from IPI stream"),
+                   cl::cat(NativeOtions));
+cl::opt<bool> DumpIpiRecordBytes(
+    "raw-ipi-record-bytes",
+    cl::desc("dump CodeView type record raw bytes from IPI stream"),
+    cl::cat(NativeOtions));
 cl::opt<std::string> DumpStreamDataIdx("raw-stream",
                                        cl::desc("dump stream data"),
                                        cl::cat(NativeOtions));
@@ -213,11 +222,15 @@ static Error dumpStreamSummary(ScopedPrinter &P, PDBFile &File) {
   auto TpiS = File.getPDBTpiStream();
   if (auto EC = TpiS.takeError())
     return EC;
+  auto IpiS = File.getPDBIpiStream();
+  if (auto EC = IpiS.takeError())
+    return EC;
   auto InfoS = File.getPDBInfoStream();
   if (auto EC = InfoS.takeError())
     return EC;
   DbiStream &DS = DbiS.get();
   TpiStream &TS = TpiS.get();
+  TpiStream &TIS = IpiS.get();
   InfoStream &IS = InfoS.get();
 
   ListScope L(P, "Streams");
@@ -255,6 +268,10 @@ static Error dumpStreamSummary(ScopedPrinter &P, PDBFile &File) {
       Value = "TPI Hash";
     else if (StreamIdx == TS.getTypeHashStreamAuxIndex())
       Value = "TPI Aux Hash";
+    else if (StreamIdx == TIS.getTypeHashStreamIndex())
+      Value = "IPI Hash";
+    else if (StreamIdx == TIS.getTypeHashStreamAuxIndex())
+      Value = "IPI Aux Hash";
     else {
       auto ModIter = ModStreams.find(StreamIdx);
       auto NSIter = NamedStreams.find(StreamIdx);
@@ -454,17 +471,37 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
 }
 
 static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File,
-                           codeview::CVTypeDumper &TD) {
+                           codeview::CVTypeDumper &TD, uint32_t StreamIdx) {
+  assert(StreamIdx == StreamTPI || StreamIdx == StreamIPI);
 
-  if (opts::DumpTpiRecordBytes || opts::DumpTpiRecords) {
-    DictScope D(P, "Type Info Stream");
+  bool DumpRecordBytes = false;
+  bool DumpRecords = false;
+  StringRef Label;
+  StringRef VerLabel;
+  if (StreamIdx == StreamTPI) {
+    DumpRecordBytes = opts::DumpTpiRecordBytes;
+    DumpRecords = opts::DumpTpiRecordBytes;
+    Label = "Type Info Stream (TPI)";
+    VerLabel = "TPI Version";
+  } else if (StreamIdx == StreamIPI) {
+    DumpRecordBytes = opts::DumpIpiRecordBytes;
+    DumpRecords = opts::DumpIpiRecords;
+    Label = "Type Info Stream (IPI)";
+    VerLabel = "IPI Version";
+  }
+  if (!DumpRecordBytes && !DumpRecords && !opts::DumpModuleSyms)
+    return Error::success();
 
-    auto TpiS = File.getPDBTpiStream();
+  auto TpiS = (StreamIdx == StreamTPI) ? File.getPDBTpiStream()
+                                       : File.getPDBIpiStream();
     if (auto EC = TpiS.takeError())
       return EC;
     TpiStream &Tpi = TpiS.get();
 
-    P.printNumber("TPI Version", Tpi.getTpiVersion());
+    if (DumpRecords || DumpRecordBytes) {
+      DictScope D(P, Label);
+
+      P.printNumber(VerLabel, Tpi.getTpiVersion());
     P.printNumber("Record count", Tpi.NumTypeRecords());
 
     ListScope L(P, "Records");
@@ -473,10 +510,10 @@ static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File,
     for (auto &Type : Tpi.types(&HadError)) {
       DictScope DD(P, "");
 
-      if (opts::DumpTpiRecords)
+      if (DumpRecords)
         TD.dump(Type);
 
-      if (opts::DumpTpiRecordBytes)
+      if (DumpRecordBytes)
         P.printBinaryBlock("Bytes", Type.Data);
     }
     if (HadError)
@@ -489,10 +526,7 @@ static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File,
     // but not types, use a null output stream.
     ScopedPrinter *OldP = TD.getPrinter();
     TD.setPrinter(nullptr);
-    auto TpiS = File.getPDBTpiStream();
-    if (auto EC = TpiS.takeError())
-      return EC;
-    TpiStream &Tpi = TpiS.get();
+
     bool HadError = false;
     for (auto &Type : Tpi.types(&HadError))
       TD.dump(Type);
@@ -502,7 +536,7 @@ static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File,
       return make_error<RawError>(raw_error_code::corrupt_file,
                                   "TPI stream contained corrupt record");
   }
-
+  P.flush();
   return Error::success();
 }
 
@@ -559,7 +593,9 @@ static Error dumpStructure(RawSession &RS) {
     return EC;
 
   codeview::CVTypeDumper TD(P, false);
-  if (auto EC = dumpTpiStream(P, File, TD))
+  if (auto EC = dumpTpiStream(P, File, TD, StreamTPI))
+    return EC;
+  if (auto EC = dumpTpiStream(P, File, TD, StreamIPI))
     return EC;
 
   if (auto EC = dumpDbiStream(P, File, TD))
@@ -594,6 +630,10 @@ bool isRawDumpEnabled() {
   if (opts::DumpTpiRecordBytes)
     return true;
   if (opts::DumpTpiRecords)
+    return true;
+  if (opts::DumpIpiRecords)
+    return true;
+  if (opts::DumpIpiRecordBytes)
     return true;
   return false;
 }

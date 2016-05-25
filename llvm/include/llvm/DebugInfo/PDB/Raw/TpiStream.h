@@ -28,7 +28,7 @@ class TpiStream {
   struct HeaderInfo;
 
 public:
-  TpiStream(PDBFile &File);
+  TpiStream(PDBFile &File, uint32_t StreamIdx);
   ~TpiStream();
   Error reload();
 

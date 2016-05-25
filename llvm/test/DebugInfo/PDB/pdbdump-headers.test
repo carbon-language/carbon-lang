@@ -1,6 +1,7 @@
 ; RUN: llvm-pdbdump -raw-headers -raw-tpi-records -raw-tpi-record-bytes -raw-module-syms \
 ; RUN:              -raw-sym-record-bytes -raw-publics -raw-module-files -raw-stream-name=/names \
-; RUN:              -raw-stream-summary %p/Inputs/empty.pdb | FileCheck -check-prefix=EMPTY %s
+; RUN:              -raw-stream-summary -raw-ipi-records -raw-ipi-record-bytes %p/Inputs/empty.pdb \
+; RUN:              | FileCheck -check-prefix=EMPTY %s
 ; RUN: llvm-pdbdump -raw-headers -raw-stream-name=/names -raw-modules -raw-module-files \
 ; RUN:              %p/Inputs/big-read.pdb | FileCheck -check-prefix=BIG %s
 ; RUN: llvm-pdbdump -raw-headers %p/Inputs/bad-block-size.pdb | FileCheck -check-prefix=BAD-BLOCK-SIZE %s
@@ -34,7 +35,7 @@
 ; EMPTY-NEXT:   Stream 13: [Named Stream "/names"] (239 bytes)
 ; EMPTY-NEXT:   Stream 14: [Module "* Linker *"] (520 bytes)
 ; EMPTY-NEXT:   Stream 15: [TPI Hash] (308 bytes)
-; EMPTY-NEXT:   Stream 16: [???] (68 bytes)
+; EMPTY-NEXT:   Stream 16: [IPI Hash] (68 bytes)
 ; EMPTY-NEXT: ]
 ; EMPTY-NEXT: PDB Stream {
 ; EMPTY-NEXT:   Version: 20000404
@@ -53,7 +54,7 @@
 ; EMPTY-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =
 ; EMPTY-NEXT:   ]
 ; EMPTY-NEXT: }
-; EMPTY-NEXT: Type Info Stream {
+; EMPTY-NEXT: Type Info Stream (TPI) {
 ; EMPTY-NEXT:   TPI Version: 20040203
 ; EMPTY-NEXT:   Record count: 75
 ; EMPTY-NEXT:   Records [
@@ -119,6 +120,82 @@
 ; EMPTY-NEXT:         0040: 0500626F 746800F1                    |..both..|
 ; EMPTY-NEXT:       )
 ; EMPTY-NEXT:     }
+; EMPTY:        Type Info Stream (IPI) {
+; EMPTY-NEXT:     IPI Version: 20040203
+; EMPTY-NEXT:     Record count: 15
+; EMPTY-NEXT:     Records [
+; EMPTY-NEXT:       {
+; EMPTY-NEXT:         UnknownLeaf (0x104B) {
+; EMPTY-NEXT:           TypeLeafKind: LF_UDT_MOD_SRC_LINE (0x1607)
+; EMPTY-NEXT:           UnknownType {
+; EMPTY-NEXT:             Kind: LF_UDT_MOD_SRC_LINE (0x1607)
+; EMPTY-NEXT:             Length: 16
+; EMPTY-NEXT:           }
+; EMPTY-NEXT:         }
+; EMPTY-NEXT:         Bytes (
+; EMPTY-NEXT:           0000: 0B100000 01000000 E1010000 0100F2F1  |................|
+; EMPTY-NEXT:         )
+; EMPTY-NEXT:       }
+; EMPTY-NEXT:       {
+; EMPTY-NEXT:         UnknownLeaf (0x104C) {
+; EMPTY-NEXT:           TypeLeafKind: LF_UDT_MOD_SRC_LINE (0x1607)
+; EMPTY-NEXT:           UnknownType {
+; EMPTY-NEXT:             Kind: LF_UDT_MOD_SRC_LINE (0x1607)
+; EMPTY-NEXT:             Length: 16
+; EMPTY-NEXT:           }
+; EMPTY-NEXT:         }
+; EMPTY-NEXT:         Bytes (
+; EMPTY-NEXT:           0000: 17100000 01000000 C2000000 0100F2F1  |................|
+; EMPTY-NEXT:         )
+; EMPTY-NEXT:       }
+; EMPTY-NEXT:       {
+; EMPTY-NEXT:         UnknownLeaf (0x104D) {
+; EMPTY-NEXT:           TypeLeafKind: LF_UDT_MOD_SRC_LINE (0x1607)
+; EMPTY-NEXT:           UnknownType {
+; EMPTY-NEXT:             Kind: LF_UDT_MOD_SRC_LINE (0x1607)
+; EMPTY-NEXT:             Length: 16
+; EMPTY-NEXT:           }
+; EMPTY-NEXT:         }
+; EMPTY-NEXT:         Bytes (
+; EMPTY-NEXT:           0000: 21100000 01000000 5B020000 0100F2F1  |!.......[.......|
+; EMPTY-NEXT:         )
+; EMPTY-NEXT:       }
+; EMPTY-NEXT:       {
+; EMPTY-NEXT:         UnknownLeaf (0x104E) {
+; EMPTY-NEXT:           TypeLeafKind: LF_UDT_MOD_SRC_LINE (0x1607)
+; EMPTY-NEXT:           UnknownType {
+; EMPTY-NEXT:             Kind: LF_UDT_MOD_SRC_LINE (0x1607)
+; EMPTY-NEXT:             Length: 16
+; EMPTY-NEXT:           }
+; EMPTY-NEXT:         }
+; EMPTY-NEXT:         Bytes (
+; EMPTY-NEXT:           0000: 2C100000 01000000 B0040000 0100F2F1  |,...............|
+; EMPTY-NEXT:         )
+; EMPTY-NEXT:       }
+; EMPTY-NEXT:       {
+; EMPTY-NEXT:         UnknownLeaf (0x104F) {
+; EMPTY-NEXT:           TypeLeafKind: LF_UDT_MOD_SRC_LINE (0x1607)
+; EMPTY-NEXT:           UnknownType {
+; EMPTY-NEXT:             Kind: LF_UDT_MOD_SRC_LINE (0x1607)
+; EMPTY-NEXT:             Length: 16
+; EMPTY-NEXT:           }
+; EMPTY-NEXT:         }
+; EMPTY-NEXT:         Bytes (
+; EMPTY-NEXT:           0000: 3A100000 01000000 1C020000 0100F2F1  |:...............|
+; EMPTY-NEXT:         )
+; EMPTY-NEXT:       }
+; EMPTY-NEXT:       {
+; EMPTY-NEXT:         UnknownLeaf (0x1050) {
+; EMPTY-NEXT:           TypeLeafKind: LF_UDT_MOD_SRC_LINE (0x1607)
+; EMPTY-NEXT:           UnknownType {
+; EMPTY-NEXT:             Kind: LF_UDT_MOD_SRC_LINE (0x1607)
+; EMPTY-NEXT:             Length: 16
+; EMPTY-NEXT:           }
+; EMPTY-NEXT:         }
+; EMPTY-NEXT:         Bytes (
+; EMPTY-NEXT:           0000: 42100000 01000000 6C000000 0100F2F1  |B.......l.......|
+; EMPTY-NEXT:         )
+; EMPTY-NEXT:       }
 ; EMPTY:      DBI Stream {
 ; EMPTY-NEXT:   Dbi Version: 19990903
 ; EMPTY-NEXT:   Age: 1

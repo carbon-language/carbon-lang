@@ -289,11 +289,20 @@ Expected<DbiStream &> PDBFile::getPDBDbiStream() {
 
 Expected<TpiStream &> PDBFile::getPDBTpiStream() {
   if (!Tpi) {
-    Tpi.reset(new TpiStream(*this));
+    Tpi.reset(new TpiStream(*this, StreamTPI));
     if (auto EC = Tpi->reload())
       return std::move(EC);
   }
   return *Tpi;
+}
+
+Expected<TpiStream &> PDBFile::getPDBIpiStream() {
+  if (!Ipi) {
+    Ipi.reset(new TpiStream(*this, StreamIPI));
+    if (auto EC = Ipi->reload())
+      return std::move(EC);
+  }
+  return *Ipi;
 }
 
 Expected<PublicsStream &> PDBFile::getPDBPublicsStream() {
