@@ -106,12 +106,12 @@ cl::opt<uint64_t> LoadAddress(
 
 cl::opt<bool> DumpHeaders("raw-headers", cl::desc("dump PDB headers"),
                           cl::cat(NativeOtions));
-cl::opt<bool> DumpStreamSizes("raw-stream-sizes",
-                              cl::desc("dump PDB stream sizes"),
-                              cl::cat(NativeOtions));
 cl::opt<bool> DumpStreamBlocks("raw-stream-blocks",
                                cl::desc("dump PDB stream blocks"),
                                cl::cat(NativeOtions));
+cl::opt<bool> DumpStreamSummary("raw-stream-summary",
+                                cl::desc("dump summary of the PDB streams"),
+                                cl::cat(NativeOtions));
 cl::opt<bool> DumpTpiRecords("raw-tpi-records",
                              cl::desc("dump CodeView type records"),
                              cl::cat(NativeOtions));
@@ -203,17 +203,82 @@ static Error dumpFileHeaders(ScopedPrinter &P, PDBFile &File) {
   return Error::success();
 }
 
-static Error dumpStreamSizes(ScopedPrinter &P, PDBFile &File) {
-  if (!opts::DumpStreamSizes)
+static Error dumpStreamSummary(ScopedPrinter &P, PDBFile &File) {
+  if (!opts::DumpStreamSummary)
     return Error::success();
 
-  ListScope L(P, "StreamSizes");
+  auto DbiS = File.getPDBDbiStream();
+  if (auto EC = DbiS.takeError())
+    return EC;
+  auto TpiS = File.getPDBTpiStream();
+  if (auto EC = TpiS.takeError())
+    return EC;
+  auto InfoS = File.getPDBInfoStream();
+  if (auto EC = InfoS.takeError())
+    return EC;
+  DbiStream &DS = DbiS.get();
+  TpiStream &TS = TpiS.get();
+  InfoStream &IS = InfoS.get();
+
+  ListScope L(P, "Streams");
   uint32_t StreamCount = File.getNumStreams();
-  for (uint32_t StreamIdx = 0; StreamIdx < StreamCount; ++StreamIdx) {
-    std::string Name("Stream ");
-    Name += to_string(StreamIdx);
-    P.printNumber(Name, File.getStreamByteSize(StreamIdx));
+  std::unordered_map<uint16_t, const ModuleInfoEx *> ModStreams;
+  std::unordered_map<uint16_t, std::string> NamedStreams;
+
+  for (auto &ModI : DS.modules()) {
+    uint16_t SN = ModI.Info.getModuleStreamIndex();
+    ModStreams[SN] = &ModI;
   }
+  for (auto &NSE : IS.named_streams()) {
+    NamedStreams[NSE.second] = NSE.first();
+  }
+
+  for (uint16_t StreamIdx = 0; StreamIdx < StreamCount; ++StreamIdx) {
+    std::string Label("Stream ");
+    Label += to_string(StreamIdx);
+    std::string Value;
+    if (StreamIdx == 0)
+      Value = "MSF Superblock";
+    else if (StreamIdx == StreamPDB)
+      Value = "PDB Stream";
+    else if (StreamIdx == StreamDBI)
+      Value = "DBI Stream";
+    else if (StreamIdx == StreamTPI)
+      Value = "TPI Stream";
+    else if (StreamIdx == StreamIPI)
+      Value = "IPI Stream";
+    else if (StreamIdx == DS.getGlobalSymbolStreamIndex())
+      Value = "Global Symbol Hash";
+    else if (StreamIdx == DS.getPublicSymbolStreamIndex())
+      Value = "Public Symbol Hash";
+    else if (StreamIdx == DS.getSymRecordStreamIndex())
+      Value = "Public Symbol Records";
+    else if (StreamIdx == TS.getTypeHashStreamIndex())
+      Value = "TPI Hash";
+    else if (StreamIdx == TS.getTypeHashStreamAuxIndex())
+      Value = "TPI Aux Hash";
+    else {
+      auto ModIter = ModStreams.find(StreamIdx);
+      auto NSIter = NamedStreams.find(StreamIdx);
+      if (ModIter != ModStreams.end()) {
+        Value = "Module \"";
+        Value += ModIter->second->Info.getModuleName();
+        Value += "\"";
+      } else if (NSIter != NamedStreams.end()) {
+        Value = "Named Stream \"";
+        Value += NSIter->second;
+        Value += "\"";
+      } else {
+        Value = "???";
+      }
+    }
+    Value = "[" + Value + "]";
+    Value =
+        Value + " (" + to_string(File.getStreamByteSize(StreamIdx)) + " bytes)";
+
+    P.printString(Label, Value);
+  }
+  P.flush();
   return Error::success();
 }
 
@@ -473,7 +538,7 @@ static Error dumpStructure(RawSession &RS) {
   if (auto EC = dumpFileHeaders(P, File))
     return EC;
 
-  if (auto EC = dumpStreamSizes(P, File))
+  if (auto EC = dumpStreamSummary(P, File))
     return EC;
 
   if (auto EC = dumpStreamBlocks(P, File))
@@ -515,9 +580,9 @@ bool isRawDumpEnabled() {
     return true;
   if (opts::DumpPublics)
     return true;
-  if (opts::DumpStreamBlocks)
+  if (opts::DumpStreamSummary)
     return true;
-  if (opts::DumpStreamSizes)
+  if (opts::DumpStreamBlocks)
     return true;
   if (opts::DumpSymRecordBytes)
     return true;

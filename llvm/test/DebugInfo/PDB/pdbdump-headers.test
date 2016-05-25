@@ -1,6 +1,6 @@
 ; RUN: llvm-pdbdump -raw-headers -raw-tpi-records -raw-tpi-record-bytes -raw-module-syms \
 ; RUN:              -raw-sym-record-bytes -raw-publics -raw-module-files -raw-stream-name=/names \
-; RUN:              %p/Inputs/empty.pdb | FileCheck -check-prefix=EMPTY %s
+; RUN:              -raw-stream-summary %p/Inputs/empty.pdb | FileCheck -check-prefix=EMPTY %s
 ; RUN: llvm-pdbdump -raw-headers -raw-stream-name=/names -raw-modules -raw-module-files \
 ; RUN:              %p/Inputs/big-read.pdb | FileCheck -check-prefix=BIG %s
 ; RUN: llvm-pdbdump -raw-headers %p/Inputs/bad-block-size.pdb | FileCheck -check-prefix=BAD-BLOCK-SIZE %s
@@ -17,6 +17,25 @@
 ; EMPTY-NEXT:   DirectoryBlocks: [23]
 ; EMPTY-NEXT:   NumStreams: 17
 ; EMPTY-NEXT: }
+; EMPTY-NEXT: Streams [
+; EMPTY-NEXT:   Stream 0: [MSF Superblock] (40 bytes)
+; EMPTY-NEXT:   Stream 1: [PDB Stream] (118 bytes)
+; EMPTY-NEXT:   Stream 2: [TPI Stream] (5392 bytes)
+; EMPTY-NEXT:   Stream 3: [DBI Stream] (739 bytes)
+; EMPTY-NEXT:   Stream 4: [IPI Stream] (784 bytes)
+; EMPTY-NEXT:   Stream 5: [Named Stream "/LinkInfo"] (0 bytes)
+; EMPTY-NEXT:   Stream 6: [Global Symbol Hash] (556 bytes)
+; EMPTY-NEXT:   Stream 7: [Public Symbol Hash] (604 bytes)
+; EMPTY-NEXT:   Stream 8: [Public Symbol Records] (104 bytes)
+; EMPTY-NEXT:   Stream 9: [Named Stream "/src/headerblock"] (0 bytes)
+; EMPTY-NEXT:   Stream 10: [???] (160 bytes)
+; EMPTY-NEXT:   Stream 11: [???] (32 bytes)
+; EMPTY-NEXT:   Stream 12: [Module "d:\src\llvm\test\DebugInfo\PDB\Inputs\empty.obj"] (308 bytes)
+; EMPTY-NEXT:   Stream 13: [Named Stream "/names"] (239 bytes)
+; EMPTY-NEXT:   Stream 14: [Module "* Linker *"] (520 bytes)
+; EMPTY-NEXT:   Stream 15: [TPI Hash] (308 bytes)
+; EMPTY-NEXT:   Stream 16: [???] (68 bytes)
+; EMPTY-NEXT: ]
 ; EMPTY-NEXT: PDB Stream {
 ; EMPTY-NEXT:   Version: 20000404
 ; EMPTY-NEXT:   Signature: 0x54E507E2

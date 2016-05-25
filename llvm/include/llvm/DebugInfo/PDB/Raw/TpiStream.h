@@ -37,6 +37,8 @@ public:
   uint32_t TypeIndexBegin() const;
   uint32_t TypeIndexEnd() const;
   uint32_t NumTypeRecords() const;
+  uint16_t getTypeHashStreamIndex() const;
+  uint16_t getTypeHashStreamAuxIndex() const;
 
   iterator_range<codeview::TypeIterator> types(bool *HadError) const;
 
