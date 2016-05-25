@@ -145,7 +145,7 @@ private:
       return *this;
     }
 
-    SymbolResolverFtor ExternalSymbolResolver;
+    std::unique_ptr<RuntimeDyld::SymbolResolver> ExternalSymbolResolver;
     std::unique_ptr<ResourceOwner<RuntimeDyld::MemoryManager>> MemMgr;
     ModuleAdderFtor ModuleAdder;
   };
@@ -188,10 +188,7 @@ public:
     LogicalDylibs.push_back(CODLogicalDylib(BaseLayer));
     auto &LDResources = LogicalDylibs.back().getDylibResources();
 
-    LDResources.ExternalSymbolResolver =
-      [Resolver](const std::string &Name) {
-        return Resolver->findSymbol(Name);
-      };
+    LDResources.ExternalSymbolResolver = std::move(Resolver);
 
     auto &MemMgrRef = *MemMgr;
     LDResources.MemMgr =
@@ -357,10 +354,12 @@ private:
           auto &LMResources = LD.getLogicalModuleResources(LMH);
           if (auto Sym = LMResources.StubsMgr->findStub(Name, false))
             return RuntimeDyld::SymbolInfo(Sym.getAddress(), Sym.getFlags());
-          return LD.getDylibResources().ExternalSymbolResolver(Name);
+          auto &LDResolver = LD.getDylibResources().ExternalSymbolResolver;
+          return LDResolver->findSymbolInLogicalDylib(Name);
         },
-        [](const std::string &Name) {
-          return RuntimeDyld::SymbolInfo(nullptr);
+        [&LD](const std::string &Name) {
+          auto &LDResolver = LD.getDylibResources().ExternalSymbolResolver;
+          return LDResolver->findSymbol(Name);
         });
 
     auto GVsH =
@@ -484,13 +483,12 @@ private:
           if (auto Symbol = LD.findSymbolInternally(LMH, Name))
             return RuntimeDyld::SymbolInfo(Symbol.getAddress(),
                                            Symbol.getFlags());
-          return LD.getDylibResources().ExternalSymbolResolver(Name);
+          auto &LDResolver = LD.getDylibResources().ExternalSymbolResolver;
+          return LDResolver->findSymbolInLogicalDylib(Name);
         },
-        [this, &LD, LMH](const std::string &Name) {
-          if (auto Symbol = LD.findSymbolInternally(LMH, Name))
-            return RuntimeDyld::SymbolInfo(Symbol.getAddress(),
-                                           Symbol.getFlags());
-          return RuntimeDyld::SymbolInfo(nullptr);
+        [this, &LD](const std::string &Name) {
+          auto &LDResolver = LD.getDylibResources().ExternalSymbolResolver;
+          return LDResolver->findSymbol(Name);
         });
 
     return LD.getDylibResources().ModuleAdder(BaseLayer, std::move(M),
