@@ -337,7 +337,7 @@ const HeaderMapCollector::HeaderMap *getSTLPostfixHeaderMap() {
       {"sys/sysmacros.h", "<cstdlib>"},
       {"sys/types.h", "<cstdlib>"},
       {"sys/ucontext.h", "<csignal>"},
-      {"/usr/include/xlocale.h", "<cstring>"},
+      {"include/xlocale.h", "<cstring>"},
       {"bits/atomic_word.h", "<memory>"},
       {"bits/basic_file.h", "<fstream>"},
       {"bits/c++allocator.h", "<string>"},
