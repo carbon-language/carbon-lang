@@ -651,7 +651,7 @@ void test_mm_store_ps(float* x, __m128 y) {
 void test_mm_store_ps1(float* x, __m128 y) {
   // CHECK-LABEL: test_mm_store_ps1
   // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> %{{.*}}, <4 x i32> zeroinitializer
-  // CHECK: store <4 x float> %{{.*}}, <4 x float>* {{.*}}, align 16
+  // CHECK: call void @llvm.x86.sse.storeu.ps(i8* %{{.*}}, <4 x float> %{{.*}})
   _mm_store_ps1(x, y);
 }
 
