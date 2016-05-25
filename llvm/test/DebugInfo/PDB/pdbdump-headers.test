@@ -50,6 +50,7 @@
 ; EMPTY-NEXT:   Names [
 ; EMPTY-NEXT:     d:\src\llvm\test\debuginfo\pdb\inputs\predefined c++ attributes (compiler internal)
 ; EMPTY-NEXT:     d:\src\llvm\test\debuginfo\pdb\inputs\empty.cpp
+; EMPTY-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =
 ; EMPTY-NEXT:   ]
 ; EMPTY-NEXT: }
 ; EMPTY-NEXT: Type Info Stream {
@@ -524,24 +525,24 @@
 ; BIG-NEXT:     f:\dd\vctools\crt\vcruntime\inc\vcruntime_startup.h
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\misc\checkcfg.c
 ; BIG-NEXT:     f:\dd\vctools\langapi\include\isa_availability.h
-; BIG-NEXT:     $T0 $ebp = $T2 $esp = $T1 .raSearchStart = $eip $T1 ^ = $ebp $T0 = $esp $T1 4 + = 
+; BIG-NEXT:     $T0 $ebp = $T2 $esp = $T1 .raSearchStart = $eip $T1 ^ = $ebp $T0 = $esp $T1 4 + =
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\startup\exe_common.inl
-; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $20 $T0 40 - ^ =  $23 $T0 44 - ^ =  $24 $T0 48 - ^ = 
-; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $23 $T0 16 - ^ =  $24 $T0 20 - ^ = 
+; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $20 $T0 40 - ^ =  $23 $T0 44 - ^ =  $24 $T0 48 - ^ =
+; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $23 $T0 16 - ^ =  $24 $T0 20 - ^ =
 ; BIG-NEXT:     f:\dd\externalapis\windows\8.1\sdk\inc\wingdi.h
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\build\md\msvcrt_kernel32\predefined c++ types (compiler internal)
-; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $23 $T0 24 - ^ = 
+; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $23 $T0 24 - ^ =
 ; BIG-NEXT:     f:\dd\externalapis\unifiedcrt\inc\corecrt_memcpy_s.h
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\utility\ucrt_stubs.cpp
-; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + = 
+; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\utility\dyn_tls_init.c
 ; BIG-NEXT:     f:\dd\externalapis\unifiedcrt\inc\corecrt_wstdio.h
-; BIG-NEXT:     $T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + =  $23 $T0 4 - ^ = 
+; BIG-NEXT:     $T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + =  $23 $T0 4 - ^ =
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\defaults\default_precision.cpp
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\defaults\thread_locale.cpp
 ; BIG-NEXT:     f:\dd\externalapis\unifiedcrt\inc\string.h
 ; BIG-NEXT:     f:\dd\externalapis\unifiedcrt\inc\corecrt_wstring.h
-; BIG-NEXT:     $T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + =  $20 $T0 4 - ^ =  $23 $T0 8 - ^ = 
+; BIG-NEXT:     $T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + =  $20 $T0 4 - ^ =  $23 $T0 8 - ^ =
 ; BIG-NEXT:     d:\src\llvm\test\tools\llvm-symbolizer\pdb\inputs\test.cpp
 ; BIG-NEXT:     f:\dd\externalapis\unifiedcrt\inc\corecrt_stdio_config.h
 ; BIG-NEXT:     f:\dd\vctools\crt\vcruntime\inc\vcruntime_new.h
@@ -556,9 +557,9 @@
 ; BIG-NEXT:     f:\dd\externalapis\unifiedcrt\inc\corecrt.h
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\defaults\env_mode.cpp
 ; BIG-NEXT:     f:\dd\externalapis\windows\8.1\sdk\inc\winbase.h
-; BIG-NEXT:     $T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = 
+; BIG-NEXT:     $T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + =
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\eh\tncleanup.cpp
-; BIG-NEXT:     $T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + =  $20 $T0 4 - ^ =  $23 $T0 8 - ^ =  $24 $T0 12 - ^ = 
+; BIG-NEXT:     $T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + =  $20 $T0 4 - ^ =  $23 $T0 8 - ^ =  $24 $T0 12 - ^ =
 ; BIG-NEXT:     f:\dd\vctools\crt\vcruntime\inc\internal_shared.h
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\eh\i386\sehprolg4.asm
 ; BIG-NEXT:     f:\dd\externalapis\windows\8.1\sdk\inc\winnt.h
@@ -566,10 +567,10 @@
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\misc\guard_support.c
 ; BIG-NEXT:     f:\dd\vctools\crt\vcruntime\inc\vcruntime_typeinfo.h
 ; BIG-NEXT:     f:\dd\externalapis\windows\8.1\sdk\inc\evntprov.h
-; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $23 $T0 24 - ^ =  $24 $T0 28 - ^ = 
+; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $23 $T0 24 - ^ =  $24 $T0 28 - ^ =
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\utility\utility.cpp
 ; BIG-NEXT:     f:\dd\vctools\crt\vcruntime\inc\eh.h
-; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $20 $T0 808 - ^ =  $23 $T0 812 - ^ = 
+; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $20 $T0 808 - ^ =  $23 $T0 812 - ^ =
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\build\md\msvcrt_kernel32\predefined c++ attributes (compiler internal)
 ; BIG-NEXT:     d:\src\llvm\test\tools\llvm-symbolizer\pdb\inputs\predefined c++ attributes (compiler internal)
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\defaults\argv_mode.cpp
@@ -580,10 +581,38 @@
 ; BIG-NEXT:     f:\dd\externalapis\windows\8.1\sdk\inc\guiddef.h
 ; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\utility\dyn_tls_dtor.c
 ; BIG-NEXT:     f:\dd\vctools\crt\vcruntime\inc\i386\mmintrin.h
-; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $23 $T0 4 - ^ = 
-; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $20 $T0 28 - ^ =  $23 $T0 32 - ^ =  $24 $T0 36 - ^ = 
+; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $23 $T0 4 - ^ =
+; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $20 $T0 28 - ^ =  $23 $T0 32 - ^ =  $24 $T0 36 - ^ =
 ; BIG-NEXT:     f:\dd\vctools\crt\vcruntime\inc\i386\xmmintrin.h
 ; BIG-NEXT:     f:\dd\vctools\crt\vcruntime\inc\rtcapi.h
+; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\defaults\denormal_control.cpp
+; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\gs\gs_report.c
+; BIG-NEXT:     f:\dd\externalapis\windows\8.1\sdk\inc\minwindef.h
+; BIG-NEXT:     f:\dd\vctools\crt\vcruntime\inc\vadefs.h
+; BIG-NEXT:     _TP_CALLBACK_ENVIRON_V3
+; BIG-NEXT:     $T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + =  $23 $T0 4 - ^ =  $24 $T0 8 - ^ =
+; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\inc\vcstartup_internal.h
+; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\rtc\initsect.cpp
+; BIG-NEXT:     f:\dd\externalapis\unifiedcrt\inc\ctype.h
+; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\utility\matherr_detection.c
+; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\defaults\invalid_parameter_handler.cpp
+; BIG-NEXT:     f:\dd\externalapis\windows\8.1\sdk\inc\basetsd.h
+; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\eh\i386\chandler4gs.c
+; BIG-NEXT:     f:\dd\vctools\langapi\include\ehdata.h
+; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\defaults\file_mode.cpp
+; BIG-NEXT:     f:\dd\externalapis\unifiedcrt\inc\math.h
+; BIG-NEXT:     f:\dd\externalapis\windows\8.1\sdk\inc\winuser.h
+; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $20 $T0 48 - ^ =  $23 $T0 52 - ^ =
+; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $20 $T0 48 - ^ =  $23 $T0 52 - ^ =  $24 $T0 56 - ^ =
+; BIG-NEXT:     f:\dd\externalapis\unifiedcrt\inc\stdlib.h
+; BIG-NEXT:     f:\dd\vctools\crt\vcstartup\src\defaults\default_local_stdio_options.cpp
+; BIG-NEXT:     f:\dd\externalapis\windows\8.1\sdk\inc\stralign.h
+; BIG-NEXT:     f:\dd\externalapis\unifiedcrt\inc\malloc.h
+; BIG-NEXT:     f:\dd\externalapis\windows\8.1\sdk\inc\winerror.h
+; BIG-NEXT:     $T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + =  $20 $T0 4 - ^ =
+; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $20 $T0 48 - ^ =
+; BIG-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =  $23 $T0 16 - ^ =
+; BIG-NEXT:     f:\dd\externalapis\unifiedcrt\inc\corecrt_memory.h
 ; BIG-NEXT:   ]
 ; BIG-NEXT: }
 ; BIG-NEXT: DBI Stream {
@@ -1621,7 +1650,7 @@
 ; BIG-NEXT:     {
 ; BIG-NEXT:       Name: * Linker *
 ; BIG-NEXT:       Debug Stream Index: 60
-; BIG-NEXT:       Object File Name: 
+; BIG-NEXT:       Object File Name:
 ; BIG-NEXT:       Num Files: 0
 ; BIG-NEXT:       Source File Name Idx: 0
 ; BIG-NEXT:       Pdb File Name Idx: 55
