@@ -2706,7 +2706,11 @@ static CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E,
         }
       } else {
         // FIXME: Allow folding of values of any literal type in all languages.
-        if (Info.getLangOpts().CPlusPlus11) {
+        if (Info.checkingPotentialConstantExpression() &&
+            VD->getType().isConstQualified() && !VD->hasDefinition(Info.Ctx)) {
+          // The definition of this variable could be constexpr. We can't
+          // access it right now, but may be able to in future.
+        } else if (Info.getLangOpts().CPlusPlus11) {
           Info.Diag(E, diag::note_constexpr_ltor_non_constexpr, 1) << VD;
           Info.Note(VD->getLocation(), diag::note_declared_at);
         } else {
@@ -5456,8 +5460,9 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
   }
 
   auto *CXXRD = dyn_cast<CXXRecordDecl>(RD);
-  Result = APValue(APValue::UninitStruct(), CXXRD ? CXXRD->getNumBases() : 0,
-                   std::distance(RD->field_begin(), RD->field_end()));
+  if (Result.isUninit())
+    Result = APValue(APValue::UninitStruct(), CXXRD ? CXXRD->getNumBases() : 0,
+                     std::distance(RD->field_begin(), RD->field_end()));
   unsigned ElementNo = 0;
   bool Success = true;
 
