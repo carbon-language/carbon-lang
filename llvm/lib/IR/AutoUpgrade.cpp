@@ -178,6 +178,10 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name.startswith("x86.avx2.pbroadcast") ||
         Name.startswith("x86.avx.vpermil.") ||
         Name.startswith("x86.sse41.pmovsx") ||
+        Name == "x86.sse2.cvtdq2pd" ||
+        Name == "x86.sse2.cvtps2pd" ||
+        Name == "x86.avx.cvtdq2.pd.256" ||
+        Name == "x86.avx.cvt.ps2.pd.256" ||
         Name == "x86.avx.vinsertf128.pd.256" ||
         Name == "x86.avx.vinsertf128.ps.256" ||
         Name == "x86.avx.vinsertf128.si.256" ||
@@ -397,6 +401,29 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                                   "pcmpgt");
       // need to sign extend since icmp returns vector of i1
       Rep = Builder.CreateSExt(Rep, CI->getType(), "");
+    } else if (Name == "llvm.x86.sse2.cvtdq2pd" ||
+               Name == "llvm.x86.sse2.cvtps2pd" ||
+               Name == "llvm.x86.avx.cvtdq2.pd.256" ||
+               Name == "llvm.x86.avx.cvt.ps2.pd.256") {
+      // Lossless i32/float to double conversion.
+      // Extract the bottom elements if necessary and convert to double vector.
+      Value *Src = CI->getArgOperand(0);
+      VectorType *SrcTy = cast<VectorType>(Src->getType());
+      VectorType *DstTy = cast<VectorType>(CI->getType());
+      Rep = CI->getArgOperand(0);
+
+      unsigned NumDstElts = DstTy->getNumElements();
+      if (NumDstElts < SrcTy->getNumElements()) {
+        assert(NumDstElts == 2 && "Unexpected vector size");
+        const int ShuffleMask[2] = { 0, 1 };
+        Rep = Builder.CreateShuffleVector(Rep, UndefValue::get(SrcTy), ShuffleMask);
+      }
+
+      bool Int2Double = (StringRef::npos != Name.find("cvtdq2"));
+      if (Int2Double)
+        Rep = Builder.CreateSIToFP(Rep, DstTy, "cvtdq2pd");
+      else
+        Rep = Builder.CreateFPExt(Rep, DstTy, "cvtps2pd");
     } else if (Name == "llvm.x86.avx.movnt.dq.256" ||
                Name == "llvm.x86.avx.movnt.ps.256" ||
                Name == "llvm.x86.avx.movnt.pd.256") {
