@@ -42,6 +42,9 @@ using namespace llvm;
 static cl::opt<bool>
     ClToolCacheFrag("esan-cache-frag", cl::init(false),
                     cl::desc("Detect data cache fragmentation"), cl::Hidden);
+static cl::opt<bool>
+    ClToolWorkingSet("esan-working-set", cl::init(false),
+                    cl::desc("Measure the working set size"), cl::Hidden);
 // Each new tool will get its own opt flag here.
 // These are converted to EfficiencySanitizerOptions for use
 // in the code.
@@ -65,12 +68,31 @@ static const char *const EsanModuleDtorName = "esan.module_dtor";
 static const char *const EsanInitName = "__esan_init";
 static const char *const EsanExitName = "__esan_exit";
 
+// We must keep these Shadow* constants consistent with the esan runtime.
+// FIXME: Try to place these shadow constants, the names of the __esan_*
+// interface functions, and the ToolType enum into a header shared between
+// llvm and compiler-rt.
+static const uint64_t ShadowMask = 0x00000fffffffffffull;
+static const uint64_t ShadowOffs[3] = { // Indexed by scale
+  0x0000130000000000ull,
+  0x0000220000000000ull,
+  0x0000440000000000ull,
+};
+// This array is indexed by the ToolType enum.
+static const int ShadowScale[] = {
+  0, // ESAN_None.
+  2, // ESAN_CacheFrag: 4B:1B, so 4 to 1 == >>2.
+  6, // ESAN_WorkingSet: 64B:1B, so 64 to 1 == >>6.
+};
+
 namespace {
 
 static EfficiencySanitizerOptions
 OverrideOptionsFromCL(EfficiencySanitizerOptions Options) {
   if (ClToolCacheFrag)
     Options.ToolType = EfficiencySanitizerOptions::ESAN_CacheFrag;
+  else if (ClToolWorkingSet)
+    Options.ToolType = EfficiencySanitizerOptions::ESAN_WorkingSet;
 
   // Direct opt invocation with no params will have the default ESAN_None.
   // We run the default tool in that case.
@@ -100,11 +122,14 @@ private:
   bool instrumentMemIntrinsic(MemIntrinsic *MI);
   bool shouldIgnoreMemoryAccess(Instruction *I);
   int getMemoryAccessFuncIndex(Value *Addr, const DataLayout &DL);
+  Value *appToShadow(Value *Shadow, IRBuilder<> &IRB);
   bool instrumentFastpath(Instruction *I, const DataLayout &DL, bool IsStore,
                           Value *Addr, unsigned Alignment);
   // Each tool has its own fastpath routine:
   bool instrumentFastpathCacheFrag(Instruction *I, const DataLayout &DL,
                                    Value *Addr, unsigned Alignment);
+  bool instrumentFastpathWorkingSet(Instruction *I, const DataLayout &DL,
+                                    Value *Addr, unsigned Alignment);
 
   EfficiencySanitizerOptions Options;
   LLVMContext *Ctx;
@@ -226,11 +251,30 @@ bool EfficiencySanitizer::initOnModule(Module &M) {
   return true;
 }
 
+Value *EfficiencySanitizer::appToShadow(Value *Shadow, IRBuilder<> &IRB) {
+  // Shadow = ((App & Mask) + Offs) >> Scale
+  Shadow = IRB.CreateAnd(Shadow, ConstantInt::get(IntptrTy, ShadowMask));
+  uint64_t Offs;
+  int Scale = ShadowScale[Options.ToolType];
+  if (Scale <= 2)
+    Offs = ShadowOffs[Scale];
+  else
+    Offs = ShadowOffs[0] << Scale;
+  Shadow = IRB.CreateAdd(Shadow, ConstantInt::get(IntptrTy, Offs));
+  if (Scale > 0)
+    Shadow = IRB.CreateLShr(Shadow, Scale);
+  return Shadow;
+}
+
 bool EfficiencySanitizer::shouldIgnoreMemoryAccess(Instruction *I) {
   if (Options.ToolType == EfficiencySanitizerOptions::ESAN_CacheFrag) {
     // We'd like to know about cache fragmentation in vtable accesses and
     // constant data references, so we do not currently ignore anything.
     return false;
+  } else if (Options.ToolType == EfficiencySanitizerOptions::ESAN_WorkingSet) {
+    // TODO: the instrumentation disturbs the data layout on the stack, so we
+    // may want to add an option to ignore stack references (if we can
+    // distinguish them) to reduce overhead.
   }
   // TODO(bruening): future tools will be returning true for some cases.
   return false;
@@ -309,6 +353,11 @@ bool EfficiencySanitizer::instrumentLoadOrStore(Instruction *I,
   Type *OrigTy = cast<PointerType>(Addr->getType())->getElementType();
   const uint32_t TypeSizeBytes = DL.getTypeStoreSizeInBits(OrigTy) / 8;
   Value *OnAccessFunc = nullptr;
+
+  // Convert 0 to the default alignment.
+  if (Alignment == 0)
+    Alignment = DL.getPrefTypeAlignment(OrigTy);
+
   if (IsStore)
     NumInstrumentedStores++;
   else
@@ -384,6 +433,8 @@ bool EfficiencySanitizer::instrumentFastpath(Instruction *I,
                                              Value *Addr, unsigned Alignment) {
   if (Options.ToolType == EfficiencySanitizerOptions::ESAN_CacheFrag) {
     return instrumentFastpathCacheFrag(I, DL, Addr, Alignment);
+  } else if (Options.ToolType == EfficiencySanitizerOptions::ESAN_WorkingSet) {
+    return instrumentFastpathWorkingSet(I, DL, Addr, Alignment);
   }
   return false;
 }
@@ -394,4 +445,57 @@ bool EfficiencySanitizer::instrumentFastpathCacheFrag(Instruction *I,
                                                       unsigned Alignment) {
   // TODO(bruening): implement a fastpath for aligned accesses
   return false;
+}
+
+bool EfficiencySanitizer::instrumentFastpathWorkingSet(
+    Instruction *I, const DataLayout &DL, Value *Addr, unsigned Alignment) {
+  assert(ShadowScale[Options.ToolType] == 6); // The code below assumes this
+  IRBuilder<> IRB(I);
+  Type *OrigTy = cast<PointerType>(Addr->getType())->getElementType();
+  const uint32_t TypeSize = DL.getTypeStoreSizeInBits(OrigTy);
+  // Bail to the slowpath if the access might touch multiple cache lines.
+  // An access aligned to its size is guaranteed to be intra-cache-line.
+  // getMemoryAccessFuncIndex has already ruled out a size larger than 16
+  // and thus larger than a cache line for platforms this tool targets
+  // (and our shadow memory setup assumes 64-byte cache lines).
+  assert(TypeSize <= 64);
+  if (!(TypeSize == 8 ||
+        (Alignment % (TypeSize / 8)) == 0))
+    return false;
+
+  // We inline instrumentation to set the corresponding shadow bits for
+  // each cache line touched by the application.  Here we handle a single
+  // load or store where we've already ruled out the possibility that it
+  // might touch more than one cache line and thus we simply update the
+  // shadow memory for a single cache line.
+  // Our shadow memory model is fine with races when manipulating shadow values.
+  // We generate the following code:
+  //
+  //   const char BitMask = 0x81;
+  //   char *ShadowAddr = appToShadow(AppAddr);
+  //   if ((*ShadowAddr & BitMask) != BitMask)
+  //     *ShadowAddr |= Bitmask;
+  //
+  Value *AddrPtr = IRB.CreatePointerCast(Addr, IntptrTy);
+  Value *ShadowPtr = appToShadow(AddrPtr, IRB);
+  Type *ShadowTy = IntegerType::get(*Ctx, 8U);
+  Type *ShadowPtrTy = PointerType::get(ShadowTy, 0);
+  // The bottom bit is used for the current sampling period's working set.
+  // The top bit is used for the total working set.  We set both on each
+  // memory access, if they are not already set.
+  Value *ValueMask = ConstantInt::get(ShadowTy, 0x81); // 10000001B
+
+  Value *OldValue = IRB.CreateLoad(IRB.CreateIntToPtr(ShadowPtr, ShadowPtrTy));
+  // The AND and CMP will be turned into a TEST instruction by the compiler.
+  Value *Cmp = IRB.CreateICmpNE(IRB.CreateAnd(OldValue, ValueMask), ValueMask);
+  TerminatorInst *CmpTerm = SplitBlockAndInsertIfThen(Cmp, I, false);
+  // FIXME: do I need to call SetCurrentDebugLocation?
+  IRB.SetInsertPoint(CmpTerm);
+  // We use OR to set the shadow bits to avoid corrupting the middle 6 bits,
+  // which are used by the runtime library.
+  Value *NewVal = IRB.CreateOr(OldValue, ValueMask);
+  IRB.CreateStore(NewVal, IRB.CreateIntToPtr(ShadowPtr, ShadowPtrTy));
+  IRB.SetInsertPoint(I);
+
+  return true;
 }
