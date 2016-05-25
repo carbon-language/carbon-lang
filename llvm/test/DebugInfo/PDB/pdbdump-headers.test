@@ -18,7 +18,7 @@
 ; EMPTY-NEXT:   NumStreams: 17
 ; EMPTY-NEXT: }
 ; EMPTY-NEXT: Streams [
-; EMPTY-NEXT:   Stream 0: [MSF Superblock] (40 bytes)
+; EMPTY-NEXT:   Stream 0: [???] (40 bytes)
 ; EMPTY-NEXT:   Stream 1: [PDB Stream] (118 bytes)
 ; EMPTY-NEXT:   Stream 2: [TPI Stream] (5392 bytes)
 ; EMPTY-NEXT:   Stream 3: [DBI Stream] (739 bytes)

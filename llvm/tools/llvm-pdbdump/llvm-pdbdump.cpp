@@ -237,9 +237,7 @@ static Error dumpStreamSummary(ScopedPrinter &P, PDBFile &File) {
     std::string Label("Stream ");
     Label += to_string(StreamIdx);
     std::string Value;
-    if (StreamIdx == 0)
-      Value = "MSF Superblock";
-    else if (StreamIdx == StreamPDB)
+    if (StreamIdx == StreamPDB)
       Value = "PDB Stream";
     else if (StreamIdx == StreamDBI)
       Value = "DBI Stream";
@@ -320,6 +318,8 @@ static Error dumpStreamData(ScopedPrinter &P, PDBFile &File) {
 }
 
 static Error dumpInfoStream(ScopedPrinter &P, PDBFile &File) {
+  if (!opts::DumpHeaders)
+    return Error::success();
   auto InfoS = File.getPDBInfoStream();
   if (auto EC = InfoS.takeError())
     return EC;
@@ -374,6 +374,11 @@ static Error dumpNamedStream(ScopedPrinter &P, PDBFile &File) {
 
 static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
                            codeview::CVTypeDumper &TD) {
+  bool DumpModules =
+      opts::DumpModules || opts::DumpModuleSyms || opts::DumpModuleFiles;
+  if (!opts::DumpHeaders && !DumpModules)
+    return Error::success();
+
   auto DbiS = File.getPDBDbiStream();
   if (auto EC = DbiS.takeError())
     return EC;
@@ -400,7 +405,7 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
   DllStream.flush();
   P.printVersion(DllName, Major, Minor, DS.getPdbDllVersion());
 
-  if (opts::DumpModules || opts::DumpModuleSyms || opts::DumpModuleFiles) {
+  if (DumpModules) {
     ListScope L(P, "Modules");
     for (auto &Modi : DS.modules()) {
       DictScope DD(P);

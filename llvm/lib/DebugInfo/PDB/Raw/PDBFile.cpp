@@ -124,6 +124,7 @@ StringRef PDBFile::getBlockData(uint32_t BlockIndex, uint32_t NumBytes) const {
 Error PDBFile::parseFileHeaders() {
   std::error_code EC;
   MemoryBufferRef BufferRef = *Context->Buffer;
+
   // Make sure the file is sufficiently large to hold a super block.
   // Do this before attempting to read the super block.
   if (BufferRef.getBufferSize() < sizeof(SuperBlock))
