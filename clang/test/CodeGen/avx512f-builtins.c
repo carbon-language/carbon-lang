@@ -5951,6 +5951,36 @@ __m512d test_mm512_castpd128_pd512(__m128d __A) {
   return _mm512_castpd128_pd512(__A); 
 }
 
+__m512d test_mm512_set1_epi8(char d)
+{
+  // CHECK-LABEL: @test_mm512_set1_epi8
+  // CHECK: insertelement <64 x i8> {{.*}}, i32 0
+  // CHECK: insertelement <64 x i8> {{.*}}, i32 1
+  // CHECK: insertelement <64 x i8> {{.*}}, i32 2
+  // CHECK: insertelement <64 x i8> {{.*}}, i32 3
+  // CHECK: insertelement <64 x i8> {{.*}}, i32 4
+  // CHECK: insertelement <64 x i8> {{.*}}, i32 5
+  // CHECK: insertelement <64 x i8> {{.*}}, i32 6
+  // CHECK: insertelement <64 x i8> {{.*}}, i32 7
+  // CHECK: insertelement <64 x i8> {{.*}}, i32 63
+  return _mm512_set1_epi8(d);
+}
+
+__m512d test_mm512_set1_epi16(short d)
+{
+  // CHECK-LABEL: @test_mm512_set1_epi16
+  // CHECK: insertelement <32 x i16> {{.*}}, i32 0
+  // CHECK: insertelement <32 x i16> {{.*}}, i32 1
+  // CHECK: insertelement <32 x i16> {{.*}}, i32 2
+  // CHECK: insertelement <32 x i16> {{.*}}, i32 3
+  // CHECK: insertelement <32 x i16> {{.*}}, i32 4
+  // CHECK: insertelement <32 x i16> {{.*}}, i32 5
+  // CHECK: insertelement <32 x i16> {{.*}}, i32 6
+  // CHECK: insertelement <32 x i16> {{.*}}, i32 7
+  // CHECK: insertelement <32 x i16> {{.*}}, i32 31
+  return _mm512_set1_epi16(d);
+}
+
 __m512d test_mm512_castpd256_pd512(__m256d a)
 {
   // CHECK-LABEL: @test_mm512_castpd256_pd512

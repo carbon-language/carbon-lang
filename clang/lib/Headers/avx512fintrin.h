@@ -27,6 +27,8 @@
 #ifndef __AVX512FINTRIN_H
 #define __AVX512FINTRIN_H
 
+typedef char __v64qi __attribute__((__vector_size__(64)));
+typedef short __v32hi __attribute__((__vector_size__(64)));
 typedef double __v8df __attribute__((__vector_size__(64)));
 typedef float __v16sf __attribute__((__vector_size__(64)));
 typedef long long __v8di __attribute__((__vector_size__(64)));
@@ -283,6 +285,28 @@ static __inline __m512d __DEFAULT_FN_ATTRS
 _mm512_set1_pd(double __w)
 {
   return (__m512d){ __w, __w, __w, __w, __w, __w, __w, __w };
+}
+
+static __inline __m512i __DEFAULT_FN_ATTRS
+_mm512_set1_epi8(char __w)
+{
+  return (__m512i)(__v64qi){ __w, __w, __w, __w, __w, __w, __w, __w,
+                             __w, __w, __w, __w, __w, __w, __w, __w,
+                             __w, __w, __w, __w, __w, __w, __w, __w,
+                             __w, __w, __w, __w, __w, __w, __w, __w,
+                             __w, __w, __w, __w, __w, __w, __w, __w,
+                             __w, __w, __w, __w, __w, __w, __w, __w,
+                             __w, __w, __w, __w, __w, __w, __w, __w,
+                             __w, __w, __w, __w, __w, __w, __w, __w  };
+}
+
+static __inline __m512i __DEFAULT_FN_ATTRS
+_mm512_set1_epi16(short __w)
+{
+  return (__m512i)(__v32hi){ __w, __w, __w, __w, __w, __w, __w, __w,
+                             __w, __w, __w, __w, __w, __w, __w, __w,
+                             __w, __w, __w, __w, __w, __w, __w, __w,
+                             __w, __w, __w, __w, __w, __w, __w, __w };
 }
 
 static __inline __m512i __DEFAULT_FN_ATTRS
