@@ -79,7 +79,6 @@
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
-#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/Debug.h"
@@ -114,7 +113,6 @@ private:
   // This transformation requires dominator postdominator info
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
-    AU.addRequired<TargetLibraryInfoWrapperPass>();
     AU.addRequired<AAResultsWrapperPass>();
     AU.addPreserved<GlobalsAAWrapperPass>();
     AU.addPreserved<MemoryDependenceWrapperPass>();
@@ -130,9 +128,9 @@ private:
   BasicBlock *getDiamondTail(BasicBlock *BB);
   bool isDiamondHead(BasicBlock *BB);
   // Routines for hoisting loads
-  bool isLoadHoistBarrierInRange(const Instruction& Start,
-                                 const Instruction& End,
-                                 LoadInst* LI);
+  bool isLoadHoistBarrierInRange(const Instruction &Start,
+                                 const Instruction &End, LoadInst *LI,
+                                 bool SafeToLoadUnconditionally);
   LoadInst *canHoistFromBlock(BasicBlock *BB, LoadInst *LI);
   void hoistInstruction(BasicBlock *BB, Instruction *HoistCand,
                         Instruction *ElseInst);
@@ -166,7 +164,6 @@ FunctionPass *llvm::createMergedLoadStoreMotionPass() {
 INITIALIZE_PASS_BEGIN(MergedLoadStoreMotion, "mldst-motion",
                       "MergedLoadStoreMotion", false, false)
 INITIALIZE_PASS_DEPENDENCY(MemoryDependenceWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(GlobalsAAWrapperPass)
 INITIALIZE_PASS_END(MergedLoadStoreMotion, "mldst-motion",
@@ -229,9 +226,14 @@ bool MergedLoadStoreMotion::isDiamondHead(BasicBlock *BB) {
 /// being loaded or protect against the load from happening
 /// it is considered a hoist barrier.
 ///
-bool MergedLoadStoreMotion::isLoadHoistBarrierInRange(const Instruction& Start, 
-                                                      const Instruction& End,
-                                                      LoadInst* LI) {
+bool MergedLoadStoreMotion::isLoadHoistBarrierInRange(
+    const Instruction &Start, const Instruction &End, LoadInst *LI,
+    bool SafeToLoadUnconditionally) {
+  if (!SafeToLoadUnconditionally)
+    for (const Instruction &Inst :
+         make_range(Start.getIterator(), End.getIterator()))
+      if (Inst.mayThrow())
+        return true;
   MemoryLocation Loc = MemoryLocation::get(LI);
   return AA->canInstructionRangeModRef(Start, End, Loc, MRI_Mod);
 }
@@ -245,23 +247,28 @@ bool MergedLoadStoreMotion::isLoadHoistBarrierInRange(const Instruction& Start,
 ///
 LoadInst *MergedLoadStoreMotion::canHoistFromBlock(BasicBlock *BB1,
                                                    LoadInst *Load0) {
-
+  BasicBlock *BB0 = Load0->getParent();
+  BasicBlock *Head = BB0->getSinglePredecessor();
+  bool SafeToLoadUnconditionally = isSafeToLoadUnconditionally(
+      Load0->getPointerOperand(), Load0->getAlignment(),
+      Load0->getModule()->getDataLayout(),
+      /*ScanFrom=*/Head->getTerminator());
   for (BasicBlock::iterator BBI = BB1->begin(), BBE = BB1->end(); BBI != BBE;
        ++BBI) {
     Instruction *Inst = &*BBI;
 
     // Only merge and hoist loads when their result in used only in BB
-    if (!isa<LoadInst>(Inst) || Inst->isUsedOutsideOfBlock(BB1))
+    auto *Load1 = dyn_cast<LoadInst>(Inst);
+    if (!Load1 || Inst->isUsedOutsideOfBlock(BB1))
       continue;
-
-    auto *Load1 = cast<LoadInst>(Inst);
-    BasicBlock *BB0 = Load0->getParent();
 
     MemoryLocation Loc0 = MemoryLocation::get(Load0);
     MemoryLocation Loc1 = MemoryLocation::get(Load1);
     if (AA->isMustAlias(Loc0, Loc1) && Load0->isSameOperationAs(Load1) &&
-        !isLoadHoistBarrierInRange(BB1->front(), *Load1, Load1) &&
-        !isLoadHoistBarrierInRange(BB0->front(), *Load0, Load0)) {
+        !isLoadHoistBarrierInRange(BB1->front(), *Load1, Load1,
+                                   SafeToLoadUnconditionally) &&
+        !isLoadHoistBarrierInRange(BB0->front(), *Load0, Load0,
+                                   SafeToLoadUnconditionally)) {
       return Load1;
     }
   }
@@ -387,6 +394,10 @@ bool MergedLoadStoreMotion::mergeLoads(BasicBlock *BB) {
 bool MergedLoadStoreMotion::isStoreSinkBarrierInRange(const Instruction &Start,
                                                       const Instruction &End,
                                                       MemoryLocation Loc) {
+  for (const Instruction &Inst :
+       make_range(Start.getIterator(), End.getIterator()))
+    if (Inst.mayThrow())
+      return true;
   return AA->canInstructionRangeModRef(Start, End, Loc, MRI_ModRef);
 }
 
@@ -403,18 +414,15 @@ StoreInst *MergedLoadStoreMotion::canSinkFromBlock(BasicBlock *BB1,
        RBI != RBE; ++RBI) {
     Instruction *Inst = &*RBI;
 
-    if (!isa<StoreInst>(Inst))
-       continue;
-
-    StoreInst *Store1 = cast<StoreInst>(Inst);
+    auto *Store1 = dyn_cast<StoreInst>(Inst);
+    if (!Store1)
+      continue;
 
     MemoryLocation Loc0 = MemoryLocation::get(Store0);
     MemoryLocation Loc1 = MemoryLocation::get(Store1);
     if (AA->isMustAlias(Loc0, Loc1) && Store0->isSameOperationAs(Store1) &&
-        !isStoreSinkBarrierInRange(*(std::next(BasicBlock::iterator(Store1))),
-                                   BB1->back(), Loc1) &&
-        !isStoreSinkBarrierInRange(*(std::next(BasicBlock::iterator(Store0))),
-                                   BB0->back(), Loc0)) {
+        !isStoreSinkBarrierInRange(*Store1->getNextNode(), BB1->back(), Loc1) &&
+        !isStoreSinkBarrierInRange(*Store0->getNextNode(), BB0->back(), Loc0)) {
       return Store1;
     }
   }
