@@ -542,32 +542,16 @@ bool APInt::slt(const APInt& RHS) const {
     return lhsSext < rhsSext;
   }
 
-  APInt lhs(*this);
-  APInt rhs(RHS);
   bool lhsNeg = isNegative();
-  bool rhsNeg = rhs.isNegative();
-  if (lhsNeg) {
-    // Sign bit is set so perform two's complement to make it positive
-    lhs.flipAllBits();
-    ++lhs;
-  }
-  if (rhsNeg) {
-    // Sign bit is set so perform two's complement to make it positive
-    rhs.flipAllBits();
-    ++rhs;
-  }
+  bool rhsNeg = RHS.isNegative();
 
-  // Now we have unsigned values to compare so do the comparison if necessary
-  // based on the negativeness of the values.
-  if (lhsNeg)
-    if (rhsNeg)
-      return lhs.ugt(rhs);
-    else
-      return true;
-  else if (rhsNeg)
-    return false;
-  else
-    return lhs.ult(rhs);
+  // If the sign bits don't match, then (LHS < RHS) if LHS is negative
+  if (lhsNeg != rhsNeg)
+    return lhsNeg;
+
+  // Otherwise we can just use an unsigned comparision, because even negative
+  // numbers compare correctly this way if both have the same signed-ness.
+  return ult(RHS);
 }
 
 void APInt::setBit(unsigned bitPosition) {
