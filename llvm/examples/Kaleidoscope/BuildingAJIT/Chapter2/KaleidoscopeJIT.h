@@ -104,6 +104,8 @@ public:
     OptimizeLayer.removeModuleSet(H);
   }
 
+private:
+
   std::unique_ptr<Module> optimizeModule(std::unique_ptr<Module> M) {
     // Create a function pass manager.
     auto FPM = llvm::make_unique<legacy::FunctionPassManager>(M.get());
