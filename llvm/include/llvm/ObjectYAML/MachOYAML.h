@@ -74,6 +74,7 @@ struct BindOpcode {
 struct LinkEditData {
   std::vector<MachOYAML::RebaseOpcode> RebaseOpcodes;
   std::vector<MachOYAML::BindOpcode> BindOpcodes;
+  std::vector<MachOYAML::BindOpcode> WeakBindOpcodes;
 };
 
 struct Object {
