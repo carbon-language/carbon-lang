@@ -127,14 +127,10 @@ private:
     FPM->add(createCFGSimplificationPass());
     FPM->doInitialization();
 
-    dbgs() << "<pre-opt>\n" << *M << "</pre-opt>\n";
-
     // Run the optimizations over all functions in the module being added to
     // the JIT.
     for (auto &F : *M)
       FPM->run(F);
-
-    dbgs() << "<post-opt>\n" << *M << "</post-opt>\n";
 
     return M;
   }
