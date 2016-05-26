@@ -409,13 +409,14 @@ void Fuzzer::ShuffleAndMinimize() {
       if (Options.Verbosity >= 2)
         Printf("NEW0: %zd L %zd\n", MaxCoverage.BlockCoverage, U.size());
     }
+    TryDetectingAMemoryLeak(U.data(), U.size(),
+                            /*DuringInitialCorpusExecution*/ true);
   }
   Corpus = NewCorpus;
   UpdateCorpusDistribution();
   for (auto &X : Corpus)
     UnitHashesAddedToCorpus.insert(Hash(X));
   PrintStats("INITED");
-  CheckForMemoryLeaks();
 }
 
 bool Fuzzer::UpdateMaxCoverage() {
@@ -639,26 +640,10 @@ void Fuzzer::Merge(const std::vector<std::string> &Corpora) {
   Printf("=== Merge: written %zd units\n", Res.size());
 }
 
-// Tries to call lsan, and if there are leaks exits. We call this right after
-// the initial corpus was read because if there are leaky inputs in the corpus
-// further fuzzing will likely hit OOMs.
-void Fuzzer::CheckForMemoryLeaks() {
-  if (!Options.DetectLeaks) return;
-  if (!__lsan_do_recoverable_leak_check)
-    return;
-  if (__lsan_do_recoverable_leak_check()) {
-    Printf("==%d== ERROR: libFuzzer: initial corpus triggers memory leaks.\n"
-           "Exiting now. Use -detect_leaks=0 to disable leak detection here.\n"
-           "LeakSanitizer will still check for leaks at the process exit.\n",
-           GetPid());
-    PrintFinalStats();
-    _Exit(Options.ErrorExitCode);
-  }
-}
-
 // Tries detecting a memory leak on the particular input that we have just
 // executed before calling this function.
-void Fuzzer::TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size) {
+void Fuzzer::TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size,
+                                     bool DuringInitialCorpusExecution) {
   if (!HasMoreMallocsThanFrees) return;  // mallocs==frees, a leak is unlikely.
   if (!Options.DetectLeaks) return;
   if (!&__lsan_enable || !&__lsan_disable || !__lsan_do_recoverable_leak_check)
@@ -681,6 +666,9 @@ void Fuzzer::TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size) {
   // Now perform the actual lsan pass. This is expensive and we must ensure
   // we don't call it too often.
   if (__lsan_do_recoverable_leak_check()) {  // Leak is found, report it.
+    if (DuringInitialCorpusExecution)
+      Printf("\nINFO: a leak has been found in the initial corpus.\n\n");
+    Printf("INFO: to ignore leaks on libFuzzer side use -detect_leaks=0.\n\n");
     CurrentUnitData = Data;
     CurrentUnitSize = Size;
     DumpCurrentUnit("leak-");
@@ -715,7 +703,8 @@ void Fuzzer::MutateAndTestOne() {
       StartTraceRecording();
     RunOneAndUpdateCorpus(MutateInPlaceHere.data(), Size);
     StopTraceRecording();
-    TryDetectingAMemoryLeak(MutateInPlaceHere.data(), Size);
+    TryDetectingAMemoryLeak(MutateInPlaceHere.data(), Size,
+                            /*DuringInitialCorpusExecution*/ false);
   }
 }
 

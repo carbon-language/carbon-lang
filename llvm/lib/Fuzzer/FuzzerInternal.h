@@ -415,8 +415,8 @@ private:
   void PrintStats(const char *Where, const char *End = "\n");
   void PrintStatusForNewUnit(const Unit &U);
   void ShuffleCorpus(UnitVector *V);
-  void TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size);
-  void CheckForMemoryLeaks();
+  void TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size,
+                               bool DuringInitialCorpusExecution);
 
   // Updates the probability distribution for the units in the corpus.
   // Must be called whenever the corpus or unit weights are changed.
