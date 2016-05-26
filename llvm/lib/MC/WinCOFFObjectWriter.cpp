@@ -377,7 +377,7 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
       WeakDefault->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
       WeakDefault->Data.StorageClass = COFF::IMAGE_SYM_CLASS_EXTERNAL;
       WeakDefault->Data.Type = 0;
-      WeakDefault->Data.Value = 0;
+      WeakDefault->Data.Value = getSymbolValue(Symbol, Layout);
       coff_symbol->Other = WeakDefault;
     }
 
