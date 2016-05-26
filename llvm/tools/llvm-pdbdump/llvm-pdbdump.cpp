@@ -83,7 +83,7 @@ cl::list<std::string> InputFilenames(cl::Positional,
 cl::OptionCategory TypeCategory("Symbol Type Options");
 cl::OptionCategory FilterCategory("Filtering Options");
 cl::OptionCategory OtherOptions("Other Options");
-cl::OptionCategory NativeOtions("Native Options");
+cl::OptionCategory NativeOptions("Native Options");
 
 cl::opt<bool> Compilands("compilands", cl::desc("Display compilands"),
                          cl::cat(TypeCategory));
@@ -105,48 +105,48 @@ cl::opt<uint64_t> LoadAddress(
     cl::cat(OtherOptions));
 
 cl::opt<bool> DumpHeaders("raw-headers", cl::desc("dump PDB headers"),
-                          cl::cat(NativeOtions));
+                          cl::cat(NativeOptions));
 cl::opt<bool> DumpStreamBlocks("raw-stream-blocks",
                                cl::desc("dump PDB stream blocks"),
-                               cl::cat(NativeOtions));
+                               cl::cat(NativeOptions));
 cl::opt<bool> DumpStreamSummary("raw-stream-summary",
                                 cl::desc("dump summary of the PDB streams"),
-                                cl::cat(NativeOtions));
+                                cl::cat(NativeOptions));
 cl::opt<bool>
     DumpTpiRecords("raw-tpi-records",
                    cl::desc("dump CodeView type records from TPI stream"),
-                   cl::cat(NativeOtions));
+                   cl::cat(NativeOptions));
 cl::opt<bool> DumpTpiRecordBytes(
     "raw-tpi-record-bytes",
     cl::desc("dump CodeView type record raw bytes from TPI stream"),
-    cl::cat(NativeOtions));
+    cl::cat(NativeOptions));
 cl::opt<bool>
     DumpIpiRecords("raw-ipi-records",
                    cl::desc("dump CodeView type records from IPI stream"),
-                   cl::cat(NativeOtions));
+                   cl::cat(NativeOptions));
 cl::opt<bool> DumpIpiRecordBytes(
     "raw-ipi-record-bytes",
     cl::desc("dump CodeView type record raw bytes from IPI stream"),
-    cl::cat(NativeOtions));
+    cl::cat(NativeOptions));
 cl::opt<std::string> DumpStreamDataIdx("raw-stream",
                                        cl::desc("dump stream data"),
-                                       cl::cat(NativeOtions));
+                                       cl::cat(NativeOptions));
 cl::opt<std::string> DumpStreamDataName("raw-stream-name",
                                         cl::desc("dump stream data"),
-                                        cl::cat(NativeOtions));
+                                        cl::cat(NativeOptions));
 cl::opt<bool> DumpModules("raw-modules", cl::desc("dump compiland information"),
-                          cl::cat(NativeOtions));
+                          cl::cat(NativeOptions));
 cl::opt<bool> DumpModuleFiles("raw-module-files",
                               cl::desc("dump file information"),
-                              cl::cat(NativeOtions));
+                              cl::cat(NativeOptions));
 cl::opt<bool> DumpModuleSyms("raw-module-syms", cl::desc("dump module symbols"),
-                             cl::cat(NativeOtions));
+                             cl::cat(NativeOptions));
 cl::opt<bool> DumpPublics("raw-publics", cl::desc("dump Publics stream data"),
-                          cl::cat(NativeOtions));
+                          cl::cat(NativeOptions));
 cl::opt<bool>
     DumpSymRecordBytes("raw-sym-record-bytes",
                        cl::desc("dump CodeView symbol record raw bytes"),
-                       cl::cat(NativeOtions));
+                       cl::cat(NativeOptions));
 
 cl::list<std::string>
     ExcludeTypes("exclude-types",
