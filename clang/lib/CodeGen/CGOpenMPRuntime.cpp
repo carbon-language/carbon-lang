@@ -660,6 +660,9 @@ enum OpenMPRTLFunction {
   // Call to void __tgt_target_data_end(int32_t device_id, int32_t arg_num,
   // void** args_base, void **args, size_t *arg_sizes, int32_t *arg_types);
   OMPRTL__tgt_target_data_end,
+  // Call to void __tgt_target_data_update(int32_t device_id, int32_t arg_num,
+  // void** args_base, void **args, size_t *arg_sizes, int32_t *arg_types);
+  OMPRTL__tgt_target_data_update,
 };
 
 /// A basic class for pre|post-action for advanced codegen sequence for OpenMP
@@ -1607,6 +1610,20 @@ CGOpenMPRuntime::createRuntimeFunction(unsigned Function) {
     llvm::FunctionType *FnTy =
         llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ false);
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__tgt_target_data_end");
+    break;
+  }
+  case OMPRTL__tgt_target_data_update: {
+    // Build void __tgt_target_data_update(int32_t device_id, int32_t arg_num,
+    // void** args_base, void **args, size_t *arg_sizes, int32_t *arg_types);
+    llvm::Type *TypeParams[] = {CGM.Int32Ty,
+                                CGM.Int32Ty,
+                                CGM.VoidPtrPtrTy,
+                                CGM.VoidPtrPtrTy,
+                                CGM.SizeTy->getPointerTo(),
+                                CGM.Int32Ty->getPointerTo()};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__tgt_target_data_update");
     break;
   }
   }
@@ -5347,13 +5364,27 @@ public:
     // declaration in a single chunk so that we can generate the map flags
     // correctly. Therefore, we organize all lists in a map.
     llvm::DenseMap<const ValueDecl *, SmallVector<MapInfo, 8>> Info;
+
+    // Helper function to fill the information map for the different supported
+    // clauses.
+    auto &&InfoGen =
+        [&Info](const ValueDecl *D,
+                OMPClauseMappableExprCommon::MappableExprComponentListRef L,
+                OpenMPMapClauseKind MapType, OpenMPMapClauseKind MapModifier) {
+          const ValueDecl *VD =
+              D ? cast<ValueDecl>(D->getCanonicalDecl()) : nullptr;
+          Info[VD].push_back({L, MapType, MapModifier});
+        };
+
     for (auto *C : Directive.getClausesOfKind<OMPMapClause>())
-      for (auto L : C->component_lists()) {
-        const ValueDecl *VD =
-            L.first ? cast<ValueDecl>(L.first->getCanonicalDecl()) : nullptr;
-        Info[VD].push_back(
-            {L.second, C->getMapType(), C->getMapTypeModifier()});
-      }
+      for (auto L : C->component_lists())
+        InfoGen(L.first, L.second, C->getMapType(), C->getMapTypeModifier());
+    for (auto *C : Directive.getClausesOfKind<OMPToClause>())
+      for (auto L : C->component_lists())
+        InfoGen(L.first, L.second, OMPC_MAP_to, OMPC_MAP_unknown);
+    for (auto *C : Directive.getClausesOfKind<OMPFromClause>())
+      for (auto L : C->component_lists())
+        InfoGen(L.first, L.second, OMPC_MAP_from, OMPC_MAP_unknown);
 
     for (auto &M : Info) {
       // We need to know when we generate information for the first component
@@ -6128,15 +6159,16 @@ void CGOpenMPRuntime::emitTargetDataCalls(CodeGenFunction &CGF,
   }
 }
 
-void CGOpenMPRuntime::emitTargetEnterOrExitDataCall(
+void CGOpenMPRuntime::emitTargetDataStandAloneCall(
     CodeGenFunction &CGF, const OMPExecutableDirective &D, const Expr *IfCond,
     const Expr *Device) {
   if (!CGF.HaveInsertPoint())
     return;
 
   assert((isa<OMPTargetEnterDataDirective>(D) ||
-          isa<OMPTargetExitDataDirective>(D)) &&
-         "Expecting either target enter or exit data directives.");
+          isa<OMPTargetExitDataDirective>(D) ||
+          isa<OMPTargetUpdateDirective>(D)) &&
+         "Expecting either target enter, exit data, or update directives.");
 
   // Generate the code for the opening of the data environment.
   auto &&ThenGen = [&D, &CGF, Device](CodeGenFunction &CGF, PrePostActionTy &) {
@@ -6147,8 +6179,8 @@ void CGOpenMPRuntime::emitTargetEnterOrExitDataCall(
     MappableExprsHandler::MapFlagsArrayTy MapTypes;
 
     // Get map clause information.
-    MappableExprsHandler MCHandler(D, CGF);
-    MCHandler.generateAllInfo(BasePointers, Pointers, Sizes, MapTypes);
+    MappableExprsHandler MEHandler(D, CGF);
+    MEHandler.generateAllInfo(BasePointers, Pointers, Sizes, MapTypes);
 
     llvm::Value *BasePointersArrayArg = nullptr;
     llvm::Value *PointersArrayArg = nullptr;
@@ -6178,12 +6210,26 @@ void CGOpenMPRuntime::emitTargetEnterOrExitDataCall(
     llvm::Value *OffloadingArgs[] = {
         DeviceID,         PointerNum,    BasePointersArrayArg,
         PointersArrayArg, SizesArrayArg, MapTypesArrayArg};
+
     auto &RT = CGF.CGM.getOpenMPRuntime();
-    CGF.EmitRuntimeCall(
-        RT.createRuntimeFunction(isa<OMPTargetEnterDataDirective>(D)
-                                     ? OMPRTL__tgt_target_data_begin
-                                     : OMPRTL__tgt_target_data_end),
-        OffloadingArgs);
+    // Select the right runtime function call for each expected standalone
+    // directive.
+    OpenMPRTLFunction RTLFn;
+    switch (D.getDirectiveKind()) {
+    default:
+      llvm_unreachable("Unexpected standalone target data directive.");
+      break;
+    case OMPD_target_enter_data:
+      RTLFn = OMPRTL__tgt_target_data_begin;
+      break;
+    case OMPD_target_exit_data:
+      RTLFn = OMPRTL__tgt_target_data_end;
+      break;
+    case OMPD_target_update:
+      RTLFn = OMPRTL__tgt_target_data_update;
+      break;
+    }
+    CGF.EmitRuntimeCall(RT.createRuntimeFunction(RTLFn), OffloadingArgs);
   };
 
   // In the event we get an if clause, we don't have to take any action on the
