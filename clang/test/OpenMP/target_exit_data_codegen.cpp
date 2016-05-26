@@ -22,15 +22,15 @@ ST<int> gb;
 double gc[100];
 
 // CK1: [[SIZE00:@.+]] = {{.+}}constant [1 x i[[sz:64|32]]] [i{{64|32}} 800]
-// CK1: [[MTYPE00:@.+]] = {{.+}}constant [1 x i32] [i32 2]
+// CK1: [[MTYPE00:@.+]] = {{.+}}constant [1 x i32] [i32 34]
 
 // CK1: [[SIZE02:@.+]] = {{.+}}constant [1 x i[[sz]]] [i[[sz]] 4]
-// CK1: [[MTYPE02:@.+]] = {{.+}}constant [1 x i32] [i32 8]
+// CK1: [[MTYPE02:@.+]] = {{.+}}constant [1 x i32] [i32 32]
 
-// CK1: [[MTYPE03:@.+]] = {{.+}}constant [1 x i32] [i32 6]
+// CK1: [[MTYPE03:@.+]] = {{.+}}constant [1 x i32] [i32 38]
 
 // CK1: [[SIZE04:@.+]] = {{.+}}constant [2 x i[[sz]]] [i[[sz]] {{8|4}}, i[[sz]] 24]
-// CK1: [[MTYPE04:@.+]] = {{.+}}constant [2 x i32] [i32 8, i32 104]
+// CK1: [[MTYPE04:@.+]] = {{.+}}constant [2 x i32] [i32 32, i32 16]
 
 // CK1-LABEL: _Z3fooi
 void foo(int arg) {
@@ -156,7 +156,7 @@ struct ST {
 };
 
 // CK2: [[SIZE00:@.+]] = {{.+}}constant [2 x i[[sz:64|32]]] [i{{64|32}} {{8|4}}, i{{64|32}} 24]
-// CK2: [[MTYPE00:@.+]] = {{.+}}constant [2 x i32] [i32 12, i32 108]
+// CK2: [[MTYPE00:@.+]] = {{.+}}constant [2 x i32] [i32 36, i32 20]
 
 // CK2-LABEL: _Z3bari
 int bar(int arg){
