@@ -4927,6 +4927,9 @@ public:
     /// map/privatization results in multiple arguments passed to the runtime
     /// library.
     OMP_MAP_FIRST_REF = 0x20,
+    /// \brief This flag signals that the reference being passed is a pointer to
+    /// private data.
+    OMP_MAP_PRIVATE_PTR = 0x80,
     /// \brief Pass the element to the device by value.
     OMP_MAP_PRIVATE_VAL = 0x100,
   };
@@ -4940,6 +4943,9 @@ private:
 
   /// \brief Function the directive is being generated for.
   CodeGenFunction &CGF;
+
+  /// \brief Set of all first private variables in the current directive.
+  llvm::SmallPtrSet<const VarDecl *, 8> FirstPrivateDecls;
 
   llvm::Value *getExprTypeSize(const Expr *E) const {
     auto ExprTy = E->getType().getCanonicalType();
@@ -5293,9 +5299,33 @@ private:
     }
   }
 
+  /// \brief Return the adjusted map modifiers if the declaration a capture
+  /// refers to appears in a first-private clause. This is expected to be used
+  /// only with directives that start with 'target'.
+  unsigned adjustMapModifiersForPrivateClauses(const CapturedStmt::Capture &Cap,
+                                               unsigned CurrentModifiers) {
+    assert(Cap.capturesVariable() && "Expected capture by reference only!");
+
+    // A first private variable captured by reference will use only the
+    // 'private ptr' and 'map to' flag. Return the right flags if the captured
+    // declaration is known as first-private in this handler.
+    if (FirstPrivateDecls.count(Cap.getCapturedVar()))
+      return MappableExprsHandler::OMP_MAP_PRIVATE_PTR |
+             MappableExprsHandler::OMP_MAP_TO;
+
+    // We didn't modify anything.
+    return CurrentModifiers;
+  }
+
 public:
   MappableExprsHandler(const OMPExecutableDirective &Dir, CodeGenFunction &CGF)
-      : Directive(Dir), CGF(CGF) {}
+      : Directive(Dir), CGF(CGF) {
+    // Extract firstprivate clause information.
+    for (const auto *C : Dir.getClausesOfKind<OMPFirstprivateClause>())
+      for (const auto *D : C->varlists())
+        FirstPrivateDecls.insert(
+            cast<VarDecl>(cast<DeclRefExpr>(D)->getDecl())->getCanonicalDecl());
+  }
 
   /// \brief Generate all the base pointers, section pointers, sizes and map
   /// types for the extracted mappable expressions.
@@ -5376,6 +5406,86 @@ public:
       }
 
     return;
+  }
+
+  /// \brief Generate the default map information for a given capture \a CI,
+  /// record field declaration \a RI and captured value \a CV.
+  void generateDefaultMapInfo(
+      const CapturedStmt::Capture &CI, const FieldDecl &RI, llvm::Value *CV,
+      MappableExprsHandler::MapValuesArrayTy &CurBasePointers,
+      MappableExprsHandler::MapValuesArrayTy &CurPointers,
+      MappableExprsHandler::MapValuesArrayTy &CurSizes,
+      MappableExprsHandler::MapFlagsArrayTy &CurMapTypes) {
+    auto &Ctx = CGF.getContext();
+
+    // Do the default mapping.
+    if (CI.capturesThis()) {
+      CurBasePointers.push_back(CV);
+      CurPointers.push_back(CV);
+      const PointerType *PtrTy = cast<PointerType>(RI.getType().getTypePtr());
+      CurSizes.push_back(CGF.getTypeSize(PtrTy->getPointeeType()));
+      // Default map type.
+      CurMapTypes.push_back(MappableExprsHandler::OMP_MAP_TO |
+                            MappableExprsHandler::OMP_MAP_FROM);
+    } else if (CI.capturesVariableByCopy()) {
+      if (!RI.getType()->isAnyPointerType()) {
+        // If the field is not a pointer, we need to save the actual value
+        // and load it as a void pointer.
+        CurMapTypes.push_back(MappableExprsHandler::OMP_MAP_PRIVATE_VAL);
+        auto DstAddr = CGF.CreateMemTemp(Ctx.getUIntPtrType(),
+                                         Twine(CI.getCapturedVar()->getName()) +
+                                             ".casted");
+        LValue DstLV = CGF.MakeAddrLValue(DstAddr, Ctx.getUIntPtrType());
+
+        auto *SrcAddrVal = CGF.EmitScalarConversion(
+            DstAddr.getPointer(), Ctx.getPointerType(Ctx.getUIntPtrType()),
+            Ctx.getPointerType(RI.getType()), SourceLocation());
+        LValue SrcLV = CGF.MakeNaturalAlignAddrLValue(SrcAddrVal, RI.getType());
+
+        // Store the value using the source type pointer.
+        CGF.EmitStoreThroughLValue(RValue::get(CV), SrcLV);
+
+        // Load the value using the destination type pointer.
+        CurBasePointers.push_back(
+            CGF.EmitLoadOfLValue(DstLV, SourceLocation()).getScalarVal());
+        CurPointers.push_back(CurBasePointers.back());
+
+        // Get the size of the type to be used in the map.
+        CurSizes.push_back(CGF.getTypeSize(RI.getType()));
+      } else {
+        // Pointers are implicitly mapped with a zero size and no flags
+        // (other than first map that is added for all implicit maps).
+        CurMapTypes.push_back(0u);
+        CurBasePointers.push_back(CV);
+        CurPointers.push_back(CV);
+        CurSizes.push_back(llvm::Constant::getNullValue(CGF.SizeTy));
+      }
+    } else {
+      assert(CI.capturesVariable() && "Expected captured reference.");
+      CurBasePointers.push_back(CV);
+      CurPointers.push_back(CV);
+
+      const ReferenceType *PtrTy =
+          cast<ReferenceType>(RI.getType().getTypePtr());
+      QualType ElementType = PtrTy->getPointeeType();
+      CurSizes.push_back(CGF.getTypeSize(ElementType));
+      // The default map type for a scalar/complex type is 'to' because by
+      // default the value doesn't have to be retrieved. For an aggregate
+      // type, the default is 'tofrom'.
+      CurMapTypes.push_back(ElementType->isAggregateType()
+                                ? (MappableExprsHandler::OMP_MAP_TO |
+                                   MappableExprsHandler::OMP_MAP_FROM)
+                                : MappableExprsHandler::OMP_MAP_TO);
+
+      // If we have a capture by reference we may need to add the private
+      // pointer flag if the base declaration shows in some first-private
+      // clause.
+      CurMapTypes.back() =
+          adjustMapModifiersForPrivateClauses(CI, CurMapTypes.back());
+    }
+    // Every default map produces a single argument, so, it is always the
+    // first one.
+    CurMapTypes.back() |= MappableExprsHandler::OMP_MAP_FIRST_REF;
   }
 };
 
@@ -5559,8 +5669,8 @@ void CGOpenMPRuntime::emitTargetCall(CodeGenFunction &CGF,
   MappableExprsHandler::MapValuesArrayTy CurSizes;
   MappableExprsHandler::MapFlagsArrayTy CurMapTypes;
 
-  // Get map clause information.
-  MappableExprsHandler MCHandler(D, CGF);
+  // Get mappable expression information.
+  MappableExprsHandler MEHandler(D, CGF);
 
   const CapturedStmt &CS = *cast<CapturedStmt>(D.getAssociatedStmt());
   auto RI = CS.getCapturedRecordDecl()->field_begin();
@@ -5588,75 +5698,11 @@ void CGOpenMPRuntime::emitTargetCall(CodeGenFunction &CGF,
     } else {
       // If we have any information in the map clause, we use it, otherwise we
       // just do a default mapping.
-      MCHandler.generateInfoForCapture(CI, CurBasePointers, CurPointers,
+      MEHandler.generateInfoForCapture(CI, CurBasePointers, CurPointers,
                                        CurSizes, CurMapTypes);
-
-      if (CurBasePointers.empty()) {
-        // Do the default mapping.
-        if (CI->capturesThis()) {
-          CurBasePointers.push_back(*CV);
-          CurPointers.push_back(*CV);
-          const PointerType *PtrTy =
-              cast<PointerType>(RI->getType().getTypePtr());
-          CurSizes.push_back(CGF.getTypeSize(PtrTy->getPointeeType()));
-          // Default map type.
-          CurMapTypes.push_back(MappableExprsHandler::OMP_MAP_TO |
-                                MappableExprsHandler::OMP_MAP_FROM);
-        } else if (CI->capturesVariableByCopy()) {
-          if (!RI->getType()->isAnyPointerType()) {
-            // If the field is not a pointer, we need to save the actual value
-            // and load it as a void pointer.
-            CurMapTypes.push_back(MappableExprsHandler::OMP_MAP_PRIVATE_VAL);
-            auto DstAddr = CGF.CreateMemTemp(
-                Ctx.getUIntPtrType(),
-                Twine(CI->getCapturedVar()->getName()) + ".casted");
-            LValue DstLV = CGF.MakeAddrLValue(DstAddr, Ctx.getUIntPtrType());
-
-            auto *SrcAddrVal = CGF.EmitScalarConversion(
-                DstAddr.getPointer(), Ctx.getPointerType(Ctx.getUIntPtrType()),
-                Ctx.getPointerType(RI->getType()), SourceLocation());
-            LValue SrcLV =
-                CGF.MakeNaturalAlignAddrLValue(SrcAddrVal, RI->getType());
-
-            // Store the value using the source type pointer.
-            CGF.EmitStoreThroughLValue(RValue::get(*CV), SrcLV);
-
-            // Load the value using the destination type pointer.
-            CurBasePointers.push_back(
-                CGF.EmitLoadOfLValue(DstLV, SourceLocation()).getScalarVal());
-            CurPointers.push_back(CurBasePointers.back());
-
-            // Get the size of the type to be used in the map.
-            CurSizes.push_back(CGF.getTypeSize(RI->getType()));
-          } else {
-            // Pointers are implicitly mapped with a zero size and no flags
-            // (other than first map that is added for all implicit maps).
-            CurMapTypes.push_back(0u);
-            CurBasePointers.push_back(*CV);
-            CurPointers.push_back(*CV);
-            CurSizes.push_back(llvm::Constant::getNullValue(CGM.SizeTy));
-          }
-        } else {
-          assert(CI->capturesVariable() && "Expected captured reference.");
-          CurBasePointers.push_back(*CV);
-          CurPointers.push_back(*CV);
-
-          const ReferenceType *PtrTy =
-              cast<ReferenceType>(RI->getType().getTypePtr());
-          QualType ElementType = PtrTy->getPointeeType();
-          CurSizes.push_back(CGF.getTypeSize(ElementType));
-          // The default map type for a scalar/complex type is 'to' because by
-          // default the value doesn't have to be retrieved. For an aggregate
-          // type, the default is 'tofrom'.
-          CurMapTypes.push_back(ElementType->isAggregateType()
-                                    ? (MappableExprsHandler::OMP_MAP_TO |
-                                       MappableExprsHandler::OMP_MAP_FROM)
-                                    : MappableExprsHandler::OMP_MAP_TO);
-        }
-        // Every default map produces a single argument, so, it is always the
-        // first one.
-        CurMapTypes.back() |= MappableExprsHandler::OMP_MAP_FIRST_REF;
-      }
+      if (CurBasePointers.empty())
+        MEHandler.generateDefaultMapInfo(*CI, **RI, *CV, CurBasePointers,
+                                         CurPointers, CurSizes, CurMapTypes);
     }
     // We expect to have at least an element of information for this capture.
     assert(!CurBasePointers.empty() && "Non-existing map pointer for capture!");
