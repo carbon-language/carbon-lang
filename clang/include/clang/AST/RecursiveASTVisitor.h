@@ -2502,6 +2502,9 @@ DEF_TRAVERSE_STMT(OMPTargetParallelForDirective,
 DEF_TRAVERSE_STMT(OMPTeamsDirective,
                   { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
+DEF_TRAVERSE_STMT(OMPTargetUpdateDirective,
+                  { TRY_TO(TraverseOMPExecutableDirective(S)); })
+
 DEF_TRAVERSE_STMT(OMPTaskLoopDirective,
                   { TRY_TO(TraverseOMPExecutableDirective(S)); })
 

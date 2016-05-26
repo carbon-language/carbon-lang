@@ -656,6 +656,11 @@ void OMPClauseProfiler::VisitOMPDistScheduleClause(
 
 void OMPClauseProfiler::VisitOMPDefaultmapClause(const OMPDefaultmapClause *) {}
 
+void StmtProfiler::VisitOMPTargetUpdateDirective(
+    const OMPTargetUpdateDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void StmtProfiler::VisitExpr(const Expr *S) {
   VisitStmt(S);
 }

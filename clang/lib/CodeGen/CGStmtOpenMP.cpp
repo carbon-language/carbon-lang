@@ -3544,3 +3544,9 @@ void CodeGenFunction::EmitOMPTaskLoopSimdDirective(
     const OMPTaskLoopSimdDirective &S) {
   EmitOMPTaskLoopBasedDirective(S);
 }
+
+// Generate the instructions for '#pragma omp target update' directive.
+void CodeGenFunction::EmitOMPTargetUpdateDirective(
+    const OMPTargetUpdateDirective &S) {
+  // TODO: codegen for target update
+}

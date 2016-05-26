@@ -1825,6 +1825,7 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
   case OMPD_declare_simd:
   case OMPD_declare_target:
   case OMPD_end_declare_target:
+  case OMPD_target_update:
     llvm_unreachable("OpenMP Directive is not allowed");
   case OMPD_unknown:
     llvm_unreachable("Unknown OpenMP directive");
@@ -3273,6 +3274,12 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(
   case OMPD_distribute:
     Res = ActOnOpenMPDistributeDirective(ClausesWithImplicit, AStmt, StartLoc,
                                          EndLoc, VarsWithInheritedDSA);
+    break;
+  case OMPD_target_update:
+    assert(!AStmt && "Statement is not allowed for target update");
+    Res =
+        ActOnOpenMPTargetUpdateDirective(ClausesWithImplicit, StartLoc, EndLoc);
+    AllowedNameModifiers.push_back(OMPD_target_update);
     break;
   case OMPD_declare_target:
   case OMPD_end_declare_target:
@@ -6509,6 +6516,20 @@ Sema::ActOnOpenMPTargetExitDataDirective(ArrayRef<OMPClause *> Clauses,
   }
 
   return OMPTargetExitDataDirective::Create(Context, StartLoc, EndLoc, Clauses);
+}
+
+StmtResult Sema::ActOnOpenMPTargetUpdateDirective(ArrayRef<OMPClause *> Clauses,
+                                                  SourceLocation StartLoc,
+                                                  SourceLocation EndLoc) {
+  // TODO: Set this flag accordingly when we add support for the 'to' and 'from'
+  // clauses.
+  bool seenMotionClause = false;
+
+  if (!seenMotionClause) {
+    Diag(StartLoc, diag::err_omp_at_least_one_motion_clause_required);
+    return StmtError();
+  }
+  return OMPTargetUpdateDirective::Create(Context, StartLoc, EndLoc, Clauses);
 }
 
 StmtResult Sema::ActOnOpenMPTeamsDirective(ArrayRef<OMPClause *> Clauses,
@@ -10407,7 +10428,7 @@ Sema::ActOnOpenMPMapClause(OpenMPMapClauseKind MapTypeModifier,
 
     // Save the components and declaration to create the clause. For purposes of
     // the clause creation, any component list that has has base 'this' uses
-    // null has
+    // null as base declaration.
     ClauseComponents.resize(ClauseComponents.size() + 1);
     ClauseComponents.back().append(CurComponents.begin(), CurComponents.end());
     ClauseBaseDeclarations.push_back(isa<MemberExpr>(BE) ? nullptr

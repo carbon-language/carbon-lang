@@ -1131,6 +1131,12 @@ void StmtPrinter::VisitOMPDistributeDirective(OMPDistributeDirective *Node) {
   PrintOMPExecutableDirective(Node);
 }
 
+void StmtPrinter::VisitOMPTargetUpdateDirective(
+    OMPTargetUpdateDirective *Node) {
+  Indent() << "#pragma omp target update ";
+  PrintOMPExecutableDirective(Node);
+}
+
 //===----------------------------------------------------------------------===//
 //  Expr printing methods.
 //===----------------------------------------------------------------------===//

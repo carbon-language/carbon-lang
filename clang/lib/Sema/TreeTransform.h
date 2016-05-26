@@ -7477,6 +7477,17 @@ StmtResult TreeTransform<Derived>::TransformOMPTargetParallelForDirective(
 }
 
 template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformOMPTargetUpdateDirective(
+    OMPTargetUpdateDirective *D) {
+  DeclarationNameInfo DirName;
+  getDerived().getSema().StartOpenMPDSABlock(OMPD_target_update, DirName,
+                                             nullptr, D->getLocStart());
+  StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
+  getDerived().getSema().EndOpenMPDSABlock(Res.get());
+  return Res;
+}
+
+template <typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformOMPTeamsDirective(OMPTeamsDirective *D) {
   DeclarationNameInfo DirName;

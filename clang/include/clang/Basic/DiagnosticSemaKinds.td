@@ -8265,6 +8265,8 @@ def err_omp_expected_uniform_param : Error<
   "expected a reference to a parameter specified in a 'uniform' clause">;
 def err_omp_expected_int_param : Error<
   "expected a reference to an integer-typed parameter">;
+def err_omp_at_least_one_motion_clause_required : Error<
+  "expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

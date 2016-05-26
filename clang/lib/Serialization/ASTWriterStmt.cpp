@@ -2370,6 +2370,13 @@ void ASTStmtWriter::VisitOMPDistributeDirective(OMPDistributeDirective *D) {
   Code = serialization::STMT_OMP_DISTRIBUTE_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPTargetUpdateDirective(OMPTargetUpdateDirective *D) {
+  VisitStmt(D);
+  Record.push_back(D->getNumClauses());
+  VisitOMPExecutableDirective(D);
+  Code = serialization::STMT_OMP_TARGET_UPDATE_DIRECTIVE;
+}
+
 //===----------------------------------------------------------------------===//
 // ASTWriter Implementation
 //===----------------------------------------------------------------------===//
