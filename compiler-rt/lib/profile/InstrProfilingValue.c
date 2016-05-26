@@ -26,11 +26,16 @@ static int hasNonDefaultValsPerSite = 0;
 #define INSTR_PROF_VNODE_POOL_SIZE 1024
 
 #ifndef _MSC_VER
+#if defined(__APPLE__)
+#define VPSEG "__DATA,"
+#else
+#define VPSEG ""
+#endif
 /* A shared static pool in addition to the vnodes statically
  * allocated by the compiler.  */
 COMPILER_RT_VISIBILITY ValueProfNode
     lprofValueProfNodes[INSTR_PROF_VNODE_POOL_SIZE] COMPILER_RT_SECTION(
-        INSTR_PROF_VNODES_SECT_NAME_STR);
+       VPSEG INSTR_PROF_VNODES_SECT_NAME_STR);
 #endif
 
 COMPILER_RT_VISIBILITY uint32_t VPMaxNumValsPerSite =
