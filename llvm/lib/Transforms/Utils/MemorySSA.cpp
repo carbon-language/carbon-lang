@@ -354,6 +354,14 @@ MemorySSAWalker *MemorySSA::buildMemorySSA(AliasAnalysis *AA,
 
 /// \brief Helper function to create new memory accesses
 MemoryUseOrDef *MemorySSA::createNewAccess(Instruction *I) {
+  // The assume intrinsic has a control dependency which we model by claiming
+  // that it writes arbitrarily. Ignore that fake memory dependency here.
+  // FIXME: Replace this special casing with a more accurate modelling of
+  // assume's control dependency.
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
+    if (II->getIntrinsicID() == Intrinsic::assume)
+      return nullptr;
+
   // Find out what affect this instruction has on memory.
   ModRefInfo ModRef = AA->getModRefInfo(I);
   bool Def = bool(ModRef & MRI_Mod);

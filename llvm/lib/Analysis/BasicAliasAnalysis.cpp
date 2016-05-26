@@ -580,18 +580,9 @@ FunctionModRefBehavior BasicAAResult::getModRefBehavior(ImmutableCallSite CS) {
 
 /// Returns the behavior when calling the given function. For use when the call
 /// site is not known.
-/// NOTE: Because of the special case handling of llvm.assume below, the result
-/// of this function may not match similar results derived from function
-/// attributes (e.g. "readnone").
 FunctionModRefBehavior BasicAAResult::getModRefBehavior(const Function *F) {
   // If the function declares it doesn't access memory, we can't do better.
   if (F->doesNotAccessMemory())
-    return FMRB_DoesNotAccessMemory;
-
-  // While the assume intrinsic is marked as arbitrarily writing so that
-  // proper control dependencies will be maintained, it never aliases any
-  // actual memory locations.
-  if (F->getIntrinsicID() == Intrinsic::assume)
     return FMRB_DoesNotAccessMemory;
 
   FunctionModRefBehavior Min = FMRB_UnknownModRefBehavior;
