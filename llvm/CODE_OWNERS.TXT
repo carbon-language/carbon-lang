@@ -38,6 +38,10 @@ N: Greg Clayton
 E: gclayton@apple.com
 D: LLDB
 
+N: Sanjoy Das
+E: sanjoy@playingwithpointers.com
+D: IndVar Simplify, Scalar Evolution
+
 N: Hans Wennborg
 E: hans@chromium.org
 D: Release management (x.y.0 releases)
@@ -186,7 +190,7 @@ D: MemorySanitizer (LLVM part)
 
 N: Andrew Trick
 E: atrick@apple.com
-D: IndVar Simplify, Loop Strength Reduction, Instruction Scheduling
+D: Loop Strength Reduction, Instruction Scheduling
 
 N: Ulrich Weigand
 E: uweigand@de.ibm.com
