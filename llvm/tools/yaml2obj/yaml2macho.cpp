@@ -289,6 +289,23 @@ Error MachOWriter::writeLinkEditData(raw_ostream &OS) {
     }
   }
 
+  ZeroToOffset(OS, DyldInfoOnlyCmd->bind_off);
+
+  for (auto Opcode : LinkEdit.BindOpcodes) {
+    uint8_t OpByte = Opcode.Opcode | Opcode.Imm;
+    OS.write(reinterpret_cast<char *>(&OpByte), 1);
+    for (auto Data : Opcode.ULEBExtraData) {
+      encodeULEB128(Data, OS);
+    }
+    for (auto Data : Opcode.SLEBExtraData) {
+      encodeSLEB128(Data, OS);
+    }
+    if(!Opcode.Symbol.empty()) {
+      OS.write(Opcode.Symbol.data(), Opcode.Symbol.size());
+      OS.write("\0", 1);
+    }
+  }
+
   // Fill to the end of the string table
   ZeroToOffset(OS, SymtabCmd->stroff + SymtabCmd->strsize);
 
