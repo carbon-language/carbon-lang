@@ -238,8 +238,7 @@ private:
   LocalBranchesListType FTBranches;
 
   /// Storage for all landing pads and their corresponding invokes.
-  using LandingPadsMapType = std::map<const MCSymbol *,
-                                      std::vector<unsigned> >;
+  using LandingPadsMapType = std::map<const MCSymbol *, std::vector<unsigned> >;
   LandingPadsMapType LPToBBIndex;
 
   /// Map offset in the function to a local label.

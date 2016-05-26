@@ -62,6 +62,11 @@ void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred) {
   Predecessors.erase(I);
 }
 
+void BinaryBasicBlock::addLandingPad(BinaryBasicBlock *LPBlock) {
+  LandingPads.insert(LPBlock);
+  LPBlock->Throwers.insert(this);
+}
+
 bool BinaryBasicBlock::analyzeBranch(const MCInstrAnalysis &MIA,
                                      const MCSymbol *&TBB,
                                      const MCSymbol *&FBB,

@@ -75,6 +75,7 @@ class BinaryBasicBlock {
   /// CFG information.
   std::vector<BinaryBasicBlock *> Predecessors;
   std::vector<BinaryBasicBlock *> Successors;
+  std::set<BinaryBasicBlock *> Throwers;
   std::set<BinaryBasicBlock *> LandingPads;
 
   struct BinaryBranchInfo {
@@ -137,6 +138,10 @@ public:
   typedef std::vector<BinaryBasicBlock *>::const_iterator const_pred_iterator;
   typedef std::vector<BinaryBasicBlock *>::iterator       succ_iterator;
   typedef std::vector<BinaryBasicBlock *>::const_iterator const_succ_iterator;
+  typedef std::set<BinaryBasicBlock *>::iterator          throw_iterator;
+  typedef std::set<BinaryBasicBlock *>::const_iterator    const_throw_iterator;
+  typedef std::set<BinaryBasicBlock *>::iterator          lp_iterator;
+  typedef std::set<BinaryBasicBlock *>::const_iterator    const_lp_iterator;
   typedef std::vector<BinaryBasicBlock *>::reverse_iterator
                                                          pred_reverse_iterator;
   typedef std::vector<BinaryBasicBlock *>::const_reverse_iterator
@@ -145,6 +150,15 @@ public:
                                                          succ_reverse_iterator;
   typedef std::vector<BinaryBasicBlock *>::const_reverse_iterator
                                                    const_succ_reverse_iterator;
+  typedef std::set<BinaryBasicBlock *>::reverse_iterator
+                                                         throw_reverse_iterator;
+  typedef std::set<BinaryBasicBlock *>::const_reverse_iterator
+                                                   const_throw_reverse_iterator;
+  typedef std::set<BinaryBasicBlock *>::reverse_iterator
+                                                         lp_reverse_iterator;
+  typedef std::set<BinaryBasicBlock *>::const_reverse_iterator
+                                                   const_lp_reverse_iterator;
+
   pred_iterator        pred_begin()       { return Predecessors.begin(); }
   const_pred_iterator  pred_begin() const { return Predecessors.begin(); }
   pred_iterator        pred_end()         { return Predecessors.end();   }
@@ -179,6 +193,40 @@ public:
   }
   bool                 succ_empty() const { return Successors.empty();   }
 
+  throw_iterator        throw_begin()       { return Throwers.begin(); }
+  const_throw_iterator  throw_begin() const { return Throwers.begin(); }
+  throw_iterator        throw_end()         { return Throwers.end();   }
+  const_throw_iterator  throw_end()   const { return Throwers.end();   }
+  throw_reverse_iterator        throw_rbegin()
+                                            { return Throwers.rbegin();}
+  const_throw_reverse_iterator  throw_rbegin() const
+                                            { return Throwers.rbegin();}
+  throw_reverse_iterator        throw_rend()
+                                            { return Throwers.rend();  }
+  const_throw_reverse_iterator  throw_rend()   const
+                                            { return Throwers.rend();  }
+  unsigned              throw_size()  const {
+    return (unsigned)Throwers.size();
+  }
+  bool                  throw_empty() const { return Throwers.empty(); }
+
+  lp_iterator        lp_begin()       { return LandingPads.begin();   }
+  const_lp_iterator  lp_begin() const { return LandingPads.begin();   }
+  lp_iterator        lp_end()         { return LandingPads.end();     }
+  const_lp_iterator  lp_end()   const { return LandingPads.end();     }
+  lp_reverse_iterator        lp_rbegin()
+                                      { return LandingPads.rbegin();  }
+  const_lp_reverse_iterator  lp_rbegin() const
+                                      { return LandingPads.rbegin();  }
+  lp_reverse_iterator        lp_rend()
+                                      { return LandingPads.rend();    }
+  const_lp_reverse_iterator  lp_rend()   const
+                                      { return LandingPads.rend();    }
+  unsigned           lp_size()  const {
+    return (unsigned)LandingPads.size();
+  }
+  bool               lp_empty() const { return LandingPads.empty();   }
+
   inline iterator_range<pred_iterator> predecessors() {
     return iterator_range<pred_iterator>(pred_begin(), pred_end());
   }
@@ -190,6 +238,18 @@ public:
   }
   inline iterator_range<const_succ_iterator> successors() const {
     return iterator_range<const_succ_iterator>(succ_begin(), succ_end());
+  }
+  inline iterator_range<throw_iterator> throwers() {
+    return iterator_range<throw_iterator>(throw_begin(), throw_end());
+  }
+  inline iterator_range<const_throw_iterator> throwers() const {
+    return iterator_range<const_throw_iterator>(throw_begin(), throw_end());
+  }
+  inline iterator_range<lp_iterator> landing_pads() {
+    return iterator_range<lp_iterator>(lp_begin(), lp_end());
+  }
+  inline iterator_range<const_lp_iterator> landing_pads() const {
+    return iterator_range<const_lp_iterator>(lp_begin(), lp_end());
   }
 
   /// Return symbol marking the start of this basic block.
@@ -238,9 +298,7 @@ public:
                     uint64_t MispredictedCount = 0);
 
   /// Adds block to landing pad list.
-  void addLandingPad(BinaryBasicBlock *LPBlock) {
-    LandingPads.insert(LPBlock);
-  }
+  void addLandingPad(BinaryBasicBlock *LPBlock);
 
   /// Remove /p Succ basic block from the list of successors. Update the
   /// list of predecessors of /p Succ and update branch info.

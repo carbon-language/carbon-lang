@@ -287,6 +287,15 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       }
       OS << '\n';
     }
+    if (!BB->Throwers.empty()) {
+      OS << "  Throwers: ";
+      auto Sep = "";
+      for (auto Throw : BB->Throwers) {
+        OS << Sep << Throw->getName();
+        Sep = ", ";
+      }
+      OS << '\n';
+    }
 
     Offset = RoundUpToAlignment(Offset, BB->getAlignment());
 
@@ -319,6 +328,19 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
         }
         Sep = ", ";
         ++BI;
+      }
+      OS << '\n';
+    }
+
+    if (!BB->LandingPads.empty()) {
+      OS << "  Landing Pads: ";
+      auto Sep = "";
+      for (auto LP : BB->LandingPads) {
+        OS << Sep << LP->getName();
+        if (ExecutionCount != COUNT_NO_PROFILE) {
+          OS << " (count: " << LP->ExecutionCount << ")";
+        }
+        Sep = ", ";
       }
       OS << '\n';
     }
