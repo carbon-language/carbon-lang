@@ -4862,7 +4862,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Forward flags for OpenMP
   if (Args.hasFlag(options::OPT_fopenmp, options::OPT_fopenmp_EQ,
-                   options::OPT_fno_openmp, false))
+                   options::OPT_fno_openmp, false)) {
+    Args.AddAllArgs(CmdArgs, options::OPT_fopenmp_version_EQ);
     switch (getOpenMPRuntime(getToolChain(), Args)) {
     case OMPRT_OMP:
     case OMPRT_IOMP5:
@@ -4885,6 +4886,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       // semantic analysis, etc.
       break;
     }
+  }
 
   const SanitizerArgs &Sanitize = getToolChain().getSanitizerArgs();
   Sanitize.addArgs(getToolChain(), Args, CmdArgs, InputType);

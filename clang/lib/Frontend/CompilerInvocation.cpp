@@ -1960,18 +1960,23 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.OpenMPIsDevice =
       Opts.OpenMP && Args.hasArg(options::OPT_fopenmp_is_device);
 
-  // Provide diagnostic when a given target is not expected to be an OpenMP
-  // device or host.
-  if (Opts.OpenMP && !Opts.OpenMPIsDevice) {
-    switch (T.getArch()) {
-    default:
-      break;
-    // Add unsupported host targets here:
-    case llvm::Triple::nvptx:
-    case llvm::Triple::nvptx64:
-      Diags.Report(clang::diag::err_drv_omp_host_target_not_supported)
-          << TargetOpts.Triple;
-      break;
+  if (Opts.OpenMP) {
+    if (int Version = getLastArgIntValue(Args, OPT_fopenmp_version_EQ,
+                                         Opts.OpenMP, Diags))
+      Opts.OpenMP = Version;
+    // Provide diagnostic when a given target is not expected to be an OpenMP
+    // device or host.
+    if (!Opts.OpenMPIsDevice) {
+      switch (T.getArch()) {
+      default:
+        break;
+      // Add unsupported host targets here:
+      case llvm::Triple::nvptx:
+      case llvm::Triple::nvptx64:
+        Diags.Report(clang::diag::err_drv_omp_host_target_not_supported)
+            << TargetOpts.Triple;
+        break;
+      }
     }
   }
 
