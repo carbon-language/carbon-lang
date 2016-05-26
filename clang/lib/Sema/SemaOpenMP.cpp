@@ -6523,7 +6523,7 @@ StmtResult Sema::ActOnOpenMPTargetUpdateDirective(ArrayRef<OMPClause *> Clauses,
                                                   SourceLocation EndLoc) {
   bool seenMotionClause = false;
   for (auto *C : Clauses) {
-    if (C->getClauseKind() == OMPC_to)
+    if (C->getClauseKind() == OMPC_to || C->getClauseKind() == OMPC_from)
       seenMotionClause = true;
   }
   if (!seenMotionClause) {
@@ -6800,6 +6800,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_unknown:
   case OMPC_uniform:
   case OMPC_to:
+  case OMPC_from:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;
@@ -7087,6 +7088,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_unknown:
   case OMPC_uniform:
   case OMPC_to:
+  case OMPC_from:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;
@@ -7239,6 +7241,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_unknown:
   case OMPC_uniform:
   case OMPC_to:
+  case OMPC_from:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;
@@ -7424,6 +7427,7 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_unknown:
   case OMPC_uniform:
   case OMPC_to:
+  case OMPC_from:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;
@@ -7539,6 +7543,9 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
     break;
   case OMPC_to:
     Res = ActOnOpenMPToClause(VarList, StartLoc, LParenLoc, EndLoc);
+    break;
+  case OMPC_from:
+    Res = ActOnOpenMPFromClause(VarList, StartLoc, LParenLoc, EndLoc);
     break;
   case OMPC_if:
   case OMPC_final:
@@ -10177,7 +10184,7 @@ static bool CheckMapConflicts(
             if (CKind == OMPC_map)
               SemaRef.Diag(ELoc, diag::err_omp_map_shared_storage) << ERange;
             else {
-              assert(CKind == OMPC_to);
+              assert(CKind == OMPC_to || CKind == OMPC_from);
               SemaRef.Diag(ELoc, diag::err_omp_once_referenced_in_target_update)
                   << ERange;
             }
@@ -10238,7 +10245,7 @@ static bool CheckMapConflicts(
           if (CKind == OMPC_map)
             SemaRef.Diag(ELoc, diag::err_omp_map_shared_storage) << ERange;
           else {
-            assert(CKind == OMPC_to);
+            assert(CKind == OMPC_to || CKind == OMPC_from);
             SemaRef.Diag(ELoc, diag::err_omp_once_referenced_in_target_update)
                 << ERange;
           }
@@ -10319,8 +10326,8 @@ checkMappableExpressionList(Sema &SemaRef, DSAStackTy *DSAS,
                             SourceLocation StartLoc,
                             OpenMPMapClauseKind MapType = OMPC_MAP_unknown,
                             bool IsMapTypeImplicit = false) {
-  // We only expect mappable expressions in 'to' and 'map' clauses.
-  assert((CKind == OMPC_map || CKind == OMPC_to) &&
+  // We only expect mappable expressions in 'to', 'from', and 'map' clauses.
+  assert((CKind == OMPC_map || CKind == OMPC_to || CKind == OMPC_from) &&
          "Unexpected clause kind with mappable expressions!");
 
   // Keep track of the mappable components and base declarations in this clause.
@@ -10330,7 +10337,7 @@ checkMappableExpressionList(Sema &SemaRef, DSAStackTy *DSAS,
   // lists.
 
   for (auto &RE : MVLI.VarList) {
-    assert(RE && "Null expr in omp to/map clause");
+    assert(RE && "Null expr in omp to/from/map clause");
     SourceLocation ELoc = RE->getExprLoc();
 
     auto *VE = RE->IgnoreParenLValueCasts();
@@ -11116,4 +11123,18 @@ OMPClause *Sema::ActOnOpenMPToClause(ArrayRef<Expr *> VarList,
   return OMPToClause::Create(Context, StartLoc, LParenLoc, EndLoc,
                              MVLI.ProcessedVarList, MVLI.VarBaseDeclarations,
                              MVLI.VarComponents);
+}
+
+OMPClause *Sema::ActOnOpenMPFromClause(ArrayRef<Expr *> VarList,
+                                       SourceLocation StartLoc,
+                                       SourceLocation LParenLoc,
+                                       SourceLocation EndLoc) {
+  MappableVarListInfo MVLI(VarList);
+  checkMappableExpressionList(*this, DSAStack, OMPC_from, MVLI, StartLoc);
+  if (MVLI.ProcessedVarList.empty())
+    return nullptr;
+
+  return OMPFromClause::Create(Context, StartLoc, LParenLoc, EndLoc,
+                               MVLI.ProcessedVarList, MVLI.VarBaseDeclarations,
+                               MVLI.VarComponents);
 }

@@ -14,20 +14,25 @@ T foo(T targ, U uarg) {
   U b;
   int l;
 #pragma omp target update to(a) if(l>5) device(l)
+
+#pragma omp target update from(b) if(l<5) device(l-1)
   return a + targ + (T)b;
 }
 // CHECK:      static int a;
 // CHECK-NEXT: float b;
 // CHECK-NEXT: int l;
 // CHECK-NEXT: #pragma omp target update to(a) if(l > 5) device(l)
+// CHECK-NEXT: #pragma omp target update from(b) if(l < 5) device(l - 1)
 // CHECK:      static char a;
 // CHECK-NEXT: float b;
 // CHECK-NEXT: int l;
 // CHECK-NEXT: #pragma omp target update to(a) if(l > 5) device(l)
+// CHECK-NEXT: #pragma omp target update from(b) if(l < 5) device(l - 1)
 // CHECK:      static T a;
 // CHECK-NEXT: U b;
 // CHECK-NEXT: int l;
 // CHECK-NEXT: #pragma omp target update to(a) if(l > 5) device(l)
+// CHECK-NEXT: #pragma omp target update from(b) if(l < 5) device(l - 1)
 
 int main(int argc, char **argv) {
   static int a;
@@ -39,6 +44,8 @@ int main(int argc, char **argv) {
 // CHECK-NEXT: float f;
 #pragma omp target update to(a) if(f>0.0) device(n)
   // CHECK-NEXT: #pragma omp target update to(a) if(f > 0.) device(n)
+#pragma omp target update from(f) if(f<0.0) device(n+1)
+  // CHECK-NEXT: #pragma omp target update from(f) if(f < 0.) device(n + 1)
   return foo(argc, f) + foo(argv[0][0], f) + a;
 }
 

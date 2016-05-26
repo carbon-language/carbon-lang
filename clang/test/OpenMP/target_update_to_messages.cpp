@@ -97,7 +97,7 @@ T tmain(T argc) {
 #pragma omp target update to(a, b, c, d, f) // expected-error {{incomplete type 'S1' where a complete type is required}} expected-error 2 {{type 'S2' is not mappable to target}}
 #pragma omp target update to(ba) // expected-error 2 {{type 'S2' is not mappable to target}} expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
 #pragma omp target update to(h) // expected-error {{threadprivate variables are not allowed in 'to' clause}} expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
-#pragma omp target update to(k), to(k) // expected-error 2 {{variable can appear only once in OpenMP 'target update' construct}} expected-note 2 {{used here}}
+#pragma omp target update to(k), from(k) // expected-error 2 {{variable can appear only once in OpenMP 'target update' construct}} expected-note 2 {{used here}}
 #pragma omp target update to(t), to(t[:5]) // expected-error 2 {{variable can appear only once in OpenMP 'target update' construct}} expected-note 2 {{used here}}
 #pragma omp target update to(da)
 #pragma omp target update to(da[:4])
@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
 #pragma omp target update to(a, b, c, d, f) // expected-error {{incomplete type 'S1' where a complete type is required}} expected-error 2 {{type 'S2' is not mappable to target}}
 #pragma omp target update to(ba) // expected-error 2 {{type 'S2' is not mappable to target}} expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
 #pragma omp target update to(h) // expected-error {{threadprivate variables are not allowed in 'to' clause}} expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
-#pragma omp target update to(k), to(k) // expected-error {{variable can appear only once in OpenMP 'target update' construct}} expected-note {{used here}}
+#pragma omp target update to(k), from(k) // expected-error {{variable can appear only once in OpenMP 'target update' construct}} expected-note {{used here}}
 #pragma omp target update to(t), to(t[:5]) // expected-error {{variable can appear only once in OpenMP 'target update' construct}} expected-note {{used here}}
 #pragma omp target update to(da)
 #pragma omp target update to(da[:4])

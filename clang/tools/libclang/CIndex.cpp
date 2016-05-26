@@ -2249,6 +2249,9 @@ void OMPClauseEnqueue::VisitOMPDefaultmapClause(
 void OMPClauseEnqueue::VisitOMPToClause(const OMPToClause *C) {
   VisitOMPClauseList(C);
 }
+void OMPClauseEnqueue::VisitOMPFromClause(const OMPFromClause *C) {
+  VisitOMPClauseList(C);
+}
 }
 
 void EnqueueVisitor::EnqueueChildren(const OMPClause *S) {

@@ -494,6 +494,9 @@ void OMPClauseProfiler::VisitOMPHintClause(const OMPHintClause *C) {
 void OMPClauseProfiler::VisitOMPToClause(const OMPToClause *C) {
   VisitOMPClauseList(C);
 }
+void OMPClauseProfiler::VisitOMPFromClause(const OMPFromClause *C) {
+  VisitOMPClauseList(C);
+}
 }
 
 void
