@@ -315,6 +315,8 @@ Error MachOWriter::writeLinkEditData(raw_ostream &OS) {
   writeBindOpcodes(OS, DyldInfoOnlyCmd->bind_off, LinkEdit.BindOpcodes);
   writeBindOpcodes(OS, DyldInfoOnlyCmd->weak_bind_off,
                    LinkEdit.WeakBindOpcodes);
+  writeBindOpcodes(OS, DyldInfoOnlyCmd->lazy_bind_off,
+                   LinkEdit.LazyBindOpcodes);
 
   // Fill to the end of the string table
   ZeroToOffset(OS, SymtabCmd->stroff + SymtabCmd->strsize);

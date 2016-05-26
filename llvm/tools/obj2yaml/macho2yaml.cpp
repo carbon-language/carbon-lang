@@ -199,6 +199,8 @@ void MachODumper::dumpLinkEdit(std::unique_ptr<MachOYAML::Object> &Y) {
   dumpBindOpcodes(Y->LinkEdit.BindOpcodes, Obj.getDyldInfoBindOpcodes());
   dumpBindOpcodes(Y->LinkEdit.WeakBindOpcodes,
                   Obj.getDyldInfoWeakBindOpcodes());
+  dumpBindOpcodes(Y->LinkEdit.LazyBindOpcodes,
+                  Obj.getDyldInfoLazyBindOpcodes(), true);
 }
 
 void MachODumper::dumpRebaseOpcodes(std::unique_ptr<MachOYAML::Object> &Y) {

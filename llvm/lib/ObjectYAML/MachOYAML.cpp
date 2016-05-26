@@ -102,6 +102,7 @@ void MappingTraits<MachOYAML::LinkEditData>::mapping(
   IO.mapOptional("RebaseOpcodes", LinkEditData.RebaseOpcodes);
   IO.mapOptional("BindOpcodes", LinkEditData.BindOpcodes);
   IO.mapOptional("WeakBindOpcodes", LinkEditData.WeakBindOpcodes);
+  IO.mapOptional("LazyBindOpcodes", LinkEditData.LazyBindOpcodes);
 }
 
 void MappingTraits<MachOYAML::RebaseOpcode>::mapping(
