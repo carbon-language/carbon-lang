@@ -115,11 +115,11 @@ class InductiveRangeCheck {
 
   static StringRef rangeCheckKindToStr(RangeCheckKind);
 
-  const SCEV *Offset;
-  const SCEV *Scale;
-  Value *Length;
-  Use *CheckUse;
-  RangeCheckKind Kind;
+  const SCEV *Offset = nullptr;
+  const SCEV *Scale = nullptr;
+  Value *Length = nullptr;
+  Use *CheckUse = nullptr;
+  RangeCheckKind Kind = RANGE_CHECK_UNKNOWN;
 
   static RangeCheckKind parseRangeCheckICmp(Loop *L, ICmpInst *ICI,
                                             ScalarEvolution &SE, Value *&Index,
@@ -129,10 +129,6 @@ class InductiveRangeCheck {
   extractRangeChecksFromCond(Loop *L, ScalarEvolution &SE, Use &ConditionUse,
                              SmallVectorImpl<InductiveRangeCheck> &Checks,
                              SmallPtrSetImpl<Value *> &Visited);
-
-  InductiveRangeCheck()
-      : Offset(nullptr), Scale(nullptr), Length(nullptr),
-        CheckUse(nullptr) {}
 
 public:
   const SCEV *getOffset() const { return Offset; }
