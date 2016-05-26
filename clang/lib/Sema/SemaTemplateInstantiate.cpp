@@ -21,6 +21,7 @@
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/PrettyDeclStackTrace.h"
 #include "clang/Sema/Template.h"
 #include "clang/Sema/TemplateDeduction.h"
 
@@ -1955,6 +1956,8 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Instantiation);
   if (Inst.isInvalid())
     return true;
+  PrettyDeclStackTraceEntry CrashInfo(*this, Instantiation, SourceLocation(),
+                                      "instantiating class definition");
 
   // Enter the scope of this instantiation. We don't use
   // PushDeclContext because we don't have a scope.
@@ -2178,6 +2181,8 @@ bool Sema::InstantiateEnum(SourceLocation PointOfInstantiation,
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Instantiation);
   if (Inst.isInvalid())
     return true;
+  PrettyDeclStackTraceEntry CrashInfo(*this, Instantiation, SourceLocation(),
+                                      "instantiating enum definition");
 
   // The instantiation is visible here, even if it was first declared in an
   // unimported module.
@@ -2250,6 +2255,8 @@ bool Sema::InstantiateInClassInitializer(
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Instantiation);
   if (Inst.isInvalid())
     return true;
+  PrettyDeclStackTraceEntry CrashInfo(*this, Instantiation, SourceLocation(),
+                                      "instantiating default member init");
 
   // Enter the scope of this instantiation. We don't use PushDeclContext because
   // we don't have a scope.
