@@ -402,6 +402,13 @@ public:
   // Public for tests.
   void ResetCoverage();
 
+  bool InFuzzingThread() const { return IsMyThread; }
+  size_t GetCurrentUnitInFuzzingThead(const uint8_t **Data) const {
+    assert(InFuzzingThread());
+    *Data = CurrentUnitData;
+    return CurrentUnitSize;
+  }
+
 private:
   void AlarmCallback();
   void CrashCallback();
@@ -463,6 +470,9 @@ private:
 
   // Maximum recorded coverage.
   Coverage MaxCoverage;
+
+  // Need to know our own thread.
+  static thread_local bool IsMyThread;
 };
 
 }; // namespace fuzzer

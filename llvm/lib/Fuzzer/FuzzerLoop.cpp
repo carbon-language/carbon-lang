@@ -61,6 +61,8 @@ namespace fuzzer {
 static const size_t kMaxUnitSizeToPrint = 256;
 static const size_t TruncateMaxRuns = 1000;
 
+thread_local bool Fuzzer::IsMyThread;
+
 static void MissingWeakApiFunction(const char *FnName) {
   Printf("ERROR: %s is not defined. Exiting.\n"
          "Did you use -fsanitize-coverage=... to build your code?\n",
@@ -154,6 +156,7 @@ Fuzzer::Fuzzer(UserCallback CB, MutationDispatcher &MD, FuzzingOptions Options)
   assert(!F);
   F = this;
   ResetCoverage();
+  IsMyThread = true;
 }
 
 void Fuzzer::SetDeathCallback() {
