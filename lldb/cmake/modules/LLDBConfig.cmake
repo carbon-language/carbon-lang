@@ -338,28 +338,6 @@ if (HAVE_LIBDL)
   list(APPEND system_libs ${CMAKE_DL_LIBS})
 endif()
 
-if(LLDB_REQUIRES_EH)
-  set(LLDB_REQUIRES_RTTI ON)
-else()
-  if(LLVM_COMPILER_IS_GCC_COMPATIBLE)
-    set(LLDB_COMPILE_FLAGS "${LLDB_COMPILE_FLAGS} -fno-exceptions")
-  elseif(MSVC)
-    add_definitions( -D_HAS_EXCEPTIONS=0 )
-    set(LLDB_COMPILE_FLAGS "${LLDB_COMPILE_FLAGS} /EHs-c-")
-  endif()
-endif()
-
-# Disable RTTI by default
-if(NOT LLDB_REQUIRES_RTTI)
-  if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
-    set(LLDB_COMPILE_FLAGS "${LLDB_COMPILE_FLAGS} -fno-rtti")
-  elseif(MSVC)
-    set(LLDB_COMPILE_FLAGS "${LLDB_COMPILE_FLAGS} /GR-")
-  endif()
-endif()
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLDB_COMPILE_FLAGS}")
-
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     # Check for syscall used by lldb-server on linux.
     # If these are not found, it will fall back to ptrace (slow) for memory reads.
