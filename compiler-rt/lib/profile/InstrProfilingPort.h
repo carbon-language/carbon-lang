@@ -22,7 +22,17 @@
 #define COMPILER_RT_ALLOCA __builtin_alloca
 #endif
 
+#if defined(__APPLE__)
+#define COMPILER_RT_SEG "__DATA,"
+#else
+#define COMPILER_RT_SEG ""
+#endif
+
+#ifdef _MSC_VER
+#define COMPILER_RT_SECTION(Sect) __declspec(allocate(Sect))
+#else
 #define COMPILER_RT_SECTION(Sect) __attribute__((section(Sect)))
+#endif
 
 #define COMPILER_RT_MAX_HOSTLEN 128
 #ifdef _MSC_VER
