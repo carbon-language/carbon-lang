@@ -58,6 +58,7 @@ set(Tests
   SimpleFnAdapterTest
   SimpleHashTest
   SimpleTest
+  SimpleThreadedTest
   SpamyTest
   StrcmpTest
   StrncmpTest

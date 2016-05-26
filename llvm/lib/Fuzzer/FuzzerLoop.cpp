@@ -170,20 +170,19 @@ void Fuzzer::StaticDeathCallback() {
 }
 
 void Fuzzer::DumpCurrentUnit(const char *Prefix) {
-  if (CurrentUnitSize <= kMaxUnitSizeToPrint) {
-    PrintHexArray(CurrentUnitData, CurrentUnitSize, "\n");
-    PrintASCII(CurrentUnitData, CurrentUnitSize, "\n");
+  const uint8_t *UnitData;
+  size_t UnitSize = GetCurrentUnitNoThreadCheck(&UnitData);
+  if (UnitSize <= kMaxUnitSizeToPrint) {
+    PrintHexArray(UnitData, UnitSize, "\n");
+    PrintASCII(UnitData, UnitSize, "\n");
   }
   WriteUnitToFileWithPrefix(
-      {CurrentUnitData, CurrentUnitData + CurrentUnitSize}, Prefix);
+      {UnitData, UnitData + UnitSize}, Prefix);
 }
 
 NO_SANITIZE_MEMORY
 void Fuzzer::DeathCallback() {
-  if (CurrentUnitSize) {
-    Printf("DEATH:\n");
-    DumpCurrentUnit("crash-");
-  }
+  DumpCurrentUnit("crash-");
   PrintFinalStats();
 }
 
@@ -224,11 +223,15 @@ void Fuzzer::InterruptCallback() {
 NO_SANITIZE_MEMORY
 void Fuzzer::AlarmCallback() {
   assert(Options.UnitTimeoutSec > 0);
+  if (!InFuzzingThread()) return;
+  const uint8_t *UnitData;
+  size_t UnitSize = GetCurrentUnitInFuzzingThead(&UnitData);
   if (InOOMState) {
-    Printf("==%d== ERROR: libFuzzer: out-of-memory (used: %zdMb; limit: %zdMb)\n",
-           GetPid(), GetPeakRSSMb(), Options.RssLimitMb);
+    Printf(
+        "==%d== ERROR: libFuzzer: out-of-memory (used: %zdMb; limit: %zdMb)\n",
+        GetPid(), GetPeakRSSMb(), Options.RssLimitMb);
     Printf("   To change the out-of-memory limit use -rss_limit_mb=<N>\n");
-    if (CurrentUnitSize && CurrentUnitData) {
+    if (UnitSize && UnitData) {
       DumpCurrentUnit("oom-");
       if (__sanitizer_print_stack_trace)
         __sanitizer_print_stack_trace();
@@ -238,7 +241,7 @@ void Fuzzer::AlarmCallback() {
     _Exit(Options.ErrorExitCode); // Stop right now.
   }
 
-  if (!CurrentUnitSize)
+  if (!UnitSize)
     return; // We have not started running units yet.
   size_t Seconds =
       duration_cast<seconds>(system_clock::now() - UnitStartTime).count();
@@ -498,6 +501,22 @@ void __sanitizer_free_hook(void *ptr) {
 }
 }  // extern "C"
 
+void Fuzzer::SetCurrentUnit(const uint8_t *Data, size_t Size) {
+  assert(InFuzzingThread());
+  CurrentUnitSize = Size;
+  CurrentUnitData = Data;
+}
+
+size_t Fuzzer::GetCurrentUnitNoThreadCheck(const uint8_t **Data) const {
+  *Data = CurrentUnitData;
+  return CurrentUnitSize;
+}
+
+size_t Fuzzer::GetCurrentUnitInFuzzingThead(const uint8_t **Data) const {
+  assert(InFuzzingThread());
+  return GetCurrentUnitNoThreadCheck(Data);
+}
+
 void Fuzzer::ExecuteCallback(const uint8_t *Data, size_t Size) {
   UnitStartTime = system_clock::now();
   // We copy the contents of Unit into a separate heap buffer
@@ -505,14 +524,12 @@ void Fuzzer::ExecuteCallback(const uint8_t *Data, size_t Size) {
   std::unique_ptr<uint8_t[]> DataCopy(new uint8_t[Size]);
   memcpy(DataCopy.get(), Data, Size);
   AssignTaintLabels(DataCopy.get(), Size);
-  CurrentUnitData = DataCopy.get();
-  CurrentUnitSize = Size;
+  SetCurrentUnit(DataCopy.get(), Size);
   AllocTracer.Start();
   int Res = CB(DataCopy.get(), Size);
   (void)Res;
   HasMoreMallocsThanFrees = AllocTracer.Stop();
-  CurrentUnitSize = 0;
-  CurrentUnitData = nullptr;
+  SetCurrentUnit(nullptr, 0);
   assert(Res == 0);
 }
 
@@ -672,8 +689,7 @@ void Fuzzer::TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size,
     if (DuringInitialCorpusExecution)
       Printf("\nINFO: a leak has been found in the initial corpus.\n\n");
     Printf("INFO: to ignore leaks on libFuzzer side use -detect_leaks=0.\n\n");
-    CurrentUnitData = Data;
-    CurrentUnitSize = Size;
+    SetCurrentUnit(Data, Size);
     DumpCurrentUnit("leak-");
     PrintFinalStats();
     _Exit(Options.ErrorExitCode);  // not exit() to disable lsan further on.

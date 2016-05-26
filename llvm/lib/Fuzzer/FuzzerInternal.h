@@ -403,11 +403,7 @@ public:
   void ResetCoverage();
 
   bool InFuzzingThread() const { return IsMyThread; }
-  size_t GetCurrentUnitInFuzzingThead(const uint8_t **Data) const {
-    assert(InFuzzingThread());
-    *Data = CurrentUnitData;
-    return CurrentUnitSize;
-  }
+  size_t GetCurrentUnitInFuzzingThead(const uint8_t **Data) const;
 
 private:
   void AlarmCallback();
@@ -445,6 +441,8 @@ private:
   void DumpCurrentUnit(const char *Prefix);
   void DeathCallback();
 
+  void SetCurrentUnit(const uint8_t *Data, size_t Size);
+  size_t GetCurrentUnitNoThreadCheck(const uint8_t **Data) const;
   const uint8_t *CurrentUnitData = nullptr;
   size_t CurrentUnitSize = 0;
   bool InOOMState = false;
