@@ -106,6 +106,7 @@ public:
   bool enableMachineSchedDefaultSched() const override { return false; }
 
   AntiDepBreakMode getAntiDepBreakMode() const override { return ANTIDEP_ALL; }
+  bool enablePostRAScheduler() const override { return true; }
 
   const std::string &getCPUString () const { return CPUString; }
 
