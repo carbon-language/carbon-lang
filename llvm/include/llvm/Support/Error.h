@@ -835,9 +835,8 @@ private:
 /// (or Expected) and you want to call code that still returns
 /// std::error_codes.
 class ECError : public ErrorInfo<ECError> {
+  friend Error errorCodeToError(std::error_code);
 public:
-  ECError() = default;
-  ECError(std::error_code EC) : EC(EC) {}
   void setErrorCode(std::error_code EC) { this->EC = EC; }
   std::error_code convertToErrorCode() const override { return EC; }
   void log(raw_ostream &OS) const override { OS << EC.message(); }
@@ -846,6 +845,8 @@ public:
   static char ID;
 
 protected:
+  ECError() = default;
+  ECError(std::error_code EC) : EC(EC) {}
   std::error_code EC;
 };
 
@@ -853,7 +854,7 @@ protected:
 inline Error errorCodeToError(std::error_code EC) {
   if (!EC)
     return Error::success();
-  return make_error<ECError>(EC);
+  return Error(llvm::make_unique<ECError>(ECError(EC)));
 }
 
 /// Helper for converting an ECError to a std::error_code.
