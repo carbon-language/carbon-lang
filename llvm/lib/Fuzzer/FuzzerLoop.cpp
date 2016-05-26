@@ -457,11 +457,9 @@ bool Fuzzer::RunOne(const uint8_t *Data, size_t Size) {
   return Res;
 }
 
-void Fuzzer::RunOneAndUpdateCorpus(uint8_t *Data, size_t Size) {
+void Fuzzer::RunOneAndUpdateCorpus(const uint8_t *Data, size_t Size) {
   if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
     return;
-  if (Options.OnlyASCII)
-    ToASCII(Data, Size);
   if (RunOne(Data, Size))
     ReportNewCoverage({Data, Data + Size});
 }
@@ -525,13 +523,14 @@ std::string Fuzzer::Coverage::DebugString() const {
 }
 
 void Fuzzer::WriteToOutputCorpus(const Unit &U) {
+  if (Options.OnlyASCII)
+    assert(IsASCII(U));
   if (Options.OutputCorpus.empty())
     return;
   std::string Path = DirPlusFile(Options.OutputCorpus, Hash(U));
   WriteToFile(U, Path);
   if (Options.Verbosity >= 2)
     Printf("Written to %s\n", Path.c_str());
-  assert(!Options.OnlyASCII || IsASCII(U));
 }
 
 void Fuzzer::WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix) {
@@ -659,7 +658,7 @@ void Fuzzer::CheckForMemoryLeaks() {
 
 // Tries detecting a memory leak on the particular input that we have just
 // executed before calling this function.
-void Fuzzer::TryDetectingAMemoryLeak(uint8_t *Data, size_t Size) {
+void Fuzzer::TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size) {
   if (!HasMoreMallocsThanFrees) return;  // mallocs==frees, a leak is unlikely.
   if (!Options.DetectLeaks) return;
   if (!&__lsan_enable || !&__lsan_disable || !__lsan_do_recoverable_leak_check)
@@ -710,6 +709,8 @@ void Fuzzer::MutateAndTestOne() {
     assert(NewSize <= Options.MaxLen &&
            "Mutator return overisized unit");
     Size = NewSize;
+    if (Options.OnlyASCII)
+      ToASCII(MutateInPlaceHere.data(), Size);
     if (i == 0)
       StartTraceRecording();
     RunOneAndUpdateCorpus(MutateInPlaceHere.data(), Size);

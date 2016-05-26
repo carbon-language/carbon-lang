@@ -122,6 +122,7 @@ void ComputeSHA1(const uint8_t *Data, size_t Len, uint8_t *Out);
 // Returns true iff U has been changed.
 bool ToASCII(uint8_t *Data, size_t Size);
 bool IsASCII(const Unit &U);
+bool IsASCII(const uint8_t *Data, size_t Size);
 
 int NumberOfCpuCores();
 int GetPid();
@@ -408,13 +409,13 @@ private:
   void MutateAndTestOne();
   void ReportNewCoverage(const Unit &U);
   bool RunOne(const Unit &U) { return RunOne(U.data(), U.size()); }
-  void RunOneAndUpdateCorpus(uint8_t *Data, size_t Size);
+  void RunOneAndUpdateCorpus(const uint8_t *Data, size_t Size);
   void WriteToOutputCorpus(const Unit &U);
   void WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix);
   void PrintStats(const char *Where, const char *End = "\n");
   void PrintStatusForNewUnit(const Unit &U);
   void ShuffleCorpus(UnitVector *V);
-  void TryDetectingAMemoryLeak(uint8_t *Data, size_t Size);
+  void TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size);
   void CheckForMemoryLeaks();
 
   // Updates the probability distribution for the units in the corpus.
@@ -437,7 +438,7 @@ private:
   void DumpCurrentUnit(const char *Prefix);
   void DeathCallback();
 
-  uint8_t *CurrentUnitData = nullptr;
+  const uint8_t *CurrentUnitData = nullptr;
   size_t CurrentUnitSize = 0;
   bool InOOMState = false;
 

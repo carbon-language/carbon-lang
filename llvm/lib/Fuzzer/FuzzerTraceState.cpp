@@ -175,7 +175,7 @@ static bool RecordingMemcmp = false;
 class TraceState {
  public:
    TraceState(MutationDispatcher &MD, const Fuzzer::FuzzingOptions &Options,
-              uint8_t **CurrentUnitData, size_t *CurrentUnitSize)
+              const uint8_t **CurrentUnitData, size_t *CurrentUnitSize)
        : MD(MD), Options(Options), CurrentUnitData(CurrentUnitData),
          CurrentUnitSize(CurrentUnitSize) {
      // Current trace collection is not thread-friendly and it probably
@@ -293,7 +293,7 @@ class TraceState {
   size_t LastDfsanLabel = 0;
   MutationDispatcher &MD;
   const Fuzzer::FuzzingOptions &Options;
-  uint8_t **CurrentUnitData;
+  const uint8_t **CurrentUnitData;
   size_t *CurrentUnitSize;
   std::map<Word, size_t> AutoDictUnitCounts;
   size_t AutoDictAdds = 0;
