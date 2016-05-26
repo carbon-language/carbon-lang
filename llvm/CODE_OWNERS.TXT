@@ -42,10 +42,6 @@ N: Sanjoy Das
 E: sanjoy@playingwithpointers.com
 D: IndVar Simplify, Scalar Evolution
 
-N: Hans Wennborg
-E: hans@chromium.org
-D: Release management (x.y.0 releases)
-
 N: Marshall Clow
 E: mclow.lists@gmail.com
 D: libc++
@@ -199,6 +195,10 @@ D: SystemZ Backend
 N: Bill Wendling
 E: isanbard@gmail.com
 D: libLTO, IR Linker
+
+N: Hans Wennborg
+E: hans@chromium.org
+D: Release management (x.y.0 releases)
 
 N: Peter Zotov
 E: whitequark@whitequark.org
