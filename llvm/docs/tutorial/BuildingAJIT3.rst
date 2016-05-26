@@ -19,12 +19,12 @@ CompileOnDemand layer the JIT from `Chapter 2 <BuildingAJIT2.html>`_.
 **To be done:**
 
 **(1) Describe lazy function-at-a-time JITing and how it differs from the kind
-of eager module-at-a-time JITing that we've been doing so far. **
+of eager module-at-a-time JITing that we've been doing so far.**
 
 **(2) Discuss CompileCallbackManagers and IndirectStubManagers.**
 
 **(3) Describe CompileOnDemandLayer (automates these components and builds stubs
-and lazy compilation callbacks for IR) and how to add it to the JIT. **
+and lazy compilation callbacks for IR) and how to add it to the JIT.**
 
 Full Code Listing
 =================
