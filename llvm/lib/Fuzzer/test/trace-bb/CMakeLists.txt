@@ -1,6 +1,6 @@
 # These tests are not instrumented with coverage.
 
-set(CMAKE_CXX_FLAGS_RELEASE
+set(CMAKE_CXX_FLAGS
   "${LIBFUZZER_FLAGS_BASE} -fsanitize-coverage=edge,trace-bb")
 
 foreach(Test ${TraceBBTests})

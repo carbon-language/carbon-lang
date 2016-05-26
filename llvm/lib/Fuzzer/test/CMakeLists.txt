@@ -1,8 +1,31 @@
 # Build all these tests with -O0, otherwise optimizations may merge some
 # basic blocks and we'll fail to discover the targets.
-# Also enable the coverage instrumentation back (it is disabled
-# for the Fuzzer lib)
-set(CMAKE_CXX_FLAGS_RELEASE "${LIBFUZZER_FLAGS_BASE} -O0 -fsanitize-coverage=edge,indirect-calls")
+# We change the flags for every build type because we might be doing
+# a multi-configuration build (e.g. Xcode) where CMAKE_BUILD_TYPE doesn't
+# mean anything.
+set(variables_to_filter
+  CMAKE_CXX_FLAGS_RELEASE
+  CMAKE_CXX_FLAGS_DEBUG
+  CMAKE_CXX_FLAGS_RELWITHDEBINFO
+  CMAKE_CXX_FLAGS_MINSIZEREL
+  LIBFUZZER_FLAGS_BASE
+  )
+foreach (VARNAME ${variables_to_filter})
+  string(REPLACE " " ";" BUILD_FLAGS_AS_LIST "${${VARNAME}}")
+  set(new_flags "")
+  foreach (flag ${BUILD_FLAGS_AS_LIST})
+    # NOTE: Use of XX here is to avoid a CMake warning due to CMP0054
+    if (NOT ("XX${flag}" MATCHES "XX-O[0123s]"))
+      set(new_flags "${new_flags} ${flag}")
+    else()
+      set(new_flags "${new_flags} -O0")
+    endif()
+  endforeach()
+  set(${VARNAME} "${new_flags}")
+endforeach()
+
+# Enable the coverage instrumentation (it is disabled for the Fuzzer lib).
+set(CMAKE_CXX_FLAGS "${LIBFUZZER_FLAGS_BASE} -fsanitize-coverage=edge,indirect-calls")
 
 set(DFSanTests
   MemcmpTest
