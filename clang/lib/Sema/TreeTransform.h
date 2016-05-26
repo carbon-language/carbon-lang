@@ -1751,6 +1751,17 @@ public:
         Kind, ChunkSize, StartLoc, LParenLoc, KindLoc, CommaLoc, EndLoc);
   }
 
+  /// \brief Build a new OpenMP 'to' clause.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OMPClause *RebuildOMPToClause(ArrayRef<Expr *> VarList,
+                                SourceLocation StartLoc,
+                                SourceLocation LParenLoc,
+                                SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPToClause(VarList, StartLoc, LParenLoc, EndLoc);
+  }
+
   /// \brief Rebuild the operand to an Objective-C \@synchronized statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -8036,6 +8047,20 @@ template <typename Derived>
 OMPClause *
 TreeTransform<Derived>::TransformOMPDefaultmapClause(OMPDefaultmapClause *C) {
   return C;
+}
+
+template <typename Derived>
+OMPClause *TreeTransform<Derived>::TransformOMPToClause(OMPToClause *C) {
+  llvm::SmallVector<Expr *, 16> Vars;
+  Vars.reserve(C->varlist_size());
+  for (auto *VE : C->varlists()) {
+    ExprResult EVar = getDerived().TransformExpr(cast<Expr>(VE));
+    if (EVar.isInvalid())
+      return 0;
+    Vars.push_back(EVar.get());
+  }
+  return getDerived().RebuildOMPToClause(Vars, C->getLocStart(),
+                                         C->getLParenLoc(), C->getLocEnd());
 }
 
 //===----------------------------------------------------------------------===//

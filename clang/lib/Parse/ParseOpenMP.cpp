@@ -1043,7 +1043,7 @@ bool Parser::ParseOpenMPSimpleVarList(
 ///       update-clause | capture-clause | seq_cst-clause | device-clause |
 ///       simdlen-clause | threads-clause | simd-clause | num_teams-clause |
 ///       thread_limit-clause | priority-clause | grainsize-clause |
-///       nogroup-clause | num_tasks-clause | hint-clause
+///       nogroup-clause | num_tasks-clause | hint-clause | to-clause
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
@@ -1167,6 +1167,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
   case OMPC_flush:
   case OMPC_depend:
   case OMPC_map:
+  case OMPC_to:
     Clause = ParseOpenMPVarListClause(DKind, CKind);
     break;
   case OMPC_unknown:
@@ -1727,6 +1728,8 @@ bool Parser::ParseOpenMPVarList(OpenMPDirectiveKind DKind,
 ///    map-clause:
 ///       'map' '(' [ [ always , ]
 ///          to | from | tofrom | alloc | release | delete ':' ] list ')';
+///    to-clause:
+///       'to' '(' list ')'
 ///
 /// For 'linear' clause linear-list may have the following forms:
 ///  list

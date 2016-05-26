@@ -162,6 +162,7 @@ unsigned clang::getOpenMPSimpleClauseType(OpenMPClauseKind Kind,
   case OMPC_num_tasks:
   case OMPC_hint:
   case OMPC_uniform:
+  case OMPC_to:
     break;
   }
   llvm_unreachable("Invalid OpenMP simple clause kind");
@@ -297,6 +298,7 @@ const char *clang::getOpenMPSimpleClauseTypeName(OpenMPClauseKind Kind,
   case OMPC_num_tasks:
   case OMPC_hint:
   case OMPC_uniform:
+  case OMPC_to:
     break;
   }
   llvm_unreachable("Invalid OpenMP simple clause kind");

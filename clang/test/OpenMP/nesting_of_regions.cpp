@@ -135,7 +135,7 @@ void foo() {
   }
 #pragma omp parallel
   {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
   }
 
 // SIMD DIRECTIVE
@@ -299,7 +299,7 @@ void foo() {
   }
 #pragma omp simd
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+#pragma omp target update to(a) // expected-error {{OpenMP constructs may not be nested inside a simd region}}
   }
 
 // FOR DIRECTIVE
@@ -486,7 +486,7 @@ void foo() {
   }
 #pragma omp for
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
   }
 
 // FOR SIMD DIRECTIVE
@@ -650,7 +650,7 @@ void foo() {
   }
 #pragma omp for simd
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{OpenMP constructs may not be nested inside a simd region}} 
+#pragma omp target update to(a) // expected-error {{OpenMP constructs may not be nested inside a simd region}}
     bar();
   }
 
@@ -843,7 +843,7 @@ void foo() {
   }
 #pragma omp sections
   {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
   }
 
 // SECTION DIRECTIVE
@@ -1088,7 +1088,7 @@ void foo() {
 #pragma omp section
     {
       bar();
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     }
   }
 
@@ -1266,7 +1266,7 @@ void foo() {
   }
 #pragma omp single
   {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     bar();
   }
 
@@ -1444,7 +1444,7 @@ void foo() {
   }
 #pragma omp master
   {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     bar();
   }
 
@@ -1636,7 +1636,7 @@ void foo() {
   }
 #pragma omp critical
   {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     bar();
   }
 
@@ -1829,7 +1829,7 @@ void foo() {
   }
 #pragma omp parallel for
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update //expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
   }
 
 // PARALLEL FOR SIMD DIRECTIVE
@@ -2021,7 +2021,7 @@ void foo() {
   }
 #pragma omp parallel for simd
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{OpenMP constructs may not be nested inside a simd region}} 
+#pragma omp target update to(a) // expected-error {{OpenMP constructs may not be nested inside a simd region}}
     bar();
   }
 
@@ -2203,7 +2203,7 @@ void foo() {
   }
 #pragma omp parallel sections
   {
-#pragma omp target update //expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
   }
 
 // TASK DIRECTIVE
@@ -2330,7 +2330,7 @@ void foo() {
   }
 #pragma omp task
   {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     bar();
   }
 
@@ -2529,7 +2529,7 @@ void foo() {
 #pragma omp ordered
   {
     bar();
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     bar();
   }
 
@@ -2750,7 +2750,7 @@ void foo() {
   // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   // expected-note@+1 {{expected an expression statement}}
   {
-#pragma omp target update // expected-error {{OpenMP constructs may not be nested inside an atomic region}} 
+#pragma omp target update to(a) // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     bar();
   }
 
@@ -2889,7 +2889,7 @@ void foo() {
   }
 #pragma omp target
   {
-#pragma omp target update // expected-error {{region cannot be nested inside 'target' region}} 
+#pragma omp target update to(a) // expected-error {{region cannot be nested inside 'target' region}}
   }
 
 // TARGET PARALLEL DIRECTIVE
@@ -3027,7 +3027,7 @@ void foo() {
   }
 #pragma omp target parallel
   {
-#pragma omp target update // expected-error {{region cannot be nested inside 'target parallel' region}} 
+#pragma omp target update to(a) // expected-error {{region cannot be nested inside 'target parallel' region}}
   }
 
 // TARGET PARALLEL FOR DIRECTIVE
@@ -3219,7 +3219,7 @@ void foo() {
   }
 #pragma omp target parallel for
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{region cannot be nested inside 'target parallel for' region}} 
+#pragma omp target update to(a) // expected-error {{region cannot be nested inside 'target parallel for' region}}
   }
 
 // TEAMS DIRECTIVE
@@ -3387,7 +3387,7 @@ void foo() {
 #pragma omp target
 #pragma omp teams
   {
-#pragma omp target update // expected-error {{region cannot be closely nested inside 'teams' region; perhaps you forget to enclose 'omp target update' directive into a parallel region?}} 
+#pragma omp target update to(a) // expected-error {{region cannot be closely nested inside 'teams' region; perhaps you forget to enclose 'omp target update' directive into a parallel region?}}
   }
 
 // TASKLOOP DIRECTIVE
@@ -3563,7 +3563,7 @@ void foo() {
   }
 #pragma omp taskloop
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     bar();
   }
 
@@ -3789,7 +3789,7 @@ void foo() {
 #pragma omp teams
 #pragma omp distribute
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{region cannot be nested inside 'target' region}} 
+#pragma omp target update to(a) // expected-error {{region cannot be nested inside 'target' region}}
     ++a;
   }
 }
@@ -3924,7 +3924,7 @@ void foo() {
   }
 #pragma omp parallel
   {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     a++;
   }
 
@@ -4082,7 +4082,7 @@ void foo() {
   }
 #pragma omp simd
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{OpenMP constructs may not be nested inside a simd region}} 
+#pragma omp target update to(a) // expected-error {{OpenMP constructs may not be nested inside a simd region}}
     a++;
   }
 
@@ -4260,7 +4260,7 @@ void foo() {
   }
 #pragma omp for
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     ++a;
   }
 
@@ -4418,7 +4418,7 @@ void foo() {
   }
 #pragma omp for simd
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{OpenMP constructs may not be nested inside a simd region}} 
+#pragma omp target update to(a) // expected-error {{OpenMP constructs may not be nested inside a simd region}}
     ++a;
   }
 
@@ -4586,7 +4586,7 @@ void foo() {
   }
 #pragma omp sections
   {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
   }
 
 // SECTION DIRECTIVE
@@ -4840,7 +4840,7 @@ void foo() {
   {
 #pragma omp section
     {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
       a++;
     }
   }
@@ -5009,7 +5009,7 @@ void foo() {
   }
 #pragma omp single
   {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     a++;
   }
 
@@ -5187,7 +5187,7 @@ void foo() {
   }
 #pragma omp master
   {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     ++a;
   }
 
@@ -5384,7 +5384,7 @@ void foo() {
   }
 #pragma omp critical
   {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     a++;
   }
 
@@ -5577,7 +5577,7 @@ void foo() {
   }
 #pragma omp parallel for
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     a++;
   }
 
@@ -5770,7 +5770,7 @@ void foo() {
   }
 #pragma omp parallel for simd
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+#pragma omp target update to(a) // expected-error {{OpenMP constructs may not be nested inside a simd region}}
     a++;
   }
 
@@ -5948,7 +5948,7 @@ void foo() {
   }
 #pragma omp parallel sections
   {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
   }
 
 // TASK DIRECTIVE
@@ -6074,7 +6074,7 @@ void foo() {
   }
 #pragma omp task
   {
-#pragma omp target update // // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     a++;
   }
 
@@ -6435,7 +6435,7 @@ void foo() {
   // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   // expected-note@+1 {{expected an expression statement}}
   {
-#pragma omp target update // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
+#pragma omp target update to(a) // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     a++;
   }
 
@@ -6574,7 +6574,7 @@ void foo() {
   }
 #pragma omp target parallel
   {
-#pragma omp target update // expected-error {{region cannot be nested inside 'target parallel' region}}
+#pragma omp target update to(a) // expected-error {{region cannot be nested inside 'target parallel' region}}
   }
 
 
@@ -6767,7 +6767,7 @@ void foo() {
   }
 #pragma omp target parallel for
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{region cannot be nested inside 'target parallel for' region}}
+#pragma omp target update to(a) // expected-error {{region cannot be nested inside 'target parallel for' region}}
     a++;
   }
 
@@ -6934,7 +6934,7 @@ void foo() {
 #pragma omp target
 #pragma omp teams
   {
-#pragma omp target update // expected-error {{region cannot be closely nested inside 'teams' region; perhaps you forget to enclose 'omp target update' directive into a parallel region?}}
+#pragma omp target update to(a) // expected-error {{region cannot be closely nested inside 'teams' region; perhaps you forget to enclose 'omp target update' directive into a parallel region?}}
     ++a;
   }
 
@@ -7111,7 +7111,7 @@ void foo() {
   }
 #pragma omp taskloop
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+#pragma omp target update to(a)
     ++a;
   }
 
@@ -7337,7 +7337,7 @@ void foo() {
 #pragma omp teams
 #pragma omp distribute
   for (int i = 0; i < 10; ++i) {
-#pragma omp target update // expected-error {{region cannot be nested inside 'target' region}}
+#pragma omp target update to(a) // expected-error {{region cannot be nested inside 'target' region}}
     ++a;
   }
 }

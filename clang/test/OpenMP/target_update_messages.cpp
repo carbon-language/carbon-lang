@@ -18,13 +18,13 @@ int tmain(T argc, S **argv) {
 int main(int argc, char **argv) {
   int m;
   #pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
-  #pragma omp target update { // expected-warning {{extra tokens at the end of '#pragma omp target update' are ignored}} expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
-  #pragma omp target update ( // expected-warning {{extra tokens at the end of '#pragma omp target update' are ignored}} expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
-  #pragma omp target update [ // expected-warning {{extra tokens at the end of '#pragma omp target update' are ignored}} expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
-  #pragma omp target update ] // expected-warning {{extra tokens at the end of '#pragma omp target update' are ignored}} expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
-  #pragma omp target update ) // expected-warning {{extra tokens at the end of '#pragma omp target update' are ignored}} expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+  #pragma omp target update to(m) { // expected-warning {{extra tokens at the end of '#pragma omp target update' are ignored}}
+  #pragma omp target update to(m) ( // expected-warning {{extra tokens at the end of '#pragma omp target update' are ignored}}
+  #pragma omp target update to(m) [ // expected-warning {{extra tokens at the end of '#pragma omp target update' are ignored}}
+  #pragma omp target update to(m) ] // expected-warning {{extra tokens at the end of '#pragma omp target update' are ignored}}
+  #pragma omp target update to(m) ) // expected-warning {{extra tokens at the end of '#pragma omp target update' are ignored}}
 
-  #pragma omp target update // expected-error {{expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'}}
+  #pragma omp target update to(m) // OK
   {
     foo();
   }

@@ -491,6 +491,9 @@ void OMPClauseProfiler::VisitOMPNumTasksClause(const OMPNumTasksClause *C) {
 void OMPClauseProfiler::VisitOMPHintClause(const OMPHintClause *C) {
   Profiler->VisitStmt(C->getHint());
 }
+void OMPClauseProfiler::VisitOMPToClause(const OMPToClause *C) {
+  VisitOMPClauseList(C);
+}
 }
 
 void

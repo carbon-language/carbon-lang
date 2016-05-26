@@ -210,6 +210,7 @@ OPENMP_CLAUSE(num_tasks, OMPNumTasksClause)
 OPENMP_CLAUSE(hint, OMPHintClause)
 OPENMP_CLAUSE(dist_schedule, OMPDistScheduleClause)
 OPENMP_CLAUSE(defaultmap, OMPDefaultmapClause)
+OPENMP_CLAUSE(to, OMPToClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
@@ -450,6 +451,7 @@ OPENMP_TARGET_PARALLEL_FOR_CLAUSE(linear)
 // TODO More clauses for 'target update' directive.
 OPENMP_TARGET_UPDATE_CLAUSE(if)
 OPENMP_TARGET_UPDATE_CLAUSE(device)
+OPENMP_TARGET_UPDATE_CLAUSE(to)
 
 // Clauses allowed for OpenMP directive 'teams'.
 // TODO More clauses for 'teams' directive.

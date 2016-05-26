@@ -8418,6 +8418,11 @@ public:
       OpenMPDefaultmapClauseModifier M, OpenMPDefaultmapClauseKind Kind,
       SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation MLoc,
       SourceLocation KindLoc, SourceLocation EndLoc);
+  /// \brief Called on well-formed 'to' clause.
+  OMPClause *ActOnOpenMPToClause(ArrayRef<Expr *> VarList,
+                                 SourceLocation StartLoc,
+                                 SourceLocation LParenLoc,
+                                 SourceLocation EndLoc);
 
   /// \brief The kind of conversion being performed.
   enum CheckedConversionKind {

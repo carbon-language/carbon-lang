@@ -912,6 +912,14 @@ void OMPClausePrinter::VisitOMPMapClause(OMPMapClause *Node) {
   }
 }
 
+void OMPClausePrinter::VisitOMPToClause(OMPToClause *Node) {
+  if (!Node->varlist_empty()) {
+    OS << "to";
+    VisitOMPClauseList(Node, '(');
+    OS << ")";
+  }
+}
+
 void OMPClausePrinter::VisitOMPDistScheduleClause(OMPDistScheduleClause *Node) {
   OS << "dist_schedule(" << getOpenMPSimpleClauseTypeName(
                            OMPC_dist_schedule, Node->getDistScheduleKind());
