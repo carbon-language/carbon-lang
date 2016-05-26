@@ -575,7 +575,7 @@ private:
   void computeDomLevels(DenseMap<DomTreeNode *, unsigned> &DomLevels);
   void markUnreachableAsLiveOnEntry(BasicBlock *BB);
   bool dominatesUse(const MemoryAccess *, const MemoryAccess *) const;
-  MemoryUseOrDef *createNewAccess(Instruction *, bool ignoreNonMemory = false);
+  MemoryUseOrDef *createNewAccess(Instruction *);
   MemoryAccess *findDominatingDef(BasicBlock *, enum InsertionPlace);
   void removeFromLookups(MemoryAccess *);
 
