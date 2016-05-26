@@ -38,17 +38,6 @@ endif()
 
 add_llvm_library(LLVM SHARED DISABLE_LLVM_LINK_LLVM_DYLIB SONAME ${SOURCES})
 
-if(APPLE)
-  set(library_type PUBLIC)
-else()
-  # We can use PRIVATE since SO knows its dependent libs.
-  set(library_type PRIVATE)
-endif()
-
-get_property(system_libs TARGET LLVMSupport PROPERTY LLVM_SYSTEM_LIBS)
-
-target_link_libraries(LLVM ${library_type} ${system_libs})
-
 list(REMOVE_DUPLICATES LIB_NAMES)
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") # FIXME: It should be "GNU ld for elf"
   # GNU ld doesn't resolve symbols in the version script.
