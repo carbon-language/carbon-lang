@@ -38,9 +38,15 @@ class NVVMIntrRange : public FunctionPass {
  public:
    static char ID;
    NVVMIntrRange() : NVVMIntrRange(NVVMIntrRangeSM) {}
-   NVVMIntrRange(unsigned int SmVersion)
-       : FunctionPass(ID), MaxBlockSize{1024, 1024, 64},
-         MaxGridSize{SmVersion >= 30 ? 0x7fffffffu : 0xffffu, 0xffff, 0xffff} {
+   NVVMIntrRange(unsigned int SmVersion) : FunctionPass(ID) {
+     MaxBlockSize.x = 1024;
+     MaxBlockSize.y = 1024;
+     MaxBlockSize.z = 64;
+
+     MaxGridSize.x = SmVersion >= 30 ? 0x7fffffff : 0xffff;
+     MaxGridSize.y = 0xffff;
+     MaxGridSize.z = 0xffff;
+
      initializeNVVMIntrRangePass(*PassRegistry::getPassRegistry());
    }
 
