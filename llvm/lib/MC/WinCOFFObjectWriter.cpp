@@ -359,6 +359,13 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
                                        MCAssembler &Assembler,
                                        const MCAsmLayout &Layout) {
   COFFSymbol *coff_symbol = GetOrCreateCOFFSymbol(&Symbol);
+  const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
+  COFFSection *Sec = nullptr;
+  if (Base && Base->getFragment()) {
+    Sec = SectionMap[Base->getFragment()->getParent()];
+    if (coff_symbol->Section && coff_symbol->Section != Sec)
+      report_fatal_error("conflicting sections for symbol");
+  }
 
   if (cast<MCSymbolCOFF>(Symbol).isWeakExternal()) {
     coff_symbol->Data.StorageClass = COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL;
@@ -374,7 +381,12 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
     } else {
       std::string WeakName = (".weak." + Symbol.getName() + ".default").str();
       COFFSymbol *WeakDefault = createSymbol(WeakName);
-      WeakDefault->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
+
+      if (!Sec)
+        WeakDefault->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
+      else
+        WeakDefault->Section = Sec;
+
       WeakDefault->Data.StorageClass = COFF::IMAGE_SYM_CLASS_EXTERNAL;
       WeakDefault->Data.Type = 0;
       WeakDefault->Data.Value = getSymbolValue(Symbol, Layout);
@@ -391,7 +403,6 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
 
     coff_symbol->MC = &Symbol;
   } else {
-    const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
     coff_symbol->Data.Value = getSymbolValue(Symbol, Layout);
 
     const MCSymbolCOFF &SymbolCOFF = cast<MCSymbolCOFF>(Symbol);
@@ -408,18 +419,10 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
                                            : COFF::IMAGE_SYM_CLASS_STATIC;
     }
 
-    if (!Base) {
+    if (!Base)
       coff_symbol->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
-    } else {
-      if (Base->getFragment()) {
-        COFFSection *Sec = SectionMap[Base->getFragment()->getParent()];
-
-        if (coff_symbol->Section && coff_symbol->Section != Sec)
-          report_fatal_error("conflicting sections for symbol");
-
-        coff_symbol->Section = Sec;
-      }
-    }
+    else
+      coff_symbol->Section = Sec;
 
     coff_symbol->MC = &Symbol;
   }

@@ -25,7 +25,7 @@ b:
 // CHECK-NEXT: Symbol {
 // CHECK-NEXT:   Name: .weak.b.default
 // CHECK-NEXT:   Value: 4
-// CHECK-NEXT:   Section: IMAGE_SYM_ABSOLUTE (-1)
+// CHECK-NEXT:   Section: .data (2)
 // CHECK-NEXT:   BaseType: Null (0x0)
 // CHECK-NEXT:   ComplexType: Null (0x0)
 // CHECK-NEXT:   StorageClass: External (0x2)
