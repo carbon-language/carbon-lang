@@ -7915,7 +7915,13 @@ static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
       return SDValue();
     MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(EltBits * Scale),
                                  NumElements / Scale);
-    InputV = DAG.getNode(X86ISD::VZEXT, DL, ExtVT, ShuffleOffset(InputV));
+    InputV = ShuffleOffset(InputV);
+
+    // For 256-bit vectors, we only need the lower (128-bit) input half.
+    if (VT.is256BitVector())
+      InputV = extract128BitVector(InputV, 0, DAG, DL);
+
+    InputV = DAG.getNode(X86ISD::VZEXT, DL, ExtVT, InputV);
     return DAG.getBitcast(VT, InputV);
   }
 
