@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
+#include "llvm/ADT/GraphTraits.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
@@ -398,6 +399,14 @@ public:
                      MCInst *&CondBranch,
                      MCInst *&UncondBranch);
 
+  /// Printer required for printing dominator trees.
+  void printAsOperand(raw_ostream &OS, bool PrintType = true) {
+    if (PrintType) {
+      OS << "basic block ";
+    }
+    OS << getName();
+  }
+
 private:
 
   /// Adds predecessor to the BB. Most likely you don't need to call this.
@@ -412,6 +421,66 @@ bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS);
 
 
 } // namespace bolt
+
+
+// GraphTraits specializations for basic block graphs (CFGs)
+template <> struct GraphTraits<bolt::BinaryBasicBlock *> {
+  typedef bolt::BinaryBasicBlock NodeType;
+  typedef bolt::BinaryBasicBlock::succ_iterator ChildIteratorType;
+
+  static NodeType *getEntryNode(bolt::BinaryBasicBlock *BB) { return BB; }
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return N->succ_begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) {
+    return N->succ_end();
+  }
+};
+
+template <> struct GraphTraits<const bolt::BinaryBasicBlock *> {
+  typedef const bolt::BinaryBasicBlock NodeType;
+  typedef bolt::BinaryBasicBlock::const_succ_iterator ChildIteratorType;
+
+  static NodeType *getEntryNode(const bolt::BinaryBasicBlock *BB) {
+    return BB;
+  }
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return N->succ_begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) {
+    return N->succ_end();
+  }
+};
+
+template <> struct GraphTraits<Inverse<bolt::BinaryBasicBlock *>> {
+  typedef bolt::BinaryBasicBlock NodeType;
+  typedef bolt::BinaryBasicBlock::pred_iterator ChildIteratorType;
+  static NodeType *getEntryNode(Inverse<bolt::BinaryBasicBlock *> G) {
+    return G.Graph;
+  }
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return N->pred_begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) {
+    return N->pred_end();
+  }
+};
+
+template <> struct GraphTraits<Inverse<const bolt::BinaryBasicBlock *>> {
+  typedef const bolt::BinaryBasicBlock NodeType;
+  typedef bolt::BinaryBasicBlock::const_pred_iterator ChildIteratorType;
+  static NodeType *getEntryNode(Inverse<const bolt::BinaryBasicBlock *> G) {
+    return G.Graph;
+  }
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return N->pred_begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) {
+    return N->pred_end();
+  }
+};
+
+
 } // namespace llvm
 
 #endif

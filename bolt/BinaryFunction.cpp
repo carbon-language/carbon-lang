@@ -33,6 +33,7 @@
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
+
 namespace llvm {
 namespace bolt {
 
@@ -1630,6 +1631,127 @@ BinaryFunction::~BinaryFunction() {
   for (auto BB : BasicBlocks) {
     delete BB;
   }
+}
+
+void BinaryFunction::calculateLoopInfo() {
+  // Discover loops.
+  BinaryDominatorTree DomTree(false);
+  DomTree.recalculate<BinaryFunction>(*this);
+  BLI.reset(new BinaryLoopInfo());
+  BLI->analyze(DomTree);
+
+  // Traverse discovered loops and add depth and profile information.
+  std::stack<BinaryLoop *> St;
+  for (auto I = BLI->begin(), E = BLI->end(); I != E; ++I) {
+    St.push(*I);
+    ++BLI->OuterLoops;
+  }
+
+  while (!St.empty()) {
+    BinaryLoop *L = St.top();
+    St.pop();
+    ++BLI->TotalLoops;
+    BLI->MaximumDepth = std::max(L->getLoopDepth(), BLI->MaximumDepth);
+
+    // Add nested loops in the stack.
+    for (BinaryLoop::iterator I = L->begin(), E = L->end(); I != E; ++I) {
+      St.push(*I);
+    }
+
+    // Skip if no valid profile is found.
+    if (!hasValidProfile()) {
+      L->EntryCount = COUNT_NO_PROFILE;
+      L->ExitCount = COUNT_NO_PROFILE;
+      L->TotalBackEdgeCount = COUNT_NO_PROFILE;
+      continue;
+    }
+
+    // Compute back edge count.
+    SmallVector<BinaryBasicBlock *, 1> Latches;
+    L->getLoopLatches(Latches);
+
+    for (BinaryBasicBlock *Latch : Latches) {
+      auto BI = Latch->BranchInfo.begin();
+      for (BinaryBasicBlock *Succ : Latch->successors()) {
+        if (Succ == L->getHeader()) {
+          assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
+                 "profile data not found");
+          L->TotalBackEdgeCount += BI->Count;
+        }
+        ++BI;
+      }
+    }
+
+    // Compute entry count.
+    L->EntryCount = L->getHeader()->getExecutionCount() - L->TotalBackEdgeCount;
+
+    // Compute exit count.
+    SmallVector<BinaryLoop::Edge, 1> ExitEdges;
+    L->getExitEdges(ExitEdges);
+    for (BinaryLoop::Edge &Exit : ExitEdges) {
+      const BinaryBasicBlock *Exiting = Exit.first;
+      const BinaryBasicBlock *ExitTarget = Exit.second;
+      auto BI = Exiting->BranchInfo.begin();
+      for (BinaryBasicBlock *Succ : Exiting->successors()) {
+        if (Succ == ExitTarget) {
+          assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
+                 "profile data not found");
+          L->ExitCount += BI->Count;
+        }
+        ++BI;
+      }
+    }
+  }
+}
+
+void BinaryFunction::printLoopInfo(raw_ostream &OS) const {
+  OS << "Loop Info for Function \"" << getName() << "\"";
+  if (hasValidProfile()) {
+    OS << " (count: " << getExecutionCount() << ")";
+  }
+  OS << "\n";
+
+  std::stack<BinaryLoop *> St;
+  for (auto I = BLI->begin(), E = BLI->end(); I != E; ++I) {
+    St.push(*I);
+  }
+  while (!St.empty()) {
+    BinaryLoop *L = St.top();
+    St.pop();
+
+    for (BinaryLoop::iterator I = L->begin(), E = L->end(); I != E; ++I) {
+      St.push(*I);
+    }
+
+    if (!hasValidProfile())
+      continue;
+
+    OS << (L->getLoopDepth() > 1 ? "Nested" : "Outer") << " loop header: "
+       << L->getHeader()->getName();
+    OS << "\n";
+    OS << "Loop basic blocks: ";
+    auto Sep = "";
+    for (auto BI = L->block_begin(), BE = L->block_end(); BI != BE; ++BI) {
+      OS << Sep << (*BI)->getName();
+      Sep = ", ";
+    }
+    OS << "\n";
+    if (hasValidProfile()) {
+      OS << "Total back edge count: " << L->TotalBackEdgeCount << "\n";
+      OS << "Loop entry count: " << L->EntryCount << "\n";
+      OS << "Loop exit count: " << L->ExitCount << "\n";
+      if (L->EntryCount > 0) {
+        OS << "Average iters per entry: "
+           << format("%.4lf", (double)L->TotalBackEdgeCount / L->EntryCount)
+           << "\n";
+      }
+    }
+    OS << "----\n";
+  }
+
+  OS << "Total number of loops: "<< BLI->TotalLoops << "\n";
+  OS << "Number of outer loops: " << BLI->OuterLoops << "\n";
+  OS << "Maximum nested loop depth: " << BLI->MaximumDepth << "\n\n";
 }
 
 } // namespace bolt

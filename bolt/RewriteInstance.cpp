@@ -152,6 +152,10 @@ static cl::opt<bool>
 PrintCFG("print-cfg", cl::desc("print functions after CFG construction"),
          cl::Hidden);
 
+static cl::opt<bool>
+PrintLoopInfo("print-loops", cl::desc("print loop related information"),
+              cl::Hidden);
+
 cl::opt<bool>
 PrintUCE("print-uce",
          cl::desc("print functions after unreachable code elimination"),
@@ -962,6 +966,11 @@ void RewriteInstance::disassembleFunctions() {
 
     if (opts::DumpDotAll)
       Function.dumpGraphForPass("build-cfg");
+
+    if (opts::PrintLoopInfo) {
+      Function.calculateLoopInfo();
+      Function.printLoopInfo(errs());
+    }
 
     TotalScore += Function.getFunctionScore();
 

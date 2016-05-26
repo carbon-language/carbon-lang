@@ -19,6 +19,7 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
+#include "BinaryLoop.h"
 #include "DataReader.h"
 #include "DebugData.h"
 #include "llvm/ADT/StringRef.h"
@@ -132,6 +133,8 @@ private:
   uint8_t PersonalityEncoding{dwarf::DW_EH_PE_sdata4 | dwarf::DW_EH_PE_pcrel};
 
   BinaryContext &BC;
+
+  std::unique_ptr<BinaryLoopInfo> BLI;
 
   /// False if the function is too complex to reconstruct its control
   /// flow graph and re-assemble.
@@ -387,6 +390,18 @@ public:
   /// end of basic blocks.
   void modifyLayout(LayoutType Type, bool Split);
 
+  /// Find the loops in the CFG of the function and store infromation about
+  /// them.
+  void calculateLoopInfo();
+
+  /// Returns if loop detection has been run for this function.
+  bool hasLoopInfo() const {
+    return BLI != nullptr;
+  }
+
+  /// Print loop inforamtion about the function.
+  void printLoopInfo(raw_ostream &OS) const;
+
   /// View CFG in graphviz program
   void viewGraph() const;
 
@@ -605,7 +620,7 @@ public:
   }
 
   /// Return true if function profile is present and accurate.
-  bool hasValidProfile() {
+  bool hasValidProfile() const {
     return ExecutionCount != COUNT_NO_PROFILE &&
            ProfileMatchRatio == 1.0f;
   }
@@ -934,6 +949,60 @@ inline raw_ostream &operator<<(raw_ostream &OS,
 }
 
 } // namespace bolt
+
+
+// GraphTraits specializations for function basic block graphs (CFGs)
+template <> struct GraphTraits<bolt::BinaryFunction *> :
+  public GraphTraits<bolt::BinaryBasicBlock *> {
+  static NodeType *getEntryNode(bolt::BinaryFunction *F) {
+    return *F->layout_begin();
+  }
+
+  typedef bolt::BinaryBasicBlock * nodes_iterator;
+  static nodes_iterator nodes_begin(bolt::BinaryFunction *F) {
+    return &(*F->begin());
+  }
+  static nodes_iterator nodes_end(bolt::BinaryFunction *F) {
+    return &(*F->end());
+  }
+  static size_t size(bolt::BinaryFunction *F) {
+    return F->size();
+  }
+};
+
+template <> struct GraphTraits<const bolt::BinaryFunction *> :
+  public GraphTraits<const bolt::BinaryBasicBlock *> {
+  static NodeType *getEntryNode(const bolt::BinaryFunction *F) {
+    return *F->layout_begin();
+  }
+
+  typedef const bolt::BinaryBasicBlock * nodes_iterator;
+  static nodes_iterator nodes_begin(const bolt::BinaryFunction *F) {
+    return &(*F->begin());
+  }
+  static nodes_iterator nodes_end(const bolt::BinaryFunction *F) {
+    return &(*F->end());
+  }
+  static size_t size(const bolt::BinaryFunction *F) {
+    return F->size();
+  }
+};
+
+template <> struct GraphTraits<Inverse<bolt::BinaryFunction *>> :
+  public GraphTraits<Inverse<bolt::BinaryBasicBlock *>> {
+  static NodeType *getEntryNode(Inverse<bolt::BinaryFunction *> G) {
+    return *G.Graph->layout_begin();
+  }
+};
+
+template <> struct GraphTraits<Inverse<const bolt::BinaryFunction *>> :
+  public GraphTraits<Inverse<const bolt::BinaryBasicBlock *>> {
+  static NodeType *getEntryNode(Inverse<const bolt::BinaryFunction *> G) {
+    return *G.Graph->layout_begin();
+  }
+};
+
+
 } // namespace llvm
 
 #endif
