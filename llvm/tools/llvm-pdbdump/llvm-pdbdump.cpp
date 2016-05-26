@@ -147,6 +147,10 @@ cl::opt<bool>
     DumpSymRecordBytes("raw-sym-record-bytes",
                        cl::desc("dump CodeView symbol record raw bytes"),
                        cl::cat(NativeOptions));
+cl::opt<bool>
+    RawAll("raw-all",
+           cl::desc("Implies most other options in 'Native Options' category"),
+           cl::cat(NativeOptions));
 
 cl::list<std::string>
     ExcludeTypes("exclude-types",
@@ -821,6 +825,18 @@ int main(int argc_, const char *argv_[]) {
     opts::Types = true;
     opts::Externals = true;
     opts::Lines = true;
+  }
+
+  if (opts::RawAll) {
+    opts::DumpHeaders = true;
+    opts::DumpModules = true;
+    opts::DumpModuleFiles = true;
+    opts::DumpModuleSyms = true;
+    opts::DumpPublics = true;
+    opts::DumpStreamSummary = true;
+    opts::DumpStreamBlocks = true;
+    opts::DumpTpiRecords = true;
+    opts::DumpIpiRecords = true;
   }
 
   // When adding filters for excluded compilands and types, we need to remember
