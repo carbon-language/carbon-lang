@@ -2463,7 +2463,8 @@ static void getAMDGPUTargetFeatures(const Driver &D, const ArgList &Args,
     StringRef value = dAbi->getValue();
     if (value == "1.0") {
       Features.push_back("+amdgpu-debugger-insert-nops");
-      Features.push_back("+amdgpu-debugger-reserve-trap-regs");
+      Features.push_back("+amdgpu-debugger-reserve-regs");
+      Features.push_back("+amdgpu-debugger-emit-prologue");
     } else {
       D.Diag(diag::err_drv_clang_unsupported) << dAbi->getAsString(Args);
     }

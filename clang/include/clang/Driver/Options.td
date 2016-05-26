@@ -1475,10 +1475,6 @@ def mamdgpu_debugger_abi : Joined<["-"], "mamdgpu-debugger-abi=">,
   Group<m_Group>,
   HelpText<"Generate additional code for specified <version> of debugger ABI (AMDGPU only)">,
   MetaVarName<"<version>">;
-def mamdgpu_debugger_insert_nops : Flag<["-"], "mamdgpu-debugger-insert-nops">,
-  Group<m_amdgpu_Features_Group>;
-def mamdgpu_debugger_reserve_trap_regs : Flag<["-"], "mamdgpu-debugger-reserve-trap-regs">,
-  Group<m_amdgpu_Features_Group>;
 
 def mvsx : Flag<["-"], "mvsx">, Group<m_ppc_Features_Group>;
 def mno_vsx : Flag<["-"], "mno-vsx">, Group<m_ppc_Features_Group>;
