@@ -137,3 +137,33 @@ for.body:
 exit:
   ret void
 }
+
+@i = external global i32, align 4
+
+define void @folded_not_to_constantint() {
+entry:
+  br label %for.body
+
+for.body:
+  %iv = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
+  %m = phi i32* [ @i, %entry ], [ %m, %for.inc ]
+  br i1 undef, label %if.else, label %if.then
+
+if.then:
+  unreachable
+
+if.else:
+  %cmp = icmp ult i32* %m, null
+  br i1 %cmp, label %cond.false, label %for.inc
+
+cond.false:
+  unreachable
+
+for.inc:
+  %inc = add nuw nsw i32 %iv, 1
+  %cmp2 = icmp ult i32 %inc, 10
+  br i1 %cmp2, label %for.body, label %for.end
+
+for.end:
+  ret void
+}
