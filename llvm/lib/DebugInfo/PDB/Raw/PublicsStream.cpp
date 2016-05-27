@@ -107,12 +107,11 @@ Error PublicsStream::reload() {
                                 "Publics Stream does not contain a header.");
 
   // Read PSGSIHDR and GSIHashHdr structs.
-  Header.reset(new HeaderInfo());
-  if (Reader.readObject(Header.get()))
+  if (Reader.readObject(Header))
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Publics Stream does not contain a header.");
-  HashHdr.reset(new GSIHashHeader());
-  if (Reader.readObject(HashHdr.get()))
+
+  if (Reader.readObject(HashHdr))
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Publics Stream does not contain a header.");
 

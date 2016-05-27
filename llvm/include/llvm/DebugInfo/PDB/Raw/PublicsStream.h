@@ -57,8 +57,8 @@ private:
   std::vector<uint32_t> ThunkMap;
   std::vector<uint32_t> SectionOffsets;
 
-  std::unique_ptr<HeaderInfo> Header;
-  std::unique_ptr<GSIHashHeader> HashHdr;
+  const HeaderInfo *Header;
+  const GSIHashHeader *HashHdr;
 };
 }
 }

@@ -12,7 +12,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/DebugInfo/CodeView/ByteStream.h"
+#include "llvm/DebugInfo/CodeView/StreamRef.h"
 #include "llvm/Support/Error.h"
 #include <cstdint>
 #include <vector>
@@ -39,7 +39,7 @@ public:
   ArrayRef<uint32_t> name_ids() const;
 
 private:
-  codeview::ByteStream NamesBuffer;
+  codeview::StreamRef NamesBuffer;
   std::vector<uint32_t> IDs;
   uint32_t Signature;
   uint32_t HashVersion;

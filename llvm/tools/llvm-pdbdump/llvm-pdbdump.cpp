@@ -305,7 +305,7 @@ static Error dumpStreamSummary(ScopedPrinter &P, PDBFile &File) {
       auto NSIter = NamedStreams.find(StreamIdx);
       if (ModIter != ModStreams.end()) {
         Value = "Module \"";
-        Value += ModIter->second->Info.getModuleName();
+        Value += ModIter->second->Info.getModuleName().str();
         Value += "\"";
       } else if (NSIter != NamedStreams.end()) {
         Value = "Named Stream \"";
@@ -354,7 +354,7 @@ static Error dumpStreamData(ScopedPrinter &P, PDBFile &File) {
     ArrayRef<uint8_t> Data;
     uint32_t BytesToReadInBlock = std::min(
         R.bytesRemaining(), static_cast<uint32_t>(File.getBlockSize()));
-    if (auto EC = R.getArrayRef(Data, BytesToReadInBlock))
+    if (auto EC = R.readBytes(BytesToReadInBlock, Data))
       return EC;
     P.printBinaryBlock(
         "Data",
@@ -455,9 +455,9 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
     ListScope L(P, "Modules");
     for (auto &Modi : DS.modules()) {
       DictScope DD(P);
-      P.printString("Name", Modi.Info.getModuleName());
+      P.printString("Name", Modi.Info.getModuleName().str());
       P.printNumber("Debug Stream Index", Modi.Info.getModuleStreamIndex());
-      P.printString("Object File Name", Modi.Info.getObjFileName());
+      P.printString("Object File Name", Modi.Info.getObjFileName().str());
       P.printNumber("Num Files", Modi.Info.getNumberOfFiles());
       P.printNumber("Source File Name Idx", Modi.Info.getSourceFileNameIndex());
       P.printNumber("Pdb File Name Idx", Modi.Info.getPdbFilePathNameIndex());
@@ -472,7 +472,7 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
             to_string(Modi.SourceFiles.size()) + " Contributing Source Files";
         ListScope LL(P, FileListName);
         for (auto File : Modi.SourceFiles)
-          P.printString(File);
+          P.printString(File.str());
       }
       bool HasModuleDI =
           (Modi.Info.getModuleStreamIndex() < File.getNumStreams());
