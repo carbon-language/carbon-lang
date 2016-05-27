@@ -167,3 +167,24 @@ for.inc:
 for.end:
   ret void
 }
+
+define void @index_too_large() {
+entry:
+  br label %for.body
+
+for.body:
+  %iv = phi i64 [ -73631599, %entry ], [ %iv.next, %for.inc ]
+  br i1 undef, label %for.body2, label %for.inc
+
+for.body2:
+  %idx = getelementptr inbounds [10 x i32], [10 x i32]* @known_constant, i64 0, i64 %iv
+  %x = load i32, i32* %idx, align 1
+  br label %for.inc
+
+for.inc:
+  %iv.next = add nsw i64 %iv, -1
+  br i1 undef, label %for.body, label %for.end
+
+for.end:
+  ret void
+}
