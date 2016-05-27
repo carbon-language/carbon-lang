@@ -1143,6 +1143,8 @@ TEST_F(FormatTest, UnderstandsBlockComments) {
              "                      aaaaaaaaaaaaaaaaaa  ,\n"
              "    aaaaaaaaaaaaaaaaaa) {   /*aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa*/\n"
              "}"));
+  verifyFormat("f(/* aaaaaaaaaaaaaaaaaa = */\n"
+               "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 
   FormatStyle NoBinPacking = getLLVMStyle();
   NoBinPacking.BinPackParameters = false;
