@@ -35,6 +35,7 @@
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/UnrollLoop.h"
 #include <climits>
+#include <utility>
 
 using namespace llvm;
 
@@ -939,8 +940,9 @@ public:
   LoopUnroll(Optional<unsigned> Threshold = None,
              Optional<unsigned> Count = None,
              Optional<bool> AllowPartial = None, Optional<bool> Runtime = None)
-      : LoopPass(ID), ProvidedCount(Count), ProvidedThreshold(Threshold),
-        ProvidedAllowPartial(AllowPartial), ProvidedRuntime(Runtime) {
+      : LoopPass(ID), ProvidedCount(std::move(Count)),
+        ProvidedThreshold(Threshold), ProvidedAllowPartial(AllowPartial),
+        ProvidedRuntime(Runtime) {
     initializeLoopUnrollPass(*PassRegistry::getPassRegistry());
   }
 

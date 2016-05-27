@@ -150,7 +150,7 @@ public:
 
   // Provide the profile filename as the parameter.
   PGOInstrumentationUseLegacyPass(std::string Filename = "")
-      : ModulePass(ID), ProfileFileName(Filename) {
+      : ModulePass(ID), ProfileFileName(std::move(Filename)) {
     if (!PGOTestProfileFile.empty())
       ProfileFileName = PGOTestProfileFile;
     initializePGOInstrumentationUseLegacyPassPass(
@@ -919,7 +919,7 @@ static bool annotateAllFunctions(
 }
 
 PGOInstrumentationUse::PGOInstrumentationUse(std::string Filename)
-    : ProfileFileName(Filename) {
+    : ProfileFileName(std::move(Filename)) {
   if (!PGOTestProfileFile.empty())
     ProfileFileName = PGOTestProfileFile;
 }

@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <functional>
 #include <map>
+#include <utility>
 #include <vector>
 
 #include "llvm/IR/ProfileSummary.h"
@@ -52,7 +53,7 @@ private:
 protected:
   SummaryEntryVector DetailedSummary;
   ProfileSummaryBuilder(std::vector<uint32_t> Cutoffs)
-      : DetailedSummaryCutoffs(Cutoffs), TotalCount(0), MaxCount(0),
+      : DetailedSummaryCutoffs(std::move(Cutoffs)), TotalCount(0), MaxCount(0),
         MaxFunctionCount(0), NumCounts(0), NumFunctions(0) {}
   inline void addCount(uint64_t Count);
   ~ProfileSummaryBuilder() = default;
