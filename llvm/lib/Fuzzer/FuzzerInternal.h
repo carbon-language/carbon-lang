@@ -13,6 +13,7 @@
 #define LLVM_FUZZER_INTERNAL_H
 
 #include <algorithm>
+#include <atomic>
 #include <cassert>
 #include <chrono>
 #include <climits>
@@ -126,7 +127,6 @@ bool IsASCII(const uint8_t *Data, size_t Size);
 
 int NumberOfCpuCores();
 int GetPid();
-int SignalToMainThread();
 void SleepSeconds(int Seconds);
 
 class Random {
@@ -441,12 +441,9 @@ private:
   void DumpCurrentUnit(const char *Prefix);
   void DeathCallback();
 
-  void SetCurrentUnit(size_t Size);
-  size_t GetCurrentUnitNoThreadCheck(const uint8_t **Data) const;
   void LazyAllocateCurrentUnitData();
   uint8_t *CurrentUnitData = nullptr;
-  size_t CurrentUnitSize = 0;
-  bool InOOMState = false;
+  std::atomic<size_t> CurrentUnitSize;
 
   size_t TotalNumberOfRuns = 0;
   size_t NumberOfNewUnitsAdded = 0;

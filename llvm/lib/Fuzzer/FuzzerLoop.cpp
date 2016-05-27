@@ -175,14 +175,13 @@ void Fuzzer::StaticDeathCallback() {
 }
 
 void Fuzzer::DumpCurrentUnit(const char *Prefix) {
-  const uint8_t *UnitData;
-  size_t UnitSize = GetCurrentUnitNoThreadCheck(&UnitData);
+  size_t UnitSize = CurrentUnitSize;
   if (UnitSize <= kMaxUnitSizeToPrint) {
-    PrintHexArray(UnitData, UnitSize, "\n");
-    PrintASCII(UnitData, UnitSize, "\n");
+    PrintHexArray(CurrentUnitData, UnitSize, "\n");
+    PrintASCII(CurrentUnitData, UnitSize, "\n");
   }
-  WriteUnitToFileWithPrefix(
-      {UnitData, UnitData + UnitSize}, Prefix);
+  WriteUnitToFileWithPrefix({CurrentUnitData, CurrentUnitData + UnitSize},
+                            Prefix);
 }
 
 NO_SANITIZE_MEMORY
@@ -229,24 +228,7 @@ NO_SANITIZE_MEMORY
 void Fuzzer::AlarmCallback() {
   assert(Options.UnitTimeoutSec > 0);
   if (!InFuzzingThread()) return;
-  const uint8_t *UnitData;
-  size_t UnitSize = GetCurrentUnitInFuzzingThead(&UnitData);
-  if (InOOMState) {
-    Printf(
-        "==%d== ERROR: libFuzzer: out-of-memory (used: %zdMb; limit: %zdMb)\n",
-        GetPid(), GetPeakRSSMb(), Options.RssLimitMb);
-    Printf("   To change the out-of-memory limit use -rss_limit_mb=<N>\n");
-    if (UnitSize && UnitData) {
-      DumpCurrentUnit("oom-");
-      if (__sanitizer_print_stack_trace)
-        __sanitizer_print_stack_trace();
-    }
-    Printf("SUMMARY: libFuzzer: out-of-memory\n");
-    PrintFinalStats();
-    _Exit(Options.ErrorExitCode); // Stop right now.
-  }
-
-  if (!UnitSize)
+  if (!CurrentUnitSize)
     return; // We have not started running units yet.
   size_t Seconds =
       duration_cast<seconds>(system_clock::now() - UnitStartTime).count();
@@ -270,12 +252,14 @@ void Fuzzer::AlarmCallback() {
 }
 
 void Fuzzer::RssLimitCallback() {
-  InOOMState = true;
-  SignalToMainThread();
-  SleepSeconds(5);
-  Printf("Signal to main thread failed (non-linux?). Exiting.\n");
-  _Exit(Options.ErrorExitCode);
-  return;
+  Printf(
+      "==%d== ERROR: libFuzzer: out-of-memory (used: %zdMb; limit: %zdMb)\n",
+      GetPid(), GetPeakRSSMb(), Options.RssLimitMb);
+  Printf("   To change the out-of-memory limit use -rss_limit_mb=<N>\n");
+  DumpCurrentUnit("oom-");
+  Printf("SUMMARY: libFuzzer: out-of-memory\n");
+  PrintFinalStats();
+  _Exit(Options.ErrorExitCode); // Stop right now.
 }
 
 void Fuzzer::PrintStats(const char *Where, const char *End) {
@@ -506,22 +490,14 @@ void __sanitizer_free_hook(void *ptr) {
 }
 }  // extern "C"
 
-void Fuzzer::SetCurrentUnit(size_t Size) {
+size_t Fuzzer::GetCurrentUnitInFuzzingThead(const uint8_t **Data) const {
   assert(InFuzzingThread());
-  CurrentUnitSize = Size;
-}
-
-size_t Fuzzer::GetCurrentUnitNoThreadCheck(const uint8_t **Data) const {
   *Data = CurrentUnitData;
   return CurrentUnitSize;
 }
 
-size_t Fuzzer::GetCurrentUnitInFuzzingThead(const uint8_t **Data) const {
-  assert(InFuzzingThread());
-  return GetCurrentUnitNoThreadCheck(Data);
-}
-
 void Fuzzer::ExecuteCallback(const uint8_t *Data, size_t Size) {
+  assert(InFuzzingThread());
   LazyAllocateCurrentUnitData();
   UnitStartTime = system_clock::now();
   // We copy the contents of Unit into a separate heap buffer
@@ -531,12 +507,12 @@ void Fuzzer::ExecuteCallback(const uint8_t *Data, size_t Size) {
   if (CurrentUnitData && CurrentUnitData != Data)
     memcpy(CurrentUnitData, Data, Size);
   AssignTaintLabels(DataCopy.get(), Size);
-  SetCurrentUnit(Size);
+  CurrentUnitSize = Size;
   AllocTracer.Start();
   int Res = CB(DataCopy.get(), Size);
   (void)Res;
   HasMoreMallocsThanFrees = AllocTracer.Stop();
-  SetCurrentUnit(0);
+  CurrentUnitSize = 0;
   assert(Res == 0);
 }
 
@@ -696,7 +672,7 @@ void Fuzzer::TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size,
     if (DuringInitialCorpusExecution)
       Printf("\nINFO: a leak has been found in the initial corpus.\n\n");
     Printf("INFO: to ignore leaks on libFuzzer side use -detect_leaks=0.\n\n");
-    SetCurrentUnit(Size);
+    CurrentUnitSize = Size;
     DumpCurrentUnit("leak-");
     PrintFinalStats();
     _Exit(Options.ErrorExitCode);  // not exit() to disable lsan further on.

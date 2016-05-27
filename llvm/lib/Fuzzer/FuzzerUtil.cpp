@@ -250,13 +250,6 @@ void SleepSeconds(int Seconds) {
 }
 
 int GetPid() { return getpid(); }
-int SignalToMainThread() {
-#ifdef __linux__
-  return syscall(SYS_tgkill, GetPid(), GetPid(), SIGALRM);
-#else
-  return 0;
-#endif
-}
 
 std::string Base64(const Unit &U) {
   static const char Table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
