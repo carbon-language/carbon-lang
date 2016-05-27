@@ -257,8 +257,26 @@ Error PDBFile::parseStreamData() {
         return make_error<RawError>(raw_error_code::corrupt_file,
                                     "Orphaned block found?");
 
+      uint64_t BlockOffset = blockToOffset(Data, getBlockSize());
+      if (BlockOffset + getBlockSize() < BlockOffset)
+        return make_error<RawError>(raw_error_code::corrupt_file,
+                                    "Bogus stream block number");
+      if (BlockOffset + getBlockSize() > M.getBufferSize())
+        return make_error<RawError>(raw_error_code::corrupt_file,
+                                    "Stream block number is out of bounds");
+
       StreamBlocks->push_back(Data);
     }
+  }
+
+  for (uint32_t SI = 0; SI != NumStreams; ++SI) {
+    uint64_t NumExpectedStreamBlocks =
+        bytesToBlocks(getStreamByteSize(SI), getBlockSize());
+    size_t NumStreamBlocks = getStreamBlockList(SI).size();
+    if (NumExpectedStreamBlocks != NumStreamBlocks)
+      return make_error<RawError>(raw_error_code::corrupt_file,
+                                  "The number of stream blocks is not "
+                                  "sufficient for the size of this stream");
   }
 
   // We should have read exactly SB->NumDirectoryBytes bytes.
