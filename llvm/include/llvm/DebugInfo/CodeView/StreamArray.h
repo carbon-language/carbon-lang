@@ -111,8 +111,6 @@ template <typename T> class FixedStreamArrayIterator;
 
 template <typename T> class FixedStreamArray {
   friend class FixedStreamArrayIterator<T>;
-  static_assert(std::is_trivially_constructible<T>::value,
-                "FixedStreamArray must be used with trivial types");
 
 public:
   FixedStreamArray() : Stream() {}
