@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+using namespace llvm;
 
 LEONMachineFunctionPass::LEONMachineFunctionPass(TargetMachine &tm, char& ID) :
   MachineFunctionPass(ID)
