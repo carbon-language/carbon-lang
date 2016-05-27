@@ -382,7 +382,7 @@ TEST(Error, StringError) {
   std::string Msg;
   raw_string_ostream S(Msg);
   logAllUnhandledErrors(make_error<StringError>("foo" + Twine(42),
-                                                unconvertibleErrorCode()),
+                                                inconvertibleErrorCode()),
                         S, "");
   EXPECT_EQ(S.str(), "foo42\n") << "Unexpected StringError log result";
 
