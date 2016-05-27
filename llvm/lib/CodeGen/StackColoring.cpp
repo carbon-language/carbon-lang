@@ -75,10 +75,10 @@ ProtectFromEscapedAllocas("protect-from-escaped-allocas",
 /// Enable enhanced dataflow scheme for lifetime analysis (treat first
 /// use of stack slot as start of slot lifetime, as opposed to looking
 /// for LIFETIME_START marker). See "Implementation notes" below for
-/// more info.
+/// more info. FIXME: set to false for the moment due to PR27903.
 static cl::opt<bool>
 LifetimeStartOnFirstUse("stackcoloring-lifetime-start-on-first-use",
-        cl::init(true), cl::Hidden,
+        cl::init(false), cl::Hidden,
         cl::desc("Treat stack lifetimes as starting on first use, not on START marker."));
 
 
