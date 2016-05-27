@@ -644,7 +644,7 @@ void ARMAsmPrinter::emitAttributes() {
 
   const std::string &CPUString = STI.getCPUString();
 
-  if (CPUString.find("generic") != 0) { //CPUString doesn't start with "generic"
+  if (!StringRef(CPUString).startswith("generic")) {
     // FIXME: remove krait check when GNU tools support krait cpu
     if (STI.isKrait()) {
       ATS.emitTextAttribute(ARMBuildAttrs::CPU_name, "cortex-a9");

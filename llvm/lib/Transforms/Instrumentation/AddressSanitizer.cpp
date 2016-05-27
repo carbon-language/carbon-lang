@@ -848,9 +848,9 @@ static GlobalVariable *createPrivateGlobalForSourceLoc(Module &M,
 }
 
 static bool GlobalWasGeneratedByAsan(GlobalVariable *G) {
-  return G->getName().find(kAsanGenPrefix) == 0 ||
-         G->getName().find(kSanCovGenPrefix) == 0 ||
-         G->getName().find(kODRGenPrefix) == 0;
+  return G->getName().startswith(kAsanGenPrefix) ||
+         G->getName().startswith(kSanCovGenPrefix) ||
+         G->getName().startswith(kODRGenPrefix);
 }
 
 Value *AddressSanitizer::memToShadow(Value *Shadow, IRBuilder<> &IRB) {
