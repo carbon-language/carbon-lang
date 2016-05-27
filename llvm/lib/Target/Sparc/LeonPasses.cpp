@@ -61,12 +61,10 @@ bool InsertNOPLoad::runOnMachineFunction(MachineFunction& MF)
         Modified = true;
       }
       else if (MI.isInlineAsm()) {
-        std::string AsmString (MI.getOperand(InlineAsm::MIOp_AsmString)
-            .getSymbolName());
-        std::string LDOpCoode ("ld");
-        std::transform(AsmString.begin(), AsmString.end(), AsmString.begin(),
-            ::tolower);
-        if (AsmString.find(LDOpCoode) == 0) { // an inline ld or ldf instruction
+        // Look for an inline ld or ldf instruction.
+        StringRef AsmString =
+            MI.getOperand(InlineAsm::MIOp_AsmString).getSymbolName();
+        if (AsmString.startswith_lower("ld")) {
           //errs() << "Inserting NOP after LD instruction\n";
           MachineBasicBlock::iterator NMBBI = std::next(MBBI);
           BuildMI(MBB, NMBBI, DL, TII.get(SP::NOP));
