@@ -97,7 +97,7 @@ public:
   void visitTypeBegin(TypeLeafKind Leaf, ArrayRef<uint8_t> RecordData) {}
   void visitTypeEnd(TypeLeafKind Leaf, ArrayRef<uint8_t> RecordData) {}
 
-  static ArrayRef<uint8_t> skipPadding(ArrayRef<uint8_t> Data) {
+  ArrayRef<uint8_t> skipPadding(ArrayRef<uint8_t> Data) {
     if (Data.empty())
       return Data;
     uint8_t Leaf = Data.front();
@@ -105,7 +105,12 @@ public:
       return Data;
     // Leaf is greater than 0xf0. We should advance by the number of bytes in
     // the low 4 bits.
-    return Data.drop_front(Leaf & 0x0F);
+    unsigned BytesToAdvance = Leaf & 0x0F;
+    if (Data.size() < BytesToAdvance) {
+      parseError();
+      return None;
+    }
+    return Data.drop_front(BytesToAdvance);
   }
 
   /// Visits individual member records of a field list record. Member records do
@@ -137,6 +142,8 @@ public:
 #include "TypeRecords.def"
       }
       FieldData = skipPadding(FieldData);
+      if (hadError())
+        break;
     }
   }
 
