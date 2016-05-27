@@ -109,9 +109,8 @@ define <8 x i16> @test_llvm_x86_sse41_pmovzxbw(<16 x i8>* %a) {
 ; AVX-NEXT:    vpmovzxbw {{.*#+}} xmm0 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero
 ; AVX-NEXT:    retq
   %1 = load <16 x i8>, <16 x i8>* %a, align 1
-  %2 = shufflevector <16 x i8> %1, <16 x i8> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-  %3 = zext <8 x i8> %2 to <8 x i16>
-  ret <8 x i16> %3
+  %2 = call <8 x i16> @llvm.x86.sse41.pmovzxbw(<16 x i8> %1)
+  ret <8 x i16> %2
 }
 
 define <4 x i32> @test_llvm_x86_sse41_pmovzxbd(<16 x i8>* %a) {
@@ -125,9 +124,8 @@ define <4 x i32> @test_llvm_x86_sse41_pmovzxbd(<16 x i8>* %a) {
 ; AVX-NEXT:    vpmovzxbd {{.*#+}} xmm0 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero
 ; AVX-NEXT:    retq
   %1 = load <16 x i8>, <16 x i8>* %a, align 1
-  %2 = shufflevector <16 x i8> %1, <16 x i8> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-  %3 = zext <4 x i8> %2 to <4 x i32>
-  ret <4 x i32> %3
+  %2 = call <4 x i32> @llvm.x86.sse41.pmovzxbd(<16 x i8> %1)
+  ret <4 x i32> %2
 }
 
 define <2 x i64> @test_llvm_x86_sse41_pmovzxbq(<16 x i8>* %a) {
@@ -141,9 +139,8 @@ define <2 x i64> @test_llvm_x86_sse41_pmovzxbq(<16 x i8>* %a) {
 ; AVX-NEXT:    vpmovzxbq {{.*#+}} xmm0 = mem[0],zero,zero,zero,zero,zero,zero,zero,mem[1],zero,zero,zero,zero,zero,zero,zero
 ; AVX-NEXT:    retq
   %1 = load <16 x i8>, <16 x i8>* %a, align 1
-  %2 = shufflevector <16 x i8> %1, <16 x i8> undef, <2 x i32> <i32 0, i32 1>
-  %3 = zext <2 x i8> %2 to <2 x i64>
-  ret <2 x i64> %3
+  %2 = call <2 x i64> @llvm.x86.sse41.pmovzxbq(<16 x i8> %1)
+  ret <2 x i64> %2
 }
 
 define <4 x i32> @test_llvm_x86_sse41_pmovzxwd(<8 x i16>* %a) {
@@ -157,9 +154,8 @@ define <4 x i32> @test_llvm_x86_sse41_pmovzxwd(<8 x i16>* %a) {
 ; AVX-NEXT:    vpmovzxwd {{.*#+}} xmm0 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero
 ; AVX-NEXT:    retq
   %1 = load <8 x i16>, <8 x i16>* %a, align 1
-  %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-  %3 = zext <4 x i16> %2 to <4 x i32>
-  ret <4 x i32> %3
+  %2 = call <4 x i32> @llvm.x86.sse41.pmovzxwd(<8 x i16> %1)
+  ret <4 x i32> %2
 }
 
 define <2 x i64> @test_llvm_x86_sse41_pmovzxwq(<8 x i16>* %a) {
@@ -173,9 +169,8 @@ define <2 x i64> @test_llvm_x86_sse41_pmovzxwq(<8 x i16>* %a) {
 ; AVX-NEXT:    vpmovzxwq {{.*#+}} xmm0 = mem[0],zero,zero,zero,mem[1],zero,zero,zero
 ; AVX-NEXT:    retq
   %1 = load <8 x i16>, <8 x i16>* %a, align 1
-  %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <2 x i32> <i32 0, i32 1>
-  %3 = zext <2 x i16> %2 to <2 x i64>
-  ret <2 x i64> %3
+  %2 = call <2 x i64> @llvm.x86.sse41.pmovzxwq(<8 x i16> %1)
+  ret <2 x i64> %2
 }
 
 define <2 x i64> @test_llvm_x86_sse41_pmovzxdq(<4 x i32>* %a) {
@@ -189,7 +184,13 @@ define <2 x i64> @test_llvm_x86_sse41_pmovzxdq(<4 x i32>* %a) {
 ; AVX-NEXT:    vpmovzxdq {{.*#+}} xmm0 = mem[0],zero,mem[1],zero
 ; AVX-NEXT:    retq
   %1 = load <4 x i32>, <4 x i32>* %a, align 1
-  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <2 x i32> <i32 0, i32 1>
-  %3 = zext <2 x i32> %2 to <2 x i64>
-  ret <2 x i64> %3
+  %2 = call <2 x i64> @llvm.x86.sse41.pmovzxdq(<4 x i32> %1)
+  ret <2 x i64> %2
 }
+
+declare <2 x i64> @llvm.x86.sse41.pmovzxdq(<4 x i32>)
+declare <2 x i64> @llvm.x86.sse41.pmovzxwq(<8 x i16>)
+declare <4 x i32> @llvm.x86.sse41.pmovzxwd(<8 x i16>)
+declare <2 x i64> @llvm.x86.sse41.pmovzxbq(<16 x i8>)
+declare <4 x i32> @llvm.x86.sse41.pmovzxbd(<16 x i8>)
+declare <8 x i16> @llvm.x86.sse41.pmovzxbw(<16 x i8>)

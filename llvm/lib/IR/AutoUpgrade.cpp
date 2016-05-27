@@ -178,9 +178,6 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name.startswith("x86.avx2.pbroadcast") ||
         Name.startswith("x86.avx.vpermil.") ||
         Name.startswith("x86.sse41.pmovsx") ||
-        Name.startswith("x86.sse41.pmovzx") ||
-        Name.startswith("x86.avx2.pmovsx") ||
-        Name.startswith("x86.avx2.pmovzx") ||
         Name == "x86.sse2.cvtdq2pd" ||
         Name == "x86.sse2.cvtps2pd" ||
         Name == "x86.avx.cvtdq2.pd.256" ||
@@ -547,25 +544,19 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       for (unsigned I = 0; I < EltNum; ++I)
         Rep = Builder.CreateInsertElement(Rep, Load,
                                           ConstantInt::get(I32Ty, I));
-    } else if (Name.startswith("llvm.x86.sse41.pmovsx") ||
-               Name.startswith("llvm.x86.sse41.pmovzx") ||
-               Name.startswith("llvm.x86.avx2.pmovsx") ||
-               Name.startswith("llvm.x86.avx2.pmovzx")) {
+    } else if (Name.startswith("llvm.x86.sse41.pmovsx")) {
       VectorType *SrcTy = cast<VectorType>(CI->getArgOperand(0)->getType());
       VectorType *DstTy = cast<VectorType>(CI->getType());
       unsigned NumDstElts = DstTy->getNumElements();
 
-      // Extract a subvector of the first NumDstElts lanes and sign/zero extend.
+      // Extract a subvector of the first NumDstElts lanes and sign extend.
       SmallVector<int, 8> ShuffleMask;
       for (int i = 0; i != (int)NumDstElts; ++i)
         ShuffleMask.push_back(i);
 
       Value *SV = Builder.CreateShuffleVector(
           CI->getArgOperand(0), UndefValue::get(SrcTy), ShuffleMask);
-
-      bool DoSext = (StringRef::npos != Name.find("pmovsx"));
-      Rep = DoSext ? Builder.CreateSExt(SV, DstTy)
-                   : Builder.CreateZExt(SV, DstTy);
+      Rep = Builder.CreateSExt(SV, DstTy);
     } else if (Name == "llvm.x86.avx2.vbroadcasti128") {
       // Replace vbroadcasts with a vector shuffle.
       Type *VT = VectorType::get(Type::getInt64Ty(C), 2);
