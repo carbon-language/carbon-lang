@@ -438,7 +438,7 @@ public:
     IsCpRestoreSet = false;
     CpRestoreOffset = -1;
 
-    Triple TheTriple(sti.getTargetTriple());
+    const Triple &TheTriple = sti.getTargetTriple();
     if ((TheTriple.getArch() == Triple::mips) ||
         (TheTriple.getArch() == Triple::mips64))
       IsLittleEndian = false;

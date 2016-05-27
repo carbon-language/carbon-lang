@@ -445,7 +445,7 @@ void SampleProfileLoader::printBlockWeight(raw_ostream &OS,
 /// \returns the weight of \p Inst.
 ErrorOr<uint64_t>
 SampleProfileLoader::getInstWeight(const Instruction &Inst) const {
-  DebugLoc DLoc = Inst.getDebugLoc();
+  const DebugLoc &DLoc = Inst.getDebugLoc();
   if (!DLoc)
     return std::error_code();
 
