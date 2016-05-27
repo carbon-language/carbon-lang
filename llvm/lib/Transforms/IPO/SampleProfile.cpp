@@ -22,6 +22,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/SampleProfile.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -34,8 +35,8 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Metadata.h"
@@ -1225,10 +1226,8 @@ bool SampleProfileLoader::emitAnnotations(Function &F) {
 }
 
 char SampleProfileLoaderLegacyPass::ID = 0;
-INITIALIZE_PASS_BEGIN(SampleProfileLoaderLegacyPass, "sample-profile",
-                      "Sample Profile loader", false, false)
-INITIALIZE_PASS_END(SampleProfileLoaderLegacyPass, "sample-profile",
-                    "Sample Profile loader", false, false)
+INITIALIZE_PASS(SampleProfileLoaderLegacyPass, "sample-profile",
+                "Sample Profile loader", false, false)
 
 bool SampleProfileLoader::doInitialization(Module &M) {
   auto &Ctx = M.getContext();
@@ -1278,4 +1277,17 @@ bool SampleProfileLoader::runOnFunction(Function &F) {
   if (!Samples->empty())
     return emitAnnotations(F);
   return false;
+}
+
+PreservedAnalyses SampleProfileLoaderPass::run(Module &M,
+                                               AnalysisManager<Module> &AM) {
+
+  SampleProfileLoader SampleLoader(SampleProfileFile);
+
+  SampleLoader.doInitialization(M);
+
+  if (!SampleLoader.runOnModule(M))
+    return PreservedAnalyses::all();
+
+  return PreservedAnalyses::none();
 }
