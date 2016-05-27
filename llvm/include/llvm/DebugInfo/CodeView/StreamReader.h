@@ -46,6 +46,15 @@ public:
   }
 
   template <typename T>
+  Error readArray(VarStreamArray<T> &Array, uint32_t Size) {
+    StreamRef S;
+    if (auto EC = readStreamRef(S, Size))
+      return EC;
+    Array = VarStreamArray<T>(S);
+    return Error::success();
+  }
+
+  template <typename T>
   Error readArray(FixedStreamArray<T> &Array, uint32_t NumItems) {
     if (NumItems == 0) {
       Array = FixedStreamArray<T>();

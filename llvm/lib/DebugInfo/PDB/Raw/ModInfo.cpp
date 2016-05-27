@@ -67,6 +67,8 @@ struct ModInfo::FileLayout {
                              // Null terminated Obj File Name
 };
 
+ModInfo::ModInfo() : Layout(nullptr) {}
+
 ModInfo::ModInfo(codeview::StreamRef Stream) : Layout(nullptr) {
   codeview::StreamReader Reader(Stream);
   if (auto EC = Reader.readObject(Layout)) {

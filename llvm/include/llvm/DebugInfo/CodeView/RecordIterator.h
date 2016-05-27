@@ -13,19 +13,41 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/DebugInfo/CodeView/RecordSerialization.h"
+#include "llvm/DebugInfo/CodeView/StreamInterface.h"
+#include "llvm/DebugInfo/CodeView/StreamReader.h"
 #include "llvm/Support/Endian.h"
 
 namespace llvm {
 namespace codeview {
 
+template <typename Kind> struct CVRecord {
+  uint32_t Length;
+  Kind Type;
+  ArrayRef<uint8_t> Data;
+};
+
+template <typename Kind> struct VarStreamArrayExtractor<CVRecord<Kind>> {
+  uint32_t operator()(const StreamInterface &Stream,
+                      CVRecord<Kind> &Item) const {
+    const RecordPrefix *Prefix = nullptr;
+    StreamReader Reader(Stream);
+    if (auto EC = Reader.readObject(Prefix)) {
+      consumeError(std::move(EC));
+      return 0;
+    }
+    Item.Length = Prefix->RecordLen;
+    Item.Type = static_cast<Kind>(uint16_t(Prefix->RecordKind));
+    if (auto EC = Reader.readBytes(Item.Length - 2, Item.Data)) {
+      consumeError(std::move(EC));
+      return 0;
+    }
+    return Prefix->RecordLen + 2;
+  }
+};
+
 // A const input iterator interface to the CodeView record stream.
 template <typename Kind> class RecordIterator {
 public:
-  struct Record {
-    std::size_t Length;
-    Kind Type;
-    ArrayRef<uint8_t> Data;
-  };
 
   explicit RecordIterator(const ArrayRef<uint8_t> &RecordBytes, bool *HadError)
       : HadError(HadError), Data(RecordBytes), AtEnd(false) {
@@ -46,12 +68,12 @@ public:
     return !(lhs == rhs);
   }
 
-  const Record &operator*() const {
+  const CVRecord<Kind> &operator*() const {
     assert(!AtEnd);
     return Current;
   }
 
-  const Record *operator->() const {
+  const CVRecord<Kind> *operator->() const {
     assert(!AtEnd);
     return &Current;
   }
@@ -106,7 +128,7 @@ private:
 
   bool *HadError;
   ArrayRef<uint8_t> Data;
-  Record Current;
+  CVRecord<Kind> Current;
   bool AtEnd;
 };
 
