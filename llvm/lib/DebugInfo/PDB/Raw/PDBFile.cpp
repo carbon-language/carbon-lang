@@ -139,9 +139,10 @@ Error PDBFile::parseFileHeaders() {
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "MSF magic header doesn't match");
 
-  if (BufferRef.getBufferSize() % SB->BlockSize != 0)
+  // We don't support blocksizes which aren't a multiple of four bytes.
+  if (SB->BlockSize % sizeof(support::ulittle32_t) != 0)
     return make_error<RawError>(raw_error_code::corrupt_file,
-                                "File size is not a multiple of block size");
+                                "Block size is not multiple of 4.");
 
   switch (SB->BlockSize) {
   case 512: case 1024: case 2048: case 4096:
@@ -152,10 +153,9 @@ Error PDBFile::parseFileHeaders() {
                                 "Unsupported block size.");
   }
 
-  // We don't support blocksizes which aren't a multiple of four bytes.
-  if (SB->BlockSize % sizeof(support::ulittle32_t) != 0)
+  if (BufferRef.getBufferSize() % SB->BlockSize != 0)
     return make_error<RawError>(raw_error_code::corrupt_file,
-                                "Block size is not multiple of 4.");
+                                "File size is not a multiple of block size");
 
   // We don't support directories whose sizes aren't a multiple of four bytes.
   if (SB->NumDirectoryBytes % sizeof(support::ulittle32_t) != 0)
