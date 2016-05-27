@@ -29,13 +29,13 @@ public:
   StreamReader(const StreamInterface &S);
 
   Error readBytes(uint32_t Size, ArrayRef<uint8_t> &Buffer);
-  Error readBytes(MutableArrayRef<uint8_t> Buffer);
   Error readInteger(uint16_t &Dest);
   Error readInteger(uint32_t &Dest);
   Error readZeroString(StringRef &Dest);
   Error readFixedString(StringRef &Dest, uint32_t Length);
   Error readStreamRef(StreamRef &Ref);
   Error readStreamRef(StreamRef &Ref, uint32_t Length);
+  Error readBytes(MutableArrayRef<uint8_t> Buffer);
 
   template <typename T> Error readObject(const T *&Dest) {
     ArrayRef<uint8_t> Buffer;
@@ -58,12 +58,6 @@ public:
     Array = FixedStreamArray<T>(View);
     Offset += Length;
     return Error::success();
-  }
-
-  template <typename T> Error readArray(MutableArrayRef<T> Array) {
-    MutableArrayRef<uint8_t> Casted(reinterpret_cast<uint8_t *>(Array.data()),
-                                    Array.size() * sizeof(T));
-    return readBytes(Casted);
   }
 
   void setOffset(uint32_t Off) { Offset = Off; }

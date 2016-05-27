@@ -569,6 +569,11 @@ static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File,
   return Error::success();
 }
 
+static void printSectionOffset(llvm::raw_ostream &OS,
+                               const SectionOffset &Off) {
+  OS << Off.Off << ", " << Off.Isect;
+}
+
 static Error dumpPublicsStream(ScopedPrinter &P, PDBFile &File,
                                codeview::CVTypeDumper &TD) {
   if (!opts::DumpPublics)
@@ -586,7 +591,8 @@ static Error dumpPublicsStream(ScopedPrinter &P, PDBFile &File,
   P.printList("Hash Buckets", Publics.getHashBuckets());
   P.printList("Address Map", Publics.getAddressMap());
   P.printList("Thunk Map", Publics.getThunkMap());
-  P.printList("Section Offsets", Publics.getSectionOffsets());
+  P.printList("Section Offsets", Publics.getSectionOffsets(),
+              printSectionOffset);
   ListScope L(P, "Symbols");
   codeview::CVSymbolDumper SD(P, TD, nullptr, false);
   for (auto S : Publics.getSymbols()) {

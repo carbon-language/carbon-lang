@@ -105,11 +105,9 @@ Error NameHashTable::load(codeview::StreamReader &Stream) {
   if (auto EC = Stream.readObject(HashCount))
     return EC;
 
-  std::vector<support::ulittle32_t> BucketArray(*HashCount);
-  if (auto EC = Stream.readArray<support::ulittle32_t>(BucketArray))
+  if (auto EC = Stream.readArray(IDs, *HashCount))
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Could not read bucket array");
-  IDs.assign(BucketArray.begin(), BucketArray.end());
 
   if (Stream.bytesRemaining() < sizeof(support::ulittle32_t))
     return make_error<RawError>(raw_error_code::corrupt_file,
@@ -154,4 +152,7 @@ uint32_t NameHashTable::getIDForString(StringRef Str) const {
   return IDs[0];
 }
 
-ArrayRef<uint32_t> NameHashTable::name_ids() const { return IDs; }
+codeview::FixedStreamArray<support::ulittle32_t>
+NameHashTable::name_ids() const {
+  return IDs;
+}

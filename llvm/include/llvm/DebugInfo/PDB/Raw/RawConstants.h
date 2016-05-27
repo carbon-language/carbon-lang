@@ -10,6 +10,8 @@
 #ifndef LLVM_DEBUGINFO_PDB_RAW_PDBRAWCONSTANTS_H
 #define LLVM_DEBUGINFO_PDB_RAW_PDBRAWCONSTANTS_H
 
+#include "llvm/Support/Endian.h"
+
 #include <cstdint>
 
 namespace llvm {
@@ -69,6 +71,19 @@ enum class DbgHeaderType : uint16_t {
   NewFPO,
   SectionHdrOrig,
   Max
+};
+
+// This struct is defined as "SO" in langapi/include/pdb.h.
+struct SectionOffset {
+  support::ulittle32_t Off;
+  support::ulittle16_t Isect;
+  char Padding[2];
+};
+
+// This is HRFile.
+struct PSHashRecord {
+  support::ulittle32_t Off; // Offset in the symbol record stream
+  support::ulittle32_t CRef;
 };
 
 } // end namespace pdb
