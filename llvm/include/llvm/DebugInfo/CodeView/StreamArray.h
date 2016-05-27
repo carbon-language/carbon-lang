@@ -93,12 +93,13 @@ public:
     if (!Array || IterRef.getLength() == 0 || ThisLen == 0)
       return *this;
     IterRef = IterRef.drop_front(ThisLen);
-    if (IterRef.getLength() == 0) {
-      Array = nullptr;
+    if (IterRef.getLength() == 0)
       ThisLen = 0;
-    } else {
+    else
+      // TODO: We should report an error if Extract fails.
       ThisLen = Extract(IterRef, ThisValue);
-    }
+    if (ThisLen == 0)
+      Array = nullptr;
     return *this;
   }
 
