@@ -497,7 +497,7 @@ void __sanitizer_set_report_path(const char *path) {
 }
 
 void __sanitizer_set_report_fd(void *fd) {
-  report_file.fd = reinterpret_cast<uptr>(fd);
+  report_file.fd = (fd_t)reinterpret_cast<uptr>(fd);
   report_file.fd_pid = internal_getpid();
 }
 
