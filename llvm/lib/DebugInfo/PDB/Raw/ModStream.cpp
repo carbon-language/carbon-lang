@@ -9,7 +9,6 @@
 
 #include "llvm/DebugInfo/PDB/Raw/ModStream.h"
 
-#include "llvm/DebugInfo/CodeView/RecordIterator.h"
 #include "llvm/DebugInfo/CodeView/StreamReader.h"
 #include "llvm/DebugInfo/PDB/Raw/ModInfo.h"
 #include "llvm/DebugInfo/PDB/Raw/RawError.h"
@@ -33,14 +32,8 @@ Error ModStream::reload() {
     return llvm::make_error<RawError>(raw_error_code::corrupt_file,
                                       "Module has both C11 and C13 line info");
 
-  codeview::StreamRef S;
-
-  uint32_t SymbolSubstreamSig = 0;
-  if (auto EC = Reader.readInteger(SymbolSubstreamSig))
+  if (auto EC = SymbolsSubstream.load(Reader, SymbolSize))
     return EC;
-  if (auto EC = Reader.readArray(SymbolsSubstream, SymbolSize - 4))
-    return EC;
-
   if (auto EC = Reader.readStreamRef(LinesSubstream, C11Size))
     return EC;
   if (auto EC = Reader.readStreamRef(C13LinesSubstream, C13Size))
@@ -58,6 +51,6 @@ Error ModStream::reload() {
   return Error::success();
 }
 
-iterator_range<codeview::CVSymbolArray::Iterator> ModStream::symbols() const {
-  return llvm::make_range(SymbolsSubstream.begin(), SymbolsSubstream.end());
+iterator_range<codeview::SymbolIterator> ModStream::symbols() const {
+  return codeview::makeSymbolRange(SymbolsSubstream.data().slice(4), nullptr);
 }

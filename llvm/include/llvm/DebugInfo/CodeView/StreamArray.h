@@ -18,19 +18,6 @@
 namespace llvm {
 namespace codeview {
 
-/// VarStreamArrayExtractor is intended to be specialized to provide customized
-/// extraction logic.  It should return the total number of bytes of the next
-/// record (so that the array knows how much data to skip to get to the next
-/// record, and it should initialize the second parameter with the desired
-/// value type.
-template <typename T> struct VarStreamArrayExtractor {
-  uint32_t operator()(const StreamInterface &Stream, T &t) const {
-    static_assert(false, "You must either provide a specialization of "
-                         "VarStreamArrayExtractor or a custom extractor");
-    return 0;
-  }
-};
-
 /// VarStreamArray represents an array of variable length records backed by a
 /// stream.  This could be a contiguous sequence of bytes in memory, it could
 /// be a file on disk, or it could be a PDB stream where bytes are stored as
@@ -40,39 +27,33 @@ template <typename T> struct VarStreamArrayExtractor {
 /// re-ordering of stream data to be contiguous before iterating over it.  By
 /// abstracting this out, we need not duplicate this memory, and we can
 /// iterate over arrays in arbitrarily formatted streams.
-template <typename ValueType, typename Extractor> class VarStreamArrayIterator;
+class VarStreamArrayIterator;
 
-template <typename ValueType,
-          typename Extractor = VarStreamArrayExtractor<ValueType>>
 class VarStreamArray {
-  friend class VarStreamArrayIterator<ValueType, Extractor>;
+  friend class VarStreamArrayIterator;
+  typedef std::function<uint32_t(const StreamInterface &)> LengthFuncType;
 
 public:
-  typedef VarStreamArrayIterator<ValueType, Extractor> Iterator;
+  template <typename LengthFunc>
+  VarStreamArray(StreamRef Stream, const LengthFunc &Len)
+      : Stream(Stream), Len(Len) {}
 
-  VarStreamArray() {}
-
-  VarStreamArray(StreamRef Stream) : Stream(Stream) {}
-
-  Iterator begin() const { return Iterator(*this); }
-
-  Iterator end() const { return Iterator(); }
+  VarStreamArrayIterator begin() const;
+  VarStreamArrayIterator end() const;
 
 private:
   StreamRef Stream;
+  LengthFuncType Len; // Function used to calculate legth of a record
 };
 
-template <typename ValueType, typename Extractor> class VarStreamArrayIterator {
-  typedef VarStreamArrayIterator<ValueType, Extractor> IterType;
-  typedef VarStreamArray<ValueType, Extractor> ArrayType;
-
+class VarStreamArrayIterator {
 public:
-  VarStreamArrayIterator(const ArrayType &Array)
+  VarStreamArrayIterator(const VarStreamArray &Array)
       : Array(&Array), IterRef(Array.Stream) {
-    ThisLen = Extract(IterRef, ThisValue);
+    ThisLen = Array.Len(IterRef);
   }
   VarStreamArrayIterator() : Array(nullptr), IterRef() {}
-  bool operator==(const IterType &R) const {
+  bool operator==(const VarStreamArrayIterator &R) const {
     if (Array && R.Array) {
       // Both have a valid array, make sure they're same.
       assert(Array == R.Array);
@@ -87,36 +68,44 @@ public:
     return false;
   }
 
-  bool operator!=(const IterType &R) { return !(*this == R); }
+  bool operator!=(const VarStreamArrayIterator &R) { return !(*this == R); }
 
-  const ValueType &operator*() const { return ThisValue; }
+  StreamRef operator*() const {
+    ArrayRef<uint8_t> Result;
+    return IterRef.keep_front(ThisLen);
+  }
 
-  IterType &operator++() {
-    if (!Array || IterRef.getLength() == 0 || ThisLen == 0)
+  VarStreamArrayIterator &operator++() {
+    if (!Array || IterRef.getLength() == 0)
       return *this;
     IterRef = IterRef.drop_front(ThisLen);
     if (IterRef.getLength() == 0) {
       Array = nullptr;
       ThisLen = 0;
     } else {
-      ThisLen = Extract(IterRef, ThisValue);
+      ThisLen = Array->Len(IterRef);
     }
     return *this;
   }
 
-  IterType operator++(int) {
-    IterType Original = *this;
+  VarStreamArrayIterator operator++(int) {
+    VarStreamArrayIterator Original = *this;
     ++*this;
     return Original;
   }
 
 private:
-  const ArrayType *Array;
+  const VarStreamArray *Array;
   uint32_t ThisLen;
-  ValueType ThisValue;
   StreamRef IterRef;
-  Extractor Extract;
 };
+
+inline VarStreamArrayIterator VarStreamArray::begin() const {
+  return VarStreamArrayIterator(*this);
+}
+inline VarStreamArrayIterator VarStreamArray::end() const {
+  return VarStreamArrayIterator();
+}
 
 template <typename T> class FixedStreamArrayIterator;
 

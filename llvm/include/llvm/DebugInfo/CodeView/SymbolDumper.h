@@ -35,7 +35,7 @@ public:
   /// and true otherwise.  This should be called in order, since the dumper
   /// maintains state about previous records which are necessary for cross
   /// type references.
-  bool dump(const CVRecord<SymbolKind> &Record);
+  bool dump(const SymbolIterator::Record &Record);
 
   /// Dumps the type records in Data. Returns false if there was a type stream
   /// parse error, and true otherwise.

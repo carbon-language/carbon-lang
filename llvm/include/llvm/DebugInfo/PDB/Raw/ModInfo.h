@@ -11,7 +11,6 @@
 #define LLVM_DEBUGINFO_PDB_RAW_MODINFO_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/DebugInfo/CodeView/StreamArray.h"
 #include "llvm/DebugInfo/CodeView/StreamRef.h"
 #include <cstdint>
 #include <vector>
@@ -24,7 +23,6 @@ private:
   struct FileLayout;
 
 public:
-  ModInfo();
   ModInfo(codeview::StreamRef Stream);
   ModInfo(const ModInfo &Info);
   ~ModInfo();
@@ -52,7 +50,6 @@ private:
 
 struct ModuleInfoEx {
   ModuleInfoEx(codeview::StreamRef Stream) : Info(Stream) {}
-  ModuleInfoEx(const ModInfo &Info) : Info(Info) {}
   ModuleInfoEx(const ModuleInfoEx &Ex)
       : Info(Ex.Info), SourceFiles(Ex.SourceFiles) {}
 
@@ -60,17 +57,11 @@ struct ModuleInfoEx {
   std::vector<StringRef> SourceFiles;
 };
 
-} // end namespace pdb
-
-namespace codeview {
-template <> struct VarStreamArrayExtractor<pdb::ModInfo> {
-  uint32_t operator()(const StreamInterface &Stream, pdb::ModInfo &Info) const {
-    Info = pdb::ModInfo(Stream);
-    return Info.getRecordLength();
-  }
-};
+inline uint32_t ModInfoRecordLength(const codeview::StreamInterface &Stream) {
+  return ModInfo(Stream).getRecordLength();
 }
 
+} // end namespace pdb
 } // end namespace llvm
 
 #endif // LLVM_DEBUGINFO_PDB_RAW_MODINFO_H

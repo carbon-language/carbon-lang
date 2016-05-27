@@ -866,7 +866,7 @@ void CVSymbolDumperImpl::visitUnknownSymbol(SymbolKind Kind,
   W.printNumber("Length", uint32_t(Data.size()));
 }
 
-bool CVSymbolDumper::dump(const CVRecord<SymbolKind> &Record) {
+bool CVSymbolDumper::dump(const SymbolIterator::Record &Record) {
   CVSymbolDumperImpl Dumper(CVTD, ObjDelegate.get(), W, PrintRecordBytes);
   Dumper.visitSymbolRecord(Record);
   return !Dumper.hadError();
