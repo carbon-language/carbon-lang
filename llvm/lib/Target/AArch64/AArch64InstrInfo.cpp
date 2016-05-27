@@ -1447,8 +1447,8 @@ bool AArch64InstrInfo::isScaledAddr(const MachineInstr *MI) const {
 
 /// Check all MachineMemOperands for a hint to suppress pairing.
 bool AArch64InstrInfo::isLdStPairSuppressed(const MachineInstr *MI) const {
-  assert(MOSuppressPair < (1 << MachineMemOperand::MOTargetNumBits) &&
-         "Too many target MO flags");
+  static_assert(MOSuppressPair < (1 << MachineMemOperand::MOTargetNumBits),
+                "Too many target MO flags");
   for (auto *MM : MI->memoperands()) {
     if (MM->getFlags() &
         (MOSuppressPair << MachineMemOperand::MOTargetStartBit)) {
@@ -1463,8 +1463,8 @@ void AArch64InstrInfo::suppressLdStPair(MachineInstr *MI) const {
   if (MI->memoperands_empty())
     return;
 
-  assert(MOSuppressPair < (1 << MachineMemOperand::MOTargetNumBits) &&
-         "Too many target MO flags");
+  static_assert(MOSuppressPair < (1 << MachineMemOperand::MOTargetNumBits),
+                "Too many target MO flags");
   (*MI->memoperands_begin())
       ->setFlags(MOSuppressPair << MachineMemOperand::MOTargetStartBit);
 }
