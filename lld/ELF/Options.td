@@ -150,7 +150,8 @@ def strip_debug : Flag<["--"], "strip-debug">,
 def sysroot : Joined<["--"], "sysroot=">,
   HelpText<"Set the system root">;
 
-def threads : Flag<["--"], "threads">;
+def threads : Flag<["--"], "threads">,
+  HelpText<"Enable use of threads">;
 
 def trace: Flag<["--"], "trace">,
   HelpText<"Print the names of the input files">;
