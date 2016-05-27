@@ -2837,6 +2837,7 @@ void MicrosoftMangleContextImpl::mangleThreadSafeStaticGuardVariable(
 
   Mangler.getStream() << "\01?$TSS" << GuardNum << '@';
   Mangler.mangleNestedName(VD);
+  Mangler.getStream() << "@4HA";
 }
 
 void MicrosoftMangleContextImpl::mangleStaticGuardVariable(const VarDecl *VD,
