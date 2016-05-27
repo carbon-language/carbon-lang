@@ -48,7 +48,6 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include <cctype>
 
@@ -121,10 +120,6 @@ public:
   const char *getPassName() const override { return "Sample profile pass"; }
 
   bool runOnModule(Module &M) override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<InstructionCombiningPass>();
-  }
 
 protected:
   bool runOnFunction(Function &F);
@@ -1218,8 +1213,6 @@ bool SampleProfileLoader::emitAnnotations(Function &F) {
 char SampleProfileLoader::ID = 0;
 INITIALIZE_PASS_BEGIN(SampleProfileLoader, "sample-profile",
                       "Sample Profile loader", false, false)
-INITIALIZE_PASS_DEPENDENCY(AddDiscriminators)
-INITIALIZE_PASS_DEPENDENCY(InstructionCombiningPass)
 INITIALIZE_PASS_END(SampleProfileLoader, "sample-profile",
                     "Sample Profile loader", false, false)
 
@@ -1263,7 +1256,6 @@ bool SampleProfileLoader::runOnModule(Module &M) {
 
 bool SampleProfileLoader::runOnFunction(Function &F) {
   F.setEntryCount(0);
-  getAnalysis<InstructionCombiningPass>(F);
   Samples = Reader->getSamplesFor(F);
   if (!Samples->empty())
     return emitAnnotations(F);
