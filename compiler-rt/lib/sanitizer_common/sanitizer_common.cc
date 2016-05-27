@@ -496,6 +496,11 @@ void __sanitizer_set_report_path(const char *path) {
   report_file.SetReportPath(path);
 }
 
+void __sanitizer_set_report_fd(void *fd) {
+  report_file.fd = reinterpret_cast<uptr>(fd);
+  report_file.fd_pid = internal_getpid();
+}
+
 void __sanitizer_report_error_summary(const char *error_summary) {
   Printf("%s\n", error_summary);
 }
