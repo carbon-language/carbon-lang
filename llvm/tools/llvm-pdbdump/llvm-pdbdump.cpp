@@ -254,7 +254,9 @@ static Error dumpStreamSummary(ScopedPrinter &P, PDBFile &File) {
     std::string Label("Stream ");
     Label += to_string(StreamIdx);
     std::string Value;
-    if (StreamIdx == StreamPDB)
+    if (StreamIdx == OldMSFDirectory)
+      Value = "Old MSF Directory";
+    else if (StreamIdx == StreamPDB)
       Value = "PDB Stream";
     else if (StreamIdx == StreamDBI)
       Value = "DBI Stream";

@@ -45,6 +45,11 @@ enum PdbRaw_TpiVer : uint32_t {
 };
 
 enum SpecialStream : uint32_t {
+  // Stream 0 contains the copy of previous version of the MSF directory.
+  // We are not currently using it, but technically if we find the main
+  // MSF is corrupted, we could fallback to it.
+  OldMSFDirectory = 0,
+
   StreamPDB = 1,
   StreamTPI = 2,
   StreamDBI = 3,
