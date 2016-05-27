@@ -4864,7 +4864,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Forward flags for OpenMP
   if (Args.hasFlag(options::OPT_fopenmp, options::OPT_fopenmp_EQ,
                    options::OPT_fno_openmp, false)) {
-    Args.AddAllArgs(CmdArgs, options::OPT_fopenmp_version_EQ);
     switch (getOpenMPRuntime(getToolChain(), Args)) {
     case OMPRT_OMP:
     case OMPRT_IOMP5:
@@ -4877,6 +4876,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       if (!Args.hasFlag(options::OPT_fopenmp_use_tls,
                         options::OPT_fnoopenmp_use_tls, /*Default=*/true))
         CmdArgs.push_back("-fnoopenmp-use-tls");
+      Args.AddAllArgs(CmdArgs, options::OPT_fopenmp_version_EQ);
       break;
     default:
       // By default, if Clang doesn't know how to generate useful OpenMP code
