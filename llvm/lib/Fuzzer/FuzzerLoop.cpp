@@ -159,6 +159,11 @@ Fuzzer::Fuzzer(UserCallback CB, MutationDispatcher &MD, FuzzingOptions Options)
   IsMyThread = true;
 }
 
+void Fuzzer::LazyAllocateCurrentUnitData() {
+  if (CurrentUnitData || Options.MaxLen == 0) return;
+  CurrentUnitData = new uint8_t[Options.MaxLen];
+}
+
 void Fuzzer::SetDeathCallback() {
   CHECK_WEAK_API_FUNCTION(__sanitizer_set_death_callback);
   __sanitizer_set_death_callback(StaticDeathCallback);
@@ -501,10 +506,9 @@ void __sanitizer_free_hook(void *ptr) {
 }
 }  // extern "C"
 
-void Fuzzer::SetCurrentUnit(const uint8_t *Data, size_t Size) {
+void Fuzzer::SetCurrentUnit(size_t Size) {
   assert(InFuzzingThread());
   CurrentUnitSize = Size;
-  CurrentUnitData = Data;
 }
 
 size_t Fuzzer::GetCurrentUnitNoThreadCheck(const uint8_t **Data) const {
@@ -518,18 +522,21 @@ size_t Fuzzer::GetCurrentUnitInFuzzingThead(const uint8_t **Data) const {
 }
 
 void Fuzzer::ExecuteCallback(const uint8_t *Data, size_t Size) {
+  LazyAllocateCurrentUnitData();
   UnitStartTime = system_clock::now();
   // We copy the contents of Unit into a separate heap buffer
   // so that we reliably find buffer overflows in it.
   std::unique_ptr<uint8_t[]> DataCopy(new uint8_t[Size]);
   memcpy(DataCopy.get(), Data, Size);
+  if (CurrentUnitData && CurrentUnitData != Data)
+    memcpy(CurrentUnitData, Data, Size);
   AssignTaintLabels(DataCopy.get(), Size);
-  SetCurrentUnit(DataCopy.get(), Size);
+  SetCurrentUnit(Size);
   AllocTracer.Start();
   int Res = CB(DataCopy.get(), Size);
   (void)Res;
   HasMoreMallocsThanFrees = AllocTracer.Stop();
-  SetCurrentUnit(nullptr, 0);
+  SetCurrentUnit(0);
   assert(Res == 0);
 }
 
@@ -689,7 +696,7 @@ void Fuzzer::TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size,
     if (DuringInitialCorpusExecution)
       Printf("\nINFO: a leak has been found in the initial corpus.\n\n");
     Printf("INFO: to ignore leaks on libFuzzer side use -detect_leaks=0.\n\n");
-    SetCurrentUnit(Data, Size);
+    SetCurrentUnit(Size);
     DumpCurrentUnit("leak-");
     PrintFinalStats();
     _Exit(Options.ErrorExitCode);  // not exit() to disable lsan further on.
@@ -697,32 +704,33 @@ void Fuzzer::TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size,
 }
 
 void Fuzzer::MutateAndTestOne() {
+  LazyAllocateCurrentUnitData();
   MD.StartMutationSequence();
 
   auto &U = ChooseUnitToMutate();
-  MutateInPlaceHere.resize(Options.MaxLen);
+  assert(CurrentUnitData);
   size_t Size = U.size();
   assert(Size <= Options.MaxLen && "Oversized Unit");
-  memcpy(MutateInPlaceHere.data(), U.data(), Size);
+  memcpy(CurrentUnitData, U.data(), Size);
 
   for (int i = 0; i < Options.MutateDepth; i++) {
     size_t NewSize = 0;
     if (LLVMFuzzerCustomMutator)
-      NewSize = LLVMFuzzerCustomMutator(MutateInPlaceHere.data(), Size,
+      NewSize = LLVMFuzzerCustomMutator(CurrentUnitData, Size,
                                         Options.MaxLen, MD.GetRand().Rand());
     else
-      NewSize = MD.Mutate(MutateInPlaceHere.data(), Size, Options.MaxLen);
+      NewSize = MD.Mutate(CurrentUnitData, Size, Options.MaxLen);
     assert(NewSize > 0 && "Mutator returned empty unit");
     assert(NewSize <= Options.MaxLen &&
            "Mutator return overisized unit");
     Size = NewSize;
     if (Options.OnlyASCII)
-      ToASCII(MutateInPlaceHere.data(), Size);
+      ToASCII(CurrentUnitData, Size);
     if (i == 0)
       StartTraceRecording();
-    RunOneAndUpdateCorpus(MutateInPlaceHere.data(), Size);
+    RunOneAndUpdateCorpus(CurrentUnitData, Size);
     StopTraceRecording();
-    TryDetectingAMemoryLeak(MutateInPlaceHere.data(), Size,
+    TryDetectingAMemoryLeak(CurrentUnitData, Size,
                             /*DuringInitialCorpusExecution*/ false);
   }
 }

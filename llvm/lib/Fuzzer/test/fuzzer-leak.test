@@ -14,6 +14,9 @@ RUN: not LLVMFuzzer-LeakTest -runs=100000                 2>&1 | FileCheck %s --
 LEAK_AFTER: Done 100000 runs in
 LEAK_AFTER: ERROR: LeakSanitizer: detected memory leaks
 
+RUN: not LLVMFuzzer-LeakTest -runs=100000 -max_len=1 2>&1 | FileCheck %s --check-prefix=MAX_LEN_1
+MAX_LEN_1: Test unit written to ./leak-7cf184f4c67ad58283ecb19349720b0cae756829
+
 RUN: not LLVMFuzzer-LeakTimeoutTest -timeout=1 2>&1 | FileCheck %s --check-prefix=LEAK_TIMEOUT
 LEAK_TIMEOUT: ERROR: libFuzzer: timeout after
 LEAK_TIMEOUT-NOT: LeakSanitizer

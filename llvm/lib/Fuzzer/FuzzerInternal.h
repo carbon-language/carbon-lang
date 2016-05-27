@@ -441,9 +441,10 @@ private:
   void DumpCurrentUnit(const char *Prefix);
   void DeathCallback();
 
-  void SetCurrentUnit(const uint8_t *Data, size_t Size);
+  void SetCurrentUnit(size_t Size);
   size_t GetCurrentUnitNoThreadCheck(const uint8_t **Data) const;
-  const uint8_t *CurrentUnitData = nullptr;
+  void LazyAllocateCurrentUnitData();
+  uint8_t *CurrentUnitData = nullptr;
   size_t CurrentUnitSize = 0;
   bool InOOMState = false;
 
@@ -455,7 +456,6 @@ private:
 
   std::vector<Unit> Corpus;
   std::unordered_set<std::string> UnitHashesAddedToCorpus;
-  std::vector<uint8_t> MutateInPlaceHere;
 
   std::piecewise_constant_distribution<double> CorpusDistribution;
   UserCallback CB;
