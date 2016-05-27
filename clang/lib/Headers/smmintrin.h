@@ -299,7 +299,6 @@ _mm_cvtepi8_epi64(__m128i __V)
 {
   /* This function always performs a signed extension, but __v16qi is a char
      which may be signed or unsigned, so use __v16qs. */
-  typedef signed char __v16qs __attribute__((__vector_size__(16)));
   return (__m128i)__builtin_convertvector(__builtin_shufflevector((__v16qs)__V, (__v16qs)__V, 0, 1), __v2di);
 }
 
