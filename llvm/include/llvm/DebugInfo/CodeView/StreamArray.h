@@ -13,6 +13,7 @@
 #include "llvm/DebugInfo/CodeView/StreamRef.h"
 
 #include <functional>
+#include <type_traits>
 
 namespace llvm {
 namespace codeview {
