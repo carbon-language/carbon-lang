@@ -102,6 +102,10 @@ template <typename T, typename U> struct serialize_array_impl {
       return std::error_code();
 
     uint32_t Size = sizeof(T) * N;
+
+    if (Size / sizeof(T) != N)
+      return std::make_error_code(std::errc::illegal_byte_sequence);
+
     if (Data.size() < Size)
       return std::make_error_code(std::errc::illegal_byte_sequence);
 
