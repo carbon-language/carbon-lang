@@ -3,12 +3,13 @@
 set(CMAKE_CXX_FLAGS
   "${LIBFUZZER_FLAGS_BASE} -fsanitize=undefined -fno-sanitize-recover=all")
 
+set(UbsanTests
+  SignedIntOverflowTest
+  )
+
 foreach(Test ${UbsanTests})
-  add_executable(LLVMFuzzer-${Test}-Ubsan
-    ../${Test}.cpp
-    )
-  target_link_libraries(LLVMFuzzer-${Test}-Ubsan
-    LLVMFuzzer
-    )
+  add_libfuzzer_test(${Test}-Ubsan SOURCES ../${Test}.cpp)
 endforeach()
 
+# Propagate value into parent directory
+set(TestBinaries ${TestBinaries} PARENT_SCOPE)
