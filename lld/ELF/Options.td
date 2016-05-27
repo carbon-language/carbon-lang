@@ -18,7 +18,7 @@ def build_id : Flag<["--", "-"], "build-id">,
 def build_id_eq : Joined<["--", "-"], "build-id=">;
 
 def L : JoinedOrSeparate<["-"], "L">, MetaVarName<"<dir>">,
-  HelpText<"Directory to search for libraries">;
+  HelpText<"Add a directory to the library search path">;
 
 def O : Joined<["-"], "O">, HelpText<"Optimize">;
 
