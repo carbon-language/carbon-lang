@@ -1436,6 +1436,19 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
     CmdArgs.push_back(Args.MakeArgString("-mips-ssection-threshold=" + v));
     A->claim();
   }
+
+  if (Arg *A = Args.getLastArg(options::OPT_mcompact_branches_EQ)) {
+    StringRef Val = StringRef(A->getValue());
+    if (mips::hasCompactBranches(CPUName)) {
+      if (Val == "never" || Val == "always" || Val == "optimal") {
+        CmdArgs.push_back("-mllvm");
+        CmdArgs.push_back(Args.MakeArgString("-mips-compact-branches=" + Val));
+      } else
+        D.Diag(diag::err_drv_unsupported_option_argument)
+            << A->getOption().getName() << Val;
+    } else
+      D.Diag(diag::warn_target_unsupported_compact_branches) << CPUName;
+  }
 }
 
 /// getPPCTargetCPU - Get the (LLVM) name of the PowerPC cpu we are targeting.
@@ -7063,6 +7076,14 @@ mips::NanEncoding mips::getSupportedNanEncoding(StringRef &CPU) {
       .Case("mips64r5", NanLegacy | Nan2008)
       .Case("mips64r6", Nan2008)
       .Default(NanLegacy);
+}
+
+bool mips::hasCompactBranches(StringRef &CPU) {
+  // mips32r6 and mips64r6 have compact branches.
+  return llvm::StringSwitch<bool>(CPU)
+      .Case("mips32r6", true)
+      .Case("mips64r6", true)
+      .Default(false);
 }
 
 bool mips::hasMipsAbiArg(const ArgList &Args, const char *Value) {
