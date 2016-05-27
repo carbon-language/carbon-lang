@@ -26,6 +26,7 @@ namespace llvm {
 
 class Error;
 class ErrorList;
+class Twine;
 
 /// Base class for error info classes. Do not extend this directly: Extend
 /// the ErrorInfo template subclass instead.
@@ -850,24 +851,22 @@ protected:
   std::error_code EC;
 };
 
+/// The value returned by this function can be returned from convertToErrorCode
+/// for Error values where no sensible translation to std::error_code exists.
+/// It should only be used in this situation, and should never be used where a
+/// sensible conversion to std::error_code is available, as attempts to convert
+/// to/from this error will result in a fatal error. (i.e. it is a programmatic
+///error to try to convert such a value).
+std::error_code unconvertibleErrorCode();
+
 /// Helper for converting an std::error_code to a Error.
-inline Error errorCodeToError(std::error_code EC) {
-  if (!EC)
-    return Error::success();
-  return Error(llvm::make_unique<ECError>(ECError(EC)));
-}
+Error errorCodeToError(std::error_code EC);
 
 /// Helper for converting an ECError to a std::error_code.
 ///
 /// This method requires that Err be Error() or an ECError, otherwise it
 /// will trigger a call to abort().
-inline std::error_code errorToErrorCode(Error Err) {
-  std::error_code EC;
-  handleAllErrors(std::move(Err), [&](const ErrorInfoBase &EI) {
-    EC = EI.convertToErrorCode();
-  });
-  return EC;
-}
+std::error_code errorToErrorCode(Error Err);
 
 /// Convert an ErrorOr<T> to an Expected<T>.
 template <typename T> Expected<T> errorOrToExpected(ErrorOr<T> &&EO) {
@@ -882,6 +881,23 @@ template <typename T> ErrorOr<T> expectedToErrorOr(Expected<T> &&E) {
     return errorToErrorCode(std::move(Err));
   return std::move(*E);
 }
+
+/// This class wraps a string in an Error.
+///
+/// StringError is useful in cases where the client is not expected to be able
+/// to consume the specific error message programmatically (for example, if the
+/// error message is to be presented to the user). It cannot be converted to a
+/// std::error_code.
+class StringError : public ErrorInfo<StringError> {
+public:
+  static char ID;
+  StringError(const Twine &S, std::error_code EC);
+  void log(raw_ostream &OS) const override;
+  std::error_code convertToErrorCode() const override;
+private:
+  std::string Msg;
+  std::error_code EC;
+};
 
 /// Helper for check-and-exit error handling.
 ///
