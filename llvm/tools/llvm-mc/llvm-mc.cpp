@@ -52,18 +52,9 @@ OutputFilename("o", cl::desc("Output filename"),
 static cl::opt<bool>
 ShowEncoding("show-encoding", cl::desc("Show instruction encodings"));
 
-static cl::opt<DebugCompressionType>
-CompressDebugSections("compress-debug-sections", cl::ValueOptional,
-  cl::init(DebugCompressionType::DCT_None),
-  cl::desc("Choose DWARF debug sections compression:"),
-  cl::values(
-    clEnumValN(DebugCompressionType::DCT_None, "none",
-      "No compression"),
-    clEnumValN(DebugCompressionType::DCT_Zlib, "zlib",
-      "Use zlib compression"),
-    clEnumValN(DebugCompressionType::DCT_ZlibGnu, "zlib-gnu",
-      "Use zlib-gnu compression (depricated)"),
-    clEnumValEnd));
+static cl::opt<bool>
+CompressDebugSections("compress-debug-sections",
+                      cl::desc("Compress DWARF debug sections"));
 
 static cl::opt<bool>
 ShowInst("show-inst", cl::desc("Show internal instruction representation"));
@@ -416,13 +407,13 @@ int main(int argc, char **argv) {
   std::unique_ptr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(*MRI, TripleName));
   assert(MAI && "Unable to create target asm info!");
 
-  if (CompressDebugSections != DebugCompressionType::DCT_None) {
+  if (CompressDebugSections) {
     if (!zlib::isAvailable()) {
       errs() << ProgName
              << ": build tools with zlib to enable -compress-debug-sections";
       return 1;
     }
-    MAI->setCompressDebugSections(CompressDebugSections);
+    MAI->setCompressDebugSections(true);
   }
 
   // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
