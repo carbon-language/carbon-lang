@@ -4077,8 +4077,8 @@ public:
   /// \brief Creates clause with a list of variables \a Vars.
   ///
   /// \param C AST context.
-  /// \brief StartLoc Starting location of the clause.
-  /// \brief EndLoc Ending location of the clause.
+  /// \param StartLoc Starting location of the clause.
+  /// \param EndLoc Ending location of the clause.
   /// \param Vars The original expression used in the clause.
   /// \param Declarations Declarations used in the clause.
   /// \param ComponentLists Component lists used in the clause.
@@ -4181,8 +4181,8 @@ public:
   /// \brief Creates clause with a list of variables \a Vars.
   ///
   /// \param C AST context.
-  /// \brief StartLoc Starting location of the clause.
-  /// \brief EndLoc Ending location of the clause.
+  /// \param StartLoc Starting location of the clause.
+  /// \param EndLoc Ending location of the clause.
   /// \param Vars The original expression used in the clause.
   /// \param Declarations Declarations used in the clause.
   /// \param ComponentLists Component lists used in the clause.
