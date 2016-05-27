@@ -51,7 +51,7 @@ public:
 #define MEMBER_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #include "TypeRecords.def"
 
-  void visitTypeRecord(const TypeIterator::Record &Record) {
+  void visitTypeRecord(const CVRecord<TypeLeafKind> &Record) {
     ArrayRef<uint8_t> LeafData = Record.Data;
     ArrayRef<uint8_t> RecordData = LeafData;
     auto *DerivedThis = static_cast<Derived *>(this);

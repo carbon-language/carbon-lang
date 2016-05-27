@@ -46,7 +46,7 @@ public:
 #define SYMBOL_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #include "CVSymbolTypes.def"
 
-  void visitSymbolRecord(const SymbolIterator::Record &Record) {
+  void visitSymbolRecord(const CVRecord<SymbolKind> &Record) {
     ArrayRef<uint8_t> Data = Record.Data;
     auto *DerivedThis = static_cast<Derived *>(this);
     DerivedThis->visitSymbolBegin(Record.Type, Data);
