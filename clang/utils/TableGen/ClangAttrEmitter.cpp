@@ -241,8 +241,7 @@ namespace {
 
   public:
     SimpleArgument(const Record &Arg, StringRef Attr, std::string T)
-      : Argument(Arg, Attr), type(T)
-    {}
+        : Argument(Arg, Attr), type(std::move(T)) {}
 
     std::string getType() const { return type; }
 
@@ -586,8 +585,9 @@ namespace {
 
   public:
     VariadicArgument(const Record &Arg, StringRef Attr, std::string T)
-        : Argument(Arg, Attr), Type(T), ArgName(getLowerName().str() + "_"),
-          ArgSizeName(ArgName + "Size"), RangeName(getLowerName()) {}
+        : Argument(Arg, Attr), Type(std::move(T)),
+          ArgName(getLowerName().str() + "_"), ArgSizeName(ArgName + "Size"),
+          RangeName(getLowerName()) {}
 
     const std::string &getType() const { return Type; }
     const std::string &getArgName() const { return ArgName; }
