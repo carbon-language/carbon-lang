@@ -174,6 +174,10 @@ Error PDBFile::parseFileHeaders() {
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Too many directory blocks.");
 
+  // Make sure the directory block array fits within the file.
+  if (auto EC = checkOffset(BufferRef, getDirectoryBlockArray()))
+    return EC;
+
   return Error::success();
 }
 
