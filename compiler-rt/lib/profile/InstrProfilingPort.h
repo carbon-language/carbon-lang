@@ -38,7 +38,7 @@
 #ifdef _MSC_VER
 #define COMPILER_RT_GETHOSTNAME(Name, Len) gethostname(Name, Len)
 #elif defined(__ORBIS__)
-#define COMPILER_RT_GETHOSTNAME(Name, Len) (-1)
+#define COMPILER_RT_GETHOSTNAME(Name, Len) ((void)(Name), (void)(Len), (-1))
 #else
 #define COMPILER_RT_GETHOSTNAME(Name, Len) lprofGetHostName(Name, Len)
 #define COMPILER_RT_HAS_UNAME 1
