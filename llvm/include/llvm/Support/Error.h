@@ -886,8 +886,7 @@ template <typename T> ErrorOr<T> expectedToErrorOr(Expected<T> &&E) {
 ///
 /// StringError is useful in cases where the client is not expected to be able
 /// to consume the specific error message programmatically (for example, if the
-/// error message is to be presented to the user). It cannot be converted to a
-/// std::error_code.
+/// error message is to be presented to the user).
 class StringError : public ErrorInfo<StringError> {
 public:
   static char ID;
