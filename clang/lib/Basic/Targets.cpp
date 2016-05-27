@@ -7009,7 +7009,7 @@ public:
 class MipsTargetInfo : public TargetInfo {
   void setDataLayout() {
     if (BigEndian) {
-      if (ABI == "o32" || ABI == "eabi")
+      if (ABI == "o32")
         resetDataLayout("E-m:m-p:32:32-i8:8:32-i16:16:32-i64:64-n32-S64");
       else if (ABI == "n32")
         resetDataLayout("E-m:m-p:32:32-i8:8:32-i16:16:32-i64:64-n32:64-S128");
@@ -7018,7 +7018,7 @@ class MipsTargetInfo : public TargetInfo {
       else
         llvm_unreachable("Invalid ABI");
     } else {
-      if (ABI == "o32" || ABI == "eabi")
+      if (ABI == "o32")
         resetDataLayout("e-m:m-p:32:32-i8:8:32-i16:16:32-i64:64-n32-S64");
       else if (ABI == "n32")
         resetDataLayout("e-m:m-p:32:32-i8:8:32-i16:16:32-i64:64-n32:64-S128");
@@ -7100,7 +7100,7 @@ public:
   bool setABI(const std::string &Name) override {
     if (getTriple().getArch() == llvm::Triple::mips ||
         getTriple().getArch() == llvm::Triple::mipsel) {
-      if (Name == "o32" || Name == "eabi") {
+      if (Name == "o32") {
         ABI = Name;
         return true;
       }
@@ -7217,9 +7217,7 @@ public:
       Builder.defineMacro("__mips_o32");
       Builder.defineMacro("_ABIO32", "1");
       Builder.defineMacro("_MIPS_SIM", "_ABIO32");
-    } else if (ABI == "eabi")
-      Builder.defineMacro("__mips_eabi");
-    else if (ABI == "n32") {
+    } else if (ABI == "n32") {
       Builder.defineMacro("__mips_n32");
       Builder.defineMacro("_ABIN32", "2");
       Builder.defineMacro("_MIPS_SIM", "_ABIN32");

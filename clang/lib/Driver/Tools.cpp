@@ -1233,7 +1233,7 @@ void mips::getMipsCPUAndABI(const ArgList &Args, const llvm::Triple &Triple,
   if (CPUName.empty()) {
     // Deduce CPU name from ABI name.
     CPUName = llvm::StringSwitch<const char *>(ABIName)
-                  .Cases("o32", "eabi", DefMips32CPU)
+                  .Case("o32", DefMips32CPU)
                   .Cases("n32", "n64", DefMips64CPU)
                   .Default("");
   }
