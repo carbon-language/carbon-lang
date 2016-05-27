@@ -142,6 +142,8 @@ struct serialize_null_term_string_array_impl {
       if (auto EC = consume(Data, Field))
         return EC;
       Item.push_back(Field);
+      if (Data.empty())
+        return std::make_error_code(std::errc::illegal_byte_sequence);
     }
     Data = Data.drop_front(1);
     return std::error_code();
