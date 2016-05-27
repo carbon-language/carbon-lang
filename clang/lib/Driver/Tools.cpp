@@ -6541,7 +6541,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  const std::string customGCCName = D.getCCCGenericGCCName();
+  const std::string &customGCCName = D.getCCCGenericGCCName();
   const char *GCCName;
   if (!customGCCName.empty())
     GCCName = customGCCName.c_str();

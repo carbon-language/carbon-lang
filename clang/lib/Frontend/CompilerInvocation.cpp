@@ -2416,7 +2416,7 @@ std::string CompilerInvocation::getModuleHash() const {
 
   // Extend the signature with the module file extensions.
   const FrontendOptions &frontendOpts = getFrontendOpts();
-  for (auto ext : frontendOpts.ModuleFileExtensions) {
+  for (const auto &ext : frontendOpts.ModuleFileExtensions) {
     code = ext->hashExtension(code);
   }
 
