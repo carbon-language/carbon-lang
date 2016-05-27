@@ -480,12 +480,30 @@ APInt APInt::operator+(const APInt& RHS) const {
   return Result;
 }
 
+APInt APInt::operator+(uint64_t RHS) const {
+  if (isSingleWord())
+    return APInt(BitWidth, VAL + RHS);
+  APInt Result(*this);
+  add_1(Result.pVal, Result.pVal, getNumWords(), RHS);
+  Result.clearUnusedBits();
+  return Result;
+}
+
 APInt APInt::operator-(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord())
     return APInt(BitWidth, VAL - RHS.VAL);
   APInt Result(BitWidth, 0);
   sub(Result.pVal, this->pVal, RHS.pVal, getNumWords());
+  Result.clearUnusedBits();
+  return Result;
+}
+
+APInt APInt::operator-(uint64_t RHS) const {
+  if (isSingleWord())
+    return APInt(BitWidth, VAL - RHS);
+  APInt Result(*this);
+  sub_1(Result.pVal, getNumWords(), RHS);
   Result.clearUnusedBits();
   return Result;
 }
