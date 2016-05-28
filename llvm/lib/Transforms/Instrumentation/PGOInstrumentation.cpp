@@ -693,6 +693,7 @@ void PGOUseFunc::populateCounters() {
   DEBUG(dbgs() << "Populate counts in " << NumPasses << " passes.\n");
   // Assert every BB has a valid counter.
   uint64_t FuncEntryCount = getBBInfo(&*F.begin()).CountValue;
+  F.setEntryCount(FuncEntryCount);
   uint64_t FuncMaxCount = FuncEntryCount;
   for (auto &BB : F) {
     assert(getBBInfo(&BB).CountValid && "BB count is not valid");
