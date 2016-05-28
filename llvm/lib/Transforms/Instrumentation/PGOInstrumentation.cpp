@@ -901,6 +901,9 @@ static bool annotateAllFunctions(
   }
   M.setProfileSummary(Builder.getSummary()->getMD(M.getContext()));
   // Set function hotness attribute from the profile.
+  // We have to apply these attributes at the end because their presence
+  // can affect the BranchProbabilityInfo of any callers, resulting in an
+  // inconsistent MST between prof-gen and prof-use.
   for (auto &F : HotFunctions) {
     F->addFnAttr(llvm::Attribute::InlineHint);
     DEBUG(dbgs() << "Set inline attribute to function: " << F->getName()
