@@ -794,14 +794,20 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
       while (!Contents.empty()) {
         const FrameData *FD;
         error(consumeObject(Contents, FD));
+
+        if (FD->FrameFunc >= CVStringTable.size())
+          error(object_error::parse_failed);
+
+        StringRef FrameFunc =
+            CVStringTable.drop_front(FD->FrameFunc).split('\0').first;
+
         DictScope S(W, "FrameData");
         W.printHex("RvaStart", FD->RvaStart);
         W.printHex("CodeSize", FD->CodeSize);
         W.printHex("LocalSize", FD->LocalSize);
         W.printHex("ParamsSize", FD->ParamsSize);
         W.printHex("MaxStackSize", FD->MaxStackSize);
-        W.printString("FrameFunc",
-                      CVStringTable.drop_front(FD->FrameFunc).split('\0').first);
+        W.printString("FrameFunc", FrameFunc);
         W.printHex("PrologSize", FD->PrologSize);
         W.printHex("SavedRegsSize", FD->SavedRegsSize);
         W.printFlags("Flags", FD->Flags, makeArrayRef(FrameDataFlags));
