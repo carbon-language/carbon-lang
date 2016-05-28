@@ -76,3 +76,93 @@ define i32 @par(i32 %a, i32 %b, i32 %c, i32 %d) {
   %t3 = or i32 %t1, %t2
   ret i32 %t3
 }
+
+; FIXME: In the following tests, verify that a bitcast doesn't get in the way
+; of a perfectly good transform. These bitcasts are common in SSE/AVX
+; code because of canonicalization to i64 elements for vectors.
+
+define <2 x i64> @vecBitcastOp0(<4 x i1> %cmp, <2 x i64> %a) {
+; CHECK-LABEL: @vecBitcastOp0(
+; CHECK-NEXT:    [[SEXT:%.*]] = sext <4 x i1> %cmp to <4 x i32>
+; CHECK-NEXT:    [[BC:%.*]] = bitcast <4 x i32> [[SEXT]] to <2 x i64>
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i64> [[BC]], %a
+; CHECK-NEXT:    ret <2 x i64> [[AND]]
+;
+  %sext = sext <4 x i1> %cmp to <4 x i32>
+  %bc = bitcast <4 x i32> %sext to <2 x i64>
+  %and = and <2 x i64> %bc, %a
+  ret <2 x i64> %and
+}
+
+; Verify that the transform can handle the case where the bitcast is Op1.
+; The 'add' is here to prevent a canonicalization of the bitcast to Op0.
+
+define <2 x i64> @vecBitcastOp1(<4 x i1> %cmp, <2 x i64> %a) {
+; CHECK-LABEL: @vecBitcastOp1(
+; CHECK-NEXT:    [[A2:%.*]] = shl <2 x i64> %a, <i64 1, i64 1>
+; CHECK-NEXT:    [[SEXT:%.*]] = sext <4 x i1> %cmp to <4 x i32>
+; CHECK-NEXT:    [[BC:%.*]] = bitcast <4 x i32> [[SEXT]] to <2 x i64>
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i64> [[A2]], [[BC]]
+; CHECK-NEXT:    ret <2 x i64> [[AND]]
+;
+  %a2 = add <2 x i64> %a, %a
+  %sext = sext <4 x i1> %cmp to <4 x i32>
+  %bc = bitcast <4 x i32> %sext to <2 x i64>
+  %and = and <2 x i64> %a2, %bc
+  ret <2 x i64> %and
+}
+
+; Verify that a 'not' is matched too.
+
+define <2 x i64> @vecBitcastNotOp0(<4 x i1> %cmp, <2 x i64> %a) {
+; CHECK-LABEL: @vecBitcastNotOp0(
+; CHECK-NEXT:    [[SEXT:%.*]] = sext <4 x i1> %cmp to <4 x i32>
+; CHECK-NEXT:    [[NEG:%.*]] = xor <4 x i32> [[SEXT]], <i32 -1, i32 -1, i32 -1, i32 -1>
+; CHECK-NEXT:    [[BC:%.*]] = bitcast <4 x i32> [[NEG]] to <2 x i64>
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i64> [[BC]], %a
+; CHECK-NEXT:    ret <2 x i64> [[AND]]
+;
+  %sext = sext <4 x i1> %cmp to <4 x i32>
+  %neg = xor <4 x i32> %sext, <i32 -1, i32 -1, i32 -1, i32 -1>
+  %bc = bitcast <4 x i32> %neg to <2 x i64>
+  %and = and <2 x i64> %bc, %a
+  ret <2 x i64> %and
+}
+
+; Verify that the transform can handle the case where the bitcast is Op1.
+; The 'add' is here to prevent a canonicalization of the bitcast to Op0.
+
+define <2 x i64> @vecBitcastNotOp1(<4 x i1> %cmp, <2 x i64> %a) {
+; CHECK-LABEL: @vecBitcastNotOp1(
+; CHECK-NEXT:    [[A2:%.*]] = shl <2 x i64> %a, <i64 1, i64 1>
+; CHECK-NEXT:    [[SEXT:%.*]] = sext <4 x i1> %cmp to <4 x i32>
+; CHECK-NEXT:    [[NEG:%.*]] = xor <4 x i32> [[SEXT]], <i32 -1, i32 -1, i32 -1, i32 -1>
+; CHECK-NEXT:    [[BC:%.*]] = bitcast <4 x i32> [[NEG]] to <2 x i64>
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i64> [[A2]], [[BC]]
+; CHECK-NEXT:    ret <2 x i64> [[AND]]
+;
+  %a2 = add <2 x i64> %a, %a
+  %sext = sext <4 x i1> %cmp to <4 x i32>
+  %neg = xor <4 x i32> %sext, <i32 -1, i32 -1, i32 -1, i32 -1>
+  %bc = bitcast <4 x i32> %neg to <2 x i64>
+  %and = and <2 x i64> %a2, %bc
+  ret <2 x i64> %and
+}
+
+; Verify that the transform fires even if the bitcast is ahead of the 'not'.
+
+define <2 x i64> @vecBitcastSext(<4 x i1> %cmp, <2 x i64> %a) {
+; CHECK-LABEL: @vecBitcastSext(
+; CHECK-NEXT:    [[SEXT:%.*]] = sext <4 x i1> %cmp to <4 x i32>
+; CHECK-NEXT:    [[NEG1:%.*]] = xor <4 x i32> [[SEXT]], <i32 -1, i32 -1, i32 -1, i32 -1>
+; CHECK-NEXT:    [[NEG:%.*]] = bitcast <4 x i32> [[NEG:%.*]]1 to <2 x i64>
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i64> [[NEG]], %a
+; CHECK-NEXT:    ret <2 x i64> [[AND]]
+;
+  %sext = sext <4 x i1> %cmp to <4 x i32>
+  %bc = bitcast <4 x i32> %sext to <2 x i64>
+  %neg = xor <2 x i64> %bc, <i64 -1, i64 -1>
+  %and = and <2 x i64> %a, %neg
+  ret <2 x i64> %and
+}
+
