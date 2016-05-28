@@ -42,6 +42,8 @@ static unsigned getFixupKindLog2Size(unsigned Kind) {
     return 1;
   case FK_PCRel_4:
   case X86::reloc_riprel_4byte:
+  case X86::reloc_riprel_4byte_relax:
+  case X86::reloc_riprel_4byte_relax_rex:
   case X86::reloc_riprel_4byte_movq_load:
   case X86::reloc_signed_4byte:
   case X86::reloc_global_offset_table:
@@ -88,6 +90,8 @@ public:
     const static MCFixupKindInfo Infos[X86::NumTargetFixupKinds] = {
         {"reloc_riprel_4byte", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
         {"reloc_riprel_4byte_movq_load", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+        {"reloc_riprel_4byte_relax", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+        {"reloc_riprel_4byte_relax_rex", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
         {"reloc_signed_4byte", 0, 32, 0},
         {"reloc_global_offset_table", 0, 32, 0},
         {"reloc_global_offset_table8", 0, 64, 0},
