@@ -691,16 +691,16 @@ void PGOUseFunc::populateCounters() {
   }
 
   DEBUG(dbgs() << "Populate counts in " << NumPasses << " passes.\n");
+#ifndef NDEBUG
   // Assert every BB has a valid counter.
+  for (auto &BB : F)
+    assert(getBBInfo(&BB).CountValid && "BB count is not valid");
+#endif
   uint64_t FuncEntryCount = getBBInfo(&*F.begin()).CountValue;
   F.setEntryCount(FuncEntryCount);
   uint64_t FuncMaxCount = FuncEntryCount;
-  for (auto &BB : F) {
-    assert(getBBInfo(&BB).CountValid && "BB count is not valid");
-    uint64_t Count = getBBInfo(&BB).CountValue;
-    if (Count > FuncMaxCount)
-      FuncMaxCount = Count;
-  }
+  for (auto &BB : F)
+    FuncMaxCount = std::max(FuncMaxCount, getBBInfo(&BB).CountValue);
   markFunctionAttributes(FuncEntryCount, FuncMaxCount);
 
   DEBUG(FuncInfo.dumpInfo("after reading profile."));
