@@ -998,10 +998,10 @@ void COFFDumper::mergeCodeViewTypes(MemoryTypeTableBuilder &CVTypes) {
     if (SectionName == ".debug$T") {
       StringRef Data;
       error(S.getContents(Data));
-      unsigned Magic = *reinterpret_cast<const ulittle32_t *>(Data.data());
+      uint32_t Magic;
+      error(consume(Data, Magic));
       if (Magic != 4)
         error(object_error::parse_failed);
-      Data = Data.drop_front(4);
       ArrayRef<uint8_t> Bytes(reinterpret_cast<const uint8_t *>(Data.data()),
                               Data.size());
       ByteStream Stream(Bytes);
