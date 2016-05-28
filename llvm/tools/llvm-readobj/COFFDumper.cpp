@@ -736,6 +736,8 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
     size_t SectionOffset = Data.data() - SectionContents.data();
     size_t NextOffset = SectionOffset + SubSectionSize;
     NextOffset = alignTo(NextOffset, 4);
+    if (NextOffset > SectionContents.size())
+      return error(object_error::parse_failed);
     Data = SectionContents.drop_front(NextOffset);
 
     // Optionally print the subsection bytes in case our parsing gets confused
