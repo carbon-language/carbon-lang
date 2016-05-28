@@ -269,10 +269,15 @@ Error PDBFile::parseStreamData() {
     }
   }
 
-  for (uint32_t SI = 0; SI != NumStreams; ++SI) {
+  if (Context->StreamSizes.size() != NumStreams)
+    return make_error<RawError>(
+        raw_error_code::corrupt_file,
+        "The directory has fewer streams then expected");
+
+  for (uint32_t I = 0; I != NumStreams; ++I) {
     uint64_t NumExpectedStreamBlocks =
-        bytesToBlocks(getStreamByteSize(SI), getBlockSize());
-    size_t NumStreamBlocks = getStreamBlockList(SI).size();
+        bytesToBlocks(getStreamByteSize(I), getBlockSize());
+    size_t NumStreamBlocks = getStreamBlockList(I).size();
     if (NumExpectedStreamBlocks != NumStreamBlocks)
       return make_error<RawError>(raw_error_code::corrupt_file,
                                   "The number of stream blocks is not "
