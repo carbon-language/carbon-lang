@@ -870,6 +870,7 @@ static bool annotateAllFunctions(
     auto *BFI = LookupBFI(F);
     PGOUseFunc Func(F, &M, BPI, BFI);
     setPGOCountOnFunc(Func, PGOReader.get());
+    F.setEntryCount(Func.EntryCount);
     if (!Func.getProfileRecord().Counts.empty())
       Builder.addRecord(Func.getProfileRecord());
 
