@@ -687,7 +687,10 @@ void COFFDumper::initializeFileAndStringTables(StringRef Data) {
     default:
       break;
     }
-    Data = Data.drop_front(alignTo(SubSectionSize, 4));
+    uint32_t PaddedSize = alignTo(SubSectionSize, 4);
+    if (PaddedSize > Data.size())
+      error(object_error::parse_failed);
+    Data = Data.drop_front(PaddedSize);
   }
 }
 
