@@ -847,15 +847,6 @@ PreservedAnalyses PGOInstrumentationGen::run(Module &M,
   return PreservedAnalyses::none();
 }
 
-static void setPGOCountOnFunc(PGOUseFunc &Func,
-                              IndexedInstrProfReader *PGOReader) {
-  if (Func.readCounters(PGOReader)) {
-    Func.populateCounters();
-    Func.setBranchWeights();
-    Func.annotateIndirectCallSites();
-  }
-}
-
 static bool annotateAllFunctions(
     Module &M, StringRef ProfileFileName,
     function_ref<BranchProbabilityInfo *(Function &)> LookupBPI,
@@ -895,7 +886,11 @@ static bool annotateAllFunctions(
     auto *BPI = LookupBPI(F);
     auto *BFI = LookupBFI(F);
     PGOUseFunc Func(F, &M, BPI, BFI);
-    setPGOCountOnFunc(Func, PGOReader.get());
+    if (!Func.readCounters(PGOReader.get()))
+      continue;
+    Func.populateCounters();
+    Func.setBranchWeights();
+    Func.annotateIndirectCallSites();
     if (!Func.getProfileRecord().Counts.empty())
       Builder.addRecord(Func.getProfileRecord());
     PGOUseFunc::FuncFreqAttr FreqAttr = Func.getFuncFreqAttr();
