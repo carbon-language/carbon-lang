@@ -940,6 +940,8 @@ void COFFDumper::printCodeViewFileChecksums(StringRef Subsection) {
     W.printBinary("ChecksumBytes", ChecksumBytes);
     unsigned PaddedSize = alignTo(FC->ChecksumSize + sizeof(FileChecksum), 4) -
                           sizeof(FileChecksum);
+    if (PaddedSize > Data.size())
+      error(object_error::parse_failed);
     Data = Data.drop_front(PaddedSize);
   }
 }
