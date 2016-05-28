@@ -458,8 +458,7 @@ class PGOUseFunc {
 public:
   PGOUseFunc(Function &Func, Module *Modu, BranchProbabilityInfo *BPI = nullptr,
              BlockFrequencyInfo *BFI = nullptr)
-      : F(Func), M(Modu), FuncInfo(Func, false, BPI, BFI),
-        FreqAttr(FFA_Normal) {}
+      : F(Func), M(Modu), FuncInfo(Func, false, BPI, BFI) {}
 
   // Read counts for the instrumented BB from profile.
   bool readCounters(IndexedInstrProfReader *PGOReader);
@@ -473,14 +472,14 @@ public:
   // Annotate the indirect call sites.
   void annotateIndirectCallSites();
 
-  // The hotness of the function from the profile count.
-  enum FuncFreqAttr { FFA_Normal, FFA_Cold, FFA_Hot };
-
-  // Return the function hotness from the profile.
-  FuncFreqAttr getFuncFreqAttr() const { return FreqAttr; }
-
   // Return the profile record for this function;
   InstrProfRecord &getProfileRecord() { return ProfileRecord; }
+
+  // The entry count of this function.
+  uint64_t EntryCount;
+
+  // The maximum count value of any BB in this function.
+  uint64_t MaxBBCount;
 
 private:
   Function &F;
@@ -493,15 +492,8 @@ private:
     return FuncInfo.getBBInfo(BB);
   }
 
-  // The maximum count value in the profile. This is only used in PGO use
-  // compilation.
-  uint64_t ProgramMaxCount;
-
   // ProfileRecord for this function.
   InstrProfRecord ProfileRecord;
-
-  // Function hotness info derived from profile.
-  FuncFreqAttr FreqAttr;
 
   // Find the Instrumented BB and set the value.
   void setInstrumentedCounts(const std::vector<uint64_t> &CountFromProfile);
@@ -512,22 +504,6 @@ private:
 
   // Return FuncName string;
   const std::string getFuncName() const { return FuncInfo.FuncName; }
-
-  // Set the hot/cold inline hints based on the count values.
-  // FIXME: This function should be removed once the functionality in
-  // the inliner is implemented.
-  void markFunctionAttributes(uint64_t EntryCount, uint64_t MaxCount) {
-    if (ProgramMaxCount == 0)
-      return;
-    // Threshold of the hot functions.
-    const BranchProbability HotFunctionThreshold(1, 100);
-    // Threshold of the cold functions.
-    const BranchProbability ColdFunctionThreshold(2, 10000);
-    if (EntryCount >= HotFunctionThreshold.scale(ProgramMaxCount))
-      FreqAttr = FFA_Hot;
-    else if (MaxCount <= ColdFunctionThreshold.scale(ProgramMaxCount))
-      FreqAttr = FFA_Cold;
-  }
 };
 
 // Visit all the edges and assign the count value for the instrumented
@@ -627,7 +603,6 @@ bool PGOUseFunc::readCounters(IndexedInstrProfReader *PGOReader) {
   getBBInfo(nullptr).UnknownCountInEdge = 2;
 
   setInstrumentedCounts(CountFromProfile);
-  ProgramMaxCount = PGOReader->getMaximumFunctionCount();
   return true;
 }
 
@@ -691,16 +666,14 @@ void PGOUseFunc::populateCounters() {
   }
 
   DEBUG(dbgs() << "Populate counts in " << NumPasses << " passes.\n");
-  // Assert every BB has a valid counter.
-  uint64_t FuncEntryCount = getBBInfo(&*F.begin()).CountValue;
-  uint64_t FuncMaxCount = FuncEntryCount;
+
+  EntryCount = getBBInfo(&*F.begin()).CountValue;
+  MaxBBCount = 0;
   for (auto &BB : F) {
+    // Assert every BB has a valid counter.
     assert(getBBInfo(&BB).CountValid && "BB count is not valid");
-    uint64_t Count = getBBInfo(&BB).CountValue;
-    if (Count > FuncMaxCount)
-      FuncMaxCount = Count;
+    MaxBBCount = std::max(MaxBBCount, getBBInfo(&BB).CountValue);
   }
-  markFunctionAttributes(FuncEntryCount, FuncMaxCount);
 
   DEBUG(FuncInfo.dumpInfo("after reading profile."));
 }
@@ -888,6 +861,8 @@ static bool annotateAllFunctions(
   std::vector<Function *> HotFunctions;
   std::vector<Function *> ColdFunctions;
   InstrProfSummaryBuilder Builder(ProfileSummaryBuilder::DefaultCutoffs);
+  uint64_t ProgramMaxCount = PGOReader->getMaximumFunctionCount();
+  bool HasProgramMaxCount = ProgramMaxCount != 0;
   for (auto &F : M) {
     if (F.isDeclaration())
       continue;
@@ -897,14 +872,25 @@ static bool annotateAllFunctions(
     setPGOCountOnFunc(Func, PGOReader.get());
     if (!Func.getProfileRecord().Counts.empty())
       Builder.addRecord(Func.getProfileRecord());
-    PGOUseFunc::FuncFreqAttr FreqAttr = Func.getFuncFreqAttr();
-    if (FreqAttr == PGOUseFunc::FFA_Cold)
-      ColdFunctions.push_back(&F);
-    else if (FreqAttr == PGOUseFunc::FFA_Hot)
+
+    if (!HasProgramMaxCount)
+      continue;
+    // Set the hot/cold inline hints based on the count values.
+    // FIXME: This should be removed once the functionality in
+    // the inliner is implemented.
+    const BranchProbability HotFunctionThreshold(1, 100);
+    const BranchProbability ColdFunctionThreshold(2, 10000);
+    if (Func.EntryCount >= HotFunctionThreshold.scale(ProgramMaxCount))
       HotFunctions.push_back(&F);
+    else if (Func.MaxBBCount <= ColdFunctionThreshold.scale(ProgramMaxCount))
+      ColdFunctions.push_back(&F);
   }
   M.setProfileSummary(Builder.getSummary()->getMD(M.getContext()));
+
   // Set function hotness attribute from the profile.
+  // We have to apply these attributes at the end because their presence
+  // can affect the BranchProbabilityInfo of any callers, resulting in an
+  // inconsistent MST between prof-gen and prof-use.
   for (auto &F : HotFunctions) {
     F->addFnAttr(llvm::Attribute::InlineHint);
     DEBUG(dbgs() << "Set inline attribute to function: " << F->getName()
