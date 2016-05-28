@@ -2262,9 +2262,9 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
       TargetTriple.getOS() == llvm::Triple::Linux &&
       TargetTriple.getEnvironment() == llvm::Triple::GNU) {
     // Select mips-mti-linux-gnu toolchain.
-    for (auto candidate : {&MtiMipsMultilibsV1, &MtiMipsMultilibsV2}) {
-      if (candidate->select(Flags, Result.SelectedMultilib)) {
-        Result.Multilibs = *candidate;
+    for (auto Candidate : {&MtiMipsMultilibsV1, &MtiMipsMultilibsV2}) {
+      if (Candidate->select(Flags, Result.SelectedMultilib)) {
+        Result.Multilibs = *Candidate;
         return true;
       }
     }
@@ -2275,9 +2275,9 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
       TargetTriple.getOS() == llvm::Triple::Linux &&
       TargetTriple.getEnvironment() == llvm::Triple::GNU) {
     // Select mips-img-linux-gnu toolchain.
-    for (auto candidate : {&ImgMultilibsV1, &ImgMultilibsV2}) {
-      if (candidate->select(Flags, Result.SelectedMultilib)) {
-        Result.Multilibs = *candidate;
+    for (auto Candidate : {&ImgMultilibsV1, &ImgMultilibsV2}) {
+      if (Candidate->select(Flags, Result.SelectedMultilib)) {
+        Result.Multilibs = *Candidate;
         return true;
       }
     }
