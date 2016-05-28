@@ -872,8 +872,8 @@ bool CVSymbolDumper::dump(const CVRecord<SymbolKind> &Record) {
   return !Dumper.hadError();
 }
 
-bool CVSymbolDumper::dump(ArrayRef<uint8_t> Data) {
+bool CVSymbolDumper::dump(const CVSymbolArray &Symbols) {
   CVSymbolDumperImpl Dumper(CVTD, ObjDelegate.get(), W, PrintRecordBytes);
-  Dumper.visitSymbolStream(Data);
+  Dumper.visitSymbolStream(Symbols);
   return !Dumper.hadError();
 }

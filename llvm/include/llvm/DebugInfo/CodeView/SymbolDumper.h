@@ -39,7 +39,7 @@ public:
 
   /// Dumps the type records in Data. Returns false if there was a type stream
   /// parse error, and true otherwise.
-  bool dump(ArrayRef<uint8_t> Data);
+  bool dump(const CVSymbolArray &Symbols);
 
 private:
   ScopedPrinter &W;

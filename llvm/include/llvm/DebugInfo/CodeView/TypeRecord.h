@@ -13,8 +13,10 @@
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/DebugInfo/CodeView/CVRecord.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/RecordSerialization.h"
+#include "llvm/DebugInfo/CodeView/StreamArray.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/Support/ErrorOr.h"
 #include <cinttypes>
@@ -1398,6 +1400,9 @@ private:
   uint64_t VBPtrOffset;
   uint64_t VTableIndex;
 };
+
+typedef CVRecord<TypeLeafKind> CVType;
+typedef VarStreamArray<CVType> CVTypeArray;
 }
 }
 

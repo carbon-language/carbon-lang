@@ -12,8 +12,8 @@
 
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/DebugInfo/CodeView/CVRecord.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
-#include "llvm/DebugInfo/CodeView/RecordIterator.h"
 #include "llvm/DebugInfo/CodeView/RecordSerialization.h"
 #include "llvm/DebugInfo/CodeView/StreamArray.h"
 #include "llvm/DebugInfo/CodeView/StreamInterface.h"
@@ -1442,14 +1442,8 @@ public:
   StringRef Name;
 };
 
-typedef RecordIterator<SymbolKind> SymbolIterator;
 typedef CVRecord<SymbolKind> CVSymbol;
 typedef VarStreamArray<CVSymbol> CVSymbolArray;
-
-inline iterator_range<SymbolIterator> makeSymbolRange(ArrayRef<uint8_t> Data,
-                                                      bool *HadError) {
-  return make_range(SymbolIterator(Data, HadError), SymbolIterator());
-}
 
 } // namespace codeview
 } // namespace llvm

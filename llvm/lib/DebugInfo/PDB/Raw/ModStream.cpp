@@ -9,7 +9,6 @@
 
 #include "llvm/DebugInfo/PDB/Raw/ModStream.h"
 
-#include "llvm/DebugInfo/CodeView/RecordIterator.h"
 #include "llvm/DebugInfo/CodeView/StreamReader.h"
 #include "llvm/DebugInfo/PDB/Raw/ModInfo.h"
 #include "llvm/DebugInfo/PDB/Raw/RawError.h"
@@ -58,6 +57,7 @@ Error ModStream::reload() {
   return Error::success();
 }
 
-iterator_range<codeview::CVSymbolArray::Iterator> ModStream::symbols() const {
+iterator_range<codeview::CVSymbolArray::Iterator>
+ModStream::symbols(bool *HadError) const {
   return llvm::make_range(SymbolsSubstream.begin(), SymbolsSubstream.end());
 }

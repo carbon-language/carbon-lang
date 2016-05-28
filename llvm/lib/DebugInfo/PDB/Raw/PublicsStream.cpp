@@ -113,7 +113,7 @@ Error PublicsStream::reload() {
   // A bitmap of a fixed length follows.
   size_t BitmapSizeInBits = alignTo(IPHR_HASH + 1, 32);
   uint32_t NumBitmapEntries = BitmapSizeInBits / 8;
-  if (auto EC = Reader.readBytes(NumBitmapEntries, Bitmap))
+  if (auto EC = Reader.readBytes(Bitmap, NumBitmapEntries))
     return joinErrors(std::move(EC),
                       make_error<RawError>(raw_error_code::corrupt_file,
                                            "Could not read a bitmap."));
@@ -156,13 +156,14 @@ Error PublicsStream::reload() {
   return Error::success();
 }
 
-iterator_range<codeview::SymbolIterator> PublicsStream::getSymbols() const {
-  using codeview::SymbolIterator;
+iterator_range<codeview::CVSymbolArray::Iterator>
+PublicsStream::getSymbols(bool *HadError) const {
   auto SymbolS = Pdb.getPDBSymbolStream();
   if (SymbolS.takeError()) {
-    return llvm::make_range<SymbolIterator>(SymbolIterator(), SymbolIterator());
+    codeview::CVSymbolArray::Iterator Iter;
+    return llvm::make_range(Iter, Iter);
   }
   SymbolStream &SS = SymbolS.get();
 
-  return SS.getSymbols();
+  return SS.getSymbols(HadError);
 }

@@ -69,27 +69,24 @@ struct ModInfo::FileLayout {
 
 ModInfo::ModInfo() : Layout(nullptr) {}
 
-ModInfo::ModInfo(codeview::StreamRef Stream) : Layout(nullptr) {
-  codeview::StreamReader Reader(Stream);
-  if (auto EC = Reader.readObject(Layout)) {
-    consumeError(std::move(EC));
-    return;
-  }
-  if (auto EC = Reader.readZeroString(ModuleName)) {
-    consumeError(std::move(EC));
-    return;
-  }
-  if (auto EC = Reader.readZeroString(ObjFileName)) {
-    consumeError(std::move(EC));
-    return;
-  }
-}
-
 ModInfo::ModInfo(const ModInfo &Info)
     : ModuleName(Info.ModuleName), ObjFileName(Info.ObjFileName),
       Layout(Info.Layout) {}
 
 ModInfo::~ModInfo() {}
+
+Error ModInfo::initialize(codeview::StreamRef Stream, ModInfo &Info) {
+  codeview::StreamReader Reader(Stream);
+  if (auto EC = Reader.readObject(Info.Layout))
+    return EC;
+
+  if (auto EC = Reader.readZeroString(Info.ModuleName))
+    return EC;
+
+  if (auto EC = Reader.readZeroString(Info.ObjFileName))
+    return EC;
+  return Error::success();
+}
 
 bool ModInfo::hasECInfo() const { return (Layout->Flags & HasECFlagMask) != 0; }
 

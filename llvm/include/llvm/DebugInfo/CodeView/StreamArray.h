@@ -11,6 +11,7 @@
 #define LLVM_DEBUGINFO_CODEVIEW_STREAMARRAY_H
 
 #include "llvm/DebugInfo/CodeView/StreamRef.h"
+#include "llvm/Support/Error.h"
 
 #include <functional>
 #include <type_traits>
@@ -25,8 +26,11 @@ namespace codeview {
 /// value type.
 template <typename T> struct VarStreamArrayExtractor {
   // Method intentionally deleted.  You must provide an explicit specialization
-  // with the following method implemented.
-  uint32_t operator()(const StreamInterface &Stream, T &t) const = delete;
+  // with the following method implemented.  On output return `Len` should
+  // contain the number of bytes to consume from the stream, and `Item` should
+  // be initialized with the proper value.
+  Error operator()(const StreamInterface &Stream, uint32_t &Len,
+                   T &Item) const = delete;
 };
 
 /// VarStreamArray represents an array of variable length records backed by a
@@ -52,7 +56,9 @@ public:
 
   VarStreamArray(StreamRef Stream) : Stream(Stream) {}
 
-  Iterator begin() const { return Iterator(*this); }
+  Iterator begin(bool *HadError = nullptr) const {
+    return Iterator(*this, HadError);
+  }
 
   Iterator end() const { return Iterator(); }
 
@@ -65,11 +71,20 @@ template <typename ValueType, typename Extractor> class VarStreamArrayIterator {
   typedef VarStreamArray<ValueType, Extractor> ArrayType;
 
 public:
-  VarStreamArrayIterator(const ArrayType &Array)
-      : Array(&Array), IterRef(Array.Stream) {
-    ThisLen = Extract(IterRef, ThisValue);
+  VarStreamArrayIterator(const ArrayType &Array, bool *HadError = nullptr)
+      : Array(&Array), IterRef(Array.Stream), HasError(false),
+        HadError(HadError) {
+    auto EC = Extract(IterRef, ThisLen, ThisValue);
+    if (EC) {
+      consumeError(std::move(EC));
+      HasError = true;
+      if (HadError)
+        *HadError = true;
+    }
   }
-  VarStreamArrayIterator() : Array(nullptr), IterRef() {}
+  VarStreamArrayIterator() : Array(nullptr), IterRef(), HasError(false) {}
+  ~VarStreamArrayIterator() {}
+
   bool operator==(const IterType &R) const {
     if (Array && R.Array) {
       // Both have a valid array, make sure they're same.
@@ -87,19 +102,30 @@ public:
 
   bool operator!=(const IterType &R) { return !(*this == R); }
 
-  const ValueType &operator*() const { return ThisValue; }
+  const ValueType &operator*() const {
+    assert(Array && !HasError);
+    return ThisValue;
+  }
 
   IterType &operator++() {
-    if (!Array || IterRef.getLength() == 0 || ThisLen == 0)
+    if (!Array || IterRef.getLength() == 0 || ThisLen == 0 || HasError)
       return *this;
     IterRef = IterRef.drop_front(ThisLen);
     if (IterRef.getLength() == 0)
       ThisLen = 0;
-    else
-      // TODO: We should report an error if Extract fails.
-      ThisLen = Extract(IterRef, ThisValue);
-    if (ThisLen == 0)
+    else {
+      auto EC = Extract(IterRef, ThisLen, ThisValue);
+      if (EC) {
+        consumeError(std::move(EC));
+        HasError = true;
+        if (HadError)
+          *HadError = true;
+      }
+    }
+    if (ThisLen == 0 || HasError) {
       Array = nullptr;
+      ThisLen = 0;
+    }
     return *this;
   }
 
@@ -114,6 +140,8 @@ private:
   uint32_t ThisLen;
   ValueType ThisValue;
   StreamRef IterRef;
+  bool HasError;
+  bool *HadError;
   Extractor Extract;
 };
 

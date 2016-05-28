@@ -10,11 +10,10 @@
 #ifndef LLVM_DEBUGINFO_CODEVIEW_CVTYPEVISITOR_H
 #define LLVM_DEBUGINFO_CODEVIEW_CVTYPEVISITOR_H
 
+#include "llvm/DebugInfo/CodeView/CVRecord.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
-#include "llvm/DebugInfo/CodeView/RecordIterator.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
-#include "llvm/DebugInfo/CodeView/TypeStream.h"
 #include "llvm/Support/ErrorOr.h"
 
 namespace llvm {
@@ -81,8 +80,8 @@ public:
   }
 
   /// Visits the type records in Data. Sets the error flag on parse failures.
-  void visitTypeStream(ArrayRef<uint8_t> Data) {
-    for (const auto &I : makeTypeRange(Data, &HadError)) {
+  void visitTypeStream(const CVTypeArray &Types) {
+    for (const auto &I : Types) {
       visitTypeRecord(I);
       if (hadError())
         break;

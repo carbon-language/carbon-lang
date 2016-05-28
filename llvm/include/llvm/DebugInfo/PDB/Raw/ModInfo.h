@@ -25,9 +25,10 @@ private:
 
 public:
   ModInfo();
-  ModInfo(codeview::StreamRef Stream);
   ModInfo(const ModInfo &Info);
   ~ModInfo();
+
+  static Error initialize(codeview::StreamRef Stream, ModInfo &Info);
 
   bool hasECInfo() const;
   uint16_t getTypeServerIndex() const;
@@ -51,7 +52,6 @@ private:
 };
 
 struct ModuleInfoEx {
-  ModuleInfoEx(codeview::StreamRef Stream) : Info(Stream) {}
   ModuleInfoEx(const ModInfo &Info) : Info(Info) {}
   ModuleInfoEx(const ModuleInfoEx &Ex)
       : Info(Ex.Info), SourceFiles(Ex.SourceFiles) {}
@@ -64,9 +64,12 @@ struct ModuleInfoEx {
 
 namespace codeview {
 template <> struct VarStreamArrayExtractor<pdb::ModInfo> {
-  uint32_t operator()(const StreamInterface &Stream, pdb::ModInfo &Info) const {
-    Info = pdb::ModInfo(Stream);
-    return Info.getRecordLength();
+  Error operator()(const StreamInterface &Stream, uint32_t &Length,
+                   pdb::ModInfo &Info) const {
+    if (auto EC = pdb::ModInfo::initialize(Stream, Info))
+      return EC;
+    Length = Info.getRecordLength();
+    return Error::success();
   }
 };
 }

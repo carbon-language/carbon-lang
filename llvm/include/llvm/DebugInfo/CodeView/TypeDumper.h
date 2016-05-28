@@ -14,7 +14,6 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
-#include "llvm/DebugInfo/CodeView/TypeStream.h"
 
 namespace llvm {
 class ScopedPrinter;
@@ -38,7 +37,7 @@ public:
 
   /// Dumps the type records in Data. Returns false if there was a type stream
   /// parse error, and true otherwise.
-  bool dump(ArrayRef<uint8_t> Data);
+  bool dump(const CVTypeArray &Types);
 
   /// Gets the type index for the next type record.
   unsigned getNextTypeIndex() const {
