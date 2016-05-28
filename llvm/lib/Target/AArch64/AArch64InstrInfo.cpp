@@ -1524,17 +1524,17 @@ bool AArch64InstrInfo::isCandidateToMergeOrPair(MachineInstr *MI) const {
 
   // Do not pair quad ld/st for Exynos.
   if (Subtarget.isExynosM1()) {
-      switch (MI->getOpcode()) {
-        default:
-          break;
+    switch (MI->getOpcode()) {
+    default:
+      break;
 
-        case AArch64::LDURQi:
-        case AArch64::STURQi:
-        case AArch64::LDRQui:
-        case AArch64::STRQui:
-          return false;
-        }
+    case AArch64::LDURQi:
+    case AArch64::STURQi:
+    case AArch64::LDRQui:
+    case AArch64::STRQui:
+      return false;
     }
+  }
 
   return true;
 }
