@@ -140,6 +140,9 @@ struct serialize_null_term_string_array_impl {
       : Item(Item) {}
 
   std::error_code deserialize(ArrayRef<uint8_t> &Data) const {
+    if (Data.empty())
+      return std::make_error_code(std::errc::illegal_byte_sequence);
+
     StringRef Field;
     // Stop when we run out of bytes or we hit record padding bytes.
     while (Data.front() != 0) {
