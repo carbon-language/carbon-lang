@@ -861,7 +861,9 @@ static bool computeUnrollCount(Loop *L, const TargetTransformInfo &TTI,
     UnrolledSize = (LoopSize - BEInsns) * UP.Count + BEInsns;
   }
 
+#ifndef NDEBUG
   unsigned OrigCount = UP.Count;
+#endif
 
   if (!UP.AllowRemainder && UP.Count != 0 && (TripMultiple % UP.Count) != 0) {
     while (UP.Count != 0 && TripMultiple % UP.Count != 0)
@@ -899,9 +901,8 @@ static bool tryToUnrollLoop(Loop *L, DominatorTree &DT, LoopInfo *LI,
                             Optional<unsigned> ProvidedThreshold,
                             Optional<bool> ProvidedAllowPartial,
                             Optional<bool> ProvidedRuntime) {
-  BasicBlock *Header = L->getHeader();
-  DEBUG(dbgs() << "Loop Unroll: F[" << Header->getParent()->getName()
-               << "] Loop %" << Header->getName() << "\n");
+  DEBUG(dbgs() << "Loop Unroll: F[" << L->getHeader()->getParent()->getName()
+               << "] Loop %" << L->getHeader()->getName() << "\n");
   if (HasUnrollDisablePragma(L)) {
     return false;
   }
