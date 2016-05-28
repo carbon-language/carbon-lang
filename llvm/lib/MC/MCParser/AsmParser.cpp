@@ -2801,7 +2801,7 @@ bool AsmParser::parseDirectiveFill() {
 
   if (FillSize < 0) {
     Warning(SizeLoc, "'.fill' directive with negative size has no effect");
-    NumValues = MCConstantExpr::create(0, getStreamer().getContext());
+    return false;
   }
   if (FillSize > 8) {
     Warning(SizeLoc, "'.fill' directive with size greater than 8 has been truncated to 8");
