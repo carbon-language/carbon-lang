@@ -50,7 +50,7 @@ void BasicBlockOffsetRanges::addAddressRange(BinaryFunction &Function,
       std::min(BBAddress + Function.getBasicBlockOriginalSize(BB),
                EndAddress);
 
-    AddressRanges.push_back(
+    AddressRanges.emplace_back(
         BBAddressRange{
             BB,
             static_cast<uint16_t>(InternalAddressRangeBegin - BBAddress),
@@ -107,13 +107,13 @@ BasicBlockOffsetRanges::getAbsoluteAddressRanges() const {
 void DebugRangesSectionsWriter::AddRange(uint32_t CompileUnitOffset,
                                          uint64_t Address,
                                          uint64_t Size) {
-  CUAddressRanges[CompileUnitOffset].push_back(std::make_pair(Address, Size));
+  CUAddressRanges[CompileUnitOffset].emplace_back(std::make_pair(Address, Size));
 }
 
 void DebugRangesSectionsWriter::AddRange(AddressRangesOwner *BF,
                                          uint64_t Address,
                                          uint64_t Size) {
-  ObjectAddressRanges[BF].push_back(std::make_pair(Address, Size));
+  ObjectAddressRanges[BF].emplace_back(std::make_pair(Address, Size));
 }
 
 namespace {
@@ -273,7 +273,7 @@ void DebugAbbrevPatcher::addAttributePatch(const DWARFUnit *Unit,
                                            uint8_t NewAttrTag,
                                            uint8_t NewAttrForm) {
   assert(Unit && "No compile unit specified.");
-  Patches[Unit].push_back(
+  Patches[Unit].emplace_back(
       AbbrevAttrPatch{AbbrevCode, AttrTag, NewAttrTag, NewAttrForm});
 }
 

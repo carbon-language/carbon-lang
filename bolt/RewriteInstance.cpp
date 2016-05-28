@@ -50,6 +50,8 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TimeValue.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include <algorithm>
@@ -563,7 +565,7 @@ void RewriteInstance::run() {
   if (opts::UpdateDebugSections && opts::FixDebugInfoLargeFunctions &&
       checkLargeFunctions()) {
     ++PassNumber;
-    outs() << "BOLT: starting pass (ignoring large functions)"
+    outs() << "BOLT: starting pass (ignoring large functions) "
            << PassNumber << "...\n";
     reset();
     discoverStorage();
@@ -783,7 +785,7 @@ void RewriteInstance::readDebugInfo() {
   if (!opts::UpdateDebugSections)
     return;
 
-  BC->preprocessDebugInfo();
+  BC->preprocessDebugInfo(BinaryFunctions);
 }
 
 void RewriteInstance::readFunctionDebugInfo() {
@@ -868,7 +870,7 @@ void RewriteInstance::disassembleFunctions() {
           (SectionContents.data()) + FunctionOffset,
         Function.getSize());
 
-    if (!Function.disassemble(FunctionData, opts::UpdateDebugSections))
+    if (!Function.disassemble(FunctionData))
       continue;
 
     if (opts::PrintAll || opts::PrintDisasm)
@@ -1127,17 +1129,17 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
         auto RowReference = DebugLineTableRowRef::fromSMLoc(Instr.getLoc());
         if (RowReference != DebugLineTableRowRef::NULL_ROW &&
             Instr.getLoc().getPointer() != LastLocSeen.getPointer()) {
-          auto CompileUnit =
-              BC.OffsetToDwarfCU[RowReference.DwCompileUnitIndex];
-          assert(CompileUnit &&
-                 "Invalid CU offset set in instruction debug info.");
+          auto ULT = Function.getDWARFUnitLineTable();
+          auto Unit = ULT.first;
+          auto OriginalLineTable = ULT.second;
 
-          auto OriginalLineTable =
-            BC.DwCtx->getLineTableForUnit(
-                CompileUnit);
+          assert(Unit && OriginalLineTable &&
+                 "Invalid CU offset set in instruction debug info.");
+          assert(RowReference.DwCompileUnitIndex == Unit->getOffset() &&
+                 "DWARF compile unit mismatch");
+
           const auto &OriginalRow =
               OriginalLineTable->Rows[RowReference.RowIndex - 1];
-
           BC.Ctx->setCurrentDwarfLoc(
               OriginalRow.File,
               OriginalRow.Line,
@@ -1148,7 +1150,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
               (DWARF2_FLAG_EPILOGUE_BEGIN * OriginalRow.EpilogueBegin),
               OriginalRow.Isa,
               OriginalRow.Discriminator);
-          BC.Ctx->setDwarfCompileUnitID(CompileUnit->getOffset());
+          BC.Ctx->setDwarfCompileUnitID(Unit->getOffset());
           LastLocSeen = Instr.getLoc();
         }
       }
@@ -1261,7 +1263,7 @@ void RewriteInstance::emitFunctions() {
 
   if (opts::UpdateDebugSections) {
     // Compute offsets of tables in .debug_line for each compile unit.
-    computeLineTableOffsets();
+    updateLineTableOffsets();
   }
 
   // Get output object as ObjectFile.
@@ -1440,7 +1442,7 @@ void RewriteInstance::updateFunctionRanges() {
     // The function potentially has multiple associated CUs because of
     // the identical code folding optimization. Update all of them with
     // the range.
-    for (const auto DIECompileUnitPair : Function.getSubprocedureDIEs()) {
+    for (const auto DIECompileUnitPair : Function.getSubprogramDIEs()) {
       auto CUOffset = DIECompileUnitPair.second->getOffset();
       if (CUOffset != -1U)
         RangesSectionsWriter.AddRange(CUOffset, RangeBegin, RangeSize);
@@ -1450,7 +1452,7 @@ void RewriteInstance::updateFunctionRanges() {
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
     // If function doesn't have registered DIEs - there's nothting to update.
-    if (Function.getSubprocedureDIEs().empty())
+    if (Function.getSubprogramDIEs().empty())
       continue;
     // Use either new (image) or original size for the function range.
     auto Size = Function.isSimple() ? Function.getImageSize()
@@ -2067,7 +2069,7 @@ void RewriteInstance::updateAddressRangesObjects() {
   }
 }
 
-void RewriteInstance::computeLineTableOffsets() {
+void RewriteInstance::updateLineTableOffsets() {
   const auto LineSection =
     BC->Ctx->getObjectFileInfo()->getDwarfLineSection();
   auto CurrentFragment = LineSection->begin();
@@ -2080,8 +2082,18 @@ void RewriteInstance::computeLineTableOffsets() {
   // instead of from the first fragment.
   for (const auto &CUIDLineTablePair : BC->Ctx->getMCDwarfLineTables()) {
     auto Label = CUIDLineTablePair.second.getLabel();
-
     if (!Label)
+      continue;
+
+    auto CUOffset = CUIDLineTablePair.first;
+    if (CUOffset == -1U)
+      continue;
+
+    auto *CU = BC->DwCtx->getCompileUnitForOffset(CUOffset);
+    assert(CU && "expected non-null CU");
+    auto LTOffset =
+      BC->DwCtx->getAttrFieldOffsetForUnit(CU, dwarf::DW_AT_stmt_list);
+    if (!LTOffset)
       continue;
 
     auto Fragment = Label->getFragment();
@@ -2106,17 +2118,10 @@ void RewriteInstance::computeLineTableOffsets() {
     Offset += Label->getOffset() - CurrentOffset;
     CurrentOffset = Label->getOffset();
 
-    auto CompileUnit = BC->OffsetToDwarfCU[CUIDLineTablePair.first];
-    BC->CompileUnitLineTableOffset[CompileUnit] = Offset;
+    auto &SI = SectionMM->NoteSectionInfo[".debug_info"];
+    SI.PendingRelocs.emplace_back(
+        SectionInfo::Reloc{LTOffset, 4, 0, Offset});
 
-    auto LTOI = BC->LineTableOffsetCUMap.find(CUIDLineTablePair.first);
-    if (LTOI != BC->LineTableOffsetCUMap.end()) {
-      DEBUG(dbgs() << "BOLT-DEBUG: adding relocation for stmt_list "
-                   << "in .debug_info\n");
-      auto &SI = SectionMM->NoteSectionInfo[".debug_info"];
-      SI.PendingRelocs.emplace_back(
-          SectionInfo::Reloc{LTOI->second, 4, 0, Offset});
-    }
     DEBUG(dbgs() << "BOLT-DEBUG: CU " << CUIDLineTablePair.first
                 << " has line table at " << Offset << "\n");
   }
@@ -2169,7 +2174,7 @@ void RewriteInstance::updateDWARFAddressRanges() {
   // Update address ranges of functions.
   for (const auto &BFI : BinaryFunctions) {
     const auto &Function = BFI.second;
-    for (const auto DIECompileUnitPair : Function.getSubprocedureDIEs()) {
+    for (const auto DIECompileUnitPair : Function.getSubprogramDIEs()) {
       updateDWARFObjectAddressRanges(
           Function.getAddressRangesOffset(),
           DIECompileUnitPair.second,
@@ -2306,30 +2311,18 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
   if (!opts::UpdateDebugSections)
     return;
 
-  auto DebugAranges = BC->DwCtx->getDebugAranges();
-  if (!DebugAranges) {
-    errs() << "BOLT-WARNING: need .debug_aranges in the input file to update "
-           << "debug info for non-simple functions.\n";
-    return;
-  }
-
   for (auto It : BinaryFunctions) {
     const auto &Function = It.second;
 
     if (Function.isSimple())
       continue;
 
-    uint64_t Address = It.first;
-    uint32_t CUOffset = DebugAranges->findAddress(Address);
-    if (CUOffset == -1U) {
-      errs() << "BOLT-WARNING: function " << Function.getName()
-             << " does not belong to any compile unit in .debug_aranges. "
-             << "Cannot update line number information.\n";
-      continue;
-    }
-    auto Unit = BC->OffsetToDwarfCU[CUOffset];
-    auto LineTable = BC->DwCtx->getLineTableForUnit(Unit);
-    assert(LineTable && "CU without .debug_line info.");
+    auto ULT = Function.getDWARFUnitLineTable();
+    auto Unit = ULT.first;
+    auto LineTable = ULT.second;
+
+    if (!LineTable)
+      continue; // nothing to update for this function
 
     std::vector<uint32_t> Results;
     MCSectionELF *FunctionSection =
@@ -2337,10 +2330,11 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
                                ELF::SHT_PROGBITS,
                                ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
 
+    uint64_t Address = It.first;
     if (LineTable->lookupAddressRange(Address, Function.getMaxSize(),
                                       Results)) {
       auto &OutputLineTable =
-          BC->Ctx->getMCDwarfLineTable(CUOffset).getMCLineSections();
+          BC->Ctx->getMCDwarfLineTable(Unit->getOffset()).getMCLineSections();
       for (auto RowIndex : Results) {
         const auto &Row = LineTable->Rows[RowIndex];
         BC->Ctx->setCurrentDwarfLoc(

@@ -47,6 +47,9 @@ class DWARFDebugInfoEntryMinimal;
 
 namespace bolt {
 
+using DWARFUnitLineTable = std::pair<DWARFCompileUnit *,
+                                     const DWARFDebugLine::LineTable *>;
+
 /// BinaryFunction is a representation of machine-level function.
 //
 /// We use the term "Binary" as "Machine" was already taken.
@@ -166,10 +169,9 @@ private:
   std::set<MCSymbol *> LandingPads;
 
   /// Associated DIEs in the .debug_info section with their respective CUs.
-  /// There can be multiple because of identical code folding performed by
-  /// the Linker Script.
+  /// There can be multiple because of identical code folding.
   std::vector<std::pair<const DWARFDebugInfoEntryMinimal *,
-                        const DWARFCompileUnit *>> SubprocedureDIEs;
+                        DWARFCompileUnit *>> SubprogramDIEs;
 
   /// Offset of this function's address ranges in the .debug_ranges section of
   /// the output binary.
@@ -220,14 +222,6 @@ private:
     CurrentState = State;
     return *this;
   }
-
-  /// Gets debug line information for the instruction located at the given
-  /// address in the original binary. The SMLoc's pointer is used
-  /// to point to this information, which is represented by a
-  /// DebugLineTableRowRef. The returned pointer is null if no debug line
-  /// information for this instruction was found.
-  SMLoc findDebugLineInformationForInstructionAt(uint64_t Address,
-                                                 DWARFCompileUnit *Unit);
 
   const BinaryBasicBlock *
   getOriginalLayoutSuccessor(const BinaryBasicBlock *BB) const;
@@ -730,10 +724,6 @@ public:
   ///
   /// \p FunctionData is the set bytes representing the function body.
   ///
-  /// \p ExtractDebugLineData is a flag indicating whether DWARF .debug_line
-  /// information should be looked up and tied to each disassembled
-  /// instruction.
-  ///
   /// The Function should be properly initialized before this function
   /// is called. I.e. function address and size should be set.
   ///
@@ -741,8 +731,7 @@ public:
   /// state to State:Disassembled.
   ///
   /// Returns false if disassembly failed.
-  bool disassemble(ArrayRef<uint8_t> FunctionData,
-                   bool ExtractDebugLineData = false);
+  bool disassemble(ArrayRef<uint8_t> FunctionData);
 
   /// Builds a list of basic blocks with successor and predecessor info.
   ///
@@ -796,13 +785,23 @@ public:
   void emitLSDA(MCStreamer *Streamer);
 
   /// Sets the associated .debug_info entry.
-  void addSubprocedureDIE(const DWARFCompileUnit *Unit,
+  void addSubprogramDIE(DWARFCompileUnit *Unit,
                           const DWARFDebugInfoEntryMinimal *DIE) {
-    SubprocedureDIEs.emplace_back(DIE, Unit);
+    SubprogramDIEs.emplace_back(DIE, Unit);
   }
 
-  const decltype(SubprocedureDIEs) &getSubprocedureDIEs() const {
-    return SubprocedureDIEs;
+  const decltype(SubprogramDIEs) &getSubprogramDIEs() const {
+    return SubprogramDIEs;
+  }
+
+  /// Return DWARF compile unit with line info.
+  DWARFUnitLineTable getDWARFUnitLineTable() const {
+    for (auto &DIEUnitPair : SubprogramDIEs) {
+      if (auto *LT = BC.DwCtx->getLineTableForUnit(DIEUnitPair.second)) {
+        return std::make_pair(DIEUnitPair.second, LT);
+      }
+    }
+    return std::make_pair(nullptr, nullptr);
   }
 
   /// Returns the size of the basic block in the original binary.

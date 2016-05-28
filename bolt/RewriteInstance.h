@@ -191,9 +191,9 @@ private:
   void patchELFPHDRTable();
   void patchELFSectionHeaderTable();
 
-  /// Computes output .debug_line line table offsets for each compile unit, and
-  /// stores them into BinaryContext::CompileUnitLineTableOffset.
-  void computeLineTableOffsets();
+  /// Computes output .debug_line line table offsets for each compile unit,
+  /// and updates stmt_list for a corresponding compile unit.
+  void updateLineTableOffsets();
 
   /// Adds an entry to be saved in the .debug_aranges/.debug_ranges section.
   /// \p OriginalFunctionAddress function's address in the original binary,

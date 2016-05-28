@@ -63,17 +63,6 @@ public:
   // Set of addresses we cannot relocate because we have a direct branch to it.
   std::set<uint64_t> InterproceduralBranchTargets;
 
-  // Map from offset in the .debug_info section of the binary the
-  // DWARF Compilation Unit that starts at that offset.
-  std::map<uint32_t, DWARFCompileUnit *> OffsetToDwarfCU;
-
-  // Maps each compile unit to the offset of its .debug_line line table in the
-  // output file.
-  std::map<const DWARFCompileUnit *, uint32_t> CompileUnitLineTableOffset;
-
-  /// Maps DWARF CUID to offset of stmt_list attribute in .debug_info.
-  std::map<unsigned, uint32_t> LineTableOffsetCUMap;
-
   /// List of DWARF location lists in .debug_loc.
   std::vector<LocationList> LocationLists;
 
@@ -86,7 +75,7 @@ public:
     std::vector<std::pair<const DWARFDebugInfoEntryMinimal *,
                           const DWARFCompileUnit *>> ;
 
-  /// List of subprocedure DIEs that have addresses that don't match any
+  /// List of subprogram DIEs that have addresses that don't match any
   /// function, along with their CU.
   DIECompileUnitVector UnknownFunctions;
 
@@ -162,7 +151,8 @@ public:
   MCSymbol *getOrCreateGlobalSymbol(uint64_t Address, Twine Prefix);
 
   /// Populate some internal data structures with debug info.
-  void preprocessDebugInfo();
+  void preprocessDebugInfo(
+      std::map<uint64_t, BinaryFunction> &BinaryFunctions);
 
   /// Populate internal data structures with debug info that depends on
   /// disassembled functions.

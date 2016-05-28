@@ -116,7 +116,7 @@ void findAddressRangesObjects(
 /// Recursively finds DWARF DW_TAG_subprogram DIEs and match them with
 /// BinaryFunctions. Record DIEs for unknown subprograms (mostly functions that
 /// are never called and removed from the binary) in Unknown.
-void findSubprograms(const DWARFCompileUnit *Unit,
+void findSubprograms(DWARFCompileUnit *Unit,
                      const DWARFDebugInfoEntryMinimal *DIE,
                      std::map<uint64_t, BinaryFunction> &BinaryFunctions,
                      BinaryContext::DIECompileUnitVector &Unknown) {
@@ -126,7 +126,7 @@ void findSubprograms(const DWARFCompileUnit *Unit,
     if (DIE->getLowAndHighPC(Unit, LowPC, HighPC)) {
       auto It = BinaryFunctions.find(LowPC);
       if (It != BinaryFunctions.end()) {
-        It->second.addSubprocedureDIE(Unit, DIE);
+        It->second.addSubprogramDIE(Unit, DIE);
       } else {
         Unknown.emplace_back(DIE, Unit);
       }
@@ -145,13 +145,8 @@ void findSubprograms(const DWARFCompileUnit *Unit,
 namespace llvm {
 namespace bolt {
 
-void BinaryContext::preprocessDebugInfo() {
-  // Iterate over all DWARF compilation units and map their offset in the
-  // binary to themselves in OffsetDwarfCUMap
-  for (const auto &CU : DwCtx->compile_units()) {
-    OffsetToDwarfCU[CU->getOffset()] = CU.get();
-  }
-
+void BinaryContext::preprocessDebugInfo(
+    std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
   // Populate MCContext with DWARF files.
   for (const auto &CU : DwCtx->compile_units()) {
     const auto CUID = CU->getOffset();
@@ -165,23 +160,53 @@ void BinaryContext::preprocessDebugInfo() {
           "";
       Ctx->getDwarfFile(Dir, FileNames[I].Name, I + 1, CUID);
     }
+  }
 
-    auto LineTableOffset =
-      DwCtx->getAttrFieldOffsetForUnit(CU.get(), dwarf::DW_AT_stmt_list);
-    if (LineTableOffset)
-      LineTableOffsetCUMap[CUID] = LineTableOffset;
+  // For each CU, iterate over its children DIEs and match subprogram DIEs to
+  // BinaryFunctions.
+  for (auto &CU : DwCtx->compile_units()) {
+    findSubprograms(CU.get(), CU->getUnitDIE(false), BinaryFunctions,
+                    UnknownFunctions);
+  }
+
+  // Some functions may not have a corresponding subprogram DIE
+  // yet they will be included in some CU and will have line number information.
+  // Hence we need to associate them with the CU and include in CU ranges.
+  for (auto &AddrFunctionPair : BinaryFunctions) {
+    auto FunctionAddress = AddrFunctionPair.first;
+    auto &Function = AddrFunctionPair.second;
+    if (!Function.getSubprogramDIEs().empty())
+      continue;
+    if (auto DebugAranges = DwCtx->getDebugAranges()) {
+      auto CUOffset = DebugAranges->findAddress(FunctionAddress);
+      if (CUOffset != -1U) {
+        Function.addSubprogramDIE(DwCtx->getCompileUnitForOffset(CUOffset),
+                                  nullptr);
+        continue;
+      }
+    }
+
+#ifdef DWARF_LOOKUP_ALL_RANGES
+    // Last resort - iterate over all compile units. This should not happen
+    // very often. If it does, we need to create a separate lookup table
+    // similar to .debug_aranges internally. This slows down processing
+    // considerably.
+    for (const auto &CU : DwCtx->compile_units()) {
+      const auto *CUDie = CU->getUnitDIE();
+      for (const auto &Range : CUDie->getAddressRanges(CU.get())) {
+        if (FunctionAddress >= Range.first &&
+            FunctionAddress < Range.second) {
+          Function.addSubprogramDIE(CU.get(), nullptr);
+          break;
+        }
+      }
+    }
+#endif
   }
 }
 
 void BinaryContext::preprocessFunctionDebugInfo(
     std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
-  // For each CU, iterate over its children DIEs and match subprogram DIEs to
-  // BinaryFunctions.
-  for (const auto &CU : DwCtx->compile_units()) {
-    findSubprograms(CU.get(), CU->getUnitDIE(false), BinaryFunctions,
-                    UnknownFunctions);
-  }
-
   // Iterate over DIE trees finding objects that contain address ranges.
   for (const auto &CU : DwCtx->compile_units()) {
     findAddressRangesObjects(CU.get(), CU->getUnitDIE(false), BinaryFunctions,
@@ -191,15 +216,18 @@ void BinaryContext::preprocessFunctionDebugInfo(
   // Iterate over location lists and save them in LocationLists.
   auto DebugLoc = DwCtx->getDebugLoc();
   for (const auto &DebugLocEntry : DebugLoc->getLocationLists()) {
+    if (DebugLocEntry.Entries.empty())
+      continue;
+    auto StartAddress = DebugLocEntry.Entries.front().Begin;
+    auto *Function = getBinaryFunctionContainingAddress(StartAddress,
+                                                        BinaryFunctions);
+    if (!Function || !Function->isSimple())
+      continue;
     LocationLists.emplace_back(DebugLocEntry.Offset);
     auto &LocationList = LocationLists.back();
     for (const auto &Location : DebugLocEntry.Entries) {
-      auto *Function = getBinaryFunctionContainingAddress(Location.Begin,
-                                                          BinaryFunctions);
-      if (Function && Function->isSimple()) {
-        LocationList.addLocation(&Location.Loc, *Function, Location.Begin,
-                                 Location.End);
-      }
+      LocationList.addLocation(&Location.Loc, *Function, Location.Begin,
+                               Location.End);
     }
   }
 }
