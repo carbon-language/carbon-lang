@@ -950,24 +950,24 @@ namespace llvm {
     /// value to zero will execute.  If not computable, return CouldNotCompute.
     /// If AllowPredicates is set, this call will try to use a minimal set of
     /// SCEV predicates in order to return an exact answer.
-    ExitLimit HowFarToZero(const SCEV *V, const Loop *L, bool IsSubExpr,
+    ExitLimit howFarToZero(const SCEV *V, const Loop *L, bool IsSubExpr,
                            bool AllowPredicates = false);
 
     /// Return the number of times an exit condition checking the specified
     /// value for nonzero will execute.  If not computable, return
     /// CouldNotCompute.
-    ExitLimit HowFarToNonZero(const SCEV *V, const Loop *L);
+    ExitLimit howFarToNonZero(const SCEV *V, const Loop *L);
 
     /// Return the number of times an exit condition containing the specified
     /// less-than comparison will execute.  If not computable, return
     /// CouldNotCompute. isSigned specifies whether the less-than is signed.
     /// If AllowPredicates is set, this call will try to use a minimal set of
     /// SCEV predicates in order to return an exact answer.
-    ExitLimit HowManyLessThans(const SCEV *LHS, const SCEV *RHS, const Loop *L,
+    ExitLimit howManyLessThans(const SCEV *LHS, const SCEV *RHS, const Loop *L,
                                bool isSigned, bool IsSubExpr,
                                bool AllowPredicates = false);
 
-    ExitLimit HowManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
+    ExitLimit howManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
                                   const Loop *L, bool isSigned, bool IsSubExpr,
                                   bool AllowPredicates = false);
 

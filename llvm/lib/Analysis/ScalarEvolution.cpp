@@ -5602,7 +5602,7 @@ void ScalarEvolution::forgetValue(Value *V) {
 /// getExact - Get the exact loop backedge taken count considering all loop
 /// exits. A computable result can only be returned for loops with a single
 /// exit.  Returning the minimum taken count among all exits is incorrect
-/// because one of the loop's exit limit's may have been skipped. HowFarToZero
+/// because one of the loop's exit limit's may have been skipped. howFarToZero
 /// assumes that the limit of each loop test is never skipped. This is a valid
 /// assumption as long as the loop exits via that test. For precise results, it
 /// is the caller's responsibility to specify the relevant loop exit using
@@ -6077,21 +6077,21 @@ ScalarEvolution::computeExitLimitFromICmp(const Loop *L,
   switch (Cond) {
   case ICmpInst::ICMP_NE: {                     // while (X != Y)
     // Convert to: while (X-Y != 0)
-    ExitLimit EL = HowFarToZero(getMinusSCEV(LHS, RHS), L, ControlsExit,
+    ExitLimit EL = howFarToZero(getMinusSCEV(LHS, RHS), L, ControlsExit,
                                 AllowPredicates);
     if (EL.hasAnyInfo()) return EL;
     break;
   }
   case ICmpInst::ICMP_EQ: {                     // while (X == Y)
     // Convert to: while (X-Y == 0)
-    ExitLimit EL = HowFarToNonZero(getMinusSCEV(LHS, RHS), L);
+    ExitLimit EL = howFarToNonZero(getMinusSCEV(LHS, RHS), L);
     if (EL.hasAnyInfo()) return EL;
     break;
   }
   case ICmpInst::ICMP_SLT:
   case ICmpInst::ICMP_ULT: {                    // while (X < Y)
     bool IsSigned = Cond == ICmpInst::ICMP_SLT;
-    ExitLimit EL = HowManyLessThans(LHS, RHS, L, IsSigned, ControlsExit,
+    ExitLimit EL = howManyLessThans(LHS, RHS, L, IsSigned, ControlsExit,
                                     AllowPredicates);
     if (EL.hasAnyInfo()) return EL;
     break;
@@ -6100,7 +6100,7 @@ ScalarEvolution::computeExitLimitFromICmp(const Loop *L,
   case ICmpInst::ICMP_UGT: {                    // while (X > Y)
     bool IsSigned = Cond == ICmpInst::ICMP_SGT;
     ExitLimit EL =
-        HowManyGreaterThans(LHS, RHS, L, IsSigned, ControlsExit,
+        howManyGreaterThans(LHS, RHS, L, IsSigned, ControlsExit,
                             AllowPredicates);
     if (EL.hasAnyInfo()) return EL;
     break;
@@ -6128,7 +6128,7 @@ ScalarEvolution::computeExitLimitFromSingleExitSwitch(const Loop *L,
   const SCEV *RHS = getConstant(Switch->findCaseDest(ExitingBlock));
 
   // while (X != Y) --> while (X-Y != 0)
-  ExitLimit EL = HowFarToZero(getMinusSCEV(LHS, RHS), L, ControlsExit);
+  ExitLimit EL = howFarToZero(getMinusSCEV(LHS, RHS), L, ControlsExit);
   if (EL.hasAnyInfo())
     return EL;
 
@@ -7133,7 +7133,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
   } // end APIntOps namespace
 }
 
-/// HowFarToZero - Return the number of times a backedge comparing the specified
+/// howFarToZero - Return the number of times a backedge comparing the specified
 /// value to zero will execute.  If not computable, return CouldNotCompute.
 ///
 /// This is only used for loops with a "x != y" exit test. The exit condition is
@@ -7141,7 +7141,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
 /// effectively V != 0.  We know and take advantage of the fact that this
 /// expression only being used in a comparison by zero context.
 ScalarEvolution::ExitLimit
-ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L, bool ControlsExit,
+ScalarEvolution::howFarToZero(const SCEV *V, const Loop *L, bool ControlsExit,
                               bool AllowPredicates) {
   SCEVUnionPredicate P;
   // If the value is a constant
@@ -7318,11 +7318,11 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L, bool ControlsExit,
   return getCouldNotCompute();
 }
 
-/// HowFarToNonZero - Return the number of times a backedge checking the
+/// howFarToNonZero - Return the number of times a backedge checking the
 /// specified value for nonzero will execute.  If not computable, return
 /// CouldNotCompute
 ScalarEvolution::ExitLimit
-ScalarEvolution::HowFarToNonZero(const SCEV *V, const Loop *L) {
+ScalarEvolution::howFarToNonZero(const SCEV *V, const Loop *L) {
   // Loops that look like: while (X == 0) are very strange indeed.  We don't
   // handle them yet except for the trivial case.  This could be expanded in the
   // future as needed.
@@ -8773,7 +8773,7 @@ const SCEV *ScalarEvolution::computeBECount(const SCEV *Delta, const SCEV *Step,
   return getUDivExpr(Delta, Step);
 }
 
-/// HowManyLessThans - Return the number of times a backedge containing the
+/// howManyLessThans - Return the number of times a backedge containing the
 /// specified less-than comparison will execute.  If not computable, return
 /// CouldNotCompute.
 ///
@@ -8781,7 +8781,7 @@ const SCEV *ScalarEvolution::computeBECount(const SCEV *Delta, const SCEV *Step,
 /// the branch (loops exits only if condition is true). In this case, we can use
 /// NoWrapFlags to skip overflow checks.
 ScalarEvolution::ExitLimit
-ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
+ScalarEvolution::howManyLessThans(const SCEV *LHS, const SCEV *RHS,
                                   const Loop *L, bool IsSigned,
                                   bool ControlsExit, bool AllowPredicates) {
   SCEVUnionPredicate P;
@@ -8867,7 +8867,7 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
 }
 
 ScalarEvolution::ExitLimit
-ScalarEvolution::HowManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
+ScalarEvolution::howManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
                                      const Loop *L, bool IsSigned,
                                      bool ControlsExit, bool AllowPredicates) {
   SCEVUnionPredicate P;
