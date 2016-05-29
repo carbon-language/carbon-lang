@@ -144,7 +144,7 @@ def mno_exec_stack : Flag<["-"], "mnoexecstack">,
 def massembler_fatal_warnings : Flag<["-"], "massembler-fatal-warnings">,
   HelpText<"Make assembler warnings fatal">;
 def mrelax_relocations : Flag<["--"], "mrelax-relocations">,
-    HelpText<"Use relaxabel elf relocations">;
+    HelpText<"Use relaxable elf relocations">;
 def compress_debug_sections : Flag<["-"], "compress-debug-sections">,
     HelpText<"Compress DWARF debug sections using zlib">;
 def msave_temp_labels : Flag<["-"], "msave-temp-labels">,
