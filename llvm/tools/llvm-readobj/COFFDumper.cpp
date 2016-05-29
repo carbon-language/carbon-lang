@@ -208,15 +208,19 @@ std::error_code COFFDumper::resolveSymbol(const coff_section *Section,
                                           uint64_t Offset, SymbolRef &Sym) {
   cacheRelocations();
   const auto &Relocations = RelocMap[Section];
+  auto SymI = Obj->symbol_end();
   for (const auto &Relocation : Relocations) {
     uint64_t RelocationOffset = Relocation.getOffset();
 
     if (RelocationOffset == Offset) {
-      Sym = *Relocation.getSymbol();
-      return readobj_error::success;
+      SymI = Relocation.getSymbol();
+      break;
     }
   }
-  return readobj_error::unknown_symbol;
+  if (SymI == Obj->symbol_end())
+    return readobj_error::unknown_symbol;
+  Sym = *SymI;
+  return readobj_error::success;
 }
 
 // Given a section and an offset into this section the function returns the name
