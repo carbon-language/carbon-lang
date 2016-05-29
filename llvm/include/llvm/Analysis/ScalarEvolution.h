@@ -891,13 +891,20 @@ namespace llvm {
 
     /// Compute the number of times the backedge of the specified loop will
     /// execute if its exit condition were a conditional branch of ExitCond,
-    /// TBB, and FBB. If AllowPredicates is set, this call will try to use a
-    /// minimal set of SCEV predicates in order to return an exact answer.
+    /// TBB, and FBB.
+    ///
+    /// \p ControlsExit is true if ExitCond directly controls the exit
+    /// branch. In this case, we can assume that the loop exits only if the
+    /// condition is true and can infer that failing to meet the condition prior
+    /// to integer wraparound results in undefined behavior.
+    ///
+    /// If \p AllowPredicates is set, this call will try to use a minimal set of
+    /// SCEV predicates in order to return an exact answer.
     ExitLimit computeExitLimitFromCond(const Loop *L,
                                        Value *ExitCond,
                                        BasicBlock *TBB,
                                        BasicBlock *FBB,
-                                       bool IsSubExpr,
+                                       bool ControlsExit,
                                        bool AllowPredicates = false);
 
     /// Compute the number of times the backedge of the specified loop will
@@ -960,11 +967,18 @@ namespace llvm {
 
     /// Return the number of times an exit condition containing the specified
     /// less-than comparison will execute.  If not computable, return
-    /// CouldNotCompute. isSigned specifies whether the less-than is signed.
-    /// If AllowPredicates is set, this call will try to use a minimal set of
+    /// CouldNotCompute.
+    ///
+    /// \p isSigned specifies whether the less-than is signed.
+    ///
+    /// \p ControlsExit is true when the LHS < RHS condition directly controls
+    /// the branch (loops exits only if condition is true). In this case, we can
+    /// use NoWrapFlags to skip overflow checks.
+    ///
+    /// If \p AllowPredicates is set, this call will try to use a minimal set of
     /// SCEV predicates in order to return an exact answer.
     ExitLimit howManyLessThans(const SCEV *LHS, const SCEV *RHS, const Loop *L,
-                               bool isSigned, bool IsSubExpr,
+                               bool isSigned, bool ControlsExit,
                                bool AllowPredicates = false);
 
     ExitLimit howManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
@@ -1008,7 +1022,8 @@ namespace llvm {
 
     /// Test whether the condition described by Pred, LHS, and RHS is true
     /// whenever the condition described by Pred, FoundLHS, and FoundRHS is
-    /// true.  Utility function used by isImpliedCondOperands.
+    /// true.  Utility function used by isImpliedCondOperands.  Tries to get
+    /// cases like "X `sgt` 0 => X - 1 `sgt` -1".
     bool isImpliedCondOperandsViaRanges(ICmpInst::Predicate Pred,
                                         const SCEV *LHS, const SCEV *RHS,
                                         const SCEV *FoundLHS,
@@ -1505,7 +1520,8 @@ namespace llvm {
     const SCEV *getElementSize(Instruction *Inst);
 
     /// Compute the array dimensions Sizes from the set of Terms extracted from
-    /// the memory access function of this SCEVAddRecExpr.
+    /// the memory access function of this SCEVAddRecExpr (second step of
+    /// delinearization).
     void findArrayDimensions(SmallVectorImpl<const SCEV *> &Terms,
                              SmallVectorImpl<const SCEV *> &Sizes,
                              const SCEV *ElementSize) const;
@@ -1513,13 +1529,15 @@ namespace llvm {
     void print(raw_ostream &OS) const;
     void verify() const;
 
-    /// Collect parametric terms occurring in step expressions.
+    /// Collect parametric terms occurring in step expressions (first step of
+    /// delinearization).
     void collectParametricTerms(const SCEV *Expr,
                                 SmallVectorImpl<const SCEV *> &Terms);
 
 
 
-    /// Return in Subscripts the access functions for each dimension in Sizes.
+    /// Return in Subscripts the access functions for each dimension in Sizes
+    /// (third step of delinearization).
     void computeAccessFunctions(const SCEV *Expr,
                                 SmallVectorImpl<const SCEV *> &Subscripts,
                                 SmallVectorImpl<const SCEV *> &Sizes);
