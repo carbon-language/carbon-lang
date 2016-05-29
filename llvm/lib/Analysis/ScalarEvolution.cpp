@@ -3980,8 +3980,6 @@ const SCEV *ScalarEvolution::createAddRecFromPHI(PHINode *PN) {
              cast<SCEVAddRecExpr>(Accum)->getLoop() == L)) {
           SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap;
 
-          // If the increment doesn't overflow, then neither the addrec nor
-          // the post-increment will overflow.
           if (auto BO = MatchBinaryOp(BEValueV)) {
             if (BO->Opcode == Instruction::Add && BO->LHS == PN) {
               if (BO->IsNUW)
@@ -4012,16 +4010,19 @@ const SCEV *ScalarEvolution::createAddRecFromPHI(PHINode *PN) {
           const SCEV *StartVal = getSCEV(StartValueV);
           const SCEV *PHISCEV = getAddRecExpr(StartVal, Accum, L, Flags);
 
-          // Since the no-wrap flags are on the increment, they apply to the
-          // post-incremented value as well.
-          if (isLoopInvariant(Accum, L))
-            (void)getAddRecExpr(getAddExpr(StartVal, Accum), Accum, L, Flags);
-
           // Okay, for the entire analysis of this edge we assumed the PHI
           // to be symbolic.  We now need to go back and purge all of the
           // entries for the scalars that use the symbolic expression.
           forgetSymbolicName(PN, SymbolicName);
           ValueExprMap[SCEVCallbackVH(PN, this)] = PHISCEV;
+
+          // We can add Flags to the post-inc expression only if we
+          // know that it us *undefined behavior* for BEValueV to
+          // overflow.
+          if (auto *BEInst = dyn_cast<Instruction>(BEValueV))
+            if (isLoopInvariant(Accum, L) && isAddRecNeverPoison(BEInst, L))
+              (void)getAddRecExpr(getAddExpr(StartVal, Accum), Accum, L, Flags);
+
           return PHISCEV;
         }
       }
@@ -4850,6 +4851,87 @@ bool ScalarEvolution::isSCEVExprNeverPoison(const Instruction *I) {
   return false;
 }
 
+bool ScalarEvolution::isAddRecNeverPoison(const Instruction *I, const Loop *L) {
+  // If we know that \c I can never be poison period, then that's enough.
+  if (isSCEVExprNeverPoison(I))
+    return true;
+
+  // For an add recurrence specifically, we assume that infinite loops without
+  // side effects are undefined behavior, and then reason as follows:
+  //
+  // If the add recurrence is poison in any iteration, it is poison on all
+  // future iterations (since incrementing poison yields poison). If the result
+  // of the add recurrence is fed into the loop latch condition and the loop
+  // does not contain any throws or exiting blocks other than the latch, we now
+  // have the ability to "choose" whether the backedge is taken or not (by
+  // choosing a sufficiently evil value for the poison feeding into the branch)
+  // for every iteration including and after the one in which \p I first became
+  // poison.  There are two possibilities (let's call the iteration in which \p
+  // I first became poison as K):
+  //
+  //  1. In the set of iterations including and after K, the loop body executes
+  //     no side effects.  In this case executing the backege an infinte number
+  //     of times will yield undefined behavior.
+  //
+  //  2. In the set of iterations including and after K, the loop body executes
+  //     at least one side effect.  In this case, that specific instance of side
+  //     effect is control dependent on poison, which also yields undefined
+  //     behavior.
+
+  auto *ExitingBB = L->getExitingBlock();
+  auto *LatchBB = L->getLoopLatch();
+  if (!ExitingBB || !LatchBB || ExitingBB != LatchBB)
+    return false;
+
+  SmallPtrSet<const Instruction *, 16> Pushed;
+  SmallVector<const Instruction *, 8> Stack;
+
+  Pushed.insert(I);
+  for (auto *U : I->users())
+    if (Pushed.insert(cast<Instruction>(U)).second)
+      Stack.push_back(cast<Instruction>(U));
+
+  bool LatchControlDependentOnPoison = false;
+  while (!Stack.empty()) {
+    const Instruction *I = Stack.pop_back_val();
+
+    for (auto *U : I->users()) {
+      if (propagatesFullPoison(cast<Instruction>(U))) {
+        if (Pushed.insert(cast<Instruction>(U)).second)
+          Stack.push_back(cast<Instruction>(U));
+      } else if (auto *BI = dyn_cast<BranchInst>(U)) {
+        assert(BI->isConditional() && "Only possibility!");
+        if (BI->getParent() == LatchBB) {
+          LatchControlDependentOnPoison = true;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!LatchControlDependentOnPoison)
+    return false;
+
+  // Now check if loop is no-throw, and cache the information.  In the future,
+  // we can consider commoning this logic with LICMSafetyInfo into a separate
+  // analysis pass.
+
+  auto Itr = LoopMayThrow.find(L);
+  if (Itr == LoopMayThrow.end()) {
+    bool MayThrow = false;
+    for (auto *BB : L->getBlocks()) {
+      MayThrow = any_of(*BB, [](Instruction &I) { return I.mayThrow(); });
+      if (MayThrow)
+        break;
+    }
+    auto InsertPair = LoopMayThrow.insert({L, MayThrow});
+    assert(InsertPair.second && "We just checked!");
+    Itr = InsertPair.first;
+  }
+
+  return !Itr->second;
+}
+
 /// createSCEV - We know that there is no SCEV for the specified value.  Analyze
 /// the expression.
 ///
@@ -5439,6 +5521,8 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
   // ValuesAtScopes map.
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     forgetLoop(*I);
+
+  LoopMayThrow.erase(L);
 }
 
 /// forgetValue - This method should be called by the client when it has

@@ -784,6 +784,10 @@ namespace llvm {
              SmallVector<PointerIntPair<const Loop *, 2, LoopDisposition>, 2>>
         LoopDispositions;
 
+    /// A cache of the predicate "does the given loop contain an instruction
+    /// that can throw?"
+    DenseMap<const Loop *, bool> LoopMayThrow;
+
     /// Compute a LoopDisposition value.
     LoopDisposition computeLoopDisposition(const SCEV *S, const Loop *L);
 
@@ -1123,6 +1127,12 @@ namespace llvm {
     /// `idx0` and `idx1` will be mapped to the same SCEV expression, (+ a b),
     /// it is not okay to annotate (+ a b) with <nsw> in the above example.
     bool isSCEVExprNeverPoison(const Instruction *I);
+
+    /// This is like \c isSCEVExprNeverPoison but it specifically works for
+    /// instructions that will get mapped to SCEV add recurrences.  Return true
+    /// if \p I will never generate poison under the assumption that \p I is an
+    /// add recurrence on the loop \p L.
+    bool isAddRecNeverPoison(const Instruction *I, const Loop *L);
 
   public:
     ScalarEvolution(Function &F, TargetLibraryInfo &TLI, AssumptionCache &AC,
