@@ -3860,7 +3860,7 @@ struct BinaryOp {
 
 
 /// Try to map \p V into a BinaryOp, and return \c None on failure.
-static Optional<BinaryOp> MatchBinaryOp(Value *V) {
+static Optional<BinaryOp> MatchBinaryOp(Value *V, DominatorTree &DT) {
   auto *Op = dyn_cast<Operator>(V);
   if (!Op)
     return None;
@@ -3905,6 +3905,50 @@ static Optional<BinaryOp> MatchBinaryOp(Value *V) {
       }
     }
     return BinaryOp(Op);
+
+  case Instruction::ExtractValue: {
+    auto *EVI = cast<ExtractValueInst>(Op);
+    if (EVI->getNumIndices() != 1 || EVI->getIndices()[0] != 0)
+      break;
+
+    auto *CI = dyn_cast<CallInst>(EVI->getAggregateOperand());
+    if (!CI)
+      break;
+
+    if (auto *F = CI->getCalledFunction())
+      switch (F->getIntrinsicID()) {
+      case Intrinsic::sadd_with_overflow:
+      case Intrinsic::uadd_with_overflow: {
+        if (!isOverflowIntrinsicNoWrap(cast<IntrinsicInst>(CI), DT))
+          return BinaryOp(Instruction::Add, CI->getArgOperand(0),
+                          CI->getArgOperand(1));
+
+        // Now that we know that all uses of the arithmetic-result component of
+        // CI are guarded by the overflow check, we can go ahead and pretend
+        // that the arithmetic is non-overflowing.
+        if (F->getIntrinsicID() == Intrinsic::sadd_with_overflow)
+          return BinaryOp(Instruction::Add, CI->getArgOperand(0),
+                          CI->getArgOperand(1), /* IsNSW = */ true,
+                          /* IsNUW = */ false);
+        else
+          return BinaryOp(Instruction::Add, CI->getArgOperand(0),
+                          CI->getArgOperand(1), /* IsNSW = */ false,
+                          /* IsNUW*/ true);
+      }
+
+      case Intrinsic::ssub_with_overflow:
+      case Intrinsic::usub_with_overflow:
+        return BinaryOp(Instruction::Sub, CI->getArgOperand(0),
+                        CI->getArgOperand(1));
+
+      case Intrinsic::smul_with_overflow:
+      case Intrinsic::umul_with_overflow:
+        return BinaryOp(Instruction::Mul, CI->getArgOperand(0),
+                        CI->getArgOperand(1));
+      default:
+        break;
+      }
+  }
 
   default:
     break;
@@ -3980,7 +4024,7 @@ const SCEV *ScalarEvolution::createAddRecFromPHI(PHINode *PN) {
              cast<SCEVAddRecExpr>(Accum)->getLoop() == L)) {
           SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap;
 
-          if (auto BO = MatchBinaryOp(BEValueV)) {
+          if (auto BO = MatchBinaryOp(BEValueV, DT)) {
             if (BO->Opcode == Instruction::Add && BO->LHS == PN) {
               if (BO->IsNUW)
                 Flags = setFlags(Flags, SCEV::FlagNUW);
@@ -4956,7 +5000,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     return getUnknown(V);
 
   Operator *U = cast<Operator>(V);
-  if (auto BO = MatchBinaryOp(U)) {
+  if (auto BO = MatchBinaryOp(U, DT)) {
     switch (BO->Opcode) {
     case Instruction::Add: {
       // The simple thing to do would be to just call getSCEV on both operands
@@ -4997,7 +5041,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
         else
           AddOps.push_back(getSCEV(BO->RHS));
 
-        auto NewBO = MatchBinaryOp(BO->LHS);
+        auto NewBO = MatchBinaryOp(BO->LHS, DT);
         if (!NewBO || (NewBO->Opcode != Instruction::Add &&
                        NewBO->Opcode != Instruction::Sub)) {
           AddOps.push_back(getSCEV(BO->LHS));
@@ -5027,7 +5071,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
         }
 
         MulOps.push_back(getSCEV(BO->RHS));
-        auto NewBO = MatchBinaryOp(BO->LHS);
+        auto NewBO = MatchBinaryOp(BO->LHS, DT);
         if (!NewBO || NewBO->Opcode != Instruction::Mul) {
           MulOps.push_back(getSCEV(BO->LHS));
           break;
