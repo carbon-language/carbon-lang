@@ -680,6 +680,13 @@ namespace llvm {
   private:
     LoopToScevMapT &Map;
   };
+
+/// Applies the Map (Loop -> SCEV) to the given Scev.
+static inline const SCEV *apply(const SCEV *Scev, LoopToScevMapT &Map,
+                                ScalarEvolution &SE) {
+  return SCEVLoopAddRecRewriter::rewrite(Scev, Map, SE);
+}
+
 }
 
 #endif
