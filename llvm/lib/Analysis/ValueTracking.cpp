@@ -3477,6 +3477,11 @@ bool llvm::propagatesFullPoison(const Instruction *I) {
       return false;
     }
 
+    case Instruction::ICmp:
+      // Comparing poison with any value yields poison.  This is why, for
+      // instance, x s< (x +nsw 1) can be folded to true.
+      return true;
+
     case Instruction::GetElementPtr:
       // A GEP implicitly represents a sequence of additions, subtractions,
       // truncations, sign extensions and multiplications. The multiplications
