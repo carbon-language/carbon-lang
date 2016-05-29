@@ -6524,29 +6524,27 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     unsigned NumElts =
       cast<llvm::VectorType>(Ops[0]->getType())->getNumElements();
     assert(NumElts % 16 == 0);
-    unsigned NumLanes = NumElts / 16;
-    unsigned NumLaneElts = NumElts / NumLanes;
 
     // If palignr is shifting the pair of vectors more than the size of two
     // lanes, emit zero.
-    if (ShiftVal >= (2 * NumLaneElts))
+    if (ShiftVal >= 32)
       return llvm::Constant::getNullValue(ConvertType(E->getType()));
 
     // If palignr is shifting the pair of input vectors more than one lane,
     // but less than two lanes, convert to shifting in zeroes.
-    if (ShiftVal > NumLaneElts) {
-      ShiftVal -= NumLaneElts;
+    if (ShiftVal > 16) {
+      ShiftVal -= 16;
       Ops[1] = Ops[0];
       Ops[0] = llvm::Constant::getNullValue(Ops[0]->getType());
     }
 
     int Indices[32];
     // 256-bit palignr operates on 128-bit lanes so we need to handle that
-    for (unsigned l = 0; l != NumElts; l += NumLaneElts) {
-      for (unsigned i = 0; i != NumLaneElts; ++i) {
+    for (unsigned l = 0; l != NumElts; l += 16) {
+      for (unsigned i = 0; i != 16; ++i) {
         unsigned Idx = ShiftVal + i;
-        if (Idx >= NumLaneElts)
-          Idx += NumElts - NumLaneElts; // End of lane, switch operand.
+        if (Idx >= 16)
+          Idx += NumElts - 16; // End of lane, switch operand.
         Indices[l + i] = Idx + l;
       }
     }
