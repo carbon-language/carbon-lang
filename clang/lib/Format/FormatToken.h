@@ -145,7 +145,7 @@ struct FormatToken {
   /// \brief Whether the token text contains newlines (escaped or not).
   bool IsMultiline = false;
 
-  /// \brief Indicates that this is the first token.
+  /// \brief Indicates that this is the first token of the file.
   bool IsFirst = false;
 
   /// \brief Whether there must be a line break before this token.

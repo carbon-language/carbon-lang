@@ -1276,5 +1276,12 @@ TEST_F(FormatTestJS, RequoteStringsLeave) {
   verifyFormat("var x = 'foo';", LeaveQuotes);
 }
 
+TEST_F(FormatTestJS, SupportShebangLines) {
+  verifyFormat("#!/usr/bin/env node\n"
+               "var x = hello();",
+               "#!/usr/bin/env node\n"
+               "var x   =  hello();");
+}
+
 } // end namespace tooling
 } // end namespace clang
