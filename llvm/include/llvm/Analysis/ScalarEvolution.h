@@ -192,23 +192,23 @@ namespace llvm {
 
     SCEVPredicateKind getKind() const { return Kind; }
 
-    /// \brief Returns the estimated complexity of this predicate.
-    /// This is roughly measured in the number of run-time checks required.
+    /// Returns the estimated complexity of this predicate.  This is roughly
+    /// measured in the number of run-time checks required.
     virtual unsigned getComplexity() const { return 1; }
 
-    /// \brief Returns true if the predicate is always true. This means that no
+    /// Returns true if the predicate is always true. This means that no
     /// assumptions were made and nothing needs to be checked at run-time.
     virtual bool isAlwaysTrue() const = 0;
 
-    /// \brief Returns true if this predicate implies \p N.
+    /// Returns true if this predicate implies \p N.
     virtual bool implies(const SCEVPredicate *N) const = 0;
 
-    /// \brief Prints a textual representation of this predicate with an
-    /// indentation of \p Depth.
+    /// Prints a textual representation of this predicate with an indentation of
+    /// \p Depth.
     virtual void print(raw_ostream &OS, unsigned Depth = 0) const = 0;
 
-    /// \brief Returns the SCEV to which this predicate applies, or nullptr
-    /// if this is a SCEVUnionPredicate.
+    /// Returns the SCEV to which this predicate applies, or nullptr if this is
+    /// a SCEVUnionPredicate.
     virtual const SCEV *getExpr() const = 0;
   };
 
@@ -256,10 +256,10 @@ namespace llvm {
     bool isAlwaysTrue() const override;
     const SCEV *getExpr() const override;
 
-    /// \brief Returns the left hand side of the equality.
+    /// Returns the left hand side of the equality.
     const SCEVUnknown *getLHS() const { return LHS; }
 
-    /// \brief Returns the right hand side of the equality.
+    /// Returns the right hand side of the equality.
     const SCEVConstant *getRHS() const { return RHS; }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -338,8 +338,8 @@ namespace llvm {
       return (SCEVWrapPredicate::IncrementWrapFlags)(Flags | OnFlags);
     }
 
-    /// \brief Returns the set of SCEVWrapPredicate no wrap flags implied
-    /// by a SCEVAddRecExpr.
+    /// Returns the set of SCEVWrapPredicate no wrap flags implied by a
+    /// SCEVAddRecExpr.
     static SCEVWrapPredicate::IncrementWrapFlags
     getImpliedFlags(const SCEVAddRecExpr *AR, ScalarEvolution &SE);
 
@@ -352,7 +352,7 @@ namespace llvm {
                                const SCEVAddRecExpr *AR,
                                IncrementWrapFlags Flags);
 
-    /// \brief Returns the set assumed no overflow flags.
+    /// Returns the set assumed no overflow flags.
     IncrementWrapFlags getFlags() const { return Flags; }
     /// Implementation of the SCEVPredicate interface
     const SCEV *getExpr() const override;
@@ -386,11 +386,11 @@ namespace llvm {
       return Preds;
     }
 
-    /// \brief Adds a predicate to this union.
+    /// Adds a predicate to this union.
     void add(const SCEVPredicate *N);
 
-    /// \brief Returns a reference to a vector containing all predicates
-    /// which apply to \p Expr.
+    /// Returns a reference to a vector containing all predicates which apply to
+    /// \p Expr.
     ArrayRef<const SCEVPredicate *> getPredicatesForExpr(const SCEV *Expr);
 
     /// Implementation of the SCEVPredicate interface
@@ -399,8 +399,8 @@ namespace llvm {
     void print(raw_ostream &OS, unsigned Depth) const override;
     const SCEV *getExpr() const override;
 
-    /// \brief We estimate the complexity of a union predicate as the size
-    /// number of predicates in the union.
+    /// We estimate the complexity of a union predicate as the size number of
+    /// predicates in the union.
     unsigned getComplexity() const override { return Preds.size(); }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -1226,7 +1226,7 @@ namespace llvm {
       SmallVector<const SCEV *, 4> NewOp(Operands.begin(), Operands.end());
       return getAddRecExpr(NewOp, L, Flags);
     }
-    /// \brief Returns an expression for a GEP
+    /// Returns an expression for a GEP
     ///
     /// \p PointeeType The type used as the basis for the pointer arithmetics
     /// \p BaseExpr The expression for the pointer operand.
@@ -1244,10 +1244,10 @@ namespace llvm {
     const SCEV *getUnknown(Value *V);
     const SCEV *getCouldNotCompute();
 
-    /// \brief Return a SCEV for the constant 0 of a specific type.
+    /// Return a SCEV for the constant 0 of a specific type.
     const SCEV *getZero(Type *Ty) { return getConstant(Ty, 0); }
 
-    /// \brief Return a SCEV for the constant 1 of a specific type.
+    /// Return a SCEV for the constant 1 of a specific type.
     const SCEV *getOne(Type *Ty) { return getConstant(Ty, 1); }
 
     /// Return an expression for sizeof AllocTy that is type IntTy
@@ -1340,7 +1340,7 @@ namespace llvm {
     bool isLoopBackedgeGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
                                      const SCEV *LHS, const SCEV *RHS);
 
-    /// \brief Returns the maximum trip count of the loop if it is a single-exit
+    /// Returns the maximum trip count of the loop if it is a single-exit
     /// loop and we can compute a small maximum for that loop.
     ///
     /// Implemented in terms of the \c getSmallConstantTripCount overload with
@@ -1356,7 +1356,7 @@ namespace llvm {
     /// prematurely via another branch.
     unsigned getSmallConstantTripCount(Loop *L, BasicBlock *ExitingBlock);
 
-    /// \brief Returns the largest constant divisor of the trip count of the
+    /// Returns the largest constant divisor of the trip count of the
     /// loop if it is a single-exit loop and we can compute a small maximum for
     /// that loop.
     ///
@@ -1416,7 +1416,7 @@ namespace llvm {
     /// def-use chain linking it to a loop.
     void forgetValue(Value *V);
 
-    /// \brief Called when the client has changed the disposition of values in
+    /// Called when the client has changed the disposition of values in
     /// this loop.
     ///
     /// We don't have a way to invalidate per-loop dispositions. Clear and
@@ -1662,7 +1662,7 @@ namespace llvm {
     SCEVUnknown *FirstUnknown;
   };
 
-  /// \brief Analysis pass that exposes the \c ScalarEvolution for a function.
+  /// Analysis pass that exposes the \c ScalarEvolution for a function.
   class ScalarEvolutionAnalysis
       : public AnalysisInfoMixin<ScalarEvolutionAnalysis> {
     friend AnalysisInfoMixin<ScalarEvolutionAnalysis>;
@@ -1674,7 +1674,7 @@ namespace llvm {
     ScalarEvolution run(Function &F, AnalysisManager<Function> &AM);
   };
 
-  /// \brief Printer pass for the \c ScalarEvolutionAnalysis results.
+  /// Printer pass for the \c ScalarEvolutionAnalysis results.
   class ScalarEvolutionPrinterPass
       : public PassInfoMixin<ScalarEvolutionPrinterPass> {
     raw_ostream &OS;
@@ -1720,33 +1720,32 @@ namespace llvm {
     PredicatedScalarEvolution(ScalarEvolution &SE, Loop &L);
     const SCEVUnionPredicate &getUnionPredicate() const;
 
-    /// \brief Returns the SCEV expression of V, in the context of the current
-    /// SCEV predicate.
-    /// The order of transformations applied on the expression of V returned
-    /// by ScalarEvolution is guaranteed to be preserved, even when adding new
-    /// predicates.
+    /// Returns the SCEV expression of V, in the context of the current SCEV
+    /// predicate.  The order of transformations applied on the expression of V
+    /// returned by ScalarEvolution is guaranteed to be preserved, even when
+    /// adding new predicates.
     const SCEV *getSCEV(Value *V);
 
     /// Get the (predicated) backedge count for the analyzed loop.
     const SCEV *getBackedgeTakenCount();
 
-    /// \brief Adds a new predicate.
+    /// Adds a new predicate.
     void addPredicate(const SCEVPredicate &Pred);
 
-    /// \brief Attempts to produce an AddRecExpr for V by adding additional
-    /// SCEV predicates. If we can't transform the expression into an
-    /// AddRecExpr we return nullptr and not add additional SCEV predicates
-    /// to the current context.
+    /// Attempts to produce an AddRecExpr for V by adding additional SCEV
+    /// predicates. If we can't transform the expression into an AddRecExpr we
+    /// return nullptr and not add additional SCEV predicates to the current
+    /// context.
     const SCEVAddRecExpr *getAsAddRec(Value *V);
 
-    /// \brief Proves that V doesn't overflow by adding SCEV predicate.
+    /// Proves that V doesn't overflow by adding SCEV predicate.
     void setNoOverflow(Value *V, SCEVWrapPredicate::IncrementWrapFlags Flags);
 
-    /// \brief Returns true if we've proved that V doesn't wrap by means of a
-    /// SCEV predicate.
+    /// Returns true if we've proved that V doesn't wrap by means of a SCEV
+    /// predicate.
     bool hasNoOverflow(Value *V, SCEVWrapPredicate::IncrementWrapFlags Flags);
 
-    /// \brief Returns the ScalarEvolution analysis used.
+    /// Returns the ScalarEvolution analysis used.
     ScalarEvolution *getSE() const { return &SE; }
 
     /// We need to explicitly define the copy constructor because of FlagsMap.
@@ -1757,8 +1756,8 @@ namespace llvm {
     void print(raw_ostream &OS, unsigned Depth) const;
 
   private:
-    /// \brief Increments the version number of the predicate.
-    /// This needs to be called every time the SCEV predicate changes.
+    /// Increments the version number of the predicate.  This needs to be called
+    /// every time the SCEV predicate changes.
     void updateGeneration();
 
     /// Holds a SCEV and the version number of the SCEV predicate used to
