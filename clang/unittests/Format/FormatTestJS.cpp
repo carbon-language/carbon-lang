@@ -354,6 +354,10 @@ TEST_F(FormatTestJS, AsyncFunctions) {
   verifyFormat("class X {\n"
                "  async asyncMethod() { return fetch(1); }\n"
                "}");
+  verifyFormat("function initialize() {\n"
+               "  // Comment.\n"
+               "  return async.then();\n"
+               "}\n");
 }
 
 TEST_F(FormatTestJS, ArrayLiterals) {
