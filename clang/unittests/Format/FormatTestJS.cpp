@@ -62,6 +62,11 @@ protected:
   }
 };
 
+TEST_F(FormatTestJS, BlockComments) {
+  verifyFormat("/* aaaaaaaaaaaaa */ aaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+}
+
 TEST_F(FormatTestJS, UnderstandsJavaScriptOperators) {
   verifyFormat("a == = b;");
   verifyFormat("a != = b;");
