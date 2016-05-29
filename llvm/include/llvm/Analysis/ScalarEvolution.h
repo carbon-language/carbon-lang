@@ -169,8 +169,8 @@ namespace llvm {
     static bool classof(const SCEV *S);
   };
 
-  /// SCEVPredicate - This class represents an assumption made using SCEV
-  /// expressions which can be checked at run-time.
+  /// This class represents an assumption made using SCEV expressions which can
+  /// be checked at run-time.
   class SCEVPredicate : public FoldingSetNode {
     friend struct FoldingSetTrait<SCEVPredicate>;
 
@@ -237,10 +237,9 @@ namespace llvm {
     }
   };
 
-  /// SCEVEqualPredicate - This class represents an assumption that two SCEV
-  /// expressions are equal, and this can be checked at run-time. We assume
-  /// that the left hand side is a SCEVUnknown and the right hand side a
-  /// constant.
+  /// This class represents an assumption that two SCEV expressions are equal,
+  /// and this can be checked at run-time. We assume that the left hand side is
+  /// a SCEVUnknown and the right hand side a constant.
   class SCEVEqualPredicate final : public SCEVPredicate {
     /// We assume that LHS == RHS, where LHS is a SCEVUnknown and RHS a
     /// constant.
@@ -269,11 +268,10 @@ namespace llvm {
     }
   };
 
-  /// SCEVWrapPredicate - This class represents an assumption made on an AddRec
-  /// expression. Given an affine AddRec expression {a,+,b}, we assume that it
-  /// has the nssw or nusw flags (defined below) in the first X iterations of
-  /// the loop, where X is a SCEV expression returned by
-  /// getPredicatedBackedgeTakenCount).
+  /// This class represents an assumption made on an AddRec expression. Given an
+  /// affine AddRec expression {a,+,b}, we assume that it has the nssw or nusw
+  /// flags (defined below) in the first X iterations of the loop, where X is a
+  /// SCEV expression returned by getPredicatedBackedgeTakenCount).
   ///
   /// Note that this does not imply that X is equal to the backedge taken
   /// count. This means that if we have a nusw predicate for i32 {0,+,1} with a
@@ -368,9 +366,9 @@ namespace llvm {
     }
   };
 
-  /// SCEVUnionPredicate - This class represents a composition of other
-  /// SCEV predicates, and is the class that most clients will interact with.
-  /// This is equivalent to a logical "AND" of all the predicates in the union.
+  /// This class represents a composition of other SCEV predicates, and is the
+  /// class that most clients will interact with.  This is equivalent to a
+  /// logical "AND" of all the predicates in the union.
   class SCEVUnionPredicate final : public SCEVPredicate {
   private:
     typedef DenseMap<const SCEV *, SmallVector<const SCEVPredicate *, 4>>
@@ -488,15 +486,14 @@ namespace llvm {
     /// This SCEV is used to represent unknown trip counts and things.
     std::unique_ptr<SCEVCouldNotCompute> CouldNotCompute;
 
-    /// HasRecMapType - The typedef for HasRecMap.
+    /// The typedef for HasRecMap.
     ///
     typedef DenseMap<const SCEV *, bool> HasRecMapType;
 
-    /// HasRecMap -- This is a cache to record whether a SCEV contains
-    /// any scAddRecExpr.
+    /// This is a cache to record whether a SCEV contains any scAddRecExpr.
     HasRecMapType HasRecMap;
 
-    /// ExprValueMapType - The typedef for ExprValueMap.
+    /// The typedef for ExprValueMap.
     ///
     typedef DenseMap<const SCEV *, SetVector<Value *>> ExprValueMapType;
 
@@ -1105,9 +1102,9 @@ namespace llvm {
     bool isMonotonicPredicate(const SCEVAddRecExpr *LHS,
                               ICmpInst::Predicate Pred, bool &Increasing);
 
-    // Return SCEV no-wrap flags that can be proven based on reasoning
-    // about how poison produced from no-wrap flags on this value
-    // (e.g. a nuw add) would trigger undefined behavior on overflow.
+    /// Return SCEV no-wrap flags that can be proven based on reasoning about
+    /// how poison produced from no-wrap flags on this value (e.g. a nuw add)
+    /// would trigger undefined behavior on overflow.
     SCEV::NoWrapFlags getNoWrapFlagsFromUB(const Value *V);
 
     /// Return true if the SCEV corresponding to \p I is never poison.  Proving
@@ -1157,16 +1154,15 @@ namespace llvm {
     /// return true. For pointer types, this is the pointer-sized integer type.
     Type *getEffectiveSCEVType(Type *Ty) const;
 
-    /// containsAddRecurrence - Return true if the SCEV is a scAddRecExpr or
-    /// it contains scAddRecExpr. The result will be cached in HasRecMap.
+    /// Return true if the SCEV is a scAddRecExpr or it contains
+    /// scAddRecExpr. The result will be cached in HasRecMap.
     ///
     bool containsAddRecurrence(const SCEV *S);
 
-    /// getSCEVValues - Return the Value set from which the SCEV expr is
-    /// generated.
+    /// Return the Value set from which the SCEV expr is generated.
     SetVector<Value *> *getSCEVValues(const SCEV *S);
 
-    /// eraseValueFromMap - Erase Value from ValueExprMap and ExprValueMap.
+    /// Erase Value from ValueExprMap and ExprValueMap.
     void eraseValueFromMap(Value *V);
 
     /// Return a SCEV expression for the full generality of the specified
@@ -1705,60 +1701,78 @@ namespace llvm {
   public:
     PredicatedScalarEvolution(ScalarEvolution &SE, Loop &L);
     const SCEVUnionPredicate &getUnionPredicate() const;
+
     /// \brief Returns the SCEV expression of V, in the context of the current
     /// SCEV predicate.
     /// The order of transformations applied on the expression of V returned
     /// by ScalarEvolution is guaranteed to be preserved, even when adding new
     /// predicates.
     const SCEV *getSCEV(Value *V);
+
     /// Get the (predicated) backedge count for the analyzed loop.
     const SCEV *getBackedgeTakenCount();
+
     /// \brief Adds a new predicate.
     void addPredicate(const SCEVPredicate &Pred);
+
     /// \brief Attempts to produce an AddRecExpr for V by adding additional
     /// SCEV predicates. If we can't transform the expression into an
     /// AddRecExpr we return nullptr and not add additional SCEV predicates
     /// to the current context.
     const SCEVAddRecExpr *getAsAddRec(Value *V);
+
     /// \brief Proves that V doesn't overflow by adding SCEV predicate.
     void setNoOverflow(Value *V, SCEVWrapPredicate::IncrementWrapFlags Flags);
+
     /// \brief Returns true if we've proved that V doesn't wrap by means of a
     /// SCEV predicate.
     bool hasNoOverflow(Value *V, SCEVWrapPredicate::IncrementWrapFlags Flags);
+
     /// \brief Returns the ScalarEvolution analysis used.
     ScalarEvolution *getSE() const { return &SE; }
+
     /// We need to explicitly define the copy constructor because of FlagsMap.
     PredicatedScalarEvolution(const PredicatedScalarEvolution&);
+
     /// Print the SCEV mappings done by the Predicated Scalar Evolution.
     /// The printed text is indented by \p Depth.
     void print(raw_ostream &OS, unsigned Depth) const;
+
   private:
     /// \brief Increments the version number of the predicate.
     /// This needs to be called every time the SCEV predicate changes.
     void updateGeneration();
+
     /// Holds a SCEV and the version number of the SCEV predicate used to
     /// perform the rewrite of the expression.
     typedef std::pair<unsigned, const SCEV *> RewriteEntry;
+
     /// Maps a SCEV to the rewrite result of that SCEV at a certain version
     /// number. If this number doesn't match the current Generation, we will
     /// need to do a rewrite. To preserve the transformation order of previous
     /// rewrites, we will rewrite the previous result instead of the original
     /// SCEV.
     DenseMap<const SCEV *, RewriteEntry> RewriteMap;
+
     /// Records what NoWrap flags we've added to a Value *.
     ValueMap<Value *, SCEVWrapPredicate::IncrementWrapFlags> FlagsMap;
+
     /// The ScalarEvolution analysis.
     ScalarEvolution &SE;
+
     /// The analyzed Loop.
     const Loop &L;
+
     /// The SCEVPredicate that forms our context. We will rewrite all
     /// expressions assuming that this predicate true.
     SCEVUnionPredicate Preds;
+
     /// Marks the version of the SCEV predicate used. When rewriting a SCEV
     /// expression we mark it with the version of the predicate. We use this to
     /// figure out if the predicate has changed from the last rewrite of the
     /// SCEV. If so, we need to perform a new rewrite.
     unsigned Generation;
+
     /// The backedge taken count.
     const SCEV *BackedgeCount;
   };
