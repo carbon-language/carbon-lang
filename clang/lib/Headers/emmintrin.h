@@ -588,19 +588,22 @@ _mm_store_sd(double *__dp, __m128d __a)
 }
 
 static __inline__ void __DEFAULT_FN_ATTRS
-_mm_store1_pd(double *__dp, __m128d __a)
+_mm_store_pd(double *__dp, __m128d __a)
 {
-  struct __mm_store1_pd_struct {
-    double __u[2];
-  } __attribute__((__packed__, __may_alias__));
-  ((struct __mm_store1_pd_struct*)__dp)->__u[0] = __a[0];
-  ((struct __mm_store1_pd_struct*)__dp)->__u[1] = __a[0];
+  *(__m128d*)__dp = __a;
 }
 
 static __inline__ void __DEFAULT_FN_ATTRS
-_mm_store_pd(double *__dp, __m128d __a)
+_mm_store1_pd(double *__dp, __m128d __a)
 {
-  *(__m128d *)__dp = __a;
+  __a = __builtin_shufflevector((__v2df)__a, (__v2df)__a, 0, 0);
+  _mm_store_pd(__dp, __a);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm_store_pd1(double *__dp, __m128d __a)
+{
+  return _mm_store1_pd(__dp, __a);
 }
 
 static __inline__ void __DEFAULT_FN_ATTRS
