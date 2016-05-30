@@ -3255,11 +3255,10 @@ define void @test_mm_storeu_pd(double *%a0, <2 x double> %a1) {
 ; X64:       # BB#0:
 ; X64-NEXT:    movups %xmm0, (%rdi)
 ; X64-NEXT:    retq
-  %arg0 = bitcast double* %a0 to i8*
-  call void @llvm.x86.sse2.storeu.pd(i8* %arg0, <2 x double> %a1)
+  %arg0 = bitcast double* %a0 to <2 x double>*
+  store <2 x double> %a1, <2 x double>* %arg0, align 1
   ret void
 }
-declare void @llvm.x86.sse2.storeu.pd(i8*, <2 x double>) nounwind
 
 define void @test_mm_storeu_si128(<2 x i64> *%a0, <2 x i64> %a1) {
 ; X32-LABEL: test_mm_storeu_si128:
@@ -3272,12 +3271,9 @@ define void @test_mm_storeu_si128(<2 x i64> *%a0, <2 x i64> %a1) {
 ; X64:       # BB#0:
 ; X64-NEXT:    movups %xmm0, (%rdi)
 ; X64-NEXT:    retq
-  %arg0 = bitcast <2 x i64>* %a0 to i8*
-  %arg1 = bitcast <2 x i64> %a1 to <16 x i8>
-  call void @llvm.x86.sse2.storeu.dq(i8* %arg0, <16 x i8> %arg1)
+  store <2 x i64> %a1, <2 x i64>* %a0, align 1
   ret void
 }
-declare void @llvm.x86.sse2.storeu.dq(i8*, <16 x i8>) nounwind
 
 define void @test_mm_stream_pd(double *%a0, <2 x double> %a1) {
 ; X32-LABEL: test_mm_stream_pd:
