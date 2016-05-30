@@ -6411,6 +6411,12 @@ __m512i test_mm512_mask_cvtps_epu32 (__m512i __W, __mmask16 __U, __m512 __A)
   // CHECK: @llvm.x86.avx512.mask.cvtps2udq.512
   return _mm512_mask_cvtps_epu32( __W, __U, __A);
 }
+__m512i test_mm512_maskz_cvtps_epu32 (__mmask16 __U, __m512 __A)
+{
+  // CHECK-LABEL: @test_mm512_maskz_cvtps_epu32
+  // CHECK: @llvm.x86.avx512.mask.cvtps2udq.512
+  return _mm512_maskz_cvtps_epu32( __U, __A);
+}
 
 __m512d test_mm512_mask_max_pd (__m512d __W, __mmask8 __U, __m512d __A, __m512d __B)
 {
