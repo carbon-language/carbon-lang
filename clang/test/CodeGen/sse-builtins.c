@@ -346,7 +346,7 @@ __m128 test_mm_load_ps1(float* y) {
 
 __m128 test_mm_load_ss(float* y) {
   // CHECK-LABEL: test_mm_load_ss
-  // CHECK: load float, float* {{.*}}, align 1
+  // CHECK: load float, float* {{.*}}, align 1{{$}}
   // CHECK: insertelement <4 x float> undef, float %{{.*}}, i32 0
   // CHECK: insertelement <4 x float> %{{.*}}, float 0.000000e+00, i32 1
   // CHECK: insertelement <4 x float> %{{.*}}, float 0.000000e+00, i32 2
@@ -389,7 +389,7 @@ __m128 test_mm_loadr_ps(float* A) {
 
 __m128 test_mm_loadu_ps(float* A) {
   // CHECK-LABEL: test_mm_loadu_ps
-  // CHECK: load <4 x float>, <4 x float>* %{{.*}}, align 1
+  // CHECK: load <4 x float>, <4 x float>* %{{.*}}, align 1{{$}}
   return _mm_loadu_ps(A);
 }
 
