@@ -1,3 +1,5 @@
+// REQUIRES: arm-registered-target,x86-registered-target
+
 // RUN: %clang_cc1 -triple thumbv7-windows -S -emit-llvm %s -o - | FileCheck %s -check-prefix CHECK-COFF
 // RUN: %clang_cc1 -triple i686-windows -S -emit-llvm %s -o - | FileCheck %s -check-prefix CHECK-COFF
 // RUN: %clang_cc1 -triple x86_64-windows -S -emit-llvm %s -o - | FileCheck %s -check-prefix CHECK-COFF
