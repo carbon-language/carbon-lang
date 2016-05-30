@@ -3147,7 +3147,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   // FIXME: We set the section explicitly to avoid a bug in ld64 224.1.
   // Without it LLVM can merge the string with a non unnamed_addr one during
   // LTO.  Doing that changes the section it ends in, which surprises ld64.
-  if (getTarget().getTriple().getObjectFormat() == llvm::Triple::MachO)
+  if (getTarget().getTriple().isOSBinFormatMachO())
     GV->setSection(isUTF16 ? "__TEXT,__ustring"
                            : "__TEXT,__cstring,cstring_literals");
 
