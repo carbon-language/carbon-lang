@@ -259,13 +259,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                          llvm_x86mmx_ty], [IntrNoMem]>;
 }
 
-// SIMD store ops
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_sse_storeu_ps : GCCBuiltin<"__builtin_ia32_storeups">,
-              Intrinsic<[], [llvm_ptr_ty,
-                         llvm_v4f32_ty], [IntrArgMemOnly]>;
-}
-
 // Cacheability support ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_sfence : GCCBuiltin<"__builtin_ia32_sfence">,
@@ -523,16 +516,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_x86mmx_ty], [llvm_v2f64_ty], [IntrNoMem]>;
   def int_x86_sse_cvtpi2pd : GCCBuiltin<"__builtin_ia32_cvtpi2pd">,
               Intrinsic<[llvm_v2f64_ty], [llvm_x86mmx_ty], [IntrNoMem]>;
-}
-
-// SIMD store ops
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_sse2_storeu_pd : GCCBuiltin<"__builtin_ia32_storeupd">,
-              Intrinsic<[], [llvm_ptr_ty,
-                         llvm_v2f64_ty], [IntrArgMemOnly]>;
-  def int_x86_sse2_storeu_dq : GCCBuiltin<"__builtin_ia32_storedqu">,
-              Intrinsic<[], [llvm_ptr_ty,
-                         llvm_v16i8_ty], [IntrArgMemOnly]>;
 }
 
 // Misc.
@@ -1936,16 +1919,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_ldu_dq_256 : GCCBuiltin<"__builtin_ia32_lddqu256">,
         Intrinsic<[llvm_v32i8_ty], [llvm_ptr_ty], [IntrReadMem]>;
-}
-
-// SIMD store ops
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx_storeu_pd_256 : GCCBuiltin<"__builtin_ia32_storeupd256">,
-        Intrinsic<[], [llvm_ptr_ty, llvm_v4f64_ty], [IntrArgMemOnly]>;
-  def int_x86_avx_storeu_ps_256 : GCCBuiltin<"__builtin_ia32_storeups256">,
-        Intrinsic<[], [llvm_ptr_ty, llvm_v8f32_ty], [IntrArgMemOnly]>;
-  def int_x86_avx_storeu_dq_256 : GCCBuiltin<"__builtin_ia32_storedqu256">,
-        Intrinsic<[], [llvm_ptr_ty, llvm_v32i8_ty], [IntrArgMemOnly]>;
 }
 
 // Conditional load ops

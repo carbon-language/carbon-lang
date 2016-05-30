@@ -191,6 +191,9 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name == "x86.avx2.vextracti128" ||
         Name.startswith("x86.avx.movnt.") ||
         Name == "x86.sse2.storel.dq" ||
+        Name.startswith("x86.sse.storeu.") ||
+        Name.startswith("x86.sse2.storeu.") ||
+        Name.startswith("x86.avx.storeu.") ||
         Name == "x86.sse42.crc32.64.8" ||
         Name.startswith("x86.avx.vbroadcast.s") ||
         Name.startswith("x86.sse2.psll.dq") ||
@@ -438,6 +441,20 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                                         PointerType::getUnqual(Elt->getType()),
                                         "cast");
       Builder.CreateAlignedStore(Elt, BC, 1);
+
+      // Remove intrinsic.
+      CI->eraseFromParent();
+      return;
+    } else if (Name.startswith("llvm.x86.sse.storeu.") ||
+               Name.startswith("llvm.x86.sse2.storeu.") ||
+               Name.startswith("llvm.x86.avx.storeu.")) {
+      Value *Arg0 = CI->getArgOperand(0);
+      Value *Arg1 = CI->getArgOperand(1);
+
+      Arg0 = Builder.CreateBitCast(Arg0,
+                                   PointerType::getUnqual(Arg1->getType()),
+                                   "cast");
+      Builder.CreateAlignedStore(Arg1, Arg0, 1);
 
       // Remove intrinsic.
       CI->eraseFromParent();

@@ -365,3 +365,19 @@ define <4 x i64> @test_x86_avx2_pmovzxwq(<8 x i16> %a0) {
   ret <4 x i64> %res
 }
 declare <4 x i64> @llvm.x86.avx2.pmovzxwq(<8 x i16>) nounwind readnone
+
+; This is checked here because the execution dependency fix pass makes it hard to test in AVX mode since we don't have 256-bit integer instructions
+define void @test_x86_avx_storeu_dq_256(i8* %a0, <32 x i8> %a1) {
+  ; add operation forces the execution domain.
+; CHECK-LABEL: test_x86_avx_storeu_dq_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    vpaddb LCPI33_0, %ymm0, %ymm0
+; CHECK-NEXT:    vmovdqu %ymm0, (%eax)
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retl
+  %a2 = add <32 x i8> %a1, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
+  call void @llvm.x86.avx.storeu.dq.256(i8* %a0, <32 x i8> %a2)
+  ret void
+}
+declare void @llvm.x86.avx.storeu.dq.256(i8*, <32 x i8>) nounwind
