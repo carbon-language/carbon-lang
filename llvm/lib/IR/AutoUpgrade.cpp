@@ -185,38 +185,23 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name == "x86.sse2.cvtps2pd" ||
         Name == "x86.avx.cvtdq2.pd.256" ||
         Name == "x86.avx.cvt.ps2.pd.256" ||
-        Name == "x86.avx.vinsertf128.pd.256" ||
-        Name == "x86.avx.vinsertf128.ps.256" ||
-        Name == "x86.avx.vinsertf128.si.256" ||
+        Name.startswith("x86.avx.vinsertf128.") ||
         Name == "x86.avx2.vinserti128" ||
-        Name == "x86.avx.vextractf128.pd.256" ||
-        Name == "x86.avx.vextractf128.ps.256" ||
-        Name == "x86.avx.vextractf128.si.256" ||
+        Name.startswith("x86.avx.vextractf128.") ||
         Name == "x86.avx2.vextracti128" ||
-        Name == "x86.avx.movnt.dq.256" ||
-        Name == "x86.avx.movnt.pd.256" ||
-        Name == "x86.avx.movnt.ps.256" ||
+        Name.startswith("x86.avx.movnt.") ||
         Name == "x86.sse2.storel.dq" ||
         Name == "x86.sse42.crc32.64.8" ||
-        Name == "x86.avx.vbroadcast.ss" ||
-        Name == "x86.avx.vbroadcast.ss.256" ||
-        Name == "x86.avx.vbroadcast.sd.256" ||
-        Name == "x86.sse2.psll.dq" ||
-        Name == "x86.sse2.psrl.dq" ||
-        Name == "x86.avx2.psll.dq" ||
-        Name == "x86.avx2.psrl.dq" ||
-        Name == "x86.sse2.psll.dq.bs" ||
-        Name == "x86.sse2.psrl.dq.bs" ||
-        Name == "x86.avx2.psll.dq.bs" ||
-        Name == "x86.avx2.psrl.dq.bs" ||
+        Name.startswith("x86.avx.vbroadcast.s") ||
+        Name.startswith("x86.sse2.psll.dq") ||
+        Name.startswith("x86.sse2.psrl.dq") ||
+        Name.startswith("x86.avx2.psll.dq") ||
+        Name.startswith("x86.avx2.psrl.dq") ||
         Name == "x86.sse41.pblendw" ||
-        Name == "x86.sse41.blendpd" ||
-        Name == "x86.sse41.blendps" ||
-        Name == "x86.avx.blend.pd.256" ||
-        Name == "x86.avx.blend.ps.256" ||
+        Name.startswith("x86.sse41.blendp") ||
+        Name.startswith("x86.avx.blend.p") ||
         Name == "x86.avx2.pblendw" ||
-        Name == "x86.avx2.pblendd.128" ||
-        Name == "x86.avx2.pblendd.256" ||
+        Name.startswith("x86.avx2.pblendd.") ||
         Name == "x86.avx2.vbroadcasti128" ||
         Name == "x86.xop.vpcmov" ||
         (Name.startswith("x86.xop.vpcom") && F->arg_size() == 2)) {
@@ -422,9 +407,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         Rep = Builder.CreateSIToFP(Rep, DstTy, "cvtdq2pd");
       else
         Rep = Builder.CreateFPExt(Rep, DstTy, "cvtps2pd");
-    } else if (Name == "llvm.x86.avx.movnt.dq.256" ||
-               Name == "llvm.x86.avx.movnt.ps.256" ||
-               Name == "llvm.x86.avx.movnt.pd.256") {
+    } else if (Name.startswith("llvm.x86.avx.movnt.")) {
       IRBuilder<> Builder(C);
       Builder.SetInsertPoint(CI->getParent(), CI->getIterator());
 
@@ -601,13 +584,10 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       unsigned Shift = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
       Rep = UpgradeX86PSRLDQIntrinsics(Builder, C, CI->getArgOperand(0), Shift);
     } else if (Name == "llvm.x86.sse41.pblendw" ||
-               Name == "llvm.x86.sse41.blendpd" ||
-               Name == "llvm.x86.sse41.blendps" ||
-               Name == "llvm.x86.avx.blend.pd.256" ||
-               Name == "llvm.x86.avx.blend.ps.256" ||
+               Name.startswith("llvm.x86.sse41.blendp") ||
+               Name.startswith("llvm.x86.avx.blend.p") ||
                Name == "llvm.x86.avx2.pblendw" ||
-               Name == "llvm.x86.avx2.pblendd.128" ||
-               Name == "llvm.x86.avx2.pblendd.256") {
+               Name.startswith("llvm.x86.avx2.pblendd.")) {
       Value *Op0 = CI->getArgOperand(0);
       Value *Op1 = CI->getArgOperand(1);
       unsigned Imm = cast <ConstantInt>(CI->getArgOperand(2))->getZExtValue();
@@ -621,9 +601,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       }
 
       Rep = Builder.CreateShuffleVector(Op0, Op1, ConstantVector::get(Idxs));
-    } else if (Name == "llvm.x86.avx.vinsertf128.pd.256" ||
-               Name == "llvm.x86.avx.vinsertf128.ps.256" ||
-               Name == "llvm.x86.avx.vinsertf128.si.256" ||
+    } else if (Name.startswith("llvm.x86.avx.vinsertf128.") ||
                Name == "llvm.x86.avx2.vinserti128") {
       Value *Op0 = CI->getArgOperand(0);
       Value *Op1 = CI->getArgOperand(1);
@@ -667,9 +645,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         Idxs2.push_back(Builder.getInt32(Idx));
       }
       Rep = Builder.CreateShuffleVector(Op0, Rep, ConstantVector::get(Idxs2));
-    } else if (Name == "llvm.x86.avx.vextractf128.pd.256" ||
-               Name == "llvm.x86.avx.vextractf128.ps.256" ||
-               Name == "llvm.x86.avx.vextractf128.si.256" ||
+    } else if (Name.startswith("llvm.x86.avx.vextractf128.") ||
                Name == "llvm.x86.avx2.vextracti128") {
       Value *Op0 = CI->getArgOperand(0);
       unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
