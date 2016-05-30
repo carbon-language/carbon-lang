@@ -651,8 +651,7 @@ void test_mm_store_ps(float* x, __m128 y) {
 void test_mm_store_ps1(float* x, __m128 y) {
   // CHECK-LABEL: test_mm_store_ps1
   // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> %{{.*}}, <4 x i32> zeroinitializer
-  // CHECK: store <4 x float> %{{.*}}, <4 x float>* %{{.*}}, align 1{{$}}
-  // CHECK-NEXT: ret void
+  // CHECK: store <4 x float> %{{.*}}, <4 x float>* %{{.*}}, align 16
   _mm_store_ps1(x, y);
 }
 
@@ -666,8 +665,7 @@ void test_mm_store_ss(float* x, __m128 y) {
 void test_mm_store1_ps(float* x, __m128 y) {
   // CHECK-LABEL: test_mm_store1_ps
   // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> %{{.*}}, <4 x i32> zeroinitializer
-  // CHECK: store <4 x float> %{{.*}}, <4 x float>* %{{.*}}, align 1{{$}}
-  // CHECK-NEXT: ret void
+  // CHECK: store <4 x float> %{{.*}}, <4 x float>* %{{.*}}, align 16
   _mm_store1_ps(x, y);
 }
 
