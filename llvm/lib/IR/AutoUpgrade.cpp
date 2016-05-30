@@ -408,9 +408,6 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       else
         Rep = Builder.CreateFPExt(Rep, DstTy, "cvtps2pd");
     } else if (Name.startswith("llvm.x86.avx.movnt.")) {
-      IRBuilder<> Builder(C);
-      Builder.SetInsertPoint(CI->getParent(), CI->getIterator());
-
       Module *M = F->getParent();
       SmallVector<Metadata *, 1> Elts;
       Elts.push_back(
@@ -424,17 +421,13 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Value *BC = Builder.CreateBitCast(Arg0,
                                         PointerType::getUnqual(Arg1->getType()),
                                         "cast");
-      StoreInst *SI = Builder.CreateStore(Arg1, BC);
+      StoreInst *SI = Builder.CreateAlignedStore(Arg1, BC, 32);
       SI->setMetadata(M->getMDKindID("nontemporal"), Node);
-      SI->setAlignment(32);
 
       // Remove intrinsic.
       CI->eraseFromParent();
       return;
     } else if (Name == "llvm.x86.sse2.storel.dq") {
-      IRBuilder<> Builder(C);
-      Builder.SetInsertPoint(CI->getParent(), CI->getIterator());
-
       Value *Arg0 = CI->getArgOperand(0);
       Value *Arg1 = CI->getArgOperand(1);
 
@@ -444,8 +437,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Value *BC = Builder.CreateBitCast(Arg0,
                                         PointerType::getUnqual(Elt->getType()),
                                         "cast");
-      StoreInst *SI = Builder.CreateStore(Elt, BC);
-      SI->setAlignment(1);
+      Builder.CreateAlignedStore(Elt, BC, 1);
 
       // Remove intrinsic.
       CI->eraseFromParent();
