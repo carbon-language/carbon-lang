@@ -2386,13 +2386,19 @@ _mm256_store_ps(float *__p, __m256 __a)
 static __inline void __DEFAULT_FN_ATTRS
 _mm256_storeu_pd(double *__p, __m256d __a)
 {
-  __builtin_ia32_storeupd256(__p, (__v4df)__a);
+  struct __storeu_pd {
+    __m256d __v;
+  } __attribute__((__packed__, __may_alias__));
+  ((struct __storeu_pd*)__p)->__v = __a;
 }
 
 static __inline void __DEFAULT_FN_ATTRS
 _mm256_storeu_ps(float *__p, __m256 __a)
 {
-  __builtin_ia32_storeups256(__p, (__v8sf)__a);
+  struct __storeu_ps {
+    __m256 __v;
+  } __attribute__((__packed__, __may_alias__));
+  ((struct __storeu_ps*)__p)->__v = __a;
 }
 
 static __inline void __DEFAULT_FN_ATTRS
@@ -2404,7 +2410,10 @@ _mm256_store_si256(__m256i *__p, __m256i __a)
 static __inline void __DEFAULT_FN_ATTRS
 _mm256_storeu_si256(__m256i *__p, __m256i __a)
 {
-  __builtin_ia32_storedqu256((char *)__p, (__v32qi)__a);
+  struct __storeu_si256 {
+    __m256i __v;
+  } __attribute__((__packed__, __may_alias__));
+  ((struct __storeu_si256*)__p)->__v = __a;
 }
 
 /* Conditional load ops */
@@ -2842,9 +2851,9 @@ _mm256_storeu2_m128(float *__addr_hi, float *__addr_lo, __m256 __a)
   __m128 __v128;
 
   __v128 = _mm256_castps256_ps128(__a);
-  __builtin_ia32_storeups(__addr_lo, __v128);
+  _mm_storeu_ps(__addr_lo, __v128);
   __v128 = _mm256_extractf128_ps(__a, 1);
-  __builtin_ia32_storeups(__addr_hi, __v128);
+  _mm_storeu_ps(__addr_hi, __v128);
 }
 
 static __inline void __DEFAULT_FN_ATTRS
@@ -2853,9 +2862,9 @@ _mm256_storeu2_m128d(double *__addr_hi, double *__addr_lo, __m256d __a)
   __m128d __v128;
 
   __v128 = _mm256_castpd256_pd128(__a);
-  __builtin_ia32_storeupd(__addr_lo, __v128);
+  _mm_storeu_pd(__addr_lo, __v128);
   __v128 = _mm256_extractf128_pd(__a, 1);
-  __builtin_ia32_storeupd(__addr_hi, __v128);
+  _mm_storeu_pd(__addr_hi, __v128);
 }
 
 static __inline void __DEFAULT_FN_ATTRS
@@ -2864,9 +2873,9 @@ _mm256_storeu2_m128i(__m128i *__addr_hi, __m128i *__addr_lo, __m256i __a)
   __m128i __v128;
 
   __v128 = _mm256_castsi256_si128(__a);
-  __builtin_ia32_storedqu((char *)__addr_lo, (__v16qi)__v128);
+  _mm_storeu_si128(__addr_lo, __v128);
   __v128 = _mm256_extractf128_si256(__a, 1);
-  __builtin_ia32_storedqu((char *)__addr_hi, (__v16qi)__v128);
+  _mm_storeu_si128(__addr_hi, __v128);
 }
 
 static __inline __m256 __DEFAULT_FN_ATTRS

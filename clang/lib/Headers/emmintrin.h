@@ -606,7 +606,10 @@ _mm_store_pd(double *__dp, __m128d __a)
 static __inline__ void __DEFAULT_FN_ATTRS
 _mm_storeu_pd(double *__dp, __m128d __a)
 {
-  __builtin_ia32_storeupd(__dp, (__v2df)__a);
+  struct __storeu_pd {
+    __m128d __v;
+  } __attribute__((__packed__, __may_alias__));
+  ((struct __storeu_pd*)__dp)->__v = __a;
 }
 
 static __inline__ void __DEFAULT_FN_ATTRS
@@ -2177,7 +2180,10 @@ _mm_store_si128(__m128i *__p, __m128i __b)
 static __inline__ void __DEFAULT_FN_ATTRS
 _mm_storeu_si128(__m128i *__p, __m128i __b)
 {
-  __builtin_ia32_storedqu((char *)__p, (__v16qi)__b);
+  struct __storeu_si128 {
+    __m128i __v;
+  } __attribute__((__packed__, __may_alias__));
+  ((struct __storeu_si128*)__p)->__v = __b;
 }
 
 static __inline__ void __DEFAULT_FN_ATTRS
