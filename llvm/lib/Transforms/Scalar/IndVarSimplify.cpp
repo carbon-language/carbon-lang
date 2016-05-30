@@ -2101,6 +2101,9 @@ void IndVarSimplify::sinkUnusedInvariants(Loop *L) {
 //===----------------------------------------------------------------------===//
 
 bool IndVarSimplify::run(Loop *L) {
+  // We need (and expect!) the incoming loop to be in LCSSA.
+  assert(L->isRecursivelyLCSSAForm(*DT) && "LCSSA required to run indvars!");
+
   // If LoopSimplify form is not available, stay out of trouble. Some notes:
   //  - LSR currently only supports LoopSimplify-form loops. Indvars'
   //    canonicalization can be a pessimization without LSR to "clean up"
