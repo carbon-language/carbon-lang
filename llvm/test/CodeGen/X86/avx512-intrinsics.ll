@@ -972,62 +972,6 @@ define i16 @test_vptestmd(<16 x i32> %a0, <16 x i32> %a1, i16 %m) {
 }
 declare i16 @llvm.x86.avx512.ptestm.d.512(<16 x i32>, <16 x i32>, i16)
 
-define void @test_store1(<16 x float> %data, i8* %ptr, i8* %ptr2, i16 %mask) {
-; CHECK-LABEL: test_store1:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vmovups %zmm0, (%rdi) {%k1}
-; CHECK-NEXT:    vmovups %zmm0, (%rsi)
-; CHECK-NEXT:    retq
-  call void @llvm.x86.avx512.mask.storeu.ps.512(i8* %ptr, <16 x float> %data, i16 %mask)
-  call void @llvm.x86.avx512.mask.storeu.ps.512(i8* %ptr2, <16 x float> %data, i16 -1)
-  ret void
-}
-
-declare void @llvm.x86.avx512.mask.storeu.ps.512(i8*, <16 x float>, i16 )
-
-define void @test_store2(<8 x double> %data, i8* %ptr, i8* %ptr2, i8 %mask) {
-; CHECK-LABEL: test_store2:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vmovupd %zmm0, (%rdi) {%k1}
-; CHECK-NEXT:    vmovupd %zmm0, (%rsi)
-; CHECK-NEXT:    retq
-  call void @llvm.x86.avx512.mask.storeu.pd.512(i8* %ptr, <8 x double> %data, i8 %mask)
-  call void @llvm.x86.avx512.mask.storeu.pd.512(i8* %ptr2, <8 x double> %data, i8 -1)
-  ret void
-}
-
-declare void @llvm.x86.avx512.mask.storeu.pd.512(i8*, <8 x double>, i8)
-
-define void @test_mask_store_aligned_ps(<16 x float> %data, i8* %ptr, i8* %ptr2, i16 %mask) {
-; CHECK-LABEL: test_mask_store_aligned_ps:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vmovaps %zmm0, (%rdi) {%k1}
-; CHECK-NEXT:    vmovaps %zmm0, (%rsi)
-; CHECK-NEXT:    retq
-  call void @llvm.x86.avx512.mask.store.ps.512(i8* %ptr, <16 x float> %data, i16 %mask)
-  call void @llvm.x86.avx512.mask.store.ps.512(i8* %ptr2, <16 x float> %data, i16 -1)
-  ret void
-}
-
-declare void @llvm.x86.avx512.mask.store.ps.512(i8*, <16 x float>, i16 )
-
-define void @test_mask_store_aligned_pd(<8 x double> %data, i8* %ptr, i8* %ptr2, i8 %mask) {
-; CHECK-LABEL: test_mask_store_aligned_pd:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vmovapd %zmm0, (%rdi) {%k1}
-; CHECK-NEXT:    vmovapd %zmm0, (%rsi)
-; CHECK-NEXT:    retq
-  call void @llvm.x86.avx512.mask.store.pd.512(i8* %ptr, <8 x double> %data, i8 %mask)
-  call void @llvm.x86.avx512.mask.store.pd.512(i8* %ptr2, <8 x double> %data, i8 -1)
-  ret void
-}
-
-declare void @llvm.x86.avx512.mask.store.pd.512(i8*, <8 x double>, i8)
-
 define <16 x float> @test_mask_load_aligned_ps(<16 x float> %data, i8* %ptr, i16 %mask) {
 ; CHECK-LABEL: test_mask_load_aligned_ps:
 ; CHECK:       ## BB#0:
@@ -1042,62 +986,6 @@ define <16 x float> @test_mask_load_aligned_ps(<16 x float> %data, i8* %ptr, i16
   %res2 = call <16 x float> @llvm.x86.avx512.mask.load.ps.512(i8* %ptr, <16 x float> zeroinitializer, i16 %mask)
   %res4 = fadd <16 x float> %res2, %res1
   ret <16 x float> %res4
-}
-
-declare void @llvm.x86.avx512.mask.storeu.q.512(i8*, <8 x i64>, i8)
-
-define void@test_int_x86_avx512_mask_storeu_q_512(i8* %ptr1, i8* %ptr2, <8 x i64> %x1, i8 %x2) {
-; CHECK-LABEL: test_int_x86_avx512_mask_storeu_q_512:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vmovdqu64 %zmm0, (%rdi) {%k1}
-; CHECK-NEXT:    vmovdqu64 %zmm0, (%rsi)
-; CHECK-NEXT:    retq
-  call void @llvm.x86.avx512.mask.storeu.q.512(i8* %ptr1, <8 x i64> %x1, i8 %x2)
-  call void @llvm.x86.avx512.mask.storeu.q.512(i8* %ptr2, <8 x i64> %x1, i8 -1)
-  ret void
-}
-
-declare void @llvm.x86.avx512.mask.storeu.d.512(i8*, <16 x i32>, i16)
-
-define void@test_int_x86_avx512_mask_storeu_d_512(i8* %ptr1, i8* %ptr2, <16 x i32> %x1, i16 %x2) {
-; CHECK-LABEL: test_int_x86_avx512_mask_storeu_d_512:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vmovdqu32 %zmm0, (%rdi) {%k1}
-; CHECK-NEXT:    vmovdqu32 %zmm0, (%rsi)
-; CHECK-NEXT:    retq
-  call void @llvm.x86.avx512.mask.storeu.d.512(i8* %ptr1, <16 x i32> %x1, i16 %x2)
-  call void @llvm.x86.avx512.mask.storeu.d.512(i8* %ptr2, <16 x i32> %x1, i16 -1)
-  ret void
-}
-
-declare void @llvm.x86.avx512.mask.store.q.512(i8*, <8 x i64>, i8)
-
-define void@test_int_x86_avx512_mask_store_q_512(i8* %ptr1, i8* %ptr2, <8 x i64> %x1, i8 %x2) {
-; CHECK-LABEL: test_int_x86_avx512_mask_store_q_512:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vmovdqa64 %zmm0, (%rdi) {%k1}
-; CHECK-NEXT:    vmovdqa64 %zmm0, (%rsi)
-; CHECK-NEXT:    retq
-  call void @llvm.x86.avx512.mask.store.q.512(i8* %ptr1, <8 x i64> %x1, i8 %x2)
-  call void @llvm.x86.avx512.mask.store.q.512(i8* %ptr2, <8 x i64> %x1, i8 -1)
-  ret void
-}
-
-declare void @llvm.x86.avx512.mask.store.d.512(i8*, <16 x i32>, i16)
-
-define void@test_int_x86_avx512_mask_store_d_512(i8* %ptr1, i8* %ptr2, <16 x i32> %x1, i16 %x2) {
-; CHECK-LABEL: test_int_x86_avx512_mask_store_d_512:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vmovdqa32 %zmm0, (%rdi) {%k1}
-; CHECK-NEXT:    vmovdqa32 %zmm0, (%rsi)
-; CHECK-NEXT:    retq
-  call void @llvm.x86.avx512.mask.store.d.512(i8* %ptr1, <16 x i32> %x1, i16 %x2)
-  call void @llvm.x86.avx512.mask.store.d.512(i8* %ptr2, <16 x i32> %x1, i16 -1)
-  ret void
 }
 
 declare <16 x float> @llvm.x86.avx512.mask.load.ps.512(i8*, <16 x float>, i16)

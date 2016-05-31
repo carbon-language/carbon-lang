@@ -194,6 +194,16 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name.startswith("x86.sse.storeu.") ||
         Name.startswith("x86.sse2.storeu.") ||
         Name.startswith("x86.avx.storeu.") ||
+        Name.startswith("x86.avx512.mask.storeu.p") ||
+        Name.startswith("x86.avx512.mask.storeu.b.") ||
+        Name.startswith("x86.avx512.mask.storeu.w.") ||
+        Name.startswith("x86.avx512.mask.storeu.d.") ||
+        Name.startswith("x86.avx512.mask.storeu.q.") ||
+        Name.startswith("x86.avx512.mask.store.p") ||
+        Name.startswith("x86.avx512.mask.store.b.") ||
+        Name.startswith("x86.avx512.mask.store.w.") ||
+        Name.startswith("x86.avx512.mask.store.d.") ||
+        Name.startswith("x86.avx512.mask.store.q.") ||
         Name == "x86.sse42.crc32.64.8" ||
         Name.startswith("x86.avx.vbroadcast.s") ||
         Name.startswith("x86.sse2.psll.dq") ||
@@ -358,6 +368,40 @@ static Value *UpgradeX86PSRLDQIntrinsics(IRBuilder<> &Builder, LLVMContext &C,
   return Builder.CreateBitCast(Res, ResultTy, "cast");
 }
 
+static Value *UpgradeMaskedStore(IRBuilder<> &Builder, LLVMContext &C,
+                                 Value *Ptr, Value *Data, Value *Mask,
+                                 bool Aligned) {
+  // Cast the pointer to the right type.
+  Ptr = Builder.CreateBitCast(Ptr,
+                              llvm::PointerType::getUnqual(Data->getType()));
+  unsigned Align =
+    Aligned ? cast<VectorType>(Data->getType())->getBitWidth() / 8 : 1;
+
+  // If the mask is all ones just emit a regular store.
+  if (const auto *C = dyn_cast<Constant>(Mask))
+    if (C->isAllOnesValue())
+      return Builder.CreateAlignedStore(Data, Ptr, Align);
+
+  // Convert the mask from an integer type to a vector of i1.
+  unsigned NumElts = Data->getType()->getVectorNumElements();
+  llvm::VectorType *MaskTy = llvm::VectorType::get(Builder.getInt1Ty(),
+                             cast<IntegerType>(Mask->getType())->getBitWidth());
+  Mask = Builder.CreateBitCast(Mask, MaskTy);
+
+  // If we have less than 8 elements, then the starting mask was an i8 and
+  // we need to extract down to the right number of elements.
+  if (NumElts < 8) {
+    int Indices[4];
+    for (unsigned i = 0; i != NumElts; ++i)
+      Indices[i] = i;
+    Mask = Builder.CreateShuffleVector(Mask, Mask,
+                                           makeArrayRef(Indices, NumElts),
+                                           "extract");
+  }
+
+  return Builder.CreateMaskedStore(Data, Ptr, Align, Mask);
+}
+
 // UpgradeIntrinsicCall - Upgrade a call to an old intrinsic to be a call the
 // upgraded intrinsic. All argument and return casting must be provided in
 // order to seamlessly integrate with existing context.
@@ -455,6 +499,28 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                                    PointerType::getUnqual(Arg1->getType()),
                                    "cast");
       Builder.CreateAlignedStore(Arg1, Arg0, 1);
+
+      // Remove intrinsic.
+      CI->eraseFromParent();
+      return;
+    } else if (Name.startswith("llvm.x86.avx512.mask.storeu.p") ||
+               Name.startswith("llvm.x86.avx512.mask.storeu.b.") ||
+               Name.startswith("llvm.x86.avx512.mask.storeu.w.") ||
+               Name.startswith("llvm.x86.avx512.mask.storeu.d.") ||
+               Name.startswith("llvm.x86.avx512.mask.storeu.q.")) {
+      UpgradeMaskedStore(Builder, C, CI->getArgOperand(0), CI->getArgOperand(1),
+                         CI->getArgOperand(2), /*Aligned*/false);
+
+      // Remove intrinsic.
+      CI->eraseFromParent();
+      return;
+    } else if (Name.startswith("llvm.x86.avx512.mask.store.p") ||
+               Name.startswith("llvm.x86.avx512.mask.store.b.") ||
+               Name.startswith("llvm.x86.avx512.mask.store.w.") ||
+               Name.startswith("llvm.x86.avx512.mask.store.d.") ||
+               Name.startswith("llvm.x86.avx512.mask.store.q.")) {
+      UpgradeMaskedStore(Builder, C, CI->getArgOperand(0), CI->getArgOperand(1),
+                         CI->getArgOperand(2), /*Aligned*/true);
 
       // Remove intrinsic.
       CI->eraseFromParent();
