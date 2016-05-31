@@ -1052,18 +1052,7 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
   if (Magic != COFF::DEBUG_SECTION_MAGIC)
     return error(object_error::parse_failed);
 
-  ArrayRef<uint8_t> BinaryData(reinterpret_cast<const uint8_t *>(Data.data()),
-                               Data.size());
-  ByteStream Stream(BinaryData);
-  CVTypeArray Types;
-  StreamReader Reader(Stream);
-  if (auto EC = Reader.readArray(Types, Reader.getLength())) {
-    consumeError(std::move(EC));
-    W.flush();
-    error(object_error::parse_failed);
-  }
-
-  if (!CVTD.dump(Types)) {
+  if (!CVTD.dump({Data.bytes_begin(), Data.bytes_end()})) {
     W.flush();
     error(object_error::parse_failed);
   }
@@ -1513,18 +1502,7 @@ void llvm::dumpCodeViewMergedTypes(
     Buf.append(R->data(), R->data() + R->size());
   });
   CVTypeDumper CVTD(Writer, opts::CodeViewSubsectionBytes);
-  ArrayRef<uint8_t> BinaryData(reinterpret_cast<const uint8_t *>(Buf.data()),
-                               Buf.size());
-  ByteStream Stream(BinaryData);
-  CVTypeArray Types;
-  StreamReader Reader(Stream);
-  if (auto EC = Reader.readArray(Types, Reader.getLength())) {
-    consumeError(std::move(EC));
-    Writer.flush();
-    error(object_error::parse_failed);
-  }
-
-  if (!CVTD.dump(Types)) {
+  if (!CVTD.dump({Buf.str().bytes_begin(), Buf.str().bytes_end()})) {
     Writer.flush();
     error(object_error::parse_failed);
   }
