@@ -33,6 +33,7 @@ template <> struct MappingTraits<SymbolInfo> {
     io.mapRequired("FilePath", Symbol.FilePath);
     io.mapRequired("LineNumber", Symbol.LineNumber);
     io.mapRequired("Type", Symbol.Type);
+    io.mapRequired("NumOccurrences", Symbol.NumOccurrences);
   }
 };
 
@@ -72,9 +73,10 @@ namespace find_all_symbols {
 
 SymbolInfo::SymbolInfo(llvm::StringRef Name, SymbolKind Type,
                        llvm::StringRef FilePath, int LineNumber,
-                       const std::vector<Context> &Contexts)
+                       const std::vector<Context> &Contexts,
+                       unsigned NumOccurrences)
     : Name(Name), Type(Type), FilePath(FilePath), Contexts(Contexts),
-      LineNumber(LineNumber) {}
+      LineNumber(LineNumber), NumOccurrences(NumOccurrences) {}
 
 llvm::StringRef SymbolInfo::getName() const { return Name; }
 
@@ -87,6 +89,8 @@ const std::vector<SymbolInfo::Context> &SymbolInfo::getContexts() const {
 }
 
 int SymbolInfo::getLineNumber() const { return LineNumber; }
+
+unsigned SymbolInfo::getNumOccurrences() const { return NumOccurrences; }
 
 bool SymbolInfo::operator==(const SymbolInfo &Symbol) const {
   return std::tie(Name, Type, FilePath, LineNumber, Contexts) ==

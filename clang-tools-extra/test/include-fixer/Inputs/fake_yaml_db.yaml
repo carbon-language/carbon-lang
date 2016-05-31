@@ -8,6 +8,7 @@ Contexts:
 FilePath:        foo.h
 LineNumber:      1
 Type:            Class
+NumOccurrences:  1
 ...
 ---
 Name:           bar
@@ -19,4 +20,5 @@ Contexts:
 FilePath:        ../include/bar.h
 LineNumber:      1
 Type:            Class
+NumOccurrences:  1
 ...

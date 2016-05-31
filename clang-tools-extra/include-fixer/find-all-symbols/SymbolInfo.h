@@ -51,7 +51,8 @@ public:
   SymbolInfo() : Type(SymbolKind::Unknown), LineNumber(-1) {}
 
   SymbolInfo(llvm::StringRef Name, SymbolKind Type, llvm::StringRef FilePath,
-             int LineNumber, const std::vector<Context> &Contexts);
+             int LineNumber, const std::vector<Context> &Contexts,
+             unsigned NumOccurrences = 0);
 
   /// \brief Get symbol name.
   llvm::StringRef getName() const;
@@ -67,6 +68,9 @@ public:
 
   /// \brief Get a 1-based line number of the symbol's declaration.
   int getLineNumber() const;
+
+  /// \brief The number of times this symbol was found during an indexing run.
+  unsigned getNumOccurrences() const;
 
   bool operator<(const SymbolInfo &Symbol) const;
 
@@ -99,6 +103,10 @@ private:
 
   /// \brief The 1-based line number of of the symbol's declaration.
   int LineNumber;
+
+  /// \brief The number of times this symbol was found during an indexing
+  /// run. Populated by the reducer and used to rank results.
+  unsigned NumOccurrences;
 };
 
 /// \brief Write SymbolInfos to a stream (YAML format).
