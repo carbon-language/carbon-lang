@@ -78,6 +78,7 @@ void processRangeAccessWorkingSet(uptr PC, uptr Addr, SIZE_T Size,
 void initializeWorkingSet() {
   // The shadow mapping assumes 64 so this cannot be changed.
   CHECK(getFlags()->cache_line_size == 64);
+  registerMemoryFaultHandler();
 }
 
 int finalizeWorkingSet() {

@@ -73,6 +73,18 @@ void processRangeAccess(uptr PC, uptr Addr, int Size, bool IsWrite) {
   }
 }
 
+bool processSignal(int SigNum, void (*Handler)(int), void (**Result)(int)) {
+  if (WhichTool == ESAN_WorkingSet)
+    return processWorkingSetSignal(SigNum, Handler, Result);
+  return true;
+}
+
+bool processSigaction(int SigNum, const void *Act, void *OldAct) {
+  if (WhichTool == ESAN_WorkingSet)
+    return processWorkingSetSigaction(SigNum, Act, OldAct);
+  return true;
+}
+
 #if SANITIZER_DEBUG
 static bool verifyShadowScheme() {
   // Sanity checks for our shadow mapping scheme.
