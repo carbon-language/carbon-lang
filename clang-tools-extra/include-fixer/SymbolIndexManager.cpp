@@ -17,6 +17,37 @@
 namespace clang {
 namespace include_fixer {
 
+using clang::find_all_symbols::SymbolInfo;
+
+/// Sorts and uniques SymbolInfos based on the popularity info in SymbolInfo.
+static void rankByPopularity(std::vector<SymbolInfo> &Symbols) {
+  // First collect occurrences per header file.
+  std::map<llvm::StringRef, unsigned> HeaderPopularity;
+  for (const SymbolInfo &Symbol : Symbols) {
+    unsigned &Popularity = HeaderPopularity[Symbol.getFilePath()];
+    Popularity = std::max(Popularity, Symbol.getNumOccurrences());
+  }
+
+  // Sort by the gathered popularities. Use file name as a tie breaker so we can
+  // deduplicate.
+  std::sort(Symbols.begin(), Symbols.end(),
+            [&](const SymbolInfo &A, const SymbolInfo &B) {
+              auto APop = HeaderPopularity[A.getFilePath()];
+              auto BPop = HeaderPopularity[B.getFilePath()];
+              if (APop != BPop)
+                return APop > BPop;
+              return A.getFilePath() < B.getFilePath();
+            });
+
+  // Deduplicate based on the file name. They will have the same popularity and
+  // we don't want to suggest the same header twice.
+  Symbols.erase(std::unique(Symbols.begin(), Symbols.end(),
+                            [](const SymbolInfo &A, const SymbolInfo &B) {
+                              return A.getFilePath() == B.getFilePath();
+                            }),
+                Symbols.end());
+}
+
 std::vector<std::string>
 SymbolIndexManager::search(llvm::StringRef Identifier) const {
   // The identifier may be fully qualified, so split it and get all the context
@@ -44,6 +75,8 @@ SymbolIndexManager::search(llvm::StringRef Identifier) const {
 
     DEBUG(llvm::dbgs() << "Searching " << Names.back() << "... got "
                        << Symbols.size() << " results...\n");
+
+    rankByPopularity(Symbols);
 
     for (const auto &Symbol : Symbols) {
       // Match the identifier name without qualifier.

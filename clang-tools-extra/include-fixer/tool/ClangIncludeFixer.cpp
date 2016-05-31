@@ -98,11 +98,11 @@ createSymbolIndexManager(StringRef FilePath) {
       std::vector<std::string> Headers;
       SmallVector<StringRef, 4> CommaSplits;
       Split.second.split(CommaSplits, ",");
-      for (StringRef Header : CommaSplits)
+      for (size_t I = 0, E = CommaSplits.size(); I != E; ++I)
         Symbols.push_back(find_all_symbols::SymbolInfo(
             Split.first.trim(),
-            find_all_symbols::SymbolInfo::SymbolKind::Unknown, Header.trim(), 1,
-            {}));
+            find_all_symbols::SymbolInfo::SymbolKind::Unknown,
+            CommaSplits[I].trim(), 1, {}, /*NumOccurrences=*/E - I));
     }
     SymbolIndexMgr->addSymbolIndex(
         llvm::make_unique<include_fixer::InMemorySymbolIndex>(Symbols));
