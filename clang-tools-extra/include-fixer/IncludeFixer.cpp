@@ -214,7 +214,7 @@ public:
 
   /// Get the minimal include for a given path.
   std::string minimizeInclude(StringRef Include,
-                              clang::SourceManager &SourceManager,
+                              const clang::SourceManager &SourceManager,
                               clang::HeaderSearch &HeaderSearch) {
     if (!MinimizeIncludePaths)
       return Include;
@@ -236,66 +236,21 @@ public:
     return IsSystem ? '<' + Suggestion + '>' : '"' + Suggestion + '"';
   }
 
-  /// Insert all headers before the first #include in \p Code and run
-  /// clang-format to sort all headers.
-  /// \return Replacements for inserting and sorting headers.
-  std::vector<clang::tooling::Replacement>
-  CreateReplacementsForHeaders(StringRef Code,
-                               const std::set<std::string> &Headers) {
-    // Create replacements for new headers.
-    clang::tooling::Replacements Insertions;
-    if (FirstIncludeOffset == -1U) {
-      // FIXME: skip header guards.
-      FirstIncludeOffset = 0;
-      // If there is no existing #include, then insert an empty line after new
-      // header block.
-      if (Code.front() != '\n')
-        Insertions.insert(
-            clang::tooling::Replacement(Filename, FirstIncludeOffset, 0, "\n"));
-    }
-    // Keep inserting new headers before the first header.
-    for (StringRef Header : Headers) {
-      std::string Text = "#include " + Header.str() + "\n";
-      Insertions.insert(
-          clang::tooling::Replacement(Filename, FirstIncludeOffset, 0, Text));
-    }
-    DEBUG({
-      llvm::dbgs() << "Header insertions:\n";
-      for (const auto &R : Insertions)
-        llvm::dbgs() << R.toString() << '\n';
-    });
-
-    clang::format::FormatStyle Style =
-        clang::format::getStyle("file", Filename, FallbackStyle);
-    clang::tooling::Replacements Replaces =
-        formatReplacements(Code, Insertions, Style);
-    // FIXME: remove this when `clang::tooling::Replacements` is implemented as
-    // `std::vector<clang::tooling::Replacement>`.
-    std::vector<clang::tooling::Replacement> Results;
-    std::copy(Replaces.begin(), Replaces.end(), std::back_inserter(Results));
-    return Results;
-  }
-
-  /// Generate replacements for the suggested includes.
-  /// \return true if changes will be made, false otherwise.
-  bool Rewrite(clang::SourceManager &SourceManager,
-               clang::HeaderSearch &HeaderSearch,
-               std::set<std::string> &Headers,
-               std::vector<clang::tooling::Replacement> &Replacements) {
+  /// Get the include fixer context for the queried symbol.
+  IncludeFixerContext
+  getIncludeFixerContext(const clang::SourceManager &SourceManager,
+                         clang::HeaderSearch &HeaderSearch) {
+    IncludeFixerContext FixerContext;
     if (SymbolQueryResults.empty())
-      return false;
+      return FixerContext;
 
-    // FIXME: Rank the results and pick the best one instead of the first one.
-    const auto &ToTry = SymbolQueryResults.front();
-    Headers.insert(minimizeInclude(ToTry, SourceManager, HeaderSearch));
+    FixerContext.SymbolIdentifer = QuerySymbol;
+    FixerContext.FirstIncludeOffset = FirstIncludeOffset;
+    for (const auto &Header : SymbolQueryResults)
+      FixerContext.Headers.push_back(
+          minimizeInclude(Header, SourceManager, HeaderSearch));
 
-    StringRef Code = SourceManager.getBufferData(SourceManager.getMainFileID());
-    Replacements = CreateReplacementsForHeaders(Code, Headers);
-
-    // We currently abort after the first inserted include. The more
-    // includes we have the less safe this becomes due to error recovery
-    // changing the results.
-    return true;
+    return FixerContext;
   }
 
   /// Sets the location at the very top of the file.
@@ -314,6 +269,7 @@ private:
     DEBUG(Loc.print(llvm::dbgs(), getCompilerInstance().getSourceManager()));
     DEBUG(llvm::dbgs() << " ...");
 
+    QuerySymbol = Query.str();
     SymbolQueryResults = SymbolIndexMgr.search(Query);
     DEBUG(llvm::dbgs() << SymbolQueryResults.size() << " replies\n");
     return !SymbolQueryResults.empty();
@@ -335,6 +291,9 @@ private:
   /// The fallback format style for formatting after insertion if there is no
   /// clang-format config file found.
   std::string FallbackStyle;
+
+  /// The symbol being queried.
+  std::string QuerySymbol;
 
   /// The query results of an identifier. We only include the first discovered
   /// identifier to avoid getting caught in results from error recovery.
@@ -385,12 +344,10 @@ void PreprocessorHooks::InclusionDirective(
 } // namespace
 
 IncludeFixerActionFactory::IncludeFixerActionFactory(
-    SymbolIndexManager &SymbolIndexMgr, std::set<std::string> &Headers,
-    std::vector<clang::tooling::Replacement> &Replacements, StringRef StyleName,
-    bool MinimizeIncludePaths)
-    : SymbolIndexMgr(SymbolIndexMgr), Headers(Headers),
-      Replacements(Replacements), MinimizeIncludePaths(MinimizeIncludePaths),
-      FallbackStyle(StyleName) {}
+    SymbolIndexManager &SymbolIndexMgr, IncludeFixerContext &Context,
+    StringRef StyleName, bool MinimizeIncludePaths)
+    : SymbolIndexMgr(SymbolIndexMgr), Context(Context),
+      MinimizeIncludePaths(MinimizeIncludePaths), FallbackStyle(StyleName) {}
 
 IncludeFixerActionFactory::~IncludeFixerActionFactory() = default;
 
@@ -420,15 +377,50 @@ bool IncludeFixerActionFactory::runInvocation(
       SymbolIndexMgr, FallbackStyle, MinimizeIncludePaths);
   Compiler.ExecuteAction(*ScopedToolAction);
 
-  // Generate replacements.
-  ScopedToolAction->Rewrite(Compiler.getSourceManager(),
-                            Compiler.getPreprocessor().getHeaderSearchInfo(),
-                            Headers, Replacements);
+  Context = ScopedToolAction->getIncludeFixerContext(
+      Compiler.getSourceManager(),
+      Compiler.getPreprocessor().getHeaderSearchInfo());
 
   // Technically this should only return true if we're sure that we have a
   // parseable file. We don't know that though. Only inform users of fatal
   // errors.
   return !Compiler.getDiagnostics().hasFatalErrorOccurred();
+}
+
+std::vector<clang::tooling::Replacement>
+createInsertHeaderReplacements(StringRef Code, StringRef FilePath,
+                               StringRef Header, unsigned FirstIncludeOffset,
+                               const clang::format::FormatStyle &Style) {
+  if (Header.empty())
+    return {};
+  // Create replacements for new headers.
+  clang::tooling::Replacements Insertions;
+  if (FirstIncludeOffset == -1U) {
+    // FIXME: skip header guards.
+    FirstIncludeOffset = 0;
+    // If there is no existing #include, then insert an empty line after new
+    // header block.
+    if (Code.front() != '\n')
+      Insertions.insert(
+          clang::tooling::Replacement(FilePath, FirstIncludeOffset, 0, "\n"));
+  }
+  // Keep inserting new headers before the first header.
+  std::string Text = "#include " + Header.str() + "\n";
+  Insertions.insert(
+      clang::tooling::Replacement(FilePath, FirstIncludeOffset, 0, Text));
+  DEBUG({
+    llvm::dbgs() << "Header insertions:\n";
+    for (const auto &R : Insertions)
+      llvm::dbgs() << R.toString() << '\n';
+  });
+
+  clang::tooling::Replacements Replaces =
+      formatReplacements(Code, Insertions, Style);
+  // FIXME: remove this when `clang::tooling::Replacements` is implemented as
+  // `std::vector<clang::tooling::Replacement>`.
+  std::vector<clang::tooling::Replacement> Results;
+  std::copy(Replaces.begin(), Replaces.end(), std::back_inserter(Results));
+  return Results;
 }
 
 } // namespace include_fixer

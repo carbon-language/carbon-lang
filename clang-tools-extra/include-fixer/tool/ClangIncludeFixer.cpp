@@ -9,8 +9,10 @@
 
 #include "InMemorySymbolIndex.h"
 #include "IncludeFixer.h"
+#include "IncludeFixerContext.h"
 #include "SymbolIndexManager.h"
 #include "YamlSymbolIndex.h"
+#include "clang/Format/Format.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/CommonOptionsParser.h"
@@ -56,6 +58,23 @@ cl::opt<bool>
                        "used for editor integration."),
               cl::init(false), cl::cat(IncludeFixerCategory));
 
+cl::opt<bool> OutputHeaders(
+    "output-headers",
+    cl::desc("Output the symbol being quired and all its relevant headers.\n"
+             "The first line is the symbol name; The other lines\n"
+             "are the headers: \n"
+             "   b::foo\n"
+             "   path/to/foo_a.h\n"
+             "   path/to/foo_b.h\n"),
+    cl::init(false), cl::cat(IncludeFixerCategory));
+
+cl::opt<std::string> InsertHeader(
+    "insert-header",
+    cl::desc("Insert a specific header. This should run with STDIN mode.\n"
+             "The result is written to stdout. It is currently used for\n"
+             "editor integration."),
+    cl::init(""), cl::cat(IncludeFixerCategory));
+
 cl::opt<std::string>
     Style("style",
           cl::desc("Fallback style for reformatting after inserting new "
@@ -85,6 +104,27 @@ int includeFixerMain(int argc, const char **argv) {
       return 0;  // Skip empty files.
 
     tool.mapVirtualFile(options.getSourcePathList().front(), Code->getBuffer());
+  }
+
+  StringRef FilePath = options.getSourcePathList().front();
+  format::FormatStyle InsertStyle = format::getStyle("file", FilePath, Style);
+
+  if (!InsertHeader.empty()) {
+    if (!STDINMode) {
+      errs() << "Should be running in STDIN mode\n";
+      return 1;
+    }
+
+    // FIXME: Insert the header in right FirstIncludeOffset.
+    std::vector<tooling::Replacement> Replacements =
+        clang::include_fixer::createInsertHeaderReplacements(
+            Code->getBuffer(), FilePath, InsertHeader,
+            /*FirstIncludeOffset=*/0, InsertStyle);
+    tooling::Replacements Replaces(Replacements.begin(), Replacements.end());
+    std::string ChangedCode =
+        tooling::applyAllReplacements(Code->getBuffer(), Replaces);
+    llvm::outs() << ChangedCode;
+    return 0;
   }
 
   // Set up data source.
@@ -139,10 +179,9 @@ int includeFixerMain(int argc, const char **argv) {
   }
 
   // Now run our tool.
-  std::set<std::string> Headers;  // Headers to be added.
-  std::vector<tooling::Replacement> Replacements;
-  include_fixer::IncludeFixerActionFactory Factory(
-      *SymbolIndexMgr, Headers, Replacements, Style, MinimizeIncludePaths);
+  include_fixer::IncludeFixerContext Context;
+  include_fixer::IncludeFixerActionFactory Factory(*SymbolIndexMgr, Context,
+                                                   Style, MinimizeIncludePaths);
 
   if (tool.run(&Factory) != 0) {
     llvm::errs()
@@ -150,9 +189,31 @@ int includeFixerMain(int argc, const char **argv) {
     return 1;
   }
 
+  if (OutputHeaders) {
+    // FIXME: Output IncludeFixerContext as YAML.
+    llvm::outs() << Context.SymbolIdentifer << "\n";
+    for (const auto &Header : Context.Headers)
+      llvm::outs() << Header << "\n";
+    return 0;
+  }
+
+  if (Context.Headers.empty())
+    return 0;
+
+  auto Buffer = llvm::MemoryBuffer::getFile(FilePath);
+  if (!Buffer) {
+    errs() << "Couldn't open file: " << FilePath;
+    return 1;
+  }
+
+  // FIXME: Rank the results and pick the best one instead of the first one.
+  std::vector<tooling::Replacement> Replacements =
+      clang::include_fixer::createInsertHeaderReplacements(
+          /*Code=*/Buffer.get()->getBuffer(), FilePath, Context.Headers.front(),
+          Context.FirstIncludeOffset, InsertStyle);
+
   if (!Quiet)
-    for (const auto &Header : Headers)
-      llvm::errs() << "Added #include " << Header;
+    llvm::errs() << "Added #include" << Context.Headers.front();
 
   // Set up a new source manager for applying the resulting replacements.
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts(new DiagnosticOptions);
