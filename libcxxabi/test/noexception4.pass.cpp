@@ -1,4 +1,4 @@
-//===------------------- uncaught_exceptions.pass.cpp ---------------------===//
+//===----------------------- noexception4.pass.cpp ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,32 +7,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: libcxxabi-no-exceptions
+// REQUIRES: libcxxabi-no-exceptions
 
 #include <cxxabi.h>
 #include <exception>
 #include <cassert>
 
 // namespace __cxxabiv1 {
+//      void *__cxa_current_primary_exception() throw();
 //      extern bool          __cxa_uncaught_exception () throw();
 //      extern unsigned int  __cxa_uncaught_exceptions() throw();
 // }
 
-struct A {
-    ~A() { assert( __cxxabiv1::__cxa_uncaught_exception()); }
-    };
-
-struct B {
-    B(int cnt) : data_(cnt) {}
-    ~B() { assert( data_ == __cxxabiv1::__cxa_uncaught_exceptions()); }
-    int data_;
-    };
-
 int main ()
 {
-    try { A a; throw 3; assert (false); }
-    catch (int) {}
-    
-    try { B b(1); throw 3; assert (false); }
-    catch (int) {}
+    // Trivially
+    assert(nullptr == __cxxabiv1::__cxa_current_primary_exception());
+    assert(!__cxxabiv1::__cxa_uncaught_exception());
+    assert(0 == __cxxabiv1::__cxa_uncaught_exceptions());
+    return 0;
 }

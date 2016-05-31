@@ -108,6 +108,7 @@ endif()
 #===============================================================================
 
 # Define options.
+option(LIBCXXABI_ENABLE_EXCEPTIONS "Use exceptions." ON)
 option(LIBCXXABI_ENABLE_ASSERTIONS "Enable assertions independent of build mode." ON)
 option(LIBCXXABI_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
 option(LIBCXXABI_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
@@ -242,13 +243,20 @@ if (LIBCXXABI_ENABLE_PEDANTIC)
 endif()
 
 # Get feature flags.
-# Exceptions
-# Catches C++ exceptions only and tells the compiler to assume that extern C
-# functions never throw a C++ exception.
 append_if(LIBCXXABI_CXX_FLAGS LIBCXXABI_HAS_FSTRICT_ALIASING_FLAG -fstrict-aliasing)
-append_if(LIBCXXABI_CXX_FLAGS LIBCXXABI_HAS_EHSC_FLAG -EHsc)
 
-append_if(LIBCXXABI_C_FLAGS LIBCXXABI_HAS_FUNWIND_TABLES -funwind-tables)
+# Exceptions
+if (LIBCXXABI_ENABLE_EXCEPTIONS)
+  # Catches C++ exceptions only and tells the compiler to assume that extern C
+  # functions never throw a C++ exception.
+  append_if(LIBCXXABI_CXX_FLAGS LIBCXXABI_HAS_EHSC_FLAG -EHsc)
+  append_if(LIBCXXABI_C_FLAGS LIBCXXABI_HAS_FUNWIND_TABLES -funwind-tables)
+else()
+  add_definitions(-D_LIBCXXABI_NO_EXCEPTIONS)
+  append_if(LIBCXXABI_CXX_FLAGS LIBCXXABI_HAS_NO_EXCEPTIONS_FLAG -fno-exceptions)
+  append_if(LIBCXXABI_CXX_FLAGS LIBCXXABI_HAS_NO_EHS_FLAG -EHs-)
+  append_if(LIBCXXABI_CXX_FLAGS LIBCXXABI_HAS_NO_EHA_FLAG -EHa-)
+endif()
 
 append_if(LIBCXXABI_COMPILE_FLAGS LIBCXXABI_HAS_FVISIBILITY_HIDDEN_FLAG -fvisibility=hidden)
 
