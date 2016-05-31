@@ -55,22 +55,24 @@ public:
              unsigned NumOccurrences = 0);
 
   /// \brief Get symbol name.
-  llvm::StringRef getName() const;
+  llvm::StringRef getName() const { return Name; }
 
   /// \brief Get symbol type.
-  SymbolKind getSymbolKind() const;
+  SymbolKind getSymbolKind() const { return Type; }
 
   /// \brief Get a relative file path where symbol comes from.
-  llvm::StringRef getFilePath() const;
+  llvm::StringRef getFilePath() const { return FilePath; }
 
   /// \brief Get symbol contexts.
-  const std::vector<SymbolInfo::Context> &getContexts() const;
+  const std::vector<SymbolInfo::Context> &getContexts() const {
+    return Contexts;
+  }
 
   /// \brief Get a 1-based line number of the symbol's declaration.
-  int getLineNumber() const;
+  int getLineNumber() const { return LineNumber; }
 
   /// \brief The number of times this symbol was found during an indexing run.
-  unsigned getNumOccurrences() const;
+  unsigned getNumOccurrences() const { return NumOccurrences; }
 
   bool operator<(const SymbolInfo &Symbol) const;
 

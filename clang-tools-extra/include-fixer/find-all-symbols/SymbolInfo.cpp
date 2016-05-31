@@ -78,20 +78,6 @@ SymbolInfo::SymbolInfo(llvm::StringRef Name, SymbolKind Type,
     : Name(Name), Type(Type), FilePath(FilePath), Contexts(Contexts),
       LineNumber(LineNumber), NumOccurrences(NumOccurrences) {}
 
-llvm::StringRef SymbolInfo::getName() const { return Name; }
-
-SymbolKind SymbolInfo::getSymbolKind() const { return Type; }
-
-llvm::StringRef SymbolInfo::getFilePath() const { return FilePath; }
-
-const std::vector<SymbolInfo::Context> &SymbolInfo::getContexts() const {
-  return Contexts;
-}
-
-int SymbolInfo::getLineNumber() const { return LineNumber; }
-
-unsigned SymbolInfo::getNumOccurrences() const { return NumOccurrences; }
-
 bool SymbolInfo::operator==(const SymbolInfo &Symbol) const {
   return std::tie(Name, Type, FilePath, LineNumber, Contexts) ==
          std::tie(Symbol.Name, Symbol.Type, Symbol.FilePath, Symbol.LineNumber,
