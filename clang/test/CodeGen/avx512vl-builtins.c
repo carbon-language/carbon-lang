@@ -3935,13 +3935,13 @@ __m256i test_mm256_maskz_srav_epi64(__mmask8 __U, __m256i __X, __m256i __Y) {
 
 void test_mm_mask_store_epi32(void *__P, __mmask8 __U, __m128i __A) {
   // CHECK-LABEL: @test_mm_mask_store_epi32
-  // CHECK: @llvm.x86.avx512.mask.store.d.128
+  // CHECK: @llvm.masked.store.v4i32(<4 x i32> %{{.*}}, <4 x i32>* %{{.}}, i32 16, <4 x i1> %{{.*}})
   return _mm_mask_store_epi32(__P, __U, __A); 
 }
 
 void test_mm256_mask_store_epi32(void *__P, __mmask8 __U, __m256i __A) {
   // CHECK-LABEL: @test_mm256_mask_store_epi32
-  // CHECK: @llvm.x86.avx512.mask.store.d.256
+  // CHECK: @llvm.masked.store.v8i32(<8 x i32> %{{.*}}, <8 x i32>* %{{.}}, i32 32, <8 x i1> %{{.*}})
   return _mm256_mask_store_epi32(__P, __U, __A); 
 }
 
@@ -4043,13 +4043,13 @@ __m256i test_mm256_maskz_load_epi64(__mmask8 __U, void const *__P) {
 
 void test_mm_mask_store_epi64(void *__P, __mmask8 __U, __m128i __A) {
   // CHECK-LABEL: @test_mm_mask_store_epi64
-  // CHECK: @llvm.x86.avx512.mask.store.q.128
+  // CHECK: @llvm.masked.store.v2i64(<2 x i64> %{{.*}}, <2 x i64>* %{{.*}}, i32 16, <2 x i1> %{{.*}})
   return _mm_mask_store_epi64(__P, __U, __A); 
 }
 
 void test_mm256_mask_store_epi64(void *__P, __mmask8 __U, __m256i __A) {
   // CHECK-LABEL: @test_mm256_mask_store_epi64
-  // CHECK: @llvm.x86.avx512.mask.store.q.256
+  // CHECK: @llvm.masked.store.v4i64(<4 x i64> %{{.*}}, <4 x i64>* %{{.*}}, i32 32, <4 x i1> %{{.*}})
   return _mm256_mask_store_epi64(__P, __U, __A); 
 }
 
@@ -4343,73 +4343,73 @@ __m256 test_mm256_maskz_loadu_ps(__mmask8 __U, void const *__P) {
 
 void test_mm_mask_store_pd(void *__P, __mmask8 __U, __m128d __A) {
   // CHECK-LABEL: @test_mm_mask_store_pd
-  // CHECK: @llvm.x86.avx512.mask.store.pd.128
+  // CHECK: @llvm.masked.store.v2f64(<2 x double> %{{.*}}, <2 x double>* %{{.*}}, i32 16, <2 x i1> %{{.*}})
   return _mm_mask_store_pd(__P, __U, __A); 
 }
 
 void test_mm256_mask_store_pd(void *__P, __mmask8 __U, __m256d __A) {
   // CHECK-LABEL: @test_mm256_mask_store_pd
-  // CHECK: @llvm.x86.avx512.mask.store.pd.256
+  // CHECK: @llvm.masked.store.v4f64(<4 x double> %{{.*}}, <4 x double>* %{{.*}}, i32 32, <4 x i1> %{{.*}})
   return _mm256_mask_store_pd(__P, __U, __A); 
 }
 
 void test_mm_mask_store_ps(void *__P, __mmask8 __U, __m128 __A) {
   // CHECK-LABEL: @test_mm_mask_store_ps
-  // CHECK: @llvm.x86.avx512.mask.store.ps.128
+  // CHECK: @llvm.masked.store.v4f32(<4 x float> %{{.*}}, <4 x float>* %{{.*}}, i32 16, <4 x i1> %{{.*}})
   return _mm_mask_store_ps(__P, __U, __A); 
 }
 
 void test_mm256_mask_store_ps(void *__P, __mmask8 __U, __m256 __A) {
   // CHECK-LABEL: @test_mm256_mask_store_ps
-  // CHECK: @llvm.x86.avx512.mask.store.ps.256
+  // CHECK: @llvm.masked.store.v8f32(<8 x float> %{{.*}}, <8 x float>* %{{.*}}, i32 32, <8 x i1> %{{.*}})
   return _mm256_mask_store_ps(__P, __U, __A); 
 }
 
 void test_mm_mask_storeu_epi64(void *__P, __mmask8 __U, __m128i __A) {
   // CHECK-LABEL: @test_mm_mask_storeu_epi64
-  // CHECK: @llvm.x86.avx512.mask.storeu
+  // CHECK: @llvm.masked.store.v2i64(<2 x i64> %{{.*}}, <2 x i64>* %{{.*}}, i32 1, <2 x i1> %{{.*}})
   return _mm_mask_storeu_epi64(__P, __U, __A); 
 }
 
 void test_mm256_mask_storeu_epi64(void *__P, __mmask8 __U, __m256i __A) {
   // CHECK-LABEL: @test_mm256_mask_storeu_epi64
-  // CHECK: @llvm.x86.avx512.mask.storeu
+  // CHECK: @llvm.masked.store.v4i64(<4 x i64> %{{.*}}, <4 x i64>* %{{.*}}, i32 1, <4 x i1> %{{.*}})
   return _mm256_mask_storeu_epi64(__P, __U, __A); 
 }
 
 void test_mm_mask_storeu_epi32(void *__P, __mmask8 __U, __m128i __A) {
   // CHECK-LABEL: @test_mm_mask_storeu_epi32
-  // CHECK: @llvm.x86.avx512.mask.storeu
+  // CHECK: @llvm.masked.store.v4i32(<4 x i32> %{{.*}}, <4 x i32>* %{{.*}}, i32 1, <4 x i1> %{{.*}})
   return _mm_mask_storeu_epi32(__P, __U, __A); 
 }
 
 void test_mm256_mask_storeu_epi32(void *__P, __mmask8 __U, __m256i __A) {
   // CHECK-LABEL: @test_mm256_mask_storeu_epi32
-  // CHECK: @llvm.x86.avx512.mask.storeu
+  // CHECK: @llvm.masked.store.v8i32(<8 x i32> %{{.*}}, <8 x i32>* %{{.*}}, i32 1, <8 x i1> %{{.*}})
   return _mm256_mask_storeu_epi32(__P, __U, __A); 
 }
 
 void test_mm_mask_storeu_pd(void *__P, __mmask8 __U, __m128d __A) {
   // CHECK-LABEL: @test_mm_mask_storeu_pd
-  // CHECK: @llvm.x86.avx512.mask.storeu.pd.128
+  // CHECK: @llvm.masked.store.v2f64(<2 x double> %{{.*}}, <2 x double>* %{{.*}}, i32 1, <2 x i1> %{{.*}})
   return _mm_mask_storeu_pd(__P, __U, __A); 
 }
 
 void test_mm256_mask_storeu_pd(void *__P, __mmask8 __U, __m256d __A) {
   // CHECK-LABEL: @test_mm256_mask_storeu_pd
-  // CHECK: @llvm.x86.avx512.mask.storeu.pd.256
+  // CHECK: @llvm.masked.store.v4f64(<4 x double> %{{.*}}, <4 x double>* %{{.*}}, i32 1, <4 x i1> %{{.*}})
   return _mm256_mask_storeu_pd(__P, __U, __A); 
 }
 
 void test_mm_mask_storeu_ps(void *__P, __mmask8 __U, __m128 __A) {
   // CHECK-LABEL: @test_mm_mask_storeu_ps
-  // CHECK: @llvm.x86.avx512.mask.storeu.ps.128
+  // CHECK: @llvm.masked.store.v4f32(<4 x float> %{{.*}}, <4 x float>* %{{.*}}, i32 1, <4 x i1> %{{.*}})
   return _mm_mask_storeu_ps(__P, __U, __A); 
 }
 
 void test_mm256_mask_storeu_ps(void *__P, __mmask8 __U, __m256 __A) {
   // CHECK-LABEL: @test_mm256_mask_storeu_ps
-  // CHECK: @llvm.x86.avx512.mask.storeu.ps.256
+  // CHECK: @llvm.masked.store.v8f32(<8 x float> %{{.*}}, <8 x float>* %{{.*}}, i32 1, <8 x i1> %{{.*}})
   return _mm256_mask_storeu_ps(__P, __U, __A); 
 }
 

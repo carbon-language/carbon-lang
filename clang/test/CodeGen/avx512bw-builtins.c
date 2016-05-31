@@ -1348,7 +1348,7 @@ __m512i test_mm512_maskz_loadu_epi8(__mmask64 __U, void const *__P) {
 }
 void test_mm512_mask_storeu_epi16(void *__P, __mmask32 __U, __m512i __A) {
   // CHECK-LABEL: @test_mm512_mask_storeu_epi16
-  // CHECK: @llvm.x86.avx512.mask.storeu.w.
+  // CHECK: @llvm.masked.store.v32i16(<32 x i16> %{{.*}}, <32 x i16>* %{{.*}}, i32 1, <32 x i1> %{{.*}})
   return _mm512_mask_storeu_epi16(__P, __U, __A); 
 }
 __mmask64 test_mm512_test_epi8_mask(__m512i __A, __m512i __B) {
@@ -1359,7 +1359,7 @@ __mmask64 test_mm512_test_epi8_mask(__m512i __A, __m512i __B) {
 
 void test_mm512_mask_storeu_epi8(void *__P, __mmask64 __U, __m512i __A) {
   // CHECK-LABEL: @test_mm512_mask_storeu_epi8
-  // CHECK: @llvm.x86.avx512.mask.storeu.b.
+  // CHECK: @llvm.masked.store.v64i8(<64 x i8> %{{.*}}, <64 x i8>* %{{.*}}, i32 1, <64 x i1> %{{.*}})
   return _mm512_mask_storeu_epi8(__P, __U, __A); 
 }
 __mmask64 test_mm512_mask_test_epi8_mask(__mmask64 __U, __m512i __A, __m512i __B) {
