@@ -1050,8 +1050,7 @@ extern int __kmp_place_num_threads_per_core;
 #define KMP_MAX_NEXT_WAIT       (INT_MAX/2)
 #define KMP_DEFAULT_NEXT_WAIT   1024U
 
-// max possible dynamic loops in concurrent execution per team
-#define KMP_MAX_DISP_BUF        7
+#define KMP_DFLT_DISP_NUM_BUFF  7
 #define KMP_MAX_ORDERED         8
 
 #define KMP_MAX_FIELDS          32
@@ -2806,6 +2805,7 @@ extern kmp_uint32 __kmp_init_mxcsr;      /* init thread's mxscr */
 #endif /* KMP_ARCH_X86 || KMP_ARCH_X86_64 */
 
 extern int        __kmp_dflt_max_active_levels; /* max_active_levels for nested parallelism enabled by default a la OMP_MAX_ACTIVE_LEVELS */
+extern int        __kmp_dispatch_num_buffers; /* max possible dynamic loops in concurrent execution per team */
 #if KMP_NESTED_HOT_TEAMS
 extern int        __kmp_hot_teams_mode;
 extern int        __kmp_hot_teams_max_level;
@@ -3623,6 +3623,7 @@ KMP_EXPORT void KMPC_CONVENTION kmpc_set_stacksize(int);
 KMP_EXPORT void KMPC_CONVENTION kmpc_set_stacksize_s(size_t);
 KMP_EXPORT void KMPC_CONVENTION kmpc_set_library(int);
 KMP_EXPORT void KMPC_CONVENTION kmpc_set_defaults(char const *);
+KMP_EXPORT void KMPC_CONVENTION kmpc_set_disp_num_buffers(int);
 
 #ifdef __cplusplus
 }

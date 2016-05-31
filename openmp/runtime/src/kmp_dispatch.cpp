@@ -656,9 +656,9 @@ __kmp_dispatch_init(
 
         /* What happens when number of threads changes, need to resize buffer? */
         pr = reinterpret_cast< dispatch_private_info_template< T >  * >
-            ( &th -> th.th_dispatch -> th_disp_buffer[ my_buffer_index % KMP_MAX_DISP_BUF ] );
+            ( &th -> th.th_dispatch -> th_disp_buffer[ my_buffer_index % __kmp_dispatch_num_buffers ] );
         sh = reinterpret_cast< dispatch_shared_info_template< UT > volatile * >
-            ( &team -> t.t_disp_buffer[ my_buffer_index % KMP_MAX_DISP_BUF ] );
+            ( &team -> t.t_disp_buffer[ my_buffer_index % __kmp_dispatch_num_buffers ] );
     }
 
     /* Currently just ignore the monotonic and non-monotonic modifiers (the compiler isn't producing them
@@ -2150,7 +2150,7 @@ __kmp_dispatch_next(
 
                 KMP_MB();       /* Flush all pending memory write invalidates.  */
 
-                sh -> buffer_index += KMP_MAX_DISP_BUF;
+                sh -> buffer_index += __kmp_dispatch_num_buffers;
                 KD_TRACE(100, ("__kmp_dispatch_next: T#%d change buffer_index:%d\n",
                                 gtid, sh->buffer_index) );
 
