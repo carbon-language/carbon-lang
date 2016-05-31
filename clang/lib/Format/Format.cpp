@@ -1528,6 +1528,7 @@ fixCppIncludeInsertions(StringRef Code, const tooling::Replacements &Replaces,
     bool Matched = IncludeRegex.match(IncludeDirective, &Matches);
     assert(Matched && "Header insertion replacement must have replacement text "
                       "'#include ...'");
+    (void)Matched;
     auto IncludeName = Matches[2];
     int Category =
         Categories.getIncludePriority(IncludeName, /*CheckMainHeader=*/true);
