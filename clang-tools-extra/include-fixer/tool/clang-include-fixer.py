@@ -36,7 +36,7 @@ if vim.eval('exists("g:clang_include_fixer_maximum_suggested_headers")') == "1":
 
 def ShowDialog(message, choices, default_choice_index=0):
   to_eval = "confirm('{0}', '{1}', '{2}')".format(message,
-                                                  choices,
+                                                  choices.strip(),
                                                   default_choice_index)
   return int(vim.eval(to_eval));
 
@@ -74,8 +74,8 @@ def main():
   text = '\n'.join(buf)
 
   # Run command to get all headers.
-  command = [binary, "-stdin", "-output-headers", "-db="+args.db, "-input="+args.input, "-debug",
-             vim.current.buffer.name]
+  command = [binary, "-stdin", "-output-headers", "-db="+args.db,
+             "-input="+args.input, vim.current.buffer.name]
   stdout, stderr = execute(command, text)
   lines = stdout.splitlines()
   if len(lines) < 2:
@@ -93,7 +93,7 @@ def main():
   choices_message = ""
   index = 1;
   for header in lines[1:1+maximum_suggested_headers]:
-    choices_message += "&" + str(index) + header + "\n"
+    choices_message += "&{0} {1}\n".format(index, header)
     index += 1
 
   select = ShowDialog("choose a header file for {0}.".format(symbol),
