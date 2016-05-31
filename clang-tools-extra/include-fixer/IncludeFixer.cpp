@@ -382,12 +382,12 @@ bool IncludeFixerActionFactory::runInvocation(
   return !Compiler.getDiagnostics().hasFatalErrorOccurred();
 }
 
-std::vector<clang::tooling::Replacement>
+tooling::Replacements
 createInsertHeaderReplacements(StringRef Code, StringRef FilePath,
                                StringRef Header, unsigned FirstIncludeOffset,
                                const clang::format::FormatStyle &Style) {
   if (Header.empty())
-    return {};
+    return tooling::Replacements();
   // Create replacements for new headers.
   clang::tooling::Replacements Insertions;
   if (FirstIncludeOffset == -1U) {
@@ -409,13 +409,7 @@ createInsertHeaderReplacements(StringRef Code, StringRef FilePath,
       llvm::dbgs() << R.toString() << '\n';
   });
 
-  clang::tooling::Replacements Replaces =
-      formatReplacements(Code, Insertions, Style);
-  // FIXME: remove this when `clang::tooling::Replacements` is implemented as
-  // `std::vector<clang::tooling::Replacement>`.
-  std::vector<clang::tooling::Replacement> Results;
-  std::copy(Replaces.begin(), Replaces.end(), std::back_inserter(Results));
-  return Results;
+  return formatReplacements(Code, Insertions, Style);
 }
 
 } // namespace include_fixer

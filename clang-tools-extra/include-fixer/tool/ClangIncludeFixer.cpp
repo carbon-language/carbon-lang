@@ -169,7 +169,7 @@ int includeFixerMain(int argc, const char **argv) {
     }
 
     // FIXME: Insert the header in right FirstIncludeOffset.
-    std::vector<tooling::Replacement> Replacements =
+    tooling::Replacements Replacements =
         clang::include_fixer::createInsertHeaderReplacements(
             Code->getBuffer(), FilePath, InsertHeader,
             /*FirstIncludeOffset=*/0, InsertStyle);
@@ -215,7 +215,7 @@ int includeFixerMain(int argc, const char **argv) {
   }
 
   // FIXME: Rank the results and pick the best one instead of the first one.
-  std::vector<tooling::Replacement> Replacements =
+  tooling::Replacements Replacements =
       clang::include_fixer::createInsertHeaderReplacements(
           /*Code=*/Buffer.get()->getBuffer(), FilePath, Context.Headers.front(),
           Context.FirstIncludeOffset, InsertStyle);
@@ -231,9 +231,8 @@ int includeFixerMain(int argc, const char **argv) {
   Diagnostics.setClient(&DiagnosticPrinter, false);
 
   if (STDINMode) {
-    tooling::Replacements Replaces(Replacements.begin(), Replacements.end());
     std::string ChangedCode =
-        tooling::applyAllReplacements(Code->getBuffer(), Replaces);
+        tooling::applyAllReplacements(Code->getBuffer(), Replacements);
     llvm::outs() << ChangedCode;
     return 0;
   }

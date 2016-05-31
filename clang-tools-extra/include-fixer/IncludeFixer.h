@@ -74,7 +74,7 @@ private:
 /// \param Style clang-format style being used.
 ///
 /// \return Replacements for inserting and sorting headers.
-std::vector<clang::tooling::Replacement> createInsertHeaderReplacements(
+tooling::Replacements createInsertHeaderReplacements(
     StringRef Code, StringRef FilePath, StringRef Header,
     unsigned FirstIncludeOffset = -1U,
     const clang::format::FormatStyle &Style = clang::format::getLLVMStyle());

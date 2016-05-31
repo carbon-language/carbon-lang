@@ -74,12 +74,12 @@ static std::string runIncludeFixer(
   IncludeFixerActionFactory Factory(*SymbolIndexMgr, FixerContext, "llvm");
 
   runOnCode(&Factory, Code, "input.cc", ExtraArgs);
-  std::vector<clang::tooling::Replacement> Replacements;
-  if (!FixerContext.Headers.empty()) {
-    Replacements = clang::include_fixer::createInsertHeaderReplacements(
-        Code, "input.cc", FixerContext.Headers.front(),
-        FixerContext.FirstIncludeOffset);
-  }
+  if (FixerContext.Headers.empty())
+    return Code;
+  tooling::Replacements Replacements =
+      clang::include_fixer::createInsertHeaderReplacements(
+          Code, "input.cc", FixerContext.Headers.front(),
+          FixerContext.FirstIncludeOffset);
   clang::RewriterTestContext Context;
   clang::FileID ID = Context.createInMemoryFile("input.cc", Code);
   clang::tooling::applyAllReplacements(Replacements, Context.Rewrite);
