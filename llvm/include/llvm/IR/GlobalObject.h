@@ -20,6 +20,7 @@
 
 namespace llvm {
 class Comdat;
+class MDNode;
 class Module;
 
 class GlobalObject : public GlobalValue {
@@ -36,12 +37,19 @@ protected:
 
   std::string Section;     // Section to emit this into, empty means default
   Comdat *ObjComdat;
-  static const unsigned AlignmentBits = 5;
+  enum {
+    LastAlignmentBit = 4,
+    HasMetadataHashEntryBit,
+
+    GlobalObjectBits,
+  };
   static const unsigned GlobalObjectSubClassDataBits =
-      GlobalValueSubClassDataBits - AlignmentBits;
+      GlobalValueSubClassDataBits - GlobalObjectBits;
 
 private:
+  static const unsigned AlignmentBits = LastAlignmentBit + 1;
   static const unsigned AlignmentMask = (1 << AlignmentBits) - 1;
+  static const unsigned GlobalObjectMask = (1 << GlobalObjectBits) - 1;
 
 public:
   unsigned getAlignment() const {
@@ -63,12 +71,54 @@ public:
   Comdat *getComdat() { return ObjComdat; }
   void setComdat(Comdat *C) { ObjComdat = C; }
 
+  /// Check if this has any metadata.
+  bool hasMetadata() const { return hasMetadataHashEntry(); }
+
+  /// Get the current metadata attachment, if any.
+  ///
+  /// Returns \c nullptr if such an attachment is missing.
+  /// @{
+  MDNode *getMetadata(unsigned KindID) const;
+  MDNode *getMetadata(StringRef Kind) const;
+  /// @}
+
+  /// Set a particular kind of metadata attachment.
+  ///
+  /// Sets the given attachment to \c MD, erasing it if \c MD is \c nullptr or
+  /// replacing it if it already exists.
+  /// @{
+  void setMetadata(unsigned KindID, MDNode *MD);
+  void setMetadata(StringRef Kind, MDNode *MD);
+  /// @}
+
+  /// Get all current metadata attachments.
+  void
+  getAllMetadata(SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs) const;
+
+  /// Drop metadata not in the given list.
+  ///
+  /// Drop all metadata from \c this not included in \c KnownIDs.
+  void dropUnknownMetadata(ArrayRef<unsigned> KnownIDs);
+
   void copyAttributesFrom(const GlobalValue *Src) override;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Value *V) {
     return V->getValueID() == Value::FunctionVal ||
            V->getValueID() == Value::GlobalVariableVal;
+  }
+
+protected:
+  void clearMetadata();
+
+private:
+  bool hasMetadataHashEntry() const {
+    return getGlobalValueSubClassData() & (1 << HasMetadataHashEntryBit);
+  }
+  void setHasMetadataHashEntry(bool HasEntry) {
+    unsigned Mask = 1 << HasMetadataHashEntryBit;
+    setGlobalValueSubClassData((~Mask & getGlobalValueSubClassData()) |
+                               (HasEntry ? Mask : 0u));
   }
 };
 

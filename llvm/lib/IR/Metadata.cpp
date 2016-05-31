@@ -1281,24 +1281,24 @@ void Instruction::clearMetadataHashEntries() {
   setHasMetadataHashEntry(false);
 }
 
-MDNode *Function::getMetadata(unsigned KindID) const {
+MDNode *GlobalObject::getMetadata(unsigned KindID) const {
   if (!hasMetadata())
     return nullptr;
-  return getContext().pImpl->FunctionMetadata[this].lookup(KindID);
+  return getContext().pImpl->GlobalObjectMetadata[this].lookup(KindID);
 }
 
-MDNode *Function::getMetadata(StringRef Kind) const {
+MDNode *GlobalObject::getMetadata(StringRef Kind) const {
   if (!hasMetadata())
     return nullptr;
   return getMetadata(getContext().getMDKindID(Kind));
 }
 
-void Function::setMetadata(unsigned KindID, MDNode *MD) {
+void GlobalObject::setMetadata(unsigned KindID, MDNode *MD) {
   if (MD) {
     if (!hasMetadata())
       setHasMetadataHashEntry(true);
 
-    getContext().pImpl->FunctionMetadata[this].set(KindID, *MD);
+    getContext().pImpl->GlobalObjectMetadata[this].set(KindID, *MD);
     return;
   }
 
@@ -1306,29 +1306,29 @@ void Function::setMetadata(unsigned KindID, MDNode *MD) {
   if (!hasMetadata())
     return;
 
-  auto &Store = getContext().pImpl->FunctionMetadata[this];
+  auto &Store = getContext().pImpl->GlobalObjectMetadata[this];
   Store.erase(KindID);
   if (Store.empty())
     clearMetadata();
 }
 
-void Function::setMetadata(StringRef Kind, MDNode *MD) {
+void GlobalObject::setMetadata(StringRef Kind, MDNode *MD) {
   if (!MD && !hasMetadata())
     return;
   setMetadata(getContext().getMDKindID(Kind), MD);
 }
 
-void Function::getAllMetadata(
+void GlobalObject::getAllMetadata(
     SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs) const {
   MDs.clear();
 
   if (!hasMetadata())
     return;
 
-  getContext().pImpl->FunctionMetadata[this].getAll(MDs);
+  getContext().pImpl->GlobalObjectMetadata[this].getAll(MDs);
 }
 
-void Function::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
+void GlobalObject::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
   if (!hasMetadata())
     return;
   if (KnownIDs.empty()) {
@@ -1339,7 +1339,7 @@ void Function::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
   SmallSet<unsigned, 5> KnownSet;
   KnownSet.insert(KnownIDs.begin(), KnownIDs.end());
 
-  auto &Store = getContext().pImpl->FunctionMetadata[this];
+  auto &Store = getContext().pImpl->GlobalObjectMetadata[this];
   assert(!Store.empty());
 
   Store.remove_if([&KnownSet](const std::pair<unsigned, TrackingMDNodeRef> &I) {
@@ -1350,10 +1350,10 @@ void Function::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
     clearMetadata();
 }
 
-void Function::clearMetadata() {
+void GlobalObject::clearMetadata() {
   if (!hasMetadata())
     return;
-  getContext().pImpl->FunctionMetadata.erase(this);
+  getContext().pImpl->GlobalObjectMetadata.erase(this);
   setHasMetadataHashEntry(false);
 }
 

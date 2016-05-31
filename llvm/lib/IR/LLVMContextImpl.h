@@ -1107,8 +1107,8 @@ public:
   /// Collection of per-instruction metadata used in this context.
   DenseMap<const Instruction *, MDAttachmentMap> InstructionMetadata;
 
-  /// Collection of per-function metadata used in this context.
-  DenseMap<const Function *, MDAttachmentMap> FunctionMetadata;
+  /// Collection of per-GlobalObject metadata used in this context.
+  DenseMap<const GlobalObject *, MDAttachmentMap> GlobalObjectMetadata;
 
   /// DiscriminatorTable - This table maps file:line locations to an
   /// integer representing the next DWARF path discriminator to assign to
