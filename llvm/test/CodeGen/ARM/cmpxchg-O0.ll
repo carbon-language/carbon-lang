@@ -101,8 +101,8 @@ define { i64, i1 } @test_nontrivial_args(i64* %addr, i64 %desired, i64 %new) {
   ret { i64, i1 } %res
 }
 
-; The following used to trigger an assertion in the aarch64 backend when
-; creating a spill for a physreg with RC==GPRPairRegClass.
+; The following used to trigger an assertion when creating a spill on thumb2
+; for a physreg with RC==GPRPairRegClass.
 ; CHECK-LABEL: test_cmpxchg_spillbug:
 ; CHECK: ldrexd
 ; CHECK: strexd
