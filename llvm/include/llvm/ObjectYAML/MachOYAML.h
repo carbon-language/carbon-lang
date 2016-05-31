@@ -72,8 +72,8 @@ struct BindOpcode {
 };
 
 struct ExportEntry {
-  uint64_t TerminalSize;
-  uint64_t NodeOffset;
+  uint64_t TerminalSize = 0;
+  uint64_t NodeOffset = 0;
   std::string Name;
   llvm::yaml::Hex64 Flags;
   llvm::yaml::Hex64 Address;
