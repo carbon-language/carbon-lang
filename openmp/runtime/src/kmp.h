@@ -35,10 +35,6 @@
 #define TASK_CURRENT_NOT_QUEUED  0
 #define TASK_CURRENT_QUEUED      1
 
-#define TASK_DEQUE_BITS          8  // Used solely to define TASK_DEQUE_SIZE and TASK_DEQUE_MASK.
-#define TASK_DEQUE_SIZE          ( 1 << TASK_DEQUE_BITS )
-#define TASK_DEQUE_MASK          ( TASK_DEQUE_SIZE - 1 )
-
 #ifdef BUILD_TIED_TASK_STACK
 #define TASK_STACK_EMPTY         0  // entries when the stack is empty
 
@@ -2223,6 +2219,7 @@ typedef struct kmp_base_thread_data {
                                                    // Used only in __kmp_execute_tasks_template, maybe not avail until task is queued?
     kmp_bootstrap_lock_t    td_deque_lock;         // Lock for accessing deque
     kmp_taskdata_t **       td_deque;              // Deque of tasks encountered by td_thr, dynamically allocated
+    kmp_int32               td_deque_size;         // Size of deck
     kmp_uint32              td_deque_head;         // Head of deque (will wrap)
     kmp_uint32              td_deque_tail;         // Tail of deque (will wrap)
     kmp_int32               td_deque_ntasks;       // Number of tasks in deque
@@ -2232,6 +2229,12 @@ typedef struct kmp_base_thread_data {
     kmp_task_stack_t        td_susp_tied_tasks;    // Stack of suspended tied tasks for task scheduling constraint
 #endif // BUILD_TIED_TASK_STACK
 } kmp_base_thread_data_t;
+
+#define TASK_DEQUE_BITS          8  // Used solely to define INITIAL_TASK_DEQUE_SIZE
+#define INITIAL_TASK_DEQUE_SIZE  ( 1 << TASK_DEQUE_BITS )
+
+#define TASK_DEQUE_SIZE(td)     ((td).td_deque_size)
+#define TASK_DEQUE_MASK(td)     ((td).td_deque_size - 1)
 
 typedef union KMP_ALIGN_CACHE kmp_thread_data {
     kmp_base_thread_data_t  td;
