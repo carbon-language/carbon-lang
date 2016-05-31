@@ -90,8 +90,13 @@ public:
     InMemoryFileSystem->addFile(HeaderName, 0,
                                 llvm::MemoryBuffer::getMemBuffer(Code));
 
+    std::string Content = "#include\"" + std::string(HeaderName) +
+                          "\"\n"
+                          "#include \"internal/internal.h\"";
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
     // Test path cleaning for both decls and macros.
     const std::string DirtyHeader = "./internal/../internal/./a/b.h";
+    Content += "\n#include \"" + DirtyHeader + "\"";
     const std::string CleanHeader = "internal/a/b.h";
     const std::string DirtyHeaderContent =
         "#define INTERNAL 1\nclass ExtraInternal {};";
@@ -101,17 +106,15 @@ public:
                           CleanHeader, 1, {});
     SymbolInfo DirtySymbol("ExtraInternal", SymbolInfo::SymbolKind::Class,
                            CleanHeader, 2, {});
-
-    std::string Content = "#include\"" + std::string(HeaderName) +
-                          "\"\n"
-                          "#include \"internal/internal.h\"\n"
-                          "#include \"" + DirtyHeader + "\"";
+#endif // _MSC_VER && __MINGW32__
     InMemoryFileSystem->addFile(FileName, 0,
                                 llvm::MemoryBuffer::getMemBuffer(Content));
     Invocation.run();
     EXPECT_TRUE(hasSymbol(InternalSymbol));
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
     EXPECT_TRUE(hasSymbol(DirtySymbol));
     EXPECT_TRUE(hasSymbol(DirtyMacro));
+#endif  // _MSC_VER && __MINGW32__
     return true;
   }
 
