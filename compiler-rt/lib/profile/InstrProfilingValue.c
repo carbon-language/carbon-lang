@@ -143,21 +143,21 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
   ValueProfNode **ValueCounters = (ValueProfNode **)PData->Values;
   ValueProfNode *PrevVNode = NULL;
   ValueProfNode *MinCountVNode = NULL;
-  ValueProfNode *CurrentVNode = ValueCounters[CounterIndex];
+  ValueProfNode *CurVNode = ValueCounters[CounterIndex];
   uint64_t MinCount = UINT64_MAX;
 
   uint8_t VDataCount = 0;
-  while (CurrentVNode) {
-    if (TargetValue == CurrentVNode->Value) {
-      CurrentVNode->Count++;
+  while (CurVNode) {
+    if (TargetValue == CurVNode->Value) {
+      CurVNode->Count++;
       return;
     }
-    if (CurrentVNode->Count < MinCount) {
-      MinCount = CurrentVNode->Count;
-      MinCountVNode = CurrentVNode;
+    if (CurVNode->Count < MinCount) {
+      MinCount = CurVNode->Count;
+      MinCountVNode = CurVNode;
     }
-    PrevVNode = CurrentVNode;
-    CurrentVNode = CurrentVNode->Next;
+    PrevVNode = CurVNode;
+    CurVNode = CurVNode->Next;
     ++VDataCount;
   }
 
@@ -191,29 +191,29 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
      * to give space for hot targets.
      */
     if (!(--MinCountVNode->Count)) {
-      CurrentVNode = MinCountVNode;
-      CurrentVNode->Value = TargetValue;
-      CurrentVNode->Count++;
+      CurVNode = MinCountVNode;
+      CurVNode->Value = TargetValue;
+      CurVNode->Count++;
     }
     return;
   }
 
-  CurrentVNode = allocateOneNode(PData, CounterIndex, TargetValue);
-  if (!CurrentVNode)
+  CurVNode = allocateOneNode(PData, CounterIndex, TargetValue);
+  if (!CurVNode)
     return;
 
-  CurrentVNode->Value = TargetValue;
-  CurrentVNode->Count++;
+  CurVNode->Value = TargetValue;
+  CurVNode->Count++;
 
   uint32_t Success = 0;
   if (!ValueCounters[CounterIndex])
     Success =
-        COMPILER_RT_BOOL_CMPXCHG(&ValueCounters[CounterIndex], 0, CurrentVNode);
+        COMPILER_RT_BOOL_CMPXCHG(&ValueCounters[CounterIndex], 0, CurVNode);
   else if (PrevVNode && !PrevVNode->Next)
-    Success = COMPILER_RT_BOOL_CMPXCHG(&(PrevVNode->Next), 0, CurrentVNode);
+    Success = COMPILER_RT_BOOL_CMPXCHG(&(PrevVNode->Next), 0, CurVNode);
 
   if (!Success && !hasStaticCounters) {
-    free(CurrentVNode);
+    free(CurVNode);
     return;
   }
 }
