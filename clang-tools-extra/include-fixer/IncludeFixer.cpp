@@ -59,9 +59,8 @@ private:
 class Action : public clang::ASTFrontendAction,
                public clang::ExternalSemaSource {
 public:
-  explicit Action(SymbolIndexManager &SymbolIndexMgr, StringRef StyleName,
-                  bool MinimizeIncludePaths)
-      : SymbolIndexMgr(SymbolIndexMgr), FallbackStyle(StyleName),
+  explicit Action(SymbolIndexManager &SymbolIndexMgr, bool MinimizeIncludePaths)
+      : SymbolIndexMgr(SymbolIndexMgr),
         MinimizeIncludePaths(MinimizeIncludePaths) {}
 
   std::unique_ptr<clang::ASTConsumer>
@@ -288,10 +287,6 @@ private:
   /// be used as the insertion point for new include directives.
   unsigned FirstIncludeOffset = -1U;
 
-  /// The fallback format style for formatting after insertion if there is no
-  /// clang-format config file found.
-  std::string FallbackStyle;
-
   /// The symbol being queried.
   std::string QuerySymbol;
 
@@ -347,7 +342,7 @@ IncludeFixerActionFactory::IncludeFixerActionFactory(
     SymbolIndexManager &SymbolIndexMgr, IncludeFixerContext &Context,
     StringRef StyleName, bool MinimizeIncludePaths)
     : SymbolIndexMgr(SymbolIndexMgr), Context(Context),
-      MinimizeIncludePaths(MinimizeIncludePaths), FallbackStyle(StyleName) {}
+      MinimizeIncludePaths(MinimizeIncludePaths) {}
 
 IncludeFixerActionFactory::~IncludeFixerActionFactory() = default;
 
@@ -373,8 +368,8 @@ bool IncludeFixerActionFactory::runInvocation(
   Compiler.getDiagnostics().setErrorLimit(0);
 
   // Run the parser, gather missing includes.
-  auto ScopedToolAction = llvm::make_unique<Action>(
-      SymbolIndexMgr, FallbackStyle, MinimizeIncludePaths);
+  auto ScopedToolAction =
+      llvm::make_unique<Action>(SymbolIndexMgr, MinimizeIncludePaths);
   Compiler.ExecuteAction(*ScopedToolAction);
 
   Context = ScopedToolAction->getIncludeFixerContext(

@@ -81,6 +81,59 @@ cl::opt<std::string>
                    "headers if there is no clang-format config file found."),
           cl::init("llvm"), cl::cat(IncludeFixerCategory));
 
+std::unique_ptr<include_fixer::SymbolIndexManager>
+createSymbolIndexManager(StringRef FilePath) {
+  auto SymbolIndexMgr = llvm::make_unique<include_fixer::SymbolIndexManager>();
+  switch (DatabaseFormat) {
+  case fixed: {
+    // Parse input and fill the database with it.
+    // <symbol>=<header><, header...>
+    // Multiple symbols can be given, separated by semicolons.
+    std::map<std::string, std::vector<std::string>> SymbolsMap;
+    SmallVector<StringRef, 4> SemicolonSplits;
+    StringRef(Input).split(SemicolonSplits, ";");
+    std::vector<find_all_symbols::SymbolInfo> Symbols;
+    for (StringRef Pair : SemicolonSplits) {
+      auto Split = Pair.split('=');
+      std::vector<std::string> Headers;
+      SmallVector<StringRef, 4> CommaSplits;
+      Split.second.split(CommaSplits, ",");
+      for (StringRef Header : CommaSplits)
+        Symbols.push_back(find_all_symbols::SymbolInfo(
+            Split.first.trim(),
+            find_all_symbols::SymbolInfo::SymbolKind::Unknown, Header.trim(), 1,
+            {}));
+    }
+    SymbolIndexMgr->addSymbolIndex(
+        llvm::make_unique<include_fixer::InMemorySymbolIndex>(Symbols));
+    break;
+  }
+  case yaml: {
+    llvm::ErrorOr<std::unique_ptr<include_fixer::YamlSymbolIndex>> DB(nullptr);
+    if (!Input.empty()) {
+      DB = include_fixer::YamlSymbolIndex::createFromFile(Input);
+    } else {
+      // If we don't have any input file, look in the directory of the first
+      // file and its parents.
+      SmallString<128> AbsolutePath(tooling::getAbsolutePath(FilePath));
+      StringRef Directory = llvm::sys::path::parent_path(AbsolutePath);
+      DB = include_fixer::YamlSymbolIndex::createFromDirectory(
+          Directory, "find_all_symbols_db.yaml");
+    }
+
+    if (!DB) {
+      llvm::errs() << "Couldn't find YAML db: " << DB.getError().message()
+                   << '\n';
+      return nullptr;
+    }
+
+    SymbolIndexMgr->addSymbolIndex(std::move(*DB));
+    break;
+  }
+  }
+  return SymbolIndexMgr;
+}
+
 int includeFixerMain(int argc, const char **argv) {
   tooling::CommonOptionsParser options(argc, argv, IncludeFixerCategory);
   tooling::ClangTool tool(options.getCompilations(),
@@ -128,55 +181,10 @@ int includeFixerMain(int argc, const char **argv) {
   }
 
   // Set up data source.
-  auto SymbolIndexMgr = llvm::make_unique<include_fixer::SymbolIndexManager>();
-  switch (DatabaseFormat) {
-  case fixed: {
-    // Parse input and fill the database with it.
-    // <symbol>=<header><, header...>
-    // Multiple symbols can be given, separated by semicolons.
-    std::map<std::string, std::vector<std::string>> SymbolsMap;
-    SmallVector<StringRef, 4> SemicolonSplits;
-    StringRef(Input).split(SemicolonSplits, ";");
-    std::vector<find_all_symbols::SymbolInfo> Symbols;
-    for (StringRef Pair : SemicolonSplits) {
-      auto Split = Pair.split('=');
-      std::vector<std::string> Headers;
-      SmallVector<StringRef, 4> CommaSplits;
-      Split.second.split(CommaSplits, ",");
-      for (StringRef Header : CommaSplits)
-        Symbols.push_back(find_all_symbols::SymbolInfo(
-            Split.first.trim(),
-            find_all_symbols::SymbolInfo::SymbolKind::Unknown, Header.trim(), 1,
-            {}));
-    }
-    SymbolIndexMgr->addSymbolIndex(
-        llvm::make_unique<include_fixer::InMemorySymbolIndex>(Symbols));
-    break;
-  }
-  case yaml: {
-    llvm::ErrorOr<std::unique_ptr<include_fixer::YamlSymbolIndex>> DB(nullptr);
-    if (!Input.empty()) {
-      DB = include_fixer::YamlSymbolIndex::createFromFile(Input);
-    } else {
-      // If we don't have any input file, look in the directory of the first
-      // file and its parents.
-      SmallString<128> AbsolutePath(
-          tooling::getAbsolutePath(options.getSourcePathList().front()));
-      StringRef Directory = llvm::sys::path::parent_path(AbsolutePath);
-      DB = include_fixer::YamlSymbolIndex::createFromDirectory(
-          Directory, "find_all_symbols_db.yaml");
-    }
-
-    if (!DB) {
-      llvm::errs() << "Couldn't find YAML db: " << DB.getError().message()
-                   << '\n';
-      return 1;
-    }
-
-    SymbolIndexMgr->addSymbolIndex(std::move(*DB));
-    break;
-  }
-  }
+  std::unique_ptr<include_fixer::SymbolIndexManager> SymbolIndexMgr =
+      createSymbolIndexManager(options.getSourcePathList().front());
+  if (!SymbolIndexMgr)
+    return 1;
 
   // Now run our tool.
   include_fixer::IncludeFixerContext Context;
