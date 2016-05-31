@@ -219,7 +219,10 @@ int finalizeLibrary() {
 void processCompilationUnitInit(void *Ptr) {
   VPrintf(2, "in esan::%s\n", __FUNCTION__);
   if (WhichTool == ESAN_CacheFrag) {
+    DCHECK(Ptr != nullptr);
     processCacheFragCompilationUnitInit(Ptr);
+  } else {
+    DCHECK(Ptr == nullptr);
   }
 }
 
@@ -228,7 +231,10 @@ void processCompilationUnitInit(void *Ptr) {
 void processCompilationUnitExit(void *Ptr) {
   VPrintf(2, "in esan::%s\n", __FUNCTION__);
   if (WhichTool == ESAN_CacheFrag) {
+    DCHECK(Ptr != nullptr);
     processCacheFragCompilationUnitExit(Ptr);
+  } else {
+    DCHECK(Ptr == nullptr);
   }
 }
 
