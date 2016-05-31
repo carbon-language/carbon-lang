@@ -23,8 +23,8 @@ namespace codeview {
 /// Dumper for CodeView type streams found in COFF object files and PDB files.
 class CVTypeDumper {
 public:
-  CVTypeDumper(ScopedPrinter &W, bool PrintRecordBytes)
-      : W(&W), PrintRecordBytes(PrintRecordBytes) {}
+  CVTypeDumper(ScopedPrinter *W, bool PrintRecordBytes)
+      : W(W), PrintRecordBytes(PrintRecordBytes) {}
 
   StringRef getTypeName(TypeIndex TI);
   void printTypeIndex(StringRef FieldName, TypeIndex TI);

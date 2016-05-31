@@ -523,6 +523,10 @@ public:
   /// etc.
   virtual void EmitBytes(StringRef Data);
 
+  /// Functionally identical to EmitBytes. When emitting textual assembly, this
+  /// method uses .byte directives instead of .ascii or .asciz for readability.
+  virtual void EmitBinaryData(StringRef Data);
+
   /// \brief Emit the expression \p Value into the output as a native
   /// integer of the given \p Size bytes.
   ///
