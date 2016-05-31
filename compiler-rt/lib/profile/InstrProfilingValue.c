@@ -111,7 +111,7 @@ static ValueProfNode *allocateOneNode(__llvm_profile_data *Data, uint32_t Index,
     return (ValueProfNode *)calloc(1, sizeof(ValueProfNode));
 
   /* Early check to avoid value wrapping around.  */
-  if (CurrentVNode >= EndVNode) {
+  if (CurrentVNode + 1 > EndVNode) {
     if (OutOfNodesWarnings++ < INSTR_PROF_MAX_VP_WARNS) {
       PROF_WARN("Unable to track new values: %s. "
                 " Consider using option -mllvm -vp-counters-per-site=<n> to "
@@ -122,7 +122,9 @@ static ValueProfNode *allocateOneNode(__llvm_profile_data *Data, uint32_t Index,
     return 0;
   }
   Node = COMPILER_RT_PTR_FETCH_ADD(ValueProfNode, CurrentVNode, 1);
-  if (Node >= EndVNode)
+  /* Due to section padding, EndVNode point to a byte which is one pass
+   * an incomplete VNode, so we need to skip the last incomplete node. */
+  if (Node + 1 > EndVNode)
     return 0;
 
   return Node;
@@ -201,7 +203,6 @@ __llvm_profile_instrument_target(uint64_t TargetValue, void *Data,
   CurVNode = allocateOneNode(PData, CounterIndex, TargetValue);
   if (!CurVNode)
     return;
-
   CurVNode->Value = TargetValue;
   CurVNode->Count++;
 
