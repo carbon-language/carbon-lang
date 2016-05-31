@@ -9,6 +9,7 @@
 
 #include "SymbolIndexManager.h"
 #include "find-all-symbols/SymbolInfo.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Debug.h"
 
@@ -22,7 +23,7 @@ using clang::find_all_symbols::SymbolInfo;
 /// Sorts and uniques SymbolInfos based on the popularity info in SymbolInfo.
 static void rankByPopularity(std::vector<SymbolInfo> &Symbols) {
   // First collect occurrences per header file.
-  std::map<llvm::StringRef, unsigned> HeaderPopularity;
+  llvm::DenseMap<llvm::StringRef, unsigned> HeaderPopularity;
   for (const SymbolInfo &Symbol : Symbols) {
     unsigned &Popularity = HeaderPopularity[Symbol.getFilePath()];
     Popularity = std::max(Popularity, Symbol.getNumOccurrences());
