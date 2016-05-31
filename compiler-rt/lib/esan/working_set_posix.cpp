@@ -68,10 +68,16 @@ static void reinstateDefaultHandler(int SigNum) {
 // app to handle it just as the app would do without our tool in place.
 static void handleMemoryFault(int SigNum, void *Info, void *Ctx) {
   if (SigNum == SIGSEGV) {
-
-    // TODO: Add shadow memory fault detection and handling.
-
-    if (AppSigAct.sigaction) {
+    // We rely on si_addr being filled in (thus we do not support old kernels).
+    siginfo_t *SigInfo = (siginfo_t *)Info;
+    uptr Addr = (uptr)SigInfo->si_addr;
+    if (isShadowMem(Addr)) {
+      VPrintf(3, "Shadow fault @%p\n", Addr);
+      uptr PageSize = GetPageSizeCached();
+      int Res = internal_mprotect((void *)RoundDownTo(Addr, PageSize),
+                                  PageSize, PROT_READ|PROT_WRITE);
+      CHECK(Res == 0);
+    } else if (AppSigAct.sigaction) {
       // FIXME: For simplicity we ignore app options including its signal stack
       // (we just use ours) and all the delivery flags.
       AppSigAct.sigaction(SigNum, Info, Ctx);

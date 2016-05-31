@@ -57,3 +57,4 @@ int main(int argc, char **argv) {
 // CHECK-NEXT: Past longjmp for signal
 // CHECK-NEXT: Handling SIGSEGV for sigaction
 // CHECK-NEXT: Past longjmp for sigaction
+// CHECK:      {{.*}} EfficiencySanitizer: the total working set size: {{[0-9][0-9][0-9]}} Bytes ({{[0-9][0-9]}} cache lines)

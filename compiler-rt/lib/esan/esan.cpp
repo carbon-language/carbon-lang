@@ -149,8 +149,16 @@ static void initializeShadow() {
     VPrintf(1, "Shadow #%d: [%zx-%zx) (%zuGB)\n", i, ShadowStart, ShadowEnd,
             (ShadowEnd - ShadowStart) >> 30);
 
-    uptr Map = (uptr)MmapFixedNoReserve(ShadowStart, ShadowEnd - ShadowStart,
-                                        "shadow");
+    uptr Map;
+    if (WhichTool == ESAN_WorkingSet) {
+      // We want to identify all shadow pages that are touched so we start
+      // out inaccessible.
+      Map = (uptr)MmapFixedNoAccess(ShadowStart, ShadowEnd- ShadowStart,
+                                    "shadow");
+    } else {
+      Map = (uptr)MmapFixedNoReserve(ShadowStart, ShadowEnd - ShadowStart,
+                                     "shadow");
+    }
     if (Map != ShadowStart) {
       Printf("FATAL: EfficiencySanitizer failed to map its shadow memory.\n");
       Die();
