@@ -26,8 +26,6 @@ namespace clang {
 namespace include_fixer {
 namespace {
 
-class Action;
-
 /// Manages the parse, gathers include suggestions.
 class Action : public clang::ASTFrontendAction,
                public clang::ExternalSemaSource {
