@@ -90,13 +90,28 @@ public:
     InMemoryFileSystem->addFile(HeaderName, 0,
                                 llvm::MemoryBuffer::getMemBuffer(Code));
 
+    // Test path cleaning for both decls and macros.
+    const std::string DirtyHeader = "./internal/../internal/./a/b.h";
+    const std::string CleanHeader = "internal/a/b.h";
+    const std::string DirtyHeaderContent =
+        "#define INTERNAL 1\nclass ExtraInternal {};";
+    InMemoryFileSystem->addFile(
+        DirtyHeader, 0, llvm::MemoryBuffer::getMemBuffer(DirtyHeaderContent));
+    SymbolInfo DirtyMacro("INTERNAL", SymbolInfo::SymbolKind::Macro,
+                          CleanHeader, 1, {});
+    SymbolInfo DirtySymbol("ExtraInternal", SymbolInfo::SymbolKind::Class,
+                           CleanHeader, 2, {});
+
     std::string Content = "#include\"" + std::string(HeaderName) +
                           "\"\n"
-                          "#include \"internal/internal.h\"";
+                          "#include \"internal/internal.h\"\n"
+                          "#include \"" + DirtyHeader + "\"";
     InMemoryFileSystem->addFile(FileName, 0,
                                 llvm::MemoryBuffer::getMemBuffer(Content));
     Invocation.run();
     EXPECT_TRUE(hasSymbol(InternalSymbol));
+    EXPECT_TRUE(hasSymbol(DirtySymbol));
+    EXPECT_TRUE(hasSymbol(DirtyMacro));
     return true;
   }
 
