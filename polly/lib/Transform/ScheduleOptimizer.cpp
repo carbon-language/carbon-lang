@@ -750,6 +750,6 @@ Pass *polly::createIslScheduleOptimizerPass() {
 INITIALIZE_PASS_BEGIN(IslScheduleOptimizer, "polly-opt-isl",
                       "Polly - Optimize schedule of SCoP", false, false);
 INITIALIZE_PASS_DEPENDENCY(DependenceInfo);
-INITIALIZE_PASS_DEPENDENCY(ScopInfo);
+INITIALIZE_PASS_DEPENDENCY(ScopInfoRegionPass);
 INITIALIZE_PASS_END(IslScheduleOptimizer, "polly-opt-isl",
                     "Polly - Optimize schedule of SCoP", false, false)
