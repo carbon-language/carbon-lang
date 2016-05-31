@@ -604,13 +604,20 @@ define <16 x float> @test_x86_vcvtph2ps_512_rrkz(<16 x i16> %a0, i16 %mask) {
 
 declare <16 x float> @llvm.x86.avx512.mask.vcvtph2ps.512(<16 x i16>, <16 x float>, i16, i32) nounwind readonly
 
-
-define <16 x i16> @test_x86_vcvtps2ph_256(<16 x float> %a0) {
+define <16 x i16> @test_x86_vcvtps2ph_256(<16 x float> %a0, <16 x i16> %src, i16 %mask, <16 x i16> * %dst) {
 ; CHECK-LABEL: test_x86_vcvtps2ph_256:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vcvtps2ph $2, %zmm0, %ymm0
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vcvtps2ph $2, %zmm0, %ymm1 {%k1}
+; CHECK-NEXT:    vcvtps2ph $2, %zmm0, %ymm2 {%k1} {z}
+; CHECK-NEXT:    vcvtps2ph $2, %zmm0, (%rsi)
+; CHECK-NEXT:    vpaddw %ymm1, %ymm2, %ymm0
 ; CHECK-NEXT:    retq
-  %res = call <16 x i16> @llvm.x86.avx512.mask.vcvtps2ph.512(<16 x float> %a0, i32 2, <16 x i16> zeroinitializer, i16 -1)
+  %res1 = call <16 x i16> @llvm.x86.avx512.mask.vcvtps2ph.512(<16 x float> %a0, i32 2, <16 x i16> zeroinitializer, i16 -1)
+  %res2 = call <16 x i16> @llvm.x86.avx512.mask.vcvtps2ph.512(<16 x float> %a0, i32 2, <16 x i16> zeroinitializer, i16 %mask)
+  %res3 = call <16 x i16> @llvm.x86.avx512.mask.vcvtps2ph.512(<16 x float> %a0, i32 2, <16 x i16> %src, i16 %mask)
+  store <16 x i16> %res1, <16 x i16> * %dst
+  %res  = add <16 x i16> %res2, %res3
   ret <16 x i16> %res
 }
 
