@@ -28,33 +28,6 @@ namespace {
 
 class Action;
 
-class PreprocessorHooks : public clang::PPCallbacks {
-public:
-  explicit PreprocessorHooks(Action *EnclosingPass)
-      : EnclosingPass(EnclosingPass), TrackedFile(nullptr) {}
-
-  void FileChanged(clang::SourceLocation loc,
-                   clang::PPCallbacks::FileChangeReason reason,
-                   clang::SrcMgr::CharacteristicKind file_type,
-                   clang::FileID prev_fid) override;
-
-  void InclusionDirective(clang::SourceLocation HashLocation,
-                          const clang::Token &IncludeToken,
-                          llvm::StringRef FileName, bool IsAngled,
-                          clang::CharSourceRange FileNameRange,
-                          const clang::FileEntry *IncludeFile,
-                          llvm::StringRef SearchPath,
-                          llvm::StringRef relative_path,
-                          const clang::Module *imported) override;
-
-private:
-  /// The current Action.
-  Action *EnclosingPass;
-
-  /// The current FileEntry.
-  const clang::FileEntry *TrackedFile;
-};
-
 /// Manages the parse, gathers include suggestions.
 class Action : public clang::ASTFrontendAction,
                public clang::ExternalSemaSource {
@@ -67,8 +40,6 @@ public:
   CreateASTConsumer(clang::CompilerInstance &Compiler,
                     StringRef InFile) override {
     Filename = InFile;
-    Compiler.getPreprocessor().addPPCallbacks(
-        llvm::make_unique<PreprocessorHooks>(this));
     return llvm::make_unique<clang::ASTConsumer>();
   }
 
@@ -195,22 +166,6 @@ public:
 
   StringRef filename() const { return Filename; }
 
-  /// Called for each include file we discover is in the file.
-  /// \param SourceManager the active SourceManager
-  /// \param canonical_path the canonical path to the include file
-  /// \param uttered_path the path as it appeared in the program
-  /// \param IsAngled whether angle brackets were used
-  /// \param HashLocation the source location of the include's \#
-  /// \param EndLocation the source location following the include
-  void NextInclude(clang::SourceManager *SourceManager,
-                   llvm::StringRef canonical_path, llvm::StringRef uttered_path,
-                   bool IsAngled, clang::SourceLocation HashLocation,
-                   clang::SourceLocation EndLocation) {
-    unsigned Offset = SourceManager->getFileOffset(HashLocation);
-    if (FirstIncludeOffset == -1U)
-      FirstIncludeOffset = Offset;
-  }
-
   /// Get the minimal include for a given path.
   std::string minimizeInclude(StringRef Include,
                               const clang::SourceManager &SourceManager,
@@ -244,16 +199,12 @@ public:
       return FixerContext;
 
     FixerContext.SymbolIdentifer = QuerySymbol;
-    FixerContext.FirstIncludeOffset = FirstIncludeOffset;
     for (const auto &Header : SymbolQueryResults)
       FixerContext.Headers.push_back(
           minimizeInclude(Header, SourceManager, HeaderSearch));
 
     return FixerContext;
   }
-
-  /// Sets the location at the very top of the file.
-  void setFileBegin(clang::SourceLocation Location) { FileBegin = Location; }
 
 private:
   /// Query the database for a given identifier.
@@ -280,13 +231,6 @@ private:
   /// The absolute path to the file being processed.
   std::string Filename;
 
-  /// The location of the beginning of the tracked file.
-  clang::SourceLocation FileBegin;
-
-  /// The offset of the last include in the original source file. This will
-  /// be used as the insertion point for new include directives.
-  unsigned FirstIncludeOffset = -1U;
-
   /// The symbol being queried.
   std::string QuerySymbol;
 
@@ -297,44 +241,6 @@ private:
   /// Whether we should use the smallest possible include path.
   bool MinimizeIncludePaths = true;
 };
-
-void PreprocessorHooks::FileChanged(clang::SourceLocation Loc,
-                                    clang::PPCallbacks::FileChangeReason Reason,
-                                    clang::SrcMgr::CharacteristicKind FileType,
-                                    clang::FileID PrevFID) {
-  // Remember where the main file starts.
-  if (Reason == clang::PPCallbacks::EnterFile) {
-    clang::SourceManager *SourceManager =
-        &EnclosingPass->getCompilerInstance().getSourceManager();
-    clang::FileID loc_id = SourceManager->getFileID(Loc);
-    if (const clang::FileEntry *FileEntry =
-            SourceManager->getFileEntryForID(loc_id)) {
-      if (FileEntry->getName() == EnclosingPass->filename()) {
-        EnclosingPass->setFileBegin(Loc);
-        TrackedFile = FileEntry;
-      }
-    }
-  }
-}
-
-void PreprocessorHooks::InclusionDirective(
-    clang::SourceLocation HashLocation, const clang::Token &IncludeToken,
-    llvm::StringRef FileName, bool IsAngled,
-    clang::CharSourceRange FileNameRange, const clang::FileEntry *IncludeFile,
-    llvm::StringRef SearchPath, llvm::StringRef relative_path,
-    const clang::Module *imported) {
-  // Remember include locations so we can insert our new include at the end of
-  // the include block.
-  clang::SourceManager *SourceManager =
-      &EnclosingPass->getCompilerInstance().getSourceManager();
-  auto IDPosition = SourceManager->getDecomposedExpansionLoc(HashLocation);
-  const FileEntry *SourceFile =
-      SourceManager->getFileEntryForID(IDPosition.first);
-  if (!IncludeFile || TrackedFile != SourceFile)
-    return;
-  EnclosingPass->NextInclude(SourceManager, IncludeFile->getName(), FileName,
-                             IsAngled, HashLocation, FileNameRange.getEnd());
-}
 
 } // namespace
 
@@ -384,32 +290,17 @@ bool IncludeFixerActionFactory::runInvocation(
 
 tooling::Replacements
 createInsertHeaderReplacements(StringRef Code, StringRef FilePath,
-                               StringRef Header, unsigned FirstIncludeOffset,
+                               StringRef Header,
                                const clang::format::FormatStyle &Style) {
   if (Header.empty())
     return tooling::Replacements();
-  // Create replacements for new headers.
-  clang::tooling::Replacements Insertions;
-  if (FirstIncludeOffset == -1U) {
-    // FIXME: skip header guards.
-    FirstIncludeOffset = 0;
-    // If there is no existing #include, then insert an empty line after new
-    // header block.
-    if (Code.front() != '\n')
-      Insertions.insert(
-          clang::tooling::Replacement(FilePath, FirstIncludeOffset, 0, "\n"));
-  }
-  // Keep inserting new headers before the first header.
-  std::string Text = "#include " + Header.str() + "\n";
-  Insertions.insert(
-      clang::tooling::Replacement(FilePath, FirstIncludeOffset, 0, Text));
-  DEBUG({
-    llvm::dbgs() << "Header insertions:\n";
-    for (const auto &R : Insertions)
-      llvm::dbgs() << R.toString() << '\n';
-  });
+  std::string IncludeName = "#include " + Header.str() + "\n";
+  // Create replacements for the new header.
+  clang::tooling::Replacements Insertions = {
+      tooling::Replacement(FilePath, UINT_MAX, 0, IncludeName)};
 
-  return formatReplacements(Code, Insertions, Style);
+  return formatReplacements(
+      Code, cleanupAroundReplacements(Code, Insertions, Style), Style);
 }
 
 } // namespace include_fixer

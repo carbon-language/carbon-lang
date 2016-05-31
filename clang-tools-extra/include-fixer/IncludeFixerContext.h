@@ -22,8 +22,6 @@ struct IncludeFixerContext {
   std::string SymbolIdentifer;
   /// \brief The headers which have SymbolIdentifier definitions.
   std::vector<std::string> Headers;
-  /// \brief The insertion point for new include header.
-  unsigned FirstIncludeOffset;
 };
 
 } // namespace include_fixer

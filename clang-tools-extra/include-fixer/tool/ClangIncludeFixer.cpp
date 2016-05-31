@@ -168,11 +168,9 @@ int includeFixerMain(int argc, const char **argv) {
       return 1;
     }
 
-    // FIXME: Insert the header in right FirstIncludeOffset.
     tooling::Replacements Replacements =
         clang::include_fixer::createInsertHeaderReplacements(
-            Code->getBuffer(), FilePath, InsertHeader,
-            /*FirstIncludeOffset=*/0, InsertStyle);
+            Code->getBuffer(), FilePath, InsertHeader, InsertStyle);
     tooling::Replacements Replaces(Replacements.begin(), Replacements.end());
     std::string ChangedCode =
         tooling::applyAllReplacements(Code->getBuffer(), Replaces);
@@ -218,7 +216,7 @@ int includeFixerMain(int argc, const char **argv) {
   tooling::Replacements Replacements =
       clang::include_fixer::createInsertHeaderReplacements(
           /*Code=*/Buffer.get()->getBuffer(), FilePath, Context.Headers.front(),
-          Context.FirstIncludeOffset, InsertStyle);
+          InsertStyle);
 
   if (!Quiet)
     llvm::errs() << "Added #include" << Context.Headers.front();
