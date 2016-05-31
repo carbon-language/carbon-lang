@@ -1734,12 +1734,14 @@ __kmp_steal_task( kmp_info_t *victim, kmp_int32 gtid, kmp_task_team_t *task_team
 
     if ( !is_constrained ) {
         taskdata = victim_td -> td.td_deque[ victim_td -> td.td_deque_head ];
+        KMP_ASSERT(taskdata);
         // Bump head pointer and Wrap.
         victim_td -> td.td_deque_head = ( victim_td -> td.td_deque_head + 1 ) & TASK_DEQUE_MASK(victim_td->td);
     } else {
         // While we have postponed tasks let's steal from tail of the deque (smaller tasks)
         kmp_int32 tail = ( victim_td -> td.td_deque_tail - 1 ) & TASK_DEQUE_MASK(victim_td->td);  // Wrap index.
         taskdata = victim_td -> td.td_deque[ tail ];
+        KMP_ASSERT(taskdata);
         // we need to check if the candidate obeys task scheduling constraint:
         // only child of current task can be scheduled
         kmp_taskdata_t * current = __kmp_threads[ gtid ]->th.th_current_task;

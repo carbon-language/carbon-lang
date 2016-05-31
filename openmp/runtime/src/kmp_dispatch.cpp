@@ -2570,6 +2570,32 @@ __kmp_wait_yield_4(volatile kmp_uint32 * spinner,
     return r;
 }
 
+void
+__kmp_wait_yield_4_ptr(void *spinner,
+                   kmp_uint32 checker,
+                   kmp_uint32 (*pred)( void *, kmp_uint32 ),
+                   void        *obj    // Higher-level synchronization object, or NULL.
+                   )
+{
+    // note: we may not belong to a team at this point
+    register void                *spin          = spinner;
+    register kmp_uint32           check         = checker;
+    register kmp_uint32           spins;
+    register kmp_uint32 (*f) ( void *, kmp_uint32 ) = pred;
+
+    KMP_FSYNC_SPIN_INIT( obj, spin );
+    KMP_INIT_YIELD( spins );
+    // main wait spin loop
+    while ( !f( spin, check ) ) {
+        KMP_FSYNC_SPIN_PREPARE( obj );
+        /* if we have waited a bit, or are oversubscribed, yield */
+        /* pause is in the following code */
+        KMP_YIELD( TCR_4( __kmp_nth ) > __kmp_avail_proc );
+        KMP_YIELD_SPIN( spins );
+    }
+    KMP_FSYNC_SPIN_ACQUIRED( obj );
+}
+
 } // extern "C"
 
 #ifdef KMP_GOMP_COMPAT
