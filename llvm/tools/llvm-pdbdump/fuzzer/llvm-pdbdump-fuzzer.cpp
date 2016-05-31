@@ -28,7 +28,7 @@ extern "C" void LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
       StringRef((const char *)data, size), "", false);
 
   ScopedPrinter P(nulls());
-  codeview::CVTypeDumper TD(P, false);
+  codeview::CVTypeDumper TD(&P, false);
 
   std::unique_ptr<pdb::PDBFile> File(new pdb::PDBFile(std::move(Buff)));
   if (auto E = File->parseFileHeaders()) {
