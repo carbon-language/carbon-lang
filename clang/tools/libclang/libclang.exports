@@ -182,7 +182,6 @@ clang_getCursorSemanticParent
 clang_getCursorSpelling
 clang_getCursorType
 clang_getCursorUSR
-clang_getCursorVisibility
 clang_getDeclObjCTypeEncoding
 clang_getDefinitionSpellingAndExtent
 clang_getDiagnostic
