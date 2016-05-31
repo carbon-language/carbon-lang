@@ -8238,9 +8238,6 @@ Example:
       <result> = icmp ule i16 -4, 5        ; yields: result=false
       <result> = icmp sge i16  4, 5        ; yields: result=false
 
-Note that the code generator does not yet support vector types with the
-``icmp`` instruction.
-
 .. _i_fcmp:
 
 '``fcmp``' Instruction
@@ -8352,9 +8349,6 @@ Example:
       <result> = fcmp one float 4.0, 5.0    ; yields: result=true
       <result> = fcmp olt float 4.0, 5.0    ; yields: result=true
       <result> = fcmp ueq double 1.0, 2.0   ; yields: result=false
-
-Note that the code generator does not yet support vector types with the
-``fcmp`` instruction.
 
 .. _i_phi:
 
