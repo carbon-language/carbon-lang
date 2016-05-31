@@ -313,8 +313,12 @@ enum sched_type {
 
     kmp_sch_static_steal              = 44,   /**< accessible only through KMP_SCHEDULE environment variable */
 
+#if OMP_41_ENABLED
+    kmp_sch_static_balanced_chunked   = 45,   /**< static with chunk adjustment (e.g., simd) */
+#endif
+
     /* accessible only through KMP_SCHEDULE environment variable */
-    kmp_sch_upper                     = 45,   /**< upper bound for unordered values */
+    kmp_sch_upper                     = 46,   /**< upper bound for unordered values */
 
     kmp_ord_lower                     = 64,   /**< lower bound for ordered values, must be power of 2 */
     kmp_ord_static_chunked            = 65,
