@@ -2,8 +2,12 @@
 // RUN: %clang_cc1 -x cl -cl-std=CL1.1 %s -verify -triple spir-unknown-unknown
 // RUN: %clang_cc1 -x cl -cl-std=CL1.2 %s -verify -triple spir-unknown-unknown
 // RUN: %clang_cc1 -x cl -cl-std=CL2.0 %s -verify -triple spir-unknown-unknown
+// RUN: %clang_cc1 -x cl -cl-std=CL %s -verify -triple spir-unknown-unknown -Wpedantic-core-features -DTEST_CORE_FEATURES
+// RUN: %clang_cc1 -x cl -cl-std=CL1.1 %s -verify -triple spir-unknown-unknown -Wpedantic-core-features -DTEST_CORE_FEATURES
+// RUN: %clang_cc1 -x cl -cl-std=CL1.2 %s -verify -triple spir-unknown-unknown -Wpedantic-core-features -DTEST_CORE_FEATURES
+// RUN: %clang_cc1 -x cl -cl-std=CL2.0 %s -verify -triple spir-unknown-unknown -Wpedantic-core-features -DTEST_CORE_FEATURES
 
-#if __OPENCL_C_VERSION__ >= 200
+#if __OPENCL_C_VERSION__ >= 200 && ! defined TEST_CORE_FEATURES
 // expected-no-diagnostics
 #endif
 
@@ -39,54 +43,74 @@
 #pragma OPENCL EXTENSION cl_khr_icd: enable
 
 // Core features in CL 1.1
-#if (__OPENCL_C_VERSION__ < 110)
+
 #ifndef cl_khr_byte_addressable_store
 #error "Missing cl_khr_byte_addressable_store define"
 #endif
 #pragma OPENCL EXTENSION cl_khr_byte_addressable_store: enable
+#if (__OPENCL_C_VERSION__ >= 110) && defined TEST_CORE_FEATURES
+// expected-warning@-2{{OpenCL extension 'cl_khr_byte_addressable_store' is core feature or supported optional core feature - ignoring}}
+#endif
 
 #ifndef cl_khr_global_int32_base_atomics
 #error "Missing cl_khr_global_int32_base_atomics define"
 #endif
 #pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics: enable
+#if (__OPENCL_C_VERSION__ >= 110) && defined TEST_CORE_FEATURES
+// expected-warning@-2{{OpenCL extension 'cl_khr_global_int32_base_atomics' is core feature or supported optional core feature - ignoring}}
+#endif
 
 #ifndef cl_khr_global_int32_extended_atomics
 #error "Missing cl_khr_global_int32_extended_atomics define"
 #endif
 #pragma OPENCL EXTENSION cl_khr_global_int32_extended_atomics: enable
+#if (__OPENCL_C_VERSION__ >= 110) && defined TEST_CORE_FEATURES
+// expected-warning@-2{{OpenCL extension 'cl_khr_global_int32_extended_atomics' is core feature or supported optional core feature - ignoring}}
+#endif
 
 #ifndef cl_khr_local_int32_base_atomics
 #error "Missing cl_khr_local_int32_base_atomics define"
 #endif
 #pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics: enable
+#if (__OPENCL_C_VERSION__ >= 110) && defined TEST_CORE_FEATURES
+// expected-warning@-2{{OpenCL extension 'cl_khr_local_int32_base_atomics' is core feature or supported optional core feature - ignoring}}
+#endif
 
 #ifndef cl_khr_local_int32_extended_atomics
 #error "Missing cl_khr_local_int32_extended_atomics define"
 #endif
 #pragma OPENCL EXTENSION cl_khr_local_int32_extended_atomics: enable
+#if (__OPENCL_C_VERSION__ >= 110) && defined TEST_CORE_FEATURES
+// expected-warning@-2{{OpenCL extension 'cl_khr_local_int32_extended_atomics' is core feature or supported optional core feature - ignoring}}
+#endif
 
+#if (__OPENCL_C_VERSION__ < 110)
+// Deprecated abvoe 1.0
 #ifndef cl_khr_select_fprounding_mode
 #error "Missing cl_khr_select_fp_rounding_mode define"
 #endif
 #pragma OPENCL EXTENSION cl_khr_select_fprounding_mode: enable
-
 #endif
 
+
 // Core feature in CL 1.2
-#if (__OPENCL_C_VERSION__ < 120)
 #ifndef cl_khr_fp64
 #error "Missing cl_khr_fp64 define"
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64: enable
+#if (__OPENCL_C_VERSION__ >= 120) && defined TEST_CORE_FEATURES
+// expected-warning@-2{{OpenCL extension 'cl_khr_fp64' is core feature or supported optional core feature - ignoring}}
 #endif
 
 //Core feature in CL 2.0
-#if (__OPENCL_C_VERSION__ < 200)
 #ifndef cl_khr_3d_image_writes
 #error "Missing cl_khr_3d_image_writes define"
 #endif
 #pragma OPENCL EXTENSION cl_khr_3d_image_writes: enable
+#if (__OPENCL_C_VERSION__ >= 200) && defined TEST_CORE_FEATURES
+// expected-warning@-2{{OpenCL extension 'cl_khr_3d_image_writes' is core feature or supported optional core feature - ignoring}}
 #endif
+
 
 
 #if (__OPENCL_C_VERSION__ >= 110)
