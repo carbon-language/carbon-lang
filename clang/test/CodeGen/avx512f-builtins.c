@@ -26,6 +26,27 @@ __m512d test_mm512_maskz_sqrt_pd (__mmask8 __U, __m512d __A)
   return _mm512_maskz_sqrt_pd (__U,__A);
 }
 
+__m512d test_mm512_mask_sqrt_round_pd(__m512d __W,__mmask8 __U,__m512d __A)
+{
+  // CHECK-LABEL: @test_mm512_mask_sqrt_round_pd
+  // CHECK: @llvm.x86.avx512.mask.sqrt.pd.512
+  return _mm512_mask_sqrt_round_pd(__W,__U,__A,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512d test_mm512_maskz_sqrt_round_pd(__mmask8 __U,__m512d __A)
+{
+  // CHECK-LABEL: @test_mm512_maskz_sqrt_round_pd
+  // CHECK: @llvm.x86.avx512.mask.sqrt.pd.512
+  return _mm512_maskz_sqrt_round_pd(__U,__A,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512d test_mm512_sqrt_round_pd(__m512d __A)
+{
+  // CHECK-LABEL: @test_mm512_sqrt_round_pd
+  // CHECK: @llvm.x86.avx512.mask.sqrt.pd.512
+  return _mm512_sqrt_round_pd(__A,_MM_FROUND_CUR_DIRECTION);
+}
+
 __m512 test_mm512_sqrt_ps(__m512 a)
 {
   // CHECK-LABEL: @test_mm512_sqrt_ps
@@ -45,6 +66,27 @@ __m512 test_mm512_maskz_sqrt_ps( __mmask8 __U, __m512 __A)
   // CHECK-LABEL: @test_mm512_maskz_sqrt_ps
   // CHECK: @llvm.x86.avx512.mask.sqrt.ps.512
   return _mm512_maskz_sqrt_ps(__U ,__A);
+}
+
+__m512 test_mm512_mask_sqrt_round_ps(__m512 __W,__mmask16 __U,__m512 __A)
+{
+  // CHECK-LABEL: @test_mm512_mask_sqrt_round_ps
+  // CHECK: @llvm.x86.avx512.mask.sqrt.ps.512
+  return _mm512_mask_sqrt_round_ps(__W,__U,__A,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512 test_mm512_maskz_sqrt_round_ps(__mmask16 __U,__m512 __A)
+{
+  // CHECK-LABEL: @test_mm512_maskz_sqrt_round_ps
+  // CHECK: @llvm.x86.avx512.mask.sqrt.ps.512
+  return _mm512_maskz_sqrt_round_ps(__U,__A,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512 test_mm512_sqrt_round_ps(__m512 __A)
+{
+  // CHECK-LABEL: @test_mm512_sqrt_round_ps
+  // CHECK: @llvm.x86.avx512.mask.sqrt.ps.512
+  return _mm512_sqrt_round_ps(__A,_MM_FROUND_CUR_DIRECTION);
 }
 
 __m512d test_mm512_rsqrt14_pd(__m512d a)
@@ -6576,11 +6618,53 @@ __m512 test_mm512_mask_max_ps (__m512 __W, __mmask16 __U, __m512 __A, __m512 __B
   return _mm512_mask_max_ps (__W,__U,__A,__B);
 }
 
+__m512d test_mm512_mask_max_round_pd(__m512d __W,__mmask8 __U,__m512d __A,__m512d __B)
+{
+  // CHECK-LABEL: @test_mm512_mask_max_round_pd
+  // CHECK: @llvm.x86.avx512.mask.max.pd.512
+  return _mm512_mask_max_round_pd(__W,__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512d test_mm512_maskz_max_round_pd(__mmask8 __U,__m512d __A,__m512d __B)
+{
+  // CHECK-LABEL: @test_mm512_maskz_max_round_pd
+  // CHECK: @llvm.x86.avx512.mask.max.pd.512
+  return _mm512_maskz_max_round_pd(__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512d test_mm512_max_round_pd(__m512d __A,__m512d __B)
+{
+  // CHECK-LABEL: @test_mm512_max_round_pd
+  // CHECK: @llvm.x86.avx512.mask.max.pd.512
+  return _mm512_max_round_pd(__A,__B,_MM_FROUND_CUR_DIRECTION);
+}
+
 __m512 test_mm512_maskz_max_ps (__mmask16 __U, __m512 __A, __m512 __B)
 {
   // CHECK-LABEL: @test_mm512_maskz_max_ps 
   // CHECK: @llvm.x86.avx512.mask.max.ps.512
   return _mm512_maskz_max_ps (__U,__A,__B);
+}
+
+__m512 test_mm512_mask_max_round_ps(__m512 __W,__mmask16 __U,__m512 __A,__m512 __B)
+{
+  // CHECK-LABEL: @test_mm512_mask_max_round_ps
+  // CHECK: @llvm.x86.avx512.mask.max.ps.512
+  return _mm512_mask_max_round_ps(__W,__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512 test_mm512_maskz_max_round_ps(__mmask16 __U,__m512 __A,__m512 __B)
+{
+  // CHECK-LABEL: @test_mm512_maskz_max_round_ps
+  // CHECK: @llvm.x86.avx512.mask.max.ps.512
+  return _mm512_maskz_max_round_ps(__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512 test_mm512_max_round_ps(__m512 __A,__m512 __B)
+{
+  // CHECK-LABEL: @test_mm512_max_round_ps
+  // CHECK: @llvm.x86.avx512.mask.max.ps.512
+  return _mm512_max_round_ps(__A,__B,_MM_FROUND_CUR_DIRECTION);
 }
 
 __m512d test_mm512_mask_min_pd (__m512d __W, __mmask8 __U, __m512d __A, __m512d __B)
@@ -6597,6 +6681,27 @@ __m512d test_mm512_maskz_min_pd (__mmask8 __U, __m512d __A, __m512d __B)
   return _mm512_maskz_min_pd (__U,__A,__B);
 }
 
+__m512d test_mm512_mask_min_round_pd(__m512d __W,__mmask8 __U,__m512d __A,__m512d __B)
+{
+  // CHECK-LABEL: @test_mm512_mask_min_round_pd
+  // CHECK: @llvm.x86.avx512.mask.min.pd.512
+  return _mm512_mask_min_round_pd(__W,__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512d test_mm512_maskz_min_round_pd(__mmask8 __U,__m512d __A,__m512d __B)
+{
+  // CHECK-LABEL: @test_mm512_maskz_min_round_pd
+  // CHECK: @llvm.x86.avx512.mask.min.pd.512
+  return _mm512_maskz_min_round_pd(__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512d test_mm512_min_round_pd( __m512d __A,__m512d __B)
+{
+  // CHECK-LABEL: @test_mm512_min_round_pd
+  // CHECK: @llvm.x86.avx512.mask.min.pd.512
+  return _mm512_min_round_pd(__A,__B,_MM_FROUND_CUR_DIRECTION);
+}
+
 __m512 test_mm512_mask_min_ps (__m512 __W, __mmask16 __U, __m512 __A, __m512 __B)
 {
   // CHECK-LABEL: @test_mm512_mask_min_ps 
@@ -6609,6 +6714,27 @@ __m512 test_mm512_maskz_min_ps (__mmask16 __U, __m512 __A, __m512 __B)
   // CHECK-LABEL: @test_mm512_maskz_min_ps 
   // CHECK: @llvm.x86.avx512.mask.min.ps.512
   return _mm512_maskz_min_ps (__U,__A,__B);
+}
+
+__m512 test_mm512_mask_min_round_ps(__m512 __W,__mmask16 __U,__m512 __A,__m512 __B)
+{
+  // CHECK-LABEL: @test_mm512_mask_min_round_ps
+  // CHECK: @llvm.x86.avx512.mask.min.ps.512
+  return _mm512_mask_min_round_ps(__W,__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512 test_mm512_maskz_min_round_ps(__mmask16 __U,__m512 __A,__m512 __B)
+{
+  // CHECK-LABEL: @test_mm512_maskz_min_round_ps
+  // CHECK: @llvm.x86.avx512.mask.min.ps.512
+  return _mm512_maskz_min_round_ps(__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512 test_mm512_min_round_ps(__m512 __A,__m512 __B)
+{
+  // CHECK-LABEL: @test_mm512_min_round_ps
+  // CHECK: @llvm.x86.avx512.mask.min.ps.512
+  return _mm512_min_round_ps(__A,__B,_MM_FROUND_CUR_DIRECTION);
 }
 
 __m512 test_mm512_mask_floor_ps (__m512 __W, __mmask16 __U, __m512 __A)
