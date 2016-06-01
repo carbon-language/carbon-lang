@@ -23,7 +23,7 @@ namespace {
 
 #define EXPECT_NO_ERROR(Err)                                                   \
   {                                                                            \
-    auto E = std::move(Err);                                                   \
+    auto E = Err;                                                              \
     EXPECT_FALSE(static_cast<bool>(E));                                        \
     if (E)                                                                     \
       consumeError(std::move(E));                                              \
@@ -31,7 +31,7 @@ namespace {
 
 #define EXPECT_ERROR(Err)                                                      \
   {                                                                            \
-    auto E = std::move(Err);                                                   \
+    auto E = Err;                                                              \
     EXPECT_TRUE(static_cast<bool>(E));                                         \
     if (E)                                                                     \
       consumeError(std::move(E));                                              \
