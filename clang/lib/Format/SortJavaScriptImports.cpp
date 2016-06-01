@@ -245,7 +245,7 @@ private:
     SourceLocation SymbolsEnd = Reference.Symbols.back().Range.getEnd();
     Buffer += getSourceText(Reference.Range.getBegin(), SymbolsStart);
     // ... then the references in order ...
-    for (auto *I = Symbols.begin(), *E = Symbols.end(); I != E; ++I) {
+    for (auto I = Symbols.begin(), E = Symbols.end(); I != E; ++I) {
       if (I != Symbols.begin())
         Buffer += ",";
       Buffer += getSourceText(I->Range);
