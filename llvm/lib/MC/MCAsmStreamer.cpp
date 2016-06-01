@@ -179,7 +179,7 @@ public:
   void EmitGPRel32Value(const MCExpr *Value) override;
 
 
-  void EmitFill(uint64_t NumBytes, uint8_t FillValue) override;
+  void emitFill(uint64_t NumBytes, uint8_t FillValue) override;
 
   void emitFill(const MCExpr &NumBytes, uint64_t FillValue,
                 SMLoc Loc = SMLoc()) override;
@@ -819,9 +819,9 @@ void MCAsmStreamer::EmitGPRel32Value(const MCExpr *Value) {
   EmitEOL();
 }
 
-/// EmitFill - Emit NumBytes bytes worth of the value specified by
+/// emitFill - Emit NumBytes bytes worth of the value specified by
 /// FillValue.  This implements directives such as '.space'.
-void MCAsmStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue) {
+void MCAsmStreamer::emitFill(uint64_t NumBytes, uint8_t FillValue) {
   if (NumBytes == 0) return;
 
   const MCExpr *E = MCConstantExpr::create(NumBytes, getContext());
