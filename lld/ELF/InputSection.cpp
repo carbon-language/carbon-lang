@@ -257,6 +257,8 @@ getSymVA(uint32_t Type, typename ELFT::uint A, typename ELFT::uint P,
   case R_PC:
   case R_RELAX_GOT_PC:
     return Body.getVA<ELFT>(A) - P;
+  case R_RELAX_GOT_PC_NOPIC:
+    return Body.getVA<ELFT>();
   case R_PAGE_PC:
     return getAArch64Page(Body.getVA<ELFT>(A)) - getAArch64Page(P);
   }
@@ -325,6 +327,7 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd) {
 
     switch (Expr) {
     case R_RELAX_GOT_PC:
+    case R_RELAX_GOT_PC_NOPIC:
       Target->relaxGot(BufLoc, SymVA);
       break;
     case R_RELAX_TLS_IE_TO_LE:
