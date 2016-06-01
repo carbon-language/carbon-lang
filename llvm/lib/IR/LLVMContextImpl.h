@@ -997,6 +997,33 @@ public:
   }
 };
 
+/// Multimap-like storage for metadata attachments for globals. This differs
+/// from MDAttachmentMap in that it allows multiple attachments per metadata
+/// kind.
+class MDGlobalAttachmentMap {
+  struct Attachment {
+    unsigned MDKind;
+    TrackingMDNodeRef Node;
+  };
+  SmallVector<Attachment, 1> Attachments;
+
+public:
+  bool empty() const { return Attachments.empty(); }
+
+  /// Appends all attachments with the given ID to \c Result in insertion order.
+  /// If the global has no attachments with the given ID, or if ID is invalid,
+  /// leaves Result unchanged.
+  void get(unsigned ID, SmallVectorImpl<MDNode *> &Result);
+
+  void insert(unsigned ID, MDNode &MD);
+  void erase(unsigned ID);
+
+  /// Appends all attachments for the global to \c Result, sorting by attachment
+  /// ID. Attachments with the same ID appear in insertion order. This function
+  /// does \em not clear \c Result.
+  void getAll(SmallVectorImpl<std::pair<unsigned, MDNode *>> &Result) const;
+};
+
 class LLVMContextImpl {
 public:
   /// OwnedModules - The set of modules instantiated in this context, and which
@@ -1108,7 +1135,7 @@ public:
   DenseMap<const Instruction *, MDAttachmentMap> InstructionMetadata;
 
   /// Collection of per-GlobalObject metadata used in this context.
-  DenseMap<const GlobalObject *, MDAttachmentMap> GlobalObjectMetadata;
+  DenseMap<const GlobalObject *, MDGlobalAttachmentMap> GlobalObjectMetadata;
 
   /// DiscriminatorTable - This table maps file:line locations to an
   /// integer representing the next DWARF path discriminator to assign to

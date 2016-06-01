@@ -1719,7 +1719,7 @@ bool LLParser::ParseGlobalObjectMetadataAttachment(GlobalObject &GO) {
   if (ParseMetadataAttachment(MDK, N))
     return true;
 
-  GO.setMetadata(MDK, N);
+  GO.addMetadata(MDK, *N);
   return false;
 }
 

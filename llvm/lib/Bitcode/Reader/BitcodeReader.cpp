@@ -4167,7 +4167,7 @@ std::error_code BitcodeReader::parseGlobalObjectAttachment(
     MDNode *MD = MetadataList.getMDNodeFwdRefOrNull(Record[I + 1]);
     if (!MD)
       return error("Invalid metadata attachment");
-    GO.setMetadata(K->second, MD);
+    GO.addMetadata(K->second, *MD);
   }
   return std::error_code();
 }

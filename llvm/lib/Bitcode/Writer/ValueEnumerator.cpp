@@ -345,6 +345,7 @@ ValueEnumerator::ValueEnumerator(const Module &M,
 
   SmallVector<std::pair<unsigned, MDNode *>, 8> MDs;
   for (const GlobalVariable &GV : M.globals()) {
+    MDs.clear();
     GV.getAllMetadata(MDs);
     for (const auto &I : MDs)
       EnumerateMetadata(&GV, I.second);
@@ -356,6 +357,7 @@ ValueEnumerator::ValueEnumerator(const Module &M,
       EnumerateType(A.getType());
 
     // Enumerate metadata attached to this function.
+    MDs.clear();
     F.getAllMetadata(MDs);
     for (const auto &I : MDs)
       EnumerateMetadata(&F, I.second);

@@ -74,12 +74,21 @@ public:
   /// Check if this has any metadata.
   bool hasMetadata() const { return hasMetadataHashEntry(); }
 
-  /// Get the current metadata attachment, if any.
+  /// Get the current metadata attachments for the given kind, if any.
   ///
-  /// Returns \c nullptr if such an attachment is missing.
+  /// These functions require that the function have at most a single attachment
+  /// of the given kind, and return \c nullptr if such an attachment is missing.
   /// @{
   MDNode *getMetadata(unsigned KindID) const;
   MDNode *getMetadata(StringRef Kind) const;
+  /// @}
+
+  /// Appends all attachments with the given ID to \c MDs in insertion order.
+  /// If the global has no attachments with the given ID, or if ID is invalid,
+  /// leaves MDs unchanged.
+  /// @{
+  void getMetadata(unsigned KindID, SmallVectorImpl<MDNode *> &MDs) const;
+  void getMetadata(StringRef Kind, SmallVectorImpl<MDNode *> &MDs) const;
   /// @}
 
   /// Set a particular kind of metadata attachment.
@@ -91,14 +100,19 @@ public:
   void setMetadata(StringRef Kind, MDNode *MD);
   /// @}
 
-  /// Get all current metadata attachments.
+  /// Add a metadata attachment.
+  /// @{
+  void addMetadata(unsigned KindID, MDNode &MD);
+  void addMetadata(StringRef Kind, MDNode &MD);
+  /// @}
+
+  /// Appends all attachments for the global to \c MDs, sorting by attachment
+  /// ID. Attachments with the same ID appear in insertion order.
   void
   getAllMetadata(SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs) const;
 
-  /// Drop metadata not in the given list.
-  ///
-  /// Drop all metadata from \c this not included in \c KnownIDs.
-  void dropUnknownMetadata(ArrayRef<unsigned> KnownIDs);
+  /// Erase all metadata attachments with the given kind.
+  void eraseMetadata(unsigned KindID);
 
   void copyAttributesFrom(const GlobalValue *Src) override;
 
@@ -108,7 +122,6 @@ public:
            V->getValueID() == Value::GlobalVariableVal;
   }
 
-protected:
   void clearMetadata();
 
 private:
