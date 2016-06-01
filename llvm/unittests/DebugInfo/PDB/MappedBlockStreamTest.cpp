@@ -45,7 +45,7 @@ class DiscontiguousFile : public IPDBFile {
 public:
   DiscontiguousFile()
       : Blocks(std::begin(BlocksAry), std::end(BlocksAry)),
-        Data(makeArrayRef(DataAry)) {}
+        Data(std::begin(DataAry), std::end(DataAry)) {}
 
   virtual uint32_t getBlockSize() const override { return 1; }
   virtual uint32_t getBlockCount() const override { return 10; }
