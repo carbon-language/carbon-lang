@@ -765,18 +765,22 @@ for.end:                                          ; preds = %for.cond
   ret i32 %7
 }
 
-; /// Different objects, swapped induction
-; int noAlias15(int a) {
+
+;; === Now, the tests that we could vectorize with induction changes or run-time checks ===
+
+
+; /// Different objects, swapped induction, alias at the end
+; int mayAlias01 (int a) {
 ;   int i;
 ;   for (i=0; i<SIZE; i++)
 ;     Foo.A[i] = Foo.B[SIZE-i-1] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK-LABEL: define i32 @noAlias15(
-; CHECK: add nsw <4 x i32>
+; CHECK-LABEL: define i32 @mayAlias01(
+; CHECK-NOT: add nsw <4 x i32>
 ; CHECK: ret
 
-define i32 @noAlias15(i32 %a) nounwind {
+define i32 @mayAlias01(i32 %a) nounwind {
 entry:
   %a.addr = alloca i32, align 4
   %i = alloca i32, align 4
@@ -815,18 +819,18 @@ for.end:                                          ; preds = %for.cond
   ret i32 %7
 }
 
-; /// Different objects, swapped induction
-; int noAlias16 (int a) {
+; /// Different objects, swapped induction, alias at the beginning
+; int mayAlias02 (int a) {
 ;   int i;
 ;   for (i=0; i<SIZE; i++)
 ;     Foo.A[SIZE-i-1] = Foo.B[i] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK-LABEL: define i32 @noAlias16(
-; CHECK: add nsw <4 x i32>
+; CHECK-LABEL: define i32 @mayAlias02(
+; CHECK-NOT: add nsw <4 x i32>
 ; CHECK: ret
 
-define i32 @noAlias16(i32 %a) nounwind {
+define i32 @mayAlias02(i32 %a) nounwind {
 entry:
   %a.addr = alloca i32, align 4
   %i = alloca i32, align 4
@@ -865,171 +869,18 @@ for.end:                                          ; preds = %for.cond
   ret i32 %7
 }
 
-
-;; === Ignore undefined behavior ===
-
-
-; int noAlias17(int a) {
-;   int i;
-;   for (i=0; i<SIZE; i++)
-;     Foo.A[i+10] = Foo.B[SIZE-i-1] + a;
-;   return Foo.A[a];
-; }
-; CHECK-LABEL: define i32 @noAlias17(
-; CHECK: add nsw <4 x i32>
-; CHECK: ret
-
-define i32 @noAlias17(i32 %a) nounwind {
-entry:
-  %a.addr = alloca i32, align 4
-  %i = alloca i32, align 4
-  store i32 %a, i32* %a.addr, align 4
-  store i32 0, i32* %i, align 4
-  br label %for.cond
-
-for.cond:                                         ; preds = %for.inc, %entry
-  %0 = load i32, i32* %i, align 4
-  %cmp = icmp slt i32 %0, 100
-  br i1 %cmp, label %for.body, label %for.end
-
-for.body:                                         ; preds = %for.cond
-  %1 = load i32, i32* %i, align 4
-  %sub = sub nsw i32 100, %1
-  %sub1 = sub nsw i32 %sub, 1
-  %arrayidx = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 2), i32 0, i32 %sub1
-  %2 = load i32, i32* %arrayidx, align 4
-  %3 = load i32, i32* %a.addr, align 4
-  %add = add nsw i32 %2, %3
-  %4 = load i32, i32* %i, align 4
-  %add2 = add nsw i32 %4, 10
-  %arrayidx3 = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 0), i32 0, i32 %add2
-  store i32 %add, i32* %arrayidx3, align 4
-  br label %for.inc
-
-for.inc:                                          ; preds = %for.body
-  %5 = load i32, i32* %i, align 4
-  %inc = add nsw i32 %5, 1
-  store i32 %inc, i32* %i, align 4
-  br label %for.cond
-
-for.end:                                          ; preds = %for.cond
-  %6 = load i32, i32* %a.addr, align 4
-  %arrayidx4 = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 0), i32 0, i32 %6
-  %7 = load i32, i32* %arrayidx4, align 4
-  ret i32 %7
-}
-
-; int noAlias18(int a) {
-;   int i;
-;   for (i=0; i<SIZE; i++)
-;     Foo.A[i] = Foo.B[SIZE-i-10] + a;
-;   return Foo.A[a];
-; }
-; CHECK-LABEL: define i32 @noAlias18(
-; CHECK: add nsw <4 x i32>
-; CHECK: ret
-
-define i32 @noAlias18(i32 %a) nounwind {
-entry:
-  %a.addr = alloca i32, align 4
-  %i = alloca i32, align 4
-  store i32 %a, i32* %a.addr, align 4
-  store i32 0, i32* %i, align 4
-  br label %for.cond
-
-for.cond:                                         ; preds = %for.inc, %entry
-  %0 = load i32, i32* %i, align 4
-  %cmp = icmp slt i32 %0, 100
-  br i1 %cmp, label %for.body, label %for.end
-
-for.body:                                         ; preds = %for.cond
-  %1 = load i32, i32* %i, align 4
-  %sub = sub nsw i32 100, %1
-  %sub1 = sub nsw i32 %sub, 10
-  %arrayidx = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 2), i32 0, i32 %sub1
-  %2 = load i32, i32* %arrayidx, align 4
-  %3 = load i32, i32* %a.addr, align 4
-  %add = add nsw i32 %2, %3
-  %4 = load i32, i32* %i, align 4
-  %arrayidx2 = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 0), i32 0, i32 %4
-  store i32 %add, i32* %arrayidx2, align 4
-  br label %for.inc
-
-for.inc:                                          ; preds = %for.body
-  %5 = load i32, i32* %i, align 4
-  %inc = add nsw i32 %5, 1
-  store i32 %inc, i32* %i, align 4
-  br label %for.cond
-
-for.end:                                          ; preds = %for.cond
-  %6 = load i32, i32* %a.addr, align 4
-  %arrayidx3 = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 0), i32 0, i32 %6
-  %7 = load i32, i32* %arrayidx3, align 4
-  ret i32 %7
-}
-
-; int noAlias19(int a) {
-;   int i;
-;   for (i=0; i<SIZE; i++)
-;     Foo.A[i+10] = Foo.B[SIZE-i-10] + a;
-;   return Foo.A[a];
-; }
-; CHECK-LABEL: define i32 @noAlias19(
-; CHECK: add nsw <4 x i32>
-; CHECK: ret
-
-define i32 @noAlias19(i32 %a) nounwind {
-entry:
-  %a.addr = alloca i32, align 4
-  %i = alloca i32, align 4
-  store i32 %a, i32* %a.addr, align 4
-  store i32 0, i32* %i, align 4
-  br label %for.cond
-
-for.cond:                                         ; preds = %for.inc, %entry
-  %0 = load i32, i32* %i, align 4
-  %cmp = icmp slt i32 %0, 100
-  br i1 %cmp, label %for.body, label %for.end
-
-for.body:                                         ; preds = %for.cond
-  %1 = load i32, i32* %i, align 4
-  %sub = sub nsw i32 100, %1
-  %sub1 = sub nsw i32 %sub, 10
-  %arrayidx = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 2), i32 0, i32 %sub1
-  %2 = load i32, i32* %arrayidx, align 4
-  %3 = load i32, i32* %a.addr, align 4
-  %add = add nsw i32 %2, %3
-  %4 = load i32, i32* %i, align 4
-  %add2 = add nsw i32 %4, 10
-  %arrayidx3 = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 0), i32 0, i32 %add2
-  store i32 %add, i32* %arrayidx3, align 4
-  br label %for.inc
-
-for.inc:                                          ; preds = %for.body
-  %5 = load i32, i32* %i, align 4
-  %inc = add nsw i32 %5, 1
-  store i32 %inc, i32* %i, align 4
-  br label %for.cond
-
-for.end:                                          ; preds = %for.cond
-  %6 = load i32, i32* %a.addr, align 4
-  %arrayidx4 = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 0), i32 0, i32 %6
-  %7 = load i32, i32* %arrayidx4, align 4
-  ret i32 %7
-}
-
 ; /// Pointer access, run-time check added
-; int mayAlias01 (int a) {
+; int mayAlias03 (int a) {
 ;   int i;
 ;   for (i=0; i<SIZE; i++)
 ;     *(PA+i) = *(PB+SIZE-i-1) + a;
 ;   return *(PA+a);
 ; }
-; CHECK-LABEL: define i32 @mayAlias01(
+; CHECK-LABEL: define i32 @mayAlias03(
 ; CHECK-NOT: add nsw <4 x i32>
 ; CHECK: ret
 
-define i32 @mayAlias01(i32 %a) nounwind {
+define i32 @mayAlias03(i32 %a) nounwind {
 entry:
   %a.addr = alloca i32, align 4
   %i = alloca i32, align 4
@@ -1070,4 +921,157 @@ for.end:                                          ; preds = %for.cond
   %add.ptr4 = getelementptr inbounds i32, i32* %8, i32 %9
   %10 = load i32, i32* %add.ptr4, align 4
   ret i32 %10
+}
+
+
+;; === Finally, the tests that should only vectorize with care (or if we ignore undefined behaviour at all) ===
+
+
+; int mustAlias01 (int a) {
+;   int i;
+;   for (i=0; i<SIZE; i++)
+;     Foo.A[i+10] = Foo.B[SIZE-i-1] + a;
+;   return Foo.A[a];
+; }
+; CHECK-LABEL: define i32 @mustAlias01(
+; CHECK-NOT: add nsw <4 x i32>
+; CHECK: ret
+
+define i32 @mustAlias01(i32 %a) nounwind {
+entry:
+  %a.addr = alloca i32, align 4
+  %i = alloca i32, align 4
+  store i32 %a, i32* %a.addr, align 4
+  store i32 0, i32* %i, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %0 = load i32, i32* %i, align 4
+  %cmp = icmp slt i32 %0, 100
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %1 = load i32, i32* %i, align 4
+  %sub = sub nsw i32 100, %1
+  %sub1 = sub nsw i32 %sub, 1
+  %arrayidx = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 2), i32 0, i32 %sub1
+  %2 = load i32, i32* %arrayidx, align 4
+  %3 = load i32, i32* %a.addr, align 4
+  %add = add nsw i32 %2, %3
+  %4 = load i32, i32* %i, align 4
+  %add2 = add nsw i32 %4, 10
+  %arrayidx3 = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 0), i32 0, i32 %add2
+  store i32 %add, i32* %arrayidx3, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %5 = load i32, i32* %i, align 4
+  %inc = add nsw i32 %5, 1
+  store i32 %inc, i32* %i, align 4
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  %6 = load i32, i32* %a.addr, align 4
+  %arrayidx4 = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 0), i32 0, i32 %6
+  %7 = load i32, i32* %arrayidx4, align 4
+  ret i32 %7
+}
+
+; int mustAlias02 (int a) {
+;   int i;
+;   for (i=0; i<SIZE; i++)
+;     Foo.A[i] = Foo.B[SIZE-i-10] + a;
+;   return Foo.A[a];
+; }
+; CHECK-LABEL: define i32 @mustAlias02(
+; CHECK-NOT: add nsw <4 x i32>
+; CHECK: ret
+
+define i32 @mustAlias02(i32 %a) nounwind {
+entry:
+  %a.addr = alloca i32, align 4
+  %i = alloca i32, align 4
+  store i32 %a, i32* %a.addr, align 4
+  store i32 0, i32* %i, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %0 = load i32, i32* %i, align 4
+  %cmp = icmp slt i32 %0, 100
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %1 = load i32, i32* %i, align 4
+  %sub = sub nsw i32 100, %1
+  %sub1 = sub nsw i32 %sub, 10
+  %arrayidx = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 2), i32 0, i32 %sub1
+  %2 = load i32, i32* %arrayidx, align 4
+  %3 = load i32, i32* %a.addr, align 4
+  %add = add nsw i32 %2, %3
+  %4 = load i32, i32* %i, align 4
+  %arrayidx2 = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 0), i32 0, i32 %4
+  store i32 %add, i32* %arrayidx2, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %5 = load i32, i32* %i, align 4
+  %inc = add nsw i32 %5, 1
+  store i32 %inc, i32* %i, align 4
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  %6 = load i32, i32* %a.addr, align 4
+  %arrayidx3 = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 0), i32 0, i32 %6
+  %7 = load i32, i32* %arrayidx3, align 4
+  ret i32 %7
+}
+
+; int mustAlias03 (int a) {
+;   int i;
+;   for (i=0; i<SIZE; i++)
+;     Foo.A[i+10] = Foo.B[SIZE-i-10] + a;
+;   return Foo.A[a];
+; }
+; CHECK-LABEL: define i32 @mustAlias03(
+; CHECK-NOT: add nsw <4 x i32>
+; CHECK: ret
+
+define i32 @mustAlias03(i32 %a) nounwind {
+entry:
+  %a.addr = alloca i32, align 4
+  %i = alloca i32, align 4
+  store i32 %a, i32* %a.addr, align 4
+  store i32 0, i32* %i, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %0 = load i32, i32* %i, align 4
+  %cmp = icmp slt i32 %0, 100
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %1 = load i32, i32* %i, align 4
+  %sub = sub nsw i32 100, %1
+  %sub1 = sub nsw i32 %sub, 10
+  %arrayidx = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 2), i32 0, i32 %sub1
+  %2 = load i32, i32* %arrayidx, align 4
+  %3 = load i32, i32* %a.addr, align 4
+  %add = add nsw i32 %2, %3
+  %4 = load i32, i32* %i, align 4
+  %add2 = add nsw i32 %4, 10
+  %arrayidx3 = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 0), i32 0, i32 %add2
+  store i32 %add, i32* %arrayidx3, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %5 = load i32, i32* %i, align 4
+  %inc = add nsw i32 %5, 1
+  store i32 %inc, i32* %i, align 4
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  %6 = load i32, i32* %a.addr, align 4
+  %arrayidx4 = getelementptr inbounds [100 x i32], [100 x i32]* getelementptr inbounds (%struct.anon, %struct.anon* @Foo, i32 0, i32 0), i32 0, i32 %6
+  %7 = load i32, i32* %arrayidx4, align 4
+  ret i32 %7
 }
