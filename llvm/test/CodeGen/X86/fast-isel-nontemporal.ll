@@ -93,6 +93,51 @@ entry:
   ret void
 }
 
+define void @test_nt16xi8(<16 x i8>* nocapture %ptr, <16 x i8> %X) {
+; SSE-LABEL: test_nt16xi8:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    movntdq %xmm0, (%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_nt16xi8:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vmovntdq %xmm0, (%rdi)
+; AVX-NEXT:    retq
+entry:
+  store <16 x i8> %X, <16 x i8>* %ptr, align 16, !nontemporal !1
+  ret void
+}
+
+define void @test_nt8xi16(<8 x i16>* nocapture %ptr, <8 x i16> %X) {
+; SSE-LABEL: test_nt8xi16:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    movntdq %xmm0, (%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_nt8xi16:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vmovntdq %xmm0, (%rdi)
+; AVX-NEXT:    retq
+entry:
+  store <8 x i16> %X, <8 x i16>* %ptr, align 16, !nontemporal !1
+  ret void
+}
+
+define void @test_nt4xi32(<4 x i32>* nocapture %ptr, <4 x i32> %X) {
+; SSE-LABEL: test_nt4xi32:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    movntdq %xmm0, (%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_nt4xi32:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vmovntdq %xmm0, (%rdi)
+; AVX-NEXT:    retq
+entry:
+  store <4 x i32> %X, <4 x i32>* %ptr, align 16, !nontemporal !1
+  ret void
+}
+
 define void @test_nt2xi64(<2 x i64>* nocapture %ptr, <2 x i64> %X) {
 ; SSE-LABEL: test_nt2xi64:
 ; SSE:       # BB#0: # %entry
