@@ -37,11 +37,15 @@ namespace {
       consumeError(std::move(E));                                              \
   }
 
+static const uint32_t BlocksAry[] = {0, 1, 2, 5, 4, 3, 6, 7, 8, 9};
+static const char DataAry[] = {'A', 'B', 'C', 'F', 'E',
+                               'D', 'G', 'H', 'I', 'J'};
+
 class DiscontiguousFile : public IPDBFile {
 public:
   DiscontiguousFile()
-      : Blocks{0, 1, 2, 5, 4, 3, 6, 7, 8, 9},
-        Data{'A', 'B', 'C', 'F', 'E', 'D', 'G', 'H', 'I', 'J'} {}
+      : Blocks(&BlocksAry[0], &BlocksAry[10]), Data(&DataAry[0], &DataAry[10]) {
+  }
 
   virtual uint32_t getBlockSize() const override { return 1; }
   virtual uint32_t getBlockCount() const override { return 10; }
