@@ -6653,6 +6653,27 @@ __m512 test_mm512_maskz_roundscale_ps(__mmask16 __U, __m512 __A)
   return _mm512_maskz_roundscale_ps(__U,__A, 1);
 }
 
+__m512 test_mm512_mask_roundscale_round_ps(__m512 __A,__mmask16 __U,__m512 __C)
+{
+  // CHECK-LABEL: @test_mm512_mask_roundscale_round_ps
+  // CHECK: @llvm.x86.avx512.mask.rndscale.ps.512
+  return _mm512_mask_roundscale_round_ps(__A,__U,__C,3,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512 test_mm512_maskz_roundscale_round_ps(__m512 __A,__mmask16 __U) 
+{
+  // CHECK-LABEL: @test_mm512_maskz_roundscale_round_ps
+  // CHECK: @llvm.x86.avx512.mask.rndscale.ps.512
+  return _mm512_maskz_roundscale_round_ps(__U,__A,3,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512 test_mm512_roundscale_round_ps(__m512 __A)
+{
+  // CHECK-LABEL: @test_mm512_roundscale_round_ps
+  // CHECK: @llvm.x86.avx512.mask.rndscale.ps.512
+  return _mm512_roundscale_round_ps(__A,3,_MM_FROUND_CUR_DIRECTION);
+}
+
 __m512d test_mm512_mask_roundscale_pd(__m512d __W, __mmask8 __U, __m512d __A) 
 {
   // CHECK-LABEL: @test_mm512_mask_roundscale_pd
@@ -6665,6 +6686,27 @@ __m512d test_mm512_maskz_roundscale_pd(__mmask8 __U, __m512d __A)
   // CHECK-LABEL: @test_mm512_maskz_roundscale_pd
   // CHECK: @llvm.x86.avx512.mask.rndscale.pd.512
   return _mm512_maskz_roundscale_pd(__U,__A, 1);
+}
+
+__m512d test_mm512_mask_roundscale_round_pd(__m512d __A,__mmask8 __U,__m512d __C)
+{
+  // CHECK-LABEL: @test_mm512_mask_roundscale_round_pd
+  // CHECK: @llvm.x86.avx512.mask.rndscale.pd.512
+  return _mm512_mask_roundscale_round_pd(__A,__U,__C,3,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512d test_mm512_maskz_roundscale_round_pd(__m512d __A,__mmask8 __U)
+{
+  // CHECK-LABEL: @test_mm512_maskz_roundscale_round_pd
+  // CHECK: @llvm.x86.avx512.mask.rndscale.pd.512
+  return _mm512_maskz_roundscale_round_pd(__U,__A,3,_MM_FROUND_CUR_DIRECTION);
+}
+
+__m512d test_mm512_roundscale_round_pd(__m512d __A)
+{
+  // CHECK-LABEL: @test_mm512_roundscale_round_pd
+  // CHECK: @llvm.x86.avx512.mask.rndscale.pd.512
+  return _mm512_roundscale_round_pd(__A,3,_MM_FROUND_CUR_DIRECTION);
 }
 
 __m512i test_mm512_mask_max_epi32 (__m512i __W, __mmask16 __M, __m512i __A, __m512i __B)

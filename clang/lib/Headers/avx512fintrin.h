@@ -2382,6 +2382,24 @@ _mm512_maskz_div_ps(__mmask16 __U, __m512 __A, __m512 __B) {
                                          (__mmask16)(A), \
                                          _MM_FROUND_CUR_DIRECTION); })
 
+#define _mm512_mask_roundscale_round_ps( __A, __B, __C, __imm, __R) __extension__ ({ \
+  (__m512)__builtin_ia32_rndscaleps_mask ((__v16sf)( __C), (int)__imm,\
+                                          (__v16sf)( __A),\
+                                          (__mmask16)( __B),(int) __R);\
+})
+
+#define _mm512_maskz_roundscale_round_ps( __A, __B, __imm,__R) __extension__ ({ \
+  (__m512)__builtin_ia32_rndscaleps_mask ((__v16sf)( __B), (int)__imm,\
+                                          (__v16sf)_mm512_setzero_ps (),\
+                                          (__mmask16)( __A),(int) __R);\
+})
+
+#define _mm512_roundscale_round_ps( __A, __imm, __R) __extension__ ({ \
+  (__m512)__builtin_ia32_rndscaleps_mask ((__v16sf)( __A),(int) __imm,\
+                                          (__v16sf) _mm512_undefined_ps (),\
+                                          (__mmask16) -1,(int) __R);\
+})
+
 #define _mm512_roundscale_pd(A, B) __extension__ ({ \
   (__m512d)__builtin_ia32_rndscalepd_mask((__v8df)(__m512d)(A), (int)(B), \
                                           (__v8df)(__m512d)(A), (__mmask8)-1, \
@@ -2397,6 +2415,24 @@ _mm512_maskz_div_ps(__mmask16 __U, __m512 __A, __m512 __B) {
                                           (__v8df)_mm512_setzero_pd(), \
                                           (__mmask8)(A), \
                                           _MM_FROUND_CUR_DIRECTION); })
+
+#define _mm512_mask_roundscale_round_pd( __A, __B, __C, __imm ,__R) __extension__ ({ \
+  (__m512d)__builtin_ia32_rndscalepd_mask ((__v8df)( __C),(int)__imm,\
+                                           (__v8df)( __A),\
+                                           (__mmask8)( __B),(int)__R);\
+})
+
+#define _mm512_maskz_roundscale_round_pd( __A, __B, __imm, __R) __extension__ ({ \
+  (__m512d)__builtin_ia32_rndscalepd_mask ((__v8df)( __B),(int)__imm,\
+                                            (__v8df)_mm512_setzero_pd (),\
+                                            (__mmask8)( __A),(int) __R);\
+})
+
+#define _mm512_roundscale_round_pd( __A, __imm , __R) __extension__ ({ \
+  (__m512d)__builtin_ia32_rndscalepd_mask ((__v8df)( __A),(int) __imm,\
+                                            (__v8df)_mm512_undefined_pd (),\
+                                            (__mmask8) -1,(int) __R);\
+})
 
 #define _mm512_fmadd_round_pd(A, B, C, R) __extension__ ({ \
   (__m512d)__builtin_ia32_vfmaddpd512_mask((__v8df)(__m512d)(A), \
