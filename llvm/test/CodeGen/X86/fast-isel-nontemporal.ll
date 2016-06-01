@@ -2,6 +2,11 @@
 ; RUN: llc -verify-machineinstrs -mtriple=x86_64-unknown-unknown -mattr=+sse2 -fast-isel -O0 < %s | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE2
 ; RUN: llc -verify-machineinstrs -mtriple=x86_64-unknown-unknown -mattr=+sse4a -fast-isel -O0 < %s | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE4A
 ; RUN: llc -verify-machineinstrs -mtriple=x86_64-unknown-unknown -mattr=+avx -fast-isel -O0 < %s | FileCheck %s --check-prefix=ALL --check-prefix=AVX
+; RUN: llc -verify-machineinstrs -mtriple=x86_64-unknown-unknown -mcpu=knl -fast-isel -O0 < %s | FileCheck %s --check-prefix=ALL --check-prefix=KNL
+
+;
+; Scalar Stores
+;
 
 define void @test_nti32(i32* nocapture %ptr, i32 %X) {
 ; ALL-LABEL: test_nti32:
@@ -38,6 +43,11 @@ define void @test_ntfloat(float* nocapture %ptr, float %X) {
 ; AVX:       # BB#0: # %entry
 ; AVX-NEXT:    vmovss %xmm0, (%rdi)
 ; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_ntfloat:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovss %xmm0, (%rdi)
+; KNL-NEXT:    retq
 entry:
   store float %X, float* %ptr, align 4, !nontemporal !1
   ret void
@@ -58,10 +68,19 @@ define void @test_ntdouble(double* nocapture %ptr, double %X) {
 ; AVX:       # BB#0: # %entry
 ; AVX-NEXT:    vmovsd %xmm0, (%rdi)
 ; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_ntdouble:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovsd %xmm0, (%rdi)
+; KNL-NEXT:    retq
 entry:
   store double %X, double* %ptr, align 8, !nontemporal !1
   ret void
 }
+
+;
+; 128-bit Vector Stores
+;
 
 define void @test_nt4xfloat(<4 x float>* nocapture %ptr, <4 x float> %X) {
 ; SSE-LABEL: test_nt4xfloat:
@@ -73,6 +92,11 @@ define void @test_nt4xfloat(<4 x float>* nocapture %ptr, <4 x float> %X) {
 ; AVX:       # BB#0: # %entry
 ; AVX-NEXT:    vmovntps %xmm0, (%rdi)
 ; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_nt4xfloat:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovntps %xmm0, (%rdi)
+; KNL-NEXT:    retq
 entry:
   store <4 x float> %X, <4 x float>* %ptr, align 16, !nontemporal !1
   ret void
@@ -88,6 +112,11 @@ define void @test_nt2xdouble(<2 x double>* nocapture %ptr, <2 x double> %X) {
 ; AVX:       # BB#0: # %entry
 ; AVX-NEXT:    vmovntpd %xmm0, (%rdi)
 ; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_nt2xdouble:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovntpd %xmm0, (%rdi)
+; KNL-NEXT:    retq
 entry:
   store <2 x double> %X, <2 x double>* %ptr, align 16, !nontemporal !1
   ret void
@@ -103,6 +132,11 @@ define void @test_nt16xi8(<16 x i8>* nocapture %ptr, <16 x i8> %X) {
 ; AVX:       # BB#0: # %entry
 ; AVX-NEXT:    vmovntdq %xmm0, (%rdi)
 ; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_nt16xi8:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovntdq %xmm0, (%rdi)
+; KNL-NEXT:    retq
 entry:
   store <16 x i8> %X, <16 x i8>* %ptr, align 16, !nontemporal !1
   ret void
@@ -118,6 +152,11 @@ define void @test_nt8xi16(<8 x i16>* nocapture %ptr, <8 x i16> %X) {
 ; AVX:       # BB#0: # %entry
 ; AVX-NEXT:    vmovntdq %xmm0, (%rdi)
 ; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_nt8xi16:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovntdq %xmm0, (%rdi)
+; KNL-NEXT:    retq
 entry:
   store <8 x i16> %X, <8 x i16>* %ptr, align 16, !nontemporal !1
   ret void
@@ -133,6 +172,11 @@ define void @test_nt4xi32(<4 x i32>* nocapture %ptr, <4 x i32> %X) {
 ; AVX:       # BB#0: # %entry
 ; AVX-NEXT:    vmovntdq %xmm0, (%rdi)
 ; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_nt4xi32:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovntdq %xmm0, (%rdi)
+; KNL-NEXT:    retq
 entry:
   store <4 x i32> %X, <4 x i32>* %ptr, align 16, !nontemporal !1
   ret void
@@ -148,8 +192,149 @@ define void @test_nt2xi64(<2 x i64>* nocapture %ptr, <2 x i64> %X) {
 ; AVX:       # BB#0: # %entry
 ; AVX-NEXT:    vmovntdq %xmm0, (%rdi)
 ; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_nt2xi64:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovntdq %xmm0, (%rdi)
+; KNL-NEXT:    retq
 entry:
   store <2 x i64> %X, <2 x i64>* %ptr, align 16, !nontemporal !1
+  ret void
+}
+
+;
+; 256-bit Vector Stores
+;
+
+define void @test_nt8xfloat(<8 x float>* nocapture %ptr, <8 x float> %X) {
+; SSE-LABEL: test_nt8xfloat:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    movntps %xmm0, (%rdi)
+; SSE-NEXT:    movntps %xmm1, 16(%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_nt8xfloat:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vmovntps %ymm0, (%rdi)
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_nt8xfloat:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovntps %ymm0, (%rdi)
+; KNL-NEXT:    retq
+entry:
+  store <8 x float> %X, <8 x float>* %ptr, align 32, !nontemporal !1
+  ret void
+}
+
+define void @test_nt4xdouble(<4 x double>* nocapture %ptr, <4 x double> %X) {
+; SSE-LABEL: test_nt4xdouble:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    movntpd %xmm0, (%rdi)
+; SSE-NEXT:    movntpd %xmm1, 16(%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_nt4xdouble:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vmovntpd %ymm0, (%rdi)
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_nt4xdouble:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovntpd %ymm0, (%rdi)
+; KNL-NEXT:    retq
+entry:
+  store <4 x double> %X, <4 x double>* %ptr, align 32, !nontemporal !1
+  ret void
+}
+
+define void @test_nt32xi8(<32 x i8>* nocapture %ptr, <32 x i8> %X) {
+; SSE-LABEL: test_nt32xi8:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    movntdq %xmm0, (%rdi)
+; SSE-NEXT:    movntdq %xmm1, 16(%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_nt32xi8:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vmovntps %ymm0, (%rdi)
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_nt32xi8:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovntdq %ymm0, (%rdi)
+; KNL-NEXT:    retq
+entry:
+  store <32 x i8> %X, <32 x i8>* %ptr, align 32, !nontemporal !1
+  ret void
+}
+
+define void @test_nt16xi16(<16 x i16>* nocapture %ptr, <16 x i16> %X) {
+; SSE-LABEL: test_nt16xi16:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    movntdq %xmm0, (%rdi)
+; SSE-NEXT:    movntdq %xmm1, 16(%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_nt16xi16:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vmovntps %ymm0, (%rdi)
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_nt16xi16:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovntdq %ymm0, (%rdi)
+; KNL-NEXT:    retq
+entry:
+  store <16 x i16> %X, <16 x i16>* %ptr, align 32, !nontemporal !1
+  ret void
+}
+
+define void @test_nt8xi32(<8 x i32>* nocapture %ptr, <8 x i32> %X) {
+; SSE-LABEL: test_nt8xi32:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    movntdq %xmm0, (%rdi)
+; SSE-NEXT:    movntdq %xmm1, 16(%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_nt8xi32:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vmovntps %ymm0, (%rdi)
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_nt8xi32:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovntdq %ymm0, (%rdi)
+; KNL-NEXT:    retq
+entry:
+  store <8 x i32> %X, <8 x i32>* %ptr, align 32, !nontemporal !1
+  ret void
+}
+
+define void @test_nt4xi64(<4 x i64>* nocapture %ptr, <4 x i64> %X) {
+; SSE-LABEL: test_nt4xi64:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    movntdq %xmm0, (%rdi)
+; SSE-NEXT:    movntdq %xmm1, 16(%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_nt4xi64:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vmovntdq %ymm0, (%rdi)
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
+;
+; KNL-LABEL: test_nt4xi64:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovntdq %ymm0, (%rdi)
+; KNL-NEXT:    retq
+entry:
+  store <4 x i64> %X, <4 x i64>* %ptr, align 32, !nontemporal !1
   ret void
 }
 
