@@ -125,9 +125,11 @@ UpdateDebugSections("update-debug-sections",
 
 static cl::opt<bool>
 FixDebugInfoLargeFunctions("fix-debuginfo-large-functions",
+                           cl::init(true),
                            cl::desc("do another pass if we encounter large "
                                     "functions, to correct their debug info."),
-                           cl::Optional);
+                           cl::Optional,
+                           cl::ReallyHidden);
 
 static cl::opt<bool>
 AlignBlocks("align-blocks",
@@ -1306,6 +1308,7 @@ void RewriteInstance::emitFunctions() {
     if (!Function.isSimple())
       continue;
 
+    auto TooLarge = false;
     auto SMII = EFMM->SectionMapInfo.find(Function.getCodeSectionName());
     if (SMII != EFMM->SectionMapInfo.end()) {
       DEBUG(dbgs() << "BOLT: mapping 0x"
@@ -1317,6 +1320,10 @@ void RewriteInstance::emitFunctions() {
                             Function.getAddress());
       Function.setImageAddress(SMII->second.AllocAddress);
       Function.setImageSize(SMII->second.Size);
+      if (Function.getImageSize() > Function.getMaxSize()) {
+        TooLarge = true;
+        FailedAddresses.emplace_back(Function.getAddress());
+      }
     } else {
       errs() << "BOLT: cannot remap function " << Function.getName() << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
@@ -1340,10 +1347,10 @@ void RewriteInstance::emitFunctions() {
                             NextAvailableAddress);
       Function.cold().setAddress(NextAvailableAddress);
       Function.cold().setImageAddress(SMII->second.AllocAddress);
-      Function.cold().setImageSize(SMII->second.Size);
+      Function.cold().setImageSize(TooLarge ? 0 : SMII->second.Size);
       Function.cold().setFileOffset(getFileOffsetFor(NextAvailableAddress));
 
-      NextAvailableAddress += SMII->second.Size;
+      NextAvailableAddress += Function.cold().getImageSize();
     } else {
       errs() << "BOLT: cannot remap function " << Function.getName() << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
