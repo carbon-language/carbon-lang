@@ -44,8 +44,8 @@ static const char DataAry[] = {'A', 'B', 'C', 'F', 'E',
 class DiscontiguousFile : public IPDBFile {
 public:
   DiscontiguousFile()
-      : Blocks(&BlocksAry[0], &BlocksAry[10]), Data(&DataAry[0], &DataAry[10]) {
-  }
+      : Blocks(std::begin(BlocksAry), std::end(BlocksAry)),
+        Data(makeArrayRef(DataAry)) {}
 
   virtual uint32_t getBlockSize() const override { return 1; }
   virtual uint32_t getBlockCount() const override { return 10; }
