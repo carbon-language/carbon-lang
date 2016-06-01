@@ -932,6 +932,7 @@ TypeIndex CodeViewDebug::getTypeIndex(DITypeRef TypeRef) {
   TypeIndex TI = lowerType(Ty);
 
   auto InsertResult = TypeIndices.insert({Ty, TI});
+  (void)InsertResult;
   assert(InsertResult.second && "DIType lowered twice");
   return TI;
 }
