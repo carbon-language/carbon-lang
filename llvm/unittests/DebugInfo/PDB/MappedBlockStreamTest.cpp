@@ -78,7 +78,7 @@ TEST(MappedBlockStreamTest, ZeroCopyReadNoBreak) {
   StringRef Str;
   EXPECT_NO_ERROR(R.readFixedString(Str, 1));
   EXPECT_EQ(Str, StringRef("A"));
-  EXPECT_EQ(0, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S.getNumBytesCopied());
 }
 
 // Tests that a read which outputs into a full destination buffer works and
@@ -90,7 +90,7 @@ TEST(MappedBlockStreamTest, ReadOntoNonEmptyBuffer) {
   StringRef Str = "ZYXWVUTSRQPONMLKJIHGFEDCBA";
   EXPECT_NO_ERROR(R.readFixedString(Str, 1));
   EXPECT_EQ(Str, StringRef("A"));
-  EXPECT_EQ(0, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S.getNumBytesCopied());
 }
 
 // Tests that a read which crosses a block boundary, but where the subsequent
@@ -103,12 +103,12 @@ TEST(MappedBlockStreamTest, ZeroCopyReadContiguousBreak) {
   StringRef Str;
   EXPECT_NO_ERROR(R.readFixedString(Str, 2));
   EXPECT_EQ(Str, StringRef("AB"));
-  EXPECT_EQ(0, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S.getNumBytesCopied());
 
   R.setOffset(6);
   EXPECT_NO_ERROR(R.readFixedString(Str, 4));
   EXPECT_EQ(Str, StringRef("GHIJ"));
-  EXPECT_EQ(0, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S.getNumBytesCopied());
 }
 
 // Tests that a read which crosses a block boundary and cannot be referenced
@@ -121,7 +121,7 @@ TEST(MappedBlockStreamTest, CopyReadNonContiguousBreak) {
   StringRef Str;
   EXPECT_NO_ERROR(R.readFixedString(Str, 10));
   EXPECT_EQ(Str, StringRef("ABCDEFGHIJ"));
-  EXPECT_EQ(10, S.getNumBytesCopied());
+  EXPECT_EQ(10U, S.getNumBytesCopied());
 }
 
 // Test that an out of bounds read which doesn't cross a block boundary
@@ -134,7 +134,7 @@ TEST(MappedBlockStreamTest, InvalidReadSizeNoBreak) {
 
   R.setOffset(10);
   EXPECT_ERROR(R.readFixedString(Str, 1));
-  EXPECT_EQ(0, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S.getNumBytesCopied());
 }
 
 // Test that an out of bounds read which crosses a contiguous block boundary
@@ -147,7 +147,7 @@ TEST(MappedBlockStreamTest, InvalidReadSizeContiguousBreak) {
 
   R.setOffset(6);
   EXPECT_ERROR(R.readFixedString(Str, 5));
-  EXPECT_EQ(0, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S.getNumBytesCopied());
 }
 
 // Test that an out of bounds read which crosses a discontiguous block
@@ -159,7 +159,7 @@ TEST(MappedBlockStreamTest, InvalidReadSizeNonContiguousBreak) {
   StringRef Str;
 
   EXPECT_ERROR(R.readFixedString(Str, 11));
-  EXPECT_EQ(0, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S.getNumBytesCopied());
 }
 
 } // end anonymous namespace
