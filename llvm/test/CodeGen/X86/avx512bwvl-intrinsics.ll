@@ -6230,8 +6230,8 @@ declare <8 x i16> @llvm.x86.avx512.mask.loadu.w.128(i8*, <8 x i16>, i8)
 define <8 x i16>@test_int_x86_avx512_mask_loadu_w_128(i8* %ptr, i8* %ptr2, <8 x i16> %x1, i8 %mask) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_loadu_w_128:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovdqu16 (%rdi), %xmm0 ## encoding: [0x62,0xf1,0xff,0x08,0x6f,0x07]
 ; CHECK-NEXT:    kmovw %edx, %k1 ## encoding: [0xc5,0xf8,0x92,0xca]
+; CHECK-NEXT:    vmovdqu16 (%rdi), %xmm0 ## encoding: [0x62,0xf1,0xff,0x08,0x6f,0x07]
 ; CHECK-NEXT:    vmovdqu16 (%rsi), %xmm0 {%k1} ## encoding: [0x62,0xf1,0xff,0x09,0x6f,0x06]
 ; CHECK-NEXT:    vmovdqu16 (%rdi), %xmm1 {%k1} {z} ## encoding: [0x62,0xf1,0xff,0x89,0x6f,0x0f]
 ; CHECK-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0x7d,0x08,0xfd,0xc1]
@@ -6248,8 +6248,8 @@ declare <16 x i16> @llvm.x86.avx512.mask.loadu.w.256(i8*, <16 x i16>, i16)
 define <16 x i16>@test_int_x86_avx512_mask_loadu_w_256(i8* %ptr, i8* %ptr2, <16 x i16> %x1, i16 %mask) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_loadu_w_256:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovdqu16 (%rdi), %ymm0 ## encoding: [0x62,0xf1,0xff,0x28,0x6f,0x07]
 ; CHECK-NEXT:    kmovw %edx, %k1 ## encoding: [0xc5,0xf8,0x92,0xca]
+; CHECK-NEXT:    vmovdqu16 (%rdi), %ymm0 ## encoding: [0x62,0xf1,0xff,0x28,0x6f,0x07]
 ; CHECK-NEXT:    vmovdqu16 (%rsi), %ymm0 {%k1} ## encoding: [0x62,0xf1,0xff,0x29,0x6f,0x06]
 ; CHECK-NEXT:    vmovdqu16 (%rdi), %ymm1 {%k1} {z} ## encoding: [0x62,0xf1,0xff,0xa9,0x6f,0x0f]
 ; CHECK-NEXT:    vpaddw %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0x7d,0x28,0xfd,0xc1]
@@ -6266,8 +6266,8 @@ declare <16 x i8> @llvm.x86.avx512.mask.loadu.b.128(i8*, <16 x i8>, i16)
 define <16 x i8>@test_int_x86_avx512_mask_loadu_b_128(i8* %ptr, i8* %ptr2, <16 x i8> %x1, i16 %mask) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_loadu_b_128:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovdqu8 (%rdi), %xmm0 ## encoding: [0x62,0xf1,0x7f,0x08,0x6f,0x07]
 ; CHECK-NEXT:    kmovw %edx, %k1 ## encoding: [0xc5,0xf8,0x92,0xca]
+; CHECK-NEXT:    vmovdqu8 (%rdi), %xmm0 ## encoding: [0x62,0xf1,0x7f,0x08,0x6f,0x07]
 ; CHECK-NEXT:    vmovdqu8 (%rsi), %xmm0 {%k1} ## encoding: [0x62,0xf1,0x7f,0x09,0x6f,0x06]
 ; CHECK-NEXT:    vmovdqu8 (%rdi), %xmm1 {%k1} {z} ## encoding: [0x62,0xf1,0x7f,0x89,0x6f,0x0f]
 ; CHECK-NEXT:    vpaddb %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0x7d,0x08,0xfc,0xc1]
@@ -6284,8 +6284,8 @@ declare <32 x i8> @llvm.x86.avx512.mask.loadu.b.256(i8*, <32 x i8>, i32)
 define <32 x i8>@test_int_x86_avx512_mask_loadu_b_256(i8* %ptr, i8* %ptr2, <32 x i8> %x1, i32 %mask) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_loadu_b_256:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovdqu8 (%rdi), %ymm0 ## encoding: [0x62,0xf1,0x7f,0x28,0x6f,0x07]
 ; CHECK-NEXT:    kmovd %edx, %k1 ## encoding: [0xc5,0xfb,0x92,0xca]
+; CHECK-NEXT:    vmovdqu8 (%rdi), %ymm0 ## encoding: [0x62,0xf1,0x7f,0x28,0x6f,0x07]
 ; CHECK-NEXT:    vmovdqu8 (%rsi), %ymm0 {%k1} ## encoding: [0x62,0xf1,0x7f,0x29,0x6f,0x06]
 ; CHECK-NEXT:    vmovdqu8 (%rdi), %ymm1 {%k1} {z} ## encoding: [0x62,0xf1,0x7f,0xa9,0x6f,0x0f]
 ; CHECK-NEXT:    vpaddb %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0x7d,0x28,0xfc,0xc1]
