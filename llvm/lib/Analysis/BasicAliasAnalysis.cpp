@@ -834,8 +834,42 @@ static AliasResult aliasSameBasePointerGEPs(const GEPOperator *GEP1,
   // Try to determine whether GEP1 and GEP2 index through arrays, into structs,
   // such that the struct field accesses provably cannot alias.
   // We also need at least two indices (the pointer, and the struct field).
-  if (GEP1->getNumIndices() != GEP2->getNumIndices() ||
-      GEP1->getNumIndices() < 2)
+  if (GEP1->getNumIndices() < 2)
+    return MayAlias;
+
+  // If both GEP1 and GEP2 have the inbounds keyword but index different fields
+  // of the same struct, they do not alias.
+  if (GEP1->isInBounds() && GEP2->isInBounds()) {
+    auto Opi1 = GEP1->op_begin() + 1;
+    auto Opi2 = GEP2->op_begin() + 1;
+    auto Ope1 = GEP1->op_end();
+    auto Ope2 = GEP2->op_end();
+
+    SmallVector<Value *, 8> IntermediateIndices;
+    ConstantInt *C1 = nullptr;
+    ConstantInt *C2 = nullptr;
+    while (Opi1 != Ope1 && Opi2 != Ope2 &&
+           (C1 = dyn_cast<ConstantInt>(*Opi1)) &&
+           (C2 = dyn_cast<ConstantInt>(*Opi2))) {
+      if (C1 == C2) {
+        IntermediateIndices.push_back(C1);
+        ++Opi1;
+        ++Opi2;
+      } else {
+        // Both GEPs share the same pointer operand and access through the same
+        // indices up to this point, but now they are having different index
+        // values. At this point, if the indexed type is a StructType, this means
+        // that two GEPs are for two different fields in the same structure.
+        auto *Ty = GetElementPtrInst::getIndexedType(
+            GEP1->getSourceElementType(), IntermediateIndices);
+        if (isa<StructType>(Ty))
+          return NoAlias;
+        break;
+      }
+    }
+  }
+
+  if (GEP1->getNumIndices() != GEP2->getNumIndices())
     return MayAlias;
 
   // If we don't know the size of the accesses through both GEPs, we can't
