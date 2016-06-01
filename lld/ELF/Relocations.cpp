@@ -244,7 +244,7 @@ static bool needsPlt(RelExpr Expr) {
 // file (PC, or GOT for example).
 static bool isRelExpr(RelExpr Expr) {
   return Expr == R_PC || Expr == R_GOTREL || Expr == R_PAGE_PC ||
-         Expr == R_RELAX_GOT_PC || Expr == R_RELAX_GOT_PC_NOPIC;
+         Expr == R_RELAX_GOT_PC;
 }
 
 template <class ELFT>
@@ -370,8 +370,8 @@ static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
   } else if (!Preemptible) {
     if (needsPlt(Expr))
       Expr = fromPlt(Expr);
-    if (Expr == R_GOT_PC)
-      Expr = Target->adjustRelaxGotExpr(Type, Data + Offset, Expr);
+    if (Expr == R_GOT_PC && Target->canRelaxGot(Type, Data + Offset))
+      Expr = R_RELAX_GOT_PC;
   }
 
   if (IsWrite || isStaticLinkTimeConstant<ELFT>(Expr, Type, Body))

@@ -113,8 +113,7 @@ public:
                 int32_t Index, unsigned RelOff) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 
-  RelExpr adjustRelaxGotExpr(uint32_t Type, const uint8_t *Data,
-                             RelExpr Expr) const override;
+  bool canRelaxGot(uint32_t Type, const uint8_t *Data) const override;
   void relaxGot(uint8_t *Loc, uint64_t Val) const override;
   void relaxTlsGdToIe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -235,9 +234,8 @@ bool TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
   return false;
 }
 
-RelExpr TargetInfo::adjustRelaxGotExpr(uint32_t Type, const uint8_t *Data,
-                                       RelExpr Expr) const {
-  return Expr;
+bool TargetInfo::canRelaxGot(uint32_t Type, const uint8_t *Data) const {
+  return false;
 }
 
 void TargetInfo::relaxGot(uint8_t *Loc, uint64_t Val) const {
@@ -736,25 +734,16 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   }
 }
 
-RelExpr X86_64TargetInfo::adjustRelaxGotExpr(uint32_t Type, const uint8_t *Data,
-                                             RelExpr RelExpr) const {
+bool X86_64TargetInfo::canRelaxGot(uint32_t Type, const uint8_t *Data) const {
   if (Type != R_X86_64_GOTPCRELX && Type != R_X86_64_REX_GOTPCRELX)
-    return RelExpr;
+    return false;
   const uint8_t Op = Data[-2];
   const uint8_t ModRm = Data[-1];
   // Relax mov.
   if (Op == 0x8b)
-    return R_RELAX_GOT_PC;
+    return true;
   // Relax call and jmp.
-  if (Op == 0xff && (ModRm == 0x15 || ModRm == 0x25))
-    return R_RELAX_GOT_PC;
-
-  // Relaxation of test, adc, add, and, cmp, or, sbb, sub, xor.
-  // If PIC then no relaxation is available.
-  // We also don't relax test/binop instructions without REX byte,
-  // they are 32bit operations and not common to have.
-  return (!Config->Pic && Type == R_X86_64_REX_GOTPCRELX) ? R_RELAX_GOT_PC_NOPIC
-                                                          : RelExpr;
+  return Op == 0xff && (ModRm == 0x15 || ModRm == 0x25);
 }
 
 void X86_64TargetInfo::relaxGot(uint8_t *Loc, uint64_t Val) const {
@@ -768,86 +757,22 @@ void X86_64TargetInfo::relaxGot(uint8_t *Loc, uint64_t Val) const {
     return;
   }
 
-  // Convert call/jmp instructions.
-  if (Op == 0xff) {
-    if (ModRm == 0x15) {
-      // ABI says we can convert call *foo@GOTPCREL(%rip) to nop call foo.
-      // Instead we convert to addr32 call foo, where addr32 is instruction
-      // prefix. That makes result expression to be a single instruction.
-      *(Loc - 2) = 0x67; // addr32 prefix
-      *(Loc - 1) = 0xe8; // call
-    }
-    else {
-      assert(ModRm == 0x25);
-      // Convert jmp *foo@GOTPCREL(%rip) to jmp foo nop.
-      // jmp doesn't return, so it is fine to use nop here, it is just a stub.
-      *(Loc - 2) = 0xe9; // jmp
-      *(Loc + 3) = 0x90; // nop
-      Loc -= 1;
-      Val += 1;
-    }
-    relocateOne(Loc, R_X86_64_PC32, Val);
-    return;
+  assert(Op == 0xff);
+  if (ModRm == 0x15) {
+    // ABI says we can convert call *foo@GOTPCREL(%rip) to nop call foo.
+    // Instead we convert to addr32 call foo, where addr32 is instruction
+    // prefix. That makes result expression to be a single instruction.
+    *(Loc - 2) = 0x67; // addr32 prefix
+    *(Loc - 1) = 0xe8; // call
+  } else {
+    assert(ModRm == 0x25);
+    // Convert jmp *foo@GOTPCREL(%rip) to jmp foo nop.
+    // jmp doesn't return, so it is fine to use nop here, it is just a stub.
+    *(Loc - 2) = 0xe9; // jmp
+    *(Loc + 3) = 0x90; // nop
+    Loc -= 1;
+    Val += 1;
   }
-
-  // Convert "test %reg, foo@GOTPCREL(%rip)" to "test $foo, %reg".
-  // Documents used:
-  // 1) http://ref.x86asm.net/coder64.html
-  // 2) http://wiki.osdev.org/X86-64_Instruction_Encoding
-  // 3) http://www.swansontec.com/sintel.html
-  assert(!Config->Pic);
-  const uint8_t Rex = Loc[-3];
-  if (Op == 0x85) {
-    // See 0x85 description in (1). Column "o" has "r" what indicates that the
-    // instruction uses "full" ModR / M byte, (no opcode extension).
-
-    // ModR/M byte has form XX YYY ZZZ, where
-    // YYY is MODRM.reg(register 2), ZZZ is MODRM.rm(register 1).
-    // XX has different meanings:
-    // 00: The operand's memory address is in reg1.
-    // 01: The operand's memory address is reg1 + a byte-sized displacement.
-    // 10: The operand's memory address is reg1 + a word-sized displacement.
-    // 11: The operand is reg1 itself.
-    // If an instruction requires only one operand, the unused reg2 field
-    // holds extra opcode bits rather than a register code
-    // 0xC0 == 11 000 000 binary.
-    // 0x38 == 00 111 000 binary.
-    // We transfer reg2 to reg1 here as operand. See (2), (3).
-    *(Loc - 1) = 0xc0 | (ModRm & 0x38) >> 3; // ModR/M byte.
-
-    // Change opcode from test op1 = r/m16/32/64, op2 = r16/32/64
-    // to test op1 = r/m16/32/64, op2 = imm16/32/64, see (1).
-    *(Loc - 2) = 0xf7;
-
-    // Move R bit to the B bit in REX byte.
-    // REX byte is encoded as 0100WRXB, where
-    // 0100 is 4bit fixed pattern.
-    // REX.W When 1, a 64-bit operand size is used. Otherwise, when 0, the
-    //   default operand size is used (which is 32-bit for most but not all
-    //   instructions).
-    // REX.R This 1-bit value is an extension to the MODRM.reg field.
-    // REX.X This 1-bit value is an extension to the SIB.index field.
-    // REX.B This 1-bit value is an extension to the MODRM.rm field or the
-    // SIB.base field, see (3).
-    *(Loc - 3) = (Rex & ~0x4) | (Rex & 0x4) >> 2;
-    relocateOne(Loc, R_X86_64_PC32, Val);
-    return;
-  }
-
-  // If we are here then we need to relax the adc, add, and, cmp, or, sbb, sub
-  // or xor operations.
-
-  // Convert "binop foo@GOTPCREL(%rip), %reg" to "binop $foo, %reg".
-  // Logic is close to one for test instruction above, but we also
-  // write opcode extension here, see below for info.
-  *(Loc - 1) = 0xc0 | (ModRm & 0x38) >> 3 | (Op & 0x3c); // ModR/M byte.
-
-  // Primary opcode is 0x81, opcode extension is one of:
-  // 000b = ADD, 001b is OR, 010b is ADC, 011b is SBB,
-  // 100b is AND, 101b is SUB, 110b is XOR, 111b is CMP.
-  // This value was wrote to MODRM.reg in a line above, see (1).
-  *(Loc - 2) = 0x81;
-  *(Loc - 3) = (Rex & ~0x4) | (Rex & 0x4) >> 2;
   relocateOne(Loc, R_X86_64_PC32, Val);
 }
 
