@@ -71,14 +71,14 @@ private:
 
 // Tests that a read which is entirely contained within a single block works
 // and does not allocate.
-TEST(MappedBlockStreamTest, ZeroCopyReadNoBreak) {
+TEST(MappedBlockStreamTest, ReadBeyondEndOfStreamRef) {
   DiscontiguousFile F;
   MappedBlockStream S(0, F);
   StreamReader R(S);
-  StringRef Str;
-  EXPECT_NO_ERROR(R.readFixedString(Str, 1));
-  EXPECT_EQ(Str, StringRef("A"));
-  EXPECT_EQ(0U, S.getNumBytesCopied());
+  StreamRef SR;
+  EXPECT_NO_ERROR(R.readStreamRef(SR, 0U));
+  ArrayRef<uint8_t> Buffer;
+  EXPECT_ERROR(SR.readBytes(0U, 1U, Buffer));
 }
 
 // Tests that a read which outputs into a full destination buffer works and
@@ -159,6 +159,18 @@ TEST(MappedBlockStreamTest, InvalidReadSizeNonContiguousBreak) {
   StringRef Str;
 
   EXPECT_ERROR(R.readFixedString(Str, 11));
+  EXPECT_EQ(0U, S.getNumBytesCopied());
+}
+
+// Tests that a read which is entirely contained within a single block but
+// beyond the end of a StreamRef fails.
+TEST(MappedBlockStreamTest, ZeroCopyReadNoBreak) {
+  DiscontiguousFile F;
+  MappedBlockStream S(0, F);
+  StreamReader R(S);
+  StringRef Str;
+  EXPECT_NO_ERROR(R.readFixedString(Str, 1));
+  EXPECT_EQ(Str, StringRef("A"));
   EXPECT_EQ(0U, S.getNumBytesCopied());
 }
 
