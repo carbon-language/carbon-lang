@@ -1385,3 +1385,24 @@ void test_mm256_zeroupper() {
   // CHECK: call void @llvm.x86.avx.vzeroupper()
   return _mm256_zeroupper();
 }
+
+double test_mm256_cvtsd_f64(__m256d __a)
+{
+ // CHECK-LABEL: @test_mm256_cvtsd_f64
+ // CHECK: extractelement <4 x double> %{{.*}}, i32 0
+ return _mm256_cvtsd_f64(__a);
+}
+
+int test_mm256_cvtsi256_si32(__m256i __a)
+{
+ // CHECK-LABEL: @test_mm256_cvtsi256_si32
+ // CHECK: extractelement <8 x i32> %{{.*}}, i32 0
+ return _mm256_cvtsi256_si32(__a);
+}
+
+float test_mm256_cvtss_f32(__m256 __a)
+{
+ // CHECK-LABEL: @test_mm256_cvtss_f32
+ // CHECK: extractelement <8 x float> %{{.*}}, i32 0
+ return _mm256_cvtss_f32(__a);
+}

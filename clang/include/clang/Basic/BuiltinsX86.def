@@ -35,6 +35,10 @@ BUILTIN(__builtin_ms_va_start, "vc*&.", "nt")
 BUILTIN(__builtin_ms_va_end, "vc*&", "n")
 BUILTIN(__builtin_ms_va_copy, "vc*&c*&", "n")
 
+// Bit scan
+TARGET_BUILTIN(__builtin_ia32_bit_scan_forward, "ii", "", "")
+TARGET_BUILTIN(__builtin_ia32_bit_scan_reverse, "ii", "", "")
+
 // Undefined Values
 //
 TARGET_BUILTIN(__builtin_ia32_undef128, "V2d", "nc", "")
