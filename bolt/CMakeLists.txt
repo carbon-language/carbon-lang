@@ -25,4 +25,5 @@ add_llvm_tool(llvm-bolt
   Exceptions.cpp
   RewriteInstance.cpp
   ReorderAlgorithm.cpp
+  DWARFRewriter.cpp
   )
