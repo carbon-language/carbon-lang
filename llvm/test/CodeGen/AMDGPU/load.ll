@@ -181,6 +181,19 @@ entry:
   ret void
 }
 
+; FUNC-LABEL: {{^}}global_load_v3i16:
+; SI-NOHSA: buffer_load_dwordx2 v
+; SI-HSA: flat_load_dwordx2 v
+
+; R600-DAG: VTX_READ_32
+; R600-DAG: VTX_READ_16
+define void @global_load_v3i16(<3 x i16> addrspace(1)* %out, <3 x i16> addrspace(1)* %in) {
+entry:
+  %ld = load <3 x i16>, <3 x i16> addrspace(1)* %in
+  store <3 x i16> %ld, <3 x i16> addrspace(1)* %out
+  ret void
+}
+
 ; FUNC-LABEL: {{^}}load_v4i16:
 ; R600: VTX_READ_16
 ; R600: VTX_READ_16
