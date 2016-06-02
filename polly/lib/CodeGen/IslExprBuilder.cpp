@@ -178,32 +178,18 @@ Value *IslExprBuilder::createOpNAry(__isl_take isl_ast_expr *Expr) {
          "isl ast expression not of type isl_ast_op");
   assert(isl_ast_expr_get_op_n_arg(Expr) >= 2 &&
          "We need at least two operands in an n-ary operation");
+  assert((isl_ast_expr_get_op_type(Expr) == isl_ast_op_max ||
+          isl_ast_expr_get_op_type(Expr) == isl_ast_op_min) &&
+         "This is no n-ary isl ast expression");
 
-  Value *V;
-
-  V = create(isl_ast_expr_get_op_arg(Expr, 0));
+  bool IsMax = isl_ast_expr_get_op_type(Expr) == isl_ast_op_max;
+  auto Pred = IsMax ? CmpInst::ICMP_SGT : CmpInst::ICMP_SLT;
+  auto *V = create(isl_ast_expr_get_op_arg(Expr, 0));
 
   for (int i = 0; i < isl_ast_expr_get_op_n_arg(Expr); ++i) {
-    Value *OpV;
-    OpV = create(isl_ast_expr_get_op_arg(Expr, i));
-
+    auto *OpV = create(isl_ast_expr_get_op_arg(Expr, i));
     unifyTypes(V, OpV);
-
-    switch (isl_ast_expr_get_op_type(Expr)) {
-    default:
-      llvm_unreachable("This is no n-ary isl ast expression");
-
-    case isl_ast_op_max: {
-      Value *Cmp = Builder.CreateICmpSGT(V, OpV);
-      V = Builder.CreateSelect(Cmp, V, OpV);
-      continue;
-    }
-    case isl_ast_op_min: {
-      Value *Cmp = Builder.CreateICmpSLT(V, OpV);
-      V = Builder.CreateSelect(Cmp, V, OpV);
-      continue;
-    }
-    }
+    V = Builder.CreateSelect(Builder.CreateICmp(Pred, V, OpV), V, OpV);
   }
 
   // TODO: We can truncate the result, if it fits into a smaller type. This can
