@@ -23,6 +23,7 @@ corpus of input data in order to maximize the code coverage.  The code coverage
 information for libFuzzer is provided by LLVM's SanitizerCoverage_
 instrumentation.
 
+Contact: libfuzzer(#)googlegroups.com
 
 Versions
 ========
@@ -876,7 +877,7 @@ Trophies
 
 * `Linux Kernel's BPF verifier <https://github.com/iovisor/bpf-fuzzer>`_
 
-* Capstone: `[1] <https://github.com/aquynh/capstone/issues/600>`__ `[2] <https://github.com/aquynh/capstone/commit/6b88d1d51eadf7175a8f8a11b690684443b11359>`__
+* Capstone: `[1] <https://github.com/aquynh/capstone/issues/600>`__ `[2] <https://github.com/aquynh/capstone/commit/6b88d1d51eadf7175a8f8a11b690684443b11359>`__  `[3] <http://bugs.gw.com/view.php?id=550>`__  `[4] <http://bugs.gw.com/view.php?id=551>`__  `[5] <http://bugs.gw.com/view.php?id=553>`__  `[6] <http://bugs.gw.com/view.php?id=554>`__
 
 * Radare2: `[1] <https://github.com/revskills?tab=contributions&from=2016-04-09>`__
 
