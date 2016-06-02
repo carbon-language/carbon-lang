@@ -1203,8 +1203,8 @@ void AArch64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
 
 static void updateAArch64Addr(uint8_t *L, uint64_t Imm) {
   uint32_t ImmLo = (Imm & 0x3) << 29;
-  uint32_t ImmHi = ((Imm & 0x1FFFFC) >> 2) << 5;
-  uint64_t Mask = (0x3 << 29) | (0x7FFFF << 5);
+  uint32_t ImmHi = (Imm & 0x1FFFFC) << 3;
+  uint64_t Mask = (0x3 << 29) | (0x1FFFFC << 3);
   write32le(L, (read32le(L) & ~Mask) | ImmLo | ImmHi);
 }
 
@@ -1240,11 +1240,11 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_AARCH64_ADR_PREL_PG_HI21:
   case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
     checkInt<33>(Val, Type);
-    updateAArch64Addr(Loc, (Val >> 12) & 0x1FFFFF); // X[32:12]
+    updateAArch64Addr(Loc, Val >> 12);
     break;
   case R_AARCH64_ADR_PREL_LO21:
     checkInt<21>(Val, Type);
-    updateAArch64Addr(Loc, Val & 0x1FFFFF);
+    updateAArch64Addr(Loc, Val);
     break;
   case R_AARCH64_CALL26:
   case R_AARCH64_JUMP26:
