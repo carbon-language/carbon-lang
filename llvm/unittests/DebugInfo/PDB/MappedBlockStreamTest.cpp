@@ -79,6 +79,8 @@ TEST(MappedBlockStreamTest, ReadBeyondEndOfStreamRef) {
   EXPECT_NO_ERROR(R.readStreamRef(SR, 0U));
   ArrayRef<uint8_t> Buffer;
   EXPECT_ERROR(SR.readBytes(0U, 1U, Buffer));
+  EXPECT_NO_ERROR(R.readStreamRef(SR, 1U));
+  EXPECT_ERROR(SR.readBytes(1U, 1U, Buffer));
 }
 
 // Tests that a read which outputs into a full destination buffer works and
