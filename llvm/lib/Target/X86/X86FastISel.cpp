@@ -435,6 +435,26 @@ bool X86FastISel::X86FastEmitLoad(EVT VT, X86AddressMode &AM,
     Opc = (Alignment >= 32) ? X86::VMOVDQAYrm : X86::VMOVDQUYrm;
     RC  = &X86::VR256RegClass;
     break;
+  case MVT::v16f32:
+    assert(Subtarget->hasAVX512());
+    Opc = (Alignment >= 64) ? X86::VMOVAPSZrm : X86::VMOVUPSZrm;
+    RC  = &X86::VR512RegClass;
+    break;
+  case MVT::v8f64:
+    assert(Subtarget->hasAVX512());
+    Opc = (Alignment >= 64) ? X86::VMOVAPDZrm : X86::VMOVUPDZrm;
+    RC  = &X86::VR512RegClass;
+    break;
+  case MVT::v8i64:
+  case MVT::v16i32:
+  case MVT::v32i16:
+  case MVT::v64i8:
+    assert(Subtarget->hasAVX512());
+    // Note: There are a lot more choices based on type with AVX-512, but
+    // there's really no advantage when the load isn't masked.
+    Opc = (Alignment >= 64) ? X86::VMOVDQA64Zmr : X86::VMOVDQU64Zmr;
+    RC  = &X86::VR512RegClass;
+    break;
   }
 
   ResultReg = createResultReg(RC);
@@ -552,6 +572,32 @@ bool X86FastISel::X86FastEmitStore(EVT VT, unsigned ValReg, bool ValIsKill,
       Opc = IsNonTemporal ? X86::VMOVNTDQYmr : X86::VMOVDQAYmr;
     else
       Opc = X86::VMOVDQUYmr;
+    break;
+  case MVT::v16f32:
+    assert(Subtarget->hasAVX512());
+    if (Aligned)
+      Opc = IsNonTemporal ? X86::VMOVNTPSZmr : X86::VMOVAPSZmr;
+    else
+      Opc = X86::VMOVUPSZmr;
+    break;
+  case MVT::v8f64:
+    assert(Subtarget->hasAVX512());
+    if (Aligned) {
+      Opc = IsNonTemporal ? X86::VMOVNTPDZmr : X86::VMOVAPDZmr;
+    } else
+      Opc = X86::VMOVUPDZmr;
+    break;
+  case MVT::v8i64:
+  case MVT::v16i32:
+  case MVT::v32i16:
+  case MVT::v64i8:
+    assert(Subtarget->hasAVX512());
+    // Note: There are a lot more choices based on type with AVX-512, but
+    // there's really no advantage when the store isn't masked.
+    if (Aligned)
+      Opc = IsNonTemporal ? X86::VMOVNTDQZmr : X86::VMOVDQA64Zmr;
+    else
+      Opc = X86::VMOVDQU64Zmr;
     break;
   }
 
