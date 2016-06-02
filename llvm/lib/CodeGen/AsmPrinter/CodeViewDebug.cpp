@@ -731,6 +731,8 @@ void CodeViewDebug::beginFunction(const MachineFunction *MF) {
 TypeIndex CodeViewDebug::lowerType(const DIType *Ty) {
   // Generic dispatch for lowering an unknown type.
   switch (Ty->getTag()) {
+  case dwarf::DW_TAG_typedef:
+    return lowerTypeAlias(cast<DIDerivedType>(Ty));
   case dwarf::DW_TAG_base_type:
     return lowerTypeBasic(cast<DIBasicType>(Ty));
   case dwarf::DW_TAG_pointer_type:
@@ -746,6 +748,16 @@ TypeIndex CodeViewDebug::lowerType(const DIType *Ty) {
     // Use the null type index.
     return TypeIndex();
   }
+}
+
+TypeIndex CodeViewDebug::lowerTypeAlias(const DIDerivedType *Ty) {
+  // TODO: MSVC emits a S_UDT record.
+  DITypeRef UnderlyingTypeRef = Ty->getBaseType();
+  TypeIndex UnderlyingTypeIndex = getTypeIndex(UnderlyingTypeRef);
+  if (UnderlyingTypeIndex == TypeIndex(SimpleTypeKind::Int32Long) &&
+      Ty->getName() == "HRESULT")
+    return TypeIndex(SimpleTypeKind::HResult);
+  return UnderlyingTypeIndex;
 }
 
 TypeIndex CodeViewDebug::lowerTypeBasic(const DIBasicType *Ty) {
