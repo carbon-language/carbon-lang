@@ -438,7 +438,6 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For,
   isl_ast_expr *Init, *Inc, *Iterator, *UB;
   isl_id *IteratorID;
   Value *ValueLB, *ValueUB, *ValueInc;
-  Type *MaxType;
   BasicBlock *ExitBlock;
   Value *IV;
   CmpInst::Predicate Predicate;
@@ -537,7 +536,6 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
   isl_ast_expr *Init, *Inc, *Iterator, *UB;
   isl_id *IteratorID;
   Value *ValueLB, *ValueUB, *ValueInc;
-  Type *MaxType;
   Value *IV;
   CmpInst::Predicate Predicate;
 
