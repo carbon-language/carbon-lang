@@ -162,7 +162,7 @@ Value *IslExprBuilder::createOpUnary(__isl_take isl_ast_expr *Expr) {
     V = Builder.CreateSExt(V, MaxType);
 
   isl_ast_expr_free(Expr);
-  return Builder.CreateNSWNeg(V);
+  return createSub(ConstantInt::getNullValue(MaxType), V);
 }
 
 Value *IslExprBuilder::createOpNAry(__isl_take isl_ast_expr *Expr) {
