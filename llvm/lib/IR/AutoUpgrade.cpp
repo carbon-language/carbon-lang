@@ -185,6 +185,8 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name == "x86.sse2.cvtps2pd" ||
         Name == "x86.avx.cvtdq2.pd.256" ||
         Name == "x86.avx.cvt.ps2.pd.256" ||
+        Name == "x86.sse2.cvttps2dq" ||
+        Name.startswith("x86.avx.cvtt.") ||
         Name.startswith("x86.avx.vinsertf128.") ||
         Name == "x86.avx2.vinserti128" ||
         Name.startswith("x86.avx.vextractf128.") ||
@@ -498,6 +500,12 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         Rep = Builder.CreateSIToFP(Rep, DstTy, "cvtdq2pd");
       else
         Rep = Builder.CreateFPExt(Rep, DstTy, "cvtps2pd");
+    } else if (Name == "llvm.x86.sse2.cvttps2dq" ||
+               Name.startswith("llvm.x86.avx.cvtt.")) {
+      // Truncation (round to zero) float/double to i32 vector conversion.
+      Value *Src = CI->getArgOperand(0);
+      VectorType *DstTy = cast<VectorType>(CI->getType());
+      Rep = Builder.CreateFPToSI(Src, DstTy, "cvtt");
     } else if (Name.startswith("llvm.x86.avx.movnt.")) {
       Module *M = F->getParent();
       SmallVector<Metadata *, 1> Elts;
