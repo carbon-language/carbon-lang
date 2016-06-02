@@ -120,6 +120,10 @@ public:
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsIeToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsLdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
+
+private:
+  void relaxGotNoPic(uint8_t *Loc, uint64_t Val, uint8_t Op,
+                     uint8_t ModRm) const;
 };
 
 class PPCTargetInfo final : public TargetInfo {
@@ -760,47 +764,13 @@ RelExpr X86_64TargetInfo::adjustRelaxGotExpr(uint32_t Type, const uint8_t *Data,
   return Config->Pic ? RelExpr : R_RELAX_GOT_PC_NOPIC;
 }
 
-void X86_64TargetInfo::relaxGot(uint8_t *Loc, uint64_t Val) const {
-  const uint8_t Op = Loc[-2];
-  const uint8_t ModRm = Loc[-1];
-
-  // Convert mov foo@GOTPCREL(%rip), %reg to lea foo(%rip), %reg.
-  if (Op == 0x8b) {
-    *(Loc - 2) = 0x8d;
-    relocateOne(Loc, R_X86_64_PC32, Val);
-    return;
-  }
-
-  // Convert call/jmp instructions.
-  if (Op == 0xff) {
-    if (ModRm == 0x15) {
-      // ABI says we can convert call *foo@GOTPCREL(%rip) to nop call foo.
-      // Instead we convert to addr32 call foo, where addr32 is instruction
-      // prefix. That makes result expression to be a single instruction.
-      *(Loc - 2) = 0x67; // addr32 prefix
-      *(Loc - 1) = 0xe8; // call
-    } else {
-      assert(ModRm == 0x25);
-      // Convert jmp *foo@GOTPCREL(%rip) to jmp foo nop.
-      // jmp doesn't return, so it is fine to use nop here, it is just a stub.
-      *(Loc - 2) = 0xe9; // jmp
-      *(Loc + 3) = 0x90; // nop
-      Loc -= 1;
-      Val += 1;
-    }
-    relocateOne(Loc, R_X86_64_PC32, Val);
-    return;
-  }
-
-  assert(!Config->Pic);
-  // We are relaxing a rip relative to an absolute, so compensate for the old
-  // -4 addend.
-  Val += 4;
-  // "Intel 64 and IA-32 Architectures Software Developer's Manual V2"
-  // (http://www.intel.com/content/dam/www/public/us/en/documents/manuals/
-  //    64-ia-32-architectures-software-developer-instruction-set-reference-manual-325383.pdf)
-  // can be used as reference.
-
+// A subset of relaxations can only be applied for no-PIC. This method
+// handles such relaxations. Instructions encoding information was taken from:
+// "Intel 64 and IA-32 Architectures Software Developer's Manual V2"
+// (http://www.intel.com/content/dam/www/public/us/en/documents/manuals/
+//    64-ia-32-architectures-software-developer-instruction-set-reference-manual-325383.pdf)
+void X86_64TargetInfo::relaxGotNoPic(uint8_t *Loc, uint64_t Val, uint8_t Op,
+                                     uint8_t ModRm) const {
   const uint8_t Rex = Loc[-3];
   // Convert "test %reg, foo@GOTPCREL(%rip)" to "test $foo, %reg".
   if (Op == 0x85) {
@@ -860,6 +830,44 @@ void X86_64TargetInfo::relaxGot(uint8_t *Loc, uint64_t Val) const {
   *(Loc - 2) = 0x81;
   *(Loc - 3) = (Rex & ~0x4) | (Rex & 0x4) >> 2;
   relocateOne(Loc, R_X86_64_PC32, Val);
+}
+
+void X86_64TargetInfo::relaxGot(uint8_t *Loc, uint64_t Val) const {
+  const uint8_t Op = Loc[-2];
+  const uint8_t ModRm = Loc[-1];
+
+  // Convert mov foo@GOTPCREL(%rip), %reg to lea foo(%rip), %reg.
+  if (Op == 0x8b) {
+    *(Loc - 2) = 0x8d;
+    relocateOne(Loc, R_X86_64_PC32, Val);
+    return;
+  }
+
+  // Convert call/jmp instructions.
+  if (Op == 0xff) {
+    if (ModRm == 0x15) {
+      // ABI says we can convert call *foo@GOTPCREL(%rip) to nop call foo.
+      // Instead we convert to addr32 call foo, where addr32 is instruction
+      // prefix. That makes result expression to be a single instruction.
+      *(Loc - 2) = 0x67; // addr32 prefix
+      *(Loc - 1) = 0xe8; // call
+    } else {
+      assert(ModRm == 0x25);
+      // Convert jmp *foo@GOTPCREL(%rip) to jmp foo nop.
+      // jmp doesn't return, so it is fine to use nop here, it is just a stub.
+      *(Loc - 2) = 0xe9; // jmp
+      *(Loc + 3) = 0x90; // nop
+      Loc -= 1;
+      Val += 1;
+    }
+    relocateOne(Loc, R_X86_64_PC32, Val);
+    return;
+  }
+
+  assert(!Config->Pic);
+  // We are relaxing a rip relative to an absolute, so compensate
+  // for the old -4 addend.
+  relaxGotNoPic(Loc, Val + 4, Op, ModRm);
 }
 
 // Relocation masks following the #lo(value), #hi(value), #ha(value),
