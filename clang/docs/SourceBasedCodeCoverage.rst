@@ -26,11 +26,11 @@ The code coverage workflow
 
 The code coverage workflow consists of three main steps:
 
-1. Compiling with coverage enabled.
+* Compiling with coverage enabled.
 
-2. Running the instrumented program.
+* Running the instrumented program.
 
-3. Creating coverage reports.
+* Creating coverage reports.
 
 The next few sections work through a complete, copy-'n-paste friendly example
 based on this program:
@@ -52,7 +52,7 @@ based on this program:
 Compiling with coverage enabled
 ===============================
 
-To compile code with coverage enabled pass ``-fprofile-instr-generate
+To compile code with coverage, enabled pass ``-fprofile-instr-generate
 -fcoverage-mapping`` to the compiler:
 
 .. code-block:: console
@@ -68,12 +68,11 @@ Running the instrumented program
 
 The next step is to run the instrumented program. When the program exits it
 will write a **raw profile** to the path specified by the ``LLVM_PROFILE_FILE``
-environment variable. If that variable does not exist the profile is written to
-``default.profraw`` in the current directory of the program.
-
-If ``LLVM_PROFILE_FILE`` contains a path to a non-existent directory the
-missing directory structure will be created.  Additionally, the following
-special **pattern strings** are replaced:
+environment variable. If that variable does not exist, the profile is written
+to ``default.profraw`` in the current directory of the program. If
+``LLVM_PROFILE_FILE`` contains a path to a non-existent directory, the missing
+directory structure will be created.  Additionally, the following special
+**pattern strings** are rewritten:
 
 * "%p" expands out to the process ID.
 
@@ -87,7 +86,7 @@ special **pattern strings** are replaced:
 Creating coverage reports
 =========================
 
-Raw profiles have to be **indexed** before they can be used to generated
+Raw profiles have to be **indexed** before they can be used to generate
 coverage reports. This is done using the "merge" tool in ``llvm-profdata``, so
 named because it can combine and index profiles at the same time:
 
