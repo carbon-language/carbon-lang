@@ -126,7 +126,7 @@ TypeIndex CodeViewDebug::getFuncIdForSubprogram(const DISubprogram *SP) {
   // It's possible to ask for the FuncId of a function which doesn't have a
   // subprogram: inlining a function with debug info into a function with none.
   if (!SP)
-    return TypeIndex::Void();
+    return TypeIndex::None();
 
   // Check if we've already translated this subprogram.
   auto I = TypeIndices.find(SP);
