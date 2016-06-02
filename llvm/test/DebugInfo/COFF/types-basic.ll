@@ -32,16 +32,40 @@
 ; $ clang t.cpp -S -emit-llvm -g -gcodeview -o t.ll
 
 ; CHECK: CodeViewTypes [
-; CHECK:   Modifier (0x1000) {
+; CHECK:   ArgList (0x1000) {
+; CHECK:     TypeLeafKind: LF_ARGLIST (0x1201)
+; CHECK:     NumArgs: 3
+; CHECK:     Arguments [
+; CHECK:       ArgType: float (0x40)
+; CHECK:       ArgType: double (0x41)
+; CHECK:       ArgType: __int64 (0x13)
+; CHECK:     ]
+; CHECK:   }
+; CHECK:   Procedure (0x1001) {
+; CHECK:     TypeLeafKind: LF_PROCEDURE (0x1008)
+; CHECK:     ReturnType: void (0x3)
+; CHECK:     CallingConvention: NearC (0x0)
+; CHECK:     FunctionOptions [ (0x0)
+; CHECK:     ]
+; CHECK:     NumParameters: 3
+; CHECK:     ArgListType: (float, double, __int64) (0x1000)
+; CHECK:   }
+; CHECK:   FuncId (0x1002) {
+; CHECK:     TypeLeafKind: LF_FUNC_ID (0x1601)
+; CHECK:     ParentScope: 0x0
+; CHECK:     FunctionType: void (float, double, __int64) (0x1001)
+; CHECK:     Name: f
+; CHECK:   }
+; CHECK:   Modifier (0x1003) {
 ; CHECK:     TypeLeafKind: LF_MODIFIER (0x1001)
 ; CHECK:     ModifiedType: int (0x74)
 ; CHECK:     Modifiers [ (0x1)
 ; CHECK:       Const (0x1)
 ; CHECK:     ]
 ; CHECK:   }
-; CHECK:   Pointer (0x1001) {
+; CHECK:   Pointer (0x1004) {
 ; CHECK:     TypeLeafKind: LF_POINTER (0x1002)
-; CHECK:     PointeeType: const int (0x1000)
+; CHECK:     PointeeType: const int (0x1003)
 ; CHECK:     PointerAttributes: 0x1000C
 ; CHECK:     PtrType: Near64 (0xC)
 ; CHECK:     PtrMode: Pointer (0x0)
@@ -50,7 +74,7 @@
 ; CHECK:     IsVolatile: 0
 ; CHECK:     IsUnaligned: 0
 ; CHECK:   }
-; CHECK:   Pointer (0x1002) {
+; CHECK:   Pointer (0x1005) {
 ; CHECK:     TypeLeafKind: LF_POINTER (0x1002)
 ; CHECK:     PointeeType: int (0x74)
 ; CHECK:     PointerAttributes: 0x804C
@@ -63,9 +87,25 @@
 ; CHECK:     ClassType: 0x0
 ; CHECK:     Representation: Unknown (0x0)
 ; CHECK:   }
-; CHECK:   Pointer (0x1003) {
+; CHECK:   ArgList (0x1006) {
+; CHECK:     TypeLeafKind: LF_ARGLIST (0x1201)
+; CHECK:     NumArgs: 1
+; CHECK:     Arguments [
+; CHECK:       ArgType: <unknown simple type> (0x600)
+; CHECK:     ]
+; CHECK:   }
+; CHECK:   Procedure (0x1007) {
+; CHECK:     TypeLeafKind: LF_PROCEDURE (0x1008)
+; CHECK:     ReturnType: void (0x3)
+; CHECK:     CallingConvention: NearC (0x0)
+; CHECK:     FunctionOptions [ (0x0)
+; CHECK:     ]
+; CHECK:     NumParameters: 1
+; CHECK:     ArgListType: (<unknown simple type>) (0x1006)
+; CHECK:   }
+; CHECK:   Pointer (0x1008) {
 ; CHECK:     TypeLeafKind: LF_POINTER (0x1002)
-; CHECK:     PointeeType: 0x0
+; CHECK:     PointeeType: void (<unknown simple type>) (0x1007)
 ; CHECK:     PointerAttributes: 0x1006C
 ; CHECK:     PtrType: Near64 (0xC)
 ; CHECK:     PtrMode: PointerToMemberFunction (0x3)
@@ -83,7 +123,7 @@
 ; CHECK:     ProcStart {
 ; CHECK:       DbgStart: 0x0
 ; CHECK:       DbgEnd: 0x0
-; CHECK:       FunctionType: 0x0
+; CHECK:       FunctionType: f (0x1002)
 ; CHECK:       CodeOffset: ?f@@YAXMN_J@Z+0x0
 ; CHECK:       Segment: 0x0
 ; CHECK:       Flags [ (0x0)
@@ -121,7 +161,7 @@
 ; CHECK:       VarName: v2
 ; CHECK:     }
 ; CHECK:     Local {
-; CHECK:       Type: const int* (0x1001)
+; CHECK:       Type: const int* (0x1004)
 ; CHECK:       VarName: v21
 ; CHECK:     }
 ; CHECK:     Local {
@@ -129,11 +169,11 @@
 ; CHECK:       VarName: v3
 ; CHECK:     }
 ; CHECK:     Local {
-; CHECK:       Type: int <no type>::* (0x1002)
+; CHECK:       Type: int <no type>::* (0x1005)
 ; CHECK:       VarName: v4
 ; CHECK:     }
 ; CHECK:     Local {
-; CHECK:       Type: <no type> <no type>::* (0x1003)
+; CHECK:       Type: void (<unknown simple type>) <no type>::* (0x1008)
 ; CHECK:       VarName: v5
 ; CHECK:     }
 ; CHECK:     Local {
