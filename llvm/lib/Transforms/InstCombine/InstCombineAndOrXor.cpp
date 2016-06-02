@@ -1594,24 +1594,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (Instruction *CastedAnd = foldCastedBitwiseLogic(I))
     return CastedAnd;
 
-  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
-    Value *Op0COp = Op0C->getOperand(0);
-    Type *SrcTy = Op0COp->getType();
-
-    // If we are masking off the sign bit of a floating-point value, convert
-    // this to the canonical fabs intrinsic call and cast back to integer.
-    // The backend should know how to optimize fabs().
-    // TODO: This transform should also apply to vectors.
-    ConstantInt *CI;
-    if (isa<BitCastInst>(Op0C) && SrcTy->isFloatingPointTy() &&
-        match(Op1, m_ConstantInt(CI)) && CI->isMaxValue(true)) {
-      Module *M = I.getModule();
-      Function *Fabs = Intrinsic::getDeclaration(M, Intrinsic::fabs, SrcTy);
-      Value *Call = Builder->CreateCall(Fabs, Op0COp, "fabs");
-      return CastInst::CreateBitOrPointerCast(Call, I.getType());
-    }
-  }
-
   if (Instruction *Select = foldBoolSextMaskToSelect(I))
     return Select;
 

@@ -7351,6 +7351,49 @@ static unsigned getPPCf128HiElementSelector(const SelectionDAG &DAG) {
   return DAG.getDataLayout().isBigEndian() ? 1 : 0;
 }
 
+static SDValue foldBitcastedFPLogic(SDNode *N, SelectionDAG &DAG,
+                                    const TargetLowering &TLI) {
+  // If this is not a bitcast to an FP type or if the target doesn't have
+  // IEEE754-compliant FP logic, we're done.
+  EVT VT = N->getValueType(0);
+  if (!VT.isFloatingPoint() || !TLI.hasBitPreservingFPLogic(VT))
+    return SDValue();
+
+  // TODO: Use splat values for the constant-checking below and remove this
+  // restriction.
+  SDValue N0 = N->getOperand(0);
+  EVT SourceVT = N0.getValueType();
+  if (SourceVT.isVector())
+    return SDValue();
+
+  unsigned FPOpcode;
+  APInt SignMask;
+  switch (N0.getOpcode()) {
+  case ISD::AND:
+    FPOpcode = ISD::FABS;
+    SignMask = ~APInt::getSignBit(SourceVT.getSizeInBits());
+    break;
+  case ISD::XOR:
+    FPOpcode = ISD::FNEG;
+    SignMask = APInt::getSignBit(SourceVT.getSizeInBits());
+    break;
+  // TODO: ISD::OR --> ISD::FNABS?
+  default:
+    return SDValue();
+  }
+
+  // Fold (bitcast int (and (bitcast fp X to int), 0x7fff...) to fp) -> fabs X
+  // Fold (bitcast int (xor (bitcast fp X to int), 0x8000...) to fp) -> fneg X
+  SDValue LogicOp0 = N0.getOperand(0);
+  ConstantSDNode *LogicOp1 = dyn_cast<ConstantSDNode>(N0.getOperand(1));
+  if (LogicOp1 && LogicOp1->getAPIntValue() == SignMask &&
+      LogicOp0.getOpcode() == ISD::BITCAST &&
+      LogicOp0->getOperand(0).getValueType() == VT)
+    return DAG.getNode(FPOpcode, SDLoc(N), VT, LogicOp0->getOperand(0));
+
+  return SDValue();
+}
+
 SDValue DAGCombiner::visitBITCAST(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
@@ -7414,6 +7457,9 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
       return Load;
     }
   }
+
+  if (SDValue V = foldBitcastedFPLogic(N, DAG, TLI))
+    return V;
 
   // fold (bitconvert (fneg x)) -> (xor (bitconvert x), signbit)
   // fold (bitconvert (fabs x)) -> (and (bitconvert x), (not signbit))
