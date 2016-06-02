@@ -390,14 +390,7 @@ void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
   Value *ValueLB = ExprBuilder.create(Init);
   Value *ValueInc = ExprBuilder.create(Inc);
 
-  Type *MaxType = ExprBuilder.getType(Iterator);
-  MaxType = ExprBuilder.getWidestType(MaxType, ValueLB->getType());
-  MaxType = ExprBuilder.getWidestType(MaxType, ValueInc->getType());
-
-  if (MaxType != ValueLB->getType())
-    ValueLB = Builder.CreateSExt(ValueLB, MaxType);
-  if (MaxType != ValueInc->getType())
-    ValueInc = Builder.CreateSExt(ValueInc, MaxType);
+  ExprBuilder.unifyTypes(ValueLB, ValueInc);
 
   std::vector<Value *> IVS(VectorWidth);
   IVS[0] = ValueLB;
@@ -472,17 +465,7 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For,
   ValueUB = ExprBuilder.create(UB);
   ValueInc = ExprBuilder.create(Inc);
 
-  MaxType = ExprBuilder.getType(Iterator);
-  MaxType = ExprBuilder.getWidestType(MaxType, ValueLB->getType());
-  MaxType = ExprBuilder.getWidestType(MaxType, ValueUB->getType());
-  MaxType = ExprBuilder.getWidestType(MaxType, ValueInc->getType());
-
-  if (MaxType != ValueLB->getType())
-    ValueLB = Builder.CreateSExt(ValueLB, MaxType);
-  if (MaxType != ValueUB->getType())
-    ValueUB = Builder.CreateSExt(ValueUB, MaxType);
-  if (MaxType != ValueInc->getType())
-    ValueInc = Builder.CreateSExt(ValueInc, MaxType);
+  ExprBuilder.unifyTypes(ValueLB, ValueUB, ValueInc);
 
   // If we can show that LB <Predicate> UB holds at least once, we can
   // omit the GuardBB in front of the loop.
@@ -583,17 +566,7 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
     ValueUB = Builder.CreateAdd(
         ValueUB, Builder.CreateSExt(Builder.getTrue(), ValueUB->getType()));
 
-  MaxType = ExprBuilder.getType(Iterator);
-  MaxType = ExprBuilder.getWidestType(MaxType, ValueLB->getType());
-  MaxType = ExprBuilder.getWidestType(MaxType, ValueUB->getType());
-  MaxType = ExprBuilder.getWidestType(MaxType, ValueInc->getType());
-
-  if (MaxType != ValueLB->getType())
-    ValueLB = Builder.CreateSExt(ValueLB, MaxType);
-  if (MaxType != ValueUB->getType())
-    ValueUB = Builder.CreateSExt(ValueUB, MaxType);
-  if (MaxType != ValueInc->getType())
-    ValueInc = Builder.CreateSExt(ValueInc, MaxType);
+  ExprBuilder.unifyTypes(ValueLB, ValueUB, ValueInc);
 
   BasicBlock::iterator LoopBody;
 
