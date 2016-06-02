@@ -1122,12 +1122,12 @@ bool AArch64TargetInfo::usesOnlyLowPageBits(uint32_t Type) const {
   default:
     return false;
   case R_AARCH64_ADD_ABS_LO12_NC:
-  case R_AARCH64_LDST8_ABS_LO12_NC:
+  case R_AARCH64_LD64_GOT_LO12_NC:
+  case R_AARCH64_LDST128_ABS_LO12_NC:
   case R_AARCH64_LDST16_ABS_LO12_NC:
   case R_AARCH64_LDST32_ABS_LO12_NC:
   case R_AARCH64_LDST64_ABS_LO12_NC:
-  case R_AARCH64_LDST128_ABS_LO12_NC:
-  case R_AARCH64_LD64_GOT_LO12_NC:
+  case R_AARCH64_LDST8_ABS_LO12_NC:
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
     return true;
   }
