@@ -100,16 +100,6 @@ public:
     return init();
   }
 
-  const Statistic &operator*=(const unsigned &V) {
-    sys::AtomicMul(&Value, V);
-    return init();
-  }
-
-  const Statistic &operator/=(const unsigned &V) {
-    sys::AtomicDiv(&Value, V);
-    return init();
-  }
-
 #else  // Statistics are disabled in release builds.
 
   const Statistic &operator=(unsigned Val) {
@@ -137,14 +127,6 @@ public:
   }
 
   const Statistic &operator-=(const unsigned &V) {
-    return *this;
-  }
-
-  const Statistic &operator*=(const unsigned &V) {
-    return *this;
-  }
-
-  const Statistic &operator/=(const unsigned &V) {
     return *this;
   }
 
