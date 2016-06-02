@@ -19,7 +19,7 @@
 #include "lsan/lsan_common.h"
 #include "asan/asan_allocator.h"
 
-#if SANITIZER_LINUX  // StopTheWorld is currently linux-only.
+#if CAN_SANITIZE_LEAKS
 
 namespace __asan {
 
@@ -97,4 +97,4 @@ void __sanitizer_print_memory_profile(uptr top_percent) {
 }
 }  // extern "C"
 
-#endif  // SANITIZER_LINUX
+#endif  // CAN_SANITIZE_LEAKS
