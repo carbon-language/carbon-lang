@@ -150,8 +150,9 @@ def : ProcessorModel<"generic", NoSchedModel, [FeatureFPARMv8,
 def : ProcessorModel<"cortex-a35", CortexA53Model, [ProcA35]>;
 def : ProcessorModel<"cortex-a53", CortexA53Model, [ProcA53]>;
 def : ProcessorModel<"cortex-a57", CortexA57Model, [ProcA57]>;
-// FIXME: Cortex-A72 is currently modelled as an Cortex-A57.
+// FIXME: Cortex-A72 and Cortex-A73 are currently modelled as an Cortex-A57.
 def : ProcessorModel<"cortex-a72", CortexA57Model, [ProcA57]>;
+def : ProcessorModel<"cortex-a73", CortexA57Model, [ProcA57]>;
 def : ProcessorModel<"cyclone", CycloneModel, [ProcCyclone]>;
 def : ProcessorModel<"exynos-m1", ExynosM1Model, [ProcExynosM1]>;
 def : ProcessorModel<"kryo", KryoModel, [ProcKryo]>;
