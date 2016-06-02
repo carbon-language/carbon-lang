@@ -55,6 +55,7 @@ __attribute__((weak)) void __sanitizer_free_hook(void *ptr);
 __attribute__((weak)) void __lsan_enable();
 __attribute__((weak)) void __lsan_disable();
 __attribute__((weak)) int __lsan_do_recoverable_leak_check();
+__attribute__((weak)) int __sanitizer_print_memory_profile(size_t);
 }
 
 namespace fuzzer {
@@ -256,7 +257,9 @@ void Fuzzer::RssLimitCallback() {
   Printf(
       "==%d== ERROR: libFuzzer: out-of-memory (used: %zdMb; limit: %zdMb)\n",
       GetPid(), GetPeakRSSMb(), Options.RssLimitMb);
-  Printf("   To change the out-of-memory limit use -rss_limit_mb=<N>\n");
+  Printf("   To change the out-of-memory limit use -rss_limit_mb=<N>\n\n");
+  if (__sanitizer_print_memory_profile)
+    __sanitizer_print_memory_profile(50);
   DumpCurrentUnit("oom-");
   Printf("SUMMARY: libFuzzer: out-of-memory\n");
   PrintFinalStats();
