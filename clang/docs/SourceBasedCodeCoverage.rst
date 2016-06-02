@@ -35,7 +35,7 @@ The code coverage workflow consists of three main steps:
 The next few sections work through a complete, copy-'n-paste friendly example
 based on this program:
 
-.. code-block:: console
+.. code-block:: cpp
 
     % cat <<EOF > foo.cc
     #define BAR(x) ((x) || (x))
@@ -116,7 +116,7 @@ distinct views for ``foo<int>(...)`` and ``foo<float>(...)``.  If
 ``-show-line-counts-or-regions`` is enabled, ``llvm-cov`` displays sub-line
 region counts (even in macro expansions):
 
-.. code-block:: console
+.. code-block:: cpp
 
        20|    1|#define BAR(x) ((x) || (x))
                                ^20     ^2
