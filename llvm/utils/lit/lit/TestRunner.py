@@ -379,11 +379,17 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
 
         # Ensure the resulting output is always of string type.
         try:
-            out = to_string(out.decode('utf-8'))
+            if out is None:
+                out = ''
+            else:
+                out = to_string(out.decode('utf-8', errors='replace'))
         except:
             out = str(out)
         try:
-            err = to_string(err.decode('utf-8'))
+            if err is None:
+                err = ''
+            else:
+                err = to_string(err.decode('utf-8', errors='replace'))
         except:
             err = str(err)
 
@@ -438,14 +444,31 @@ def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
 
     out = err = ''
     for i,result in enumerate(results):
-        out += 'Command %d: %s\n' % (i, ' '.join('"%s"' % s
-                                                 for s in result.command.args))
-        out += 'Command %d Result: %r\n' % (i, result.exitCode)
+        # Write the command line run.
+        out += '$ %s\n' % (' '.join('"%s"' % s
+                                    for s in result.command.args),)
+
+        # If nothing interesting happened, move on.
+        if litConfig.maxIndividualTestTime == 0 and \
+               result.exitCode == 0 and \
+               not result.stdout.strip() and not result.stderr.strip():
+            continue
+
+        # Otherwise, something failed or was printed, show it.
+        if result.stdout.strip():
+            out += '# command output:\n%s\n' % (result.stdout,)
+        if result.stderr.strip():
+            out += '# command stderr:\n%s\n' % (result.stderr,)
+        if not result.stdout.strip() and not result.stderr.strip():
+            out += "note: command had no output on stdout or stderr\n"
+
+        # Show the error conditions:
+        if result.exitCode != 0:
+            out += "error: command failed with exit status: %d\n" % (
+                result.exitCode,)
         if litConfig.maxIndividualTestTime > 0:
-            out += 'Command %d Reached Timeout: %s\n\n' % (
+            out += 'error: command reached timeout: %s\n' % (
                 i, str(result.timeoutReached))
-        out += 'Command %d Output:\n%s\n\n' % (i, result.stdout)
-        out += 'Command %d Stderr:\n%s\n\n' % (i, result.stderr)
 
     return out, err, exitCode, timeoutInfo
 
