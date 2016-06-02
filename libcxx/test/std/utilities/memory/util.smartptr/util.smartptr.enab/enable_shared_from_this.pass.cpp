@@ -88,32 +88,6 @@ int main()
         }
 #endif
     }
-    // Test LWG issue 2529 again. This time check that an expired pointer
-    // is replaced.
-    {
-        T* ptr = new T;
-        std::weak_ptr<T> weak;
-        {
-            std::shared_ptr<T> s(ptr, &nullDeleter);
-            assert(ptr->shared_from_this() == s);
-            weak = s;
-            assert(!weak.expired());
-        }
-        assert(weak.expired());
-        weak.reset();
-#ifndef TEST_HAS_NO_EXCEPTIONS
-        try {
-            ptr->shared_from_this();
-            assert(false);
-        } catch (std::bad_weak_ptr const&) {
-        } catch (...) { assert(false); }
-#endif
-        {
-            std::shared_ptr<T> s2(ptr, &nullDeleter);
-            assert(ptr->shared_from_this() == s2);
-        }
-        delete ptr;
-    }
     // Test weak_from_this_methods
 #if TEST_STD_VER > 14
     {
