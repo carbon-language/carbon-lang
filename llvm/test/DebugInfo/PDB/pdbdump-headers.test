@@ -1,8 +1,8 @@
 ; RUN: llvm-pdbdump -raw-headers -raw-tpi-records -raw-tpi-record-bytes -raw-module-syms \
 ; RUN:              -raw-sym-record-bytes -raw-publics -raw-module-files -raw-stream-name=/names \
 ; RUN:              -raw-stream-summary -raw-stream-blocks -raw-ipi-records -raw-ipi-record-bytes \
-; RUN:              -raw-section-contribs -raw-section-map -raw-section-headers %p/Inputs/empty.pdb \
-; RUN:              | FileCheck -check-prefix=EMPTY %s
+; RUN:              -raw-section-contribs -raw-section-map -raw-section-headers -raw-line-info \
+; RUN:              %p/Inputs/empty.pdb | FileCheck -check-prefix=EMPTY %s
 ; RUN: llvm-pdbdump -raw-all %p/Inputs/empty.pdb | FileCheck -check-prefix=ALL %s
 ; RUN: llvm-pdbdump -raw-headers -raw-stream-name=/names -raw-modules -raw-module-files \
 ; RUN:              %p/Inputs/big-read.pdb | FileCheck -check-prefix=BIG %s
@@ -330,6 +330,23 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:       ]
+; EMPTY-NEXT:       LineInfo [
+; EMPTY-NEXT:         {
+; EMPTY-NEXT:           Kind: Lines (0xF2)
+; EMPTY-NEXT:           Data (
+; EMPTY-NEXT:             0000: 10000000 01000000 0A000000 00000000  |................|
+; EMPTY-NEXT:             0010: 03000000 24000000 00000000 05000080  |....$...........|
+; EMPTY-NEXT:             0020: 03000000 06000080 08000000 07000080  |................|
+; EMPTY-NEXT:           )
+; EMPTY-NEXT:         }
+; EMPTY-NEXT:         {
+; EMPTY-NEXT:           Kind: FileChecksums (0xF4)
+; EMPTY-NEXT:           Data (
+; EMPTY-NEXT:             0000: 56000000 1001A0A5 BD0D3ECD 93FC29D1  |V.........>...).|
+; EMPTY-NEXT:             0010: 9DE826FB F4BC0000                    |..&.....|
+; EMPTY-NEXT:           )
+; EMPTY-NEXT:         }
+; EMPTY-NEXT:       ]
 ; EMPTY-NEXT:     }
 ; EMPTY-NEXT:     {
 ; EMPTY-NEXT:       Name: * Linker *
@@ -567,6 +584,8 @@
 ; EMPTY-NEXT:             0010: 2E72656C 6F630000                    |.reloc..|
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
+; EMPTY-NEXT:       ]
+; EMPTY-NEXT:       LineInfo [
 ; EMPTY-NEXT:       ]
 ; EMPTY-NEXT:     }
 ; EMPTY-NEXT:   ]

@@ -231,6 +231,23 @@ static const EnumEntry<uint32_t> FrameProcSymFlagNames[] = {
     CV_ENUM_CLASS_ENT(FrameProcedureOptions, GuardCfw),
 };
 
+static const EnumEntry<uint32_t> ModuleSubstreamKindNames[] = {
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, None),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, Symbols),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, Lines),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, StringTable),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, FileChecksums),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, FrameData),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, InlineeLines),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, CrossScopeImports),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, CrossScopeExports),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, ILLines),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, FuncMDTokenMap),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, TypeMDTokenMap),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, MergedAssemblyInput),
+    CV_ENUM_CLASS_ENT(ModuleSubstreamKind, CoffSymbolRVA),
+};
+
 static const EnumEntry<uint16_t> ExportSymFlagNames[] = {
     CV_ENUM_CLASS_ENT(ExportFlags, IsConstant),
     CV_ENUM_CLASS_ENT(ExportFlags, IsData),
@@ -330,6 +347,9 @@ ArrayRef<EnumEntry<uint32_t>> getFrameProcSymFlagNames() {
 }
 ArrayRef<EnumEntry<uint16_t>> getExportSymFlagNames() {
   return makeArrayRef(ExportSymFlagNames);
+}
+ArrayRef<EnumEntry<uint32_t>> getModuleSubstreamKindNames() {
+  return makeArrayRef(ModuleSubstreamKindNames);
 }
 ArrayRef<EnumEntry<uint8_t>> getThunkOrdinalNames() {
   return makeArrayRef(ThunkOrdinalNames);

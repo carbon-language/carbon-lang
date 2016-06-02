@@ -12,9 +12,11 @@
 
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/DebugInfo/CodeView/CVRecord.h"
+#include "llvm/DebugInfo/CodeView/StreamArray.h"
 #include "llvm/DebugInfo/CodeView/StreamRef.h"
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/DebugInfo/PDB/Raw/MappedBlockStream.h"
+#include "llvm/DebugInfo/PDB/Raw/ModuleSubstreamRecord.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm {
@@ -24,6 +26,8 @@ class ModInfo;
 
 class ModStream {
 public:
+  typedef codeview::VarStreamArray<ModuleSubstreamRecord> LineInfoArray;
+
   ModStream(PDBFile &File, const ModInfo &Module);
   ~ModStream();
 
@@ -31,6 +35,8 @@ public:
 
   iterator_range<codeview::CVSymbolArray::Iterator>
   symbols(bool *HadError) const;
+
+  iterator_range<LineInfoArray::Iterator> lines(bool *HadError) const;
 
 private:
   const ModInfo &Mod;
@@ -41,6 +47,8 @@ private:
   codeview::StreamRef LinesSubstream;
   codeview::StreamRef C13LinesSubstream;
   codeview::StreamRef GlobalRefsSubstream;
+
+  LineInfoArray LineInfo;
 };
 }
 }

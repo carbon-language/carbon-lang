@@ -15,7 +15,7 @@
 using namespace llvm;
 using namespace llvm::codeview;
 
-StreamReader::StreamReader(StreamRef Stream) : Stream(Stream), Offset(0) {}
+StreamReader::StreamReader(StreamRef S) : Stream(S), Offset(0) {}
 
 Error StreamReader::readBytes(ArrayRef<uint8_t> &Buffer, uint32_t Size) {
   if (auto EC = Stream.readBytes(Offset, Size, Buffer))

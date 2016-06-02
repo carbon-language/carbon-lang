@@ -287,6 +287,7 @@ enum class ModifierOptions : uint16_t {
 CV_DEFINE_ENUM_CLASS_FLAGS_OPERATORS(ModifierOptions)
 
 enum class ModuleSubstreamKind : uint32_t {
+  None = 0,
   Symbols = 0xf1,
   Lines = 0xf2,
   StringTable = 0xf3,

@@ -23,6 +23,8 @@ public:
       : Stream(&Stream), ViewOffset(0), Length(Stream.getLength()) {}
   StreamRef(const StreamInterface &Stream, uint32_t Offset, uint32_t Length)
       : Stream(&Stream), ViewOffset(Offset), Length(Length) {}
+
+  StreamRef(const StreamRef &Stream, uint32_t Offset, uint32_t Length) = delete;
   StreamRef(const StreamRef &Other)
       : Stream(Other.Stream), ViewOffset(Other.ViewOffset),
         Length(Other.Length) {}

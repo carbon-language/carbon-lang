@@ -144,6 +144,9 @@ cl::opt<bool> DumpPublics("raw-publics", cl::desc("dump Publics stream data"),
 cl::opt<bool> DumpSectionContribs("raw-section-contribs",
                                   cl::desc("dump section contributions"),
                                   cl::cat(NativeOptions));
+cl::opt<bool> DumpLineInfo("raw-line-info",
+                           cl::desc("dump file and line information"),
+                           cl::cat(NativeOptions));
 cl::opt<bool> DumpSectionMap("raw-section-map", cl::desc("dump section map"),
                              cl::cat(NativeOptions));
 cl::opt<bool>
@@ -429,8 +432,8 @@ static Error dumpNamedStream(ScopedPrinter &P, PDBFile &File) {
 
 static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
                            codeview::CVTypeDumper &TD) {
-  bool DumpModules =
-      opts::DumpModules || opts::DumpModuleSyms || opts::DumpModuleFiles;
+  bool DumpModules = opts::DumpModules || opts::DumpModuleSyms ||
+                     opts::DumpModuleFiles || opts::DumpLineInfo;
   if (!opts::DumpHeaders && !DumpModules)
     return Error::success();
 
@@ -487,25 +490,45 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
           (Modi.Info.getModuleStreamIndex() < File.getNumStreams());
       bool ShouldDumpSymbols =
           (opts::DumpModuleSyms || opts::DumpSymRecordBytes);
-      if (HasModuleDI && ShouldDumpSymbols) {
-        ListScope SS(P, "Symbols");
+      if (HasModuleDI && (ShouldDumpSymbols || opts::DumpLineInfo)) {
         ModStream ModS(File, Modi.Info);
         if (auto EC = ModS.reload())
           return EC;
 
-        codeview::CVSymbolDumper SD(P, TD, nullptr, false);
-        bool HadError = false;
-        for (auto &S : ModS.symbols(&HadError)) {
-          DictScope DD(P, "");
+        if (ShouldDumpSymbols) {
+          ListScope SS(P, "Symbols");
+          codeview::CVSymbolDumper SD(P, TD, nullptr, false);
+          bool HadError = false;
+          for (auto &S : ModS.symbols(&HadError)) {
+            DictScope DD(P, "");
 
-          if (opts::DumpModuleSyms)
-            SD.dump(S);
-          if (opts::DumpSymRecordBytes)
-            P.printBinaryBlock("Bytes", S.Data);
+            if (opts::DumpModuleSyms)
+              SD.dump(S);
+            if (opts::DumpSymRecordBytes)
+              P.printBinaryBlock("Bytes", S.Data);
+          }
+          if (HadError)
+            return make_error<RawError>(
+                raw_error_code::corrupt_file,
+                "DBI stream contained corrupt symbol record");
         }
-        if (HadError)
-          return make_error<RawError>(raw_error_code::corrupt_file,
-                                      "DBI stream contained corrupt record");
+        if (opts::DumpLineInfo) {
+          ListScope SS(P, "LineInfo");
+          bool HadError = false;
+          for (auto &L : ModS.lines(&HadError)) {
+            DictScope DD(P, "");
+            P.printEnum("Kind", uint32_t(L.getSubstreamKind()),
+                        codeview::getModuleSubstreamKindNames());
+            ArrayRef<uint8_t> Data;
+            codeview::StreamReader R(L.getRecordData());
+            if (auto EC = R.readBytes(Data, R.bytesRemaining())) {
+              return make_error<RawError>(
+                  raw_error_code::corrupt_file,
+                  "DBI stream contained corrupt line info record");
+            }
+            P.printBinaryBlock("Data", Data);
+          }
+        }
       }
     }
   }
@@ -805,6 +828,8 @@ bool isRawDumpEnabled() {
     return true;
   if (opts::DumpSectionMap)
     return true;
+  if (opts::DumpLineInfo)
+    return true;
   return false;
 }
 
@@ -972,6 +997,7 @@ int main(int argc_, const char *argv_[]) {
     opts::DumpIpiRecords = true;
     opts::DumpSectionMap = true;
     opts::DumpSectionContribs = true;
+    opts::DumpLineInfo = true;
   }
 
   // When adding filters for excluded compilands and types, we need to remember
