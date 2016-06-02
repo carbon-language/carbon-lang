@@ -2623,7 +2623,7 @@ bool X86FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
     unsigned ResultReg = 0;
     // Check if we have an immediate version.
     if (const auto *CI = dyn_cast<ConstantInt>(RHS)) {
-      static const unsigned Opc[2][4] = {
+      static const uint16_t Opc[2][4] = {
         { X86::INC8r, X86::INC16r, X86::INC32r, X86::INC64r },
         { X86::DEC8r, X86::DEC16r, X86::DEC32r, X86::DEC64r }
       };
@@ -2717,7 +2717,7 @@ bool X86FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
     if (!isTypeLegal(RetTy, VT))
       return false;
 
-    static const unsigned CvtOpc[2][2][2] = {
+    static const uint16_t CvtOpc[2][2][2] = {
       { { X86::CVTTSS2SIrr,   X86::VCVTTSS2SIrr   },
         { X86::CVTTSS2SI64rr, X86::VCVTTSS2SI64rr }  },
       { { X86::CVTTSD2SIrr,   X86::VCVTTSD2SIrr   },
