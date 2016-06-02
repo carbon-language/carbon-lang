@@ -147,7 +147,6 @@ public:
   AArch64TargetInfo();
   RelExpr getRelExpr(uint32_t Type, const SymbolBody &S) const override;
   uint32_t getDynRel(uint32_t Type) const override;
-  bool isTlsGlobalDynamicRel(uint32_t Type) const override;
   bool isTlsInitialExecRel(uint32_t Type) const override;
   void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZero(uint8_t *Buf) const override;
@@ -1076,6 +1075,7 @@ AArch64TargetInfo::AArch64TargetInfo() {
   IRelativeRel = R_AARCH64_IRELATIVE;
   GotRel = R_AARCH64_GLOB_DAT;
   PltRel = R_AARCH64_JUMP_SLOT;
+  TlsDescRel = R_AARCH64_TLSDESC;
   TlsGotRel = R_AARCH64_TLS_TPREL64;
   PltEntrySize = 16;
   PltZeroSize = 32;
@@ -1090,6 +1090,16 @@ RelExpr AArch64TargetInfo::getRelExpr(uint32_t Type,
   switch (Type) {
   default:
     return R_ABS;
+
+  case R_AARCH64_TLSDESC_ADR_PAGE21:
+    return R_TLSDESC_PAGE;
+
+  case R_AARCH64_TLSDESC_LD64_LO12_NC:
+  case R_AARCH64_TLSDESC_ADD_LO12_NC:
+    return R_TLSDESC;
+
+  case R_AARCH64_TLSDESC_CALL:
+    return R_HINT;
 
   case R_AARCH64_TLSLE_ADD_TPREL_HI12:
   case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
@@ -1128,16 +1138,11 @@ bool AArch64TargetInfo::usesOnlyLowPageBits(uint32_t Type) const {
   case R_AARCH64_LDST32_ABS_LO12_NC:
   case R_AARCH64_LDST64_ABS_LO12_NC:
   case R_AARCH64_LDST8_ABS_LO12_NC:
+  case R_AARCH64_TLSDESC_ADD_LO12_NC:
+  case R_AARCH64_TLSDESC_LD64_LO12_NC:
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
     return true;
   }
-}
-
-bool AArch64TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
-  return Type == R_AARCH64_TLSDESC_ADR_PAGE21 ||
-         Type == R_AARCH64_TLSDESC_LD64_LO12_NC ||
-         Type == R_AARCH64_TLSDESC_ADD_LO12_NC ||
-         Type == R_AARCH64_TLSDESC_CALL;
 }
 
 bool AArch64TargetInfo::isTlsInitialExecRel(uint32_t Type) const {
@@ -1239,6 +1244,7 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_AARCH64_ADR_GOT_PAGE:
   case R_AARCH64_ADR_PREL_PG_HI21:
   case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
+  case R_AARCH64_TLSDESC_ADR_PAGE21:
     checkInt<33>(Val, Type);
     updateAArch64Addr(Loc, Val >> 12);
     break;
@@ -1257,6 +1263,7 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     break;
   case R_AARCH64_LD64_GOT_LO12_NC:
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+  case R_AARCH64_TLSDESC_LD64_LO12_NC:
     checkAlignment<8>(Val, Type);
     or32le(Loc, (Val & 0xFF8) << 7);
     break;
@@ -1284,6 +1291,7 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     updateAArch64Add(Loc, Val >> 12);
     break;
   case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
+  case R_AARCH64_TLSDESC_ADD_LO12_NC:
     updateAArch64Add(Loc, Val);
     break;
   default:
