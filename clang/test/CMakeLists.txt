@@ -76,11 +76,11 @@ if( NOT CLANG_BUILT_STANDALONE )
     )
 
   if(TARGET llvm-lto)
-    set(LLVM_TEST_DEPENDS ${LLVM_TEST_DEPENDS} llvm-lto)
+    list(APPEND CLANG_TEST_DEPS llvm-lto)
   endif()
 
   if(TARGET LTO)
-    set(LLVM_TEST_DEPENDS ${LLVM_TEST_DEPENDS} LTO)
+    list(APPEND CLANG_TEST_DEPS LTO)
   endif()
 endif()
 
