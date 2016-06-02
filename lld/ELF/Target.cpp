@@ -1077,8 +1077,6 @@ AArch64TargetInfo::AArch64TargetInfo() {
   GotRel = R_AARCH64_GLOB_DAT;
   PltRel = R_AARCH64_JUMP_SLOT;
   TlsGotRel = R_AARCH64_TLS_TPREL64;
-  TlsModuleIndexRel = R_AARCH64_TLS_DTPMOD64;
-  TlsOffsetRel = R_AARCH64_TLS_DTPREL64;
   PltEntrySize = 16;
   PltZeroSize = 32;
 
