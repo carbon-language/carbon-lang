@@ -14,32 +14,34 @@
 ; CHECK-NEXT:            Execution Context: [N, p, q] -> {  : N > 0 }
 ; CHECK-NEXT:    }
 ;
-; IR:  polly.preload.merge:
+; IR:      polly.preload.merge:
 ; IR-NEXT:   %polly.preload.tmp1.merge = phi i32* [ %polly.access.I.load, %polly.preload.exec ], [ null, %polly.preload.cond ]
 ; IR-NEXT:   store i32* %polly.preload.tmp1.merge, i32** %tmp1.preload.s2a
-; IR-NEXT:   %10 = sext i32 %N to i64
-; IR-NEXT:   %11 = icmp sge i64 %10, 1
-; IR-NEXT:   %12 = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 %p, i32 %q)
-; IR-NEXT:   %.obit4 = extractvalue { i32, i1 } %12, 1
+; IR-NEXT:   %12 = sext i32 %N to i64
+; IR-NEXT:   %13 = icmp sge i64 %12, 1
+; IR-NEXT:   %14 = sext i32 %p to i64
+; IR-NEXT:   %15 = sext i32 %q to i64
+; IR-NEXT:   %16 = call { i64, i1 } @llvm.sadd.with.overflow.i64(i64 %14, i64 %15)
+; IR-NEXT:   %.obit4 = extractvalue { i64, i1 } %16, 1
 ; IR-NEXT:   %polly.overflow.state5 = or i1 false, %.obit4
-; IR-NEXT:   %.res6 = extractvalue { i32, i1 } %12, 0
-; IR-NEXT:   %13 = sext i32 %.res6 to i64
-; IR-NEXT:   %14 = icmp sle i64 %13, 2147483647
-; IR-NEXT:   %15 = and i1 %11, %14
-; IR-NEXT:   %16 = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 %p, i32 %q)
-; IR-NEXT:   %.obit7 = extractvalue { i32, i1 } %16, 1
+; IR-NEXT:   %.res6 = extractvalue { i64, i1 } %16, 0
+; IR-NEXT:   %17 = icmp sle i64 %.res6, 2147483647
+; IR-NEXT:   %18 = and i1 %13, %17
+; IR-NEXT:   %19 = sext i32 %p to i64
+; IR-NEXT:   %20 = sext i32 %q to i64
+; IR-NEXT:   %21 = call { i64, i1 } @llvm.sadd.with.overflow.i64(i64 %19, i64 %20)
+; IR-NEXT:   %.obit7 = extractvalue { i64, i1 } %21, 1
 ; IR-NEXT:   %polly.overflow.state8 = or i1 %polly.overflow.state5, %.obit7
-; IR-NEXT:   %.res9 = extractvalue { i32, i1 } %16, 0
-; IR-NEXT:   %17 = sext i32 %.res9 to i64
-; IR-NEXT:   %18 = icmp sge i64 %17, -2147483648
-; IR-NEXT:   %19 = and i1 %15, %18
+; IR-NEXT:   %.res9 = extractvalue { i64, i1 } %21, 0
+; IR-NEXT:   %22 = icmp sge i64 %.res9, -2147483648
+; IR-NEXT:   %23 = and i1 %18, %22
 ; IR-NEXT:   %polly.preload.cond.overflown10 = xor i1 %polly.overflow.state8, true
-; IR-NEXT:   %polly.preload.cond.result11 = and i1 %19, %polly.preload.cond.overflown10
+; IR-NEXT:   %polly.preload.cond.result11 = and i1 %23, %polly.preload.cond.overflown10
 ; IR-NEXT:   br label %polly.preload.cond12
 ;
-; IR:       polly.preload.cond12:
-; IR-NEXT:    br i1 %polly.preload.cond.result11, label %polly.preload.exec14, label %polly.preload.merge13
-
+; IR:      polly.preload.cond12:
+; IR-NEXT:   br i1 %polly.preload.cond.result11
+;
 ; IR:      polly.preload.exec14:
 ; IR-NEXT:   %polly.access.polly.preload.tmp1.merge = getelementptr i32, i32* %polly.preload.tmp1.merge, i64 0
 ; IR-NEXT:   %polly.access.polly.preload.tmp1.merge.load = load i32, i32* %polly.access.polly.preload.tmp1.merge, align 4
@@ -47,22 +49,24 @@
 ; IRA:      polly.preload.merge:
 ; IRA-NEXT:   %polly.preload.tmp1.merge = phi i32* [ %polly.access.I.load, %polly.preload.exec ], [ null, %polly.preload.cond ]
 ; IRA-NEXT:   store i32* %polly.preload.tmp1.merge, i32** %tmp1.preload.s2a
-; IRA-NEXT:   %10 = sext i32 %N to i64
-; IRA-NEXT:   %11 = icmp sge i64 %10, 1
-; IRA-NEXT:   %12 = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 %p, i32 %q)
-; IRA-NEXT:   %.obit5 = extractvalue { i32, i1 } %12, 1
-; IRA-NEXT:   %.res6 = extractvalue { i32, i1 } %12, 0
-; IRA-NEXT:   %13 = sext i32 %.res6 to i64
-; IRA-NEXT:   %14 = icmp sle i64 %13, 2147483647
-; IRA-NEXT:   %15 = and i1 %11, %14
-; IRA-NEXT:   %16 = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 %p, i32 %q)
-; IRA-NEXT:   %.obit7 = extractvalue { i32, i1 } %16, 1
-; IRA-NEXT:   %.res8 = extractvalue { i32, i1 } %16, 0
-; IRA-NEXT:   %17 = sext i32 %.res8 to i64
-; IRA-NEXT:   %18 = icmp sge i64 %17, -2147483648
-; IRA-NEXT:   %19 = and i1 %15, %18
+; IRA-NEXT:   %12 = sext i32 %N to i64
+; IRA-NEXT:   %13 = icmp sge i64 %12, 1
+; IRA-NEXT:   %14 = sext i32 %p to i64
+; IRA-NEXT:   %15 = sext i32 %q to i64
+; IRA-NEXT:   %16 = call { i64, i1 } @llvm.sadd.with.overflow.i64(i64 %14, i64 %15)
+; IRA-NEXT:   %.obit5 = extractvalue { i64, i1 } %16, 1
+; IRA-NEXT:   %.res6 = extractvalue { i64, i1 } %16, 0
+; IRA-NEXT:   %17 = icmp sle i64 %.res6, 2147483647
+; IRA-NEXT:   %18 = and i1 %13, %17
+; IRA-NEXT:   %19 = sext i32 %p to i64
+; IRA-NEXT:   %20 = sext i32 %q to i64
+; IRA-NEXT:   %21 = call { i64, i1 } @llvm.sadd.with.overflow.i64(i64 %19, i64 %20)
+; IRA-NEXT:   %.obit7 = extractvalue { i64, i1 } %21, 1
+; IRA-NEXT:   %.res8 = extractvalue { i64, i1 } %21, 0
+; IRA-NEXT:   %22 = icmp sge i64 %.res8, -2147483648
+; IRA-NEXT:   %23 = and i1 %18, %22
 ; IRA-NEXT:   %polly.preload.cond.overflown9 = xor i1 %.obit7, true
-; IRA-NEXT:   %polly.preload.cond.result10 = and i1 %19, %polly.preload.cond.overflown9
+; IRA-NEXT:   %polly.preload.cond.result10 = and i1 %23, %polly.preload.cond.overflown9
 ; IRA-NEXT:   br label %polly.preload.cond11
 ;
 ; IRA:      polly.preload.cond11:

@@ -74,7 +74,10 @@ Value *IslExprBuilder::getOverflowState() const {
 
 Value *IslExprBuilder::createBinOp(BinaryOperator::BinaryOps Opc, Value *LHS,
                                    Value *RHS, const Twine &Name) {
-  unifyTypes(LHS, RHS);
+  // @TODO Temporarily promote types of potentially overflowing binary
+  //       operations to at least i64.
+  Value *I64C = Builder.getInt64(0);
+  unifyTypes(LHS, RHS, I64C);
 
   // Handle the plain operation (without overflow tracking) first.
   if (!OverflowState) {
