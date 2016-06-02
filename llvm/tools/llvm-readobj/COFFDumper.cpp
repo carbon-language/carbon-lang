@@ -487,12 +487,13 @@ static const EnumEntry<COFF::DebugType> ImageDebugType[] = {
   { "OmapToSrc"  , COFF::IMAGE_DEBUG_TYPE_OMAP_TO_SRC   },
   { "OmapFromSrc", COFF::IMAGE_DEBUG_TYPE_OMAP_FROM_SRC },
   { "Borland"    , COFF::IMAGE_DEBUG_TYPE_BORLAND       },
+  { "Reserved10" , COFF::IMAGE_DEBUG_TYPE_RESERVED10    },
   { "CLSID"      , COFF::IMAGE_DEBUG_TYPE_CLSID         },
   { "VCFeature"  , COFF::IMAGE_DEBUG_TYPE_VC_FEATURE    },
   { "POGO"       , COFF::IMAGE_DEBUG_TYPE_POGO          },
   { "ILTCG"      , COFF::IMAGE_DEBUG_TYPE_ILTCG         },
   { "MPX"        , COFF::IMAGE_DEBUG_TYPE_MPX           },
-  { "NoTimestamp", COFF::IMAGE_DEBUG_TYPE_NO_TIMESTAMP  },
+  { "Repro"      , COFF::IMAGE_DEBUG_TYPE_REPRO         },
 };
 
 static const EnumEntry<COFF::WeakExternalCharacteristics>
