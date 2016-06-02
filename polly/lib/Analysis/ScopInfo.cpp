@@ -95,6 +95,7 @@ static cl::opt<unsigned> RunTimeChecksMaxArraysPerGroup(
     "polly-rtc-max-arrays-per-group",
     cl::desc("The maximal number of arrays to compare in each alias group."),
     cl::Hidden, cl::ZeroOrMore, cl::init(20), cl::cat(PollyCategory));
+
 static cl::opt<std::string> UserContextStr(
     "polly-context", cl::value_desc("isl parameter set"),
     cl::desc("Provide additional constraints on the context parameters"),
@@ -2867,12 +2868,12 @@ bool Scop::hasNonHoistableBasePtrInScop(MemoryAccess *MA,
   return false;
 }
 
-void Scop::buildAliasChecks(AliasAnalysis &AA) {
+bool Scop::buildAliasChecks(AliasAnalysis &AA) {
   if (!PollyUseRuntimeAliasChecks)
-    return;
+    return true;
 
   if (buildAliasGroups(AA))
-    return;
+    return true;
 
   // If a problem occurs while building the alias groups we need to delete
   // this SCoP and pretend it wasn't valid in the first place. To this end
@@ -2885,6 +2886,7 @@ void Scop::buildAliasChecks(AliasAnalysis &AA) {
                   "dismissed.\nUse:\n\t--polly-rtc-max-parameters=X\nto adjust "
                   "the maximal number of parameters but be advised that the "
                   "compile time might increase exponentially.\n\n");
+  return false;
 }
 
 bool Scop::buildAliasGroups(AliasAnalysis &AA) {
@@ -3048,7 +3050,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     // Bail out if the number of values we need to compare is too large.
     // This is important as the number of comparisions grows quadratically with
     // the number of values we need to compare.
-    if (!Valid || (MinMaxAccessesNonReadOnly.size() + !ReadOnlyPairs.empty() >
+    if (!Valid || (MinMaxAccessesNonReadOnly.size() + ReadOnlyPairs.size() >
                    RunTimeChecksMaxArraysPerGroup))
       return false;
 
@@ -3140,7 +3142,8 @@ void Scop::init(AliasAnalysis &AA, AssumptionCache &AC, DominatorTree &DT,
   addRecordedAssumptions();
 
   simplifyContexts();
-  buildAliasChecks(AA);
+  if (!buildAliasChecks(AA))
+    return;
 
   hoistInvariantLoads();
   verifyInvariantLoads();

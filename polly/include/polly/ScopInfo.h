@@ -2020,7 +2020,7 @@ public:
   }
 
   /// @brief Build the alias checks for this SCoP.
-  void buildAliasChecks(AliasAnalysis &AA);
+  bool buildAliasChecks(AliasAnalysis &AA);
 
   /// @brief Build all alias groups for this SCoP.
   ///
