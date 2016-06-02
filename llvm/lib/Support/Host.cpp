@@ -301,26 +301,30 @@ StringRef sys::getHostCPUName() {
       case 0x09: // Intel Pentium M processor, Intel Celeron M processor model
                  // 09.
       case 0x0d: // Intel Pentium M processor, Intel Celeron M processor, model
-                 // 0Dh. All processors are manufactured using the 90 nm process.
+                 // 0Dh. All processors are manufactured using the 90 nm
+                 // process.
       case 0x15: // Intel EP80579 Integrated Processor and Intel EP80579
                  // Integrated Processor with Intel QuickAssist Technology
         return "pentium-m";
 
       case 0x0e: // Intel Core Duo processor, Intel Core Solo processor, model
-                 // 0Eh. All processors are manufactured using the 65 nm process.
+                 // 0Eh. All processors are manufactured using the 65 nm
+                 // process.
         return "yonah";
 
       case 0x0f: // Intel Core 2 Duo processor, Intel Core 2 Duo mobile
                  // processor, Intel Core 2 Quad processor, Intel Core 2 Quad
                  // mobile processor, Intel Core 2 Extreme processor, Intel
                  // Pentium Dual-Core processor, Intel Xeon processor, model
-                 // 0Fh. All processors are manufactured using the 65 nm process.
+                 // 0Fh. All processors are manufactured using the 65 nm
+                 // process.
       case 0x16: // Intel Celeron processor model 16h. All processors are
                  // manufactured using the 65 nm process
         return "core2";
 
       case 0x17: // Intel Core 2 Extreme processor, Intel Xeon processor, model
-                 // 17h. All processors are manufactured using the 45 nm process.
+                 // 17h. All processors are manufactured using the 45 nm
+                 // process.
                  //
                  // 45nm: Penryn , Wolfdale, Yorkfield (XE)
       case 0x1d: // Intel Xeon processor MP. All processors are manufactured
