@@ -110,6 +110,16 @@ class TimeoutHelper(object):
             self._procs = [] # Python2 doesn't have list.clear()
             self._doneKillPass = True
 
+class ShellCommandResult(object):
+    """Captures the result of an individual command."""
+
+    def __init__(self, command, stdout, stderr, exitCode, timeoutReached):
+        self.command = command
+        self.stdout = stdout
+        self.stderr = stderr
+        self.exitCode = exitCode
+        self.timeoutReached = timeoutReached
+               
 def executeShCmd(cmd, shenv, results, timeout=0):
     """
         Wrapper around _executeShCmd that handles
@@ -377,7 +387,8 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
         except:
             err = str(err)
 
-        results.append((cmd.commands[i], out, err, res, timeoutHelper.timeoutReached()))
+        results.append(ShellCommandResult(
+            cmd.commands[i], out, err, res, timeoutHelper.timeoutReached()))
         if cmd.pipe_err:
             # Python treats the exit code as a signed char.
             if exitCode is None:
@@ -422,16 +433,19 @@ def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
     except InternalShellError:
         e = sys.exc_info()[1]
         exitCode = 127
-        results.append((e.command, '', e.message, exitCode, False))
+        results.append(
+            ShellCommandResult(e.command, '', e.message, exitCode, False))
 
     out = err = ''
-    for i,(cmd, cmd_out, cmd_err, res, timeoutReached) in enumerate(results):
-        out += 'Command %d: %s\n' % (i, ' '.join('"%s"' % s for s in cmd.args))
-        out += 'Command %d Result: %r\n' % (i, res)
+    for i,result in enumerate(results):
+        out += 'Command %d: %s\n' % (i, ' '.join('"%s"' % s
+                                                 for s in result.command.args))
+        out += 'Command %d Result: %r\n' % (i, result.exitCode)
         if litConfig.maxIndividualTestTime > 0:
-            out += 'Command %d Reached Timeout: %s\n\n' % (i, str(timeoutReached))
-        out += 'Command %d Output:\n%s\n\n' % (i, cmd_out)
-        out += 'Command %d Stderr:\n%s\n\n' % (i, cmd_err)
+            out += 'Command %d Reached Timeout: %s\n\n' % (
+                i, str(result.timeoutReached))
+        out += 'Command %d Output:\n%s\n\n' % (i, result.stdout)
+        out += 'Command %d Stderr:\n%s\n\n' % (i, result.stderr)
 
     return out, err, exitCode, timeoutInfo
 
