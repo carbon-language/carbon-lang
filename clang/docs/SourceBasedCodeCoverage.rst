@@ -52,7 +52,7 @@ based on this program:
 Compiling with coverage enabled
 ===============================
 
-To compile code with coverage, enabled pass ``-fprofile-instr-generate
+To compile code with coverage enabled, pass ``-fprofile-instr-generate
 -fcoverage-mapping`` to the compiler:
 
 .. code-block:: console
