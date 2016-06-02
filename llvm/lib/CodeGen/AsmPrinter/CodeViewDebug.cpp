@@ -766,7 +766,7 @@ TypeIndex CodeViewDebug::lowerTypeBasic(const DIBasicType *Ty) {
   uint32_t ByteSize;
 
   Kind = static_cast<dwarf::TypeKind>(Ty->getEncoding());
-  ByteSize = Ty->getSizeInBits() >> 3;
+  ByteSize = Ty->getSizeInBits() / 8;
 
   SimpleTypeKind STK = SimpleTypeKind::None;
   switch (Kind) {
