@@ -72,6 +72,11 @@ void llvm::llvm_execute_on_thread(void (*Fn)(void*), void *UserData,
 #include "Windows/WindowsSupport.h"
 #include <process.h>
 
+// Windows will at times define MemoryFence.
+#ifdef MemoryFence
+#undef MemoryFence
+#endif
+
 struct ThreadInfo {
   void (*func)(void*);
   void *param;
