@@ -107,6 +107,7 @@ generate a line-oriented report:
 To demangle any C++ identifiers in the ouput, use:
 
 .. code-block:: console
+
     % llvm-cov show ./foo -instr-profile=foo.profdata | c++filt -n
 
 This report includes a summary view as well as dedicated sub-views for
