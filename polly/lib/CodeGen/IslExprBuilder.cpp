@@ -186,7 +186,7 @@ Value *IslExprBuilder::createOpNAry(__isl_take isl_ast_expr *Expr) {
   auto Pred = IsMax ? CmpInst::ICMP_SGT : CmpInst::ICMP_SLT;
   auto *V = create(isl_ast_expr_get_op_arg(Expr, 0));
 
-  for (int i = 0; i < isl_ast_expr_get_op_n_arg(Expr); ++i) {
+  for (int i = 1; i < isl_ast_expr_get_op_n_arg(Expr); ++i) {
     auto *OpV = create(isl_ast_expr_get_op_arg(Expr, i));
     unifyTypes(V, OpV);
     V = Builder.CreateSelect(Builder.CreateICmp(Pred, V, OpV), V, OpV);
