@@ -80,7 +80,9 @@ public:
       markError();
     }
   }
-  VarStreamArrayIterator() : Array(nullptr), IterRef(), HasError(false) {}
+  VarStreamArrayIterator()
+      : Array(nullptr), ThisLen(0), ThisValue(), IterRef(), HasError(false),
+        HadError(nullptr) {}
   ~VarStreamArrayIterator() {}
 
   bool operator==(const IterType &R) const {
