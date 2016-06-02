@@ -22,6 +22,10 @@
 #include "llvm/Support/Error.h"
 
 namespace llvm {
+namespace object {
+struct coff_section;
+}
+
 namespace pdb {
 class PDBFile;
 class ISectionContribVisitor;
@@ -56,11 +60,14 @@ public:
 
   ArrayRef<ModuleInfoEx> modules() const;
 
+  codeview::FixedStreamArray<object::coff_section> getSectionHeaders();
+
   codeview::FixedStreamArray<SecMapEntry> getSectionMap() const;
   void visitSectionContributions(ISectionContribVisitor &Visitor) const;
 
 private:
   Error initializeSectionContributionData();
+  Error initializeSectionHeadersData();
   Error initializeSectionMapData();
   Error initializeFileInfo();
 
@@ -83,6 +90,9 @@ private:
   codeview::FixedStreamArray<SectionContrib> SectionContribs;
   codeview::FixedStreamArray<SectionContrib2> SectionContribs2;
   codeview::FixedStreamArray<SecMapEntry> SectionMap;
+
+  std::unique_ptr<MappedBlockStream> SectionHeaderStream;
+  codeview::FixedStreamArray<object::coff_section> SectionHeaders;
 
   const HeaderInfo *Header;
 };

@@ -53,6 +53,7 @@
 #include "llvm/DebugInfo/PDB/Raw/RawError.h"
 #include "llvm/DebugInfo/PDB/Raw/RawSession.h"
 #include "llvm/DebugInfo/PDB/Raw/TpiStream.h"
+#include "llvm/Object/COFF.h"
 #include "llvm/Support/COM.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -149,6 +150,10 @@ cl::opt<bool>
     DumpSymRecordBytes("raw-sym-record-bytes",
                        cl::desc("dump CodeView symbol record raw bytes"),
                        cl::cat(NativeOptions));
+cl::opt<bool> DumpSectionHeaders("raw-section-headers",
+                                 cl::desc("dump section headers"),
+                                 cl::cat(NativeOptions));
+
 cl::opt<bool>
     RawAll("raw-all",
            cl::desc("Implies most other options in 'Native Options' category"),
@@ -691,6 +696,36 @@ static Error dumpPublicsStream(ScopedPrinter &P, PDBFile &File,
   return Error::success();
 }
 
+static Error dumpSectionHeaders(ScopedPrinter &P, PDBFile &File,
+                                codeview::CVTypeDumper &TD) {
+  if (!opts::DumpSectionHeaders)
+    return Error::success();
+
+  auto DbiS = File.getPDBDbiStream();
+  if (auto EC = DbiS.takeError())
+    return EC;
+  DbiStream &DS = DbiS.get();
+
+  ListScope D(P, "Section Headers");
+  for (const object::coff_section &Section : DS.getSectionHeaders()) {
+    DictScope DD(P, "");
+
+    // If a name is 8 characters long, there is no NUL character at end.
+    StringRef Name(Section.Name, strnlen(Section.Name, sizeof(Section.Name)));
+    P.printString("Name", Name);
+    P.printNumber("Virtual Size", Section.VirtualSize);
+    P.printNumber("Virtual Address", Section.VirtualAddress);
+    P.printNumber("Size of Raw Data", Section.SizeOfRawData);
+    P.printNumber("File Pointer to Raw Data", Section.PointerToRawData);
+    P.printNumber("File Pointer to Relocations", Section.PointerToRelocations);
+    P.printNumber("File Pointer to Linenumbers", Section.PointerToLinenumbers);
+    P.printNumber("Number of Relocations", Section.NumberOfRelocations);
+    P.printNumber("Number of Linenumbers", Section.NumberOfLinenumbers);
+    P.printNumber("Characteristics", Section.Characteristics);
+  }
+  return Error::success();
+}
+
 static Error dumpStructure(RawSession &RS) {
   PDBFile &File = RS.getPDBFile();
   ScopedPrinter P(outs());
@@ -716,6 +751,7 @@ static Error dumpStructure(RawSession &RS) {
   codeview::CVTypeDumper TD(&P, false);
   if (auto EC = dumpTpiStream(P, File, TD, StreamTPI))
     return EC;
+
   if (auto EC = dumpTpiStream(P, File, TD, StreamIPI))
     return EC;
 
@@ -731,6 +767,8 @@ static Error dumpStructure(RawSession &RS) {
   if (auto EC = dumpPublicsStream(P, File, TD))
     return EC;
 
+  if (auto EC = dumpSectionHeaders(P, File, TD))
+    return EC;
   return Error::success();
 }
 
@@ -927,6 +965,7 @@ int main(int argc_, const char *argv_[]) {
     opts::DumpModuleFiles = true;
     opts::DumpModuleSyms = true;
     opts::DumpPublics = true;
+    opts::DumpSectionHeaders = true;
     opts::DumpStreamSummary = true;
     opts::DumpStreamBlocks = true;
     opts::DumpTpiRecords = true;

@@ -6,6 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+
 #include "llvm/DebugInfo/PDB/Raw/DbiStream.h"
 
 #include "llvm/DebugInfo/CodeView/StreamArray.h"
@@ -18,6 +19,7 @@
 #include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Raw/RawError.h"
 #include "llvm/DebugInfo/PDB/Raw/RawTypes.h"
+#include "llvm/Object/COFF.h"
 
 using namespace llvm;
 using namespace llvm::codeview;
@@ -180,7 +182,8 @@ Error DbiStream::reload() {
 
   if (auto EC = initializeSectionContributionData())
     return EC;
-
+  if (auto EC = initializeSectionHeadersData())
+    return EC;
   if (auto EC = initializeSectionMapData())
     return EC;
 
@@ -244,6 +247,11 @@ PDB_Machine DbiStream::getMachineType() const {
   return static_cast<PDB_Machine>(Machine);
 }
 
+codeview::FixedStreamArray<object::coff_section>
+DbiStream::getSectionHeaders() {
+  return SectionHeaders;
+}
+
 ArrayRef<ModuleInfoEx> DbiStream::modules() const { return ModuleInfos; }
 codeview::FixedStreamArray<SecMapEntry> DbiStream::getSectionMap() const {
   return SectionMap;
@@ -272,6 +280,24 @@ Error DbiStream::initializeSectionContributionData() {
 
   return make_error<RawError>(raw_error_code::feature_unsupported,
                               "Unsupported DBI Section Contribution version");
+}
+
+// Initializes this->SectionHeaders.
+Error DbiStream::initializeSectionHeadersData() {
+  uint32_t StreamNum = getDebugStreamIndex(DbgHeaderType::SectionHdr);
+  SectionHeaderStream.reset(new MappedBlockStream(StreamNum, Pdb));
+
+  size_t StreamLen = SectionHeaderStream->getLength();
+  if (StreamLen % sizeof(object::coff_section))
+    return make_error<RawError>(raw_error_code::corrupt_file,
+                                "Corrupted section header stream.");
+
+  size_t NumSections = StreamLen / sizeof(object::coff_section);
+  codeview::StreamReader Reader(*SectionHeaderStream);
+  if (auto EC = Reader.readArray(SectionHeaders, NumSections))
+    return make_error<RawError>(raw_error_code::corrupt_file,
+                                "Could not read a bitmap.");
+  return Error::success();
 }
 
 Error DbiStream::initializeSectionMapData() {
