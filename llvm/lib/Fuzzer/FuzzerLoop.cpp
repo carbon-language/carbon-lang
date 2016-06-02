@@ -47,9 +47,6 @@ __sanitizer_update_counter_bitset_and_clear_counters(uint8_t *bitset);
 __attribute__((weak)) uintptr_t
 __sanitizer_get_coverage_pc_buffer(uintptr_t **data);
 
-__attribute__((weak)) size_t LLVMFuzzerCustomMutator(uint8_t *Data, size_t Size,
-                                                     size_t MaxSize,
-                                                     unsigned int Seed);
 __attribute__((weak)) void __sanitizer_malloc_hook(void *ptr, size_t size);
 __attribute__((weak)) void __sanitizer_free_hook(void *ptr);
 __attribute__((weak)) void __lsan_enable();
@@ -695,9 +692,9 @@ void Fuzzer::MutateAndTestOne() {
 
   for (int i = 0; i < Options.MutateDepth; i++) {
     size_t NewSize = 0;
-    if (LLVMFuzzerCustomMutator)
-      NewSize = LLVMFuzzerCustomMutator(CurrentUnitData, Size,
-                                        Options.MaxLen, MD.GetRand().Rand());
+    if (EF.LLVMFuzzerCustomMutator)
+      NewSize = EF.LLVMFuzzerCustomMutator(CurrentUnitData, Size,
+                                           Options.MaxLen, MD.GetRand().Rand());
     else
       NewSize = MD.Mutate(CurrentUnitData, Size, Options.MaxLen);
     assert(NewSize > 0 && "Mutator returned empty unit");
