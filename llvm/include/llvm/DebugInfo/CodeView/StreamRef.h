@@ -16,7 +16,7 @@
 namespace llvm {
 namespace codeview {
 
-class StreamRef : public StreamInterface {
+class StreamRef : private StreamInterface {
 public:
   StreamRef() : Stream(nullptr), ViewOffset(0), Length(0) {}
   StreamRef(const StreamInterface &Stream)
@@ -48,6 +48,10 @@ public:
       return StreamRef();
     N = std::min(N, Length);
     return StreamRef(*Stream, ViewOffset, N);
+  }
+
+  StreamRef slice(uint32_t Offset, uint32_t Len) const {
+    return drop_front(Offset).keep_front(Len);
   }
 
   bool operator==(const StreamRef &Other) const {

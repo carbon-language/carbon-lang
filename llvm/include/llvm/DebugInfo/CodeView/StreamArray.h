@@ -29,8 +29,7 @@ template <typename T> struct VarStreamArrayExtractor {
   // with the following method implemented.  On output return `Len` should
   // contain the number of bytes to consume from the stream, and `Item` should
   // be initialized with the proper value.
-  Error operator()(const StreamInterface &Stream, uint32_t &Len,
-                   T &Item) const = delete;
+  Error operator()(StreamRef Stream, uint32_t &Len, T &Item) const = delete;
 };
 
 /// VarStreamArray represents an array of variable length records backed by a
