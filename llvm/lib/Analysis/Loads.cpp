@@ -32,7 +32,7 @@ static bool isDereferenceableFromAttribute(const Value *BV, APInt Size,
                                            const TargetLibraryInfo *TLI) {
   bool CheckForNonNull = false;
   APInt DerefBytes(Size.getBitWidth(),
-                   BV->getPointerDereferenceableBytes(CheckForNonNull));
+                   BV->getPointerDereferenceableBytes(DL, CheckForNonNull));
 
   if (DerefBytes.getBoolValue())
     if (DerefBytes.uge(Size))
@@ -74,16 +74,6 @@ static bool isDereferenceableAndAlignedPointer(
     const TargetLibraryInfo *TLI, SmallPtrSetImpl<const Value *> &Visited) {
   // Note that it is not safe to speculate into a malloc'd region because
   // malloc may return null.
-
-  bool CheckForNonNull;
-  if (V->isPointerDereferenceable(CheckForNonNull)) {
-    Type *ETy = V->getType()->getPointerElementType();
-    if (ETy->isSized() && Size.ule(DL.getTypeStoreSize(ETy))) {
-      if (CheckForNonNull && !isKnownNonNullAt(V, CtxI, DT, TLI))
-        return false;
-      return isAligned(V, Align, DL);
-    }
-  }
 
   // bitcast instructions are no-ops as far as dereferenceability is concerned.
   if (const BitCastOperator *BC = dyn_cast<BitCastOperator>(V))
