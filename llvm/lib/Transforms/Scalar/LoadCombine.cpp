@@ -65,7 +65,11 @@ public:
   using llvm::Pass::doInitialization;
   bool doInitialization(Function &) override;
   bool runOnBasicBlock(BasicBlock &BB) override;
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.setPreservesCFG();
+    AU.addRequired<AAResultsWrapperPass>();
+    AU.addPreserved<GlobalsAAWrapperPass>();
+  }
 
   const char *getPassName() const override { return LDCOMBINE_NAME; }
   static char ID;
@@ -260,13 +264,6 @@ bool LoadCombine::runOnBasicBlock(BasicBlock &BB) {
   if (combineLoads(LoadMap))
     Combined = true;
   return Combined;
-}
-
-void LoadCombine::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesCFG();
-
-  AU.addRequired<AAResultsWrapperPass>();
-  AU.addPreserved<GlobalsAAWrapperPass>();
 }
 
 char LoadCombine::ID = 0;
