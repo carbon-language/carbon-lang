@@ -67,6 +67,7 @@ private:
   // AsmPrinter Implementation.
   //===------------------------------------------------------------------===//
 
+  void EmitEndOfAsmFile(Module &M) override;
   void EmitJumpTableInfo() override;
   void EmitConstantPool() override;
   void EmitFunctionBodyStart() override;
@@ -124,16 +125,6 @@ WebAssemblyTargetStreamer *WebAssemblyAsmPrinter::getTargetStreamer() {
 //===----------------------------------------------------------------------===//
 // WebAssemblyAsmPrinter Implementation.
 //===----------------------------------------------------------------------===//
-
-void WebAssemblyAsmPrinter::EmitConstantPool() {
-  assert(MF->getConstantPool()->getConstants().empty() &&
-         "WebAssembly disables constant pools");
-}
-
-void WebAssemblyAsmPrinter::EmitJumpTableInfo() {
-  // Nothing to do; jump tables are incorporated into the instruction stream.
-}
-
 static void ComputeLegalValueVTs(const Function &F, const TargetMachine &TM,
                                  Type *Ty, SmallVectorImpl<MVT> &ValueVTs) {
   const DataLayout &DL(F.getParent()->getDataLayout());
@@ -148,6 +139,36 @@ static void ComputeLegalValueVTs(const Function &F, const TargetMachine &TM,
     for (unsigned i = 0; i != NumRegs; ++i)
       ValueVTs.push_back(RegisterVT);
   }
+}
+
+void WebAssemblyAsmPrinter::EmitEndOfAsmFile(Module &M) {
+  for (const auto &F : M) {
+    // Emit function type info for all undefined functions
+    if (F.isDeclarationForLinker() && !F.isIntrinsic()) {
+      SmallVector<MVT, 4> SignatureVTs;
+      ComputeLegalValueVTs(F, TM, F.getReturnType(), SignatureVTs);
+      if (SignatureVTs.size() > 1) {
+        report_fatal_error(
+            "Import functions with nontrival return types are not supported");
+      }
+      size_t NumResults = SignatureVTs.size();
+      for (auto &Arg : F.args()) {
+        ComputeLegalValueVTs(F, TM, Arg.getType(), SignatureVTs);
+      }
+
+      getTargetStreamer()->emitIndirectFunctionType(F.getName(), SignatureVTs,
+                                                    NumResults);
+    }
+  }
+}
+
+void WebAssemblyAsmPrinter::EmitConstantPool() {
+  assert(MF->getConstantPool()->getConstants().empty() &&
+         "WebAssembly disables constant pools");
+}
+
+void WebAssemblyAsmPrinter::EmitJumpTableInfo() {
+  // Nothing to do; jump tables are incorporated into the instruction stream.
 }
 
 void WebAssemblyAsmPrinter::EmitFunctionBodyStart() {
