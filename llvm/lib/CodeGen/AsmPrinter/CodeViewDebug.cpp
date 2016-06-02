@@ -914,8 +914,7 @@ TypeIndex CodeViewDebug::lowerTypeModifier(const DIDerivedType *Ty) {
   ModifierOptions Mods = ModifierOptions::None;
   bool IsModifier = true;
   const DIType *BaseTy = Ty;
-  while (IsModifier) {
-    assert(BaseTy);
+  while (IsModifier && BaseTy) {
     // FIXME: Need to add DWARF tag for __unaligned.
     switch (BaseTy->getTag()) {
     case dwarf::DW_TAG_const_type:
