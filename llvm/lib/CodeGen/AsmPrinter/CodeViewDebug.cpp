@@ -775,14 +775,16 @@ TypeIndex CodeViewDebug::lowerTypeBasic(const DIBasicType *Ty) {
     break;
   case dwarf::DW_ATE_boolean:
     switch (ByteSize) {
-    case 1: STK = SimpleTypeKind::Boolean8;  break;
-    case 2: STK = SimpleTypeKind::Boolean16; break;
-    case 4: STK = SimpleTypeKind::Boolean32; break;
-    case 8: STK = SimpleTypeKind::Boolean64; break;
+    case 1:  STK = SimpleTypeKind::Boolean8;   break;
+    case 2:  STK = SimpleTypeKind::Boolean16;  break;
+    case 4:  STK = SimpleTypeKind::Boolean32;  break;
+    case 8:  STK = SimpleTypeKind::Boolean64;  break;
+    case 16: STK = SimpleTypeKind::Boolean128; break;
     }
     break;
   case dwarf::DW_ATE_complex_float:
     switch (ByteSize) {
+    case 2:  STK = SimpleTypeKind::Complex16;  break;
     case 4:  STK = SimpleTypeKind::Complex32;  break;
     case 8:  STK = SimpleTypeKind::Complex64;  break;
     case 10: STK = SimpleTypeKind::Complex80;  break;
@@ -791,6 +793,7 @@ TypeIndex CodeViewDebug::lowerTypeBasic(const DIBasicType *Ty) {
     break;
   case dwarf::DW_ATE_float:
     switch (ByteSize) {
+    case 2:  STK = SimpleTypeKind::Float16;  break;
     case 4:  STK = SimpleTypeKind::Float32;  break;
     case 6:  STK = SimpleTypeKind::Float48;  break;
     case 8:  STK = SimpleTypeKind::Float64;  break;
@@ -800,18 +803,20 @@ TypeIndex CodeViewDebug::lowerTypeBasic(const DIBasicType *Ty) {
     break;
   case dwarf::DW_ATE_signed:
     switch (ByteSize) {
-    case 1: STK = SimpleTypeKind::SByte;      break;
-    case 2: STK = SimpleTypeKind::Int16Short; break;
-    case 4: STK = SimpleTypeKind::Int32;      break;
-    case 8: STK = SimpleTypeKind::Int64;      break;
+    case 1:  STK = SimpleTypeKind::SByte;      break;
+    case 2:  STK = SimpleTypeKind::Int16Short; break;
+    case 4:  STK = SimpleTypeKind::Int32;      break;
+    case 8:  STK = SimpleTypeKind::Int64Quad;  break;
+    case 16: STK = SimpleTypeKind::Int128Oct;  break;
     }
     break;
   case dwarf::DW_ATE_unsigned:
     switch (ByteSize) {
-    case 1: STK = SimpleTypeKind::Byte;        break;
-    case 2: STK = SimpleTypeKind::UInt16Short; break;
-    case 4: STK = SimpleTypeKind::UInt32;      break;
-    case 8: STK = SimpleTypeKind::UInt64;      break;
+    case 1:  STK = SimpleTypeKind::Byte;        break;
+    case 2:  STK = SimpleTypeKind::UInt16Short; break;
+    case 4:  STK = SimpleTypeKind::UInt32;      break;
+    case 8:  STK = SimpleTypeKind::UInt64Quad;  break;
+    case 16: STK = SimpleTypeKind::UInt128Oct;  break;
     }
     break;
   case dwarf::DW_ATE_UTF:
