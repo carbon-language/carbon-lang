@@ -1281,10 +1281,10 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     break;
   case R_AARCH64_TLSLE_ADD_TPREL_HI12:
     checkInt<24>(Val, Type);
-    updateAArch64Add(Loc, (Val & 0xFFF000) >> 12);
+    updateAArch64Add(Loc, Val >> 12);
     break;
   case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
-    updateAArch64Add(Loc, Val & 0xFFF);
+    updateAArch64Add(Loc, Val);
     break;
   default:
     fatal("unrecognized reloc " + Twine(Type));
