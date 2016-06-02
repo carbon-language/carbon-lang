@@ -2045,6 +2045,9 @@ void Scop::realignParams() {
 
   for (ScopStmt &Stmt : *this)
     Stmt.realignParams();
+
+  // Simplify the schedule according to the context too.
+  Schedule = isl_schedule_gist_domain_params(Schedule, getContext());
 }
 
 static __isl_give isl_set *
