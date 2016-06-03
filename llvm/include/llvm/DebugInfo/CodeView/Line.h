@@ -142,9 +142,9 @@ struct InlineeSourceLine {
 };
 
 struct FileChecksum {
-  ulittle32_t FileNameOffset; // Offset of filename in string table substream.
-  uint8_t ChecksumSize;
-  uint8_t ChecksumKind; // FileChecksumKind
+  ulittle32_t FileNameOffset; // Byte offset of filename in global string table.
+  uint8_t ChecksumSize;       // Number of bytes of checksum.
+  uint8_t ChecksumKind;       // FileChecksumKind
   // Checksum bytes follow.
 };
 

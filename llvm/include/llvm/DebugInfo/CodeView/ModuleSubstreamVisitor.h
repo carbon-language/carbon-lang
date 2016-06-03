@@ -21,7 +21,7 @@ namespace llvm {
 namespace codeview {
 
 struct LineColumnEntry {
-  support::ulittle32_t Offset;
+  support::ulittle32_t NameIndex;
   FixedStreamArray<LineNumberEntry> LineNumbers;
   FixedStreamArray<ColumnNumberEntry> Columns;
 };
@@ -50,7 +50,7 @@ public:
     // The value recorded in BlockHeader->BlockSize includes the size of
     // LineFileBlockHeader.
     Len = BlockHeader->BlockSize;
-    Item.Offset = BlockHeader->FileOffset;
+    Item.NameIndex = BlockHeader->NameIndex;
     if (auto EC = Reader.readArray(Item.LineNumbers, BlockHeader->NumLines))
       return EC;
     if (HasColumn) {
@@ -65,9 +65,9 @@ private:
 };
 
 struct FileChecksumEntry {
-  uint32_t FileNameOffset;
-  FileChecksumKind Kind;
-  ArrayRef<uint8_t> Checksum;
+  uint32_t FileNameOffset;    // Byte offset of filename in global stringtable.
+  FileChecksumKind Kind;      // The type of checksum.
+  ArrayRef<uint8_t> Checksum; // The bytes of the checksum.
 };
 
 template <> class VarStreamArrayExtractor<FileChecksumEntry> {

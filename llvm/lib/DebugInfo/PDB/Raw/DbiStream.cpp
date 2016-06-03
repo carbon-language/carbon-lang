@@ -345,7 +345,6 @@ Error DbiStream::initializeFileInfo() {
 
   FixedStreamArray<ulittle16_t> ModIndexArray;
   FixedStreamArray<ulittle16_t> ModFileCountArray;
-  FixedStreamArray<little32_t> FileNameOffsets;
 
   // First is an array of `NumModules` module indices.  This is not used for the
   // same reason that `NumSourceFiles` is not used.  It's an array of uint16's,
@@ -373,10 +372,8 @@ Error DbiStream::initializeFileInfo() {
   if (auto EC = FISR.readArray(FileNameOffsets, NumSourceFiles))
     return EC;
 
-  StreamRef NamesBufferRef;
-  if (auto EC = FISR.readStreamRef(NamesBufferRef))
+  if (auto EC = FISR.readStreamRef(NamesBuffer))
     return EC;
-  StreamReader Names(NamesBufferRef);
 
   // We go through each ModuleInfo, determine the number N of source files for
   // that module, and then get the next N offsets from the Offsets array, using
@@ -387,10 +384,10 @@ Error DbiStream::initializeFileInfo() {
     uint32_t NumFiles = ModFileCountArray[I];
     ModuleInfos[I].SourceFiles.resize(NumFiles);
     for (size_t J = 0; J < NumFiles; ++J, ++NextFileIndex) {
-      uint32_t FileOffset = FileNameOffsets[NextFileIndex];
-      Names.setOffset(FileOffset);
-      if (auto EC = Names.readZeroString(ModuleInfos[I].SourceFiles[J]))
-        return EC;
+      if (auto Name = getFileNameForIndex(NextFileIndex))
+        ModuleInfos[I].SourceFiles[J] = Name.get();
+      else
+        return Name.takeError();
     }
   }
 
@@ -399,4 +396,17 @@ Error DbiStream::initializeFileInfo() {
 
 uint32_t DbiStream::getDebugStreamIndex(DbgHeaderType Type) const {
   return DbgStreams[static_cast<uint16_t>(Type)];
+}
+
+Expected<StringRef> DbiStream::getFileNameForIndex(uint32_t Index) const {
+  StreamReader Names(NamesBuffer);
+  if (Index >= FileNameOffsets.size())
+    return make_error<RawError>(raw_error_code::index_out_of_bounds);
+
+  uint32_t FileOffset = FileNameOffsets[Index];
+  Names.setOffset(FileOffset);
+  StringRef Name;
+  if (auto EC = Names.readZeroString(Name))
+    return std::move(EC);
+  return Name;
 }

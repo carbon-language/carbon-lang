@@ -61,6 +61,8 @@ public:
 
   ArrayRef<ModuleInfoEx> modules() const;
 
+  Expected<StringRef> getFileNameForIndex(uint32_t Index) const;
+
   codeview::FixedStreamArray<object::coff_section> getSectionHeaders();
 
   codeview::FixedStreamArray<SecMapEntry> getSectionMap() const;
@@ -85,12 +87,15 @@ private:
   codeview::StreamRef TypeServerMapSubstream;
   codeview::StreamRef ECSubstream;
 
+  codeview::StreamRef NamesBuffer;
+
   codeview::FixedStreamArray<support::ulittle16_t> DbgStreams;
 
   PdbRaw_DbiSecContribVer SectionContribVersion;
   codeview::FixedStreamArray<SectionContrib> SectionContribs;
   codeview::FixedStreamArray<SectionContrib2> SectionContribs2;
   codeview::FixedStreamArray<SecMapEntry> SectionMap;
+  codeview::FixedStreamArray<support::little32_t> FileNameOffsets;
 
   std::unique_ptr<MappedBlockStream> SectionHeaderStream;
   codeview::FixedStreamArray<object::coff_section> SectionHeaders;

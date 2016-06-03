@@ -332,7 +332,7 @@
 ; EMPTY-NEXT:       ]
 ; EMPTY-NEXT:       LineInfo [
 ; EMPTY-NEXT:         Lines {
-; EMPTY-NEXT:           FileOffset: 0
+; EMPTY-NEXT:           FileName: d:\src\llvm\test\debuginfo\pdb\inputs\empty.cpp
 ; EMPTY-NEXT:           Line {
 ; EMPTY-NEXT:             Offset: 0
 ; EMPTY-NEXT:             LineNumberStart: 5
@@ -354,7 +354,7 @@
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         FileChecksums {
 ; EMPTY-NEXT:           Checksum {
-; EMPTY-NEXT:             FileNameOffset: 86
+; EMPTY-NEXT:             FileName: d:\src\llvm\test\debuginfo\pdb\inputs\empty.cpp
 ; EMPTY-NEXT:             Kind: MD5 (0x1)
 ; EMPTY-NEXT:             Checksum (
 ; EMPTY-NEXT:               0000: A0A5BD0D 3ECD93FC 29D19DE8 26FBF4BC  |....>...)...&...|

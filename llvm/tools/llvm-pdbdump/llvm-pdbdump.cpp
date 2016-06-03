@@ -522,11 +522,19 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
           // substream types types.
           class RecordVisitor : public codeview::IModuleSubstreamVisitor {
           public:
-            RecordVisitor(ScopedPrinter &P) : P(P) {}
+            RecordVisitor(ScopedPrinter &P, PDBFile &F) : P(P), F(F) {}
             Error visitUnknown(ModuleSubstreamKind Kind,
-                               StreamRef Data) override {
+                               StreamRef Stream) override {
               DictScope DD(P, "Unknown");
-              return printBinaryData(Data);
+              ArrayRef<uint8_t> Data;
+              StreamReader R(Stream);
+              if (auto EC = R.readBytes(Data, R.bytesRemaining())) {
+                return make_error<RawError>(
+                    raw_error_code::corrupt_file,
+                    "DBI stream contained corrupt line info record");
+              }
+              P.printBinaryBlock("Data", Data);
+              return Error::success();
             }
             Error
             visitFileChecksums(StreamRef Data,
@@ -534,7 +542,11 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
               DictScope DD(P, "FileChecksums");
               for (const auto &C : Checksums) {
                 DictScope DDD(P, "Checksum");
-                P.printNumber("FileNameOffset", C.FileNameOffset);
+                if (auto Result = getFileNameForOffset(C.FileNameOffset))
+                  P.printString("FileName", Result.get());
+                else
+                  return Result.takeError();
+                P.flush();
                 P.printEnum("Kind", uint8_t(C.Kind), getFileChecksumNames());
                 P.printBinaryBlock("Checksum", C.Checksum);
               }
@@ -545,7 +557,11 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
                              const LineInfoArray &Lines) override {
               DictScope DD(P, "Lines");
               for (const auto &L : Lines) {
-                P.printNumber("FileOffset", L.Offset);
+                if (auto Result = getFileNameForOffset2(L.NameIndex))
+                  P.printString("FileName", Result.get());
+                else
+                  return Result.takeError();
+                P.flush();
                 for (const auto &N : L.LineNumbers) {
                   DictScope DDD(P, "Line");
                   LineInfo LI(N.Flags);
@@ -569,21 +585,25 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
             }
 
           private:
-            Error printBinaryData(StreamRef Stream) {
-              ArrayRef<uint8_t> Data;
-              StreamReader R(Stream);
-              if (auto EC = R.readBytes(Data, R.bytesRemaining())) {
-                return make_error<RawError>(
-                    raw_error_code::corrupt_file,
-                    "DBI stream contained corrupt line info record");
-              }
-              P.printBinaryBlock("Data", Data);
-              P.flush();
-              return Error::success();
+            Expected<StringRef> getFileNameForOffset(uint32_t Offset) {
+              auto StringT = F.getStringTable();
+              if (auto EC = StringT.takeError())
+                return std::move(EC);
+              NameHashTable &ST = StringT.get();
+              return ST.getStringForID(Offset);
+            }
+            Expected<StringRef> getFileNameForOffset2(uint32_t Offset) {
+              auto DbiS = F.getPDBDbiStream();
+              if (auto EC = DbiS.takeError())
+                return std::move(EC);
+              auto &DS = DbiS.get();
+              return DS.getFileNameForIndex(Offset);
             }
             ScopedPrinter &P;
+            PDBFile &F;
           };
-          RecordVisitor V(P);
+
+          RecordVisitor V(P, File);
           for (const auto &L : ModS.lines(&HadError)) {
             if (auto EC = codeview::visitModuleSubstream(L, V))
               return EC;

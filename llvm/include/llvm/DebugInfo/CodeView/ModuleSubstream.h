@@ -35,7 +35,7 @@ struct LineSubstreamHeader {
 
 // Corresponds to the `CV_DebugSLinesFileBlockHeader_t` structure.
 struct LineFileBlockHeader {
-  support::ulittle32_t FileOffset;
+  support::ulittle32_t NameIndex; // Index in DBI name buffer of filename.
   support::ulittle32_t NumLines;  // Number of lines
   support::ulittle32_t BlockSize; // Code size of block, in bytes.
   // The following two variable length arrays appear immediately after the
