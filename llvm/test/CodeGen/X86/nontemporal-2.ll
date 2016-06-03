@@ -9,6 +9,98 @@
 ; Make sure that we generate non-temporal stores for the test cases below.
 ; We use xorps for zeroing, so domain information isn't available anymore.
 
+; Scalar versions (zeroing means we can this even for fp types).
+
+define void @test_zero_f32(float* %dst) {
+; SSE-LABEL: test_zero_f32:
+; SSE:       # BB#0:
+; SSE-NEXT:    xorl %eax, %eax
+; SSE-NEXT:    movntil %eax, (%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_zero_f32:
+; AVX:       # BB#0:
+; AVX-NEXT:    xorl %eax, %eax
+; AVX-NEXT:    movntil %eax, (%rdi)
+; AVX-NEXT:    retq
+;
+; VLX-LABEL: test_zero_f32:
+; VLX:       # BB#0:
+; VLX-NEXT:    xorl %eax, %eax
+; VLX-NEXT:    movntil %eax, (%rdi)
+; VLX-NEXT:    retq
+  store float zeroinitializer, float* %dst, align 1, !nontemporal !1
+  ret void
+}
+
+define void @test_zero_i32(i32* %dst) {
+; SSE-LABEL: test_zero_i32:
+; SSE:       # BB#0:
+; SSE-NEXT:    xorl %eax, %eax
+; SSE-NEXT:    movntil %eax, (%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_zero_i32:
+; AVX:       # BB#0:
+; AVX-NEXT:    xorl %eax, %eax
+; AVX-NEXT:    movntil %eax, (%rdi)
+; AVX-NEXT:    retq
+;
+; VLX-LABEL: test_zero_i32:
+; VLX:       # BB#0:
+; VLX-NEXT:    xorl %eax, %eax
+; VLX-NEXT:    movntil %eax, (%rdi)
+; VLX-NEXT:    retq
+  store i32 zeroinitializer, i32* %dst, align 1, !nontemporal !1
+  ret void
+}
+
+define void @test_zero_f64(double* %dst) {
+; SSE-LABEL: test_zero_f64:
+; SSE:       # BB#0:
+; SSE-NEXT:    xorl %eax, %eax
+; SSE-NEXT:    movntiq %rax, (%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_zero_f64:
+; AVX:       # BB#0:
+; AVX-NEXT:    xorl %eax, %eax
+; AVX-NEXT:    movntiq %rax, (%rdi)
+; AVX-NEXT:    retq
+;
+; VLX-LABEL: test_zero_f64:
+; VLX:       # BB#0:
+; VLX-NEXT:    xorl %eax, %eax
+; VLX-NEXT:    movntiq %rax, (%rdi)
+; VLX-NEXT:    retq
+  store double zeroinitializer, double* %dst, align 1, !nontemporal !1
+  ret void
+}
+
+define void @test_zero_i64(i64* %dst) {
+; SSE-LABEL: test_zero_i64:
+; SSE:       # BB#0:
+; SSE-NEXT:    xorl %eax, %eax
+; SSE-NEXT:    movntiq %rax, (%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_zero_i64:
+; AVX:       # BB#0:
+; AVX-NEXT:    xorl %eax, %eax
+; AVX-NEXT:    movntiq %rax, (%rdi)
+; AVX-NEXT:    retq
+;
+; VLX-LABEL: test_zero_i64:
+; VLX:       # BB#0:
+; VLX-NEXT:    xorl %eax, %eax
+; VLX-NEXT:    movntiq %rax, (%rdi)
+; VLX-NEXT:    retq
+  store i64 zeroinitializer, i64* %dst, align 1, !nontemporal !1
+  ret void
+}
+
+; And now XMM versions.
+
 define void @test_zero_v4f32(<4 x float>* %dst) {
 ; SSE-LABEL: test_zero_v4f32:
 ; SSE:       # BB#0:
@@ -290,6 +382,86 @@ define void @test_zero_v32i8(<32 x i8>* %dst) {
 
 
 ; Check that we also handle arguments.  Here the type survives longer.
+
+; Scalar versions.
+
+define void @test_arg_f32(float %arg, float* %dst) {
+; SSE-LABEL: test_arg_f32:
+; SSE:       # BB#0:
+; SSE-NEXT:    movss %xmm0, (%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_arg_f32:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovss %xmm0, (%rdi)
+; AVX-NEXT:    retq
+;
+; VLX-LABEL: test_arg_f32:
+; VLX:       # BB#0:
+; VLX-NEXT:    vmovss %xmm0, (%rdi)
+; VLX-NEXT:    retq
+  store float %arg, float* %dst, align 1, !nontemporal !1
+  ret void
+}
+
+define void @test_arg_i32(i32 %arg, i32* %dst) {
+; SSE-LABEL: test_arg_i32:
+; SSE:       # BB#0:
+; SSE-NEXT:    movntil %edi, (%rsi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_arg_i32:
+; AVX:       # BB#0:
+; AVX-NEXT:    movntil %edi, (%rsi)
+; AVX-NEXT:    retq
+;
+; VLX-LABEL: test_arg_i32:
+; VLX:       # BB#0:
+; VLX-NEXT:    movntil %edi, (%rsi)
+; VLX-NEXT:    retq
+  store i32 %arg, i32* %dst, align 1, !nontemporal !1
+  ret void
+}
+
+define void @test_arg_f64(double %arg, double* %dst) {
+; SSE-LABEL: test_arg_f64:
+; SSE:       # BB#0:
+; SSE-NEXT:    movsd %xmm0, (%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_arg_f64:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovsd %xmm0, (%rdi)
+; AVX-NEXT:    retq
+;
+; VLX-LABEL: test_arg_f64:
+; VLX:       # BB#0:
+; VLX-NEXT:    vmovsd %xmm0, (%rdi)
+; VLX-NEXT:    retq
+  store double %arg, double* %dst, align 1, !nontemporal !1
+  ret void
+}
+
+define void @test_arg_i64(i64 %arg, i64* %dst) {
+; SSE-LABEL: test_arg_i64:
+; SSE:       # BB#0:
+; SSE-NEXT:    movntiq %rdi, (%rsi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_arg_i64:
+; AVX:       # BB#0:
+; AVX-NEXT:    movntiq %rdi, (%rsi)
+; AVX-NEXT:    retq
+;
+; VLX-LABEL: test_arg_i64:
+; VLX:       # BB#0:
+; VLX-NEXT:    movntiq %rdi, (%rsi)
+; VLX-NEXT:    retq
+  store i64 %arg, i64* %dst, align 1, !nontemporal !1
+  ret void
+}
+
+; And now XMM versions.
 
 define void @test_arg_v4f32(<4 x float> %arg, <4 x float>* %dst) {
 ; SSE-LABEL: test_arg_v4f32:
