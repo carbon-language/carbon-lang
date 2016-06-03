@@ -38,3 +38,15 @@ v_min_u32 v200, v200, v1 dst_sel:WORD_1 dst_unused:UNUSED_PAD src0_sel:BYTE_1 sr
 // NOSICI: error:
 // VI: v_min_u32_sdwa v1, v1, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD ; encoding: [0xf9,0x02,0x02,0x1c,0x01,0x06,0x00,0x06]
 v_min_u32 v1, v1, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD
+
+// NOSICI: error:
+// VI: v_mov_b32_sdwa v0, v0 dst_sel:BYTE_0 dst_unused:UNUSED_PRESERVE src0_sel:DWORD ; encoding: [0xf9,0x02,0x00,0x7e,0x00,0x10,0x06,0x06]
+v_mov_b32 v0, v0 dst_sel:BYTE_0 src0_sel:DWORD
+
+// NOSICI: error:
+// VI: v_mov_b32_sdwa v0, v0 dst_sel:DWORD dst_unused:UNUSED_PRESERVE src0_sel:DWORD ; encoding: [0xf9,0x02,0x00,0x7e,0x00,0x16,0x06,0x06]
+v_mov_b32 v0, v0 src0_sel:DWORD
+
+// NOSICI: error:
+// VI: v_mov_b32_sdwa v0, v0 dst_sel:DWORD dst_unused:UNUSED_PRESERVE src0_sel:DWORD ; encoding: [0xf9,0x02,0x00,0x7e,0x00,0x16,0x06,0x06]
+v_mov_b32_sdwa v0, v0

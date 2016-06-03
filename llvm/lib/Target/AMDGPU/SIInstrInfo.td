@@ -489,10 +489,8 @@ class NamedMatchClass<string CName, bit Optional = 1> : AsmOperandClass {
   let ParserMethod = !if(Optional, "parseOptionalOperand", "parse"#CName);
   let RenderMethod = "addImmOperands";
   let IsOptional = Optional;
-  let DefaultMethod = "default"#CName;
+  let DefaultMethod = !if(Optional, "default"#CName, ?);
 }
-
-def sdwa_sel : NamedMatchClass<"SDWASel">;
 
 class NamedOperandBit<string Name, AsmOperandClass MatchClass> : Operand<i1> {
   let PrintMethod = "print"#Name;
@@ -547,9 +545,9 @@ def row_mask : NamedOperandU32<"RowMask", NamedMatchClass<"RowMask">>;
 def bank_mask : NamedOperandU32<"BankMask", NamedMatchClass<"BankMask">>;
 def bound_ctrl : NamedOperandBit<"BoundCtrl", NamedMatchClass<"BoundCtrl">>;
 
-def dst_sel : NamedOperandU32<"SDWADstSel", sdwa_sel>;
-def src0_sel : NamedOperandU32<"SDWASrc0Sel", sdwa_sel>;
-def src1_sel : NamedOperandU32<"SDWASrc1Sel", sdwa_sel>;
+def dst_sel : NamedOperandU32<"SDWADstSel", NamedMatchClass<"SDWADstSel">>;
+def src0_sel : NamedOperandU32<"SDWASrc0Sel", NamedMatchClass<"SDWASrc0Sel">>;
+def src1_sel : NamedOperandU32<"SDWASrc1Sel", NamedMatchClass<"SDWASrc1Sel">>;
 def dst_unused : NamedOperandU32<"SDWADstUnused", NamedMatchClass<"SDWADstUnused">>;
 
 def hwreg : NamedOperandU16<"Hwreg", NamedMatchClass<"Hwreg", 0>>;
@@ -1337,7 +1335,7 @@ class getAsmSDWA <bit HasDst, int NumSrcArgs, bit HasModifiers, ValueType DstVT 
                                            " $src1_modifiers,"));
   string args = !if(!eq(HasModifiers, 0),
                      getAsm32<0, NumSrcArgs, DstVT>.ret,
-                     ", "#src0#src1#", $clamp");
+                     ", "#src0#src1#"$clamp");
   string sdwa = !if(!eq(NumSrcArgs, 0),
                     "",
                     !if(!eq(NumSrcArgs, 1),
@@ -1679,7 +1677,7 @@ class SDWADisableFields <VOPProfile p> {
                                !if(!eq(p.NumSrcArgs, 1), 0,
                                    !if(p.HasModifiers, ?, 0)));
   bits<3> dst_sel = !if(p.HasDst, ?, 6);
-  bits<2> dst_unused = !if(p.HasDst, ?, 0);
+  bits<2> dst_unused = !if(p.HasDst, ?, 2);
   bits<1> clamp = !if(p.HasModifiers, ?, 0);
 }
 
@@ -1687,6 +1685,7 @@ class VOP1_SDWA <vop1 op, string opName, VOPProfile p> :
   VOP1_SDWAe <op.VI>,
   VOP_SDWA <p.OutsSDWA, p.InsSDWA, opName#p.AsmSDWA, [], p.HasModifiers>,
   SDWADisableFields <p> {
+  let AsmMatchConverter = !if(!eq(p.HasModifiers,1), "cvtSdwaVop1_mod", "cvtSdwaVop1_nomod");
   let AssemblerPredicates = !if(p.HasExt, [isVI], [DisableInst]);
   let DecoderNamespace = "SDWA";
   let DisableDecoder = DisableVIDecoder;
@@ -1760,6 +1759,7 @@ class VOP2_SDWA <vop2 op, string opName, VOPProfile p> :
   VOP2_SDWAe <op.VI>,
   VOP_SDWA <p.OutsSDWA, p.InsSDWA, opName#p.AsmSDWA, [], p.HasModifiers>,
   SDWADisableFields <p> {
+  let AsmMatchConverter = !if(!eq(p.HasModifiers,1), "cvtSdwaVop2_mod", "cvtSdwaVop2_nomod");
   let AssemblerPredicates = !if(p.HasExt, [isVI], [DisableInst]);
   let DecoderNamespace = "SDWA";
   let DisableDecoder = DisableVIDecoder;
