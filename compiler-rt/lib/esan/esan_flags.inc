@@ -45,3 +45,12 @@ ESAN_FLAG(int, sample_freq, 20,
 // Number N samples number N-1 every (1 << snapshot_step) instance of N-1.
 ESAN_FLAG(int, snapshot_step, 2, "Working set tool: the log of the sampling "
           "performed for the next-higher-frequency snapshot series.")
+
+//===----------------------------------------------------------------------===//
+// Cache Fragmentation tool options
+//===----------------------------------------------------------------------===//
+
+// The difference information of a struct is reported if the struct's difference
+// score is greater than the report_threshold.
+ESAN_FLAG(int, report_threshold, 1<<10, "Cache-frag tool: the struct difference"
+          " score threshold for reporting.")
