@@ -63,7 +63,7 @@ const HeaderMapCollector::HeaderMap *getSTLPostfixHeaderMap() {
       {"include/stdalign.h", "<cstdalign>"},
       {"include/stdarg.h", "<cstdarg>"},
       {"include/stdbool.h", "<cstdbool>"},
-      {"include/stddef.h", "<cwchar>"},
+      {"include/stddef.h", "<cstddef>"},
       {"include/stdint.h", "<cstdint>"},
       {"include/tbmintrin.h", "<x86intrin.h>"},
       {"include/tmmintrin.h", "<tmmintrin.h>"},
