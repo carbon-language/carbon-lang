@@ -390,6 +390,7 @@ def : DiagGroup<"sequence-point", [Unsequenced]>;
 def AmbiguousMacro : DiagGroup<"ambiguous-macro">;
 def KeywordAsMacro : DiagGroup<"keyword-macro">;
 def ReservedIdAsMacro : DiagGroup<"reserved-id-macro">;
+def NonportableIncludePath : DiagGroup<"nonportable-include-path">;
 
 // Just silence warnings about -Wstrict-aliasing for now.
 def : DiagGroup<"strict-aliasing=0">;

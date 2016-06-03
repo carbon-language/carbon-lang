@@ -274,6 +274,10 @@ def ext_missing_whitespace_after_macro_name : ExtWarn<
   "whitespace required after macro name">;
 def warn_missing_whitespace_after_macro_name : Warning<
   "whitespace recommended after macro name">;
+def pp_nonportable_path : Warning<
+  "non-portable path to file '%0'; specified path differs in case from file"
+  " name on disk">,
+  InGroup<NonportableIncludePath>;
   
 def pp_pragma_once_in_main_file : Warning<"#pragma once in main file">,
   InGroup<DiagGroup<"pragma-once-outside-header">>;
