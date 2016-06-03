@@ -254,7 +254,6 @@ void initializePreISelIntrinsicLoweringPass(PassRegistry&);
 void initializePrintFunctionPassWrapperPass(PassRegistry&);
 void initializePrintModulePassWrapperPass(PassRegistry&);
 void initializePrintBasicBlockPassPass(PassRegistry&);
-void initializeProfileSummaryInfoWrapperPassPass(PassRegistry &);
 void initializeProcessImplicitDefsPass(PassRegistry&);
 void initializePromotePassPass(PassRegistry&);
 void initializePruneEHPass(PassRegistry&);

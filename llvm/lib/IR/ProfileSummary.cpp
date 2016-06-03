@@ -144,8 +144,6 @@ static bool getSummaryFromMD(MDTuple *MD, SummaryEntryVector &Summary) {
 }
 
 ProfileSummary *ProfileSummary::getFromMD(Metadata *MD) {
-  if (!MD)
-    return nullptr;
   if (!isa<MDTuple>(MD))
     return nullptr;
   MDTuple *Tuple = cast<MDTuple>(MD);

@@ -57,7 +57,6 @@ add_llvm_library(LLVMAnalysis
   OrderedBasicBlock.cpp
   PHITransAddr.cpp
   PostDominators.cpp
-  ProfileSummaryInfo.cpp
   PtrUseVisitor.cpp
   RegionInfo.cpp
   RegionPass.cpp
