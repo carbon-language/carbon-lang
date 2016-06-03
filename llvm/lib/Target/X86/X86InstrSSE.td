@@ -4211,8 +4211,8 @@ defm PCMPGTD : PDI_binop_all<0x66, "pcmpgtd", X86pcmpgt, v4i32, v8i32,
 
 let ExeDomain = SSEPackedInt in {
 multiclass sse2_pshuffle<string OpcodeStr, ValueType vt128, ValueType vt256,
-                         SDNode OpNode> {
-let Predicates = [HasAVX] in {
+                         SDNode OpNode, Predicate prd> {
+let Predicates = [HasAVX, prd] in {
   def V#NAME#ri : Ii8<0x70, MRMSrcReg, (outs VR128:$dst),
                       (ins VR128:$src1, u8imm:$src2),
                       !strconcat("v", OpcodeStr,
@@ -4230,7 +4230,7 @@ let Predicates = [HasAVX] in {
                   Sched<[WriteShuffleLd]>;
 }
 
-let Predicates = [HasAVX2] in {
+let Predicates = [HasAVX2, prd] in {
   def V#NAME#Yri : Ii8<0x70, MRMSrcReg, (outs VR256:$dst),
                        (ins VR256:$src1, u8imm:$src2),
                        !strconcat("v", OpcodeStr,
@@ -4268,9 +4268,11 @@ let Predicates = [UseSSE2] in {
 }
 } // ExeDomain = SSEPackedInt
 
-defm PSHUFD  : sse2_pshuffle<"pshufd", v4i32, v8i32, X86PShufd>, PD;
-defm PSHUFHW : sse2_pshuffle<"pshufhw", v8i16, v16i16, X86PShufhw>, XS;
-defm PSHUFLW : sse2_pshuffle<"pshuflw", v8i16, v16i16, X86PShuflw>, XD;
+defm PSHUFD  : sse2_pshuffle<"pshufd", v4i32, v8i32, X86PShufd, NoVLX>, PD;
+defm PSHUFHW : sse2_pshuffle<"pshufhw", v8i16, v16i16, X86PShufhw,
+                             NoVLX_Or_NoBWI>, XS;
+defm PSHUFLW : sse2_pshuffle<"pshuflw", v8i16, v16i16, X86PShuflw,
+                             NoVLX_Or_NoBWI>, XD;
 
 let Predicates = [HasAVX] in {
   def : Pat<(v4f32 (X86PShufd (loadv4f32 addr:$src1), (i8 imm:$imm))),
