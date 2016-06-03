@@ -377,10 +377,8 @@ namespace llvm {
   Registry.registerPass(*PI, true);                                            \
   return PI;                                                                   \
   }                                                                            \
-  LLVM_DEFINE_ONCE_FLAG(Initialize##passName##PassFlag);                       \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) {              \
-    call_once(Initialize##passName##PassFlag, initialize##passName##PassOnce,  \
-              std::ref(Registry));                                             \
+    CALL_ONCE_INITIALIZATION(initialize##passName##PassOnce)                   \
   }
 
 /// This initializer registers TargetMachine constructor, so the pass being
