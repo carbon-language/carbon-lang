@@ -364,9 +364,9 @@ define <16 x float> @test_v16f32(<16 x float>* %src) {
 ;
 ; AVX512-LABEL: test_v16f32:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovups (%rdi), %zmm0
+; AVX512-NEXT:    vmovaps (%rdi), %zmm0
 ; AVX512-NEXT:    retq
-  %1 = load <16 x float>, <16 x float>* %src, align 32, !nontemporal !1
+  %1 = load <16 x float>, <16 x float>* %src, align 64, !nontemporal !1
   ret <16 x float> %1
 }
 
@@ -387,9 +387,9 @@ define <16 x i32> @test_v16i32(<16 x i32>* %src) {
 ;
 ; AVX512-LABEL: test_v16i32:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovdqu32 (%rdi), %zmm0
+; AVX512-NEXT:    vmovdqa32 (%rdi), %zmm0
 ; AVX512-NEXT:    retq
-  %1 = load <16 x i32>, <16 x i32>* %src, align 32, !nontemporal !1
+  %1 = load <16 x i32>, <16 x i32>* %src, align 64, !nontemporal !1
   ret <16 x i32> %1
 }
 
@@ -410,9 +410,9 @@ define <8 x double> @test_v8f64(<8 x double>* %src) {
 ;
 ; AVX512-LABEL: test_v8f64:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovupd (%rdi), %zmm0
+; AVX512-NEXT:    vmovapd (%rdi), %zmm0
 ; AVX512-NEXT:    retq
-  %1 = load <8 x double>, <8 x double>* %src, align 32, !nontemporal !1
+  %1 = load <8 x double>, <8 x double>* %src, align 64, !nontemporal !1
   ret <8 x double> %1
 }
 
@@ -433,9 +433,9 @@ define <8 x i64> @test_v8i64(<8 x i64>* %src) {
 ;
 ; AVX512-LABEL: test_v8i64:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovdqu64 (%rdi), %zmm0
+; AVX512-NEXT:    vmovdqa64 (%rdi), %zmm0
 ; AVX512-NEXT:    retq
-  %1 = load <8 x i64>, <8 x i64>* %src, align 32, !nontemporal !1
+  %1 = load <8 x i64>, <8 x i64>* %src, align 64, !nontemporal !1
   ret <8 x i64> %1
 }
 
@@ -470,7 +470,7 @@ define <32 x i16> @test_v32i16(<32 x i16>* %src) {
 ; AVX512VL-NEXT:    vmovdqa64 (%rdi), %ymm0
 ; AVX512VL-NEXT:    vmovdqa64 32(%rdi), %ymm1
 ; AVX512VL-NEXT:    retq
-  %1 = load <32 x i16>, <32 x i16>* %src, align 32, !nontemporal !1
+  %1 = load <32 x i16>, <32 x i16>* %src, align 64, !nontemporal !1
   ret <32 x i16> %1
 }
 
@@ -505,7 +505,7 @@ define <64 x i8> @test_v64i8(<64 x i8>* %src) {
 ; AVX512VL-NEXT:    vmovdqa64 (%rdi), %ymm0
 ; AVX512VL-NEXT:    vmovdqa64 32(%rdi), %ymm1
 ; AVX512VL-NEXT:    retq
-  %1 = load <64 x i8>, <64 x i8>* %src, align 32, !nontemporal !1
+  %1 = load <64 x i8>, <64 x i8>* %src, align 64, !nontemporal !1
   ret <64 x i8> %1
 }
 
@@ -821,7 +821,7 @@ define <16 x float> @test_arg_v16f32(<16 x float> %arg, <16 x float>* %src) {
 ; AVX512:       # BB#0:
 ; AVX512-NEXT:    vaddps (%rdi), %zmm0, %zmm0
 ; AVX512-NEXT:    retq
-  %1 = load <16 x float>, <16 x float>* %src, align 32, !nontemporal !1
+  %1 = load <16 x float>, <16 x float>* %src, align 64, !nontemporal !1
   %2 = fadd <16 x float> %arg, %1
   ret <16 x float> %2
 }
@@ -861,7 +861,7 @@ define <16 x i32> @test_arg_v16i32(<16 x i32> %arg, <16 x i32>* %src) {
 ; AVX512:       # BB#0:
 ; AVX512-NEXT:    vpaddd (%rdi), %zmm0, %zmm0
 ; AVX512-NEXT:    retq
-  %1 = load <16 x i32>, <16 x i32>* %src, align 32, !nontemporal !1
+  %1 = load <16 x i32>, <16 x i32>* %src, align 64, !nontemporal !1
   %2 = add <16 x i32> %arg, %1
   ret <16 x i32> %2
 }
@@ -885,7 +885,7 @@ define <8 x double> @test_arg_v8f64(<8 x double> %arg, <8 x double>* %src) {
 ; AVX512:       # BB#0:
 ; AVX512-NEXT:    vaddpd (%rdi), %zmm0, %zmm0
 ; AVX512-NEXT:    retq
-  %1 = load <8 x double>, <8 x double>* %src, align 32, !nontemporal !1
+  %1 = load <8 x double>, <8 x double>* %src, align 64, !nontemporal !1
   %2 = fadd <8 x double> %arg, %1
   ret <8 x double> %2
 }
@@ -925,7 +925,7 @@ define <8 x i64> @test_arg_v8i64(<8 x i64> %arg, <8 x i64>* %src) {
 ; AVX512:       # BB#0:
 ; AVX512-NEXT:    vpaddq (%rdi), %zmm0, %zmm0
 ; AVX512-NEXT:    retq
-  %1 = load <8 x i64>, <8 x i64>* %src, align 32, !nontemporal !1
+  %1 = load <8 x i64>, <8 x i64>* %src, align 64, !nontemporal !1
   %2 = add <8 x i64> %arg, %1
   ret <8 x i64> %2
 }
@@ -977,7 +977,7 @@ define <32 x i16> @test_arg_v32i16(<32 x i16> %arg, <32 x i16>* %src) {
 ; AVX512VL-NEXT:    vpaddw (%rdi), %ymm0, %ymm0
 ; AVX512VL-NEXT:    vpaddw 32(%rdi), %ymm1, %ymm1
 ; AVX512VL-NEXT:    retq
-  %1 = load <32 x i16>, <32 x i16>* %src, align 32, !nontemporal !1
+  %1 = load <32 x i16>, <32 x i16>* %src, align 64, !nontemporal !1
   %2 = add <32 x i16> %arg, %1
   ret <32 x i16> %2
 }
@@ -1029,7 +1029,7 @@ define <64 x i8> @test_arg_v64i8(<64 x i8> %arg, <64 x i8>* %src) {
 ; AVX512VL-NEXT:    vpaddb (%rdi), %ymm0, %ymm0
 ; AVX512VL-NEXT:    vpaddb 32(%rdi), %ymm1, %ymm1
 ; AVX512VL-NEXT:    retq
-  %1 = load <64 x i8>, <64 x i8>* %src, align 32, !nontemporal !1
+  %1 = load <64 x i8>, <64 x i8>* %src, align 64, !nontemporal !1
   %2 = add <64 x i8> %arg, %1
   ret <64 x i8> %2
 }
