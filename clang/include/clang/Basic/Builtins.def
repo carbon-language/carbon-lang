@@ -790,6 +790,7 @@ LIBBUILTIN(isxdigit, "ii", "fnU", "ctype.h", ALL_LANGUAGES)
 LIBBUILTIN(tolower, "ii", "fnU", "ctype.h", ALL_LANGUAGES)
 LIBBUILTIN(toupper, "ii", "fnU", "ctype.h", ALL_LANGUAGES)
 
+
 // C99
 // In some systems setjmp is a macro that expands to _setjmp. We undefine
 // it here to avoid having two identical LIBBUILTIN entries.
