@@ -180,7 +180,12 @@ public:
   /// empty - Returns true if there are no nodes in the folding set.
   bool empty() const { return NumNodes == 0; }
 
+  /// reserve - Increase the number of buckets such that adding the
+  /// EltCount-th node won't cause a rebucket operation. reserve is permitted
+  /// to allocate more space than requested by EltCount.
   void reserve(unsigned EltCount);
+  /// capacity - Returns the number of nodes permitted in the folding set
+  /// before a rebucket operation is performed.
   unsigned capacity() {
     // We allow a load factor of up to 2.0,
     // so that means our capacity is NumBuckets * 2
