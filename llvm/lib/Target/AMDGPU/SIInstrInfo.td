@@ -1246,19 +1246,20 @@ class getInsSDWA <RegisterClass Src0RC, RegisterClass Src1RC, int NumSrcArgs,
             !if (!eq(NumSrcArgs, 1),
               !if (!eq(HasModifiers, 1),
                 // VOP1_SDWA with modifiers
-                (ins InputModsNoDefault:$src0_modifiers, Src0RC:$src0,
+                (ins InputModsNoDefault:$src0_fmodifiers, Src0RC:$src0,
                      clampmod:$clamp, dst_sel:$dst_sel, dst_unused:$dst_unused,
                      src0_sel:$src0_sel)
               /* else */,
                 // VOP1_SDWA without modifiers
+                // FIXME: sext() modifier is not supported yet
                 (ins Src0RC:$src0, dst_sel:$dst_sel, dst_unused:$dst_unused,
                      src0_sel:$src0_sel)
               /* endif */)
               /* NumSrcArgs == 2 */,
               !if (!eq(HasModifiers, 1),
                 // VOP2_SDWA with modifiers
-                (ins InputModsNoDefault:$src0_modifiers, Src0RC:$src0,
-                     InputModsNoDefault:$src1_modifiers, Src1RC:$src1,
+                (ins InputModsNoDefault:$src0_fmodifiers, Src0RC:$src0,
+                     InputModsNoDefault:$src1_fmodifiers, Src1RC:$src1,
                      clampmod:$clamp, dst_sel:$dst_sel, dst_unused:$dst_unused,
                      src0_sel:$src0_sel, src1_sel:$src1_sel)
               /* else */,
@@ -1329,10 +1330,10 @@ class getAsmSDWA <bit HasDst, int NumSrcArgs, bit HasModifiers, ValueType DstVT 
                        "$sdst",
                        "$vdst"),
                     ""); // use $sdst for VOPC
-  string src0 = !if(!eq(NumSrcArgs, 1), "$src0_modifiers", "$src0_modifiers,");
+  string src0 = !if(!eq(NumSrcArgs, 1), "$src0_fmodifiers", "$src0_fmodifiers,");
   string src1 = !if(!eq(NumSrcArgs, 1), "",
-                   !if(!eq(NumSrcArgs, 2), " $src1_modifiers",
-                                           " $src1_modifiers,"));
+                   !if(!eq(NumSrcArgs, 2), " $src1_fmodifiers",
+                                           " $src1_fmodifiers,"));
   string args = !if(!eq(HasModifiers, 0),
                      getAsm32<0, NumSrcArgs, DstVT>.ret,
                      ", "#src0#src1#"$clamp");
@@ -1541,8 +1542,8 @@ def VOP_MAC : VOPProfile <[f32, f32, f32, f32]> {
                     VGPR_32:$src2, // stub argument
                     dpp_ctrl:$dpp_ctrl, row_mask:$row_mask,
                     bank_mask:$bank_mask, bound_ctrl:$bound_ctrl);
-  let InsSDWA = (ins InputModsNoDefault:$src0_modifiers, Src0RC32:$src0,
-                     InputModsNoDefault:$src1_modifiers, Src1RC32:$src1,
+  let InsSDWA = (ins InputModsNoDefault:$src0_fmodifiers, Src0RC32:$src0,
+                     InputModsNoDefault:$src1_fmodifiers, Src1RC32:$src1,
                      VGPR_32:$src2, // stub argument
                      clampmod:$clamp, dst_sel:$dst_sel, dst_unused:$dst_unused,
                      src0_sel:$src0_sel, src1_sel:$src1_sel);
@@ -1669,13 +1670,15 @@ class VOP1_DPP <vop1 op, string opName, VOPProfile p> :
 class SDWADisableFields <VOPProfile p> {
   bits<8> src0 = !if(!eq(p.NumSrcArgs, 0), 0, ?);
   bits<3> src0_sel = !if(!eq(p.NumSrcArgs, 0), 6, ?);
-  bits<3> src0_modifiers = !if(p.HasModifiers, ?, 0);
+  bits<2> src0_fmodifiers = !if(p.HasModifiers, ?, 0);
+  bits<1> src0_imodifiers = 0; // FIXME: always 0 untill sext modifier is supported
   bits<3> src1_sel = !if(!eq(p.NumSrcArgs, 0), 6,
                          !if(!eq(p.NumSrcArgs, 1), 6,
                              ?));
-  bits<3> src1_modifiers = !if(!eq(p.NumSrcArgs, 0), 0,
-                               !if(!eq(p.NumSrcArgs, 1), 0,
-                                   !if(p.HasModifiers, ?, 0)));
+  bits<2> src1_fmodifiers = !if(!eq(p.NumSrcArgs, 0), 0,
+                                !if(!eq(p.NumSrcArgs, 1), 0,
+                                    !if(p.HasModifiers, ?, 0)));
+  bits<1> src1_imodifiers = 0;
   bits<3> dst_sel = !if(p.HasDst, ?, 6);
   bits<2> dst_unused = !if(p.HasDst, ?, 2);
   bits<1> clamp = !if(p.HasModifiers, ?, 0);
