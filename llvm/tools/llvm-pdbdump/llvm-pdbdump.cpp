@@ -427,7 +427,7 @@ static Error dumpNamedStream(ScopedPrinter &P, PDBFile &File) {
     for (uint32_t ID : NameTable.name_ids()) {
       StringRef Str = NameTable.getStringForID(ID);
       if (!Str.empty())
-        P.printString(Str);
+        P.printString(to_string(ID), Str);
     }
   }
   return Error::success();
@@ -528,13 +528,21 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
               DictScope DD(P, "Unknown");
               return printBinaryData(Data);
             }
-            Error visitFileChecksums(StreamRef Data) override {
+            Error
+            visitFileChecksums(StreamRef Data,
+                               const FileChecksumArray &Checksums) override {
               DictScope DD(P, "FileChecksums");
-              return printBinaryData(Data);
+              for (const auto &C : Checksums) {
+                DictScope DDD(P, "Checksum");
+                P.printNumber("FileNameOffset", C.FileNameOffset);
+                P.printEnum("Kind", uint8_t(C.Kind), getFileChecksumNames());
+                P.printBinaryBlock("Checksum", C.Checksum);
+              }
+              return Error::success();
             }
 
             Error visitLines(StreamRef Data, const LineSubstreamHeader *Header,
-                             LineInfoArray Lines) override {
+                             const LineInfoArray &Lines) override {
               DictScope DD(P, "Lines");
               for (const auto &L : Lines) {
                 P.printNumber("FileOffset", L.Offset);
@@ -557,7 +565,7 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
                   P.printNumber("End", C.EndColumn);
                 }
               }
-              return printBinaryData(Data);
+              return Error::success();
             }
 
           private:

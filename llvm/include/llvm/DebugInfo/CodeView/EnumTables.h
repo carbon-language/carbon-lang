@@ -27,6 +27,7 @@ ArrayRef<EnumEntry<uint32_t>> getFrameCookieKindNames();
 ArrayRef<EnumEntry<SourceLanguage>> getSourceLanguageNames();
 ArrayRef<EnumEntry<uint32_t>> getCompileSym2FlagNames();
 ArrayRef<EnumEntry<uint32_t>> getCompileSym3FlagNames();
+ArrayRef<EnumEntry<uint32_t>> getFileChecksumNames();
 ArrayRef<EnumEntry<unsigned>> getCPUTypeNames();
 ArrayRef<EnumEntry<uint32_t>> getFrameProcSymFlagNames();
 ArrayRef<EnumEntry<uint16_t>> getExportSymFlagNames();

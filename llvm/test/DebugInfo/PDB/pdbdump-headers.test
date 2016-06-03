@@ -70,9 +70,9 @@
 ; EMPTY-NEXT:   Version: 1
 ; EMPTY-NEXT:   Name Count: 4
 ; EMPTY-NEXT:   Names [
-; EMPTY-NEXT:     d:\src\llvm\test\debuginfo\pdb\inputs\predefined c++ attributes (compiler internal)
-; EMPTY-NEXT:     d:\src\llvm\test\debuginfo\pdb\inputs\empty.cpp
-; EMPTY-NEXT:     $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =
+; EMPTY-NEXT:     1: d:\src\llvm\test\debuginfo\pdb\inputs\predefined c++ attributes (compiler internal)
+; EMPTY-NEXT:     86: d:\src\llvm\test\debuginfo\pdb\inputs\empty.cpp
+; EMPTY-NEXT:     134: $T0 $ebp = $eip $T0 4 + ^ = $ebp $T0 ^ = $esp $T0 8 + =
 ; EMPTY-NEXT:   ]
 ; EMPTY-NEXT: }
 ; EMPTY-NEXT: Type Info Stream (TPI) {
@@ -351,17 +351,15 @@
 ; EMPTY-NEXT:             EndDelta: 0
 ; EMPTY-NEXT:             IsStatement: Yes
 ; EMPTY-NEXT:           }
-; EMPTY-NEXT:           Data (
-; EMPTY-NEXT:             0000: 10000000 01000000 0A000000 00000000  |................|
-; EMPTY-NEXT:             0010: 03000000 24000000 00000000 05000080  |....$...........|
-; EMPTY-NEXT:             0020: 03000000 06000080 08000000 07000080  |................|
-; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:         FileChecksums {
-; EMPTY-NEXT:           Data (
-; EMPTY-NEXT:             0000: 56000000 1001A0A5 BD0D3ECD 93FC29D1  |V.........>...).|
-; EMPTY-NEXT:             0010: 9DE826FB F4BC0000                    |..&.....|
-; EMPTY-NEXT:           )
+; EMPTY-NEXT:           Checksum {
+; EMPTY-NEXT:             FileNameOffset: 86
+; EMPTY-NEXT:             Kind: MD5 (0x1)
+; EMPTY-NEXT:             Checksum (
+; EMPTY-NEXT:               0000: A0A5BD0D 3ECD93FC 29D19DE8 26FBF4BC  |....>...)...&...|
+; EMPTY-NEXT:             )
+; EMPTY-NEXT:           }
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:       ]
 ; EMPTY-NEXT:     }

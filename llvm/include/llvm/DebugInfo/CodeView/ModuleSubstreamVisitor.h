@@ -26,9 +26,9 @@ struct LineColumnEntry {
   FixedStreamArray<ColumnNumberEntry> Columns;
 };
 
-class FileLineInfoExtractor {
+template <> class VarStreamArrayExtractor<LineColumnEntry> {
 public:
-  FileLineInfoExtractor(const LineSubstreamHeader *Header) : Header(Header) {}
+  VarStreamArrayExtractor(const LineSubstreamHeader *Header) : Header(Header) {}
 
   Error operator()(StreamRef Stream, uint32_t &Len,
                    LineColumnEntry &Item) const {
@@ -64,7 +64,31 @@ private:
   const LineSubstreamHeader *Header;
 };
 
-typedef VarStreamArray<LineColumnEntry, FileLineInfoExtractor> LineInfoArray;
+struct FileChecksumEntry {
+  uint32_t FileNameOffset;
+  FileChecksumKind Kind;
+  ArrayRef<uint8_t> Checksum;
+};
+
+template <> class VarStreamArrayExtractor<FileChecksumEntry> {
+public:
+  Error operator()(StreamRef Stream, uint32_t &Len,
+                   FileChecksumEntry &Item) const {
+    const FileChecksum *Header;
+    StreamReader Reader(Stream);
+    if (auto EC = Reader.readObject(Header))
+      return EC;
+    Item.FileNameOffset = Header->FileNameOffset;
+    Item.Kind = static_cast<FileChecksumKind>(Header->ChecksumKind);
+    if (auto EC = Reader.readBytes(Item.Checksum, Header->ChecksumSize))
+      return EC;
+    Len = sizeof(FileChecksum) + Header->ChecksumSize;
+    return Error::success();
+  }
+};
+
+typedef VarStreamArray<LineColumnEntry> LineInfoArray;
+typedef VarStreamArray<FileChecksumEntry> FileChecksumArray;
 
 class IModuleSubstreamVisitor {
 public:
@@ -73,9 +97,10 @@ public:
   virtual Error visitUnknown(ModuleSubstreamKind Kind, StreamRef Data) = 0;
   virtual Error visitSymbols(StreamRef Data);
   virtual Error visitLines(StreamRef Data, const LineSubstreamHeader *Header,
-                           LineInfoArray Lines);
+                           const LineInfoArray &Lines);
   virtual Error visitStringTable(StreamRef Data);
-  virtual Error visitFileChecksums(StreamRef Data);
+  virtual Error visitFileChecksums(StreamRef Data,
+                                   const FileChecksumArray &Checksums);
   virtual Error visitFrameData(StreamRef Data);
   virtual Error visitInlineeLines(StreamRef Data);
   virtual Error visitCrossScopeImports(StreamRef Data);

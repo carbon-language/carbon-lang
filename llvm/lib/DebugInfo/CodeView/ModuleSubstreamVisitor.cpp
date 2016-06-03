@@ -17,13 +17,14 @@ Error IModuleSubstreamVisitor::visitSymbols(StreamRef Data) {
 }
 Error IModuleSubstreamVisitor::visitLines(StreamRef Data,
                                           const LineSubstreamHeader *Header,
-                                          LineInfoArray Lines) {
+                                          const LineInfoArray &Lines) {
   return visitUnknown(ModuleSubstreamKind::Lines, Data);
 }
 Error IModuleSubstreamVisitor::visitStringTable(StreamRef Data) {
   return visitUnknown(ModuleSubstreamKind::StringTable, Data);
 }
-Error IModuleSubstreamVisitor::visitFileChecksums(StreamRef Data) {
+Error IModuleSubstreamVisitor::visitFileChecksums(
+    StreamRef Data, const FileChecksumArray &Checksums) {
   return visitUnknown(ModuleSubstreamKind::FileChecksums, Data);
 }
 Error IModuleSubstreamVisitor::visitFrameData(StreamRef Data) {
@@ -64,7 +65,7 @@ Error llvm::codeview::visitModuleSubstream(const ModuleSubstream &R,
     const LineSubstreamHeader *Header;
     if (auto EC = Reader.readObject(Header))
       return EC;
-    FileLineInfoExtractor E(Header);
+    VarStreamArrayExtractor<LineColumnEntry> E(Header);
     LineInfoArray LineInfos(E);
     if (auto EC = Reader.readArray(LineInfos, Reader.bytesRemaining()))
       return EC;
@@ -72,8 +73,13 @@ Error llvm::codeview::visitModuleSubstream(const ModuleSubstream &R,
   }
   case ModuleSubstreamKind::StringTable:
     return V.visitStringTable(R.getRecordData());
-  case ModuleSubstreamKind::FileChecksums:
-    return V.visitFileChecksums(R.getRecordData());
+  case ModuleSubstreamKind::FileChecksums: {
+    StreamReader Reader(R.getRecordData());
+    FileChecksumArray Checksums;
+    if (auto EC = Reader.readArray(Checksums, Reader.bytesRemaining()))
+      return EC;
+    return V.visitFileChecksums(R.getRecordData(), Checksums);
+  }
   case ModuleSubstreamKind::FrameData:
     return V.visitFrameData(R.getRecordData());
   case ModuleSubstreamKind::InlineeLines:
