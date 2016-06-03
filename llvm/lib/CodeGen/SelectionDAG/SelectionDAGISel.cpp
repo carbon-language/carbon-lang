@@ -2163,8 +2163,10 @@ void SelectionDAGISel::UpdateChains(
     // Replace all the chain results with the final chain we ended up with.
     for (unsigned i = 0, e = ChainNodesMatched.size(); i != e; ++i) {
       SDNode *ChainNode = ChainNodesMatched[i];
-      assert(ChainNode->getOpcode() != ISD::DELETED_NODE &&
-             "Deleted node left in chain");
+
+      // If this node was already deleted, don't look at it.
+      if (ChainNode->getOpcode() == ISD::DELETED_NODE)
+        continue;
 
       // Don't replace the results of the root node if we're doing a
       // MorphNodeTo.
@@ -3366,13 +3368,6 @@ void SelectionDAGISel::SelectCodeCommon(SDNode *NodeToMatch,
       } else {
         assert(NodeToMatch->getOpcode() != ISD::DELETED_NODE &&
                "NodeToMatch was removed partway through selection");
-        SelectionDAG::DAGNodeDeletedListener NDL(*CurDAG, [&](SDNode *N,
-                                                              SDNode *E) {
-          assert(!E && "Unexpected node replacement in MorphNode");
-          ChainNodesMatched.erase(std::remove(ChainNodesMatched.begin(),
-                                              ChainNodesMatched.end(), N),
-                                  ChainNodesMatched.end());
-        });
         Res = MorphNode(NodeToMatch, TargetOpc, VTList, Ops, EmitNodeInfo);
       }
 
