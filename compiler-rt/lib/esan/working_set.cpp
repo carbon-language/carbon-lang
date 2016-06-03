@@ -16,6 +16,7 @@
 #include "esan.h"
 #include "esan_flags.h"
 #include "esan_shadow.h"
+#include "esan_sideline.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
 
 // We shadow every cache line of app memory with one shadow byte.
@@ -39,6 +40,12 @@ static const u32 TotalWorkingSetBitIdx = 7;
 static const u32 CurWorkingSetBitIdx = 0;
 static const byte ShadowAccessedVal =
   (1 << TotalWorkingSetBitIdx) | (1 << CurWorkingSetBitIdx);
+
+static SidelineThread Thread;
+// If we use real-time-based timer samples this won't overflow in any realistic
+// scenario, but if we switch to some other unit (such as memory accesses) we
+// may want to consider a 64-bit int.
+static u32 SnapshotNum;
 
 void processRangeAccessWorkingSet(uptr PC, uptr Addr, SIZE_T Size,
                                   bool IsWrite) {
@@ -124,9 +131,22 @@ static u32 computeWorkingSizeAndReset(u32 BitIdx) {
   return WorkingSetSize;
 }
 
+// This is invoked from a signal handler but in a sideline thread doing nothing
+// else so it is a little less fragile than a typical signal handler.
+static void takeSample(void *Arg) {
+  // FIXME: record the size and report at process end.  For now this simply
+  // serves as a test of the sideline thread functionality.
+  VReport(1, "%s: snapshot #%d: %u\n", SanitizerToolName, SnapshotNum,
+          computeWorkingSizeAndReset(CurWorkingSetBitIdx));
+  ++SnapshotNum;
+}
+
 void initializeWorkingSet() {
   CHECK(getFlags()->cache_line_size == CacheLineSize);
   registerMemoryFaultHandler();
+
+  if (getFlags()->record_snapshots)
+    Thread.launchThread(takeSample, nullptr, getFlags()->sample_freq);
 }
 
 static u32 getSizeForPrinting(u32 NumOfCachelines, const char *&Unit) {
@@ -147,6 +167,9 @@ static u32 getSizeForPrinting(u32 NumOfCachelines, const char *&Unit) {
 }
 
 int finalizeWorkingSet() {
+  if (getFlags()->record_snapshots)
+    Thread.joinThread();
+
   // Get the working set size for the entire execution.
   u32 NumOfCachelines = computeWorkingSizeAndReset(TotalWorkingSetBitIdx);
   const char *Unit;
