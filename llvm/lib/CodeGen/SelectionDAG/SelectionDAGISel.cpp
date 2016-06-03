@@ -3365,13 +3365,10 @@ void SelectionDAGISel::SelectCodeCommon(SDNode *NodeToMatch,
                                                              nullptr));
         }
 
-      } else if (NodeToMatch->getOpcode() != ISD::DELETED_NODE) {
-        Res = MorphNode(NodeToMatch, TargetOpc, VTList, Ops, EmitNodeInfo);
       } else {
-        // NodeToMatch was eliminated by CSE when the target changed the DAG.
-        // We will visit the equivalent node later.
-        DEBUG(dbgs() << "Node was eliminated by CSE\n");
-        return;
+        assert(NodeToMatch->getOpcode() != ISD::DELETED_NODE &&
+               "NodeToMatch was removed partway through selection");
+        Res = MorphNode(NodeToMatch, TargetOpc, VTList, Ops, EmitNodeInfo);
       }
 
       // If the node had chain/glue results, update our notion of the current
