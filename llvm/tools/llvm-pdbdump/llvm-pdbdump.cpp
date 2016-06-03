@@ -631,14 +631,14 @@ static Error dumpTpiStream(ScopedPrinter &P, PDBFile &File,
 
   auto TpiS = (StreamIdx == StreamTPI) ? File.getPDBTpiStream()
                                        : File.getPDBIpiStream();
-    if (auto EC = TpiS.takeError())
-      return EC;
-    TpiStream &Tpi = TpiS.get();
+  if (auto EC = TpiS.takeError())
+    return EC;
+  TpiStream &Tpi = TpiS.get();
 
-    if (DumpRecords || DumpRecordBytes) {
-      DictScope D(P, Label);
+  if (DumpRecords || DumpRecordBytes) {
+    DictScope D(P, Label);
 
-      P.printNumber(VerLabel, Tpi.getTpiVersion());
+    P.printNumber(VerLabel, Tpi.getTpiVersion());
     P.printNumber("Record count", Tpi.NumTypeRecords());
 
     ListScope L(P, "Records");
