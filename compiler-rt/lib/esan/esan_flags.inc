@@ -39,3 +39,9 @@ ESAN_FLAG(bool, record_snapshots, true,
 // To disable samples, turn off record_snapshots.
 ESAN_FLAG(int, sample_freq, 20,
           "Working set tool: sampling frequency in milliseconds.")
+
+// This controls the difference in frequency between each successive series
+// of snapshots.  There are 8 in total, with number 0 using sample_freq.
+// Number N samples number N-1 every (1 << snapshot_step) instance of N-1.
+ESAN_FLAG(int, snapshot_step, 2, "Working set tool: the log of the sampling "
+          "performed for the next-higher-frequency snapshot series.")
