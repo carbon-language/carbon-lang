@@ -57,6 +57,14 @@ static cl::opt<bool> ClInstrumentMemIntrinsics(
     "esan-instrument-memintrinsics", cl::init(true),
     cl::desc("Instrument memintrinsics (memset/memcpy/memmove)"), cl::Hidden);
 
+// Experiments show that the performance difference can be 2x or more,
+// and accuracy loss is typically negligible, so we turn this on by default.
+static cl::opt<bool> ClAssumeIntraCacheLine(
+    "esan-assume-intra-cache-line", cl::init(true),
+    cl::desc("Assume each memory access touches just one cache line, for "
+             "better performance but with a potential loss of accuracy."),
+    cl::Hidden);
+
 STATISTIC(NumInstrumentedLoads, "Number of instrumented loads");
 STATISTIC(NumInstrumentedStores, "Number of instrumented stores");
 STATISTIC(NumFastpaths, "Number of instrumented fastpaths");
@@ -65,6 +73,8 @@ STATISTIC(NumAccessesWithIrregularSize,
 STATISTIC(NumIgnoredStructs, "Number of ignored structs");
 STATISTIC(NumIgnoredGEPs, "Number of ignored GEP instructions");
 STATISTIC(NumInstrumentedGEPs, "Number of instrumented GEP instructions");
+STATISTIC(NumAssumedIntraCacheLine,
+          "Number of accesses assumed to be intra-cache-line");
 
 static const uint64_t EsanCtorAndDtorPriority = 0;
 static const char *const EsanModuleCtorName = "esan.module_ctor";
@@ -715,8 +725,12 @@ bool EfficiencySanitizer::instrumentFastpathWorkingSet(
   // (and our shadow memory setup assumes 64-byte cache lines).
   assert(TypeSize <= 64);
   if (!(TypeSize == 8 ||
-        (Alignment % (TypeSize / 8)) == 0))
-    return false;
+        (Alignment % (TypeSize / 8)) == 0)) {
+    if (ClAssumeIntraCacheLine)
+      ++NumAssumedIntraCacheLine;
+    else
+      return false;
+  }
 
   // We inline instrumentation to set the corresponding shadow bits for
   // each cache line touched by the application.  Here we handle a single
