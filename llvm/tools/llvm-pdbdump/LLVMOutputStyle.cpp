@@ -264,6 +264,23 @@ Error LLVMOutputStyle::dumpNamedStream() {
   return Error::success();
 }
 
+static void printTypeIndexOffset(raw_ostream &OS,
+                                 const TypeIndexOffset &TIOff) {
+  OS << "{" << TIOff.Type.getIndex() << ", " << TIOff.Offset << "}";
+}
+
+static void dumpTpiHash(ScopedPrinter &P, TpiStream &Tpi) {
+  if (!opts::DumpTpiHash)
+    return;
+  DictScope DD(P, "Hash");
+  codeview::FixedStreamArray<support::ulittle32_t> S = Tpi.getHashValues();
+  P.printList("Values", Tpi.getHashValues());
+  P.printList("Type Index Offsets", Tpi.getTypeIndexOffsets(),
+              printTypeIndexOffset);
+  P.printList("Hash Adjustments", Tpi.getHashAdjustments(),
+              printTypeIndexOffset);
+}
+
 Error LLVMOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
   assert(StreamIdx == StreamTPI || StreamIdx == StreamIPI);
 
@@ -309,6 +326,7 @@ Error LLVMOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
       if (DumpRecordBytes)
         P.printBinaryBlock("Bytes", Type.Data);
     }
+    dumpTpiHash(P, Tpi);
     if (HadError)
       return make_error<RawError>(raw_error_code::corrupt_file,
                                   "TPI stream contained corrupt record");
@@ -325,6 +343,7 @@ Error LLVMOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
       TD.dump(Type);
 
     TD.setPrinter(OldP);
+    dumpTpiHash(P, Tpi);
     if (HadError)
       return make_error<RawError>(raw_error_code::corrupt_file,
                                   "TPI stream contained corrupt record");

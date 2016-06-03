@@ -113,6 +113,9 @@ cl::opt<bool> DumpTpiRecordBytes(
     "raw-tpi-record-bytes",
     cl::desc("dump CodeView type record raw bytes from TPI stream"),
     cl::cat(NativeOptions));
+cl::opt<bool> DumpTpiHash("raw-tpi-hash",
+                          cl::desc("dump CodeView TPI hash stream"),
+                          cl::cat(NativeOptions));
 cl::opt<bool>
     DumpIpiRecords("raw-ipi-records",
                    cl::desc("dump CodeView type records from IPI stream"),
@@ -275,6 +278,8 @@ bool isRawDumpEnabled() {
   if (opts::DumpTpiRecordBytes)
     return true;
   if (opts::DumpTpiRecords)
+    return true;
+  if (opts::DumpTpiHash)
     return true;
   if (opts::DumpIpiRecords)
     return true;
@@ -450,6 +455,7 @@ int main(int argc_, const char *argv_[]) {
     opts::DumpStreamSummary = true;
     opts::DumpStreamBlocks = true;
     opts::DumpTpiRecords = true;
+    opts::DumpTpiHash = true;
     opts::DumpIpiRecords = true;
     opts::DumpSectionMap = true;
     opts::DumpSectionContribs = true;
