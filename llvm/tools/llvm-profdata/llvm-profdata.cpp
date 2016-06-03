@@ -223,16 +223,19 @@ static WeightedFile parseWeightedFile(const StringRef &WeightedFilename) {
   return WeightedFile(FileName, Weight);
 }
 
-static void parseInputFilenamesFile(const StringRef &InputFilenamesFile,
-                                    WeightedFileVector &WFV) {
+static std::unique_ptr<MemoryBuffer>
+parseInputFilenamesFile(const StringRef &InputFilenamesFile,
+                        WeightedFileVector &WFV) {
   if (InputFilenamesFile == "")
-    return;
+    return {};
 
-  auto Buf = MemoryBuffer::getFileOrSTDIN(InputFilenamesFile);
-  if (!Buf)
-    exitWithErrorCode(Buf.getError(), InputFilenamesFile);
+  auto BufOrError = MemoryBuffer::getFileOrSTDIN(InputFilenamesFile);
+  if (!BufOrError)
+    exitWithErrorCode(BufOrError.getError(), InputFilenamesFile);
 
-  StringRef Data = Buf.get()->getBuffer();
+  std::unique_ptr<MemoryBuffer> Buffer = std::move(*BufOrError);
+  StringRef Data = Buffer->getBuffer();
+
   SmallVector<StringRef, 8> Entries;
   Data.split(Entries, '\n', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
   for (const StringRef &FileWeightEntry : Entries) {
@@ -246,6 +249,8 @@ static void parseInputFilenamesFile(const StringRef &InputFilenamesFile,
     else
       WFV.emplace_back(parseWeightedFile(SanitizedEntry));
   }
+
+  return Buffer;
 }
 
 static int merge_main(int argc, const char *argv[]) {
@@ -288,7 +293,7 @@ static int merge_main(int argc, const char *argv[]) {
     WeightedInputs.push_back(WeightedFile(Filename, 1));
   for (StringRef WeightedFilename : WeightedInputFilenames)
     WeightedInputs.push_back(parseWeightedFile(WeightedFilename));
-  parseInputFilenamesFile(InputFilenamesFile, WeightedInputs);
+  auto Buf = parseInputFilenamesFile(InputFilenamesFile, WeightedInputs);
 
   if (WeightedInputs.empty())
     exitWithError("No input files specified. See " +
