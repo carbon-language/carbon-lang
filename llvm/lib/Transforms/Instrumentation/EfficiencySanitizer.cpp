@@ -63,6 +63,8 @@ STATISTIC(NumFastpaths, "Number of instrumented fastpaths");
 STATISTIC(NumAccessesWithIrregularSize,
           "Number of accesses with a size outside our targeted callout sizes");
 STATISTIC(NumIgnoredStructs, "Number of ignored structs");
+STATISTIC(NumIgnoredGEPs, "Number of ignored GEP instructions");
+STATISTIC(NumInstrumentedGEPs, "Number of instrumented GEP instructions");
 
 static const uint64_t EsanCtorAndDtorPriority = 0;
 static const char *const EsanModuleCtorName = "esan.module_ctor";
@@ -145,6 +147,7 @@ private:
   bool runOnFunction(Function &F, Module &M);
   bool instrumentLoadOrStore(Instruction *I, const DataLayout &DL);
   bool instrumentMemIntrinsic(MemIntrinsic *MI);
+  bool instrumentGetElementPtr(Instruction *I, Module &M);
   bool shouldIgnoreMemoryAccess(Instruction *I);
   int getMemoryAccessFuncIndex(Value *Addr, const DataLayout &DL);
   Value *appToShadow(Value *Shadow, IRBuilder<> &IRB);
@@ -171,6 +174,9 @@ private:
   Function *MemmoveFn, *MemcpyFn, *MemsetFn;
   Function *EsanCtorFunction;
   Function *EsanDtorFunction;
+  // Remember the counter variable for each struct type to avoid
+  // recomputing the variable name later during instrumentation.
+  std::map<Type *, GlobalVariable *> StructTyMap;
 };
 } // namespace
 
@@ -320,6 +326,9 @@ GlobalVariable *EfficiencySanitizer::createCacheFragInfoGV(
                          GlobalVariable::WeakAnyLinkage,
                          ConstantAggregateZero::get(CounterArrayTy),
                          CounterNameStr);
+
+    // Remember the counter variable for each struct type.
+    StructTyMap.insert(std::pair<Type *, GlobalVariable *>(StructTy, Counters));
 
     // FieldTypeNames.
     // We pass the field type name array to the runtime for better reporting.
@@ -477,6 +486,7 @@ bool EfficiencySanitizer::runOnFunction(Function &F, Module &M) {
     return false;
   SmallVector<Instruction *, 8> LoadsAndStores;
   SmallVector<Instruction *, 8> MemIntrinCalls;
+  SmallVector<Instruction *, 8> GetElementPtrs;
   bool Res = false;
   const DataLayout &DL = M.getDataLayout();
 
@@ -488,6 +498,8 @@ bool EfficiencySanitizer::runOnFunction(Function &F, Module &M) {
         LoadsAndStores.push_back(&Inst);
       else if (isa<MemIntrinsic>(Inst))
         MemIntrinCalls.push_back(&Inst);
+      else if (isa<GetElementPtrInst>(Inst))
+        GetElementPtrs.push_back(&Inst);
     }
   }
 
@@ -500,6 +512,12 @@ bool EfficiencySanitizer::runOnFunction(Function &F, Module &M) {
   if (ClInstrumentMemIntrinsics) {
     for (auto Inst : MemIntrinCalls) {
       Res |= instrumentMemIntrinsic(cast<MemIntrinsic>(Inst));
+    }
+  }
+
+  if (Options.ToolType == EfficiencySanitizerOptions::ESAN_CacheFrag) {
+    for (auto Inst : GetElementPtrs) {
+      Res |= instrumentGetElementPtr(Inst, M);
     }
   }
 
@@ -589,6 +607,49 @@ bool EfficiencySanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
   } else
     llvm_unreachable("Unsupported mem intrinsic type");
   return Res;
+}
+
+bool EfficiencySanitizer::instrumentGetElementPtr(Instruction *I, Module &M) {
+  GetElementPtrInst *GepInst = dyn_cast<GetElementPtrInst>(I);
+  if (GepInst == nullptr || !isa<StructType>(GepInst->getSourceElementType()) ||
+      StructTyMap.count(GepInst->getSourceElementType()) == 0 ||
+      !GepInst->hasAllConstantIndices() ||
+      // Only handle simple struct field GEP.
+      GepInst->getNumIndices() != 2) {
+    ++NumIgnoredGEPs;
+    return false;
+  }
+  StructType *StructTy = dyn_cast<StructType>(GepInst->getSourceElementType());
+  if (shouldIgnoreStructType(StructTy)) {
+    ++NumIgnoredGEPs;
+    return false;
+  }
+  ++NumInstrumentedGEPs;
+  // Use the last index as the index within the struct.
+  ConstantInt *Idx = dyn_cast<ConstantInt>(GepInst->getOperand(2));
+  if (Idx == nullptr || Idx->getZExtValue() > StructTy->getNumElements())
+    return false;
+
+  GlobalVariable *CounterArray = StructTyMap[StructTy];
+  if (CounterArray == nullptr)
+    return false;
+  IRBuilder<> IRB(I);
+  Constant *Indices[2];
+  // Xref http://llvm.org/docs/LangRef.html#i-getelementptr and
+  // http://llvm.org/docs/GetElementPtr.html.
+  // The first index of the GEP instruction steps through the first operand,
+  // i.e., the array itself.
+  Indices[0] = ConstantInt::get(IRB.getInt32Ty(), 0);
+  // The second index is the index within the array.
+  Indices[1] = ConstantInt::get(IRB.getInt32Ty(), Idx->getZExtValue());
+  Constant *Counter =
+      ConstantExpr::getGetElementPtr(ArrayType::get(IRB.getInt64Ty(),
+                                                    StructTy->getNumElements()),
+                                     CounterArray, Indices);
+  Value *Load = IRB.CreateLoad(Counter);
+  IRB.CreateStore(IRB.CreateAdd(Load, ConstantInt::get(IRB.getInt64Ty(), 1)),
+                  Counter);
+  return true;
 }
 
 int EfficiencySanitizer::getMemoryAccessFuncIndex(Value *Addr,
