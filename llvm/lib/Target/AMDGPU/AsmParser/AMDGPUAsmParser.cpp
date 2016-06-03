@@ -776,34 +776,48 @@ bool AMDGPUAsmParser::ParseAMDGPURegister(RegisterKind& RegKind, unsigned& Reg, 
       RegKind = IS_SPECIAL;
     } else {
       unsigned RegNumIndex = 0;
-      if (RegName[0] == 'v') { RegNumIndex = 1; RegKind = IS_VGPR; }
-      else if (RegName[0] == 's') { RegNumIndex = 1; RegKind = IS_SGPR; }
-      else if (RegName.startswith("ttmp")) { RegNumIndex = strlen("ttmp"); RegKind = IS_TTMP; }
-      else { return false; }
+      if (RegName[0] == 'v') {
+        RegNumIndex = 1;
+        RegKind = IS_VGPR;
+      } else if (RegName[0] == 's') {
+        RegNumIndex = 1;
+        RegKind = IS_SGPR;
+      } else if (RegName.startswith("ttmp")) {
+        RegNumIndex = strlen("ttmp");
+        RegKind = IS_TTMP;
+      } else {
+        return false;
+      }
       if (RegName.size() > RegNumIndex) {
         // Single 32-bit register: vXX.
-        if (RegName.substr(RegNumIndex).getAsInteger(10, RegNum)) { return false; }
+        if (RegName.substr(RegNumIndex).getAsInteger(10, RegNum))
+          return false;
         Parser.Lex();
         RegWidth = 1;
       } else {
         // Range of registers: v[XX:YY]. ":YY" is optional.
         Parser.Lex();
         int64_t RegLo, RegHi;
-        if (getLexer().isNot(AsmToken::LBrac)) { return false; }
+        if (getLexer().isNot(AsmToken::LBrac))
+          return false;
         Parser.Lex();
 
-        if (getParser().parseAbsoluteExpression(RegLo)) { return false; }
+        if (getParser().parseAbsoluteExpression(RegLo))
+          return false;
 
         const bool isRBrace = getLexer().is(AsmToken::RBrac);
-        if (!isRBrace && getLexer().isNot(AsmToken::Colon)) { return false; }
+        if (!isRBrace && getLexer().isNot(AsmToken::Colon))
+          return false;
         Parser.Lex();
 
         if (isRBrace) {
           RegHi = RegLo;
         } else {
-          if (getParser().parseAbsoluteExpression(RegHi)) { return false; }
+          if (getParser().parseAbsoluteExpression(RegHi))
+            return false;
 
-          if (getLexer().isNot(AsmToken::RBrac)) { return false; }
+          if (getLexer().isNot(AsmToken::RBrac))
+            return false;
           Parser.Lex();
         }
         RegNum = (unsigned) RegLo;
@@ -813,8 +827,10 @@ bool AMDGPUAsmParser::ParseAMDGPURegister(RegisterKind& RegKind, unsigned& Reg, 
   } else if (getLexer().is(AsmToken::LBrac)) {
     // List of consecutive registers: [s0,s1,s2,s3]
     Parser.Lex();
-    if (!ParseAMDGPURegister(RegKind, Reg, RegNum, RegWidth)) { return false; }
-    if (RegWidth != 1) { return false; }
+    if (!ParseAMDGPURegister(RegKind, Reg, RegNum, RegWidth))
+      return false;
+    if (RegWidth != 1)
+      return false;
     RegisterKind RegKind1;
     unsigned Reg1, RegNum1, RegWidth1;
     do {
@@ -824,9 +840,15 @@ bool AMDGPUAsmParser::ParseAMDGPURegister(RegisterKind& RegKind, unsigned& Reg, 
         Parser.Lex();
         break;
       } else if (ParseAMDGPURegister(RegKind1, Reg1, RegNum1, RegWidth1)) {
-        if (RegWidth1 != 1) { return false; }
-        if (RegKind1 != RegKind) { return false; }
-        if (!AddNextRegisterToList(Reg, RegWidth, RegKind1, Reg1, RegNum1)) { return false; }
+        if (RegWidth1 != 1) {
+          return false;
+        }
+        if (RegKind1 != RegKind) {
+          return false;
+        }
+        if (!AddNextRegisterToList(Reg, RegWidth, RegKind1, Reg1, RegNum1)) {
+          return false;
+        }
       } else {
         return false;
       }
@@ -848,12 +870,15 @@ bool AMDGPUAsmParser::ParseAMDGPURegister(RegisterKind& RegKind, unsigned& Reg, 
       // SGPR and TTMP registers must be are aligned. Max required alignment is 4 dwords.
       Size = std::min(RegWidth, 4u);
     }
-    if (RegNum % Size != 0) { return false; }
+    if (RegNum % Size != 0)
+      return false;
     RegNum = RegNum / Size;
     int RCID = getRegClass(RegKind, RegWidth);
-    if (RCID == -1) { return false; }
+    if (RCID == -1)
+      return false;
     const MCRegisterClass RC = TRI->getRegClass(RCID);
-    if (RegNum >= RC.getNumRegs()) { return false; }
+    if (RegNum >= RC.getNumRegs())
+      return false;
     Reg = RC.getRegister(RegNum);
     break;
   }
@@ -862,7 +887,8 @@ bool AMDGPUAsmParser::ParseAMDGPURegister(RegisterKind& RegKind, unsigned& Reg, 
     assert(false); return false;
   }
 
-  if (!subtargetHasRegister(*TRI, Reg)) { return false; }
+  if (!subtargetHasRegister(*TRI, Reg))
+    return false;
   return true;
 }
 
