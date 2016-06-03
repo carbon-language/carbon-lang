@@ -34,8 +34,6 @@ namespace __esan {
 
 extern bool EsanIsInitialized;
 
-extern ToolType WhichTool;
-
 void initializeLibrary(ToolType Tool);
 int finalizeLibrary();
 // Esan creates the variable per tool per compilation unit at compile time
