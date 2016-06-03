@@ -30,6 +30,7 @@ extern void __cxa_atexit(void (*function)(void));
 namespace __esan {
 
 bool EsanIsInitialized;
+bool EsanDuringInit;
 ShadowMapping Mapping;
 
 // Different tools use different scales within the same shadow mapping scheme.
@@ -173,11 +174,13 @@ static void initializeShadow() {
 }
 
 void initializeLibrary(ToolType Tool) {
-  // We assume there is only one thread during init.
-  if (EsanIsInitialized) {
-    CHECK(Tool == __esan_which_tool);
+  // We assume there is only one thread during init, but we need to
+  // guard against double-init when we're (re-)called from an
+  // early interceptor.
+  if (EsanIsInitialized || EsanDuringInit)
     return;
-  }
+  EsanDuringInit = true;
+  CHECK(Tool == __esan_which_tool);
   SanitizerToolName = "EfficiencySanitizer";
   CacheBinaryName();
   initializeFlags();
@@ -203,6 +206,7 @@ void initializeLibrary(ToolType Tool) {
   }
 
   EsanIsInitialized = true;
+  EsanDuringInit = false;
 }
 
 int finalizeLibrary() {
