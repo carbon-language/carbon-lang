@@ -22,6 +22,7 @@ extern llvm::cl::opt<bool> PrintReordered;
 extern llvm::cl::opt<bool> PrintEHRanges;
 extern llvm::cl::opt<bool> PrintUCE;
 extern llvm::cl::opt<bool> PrintPeepholes;
+extern llvm::cl::opt<bool> PrintSimplifyROLoads;
 extern llvm::cl::opt<llvm::bolt::BinaryFunction::SplittingType> SplitFunctions;
 extern bool shouldProcess(const llvm::bolt::BinaryFunction &Function);
 
@@ -565,6 +566,120 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
       }
     }
   }
+}
+
+bool SimplifyRODataLoads::simplifyRODataLoads(
+    BinaryContext &BC, BinaryFunction &BF) {
+  auto &MIA = BC.MIA;
+
+  uint64_t NumLocalLoadsSimplified = 0;
+  uint64_t NumDynamicLocalLoadsSimplified = 0;
+  uint64_t NumLocalLoadsFound = 0;
+  uint64_t NumDynamicLocalLoadsFound = 0;
+
+  for (auto *BB : BF.layout()) {
+    for (auto &Inst : *BB) {
+      unsigned Opcode = Inst.getOpcode();
+      const MCInstrDesc &Desc = BC.MII->get(Opcode);
+
+      // Skip instructions that do not load from memory.
+      if (!Desc.mayLoad())
+        continue;
+
+      // Try to statically evaluate the target memory address;
+      uint64_t TargetAddress;
+
+      if (MIA->hasRIPOperand(Inst)) {
+        // Try to find the symbol that corresponds to the rip-relative operand.
+        MCOperand DisplOp;
+        if (!MIA->getRIPOperandDisp(Inst, DisplOp))
+          continue;
+
+        assert(DisplOp.isExpr() &&
+              "found rip-relative with non-symbolic displacement");
+
+        // Get displacement symbol.
+        const MCSymbolRefExpr *DisplExpr;
+        if (!(DisplExpr = dyn_cast<MCSymbolRefExpr>(DisplOp.getExpr())))
+          continue;
+        const MCSymbol &DisplSymbol = DisplExpr->getSymbol();
+
+        // Look up the symbol address in the global symbols map of the binary
+        // context object.
+        auto GI = BC.GlobalSymbols.find(DisplSymbol.getName().str());
+        if (GI == BC.GlobalSymbols.end())
+          continue;
+        TargetAddress = GI->second;
+      } else if (!MIA->evaluateMemOperand(Inst, TargetAddress)) {
+        continue;
+      }
+
+      // Get the contents of the section containing the target addresss of the
+      // memory operand. We are only interested in read-only sections.
+      ErrorOr<SectionRef> DataSectionOrErr =
+        BC.getSectionForAddress(TargetAddress);
+      if (!DataSectionOrErr)
+        continue;
+      SectionRef DataSection = DataSectionOrErr.get();
+      if (!DataSection.isReadOnly())
+        continue;
+      uint32_t Offset = TargetAddress - DataSection.getAddress();
+      StringRef ConstantData;
+      if (std::error_code EC = DataSection.getContents(ConstantData)) {
+        errs() << "BOLT-ERROR: 'cannot get section contents': "
+               << EC.message() << ".\n";
+        exit(1);
+      }
+
+      ++NumLocalLoadsFound;
+      if (BB->getExecutionCount() != BinaryBasicBlock::COUNT_NO_PROFILE)
+        NumDynamicLocalLoadsFound += BB->getExecutionCount();
+
+      if (MIA->replaceMemOperandWithImm(Inst, ConstantData, Offset)) {
+        ++NumLocalLoadsSimplified;
+        if (BB->getExecutionCount() != BinaryBasicBlock::COUNT_NO_PROFILE)
+          NumDynamicLocalLoadsSimplified += BB->getExecutionCount();
+      }
+    }
+  }
+
+  NumLoadsFound += NumLocalLoadsFound;
+  NumDynamicLoadsFound += NumDynamicLocalLoadsFound;
+  NumLoadsSimplified += NumLocalLoadsSimplified;
+  NumDynamicLoadsSimplified += NumDynamicLocalLoadsSimplified;
+
+  return NumLocalLoadsSimplified > 0;
+}
+
+void SimplifyRODataLoads::runOnFunctions(
+  BinaryContext &BC,
+  std::map<uint64_t, BinaryFunction> &BFs,
+  std::set<uint64_t> &
+) {
+
+  for (auto &It : BFs) {
+    auto &Function = It.second;
+
+    if (!Function.isSimple())
+      continue;
+
+    if (simplifyRODataLoads(BC, Function)) {
+      if (opts::PrintAll || opts::PrintSimplifyROLoads) {
+        Function.print(errs(),
+                       "after simplifying read-only section loads",
+                       true);
+      }
+      if (opts::DumpDotAll) {
+        Function.dumpGraphForPass("simplify-rodata-loads");
+      }
+    }
+  }
+
+  outs() << "BOLT: simplified " << NumLoadsSimplified << " out of ";
+  outs() << NumLoadsFound << " loads from a statically computed address.\n";
+  outs() << "BOLT: dynamic loads simplified: " << NumDynamicLoadsSimplified;
+  outs() << "\n";
+  outs() << "BOLT: dynamic loads found: " << NumDynamicLoadsFound << "\n";
 }
 
 } // namespace bolt

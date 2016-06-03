@@ -42,6 +42,14 @@ Peepholes("peepholes",
           llvm::cl::init(true),
           llvm::cl::Optional);
 
+static llvm::cl::opt<bool>
+SimplifyRODataLoads("simplify-rodata-loads",
+                    llvm::cl::desc("simplify loads from read-only sections by "
+                                   "replacing the memory operand with the "
+                                   "constant found in the corresponding "
+                                   "section"),
+                    llvm::cl::Optional);
+
 } // namespace opts
 
 namespace llvm {
@@ -68,6 +76,9 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(
     std::move(llvm::make_unique<EliminateUnreachableBlocks>(Manager.NagUser)),
     opts::EliminateUnreachable);
+
+  Manager.registerPass(llvm::make_unique<SimplifyRODataLoads>(),
+                       opts::SimplifyRODataLoads);
 
   Manager.registerPass(std::move(llvm::make_unique<ReorderBasicBlocks>()));
 

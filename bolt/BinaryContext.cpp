@@ -242,5 +242,13 @@ ErrorOr<SectionRef> BinaryContext::getSectionForAddress(uint64_t Address) const{
   return std::make_error_code(std::errc::bad_address);
 }
 
+uint64_t BinaryContext::getInstructionSize(const MCInst &Instr) const {
+  SmallString<256> Code;
+  SmallVector<MCFixup, 4> Fixups;
+  raw_svector_ostream VecOS(Code);
+  MCE->encodeInstruction(Instr, VecOS, Fixups, *STI);
+  return Code.size();
+}
+
 } // namespace bolt
 } // namespace llvm

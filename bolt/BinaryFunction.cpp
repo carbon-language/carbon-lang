@@ -327,14 +327,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
 
     for (auto &Instr : *BB) {
       printInstruction(Instr);
-
-      // Calculate the size of the instruction.
-      // Note: this is imprecise since happening prior to relaxation.
-      SmallString<256> Code;
-      SmallVector<MCFixup, 4> Fixups;
-      raw_svector_ostream VecOS(Code);
-      BC.MCE->encodeInstruction(Instr, VecOS, Fixups, *BC.STI);
-      Offset += Code.size();
+      Offset += BC.getInstructionSize(Instr);
     }
 
     if (!BB->Successors.empty()) {

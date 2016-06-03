@@ -177,6 +177,12 @@ public:
   /// disassembled functions.
   void preprocessFunctionDebugInfo(
       std::map<uint64_t, BinaryFunction> &BinaryFunctions);
+
+  /// Calculate the size of the given instruction.
+  /// Note: this can be imprecise wrt the final binary since happening prior to
+  /// relaxation, as well as wrt the original binary because of opcode
+  /// shortening.
+  uint64_t getInstructionSize(const MCInst &Instr) const;
 };
 
 } // namespace bolt

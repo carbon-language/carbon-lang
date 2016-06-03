@@ -176,6 +176,12 @@ PrintEHRanges("print-eh-ranges",
               cl::Hidden);
 
 cl::opt<bool>
+PrintSimplifyROLoads("print-simplify-rodata-loads",
+                     cl::desc("print functions after simplification of RO data"
+                              " loads"),
+                     cl::Hidden);
+
+cl::opt<bool>
 PrintReordered("print-reordered",
                cl::desc("print functions after layout optimization"),
                cl::Hidden);

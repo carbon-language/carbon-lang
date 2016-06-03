@@ -157,6 +157,31 @@ class Peepholes : public BinaryFunctionPass {
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
+/// An optimization to simplify loads from read-only sections.The pass converts
+/// load instructions with statically computed target address such as:
+///
+///      mov 0x12f(%rip), %eax
+///
+/// to their counterparts that use immediate opreands instead of memory loads:
+///
+///     mov $0x4007dc, %eax
+///
+/// when the target address points somewhere inside a read-only section.
+///
+class SimplifyRODataLoads : public BinaryFunctionPass {
+  uint64_t NumLoadsSimplified{0};
+  uint64_t NumDynamicLoadsSimplified{0};
+  uint64_t NumLoadsFound{0};
+  uint64_t NumDynamicLoadsFound{0};
+
+  bool simplifyRODataLoads(BinaryContext &BC, BinaryFunction &BF);
+
+public:
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
 } // namespace bolt
 } // namespace llvm
 
