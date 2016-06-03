@@ -223,11 +223,45 @@ static WeightedFile parseWeightedFile(const StringRef &WeightedFilename) {
   return WeightedFile(FileName, Weight);
 }
 
+static void parseInputFilenamesFile(const StringRef &InputFilenamesFile,
+                                    WeightedFileVector &WFV) {
+  if (InputFilenamesFile == "")
+    return;
+
+  auto Buf = MemoryBuffer::getFileOrSTDIN(InputFilenamesFile);
+  if (!Buf)
+    exitWithErrorCode(Buf.getError(), InputFilenamesFile);
+
+  StringRef Data = Buf.get()->getBuffer();
+  SmallVector<StringRef, 8> Entries;
+  Data.split(Entries, '\n', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
+  for (const StringRef &FileWeightEntry : Entries) {
+    StringRef SanitizedEntry = FileWeightEntry.trim(" \t\v\f\r");
+    // Skip comments.
+    if (SanitizedEntry.startswith("#"))
+      continue;
+    // If there's no comma, it's an unweighted profile.
+    else if (SanitizedEntry.rfind(',') == StringRef::npos)
+      WFV.emplace_back(SanitizedEntry, 1);
+    else
+      WFV.emplace_back(parseWeightedFile(SanitizedEntry));
+  }
+}
+
 static int merge_main(int argc, const char *argv[]) {
   cl::list<std::string> InputFilenames(cl::Positional,
                                        cl::desc("<filename...>"));
   cl::list<std::string> WeightedInputFilenames("weighted-input",
                                                cl::desc("<weight>,<filename>"));
+  cl::opt<std::string> InputFilenamesFile(
+      "input-files", cl::init(""),
+      cl::desc("Path to file containing newline-separated "
+               "<filename>[,<weight>] entries"));
+  cl::alias InputFilenamesFileA("f", cl::desc("Alias for --input-files"),
+                                cl::aliasopt(InputFilenamesFile));
+  cl::opt<bool> DumpInputFileList(
+      "dump-input-file-list", cl::init(false), cl::Hidden,
+      cl::desc("Dump the list of input files and their weights, then exit"));
   cl::opt<std::string> OutputFilename("output", cl::value_desc("output"),
                                       cl::init("-"), cl::Required,
                                       cl::desc("Output file"));
@@ -249,15 +283,22 @@ static int merge_main(int argc, const char *argv[]) {
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM profile data merger\n");
 
-  if (InputFilenames.empty() && WeightedInputFilenames.empty())
-    exitWithError("No input files specified. See " +
-                  sys::path::filename(argv[0]) + " -help");
-
   WeightedFileVector WeightedInputs;
   for (StringRef Filename : InputFilenames)
     WeightedInputs.push_back(WeightedFile(Filename, 1));
   for (StringRef WeightedFilename : WeightedInputFilenames)
     WeightedInputs.push_back(parseWeightedFile(WeightedFilename));
+  parseInputFilenamesFile(InputFilenamesFile, WeightedInputs);
+
+  if (WeightedInputs.empty())
+    exitWithError("No input files specified. See " +
+                  sys::path::filename(argv[0]) + " -help");
+
+  if (DumpInputFileList) {
+    for (auto &WF : WeightedInputs)
+      outs() << WF.Weight << "," << WF.Filename << "\n";
+    return 0;
+  }
 
   if (ProfileKind == instr)
     mergeInstrProfile(WeightedInputs, OutputFilename, OutputFormat,
