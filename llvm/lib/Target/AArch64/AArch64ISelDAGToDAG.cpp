@@ -1505,6 +1505,39 @@ static bool isBitfieldExtractOpFromAnd(SelectionDAG *CurDAG, SDNode *N,
   return true;
 }
 
+static bool isBitfieldExtractOpFromSExtInReg(SDNode *N, unsigned &Opc,
+                                             SDValue &Opd0, unsigned &Immr,
+                                             unsigned &Imms) {
+  assert(N->getOpcode() == ISD::SIGN_EXTEND_INREG);
+
+  EVT VT = N->getValueType(0);
+  unsigned BitWidth = VT.getSizeInBits();
+  assert((VT == MVT::i32 || VT == MVT::i64) &&
+         "Type checking must have been done before calling this function");
+
+  SDValue Op = N->getOperand(0);
+  if (Op->getOpcode() == ISD::TRUNCATE) {
+    Op = Op->getOperand(0);
+    VT = Op->getValueType(0);
+    BitWidth = VT.getSizeInBits();
+  }
+
+  uint64_t ShiftImm;
+  if (!isOpcWithIntImmediate(Op.getNode(), ISD::SRL, ShiftImm) &&
+      !isOpcWithIntImmediate(Op.getNode(), ISD::SRA, ShiftImm))
+    return false;
+
+  unsigned Width = cast<VTSDNode>(N->getOperand(1))->getVT().getSizeInBits();
+  if (ShiftImm + Width > BitWidth)
+    return false;
+
+  Opc = (VT == MVT::i32) ? AArch64::SBFMWri : AArch64::SBFMXri;
+  Opd0 = Op.getOperand(0);
+  Immr = ShiftImm;
+  Imms = ShiftImm + Width - 1;
+  return true;
+}
+
 static bool isSeveralBitsExtractOpFromShr(SDNode *N, unsigned &Opc,
                                           SDValue &Opd0, unsigned &LSB,
                                           unsigned &MSB) {
@@ -1635,6 +1668,9 @@ static bool isBitfieldExtractOp(SelectionDAG *CurDAG, SDNode *N, unsigned &Opc,
   case ISD::SRL:
   case ISD::SRA:
     return isBitfieldExtractOpFromShr(N, Opc, Opd0, Immr, Imms, BiggerPattern);
+
+  case ISD::SIGN_EXTEND_INREG:
+    return isBitfieldExtractOpFromSExtInReg(N, Opc, Opd0, Immr, Imms);
   }
 
   unsigned NOpc = N->getMachineOpcode();
@@ -2545,6 +2581,7 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
   case ISD::SRL:
   case ISD::AND:
   case ISD::SRA:
+  case ISD::SIGN_EXTEND_INREG:
     if (tryBitfieldExtractOp(Node))
       return;
     if (tryBitfieldInsertInZeroOp(Node))

@@ -463,3 +463,91 @@ define i64 @test8(i64 %a) {
   %2 = or i64 %1, 157601565442048     ; 0x00008f5679530000
   ret i64 %2
 }
+
+; CHECK-LABEL: @test9
+; CHECK: sbfx w0, w0, #23, #8
+define signext i8 @test9(i32 %a) {
+  %tmp = ashr i32 %a, 23
+  %res = trunc i32 %tmp to i8
+  ret i8 %res
+}
+
+; CHECK-LABEL: @test10
+; CHECK: sbfx w0, w0, #23, #8
+define signext i8 @test10(i32 %a) {
+  %tmp = lshr i32 %a, 23
+  %res = trunc i32 %tmp to i8
+  ret i8 %res
+}
+
+; CHECK-LABEL: @test11
+; CHECK: sbfx w0, w0, #15, #16
+define signext i16 @test11(i32 %a) {
+  %tmp = lshr i32 %a, 15
+  %res = trunc i32 %tmp to i16
+  ret i16 %res
+}
+
+; CHECK-LABEL: @test12
+; CHECK: sbfx w0, w0, #16, #8
+define signext i8 @test12(i64 %a) {
+  %tmp = lshr i64 %a, 16
+  %res = trunc i64 %tmp to i8
+  ret i8 %res
+}
+
+; CHECK-LABEL: @test13
+; CHECK: sbfx x0, x0, #30, #8
+define signext i8 @test13(i64 %a) {
+  %tmp = lshr i64 %a, 30
+  %res = trunc i64 %tmp to i8
+  ret i8 %res
+}
+
+; CHECK-LABEL: @test14
+; CHECK: sbfx x0, x0, #23, #16
+define signext i16 @test14(i64 %a) {
+  %tmp = lshr i64 %a, 23
+  %res = trunc i64 %tmp to i16
+  ret i16 %res
+}
+
+; CHECK-LABEL: @test15
+; CHECK: asr w0, w0, #25
+define signext i8 @test15(i32 %a) {
+  %tmp = ashr i32 %a, 25
+  %res = trunc i32 %tmp to i8
+  ret i8 %res
+}
+
+; CHECK-LABEL: @test16
+; CHECK: lsr w0, w0, #25
+define signext i8 @test16(i32 %a) {
+  %tmp = lshr i32 %a, 25
+  %res = trunc i32 %tmp to i8
+  ret i8 %res
+}
+
+; CHECK-LABEL: @test17
+; CHECK: lsr x0, x0, #49
+define signext i16 @test17(i64 %a) {
+  %tmp = lshr i64 %a, 49
+  %res = trunc i64 %tmp to i16
+  ret i16 %res
+}
+
+; SHR with multiple uses is fine as SXTH and SBFX are both aliases of SBFM.
+; However, allowing the transformation means the SHR and SBFX can execute in
+; parallel.
+;
+; CHECK-LABEL: @test18
+; CHECK: lsr x1, x0, #23
+; CHECK: sbfx x0, x0, #23, #16
+define void @test18(i64 %a) {
+  %tmp = lshr i64 %a, 23
+  %res = trunc i64 %tmp to i16
+  call void @use(i16 %res, i64 %tmp)
+  ret void
+}
+
+declare void @use(i16 signext, i64)
