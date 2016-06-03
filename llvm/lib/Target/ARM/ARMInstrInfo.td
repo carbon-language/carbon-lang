@@ -241,6 +241,8 @@ def HasCrypto        : Predicate<"Subtarget->hasCrypto()">,
                                  AssemblerPredicate<"FeatureCrypto", "crypto">;
 def HasCRC           : Predicate<"Subtarget->hasCRC()">,
                                  AssemblerPredicate<"FeatureCRC", "crc">;
+def HasRAS           : Predicate<"Subtarget->hasRAS()">,
+                                 AssemblerPredicate<"FeatureRAS", "ras">;
 def HasFP16          : Predicate<"Subtarget->hasFP16()">,
                                  AssemblerPredicate<"FeatureFP16","half-float conversions">;
 def HasFullFP16      : Predicate<"Subtarget->hasFullFP16()">,
@@ -1910,6 +1912,7 @@ def HINT : AI<(outs), (ins imm0_239:$imm), MiscFrm, NoItinerary,
   bits<8> imm;
   let Inst{27-8} = 0b00110010000011110000;
   let Inst{7-0} = imm;
+  let DecoderMethod = "DecodeHINTInstruction";
 }
 
 def : InstAlias<"nop$p", (HINT 0, pred:$p)>, Requires<[IsARM, HasV6K]>;
@@ -1918,6 +1921,7 @@ def : InstAlias<"wfe$p", (HINT 2, pred:$p)>, Requires<[IsARM, HasV6K]>;
 def : InstAlias<"wfi$p", (HINT 3, pred:$p)>, Requires<[IsARM, HasV6K]>;
 def : InstAlias<"sev$p", (HINT 4, pred:$p)>, Requires<[IsARM, HasV6K]>;
 def : InstAlias<"sevl$p", (HINT 5, pred:$p)>, Requires<[IsARM, HasV8]>;
+def : InstAlias<"esb$p", (HINT 16, pred:$p)>, Requires<[IsARM, HasRAS]>;
 
 def SEL : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm, NoItinerary, "sel",
              "\t$Rd, $Rn, $Rm", []>, Requires<[IsARM, HasV6]> {
