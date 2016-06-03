@@ -72,6 +72,10 @@ static const char *const EsanModuleDtorName = "esan.module_dtor";
 static const char *const EsanInitName = "__esan_init";
 static const char *const EsanExitName = "__esan_exit";
 
+// We need to specify the tool to the runtime earlier than
+// the ctor is called in some cases, so we set a global variable.
+static const char *const EsanWhichToolName = "__esan_which_tool";
+
 // We must keep these Shadow* constants consistent with the esan runtime.
 // FIXME: Try to place these shadow constants, the names of the __esan_*
 // interface functions, and the ToolType enum into a header shared between
@@ -430,6 +434,8 @@ bool EfficiencySanitizer::initOnModule(Module &M) {
   // Create the variable passed to EsanInit and EsanExit.
   Constant *ToolInfoArg = createEsanInitToolInfoArg(M);
   // Constructor
+  // We specify the tool type both in the EsanWhichToolName global
+  // and as an arg to the init routine as a sanity check.
   std::tie(EsanCtorFunction, std::ignore) = createSanitizerCtorAndInitFunctions(
       M, EsanModuleCtorName, EsanInitName, /*InitArgTypes=*/{OrdTy, Int8PtrTy},
       /*InitArgs=*/{
@@ -438,6 +444,13 @@ bool EfficiencySanitizer::initOnModule(Module &M) {
   appendToGlobalCtors(M, EsanCtorFunction, EsanCtorAndDtorPriority);
 
   createDestructor(M, ToolInfoArg);
+
+  new GlobalVariable(M, OrdTy, true,
+                     GlobalValue::WeakAnyLinkage,
+                     ConstantInt::get(OrdTy,
+                                      static_cast<int>(Options.ToolType)),
+                     EsanWhichToolName);
+
   return true;
 }
 
