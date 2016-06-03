@@ -256,7 +256,7 @@ static int merge_main(int argc, const char *argv[]) {
   cl::opt<std::string> InputFilenamesFile(
       "input-files", cl::init(""),
       cl::desc("Path to file containing newline-separated "
-               "<filename>[,<weight>] entries"));
+               "[<weight>,]<filename> entries"));
   cl::alias InputFilenamesFileA("f", cl::desc("Alias for --input-files"),
                                 cl::aliasopt(InputFilenamesFile));
   cl::opt<bool> DumpInputFileList(
