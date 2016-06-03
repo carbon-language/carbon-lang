@@ -1,4 +1,3 @@
-REQUIRES: x86_64-linux
 RUN: sancov -print-coverage-pcs %p/Inputs/test-linux_x86_64 | FileCheck %s
 
 CHECK: 0x4e132b
