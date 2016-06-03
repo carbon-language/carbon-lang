@@ -1199,7 +1199,7 @@ static void
 thinLTOBackends(raw_fd_ostream *ApiFile,
                 const ModuleSummaryIndex &CombinedIndex,
                 StringMap<MemoryBufferRef> &ModuleMap,
-                StringMap<FunctionImporter::ImportMapTy> ImportLists) {
+                StringMap<FunctionImporter::ImportMapTy> &ImportLists) {
   unsigned TaskCount = 0;
   std::vector<ThinLTOTaskInfo> Tasks;
   Tasks.reserve(Modules.size());
