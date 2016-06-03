@@ -376,37 +376,37 @@ multiclass AVX512_maskable_cmp_alt<bits<8> O, Format F, X86VectorVTInfo _,
 // Bitcasts between 512-bit vector types. Return the original type since
 // no instruction is needed for the conversion
 let Predicates = [HasAVX512] in {
-  def : Pat<(v8f64  (bitconvert (v8i64 VR512:$src))),  (v8f64 VR512:$src)>;
-  def : Pat<(v8f64  (bitconvert (v16i32 VR512:$src))), (v8f64 VR512:$src)>;
-  def : Pat<(v8f64  (bitconvert (v32i16 VR512:$src))),  (v8f64 VR512:$src)>;
-  def : Pat<(v8f64  (bitconvert (v64i8 VR512:$src))), (v8f64 VR512:$src)>;
-  def : Pat<(v8f64  (bitconvert (v16f32 VR512:$src))), (v8f64 VR512:$src)>;
-  def : Pat<(v16f32 (bitconvert (v8i64 VR512:$src))),  (v16f32 VR512:$src)>;
+  def : Pat<(v8f64  (bitconvert (v8i64  VR512:$src))), (v8f64  VR512:$src)>;
+  def : Pat<(v8f64  (bitconvert (v16i32 VR512:$src))), (v8f64  VR512:$src)>;
+  def : Pat<(v8f64  (bitconvert (v32i16 VR512:$src))), (v8f64  VR512:$src)>;
+  def : Pat<(v8f64  (bitconvert (v64i8  VR512:$src))), (v8f64  VR512:$src)>;
+  def : Pat<(v8f64  (bitconvert (v16f32 VR512:$src))), (v8f64  VR512:$src)>;
+  def : Pat<(v16f32 (bitconvert (v8i64  VR512:$src))), (v16f32 VR512:$src)>;
   def : Pat<(v16f32 (bitconvert (v16i32 VR512:$src))), (v16f32 VR512:$src)>;
   def : Pat<(v16f32 (bitconvert (v32i16 VR512:$src))), (v16f32 VR512:$src)>;
-  def : Pat<(v16f32 (bitconvert (v64i8 VR512:$src))), (v16f32 VR512:$src)>;
-  def : Pat<(v16f32 (bitconvert (v8f64 VR512:$src))),  (v16f32 VR512:$src)>;
-  def : Pat<(v8i64  (bitconvert (v16i32 VR512:$src))), (v8i64 VR512:$src)>;
-  def : Pat<(v8i64  (bitconvert (v32i16 VR512:$src))), (v8i64 VR512:$src)>;
-  def : Pat<(v8i64  (bitconvert (v64i8 VR512:$src))), (v8i64 VR512:$src)>;
-  def : Pat<(v8i64  (bitconvert (v8f64 VR512:$src))),  (v8i64 VR512:$src)>;
-  def : Pat<(v8i64  (bitconvert (v16f32 VR512:$src))), (v8i64 VR512:$src)>;
-  def : Pat<(v16i32 (bitconvert (v8i64 VR512:$src))), (v16i32 VR512:$src)>;
+  def : Pat<(v16f32 (bitconvert (v64i8  VR512:$src))), (v16f32 VR512:$src)>;
+  def : Pat<(v16f32 (bitconvert (v8f64  VR512:$src))), (v16f32 VR512:$src)>;
+  def : Pat<(v8i64  (bitconvert (v16i32 VR512:$src))), (v8i64  VR512:$src)>;
+  def : Pat<(v8i64  (bitconvert (v32i16 VR512:$src))), (v8i64  VR512:$src)>;
+  def : Pat<(v8i64  (bitconvert (v64i8  VR512:$src))), (v8i64  VR512:$src)>;
+  def : Pat<(v8i64  (bitconvert (v8f64  VR512:$src))), (v8i64  VR512:$src)>;
+  def : Pat<(v8i64  (bitconvert (v16f32 VR512:$src))), (v8i64  VR512:$src)>;
+  def : Pat<(v16i32 (bitconvert (v8i64  VR512:$src))), (v16i32 VR512:$src)>;
   def : Pat<(v16i32 (bitconvert (v16f32 VR512:$src))), (v16i32 VR512:$src)>;
-  def : Pat<(v16i32 (bitconvert (v32i16 VR512:$src))),  (v16i32 VR512:$src)>;
-  def : Pat<(v16i32 (bitconvert (v64i8 VR512:$src))),  (v16i32 VR512:$src)>;
-  def : Pat<(v16i32 (bitconvert (v8f64 VR512:$src))),  (v16i32 VR512:$src)>;
-  def : Pat<(v32i16 (bitconvert (v8i64 VR512:$src))), (v32i16 VR512:$src)>;
-  def : Pat<(v32i16 (bitconvert (v16i32 VR512:$src))),  (v32i16 VR512:$src)>;
-  def : Pat<(v32i16 (bitconvert (v64i8 VR512:$src))),  (v32i16 VR512:$src)>;
-  def : Pat<(v32i16 (bitconvert (v8f64 VR512:$src))),  (v32i16 VR512:$src)>;
+  def : Pat<(v16i32 (bitconvert (v32i16 VR512:$src))), (v16i32 VR512:$src)>;
+  def : Pat<(v16i32 (bitconvert (v64i8  VR512:$src))), (v16i32 VR512:$src)>;
+  def : Pat<(v16i32 (bitconvert (v8f64  VR512:$src))), (v16i32 VR512:$src)>;
+  def : Pat<(v32i16 (bitconvert (v8i64  VR512:$src))), (v32i16 VR512:$src)>;
+  def : Pat<(v32i16 (bitconvert (v16i32 VR512:$src))), (v32i16 VR512:$src)>;
+  def : Pat<(v32i16 (bitconvert (v64i8  VR512:$src))), (v32i16 VR512:$src)>;
+  def : Pat<(v32i16 (bitconvert (v8f64  VR512:$src))), (v32i16 VR512:$src)>;
   def : Pat<(v32i16 (bitconvert (v16f32 VR512:$src))), (v32i16 VR512:$src)>;
   def : Pat<(v32i16 (bitconvert (v16f32 VR512:$src))), (v32i16 VR512:$src)>;
-  def : Pat<(v64i8  (bitconvert (v8i64 VR512:$src))), (v64i8 VR512:$src)>;
-  def : Pat<(v64i8  (bitconvert (v16i32 VR512:$src))), (v64i8 VR512:$src)>;
-  def : Pat<(v64i8  (bitconvert (v32i16 VR512:$src))), (v64i8 VR512:$src)>;
-  def : Pat<(v64i8  (bitconvert (v8f64 VR512:$src))),  (v64i8 VR512:$src)>;
-  def : Pat<(v64i8  (bitconvert (v16f32 VR512:$src))), (v64i8 VR512:$src)>;
+  def : Pat<(v64i8  (bitconvert (v8i64  VR512:$src))), (v64i8  VR512:$src)>;
+  def : Pat<(v64i8  (bitconvert (v16i32 VR512:$src))), (v64i8  VR512:$src)>;
+  def : Pat<(v64i8  (bitconvert (v32i16 VR512:$src))), (v64i8  VR512:$src)>;
+  def : Pat<(v64i8  (bitconvert (v8f64  VR512:$src))), (v64i8  VR512:$src)>;
+  def : Pat<(v64i8  (bitconvert (v16f32 VR512:$src))), (v64i8  VR512:$src)>;
 }
 
 // Alias instruction that maps zero vector to pxor / xorp* for AVX-512.
