@@ -69,7 +69,7 @@ ModStream::symbols(bool *HadError) const {
                           SymbolsSubstream.end());
 }
 
-iterator_range<ModStream::LineInfoArray::Iterator>
+iterator_range<codeview::ModuleSubstreamArray::Iterator>
 ModStream::lines(bool *HadError) const {
   return llvm::make_range(LineInfo.begin(HadError), LineInfo.end());
 }

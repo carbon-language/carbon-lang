@@ -774,6 +774,7 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
 
   initializeFileAndStringTables(Data);
 
+  // TODO: Convert this over to using ModuleSubstreamVisitor.
   while (!Data.empty()) {
     // The section consists of a number of subsection in the following format:
     // |SubSectionType|SubSectionSize|Contents...|

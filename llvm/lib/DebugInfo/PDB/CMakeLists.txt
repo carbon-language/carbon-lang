@@ -33,7 +33,6 @@ add_pdb_impl_folder(Raw
   Raw/InfoStream.cpp
   Raw/MappedBlockStream.cpp
   Raw/ModInfo.cpp
-  Raw/ModuleSubstreamRecord.cpp
   Raw/ModStream.cpp
   Raw/NameHashTable.cpp
   Raw/NameMap.cpp

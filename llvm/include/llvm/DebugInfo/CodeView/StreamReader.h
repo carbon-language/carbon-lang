@@ -52,12 +52,12 @@ public:
     return Error::success();
   }
 
-  template <typename T>
-  Error readArray(VarStreamArray<T> &Array, uint32_t Size) {
+  template <typename T, typename U>
+  Error readArray(VarStreamArray<T, U> &Array, uint32_t Size) {
     StreamRef S;
     if (auto EC = readStreamRef(S, Size))
       return EC;
-    Array = VarStreamArray<T>(S);
+    Array = VarStreamArray<T, U>(S, Array.getExtractor());
     return Error::success();
   }
 

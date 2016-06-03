@@ -72,45 +72,6 @@ struct SecMapEntry {
   support::ulittle32_t SecByteLength; // Byte count of the segment or group.
 };
 
-// Corresponds to the `CV_DebugSSubsectionHeader_t` structure.
-struct ModuleSubsectionHeader {
-  support::ulittle32_t Kind;   // codeview::ModuleSubstreamKind enum
-  support::ulittle32_t Length; // number of bytes occupied by this record.
-};
-
-// Corresponds to the `CV_DebugSLinesHeader_t` structure.
-struct LineTableSubsectionHeader {
-  support::ulittle32_t OffCon;
-  support::ulittle16_t SegCon;
-  support::ulittle16_t Flags;
-  support::ulittle32_t CbCon;
-};
-
-// Corresponds to the `CV_DebugSLinesFileBlockHeader_t` structure.
-struct SourceFileBlockHeader {
-  support::ulittle32_t offFile;
-  support::ulittle32_t nLines;
-  support::ulittle32_t cbBlock;
-  // LineInfo      lines[nLines];
-  // ColumnInfo    columns[nColumns];
-};
-
-// Corresponds to `CV_Line_t` structure
-struct LineInfo {
-  unsigned long Offset; // Offset to start of code bytes for line number
-  unsigned long LinenumStart : 24; // line where statement/expression starts
-  unsigned long
-      DeltaLineEnd : 7;         // delta to line where statement ends (optional)
-  unsigned long FStatement : 1; // true if a statement linenumber, else an
-                                // expression line num
-};
-
-// Corresponds to `CV_Column_t` structure
-struct ColumnInfo {
-  support::ulittle16_t OffColumnStart;
-  support::ulittle16_t OffColumnEnd;
-};
-
 } // namespace pdb
 } // namespace llvm
 

@@ -27,6 +27,8 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/DebugInfo/CodeView/EnumTables.h"
+#include "llvm/DebugInfo/CodeView/Line.h"
+#include "llvm/DebugInfo/CodeView/ModuleSubstreamVisitor.h"
 #include "llvm/DebugInfo/CodeView/StreamReader.h"
 #include "llvm/DebugInfo/CodeView/SymbolDumper.h"
 #include "llvm/DebugInfo/CodeView/TypeDumper.h"
@@ -68,6 +70,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+using namespace llvm::codeview;
 using namespace llvm::pdb;
 
 namespace opts {
@@ -499,7 +502,7 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
           ListScope SS(P, "Symbols");
           codeview::CVSymbolDumper SD(P, TD, nullptr, false);
           bool HadError = false;
-          for (auto &S : ModS.symbols(&HadError)) {
+          for (const auto &S : ModS.symbols(&HadError)) {
             DictScope DD(P, "");
 
             if (opts::DumpModuleSyms)
@@ -515,18 +518,67 @@ static Error dumpDbiStream(ScopedPrinter &P, PDBFile &File,
         if (opts::DumpLineInfo) {
           ListScope SS(P, "LineInfo");
           bool HadError = false;
-          for (auto &L : ModS.lines(&HadError)) {
-            DictScope DD(P, "");
-            P.printEnum("Kind", uint32_t(L.getSubstreamKind()),
-                        codeview::getModuleSubstreamKindNames());
-            ArrayRef<uint8_t> Data;
-            codeview::StreamReader R(L.getRecordData());
-            if (auto EC = R.readBytes(Data, R.bytesRemaining())) {
-              return make_error<RawError>(
-                  raw_error_code::corrupt_file,
-                  "DBI stream contained corrupt line info record");
+          // Define a locally scoped visitor to print the different
+          // substream types types.
+          class RecordVisitor : public codeview::IModuleSubstreamVisitor {
+          public:
+            RecordVisitor(ScopedPrinter &P) : P(P) {}
+            Error visitUnknown(ModuleSubstreamKind Kind,
+                               StreamRef Data) override {
+              DictScope DD(P, "Unknown");
+              return printBinaryData(Data);
             }
-            P.printBinaryBlock("Data", Data);
+            Error visitFileChecksums(StreamRef Data) override {
+              DictScope DD(P, "FileChecksums");
+              return printBinaryData(Data);
+            }
+
+            Error visitLines(StreamRef Data, const LineSubstreamHeader *Header,
+                             LineInfoArray Lines) override {
+              DictScope DD(P, "Lines");
+              for (const auto &L : Lines) {
+                P.printNumber("FileOffset", L.Offset);
+                for (const auto &N : L.LineNumbers) {
+                  DictScope DDD(P, "Line");
+                  LineInfo LI(N.Flags);
+                  P.printNumber("Offset", N.Offset);
+                  if (LI.isAlwaysStepInto())
+                    P.printString("StepInto", StringRef("Always"));
+                  else if (LI.isNeverStepInto())
+                    P.printString("StepInto", StringRef("Never"));
+                  else
+                    P.printNumber("LineNumberStart", LI.getStartLine());
+                  P.printNumber("EndDelta", LI.getLineDelta());
+                  P.printBoolean("IsStatement", LI.isStatement());
+                }
+                for (const auto &C : L.Columns) {
+                  DictScope DDD(P, "Column");
+                  P.printNumber("Start", C.StartColumn);
+                  P.printNumber("End", C.EndColumn);
+                }
+              }
+              return printBinaryData(Data);
+            }
+
+          private:
+            Error printBinaryData(StreamRef Stream) {
+              ArrayRef<uint8_t> Data;
+              StreamReader R(Stream);
+              if (auto EC = R.readBytes(Data, R.bytesRemaining())) {
+                return make_error<RawError>(
+                    raw_error_code::corrupt_file,
+                    "DBI stream contained corrupt line info record");
+              }
+              P.printBinaryBlock("Data", Data);
+              P.flush();
+              return Error::success();
+            }
+            ScopedPrinter &P;
+          };
+          RecordVisitor V(P);
+          for (const auto &L : ModS.lines(&HadError)) {
+            if (auto EC = codeview::visitModuleSubstream(L, V))
+              return EC;
           }
         }
       }

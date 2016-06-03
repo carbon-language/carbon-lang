@@ -1,4 +1,4 @@
-//===- ModuleSubstreamRecord.cpp --------------------------------*- C++ -*-===//
+//===- ModuleSubstream.cpp --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,24 +7,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/PDB/Raw/ModuleSubstreamRecord.h"
+#include "llvm/DebugInfo/CodeView/ModuleSubstream.h"
 
 #include "llvm/DebugInfo/CodeView/StreamReader.h"
-#include "llvm/DebugInfo/PDB/Raw/RawTypes.h"
 
 using namespace llvm;
 using namespace llvm::codeview;
-using namespace llvm::pdb;
 
-ModuleSubstreamRecord::ModuleSubstreamRecord()
-    : Kind(ModuleSubstreamKind::None) {}
+ModuleSubstream::ModuleSubstream() : Kind(ModuleSubstreamKind::None) {}
 
-ModuleSubstreamRecord::ModuleSubstreamRecord(ModuleSubstreamKind Kind,
-                                             StreamRef Data)
+ModuleSubstream::ModuleSubstream(ModuleSubstreamKind Kind, StreamRef Data)
     : Kind(Kind), Data(Data) {}
 
-Error ModuleSubstreamRecord::initialize(StreamRef Stream,
-                                        ModuleSubstreamRecord &Info) {
+Error ModuleSubstream::initialize(StreamRef Stream, ModuleSubstream &Info) {
   const ModuleSubsectionHeader *Header;
   StreamReader Reader(Stream);
   if (auto EC = Reader.readObject(Header))
@@ -38,12 +33,10 @@ Error ModuleSubstreamRecord::initialize(StreamRef Stream,
   return Error::success();
 }
 
-uint32_t ModuleSubstreamRecord::getRecordLength() const {
+uint32_t ModuleSubstream::getRecordLength() const {
   return sizeof(ModuleSubsectionHeader) + Data.getLength();
 }
 
-ModuleSubstreamKind ModuleSubstreamRecord::getSubstreamKind() const {
-  return Kind;
-}
+ModuleSubstreamKind ModuleSubstream::getSubstreamKind() const { return Kind; }
 
-StreamRef ModuleSubstreamRecord::getRecordData() const { return Data; }
+StreamRef ModuleSubstream::getRecordData() const { return Data; }
