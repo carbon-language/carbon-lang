@@ -102,6 +102,10 @@ unsigned MipsABIInfo::GetBasePtr() const {
   return ArePtrs64bit() ? Mips::S7_64 : Mips::S7;
 }
 
+unsigned MipsABIInfo::GetGlobalPtr() const {
+  return ArePtrs64bit() ? Mips::GP_64 : Mips::GP;
+}
+
 unsigned MipsABIInfo::GetNullPtr() const {
   return ArePtrs64bit() ? Mips::ZERO_64 : Mips::ZERO;
 }
