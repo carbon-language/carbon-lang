@@ -282,6 +282,27 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       NewFn = F;
       return true;
     }
+    // Upgrade any XOP PERMIL2 index operand still using a float/double vector.
+    if (Name.startswith("x86.xop.vpermil2")) {
+      auto Params = F->getFunctionType()->params();
+      auto Idx = Params[2];
+      if (Idx->getScalarType()->isFloatingPointTy()) {
+        F->setName(Name + ".old");
+        unsigned IdxSize = Idx->getPrimitiveSizeInBits();
+        unsigned EltSize = Idx->getScalarSizeInBits();
+        Intrinsic::ID Permil2ID;
+        if (EltSize == 64 && IdxSize == 128)
+          Permil2ID = Intrinsic::x86_xop_vpermil2pd;
+        else if (EltSize == 32 && IdxSize == 128)
+          Permil2ID = Intrinsic::x86_xop_vpermil2ps;
+        else if (EltSize == 64 && IdxSize == 256)
+          Permil2ID = Intrinsic::x86_xop_vpermil2pd_256;
+        else
+          Permil2ID = Intrinsic::x86_xop_vpermil2ps_256;
+        NewFn = Intrinsic::getDeclaration(F->getParent(), Permil2ID);
+        return true;
+      }
+    }
     break;
   }
   }
@@ -910,6 +931,20 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         Builder.CreateCall(NewFn, {CI->getArgOperand(1)}, Name));
     CI->eraseFromParent();
     return;
+
+  case Intrinsic::x86_xop_vpermil2pd:
+  case Intrinsic::x86_xop_vpermil2ps:
+  case Intrinsic::x86_xop_vpermil2pd_256:
+  case Intrinsic::x86_xop_vpermil2ps_256: {
+    SmallVector<Value *, 4> Args(CI->arg_operands().begin(),
+                                 CI->arg_operands().end());
+    VectorType *FltIdxTy = cast<VectorType>(Args[2]->getType());
+    VectorType *IntIdxTy = VectorType::getInteger(FltIdxTy);
+    Args[2] = Builder.CreateBitCast(Args[2], IntIdxTy);
+    CI->replaceAllUsesWith(Builder.CreateCall(NewFn, Args, Name));
+    CI->eraseFromParent();
+    return;
+  }
 
   case Intrinsic::x86_sse41_ptestc:
   case Intrinsic::x86_sse41_ptestz:
