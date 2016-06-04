@@ -2439,15 +2439,14 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
   }
 
   // If we aren't dealing with a constant on the RHS, exit early.
-  ConstantInt *CI = dyn_cast<ConstantInt>(ICI.getOperand(1));
+  auto *CI = dyn_cast<ConstantInt>(ICI.getOperand(1));
   if (!CI)
     return nullptr;
 
   // Compute the constant that would happen if we truncated to SrcTy then
-  // reextended to DestTy.
+  // re-extended to DestTy.
   Constant *Res1 = ConstantExpr::getTrunc(CI, SrcTy);
-  Constant *Res2 = ConstantExpr::getCast(LHSCI->getOpcode(),
-                                                Res1, DestTy);
+  Constant *Res2 = ConstantExpr::getCast(LHSCI->getOpcode(), Res1, DestTy);
 
   // If the re-extended constant didn't change...
   if (Res2 == CI) {
