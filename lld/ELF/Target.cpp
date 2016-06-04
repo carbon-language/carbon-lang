@@ -278,7 +278,7 @@ X86TargetInfo::X86TargetInfo() {
   TlsOffsetRel = R_386_TLS_DTPOFF32;
   PltEntrySize = 16;
   PltZeroSize = 16;
-  TlsGdToLeSkip = 2;
+  TlsGdRelaxSkip = 2;
 }
 
 RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
@@ -507,7 +507,7 @@ X86_64TargetInfo::X86_64TargetInfo() {
   TlsOffsetRel = R_X86_64_DTPOFF64;
   PltEntrySize = 16;
   PltZeroSize = 16;
-  TlsGdToLeSkip = 2;
+  TlsGdRelaxSkip = 2;
 }
 
 RelExpr X86_64TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {

@@ -159,7 +159,7 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
     }
     C.Relocations.push_back(
         {R_RELAX_TLS_GD_TO_LE, Type, Offset, Addend, &Body});
-    return Target->TlsGdToLeSkip;
+    return Target->TlsGdRelaxSkip;
   }
 
   // Initial-Exec relocs can be relaxed to Local-Exec if the symbol is locally

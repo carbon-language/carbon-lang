@@ -57,7 +57,7 @@ public:
   virtual void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const = 0;
   virtual ~TargetInfo();
 
-  unsigned TlsGdToLeSkip = 1;
+  unsigned TlsGdRelaxSkip = 1;
   unsigned PageSize = 4096;
 
   // On freebsd x86_64 the first page cannot be mmaped.
