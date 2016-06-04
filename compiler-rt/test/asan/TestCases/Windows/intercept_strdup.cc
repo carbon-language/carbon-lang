@@ -20,7 +20,8 @@ int main() {
 // CHECK:   {{#0 .* main .*}}intercept_strdup.cc:[[@LINE-3]]
 // CHECK: [[ADDR]] is located 1 bytes to the left of 6-byte region
 // CHECK: allocated by thread T0 here:
-// CHECK:   #0 {{.*strdup}}
-// CHECK:   #1 {{.* main .*}}intercept_strdup.cc:[[@LINE-15]]
+// CHECK:   #0 {{.*}} in malloc
+// CHECK:   #1 {{.*FIXME}}
+// CHECK:   #2 {{.* main .*}}intercept_strdup.cc:[[@LINE-15]]
   free(ptr);
 }
