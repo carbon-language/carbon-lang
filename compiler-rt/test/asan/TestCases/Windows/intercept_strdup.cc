@@ -27,6 +27,6 @@ int main() {
 //
 // The local call to _strdup above may be the second or third frame depending
 // on whether we're using the dynamic config.
-// CHECK:   #{{[12]}} {{.*}} in main {{.*}}intercept_strdup.cc:[[@LINE-21]
+// CHECK:   #{{[12]}} {{.*}} in main {{.*}}intercept_strdup.cc:[[@LINE-21]]
   free(ptr);
 }
