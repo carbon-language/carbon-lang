@@ -30693,7 +30693,7 @@ static bool isGRClass(const TargetRegisterClass &RC) {
   }
 }
 
-/// Check if \p RC is a general purpose register class.
+/// Check if \p RC is a vector register class.
 /// I.e., FR* / VR* or one of their variant.
 static bool isFRClass(const TargetRegisterClass &RC) {
   switch (RC.getID()) {
@@ -30704,8 +30704,12 @@ static bool isFRClass(const TargetRegisterClass &RC) {
   case X86::FR128RegClassID:
   case X86::VR64RegClassID:
   case X86::VR128RegClassID:
+  case X86::VR128LRegClassID:
+  case X86::VR128HRegClassID:
   case X86::VR128XRegClassID:
   case X86::VR256RegClassID:
+  case X86::VR256LRegClassID:
+  case X86::VR256HRegClassID:
   case X86::VR256XRegClassID:
   case X86::VR512RegClassID:
     return true;
