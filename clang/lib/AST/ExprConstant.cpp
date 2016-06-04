@@ -7112,7 +7112,9 @@ public:
   static bool shouldEnqueue(const BinaryOperator *E) {
     return E->getOpcode() == BO_Comma ||
            E->isLogicalOp() ||
-           (E->getLHS()->getType()->isIntegralOrEnumerationType() &&
+           (E->isRValue() &&
+            E->getType()->isIntegralOrEnumerationType() &&
+            E->getLHS()->getType()->isIntegralOrEnumerationType() &&
             E->getRHS()->getType()->isIntegralOrEnumerationType());
   }
 
