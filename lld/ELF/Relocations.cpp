@@ -156,7 +156,7 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
                                       Body.getGotOffset<ELFT>(), false, &Body,
                                       0});
       }
-      return 2;
+      return Target->TlsGdRelaxSkip;
     }
     C.Relocations.push_back(
         {Target->adjustRelaxExpr(Type, nullptr, R_RELAX_TLS_GD_TO_LE), Type,

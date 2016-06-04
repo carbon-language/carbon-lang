@@ -183,8 +183,10 @@ getSymVA(uint32_t Type, typename ELFT::uint A, typename ELFT::uint P,
   case R_GOT_FROM_END:
     return Body.getGotOffset<ELFT>() + A -
            Out<ELFT>::Got->getNumEntries() * sizeof(uintX_t);
+  case R_RELAX_TLS_GD_TO_IE_ABS:
   case R_GOT:
     return Body.getGotVA<ELFT>() + A;
+  case R_RELAX_TLS_GD_TO_IE_PAGE_PC:
   case R_GOT_PAGE_PC:
     return getAArch64Page(Body.getGotVA<ELFT>() + A) - getAArch64Page(P);
   case R_RELAX_TLS_GD_TO_IE:
@@ -324,6 +326,8 @@ void InputSectionBase<ELFT>::relocate(uint8_t *Buf, uint8_t *BufEnd) {
       Target->relaxTlsGdToLe(BufLoc, Type, SymVA);
       break;
     case R_RELAX_TLS_GD_TO_IE:
+    case R_RELAX_TLS_GD_TO_IE_ABS:
+    case R_RELAX_TLS_GD_TO_IE_PAGE_PC:
     case R_RELAX_TLS_GD_TO_IE_END:
       Target->relaxTlsGdToIe(BufLoc, Type, SymVA);
       break;

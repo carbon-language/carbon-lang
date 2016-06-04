@@ -156,7 +156,10 @@ public:
                 int32_t Index, unsigned RelOff) const override;
   bool usesOnlyLowPageBits(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
+  RelExpr adjustRelaxExpr(uint32_t Type, const uint8_t *Data,
+                          RelExpr Expr) const override;
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
+  void relaxTlsGdToIe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsIeToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 };
 
@@ -1141,6 +1144,16 @@ RelExpr AArch64TargetInfo::getRelExpr(uint32_t Type,
   }
 }
 
+RelExpr AArch64TargetInfo::adjustRelaxExpr(uint32_t Type, const uint8_t *Data,
+                                           RelExpr Expr) const {
+  if (Expr == R_RELAX_TLS_GD_TO_IE) {
+    if (Type == R_AARCH64_TLSDESC_ADR_PAGE21)
+      return R_RELAX_TLS_GD_TO_IE_PAGE_PC;
+    return R_RELAX_TLS_GD_TO_IE_ABS;
+  }
+  return Expr;
+}
+
 bool AArch64TargetInfo::usesOnlyLowPageBits(uint32_t Type) const {
   switch (Type) {
   default:
@@ -1320,6 +1333,7 @@ void AArch64TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint32_t Type,
   //   ldr     x1, [x0, #:tlsdesc_lo12:v  [R_AARCH64_TLSDESC_LD64_LO12_NC]
   //   add     x0, x0, :tlsdesc_los:v     [_AARCH64_TLSDESC_ADD_LO12_NC]
   //   .tlsdesccall                       [R_AARCH64_TLSDESC_CALL]
+  //   blr     x1
   // And it can optimized to:
   //   movz    x0, #0x0, lsl #16
   //   movk    x0, #0x10
@@ -1346,6 +1360,38 @@ void AArch64TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint32_t Type,
     llvm_unreachable("unsupported Relocation for TLS GD to LE relax");
   }
   write32le(Loc, NewInst);
+}
+
+void AArch64TargetInfo::relaxTlsGdToIe(uint8_t *Loc, uint32_t Type,
+                                       uint64_t Val) const {
+  // TLSDESC Global-Dynamic relocation are in the form:
+  //   adrp    x0, :tlsdesc:v             [R_AARCH64_TLSDESC_ADR_PAGE21]
+  //   ldr     x1, [x0, #:tlsdesc_lo12:v  [R_AARCH64_TLSDESC_LD64_LO12_NC]
+  //   add     x0, x0, :tlsdesc_los:v     [_AARCH64_TLSDESC_ADD_LO12_NC]
+  //   .tlsdesccall                       [R_AARCH64_TLSDESC_CALL]
+  //   blr     x1
+  // And it can optimized to:
+  //   adrp    x0, :gottprel:v
+  //   ldr     x0, [x0, :gottprel_lo12:v]
+  //   nop
+  //   nop
+
+  switch (Type) {
+  case R_AARCH64_TLSDESC_ADD_LO12_NC:
+  case R_AARCH64_TLSDESC_CALL:
+    write32le(Loc, 0xd503201f); // nop
+    break;
+  case R_AARCH64_TLSDESC_ADR_PAGE21:
+    write32le(Loc, 0x90000000); // adrp
+    relocateOne(Loc, R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21, Val);
+    break;
+  case R_AARCH64_TLSDESC_LD64_LO12_NC:
+    write32le(Loc, 0xf9400000); // ldr
+    relocateOne(Loc, R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC, Val);
+    break;
+  default:
+    llvm_unreachable("unsupported Relocation for TLS GD to LE relax");
+  }
 }
 
 void AArch64TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
