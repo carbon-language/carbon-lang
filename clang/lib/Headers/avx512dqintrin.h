@@ -33,7 +33,7 @@
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_mullo_epi64 (__m512i __A, __m512i __B) {
-  return (__m512i) ((__v8di) __A * (__v8di) __B);
+  return (__m512i) ((__v8du) __A * (__v8du) __B);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
@@ -55,7 +55,7 @@ _mm512_maskz_mullo_epi64 (__mmask8 __U, __m512i __A, __m512i __B) {
 
 static __inline__ __m512d __DEFAULT_FN_ATTRS
 _mm512_xor_pd (__m512d __A, __m512d __B) {
-  return (__m512d) ((__v8di) __A ^ (__v8di) __B);
+  return (__m512d) ((__v8du) __A ^ (__v8du) __B);
 }
 
 static __inline__ __m512d __DEFAULT_FN_ATTRS
@@ -77,7 +77,7 @@ _mm512_maskz_xor_pd (__mmask8 __U, __m512d __A, __m512d __B) {
 
 static __inline__ __m512 __DEFAULT_FN_ATTRS
 _mm512_xor_ps (__m512 __A, __m512 __B) {
-  return (__m512) ((__v16si) __A ^ (__v16si) __B);
+  return (__m512) ((__v16su) __A ^ (__v16su) __B);
 }
 
 static __inline__ __m512 __DEFAULT_FN_ATTRS
@@ -99,7 +99,7 @@ _mm512_maskz_xor_ps (__mmask16 __U, __m512 __A, __m512 __B) {
 
 static __inline__ __m512d __DEFAULT_FN_ATTRS
 _mm512_or_pd (__m512d __A, __m512d __B) {
-  return (__m512d) ((__v8di) __A | (__v8di) __B);
+  return (__m512d) ((__v8du) __A | (__v8du) __B);
 }
 
 static __inline__ __m512d __DEFAULT_FN_ATTRS
@@ -121,7 +121,7 @@ _mm512_maskz_or_pd (__mmask8 __U, __m512d __A, __m512d __B) {
 
 static __inline__ __m512 __DEFAULT_FN_ATTRS
 _mm512_or_ps (__m512 __A, __m512 __B) {
-  return (__m512) ((__v16si) __A | (__v16si) __B);
+  return (__m512) ((__v16su) __A | (__v16su) __B);
 }
 
 static __inline__ __m512 __DEFAULT_FN_ATTRS
@@ -143,7 +143,7 @@ _mm512_maskz_or_ps (__mmask16 __U, __m512 __A, __m512 __B) {
 
 static __inline__ __m512d __DEFAULT_FN_ATTRS
 _mm512_and_pd (__m512d __A, __m512d __B) {
-  return (__m512d) ((__v8di) __A & (__v8di) __B);
+  return (__m512d) ((__v8du) __A & (__v8du) __B);
 }
 
 static __inline__ __m512d __DEFAULT_FN_ATTRS
@@ -165,7 +165,7 @@ _mm512_maskz_and_pd (__mmask8 __U, __m512d __A, __m512d __B) {
 
 static __inline__ __m512 __DEFAULT_FN_ATTRS
 _mm512_and_ps (__m512 __A, __m512 __B) {
-  return (__m512) ((__v16si) __A & (__v16si) __B);
+  return (__m512) ((__v16su) __A & (__v16su) __B);
 }
 
 static __inline__ __m512 __DEFAULT_FN_ATTRS

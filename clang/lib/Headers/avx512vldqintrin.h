@@ -33,7 +33,7 @@
 
 static __inline__ __m256i __DEFAULT_FN_ATTRS
 _mm256_mullo_epi64 (__m256i __A, __m256i __B) {
-  return (__m256i) ((__v4di) __A * (__v4di) __B);
+  return (__m256i) ((__v4du) __A * (__v4du) __B);
 }
 
 static __inline__ __m256i __DEFAULT_FN_ATTRS
@@ -55,7 +55,7 @@ _mm256_maskz_mullo_epi64 (__mmask8 __U, __m256i __A, __m256i __B) {
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_mullo_epi64 (__m128i __A, __m128i __B) {
-  return (__m128i) ((__v2di) __A * (__v2di) __B);
+  return (__m128i) ((__v2du) __A * (__v2du) __B);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
