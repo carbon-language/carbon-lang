@@ -113,8 +113,8 @@ public:
                 int32_t Index, unsigned RelOff) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 
-  RelExpr adjustRelaxGotExpr(uint32_t Type, const uint8_t *Data,
-                             RelExpr Expr) const override;
+  RelExpr adjustRelaxExpr(uint32_t Type, const uint8_t *Data,
+                          RelExpr Expr) const override;
   void relaxGot(uint8_t *Loc, uint64_t Val) const override;
   void relaxTlsGdToIe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -238,8 +238,8 @@ bool TargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
   return false;
 }
 
-RelExpr TargetInfo::adjustRelaxGotExpr(uint32_t Type, const uint8_t *Data,
-                                       RelExpr Expr) const {
+RelExpr TargetInfo::adjustRelaxExpr(uint32_t Type, const uint8_t *Data,
+                                    RelExpr Expr) const {
   return Expr;
 }
 
@@ -739,8 +739,8 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   }
 }
 
-RelExpr X86_64TargetInfo::adjustRelaxGotExpr(uint32_t Type, const uint8_t *Data,
-                                             RelExpr RelExpr) const {
+RelExpr X86_64TargetInfo::adjustRelaxExpr(uint32_t Type, const uint8_t *Data,
+                                          RelExpr RelExpr) const {
   if (Type != R_X86_64_GOTPCRELX && Type != R_X86_64_REX_GOTPCRELX)
     return RelExpr;
   const uint8_t Op = Data[-2];
