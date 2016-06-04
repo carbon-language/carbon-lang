@@ -263,6 +263,7 @@ getSymVA(uint32_t Type, typename ELFT::uint A, typename ELFT::uint P,
   case R_PC:
   case R_RELAX_GOT_PC:
     return Body.getVA<ELFT>(A) - P;
+  case R_PLT_PAGE_PC:
   case R_PAGE_PC:
     return getAArch64Page(Body.getVA<ELFT>(A)) - getAArch64Page(P);
   }

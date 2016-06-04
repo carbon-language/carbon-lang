@@ -35,6 +35,7 @@ enum RelExpr {
   R_PC,
   R_PLT,
   R_PLT_PC,
+  R_PLT_PAGE_PC,
   R_PPC_OPD,
   R_PPC_PLT_OPD,
   R_PPC_TOC,

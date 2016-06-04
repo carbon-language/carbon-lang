@@ -251,7 +251,8 @@ template <class ELFT> static bool isAbsolute(const SymbolBody &Body) {
 }
 
 static bool needsPlt(RelExpr Expr) {
-  return Expr == R_PLT_PC || Expr == R_PPC_PLT_OPD || Expr == R_PLT;
+  return Expr == R_PLT_PC || Expr == R_PPC_PLT_OPD || Expr == R_PLT ||
+         Expr == R_PLT_PAGE_PC;
 }
 
 // True if this expression is of the form Sym - X, where X is a position in the
@@ -311,6 +312,8 @@ static RelExpr toPlt(RelExpr Expr) {
     return R_PPC_PLT_OPD;
   if (Expr == R_PC)
     return R_PLT_PC;
+  if (Expr == R_PAGE_PC)
+    return R_PLT_PAGE_PC;
   if (Expr == R_ABS)
     return R_PLT;
   return Expr;
