@@ -19,7 +19,7 @@
 
 namespace llvm {
 
-enum IntrinsicType {
+enum IntrinsicType : uint16_t {
   INTR_NO_TYPE,
   GATHER, SCATTER, PREFETCH, RDSEED, RDRAND, RDPMC, RDTSC, XTEST, ADX, FPCLASS, FPCLASSS,
   INTR_TYPE_1OP, INTR_TYPE_2OP, INTR_TYPE_2OP_IMM8, INTR_TYPE_3OP, INTR_TYPE_4OP,
@@ -40,10 +40,10 @@ enum IntrinsicType {
 
 struct IntrinsicData {
 
-  unsigned      Id;
+  uint16_t      Id;
   IntrinsicType Type;
-  unsigned      Opc0;
-  unsigned      Opc1;
+  uint16_t      Opc0;
+  uint16_t      Opc1;
 
   bool operator<(const IntrinsicData &RHS) const {
     return Id < RHS.Id;
@@ -237,7 +237,7 @@ static const IntrinsicData IntrinsicsWithChain[] = {
 /*
  * Find Intrinsic data by intrinsic ID
  */
-static const IntrinsicData* getIntrinsicWithChain(unsigned IntNo) {
+static const IntrinsicData* getIntrinsicWithChain(uint16_t IntNo) {
 
   IntrinsicData IntrinsicToFind = {IntNo, INTR_NO_TYPE, 0, 0 };
   const IntrinsicData *Data =  std::lower_bound(std::begin(IntrinsicsWithChain),
@@ -2267,7 +2267,7 @@ static const IntrinsicData  IntrinsicsWithoutChain[] = {
  * Retrieve data for Intrinsic without chain.
  * Return nullptr if intrinsic is not defined in the table.
  */
-static const IntrinsicData* getIntrinsicWithoutChain(unsigned IntNo) {
+static const IntrinsicData* getIntrinsicWithoutChain(uint16_t IntNo) {
   IntrinsicData IntrinsicToFind = { IntNo, INTR_NO_TYPE, 0, 0 };
   const IntrinsicData *Data = std::lower_bound(std::begin(IntrinsicsWithoutChain),
                                                std::end(IntrinsicsWithoutChain),
