@@ -22,13 +22,5 @@ int main() {
 // CHECK: allocated by thread T0 here:
 // CHECK:   #0 {{.*strdup}}
 // CHECK:   #1 {{.* main .*}}intercept_strdup.cc:[[@LINE-15]]
-// CHECK:   #2 {{.*foobar}}
-// CHECK:   #3 {{.*foobar}}
-// CHECK:   #4 {{.*foobar}}
-// CHECK:   #5 {{.*foobar}}
-// CHECK:   #6 {{.*foobar}}
-// CHECK:   #7 {{.*foobar}}
-// CHECK:   #8 {{.*foobar}}
-// CHECK:   #9 {{.*foobar}}
   free(ptr);
 }
