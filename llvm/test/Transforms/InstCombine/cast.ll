@@ -214,17 +214,24 @@ define i1 @test19(i32 %X) {
   ret i1 %Z
 }
 
-; FIXME: Vector should be the same as scalar.
-
 define <2 x i1> @test19vec(<2 x i32> %X) {
 ; CHECK-LABEL: @test19vec(
-; CHECK-NEXT:    [[C:%.*]] = sext <2 x i32> %X to <2 x i64>
-; CHECK-NEXT:    [[Z:%.*]] = icmp slt <2 x i64> [[C]], <i64 12345, i64 2147483647>
+; CHECK-NEXT:    [[Z:%.*]] = icmp slt <2 x i32> %X, <i32 12345, i32 2147483647>
 ; CHECK-NEXT:    ret <2 x i1> [[Z]]
 ;
   %c = sext <2 x i32> %X to <2 x i64>
   %Z = icmp slt <2 x i64> %c, <i64 12345, i64 2147483647>
   ret <2 x i1> %Z
+}
+
+define <3 x i1> @test19vec2(<3 x i1> %X) {
+; CHECK-LABEL: @test19vec2(
+; CHECK-NEXT:    [[CMPEQ:%.*]] = icmp eq <3 x i1> %X, zeroinitializer
+; CHECK-NEXT:    ret <3 x i1> [[CMPEQ]]
+;
+  %sext = sext <3 x i1> %X to <3 x i32>
+  %cmpeq = icmp eq <3 x i32> %sext, zeroinitializer
+  ret <3 x i1> %cmpeq
 }
 
 define i1 @test20(i1 %B) {

@@ -13,12 +13,9 @@ define i1 @scalar_zext_slt(i16 %t4) {
   ret i1 %t6
 }
 
-; FIXME: Vector compare should work the same as scalar.
-
 define <4 x i1> @vector_zext_slt(<4 x i16> %t4) {
 ; CHECK-LABEL: @vector_zext_slt(
-; CHECK-NEXT:    [[T5:%.*]] = zext <4 x i16> %t4 to <4 x i32>
-; CHECK-NEXT:    [[T6:%.*]] = icmp ult <4 x i32> [[T5]], <i32 500, i32 0, i32 501, i32 65535>
+; CHECK-NEXT:    [[T6:%.*]] = icmp ult <4 x i16> %t4, <i16 500, i16 0, i16 501, i16 -1>
 ; CHECK-NEXT:    ret <4 x i1> [[T6]]
 ;
   %t5 = zext <4 x i16> %t4 to <4 x i32>

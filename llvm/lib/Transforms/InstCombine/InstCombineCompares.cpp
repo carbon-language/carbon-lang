@@ -2439,7 +2439,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
   }
 
   // If we aren't dealing with a constant on the RHS, exit early.
-  auto *CI = dyn_cast<ConstantInt>(ICI.getOperand(1));
+  auto *CI = dyn_cast<Constant>(ICI.getOperand(1));
   if (!CI)
     return nullptr;
 
