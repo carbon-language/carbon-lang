@@ -20082,8 +20082,8 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
     SDValue Z = getZeroVector(VT, Subtarget, DAG, dl);
     SDValue ALo = DAG.getNode(X86ISD::UNPCKL, dl, VT, Amt, Z);
     SDValue AHi = DAG.getNode(X86ISD::UNPCKH, dl, VT, Amt, Z);
-    SDValue RLo = DAG.getNode(X86ISD::UNPCKL, dl, VT, R, R);
-    SDValue RHi = DAG.getNode(X86ISD::UNPCKH, dl, VT, R, R);
+    SDValue RLo = DAG.getNode(X86ISD::UNPCKL, dl, VT, Z, R);
+    SDValue RHi = DAG.getNode(X86ISD::UNPCKH, dl, VT, Z, R);
     ALo = DAG.getBitcast(ExtVT, ALo);
     AHi = DAG.getBitcast(ExtVT, AHi);
     RLo = DAG.getBitcast(ExtVT, RLo);
