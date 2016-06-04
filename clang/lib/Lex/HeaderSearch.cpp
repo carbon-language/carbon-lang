@@ -250,9 +250,8 @@ const char *DirectoryLookup::getName() const {
 }
 
 const FileEntry *HeaderSearch::getFileAndSuggestModule(
-    StringRef FileName, SourceLocation IncludeLoc, const DirectoryEntry *Dir,
-    bool IsSystemHeaderDir, Module *RequestingModule,
-    ModuleMap::KnownHeader *SuggestedModule) {
+    StringRef FileName, const DirectoryEntry *Dir, bool IsSystemHeaderDir,
+    Module *RequestingModule, ModuleMap::KnownHeader *SuggestedModule) {
   // If we have a module map that might map this header, load it and
   // check whether we'll have a suggestion for a module.
   const FileEntry *File = getFileMgr().getFile(FileName, /*OpenFile=*/true);
@@ -273,7 +272,6 @@ const FileEntry *HeaderSearch::getFileAndSuggestModule(
 const FileEntry *DirectoryLookup::LookupFile(
     StringRef &Filename,
     HeaderSearch &HS,
-    SourceLocation IncludeLoc,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
     Module *RequestingModule,
@@ -299,7 +297,7 @@ const FileEntry *DirectoryLookup::LookupFile(
       RelativePath->append(Filename.begin(), Filename.end());
     }
 
-    return HS.getFileAndSuggestModule(TmpDir, IncludeLoc, getDir(),
+    return HS.getFileAndSuggestModule(TmpDir, getDir(),
                                       isSystemHeaderDirectory(),
                                       RequestingModule, SuggestedModule);
   }
@@ -587,7 +585,7 @@ const FileEntry *HeaderSearch::LookupFile(
       RelativePath->append(Filename.begin(), Filename.end());
     }
     // Otherwise, just return the file.
-    return getFileAndSuggestModule(Filename, IncludeLoc, nullptr,
+    return getFileAndSuggestModule(Filename, nullptr,
                                    /*IsSystemHeaderDir*/false,
                                    RequestingModule, SuggestedModule);
   }
@@ -624,7 +622,7 @@ const FileEntry *HeaderSearch::LookupFile(
           Includer ? getFileInfo(Includer).DirInfo != SrcMgr::C_User :
           BuildSystemModule;
       if (const FileEntry *FE = getFileAndSuggestModule(
-              TmpDir, IncludeLoc, IncluderAndDir.second, IncluderIsSystemHeader,
+              TmpDir, IncluderAndDir.second, IncluderIsSystemHeader,
               RequestingModule, SuggestedModule)) {
         if (!Includer) {
           assert(First && "only first includer can have no file");
@@ -715,7 +713,7 @@ const FileEntry *HeaderSearch::LookupFile(
     bool InUserSpecifiedSystemFramework = false;
     bool HasBeenMapped = false;
     const FileEntry *FE = SearchDirs[i].LookupFile(
-        Filename, *this, IncludeLoc, SearchPath, RelativePath, RequestingModule,
+        Filename, *this, SearchPath, RelativePath, RequestingModule,
         SuggestedModule, InUserSpecifiedSystemFramework, HasBeenMapped,
         MappedName);
     if (HasBeenMapped) {
