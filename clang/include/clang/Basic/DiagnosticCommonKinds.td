@@ -89,7 +89,7 @@ def err_module_unavailable : Error<
 def err_module_header_missing : Error<
   "%select{|umbrella }0header '%1' not found">;
 def err_module_lock_failure : Error<
-  "could not acquire lock file for module '%0'">, DefaultFatal;
+  "could not acquire lock file for module '%0': %1">, DefaultFatal;
 def err_module_lock_timeout : Error<
   "timed out waiting to acquire lock file for module '%0'">, DefaultFatal;
 def err_module_cycle : Error<"cyclic dependency in module '%0': %1">, 
