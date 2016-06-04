@@ -1,3 +1,4 @@
+// REQUIRES: aarch64
 // RUN: llvm-mc %s -o %t.o -filetype=obj -triple=aarch64-pc-linux
 // RUN: llvm-mc %p/Inputs/aarch64-copy2.s -o %t2.o -filetype=obj -triple=aarch64-pc-linux
 // RUN: ld.lld %t2.o -o %t2.so -shared
