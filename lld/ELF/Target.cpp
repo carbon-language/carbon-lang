@@ -92,6 +92,8 @@ public:
                 int32_t Index, unsigned RelOff) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 
+  RelExpr adjustRelaxExpr(uint32_t Type, const uint8_t *Data,
+                          RelExpr Expr) const override;
   void relaxTlsGdToIe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsGdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   void relaxTlsIeToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -306,6 +308,18 @@ RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
     return R_TLS;
   case R_386_TLS_LE_32:
     return R_NEG_TLS;
+  }
+}
+
+RelExpr X86TargetInfo::adjustRelaxExpr(uint32_t Type, const uint8_t *Data,
+                                       RelExpr Expr) const {
+  switch (Expr) {
+  default:
+    return Expr;
+  case R_RELAX_TLS_GD_TO_IE:
+    return R_RELAX_TLS_GD_TO_IE_END;
+  case R_RELAX_TLS_GD_TO_LE:
+    return R_RELAX_TLS_GD_TO_LE_NEG;
   }
 }
 

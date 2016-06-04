@@ -148,7 +148,8 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
     // depending on the symbol being locally defined or not.
     if (isPreemptible(Body, Type)) {
       C.Relocations.push_back(
-          {R_RELAX_TLS_GD_TO_IE, Type, Offset, Addend, &Body});
+          {Target->adjustRelaxExpr(Type, nullptr, R_RELAX_TLS_GD_TO_IE), Type,
+           Offset, Addend, &Body});
       if (!Body.isInGot()) {
         Out<ELFT>::Got->addEntry(Body);
         Out<ELFT>::RelaDyn->addReloc({Target->TlsGotRel, Out<ELFT>::Got,
@@ -158,7 +159,8 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
       return 2;
     }
     C.Relocations.push_back(
-        {R_RELAX_TLS_GD_TO_LE, Type, Offset, Addend, &Body});
+        {Target->adjustRelaxExpr(Type, nullptr, R_RELAX_TLS_GD_TO_LE), Type,
+         Offset, Addend, &Body});
     return Target->TlsGdRelaxSkip;
   }
 
