@@ -254,3 +254,119 @@ if.end:
   %rem = srem i32 %lhs, 5
   ret i32 %rem
 }
+
+@a = common global [5 x i16] zeroinitializer, align 2
+@b = common global i16 0, align 2
+
+define i32 @pr27968_0(i1 %c0, i32* %val) {
+; CHECK-LABEL: @pr27968_0(
+entry:
+  br i1 %c0, label %if.then, label %if.end
+
+if.then:
+  %v = load volatile i32, i32* %val
+  br label %if.end
+
+; CHECK: if.then:
+; CHECK-NOT: srem
+; CHECK:  br label %if.end
+
+if.end:
+  %lhs = phi i32 [ %v, %if.then ], [ 5, %entry ]
+  br i1 icmp eq (i16* getelementptr inbounds ([5 x i16], [5 x i16]* @a, i64 0, i64 4), i16* @b), label %rem.is.safe, label %rem.is.unsafe
+
+rem.is.safe:
+; CHECK: rem.is.safe:
+; CHECK-NEXT:  %rem = srem i32 %lhs, zext (i1 icmp eq (i16* getelementptr inbounds ([5 x i16], [5 x i16]* @a, i64 0, i64 4), i16* @b) to i32)
+; CHECK-NEXT:  ret i32 %rem
+
+  %rem = srem i32 %lhs, zext (i1 icmp eq (i16* getelementptr inbounds ([5 x i16], [5 x i16]* @a, i64 0, i64 4), i16* @b) to i32)
+  ret i32 %rem
+
+rem.is.unsafe:
+  ret i32 0
+}
+
+define i32 @pr27968_1(i1 %c0, i1 %always_false, i32* %val) {
+; CHECK-LABEL: @pr27968_1(
+entry:
+  br i1 %c0, label %if.then, label %if.end
+
+if.then:
+  %v = load volatile i32, i32* %val
+  br label %if.end
+
+; CHECK: if.then:
+; CHECK-NOT: srem
+; CHECK:  br label %if.end
+
+if.end:
+  %lhs = phi i32 [ %v, %if.then ], [ 5, %entry ]
+  br i1 %always_false, label %rem.is.safe, label %rem.is.unsafe
+
+rem.is.safe:
+  %rem = srem i32 %lhs, -2147483648
+  ret i32 %rem
+
+; CHECK: rem.is.safe:
+; CHECK-NEXT:  %rem = srem i32 %lhs, -2147483648
+; CHECK-NEXT:  ret i32 %rem
+
+rem.is.unsafe:
+  ret i32 0
+}
+
+define i32 @pr27968_2(i1 %c0, i32* %val) {
+; CHECK-LABEL: @pr27968_2(
+entry:
+  br i1 %c0, label %if.then, label %if.end
+
+if.then:
+  %v = load volatile i32, i32* %val
+  br label %if.end
+
+; CHECK: if.then:
+; CHECK-NOT: urem
+; CHECK:  br label %if.end
+
+if.end:
+  %lhs = phi i32 [ %v, %if.then ], [ 5, %entry ]
+  br i1 icmp eq (i16* getelementptr inbounds ([5 x i16], [5 x i16]* @a, i64 0, i64 4), i16* @b), label %rem.is.safe, label %rem.is.unsafe
+
+rem.is.safe:
+; CHECK: rem.is.safe:
+; CHECK-NEXT:  %rem = urem i32 %lhs, zext (i1 icmp eq (i16* getelementptr inbounds ([5 x i16], [5 x i16]* @a, i64 0, i64 4), i16* @b) to i32)
+; CHECK-NEXT:  ret i32 %rem
+
+  %rem = urem i32 %lhs, zext (i1 icmp eq (i16* getelementptr inbounds ([5 x i16], [5 x i16]* @a, i64 0, i64 4), i16* @b) to i32)
+  ret i32 %rem
+
+rem.is.unsafe:
+  ret i32 0
+}
+
+define i32 @pr27968_3(i1 %c0, i1 %always_false, i32* %val) {
+; CHECK-LABEL: @pr27968_3(
+entry:
+  br i1 %c0, label %if.then, label %if.end
+
+if.then:
+  %v = load volatile i32, i32* %val
+  br label %if.end
+
+; CHECK: if.then:
+; CHECK-NEXT:  %v = load volatile i32, i32* %val, align 4
+; CHECK-NEXT:  %phitmp = and i32 %v, 2147483647
+; CHECK-NEXT:  br label %if.end
+
+if.end:
+  %lhs = phi i32 [ %v, %if.then ], [ 5, %entry ]
+  br i1 %always_false, label %rem.is.safe, label %rem.is.unsafe
+
+rem.is.safe:
+  %rem = urem i32 %lhs, -2147483648
+  ret i32 %rem
+
+rem.is.unsafe:
+  ret i32 0
+}
