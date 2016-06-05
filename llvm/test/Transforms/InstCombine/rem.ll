@@ -231,3 +231,26 @@ define <2 x i64> @test20(<2 x i64> %X, <2 x i1> %C) {
 	%R = urem <2 x i64> %V, <i64 2, i64 3>
 	ret <2 x i64> %R
 }
+
+define i32 @test21(i1 %c0, i32* %val) {
+; CHECK-LABEL: @test21(
+entry:
+  br i1 %c0, label %if.then, label %if.end
+
+if.then:
+; CHECK: if.then:
+; CHECK-NEXT:  %v = load volatile i32, i32* %val, align 4
+; CHECK-NEXT:  %phitmp = srem i32 %v, 5
+
+  %v = load volatile i32, i32* %val
+  br label %if.end
+
+if.end:
+; CHECK: if.end:
+; CHECK-NEXT:  %lhs = phi i32 [ %phitmp, %if.then ], [ 0, %entry ]
+; CHECK-NEXT:  ret i32 %lhs
+
+  %lhs = phi i32 [ %v, %if.then ], [ 5, %entry ]
+  %rem = srem i32 %lhs, 5
+  ret i32 %rem
+}
