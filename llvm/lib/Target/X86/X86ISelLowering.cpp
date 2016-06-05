@@ -4937,6 +4937,11 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
     SDValue CtrlNode = N->getOperand(3);
     if (ConstantSDNode *CtrlOp = dyn_cast<ConstantSDNode>(CtrlNode)) {
       unsigned CtrlImm = CtrlOp->getZExtValue();
+      SmallVector<uint64_t, 32> RawMask;
+      if (getTargetShuffleMaskIndices(MaskNode, MaskEltSize, RawMask)) {
+        DecodeVPERMIL2PMask(VT, CtrlImm, RawMask, Mask);
+        break;
+      }
       if (auto *C = getTargetShuffleMaskConstant(MaskNode)) {
         DecodeVPERMIL2PMask(C, CtrlImm, MaskEltSize, Mask);
         break;
