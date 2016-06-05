@@ -24,12 +24,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/LoopPassManager.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/ScalarEvolutionAliasAnalysis.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
@@ -2210,6 +2212,31 @@ bool IndVarSimplify::run(Loop *L) {
 #endif
 
   return Changed;
+}
+
+PreservedAnalyses IndVarSimplifyPass::run(Loop &L, AnalysisManager<Loop> &AM) {
+  auto &FAM = AM.getResult<FunctionAnalysisManagerLoopProxy>(L).getManager();
+  Function *F = L.getHeader()->getParent();
+  const DataLayout &DL = F->getParent()->getDataLayout();
+
+  auto *LI = FAM.getCachedResult<LoopAnalysis>(*F);
+  auto *SE = FAM.getCachedResult<ScalarEvolutionAnalysis>(*F);
+  auto *DT = FAM.getCachedResult<DominatorTreeAnalysis>(*F);
+
+  assert((LI && SE && DT) &&
+         "Analyses required for indvarsimplify not available!");
+
+  // Optional analyses.
+  auto *TTI = FAM.getCachedResult<TargetIRAnalysis>(*F);
+  auto *TLI = FAM.getCachedResult<TargetLibraryAnalysis>(*F);
+
+  IndVarSimplify IVS(LI, SE, DT, DL, TLI, TTI);
+  if (!IVS.run(&L))
+    return PreservedAnalyses::all();
+
+  // FIXME: once we have an equivalent of AU.setPreservesCFG() in the
+  // new pass manager, we should use that here.
+  return getLoopPassPreservedAnalyses();
 }
 
 namespace {
