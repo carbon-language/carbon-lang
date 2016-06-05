@@ -85,7 +85,7 @@ namespace llvm {
   /// \endcode
   ///
   /// \param flag Flag used for tracking whether or not this has run.
-  /// \param UserFn Function to call once.
+  /// \param F Function to call once.
   template <typename Function, typename... Args>
   void call_once(once_flag &flag, Function &&F, Args &&... ArgList) {
 #if LLVM_THREADING_USE_STD_CALL_ONCE
