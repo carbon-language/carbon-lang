@@ -170,6 +170,8 @@ _mm512_setzero_si512(void)
   return (__m512i)(__v8di){ 0, 0, 0, 0, 0, 0, 0, 0 };
 }
 
+#define _mm512_setzero_epi32 _mm512_setzero_si512
+
 static __inline__ __m512d __DEFAULT_FN_ATTRS
 _mm512_undefined_pd()
 {
@@ -274,6 +276,9 @@ _mm512_setzero_ps(void)
   return (__m512){ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 }
+
+#define _mm512_setzero _mm512_setzero_ps
+
 static  __inline __m512d __DEFAULT_FN_ATTRS
 _mm512_setzero_pd(void)
 {

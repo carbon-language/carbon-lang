@@ -7343,3 +7343,38 @@ __m128 test_mm_maskz_cvtsd_ss(__mmask8 __U, __m128 __A, __m128d __B) {
   return _mm_maskz_cvtsd_ss(__U, __A, __B); 
 }
 
+
+__m512i test_mm512_setzero_epi32()
+{
+  // CHECK-LABEL: @test_mm512_setzero_epi32
+  // CHECK: zeroinitializer
+  return _mm512_setzero_epi32();
+}
+
+__m512i test_mm512_setzero()
+{
+  // CHECK-LABEL: @test_mm512_setzero
+  // CHECK: zeroinitializer
+  return _mm512_setzero();
+}
+
+__m512i test_mm512_setzero_si512()
+{
+  // CHECK-LABEL: @test_mm512_setzero_si512
+  // CHECK: zeroinitializer
+  return _mm512_setzero_si512();
+}
+
+__m512i test_mm512_setzero_ps()
+{
+  // CHECK-LABEL: @test_mm512_setzero_ps
+  // CHECK: zeroinitializer
+  return _mm512_setzero_ps();
+}
+
+__m512d test_mm512_setzero_pd()
+{
+  // CHECK-LABEL: @test_mm512_setzero_pd
+  // CHECK: zeroinitializer
+  return _mm512_setzero_pd();
+}
