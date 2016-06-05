@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Instrumentation.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/STLExtras.h"
@@ -35,6 +34,8 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/GCOVProfiler.h"
+#include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <algorithm>
 #include <memory>
@@ -462,6 +463,17 @@ bool GCOVProfiler::runOnModule(Module &M) {
   if (Options.EmitNotes) emitProfileNotes();
   if (Options.EmitData) return emitProfileArcs();
   return false;
+}
+
+PreservedAnalyses GCOVProfilerPass::run(Module &M,
+                                        AnalysisManager<Module> &AM) {
+
+  GCOVProfiler Profiler(GCOVOpts);
+
+  if (!Profiler.runOnModule(M))
+    return PreservedAnalyses::all();
+
+  return PreservedAnalyses::none();
 }
 
 static bool functionHasLines(Function &F) {
