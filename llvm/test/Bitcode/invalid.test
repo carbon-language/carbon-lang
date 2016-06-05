@@ -217,3 +217,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-void-constant.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=VOID-CONSTANT-TYPE %s
 
 VOID-CONSTANT-TYPE: Invalid constant type
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-gep-no-operands.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=GEP-NO-OPERANDS %s
+
+GEP-NO-OPERANDS: Invalid gep with no operands

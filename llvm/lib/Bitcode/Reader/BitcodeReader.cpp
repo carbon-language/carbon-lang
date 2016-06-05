@@ -3090,6 +3090,9 @@ std::error_code BitcodeReader::parseConstants() {
         return error("Explicit gep operator type does not match pointee type "
                      "of pointer operand");
 
+      if (Elts.size() < 1)
+        return error("Invalid gep with no operands");
+
       ArrayRef<Constant *> Indices(Elts.begin() + 1, Elts.end());
       V = ConstantExpr::getGetElementPtr(PointeeType, Elts[0], Indices,
                                          BitCode ==
