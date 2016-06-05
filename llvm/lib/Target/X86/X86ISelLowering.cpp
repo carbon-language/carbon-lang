@@ -11770,6 +11770,11 @@ static SDValue lowerV64I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(Mask.size() == 64 && "Unexpected mask size for v64 shuffle!");
   assert(Subtarget.hasBWI() && "We can only lower v64i8 with AVX-512-BWI!");
 
+  // Try to use byte rotation instructions.
+  if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+          DL, MVT::v64i8, V1, V2, Mask, Subtarget, DAG))
+    return Rotate;
+
   // FIXME: Implement direct support for this type!
   return splitAndLowerVectorShuffle(DL, MVT::v64i8, V1, V2, Mask, DAG);
 }
