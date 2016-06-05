@@ -118,6 +118,16 @@ define i1 @test13(i1 %A, i1 %B) {
   ret i1 %C
 }
 
+; FIXME: Vectors should fold the same as scalars.
+define <2 x i1> @test13vec(<2 x i1> %A, <2 x i1> %B) {
+; CHECK-LABEL: @test13vec(
+; CHECK-NEXT:    [[C:%.*]] = icmp uge <2 x i1> %A, %B
+; CHECK-NEXT:    ret <2 x i1> [[C]]
+;
+  %C = icmp uge <2 x i1> %A, %B
+  ret <2 x i1> %C
+}
+
 define i1 @test14(i1 %A, i1 %B) {
 ; CHECK-LABEL: @test14(
 ; CHECK-NEXT:    [[CTMP:%.*]] = xor i1 %A, %B
@@ -126,6 +136,16 @@ define i1 @test14(i1 %A, i1 %B) {
 ;
   %C = icmp eq i1 %A, %B
   ret i1 %C
+}
+
+; FIXME: Vectors should fold the same as scalars.
+define <3 x i1> @test14vec(<3 x i1> %A, <3 x i1> %B) {
+; CHECK-LABEL: @test14vec(
+; CHECK-NEXT:    [[C:%.*]] = icmp eq <3 x i1> %A, %B
+; CHECK-NEXT:    ret <3 x i1> [[C]]
+;
+  %C = icmp eq <3 x i1> %A, %B
+  ret <3 x i1> %C
 }
 
 define i1 @test16(i32 %A) {
