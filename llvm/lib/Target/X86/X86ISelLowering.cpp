@@ -27117,7 +27117,8 @@ static SDValue combineANDXORWithAllOnesIntoANDNP(SDNode *N, SelectionDAG &DAG) {
   SDValue N1 = N->getOperand(1);
   SDLoc DL(N);
 
-  if (VT != MVT::v2i64 && VT != MVT::v4i64)
+  if (VT != MVT::v2i64 && VT != MVT::v4i64 &&
+      VT != MVT::v4i32 && VT != MVT::v8i32) // Legal with VLX
     return SDValue();
 
   // Canonicalize XOR to the left.
