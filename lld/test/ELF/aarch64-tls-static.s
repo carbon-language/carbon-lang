@@ -1,3 +1,4 @@
+// REQUIRES: aarch64
 // RUN: llvm-mc %s -o %t.o -triple aarch64-pc-linux -filetype=obj
 // RUN: ld.lld %t.o -o %t.so -shared
 // RUN: llvm-readobj -s %t.so | FileCheck --check-prefix=SEC %s
