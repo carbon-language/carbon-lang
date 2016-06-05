@@ -111,7 +111,7 @@ define i1 @test12(i1 %A) {
 define i1 @test13(i1 %A, i1 %B) {
 ; CHECK-LABEL: @test13(
 ; CHECK-NEXT:    [[CTMP:%.*]] = xor i1 %B, true
-; CHECK-NEXT:    [[C:%.*]] = or i1 [[C:%.*]]tmp, %A
+; CHECK-NEXT:    [[C:%.*]] = or i1 [[CTMP]], %A
 ; CHECK-NEXT:    ret i1 [[C]]
 ;
   %C = icmp uge i1 %A, %B
@@ -131,7 +131,7 @@ define <2 x i1> @test13vec(<2 x i1> %A, <2 x i1> %B) {
 define i1 @test14(i1 %A, i1 %B) {
 ; CHECK-LABEL: @test14(
 ; CHECK-NEXT:    [[CTMP:%.*]] = xor i1 %A, %B
-; CHECK-NEXT:    [[C:%.*]] = xor i1 [[C:%.*]]tmp, true
+; CHECK-NEXT:    [[C:%.*]] = xor i1 [[CTMP]], true
 ; CHECK-NEXT:    ret i1 [[C]]
 ;
   %C = icmp eq i1 %A, %B
@@ -192,7 +192,7 @@ endif:
 define i1 @test19(i1 %A, i1 %B) {
 ; CHECK-LABEL: @test19(
 ; CHECK-NEXT:    [[CTMP:%.*]] = xor i1 %A, %B
-; CHECK-NEXT:    [[C:%.*]] = xor i1 [[C:%.*]]tmp, true
+; CHECK-NEXT:    [[C:%.*]] = xor i1 [[CTMP]], true
 ; CHECK-NEXT:    ret i1 [[C]]
 ;
   %a = zext i1 %A to i32
