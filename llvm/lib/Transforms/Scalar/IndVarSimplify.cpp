@@ -68,9 +68,6 @@ static cl::opt<bool> VerifyIndvars(
   "verify-indvars", cl::Hidden,
   cl::desc("Verify the ScalarEvolution result after running indvars"));
 
-static cl::opt<bool> ReduceLiveIVs("liv-reduce", cl::Hidden,
-  cl::desc("Reduce live induction variables."));
-
 enum ReplaceExitVal { NeverRepl, OnlyCheapRepl, AlwaysRepl };
 
 static cl::opt<ReplaceExitVal> ReplaceExitValue(
@@ -1489,8 +1486,6 @@ public:
     : SE(SCEV), TTI(TTI), IVPhi(IV) {
     DT = DTree;
     WI.NarrowIV = IVPhi;
-    if (ReduceLiveIVs)
-      setSplitOverflowIntrinsics();
   }
 
   // Implement the interface used by simplifyUsersOfIV.
