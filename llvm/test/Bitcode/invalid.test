@@ -212,3 +212,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-name-with-0-byte.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=NAME-WITH-0 %s
 
 NAME-WITH-0: Invalid value name
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-void-constant.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=VOID-CONSTANT-TYPE %s
+
+VOID-CONSTANT-TYPE: Invalid constant type
