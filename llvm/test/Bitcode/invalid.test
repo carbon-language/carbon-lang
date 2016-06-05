@@ -227,3 +227,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-nonpointer-storeatomic.bc 2>
 RUN:   FileCheck --check-prefix=NONPOINTER-STOREATOMIC %s
 
 NONPOINTER-STOREATOMIC: Invalid record
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-nonpointer-atomicrmw.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=NONPOINTER-ATOMICRMW %s
+
+NONPOINTER-ATOMICRMW: Invalid record
