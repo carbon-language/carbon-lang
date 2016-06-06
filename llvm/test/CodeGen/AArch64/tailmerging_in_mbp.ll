@@ -1,12 +1,12 @@
 ; RUN: llc <%s -march=aarch64 | FileCheck %s
 
 ; CHECK-LABEL: test:
-; CHECK:       .LBB0_7
-; CHECK:         b.hi	.LBB0_2
-; CHECK-NEXT:    b	.LBB0_9
-; CHECK-NEXT:  .LBB0_8
+; CHECK:       LBB0_7:
+; CHECK:         b.hi	
+; CHECK-NEXT:    b	
+; CHECK-NEXT:  LBB0_8:
 ; CHECK-NEXT:    mov	 x8, x9
-; CHECK-NEXT:  .LBB0_9 
+; CHECK-NEXT:  LBB0_9:
 define i64 @test(i64 %n, i64* %a, i64* %b, i64* %c, i64* %d, i64* %e, i64* %f) {
 entry:
   %cmp28 = icmp sgt i64 %n, 1
