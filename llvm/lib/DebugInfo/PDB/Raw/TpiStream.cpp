@@ -103,7 +103,12 @@ Error TpiStream::reload() {
   // Hash indices, hash values, etc come from the hash stream.
   HashStream.reset(new MappedBlockStream(Header->HashStreamIndex, Pdb));
   codeview::StreamReader HSR(*HashStream);
+
   uint32_t NumHashValues = Header->HashValueBuffer.Length / sizeof(ulittle32_t);
+  if (NumHashValues != NumTypeRecords())
+    return make_error<RawError>(
+        raw_error_code::corrupt_file,
+        "TPI hash count does not match with the number of type records.");
   HSR.setOffset(Header->HashValueBuffer.Off);
   if (auto EC = HSR.readArray(HashValues, NumHashValues))
     return EC;
