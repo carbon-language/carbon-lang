@@ -31,6 +31,7 @@ public:
   virtual Error dumpSectionMap() = 0;
   virtual Error dumpPublicsStream() = 0;
   virtual Error dumpSectionHeaders() = 0;
+  virtual Error dumpFpoStream() = 0;
 };
 }
 }

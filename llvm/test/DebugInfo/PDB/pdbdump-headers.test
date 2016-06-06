@@ -2,7 +2,7 @@
 ; RUN:              -raw-sym-record-bytes -raw-publics -raw-module-files -raw-stream-name=/names \
 ; RUN:              -raw-stream-summary -raw-stream-blocks -raw-ipi-records -raw-ipi-record-bytes \
 ; RUN:              -raw-section-contribs -raw-section-map -raw-section-headers -raw-line-info \
-; RUN:              -raw-tpi-hash %p/Inputs/empty.pdb | FileCheck -check-prefix=EMPTY %s
+; RUN:              -raw-tpi-hash -raw-fpo %p/Inputs/empty.pdb | FileCheck -check-prefix=EMPTY %s
 ; RUN: llvm-pdbdump -raw-all %p/Inputs/empty.pdb | FileCheck -check-prefix=ALL %s
 ; RUN: llvm-pdbdump -raw-headers -raw-stream-name=/names -raw-modules -raw-module-files \
 ; RUN:              %p/Inputs/big-read.pdb | FileCheck -check-prefix=BIG %s
@@ -896,6 +896,30 @@
 ; EMPTY-NEXT:     Number of Relocations: 0
 ; EMPTY-NEXT:     Number of Linenumbers: 0
 ; EMPTY-NEXT:     Characteristics: 1107296320
+; EMPTY-NEXT:   }
+; EMPTY-NEXT: ]
+; EMPTY:      New FPO [
+; EMPTY-NEXT:   {
+; EMPTY-NEXT:     Offset: 4112
+; EMPTY-NEXT:     Size: 10
+; EMPTY-NEXT:     Number of locals: 0
+; EMPTY-NEXT:     Number of params: 0
+; EMPTY-NEXT:     Size of Prolog: 0
+; EMPTY-NEXT:     Number of Saved Registers: 0
+; EMPTY-NEXT:     Has SEH: No
+; EMPTY-NEXT:     Use BP: No
+; EMPTY-NEXT:     Frame Pointer: 0
+; EMPTY-NEXT:   }
+; EMPTY-NEXT:   {
+; EMPTY-NEXT:     Offset: 0
+; EMPTY-NEXT:     Size: 134
+; EMPTY-NEXT:     Number of locals: 3
+; EMPTY-NEXT:     Number of params: 4
+; EMPTY-NEXT:     Size of Prolog: 0
+; EMPTY-NEXT:     Number of Saved Registers: 0
+; EMPTY-NEXT:     Has SEH: No
+; EMPTY-NEXT:     Use BP: No
+; EMPTY-NEXT:     Frame Pointer: 0
 ; EMPTY-NEXT:   }
 ; EMPTY-NEXT: ]
 

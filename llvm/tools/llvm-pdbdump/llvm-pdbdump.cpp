@@ -154,6 +154,8 @@ cl::opt<bool>
 cl::opt<bool> DumpSectionHeaders("raw-section-headers",
                                  cl::desc("dump section headers"),
                                  cl::cat(NativeOptions));
+cl::opt<bool> DumpFpo("raw-fpo", cl::desc("dump FPO records"),
+                      cl::cat(NativeOptions));
 
 cl::opt<bool>
     RawAll("raw-all",
@@ -251,6 +253,9 @@ static Error dumpStructure(RawSession &RS) {
 
   if (auto EC = O->dumpSectionHeaders())
     return EC;
+
+  if (auto EC = O->dumpFpoStream())
+    return EC;
   return Error::success();
 }
 
@@ -290,6 +295,8 @@ bool isRawDumpEnabled() {
   if (opts::DumpSectionMap)
     return true;
   if (opts::DumpLineInfo)
+    return true;
+  if (opts::DumpFpo)
     return true;
   return false;
 }
@@ -460,6 +467,7 @@ int main(int argc_, const char *argv_[]) {
     opts::DumpSectionMap = true;
     opts::DumpSectionContribs = true;
     opts::DumpLineInfo = true;
+    opts::DumpFpo = true;
   }
 
   // When adding filters for excluded compilands and types, we need to remember

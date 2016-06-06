@@ -186,8 +186,9 @@ Error DbiStream::reload() {
     return EC;
   if (auto EC = initializeSectionMapData())
     return EC;
-
   if (auto EC = initializeFileInfo())
+    return EC;
+  if (auto EC = initializeFpoRecords())
     return EC;
 
   if (Reader.bytesRemaining() > 0)
@@ -252,6 +253,10 @@ DbiStream::getSectionHeaders() {
   return SectionHeaders;
 }
 
+codeview::FixedStreamArray<object::FpoData> DbiStream::getFpoRecords() {
+  return FpoRecords;
+}
+
 ArrayRef<ModuleInfoEx> DbiStream::modules() const { return ModuleInfos; }
 codeview::FixedStreamArray<SecMapEntry> DbiStream::getSectionMap() const {
   return SectionMap;
@@ -297,6 +302,24 @@ Error DbiStream::initializeSectionHeadersData() {
   if (auto EC = Reader.readArray(SectionHeaders, NumSections))
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Could not read a bitmap.");
+  return Error::success();
+}
+
+// Initializes this->Fpos.
+Error DbiStream::initializeFpoRecords() {
+  uint32_t StreamNum = getDebugStreamIndex(DbgHeaderType::NewFPO);
+  FpoStream.reset(new MappedBlockStream(StreamNum, Pdb));
+
+  size_t StreamLen = FpoStream->getLength();
+  if (StreamLen % sizeof(object::FpoData))
+    return make_error<RawError>(raw_error_code::corrupt_file,
+                                "Corrupted New FPO stream.");
+
+  size_t NumRecords = StreamLen / sizeof(object::FpoData);
+  codeview::StreamReader Reader(*FpoStream);
+  if (auto EC = Reader.readArray(FpoRecords, NumRecords))
+    return make_error<RawError>(raw_error_code::corrupt_file,
+                                "Corrupted New FPO stream.");
   return Error::success();
 }
 

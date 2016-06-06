@@ -33,6 +33,7 @@ public:
   Error dumpSectionMap() override;
   Error dumpPublicsStream() override;
   Error dumpSectionHeaders() override;
+  Error dumpFpoStream() override;
 
 private:
   PDBFile &File;
