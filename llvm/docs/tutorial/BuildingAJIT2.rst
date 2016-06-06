@@ -97,6 +97,10 @@ that we will define below.
         return RuntimeDyld::SymbolInfo(nullptr);
       },
   // ...
+
+.. code-block:: c++
+
+  // ...
   // Add the set to the JIT with the resolver we created above and a newly
   // created SectionMemoryManager.
   return OptimizeLayer.addModuleSet(std::move(Ms),
@@ -104,9 +108,13 @@ that we will define below.
                                     std::move(Resolver));
   // ...
 
+.. code-block:: c++
+
   // ...
   return OptimizeLayer.findSymbol(MangledNameStream.str(), true);
   // ...
+
+.. code-block:: c++
 
   // ...
   OptimizeLayer.removeModuleSet(H);
