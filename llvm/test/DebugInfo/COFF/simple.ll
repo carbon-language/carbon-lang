@@ -36,7 +36,7 @@
 ; X86-NEXT: .long [[END_OF_F]]-_f
 ; X86-NEXT: .long   0
 ; X86-NEXT: .long   0
-; X86-NEXT: .long   4098 # Function type index
+; X86-NEXT: .long   4098
 ; X86-NEXT: .secrel32 _f
 ; X86-NEXT: .secidx _f
 ; X86-NEXT: .byte   0
@@ -48,11 +48,10 @@
 ; X86-NEXT: .p2align 2
 ; Line table
 ; X86-NEXT: .cv_linetable 0, _f, [[END_OF_F]]
-
 ; File index to string table offset subsection
-; X86: .cv_filechecksums
+; X86-NEXT: .cv_filechecksums
 ; String table
-; X86: .cv_stringtable
+; X86-NEXT: .cv_stringtable
 
 ; OBJ32:    Section {
 ; OBJ32:      Name: .debug$S (2E 64 65 62 75 67 24 53)
@@ -127,7 +126,7 @@
 ; X64-NEXT: .long [[END_OF_F]]-f
 ; X64-NEXT: .long   0
 ; X64-NEXT: .long   0
-; X64-NEXT: .long   4098 # Function type index
+; X64-NEXT: .long   4098
 ; X64-NEXT: .secrel32 f
 ; X64-NEXT: .secidx f
 ; X64-NEXT: .byte   0
@@ -139,11 +138,10 @@
 ; X64-NEXT: .p2align   2
 ; Line table
 ; X64-NEXT: .cv_linetable 0, f, [[END_OF_F]]
-
 ; File index to string table offset subsection
-; X64: .cv_filechecksums
+; X64-NEXT: .cv_filechecksums
 ; String table
-; X64: .cv_stringtable
+; X64-NEXT: .cv_stringtable
 
 ; OBJ64:    Section {
 ; OBJ64:      Name: .debug$S (2E 64 65 62 75 67 24 53)
