@@ -19,7 +19,8 @@
 ;    }
 ;
 ; CHECK: polly.stmt.stmt.P:
-; CHECK:   sext i32 %tmp.merge to i64
+; CHECK:   %polly.fdiv_q.shr = ashr i32 %tmp.merge, 1
+; CHECL:   sext i32 %polly.fdiv_q.shr to i33
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
