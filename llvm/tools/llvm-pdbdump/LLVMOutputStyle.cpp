@@ -665,7 +665,8 @@ Error LLVMOutputStyle::dumpSectionHeaders() {
     P.printNumber("File Pointer to Linenumbers", Section.PointerToLinenumbers);
     P.printNumber("Number of Relocations", Section.NumberOfRelocations);
     P.printNumber("Number of Linenumbers", Section.NumberOfLinenumbers);
-    P.printNumber("Characteristics", Section.Characteristics);
+    P.printFlags("Characteristics", Section.Characteristics,
+                 getImageSectionCharacteristicNames());
   }
   return Error::success();
 }
