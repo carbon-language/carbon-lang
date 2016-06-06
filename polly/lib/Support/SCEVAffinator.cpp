@@ -245,7 +245,7 @@ __isl_give PWACtx SCEVAffinator::visit(const SCEV *Expr) {
   if (PWAC.first)
     return copyPWACtx(PWAC);
 
-  auto ConstantAndLeftOverPair = extractConstantFactor(Expr, *S->getSE());
+  auto ConstantAndLeftOverPair = extractConstantFactor(Expr, SE);
   auto *Factor = ConstantAndLeftOverPair.first;
   Expr = ConstantAndLeftOverPair.second;
 
@@ -462,7 +462,6 @@ __isl_give PWACtx SCEVAffinator::visitAddRecExpr(const SCEVAddRecExpr *Expr) {
   // TODO: Using the original SCEV no-wrap flags is not always safe, however
   //       as our code generation is reordering the expression anyway it doesn't
   //       really matter.
-  ScalarEvolution &SE = *S->getSE();
   const SCEV *ZeroStartExpr =
       SE.getAddRecExpr(SE.getConstant(Expr->getStart()->getType(), 0),
                        Expr->getStepRecurrence(SE), Expr->getLoop(), Flags);
@@ -529,16 +528,15 @@ __isl_give PWACtx SCEVAffinator::visitUDivExpr(const SCEVUDivExpr *Expr) {
 
 __isl_give PWACtx SCEVAffinator::visitSDivInstruction(Instruction *SDiv) {
   assert(SDiv->getOpcode() == Instruction::SDiv && "Assumed SDiv instruction!");
-  auto *SE = S->getSE();
 
   auto *Divisor = SDiv->getOperand(1);
-  auto *DivisorSCEV = SE->getSCEV(Divisor);
+  auto *DivisorSCEV = SE.getSCEV(Divisor);
   auto DivisorPWAC = visit(DivisorSCEV);
   assert(isa<ConstantInt>(Divisor) &&
          "SDiv is no parameter but has a non-constant RHS.");
 
   auto *Dividend = SDiv->getOperand(0);
-  auto *DividendSCEV = SE->getSCEV(Dividend);
+  auto *DividendSCEV = SE.getSCEV(Dividend);
   auto DividendPWAC = visit(DividendSCEV);
   combine(DividendPWAC, DivisorPWAC, isl_pw_aff_tdiv_q);
   return DividendPWAC;
@@ -546,7 +544,6 @@ __isl_give PWACtx SCEVAffinator::visitSDivInstruction(Instruction *SDiv) {
 
 __isl_give PWACtx SCEVAffinator::visitSRemInstruction(Instruction *SRem) {
   assert(SRem->getOpcode() == Instruction::SRem && "Assumed SRem instruction!");
-  auto *SE = S->getSE();
 
   auto *Divisor = dyn_cast<ConstantInt>(SRem->getOperand(1));
   assert(Divisor && "SRem is no parameter but has a non-constant RHS.");
@@ -554,7 +551,7 @@ __isl_give PWACtx SCEVAffinator::visitSRemInstruction(Instruction *SRem) {
                                       /* isSigned */ true);
 
   auto *Dividend = SRem->getOperand(0);
-  auto *DividendSCEV = SE->getSCEV(Dividend);
+  auto *DividendSCEV = SE.getSCEV(Dividend);
   auto DividendPWAC = visit(DividendSCEV);
 
   DividendPWAC.first =
