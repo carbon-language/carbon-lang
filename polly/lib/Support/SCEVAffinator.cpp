@@ -135,6 +135,8 @@ SCEVAffinator::~SCEVAffinator() {
     freePWACtx(CachedPair.second);
 }
 
+Loop *SCEVAffinator::getScope() { return BB ? LI.getLoopFor(BB) : nullptr; }
+
 void SCEVAffinator::interpretAsUnsigned(__isl_keep PWACtx &PWAC,
                                         unsigned Width) {
   auto *PWA = PWAC.first;
@@ -169,7 +171,7 @@ __isl_give PWACtx SCEVAffinator::getPwAff(const SCEV *Expr, BasicBlock *BB) {
   } else
     NumIterators = 0;
 
-  auto *Scope = LI.getLoopFor(BB);
+  auto *Scope = getScope();
   S->addParams(getParamsInAffineExpr(&S->getRegion(), Scope, Expr, SE));
 
   return visit(Expr);
@@ -529,14 +531,15 @@ __isl_give PWACtx SCEVAffinator::visitUDivExpr(const SCEVUDivExpr *Expr) {
 __isl_give PWACtx SCEVAffinator::visitSDivInstruction(Instruction *SDiv) {
   assert(SDiv->getOpcode() == Instruction::SDiv && "Assumed SDiv instruction!");
 
+  auto *Scope = getScope();
   auto *Divisor = SDiv->getOperand(1);
-  auto *DivisorSCEV = SE.getSCEV(Divisor);
+  auto *DivisorSCEV = SE.getSCEVAtScope(Divisor, Scope);
   auto DivisorPWAC = visit(DivisorSCEV);
   assert(isa<ConstantInt>(Divisor) &&
          "SDiv is no parameter but has a non-constant RHS.");
 
   auto *Dividend = SDiv->getOperand(0);
-  auto *DividendSCEV = SE.getSCEV(Dividend);
+  auto *DividendSCEV = SE.getSCEVAtScope(Dividend, Scope);
   auto DividendPWAC = visit(DividendSCEV);
   combine(DividendPWAC, DivisorPWAC, isl_pw_aff_tdiv_q);
   return DividendPWAC;
@@ -551,7 +554,7 @@ __isl_give PWACtx SCEVAffinator::visitSRemInstruction(Instruction *SRem) {
                                       /* isSigned */ true);
 
   auto *Dividend = SRem->getOperand(0);
-  auto *DividendSCEV = SE.getSCEV(Dividend);
+  auto *DividendSCEV = SE.getSCEVAtScope(Dividend, getScope());
   auto DividendPWAC = visit(DividendSCEV);
 
   DividendPWAC.first =
