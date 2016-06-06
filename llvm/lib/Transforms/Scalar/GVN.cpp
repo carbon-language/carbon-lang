@@ -594,7 +594,12 @@ PreservedAnalyses GVN::run(Function &F, AnalysisManager<Function> &AM) {
   auto &AA = AM.getResult<AAManager>(F);
   auto &MemDep = AM.getResult<MemoryDependenceAnalysis>(F);
   bool Changed = runImpl(F, AC, DT, TLI, AA, &MemDep);
-  return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
+  if (!Changed)
+    return PreservedAnalyses::all();
+  PreservedAnalyses PA;
+  PA.preserve<DominatorTreeAnalysis>();
+  PA.preserve<GlobalsAA>();
+  return PA;
 }
 
 LLVM_DUMP_METHOD
