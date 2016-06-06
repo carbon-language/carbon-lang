@@ -108,12 +108,12 @@ static void handleMergeWriterError(Error E, StringRef WhenceFile = "",
 }
 
 struct WeightedFile {
-  std::string Filename;
+  StringRef Filename;
   uint64_t Weight;
 
   WeightedFile() {}
 
-  WeightedFile(std::string F, uint64_t W) : Filename{F}, Weight{W} {}
+  WeightedFile(StringRef F, uint64_t W) : Filename{F}, Weight{W} {}
 };
 typedef SmallVector<WeightedFile, 5> WeightedFileVector;
 
@@ -209,47 +209,18 @@ static void mergeSampleProfile(const WeightedFileVector &Inputs,
 }
 
 static WeightedFile parseWeightedFile(const StringRef &WeightedFilename) {
-  StringRef WeightStr, FilenameStr;
-  std::tie(WeightStr, FilenameStr) = WeightedFilename.split(',');
+  StringRef WeightStr, FileName;
+  std::tie(WeightStr, FileName) = WeightedFilename.split(',');
 
   uint64_t Weight;
   if (WeightStr.getAsInteger(10, Weight) || Weight < 1)
     exitWithError("Input weight must be a positive integer.");
 
-  SmallString<256> CanonicalFilename;
-  sys::path::native(FilenameStr, CanonicalFilename);
-
-  if (!sys::fs::exists(CanonicalFilename))
+  if (!sys::fs::exists(FileName))
     exitWithErrorCode(make_error_code(errc::no_such_file_or_directory),
-                      CanonicalFilename);
+                      FileName);
 
-  return WeightedFile(StringRef(CanonicalFilename).str(), Weight);
-}
-
-static void parseInputFilenamesFile(const StringRef &InputFilenamesFile,
-                                    WeightedFileVector &WFV) {
-  if (InputFilenamesFile == "")
-    return;
-
-  auto BufOrError = MemoryBuffer::getFileOrSTDIN(InputFilenamesFile);
-  if (!BufOrError)
-    exitWithErrorCode(BufOrError.getError(), InputFilenamesFile);
-
-  auto Buffer = std::move(*BufOrError);
-  StringRef Data = Buffer->getBuffer();
-  SmallVector<StringRef, 8> Entries;
-  Data.split(Entries, '\n', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
-  for (const StringRef &FileWeightEntry : Entries) {
-    StringRef SanitizedEntry = FileWeightEntry.trim(" \t\v\f\r");
-    // Skip comments.
-    if (SanitizedEntry.startswith("#"))
-      continue;
-    // If there's no comma, it's an unweighted profile.
-    else if (SanitizedEntry.rfind(',') == StringRef::npos)
-      WFV.emplace_back(SanitizedEntry, 1);
-    else
-      WFV.emplace_back(parseWeightedFile(SanitizedEntry));
-  }
+  return WeightedFile(FileName, Weight);
 }
 
 static int merge_main(int argc, const char *argv[]) {
@@ -257,15 +228,6 @@ static int merge_main(int argc, const char *argv[]) {
                                        cl::desc("<filename...>"));
   cl::list<std::string> WeightedInputFilenames("weighted-input",
                                                cl::desc("<weight>,<filename>"));
-  cl::opt<std::string> InputFilenamesFile(
-      "input-files", cl::init(""),
-      cl::desc("Path to file containing newline-separated "
-               "[<weight>,]<filename> entries"));
-  cl::alias InputFilenamesFileA("f", cl::desc("Alias for --input-files"),
-                                cl::aliasopt(InputFilenamesFile));
-  cl::opt<bool> DumpInputFileList(
-      "dump-input-file-list", cl::init(false), cl::Hidden,
-      cl::desc("Dump the list of input files and their weights, then exit"));
   cl::opt<std::string> OutputFilename("output", cl::value_desc("output"),
                                       cl::init("-"), cl::Required,
                                       cl::desc("Output file"));
@@ -287,22 +249,15 @@ static int merge_main(int argc, const char *argv[]) {
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM profile data merger\n");
 
-  WeightedFileVector WeightedInputs;
-  for (StringRef Filename : InputFilenames)
-    WeightedInputs.emplace_back(Filename, 1);
-  for (StringRef WeightedFilename : WeightedInputFilenames)
-    WeightedInputs.emplace_back(parseWeightedFile(WeightedFilename));
-  parseInputFilenamesFile(InputFilenamesFile, WeightedInputs);
-
-  if (WeightedInputs.empty())
+  if (InputFilenames.empty() && WeightedInputFilenames.empty())
     exitWithError("No input files specified. See " +
                   sys::path::filename(argv[0]) + " -help");
 
-  if (DumpInputFileList) {
-    for (auto &WF : WeightedInputs)
-      outs() << WF.Weight << "," << WF.Filename << "\n";
-    return 0;
-  }
+  WeightedFileVector WeightedInputs;
+  for (StringRef Filename : InputFilenames)
+    WeightedInputs.push_back(WeightedFile(Filename, 1));
+  for (StringRef WeightedFilename : WeightedInputFilenames)
+    WeightedInputs.push_back(parseWeightedFile(WeightedFilename));
 
   if (ProfileKind == instr)
     mergeInstrProfile(WeightedInputs, OutputFilename, OutputFormat,
