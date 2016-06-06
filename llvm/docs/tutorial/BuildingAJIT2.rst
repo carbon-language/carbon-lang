@@ -48,7 +48,7 @@ constructor for this layer takes a reference to the layer below (as all layers
 do) plus an *IR optimization function* that it will apply to each Module that
 is added via addModuleSet:
 
-.. code-block: c++
+.. code-block:: c++
 
   class KaleidoscopeJIT {
   private:
@@ -87,7 +87,7 @@ below (standard practice for layers), and we initialize the OptimizeFunction
 using a lambda. In the lambda, we just call out to the "optimizeModule" function
 that we will define below.
 
-.. code-block:
+.. code-block:: c++
 
   // ...
   auto Resolver = createLambdaResolver(
@@ -117,7 +117,7 @@ OptimizeLayer in our key methods: addModule, findSymbol, and removeModule. In
 addModule we need to be careful to replace both references: the findSymbol call
 inside our resolver, and the call through to addModuleSet.
 
-.. code-block: c++
+.. code-block:: c++
 
   std::unique_ptr<Module> optimizeModule(std::unique_ptr<Module> M) {
     // Create a function pass manager.
@@ -154,7 +154,7 @@ IRTransformLayer, but it gives us an opportunity to see how layers compose, and
 how one can be implemented, because IRTransformLayer turns out to be one of
 the simplest implementations of the *layer* concept that can be devised:
 
-.. code-block:
+.. code-block:: c++
 
   template <typename BaseLayerT, typename TransformFtor>
   class IRTransformLayer {
