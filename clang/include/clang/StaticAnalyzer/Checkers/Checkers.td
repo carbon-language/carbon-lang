@@ -72,8 +72,6 @@ def Containers : Package<"containers">, InPackage<CoreFoundation>;
 def LocalizabilityAlpha : Package<"localizability">, InPackage<CocoaAlpha>;
 def LocalizabilityOptIn : Package<"localizability">, InPackage<CocoaOptIn>;
 
-def MPI : Package<"mpi">, InPackage<OptIn>;
-
 def LLVM : Package<"llvm">;
 def Debug : Package<"debug">;
 
@@ -577,12 +575,6 @@ let ParentPackage = LocalizabilityAlpha in {
 def PluralMisuseChecker : Checker<"PluralMisuseChecker">,
   HelpText<"Warns against using one vs. many plural pattern in code when generating localized strings.">,
   DescFile<"LocalizationChecker.cpp">;
-}
-
-let ParentPackage = MPI in {
-  def MPIChecker : Checker<"MPI-Checker">,
-  HelpText<"Checks MPI code">,
-  DescFile<"MPIChecker.cpp">;
 }
 
 //===----------------------------------------------------------------------===//
