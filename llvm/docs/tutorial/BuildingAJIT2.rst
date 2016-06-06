@@ -84,8 +84,8 @@ which sits on top of our CompileLayer.
 
 To initialize our OptimizeLayer we pass it a reference to the CompileLayer
 below (standard practice for layers), and we initialize the OptimizeFunction
-using a lambda. In the lambda, we just call out to the "optimizeModule" function
-that we will define below.
+using a lambda that calls out to an "optimizeModule" function that we will
+define below.
 
 .. code-block:: c++
 
@@ -101,8 +101,6 @@ that we will define below.
 .. code-block:: c++
 
   // ...
-  // Add the set to the JIT with the resolver we created above and a newly
-  // created SectionMemoryManager.
   return OptimizeLayer.addModuleSet(std::move(Ms),
                                     make_unique<SectionMemoryManager>(),
                                     std::move(Resolver));
