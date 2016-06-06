@@ -265,7 +265,7 @@ For later versions of Visual Studio, no setup is required-->
     <DisplayString IncludeView="arg1" Condition="NumArguments==1"></DisplayString>
     <DisplayString IncludeView="arg1">, {Arguments[1],view(cpp)}{*this,view(arg2)}</DisplayString>
     <DisplayString IncludeView="arg2" Condition="NumArguments==2"></DisplayString>
-    <DisplayString IncludeView="arg2">, {Arguments[1],view(cpp)}, ...</DisplayString>
+    <DisplayString IncludeView="arg2">, {Arguments[2],view(cpp)}, ...</DisplayString>
     <DisplayString>&lt;{*this,view(arg0)}&gt;</DisplayString>
     <Expand>
       <Item Name="NumArguments">NumArguments</Item>
