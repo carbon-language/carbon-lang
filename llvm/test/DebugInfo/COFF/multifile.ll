@@ -59,9 +59,9 @@
 ; Line table
 ; X86-NEXT: .cv_linetable 0, _f, [[END_OF_F]]
 ; File index to string table offset subsection
-; X86-NEXT: .cv_filechecksums
+; X86: .cv_filechecksums
 ; String table
-; X86-NEXT: .cv_stringtable
+; X86: .cv_stringtable
 
 ; OBJ32:    Section {
 ; OBJ32:      Name: .debug$S (2E 64 65 62 75 67 24 53)
