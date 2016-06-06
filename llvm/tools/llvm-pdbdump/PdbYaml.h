@@ -36,13 +36,33 @@ struct MsfHeaders {
   uint32_t NumStreams;
 };
 
+struct StreamSizeEntry {
+  uint32_t Size;
+};
+
+struct StreamMapEntry {
+  std::vector<uint32_t> Blocks;
+};
+
 struct PdbObject {
   Optional<MsfHeaders> Headers;
+  Optional<std::vector<StreamSizeEntry>> StreamSizes;
+  Optional<std::vector<StreamMapEntry>> StreamMap;
 };
 }
 }
+}
 
+namespace llvm {
 namespace yaml {
+template <> struct MappingTraits<pdb::yaml::StreamSizeEntry> {
+  static void mapping(IO &IO, pdb::yaml::StreamSizeEntry &Obj);
+};
+
+template <> struct MappingTraits<pdb::yaml::StreamMapEntry> {
+  static void mapping(IO &IO, pdb::yaml::StreamMapEntry &Obj);
+};
+
 template <> struct MappingTraits<pdb::yaml::MsfHeaders> {
   static void mapping(IO &IO, pdb::yaml::MsfHeaders &Obj);
 };
@@ -53,5 +73,7 @@ template <> struct MappingTraits<pdb::yaml::PdbObject> {
 }
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(uint32_t)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::pdb::yaml::StreamSizeEntry)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::pdb::yaml::StreamMapEntry)
 
 #endif // LLVM_TOOLS_LLVMPDBDUMP_PDBYAML_H

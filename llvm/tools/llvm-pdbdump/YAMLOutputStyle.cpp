@@ -45,12 +45,28 @@ Error YAMLOutputStyle::dumpStreamSummary() {
   if (!opts::DumpStreamSummary)
     return Error::success();
 
+  std::vector<yaml::StreamSizeEntry> Sizes;
+  for (uint32_t I = 0; I < File.getNumStreams(); ++I) {
+    yaml::StreamSizeEntry Entry;
+    Entry.Size = File.getStreamByteSize(I);
+    Sizes.push_back(Entry);
+  }
+  Obj.StreamSizes.emplace(Sizes);
   return Error::success();
 }
 
 Error YAMLOutputStyle::dumpStreamBlocks() {
   if (!opts::DumpStreamBlocks)
     return Error::success();
+
+  std::vector<yaml::StreamMapEntry> Blocks;
+  for (uint32_t I = 0; I < File.getNumStreams(); ++I) {
+    yaml::StreamMapEntry Entry;
+    auto BlockList = File.getStreamBlockList(I);
+    Entry.Blocks.assign(BlockList.begin(), BlockList.end());
+    Blocks.push_back(Entry);
+  }
+  Obj.StreamMap.emplace(Blocks);
 
   return Error::success();
 }

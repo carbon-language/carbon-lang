@@ -12,11 +12,11 @@
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 
 using namespace llvm;
+using namespace llvm::yaml;
 using namespace llvm::pdb;
 using namespace llvm::pdb::yaml;
 
-void llvm::yaml::MappingTraits<MsfHeaders>::mapping(
-    IO &IO, pdb::yaml::MsfHeaders &Obj) {
+void MappingTraits<MsfHeaders>::mapping(IO &IO, MsfHeaders &Obj) {
   IO.mapRequired("BlockSize", Obj.BlockSize);
   IO.mapRequired("Unknown0", Obj.Unknown0);
   IO.mapRequired("NumBlocks", Obj.BlockCount);
@@ -29,7 +29,16 @@ void llvm::yaml::MappingTraits<MsfHeaders>::mapping(
   IO.mapRequired("NumStreams", Obj.NumStreams);
 }
 
-void llvm::yaml::MappingTraits<pdb::yaml::PdbObject>::mapping(
-    IO &IO, pdb::yaml::PdbObject &Obj) {
+void MappingTraits<PdbObject>::mapping(IO &IO, PdbObject &Obj) {
   IO.mapOptional("MSF", Obj.Headers);
+  IO.mapOptional("StreamSizes", Obj.StreamSizes);
+  IO.mapOptional("StreamMap", Obj.StreamMap);
+}
+
+void MappingTraits<StreamSizeEntry>::mapping(IO &IO, StreamSizeEntry &Obj) {
+  IO.mapRequired("Size", Obj.Size);
+}
+
+void MappingTraits<StreamMapEntry>::mapping(IO &IO, StreamMapEntry &Obj) {
+  IO.mapRequired("Blocks", Obj.Blocks);
 }
