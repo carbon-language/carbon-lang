@@ -7679,6 +7679,8 @@ static SDValue lowerVectorShuffleAsByteRotate(SDLoc DL, MVT VT, SDValue V1,
 
   // SSSE3 targets can use the palignr instruction.
   if (Subtarget.hasSSSE3()) {
+    assert((!VT.is512BitVector() || Subtarget.hasBWI()) &&
+           "512-bit PALIGNR requires BWI instructions");
     // Cast the inputs to i8 vector of correct length to match PALIGNR.
     MVT AlignVT = MVT::getVectorVT(MVT::i8, 16 * NumLanes);
     Lo = DAG.getBitcast(AlignVT, Lo);
@@ -11760,6 +11762,12 @@ static SDValue lowerV16I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
           lowerVectorShuffleWithUNPCK(DL, MVT::v16i32, Mask, V1, V2, DAG))
     return Unpck;
 
+  // Try to use byte rotation instructions.
+  if (Subtarget.hasBWI())
+    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+            DL, MVT::v32i16, V1, V2, Mask, Subtarget, DAG))
+      return Rotate;
+
   return lowerVectorShuffleWithPERMV(DL, MVT::v16i32, Mask, V1, V2, DAG);
 }
 
@@ -11774,6 +11782,11 @@ static SDValue lowerV32I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 32 && "Unexpected mask size for v32 shuffle!");
   assert(Subtarget.hasBWI() && "We can only lower v32i16 with AVX-512-BWI!");
+
+  // Try to use byte rotation instructions.
+  if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+          DL, MVT::v32i16, V1, V2, Mask, Subtarget, DAG))
+    return Rotate;
 
   return lowerVectorShuffleWithPERMV(DL, MVT::v32i16, Mask, V1, V2, DAG);
 }
