@@ -20,6 +20,7 @@ namespace llvm {
   class MachineBranchProbabilityInfo;
   class MachineFunction;
   class MachineModuleInfo;
+  class MachineLoopInfo;
   class RegScavenger;
   class TargetInstrInfo;
   class TargetRegisterInfo;
@@ -32,10 +33,11 @@ namespace llvm {
                           MBFIWrapper &MBFI,
                           const MachineBranchProbabilityInfo &MBPI);
 
-    bool OptimizeFunction(MachineFunction &MF,
-                          const TargetInstrInfo *tii,
-                          const TargetRegisterInfo *tri,
-                          MachineModuleInfo *mmi);
+    bool OptimizeFunction(MachineFunction &MF, const TargetInstrInfo *tii,
+                          const TargetRegisterInfo *tri, MachineModuleInfo *mmi,
+                          MachineLoopInfo *mli = nullptr,
+                          bool AfterPlacement = false);
+
   private:
     class MergePotentialsElt {
       unsigned Hash;
@@ -93,11 +95,13 @@ namespace llvm {
     };
     std::vector<SameTailElt> SameTails;
 
+    bool AfterBlockPlacement;
     bool EnableTailMerge;
     bool EnableHoistCommonCode;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     MachineModuleInfo *MMI;
+    MachineLoopInfo *MLI;
     RegScavenger *RS;
 
   public:
