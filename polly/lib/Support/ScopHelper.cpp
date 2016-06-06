@@ -280,11 +280,19 @@ private:
         return visit(NewE);
     }
 
-    Instruction *StartIP = R.getEnteringBlock()->getTerminator();
+    auto *EnteringBB = R.getEnteringBlock();
     Instruction *Inst = dyn_cast<Instruction>(E->getValue());
+    Instruction *IP;
+    if (Inst && !R.contains(Inst))
+      IP = Inst;
+    else if (Inst && EnteringBB->getParent() == Inst->getFunction())
+      IP = EnteringBB->getTerminator();
+    else
+      IP = EnteringBB->getParent()->getEntryBlock().getTerminator();
+
     if (!Inst || (Inst->getOpcode() != Instruction::SRem &&
                   Inst->getOpcode() != Instruction::SDiv))
-      return visitGenericInst(E, Inst, StartIP);
+      return visitGenericInst(E, Inst, IP);
 
     const SCEV *LHSScev = SE.getSCEV(Inst->getOperand(0));
     const SCEV *RHSScev = SE.getSCEV(Inst->getOperand(1));
@@ -292,11 +300,11 @@ private:
     if (!SE.isKnownNonZero(RHSScev))
       RHSScev = SE.getUMaxExpr(RHSScev, SE.getConstant(E->getType(), 1));
 
-    Value *LHS = expandCodeFor(LHSScev, E->getType(), StartIP);
-    Value *RHS = expandCodeFor(RHSScev, E->getType(), StartIP);
+    Value *LHS = expandCodeFor(LHSScev, E->getType(), IP);
+    Value *RHS = expandCodeFor(RHSScev, E->getType(), IP);
 
     Inst = BinaryOperator::Create((Instruction::BinaryOps)Inst->getOpcode(),
-                                  LHS, RHS, Inst->getName() + Name, StartIP);
+                                  LHS, RHS, Inst->getName() + Name, IP);
     return SE.getSCEV(Inst);
   }
 
