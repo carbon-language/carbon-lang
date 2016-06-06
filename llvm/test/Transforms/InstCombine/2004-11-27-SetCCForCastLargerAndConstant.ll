@@ -22,6 +22,34 @@ define i1 @lt_signed_to_large_unsigned(i8 %SB) {
   ret i1 %C
 }
 
+; PR28011 - https://llvm.org/bugs/show_bug.cgi?id=28011
+; The above transform only applies to scalar integers; it shouldn't be attempted for constant expressions or vectors.
+
+@a = common global i32** null
+@b = common global [1 x i32] zeroinitializer
+
+define i1 @PR28011(i16 %a) {
+; CHECK-LABEL: @PR28011(
+; CHECK-NEXT:    [[CONV:%.*]] = sext i16 %a to i32
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ne i32 [[CONV]], or (i32 zext (i1 icmp ne (i32*** bitcast ([1 x i32]* @b to i32***), i32*** @a) to i32), i32 1)
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %conv = sext i16 %a to i32
+  %cmp = icmp ne i32 %conv, or (i32 zext (i1 icmp ne (i32*** bitcast ([1 x i32]* @b to i32***), i32*** @a) to i32), i32 1)
+  ret i1 %cmp
+}
+
+define <2 x i1> @lt_signed_to_large_unsigned_vec(<2 x i8> %SB) {
+; CHECK-LABEL: @lt_signed_to_large_unsigned_vec(
+; CHECK-NEXT:    [[Y:%.*]] = sext <2 x i8> %SB to <2 x i32>
+; CHECK-NEXT:    [[C:%.*]] = icmp ult <2 x i32> [[Y]], <i32 1024, i32 2>
+; CHECK-NEXT:    ret <2 x i1> [[C]]
+;
+  %Y = sext <2 x i8> %SB to <2 x i32>
+  %C = icmp ult <2 x i32> %Y, <i32 1024, i32 2>
+  ret <2 x i1> %C
+}
+
 define i1 @lt_signed_to_large_signed(i8 %SB) {
 ; CHECK-LABEL: @lt_signed_to_large_signed(
 ; CHECK-NEXT:    ret i1 true
