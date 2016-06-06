@@ -325,8 +325,7 @@ LLVMSymbolizer::getOrCreateObject(const std::string &Path,
   if (I == BinaryForPath.end()) {
     Expected<OwningBinary<Binary>> BinOrErr = createBinary(Path);
     if (!BinOrErr) {
-      OwningBinary<Binary> NullBinary;
-      BinaryForPath.insert(std::make_pair(Path, std::move(NullBinary)));
+      BinaryForPath.insert(std::make_pair(Path, OwningBinary<Binary>()));
       return BinOrErr.takeError();
     }
     Bin = BinOrErr->getBinary();
