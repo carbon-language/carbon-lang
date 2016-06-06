@@ -265,7 +265,7 @@ For later versions of Visual Studio, no setup is required-->
     <DisplayString IncludeView="arg1" Condition="NumArguments==1"></DisplayString>
     <DisplayString IncludeView="arg1">, {Arguments[1],view(cpp)}{*this,view(arg2)}</DisplayString>
     <DisplayString IncludeView="arg2" Condition="NumArguments==2"></DisplayString>
-    <DisplayString IncludeView="arg2">, {Arguments[2],view(cpp)}, ...</DisplayString>
+    <DisplayString IncludeView="arg2">, {Arguments[1],view(cpp)}, ...</DisplayString>
     <DisplayString>&lt;{*this,view(arg0)}&gt;</DisplayString>
     <Expand>
       <Item Name="NumArguments">NumArguments</Item>
@@ -273,6 +273,27 @@ For later versions of Visual Studio, no setup is required-->
         <Size>NumArguments</Size>
         <ValuePointer>Arguments</ValuePointer>
       </ArrayItems>
+    </Expand>
+  </Type>
+  <Type Name="llvm::ArrayRef&lt;clang::TemplateArgument&gt;">
+    <DisplayString IncludeView="arg0" Condition="Length==0"></DisplayString>
+    <DisplayString IncludeView="arg0">{Data[0],view(cpp)}{*this,view(arg1)}</DisplayString>
+    <DisplayString IncludeView="arg1" Condition="Length==1"></DisplayString>
+    <DisplayString IncludeView="arg1">, {Data[1],view(cpp)}{*this,view(arg2)}</DisplayString>
+    <DisplayString IncludeView="arg2" Condition="Length==2"></DisplayString>
+    <DisplayString IncludeView="arg2">, {Data[2],view(cpp)}, ...</DisplayString>
+    <DisplayString>&lt;{*this,view(arg0)}&gt;</DisplayString>
+  </Type>
+  <Type Name="clang::MultiLevelTemplateArgumentList">
+    <DisplayString IncludeView="level0" Condition="(llvm::ArrayRef&lt;clang::TemplateArgument&gt; *)TemplateArgumentLists.EndX - (llvm::ArrayRef&lt;clang::TemplateArgument&gt; *)TemplateArgumentLists.BeginX==0"></DisplayString>
+    <DisplayString IncludeView="level0">{((llvm::ArrayRef&lt;clang::TemplateArgument&gt; *)TemplateArgumentLists.BeginX)[0],view(cpp)}{*this,view(level1)}</DisplayString>
+    <DisplayString IncludeView="level1" Condition="(llvm::ArrayRef&lt;clang::TemplateArgument&gt; *)TemplateArgumentLists.EndX - (llvm::ArrayRef&lt;clang::TemplateArgument&gt; *)TemplateArgumentLists.BeginX==1"></DisplayString>
+    <DisplayString IncludeView="level1">::{((llvm::ArrayRef&lt;clang::TemplateArgument&gt; *)TemplateArgumentLists.BeginX)[1],view(cpp)}{*this,view(level2)}</DisplayString>
+    <DisplayString IncludeView="level2" Condition="(llvm::ArrayRef&lt;clang::TemplateArgument&gt; *)TemplateArgumentLists.EndX - (llvm::ArrayRef&lt;clang::TemplateArgument&gt; *)TemplateArgumentLists.BeginX==2"></DisplayString>
+    <DisplayString IncludeView="level2">::{((llvm::ArrayRef&lt;clang::TemplateArgument&gt; *)TemplateArgumentLists.BeginX)[2],view(cpp)}, ...</DisplayString>
+    <DisplayString>{*this,view(level0)}</DisplayString>
+    <Expand>
+      <Item Name="TemplateList">TemplateArgumentLists</Item>
     </Expand>
   </Type>
   <!-- Builtin types that have C++ keywords are manually displayed as that keyword. Otherwise, just use the enum name -->
