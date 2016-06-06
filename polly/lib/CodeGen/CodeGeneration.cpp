@@ -208,13 +208,13 @@ public:
       fixRegionInfo(EnteringBB->getParent(), R->getParent());
     }
 
-    verifyGeneratedFunction(S, *EnteringBB->getParent());
+    Function *F = EnteringBB->getParent();
+    verifyGeneratedFunction(S, *F);
     for (auto *SubF : NodeBuilder.getParallelSubfunctions())
       verifyGeneratedFunction(S, *SubF);
 
     // Mark the function such that we run additional cleanup passes on this
     // function (e.g. mem2reg to rediscover phi nodes).
-    Function *F = EnteringBB->getParent();
     F->addFnAttr("polly-optimized");
 
     return true;
