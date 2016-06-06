@@ -1,4 +1,4 @@
-//===- LLVMOutputStyle.h -------------------------------------- *- C++ --*-===//
+//===- YAMLOutputStyle.h -------------------------------------- *- C++ --*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,19 +7,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMPDBDUMP_LLVMOUTPUTSTYLE_H
-#define LLVM_TOOLS_LLVMPDBDUMP_LLVMOUTPUTSTYLE_H
+#ifndef LLVM_TOOLS_LLVMPDBDUMP_YAMLOUTPUTSTYLE_H
+#define LLVM_TOOLS_LLVMPDBDUMP_YAMLOUTPUTSTYLE_H
 
 #include "OutputStyle.h"
+#include "PdbYaml.h"
 
 #include "llvm/DebugInfo/CodeView/TypeDumper.h"
 #include "llvm/Support/ScopedPrinter.h"
+#include "llvm/Support/YAMLTraits.h"
 
 namespace llvm {
 namespace pdb {
-class LLVMOutputStyle : public OutputStyle {
+class YAMLOutputStyle : public OutputStyle {
 public:
-  LLVMOutputStyle(PDBFile &File);
+  YAMLOutputStyle(PDBFile &File);
 
   Error dumpFileHeaders() override;
   Error dumpStreamSummary() override;
@@ -39,10 +41,11 @@ public:
 
 private:
   PDBFile &File;
-  ScopedPrinter P;
-  codeview::CVTypeDumper TD;
-};
-}
-}
+  llvm::yaml::Output Out;
 
-#endif
+  yaml::PdbObject Obj;
+};
+} // namespace pdb
+} // namespace llvm
+
+#endif // LLVM_TOOLS_LLVMPDBDUMP_YAMLOUTPUTSTYLE_H

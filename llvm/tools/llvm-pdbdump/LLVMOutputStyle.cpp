@@ -694,3 +694,4 @@ Error LLVMOutputStyle::dumpFpoStream() {
   }
   return Error::success();
 }
+void LLVMOutputStyle::flush() { P.flush(); }
