@@ -204,6 +204,9 @@ private:
   llvm::Value *createOpAddressOf(__isl_take isl_ast_expr *Expr);
   llvm::Value *createAccessAddress(__isl_take isl_ast_expr *Expr);
 
+  /// @brief Supported kinds of division.
+  enum DivisionMode { DM_SIGNED, DM_UNSIGNED, DM_FLOORED };
+
   /// @brief Create a binary operation @p Opc and track overflows if requested.
   ///
   /// @param OpC  The binary operation that should be performed [Add/Sub/Mul].
@@ -215,6 +218,15 @@ private:
   llvm::Value *createBinOp(llvm::BinaryOperator::BinaryOps Opc,
                            llvm::Value *LHS, llvm::Value *RHS,
                            const llvm::Twine &Name);
+
+  /// @brief Create a division and adjust the result type if possible.
+  ///
+  /// @param LHS The left operand.
+  /// @param RHS The right operand.
+  /// @param DM  The requested division mode.
+  ///
+  /// @return A value that represents the result of the division.
+  llvm::Value *createDiv(llvm::Value *LHS, llvm::Value *RHS, DivisionMode DM);
 
   /// @brief Create an addition and track overflows if requested.
   ///

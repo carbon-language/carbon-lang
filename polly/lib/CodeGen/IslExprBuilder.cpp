@@ -318,6 +318,48 @@ Value *IslExprBuilder::createOpAccess(isl_ast_expr *Expr) {
   return Builder.CreateLoad(Addr, Addr->getName() + ".load");
 }
 
+Value *IslExprBuilder::createDiv(Value *LHS, Value *RHS, DivisionMode DM) {
+  auto *ConstRHS = dyn_cast<ConstantInt>(RHS);
+  unsigned UnusedBits = 0;
+  Value *Res = nullptr;
+
+  if (ConstRHS)
+    UnusedBits = ConstRHS->getValue().logBase2();
+
+  if (ConstRHS && ConstRHS->getValue().isPowerOf2() &&
+      ConstRHS->getValue().isNonNegative())
+    Res = Builder.CreateAShr(LHS, UnusedBits, "polly.div.shr");
+  else if (DM == DM_SIGNED)
+    Res = Builder.CreateSDiv(LHS, RHS, "pexp.div", true);
+  else if (DM == DM_UNSIGNED)
+    Res = Builder.CreateUDiv(LHS, RHS, "pexp.p_div_q");
+  else {
+    assert(DM == DM_FLOORED);
+    // TODO: Review code and check that this calculation does not yield
+    //       incorrect overflow in some bordercases.
+    //
+    // floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
+    Value *Sum1 = createSub(LHS, RHS, "pexp.fdiv_q.0");
+    Value *One = ConstantInt::get(Sum1->getType(), 1);
+    Value *Sum2 = createAdd(Sum1, One, "pexp.fdiv_q.1");
+    Value *Zero = ConstantInt::get(LHS->getType(), 0);
+    Value *isNegative = Builder.CreateICmpSLT(LHS, Zero, "pexp.fdiv_q.2");
+    unifyTypes(LHS, Sum2);
+    Value *Dividend =
+        Builder.CreateSelect(isNegative, Sum2, LHS, "pexp.fdiv_q.3");
+    unifyTypes(Dividend, RHS);
+    Res = Builder.CreateSDiv(Dividend, RHS, "pexp.fdiv_q.4");
+  }
+
+  if (UnusedBits) {
+    auto RequiredBits = Res->getType()->getPrimitiveSizeInBits() - UnusedBits;
+    Res = Builder.CreateTrunc(Res, Builder.getIntNTy(RequiredBits),
+                              "polly.div.trunc");
+  }
+
+  return Res;
+}
+
 Value *IslExprBuilder::createOpBin(__isl_take isl_ast_expr *Expr) {
   Value *LHS, *RHS, *Res;
   isl_ast_op_type OpType;
@@ -364,39 +406,17 @@ Value *IslExprBuilder::createOpBin(__isl_take isl_ast_expr *Expr) {
     Res = createMul(LHS, RHS);
     break;
   case isl_ast_op_div:
-    Res = Builder.CreateSDiv(LHS, RHS, "pexp.div", true);
+    Res = createDiv(LHS, RHS, DM_SIGNED);
     break;
   case isl_ast_op_pdiv_q: // Dividend is non-negative
-    Res = Builder.CreateUDiv(LHS, RHS, "pexp.p_div_q");
+    Res = createDiv(LHS, RHS, DM_UNSIGNED);
     break;
-  case isl_ast_op_fdiv_q: { // Round towards -infty
-    if (auto *Const = dyn_cast<ConstantInt>(RHS)) {
-      auto &Val = Const->getValue();
-      if (Val.isPowerOf2() && Val.isNonNegative()) {
-        Res = Builder.CreateAShr(LHS, Val.ceilLogBase2(), "polly.fdiv_q.shr");
-        break;
-      }
-    }
-    // TODO: Review code and check that this calculation does not yield
-    //       incorrect overflow in some bordercases.
-    //
-    // floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
-    Value *Sum1 = createSub(LHS, RHS, "pexp.fdiv_q.0");
-    Value *One = ConstantInt::get(Sum1->getType(), 1);
-    Value *Sum2 = createAdd(Sum1, One, "pexp.fdiv_q.1");
-    Value *Zero = ConstantInt::get(LHS->getType(), 0);
-    Value *isNegative = Builder.CreateICmpSLT(LHS, Zero, "pexp.fdiv_q.2");
-    unifyTypes(LHS, Sum2);
-    Value *Dividend =
-        Builder.CreateSelect(isNegative, Sum2, LHS, "pexp.fdiv_q.3");
-    unifyTypes(Dividend, RHS);
-    Res = Builder.CreateSDiv(Dividend, RHS, "pexp.fdiv_q.4");
+  case isl_ast_op_fdiv_q: // Round towards -infty
+    Res = createDiv(LHS, RHS, DM_FLOORED);
     break;
-  }
   case isl_ast_op_pdiv_r: // Dividend is non-negative
     Res = Builder.CreateURem(LHS, RHS, "pexp.pdiv_r");
     break;
-
   case isl_ast_op_zdiv_r: // Result only compared against zero
     Res = Builder.CreateSRem(LHS, RHS, "pexp.zdiv_r");
     break;
