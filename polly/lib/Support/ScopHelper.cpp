@@ -299,7 +299,7 @@ private:
   }
   const SCEV *visitUDivExpr(const SCEVUDivExpr *E) {
     auto *RHSScev = visit(E->getRHS());
-    if (!SE.isKnownNonZero(E->getRHS()))
+    if (!SE.isKnownNonZero(RHSScev))
       RHSScev = SE.getUMaxExpr(RHSScev, SE.getConstant(E->getType(), 1));
     return SE.getUDivExpr(visit(E->getLHS()), RHSScev);
   }
