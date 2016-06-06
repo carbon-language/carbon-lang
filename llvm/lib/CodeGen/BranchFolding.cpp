@@ -99,8 +99,9 @@ bool BranchFolderPass::runOnMachineFunction(MachineFunction &MF) {
   // HW that requires structurized CFG.
   bool EnableTailMerge = !MF.getTarget().requiresStructuredCFG() &&
                          PassConfig->getEnableTailMerge();
-  BranchFolder Folder(EnableTailMerge, /*CommonHoist=*/true,
-                      getAnalysis<MachineBlockFrequencyInfo>(),
+  BranchFolder::MBFIWrapper MBBFreqInfo(
+      getAnalysis<MachineBlockFrequencyInfo>());
+  BranchFolder Folder(EnableTailMerge, /*CommonHoist=*/true, MBBFreqInfo,
                       getAnalysis<MachineBranchProbabilityInfo>());
   return Folder.OptimizeFunction(MF, MF.getSubtarget().getInstrInfo(),
                                  MF.getSubtarget().getRegisterInfo(),
@@ -108,7 +109,7 @@ bool BranchFolderPass::runOnMachineFunction(MachineFunction &MF) {
 }
 
 BranchFolder::BranchFolder(bool defaultEnableTailMerge, bool CommonHoist,
-                           const MachineBlockFrequencyInfo &FreqInfo,
+                           MBFIWrapper &FreqInfo,
                            const MachineBranchProbabilityInfo &ProbInfo)
     : EnableHoistCommonCode(CommonHoist), MBBFreqInfo(FreqInfo),
       MBPI(ProbInfo) {
@@ -538,6 +539,18 @@ BranchFolder::MBFIWrapper::getBlockFreq(const MachineBasicBlock *MBB) const {
 void BranchFolder::MBFIWrapper::setBlockFreq(const MachineBasicBlock *MBB,
                                              BlockFrequency F) {
   MergedBBFreq[MBB] = F;
+}
+
+raw_ostream &
+BranchFolder::MBFIWrapper::printBlockFreq(raw_ostream &OS,
+                                          const MachineBasicBlock *MBB) const {
+  return MBFI.printBlockFreq(OS, getBlockFreq(MBB));
+}
+
+raw_ostream &
+BranchFolder::MBFIWrapper::printBlockFreq(raw_ostream &OS,
+                                          const BlockFrequency Freq) const {
+  return MBFI.printBlockFreq(OS, Freq);
 }
 
 /// CountTerminators - Count the number of terminators in the given
