@@ -191,9 +191,11 @@ __isl_give PWACtx SCEVAffinator::checkForWrapping(const SCEV *Expr,
   auto *PWAMod = addModuloSemantic(isl_pw_aff_copy(PWA), Expr->getType());
   auto *NotEqualSet = isl_pw_aff_ne_set(isl_pw_aff_copy(PWA), PWAMod);
   PWAC.second = isl_set_union(PWAC.second, isl_set_copy(NotEqualSet));
+  PWAC.second = isl_set_coalesce(PWAC.second);
 
   const DebugLoc &Loc = BB ? BB->getTerminator()->getDebugLoc() : DebugLoc();
   NotEqualSet = BB ? NotEqualSet : isl_set_params(NotEqualSet);
+  NotEqualSet = isl_set_coalesce(NotEqualSet);
 
   if (isl_set_is_empty(NotEqualSet))
     isl_set_free(NotEqualSet);
