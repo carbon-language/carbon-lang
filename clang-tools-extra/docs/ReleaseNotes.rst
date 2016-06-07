@@ -123,6 +123,12 @@ identified.  The improvements since the 3.8 release include:
 
   Checks if an unused forward declaration is in a wrong namespace.
 
+- New `misc-misplaced-const
+  <http://clang.llvm.org/extra/clang-tidy/checks/misc-misplaced-const.html>`_ check
+  
+  Checks if a const-qualifier is applied to a typedef to pointer type instead of
+  the underlying pointee type.
+
 - New `misc-misplaced-widening-cast
   <http://clang.llvm.org/extra/clang-tidy/checks/misc-misplaced-widening-cast.html>`_ check
 
