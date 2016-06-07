@@ -902,6 +902,8 @@ getModifierVariantKind(ARMCP::ARMCPModifier Modifier) {
     return MCSymbolRefExpr::VK_GOTTPOFF;
   case ARMCP::GOT_PREL:
     return MCSymbolRefExpr::VK_ARM_GOT_PREL;
+  case ARMCP::SECREL:
+    return MCSymbolRefExpr::VK_SECREL;
   }
   llvm_unreachable("Invalid ARMCPModifier!");
 }

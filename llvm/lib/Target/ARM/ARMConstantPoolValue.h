@@ -42,6 +42,7 @@ namespace ARMCP {
     GOT_PREL,    /// Global Offset Table, PC Relative
     GOTTPOFF,    /// Global Offset Table, Thread Pointer Offset
     TPOFF,       /// Thread Pointer Offset
+    SECREL,      /// Section Relative (Windows TLS)
   };
 }
 
