@@ -71,6 +71,8 @@ static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
     return {ELF64LEKind, EM_X86_64};
   if (S == "aarch64linux")
     return {ELF64LEKind, EM_AARCH64};
+  if (S == "armelf_linux_eabi")
+    return {ELF32LEKind, EM_ARM};
   if (S == "i386pe" || S == "i386pep" || S == "thumb2pe")
     error("Windows targets are not supported on the ELF frontend: " + S);
   else
