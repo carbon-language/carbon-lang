@@ -56,7 +56,7 @@ void OptimizeBodylessFunctions::analyze(
     BinaryFunction &BF,
     BinaryContext &BC,
     std::map<uint64_t, BinaryFunction> &BFs) {
-  if (BF.size() != 1 || BF.begin()->size() == 0)
+  if (BF.size() != 1 || (*BF.begin()).size() == 0)
     return;
 
   auto &BB = *BF.begin();
@@ -84,7 +84,7 @@ void OptimizeBodylessFunctions::analyze(
 void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
                                               BinaryContext &BC) {
   for (auto BBIt = BF.begin(), BBEnd = BF.end(); BBIt != BBEnd; ++BBIt) {
-    for (auto InstIt = BBIt->begin(), InstEnd = BBIt->end();
+    for (auto InstIt = (*BBIt).begin(), InstEnd = (*BBIt).end();
         InstIt != InstEnd; ++InstIt) {
       auto &Inst = *InstIt;
       if (BC.MIA->isCall(Inst)) {

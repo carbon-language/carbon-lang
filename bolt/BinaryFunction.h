@@ -281,10 +281,14 @@ private:
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
   // the terminating instructions need to be modified.
-  using BasicBlockListType = std::vector<BinaryBasicBlock>;
+  using BasicBlockListType = std::vector<BinaryBasicBlock*>;
   using BasicBlockOrderType = std::vector<BinaryBasicBlock*>;
   BasicBlockListType BasicBlocks;
   BasicBlockOrderType BasicBlocksLayout;
+
+  // Map that keeps track of the index of each basic block in the BasicBlocks
+  // vector.  Used to make getIndex fast.
+  std::map<const BinaryBasicBlock*, unsigned> BasicBlockIndices;
 
   // At each basic block entry we attach a CFI state to detect if reordering
   // corrupts the CFI state for a block. The CFI state is simply the index in
@@ -304,12 +308,31 @@ private:
   /// Count the number of functions created.
   static uint64_t Count;
 
+  template <typename Itr, typename T>
+  class Iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
+   public:
+    Iterator &operator++() { ++itr; return *this; }
+    Iterator &operator--() { --itr; return *this; }
+    Iterator operator++(int) { auto tmp(itr); itr++; return tmp; }
+    Iterator operator--(int) { auto tmp(itr); itr--; return tmp; }
+    bool operator==(const Iterator& other) const { return itr == other.itr; }
+    bool operator!=(const Iterator& other) const { return itr != other.itr; }
+    T& operator*() { return **itr; }
+    Iterator(Itr itr) : itr(itr) { }
+   private:
+    Itr itr;
+  };
+
 public:
 
-  typedef BasicBlockListType::iterator iterator;
-  typedef BasicBlockListType::const_iterator const_iterator;
-  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-  typedef std::reverse_iterator<iterator>             reverse_iterator;
+  typedef Iterator<BasicBlockListType::iterator, BinaryBasicBlock> iterator;
+  typedef Iterator<BasicBlockListType::const_iterator,
+                   const BinaryBasicBlock> const_iterator;
+  typedef Iterator<BasicBlockListType::reverse_iterator,
+                   BinaryBasicBlock> reverse_iterator;
+  typedef Iterator<BasicBlockListType::const_reverse_iterator,
+                   const BinaryBasicBlock> const_reverse_iterator;
+
   typedef BasicBlockOrderType::iterator order_iterator;
   typedef BasicBlockOrderType::const_iterator const_order_iterator;
 
@@ -326,10 +349,10 @@ public:
 
   unsigned                  size() const { return (unsigned)BasicBlocks.size();}
   bool                     empty() const { return BasicBlocks.empty(); }
-  const BinaryBasicBlock &front() const  { return BasicBlocks.front(); }
-        BinaryBasicBlock &front()        { return BasicBlocks.front(); }
-  const BinaryBasicBlock & back() const  { return BasicBlocks.back(); }
-        BinaryBasicBlock & back()        { return BasicBlocks.back(); }
+  const BinaryBasicBlock &front() const  { return *BasicBlocks.front(); }
+        BinaryBasicBlock &front()        { return *BasicBlocks.front(); }
+  const BinaryBasicBlock & back() const  { return *BasicBlocks.back(); }
+        BinaryBasicBlock & back()        { return *BasicBlocks.back(); }
 
   unsigned layout_size() const {
     return (unsigned)BasicBlocksLayout.size();
@@ -357,6 +380,10 @@ public:
     return iterator_range<const_cfi_iterator>(cie_begin(), cie_end());
   }
 
+  BinaryFunction& operator=(const BinaryFunction &) = delete;
+  BinaryFunction(const BinaryFunction &) = delete;
+
+  BinaryFunction(BinaryFunction &&) = default;
 
   BinaryFunction(std::string Name, SymbolRef Symbol, SectionRef Section,
                  uint64_t Address, uint64_t Size, BinaryContext &BC,
@@ -383,20 +410,18 @@ public:
 
   /// Get basic block index assuming it belongs to this function.
   unsigned getIndex(const BinaryBasicBlock *BB) const {
-    assert(BB >= &BasicBlocks.front() && "wrong basic block");
-    unsigned I = BB - &BasicBlocks.front();
-    assert(I < BasicBlocks.size() && "wrong basic block");
-    return I;
+    assert(BasicBlockIndices.find(BB) != BasicBlockIndices.end());
+    return BasicBlockIndices.find(BB)->second;
   }
 
   /// Returns the n-th basic block in this function in its original layout, or
   /// nullptr if n >= size().
   const BinaryBasicBlock * getBasicBlockAtIndex(unsigned Index) const {
-    return &BasicBlocks.at(Index);
+    return BasicBlocks.at(Index);
   }
 
   BinaryBasicBlock * getBasicBlockAtIndex(unsigned Index) {
-    return &BasicBlocks.at(Index);
+    return BasicBlocks.at(Index);
   }
 
   /// Return the name of the function as extracted from the binary file.
@@ -504,14 +529,16 @@ public:
     assert(BC.Ctx && "cannot be called with empty context");
     if (!Label)
       Label = BC.Ctx->createTempSymbol("BB", true);
-    BasicBlocks.emplace_back(BinaryBasicBlock(Label, this, Offset));
+    BasicBlocks.emplace_back(new BinaryBasicBlock(Label, this, Offset));
 
-    auto BB = &BasicBlocks.back();
+    auto BB = BasicBlocks.back();
 
     if (DeriveAlignment) {
       uint64_t DerivedAlignment = Offset & (1 + ~Offset);
       BB->setAlignment(std::min(DerivedAlignment, uint64_t(32)));
     }
+
+    BasicBlockIndices[BB] = BasicBlocks.size() - 1;
 
     return BB;
   }
@@ -821,7 +848,7 @@ public:
     return Estimate;
   }
 
-  virtual ~BinaryFunction() {}
+  virtual ~BinaryFunction();
 
   /// Info for fragmented functions.
   class FragmentInfo {

@@ -1087,7 +1087,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
     }
   }
 
-  assert(!Function.begin()->isCold() &&
+  assert(!(*Function.begin()).isCold() &&
          "first basic block should never be cold");
 
   // Emit UD2 at the beginning if requested by user.
@@ -2318,7 +2318,7 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
   if (!opts::UpdateDebugSections)
     return;
 
-  for (auto It : BinaryFunctions) {
+  for (auto &It : BinaryFunctions) {
     const auto &Function = It.second;
 
     if (Function.isSimple())

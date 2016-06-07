@@ -103,12 +103,12 @@ BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
   if (BasicBlocks.empty())
     return nullptr;
 
-  auto I = std::upper_bound(BasicBlocks.begin(),
-                            BasicBlocks.end(),
+  auto I = std::upper_bound(begin(),
+                            end(),
                             BinaryBasicBlock(Offset));
-  assert(I != BasicBlocks.begin() && "first basic block not at offset 0");
+  assert(I != begin() && "first basic block not at offset 0");
 
-  return &(*--I);
+  return &*--I;
 }
 
 size_t
@@ -117,7 +117,7 @@ BinaryFunction::getBasicBlockOriginalSize(const BinaryBasicBlock *BB) const {
   if (Index + 1 == BasicBlocks.size()) {
     return Size - BB->getOffset();
   } else {
-    return BasicBlocks[Index + 1].getOffset() - BB->getOffset();
+    return BasicBlocks[Index + 1]->getOffset() - BB->getOffset();
   }
 }
 
@@ -725,8 +725,8 @@ bool BinaryFunction::buildCFG() {
   }
 
   // Set the basic block layout to the original order.
-  for (auto &BB : BasicBlocks) {
-    BasicBlocksLayout.emplace_back(&BB);
+  for (auto BB : BasicBlocks) {
+    BasicBlocksLayout.emplace_back(BB);
   }
 
   // Intermediate dump.
@@ -786,23 +786,23 @@ bool BinaryFunction::buildCFG() {
   // profile data, which were already accounted for in LocalBranches).
   PrevBB = nullptr;
   bool IsPrevFT = false; // Is previous block a fall-through.
-  for (auto &BB : BasicBlocks) {
+  for (auto BB : BasicBlocks) {
     if (IsPrevFT) {
-      PrevBB->addSuccessor(&BB, BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE,
+      PrevBB->addSuccessor(BB, BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE,
                            BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE);
     }
-    if (BB.empty()) {
+    if (BB->empty()) {
       IsPrevFT = true;
-      PrevBB = &BB;
+      PrevBB = BB;
       continue;
     }
 
-    auto LastInstIter = --BB.end();
-    while (MIA->isCFI(*LastInstIter) && LastInstIter != BB.begin())
+    auto LastInstIter = --BB->end();
+    while (MIA->isCFI(*LastInstIter) && LastInstIter != BB->begin())
       --LastInstIter;
-    if (BB.succ_size() == 0) {
+    if (BB->succ_size() == 0) {
       IsPrevFT = MIA->isTerminator(*LastInstIter) ? false : true;
-    } else if (BB.succ_size() == 1) {
+    } else if (BB->succ_size() == 1) {
       IsPrevFT =  MIA->isConditionalBranch(*LastInstIter) ? true : false;
     } else {
       // Ends with 2 branches, with an indirect jump or it is a conditional
@@ -810,7 +810,7 @@ bool BinaryFunction::buildCFG() {
       IsPrevFT = false;
     }
 
-    PrevBB = &BB;
+    PrevBB = BB;
   }
 
   if (!IsPrevFT) {
@@ -819,12 +819,12 @@ bool BinaryFunction::buildCFG() {
   }
 
   // Add associated landing pad blocks to each basic block.
-  for (auto &BB : BasicBlocks) {
-    if (LandingPads.find(BB.getLabel()) != LandingPads.end()) {
-      MCSymbol *LP = BB.getLabel();
+  for (auto BB : BasicBlocks) {
+    if (LandingPads.find(BB->getLabel()) != LandingPads.end()) {
+      MCSymbol *LP = BB->getLabel();
       for (unsigned I : LPToBBIndex.at(LP)) {
         BinaryBasicBlock *ThrowBB = getBasicBlockAtIndex(I);
-        ThrowBB->addLandingPad(&BB);
+        ThrowBB->addLandingPad(BB);
       }
     }
   }
@@ -860,20 +860,20 @@ void BinaryFunction::inferFallThroughCounts() {
   auto BranchDataOrErr = BC.DR.getFuncBranchData(getName());
 
   // Compute preliminary execution time for each basic block
-  for (auto &CurBB : BasicBlocks) {
-    if (&CurBB == &*BasicBlocks.begin()) {
-      CurBB.ExecutionCount = ExecutionCount;
+  for (auto CurBB : BasicBlocks) {
+    if (CurBB == *BasicBlocks.begin()) {
+      CurBB->ExecutionCount = ExecutionCount;
       continue;
     }
-    CurBB.ExecutionCount = 0;
+    CurBB->ExecutionCount = 0;
   }
 
-  for (auto &CurBB : BasicBlocks) {
-    auto SuccCount = CurBB.BranchInfo.begin();
-    for (auto Succ : CurBB.successors()) {
+  for (auto CurBB : BasicBlocks) {
+    auto SuccCount = CurBB->BranchInfo.begin();
+    for (auto Succ : CurBB->successors()) {
       // Do not update execution count of the entry block (when we have tail
       // calls). We already accounted for those when computing the func count.
-      if (Succ == &*BasicBlocks.begin())
+      if (Succ == *BasicBlocks.begin())
         continue;
       if (SuccCount->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
         Succ->ExecutionCount += SuccCount->Count;
@@ -894,18 +894,18 @@ void BinaryFunction::inferFallThroughCounts() {
 
   // Work on a basic block at a time, propagating frequency information forwards
   // It is important to walk in the layour order
-  for (auto &CurBB : BasicBlocks) {
-    uint64_t BBExecCount = CurBB.getExecutionCount();
+  for (auto CurBB : BasicBlocks) {
+    uint64_t BBExecCount = CurBB->getExecutionCount();
 
     // Propagate this information to successors, filling in fall-through edges
     // with frequency information
-    if (CurBB.succ_size() == 0)
+    if (CurBB->succ_size() == 0)
       continue;
 
     // Calculate frequency of outgoing branches from this node according to
     // LBR data
     uint64_t ReportedBranches = 0;
-    for (auto &SuccCount : CurBB.BranchInfo) {
+    for (auto &SuccCount : CurBB->BranchInfo) {
       if (SuccCount.Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
         ReportedBranches += SuccCount.Count;
     }
@@ -915,7 +915,7 @@ void BinaryFunction::inferFallThroughCounts() {
     // for a landing pad to be associated with more than one basic blocks,
     // we may overestimate the frequency of throws for such blocks.
     uint64_t ReportedThrows = 0;
-    for (BinaryBasicBlock *LP: CurBB.LandingPads) {
+    for (BinaryBasicBlock *LP: CurBB->LandingPads) {
       ReportedThrows += LP->ExecutionCount;
     }
 
@@ -934,15 +934,15 @@ void BinaryFunction::inferFallThroughCounts() {
                "exec frequency is less than the outgoing edges frequency ("
             << BBExecCount << " < " << ReportedBranches
             << ") for  BB at offset 0x"
-            << Twine::utohexstr(getAddress() + CurBB.getOffset()) << '\n';
+            << Twine::utohexstr(getAddress() + CurBB->getOffset()) << '\n';
     });
 
     // Put this information into the fall-through edge
-    if (CurBB.succ_size() == 0)
+    if (CurBB->succ_size() == 0)
       continue;
     // If there is a FT, the last successor will be it.
-    auto &SuccCount = CurBB.BranchInfo.back();
-    auto &Succ = CurBB.Successors.back();
+    auto &SuccCount = CurBB->BranchInfo.back();
+    auto &Succ = CurBB->Successors.back();
     if (SuccCount.Count == BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
       SuccCount.Count = Inferred;
       Succ->ExecutionCount += Inferred;
@@ -977,12 +977,12 @@ void BinaryFunction::annotateCFIState() {
   std::stack<uint32_t> StateStack;
 
   for (auto CI = BasicBlocks.begin(), CE = BasicBlocks.end(); CI != CE; ++CI) {
-    BinaryBasicBlock &CurBB = *CI;
+    BinaryBasicBlock *CurBB = *CI;
     // Annotate this BB entry
     BBCFIState.emplace_back(State);
 
     // Advance state
-    for (const auto &Instr : CurBB) {
+    for (const auto &Instr : *CurBB) {
       MCCFIInstruction *CFI = getCFIFor(Instr);
       if (CFI == nullptr)
         continue;
@@ -1520,10 +1520,10 @@ void BinaryFunction::solveOptimalLayout(bool Split) {
 
 const BinaryBasicBlock *
 BinaryFunction::getOriginalLayoutSuccessor(const BinaryBasicBlock *BB) const {
-  auto I = std::upper_bound(BasicBlocks.begin(), BasicBlocks.end(), *BB);
-  assert(I != BasicBlocks.begin() && "first basic block not at offset 0");
+  auto I = std::upper_bound(begin(), end(), *BB);
+  assert(I != begin() && "first basic block not at offset 0");
 
-  if (I == BasicBlocks.end())
+  if (I == end())
     return nullptr;
   return &*I;
 }
@@ -1656,28 +1656,28 @@ void BinaryFunction::splitFunction() {
   assert(BasicBlocksLayout.size() > 0);
 
   // Never outline the first basic block.
-  BasicBlocks.front().CanOutline = false;
-  for (auto &BB : BasicBlocks) {
-    if (!BB.CanOutline)
+  BasicBlocks.front()->CanOutline = false;
+  for (auto BB : BasicBlocks) {
+    if (!BB->CanOutline)
       continue;
-    if (BB.getExecutionCount() != 0) {
-      BB.CanOutline = false;
+    if (BB->getExecutionCount() != 0) {
+      BB->CanOutline = false;
       continue;
     }
     if (hasEHRanges()) {
       // We cannot move landing pads (or rather entry points for landing
       // pads).
-      if (LandingPads.find(BB.getLabel()) != LandingPads.end()) {
-        BB.CanOutline = false;
+      if (LandingPads.find(BB->getLabel()) != LandingPads.end()) {
+        BB->CanOutline = false;
         continue;
       }
       // We cannot move a block that can throw since exception-handling
       // runtime cannot deal with split functions. However, if we can guarantee
       // that the block never throws, it is safe to move the block to
       // decrease the size of the function.
-      for (auto &Instr : BB) {
+      for (auto &Instr : *BB) {
         if (BC.MIA->isInvoke(Instr)) {
-          BB.CanOutline = false;
+          BB->CanOutline = false;
           break;
         }
       }
@@ -1726,8 +1726,8 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
   // It is important to iterate basic blocks in the original order when
   // assigning the value.
   uint64_t CurrentGnuArgsSize = 0;
-  for (auto &BB : BasicBlocks) {
-    for (auto II = BB.begin(); II != BB.end(); ) {
+  for (auto BB : BasicBlocks) {
+    for (auto II = BB->begin(); II != BB->end(); ) {
       auto &Instr = *II;
       if (BC.MIA->isCFI(Instr)) {
         auto CFI = getCFIFor(Instr);
@@ -1736,7 +1736,7 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
           // Delete DW_CFA_GNU_args_size instructions and only regenerate
           // during the final code emission. The information is embedded
           // inside call instructions.
-          II = BB.Instructions.erase(II);
+          II = BB->Instructions.erase(II);
         } else {
           ++II;
         }
@@ -1752,6 +1752,12 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
       }
       ++II;
     }
+  }
+}
+
+BinaryFunction::~BinaryFunction() {
+  for (auto BB : BasicBlocks) {
+    delete BB;
   }
 }
 
