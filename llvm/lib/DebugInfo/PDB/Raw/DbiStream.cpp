@@ -12,6 +12,7 @@
 #include "llvm/DebugInfo/CodeView/StreamArray.h"
 #include "llvm/DebugInfo/CodeView/StreamReader.h"
 #include "llvm/DebugInfo/PDB/Raw/ISectionContribVisitor.h"
+#include "llvm/DebugInfo/PDB/Raw/IndexedStreamData.h"
 #include "llvm/DebugInfo/PDB/Raw/InfoStream.h"
 #include "llvm/DebugInfo/PDB/Raw/ModInfo.h"
 #include "llvm/DebugInfo/PDB/Raw/NameHashTable.h"
@@ -93,7 +94,9 @@ Error loadSectionContribs(FixedStreamArray<ContribType> &Output,
 }
 
 DbiStream::DbiStream(PDBFile &File)
-    : Pdb(File), Stream(StreamDBI, File), Header(nullptr) {
+    : Pdb(File),
+      Stream(llvm::make_unique<IndexedStreamData>(StreamDBI, File), File),
+      Header(nullptr) {
   static_assert(sizeof(HeaderInfo) == 64, "Invalid HeaderInfo size!");
 }
 
@@ -290,7 +293,8 @@ Error DbiStream::initializeSectionContributionData() {
 // Initializes this->SectionHeaders.
 Error DbiStream::initializeSectionHeadersData() {
   uint32_t StreamNum = getDebugStreamIndex(DbgHeaderType::SectionHdr);
-  SectionHeaderStream.reset(new MappedBlockStream(StreamNum, Pdb));
+  SectionHeaderStream.reset(new MappedBlockStream(
+      llvm::make_unique<IndexedStreamData>(StreamNum, Pdb), Pdb));
 
   size_t StreamLen = SectionHeaderStream->getLength();
   if (StreamLen % sizeof(object::coff_section))
@@ -308,7 +312,8 @@ Error DbiStream::initializeSectionHeadersData() {
 // Initializes this->Fpos.
 Error DbiStream::initializeFpoRecords() {
   uint32_t StreamNum = getDebugStreamIndex(DbgHeaderType::NewFPO);
-  FpoStream.reset(new MappedBlockStream(StreamNum, Pdb));
+  FpoStream.reset(new MappedBlockStream(
+      llvm::make_unique<IndexedStreamData>(StreamNum, Pdb), Pdb));
 
   size_t StreamLen = FpoStream->getLength();
   if (StreamLen % sizeof(object::FpoData))
