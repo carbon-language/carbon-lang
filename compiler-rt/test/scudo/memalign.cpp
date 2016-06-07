@@ -11,7 +11,7 @@
 #include <string.h>
 
 // Sometimes the headers may not have this...
-extern void *aligned_alloc (size_t alignment, size_t size);
+extern "C" void *aligned_alloc (size_t alignment, size_t size);
 
 int main(int argc, char **argv)
 {
