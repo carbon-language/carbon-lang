@@ -28,7 +28,7 @@ class MPIBugReporter {
 public:
   MPIBugReporter(BugReporter &BR, const CheckerBase &CB,
                  const MPIFunctionClassifier &FC)
-      : BReporter{BR} {
+      : BReporter(BR) {
     UnmatchedWaitBugType.reset(new BugType(&CB, "Unmatched wait", MPIError));
     DoubleNonblockingBugType.reset(
         new BugType(&CB, "Double nonblocking", MPIError));
