@@ -210,10 +210,7 @@ Error PDBFile::parseStreamData() {
   if (DirectoryStream)
     return Error::success();
 
-  // bool SeenNumStreams = false;
   uint32_t NumStreams = 0;
-  // uint32_t StreamIdx = 0;
-  // uint64_t DirectoryBytesRead = 0;
 
   const SuperBlock *SB = Context->SB;
 
