@@ -1329,7 +1329,7 @@ defm VPBLENDMB : blendmask_bw <0x66, "vpblendmb", avx512vl_i8_info>;
 defm VPBLENDMW : blendmask_bw <0x66, "vpblendmw", avx512vl_i16_info>, VEX_W;
 
 
-let Predicates = [HasAVX512] in {
+let Predicates = [HasAVX512, NoVLX] in {
 def : Pat<(v8f32 (vselect (v8i1 VK8WM:$mask), (v8f32 VR256X:$src1),
                             (v8f32 VR256X:$src2))),
             (EXTRACT_SUBREG
