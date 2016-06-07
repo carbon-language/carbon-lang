@@ -44,6 +44,7 @@ public:
   uint16_t getTypeHashStreamAuxIndex() const;
 
   uint32_t getHashKeySize() const;
+  uint32_t NumHashBuckets() const;
   codeview::FixedStreamArray<support::ulittle32_t> getHashValues() const;
   codeview::FixedStreamArray<TypeIndexOffset> getTypeIndexOffsets() const;
   codeview::FixedStreamArray<TypeIndexOffset> getHashAdjustments() const;
