@@ -75,6 +75,11 @@ template <unsigned N> static void checkAlignment(uint64_t V, uint32_t Type) {
   error("improper alignment for relocation " + S);
 }
 
+static void warnDynRel(uint32_t Type) {
+  error("relocation " + getELFRelocationTypeName(Config->EMachine, Type) +
+        " cannot be used when making a shared object; recompile with -fPIC.");
+}
+
 namespace {
 class X86TargetInfo final : public TargetInfo {
 public:
@@ -1195,10 +1200,8 @@ bool AArch64TargetInfo::isTlsInitialExecRel(uint32_t Type) const {
 uint32_t AArch64TargetInfo::getDynRel(uint32_t Type) const {
   if (Type == R_AARCH64_ABS32 || Type == R_AARCH64_ABS64)
     return Type;
-  StringRef S = getELFRelocationTypeName(EM_AARCH64, Type);
-  error("relocation " + S + " cannot be used when making a shared object; "
-                            "recompile with -fPIC.");
   // Keep it going with a dummy value so that we can find more reloc errors.
+  warnDynRel(Type);
   return R_AARCH64_ABS32;
 }
 
@@ -1487,10 +1490,8 @@ RelExpr ARMTargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
 uint32_t ARMTargetInfo::getDynRel(uint32_t Type) const {
   if (Type == R_ARM_ABS32)
     return Type;
-  StringRef S = getELFRelocationTypeName(EM_ARM, Type);
-  error("relocation " + S + " cannot be used when making a shared object; "
-                            "recompile with -fPIC.");
   // Keep it going with a dummy value so that we can find more reloc errors.
+  warnDynRel(Type);
   return R_ARM_ABS32;
 }
 
@@ -1664,10 +1665,8 @@ template <class ELFT>
 uint32_t MipsTargetInfo<ELFT>::getDynRel(uint32_t Type) const {
   if (Type == R_MIPS_32 || Type == R_MIPS_64)
     return RelativeRel;
-  StringRef S = getELFRelocationTypeName(EM_MIPS, Type);
-  error("relocation " + S + " cannot be used when making a shared object; "
-                            "recompile with -fPIC.");
   // Keep it going with a dummy value so that we can find more reloc errors.
+  warnDynRel(Type);
   return R_MIPS_32;
 }
 
