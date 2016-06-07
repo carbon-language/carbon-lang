@@ -265,12 +265,6 @@ template <typename T> class StratifiedSetsBuilder {
       return Link.Attrs;
     }
 
-    void setAttr(unsigned index) {
-      assert(!isRemapped());
-      assert(index < NumStratifiedAttrs);
-      Link.Attrs.set(index);
-    }
-
     void setAttrs(const StratifiedAttrs &other) {
       assert(!isRemapped());
       Link.Attrs |= other;
@@ -426,14 +420,6 @@ public:
     assert(has(Main));
     auto MainIndex = *indexOf(Main);
     return addAtMerging(ToAdd, MainIndex);
-  }
-
-  void noteAttribute(const T &Main, unsigned AttrNum) {
-    assert(has(Main));
-    assert(AttrNum < StratifiedLink::SetSentinel);
-    auto *Info = *get(Main);
-    auto &Link = linksAt(Info->Index);
-    Link.setAttr(AttrNum);
   }
 
   void noteAttributes(const T &Main, const StratifiedAttrs &NewAttrs) {
