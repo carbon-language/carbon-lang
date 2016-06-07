@@ -5,12 +5,13 @@
 // Tests that the various aligned allocation functions work as intended. Also
 // tests for the condition where the alignment is not a power of 2.
 
-#define __USE_ISOC11  // for aligned_alloc
-
 #include <assert.h>
 #include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
+
+// Sometimes the headers may not have this...
+extern void *aligned_alloc (size_t alignment, size_t size);
 
 int main(int argc, char **argv)
 {
