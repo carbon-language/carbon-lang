@@ -989,6 +989,200 @@ entry:
   ret <8 x double> %0
 }
 
-; TODO - 512-bit integer vector loads
+define <64 x i8> @test_load_nt64xi8(<64 x i8>* nocapture %ptr) {
+; SSE2-LABEL: test_load_nt64xi8:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movaps (%rdi), %xmm0
+; SSE2-NEXT:    movaps 16(%rdi), %xmm1
+; SSE2-NEXT:    movaps 32(%rdi), %xmm2
+; SSE2-NEXT:    movaps 48(%rdi), %xmm3
+; SSE2-NEXT:    retq
+;
+; SSE4A-LABEL: test_load_nt64xi8:
+; SSE4A:       # BB#0: # %entry
+; SSE4A-NEXT:    movaps (%rdi), %xmm0
+; SSE4A-NEXT:    movaps 16(%rdi), %xmm1
+; SSE4A-NEXT:    movaps 32(%rdi), %xmm2
+; SSE4A-NEXT:    movaps 48(%rdi), %xmm3
+; SSE4A-NEXT:    retq
+;
+; SSE41-LABEL: test_load_nt64xi8:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    movntdqa (%rdi), %xmm0
+; SSE41-NEXT:    movntdqa 16(%rdi), %xmm1
+; SSE41-NEXT:    movntdqa 32(%rdi), %xmm2
+; SSE41-NEXT:    movntdqa 48(%rdi), %xmm3
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: test_load_nt64xi8:
+; AVX1:       # BB#0: # %entry
+; AVX1-NEXT:    vmovaps (%rdi), %ymm0
+; AVX1-NEXT:    vmovaps 32(%rdi), %ymm1
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: test_load_nt64xi8:
+; AVX2:       # BB#0: # %entry
+; AVX2-NEXT:    vmovntdqa (%rdi), %ymm0
+; AVX2-NEXT:    vmovntdqa 32(%rdi), %ymm1
+; AVX2-NEXT:    retq
+;
+; AVX512F-LABEL: test_load_nt64xi8:
+; AVX512F:       # BB#0: # %entry
+; AVX512F-NEXT:    vmovntdqa (%rdi), %ymm0
+; AVX512F-NEXT:    vmovntdqa 32(%rdi), %ymm1
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: test_load_nt64xi8:
+; AVX512BW:       # BB#0: # %entry
+; AVX512BW-NEXT:    vmovntdqa (%rdi), %zmm0
+; AVX512BW-NEXT:    retq
+entry:
+  %0 = load <64 x i8>, <64 x i8>* %ptr, align 64, !nontemporal !1
+  ret <64 x i8> %0
+}
+
+define <32 x i16> @test_load_nt32xi16(<32 x i16>* nocapture %ptr) {
+; SSE2-LABEL: test_load_nt32xi16:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movaps (%rdi), %xmm0
+; SSE2-NEXT:    movaps 16(%rdi), %xmm1
+; SSE2-NEXT:    movaps 32(%rdi), %xmm2
+; SSE2-NEXT:    movaps 48(%rdi), %xmm3
+; SSE2-NEXT:    retq
+;
+; SSE4A-LABEL: test_load_nt32xi16:
+; SSE4A:       # BB#0: # %entry
+; SSE4A-NEXT:    movaps (%rdi), %xmm0
+; SSE4A-NEXT:    movaps 16(%rdi), %xmm1
+; SSE4A-NEXT:    movaps 32(%rdi), %xmm2
+; SSE4A-NEXT:    movaps 48(%rdi), %xmm3
+; SSE4A-NEXT:    retq
+;
+; SSE41-LABEL: test_load_nt32xi16:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    movntdqa (%rdi), %xmm0
+; SSE41-NEXT:    movntdqa 16(%rdi), %xmm1
+; SSE41-NEXT:    movntdqa 32(%rdi), %xmm2
+; SSE41-NEXT:    movntdqa 48(%rdi), %xmm3
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: test_load_nt32xi16:
+; AVX1:       # BB#0: # %entry
+; AVX1-NEXT:    vmovaps (%rdi), %ymm0
+; AVX1-NEXT:    vmovaps 32(%rdi), %ymm1
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: test_load_nt32xi16:
+; AVX2:       # BB#0: # %entry
+; AVX2-NEXT:    vmovntdqa (%rdi), %ymm0
+; AVX2-NEXT:    vmovntdqa 32(%rdi), %ymm1
+; AVX2-NEXT:    retq
+;
+; AVX512F-LABEL: test_load_nt32xi16:
+; AVX512F:       # BB#0: # %entry
+; AVX512F-NEXT:    vmovntdqa (%rdi), %ymm0
+; AVX512F-NEXT:    vmovntdqa 32(%rdi), %ymm1
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: test_load_nt32xi16:
+; AVX512BW:       # BB#0: # %entry
+; AVX512BW-NEXT:    vmovntdqa (%rdi), %zmm0
+; AVX512BW-NEXT:    retq
+entry:
+  %0 = load <32 x i16>, <32 x i16>* %ptr, align 64, !nontemporal !1
+  ret <32 x i16> %0
+}
+
+define <16 x i32> @test_load_nt16xi32(<16 x i32>* nocapture %ptr) {
+; SSE2-LABEL: test_load_nt16xi32:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movaps (%rdi), %xmm0
+; SSE2-NEXT:    movaps 16(%rdi), %xmm1
+; SSE2-NEXT:    movaps 32(%rdi), %xmm2
+; SSE2-NEXT:    movaps 48(%rdi), %xmm3
+; SSE2-NEXT:    retq
+;
+; SSE4A-LABEL: test_load_nt16xi32:
+; SSE4A:       # BB#0: # %entry
+; SSE4A-NEXT:    movaps (%rdi), %xmm0
+; SSE4A-NEXT:    movaps 16(%rdi), %xmm1
+; SSE4A-NEXT:    movaps 32(%rdi), %xmm2
+; SSE4A-NEXT:    movaps 48(%rdi), %xmm3
+; SSE4A-NEXT:    retq
+;
+; SSE41-LABEL: test_load_nt16xi32:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    movntdqa (%rdi), %xmm0
+; SSE41-NEXT:    movntdqa 16(%rdi), %xmm1
+; SSE41-NEXT:    movntdqa 32(%rdi), %xmm2
+; SSE41-NEXT:    movntdqa 48(%rdi), %xmm3
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: test_load_nt16xi32:
+; AVX1:       # BB#0: # %entry
+; AVX1-NEXT:    vmovaps (%rdi), %ymm0
+; AVX1-NEXT:    vmovaps 32(%rdi), %ymm1
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: test_load_nt16xi32:
+; AVX2:       # BB#0: # %entry
+; AVX2-NEXT:    vmovntdqa (%rdi), %ymm0
+; AVX2-NEXT:    vmovntdqa 32(%rdi), %ymm1
+; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_load_nt16xi32:
+; AVX512:       # BB#0: # %entry
+; AVX512-NEXT:    vmovntdqa (%rdi), %zmm0
+; AVX512-NEXT:    retq
+entry:
+  %0 = load <16 x i32>, <16 x i32>* %ptr, align 64, !nontemporal !1
+  ret <16 x i32> %0
+}
+
+define <8 x i64> @test_load_nt8xi64(<8 x i64>* nocapture %ptr) {
+; SSE2-LABEL: test_load_nt8xi64:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movaps (%rdi), %xmm0
+; SSE2-NEXT:    movaps 16(%rdi), %xmm1
+; SSE2-NEXT:    movaps 32(%rdi), %xmm2
+; SSE2-NEXT:    movaps 48(%rdi), %xmm3
+; SSE2-NEXT:    retq
+;
+; SSE4A-LABEL: test_load_nt8xi64:
+; SSE4A:       # BB#0: # %entry
+; SSE4A-NEXT:    movaps (%rdi), %xmm0
+; SSE4A-NEXT:    movaps 16(%rdi), %xmm1
+; SSE4A-NEXT:    movaps 32(%rdi), %xmm2
+; SSE4A-NEXT:    movaps 48(%rdi), %xmm3
+; SSE4A-NEXT:    retq
+;
+; SSE41-LABEL: test_load_nt8xi64:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    movntdqa (%rdi), %xmm0
+; SSE41-NEXT:    movntdqa 16(%rdi), %xmm1
+; SSE41-NEXT:    movntdqa 32(%rdi), %xmm2
+; SSE41-NEXT:    movntdqa 48(%rdi), %xmm3
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: test_load_nt8xi64:
+; AVX1:       # BB#0: # %entry
+; AVX1-NEXT:    vmovaps (%rdi), %ymm0
+; AVX1-NEXT:    vmovaps 32(%rdi), %ymm1
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: test_load_nt8xi64:
+; AVX2:       # BB#0: # %entry
+; AVX2-NEXT:    vmovntdqa (%rdi), %ymm0
+; AVX2-NEXT:    vmovntdqa 32(%rdi), %ymm1
+; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_load_nt8xi64:
+; AVX512:       # BB#0: # %entry
+; AVX512-NEXT:    vmovntdqa (%rdi), %zmm0
+; AVX512-NEXT:    retq
+entry:
+  %0 = load <8 x i64>, <8 x i64>* %ptr, align 64, !nontemporal !1
+  ret <8 x i64> %0
+}
 
 !1 = !{i32 1}
