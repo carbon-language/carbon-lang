@@ -215,6 +215,8 @@ public:
   void RecordSuccessfulMutationSequence();
   /// Mutates data by invoking user-provided mutator.
   size_t Mutate_Custom(uint8_t *Data, size_t Size, size_t MaxSize);
+  /// Mutates data by invoking user-provided crossover.
+  size_t Mutate_CustomCrossOver(uint8_t *Data, size_t Size, size_t MaxSize);
   /// Mutates data by shuffling bytes.
   size_t Mutate_ShuffleBytes(uint8_t *Data, size_t Size, size_t MaxSize);
   /// Mutates data by erasing a byte.

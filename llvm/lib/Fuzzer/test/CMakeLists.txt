@@ -66,6 +66,7 @@ set(Tests
   BufferOverflowOnInput
   CallerCalleeTest
   CounterTest
+  CustomCrossOverTest
   CustomMutatorTest
   EmptyTest
   FourIndependentBranchesTest
