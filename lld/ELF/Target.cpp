@@ -47,36 +47,36 @@ TargetInfo *Target;
 
 static void or32le(uint8_t *P, int32_t V) { write32le(P, read32le(P) | V); }
 
+static StringRef getRelName(uint32_t Type) {
+  return getELFRelocationTypeName(Config->EMachine, Type);
+}
+
 template <unsigned N> static void checkInt(int64_t V, uint32_t Type) {
   if (isInt<N>(V))
     return;
-  StringRef S = getELFRelocationTypeName(Config->EMachine, Type);
-  error("relocation " + S + " out of range");
+  error("relocation " + getRelName(Type) + " out of range");
 }
 
 template <unsigned N> static void checkUInt(uint64_t V, uint32_t Type) {
   if (isUInt<N>(V))
     return;
-  StringRef S = getELFRelocationTypeName(Config->EMachine, Type);
-  error("relocation " + S + " out of range");
+  error("relocation " + getRelName(Type) + " out of range");
 }
 
 template <unsigned N> static void checkIntUInt(uint64_t V, uint32_t Type) {
   if (isInt<N>(V) || isUInt<N>(V))
     return;
-  StringRef S = getELFRelocationTypeName(Config->EMachine, Type);
-  error("relocation " + S + " out of range");
+  error("relocation " + getRelName(Type) + " out of range");
 }
 
 template <unsigned N> static void checkAlignment(uint64_t V, uint32_t Type) {
   if ((V & (N - 1)) == 0)
     return;
-  StringRef S = getELFRelocationTypeName(Config->EMachine, Type);
-  error("improper alignment for relocation " + S);
+  error("improper alignment for relocation " + getRelName(Type));
 }
 
 static void warnDynRel(uint32_t Type) {
-  error("relocation " + getELFRelocationTypeName(Config->EMachine, Type) +
+  error("relocation " + getRelName(Type) +
         " cannot be used when making a shared object; recompile with -fPIC.");
 }
 
@@ -617,10 +617,8 @@ void X86_64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
 }
 
 uint32_t X86_64TargetInfo::getDynRel(uint32_t Type) const {
-  if (Type == R_X86_64_PC32 || Type == R_X86_64_32)
-    if (Config->Shared)
-      error(getELFRelocationTypeName(EM_X86_64, Type) +
-            " cannot be a dynamic relocation");
+  if (Config->Shared && (Type == R_X86_64_PC32 || Type == R_X86_64_32))
+    error(getRelName(Type) + " cannot be a dynamic relocation");
   return Type;
 }
 
