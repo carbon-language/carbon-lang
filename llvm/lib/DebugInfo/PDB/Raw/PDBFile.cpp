@@ -138,11 +138,14 @@ PDBFile::getStreamBlockList(uint32_t StreamIndex) const {
   return Array;
 }
 
-StringRef PDBFile::getBlockData(uint32_t BlockIndex, uint32_t NumBytes) const {
+ArrayRef<uint8_t> PDBFile::getBlockData(uint32_t BlockIndex,
+                                        uint32_t NumBytes) const {
   uint64_t StreamBlockOffset = blockToOffset(BlockIndex, getBlockSize());
 
-  return StringRef(Context->Buffer->getBufferStart() + StreamBlockOffset,
-                   NumBytes);
+  return ArrayRef<uint8_t>(
+      reinterpret_cast<const uint8_t *>(Context->Buffer->getBufferStart()) +
+          StreamBlockOffset,
+      NumBytes);
 }
 
 Error PDBFile::parseFileHeaders() {
