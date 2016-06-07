@@ -24602,23 +24602,27 @@ static bool combineX86ShuffleChain(SDValue Input, SDValue Root,
   }
 
   // Attempt to blend with zero.
-  if (VT.getVectorNumElements() <= 8 &&
+  if (NumMaskElts <= 8 &&
       ((Subtarget.hasSSE41() && VT.is128BitVector()) ||
        (Subtarget.hasAVX() && VT.is256BitVector()))) {
     // Convert VT to a type compatible with X86ISD::BLENDI.
     // TODO - add 16i16 support (requires lane duplication).
-    MVT ShuffleVT = VT;
+    bool FloatDomain = VT.isFloatingPoint();
+    MVT ShuffleVT = FloatDomain ? MVT::getFloatingPointVT(MaskEltSizeInBits)
+                                : MVT::getIntegerVT(MaskEltSizeInBits);
+    ShuffleVT = MVT::getVectorVT(ShuffleVT, NumMaskElts);
+
     if (Subtarget.hasAVX2()) {
-      if (VT == MVT::v4i64)
+      if (ShuffleVT == MVT::v4i64)
         ShuffleVT = MVT::v8i32;
-      else if (VT == MVT::v2i64)
+      else if (ShuffleVT == MVT::v2i64)
         ShuffleVT = MVT::v4i32;
     } else {
-      if (VT == MVT::v2i64 || VT == MVT::v4i32)
+      if (ShuffleVT == MVT::v2i64 || ShuffleVT == MVT::v4i32)
         ShuffleVT = MVT::v8i16;
-      else if (VT == MVT::v4i64)
+      else if (ShuffleVT == MVT::v4i64)
         ShuffleVT = MVT::v4f64;
-      else if (VT == MVT::v8i32)
+      else if (ShuffleVT == MVT::v8i32)
         ShuffleVT = MVT::v8f32;
     }
 
