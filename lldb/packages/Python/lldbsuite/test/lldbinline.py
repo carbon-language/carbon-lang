@@ -2,9 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 # System modules
-import filecmp
 import os
-import sys
 
 # Third-party modules
 
@@ -91,6 +89,9 @@ class InlineTest(TestBase):
             return "-N dsym %s" % (self.mydir)
 
     def BuildMakefile(self):
+        if os.path.exists("Makefile"):
+            return
+
         categories = {}
 
         for f in os.listdir(os.getcwd()):
@@ -101,7 +102,7 @@ class InlineTest(TestBase):
                 else:
                     categories[t] = [f]
 
-        makefile = open("Makefile.tmp", 'w+')
+        makefile = open("Makefile", 'w+')
 
         level = os.sep.join([".."] * len(self.mydir.split(os.sep))) + os.sep + "make"
 
@@ -117,25 +118,10 @@ class InlineTest(TestBase):
         if ('CXX_SOURCES' in list(categories.keys())):
             makefile.write("CXXFLAGS += -std=c++11\n")
 
-        # clang-3.5+ outputs FullDebugInfo by default for Darwin/FreeBSD 
-        # targets.  Other targets do not, which causes this test to fail.
-        # This flag enables FullDebugInfo for all targets.
-
-        makefile.write("ifneq (,$(findstring clang,$(CC)))\n")
-        makefile.write("    CFLAGS_EXTRAS += -fno-limit-debug-info\n")
-        makefile.write("endif\n\n")
-
-        makefile.write("include $(LEVEL)/Makefile.rules\n\n")
-
+        makefile.write("include $(LEVEL)/Makefile.rules\n")
         makefile.write("\ncleanup:\n\trm -f Makefile *.d\n\n")
         makefile.flush()
         makefile.close()
-
-        if os.path.exists("Makefile"):
-            if not filecmp.cmp("Makefile", "Makefile.tmp"):
-                sys.exit("Existing Makefile doesn't match generated Makefile!")
-
-        os.rename("Makefile.tmp", "Makefile")    
 
     @skipUnlessDarwin
     def __test_with_dsym(self):
