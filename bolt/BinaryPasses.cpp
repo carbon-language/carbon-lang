@@ -23,6 +23,21 @@ extern llvm::cl::opt<bool> PrintUCE;
 extern llvm::cl::opt<llvm::bolt::BinaryFunction::SplittingType> SplitFunctions;
 extern bool shouldProcess(const llvm::bolt::BinaryFunction &Function);
 
+static llvm::cl::opt<int>
+OptimizeIndirectBranchesThreshold(
+    "optimize-indirect-branches-threshold",
+    llvm::cl::desc("threshold for optimizing a frequently taken indirect call"),
+    llvm::cl::init(90),
+    llvm::cl::Optional);
+
+static llvm::cl::opt<int>
+OptimizeIndirectBranchesTopN(
+    "optimize-indirect-branches-topn",
+    llvm::cl::desc("number of targets to consider when doing indirect "
+                   "branch optimization"),
+    llvm::cl::init(2),
+    llvm::cl::Optional);
+
 static llvm::cl::opt<llvm::bolt::BinaryFunction::LayoutType>
 ReorderBlocks(
     "reorder-blocks",
@@ -525,6 +540,297 @@ void SimplifyConditionalTailCalls::runOnFunctions(
   outs() << "BOLT: patched " << NumTailCallsPatched
          << " tail calls (" << NumOrigForwardBranches << " forward)"
          << " from a total of " << NumTailCallCandidates << "\n";
+}
+
+namespace {
+
+template <typename S>
+void printInstruction(S& OS, BinaryContext& BC, const MCInst &Instruction, bool printMCInst = false) {
+  if (!BC.MIA->isUnsupported(Instruction)) {
+    BC.InstPrinter->printInst(&Instruction, OS, "", *BC.STI);
+  } else {
+    OS << "unsupported (probably jmpr)";
+  }
+  OS << "\n";
+  if (printMCInst) {
+    Instruction.dump_pretty(OS, BC.InstPrinter.get());
+    OS << "\n";
+  }
+}
+
+template <typename Itr>
+uint64_t computeCodeSize(BinaryContext& BC, Itr beg, Itr end) {
+  uint64_t size = 0;
+  while (beg != end) {
+    // Calculate the size of the instruction.
+    // Note: this is imprecise since happening prior to relaxation.
+    SmallString<256> Code;
+    SmallVector<MCFixup, 4> Fixups;
+    raw_svector_ostream VecOS(Code);
+    printInstruction(dbgs(), BC, *beg, false);
+    BC.MCE->encodeInstruction(*beg++, VecOS, Fixups, *BC.STI);
+    size += Code.size();
+  }
+  return size;
+}
+
+}
+
+void OptimizeIndirectBranches::runOnFunctions(
+  BinaryContext &BC,
+  std::map<uint64_t, BinaryFunction> &BFs,
+  std::set<uint64_t> &LargeFunctions
+) {
+  uint64_t TotalBranches = 0;
+  uint64_t TotalIndirectCalls = 0;
+  uint64_t TotalIndirectCallsites = 0;
+  uint64_t TotalIndirectCandidateCalls = 0;
+  for (auto &BFIt : BFs) {
+    auto &Function = BFIt.second;
+
+    if (!Function.isSimple() || !opts::shouldProcess(Function))
+      continue;
+
+    auto BranchDataOrErr = BC.DR.getFuncBranchData(Function.getName());
+    if (std::error_code EC = BranchDataOrErr.getError()) {
+      DEBUG(dbgs() << "no branch data found for \""
+                   << Function.getName() << "\"\n");
+      continue;
+    }
+    const FuncBranchData &BranchData = BranchDataOrErr.get();
+
+    // Note: this is not just counting calls.
+    TotalBranches += BranchData.ExecutionCount;
+
+    uint64_t Total = 0;
+    for (auto &nlib : Function.nlibs()) {
+      auto Branches = BranchData.getBranchRange(nlib);
+      for (auto &BInfo : Branches) {
+        Total += BInfo.Branches;
+      }
+      std::vector<BranchInfo> targets;
+      for (auto &BInfo : Branches) {
+        targets.push_back(BInfo);
+      }
+
+      std::sort(targets.begin(), targets.end(),
+                [](const BranchInfo& a, const BranchInfo& b) {
+                  return a.Branches > b.Branches;
+                });
+
+      if (!targets.empty()) {
+        uint64_t TopNBranches = 0;
+
+        const int NumTargets = std::distance(targets.begin(), targets.end());
+        const int N = std::min(int(opts::OptimizeIndirectBranchesTopN),
+                               NumTargets);
+
+        for (int i = 0; i < N; ++i) {
+          TopNBranches += targets[i].Branches;
+        }
+
+        const double TopNFrequency = 100.0 * TopNBranches / Total;
+
+        if (TopNFrequency >= opts::OptimizeIndirectBranchesThreshold) {
+          double Threshold = double(opts::OptimizeIndirectBranchesThreshold);
+          bool Separator = false;
+
+          dbgs() << "BOLT: candidate branch info: "
+                 << Function.getName() << " @ " << nlib
+                 << " -> ";
+          
+          for (int i = 0; i < N && Threshold > 0; i++) {
+            const auto Frequency = 100.0 * targets[i].Branches / Total;
+            if (Separator) {
+              dbgs() << " | ";
+            }
+            Separator = true;
+            dbgs() << targets[i].To.Name
+                   << ", count = " << targets[i].Branches
+                   << ", mispreds = " << targets[i].Mispreds
+                   << ", freq = " << (int)Frequency << "%";
+            TotalIndirectCandidateCalls += targets[i].Branches;
+            Threshold -= Frequency;
+          }
+          dbgs() << "\n";
+
+          //assert(!targets[0].From.IsSymbol);
+          auto IndCallBlock =
+            Function.getBasicBlockContainingOffset(targets[0].From.Offset);
+
+#if 0
+          // scan insts for jump (use analyze?)
+          const MCSymbol *TBB = nullptr;
+          const MCSymbol *FBB = nullptr;
+          MCInst *CondBranch = nullptr;
+          MCInst *UncondBranch = nullptr;
+          bool Found = MIA->analyzeBranch(IndCallBlock->Instructions,
+                                          TBB,
+                                          FBB,
+                                          CondBranch,
+                                          UncondBranch);
+          assert(Found);
+          // how to assert that UncondBranch is the one we want?
+          assert(UncondBranch != nullptr);
+#else
+          MCInst* CallInst = nullptr;
+          uint64_t InstOffset{RoundUpToAlignment(IndCallBlock->getOffset(),
+                                                 IndCallBlock->getAlignment())};
+
+          size_t CallInstIdx = 0;
+          for (auto &Instr : *IndCallBlock) {
+            // Calculate the size of the instruction.
+            // Note: this is imprecise since happening prior to relaxation.
+            SmallString<256> Code;
+            SmallVector<MCFixup, 4> Fixups;
+            raw_svector_ostream VecOS(Code);
+            BC.MCE->encodeInstruction(Instr, VecOS, Fixups, *BC.STI);
+            if (InstOffset == targets[0].From.Offset) {
+              CallInst = &Instr;
+            }
+            ++CallInstIdx;
+            InstOffset += Code.size();
+          }
+          assert(CallInst);
+#endif
+
+          std::vector<MCSymbol*> Targets;
+          for (int i = 0; i < N; ++i) {
+            assert(targets[i].To.IsSymbol);
+            // Is this right?  lookupSym doesn't always return a result
+            auto Symbol = BC.Ctx->getOrCreateSymbol(targets[i].To.Name);
+            assert(Symbol);
+            Targets.push_back(Symbol);
+          }
+
+          MCInst* SourceInst = CallInst; // for now
+#if 0
+          for (auto &Instr : *IndCallBlock) {
+            if (&Instr == CallInst) break;
+            if (Instr.getNumOperands() > 0) {
+              printInstruction(dbgs(), BC, Instr, true);
+              for (unsigned int i = 0; i < Instr.getNumOperands(); ++i) {
+                auto &Operand = Instr.getOperand(i);
+                dbgs() << "isreg("<< i << ") = " << Operand.isReg() << "\n";
+                dbgs() << "isexpr(" << i << ") = " << Operand.isExpr() << "\n";
+                SourceInst = &Instr; // WRONG
+              }
+            }
+            if (&Instr == CallInst) break;
+          }
+          dbgs() << "-----------\n";
+          assert(SourceInst);
+#endif
+
+          auto ICPcode = BC.MIA->indirectCallPromotion(
+            *SourceInst,  // == CallInst for now
+            *CallInst,
+            Targets,
+            BC.Ctx.get());
+
+          if (!ICPcode.empty()) {
+            for (auto &entry : ICPcode) {
+              auto &Sym = entry.first;
+              auto &Insts = entry.second;
+              if (Sym) dbgs() << Sym->getName() << ":\n";
+              for (auto &Instr : Insts) {
+                printInstruction(dbgs(), BC, Instr, false);
+              }
+            }
+
+            // create new bbs with correct code in each one
+            // first
+            auto oldSuccRange = IndCallBlock->successors();
+            std::vector<BinaryBasicBlock*> oldSucc(oldSuccRange.begin(), oldSuccRange.end());
+            BinaryBasicBlock* LastBlock = IndCallBlock;
+            BinaryBasicBlock* MergeBlock = nullptr;
+            std::vector<BinaryBasicBlock*> newBBs;
+
+            assert(!BC.MIA->isTailCall(*CallInst) || oldSucc.empty());
+
+            // Remove all successors from block doing the indirect call.
+            for (auto succ : oldSucc) {
+              IndCallBlock->removeSuccessor(succ);
+            }
+            assert(IndCallBlock->succ_empty());
+
+            dbgs() << "IndCallBlock = " << IndCallBlock << "\n";
+
+            if (ICPcode.back().second.empty()) { // merge block
+              // Create BB for merge block following old call
+
+              uint64_t total = 0;
+              for (auto &entry : ICPcode) {
+                total += computeCodeSize(BC, entry.second.begin(), entry.second.end());
+              }
+
+              // adjust all other blocks by total
+              for (auto &BB : Function) {
+                if (BB.getOffset() > IndCallBlock->getOffset()) {
+                  BB.setOffset(BB.getOffset() + total);
+                }
+              }
+
+              //dbgs() << "total = " << total << "\n";
+              //dbgs() << "InstOffset = " << InstOffset << "\n";
+              MergeBlock = Function.addBasicBlock(total + InstOffset, ICPcode.back().first);
+              newBBs.push_back(MergeBlock);
+              for (auto succ : oldSucc) {
+                MergeBlock->addSuccessor(succ);
+              }
+              dbgs() << "MergeBlock = " << MergeBlock << "\n";
+
+              // Move instructions from the tail of the original call block
+              // to the merge block.
+              std::vector<MCInst> MovedInst;
+
+              while(&IndCallBlock->back() != CallInst) {
+                auto &lastInst = IndCallBlock->back();
+                MovedInst.push_back(lastInst);
+                IndCallBlock->eraseInstruction(&lastInst);
+              }
+              IndCallBlock->eraseInstruction(CallInst);
+
+              for (auto itr = MovedInst.rbegin(); itr != MovedInst.rend(); ++itr) {
+                MergeBlock->addInstruction(*itr);
+              }
+
+              ICPcode.pop_back();  // remove merge block
+            }
+
+            for (auto &entry : ICPcode) {
+              auto &Sym = entry.first;
+              auto &Insts = entry.second;
+              if (Sym) {
+                auto TBB = Function.addBasicBlock(InstOffset, Sym);
+                newBBs.push_back(TBB);
+                LastBlock->addSuccessor(TBB);
+                LastBlock = TBB;
+                InstOffset += computeCodeSize(BC, Insts.begin(), Insts.end());
+                dbgs() << "TBB = " << TBB << "\n";
+              }
+              for (auto &Inst : Insts) {
+                LastBlock->addInstruction(Inst);
+              }
+              if (MergeBlock) LastBlock->addSuccessor(MergeBlock);
+            }
+
+            // update BBlayout in Function, XXX is this right?
+            Function.updateLayout(IndCallBlock, newBBs);
+          }
+        }
+      }
+
+      ++TotalIndirectCallsites;
+    }
+    TotalIndirectCalls += Total;
+  }
+
+  dbgs() << "BOLT: total indirect callsites/candidate calls/calls/branches = "
+         << TotalIndirectCallsites << "/"
+         << TotalIndirectCandidateCalls << "/"
+         << TotalIndirectCalls << "/"
+         << TotalBranches << "\n";
 }
 
 } // namespace bolt

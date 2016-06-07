@@ -19,6 +19,7 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
+#include "DataReader.h"
 #include "DebugData.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
@@ -36,6 +37,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 using namespace llvm::object;
@@ -235,6 +237,10 @@ private:
   using LandingPadsMapType = std::map<const MCSymbol *, std::vector<unsigned> >;
   LandingPadsMapType LPToBBIndex;
 
+  /// Storage for non-local branches
+  using NonLocalIndirectBranchesListType = std::vector<uint32_t>;
+  NonLocalIndirectBranchesListType NonLocalIndirectBranches;
+
   /// Map offset in the function to a local label.
   using LabelsMapType = std::map<uint32_t, MCSymbol *>;
   LabelsMapType Labels;
@@ -288,7 +294,7 @@ private:
 
   // Map that keeps track of the index of each basic block in the BasicBlocks
   // vector.  Used to make getIndex fast.
-  std::map<const BinaryBasicBlock*, unsigned> BasicBlockIndices;
+  std::unordered_map<const BinaryBasicBlock*, unsigned> BasicBlockIndices;
 
   // At each basic block entry we attach a CFI state to detect if reordering
   // corrupts the CFI state for a block. The CFI state is simply the index in
@@ -335,6 +341,28 @@ public:
 
   typedef BasicBlockOrderType::iterator order_iterator;
   typedef BasicBlockOrderType::const_iterator const_order_iterator;
+
+  typedef NonLocalIndirectBranchesListType::iterator nlib_iterator;
+  typedef NonLocalIndirectBranchesListType::const_iterator const_nlib_iterator;
+
+  nlib_iterator             begin_nlibs() {
+    return NonLocalIndirectBranches.begin();
+  }
+  const_nlib_iterator       begin_nlibs() const {
+    return NonLocalIndirectBranches.begin();
+  }
+  nlib_iterator             end_nlibs() {
+    return NonLocalIndirectBranches.end();
+  }
+  const_nlib_iterator       end_nlibs() const {
+    return NonLocalIndirectBranches.end();
+  }
+  inline iterator_range<nlib_iterator> nlibs() {
+    return iterator_range<nlib_iterator>(begin_nlibs(), end_nlibs());
+  }
+  inline iterator_range<const_nlib_iterator> nlibs() const {
+    return iterator_range<const_nlib_iterator>(begin_nlibs(), end_nlibs());
+  }
 
   // CFG iterators.
   iterator                 begin()       { return BasicBlocks.begin(); }
@@ -525,7 +553,8 @@ public:
   /// Returns NULL if basic block already exists at the \p Offset.
   BinaryBasicBlock *addBasicBlock(uint64_t Offset, MCSymbol *Label,
                                   bool DeriveAlignment = false) {
-    assert(!getBasicBlockAtOffset(Offset) && "basic block already exists");
+    assert(CurrentState == State::CFG ||
+           (!getBasicBlockAtOffset(Offset) && "basic block already exists"));
     assert(BC.Ctx && "cannot be called with empty context");
     if (!Label)
       Label = BC.Ctx->createTempSymbol("BB", true);
@@ -556,6 +585,13 @@ public:
     return nullptr;
   }
 
+  void updateLayout(BinaryBasicBlock* start,
+                    const std::vector<BinaryBasicBlock*>& newBBs) {
+    BasicBlocksLayout.insert(BasicBlocksLayout.begin() + getIndex(start) + 1,
+                             newBBs.begin(),
+                             newBBs.end());
+  }
+  
   /// Return basic block that originally contained offset \p Offset
   /// from the function start.
   BinaryBasicBlock *getBasicBlockContainingOffset(uint64_t Offset);

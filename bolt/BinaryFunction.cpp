@@ -220,7 +220,11 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       OS << "\n";
       return;
     }
-    BC.InstPrinter->printInst(&Instruction, OS, "", *BC.STI);
+    if (!BC.MIA->isUnsupported(Instruction)) {
+      BC.InstPrinter->printInst(&Instruction, OS, "", *BC.STI);
+    } else {
+      OS << "unsupported (probably jmpr)";
+    }
     if (BC.MIA->isCall(Instruction)) {
       if (BC.MIA->isTailCall(Instruction))
         OS << " # TAILCALL ";
@@ -542,12 +546,6 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           }
         }
 
-        Instruction.clear();
-        Instruction.addOperand(
-            MCOperand::createExpr(
-              MCSymbolRefExpr::create(TargetSymbol,
-                                      MCSymbolRefExpr::VK_None,
-                                      *Ctx)));
         if (!IsCall) {
           // Add local branch info.
           LocalBranches.push_back({Offset, TargetOffset});
@@ -556,15 +554,54 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           // Add fallthrough branch info.
           FTBranches.push_back({Offset, Offset + Size});
         }
+
+        if (IsCall || !IsCondBranch) {
+          if (MIA->isIndirectBranch(Instruction)) {
+#if 0
+            dbgs() << "Indirect call/branch @ "
+                   << Twine::utohexstr(Offset) << "\n";
+#endif
+            NonLocalIndirectBranches.push_back(Offset);
+          }
+        }
+
+        Instruction.clear();
+        Instruction.addOperand(
+            MCOperand::createExpr(
+              MCSymbolRefExpr::create(TargetSymbol,
+                                      MCSymbolRefExpr::VK_None,
+                                      *Ctx)));
       } else {
+        if (MIA->isCall(Instruction)) {
+#if 0
+          dbgs() << getName() << ": indirect call/branch @ "
+                 << Twine::utohexstr(Offset) << "\n";
+#endif
+          NonLocalIndirectBranches.push_back(Offset);
+        }
+
         // Should be an indirect call or an indirect branch. Bail out on the
         // latter case.
         if (MIA->isIndirectBranch(Instruction)) {
           DEBUG(dbgs() << "BOLT-WARNING: indirect branch detected at 0x"
                  << Twine::utohexstr(AbsoluteInstrAddr)
                  << ". Skipping function " << getName() << ".\n");
-          IsSimple = false;
+          if (!MIA->isConditionalBranch(Instruction)) {
+#if 0
+            dbgs() << getName() << ": indirect call/branch @ "
+                   << Twine::utohexstr(Offset) << "\n";
+#endif
+            NonLocalIndirectBranches.push_back(Offset);
+
+            MCInst tmp(Instruction);
+            if (1 || !MIA->isTerminator(tmp) || !MIA->convertJmpToTailCall(tmp)) {
+              IsSimple = false;
+            }
+          } else {
+            IsSimple = false;
+          }
         }
+
         // Indirect call. We only need to fix it if the operand is RIP-relative
         if (MIA->hasRIPOperand(Instruction)) {
           if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {

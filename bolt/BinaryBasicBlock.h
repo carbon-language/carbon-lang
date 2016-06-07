@@ -290,6 +290,11 @@ public:
     return Offset;
   }
 
+  /// Set offset of the basic block from the function start.
+  void setOffset(uint64_t newOffset) {
+    Offset = newOffset;
+  }
+
   /// Adds block to successor list, and also updates predecessor list for
   /// successor block.
   /// Set branch info for this path.

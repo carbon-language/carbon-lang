@@ -18,6 +18,21 @@
 namespace llvm {
 namespace bolt {
 
+iterator_range<FuncBranchData::ContainerTy::const_iterator>
+FuncBranchData::getBranchRange(uint64_t From) const {
+  assert(std::is_sorted(Data.begin(), Data.end()));
+  struct Compare {
+    bool operator()(const BranchInfo &BI, const uint64_t val) const {
+      return BI.From.Offset < val;
+    }
+    bool operator()(const uint64_t val, const BranchInfo &BI) const {
+      return val < BI.From.Offset;
+    }
+  };
+  auto Range = std::equal_range(Data.begin(), Data.end(), From, Compare());
+  return iterator_range<ContainerTy::const_iterator>(Range.first, Range.second);
+}
+
 ErrorOr<const BranchInfo &> FuncBranchData::getBranch(uint64_t From,
                                                       uint64_t To) const {
   for (const auto &I : Data) {
@@ -195,8 +210,12 @@ std::error_code DataReader::parse() {
       I = GetOrCreateFuncEntry(BI.To.Name);
       I->getValue().ExecutionCount += BI.Branches;
     }
-
   }
+
+  for (auto &FuncBranches : FuncsMap) {
+    std::sort(FuncBranches.second.Data.begin(), FuncBranches.second.Data.end());
+  }
+
   return std::error_code();
 }
 

@@ -148,6 +148,14 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
+/// Optimize indirect calls.
+class OptimizeIndirectBranches : public BinaryFunctionPass {
+ public:
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
 } // namespace bolt
 } // namespace llvm
 
