@@ -37,12 +37,12 @@ MutationDispatcher::MutationDispatcher(Random &Rand) : Rand(Rand) {
            "AddFromPersAutoDict"},
       });
 
-  if (EF.LLVMFuzzerCustomMutator)
+  if (EF->LLVMFuzzerCustomMutator)
     Mutators.push_back({&MutationDispatcher::Mutate_Custom, "Custom"});
   else
     Mutators = DefaultMutators;
 
-  if (EF.LLVMFuzzerCustomCrossOver)
+  if (EF->LLVMFuzzerCustomCrossOver)
     Mutators.push_back(
         {&MutationDispatcher::Mutate_CustomCrossOver, "CustomCrossOver"});
 }
@@ -67,7 +67,7 @@ static char RandCh(Random &Rand) {
 
 size_t MutationDispatcher::Mutate_Custom(uint8_t *Data, size_t Size,
                                          size_t MaxSize) {
-  return EF.LLVMFuzzerCustomMutator(Data, Size, MaxSize, Rand.Rand());
+  return EF->LLVMFuzzerCustomMutator(Data, Size, MaxSize, Rand.Rand());
 }
 
 size_t MutationDispatcher::Mutate_CustomCrossOver(uint8_t *Data, size_t Size,
@@ -80,7 +80,7 @@ size_t MutationDispatcher::Mutate_CustomCrossOver(uint8_t *Data, size_t Size,
     return 0;
   MutateInPlaceHere.resize(MaxSize);
   auto &U = MutateInPlaceHere;
-  size_t NewSize = EF.LLVMFuzzerCustomCrossOver(
+  size_t NewSize = EF->LLVMFuzzerCustomCrossOver(
       Data, Size, Other.data(), Other.size(), U.data(), U.size(), Rand.Rand());
   if (!NewSize)
     return 0;
