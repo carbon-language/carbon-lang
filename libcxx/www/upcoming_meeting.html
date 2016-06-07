@@ -97,23 +97,23 @@
 <h3>Comments about the issues</h3>
 <ul>
 <li>2181 - </li>
-<li>2309 - </li>
-<li>2310 - </li>
-<li>2328 - </li>
+<li>2309 - I don't think there's anything to do here.</li>
+<li>2310 - I think we need a test that checks array::data() == addressof(front()). Other than that, we're good.</li>
+<li>2328 - &lt;istream&gt;:1467 - fix is straightforward.  Need to think about tests.</li>
 <li>2393 - </li>
-<li>2426 - </li>
-<li>2436 - </li>
-<li>2441 - </li>
-<li>2451 - </li>
-<li>2509 - </li>
-<li>2516 - </li>
-<li>2542 - </li>
-<li>2549 - </li>
-<li>2550 - </li>
-<li>2551 - </li>
-<li>2555 - </li>
+<li>2426 - I believe this is just a wording clarification, but need to study it some more.</li>
+<li>2436 - Adds Requirements on compare/hasher. We can static_assert this, and test it.</li>
+<li>2441 - Looks straightforward.</li>
+<li>2451 - <i>Significant work.</i></li>
+<li>2509 - <i>Significant work.</i></li>
+<li>2516 - We don't have an observer_ptr implementation yet.</li>
+<li>2542 - This is probably mostly writing additional tests.</li>
+<li>2549 - Tuple EXPLICIT - Eric?</li>
+<li>2550 - Wording clarification; no code change needed.</li>
+<li>2551 - Wording cleanup; no code change needed.</li>
+<li>2555 - Wording clarification; no code change needed.</li>
 <li>2573 - </li>
-<li>2596 - </li>
+<li>2596 - Easy.</li>
 <li>2667 - </li>
 <li>2669 - </li>
 <li>2670 - </li>
@@ -121,17 +121,17 @@
 <li>2673 - </li>
 <li>2674 - </li>
 <li>2683 - </li>
-<li>2684 - </li>
-<li>2685 - </li>
-<li>2688 - </li>
-<li>2689 - </li>
-<li>2698 - </li>
+<li>2684 - We already have one; just need to add a test for it (in test/std/containers/container.adaptors/priority.queue/types.pass.cpp)</li>
+<li>2685 - Wording clarification; no code change needed. We don't handle throwing move ctors here anyway.</li>
+<li>2688 - I believe that we already do this.</li>
+<li>2689 - We don't have a parallel implementation yet (though I'm working on it).</li>
+<li>2698 - Wording clarification; no code change needed.</li>
 <li>2706 - </li>
 <li>2707 - </li>
-<li>2710 - </li>
+<li>2710 - Wording cleanup; no code change needed.</li>
 </ul>
 
-<p>Last Updated: 31-May-2016</p>
+<p>Last Updated: 7-Jun-2016</p>
 </div>
 </body>
 </html>
