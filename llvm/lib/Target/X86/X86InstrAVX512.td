@@ -3301,6 +3301,19 @@ let Predicates = [HasAVX512], AddedComplexity = 400 in {
             (VMOVNTDQZmr addr:$dst, VR512:$src)>;
   def : Pat<(alignednontemporalstore (v64i8 VR512:$src), addr:$dst),
             (VMOVNTDQZmr addr:$dst, VR512:$src)>;
+
+  def : Pat<(v8f64 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZrm addr:$src)>;
+  def : Pat<(v16f32 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZrm addr:$src)>;
+  def : Pat<(v8i64 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZrm addr:$src)>;
+  def : Pat<(v16i32 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZrm addr:$src)>;
+  def : Pat<(v32i16 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZrm addr:$src)>;
+  def : Pat<(v64i8 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZrm addr:$src)>;
 }
 
 let Predicates = [HasVLX], AddedComplexity = 400 in {
@@ -3311,12 +3324,38 @@ let Predicates = [HasVLX], AddedComplexity = 400 in {
   def : Pat<(alignednontemporalstore (v32i8 VR256X:$src), addr:$dst),
             (VMOVNTDQZ256mr addr:$dst, VR256X:$src)>;
 
+  def : Pat<(v4f64 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZ256rm addr:$src)>;
+  def : Pat<(v8f32 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZ256rm addr:$src)>;
+  def : Pat<(v4i64 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZ256rm addr:$src)>;
+  def : Pat<(v8i32 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZ256rm addr:$src)>;
+  def : Pat<(v16i16 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZ256rm addr:$src)>;
+  def : Pat<(v32i8 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZ256rm addr:$src)>;
+
   def : Pat<(alignednontemporalstore (v4i32 VR128X:$src), addr:$dst),
             (VMOVNTDQZ128mr addr:$dst, VR128X:$src)>;
   def : Pat<(alignednontemporalstore (v8i16 VR128X:$src), addr:$dst),
             (VMOVNTDQZ128mr addr:$dst, VR128X:$src)>;
   def : Pat<(alignednontemporalstore (v16i8 VR128X:$src), addr:$dst),
             (VMOVNTDQZ128mr addr:$dst, VR128X:$src)>;
+
+  def : Pat<(v2f64 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZ128rm addr:$src)>;
+  def : Pat<(v4f32 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZ128rm addr:$src)>;
+  def : Pat<(v2i64 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZ128rm addr:$src)>;
+  def : Pat<(v4i32 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZ128rm addr:$src)>;
+  def : Pat<(v8i16 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZ128rm addr:$src)>;
+  def : Pat<(v16i8 (alignednontemporalload addr:$src)),
+            (VMOVNTDQAZ128rm addr:$src)>;
 }
 
 //===----------------------------------------------------------------------===//
