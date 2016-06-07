@@ -14,6 +14,7 @@
 // concatentation of input sections.
 
 // CHECK-NOT: Name: .ARM.attributes
+// REQUIRES: arm
  .text
  .syntax unified
  .eabi_attribute        67, "2.09"      @ Tag_conformance
