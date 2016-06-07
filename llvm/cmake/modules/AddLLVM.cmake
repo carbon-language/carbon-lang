@@ -771,7 +771,7 @@ macro(add_llvm_tool name)
     if( LLVM_BUILD_TOOLS )
       install(TARGETS ${name}
               EXPORT LLVMExports
-              RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+              RUNTIME DESTINATION bin
               COMPONENT ${name})
 
       if (NOT CMAKE_CONFIGURATION_TYPES)
@@ -1211,7 +1211,7 @@ function(llvm_install_symlink name dest)
   set(full_dest ${dest}${CMAKE_EXECUTABLE_SUFFIX})
 
   install(SCRIPT ${INSTALL_SYMLINK}
-          CODE "install_symlink(${full_name} ${full_dest} ${CMAKE_INSTALL_BINDIR})"
+          CODE "install_symlink(${full_name} ${full_dest} bin)"
           COMPONENT ${component})
 
   if (NOT CMAKE_CONFIGURATION_TYPES AND NOT ARG_ALWAYS_GENERATE)
