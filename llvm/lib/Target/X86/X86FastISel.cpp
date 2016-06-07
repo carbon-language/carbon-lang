@@ -452,7 +452,7 @@ bool X86FastISel::X86FastEmitLoad(EVT VT, X86AddressMode &AM,
     assert(Subtarget->hasAVX512());
     // Note: There are a lot more choices based on type with AVX-512, but
     // there's really no advantage when the load isn't masked.
-    Opc = (Alignment >= 64) ? X86::VMOVDQA64Zmr : X86::VMOVDQU64Zmr;
+    Opc = (Alignment >= 64) ? X86::VMOVDQA64Zrm : X86::VMOVDQU64Zrm;
     RC  = &X86::VR512RegClass;
     break;
   }
