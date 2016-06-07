@@ -255,6 +255,7 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
                 result = subprocess.PIPE
             else:
                 if r[2] is None:
+                    redir_filename = None
                     if kAvoidDevNull and r[0] == '/dev/null':
                         r[2] = tempfile.TemporaryFile(mode=r[1])
                     elif kIsWindows and r[0] == '/dev/tty':
@@ -398,7 +399,7 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
         # Gather the redirected output files.
         output_files = []
         for (name, mode, f, path) in sorted(opened_files):
-            if mode in ('w', 'a'):
+            if path is not None and mode in ('w', 'a'):
                 try:
                     with open(path) as f:
                         data = f.read()
