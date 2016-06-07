@@ -3252,18 +3252,20 @@ let SchedRW = [WriteLoad] in {
                         SSEPackedInt>, EVEX, T8PD, EVEX_V512,
                         EVEX_CD8<64, CD8VF>;
 
-  let Predicates = [HasAVX512, HasVLX] in {
+  let Predicates = [HasVLX] in {
     def VMOVNTDQAZ256rm : AVX512PI<0x2A, MRMSrcMem, (outs VR256X:$dst),
-                             (ins i256mem:$src),
-                             "vmovntdqa\t{$src, $dst|$dst, $src}", [],
-                             SSEPackedInt>, EVEX, T8PD, EVEX_V256,
-                             EVEX_CD8<64, CD8VF>;
+                         (ins i256mem:$src),
+                         "vmovntdqa\t{$src, $dst|$dst, $src}",
+                         [(set VR256X:$dst, (int_x86_avx2_movntdqa addr:$src))],
+                         SSEPackedInt>, EVEX, T8PD, EVEX_V256,
+                         EVEX_CD8<64, CD8VF>;
 
     def VMOVNTDQAZ128rm : AVX512PI<0x2A, MRMSrcMem, (outs VR128X:$dst),
-                             (ins i128mem:$src),
-                             "vmovntdqa\t{$src, $dst|$dst, $src}", [],
-                             SSEPackedInt>, EVEX, T8PD, EVEX_V128,
-                             EVEX_CD8<64, CD8VF>;
+                        (ins i128mem:$src),
+                        "vmovntdqa\t{$src, $dst|$dst, $src}",
+                        [(set VR128X:$dst, (int_x86_sse41_movntdqa addr:$src))],
+                        SSEPackedInt>, EVEX, T8PD, EVEX_V128,
+                        EVEX_CD8<64, CD8VF>;
   }
 }
 
