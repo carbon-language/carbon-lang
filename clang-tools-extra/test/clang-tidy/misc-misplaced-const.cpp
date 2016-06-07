@@ -26,7 +26,14 @@ struct S {
 template struct S<int>;
 template struct S<ip>; // ok
 template struct S<cip>;
-template struct S<int *>; // ok
+
+template <typename Ty>
+struct U {
+  const Ty *i;
+  const Ty &i2;
+};
+
+template struct U<int *>; // ok
 
 struct T {
   typedef void (T::*PMF)();
