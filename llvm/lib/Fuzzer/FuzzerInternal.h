@@ -331,6 +331,7 @@ public:
     bool PrintFinalStats = false;
     bool DetectLeaks = true;
     bool TruncateUnits = false;
+    bool PruneCorpus = true;
   };
 
   // Aggregates all available coverage measurements.

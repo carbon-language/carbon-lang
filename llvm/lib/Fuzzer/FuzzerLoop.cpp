@@ -400,7 +400,8 @@ void Fuzzer::ShuffleAndMinimize() {
   }
 
   for (const auto &U : Corpus) {
-    if (RunOne(U)) {
+    bool NewCoverage = RunOne(U);
+    if (!Options.PruneCorpus || NewCoverage) {
       NewCorpus.push_back(U);
       if (Options.Verbosity >= 2)
         Printf("NEW0: %zd L %zd\n", MaxCoverage.BlockCoverage, U.size());

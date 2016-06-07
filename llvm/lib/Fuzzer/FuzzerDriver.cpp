@@ -336,6 +336,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
   Options.PrintNewCovPcs = Flags.print_new_cov_pcs;
   Options.PrintFinalStats = Flags.print_final_stats;
   Options.TruncateUnits = Flags.truncate_units;
+  Options.PruneCorpus = Flags.prune_corpus;
 
   unsigned Seed = Flags.seed;
   // Initialize Seed.
