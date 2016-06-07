@@ -1,4 +1,4 @@
-; RUN: opt -loop-vectorize -S < %s | FileCheck %s
+; RUN: opt -loop-vectorize -force-vector-width=4 -S < %s | FileCheck %s
 
 ; This is the test case from PR26314.
 ; When we were retrying dependence checking with memchecks only,
