@@ -276,6 +276,7 @@ static void dumpTpiHash(ScopedPrinter &P, TpiStream &Tpi) {
   if (!opts::DumpTpiHash)
     return;
   DictScope DD(P, "Hash");
+  P.printNumber("Hash Key Size", Tpi.getHashKeySize());
   codeview::FixedStreamArray<support::ulittle32_t> S = Tpi.getHashValues();
   P.printList("Values", Tpi.getHashValues());
   P.printList("Type Index Offsets", Tpi.getTypeIndexOffsets(),

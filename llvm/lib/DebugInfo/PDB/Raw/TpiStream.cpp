@@ -153,6 +153,8 @@ uint16_t TpiStream::getTypeHashStreamAuxIndex() const {
   return Header->HashAuxStreamIndex;
 }
 
+uint32_t TpiStream::getHashKeySize() const { return Header->HashKeySize; }
+
 codeview::FixedStreamArray<support::ulittle32_t>
 TpiStream::getHashValues() const {
   return HashValues;
