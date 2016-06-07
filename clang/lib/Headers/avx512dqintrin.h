@@ -851,6 +851,78 @@ _mm512_maskz_cvtepu64_ps (__mmask8 __U, __m512i __A) {
                                           (__v16sf)_mm512_setzero_ps(), \
                                           (__mmask16)(U), (int)(R)); })
 
+#define _mm_reduce_ss(A, B, C) __extension__ ({              \
+  (__m128)__builtin_ia32_reducess_mask((__v4sf)(__m128)(A), (__v4sf)(__m128)(B), \
+                                          (__v4sf)_mm_setzero_ps(), \
+                                          (__mmask8)-1, \
+                                          (int)(C),_MM_FROUND_CUR_DIRECTION); })
+
+#define _mm_mask_reduce_ss(W, U, A, B, C) __extension__ ({   \
+  (__m128)__builtin_ia32_reducess_mask((__v4sf)(__m128 )(A), (__v4sf)(__m128 )(B), \
+                                          (__v4sf)(__m128 )(W), \
+                                          (__mmask8)(U), \
+                                          (int)(C),_MM_FROUND_CUR_DIRECTION); })
+
+#define _mm_maskz_reduce_ss(U, A, B, C) __extension__ ({       \
+  (__m128)__builtin_ia32_reducess_mask((__v4sf)(__m128)(A), (__v4sf)(__m128 )(B), \
+                                          (__v4sf)_mm_setzero_ps(), \
+                                          (__mmask8)(U), \
+                                          (int)(C),_MM_FROUND_CUR_DIRECTION); })
+               
+#define _mm_reduce_round_ss(A, B, C, R) __extension__ ({              \
+  (__m128)__builtin_ia32_reducess_mask((__v4sf)(__m128)(A), (__v4sf)(__m128 )(B), \
+                                          (__v4sf)_mm_setzero_ps(), \
+                                          (__mmask8)-1, \
+                                          (int)(C),(int)(R)); })
+
+#define _mm_mask_reduce_round_ss(W, U, A, B, C, R) __extension__ ({   \
+  (__m128)__builtin_ia32_reducess_mask((__v4sf)(__m128 )(A), (__v4sf)(__m128 )(B), \
+                                          (__v4sf)(__m128 )(W), \
+                                          (__mmask8)(U), \
+                                          (int)(C),(int)(R)); })
+
+#define _mm_maskz_reduce_round_ss(U, A, B, C, R) __extension__ ({       \
+  (__m128)__builtin_ia32_reducess_mask((__v4sf)(__m128)(A), (__v4sf)(__m128 )(B), \
+                                          (__v4sf)_mm_setzero_ps(), \
+                                          (__mmask8)(U), \
+                                          (int)(C),(int)(R)); })
+
+#define _mm_reduce_sd(A, B, C) __extension__ ({              \
+  (__m128d)__builtin_ia32_reducesd_mask((__v2df)(__m128)(A), (__v2df)(__m128)(B), \
+                                          (__v2df)_mm_setzero_pd(), \
+                                          (__mmask8)-1, \
+                                          (int)(C),_MM_FROUND_CUR_DIRECTION); })
+
+#define _mm_mask_reduce_sd(W, U, A, B, C) __extension__ ({   \
+  (__m128d)__builtin_ia32_reducesd_mask((__v2df)(__m128 )(A), (__v2df)(__m128)(B), \
+                                          (__v2df)(__m128 )(W), \
+                                          (__mmask8)(U), \
+                                          (int)(C),_MM_FROUND_CUR_DIRECTION); })
+
+#define _mm_maskz_reduce_sd(U, A, B, C) __extension__ ({       \
+  (__m128d)__builtin_ia32_reducesd_mask((__v2df)(__m128)(A), (__v2df)(__m128)(B), \
+                                          (__v2df)_mm_setzero_pd(), \
+                                          (__mmask8)(U), \
+                                          (int)(C),_MM_FROUND_CUR_DIRECTION); })
+               
+#define _mm_reduce_round_sd(A, B, C, R) __extension__ ({              \
+  (__m128d)__builtin_ia32_reducesd_mask((__v2df)(__m128)(A), (__v2df)(__m128)(B), \
+                                          (__v2df)_mm_setzero_pd(), \
+                                          (__mmask8)-1, \
+                                          (int)(C),(int)(R)); })
+
+#define _mm_mask_reduce_round_sd(W, U, A, B, C, R) __extension__ ({   \
+  (__m128d)__builtin_ia32_reducesd_mask((__v2df)(__m128 )(A), (__v2df)(__m128)(B), \
+                                          (__v2df)(__m128 )(W), \
+                                          (__mmask8)(U), \
+                                          (int)(C),(int)(R)); })
+
+#define _mm_maskz_reduce_round_sd(U, A, B, C, R) __extension__ ({       \
+  (__m128d)__builtin_ia32_reducesd_mask((__v2df)(__m128)(A), (__v2df)(__m128)(B), \
+                                          (__v2df)_mm_setzero_pd(), \
+                                          (__mmask8)(U), \
+                                          (int)(C),(int)(R)); })
+                     
 static __inline__ __mmask16 __DEFAULT_FN_ATTRS
 _mm512_movepi32_mask (__m512i __A)
 {
