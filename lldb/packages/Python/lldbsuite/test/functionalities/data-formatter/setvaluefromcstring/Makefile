@@ -1,4 +1,13 @@
 LEVEL = ../../../make
 OBJC_SOURCES := main.m
+LDFLAGS = $(CFLAGS) -lobjc -framework Foundation
+ifneq (,$(findstring clang,$(CC)))
+    CFLAGS_EXTRAS += -fno-limit-debug-info
+endif
+
 include $(LEVEL)/Makefile.rules
-LDFLAGS += -framework Foundation
+
+
+cleanup:
+	rm -f Makefile *.d
+
