@@ -141,7 +141,7 @@ macro(add_tablegen target project)
   if (${project} STREQUAL LLVM AND NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     install(TARGETS ${target}
             EXPORT LLVMExports
-            RUNTIME DESTINATION bin)
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
   endif()
   set_property(GLOBAL APPEND PROPERTY LLVM_EXPORTS ${target})
 endmacro()
