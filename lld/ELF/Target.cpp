@@ -1578,10 +1578,8 @@ uint64_t ARMTargetInfo::getImplicitAddend(const uint8_t *Buf,
   case R_ARM_GOT_PREL:
   case R_ARM_REL32:
     return SignExtend64<32>(read32le(Buf));
-    break;
   case R_ARM_PREL31:
     return SignExtend64<31>(read32le(Buf));
-    break;
   case R_ARM_CALL:
   case R_ARM_JUMP24:
   case R_ARM_PC24:
