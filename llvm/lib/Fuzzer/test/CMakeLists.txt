@@ -138,8 +138,8 @@ set_target_properties(LLVMFuzzer-Unittest
 include_directories(..)
 
 if(APPLE)
-  message(WARNING "Dataflow sanitizer is not supported on Apple platforms."
-    " Building and running LibFuzzer dataflow sanitizer tests is disabled."
+  message(WARNING "DataflowSanitizer is not supported on Apple platforms."
+    " Building and running LibFuzzer DataflowSanitizer tests is disabled."
     )
   set(HAS_DFSAN 0)
 else()
