@@ -476,7 +476,7 @@ def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
         for (name, path, data) in result.outputFiles:
             if data.strip():
                 out += "# redirected output from %r:\n" % (name,)
-                data = to_string(data.decode('utf-8'))
+                data = to_string(data.decode('utf-8', errors='replace'))
                 if len(data) > 1024:
                     out += data[:1024] + "\n...\n"
                     out += "note: data was truncated\n"
