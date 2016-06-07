@@ -663,8 +663,9 @@ At the end of the process it will dump a single html file with coverage informat
 See SanitizerCoverage_ for details.
 
 You may also use other ways to visualize coverage,
-e.g. `llvm-cov <http://llvm.org/docs/CommandGuide/llvm-cov.html>`_, but those will require
-you to rebuild the code with different compiler flags. 
+e.g. using `Clang coverage <http://clang.llvm.org/docs/SourceBasedCodeCoverage.html>`_,
+but those will require
+you to rebuild the code with different compiler flags.
 
 User-supplied mutators
 ----------------------
