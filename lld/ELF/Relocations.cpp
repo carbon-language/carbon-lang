@@ -136,9 +136,13 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
         uintX_t Off = Out<ELFT>::Got->getGlobalDynOffset(Body);
         Out<ELFT>::RelaDyn->addReloc(
             {Target->TlsModuleIndexRel, Out<ELFT>::Got, Off, false, &Body, 0});
-        Out<ELFT>::RelaDyn->addReloc({Target->TlsOffsetRel, Out<ELFT>::Got,
-                                      Off + (uintX_t)sizeof(uintX_t), false,
-                                      &Body, 0});
+
+        // If the symbol is preemptible we need the dynamic linker to write
+        // the offset too.
+        if (Body.isPreemptible())
+          Out<ELFT>::RelaDyn->addReloc({Target->TlsOffsetRel, Out<ELFT>::Got,
+                                        Off + (uintX_t)sizeof(uintX_t), false,
+                                        &Body, 0});
       }
       C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
       return 1;
