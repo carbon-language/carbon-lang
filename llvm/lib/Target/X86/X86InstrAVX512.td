@@ -5097,7 +5097,7 @@ let isCodeGenOnly = 1 , Predicates = [HasAVX512] in {
             int_x86_sse2_cvtsi642sd, i64mem, loadi64, "cvtsi2sd{q}",
             SSE_CVT_Scalar, 0>, XD, EVEX_4V, VEX_W;
 
-  defm Int_VCVTUSI2SDZ : sse12_cvt_sint_3addr<0x2A, GR32, VR128X,
+  defm Int_VCVTUSI2SDZ : sse12_cvt_sint_3addr<0x7B, GR32, VR128X,
             int_x86_avx512_cvtusi2sd, i32mem, loadi32, "cvtusi2sd{l}",
             SSE_CVT_Scalar, 0>, XD, EVEX_4V;
 } // isCodeGenOnly = 1, Predicates = [HasAVX512]
