@@ -785,6 +785,48 @@ _mm512_maskz_cvtepu64_ps (__mmask8 __U, __m512i __A) {
                                          (__v16sf)_mm512_setzero_ps(), \
                                          (__mmask16)(U), (int)(R)); })
 
+#define _mm_range_round_ss(A, B, C, R) __extension__ ({           \
+  (__m128)__builtin_ia32_rangess128_round_mask((__v4sf)(__m128)(A), \
+                                               (__v4sf)(__m128)(B), \
+                                               (__v4sf)_mm_setzero_ps(), \
+                                               (__mmask8) -1, (int)(C),\
+                                               (int)(R)); })
+
+#define _mm_mask_range_round_ss(W, U, A, B, C, R) __extension__ ({ \
+  (__m128)__builtin_ia32_rangess128_round_mask((__v4sf)(__m128)(A), \
+                                               (__v4sf)(__m128)(B), \
+                                               (__v4sf)(__m128)(W),\
+                                               (__mmask8)(U), (int)(C),\
+                                               (int)(R)); })
+
+#define _mm_maskz_range_round_ss(U, A, B, C, R) __extension__ ({ \
+  (__m128)__builtin_ia32_rangess128_round_mask((__v4sf)(__m128)(A), \
+                                               (__v4sf)(__m128)(B), \
+                                               (__v4sf)_mm_setzero_ps(), \
+                                               (__mmask8)(U), (int)(C),\
+                                               (int)(R)); })
+
+#define _mm_range_round_sd(A, B, C, R) __extension__ ({           \
+  (__m128d)__builtin_ia32_rangesd128_round_mask((__v2df)(__m128d)(A), \
+                                                (__v2df)(__m128d)(B), \
+                                                (__v2df)_mm_setzero_pd(), \
+                                                (__mmask8) -1, (int)(C),\
+                                                (int)(R)); })
+
+#define _mm_mask_range_round_sd(W, U, A, B, C, R) __extension__ ({ \
+  (__m128d)__builtin_ia32_rangesd128_round_mask((__v2df)(__m128d)(A), \
+                                                (__v2df)(__m128d)(B), \
+                                                (__v2df)(__m128d)(W),\
+                                                (__mmask8)(U), (int)(C),\
+                                                (int)(R)); })
+
+#define _mm_maskz_range_round_sd(U, A, B, C, R) __extension__ ({ \
+  (__m128d)__builtin_ia32_rangesd128_round_mask((__v2df)(__m128d)(A), \
+                                                (__v2df)(__m128d)(B), \
+                                                (__v2df)_mm_setzero_pd(), \
+                                                (__mmask8)(U), (int)(C),\
+                                                (int)(R)); })
+
 #define _mm512_reduce_pd(A, B) __extension__ ({             \
   (__m512d)__builtin_ia32_reducepd512_mask((__v8df)(__m512d)(A), (int)(B), \
                                            (__v8df)_mm512_setzero_pd(), \
