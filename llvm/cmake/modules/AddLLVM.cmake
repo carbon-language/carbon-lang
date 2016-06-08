@@ -496,27 +496,18 @@ function(llvm_add_library name)
     get_property(lib_deps GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_${name})
   endif()
 
-  if(CMAKE_VERSION VERSION_LESS 2.8.12)
-    # Link libs w/o keywords, assuming PUBLIC.
-    target_link_libraries(${name}
-      ${ARG_LINK_LIBS}
-      ${lib_deps}
-      ${llvm_libs}
-      )
-  elseif(ARG_STATIC)
-    target_link_libraries(${name} INTERFACE
-      ${ARG_LINK_LIBS}
-      ${lib_deps}
-      ${llvm_libs}
-      )
+  if(ARG_STATIC)
+    set(libtype INTERFACE)
   else()
     # We can use PRIVATE since SO knows its dependent libs.
-    target_link_libraries(${name} PRIVATE
+    set(libtype PRIVATE)
+  endif()
+
+  target_link_libraries(${name} ${libtype}
       ${ARG_LINK_LIBS}
       ${lib_deps}
       ${llvm_libs}
       )
-  endif()
 
   if(LLVM_COMMON_DEPENDS)
     add_dependencies(${name} ${LLVM_COMMON_DEPENDS})
