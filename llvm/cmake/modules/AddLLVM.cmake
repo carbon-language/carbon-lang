@@ -1079,7 +1079,7 @@ function(add_lit_target target comment)
     add_custom_target(${target}
       COMMAND ${LIT_COMMAND} ${ARG_UNPARSED_ARGUMENTS}
       COMMENT "${comment}"
-      ${cmake_3_2_USES_TERMINAL}
+      USES_TERMINAL
       )
   else()
     add_custom_target(${target}
