@@ -179,7 +179,7 @@ public:
     // after applying source sorting.
     // This loop just backfills trailing spaces after the imports, which are
     // harmless and will be stripped by the subsequent formatting pass.
-    // TODO: A better long term fix is to re-calculate Ranges after sorting.
+    // FIXME: A better long term fix is to re-calculate Ranges after sorting.
     unsigned PreviousSize = getSourceText(InsertionPoint).size();
     while (ReferencesText.size() < PreviousSize) {
       ReferencesText += " ";
