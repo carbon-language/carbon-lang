@@ -6277,6 +6277,27 @@ BuildVector(ArrayRef<llvm::Value*> Ops) {
   return Result;
 }
 
+// Convert the mask from an integer type to a vector of i1.
+static Value *getMaskVecValue(CodeGenFunction &CGF, Value *Mask,
+                              unsigned NumElts) {
+
+  llvm::VectorType *MaskTy = llvm::VectorType::get(CGF.Builder.getInt1Ty(),
+                         cast<IntegerType>(Mask->getType())->getBitWidth());
+  Value *MaskVec = CGF.Builder.CreateBitCast(Mask, MaskTy);
+
+  // If we have less than 8 elements, then the starting mask was an i8 and
+  // we need to extract down to the right number of elements.
+  if (NumElts < 8) {
+    int Indices[4];
+    for (unsigned i = 0; i != NumElts; ++i)
+      Indices[i] = i;
+    MaskVec = CGF.Builder.CreateShuffleVector(MaskVec, MaskVec,
+                                             makeArrayRef(Indices, NumElts),
+                                             "extract");
+  }
+  return MaskVec;
+}
+
 static Value *EmitX86MaskedStore(CodeGenFunction &CGF,
                                  SmallVectorImpl<Value *> &Ops,
                                  unsigned Align) {
@@ -6289,24 +6310,10 @@ static Value *EmitX86MaskedStore(CodeGenFunction &CGF,
     if (C->isAllOnesValue())
       return CGF.Builder.CreateAlignedStore(Ops[1], Ops[0], Align);
 
-  // Convert the mask from an integer type to a vector of i1.
-  unsigned NumElts = Ops[1]->getType()->getVectorNumElements();
-  llvm::VectorType *MaskTy = llvm::VectorType::get(CGF.Builder.getInt1Ty(),
-                         cast<IntegerType>(Ops[2]->getType())->getBitWidth());
-  Ops[2] = CGF.Builder.CreateBitCast(Ops[2], MaskTy);
+  Value *MaskVec = getMaskVecValue(CGF, Ops[2],
+                                   Ops[1]->getType()->getVectorNumElements());
 
-  // If we have less than 8 elements, then the starting mask was an i8 and
-  // we need to extract down to the right number of elements.
-  if (NumElts < 8) {
-    int Indices[4];
-    for (unsigned i = 0; i != NumElts; ++i)
-      Indices[i] = i;
-    Ops[2] = CGF.Builder.CreateShuffleVector(Ops[2], Ops[2],
-                                             makeArrayRef(Indices, NumElts),
-                                             "extract");
-  }
-
-  return CGF.Builder.CreateMaskedStore(Ops[1], Ops[0], Align, Ops[2]);
+  return CGF.Builder.CreateMaskedStore(Ops[1], Ops[0], Align, MaskVec);
 }
 
 static Value *EmitX86MaskedLoad(CodeGenFunction &CGF,
@@ -6320,24 +6327,24 @@ static Value *EmitX86MaskedLoad(CodeGenFunction &CGF,
     if (C->isAllOnesValue())
       return CGF.Builder.CreateAlignedLoad(Ops[0], Align);
 
-  // Convert the mask from an integer type to a vector of i1.
-  unsigned NumElts = Ops[1]->getType()->getVectorNumElements();
-  llvm::VectorType *MaskTy = llvm::VectorType::get(CGF.Builder.getInt1Ty(),
-                         cast<IntegerType>(Ops[2]->getType())->getBitWidth());
-  Ops[2] = CGF.Builder.CreateBitCast(Ops[2], MaskTy);
+  Value *MaskVec = getMaskVecValue(CGF, Ops[2],
+                                   Ops[1]->getType()->getVectorNumElements());
 
-  // If we have less than 8 elements, then the starting mask was an i8 and
-  // we need to extract down to the right number of elements.
-  if (NumElts < 8) {
-    int Indices[4];
-    for (unsigned i = 0; i != NumElts; ++i)
-      Indices[i] = i;
-    Ops[2] = CGF.Builder.CreateShuffleVector(Ops[2], Ops[2],
-                                             makeArrayRef(Indices, NumElts),
-                                             "extract");
-  }
+  return CGF.Builder.CreateMaskedLoad(Ops[0], Align, MaskVec, Ops[1]);
+}
 
-  return CGF.Builder.CreateMaskedLoad(Ops[0], Align, Ops[2], Ops[1]);
+static Value *EmitX86Select(CodeGenFunction &CGF,
+                            SmallVectorImpl<Value *> &Ops) {
+
+  // If the mask is all ones just return first argument.
+  if (const auto *C = dyn_cast<Constant>(Ops[0]))
+    if (C->isAllOnesValue())
+      return Ops[1];
+
+  Value *MaskVec = getMaskVecValue(CGF, Ops[0],
+                                   Ops[1]->getType()->getVectorNumElements());
+
+  return CGF.Builder.CreateSelect(MaskVec, Ops[1], Ops[2]);
 }
 
 Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
@@ -6787,6 +6794,25 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     SI->setAlignment(Align);
     return SI;
   }
+  case X86::BI__builtin_ia32_selectb_128:
+  case X86::BI__builtin_ia32_selectb_256:
+  case X86::BI__builtin_ia32_selectb_512:
+  case X86::BI__builtin_ia32_selectw_128:
+  case X86::BI__builtin_ia32_selectw_256:
+  case X86::BI__builtin_ia32_selectw_512:
+  case X86::BI__builtin_ia32_selectd_128:
+  case X86::BI__builtin_ia32_selectd_256:
+  case X86::BI__builtin_ia32_selectd_512:
+  case X86::BI__builtin_ia32_selectq_128:
+  case X86::BI__builtin_ia32_selectq_256:
+  case X86::BI__builtin_ia32_selectq_512:
+  case X86::BI__builtin_ia32_selectps_128:
+  case X86::BI__builtin_ia32_selectps_256:
+  case X86::BI__builtin_ia32_selectps_512:
+  case X86::BI__builtin_ia32_selectpd_128:
+  case X86::BI__builtin_ia32_selectpd_256:
+  case X86::BI__builtin_ia32_selectpd_512:
+    return EmitX86Select(*this, Ops);
   // 3DNow!
   case X86::BI__builtin_ia32_pswapdsf:
   case X86::BI__builtin_ia32_pswapdsi: {
