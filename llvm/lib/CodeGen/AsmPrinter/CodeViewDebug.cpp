@@ -726,6 +726,8 @@ void CodeViewDebug::beginFunction(const MachineFunction *MF) {
 TypeIndex CodeViewDebug::lowerType(const DIType *Ty) {
   // Generic dispatch for lowering an unknown type.
   switch (Ty->getTag()) {
+  case dwarf::DW_TAG_array_type:
+    return lowerTypeArray(cast<DICompositeType>(Ty));
   case dwarf::DW_TAG_typedef:
     return lowerTypeAlias(cast<DIDerivedType>(Ty));
   case dwarf::DW_TAG_base_type:
@@ -763,6 +765,18 @@ TypeIndex CodeViewDebug::lowerTypeAlias(const DIDerivedType *Ty) {
       Ty->getName() == "wchar_t")
     return TypeIndex(SimpleTypeKind::WideCharacter);
   return UnderlyingTypeIndex;
+}
+
+TypeIndex CodeViewDebug::lowerTypeArray(const DICompositeType *Ty) {
+  DITypeRef ElementTypeRef = Ty->getBaseType();
+  TypeIndex ElementTypeIndex = getTypeIndex(ElementTypeRef);
+  // IndexType is size_t, which depends on the bitness of the target.
+  TypeIndex IndexType = Asm->MAI->getPointerSize() == 8
+                            ? TypeIndex(SimpleTypeKind::UInt64Quad)
+                            : TypeIndex(SimpleTypeKind::UInt32Long);
+  uint64_t Size = Ty->getSizeInBits() / 8;
+  ArrayRecord Record(ElementTypeIndex, IndexType, Size, Ty->getName());
+  return TypeTable.writeArray(Record);
 }
 
 TypeIndex CodeViewDebug::lowerTypeBasic(const DIBasicType *Ty) {
