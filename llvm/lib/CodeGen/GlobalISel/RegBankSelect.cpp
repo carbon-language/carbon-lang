@@ -178,6 +178,17 @@ uint64_t RegBankSelect::getRepairCost(
     // the repairing.
     if (MO.isDef())
       std::swap(CurRegBank, DesiredRegBrank);
+    // TODO: It may be possible to actually avoid the copy.
+    // If we repair something where the source is defined by a copy
+    // and the source of that copy is on the right bank, we can reuse
+    // it for free.
+    // E.g.,
+    // RegToRepair<BankA> = copy AlternativeSrc<BankB>
+    // = op RegToRepair<BankA>
+    // We can simply propagate AlternativeSrc instead of copying RegToRepair
+    // into a new virtual register.
+    // We would also need to propagate this information in the
+    // repairing placement.
     unsigned Cost =
         RBI->copyCost(*DesiredRegBrank, *CurRegBank,
                       RegisterBankInfo::getSizeInBits(MO.getReg(), *MRI, *TRI));
