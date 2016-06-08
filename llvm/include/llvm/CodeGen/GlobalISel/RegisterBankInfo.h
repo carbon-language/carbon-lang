@@ -352,9 +352,13 @@ public:
   }
 
   /// Get the cost of a copy from \p B to \p A, or put differently,
-  /// get the cost of A = COPY B.
-  virtual unsigned copyCost(const RegisterBank &A,
-                            const RegisterBank &B) const {
+  /// get the cost of A = COPY B. Since register banks may cover
+  /// different size, \p Size specifies what will be the size in bits
+  /// that will be copied around.
+  ///
+  /// \note Since this is a copy, both registers have the same size.
+  virtual unsigned copyCost(const RegisterBank &A, const RegisterBank &B,
+                            unsigned Size) const {
     return 0;
   }
 
