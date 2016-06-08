@@ -94,9 +94,9 @@ struct StratifiedLink {
 template <typename T> class StratifiedSets {
 public:
   StratifiedSets() = default;
-  // If we have a need to copy these at some point, it's fine to default this.
-  // At the time of writing, copying StratifiedSets is always a perf bug.
-  StratifiedSets(const StratifiedSets &) = delete;
+
+  // TODO: Figure out how to make MSVC not call the copy ctor here, and delete
+  // it.
 
   // Can't default these due to compile errors in MSVC2013
   StratifiedSets(StratifiedSets &&Other) { *this = std::move(Other); }
