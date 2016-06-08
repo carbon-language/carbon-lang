@@ -502,6 +502,7 @@ void RegBankSelect::applyMapping(
     }
   }
   // Second, rewrite the instruction.
+  DEBUG(dbgs() << "Actual mapping of the operands: " << OpdMapper << '\n');
   RBI->applyMapping(OpdMapper);
 }
 
