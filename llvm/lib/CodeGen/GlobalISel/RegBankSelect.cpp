@@ -384,6 +384,15 @@ RegBankSelect::MappingCost RegBankSelect::computeMapping(
     // Thus, if we end up here this information should be here.
     assert(MBFI && MBPI && "Cost computation requires MBFI and MBPI");
 
+    // FIXME: We will have to rework the repairing cost model.
+    // The repairing cost depends on the register bank that MO has.
+    // However, when we break down the value into different values,
+    // MO may not have a register bank while still needing repairing.
+    // For the fast mode, we don't compute the cost so that is fine,
+    // but still for the repairing code, we will have to make a choice.
+    // For the greedy mode, we should choose greedily what is the best
+    // choice based on the next use of MO.
+
     // Sums up the repairing cost of MO at each insertion point.
     uint64_t RepairCost = getRepairCost(MO, ValMapping);
     // Bias used for splitting: 5%.
