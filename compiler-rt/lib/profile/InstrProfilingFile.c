@@ -30,7 +30,7 @@ typedef struct lprofFilename {
   unsigned NumHosts;
 } lprofFilename;
 
-lprofFilename lprofCurFilename = {0, {0}, {0}, 0, 0};
+COMPILER_RT_VISIBILITY lprofFilename lprofCurFilename = {0, {0}, {0}, 0, 0};
 
 int getpid(void);
 static int getCurFilenameLength();
