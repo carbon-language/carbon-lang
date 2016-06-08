@@ -334,6 +334,7 @@ TEST_F(FindAllSymbolsTest, EnumTest) {
       public:
         enum A_ENUM { X1, X2 };
       };
+      enum DECL : int;
       )";
   runFindAllSymbols(Code);
 
@@ -375,6 +376,10 @@ TEST_F(FindAllSymbolsTest, EnumTest) {
   Symbol = SymbolInfo("X1", SymbolInfo::SymbolKind::EnumDecl, HeaderName, 7,
                       {{SymbolInfo::ContextType::EnumDecl, "A_ENUM"},
                        {SymbolInfo::ContextType::Record, "A"}});
+  EXPECT_FALSE(hasSymbol(Symbol));
+
+  Symbol =
+      SymbolInfo("DECL", SymbolInfo::SymbolKind::EnumDecl, HeaderName, 9, {});
   EXPECT_FALSE(hasSymbol(Symbol));
 }
 
