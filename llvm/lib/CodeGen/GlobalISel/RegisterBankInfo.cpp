@@ -332,6 +332,33 @@ RegisterBankInfo::getInstrAlternativeMappings(const MachineInstr &MI) const {
   return InstructionMappings();
 }
 
+void RegisterBankInfo::applyDefaultMapping(const OperandsMapper &OpdMapper) {
+  MachineInstr &MI = OpdMapper.getMI();
+  DEBUG(dbgs() << "Applying default-like mapping\n");
+  for (unsigned OpIdx = 0, EndIdx = MI.getNumOperands(); OpIdx != EndIdx;
+       ++OpIdx) {
+    DEBUG(dbgs() << "OpIdx " << OpIdx);
+    MachineOperand &MO = MI.getOperand(OpIdx);
+    if (!MO.isReg()) {
+      DEBUG(dbgs() << " is not a register, nothing to be done\n");
+      continue;
+    }
+    assert(
+        OpdMapper.getInstrMapping().getOperandMapping(OpIdx).BreakDown.size() ==
+            1 &&
+        "This mapping is too complex for this function");
+    iterator_range<SmallVectorImpl<unsigned>::const_iterator> NewRegs =
+        OpdMapper.getVRegs(OpIdx);
+    if (NewRegs.begin() == NewRegs.end()) {
+      DEBUG(dbgs() << " has not been repaired, nothing to be done\n");
+      continue;
+    }
+    DEBUG(dbgs() << " changed, replace " << MO.getReg());
+    MO.setReg(*NewRegs.begin());
+    DEBUG(dbgs() << " with " << MO.getReg());
+  }
+}
+
 unsigned RegisterBankInfo::getSizeInBits(unsigned Reg,
                                          const MachineRegisterInfo &MRI,
                                          const TargetRegisterInfo &TRI) {

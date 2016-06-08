@@ -395,6 +395,22 @@ protected:
                             const TargetInstrInfo &TII,
                             const TargetRegisterInfo &TRI) const;
 
+  /// Helper method to apply something that is like the default mapping.
+  /// Basically, that means that \p OpdMapper.getMI() is left untouched
+  /// aside from the reassignment of the register operand that have been
+  /// remapped.
+  /// If the mapping of one of the operand spans several registers, this
+  /// method will abort as this is not like a default mapping anymore.
+  ///
+  /// \pre For OpIdx in {0..\p OpdMapper.getMI().getNumOperands())
+  ///        the range OpdMapper.getVRegs(OpIdx) is empty or of size 1.
+  static void applyDefaultMapping(const OperandsMapper &OpdMapper);
+
+  /// See ::applyMapping.
+  virtual void applyMappingImpl(const OperandsMapper &OpdMapper) const {
+    llvm_unreachable("The target has to implement that part");
+  }
+
 public:
   virtual ~RegisterBankInfo() {}
 
@@ -502,6 +518,24 @@ public:
   ///
   /// \post !returnedVal.empty().
   InstructionMappings getInstrPossibleMappings(const MachineInstr &MI) const;
+
+  /// Apply \p OpdMapper.getInstrMapping() to \p OpdMapper.getMI().
+  /// After this call \p OpdMapper.getMI() may not be valid anymore.
+  /// \p OpdMapper.getInstrMapping().getID() carries the information of
+  /// what has been chosen to map \p OpdMapper.getMI(). This ID is set
+  /// by the various getInstrXXXMapping method.
+  ///
+  /// Therefore, getting the mapping and applying it should be kept in
+  /// sync.
+  void applyMapping(const OperandsMapper &OpdMapper) const {
+    // The only mapping we know how to handle is the default mapping.
+    if (OpdMapper.getInstrMapping().getID() == DefaultMappingID)
+      return applyDefaultMapping(OpdMapper);
+    // For other mapping, the target needs to do the right thing.
+    // If that means calling applyDefaultMapping, fine, but this
+    // must be explicitly stated.
+    applyMappingImpl(OpdMapper);
+  }
 
   /// Get the size in bits of \p Reg.
   /// Utility method to get the size of any registers. Unlike
