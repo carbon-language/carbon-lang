@@ -7,7 +7,7 @@
 // RUN: echo 'b::a::bar f;' > %T/include-fixer/src/bar.cpp
 // RUN: touch %T/include-fixer/include/bar.h
 // RUN: cd %T/include-fixer/build
-// RUN: clang-include-fixer -db=yaml -input=fake_yaml_db.yaml -p=. %T/include-fixer/src/bar.cpp
+// RUN: clang-include-fixer -db=yaml -input=fake_yaml_db.yaml -minimize-paths=true -p=. %T/include-fixer/src/bar.cpp
 // RUN: FileCheck -input-file=%T/include-fixer/src/bar.cpp %s
 
 // CHECK: #include "bar.h"
