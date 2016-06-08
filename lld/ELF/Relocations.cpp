@@ -58,8 +58,6 @@ using namespace llvm::support::endian;
 namespace lld {
 namespace elf {
 
-StringRef getRelName(uint32_t Type);
-
 static bool refersToGotEntry(RelExpr Expr) {
   return Expr == R_GOT || Expr == R_GOT_OFF || Expr == R_MIPS_GOT_LOCAL ||
          Expr == R_MIPS_GOT_LOCAL_PAGE || Expr == R_GOT_PAGE_PC ||
