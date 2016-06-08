@@ -1932,7 +1932,7 @@ void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
 }
 
 const LoopAccessInfo &
-LoopAccessAnalysis::getInfo(Loop *L, const ValueToValueMap &Strides) {
+LoopAccessAnalysisResult::getInfo(Loop *L, const ValueToValueMap &Strides) {
   auto &LAI = LoopAccessInfoMap[L];
 
 #ifndef NDEBUG
@@ -1942,8 +1942,8 @@ LoopAccessAnalysis::getInfo(Loop *L, const ValueToValueMap &Strides) {
 
   if (!LAI) {
     const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
-    LAI =
-        llvm::make_unique<LoopAccessInfo>(L, SE, DL, TLI, AA, DT, LI, Strides);
+    LAI = llvm::make_unique<LoopAccessInfo>(L, SCEV, DL, TLI, AA, DT, LI,
+                                            Strides);
 #ifndef NDEBUG
     LAI->NumSymbolicStrides = Strides.size();
 #endif
@@ -1951,26 +1951,25 @@ LoopAccessAnalysis::getInfo(Loop *L, const ValueToValueMap &Strides) {
   return *LAI.get();
 }
 
-void LoopAccessAnalysis::print(raw_ostream &OS, const Module *M) const {
-  LoopAccessAnalysis &LAA = *const_cast<LoopAccessAnalysis *>(this);
-
+void LoopAccessAnalysisResult::print(raw_ostream &OS, const Module *M) const {
   ValueToValueMap NoSymbolicStrides;
 
   for (Loop *TopLevelLoop : *LI)
     for (Loop *L : depth_first(TopLevelLoop)) {
       OS.indent(2) << L->getHeader()->getName() << ":\n";
-      auto &LAI = LAA.getInfo(L, NoSymbolicStrides);
+      auto &LAI = const_cast<LoopAccessAnalysisResult *>(this)->getInfo(
+          L, NoSymbolicStrides);
       LAI.print(OS, 4);
     }
 }
 
 bool LoopAccessAnalysis::runOnFunction(Function &F) {
-  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
-  TLI = TLIP ? &TLIP->getTLI() : nullptr;
-  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  LAAR.setDepAnalyses(&getAnalysis<AAResultsWrapperPass>().getAAResults(),
+                      &getAnalysis<DominatorTreeWrapperPass>().getDomTree(),
+                      &getAnalysis<LoopInfoWrapperPass>().getLoopInfo(),
+                      &getAnalysis<ScalarEvolutionWrapperPass>().getSE(),
+                      TLIP ? &TLIP->getTLI() : nullptr);
 
   return false;
 }

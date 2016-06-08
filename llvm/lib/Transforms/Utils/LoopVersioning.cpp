@@ -268,7 +268,7 @@ public:
     // Now walk the identified inner loops.
     bool Changed = false;
     for (Loop *L : Worklist) {
-      const LoopAccessInfo &LAI = LAA->getInfo(L, ValueToValueMap());
+      const LoopAccessInfo &LAI = LAA->getResult().getInfo(L, ValueToValueMap());
       if (LAI.getNumRuntimePointerChecks() ||
           !LAI.PSE.getUnionPredicate().isAlwaysTrue()) {
         LoopVersioning LVer(LAI, L, LI, DT, SE);
