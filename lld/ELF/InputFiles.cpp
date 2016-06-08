@@ -179,10 +179,7 @@ template <class ELFT> static bool shouldMerge(const typename ELFT::Shdr &Sec) {
   if (Flags & SHF_STRINGS)
     return true;
 
-  if (Sec.sh_addralign > EntSize)
-    return false;
-
-  return true;
+  return Sec.sh_addralign <= EntSize;
 }
 
 template <class ELFT>
