@@ -105,7 +105,7 @@ public:
                           "#include \"internal/internal.h\"";
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
     // Test path cleaning for both decls and macros.
-    const std::string DirtyHeader = "./internal/../internal/./a/b.h";
+    const std::string DirtyHeader = "./internal/./a/b.h";
     Content += "\n#include \"" + DirtyHeader + "\"";
     const std::string CleanHeader = "internal/a/b.h";
     const std::string DirtyHeaderContent =
