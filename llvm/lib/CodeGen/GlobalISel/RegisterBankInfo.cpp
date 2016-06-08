@@ -538,11 +538,24 @@ RegisterBankInfo::OperandsMapper::getVRegsMem(unsigned OpIdx) {
       NewVRegs.push_back(0);
   }
   SmallVectorImpl<unsigned>::iterator End =
-      NewVRegs.size() <= StartIdx + NumPartialVal + 1
-          ? NewVRegs.end()
-          : &NewVRegs[StartIdx + NumPartialVal + 1];
+      getNewVRegsEnd(StartIdx, NumPartialVal);
 
   return make_range(&NewVRegs[StartIdx], End);
+}
+
+SmallVectorImpl<unsigned>::const_iterator
+RegisterBankInfo::OperandsMapper::getNewVRegsEnd(unsigned StartIdx,
+                                                 unsigned NumVal) const {
+  return const_cast<OperandsMapper *>(this)->getNewVRegsEnd(StartIdx, NumVal);
+}
+SmallVectorImpl<unsigned>::iterator
+RegisterBankInfo::OperandsMapper::getNewVRegsEnd(unsigned StartIdx,
+                                                 unsigned NumVal) {
+  assert((NewVRegs.size() == StartIdx + NumVal ||
+          NewVRegs.size() > StartIdx + NumVal) &&
+         "NewVRegs too small to contain all the partial mapping");
+  return NewVRegs.size() <= StartIdx + NumVal ? NewVRegs.end()
+                                              : &NewVRegs[StartIdx + NumVal];
 }
 
 void RegisterBankInfo::OperandsMapper::createVRegs(unsigned OpIdx) {
@@ -588,9 +601,7 @@ RegisterBankInfo::OperandsMapper::getVRegs(unsigned OpIdx,
   unsigned PartMapSize =
       getInstrMapping().getOperandMapping(OpIdx).BreakDown.size();
   SmallVectorImpl<unsigned>::const_iterator End =
-      NewVRegs.size() <= StartIdx + PartMapSize + 1
-          ? NewVRegs.end()
-          : &NewVRegs[StartIdx + PartMapSize + 1];
+      getNewVRegsEnd(StartIdx, PartMapSize);
   iterator_range<SmallVectorImpl<unsigned>::const_iterator> Res =
       make_range(&NewVRegs[StartIdx], End);
 #ifndef NDEBUG

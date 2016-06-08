@@ -216,6 +216,14 @@ public:
     iterator_range<SmallVectorImpl<unsigned>::iterator>
     getVRegsMem(unsigned OpIdx);
 
+    /// Get the end iterator for a range starting at \p StartIdx and
+    /// spannig \p NumVal in NewVRegs.
+    /// \pre StartIdx + NumVal <= NewVRegs.size()
+    SmallVectorImpl<unsigned>::const_iterator
+    getNewVRegsEnd(unsigned StartIdx, unsigned NumVal) const;
+    SmallVectorImpl<unsigned>::iterator getNewVRegsEnd(unsigned StartIdx,
+                                                       unsigned NumVal);
+
   public:
     /// Create an OperandsMapper that will hold the information to apply \p
     /// InstrMapping to \p MI.
