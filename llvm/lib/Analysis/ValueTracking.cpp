@@ -3448,10 +3448,13 @@ bool llvm::isGuaranteedToTransferExecutionToSuccessor(const Instruction *I) {
   // atomic operations are guaranteed to terminate on most platforms
   // and most functions terminate.
 
+  // Calls can throw and thus not terminate, and invokes may not terminate and
+  // could throw to non-successor (see bug 24185 for details).
+  if (isa<CallInst>(I) || isa<InvokeInst>(I))
+    // However, llvm.dbg intrinsics are safe, since they're no-ops.
+    return isa<DbgInfoIntrinsic>(I);
+
   return !I->isAtomic() &&       // atomics may never succeed on some platforms
-         !isa<CallInst>(I) &&    // could throw and might not terminate
-         !isa<InvokeInst>(I) &&  // might not terminate and could throw to
-                                 //   non-successor (see bug 24185 for details).
          !isa<ResumeInst>(I) &&  // has no successors
          !isa<ReturnInst>(I);    // has no successors
 }
