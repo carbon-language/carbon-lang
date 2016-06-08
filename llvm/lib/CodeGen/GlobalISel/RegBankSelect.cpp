@@ -18,12 +18,21 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/BlockFrequency.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 
 #define DEBUG_TYPE "regbankselect"
 
 using namespace llvm;
+
+static cl::opt<RegBankSelect::Mode> RegBankSelectMode(
+    cl::desc("Mode of the RegBankSelect pass"), cl::Hidden, cl::Optional,
+    cl::values(clEnumValN(RegBankSelect::Mode::Fast, "regbankselect-fast",
+                          "Run the Fast mode (default mapping)"),
+               clEnumValN(RegBankSelect::Mode::Greedy, "regbankselect-greedy",
+                          "Use the Greedy mode (best local mapping)"),
+               clEnumValEnd));
 
 char RegBankSelect::ID = 0;
 INITIALIZE_PASS_BEGIN(RegBankSelect, "regbankselect",
@@ -39,6 +48,11 @@ RegBankSelect::RegBankSelect(Mode RunningMode)
     : MachineFunctionPass(ID), RBI(nullptr), MRI(nullptr), TRI(nullptr),
       MBFI(nullptr), MBPI(nullptr), OptMode(RunningMode) {
   initializeRegBankSelectPass(*PassRegistry::getPassRegistry());
+  if (RegBankSelectMode.getNumOccurrences() != 0) {
+    OptMode = RegBankSelectMode;
+    if (RegBankSelectMode != RunningMode)
+      DEBUG(dbgs() << "RegBankSelect mode overrided by command line\n");
+  }
 }
 
 void RegBankSelect::init(MachineFunction &MF) {
