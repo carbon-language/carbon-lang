@@ -115,8 +115,6 @@ void RegBankSelect::repairReg(
   // the source of the repairing.
   unsigned Src = MO.getReg();
   unsigned Dst = *NewVRegs.begin();
-  if (ValMapping.BreakDown.size() == 1)
-    MO.setReg(Dst);
 
   // If we repair a definition, swap the source and destination for
   // the repairing.
@@ -460,13 +458,10 @@ RegBankSelect::MappingCost RegBankSelect::computeMapping(
 void RegBankSelect::applyMapping(
     MachineInstr &MI, const RegisterBankInfo::InstructionMapping &InstrMapping,
     SmallVectorImpl<RegBankSelect::RepairingPlacement> &RepairPts) {
-  assert(InstrMapping.getID() == RegisterBankInfo::DefaultMappingID &&
-         "Rewriting of MI not implemented yet");
-  // First, place the repairing code.
-  bool NeedRewrite = false;
   // OpdMapper will hold all the information needed for the rewritting.
   RegisterBankInfo::OperandsMapper OpdMapper(MI, InstrMapping, *MRI);
 
+  // First, place the repairing code.
   for (RepairingPlacement &RepairPt : RepairPts) {
     assert(RepairPt.canMaterialize() &&
            RepairPt.getKind() != RepairingPlacement::Impossible &&
@@ -479,7 +474,6 @@ void RegBankSelect::applyMapping(
         InstrMapping.getOperandMapping(OpIdx);
     unsigned BreakDownSize = ValMapping.BreakDown.size();
     unsigned Reg = MO.getReg();
-    NeedRewrite = BreakDownSize != 1;
 
     switch (RepairPt.getKind()) {
     case RepairingPlacement::Reassign:
@@ -496,8 +490,7 @@ void RegBankSelect::applyMapping(
     }
   }
   // Second, rewrite the instruction.
-  (void)NeedRewrite;
-  assert(!NeedRewrite && "Not implemented yet");
+  RBI->applyMapping(OpdMapper);
 }
 
 void RegBankSelect::assignInstr(MachineInstr &MI) {
@@ -544,8 +537,12 @@ bool RegBankSelect::runOnMachineFunction(MachineFunction &MF) {
     // Set a sensible insertion point so that subsequent calls to
     // MIRBuilder.
     MIRBuilder.setMBB(*MBB);
-    for (MachineInstr &MI : *MBB)
-      assignInstr(MI);
+    for (MachineBasicBlock::iterator MII = MBB->begin(), End = MBB->end();
+         MII != End;) {
+      // MI might be invalidated by the assignment, so move the
+      // iterator before hand.
+      assignInstr(*MII++);
+    }
   }
   OptMode = SaveOptMode;
   return false;
