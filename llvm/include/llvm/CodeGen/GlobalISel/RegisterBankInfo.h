@@ -262,10 +262,19 @@ public:
     /// called.
     /// The iterator may be invalidated by a call to setVRegs or createVRegs.
     ///
+    /// When \p ForDebug is true, we will not check that the list of new virtual
+    /// registers does not contain uninitialized values.
+    ///
     /// \pre getMI().getOperand(OpIdx).isReg()
-    /// \pre All partial mappings have been set a register
+    /// \pre ForDebug || All partial mappings have been set a register
     iterator_range<SmallVectorImpl<unsigned>::const_iterator>
-    getVRegs(unsigned OpIdx) const;
+    getVRegs(unsigned OpIdx, bool ForDebug = false) const;
+
+    /// Print this operands mapper on dbgs() stream.
+    void dump() const;
+
+    /// Print this operands mapper on \p OS stream.
+    void print(raw_ostream &OS, bool ForDebug = false) const;
   };
 
 protected:
@@ -572,6 +581,12 @@ inline raw_ostream &
 operator<<(raw_ostream &OS,
            const RegisterBankInfo::InstructionMapping &InstrMapping) {
   InstrMapping.print(OS);
+  return OS;
+}
+
+inline raw_ostream &
+operator<<(raw_ostream &OS, const RegisterBankInfo::OperandsMapper &OpdMapper) {
+  OpdMapper.print(OS, /*ForDebug*/ false);
   return OS;
 }
 } // End namespace llvm.
