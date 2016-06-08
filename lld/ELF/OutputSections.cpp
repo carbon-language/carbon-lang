@@ -531,11 +531,6 @@ void GnuHashTableSection<ELFT>::writeHashTable(uint8_t *Buf) {
     Values[I - 1] |= 1;
 }
 
-static bool includeInGnuHashTable(SymbolBody *B) {
-  // Assume that includeInDynsym() is already checked.
-  return !B->isUndefined();
-}
-
 // Add symbols to this symbol hash table. Note that this function
 // destructively sort a given vector -- which is needed because
 // GNU-style hash table places some sorting requirements.
@@ -544,7 +539,7 @@ void GnuHashTableSection<ELFT>::addSymbols(
     std::vector<std::pair<SymbolBody *, size_t>> &V) {
   auto Mid = std::stable_partition(V.begin(), V.end(),
                                    [](std::pair<SymbolBody *, size_t> &P) {
-                                     return !includeInGnuHashTable(P.first);
+                                     return P.first->isUndefined();
                                    });
   if (Mid == V.end())
     return;
