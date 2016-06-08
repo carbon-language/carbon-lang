@@ -391,6 +391,11 @@ void Fuzzer::ShuffleAndMinimize() {
   for (auto &X : Corpus)
     UnitHashesAddedToCorpus.insert(Hash(X));
   PrintStats("INITED");
+  if (Corpus.empty()) {
+    Printf("ERROR: no interesting inputs were found. "
+           "Is the code instrumented for coverage? Exiting.\n");
+    exit(1);
+  }
 }
 
 bool Fuzzer::UpdateMaxCoverage() {
