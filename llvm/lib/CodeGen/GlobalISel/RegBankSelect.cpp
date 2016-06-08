@@ -106,7 +106,7 @@ bool RegBankSelect::assignmentMatch(
 void RegBankSelect::repairReg(
     MachineOperand &MO, const RegisterBankInfo::ValueMapping &ValMapping,
     RegBankSelect::RepairingPlacement &RepairPt,
-    const iterator_range<SmallVectorImpl<unsigned>::iterator> &NewVRegs) {
+    const iterator_range<SmallVectorImpl<unsigned>::const_iterator> &NewVRegs) {
   assert(ValMapping.BreakDown.size() == 1 && "Not yet implemented");
   // Assume we are repairing a use and thus, the original reg will be
   // the source of the repairing.
