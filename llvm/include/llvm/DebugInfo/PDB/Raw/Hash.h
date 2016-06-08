@@ -14,8 +14,8 @@
 
 namespace llvm {
 namespace pdb {
-uint32_t HashStringV1(StringRef Str);
-uint32_t HashStringV2(StringRef Str);
+uint32_t hashStringV1(StringRef Str);
+uint32_t hashStringV2(StringRef Str);
 }
 }
 

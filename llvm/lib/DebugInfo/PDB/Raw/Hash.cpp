@@ -17,7 +17,7 @@ using namespace llvm::support;
 
 // Corresponds to `Hasher::lhashPbCb` in PDB/include/misc.h.
 // Used for name hash table and TPI/IPI hashes.
-uint32_t pdb::HashStringV1(StringRef Str) {
+uint32_t pdb::hashStringV1(StringRef Str) {
   uint32_t Result = 0;
   uint32_t Size = Str.size();
 
@@ -53,7 +53,7 @@ uint32_t pdb::HashStringV1(StringRef Str) {
 
 // Corresponds to `HasherV2::HashULONG` in PDB/include/misc.h.
 // Used for name hash table.
-uint32_t pdb::HashStringV2(StringRef Str) {
+uint32_t pdb::hashStringV2(StringRef Str) {
   uint32_t Hash = 0xb170a1bf;
 
   ArrayRef<char> Buffer(Str.begin(), Str.end());

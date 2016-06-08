@@ -80,7 +80,7 @@ StringRef NameHashTable::getStringForID(uint32_t ID) const {
 }
 
 uint32_t NameHashTable::getIDForString(StringRef Str) const {
-  uint32_t Hash = (HashVersion == 1) ? HashStringV1(Str) : HashStringV2(Str);
+  uint32_t Hash = (HashVersion == 1) ? hashStringV1(Str) : hashStringV2(Str);
   size_t Count = IDs.size();
   uint32_t Start = Hash % Count;
   for (size_t I = 0; I < Count; ++I) {
