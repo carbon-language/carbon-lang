@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains platform-independent functions to processe relocations.
+// This file contains platform-independent functions to process relocations.
 // I'll describe the overview of this file here.
 //
 // Simple relocations are easy to handle for the linker. For example,
