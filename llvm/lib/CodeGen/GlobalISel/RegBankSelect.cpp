@@ -108,6 +108,9 @@ void RegBankSelect::repairReg(
     RegBankSelect::RepairingPlacement &RepairPt,
     const iterator_range<SmallVectorImpl<unsigned>::const_iterator> &NewVRegs) {
   assert(ValMapping.BreakDown.size() == 1 && "Not yet implemented");
+  // An empty range of new register means no repairing.
+  assert(NewVRegs.begin() != NewVRegs.end() && "We should not have to repair");
+
   // Assume we are repairing a use and thus, the original reg will be
   // the source of the repairing.
   unsigned Src = MO.getReg();
@@ -461,7 +464,9 @@ void RegBankSelect::applyMapping(
          "Rewriting of MI not implemented yet");
   // First, place the repairing code.
   bool NeedRewrite = false;
-  SmallVector<unsigned, 8> NewVRegs;
+  // OpdMapper will hold all the information needed for the rewritting.
+  RegisterBankInfo::OperandsMapper OpdMapper(MI, InstrMapping, *MRI);
+
   for (RepairingPlacement &RepairPt : RepairPts) {
     assert(RepairPt.canMaterialize() &&
            RepairPt.getKind() != RepairingPlacement::Impossible &&
@@ -483,15 +488,8 @@ void RegBankSelect::applyMapping(
       MRI->setRegBank(Reg, *ValMapping.BreakDown[0].RegBank);
       break;
     case RepairingPlacement::Insert:
-      // We need as many new virtual registers as the number of partial mapping.
-      for (const RegisterBankInfo::PartialMapping &PartMap :
-           ValMapping.BreakDown) {
-        unsigned Tmp = MRI->createGenericVirtualRegister(PartMap.Length);
-        MRI->setRegBank(Tmp, *PartMap.RegBank);
-        NewVRegs.push_back(Tmp);
-      }
-      repairReg(MO, ValMapping, RepairPt,
-                make_range(NewVRegs.end() - BreakDownSize, NewVRegs.end()));
+      OpdMapper.createVRegs(OpIdx);
+      repairReg(MO, ValMapping, RepairPt, OpdMapper.getVRegs(OpIdx));
       break;
     default:
       llvm_unreachable("Other kind should not happen");
