@@ -206,8 +206,9 @@ without using static initializers, do this manually:
   to ``__llvm_profile_write_file``.
 
 * Forward-declare ``int __llvm_profile_write_file(void)`` and call it to write
-  out a profile. Calling this function multiple times appends profile data to
-  an existing on-disk raw profile.
+  out a profile. This function returns 0 when it succeeds, and a non-zero value
+  otherwise. Calling this function multiple times appends profile data to an
+  existing on-disk raw profile.
 
 Drawbacks and limitations
 =========================
