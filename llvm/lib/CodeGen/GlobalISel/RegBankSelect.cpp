@@ -484,6 +484,7 @@ void RegBankSelect::applyMapping(
     const RegisterBankInfo::ValueMapping &ValMapping =
         InstrMapping.getOperandMapping(OpIdx);
     unsigned BreakDownSize = ValMapping.BreakDown.size();
+    (void)BreakDownSize;
     unsigned Reg = MO.getReg();
 
     switch (RepairPt.getKind()) {
