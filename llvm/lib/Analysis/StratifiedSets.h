@@ -97,13 +97,18 @@ public:
   // If we have a need to copy these at some point, it's fine to default this.
   // At the time of writing, copying StratifiedSets is always a perf bug.
   StratifiedSets(const StratifiedSets &) = delete;
-  StratifiedSets(StratifiedSets &&Other) = default;
+
+  // Can't default these due to compile errors in MSVC2013
+  StratifiedSets(StratifiedSets &&Other) { *this = std::move(Other); }
+  StratifiedSets &operator=(StratifiedSets &&Other) {
+    Values = std::move(Other.Values);
+    Links = std::move(Other.Links);
+    return *this;
+  }
 
   StratifiedSets(DenseMap<T, StratifiedInfo> Map,
                  std::vector<StratifiedLink> Links)
       : Values(std::move(Map)), Links(std::move(Links)) {}
-
-  StratifiedSets &operator=(StratifiedSets<T> &&Other) = default;
 
   Optional<StratifiedInfo> find(const T &Elem) const {
     auto Iter = Values.find(Elem);
