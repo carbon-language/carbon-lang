@@ -240,3 +240,23 @@ loop:
 leave:
   ret void
 }
+
+declare void @may_exit() nounwind
+
+define void @pr28012(i32 %n) {
+; CHECK-LABEL: Classifying expressions for: @pr28012
+entry:
+  br label %loop
+
+loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %loop ]
+  %iv.inc = add nsw i32 %iv, 7
+; CHECK:    %iv.inc = add nsw i32 %iv, 7
+; CHECK-NEXT:  -->  {7,+,7}<nuw><%loop>
+  %becond = icmp ult i32 %iv.inc, %n
+  call void @may_exit()
+  br i1 %becond, label %loop, label %leave
+
+leave:
+  ret void
+}

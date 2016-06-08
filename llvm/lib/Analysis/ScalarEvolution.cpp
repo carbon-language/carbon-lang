@@ -4909,19 +4909,19 @@ bool ScalarEvolution::isAddRecNeverPoison(const Instruction *I, const Loop *L) {
   if (!LatchControlDependentOnPoison)
     return false;
 
-  // Now check if loop is no-throw, and cache the information.  In the future,
-  // we can consider commoning this logic with LICMSafetyInfo into a separate
-  // analysis pass.
+  // Now check if loop has abonormal exits (or not), and cache the information.
 
-  auto Itr = LoopMayThrow.find(L);
-  if (Itr == LoopMayThrow.end()) {
-    bool MayThrow = false;
+  auto Itr = LoopHasAbnormalExit.find(L);
+  if (Itr == LoopHasAbnormalExit.end()) {
+    bool HasAbnormalExit = false;
     for (auto *BB : L->getBlocks()) {
-      MayThrow = any_of(*BB, [](Instruction &I) { return I.mayThrow(); });
-      if (MayThrow)
+      HasAbnormalExit = any_of(*BB, [](Instruction &I) {
+        return !isGuaranteedToTransferExecutionToSuccessor(&I);
+      });
+      if (HasAbnormalExit)
         break;
     }
-    auto InsertPair = LoopMayThrow.insert({L, MayThrow});
+    auto InsertPair = LoopHasAbnormalExit.insert({L, HasAbnormalExit});
     assert(InsertPair.second && "We just checked!");
     Itr = InsertPair.first;
   }
@@ -5490,7 +5490,7 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     forgetLoop(*I);
 
-  LoopMayThrow.erase(L);
+  LoopHasAbnormalExit.erase(L);
 }
 
 void ScalarEvolution::forgetValue(Value *V) {

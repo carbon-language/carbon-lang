@@ -782,8 +782,12 @@ namespace llvm {
         LoopDispositions;
 
     /// A cache of the predicate "does the given loop contain an instruction
-    /// that can throw?"
-    DenseMap<const Loop *, bool> LoopMayThrow;
+    /// that can abnormally exit the loop (i.e. via throwing an exception, by
+    /// terminating the thread cleanly or by infinite looping in a called
+    /// function)?"  The last one is strictly not leaving the loop, but is
+    /// identical to leaving the loop from the viewpoint of reasoning about
+    /// undefined behavior.
+    DenseMap<const Loop *, bool> LoopHasAbnormalExit;
 
     /// Compute a LoopDisposition value.
     LoopDisposition computeLoopDisposition(const SCEV *S, const Loop *L);
