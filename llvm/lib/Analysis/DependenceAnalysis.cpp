@@ -523,7 +523,7 @@ bool DependenceInfo::intersectConstraints(Constraint *X, const Constraint *Y) {
       }
       if (const SCEVConstant *CUB =
           collectConstantUpperBound(X->getAssociatedLoop(), Prod1->getType())) {
-        APInt UpperBound = CUB->getAPInt();
+        const APInt &UpperBound = CUB->getAPInt();
         DEBUG(dbgs() << "\t\tupper bound = " << UpperBound << "\n");
         if (Xq.sgt(UpperBound) || Yq.sgt(UpperBound)) {
           X->setEmpty();
@@ -1587,8 +1587,8 @@ bool DependenceInfo::exactSIVtest(const SCEV *SrcCoeff, const SCEV *DstCoeff,
 static
 bool isRemainderZero(const SCEVConstant *Dividend,
                      const SCEVConstant *Divisor) {
-  APInt ConstDividend = Dividend->getAPInt();
-  APInt ConstDivisor = Divisor->getAPInt();
+  const APInt &ConstDividend = Dividend->getAPInt();
+  const APInt &ConstDivisor = Divisor->getAPInt();
   return ConstDividend.srem(ConstDivisor) == 0;
 }
 

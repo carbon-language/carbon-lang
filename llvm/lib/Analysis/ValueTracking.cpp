@@ -1120,7 +1120,7 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
     break;
   case Instruction::URem: {
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      APInt RA = Rem->getValue();
+      const APInt &RA = Rem->getValue();
       if (RA.isPowerOf2()) {
         APInt LowBits = (RA - 1);
         computeKnownBits(I->getOperand(0), KnownZero, KnownOne, Depth + 1, Q);

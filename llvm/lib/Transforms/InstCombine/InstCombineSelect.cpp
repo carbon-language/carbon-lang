@@ -663,8 +663,8 @@ Instruction *InstCombiner::FoldSPFofSPF(Instruction *Inner,
   if (SPF1 == SPF2) {
     if (ConstantInt *CB = dyn_cast<ConstantInt>(B)) {
       if (ConstantInt *CC = dyn_cast<ConstantInt>(C)) {
-        APInt ACB = CB->getValue();
-        APInt ACC = CC->getValue();
+        const APInt &ACB = CB->getValue();
+        const APInt &ACC = CC->getValue();
 
         // MIN(MIN(A, 23), 97) -> MIN(A, 23)
         // MAX(MAX(A, 97), 23) -> MAX(A, 97)

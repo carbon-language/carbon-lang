@@ -277,7 +277,7 @@ bool NVPTXAsmPrinter::lowerOperand(const MachineOperand &MO,
     break;
   case MachineOperand::MO_FPImmediate: {
     const ConstantFP *Cnt = MO.getFPImm();
-    APFloat Val = Cnt->getValueAPF();
+    const APFloat &Val = Cnt->getValueAPF();
 
     switch (Cnt->getType()->getTypeID()) {
     default: report_fatal_error("Unsupported FP type"); break;

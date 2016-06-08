@@ -254,7 +254,7 @@ public:
   ~LLIObjectCache() override {}
 
   void notifyObjectCompiled(const Module *M, MemoryBufferRef Obj) override {
-    const std::string ModuleID = M->getModuleIdentifier();
+    const std::string &ModuleID = M->getModuleIdentifier();
     std::string CacheName;
     if (!getCacheFilename(ModuleID, CacheName))
       return;
@@ -269,7 +269,7 @@ public:
   }
 
   std::unique_ptr<MemoryBuffer> getObject(const Module* M) override {
-    const std::string ModuleID = M->getModuleIdentifier();
+    const std::string &ModuleID = M->getModuleIdentifier();
     std::string CacheName;
     if (!getCacheFilename(ModuleID, CacheName))
       return nullptr;
