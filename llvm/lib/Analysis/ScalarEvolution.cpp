@@ -4880,22 +4880,23 @@ bool ScalarEvolution::isAddRecNeverPoison(const Instruction *I, const Loop *L) {
     return false;
 
   SmallPtrSet<const Instruction *, 16> Pushed;
-  SmallVector<const Instruction *, 8> Stack;
+  SmallVector<const Instruction *, 8> PoisonStack;
 
+  // We start by assuming \c I, the post-inc add recurrence, is poison.  Only
+  // things that are known to be fully poison under that assumption go on the
+  // PoisonStack.
   Pushed.insert(I);
-  for (auto *U : I->users())
-    if (Pushed.insert(cast<Instruction>(U)).second)
-      Stack.push_back(cast<Instruction>(U));
+  PoisonStack.push_back(I);
 
   bool LatchControlDependentOnPoison = false;
-  while (!Stack.empty()) {
-    const Instruction *I = Stack.pop_back_val();
+  while (!PoisonStack.empty()) {
+    const Instruction *Poison = PoisonStack.pop_back_val();
 
-    for (auto *U : I->users()) {
-      if (propagatesFullPoison(cast<Instruction>(U))) {
-        if (Pushed.insert(cast<Instruction>(U)).second)
-          Stack.push_back(cast<Instruction>(U));
-      } else if (auto *BI = dyn_cast<BranchInst>(U)) {
+    for (auto *PoisonUser : Poison->users()) {
+      if (propagatesFullPoison(cast<Instruction>(PoisonUser))) {
+        if (Pushed.insert(cast<Instruction>(PoisonUser)).second)
+          PoisonStack.push_back(cast<Instruction>(PoisonUser));
+      } else if (auto *BI = dyn_cast<BranchInst>(PoisonUser)) {
         assert(BI->isConditional() && "Only possibility!");
         if (BI->getParent() == LatchBB) {
           LatchControlDependentOnPoison = true;
