@@ -1444,8 +1444,7 @@ VersionNeedSection<ELFT>::VersionNeedSection()
 template <class ELFT>
 void VersionNeedSection<ELFT>::addSymbol(SharedSymbol<ELFT> *SS) {
   if (!SS->Verdef) {
-    // The reserved identifier for a non-versioned global symbol.
-    SS->VersionId = 1;
+    SS->VersionId = VER_NDX_GLOBAL;
     return;
   }
   SharedFile<ELFT> *F = SS->File;
