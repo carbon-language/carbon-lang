@@ -359,7 +359,11 @@ public:
   /// \note Since this is a copy, both registers have the same size.
   virtual unsigned copyCost(const RegisterBank &A, const RegisterBank &B,
                             unsigned Size) const {
-    return 0;
+    // Optimistically assume that copies are coalesced. I.e., when
+    // they are on the same bank, they are free.
+    // Otherwise assume a non-zero cost of 1. The targets are supposed
+    // to override that properly anyway if they care.
+    return &A != &B;
   }
 
   /// Identifier used when the related instruction mapping instance
