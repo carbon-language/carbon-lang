@@ -120,22 +120,19 @@ static Constant *GetSelectFoldableConstant(Instruction *I) {
 /// have the same opcode and only one use each.  Try to simplify this.
 Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
                                           Instruction *FI) {
-  if (TI->getNumOperands() == 1) {
-    // If this is a non-volatile load or a cast from the same type,
-    // merge.
-    if (TI->isCast()) {
-      Type *FIOpndTy = FI->getOperand(0)->getType();
-      if (TI->getOperand(0)->getType() != FIOpndTy)
-        return nullptr;
-      // The select condition may be a vector. We may only change the operand
-      // type if the vector width remains the same (and matches the condition).
-      Type *CondTy = SI.getCondition()->getType();
-      if (CondTy->isVectorTy() && (!FIOpndTy->isVectorTy() ||
-          CondTy->getVectorNumElements() != FIOpndTy->getVectorNumElements()))
-        return nullptr;
-    } else {
-      return nullptr;  // unknown unary op.
-    }
+  // If this is a cast from the same type, merge.
+  if (TI->getNumOperands() == 1 && TI->isCast()) {
+    Type *FIOpndTy = FI->getOperand(0)->getType();
+    if (TI->getOperand(0)->getType() != FIOpndTy)
+      return nullptr;
+
+    // The select condition may be a vector. We may only change the operand
+    // type if the vector width remains the same (and matches the condition).
+    Type *CondTy = SI.getCondition()->getType();
+    if (CondTy->isVectorTy() &&
+        (!FIOpndTy->isVectorTy() ||
+         CondTy->getVectorNumElements() != FIOpndTy->getVectorNumElements()))
+      return nullptr;
 
     // Fold this by inserting a select from the input values.
     Value *NewSI = Builder->CreateSelect(SI.getCondition(), TI->getOperand(0),
