@@ -464,10 +464,12 @@ static thread_local MallocFreeTracer AllocTracer;
 // thread local storage is initialised leading to
 // crashes when accessing ``AllocTracer``.
 extern "C" {
+__attribute__((weak))
 void __sanitizer_malloc_hook(void *ptr, size_t size) {
   if (!LIBFUZZER_APPLE)
     AllocTracer.Mallocs++;
 }
+__attribute__((weak))
 void __sanitizer_free_hook(void *ptr) {
   if (!LIBFUZZER_APPLE)
     AllocTracer.Frees++;
