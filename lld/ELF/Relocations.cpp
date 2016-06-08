@@ -58,6 +58,8 @@ using namespace llvm::support::endian;
 namespace lld {
 namespace elf {
 
+StringRef getRelName(uint32_t Type);
+
 static bool refersToGotEntry(RelExpr Expr) {
   return Expr == R_GOT || Expr == R_GOT_OFF || Expr == R_MIPS_GOT_LOCAL ||
          Expr == R_MIPS_GOT_LOCAL_PAGE || Expr == R_GOT_PAGE_PC ||
@@ -235,10 +237,8 @@ static int32_t findMipsPairedAddend(const uint8_t *Buf, const uint8_t *BufLoc,
     return ((read32<E>(BufLoc) & 0xffff) << 16) +
            readSignedLo16<E>(Buf + RI->r_offset);
   }
-  unsigned OldType = Rel->getType(Config->Mips64EL);
-  StringRef OldName = getELFRelocationTypeName(Config->EMachine, OldType);
-  StringRef NewName = getELFRelocationTypeName(Config->EMachine, Type);
-  warning("can't find matching " + NewName + " relocation for " + OldName);
+  warning("can't find matching " + getRelName(Type) + " relocation for " +
+          getRelName(Rel->getType(Config->Mips64EL)));
   return 0;
 }
 
@@ -300,9 +300,8 @@ static bool isStaticLinkTimeConstant(RelExpr E, uint32_t Type,
   if (AbsVal && RelE) {
     if (Body.isUndefined() && !Body.isLocal() && Body.symbol()->isWeak())
       return true;
-    StringRef S = getELFRelocationTypeName(Config->EMachine, Type);
-    error("relocation " + S + " cannot refer to absolute symbol " +
-          Body.getName());
+    error("relocation " + getRelName(Type) +
+          " cannot refer to absolute symbol " + Body.getName());
     return true;
   }
 
@@ -400,9 +399,8 @@ static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
   // only memory. We can hack around it if we are producing an executable and
   // the refered symbol can be preemepted to refer to the executable.
   if (Config->Shared || (Config->Pic && !isRelExpr(Expr))) {
-    StringRef S = getELFRelocationTypeName(Config->EMachine, Type);
-    error("relocation " + S + " cannot be used when making a shared "
-                              "object; recompile with -fPIC.");
+    error("relocation " + getRelName(Type) +
+          " cannot be used when making a shared object; recompile with -fPIC.");
     return Expr;
   }
   if (Body.getVisibility() != STV_DEFAULT) {
