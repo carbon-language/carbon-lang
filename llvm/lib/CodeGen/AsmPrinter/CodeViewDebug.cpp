@@ -926,6 +926,20 @@ TypeIndex CodeViewDebug::lowerTypeMemberPointer(const DIDerivedType *Ty) {
   return TypeTable.writePointer(PR);
 }
 
+/// Given a DWARF calling convention, get the CodeView equivalent. If we don't
+/// have a translation, use the NearC convention.
+static CallingConvention dwarfCCToCodeView(unsigned DwarfCC) {
+  switch (DwarfCC) {
+  case dwarf::DW_CC_normal:             return CallingConvention::NearC;
+  case dwarf::DW_CC_BORLAND_msfastcall: return CallingConvention::NearFast;
+  case dwarf::DW_CC_BORLAND_thiscall:   return CallingConvention::ThisCall;
+  case dwarf::DW_CC_BORLAND_stdcall:    return CallingConvention::NearStdCall;
+  case dwarf::DW_CC_BORLAND_pascal:     return CallingConvention::NearPascal;
+  case dwarf::DW_CC_LLVM_vectorcall:    return CallingConvention::NearVector;
+  }
+  return CallingConvention::NearC;
+}
+
 TypeIndex CodeViewDebug::lowerTypeModifier(const DIDerivedType *Ty) {
   ModifierOptions Mods = ModifierOptions::None;
   bool IsModifier = true;
@@ -967,13 +981,12 @@ TypeIndex CodeViewDebug::lowerTypeFunction(const DISubroutineType *Ty) {
   ArgListRecord ArgListRec(TypeRecordKind::ArgList, ArgTypeIndices);
   TypeIndex ArgListIndex = TypeTable.writeArgList(ArgListRec);
 
-  // TODO: We should use DW_AT_calling_convention to determine what CC this
-  // procedure record should have.
+  CallingConvention CC = dwarfCCToCodeView(Ty->getCC());
+
   // TODO: Some functions are member functions, we should use a more appropriate
   // record for those.
-  ProcedureRecord Procedure(ReturnTypeIndex, CallingConvention::NearC,
-                            FunctionOptions::None, ArgTypeIndices.size(),
-                            ArgListIndex);
+  ProcedureRecord Procedure(ReturnTypeIndex, CC, FunctionOptions::None,
+                            ArgTypeIndices.size(), ArgListIndex);
   return TypeTable.writeProcedure(Procedure);
 }
 
