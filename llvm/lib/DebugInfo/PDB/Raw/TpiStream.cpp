@@ -62,15 +62,14 @@ struct TpiStream::HeaderInfo {
   EmbeddedBuf HashAdjBuffer;
 };
 
-TpiStream::TpiStream(const PDBFile &File, uint32_t StreamIdx)
-    : Pdb(File),
-      Stream(llvm::make_unique<IndexedStreamData>(StreamIdx, File), File),
-      HashFunction(nullptr) {}
+TpiStream::TpiStream(const PDBFile &File,
+                     std::unique_ptr<MappedBlockStream> Stream)
+    : Pdb(File), Stream(std::move(Stream)), HashFunction(nullptr) {}
 
 TpiStream::~TpiStream() {}
 
 Error TpiStream::reload() {
-  codeview::StreamReader Reader(Stream);
+  codeview::StreamReader Reader(*Stream);
 
   if (Reader.bytesRemaining() < sizeof(HeaderInfo))
     return make_error<RawError>(raw_error_code::corrupt_file,
@@ -108,9 +107,11 @@ Error TpiStream::reload() {
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Invalid TPI hash stream index.");
 
-  HashStream.reset(new MappedBlockStream(
-      llvm::make_unique<IndexedStreamData>(Header->HashStreamIndex, Pdb), Pdb));
-  codeview::StreamReader HSR(*HashStream);
+  auto HS =
+      MappedBlockStream::createIndexedStream(Header->HashStreamIndex, Pdb);
+  if (!HS)
+    return HS.takeError();
+  codeview::StreamReader HSR(**HS);
 
   uint32_t NumHashValues = Header->HashValueBuffer.Length / sizeof(ulittle32_t);
   if (NumHashValues != NumTypeRecords())
@@ -133,6 +134,7 @@ Error TpiStream::reload() {
   if (auto EC = HSR.readArray(HashAdjustments, NumHashAdjustments))
     return EC;
 
+  HashStream = std::move(*HS);
   return Error::success();
 }
 
