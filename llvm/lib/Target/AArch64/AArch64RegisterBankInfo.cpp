@@ -71,7 +71,8 @@ unsigned AArch64RegisterBankInfo::copyCost(const RegisterBank &A,
   // Will introduce other hooks for different size:
   // * extract cost.
   // * build_sequence cost.
-  return 0;
+  // TODO: Add more accurate cost for FPR to/from GPR.
+  return RegisterBankInfo::copyCost(A, B, Size);
 }
 
 const RegisterBank &AArch64RegisterBankInfo::getRegBankFromRegClass(
