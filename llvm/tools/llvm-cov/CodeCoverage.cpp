@@ -72,7 +72,7 @@ public:
 
   int run(Command Cmd, int argc, const char **argv);
 
-  typedef std::function<int(int, const char **)> CommandLineParserType;
+  typedef llvm::function_ref<int(int, const char **)> CommandLineParserType;
 
   int show(int argc, const char **argv,
            CommandLineParserType commandLineParser);

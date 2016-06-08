@@ -114,7 +114,7 @@ static void DumpInput(StringRef Filename) {
 /// If the input path is a .dSYM bundle (as created by the dsymutil tool),
 /// replace it with individual entries for each of the object files inside the
 /// bundle otherwise return the input path.
-static std::vector<std::string> expandBundle(std::string InputPath) {
+static std::vector<std::string> expandBundle(const std::string &InputPath) {
   std::vector<std::string> BundlePaths;
   SmallString<256> BundlePath(InputPath);
   // Manually open up the bundle to avoid introducing additional dependencies.

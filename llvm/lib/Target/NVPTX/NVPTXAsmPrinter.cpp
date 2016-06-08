@@ -2341,7 +2341,7 @@ void NVPTXAsmPrinter::emitSrcInText(StringRef filename, unsigned line) {
   this->OutStreamer->EmitRawText(temp.str());
 }
 
-LineReader *NVPTXAsmPrinter::getReader(std::string filename) {
+LineReader *NVPTXAsmPrinter::getReader(const std::string &filename) {
   if (!reader) {
     reader = new LineReader(filename);
   }
