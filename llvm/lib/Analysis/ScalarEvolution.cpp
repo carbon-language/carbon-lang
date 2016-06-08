@@ -4889,7 +4889,7 @@ bool ScalarEvolution::isAddRecNeverPoison(const Instruction *I, const Loop *L) {
   PoisonStack.push_back(I);
 
   bool LatchControlDependentOnPoison = false;
-  while (!PoisonStack.empty()) {
+  while (!PoisonStack.empty() && !LatchControlDependentOnPoison) {
     const Instruction *Poison = PoisonStack.pop_back_val();
 
     for (auto *PoisonUser : Poison->users()) {
