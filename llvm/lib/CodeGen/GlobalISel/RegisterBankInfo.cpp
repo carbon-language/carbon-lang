@@ -480,3 +480,93 @@ void RegisterBankInfo::InstructionMapping::print(raw_ostream &OS) const {
     OS << "{ Idx: " << OpIdx << " Map: " << ValMapping << '}';
   }
 }
+
+const int RegisterBankInfo::OperandsMapper::DontKnowIdx = -1;
+
+RegisterBankInfo::OperandsMapper::OperandsMapper(
+    MachineInstr &MI, const InstructionMapping &InstrMapping,
+    MachineRegisterInfo &MRI)
+    : MRI(MRI), MI(MI), InstrMapping(InstrMapping) {
+  unsigned NumOpds = MI.getNumOperands();
+  OpToNewVRegIdx.reset(new int[NumOpds]);
+  std::fill(&OpToNewVRegIdx[0], &OpToNewVRegIdx[NumOpds],
+            OperandsMapper::DontKnowIdx);
+  assert(InstrMapping.verify(MI) && "Invalid mapping for MI");
+}
+
+iterator_range<SmallVectorImpl<unsigned>::iterator>
+RegisterBankInfo::OperandsMapper::getVRegsMem(unsigned OpIdx) {
+  assert(OpIdx < getMI().getNumOperands() && "Out-of-bound access");
+  unsigned NumPartialVal =
+      getInstrMapping().getOperandMapping(OpIdx).BreakDown.size();
+  int StartIdx = OpToNewVRegIdx[OpIdx];
+
+  if (StartIdx == OperandsMapper::DontKnowIdx) {
+    // This is the first time we try to access OpIdx.
+    // Create the cells that will hold all the partial values at the
+    // end of the list of NewVReg.
+    StartIdx = NewVRegs.size();
+    OpToNewVRegIdx[OpIdx] = StartIdx;
+    for (unsigned i = 0; i < NumPartialVal; ++i)
+      NewVRegs.push_back(0);
+  }
+  SmallVectorImpl<unsigned>::iterator End =
+      NewVRegs.size() <= StartIdx + NumPartialVal + 1
+          ? NewVRegs.end()
+          : &NewVRegs[StartIdx + NumPartialVal + 1];
+
+  return make_range(&NewVRegs[StartIdx], End);
+}
+
+void RegisterBankInfo::OperandsMapper::createVRegs(unsigned OpIdx) {
+  assert(OpIdx < getMI().getNumOperands() && "Out-of-bound access");
+  iterator_range<SmallVectorImpl<unsigned>::iterator> NewVRegsForOpIdx =
+      getVRegsMem(OpIdx);
+  const SmallVectorImpl<PartialMapping> &PartMapList =
+      getInstrMapping().getOperandMapping(OpIdx).BreakDown;
+  SmallVectorImpl<PartialMapping>::const_iterator PartMap = PartMapList.begin();
+  for (unsigned &NewVReg : NewVRegsForOpIdx) {
+    assert(PartMap != PartMapList.end() && "Out-of-bound access");
+    assert(NewVReg == 0 && "Register has already been created");
+    NewVReg = MRI.createGenericVirtualRegister(PartMap->Length);
+    MRI.setRegBank(NewVReg, *PartMap->RegBank);
+    ++PartMap;
+  }
+}
+
+void RegisterBankInfo::OperandsMapper::setVRegs(unsigned OpIdx,
+                                                unsigned PartialMapIdx,
+                                                unsigned NewVReg) {
+  assert(OpIdx < getMI().getNumOperands() && "Out-of-bound access");
+  assert(getInstrMapping().getOperandMapping(OpIdx).BreakDown.size() >
+             PartialMapIdx &&
+         "Out-of-bound access for partial mapping");
+  // Make sure the memory is initialized for that operand.
+  (void)getVRegsMem(OpIdx);
+  assert(NewVRegs[OpToNewVRegIdx[OpIdx] + PartialMapIdx] == 0 &&
+         "This value is already set");
+  NewVRegs[OpToNewVRegIdx[OpIdx] + PartialMapIdx] = NewVReg;
+}
+
+iterator_range<SmallVectorImpl<unsigned>::const_iterator>
+RegisterBankInfo::OperandsMapper::getVRegs(unsigned OpIdx) const {
+  assert(OpIdx < getMI().getNumOperands() && "Out-of-bound access");
+  int StartIdx = OpToNewVRegIdx[OpIdx];
+
+  if (StartIdx == OperandsMapper::DontKnowIdx)
+    return make_range(NewVRegs.end(), NewVRegs.end());
+
+  unsigned PartMapSize =
+      getInstrMapping().getOperandMapping(OpIdx).BreakDown.size();
+  SmallVectorImpl<unsigned>::const_iterator End =
+      NewVRegs.size() <= StartIdx + PartMapSize + 1
+          ? NewVRegs.end()
+          : &NewVRegs[StartIdx + PartMapSize + 1];
+  iterator_range<SmallVectorImpl<unsigned>::const_iterator> Res =
+      make_range(&NewVRegs[StartIdx], End);
+#ifndef NDEBUG
+  for (unsigned VReg : Res)
+    assert(VReg && "Some registers are uninitialized");
+#endif
+  return Res;
+}
