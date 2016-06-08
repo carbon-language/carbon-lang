@@ -325,6 +325,9 @@ Expected<NameHashTable &> PDBFile::getStringTable() {
 
     if (NameStreamIndex == 0)
       return make_error<RawError>(raw_error_code::no_stream);
+    if (NameStreamIndex >= getNumStreams())
+      return make_error<RawError>(raw_error_code::no_stream);
+
     auto SD = llvm::make_unique<IndexedStreamData>(NameStreamIndex, *this);
     auto S = llvm::make_unique<MappedBlockStream>(std::move(SD), *this);
     codeview::StreamReader Reader(*S);
