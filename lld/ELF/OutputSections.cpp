@@ -1430,8 +1430,7 @@ template <class ELFT> void VersionTableSection<ELFT>::writeTo(uint8_t *Buf) {
     if (auto *SS = dyn_cast<SharedSymbol<ELFT>>(P.first))
       OutVersym->vs_index = SS->VersionId;
     else
-      // The reserved identifier for a non-versioned global symbol.
-      OutVersym->vs_index = 1;
+      OutVersym->vs_index = VER_NDX_GLOBAL;
     ++OutVersym;
   }
 }
