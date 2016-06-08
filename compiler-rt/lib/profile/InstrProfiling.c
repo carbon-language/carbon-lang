@@ -18,8 +18,7 @@
 
 COMPILER_RT_VISIBILITY char *(*GetEnvHook)(const char *) = 0;
 
-COMPILER_RT_VISIBILITY COMPILER_RT_WEAK uint64_t __llvm_profile_raw_version =
-    INSTR_PROF_RAW_VERSION;
+COMPILER_RT_WEAK uint64_t __llvm_profile_raw_version = INSTR_PROF_RAW_VERSION;
 
 COMPILER_RT_VISIBILITY uint64_t __llvm_profile_get_magic(void) {
   return sizeof(void *) == sizeof(uint64_t) ? (INSTR_PROF_RAW_MAGIC_64)
