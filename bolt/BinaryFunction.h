@@ -117,6 +117,16 @@ private:
   /// base address for position independent binaries.
   uint64_t Address;
 
+  /// Address of an identical function that can replace this one. By default
+  /// this is the same as the address of this functions, and the icf pass can
+  /// potentially set it to some other function's address.
+  ///
+  /// In case multiple functions are identical to each other, one of the
+  /// functions (the representative) will point to its own address, while the
+  /// rest of the functions will point to the representative through one or
+  /// more steps.
+  uint64_t IdenticalFunctionAddress;
+
   /// Original size of the function.
   uint64_t Size;
 
@@ -195,6 +205,32 @@ private:
     CurrentState = State;
     return *this;
   }
+
+  /// Helper function that compares an instruction of this function to the
+  /// given instruction of the given function. The functions should have
+  /// identical CFG.
+  bool isInstrEquivalentWith(
+      const MCInst &Inst, const BinaryBasicBlock &BB, const MCInst &InstOther,
+      const BinaryBasicBlock &BBOther, const BinaryFunction &BF) const;
+
+  /// Helper function that compares the callees of two call instructions.
+  /// Callees are considered equivalent if both refer to the same function
+  /// or if both calls are recursive. Instructions should have same opcodes
+  /// and same number of operands. Returns true and the callee operand index
+  /// when callees are quivalent, and false, 0 otherwise.
+  std::pair<bool, unsigned> isCalleeEquivalentWith(
+      const MCInst &Inst, const BinaryBasicBlock &BB, const MCInst &InstOther,
+      const BinaryBasicBlock &BBOther, const BinaryFunction &BF) const;
+
+  /// Helper function that compares the targets two jump or invoke instructions.
+  /// A target of an invoke we consider its landing pad basic block. The
+  /// corresponding functions should have identical CFG. Instructions should
+  /// have same opcodes and same number of operands. Returns true and the target
+  /// operand index when targets are equivalent,  and false, 0 otherwise.
+  std::pair<bool, unsigned> isTargetEquivalentWith(
+      const MCInst &Inst, const BinaryBasicBlock &BB, const MCInst &InstOther,
+      const BinaryBasicBlock &BBOther, const BinaryFunction &BF,
+      bool AreInvokes) const;
 
   /// Return basic block that originally was laid out immediately following
   /// the given /p BB basic block.
@@ -381,8 +417,8 @@ public:
   BinaryFunction(const std::string &Name, SymbolRef Symbol, SectionRef Section,
                  uint64_t Address, uint64_t Size, BinaryContext &BC,
                  bool IsSimple = true) :
-      Names({Name}), Symbol(Symbol), Section(Section),
-      Address(Address), Size(Size), BC(BC), IsSimple(IsSimple),
+      Names({Name}), Symbol(Symbol), Section(Section), Address(Address),
+      IdenticalFunctionAddress(Address), Size(Size), BC(BC), IsSimple(IsSimple),
       CodeSectionName(".text." + Name), FunctionNumber(++Count)
   {}
 
@@ -458,6 +494,10 @@ public:
   /// Return a vector of all possible names for the function.
   const std::vector<std::string> &getNames() const {
     return Names;
+  }
+
+  State getCurrentState() const {
+    return CurrentState;
   }
 
   /// Return containing file section.
@@ -778,6 +818,17 @@ public:
     return LSDAAddress;
   }
 
+  /// Return the address of an identical function. If none is found this will
+  /// return this function's address.
+  uint64_t getIdenticalFunctionAddress() const {
+    return IdenticalFunctionAddress;
+  }
+
+  /// Set the address of an identical function.
+  void setIdenticalFunctionAddress(uint64_t Address) {
+    IdenticalFunctionAddress = Address;
+  }
+
   /// Return symbol pointing to function's LSDA.
   MCSymbol *getLSDASymbol() {
     if (LSDASymbol)
@@ -863,6 +914,18 @@ public:
 
   /// Emit exception handling ranges for the function.
   void emitLSDA(MCStreamer *Streamer);
+
+  /// Merge profile data of this function into those of the given
+  /// function. The functions should have been proven identical with
+  /// isIdenticalWith.
+  void mergeProfileDataInto(BinaryFunction &BF) const;
+
+  /// Returns true if this function has identical code and
+  /// CFG with the given function.
+  bool isIdenticalWith(const BinaryFunction &BF) const;
+
+  /// Returns a hash value for the function. To be used for ICF.
+  std::size_t hash() const;
 
   /// Sets the associated .debug_info entry.
   void addSubprogramDIE(DWARFCompileUnit *Unit,

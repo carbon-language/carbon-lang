@@ -29,6 +29,24 @@ bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS) {
   return LHS.Offset < RHS.Offset;
 }
 
+BinaryBasicBlock *BinaryBasicBlock::getSuccessor(const MCSymbol *Label) const {
+  for (BinaryBasicBlock *BB : successors()) {
+    if (BB->getLabel() == Label)
+      return BB;
+  }
+
+  return nullptr;
+}
+
+BinaryBasicBlock *BinaryBasicBlock::getLandingPad(const MCSymbol *Label) const {
+  for (BinaryBasicBlock *BB : landing_pads()) {
+    if (BB->getLabel() == Label)
+      return BB;
+  }
+
+  return nullptr;
+}
+
 void BinaryBasicBlock::addSuccessor(BinaryBasicBlock *Succ,
                                     uint64_t Count,
                                     uint64_t MispredictedCount) {

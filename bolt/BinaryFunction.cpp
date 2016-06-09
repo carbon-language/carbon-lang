@@ -29,6 +29,7 @@
 #include <limits>
 #include <queue>
 #include <string>
+#include <functional>
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
@@ -178,6 +179,8 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     OS << "\n  Exec Count  : " << ExecutionCount;
     OS << "\n  Profile Acc : " << format("%.1f%%", ProfileMatchRatio * 100.0f);
   }
+  if (IdenticalFunctionAddress != Address)
+    OS << "\n  Id Fun Addr : 0x" << Twine::utohexstr(IdenticalFunctionAddress);
 
   OS << "\n}\n";
 
@@ -1536,6 +1539,376 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
       ++II;
     }
   }
+}
+
+void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {
+  if (!hasValidProfile() || !BF.hasValidProfile())
+    return;
+
+  // Update BF's execution count.
+  uint64_t MyExecutionCount = getExecutionCount();
+  if (MyExecutionCount != BinaryFunction::COUNT_NO_PROFILE) {
+    uint64_t OldExecCount = BF.getExecutionCount();
+    uint64_t NewExecCount =
+      OldExecCount == BinaryFunction::COUNT_NO_PROFILE ?
+        MyExecutionCount :
+        MyExecutionCount + OldExecCount;
+    BF.setExecutionCount(NewExecCount);
+  }
+
+  // Update BF's basic block and edge counts.
+  auto BBMergeI = BF.begin();
+  for (BinaryBasicBlock *BB : BasicBlocks) {
+    BinaryBasicBlock *BBMerge = &*BBMergeI;
+    assert(getIndex(BB) == BF.getIndex(BBMerge));
+
+    // Update BF's basic block count.
+    uint64_t MyBBExecutionCount = BB->getExecutionCount();
+    if (MyBBExecutionCount != BinaryBasicBlock::COUNT_NO_PROFILE) {
+      uint64_t OldExecCount = BBMerge->getExecutionCount();
+      uint64_t NewExecCount =
+        OldExecCount == BinaryBasicBlock::COUNT_NO_PROFILE ?
+          MyBBExecutionCount :
+          MyBBExecutionCount + OldExecCount;
+      BBMerge->ExecutionCount = NewExecCount;
+    }
+
+    // Update BF's edge count for successors of this basic block.
+    auto BBMergeSI = BBMerge->succ_begin();
+    auto BII = BB->BranchInfo.begin();
+    auto BIMergeI = BBMerge->BranchInfo.begin();
+    for (BinaryBasicBlock *BBSucc : BB->successors()) {
+      BinaryBasicBlock *BBMergeSucc = *BBMergeSI;
+      assert(getIndex(BBSucc) == BF.getIndex(BBMergeSucc));
+
+      if (BII->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+        uint64_t OldBranchCount = BIMergeI->Count;
+        uint64_t NewBranchCount =
+          OldBranchCount == BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE ?
+            BII->Count :
+            BII->Count + OldBranchCount;
+        BIMergeI->Count = NewBranchCount;
+      }
+
+      if (BII->MispredictedCount != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+        uint64_t OldMispredictedCount = BIMergeI->MispredictedCount;
+        uint64_t NewMispredictedCount =
+          OldMispredictedCount == BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE ?
+            BII->MispredictedCount :
+            BII->MispredictedCount + OldMispredictedCount;
+        BIMergeI->MispredictedCount = NewMispredictedCount;
+      }
+
+      ++BBMergeSI;
+      ++BII;
+      ++BIMergeI;
+    }
+    assert(BBMergeSI == BBMerge->succ_end());
+
+    ++BBMergeI;
+  }
+  assert(BBMergeI == BF.end());
+}
+
+std::pair<bool, unsigned> BinaryFunction::isCalleeEquivalentWith(
+    const MCInst &Inst, const BinaryBasicBlock &BB, const MCInst &InstOther,
+    const BinaryBasicBlock &BBOther, const BinaryFunction &BF) const {
+  // The callee operand in a direct call is the first operand. This
+  // operand should be a symbol corresponding to the callee function.
+  constexpr unsigned CalleeOpIndex = 0;
+
+  // Helper function.
+  auto getGlobalAddress = [this] (const MCSymbol &Symbol) -> uint64_t {
+    auto AI = BC.GlobalSymbols.find(Symbol.getName());
+    assert(AI != BC.GlobalSymbols.end());
+    return AI->second;
+  };
+
+  const MCOperand &CalleeOp = Inst.getOperand(CalleeOpIndex);
+  const MCOperand &CalleeOpOther = InstOther.getOperand(CalleeOpIndex);
+  if (!CalleeOp.isExpr() || !CalleeOpOther.isExpr()) {
+    // At least one of these is actually an indirect call.
+    return std::make_pair(false, 0);
+  }
+
+  const MCSymbol &CalleeSymbol = CalleeOp.getExpr()->getSymbol();
+  uint64_t CalleeAddress = getGlobalAddress(CalleeSymbol);
+
+  const MCSymbol &CalleeSymbolOther = CalleeOpOther.getExpr()->getSymbol();
+  uint64_t CalleeAddressOther = getGlobalAddress(CalleeSymbolOther);
+
+  bool BothRecursiveCalls =
+    CalleeAddress == getAddress() &&
+    CalleeAddressOther == BF.getAddress();
+
+  bool SameCallee = CalleeAddress == CalleeAddressOther;
+
+  return std::make_pair(BothRecursiveCalls || SameCallee, CalleeOpIndex);
+}
+
+std::pair<bool, unsigned> BinaryFunction::isTargetEquivalentWith(
+    const MCInst &Inst, const BinaryBasicBlock &BB, const MCInst &InstOther,
+    const BinaryBasicBlock &BBOther, const BinaryFunction &BF,
+    bool AreInvokes) const {
+  // The target operand in a (non-indirect) jump instruction is the
+  // first operand.
+  unsigned TargetOpIndex = 0;
+  if (AreInvokes) {
+    // The landing pad operand in an invoke is either the second or the
+    // sixth operand, depending on the number of operands of the invoke.
+    TargetOpIndex = 1;
+    if (Inst.getNumOperands() == 7 || Inst.getNumOperands() == 8)
+      TargetOpIndex = 5;
+  }
+
+  const MCOperand &TargetOp = Inst.getOperand(TargetOpIndex);
+  const MCOperand &TargetOpOther = InstOther.getOperand(TargetOpIndex);
+  if (!TargetOp.isExpr() || !TargetOpOther.isExpr()) {
+    assert(AreInvokes);
+    // An invoke without a landing pad operand has no catch handler. As long
+    // as both invokes have no catch target, we can consider they have the
+    // same catch target.
+    return std::make_pair(!TargetOp.isExpr() && !TargetOpOther.isExpr(),
+                          TargetOpIndex);
+  }
+
+  const MCSymbol &TargetSymbol = TargetOp.getExpr()->getSymbol();
+  BinaryBasicBlock *TargetBB =
+    AreInvokes ?
+      BB.getLandingPad(&TargetSymbol) :
+      BB.getSuccessor(&TargetSymbol);
+
+  const MCSymbol &TargetSymbolOther = TargetOpOther.getExpr()->getSymbol();
+  BinaryBasicBlock *TargetBBOther =
+    AreInvokes ?
+      BBOther.getLandingPad(&TargetSymbolOther) :
+      BBOther.getSuccessor(&TargetSymbolOther);
+
+  if (TargetBB == nullptr || TargetBBOther == nullptr) {
+    assert(!AreInvokes);
+    // This is a tail call implemented with a jump that was not
+    // converted to a call (e.g. conditional jump). Since the
+    // instructions were not identical, the functions canot be
+    // proven identical either.
+    return std::make_pair(false, 0);
+  }
+
+  return std::make_pair(getIndex(TargetBB) == BF.getIndex(TargetBBOther),
+                        TargetOpIndex);
+}
+
+bool BinaryFunction::isInstrEquivalentWith(
+    const MCInst &Inst, const BinaryBasicBlock &BB, const MCInst &InstOther,
+    const BinaryBasicBlock &BBOther, const BinaryFunction &BF) const {
+  // First check their opcodes.
+  if (Inst.getOpcode() != InstOther.getOpcode()) {
+    return false;
+  }
+
+  // Then check if they have the same number of operands.
+  unsigned NumOperands = Inst.getNumOperands();
+  unsigned NumOperandsOther = InstOther.getNumOperands();
+  if (NumOperands != NumOperandsOther) {
+    return false;
+  }
+
+  // We are interested in 3 special cases:
+  //
+  // a) both instructions are recursive calls.
+  // b) both instructions are local jumps to basic blocks with same indices.
+  // c) both instructions are invokes with landing pad blocks with same indices.
+  //
+  // In any of these cases the instructions will differ in some operands, but
+  // given identical CFG of the functions, they can still be considered
+  // equivalent.
+  bool BothCalls =
+    BC.MIA->isCall(Inst) &&
+    BC.MIA->isCall(InstOther);
+  bool BothInvokes =
+    BC.MIA->isInvoke(Inst) &&
+    BC.MIA->isInvoke(InstOther);
+  bool BothBranches =
+    BC.MIA->isBranch(Inst) &&
+    !BC.MIA->isIndirectBranch(Inst) &&
+    BC.MIA->isBranch(InstOther) &&
+    !BC.MIA->isIndirectBranch(InstOther);
+
+  if (!BothCalls && !BothInvokes && !BothBranches) {
+    return Inst.equals(InstOther);
+  }
+
+  // We figure out if both instructions are recursive calls (case a) or else
+  // if they are calls to the same function.
+  bool EquivCallees = false;
+  unsigned CalleeOpIndex = 0;
+  if (BothCalls) {
+    std::tie(EquivCallees, CalleeOpIndex) =
+      isCalleeEquivalentWith(Inst, BB, InstOther, BBOther, BF);
+  }
+
+  // We figure out if both instructions are jumps (case b) or invokes (case c)
+  // with equivalent jump targets or landing pads respectively.
+  assert(!(BothInvokes && BothBranches));
+  bool SameTarget = false;
+  unsigned TargetOpIndex = 0;
+  if (BothInvokes || BothBranches) {
+    std::tie(SameTarget, TargetOpIndex) =
+      isTargetEquivalentWith(Inst, BB, InstOther, BBOther, BF, BothInvokes);
+  }
+
+  // Compare all operands.
+  for (unsigned i = 0; i < NumOperands; ++i) {
+    if (i == CalleeOpIndex && BothCalls && EquivCallees)
+      continue;
+
+    if (i == TargetOpIndex && (BothInvokes || BothBranches) && SameTarget)
+      continue;
+
+    if (!Inst.getOperand(i).equals(InstOther.getOperand(i)))
+      return false;
+  }
+
+  // The instructions are equal although (some of) their operands
+  // may differ.
+  return true;
+}
+
+bool BinaryFunction::isIdenticalWith(const BinaryFunction &BF) const {
+
+  assert(CurrentState == State::CFG && BF.CurrentState == State::CFG);
+
+  // Compare the two functions, one basic block at a time.
+  // Currently we require two identical basic blocks to have identical
+  // instruction sequences and the same index in their corresponding
+  // functions. The latter is important for CFG equality.
+
+  // We do not consider functions with just different pseudo instruction
+  // sequences non-identical by default. However we print a wanring
+  // in case two instructions that are identical have different pseudo
+  // instruction sequences.
+  bool PseudosDiffer = false;
+
+  if (size() != BF.size())
+    return false;
+
+  auto BBI = BF.begin();
+  for (const BinaryBasicBlock *BB : BasicBlocks) {
+    const BinaryBasicBlock *BBOther = &*BBI;
+    if (getIndex(BB) != BF.getIndex(BBOther))
+      return false;
+
+    // Compare successor basic blocks.
+    if (BB->succ_size() != BBOther->succ_size())
+      return false;
+
+    auto SuccBBI = BBOther->succ_begin();
+    for (const BinaryBasicBlock *SuccBB : BB->successors()) {
+      const BinaryBasicBlock *SuccBBOther = *SuccBBI;
+      if (getIndex(SuccBB) != BF.getIndex(SuccBBOther))
+        return false;
+      ++SuccBBI;
+    }
+
+    // Compare landing pads.
+    if (BB->lp_size() != BBOther->lp_size())
+      return false;
+
+    auto LPI = BBOther->lp_begin();
+    for (const BinaryBasicBlock *LP : BB->landing_pads()) {
+      const BinaryBasicBlock *LPOther = *LPI;
+      if (getIndex(LP) != BF.getIndex(LPOther))
+        return false;
+      ++LPI;
+    }
+
+    // Compare instructions.
+    auto I = BB->begin(), E = BB->end();
+    auto OtherI = BBOther->begin(), OtherE = BBOther->end();
+    while (I != E && OtherI != OtherE) {
+      const MCInst &Inst = *I;
+      const MCInst &InstOther = *OtherI;
+
+      bool IsInstPseudo = BC.MII->get(Inst.getOpcode()).isPseudo();
+      bool IsInstOtherPseudo = BC.MII->get(InstOther.getOpcode()).isPseudo();
+
+      if (IsInstPseudo == IsInstOtherPseudo) {
+        // Either both are pseudos or none is.
+        bool areEqual =
+          isInstrEquivalentWith(Inst, *BB, InstOther, *BBOther, BF);
+
+        if (!areEqual && IsInstPseudo) {
+          // Different pseudo instructions.
+          PseudosDiffer = true;
+        }
+        else if (!areEqual) {
+          // Different non-pseudo instructions.
+          return false;
+        }
+
+        ++I; ++OtherI;
+      }
+      else {
+        // One instruction is a pseudo while the other is not.
+        PseudosDiffer = true;
+        IsInstPseudo ? ++I : ++OtherI;
+      }
+    }
+
+    // Check for trailing instructions or pseudos in one of the basic blocks.
+    auto TrailI = I == E ? OtherI : I;
+    auto TrailE = I == E ? OtherE : E;
+    while (TrailI != TrailE) {
+      const MCInst &InstTrail = *TrailI;
+      if (!BC.MII->get(InstTrail.getOpcode()).isPseudo()) {
+        // One of the functions has more instructions in this basic block
+        // than the other, hence not identical.
+        return false;
+      }
+
+      // There are trailing pseudos only in one of the basic blocks.
+      PseudosDiffer = true;
+      ++TrailI;
+    }
+
+    ++BBI;
+  }
+
+  if (PseudosDiffer) {
+    errs() << "BOLT-WARNING: functions " << getName() << " and ";
+    errs() << BF.getName() << " are identical, but have different";
+    errs() << " pseudo instruction sequences.\n";
+  }
+
+  return true;
+}
+
+std::size_t BinaryFunction::hash() const {
+  assert(CurrentState == State::CFG);
+
+  // The hash is computed by creating a string of all the opcodes
+  // in the function and hashing that string with std::hash.
+  std::string Opcodes;
+  for (const BinaryBasicBlock *BB : BasicBlocks) {
+    for (const MCInst &Inst : *BB) {
+      unsigned Opcode = Inst.getOpcode();
+
+      if (BC.MII->get(Opcode).isPseudo())
+        continue;
+
+      if (Opcode == 0) {
+        Opcodes.push_back(0);
+        continue;
+      }
+
+      while (Opcode) {
+        uint8_t LSB = Opcode & 0xff;
+        Opcodes.push_back(LSB);
+        Opcode = Opcode >> 8;
+      }
+    }
+  }
+
+  return std::hash<std::string>{}(Opcodes);
 }
 
 BinaryFunction::~BinaryFunction() {

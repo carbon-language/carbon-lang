@@ -11,6 +11,7 @@
 
 #include "BinaryPasses.h"
 #include "llvm/Support/Options.h"
+#include <unordered_map>
 
 #define DEBUG_TYPE "bolt"
 
@@ -23,6 +24,7 @@ extern llvm::cl::opt<bool> PrintEHRanges;
 extern llvm::cl::opt<bool> PrintUCE;
 extern llvm::cl::opt<bool> PrintPeepholes;
 extern llvm::cl::opt<bool> PrintSimplifyROLoads;
+extern llvm::cl::opt<bool> PrintICF;
 extern llvm::cl::opt<llvm::bolt::BinaryFunction::SplittingType> SplitFunctions;
 extern bool shouldProcess(const llvm::bolt::BinaryFunction &Function);
 
@@ -680,6 +682,232 @@ void SimplifyRODataLoads::runOnFunctions(
   outs() << "BOLT: dynamic loads simplified: " << NumDynamicLoadsSimplified;
   outs() << "\n";
   outs() << "BOLT: dynamic loads found: " << NumDynamicLoadsFound << "\n";
+}
+
+void IdenticalCodeFolding::discoverCallers(
+  BinaryContext &BC, std::map<uint64_t, BinaryFunction> &BFs) {
+  for (auto &I : BFs) {
+    BinaryFunction &Caller = I.second;
+
+    if (!Caller.isSimple())
+      continue;
+
+    for (BinaryBasicBlock &BB : Caller) {
+      unsigned BlockIndex = Caller.getIndex(&BB);
+      unsigned InstrIndex = 0;
+
+      for (MCInst &Inst : BB) {
+        if (!BC.MIA->isCall(Inst)) {
+          ++InstrIndex;
+          continue;
+        }
+
+        const MCOperand &TargetOp = Inst.getOperand(0);
+        if (!TargetOp.isExpr()) {
+          // This is an inderect call, we cannot record
+          // a target.
+          ++InstrIndex;
+          continue;
+        }
+
+        // Find the target function for this call.
+        const MCExpr *TargetExpr = TargetOp.getExpr();
+        assert(TargetExpr->getKind() == MCExpr::SymbolRef);
+        const MCSymbol &TargetSymbol =
+          dyn_cast<MCSymbolRefExpr>(TargetExpr)->getSymbol();
+        auto AI = BC.GlobalSymbols.find(TargetSymbol.getName());
+        assert(AI != BC.GlobalSymbols.end());
+        uint64_t TargetAddress = AI->second;
+        auto FI = BFs.find(TargetAddress);
+        if (FI == BFs.end()) {
+          // Call to a function without a BinaryFunction object.
+          ++InstrIndex;
+          continue;
+        }
+        BinaryFunction *Callee = &FI->second;
+
+        // Insert a tuple in the Callers map.
+        Callers[Callee].emplace_back(
+          CallSite(&Caller, BlockIndex, InstrIndex));
+
+        ++InstrIndex;
+      }
+    }
+  }
+}
+
+void IdenticalCodeFolding::foldFunction(
+  BinaryContext &BC,
+  std::map<uint64_t, BinaryFunction> &BFs,
+  BinaryFunction *BFToFold,
+  BinaryFunction *BFToReplaceWith,
+  std::set<BinaryFunction *> &Modified) {
+
+  // Mark BFToFold as identical with BFTOreplaceWith.
+  BFToFold->setIdenticalFunctionAddress(BFToReplaceWith->getAddress());
+
+  // Add the size of BFToFold to the total size savings estimate.
+  BytesSavedEstimate += BFToFold->getSize();
+
+  // Get callers of BFToFold.
+  auto CI = Callers.find(BFToFold);
+  if (CI == Callers.end())
+    return;
+  std::vector<CallSite> &BFToFoldCallers = CI->second;
+
+  // Get callers of BFToReplaceWith.
+  std::vector<CallSite> &BFToReplaceWithCallers = Callers[BFToReplaceWith];
+
+  // Get MCSymbol for BFToReplaceWith.
+  MCSymbol *SymbolToReplaceWith =
+    BC.getOrCreateGlobalSymbol(BFToReplaceWith->getAddress(), "");
+
+  // Traverse callers of BFToFold and replace the calls with calls
+  // to BFToReplaceWith.
+  for (const CallSite &CS : BFToFoldCallers) {
+    // Get call instruction.
+    BinaryFunction *Caller = CS.Caller;
+    BinaryBasicBlock *CallBB = Caller->getBasicBlockAtIndex(CS.BlockIndex);
+    MCInst &CallInst = CallBB->getInstructionAtIndex(CS.InstrIndex);
+
+    // Replace call target with BFToReplaceWith.
+    MCOperand CallTargetOp =
+      MCOperand::createExpr(
+        MCSymbolRefExpr::create(
+          SymbolToReplaceWith, MCSymbolRefExpr::VK_None, *BC.Ctx));
+    assert(BC.MIA->replaceCallTargetOperand(CallInst, CallTargetOp) &&
+           "unexpected call target prevented the replacement");
+
+    // Add this call site to the callers of BFToReplaceWith.
+    BFToReplaceWithCallers.emplace_back(CS);
+
+    // Add caller to the set of modified functions.
+    Modified.insert(Caller);
+
+    // Update dynamic calls folded stat.
+    if (Caller->hasValidProfile() &&
+        CallBB->getExecutionCount() != BinaryBasicBlock::COUNT_NO_PROFILE)
+      NumDynamicCallsFolded += CallBB->getExecutionCount();
+  }
+
+  // Remove all callers of BFToFold.
+  BFToFoldCallers.clear();
+
+  ++NumFunctionsFolded;
+
+  // Merge execution counts of BFToFold into those of BFToReplaceWith.
+  BFToFold->mergeProfileDataInto(*BFToReplaceWith);
+}
+
+void IdenticalCodeFolding::runOnFunctions(
+  BinaryContext &BC,
+  std::map<uint64_t, BinaryFunction> &BFs,
+  std::set<uint64_t> &
+) {
+
+  discoverCallers(BC, BFs);
+
+  // This hash table is used to identify identical functions. It maps
+  // a function to a bucket of functions identical to it.
+  struct KeyHash {
+    std::size_t operator()(const BinaryFunction *F) const { return F->hash(); }
+  };
+  struct KeyEqual {
+    bool operator()(const BinaryFunction *A, const BinaryFunction *B) const {
+      return A->isIdenticalWith(*B);
+    }
+  };
+  std::unordered_map<BinaryFunction *, std::vector<BinaryFunction *>,
+                     KeyHash, KeyEqual> Buckets;
+
+  // Set that holds the functions that were modified by the last pass.
+  std::set<BinaryFunction *> Mod;
+
+  // Vector of all the candidate functions to be tested for being identical
+  // to each other. Initialized with all simple functions.
+  std::vector<BinaryFunction *> Cands;
+  for (auto &I : BFs) {
+    BinaryFunction *BF = &I.second;
+    if (BF->isSimple())
+      Cands.emplace_back(BF);
+  }
+
+  // We repeat the icf pass until no new modifications happen.
+  unsigned Iter = 1;
+  do {
+    Buckets.clear();
+    Mod.clear();
+
+    errs() << "BOLT-INFO: icf pass " << Iter << "...\n";
+
+    uint64_t NumIdenticalFunctions = 0;
+
+    // Compare candidate functions using the Buckets hash table. Identical
+    // functions are effiently discovered and added to the same bucket.
+    for (BinaryFunction *BF : Cands) {
+      Buckets[BF].emplace_back(BF);
+    }
+
+    Cands.clear();
+
+    // Go through the functions of each bucket and fold any references to them
+    // with the references to the hottest function among them.
+    for (auto &I : Buckets) {
+      std::vector<BinaryFunction *> &IFs = I.second;
+      std::sort(IFs.begin(), IFs.end(),
+                [](const BinaryFunction *A, const BinaryFunction *B) {
+                  if (!A->hasValidProfile() && !B->hasValidProfile())
+                    return false;
+
+                  if (!A->hasValidProfile())
+                    return false;
+
+                  if (!B->hasValidProfile())
+                    return true;
+
+                  return B->getExecutionCount() < A->getExecutionCount();
+                }
+      );
+      BinaryFunction *Hottest = IFs[0];
+
+      // For the next pass, we consider only one function from each set of
+      // identical functions.
+      Cands.emplace_back(Hottest);
+
+      if (IFs.size() <= 1)
+        continue;
+
+      NumIdenticalFunctions += IFs.size() - 1;
+      for (unsigned i = 1; i < IFs.size(); ++i) {
+        BinaryFunction *BF = IFs[i];
+        foldFunction(BC, BFs, BF, Hottest, Mod);
+      }
+    }
+
+    errs() << "BOLT-INFO: found " << NumIdenticalFunctions;
+    errs() << " identical functions.\n";
+    errs() << "BOLT-INFO: modified " << Mod.size() << " functions.\n";
+
+    NumIdenticalFunctionsFound += NumIdenticalFunctions;
+
+    ++Iter;
+  } while (!Mod.empty());
+
+  outs() << "BOLT: ICF pass found " << NumIdenticalFunctionsFound;
+  outs() << " functions identical to some other function.\n";
+  outs() << "BOLT: ICF pass folded references to " << NumFunctionsFolded;
+  outs() << " functions.\n";
+  outs() << "BOLT: ICF pass folded " << NumDynamicCallsFolded << " dynamic";
+  outs() << " function calls.\n";
+  outs() << "BOLT: Removing all identical functions could save ";
+  outs() << format("%.2lf", (double) BytesSavedEstimate / 1024);
+  outs() << " KB of code space.\n";
+
+  if (opts::PrintAll || opts::PrintICF) {
+    for (auto &I : BFs) {
+      I.second.print(errs(), "after identical code folding", true);
+    }
+  }
 }
 
 } // namespace bolt

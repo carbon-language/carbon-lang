@@ -50,6 +50,12 @@ SimplifyRODataLoads("simplify-rodata-loads",
                                    "section"),
                     llvm::cl::Optional);
 
+static llvm::cl::opt<bool>
+IdenticalCodeFolding(
+    "icf",
+    llvm::cl::desc("fold functions with identical code"),
+    llvm::cl::Optional);
+
 } // namespace opts
 
 namespace llvm {
@@ -72,6 +78,9 @@ void BinaryFunctionPassManager::runAllPasses(
 
   // Here we manage dependencies/order manually, since passes are ran in the
   // order they're registered.
+
+  Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(),
+                       opts::IdenticalCodeFolding);
 
   Manager.registerPass(
     std::move(llvm::make_unique<EliminateUnreachableBlocks>(Manager.NagUser)),

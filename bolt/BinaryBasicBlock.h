@@ -273,10 +273,27 @@ public:
         branch_info_begin(), branch_info_end());
   }
 
+  /// Get instruction at given index.
+  MCInst &getInstructionAtIndex(unsigned Index) {
+    return Instructions.at(Index);
+  }
+
+  const MCInst &getInstructionAtIndex(unsigned Index) const {
+    return Instructions.at(Index);
+  }
+
   /// Return symbol marking the start of this basic block.
   MCSymbol *getLabel() const {
     return Label;
   }
+
+  /// Get successor with given label. Returns nullptr if no such
+  /// successor is found.
+  BinaryBasicBlock *getSuccessor(const MCSymbol *Label) const;
+
+  /// Get landing pad with given label. Returns nullptr if no such
+  /// landing pad is found.
+  BinaryBasicBlock *getLandingPad(const MCSymbol *Label) const;
 
   /// Return local name for the block.
   StringRef getName() const {

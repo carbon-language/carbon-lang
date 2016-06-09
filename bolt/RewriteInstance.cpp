@@ -186,6 +186,11 @@ PrintReordered("print-reordered",
                cl::desc("print functions after layout optimization"),
                cl::Hidden);
 
+cl::opt<bool>
+PrintICF("print-icf",
+         cl::desc("print functions after ICF optimization"),
+         cl::Hidden);
+
 static cl::opt<bool>
 KeepTmp("keep-tmp",
         cl::desc("preserve intermediate .o file"),
@@ -804,6 +809,16 @@ void RewriteInstance::discoverFileObjects() {
               "profiled binary was not. If you know what you are doing and "
               "wish to proceed, use -allow-stripped option.\n";
     exit(1);
+  }
+
+  // Register the final names of functions with multiple names with BinaryContext
+  // data structures.
+  for (auto &BFI : BinaryFunctions) {
+    uint64_t Address = BFI.first;
+    const BinaryFunction &BF = BFI.second;
+    auto AI = BC->GlobalSymbols.find(BF.getName());
+    if (AI == BC->GlobalSymbols.end())
+      BC->registerNameAtAddress(BF.getName(), Address);
   }
 }
 

@@ -182,6 +182,47 @@ public:
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
+/// An optimization that replaces references to identical functions with
+/// references to a single one of them.
+///
+class IdenticalCodeFolding : public BinaryFunctionPass {
+  uint64_t NumIdenticalFunctionsFound{0};
+  uint64_t NumFunctionsFolded{0};
+  uint64_t NumDynamicCallsFolded{0};
+  uint64_t BytesSavedEstimate{0};
+
+  /// Map from a binary function to its callers.
+  struct CallSite {
+    BinaryFunction *Caller;
+    unsigned BlockIndex;
+    unsigned InstrIndex;
+
+    CallSite(BinaryFunction *Caller, unsigned BlockIndex, unsigned InstrIndex) :
+      Caller(Caller), BlockIndex(BlockIndex), InstrIndex(InstrIndex) { }
+  };
+  using CallerMap = std::map<BinaryFunction *, std::vector<CallSite>>;
+  CallerMap Callers;
+
+  /// Replaces all calls to BFTOFold with calls to BFToReplaceWith and merges
+  /// the profile data of BFToFold with those of BFToReplaceWith. All modified
+  /// functions are added to the Modified set.
+  void foldFunction(BinaryContext &BC,
+                    std::map<uint64_t, BinaryFunction> &BFs,
+                    BinaryFunction *BFToFold,
+                    BinaryFunction *BFToReplaceWith,
+                    std::set<BinaryFunction *> &Modified);
+
+  /// Finds callers for each binary function and populates the Callers
+  /// map.
+  void discoverCallers(BinaryContext &BC,
+                       std::map<uint64_t, BinaryFunction> &BFs);
+
+ public:
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
 } // namespace bolt
 } // namespace llvm
 
