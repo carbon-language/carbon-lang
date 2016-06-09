@@ -17654,14 +17654,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget &Subtarget
       Mask = DAG.getBitcast(MaskVT, Mask);
       return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Mask);
     }
-    case BLEND: {
-      SDValue Mask = Op.getOperand(3);
-      MVT VT = Op.getSimpleValueType();
-      MVT MaskVT = MVT::getVectorVT(MVT::i1, VT.getVectorNumElements());
-      SDValue VMask = getMaskNode(Mask, MaskVT, Subtarget, DAG, dl);
-      return DAG.getNode(IntrData->Opc0, dl, VT, VMask, Op.getOperand(1),
-                         Op.getOperand(2));
-    }
     case KUNPCK: {
       MVT VT = Op.getSimpleValueType();
       MVT MaskVT = MVT::getVectorVT(MVT::i1, VT.getSizeInBits()/2);
