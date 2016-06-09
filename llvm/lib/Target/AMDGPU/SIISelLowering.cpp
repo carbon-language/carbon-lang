@@ -2197,9 +2197,9 @@ SDValue SITargetLowering::LowerATOMIC_CMP_SWAP(SDValue Op, SelectionDAG &DAG) co
 
   SDValue NewOld = DAG.getBuildVector(VecType, DL, {New, Old});
   SDValue Ops[] = { ChainIn, Addr, NewOld };
-  SDVTList VTList = DAG.getVTList(VT, MVT::Other);
-  return DAG.getMemIntrinsicNode(AMDGPUISD::ATOMIC_CMP_SWAP, DL,
-                                 VTList, Ops, VT, AtomicNode->getMemOperand());
+
+  return DAG.getMemIntrinsicNode(AMDGPUISD::ATOMIC_CMP_SWAP, DL, Op->getVTList(),
+                                 Ops, VT, AtomicNode->getMemOperand());
 }
 
 //===----------------------------------------------------------------------===//

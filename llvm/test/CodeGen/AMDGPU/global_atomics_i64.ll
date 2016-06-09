@@ -841,6 +841,113 @@ entry:
   ret void
 }
 
+
+
+
+
+
+
+
+
+; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_offset:
+; GCN: buffer_atomic_cmpswap_x2 v[{{[0-9]+}}:{{[0-9]+}}], off, s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:32{{$}}
+define void @atomic_cmpxchg_i64_offset(i64 addrspace(1)* %out, i64 %in, i64 %old) {
+entry:
+  %gep = getelementptr i64, i64 addrspace(1)* %out, i64 4
+  %val = cmpxchg volatile i64 addrspace(1)* %gep, i64 %old, i64 %in seq_cst seq_cst
+  ret void
+}
+
+; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_soffset:
+; GCN: s_mov_b32 [[SREG:s[0-9]+]], 0x11940
+; GCN: buffer_atomic_cmpswap_x2 v[{{[0-9]+}}:{{[0-9]+}}], off, s[{{[0-9]+}}:{{[0-9]+}}], [[SREG]]{{$}}
+define void @atomic_cmpxchg_i64_soffset(i64 addrspace(1)* %out, i64 %in, i64 %old) {
+entry:
+  %gep = getelementptr i64, i64 addrspace(1)* %out, i64 9000
+  %val = cmpxchg volatile i64 addrspace(1)* %gep, i64 %old, i64 %in seq_cst seq_cst
+  ret void
+}
+
+; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_ret_offset:
+; GCN: buffer_atomic_cmpswap_x2 v{{\[}}[[RET:[0-9]+]]{{:[0-9]+}}], off, s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:32 glc{{$}}
+; GCN: buffer_store_dwordx2 v{{\[}}[[RET]]:
+define void @atomic_cmpxchg_i64_ret_offset(i64 addrspace(1)* %out, i64 addrspace(1)* %out2, i64 %in, i64 %old) {
+entry:
+  %gep = getelementptr i64, i64 addrspace(1)* %out, i64 4
+  %val = cmpxchg volatile i64 addrspace(1)* %gep, i64 %old, i64 %in seq_cst seq_cst
+  %extract0 = extractvalue { i64, i1 } %val, 0
+  store i64 %extract0, i64 addrspace(1)* %out2
+  ret void
+}
+
+; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_addr64_offset:
+; CI: buffer_atomic_cmpswap_x2 v[{{[0-9]+\:[0-9]+}}], v[{{[0-9]+}}:{{[0-9]+}}], s[{{[0-9]+}}:{{[0-9]+}}], 0 addr64 offset:32{{$}}
+
+; VI: flat_atomic_cmpswap_x2 v[{{[0-9]+\:[0-9]+}}], v[{{[0-9]+}}:{{[0-9]+}}]{{$}}
+define void @atomic_cmpxchg_i64_addr64_offset(i64 addrspace(1)* %out, i64 %in, i64 %index, i64 %old) {
+entry:
+  %ptr = getelementptr i64, i64 addrspace(1)* %out, i64 %index
+  %gep = getelementptr i64, i64 addrspace(1)* %ptr, i64 4
+  %val = cmpxchg volatile i64 addrspace(1)* %gep, i64 %old, i64 %in seq_cst seq_cst
+  ret void
+}
+
+; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_ret_addr64_offset:
+; CI: buffer_atomic_cmpswap_x2 v{{\[}}[[RET:[0-9]+]]:{{[0-9]+}}], v[{{[0-9]+}}:{{[0-9]+}}], s[{{[0-9]+}}:{{[0-9]+}}], 0 addr64 offset:32 glc{{$}}
+; VI: flat_atomic_cmpswap_x2 v{{\[}}[[RET:[0-9]+]]:{{[0-9]+\]}}, v[{{[0-9]+:[0-9]+}}], v[{{[0-9]+:[0-9]+}}] glc{{$}}
+; GCN: buffer_store_dwordx2 v{{\[}}[[RET]]:
+define void @atomic_cmpxchg_i64_ret_addr64_offset(i64 addrspace(1)* %out, i64 addrspace(1)* %out2, i64 %in, i64 %index, i64 %old) {
+entry:
+  %ptr = getelementptr i64, i64 addrspace(1)* %out, i64 %index
+  %gep = getelementptr i64, i64 addrspace(1)* %ptr, i64 4
+  %val = cmpxchg volatile i64 addrspace(1)* %gep, i64 %old, i64 %in seq_cst seq_cst
+  %extract0 = extractvalue { i64, i1 } %val, 0
+  store i64 %extract0, i64 addrspace(1)* %out2
+  ret void
+}
+
+; FUNC-LABEL: {{^}}atomic_cmpxchg_i64:
+; GCN: buffer_atomic_cmpswap_x2 v[{{[0-9]+:[0-9]+}}], off, s[{{[0-9]+}}:{{[0-9]+}}], 0{{$}}
+define void @atomic_cmpxchg_i64(i64 addrspace(1)* %out, i64 %in, i64 %old) {
+entry:
+  %val = cmpxchg volatile i64 addrspace(1)* %out, i64 %old, i64 %in seq_cst seq_cst
+  ret void
+}
+
+; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_ret:
+; GCN: buffer_atomic_cmpswap_x2 v{{\[}}[[RET:[0-9]+]]:{{[0-9]+}}], off, s[{{[0-9]+}}:{{[0-9]+}}], 0 glc
+; GCN: buffer_store_dwordx2 v{{\[}}[[RET]]:
+define void @atomic_cmpxchg_i64_ret(i64 addrspace(1)* %out, i64 addrspace(1)* %out2, i64 %in, i64 %old) {
+entry:
+  %val = cmpxchg volatile i64 addrspace(1)* %out, i64 %old, i64 %in seq_cst seq_cst
+  %extract0 = extractvalue { i64, i1 } %val, 0
+  store i64 %extract0, i64 addrspace(1)* %out2
+  ret void
+}
+
+; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_addr64:
+; CI: buffer_atomic_cmpswap_x2 v[{{[0-9]+:[0-9]+}}], v[{{[0-9]+}}:{{[0-9]+}}], s[{{[0-9]+}}:{{[0-9]+}}], 0 addr64{{$}}
+; VI: flat_atomic_cmpswap_x2 v[{{[0-9]+:[0-9]+}}], v[{{[0-9]+:[0-9]+}}]{{$}}
+define void @atomic_cmpxchg_i64_addr64(i64 addrspace(1)* %out, i64 %in, i64 %index, i64 %old) {
+entry:
+  %ptr = getelementptr i64, i64 addrspace(1)* %out, i64 %index
+  %val = cmpxchg volatile i64 addrspace(1)* %ptr, i64 %old, i64 %in seq_cst seq_cst
+  ret void
+}
+
+; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_ret_addr64:
+; CI: buffer_atomic_cmpswap_x2 v{{\[}}[[RET:[0-9]+]]:{{[0-9]+}}], v[{{[0-9]+}}:{{[0-9]+}}], s[{{[0-9]+}}:{{[0-9]+}}], 0 addr64 glc{{$}}
+; VI: flat_atomic_cmpswap_x2 v{{\[}}[[RET:[0-9]+]]:{{[0-9]+\]}}, v[{{[0-9]+:[0-9]+}}], v[{{[0-9]+:[0-9]+}}] glc{{$}}
+; GCN: buffer_store_dwordx2 v{{\[}}[[RET]]:
+define void @atomic_cmpxchg_i64_ret_addr64(i64 addrspace(1)* %out, i64 addrspace(1)* %out2, i64 %in, i64 %index, i64 %old) {
+entry:
+  %ptr = getelementptr i64, i64 addrspace(1)* %out, i64 %index
+  %val = cmpxchg volatile i64 addrspace(1)* %ptr, i64 %old, i64 %in seq_cst seq_cst
+  %extract0 = extractvalue { i64, i1 } %val, 0
+  store i64 %extract0, i64 addrspace(1)* %out2
+  ret void
+}
+
 ; FUNC-LABEL: {{^}}atomic_load_i64_offset:
 ; CI: buffer_load_dwordx2 [[RET:v\[[0-9]+:[0-9]+\]]], off, s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:32 glc{{$}}
 ; VI: flat_load_dwordx2 [[RET:v\[[0-9]+:[0-9]\]]], v[{{[0-9]+}}:{{[0-9]+}}] glc{{$}}
@@ -926,101 +1033,5 @@ define void @atomic_store_i64_addr64(i64 %in, i64 addrspace(1)* %out, i64 %index
 entry:
   %ptr = getelementptr i64, i64 addrspace(1)* %out, i64 %index
   store atomic i64 %in, i64 addrspace(1)* %ptr seq_cst, align 8
-  ret void
-}
-
-
-
-
-
-
-
-
-; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_offset:
-; GCN: buffer_atomic_cmpswapx2 v[{{[0-9]+}}:{{[0-9]+}}], off, s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16{{$}}
-define void @atomic_cmpxchg_i64_offset(i64 addrspace(1)* %out, i64 %in, i64 %old) {
-entry:
-  %gep = getelementptr i64, i64 addrspace(1)* %out, i64 4
-  %val = cmpxchg volatile i64 addrspace(1)* %gep, i64 %old, i64 %in seq_cst seq_cst
-  ret void
-}
-
-; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_ret_offset:
-; GCN: buffer_atomic_cmpswapx2 v{{\[}}[[RET:[0-9]+]]{{:[0-9]+}}], off, s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc{{$}}
-; GCN: buffer_store_dwordx2 v[[RET]]
-define void @atomic_cmpxchg_i64_ret_offset(i64 addrspace(1)* %out, i64 addrspace(1)* %out2, i64 %in, i64 %old) {
-entry:
-  %gep = getelementptr i64, i64 addrspace(1)* %out, i64 4
-  %val = cmpxchg volatile i64 addrspace(1)* %gep, i64 %old, i64 %in seq_cst seq_cst
-  %extract0 = extractvalue { i64, i1 } %val, 0
-  store i64 %extract0, i64 addrspace(1)* %out2
-  ret void
-}
-
-; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_addr64_offset:
-; SI: buffer_atomic_cmpswapx2 v[{{[0-9]+\:[0-9]+}}], v[{{[0-9]+}}:{{[0-9]+}}], s[{{[0-9]+}}:{{[0-9]+}}], 0 addr64 offset:16{{$}}
-
-; VI: flat_atomic_cmpswapx2 v[{{[0-9]+\:[0-9]+}}], v[{{[0-9]+}}:{{[0-9]+}}]{{$}}
-define void @atomic_cmpxchg_i64_addr64_offset(i64 addrspace(1)* %out, i64 %in, i64 %index, i64 %old) {
-entry:
-  %ptr = getelementptr i64, i64 addrspace(1)* %out, i64 %index
-  %gep = getelementptr i64, i64 addrspace(1)* %ptr, i64 4
-  %val  = cmpxchg volatile i64 addrspace(1)* %gep, i64 %old, i64 %in seq_cst seq_cst
-  ret void
-}
-
-; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_ret_addr64_offset:
-; SI: buffer_atomic_cmpswapx2 v{{\[}}[[RET:[0-9]+]]:{{[0-9]+}}], v[{{[0-9]+}}:{{[0-9]+}}], s[{{[0-9]+}}:{{[0-9]+}}], 0 addr64 offset:16 glc{{$}}
-; VI: flat_atomic_cmpswapx2 v[[RET:[0-9]+]], v[{{[0-9]+:[0-9]+}}], v[{{[0-9]+:[0-9]+}}] glc{{$}}
-; GCN: buffer_store_dword v[[RET]]
-define void @atomic_cmpxchg_i64_ret_addr64_offset(i64 addrspace(1)* %out, i64 addrspace(1)* %out2, i64 %in, i64 %index, i64 %old) {
-entry:
-  %ptr = getelementptr i64, i64 addrspace(1)* %out, i64 %index
-  %gep = getelementptr i64, i64 addrspace(1)* %ptr, i64 4
-  %val  = cmpxchg volatile i64 addrspace(1)* %gep, i64 %old, i64 %in seq_cst seq_cst
-  %extract0 = extractvalue { i64, i1 } %val, 0
-  store i64 %extract0, i64 addrspace(1)* %out2
-  ret void
-}
-
-; FUNC-LABEL: {{^}}atomic_cmpxchg_i64:
-; GCN: buffer_atomic_cmpswap v[{{[0-9]+:[0-9]+}}], off, s[{{[0-9]+}}:{{[0-9]+}}], 0{{$}}
-define void @atomic_cmpxchg_i64(i64 addrspace(1)* %out, i64 %in, i64 %old) {
-entry:
-  %val = cmpxchg volatile i64 addrspace(1)* %out, i64 %old, i64 %in seq_cst seq_cst
-  ret void
-}
-
-; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_ret:
-; GCN: buffer_atomic_cmpswap v{{\[}}[[RET:[0-9]+]]:{{[0-9]+}}], off, s[{{[0-9]+}}:{{[0-9]+}}], 0 glc
-; GCN: buffer_store_dword v[[RET]]
-define void @atomic_cmpxchg_i64_ret(i64 addrspace(1)* %out, i64 addrspace(1)* %out2, i64 %in, i64 %old) {
-entry:
-  %val = cmpxchg volatile i64 addrspace(1)* %out, i64 %old, i64 %in seq_cst seq_cst
-  %extract0 = extractvalue { i64, i1 } %val, 0
-  store i64 %extract0, i64 addrspace(1)* %out2
-  ret void
-}
-
-; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_addr64:
-; SI: buffer_atomic_cmpswap v[{{[0-9]+:[0-9]+}}], v[{{[0-9]+}}:{{[0-9]+}}], s[{{[0-9]+}}:{{[0-9]+}}], 0 addr64{{$}}
-; VI: flat_atomic_cmpswap v[{{[0-9]+:[0-9]+}}], v[{{[0-9]+:[0-9]+}}]{{$}}
-define void @atomic_cmpxchg_i64_addr64(i64 addrspace(1)* %out, i64 %in, i64 %index, i64 %old) {
-entry:
-  %ptr = getelementptr i64, i64 addrspace(1)* %out, i64 %index
-  %val = cmpxchg volatile i64 addrspace(1)* %ptr, i64 %old, i64 %in seq_cst seq_cst
-  ret void
-}
-
-; FUNC-LABEL: {{^}}atomic_cmpxchg_i64_ret_addr64:
-; SI: buffer_atomic_cmpswap v{{\[}}[[RET:[0-9]+]]:{{[0-9]+}}], v[{{[0-9]+}}:{{[0-9]+}}], s[{{[0-9]+}}:{{[0-9]+}}], 0 addr64 glc{{$}}
-; VI: flat_atomic_cmpswap v[[RET:[0-9]+]], v[{{[0-9]+:[0-9]+}}], v[{{[0-9]+:[0-9]+}}] glc{{$}}
-; GCN: buffer_store_dword v[[RET]]
-define void @atomic_cmpxchg_i64_ret_addr64(i64 addrspace(1)* %out, i64 addrspace(1)* %out2, i64 %in, i64 %index, i64 %old) {
-entry:
-  %ptr = getelementptr i64, i64 addrspace(1)* %out, i64 %index
-  %val = cmpxchg volatile i64 addrspace(1)* %ptr, i64 %old, i64 %in seq_cst seq_cst
-  %extract0 = extractvalue { i64, i1 } %val, 0
-  store i64 %extract0, i64 addrspace(1)* %out2
   ret void
 }
