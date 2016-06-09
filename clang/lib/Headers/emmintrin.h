@@ -536,7 +536,7 @@ _mm_loadl_pd(__m128d __a, double const *__dp)
 }
 
 static __inline__ __m128d __DEFAULT_FN_ATTRS
-_mm_undefined_pd()
+_mm_undefined_pd(void)
 {
   return (__m128d)__builtin_ia32_undef128();
 }
@@ -1883,7 +1883,7 @@ _mm_loadl_epi64(__m128i const *__p)
 ///
 /// \returns A 128-bit vector of [4 x i32] with unspecified content.
 static __inline__ __m128i __DEFAULT_FN_ATTRS
-_mm_undefined_si128()
+_mm_undefined_si128(void)
 {
   return (__m128i)__builtin_ia32_undef128();
 }

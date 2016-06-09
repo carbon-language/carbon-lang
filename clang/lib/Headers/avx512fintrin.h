@@ -173,25 +173,25 @@ _mm512_setzero_si512(void)
 #define _mm512_setzero_epi32 _mm512_setzero_si512
 
 static __inline__ __m512d __DEFAULT_FN_ATTRS
-_mm512_undefined_pd()
+_mm512_undefined_pd(void)
 {
   return (__m512d)__builtin_ia32_undef512();
 }
 
 static __inline__ __m512 __DEFAULT_FN_ATTRS
-_mm512_undefined()
+_mm512_undefined(void)
 {
   return (__m512)__builtin_ia32_undef512();
 }
 
 static __inline__ __m512 __DEFAULT_FN_ATTRS
-_mm512_undefined_ps()
+_mm512_undefined_ps(void)
 {
   return (__m512)__builtin_ia32_undef512();
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
-_mm512_undefined_epi32()
+_mm512_undefined_epi32(void)
 {
   return (__m512i)__builtin_ia32_undef512();
 }
