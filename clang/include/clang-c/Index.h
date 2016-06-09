@@ -1932,7 +1932,7 @@ enum CXCursorKind {
    */
   CXCursor_CXXDeleteExpr                 = 135,
 
-  /** \brief A unary expression.
+  /** \brief A unary expression. (noexcept, sizeof, or other traits)
    */
   CXCursor_UnaryExpr                     = 136,
 
