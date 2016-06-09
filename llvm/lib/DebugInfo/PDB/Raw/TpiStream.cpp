@@ -13,6 +13,7 @@
 #include "llvm/DebugInfo/CodeView/StreamReader.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
+#include "llvm/DebugInfo/PDB/Raw/Hash.h"
 #include "llvm/DebugInfo/PDB/Raw/IndexedStreamData.h"
 #include "llvm/DebugInfo/PDB/Raw/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
@@ -67,6 +68,22 @@ TpiStream::TpiStream(const PDBFile &File,
     : Pdb(File), Stream(std::move(Stream)), HashFunction(nullptr) {}
 
 TpiStream::~TpiStream() {}
+
+// Verifies that a given type record matches with a given hash value.
+// Currently we only verify SRC_LINE records.
+static Error verifyTIHash(const codeview::CVType &Rec, uint32_t Expected,
+                          uint32_t NumHashBuckets) {
+  ArrayRef<uint8_t> D = Rec.Data;
+  if (Rec.Type == codeview::LF_UDT_SRC_LINE ||
+      Rec.Type == codeview::LF_UDT_MOD_SRC_LINE) {
+    uint32_t Hash =
+        hashStringV1(StringRef((const char *)D.data(), 4)) % NumHashBuckets;
+    if (Hash != Expected)
+      return make_error<RawError>(raw_error_code::corrupt_file,
+                                  "Corrupt TPI hash table.");
+  }
+  return Error::success();
+}
 
 Error TpiStream::reload() {
   codeview::StreamReader Reader(*Stream);
@@ -135,6 +152,17 @@ Error TpiStream::reload() {
     return EC;
 
   HashStream = std::move(*HS);
+
+  // TPI hash table is a parallel array for the type records.
+  // Verify that the hash values match with type records.
+  size_t I = 0;
+  bool HasError;
+  for (const codeview::CVType &Rec : types(&HasError)) {
+    if (auto EC = verifyTIHash(Rec, HashValues[I], Header->NumHashBuckets))
+      return EC;
+    ++I;
+  }
+
   return Error::success();
 }
 
