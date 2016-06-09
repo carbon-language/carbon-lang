@@ -632,19 +632,6 @@ configure_file(
 if (CLANG_ENABLE_BOOTSTRAP)
   include(ExternalProject)
 
-  if(CMAKE_VERSION VERSION_GREATER 3.1.0)
-    set(cmake_3_1_EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL 1)
-  endif()
-
-  if(CMAKE_VERSION VERSION_GREATER 3.3.20150708)
-    set(cmake_3_4_USES_TERMINAL_OPTIONS
-      USES_TERMINAL_CONFIGURE 1
-      USES_TERMINAL_BUILD 1
-      USES_TERMINAL_INSTALL 1
-      )
-    set(cmake_3_4_USES_TERMINAL USES_TERMINAL 1)
-  endif()
-
   if(NOT CLANG_STAGE)
     set(CLANG_STAGE stage1)
     message(STATUS "Setting current clang stage to: ${CLANG_STAGE}")
@@ -770,7 +757,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
     SOURCE_DIR ${CMAKE_SOURCE_DIR}
     STAMP_DIR ${STAMP_DIR}
     BINARY_DIR ${BINARY_DIR}
-    ${cmake_3_1_EXCLUDE_FROM_ALL}
+    EXCLUDE_FROM_ALL 1
     CMAKE_ARGS
                 # We shouldn't need to set this here, but INSTALL_DIR doesn't
                 # seem to work, so instead I'm passing this through
@@ -783,7 +770,9 @@ if (CLANG_ENABLE_BOOTSTRAP)
     CMAKE_COMMAND ${cmake_command}
     INSTALL_COMMAND ""
     STEP_TARGETS configure build
-    ${cmake_3_4_USES_TERMINAL_OPTIONS}
+    USES_TERMINAL_CONFIGURE 1
+    USES_TERMINAL_BUILD 1
+    USES_TERMINAL_INSTALL 1
     )
 
   # exclude really-install from main target
@@ -792,7 +781,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
     COMMAND ${cmake_command} --build <BINARY_DIR> --target install
     COMMENT "Performing install step for '${NEXT_CLANG_STAGE}'"
     DEPENDEES build
-    ${cmake_3_4_USES_TERMINAL}
+    USES_TERMINAL 1
   )
   ExternalProject_Add_StepTargets(${NEXT_CLANG_STAGE} really-install)
   add_custom_target(${NEXT_CLANG_STAGE}-install DEPENDS ${NEXT_CLANG_STAGE}-really-install)
@@ -808,7 +797,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
       COMMAND ${cmake_command} --build <BINARY_DIR> --target ${target}
       COMMENT "Performing ${target} for '${NEXT_CLANG_STAGE}'"
       DEPENDEES configure
-      ${cmake_3_4_USES_TERMINAL}
+      USES_TERMINAL 1
     )
 
     if(target MATCHES "^stage[0-9]*")
