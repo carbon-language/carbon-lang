@@ -1869,12 +1869,15 @@ void FunctionStackPoisoner::initializeCallbacks(Module &M) {
         M.getOrInsertFunction(kAsanStackFreeNameTemplate + Suffix,
                               IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
   }
-  AsanPoisonStackMemoryFunc = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(kAsanPoisonStackMemoryName, IRB.getVoidTy(),
-                            IntptrTy, IntptrTy, nullptr));
-  AsanUnpoisonStackMemoryFunc = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(kAsanUnpoisonStackMemoryName, IRB.getVoidTy(),
-                            IntptrTy, IntptrTy, nullptr));
+  if (ASan.UseAfterScope) {
+    AsanPoisonStackMemoryFunc = checkSanitizerInterfaceFunction(
+        M.getOrInsertFunction(kAsanPoisonStackMemoryName, IRB.getVoidTy(),
+                              IntptrTy, IntptrTy, nullptr));
+    AsanUnpoisonStackMemoryFunc = checkSanitizerInterfaceFunction(
+        M.getOrInsertFunction(kAsanUnpoisonStackMemoryName, IRB.getVoidTy(),
+                              IntptrTy, IntptrTy, nullptr));
+  }
+
   AsanAllocaPoisonFunc = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
       kAsanAllocaPoison, IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
   AsanAllocasUnpoisonFunc =
@@ -2133,6 +2136,16 @@ void FunctionStackPoisoner::poisonStack() {
   Value *ShadowBase = ASan.memToShadow(LocalStackBase, IRB);
   poisonRedZones(L.ShadowBytes, IRB, ShadowBase, true);
 
+  auto UnpoisonStack = [&](IRBuilder<> &IRB) {
+    if (HavePoisonedAllocas) {
+      // If we poisoned some allocas in llvm.lifetime analysis,
+      // unpoison whole stack frame now.
+      poisonAlloca(LocalStackBase, LocalStackSize, IRB, false);
+    } else {
+      poisonRedZones(L.ShadowBytes, IRB, ShadowBase, false);
+    }
+  };
+
   // (Un)poison the stack before all ret instructions.
   for (auto Ret : RetVec) {
     IRBuilder<> IRBRet(Ret);
@@ -2177,13 +2190,9 @@ void FunctionStackPoisoner::poisonStack() {
       }
 
       IRBuilder<> IRBElse(ElseTerm);
-      poisonRedZones(L.ShadowBytes, IRBElse, ShadowBase, false);
-    } else if (HavePoisonedAllocas) {
-      // If we poisoned some allocas in llvm.lifetime analysis,
-      // unpoison whole stack frame now.
-      poisonAlloca(LocalStackBase, LocalStackSize, IRBRet, false);
+      UnpoisonStack(IRBElse);
     } else {
-      poisonRedZones(L.ShadowBytes, IRBRet, ShadowBase, false);
+      UnpoisonStack(IRBRet);
     }
   }
 
