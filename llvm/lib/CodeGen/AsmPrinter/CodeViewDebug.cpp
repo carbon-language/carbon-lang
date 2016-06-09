@@ -1317,7 +1317,7 @@ void CodeViewDebug::emitDebugInfoForGlobals() {
     switchToDebugSectionForSymbol(nullptr);
     MCSymbol *EndLabel = nullptr;
     for (const DIGlobalVariable *G : CU->getGlobalVariables()) {
-      if (const auto *GV = dyn_cast<GlobalVariable>(G->getVariable()))
+      if (const auto *GV = dyn_cast_or_null<GlobalVariable>(G->getVariable())) {
         if (!GV->hasComdat()) {
           if (!EndLabel) {
             OS.AddComment("Symbol subsection for globals");
@@ -1325,6 +1325,7 @@ void CodeViewDebug::emitDebugInfoForGlobals() {
           }
           emitDebugInfoForGlobal(G, Asm->getSymbol(GV));
         }
+      }
     }
     if (EndLabel)
       endCVSubsection(EndLabel);
@@ -1332,7 +1333,7 @@ void CodeViewDebug::emitDebugInfoForGlobals() {
     // Second, emit each global that is in a comdat into its own .debug$S
     // section along with its own symbol substream.
     for (const DIGlobalVariable *G : CU->getGlobalVariables()) {
-      if (const auto *GV = dyn_cast<GlobalVariable>(G->getVariable())) {
+      if (const auto *GV = dyn_cast_or_null<GlobalVariable>(G->getVariable())) {
         if (GV->hasComdat()) {
           MCSymbol *GVSym = Asm->getSymbol(GV);
           OS.AddComment("Symbol subsection for " +
