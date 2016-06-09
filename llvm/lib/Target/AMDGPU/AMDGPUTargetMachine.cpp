@@ -407,7 +407,7 @@ void GCNPassConfig::addPreEmitPass() {
   // hazard recognizer pass.
   addPass(&PostRAHazardRecognizerID);
 
-  addPass(createSIInsertWaitsPass(), false);
+  addPass(createSIInsertWaitsPass());
   addPass(createSIShrinkInstructionsPass());
   addPass(createSILowerControlFlowPass(), false);
   addPass(createSIDebuggerInsertNopsPass(), false);
