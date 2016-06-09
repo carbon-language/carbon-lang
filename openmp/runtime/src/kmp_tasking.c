@@ -1655,7 +1655,7 @@ __kmp_remove_my_task( kmp_info_t * thread, kmp_int32 gtid, kmp_task_team_t *task
             KMP_DEBUG_ASSERT(parent != NULL);
         }
         if ( parent != current ) {
-            // If the tail task is not a child, then no other childs can appear in the deque.
+            // If the tail task is not a child, then no other child can appear in the deque.
             __kmp_release_bootstrap_lock( & thread_data -> td.td_deque_lock );
             KA_TRACE(10, ("__kmp_remove_my_task(exit #2): T#%d No tasks to remove: ntasks=%d head=%u tail=%u\n",
                           gtid, thread_data->td.td_deque_ntasks, thread_data->td.td_deque_head,
