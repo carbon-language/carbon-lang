@@ -869,7 +869,9 @@ StringRef sys::getHostCPUName() {
         return "athlon";
       }
     case AMDFAM10H:
-        return "amdfam10";
+      if(Subtype == AMDFAM10H_BARCELONA)
+        return "barcelona";
+      return "amdfam10";
     case AMDFAM14H:
       return "btver1";
     case AMDFAM15H:
