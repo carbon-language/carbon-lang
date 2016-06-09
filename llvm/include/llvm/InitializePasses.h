@@ -163,7 +163,7 @@ void initializeInternalizeLegacyPassPass(PassRegistry&);
 void initializeIntervalPartitionPass(PassRegistry&);
 void initializeIRTranslatorPass(PassRegistry &);
 void initializeJumpThreadingPass(PassRegistry&);
-void initializeLCSSAPass(PassRegistry&);
+void initializeLCSSAWrapperPassPass(PassRegistry &);
 void initializeLICMPass(PassRegistry&);
 void initializeLazyValueInfoPass(PassRegistry&);
 void initializeLintPass(PassRegistry&);
