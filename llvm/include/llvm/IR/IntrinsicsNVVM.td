@@ -3744,5 +3744,5 @@ def int_ptx_read_pm2         : PTXReadSpecialRegisterIntrinsic_r32
 def int_ptx_read_pm3         : PTXReadSpecialRegisterIntrinsic_r32
                                <"__builtin_ptx_read_pm3">;
 
-def int_ptx_bar_sync : Intrinsic<[], [llvm_i32_ty], []>,
+def int_ptx_bar_sync : Intrinsic<[], [llvm_i32_ty], [IntrConvergent]>,
                        GCCBuiltin<"__builtin_ptx_bar_sync">;
