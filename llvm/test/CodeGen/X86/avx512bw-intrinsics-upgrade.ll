@@ -111,15 +111,15 @@ declare <8 x i64> @llvm.x86.avx512.psll.dq.512(<8 x i64>, i32)
 define <8 x i64>@test_int_x86_avx512_mask_psll_dq_512(<8 x i64> %x0) {
 ; AVX512BW-LABEL: test_int_x86_avx512_mask_psll_dq_512:
 ; AVX512BW:       ## BB#0:
-; AVX512BW-NEXT:    vpslldq $8, %zmm0, %zmm1
-; AVX512BW-NEXT:    vpslldq $4, %zmm0, %zmm0
+; AVX512BW-NEXT:    vpslldq {{.*#+}} zmm1 = zero,zero,zero,zero,zero,zero,zero,zero,zmm0[0,1,2,3,4,5,6,7],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[16,17,18,19,20,21,22,23],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[32,33,34,35,36,37,38,39],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[48,49,50,51,52,53,54,55]
+; AVX512BW-NEXT:    vpslldq {{.*#+}} zmm0 = zero,zero,zero,zero,zmm0[0,1,2,3,4,5,6,7,8,9,10,11],zero,zero,zero,zero,zmm0[16,17,18,19,20,21,22,23,24,25,26,27],zero,zero,zero,zero,zmm0[32,33,34,35,36,37,38,39,40,41,42,43],zero,zero,zero,zero,zmm0[48,49,50,51,52,53,54,55,56,57,58,59]
 ; AVX512BW-NEXT:    vpaddq %zmm0, %zmm1, %zmm0
 ; AVX512BW-NEXT:    retq
 ;
 ; AVX512F-32-LABEL: test_int_x86_avx512_mask_psll_dq_512:
 ; AVX512F-32:       # BB#0:
-; AVX512F-32-NEXT:    vpslldq $8, %zmm0, %zmm1
-; AVX512F-32-NEXT:    vpslldq $4, %zmm0, %zmm0
+; AVX512F-32-NEXT:    vpslldq {{.*#+}} zmm1 = zero,zero,zero,zero,zero,zero,zero,zero,zmm0[0,1,2,3,4,5,6,7],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[16,17,18,19,20,21,22,23],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[32,33,34,35,36,37,38,39],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[48,49,50,51,52,53,54,55]
+; AVX512F-32-NEXT:    vpslldq {{.*#+}} zmm0 = zero,zero,zero,zero,zmm0[0,1,2,3,4,5,6,7,8,9,10,11],zero,zero,zero,zero,zmm0[16,17,18,19,20,21,22,23,24,25,26,27],zero,zero,zero,zero,zmm0[32,33,34,35,36,37,38,39,40,41,42,43],zero,zero,zero,zero,zmm0[48,49,50,51,52,53,54,55,56,57,58,59]
 ; AVX512F-32-NEXT:    vpaddq %zmm0, %zmm1, %zmm0
 ; AVX512F-32-NEXT:    retl
   %res = call <8 x i64> @llvm.x86.avx512.psll.dq.512(<8 x i64> %x0, i32 8)
@@ -133,15 +133,15 @@ declare <8 x i64> @llvm.x86.avx512.psrl.dq.512(<8 x i64>, i32)
 define <8 x i64>@test_int_x86_avx512_mask_psrl_dq_512(<8 x i64> %x0) {
 ; AVX512BW-LABEL: test_int_x86_avx512_mask_psrl_dq_512:
 ; AVX512BW:       ## BB#0:
-; AVX512BW-NEXT:    vpsrldq $8, %zmm0, %zmm1
-; AVX512BW-NEXT:    vpsrldq $4, %zmm0, %zmm0
+; AVX512BW-NEXT:    vpsrldq {{.*#+}} zmm1 = zmm0[8,9,10,11,12,13,14,15],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[24,25,26,27,28,29,30,31],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[40,41,42,43,44,45,46,47],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[56,57,58,59,60,61,62,63],zero,zero,zero,zero,zero,zero,zero,zero
+; AVX512BW-NEXT:    vpsrldq {{.*#+}} zmm0 = zmm0[4,5,6,7,8,9,10,11,12,13,14,15],zero,zero,zero,zero,zmm0[20,21,22,23,24,25,26,27,28,29,30,31],zero,zero,zero,zero,zmm0[36,37,38,39,40,41,42,43,44,45,46,47],zero,zero,zero,zero,zmm0[52,53,54,55,56,57,58,59,60,61,62,63],zero,zero,zero,zero
 ; AVX512BW-NEXT:    vpaddq %zmm0, %zmm1, %zmm0
 ; AVX512BW-NEXT:    retq
 ;
 ; AVX512F-32-LABEL: test_int_x86_avx512_mask_psrl_dq_512:
 ; AVX512F-32:       # BB#0:
-; AVX512F-32-NEXT:    vpsrldq $8, %zmm0, %zmm1
-; AVX512F-32-NEXT:    vpsrldq $4, %zmm0, %zmm0
+; AVX512F-32-NEXT:    vpsrldq {{.*#+}} zmm1 = zmm0[8,9,10,11,12,13,14,15],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[24,25,26,27,28,29,30,31],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[40,41,42,43,44,45,46,47],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[56,57,58,59,60,61,62,63],zero,zero,zero,zero,zero,zero,zero,zero
+; AVX512F-32-NEXT:    vpsrldq {{.*#+}} zmm0 = zmm0[4,5,6,7,8,9,10,11,12,13,14,15],zero,zero,zero,zero,zmm0[20,21,22,23,24,25,26,27,28,29,30,31],zero,zero,zero,zero,zmm0[36,37,38,39,40,41,42,43,44,45,46,47],zero,zero,zero,zero,zmm0[52,53,54,55,56,57,58,59,60,61,62,63],zero,zero,zero,zero
 ; AVX512F-32-NEXT:    vpaddq %zmm0, %zmm1, %zmm0
 ; AVX512F-32-NEXT:    retl
   %res = call <8 x i64> @llvm.x86.avx512.psrl.dq.512(<8 x i64> %x0, i32 8)
