@@ -617,7 +617,7 @@ void X86_64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
 }
 
 uint32_t X86_64TargetInfo::getDynRel(uint32_t Type) const {
-  if (Config->Shared && (Type == R_X86_64_PC32 || Type == R_X86_64_32))
+  if (Type == R_X86_64_PC32 || Type == R_X86_64_32)
     error(getRelName(Type) + " cannot be a dynamic relocation");
   return Type;
 }

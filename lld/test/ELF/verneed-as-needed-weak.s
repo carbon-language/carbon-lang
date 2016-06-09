@@ -11,4 +11,4 @@
 .globl _start
 _start:
 .data
-.long f1
+.quad f1
