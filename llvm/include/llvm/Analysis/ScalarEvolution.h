@@ -781,13 +781,15 @@ namespace llvm {
              SmallVector<PointerIntPair<const Loop *, 2, LoopDisposition>, 2>>
         LoopDispositions;
 
-    /// A cache of the predicate "does the given loop contain an instruction
-    /// that can abnormally exit the loop (i.e. via throwing an exception, by
-    /// terminating the thread cleanly or by infinite looping in a called
-    /// function)?"  The last one is strictly not leaving the loop, but is
-    /// identical to leaving the loop from the viewpoint of reasoning about
-    /// undefined behavior.
-    DenseMap<const Loop *, bool> LoopHasAbnormalExit;
+    /// Cache for \c loopHasNoAbnormalExits.
+    DenseMap<const Loop *, bool> LoopHasNoAbnormalExits;
+
+    /// Returns true if \p L contains no instruction that can abnormally exit
+    /// the loop (i.e. via throwing an exception, by terminating the thread
+    /// cleanly or by infinite looping in a called function).  Strictly
+    /// speaking, the last one is not leaving the loop, but is identical to
+    /// leaving the loop for reasoning about undefined behavior.
+    bool loopHasNoAbnormalExits(const Loop *L);
 
     /// Compute a LoopDisposition value.
     LoopDisposition computeLoopDisposition(const SCEV *S, const Loop *L);

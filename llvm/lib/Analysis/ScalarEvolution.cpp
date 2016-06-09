@@ -4906,13 +4906,12 @@ bool ScalarEvolution::isAddRecNeverPoison(const Instruction *I, const Loop *L) {
     }
   }
 
-  if (!LatchControlDependentOnPoison)
-    return false;
+  return LatchControlDependentOnPoison && loopHasNoAbnormalExits(L);
+}
 
-  // Now check if loop has abonormal exits (or not), and cache the information.
-
-  auto Itr = LoopHasAbnormalExit.find(L);
-  if (Itr == LoopHasAbnormalExit.end()) {
+bool ScalarEvolution::loopHasNoAbnormalExits(const Loop *L) {
+  auto Itr = LoopHasNoAbnormalExits.find(L);
+  if (Itr == LoopHasNoAbnormalExits.end()) {
     bool HasAbnormalExit = false;
     for (auto *BB : L->getBlocks()) {
       HasAbnormalExit = any_of(*BB, [](Instruction &I) {
@@ -4921,12 +4920,12 @@ bool ScalarEvolution::isAddRecNeverPoison(const Instruction *I, const Loop *L) {
       if (HasAbnormalExit)
         break;
     }
-    auto InsertPair = LoopHasAbnormalExit.insert({L, HasAbnormalExit});
+    auto InsertPair = LoopHasNoAbnormalExits.insert({L, !HasAbnormalExit});
     assert(InsertPair.second && "We just checked!");
     Itr = InsertPair.first;
   }
 
-  return !Itr->second;
+  return Itr->second;
 }
 
 const SCEV *ScalarEvolution::createSCEV(Value *V) {
@@ -5490,7 +5489,7 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     forgetLoop(*I);
 
-  LoopHasAbnormalExit.erase(L);
+  LoopHasNoAbnormalExits.erase(L);
 }
 
 void ScalarEvolution::forgetValue(Value *V) {
