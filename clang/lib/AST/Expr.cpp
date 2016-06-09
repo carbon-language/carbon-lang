@@ -2890,6 +2890,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case CXXThrowExprClass:
   case CXXNewExprClass:
   case CXXDeleteExprClass:
+  case ExprWithCleanupsClass:
   case CoawaitExprClass:
   case CoyieldExprClass:
     // These always have a side-effect.
@@ -2901,12 +2902,6 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
     Finder.Visit(cast<StmtExpr>(this)->getSubStmt());
     return Finder.hasSideEffects();
   }
-
-  case ExprWithCleanupsClass:
-    if (IncludePossibleEffects)
-      if (cast<ExprWithCleanups>(this)->cleanupsHaveSideEffects())
-        return true;
-    break;
 
   case ParenExprClass:
   case ArraySubscriptExprClass:

@@ -2877,8 +2877,7 @@ private:
   Stmt *SubExpr;
 
   ExprWithCleanups(EmptyShell, unsigned NumObjects);
-  ExprWithCleanups(Expr *SubExpr, bool CleanupsHaveSideEffects,
-                   ArrayRef<CleanupObject> Objects);
+  ExprWithCleanups(Expr *SubExpr, ArrayRef<CleanupObject> Objects);
 
   friend TrailingObjects;
   friend class ASTStmtReader;
@@ -2888,7 +2887,6 @@ public:
                                   unsigned numObjects);
 
   static ExprWithCleanups *Create(const ASTContext &C, Expr *subexpr,
-                                  bool CleanupsHaveSideEffects,
                                   ArrayRef<CleanupObject> objects);
 
   ArrayRef<CleanupObject> getObjects() const {
@@ -2905,9 +2903,6 @@ public:
 
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
-  bool cleanupsHaveSideEffects() const {
-    return ExprWithCleanupsBits.CleanupsHaveSideEffects;
-  }
 
   /// As with any mutator of the AST, be very careful
   /// when modifying an existing AST to preserve its invariants.
