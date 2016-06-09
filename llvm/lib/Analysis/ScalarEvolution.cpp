@@ -4912,15 +4912,14 @@ bool ScalarEvolution::isAddRecNeverPoison(const Instruction *I, const Loop *L) {
 bool ScalarEvolution::loopHasNoAbnormalExits(const Loop *L) {
   auto Itr = LoopHasNoAbnormalExits.find(L);
   if (Itr == LoopHasNoAbnormalExits.end()) {
-    bool HasAbnormalExit = false;
-    for (auto *BB : L->getBlocks()) {
-      HasAbnormalExit = any_of(*BB, [](Instruction &I) {
-        return !isGuaranteedToTransferExecutionToSuccessor(&I);
+    auto NoAbnormalExitInBB = [&](BasicBlock *BB) {
+      return all_of(*BB, [](Instruction &I) {
+        return isGuaranteedToTransferExecutionToSuccessor(&I);
       });
-      if (HasAbnormalExit)
-        break;
-    }
-    auto InsertPair = LoopHasNoAbnormalExits.insert({L, !HasAbnormalExit});
+    };
+
+    auto InsertPair = LoopHasNoAbnormalExits.insert(
+        {L, all_of(L->getBlocks(), NoAbnormalExitInBB)});
     assert(InsertPair.second && "We just checked!");
     Itr = InsertPair.first;
   }
