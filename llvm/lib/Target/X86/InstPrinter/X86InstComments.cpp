@@ -342,14 +342,10 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
                        ShuffleMask);
     break;
 
-  case X86::PALIGNR128rr:
-  case X86::VPALIGNR128rr:
-  case X86::VPALIGNR256rr:
+  CASE_SHUF(PALIGNR, rri)
     Src1Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
-  case X86::PALIGNR128rm:
-  case X86::VPALIGNR128rm:
-  case X86::VPALIGNR256rm:
+  CASE_SHUF(PALIGNR, rmi)
     Src2Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     if (MI->getOperand(NumOperands - 1).isImm())
