@@ -20,9 +20,6 @@ kIsWindows = platform.system() == 'Windows'
 # Don't use close_fds on Windows.
 kUseCloseFDs = not kIsWindows
 
-# Use temporary files to replace /dev/null on Windows.
-kAvoidDevNull = kIsWindows
-
 class ShellEnvironment(object):
 
     """Mutable shell environment containing things like CWD and env vars.
@@ -192,7 +189,6 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
     input = subprocess.PIPE
     stderrTempFiles = []
     opened_files = []
-    named_temp_files = []
     # To avoid deadlock, we use a single stderr stream for piped
     # output. This is null until we have seen some output using
     # stderr.
@@ -256,8 +252,8 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
             else:
                 if r[2] is None:
                     redir_filename = None
-                    if kAvoidDevNull and r[0] == '/dev/null':
-                        r[2] = tempfile.TemporaryFile(mode=r[1])
+                    if kIsWindows and r[0] == '/dev/null':
+                        r[2] = open(os.devnull, r[1])
                     elif kIsWindows and r[0] == '/dev/tty':
                         # Simulate /dev/tty on Windows.
                         # "CON" is a special filename for the console.
@@ -306,14 +302,11 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
         if not executable:
             raise InternalShellError(j, '%r: command not found' % j.args[0])
 
-        # Replace uses of /dev/null with temporary files.
-        if kAvoidDevNull:
+        if kIsWindows:
+            # Replace uses of /dev/null with the Windows equivalent.
             for i,arg in enumerate(args):
                 if arg == "/dev/null":
-                    f = tempfile.NamedTemporaryFile(delete=False)
-                    f.close()
-                    named_temp_files.append(f.name)
-                    args[i] = f.name
+                    args[i] = os.devnull
 
         try:
             procs.append(subprocess.Popen(args, cwd=cmd_shenv.cwd,
@@ -421,13 +414,6 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
                 exitCode = max(exitCode, res)
         else:
             exitCode = res
-
-    # Remove any named temporary files we created.
-    for f in named_temp_files:
-        try:
-            os.remove(f)
-        except OSError:
-            pass
 
     if cmd.negate:
         exitCode = not exitCode
