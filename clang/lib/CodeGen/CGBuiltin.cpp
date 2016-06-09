@@ -6704,58 +6704,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return EmitX86Select(*this, Ops[4], Align, Ops[3]);
   }
 
-  case X86::BI__builtin_ia32_pslldqi256: {
-    // Shift value is in bits so divide by 8.
-    unsigned shiftVal = cast<llvm::ConstantInt>(Ops[1])->getZExtValue() >> 3;
-
-    // If pslldq is shifting the vector more than 15 bytes, emit zero.
-    if (shiftVal >= 16)
-      return llvm::Constant::getNullValue(ConvertType(E->getType()));
-
-    int Indices[32];
-    // 256-bit pslldq operates on 128-bit lanes so we need to handle that
-    for (unsigned l = 0; l != 32; l += 16) {
-      for (unsigned i = 0; i != 16; ++i) {
-        unsigned Idx = 32 + i - shiftVal;
-        if (Idx < 32) Idx -= 16; // end of lane, switch operand.
-        Indices[l + i] = Idx + l;
-      }
-    }
-
-    llvm::Type *VecTy = llvm::VectorType::get(Int8Ty, 32);
-    Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
-    Value *Zero = llvm::Constant::getNullValue(VecTy);
-
-    Value *SV = Builder.CreateShuffleVector(Zero, Ops[0], Indices, "pslldq");
-    llvm::Type *ResultType = ConvertType(E->getType());
-    return Builder.CreateBitCast(SV, ResultType, "cast");
-  }
-  case X86::BI__builtin_ia32_psrldqi256: {
-    // Shift value is in bits so divide by 8.
-    unsigned shiftVal = cast<llvm::ConstantInt>(Ops[1])->getZExtValue() >> 3;
-
-    // If psrldq is shifting the vector more than 15 bytes, emit zero.
-    if (shiftVal >= 16)
-      return llvm::Constant::getNullValue(ConvertType(E->getType()));
-
-    int Indices[32];
-    // 256-bit psrldq operates on 128-bit lanes so we need to handle that
-    for (unsigned l = 0; l != 32; l += 16) {
-      for (unsigned i = 0; i != 16; ++i) {
-        unsigned Idx = i + shiftVal;
-        if (Idx >= 16) Idx += 16; // end of lane, switch operand.
-        Indices[l + i] = Idx + l;
-      }
-    }
-
-    llvm::Type *VecTy = llvm::VectorType::get(Int8Ty, 32);
-    Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
-    Value *Zero = llvm::Constant::getNullValue(VecTy);
-
-    Value *SV = Builder.CreateShuffleVector(Ops[0], Zero, Indices, "psrldq");
-    llvm::Type *ResultType = ConvertType(E->getType());
-    return Builder.CreateBitCast(SV, ResultType, "cast");
-  }
   case X86::BI__builtin_ia32_movntps:
   case X86::BI__builtin_ia32_movntps256:
   case X86::BI__builtin_ia32_movntpd:
