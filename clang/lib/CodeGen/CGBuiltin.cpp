@@ -6334,17 +6334,16 @@ static Value *EmitX86MaskedLoad(CodeGenFunction &CGF,
 }
 
 static Value *EmitX86Select(CodeGenFunction &CGF,
-                            SmallVectorImpl<Value *> &Ops) {
+                            Value *Mask, Value *Op0, Value *Op1) {
 
   // If the mask is all ones just return first argument.
-  if (const auto *C = dyn_cast<Constant>(Ops[0]))
+  if (const auto *C = dyn_cast<Constant>(Mask))
     if (C->isAllOnesValue())
-      return Ops[1];
+      return Op0;
 
-  Value *MaskVec = getMaskVecValue(CGF, Ops[0],
-                                   Ops[1]->getType()->getVectorNumElements());
+  Mask = getMaskVecValue(CGF, Mask, Op0->getType()->getVectorNumElements());
 
-  return CGF.Builder.CreateSelect(MaskVec, Ops[1], Ops[2]);
+  return CGF.Builder.CreateSelect(Mask, Op0, Op1);
 }
 
 Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
@@ -6702,15 +6701,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     if (Ops.size() == 3)
       return Align;
 
-    // If the mask is all ones just emit the align operation.
-    if (const auto *C = dyn_cast<Constant>(Ops[4]))
-      if (C->isAllOnesValue())
-        return Align;
-
-    llvm::VectorType *MaskTy = llvm::VectorType::get(Builder.getInt1Ty(),
-                                                     NumElts);
-    llvm::Value *Mask = Builder.CreateBitCast(Ops[4], MaskTy, "cast");
-    return Builder.CreateSelect(Mask, Align, Ops[3]);
+    return EmitX86Select(*this, Ops[4], Align, Ops[3]);
   }
 
   case X86::BI__builtin_ia32_pslldqi256: {
@@ -6812,7 +6803,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_selectpd_128:
   case X86::BI__builtin_ia32_selectpd_256:
   case X86::BI__builtin_ia32_selectpd_512:
-    return EmitX86Select(*this, Ops);
+    return EmitX86Select(*this, Ops[0], Ops[1], Ops[2]);
   // 3DNow!
   case X86::BI__builtin_ia32_pswapdsf:
   case X86::BI__builtin_ia32_pswapdsi: {
