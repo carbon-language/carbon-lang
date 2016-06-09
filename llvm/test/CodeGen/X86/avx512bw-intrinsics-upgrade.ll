@@ -106,6 +106,50 @@ define <64 x i8>@test_int_x86_avx512_mask_loadu_b_512(i8* %ptr, i8* %ptr2, <64 x
   ret <64 x i8> %res2
 }
 
+declare <8 x i64> @llvm.x86.avx512.psll.dq.512(<8 x i64>, i32)
+
+define <8 x i64>@test_int_x86_avx512_mask_psll_dq_512(<8 x i64> %x0) {
+; AVX512BW-LABEL: test_int_x86_avx512_mask_psll_dq_512:
+; AVX512BW:       ## BB#0:
+; AVX512BW-NEXT:    vpslldq $8, %zmm0, %zmm1
+; AVX512BW-NEXT:    vpslldq $4, %zmm0, %zmm0
+; AVX512BW-NEXT:    vpaddq %zmm0, %zmm1, %zmm0
+; AVX512BW-NEXT:    retq
+;
+; AVX512F-32-LABEL: test_int_x86_avx512_mask_psll_dq_512:
+; AVX512F-32:       # BB#0:
+; AVX512F-32-NEXT:    vpslldq $8, %zmm0, %zmm1
+; AVX512F-32-NEXT:    vpslldq $4, %zmm0, %zmm0
+; AVX512F-32-NEXT:    vpaddq %zmm0, %zmm1, %zmm0
+; AVX512F-32-NEXT:    retl
+  %res = call <8 x i64> @llvm.x86.avx512.psll.dq.512(<8 x i64> %x0, i32 8)
+  %res1 = call <8 x i64> @llvm.x86.avx512.psll.dq.512(<8 x i64> %x0, i32 4)
+  %res2 = add <8 x i64> %res, %res1
+  ret <8 x i64> %res2
+}
+
+declare <8 x i64> @llvm.x86.avx512.psrl.dq.512(<8 x i64>, i32)
+
+define <8 x i64>@test_int_x86_avx512_mask_psrl_dq_512(<8 x i64> %x0) {
+; AVX512BW-LABEL: test_int_x86_avx512_mask_psrl_dq_512:
+; AVX512BW:       ## BB#0:
+; AVX512BW-NEXT:    vpsrldq $8, %zmm0, %zmm1
+; AVX512BW-NEXT:    vpsrldq $4, %zmm0, %zmm0
+; AVX512BW-NEXT:    vpaddq %zmm0, %zmm1, %zmm0
+; AVX512BW-NEXT:    retq
+;
+; AVX512F-32-LABEL: test_int_x86_avx512_mask_psrl_dq_512:
+; AVX512F-32:       # BB#0:
+; AVX512F-32-NEXT:    vpsrldq $8, %zmm0, %zmm1
+; AVX512F-32-NEXT:    vpsrldq $4, %zmm0, %zmm0
+; AVX512F-32-NEXT:    vpaddq %zmm0, %zmm1, %zmm0
+; AVX512F-32-NEXT:    retl
+  %res = call <8 x i64> @llvm.x86.avx512.psrl.dq.512(<8 x i64> %x0, i32 8)
+  %res1 = call <8 x i64> @llvm.x86.avx512.psrl.dq.512(<8 x i64> %x0, i32 4)
+  %res2 = add <8 x i64> %res, %res1
+  ret <8 x i64> %res2
+}
+
 declare <64 x i8> @llvm.x86.avx512.mask.palignr.512(<64 x i8>, <64 x i8>, i32, <64 x i8>, i64)
 
 define <64 x i8>@test_int_x86_avx512_mask_palignr_512(<64 x i8> %x0, <64 x i8> %x1, <64 x i8> %x3, i64 %x4) {
