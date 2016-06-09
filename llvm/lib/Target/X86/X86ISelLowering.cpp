@@ -11808,7 +11808,7 @@ static SDValue lowerV16I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // Try to use byte rotation instructions.
   if (Subtarget.hasBWI())
     if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
-            DL, MVT::v32i16, V1, V2, Mask, Subtarget, DAG))
+            DL, MVT::v16i32, V1, V2, Mask, Subtarget, DAG))
       return Rotate;
 
   return lowerVectorShuffleWithPERMV(DL, MVT::v16i32, Mask, V1, V2, DAG);
