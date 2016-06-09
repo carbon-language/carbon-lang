@@ -8,6 +8,8 @@ define void @f() sspstrong {
   ret void
 }
 
+; CHECK:  movq  __stack_chk_guard(%rip), %rax
+; CHECKL  movq  __stack_chk_guard(%rip), %rax
 ; CHECK:  .type __stack_chk_guard,@object
 ; CHECK:  .local  __stack_chk_guard
 ; CHECK:  .comm __stack_chk_guard,64,16
