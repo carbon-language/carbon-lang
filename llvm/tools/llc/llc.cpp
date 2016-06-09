@@ -260,10 +260,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
   if (!SkipModule) {
     if (StringRef(InputFilename).endswith_lower(".mir")) {
       MIR = createMIRParserFromFile(InputFilename, Err, Context);
-      if (MIR) {
+      if (MIR)
         M = MIR->parseLLVMModule();
-        assert(M && "parseLLVMModule should exit on failure");
-      }
     } else
       M = parseIRFile(InputFilename, Err, Context);
     if (!M) {
