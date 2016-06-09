@@ -138,6 +138,10 @@ private:
                                   SDValue &ImmOffset) const;
   bool SelectMUBUFIntrinsicVOffset(SDValue Offset, SDValue &SOffset,
                                    SDValue &ImmOffset, SDValue &VOffset) const;
+
+  bool SelectFlat(SDValue Addr, SDValue &VAddr,
+                  SDValue &SLC, SDValue &TFE) const;
+
   bool SelectSMRDOffset(SDValue ByteOffsetNode, SDValue &Offset,
                         bool &Imm) const;
   bool SelectSMRD(SDValue Addr, SDValue &SBase, SDValue &Offset,
@@ -1236,6 +1240,15 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFIntrinsicVOffset(SDValue Offset,
   return true;
 }
 
+bool AMDGPUDAGToDAGISel::SelectFlat(SDValue Addr,
+                                    SDValue &VAddr,
+                                    SDValue &SLC,
+                                    SDValue &TFE) const {
+  VAddr = Addr;
+  TFE = SLC = CurDAG->getTargetConstant(0, SDLoc(), MVT::i1);
+  return true;
+}
+
 ///
 /// \param EncodedOffset This is the immediate value that will be encoded
 ///        directly into the instruction.  On SI/CI the \p EncodedOffset
@@ -1500,6 +1513,10 @@ void AMDGPUDAGToDAGISel::SelectBRCOND(SDNode *N) {
 void AMDGPUDAGToDAGISel::SelectATOMIC_CMP_SWAP(SDNode *N) {
   MemSDNode *Mem = cast<MemSDNode>(N);
   unsigned AS = Mem->getAddressSpace();
+  if (AS == AMDGPUAS::FLAT_ADDRESS) {
+    SelectCode(N);
+    return;
+  }
 
   MVT VT = N->getSimpleValueType(0);
   bool Is32 = (VT == MVT::i32);
