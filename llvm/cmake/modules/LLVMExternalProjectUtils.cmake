@@ -127,20 +127,6 @@ function(llvm_ExternalProject_Add name source_dir)
     USES_TERMINAL_INSTALL 1
     )
 
-  if(CMAKE_VERSION VERSION_LESS 3.1.0)
-    set(ALWAYS_REBUILD ${CMAKE_CURRENT_BINARY_DIR}/${name}-always-rebuild)
-    add_custom_target(${name}-always-rebuild
-      COMMAND ${CMAKE_COMMAND} -E touch ${STAMP_DIR}/${name}-clobber-stamp)
-
-    llvm_ExternalProject_BuildCmd(run_build all ${BINARY_DIR})
-    ExternalProject_Add_Step(${name} force-rebuild
-      COMMAND ${run_build}
-      COMMENT "Forcing rebuild of ${name}"
-      DEPENDEES configure clean
-      DEPENDS ${ALWAYS_REBUILD} ${ARG_DEPENDS} ${TOOLCHAIN_BINS}
-      USES_TERMINAL 1 )
-  endif()
-
   if(ARG_USE_TOOLCHAIN)
     set(force_deps DEPENDS ${TOOLCHAIN_BINS})
   endif()
