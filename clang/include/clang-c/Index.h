@@ -2359,8 +2359,12 @@ enum CXCursorKind {
    */
   CXCursor_ModuleImportDecl              = 600,
   CXCursor_TypeAliasTemplateDecl         = 601,
+  /**
+   * \brief A static_assert or _Static_assert node
+   */
+  CXCursor_StaticAssert                  = 602,
   CXCursor_FirstExtraDecl                = CXCursor_ModuleImportDecl,
-  CXCursor_LastExtraDecl                 = CXCursor_TypeAliasTemplateDecl,
+  CXCursor_LastExtraDecl                 = CXCursor_StaticAssert,
 
   /**
    * \brief A code completion overload candidate.
