@@ -25,13 +25,6 @@ OptimizeBodylessFunctions(
     llvm::cl::Optional);
 
 static llvm::cl::opt<bool>
-OptimizeIndirectBranches(
-    "optimize-indirect-branches",
-    llvm::cl::desc("optimize indirect branches"),
-    llvm::cl::init(true),
-    llvm::cl::Optional);
-
-static llvm::cl::opt<bool>
 InlineSmallFunctions(
     "inline-small-functions",
     llvm::cl::desc("inline functions with a single basic block"),
@@ -71,9 +64,6 @@ void BinaryFunctionPassManager::runAllPasses(
     opts::EliminateUnreachable);
 
   Manager.registerPass(std::move(llvm::make_unique<ReorderBasicBlocks>()));
-
-  Manager.registerPass(llvm::make_unique<OptimizeIndirectBranches>(),
-                       opts::OptimizeIndirectBranches);
 
   Manager.registerPass(llvm::make_unique<SimplifyConditionalTailCalls>(),
                        opts::SimplifyConditionalTailCalls);

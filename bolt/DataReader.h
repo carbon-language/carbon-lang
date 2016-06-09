@@ -96,7 +96,6 @@ struct FuncBranchData {
   FuncBranchData(StringRef Name, ContainerTy Data, ContainerTy EntryData)
       : Name(Name), Data(std::move(Data)), EntryData(std::move(EntryData)) {}
 
-  iterator_range<ContainerTy::const_iterator> getBranchRange(uint64_t From) const;
   ErrorOr<const BranchInfo &> getBranch(uint64_t From, uint64_t To) const;
 };
 
