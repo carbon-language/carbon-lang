@@ -19,6 +19,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/CapturedStmt.h"
 #include "clang/Basic/PartialDiagnostic.h"
+#include "clang/Sema/CleanupInfo.h"
 #include "clang/Sema/Ownership.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
@@ -682,7 +683,7 @@ public:
   bool ExplicitParams;
 
   /// \brief Whether any of the capture expressions requires cleanups.
-  bool ExprNeedsCleanups;
+  CleanupInfo Cleanup;
 
   /// \brief Whether the lambda contains an unexpanded parameter pack.
   bool ContainsUnexpandedParameterPack;
@@ -730,7 +731,7 @@ public:
   LambdaScopeInfo(DiagnosticsEngine &Diag)
     : CapturingScopeInfo(Diag, ImpCap_None), Lambda(nullptr),
       CallOperator(nullptr), NumExplicitCaptures(0), Mutable(false),
-      ExplicitParams(false), ExprNeedsCleanups(false),
+      ExplicitParams(false), Cleanup{},
       ContainsUnexpandedParameterPack(false), AutoTemplateParameterDepth(0),
       GLTemplateParameterList(nullptr) {
     Kind = SK_Lambda;
