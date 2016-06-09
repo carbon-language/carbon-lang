@@ -4931,7 +4931,7 @@ void LoopVectorizationLegality::collectLoopUniforms() {
 }
 
 bool LoopVectorizationLegality::canVectorizeMemory() {
-  LAI = &LAA->getResult().getInfo(TheLoop, Strides);
+  LAI = &LAA->getInfo(TheLoop, Strides);
   auto &OptionalReport = LAI->getReport();
   if (OptionalReport)
     emitAnalysis(VectorizationReport(*OptionalReport));

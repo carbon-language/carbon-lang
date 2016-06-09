@@ -670,47 +670,9 @@ int getPtrStride(PredicatedScalarEvolution &PSE, Value *Ptr, const Loop *Lp,
                  bool Assume = false);
 
 /// \brief Returns true if the memory operations \p A and \p B are consecutive.
-/// This is a simple API that does not depend on the analysis pass.
+/// This is a simple API that does not depend on the analysis pass. 
 bool isConsecutiveAccess(Value *A, Value *B, const DataLayout &DL,
                          ScalarEvolution &SE, bool CheckType = true);
-
-/// \brief This class holds the result of LoopAccessAnalysis pass.
-class LoopAccessAnalysisResult {
-public:
-  void setDepAnalyses(AliasAnalysis *AA, DominatorTree *DT, LoopInfo *LI,
-                      ScalarEvolution *SCEV, TargetLibraryInfo *TLI) {
-    this->AA = AA;
-    this->DT = DT;
-    this->LI = LI;
-    this->SCEV = SCEV;
-    this->TLI = TLI;
-  }
-  /// \brief Query the result of the loop access information for the loop \p L.
-  ///
-  /// If the client speculates (and then issues run-time checks) for the values
-  /// of symbolic strides, \p Strides provides the mapping (see
-  /// replaceSymbolicStrideSCEV).  If there is no cached result available run
-  /// the analysis.
-  const LoopAccessInfo &getInfo(Loop *L, const ValueToValueMap &Strides);
-
-  void print(raw_ostream &OS, const Module *M = nullptr) const;
-
-  /// \brief Invalidate the cache when the pass is freed.
-  void releaseMemory() {
-    LoopAccessInfoMap.clear();
-  }
-
-private:
-  /// \brief LoopAccessInfo is created on demand. This map caches
-  /// the computed results.
-  DenseMap<Loop *, std::unique_ptr<LoopAccessInfo>> LoopAccessInfoMap;
-
-  AliasAnalysis *AA = nullptr;
-  DominatorTree *DT = nullptr;
-  LoopInfo *LI = nullptr;
-  ScalarEvolution *SCEV = nullptr;
-  TargetLibraryInfo *TLI = nullptr;
-};
 
 /// \brief This analysis provides dependence information for the memory accesses
 /// of a loop.
@@ -723,7 +685,7 @@ class LoopAccessAnalysis : public FunctionPass {
 public:
   static char ID;
 
-  LoopAccessAnalysis() : FunctionPass(ID), LAAR() {
+  LoopAccessAnalysis() : FunctionPass(ID) {
     initializeLoopAccessAnalysisPass(*PassRegistry::getPassRegistry());
   }
 
@@ -731,20 +693,32 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  LoopAccessAnalysisResult &getResult() { return LAAR; }
+  /// \brief Query the result of the loop access information for the loop \p L.
+  ///
+  /// If the client speculates (and then issues run-time checks) for the values
+  /// of symbolic strides, \p Strides provides the mapping (see
+  /// replaceSymbolicStrideSCEV).  If there is no cached result available run
+  /// the analysis.
+  const LoopAccessInfo &getInfo(Loop *L, const ValueToValueMap &Strides);
 
   void releaseMemory() override {
     // Invalidate the cache when the pass is freed.
-    LAAR.releaseMemory();
+    LoopAccessInfoMap.clear();
   }
 
   /// \brief Print the result of the analysis when invoked with -analyze.
-  void print(raw_ostream &OS, const Module *M = nullptr) const override {
-    LAAR.print(OS, M);
-  }
+  void print(raw_ostream &OS, const Module *M = nullptr) const override;
 
 private:
-  LoopAccessAnalysisResult LAAR;
+  /// \brief The cache.
+  DenseMap<Loop *, std::unique_ptr<LoopAccessInfo>> LoopAccessInfoMap;
+
+  // The used analysis passes.
+  ScalarEvolution *SE;
+  const TargetLibraryInfo *TLI;
+  AliasAnalysis *AA;
+  DominatorTree *DT;
+  LoopInfo *LI;
 };
 
 inline Instruction *MemoryDepChecker::Dependence::getSource(

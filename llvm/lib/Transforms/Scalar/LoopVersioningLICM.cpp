@@ -411,7 +411,7 @@ bool LoopVersioningLICM::legalLoopInstructions() {
         return false;
     }
   // Get LoopAccessInfo from current loop.
-  LAI = &LAA->getResult().getInfo(CurLoop, Strides);
+  LAI = &LAA->getInfo(CurLoop, Strides);
   // Check LoopAccessInfo for need of runtime check.
   if (LAI->getRuntimePointerChecking()->getChecks().empty()) {
     DEBUG(dbgs() << "    LAA: Runtime check not found !!\n");
