@@ -4194,7 +4194,7 @@ define <2 x double>@test_int_x86_avx512_mask_unpckh_pd_128(<2 x double> %x0, <2 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vunpckhpd %xmm1, %xmm0, %xmm2 {%k1} ## encoding: [0x62,0xf1,0xfd,0x09,0x15,0xd1]
-; CHECK-NEXT:    ## xmm2 = xmm2[1],k1[1]
+; CHECK-NEXT:    ## xmm2 = xmm0[1],xmm1[1]
 ; CHECK-NEXT:    vunpckhpd %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0xfd,0x08,0x15,0xc1]
 ; CHECK-NEXT:    ## xmm0 = xmm0[1],xmm1[1]
 ; CHECK-NEXT:    vaddpd %xmm0, %xmm2, %xmm0 ## encoding: [0x62,0xf1,0xed,0x08,0x58,0xc0]
@@ -4212,7 +4212,7 @@ define <4 x double>@test_int_x86_avx512_mask_unpckh_pd_256(<4 x double> %x0, <4 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vunpckhpd %ymm1, %ymm0, %ymm2 {%k1} ## encoding: [0x62,0xf1,0xfd,0x29,0x15,0xd1]
-; CHECK-NEXT:    ## ymm2 = ymm2[1],k1[1],ymm2[3],k1[3]
+; CHECK-NEXT:    ## ymm2 = ymm0[1],ymm1[1],ymm0[3],ymm1[3]
 ; CHECK-NEXT:    vunpckhpd %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0xfd,0x28,0x15,0xc1]
 ; CHECK-NEXT:    ## ymm0 = ymm0[1],ymm1[1],ymm0[3],ymm1[3]
 ; CHECK-NEXT:    vaddpd %ymm0, %ymm2, %ymm0 ## encoding: [0x62,0xf1,0xed,0x28,0x58,0xc0]
@@ -4230,7 +4230,7 @@ define <4 x float>@test_int_x86_avx512_mask_unpckh_ps_128(<4 x float> %x0, <4 x 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vunpckhps %xmm1, %xmm0, %xmm2 {%k1} ## encoding: [0x62,0xf1,0x7c,0x09,0x15,0xd1]
-; CHECK-NEXT:    ## xmm2 = xmm2[2],k1[2],xmm2[3],k1[3]
+; CHECK-NEXT:    ## xmm2 = xmm0[2],xmm1[2],xmm0[3],xmm1[3]
 ; CHECK-NEXT:    vunpckhps %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0x7c,0x08,0x15,0xc1]
 ; CHECK-NEXT:    ## xmm0 = xmm0[2],xmm1[2],xmm0[3],xmm1[3]
 ; CHECK-NEXT:    vaddps %xmm0, %xmm2, %xmm0 ## encoding: [0x62,0xf1,0x6c,0x08,0x58,0xc0]
@@ -4248,7 +4248,7 @@ define <8 x float>@test_int_x86_avx512_mask_unpckh_ps_256(<8 x float> %x0, <8 x 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vunpckhps %ymm1, %ymm0, %ymm2 {%k1} ## encoding: [0x62,0xf1,0x7c,0x29,0x15,0xd1]
-; CHECK-NEXT:    ## ymm2 = ymm2[2],k1[2],ymm2[3],k1[3],ymm2[6],k1[6],ymm2[7],k1[7]
+; CHECK-NEXT:    ## ymm2 = ymm0[2],ymm1[2],ymm0[3],ymm1[3],ymm0[6],ymm1[6],ymm0[7],ymm1[7]
 ; CHECK-NEXT:    vunpckhps %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0x7c,0x28,0x15,0xc1]
 ; CHECK-NEXT:    ## ymm0 = ymm0[2],ymm1[2],ymm0[3],ymm1[3],ymm0[6],ymm1[6],ymm0[7],ymm1[7]
 ; CHECK-NEXT:    vaddps %ymm0, %ymm2, %ymm0 ## encoding: [0x62,0xf1,0x6c,0x28,0x58,0xc0]
@@ -4266,7 +4266,7 @@ define <2 x double>@test_int_x86_avx512_mask_unpckl_pd_128(<2 x double> %x0, <2 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vunpcklpd %xmm1, %xmm0, %xmm2 {%k1} ## encoding: [0x62,0xf1,0xfd,0x09,0x14,0xd1]
-; CHECK-NEXT:    ## xmm2 = xmm2[0],k1[0]
+; CHECK-NEXT:    ## xmm2 = xmm0[0],xmm1[0]
 ; CHECK-NEXT:    vunpcklpd %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0xfd,0x08,0x14,0xc1]
 ; CHECK-NEXT:    ## xmm0 = xmm0[0],xmm1[0]
 ; CHECK-NEXT:    vaddpd %xmm0, %xmm2, %xmm0 ## encoding: [0x62,0xf1,0xed,0x08,0x58,0xc0]
@@ -4284,7 +4284,7 @@ define <4 x double>@test_int_x86_avx512_mask_unpckl_pd_256(<4 x double> %x0, <4 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vunpcklpd %ymm1, %ymm0, %ymm2 {%k1} ## encoding: [0x62,0xf1,0xfd,0x29,0x14,0xd1]
-; CHECK-NEXT:    ## ymm2 = ymm2[0],k1[0],ymm2[2],k1[2]
+; CHECK-NEXT:    ## ymm2 = ymm0[0],ymm1[0],ymm0[2],ymm1[2]
 ; CHECK-NEXT:    vunpcklpd %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0xfd,0x28,0x14,0xc1]
 ; CHECK-NEXT:    ## ymm0 = ymm0[0],ymm1[0],ymm0[2],ymm1[2]
 ; CHECK-NEXT:    vaddpd %ymm0, %ymm2, %ymm0 ## encoding: [0x62,0xf1,0xed,0x28,0x58,0xc0]
@@ -4302,7 +4302,7 @@ define <4 x float>@test_int_x86_avx512_mask_unpckl_ps_128(<4 x float> %x0, <4 x 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vunpcklps %xmm1, %xmm0, %xmm2 {%k1} ## encoding: [0x62,0xf1,0x7c,0x09,0x14,0xd1]
-; CHECK-NEXT:    ## xmm2 = xmm2[0],k1[0],xmm2[1],k1[1]
+; CHECK-NEXT:    ## xmm2 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; CHECK-NEXT:    vunpcklps %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0x7c,0x08,0x14,0xc1]
 ; CHECK-NEXT:    ## xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; CHECK-NEXT:    vaddps %xmm0, %xmm2, %xmm0 ## encoding: [0x62,0xf1,0x6c,0x08,0x58,0xc0]
@@ -4320,7 +4320,7 @@ define <8 x float>@test_int_x86_avx512_mask_unpckl_ps_256(<8 x float> %x0, <8 x 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vunpcklps %ymm1, %ymm0, %ymm2 {%k1} ## encoding: [0x62,0xf1,0x7c,0x29,0x14,0xd1]
-; CHECK-NEXT:    ## ymm2 = ymm2[0],k1[0],ymm2[1],k1[1],ymm2[4],k1[4],ymm2[5],k1[5]
+; CHECK-NEXT:    ## ymm2 = ymm0[0],ymm1[0],ymm0[1],ymm1[1],ymm0[4],ymm1[4],ymm0[5],ymm1[5]
 ; CHECK-NEXT:    vunpcklps %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0x7c,0x28,0x14,0xc1]
 ; CHECK-NEXT:    ## ymm0 = ymm0[0],ymm1[0],ymm0[1],ymm1[1],ymm0[4],ymm1[4],ymm0[5],ymm1[5]
 ; CHECK-NEXT:    vaddps %ymm0, %ymm2, %ymm0 ## encoding: [0x62,0xf1,0x6c,0x28,0x58,0xc0]
@@ -4338,7 +4338,7 @@ define <4 x i32>@test_int_x86_avx512_mask_punpckhd_q_128(<4 x i32> %x0, <4 x i32
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpunpckhdq %xmm1, %xmm0, %xmm2 {%k1} ## encoding: [0x62,0xf1,0x7d,0x09,0x6a,0xd1]
-; CHECK-NEXT:    ## xmm2 = xmm2[2],k1[2],xmm2[3],k1[3]
+; CHECK-NEXT:    ## xmm2 = xmm0[2],xmm1[2],xmm0[3],xmm1[3]
 ; CHECK-NEXT:    vpunpckhdq %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0x7d,0x08,0x6a,0xc1]
 ; CHECK-NEXT:    ## xmm0 = xmm0[2],xmm1[2],xmm0[3],xmm1[3]
 ; CHECK-NEXT:    vpaddd %xmm0, %xmm2, %xmm0 ## encoding: [0x62,0xf1,0x6d,0x08,0xfe,0xc0]
@@ -4356,7 +4356,7 @@ define <4 x i32>@test_int_x86_avx512_mask_punpckld_q_128(<4 x i32> %x0, <4 x i32
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpunpckldq %xmm1, %xmm0, %xmm2 {%k1} ## encoding: [0x62,0xf1,0x7d,0x09,0x62,0xd1]
-; CHECK-NEXT:    ## xmm2 = xmm2[0],k1[0],xmm2[1],k1[1]
+; CHECK-NEXT:    ## xmm2 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; CHECK-NEXT:    vpunpckldq %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0x7d,0x08,0x62,0xc1]
 ; CHECK-NEXT:    ## xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; CHECK-NEXT:    vpaddd %xmm0, %xmm2, %xmm0 ## encoding: [0x62,0xf1,0x6d,0x08,0xfe,0xc0]
@@ -4374,7 +4374,7 @@ define <8 x i32>@test_int_x86_avx512_mask_punpckhd_q_256(<8 x i32> %x0, <8 x i32
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpunpckhdq %ymm1, %ymm0, %ymm2 {%k1} ## encoding: [0x62,0xf1,0x7d,0x29,0x6a,0xd1]
-; CHECK-NEXT:    ## ymm2 = ymm2[2],k1[2],ymm2[3],k1[3],ymm2[6],k1[6],ymm2[7],k1[7]
+; CHECK-NEXT:    ## ymm2 = ymm0[2],ymm1[2],ymm0[3],ymm1[3],ymm0[6],ymm1[6],ymm0[7],ymm1[7]
 ; CHECK-NEXT:    vpunpckhdq %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0x7d,0x28,0x6a,0xc1]
 ; CHECK-NEXT:    ## ymm0 = ymm0[2],ymm1[2],ymm0[3],ymm1[3],ymm0[6],ymm1[6],ymm0[7],ymm1[7]
 ; CHECK-NEXT:    vpaddd %ymm0, %ymm2, %ymm0 ## encoding: [0x62,0xf1,0x6d,0x28,0xfe,0xc0]
@@ -4392,7 +4392,7 @@ define <8 x i32>@test_int_x86_avx512_mask_punpckld_q_256(<8 x i32> %x0, <8 x i32
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpunpckldq %ymm1, %ymm0, %ymm2 {%k1} ## encoding: [0x62,0xf1,0x7d,0x29,0x62,0xd1]
-; CHECK-NEXT:    ## ymm2 = ymm2[0],k1[0],ymm2[1],k1[1],ymm2[4],k1[4],ymm2[5],k1[5]
+; CHECK-NEXT:    ## ymm2 = ymm0[0],ymm1[0],ymm0[1],ymm1[1],ymm0[4],ymm1[4],ymm0[5],ymm1[5]
 ; CHECK-NEXT:    vpunpckldq %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0x7d,0x28,0x62,0xc1]
 ; CHECK-NEXT:    ## ymm0 = ymm0[0],ymm1[0],ymm0[1],ymm1[1],ymm0[4],ymm1[4],ymm0[5],ymm1[5]
 ; CHECK-NEXT:    vpaddd %ymm0, %ymm2, %ymm0 ## encoding: [0x62,0xf1,0x6d,0x28,0xfe,0xc0]
@@ -4410,7 +4410,7 @@ define <2 x i64>@test_int_x86_avx512_mask_punpckhqd_q_128(<2 x i64> %x0, <2 x i6
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpunpckhqdq %xmm1, %xmm0, %xmm2 {%k1} ## encoding: [0x62,0xf1,0xfd,0x09,0x6d,0xd1]
-; CHECK-NEXT:    ## xmm2 = xmm2[1],k1[1]
+; CHECK-NEXT:    ## xmm2 = xmm0[1],xmm1[1]
 ; CHECK-NEXT:    vpunpckhqdq %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0xfd,0x08,0x6d,0xc1]
 ; CHECK-NEXT:    ## xmm0 = xmm0[1],xmm1[1]
 ; CHECK-NEXT:    vpaddq %xmm0, %xmm2, %xmm0 ## encoding: [0x62,0xf1,0xed,0x08,0xd4,0xc0]
@@ -4428,7 +4428,7 @@ define <2 x i64>@test_int_x86_avx512_mask_punpcklqd_q_128(<2 x i64> %x0, <2 x i6
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpunpcklqdq %xmm1, %xmm0, %xmm2 {%k1} ## encoding: [0x62,0xf1,0xfd,0x09,0x6c,0xd1]
-; CHECK-NEXT:    ## xmm2 = xmm2[0],k1[0]
+; CHECK-NEXT:    ## xmm2 = xmm0[0],xmm1[0]
 ; CHECK-NEXT:    vpunpcklqdq %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0xfd,0x08,0x6c,0xc1]
 ; CHECK-NEXT:    ## xmm0 = xmm0[0],xmm1[0]
 ; CHECK-NEXT:    vpaddq %xmm0, %xmm2, %xmm0 ## encoding: [0x62,0xf1,0xed,0x08,0xd4,0xc0]
@@ -4446,7 +4446,7 @@ define <4 x i64>@test_int_x86_avx512_mask_punpcklqd_q_256(<4 x i64> %x0, <4 x i6
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpunpcklqdq %ymm1, %ymm0, %ymm2 {%k1} ## encoding: [0x62,0xf1,0xfd,0x29,0x6c,0xd1]
-; CHECK-NEXT:    ## ymm2 = ymm2[0],k1[0],ymm2[2],k1[2]
+; CHECK-NEXT:    ## ymm2 = ymm0[0],ymm1[0],ymm0[2],ymm1[2]
 ; CHECK-NEXT:    vpunpcklqdq %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0xfd,0x28,0x6c,0xc1]
 ; CHECK-NEXT:    ## ymm0 = ymm0[0],ymm1[0],ymm0[2],ymm1[2]
 ; CHECK-NEXT:    vpaddq %ymm0, %ymm2, %ymm0 ## encoding: [0x62,0xf1,0xed,0x28,0xd4,0xc0]
@@ -4464,7 +4464,7 @@ define <4 x i64>@test_int_x86_avx512_mask_punpckhqd_q_256(<4 x i64> %x0, <4 x i6
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpunpckhqdq %ymm1, %ymm0, %ymm2 {%k1} ## encoding: [0x62,0xf1,0xfd,0x29,0x6d,0xd1]
-; CHECK-NEXT:    ## ymm2 = ymm2[1],k1[1],ymm2[3],k1[3]
+; CHECK-NEXT:    ## ymm2 = ymm0[1],ymm1[1],ymm0[3],ymm1[3]
 ; CHECK-NEXT:    vpunpckhqdq %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0xfd,0x28,0x6d,0xc1]
 ; CHECK-NEXT:    ## ymm0 = ymm0[1],ymm1[1],ymm0[3],ymm1[3]
 ; CHECK-NEXT:    vpaddq %ymm0, %ymm2, %ymm0 ## encoding: [0x62,0xf1,0xed,0x28,0xd4,0xc0]
@@ -6184,9 +6184,9 @@ define <2 x double>@test_int_x86_avx512_mask_shuf_pd_128(<2 x double> %x0, <2 x 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vshufpd $22, %xmm1, %xmm0, %xmm2 {%k1} ## encoding: [0x62,0xf1,0xfd,0x09,0xc6,0xd1,0x16]
-; CHECK-NEXT:    ## xmm2 = xmm2[0],k1[1]
+; CHECK-NEXT:    ## xmm2 = xmm0[0],xmm1[1]
 ; CHECK-NEXT:    vshufpd $22, %xmm1, %xmm0, %xmm3 {%k1} {z} ## encoding: [0x62,0xf1,0xfd,0x89,0xc6,0xd9,0x16]
-; CHECK-NEXT:    ## xmm3 = k1[0],xmm0[1]
+; CHECK-NEXT:    ## xmm3 = xmm0[0],xmm1[1]
 ; CHECK-NEXT:    vshufpd $22, %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0xfd,0x08,0xc6,0xc1,0x16]
 ; CHECK-NEXT:    ## xmm0 = xmm0[0],xmm1[1]
 ; CHECK-NEXT:    vaddpd %xmm0, %xmm2, %xmm0 ## encoding: [0x62,0xf1,0xed,0x08,0x58,0xc0]
@@ -6207,7 +6207,7 @@ define <4 x double>@test_int_x86_avx512_mask_shuf_pd_256(<4 x double> %x0, <4 x 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vshufpd $22, %ymm1, %ymm0, %ymm2 {%k1} ## encoding: [0x62,0xf1,0xfd,0x29,0xc6,0xd1,0x16]
-; CHECK-NEXT:    ## ymm2 = ymm2[0],k1[1],ymm2[3],k1[2]
+; CHECK-NEXT:    ## ymm2 = ymm0[0],ymm1[1],ymm0[3],ymm1[2]
 ; CHECK-NEXT:    vshufpd $22, %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0xfd,0x28,0xc6,0xc1,0x16]
 ; CHECK-NEXT:    ## ymm0 = ymm0[0],ymm1[1],ymm0[3],ymm1[2]
 ; CHECK-NEXT:    vaddpd %ymm0, %ymm2, %ymm0 ## encoding: [0x62,0xf1,0xed,0x28,0x58,0xc0]
@@ -6225,7 +6225,7 @@ define <4 x float>@test_int_x86_avx512_mask_shuf_ps_128(<4 x float> %x0, <4 x fl
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vshufps $22, %xmm1, %xmm0, %xmm2 {%k1} ## encoding: [0x62,0xf1,0x7c,0x09,0xc6,0xd1,0x16]
-; CHECK-NEXT:    ## xmm2 = xmm2[2,1],k1[1,0]
+; CHECK-NEXT:    ## xmm2 = xmm0[2,1],xmm1[1,0]
 ; CHECK-NEXT:    vshufps $22, %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0x7c,0x08,0xc6,0xc1,0x16]
 ; CHECK-NEXT:    ## xmm0 = xmm0[2,1],xmm1[1,0]
 ; CHECK-NEXT:    vaddps %xmm0, %xmm2, %xmm0 ## encoding: [0x62,0xf1,0x6c,0x08,0x58,0xc0]
@@ -6243,7 +6243,7 @@ define <8 x float>@test_int_x86_avx512_mask_shuf_ps_256(<8 x float> %x0, <8 x fl
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vshufps $22, %ymm1, %ymm0, %ymm2 {%k1} ## encoding: [0x62,0xf1,0x7c,0x29,0xc6,0xd1,0x16]
-; CHECK-NEXT:    ## ymm2 = ymm2[2,1],k1[1,0],ymm2[6,5],k1[5,4]
+; CHECK-NEXT:    ## ymm2 = ymm0[2,1],ymm1[1,0],ymm0[6,5],ymm1[5,4]
 ; CHECK-NEXT:    vshufps $22, %ymm1, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0x7c,0x28,0xc6,0xc1,0x16]
 ; CHECK-NEXT:    ## ymm0 = ymm0[2,1],ymm1[1,0],ymm0[6,5],ymm1[5,4]
 ; CHECK-NEXT:    vaddps %ymm0, %ymm2, %ymm0 ## encoding: [0x62,0xf1,0x6c,0x28,0x58,0xc0]
