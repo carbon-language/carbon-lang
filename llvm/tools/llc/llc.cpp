@@ -411,18 +411,19 @@ static int compileModule(char **argv, LLVMContext &Context) {
         errs() << argv[0] << ": run-pass needs a .mir input.\n";
         return 1;
       }
+      LLVMTargetMachine &LLVMTM = static_cast<LLVMTargetMachine&>(*Target);
+      TargetPassConfig *TPC = LLVMTM.createPassConfig(PM);
+      PM.add(TPC);
+      LLVMTM.addMachineModuleInfo(PM);
+      LLVMTM.addMachineFunctionAnalysis(PM, MIR.get());
+      TPC->printAndVerify("");
+
       for (std::string &RunPassName : *RunPassNames) {
         const PassInfo *PI = PR->getPassInfo(RunPassName);
         if (!PI) {
           errs() << argv[0] << ": run-pass " << RunPassName << " is not registered.\n";
           return 1;
         }
-        LLVMTargetMachine &LLVMTM = static_cast<LLVMTargetMachine&>(*Target);
-        TargetPassConfig *TPC = LLVMTM.createPassConfig(PM);
-        PM.add(TPC);
-        LLVMTM.addMachineModuleInfo(PM);
-        LLVMTM.addMachineFunctionAnalysis(PM, MIR.get());
-        TPC->printAndVerify("");
 
         Pass *P;
         if (PI->getTargetMachineCtor())
