@@ -139,7 +139,7 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
 
         // If the symbol is preemptible we need the dynamic linker to write
         // the offset too.
-        if (Body.isPreemptible())
+        if (isPreemptible(Body, Type))
           Out<ELFT>::RelaDyn->addReloc({Target->TlsOffsetRel, Out<ELFT>::Got,
                                         Off + (uintX_t)sizeof(uintX_t), false,
                                         &Body, 0});
