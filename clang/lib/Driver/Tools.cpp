@@ -9119,7 +9119,7 @@ static const char *getLDMOption(const llvm::Triple &T, const ArgList &Args) {
     return "armelf_linux_eabi";
   case llvm::Triple::armeb:
   case llvm::Triple::thumbeb:
-    return "armebelf_linux_eabi"; /* TODO: check which NAME.  */
+    return "armelfb_linux_eabi";
   case llvm::Triple::ppc:
     return "elf32ppclinux";
   case llvm::Triple::ppc64:
