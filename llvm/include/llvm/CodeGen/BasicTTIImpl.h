@@ -412,6 +412,9 @@ public:
       // If we are converting vectors and the operation is illegal, or
       // if the vectors are legalized to different types, estimate the
       // scalarization costs.
+      // TODO: This is probably a big overestimate. For splits, we should have
+      // something like getTypeLegalizationCost() + 2 * getCastInstrCost().
+      // The same applies to getCmpSelInstrCost() and getArithmeticInstrCost()
       unsigned Num = Dst->getVectorNumElements();
       unsigned Cost = static_cast<T *>(this)->getCastInstrCost(
           Opcode, Dst->getScalarType(), Src->getScalarType());
