@@ -16,6 +16,7 @@
 
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/SwapByteOrder.h"
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <type_traits>
