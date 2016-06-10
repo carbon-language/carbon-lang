@@ -54,6 +54,8 @@ public:
 
   ArrayRef<uint8_t> getBlockData(uint32_t BlockIndex,
                                  uint32_t NumBytes) const override;
+  Error setBlockData(uint32_t BlockIndex, uint32_t Offset,
+                     ArrayRef<uint8_t> Data) const override;
 
   ArrayRef<support::ulittle32_t> getDirectoryBlockArray() const;
 

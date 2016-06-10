@@ -136,6 +136,17 @@ ArrayRef<uint8_t> PDBFile::getBlockData(uint32_t BlockIndex,
       NumBytes);
 }
 
+Error PDBFile::setBlockData(uint32_t BlockIndex, uint32_t Offset,
+                            ArrayRef<uint8_t> Data) const {
+  if (BlockIndex >= getBlockCount())
+    return make_error<RawError>(raw_error_code::invalid_block_address);
+
+  if (Offset > getBlockSize() - Data.size())
+    return make_error<RawError>(raw_error_code::insufficient_buffer);
+
+  return make_error<RawError>(raw_error_code::not_writable);
+}
+
 Error PDBFile::parseFileHeaders() {
   std::error_code EC;
   MemoryBufferRef BufferRef = *Context->Buffer;

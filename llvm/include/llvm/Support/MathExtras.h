@@ -681,6 +681,14 @@ inline int64_t SignExtend64(uint64_t X, unsigned B) {
   return int64_t(X << (64 - B)) >> (64 - B);
 }
 
+/// \brief Subtract two unsigned integers, X and Y, of type T and return their
+/// absolute value.
+template <typename T>
+typename std::enable_if<std::is_unsigned<T>::value, T>::type
+AbsoluteDifference(T X, T Y) {
+  return std::max(X, Y) - std::min(X, Y);
+}
+
 /// \brief Add two unsigned integers, X and Y, of type T.
 /// Clamp the result to the maximum representable value of T on overflow.
 /// ResultOverflowed indicates if the result is larger than the maximum
