@@ -1,6 +1,6 @@
 ; Test basic EfficiencySanitizer struct field count instrumentation.
 ;
-; RUN: opt < %s -esan -esan-cache-frag -esan-instrument-loads-and-stores=false -esan-instrument-memintrinsics=false -S | FileCheck %s
+; RUN: opt < %s -esan -esan-cache-frag -S | FileCheck %s
 
 %struct.A = type { i32, i32 }
 %union.U = type { double }
@@ -93,3 +93,11 @@ entry:
 ; CHECK-NEXT:   %k1 = load %struct.A*, %struct.A** %k, align 8
 ; CHECK-NEXT:   %arrayidx13 = getelementptr inbounds %struct.A, %struct.A* %k1, i64 0
 ; CHECK-NEXT:   ret i32 0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Top-level:
+
+; CHECK: define internal void @esan.module_ctor()
+; CHECK: call void @__esan_init(i32 1, i8* bitcast ({ i8*, i32, { i8*, i32, i64*, i8** }* }* @21 to i8*))
+; CHECK: define internal void @esan.module_dtor()
+; CHECK: call void @__esan_exit(i8* bitcast ({ i8*, i32, { i8*, i32, i64*, i8** }* }* @21 to i8*))

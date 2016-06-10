@@ -56,6 +56,9 @@ static cl::opt<bool> ClInstrumentLoadsAndStores(
 static cl::opt<bool> ClInstrumentMemIntrinsics(
     "esan-instrument-memintrinsics", cl::init(true),
     cl::desc("Instrument memintrinsics (memset/memcpy/memmove)"), cl::Hidden);
+static cl::opt<bool> ClInstrumentFastpath(
+    "esan-instrument-fastpath", cl::init(true),
+    cl::desc("Instrument fastpath"), cl::Hidden);
 
 // Experiments show that the performance difference can be 2x or more,
 // and accuracy loss is typically negligible, so we turn this on by default.
@@ -591,7 +594,8 @@ bool EfficiencySanitizer::instrumentLoadOrStore(Instruction *I,
                    {IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()),
                     ConstantInt::get(IntptrTy, TypeSizeBytes)});
   } else {
-    if (instrumentFastpath(I, DL, IsStore, Addr, Alignment)) {
+    if (ClInstrumentFastpath &&
+        instrumentFastpath(I, DL, IsStore, Addr, Alignment)) {
       NumFastpaths++;
       return true;
     }
@@ -708,8 +712,8 @@ bool EfficiencySanitizer::instrumentFastpathCacheFrag(Instruction *I,
                                                       const DataLayout &DL,
                                                       Value *Addr,
                                                       unsigned Alignment) {
-  // TODO(bruening): implement a fastpath for aligned accesses
-  return false;
+  // Do nothing.
+  return true; // Return true to avoid slowpath instrumentation.
 }
 
 bool EfficiencySanitizer::instrumentFastpathWorkingSet(
