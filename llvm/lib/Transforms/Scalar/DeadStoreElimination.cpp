@@ -545,7 +545,7 @@ static bool handleFree(CallInst *F, AliasAnalysis *AA,
 
       auto Next = ++Dependency->getIterator();
 
-      // DCE instructions only used to calculate that store
+      // DCE instructions only used to calculate that store.
       deleteDeadInstruction(Dependency, *MD, *TLI);
       ++NumFastStores;
       MadeChange = true;
