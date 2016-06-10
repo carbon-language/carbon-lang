@@ -8787,7 +8787,9 @@ define <4 x double>@test_int_x86_avx512_mask_perm_df_256(<4 x double> %x0, i32 %
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %esi, %k1 ## encoding: [0xc5,0xf8,0x92,0xce]
 ; CHECK-NEXT:    vpermpd $3, %ymm0, %ymm1 {%k1} ## encoding: [0x62,0xf3,0xfd,0x29,0x01,0xc8,0x03]
+; CHECK-NEXT:    ## ymm1 = ymm0[3,0,0,0]
 ; CHECK-NEXT:    vpermpd $3, %ymm0, %ymm2 {%k1} {z} ## encoding: [0x62,0xf3,0xfd,0xa9,0x01,0xd0,0x03]
+; CHECK-NEXT:    ## ymm2 = ymm0[3,0,0,0]
 ; CHECK-NEXT:    vpermpd $3, %ymm0, %ymm0 ## encoding: [0x62,0xf3,0xfd,0x28,0x01,0xc0,0x03]
 ; CHECK-NEXT:    ## ymm0 = ymm0[3,0,0,0]
 ; CHECK-NEXT:    vaddpd %ymm2, %ymm1, %ymm1 ## encoding: [0x62,0xf1,0xf5,0x28,0x58,0xca]
@@ -8808,7 +8810,9 @@ define <4 x i64>@test_int_x86_avx512_mask_perm_di_256(<4 x i64> %x0, i32 %x1, <4
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %esi, %k1 ## encoding: [0xc5,0xf8,0x92,0xce]
 ; CHECK-NEXT:    vpermq $3, %ymm0, %ymm1 {%k1} ## encoding: [0x62,0xf3,0xfd,0x29,0x00,0xc8,0x03]
+; CHECK-NEXT:    ## ymm1 = ymm0[3,0,0,0]
 ; CHECK-NEXT:    vpermq $3, %ymm0, %ymm2 {%k1} {z} ## encoding: [0x62,0xf3,0xfd,0xa9,0x00,0xd0,0x03]
+; CHECK-NEXT:    ## ymm2 = ymm0[3,0,0,0]
 ; CHECK-NEXT:    vpermq $3, %ymm0, %ymm0 ## encoding: [0x62,0xf3,0xfd,0x28,0x00,0xc0,0x03]
 ; CHECK-NEXT:    ## ymm0 = ymm0[3,0,0,0]
 ; CHECK-NEXT:    vpaddq %ymm2, %ymm1, %ymm1 ## encoding: [0x62,0xf1,0xf5,0x28,0xd4,0xca]
