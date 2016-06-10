@@ -876,7 +876,7 @@ bool AMDGPUDAGToDAGISel::SelectDS1Addr1Offset(SDValue Addr, SDValue &Base,
                                      Zero, Addr.getOperand(1));
 
           Base = SDValue(MachineSub, 0);
-          Offset = Addr.getOperand(0);
+          Offset = CurDAG->getTargetConstant(ByteOffset, DL, MVT::i16);
           return true;
         }
       }
@@ -894,7 +894,7 @@ bool AMDGPUDAGToDAGISel::SelectDS1Addr1Offset(SDValue Addr, SDValue &Base,
       MachineSDNode *MovZero = CurDAG->getMachineNode(AMDGPU::V_MOV_B32_e32,
                                  DL, MVT::i32, Zero);
       Base = SDValue(MovZero, 0);
-      Offset = Addr;
+      Offset = CurDAG->getTargetConstant(CAddr->getZExtValue(), DL, MVT::i16);
       return true;
     }
   }
