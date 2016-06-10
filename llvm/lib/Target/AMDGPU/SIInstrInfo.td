@@ -2116,8 +2116,8 @@ multiclass VOP2e_Helper <vop2 op, string opName, VOPProfile p,
                          list<dag> pat32, list<dag> pat64,
                          string revOp, bit useSGPRInput> {
 
-  let SchedRW = [Write32Bit, WriteSALU] in {
-    let Uses = !if(useSGPRInput, [VCC, EXEC], [EXEC]), Defs = [VCC] in {
+  let SchedRW = [Write32Bit] in {
+    let Uses = !if(useSGPRInput, [VCC, EXEC], [EXEC]) in {
       defm _e32 : VOP2_m <op, opName, p, pat32, revOp>;
     }
 
