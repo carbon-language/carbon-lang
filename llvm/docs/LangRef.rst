@@ -8553,8 +8553,8 @@ This instruction requires several arguments:
    indicates the function accepts a variable number of arguments, the
    extra arguments can be specified.
 #. The optional :ref:`function attributes <fnattrs>` list. Only
-   '``noreturn``', '``nounwind``', '``readonly``' and '``readnone``'
-   attributes are valid here.
+   '``noreturn``', '``nounwind``', '``readonly``' , '``readnone``',
+   and '``convergent``' attributes are valid here.
 #. The optional :ref:`operand bundles <opbundles>` list.
 
 Semantics:
