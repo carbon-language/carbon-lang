@@ -87,11 +87,19 @@ private:
   // Note: we would need to do something so that we can recognize such operand
   //       as constants.
   // 3. Create the generic instruction.
-  bool translateADD(const Instruction &Inst);
 
   bool translateBr(const Instruction &Inst);
 
   bool translateReturn(const Instruction &Inst);
+
+  /// Translate \p Inst into a binary operation \p Opcode.
+  /// Insert the newly translated instruction right where the MIRBuilder
+  /// is set.
+  ///
+  /// \pre \p Inst is a binary operation.
+  ///
+  /// \return true if the translation succeeded.
+  bool translateBinaryOp(unsigned Opcode, const Instruction &Inst);
 
   // Builder for machine instruction a la IRBuilder.
   // I.e., compared to regular MIBuilder, this one also inserts the instruction
