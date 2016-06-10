@@ -538,6 +538,9 @@ void TargetPassConfig::addISelPrepare() {
 void TargetPassConfig::addMachinePasses() {
   AddingMachinePasses = true;
 
+  if (UseIPRA)
+    addPass(createRegUsageInfoPropPass());
+
   // Insert a machine instr printer pass after the specified pass.
   if (!StringRef(PrintMachineInstrs.getValue()).equals("") &&
       !StringRef(PrintMachineInstrs.getValue()).equals("option-unspecified")) {

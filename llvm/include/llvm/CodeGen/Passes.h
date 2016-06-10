@@ -365,6 +365,11 @@ namespace llvm {
   /// This pass is executed POST-RA to collect which physical registers are
   /// preserved by given machine function.
   FunctionPass *createRegUsageInfoCollector();
+
+  /// Return a MachineFunction pass that identifies call sites
+  /// and propagates register usage information of callee to caller
+  /// if available with PysicalRegisterUsageInfo pass.
+  FunctionPass *createRegUsageInfoPropPass();
 } // End llvm namespace
 
 /// Target machine pass initializer for passes with dependencies. Use with
