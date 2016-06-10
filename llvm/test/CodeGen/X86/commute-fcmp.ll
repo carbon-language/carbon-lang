@@ -75,6 +75,54 @@ define <4 x i32> @commute_cmpps_uno(<4 x float>* %a0, <4 x float> %a1) {
   ret <4 x i32> %3
 }
 
+define <4 x i32> @commute_cmpps_ueq(<4 x float>* %a0, <4 x float> %a1) {
+; SSE-LABEL: commute_cmpps_ueq:
+; SSE:       # BB#0:
+; SSE-NEXT:    movaps (%rdi), %xmm1
+; SSE-NEXT:    movaps %xmm1, %xmm2
+; SSE-NEXT:    cmpeqps %xmm0, %xmm2
+; SSE-NEXT:    cmpunordps %xmm1, %xmm0
+; SSE-NEXT:    orps %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: commute_cmpps_ueq:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps (%rdi), %xmm1
+; AVX-NEXT:    vcmpeqps %xmm0, %xmm1, %xmm2
+; AVX-NEXT:    vcmpunordps %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    vorps %xmm2, %xmm0, %xmm0
+; AVX-NEXT:    retq
+;
+  %1 = load <4 x float>, <4 x float>* %a0
+  %2 = fcmp ueq <4 x float> %1, %a1
+  %3 = sext <4 x i1> %2 to <4 x i32>
+  ret <4 x i32> %3
+}
+
+define <4 x i32> @commute_cmpps_one(<4 x float>* %a0, <4 x float> %a1) {
+; SSE-LABEL: commute_cmpps_one:
+; SSE:       # BB#0:
+; SSE-NEXT:    movaps (%rdi), %xmm1
+; SSE-NEXT:    movaps %xmm1, %xmm2
+; SSE-NEXT:    cmpneqps %xmm0, %xmm2
+; SSE-NEXT:    cmpordps %xmm1, %xmm0
+; SSE-NEXT:    andps %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: commute_cmpps_one:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps (%rdi), %xmm1
+; AVX-NEXT:    vcmpneqps %xmm0, %xmm1, %xmm2
+; AVX-NEXT:    vcmpordps %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    vandps %xmm2, %xmm0, %xmm0
+; AVX-NEXT:    retq
+;
+  %1 = load <4 x float>, <4 x float>* %a0
+  %2 = fcmp one <4 x float> %1, %a1
+  %3 = sext <4 x i1> %2 to <4 x i32>
+  ret <4 x i32> %3
+}
+
 define <4 x i32> @commute_cmpps_lt(<4 x float>* %a0, <4 x float> %a1) {
 ; SSE-LABEL: commute_cmpps_lt:
 ; SSE:       # BB#0:
@@ -187,6 +235,64 @@ define <8 x i32> @commute_cmpps_uno_ymm(<8 x float>* %a0, <8 x float> %a1) {
   ret <8 x i32> %3
 }
 
+define <8 x i32> @commute_cmpps_ueq_ymm(<8 x float>* %a0, <8 x float> %a1) {
+; SSE-LABEL: commute_cmpps_ueq_ymm:
+; SSE:       # BB#0:
+; SSE-NEXT:    movaps (%rdi), %xmm2
+; SSE-NEXT:    movaps 16(%rdi), %xmm3
+; SSE-NEXT:    movaps %xmm2, %xmm4
+; SSE-NEXT:    cmpeqps %xmm0, %xmm4
+; SSE-NEXT:    cmpunordps %xmm2, %xmm0
+; SSE-NEXT:    orps %xmm4, %xmm0
+; SSE-NEXT:    movaps %xmm3, %xmm2
+; SSE-NEXT:    cmpeqps %xmm1, %xmm2
+; SSE-NEXT:    cmpunordps %xmm3, %xmm1
+; SSE-NEXT:    orps %xmm2, %xmm1
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: commute_cmpps_ueq_ymm:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps (%rdi), %ymm1
+; AVX-NEXT:    vcmpeqps %ymm0, %ymm1, %ymm2
+; AVX-NEXT:    vcmpunordps %ymm0, %ymm1, %ymm0
+; AVX-NEXT:    vorps %ymm2, %ymm0, %ymm0
+; AVX-NEXT:    retq
+;
+  %1 = load <8 x float>, <8 x float>* %a0
+  %2 = fcmp ueq <8 x float> %1, %a1
+  %3 = sext <8 x i1> %2 to <8 x i32>
+  ret <8 x i32> %3
+}
+
+define <8 x i32> @commute_cmpps_one_ymm(<8 x float>* %a0, <8 x float> %a1) {
+; SSE-LABEL: commute_cmpps_one_ymm:
+; SSE:       # BB#0:
+; SSE-NEXT:    movaps (%rdi), %xmm2
+; SSE-NEXT:    movaps 16(%rdi), %xmm3
+; SSE-NEXT:    movaps %xmm2, %xmm4
+; SSE-NEXT:    cmpneqps %xmm0, %xmm4
+; SSE-NEXT:    cmpordps %xmm2, %xmm0
+; SSE-NEXT:    andps %xmm4, %xmm0
+; SSE-NEXT:    movaps %xmm3, %xmm2
+; SSE-NEXT:    cmpneqps %xmm1, %xmm2
+; SSE-NEXT:    cmpordps %xmm3, %xmm1
+; SSE-NEXT:    andps %xmm2, %xmm1
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: commute_cmpps_one_ymm:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps (%rdi), %ymm1
+; AVX-NEXT:    vcmpneqps %ymm0, %ymm1, %ymm2
+; AVX-NEXT:    vcmpordps %ymm0, %ymm1, %ymm0
+; AVX-NEXT:    vandps %ymm2, %ymm0, %ymm0
+; AVX-NEXT:    retq
+;
+  %1 = load <8 x float>, <8 x float>* %a0
+  %2 = fcmp one <8 x float> %1, %a1
+  %3 = sext <8 x i1> %2 to <8 x i32>
+  ret <8 x i32> %3
+}
+
 define <8 x i32> @commute_cmpps_lt_ymm(<8 x float>* %a0, <8 x float> %a1) {
 ; SSE-LABEL: commute_cmpps_lt_ymm:
 ; SSE:       # BB#0:
@@ -285,6 +391,54 @@ define <2 x i64> @commute_cmppd_ord(<2 x double>* %a0, <2 x double> %a1) {
 ;
   %1 = load <2 x double>, <2 x double>* %a0
   %2 = fcmp ord <2 x double> %1, %a1
+  %3 = sext <2 x i1> %2 to <2 x i64>
+  ret <2 x i64> %3
+}
+
+define <2 x i64> @commute_cmppd_ueq(<2 x double>* %a0, <2 x double> %a1) {
+; SSE-LABEL: commute_cmppd_ueq:
+; SSE:       # BB#0:
+; SSE-NEXT:    movapd (%rdi), %xmm1
+; SSE-NEXT:    movapd %xmm1, %xmm2
+; SSE-NEXT:    cmpeqpd %xmm0, %xmm2
+; SSE-NEXT:    cmpunordpd %xmm1, %xmm0
+; SSE-NEXT:    orpd %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: commute_cmppd_ueq:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovapd (%rdi), %xmm1
+; AVX-NEXT:    vcmpeqpd %xmm0, %xmm1, %xmm2
+; AVX-NEXT:    vcmpunordpd %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    vorpd %xmm2, %xmm0, %xmm0
+; AVX-NEXT:    retq
+;
+  %1 = load <2 x double>, <2 x double>* %a0
+  %2 = fcmp ueq <2 x double> %1, %a1
+  %3 = sext <2 x i1> %2 to <2 x i64>
+  ret <2 x i64> %3
+}
+
+define <2 x i64> @commute_cmppd_one(<2 x double>* %a0, <2 x double> %a1) {
+; SSE-LABEL: commute_cmppd_one:
+; SSE:       # BB#0:
+; SSE-NEXT:    movapd (%rdi), %xmm1
+; SSE-NEXT:    movapd %xmm1, %xmm2
+; SSE-NEXT:    cmpneqpd %xmm0, %xmm2
+; SSE-NEXT:    cmpordpd %xmm1, %xmm0
+; SSE-NEXT:    andpd %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: commute_cmppd_one:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovapd (%rdi), %xmm1
+; AVX-NEXT:    vcmpneqpd %xmm0, %xmm1, %xmm2
+; AVX-NEXT:    vcmpordpd %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    vandpd %xmm2, %xmm0, %xmm0
+; AVX-NEXT:    retq
+;
+  %1 = load <2 x double>, <2 x double>* %a0
+  %2 = fcmp one <2 x double> %1, %a1
   %3 = sext <2 x i1> %2 to <2 x i64>
   ret <2 x i64> %3
 }
@@ -414,6 +568,64 @@ define <4 x i64> @commute_cmppd_uno_ymmm(<4 x double>* %a0, <4 x double> %a1) {
 ;
   %1 = load <4 x double>, <4 x double>* %a0
   %2 = fcmp uno <4 x double> %1, %a1
+  %3 = sext <4 x i1> %2 to <4 x i64>
+  ret <4 x i64> %3
+}
+
+define <4 x i64> @commute_cmppd_ueq_ymmm(<4 x double>* %a0, <4 x double> %a1) {
+; SSE-LABEL: commute_cmppd_ueq_ymmm:
+; SSE:       # BB#0:
+; SSE-NEXT:    movapd (%rdi), %xmm2
+; SSE-NEXT:    movapd 16(%rdi), %xmm3
+; SSE-NEXT:    movapd %xmm2, %xmm4
+; SSE-NEXT:    cmpeqpd %xmm0, %xmm4
+; SSE-NEXT:    cmpunordpd %xmm2, %xmm0
+; SSE-NEXT:    orpd %xmm4, %xmm0
+; SSE-NEXT:    movapd %xmm3, %xmm2
+; SSE-NEXT:    cmpeqpd %xmm1, %xmm2
+; SSE-NEXT:    cmpunordpd %xmm3, %xmm1
+; SSE-NEXT:    orpd %xmm2, %xmm1
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: commute_cmppd_ueq_ymmm:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovapd (%rdi), %ymm1
+; AVX-NEXT:    vcmpeqpd %ymm0, %ymm1, %ymm2
+; AVX-NEXT:    vcmpunordpd %ymm0, %ymm1, %ymm0
+; AVX-NEXT:    vorpd %ymm2, %ymm0, %ymm0
+; AVX-NEXT:    retq
+;
+  %1 = load <4 x double>, <4 x double>* %a0
+  %2 = fcmp ueq <4 x double> %1, %a1
+  %3 = sext <4 x i1> %2 to <4 x i64>
+  ret <4 x i64> %3
+}
+
+define <4 x i64> @commute_cmppd_one_ymmm(<4 x double>* %a0, <4 x double> %a1) {
+; SSE-LABEL: commute_cmppd_one_ymmm:
+; SSE:       # BB#0:
+; SSE-NEXT:    movapd (%rdi), %xmm2
+; SSE-NEXT:    movapd 16(%rdi), %xmm3
+; SSE-NEXT:    movapd %xmm2, %xmm4
+; SSE-NEXT:    cmpneqpd %xmm0, %xmm4
+; SSE-NEXT:    cmpordpd %xmm2, %xmm0
+; SSE-NEXT:    andpd %xmm4, %xmm0
+; SSE-NEXT:    movapd %xmm3, %xmm2
+; SSE-NEXT:    cmpneqpd %xmm1, %xmm2
+; SSE-NEXT:    cmpordpd %xmm3, %xmm1
+; SSE-NEXT:    andpd %xmm2, %xmm1
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: commute_cmppd_one_ymmm:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovapd (%rdi), %ymm1
+; AVX-NEXT:    vcmpneqpd %ymm0, %ymm1, %ymm2
+; AVX-NEXT:    vcmpordpd %ymm0, %ymm1, %ymm0
+; AVX-NEXT:    vandpd %ymm2, %ymm0, %ymm0
+; AVX-NEXT:    retq
+;
+  %1 = load <4 x double>, <4 x double>* %a0
+  %2 = fcmp one <4 x double> %1, %a1
   %3 = sext <4 x i1> %2 to <4 x i64>
   ret <4 x i64> %3
 }
