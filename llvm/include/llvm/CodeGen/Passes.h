@@ -361,6 +361,10 @@ namespace llvm {
   /// independently of other lanes and splits them into separate virtual
   /// registers.
   extern char &RenameIndependentSubregsID;
+
+  /// This pass is executed POST-RA to collect which physical registers are
+  /// preserved by given machine function.
+  FunctionPass *createRegUsageInfoCollector();
 } // End llvm namespace
 
 /// Target machine pass initializer for passes with dependencies. Use with
