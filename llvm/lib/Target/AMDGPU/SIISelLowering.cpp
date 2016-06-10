@@ -38,8 +38,8 @@ using namespace llvm;
 
 // -amdgpu-fast-fdiv - Command line option to enable faster 2.5 ulp fdiv.
 static cl::opt<bool> EnableAMDGPUFastFDIV(
-  "amdgpu-fast-fdiv", 
-  cl::desc("Enable faster 2.5 ulp fdiv"), 
+  "amdgpu-fast-fdiv",
+  cl::desc("Enable faster 2.5 ulp fdiv"),
   cl::init(false));
 
 static unsigned findFirstFreeSGPR(CCState &CCInfo) {
@@ -492,7 +492,7 @@ static bool isFlatGlobalAddrSpace(unsigned AS) {
 
 bool SITargetLowering::isNoopAddrSpaceCast(unsigned SrcAS,
                                            unsigned DestAS) const {
-  return isFlatGlobalAddrSpace(SrcAS) &&  isFlatGlobalAddrSpace(DestAS);
+  return isFlatGlobalAddrSpace(SrcAS) && isFlatGlobalAddrSpace(DestAS);
 }
 
 
@@ -1989,32 +1989,32 @@ SDValue SITargetLowering::LowerFDIV32(SDValue Op, SelectionDAG &DAG) const {
     SDValue Mul = DAG.getNode(ISD::FMUL, SL, MVT::f32, LHS, r0);
 
     return DAG.getNode(ISD::FMUL, SL, MVT::f32, r3, Mul);
-  } 
-    
+  }
+
   // Generates more precise fpdiv32.
   const SDValue One = DAG.getConstantFP(1.0, SL, MVT::f32);
-  
+
   SDVTList ScaleVT = DAG.getVTList(MVT::f32, MVT::i1);
-  
+
   SDValue DenominatorScaled = DAG.getNode(AMDGPUISD::DIV_SCALE, SL, ScaleVT, RHS, RHS, LHS);
   SDValue NumeratorScaled = DAG.getNode(AMDGPUISD::DIV_SCALE, SL, ScaleVT, LHS, RHS, LHS);
-  
+
   SDValue ApproxRcp = DAG.getNode(AMDGPUISD::RCP, SL, MVT::f32, DenominatorScaled);
-  
+
   SDValue NegDivScale0 = DAG.getNode(ISD::FNEG, SL, MVT::f32, DenominatorScaled);
-  
+
   SDValue Fma0 = DAG.getNode(ISD::FMA, SL, MVT::f32, NegDivScale0, ApproxRcp, One);
   SDValue Fma1 = DAG.getNode(ISD::FMA, SL, MVT::f32, Fma0, ApproxRcp, ApproxRcp);
-  
+
   SDValue Mul = DAG.getNode(ISD::FMUL, SL, MVT::f32, NumeratorScaled, Fma1);
-  
+
   SDValue Fma2 = DAG.getNode(ISD::FMA, SL, MVT::f32, NegDivScale0, Mul, NumeratorScaled);
   SDValue Fma3 = DAG.getNode(ISD::FMA, SL, MVT::f32, Fma2, Fma1, Mul);
   SDValue Fma4 = DAG.getNode(ISD::FMA, SL, MVT::f32, NegDivScale0, Fma3, NumeratorScaled);
-  
+
   SDValue Scale = NumeratorScaled.getValue(1);
   SDValue Fmas = DAG.getNode(AMDGPUISD::DIV_FMAS, SL, MVT::f32, Fma4, Fma1, Fma3, Scale);
-  
+
   return DAG.getNode(AMDGPUISD::DIV_FIXUP, SL, MVT::f32, Fmas, RHS, LHS);
 }
 

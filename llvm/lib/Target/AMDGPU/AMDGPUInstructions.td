@@ -30,7 +30,7 @@ class AMDGPUInst <dag outs, dag ins, string asm, list<dag> pattern> : Instructio
   field bits<64> SoftFail = 0;
 
   let DecoderNamespace = Namespace;
-  
+
   let TSFlags{63} = isRegisterLoad;
   let TSFlags{62} = isRegisterStore;
 }
