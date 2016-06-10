@@ -308,6 +308,7 @@ TEST(MappedBlockStreamTest, TestWriteThenRead) {
   MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
 
   enum class MyEnum : uint32_t { Val1 = 2908234, Val2 = 120891234 };
+  using support::ulittle32_t;
 
   uint16_t u16[] = {31468, 0};
   uint32_t u32[] = {890723408, 0};
@@ -315,7 +316,9 @@ TEST(MappedBlockStreamTest, TestWriteThenRead) {
   StringRef ZStr[] = {"Zero Str", ""};
   StringRef FStr[] = {"Fixed Str", ""};
   ArrayRef<uint8_t> byteArray[] = {{'1', '2'}, {'0', '0'}};
-  ArrayRef<uint32_t> intArray[] = {{890723408, 29082234}, {0, 0}};
+  ArrayRef<support::ulittle32_t> intArray[] = {
+      {ulittle32_t(890723408), ulittle32_t(29082234)},
+      {ulittle32_t(0), ulittle32_t(0)}};
 
   StreamReader Reader(S);
   StreamWriter Writer(S);
