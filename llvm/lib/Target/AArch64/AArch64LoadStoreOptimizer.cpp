@@ -1247,10 +1247,6 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
       // check for +1/-1. Make sure to check the new instruction offset is
       // actually an immediate and not a symbolic reference destined for
       // a relocation.
-      //
-      // Pairwise instructions have a 7-bit signed offset field. Single insns
-      // have a 12-bit unsigned offset field. To be a valid combine, the
-      // final offset must be in range.
       unsigned MIBaseReg = getLdStBaseOp(MI).getReg();
       int MIOffset = getLdStOffsetOp(MI).getImm();
       bool MIIsUnscaled = TII->isUnscaledLdSt(MI);
@@ -1285,8 +1281,10 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
             continue;
           }
         } else {
-          // If the resultant immediate offset of merging these instructions
-          // is out of range for a pairwise instruction, bail and keep looking.
+          // Pairwise instructions have a 7-bit signed offset field. Single
+          // insns have a 12-bit unsigned offset field.  If the resultant
+          // immediate offset of merging these instructions is out of range for
+          // a pairwise instruction, bail and keep looking.
           if (!inBoundsForPair(IsUnscaled, MinOffset, OffsetStride)) {
             trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
             MemInsns.push_back(MI);
