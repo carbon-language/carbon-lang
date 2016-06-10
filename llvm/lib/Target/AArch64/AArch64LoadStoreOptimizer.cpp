@@ -1152,10 +1152,23 @@ bool AArch64LoadStoreOpt::findMatchingStore(
   return false;
 }
 
-// Returns true if these two opcodes can be merged or paired.  Otherwise,
-// returns false.
-static bool canMergeOpc(unsigned OpcA, unsigned OpcB, LdStPairFlags &Flags,
-                        const AArch64InstrInfo *TII) {
+// Returns true if FirstMI and MI are candidates for merging or pairing.
+// Otherwise, returns false.
+static bool areCandidatesToMergeOrPair(MachineInstr *FirstMI, MachineInstr *MI,
+                                       LdStPairFlags &Flags,
+                                       const AArch64InstrInfo *TII) {
+  // If this is volatile or if pairing is suppressed, not a candidate.
+  if (MI->hasOrderedMemoryRef() || TII->isLdStPairSuppressed(MI))
+    return false;
+
+  // We should have already checked FirstMI for pair suppression and volatility.
+  assert(!FirstMI->hasOrderedMemoryRef() &&
+         !TII->isLdStPairSuppressed(FirstMI) &&
+         "FirstMI shouldn't get here if either of these checks are true.");
+
+  unsigned OpcA = FirstMI->getOpcode();
+  unsigned OpcB = MI->getOpcode();
+
   // Opcodes match: nothing more to check.
   if (OpcA == OpcB)
     return true;
@@ -1198,7 +1211,6 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
   MachineInstr *FirstMI = I;
   ++MBBI;
 
-  unsigned Opc = FirstMI->getOpcode();
   bool MayLoad = FirstMI->mayLoad();
   bool IsUnscaled = TII->isUnscaledLdSt(FirstMI);
   unsigned Reg = getLdStRegOp(FirstMI).getReg();
@@ -1226,7 +1238,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
     ++Count;
 
     Flags.setSExtIdx(-1);
-    if (canMergeOpc(Opc, MI->getOpcode(), Flags, TII) &&
+    if (areCandidatesToMergeOrPair(FirstMI, MI, Flags, TII) &&
         getLdStOffsetOp(MI).isImm()) {
       assert(MI->mayLoadOrStore() && "Expected memory operation.");
       // If we've found another instruction with the same opcode, check to see
@@ -1261,12 +1273,6 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
       if (BaseReg == MIBaseReg && ((Offset == MIOffset + OffsetStride) ||
                                    (Offset + OffsetStride == MIOffset))) {
         int MinOffset = Offset < MIOffset ? Offset : MIOffset;
-        // If this is a volatile load/store that otherwise matched, stop looking
-        // as something is going on that we don't have enough information to
-        // safely transform. Similarly, stop if we see a hint to avoid pairs.
-        if (MI->hasOrderedMemoryRef() || TII->isLdStPairSuppressed(MI))
-          return E;
-
         if (FindNarrowMerge) {
           // If the alignment requirements of the scaled wide load/store
           // instruction can't express the offset of the scaled narrow input,
