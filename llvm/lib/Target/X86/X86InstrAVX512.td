@@ -7561,19 +7561,20 @@ multiclass avx512_shift_packed<bits<8> opc, SDNode OpNode, Format MRMr,
            (outs _.RC:$dst), (ins _.MemOp:$src1, u8imm:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
            [(set _.RC:$dst,(_.VT (OpNode
-                                 (_.LdFrag addr:$src1), (i8 imm:$src2))))]>;
+                                 (_.VT (bitconvert (_.LdFrag addr:$src1))),
+                                 (i8 imm:$src2))))]>;
 }
 
 multiclass avx512_shift_packed_all<bits<8> opc, SDNode OpNode, Format MRMr,
                                  Format MRMm, string OpcodeStr, Predicate prd>{
   let Predicates = [prd] in
     defm Z512 : avx512_shift_packed<opc, OpNode, MRMr, MRMm,
-                                    OpcodeStr, v8i64_info>, EVEX_V512;
+                                    OpcodeStr, v64i8_info>, EVEX_V512;
   let Predicates = [prd, HasVLX] in {
     defm Z256 : avx512_shift_packed<opc, OpNode, MRMr, MRMm,
-                                    OpcodeStr, v4i64x_info>, EVEX_V256;
+                                    OpcodeStr, v32i8x_info>, EVEX_V256;
     defm Z128 : avx512_shift_packed<opc, OpNode, MRMr, MRMm,
-                                    OpcodeStr, v2i64x_info>, EVEX_V128;
+                                    OpcodeStr, v16i8x_info>, EVEX_V128;
   }
 }
 defm VPSLLDQ : avx512_shift_packed_all<0x73, X86vshldq, MRM7r, MRM7m, "vpslldq",

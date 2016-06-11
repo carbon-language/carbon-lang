@@ -5444,7 +5444,7 @@ static SDValue getVShift(bool isLeft, EVT VT, SDValue SrcOp,
                          unsigned NumBits, SelectionDAG &DAG,
                          const TargetLowering &TLI, SDLoc dl) {
   assert(VT.is128BitVector() && "Unknown type for VShift");
-  MVT ShVT = MVT::v2i64;
+  MVT ShVT = MVT::v16i8;
   unsigned Opc = isLeft ? X86ISD::VSHLDQ : X86ISD::VSRLDQ;
   SrcOp = DAG.getBitcast(ShVT, SrcOp);
   MVT ScalarShiftTy = TLI.getScalarShiftAmountTy(DAG.getDataLayout(), VT);
@@ -7731,16 +7731,16 @@ static SDValue lowerVectorShuffleAsByteRotate(SDLoc DL, MVT VT, SDValue V1,
   int LoByteShift = 16 - Rotation * Scale;
   int HiByteShift = Rotation * Scale;
 
-  // Cast the inputs to v2i64 to match PSLLDQ/PSRLDQ.
-  Lo = DAG.getBitcast(MVT::v2i64, Lo);
-  Hi = DAG.getBitcast(MVT::v2i64, Hi);
+  // Cast the inputs to v16i8 to match PSLLDQ/PSRLDQ.
+  Lo = DAG.getBitcast(MVT::v16i8, Lo);
+  Hi = DAG.getBitcast(MVT::v16i8, Hi);
 
-  SDValue LoShift = DAG.getNode(X86ISD::VSHLDQ, DL, MVT::v2i64, Lo,
+  SDValue LoShift = DAG.getNode(X86ISD::VSHLDQ, DL, MVT::v16i8, Lo,
                                 DAG.getConstant(LoByteShift, DL, MVT::i8));
-  SDValue HiShift = DAG.getNode(X86ISD::VSRLDQ, DL, MVT::v2i64, Hi,
+  SDValue HiShift = DAG.getNode(X86ISD::VSRLDQ, DL, MVT::v16i8, Hi,
                                 DAG.getConstant(HiByteShift, DL, MVT::i8));
   return DAG.getBitcast(VT,
-                        DAG.getNode(ISD::OR, DL, MVT::v2i64, LoShift, HiShift));
+                        DAG.getNode(ISD::OR, DL, MVT::v16i8, LoShift, HiShift));
 }
 
 /// \brief Try to lower a vector shuffle as a bit shift (shifts in zeros).
@@ -7806,7 +7806,8 @@ static SDValue lowerVectorShuffleAsShift(SDLoc DL, MVT VT, SDValue V1,
 
     // We need to round trip through the appropriate type for the shift.
     MVT ShiftSVT = MVT::getIntegerVT(VT.getScalarSizeInBits() * Scale);
-    MVT ShiftVT = MVT::getVectorVT(ShiftSVT, Size / Scale);
+    MVT ShiftVT = ByteShift ? MVT::getVectorVT(MVT::i8, VT.getSizeInBits() / 8)
+                            : MVT::getVectorVT(ShiftSVT, Size / Scale);
     assert(DAG.getTargetLoweringInfo().isTypeLegal(ShiftVT) &&
            "Illegal integer vector type");
     V = DAG.getBitcast(ShiftVT, V);
@@ -8382,9 +8383,9 @@ static SDValue lowerVectorShuffleAsElementInsertion(
       V2Shuffle[V2Index] = 0;
       V2 = DAG.getVectorShuffle(VT, DL, V2, DAG.getUNDEF(VT), V2Shuffle);
     } else {
-      V2 = DAG.getBitcast(MVT::v2i64, V2);
+      V2 = DAG.getBitcast(MVT::v16i8, V2);
       V2 = DAG.getNode(
-          X86ISD::VSHLDQ, DL, MVT::v2i64, V2,
+          X86ISD::VSHLDQ, DL, MVT::v16i8, V2,
           DAG.getConstant(V2Index * EltVT.getSizeInBits() / 8, DL,
                           DAG.getTargetLoweringInfo().getScalarShiftAmountTy(
                               DAG.getDataLayout(), VT)));
