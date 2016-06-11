@@ -869,6 +869,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   }
 
   if (!Subtarget.useSoftFloat() && Subtarget.hasSSSE3()) {
+    setOperationAction(ISD::BITREVERSE,         MVT::v16i8, Custom);
     setOperationAction(ISD::CTLZ,               MVT::v16i8, Custom);
     setOperationAction(ISD::CTLZ,               MVT::v8i16, Custom);
     // ISD::CTLZ v4i32 - scalarization is faster.
@@ -1005,6 +1006,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::TRUNCATE,          MVT::v16i8, Custom);
     setOperationAction(ISD::TRUNCATE,          MVT::v8i16, Custom);
     setOperationAction(ISD::TRUNCATE,          MVT::v4i32, Custom);
+    setOperationAction(ISD::BITREVERSE,        MVT::v32i8, Custom);
 
     for (auto VT : { MVT::v32i8, MVT::v16i16, MVT::v8i32, MVT::v4i64 }) {
       setOperationAction(ISD::CTPOP,           VT, Custom);
@@ -20910,7 +20912,7 @@ static SDValue LowerCTPOP(SDValue Op, const X86Subtarget &Subtarget,
   return LowerVectorCTPOP(Op, Subtarget, DAG);
 }
 
-static SDValue LowerBITREVERSE(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerBITREVERSE_XOP(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
   SDValue In = Op.getOperand(0);
   SDLoc DL(Op);
@@ -20961,6 +20963,62 @@ static SDValue LowerBITREVERSE(SDValue Op, SelectionDAG &DAG) {
   Res = DAG.getNode(X86ISD::VPPERM, DL, MVT::v16i8, DAG.getUNDEF(MVT::v16i8),
                     Res, Mask);
   return DAG.getBitcast(VT, Res);
+}
+
+static SDValue LowerBITREVERSE(SDValue Op, const X86Subtarget &Subtarget,
+                               SelectionDAG &DAG) {
+  if (Subtarget.hasXOP())
+    return LowerBITREVERSE_XOP(Op, DAG);
+
+  assert(Subtarget.hasSSSE3() && "SSSE3 required for BITREVERSE");
+
+  MVT VT = Op.getSimpleValueType();
+  SDValue In = Op.getOperand(0);
+  SDLoc DL(Op);
+
+  unsigned NumElts = VT.getVectorNumElements();
+  assert(VT.getScalarType() == MVT::i8 &&
+         "Only byte vector BITREVERSE supported");
+
+  // Decompose 256-bit ops into smaller 128-bit ops on pre-AVX2.
+  if (VT.is256BitVector() && !Subtarget.hasInt256()) {
+    MVT HalfVT = MVT::getVectorVT(MVT::i8, NumElts / 2);
+    SDValue Lo = extract128BitVector(In, 0, DAG, DL);
+    SDValue Hi = extract128BitVector(In, NumElts / 2, DAG, DL);
+    Lo = DAG.getNode(ISD::BITREVERSE, DL, HalfVT, Lo);
+    Hi = DAG.getNode(ISD::BITREVERSE, DL, HalfVT, Hi);
+    return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, Lo, Hi);
+  }
+
+  // Perform BITREVERSE using PSHUFB lookups. Each byte is split into
+  // two nibbles and a PSHUFB lookup to find the bitreverse of each
+  // 0-15 value (moved to the other nibble).
+  SDValue NibbleMask = DAG.getConstant(0xF, DL, VT);
+  SDValue Lo = DAG.getNode(ISD::AND, DL, VT, In, NibbleMask);
+  SDValue Hi = DAG.getNode(ISD::SRL, DL, VT, In, DAG.getConstant(4, DL, VT));
+
+  const int LoLUT[16] = {
+      /* 0 */ 0x00, /* 1 */ 0x80, /* 2 */ 0x40, /* 3 */ 0xC0,
+      /* 4 */ 0x20, /* 5 */ 0xA0, /* 6 */ 0x60, /* 7 */ 0xE0,
+      /* 8 */ 0x10, /* 9 */ 0x90, /* a */ 0x50, /* b */ 0xD0,
+      /* c */ 0x30, /* d */ 0xB0, /* e */ 0x70, /* f */ 0xF0};
+  const int HiLUT[16] = {
+      /* 0 */ 0x00, /* 1 */ 0x08, /* 2 */ 0x04, /* 3 */ 0x0C,
+      /* 4 */ 0x02, /* 5 */ 0x0A, /* 6 */ 0x06, /* 7 */ 0x0E,
+      /* 8 */ 0x01, /* 9 */ 0x09, /* a */ 0x05, /* b */ 0x0D,
+      /* c */ 0x03, /* d */ 0x0B, /* e */ 0x07, /* f */ 0x0F};
+
+  SmallVector<SDValue, 16> LoMaskElts, HiMaskElts;
+  for (unsigned i = 0; i < NumElts; ++i) {
+    LoMaskElts.push_back(DAG.getConstant(LoLUT[i % 16], DL, MVT::i8));
+    HiMaskElts.push_back(DAG.getConstant(HiLUT[i % 16], DL, MVT::i8));
+  }
+
+  SDValue LoMask = DAG.getBuildVector(VT, DL, LoMaskElts);
+  SDValue HiMask = DAG.getBuildVector(VT, DL, HiMaskElts);
+  Lo = DAG.getNode(X86ISD::PSHUFB, DL, VT, LoMask, Lo);
+  Hi = DAG.getNode(X86ISD::PSHUFB, DL, VT, HiMask, Hi);
+  return DAG.getNode(ISD::OR, DL, VT, Lo, Hi);
 }
 
 static SDValue lowerAtomicArithWithLOCK(SDValue N, SelectionDAG &DAG) {
@@ -21462,7 +21520,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ATOMIC_LOAD_XOR:
   case ISD::ATOMIC_LOAD_AND:    return lowerAtomicArith(Op, DAG, Subtarget);
   case ISD::ATOMIC_STORE:       return LowerATOMIC_STORE(Op, DAG);
-  case ISD::BITREVERSE:         return LowerBITREVERSE(Op, DAG);
+  case ISD::BITREVERSE:         return LowerBITREVERSE(Op, Subtarget, DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
   case ISD::CONCAT_VECTORS:     return LowerCONCAT_VECTORS(Op, Subtarget, DAG);
   case ISD::VECTOR_SHUFFLE:     return lowerVectorShuffle(Op, Subtarget, DAG);
