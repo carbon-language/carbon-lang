@@ -87,7 +87,7 @@ void RegUsageInfoCollector::getAnalysisUsage(AnalysisUsage &AU) const {
 bool RegUsageInfoCollector::runOnMachineFunction(MachineFunction &MF) {
   MachineRegisterInfo *MRI = &MF.getRegInfo();
   TargetRegisterInfo *TRI =
-      (TargetRegisterInfo *)MF.getSubtarget().getRegisterInfo();
+      const_cast<TargetRegisterInfo *>(MF.getSubtarget().getRegisterInfo());
   const TargetMachine &TM = MF.getTarget();
 
   DEBUG(dbgs() << " -------------------- " << getPassName()
