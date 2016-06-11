@@ -2343,15 +2343,7 @@ void Driver::generatePrefixedToolNames(
     const char *Tool, const ToolChain &TC,
     SmallVectorImpl<std::string> &Names) const {
   // FIXME: Needs a better variable than DefaultTargetTriple
-  StringRef Triple = DefaultTargetTriple;
-
-  // On Android, the target triple can include a version number that needs to
-  // be stripped.
-  if (TC.getTriple().isAndroid()) {
-    Triple = Triple.rtrim("0123456789");
-  }
-
-  Names.emplace_back((Triple + "-" + Tool).str());
+  Names.emplace_back(DefaultTargetTriple + "-" + Tool);
   Names.emplace_back(Tool);
 
   // Allow the discovery of tools prefixed with LLVM's default target triple.
