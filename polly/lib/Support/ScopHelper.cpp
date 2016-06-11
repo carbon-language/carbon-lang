@@ -246,6 +246,27 @@ private:
   const Region &R;
   ValueMapT *VMap;
 
+  const SCEV *visitGenericInst(const SCEVUnknown *E, Instruction *Inst,
+                               Instruction *IP) {
+    if (!Inst || !R.contains(Inst))
+      return E;
+
+    assert(!Inst->mayThrow() && !Inst->mayReadOrWriteMemory() &&
+           !isa<PHINode>(Inst));
+
+    auto *InstClone = Inst->clone();
+    for (auto &Op : Inst->operands()) {
+      assert(SE.isSCEVable(Op->getType()));
+      auto *OpSCEV = SE.getSCEV(Op);
+      auto *OpClone = expandCodeFor(OpSCEV, Op->getType(), IP);
+      InstClone->replaceUsesOfWith(Op, OpClone);
+    }
+
+    InstClone->setName(Name + Inst->getName());
+    InstClone->insertBefore(IP);
+    return SE.getSCEV(InstClone);
+  }
+
   const SCEV *visitUnknown(const SCEVUnknown *E) {
 
     // If a value mapping was given try if the underlying value is remapped.
@@ -259,15 +280,11 @@ private:
         return visit(NewE);
     }
 
+    Instruction *StartIP = R.getEnteringBlock()->getTerminator();
     Instruction *Inst = dyn_cast<Instruction>(E->getValue());
     if (!Inst || (Inst->getOpcode() != Instruction::SRem &&
                   Inst->getOpcode() != Instruction::SDiv))
-      return E;
-
-    if (!R.contains(Inst))
-      return E;
-
-    Instruction *StartIP = R.getEnteringBlock()->getTerminator();
+      return visitGenericInst(E, Inst, StartIP);
 
     const SCEV *LHSScev = SE.getSCEV(Inst->getOperand(0));
     const SCEV *RHSScev = SE.getSCEV(Inst->getOperand(1));
