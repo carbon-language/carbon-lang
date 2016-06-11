@@ -11889,20 +11889,13 @@ static SDValue lower512BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   case MVT::v16i32:
     return lowerV16I32VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v32i16:
-    if (Subtarget.hasBWI())
-      return lowerV32I16VectorShuffle(Op, V1, V2, Subtarget, DAG);
-    break;
+    return lowerV32I16VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v64i8:
-    if (Subtarget.hasBWI())
-      return lowerV64I8VectorShuffle(Op, V1, V2, Subtarget, DAG);
-    break;
+    return lowerV64I8VectorShuffle(Op, V1, V2, Subtarget, DAG);
 
   default:
     llvm_unreachable("Not a valid 512-bit x86 vector type!");
   }
-
-  // Otherwise fall back on splitting.
-  return splitAndLowerVectorShuffle(DL, VT, V1, V2, Mask, DAG);
 }
 
 // Lower vXi1 vector shuffles.
