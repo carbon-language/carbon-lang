@@ -199,7 +199,7 @@ void DecodeVPERMIL2PMask(const Constant *C, unsigned M2Z, unsigned ElSize,
     // Bits[2:1] - (Per Lane) PD Shuffle Mask.
     // Bits[2:0] - (Per Lane) PS Shuffle Mask.
     uint64_t Selector = cast<ConstantInt>(COp)->getZExtValue();
-    int MatchBit = (Selector >> 3) & 0x1;
+    unsigned MatchBit = (Selector >> 3) & 0x1;
 
     // M2Z[0:1]     MatchBit
     //   0Xb           X        Source selected by Selector index.
