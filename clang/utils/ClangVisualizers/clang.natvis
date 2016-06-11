@@ -481,4 +481,22 @@ For later versions of Visual Studio, no setup is required-->
   <Type Name="clang::Expr">
     <DisplayString>Expression of class {(clang::Stmt::StmtClass)StmtBits.sClass,en} and type {TR,view(cpp)}</DisplayString>
   </Type>
+  <Type Name="clang::DeclAccessPair">
+    <DisplayString IncludeView="access" Condition="(Ptr&amp;Mask) == clang::AS_public">public</DisplayString>
+    <DisplayString IncludeView="access" Condition="(Ptr&amp;Mask) == clang::AS_protected">protected</DisplayString>
+    <DisplayString IncludeView="access" Condition="(Ptr&amp;Mask) == clang::AS_private">private</DisplayString>
+    <DisplayString IncludeView="access" Condition="(Ptr&amp;Mask) == clang::AS_none">b</DisplayString>
+    <DisplayString IncludeView="decl">{*(clang::NamedDecl *)(Ptr&amp;~Mask)}</DisplayString>
+    <DisplayString>{*this,view(access)} {*this,view(decl)}</DisplayString>
+  </Type>
+  <Type Name="clang::UnresolvedSet&lt;*&gt;">
+    <DisplayString>{Decls}</DisplayString>
+    <Expand>
+      <ExpandedItem>Decls</ExpandedItem>
+    </Expand>
+  </Type>
+  <Type Name="clang::LookupResult">
+    <DisplayString Condition="ResultKind == clang::LookupResult::Ambiguous">{Ambiguity,en}: {Decls}</DisplayString>
+    <DisplayString>{ResultKind,en}: {Decls}</DisplayString>
+  </Type>
 </AutoVisualizer>
