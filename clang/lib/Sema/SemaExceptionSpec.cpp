@@ -112,12 +112,15 @@ bool Sema::CheckSpecifiedExceptionType(QualType &T, SourceRange Range) {
   //   pointer or reference to a class currently being defined.
   // In Microsoft mode, downgrade this to a warning.
   unsigned DiagID = diag::err_incomplete_in_exception_spec;
-  if (getLangOpts().MicrosoftExt)
+  bool ReturnValueOnError = true;
+  if (getLangOpts().MicrosoftExt) {
     DiagID = diag::ext_incomplete_in_exception_spec;
+    ReturnValueOnError = false;
+  }
   if (!(PointeeT->isRecordType() &&
         PointeeT->getAs<RecordType>()->isBeingDefined()) &&
       RequireCompleteType(Range.getBegin(), PointeeT, DiagID, Kind, Range))
-    return true;
+    return ReturnValueOnError;
 
   return false;
 }
