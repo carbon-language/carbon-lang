@@ -565,10 +565,6 @@ __isl_give PWACtx SCEVAffinator::visitSRemInstruction(Instruction *SRem) {
 __isl_give PWACtx SCEVAffinator::visitUnknown(const SCEVUnknown *Expr) {
   if (Instruction *I = dyn_cast<Instruction>(Expr->getValue())) {
     switch (I->getOpcode()) {
-    case Instruction::IntToPtr:
-      return visit(SE.getSCEVAtScope(I->getOperand(0), getScope()));
-    case Instruction::PtrToInt:
-      return visit(SE.getSCEVAtScope(I->getOperand(0), getScope()));
     case Instruction::SDiv:
       return visitSDivInstruction(I);
     case Instruction::SRem:

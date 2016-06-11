@@ -368,10 +368,6 @@ public:
 
     if (Instruction *I = dyn_cast<Instruction>(Expr->getValue())) {
       switch (I->getOpcode()) {
-      case Instruction::IntToPtr:
-        return visit(SE.getSCEVAtScope(I->getOperand(0), Scope));
-      case Instruction::PtrToInt:
-        return visit(SE.getSCEVAtScope(I->getOperand(0), Scope));
       case Instruction::Load:
         return visitLoadInstruction(I, Expr);
       case Instruction::SDiv:
