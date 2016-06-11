@@ -1588,37 +1588,74 @@ _mm512_maskz_cvtepu8_epi16 (__mmask32 __U, __m256i __A)
                                           (__mmask32)(m)); })
 
 #define _mm512_shufflehi_epi16(A, imm) __extension__ ({ \
-  (__m512i)__builtin_ia32_pshufhw512_mask((__v32hi)(__m512i)(A), (int)(imm), \
-                                          (__v32hi)_mm512_setzero_hi(), \
-                                          (__mmask32)-1); })
+  (__m512i)__builtin_shufflevector((__v32hi)(__m512i)(A), \
+                                   (__v32hi)_mm512_setzero_hi(), \
+                                   0, 1, 2, 3, \
+                                   4 + (((imm) & 0x03) >> 0), \
+                                   4 + (((imm) & 0x0c) >> 2), \
+                                   4 + (((imm) & 0x30) >> 4), \
+                                   4 + (((imm) & 0xc0) >> 6), \
+                                   8, 9, 10, 11, \
+                                   12 + (((imm) & 0x03) >> 0), \
+                                   12 + (((imm) & 0x0c) >> 2), \
+                                   12 + (((imm) & 0x30) >> 4), \
+                                   12 + (((imm) & 0xc0) >> 6), \
+                                   16, 17, 18, 19, \
+                                   20 + (((imm) & 0x03) >> 0), \
+                                   20 + (((imm) & 0x0c) >> 2), \
+                                   20 + (((imm) & 0x30) >> 4), \
+                                   20 + (((imm) & 0xc0) >> 6), \
+                                   24, 25, 26, 27, \
+                                   28 + (((imm) & 0x03) >> 0), \
+                                   28 + (((imm) & 0x0c) >> 2), \
+                                   28 + (((imm) & 0x30) >> 4), \
+                                   28 + (((imm) & 0xc0) >> 6)); })
 
 #define _mm512_mask_shufflehi_epi16(W, U, A, imm) __extension__ ({ \
-  (__m512i)__builtin_ia32_pshufhw512_mask((__v32hi)(__m512i)(A), (int)(imm), \
-                                          (__v32hi)(__m512i)(W), \
-                                          (__mmask32)(U)); })
-
+  (__m512i)__builtin_ia32_selectw_512((__mmask32)(U), \
+                                      _mm512_shufflehi_epi16((A), (imm)), \
+                                      (__v32hi)(__m512i)(W)); })
 
 #define _mm512_maskz_shufflehi_epi16(U, A, imm) __extension__ ({ \
-  (__m512i)__builtin_ia32_pshufhw512_mask((__v32hi)(__m512i)(A), (int)(imm), \
-                                          (__v32hi)_mm512_setzero_hi(), \
-                                          (__mmask32)(U)); })
+  (__m512i)__builtin_ia32_selectw_512((__mmask32)(U), \
+                                      _mm512_shufflehi_epi16((A), (imm)), \
+                                      (__v32hi)_mm512_setzero_hi()); })
 
 #define _mm512_shufflelo_epi16(A, imm) __extension__ ({ \
-  (__m512i)__builtin_ia32_pshuflw512_mask((__v32hi)(__m512i)(A), (int)(imm), \
-                                          (__v32hi)_mm512_setzero_hi(), \
-                                          (__mmask32)-1); })
+  (__m512i)__builtin_shufflevector((__v32hi)(__m512i)(A), \
+                                   (__v32hi)_mm512_setzero_hi(), \
+                                   0 + (((imm) & 0x03) >> 0), \
+                                   0 + (((imm) & 0x0c) >> 2), \
+                                   0 + (((imm) & 0x30) >> 4), \
+                                   0 + (((imm) & 0xc0) >> 6), \
+                                   4, 5, 6, 7, \
+                                   8 + (((imm) & 0x03) >> 0), \
+                                   8 + (((imm) & 0x0c) >> 2), \
+                                   8 + (((imm) & 0x30) >> 4), \
+                                   8 + (((imm) & 0xc0) >> 6), \
+                                   12, 13, 14, 15, \
+                                   16 + (((imm) & 0x03) >> 0), \
+                                   16 + (((imm) & 0x0c) >> 2), \
+                                   16 + (((imm) & 0x30) >> 4), \
+                                   16 + (((imm) & 0xc0) >> 6), \
+                                   20, 21, 22, 23, \
+                                   24 + (((imm) & 0x03) >> 0), \
+                                   24 + (((imm) & 0x0c) >> 2), \
+                                   24 + (((imm) & 0x30) >> 4), \
+                                   24 + (((imm) & 0xc0) >> 6), \
+                                   28, 29, 30, 31); })
 
 
 #define _mm512_mask_shufflelo_epi16(W, U, A, imm) __extension__ ({ \
-  (__m512i)__builtin_ia32_pshuflw512_mask((__v32hi)(__m512i)(A), (int)(imm), \
-                                          (__v32hi)(__m512i)(W), \
-                                          (__mmask32)(U)); })
+  (__m512i)__builtin_ia32_selectw_512((__mmask32)(U), \
+                                      _mm512_shufflelo_epi16((A), (imm)), \
+                                      (__v32hi)(__m512i)(W)); })
 
 
 #define _mm512_maskz_shufflelo_epi16(U, A, imm) __extension__ ({ \
-  (__m512i)__builtin_ia32_pshuflw512_mask((__v32hi)(__m512i)(A), (int)(imm), \
-                                          (__v32hi)_mm512_setzero_hi(), \
-                                          (__mmask32)(U)); })
+  (__m512i)__builtin_ia32_selectw_512((__mmask32)(U), \
+                                      _mm512_shufflelo_epi16((A), (imm)), \
+                                      (__v32hi)_mm512_setzero_hi()); })
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_sllv_epi16 (__m512i __A, __m512i __B)
