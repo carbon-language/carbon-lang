@@ -315,7 +315,9 @@ TEST(MappedBlockStreamTest, TestWriteThenRead) {
   MyEnum Enum[] = {MyEnum::Val1, MyEnum::Val2};
   StringRef ZStr[] = {"Zero Str", ""};
   StringRef FStr[] = {"Fixed Str", ""};
-  ArrayRef<uint8_t> byteArray[] = {{'1', '2'}, {'0', '0'}};
+  uint8_t byteArray0[] = {'1', '2'};
+  uint8_t byteArray1[] = {'0', '0'};
+  ArrayRef<uint8_t> byteArray[] = {byteArray0, byteArray1};
   ArrayRef<uint32_t> intArray[] = {{890723408, 29082234}, {0, 0}};
 
   StreamReader Reader(S);
