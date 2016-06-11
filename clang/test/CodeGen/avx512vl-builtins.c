@@ -6593,7 +6593,7 @@ __m256 test_mm256_maskz_moveldup_ps(__mmask8 __U, __m256 __A) {
 
 __m128i test_mm_mask_shuffle_epi32(__m128i __W, __mmask8 __U, __m128i __A) {
   // CHECK-LABEL: @test_mm_mask_shuffle_epi32
-  // CHECK: shufflevector <4 x i32> %2, <4 x i32> %4, <4 x i32> <i32 1, i32 0, i32 0, i32 0>
+  // CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> %{{.*}}, <4 x i32> <i32 1, i32 0, i32 0, i32 0>
   // CHECK: select <4 x i1> %{{.*}}, <4 x i32> %{{.*}}, <4 x i32> %{{.*}}
   return _mm_mask_shuffle_epi32(__W, __U, __A, 1); 
 }
