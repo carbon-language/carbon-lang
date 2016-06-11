@@ -201,12 +201,15 @@ std::error_code DataReader::parse() {
 }
 
 ErrorOr<const FuncBranchData &>
-DataReader::getFuncBranchData(StringRef FuncName) const {
-  const auto I = FuncsMap.find(FuncName);
-  if (I == FuncsMap.end()) {
-    return make_error_code(llvm::errc::invalid_argument);
+DataReader::getFuncBranchData(const std::vector<std::string> &FuncNames) const {
+  // Do a reverse order iteration since the name in profile has a higher chance
+  // of matching a name at the end of the list.
+  for (auto FI = FuncNames.rbegin(), FE = FuncNames.rend(); FI != FE; ++FI) {
+    const auto I = FuncsMap.find(*FI);
+    if (I != FuncsMap.end())
+      return I->getValue();
   }
-  return I->getValue();
+  return make_error_code(llvm::errc::invalid_argument);
 }
 
 void DataReader::dump() const {
@@ -223,5 +226,6 @@ void DataReader::dump() const {
     }
   }
 }
-}
-}
+
+} // namespace bolt
+} // namespace llvm

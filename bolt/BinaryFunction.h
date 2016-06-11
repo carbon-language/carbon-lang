@@ -103,8 +103,8 @@ private:
   /// Current state of the function.
   State CurrentState{State::Empty};
 
-  /// Name of the function as we know it.
-  std::string Name;
+  /// A list of function names.
+  std::vector<std::string> Names;
 
   /// Symbol associated with this function in the input.
   SymbolRef Symbol;
@@ -356,12 +356,12 @@ public:
 
   BinaryFunction(BinaryFunction &&) = default;
 
-  BinaryFunction(std::string Name, SymbolRef Symbol, SectionRef Section,
+  BinaryFunction(const std::string &Name, SymbolRef Symbol, SectionRef Section,
                  uint64_t Address, uint64_t Size, BinaryContext &BC,
                  bool IsSimple = true) :
-      Name(Name), Symbol(Symbol), Section(Section), Address(Address),
-      Size(Size), BC(BC), IsSimple(IsSimple), CodeSectionName(".text." + Name),
-      FunctionNumber(++Count)
+      Names({Name}), Symbol(Symbol), Section(Section),
+      Address(Address), Size(Size), BC(BC), IsSimple(IsSimple),
+      CodeSectionName(".text." + Name), FunctionNumber(++Count)
   {}
 
   /// Modify code layout making necessary adjustments to instructions at the
@@ -396,8 +396,31 @@ public:
   }
 
   /// Return the name of the function as extracted from the binary file.
-  StringRef getName() const {
-    return Name;
+  /// If the function has multiple names - return the last one
+  /// followed by "(*#<numnames>)".
+  /// We should preferably only use getName() for diagnostics and use
+  /// hasName() to match function name against a given string.
+  ///
+  /// We pick the last name from the list to match the name of the function
+  /// in profile data for easier manual analysis.
+  std::string getName() const {
+    return Names.size() == 1 ?
+              Names.back() :
+              (Names.back() + "(*" + std::to_string(Names.size()) + ")");
+  }
+
+  /// Check if (possibly one out of many) function name matches the given
+  /// string. Use this member function instead of direct name comparison.
+  bool hasName(std::string &FunctionName) const {
+    for (auto &Name : Names)
+      if (Name == FunctionName)
+        return true;
+    return false;
+  }
+
+  /// Return a vector of all possible names for the function.
+  const std::vector<std::string> &getNames() const {
+    return Names;
   }
 
   /// Return containing file section.
@@ -486,6 +509,11 @@ public:
   /// Return true if the given address \p PC is inside the function body.
   bool containsAddress(uint64_t PC) const {
     return Address <= PC && PC < Address + Size;
+  }
+
+  /// Register alternative function name.
+  void addAlternativeName(std::string NewName) {
+    Names.emplace_back(NewName);
   }
 
   /// Create a basic block at a given \p Offset in the

@@ -140,8 +140,16 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
                            bool PrintInstructions) const {
   StringRef SectionName;
   Section.getName(SectionName);
-  OS << "Binary Function \"" << getName() << "\" " << Annotation << " {"
-     << "\n  Number      : "   << FunctionNumber
+  OS << "Binary Function \"" << getName() << "\" " << Annotation << " {";
+  if (Names.size() > 1) {
+    OS << "\n  Other names : ";
+    auto Sep = "";
+    for (unsigned i = 0; i < Names.size() - 1; ++i) {
+      OS << Sep << Names[i];
+      Sep = "\n                ";
+    }
+  }
+  OS << "\n  Number      : "   << FunctionNumber
      << "\n  State       : "   << CurrentState
      << "\n  Address     : 0x" << Twine::utohexstr(Address)
      << "\n  Size        : 0x" << Twine::utohexstr(Size)
@@ -612,7 +620,7 @@ bool BinaryFunction::buildCFG() {
 
   auto &MIA = BC.MIA;
 
-  auto BranchDataOrErr = BC.DR.getFuncBranchData(getName());
+  auto BranchDataOrErr = BC.DR.getFuncBranchData(getNames());
   if (!BranchDataOrErr) {
     DEBUG(dbgs() << "no branch data found for \"" << getName() << "\"\n");
   } else {
@@ -963,7 +971,7 @@ void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
 void BinaryFunction::inferFallThroughCounts() {
   assert(!BasicBlocks.empty() && "basic block list should not be empty");
 
-  auto BranchDataOrErr = BC.DR.getFuncBranchData(getName());
+  auto BranchDataOrErr = BC.DR.getFuncBranchData(getNames());
 
   // Compute preliminary execution time for each basic block
   for (auto CurBB : BasicBlocks) {

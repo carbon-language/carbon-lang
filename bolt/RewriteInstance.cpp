@@ -203,7 +203,7 @@ bool shouldProcess(const BinaryFunction &Function) {
   if (!FunctionNames.empty()) {
     IsValid = false;
     for (auto &Name : FunctionNames) {
-      if (Function.getName() == Name) {
+      if (Function.hasName(Name)) {
         IsValid = true;
         break;
       }
@@ -214,7 +214,7 @@ bool shouldProcess(const BinaryFunction &Function) {
 
   if (!SkipFunctionNames.empty()) {
     for (auto &Name : SkipFunctionNames) {
-      if (Function.getName() == Name) {
+      if (Function.hasName(Name)) {
         IsValid = false;
         break;
       }
@@ -734,12 +734,24 @@ void RewriteInstance::discoverFileObjects() {
       }
     }
 
-    // Create the function and add to the map.
-    BinaryFunctions.emplace(
-        Address,
-        BinaryFunction(UniqueName, Symbol, *Section, Address,
-                       SymbolSize, *BC, IsSimple)
-    );
+    auto BFI = BinaryFunctions.find(Address);
+    if (BFI != BinaryFunctions.end()) {
+      // Duplicate function name. Make sure everything matches before we add
+      // an alternative name.
+      if (SymbolSize != BFI->second.getSize()) {
+        errs() << "BOLT-WARNING: size mismatch for duplicate entries "
+               << UniqueName << ':' << SymbolSize << " and "
+               << BFI->second.getName() << ':' << BFI->second.getSize() << '\n';
+      }
+      BFI->second.addAlternativeName(UniqueName);
+    } else {
+      // Create the function and add to the map.
+      BinaryFunctions.emplace(
+          Address,
+          BinaryFunction(UniqueName, Symbol, *Section, Address,
+                         SymbolSize, *BC, IsSimple)
+      );
+    }
   }
 }
 
@@ -1106,7 +1118,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
   // Emit UD2 at the beginning if requested by user.
   if (!opts::BreakFunctionNames.empty()) {
     for (auto &Name : opts::BreakFunctionNames) {
-      if (Function.getName() == Name) {
+      if (Function.hasName(Name)) {
         Streamer.EmitIntValue(0x0B0F, 2); // UD2: 0F 0B
         break;
       }

@@ -22,6 +22,7 @@
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include <vector>
 
 namespace llvm {
 namespace bolt {
@@ -132,7 +133,8 @@ public:
   /// offset 12, with 4 mispredictions and 221 branches
   std::error_code parse();
 
-  ErrorOr<const FuncBranchData &> getFuncBranchData(StringRef FuncName) const;
+  ErrorOr<const FuncBranchData &> getFuncBranchData(
+      const std::vector<std::string> &FuncNames) const;
 
   using FuncsMapType = StringMap<FuncBranchData>;
 
