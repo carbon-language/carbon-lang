@@ -1203,10 +1203,7 @@ static bool addNoRecurseAttrsTopDown(Function &F) {
   return setDoesNotRecurse(F);
 }
 
-bool ReversePostOrderFunctionAttrs::runOnModule(Module &M) {
-  if (skipModule(M))
-    return false;
-
+static bool deduceFunctionAttributeInRPO(Module &M, CallGraph &CG) {
   // We only have a post-order SCC traversal (because SCCs are inherently
   // discovered in post-order), so we accumulate them in a vector and then walk
   // it in reverse. This is simpler than using the RPO iterator infrastructure
@@ -1214,7 +1211,6 @@ bool ReversePostOrderFunctionAttrs::runOnModule(Module &M) {
   // graph. We can also cheat egregiously because we're primarily interested in
   // synthesizing norecurse and so we can only save the singular SCCs as SCCs
   // with multiple functions in them will clearly be recursive.
-  auto &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
   SmallVector<Function *, 16> Worklist;
   for (scc_iterator<CallGraph *> I = scc_begin(&CG); !I.isAtEnd(); ++I) {
     if (I->size() != 1)
@@ -1231,4 +1227,13 @@ bool ReversePostOrderFunctionAttrs::runOnModule(Module &M) {
     Changed |= addNoRecurseAttrsTopDown(*F);
 
   return Changed;
+}
+
+bool ReversePostOrderFunctionAttrs::runOnModule(Module &M) {
+  if (skipModule(M))
+    return false;
+
+  auto &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
+
+  return deduceFunctionAttributeInRPO(M, CG);
 }
