@@ -749,9 +749,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       unsigned NumDstElts = DstTy->getNumElements();
 
       // Extract a subvector of the first NumDstElts lanes and sign/zero extend.
-      SmallVector<uint32_t, 8> ShuffleMask;
+      SmallVector<uint32_t, 8> ShuffleMask(NumDstElts);
       for (unsigned i = 0; i != NumDstElts; ++i)
-        ShuffleMask.push_back(i);
+        ShuffleMask[i] = i;
 
       Value *SV = Builder.CreateShuffleVector(
           CI->getArgOperand(0), UndefValue::get(SrcTy), ShuffleMask);
@@ -817,11 +817,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       VectorType *VecTy = cast<VectorType>(CI->getType());
       unsigned NumElts = VecTy->getNumElements();
 
-      SmallVector<uint32_t, 16> Idxs;
-      for (unsigned i = 0; i != NumElts; ++i) {
-        unsigned Idx = ((Imm >> (i%8)) & 1) ? i + NumElts : i;
-        Idxs.push_back(Idx);
-      }
+      SmallVector<uint32_t, 16> Idxs(NumElts);
+      for (unsigned i = 0; i != NumElts; ++i)
+        Idxs[i] = ((Imm >> (i%8)) & 1) ? i + NumElts : i;
 
       Rep = Builder.CreateShuffleVector(Op0, Op1, Idxs);
     } else if (Name.startswith("llvm.x86.avx.vinsertf128.") ||
@@ -837,10 +835,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
 
       // Extend the second operand into a vector that is twice as big.
       Value *UndefV = UndefValue::get(Op1->getType());
-      SmallVector<uint32_t, 8> Idxs;
-      for (unsigned i = 0; i != NumElts; ++i) {
-        Idxs.push_back(i);
-      }
+      SmallVector<uint32_t, 8> Idxs(NumElts);
+      for (unsigned i = 0; i != NumElts; ++i)
+        Idxs[i] = i;
       Rep = Builder.CreateShuffleVector(Op1, UndefV, Idxs);
 
       // Insert the second operand into the first operand.
@@ -854,19 +851,14 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       // Imm = 1  <i32 0, i32 1, i32 2,  i32 3,  i32 8, i32 9, i32 10, i32 11>
       // Imm = 0  <i32 8, i32 9, i32 10, i32 11, i32 4, i32 5, i32 6,  i32 7 >
 
-      Idxs.clear();
       // The low half of the result is either the low half of the 1st operand
       // or the low half of the 2nd operand (the inserted vector).
-      for (unsigned i = 0; i != NumElts / 2; ++i) {
-        unsigned Idx = Imm ? i : (i + NumElts);
-        Idxs.push_back(Idx);
-      }
+      for (unsigned i = 0; i != NumElts / 2; ++i)
+        Idxs[i] = Imm ? i : (i + NumElts);
       // The high half of the result is either the low half of the 2nd operand
       // (the inserted vector) or the high half of the 1st operand.
-      for (unsigned i = NumElts / 2; i != NumElts; ++i) {
-        unsigned Idx = Imm ? (i + NumElts / 2) : i;
-        Idxs.push_back(Idx);
-      }
+      for (unsigned i = NumElts / 2; i != NumElts; ++i)
+        Idxs[i] = Imm ? (i + NumElts / 2) : i;
       Rep = Builder.CreateShuffleVector(Op0, Rep, Idxs);
     } else if (Name.startswith("llvm.x86.avx.vextractf128.") ||
                Name == "llvm.x86.avx2.vextracti128") {
