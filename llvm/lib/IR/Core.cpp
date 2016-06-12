@@ -128,7 +128,7 @@ unsigned LLVMGetEnumAttributeKindForName(const char *Name, size_t SLen) {
   return getAttrKindFromName(StringRef(Name, SLen));
 }
 
-unsigned LLVMGetLastEnumAttributeKind() {
+unsigned LLVMGetLastEnumAttributeKind(void) {
   return Attribute::AttrKind::EndAttrKinds;
 }
 

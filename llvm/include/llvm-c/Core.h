@@ -502,7 +502,7 @@ unsigned LLVMGetMDKindID(const char *Name, unsigned SLen);
  * going through the C API deprecation cycle.
  */
 unsigned LLVMGetEnumAttributeKindForName(const char *Name, size_t SLen);
-unsigned LLVMGetLastEnumAttributeKind();
+unsigned LLVMGetLastEnumAttributeKind(void);
 
 /**
  * Create an enum attribute.
