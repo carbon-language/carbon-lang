@@ -888,43 +888,25 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep = Builder.CreateShuffleVector(Op0, UndefV, Idxs);
     } else if (Name == "llvm.stackprotectorcheck") {
       Rep = nullptr;
+    } else if (Name.startswith("llvm.x86.avx.vpermil.")) {
+      Value *Op0 = CI->getArgOperand(0);
+      unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
+      VectorType *VecTy = cast<VectorType>(CI->getType());
+      unsigned NumElts = VecTy->getNumElements();
+      // Calcuate the size of each index in the immediate.
+      unsigned IdxSize = 64 / VecTy->getScalarSizeInBits();
+      unsigned IdxMask = ((1 << IdxSize) - 1);
+
+      SmallVector<uint32_t, 8> Idxs(NumElts);
+      // Lookup the bits for this element, wrapping around the immediate every
+      // 8-bits. Elements are grouped into sets of 2 or 4 elements so we need
+      // to offset by the first index of each group.
+      for (unsigned i = 0; i != NumElts; ++i)
+        Idxs[i] = ((Imm >> ((i * IdxSize) % 8)) & IdxMask) | (i & ~IdxMask);
+
+      Rep = Builder.CreateShuffleVector(Op0, Op0, Idxs);
     } else {
-      bool PD128 = false, PD256 = false, PS128 = false, PS256 = false;
-      if (Name == "llvm.x86.avx.vpermil.pd.256")
-        PD256 = true;
-      else if (Name == "llvm.x86.avx.vpermil.pd")
-        PD128 = true;
-      else if (Name == "llvm.x86.avx.vpermil.ps.256")
-        PS256 = true;
-      else if (Name == "llvm.x86.avx.vpermil.ps")
-        PS128 = true;
-
-      if (PD256 || PD128 || PS256 || PS128) {
-        Value *Op0 = CI->getArgOperand(0);
-        unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
-        SmallVector<uint32_t, 8> Idxs;
-
-        if (PD128)
-          for (unsigned i = 0; i != 2; ++i)
-            Idxs.push_back((Imm >> i) & 0x1);
-        else if (PD256)
-          for (unsigned l = 0; l != 4; l+=2)
-            for (unsigned i = 0; i != 2; ++i)
-              Idxs.push_back(((Imm >> (l+i)) & 0x1) + l);
-        else if (PS128)
-          for (unsigned i = 0; i != 4; ++i)
-            Idxs.push_back((Imm >> (2 * i)) & 0x3);
-        else if (PS256)
-          for (unsigned l = 0; l != 8; l+=4)
-            for (unsigned i = 0; i != 4; ++i)
-              Idxs.push_back(((Imm >> (2 * i)) & 0x3) + l);
-        else
-          llvm_unreachable("Unexpected function");
-
-        Rep = Builder.CreateShuffleVector(Op0, Op0, Idxs);
-      } else {
-        llvm_unreachable("Unknown function for CallInst upgrade.");
-      }
+      llvm_unreachable("Unknown function for CallInst upgrade.");
     }
 
     if (Rep)
