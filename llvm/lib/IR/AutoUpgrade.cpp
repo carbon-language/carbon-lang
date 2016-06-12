@@ -177,6 +177,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name.startswith("x86.avx2.vbroadcast") ||
         Name.startswith("x86.avx2.pbroadcast") ||
         Name.startswith("x86.avx.vpermil.") ||
+        Name.startswith("x86.sse2.pshuf") ||
         Name.startswith("x86.sse41.pmovsx") ||
         Name.startswith("x86.sse41.pmovzx") ||
         Name.startswith("x86.avx2.pmovsx") ||
@@ -880,7 +881,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep = Builder.CreateShuffleVector(Op0, UndefV, Idxs);
     } else if (Name == "llvm.stackprotectorcheck") {
       Rep = nullptr;
-    } else if (Name.startswith("llvm.x86.avx.vpermil.")) {
+    } else if (Name.startswith("llvm.x86.avx.vpermil.") ||
+               Name == "llvm.x86.sse2.pshuf.d") {
       Value *Op0 = CI->getArgOperand(0);
       unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
       VectorType *VecTy = cast<VectorType>(CI->getType());
@@ -895,6 +897,34 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       // to offset by the first index of each group.
       for (unsigned i = 0; i != NumElts; ++i)
         Idxs[i] = ((Imm >> ((i * IdxSize) % 8)) & IdxMask) | (i & ~IdxMask);
+
+      Rep = Builder.CreateShuffleVector(Op0, Op0, Idxs);
+    } else if (Name == "llvm.x86.sse2.pshufl.w") {
+      Value *Op0 = CI->getArgOperand(0);
+      unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
+      unsigned NumElts = CI->getType()->getVectorNumElements();
+
+      SmallVector<uint32_t, 16> Idxs(NumElts);
+      for (unsigned l = 0; l != NumElts; l += 8) {
+        for (unsigned i = 0; i != 4; ++i)
+          Idxs[i + l] = ((Imm >> (2 * i)) & 0x3) + l;
+        for (unsigned i = 4; i != 8; ++i)
+          Idxs[i + l] = i + l;
+      }
+
+      Rep = Builder.CreateShuffleVector(Op0, Op0, Idxs);
+    } else if (Name == "llvm.x86.sse2.pshufh.w") {
+      Value *Op0 = CI->getArgOperand(0);
+      unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
+      unsigned NumElts = CI->getType()->getVectorNumElements();
+
+      SmallVector<uint32_t, 16> Idxs(NumElts);
+      for (unsigned l = 0; l != NumElts; l += 8) {
+        for (unsigned i = 0; i != 4; ++i)
+          Idxs[i + l] = i + l;
+        for (unsigned i = 0; i != 4; ++i)
+          Idxs[i + l + 4] = ((Imm >> (2 * i)) & 0x3) + 4 + l;
+      }
 
       Rep = Builder.CreateShuffleVector(Op0, Op0, Idxs);
     } else {
