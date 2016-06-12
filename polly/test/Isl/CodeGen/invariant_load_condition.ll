@@ -8,10 +8,10 @@
 ; CHECK-LABEL: polly.cond:
 ; CHECK-NEXT:   %[[R0:[0-9]*]] = sext i32 %polly.access.C.load to i64
 ; CHECK-NEXT:   %[[R1:[0-9]*]] = icmp sle i64 %[[R0]], -1
-;
-; CHECK-LABEL: polly.cond4:
 ; CHECK-NEXT:   %[[R2:[0-9]*]] = sext i32 %polly.access.C.load to i64
 ; CHECK-NEXT:   %[[R3:[0-9]*]] = icmp sge i64 %[[R2]], 1
+; CHECK-NEXT:   %[[R4:[0-9]*]] = or i1 %[[R1]], %[[R3]]
+; CHECK-NEXT:   br i1 %[[R4]]
 ;
 ; CHECK-NOT:  polly.stmt.bb2
 ;
