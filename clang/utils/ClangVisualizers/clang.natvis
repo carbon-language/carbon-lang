@@ -35,6 +35,7 @@ For later versions of Visual Studio, no setup is required-->
     <DisplayString Condition="TypeBits.TC==clang::Type::TypeClass::FunctionProto" IncludeView="poly">{*(clang::FunctionProtoType *)this}</DisplayString>
     <DisplayString Condition="TypeBits.TC==clang::Type::TypeClass::TemplateSpecialization" IncludeView="poly">{*(clang::TemplateSpecializationType *)this}</DisplayString>
     <DisplayString Condition="TypeBits.TC==clang::Type::TypeClass::InjectedClassName" IncludeView="poly">{*(clang::InjectedClassNameType *)this}</DisplayString>
+    <DisplayString Condition="TypeBits.TC==clang::Type::TypeClass::PackExpansion" IncludeView="poly">{*(clang::PackExpansionType *)this}</DisplayString>
     <DisplayString Condition="TypeBits.TC==clang::LocInfoType::LocInfo" IncludeView="poly">{*(clang::LocInfoType *)this}</DisplayString>
     <DisplayString IncludeView="cpp">{*this,view(poly)}</DisplayString>
     <DisplayString IncludeView="poly">{*this,view(cmn)}</DisplayString> <!-- Not yet implemented Type subclass -->
@@ -54,6 +55,7 @@ For later versions of Visual Studio, no setup is required-->
       <ExpandedItem ExcludeView="cmn" Condition="TypeBits.TC==clang::Type::TypeClass::FunctionProto">(clang::FunctionProtoType *)this</ExpandedItem>
       <ExpandedItem ExcludeView="cmn" Condition="TypeBits.TC==clang::Type::TypeClass::TemplateSpecialization">(clang::TemplateSpecializationType *)this</ExpandedItem>
       <ExpandedItem ExcludeView="cmn" Condition="TypeBits.TC==clang::Type::TypeClass::InjectedClassName">(clang::InjectedClassNameType *)this</ExpandedItem>
+      <ExpandedItem ExcludeView="cmn" Condition="TypeBits.TC==clang::Type::TypeClass::PackExpansion">(clang::PackExpansionType *)this</ExpandedItem>
       <ExpandedItem ExcludeView="cmn" Condition="TypeBits.TC==clang::LocInfoType::LocInfo">(clang::LocInfoType *)this</ExpandedItem>
     </Expand>
   </Type>
@@ -205,6 +207,14 @@ For later versions of Visual Studio, no setup is required-->
     <Expand>
       <Item Name="Decl">Decl</Item>
       <Item Name="InjectedType">InjectedType</Item>
+      <ExpandedItem>*(clang::Type *)this, view(cmn)</ExpandedItem>
+    </Expand>
+  </Type>
+  <Type Name="clang::PackExpansionType">
+    <DisplayString>{Pattern}</DisplayString>
+    <Expand>
+      <Item Name="Pattern">Pattern</Item>
+      <Item Name="NumExpansions">NumExpansions</Item>
       <ExpandedItem>*(clang::Type *)this, view(cmn)</ExpandedItem>
     </Expand>
   </Type>
