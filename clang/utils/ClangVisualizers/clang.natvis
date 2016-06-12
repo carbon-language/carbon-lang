@@ -491,6 +491,12 @@ For later versions of Visual Studio, no setup is required-->
       </ArrayItems>
     </Expand>
   </Type>
+  <Type Name="clang::Stmt">
+    <DisplayString>{(clang::Stmt::StmtClass)StmtBits.sClass,en}</DisplayString>
+    <Expand>
+      <Item Name="Class">(clang::Stmt::StmtClass)StmtBits.sClass,en</Item>
+    </Expand>
+  </Type>
   <Type Name="clang::Expr">
     <DisplayString>Expression of class {(clang::Stmt::StmtClass)StmtBits.sClass,en} and type {TR,view(cpp)}</DisplayString>
   </Type>
