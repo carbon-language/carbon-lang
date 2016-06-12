@@ -15168,32 +15168,57 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
     assert(EltVT == MVT::f32 || EltVT == MVT::f64);
 #endif
 
-    unsigned SSECC = translateX86FSETCC(SetCCOpcode, Op0, Op1);
-    unsigned Opc = X86ISD::CMPP;
+    unsigned Opc;
     if (Subtarget.hasAVX512() && VT.getVectorElementType() == MVT::i1) {
       assert(VT.getVectorNumElements() <= 16);
       Opc = X86ISD::CMPM;
+    } else {
+      Opc = X86ISD::CMPP;
+      // The SSE/AVX packed FP comparison nodes are defined with a
+      // floating-point vector result that matches the operand type. This allows
+      // them to work with an SSE1 target (integer vector types are not legal).
+      VT = Op0.getSimpleValueType();
     }
-    // In the two special cases we can't handle, emit two comparisons.
+
+    // In the two cases not handled by SSE compare predicates (SETUEQ/SETONE),
+    // emit two comparisons and a logic op to tie them together.
+    // TODO: This can be avoided if Intel (and only Intel as of 2016) AVX is
+    // available.
+    SDValue Cmp;
+    unsigned SSECC = translateX86FSETCC(SetCCOpcode, Op0, Op1);
     if (SSECC == 8) {
+      // LLVM predicate is SETUEQ or SETONE.
       unsigned CC0, CC1;
       unsigned CombineOpc;
       if (SetCCOpcode == ISD::SETUEQ) {
-        CC0 = 3; CC1 = 0; CombineOpc = ISD::OR;
+        CC0 = 3; // UNORD
+        CC1 = 0; // EQ
+        CombineOpc = Opc == X86ISD::CMPP ? X86ISD::FOR : ISD::OR;
       } else {
         assert(SetCCOpcode == ISD::SETONE);
-        CC0 = 7; CC1 = 4; CombineOpc = ISD::AND;
+        CC0 = 7; // ORD
+        CC1 = 4; // NEQ
+        CombineOpc = Opc == X86ISD::CMPP ? X86ISD::FAND : ISD::AND;
       }
 
       SDValue Cmp0 = DAG.getNode(Opc, dl, VT, Op0, Op1,
                                  DAG.getConstant(CC0, dl, MVT::i8));
       SDValue Cmp1 = DAG.getNode(Opc, dl, VT, Op0, Op1,
                                  DAG.getConstant(CC1, dl, MVT::i8));
-      return DAG.getNode(CombineOpc, dl, VT, Cmp0, Cmp1);
+      Cmp = DAG.getNode(CombineOpc, dl, VT, Cmp0, Cmp1);
+    } else {
+      // Handle all other FP comparisons here.
+      Cmp = DAG.getNode(Opc, dl, VT, Op0, Op1,
+                        DAG.getConstant(SSECC, dl, MVT::i8));
     }
-    // Handle all other FP comparisons here.
-    return DAG.getNode(Opc, dl, VT, Op0, Op1,
-                       DAG.getConstant(SSECC, dl, MVT::i8));
+
+    // If this is SSE/AVX CMPP, bitcast the result back to integer to match the
+    // result type of SETCC. The bitcast is expected to be optimized away
+    // during combining/isel.
+    if (Opc == X86ISD::CMPP)
+      Cmp = DAG.getBitcast(Op.getSimpleValueType(), Cmp);
+
+    return Cmp;
   }
 
   MVT VTOp0 = Op0.getSimpleValueType();
@@ -29646,6 +29671,11 @@ static SDValue combineSetCC(SDNode *N, SelectionDAG &DAG,
       return LHS.getOperand(0);
     }
   }
+
+  // For an SSE1-only target, lower to X86ISD::CMPP early to avoid scalarization
+  // via legalization because v4i32 is not a legal type.
+  if (Subtarget.hasSSE1() && !Subtarget.hasSSE2() && VT == MVT::v4i32)
+    return LowerVSETCC(SDValue(N, 0), Subtarget, DAG);
 
   return SDValue();
 }
