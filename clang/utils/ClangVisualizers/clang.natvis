@@ -309,6 +309,17 @@ For later versions of Visual Studio, no setup is required-->
       <Item Name="TemplateList">TemplateArgumentLists</Item>
     </Expand>
   </Type>
+  <Type Name="clang::ParsedTemplateArgument">
+    <DisplayString Condition="Kind==clang::ParsedTemplateArgument::Type">Type template argument: {*(clang::QualType *)Arg}</DisplayString>
+    <DisplayString Condition="Kind==clang::ParsedTemplateArgument::NonType">Non-type template argument: {*(clang::Expr *)Arg}</DisplayString>
+    <DisplayString Condition="Kind==clang::ParsedTemplateArgument::Template">Template template argument: {*(clang::TemplateName *)Arg</DisplayString>
+    <Expand>
+      <Item Name="Kind">Kind,en</Item>
+      <Item Name="Arg" Condition="Kind==clang::ParsedTemplateArgument::Type">(clang::QualType *)Arg</Item>
+      <Item Name="Arg" Condition="Kind==clang::ParsedTemplateArgument::NonType">(clang::Expr *)Arg</Item>
+      <Item Name="Arg" Condition="Kind==clang::ParsedTemplateArgument::Template">(clang::TemplateName *)Arg</Item>
+    </Expand>
+  </Type>
   <!-- Builtin types that have C++ keywords are manually displayed as that keyword. Otherwise, just use the enum name -->
   <Type Name="clang::BuiltinType">
     <DisplayString Condition="BuiltinTypeBits.Kind==clang::BuiltinType::Void">void</DisplayString>
