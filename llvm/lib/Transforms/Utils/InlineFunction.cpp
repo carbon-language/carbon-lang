@@ -1265,7 +1265,8 @@ static bool hasLifetimeMarkers(AllocaInst *AI) {
 /// Rebuild the entire inlined-at chain for this instruction so that the top of
 /// the chain now is inlined-at the new call site.
 static DebugLoc
-updateInlinedAtInfo(DebugLoc DL, DILocation *InlinedAtNode, LLVMContext &Ctx,
+updateInlinedAtInfo(const DebugLoc &DL, DILocation *InlinedAtNode,
+                    LLVMContext &Ctx,
                     DenseMap<const DILocation *, DILocation *> &IANodes) {
   SmallVector<DILocation *, 3> InlinedAtLocations;
   DILocation *Last = InlinedAtNode;
