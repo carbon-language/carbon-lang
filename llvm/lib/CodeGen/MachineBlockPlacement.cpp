@@ -288,6 +288,11 @@ class MachineBlockPlacement : public MachineFunctionPass {
                                  const BlockFilterSet *BlockFilter,
                                  BranchProbability SuccProb,
                                  BranchProbability HotProb);
+  bool
+  hasBetterLayoutPredecessor(MachineBasicBlock *BB, MachineBasicBlock *Succ,
+                             BlockChain &SuccChain, BranchProbability SuccProb,
+                             BranchProbability RealSuccProb, BlockChain &Chain,
+                             const BlockFilterSet *BlockFilter);
   MachineBasicBlock *selectBestSuccessor(MachineBasicBlock *BB,
                                          BlockChain &Chain,
                                          const BlockFilterSet *BlockFilter);
@@ -512,6 +517,128 @@ bool MachineBlockPlacement::shouldPredBlockBeOutlined(
     return false;
 }
 
+// FIXME (PGO handling)
+// For now this method just returns a fixed threshold. It needs to be enhanced
+// such that BB and Succ is passed in so that CFG shapes are examined such that
+// the threshold is computed with more precise cost model when PGO is on.
+static BranchProbability getLayoutSuccessorProbThreshold() {
+  BranchProbability HotProb(StaticLikelyProb, 100);
+  return HotProb;
+}
+
+/// Checks to see if the layout candidate block \p Succ has a better layout
+/// predecessor than \c BB. If yes, returns true.
+bool MachineBlockPlacement::hasBetterLayoutPredecessor(
+    MachineBasicBlock *BB, MachineBasicBlock *Succ, BlockChain &SuccChain,
+    BranchProbability SuccProb, BranchProbability RealSuccProb,
+    BlockChain &Chain, const BlockFilterSet *BlockFilter) {
+
+  // This is no global conflict, just return false.
+  if (SuccChain.UnscheduledPredecessors == 0)
+    return false;
+
+  // There are two basic scenarios here:
+  // -------------------------------------
+  // Case 1: triagular shape CFG:
+  //     BB
+  //     | \
+  //     |  \
+  //     |   Pred
+  //     |   /
+  //     Succ
+  // In this case, we are evaluating whether to select edge -> Succ, e.g.
+  // set Succ as the layout successor of BB. Picking Succ as BB's
+  // successor breaks the  CFG constraints. With this layout, Pred BB
+  // is forced to be outlined, so the overall cost will be cost of the
+  // branch taken from BB to Pred, plus the cost of back taken branch
+  // from Pred to Succ, as well as the additional cost asssociated
+  // with the needed unconditional jump instruction from Pred To Succ.
+  // The cost of the topological order layout is the taken branch cost
+  // from BB to Succ, so to make BB->Succ a viable candidate, the following
+  // must hold:
+  //     2 * freq(BB->Pred) * taken_branch_cost + unconditional_jump_cost
+  //      < freq(BB->Succ) *  taken_branch_cost.
+  // Ignoring unconditional jump cost, we get
+  //    freq(BB->Succ) > 2 * freq(BB->Pred), i.e.,
+  //    prob(BB->Succ) > 2 * prob(BB->Pred)
+  //
+  // When real profile data is available, we can precisely compute the the
+  // probabililty threshold that is needed for edge BB->Succ to be considered.
+  // With out profile data, the heuristic requires the branch bias to be
+  // a lot larger to make sure the signal is very strong (e.g. 80% default).
+  // -----------------------------------------------------------------
+  // Case 2: diamond like CFG:
+  //     S
+  //    / \
+  //   |   \
+  //  BB    Pred
+  //   \    /
+  //    Succ
+  //    ..
+  // In this case, edge S->BB has already been selected, and we are evaluating
+  // candidate edge BB->Succ. Edge S->BB is selected because prob(S->BB)
+  // is no less than prob(S->Pred). When real profile data is *available*, if
+  // the condition is true, it will be always better to continue the trace with
+  // edge BB->Succ instead of laying out with topological order (i.e. laying
+  // Pred first).  The cost of S->BB->Succ is 2 * freq (S->Pred), while with
+  // the topo order, the cost is freq(S-> Pred) + Pred(S->BB) which is larger.
+  // When profile data is not available, however, we need to be more
+  // conservative. If the branch prediction is wrong, breaking the topo-order
+  // will actually yield a layout with large cost. For this reason, we need
+  // strong biaaed branch at block S with Prob(S->BB) in order to select
+  // BB->Succ. This is equialant to looking the CFG backward with backward
+  // edge: Prob(Succ->BB) needs to >= HotProb in order to be selected (without
+  // profile data).
+
+  BranchProbability HotProb = getLayoutSuccessorProbThreshold();
+
+  // Forward checking. For case 2, SuccProb will be 1.
+  if (SuccProb < HotProb) {
+    DEBUG(dbgs() << "    " << getBlockName(Succ) << " -> " << SuccProb
+                 << " (prob) (CFG conflict)\n");
+    return true;
+  }
+
+  // Make sure that a hot successor doesn't have a globally more
+  // important predecessor.
+  BlockFrequency CandidateEdgeFreq = MBFI->getBlockFreq(BB) * RealSuccProb;
+  bool BadCFGConflict = false;
+
+  for (MachineBasicBlock *Pred : Succ->predecessors()) {
+    if (Pred == Succ || BlockToChain[Pred] == &SuccChain ||
+        (BlockFilter && !BlockFilter->count(Pred)) ||
+        BlockToChain[Pred] == &Chain)
+      continue;
+    // Do backward checking. For case 1, it is actually redundant check. For
+    // case 2 above, we need a backward checking to filter out edges that are
+    // not 'strongly' biased. With profile data available, the check is mostly
+    // redundant too (when threshold prob is set at 50%) unless S has more than
+    // two successors.
+    // BB  Pred
+    //  \ /
+    //  Succ
+    // We select edgee BB->Succ if
+    //      freq(BB->Succ) > freq(Succ) * HotProb
+    //      i.e. freq(BB->Succ) > freq(BB->Succ) * HotProb + freq(Pred->Succ) *
+    //      HotProb
+    //      i.e. freq((BB->Succ) * (1 - HotProb) > freq(Pred->Succ) * HotProb
+    BlockFrequency PredEdgeFreq =
+        MBFI->getBlockFreq(Pred) * MBPI->getEdgeProbability(Pred, Succ);
+    if (PredEdgeFreq * HotProb >= CandidateEdgeFreq * HotProb.getCompl()) {
+      BadCFGConflict = true;
+      break;
+    }
+  }
+
+  if (BadCFGConflict) {
+    DEBUG(dbgs() << "    " << getBlockName(Succ) << " -> " << SuccProb
+                 << " (prob) (non-cold CFG conflict)\n");
+    return true;
+  }
+
+  return false;
+}
+
 /// \brief Select the best successor for a block.
 ///
 /// This looks across all successors of a particular block and attempts to
@@ -545,51 +672,18 @@ MachineBlockPlacement::selectBestSuccessor(MachineBasicBlock *BB,
                                   HotProb))
       return Succ;
 
-    // Only consider successors which are either "hot", or wouldn't violate
-    // any CFG constraints.
     BlockChain &SuccChain = *BlockToChain[Succ];
-    if (SuccChain.UnscheduledPredecessors != 0) {
-      if (SuccProb < HotProb) {
-        DEBUG(dbgs() << "    " << getBlockName(Succ) << " -> " << SuccProb
-                     << " (prob) (CFG conflict)\n");
-        continue;
-      }
+    // Skip the edge \c BB->Succ if block \c Succ has a better layout
+    // predecessor that yields lower global cost.
+    if (hasBetterLayoutPredecessor(BB, Succ, SuccChain, SuccProb, RealSuccProb,
+                                   Chain, BlockFilter))
+      continue;
 
-      // Make sure that a hot successor doesn't have a globally more
-      // important predecessor.
-      BlockFrequency CandidateEdgeFreq = MBFI->getBlockFreq(BB) * RealSuccProb;
-      bool BadCFGConflict = false;
-      for (MachineBasicBlock *Pred : Succ->predecessors()) {
-        if (Pred == Succ || BlockToChain[Pred] == &SuccChain ||
-            (BlockFilter && !BlockFilter->count(Pred)) ||
-            BlockToChain[Pred] == &Chain)
-          continue;
-        BlockFrequency PredEdgeFreq =
-            MBFI->getBlockFreq(Pred) * MBPI->getEdgeProbability(Pred, Succ);
-        // A   B
-        //  \ /
-        //   C
-        // We layout ACB iff  A.freq > C.freq * HotProb
-        //               i.e. A.freq > A.freq * HotProb + B.freq * HotProb
-        //               i.e. A.freq * (1 - HotProb) > B.freq * HotProb
-        // A: CandidateEdge
-        // B: PredEdge
-        if (PredEdgeFreq * HotProb >= CandidateEdgeFreq * HotProb.getCompl()) {
-          BadCFGConflict = true;
-          break;
-        }
-      }
-      if (BadCFGConflict) {
-        DEBUG(dbgs() << "    " << getBlockName(Succ) << " -> " << SuccProb
-                     << " (prob) (non-cold CFG conflict)\n");
-        continue;
-      }
-    }
-
-    DEBUG(dbgs() << "    " << getBlockName(Succ) << " -> " << SuccProb
-                 << " (prob)"
-                 << (SuccChain.UnscheduledPredecessors != 0 ? " (CFG break)" : "")
-                 << "\n");
+    DEBUG(
+        dbgs() << "    " << getBlockName(Succ) << " -> " << SuccProb
+               << " (prob)"
+               << (SuccChain.UnscheduledPredecessors != 0 ? " (CFG break)" : "")
+               << "\n");
     if (BestSucc && BestProb >= SuccProb)
       continue;
     BestSucc = Succ;
