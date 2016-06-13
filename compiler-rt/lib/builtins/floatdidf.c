@@ -16,7 +16,7 @@
 
 /* Returns: convert a to a double, rounding toward even. */
 
-/* Assumption: double is a IEEE 64 bit floating point type 
+/* Assumption: double is a IEEE 64 bit floating point type
  *             di_int is a 64 bit integral type
  */
 
@@ -32,16 +32,16 @@ ARM_EABI_FNALIAS(l2d, floatdidf)
 COMPILER_RT_ABI double
 __floatdidf(di_int a)
 {
-	static const double twop52 = 4503599627370496.0; // 0x1.0p52
-	static const double twop32 = 4294967296.0; // 0x1.0p32
-	
-	union { int64_t x; double d; } low = { .d = twop52 };
-	
-	const double high = (int32_t)(a >> 32) * twop32;
-	low.x |= a & INT64_C(0x00000000ffffffff);
-	
-	const double result = (high - twop52) + low.d;
-	return result;
+    static const double twop52 = 4503599627370496.0; // 0x1.0p52
+    static const double twop32 = 4294967296.0; // 0x1.0p32
+
+    union { int64_t x; double d; } low = { .d = twop52 };
+
+    const double high = (int32_t)(a >> 32) * twop32;
+    low.x |= a & INT64_C(0x00000000ffffffff);
+
+    const double result = (high - twop52) + low.d;
+    return result;
 }
 
 #else
