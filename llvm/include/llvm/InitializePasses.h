@@ -159,7 +159,7 @@ void initializeIntervalPartitionPass(PassRegistry&);
 void initializeJumpThreadingPass(PassRegistry&);
 void initializeLCSSAWrapperPassPass(PassRegistry &);
 void initializeLICMPass(PassRegistry&);
-void initializeLazyValueInfoPass(PassRegistry&);
+void initializeLazyValueInfoWrapperPassPass(PassRegistry&);
 void initializeLintPass(PassRegistry&);
 void initializeLiveDebugValuesPass(PassRegistry&);
 void initializeLiveDebugVariablesPass(PassRegistry&);

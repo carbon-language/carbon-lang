@@ -131,8 +131,8 @@ namespace {
     bool runOnFunction(Function &F) override;
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequired<LazyValueInfo>();
-      AU.addPreserved<LazyValueInfo>();
+      AU.addRequired<LazyValueInfoWrapperPass>();
+      AU.addPreserved<LazyValueInfoWrapperPass>();
       AU.addPreserved<GlobalsAAWrapperPass>();
       AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
@@ -176,7 +176,7 @@ namespace {
 char JumpThreading::ID = 0;
 INITIALIZE_PASS_BEGIN(JumpThreading, "jump-threading",
                 "Jump Threading", false, false)
-INITIALIZE_PASS_DEPENDENCY(LazyValueInfo)
+INITIALIZE_PASS_DEPENDENCY(LazyValueInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(JumpThreading, "jump-threading",
                 "Jump Threading", false, false)
@@ -192,7 +192,7 @@ bool JumpThreading::runOnFunction(Function &F) {
 
   DEBUG(dbgs() << "Jump threading on function '" << F.getName() << "'\n");
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-  LVI = &getAnalysis<LazyValueInfo>();
+  LVI = &getAnalysis<LazyValueInfoWrapperPass>().getLVI();
   BFI.reset();
   BPI.reset();
   // When profile data is available, we need to update edge weights after
