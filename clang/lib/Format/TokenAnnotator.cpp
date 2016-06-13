@@ -178,8 +178,8 @@ private:
       Left->Type = TT_ObjCMethodExpr;
     }
 
-    bool MightBeFunctionType = CurrentToken->isOneOf(tok::star, tok::amp) &&
-                               !Contexts[Contexts.size() - 2].IsExpression;
+    bool MightBeFunctionType = !Contexts[Contexts.size() - 2].IsExpression;
+    bool ProbablyFunctionType = CurrentToken->isOneOf(tok::star, tok::amp);
     bool HasMultipleLines = false;
     bool HasMultipleParametersOnALine = false;
     bool MightBeObjCForRangeLoop =
@@ -206,14 +206,15 @@ private:
       if (CurrentToken->Previous->is(TT_PointerOrReference) &&
           CurrentToken->Previous->Previous->isOneOf(tok::l_paren,
                                                     tok::coloncolon))
-        MightBeFunctionType = true;
+        ProbablyFunctionType = true;
+      if (CurrentToken->is(tok::comma))
+        MightBeFunctionType = false;
       if (CurrentToken->Previous->is(TT_BinaryOperator))
         Contexts.back().IsExpression = true;
       if (CurrentToken->is(tok::r_paren)) {
-        if (MightBeFunctionType && CurrentToken->Next &&
+        if (MightBeFunctionType && ProbablyFunctionType && CurrentToken->Next &&
             (CurrentToken->Next->is(tok::l_paren) ||
-             (CurrentToken->Next->is(tok::l_square) &&
-              Line.MustBeDeclaration)))
+             (CurrentToken->Next->is(tok::l_square) && Line.MustBeDeclaration)))
           Left->Type = TT_FunctionTypeLParen;
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;
