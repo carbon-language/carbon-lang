@@ -485,7 +485,25 @@ For later versions of Visual Studio, no setup is required-->
       <ExpandedItem>*(clang::Type *)this, view(cmn)</ExpandedItem>
     </Expand>
   </Type>
+  <Type Name="clang::OpaquePtr&lt;clang::QualType&gt;">
+    <DisplayString>{*(clang::QualType *)this}</DisplayString>
+    <Expand>
+      <Item Name="Ptr">*(clang::QualType *)this</Item>
+    </Expand>
+  </Type>
+  <Type Name="clang::UnionOpaquePtr&lt;clang::QualType&gt;">
+    <DisplayString>{*(clang::QualType *)this}</DisplayString>
+    <Expand>
+      <Item Name="Ptr">*(clang::QualType *)this</Item>
+    </Expand>
+  </Type>
   <Type Name="clang::OpaquePtr&lt;*&gt;">
+    <DisplayString>{($T1 *)Ptr}</DisplayString>
+    <Expand>
+      <ExpandedItem>($T1 *)Ptr</ExpandedItem>
+    </Expand>
+  </Type>
+  <Type Name="clang::UnionOpaquePtr&lt;*&gt;">
     <DisplayString>{($T1 *)Ptr}</DisplayString>
     <Expand>
       <ExpandedItem>($T1 *)Ptr</ExpandedItem>
