@@ -874,19 +874,19 @@ bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     if (SrcOp.isImm()) {
       APInt Imm(64, SrcOp.getImm());
       BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DstLo)
-              .addImm(Imm.getLoBits(32).getZExtValue())
-              .addReg(Dst, RegState::Implicit);
+        .addImm(Imm.getLoBits(32).getZExtValue())
+        .addReg(Dst, RegState::Implicit | RegState::Define);
       BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DstHi)
-              .addImm(Imm.getHiBits(32).getZExtValue())
-              .addReg(Dst, RegState::Implicit);
+        .addImm(Imm.getHiBits(32).getZExtValue())
+        .addReg(Dst, RegState::Implicit | RegState::Define);
     } else {
       assert(SrcOp.isReg());
       BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DstLo)
-              .addReg(RI.getSubReg(SrcOp.getReg(), AMDGPU::sub0))
-              .addReg(Dst, RegState::Implicit);
+        .addReg(RI.getSubReg(SrcOp.getReg(), AMDGPU::sub0))
+        .addReg(Dst, RegState::Implicit | RegState::Define);
       BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DstHi)
-              .addReg(RI.getSubReg(SrcOp.getReg(), AMDGPU::sub1))
-              .addReg(Dst, RegState::Implicit);
+        .addReg(RI.getSubReg(SrcOp.getReg(), AMDGPU::sub1))
+        .addReg(Dst, RegState::Implicit | RegState::Define);
     }
     MI->eraseFromParent();
     break;
@@ -901,13 +901,15 @@ bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     const MachineOperand &SrcCond = MI->getOperand(3);
 
     BuildMI(MBB, MI, DL, get(AMDGPU::V_CNDMASK_B32_e64), DstLo)
-        .addReg(RI.getSubReg(Src0, AMDGPU::sub0))
-        .addReg(RI.getSubReg(Src1, AMDGPU::sub0))
-        .addOperand(SrcCond);
+      .addReg(RI.getSubReg(Src0, AMDGPU::sub0))
+      .addReg(RI.getSubReg(Src1, AMDGPU::sub0))
+      .addReg(SrcCond.getReg())
+      .addReg(Dst, RegState::Implicit | RegState::Define);
     BuildMI(MBB, MI, DL, get(AMDGPU::V_CNDMASK_B32_e64), DstHi)
-        .addReg(RI.getSubReg(Src0, AMDGPU::sub1))
-        .addReg(RI.getSubReg(Src1, AMDGPU::sub1))
-        .addOperand(SrcCond);
+      .addReg(RI.getSubReg(Src0, AMDGPU::sub1))
+      .addReg(RI.getSubReg(Src1, AMDGPU::sub1))
+      .addReg(SrcCond.getReg(), getKillRegState(SrcCond.isKill()))
+      .addReg(Dst, RegState::Implicit | RegState::Define);
     MI->eraseFromParent();
     break;
   }
