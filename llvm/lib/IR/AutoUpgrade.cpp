@@ -178,6 +178,9 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name.startswith("x86.avx2.pbroadcast") ||
         Name.startswith("x86.avx.vpermil.") ||
         Name.startswith("x86.sse2.pshuf") ||
+        Name.startswith("x86.avx512.mask.pshuf.d.") ||
+        Name.startswith("x86.avx512.mask.pshufl.w.") ||
+        Name.startswith("x86.avx512.mask.pshufh.w.") ||
         Name.startswith("x86.sse41.pmovsx") ||
         Name.startswith("x86.sse41.pmovzx") ||
         Name.startswith("x86.avx2.pmovsx") ||
@@ -877,7 +880,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     } else if (Name == "llvm.stackprotectorcheck") {
       Rep = nullptr;
     } else if (Name.startswith("llvm.x86.avx.vpermil.") ||
-               Name == "llvm.x86.sse2.pshuf.d") {
+               Name == "llvm.x86.sse2.pshuf.d" ||
+               Name.startswith("llvm.x86.avx512.mask.pshuf.d.")) {
       Value *Op0 = CI->getArgOperand(0);
       unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
       VectorType *VecTy = cast<VectorType>(CI->getType());
@@ -894,7 +898,12 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         Idxs[i] = ((Imm >> ((i * IdxSize) % 8)) & IdxMask) | (i & ~IdxMask);
 
       Rep = Builder.CreateShuffleVector(Op0, Op0, Idxs);
-    } else if (Name == "llvm.x86.sse2.pshufl.w") {
+
+      if (CI->getNumArgOperands() == 4)
+        Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
+                            CI->getArgOperand(2));
+    } else if (Name == "llvm.x86.sse2.pshufl.w" ||
+               Name.startswith("llvm.x86.avx512.mask.pshufl.w.")) {
       Value *Op0 = CI->getArgOperand(0);
       unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
       unsigned NumElts = CI->getType()->getVectorNumElements();
@@ -908,7 +917,12 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       }
 
       Rep = Builder.CreateShuffleVector(Op0, Op0, Idxs);
-    } else if (Name == "llvm.x86.sse2.pshufh.w") {
+
+      if (CI->getNumArgOperands() == 4)
+        Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
+                            CI->getArgOperand(2));
+    } else if (Name == "llvm.x86.sse2.pshufh.w" ||
+               Name.startswith("llvm.x86.avx512.mask.pshufh.w.")) {
       Value *Op0 = CI->getArgOperand(0);
       unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
       unsigned NumElts = CI->getType()->getVectorNumElements();
@@ -922,6 +936,10 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       }
 
       Rep = Builder.CreateShuffleVector(Op0, Op0, Idxs);
+
+      if (CI->getNumArgOperands() == 4)
+        Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
+                            CI->getArgOperand(2));
     } else {
       llvm_unreachable("Unknown function for CallInst upgrade.");
     }
