@@ -54,14 +54,14 @@ __m512 test_mm512_sqrt_ps(__m512 a)
   return _mm512_sqrt_ps(a);
 }
 
-__m512 test_mm512_mask_sqrt_ps(__m512 __W, __mmask8 __U, __m512 __A)
+__m512 test_mm512_mask_sqrt_ps(__m512 __W, __mmask16 __U, __m512 __A)
 {
   // CHECK-LABEL: @test_mm512_mask_sqrt_ps
   // CHECK: @llvm.x86.avx512.mask.sqrt.ps.512
   return _mm512_mask_sqrt_ps( __W, __U, __A);
 }
 
-__m512 test_mm512_maskz_sqrt_ps( __mmask8 __U, __m512 __A)
+__m512 test_mm512_maskz_sqrt_ps( __mmask16 __U, __m512 __A)
 {
   // CHECK-LABEL: @test_mm512_maskz_sqrt_ps
   // CHECK: @llvm.x86.avx512.mask.sqrt.ps.512

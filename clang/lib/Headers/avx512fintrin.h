@@ -1585,7 +1585,7 @@ _mm512_sqrt_ps(__m512 __a)
 }
 
 static  __inline__ __m512 __DEFAULT_FN_ATTRS
-_mm512_mask_sqrt_ps(__m512 __W, __mmask8 __U, __m512 __A)
+_mm512_mask_sqrt_ps(__m512 __W, __mmask16 __U, __m512 __A)
 {
   return (__m512)__builtin_ia32_sqrtps512_mask((__v16sf)__A,
                                                (__v16sf) __W,
@@ -1594,7 +1594,7 @@ _mm512_mask_sqrt_ps(__m512 __W, __mmask8 __U, __m512 __A)
 }
 
 static  __inline__ __m512 __DEFAULT_FN_ATTRS
-_mm512_maskz_sqrt_ps( __mmask8 __U, __m512 __A)
+_mm512_maskz_sqrt_ps( __mmask16 __U, __m512 __A)
 {
   return (__m512)__builtin_ia32_sqrtps512_mask((__v16sf)__A,
                                                (__v16sf) _mm512_setzero_ps (),
