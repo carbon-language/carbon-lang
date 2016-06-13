@@ -309,6 +309,72 @@ __kmp_affinity_print_topology(AddrUnsPair *address2os, int len, int depth,
 }
 
 #if KMP_USE_HWLOC
+
+// This function removes the topology levels that are radix 1 and don't offer
+// further information about the topology.  The most common example is when you
+// have one thread context per core, we don't want the extra thread context
+// level if it offers no unique labels.  So they are removed.
+// return value: the new depth of address2os
+static int
+__kmp_affinity_remove_radix_one_levels(AddrUnsPair *address2os, int nActiveThreads, int depth, int* pkgLevel, int* coreLevel, int* threadLevel) {
+    int level;
+    int i;
+    int radix1_detected;
+
+    for (level = depth-1; level >= 0; --level) {
+        // Always keep the package level
+        if (level == *pkgLevel)
+            continue;
+        // Detect if this level is radix 1
+        radix1_detected = 1;
+        for (i = 1; i < nActiveThreads; ++i) {
+            if (address2os[0].first.labels[level] != address2os[i].first.labels[level]) {
+                // There are differing label values for this level so it stays
+                radix1_detected = 0;
+                break;
+            }
+        }
+        if (!radix1_detected)
+            continue;
+        // Radix 1 was detected
+        if (level == *threadLevel) {
+            // If only one thread per core, then just decrement
+            // the depth which removes the threadlevel from address2os
+            for (i = 0; i < nActiveThreads; ++i) {
+                address2os[i].first.depth--;
+            }
+            *threadLevel = -1;
+        } else if (level == *coreLevel) {
+            // For core level, we move the thread labels over if they are still
+            // valid (*threadLevel != -1), and also reduce the depth another level
+            for (i = 0; i < nActiveThreads; ++i) {
+                if (*threadLevel != -1) {
+                    address2os[i].first.labels[*coreLevel] = address2os[i].first.labels[*threadLevel];
+                }
+                address2os[i].first.depth--;
+            }
+            *coreLevel = -1;
+        }
+    }
+    return address2os[0].first.depth;
+}
+
+// Returns the number of objects of type 'type' below 'obj' within the topology tree structure.
+// e.g., if obj is a HWLOC_OBJ_SOCKET object, and type is HWLOC_OBJ_PU, then
+//  this will return the number of PU's under the SOCKET object.
+static int
+__kmp_hwloc_get_nobjs_under_obj(hwloc_obj_t obj, hwloc_obj_type_t type) {
+    int retval = 0;
+    hwloc_obj_t first;
+    for(first = hwloc_get_obj_below_by_type(__kmp_hwloc_topology, obj->type, obj->logical_index, type, 0);
+        first != NULL && hwloc_get_ancestor_obj_by_type(__kmp_hwloc_topology, obj->type, first) == obj;
+        first = hwloc_get_next_obj_by_type(__kmp_hwloc_topology, first->type, first))
+    {
+        ++retval;
+    }
+    return retval;
+}
+
 static int
 __kmp_affinity_create_hwloc_map(AddrUnsPair **address2os,
   kmp_i18n_id_t *const msg_id)
@@ -323,38 +389,13 @@ __kmp_affinity_create_hwloc_map(AddrUnsPair **address2os,
     KMP_CPU_ALLOC(oldMask);
     __kmp_get_system_affinity(oldMask, TRUE);
 
-    unsigned depth = hwloc_topology_get_depth(__kmp_hwloc_topology);
-    int threadLevel = hwloc_get_type_depth(__kmp_hwloc_topology, HWLOC_OBJ_PU);
-    int coreLevel = hwloc_get_type_depth(__kmp_hwloc_topology, HWLOC_OBJ_CORE);
-    int pkgLevel = hwloc_get_type_depth(__kmp_hwloc_topology, HWLOC_OBJ_SOCKET);
-    __kmp_nThreadsPerCore = nCoresPerPkg = nPackages = 0;
-
-    //
-    // This makes an assumption about the topology being four levels:
-    // machines -> packages -> cores -> hardware threads
-    //
-    hwloc_obj_t current_level_iterator = hwloc_get_root_obj(__kmp_hwloc_topology);
-    hwloc_obj_t child_iterator;
-    for(child_iterator = hwloc_get_next_child(__kmp_hwloc_topology, current_level_iterator, NULL);
-        child_iterator != NULL;
-        child_iterator = hwloc_get_next_child(__kmp_hwloc_topology, current_level_iterator, child_iterator))
-    {
-        nPackages++;
-    }
-    current_level_iterator = hwloc_get_obj_by_depth(__kmp_hwloc_topology, pkgLevel, 0);
-    for(child_iterator = hwloc_get_next_child(__kmp_hwloc_topology, current_level_iterator, NULL);
-        child_iterator != NULL;
-        child_iterator = hwloc_get_next_child(__kmp_hwloc_topology, current_level_iterator, child_iterator))
-    {
-        nCoresPerPkg++;
-    }
-    current_level_iterator = hwloc_get_obj_by_depth(__kmp_hwloc_topology, coreLevel, 0);
-    for(child_iterator = hwloc_get_next_child(__kmp_hwloc_topology, current_level_iterator, NULL);
-        child_iterator != NULL;
-        child_iterator = hwloc_get_next_child(__kmp_hwloc_topology, current_level_iterator, child_iterator))
-    {
-        __kmp_nThreadsPerCore++;
-    }
+    int depth = 3;
+    int pkgLevel = 0;
+    int coreLevel = 1;
+    int threadLevel = 2;
+    nPackages = __kmp_hwloc_get_nobjs_under_obj(hwloc_get_root_obj(__kmp_hwloc_topology), HWLOC_OBJ_SOCKET);
+    nCoresPerPkg = __kmp_hwloc_get_nobjs_under_obj(hwloc_get_obj_by_type(__kmp_hwloc_topology, HWLOC_OBJ_SOCKET, 0), HWLOC_OBJ_CORE);
+    __kmp_nThreadsPerCore = __kmp_hwloc_get_nobjs_under_obj(hwloc_get_obj_by_type(__kmp_hwloc_topology, HWLOC_OBJ_CORE, 0), HWLOC_OBJ_PU);
 
     if (! KMP_AFFINITY_CAPABLE())
     {
@@ -385,19 +426,40 @@ __kmp_affinity_create_hwloc_map(AddrUnsPair **address2os,
     //
     AddrUnsPair *retval = (AddrUnsPair *)__kmp_allocate(sizeof(AddrUnsPair) * __kmp_avail_proc);
 
-    unsigned num_hardware_threads = hwloc_get_nbobjs_by_depth(__kmp_hwloc_topology, threadLevel);
-    unsigned i;
-    hwloc_obj_t hardware_thread_iterator;
+    hwloc_obj_t pu;
+    hwloc_obj_t core;
+    hwloc_obj_t socket;
     int nActiveThreads = 0;
-    for(i=0;i<num_hardware_threads;i++) {
-        hardware_thread_iterator = hwloc_get_obj_by_depth(__kmp_hwloc_topology, threadLevel, i);
-        Address addr(3);
-        if(! KMP_CPU_ISSET(i, fullMask)) continue;
-        addr.labels[0] = hardware_thread_iterator->parent->parent->logical_index;
-        addr.labels[1] = hardware_thread_iterator->parent->logical_index % nCoresPerPkg;
-        addr.labels[2] = hardware_thread_iterator->logical_index % __kmp_nThreadsPerCore;
-        retval[nActiveThreads] = AddrUnsPair(addr, hardware_thread_iterator->os_index);
-        nActiveThreads++;
+    int socket_identifier = 0;
+    for(socket = hwloc_get_obj_by_type(__kmp_hwloc_topology, HWLOC_OBJ_SOCKET, 0);
+        socket != NULL;
+        socket = hwloc_get_next_obj_by_type(__kmp_hwloc_topology, HWLOC_OBJ_SOCKET, socket),
+        socket_identifier++)
+    {
+        int core_identifier = 0;
+        for(core = hwloc_get_obj_below_by_type(__kmp_hwloc_topology, socket->type, socket->logical_index, HWLOC_OBJ_CORE, 0);
+            core != NULL && hwloc_get_ancestor_obj_by_type(__kmp_hwloc_topology, socket->type, core) == socket;
+            core = hwloc_get_next_obj_by_type(__kmp_hwloc_topology, HWLOC_OBJ_CORE, core),
+            core_identifier++)
+        {
+            int pu_identifier = 0;
+            for(pu = hwloc_get_obj_below_by_type(__kmp_hwloc_topology, core->type, core->logical_index, HWLOC_OBJ_PU, 0);
+                pu != NULL && hwloc_get_ancestor_obj_by_type(__kmp_hwloc_topology, core->type, pu) == core;
+                pu = hwloc_get_next_obj_by_type(__kmp_hwloc_topology, HWLOC_OBJ_PU, pu),
+                pu_identifier++)
+            {
+                Address addr(3);
+                if(! KMP_CPU_ISSET(pu->os_index, fullMask))
+                    continue;
+                KA_TRACE(20, ("Hwloc inserting %d (%d) %d (%d) %d (%d) into address2os\n",
+                    socket->os_index, socket->logical_index, core->os_index, core->logical_index, pu->os_index,pu->logical_index));
+                addr.labels[0] = socket_identifier; // package
+                addr.labels[1] = core_identifier; // core
+                addr.labels[2] = pu_identifier; // pu
+                retval[nActiveThreads] = AddrUnsPair(addr, pu->os_index);
+                nActiveThreads++;
+            }
+        }
     }
 
     //
@@ -433,7 +495,7 @@ __kmp_affinity_create_hwloc_map(AddrUnsPair **address2os,
         // Form an Address object which only includes the package level.
         //
         Address addr(1);
-        addr.labels[0] = retval[0].first.labels[pkgLevel-1];
+        addr.labels[0] = retval[0].first.labels[pkgLevel];
         retval[0].first = addr;
 
         if (__kmp_affinity_gran_levels < 0) {
@@ -460,14 +522,14 @@ __kmp_affinity_create_hwloc_map(AddrUnsPair **address2os,
     // nCoresPerPkg, & nPackages.  Make sure all these vars are set
     // correctly, and return if affinity is not enabled.
     //
-    __kmp_ncores = hwloc_get_nbobjs_by_depth(__kmp_hwloc_topology, coreLevel);
+    __kmp_ncores = hwloc_get_nbobjs_by_type(__kmp_hwloc_topology, HWLOC_OBJ_CORE);
 
     //
     // Check to see if the machine topology is uniform
     //
-    unsigned npackages = hwloc_get_nbobjs_by_depth(__kmp_hwloc_topology, pkgLevel);
+    unsigned npackages = hwloc_get_nbobjs_by_type(__kmp_hwloc_topology, HWLOC_OBJ_SOCKET);
     unsigned ncores = __kmp_ncores;
-    unsigned nthreads = hwloc_get_nbobjs_by_depth(__kmp_hwloc_topology, threadLevel);
+    unsigned nthreads = hwloc_get_nbobjs_by_type(__kmp_hwloc_topology, HWLOC_OBJ_PU);
     unsigned uniform = (npackages * nCoresPerPkg * __kmp_nThreadsPerCore == nthreads);
 
     //
@@ -512,58 +574,7 @@ __kmp_affinity_create_hwloc_map(AddrUnsPair **address2os,
     // Find any levels with radiix 1, and remove them from the map
     // (except for the package level).
     //
-    int new_depth = 0;
-    int level;
-    unsigned proc;
-    for (level = 1; level < (int)depth; level++) {
-        if ((hwloc_get_nbobjs_by_depth(__kmp_hwloc_topology,level) == 1) && (level != pkgLevel)) {
-           continue;
-        }
-        new_depth++;
-    }
-
-    //
-    // If we are removing any levels, allocate a new vector to return,
-    // and copy the relevant information to it.
-    //
-    if (new_depth != depth-1) {
-        AddrUnsPair *new_retval = (AddrUnsPair *)__kmp_allocate(
-          sizeof(AddrUnsPair) * nActiveThreads);
-        for (proc = 0; (int)proc < nActiveThreads; proc++) {
-            Address addr(new_depth);
-            new_retval[proc] = AddrUnsPair(addr, retval[proc].second);
-        }
-        int new_level = 0;
-        for (level = 1; level < (int)depth; level++) {
-            if ((hwloc_get_nbobjs_by_depth(__kmp_hwloc_topology,level) == 1) && (level != pkgLevel)) {
-               if (level == threadLevel) {
-                   threadLevel = -1;
-               }
-               else if ((threadLevel >= 0) && (level < threadLevel)) {
-                   threadLevel--;
-               }
-               if (level == coreLevel) {
-                   coreLevel = -1;
-               }
-               else if ((coreLevel >= 0) && (level < coreLevel)) {
-                   coreLevel--;
-               }
-               if (level < pkgLevel) {
-                   pkgLevel--;
-               }
-               continue;
-            }
-            for (proc = 0; (int)proc < nActiveThreads; proc++) {
-                new_retval[proc].first.labels[new_level]
-                  = retval[proc].first.labels[level];
-            }
-            new_level++;
-        }
-
-        __kmp_free(retval);
-        retval = new_retval;
-        depth = new_depth;
-    }
+    depth = __kmp_affinity_remove_radix_one_levels(retval, nActiveThreads, depth, &pkgLevel, &coreLevel, &threadLevel);
 
     if (__kmp_affinity_gran_levels < 0) {
         //
@@ -571,10 +582,10 @@ __kmp_affinity_create_hwloc_map(AddrUnsPair **address2os,
         // in the machine topology map.
         //
         __kmp_affinity_gran_levels = 0;
-        if ((threadLevel-1 >= 0) && (__kmp_affinity_gran > affinity_gran_thread)) {
+        if ((threadLevel >= 0) && (__kmp_affinity_gran > affinity_gran_thread)) {
             __kmp_affinity_gran_levels++;
         }
-        if ((coreLevel-1 >= 0) && (__kmp_affinity_gran > affinity_gran_core)) {
+        if ((coreLevel >= 0) && (__kmp_affinity_gran > affinity_gran_core)) {
             __kmp_affinity_gran_levels++;
         }
         if (__kmp_affinity_gran > affinity_gran_package) {
@@ -583,14 +594,13 @@ __kmp_affinity_create_hwloc_map(AddrUnsPair **address2os,
     }
 
     if (__kmp_affinity_verbose) {
-        __kmp_affinity_print_topology(retval, nActiveThreads, depth-1, pkgLevel-1,
-          coreLevel-1, threadLevel-1);
+        __kmp_affinity_print_topology(retval, nActiveThreads, depth, pkgLevel,
+          coreLevel, threadLevel);
     }
 
     KMP_CPU_FREE(oldMask);
     *address2os = retval;
-    if(depth == 0) return 0;
-    else return depth-1;
+    return depth;
 }
 #endif // KMP_USE_HWLOC
 
@@ -4051,6 +4061,12 @@ __kmp_affinity_uninitialize(void)
         __kmp_free( procarr );
         procarr = NULL;
     }
+# if KMP_USE_HWLOC
+    if (__kmp_hwloc_topology != NULL) {
+        hwloc_topology_destroy(__kmp_hwloc_topology);
+        __kmp_hwloc_topology = NULL;
+    }
+# endif
 }
 
 
