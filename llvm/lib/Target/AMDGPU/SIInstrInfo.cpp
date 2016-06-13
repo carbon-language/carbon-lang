@@ -3095,7 +3095,9 @@ uint64_t SIInstrInfo::getScratchRsrcWords23() const {
 
   uint64_t EltSizeValue = Log2_32(ST.getMaxPrivateElementSize()) - 1;
 
-  Rsrc23 |= (EltSizeValue << AMDGPU::RSRC_ELEMENT_SIZE_SHIFT);
+  Rsrc23 |= (EltSizeValue << AMDGPU::RSRC_ELEMENT_SIZE_SHIFT) |
+            // IndexStride = 64
+            (UINT64_C(3) << AMDGPU::RSRC_INDEX_STRIDE_SHIFT);
 
   // If TID_ENABLE is set, DATA_FORMAT specifies stride bits [14:17].
   // Clear them unless we want a huge stride.
