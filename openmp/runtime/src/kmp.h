@@ -548,7 +548,7 @@ typedef hwloc_cpuset_t kmp_affin_mask_t;
             } \
         } \
         hwloc_bitmap_and((hwloc_cpuset_t)mask, (hwloc_cpuset_t)mask, \
-            (hwloc_cpuset_t)__kmp_affinity_get_fullMask()); \
+            (hwloc_cpuset_t)__kmp_affin_fullMask); \
     } \
 
 # define KMP_CPU_UNION(dest, src)  hwloc_bitmap_or((hwloc_cpuset_t)dest, (hwloc_cpuset_t)dest, (hwloc_cpuset_t)src)
@@ -657,7 +657,7 @@ typedef unsigned char kmp_affin_mask_t;
                 ((kmp_affin_mask_t *)(mask))[__i]                            \
                   = ~((kmp_affin_mask_t *)(mask))[__i];                      \
             }                                                                \
-            KMP_CPU_AND(mask, __kmp_affinity_get_fullMask());                \
+            KMP_CPU_AND(mask, __kmp_affin_fullMask);                                     \
         }
 
 #  define KMP_CPU_UNION(dest, src) \
@@ -746,7 +746,7 @@ extern int __kmp_num_proc_groups;
                 ((kmp_affin_mask_t *)(mask))[__i]                            \
                   = ~((kmp_affin_mask_t *)(mask))[__i];                      \
             }                                                                \
-            KMP_CPU_AND(mask, __kmp_affinity_get_fullMask());                \
+            KMP_CPU_AND(mask, __kmp_affin_fullMask);                                     \
         }
 
 #   define KMP_CPU_UNION(dest, src) \
@@ -782,7 +782,7 @@ typedef DWORD kmp_affin_mask_t; /* for compatibility with older winbase.h */
 #   define KMP_CPU_ZERO(mask)       (*(mask) = 0)
 #   define KMP_CPU_COPY(dest, src)  (*(dest) = *(src))
 #   define KMP_CPU_AND(dest, src)   (*(dest) &= *(src))
-#   define KMP_CPU_COMPLEMENT(max_bit_number, mask) (*(mask) = ~*(mask)); KMP_CPU_AND(mask, __kmp_affinity_get_fullMask())
+#   define KMP_CPU_COMPLEMENT(max_bit_number, mask) (*(mask) = ~*(mask)); KMP_CPU_AND(mask, __kmp_affin_fullMask)
 #   define KMP_CPU_UNION(dest, src) (*(dest) |= *(src))
 
 #  endif /* KMP_GROUP_AFFINITY */
@@ -887,7 +887,7 @@ extern int __kmp_get_system_affinity(kmp_affin_mask_t *mask, int abort_on_error)
 extern int __kmp_set_system_affinity(kmp_affin_mask_t const *mask, int abort_on_error);
 extern void __kmp_affinity_bind_thread(int which);
 
-extern kmp_affin_mask_t *__kmp_affinity_get_fullMask();
+extern kmp_affin_mask_t *__kmp_affin_fullMask;
 extern char const * __kmp_cpuinfo_file;
 
 #endif /* KMP_AFFINITY_SUPPORTED */
