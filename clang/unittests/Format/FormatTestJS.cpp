@@ -315,6 +315,15 @@ TEST_F(FormatTestJS, GoogModules) {
       "    goog.module.get('my.long.module.name.followedBy.MyLongClassName');");
 }
 
+TEST_F(FormatTestJS, FormatsNamespaces) {
+  verifyFormat("namespace Foo {\n"
+               "  export let x = 1;\n"
+               "}\n");
+  verifyFormat("declare namespace Foo {\n"
+               "  export let x: number;\n"
+               "}\n");
+}
+
 TEST_F(FormatTestJS, FormatsFreestandingFunctions) {
   verifyFormat("function outer1(a, b) {\n"
                "  function inner1(a, b) { return a; }\n"
