@@ -461,6 +461,137 @@ define void @test_arg_i64(i64 %arg, i64* %dst) {
   ret void
 }
 
+; Extract versions
+
+define void @test_extract_f32(<4 x float> %arg, float* %dst) {
+; SSE2-LABEL: test_extract_f32:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[1,1,2,3]
+; SSE2-NEXT:    movss %xmm0, (%rdi)
+; SSE2-NEXT:    retq
+;
+; SSE4A-LABEL: test_extract_f32:
+; SSE4A:       # BB#0:
+; SSE4A-NEXT:    movshdup {{.*#+}} xmm0 = xmm0[1,1,3,3]
+; SSE4A-NEXT:    movss %xmm0, (%rdi)
+; SSE4A-NEXT:    retq
+;
+; SSE41-LABEL: test_extract_f32:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    extractps $1, %xmm0, %eax
+; SSE41-NEXT:    movntil %eax, (%rdi)
+; SSE41-NEXT:    retq
+;
+; AVX-LABEL: test_extract_f32:
+; AVX:       # BB#0:
+; AVX-NEXT:    vextractps $1, %xmm0, %eax
+; AVX-NEXT:    movntil %eax, (%rdi)
+; AVX-NEXT:    retq
+;
+; VLX-LABEL: test_extract_f32:
+; VLX:       # BB#0:
+; VLX-NEXT:    vextractps $1, %xmm0, %eax
+; VLX-NEXT:    movntil %eax, (%rdi)
+; VLX-NEXT:    retq
+  %1 = extractelement <4 x float> %arg, i32 1
+  store float %1, float* %dst, align 1, !nontemporal !1
+  ret void
+}
+
+define void @test_extract_i32(<4 x i32> %arg, i32* %dst) {
+; SSE2-LABEL: test_extract_i32:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,1,2,3]
+; SSE2-NEXT:    movd %xmm0, %eax
+; SSE2-NEXT:    movntil %eax, (%rdi)
+; SSE2-NEXT:    retq
+;
+; SSE4A-LABEL: test_extract_i32:
+; SSE4A:       # BB#0:
+; SSE4A-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,1,2,3]
+; SSE4A-NEXT:    movd %xmm0, %eax
+; SSE4A-NEXT:    movntil %eax, (%rdi)
+; SSE4A-NEXT:    retq
+;
+; SSE41-LABEL: test_extract_i32:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    pextrd $1, %xmm0, %eax
+; SSE41-NEXT:    movntil %eax, (%rdi)
+; SSE41-NEXT:    retq
+;
+; AVX-LABEL: test_extract_i32:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpextrd $1, %xmm0, %eax
+; AVX-NEXT:    movntil %eax, (%rdi)
+; AVX-NEXT:    retq
+;
+; VLX-LABEL: test_extract_i32:
+; VLX:       # BB#0:
+; VLX-NEXT:    vpextrd $1, %xmm0, %eax
+; VLX-NEXT:    movntil %eax, (%rdi)
+; VLX-NEXT:    retq
+  %1 = extractelement <4 x i32> %arg, i32 1
+  store i32 %1, i32* %dst, align 1, !nontemporal !1
+  ret void
+}
+
+define void @test_extract_f64(<2 x double> %arg, double* %dst) {
+; SSE-LABEL: test_extract_f64:
+; SSE:       # BB#0:
+; SSE-NEXT:    movhpd %xmm0, (%rdi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_extract_f64:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovhpd %xmm0, (%rdi)
+; AVX-NEXT:    retq
+;
+; VLX-LABEL: test_extract_f64:
+; VLX:       # BB#0:
+; VLX-NEXT:    vmovhpd %xmm0, (%rdi)
+; VLX-NEXT:    retq
+  %1 = extractelement <2 x double> %arg, i32 1
+  store double %1, double* %dst, align 1, !nontemporal !1
+  ret void
+}
+
+define void @test_extract_i64(<2 x i64> %arg, i64* %dst) {
+; SSE2-LABEL: test_extract_i64:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; SSE2-NEXT:    movd %xmm0, %rax
+; SSE2-NEXT:    movntiq %rax, (%rdi)
+; SSE2-NEXT:    retq
+;
+; SSE4A-LABEL: test_extract_i64:
+; SSE4A:       # BB#0:
+; SSE4A-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; SSE4A-NEXT:    movd %xmm0, %rax
+; SSE4A-NEXT:    movntiq %rax, (%rdi)
+; SSE4A-NEXT:    retq
+;
+; SSE41-LABEL: test_extract_i64:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    pextrq $1, %xmm0, %rax
+; SSE41-NEXT:    movntiq %rax, (%rdi)
+; SSE41-NEXT:    retq
+;
+; AVX-LABEL: test_extract_i64:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpextrq $1, %xmm0, %rax
+; AVX-NEXT:    movntiq %rax, (%rdi)
+; AVX-NEXT:    retq
+;
+; VLX-LABEL: test_extract_i64:
+; VLX:       # BB#0:
+; VLX-NEXT:    vpextrq $1, %xmm0, %rax
+; VLX-NEXT:    movntiq %rax, (%rdi)
+; VLX-NEXT:    retq
+  %1 = extractelement <2 x i64> %arg, i32 1
+  store i64 %1, i64* %dst, align 1, !nontemporal !1
+  ret void
+}
+
 ; And now XMM versions.
 
 define void @test_arg_v4f32(<4 x float> %arg, <4 x float>* %dst) {
