@@ -1140,7 +1140,7 @@ private:
 
     FormatToken *LeftOfParens = Tok.MatchingParen->getPreviousNonComment();
     if (LeftOfParens) {
-      // If there is an opening parenthesis left of the current parentheses,
+      // If there is a closing parenthesis left of the current parentheses,
       // look past it as these might be chained casts.
       if (LeftOfParens->is(tok::r_paren)) {
         if (!LeftOfParens->MatchingParen ||
@@ -1159,7 +1159,7 @@ private:
       // Certain other tokens right before the parentheses are also signals that
       // this cannot be a cast.
       if (LeftOfParens->isOneOf(tok::at, tok::r_square, TT_OverloadedOperator,
-                                TT_TemplateCloser))
+                                TT_TemplateCloser, tok::ellipsis))
         return false;
     }
 
