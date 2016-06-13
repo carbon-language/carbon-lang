@@ -312,9 +312,6 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
   UFE.InPCH = Data.InPCH;
   UFE.File = std::move(F);
   UFE.IsValid = true;
-  if (UFE.File)
-    if (auto RealPathName = UFE.File->getName())
-      UFE.RealPathName = *RealPathName;
   return &UFE;
 }
 
