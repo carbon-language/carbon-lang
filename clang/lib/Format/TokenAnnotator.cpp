@@ -2126,6 +2126,11 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
       // locations that should have whitespace following are identified by the
       // above set of follower tokens.
       return false;
+    // Postfix non-null assertion operator, as in `foo!.bar()`.
+    if (Right.is(tok::exclaim) && (Left.isOneOf(tok::identifier, tok::r_paren,
+                                                tok::r_square, tok::r_brace) ||
+                                   Left.Tok.isLiteral()))
+      return false;
   } else if (Style.Language == FormatStyle::LK_Java) {
     if (Left.is(tok::r_square) && Right.is(tok::l_brace))
       return true;
