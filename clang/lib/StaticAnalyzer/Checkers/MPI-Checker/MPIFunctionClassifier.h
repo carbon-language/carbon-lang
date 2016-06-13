@@ -68,26 +68,26 @@ private:
   llvm::SmallVector<IdentifierInfo *, 32> MPIType;
 
   // point-to-point functions
-  IdentifierInfo *IdentInfo_MPI_Send{nullptr}, *IdentInfo_MPI_Isend{nullptr},
-      *IdentInfo_MPI_Ssend{nullptr}, *IdentInfo_MPI_Issend{nullptr},
-      *IdentInfo_MPI_Bsend{nullptr}, *IdentInfo_MPI_Ibsend{nullptr},
-      *IdentInfo_MPI_Rsend{nullptr}, *IdentInfo_MPI_Irsend{nullptr},
-      *IdentInfo_MPI_Recv{nullptr}, *IdentInfo_MPI_Irecv{nullptr};
+  IdentifierInfo *IdentInfo_MPI_Send = nullptr, *IdentInfo_MPI_Isend = nullptr,
+      *IdentInfo_MPI_Ssend = nullptr, *IdentInfo_MPI_Issend = nullptr,
+      *IdentInfo_MPI_Bsend = nullptr, *IdentInfo_MPI_Ibsend = nullptr,
+      *IdentInfo_MPI_Rsend = nullptr, *IdentInfo_MPI_Irsend = nullptr,
+      *IdentInfo_MPI_Recv = nullptr, *IdentInfo_MPI_Irecv = nullptr;
 
   // collective functions
-  IdentifierInfo *IdentInfo_MPI_Scatter{nullptr},
-      *IdentInfo_MPI_Iscatter{nullptr}, *IdentInfo_MPI_Gather{nullptr},
-      *IdentInfo_MPI_Igather{nullptr}, *IdentInfo_MPI_Allgather{nullptr},
-      *IdentInfo_MPI_Iallgather{nullptr}, *IdentInfo_MPI_Bcast{nullptr},
-      *IdentInfo_MPI_Ibcast{nullptr}, *IdentInfo_MPI_Reduce{nullptr},
-      *IdentInfo_MPI_Ireduce{nullptr}, *IdentInfo_MPI_Allreduce{nullptr},
-      *IdentInfo_MPI_Iallreduce{nullptr}, *IdentInfo_MPI_Alltoall{nullptr},
-      *IdentInfo_MPI_Ialltoall{nullptr}, *IdentInfo_MPI_Barrier{nullptr};
+  IdentifierInfo *IdentInfo_MPI_Scatter = nullptr,
+      *IdentInfo_MPI_Iscatter = nullptr, *IdentInfo_MPI_Gather = nullptr,
+      *IdentInfo_MPI_Igather = nullptr, *IdentInfo_MPI_Allgather = nullptr,
+      *IdentInfo_MPI_Iallgather = nullptr, *IdentInfo_MPI_Bcast = nullptr,
+      *IdentInfo_MPI_Ibcast = nullptr, *IdentInfo_MPI_Reduce = nullptr,
+      *IdentInfo_MPI_Ireduce = nullptr, *IdentInfo_MPI_Allreduce = nullptr,
+      *IdentInfo_MPI_Iallreduce = nullptr, *IdentInfo_MPI_Alltoall = nullptr,
+      *IdentInfo_MPI_Ialltoall = nullptr, *IdentInfo_MPI_Barrier = nullptr;
 
   // additional functions
-  IdentifierInfo *IdentInfo_MPI_Comm_rank{nullptr},
-      *IdentInfo_MPI_Comm_size{nullptr}, *IdentInfo_MPI_Wait{nullptr},
-      *IdentInfo_MPI_Waitall{nullptr};
+  IdentifierInfo *IdentInfo_MPI_Comm_rank = nullptr,
+      *IdentInfo_MPI_Comm_size = nullptr, *IdentInfo_MPI_Wait = nullptr,
+      *IdentInfo_MPI_Waitall = nullptr;
 };
 
 } // end of namespace: mpi

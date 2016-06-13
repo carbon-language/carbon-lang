@@ -71,7 +71,7 @@ public:
                            BugReporter &BReporter) const;
 
 private:
-  const std::string MPIError{"MPI Error"};
+  const std::string MPIError = "MPI Error";
 
   // path-sensitive bug types
   std::unique_ptr<BugType> UnmatchedWaitBugType;
@@ -84,7 +84,7 @@ private:
   public:
     RequestNodeVisitor(const MemRegion *const MemoryRegion,
                        const std::string &ErrText)
-        : RequestRegion(MemoryRegion), ErrorText{ErrText} {}
+        : RequestRegion(MemoryRegion), ErrorText(ErrText) {}
 
     void Profile(llvm::FoldingSetNodeID &ID) const override {
       static int X = 0;
@@ -99,7 +99,7 @@ private:
 
   private:
     const MemRegion *const RequestRegion;
-    bool IsNodeFound{false};
+    bool IsNodeFound = false;
     std::string ErrorText;
   };
 };
