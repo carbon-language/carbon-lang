@@ -1994,7 +1994,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return false;
   if (Right.is(TT_PointerOrReference))
     return (Left.is(tok::r_paren) && Line.MightBeFunctionDecl) ||
-           (Left.Tok.isLiteral() || Left.is(tok::kw_const) ||
+           (Left.Tok.isLiteral() || (Left.is(tok::kw_const) && Left.Previous &&
+                                     Left.Previous->is(tok::r_paren)) ||
             (!Left.isOneOf(TT_PointerOrReference, tok::l_paren) &&
              (Style.PointerAlignment != FormatStyle::PAS_Left ||
               Line.IsMultiVariableDeclStmt)));
