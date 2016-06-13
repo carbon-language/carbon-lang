@@ -15185,12 +15185,14 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
       if (SetCCOpcode == ISD::SETUEQ) {
         CC0 = 3; // UNORD
         CC1 = 0; // EQ
-        CombineOpc = Opc == X86ISD::CMPP ? X86ISD::FOR : ISD::OR;
+        CombineOpc = Opc == X86ISD::CMPP ? static_cast<unsigned>(X86ISD::FOR) :
+                                           static_cast<unsigned>(ISD::OR);
       } else {
         assert(SetCCOpcode == ISD::SETONE);
         CC0 = 7; // ORD
         CC1 = 4; // NEQ
-        CombineOpc = Opc == X86ISD::CMPP ? X86ISD::FAND : ISD::AND;
+        CombineOpc = Opc == X86ISD::CMPP ? static_cast<unsigned>(X86ISD::FAND) :
+                                           static_cast<unsigned>(ISD::AND);
       }
 
       SDValue Cmp0 = DAG.getNode(Opc, dl, VT, Op0, Op1,
