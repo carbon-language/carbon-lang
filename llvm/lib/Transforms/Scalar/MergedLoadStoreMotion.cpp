@@ -139,7 +139,6 @@ INITIALIZE_PASS_BEGIN(MergedLoadStoreMotion, "mldst-motion",
                       "MergedLoadStoreMotion", false, false)
 INITIALIZE_PASS_DEPENDENCY(MemoryDependenceWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(GlobalsAAWrapperPass)
 INITIALIZE_PASS_END(MergedLoadStoreMotion, "mldst-motion",
                     "MergedLoadStoreMotion", false, false)
 
