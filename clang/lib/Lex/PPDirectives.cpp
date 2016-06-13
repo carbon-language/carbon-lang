@@ -24,6 +24,10 @@
 #include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/Pragma.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SaveAndRestore.h"
@@ -135,6 +139,84 @@ static MacroDiag shouldWarnOnMacroUndef(Preprocessor &PP, IdentifierInfo *II) {
   if (isReservedId(Text, Lang))
     return MD_ReservedMacro;
   return MD_NoWarn;
+}
+
+// Return true if we want to issue a diagnostic by default if we
+// encounter this name in a #include with the wrong case. For now,
+// this includes the standard C and C++ headers, Posix headers,
+// and Boost headers. Improper case for these #includes is a
+// potential portability issue.
+static bool warnByDefaultOnWrongCase(StringRef Include) {
+  // If the first component of the path is "boost", treat this like a standard header
+  // for the purposes of diagnostics.
+  if (::llvm::sys::path::begin(Include)->equals_lower("boost"))
+    return true;
+
+  // "condition_variable" is the longest standard header name at 18 characters.
+  // If the include file name is longer than that, it can't be a standard header.
+  static constexpr std::size_t MaxStdHeaderNameLen = 18u;
+  if (Include.size() > MaxStdHeaderNameLen)
+    return false;
+
+  // Lowercase and normalize the search string.
+  SmallString<32> LowerInclude{Include};
+  for (char &Ch : LowerInclude) {
+    // In the ASCII range?
+    if (Ch < 0 || Ch > 0x7f)
+      return false; // Can't be a standard header
+    // ASCII lowercase:
+    if (Ch >= 'A' && Ch <= 'Z')
+      Ch += 'a' - 'A';
+    // Normalize path separators for comparison purposes.
+    else if (::llvm::sys::path::is_separator(Ch))
+      Ch = '/';
+  }
+
+  // The standard C/C++ and Posix headers
+  return llvm::StringSwitch<bool>(LowerInclude)
+    // C library headers
+    .Cases("assert.h", "complex.h", "ctype.h", "errno.h", "fenv.h", true)
+    .Cases("float.h", "inttypes.h", "iso646.h", "limits.h", "locale.h", true)
+    .Cases("math.h", "setjmp.h", "signal.h", "stdalign.h", "stdarg.h", true)
+    .Cases("stdatomic.h", "stdbool.h", "stddef.h", "stdint.h", "stdio.h", true)
+    .Cases("stdlib.h", "stdnoreturn.h", "string.h", "tgmath.h", "threads.h", true)
+    .Cases("time.h", "uchar.h", "wchar.h", "wctype.h", true)
+
+    // C++ headers for C library facilities
+    .Cases("cassert", "ccomplex", "cctype", "cerrno", "cfenv", true)
+    .Cases("cfloat", "cinttypes", "ciso646", "climits", "clocale", true)
+    .Cases("cmath", "csetjmp", "csignal", "cstdalign", "cstdarg", true)
+    .Cases("cstdbool", "cstddef", "cstdint", "cstdio", "cstdlib", true)
+    .Cases("cstring", "ctgmath", "ctime", "cuchar", "cwchar", true)
+    .Case("cwctype", true)
+
+    // C++ library headers
+    .Cases("algorithm", "fstream", "list", "regex", "thread", true)
+    .Cases("array", "functional", "locale", "scoped_allocator", "tuple", true)
+    .Cases("atomic", "future", "map", "set", "type_traits", true)
+    .Cases("bitset", "initializer_list", "memory", "shared_mutex", "typeindex", true)
+    .Cases("chrono", "iomanip", "mutex", "sstream", "typeinfo", true)
+    .Cases("codecvt", "ios", "new", "stack", "unordered_map", true)
+    .Cases("complex", "iosfwd", "numeric", "stdexcept", "unordered_set", true)
+    .Cases("condition_variable", "iostream", "ostream", "streambuf", "utility", true)
+    .Cases("deque", "istream", "queue", "string", "valarray", true)
+    .Cases("exception", "iterator", "random", "strstream", "vector", true)
+    .Cases("forward_list", "limits", "ratio", "system_error", true)
+
+    // POSIX headers (which aren't also C headers)
+    .Cases("aio.h", "arpa/inet.h", "cpio.h", "dirent.h", "dlfcn.h", true)
+    .Cases("fcntl.h", "fmtmsg.h", "fnmatch.h", "ftw.h", "glob.h", true)
+    .Cases("grp.h", "iconv.h", "langinfo.h", "libgen.h", "monetary.h", true)
+    .Cases("mqueue.h", "ndbm.h", "net/if.h", "netdb.h", "netinet/in.h", true)
+    .Cases("netinet/tcp.h", "nl_types.h", "poll.h", "pthread.h", "pwd.h", true)
+    .Cases("regex.h", "sched.h", "search.h", "semaphore.h", "spawn.h", true)
+    .Cases("strings.h", "stropts.h", "sys/ipc.h", "sys/mman.h", "sys/msg.h", true)
+    .Cases("sys/resource.h", "sys/select.h",  "sys/sem.h", "sys/shm.h", "sys/socket.h", true)
+    .Cases("sys/stat.h", "sys/statvfs.h", "sys/time.h", "sys/times.h", "sys/types.h", true)
+    .Cases("sys/uio.h", "sys/un.h", "sys/utsname.h", "sys/wait.h", "syslog.h", true)
+    .Cases("tar.h", "termios.h", "trace.h", "ulimit.h", true)
+    .Cases("unistd.h", "utime.h", "utmpx.h", "wordexp.h", true)
+    .Default(false);
 }
 
 bool Preprocessor::CheckMacroName(Token &MacroNameTok, MacroUse isDefineUndef,
@@ -1556,6 +1638,39 @@ static void diagnoseAutoModuleImport(
                                       ("@import " + PathString + ";").str());
 }
 
+// Given a vector of path components and a string containing the real
+// path to the file, build a properly-cased replacement in the vector,
+// and return true if the replacement should be suggested.
+static bool trySimplifyPath(SmallVectorImpl<StringRef> &Components,
+                            StringRef RealPathName) {
+  auto RealPathComponentIter = llvm::sys::path::rbegin(RealPathName);
+  auto RealPathComponentEnd = llvm::sys::path::rend(RealPathName);
+  int Cnt = 0;
+  bool SuggestReplacement = false;
+  // Below is a best-effort to handle ".." in paths. It is admittedly
+  // not 100% correct in the presence of symlinks.
+  for (auto &Component : llvm::reverse(Components)) {
+    if ("." == Component) {
+    } else if (".." == Component) {
+      ++Cnt;
+    } else if (Cnt) {
+      --Cnt;
+    } else if (RealPathComponentIter != RealPathComponentEnd) {
+      if (Component != *RealPathComponentIter) {
+        // If these path components differ by more than just case, then we
+        // may be looking at symlinked paths. Bail on this diagnostic to avoid
+        // noisy false positives.
+        SuggestReplacement = RealPathComponentIter->equals_lower(Component);
+        if (!SuggestReplacement)
+          break;
+        Component = *RealPathComponentIter;
+      }
+      ++RealPathComponentIter;
+    }
+  }
+  return SuggestReplacement;
+}
+
 /// HandleIncludeDirective - The "\#include" tokens have just been read, read
 /// the file to be included from the lexer, then include it!  This is a common
 /// routine with functionality shared between \#include, \#include_next and
@@ -1830,6 +1945,39 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
 
   // FIXME: If we have a suggested module, and we've already visited this file,
   // don't bother entering it again. We know it has no further effect.
+
+  // Issue a diagnostic if the name of the file on disk has a different case
+  // than the one we're about to open.
+  const bool CheckIncludePathPortability =
+    File && !File->tryGetRealPathName().empty();
+
+  if (CheckIncludePathPortability) {
+    StringRef Name = LangOpts.MSVCCompat ? NormalizedPath.str() : Filename;
+    StringRef RealPathName = File->tryGetRealPathName();
+    SmallVector<StringRef, 16> Components(llvm::sys::path::begin(Name),
+                                          llvm::sys::path::end(Name));
+
+    if (trySimplifyPath(Components, RealPathName)) {
+      SmallString<128> Path;
+      Path.reserve(Name.size()+2);
+      Path.push_back(isAngled ? '<' : '"');
+      for (auto Component : Components) {
+        Path.append(Component);
+        // Append the separator the user used, or the close quote
+        Path.push_back(
+          Path.size() <= Filename.size() ? Filename[Path.size()-1] :
+            (isAngled ? '>' : '"'));
+      }
+      auto Replacement = Path.str().str();
+      // For user files and known standard headers, by default we issue a diagnostic.
+      // For other system headers, we don't. They can be controlled separately.
+      auto DiagId = (FileCharacter == SrcMgr::C_User || warnByDefaultOnWrongCase(Name)) ?
+          diag::pp_nonportable_path : diag::pp_nonportable_system_path;
+      SourceRange Range(FilenameTok.getLocation(), CharEnd);
+      Diag(FilenameTok, DiagId) << Replacement <<
+        FixItHint::CreateReplacement(Range, Replacement);
+    }
+  }
 
   // Ask HeaderInfo if we should enter this #include file.  If not, #including
   // this file will have no effect.
