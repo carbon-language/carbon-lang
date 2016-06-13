@@ -2944,6 +2944,8 @@ __kmp_taskloop_linear(ident_t *loc, int gtid, kmp_task_t *task,
                 kmp_uint64 *lb, kmp_uint64 *ub, kmp_int64 st,
                 int sched, kmp_uint64 grainsize, void *task_dup )
 {
+    KMP_COUNT_BLOCK(OMP_TASKLOOP);
+    KMP_TIME_PARTITIONED_BLOCK(OMP_taskloop_scheduling);
     p_task_dup_t ptask_dup = (p_task_dup_t)task_dup;
     kmp_uint64 tc;
     kmp_uint64 lower = *lb; // compiler provides global bounds here
