@@ -14,6 +14,6 @@ int test_bit_scan_forward(int a) {
 int test_bit_scan_reverse(int a) {
   return _bit_scan_reverse(a);
 // CHECK:  %[[call:.*]] = call i32 @llvm.ctlz.i32(
-// CHECK:  %[[sub:.*]] = sub nsw i32 31, %2
+// CHECK:  %[[sub:.*]] = sub nsw i32 31, %[[call]]
 // CHECK: ret i32 %[[sub]]
 }
