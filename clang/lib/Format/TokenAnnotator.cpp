@@ -785,13 +785,14 @@ public:
         return LT_ImportStatement;
     }
 
+    bool KeywordVirtualFound = false;
+    bool ImportStatement = false;
+
     // import {...} from '...';
     if (Style.Language == FormatStyle::LK_JavaScript &&
         CurrentToken->is(Keywords.kw_import))
-      return LT_ImportStatement;
+      ImportStatement = true;
 
-    bool KeywordVirtualFound = false;
-    bool ImportStatement = false;
     while (CurrentToken) {
       if (CurrentToken->is(tok::kw_virtual))
         KeywordVirtualFound = true;
