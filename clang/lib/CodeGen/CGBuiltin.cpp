@@ -6704,12 +6704,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return EmitX86Select(*this, Ops[4], Align, Ops[3]);
   }
 
-  case X86::BI__builtin_ia32_movntps:
-  case X86::BI__builtin_ia32_movntps256:
-  case X86::BI__builtin_ia32_movntpd:
-  case X86::BI__builtin_ia32_movntpd256:
-  case X86::BI__builtin_ia32_movntdq:
-  case X86::BI__builtin_ia32_movntdq256:
   case X86::BI__builtin_ia32_movnti:
   case X86::BI__builtin_ia32_movnti64: {
     llvm::MDNode *Node = llvm::MDNode::get(
@@ -6722,15 +6716,9 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     StoreInst *SI = Builder.CreateDefaultAlignedStore(Ops[1], BC);
     SI->setMetadata(CGM.getModule().getMDKindID("nontemporal"), Node);
 
-    // If the operand is an integer, we can't assume alignment. Otherwise,
-    // assume natural alignment.
+    // No alignment for scalar intrinsic store.
     QualType ArgTy = E->getArg(1)->getType();
-    unsigned Align;
-    if (ArgTy->isIntegerType())
-      Align = 1;
-    else
-      Align = getContext().getTypeSizeInChars(ArgTy).getQuantity();
-    SI->setAlignment(Align);
+    SI->setAlignment(1);
     return SI;
   }
   case X86::BI__builtin_ia32_selectb_128:

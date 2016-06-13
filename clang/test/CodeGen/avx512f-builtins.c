@@ -5800,7 +5800,7 @@ __mmask16 test_mm512_kxor(__mmask16 __A, __mmask16 __B) {
 
 void test_mm512_stream_si512(__m512i * __P, __m512i __A) {
   // CHECK-LABEL: @test_mm512_stream_si512
-  // CHECK: @llvm.x86.avx512.storent.q.512
+  // CHECK: store <8 x i64> %{{.*}}, <8 x i64>* %{{.*}}, align 64, !nontemporal
   _mm512_stream_si512(__P, __A); 
 }
 
@@ -5812,13 +5812,13 @@ __m512i test_mm512_stream_load_si512(void *__P) {
 
 void test_mm512_stream_pd(double *__P, __m512d __A) {
   // CHECK-LABEL: @test_mm512_stream_pd
-  // CHECK: @llvm.x86.avx512.storent.pd.512
+  // CHECK: store <8 x double> %{{.*}}, <8 x double>* %{{.*}}, align 64, !nontemporal
   return _mm512_stream_pd(__P, __A); 
 }
 
 void test_mm512_stream_ps(float *__P, __m512 __A) {
   // CHECK-LABEL: @test_mm512_stream_ps
-  // CHECK: @llvm.x86.avx512.storent.ps.512
+  // CHECK: store <16 x float> %{{.*}}, <16 x float>* %{{.*}}, align 64, !nontemporal
   _mm512_stream_ps(__P, __A); 
 }
 
