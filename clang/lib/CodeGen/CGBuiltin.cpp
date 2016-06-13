@@ -246,8 +246,8 @@ static Value *EmitSignBit(CodeGenFunction &CGF, Value *V) {
     if (CGF.getTarget().isBigEndian()) {
       Value *ShiftCst = llvm::ConstantInt::get(IntTy, Width);
       V = CGF.Builder.CreateLShr(V, ShiftCst);
-    } 
-    // We are truncating value in order to extract the higher-order 
+    }
+    // We are truncating value in order to extract the higher-order
     // double, which we will be using to extract the sign from.
     IntTy = llvm::IntegerType::get(C, Width);
     V = CGF.Builder.CreateTrunc(V, IntTy);
@@ -1818,7 +1818,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       break;
     }
 
-    
+
     llvm::Value *Carry;
     llvm::Value *Sum = EmitOverflowIntrinsic(*this, IntrinsicId, X, Y, Carry);
     Builder.CreateStore(Sum, SumOutPtr);
@@ -3572,7 +3572,7 @@ static Value *packTBLDVectorList(CodeGenFunction &CGF, ArrayRef<Value *> Ops,
   if (ExtOp)
     TblOps.push_back(ExtOp);
 
-  // Build a vector containing sequential number like (0, 1, 2, ..., 15)  
+  // Build a vector containing sequential number like (0, 1, 2, ..., 15)
   SmallVector<uint32_t, 16> Indices;
   llvm::VectorType *TblTy = cast<llvm::VectorType>(Ops[0]->getType());
   for (unsigned i = 0, e = TblTy->getNumElements(); i != e; ++i) {
@@ -3599,7 +3599,7 @@ static Value *packTBLDVectorList(CodeGenFunction &CGF, ArrayRef<Value *> Ops,
   Function *TblF;
   TblOps.push_back(IndexOp);
   TblF = CGF.CGM.getIntrinsic(IntID, ResTy);
-  
+
   return CGF.EmitNeonCall(TblF, TblOps, Name);
 }
 
@@ -4105,7 +4105,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   // the first argument, but the LLVM intrinsic expects it as the third one.
   case ARM::BI_MoveToCoprocessor:
   case ARM::BI_MoveToCoprocessor2: {
-    Function *F = CGM.getIntrinsic(BuiltinID == ARM::BI_MoveToCoprocessor ? 
+    Function *F = CGM.getIntrinsic(BuiltinID == ARM::BI_MoveToCoprocessor ?
                                    Intrinsic::arm_mcr : Intrinsic::arm_mcr2);
     return Builder.CreateCall(F, {Ops[1], Ops[2], Ops[0],
                                   Ops[3], Ops[4], Ops[5]});
@@ -6717,7 +6717,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     SI->setMetadata(CGM.getModule().getMDKindID("nontemporal"), Node);
 
     // No alignment for scalar intrinsic store.
-    QualType ArgTy = E->getArg(1)->getType();
     SI->setAlignment(1);
     return SI;
   }
