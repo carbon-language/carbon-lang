@@ -370,6 +370,72 @@ static Value *UpgradeX86PSLLDQIntrinsics(IRBuilder<> &Builder, LLVMContext &C,
   return Builder.CreateBitCast(Res, ResultTy, "cast");
 }
 
+// Handles upgrading SSE2/AVX2/AVX512BW PSRLDQ intrinsics by converting them
+// to byte shuffles.
+static Value *UpgradeX86PSRLDQIntrinsics(IRBuilder<> &Builder, LLVMContext &C,
+                                         Value *Op,
+                                         unsigned Shift) {
+  Type *ResultTy = Op->getType();
+  unsigned NumElts = ResultTy->getVectorNumElements() * 8;
+
+  // Bitcast from a 64-bit element type to a byte element type.
+  Type *VecTy = VectorType::get(Type::getInt8Ty(C), NumElts);
+  Op = Builder.CreateBitCast(Op, VecTy, "cast");
+
+  // We'll be shuffling in zeroes.
+  Value *Res = Constant::getNullValue(VecTy);
+
+  // If shift is less than 16, emit a shuffle to move the bytes. Otherwise,
+  // we'll just return the zero vector.
+  if (Shift < 16) {
+    uint32_t Idxs[64];
+    // 256/512-bit version is split into 2/4 16-byte lanes.
+    for (unsigned l = 0; l != NumElts; l += 16)
+      for (unsigned i = 0; i != 16; ++i) {
+        unsigned Idx = i + Shift;
+        if (Idx >= 16)
+          Idx += NumElts - 16; // end of lane, switch operand.
+        Idxs[l + i] = Idx + l;
+      }
+
+    Res = Builder.CreateShuffleVector(Op, Res, makeArrayRef(Idxs, NumElts));
+  }
+
+  // Bitcast back to a 64-bit element type.
+  return Builder.CreateBitCast(Res, ResultTy, "cast");
+}
+
+static Value *getX86MaskVec(IRBuilder<> &Builder, Value *Mask,
+                            unsigned NumElts) {
+  llvm::VectorType *MaskTy = llvm::VectorType::get(Builder.getInt1Ty(),
+                             cast<IntegerType>(Mask->getType())->getBitWidth());
+  Mask = Builder.CreateBitCast(Mask, MaskTy);
+
+  // If we have less than 8 elements, then the starting mask was an i8 and
+  // we need to extract down to the right number of elements.
+  if (NumElts < 8) {
+    uint32_t Indices[4];
+    for (unsigned i = 0; i != NumElts; ++i)
+      Indices[i] = i;
+    Mask = Builder.CreateShuffleVector(Mask, Mask,
+                                       makeArrayRef(Indices, NumElts),
+                                       "extract");
+  }
+
+  return Mask;
+}
+
+static Value *EmitX86Select(IRBuilder<> &Builder, Value *Mask,
+                            Value *Op0, Value *Op1) {
+  // If the mask is all ones just emit the align operation.
+  if (const auto *C = dyn_cast<Constant>(Mask))
+    if (C->isAllOnesValue())
+      return Op0;
+
+  Mask = getX86MaskVec(Builder, Mask, Op0->getType()->getVectorNumElements());
+  return Builder.CreateSelect(Mask, Op0, Op1);
+}
+
 static Value *UpgradeX86PALIGNRIntrinsics(IRBuilder<> &Builder, LLVMContext &C,
                                           Value *Op0, Value *Op1, Value *Shift,
                                           Value *Passthru, Value *Mask) {
@@ -406,50 +472,7 @@ static Value *UpgradeX86PALIGNRIntrinsics(IRBuilder<> &Builder, LLVMContext &C,
                                              makeArrayRef(Indices, NumElts),
                                              "palignr");
 
-  // If the mask is all ones just emit the align operation.
-  if (const auto *C = dyn_cast<Constant>(Mask))
-    if (C->isAllOnesValue())
-      return Align;
-
-  llvm::VectorType *MaskTy = llvm::VectorType::get(Builder.getInt1Ty(),
-                                                   NumElts);
-  Mask = Builder.CreateBitCast(Mask, MaskTy, "cast");
-  return Builder.CreateSelect(Mask, Align, Passthru);
-}
-
-// Handles upgrading SSE2/AVX2/AVX512BW PSRLDQ intrinsics by converting them
-// to byte shuffles.
-static Value *UpgradeX86PSRLDQIntrinsics(IRBuilder<> &Builder, LLVMContext &C,
-                                         Value *Op,
-                                         unsigned Shift) {
-  Type *ResultTy = Op->getType();
-  unsigned NumElts = ResultTy->getVectorNumElements() * 8;
-
-  // Bitcast from a 64-bit element type to a byte element type.
-  Type *VecTy = VectorType::get(Type::getInt8Ty(C), NumElts);
-  Op = Builder.CreateBitCast(Op, VecTy, "cast");
-
-  // We'll be shuffling in zeroes.
-  Value *Res = Constant::getNullValue(VecTy);
-
-  // If shift is less than 16, emit a shuffle to move the bytes. Otherwise,
-  // we'll just return the zero vector.
-  if (Shift < 16) {
-    uint32_t Idxs[64];
-    // 256/512-bit version is split into 2/4 16-byte lanes.
-    for (unsigned l = 0; l != NumElts; l += 16)
-      for (unsigned i = 0; i != 16; ++i) {
-        unsigned Idx = i + Shift;
-        if (Idx >= 16)
-          Idx += NumElts - 16; // end of lane, switch operand.
-        Idxs[l + i] = Idx + l;
-      }
-
-    Res = Builder.CreateShuffleVector(Op, Res, makeArrayRef(Idxs, NumElts));
-  }
-
-  // Bitcast back to a 64-bit element type.
-  return Builder.CreateBitCast(Res, ResultTy, "cast");
+  return EmitX86Select(Builder, Mask, Align, Passthru);
 }
 
 static Value *UpgradeMaskedStore(IRBuilder<> &Builder, LLVMContext &C,
@@ -468,21 +491,7 @@ static Value *UpgradeMaskedStore(IRBuilder<> &Builder, LLVMContext &C,
 
   // Convert the mask from an integer type to a vector of i1.
   unsigned NumElts = Data->getType()->getVectorNumElements();
-  llvm::VectorType *MaskTy = llvm::VectorType::get(Builder.getInt1Ty(),
-                             cast<IntegerType>(Mask->getType())->getBitWidth());
-  Mask = Builder.CreateBitCast(Mask, MaskTy);
-
-  // If we have less than 8 elements, then the starting mask was an i8 and
-  // we need to extract down to the right number of elements.
-  if (NumElts < 8) {
-    uint32_t Indices[4];
-    for (unsigned i = 0; i != NumElts; ++i)
-      Indices[i] = i;
-    Mask = Builder.CreateShuffleVector(Mask, Mask,
-                                       makeArrayRef(Indices, NumElts),
-                                       "extract");
-  }
-
+  Mask = getX86MaskVec(Builder, Mask, NumElts);
   return Builder.CreateMaskedStore(Data, Ptr, Align, Mask);
 }
 
@@ -502,21 +511,7 @@ static Value *UpgradeMaskedLoad(IRBuilder<> &Builder, LLVMContext &C,
 
   // Convert the mask from an integer type to a vector of i1.
   unsigned NumElts = Passthru->getType()->getVectorNumElements();
-  llvm::VectorType *MaskTy = llvm::VectorType::get(Builder.getInt1Ty(),
-                             cast<IntegerType>(Mask->getType())->getBitWidth());
-  Mask = Builder.CreateBitCast(Mask, MaskTy);
-
-  // If we have less than 8 elements, then the starting mask was an i8 and
-  // we need to extract down to the right number of elements.
-  if (NumElts < 8) {
-    uint32_t Indices[4];
-    for (unsigned i = 0; i != NumElts; ++i)
-      Indices[i] = i;
-    Mask = Builder.CreateShuffleVector(Mask, Mask,
-                                       makeArrayRef(Indices, NumElts),
-                                       "extract");
-  }
-
+  Mask = getX86MaskVec(Builder, Mask, NumElts);
   return Builder.CreateMaskedLoad(Ptr, Align, Mask, Passthru);
 }
 
