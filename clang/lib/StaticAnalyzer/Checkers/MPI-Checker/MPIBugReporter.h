@@ -62,7 +62,7 @@ public:
   /// Report a wait on a request that has not been used at all before.
   ///
   /// \param CE wait call that uses the request
-  /// \param ReqRegion memory region of the request
+  /// \param RequestRegion memory region of the request
   /// \param ExplNode node in the graph the bug appeared at
   /// \param BReporter bug reporter for current context
   void reportUnmatchedWait(const CallEvent &CE,
