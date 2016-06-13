@@ -557,10 +557,6 @@ public:
   typedef mapped_iterator<NodeMap::const_iterator, NodeDerefFun>
       const_node_iterator;
 
-  CFLGraph() = default;
-  CFLGraph(CFLGraph &&) = default;
-  CFLGraph &operator=(CFLGraph &&) = default;
-
   void addNode(Node N) { getOrCreateNode(N); }
 
   void addEdge(Node From, Node To, EdgeType Type,
