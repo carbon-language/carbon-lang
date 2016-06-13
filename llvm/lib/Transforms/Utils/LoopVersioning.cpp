@@ -77,7 +77,7 @@ void LoopVersioning::versionLoop(
 
   if (MemRuntimeCheck && SCEVRuntimeCheck) {
     RuntimeCheck = BinaryOperator::Create(Instruction::Or, MemRuntimeCheck,
-                                          SCEVRuntimeCheck, "ldist.safe");
+                                          SCEVRuntimeCheck, "lver.safe");
     if (auto *I = dyn_cast<Instruction>(RuntimeCheck))
       I->insertBefore(RuntimeCheckBB->getTerminator());
   } else
