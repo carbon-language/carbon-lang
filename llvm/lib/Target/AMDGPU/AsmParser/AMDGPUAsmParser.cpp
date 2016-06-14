@@ -60,8 +60,6 @@ class AMDGPUOperand : public MCParsedAsmOperand {
 public:
   AMDGPUOperand(enum KindTy K) : MCParsedAsmOperand(), Kind(K) {}
 
-  MCContext *Ctx;
-
   typedef std::unique_ptr<AMDGPUOperand> Ptr;
 
   struct Modifiers {
@@ -586,6 +584,21 @@ public:
     }
 
     setAvailableFeatures(ComputeAvailableFeatures(getSTI().getFeatureBits()));
+
+    {
+      // TODO: make those pre-defined variables read-only.
+      // Currently there is none suitable machinery in the core llvm-mc for this.
+      // MCSymbol::isRedefinable is intended for another purpose, and
+      // AsmParser::parseDirectiveSet() cannot be specialized for specific target.
+      AMDGPU::IsaVersion Isa = AMDGPU::getIsaVersion(getSTI().getFeatureBits());
+      MCContext &Ctx = getContext();
+      MCSymbol *Sym = Ctx.getOrCreateSymbol(Twine(".option.machine_version_major"));
+      Sym->setVariableValue(MCConstantExpr::create(Isa.Major, Ctx));
+      Sym = Ctx.getOrCreateSymbol(Twine(".option.machine_version_minor"));
+      Sym->setVariableValue(MCConstantExpr::create(Isa.Minor, Ctx));
+      Sym = Ctx.getOrCreateSymbol(Twine(".option.machine_version_stepping"));
+      Sym->setVariableValue(MCConstantExpr::create(Isa.Stepping, Ctx));
+    }
   }
 
   AMDGPUTargetStreamer &getTargetStreamer() {
