@@ -21,7 +21,6 @@ define i32 @mask16_zext(i16 %x) {
 ; CHECK-NEXT:    kmovw %edi, %k0
 ; CHECK-NEXT:    knotw %k0, %k0
 ; CHECK-NEXT:    kmovw %k0, %eax
-; CHECK-NEXT:    movzwl %ax, %eax
 ; CHECK-NEXT:    retq
   %m0 = bitcast i16 %x to <16 x i1>
   %m1 = xor <16 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
@@ -56,7 +55,6 @@ define i32 @mask8_zext(i8 %x) {
 ; KNL-NEXT:    kmovw %edi, %k0
 ; KNL-NEXT:    knotw %k0, %k0
 ; KNL-NEXT:    kmovw %k0, %eax
-; KNL-NEXT:    movzbl %al, %eax
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: mask8_zext:
@@ -64,7 +62,6 @@ define i32 @mask8_zext(i8 %x) {
 ; SKX-NEXT:    kmovb %edi, %k0
 ; SKX-NEXT:    knotb %k0, %k0
 ; SKX-NEXT:    kmovb %k0, %eax
-; SKX-NEXT:    movzbl %al, %eax
 ; SKX-NEXT:    retq
   %m0 = bitcast i8 %x to <8 x i1>
   %m1 = xor <8 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
