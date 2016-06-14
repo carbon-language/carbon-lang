@@ -3107,6 +3107,7 @@ def err_use_of_default_argument_to_function_declared_later : Error<
   "use of default argument to function %0 that is declared later in class %1">;
 def note_default_argument_declared_here : Note<
   "default argument declared here">;
+def err_recursive_default_argument : Error<"recursive evaluation of default argument">;
 
 def ext_param_promoted_not_compatible_with_prototype : ExtWarn<
   "%diff{promoted type $ of K&R function parameter is not compatible with the "

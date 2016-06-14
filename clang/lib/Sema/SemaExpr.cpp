@@ -4566,6 +4566,13 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
     }
   }
 
+  // If the default argument expression is not set yet, we are building it now.
+  if (!Param->hasInit()) {
+    Diag(Param->getLocStart(), diag::err_recursive_default_argument) << FD;
+    Param->setInvalidDecl();
+    return ExprError();
+  }
+
   // If the default expression creates temporaries, we need to
   // push them to the current stack of expression temporaries so they'll
   // be properly destroyed.
