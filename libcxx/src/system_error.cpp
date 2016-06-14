@@ -70,7 +70,8 @@ string do_strerror_r(int ev) {
 string do_strerror_r(int ev) {
     char buffer[strerror_buff_size];
     const int old_errno = errno;
-    if ((int ret = ::strerror_r(ev, buffer, strerror_buff_size)) != 0) {
+    int ret;
+    if ((ret = ::strerror_r(ev, buffer, strerror_buff_size)) != 0) {
         // If `ret == -1` then the error is specified using `errno`, otherwise
         // `ret` represents the error.
         const int new_errno = ret == -1 ? errno : ret;
