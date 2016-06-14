@@ -84,6 +84,7 @@ class JumpThreadingPass : public PassInfoMixin<JumpThreadingPass> {
 
 public:
   JumpThreadingPass(int T = -1);
+  JumpThreadingPass(const JumpThreadingPass &) = delete;
 
   // Glue for old PM.
   bool runImpl(Function &F, TargetLibraryInfo *TLI_, LazyValueInfo *LVI_,
