@@ -6,19 +6,16 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
+//
 // UNSUPPORTED: libcpp-has-no-threads
 
 // <mutex>
 
-// template <class Mutex> class lock_guard;
+// template <class ...Mutex> class lock_guard;
 
-// explicit lock_guard(mutex_type& m);
+// Test that the variadic lock guard implementation compiles in all standard
+// dialects, including C++03, even though it is forward declared using
+// variadic templates.
 
-#include <mutex>
-
-int main()
-{
-    std::mutex m;
-    std::lock_guard<std::mutex> lg = m; // expected-error{{no viable conversion}}
-}
+#define _LIBCPP_ABI_VARIADIC_LOCK_GUARD
+#include "mutex.pass.cpp" // Use the existing non-variadic test
