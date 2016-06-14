@@ -3453,6 +3453,22 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       ParseDecltypeSpecifier(DS);
       continue;
 
+    case tok::annot_pragma_pack:
+      HandlePragmaPack();
+      continue;
+
+    case tok::annot_pragma_ms_pragma:
+      HandlePragmaMSPragma();
+      continue;
+
+    case tok::annot_pragma_ms_vtordisp:
+      HandlePragmaMSVtorDisp();
+      continue;
+
+    case tok::annot_pragma_ms_pointers_to_members:
+      HandlePragmaMSPointersToMembers();
+      continue;
+
     case tok::kw___underlying_type:
       ParseUnderlyingTypeSpecifier(DS);
       continue;
