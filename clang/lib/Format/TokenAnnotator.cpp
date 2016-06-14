@@ -319,9 +319,9 @@ private:
         Left->Type = TT_JsComputedPropertyName;
       } else if (Style.Language == FormatStyle::LK_Proto ||
                  (Parent &&
-                  Parent->isOneOf(TT_BinaryOperator, tok::at, tok::comma,
-                                  tok::l_paren, tok::l_square, tok::question,
-                                  tok::colon, tok::kw_return,
+                  Parent->isOneOf(TT_BinaryOperator, TT_TemplateCloser, tok::at,
+                                  tok::comma, tok::l_paren, tok::l_square,
+                                  tok::question, tok::colon, tok::kw_return,
                                   // Should only be relevant to JavaScript:
                                   tok::kw_default))) {
         Left->Type = TT_ArrayInitializerLSquare;
