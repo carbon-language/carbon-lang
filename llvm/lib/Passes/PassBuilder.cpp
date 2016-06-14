@@ -63,6 +63,7 @@
 #include "llvm/Transforms/IPO/Internalize.h"
 #include "llvm/Transforms/IPO/SCCP.h"
 #include "llvm/Transforms/IPO/StripDeadPrototypes.h"
+#include "llvm/Transforms/IPO/WholeProgramDevirt.h"
 #include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/InstrProfiling.h"
 #include "llvm/Transforms/PGOInstrumentation.h"
