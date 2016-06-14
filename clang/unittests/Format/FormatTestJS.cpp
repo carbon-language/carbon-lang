@@ -948,6 +948,11 @@ TEST_F(FormatTestJS, ClassDeclarations) {
                "    },\n"
                "  };\n"
                "}");
+  verifyFormat("@Component({\n"
+               "  moduleId: module.id,\n"
+               "})\n"
+               "class SessionListComponent implements OnDestroy, OnInit {\n"
+               "}");
 }
 
 TEST_F(FormatTestJS, InterfaceDeclarations) {

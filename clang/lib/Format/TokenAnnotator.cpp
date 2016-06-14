@@ -1461,7 +1461,8 @@ private:
         return Current->getPrecedence();
       if (Current->isOneOf(tok::period, tok::arrow))
         return PrecedenceArrowAndPeriod;
-      if (Style.Language == FormatStyle::LK_Java &&
+      if ((Style.Language == FormatStyle::LK_Java ||
+           Style.Language == FormatStyle::LK_JavaScript) &&
           Current->isOneOf(Keywords.kw_extends, Keywords.kw_implements,
                            Keywords.kw_throws))
         return 0;
