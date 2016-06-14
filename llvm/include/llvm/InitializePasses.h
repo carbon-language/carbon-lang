@@ -219,7 +219,7 @@ void initializeMachineSchedulerPass(PassRegistry&);
 void initializeMachineSinkingPass(PassRegistry&);
 void initializeMachineTraceMetricsPass(PassRegistry&);
 void initializeMachineVerifierPassPass(PassRegistry&);
-void initializeMemCpyOptPass(PassRegistry&);
+void initializeMemCpyOptLegacyPassPass(PassRegistry&);
 void initializeMemDepPrinterPass(PassRegistry&);
 void initializeMemDerefPrinterPass(PassRegistry&);
 void initializeMemoryDependenceWrapperPassPass(PassRegistry&);
