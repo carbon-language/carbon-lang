@@ -133,11 +133,8 @@ void LoopVersioning::addPHINodes(
     // See if we have a single-operand PHI with the value defined by the
     // original loop.
     for (auto I = PHIBlock->begin(); (PN = dyn_cast<PHINode>(I)); ++I) {
-      if (PN->getIncomingValue(0) == Inst) {
-        assert(PN->getNumOperands() == 1 &&
-               "Exit block should only have on predecessor");
+      if (PN->getIncomingValue(0) == Inst)
         break;
-      }
     }
     // If not create it.
     if (!PN) {
