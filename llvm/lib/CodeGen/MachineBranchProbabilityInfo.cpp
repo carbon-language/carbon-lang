@@ -29,6 +29,12 @@ cl::opt<unsigned> StaticLikelyProb(
     cl::desc("branch probability threshold to be considered very likely"),
     cl::init(80), cl::Hidden);
 
+cl::opt<unsigned> ProfileLikelyProb(
+    "profile-likely-prob",
+    cl::desc("branch probability threshold to be considered very likely "
+             "when profile is available"),
+    cl::init(51), cl::Hidden);
+
 char MachineBranchProbabilityInfo::ID = 0;
 
 void MachineBranchProbabilityInfo::anchor() {}
