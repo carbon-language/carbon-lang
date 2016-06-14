@@ -14,7 +14,6 @@
 
 #include "llvm-c/Core.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "AttributeImpl.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/CallSite.h"
