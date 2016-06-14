@@ -386,10 +386,20 @@ define void @test_zero_v32i8(<32 x i8>* %dst) {
 ; Scalar versions.
 
 define void @test_arg_f32(float %arg, float* %dst) {
-; SSE-LABEL: test_arg_f32:
-; SSE:       # BB#0:
-; SSE-NEXT:    movss %xmm0, (%rdi)
-; SSE-NEXT:    retq
+; SSE2-LABEL: test_arg_f32:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movss %xmm0, (%rdi)
+; SSE2-NEXT:    retq
+;
+; SSE4A-LABEL: test_arg_f32:
+; SSE4A:       # BB#0:
+; SSE4A-NEXT:    movntss %xmm0, (%rdi)
+; SSE4A-NEXT:    retq
+;
+; SSE41-LABEL: test_arg_f32:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    movss %xmm0, (%rdi)
+; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: test_arg_f32:
 ; AVX:       # BB#0:
@@ -424,10 +434,20 @@ define void @test_arg_i32(i32 %arg, i32* %dst) {
 }
 
 define void @test_arg_f64(double %arg, double* %dst) {
-; SSE-LABEL: test_arg_f64:
-; SSE:       # BB#0:
-; SSE-NEXT:    movsd %xmm0, (%rdi)
-; SSE-NEXT:    retq
+; SSE2-LABEL: test_arg_f64:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movsd %xmm0, (%rdi)
+; SSE2-NEXT:    retq
+;
+; SSE4A-LABEL: test_arg_f64:
+; SSE4A:       # BB#0:
+; SSE4A-NEXT:    movntsd %xmm0, (%rdi)
+; SSE4A-NEXT:    retq
+;
+; SSE41-LABEL: test_arg_f64:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    movsd %xmm0, (%rdi)
+; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: test_arg_f64:
 ; AVX:       # BB#0:
@@ -473,7 +493,7 @@ define void @test_extract_f32(<4 x float> %arg, float* %dst) {
 ; SSE4A-LABEL: test_extract_f32:
 ; SSE4A:       # BB#0:
 ; SSE4A-NEXT:    movshdup {{.*#+}} xmm0 = xmm0[1,1,3,3]
-; SSE4A-NEXT:    movss %xmm0, (%rdi)
+; SSE4A-NEXT:    movntss %xmm0, (%rdi)
 ; SSE4A-NEXT:    retq
 ;
 ; SSE41-LABEL: test_extract_f32:
@@ -536,10 +556,21 @@ define void @test_extract_i32(<4 x i32> %arg, i32* %dst) {
 }
 
 define void @test_extract_f64(<2 x double> %arg, double* %dst) {
-; SSE-LABEL: test_extract_f64:
-; SSE:       # BB#0:
-; SSE-NEXT:    movhpd %xmm0, (%rdi)
-; SSE-NEXT:    retq
+; SSE2-LABEL: test_extract_f64:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movhpd %xmm0, (%rdi)
+; SSE2-NEXT:    retq
+;
+; SSE4A-LABEL: test_extract_f64:
+; SSE4A:       # BB#0:
+; SSE4A-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[1,0]
+; SSE4A-NEXT:    movntsd %xmm0, (%rdi)
+; SSE4A-NEXT:    retq
+;
+; SSE41-LABEL: test_extract_f64:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    movhpd %xmm0, (%rdi)
+; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: test_extract_f64:
 ; AVX:       # BB#0:
