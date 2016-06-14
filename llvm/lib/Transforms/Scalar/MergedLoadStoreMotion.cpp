@@ -520,7 +520,12 @@ MergedLoadStoreMotionPass::run(Function &F, AnalysisManager<Function> &AM) {
   auto *MD = AM.getCachedResult<MemoryDependenceAnalysis>(F);
   if (!runMergedLoadStoreMotion(F, &AA, MD))
     return PreservedAnalyses::all();
-  return PreservedAnalyses::none();
+  // FIXME: This pass should also 'preserve the CFG'.
+  // The new pass manager has currently no way to do it.
+  PreservedAnalyses PA;
+  PA.preserve<GlobalsAA>();
+  PA.preserve<MemoryDependenceAnalysis>();
+  return PA;
 }
 
 namespace {
