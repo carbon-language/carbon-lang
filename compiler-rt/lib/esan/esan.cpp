@@ -197,9 +197,6 @@ void initializeLibrary(ToolType Tool) {
   }
 
   initializeShadow();
-  if (__esan_which_tool == ESAN_WorkingSet)
-    initializeShadowWorkingSet();
-
   initializeInterceptors();
 
   if (__esan_which_tool == ESAN_CacheFrag) {
