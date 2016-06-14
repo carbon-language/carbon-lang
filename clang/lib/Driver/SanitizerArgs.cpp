@@ -159,11 +159,10 @@ static SanitizerMask parseSanitizeTrapArgs(const Driver &D,
 }
 
 bool SanitizerArgs::needsUbsanRt() const {
-  return (Sanitizers.Mask & NeedsUbsanRt & ~TrapSanitizers.Mask) &&
-         !Sanitizers.has(Address) &&
-         !Sanitizers.has(Memory) &&
-         !Sanitizers.has(Thread) &&
-         !CfiCrossDso;
+  return ((Sanitizers.Mask & NeedsUbsanRt & ~TrapSanitizers.Mask) ||
+          CoverageFeatures) &&
+         !Sanitizers.has(Address) && !Sanitizers.has(Memory) &&
+         !Sanitizers.has(Thread) && !CfiCrossDso;
 }
 
 bool SanitizerArgs::needsCfiRt() const {
@@ -485,10 +484,10 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
         continue;
       }
       CoverageFeatures |= parseCoverageFeatures(D, Arg);
-      // If there is trace-pc, allow it w/o any of the sanitizers.
-      // Otherwise, require that one of the supported sanitizers is present.
-      if ((CoverageFeatures & CoverageTracePC) ||
-          (AllAddedKinds & SupportsCoverage)) {
+
+      // Disable coverage and not claim the flags if there is at least one
+      // non-supporting sanitizer.
+      if (!(AllAddedKinds & ~setGroupBits(SupportsCoverage))) {
         Arg->claim();
       } else {
         CoverageFeatures = 0;
