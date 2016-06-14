@@ -3102,24 +3102,12 @@ extern void __kmp_wait_yield_4_ptr( void * spinner, kmp_uint32 checker, kmp_uint
 class kmp_flag_32;
 class kmp_flag_64;
 class kmp_flag_oncore;
-extern void __kmp_wait_32(kmp_info_t *this_thr, kmp_flag_32 *flag, int final_spin
-#if USE_ITT_BUILD
-                   , void * itt_sync_obj
-#endif
-                   );
-extern void __kmp_release_32(kmp_flag_32 *flag);
 extern void __kmp_wait_64(kmp_info_t *this_thr, kmp_flag_64 *flag, int final_spin
 #if USE_ITT_BUILD
                    , void * itt_sync_obj
 #endif
                    );
 extern void __kmp_release_64(kmp_flag_64 *flag);
-extern void __kmp_wait_oncore(kmp_info_t *this_thr, kmp_flag_oncore *flag, int final_spin
-#if USE_ITT_BUILD
-                   , void * itt_sync_obj
-#endif
-                   );
-extern void __kmp_release_oncore(kmp_flag_oncore *flag);
 
 extern void __kmp_infinite_loop( void );
 

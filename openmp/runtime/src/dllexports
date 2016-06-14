@@ -193,12 +193,8 @@
             _You_must_link_with_Microsoft_OpenMP_library  DATA
         %endif
 
-        __kmp_wait_32
         __kmp_wait_64
-        __kmp_wait_oncore
-        __kmp_release_32
         __kmp_release_64
-        __kmp_release_oncore
 
 
 #    VT_getthid                              1
