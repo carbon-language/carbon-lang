@@ -2107,10 +2107,10 @@ defm SI_SPILL_V512 : SI_SPILL_VGPR <VReg_512>;
 
 let Defs = [SCC] in {
 
-def SI_PC_ADD_REL_OFFSET : InstSI <
+def SI_CONSTDATA_PTR : InstSI <
   (outs SReg_64:$dst),
-  (ins si_ga:$ptr),
-  "", [(set SReg_64:$dst, (i64 (SIpc_add_rel_offset (tglobaladdr:$ptr))))]
+  (ins const_ga:$ptr),
+  "", [(set SReg_64:$dst, (i64 (AMDGPUconstdata_ptr (tglobaladdr:$ptr))))]
 > {
   let SALU = 1;
 }

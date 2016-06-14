@@ -46,7 +46,7 @@ MCCodeEmitter *createSIMCCodeEmitter(const MCInstrInfo &MCII,
 MCAsmBackend *createAMDGPUAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                      const Triple &TT, StringRef CPU);
 
-MCObjectWriter *createAMDGPUELFObjectWriter(const Triple &TT,
+MCObjectWriter *createAMDGPUELFObjectWriter(bool Is64Bit,
                                             raw_pwrite_stream &OS);
 } // End llvm namespace
 

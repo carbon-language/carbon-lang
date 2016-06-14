@@ -18,6 +18,9 @@ enum Fixups {
   /// 16-bit PC relative fixup for SOPP branch instructions.
   fixup_si_sopp_br = FirstTargetFixupKind,
 
+  /// fixup for global addresses with constant initializers
+  fixup_si_rodata,
+
   // Marker
   LastTargetFixupKind,
   NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind

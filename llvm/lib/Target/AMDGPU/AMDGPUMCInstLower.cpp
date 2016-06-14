@@ -70,10 +70,7 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
     case MachineOperand::MO_GlobalAddress: {
       const GlobalValue *GV = MO.getGlobal();
       MCSymbol *Sym = Ctx.getOrCreateSymbol(StringRef(GV->getName()));
-      const MCExpr *SymExpr = MCSymbolRefExpr::create(Sym, Ctx);
-      const MCExpr *Expr = MCBinaryExpr::createAdd(SymExpr,
-          MCConstantExpr::create(MO.getOffset(), Ctx), Ctx);
-      MCOp = MCOperand::createExpr(Expr);
+      MCOp = MCOperand::createExpr(MCSymbolRefExpr::create(Sym, Ctx));
       break;
     }
     case MachineOperand::MO_ExternalSymbol: {
