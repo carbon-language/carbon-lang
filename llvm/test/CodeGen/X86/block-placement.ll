@@ -1208,7 +1208,7 @@ exit:
 }
 
 define void @test_hot_branch_profile(i32* %a) !prof !6 {
-; Test that a hot branch that has a probability a little larger than 60% will
+; Test that a hot branch that has a probability a little larger than 50% will
 ; break CFG constrains when doing block placement when profile is available.
 ; CHECK-LABEL: test_hot_branch_profile:
 ; CHECK: %entry
@@ -1220,7 +1220,7 @@ entry:
   %gep1 = getelementptr i32, i32* %a, i32 1
   %val1 = load i32, i32* %gep1
   %cond1 = icmp ugt i32 %val1, 1
-  br i1 %cond1, label %then, label %else, !prof !5
+  br i1 %cond1, label %then, label %else, !prof !7
 
 then:
   call void @hot_function()
