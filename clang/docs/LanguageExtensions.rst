@@ -2154,7 +2154,7 @@ Loop Distribution allows splitting a loop into multiple loops.  This is
 beneficial for example when the entire loop cannot be vectorized but some of the
 resulting loops can.
 
-If ``distribute(enable))'' is specified and the loop has memory dependencies
+If ``distribute(enable))`` is specified and the loop has memory dependencies
 that inhibit vectorization, the compiler will attempt to isolate the offending
 operations into a new loop.  This optimization is not enabled by default, only
 loops marked with the pragma are considered.
