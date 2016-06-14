@@ -332,9 +332,9 @@ public:
 // LazyArchive symbols represents symbols in archive files.
 class LazyArchive : public Lazy {
 public:
-  LazyArchive(ArchiveFile *F, const llvm::object::Archive::Symbol S,
+  LazyArchive(ArchiveFile &File, const llvm::object::Archive::Symbol S,
               uint8_t Type)
-      : Lazy(LazyArchiveKind, S.getName(), Type), File(F), Sym(S) {}
+      : Lazy(LazyArchiveKind, S.getName(), Type), File(File), Sym(S) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == LazyArchiveKind;
@@ -343,7 +343,7 @@ public:
   std::unique_ptr<InputFile> getFile();
 
 private:
-  ArchiveFile *File;
+  ArchiveFile &File;
   const llvm::object::Archive::Symbol Sym;
 };
 

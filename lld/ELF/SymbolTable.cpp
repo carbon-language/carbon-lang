@@ -434,7 +434,7 @@ void SymbolTable<ELFT>::addLazyArchive(
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Sym.getName());
   if (WasInserted) {
-    replaceBody<LazyArchive>(S, F, Sym, SymbolBody::UnknownType);
+    replaceBody<LazyArchive>(S, *F, Sym, SymbolBody::UnknownType);
     return;
   }
   if (!S->body()->isUndefined())
@@ -448,7 +448,7 @@ void SymbolTable<ELFT>::addLazyArchive(
   // this symbol as used when we added it to the symbol table, but we also need
   // to preserve its type. FIXME: Move the Type field to Symbol.
   if (S->isWeak()) {
-    replaceBody<LazyArchive>(S, F, Sym, S->body()->Type);
+    replaceBody<LazyArchive>(S, *F, Sym, S->body()->Type);
     return;
   }
   MemoryBufferRef MBRef = F->getMember(&Sym);
