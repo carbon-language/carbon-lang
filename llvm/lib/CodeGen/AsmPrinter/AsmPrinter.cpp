@@ -1001,7 +1001,7 @@ static bool isGOTEquivalentCandidate(const GlobalVariable *GV,
   // Global GOT equivalents are unnamed private globals with a constant
   // pointer initializer to another global symbol. They must point to a
   // GlobalVariable or Function, i.e., as GlobalValue.
-  if (!GV->hasUnnamedAddr() || !GV->hasInitializer() || !GV->isConstant() ||
+  if (!GV->hasGlobalUnnamedAddr() || !GV->hasInitializer() || !GV->isConstant() ||
       !GV->isDiscardableIfUnused() || !dyn_cast<GlobalValue>(GV->getOperand(0)))
     return false;
 
