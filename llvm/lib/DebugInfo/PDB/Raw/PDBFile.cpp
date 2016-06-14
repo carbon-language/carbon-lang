@@ -23,7 +23,6 @@
 #include "llvm/DebugInfo/PDB/Raw/SymbolStream.h"
 #include "llvm/DebugInfo/PDB/Raw/TpiStream.h"
 #include "llvm/Support/Endian.h"
-#include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 using namespace llvm;
@@ -69,8 +68,6 @@ ArrayRef<support::ulittle32_t>
 PDBFile::getStreamBlockList(uint32_t StreamIndex) const {
   return StreamMap[StreamIndex];
 }
-
-size_t PDBFile::getFileSize() const { return Buffer->getLength(); }
 
 ArrayRef<uint8_t> PDBFile::getBlockData(uint32_t BlockIndex,
                                         uint32_t NumBytes) const {
@@ -320,15 +317,3 @@ Expected<NameHashTable &> PDBFile::getStringTable() {
   }
   return *StringTable;
 }
-
-void PDBFile::setSuperBlock(const SuperBlock *Block) { SB = Block; }
-
-void PDBFile::setStreamSizes(ArrayRef<support::ulittle32_t> Sizes) {
-  StreamSizes = Sizes;
-}
-
-void PDBFile::setStreamMap(ArrayRef<ArrayRef<support::ulittle32_t>> Blocks) {
-  StreamMap = Blocks;
-}
-
-void PDBFile::commit() {}
