@@ -179,6 +179,10 @@ def IsGP64bit    :    Predicate<"Subtarget->isGP64bit()">,
                       AssemblerPredicate<"FeatureGP64Bit">;
 def IsGP32bit    :    Predicate<"!Subtarget->isGP64bit()">,
                       AssemblerPredicate<"!FeatureGP64Bit">;
+def IsPTR64bit    :   Predicate<"Subtarget->isABI_N64()">,
+                      AssemblerPredicate<"FeaturePTR64Bit">;
+def IsPTR32bit    :   Predicate<"!Subtarget->isABI_N64()">,
+                      AssemblerPredicate<"!FeaturePTR64Bit">;
 def HasMips64    :    Predicate<"Subtarget->hasMips64()">,
                       AssemblerPredicate<"FeatureMips64">;
 def NotMips64    :    Predicate<"!Subtarget->hasMips64()">,
@@ -224,6 +228,9 @@ def HasMSA : Predicate<"Subtarget->hasMSA()">,
 
 class GPR_32 { list<Predicate> GPRPredicates = [IsGP32bit]; }
 class GPR_64 { list<Predicate> GPRPredicates = [IsGP64bit]; }
+
+class PTR_32 { list<Predicate> PTRPredicates = [IsPTR32bit]; }
+class PTR_64 { list<Predicate> PTRPredicates = [IsPTR64bit]; }
 
 //===----------------------------------------------------------------------===//
 // Mips ISA/ASE membership and instruction group membership adjectives.
@@ -1821,10 +1828,12 @@ let AdditionalPredicates = [NotInMicroMips] in {
 let EncodingPredicates = []<Predicate>, // FIXME: Lack of HasStdEnc is probably a bug
     AdditionalPredicates = [NotInMicroMips] in {
 def WAIT : WAIT_FT<"wait">, WAIT_FM;
+}
 
+let AdditionalPredicates = [NotInMicroMips] in {
 /// Load-linked, Store-conditional
-def LL : LLBase<"ll", GPR32Opnd>, LW_FM<0x30>, ISA_MIPS2_NOT_32R6_64R6;
-def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>, ISA_MIPS2_NOT_32R6_64R6;
+def LL : LLBase<"ll", GPR32Opnd>, LW_FM<0x30>, PTR_32, ISA_MIPS2_NOT_32R6_64R6;
+def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>, PTR_32, ISA_MIPS2_NOT_32R6_64R6;
 }
 
 /// Jump and Branch Instructions
