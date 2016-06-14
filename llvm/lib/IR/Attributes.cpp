@@ -800,9 +800,9 @@ AttributeSet AttributeSet::get(LLVMContext &C, unsigned Index,
 }
 
 AttributeSet AttributeSet::get(LLVMContext &C, unsigned Index,
-                               ArrayRef<Attribute::AttrKind> Kind) {
+                               ArrayRef<Attribute::AttrKind> Kinds) {
   SmallVector<std::pair<unsigned, Attribute>, 8> Attrs;
-  for (Attribute::AttrKind K : Kind)
+  for (Attribute::AttrKind K : Kinds)
     Attrs.push_back(std::make_pair(Index, Attribute::get(C, K)));
   return get(C, Attrs);
 }
@@ -838,16 +838,9 @@ AttributeSet AttributeSet::get(LLVMContext &C, ArrayRef<AttributeSet> Attrs) {
 }
 
 AttributeSet AttributeSet::addAttribute(LLVMContext &C, unsigned Index,
-                                        Attribute::AttrKind Attr) const {
-  if (hasAttribute(Index, Attr)) return *this;
-  return addAttributes(C, Index, AttributeSet::get(C, Index, Attr));
-}
-
-AttributeSet AttributeSet::addAttribute(LLVMContext &C, unsigned Index,
-                                        StringRef Kind) const {
-  llvm::AttrBuilder B;
-  B.addAttribute(Kind);
-  return addAttributes(C, Index, AttributeSet::get(C, Index, B));
+                                        Attribute::AttrKind Kind) const {
+  if (hasAttribute(Index, Kind)) return *this;
+  return addAttributes(C, Index, AttributeSet::get(C, Index, Kind));
 }
 
 AttributeSet AttributeSet::addAttribute(LLVMContext &C, unsigned Index,
@@ -937,9 +930,9 @@ AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Index,
 }
 
 AttributeSet AttributeSet::removeAttribute(LLVMContext &C, unsigned Index,
-                                           Attribute::AttrKind Attr) const {
-  if (!hasAttribute(Index, Attr)) return *this;
-  return removeAttributes(C, Index, AttributeSet::get(C, Index, Attr));
+                                           Attribute::AttrKind Kind) const {
+  if (!hasAttribute(Index, Kind)) return *this;
+  return removeAttributes(C, Index, AttributeSet::get(C, Index, Kind));
 }
 
 AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Index,
