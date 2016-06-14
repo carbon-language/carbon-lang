@@ -248,14 +248,13 @@ uint64_t SIMCCodeEmitter::getMachineOpValue(const MCInst &MI,
     return MRI.getEncodingValue(MO.getReg());
 
   if (MO.isExpr()) {
-    const MCSymbolRefExpr *Expr = cast<MCSymbolRefExpr>(MO.getExpr());
-    const MCSymbol &Sym = Expr->getSymbol();
+    const MCSymbolRefExpr *Expr = dyn_cast<MCSymbolRefExpr>(MO.getExpr());
     MCFixupKind Kind;
-    if (Sym.isExternal())
+    if (Expr && Expr->getSymbol().isExternal())
       Kind = FK_Data_4;
     else
-      Kind = (MCFixupKind)AMDGPU::fixup_si_rodata;
-    Fixups.push_back(MCFixup::create(4, Expr, Kind, MI.getLoc()));
+      Kind = FK_PCRel_4;
+    Fixups.push_back(MCFixup::create(4, MO.getExpr(), Kind, MI.getLoc()));
   }
 
   // Figure out the operand number, needed for isSrcOperand check
