@@ -2050,18 +2050,18 @@ let Predicates = [HasAVX512, NoDQI] in {
               sub_8bit))>;
 
   def : Pat<(v8i1 (load addr:$src)),
-            (COPY_TO_REGCLASS (MOVZX16rm8 addr:$src), VK8)>;
+            (COPY_TO_REGCLASS (MOVZX32rm8 addr:$src), VK8)>;
   def : Pat<(v2i1 (load addr:$src)),
-            (COPY_TO_REGCLASS (MOVZX16rm8 addr:$src), VK2)>;
+            (COPY_TO_REGCLASS (MOVZX32rm8 addr:$src), VK2)>;
   def : Pat<(v4i1 (load addr:$src)),
-            (COPY_TO_REGCLASS (MOVZX16rm8 addr:$src), VK4)>;
+            (COPY_TO_REGCLASS (MOVZX32rm8 addr:$src), VK4)>;
 }
 
 let Predicates = [HasAVX512] in {
   def : Pat<(store (i16 (bitconvert (v16i1 VK16:$src))), addr:$dst),
             (KMOVWmk addr:$dst, VK16:$src)>;
   def : Pat<(i1 (load addr:$src)),
-            (COPY_TO_REGCLASS (AND16ri (MOVZX16rm8 addr:$src), (i16 1)), VK1)>;
+            (COPY_TO_REGCLASS (AND32ri (MOVZX32rm8 addr:$src), (i32 1)), VK1)>;
   def : Pat<(v16i1 (bitconvert (i16 (load addr:$src)))),
             (KMOVWkm addr:$src)>;
 }

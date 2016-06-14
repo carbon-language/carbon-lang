@@ -88,7 +88,7 @@ define void @mask16_mem(i16* %ptr) {
 define void @mask8_mem(i8* %ptr) {
 ; KNL-LABEL: mask8_mem:
 ; KNL:       ## BB#0:
-; KNL-NEXT:    movzbw (%rdi), %ax
+; KNL-NEXT:    movzbl (%rdi), %eax
 ; KNL-NEXT:    kmovw %eax, %k0
 ; KNL-NEXT:    knotw %k0, %k0
 ; KNL-NEXT:    kmovw %k0, %eax
@@ -1341,7 +1341,7 @@ End:
 define <8 x i64> @load_8i1(<8 x i1>* %a) {
 ; KNL-LABEL: load_8i1:
 ; KNL:       ## BB#0:
-; KNL-NEXT:    movzbw (%rdi), %ax
+; KNL-NEXT:    movzbl (%rdi), %eax
 ; KNL-NEXT:    kmovw %eax, %k1
 ; KNL-NEXT:    vpbroadcastq {{.*}}(%rip), %zmm0 {%k1} {z}
 ; KNL-NEXT:    retq
@@ -1376,7 +1376,7 @@ define <16 x i32> @load_16i1(<16 x i1>* %a) {
 define <2 x i16> @load_2i1(<2 x i1>* %a) {
 ; KNL-LABEL: load_2i1:
 ; KNL:       ## BB#0:
-; KNL-NEXT:    movzbw (%rdi), %ax
+; KNL-NEXT:    movzbl (%rdi), %eax
 ; KNL-NEXT:    kmovw %eax, %k1
 ; KNL-NEXT:    vpbroadcastq {{.*}}(%rip), %zmm0 {%k1} {z}
 ; KNL-NEXT:    retq
@@ -1394,7 +1394,7 @@ define <2 x i16> @load_2i1(<2 x i1>* %a) {
 define <4 x i16> @load_4i1(<4 x i1>* %a) {
 ; KNL-LABEL: load_4i1:
 ; KNL:       ## BB#0:
-; KNL-NEXT:    movzbw (%rdi), %ax
+; KNL-NEXT:    movzbl (%rdi), %eax
 ; KNL-NEXT:    kmovw %eax, %k1
 ; KNL-NEXT:    vpbroadcastq {{.*}}(%rip), %zmm0 {%k1} {z}
 ; KNL-NEXT:    vpmovqd %zmm0, %ymm0
