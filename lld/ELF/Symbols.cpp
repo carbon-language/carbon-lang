@@ -231,6 +231,9 @@ std::unique_ptr<InputFile> LazyArchive::getFile() {
 }
 
 std::unique_ptr<InputFile> LazyObject::getFile() {
+  MemoryBufferRef MBRef = File.getBuffer();
+  if (MBRef.getBuffer().empty())
+    return std::unique_ptr<InputFile>(nullptr);
   return createObjectFile(MBRef);
 }
 

@@ -457,22 +457,25 @@ void SymbolTable<ELFT>::addLazyArchive(
 }
 
 template <class ELFT>
-void SymbolTable<ELFT>::addLazyObject(StringRef Name, MemoryBufferRef MBRef) {
+void SymbolTable<ELFT>::addLazyObject(StringRef Name, LazyObjectFile &Obj) {
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Name);
   if (WasInserted) {
-    replaceBody<LazyObject>(S, Name, MBRef, SymbolBody::UnknownType);
+    replaceBody<LazyObject>(S, Name, Obj, SymbolBody::UnknownType);
     return;
   }
   if (!S->body()->isUndefined())
     return;
 
   // See comment for addLazyArchive above.
-  if (S->isWeak())
-    replaceBody<LazyObject>(S, Name, MBRef, S->body()->Type);
-  else
-    addFile(createObjectFile(MBRef));
+  if (S->isWeak()) {
+    replaceBody<LazyObject>(S, Name, Obj, S->body()->Type);
+  } else {
+    MemoryBufferRef MBRef = Obj.getBuffer();
+    if (!MBRef.getBuffer().empty())
+      addFile(createObjectFile(MBRef));
+  }
 }
 
 // Process undefined (-u) flags by loading lazy symbols named by those flags.

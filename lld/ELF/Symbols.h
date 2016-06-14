@@ -28,6 +28,7 @@ namespace elf {
 class ArchiveFile;
 class BitcodeFile;
 class InputFile;
+class LazyObjectFile;
 class SymbolBody;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class OutputSection;
@@ -351,8 +352,8 @@ private:
 // --start-lib and --end-lib options.
 class LazyObject : public Lazy {
 public:
-  LazyObject(StringRef Name, MemoryBufferRef M, uint8_t Type)
-      : Lazy(LazyObjectKind, Name, Type), MBRef(M) {}
+  LazyObject(StringRef Name, LazyObjectFile &File, uint8_t Type)
+      : Lazy(LazyObjectKind, Name, Type), File(File) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == LazyObjectKind;
@@ -361,7 +362,7 @@ public:
   std::unique_ptr<InputFile> getFile();
 
 private:
-  MemoryBufferRef MBRef;
+  LazyObjectFile &File;
 };
 
 // Some linker-generated symbols need to be created as
