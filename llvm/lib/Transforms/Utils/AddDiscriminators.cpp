@@ -155,7 +155,7 @@ FunctionPass *llvm::createAddDiscriminatorsPass() {
 /// lexical block for I2 and all the instruction in B2 that share the same
 /// file and line location as I2. This new lexical block will have a
 /// different discriminator number than I1.
-bool addDiscriminators(Function &F) {
+static bool addDiscriminators(Function &F) {
   // If the function has debug information, but the user has disabled
   // discriminators, do nothing.
   // Simlarly, if the function has no debug info, do nothing.
@@ -250,7 +250,9 @@ bool AddDiscriminatorsLegacyPass::runOnFunction(Function &F) {
 }
 PreservedAnalyses AddDiscriminatorsPass::run(Function &F,
                                              AnalysisManager<Function> &AM) {
-  addDiscriminators(F);
-  // Only modifies debug info.
-  return PreservedAnalyses::all();
+  if (!addDiscriminators(F))
+    return PreservedAnalyses::all();
+
+  // FIXME: should be all()
+  return PreservedAnalyses::none();
 }

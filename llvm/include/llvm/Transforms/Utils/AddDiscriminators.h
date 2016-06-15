@@ -20,11 +20,10 @@
 
 namespace llvm {
 
-/// Converts loops into loop-closed SSA form.
 class AddDiscriminatorsPass : public PassInfoMixin<AddDiscriminatorsPass> {
 public:
   PreservedAnalyses run(Function &F, AnalysisManager<Function> &AM);
 };
 } // end namespace llvm
 
-#endif // LLVM_TRANSFORMS_UTILS_LCSSA_H
+#endif // LLVM_TRANSFORMS_UTILS_ADDDISCRIMINATORS_H
