@@ -601,6 +601,7 @@ private:
   /// A list of blocks that we are going to CSE.
   SetVector<BasicBlock *> CSEBlocks;
 
+public: // Workaround for MSVC friend semantics.
   /// Contains all scheduling relevant data for an instruction.
   /// A ScheduleData either represents a single instruction or a member of an
   /// instruction bundle (= a group of instructions which is combined into a
@@ -730,6 +731,7 @@ private:
     /// dry-run).
     bool IsScheduled;
   };
+private:
 
 #ifndef NDEBUG
   friend raw_ostream &operator<<(raw_ostream &os,
