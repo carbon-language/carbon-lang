@@ -7059,12 +7059,10 @@ ScalarEvolution::howFarToZero(const SCEV *V, const Loop *L, bool ControlsExit,
       const SCEVConstant *R1 = Roots->first;
       const SCEVConstant *R2 = Roots->second;
       // Pick the smallest positive root value.
-      if (ConstantInt *CB =
-          dyn_cast<ConstantInt>(ConstantExpr::getICmp(CmpInst::ICMP_ULT,
-                                                      R1->getValue(),
-                                                      R2->getValue()))) {
+      if (ConstantInt *CB = dyn_cast<ConstantInt>(ConstantExpr::getICmp(
+              CmpInst::ICMP_ULT, R1->getValue(), R2->getValue()))) {
         if (!CB->getZExtValue())
-          std::swap(R1, R2);   // R1 is the minimum root now.
+          std::swap(R1, R2); // R1 is the minimum root now.
 
         // We can only use this value if the chrec ends up with an exact zero
         // value at this index.  When solving for "X*X != 5", for example, we
@@ -8878,21 +8876,21 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(const ConstantRange &Range,
                                              FlagAnyWrap);
 
     // Next, solve the constructed addrec
-    if (auto Roots = SolveQuadraticEquation(cast<SCEVAddRecExpr>(NewAddRec), SE)) {
+    if (auto Roots =
+            SolveQuadraticEquation(cast<SCEVAddRecExpr>(NewAddRec), SE)) {
       const SCEVConstant *R1 = Roots->first;
       const SCEVConstant *R2 = Roots->second;
       // Pick the smallest positive root value.
       if (ConstantInt *CB = dyn_cast<ConstantInt>(ConstantExpr::getICmp(
               ICmpInst::ICMP_ULT, R1->getValue(), R2->getValue()))) {
         if (!CB->getZExtValue())
-          std::swap(R1, R2);   // R1 is the minimum root now.
+          std::swap(R1, R2); // R1 is the minimum root now.
 
         // Make sure the root is not off by one.  The returned iteration should
         // not be in the range, but the previous one should be.  When solving
         // for "X*X < 5", for example, we should not return a root of 2.
-        ConstantInt *R1Val = EvaluateConstantChrecAtConstant(this,
-                                                             R1->getValue(),
-                                                             SE);
+        ConstantInt *R1Val =
+            EvaluateConstantChrecAtConstant(this, R1->getValue(), SE);
         if (Range.contains(R1Val->getValue())) {
           // The next iteration must be out of the range...
           ConstantInt *NextVal =
@@ -8901,7 +8899,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(const ConstantRange &Range,
           R1Val = EvaluateConstantChrecAtConstant(this, NextVal, SE);
           if (!Range.contains(R1Val->getValue()))
             return SE.getConstant(NextVal);
-          return SE.getCouldNotCompute();  // Something strange happened
+          return SE.getCouldNotCompute(); // Something strange happened
         }
 
         // If R1 was not in the range, then it is a good return value.  Make
@@ -8911,7 +8909,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(const ConstantRange &Range,
         R1Val = EvaluateConstantChrecAtConstant(this, NextVal, SE);
         if (Range.contains(R1Val->getValue()))
           return R1;
-        return SE.getCouldNotCompute();  // Something strange happened
+        return SE.getCouldNotCompute(); // Something strange happened
       }
     }
   }
