@@ -8460,7 +8460,8 @@ void Sema::DiagnoseAlwaysNonNullPointer(Expr *E,
     }
   }
 
-  auto ComplainAboutNonnullParamOrCall = [&](bool IsParam) {
+  auto ComplainAboutNonnullParamOrCall = [&](const Attr *NonnullAttr) {
+    bool IsParam = isa<NonNullAttr>(NonnullAttr);
     std::string Str;
     llvm::raw_string_ostream S(Str);
     E->printPretty(S, nullptr, getPrintingPolicy());
@@ -8468,13 +8469,14 @@ void Sema::DiagnoseAlwaysNonNullPointer(Expr *E,
                                 : diag::warn_cast_nonnull_to_bool;
     Diag(E->getExprLoc(), DiagID) << IsParam << S.str()
       << E->getSourceRange() << Range << IsEqual;
+    Diag(NonnullAttr->getLocation(), diag::note_declared_nonnull) << IsParam;
   };
 
   // If we have a CallExpr that is tagged with returns_nonnull, we can complain.
   if (auto *Call = dyn_cast<CallExpr>(E->IgnoreParenImpCasts())) {
     if (auto *Callee = Call->getDirectCallee()) {
-      if (Callee->hasAttr<ReturnsNonNullAttr>()) {
-        ComplainAboutNonnullParamOrCall(false);
+      if (const Attr *A = Callee->getAttr<ReturnsNonNullAttr>()) {
+        ComplainAboutNonnullParamOrCall(A);
         return;
       }
     }
@@ -8496,8 +8498,8 @@ void Sema::DiagnoseAlwaysNonNullPointer(Expr *E,
   if (const auto* PV = dyn_cast<ParmVarDecl>(D)) {
     if (getCurFunction() &&
         !getCurFunction()->ModifiedNonNullParams.count(PV)) {
-      if (PV->hasAttr<NonNullAttr>()) {
-        ComplainAboutNonnullParamOrCall(true);
+      if (const Attr *A = PV->getAttr<NonNullAttr>()) {
+        ComplainAboutNonnullParamOrCall(A);
         return;
       }
 
@@ -8508,13 +8510,13 @@ void Sema::DiagnoseAlwaysNonNullPointer(Expr *E,
 
         for (const auto *NonNull : FD->specific_attrs<NonNullAttr>()) {
           if (!NonNull->args_size()) {
-              ComplainAboutNonnullParamOrCall(true);
+              ComplainAboutNonnullParamOrCall(NonNull);
               return;
           }
 
           for (unsigned ArgNo : NonNull->args()) {
             if (ArgNo == ParamNo) {
-              ComplainAboutNonnullParamOrCall(true);
+              ComplainAboutNonnullParamOrCall(NonNull);
               return;
             }
           }
