@@ -30458,6 +30458,22 @@ static SDValue combineTestM(SDNode *N, SelectionDAG &DAG) {
                      Op0->getOperand(0), Op0->getOperand(1));
 }
 
+static SDValue combineVectorCompare(SDNode *N, SelectionDAG &DAG,
+                                    const X86Subtarget &Subtarget) {
+  MVT VT = N->getSimpleValueType(0);
+  SDLoc DL(N);
+
+  if (N->getOperand(0) == N->getOperand(1)) {
+    if (N->getOpcode() == X86ISD::PCMPEQ)
+      return getOnesVector(VT, Subtarget, DAG, DL);
+    if (N->getOpcode() == X86ISD::PCMPGT)
+      return getZeroVector(VT, Subtarget, DAG, DL);
+  }
+
+  return SDValue();
+}
+
+
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -30538,6 +30554,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::MSCATTER:       return combineGatherScatter(N, DAG);
   case X86ISD::LSUB:        return combineLockSub(N, DAG, Subtarget);
   case X86ISD::TESTM:       return combineTestM(N, DAG);
+  case X86ISD::PCMPEQ:
+  case X86ISD::PCMPGT:      return combineVectorCompare(N, DAG, Subtarget);
   }
 
   return SDValue();
