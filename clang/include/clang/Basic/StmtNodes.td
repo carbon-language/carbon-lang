@@ -187,7 +187,6 @@ def SEHExceptStmt : Stmt;
 def SEHFinallyStmt : Stmt;
 def SEHLeaveStmt : Stmt;
 def MSDependentExistsStmt : Stmt;
-def MSLateParsedCompoundStmt : Stmt;
 
 // OpenCL Extensions.
 def AsTypeExpr : DStmt<Expr>;

@@ -556,7 +556,6 @@ struct Base {
 template <typename T> struct Template : T {
   void member() {
     f(); // expected-warning {{found via unqualified lookup into dependent bases}}
-    T::f();
   }
 };
 void test() {

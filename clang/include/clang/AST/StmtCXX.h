@@ -18,7 +18,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/Stmt.h"
-#include "clang/Lex/Token.h"
 #include "llvm/Support/Compiler.h"
 
 namespace clang {
@@ -415,51 +414,6 @@ public:
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CoreturnStmtClass;
-  }
-};
-
-/// This represents a group of statements like { stmt stmt } that must be parsed
-/// only during instantiation. Required for better MSVC compatibility.
-class MSLateParsedCompoundStmt final
-    : public Stmt,
-      private llvm::TrailingObjects<MSLateParsedCompoundStmt, Token> {
-  friend class TrailingObjects;
-  friend class ASTStmtReader;
-  SourceLocation LBraceLoc, RBraceLoc;
-  StringRef StringRep;
-  unsigned NumToks;
-
-  MSLateParsedCompoundStmt()
-      : Stmt(MSLateParsedCompoundStmtClass), NumToks(0) {}
-
-  /// Set tokens for the statement.
-  void init(ASTContext &C, SourceLocation LB, SourceLocation RB,
-            ArrayRef<Token> Tokens, StringRef Rep);
-
-public:
-  static MSLateParsedCompoundStmt *Create(ASTContext &C, SourceLocation LB,
-                                          SourceLocation RB,
-                                          ArrayRef<Token> Tokens,
-                                          StringRef Rep);
-  /// Build an empty statement.
-  static MSLateParsedCompoundStmt *CreateEmpty(ASTContext &C,
-                                               unsigned NumTokens);
-
-  SourceLocation getLocStart() const LLVM_READONLY { return LBraceLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RBraceLoc; }
-
-  /// Returns representation of the statement as a string.
-  StringRef getStringRepresentation() const { return StringRep; }
-
-  /// Get list of tokens associated with the statement.
-  ArrayRef<Token> tokens() const;
-
-  child_range children() {
-    return child_range(child_iterator(), child_iterator());
-  }
-
-  static bool classof(const Stmt *S) {
-    return S->getStmtClass() == MSLateParsedCompoundStmtClass;
   }
 };
 

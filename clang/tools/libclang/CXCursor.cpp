@@ -168,10 +168,6 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
     K = CXCursor_MSAsmStmt;
     break;
   
-  case Stmt::MSLateParsedCompoundStmtClass:
-    K = CXCursor_MSLateParsedCompoundStmt;
-    break;
-  
   case Stmt::ObjCAtTryStmtClass:
     K = CXCursor_ObjCAtTryStmt;
     break;

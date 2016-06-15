@@ -297,18 +297,6 @@ void ASTStmtWriter::VisitMSAsmStmt(MSAsmStmt *S) {
   Code = serialization::STMT_MSASM;
 }
 
-void ASTStmtWriter::VisitMSLateParsedCompoundStmt(MSLateParsedCompoundStmt *S) {
-  VisitStmt(S);
-  Record.push_back(S->tokens().size());
-  Record.AddSourceLocation(S->getLocStart());
-  Record.AddSourceLocation(S->getLocEnd());
-  Record.AddString(S->getStringRepresentation());
-  for (auto &Tok : S->tokens())
-    Writer.AddToken(Tok, Record.getRecordData());
-
-  Code = serialization::STMT_MS_LATE_PARSED_COMPOUND;
-}
-
 void ASTStmtWriter::VisitCoroutineBodyStmt(CoroutineBodyStmt *S) {
   // FIXME: Implement coroutine serialization.
   llvm_unreachable("unimplemented");

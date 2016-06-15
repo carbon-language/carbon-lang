@@ -86,38 +86,3 @@ VarDecl *CXXForRangeStmt::getLoopVariable() {
 const VarDecl *CXXForRangeStmt::getLoopVariable() const {
   return const_cast<CXXForRangeStmt *>(this)->getLoopVariable();
 }
-
-MSLateParsedCompoundStmt *
-MSLateParsedCompoundStmt::Create(ASTContext &C, SourceLocation LB,
-                                 SourceLocation RB, ArrayRef<Token> Tokens,
-                                 StringRef Rep) {
-  // Allocate space for private variables and initializer expressions.
-  void *Mem = C.Allocate(totalSizeToAlloc<Token>(Tokens.size()),
-                         llvm::alignOf<MSLateParsedCompoundStmt>());
-  auto *S = new (Mem) MSLateParsedCompoundStmt();
-  S->init(C, LB, RB, Tokens, Rep);
-  return S;
-}
-
-MSLateParsedCompoundStmt *
-MSLateParsedCompoundStmt::CreateEmpty(ASTContext &C, unsigned NumTokens) {
-  // Allocate space for private variables and initializer expressions.
-  void *Mem = C.Allocate(totalSizeToAlloc<Token>(NumTokens),
-                         llvm::alignOf<MSLateParsedCompoundStmt>());
-  return new (Mem) MSLateParsedCompoundStmt();
-}
-
-void MSLateParsedCompoundStmt::init(ASTContext &C, SourceLocation LB,
-                                    SourceLocation RB, ArrayRef<Token> Tokens,
-                                    StringRef Rep) {
-  LBraceLoc = LB;
-  RBraceLoc = RB;
-  std::copy(Tokens.begin(), Tokens.end(), getTrailingObjects<Token>());
-  StringRep = Rep.copy(C);
-  NumToks = Tokens.size();
-}
-
-ArrayRef<Token> MSLateParsedCompoundStmt::tokens() const {
-  return llvm::makeArrayRef(getTrailingObjects<Token>(), NumToks);
-}
-

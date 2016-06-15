@@ -3507,11 +3507,6 @@ public:
   LabelDecl *GetOrCreateMSAsmLabel(StringRef ExternalLabelName,
                                    SourceLocation Location,
                                    bool AlwaysCreate);
-  /// Builds late parsed compound statement or just compound statement in MSVC
-  /// compatibility mode.
-  StmtResult ActOnMSLateParsedCompoundStmt(SourceLocation LB, SourceLocation RB,
-                                           ArrayRef<Token> Tokens,
-                                           StringRef Rep);
 
   VarDecl *BuildObjCExceptionDecl(TypeSourceInfo *TInfo, QualType ExceptionType,
                                   SourceLocation StartLoc,
