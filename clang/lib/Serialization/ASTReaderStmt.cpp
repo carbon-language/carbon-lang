@@ -382,6 +382,21 @@ void ASTStmtReader::VisitMSAsmStmt(MSAsmStmt *S) {
                 Constraints, Exprs, Clobbers);
 }
 
+void ASTStmtReader::VisitMSLateParsedCompoundStmt(MSLateParsedCompoundStmt *S) {
+  VisitStmt(S);
+  SourceLocation LB = ReadSourceLocation(Record, Idx);
+  SourceLocation RB = ReadSourceLocation(Record, Idx);
+  std::string StringRep = ReadString(Record, Idx);
+  unsigned NumToks = Record[Idx++];
+
+  // Read the tokens.
+  SmallVector<Token, 16> Toks;
+  Toks.reserve(NumToks);
+  for (unsigned I = 0, E = NumToks; I != E; ++I)
+    Toks.push_back(ReadToken(Record, Idx));
+  S->init(Reader.getContext(), LB, RB, Toks, StringRep);
+}
+
 void ASTStmtReader::VisitCoroutineBodyStmt(CoroutineBodyStmt *S) {
   // FIXME: Implement coroutine serialization.
   llvm_unreachable("unimplemented");
@@ -2865,6 +2880,11 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case STMT_MSASM:
       S = new (Context) MSAsmStmt(Empty);
+      break;
+
+    case STMT_MS_LATE_PARSED_COMPOUND:
+      S = MSLateParsedCompoundStmt::CreateEmpty(
+          Context, Record[ASTStmtReader::NumStmtFields]);
       break;
 
     case STMT_CAPTURED:

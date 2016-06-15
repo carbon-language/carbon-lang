@@ -1181,9 +1181,11 @@ private:
 
   void LexTemplateFunctionForLateParsing(CachedTokens &Toks);
   void ParseLateTemplatedFuncDef(LateParsedTemplate &LPT);
+  void ParseMSVCTemplatedFuncDef(LateParsedTemplate &LPT);
 
   static void LateTemplateParserCallback(void *P, LateParsedTemplate &LPT);
   static void LateTemplateParserCleanupCallback(void *P);
+  static void MSVCTemplateParserCallback(void *P, LateParsedTemplate &LPT);
 
   Sema::ParsingClassState
   PushParsingClass(Decl *TagOrTemplate, bool TopLevelClass, bool IsInterface);

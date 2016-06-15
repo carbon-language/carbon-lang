@@ -89,6 +89,8 @@ Parser::Parser(Preprocessor &pp, Sema &actions, bool skipFunctionBodies)
   PP.addCommentHandler(CommentSemaHandler.get());
 
   PP.setCodeCompletionHandler(*this);
+  if (getLangOpts().MSVCCompat)
+    Actions.SetLateTemplateParser(LateTemplateParserCallback, nullptr, this);
 }
 
 DiagnosticBuilder Parser::Diag(SourceLocation Loc, unsigned DiagID) {
@@ -1053,12 +1055,35 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
       Actions.MarkAsLateParsedTemplate(FnD, DP, Toks);
     }
     return DP;
-  }
-  else if (CurParsedObjCImpl && 
-           !TemplateInfo.TemplateParams &&
-           (Tok.is(tok::l_brace) || Tok.is(tok::kw_try) ||
-            Tok.is(tok::colon)) && 
-      Actions.CurContext->isTranslationUnit()) {
+  } else if (getLangOpts().MSVCCompat && Tok.isNot(tok::equal) &&
+             TemplateInfo.Kind == ParsedTemplateInfo::Template &&
+             Actions.canDelayFunctionBody(D)) {
+    // In delayed template parsing mode, for function template we consume the
+    // tokens and store them for late parsing at the end of the translation
+    // unit.
+    MultiTemplateParamsArg TemplateParameterLists(*TemplateInfo.TemplateParams);
+
+    ParseScope BodyScope(this, Scope::FnScope | Scope::DeclScope);
+
+    CachedTokens Toks;
+    LexTemplateFunctionForLateParsing(Toks);
+
+    Decl *Res = Actions.ActOnStartOfFunctionDef(getCurScope(), D,
+                                                *TemplateInfo.TemplateParams);
+    D.complete(Res);
+    D.getMutableDeclSpec().abort();
+    StmtResult Body = Actions.ActOnMSLateParsedCompoundStmt(
+        Toks.begin()->getLocation(), Tok.getLocation(), Toks,
+        Lexer::getSourceText(
+            {{Toks.begin()->getLocation(), Tok.getLocation()}, false},
+            Actions.getASTContext().getSourceManager(), getLangOpts()));
+    BodyScope.Exit();
+
+    return Actions.ActOnFinishFunctionBody(Res, Body.get());
+  } else if (CurParsedObjCImpl && !TemplateInfo.TemplateParams &&
+             (Tok.is(tok::l_brace) || Tok.is(tok::kw_try) ||
+              Tok.is(tok::colon)) &&
+             Actions.CurContext->isTranslationUnit()) {
     ParseScope BodyScope(this, Scope::FnScope|Scope::DeclScope);
     Scope *ParentScope = getCurScope()->getParent();
 

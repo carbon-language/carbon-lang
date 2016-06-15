@@ -2213,11 +2213,11 @@ Sema::ActOnIdExpression(Scope *S, CXXScopeSpec &SS,
   bool ADL = UseArgumentDependentLookup(SS, R, HasTrailingLParen);
 
   if (R.empty() && !ADL) {
-    if (SS.isEmpty() && getLangOpts().MSVCCompat) {
-      if (Expr *E = recoverFromMSUnqualifiedLookup(*this, Context, NameInfo,
-                                                   TemplateKWLoc, TemplateArgs))
-        return E;
-    }
+    // if (SS.isEmpty() && getLangOpts().MSVCCompat) {
+    //   if (Expr *E = recoverFromMSUnqualifiedLookup(*this, Context, NameInfo,
+    //                                                TemplateKWLoc, TemplateArgs))
+    //     return E;
+    // }
 
     // Don't diagnose an empty lookup for inline assembly.
     if (IsInlineAsmIdentifier)

@@ -2305,7 +2305,11 @@ enum CXCursorKind {
    */
   CXCursor_OMPTargetUpdateDirective      = 265,
 
-  CXCursor_LastStmt                      = CXCursor_OMPTargetUpdateDirective,
+  /** \brief A MS-specific late parsed compound statement.
+   */
+  CXCursor_MSLateParsedCompoundStmt     = 266,
+
+  CXCursor_LastStmt                      = CXCursor_MSLateParsedCompoundStmt,
 
   /**
    * \brief Cursor that represents the translation unit itself.

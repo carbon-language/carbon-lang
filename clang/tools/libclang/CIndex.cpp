@@ -4632,6 +4632,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return cxstring::createRef("GCCAsmStmt");
   case CXCursor_MSAsmStmt:
       return cxstring::createRef("MSAsmStmt");
+  case CXCursor_MSLateParsedCompoundStmt:
+      return cxstring::createRef("MSLateParsedCompoundStmt");
   case CXCursor_ObjCAtTryStmt:
       return cxstring::createRef("ObjCAtTryStmt");
   case CXCursor_ObjCAtCatchStmt:

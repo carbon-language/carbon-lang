@@ -2352,6 +2352,10 @@ void StmtPrinter::VisitCoreturnStmt(CoreturnStmt *S) {
   OS << ";";
 }
 
+void StmtPrinter::VisitMSLateParsedCompoundStmt(MSLateParsedCompoundStmt *S) {
+  OS << S->getStringRepresentation();
+}
+
 void StmtPrinter::VisitCoawaitExpr(CoawaitExpr *S) {
   OS << "co_await ";
   PrintExpr(S->getOperand());

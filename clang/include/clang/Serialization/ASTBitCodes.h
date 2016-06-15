@@ -1220,6 +1220,8 @@ namespace clang {
       STMT_GCCASM,
       /// \brief A MS-style AsmStmt record.
       STMT_MSASM,
+      /// \brief A MS-specific late parsed compound statement.
+      STMT_MS_LATE_PARSED_COMPOUND,
       /// \brief A PredefinedExpr record.
       EXPR_PREDEFINED,
       /// \brief A DeclRefExpr record.

@@ -3978,3 +3978,30 @@ StmtResult Sema::ActOnCapturedRegionEnd(Stmt *S) {
 
   return Res;
 }
+
+StmtResult Sema::ActOnMSLateParsedCompoundStmt(SourceLocation LB,
+                                               SourceLocation RB,
+                                               ArrayRef<Token> Tokens,
+                                               StringRef Rep) {
+  if (CurContext->isDependentContext())
+    return MSLateParsedCompoundStmt::Create(getASTContext(), LB, RB, Tokens,
+                                            Rep);
+
+  QualType CXXThisTy = getCurrentThisType();
+  assert(!CXXThisTy.isNull());
+  auto *CXXThisRD = CXXThisTy->castAs<PointerType>()
+                        ->getPointeeCXXRecordDecl()
+                        ->getCanonicalDecl();
+  DeclContext *DC = getFunctionLevelDeclContext();
+  while (auto *PCXXRD = dyn_cast<CXXRecordDecl>(DC)) {
+    if (PCXXRD->getCanonicalDecl() == CXXThisRD)
+      break;
+    DC = DC->getParent();
+  }
+  auto *MD = dyn_cast<CXXMethodDecl>(DC);
+  LateParsedTemplate LPT;
+  LPT.Toks.append(Tokens.begin(), Tokens.end());
+  LPT.D = MD;
+  LateTemplateParser(OpaqueParser, LPT);
+  return MD->getBody();
+}

@@ -1292,6 +1292,17 @@ public:
                                     Constraints, Clobbers, Exprs, EndLoc);
   }
 
+  /// Build a new compound statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  StmtResult RebuildMSLateParsedCompoundStmt(SourceLocation LB,
+                                             SourceLocation RB,
+                                             ArrayRef<Token> Tokens,
+                                             StringRef Rep) {
+    return getSema().ActOnMSLateParsedCompoundStmt(LB, RB, Tokens, Rep);
+  }
+
   /// \brief Build a new co_return statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -6604,6 +6615,16 @@ TreeTransform<Derived>::TransformMSAsmStmt(MSAsmStmt *S) {
                                        S->getNumOutputs(), S->getNumInputs(),
                                        S->getAllConstraints(), S->getClobbers(),
                                        TransformedExprs, S->getEndLoc());
+}
+
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformMSLateParsedCompoundStmt(
+    MSLateParsedCompoundStmt *S) {
+  if (SemaRef.CurContext->isDependentContext())
+    return S;
+  return getDerived().RebuildMSLateParsedCompoundStmt(
+      S->getLocStart(), S->getLocEnd(), S->tokens(),
+      S->getStringRepresentation());
 }
 
 // C++ Coroutines TS

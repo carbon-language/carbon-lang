@@ -1499,6 +1499,11 @@ void StmtProfiler::VisitCoreturnStmt(const CoreturnStmt *S) {
   VisitStmt(S);
 }
 
+void StmtProfiler::VisitMSLateParsedCompoundStmt(
+    const MSLateParsedCompoundStmt *S) {
+  VisitStmt(S);
+}
+
 void StmtProfiler::VisitCoawaitExpr(const CoawaitExpr *S) {
   VisitExpr(S);
 }

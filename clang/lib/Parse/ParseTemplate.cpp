@@ -1417,6 +1417,90 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplate &LPT) {
     delete *I;
 }
 
+void Parser::MSVCTemplateParserCallback(void *P, LateParsedTemplate &LPT) {
+  ((Parser *)P)->ParseMSVCTemplatedFuncDef(LPT);
+}
+
+/// \brief Late parse a C++ function template in Microsoft mode.
+void Parser::ParseMSVCTemplatedFuncDef(LateParsedTemplate &LPT) {
+  if (!LPT.D)
+     return;
+
+  // Get the FunctionDecl.
+  FunctionDecl *FunD = LPT.D->getAsFunction();
+  // Track template parameter depth.
+  TemplateParameterDepthRAII CurTemplateDepthTracker(TemplateParameterDepth);
+
+  SmallVector<ParseScope*, 4> TemplateParamScopeStack;
+
+  // Get the list of DeclContexts to reenter.
+  SmallVector<DeclContext*, 4> DeclContextsToReenter;
+  DeclContext *DD = FunD;
+  while (DD && !DD->isTranslationUnit()) {
+    DeclContextsToReenter.push_back(DD);
+    DD = DD->getLexicalParent();
+  }
+
+  // Reenter template scopes from outermost to innermost.
+  SmallVectorImpl<DeclContext *>::reverse_iterator II =
+      DeclContextsToReenter.rbegin();
+  for (; II != DeclContextsToReenter.rend(); ++II) {
+    TemplateParamScopeStack.push_back(new ParseScope(this,
+          Scope::TemplateParamScope));
+    unsigned NumParamLists =
+      Actions.ActOnReenterTemplateScope(getCurScope(), cast<Decl>(*II));
+    CurTemplateDepthTracker.addDepth(NumParamLists);
+    if (*II != FunD) {
+      TemplateParamScopeStack.push_back(new ParseScope(this, Scope::DeclScope));
+      Actions.PushDeclContext(Actions.getCurScope(), *II);
+    }
+  }
+
+  assert(!LPT.Toks.empty() && "Empty body!");
+
+  // Append the current token at the end of the new token stream so that it
+  // doesn't get lost.
+  LPT.Toks.push_back(Tok);
+  PP.EnterTokenStream(LPT.Toks, true);
+
+  // Consume the previously pushed token.
+  ConsumeAnyToken(/*ConsumeCodeCompletionTok=*/true);
+  assert(Tok.isOneOf(tok::l_brace, tok::colon, tok::kw_try) &&
+         "Inline method not starting with '{', ':' or 'try'");
+
+  // Parse the method body. Function body parsing code is similar enough
+  // to be re-used for method bodies as well.
+  ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope);
+
+  if (Tok.is(tok::kw_try)) {
+    ParseFunctionTryBlock(LPT.D, FnScope);
+  } else {
+    if (Tok.is(tok::colon))
+      ParseConstructorInitializer(LPT.D);
+    else
+      Actions.ActOnDefaultCtorInitializers(LPT.D);
+
+    if (Tok.is(tok::l_brace)) {
+      assert((!isa<FunctionTemplateDecl>(LPT.D) ||
+              cast<FunctionTemplateDecl>(LPT.D)
+                      ->getTemplateParameters()
+                      ->getDepth() == TemplateParameterDepth - 1) &&
+             "TemplateParameterDepth should be greater than the depth of "
+             "current template being instantiated!");
+      ParseFunctionStatementBody(LPT.D, FnScope);
+      Actions.UnmarkAsLateParsedTemplate(FunD);
+    } else
+      Actions.ActOnFinishFunctionBody(LPT.D, nullptr);
+  }
+
+  // Exit scopes.
+  FnScope.Exit();
+  SmallVectorImpl<ParseScope *>::reverse_iterator I =
+   TemplateParamScopeStack.rbegin();
+  for (; I != TemplateParamScopeStack.rend(); ++I)
+    delete *I;
+}
+
 /// \brief Lex a delayed template function for late parsing.
 void Parser::LexTemplateFunctionForLateParsing(CachedTokens &Toks) {
   tok::TokenKind kind = Tok.getKind();
