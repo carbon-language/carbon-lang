@@ -835,7 +835,7 @@ static bool eliminateDeadStores(BasicBlock &BB, AliasAnalysis *AA,
       // Get the memory clobbered by the instruction we depend on.  MemDep will
       // skip any instructions that 'Loc' clearly doesn't interact with.  If we
       // end up depending on a may- or must-aliased load, then we can't optimize
-      // away the store and we bail out.  However, if we depend on on something
+      // away the store and we bail out.  However, if we depend on something
       // that overwrites the memory location we *can* potentially optimize it.
       //
       // Find out what memory location the dependent instruction stores.
