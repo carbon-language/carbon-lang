@@ -13,6 +13,7 @@
 
 struct A
 {
+    A() : i(0), j(0) {} // explicitly initialize 'i' to prevent warnings
     const int i;
     int j;
 };
@@ -22,7 +23,7 @@ typedef       int A::*md2;
 
 struct B : public A
 {
-    B() : k(42), l(0) {} // explicitly initialize 'k' to prevent warnings.
+    B() : k(0), l(0) {} // explicitly initialize 'k' to prevent warnings.
     const int k;
     int l;
 };
