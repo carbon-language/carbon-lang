@@ -3335,34 +3335,6 @@ void ARMDAGToDAGISel::Select(SDNode *N) {
     default:
       break;
 
-    case Intrinsic::arm_mrrc:
-    case Intrinsic::arm_mrrc2: {
-      SDLoc dl(N);
-      SDValue Chain = N->getOperand(0);
-      unsigned Opc;
-
-      if (Subtarget->isThumb())
-        Opc = (IntNo == Intrinsic::arm_mrrc ? ARM::t2MRRC : ARM::t2MRRC2);
-      else
-        Opc = (IntNo == Intrinsic::arm_mrrc ? ARM::MRRC : ARM::MRRC2);
-
-      SmallVector<SDValue, 5> Ops;
-      Ops.push_back(getI32Imm(cast<ConstantSDNode>(N->getOperand(2))->getZExtValue(), dl)); /* coproc */
-      Ops.push_back(getI32Imm(cast<ConstantSDNode>(N->getOperand(3))->getZExtValue(), dl)); /* opc */
-      Ops.push_back(getI32Imm(cast<ConstantSDNode>(N->getOperand(4))->getZExtValue(), dl)); /* CRm */
-      Ops.push_back(getAL(CurDAG, dl));
-      Ops.push_back(CurDAG->getRegister(0, MVT::i32));
-      Ops.push_back(Chain);
-
-      // Writes to two registers.
-      std::vector<EVT> RetType;
-      RetType.push_back(MVT::i32);
-      RetType.push_back(MVT::i32);
-      RetType.push_back(MVT::Other);
-
-      ReplaceNode(N, CurDAG->getMachineNode(Opc, dl, RetType, Ops));
-      return;
-    }
     case Intrinsic::arm_ldaexd:
     case Intrinsic::arm_ldrexd: {
       SDLoc dl(N);
