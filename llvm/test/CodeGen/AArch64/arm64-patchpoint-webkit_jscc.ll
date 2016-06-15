@@ -1,5 +1,12 @@
-; RUN: llc -mtriple=arm64-apple-darwin -enable-misched=0 -mcpu=cyclone            < %s | FileCheck %s
+; RUN: llc -mtriple=arm64-apple-darwin -enable-misched=0 -mcpu=cyclone < %s | FileCheck %s
 ; RUN: llc -mtriple=arm64-apple-darwin -enable-misched=0 -mcpu=cyclone -fast-isel < %s | FileCheck %s --check-prefix=FAST
+; RUN: llc -mtriple=arm64-apple-darwin -enable-misched=0 -mcpu=cyclone -filetype=obj -o %t %s
+; RUN: llvm-objdump -triple arm64-apple-darwin -d %t | FileCheck %s --check-prefix CHECK-ENCODING
+
+; CHECK-ENCODING-NOT: <unknown>
+; CHECK-ENCODING: movz x16, #65535, lsl #32
+; CHECK-ENCODING: movk x16, #57005, lsl #16
+; CHECK-ENCODING: movk x16, #48879
 
 ; One argument will be passed in register, the other will be pushed on the stack.
 ; Return value in x0.
@@ -11,8 +18,8 @@ entry:
 ; CHECK-NEXT:  mov  x0, x{{.+}}
 ; CHECK:       Ltmp
 ; CHECK-NEXT:  movz  x16, #65535, lsl #32
-; CHECK-NEXT:  movk  x16, #57005, lsl #16
-; CHECK-NEXT:  movk  x16, #48879
+; CHECK:  movk  x16, #57005, lsl #16
+; CHECK:  movk  x16, #48879
 ; CHECK-NEXT:  blr x16
 ; FAST-LABEL:  jscall_patchpoint_codegen:
 ; FAST:        Ltmp
