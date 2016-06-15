@@ -29,3 +29,13 @@ s_add_u32 s0, s0, global+4
 s_addc_u32 s1, s1, 0
 // VI: s_add_u32 s0, s0, global+4
 // VI: s_addc_u32 s1, s1, 0
+
+// Use a computed expression that results in an inline immediate.
+.set foo, 4
+s_mov_b32 s0, foo+2
+// VI: s_mov_b32 s0, 6 ; encoding: [0x86,0x00,0x80,0xbe]
+
+// Use a computed expression that results in a non-inline immediate.
+.set foo, 512
+s_mov_b32 s0, foo+2
+// VI: s_mov_b32 s0, 514 ; encoding: [0xff,0x00,0x80,0xbe,0x02,0x02,0x00,0x00]
