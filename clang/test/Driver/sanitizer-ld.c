@@ -299,7 +299,6 @@
 // RUN:   | FileCheck --check-prefix=CHECK-ASAN-COV-LINUX %s
 // CHECK-ASAN-COV-LINUX: "{{.*}}ld{{(.exe)?}}"
 // CHECK-ASAN-COV-LINUX: "-whole-archive" "{{.*}}libclang_rt.asan-x86_64.a" "-no-whole-archive"
-// CHECK-ASAN-COV-LINUX: "--dynamic-list={{.*}}libclang_rt.asan-x86_64.a.syms"
 // CHECK-ASAN-COV-LINUX-NOT: libclang_rt.ubsan
 // CHECK-ASAN-COV-LINUX-NOT: "-lstdc++"
 // CHECK-ASAN-COV-LINUX: "-lpthread"
@@ -310,7 +309,6 @@
 // RUN:   | FileCheck --check-prefix=CHECK-MSAN-COV-LINUX %s
 // CHECK-MSAN-COV-LINUX: "{{.*}}ld{{(.exe)?}}"
 // CHECK-MSAN-COV-LINUX: "-whole-archive" "{{.*}}libclang_rt.msan-x86_64.a" "-no-whole-archive"
-// CHECK-MSAN-COV-LINUX: "--dynamic-list={{.*}}libclang_rt.msan-x86_64.a.syms"
 // CHECK-MSAN-COV-LINUX-NOT: libclang_rt.ubsan
 // CHECK-MSAN-COV-LINUX-NOT: "-lstdc++"
 // CHECK-MSAN-COV-LINUX: "-lpthread"
@@ -321,7 +319,6 @@
 // RUN:   | FileCheck --check-prefix=CHECK-DFSAN-COV-LINUX %s
 // CHECK-DFSAN-COV-LINUX: "{{.*}}ld{{(.exe)?}}"
 // CHECK-DFSAN-COV-LINUX: "-whole-archive" "{{.*}}libclang_rt.dfsan-x86_64.a" "-no-whole-archive"
-// CHECK-DFSAN-COV-LINUX: "--dynamic-list={{.*}}libclang_rt.dfsan-x86_64.a.syms"
 // CHECK-DFSAN-COV-LINUX-NOT: libclang_rt.ubsan
 // CHECK-DFSAN-COV-LINUX-NOT: "-lstdc++"
 // CHECK-DFSAN-COV-LINUX: "-lpthread"
@@ -332,8 +329,6 @@
 // RUN:   | FileCheck --check-prefix=CHECK-UBSAN-COV-LINUX %s
 // CHECK-UBSAN-COV-LINUX: "{{.*}}ld{{(.exe)?}}"
 // CHECK-UBSAN-COV-LINUX: "-whole-archive" "{{.*}}libclang_rt.ubsan_standalone-x86_64.a" "-no-whole-archive"
-// CHECK-UBSAN-COV-LINUX: "--dynamic-list={{.*}}libclang_rt.ubsan_standalone-x86_64.a.syms"
-// CHECK-UBSAN-COV-LINUX-NOT: libclang_rt.ubsan
 // CHECK-UBSAN-COV-LINUX-NOT: "-lstdc++"
 // CHECK-UBSAN-COV-LINUX: "-lpthread"
 
@@ -343,8 +338,6 @@
 // RUN:   | FileCheck --check-prefix=CHECK-COV-LINUX %s
 // CHECK-COV-LINUX: "{{.*}}ld{{(.exe)?}}"
 // CHECK-COV-LINUX: "-whole-archive" "{{.*}}libclang_rt.ubsan_standalone-x86_64.a" "-no-whole-archive"
-// CHECK-COV-LINUX: "--dynamic-list={{.*}}libclang_rt.ubsan_standalone-x86_64.a.syms"
-// CHECK-COV-LINUX-NOT: libclang_rt.ubsan
 // CHECK-COV-LINUX-NOT: "-lstdc++"
 // CHECK-COV-LINUX: "-lpthread"
 
