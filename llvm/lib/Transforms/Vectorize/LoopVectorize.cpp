@@ -1448,7 +1448,9 @@ private:
     emitAnalysisDiag(TheFunction, TheLoop, *Hints, Message);
   }
 
-  ValueToValueMap &getSymbolicStrides() { return SymbolicStrides; }
+  /// \brief If an access has a symbolic strides, this maps the pointer value to
+  /// the stride symbol.
+  const ValueToValueMap &getSymbolicStrides() { return SymbolicStrides; }
 
   unsigned NumPredStores;
 
