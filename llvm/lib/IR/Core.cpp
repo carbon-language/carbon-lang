@@ -2201,6 +2201,24 @@ void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index,
                                                         index, B)));
 }
 
+void LLVMAddCallSiteAttribute(LLVMValueRef C, LLVMAttributeIndex Idx,
+                              LLVMAttributeRef A) {
+  CallSite(unwrap<Instruction>(C)).addAttribute(Idx, unwrap(A));
+}
+
+LLVMAttributeRef LLVMGetCallSiteEnumAttribute(LLVMValueRef C,
+                                              LLVMAttributeIndex Idx,
+                                              unsigned KindID) {
+  return wrap(CallSite(unwrap<Instruction>(C))
+    .getAttribute(Idx, (Attribute::AttrKind)KindID));
+}
+
+void LLVMRemoveCallSiteEnumAttribute(LLVMValueRef C, LLVMAttributeIndex Idx,
+                                     unsigned KindID) {
+  CallSite(unwrap<Instruction>(C))
+    .removeAttribute(Idx, (Attribute::AttrKind)KindID);
+}
+
 LLVMValueRef LLVMGetCalledValue(LLVMValueRef Instr) {
   return wrap(CallSite(unwrap<Instruction>(Instr)).getCalledValue());
 }

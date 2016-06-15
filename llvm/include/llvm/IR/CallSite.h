@@ -313,6 +313,10 @@ public:
     CALLSITE_DELEGATE_SETTER(addAttribute(i, Kind, Value));
   }
 
+  void addAttribute(unsigned i, Attribute Attr) {
+    CALLSITE_DELEGATE_SETTER(addAttribute(i, Attr));
+  }
+
   void removeAttribute(unsigned i, Attribute::AttrKind Kind) {
     CALLSITE_DELEGATE_SETTER(removeAttribute(i, Kind));
   }
@@ -334,6 +338,10 @@ public:
   /// \brief Return true if the call or the callee has the given attribute.
   bool paramHasAttr(unsigned i, Attribute::AttrKind Kind) const {
     CALLSITE_DELEGATE_GETTER(paramHasAttr(i, Kind));
+  }
+
+  Attribute getAttribute(unsigned i, Attribute::AttrKind Kind) const {
+    CALLSITE_DELEGATE_GETTER(getAttribute(i, Kind));
   }
 
   /// \brief Return true if the data operand at index \p i directly or
