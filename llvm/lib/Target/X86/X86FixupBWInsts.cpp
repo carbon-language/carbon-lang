@@ -372,11 +372,15 @@ void FixupBWInstPass::processBasicBlock(MachineFunction &MF,
     LiveRegs.addLiveIns(MBB);
 
     auto NextCandidateIter = MIReplacements.begin();
+    auto EndCandidateIter = MIReplacements.end();
 
     for (auto I = MBB.begin(); I != MBB.end(); ++I) {
       MachineInstr *MI = &*I;
       SmallVector<std::pair<unsigned, const MachineOperand*>, 4> Clobbers;
       LiveRegs.stepForward(*MI, Clobbers);
+
+      if (NextCandidateIter == EndCandidateIter)
+        break;
 
       // Only check and create a new instruction if this instruction is
       // known to be a candidate that didn't get transformed.
