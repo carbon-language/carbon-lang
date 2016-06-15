@@ -767,6 +767,44 @@ private:
   uint32_t LineNumber;
 };
 
+// LF_UDT_MOD_SRC_LINE
+class UdtModSourceLineRecord : public TypeRecord {
+public:
+  UdtModSourceLineRecord(TypeIndex UDT, TypeIndex SourceFile,
+                         uint32_t LineNumber, uint16_t Module)
+      : TypeRecord(TypeRecordKind::UdtSourceLine), UDT(UDT),
+        SourceFile(SourceFile), LineNumber(LineNumber), Module(Module) {}
+
+  bool remapTypeIndices(ArrayRef<TypeIndex> IndexMap);
+
+  static ErrorOr<UdtModSourceLineRecord> deserialize(TypeRecordKind Kind,
+                                                     ArrayRef<uint8_t> &Data) {
+    const Layout *L = nullptr;
+    CV_DESERIALIZE(Data, L);
+
+    return UdtModSourceLineRecord(L->UDT, L->SourceFile, L->LineNumber,
+                                  L->Module);
+  }
+
+  TypeIndex getUDT() const { return UDT; }
+  TypeIndex getSourceFile() const { return SourceFile; }
+  uint32_t getLineNumber() const { return LineNumber; }
+  uint16_t getModule() const { return Module; }
+
+private:
+  struct Layout {
+    TypeIndex UDT;        // The user-defined type
+    TypeIndex SourceFile; // StringID containing the source filename
+    ulittle32_t LineNumber;
+    ulittle16_t Module; // Module that contributes this UDT definition
+  };
+
+  TypeIndex UDT;
+  TypeIndex SourceFile;
+  uint32_t LineNumber;
+  uint16_t Module;
+};
+
 // LF_BUILDINFO
 class BuildInfoRecord : public TypeRecord {
 public:

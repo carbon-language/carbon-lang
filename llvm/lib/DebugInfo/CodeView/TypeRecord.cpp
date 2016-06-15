@@ -491,6 +491,13 @@ bool UdtSourceLineRecord::remapTypeIndices(ArrayRef<TypeIndex> IndexMap) {
   return Success;
 }
 
+bool UdtModSourceLineRecord::remapTypeIndices(ArrayRef<TypeIndex> IndexMap) {
+  bool Success = true;
+  Success &= remapIndex(IndexMap, UDT);
+  Success &= remapIndex(IndexMap, SourceFile);
+  return Success;
+}
+
 bool BuildInfoRecord::remapTypeIndices(ArrayRef<TypeIndex> IndexMap) {
   bool Success = true;
   for (TypeIndex &Arg : ArgIndices)
