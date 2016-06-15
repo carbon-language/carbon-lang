@@ -3985,12 +3985,11 @@ public:
   void HandleNullChar(const char *nullCharacter) override;
 
   template <typename Range>
-  static void EmitFormatDiagnostic(Sema &S, bool inFunctionCall,
-                                   const Expr *ArgumentExpr,
-                                   PartialDiagnostic PDiag,
-                                   SourceLocation StringLoc,
-                                   bool IsStringLocation, Range StringRange,
-                                   ArrayRef<FixItHint> Fixit = None);
+  static void
+  EmitFormatDiagnostic(Sema &S, bool inFunctionCall, const Expr *ArgumentExpr,
+                       const PartialDiagnostic &PDiag, SourceLocation StringLoc,
+                       bool IsStringLocation, Range StringRange,
+                       ArrayRef<FixItHint> Fixit = None);
 
 protected:
   bool HandleInvalidConversionSpecifier(unsigned argIndex, SourceLocation Loc,
@@ -4347,14 +4346,11 @@ void CheckFormatHandler::EmitFormatDiagnostic(PartialDiagnostic PDiag,
 /// templated so it can accept either a CharSourceRange or a SourceRange.
 ///
 /// \param FixIt optional fix it hint for the format string.
-template<typename Range>
-void CheckFormatHandler::EmitFormatDiagnostic(Sema &S, bool InFunctionCall,
-                                              const Expr *ArgumentExpr,
-                                              PartialDiagnostic PDiag,
-                                              SourceLocation Loc,
-                                              bool IsStringLocation,
-                                              Range StringRange,
-                                              ArrayRef<FixItHint> FixIt) {
+template <typename Range>
+void CheckFormatHandler::EmitFormatDiagnostic(
+    Sema &S, bool InFunctionCall, const Expr *ArgumentExpr,
+    const PartialDiagnostic &PDiag, SourceLocation Loc, bool IsStringLocation,
+    Range StringRange, ArrayRef<FixItHint> FixIt) {
   if (InFunctionCall) {
     const Sema::SemaDiagnosticBuilder &D = S.Diag(Loc, PDiag);
     D << StringRange;
@@ -7225,9 +7221,8 @@ void CheckTrivialUnsignedComparison(Sema &S, BinaryOperator *E) {
   }
 }
 
-void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
-                                  Expr *Constant, Expr *Other,
-                                  llvm::APSInt Value,
+void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E, Expr *Constant,
+                                  Expr *Other, const llvm::APSInt &Value,
                                   bool RhsConstant) {
   // Disable warning in template instantiations.
   if (!S.ActiveTemplateInstantiations.empty())
@@ -8365,7 +8360,7 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
 // Helper function for Sema::DiagnoseAlwaysNonNullPointer.
 // Returns true when emitting a warning about taking the address of a reference.
 static bool CheckForReference(Sema &SemaRef, const Expr *E,
-                              PartialDiagnostic PD) {
+                              const PartialDiagnostic &PD) {
   E = E->IgnoreParenImpCasts();
 
   const FunctionDecl *FD = nullptr;
@@ -9320,7 +9315,7 @@ static const Type* getElementType(const Expr *BaseExpr) {
 ///
 /// We avoid emitting out-of-bounds access warnings for such arrays as they are
 /// commonly used to emulate flexible arrays in C89 code.
-static bool IsTailPaddedMemberArray(Sema &S, llvm::APInt Size,
+static bool IsTailPaddedMemberArray(Sema &S, const llvm::APInt &Size,
                                     const NamedDecl *ND) {
   if (Size != 1 || !ND) return false;
 
