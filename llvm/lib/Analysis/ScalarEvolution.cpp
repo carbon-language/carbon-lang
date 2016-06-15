@@ -8674,8 +8674,7 @@ ScalarEvolution::howManyLessThans(const SCEV *LHS, const SCEV *RHS,
     // overflow, in which case if RHS - Start is a constant, we don't need to
     // do a max operation since we can just figure it out statically
     if (NoWrap && isa<SCEVConstant>(Diff)) {
-      APInt D = dyn_cast<const SCEVConstant>(Diff)->getAPInt();
-      if (D.isNegative())
+      if (cast<SCEVConstant>(Diff)->getAPInt().isNegative())
         End = Start;
     } else
       End = IsSigned ? getSMaxExpr(RHS, Start)
@@ -8761,8 +8760,7 @@ ScalarEvolution::howManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
     // overflow, in which case if RHS - Start is a constant, we don't need to
     // do a max operation since we can just figure it out statically
     if (NoWrap && isa<SCEVConstant>(Diff)) {
-      APInt D = dyn_cast<const SCEVConstant>(Diff)->getAPInt();
-      if (!D.isNegative())
+      if (!cast<SCEVConstant>(Diff)->getAPInt().isNegative())
         End = Start;
     } else
       End = IsSigned ? getSMinExpr(RHS, Start)
