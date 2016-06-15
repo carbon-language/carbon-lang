@@ -1375,10 +1375,6 @@ public:
   unsigned getMaxSafeDepDistBytes() { return LAI->getMaxSafeDepDistBytes(); }
 
   bool hasStride(Value *V) { return StrideSet.count(V); }
-  SmallPtrSet<Value *, 8>::iterator strides_begin() {
-    return StrideSet.begin();
-  }
-  SmallPtrSet<Value *, 8>::iterator strides_end() { return StrideSet.end(); }
 
   /// Returns true if the target machine supports masked store operation
   /// for the given \p DataType and kind of access to \p Ptr.
