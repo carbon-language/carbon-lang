@@ -530,9 +530,19 @@ static BranchProbability getLayoutSuccessorProbThreshold(
   if (BB->succ_size() == 2) {
     const MachineBasicBlock *Succ1 = *BB->succ_begin();
     const MachineBasicBlock *Succ2 = *(BB->succ_begin() + 1);
-    if (Succ1->isSuccessor(Succ2) || Succ2->isSuccessor(Succ1))
-      return BranchProbability(
-          200 - 2 * ProfileLikelyProb, 200 - ProfileLikelyProb);
+    if (Succ1->isSuccessor(Succ2) || Succ2->isSuccessor(Succ1)) {
+      /* See case 1 below for the cost analysis. For BB->Succ to
+       * be taken with smaller cost, the following needs to hold:
+       *   Prob(BB->Succ) > 2* Prob(BB->Pred)
+       *   So the threshold T
+       *   T = 2 * (1-Prob(BB->Pred). Since T + Prob(BB->Pred) == 1,
+       * We have  T + T/2 = 1, i.e. T = 2/3. Also adding user specified
+       * branch bias, we have
+       *   T = (2/3)*(ProfileLikelyProb/50)
+       *     = (2*ProfileLikelyProb)/150)
+       */
+      return BranchProbability(2 * ProfileLikelyProb, 150);
+    }
   }
   return BranchProbability(ProfileLikelyProb, 100);
 }
