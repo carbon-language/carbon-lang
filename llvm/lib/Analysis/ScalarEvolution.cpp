@@ -6963,7 +6963,7 @@ static const SCEV *SolveLinEquationWithOverflow(const APInt &A, const APInt &B,
 /// {L,+,M,+,N}.  This returns either the two roots (which might be the same) or
 /// two SCEVCouldNotCompute objects.
 ///
-static std::pair<const SCEV *,const SCEV *>
+static Optional<std::pair<const SCEVConstant *,const SCEVConstant *>>
 SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
   assert(AddRec->getNumOperands() == 3 && "This is not a quadratic chrec!");
   const SCEVConstant *LC = dyn_cast<SCEVConstant>(AddRec->getOperand(0));
@@ -6971,10 +6971,8 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
   const SCEVConstant *NC = dyn_cast<SCEVConstant>(AddRec->getOperand(2));
 
   // We currently can only solve this if the coefficients are constants.
-  if (!LC || !MC || !NC) {
-    const SCEV *CNC = SE.getCouldNotCompute();
-    return {CNC, CNC};
-  }
+  if (!LC || !MC || !NC)
+    return None;
 
   uint32_t BitWidth = LC->getAPInt().getBitWidth();
   const APInt &L = LC->getAPInt();
@@ -7001,8 +6999,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
 
     if (SqrtTerm.isNegative()) {
       // The loop is provably infinite.
-      const SCEV *CNC = SE.getCouldNotCompute();
-      return {CNC, CNC};
+      return None;
     }
 
     // Compute sqrt(B^2-4ac). This is guaranteed to be the nearest
@@ -7013,10 +7010,8 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
     // The divisions must be performed as signed divisions.
     APInt NegB(-B);
     APInt TwoA(A << 1);
-    if (TwoA.isMinValue()) {
-      const SCEV *CNC = SE.getCouldNotCompute();
-      return {CNC, CNC};
-    }
+    if (TwoA.isMinValue())
+      return None;
 
     LLVMContext &Context = SE.getContext();
 
@@ -7025,7 +7020,8 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
     ConstantInt *Solution2 =
       ConstantInt::get(Context, (NegB - SqrtVal).sdiv(TwoA));
 
-    return {SE.getConstant(Solution1), SE.getConstant(Solution2)};
+    return std::make_pair(cast<SCEVConstant>(SE.getConstant(Solution1)),
+                          cast<SCEVConstant>(SE.getConstant(Solution2)));
   } // end APIntOps namespace
 }
 
@@ -7059,11 +7055,9 @@ ScalarEvolution::howFarToZero(const SCEV *V, const Loop *L, bool ControlsExit,
   // If this is a quadratic (3-term) AddRec {L,+,M,+,N}, find the roots of
   // the quadratic equation to solve it.
   if (AddRec->isQuadratic() && AddRec->getType()->isIntegerTy()) {
-    std::pair<const SCEV *,const SCEV *> Roots =
-      SolveQuadraticEquation(AddRec, *this);
-    const SCEVConstant *R1 = dyn_cast<SCEVConstant>(Roots.first);
-    const SCEVConstant *R2 = dyn_cast<SCEVConstant>(Roots.second);
-    if (R1 && R2) {
+    if (auto Roots = SolveQuadraticEquation(AddRec, *this)) {
+      const SCEVConstant *R1 = Roots->first;
+      const SCEVConstant *R2 = Roots->second;
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
           dyn_cast<ConstantInt>(ConstantExpr::getICmp(CmpInst::ICMP_ULT,
@@ -8884,10 +8878,9 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(const ConstantRange &Range,
                                              FlagAnyWrap);
 
     // Next, solve the constructed addrec
-    auto Roots = SolveQuadraticEquation(cast<SCEVAddRecExpr>(NewAddRec), SE);
-    const SCEVConstant *R1 = dyn_cast<SCEVConstant>(Roots.first);
-    const SCEVConstant *R2 = dyn_cast<SCEVConstant>(Roots.second);
-    if (R1) {
+    if (auto Roots = SolveQuadraticEquation(cast<SCEVAddRecExpr>(NewAddRec), SE)) {
+      const SCEVConstant *R1 = Roots->first;
+      const SCEVConstant *R2 = Roots->second;
       // Pick the smallest positive root value.
       if (ConstantInt *CB = dyn_cast<ConstantInt>(ConstantExpr::getICmp(
               ICmpInst::ICMP_ULT, R1->getValue(), R2->getValue()))) {
