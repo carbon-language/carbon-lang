@@ -22,6 +22,7 @@ typedef       int A::*md2;
 
 struct B : public A
 {
+    B() : k(42), l(0) {} // explicitly initialize 'k' to prevent warnings.
     const int k;
     int l;
 };
