@@ -1103,7 +1103,7 @@ private:
 // LF_METHODLIST
 class MethodOverloadListRecord : public TypeRecord {
 public:
-  MethodOverloadListRecord(std::vector<OneMethodRecord> &Methods)
+  MethodOverloadListRecord(ArrayRef<OneMethodRecord> Methods)
       : TypeRecord(TypeRecordKind::MethodOverloadList), Methods(Methods) {}
 
   /// Rewrite member type indices with IndexMap. Returns false if a type index
