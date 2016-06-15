@@ -1375,7 +1375,6 @@ public:
   unsigned getMaxSafeDepDistBytes() { return LAI->getMaxSafeDepDistBytes(); }
 
   bool hasStride(Value *V) { return StrideSet.count(V); }
-  bool mustCheckStrides() { return !StrideSet.empty(); }
   SmallPtrSet<Value *, 8>::iterator strides_begin() {
     return StrideSet.begin();
   }
