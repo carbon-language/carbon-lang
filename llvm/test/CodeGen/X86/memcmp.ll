@@ -23,8 +23,7 @@ return:                                           ; preds = %entry
   ret void
 ; CHECK-LABEL: memcmp2:
 ; CHECK: movzwl
-; CHECK-NEXT: movzwl
-; CHECK-NEXT: cmpl
+; CHECK-NEXT: cmpw
 ; NOBUILTIN-LABEL: memcmp2:
 ; NOBUILTIN: callq
 }
@@ -42,8 +41,7 @@ bb:                                               ; preds = %entry
 return:                                           ; preds = %entry
   ret void
 ; CHECK-LABEL: memcmp2a:
-; CHECK: movzwl
-; CHECK-NEXT: cmpl    $28527,
+; CHECK: cmpw $28527, (%
 }
 
 
