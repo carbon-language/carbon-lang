@@ -1603,7 +1603,6 @@ define <2 x i64> @test_mm_max_epi16(<2 x i64> %a0, <2 x i64> %a1) nounwind {
   %bc = bitcast <8 x i16> %sel to <2 x i64>
   ret <2 x i64> %bc
 }
-declare <8 x i16> @llvm.x86.sse2.pmaxs.w(<8 x i16>, <8 x i16>) nounwind readnone
 
 define <2 x i64> @test_mm_max_epu8(<2 x i64> %a0, <2 x i64> %a1) nounwind {
 ; X32-LABEL: test_mm_max_epu8:
@@ -1622,7 +1621,6 @@ define <2 x i64> @test_mm_max_epu8(<2 x i64> %a0, <2 x i64> %a1) nounwind {
   %bc = bitcast <16 x i8> %sel to <2 x i64>
   ret <2 x i64> %bc
 }
-declare <16 x i8> @llvm.x86.sse2.pmaxu.b(<16 x i8>, <16 x i8>) nounwind readnone
 
 define <2 x double> @test_mm_max_pd(<2 x double> %a0, <2 x double> %a1) nounwind {
 ; X32-LABEL: test_mm_max_pd:
@@ -1686,7 +1684,6 @@ define <2 x i64> @test_mm_min_epi16(<2 x i64> %a0, <2 x i64> %a1) nounwind {
   %bc = bitcast <8 x i16> %sel to <2 x i64>
   ret <2 x i64> %bc
 }
-declare <8 x i16> @llvm.x86.sse2.pmins.w(<8 x i16>, <8 x i16>) nounwind readnone
 
 define <2 x i64> @test_mm_min_epu8(<2 x i64> %a0, <2 x i64> %a1) nounwind {
 ; X32-LABEL: test_mm_min_epu8:
@@ -1705,7 +1702,6 @@ define <2 x i64> @test_mm_min_epu8(<2 x i64> %a0, <2 x i64> %a1) nounwind {
   %bc = bitcast <16 x i8> %sel to <2 x i64>
   ret <2 x i64> %bc
 }
-declare <16 x i8> @llvm.x86.sse2.pminu.b(<16 x i8>, <16 x i8>) nounwind readnone
 
 define <2 x double> @test_mm_min_pd(<2 x double> %a0, <2 x double> %a1) nounwind {
 ; X32-LABEL: test_mm_min_pd:
