@@ -1653,9 +1653,19 @@ def LONG_BRANCH_ADDiu : PseudoSE<(outs GPR32Opnd:$dst),
 
 /// Arithmetic Instructions (ALU Immediate)
 let AdditionalPredicates = [NotInMicroMips] in {
-def ADDiu : MMRel, StdMMR6Rel, ArithLogicI<"addiu", simm16_relaxed, GPR32Opnd,
-                                           II_ADDIU, immSExt16, add>,
-            ADDI_FM<0x9>, IsAsCheapAsAMove;
+  def ADDiu : MMRel, StdMMR6Rel, ArithLogicI<"addiu", simm16_relaxed, GPR32Opnd,
+                                             II_ADDIU, immSExt16, add>,
+              ADDI_FM<0x9>, IsAsCheapAsAMove;
+
+  def ANDi : MMRel, StdMMR6Rel,
+             ArithLogicI<"andi", uimm16, GPR32Opnd, II_ANDI, immZExt16, and>,
+             ADDI_FM<0xc>;
+  def ORi  : MMRel, StdMMR6Rel,
+             ArithLogicI<"ori", uimm16, GPR32Opnd, II_ORI, immZExt16, or>,
+             ADDI_FM<0xd>;
+  def XORi : MMRel, StdMMR6Rel,
+             ArithLogicI<"xori", uimm16, GPR32Opnd, II_XORI, immZExt16, xor>,
+             ADDI_FM<0xe>;
 }
 def ADDi  : MMRel, ArithLogicI<"addi", simm16_relaxed, GPR32Opnd, II_ADDI>, ADDI_FM<0x8>,
             ISA_MIPS1_NOT_32R6_64R6;
@@ -1663,17 +1673,6 @@ def SLTi  : MMRel, SetCC_I<"slti", setlt, simm16, immSExt16, GPR32Opnd>,
             SLTI_FM<0xa>;
 def SLTiu : MMRel, SetCC_I<"sltiu", setult, simm16, immSExt16, GPR32Opnd>,
             SLTI_FM<0xb>;
-let AdditionalPredicates = [NotInMicroMips] in {
-def ANDi  : MMRel, StdMMR6Rel,
-            ArithLogicI<"andi", uimm16, GPR32Opnd, II_ANDI, immZExt16, and>,
-            ADDI_FM<0xc>;
-}
-def ORi   : MMRel, StdMMR6Rel,
-            ArithLogicI<"ori", uimm16, GPR32Opnd, II_ORI, immZExt16, or>,
-            ADDI_FM<0xd>;
-def XORi  : MMRel, StdMMR6Rel,
-            ArithLogicI<"xori", uimm16, GPR32Opnd, II_XORI, immZExt16, xor>,
-            ADDI_FM<0xe>;
 def LUi   : MMRel, LoadUpper<"lui", GPR32Opnd, uimm16_relaxed>, LUI_FM;
 let AdditionalPredicates = [NotInMicroMips] in {
 /// Arithmetic Instructions (3-Operand, R-Type)
@@ -1696,8 +1695,8 @@ def OR    : MMRel, StdMMR6Rel, ArithLogicR<"or", GPR32Opnd, 1, II_OR, or>,
             ADD_FM<0, 0x25>;
 def XOR   : MMRel, StdMMR6Rel, ArithLogicR<"xor", GPR32Opnd, 1, II_XOR, xor>,
             ADD_FM<0, 0x26>;
-}
 def NOR   : MMRel, StdMMR6Rel, LogicNOR<"nor", GPR32Opnd>, ADD_FM<0, 0x27>;
+}
 
 /// Shift Instructions
 let AdditionalPredicates = [NotInMicroMips] in {
@@ -2200,8 +2199,6 @@ let Predicates = [NotInMicroMips] in {
 def : MipsInstAlias<"jalr $rs", (JALR RA, GPR32Opnd:$rs), 0>;
 }
 def : MipsInstAlias<"jalr.hb $rs", (JALR_HB RA, GPR32Opnd:$rs), 1>, ISA_MIPS32;
-def : MipsInstAlias<"not $rt, $rs",
-                    (NOR GPR32Opnd:$rt, GPR32Opnd:$rs, ZERO), 0>;
 def : MipsInstAlias<"neg $rt, $rs",
                     (SUB GPR32Opnd:$rt, ZERO, GPR32Opnd:$rs), 1>;
 def : MipsInstAlias<"negu $rt",
@@ -2214,20 +2211,29 @@ def : MipsInstAlias<
 def : MipsInstAlias<
           "sltu $rt, $rs, $imm",
           (SLTiu GPR32Opnd:$rt, GPR32Opnd:$rs, simm32_relaxed:$imm), 0>;
-def : MipsInstAlias<
+let AdditionalPredicates = [NotInMicroMips] in {
+  def : MipsInstAlias<
+          "and $rs, $rt, $imm",
+          (ANDi GPR32Opnd:$rs, GPR32Opnd:$rt, simm32_relaxed:$imm), 0>;
+  def : MipsInstAlias<
+          "and $rs, $imm",
+          (ANDi GPR32Opnd:$rs, GPR32Opnd:$rs, simm32_relaxed:$imm), 0>;
+  def : MipsInstAlias<
           "xor $rs, $rt, $imm",
           (XORi GPR32Opnd:$rs, GPR32Opnd:$rt, simm32_relaxed:$imm), 0>;
-def : MipsInstAlias<
+  def : MipsInstAlias<
           "xor $rs, $imm",
           (XORi GPR32Opnd:$rs, GPR32Opnd:$rs, simm32_relaxed:$imm), 0>;
-def : MipsInstAlias<
+  def : MipsInstAlias<
           "or $rs, $rt, $imm",
           (ORi GPR32Opnd:$rs, GPR32Opnd:$rt, simm32_relaxed:$imm), 0>;
-def : MipsInstAlias<
+  def : MipsInstAlias<
           "or $rs, $imm",
           (ORi GPR32Opnd:$rs, GPR32Opnd:$rs, simm32_relaxed:$imm), 0>;
-let AdditionalPredicates = [NotInMicroMips] in {
-def : MipsInstAlias<"nop", (SLL ZERO, ZERO, 0), 1>;
+  def : MipsInstAlias<
+          "not $rt, $rs",
+          (NOR GPR32Opnd:$rt, GPR32Opnd:$rs, ZERO), 0>;
+  def : MipsInstAlias<"nop", (SLL ZERO, ZERO, 0), 1>;
 }
 def : MipsInstAlias<"mfc0 $rt, $rd", (MFC0 GPR32Opnd:$rt, COP0Opnd:$rd, 0), 0>;
 def : MipsInstAlias<"mtc0 $rt, $rd", (MTC0 COP0Opnd:$rd, GPR32Opnd:$rt, 0), 0>;
