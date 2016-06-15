@@ -942,6 +942,11 @@ private:
   /// can legally be represented.
   MapVector<Value *, uint64_t> MinBWs;
 };
+
+#ifndef NDEBUG
+raw_ostream &operator<<(raw_ostream &os, const BoUpSLP::ScheduleData &SD);
+#endif
+
 } // end namespace llvm
 } // end namespace slpvectorizer
 
