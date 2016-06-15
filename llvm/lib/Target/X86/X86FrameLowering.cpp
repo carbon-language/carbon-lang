@@ -1773,10 +1773,12 @@ X86FrameLowering::getFrameIndexReferenceFromSP(const MachineFunction &MF,
   const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
   if (!AllowSPAdjustment && !TFI->hasReservedCallFrame(MF))
     return None;
+#ifndef NDEBUG
   // We don't handle tail calls, and shouldn't be seeing them either.
   int TailCallReturnAddrDelta =
       MF.getInfo<X86MachineFunctionInfo>()->getTCReturnAddrDelta();
   assert(!(TailCallReturnAddrDelta < 0) && "we don't handle this case!");
+#endif
 
   // Fill in FrameReg output argument.
   FrameReg = TRI->getStackRegister();
