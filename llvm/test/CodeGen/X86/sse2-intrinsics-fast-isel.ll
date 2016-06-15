@@ -1598,8 +1598,9 @@ define <2 x i64> @test_mm_max_epi16(<2 x i64> %a0, <2 x i64> %a1) nounwind {
 ; X64-NEXT:    retq
   %arg0 = bitcast <2 x i64> %a0 to <8 x i16>
   %arg1 = bitcast <2 x i64> %a1 to <8 x i16>
-  %res = call <8 x i16> @llvm.x86.sse2.pmaxs.w(<8 x i16> %arg0, <8 x i16> %arg1)
-  %bc = bitcast <8 x i16> %res to <2 x i64>
+  %cmp = icmp sgt <8 x i16> %arg0, %arg1
+  %sel = select <8 x i1> %cmp, <8 x i16> %arg0, <8 x i16> %arg1
+  %bc = bitcast <8 x i16> %sel to <2 x i64>
   ret <2 x i64> %bc
 }
 declare <8 x i16> @llvm.x86.sse2.pmaxs.w(<8 x i16>, <8 x i16>) nounwind readnone
@@ -1616,8 +1617,9 @@ define <2 x i64> @test_mm_max_epu8(<2 x i64> %a0, <2 x i64> %a1) nounwind {
 ; X64-NEXT:    retq
   %arg0 = bitcast <2 x i64> %a0 to <16 x i8>
   %arg1 = bitcast <2 x i64> %a1 to <16 x i8>
-  %res = call <16 x i8> @llvm.x86.sse2.pmaxu.b(<16 x i8> %arg0, <16 x i8> %arg1)
-  %bc = bitcast <16 x i8> %res to <2 x i64>
+  %cmp = icmp ugt <16 x i8> %arg0, %arg1
+  %sel = select <16 x i1> %cmp, <16 x i8> %arg0, <16 x i8> %arg1
+  %bc = bitcast <16 x i8> %sel to <2 x i64>
   ret <2 x i64> %bc
 }
 declare <16 x i8> @llvm.x86.sse2.pmaxu.b(<16 x i8>, <16 x i8>) nounwind readnone
@@ -1679,8 +1681,9 @@ define <2 x i64> @test_mm_min_epi16(<2 x i64> %a0, <2 x i64> %a1) nounwind {
 ; X64-NEXT:    retq
   %arg0 = bitcast <2 x i64> %a0 to <8 x i16>
   %arg1 = bitcast <2 x i64> %a1 to <8 x i16>
-  %res = call <8 x i16> @llvm.x86.sse2.pmins.w(<8 x i16> %arg0, <8 x i16> %arg1)
-  %bc = bitcast <8 x i16> %res to <2 x i64>
+  %cmp = icmp slt <8 x i16> %arg0, %arg1
+  %sel = select <8 x i1> %cmp, <8 x i16> %arg0, <8 x i16> %arg1
+  %bc = bitcast <8 x i16> %sel to <2 x i64>
   ret <2 x i64> %bc
 }
 declare <8 x i16> @llvm.x86.sse2.pmins.w(<8 x i16>, <8 x i16>) nounwind readnone
@@ -1697,8 +1700,9 @@ define <2 x i64> @test_mm_min_epu8(<2 x i64> %a0, <2 x i64> %a1) nounwind {
 ; X64-NEXT:    retq
   %arg0 = bitcast <2 x i64> %a0 to <16 x i8>
   %arg1 = bitcast <2 x i64> %a1 to <16 x i8>
-  %res = call <16 x i8> @llvm.x86.sse2.pminu.b(<16 x i8> %arg0, <16 x i8> %arg1)
-  %bc = bitcast <16 x i8> %res to <2 x i64>
+  %cmp = icmp ult <16 x i8> %arg0, %arg1
+  %sel = select <16 x i1> %cmp, <16 x i8> %arg0, <16 x i8> %arg1
+  %bc = bitcast <16 x i8> %sel to <2 x i64>
   ret <2 x i64> %bc
 }
 declare <16 x i8> @llvm.x86.sse2.pminu.b(<16 x i8>, <16 x i8>) nounwind readnone
