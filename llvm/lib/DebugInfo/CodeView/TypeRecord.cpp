@@ -47,7 +47,7 @@ ErrorOr<ProcedureRecord> ProcedureRecord::deserialize(TypeRecordKind Kind,
                                                       ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   if (auto EC = consumeObject(Data, L))
-    return EC; 
+    return EC;
   return ProcedureRecord(L->ReturnType, L->CallConv, L->Options,
                          L->NumParameters, L->ArgListType);
 }
@@ -56,7 +56,7 @@ ErrorOr<MemberFunctionRecord>
 MemberFunctionRecord::deserialize(TypeRecordKind Kind,
                                   ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
-  CV_DESERIALIZE(Data, L); 
+  CV_DESERIALIZE(Data, L);
   return MemberFunctionRecord(L->ReturnType, L->ClassType, L->ThisType,
                               L->CallConv, L->Options, L->NumParameters,
                               L->ArgListType, L->ThisAdjustment);
@@ -66,7 +66,7 @@ ErrorOr<MemberFuncIdRecord>
 MemberFuncIdRecord::deserialize(TypeRecordKind Kind, ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   StringRef Name;
-  CV_DESERIALIZE(Data, L, Name); 
+  CV_DESERIALIZE(Data, L, Name);
   return MemberFuncIdRecord(L->ClassType, L->FunctionType, Name);
 }
 
@@ -77,7 +77,7 @@ ErrorOr<ArgListRecord> ArgListRecord::deserialize(TypeRecordKind Kind,
 
   const Layout *L = nullptr;
   ArrayRef<TypeIndex> Indices;
-  CV_DESERIALIZE(Data, L, CV_ARRAY_FIELD_N(Indices, L->NumArgs)); 
+  CV_DESERIALIZE(Data, L, CV_ARRAY_FIELD_N(Indices, L->NumArgs));
   return ArgListRecord(Kind, Indices);
 }
 
@@ -107,7 +107,7 @@ ErrorOr<NestedTypeRecord>
 NestedTypeRecord::deserialize(TypeRecordKind Kind, ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   StringRef Name;
-  CV_DESERIALIZE(Data, L, Name); 
+  CV_DESERIALIZE(Data, L, Name);
   return NestedTypeRecord(L->Type, Name);
 }
 
@@ -116,7 +116,7 @@ ErrorOr<ArrayRecord> ArrayRecord::deserialize(TypeRecordKind Kind,
   const Layout *L = nullptr;
   uint64_t Size;
   StringRef Name;
-  CV_DESERIALIZE(Data, L, CV_NUMERIC_FIELD(Size), Name); 
+  CV_DESERIALIZE(Data, L, CV_NUMERIC_FIELD(Size), Name);
   return ArrayRecord(L->ElementType, L->IndexType, Size, Name);
 }
 
@@ -177,7 +177,7 @@ ErrorOr<EnumRecord> EnumRecord::deserialize(TypeRecordKind Kind,
 ErrorOr<BitFieldRecord> BitFieldRecord::deserialize(TypeRecordKind Kind,
                                                     ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
-  CV_DESERIALIZE(Data, L); 
+  CV_DESERIALIZE(Data, L);
   return BitFieldRecord(L->Type, L->BitSize, L->BitOffset);
 }
 
@@ -211,7 +211,7 @@ ErrorOr<TypeServer2Record>
 TypeServer2Record::deserialize(TypeRecordKind Kind, ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   StringRef Name;
-  CV_DESERIALIZE(Data, L, Name); 
+  CV_DESERIALIZE(Data, L, Name);
   return TypeServer2Record(StringRef(L->Guid, 16), L->Age, Name);
 }
 
@@ -219,7 +219,7 @@ ErrorOr<StringIdRecord> StringIdRecord::deserialize(TypeRecordKind Kind,
                                                     ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   StringRef Name;
-  CV_DESERIALIZE(Data, L, Name); 
+  CV_DESERIALIZE(Data, L, Name);
   return StringIdRecord(L->id, Name);
 }
 
@@ -227,14 +227,14 @@ ErrorOr<FuncIdRecord> FuncIdRecord::deserialize(TypeRecordKind Kind,
                                                 ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   StringRef Name;
-  CV_DESERIALIZE(Data, L, Name); 
+  CV_DESERIALIZE(Data, L, Name);
   return FuncIdRecord(L->ParentScope, L->FunctionType, Name);
 }
 
 ErrorOr<UdtSourceLineRecord>
 UdtSourceLineRecord::deserialize(TypeRecordKind Kind, ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
-  CV_DESERIALIZE(Data, L); 
+  CV_DESERIALIZE(Data, L);
   return UdtSourceLineRecord(L->UDT, L->SourceFile, L->LineNumber);
 }
 
@@ -242,7 +242,7 @@ ErrorOr<BuildInfoRecord> BuildInfoRecord::deserialize(TypeRecordKind Kind,
                                                       ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   ArrayRef<TypeIndex> Indices;
-  CV_DESERIALIZE(Data, L, CV_ARRAY_FIELD_N(Indices, L->NumArgs)); 
+  CV_DESERIALIZE(Data, L, CV_ARRAY_FIELD_N(Indices, L->NumArgs));
   return BuildInfoRecord(Indices);
 }
 
@@ -251,7 +251,7 @@ ErrorOr<VFTableRecord> VFTableRecord::deserialize(TypeRecordKind Kind,
   const Layout *L = nullptr;
   StringRef Name;
   std::vector<StringRef> Names;
-  CV_DESERIALIZE(Data, L, Name, CV_ARRAY_FIELD_TAIL(Names)); 
+  CV_DESERIALIZE(Data, L, Name, CV_ARRAY_FIELD_TAIL(Names));
   return VFTableRecord(L->CompleteClass, L->OverriddenVFTable, L->VFPtrOffset,
                        Name, Names);
 }
@@ -307,7 +307,7 @@ OverloadedMethodRecord::deserialize(TypeRecordKind Kind,
                                     ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   StringRef Name;
-  CV_DESERIALIZE(Data, L, Name); 
+  CV_DESERIALIZE(Data, L, Name);
   return OverloadedMethodRecord(L->MethodCount, L->MethList, Name);
 }
 
@@ -316,7 +316,7 @@ DataMemberRecord::deserialize(TypeRecordKind Kind, ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   uint64_t Offset;
   StringRef Name;
-  CV_DESERIALIZE(Data, L, CV_NUMERIC_FIELD(Offset), Name); 
+  CV_DESERIALIZE(Data, L, CV_NUMERIC_FIELD(Offset), Name);
   return DataMemberRecord(L->Attrs.getAccess(), L->Type, Offset, Name);
 }
 
@@ -325,7 +325,7 @@ StaticDataMemberRecord::deserialize(TypeRecordKind Kind,
                                     ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   StringRef Name;
-  CV_DESERIALIZE(Data, L, Name); 
+  CV_DESERIALIZE(Data, L, Name);
   return StaticDataMemberRecord(L->Attrs.getAccess(), L->Type, Name);
 }
 
@@ -334,7 +334,7 @@ EnumeratorRecord::deserialize(TypeRecordKind Kind, ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   APSInt Value;
   StringRef Name;
-  CV_DESERIALIZE(Data, L, Value, Name); 
+  CV_DESERIALIZE(Data, L, Value, Name);
   return EnumeratorRecord(L->Attrs.getAccess(), Value, Name);
 }
 
@@ -342,7 +342,7 @@ ErrorOr<VFPtrRecord> VFPtrRecord::deserialize(TypeRecordKind Kind,
                                               ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   if (auto EC = consumeObject(Data, L))
-    return EC; 
+    return EC;
   return VFPtrRecord(L->Type);
 }
 
@@ -350,7 +350,7 @@ ErrorOr<BaseClassRecord> BaseClassRecord::deserialize(TypeRecordKind Kind,
                                                       ArrayRef<uint8_t> &Data) {
   const Layout *L = nullptr;
   uint64_t Offset;
-  CV_DESERIALIZE(Data, L, CV_NUMERIC_FIELD(Offset)); 
+  CV_DESERIALIZE(Data, L, CV_NUMERIC_FIELD(Offset));
   return BaseClassRecord(L->Attrs.getAccess(), L->BaseType, Offset);
 }
 
@@ -360,7 +360,7 @@ VirtualBaseClassRecord::deserialize(TypeRecordKind Kind,
   const Layout *L = nullptr;
   uint64_t Offset;
   uint64_t Index;
-  CV_DESERIALIZE(Data, L, CV_NUMERIC_FIELD(Offset), CV_NUMERIC_FIELD(Index)); 
+  CV_DESERIALIZE(Data, L, CV_NUMERIC_FIELD(Offset), CV_NUMERIC_FIELD(Index));
   return VirtualBaseClassRecord(L->Attrs.getAccess(), L->BaseType, L->VBPtrType,
                                 Offset, Index);
 }
