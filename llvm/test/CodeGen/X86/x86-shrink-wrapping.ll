@@ -520,7 +520,8 @@ declare hidden fastcc %struct.temp_slot* @find_temp_slot_from_address(%struct.rt
 ; CHECK: testq   %rdi, %rdi
 ; CHECK-NEXT: je      [[CLEANUP:LBB[0-9_]+]]
 ;
-; CHECK: cmpw $66, (%rdi)
+; CHECK: movzwl  (%rdi), [[BF_LOAD:%e[a-z]+]]
+; CHECK-NEXT: cmpl $66, [[BF_LOAD]]
 ; CHECK-NEXT: jne [[CLEANUP]]
 ;
 ; CHECK: movq 8(%rdi), %rdi

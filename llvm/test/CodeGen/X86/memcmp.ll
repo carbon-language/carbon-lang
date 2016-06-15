@@ -41,7 +41,8 @@ bb:                                               ; preds = %entry
 return:                                           ; preds = %entry
   ret void
 ; CHECK-LABEL: memcmp2a:
-; CHECK: cmpw $28527, (%
+; CHECK: movzwl
+; CHECK-NEXT: cmpl    $28527,
 }
 
 
