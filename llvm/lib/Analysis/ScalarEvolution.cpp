@@ -725,7 +725,7 @@ public:
     }
 
     // Split the Denominator when it is a product.
-    if (const SCEVMulExpr *T = dyn_cast<const SCEVMulExpr>(Denominator)) {
+    if (const SCEVMulExpr *T = dyn_cast<SCEVMulExpr>(Denominator)) {
       const SCEV *Q, *R;
       *Quotient = Numerator;
       for (const SCEV *Op : T->operands()) {
@@ -10132,7 +10132,7 @@ public:
   const SCEV *visitUnknown(const SCEVUnknown *Expr) {
     auto ExprPreds = P.getPredicatesForExpr(Expr);
     for (auto *Pred : ExprPreds)
-      if (const auto *IPred = dyn_cast<const SCEVEqualPredicate>(Pred))
+      if (const auto *IPred = dyn_cast<SCEVEqualPredicate>(Pred))
         if (IPred->getLHS() == Expr)
           return IPred->getRHS();
 
@@ -10141,7 +10141,7 @@ public:
 
   const SCEV *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
     const SCEV *Operand = visit(Expr->getOperand());
-    const SCEVAddRecExpr *AR = dyn_cast<const SCEVAddRecExpr>(Operand);
+    const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Operand);
     if (AR && AR->getLoop() == L && AR->isAffine()) {
       // This couldn't be folded because the operand didn't have the nuw
       // flag. Add the nusw flag as an assumption that we could make.
@@ -10157,7 +10157,7 @@ public:
 
   const SCEV *visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
     const SCEV *Operand = visit(Expr->getOperand());
-    const SCEVAddRecExpr *AR = dyn_cast<const SCEVAddRecExpr>(Operand);
+    const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Operand);
     if (AR && AR->getLoop() == L && AR->isAffine()) {
       // This couldn't be folded because the operand didn't have the nsw
       // flag. Add the nssw flag as an assumption that we could make.
@@ -10223,7 +10223,7 @@ SCEVEqualPredicate::SCEVEqualPredicate(const FoldingSetNodeIDRef ID,
     : SCEVPredicate(ID, P_Equal), LHS(LHS), RHS(RHS) {}
 
 bool SCEVEqualPredicate::implies(const SCEVPredicate *N) const {
-  const auto *Op = dyn_cast<const SCEVEqualPredicate>(N);
+  const auto *Op = dyn_cast<SCEVEqualPredicate>(N);
 
   if (!Op)
     return false;
@@ -10310,7 +10310,7 @@ SCEVUnionPredicate::getPredicatesForExpr(const SCEV *Expr) {
 }
 
 bool SCEVUnionPredicate::implies(const SCEVPredicate *N) const {
-  if (const auto *Set = dyn_cast<const SCEVUnionPredicate>(N))
+  if (const auto *Set = dyn_cast<SCEVUnionPredicate>(N))
     return all_of(Set->Preds,
                   [this](const SCEVPredicate *I) { return this->implies(I); });
 
@@ -10331,7 +10331,7 @@ void SCEVUnionPredicate::print(raw_ostream &OS, unsigned Depth) const {
 }
 
 void SCEVUnionPredicate::add(const SCEVPredicate *N) {
-  if (const auto *Set = dyn_cast<const SCEVUnionPredicate>(N)) {
+  if (const auto *Set = dyn_cast<SCEVUnionPredicate>(N)) {
     for (auto Pred : Set->Preds)
       add(Pred);
     return;
