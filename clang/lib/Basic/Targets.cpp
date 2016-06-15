@@ -6395,6 +6395,10 @@ public:
              .Default(false);
   }
 
+  bool hasSjLjLowering() const override {
+    return true;
+  }
+
   ArrayRef<Builtin::Info> getTargetBuiltins() const override {
     // FIXME: Implement!
     return None;
@@ -6562,6 +6566,7 @@ public:
   SparcV8TargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
       : SparcTargetInfo(Triple, Opts) {
     resetDataLayout("E-m:e-p:32:32-i64:64-f128:64-n32-S64");
+    MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
     // NetBSD / OpenBSD use long (same as llvm default); everyone else uses int.
     switch (getTriple().getOS()) {
     default:
