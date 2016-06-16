@@ -1460,10 +1460,15 @@ RelExpr ARMTargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   switch (Type) {
   default:
     return R_ABS;
+  case R_ARM_THM_JUMP11:
+    return R_PC;
   case R_ARM_CALL:
   case R_ARM_JUMP24:
   case R_ARM_PC24:
   case R_ARM_PLT32:
+  case R_ARM_THM_JUMP19:
+  case R_ARM_THM_JUMP24:
+  case R_ARM_THM_CALL:
     return R_PLT_PC;
   case R_ARM_GOTOFF32:
     // (S + A) - GOT_ORG
@@ -1546,11 +1551,69 @@ void ARMTargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     write32le(Loc, (read32le(Loc) & 0x80000000) | (Val & ~0x80000000));
     break;
   case R_ARM_CALL:
+    // R_ARM_CALL is used for BL and BLX instructions, depending on the
+    // value of bit 0 of Val, we must select a BL or BLX instruction
+    if (Val & 1) {
+      // If bit 0 of Val is 1 the target is Thumb, we must select a BLX.
+      // The BLX encoding is 0xfa:H:imm24 where Val = imm24:H:'1'
+      checkInt<26>(Val, Type);
+      write32le(Loc, 0xfa000000 |                    // opcode
+                         ((Val & 2) << 23) |         // H
+                         ((Val >> 2) & 0x00ffffff)); // imm24
+      break;
+    }
+    if ((read32le(Loc) & 0xfe000000) == 0xfa000000)
+      // BLX (always unconditional) instruction to an ARM Target, select an
+      // unconditional BL.
+      write32le(Loc, 0xeb000000 | (read32le(Loc) & 0x00ffffff));
+    // fall through as BL encoding is shared with B
   case R_ARM_JUMP24:
   case R_ARM_PC24:
   case R_ARM_PLT32:
     checkInt<26>(Val, Type);
     write32le(Loc, (read32le(Loc) & ~0x00ffffff) | ((Val >> 2) & 0x00ffffff));
+    break;
+  case R_ARM_THM_JUMP11:
+    checkInt<12>(Val, Type);
+    write16le(Loc, (read32le(Loc) & 0xf800) | ((Val >> 1) & 0x07ff));
+    break;
+  case R_ARM_THM_JUMP19:
+    // Encoding T3: Val = S:J2:J1:imm6:imm11:0
+    checkInt<21>(Val, Type);
+    write16le(Loc,
+              (read16le(Loc) & 0xfbc0) |   // opcode cond
+                  ((Val >> 10) & 0x0400) | // S
+                  ((Val >> 12) & 0x003f)); // imm6
+    write16le(Loc + 2,
+              0x8000 |                    // opcode
+                  ((Val >> 8) & 0x0800) | // J2
+                  ((Val >> 5) & 0x2000) | // J1
+                  ((Val >> 1) & 0x07ff)); // imm11
+    break;
+  case R_ARM_THM_CALL:
+    // R_ARM_THM_CALL is used for BL and BLX instructions, depending on the
+    // value of bit 0 of Val, we must select a BL or BLX instruction
+    if ((Val & 1) == 0) {
+      // Ensure BLX destination is 4-byte aligned. As BLX instruction may
+      // only be two byte aligned. This must be done before overflow check
+      Val = alignTo(Val, 4);
+    }
+    // Bit 12 is 0 for BLX, 1 for BL
+    write16le(Loc + 2, (read16le(Loc + 2) & ~0x1000) | (Val & 1) << 12);
+    // Fall through as rest of encoding is the same as B.W
+  case R_ARM_THM_JUMP24:
+    // Encoding B  T4, BL T1, BLX T2: Val = S:I1:I2:imm10:imm11:0
+    // FIXME: Use of I1 and I2 require v6T2ops
+    checkInt<25>(Val, Type);
+    write16le(Loc,
+              0xf000 |                     // opcode
+                  ((Val >> 14) & 0x0400) | // S
+                  ((Val >> 12) & 0x03ff)); // imm10
+    write16le(Loc + 2,
+              (read16le(Loc + 2) & 0xd000) |                  // opcode
+                  (((~(Val >> 10)) ^ (Val >> 11)) & 0x2000) | // J1
+                  (((~(Val >> 11)) ^ (Val >> 13)) & 0x0800) | // J2
+                  ((Val >> 1) & 0x07ff));                     // imm11
     break;
   case R_ARM_MOVW_ABS_NC:
     write32le(Loc, (read32le(Loc) & ~0x000f0fff) | ((Val & 0xf000) << 4) |
@@ -1560,6 +1623,29 @@ void ARMTargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     checkUInt<32>(Val, Type);
     write32le(Loc, (read32le(Loc) & ~0x000f0fff) |
                        (((Val >> 16) & 0xf000) << 4) | ((Val >> 16) & 0xfff));
+    break;
+  case R_ARM_THM_MOVT_ABS:
+    // Encoding T1: A = imm4:i:imm3:imm8
+    checkUInt<32>(Val, Type);
+    write16le(Loc,
+              0xf2c0 |                     // opcode
+                  ((Val >> 17) & 0x0400) | // i
+                  ((Val >> 28) & 0x000f)); // imm4
+    write16le(Loc + 2,
+              (read16le(Loc + 2) & 0x8f00) | // opcode
+                  ((Val >> 12) & 0x7000) |   // imm3
+                  ((Val >> 16) & 0x00ff));   // imm8
+    break;
+  case R_ARM_THM_MOVW_ABS_NC:
+    // Encoding T3: A = imm4:i:imm3:imm8
+    write16le(Loc,
+              0xf240 |                     // opcode
+                  ((Val >> 1) & 0x0400) |  // i
+                  ((Val >> 12) & 0x000f)); // imm4
+    write16le(Loc + 2,
+              (read16le(Loc + 2) & 0x8f00) | // opcode
+                  ((Val << 4) & 0x7000) |    // imm3
+                  (Val & 0x00ff));           // imm8
     break;
   default:
     fatal("unrecognized reloc " + Twine(Type));
@@ -1585,12 +1671,47 @@ uint64_t ARMTargetInfo::getImplicitAddend(const uint8_t *Buf,
   case R_ARM_PC24:
   case R_ARM_PLT32:
     return SignExtend64<26>((read32le(Buf) & 0x00ffffff) << 2);
+  case R_ARM_THM_JUMP11:
+    return SignExtend64<12>((read16le(Buf) & 0x07ff) << 1);
+  case R_ARM_THM_JUMP19: {
+    // Encoding T3: A = S:J2:J1:imm10:imm6:0
+    uint16_t Hi = read16le(Buf);
+    uint16_t Lo = read16le(Buf + 2);
+    return SignExtend64<20>(((Hi & 0x0400) << 10) | // S
+                            ((Lo & 0x0800) << 8) |  // J2
+                            ((Lo & 0x2000) << 5) |  // J1
+                            ((Hi & 0x003f) << 12) | // imm6
+                            ((Lo & 0x07ff) << 1));  // imm11:0
+  }
+  case R_ARM_THM_JUMP24:
+  case R_ARM_THM_CALL: {
+    // Encoding B T4, BL T1, BLX T2: A = S:I1:I2:imm10:imm11:0
+    // I1 = NOT(J1 EOR S), I2 = NOT(J2 EOR S)
+    // FIXME: I1 and I2 require v6T2ops
+    uint16_t Hi = read16le(Buf);
+    uint16_t Lo = read16le(Buf + 2);
+    return SignExtend64<24>(((Hi & 0x0400) << 14) |                    // S
+                            (~((Lo ^ (Hi << 3)) << 10) & 0x00800000) | // I1
+                            (~((Lo ^ (Hi << 1)) << 11) & 0x00400000) | // I2
+                            ((Hi & 0x003ff) << 12) |                   // imm0
+                            ((Lo & 0x007ff) << 1)); // imm11:0
+  }
+  // ELF for the ARM Architecture 4.6.1.1 the implicit addend for MOVW and
+  // MOVT is in the range -32768 <= A < 32768
   case R_ARM_MOVW_ABS_NC:
   case R_ARM_MOVT_ABS: {
-    // ELF for the ARM Architecture 4.6.1.1 the implicit addend for MOVW and
-    // MOVT is in the range -32768 <= A < 32768
     uint64_t Val = read32le(Buf) & 0x000f0fff;
     return SignExtend64<16>(((Val & 0x000f0000) >> 4) | (Val & 0x00fff));
+  }
+  case R_ARM_THM_MOVW_ABS_NC:
+  case R_ARM_THM_MOVT_ABS: {
+    // Encoding T3: A = imm4:i:imm3:imm8
+    uint16_t Hi = read16le(Buf);
+    uint16_t Lo = read16le(Buf + 2);
+    return SignExtend64<16>(((Hi & 0x000f) << 12) | // imm4
+                            ((Hi & 0x0400) << 1) |  // i
+                            ((Lo & 0x7000) >> 4) |  // imm3
+                            (Lo & 0x00ff));         // imm8
   }
   }
 }
