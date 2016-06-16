@@ -1798,6 +1798,9 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   const TargetMachine &TM = getTargetMachine();
   Reloc::Model RM = TM.getRelocationModel();
+  const GlobalValue *GV = nullptr;
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    GV = G->getGlobal();
 
   bool isARMFunc = false;
   bool isLocalARMFunc = false;
@@ -1811,8 +1814,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // Handle a global address or an external symbol. If it's not one of
     // those, the target's already in a register, so we don't need to do
     // anything extra.
-    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-      const GlobalValue *GV = G->getGlobal();
+    if (isa<GlobalAddressSDNode>(Callee)) {
       // Create a constant pool entry for the callee address
       unsigned ARMPCLabelIndex = AFI->createPICLabelUId();
       ARMConstantPoolValue *CPV =
@@ -1841,8 +1843,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
           MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), false,
           false, false, 0);
     }
-  } else if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    const GlobalValue *GV = G->getGlobal();
+  } else if (isa<GlobalAddressSDNode>(Callee)) {
     isDirect = true;
     bool isDef = GV->isStrongDefinitionForLinker();
     const Triple &TargetTriple = TM.getTargetTriple();
