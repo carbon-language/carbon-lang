@@ -1795,6 +1795,10 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
   // node so that legalize doesn't hack it.
   bool isDirect = false;
+
+  const TargetMachine &TM = getTargetMachine();
+  Reloc::Model RM = TM.getRelocationModel();
+
   bool isARMFunc = false;
   bool isLocalARMFunc = false;
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
@@ -1802,7 +1806,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   if (Subtarget->genLongCalls()) {
     assert((Subtarget->isTargetWindows() ||
-            getTargetMachine().getRelocationModel() == Reloc::Static) &&
+            RM == Reloc::Static) &&
            "long-calls with non-static relocation model!");
     // Handle a global address or an external symbol. If it's not one of
     // those, the target's already in a register, so we don't need to do
@@ -1841,8 +1845,6 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     const GlobalValue *GV = G->getGlobal();
     isDirect = true;
     bool isDef = GV->isStrongDefinitionForLinker();
-    const TargetMachine &TM = getTargetMachine();
-    Reloc::Model RM = TM.getRelocationModel();
     const Triple &TargetTriple = TM.getTargetTriple();
     bool isStub =
         !shouldAssumeDSOLocal(RM, TargetTriple, *GV->getParent(), GV) &&
