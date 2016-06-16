@@ -1798,9 +1798,14 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   const TargetMachine &TM = getTargetMachine();
   Reloc::Model RM = TM.getRelocationModel();
+  const Triple &TargetTriple = TM.getTargetTriple();
+  const Module *Mod = MF.getFunction()->getParent();
   const GlobalValue *GV = nullptr;
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     GV = G->getGlobal();
+  bool isStub =
+    !shouldAssumeDSOLocal(RM, TargetTriple, *Mod, GV) &&
+    Subtarget->isTargetMachO();
 
   bool isARMFunc = false;
   bool isLocalARMFunc = false;
@@ -1846,10 +1851,6 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   } else if (isa<GlobalAddressSDNode>(Callee)) {
     isDirect = true;
     bool isDef = GV->isStrongDefinitionForLinker();
-    const Triple &TargetTriple = TM.getTargetTriple();
-    bool isStub =
-        !shouldAssumeDSOLocal(RM, TargetTriple, *GV->getParent(), GV) &&
-        Subtarget->isTargetMachO();
 
     isARMFunc = !Subtarget->isThumb() || (isStub && !Subtarget->isMClass());
     // ARM call to a local ARM function is predicable.
@@ -1887,8 +1888,6 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     isDirect = true;
-    bool isStub = Subtarget->isTargetMachO() &&
-                  getTargetMachine().getRelocationModel() != Reloc::Static;
     isARMFunc = !Subtarget->isThumb() || (isStub && !Subtarget->isMClass());
     // tBX takes a register source operand.
     const char *Sym = S->getSymbol();
