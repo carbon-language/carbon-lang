@@ -614,6 +614,7 @@ Value *SafeStack::moveStaticAllocasToUnsafeStack(
 
     // Replace alloc with the new location.
     replaceDbgDeclareForAlloca(AI, BasePointer, DIB, /*Deref=*/true, -StaticOffset);
+    replaceDbgValueForAlloca(AI, BasePointer, DIB, -StaticOffset);
     AI->replaceAllUsesWith(NewAI);
     AI->eraseFromParent();
   }
