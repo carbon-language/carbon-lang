@@ -209,10 +209,10 @@ public:
 #include "llvm/DebugInfo/CodeView/TypeRecords.def"
 
   void visitUnknownMember(TypeLeafKind Leaf);
-  void visitUnknownType(TypeLeafKind Leaf, ArrayRef<uint8_t> LeafData);
+  void visitUnknownType(const CVRecord<TypeLeafKind> &Record);
 
-  void visitTypeBegin(TypeLeafKind Leaf, ArrayRef<uint8_t> LeafData);
-  void visitTypeEnd(TypeLeafKind Leaf, ArrayRef<uint8_t> LeafData);
+  void visitTypeBegin(const CVRecord<TypeLeafKind> &Record);
+  void visitTypeEnd(const CVRecord<TypeLeafKind> &Record);
 
   void printMemberAttributes(MemberAttributes Attrs);
   void printMemberAttributes(MemberAccess Access, MethodKind Kind,
@@ -250,25 +250,22 @@ static StringRef getLeafTypeName(TypeLeafKind LT) {
   return "UnknownLeaf";
 }
 
-void CVTypeDumperImpl::visitTypeBegin(TypeLeafKind Leaf,
-                                      ArrayRef<uint8_t> LeafData) {
+void CVTypeDumperImpl::visitTypeBegin(const CVRecord<TypeLeafKind> &Rec) {
   // Reset Name to the empty string. If the visitor sets it, we know it.
   Name = "";
 
-  W.startLine() << getLeafTypeName(Leaf) << " ("
+  W.startLine() << getLeafTypeName(Rec.Type) << " ("
                 << HexNumber(CVTD.getNextTypeIndex()) << ") {\n";
   W.indent();
-  W.printEnum("TypeLeafKind", unsigned(Leaf), makeArrayRef(LeafTypeNames));
+  W.printEnum("TypeLeafKind", unsigned(Rec.Type), makeArrayRef(LeafTypeNames));
 }
 
-void CVTypeDumperImpl::visitTypeEnd(TypeLeafKind Leaf,
-                                    ArrayRef<uint8_t> LeafData) {
+void CVTypeDumperImpl::visitTypeEnd(const CVRecord<TypeLeafKind> &Rec) {
   // Always record some name for every type, even if Name is empty. CVUDTNames
   // is indexed by type index, and must have one entry for every type.
   CVTD.recordType(Name);
-
   if (PrintRecordBytes)
-    W.printBinaryBlock("LeafData", getBytesAsCharacters(LeafData));
+    W.printBinaryBlock("LeafData", getBytesAsCharacters(Rec.Data));
 
   W.unindent();
   W.startLine() << "}\n";
@@ -545,11 +542,10 @@ void CVTypeDumperImpl::visitUnknownMember(TypeLeafKind Leaf) {
   W.printHex("UnknownMember", unsigned(Leaf));
 }
 
-void CVTypeDumperImpl::visitUnknownType(TypeLeafKind Leaf,
-                                        ArrayRef<uint8_t> RecordData) {
+void CVTypeDumperImpl::visitUnknownType(const CVRecord<TypeLeafKind> &Rec) {
   DictScope S(W, "UnknownType");
-  W.printEnum("Kind", uint16_t(Leaf), makeArrayRef(LeafTypeNames));
-  W.printNumber("Length", uint32_t(RecordData.size()));
+  W.printEnum("Kind", uint16_t(Rec.Type), makeArrayRef(LeafTypeNames));
+  W.printNumber("Length", uint32_t(Rec.Data.size()));
 }
 
 void CVTypeDumperImpl::visitNestedType(NestedTypeRecord &Nested) {

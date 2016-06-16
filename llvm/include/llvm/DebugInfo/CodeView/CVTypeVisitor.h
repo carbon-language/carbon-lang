@@ -52,12 +52,11 @@ public:
 
   void visitTypeRecord(const CVRecord<TypeLeafKind> &Record) {
     ArrayRef<uint8_t> LeafData = Record.Data;
-    ArrayRef<uint8_t> RecordData = LeafData;
     auto *DerivedThis = static_cast<Derived *>(this);
-    DerivedThis->visitTypeBegin(Record.Type, RecordData);
+    DerivedThis->visitTypeBegin(Record);
     switch (Record.Type) {
     default:
-      DerivedThis->visitUnknownType(Record.Type, RecordData);
+      DerivedThis->visitUnknownType(Record);
       break;
     case LF_FIELDLIST:
       DerivedThis->visitFieldList(Record.Type, LeafData);
@@ -76,7 +75,7 @@ public:
 #define MEMBER_RECORD(EnumName, EnumVal, Name)
 #include "TypeRecords.def"
       }
-      DerivedThis->visitTypeEnd(Record.Type, RecordData);
+      DerivedThis->visitTypeEnd(Record);
   }
 
   /// Visits the type records in Data. Sets the error flag on parse failures.
@@ -89,12 +88,12 @@ public:
   }
 
   /// Action to take on unknown types. By default, they are ignored.
-  void visitUnknownType(TypeLeafKind Leaf, ArrayRef<uint8_t> RecordData) {}
+  void visitUnknownType(const CVRecord<TypeLeafKind> &Record) {}
 
   /// Paired begin/end actions for all types. Receives all record data,
   /// including the fixed-length record prefix.
-  void visitTypeBegin(TypeLeafKind Leaf, ArrayRef<uint8_t> RecordData) {}
-  void visitTypeEnd(TypeLeafKind Leaf, ArrayRef<uint8_t> RecordData) {}
+  void visitTypeBegin(const CVRecord<TypeLeafKind> &Record) {}
+  void visitTypeEnd(const CVRecord<TypeLeafKind> &Record) {}
 
   ArrayRef<uint8_t> skipPadding(ArrayRef<uint8_t> Data) {
     if (Data.empty())

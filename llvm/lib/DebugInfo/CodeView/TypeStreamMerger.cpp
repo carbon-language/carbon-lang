@@ -64,10 +64,10 @@ public:
 #define MEMBER_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #include "llvm/DebugInfo/CodeView/TypeRecords.def"
 
-  void visitUnknownType(TypeLeafKind Leaf, ArrayRef<uint8_t> RecordData);
+  void visitUnknownType(const CVRecord<TypeLeafKind> &Record);
 
-  void visitTypeBegin(TypeLeafKind Leaf, ArrayRef<uint8_t> RecordData);
-  void visitTypeEnd(TypeLeafKind Leaf, ArrayRef<uint8_t> RecordData);
+  void visitTypeBegin(const CVRecord<TypeLeafKind> &Record);
+  void visitTypeEnd(const CVRecord<TypeLeafKind> &Record);
 
   void visitFieldList(TypeLeafKind Leaf, ArrayRef<uint8_t> FieldData);
 
@@ -91,13 +91,11 @@ private:
 
 } // end anonymous namespace
 
-void TypeStreamMerger::visitTypeBegin(TypeLeafKind Leaf,
-                                      ArrayRef<uint8_t> RecordData) {
+void TypeStreamMerger::visitTypeBegin(const CVRecord<TypeLeafKind> &Rec) {
   BeginIndexMapSize = IndexMap.size();
 }
 
-void TypeStreamMerger::visitTypeEnd(TypeLeafKind Leaf,
-                                    ArrayRef<uint8_t> RecordData) {
+void TypeStreamMerger::visitTypeEnd(const CVRecord<TypeLeafKind> &Rec) {
   assert(IndexMap.size() == BeginIndexMapSize + 1);
 }
 
@@ -122,8 +120,7 @@ void TypeStreamMerger::visitFieldList(TypeLeafKind Leaf,
 #define MEMBER_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #include "llvm/DebugInfo/CodeView/TypeRecords.def"
 
-void TypeStreamMerger::visitUnknownType(TypeLeafKind Leaf,
-                                        ArrayRef<uint8_t> RecordData) {
+void TypeStreamMerger::visitUnknownType(const CVRecord<TypeLeafKind> &Rec) {
   // We failed to translate a type. Translate this index as "not translated".
   IndexMap.push_back(
       TypeIndex(SimpleTypeKind::NotTranslated, SimpleTypeMode::Direct));

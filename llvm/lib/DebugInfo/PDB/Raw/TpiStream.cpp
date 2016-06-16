@@ -102,9 +102,7 @@ public:
   void visitStruct(ClassRecord &Rec) { verify(Rec); }
   void visitUnion(UnionRecord &Rec) { verify(Rec); }
 
-  void visitTypeEnd(TypeLeafKind Leaf, ArrayRef<uint8_t> RecordData) {
-    ++Index;
-  }
+  void visitTypeEnd(const CVRecord<TypeLeafKind> &Record) { ++Index; }
 
 private:
   template <typename T> void verify(T &Rec) {
