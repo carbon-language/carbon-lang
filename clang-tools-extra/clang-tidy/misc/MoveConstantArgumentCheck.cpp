@@ -1,4 +1,4 @@
-//===--- MoveConstandArgumentCheck.cpp - clang-tidy -----------------------===//
+//===--- MoveConstantArgumentCheck.cpp - clang-tidy -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
