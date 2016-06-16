@@ -7283,15 +7283,15 @@ static SDValue lowerVectorShuffleWithUNPCK(const SDLoc &DL, MVT VT,
                                            SDValue V2, SelectionDAG &DAG) {
   int NumElts = VT.getVectorNumElements();
   int NumEltsInLane = 128 / VT.getScalarSizeInBits();
-  SmallVector<int, 8> Unpckl;
-  SmallVector<int, 8> Unpckh;
+  SmallVector<int, 8> Unpckl(NumElts);
+  SmallVector<int, 8> Unpckh(NumElts);
 
   for (int i = 0; i < NumElts; ++i) {
     unsigned LaneStart = (i / NumEltsInLane) * NumEltsInLane;
     int LoPos = (i % NumEltsInLane) / 2 + LaneStart + NumElts * (i % 2);
     int HiPos = LoPos + NumEltsInLane / 2;
-    Unpckl.push_back(LoPos);
-    Unpckh.push_back(HiPos);
+    Unpckl[i] = LoPos;
+    Unpckh[i] = HiPos;
   }
 
   if (isShuffleEquivalent(V1, V2, Mask, Unpckl))
@@ -8768,8 +8768,7 @@ static SDValue lowerVectorShuffleAsPermuteAndUnpack(const SDLoc &DL, MVT VT,
     // half-crossings are created.
     // FIXME: We could consider commuting the unpacks.
 
-    SmallVector<int, 32> PermMask;
-    PermMask.assign(Size, -1);
+    SmallVector<int, 32> PermMask((unsigned)Size, -1);
     for (int i = 0; i < Size; ++i) {
       if (Mask[i] < 0)
         continue;
@@ -10714,10 +10713,8 @@ static SDValue lowerVectorShuffleByMerging128BitLanes(
 
   // See if we can build a hypothetical 128-bit lane-fixing shuffle mask. Also
   // check whether the in-128-bit lane shuffles share a repeating pattern.
-  SmallVector<int, 4> Lanes;
-  Lanes.resize(NumLanes, -1);
-  SmallVector<int, 4> InLaneMask;
-  InLaneMask.resize(LaneSize, -1);
+  SmallVector<int, 4> Lanes((unsigned)NumLanes, -1);
+  SmallVector<int, 4> InLaneMask((unsigned)LaneSize, -1);
   for (int i = 0; i < Size; ++i) {
     if (Mask[i] < 0)
       continue;
@@ -10745,8 +10742,7 @@ static SDValue lowerVectorShuffleByMerging128BitLanes(
   // First shuffle the lanes into place.
   MVT LaneVT = MVT::getVectorVT(VT.isFloatingPoint() ? MVT::f64 : MVT::i64,
                                 VT.getSizeInBits() / 64);
-  SmallVector<int, 8> LaneMask;
-  LaneMask.resize(NumLanes * 2, -1);
+  SmallVector<int, 8> LaneMask((unsigned)NumLanes * 2, -1);
   for (int i = 0; i < NumLanes; ++i)
     if (Lanes[i] >= 0) {
       LaneMask[2 * i + 0] = 2*Lanes[i] + 0;
@@ -10761,8 +10757,7 @@ static SDValue lowerVectorShuffleByMerging128BitLanes(
   LaneShuffle = DAG.getBitcast(VT, LaneShuffle);
 
   // Now do a simple shuffle that isn't lane crossing.
-  SmallVector<int, 8> NewMask;
-  NewMask.resize(Size, -1);
+  SmallVector<int, 8> NewMask((unsigned)Size, -1);
   for (int i = 0; i < Size; ++i)
     if (Mask[i] >= 0)
       NewMask[i] = (i / LaneSize) * LaneSize + Mask[i] % LaneSize;
@@ -10815,12 +10810,12 @@ static SDValue lowerVectorShuffleWithUndefHalf(const SDLoc &DL, MVT VT,
   // then extract them and perform the 'half' shuffle at half width.
   // e.g. vector_shuffle <X, X, X, X, u, u, u, u> or <X, X, u, u>
   int HalfIdx1 = -1, HalfIdx2 = -1;
-  SmallVector<int, 8> HalfMask;
+  SmallVector<int, 8> HalfMask(HalfNumElts);
   unsigned Offset = UndefLower ? HalfNumElts : 0;
   for (unsigned i = 0; i != HalfNumElts; ++i) {
     int M = Mask[i + Offset];
     if (M < 0) {
-      HalfMask.push_back(M);
+      HalfMask[i] = M;
       continue;
     }
 
@@ -10834,12 +10829,12 @@ static SDValue lowerVectorShuffleWithUndefHalf(const SDLoc &DL, MVT VT,
     // We can shuffle with up to 2 half vectors, set the new 'half'
     // shuffle mask accordingly.
     if (-1 == HalfIdx1 || HalfIdx1 == HalfIdx) {
-      HalfMask.push_back(HalfElt);
+      HalfMask[i] = HalfElt;
       HalfIdx1 = HalfIdx;
       continue;
     }
     if (-1 == HalfIdx2 || HalfIdx2 == HalfIdx) {
-      HalfMask.push_back(HalfElt + HalfNumElts);
+      HalfMask[i] = HalfElt + HalfNumElts;
       HalfIdx2 = HalfIdx;
       continue;
     }
