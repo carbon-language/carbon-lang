@@ -866,38 +866,38 @@ void X86_64TargetInfo::relaxGot(uint8_t *Loc, uint64_t Val) const {
   const uint8_t Op = Loc[-2];
   const uint8_t ModRm = Loc[-1];
 
-  // Convert mov foo@GOTPCREL(%rip), %reg to lea foo(%rip), %reg.
+  // Convert "mov foo@GOTPCREL(%rip),%reg" to "lea foo(%rip),%reg".
   if (Op == 0x8b) {
     Loc[-2] = 0x8d;
     relocateOne(Loc, R_X86_64_PC32, Val);
     return;
   }
 
+  if (Op != 0xff) {
+    // We are relaxing a rip relative to an absolute, so compensate
+    // for the old -4 addend.
+    assert(!Config->Pic);
+    relaxGotNoPic(Loc, Val + 4, Op, ModRm);
+    return;
+  }
+
   // Convert call/jmp instructions.
-  if (Op == 0xff) {
-    if (ModRm == 0x15) {
-      // ABI says we can convert call *foo@GOTPCREL(%rip) to nop call foo.
-      // Instead we convert to addr32 call foo, where addr32 is instruction
-      // prefix. That makes result expression to be a single instruction.
-      Loc[-2] = 0x67; // addr32 prefix
-      Loc[-1] = 0xe8; // call
-    } else {
-      assert(ModRm == 0x25);
-      // Convert jmp *foo@GOTPCREL(%rip) to jmp foo nop.
-      // jmp doesn't return, so it is fine to use nop here, it is just a stub.
-      Loc[-2] = 0xe9; // jmp
-      Loc[3] = 0x90;  // nop
-      Loc -= 1;
-      Val += 1;
-    }
+  if (ModRm == 0x15) {
+    // ABI says we can convert "call *foo@GOTPCREL(%rip)" to "nop; call foo".
+    // Instead we convert to "addr32 call foo" where addr32 is an instruction
+    // prefix. That makes result expression to be a single instruction.
+    Loc[-2] = 0x67; // addr32 prefix
+    Loc[-1] = 0xe8; // call
     relocateOne(Loc, R_X86_64_PC32, Val);
     return;
   }
 
-  assert(!Config->Pic);
-  // We are relaxing a rip relative to an absolute, so compensate
-  // for the old -4 addend.
-  relaxGotNoPic(Loc, Val + 4, Op, ModRm);
+  // Convert "jmp *foo@GOTPCREL(%rip)" to "jmp foo; nop".
+  // jmp doesn't return, so it is fine to use nop here, it is just a stub.
+  assert(ModRm == 0x25);
+  Loc[-2] = 0xe9; // jmp
+  Loc[3] = 0x90;  // nop
+  relocateOne(Loc - 1, R_X86_64_PC32, Val + 1);
 }
 
 // Relocation masks following the #lo(value), #hi(value), #ha(value),
