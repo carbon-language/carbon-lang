@@ -936,6 +936,7 @@ PPC64TargetInfo::PPC64TargetInfo() {
   PltRel = GotRel = R_PPC64_GLOB_DAT;
   RelativeRel = R_PPC64_RELATIVE;
   PltEntrySize = 32;
+  PltHeaderSize = 0;
 
   // We need 64K pages (at least under glibc/Linux, the loader won't
   // set different permissions on a finer granularity than that).
