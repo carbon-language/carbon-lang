@@ -1040,9 +1040,11 @@ void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     write16be(Loc, (read16be(Loc) & 3) | (Val & ~3));
     break;
   case R_PPC64_ADDR16_HA:
+  case R_PPC64_REL16_HA:
     write16be(Loc, applyPPCHa(Val));
     break;
   case R_PPC64_ADDR16_HI:
+  case R_PPC64_REL16_HI:
     write16be(Loc, applyPPCHi(Val));
     break;
   case R_PPC64_ADDR16_HIGHER:
@@ -1061,23 +1063,18 @@ void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     write16be(Loc, applyPPCLo(Val));
     break;
   case R_PPC64_ADDR16_LO_DS:
+  case R_PPC64_REL16_LO:
     write16be(Loc, (read16be(Loc) & 3) | (applyPPCLo(Val) & ~3));
     break;
   case R_PPC64_ADDR32:
+  case R_PPC64_REL32:
     checkInt<32>(Val, Type);
     write32be(Loc, Val);
     break;
   case R_PPC64_ADDR64:
+  case R_PPC64_REL64:
+  case R_PPC64_TOC:
     write64be(Loc, Val);
-    break;
-  case R_PPC64_REL16_HA:
-    write16be(Loc, applyPPCHa(Val));
-    break;
-  case R_PPC64_REL16_HI:
-    write16be(Loc, applyPPCHi(Val));
-    break;
-  case R_PPC64_REL16_LO:
-    write16be(Loc, applyPPCLo(Val));
     break;
   case R_PPC64_REL24: {
     uint32_t Mask = 0x03FFFFFC;
@@ -1085,16 +1082,6 @@ void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     write32be(Loc, (read32be(Loc) & ~Mask) | (Val & Mask));
     break;
   }
-  case R_PPC64_REL32:
-    checkInt<32>(Val, Type);
-    write32be(Loc, Val);
-    break;
-  case R_PPC64_REL64:
-    write64be(Loc, Val);
-    break;
-  case R_PPC64_TOC:
-    write64be(Loc, Val);
-    break;
   default:
     fatal("unrecognized reloc " + Twine(Type));
   }
