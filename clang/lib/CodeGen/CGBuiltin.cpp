@@ -2158,6 +2158,13 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_canonicalizef:
   case Builtin::BI__builtin_canonicalizel:
     return RValue::get(emitUnaryBuiltin(*this, E, Intrinsic::canonicalize));
+
+  case Builtin::BI__builtin_thread_pointer: {
+    if (!getContext().getTargetInfo().isTLSSupported())
+      CGM.ErrorUnsupported(E, "__builtin_thread_pointer");
+    // Fall through - it's already mapped to the intrinsic by GCCBuiltin.
+    break;
+  }
   }
 
   // If this is an alias for a lib function (e.g. __builtin_sin), emit

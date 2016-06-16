@@ -20,7 +20,6 @@
 
 // In libgcc
 BUILTIN(__clear_cache, "vv*v*", "i")
-BUILTIN(__builtin_thread_pointer, "v*", "")
 
 // Saturating arithmetic
 BUILTIN(__builtin_arm_qadd, "iii", "nc")
