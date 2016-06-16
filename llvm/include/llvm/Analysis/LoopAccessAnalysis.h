@@ -599,7 +599,7 @@ public:
 
 private:
   /// \brief Analyze the loop.  Substitute symbolic strides using Strides.
-  void analyzeLoop(const ValueToValueMap &Strides);
+  void analyzeLoop(const ValueToValueMap &SymbolicStrides);
 
   /// \brief Check if the structure of the loop allows it to be analyzed by this
   /// pass.
