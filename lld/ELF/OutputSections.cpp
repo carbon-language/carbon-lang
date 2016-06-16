@@ -79,7 +79,7 @@ template <class ELFT> void GotPltSection<ELFT>::writeTo(uint8_t *Buf) {
   Target->writeGotPltHeader(Buf);
   Buf += Target->GotPltHeaderEntriesNum * sizeof(uintX_t);
   for (const SymbolBody *B : Entries) {
-    Target->writeGotPlt(Buf, B->getPltVA<ELFT>());
+    Target->writeGotPlt(Buf, *B);
     Buf += sizeof(uintX_t);
   }
 }

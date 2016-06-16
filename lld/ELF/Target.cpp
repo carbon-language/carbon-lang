@@ -91,7 +91,7 @@ public:
   bool isTlsLocalDynamicRel(uint32_t Type) const override;
   bool isTlsGlobalDynamicRel(uint32_t Type) const override;
   bool isTlsInitialExecRel(uint32_t Type) const override;
-  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
+  void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
   void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
@@ -114,7 +114,7 @@ public:
   bool isTlsGlobalDynamicRel(uint32_t Type) const override;
   bool isTlsInitialExecRel(uint32_t Type) const override;
   void writeGotPltHeader(uint8_t *Buf) const override;
-  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
+  void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
   void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
@@ -155,7 +155,7 @@ public:
   RelExpr getRelExpr(uint32_t Type, const SymbolBody &S) const override;
   uint32_t getDynRel(uint32_t Type) const override;
   bool isTlsInitialExecRel(uint32_t Type) const override;
-  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
+  void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
   void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
@@ -181,7 +181,7 @@ public:
   RelExpr getRelExpr(uint32_t Type, const SymbolBody &S) const override;
   uint32_t getDynRel(uint32_t Type) const override;
   uint64_t getImplicitAddend(const uint8_t *Buf, uint32_t Type) const override;
-  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
+  void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
   void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
@@ -194,7 +194,7 @@ public:
   RelExpr getRelExpr(uint32_t Type, const SymbolBody &S) const override;
   uint64_t getImplicitAddend(const uint8_t *Buf, uint32_t Type) const override;
   uint32_t getDynRel(uint32_t Type) const override;
-  void writeGotPlt(uint8_t *Buf, uint64_t Plt) const override;
+  void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
   void writePltZero(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
@@ -350,10 +350,10 @@ void X86TargetInfo::writeGotPltHeader(uint8_t *Buf) const {
   write32le(Buf, Out<ELF32LE>::Dynamic->getVA());
 }
 
-void X86TargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
+void X86TargetInfo::writeGotPlt(uint8_t *Buf, const SymbolBody &S) const {
   // Entries in .got.plt initially points back to the corresponding
   // PLT entries with a fixed offset to skip the first instruction.
-  write32le(Buf, Plt + 6);
+  write32le(Buf, S.getPltVA<ELF32LE>() + 6);
 }
 
 uint32_t X86TargetInfo::getDynRel(uint32_t Type) const {
@@ -583,9 +583,9 @@ void X86_64TargetInfo::writeGotPltHeader(uint8_t *Buf) const {
   write64le(Buf, Out<ELF64LE>::Dynamic->getVA());
 }
 
-void X86_64TargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
+void X86_64TargetInfo::writeGotPlt(uint8_t *Buf, const SymbolBody &S) const {
   // See comments in X86TargetInfo::writeGotPlt.
-  write32le(Buf, Plt + 6);
+  write32le(Buf, S.getPltVA<ELF64LE>() + 6);
 }
 
 void X86_64TargetInfo::writePltZero(uint8_t *Buf) const {
@@ -1203,7 +1203,7 @@ uint32_t AArch64TargetInfo::getDynRel(uint32_t Type) const {
   return R_AARCH64_ABS32;
 }
 
-void AArch64TargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
+void AArch64TargetInfo::writeGotPlt(uint8_t *Buf, const SymbolBody &) const {
   write64le(Buf, Out<ELF64LE>::Plt->getVA());
 }
 
@@ -1498,7 +1498,7 @@ uint32_t ARMTargetInfo::getDynRel(uint32_t Type) const {
   return R_ARM_ABS32;
 }
 
-void ARMTargetInfo::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
+void ARMTargetInfo::writeGotPlt(uint8_t *Buf, const SymbolBody &) const {
   write32le(Buf, Out<ELF32LE>::Plt->getVA());
 }
 
@@ -1788,7 +1788,7 @@ uint32_t MipsTargetInfo<ELFT>::getDynRel(uint32_t Type) const {
 }
 
 template <class ELFT>
-void MipsTargetInfo<ELFT>::writeGotPlt(uint8_t *Buf, uint64_t Plt) const {
+void MipsTargetInfo<ELFT>::writeGotPlt(uint8_t *Buf, const SymbolBody &) const {
   write32<ELFT::TargetEndianness>(Buf, Out<ELFT>::Plt->getVA());
 }
 
