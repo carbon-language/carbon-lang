@@ -414,6 +414,7 @@ __kmp_affinity_create_hwloc_map(AddrUnsPair **address2os,
             KMP_INFORM(Topology, "KMP_AFFINITY", nPackages, nCoresPerPkg,
               __kmp_nThreadsPerCore, __kmp_ncores);
         }
+        KMP_CPU_FREE(oldMask);
         return 0;
     }
 
@@ -562,6 +563,7 @@ __kmp_affinity_create_hwloc_map(AddrUnsPair **address2os,
     }
 
     if (__kmp_affinity_type == affinity_none) {
+        __kmp_free(retval);
         KMP_CPU_FREE(oldMask);
         return 0;
     }
