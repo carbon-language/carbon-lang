@@ -144,8 +144,8 @@ define <4 x i32> @test_x86_sse2_pshuf_d(<4 x i32> %a) {
 ; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[3,2,1,0]
 ; CHECK-NEXT:    retl
 entry:
-   %res = call <4 x i32> @llvm.x86.sse2.pshuf.d(<4 x i32> %a, i8 27) nounwind readnone
-   ret <4 x i32> %res
+  %res = call <4 x i32> @llvm.x86.sse2.pshuf.d(<4 x i32> %a, i8 27) nounwind readnone
+  ret <4 x i32> %res
 }
 declare <4 x i32> @llvm.x86.sse2.pshuf.d(<4 x i32>, i8) nounwind readnone
 
@@ -155,8 +155,8 @@ define <8 x i16> @test_x86_sse2_pshufl_w(<8 x i16> %a) {
 ; CHECK-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[3,2,1,0,4,5,6,7]
 ; CHECK-NEXT:    retl
 entry:
-   %res = call <8 x i16> @llvm.x86.sse2.pshufl.w(<8 x i16> %a, i8 27) nounwind readnone
-   ret <8 x i16> %res
+  %res = call <8 x i16> @llvm.x86.sse2.pshufl.w(<8 x i16> %a, i8 27) nounwind readnone
+  ret <8 x i16> %res
 }
 declare <8 x i16> @llvm.x86.sse2.pshufl.w(<8 x i16>, i8) nounwind readnone
 
@@ -166,7 +166,52 @@ define <8 x i16> @test_x86_sse2_pshufh_w(<8 x i16> %a) {
 ; CHECK-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,7,6,5,4]
 ; CHECK-NEXT:    retl
 entry:
-   %res = call <8 x i16> @llvm.x86.sse2.pshufh.w(<8 x i16> %a, i8 27) nounwind readnone
-   ret <8 x i16> %res
+  %res = call <8 x i16> @llvm.x86.sse2.pshufh.w(<8 x i16> %a, i8 27) nounwind readnone
+  ret <8 x i16> %res
 }
 declare <8 x i16> @llvm.x86.sse2.pshufh.w(<8 x i16>, i8) nounwind readnone
+
+define <16 x i8> @max_epu8(<16 x i8> %a0, <16 x i8> %a1) {
+; CHECK-LABEL: max_epu8:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    pmaxub %xmm1, %xmm0
+; CHECK-NEXT:    retl
+;
+  %res = call <16 x i8> @llvm.x86.sse2.pmaxu.b(<16 x i8> %a0, <16 x i8> %a1)
+  ret <16 x i8> %res
+}
+declare <16 x i8> @llvm.x86.sse2.pmaxu.b(<16 x i8>, <16 x i8>) nounwind readnone
+
+define <16 x i8> @min_epu8(<16 x i8> %a0, <16 x i8> %a1) {
+; CHECK-LABEL: min_epu8:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    pminub %xmm1, %xmm0
+; CHECK-NEXT:    retl
+;
+  %res = call <16 x i8> @llvm.x86.sse2.pminu.b(<16 x i8> %a0, <16 x i8> %a1)
+  ret <16 x i8> %res
+}
+declare <16 x i8> @llvm.x86.sse2.pminu.b(<16 x i8>, <16 x i8>) nounwind readnone
+
+define <8 x i16> @max_epi16(<8 x i16> %a0, <8 x i16> %a1) {
+; CHECK-LABEL: max_epi16:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    pmaxsw %xmm1, %xmm0
+; CHECK-NEXT:    retl
+;
+  %res = call <8 x i16> @llvm.x86.sse2.pmaxs.w(<8 x i16> %a0, <8 x i16> %a1)
+  ret <8 x i16> %res
+}
+declare <8 x i16> @llvm.x86.sse2.pmaxs.w(<8 x i16>, <8 x i16>) nounwind readnone
+
+define <8 x i16> @min_epi16(<8 x i16> %a0, <8 x i16> %a1) {
+; CHECK-LABEL: min_epi16:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    pminsw %xmm1, %xmm0
+; CHECK-NEXT:    retl
+;
+  %res = call <8 x i16> @llvm.x86.sse2.pmins.w(<8 x i16> %a0, <8 x i16> %a1)
+  ret <8 x i16> %res
+}
+declare <8 x i16> @llvm.x86.sse2.pmins.w(<8 x i16>, <8 x i16>) nounwind readnone
+
