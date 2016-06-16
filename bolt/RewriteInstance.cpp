@@ -925,22 +925,35 @@ void RewriteInstance::disassembleFunctions() {
   }
 
   uint64_t NumSimpleFunctions{0};
+  uint64_t NumStaleProfileFunctions{0};
   std::vector<BinaryFunction *> ProfiledFunctions;
   for (auto &BFI : BinaryFunctions) {
-    if (!BFI.second.isSimple())
+    auto &Function = BFI.second;
+    if (!Function.isSimple())
       continue;
     ++NumSimpleFunctions;
-    if (BFI.second.getExecutionCount() != BinaryFunction::COUNT_NO_PROFILE)
-      ProfiledFunctions.push_back(&BFI.second);
+    if (Function.getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE)
+      continue;
+    if (Function.hasValidProfile())
+      ProfiledFunctions.push_back(&Function);
+    else
+      ++NumStaleProfileFunctions;
   }
 
-  errs() << "BOLT-INFO: " << ProfiledFunctions.size() << " functions out of "
-         << NumSimpleFunctions
-         << " simple functions ("
+  errs() << "BOLT-INFO: "
+         << ProfiledFunctions.size() + NumStaleProfileFunctions
+         << " functions out of " << NumSimpleFunctions << " simple functions ("
          << format("%.1f",
-                   ProfiledFunctions.size() /
-                   (float) NumSimpleFunctions * 100.0)
+                   (ProfiledFunctions.size() + NumStaleProfileFunctions) /
+                   (float) NumSimpleFunctions * 100.0f)
          << "%) have non-empty execution profile.\n";
+  if (NumStaleProfileFunctions) {
+    errs() << "BOLT-INFO: " << NumStaleProfileFunctions
+           << format(" (%.1f%) ", NumStaleProfileFunctions /
+                                  (float) NumSimpleFunctions * 100.0f)
+           << " function" << (NumStaleProfileFunctions == 1 ? "" : "s")
+           << " have invalid (possibly stale) profile.\n";
+  }
 
   if (ProfiledFunctions.size() > 10) {
     errs() << "BOLT-INFO: top called functions are:\n";

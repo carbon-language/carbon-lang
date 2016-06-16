@@ -19,6 +19,7 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
+#include "DataReader.h"
 #include "DebugData.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
@@ -158,6 +159,9 @@ private:
   /// The profile data for the number of times the function was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
 
+  /// Profile match ration.
+  float ProfileMatchRatio{0.0};
+
   /// Score of the function (estimated number of instructions executed,
   /// according to profile data). -1 if the score has not been calculated yet.
   int64_t FunctionScore{-1};
@@ -177,44 +181,10 @@ private:
   /// the output binary.
   uint32_t AddressRangesOffset{-1U};
 
-  /// Release storage used by instructions.
-  BinaryFunction &clearInstructions() {
-    InstrMapType TempMap;
-    Instructions.swap(TempMap);
-    return *this;
-  }
-
-  /// Release storage used by CFI offsets map.
-  BinaryFunction &clearCFIOffsets() {
-    std::multimap<uint32_t, uint32_t> TempMap;
-    OffsetToCFI.swap(TempMap);
-    return *this;
-  }
-
-  /// Release storage used by instructions.
-  BinaryFunction &clearLabels() {
-    LabelsMapType TempMap;
-    Labels.swap(TempMap);
-    return *this;
-  }
-
-  /// Release memory taken by local branch info.
-  BinaryFunction &clearLocalBranches() {
-    LocalBranchesListType TempList;
-    LocalBranches.swap(TempList);
-    return *this;
-  }
-
-  BinaryFunction &clearFTBranches() {
-    LocalBranchesListType TempList;
-    FTBranches.swap(TempList);
-    return *this;
-  }
-
-  /// Release memory taken by landing pad info.
-  BinaryFunction &clearLPToBBIndex() {
-    LandingPadsMapType TempMap;
-    LPToBBIndex.swap(TempMap);
+  /// Release memory taken by the list.
+  template<typename T> BinaryFunction &clearList(T& List) {
+    T TempList;
+    TempList.swap(List);
     return *this;
   }
 
@@ -223,13 +193,14 @@ private:
     return *this;
   }
 
+  /// Return basic block that originally was laid out immediately following
+  /// the given /p BB basic block.
   const BinaryBasicBlock *
   getOriginalLayoutSuccessor(const BinaryBasicBlock *BB) const;
 
-  /// Storage for all local branches in the function (non-fall-throughs).
-  using LocalBranchesListType = std::vector<std::pair<uint32_t, uint32_t>>;
-  LocalBranchesListType LocalBranches;
-  LocalBranchesListType FTBranches;
+  using BranchListType = std::vector<std::pair<uint32_t, uint32_t>>;
+  BranchListType TakenBranches; /// All local taken branches.
+  BranchListType FTBranches;    /// All fall-through branches.
 
   /// Storage for all landing pads and their corresponding invokes.
   using LandingPadsMapType = std::map<const MCSymbol *, std::vector<unsigned> >;
@@ -574,6 +545,21 @@ public:
     Instructions.emplace(Offset, std::forward<MCInst>(Instruction));
   }
 
+  /// Return instruction at a given offset in the function. Valid before
+  /// CFG is constructed.
+  MCInst *getInstructionAtOffset(uint64_t Offset) {
+    assert(CurrentState == State::Disassembled &&
+           "can only call function in Disassembled state");
+    auto II = Instructions.find(Offset);
+    return (II == Instructions.end()) ? nullptr : &II->second;
+  }
+
+  /// Return true if function profile is present and accurate.
+  bool hasValidProfile() {
+    return ExecutionCount != COUNT_NO_PROFILE &&
+           ProfileMatchRatio == 1.0f;
+  }
+
   void addCFIInstruction(uint64_t Offset, MCCFIInstruction &&Inst) {
     assert(!Instructions.empty());
 
@@ -747,7 +733,7 @@ public:
   /// If successful, this function will populate the list of instructions
   /// for this function together with offsets from the function start
   /// in the input. It will also populate Labels with destinations for
-  /// local branches, and LocalBranches with [from, to] info.
+  /// local branches, and TakenBranches with [from, to] info.
   ///
   /// \p FunctionData is the set bytes representing the function body.
   ///
@@ -767,6 +753,10 @@ public:
   /// Returns true on success and update the current function state to
   /// State::CFG. Returns false if CFG cannot be built.
   bool buildCFG();
+
+  /// Check how closely the profile data matches the function and set
+  /// ProfileMatchRatio to reflect the accuracy.
+  void evaluateProfileData(const FuncBranchData &BranchData);
 
   /// Walks the list of basic blocks filling in missing information about
   /// edge frequency for fall-throughs.

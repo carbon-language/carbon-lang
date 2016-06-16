@@ -166,8 +166,10 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   }
   if (ImageAddress)
     OS << "\n  Image       : 0x" << Twine::utohexstr(ImageAddress);
-  if (ExecutionCount != COUNT_NO_PROFILE)
+  if (ExecutionCount != COUNT_NO_PROFILE) {
     OS << "\n  Exec Count  : " << ExecutionCount;
+    OS << "\n  Profile Acc : " << format("%.1f%%", ProfileMatchRatio * 100.0f);
+  }
 
   OS << "\n}\n";
 
@@ -262,7 +264,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   if (BasicBlocks.empty() && !Instructions.empty()) {
     // Print before CFG was built.
     for (const auto &II : Instructions) {
-      auto Offset = II.first;
+      Offset = II.first;
 
       // Print label if exists at this offset.
       auto LI = Labels.find(Offset);
@@ -549,8 +551,8 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                                       MCSymbolRefExpr::VK_None,
                                       *Ctx)));
         if (!IsCall) {
-          // Add local branch info.
-          LocalBranches.push_back({Offset, TargetOffset});
+          // Add taken branch info.
+          TakenBranches.push_back({Offset, TargetOffset});
         }
         if (IsCondBranch) {
           // Add fallthrough branch info.
@@ -611,11 +613,10 @@ bool BinaryFunction::buildCFG() {
   auto &MIA = BC.MIA;
 
   auto BranchDataOrErr = BC.DR.getFuncBranchData(getName());
-  if (std::error_code EC = BranchDataOrErr.getError()) {
+  if (!BranchDataOrErr) {
     DEBUG(dbgs() << "no branch data found for \"" << getName() << "\"\n");
   } else {
-    if (!BranchDataOrErr.get().Data.empty())
-      ExecutionCount = BranchDataOrErr.get().ExecutionCount;
+    ExecutionCount = BranchDataOrErr->ExecutionCount;
   }
 
   if (!isSimple())
@@ -736,7 +737,11 @@ bool BinaryFunction::buildCFG() {
   // e.g. exit(3), etc. Otherwise we'll see a false fall-through
   // blocks.
 
-  for (auto &Branch : LocalBranches) {
+  // Make sure we can use profile data for this function.
+  if (BranchDataOrErr)
+    evaluateProfileData(BranchDataOrErr.get());
+
+  for (auto &Branch : TakenBranches) {
     DEBUG(dbgs() << "registering branch [0x" << Twine::utohexstr(Branch.first)
                  << "] -> [0x" << Twine::utohexstr(Branch.second) << "]\n");
     BinaryBasicBlock *FromBB = getBasicBlockContainingOffset(Branch.first);
@@ -783,7 +788,7 @@ bool BinaryFunction::buildCFG() {
   }
 
   // Add fall-through branches (except for non-taken conditional branches with
-  // profile data, which were already accounted for in LocalBranches).
+  // profile data, which were already accounted for in TakenBranches).
   PrevBB = nullptr;
   bool IsPrevFT = false; // Is previous block a fall-through.
   for (auto BB : BasicBlocks) {
@@ -830,20 +835,19 @@ bool BinaryFunction::buildCFG() {
   }
 
   // Infer frequency for non-taken branches
-  if (ExecutionCount != COUNT_NO_PROFILE && !BranchDataOrErr.getError()) {
+  if (hasValidProfile())
     inferFallThroughCounts();
-  }
 
   // Update CFI information for each BB
   annotateCFIState();
 
   // Clean-up memory taken by instructions and labels.
-  clearInstructions();
-  clearCFIOffsets();
-  clearLabels();
-  clearLocalBranches();
-  clearFTBranches();
-  clearLPToBBIndex();
+  clearList(Instructions);
+  clearList(OffsetToCFI);
+  clearList(Labels);
+  clearList(TakenBranches);
+  clearList(FTBranches);
+  clearList(LPToBBIndex);
 
   // Update the state.
   CurrentState = State::CFG;
@@ -852,6 +856,108 @@ bool BinaryFunction::buildCFG() {
   propagateGnuArgsSizeInfo();
 
   return true;
+}
+
+void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
+  BranchListType ProfileBranches(BranchData.Data.size());
+  std::transform(BranchData.Data.begin(),
+                 BranchData.Data.end(),
+                 ProfileBranches.begin(),
+                 [](const BranchInfo &BI) {
+                   return std::make_pair(BI.From.Offset,
+                                         BI.To.Name == BI.From.Name ?
+                                         BI.To.Offset : -1U);
+                 });
+  BranchListType LocalProfileBranches;
+  std::copy_if(ProfileBranches.begin(),
+               ProfileBranches.end(),
+               std::back_inserter(LocalProfileBranches),
+               [](const std::pair<uint32_t, uint32_t> &Branch) {
+                 return Branch.second != -1U;
+               });
+
+  // Until we define a minimal profile, we consider no branch data to be a valid
+  // profile. It could happen to a function without branches.
+  if (LocalProfileBranches.empty()) {
+    ProfileMatchRatio = 1.0f;
+    return;
+  }
+
+  std::sort(LocalProfileBranches.begin(), LocalProfileBranches.end());
+
+  BranchListType FunctionBranches = TakenBranches;
+  FunctionBranches.insert(FunctionBranches.end(),
+                          FTBranches.begin(),
+                          FTBranches.end());
+  std::sort(FunctionBranches.begin(), FunctionBranches.end());
+
+  BranchListType DiffBranches; // Branches in profile without a match.
+  std::set_difference(LocalProfileBranches.begin(),
+                      LocalProfileBranches.end(),
+                      FunctionBranches.begin(),
+                      FunctionBranches.end(),
+                      std::back_inserter(DiffBranches));
+
+  // Branches without a match in CFG.
+  BranchListType OrphanBranches;
+
+  // Eliminate recursive calls and returns from recursive calls from the list
+  // of branches that have no match. They are not considered local branches.
+  auto isRecursiveBranch = [&](std::pair<uint32_t, uint32_t> &Branch) {
+    auto SrcInstrI = Instructions.find(Branch.first);
+    if (SrcInstrI == Instructions.end())
+      return false;
+
+    // Check if it is a recursive call.
+    if (BC.MIA->isCall(SrcInstrI->second) && Branch.second == 0)
+      return true;
+
+    auto DstInstrI = Instructions.find(Branch.second);
+    if (DstInstrI == Instructions.end())
+      return false;
+
+    // Check if it is a return from a recursive call.
+    bool IsSrcReturn = BC.MIA->isReturn(SrcInstrI->second);
+    // "rep ret" is considered to be 2 different instructions.
+    if (!IsSrcReturn && BC.MIA->isPrefix(SrcInstrI->second)) {
+      auto SrcInstrSuccessorI = SrcInstrI;
+      ++SrcInstrSuccessorI;
+      assert(SrcInstrSuccessorI != Instructions.end() &&
+             "unexpected prefix instruction at the end of function");
+      IsSrcReturn = BC.MIA->isReturn(SrcInstrSuccessorI->second);
+    }
+    if (IsSrcReturn && Branch.second != 0) {
+      // Make sure the destination follows the call instruction.
+      auto DstInstrPredecessorI = DstInstrI;
+      --DstInstrPredecessorI;
+      assert(DstInstrPredecessorI != Instructions.end() && "invalid iterator");
+      if (BC.MIA->isCall(DstInstrPredecessorI->second))
+        return true;
+    }
+    return false;
+  };
+  std::remove_copy_if(DiffBranches.begin(),
+                      DiffBranches.end(),
+                      std::back_inserter(OrphanBranches),
+                      isRecursiveBranch);
+
+  ProfileMatchRatio =
+    (float) (LocalProfileBranches.size() - OrphanBranches.size()) /
+    (float) LocalProfileBranches.size();
+
+  if (!OrphanBranches.empty()) {
+    errs() << "BOLT-WARNING: profile branches match only "
+           << format("%.1f%%", ProfileMatchRatio * 100.0f) << " ("
+           << (LocalProfileBranches.size() - OrphanBranches.size()) << '/'
+           << LocalProfileBranches.size() << ") for function "
+           << getName() << '\n';
+    DEBUG(
+      for (auto &OBranch : OrphanBranches)
+        errs() << "\t0x" << Twine::utohexstr(OBranch.first) << " -> 0x"
+               << Twine::utohexstr(OBranch.second) << " (0x"
+               << Twine::utohexstr(OBranch.first + getAddress()) << " -> 0x"
+    );
+  }
 }
 
 void BinaryFunction::inferFallThroughCounts() {
@@ -881,7 +987,7 @@ void BinaryFunction::inferFallThroughCounts() {
     }
   }
 
-  // Udate execution counts of landing pad blocks.
+  // Update execution counts of landing pad blocks.
   if (!BranchDataOrErr.getError()) {
     const FuncBranchData &BranchData = BranchDataOrErr.get();
     for (const auto &I : BranchData.EntryData) {
@@ -893,7 +999,7 @@ void BinaryFunction::inferFallThroughCounts() {
   }
 
   // Work on a basic block at a time, propagating frequency information forwards
-  // It is important to walk in the layour order
+  // It is important to walk in the layout order
   for (auto CurBB : BasicBlocks) {
     uint64_t BBExecCount = CurBB->getExecutionCount();
 
@@ -1036,7 +1142,7 @@ bool BinaryFunction::fixCFIState() {
         // without using the state stack. Not sure if it is worth the effort
         // because this happens rarely.
         if (NestedLevel != 0) {
-          errs() << "BOLT-WARNING: CFI rewriter detected nested CFI state while "
+          errs() << "BOLT-WARNING: CFI rewriter detected nested CFI state while"
                  << " replaying CFI instructions for BB " << InBB->getName()
                  << " in function " << getName() << '\n';
           return false;
@@ -1157,7 +1263,7 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
   }
 
   // Cannot do optimal layout without profile.
-  if (getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE)
+  if (!hasValidProfile())
     return;
 
   // Work on optimal solution if problem is small enough
