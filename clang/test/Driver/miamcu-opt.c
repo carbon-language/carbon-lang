@@ -16,3 +16,6 @@
 // CHECK: "-static-define"
 // CHECK: "-mfloat-abi" "soft"
 // CHECK: "-mstack-alignment=4"
+
+// CHECK: bin/ld
+// CHECK: "-static"

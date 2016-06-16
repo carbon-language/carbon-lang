@@ -295,6 +295,7 @@ void Clang::AddPreprocessingOptions(Compilation &C, const JobAction &JA,
                                     const InputInfoList &Inputs,
                                     const ToolChain *AuxToolChain) const {
   Arg *A;
+  const bool IsIAMCU = getToolChain().getTriple().isOSIAMCU();
 
   CheckPreprocessingOptions(D, Args);
 
@@ -562,10 +563,15 @@ void Clang::AddPreprocessingOptions(Compilation &C, const JobAction &JA,
       AuxToolChain->AddClangCXXStdlibIncludeArgs(Args, CmdArgs);
   }
 
-  // Add system include arguments.
-  getToolChain().AddClangSystemIncludeArgs(Args, CmdArgs);
-  if (AuxToolChain)
+  // Add system include arguments for all targets but IAMCU.
+  if (!IsIAMCU) {
+    getToolChain().AddClangSystemIncludeArgs(Args, CmdArgs);
+    if (AuxToolChain)
       AuxToolChain->AddClangCXXStdlibIncludeArgs(Args, CmdArgs);
+  } else {
+    // For IAMCU add special include arguments.
+    getToolChain().AddIAMCUIncludeArgs(Args, CmdArgs);
+  }
 
   // Add CUDA include arguments, if needed.
   if (types::isCuda(Inputs[0].getType()))
@@ -3742,6 +3748,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       getToolChain().getTriple().isWindowsCygwinEnvironment();
   bool IsWindowsMSVC = getToolChain().getTriple().isWindowsMSVCEnvironment();
   bool IsPS4CPU = getToolChain().getTriple().isPS4CPU();
+  bool IsIAMCU = getToolChain().getTriple().isOSIAMCU();
 
   // Check number of inputs for sanity. We need at least one input.
   assert(Inputs.size() >= 1 && "Must have at least one input.");
@@ -3751,6 +3758,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // input.
   bool IsCuda = types::isCuda(Input.getType());
   assert((IsCuda || Inputs.size() == 1) && "Unable to handle multiple inputs.");
+
+  // C++ is not supported for IAMCU.
+  if (IsIAMCU && types::isCXX(Input.getType()))
+    D.Diag(diag::err_drv_clang_unsupported) << "C++ for IAMCU";
 
   // Invoke ourselves in -cc1 mode.
   //
