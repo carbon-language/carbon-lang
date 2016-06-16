@@ -92,7 +92,7 @@ public:
   bool isTlsGlobalDynamicRel(uint32_t Type) const override;
   bool isTlsInitialExecRel(uint32_t Type) const override;
   void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
-  void writePltZero(uint8_t *Buf) const override;
+  void writePltHeader(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -115,7 +115,7 @@ public:
   bool isTlsInitialExecRel(uint32_t Type) const override;
   void writeGotPltHeader(uint8_t *Buf) const override;
   void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
-  void writePltZero(uint8_t *Buf) const override;
+  void writePltHeader(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -156,7 +156,7 @@ public:
   uint32_t getDynRel(uint32_t Type) const override;
   bool isTlsInitialExecRel(uint32_t Type) const override;
   void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
-  void writePltZero(uint8_t *Buf) const override;
+  void writePltHeader(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   bool usesOnlyLowPageBits(uint32_t Type) const override;
@@ -182,7 +182,7 @@ public:
   uint32_t getDynRel(uint32_t Type) const override;
   uint64_t getImplicitAddend(const uint8_t *Buf, uint32_t Type) const override;
   void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
-  void writePltZero(uint8_t *Buf) const override;
+  void writePltHeader(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -195,7 +195,7 @@ public:
   uint64_t getImplicitAddend(const uint8_t *Buf, uint32_t Type) const override;
   uint32_t getDynRel(uint32_t Type) const override;
   void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
-  void writePltZero(uint8_t *Buf) const override;
+  void writePltHeader(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   void writeThunk(uint8_t *Buf, uint64_t S) const override;
@@ -302,7 +302,7 @@ X86TargetInfo::X86TargetInfo() {
   TlsModuleIndexRel = R_386_TLS_DTPMOD32;
   TlsOffsetRel = R_386_TLS_DTPOFF32;
   PltEntrySize = 16;
-  PltZeroSize = 16;
+  PltHeaderSize = 16;
   TlsGdRelaxSkip = 2;
 }
 
@@ -376,7 +376,7 @@ bool X86TargetInfo::isTlsInitialExecRel(uint32_t Type) const {
   return Type == R_386_TLS_IE || Type == R_386_TLS_GOTIE;
 }
 
-void X86TargetInfo::writePltZero(uint8_t *Buf) const {
+void X86TargetInfo::writePltHeader(uint8_t *Buf) const {
   // Executable files and shared object files have
   // separate procedure linkage tables.
   if (Config->Pic) {
@@ -415,7 +415,7 @@ void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   uint32_t Got = Out<ELF32LE>::GotPlt->getVA();
   write32le(Buf + 2, Config->Shared ? GotEntryAddr - Got : GotEntryAddr);
   write32le(Buf + 7, RelOff);
-  write32le(Buf + 12, -Index * PltEntrySize - PltZeroSize - 16);
+  write32le(Buf + 12, -Index * PltEntrySize - PltHeaderSize - 16);
 }
 
 uint64_t X86TargetInfo::getImplicitAddend(const uint8_t *Buf,
@@ -543,7 +543,7 @@ X86_64TargetInfo::X86_64TargetInfo() {
   TlsModuleIndexRel = R_X86_64_DTPMOD64;
   TlsOffsetRel = R_X86_64_DTPOFF64;
   PltEntrySize = 16;
-  PltZeroSize = 16;
+  PltHeaderSize = 16;
   TlsGdRelaxSkip = 2;
 }
 
@@ -588,7 +588,7 @@ void X86_64TargetInfo::writeGotPlt(uint8_t *Buf, const SymbolBody &S) const {
   write32le(Buf, S.getPltVA<ELF64LE>() + 6);
 }
 
-void X86_64TargetInfo::writePltZero(uint8_t *Buf) const {
+void X86_64TargetInfo::writePltHeader(uint8_t *Buf) const {
   const uint8_t PltData[] = {
       0xff, 0x35, 0x00, 0x00, 0x00, 0x00, // pushq GOT+8(%rip)
       0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp *GOT+16(%rip)
@@ -613,7 +613,7 @@ void X86_64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
 
   write32le(Buf + 2, GotEntryAddr - PltEntryAddr - 6);
   write32le(Buf + 7, Index);
-  write32le(Buf + 12, -Index * PltEntrySize - PltZeroSize - 16);
+  write32le(Buf + 12, -Index * PltEntrySize - PltHeaderSize - 16);
 }
 
 uint32_t X86_64TargetInfo::getDynRel(uint32_t Type) const {
@@ -1113,7 +1113,7 @@ AArch64TargetInfo::AArch64TargetInfo() {
   TlsDescRel = R_AARCH64_TLSDESC;
   TlsGotRel = R_AARCH64_TLS_TPREL64;
   PltEntrySize = 16;
-  PltZeroSize = 32;
+  PltHeaderSize = 32;
 
   // It doesn't seem to be documented anywhere, but tls on aarch64 uses variant
   // 1 of the tls structures and the tcb size is 16.
@@ -1211,7 +1211,7 @@ static uint64_t getAArch64Page(uint64_t Expr) {
   return Expr & (~static_cast<uint64_t>(0xFFF));
 }
 
-void AArch64TargetInfo::writePltZero(uint8_t *Buf) const {
+void AArch64TargetInfo::writePltHeader(uint8_t *Buf) const {
   const uint8_t PltData[] = {
       0xf0, 0x7b, 0xbf, 0xa9, // stp	x16, x30, [sp,#-16]!
       0x10, 0x00, 0x00, 0x90, // adrp	x16, Page(&(.plt.got[2]))
@@ -1453,7 +1453,7 @@ ARMTargetInfo::ARMTargetInfo() {
   TlsModuleIndexRel = R_ARM_TLS_DTPMOD32;
   TlsOffsetRel = R_ARM_TLS_DTPOFF32;
   PltEntrySize = 16;
-  PltZeroSize = 20;
+  PltHeaderSize = 20;
 }
 
 RelExpr ARMTargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
@@ -1502,7 +1502,7 @@ void ARMTargetInfo::writeGotPlt(uint8_t *Buf, const SymbolBody &) const {
   write32le(Buf, Out<ELF32LE>::Plt->getVA());
 }
 
-void ARMTargetInfo::writePltZero(uint8_t *Buf) const {
+void ARMTargetInfo::writePltHeader(uint8_t *Buf) const {
   const uint8_t PltData[] = {
       0x04, 0xe0, 0x2d, 0xe5, //     str lr, [sp,#-4]!
       0x04, 0xe0, 0x9f, 0xe5, //     ldr lr, L2
@@ -1720,7 +1720,7 @@ template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
   GotPltHeaderEntriesNum = 2;
   PageSize = 65536;
   PltEntrySize = 16;
-  PltZeroSize = 32;
+  PltHeaderSize = 32;
   ThunkSize = 16;
   CopyRel = R_MIPS_COPY;
   PltRel = R_MIPS_JUMP_SLOT;
@@ -1828,7 +1828,7 @@ template <endianness E> static int16_t readSignedLo16(const uint8_t *Loc) {
 }
 
 template <class ELFT>
-void MipsTargetInfo<ELFT>::writePltZero(uint8_t *Buf) const {
+void MipsTargetInfo<ELFT>::writePltHeader(uint8_t *Buf) const {
   const endianness E = ELFT::TargetEndianness;
   write32<E>(Buf, 0x3c1c0000);      // lui   $28, %hi(&GOTPLT[0])
   write32<E>(Buf + 4, 0x8f990000);  // lw    $25, %lo(&GOTPLT[0])($28)
