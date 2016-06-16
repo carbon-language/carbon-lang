@@ -52,27 +52,23 @@ StringRef getRelName(uint32_t Type) {
 }
 
 template <unsigned N> static void checkInt(int64_t V, uint32_t Type) {
-  if (isInt<N>(V))
-    return;
-  error("relocation " + getRelName(Type) + " out of range");
+  if (!isInt<N>(V))
+    error("relocation " + getRelName(Type) + " out of range");
 }
 
 template <unsigned N> static void checkUInt(uint64_t V, uint32_t Type) {
-  if (isUInt<N>(V))
-    return;
-  error("relocation " + getRelName(Type) + " out of range");
+  if (!isUInt<N>(V))
+    error("relocation " + getRelName(Type) + " out of range");
 }
 
 template <unsigned N> static void checkIntUInt(uint64_t V, uint32_t Type) {
-  if (isInt<N>(V) || isUInt<N>(V))
-    return;
-  error("relocation " + getRelName(Type) + " out of range");
+  if (!isInt<N>(V) && !isUInt<N>(V))
+    error("relocation " + getRelName(Type) + " out of range");
 }
 
 template <unsigned N> static void checkAlignment(uint64_t V, uint32_t Type) {
-  if ((V & (N - 1)) == 0)
-    return;
-  error("improper alignment for relocation " + getRelName(Type));
+  if ((V & (N - 1)) != 0)
+    error("improper alignment for relocation " + getRelName(Type));
 }
 
 static void errorDynRel(uint32_t Type) {
@@ -1125,27 +1121,21 @@ RelExpr AArch64TargetInfo::getRelExpr(uint32_t Type,
   switch (Type) {
   default:
     return R_ABS;
-
   case R_AARCH64_TLSDESC_ADR_PAGE21:
     return R_TLSDESC_PAGE;
-
   case R_AARCH64_TLSDESC_LD64_LO12_NC:
   case R_AARCH64_TLSDESC_ADD_LO12_NC:
     return R_TLSDESC;
-
   case R_AARCH64_TLSDESC_CALL:
     return R_HINT;
-
   case R_AARCH64_TLSLE_ADD_TPREL_HI12:
   case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
     return R_TLS;
-
   case R_AARCH64_CALL26:
   case R_AARCH64_CONDBR19:
   case R_AARCH64_JUMP26:
   case R_AARCH64_TSTBR14:
     return R_PLT_PC;
-
   case R_AARCH64_PREL16:
   case R_AARCH64_PREL32:
   case R_AARCH64_PREL64:
@@ -1664,9 +1654,9 @@ uint64_t ARMTargetInfo::getImplicitAddend(const uint8_t *Buf,
   case R_ARM_JUMP24:
   case R_ARM_PC24:
   case R_ARM_PLT32:
-    return SignExtend64<26>((read32le(Buf) & 0x00ffffff) << 2);
+    return SignExtend64<26>(read32le(Buf) << 2);
   case R_ARM_THM_JUMP11:
-    return SignExtend64<12>((read16le(Buf) & 0x07ff) << 1);
+    return SignExtend64<12>(read16le(Buf) << 1);
   case R_ARM_THM_JUMP19: {
     // Encoding T3: A = S:J2:J1:imm10:imm6:0
     uint16_t Hi = read16le(Buf);
