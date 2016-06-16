@@ -65,22 +65,20 @@ TpiStream::TpiStream(const PDBFile &File,
 TpiStream::~TpiStream() {}
 
 // Computes a hash for a given TPI record.
-template <typename T> static uint32_t getTpiHash(T &Rec) {
+template <typename T>
+static uint32_t getTpiHash(T &Rec, const CVRecord<TypeLeafKind> &RawRec) {
   auto Opts = static_cast<uint16_t>(Rec.getOptions());
 
-  // We don't know how to calculate a hash value for this yet.
-  // Currently we just skip it.
-  if (Opts & static_cast<uint16_t>(ClassOptions::ForwardReference))
-    return 0;
+  bool ForwardRef =
+      Opts & static_cast<uint16_t>(ClassOptions::ForwardReference);
+  bool Scoped = Opts & static_cast<uint16_t>(ClassOptions::Scoped);
+  bool UniqueName = Opts & static_cast<uint16_t>(ClassOptions::HasUniqueName);
 
-  if (!(Opts & static_cast<uint16_t>(ClassOptions::Scoped)))
+  if (!ForwardRef && !Scoped)
     return hashStringV1(Rec.getName());
-
-  if (Opts & static_cast<uint16_t>(ClassOptions::HasUniqueName))
+  if (!ForwardRef && UniqueName)
     return hashStringV1(Rec.getUniqueName());
-
-  // This case is not implemented yet.
-  return 0;
+  return hashBufferV8(RawRec.RawData);
 }
 
 namespace {
@@ -102,15 +100,16 @@ public:
   Error visitEnum(EnumRecord &Rec) override { return verify(Rec); }
   Error visitUnion(UnionRecord &Rec) override { return verify(Rec); }
 
-  Error visitTypeEnd(const CVRecord<TypeLeafKind> &Record) override {
+  Error visitTypeBegin(const CVRecord<TypeLeafKind> &Rec) override {
     ++Index;
+    RawRecord = &Rec;
     return Error::success();
   }
 
 private:
   template <typename T> Error verify(T &Rec) {
-    uint32_t Hash = getTpiHash(Rec);
-    if (Hash && Hash % NumHashBuckets != HashValues[Index])
+    uint32_t Hash = getTpiHash(Rec, *RawRecord);
+    if (Hash % NumHashBuckets != HashValues[Index])
       return make_error<RawError>(raw_error_code::invalid_tpi_hash);
     return Error::success();
   }
@@ -125,8 +124,9 @@ private:
   }
 
   FixedStreamArray<support::ulittle32_t> HashValues;
+  const CVRecord<TypeLeafKind> *RawRecord;
   uint32_t NumHashBuckets;
-  uint32_t Index = 0;
+  uint32_t Index = -1;
 };
 }
 
