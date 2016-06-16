@@ -39,12 +39,15 @@ public:
     // Real values.
     Real,
 
+    // Comments
+    Comment,
+    HashDirective,
     // No-value.
     EndOfStatement,
     Colon,
     Space,
     Plus, Minus, Tilde,
-    Slash,    // '/'
+    Slash,     // '/'
     BackSlash, // '\'
     LParen, RParen, LBrac, RBrac, LCurly, RCurly,
     Star, Dot, Comma, Dollar, Equal, EqualEqual,
@@ -153,8 +156,9 @@ public:
   const AsmToken &Lex() {
     assert(!CurTok.empty());
     CurTok.erase(CurTok.begin());
+    // Always place in front as LexToken may generate multiple tokens via UnLex.
     if (CurTok.empty())
-      CurTok.emplace_back(LexToken());
+      CurTok.insert(CurTok.begin(), LexToken());
     return CurTok.front();
   }
 
