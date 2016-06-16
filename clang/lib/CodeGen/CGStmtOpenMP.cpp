@@ -136,33 +136,10 @@ void CodeGenFunction::GenerateOpenMPCapturedVars(
       CapturedVars.push_back(Val);
     } else if (CurCap->capturesThis())
       CapturedVars.push_back(CXXThisValue);
-    else if (CurCap->capturesVariableByCopy()) {
-      llvm::Value *CV =
-          EmitLoadOfLValue(EmitLValue(*I), SourceLocation()).getScalarVal();
-
-      // If the field is not a pointer, we need to save the actual value
-      // and load it as a void pointer.
-      if (!CurField->getType()->isAnyPointerType()) {
-        auto &Ctx = getContext();
-        auto DstAddr = CreateMemTemp(
-            Ctx.getUIntPtrType(),
-            Twine(CurCap->getCapturedVar()->getName()) + ".casted");
-        LValue DstLV = MakeAddrLValue(DstAddr, Ctx.getUIntPtrType());
-
-        auto *SrcAddrVal = EmitScalarConversion(
-            DstAddr.getPointer(), Ctx.getPointerType(Ctx.getUIntPtrType()),
-            Ctx.getPointerType(CurField->getType()), SourceLocation());
-        LValue SrcLV =
-            MakeNaturalAlignAddrLValue(SrcAddrVal, CurField->getType());
-
-        // Store the value using the source type pointer.
-        EmitStoreThroughLValue(RValue::get(CV), SrcLV);
-
-        // Load the value using the destination type pointer.
-        CV = EmitLoadOfLValue(DstLV, SourceLocation()).getScalarVal();
-      }
-      CapturedVars.push_back(CV);
-    } else {
+    else if (CurCap->capturesVariableByCopy())
+      CapturedVars.push_back(
+          EmitLoadOfLValue(EmitLValue(*I), SourceLocation()).getScalarVal());
+    else {
       assert(CurCap->capturesVariable() && "Expected capture by reference.");
       CapturedVars.push_back(EmitLValue(*I).getAddress().getPointer());
     }
@@ -195,7 +172,8 @@ static Address castValueFromUintptr(CodeGenFunction &CGF, QualType DstType,
 }
 
 llvm::Function *
-CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S) {
+CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S,
+                                                    bool CastValToPtr) {
   assert(
       CapturedStmtInfo &&
       "CapturedStmtInfo should be set when generating the captured function");
@@ -219,9 +197,11 @@ CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S) {
     // uintptr. This is necessary given that the runtime library is only able to
     // deal with pointers. We can pass in the same way the VLA type sizes to the
     // outlined function.
-    if ((I->capturesVariableByCopy() && !ArgType->isAnyPointerType()) ||
-        I->capturesVariableArrayType())
-      ArgType = Ctx.getUIntPtrType();
+    if (CastValToPtr) {
+      if ((I->capturesVariableByCopy() && !ArgType->isAnyPointerType()) ||
+          I->capturesVariableArrayType())
+        ArgType = Ctx.getUIntPtrType();
+    }
 
     if (I->capturesVariable() || I->capturesVariableByCopy()) {
       CapVar = I->getCapturedVar();
@@ -275,9 +255,12 @@ CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S) {
                        AlignmentSource::Decl);
     if (FD->hasCapturedVLAType()) {
       LValue CastedArgLVal =
-          MakeAddrLValue(castValueFromUintptr(*this, FD->getType(),
-                                              Args[Cnt]->getName(), ArgLVal),
-                         FD->getType(), AlignmentSource::Decl);
+          CastValToPtr
+              ? MakeAddrLValue(castValueFromUintptr(*this, FD->getType(),
+                                                    Args[Cnt]->getName(),
+                                                    ArgLVal),
+                               FD->getType(), AlignmentSource::Decl)
+              : ArgLVal;
       auto *ExprArg =
           EmitLoadOfLValue(CastedArgLVal, SourceLocation()).getScalarVal();
       auto VAT = FD->getCapturedVLAType();
@@ -297,9 +280,16 @@ CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S) {
              "Not expecting a captured pointer.");
       auto *Var = I->getCapturedVar();
       QualType VarTy = Var->getType();
-      setAddrOfLocalVar(Var, castValueFromUintptr(*this, FD->getType(),
-                                                  Args[Cnt]->getName(), ArgLVal,
-                                                  VarTy->isReferenceType()));
+      if (!CastValToPtr && VarTy->isReferenceType()) {
+        Address Temp = CreateMemTemp(VarTy);
+        Builder.CreateStore(ArgLVal.getPointer(), Temp);
+        ArgLVal = MakeAddrLValue(Temp, VarTy);
+      }
+      setAddrOfLocalVar(Var, CastValToPtr ? castValueFromUintptr(
+                                                *this, FD->getType(),
+                                                Args[Cnt]->getName(), ArgLVal,
+                                                VarTy->isReferenceType())
+                                          : ArgLVal.getAddress());
     } else {
       // If 'this' is captured, load it into CXXThisValue.
       assert(I->capturesThis());
