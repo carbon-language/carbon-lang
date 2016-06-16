@@ -52,6 +52,8 @@ public:
   iterator_range<codeview::CVTypeArray::Iterator> types(bool *HadError) const;
 
 private:
+  Error verifyHashValues();
+
   const PDBFile &Pdb;
   std::unique_ptr<MappedBlockStream> Stream;
   HashFunctionType HashFunction;
