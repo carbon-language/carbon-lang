@@ -601,7 +601,6 @@ private:
   /// A list of blocks that we are going to CSE.
   SetVector<BasicBlock *> CSEBlocks;
 
-public: // Workaround for MSVC friend semantics.
   /// Contains all scheduling relevant data for an instruction.
   /// A ScheduleData either represents a single instruction or a member of an
   /// instruction bundle (= a group of instructions which is combined into a
@@ -731,11 +730,13 @@ public: // Workaround for MSVC friend semantics.
     /// dry-run).
     bool IsScheduled;
   };
-private:
 
 #ifndef NDEBUG
-  friend raw_ostream &operator<<(raw_ostream &os,
-                                 const BoUpSLP::ScheduleData &SD);
+  friend inline raw_ostream &operator<<(raw_ostream &os,
+                                        const BoUpSLP::ScheduleData &SD) {
+    SD.dump(os);
+    return os;
+  }
 #endif
 
   /// Contains all scheduling data for a basic block.
@@ -945,20 +946,8 @@ private:
   MapVector<Value *, uint64_t> MinBWs;
 };
 
-#ifndef NDEBUG
-raw_ostream &operator<<(raw_ostream &os, const BoUpSLP::ScheduleData &SD);
-#endif
-
 } // end namespace llvm
 } // end namespace slpvectorizer
-
-#ifndef NDEBUG
-raw_ostream &llvm::slpvectorizer::operator<<(raw_ostream &os,
-                                             const BoUpSLP::ScheduleData &SD) {
-  SD.dump(os);
-  return os;
-}
-#endif
 
 void BoUpSLP::buildTree(ArrayRef<Value *> Roots,
                         ArrayRef<Value *> UserIgnoreLst) {
