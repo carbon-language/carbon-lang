@@ -1450,7 +1450,7 @@ private:
 
   /// \brief If an access has a symbolic strides, this maps the pointer value to
   /// the stride symbol.
-  const ValueToValueMap &getSymbolicStrides() { return SymbolicStrides; }
+  const ValueToValueMap *getSymbolicStrides() { return &SymbolicStrides; }
 
   unsigned NumPredStores;
 
@@ -2224,7 +2224,7 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
   // We can emit wide load/stores only if the last non-zero index is the
   // induction variable.
   const SCEV *Last = nullptr;
-  if (!getSymbolicStrides().count(Gep))
+  if (!getSymbolicStrides() || !getSymbolicStrides()->count(Gep))
     Last = PSE.getSCEV(Gep->getOperand(InductionOperand));
   else {
     // Because of the multiplication by a stride we can have a s/zext cast.
@@ -2236,7 +2236,7 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
     //  %idxprom = zext i32 %mul to i64  << Safe cast.
     //  %arrayidx = getelementptr inbounds i32* %B, i64 %idxprom
     //
-    Last = replaceSymbolicStrideSCEV(PSE, getSymbolicStrides(),
+    Last = replaceSymbolicStrideSCEV(PSE, *getSymbolicStrides(),
                                      Gep->getOperand(InductionOperand), Gep);
     if (const SCEVCastExpr *C = dyn_cast<SCEVCastExpr>(Last))
       Last =
@@ -4667,7 +4667,7 @@ bool LoopVectorizationLegality::canVectorize() {
 
   // Analyze interleaved memory accesses.
   if (UseInterleaved)
-    InterleaveInfo.analyzeInterleaving(getSymbolicStrides());
+    InterleaveInfo.analyzeInterleaving(*getSymbolicStrides());
 
   unsigned SCEVThreshold = VectorizeSCEVCheckThreshold;
   if (Hints->getForce() == LoopVectorizeHints::FK_Enabled)
@@ -4998,7 +4998,7 @@ void LoopVectorizationLegality::collectLoopUniforms() {
 }
 
 bool LoopVectorizationLegality::canVectorizeMemory() {
-  LAI = &LAA->getInfo(TheLoop, getSymbolicStrides());
+  LAI = &LAA->getInfo(TheLoop, *getSymbolicStrides());
   auto &OptionalReport = LAI->getReport();
   if (OptionalReport)
     emitAnalysis(VectorizationReport(*OptionalReport));
