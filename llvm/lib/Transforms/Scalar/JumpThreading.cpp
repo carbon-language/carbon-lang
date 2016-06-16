@@ -182,7 +182,7 @@ bool JumpThreadingPass::runImpl(Function &F, TargetLibraryInfo *TLI_,
   // back edges. This works for normal cases but not for unreachable blocks as
   // they may have cycle with no back edge.
   bool EverChanged = false;
-  EverChanged |= removeUnreachableBlocks(F, LVI, BPI.get());
+  EverChanged |= removeUnreachableBlocks(F, LVI);
 
   FindLoopHeaders(F);
 
@@ -204,7 +204,7 @@ bool JumpThreadingPass::runImpl(Function &F, TargetLibraryInfo *TLI_,
         DEBUG(dbgs() << "  JT: Deleting dead block '" << BB->getName()
               << "' with terminator: " << *BB->getTerminator() << '\n');
         LoopHeaders.erase(BB);
-        dropBlockAnalysisResults(BB);
+        LVI->eraseBlock(BB);
         DeleteDeadBlock(BB);
         Changed = true;
         continue;
@@ -232,7 +232,7 @@ bool JumpThreadingPass::runImpl(Function &F, TargetLibraryInfo *TLI_,
         // for a block even if it doesn't get erased.  This isn't totally
         // awesome, but it allows us to use AssertingVH to prevent nasty
         // dangling pointer issues within LazyValueInfo.
-        dropBlockAnalysisResults(BB);
+        LVI->eraseBlock(BB);
         if (TryToSimplifyUncondBranchFromEmptyBlock(BB)) {
           Changed = true;
           // If we deleted BB and BB was the header of a loop, then the
@@ -715,7 +715,7 @@ bool JumpThreadingPass::ProcessBlock(BasicBlock *BB) {
       if (LoopHeaders.erase(SinglePred))
         LoopHeaders.insert(BB);
 
-      dropBlockAnalysisResults(SinglePred);
+      LVI->eraseBlock(SinglePred);
       MergeBasicBlockIntoOnlyPred(BB);
 
       return true;
@@ -1948,12 +1948,4 @@ bool JumpThreadingPass::TryToUnfoldSelectInCurrBB(BasicBlock *BB) {
   }
   
   return false;
-}
-
-/// dropBlockAnalysisResults - Inform relevant analyzes that BB is going to
-/// be removed. This is important in order to prevent dangling pointer problems.
-void JumpThreadingPass::dropBlockAnalysisResults(BasicBlock *BB) {
-  LVI->eraseBlock(BB);
-  if (BPI)
-    BPI->eraseBlock(BB);
 }

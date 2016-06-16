@@ -20,7 +20,6 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/EHPersonalities.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
@@ -1487,8 +1486,7 @@ void llvm::removeUnwindEdge(BasicBlock *BB) {
 /// removeUnreachableBlocksFromFn - Remove blocks that are not reachable, even
 /// if they are in a dead cycle.  Return true if a change was made, false
 /// otherwise.
-bool llvm::removeUnreachableBlocks(Function &F, LazyValueInfo *LVI, 
-                                   BranchProbabilityInfo *BPI) {
+bool llvm::removeUnreachableBlocks(Function &F, LazyValueInfo *LVI) {
   SmallPtrSet<BasicBlock*, 16> Reachable;
   bool Changed = markAliveBlocks(F, Reachable);
 
@@ -1511,8 +1509,6 @@ bool llvm::removeUnreachableBlocks(Function &F, LazyValueInfo *LVI,
         (*SI)->removePredecessor(&*BB);
     if (LVI)
       LVI->eraseBlock(&*BB);
-    if (BPI)
-      BPI->eraseBlock(&*BB);
     BB->dropAllReferences();
   }
 

@@ -18,7 +18,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/IR/ValueHandle.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/BranchProbability.h"
@@ -117,16 +116,13 @@ public:
 
   void calculate(const Function &F, const LoopInfo &LI);
 
-  /// Forget analysis results for the given basic block.
-  void eraseBlock(const BasicBlock *BB);
-
 private:
   void operator=(const BranchProbabilityInfo &) = delete;
   BranchProbabilityInfo(const BranchProbabilityInfo &) = delete;
 
   // Since we allow duplicate edges from one basic block to another, we use
   // a pair (PredBlock and an index in the successors) to specify an edge.
-  typedef std::pair<AssertingVH<const BasicBlock>, unsigned> Edge;
+  typedef std::pair<const BasicBlock *, unsigned> Edge;
 
   // Default weight value. Used when we don't have information about the edge.
   // TODO: DEFAULT_WEIGHT makes sense during static predication, when none of
