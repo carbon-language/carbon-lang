@@ -9829,11 +9829,7 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
           DL, MVT::v8i16, V1, V2, OrigMask, Subtarget, DAG))
     return ZExt;
 
-  auto isV1 = [](int M) { return M >= 0 && M < 8; };
-  (void)isV1;
-  auto isV2 = [](int M) { return M >= 8; };
-
-  int NumV2Inputs = count_if(Mask, isV2);
+  int NumV2Inputs = count_if(Mask, [](int M) { return M >= 8; });
 
   if (NumV2Inputs == 0) {
     // Check for being able to broadcast a single element.
@@ -9860,7 +9856,7 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                                                      Subtarget, DAG);
   }
 
-  assert(llvm::any_of(Mask, isV1) &&
+  assert(llvm::any_of(Mask, [](int M) { return M >= 0 && M < 8; }) &&
          "All single-input shuffles should be canonicalized to be V1-input "
          "shuffles.");
 
