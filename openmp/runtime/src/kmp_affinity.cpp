@@ -3390,19 +3390,19 @@ __kmp_apply_thread_places(AddrUnsPair **pAddr, int depth)
         __kmp_place_num_threads_per_core = __kmp_nThreadsPerCore; // use all HW contexts
 
     if ( !__kmp_affinity_uniform_topology() ) {
-        KMP_WARNING( AffThrPlaceNonUniform );
+        KMP_WARNING( AffHWSubsetNonUniform );
         return; // don't support non-uniform topology
     }
     if ( depth != 3 ) {
-        KMP_WARNING( AffThrPlaceNonThreeLevel );
+        KMP_WARNING( AffHWSubsetNonThreeLevel );
         return; // don't support not-3-level topology
     }
     if (__kmp_place_socket_offset + __kmp_place_num_sockets > nPackages) {
-        KMP_WARNING(AffThrPlaceManySockets);
+        KMP_WARNING(AffHWSubsetManySockets);
         return;
     }
     if ( __kmp_place_core_offset + __kmp_place_num_cores > nCoresPerPkg ) {
-        KMP_WARNING( AffThrPlaceManyCores );
+        KMP_WARNING( AffHWSubsetManyCores );
         return;
     }
 
