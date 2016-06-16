@@ -11,7 +11,7 @@
 // RUN: %clang -### -target x86_64-linux-gnu -c -march=haswell --cuda-gpu-arch=sm_20 %s 2>&1 | \
 // RUN: FileCheck %s
 
-// CHECK:clang
+// CHECK: bin{{/|\\+}}clang
 // CHECK: "-cc1"
 // CHECK-SAME: "-triple" "nvptx
 // CHECK-SAME: "-target-cpu" "sm_20"
@@ -19,6 +19,6 @@
 // CHECK: ptxas
 // CHECK-SAME: "--gpu-name" "sm_20"
 
-// CHECK:clang
+// CHECK: bin{{/|\\+}}clang
 // CHECK-SAME: "-cc1"
 // CHECK-SAME: "-target-cpu" "haswell"
