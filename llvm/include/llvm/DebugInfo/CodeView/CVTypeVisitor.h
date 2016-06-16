@@ -43,10 +43,10 @@ public:
   /// FIXME: Make the visitor interpret the trailing bytes so that clients don't
   /// need to.
 #define TYPE_RECORD(EnumName, EnumVal, Name)                                   \
-  void visit##Name(TypeLeafKind LeafType, Name##Record &Record) {}
+  void visit##Name(Name##Record &Record) {}
 #define TYPE_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #define MEMBER_RECORD(EnumName, EnumVal, Name)                                 \
-  void visit##Name(TypeLeafKind LeafType, Name##Record &Record) {}
+  void visit##Name(Name##Record &Record) {}
 #define MEMBER_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #include "TypeRecords.def"
 
@@ -68,7 +68,7 @@ public:
     auto Result = Name##Record::deserialize(RK, LeafData);                     \
     if (Result.getError())                                                     \
       return parseError();                                                     \
-    DerivedThis->visit##Name(Record.Type, *Result);                            \
+    DerivedThis->visit##Name(*Result);                                         \
     break;                                                                     \
   }
 #define TYPE_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)                  \
@@ -133,7 +133,7 @@ public:
     auto Result = Name##Record::deserialize(RK, FieldData);                    \
     if (Result.getError())                                                     \
       return parseError();                                                     \
-    DerivedThis->visit##Name(Leaf, *Result);                                   \
+    DerivedThis->visit##Name(*Result);                                         \
     break;                                                                     \
   }
 #define MEMBER_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)                \

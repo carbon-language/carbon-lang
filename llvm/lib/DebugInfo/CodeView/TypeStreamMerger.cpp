@@ -57,10 +57,10 @@ public:
 
   /// CVTypeVisitor overrides.
 #define TYPE_RECORD(EnumName, EnumVal, Name)                                   \
-  void visit##Name(TypeLeafKind LeafType, Name##Record &Record);
+  void visit##Name(Name##Record &Record);
 #define TYPE_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #define MEMBER_RECORD(EnumName, EnumVal, Name)                                 \
-  void visit##Name(TypeLeafKind LeafType, Name##Record &Record);
+  void visit##Name(Name##Record &Record);
 #define MEMBER_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #include "llvm/DebugInfo/CodeView/TypeRecords.def"
 
@@ -109,15 +109,13 @@ void TypeStreamMerger::visitFieldList(TypeLeafKind Leaf,
 }
 
 #define TYPE_RECORD(EnumName, EnumVal, Name)                                   \
-  void TypeStreamMerger::visit##Name(TypeLeafKind LeafType,                    \
-                                     Name##Record &Record) {                   \
+  void TypeStreamMerger::visit##Name(Name##Record &Record) {                   \
     FoundBadTypeIndex |= !Record.remapTypeIndices(IndexMap);                   \
     IndexMap.push_back(DestStream.write##Name(Record));                        \
   }
 #define TYPE_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #define MEMBER_RECORD(EnumName, EnumVal, Name)                                 \
-  void TypeStreamMerger::visit##Name(TypeLeafKind LeafType,                    \
-                                     Name##Record &Record) {                   \
+  void TypeStreamMerger::visit##Name(Name##Record &Record) {                   \
     FoundBadTypeIndex |= !Record.remapTypeIndices(IndexMap);                   \
     FieldBuilder.write##Name(Record);                                          \
   }
