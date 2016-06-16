@@ -1878,12 +1878,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                         MachinePointerInfo::getGOT(DAG.getMachineFunction()),
                         false, false, false, 0);
     } else {
-      // On ELF targets for PIC code, direct calls should go through the PLT
-      unsigned OpFlags = 0;
-      if (Subtarget->isTargetELF() &&
-          getTargetMachine().getRelocationModel() == Reloc::PIC_)
-        OpFlags = ARMII::MO_PLT;
-      Callee = DAG.getTargetGlobalAddress(GV, dl, PtrVt, 0, OpFlags);
+      Callee = DAG.getTargetGlobalAddress(GV, dl, PtrVt, 0, 0);
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     isDirect = true;
@@ -1903,12 +1898,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, dl, MVT::i32);
       Callee = DAG.getNode(ARMISD::PIC_ADD, dl, PtrVt, Callee, PICLabel);
     } else {
-      unsigned OpFlags = 0;
-      // On ELF targets for PIC code, direct calls should go through the PLT
-      if (Subtarget->isTargetELF() &&
-                  getTargetMachine().getRelocationModel() == Reloc::PIC_)
-        OpFlags = ARMII::MO_PLT;
-      Callee = DAG.getTargetExternalSymbol(Sym, PtrVt, OpFlags);
+      Callee = DAG.getTargetExternalSymbol(Sym, PtrVt, 0);
     }
   }
 
