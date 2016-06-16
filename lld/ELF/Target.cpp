@@ -1007,21 +1007,24 @@ void PPC64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   write32be(Buf + 28, 0x4e800420);                   // bctr
 }
 
+static std::pair<uint32_t, uint64_t> toAddr16Rel(uint32_t Type, uint64_t Val) {
+  uint64_t V = Val - PPC64TocOffset;
+  switch (Type) {
+  case R_PPC64_TOC16: return {R_PPC64_ADDR16, V};
+  case R_PPC64_TOC16_DS: return {R_PPC64_ADDR16_DS, V};
+  case R_PPC64_TOC16_HA: return {R_PPC64_ADDR16_HA, V};
+  case R_PPC64_TOC16_HI: return {R_PPC64_ADDR16_HI, V};
+  case R_PPC64_TOC16_LO: return {R_PPC64_ADDR16_LO, V};
+  case R_PPC64_TOC16_LO_DS: return {R_PPC64_ADDR16_LO_DS, V};
+  default: return {Type, Val};
+  }
+}
+
 void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
                                   uint64_t Val) const {
-  uint64_t TO = PPC64TocOffset;
-
-  // For a TOC-relative relocation,  proceed in terms of the corresponding
+  // For a TOC-relative relocation, proceed in terms of the corresponding
   // ADDR16 relocation type.
-  switch (Type) {
-  case R_PPC64_TOC16:       Type = R_PPC64_ADDR16;       Val -= TO; break;
-  case R_PPC64_TOC16_DS:    Type = R_PPC64_ADDR16_DS;    Val -= TO; break;
-  case R_PPC64_TOC16_HA:    Type = R_PPC64_ADDR16_HA;    Val -= TO; break;
-  case R_PPC64_TOC16_HI:    Type = R_PPC64_ADDR16_HI;    Val -= TO; break;
-  case R_PPC64_TOC16_LO:    Type = R_PPC64_ADDR16_LO;    Val -= TO; break;
-  case R_PPC64_TOC16_LO_DS: Type = R_PPC64_ADDR16_LO_DS; Val -= TO; break;
-  default: break;
-  }
+  std::tie(Type, Val) = toAddr16Rel(Type, Val);
 
   switch (Type) {
   case R_PPC64_ADDR14: {
