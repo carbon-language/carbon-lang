@@ -10938,10 +10938,9 @@ static SDValue lowerShuffleAsRepeatedMaskAndLanePermute(
             int &R = RepeatMask[j];
             if (0 != ((M % NumElts) / NumLaneElts))
               return false;
-            else if (0 <= R && R != M)
+            if (0 <= R && R != M)
               return false;
-            else
-              R = M;
+            R = M;
           }
         return true;
       };
