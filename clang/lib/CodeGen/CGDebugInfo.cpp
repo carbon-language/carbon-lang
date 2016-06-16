@@ -3019,6 +3019,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::Value *Storage,
                               CGBuilderTy &Builder) {
   assert(DebugKind >= codegenoptions::LimitedDebugInfo);
   assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
+  if (VD->hasAttr<NoDebugAttr>())
+    return;
 
   bool Unwritten =
       VD->isImplicit() || (isa<Decl>(VD->getDeclContext()) &&
@@ -3162,6 +3164,8 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
   assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
 
   if (Builder.GetInsertBlock() == nullptr)
+    return;
+  if (VD->hasAttr<NoDebugAttr>())
     return;
 
   bool isByRef = VD->hasAttr<BlocksAttr>();
