@@ -1414,20 +1414,19 @@ void AArch64TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
                                        uint64_t Val) const {
   checkUInt<32>(Val, Type);
 
-  uint32_t Inst = read32le(Loc);
-  uint32_t NewInst;
   if (Type == R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21) {
-    // Generate movz.
-    unsigned RegNo = (Inst & 0x1f);
-    NewInst = (0xd2a00000 | RegNo) | (((Val >> 16) & 0xffff) << 5);
-  } else if (Type == R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC) {
-    // Generate movk
-    unsigned RegNo = (Inst & 0x1f);
-    NewInst = (0xf2800000 | RegNo) | ((Val & 0xffff) << 5);
-  } else {
-    llvm_unreachable("invalid Relocation for TLS IE to LE Relax");
+    // Generate MOVZ.
+    uint32_t RegNo = read32le(Loc) & 0x1f;
+    write32le(Loc, (0xd2a00000 | RegNo) | (((Val >> 16) & 0xffff) << 5));
+    return;
   }
-  write32le(Loc, NewInst);
+  if (Type == R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC) {
+    // Generate MOVK.
+    uint32_t RegNo = read32le(Loc) & 0x1f;
+    write32le(Loc, (0xf2800000 | RegNo) | ((Val & 0xffff) << 5));
+    return;
+  }
+  llvm_unreachable("invalid relocation for TLS IE to LE relaxation");
 }
 
 // Implementing relocations for AMDGPU is low priority since most
