@@ -756,6 +756,8 @@ TypeIndex CodeViewDebug::lowerType(const DIType *Ty) {
     return lowerTypeModifier(cast<DIDerivedType>(Ty));
   case dwarf::DW_TAG_subroutine_type:
     return lowerTypeFunction(cast<DISubroutineType>(Ty));
+  case dwarf::DW_TAG_enumeration_type:
+    return lowerTypeEnum(cast<DICompositeType>(Ty));
   case dwarf::DW_TAG_class_type:
   case dwarf::DW_TAG_structure_type:
     return lowerTypeClass(cast<DICompositeType>(Ty));
@@ -1081,6 +1083,21 @@ static ClassOptions getRecordUniqueNameOption(const DICompositeType *Ty) {
                                       : ClassOptions::None;
 }
 
+TypeIndex CodeViewDebug::lowerTypeEnum(const DICompositeType *Ty) {
+  ClassOptions CO = ClassOptions::None | getRecordUniqueNameOption(Ty);
+  TypeIndex FTI;
+  unsigned FieldCount = 0;
+
+  if (Ty->isForwardDecl())
+    CO |= ClassOptions::ForwardReference;
+  else
+    std::tie(FTI, FieldCount) = lowerRecordFieldList(Ty);
+
+  return TypeTable.writeEnum(EnumRecord(FieldCount, CO, FTI, Ty->getName(),
+                                        Ty->getIdentifier(),
+                                        getTypeIndex(Ty->getBaseType())));
+}
+
 TypeIndex CodeViewDebug::lowerTypeClass(const DICompositeType *Ty) {
   // First, construct the forward decl.  Don't look into Ty to compute the
   // forward decl options, since it might not be available in all TUs.
@@ -1172,6 +1189,10 @@ CodeViewDebug::lowerRecordFieldList(const DICompositeType *Ty) {
       }
       // FIXME: Get clang to emit nested types here and do something with
       // them.
+    } else if (auto *Enumerator = dyn_cast<DIEnumerator>(Element)) {
+      Fields.writeEnumerator(EnumeratorRecord(
+          MemberAccess::Public, APSInt::getUnsigned(Enumerator->getValue()),
+          Enumerator->getName()));
     }
     // Skip other unrecognized kinds of elements.
   }
