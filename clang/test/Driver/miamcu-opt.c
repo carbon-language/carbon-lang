@@ -11,13 +11,13 @@
 
 // NOT-X86: error: unsupported option '-miamcu' for target 'armv8---eabi'
 
-// CHECK: "-cc1"
+// CHECK: "{{.*}}clang{{.*}}" "-cc1"
 // CHECK: "-triple" "i586-intel-elfiamcu"
 // CHECK: "-static-define"
 // CHECK: "-mfloat-abi" "soft"
 // CHECK: "-mstack-alignment=4"
 
-// CHECK: bin/ld
+// CHECK: "{{.*}}ld{{(.exe)?}}"
 // CHECK: "-m" "elf_iamcu"
 // CHECK: "-static"
 // CHECK-NOT: crt1
