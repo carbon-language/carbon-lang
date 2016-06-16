@@ -699,7 +699,8 @@ public:
   /// of symbolic strides, \p Strides provides the mapping (see
   /// replaceSymbolicStrideSCEV).  If there is no cached result available run
   /// the analysis.
-  const LoopAccessInfo &getInfo(Loop *L, const ValueToValueMap &Strides);
+  const LoopAccessInfo &
+  getInfo(Loop *L, const ValueToValueMap &Strides = ValueToValueMap());
 
   void releaseMemory() override {
     // Invalidate the cache when the pass is freed.

@@ -1954,12 +1954,10 @@ LoopAccessAnalysis::getInfo(Loop *L, const ValueToValueMap &Strides) {
 void LoopAccessAnalysis::print(raw_ostream &OS, const Module *M) const {
   LoopAccessAnalysis &LAA = *const_cast<LoopAccessAnalysis *>(this);
 
-  ValueToValueMap NoSymbolicStrides;
-
   for (Loop *TopLevelLoop : *LI)
     for (Loop *L : depth_first(TopLevelLoop)) {
       OS.indent(2) << L->getHeader()->getName() << ":\n";
-      auto &LAI = LAA.getInfo(L, NoSymbolicStrides);
+      auto &LAI = LAA.getInfo(L);
       LAI.print(OS, 4);
     }
 }
