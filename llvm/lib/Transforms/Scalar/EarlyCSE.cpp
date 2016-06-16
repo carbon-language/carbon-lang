@@ -434,7 +434,7 @@ private:
 
     bool isInvariantLoad() const {
       if (auto *LI = dyn_cast<LoadInst>(Inst))
-        return LI->getMetadata(LLVMContext::MD_invariant_load);
+        return LI->getMetadata(LLVMContext::MD_invariant_load) != nullptr;
       return false;
     }
 
@@ -763,7 +763,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         AvailableLoads.insert(
             MemInst.getPointerOperand(),
             LoadValue(Inst, CurrentGeneration, MemInst.getMatchingId(),
-                      MemInst.isAtomic(), false));
+                      MemInst.isAtomic(), /*IsInvariant=*/false));
 
         // Remember that this was the last unordered store we saw for DSE. We
         // don't yet handle DSE on ordered or volatile stores since we don't
