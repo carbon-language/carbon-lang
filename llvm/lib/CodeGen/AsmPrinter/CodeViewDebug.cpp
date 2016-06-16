@@ -322,10 +322,9 @@ void CodeViewDebug::emitTypeInformation() {
           ScopedPrinter SP(CommentOS);
           SP.setPrefix(CommentPrefix);
           CVTD.setPrinter(&SP);
-          bool DumpSuccess =
-              CVTD.dump({Record.bytes_begin(), Record.bytes_end()});
-          (void)DumpSuccess;
-          assert(DumpSuccess && "produced malformed type record");
+          Error EC = CVTD.dump({Record.bytes_begin(), Record.bytes_end()});
+          assert(!EC && "produced malformed type record");
+          consumeError(std::move(EC));
           // emitRawComment will insert its own tab and comment string before
           // the first line, so strip off our first one. It also prints its own
           // newline.
