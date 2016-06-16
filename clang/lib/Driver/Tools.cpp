@@ -9065,6 +9065,7 @@ static void AddLibgcc(const llvm::Triple &Triple, const Driver &D,
                       ArgStringList &CmdArgs, const ArgList &Args) {
   bool isAndroid = Triple.isAndroid();
   bool isCygMing = Triple.isOSCygMing();
+  bool IsIAMCU = Triple.isOSIAMCU();
   bool StaticLibgcc = Args.hasArg(options::OPT_static_libgcc) ||
                       Args.hasArg(options::OPT_static);
   if (!D.CCCIsCXX())
@@ -9081,7 +9082,7 @@ static void AddLibgcc(const llvm::Triple &Triple, const Driver &D,
       CmdArgs.push_back("--no-as-needed");
   }
 
-  if (StaticLibgcc && !isAndroid)
+  if (StaticLibgcc && !isAndroid && !IsIAMCU)
     CmdArgs.push_back("-lgcc_eh");
   else if (!Args.hasArg(options::OPT_shared) && D.CCCIsCXX())
     CmdArgs.push_back("-lgcc");
@@ -9129,6 +9130,8 @@ static void AddRunTimeLibs(const ToolChain &TC, const Driver &D,
 static const char *getLDMOption(const llvm::Triple &T, const ArgList &Args) {
   switch (T.getArch()) {
   case llvm::Triple::x86:
+    if (T.isOSIAMCU())
+      return "elf_iamcu";
     return "elf_i386";
   case llvm::Triple::aarch64:
     return "aarch64linux";
@@ -9188,6 +9191,7 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   const llvm::Triple::ArchType Arch = ToolChain.getArch();
   const bool isAndroid = ToolChain.getTriple().isAndroid();
+  const bool IsIAMCU = ToolChain.getTriple().isOSIAMCU();
   const bool IsPIE =
       !Args.hasArg(options::OPT_shared) && !Args.hasArg(options::OPT_static) &&
       (Args.hasArg(options::OPT_pie) || ToolChain.isPIEDefault());
@@ -9264,7 +9268,7 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Output.getFilename());
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles)) {
-    if (!isAndroid) {
+    if (!isAndroid && !IsIAMCU) {
       const char *crt1 = nullptr;
       if (!Args.hasArg(options::OPT_shared)) {
         if (Args.hasArg(options::OPT_pg))
@@ -9280,18 +9284,22 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crti.o")));
     }
 
-    const char *crtbegin;
-    if (Args.hasArg(options::OPT_static))
-      crtbegin = isAndroid ? "crtbegin_static.o" : "crtbeginT.o";
-    else if (Args.hasArg(options::OPT_shared))
-      crtbegin = isAndroid ? "crtbegin_so.o" : "crtbeginS.o";
-    else if (IsPIE)
-      crtbegin = isAndroid ? "crtbegin_dynamic.o" : "crtbeginS.o";
-    else
-      crtbegin = isAndroid ? "crtbegin_dynamic.o" : "crtbegin.o";
+    if (IsIAMCU)
+      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crt0.o")));
+    else {
+      const char *crtbegin;
+      if (Args.hasArg(options::OPT_static))
+        crtbegin = isAndroid ? "crtbegin_static.o" : "crtbeginT.o";
+      else if (Args.hasArg(options::OPT_shared))
+        crtbegin = isAndroid ? "crtbegin_so.o" : "crtbeginS.o";
+      else if (IsPIE)
+        crtbegin = isAndroid ? "crtbegin_dynamic.o" : "crtbeginS.o";
+      else
+        crtbegin = isAndroid ? "crtbegin_dynamic.o" : "crtbegin.o";
 
-    if (HasCRTBeginEndFiles)
-      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtbegin)));
+      if (HasCRTBeginEndFiles)
+        CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtbegin)));
+    }
 
     // Add crtfastmath.o if available and fast math is enabled.
     ToolChain.AddFastMathRuntimeIfAvailable(Args, CmdArgs);
@@ -9375,13 +9383,24 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
       CmdArgs.push_back("-lc");
 
+      // Add IAMCU specific libs, if needed.
+      if (IsIAMCU)
+        CmdArgs.push_back("-lgloss");
+
       if (Args.hasArg(options::OPT_static))
         CmdArgs.push_back("--end-group");
       else
         AddRunTimeLibs(ToolChain, D, CmdArgs, Args);
+
+      // Add IAMCU specific libs (outside the group), if needed.
+      if (IsIAMCU) {
+        CmdArgs.push_back("--as-needed");
+        CmdArgs.push_back("-lsoftfp");
+        CmdArgs.push_back("--no-as-needed");
+      }
     }
 
-    if (!Args.hasArg(options::OPT_nostartfiles)) {
+    if (!Args.hasArg(options::OPT_nostartfiles) && !IsIAMCU) {
       const char *crtend;
       if (Args.hasArg(options::OPT_shared))
         crtend = isAndroid ? "crtend_so.o" : "crtendS.o";
