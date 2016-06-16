@@ -14,7 +14,6 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
-#include "llvm/DebugInfo/CodeView/TypeVisitorCallbacks.h"
 
 namespace llvm {
 class ScopedPrinter;
@@ -22,7 +21,7 @@ class ScopedPrinter;
 namespace codeview {
 
 /// Dumper for CodeView type streams found in COFF object files and PDB files.
-class CVTypeDumper : public TypeVisitorCallbacks {
+class CVTypeDumper {
 public:
   CVTypeDumper(ScopedPrinter *W, bool PrintRecordBytes)
       : W(W), PrintRecordBytes(PrintRecordBytes) {}
@@ -34,17 +33,17 @@ public:
   /// and true otherwise.  This should be called in order, since the dumper
   /// maintains state about previous records which are necessary for cross
   /// type references.
-  Error dump(const CVRecord<TypeLeafKind> &Record);
+  bool dump(const CVRecord<TypeLeafKind> &Record);
 
   /// Dumps the type records in Types. Returns false if there was a type stream
   /// parse error, and true otherwise.
-  Error dump(const CVTypeArray &Types);
+  bool dump(const CVTypeArray &Types);
 
   /// Dumps the type records in Data. Returns false if there was a type stream
   /// parse error, and true otherwise. Use this method instead of the
   /// CVTypeArray overload when type records are laid out contiguously in
   /// memory.
-  Error dump(ArrayRef<uint8_t> Data);
+  bool dump(ArrayRef<uint8_t> Data);
 
   /// Gets the type index for the next type record.
   unsigned getNextTypeIndex() const {
@@ -62,34 +61,10 @@ public:
   void setPrinter(ScopedPrinter *P);
   ScopedPrinter *getPrinter() { return W; }
 
-  /// Action to take on unknown types. By default, they are ignored.
-  Error visitUnknownType(const CVRecord<TypeLeafKind> &Record) override;
-  Error visitUnknownMember(const CVRecord<TypeLeafKind> &Record) override;
-
-  /// Paired begin/end actions for all types. Receives all record data,
-  /// including the fixed-length record prefix.
-  Error visitTypeBegin(const CVRecord<TypeLeafKind> &Record) override;
-  Error visitTypeEnd(const CVRecord<TypeLeafKind> &Record) override;
-
-#define TYPE_RECORD(EnumName, EnumVal, Name)                                   \
-  Error visit##Name(Name##Record &Record) override;
-#define MEMBER_RECORD(EnumName, EnumVal, Name)                                 \
-  TYPE_RECORD(EnumName, EnumVal, Name)
-#define TYPE_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
-#define MEMBER_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
-#include "TypeRecords.def"
-
 private:
-  void printMemberAttributes(MemberAttributes Attrs);
-  void printMemberAttributes(MemberAccess Access, MethodKind Kind,
-                             MethodOptions Options);
-
   ScopedPrinter *W;
 
   bool PrintRecordBytes = false;
-
-  /// Name of the current type. Only valid before visitTypeEnd.
-  StringRef Name;
 
   /// All user defined type records in .debug$T live in here. Type indices
   /// greater than 0x1000 are user defined. Subtract 0x1000 from the index to

@@ -328,10 +328,8 @@ Error LLVMOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
     for (auto &Type : Tpi->types(&HadError)) {
       DictScope DD(P, "");
 
-      if (DumpRecords) {
-        if (auto EC = TD.dump(Type))
-          return EC;
-      }
+      if (DumpRecords)
+        TD.dump(Type);
 
       if (DumpRecordBytes)
         P.printBinaryBlock("Bytes", Type.Data);
@@ -349,10 +347,8 @@ Error LLVMOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
     TD.setPrinter(nullptr);
 
     bool HadError = false;
-    for (auto &Type : Tpi->types(&HadError)) {
-      if (auto EC = TD.dump(Type))
-        return EC;
-    }
+    for (auto &Type : Tpi->types(&HadError))
+      TD.dump(Type);
 
     TD.setPrinter(OldP);
     dumpTpiHash(P, *Tpi);

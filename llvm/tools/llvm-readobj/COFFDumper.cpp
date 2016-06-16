@@ -1108,9 +1108,9 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
   if (Magic != COFF::DEBUG_SECTION_MAGIC)
     return error(object_error::parse_failed);
 
-  if (auto EC = CVTD.dump({Data.bytes_begin(), Data.bytes_end()})) {
+  if (!CVTD.dump({Data.bytes_begin(), Data.bytes_end()})) {
     W.flush();
-    error(llvm::errorToErrorCode(std::move(EC)));
+    error(object_error::parse_failed);
   }
 }
 
