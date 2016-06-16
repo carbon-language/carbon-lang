@@ -13024,6 +13024,8 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
 
   const GlobalValue *GV = GA->getGlobal();
   auto PtrVT = getPointerTy(DAG.getDataLayout());
+  bool PositionIndependent =
+      DAG.getTarget().getRelocationModel() == Reloc::PIC_;
 
   if (Subtarget.isTargetELF()) {
     TLSModel::Model model = DAG.getTarget().getTLSModel(GV);
@@ -13038,8 +13040,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
       case TLSModel::InitialExec:
       case TLSModel::LocalExec:
         return LowerToTLSExecModel(GA, DAG, PtrVT, model, Subtarget.is64Bit(),
-                                   DAG.getTarget().getRelocationModel() ==
-                                       Reloc::PIC_);
+                                   PositionIndependent);
     }
     llvm_unreachable("Unknown TLS model.");
   }
@@ -13052,8 +13053,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
 
     // In PIC mode (unless we're in RIPRel PIC mode) we add an offset to the
     // global base reg.
-    bool PIC32 = (DAG.getTarget().getRelocationModel() == Reloc::PIC_) &&
-                 !Subtarget.is64Bit();
+    bool PIC32 = PositionIndependent && !Subtarget.is64Bit();
     if (PIC32)
       OpFlag = X86II::MO_TLVP_PIC_BASE;
     else
