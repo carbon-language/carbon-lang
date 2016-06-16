@@ -639,6 +639,14 @@ BranchProbabilityInfo::printEdgeProbability(raw_ostream &OS,
   return OS;
 }
 
+void BranchProbabilityInfo::eraseBlock(const BasicBlock *BB) {
+  for (auto I = Probs.begin(), E = Probs.end(); I != E; ++I) {
+    auto Key = I->first;
+    if (Key.first == BB)
+      Probs.erase(Key);
+  }
+}
+
 void BranchProbabilityInfo::calculate(const Function &F, const LoopInfo &LI) {
   DEBUG(dbgs() << "---- Branch Probability Info : " << F.getName()
                << " ----\n\n");

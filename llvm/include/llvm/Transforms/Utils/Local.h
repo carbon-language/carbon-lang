@@ -44,6 +44,7 @@ class TargetTransformInfo;
 class DIBuilder;
 class DominatorTree;
 class LazyValueInfo;
+class BranchProbabilityInfo;
 
 template<typename T> class SmallVectorImpl;
 
@@ -300,7 +301,11 @@ void removeUnwindEdge(BasicBlock *BB);
 /// Remove all blocks that can not be reached from the function's entry.
 ///
 /// Returns true if any basic block was removed.
-bool removeUnreachableBlocks(Function &F, LazyValueInfo *LVI = nullptr);
+/// \param F Target function
+/// \param LVI Will update this analysis if non null
+/// \param BPI Will update this analysis if non null
+bool removeUnreachableBlocks(Function &F, LazyValueInfo *LVI = nullptr,
+                             BranchProbabilityInfo *BPI = nullptr);
 
 /// Combine the metadata of two instructions so that K can replace J
 ///

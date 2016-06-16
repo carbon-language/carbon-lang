@@ -54,6 +54,11 @@ protected:
     SMDiagnostic Err;
     return parseAssemblyString(ModuleStrig, Err, C);
   }
+
+  void destroyBFI() {
+    // Prevent AssertingVH from failing.
+    BPI->releaseMemory();
+  }
 };
 
 TEST_F(BlockFrequencyInfoTest, Basic) {
@@ -80,6 +85,8 @@ TEST_F(BlockFrequencyInfoTest, Basic) {
   EXPECT_EQ(BFI.getBlockProfileCount(BB3).getValue(), UINT64_C(100));
   EXPECT_EQ(BFI.getBlockProfileCount(BB1).getValue(), 100 * BB1Freq / BB0Freq);
   EXPECT_EQ(BFI.getBlockProfileCount(BB2).getValue(), 100 * BB2Freq / BB0Freq);
+
+  destroyBFI();
 }
 
 } // end anonymous namespace

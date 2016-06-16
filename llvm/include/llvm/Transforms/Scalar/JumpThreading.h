@@ -134,6 +134,8 @@ private:
                               const char *Suffix);
   void UpdateBlockFreqAndEdgeWeight(BasicBlock *PredBB, BasicBlock *BB,
                                     BasicBlock *NewBB, BasicBlock *SuccBB);
+
+  void dropBlockAnalysisResults(BasicBlock *BB);
 };
 
 } // end namespace llvm
