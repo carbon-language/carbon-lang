@@ -1357,25 +1357,20 @@ void AArch64TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint32_t Type,
   //   nop
   checkUInt<32>(Val, Type);
 
-  uint32_t NewInst;
   switch (Type) {
   case R_AARCH64_TLSDESC_ADD_LO12_NC:
   case R_AARCH64_TLSDESC_CALL:
-    // nop
-    NewInst = 0xd503201f;
-    break;
+    write32le(Loc, 0xd503201f); // nop
+    return;
   case R_AARCH64_TLSDESC_ADR_PAGE21:
-    // movz
-    NewInst = 0xd2a00000 | (((Val >> 16) & 0xffff) << 5);
-    break;
+    write32le(Loc, 0xd2a00000 | (((Val >> 16) & 0xffff) << 5)); // movz
+    return;
   case R_AARCH64_TLSDESC_LD64_LO12_NC:
-    // movk
-    NewInst = 0xf2800000 | ((Val & 0xffff) << 5);
-    break;
+    write32le(Loc, 0xf2800000 | ((Val & 0xffff) << 5)); // movk
+    return;
   default:
-    llvm_unreachable("unsupported Relocation for TLS GD to LE relax");
+    llvm_unreachable("unsupported relocation for TLS GD to LE relaxation");
   }
-  write32le(Loc, NewInst);
 }
 
 void AArch64TargetInfo::relaxTlsGdToIe(uint8_t *Loc, uint32_t Type,
@@ -1406,7 +1401,7 @@ void AArch64TargetInfo::relaxTlsGdToIe(uint8_t *Loc, uint32_t Type,
     relocateOne(Loc, R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC, Val);
     break;
   default:
-    llvm_unreachable("unsupported Relocation for TLS GD to LE relax");
+    llvm_unreachable("unsupported relocation for TLS GD to LE relaxation");
   }
 }
 
