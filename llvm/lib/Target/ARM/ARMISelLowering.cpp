@@ -1807,7 +1807,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     !shouldAssumeDSOLocal(RM, TargetTriple, *Mod, GV) &&
     Subtarget->isTargetMachO();
 
-  bool isARMFunc = false;
+  bool isARMFunc = !Subtarget->isThumb() || (isStub && !Subtarget->isMClass());
   bool isLocalARMFunc = false;
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   auto PtrVt = getPointerTy(DAG.getDataLayout());
@@ -1852,7 +1852,6 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     isDirect = true;
     bool isDef = GV->isStrongDefinitionForLinker();
 
-    isARMFunc = !Subtarget->isThumb() || (isStub && !Subtarget->isMClass());
     // ARM call to a local ARM function is predicable.
     isLocalARMFunc = !Subtarget->isThumb() && (isDef || !ARMInterworking);
     // tBX takes a register source operand.
@@ -1888,7 +1887,6 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     isDirect = true;
-    isARMFunc = !Subtarget->isThumb() || (isStub && !Subtarget->isMClass());
     // tBX takes a register source operand.
     const char *Sym = S->getSymbol();
     if (isARMFunc && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
