@@ -11384,7 +11384,7 @@ Decl *Sema::ActOnSkippedFunctionBody(Decl *Decl) {
     FD->setHasSkippedBody();
   else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(Decl))
     MD->setHasSkippedBody();
-  return ActOnFinishFunctionBody(Decl, nullptr);
+  return Decl;
 }
 
 Decl *Sema::ActOnFinishFunctionBody(Decl *D, Stmt *BodyArg) {
