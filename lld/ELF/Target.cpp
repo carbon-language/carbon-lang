@@ -1817,10 +1817,6 @@ static void writeMipsLo16(uint8_t *Loc, uint64_t V) {
   write32<E>(Loc, (Instr & 0xffff0000) | (V & 0xffff));
 }
 
-template <endianness E> static int16_t readSignedLo16(const uint8_t *Loc) {
-  return SignExtend32<16>(read32<E>(Loc) & 0xffff);
-}
-
 template <class ELFT>
 void MipsTargetInfo<ELFT>::writePltHeader(uint8_t *Buf) const {
   const endianness E = ELFT::TargetEndianness;
@@ -1913,7 +1909,7 @@ uint64_t MipsTargetInfo<ELFT>::getImplicitAddend(const uint8_t *Buf,
   case R_MIPS_TLS_DTPREL_LO16:
   case R_MIPS_TLS_TPREL_HI16:
   case R_MIPS_TLS_TPREL_LO16:
-    return readSignedLo16<E>(Buf);
+    return SignExtend64<16>(read32<E>(Buf));
   case R_MIPS_PC16:
     return getPcRelocAddend<E, 16, 2>(Buf);
   case R_MIPS_PC19_S2:
