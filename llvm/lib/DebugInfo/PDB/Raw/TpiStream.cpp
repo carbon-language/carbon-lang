@@ -34,13 +34,6 @@ const uint32_t MinHashBuckets = 0x1000;
 const uint32_t MaxHashBuckets = 0x40000;
 }
 
-static uint32_t HashBufferV8(uint8_t *buffer, uint32_t NumBuckets) {
-  // Not yet implemented, this is probably some variation of CRC32 but we need
-  // to be sure of the precise implementation otherwise we won't be able to work
-  // with persisted hash values.
-  return 0;
-}
-
 // This corresponds to `HDR` in PDB/dbi/tpi.h.
 struct TpiStream::HeaderInfo {
   struct EmbeddedBuf {
@@ -67,7 +60,7 @@ struct TpiStream::HeaderInfo {
 
 TpiStream::TpiStream(const PDBFile &File,
                      std::unique_ptr<MappedBlockStream> Stream)
-    : Pdb(File), Stream(std::move(Stream)), HashFunction(nullptr) {}
+    : Pdb(File), Stream(std::move(Stream)) {}
 
 TpiStream::~TpiStream() {}
 
@@ -174,8 +167,6 @@ Error TpiStream::reload() {
       Header->NumHashBuckets > MaxHashBuckets)
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "TPI Stream Invalid number of hash buckets.");
-
-  HashFunction = HashBufferV8;
 
   // The actual type records themselves come from this stream
   if (auto EC = Reader.readArray(TypeRecords, Header->TypeRecordBytes))
