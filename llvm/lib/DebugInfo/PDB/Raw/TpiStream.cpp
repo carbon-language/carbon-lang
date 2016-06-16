@@ -77,13 +77,13 @@ template <typename T> static uint32_t getTpiHash(T &Rec) {
 
   // We don't know how to calculate a hash value for this yet.
   // Currently we just skip it.
-  if (Opts & static_cast<uint16_t>(codeview::ClassOptions::ForwardReference))
+  if (Opts & static_cast<uint16_t>(ClassOptions::ForwardReference))
     return 0;
 
-  if (!(Opts & static_cast<uint16_t>(codeview::ClassOptions::Scoped)))
+  if (!(Opts & static_cast<uint16_t>(ClassOptions::Scoped)))
     return hashStringV1(Rec.getName());
 
-  if (Opts & static_cast<uint16_t>(codeview::ClassOptions::HasUniqueName))
+  if (Opts & static_cast<uint16_t>(ClassOptions::HasUniqueName))
     return hashStringV1(Rec.getUniqueName());
 
   // This case is not implemented yet.
@@ -148,7 +148,7 @@ Error TpiStream::verifyHashValues() {
 }
 
 Error TpiStream::reload() {
-  codeview::StreamReader Reader(*Stream);
+  StreamReader Reader(*Stream);
 
   if (Reader.bytesRemaining() < sizeof(HeaderInfo))
     return make_error<RawError>(raw_error_code::corrupt_file,
@@ -190,7 +190,7 @@ Error TpiStream::reload() {
       MappedBlockStream::createIndexedStream(Header->HashStreamIndex, Pdb);
   if (!HS)
     return HS.takeError();
-  codeview::StreamReader HSR(**HS);
+  StreamReader HSR(**HS);
 
   uint32_t NumHashValues = Header->HashValueBuffer.Length / sizeof(ulittle32_t);
   if (NumHashValues != NumTypeRecords())
@@ -247,22 +247,22 @@ uint16_t TpiStream::getTypeHashStreamAuxIndex() const {
 uint32_t TpiStream::NumHashBuckets() const { return Header->NumHashBuckets; }
 uint32_t TpiStream::getHashKeySize() const { return Header->HashKeySize; }
 
-codeview::FixedStreamArray<support::ulittle32_t>
+FixedStreamArray<support::ulittle32_t>
 TpiStream::getHashValues() const {
   return HashValues;
 }
 
-codeview::FixedStreamArray<TypeIndexOffset>
+FixedStreamArray<TypeIndexOffset>
 TpiStream::getTypeIndexOffsets() const {
   return TypeIndexOffsets;
 }
 
-codeview::FixedStreamArray<TypeIndexOffset>
+FixedStreamArray<TypeIndexOffset>
 TpiStream::getHashAdjustments() const {
   return HashAdjustments;
 }
 
-iterator_range<codeview::CVTypeArray::Iterator>
+iterator_range<CVTypeArray::Iterator>
 TpiStream::types(bool *HadError) const {
   return llvm::make_range(TypeRecords.begin(HadError), TypeRecords.end());
 }
