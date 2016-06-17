@@ -781,7 +781,7 @@ void OutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   auto *S = cast<InputSection<ELFT>>(C);
   Sections.push_back(S);
   S->OutSec = this;
-  this->updateAlign(S->Align);
+  this->updateAlignment(S->Alignment);
 }
 
 // If an input string is in the form of "foo.N" where N is a number,
@@ -1019,7 +1019,7 @@ template <class ELFT>
 void EhOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   auto *Sec = cast<EhInputSection<ELFT>>(C);
   Sec->OutSec = this;
-  this->updateAlign(Sec->Align);
+  this->updateAlignment(Sec->Alignment);
   Sections.push_back(Sec);
 
   // .eh_frame is a sequence of CIE or FDE records. This function
@@ -1160,7 +1160,7 @@ template <class ELFT>
 void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   auto *Sec = cast<MergeInputSection<ELFT>>(C);
   Sec->OutSec = this;
-  this->updateAlign(Sec->Align);
+  this->updateAlignment(Sec->Alignment);
   this->Header.sh_entsize = Sec->getSectionHdr()->sh_entsize;
   Sections.push_back(Sec);
 
