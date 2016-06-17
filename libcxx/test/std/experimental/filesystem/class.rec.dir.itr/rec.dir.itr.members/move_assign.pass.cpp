@@ -24,6 +24,12 @@
 #include "rapid-cxx-test.hpp"
 #include "filesystem_test_helper.hpp"
 
+// The filesystem specification explicitly allows for self-move on
+// the directory iterators. Turn off this warning so we can test it.
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wself-move"
+#endif
+
 using namespace std::experimental::filesystem;
 
 TEST_SUITE(recursive_directory_iterator_move_assign_tests)

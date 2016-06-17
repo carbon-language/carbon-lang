@@ -47,10 +47,10 @@ const ReplaceExtensionTestcase TestCases[] =
   };
 const ReplaceExtensionTestcase NoArgCases[] =
   {
-      {"", ""}
-    , {"foo", "foo"}
-    , {"foo.cpp", "foo"}
-    , {"foo..cpp", "foo."}
+      {"", "", ""}
+    , {"foo", "foo", ""}
+    , {"foo.cpp", "foo", ""}
+    , {"foo..cpp", "foo.", ""}
 };
 
 int main()
