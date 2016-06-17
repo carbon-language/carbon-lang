@@ -2172,7 +2172,7 @@ SDValue PPCTargetLowering::LowerGlobalTLSAddress(SDValue Op,
       GOTPtr = DAG.getNode(PPCISD::ADDIS_TLSGD_HA, dl, PtrVT,
                                    GOTReg, TGA);
     } else {
-      if (picLevel == PICLevel::Small)
+      if (picLevel == PICLevel::SmallPIC)
         GOTPtr = DAG.getNode(PPCISD::GlobalBaseReg, dl, PtrVT);
       else
         GOTPtr = DAG.getNode(PPCISD::PPC32_PICGOT, dl, PtrVT);
@@ -2190,7 +2190,7 @@ SDValue PPCTargetLowering::LowerGlobalTLSAddress(SDValue Op,
       GOTPtr = DAG.getNode(PPCISD::ADDIS_TLSLD_HA, dl, PtrVT,
                            GOTReg, TGA);
     } else {
-      if (picLevel == PICLevel::Small)
+      if (picLevel == PICLevel::SmallPIC)
         GOTPtr = DAG.getNode(PPCISD::GlobalBaseReg, dl, PtrVT);
       else
         GOTPtr = DAG.getNode(PPCISD::PPC32_PICGOT, dl, PtrVT);
