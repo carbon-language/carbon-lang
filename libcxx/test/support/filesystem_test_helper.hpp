@@ -7,6 +7,7 @@
 #include <string>
 #include <fstream>
 #include <random>
+#include <chrono>
 
 namespace fs = std::experimental::filesystem;
 
@@ -365,6 +366,16 @@ bool checkCollectionsEqual(
 // never be returned by the filesystem functions.
 inline std::error_code GetTestEC() {
     return std::make_error_code(std::errc::address_family_not_supported);
+}
+
+// Provide our own Sleep routine since std::this_thread::sleep_for is not
+// available in single-threaded mode.
+void SleepFor(std::chrono::seconds dur) {
+    using namespace std::chrono;
+    const auto curr_time = system_clock::now();
+    auto wake_time = curr_time + dur;
+    while (system_clock::now() < wake_time)
+        ;
 }
 
 #endif /* FILESYSTEM_TEST_HELPER_HPP */

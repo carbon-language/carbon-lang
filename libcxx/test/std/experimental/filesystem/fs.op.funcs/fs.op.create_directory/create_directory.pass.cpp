@@ -18,8 +18,6 @@
 
 #include <experimental/filesystem>
 #include <type_traits>
-#include <chrono>
-#include <thread>
 #include <cassert>
 
 #include "test_macros.h"
