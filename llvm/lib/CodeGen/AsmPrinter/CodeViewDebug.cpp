@@ -979,12 +979,16 @@ TypeIndex CodeViewDebug::lowerTypePointer(const DIDerivedType *Ty) {
   return TypeTable.writePointer(PR);
 }
 
-static PointerToMemberRepresentation translatePtrToMemberRep(bool IsPMF,
-                                                             unsigned Flags) {
+static PointerToMemberRepresentation
+translatePtrToMemberRep(unsigned SizeInBytes, bool IsPMF, unsigned Flags) {
+  // SizeInBytes being zero generally implies that the member pointer type was
+  // incomplete, which can happen if it is part of a function prototype. In this
+  // case, use the unknown model instead of the general model.
   if (IsPMF) {
     switch (Flags & DINode::FlagPtrToMemberRep) {
     case 0:
-      return PointerToMemberRepresentation::GeneralFunction;
+      return SizeInBytes == 0 ? PointerToMemberRepresentation::Unknown
+                              : PointerToMemberRepresentation::GeneralFunction;
     case DINode::FlagSingleInheritance:
       return PointerToMemberRepresentation::SingleInheritanceFunction;
     case DINode::FlagMultipleInheritance:
@@ -995,7 +999,8 @@ static PointerToMemberRepresentation translatePtrToMemberRep(bool IsPMF,
   } else {
     switch (Flags & DINode::FlagPtrToMemberRep) {
     case 0:
-      return PointerToMemberRepresentation::GeneralData;
+      return SizeInBytes == 0 ? PointerToMemberRepresentation::Unknown
+                              : PointerToMemberRepresentation::GeneralData;
     case DINode::FlagSingleInheritance:
       return PointerToMemberRepresentation::SingleInheritanceData;
     case DINode::FlagMultipleInheritance:
@@ -1017,9 +1022,10 @@ TypeIndex CodeViewDebug::lowerTypeMemberPointer(const DIDerivedType *Ty) {
   PointerMode PM = IsPMF ? PointerMode::PointerToMemberFunction
                          : PointerMode::PointerToDataMember;
   PointerOptions PO = PointerOptions::None; // FIXME
-  MemberPointerInfo MPI(ClassTI,
-                        translatePtrToMemberRep(IsPMF, Ty->getFlags()));
-  uint64_t SizeInBytes = Ty->getSizeInBits() / 8;
+  assert(Ty->getSizeInBits() / 8 <= 0xff && "pointer size too big");
+  uint8_t SizeInBytes = Ty->getSizeInBits() / 8;
+  MemberPointerInfo MPI(
+      ClassTI, translatePtrToMemberRep(SizeInBytes, IsPMF, Ty->getFlags()));
   PointerRecord PR(PointeeTI, PK, PM, PO, SizeInBytes, MPI);
   return TypeTable.writePointer(PR);
 }
