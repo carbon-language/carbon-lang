@@ -256,6 +256,7 @@ struct SkipBodyAction : public clang::ASTFrontendAction {
 
 TEST(runToolOnCode, TestSkipFunctionBody) {
   std::vector<std::string> Args = {"-std=c++11"};
+  std::vector<std::string> Args2 = {"-fno-delayed-template-parsing"};
 
   EXPECT_TRUE(runToolOnCode(new SkipBodyAction,
                             "int skipMe() { an_error_here }"));
@@ -310,9 +311,9 @@ TEST(runToolOnCode, TestSkipFunctionBody) {
   EXPECT_TRUE(runToolOnCode(
       new SkipBodyAction, "template<typename T> int skipMe() { an_error_here }"
                           "int x = skipMe<int>();"));
-  EXPECT_FALSE(
-      runToolOnCode(new SkipBodyAction,
-                    "template<typename T> int skipMeNot() { an_error_here }"));
+  EXPECT_FALSE(runToolOnCodeWithArgs(
+      new SkipBodyAction,
+      "template<typename T> int skipMeNot() { an_error_here }", Args2));
 }
 
 TEST(runToolOnCodeWithArgs, TestNoDepFile) {
