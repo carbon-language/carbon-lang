@@ -980,7 +980,7 @@ define double @test72(double *%p, i32 %i) {
 define double @test73(double *%p, i128 %i) {
 ; CHECK-LABEL: @test73(
 ; CHECK-NEXT:    [[O:%.*]] = trunc i128 %i to i64
-; CHECK-NEXT:    [[PP1:%.*]] = getelementptr double, double* %p, i64 [[O]]
+; CHECK-NEXT:    [[PP1:%.*]] = getelementptr inbounds double, double* %p, i64 [[O]]
 ; CHECK-NEXT:    [[L:%.*]] = load double, double* [[PP1]], align 8
 ; CHECK-NEXT:    ret double [[L]]
 ;
