@@ -979,20 +979,48 @@ TypeIndex CodeViewDebug::lowerTypePointer(const DIDerivedType *Ty) {
   return TypeTable.writePointer(PR);
 }
 
+static PointerToMemberRepresentation translatePtrToMemberRep(bool IsPMF,
+                                                             unsigned Flags) {
+  if (IsPMF) {
+    switch (Flags & DINode::FlagPtrToMemberRep) {
+    case 0:
+      return PointerToMemberRepresentation::GeneralFunction;
+    case DINode::FlagSingleInheritance:
+      return PointerToMemberRepresentation::SingleInheritanceFunction;
+    case DINode::FlagMultipleInheritance:
+      return PointerToMemberRepresentation::MultipleInheritanceFunction;
+    case DINode::FlagVirtualInheritance:
+      return PointerToMemberRepresentation::VirtualInheritanceFunction;
+    }
+  } else {
+    switch (Flags & DINode::FlagPtrToMemberRep) {
+    case 0:
+      return PointerToMemberRepresentation::GeneralData;
+    case DINode::FlagSingleInheritance:
+      return PointerToMemberRepresentation::SingleInheritanceData;
+    case DINode::FlagMultipleInheritance:
+      return PointerToMemberRepresentation::MultipleInheritanceData;
+    case DINode::FlagVirtualInheritance:
+      return PointerToMemberRepresentation::VirtualInheritanceData;
+    }
+  }
+  llvm_unreachable("invalid ptr to member representation");
+}
+
 TypeIndex CodeViewDebug::lowerTypeMemberPointer(const DIDerivedType *Ty) {
   assert(Ty->getTag() == dwarf::DW_TAG_ptr_to_member_type);
   TypeIndex ClassTI = getTypeIndex(Ty->getClassType());
   TypeIndex PointeeTI = getTypeIndex(Ty->getBaseType());
   PointerKind PK = Asm->MAI->getPointerSize() == 8 ? PointerKind::Near64
                                                    : PointerKind::Near32;
-  PointerMode PM = isa<DISubroutineType>(Ty->getBaseType())
-                       ? PointerMode::PointerToMemberFunction
-                       : PointerMode::PointerToDataMember;
+  bool IsPMF = isa<DISubroutineType>(Ty->getBaseType());
+  PointerMode PM = IsPMF ? PointerMode::PointerToMemberFunction
+                         : PointerMode::PointerToDataMember;
   PointerOptions PO = PointerOptions::None; // FIXME
-  // FIXME: Thread this ABI info through metadata.
-  PointerToMemberRepresentation PMR = PointerToMemberRepresentation::Unknown;
-  MemberPointerInfo MPI(ClassTI, PMR);
-  PointerRecord PR(PointeeTI, PK, PM, PO, Ty->getSizeInBits() / 8, MPI);
+  MemberPointerInfo MPI(ClassTI,
+                        translatePtrToMemberRep(IsPMF, Ty->getFlags()));
+  uint64_t SizeInBytes = Ty->getSizeInBits() / 8;
+  PointerRecord PR(PointeeTI, PK, PM, PO, SizeInBytes, MPI);
   return TypeTable.writePointer(PR);
 }
 
