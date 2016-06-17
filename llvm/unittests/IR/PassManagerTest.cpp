@@ -238,8 +238,8 @@ TEST_F(PassManagerTest, Basic) {
     {
       // Pointless scope to test move assignment.
       FunctionPassManager NestedFPM;
-      NestedFPM.addPass(TestFunctionPass(FunctionPassRunCount1, AnalyzedInstrCount1,
-                                   AnalyzedFunctionCount1));
+      NestedFPM.addPass(TestFunctionPass(
+          FunctionPassRunCount1, AnalyzedInstrCount1, AnalyzedFunctionCount1));
       FPM = std::move(NestedFPM);
     }
     NestedMPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));

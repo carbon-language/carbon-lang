@@ -142,9 +142,8 @@ struct TestModulePass {
 
 struct TestSCCPass {
   TestSCCPass(int &RunCount, int &AnalyzedInstrCount,
-                   int &AnalyzedSCCFunctionCount,
-                   int &AnalyzedModuleFunctionCount,
-                   bool OnlyUseCachedResults = false)
+              int &AnalyzedSCCFunctionCount, int &AnalyzedModuleFunctionCount,
+              bool OnlyUseCachedResults = false)
       : RunCount(RunCount), AnalyzedInstrCount(AnalyzedInstrCount),
         AnalyzedSCCFunctionCount(AnalyzedSCCFunctionCount),
         AnalyzedModuleFunctionCount(AnalyzedModuleFunctionCount),
