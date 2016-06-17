@@ -987,7 +987,7 @@ define double @test73(double *%p, i128 %i) {
   %lo = shl nsw i128 %i, 3
   %o = trunc i128 %lo to i64
   %q = bitcast double* %p to i8*
-  %pp = getelementptr i8, i8* %q, i64 %o
+  %pp = getelementptr inbounds i8, i8* %q, i64 %o
   %r = bitcast i8* %pp to double*
   %l = load double, double* %r
   ret double %l

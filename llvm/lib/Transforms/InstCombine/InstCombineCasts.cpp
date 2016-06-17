@@ -566,28 +566,11 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   // Transform "trunc (and X, cst)" -> "and (trunc X), cst" so long as the dest
   // type isn't non-native.
   if (Src->hasOneUse() && isa<IntegerType>(SrcTy) &&
-      ShouldChangeType(SrcTy, DestTy)) {
-
-    // Transform "trunc (and X, cst)" -> "and (trunc X), cst" so long as the dest
-    // type isn't non-native.
-    if (match(Src, m_And(m_Value(A), m_ConstantInt(Cst)))) {
-      Value *NewTrunc = Builder->CreateTrunc(A, DestTy, A->getName() + ".tr");
-      return BinaryOperator::CreateAnd(NewTrunc,
-                                       ConstantExpr::getTrunc(Cst, DestTy));
-    }
-
-    // Transform "trunc (shl X, cst)" -> "shl (trunc X), cst" so long as the
-    // dest type isn't non-native and cst < dest size.
-    if (match(Src, m_Shl(m_Value(A), m_ConstantInt(Cst)))) {
-      const unsigned DestSize = DestTy->getPrimitiveSizeInBits();
-      if (Cst->getValue().ult(DestSize)) {
-        Value *NewTrunc = Builder->CreateTrunc(A, DestTy, A->getName() + ".tr");
-
-        return BinaryOperator::Create(
-          Instruction::Shl, NewTrunc,
-          ConstantInt::get(DestTy, Cst->getValue().trunc(DestSize)));
-      }
-    }
+      ShouldChangeType(SrcTy, DestTy) &&
+      match(Src, m_And(m_Value(A), m_ConstantInt(Cst)))) {
+    Value *NewTrunc = Builder->CreateTrunc(A, DestTy, A->getName() + ".tr");
+    return BinaryOperator::CreateAnd(NewTrunc,
+                                     ConstantExpr::getTrunc(Cst, DestTy));
   }
 
   if (Instruction *I = foldVecTruncToExtElt(CI, *this, DL))
