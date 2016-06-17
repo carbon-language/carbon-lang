@@ -1426,7 +1426,7 @@ SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
 
   SDLoc DL(GSD);
   const GlobalValue *GV = GSD->getGlobal();
-  MVT PtrVT = getPointerTy(DAG.getDataLayout(), GSD->getAddressSpace());
+  EVT PtrVT = Op.getValueType();
 
   // In order to support pc-relative addressing, the PC_ADD_REL_OFFSET SDNode is
   // lowered to the following code sequence:
