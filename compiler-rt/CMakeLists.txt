@@ -135,7 +135,14 @@ pythonize_bool(COMPILER_RT_DEBUG)
 include(config-ix)
 
 if(MSVC)
-  append_string_if(COMPILER_RT_HAS_W3_FLAG /W3 CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+  # Override any existing /W flags with /W4. This is what LLVM does.  Failing to
+  # remove other /W[0-4] flags will result in a warning about overriding a
+  # previous flag.
+  if (COMPILER_RT_HAS_W4_FLAG)
+    string(REGEX REPLACE " /W[0-4]" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    string(REGEX REPLACE " /W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    append_string_if(COMPILER_RT_HAS_W4_FLAG /W4 CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+  endif()
 else()
   append_string_if(COMPILER_RT_HAS_WALL_FLAG -Wall CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
 endif()
