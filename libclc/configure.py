@@ -105,14 +105,12 @@ available_targets = {
   'amdgcn--amdhsa': { 'devices' :
                       [{'gpu' : '', 'aliases' : ['bonaire', 'hawaii', 'kabini', 'kaveri', 'mullins', 'carrizo', 'stoney', 'fiji', 'iceland', 'tonga'],
                        'defines' : {}} ]},
-  'nvptx--'   : { 'devices' : [{'gpu' : '', 'aliases' : [],
-                                'defines' : {'all' : ['cl_khr_fp64']}}]},
-  'nvptx64--' : { 'devices' : [{'gpu' : '', 'aliases' : [],
-                                'defines' : {'all' : ['cl_khr_fp64']}}]},
+  'nvptx--'   : { 'devices' : [{'gpu' : '', 'aliases' : [], 'defines' : {}} ]},
+  'nvptx64--' : { 'devices' : [{'gpu' : '', 'aliases' : [], 'defines' : {}} ]},
   'nvptx--nvidiacl'   : { 'devices' : [{'gpu' : '', 'aliases' : [],
-                                        'defines' : {'all' : ['cl_khr_fp64']}}]},
+                                        'defines' : {}} ]},
   'nvptx64--nvidiacl' : { 'devices' : [{'gpu' : '', 'aliases' : [],
-                                        'defines' : {'all' : ['cl_khr_fp64']}}]},
+                                        'defines' : {}} ]},
 }
 
 default_targets = ['nvptx--nvidiacl', 'nvptx64--nvidiacl', 'r600--', 'amdgcn--', 'amdgcn--amdhsa']
