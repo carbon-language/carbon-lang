@@ -198,7 +198,6 @@ for target in targets:
                      "-fno-builtin " \
                      "-Dcl_clang_storage_class_specifiers " \
                      "%s " \
-                     "-Dcles_khr_int64 " \
                      "-D__CLC_INTERNAL " \
                      "-emit-llvm" % (target, clang_cl_includes, device_defines)
     if device['gpu'] != '':
