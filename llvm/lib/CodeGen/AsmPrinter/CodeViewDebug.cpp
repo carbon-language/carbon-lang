@@ -1095,14 +1095,26 @@ static ClassOptions getRecordUniqueNameOption(const DICompositeType *Ty) {
 TypeIndex CodeViewDebug::lowerTypeEnum(const DICompositeType *Ty) {
   ClassOptions CO = ClassOptions::None | getRecordUniqueNameOption(Ty);
   TypeIndex FTI;
-  unsigned FieldCount = 0;
+  unsigned EnumeratorCount = 0;
 
-  if (Ty->isForwardDecl())
+  if (Ty->isForwardDecl()) {
     CO |= ClassOptions::ForwardReference;
-  else
-    std::tie(FTI, FieldCount) = lowerRecordFieldList(Ty);
+  } else {
+    FieldListRecordBuilder Fields;
+    for (const DINode *Element : Ty->getElements()) {
+      // We assume that the frontend provides all members in source declaration
+      // order, which is what MSVC does.
+      if (auto *Enumerator = dyn_cast_or_null<DIEnumerator>(Element)) {
+        Fields.writeEnumerator(EnumeratorRecord(
+            MemberAccess::Public, APSInt::getUnsigned(Enumerator->getValue()),
+            Enumerator->getName()));
+        EnumeratorCount++;
+      }
+    }
+    FTI = TypeTable.writeFieldList(Fields);
+  }
 
-  return TypeTable.writeEnum(EnumRecord(FieldCount, CO, FTI, Ty->getName(),
+  return TypeTable.writeEnum(EnumRecord(EnumeratorCount, CO, FTI, Ty->getName(),
                                         Ty->getIdentifier(),
                                         getTypeIndex(Ty->getBaseType())));
 }
@@ -1198,10 +1210,6 @@ CodeViewDebug::lowerRecordFieldList(const DICompositeType *Ty) {
       }
       // FIXME: Get clang to emit nested types here and do something with
       // them.
-    } else if (auto *Enumerator = dyn_cast<DIEnumerator>(Element)) {
-      Fields.writeEnumerator(EnumeratorRecord(
-          MemberAccess::Public, APSInt::getUnsigned(Enumerator->getValue()),
-          Enumerator->getName()));
     }
     // Skip other unrecognized kinds of elements.
   }
