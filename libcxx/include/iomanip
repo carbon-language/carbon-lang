@@ -567,7 +567,7 @@ __quoted_input ( basic_istream<_CharT, _Traits> &__is, _String & __string, _Char
 }
 
 
-template <class _CharT, class _Iter, class _Traits=char_traits<_CharT>>
+template <class _CharT, class _Iter, class _Traits=char_traits<_CharT> >
 struct __quoted_output_proxy
 {
     _Iter  __first;
