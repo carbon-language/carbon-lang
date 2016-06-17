@@ -69,7 +69,7 @@
 
 // RUN: %clang -### -target armv7-windows-itanium -isystem-after "Windows Kits/10/Include/10.0.10586.0/ucrt" -isystem-after "Windows Kits/10/Include/10.0.10586.0/um" -isystem-after "Windows Kits/10/Include/10.0.10586.0/shared" -c %s -o /dev/null 2>&1 \
 // RUN:     | FileCheck %s --check-prefix CHECK-ISYSTEM-AFTER
-// CHECK-ISYSTEM-AFTER: "-internal-isystem" "{{.*}}/clang/3.9.0/include"
+// CHECK-ISYSTEM-AFTER: "-internal-isystem" "{{.*}}/clang/{{[\.0-9]+}}/include"
 // CHECK-ISYSTEM-AFTER: "-internal-isystem" "Windows Kits/10/Include/10.0.10586.0/ucrt"
 // CHECK-ISYSTEM-AFTER: "-internal-isystem" "Windows Kits/10/Include/10.0.10586.0/um"
 // CHECK-ISYSTEM-AFTER: "-internal-isystem" "Windows Kits/10/Include/10.0.10586.0/shared"
