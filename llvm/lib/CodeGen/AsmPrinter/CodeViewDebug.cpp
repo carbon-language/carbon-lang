@@ -135,7 +135,9 @@ TypeIndex CodeViewDebug::getFuncIdForSubprogram(const DISubprogram *SP) {
     return I->second;
 
   TypeIndex ParentScope = TypeIndex(0);
-  StringRef DisplayName = SP->getDisplayName();
+  // The display name includes function template arguments. Drop them to match
+  // MSVC.
+  StringRef DisplayName = SP->getDisplayName().split('<').first;
   FuncIdRecord FuncId(ParentScope, getTypeIndex(SP->getType()), DisplayName);
   TypeIndex TI = TypeTable.writeFuncId(FuncId);
 
@@ -453,6 +455,31 @@ void CodeViewDebug::switchToDebugSectionForSymbol(const MCSymbol *GVSym) {
     emitCodeViewMagicVersion();
 }
 
+static const DISubprogram *getQualifiedNameComponents(
+    const DIScope *Scope, SmallVectorImpl<StringRef> &QualifiedNameComponents) {
+  const DISubprogram *ClosestSubprogram = nullptr;
+  while (Scope != nullptr) {
+    if (ClosestSubprogram == nullptr)
+      ClosestSubprogram = dyn_cast<DISubprogram>(Scope);
+    StringRef ScopeName = Scope->getName();
+    if (!ScopeName.empty())
+      QualifiedNameComponents.push_back(ScopeName);
+    Scope = Scope->getScope().resolve();
+  }
+  return ClosestSubprogram;
+}
+
+static std::string getQualifiedName(ArrayRef<StringRef> QualifiedNameComponents,
+                                    StringRef TypeName) {
+  std::string FullyQualifiedName;
+  for (StringRef QualifiedNameComponent : reverse(QualifiedNameComponents)) {
+    FullyQualifiedName.append(QualifiedNameComponent);
+    FullyQualifiedName.append("::");
+  }
+  FullyQualifiedName.append(TypeName);
+  return FullyQualifiedName;
+}
+
 void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
                                              FunctionInfo &FI) {
   // For each function there is a separate subsection
@@ -463,11 +490,18 @@ void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
   // Switch to the to a comdat section, if appropriate.
   switchToDebugSectionForSymbol(Fn);
 
-  StringRef FuncName;
+  std::string FuncName;
   auto *SP = GV->getSubprogram();
   setCurrentSubprogram(SP);
-  if (SP != nullptr)
-    FuncName = SP->getDisplayName();
+
+  // If we have a display name, build the fully qualified name by walking the
+  // chain of scopes.
+  if (SP != nullptr && !SP->getDisplayName().empty()) {
+    SmallVector<StringRef, 5> QualifiedNameComponents;
+    getQualifiedNameComponents(SP->getScope().resolve(),
+                               QualifiedNameComponents);
+    FuncName = getQualifiedName(QualifiedNameComponents, SP->getDisplayName());
+  }
 
   // If our DISubprogram name is empty, use the mangled name.
   if (FuncName.empty())
@@ -767,31 +801,6 @@ TypeIndex CodeViewDebug::lowerType(const DIType *Ty) {
     // Use the null type index.
     return TypeIndex();
   }
-}
-
-static const DISubprogram *getQualifiedNameComponents(
-    const DIScope *Scope, SmallVectorImpl<StringRef> &QualifiedNameComponents) {
-  const DISubprogram *ClosestSubprogram = nullptr;
-  while (Scope != nullptr) {
-    if (ClosestSubprogram == nullptr)
-      ClosestSubprogram = dyn_cast<DISubprogram>(Scope);
-    StringRef ScopeName = Scope->getName();
-    if (!ScopeName.empty())
-      QualifiedNameComponents.push_back(ScopeName);
-    Scope = Scope->getScope().resolve();
-  }
-  return ClosestSubprogram;
-}
-
-static std::string getQualifiedName(ArrayRef<StringRef> QualifiedNameComponents,
-                                    StringRef TypeName) {
-  std::string FullyQualifiedName;
-  for (StringRef QualifiedNameComponent : reverse(QualifiedNameComponents)) {
-    FullyQualifiedName.append(QualifiedNameComponent);
-    FullyQualifiedName.append("::");
-  }
-  FullyQualifiedName.append(TypeName);
-  return FullyQualifiedName;
 }
 
 TypeIndex CodeViewDebug::lowerTypeAlias(const DIDerivedType *Ty) {
