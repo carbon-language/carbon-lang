@@ -165,6 +165,7 @@ recursive_directory_iterator::recursive_directory_iterator(const path& p,
     directory_options opt, error_code *ec)
     : __imp_(nullptr), __rec_(true)
 {
+    if (ec) ec->clear();
     std::error_code m_ec;
     __dir_stream new_s(p, opt, m_ec);
     if (m_ec) set_or_throw(m_ec, ec, "recursive_directory_iterator", p);
@@ -226,6 +227,8 @@ void recursive_directory_iterator::__advance(error_code* ec) {
     __imp_.reset();
     if (m_ec)
         set_or_throw(m_ec, ec, "recursive_directory_iterator::operator++()");
+    else if (ec)
+        ec->clear();
 }
 
 bool recursive_directory_iterator::__try_recursion(error_code *ec) {
