@@ -11139,7 +11139,7 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // we will be able to shuffle even across lanes the other input in a single
   // instruction so skip this pattern.
   if (!(Subtarget.hasAVX2() && (isShuffleMaskInputInPlace(0, Mask) ||
-                                 isShuffleMaskInputInPlace(1, Mask))))
+                                isShuffleMaskInputInPlace(1, Mask))))
     if (SDValue Result = lowerVectorShuffleByMerging128BitLanes(
             DL, MVT::v4f64, V1, V2, Mask, Subtarget, DAG))
       return Result;
