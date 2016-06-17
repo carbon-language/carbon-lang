@@ -1,4 +1,4 @@
-; RUN: opt -loop-load-elim -S < %s | FileCheck %s -check-prefix=CHECK
+; RUN: opt -loop-load-elim -S < %s | FileCheck %s
 
 ; Forwarding in the presence of symbolic strides is currently not supported:
 ;
@@ -15,7 +15,7 @@ entry:
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %entry
-; CHECK-NOT: %store_forwarded = phi i32 [ %load_initial, %entry ], [ %add, %for.body ]
+; CHECK-NOT: %store_forwarded = phi i32 [ %load_initial, {{.*}} ], [ %add, %for.body ]
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %mul = mul i64 %indvars.iv, %stride
   %arrayidx = getelementptr inbounds i32, i32* %A, i64 %mul
