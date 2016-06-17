@@ -105,7 +105,9 @@ namespace {
 
 /// \brief No-op module pass which does nothing.
 struct NoOpModulePass {
-  PreservedAnalyses run(Module &M) { return PreservedAnalyses::all(); }
+  PreservedAnalyses run(Module &M, AnalysisManager<Module> &) {
+    return PreservedAnalyses::all();
+  }
   static StringRef name() { return "NoOpModulePass"; }
 };
 
@@ -116,13 +118,14 @@ class NoOpModuleAnalysis : public AnalysisInfoMixin<NoOpModuleAnalysis> {
 
 public:
   struct Result {};
-  Result run(Module &) { return Result(); }
+  Result run(Module &, AnalysisManager<Module> &) { return Result(); }
   static StringRef name() { return "NoOpModuleAnalysis"; }
 };
 
 /// \brief No-op CGSCC pass which does nothing.
 struct NoOpCGSCCPass {
-  PreservedAnalyses run(LazyCallGraph::SCC &C) {
+  PreservedAnalyses run(LazyCallGraph::SCC &C,
+                        AnalysisManager<LazyCallGraph::SCC> &) {
     return PreservedAnalyses::all();
   }
   static StringRef name() { return "NoOpCGSCCPass"; }
@@ -135,13 +138,17 @@ class NoOpCGSCCAnalysis : public AnalysisInfoMixin<NoOpCGSCCAnalysis> {
 
 public:
   struct Result {};
-  Result run(LazyCallGraph::SCC &) { return Result(); }
+  Result run(LazyCallGraph::SCC &, AnalysisManager<LazyCallGraph::SCC> &) {
+    return Result();
+  }
   static StringRef name() { return "NoOpCGSCCAnalysis"; }
 };
 
 /// \brief No-op function pass which does nothing.
 struct NoOpFunctionPass {
-  PreservedAnalyses run(Function &F) { return PreservedAnalyses::all(); }
+  PreservedAnalyses run(Function &F, AnalysisManager<Function> &) {
+    return PreservedAnalyses::all();
+  }
   static StringRef name() { return "NoOpFunctionPass"; }
 };
 
@@ -152,13 +159,15 @@ class NoOpFunctionAnalysis : public AnalysisInfoMixin<NoOpFunctionAnalysis> {
 
 public:
   struct Result {};
-  Result run(Function &) { return Result(); }
+  Result run(Function &, AnalysisManager<Function> &) { return Result(); }
   static StringRef name() { return "NoOpFunctionAnalysis"; }
 };
 
 /// \brief No-op loop pass which does nothing.
 struct NoOpLoopPass {
-  PreservedAnalyses run(Loop &L) { return PreservedAnalyses::all(); }
+  PreservedAnalyses run(Loop &L, AnalysisManager<Loop> &) {
+    return PreservedAnalyses::all();
+  }
   static StringRef name() { return "NoOpLoopPass"; }
 };
 
@@ -169,7 +178,7 @@ class NoOpLoopAnalysis : public AnalysisInfoMixin<NoOpLoopAnalysis> {
 
 public:
   struct Result {};
-  Result run(Loop &) { return Result(); }
+  Result run(Loop &, AnalysisManager<Loop> &) { return Result(); }
   static StringRef name() { return "NoOpLoopAnalysis"; }
 };
 
