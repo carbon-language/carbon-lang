@@ -85,9 +85,6 @@ class BinaryBasicBlock {
 
   /// Each successor has a corresponding BranchInfo entry in the list.
   std::vector<BinaryBranchInfo> BranchInfo;
-  typedef std::vector<BinaryBranchInfo>::iterator          branch_info_iterator;
-  typedef std::vector<BinaryBranchInfo>::const_iterator
-                                                     const_branch_info_iterator;
 
   BinaryBasicBlock() {}
 
@@ -250,6 +247,25 @@ public:
   }
   inline iterator_range<const_lp_iterator> landing_pads() const {
     return iterator_range<const_lp_iterator>(lp_begin(), lp_end());
+  }
+
+  // BranchInfo iterators.
+  typedef std::vector<BinaryBranchInfo>::const_iterator
+                                                     const_branch_info_iterator;
+
+  const_branch_info_iterator  branch_info_begin() const
+                                                  { return BranchInfo.begin(); }
+  const_branch_info_iterator  branch_info_end()   const
+                                                  { return BranchInfo.end();   }
+  unsigned                    branch_info_size()  const {
+    return (unsigned)BranchInfo.size();
+  }
+  bool                        branch_info_empty() const
+                                                  { return BranchInfo.empty(); }
+
+  inline iterator_range<const_branch_info_iterator> branch_info() const {
+    return iterator_range<const_branch_info_iterator>(
+        branch_info_begin(), branch_info_end());
   }
 
   /// Return symbol marking the start of this basic block.

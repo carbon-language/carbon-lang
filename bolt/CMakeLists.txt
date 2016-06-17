@@ -24,4 +24,5 @@ add_llvm_tool(llvm-bolt
   DebugData.cpp
   Exceptions.cpp
   RewriteInstance.cpp
+  ReorderAlgorithm.cpp
   )

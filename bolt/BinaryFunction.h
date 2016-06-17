@@ -306,6 +306,9 @@ public:
 
   typedef BasicBlockOrderType::iterator order_iterator;
   typedef BasicBlockOrderType::const_iterator const_order_iterator;
+  typedef BasicBlockOrderType::reverse_iterator reverse_order_iterator;
+  typedef BasicBlockOrderType::const_reverse_iterator
+    const_reverse_order_iterator;
 
   // CFG iterators.
   iterator                 begin()       { return BasicBlocks.begin(); }
@@ -325,17 +328,37 @@ public:
   const BinaryBasicBlock & back() const  { return *BasicBlocks.back(); }
         BinaryBasicBlock & back()        { return *BasicBlocks.back(); }
 
-  unsigned layout_size() const {
-    return (unsigned)BasicBlocksLayout.size();
-  }
-  const_order_iterator layout_begin() const {
-    return BasicBlocksLayout.begin();
-  }
-  order_iterator layout_begin() { return BasicBlocksLayout.begin(); }
+  order_iterator       layout_begin()    { return BasicBlocksLayout.begin(); }
+  const_order_iterator layout_begin()    const
+                                         { return BasicBlocksLayout.begin(); }
+  order_iterator       layout_end()      { return BasicBlocksLayout.end(); }
+  const_order_iterator layout_end()      const
+                                         { return BasicBlocksLayout.end(); }
+  reverse_order_iterator       layout_rbegin()
+                                         { return BasicBlocksLayout.rbegin(); }
+  const_reverse_order_iterator layout_rbegin() const
+                                         { return BasicBlocksLayout.rbegin(); }
+  reverse_order_iterator       layout_rend()
+                                         { return BasicBlocksLayout.rend(); }
+  const_reverse_order_iterator layout_rend()   const
+                                         { return BasicBlocksLayout.rend(); }
+  unsigned layout_size()  const { return (unsigned)BasicBlocksLayout.size(); }
+  bool     layout_empty() const { return BasicBlocksLayout.empty(); }
+  const BinaryBasicBlock *layout_front() const
+                                         { return BasicBlocksLayout.front(); }
+        BinaryBasicBlock *layout_front() { return BasicBlocksLayout.front(); }
+  const BinaryBasicBlock *layout_back()  const
+                                         { return BasicBlocksLayout.back(); }
+        BinaryBasicBlock *layout_back()  { return BasicBlocksLayout.back(); }
 
   inline iterator_range<order_iterator> layout() {
     return iterator_range<order_iterator>(BasicBlocksLayout.begin(),
                                           BasicBlocksLayout.end());
+  }
+
+  inline iterator_range<const_order_iterator> layout() const {
+    return iterator_range<const_order_iterator>(BasicBlocksLayout.begin(),
+                                                BasicBlocksLayout.end());
   }
 
   cfi_iterator        cie_begin()       { return CIEFrameInstructions.begin(); }
@@ -367,14 +390,6 @@ public:
   /// Modify code layout making necessary adjustments to instructions at the
   /// end of basic blocks.
   void modifyLayout(LayoutType Type, bool Split);
-
-  /// Dynamic programming implementation for the TSP, applied to BB layout. Find
-  /// the optimal way to maximize weight during a path traversing all BBs. In
-  /// this way, we will convert the hottest branches into fall-throughs.
-  ///
-  /// Uses exponential amount of memory on the number of basic blocks and should
-  /// only be used for small functions.
-  void solveOptimalLayout(bool Split);
 
   /// View CFG in graphviz program
   void viewGraph();

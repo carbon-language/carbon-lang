@@ -12,6 +12,7 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
+#include "ReorderAlgorithm.h"
 #include "DataReader.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
@@ -40,9 +41,6 @@ static cl::opt<bool>
 AgressiveSplitting("split-all-cold",
                    cl::desc("outline as many cold basic blocks as possible"),
                    cl::Optional);
-
-static cl::opt<bool>
-PrintClusters("print-clusters", cl::desc("print clusters"), cl::Optional);
 
 static cl::opt<bool>
 PrintDebugInfo("print-debug-info",
@@ -1254,378 +1252,47 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
   if (BasicBlocksLayout.empty() || Type == LT_NONE)
     return;
 
-  if (Type == LT_REVERSE) {
-    BasicBlockOrderType ReverseOrder;
-    auto FirstBB = BasicBlocksLayout.front();
-    ReverseOrder.push_back(FirstBB);
-    for (auto RBBI = BasicBlocksLayout.rbegin(); *RBBI != FirstBB; ++RBBI)
-      ReverseOrder.push_back(*RBBI);
-    BasicBlocksLayout.swap(ReverseOrder);
-
-    if (Split)
-      splitFunction();
-
-    fixBranches();
-
-    return;
-  }
+  BasicBlockOrderType NewLayout;
+  std::unique_ptr<ReorderAlgorithm> Algo;
 
   // Cannot do optimal layout without profile.
-  if (!hasValidProfile())
+  if (Type != LT_REVERSE && !hasValidProfile())
     return;
 
-  // Work on optimal solution if problem is small enough
-  if (BasicBlocksLayout.size() <= FUNC_SIZE_THRESHOLD)
-    return solveOptimalLayout(Split);
+  if (Type == LT_REVERSE) {
+    Algo.reset(new ReverseReorderAlgorithm());
+  }
+  else if (BasicBlocksLayout.size() <= FUNC_SIZE_THRESHOLD) {
+    // Work on optimal solution if problem is small enough
+    DEBUG(dbgs() << "finding optimal block layout for " << getName() << "\n");
+    Algo.reset(new OptimalReorderAlgorithm());
+  }
+  else {
+    DEBUG(dbgs() << "running block layout heuristics on " << getName() << "\n");
 
-  DEBUG(dbgs() << "running block layout heuristics on " << getName() << "\n");
+    std::unique_ptr<ClusterAlgorithm> CAlgo(new GreedyClusterAlgorithm());
 
-  // Greedy heuristic implementation for the TSP, applied to BB layout. Try to
-  // maximize weight during a path traversing all BBs. In this way, we will
-  // convert the hottest branches into fall-throughs.
+    switch(Type) {
+    case LT_OPTIMIZE:
+      Algo.reset(new OptimizeReorderAlgorithm(std::move(CAlgo)));
+      break;
 
-  // Encode an edge between two basic blocks, source and destination
-  typedef std::pair<BinaryBasicBlock *, BinaryBasicBlock *> EdgeTy;
-  std::map<EdgeTy, uint64_t> Weight;
+    case LT_OPTIMIZE_BRANCH:
+      Algo.reset(new OptimizeBranchReorderAlgorithm(std::move(CAlgo)));
+      break;
 
-  // Define a comparison function to establish SWO between edges
-  auto Comp = [&] (EdgeTy A, EdgeTy B) {
-    // With equal weights, prioritize branches with lower index
-    // source/destination. This helps to keep original block order for blocks
-    // when optimal order cannot be deducted from a profile.
-    if (Weight[A] == Weight[B]) {
-      uint32_t ASrcBBIndex = getIndex(A.first);
-      uint32_t BSrcBBIndex = getIndex(B.first);
-      if (ASrcBBIndex != BSrcBBIndex)
-        return ASrcBBIndex > BSrcBBIndex;
-      return getIndex(A.second) > getIndex(B.second);
-    }
-    return Weight[A] < Weight[B];
-  };
-  std::priority_queue<EdgeTy, std::vector<EdgeTy>, decltype(Comp)> Queue(Comp);
+    case LT_OPTIMIZE_CACHE:
+      Algo.reset(new OptimizeCacheReorderAlgorithm(std::move(CAlgo)));
+      break;
 
-  typedef std::vector<BinaryBasicBlock *> ClusterTy;
-  typedef std::map<BinaryBasicBlock *, int> BBToClusterMapTy;
-  std::vector<ClusterTy> Clusters;
-  BBToClusterMapTy BBToClusterMap;
-
-  // Encode relative weights between two clusters
-  std::vector<std::map<uint32_t, uint64_t>> ClusterEdges;
-  ClusterEdges.resize(BasicBlocksLayout.size());
-
-  for (auto BB : BasicBlocksLayout) {
-    // Create a cluster for this BB
-    uint32_t I = Clusters.size();
-    Clusters.emplace_back();
-    auto &Cluster = Clusters.back();
-    Cluster.push_back(BB);
-    BBToClusterMap[BB] = I;
-    // Populate priority queue with edges
-    auto BI = BB->BranchInfo.begin();
-    for (auto &I : BB->successors()) {
-      if (BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
-        Weight[std::make_pair(BB, I)] = BI->Count;
-      Queue.push(std::make_pair(BB, I));
-      ++BI;
+    default:
+      llvm_unreachable("unexpected layout type");
     }
   }
 
-  // Grow clusters in a greedy fashion
-  while (!Queue.empty()) {
-    auto elmt = Queue.top();
-    Queue.pop();
-
-    BinaryBasicBlock *BBSrc = elmt.first;
-    BinaryBasicBlock *BBDst = elmt.second;
-
-    // Case 1: BBSrc and BBDst are the same. Ignore this edge
-    if (BBSrc == BBDst || BBDst == *BasicBlocksLayout.begin())
-      continue;
-
-    int I = BBToClusterMap[BBSrc];
-    int J = BBToClusterMap[BBDst];
-
-    // Case 2: If they are already allocated at the same cluster, just increase
-    // the weight of this cluster
-    if (I == J) {
-      ClusterEdges[I][I] += Weight[elmt];
-      continue;
-    }
-
-    auto &ClusterA = Clusters[I];
-    auto &ClusterB = Clusters[J];
-    if (ClusterA.back() == BBSrc && ClusterB.front() == BBDst) {
-      // Case 3: BBSrc is at the end of a cluster and BBDst is at the start,
-      // allowing us to merge two clusters
-      for (auto BB : ClusterB)
-        BBToClusterMap[BB] = I;
-      ClusterA.insert(ClusterA.end(), ClusterB.begin(), ClusterB.end());
-      ClusterB.clear();
-      // Iterate through all inter-cluster edges and transfer edges targeting
-      // cluster B to cluster A.
-      // It is bad to have to iterate though all edges when we could have a list
-      // of predecessors for cluster B. However, it's not clear if it is worth
-      // the added code complexity to create a data structure for clusters that
-      // maintains a list of predecessors. Maybe change this if it becomes a
-      // deal breaker.
-      for (uint32_t K = 0, E = ClusterEdges.size(); K != E; ++K)
-        ClusterEdges[K][I] += ClusterEdges[K][J];
-    } else {
-      // Case 4: Both BBSrc and BBDst are allocated in positions we cannot
-      // merge them. Annotate the weight of this edge in the weight between
-      // clusters to help us decide ordering between these clusters.
-      ClusterEdges[I][J] += Weight[elmt];
-    }
-  }
-  std::vector<uint32_t> Order;  // Cluster layout order
-
-  // Here we have 3 conflicting goals as to how to layout clusters. If we want
-  // to minimize jump offsets, we should put clusters with heavy inter-cluster
-  // dependence as close as possible. If we want to maximize the probability
-  // that all inter-cluster edges are predicted as not-taken, we should enforce
-  // a topological order to make targets appear after sources, creating forward
-  // branches. If we want to separate hot from cold blocks to maximize the
-  // probability that unfrequently executed code doesn't pollute the cache, we
-  // should put clusters in descending order of hotness.
-  std::vector<double> AvgFreq;
-  AvgFreq.resize(Clusters.size(), 0.0);
-  for (uint32_t I = 0, E = Clusters.size(); I < E; ++I) {
-    double Freq = 0.0;
-    for (auto BB : Clusters[I]) {
-      if (!BB->empty() && BB->size() != BB->getNumPseudos())
-        Freq += ((double) BB->getExecutionCount()) /
-                (BB->size() - BB->getNumPseudos());
-    }
-    AvgFreq[I] = Freq;
-  }
-
-  if (opts::PrintClusters) {
-    for (uint32_t I = 0, E = Clusters.size(); I < E; ++I) {
-      errs() << "Cluster number " << I << " (frequency: " << AvgFreq[I]
-             << ") : ";
-      auto Sep = "";
-      for (auto BB : Clusters[I]) {
-        errs() << Sep << BB->getName();
-        Sep = ", ";
-      }
-      errs() << "\n";
-    };
-  }
-
-  switch(Type) {
-  case LT_OPTIMIZE: {
-    for (uint32_t I = 0, E = Clusters.size(); I < E; ++I)
-      if (!Clusters[I].empty())
-        Order.push_back(I);
-    break;
-  }
-  case LT_OPTIMIZE_BRANCH: {
-    // Do a topological sort for clusters, prioritizing frequently-executed BBs
-    // during the traversal.
-    std::stack<uint32_t> Stack;
-    std::vector<uint32_t> Status;
-    std::vector<uint32_t> Parent;
-    Status.resize(Clusters.size(), 0);
-    Parent.resize(Clusters.size(), 0);
-    constexpr uint32_t STACKED = 1;
-    constexpr uint32_t VISITED = 2;
-    Status[0] = STACKED;
-    Stack.push(0);
-    while (!Stack.empty()) {
-      uint32_t I = Stack.top();
-      if (!(Status[I] & VISITED)) {
-        Status[I] |= VISITED;
-        // Order successors by weight
-        auto ClusterComp = [&ClusterEdges, I](uint32_t A, uint32_t B) {
-          return ClusterEdges[I][A] > ClusterEdges[I][B];
-        };
-        std::priority_queue<uint32_t, std::vector<uint32_t>,
-                            decltype(ClusterComp)> SuccQueue(ClusterComp);
-        for (auto &Target: ClusterEdges[I]) {
-          if (Target.second > 0 && !(Status[Target.first] & STACKED) &&
-              !Clusters[Target.first].empty()) {
-            Parent[Target.first] = I;
-            Status[Target.first] = STACKED;
-            SuccQueue.push(Target.first);
-          }
-        }
-        while (!SuccQueue.empty()) {
-          Stack.push(SuccQueue.top());
-          SuccQueue.pop();
-        }
-        continue;
-      }
-      // Already visited this node
-      Stack.pop();
-      Order.push_back(I);
-    }
-    std::reverse(Order.begin(), Order.end());
-    // Put unreachable clusters at the end
-    for (uint32_t I = 0, E = Clusters.size(); I < E; ++I)
-      if (!(Status[I] & VISITED) && !Clusters[I].empty())
-        Order.push_back(I);
-
-    // Sort nodes with equal precedence
-    auto Beg = Order.begin();
-    // Don't reorder the first cluster, which contains the function entry point
-    ++Beg;
-    std::stable_sort(Beg, Order.end(),
-                     [&AvgFreq, &Parent](uint32_t A, uint32_t B) {
-                       uint32_t P = Parent[A];
-                       while (Parent[P] != 0) {
-                         if (Parent[P] == B)
-                           return false;
-                         P = Parent[P];
-                       }
-                       P = Parent[B];
-                       while (Parent[P] != 0) {
-                         if (Parent[P] == A)
-                           return true;
-                         P = Parent[P];
-                       }
-                       return AvgFreq[A] > AvgFreq[B];
-                     });
-    break;
-  }
-  case LT_OPTIMIZE_CACHE: {
-    // Order clusters based on average instruction execution frequency
-    for (uint32_t I = 0, E = Clusters.size(); I < E; ++I)
-      if (!Clusters[I].empty())
-        Order.push_back(I);
-    auto Beg = Order.begin();
-    // Don't reorder the first cluster, which contains the function entry point
-    ++Beg;
-    std::stable_sort(Beg, Order.end(), [&AvgFreq](uint32_t A, uint32_t B) {
-      return AvgFreq[A] > AvgFreq[B];
-    });
-
-    break;
-  }
-  default:
-    llvm_unreachable("unexpected layout type");
-  }
-
-  if (opts::PrintClusters) {
-    errs() << "New cluster order: ";
-    auto Sep = "";
-    for (auto O : Order) {
-      errs() << Sep << O;
-      Sep = ", ";
-    }
-    errs() << '\n';
-  }
-
+  Algo->reorderBasicBlocks(*this, NewLayout);
   BasicBlocksLayout.clear();
-  for (auto I : Order) {
-    auto &Cluster = Clusters[I];
-    BasicBlocksLayout.insert(BasicBlocksLayout.end(), Cluster.begin(),
-                             Cluster.end());
-  }
-
-  if (Split)
-    splitFunction();
-  fixBranches();
-}
-
-void BinaryFunction::solveOptimalLayout(bool Split) {
-  std::vector<std::vector<uint64_t>> Weight;
-  std::map<BinaryBasicBlock *, int> BBToIndex;
-  std::vector<BinaryBasicBlock *> IndexToBB;
-
-  DEBUG(dbgs() << "finding optimal block layout for " << getName() << "\n");
-
-  unsigned N = BasicBlocksLayout.size();
-  // Populating weight map and index map
-  for (auto BB : BasicBlocksLayout) {
-    BBToIndex[BB] = IndexToBB.size();
-    IndexToBB.push_back(BB);
-  }
-  Weight.resize(N);
-  for (auto BB : BasicBlocksLayout) {
-    auto BI = BB->BranchInfo.begin();
-    Weight[BBToIndex[BB]].resize(N);
-    for (auto I : BB->successors()) {
-      if (BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
-        Weight[BBToIndex[BB]][BBToIndex[I]] = BI->Count;
-      ++BI;
-    }
-  }
-
-  std::vector<std::vector<int64_t>> DP;
-  DP.resize(1 << N);
-  for (auto &Elmt : DP) {
-    Elmt.resize(N, -1);
-  }
-  // Start with the entry basic block being allocated with cost zero
-  DP[1][0] = 0;
-  // Walk through TSP solutions using a bitmask to represent state (current set
-  // of BBs in the layout)
-  unsigned BestSet = 1;
-  unsigned BestLast = 0;
-  int64_t BestWeight = 0;
-  for (unsigned Set = 1; Set < (1U << N); ++Set) {
-    // Traverse each possibility of Last BB visited in this layout
-    for (unsigned Last = 0; Last < N; ++Last) {
-      // Case 1: There is no possible layout with this BB as Last
-      if (DP[Set][Last] == -1)
-        continue;
-
-      // Case 2: There is a layout with this Set and this Last, and we try
-      // to expand this set with New
-      for (unsigned New = 1; New < N; ++New) {
-        // Case 2a: BB "New" is already in this Set
-        if ((Set & (1 << New)) != 0)
-          continue;
-
-        // Case 2b: BB "New" is not in this set and we add it to this Set and
-        // record total weight of this layout with "New" as the last BB.
-        unsigned NewSet = (Set | (1 << New));
-        if (DP[NewSet][New] == -1)
-          DP[NewSet][New] = DP[Set][Last] + (int64_t)Weight[Last][New];
-        DP[NewSet][New] = std::max(DP[NewSet][New],
-                                   DP[Set][Last] + (int64_t)Weight[Last][New]);
-
-        if (DP[NewSet][New] > BestWeight) {
-          BestWeight = DP[NewSet][New];
-          BestSet = NewSet;
-          BestLast = New;
-        }
-      }
-    }
-  }
-
-  std::vector<BinaryBasicBlock *> PastLayout = BasicBlocksLayout;
-
-  // Define final function layout based on layout that maximizes weight
-  BasicBlocksLayout.clear();
-  unsigned Last = BestLast;
-  unsigned Set = BestSet;
-  std::vector<bool> Visited;
-  Visited.resize(N);
-  Visited[Last] = true;
-  BasicBlocksLayout.push_back(IndexToBB[Last]);
-  Set = Set & ~(1U << Last);
-  while (Set != 0) {
-    int64_t Best = -1;
-    for (unsigned I = 0; I < N; ++I) {
-      if (DP[Set][I] == -1)
-        continue;
-      if (DP[Set][I] > Best) {
-        Last = I;
-        Best = DP[Set][I];
-      }
-    }
-    Visited[Last] = true;
-    BasicBlocksLayout.push_back(IndexToBB[Last]);
-    Set = Set & ~(1U << Last);
-  }
-  std::reverse(BasicBlocksLayout.begin(), BasicBlocksLayout.end());
-
-  // Finalize layout with BBs that weren't assigned to the layout
-  for (auto BB : PastLayout) {
-    if (Visited[BBToIndex[BB]] == false)
-      BasicBlocksLayout.push_back(BB);
-  }
+  BasicBlocksLayout.swap(NewLayout);
 
   if (Split)
     splitFunction();
