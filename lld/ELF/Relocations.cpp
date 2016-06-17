@@ -381,7 +381,7 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
 template <class ELFT>
 static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
                           bool IsWrite, RelExpr Expr, uint32_t Type,
-                          const uint8_t *Data, typename ELFT::uint Offset) {
+                          const uint8_t *Data) {
   if (Target->needsThunk(Type, File, Body))
     return R_THUNK;
   bool Preemptible = isPreemptible(Body, Type);
@@ -391,7 +391,7 @@ static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
     if (needsPlt(Expr))
       Expr = fromPlt(Expr);
     if (Expr == R_GOT_PC)
-      Expr = Target->adjustRelaxExpr(Type, Data + Offset, Expr);
+      Expr = Target->adjustRelaxExpr(Type, Data, Expr);
   }
 
   if (IsWrite || isStaticLinkTimeConstant<ELFT>(Expr, Type, Body))
@@ -516,7 +516,7 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       continue;
 
     bool Preemptible = isPreemptible(Body, Type);
-    Expr = adjustExpr(File, Body, IsWrite, Expr, Type, Buf, Offset);
+    Expr = adjustExpr(File, Body, IsWrite, Expr, Type, Buf + Offset);
     if (HasError)
       continue;
 
