@@ -194,16 +194,24 @@ TEST_CASE(access_denied_on_recursion_test_case)
         recursive_directory_iterator it(startDir, SkipEPerm, ec);
         TEST_REQUIRE(!ec);
         TEST_REQUIRE(it != endIt);
-        const path elem = *it;
-        if (elem == permDeniedDir) {
-            it.increment(ec);
-            TEST_REQUIRE(!ec);
-            TEST_REQUIRE(it != endIt);
-            TEST_CHECK(*it == otherFile);
-        } else if (elem == otherFile) {
-            it.increment(ec);
-            TEST_REQUIRE(!ec);
+
+        bool seenOtherFile = false;
+        if (*it == otherFile) {
+            ++it;
+            seenOtherFile = true;
+            TEST_REQUIRE (it != endIt);
+        }
+        TEST_REQUIRE(*it == permDeniedDir);
+
+        ec = GetTestEC();
+        it.increment(ec);
+        TEST_REQUIRE(!ec);
+
+        if (seenOtherFile) {
             TEST_CHECK(it == endIt);
+        } else {
+            TEST_CHECK(it != endIt);
+            TEST_CHECK(*it == otherFile);
         }
     }
     // Test that construction resulting in a "EACCESS" error is not ignored
