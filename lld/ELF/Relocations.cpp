@@ -511,13 +511,13 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     uint32_t Type = RI.getType(Config->Mips64EL);
 
     RelExpr Expr = Target->getRelExpr(Type, Body);
-    uintX_t Offset = C.getOffset(RI.r_offset);
-    if (Offset == (uintX_t)-1)
+    bool Preemptible = isPreemptible(Body, Type);
+    Expr = adjustExpr(File, Body, IsWrite, Expr, Type, Buf + RI.r_offset);
+    if (HasError)
       continue;
 
-    bool Preemptible = isPreemptible(Body, Type);
-    Expr = adjustExpr(File, Body, IsWrite, Expr, Type, Buf + Offset);
-    if (HasError)
+    uintX_t Offset = C.getOffset(RI.r_offset);
+    if (Offset == (uintX_t)-1)
       continue;
 
     // This relocation does not require got entry, but it is relative to got and
