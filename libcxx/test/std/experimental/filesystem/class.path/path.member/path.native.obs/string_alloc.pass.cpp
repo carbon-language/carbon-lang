@@ -27,7 +27,6 @@
 #include "count_new.hpp"
 #include "min_allocator.h"
 #include "filesystem_test_helper.hpp"
-#include "assert_checkpoint.h"
 
 namespace fs = std::experimental::filesystem;
 
@@ -43,14 +42,37 @@ void doShortStringTest(MultiStringType const& MS) {
   Ptr value = MS;
   const path p((const char*)MS);
   {
-      DisableAllocationGuard g; // should not allocate
-      CHECKPOINT("short string default constructed allocator");
+      DisableAllocationGuard g;
+      if (!std::is_same<CharT, char>::value)
+          g.release();
       Str s = p.string<CharT>();
       assert(s == value);
-      CHECKPOINT("short string provided allocator");
       Str s2 = p.string<CharT>(Alloc{});
       assert(s2 == value);
   }
+  using MAlloc = malloc_allocator<CharT>;
+  MAlloc::reset();
+  {
+      using Traits = std::char_traits<CharT>;
+      using AStr = std::basic_string<CharT, Traits, MAlloc>;
+      AStr s = p.string<CharT, Traits, MAlloc>();
+      assert(s == value);
+      assert(MAlloc::alloc_count == 0);
+      assert(MAlloc::outstanding_alloc() == 0);
+  }
+  MAlloc::reset();
+  { // Other allocator - provided copy
+      using Traits = std::char_traits<CharT>;
+      using AStr = std::basic_string<CharT, Traits, MAlloc>;
+      MAlloc a;
+      // don't allow another allocator to be default constructed.
+      MAlloc::disable_default_constructor = true;
+      AStr s = p.string<CharT, Traits, MAlloc>(a);
+      assert(s == value);
+      assert(MAlloc::alloc_count == 0);
+      assert(MAlloc::outstanding_alloc() == 0);
+  }
+  MAlloc::reset();
 }
 
 template <class CharT>
@@ -62,7 +84,6 @@ void doLongStringTest(MultiStringType const& MS) {
   const path p((const char*)MS);
   { // Default allocator
       using Alloc = std::allocator<CharT>;
-      RequireAllocationGuard g;
       Str s = p.string<CharT>();
       assert(s == value);
       Str s2 = p.string<CharT>(Alloc{});
@@ -70,22 +91,18 @@ void doLongStringTest(MultiStringType const& MS) {
   }
   using MAlloc = malloc_allocator<CharT>;
   MAlloc::reset();
-  CHECKPOINT("Malloc allocator test - default construct");
   { // Other allocator - default construct
       using Traits = std::char_traits<CharT>;
       using AStr = std::basic_string<CharT, Traits, MAlloc>;
-      DisableAllocationGuard g;
       AStr s = p.string<CharT, Traits, MAlloc>();
       assert(s == value);
       assert(MAlloc::alloc_count > 0);
       assert(MAlloc::outstanding_alloc() == 1);
   }
   MAlloc::reset();
-  CHECKPOINT("Malloc allocator test - provided copy");
   { // Other allocator - provided copy
       using Traits = std::char_traits<CharT>;
       using AStr = std::basic_string<CharT, Traits, MAlloc>;
-      DisableAllocationGuard g;
       MAlloc a;
       // don't allow another allocator to be default constructed.
       MAlloc::disable_default_constructor = true;

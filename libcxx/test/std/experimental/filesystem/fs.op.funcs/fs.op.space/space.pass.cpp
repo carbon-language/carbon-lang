@@ -88,6 +88,8 @@ TEST_CASE(basic_space_test)
     TEST_CHECK(expect.f_bfree > 0);
     TEST_CHECK(expect.f_bsize > 0);
     TEST_CHECK(expect.f_blocks > 0);
+    TEST_CHECK(expect.f_frsize > 0);
+    const std::uintmax_t bad_value = static_cast<std::uintmax_t>(-1);
     const std::uintmax_t expect_cap = expect.f_blocks * expect.f_frsize;
     // Other processes running on the operating system may have changed
     // the amount of space available. Check that these are within tolerances.
@@ -101,11 +103,14 @@ TEST_CASE(basic_space_test)
         StaticEnv::SymlinkToDir
     };
     for (auto& p : cases) {
-        std::error_code ec = std::make_error_code(std::errc::address_in_use);
+        std::error_code ec = GetTestEC();
         space_info info = space(p, ec);
         TEST_CHECK(!ec);
+        TEST_CHECK(info.capacity != bad_value);
         TEST_CHECK((expect.f_blocks * expect.f_frsize) == info.capacity);
+        TEST_CHECK(info.free != bad_value);
         TEST_CHECK(EqualDelta((expect.f_bfree  * expect.f_frsize), info.free, delta));
+        TEST_CHECK(info.available != bad_value);
         TEST_CHECK(EqualDelta((expect.f_bavail * expect.f_frsize), info.available, delta));
     }
 }
