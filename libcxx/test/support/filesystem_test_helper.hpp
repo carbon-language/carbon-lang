@@ -388,9 +388,9 @@ inline std::error_code GetTestEC() {
 // available in single-threaded mode.
 void SleepFor(std::chrono::seconds dur) {
     using namespace std::chrono;
-    const auto curr_time = system_clock::now();
+    const auto curr_time = steady_clock::now();
     auto wake_time = curr_time + dur;
-    while (system_clock::now() < wake_time)
+    while (steady_clock::now() < wake_time)
         ;
 }
 
