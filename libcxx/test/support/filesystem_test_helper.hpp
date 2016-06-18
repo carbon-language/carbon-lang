@@ -361,6 +361,22 @@ bool checkCollectionsEqual(
     return (start1 == end1 && start2 == end2);
 }
 
+
+template <class Iter1, class Iter2>
+bool checkCollectionsEqualBackwards(
+    Iter1 const start1, Iter1 end1
+  , Iter2 const start2, Iter2 end2
+  )
+{
+    while (start1 != end1 && start2 != end2) {
+        --end1; --end2;
+        if (*end1 != *end2) {
+            return false;
+        }
+    }
+    return (start1 == end1 && start2 == end2);
+}
+
 // We often need to test that the error_code was cleared if no error occurs
 // this function returns a error_code which is set to an error that will
 // never be returned by the filesystem functions.

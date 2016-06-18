@@ -24,8 +24,6 @@
 #include <type_traits>
 #include <cassert>
 
-#include <iostream>
-
 #include "test_macros.h"
 #include "filesystem_test_helper.hpp"
 
@@ -35,30 +33,6 @@ namespace fs = std::experimental::filesystem;
 template <class It>
 std::reverse_iterator<It> mkRev(It it) {
   return std::reverse_iterator<It>(it);
-}
-
-
-template <class Iter1, class Iter2>
-bool checkCollectionsEqualVerbose(
-    Iter1 start1, Iter1 const end1
-  , Iter2 start2, Iter2 const end2
-  )
-{
-    while (start1 != end1 && start2 != end2) {
-      std::cout << "Got start1 = " << *start1 << "\n"
-                << "Got start2 = " << *start2 << "\n";
-        if (*start1 != *start2) {
-            return false;
-        }
-        ++start1; ++start2;
-    }
-  if (start1 != end1) {
-    std::cout << "Got start1 = " << *start1 << " but expected end1\n";
-  }
-  if (start2 != end2) {
-    std::cout << "Got start2 = " << *start2 << " but expected end2\n";
-  }
-    return (start1 == end1 && start2 == end2);
 }
 
 void checkIteratorConcepts() {
@@ -112,16 +86,15 @@ void checkBeginEndBasic() {
     path p("//root_name//first_dir////second_dir");
     const path expect[] = {"//root_name", "/", "first_dir", "second_dir"};
     assert(checkCollectionsEqual(p.begin(), p.end(), std::begin(expect), std::end(expect)));
-    assert(checkCollectionsEqualVerbose(mkRev(p.end()), mkRev(p.begin()),
-                                 mkRev(std::end(expect)),
-                                 mkRev(std::begin(expect))));
+    assert(checkCollectionsEqualBackwards(p.begin(), p.end(), std::begin(expect), std::end(expect)));
+
   }
   {
     path p("////foo/bar/baz///");
     const path expect[] = {"/", "foo", "bar", "baz", "."};
     assert(checkCollectionsEqual(p.begin(), p.end(), std::begin(expect), std::end(expect)));
-    assert(checkCollectionsEqual(mkRev(p.end()), mkRev(p.begin()),
-                                 mkRev(std::end(expect)), mkRev(std::begin(expect))));
+    assert(checkCollectionsEqualBackwards(p.begin(), p.end(), std::begin(expect), std::end(expect)));
+
   }
 
 }

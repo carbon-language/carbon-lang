@@ -30,7 +30,8 @@
 
 namespace fs = std::experimental::filesystem;
 
-MultiStringType shortString = MKSTR("abc");
+// the SSO is always triggered for strings of size 2.
+MultiStringType shortString = MKSTR("a");
 MultiStringType longString = MKSTR("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ/123456789/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
 template <class CharT>
@@ -43,8 +44,6 @@ void doShortStringTest(MultiStringType const& MS) {
   const path p((const char*)MS);
   {
       DisableAllocationGuard g;
-      if (!std::is_same<CharT, char>::value)
-          g.release();
       Str s = p.string<CharT>();
       assert(s == value);
       Str s2 = p.string<CharT>(Alloc{});
@@ -55,6 +54,7 @@ void doShortStringTest(MultiStringType const& MS) {
   {
       using Traits = std::char_traits<CharT>;
       using AStr = std::basic_string<CharT, Traits, MAlloc>;
+      DisableAllocationGuard g;
       AStr s = p.string<CharT, Traits, MAlloc>();
       assert(s == value);
       assert(MAlloc::alloc_count == 0);
@@ -64,6 +64,7 @@ void doShortStringTest(MultiStringType const& MS) {
   { // Other allocator - provided copy
       using Traits = std::char_traits<CharT>;
       using AStr = std::basic_string<CharT, Traits, MAlloc>;
+      DisableAllocationGuard g;
       MAlloc a;
       // don't allow another allocator to be default constructed.
       MAlloc::disable_default_constructor = true;
@@ -94,6 +95,7 @@ void doLongStringTest(MultiStringType const& MS) {
   { // Other allocator - default construct
       using Traits = std::char_traits<CharT>;
       using AStr = std::basic_string<CharT, Traits, MAlloc>;
+      DisableAllocationGuard g;
       AStr s = p.string<CharT, Traits, MAlloc>();
       assert(s == value);
       assert(MAlloc::alloc_count > 0);
@@ -103,6 +105,7 @@ void doLongStringTest(MultiStringType const& MS) {
   { // Other allocator - provided copy
       using Traits = std::char_traits<CharT>;
       using AStr = std::basic_string<CharT, Traits, MAlloc>;
+      DisableAllocationGuard g;
       MAlloc a;
       // don't allow another allocator to be default constructed.
       MAlloc::disable_default_constructor = true;

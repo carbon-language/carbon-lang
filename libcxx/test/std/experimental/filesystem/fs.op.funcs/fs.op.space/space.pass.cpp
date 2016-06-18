@@ -88,13 +88,22 @@ TEST_CASE(basic_space_test)
     TEST_CHECK(expect.f_bfree > 0);
     TEST_CHECK(expect.f_bsize > 0);
     TEST_CHECK(expect.f_blocks > 0);
-    TEST_CHECK(expect.f_frsize > 0);
+    TEST_REQUIRE(expect.f_frsize > 0);
+    auto do_mult = [&](std::uintmax_t val) {
+        std::uintmax_t fsize = expect.f_frsize;
+        std::uintmax_t new_val = val * fsize;
+        TEST_CHECK(new_val / fsize == val); // Test for overflow
+        return new_val;
+    };
     const std::uintmax_t bad_value = static_cast<std::uintmax_t>(-1);
-    const std::uintmax_t expect_cap = expect.f_blocks * expect.f_frsize;
+    const std::uintmax_t expect_capacity = do_mult(expect.f_blocks);
+    const std::uintmax_t expect_free = do_mult(expect.f_bfree);
+    const std::uintmax_t expect_avail = do_mult(expect.f_bavail);
+
     // Other processes running on the operating system may have changed
     // the amount of space available. Check that these are within tolerances.
     // Currently 5% of capacity
-    const std::uintmax_t delta = expect_cap / 20;
+    const std::uintmax_t delta = expect_capacity / 20;
     const path cases[] = {
         StaticEnv::File,
         StaticEnv::Dir,
@@ -107,11 +116,11 @@ TEST_CASE(basic_space_test)
         space_info info = space(p, ec);
         TEST_CHECK(!ec);
         TEST_CHECK(info.capacity != bad_value);
-        TEST_CHECK((expect.f_blocks * expect.f_frsize) == info.capacity);
+        TEST_CHECK(expect_capacity == info.capacity);
         TEST_CHECK(info.free != bad_value);
-        TEST_CHECK(EqualDelta((expect.f_bfree  * expect.f_frsize), info.free, delta));
+        TEST_CHECK(EqualDelta(expect_free, info.free, delta));
         TEST_CHECK(info.available != bad_value);
-        TEST_CHECK(EqualDelta((expect.f_bavail * expect.f_frsize), info.available, delta));
+        TEST_CHECK(EqualDelta(expect_avail, info.available, delta));
     }
 }
 
