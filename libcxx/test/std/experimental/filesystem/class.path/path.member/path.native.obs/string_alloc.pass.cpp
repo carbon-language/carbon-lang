@@ -27,6 +27,7 @@
 #include "count_new.hpp"
 #include "min_allocator.h"
 #include "filesystem_test_helper.hpp"
+#include "assert_checkpoint.h"
 
 namespace fs = std::experimental::filesystem;
 
@@ -43,8 +44,10 @@ void doShortStringTest(MultiStringType const& MS) {
   const path p((const char*)MS);
   {
       DisableAllocationGuard g; // should not allocate
+      CHECKPOINT("short string default constructed allocator");
       Str s = p.string<CharT>();
       assert(s == value);
+      CHECKPOINT("short string provided allocator");
       Str s2 = p.string<CharT>(Alloc{});
       assert(s2 == value);
   }
@@ -59,7 +62,7 @@ void doLongStringTest(MultiStringType const& MS) {
   const path p((const char*)MS);
   { // Default allocator
       using Alloc = std::allocator<CharT>;
-      RequireAllocationGuard g; // should not allocate because
+      RequireAllocationGuard g;
       Str s = p.string<CharT>();
       assert(s == value);
       Str s2 = p.string<CharT>(Alloc{});
@@ -67,6 +70,7 @@ void doLongStringTest(MultiStringType const& MS) {
   }
   using MAlloc = malloc_allocator<CharT>;
   MAlloc::reset();
+  CHECKPOINT("Malloc allocator test - default construct");
   { // Other allocator - default construct
       using Traits = std::char_traits<CharT>;
       using AStr = std::basic_string<CharT, Traits, MAlloc>;
@@ -77,6 +81,7 @@ void doLongStringTest(MultiStringType const& MS) {
       assert(MAlloc::outstanding_alloc() == 1);
   }
   MAlloc::reset();
+  CHECKPOINT("Malloc allocator test - provided copy");
   { // Other allocator - provided copy
       using Traits = std::char_traits<CharT>;
       using AStr = std::basic_string<CharT, Traits, MAlloc>;
