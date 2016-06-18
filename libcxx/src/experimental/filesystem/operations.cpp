@@ -507,8 +507,10 @@ void __last_write_time(const path& p, file_time_type new_time,
     using namespace std::chrono;
     std::error_code m_ec;
 
-#if defined(__APPLE__)
+    // We can use the presence of UTIME_OMIT to detect GLIBC versions that
+    // do not provide utimensat.
     // FIXME: Use utimensat when it becomes available on OS X.
+#if defined(__APPLE__) || !defined(UTIME_OMIT)
     // This implementation has a race condition between determining the
     // last access time and attempting to set it to the same value using
     // ::utimes
