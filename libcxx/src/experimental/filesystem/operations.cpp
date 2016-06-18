@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <fcntl.h>  /* values for fchmodat */
-#if defined(__APPLE__)
+#if !defined(UTIME_OMIT)
 #include <sys/time.h> // for ::utimes as used in __last_write_time
 #endif
 
@@ -507,10 +507,9 @@ void __last_write_time(const path& p, file_time_type new_time,
     using namespace std::chrono;
     std::error_code m_ec;
 
-    // We can use the presence of UTIME_OMIT to detect GLIBC versions that
-    // do not provide utimensat.
-    // FIXME: Use utimensat when it becomes available on OS X.
-#if defined(__APPLE__) || !defined(UTIME_OMIT)
+    // We can use the presence of UTIME_OMIT to detect platforms that do not
+    // provide utimensat.
+#if !defined(UTIME_OMIT)
     // This implementation has a race condition between determining the
     // last access time and attempting to set it to the same value using
     // ::utimes
