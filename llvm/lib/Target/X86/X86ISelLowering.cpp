@@ -7065,7 +7065,7 @@ static bool
 is128BitLaneRepeatedShuffleMask(MVT VT, ArrayRef<int> Mask,
                                 SmallVectorImpl<int> &RepeatedMask) {
   int LaneSize = 128 / VT.getScalarSizeInBits();
-  RepeatedMask.resize(LaneSize, -1);
+  RepeatedMask.assign(LaneSize, -1);
   int Size = Mask.size();
   for (int i = 0; i < Size; ++i) {
     if (Mask[i] < 0)
