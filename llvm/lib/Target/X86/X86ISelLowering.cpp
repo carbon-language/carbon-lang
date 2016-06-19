@@ -7134,7 +7134,7 @@ static bool isShuffleEquivalent(SDValue V1, SDValue V2, ArrayRef<int> Mask,
 static bool isTargetShuffleEquivalent(ArrayRef<int> Mask,
                                       ArrayRef<int> ExpectedMask) {
   int Size = Mask.size();
-  if (Size != ExpectedMask.size())
+  if (Size != (int)ExpectedMask.size())
     return false;
 
   for (int i = 0; i < Size; ++i)
