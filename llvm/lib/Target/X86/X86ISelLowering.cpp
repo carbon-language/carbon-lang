@@ -10561,26 +10561,27 @@ static SDValue lowerVectorShuffleAsLanePermuteAndBlend(const SDLoc &DL, MVT VT,
                                                        SelectionDAG &DAG) {
   // FIXME: This should probably be generalized for 512-bit vectors as well.
   assert(VT.is256BitVector() && "Only for 256-bit vector shuffles!");
-  int LaneSize = Mask.size() / 2;
+  int Size = Mask.size();
+  int LaneSize = Size / 2;
 
   // If there are only inputs from one 128-bit lane, splitting will in fact be
   // less expensive. The flags track whether the given lane contains an element
   // that crosses to another lane.
   bool LaneCrossing[2] = {false, false};
-  for (int i = 0, Size = Mask.size(); i < Size; ++i)
+  for (int i = 0; i < Size; ++i)
     if (Mask[i] >= 0 && (Mask[i] % Size) / LaneSize != i / LaneSize)
       LaneCrossing[(Mask[i] % Size) / LaneSize] = true;
   if (!LaneCrossing[0] || !LaneCrossing[1])
     return splitAndLowerVectorShuffle(DL, VT, V1, V2, Mask, DAG);
 
   if (isSingleInputShuffleMask(Mask)) {
-    SmallVector<int, 32> FlippedBlendMask;
-    for (int i = 0, Size = Mask.size(); i < Size; ++i)
-      FlippedBlendMask.push_back(
+    SmallVector<int, 32> FlippedBlendMask(Size);
+    for (int i = 0; i < Size; ++i)
+      FlippedBlendMask[i] =
           Mask[i] < 0 ? -1 : (((Mask[i] % Size) / LaneSize == i / LaneSize)
                                   ? Mask[i]
                                   : Mask[i] % LaneSize +
-                                        (i / LaneSize) * LaneSize + Size));
+                                        (i / LaneSize) * LaneSize + Size);
 
     // Flip the vector, and blend the results which should now be in-lane. The
     // VPERM2X128 mask uses the low 2 bits for the low source and bits 4 and
