@@ -8687,6 +8687,8 @@ static SDValue lowerVectorShuffleAsPermuteAndUnpack(const SDLoc &DL, MVT VT,
                                                     SelectionDAG &DAG) {
   assert(!VT.isFloatingPoint() &&
          "This routine only supports integer vectors.");
+  assert(VT.is128BitVector() &&
+         "This routine only works on 128-bit vectors.");
   assert(!isSingleInputShuffleMask(Mask) &&
          "This routine should only be used when blending two inputs.");
   assert(Mask.size() >= 2 && "Single element masks are invalid.");
@@ -8701,8 +8703,8 @@ static SDValue lowerVectorShuffleAsPermuteAndUnpack(const SDLoc &DL, MVT VT,
   bool UnpackLo = NumLoInputs >= NumHiInputs;
 
   auto TryUnpack = [&](MVT UnpackVT, int Scale) {
-    SmallVector<int, 32> V1Mask(Mask.size(), -1);
-    SmallVector<int, 32> V2Mask(Mask.size(), -1);
+    SmallVector<int, 16> V1Mask(Mask.size(), -1);
+    SmallVector<int, 16> V2Mask(Mask.size(), -1);
 
     for (int i = 0; i < Size; ++i) {
       if (Mask[i] < 0)
