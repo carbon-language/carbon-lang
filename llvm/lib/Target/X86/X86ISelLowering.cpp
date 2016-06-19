@@ -30281,10 +30281,10 @@ static SDValue detectSADPattern(SDNode *N, SelectionDAG &DAG,
   // If the reduction vector is at least as wide as the psadbw result, just
   // bitcast. If it's narrower, truncate - the high i32 of each i64 is zero
   // anyway.
-  MVT ResVT = MVT::getVectorVT(MVT::i32, RegSize / 32);  
+  MVT ResVT = MVT::getVectorVT(MVT::i32, RegSize / 32);
   if (VT.getSizeInBits() >= ResVT.getSizeInBits())
     Sad = DAG.getNode(ISD::BITCAST, DL, ResVT, Sad);
-  else 
+  else
     Sad = DAG.getNode(ISD::TRUNCATE, DL, VT, Sad);
 
   if (VT.getSizeInBits() > ResVT.getSizeInBits()) {
