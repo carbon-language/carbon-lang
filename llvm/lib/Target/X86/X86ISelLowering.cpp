@@ -10574,30 +10574,26 @@ static SDValue lowerVectorShuffleAsLanePermuteAndBlend(const SDLoc &DL, MVT VT,
   if (!LaneCrossing[0] || !LaneCrossing[1])
     return splitAndLowerVectorShuffle(DL, VT, V1, V2, Mask, DAG);
 
-  if (isSingleInputShuffleMask(Mask)) {
-    SmallVector<int, 32> FlippedBlendMask(Size);
-    for (int i = 0; i < Size; ++i)
-      FlippedBlendMask[i] =
-          Mask[i] < 0 ? -1 : (((Mask[i] % Size) / LaneSize == i / LaneSize)
-                                  ? Mask[i]
-                                  : Mask[i] % LaneSize +
-                                        (i / LaneSize) * LaneSize + Size);
+  assert(isSingleInputShuffleMask(Mask) &&
+         "This last part of this routine only works on single input shuffles");
 
-    // Flip the vector, and blend the results which should now be in-lane. The
-    // VPERM2X128 mask uses the low 2 bits for the low source and bits 4 and
-    // 5 for the high source. The value 3 selects the high half of source 2 and
-    // the value 2 selects the low half of source 2. We only use source 2 to
-    // allow folding it into a memory operand.
-    unsigned PERMMask = 3 | 2 << 4;
-    SDValue Flipped = DAG.getNode(X86ISD::VPERM2X128, DL, VT, DAG.getUNDEF(VT),
-                                  V1, DAG.getConstant(PERMMask, DL, MVT::i8));
-    return DAG.getVectorShuffle(VT, DL, V1, Flipped, FlippedBlendMask);
-  }
+  SmallVector<int, 32> FlippedBlendMask(Size);
+  for (int i = 0; i < Size; ++i)
+    FlippedBlendMask[i] =
+        Mask[i] < 0 ? -1 : (((Mask[i] % Size) / LaneSize == i / LaneSize)
+                                ? Mask[i]
+                                : Mask[i] % LaneSize +
+                                      (i / LaneSize) * LaneSize + Size);
 
-  // This now reduces to two single-input shuffles of V1 and V2 which at worst
-  // will be handled by the above logic and a blend of the results, much like
-  // other patterns in AVX.
-  return lowerVectorShuffleAsDecomposedShuffleBlend(DL, VT, V1, V2, Mask, DAG);
+  // Flip the vector, and blend the results which should now be in-lane. The
+  // VPERM2X128 mask uses the low 2 bits for the low source and bits 4 and
+  // 5 for the high source. The value 3 selects the high half of source 2 and
+  // the value 2 selects the low half of source 2. We only use source 2 to
+  // allow folding it into a memory operand.
+  unsigned PERMMask = 3 | 2 << 4;
+  SDValue Flipped = DAG.getNode(X86ISD::VPERM2X128, DL, VT, DAG.getUNDEF(VT),
+                                V1, DAG.getConstant(PERMMask, DL, MVT::i8));
+  return DAG.getVectorShuffle(VT, DL, V1, Flipped, FlippedBlendMask);
 }
 
 /// \brief Handle lowering 2-lane 128-bit shuffles.
