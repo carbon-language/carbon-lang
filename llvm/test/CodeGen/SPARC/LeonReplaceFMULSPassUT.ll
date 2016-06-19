@@ -1,7 +1,10 @@
 ; RUN: llc %s -O0 -march=sparc -mcpu=ut699 -o - | FileCheck %s
 
 ; CHECK-LABEL: fmuls_fix_test
-; CHECK:       fmuls %f20, %f21, %f8
+; CHECK:       fstod %f20, %f2
+; CHECK:       fstod %f21, %f3
+; CHECK:       fmuld %f2, %f3, %f8
+; CHECK:       fstod %f20, %f0
 define double @fmuls_fix_test() {
 entry:
   %a = alloca float, align 4
