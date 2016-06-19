@@ -7123,6 +7123,31 @@ static bool isShuffleEquivalent(SDValue V1, SDValue V2, ArrayRef<int> Mask,
   return true;
 }
 
+/// Checks whether a target shuffle mask is equivalent to an explicit pattern.
+///
+/// The masks must be exactly the same width.
+///
+/// If an element in Mask matches SM_SentinelUndef (-1) then the corresponding
+/// value in ExpectedMask is always accepted. Otherwise the indices must match.
+///
+/// SM_SentinelZero is accepted as a valid negative index but must match in both.
+static bool isTargetShuffleEquivalent(ArrayRef<int> Mask,
+                                      ArrayRef<int> ExpectedMask) {
+  int Size = Mask.size();
+  if (Size != ExpectedMask.size())
+    return false;
+
+  for (int i = 0; i < Size; ++i)
+    if (Mask[i] == SM_SentinelUndef)
+      continue;
+    else if (Mask[i] < 0 && Mask[i] != SM_SentinelZero)
+      return false;
+    else if (Mask[i] != ExpectedMask[i])
+      return false;
+
+  return true;
+}
+
 /// \brief Get a 4-lane 8-bit shuffle immediate for a mask.
 ///
 /// This helper function produces an 8-bit shuffle immediate corresponding to
@@ -24541,15 +24566,14 @@ static SDValue combineShuffle256(SDNode *N, SelectionDAG &DAG,
 // Attempt to match a combined shuffle mask against supported unary shuffle
 // instructions.
 // TODO: Investigate sharing more of this with shuffle lowering.
-// TODO: Investigate using isShuffleEquivalent() instead of Mask.equals().
 static bool matchUnaryVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
                                     const X86Subtarget &Subtarget,
                                     unsigned &Shuffle, MVT &ShuffleVT) {
   bool FloatDomain = SrcVT.isFloatingPoint();
 
   // Match a 128-bit integer vector against a VZEXT_MOVL (MOVQ) instruction.
-  if (!FloatDomain && SrcVT.is128BitVector() && Mask.size() == 2 &&
-      Mask[0] == 0 && Mask[1] < 0) {
+  if (!FloatDomain && SrcVT.is128BitVector() &&
+      isTargetShuffleEquivalent(Mask, {0, SM_SentinelZero})) {
     Shuffle = X86ISD::VZEXT_MOVL;
     ShuffleVT = MVT::v2i64;
     return true;
@@ -24562,17 +24586,17 @@ static bool matchUnaryVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
   // instructions are no slower than UNPCKLPD but has the option to
   // fold the input operand into even an unaligned memory load.
   if (SrcVT.is128BitVector() && Subtarget.hasSSE3()) {
-    if (Mask.equals({0, 0})) {
+    if (isTargetShuffleEquivalent(Mask, {0, 0})) {
       Shuffle = X86ISD::MOVDDUP;
       ShuffleVT = MVT::v2f64;
       return true;
     }
-    if (Mask.equals({0, 0, 2, 2})) {
+    if (isTargetShuffleEquivalent(Mask, {0, 0, 2, 2})) {
       Shuffle = X86ISD::MOVSLDUP;
       ShuffleVT = MVT::v4f32;
       return true;
     }
-    if (Mask.equals({1, 1, 3, 3})) {
+    if (isTargetShuffleEquivalent(Mask, {1, 1, 3, 3})) {
       Shuffle = X86ISD::MOVSHDUP;
       ShuffleVT = MVT::v4f32;
       return true;
@@ -24581,17 +24605,17 @@ static bool matchUnaryVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
 
   if (SrcVT.is256BitVector()) {
     assert(Subtarget.hasAVX() && "AVX required for 256-bit vector shuffles");
-    if (Mask.equals({0, 0, 2, 2})) {
+    if (isTargetShuffleEquivalent(Mask, {0, 0, 2, 2})) {
       Shuffle = X86ISD::MOVDDUP;
       ShuffleVT = MVT::v4f64;
       return true;
     }
-    if (Mask.equals({0, 0, 2, 2, 4, 4, 6, 6})) {
+    if (isTargetShuffleEquivalent(Mask, {0, 0, 2, 2, 4, 4, 6, 6})) {
       Shuffle = X86ISD::MOVSLDUP;
       ShuffleVT = MVT::v8f32;
       return true;
     }
-    if (Mask.equals({1, 1, 3, 3, 5, 5, 7, 7})) {
+    if (isTargetShuffleEquivalent(Mask, {1, 1, 3, 3, 5, 5, 7, 7})) {
       Shuffle = X86ISD::MOVSHDUP;
       ShuffleVT = MVT::v8f32;
       return true;
@@ -24601,17 +24625,19 @@ static bool matchUnaryVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
   if (SrcVT.is512BitVector()) {
     assert(Subtarget.hasAVX512() &&
            "AVX512 required for 512-bit vector shuffles");
-    if (Mask.equals({0, 0, 2, 2, 4, 4, 6, 6})) {
+    if (isTargetShuffleEquivalent(Mask, {0, 0, 2, 2, 4, 4, 6, 6})) {
       Shuffle = X86ISD::MOVDDUP;
       ShuffleVT = MVT::v8f64;
       return true;
     }
-    if (Mask.equals({0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14})) {
+    if (isTargetShuffleEquivalent(
+            Mask, {0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14})) {
       Shuffle = X86ISD::MOVSLDUP;
       ShuffleVT = MVT::v16f32;
       return true;
     }
-    if (Mask.equals({1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 11, 11, 13, 13, 15, 15})) {
+    if (isTargetShuffleEquivalent(
+            Mask, {1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 11, 11, 13, 13, 15, 15})) {
       Shuffle = X86ISD::MOVSHDUP;
       ShuffleVT = MVT::v16f32;
       return true;
@@ -24624,41 +24650,41 @@ static bool matchUnaryVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
 // Attempt to match a combined unary shuffle mask against supported binary
 // shuffle instructions.
 // TODO: Investigate sharing more of this with shuffle lowering.
-// TODO: Investigate using isShuffleEquivalent() instead of Mask.equals().
 static bool matchBinaryVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
                                      unsigned &Shuffle, MVT &ShuffleVT) {
   bool FloatDomain = SrcVT.isFloatingPoint();
 
   if (SrcVT.is128BitVector()) {
-    if (Mask.equals({0, 0}) && FloatDomain) {
+    if (isTargetShuffleEquivalent(Mask, {0, 0}) && FloatDomain) {
       Shuffle = X86ISD::MOVLHPS;
       ShuffleVT = MVT::v4f32;
       return true;
     }
-    if (Mask.equals({1, 1}) && FloatDomain) {
+    if (isTargetShuffleEquivalent(Mask, {1, 1}) && FloatDomain) {
       Shuffle = X86ISD::MOVHLPS;
       ShuffleVT = MVT::v4f32;
       return true;
     }
-    if (Mask.equals({0, 0, 1, 1}) && FloatDomain) {
+    if (isTargetShuffleEquivalent(Mask, {0, 0, 1, 1}) && FloatDomain) {
       Shuffle = X86ISD::UNPCKL;
       ShuffleVT = MVT::v4f32;
       return true;
     }
-    if (Mask.equals({2, 2, 3, 3}) && FloatDomain) {
+    if (isTargetShuffleEquivalent(Mask, {2, 2, 3, 3}) && FloatDomain) {
       Shuffle = X86ISD::UNPCKH;
       ShuffleVT = MVT::v4f32;
       return true;
     }
-    if (Mask.equals({0, 0, 1, 1, 2, 2, 3, 3}) ||
-        Mask.equals({0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7})) {
+    if (isTargetShuffleEquivalent(Mask, {0, 0, 1, 1, 2, 2, 3, 3}) ||
+        isTargetShuffleEquivalent(
+            Mask, {0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7})) {
       Shuffle = X86ISD::UNPCKL;
       ShuffleVT = Mask.size() == 8 ? MVT::v8i16 : MVT::v16i8;
       return true;
     }
-    if (Mask.equals({4, 4, 5, 5, 6, 6, 7, 7}) ||
-        Mask.equals(
-            {8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15})) {
+    if (isTargetShuffleEquivalent(Mask, {4, 4, 5, 5, 6, 6, 7, 7}) ||
+        isTargetShuffleEquivalent(Mask, {8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13,
+                                         13, 14, 14, 15, 15})) {
       Shuffle = X86ISD::UNPCKH;
       ShuffleVT = Mask.size() == 8 ? MVT::v8i16 : MVT::v16i8;
       return true;
