@@ -7059,8 +7059,8 @@ static bool is128BitLaneCrossingShuffleMask(MVT VT, ArrayRef<int> Mask) {
 ///
 /// The specific repeated shuffle mask is populated in \p RepeatedMask, as it is
 /// non-trivial to compute in the face of undef lanes. The representation is
-/// *not* suitable for use with existing 128-bit shuffles as it will contain
-/// entries from both V1 and V2 inputs to the wider mask.
+/// suitable for use with existing 128-bit shuffles as entries from the second
+/// vector have been remapped to [LaneSize, 2*LaneSize).
 static bool
 is128BitLaneRepeatedShuffleMask(MVT VT, ArrayRef<int> Mask,
                                 SmallVectorImpl<int> &RepeatedMask) {
@@ -7075,11 +7075,13 @@ is128BitLaneRepeatedShuffleMask(MVT VT, ArrayRef<int> Mask,
       return false;
 
     // Ok, handle the in-lane shuffles by detecting if and when they repeat.
-    if (RepeatedMask[i % LaneSize] == -1)
+    // Adjust second vector indices to start at LaneSize instead of Size.
+    int LocalM = Mask[i] < Size ? Mask[i] % LaneSize
+                                : Mask[i] % LaneSize + LaneSize;
+    if (RepeatedMask[i % LaneSize] < 0)
       // This is the first non-undef entry in this slot of a 128-bit lane.
-      RepeatedMask[i % LaneSize] =
-          Mask[i] < Size ? Mask[i] % LaneSize : Mask[i] % LaneSize + Size;
-    else if (RepeatedMask[i % LaneSize] + (i / LaneSize) * LaneSize != Mask[i])
+      RepeatedMask[i % LaneSize] = LocalM;
+    else if (RepeatedMask[i % LaneSize] != LocalM)
       // Found a mismatch with the repeated mask.
       return false;
   }
@@ -7490,7 +7492,7 @@ static SDValue lowerVectorShuffleAsBlend(const SDLoc &DL, MVT VT, SDValue V1,
       assert(RepeatedMask.size() == 8 && "Repeated mask size doesn't match!");
       BlendMask = 0;
       for (int i = 0; i < 8; ++i)
-        if (RepeatedMask[i] >= 16)
+        if (RepeatedMask[i] >= 8)
           BlendMask |= 1u << i;
       return DAG.getNode(X86ISD::BLENDI, DL, MVT::v16i16, V1, V2,
                          DAG.getConstant(BlendMask, DL, MVT::i8));
@@ -9744,7 +9746,6 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
 static SDValue lowerVectorShuffleAsBlendOfPSHUFBs(
     const SDLoc &DL, MVT VT, SDValue V1, SDValue V2, ArrayRef<int> Mask,
     SelectionDAG &DAG, bool &V1InUse, bool &V2InUse) {
-  assert(VT.is128BitVector() && "v32i8 VPSHUFB blend not implemented yet!");
   SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
   SDValue V1Mask[16];
   SDValue V2Mask[16];
@@ -11262,9 +11263,9 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
            "Repeated masks must be half the mask width!");
 
     // Use even/odd duplicate instructions for masks that match their pattern.
-    if (isShuffleEquivalent(V1, V2, Mask, {0, 0, 2, 2, 4, 4, 6, 6}))
+    if (isShuffleEquivalent(V1, V2, RepeatedMask, {0, 0, 2, 2}))
       return DAG.getNode(X86ISD::MOVSLDUP, DL, MVT::v8f32, V1);
-    if (isShuffleEquivalent(V1, V2, Mask, {1, 1, 3, 3, 5, 5, 7, 7}))
+    if (isShuffleEquivalent(V1, V2, RepeatedMask, {1, 1, 3, 3}))
       return DAG.getNode(X86ISD::MOVSHDUP, DL, MVT::v8f32, V1);
 
     if (isSingleInputShuffleMask(Mask))
@@ -11277,11 +11278,7 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       return V;
 
     // Otherwise, fall back to a SHUFPS sequence. Here it is important that we
-    // have already handled any direct blends. We also need to squash the
-    // repeated mask into a simulated v4f32 mask.
-    for (int i = 0; i < 4; ++i)
-      if (RepeatedMask[i] >= 8)
-        RepeatedMask[i] -= 4;
+    // have already handled any direct blends.
     return lowerVectorShuffleWithSHUFPS(DL, MVT::v8f32, RepeatedMask, V1, V2, DAG);
   }
 
