@@ -10,6 +10,13 @@
 // RUN: %clangxx_msan %s -DSENDTO -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=NEGATIVE
 // RUN: %clangxx_msan %s -DSENDMSG -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=NEGATIVE
 
+// RUN: %clangxx_msan %s -DSEND -DBUF -o %t && \
+// RUN:   MSAN_OPTIONS=intercept_send=0 %run %t 2>&1 | FileCheck %s --check-prefix=NEGATIVE
+// RUN: %clangxx_msan %s -DSENDTO -DBUF -o %t && \
+// RUN:   MSAN_OPTIONS=intercept_send=0 %run %t 2>&1 | FileCheck %s --check-prefix=NEGATIVE
+// RUN: %clangxx_msan %s -DSENDMSG -DBUF -o %t && \
+// RUN:   MSAN_OPTIONS=intercept_send=0 %run %t 2>&1 | FileCheck %s --check-prefix=NEGATIVE
+
 // UNSUPPORTED: android
 
 #include <assert.h>

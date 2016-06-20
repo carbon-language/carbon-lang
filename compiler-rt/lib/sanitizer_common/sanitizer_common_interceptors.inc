@@ -2521,7 +2521,8 @@ INTERCEPTOR(SSIZE_T, sendmsg, int fd, struct __sanitizer_msghdr *msg,
     COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
   }
   SSIZE_T res = REAL(sendmsg)(fd, msg, flags);
-  if (res >= 0 && msg) read_msghdr(ctx, msg, res);
+  if (common_flags()->intercept_send && res >= 0 && msg)
+    read_msghdr(ctx, msg, res);
   return res;
 }
 #define INIT_SENDMSG COMMON_INTERCEPT_FUNCTION(sendmsg);
@@ -5623,7 +5624,8 @@ INTERCEPTOR(SSIZE_T, send, int fd, void *buf, SIZE_T len, int flags) {
     COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
   }
   SSIZE_T res = REAL(send)(fd, buf, len, flags);
-  if (res > 0) COMMON_INTERCEPTOR_READ_RANGE(ctx, buf, Min((SIZE_T)res, len));
+  if (common_flags()->intercept_send && res > 0)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, buf, Min((SIZE_T)res, len));
   return res;
 }
 
@@ -5635,9 +5637,11 @@ INTERCEPTOR(SSIZE_T, sendto, int fd, void *buf, SIZE_T len, int flags,
     COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
     COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
   }
-  if (srcaddr && addrlen) COMMON_INTERCEPTOR_READ_RANGE(ctx, srcaddr, addrlen);
+  if (common_flags()->intercept_send && srcaddr && addrlen)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, srcaddr, addrlen);
   SSIZE_T res = REAL(sendto)(fd, buf, len, flags, srcaddr, addrlen);
-  if (res > 0) COMMON_INTERCEPTOR_READ_RANGE(ctx, buf, Min((SIZE_T)res, len));
+  if (common_flags()->intercept_send && res > 0)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, buf, Min((SIZE_T)res, len));
   return res;
 }
 #define INIT_SEND_SENDTO           \
