@@ -525,14 +525,6 @@ public:
     return PICStyle == PICStyles::StubPIC;
   }
 
-  bool isPICStyleStubNoDynamic() const {
-    return PICStyle == PICStyles::StubDynamicNoPIC;
-  }
-  bool isPICStyleStubAny() const {
-    return PICStyle == PICStyles::StubDynamicNoPIC ||
-           PICStyle == PICStyles::StubPIC;
-  }
-
   bool isPositionIndependent() const {
     return TM.getRelocationModel() == Reloc::PIC_;
   }
