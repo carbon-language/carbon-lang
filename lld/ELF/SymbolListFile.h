@@ -11,7 +11,6 @@
 #define LLD_ELF_SYMBOL_LIST_FILE_H
 
 #include "lld/Core/LLVM.h"
-#include "llvm/ADT/MapVector.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 namespace lld {

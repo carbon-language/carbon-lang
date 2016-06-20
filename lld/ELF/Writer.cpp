@@ -912,8 +912,7 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
     bool HasVerNeed = Out<ELFT>::VerNeed->getNeedNum() != 0;
     if (Out<ELFT>::VerDef || HasVerNeed)
       Add(Out<ELFT>::VerSym);
-    if (Out<ELFT>::VerDef)
-      Add(Out<ELFT>::VerDef);
+    Add(Out<ELFT>::VerDef);
     if (HasVerNeed)
       Add(Out<ELFT>::VerNeed);
 
