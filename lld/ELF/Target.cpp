@@ -1405,17 +1405,16 @@ void AArch64TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
   llvm_unreachable("invalid relocation for TLS IE to LE relaxation");
 }
 
-// Implementing relocations for AMDGPU is low priority since most
-// programs don't use relocations now. Thus, this function is not
-// actually called (relocateOne is called for each relocation).
-// That's why the AMDGPU port works without implementing this function.
 void AMDGPUTargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
                                    uint64_t Val) const {
-  llvm_unreachable("not implemented");
+  assert(Type == R_AMDGPU_REL32);
+  write32le(Loc, Val);
 }
 
 RelExpr AMDGPUTargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
-  llvm_unreachable("not implemented");
+  if (Type != R_AMDGPU_REL32)
+    error("do not know how to handle relocation");
+  return R_PC;
 }
 
 ARMTargetInfo::ARMTargetInfo() {
