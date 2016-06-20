@@ -740,10 +740,8 @@ CFLAAResult::FunctionInfo::FunctionInfo(Function &Fn,
                                         const SmallVectorImpl<Value *> &RetVals,
                                         StratifiedSets<Value *> S)
     : Sets(std::move(S)) {
-  LLVM_CONSTEXPR unsigned ExpectedMaxArgs = 8;
-
   // Collect StratifiedInfo for each parameter
-  SmallVector<Optional<StratifiedInfo>, ExpectedMaxArgs> ParamInfos;
+  SmallVector<Optional<StratifiedInfo>, 8> ParamInfos;
   for (auto &Param : Fn.args()) {
     if (Param.getType()->isPointerTy())
       ParamInfos.push_back(Sets.find(&Param));
