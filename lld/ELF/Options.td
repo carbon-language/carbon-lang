@@ -135,7 +135,7 @@ def script : Separate<["--"], "script">,
 def shared : Flag<["-"], "shared">,
   HelpText<"Build a shared object">;
 
-def soname : Joined<["-"], "soname=">,
+def soname : Joined<["-", "--"], "soname=">,
   HelpText<"Set DT_SONAME">;
 
 def start_lib : Flag<["--"], "start-lib">,
