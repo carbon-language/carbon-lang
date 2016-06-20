@@ -271,7 +271,8 @@ template <class ELFT> void GotSection<ELFT>::writeMipsGot(uint8_t *&Buf) {
   auto AddEntry = [&](const MipsGotEntry &SA) {
     uint8_t *Entry = Buf;
     Buf += sizeof(uintX_t);
-    uintX_t VA = SA.first->template getVA<ELFT>(SA.second);
+    const SymbolBody* Body = SA.first;
+    uintX_t VA = Body->template getVA<ELFT>(SA.second);
     write<uintX_t, ELFT::TargetEndianness, sizeof(uintX_t)>(Entry, VA);
   };
   std::for_each(std::begin(MipsLocal), std::end(MipsLocal), AddEntry);
