@@ -32,9 +32,9 @@ in short: to optimize a Module we create an llvm::FunctionPassManager
 instance, configure it with a set of optimizations, then run the PassManager on
 a Module to mutate it into a (hopefully) more optimized but semantically
 equivalent form. In the original tutorial series the FunctionPassManager was
-created outside the KaleidoscopeJIT, and modules were optimized before being
+created outside the KaleidoscopeJIT and modules were optimized before being
 added to it. In this Chapter we will make optimization a phase of our JIT
-instead. For now, this will provide us a motivation to learn more about ORC
+instead. For now this will provide us a motivation to learn more about ORC
 layers, but in the long term making optimization part of our JIT will yield an
 important benefit: When we begin lazily compiling code (i.e. deferring
 compilation of each function until the first time it's run), having
