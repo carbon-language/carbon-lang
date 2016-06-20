@@ -28,7 +28,7 @@ Optimizing Modules using the IRTransformLayer
 In `Chapter 4 <LangImpl4.html>`_ of the "Implementing a language with LLVM"
 tutorial series the llvm *FunctionPassManager* is introduced as a means for
 optimizing LLVM IR. Interested readers may read that chapter for details, but
-in short, to optimize a Module we create an llvm::FunctionPassManager
+in short: to optimize a Module we create an llvm::FunctionPassManager
 instance, configure it with a set of optimizations, then run the PassManager on
 a Module to mutate it into a (hopefully) more optimized but semantically
 equivalent form. In the original tutorial series the FunctionPassManager was
