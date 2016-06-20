@@ -33,16 +33,6 @@ define i32 @test3(i32 %X, i32 %Y) {
   ret i32 %b
 }
 
-define i1 @test4(i32 %X) {
-; CHECK-LABEL: @test4(
-; CHECK-NEXT:    ret i1 false
-;
-  %a = icmp ult i32 %X, 31
-  %b = icmp slt i32 %X, 0
-  %c = and i1 %a, %b
-  ret i1 %c
-}
-
 ; Make sure we don't go into an infinite loop with this test
 define <4 x i32> @test5(<4 x i32> %A) {
 ; CHECK-LABEL: @test5(

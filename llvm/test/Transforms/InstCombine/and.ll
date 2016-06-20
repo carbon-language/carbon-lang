@@ -228,17 +228,6 @@ define i8 @test20(i8 %A) {
   ret i8 %D
 }
 
-define i1 @test22(i32 %A) {
-; CHECK-LABEL: @test22(
-; CHECK-NEXT:    ret i1 false
-;
-  %B = icmp eq i32 %A, 1
-  %C = icmp sge i32 %A, 3
-  ;; false
-  %D = and i1 %B, %C
-  ret i1 %D
-}
-
 define i1 @test23(i32 %A) {
 ; CHECK-LABEL: @test23(
 ; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq i32 %A, 2
