@@ -644,7 +644,7 @@ template <class ELFT> void scanRelocations(InputSection<ELFT> &C) {
   // of tests to determine if it needs special treatment, such as
   // creating GOT, PLT, copy relocations, etc.
   // Note that relocations for non-alloc sections are directly
-  // processed by InputSection::relocateNative.
+  // processed by InputSection::relocateNonAlloc.
   if (C.getSectionHdr()->sh_flags & SHF_ALLOC)
     for (const Elf_Shdr *RelSec : C.RelocSections)
       scanRelocations(C, *RelSec);
