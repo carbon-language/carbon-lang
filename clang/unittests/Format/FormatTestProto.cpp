@@ -196,6 +196,12 @@ TEST_F(FormatTestProto, FormatsImports) {
                "message A {\n"
                "}");
 
+  verifyFormat("import public \"a.proto\";\n"
+               "import \"b.proto\";\n"
+               "// comment\n"
+               "message A {\n"
+               "}");
+
   // Missing semicolons should not confuse clang-format.
   verifyFormat("import \"a.proto\"\n"
                "import \"b.proto\"\n"

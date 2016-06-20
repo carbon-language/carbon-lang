@@ -889,6 +889,8 @@ void UnwrappedLineParser::parseStructuralElement() {
       }
       if (Style.Language == FormatStyle::LK_Proto) {
         nextToken();
+        if (FormatTok->is(tok::kw_public))
+          nextToken();
         if (!FormatTok->is(tok::string_literal))
           return;
         nextToken();
