@@ -30035,8 +30035,8 @@ static SDValue combineSIntToFP(SDNode *N, SelectionDAG &DAG,
     LoadSDNode *Ld = cast<LoadSDNode>(Op0.getNode());
     EVT LdVT = Ld->getValueType(0);
 
-    // This transformation is not supported if the result type is f16
-    if (VT == MVT::f16)
+    // This transformation is not supported if the result type is f16 or f128.
+    if (VT == MVT::f16 || VT == MVT::f128)
       return SDValue();
 
     if (!Ld->isVolatile() && !VT.isVector() &&
