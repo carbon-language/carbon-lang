@@ -782,7 +782,7 @@ bool LoopIdiomRecognize::processLoopStridedStore(
   // Okay, the memset has been formed.  Zap the original store and anything that
   // feeds into it.
   for (auto *I : Stores)
-    deleteDeadInstruction(I, TLI);
+    deleteDeadInstruction(I);
   ++NumMemSet;
   return true;
 }
@@ -891,7 +891,7 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(StoreInst *SI,
 
   // Okay, the memcpy has been formed.  Zap the original store and anything that
   // feeds into it.
-  deleteDeadInstruction(SI, TLI);
+  deleteDeadInstruction(SI);
   ++NumMemCpy;
   return true;
 }
