@@ -2839,7 +2839,7 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
   // options.
   bool CompressDebugSections = false;
 
-  bool UseRelaxRelocations = false;
+  bool UseRelaxRelocations = ENABLE_X86_RELAX_RELOCATIONS;
   const char *MipsTargetFeature = nullptr;
   for (const Arg *A :
        Args.filtered(options::OPT_Wa_COMMA, options::OPT_Xassembler)) {
