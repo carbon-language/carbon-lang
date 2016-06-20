@@ -1212,6 +1212,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VTBL2:         return "ARMISD::VTBL2";
   case ARMISD::VMULLs:        return "ARMISD::VMULLs";
   case ARMISD::VMULLu:        return "ARMISD::VMULLu";
+  case ARMISD::UMAAL:         return "ARMISD::UMAAL";
   case ARMISD::UMLAL:         return "ARMISD::UMLAL";
   case ARMISD::SMLAL:         return "ARMISD::SMLAL";
   case ARMISD::BUILD_VECTOR:  return "ARMISD::BUILD_VECTOR";
@@ -8686,11 +8687,6 @@ static SDValue AddCombineTo64bitMLAL(SDNode *AddcNode,
                                      TargetLowering::DAGCombinerInfo &DCI,
                                      const ARMSubtarget *Subtarget) {
 
-  if (Subtarget->isThumb1Only()) return SDValue();
-
-  // Only perform the checks after legalize when the pattern is available.
-  if (DCI.isBeforeLegalize()) return SDValue();
-
   // Look for multiply add opportunities.
   // The pattern is a ISD::UMUL_LOHI followed by two add nodes, where
   // each add nodes consumes a value from ISD::UMUL_LOHI and there is
@@ -8818,14 +8814,97 @@ static SDValue AddCombineTo64bitMLAL(SDNode *AddcNode,
   return resNode;
 }
 
+static SDValue AddCombineTo64bitUMAAL(SDNode *AddcNode,
+                                      TargetLowering::DAGCombinerInfo &DCI,
+                                      const ARMSubtarget *Subtarget) {
+  // UMAAL is similar to UMLAL except that it adds two unsigned values.
+  // While trying to combine for the other MLAL nodes, first search for the
+  // chance to use UMAAL. Check if Addc uses another addc node which can first
+  // be combined into a UMLAL. The other pattern is AddcNode being combined
+  // into an UMLAL and then using another addc is handled in ISelDAGToDAG.
+
+  if (!Subtarget->hasV6Ops())
+    return AddCombineTo64bitMLAL(AddcNode, DCI, Subtarget);
+
+  SDNode *PrevAddc = nullptr;
+  if (AddcNode->getOperand(0).getOpcode() == ISD::ADDC)
+    PrevAddc = AddcNode->getOperand(0).getNode();
+  else if (AddcNode->getOperand(1).getOpcode() == ISD::ADDC)
+    PrevAddc = AddcNode->getOperand(1).getNode();
+
+  // If there's no addc chains, just return a search for any MLAL.
+  if (PrevAddc == nullptr)
+    return AddCombineTo64bitMLAL(AddcNode, DCI, Subtarget);
+
+  // Try to convert the addc operand to an MLAL and if that fails try to
+  // combine AddcNode.
+  SDValue MLAL = AddCombineTo64bitMLAL(PrevAddc, DCI, Subtarget);
+  if (MLAL != SDValue(PrevAddc, 0))
+    return AddCombineTo64bitMLAL(AddcNode, DCI, Subtarget);
+
+  // Find the converted UMAAL or quit if it doesn't exist.
+  SDNode *UmlalNode = nullptr;
+  SDValue AddHi;
+  if (AddcNode->getOperand(0).getOpcode() == ARMISD::UMLAL) {
+    UmlalNode = AddcNode->getOperand(0).getNode();
+    AddHi = AddcNode->getOperand(1);
+  } else if (AddcNode->getOperand(1).getOpcode() == ARMISD::UMLAL) {
+    UmlalNode = AddcNode->getOperand(1).getNode();
+    AddHi = AddcNode->getOperand(0);
+  } else {
+    return SDValue();
+  }
+
+  // The ADDC should be glued to an ADDE node, which uses the same UMLAL as
+  // the ADDC as well as Zero.
+  auto *Zero = dyn_cast<ConstantSDNode>(UmlalNode->getOperand(3));
+
+  if (!Zero || Zero->getZExtValue() != 0)
+    return SDValue();
+
+  // Check that we have a glued ADDC node.
+  if (AddcNode->getValueType(1) != MVT::Glue)
+    return SDValue();
+
+  // Look for the glued ADDE.
+  SDNode* AddeNode = AddcNode->getGluedUser();
+  if (!AddeNode)
+    return SDValue();
+
+  if ((AddeNode->getOperand(0).getNode() == Zero &&
+       AddeNode->getOperand(1).getNode() == UmlalNode) ||
+      (AddeNode->getOperand(0).getNode() == UmlalNode &&
+       AddeNode->getOperand(1).getNode() == Zero)) {
+
+    SelectionDAG &DAG = DCI.DAG;
+    SDValue Ops[] = { UmlalNode->getOperand(0), UmlalNode->getOperand(1),
+                      UmlalNode->getOperand(2), AddHi };
+    SDValue UMAAL =  DAG.getNode(ARMISD::UMAAL, SDLoc(AddcNode),
+                                 DAG.getVTList(MVT::i32, MVT::i32), Ops);
+
+    // Replace the ADDs' nodes uses by the UMAAL node's values.
+    DAG.ReplaceAllUsesOfValueWith(SDValue(AddeNode, 0), SDValue(UMAAL.getNode(), 1));
+    DAG.ReplaceAllUsesOfValueWith(SDValue(AddcNode, 0), SDValue(UMAAL.getNode(), 0));
+
+    // Return original node to notify the driver to stop replacing.
+    return SDValue(AddcNode, 0);
+  }
+  return SDValue();
+}
+
 /// PerformADDCCombine - Target-specific dag combine transform from
-/// ISD::ADDC, ISD::ADDE, and ISD::MUL_LOHI to MLAL.
+/// ISD::ADDC, ISD::ADDE, and ISD::MUL_LOHI to MLAL or
+/// ISD::ADDC, ISD::ADDE and ARMISD::UMLAL to ARMISD::UMAAL
 static SDValue PerformADDCCombine(SDNode *N,
                                  TargetLowering::DAGCombinerInfo &DCI,
                                  const ARMSubtarget *Subtarget) {
 
-  return AddCombineTo64bitMLAL(N, DCI, Subtarget);
+  if (Subtarget->isThumb1Only()) return SDValue();
 
+  // Only perform the checks after legalize when the pattern is available.
+  if (DCI.isBeforeLegalize()) return SDValue();
+
+  return AddCombineTo64bitUMAAL(N, DCI, Subtarget);
 }
 
 /// PerformADDCombineWithOperands - Try DAG combinations for an ADD with
