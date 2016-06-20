@@ -77,21 +77,21 @@ public:
   void run();
 
 private:
-  void parseVersion(StringRef Version);
+  void parseVersion();
   void parseLocal();
-  void parseVersionSymbols(StringRef Version);
+  void parseVersionSymbols();
 };
 
-void VersionScriptParser::parseVersion(StringRef Version) {
+void VersionScriptParser::parseVersion() {
   expect("{");
   if (peek() == "global:") {
     next();
-    parseVersionSymbols(Version);
+    parseVersionSymbols();
   }
   if (peek() == "local:")
     parseLocal();
   else
-    parseVersionSymbols(Version);
+    parseVersionSymbols();
 
   expect("}");
   expect(";");
@@ -104,21 +104,13 @@ void VersionScriptParser::parseLocal() {
   Config->VersionScriptGlobalByDefault = false;
 }
 
-void VersionScriptParser::parseVersionSymbols(StringRef Version) {
-  std::vector<StringRef> *Globals;
-  if (Version.empty()) {
-    Globals = &Config->VersionScriptGlobals;
-  } else {
-    Config->SymbolVersions.push_back(elf::Version(Version));
-    Globals = &Config->SymbolVersions.back().Globals;
-  }
-
+void VersionScriptParser::parseVersionSymbols() {
   for (;;) {
     StringRef Cur = peek();
     if (Cur == "}" || Cur == "local:")
       return;
     next();
-    Globals->push_back(Cur);
+    Config->VersionScriptGlobals.push_back(Cur);
     expect(";");
   }
 }
@@ -127,18 +119,18 @@ void VersionScriptParser::run() {
   StringRef Msg = "anonymous version definition is used in "
                   "combination with other version definitions";
   if (peek() == "{") {
-    parseVersion("");
+    parseVersion();
     if (!atEOF())
       setError(Msg);
     return;
   }
 
   while (!atEOF() && !Error) {
-    if (peek() == "{") {
+    if (next() == "{") {
       setError(Msg);
       return;
     }
-    parseVersion(next());
+    parseVersion();
   }
 }
 

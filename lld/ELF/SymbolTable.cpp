@@ -175,10 +175,7 @@ std::pair<Symbol *, bool> SymbolTable<ELFT>::insert(StringRef Name) {
     Sym->Visibility = STV_DEFAULT;
     Sym->IsUsedInRegularObj = false;
     Sym->ExportDynamic = false;
-    if (Config->VersionScriptGlobalByDefault)
-      Sym->VersionId = VER_NDX_GLOBAL;
-    else
-      Sym->VersionId = VER_NDX_LOCAL;
+    Sym->VersionScriptGlobal = Config->VersionScriptGlobalByDefault;
     SymVector.push_back(Sym);
   } else {
     Sym = SymVector[P.first->second];
@@ -517,24 +514,9 @@ template <class ELFT> void SymbolTable<ELFT>::scanDynamicList() {
 // symbols with the VersionScriptGlobal flag, which acts as a filter on the
 // dynamic symbol table.
 template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
-  // If version script does not contain versions declarations,
-  // we just should mark global symbols.
-  if (!Config->VersionScriptGlobals.empty()) {
-    for (StringRef S : Config->VersionScriptGlobals)
-      if (SymbolBody *B = find(S))
-        B->symbol()->VersionId = VER_NDX_GLOBAL;
-    return;
-  }
-
-  // If we have symbols version declarations, we should
-  // assign version references for each symbol.
-  size_t I = 2;
-  for (Version &V : Config->SymbolVersions) {
-    for (StringRef Name : V.Globals)
-      if (SymbolBody *B = find(Name))
-        B->symbol()->VersionId = I;
-    ++I;
-  }
+  for (StringRef S : Config->VersionScriptGlobals)
+    if (SymbolBody *B = find(S))
+      B->symbol()->VersionScriptGlobal = true;
 }
 
 template class elf::SymbolTable<ELF32LE>;
