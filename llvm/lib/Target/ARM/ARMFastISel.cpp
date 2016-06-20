@@ -599,14 +599,10 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, MVT VT) {
     if (Subtarget->isTargetMachO())
       TF = ARMII::MO_NONLAZY;
 
-    switch (RelocM) {
-    case Reloc::PIC_:
+    if (RelocM == Reloc::PIC_)
       Opc = isThumb2 ? ARM::t2MOV_ga_pcrel : ARM::MOV_ga_pcrel;
-      break;
-    default:
+    else
       Opc = isThumb2 ? ARM::t2MOVi32imm : ARM::MOVi32imm;
-      break;
-    }
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                             TII.get(Opc), DestReg).addGlobalAddress(GV, 0, TF));
   } else {
