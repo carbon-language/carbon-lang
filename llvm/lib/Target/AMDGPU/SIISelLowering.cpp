@@ -218,7 +218,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM,
   setOperationAction(ISD::FDIV, MVT::f32, Custom);
   setOperationAction(ISD::FDIV, MVT::f64, Custom);
 
-
   setTargetDAGCombine(ISD::FADD);
   setTargetDAGCombine(ISD::FSUB);
   setTargetDAGCombine(ISD::FMINNUM);
@@ -495,7 +494,6 @@ bool SITargetLowering::isNoopAddrSpaceCast(unsigned SrcAS,
                                            unsigned DestAS) const {
   return isFlatGlobalAddrSpace(SrcAS) && isFlatGlobalAddrSpace(DestAS);
 }
-
 
 bool SITargetLowering::isMemOpUniform(const SDNode *N) const {
   const MemSDNode *MemNode = cast<MemSDNode>(N);
@@ -2636,7 +2634,6 @@ static SDValue performIntMed3ImmCombine(SelectionDAG &DAG, const SDLoc &SL,
   ConstantSDNode *K0 = dyn_cast<ConstantSDNode>(Op0.getOperand(1));
   if (!K0)
     return SDValue();
-
 
   if (Signed) {
     if (K0->getAPIntValue().sge(K1->getAPIntValue()))

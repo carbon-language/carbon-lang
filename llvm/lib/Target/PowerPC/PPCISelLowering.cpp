@@ -923,7 +923,6 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
     break;
   }
 
-
   if (Subtarget.enableMachineScheduler())
     setSchedulingPreference(Sched::Source);
   else
@@ -4746,7 +4745,7 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
     CCInfo.AnalyzeCallOperands(Outs, CC_PPC32_SVR4);
   }
   CCInfo.clearWasPPCF128();
-  
+
   // Assign locations to all of the outgoing aggregate by value arguments.
   SmallVector<CCValAssign, 16> ByValArgLocs;
   CCState CCByValInfo(CallConv, isVarArg, DAG.getMachineFunction(),

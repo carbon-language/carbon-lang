@@ -164,4 +164,3 @@ bool PPCQPXLoadSplat::runOnMachineFunction(MachineFunction &MF) {
 
   return MadeChange;
 }
-

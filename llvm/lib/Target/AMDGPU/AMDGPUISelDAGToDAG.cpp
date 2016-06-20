@@ -786,7 +786,6 @@ void AMDGPUDAGToDAGISel::SelectADD_SUB_I64(SDNode *N) {
   SDVTList VTList = CurDAG->getVTList(MVT::i32, MVT::Glue);
   SDValue AddLoArgs[] = { SDValue(Lo0, 0), SDValue(Lo1, 0) };
 
-
   unsigned Opc = IsAdd ? AMDGPU::S_ADD_U32 : AMDGPU::S_SUB_U32;
   unsigned CarryOpc = IsAdd ? AMDGPU::S_ADDC_U32 : AMDGPU::S_SUBB_U32;
 
