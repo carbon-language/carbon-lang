@@ -1420,7 +1420,8 @@ SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
                                              SelectionDAG &DAG) const {
   GlobalAddressSDNode *GSD = cast<GlobalAddressSDNode>(Op);
 
-  if (GSD->getAddressSpace() != AMDGPUAS::CONSTANT_ADDRESS)
+  if (GSD->getAddressSpace() != AMDGPUAS::CONSTANT_ADDRESS &&
+      GSD->getAddressSpace() != AMDGPUAS::GLOBAL_ADDRESS)
     return AMDGPUTargetLowering::LowerGlobalAddress(MFI, Op, DAG);
 
   SDLoc DL(GSD);
