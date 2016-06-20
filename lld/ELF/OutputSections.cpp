@@ -1277,8 +1277,10 @@ static bool sortMipsSymbols(const std::pair<SymbolBody *, unsigned> &L,
                             const std::pair<SymbolBody *, unsigned> &R) {
   // Sort entries related to non-local preemptible symbols by GOT indexes.
   // All other entries go to the first part of GOT in arbitrary order.
-  if (!L.first->IsInGlobalMipsGot || !R.first->IsInGlobalMipsGot)
-    return !L.first->IsInGlobalMipsGot;
+  bool LIsInLocalGot = !L.first->IsInGlobalMipsGot;
+  bool RIsInLocalGot = !R.first->IsInGlobalMipsGot;
+  if (LIsInLocalGot || RIsInLocalGot)
+    return !RIsInLocalGot;
   return L.first->GotIndex < R.first->GotIndex;
 }
 
