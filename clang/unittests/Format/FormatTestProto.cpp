@@ -189,5 +189,20 @@ TEST_F(FormatTestProto, ExtendingMessage) {
                "}");
 }
 
+TEST_F(FormatTestProto, FormatsImports) {
+  verifyFormat("import \"a.proto\";\n"
+               "import \"b.proto\";\n"
+               "// comment\n"
+               "message A {\n"
+               "}");
+
+  // Missing semicolons should not confuse clang-format.
+  verifyFormat("import \"a.proto\"\n"
+               "import \"b.proto\"\n"
+               "// comment\n"
+               "message A {\n"
+               "}");
+}
+
 } // end namespace tooling
 } // end namespace clang
