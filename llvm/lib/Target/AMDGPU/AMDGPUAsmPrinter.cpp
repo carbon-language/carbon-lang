@@ -28,6 +28,7 @@
 #include "R600RegisterInfo.h"
 #include "SIDefines.h"
 #include "SIMachineFunctionInfo.h"
+#include "SIInstrInfo.h"
 #include "SIRegisterInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -309,6 +310,8 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   bool FlatUsed = false;
   const SIRegisterInfo *RI =
       static_cast<const SIRegisterInfo *>(STM.getRegisterInfo());
+  const SIInstrInfo *TII =
+      static_cast<const SIInstrInfo *>(STM.getInstrInfo());
 
   for (const MachineBasicBlock &MBB : MF) {
     for (const MachineInstr &MI : MBB) {
@@ -318,8 +321,7 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
       if (MI.isDebugValue())
         continue;
 
-      // FIXME: This is reporting 0 for many instructions.
-      CodeSize += MI.getDesc().Size;
+      CodeSize += TII->getInstSizeInBytes(MI);
 
       unsigned numOperands = MI.getNumOperands();
       for (unsigned op_idx = 0; op_idx < numOperands; op_idx++) {
