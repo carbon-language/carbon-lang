@@ -2501,7 +2501,16 @@ INTERCEPTOR(SSIZE_T, recvmsg, int fd, struct __sanitizer_msghdr *msg,
 #if SANITIZER_INTERCEPT_SENDMSG
 static void read_msghdr(void *ctx, struct __sanitizer_msghdr *msg,
                         SSIZE_T maxlen) {
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, msg, sizeof(*msg));
+#define R(f) \
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, &msg->msg_##f, sizeof(msg->msg_##f))
+  R(name);
+  R(namelen);
+  R(iov);
+  R(iovlen);
+  R(control);
+  R(controllen);
+  R(flags);
+#undef R
   if (msg->msg_name && msg->msg_namelen)
     COMMON_INTERCEPTOR_READ_RANGE(ctx, msg->msg_name, msg->msg_namelen);
   if (msg->msg_iov && msg->msg_iovlen)

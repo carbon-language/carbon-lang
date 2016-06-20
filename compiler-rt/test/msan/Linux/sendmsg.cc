@@ -59,11 +59,13 @@ int main() {
 #if defined(SENDMSG)
   struct iovec iov[2] = {{buf, 5}, {buf + 5, 5}};
   struct msghdr msg;
-  memset(&msg, 0, sizeof(msg));
   msg.msg_name = &serveraddr;
   msg.msg_namelen = addrlen;
   msg.msg_iov = iov;
   msg.msg_iovlen = 2;
+  msg.msg_control = 0;
+  msg.msg_controllen = 0;
+  msg.msg_flags = 0;
 #endif
 
 #if defined(SEND)
