@@ -159,7 +159,8 @@ static void deleteDeadInstruction(Instruction *I,
   SmallVector<Value *, 16> Operands(I->value_op_begin(), I->value_op_end());
   I->replaceAllUsesWith(UndefValue::get(I->getType()));
   I->eraseFromParent();
-  RecursivelyDeleteTriviallyDeadInstructions(I, TLI);
+  for (Value *Op : Operands)
+    RecursivelyDeleteTriviallyDeadInstructions(Op, TLI);
 }
 
 //===----------------------------------------------------------------------===//
