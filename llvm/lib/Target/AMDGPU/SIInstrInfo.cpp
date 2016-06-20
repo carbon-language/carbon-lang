@@ -300,8 +300,8 @@ bool SIInstrInfo::getMemOpBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
 bool SIInstrInfo::shouldClusterMemOps(MachineInstr *FirstLdSt,
                                       MachineInstr *SecondLdSt,
                                       unsigned NumLoads) const {
-	const MachineOperand *FirstDst = nullptr;
-	const MachineOperand *SecondDst = nullptr;
+  const MachineOperand *FirstDst = nullptr;
+  const MachineOperand *SecondDst = nullptr;
 
   if (isDS(*FirstLdSt) && isDS(*SecondLdSt)) {
     FirstDst = getNamedOperand(*FirstLdSt, AMDGPU::OpName::vdst);

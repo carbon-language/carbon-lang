@@ -656,8 +656,7 @@ SDValue SITargetLowering::LowerFormalArguments(
   //   enabled too.
   if (CallConv == CallingConv::AMDGPU_PS &&
       ((Info->getPSInputAddr() & 0x7F) == 0 ||
-       ((Info->getPSInputAddr() & 0xF) == 0 &&
-	Info->isPSInputAllocated(11)))) {
+       ((Info->getPSInputAddr() & 0xF) == 0 && Info->isPSInputAllocated(11)))) {
     CCInfo.AllocateReg(AMDGPU::VGPR0);
     CCInfo.AllocateReg(AMDGPU::VGPR1);
     Info->markPSInputAllocated(0);

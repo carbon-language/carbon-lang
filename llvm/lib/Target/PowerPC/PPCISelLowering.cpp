@@ -10588,8 +10588,8 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
                     MinAlign(LD->getAlignment(), 4), LD->getAAInfo());
 
       if (LD->isIndexed()) {
-	// Note that DAGCombine should re-form any pre-increment load(s) from
-	// what is produced here if that makes sense.
+        // Note that DAGCombine should re-form any pre-increment load(s) from
+        // what is produced here if that makes sense.
         DAG.ReplaceAllUsesOfValueWith(SDValue(LD, 1), BasePtr);
       }
 

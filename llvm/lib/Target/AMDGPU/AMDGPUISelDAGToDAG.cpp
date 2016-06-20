@@ -47,8 +47,7 @@ static bool isCBranchSCC(const SDNode *N) {
   if (Cond.getOpcode() == ISD::CopyToReg)
     Cond = Cond.getOperand(2);
   return Cond.getOpcode() == ISD::SETCC &&
-         Cond.getOperand(0).getValueType() == MVT::i32 &&
-	 Cond.hasOneUse();
+         Cond.getOperand(0).getValueType() == MVT::i32 && Cond.hasOneUse();
 }
 
 /// AMDGPU specific code to select AMDGPU machine instructions for
@@ -619,9 +618,8 @@ bool AMDGPUDAGToDAGISel::isGlobalLoad(const MemSDNode *N) const {
     return false;
   if (N->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS) {
     if (Subtarget->getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS)
-      return !isa<GlobalValue>(
-        GetUnderlyingObject(N->getMemOperand()->getValue(),
-	CurDAG->getDataLayout()));
+      return !isa<GlobalValue>(GetUnderlyingObject(
+          N->getMemOperand()->getValue(), CurDAG->getDataLayout()));
 
     //TODO: Why do we need this?
     if (N->getMemoryVT().bitsLT(MVT::i32))
