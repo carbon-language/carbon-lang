@@ -115,7 +115,7 @@ void VersionScriptParser::parseVersionSymbols(StringRef Version) {
 
   for (;;) {
     StringRef Cur = peek();
-    if (Cur == "}" || Cur == "local:")
+    if (Cur == "}" || Cur == "local:" || Error)
       return;
     next();
     Globals->push_back(Cur);
