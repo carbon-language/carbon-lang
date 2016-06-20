@@ -12087,7 +12087,7 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget &Subtarget,
   }
 
   int NumV1Elements = 0, NumUndefElements = 0, NumV2Elements = 0;
-  for (int M : SVOp->getMask())
+  for (int M : Mask)
     if (M < 0)
       ++NumUndefElements;
     else if (M < NumElements)
@@ -12108,28 +12108,28 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget &Subtarget,
   // indices for V1 is lower than the number of odd indices for V2.
   if (NumV1Elements == NumV2Elements) {
     int LowV1Elements = 0, LowV2Elements = 0;
-    for (int M : SVOp->getMask().slice(0, NumElements / 2))
+    for (int M : Mask.slice(0, NumElements / 2))
       if (M >= NumElements)
         ++LowV2Elements;
       else if (M >= 0)
         ++LowV1Elements;
-    if (LowV2Elements > LowV1Elements) {
+    if (LowV2Elements > LowV1Elements)
       return DAG.getCommutedVectorShuffle(*SVOp);
-    } else if (LowV2Elements == LowV1Elements) {
+    if (LowV2Elements == LowV1Elements) {
       int SumV1Indices = 0, SumV2Indices = 0;
-      for (int i = 0, Size = SVOp->getMask().size(); i < Size; ++i)
-        if (SVOp->getMask()[i] >= NumElements)
+      for (int i = 0, Size = Mask.size(); i < Size; ++i)
+        if (Mask[i] >= NumElements)
           SumV2Indices += i;
-        else if (SVOp->getMask()[i] >= 0)
+        else if (Mask[i] >= 0)
           SumV1Indices += i;
-      if (SumV2Indices < SumV1Indices) {
+      if (SumV2Indices < SumV1Indices)
         return DAG.getCommutedVectorShuffle(*SVOp);
-      } else if (SumV2Indices == SumV1Indices) {
+      if (SumV2Indices == SumV1Indices) {
         int NumV1OddIndices = 0, NumV2OddIndices = 0;
-        for (int i = 0, Size = SVOp->getMask().size(); i < Size; ++i)
-          if (SVOp->getMask()[i] >= NumElements)
+        for (int i = 0, Size = Mask.size(); i < Size; ++i)
+          if (Mask[i] >= NumElements)
             NumV2OddIndices += i % 2;
-          else if (SVOp->getMask()[i] >= 0)
+          else if (Mask[i] >= 0)
             NumV1OddIndices += i % 2;
         if (NumV2OddIndices < NumV1OddIndices)
           return DAG.getCommutedVectorShuffle(*SVOp);
