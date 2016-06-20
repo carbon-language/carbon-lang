@@ -150,17 +150,9 @@ INITIALIZE_PASS_END(LoopIdiomRecognize, "loop-idiom", "Recognize loop idioms",
 
 Pass *llvm::createLoopIdiomPass() { return new LoopIdiomRecognize(); }
 
-/// deleteDeadInstruction - Delete this instruction.  Before we do, go through
-/// and zero out all the operands of this instruction.  If any of them become
-/// dead, delete them and the computation tree that feeds them.
-///
-static void deleteDeadInstruction(Instruction *I,
-                                  const TargetLibraryInfo *TLI) {
-  SmallVector<Value *, 16> Operands(I->value_op_begin(), I->value_op_end());
+static void deleteDeadInstruction(Instruction *I) {
   I->replaceAllUsesWith(UndefValue::get(I->getType()));
   I->eraseFromParent();
-  for (Value *Op : Operands)
-    RecursivelyDeleteTriviallyDeadInstructions(Op, TLI);
 }
 
 //===----------------------------------------------------------------------===//
