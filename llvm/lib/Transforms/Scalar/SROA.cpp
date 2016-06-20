@@ -3110,10 +3110,10 @@ private:
       //
       // The gep and extractvalue values are factored out of the CreateStore
       // call to make the output independent of the argument evaluation order.
-      Value *ExtractValue = IRB.CreateExtractValue(Agg, Indices,
-        Name + ".extract");
-      Value *InBoundsGEP = IRB.CreateInBoundsGEP(nullptr, Ptr, GEPIndices,
-        Name + ".gep");
+      Value *ExtractValue =
+          IRB.CreateExtractValue(Agg, Indices, Name + ".extract");
+      Value *InBoundsGEP =
+          IRB.CreateInBoundsGEP(nullptr, Ptr, GEPIndices, Name + ".gep");
       Value *Store = IRB.CreateStore(ExtractValue, InBoundsGEP);
       (void)Store;
       DEBUG(dbgs() << "          to: " << *Store << "\n");
