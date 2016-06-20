@@ -9841,17 +9841,14 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(V1.getSimpleValueType() == MVT::v8i16 && "Bad operand type!");
   assert(V2.getSimpleValueType() == MVT::v8i16 && "Bad operand type!");
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
-  ArrayRef<int> OrigMask = SVOp->getMask();
-  int MaskStorage[8] = {OrigMask[0], OrigMask[1], OrigMask[2], OrigMask[3],
-                        OrigMask[4], OrigMask[5], OrigMask[6], OrigMask[7]};
-  MutableArrayRef<int> Mask(MaskStorage);
+  ArrayRef<int> Mask = SVOp->getMask();
 
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
 
   // Whenever we can lower this as a zext, that instruction is strictly faster
   // than any alternative.
   if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
-          DL, MVT::v8i16, V1, V2, OrigMask, Subtarget, DAG))
+          DL, MVT::v8i16, V1, V2, Mask, Subtarget, DAG))
     return ZExt;
 
   int NumV2Inputs = count_if(Mask, [](int M) { return M >= 8; });
@@ -9877,8 +9874,11 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                                                         Mask, Subtarget, DAG))
       return Rotate;
 
-    return lowerV8I16GeneralSingleInputVectorShuffle(DL, MVT::v8i16, V1, Mask,
-                                                     Subtarget, DAG);
+    // Make a copy of the mask so it can be modified.
+    SmallVector<int, 8> MutableMask(Mask.begin(), Mask.end());
+    return lowerV8I16GeneralSingleInputVectorShuffle(DL, MVT::v8i16, V1,
+                                                     MutableMask, Subtarget,
+                                                     DAG);
   }
 
   assert(llvm::any_of(Mask, [](int M) { return M >= 0 && M < 8; }) &&
