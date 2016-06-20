@@ -227,6 +227,7 @@ namespace llvm {
     explicit ARMTargetLowering(const TargetMachine &TM,
                                const ARMSubtarget &STI);
 
+    bool isPositionIndependent() const;
     unsigned getJumpTableEncoding() const override;
     bool useSoftFloat() const override;
 

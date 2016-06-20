@@ -1564,6 +1564,10 @@ void ARMTargetLowering::PassF64ArgInRegs(const SDLoc &dl, SelectionDAG &DAG,
   }
 }
 
+bool ARMTargetLowering::isPositionIndependent() const {
+  return getTargetMachine().getRelocationModel() == Reloc::PIC_;
+}
+
 /// LowerCall - Lowering a call into a callseq_start <-
 /// ARMISD:CALL <- callseq_end chain. Also add input and output parameter
 /// nodes.
@@ -1813,9 +1817,8 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   auto PtrVt = getPointerTy(DAG.getDataLayout());
 
   if (Subtarget->genLongCalls()) {
-    assert((Subtarget->isTargetWindows() ||
-            RM == Reloc::Static) &&
-           "long-calls with non-static relocation model!");
+    assert(!isPositionIndependent() &&
+           "long-calls codegen is not position independent!");
     // Handle a global address or an external symbol. If it's not one of
     // those, the target's already in a register, so we don't need to do
     // anything extra.
@@ -2516,9 +2519,9 @@ SDValue ARMTargetLowering::LowerBlockAddress(SDValue Op,
   SDLoc DL(Op);
   EVT PtrVT = getPointerTy(DAG.getDataLayout());
   const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
-  Reloc::Model RelocM = getTargetMachine().getRelocationModel();
   SDValue CPAddr;
-  if (RelocM == Reloc::Static) {
+  bool IsPositionIndependent = isPositionIndependent();
+  if (!IsPositionIndependent) {
     CPAddr = DAG.getTargetConstantPool(BA, PtrVT, 4);
   } else {
     unsigned PCAdj = Subtarget->isThumb() ? 4 : 8;
@@ -2533,7 +2536,7 @@ SDValue ARMTargetLowering::LowerBlockAddress(SDValue Op,
       DAG.getLoad(PtrVT, DL, DAG.getEntryNode(), CPAddr,
                   MachinePointerInfo::getConstantPool(DAG.getMachineFunction()),
                   false, false, false, 0);
-  if (RelocM == Reloc::Static)
+  if (!IsPositionIndependent)
     return Result;
   SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, DL, MVT::i32);
   return DAG.getNode(ARMISD::PIC_ADD, DL, PtrVT, Result, PICLabel);
@@ -2798,7 +2801,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
   const TargetMachine &TM = getTargetMachine();
   Reloc::Model RM = TM.getRelocationModel();
   const Triple &TargetTriple = TM.getTargetTriple();
-  if (RM == Reloc::PIC_) {
+  if (isPositionIndependent()) {
     bool UseGOT_PREL =
         !shouldAssumeDSOLocal(RM, TargetTriple, *GV->getParent(), GV);
 
@@ -2851,7 +2854,6 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   EVT PtrVT = getPointerTy(DAG.getDataLayout());
   SDLoc dl(Op);
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-  Reloc::Model RelocM = getTargetMachine().getRelocationModel();
 
   if (Subtarget->useMovt(DAG.getMachineFunction()))
     ++NumMovwMovt;
@@ -2859,11 +2861,12 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   // FIXME: Once remat is capable of dealing with instructions with register
   // operands, expand this into multiple nodes
   unsigned Wrapper =
-      RelocM == Reloc::PIC_ ? ARMISD::WrapperPIC : ARMISD::Wrapper;
+      isPositionIndependent() ? ARMISD::WrapperPIC : ARMISD::Wrapper;
 
   SDValue G = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, ARMII::MO_NONLAZY);
   SDValue Result = DAG.getNode(Wrapper, dl, PtrVT, G);
 
+  Reloc::Model RelocM = getTargetMachine().getRelocationModel();
   if (Subtarget->GVIsIndirectSymbol(GV, RelocM))
     Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Result,
                          MachinePointerInfo::getGOT(DAG.getMachineFunction()),
@@ -2942,10 +2945,9 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     unsigned ARMPCLabelIndex = AFI->createPICLabelUId();
     EVT PtrVT = getPointerTy(DAG.getDataLayout());
-    Reloc::Model RelocM = getTargetMachine().getRelocationModel();
     SDValue CPAddr;
-    unsigned PCAdj = (RelocM != Reloc::PIC_)
-      ? 0 : (Subtarget->isThumb() ? 4 : 8);
+    bool IsPositionIndependent = isPositionIndependent();
+    unsigned PCAdj = IsPositionIndependent ? (Subtarget->isThumb() ? 4 : 8) : 0;
     ARMConstantPoolValue *CPV =
       ARMConstantPoolConstant::Create(MF.getFunction(), ARMPCLabelIndex,
                                       ARMCP::CPLSDA, PCAdj);
@@ -2956,7 +2958,7 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
         MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), false,
         false, false, 0);
 
-    if (RelocM == Reloc::PIC_) {
+    if (IsPositionIndependent) {
       SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, dl, MVT::i32);
       Result = DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
     }
@@ -4001,7 +4003,7 @@ SDValue ARMTargetLowering::LowerBR_JT(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getNode(ARMISD::BR2_JT, dl, MVT::Other, Chain,
                        Addr, Op.getOperand(2), JTI);
   }
-  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+  if (isPositionIndependent()) {
     Addr =
         DAG.getLoad((EVT)MVT::i32, dl, Chain, Addr,
                     MachinePointerInfo::getJumpTable(DAG.getMachineFunction()),
@@ -7325,7 +7327,6 @@ void ARMTargetLowering::EmitSjLjDispatchBlock(MachineInstr *MI,
   MachineJumpTableInfo *JTI =
     MF->getOrCreateJumpTableInfo(MachineJumpTableInfo::EK_Inline);
   unsigned MJTI = JTI->createJumpTableIndex(LPadList);
-  Reloc::Model RelocM = getTargetMachine().getRelocationModel();
 
   // Create the MBBs for the dispatch code.
 
@@ -7369,6 +7370,7 @@ void ARMTargetLowering::EmitSjLjDispatchBlock(MachineInstr *MI,
   // registers being marked as clobbered.
   MIB.addRegMask(RI.getNoPreservedMask());
 
+  bool IsPositionIndependent = isPositionIndependent();
   unsigned NumLPads = LPadList.size();
   if (Subtarget->isThumb2()) {
     unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
@@ -7482,7 +7484,7 @@ void ARMTargetLowering::EmitSjLjDispatchBlock(MachineInstr *MI,
                    .addMemOperand(JTMMOLd));
 
     unsigned NewVReg6 = NewVReg5;
-    if (RelocM == Reloc::PIC_) {
+    if (IsPositionIndependent) {
       NewVReg6 = MRI->createVirtualRegister(TRC);
       AddDefaultPred(BuildMI(DispContBB, dl, TII->get(ARM::tADDrr), NewVReg6)
                      .addReg(ARM::CPSR, RegState::Define)
@@ -7565,7 +7567,7 @@ void ARMTargetLowering::EmitSjLjDispatchBlock(MachineInstr *MI,
       .addImm(0)
       .addMemOperand(JTMMOLd));
 
-    if (RelocM == Reloc::PIC_) {
+    if (IsPositionIndependent) {
       BuildMI(DispContBB, dl, TII->get(ARM::BR_JTadd))
         .addReg(NewVReg5, RegState::Kill)
         .addReg(NewVReg4)
