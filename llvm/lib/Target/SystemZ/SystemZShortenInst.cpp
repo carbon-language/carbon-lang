@@ -72,9 +72,9 @@ static void tieOpsIfNeeded(MachineInstr &MI) {
 
 // MI loads one word of a GPR using an IIxF instruction and LLIxL and LLIxH
 // are the halfword immediate loads for the same word.  Try to use one of them
-// instead of IIxF. 
-bool SystemZShortenInst::shortenIIF(MachineInstr &MI,
-                                    unsigned LLIxL, unsigned LLIxH) {
+// instead of IIxF.
+bool SystemZShortenInst::shortenIIF(MachineInstr &MI, unsigned LLIxL,
+                                    unsigned LLIxH) {
   unsigned Reg = MI.getOperand(0).getReg();
   // The new opcode will clear the other half of the GR64 reg, so
   // cancel if that is live.

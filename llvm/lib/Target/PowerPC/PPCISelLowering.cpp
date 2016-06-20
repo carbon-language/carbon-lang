@@ -9848,7 +9848,7 @@ SDValue PPCTargetLowering::DAGCombineTruncBoolExt(SDNode *N,
 
   std::list<HandleSDNode> PromOpHandles;
   for (auto &PromOp : PromOps)
-    PromOpHandles.emplace_back(PromOp); 
+    PromOpHandles.emplace_back(PromOp);
 
   // Replace all operations (these are all the same, but have a different
   // (i1) return type). DAG.getNode will validate that the types of
@@ -10102,7 +10102,7 @@ SDValue PPCTargetLowering::DAGCombineExtBoolTrunc(SDNode *N,
 
   std::list<HandleSDNode> PromOpHandles;
   for (auto &PromOp : PromOps)
-    PromOpHandles.emplace_back(PromOp); 
+    PromOpHandles.emplace_back(PromOp);
 
   // Replace all operations (these are all the same, but have a different
   // (promoted) return type). DAG.getNode will validate that the types of
@@ -10555,7 +10555,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       if (Bitcast->getOpcode() != ISD::BITCAST ||
           Bitcast->getValueType(0) != MVT::f32)
         return false;
-      if (Bitcast2->getOpcode() != ISD::BITCAST ||          
+      if (Bitcast2->getOpcode() != ISD::BITCAST ||
           Bitcast2->getValueType(0) != MVT::f32)
         return false;
 
