@@ -5639,16 +5639,15 @@ INTERCEPTOR(SSIZE_T, send, int fd, void *buf, SIZE_T len, int flags) {
 }
 
 INTERCEPTOR(SSIZE_T, sendto, int fd, void *buf, SIZE_T len, int flags,
-            void *srcaddr, int addrlen) {
+            void *dstaddr, int addrlen) {
   void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, sendto, fd, buf, len, flags, srcaddr, addrlen);
+  COMMON_INTERCEPTOR_ENTER(ctx, sendto, fd, buf, len, flags, dstaddr, addrlen);
   if (fd >= 0) {
     COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
     COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
   }
-  if (common_flags()->intercept_send && srcaddr && addrlen)
-    COMMON_INTERCEPTOR_READ_RANGE(ctx, srcaddr, addrlen);
-  SSIZE_T res = REAL(sendto)(fd, buf, len, flags, srcaddr, addrlen);
+  // Can't check dstaddr as it may have uninitialized padding at the end.
+  SSIZE_T res = REAL(sendto)(fd, buf, len, flags, dstaddr, addrlen);
   if (common_flags()->intercept_send && res > 0)
     COMMON_INTERCEPTOR_READ_RANGE(ctx, buf, Min((SIZE_T)res, len));
   return res;
