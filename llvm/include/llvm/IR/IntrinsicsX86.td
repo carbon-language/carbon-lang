@@ -25,6 +25,9 @@ let TargetPrefix = "x86" in {
   // Marks the EH registration node created in LLVM IR prior to code generation.
   def int_x86_seh_ehregnode : Intrinsic<[], [llvm_ptr_ty], []>;
 
+  // Marks the EH guard slot node created in LLVM IR prior to code generation.
+  def int_x86_seh_ehguard : Intrinsic<[], [llvm_ptr_ty], []>;
+
   // Given a pointer to the end of an EH registration object, returns the true
   // parent frame address that can be used with llvm.localrecover.
   def int_x86_seh_recoverfp : Intrinsic<[llvm_ptr_ty],
