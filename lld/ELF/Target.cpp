@@ -679,7 +679,7 @@ void X86_64TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
                                       uint64_t Val) const {
   uint8_t *Inst = Loc - 3;
   uint8_t Reg = Loc[-1] >> 3;
-  uint8_t RegSlot = Loc - 1;
+  uint8_t *RegSlot = Loc - 1;
 
   // Note that LEA with RSP or R12 is converted to ADD instead of LEA
   // because LEA with these registers needs 4 bytes to encode and thus
