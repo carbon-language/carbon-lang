@@ -70,6 +70,10 @@ void AArch64Subtarget::initializeProperties() {
   case Kryo:
     MaxInterleaveFactor = 4;
     VectorInsertExtractBaseCost = 2;
+    CacheLineSize = 128;
+    PrefetchDistance = 740;
+    MinPrefetchStride = 1024;
+    MaxPrefetchIterationsAhead = 11;
     break;
   case Vulcan: break;
   case CortexA35: break;
