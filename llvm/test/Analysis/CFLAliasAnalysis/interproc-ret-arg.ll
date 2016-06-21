@@ -4,10 +4,6 @@
 ; RUN: opt < %s -disable-basicaa -cfl-aa -aa-eval -print-all-alias-modref-info -disable-output 2>&1 | FileCheck %s
 ; RUN: opt < %s -aa-pipeline=cfl-aa -passes=aa-eval -print-all-alias-modref-info -disable-output 2>&1 | FileCheck %s
 
-; We have to xfail this since @return_arg_callee is treated as an opaque 
-; function, and the anlysis couldn't prove that %b and %c are not aliases 
-; XFAIL: *
-
 define i32* @return_arg_callee(i32* %arg1, i32* %arg2) {
   ret i32* %arg1
 }

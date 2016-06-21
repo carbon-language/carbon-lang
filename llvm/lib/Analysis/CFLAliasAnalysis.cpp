@@ -377,7 +377,7 @@ public:
   }
 
   static bool isFunctionExternal(Function *Fn) {
-    return Fn->isDeclaration() || !Fn->hasLocalLinkage();
+    return !Fn->hasExactDefinition();
   }
 
   bool tryInterproceduralAnalysis(CallSite CS,
