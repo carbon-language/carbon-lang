@@ -1297,8 +1297,7 @@ void CodeViewDebug::collectMemberInfo(ClassInfo &Info,
   assert((DDTy->getOffsetInBits() % 8) == 0 && "Unnamed bitfield member!");
   unsigned offset = DDTy->getOffsetInBits() / 8;
   const DIType *Ty = DDTy->getBaseType().resolve();
-  assert(dyn_cast<DICompositeType>(Ty) && "Expects structure or union type");
-  const DICompositeType *DCTy = dyn_cast<DICompositeType>(Ty);
+  const DICompositeType *DCTy = cast<DICompositeType>(Ty);
   ClassInfo &NestedInfo = collectClassInfo(DCTy);
   ClassInfo::MemberList &Members = NestedInfo.Members;
   for (unsigned i = 0, e = Members.size(); i != e; ++i)
@@ -1308,10 +1307,14 @@ void CodeViewDebug::collectMemberInfo(ClassInfo &Info,
 
 ClassInfo &CodeViewDebug::collectClassInfo(const DICompositeType *Ty) {
   auto Insertion = ClassInfoMap.insert({Ty, std::unique_ptr<ClassInfo>()});
-  std::unique_ptr<ClassInfo> &Info = Insertion.first->second;
-  if (!Insertion.second)
-    return *Info;
-  Info.reset(new ClassInfo());
+  ClassInfo *Info = nullptr;
+  {
+    std::unique_ptr<ClassInfo> &InfoEntry = Insertion.first->second;
+    if (!Insertion.second)
+      return *InfoEntry;
+    InfoEntry.reset(new ClassInfo());
+    Info = InfoEntry.get();
+  }
 
   // Add elements to structure type.
   DINodeArray Elements = Ty->getElements();
