@@ -246,9 +246,6 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool expandAbs(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
                  const MCSubtargetInfo *STI);
 
-  void createCpRestoreMemOp(bool IsLoad, int StackOffset, SMLoc IDLoc,
-                            MCStreamer &Out, const MCSubtargetInfo *STI);
-
   bool reportParseError(Twine ErrorMsg);
   bool reportParseError(SMLoc Loc, Twine ErrorMsg);
 
@@ -322,8 +319,6 @@ class MipsAsmParser : public MCTargetAsmParser {
   int matchMSA128CtrlRegisterName(StringRef Name);
 
   unsigned getReg(int RC, int RegNo);
-
-  unsigned getGPR(int RegNo);
 
   /// Returns the internal register number for the current AT. Also checks if
   /// the current AT is unavailable (set to $0) and gives an error if it is.
@@ -3699,21 +3694,6 @@ bool MipsAsmParser::expandAbs(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
   return false;
 }
 
-void MipsAsmParser::createCpRestoreMemOp(bool IsLoad, int StackOffset,
-                                         SMLoc IDLoc, MCStreamer &Out,
-                                         const MCSubtargetInfo *STI) {
-  MipsTargetStreamer &TOut = getTargetStreamer();
-
-  if (IsLoad) {
-    TOut.emitLoadWithImmOffset(Mips::LW, Mips::GP, Mips::SP, StackOffset,
-                               Mips::GP, IDLoc, STI);
-    return;
-  }
-
-  TOut.emitStoreWithImmOffset(Mips::SW, Mips::GP, Mips::SP, StackOffset,
-                              [&]() { return getATReg(IDLoc); }, IDLoc, STI);
-}
-
 unsigned MipsAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
   switch (Inst.getOpcode()) {
   // As described by the Mips32r2 spec, the registers Rd and Rs for
@@ -4140,11 +4120,6 @@ unsigned MipsAsmParser::getATReg(SMLoc Loc) {
 
 unsigned MipsAsmParser::getReg(int RC, int RegNo) {
   return *(getContext().getRegisterInfo()->getRegClass(RC).begin() + RegNo);
-}
-
-unsigned MipsAsmParser::getGPR(int RegNo) {
-  return getReg(isGP64bit() ? Mips::GPR64RegClassID : Mips::GPR32RegClassID,
-                RegNo);
 }
 
 int MipsAsmParser::matchRegisterByNumber(unsigned RegNum, unsigned RegClass) {

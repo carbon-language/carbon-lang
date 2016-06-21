@@ -85,7 +85,6 @@ private:
   static bool isFlatStore(const MemSDNode *N);
   static bool isPrivateStore(const StoreSDNode *N);
   static bool isLocalStore(const StoreSDNode *N);
-  static bool isRegionStore(const StoreSDNode *N);
 
   bool isCPLoad(const LoadSDNode *N) const;
   bool isConstantLoad(const MemSDNode *N, int cbID) const;
@@ -597,10 +596,6 @@ bool AMDGPUDAGToDAGISel::isFlatStore(const MemSDNode *N) {
   if (!N->writeMem())
     return false;
   return checkType(N->getMemOperand()->getValue(), AMDGPUAS::FLAT_ADDRESS);
-}
-
-bool AMDGPUDAGToDAGISel::isRegionStore(const StoreSDNode *N) {
-  return checkType(N->getMemOperand()->getValue(), AMDGPUAS::REGION_ADDRESS);
 }
 
 bool AMDGPUDAGToDAGISel::isConstantLoad(const MemSDNode *N, int CbId) const {
