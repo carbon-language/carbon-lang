@@ -1393,7 +1393,9 @@ bool exists(const path& __p) {
 
 inline _LIBCPP_INLINE_VISIBILITY
 bool exists(const path& __p, error_code& __ec) _NOEXCEPT {
-    return exists(__status(__p, &__ec));
+    auto __s = __status(__p, &__ec);
+    if (status_known(__s)) __ec.clear();
+    return exists(__s);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
