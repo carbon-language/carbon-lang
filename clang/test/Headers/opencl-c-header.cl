@@ -27,7 +27,7 @@
 // RUN: %clang_cc1 -triple nvptx64-unknown-unknown -internal-isystem ../../lib/Headers -include opencl-c.h -emit-llvm -o - %s -cl-std=CL1.2| FileCheck %s
 // RUN: %clang_cc1 -triple nvptx64-unknown-unknown -internal-isystem ../../lib/Headers -include opencl-c.h -fblocks -emit-llvm -o - %s -cl-std=CL2.0| FileCheck --check-prefix=CHECK20 %s
 
-// RUN: %clang_cc1 -finclude-default-header -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -finclude-default-header -emit-llvm -o - %s | FileCheck %s
 // CHECK: _Z16convert_char_rtec
 // CHECK-NOT: _Z3ctzc
 // CHECK20: _Z3ctzc
