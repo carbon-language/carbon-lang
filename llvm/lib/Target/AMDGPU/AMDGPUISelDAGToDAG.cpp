@@ -74,8 +74,6 @@ private:
   bool FoldDotOperands(unsigned, const R600InstrInfo *, std::vector<SDValue> &);
 
   // Complex pattern selectors
-  bool SelectADDRParam(SDValue Addr, SDValue& R1, SDValue& R2);
-  bool SelectADDR(SDValue N, SDValue &R1, SDValue &R2);
   bool SelectADDR64(SDValue N, SDValue &R1, SDValue &R2);
 
   static bool checkType(const Value *ptr, unsigned int addrspace);
@@ -235,36 +233,6 @@ const TargetRegisterClass *AMDGPUDAGToDAGISel::getOperandRegClass(SDNode *N,
   }
   }
 }
-
-bool AMDGPUDAGToDAGISel::SelectADDRParam(
-  SDValue Addr, SDValue& R1, SDValue& R2) {
-
-  if (Addr.getOpcode() == ISD::FrameIndex) {
-    if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-      R1 = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-      R2 = CurDAG->getTargetConstant(0, SDLoc(Addr), MVT::i32);
-    } else {
-      R1 = Addr;
-      R2 = CurDAG->getTargetConstant(0, SDLoc(Addr), MVT::i32);
-    }
-  } else if (Addr.getOpcode() == ISD::ADD) {
-    R1 = Addr.getOperand(0);
-    R2 = Addr.getOperand(1);
-  } else {
-    R1 = Addr;
-    R2 = CurDAG->getTargetConstant(0, SDLoc(Addr), MVT::i32);
-  }
-  return true;
-}
-
-bool AMDGPUDAGToDAGISel::SelectADDR(SDValue Addr, SDValue& R1, SDValue& R2) {
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress) {
-    return false;
-  }
-  return SelectADDRParam(Addr, R1, R2);
-}
-
 
 bool AMDGPUDAGToDAGISel::SelectADDR64(SDValue Addr, SDValue& R1, SDValue& R2) {
   if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
