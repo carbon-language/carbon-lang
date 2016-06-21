@@ -77,7 +77,7 @@ enum Format { Default, GNU, BSD };
 
 static cl::opt<Format>
     FormatOpt("format", cl::desc("Archive format to create"),
-              cl::values(clEnumValN(Default, "defalut", "default"),
+              cl::values(clEnumValN(Default, "default", "default"),
                          clEnumValN(GNU, "gnu", "gnu"),
                          clEnumValN(BSD, "bsd", "bsd"), clEnumValEnd));
 
