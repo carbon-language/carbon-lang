@@ -322,7 +322,7 @@ calculateRangesAfterReplacements(const Replacements &Replaces,
   for (const auto &R : MergedRanges)
     FakeReplaces.insert(Replacement(Replaces.begin()->getFilePath(),
                                     R.getOffset(), R.getLength(),
-                                    std::string(" ", R.getLength())));
+                                    std::string(R.getLength(), ' ')));
   tooling::Replacements NewReplaces = mergeReplacements(FakeReplaces, Replaces);
   return calculateChangedRanges(NewReplaces);
 }
