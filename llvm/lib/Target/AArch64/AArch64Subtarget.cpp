@@ -74,6 +74,8 @@ void AArch64Subtarget::initializeProperties() {
   case Vulcan: break;
   case CortexA35: break;
   case CortexA53: break;
+  case CortexA72: break;
+  case CortexA73: break;
   case Others: break;
   }
 }
