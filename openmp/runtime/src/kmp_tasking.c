@@ -1420,6 +1420,7 @@ __kmpc_omp_taskwait( ident_t *loc_ref, kmp_int32 gtid )
         }
 #endif
 
+        // Debugger: The taskwait is active. Store location and thread encountered the taskwait.
 #if USE_ITT_BUILD
         // Note: These values are used by ITT events as well.
 #endif /* USE_ITT_BUILD */
@@ -1452,6 +1453,7 @@ __kmpc_omp_taskwait( ident_t *loc_ref, kmp_int32 gtid )
 #endif /* USE_ITT_BUILD */
 
         // GEH TODO: shouldn't we have some sort of OMPRAP API calls here to mark end of wait?
+        // Debugger:  The taskwait is completed. Location remains, but thread is negated.
         taskdata->td_taskwait_thread = - taskdata->td_taskwait_thread;
 
 #if OMPT_SUPPORT && OMPT_TRACE
@@ -1494,6 +1496,7 @@ __kmpc_omp_taskyield( ident_t *loc_ref, kmp_int32 gtid, int end_part )
         thread = __kmp_threads[ gtid ];
         taskdata = thread -> th.th_current_task;
         // Should we model this as a task wait or not?
+        // Debugger: The taskwait is active. Store location and thread encountered the taskwait.
 #if USE_ITT_BUILD
         // Note: These values are used by ITT events as well.
 #endif /* USE_ITT_BUILD */
@@ -1521,6 +1524,7 @@ __kmpc_omp_taskyield( ident_t *loc_ref, kmp_int32 gtid, int end_part )
 #endif /* USE_ITT_BUILD */
 
         // GEH TODO: shouldn't we have some sort of OMPRAP API calls here to mark end of wait?
+        // Debugger:  The taskwait is completed. Location remains, but thread is negated.
         taskdata->td_taskwait_thread = - taskdata->td_taskwait_thread;
     }
 

@@ -531,7 +531,6 @@ static void __kmp_fini_allocator() {}
 #ifdef KMP_DYNAMIC_LIB
 # if KMP_OS_WINDOWS
 
-
 static void
 __kmp_reset_lock( kmp_bootstrap_lock_t* lck ) {
     // TODO: Change to __kmp_break_bootstrap_lock().
