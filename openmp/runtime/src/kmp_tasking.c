@@ -2971,6 +2971,7 @@ __kmp_taskloop_linear(ident_t *loc, int gtid, kmp_task_t *task,
         tc = (upper - lower) / st + 1;
     }
     if(tc == 0) {
+        KA_TRACE(20, ("__kmpc_taskloop(exit): T#%d zero-trip loop\n", gtid));
         // free the pattern task and exit
         __kmp_task_start( gtid, task, current_task );
         // do not execute anything for zero-trip loop
@@ -3011,6 +3012,8 @@ __kmp_taskloop_linear(ident_t *loc, int gtid, kmp_task_t *task,
     KMP_DEBUG_ASSERT(tc == num_tasks * grainsize + extras);
     KMP_DEBUG_ASSERT(num_tasks > extras);
     KMP_DEBUG_ASSERT(num_tasks > 0);
+    KA_TRACE(20, ("__kmpc_taskloop: T#%d will launch: num_tasks %lld, grainsize %lld, extras %lld\n",
+                  gtid, num_tasks, grainsize, extras));
 
     // Main loop, launch num_tasks tasks, assign grainsize iterations each task
     for( i = 0; i < num_tasks; ++i ) {
@@ -3039,6 +3042,8 @@ __kmp_taskloop_linear(ident_t *loc, int gtid, kmp_task_t *task,
         *(kmp_uint64*)((char*)next_task + upper_offset) = upper;
         if( ptask_dup != NULL )
             ptask_dup(next_task, task, lastpriv); // set lastprivate flag, construct fistprivates, etc.
+        KA_TRACE(20, ("__kmpc_taskloop: T#%d schedule task %p: lower %lld, upper %lld (offsets %p %p)\n",
+                      gtid, next_task, lower, upper, lower_offset, upper_offset));
         __kmp_omp_task(gtid, next_task, true); // schedule new task
         lower = upper + st; // adjust lower bound for the next iteration
     }
