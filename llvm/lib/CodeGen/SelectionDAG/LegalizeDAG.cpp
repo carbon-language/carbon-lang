@@ -2176,8 +2176,7 @@ static bool canCombineSinCosLibcall(SDNode *Node, const TargetLowering &TLI,
     return false;
   // GNU sin/cos functions set errno while sincos does not. Therefore
   // combining sin and cos is only safe if unsafe-fpmath is enabled.
-  bool isGNU = Triple(TM.getTargetTriple()).getEnvironment() == Triple::GNU;
-  if (isGNU && !TM.Options.UnsafeFPMath)
+  if (TM.getTargetTriple().isGNUEnvironment() && !TM.Options.UnsafeFPMath)
     return false;
   return true;
 }
