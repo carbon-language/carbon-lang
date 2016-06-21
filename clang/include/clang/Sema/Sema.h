@@ -34,6 +34,7 @@
 #include "clang/Basic/TemplateKinds.h"
 #include "clang/Basic/TypeTraits.h"
 #include "clang/Sema/AnalysisBasedWarnings.h"
+#include "clang/Sema/CleanupInfo.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/IdentifierResolver.h"
@@ -440,9 +441,8 @@ public:
   /// if Sema is already doing so, which would cause infinite recursions.
   bool IsBuildingRecoveryCallExpr;
 
-  /// ExprNeedsCleanups - True if the current evaluation context
-  /// requires cleanups to be run at its conclusion.
-  bool ExprNeedsCleanups;
+  /// Used to control the generation of ExprWithCleanups.
+  CleanupInfo Cleanup;
 
   /// ExprCleanupObjects - This is the stack of objects requiring
   /// cleanup that are created by the current full expression.  The
@@ -830,7 +830,7 @@ public:
     ExpressionEvaluationContext Context;
 
     /// \brief Whether the enclosing context needed a cleanup.
-    bool ParentNeedsCleanups;
+    CleanupInfo ParentCleanup;
 
     /// \brief Whether we are in a decltype expression.
     bool IsDecltype;
@@ -871,10 +871,10 @@ public:
 
     ExpressionEvaluationContextRecord(ExpressionEvaluationContext Context,
                                       unsigned NumCleanupObjects,
-                                      bool ParentNeedsCleanups,
+                                      CleanupInfo ParentCleanup,
                                       Decl *ManglingContextDecl,
                                       bool IsDecltype)
-      : Context(Context), ParentNeedsCleanups(ParentNeedsCleanups),
+      : Context(Context), ParentCleanup(ParentCleanup),
         IsDecltype(IsDecltype), NumCleanupObjects(NumCleanupObjects),
         NumTypos(0),
         ManglingContextDecl(ManglingContextDecl), MangleNumbering() { }
@@ -4882,6 +4882,10 @@ public:
   Expr *MaybeCreateExprWithCleanups(Expr *SubExpr);
   Stmt *MaybeCreateStmtWithCleanups(Stmt *SubStmt);
   ExprResult MaybeCreateExprWithCleanups(ExprResult SubExpr);
+
+  MaterializeTemporaryExpr *
+  CreateMaterializeTemporaryExpr(QualType T, Expr *Temporary,
+                                 bool BoundToLvalueReference);
 
   ExprResult ActOnFinishFullExpr(Expr *Expr) {
     return ActOnFinishFullExpr(Expr, Expr ? Expr->getExprLoc()
