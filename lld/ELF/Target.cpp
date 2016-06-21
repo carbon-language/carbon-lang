@@ -475,34 +475,34 @@ void X86TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
   // be used with MOVL or ADDL instructions.
   // @indntpoff is similar to @gotntpoff, but for use in
   // position dependent code.
-  uint8_t *Inst = Loc - 2;
-  uint8_t *Op = Loc - 1;
   uint8_t Reg = (Loc[-1] >> 3) & 7;
-  bool IsMov = *Inst == 0x8b;
+
   if (Type == R_386_TLS_IE) {
-    // For R_386_TLS_IE relocation we perform the next transformations:
-    // MOVL foo@INDNTPOFF,%EAX is transformed to MOVL $foo,%EAX
-    // MOVL foo@INDNTPOFF,%REG is transformed to MOVL $foo,%REG
-    // ADDL foo@INDNTPOFF,%REG is transformed to ADDL $foo,%REG
-    // First one is special because when EAX is used the sequence is 5 bytes
-    // long, otherwise it is 6 bytes.
-    if (*Op == 0xa1) {
-      *Op = 0xb8;
+    if (Loc[-1] == 0xa1) {
+      // "movl foo@indntpoff,%eax" -> "movl $foo,%eax"
+      // This case is different from the generic case below because
+      // this is a 5 byte instruction while below is 6 bytes.
+      Loc[-1] = 0xb8;
+    } else if (Loc[-2] == 0x8b) {
+      // "movl foo@indntpoff,%reg" -> "movl $foo,%reg"
+      Loc[-2] = 0xc7;
+      Loc[-1] = 0xc0 | Reg;
     } else {
-      *Inst = IsMov ? 0xc7 : 0x81;
-      *Op = 0xc0 | ((*Op >> 3) & 7);
+      // "addl foo@indntpoff,%reg" -> "addl $foo,%reg"
+      Loc[-2] = 0x81;
+      Loc[-1] = 0xc0 | Reg;
     }
   } else {
-    // R_386_TLS_GOTIE relocation can be optimized to
-    // R_386_TLS_LE so that it does not use GOT.
-    // "MOVL foo@GOTTPOFF(%RIP), %REG" is transformed to "MOVL $foo, %REG".
-    // "ADDL foo@GOTNTPOFF(%RIP), %REG" is transformed to "LEAL foo(%REG), %REG"
-    // Note: gold converts to ADDL instead of LEAL.
-    *Inst = IsMov ? 0xc7 : 0x8d;
-    if (IsMov)
-      *Op = 0xc0 | ((*Op >> 3) & 7);
-    else
-      *Op = 0x80 | Reg | (Reg << 3);
+    assert(Type == R_386_TLS_GOTIE);
+    if (Loc[-2] == 0x8b) {
+      // "movl foo@gottpoff(%rip),%reg" -> "movl $foo,%reg"
+      Loc[-2] = 0xc7;
+      Loc[-1] = 0xc0 | Reg;
+    } else {
+      // "addl foo@gotntpoff(%rip),%reg" -> "leal foo(%reg),%reg"
+      Loc[-2] = 0x8d;
+      Loc[-1] = 0x80 | (Reg << 3) | Reg;
+    }
   }
   relocateOne(Loc, R_386_TLS_LE, Val);
 }
