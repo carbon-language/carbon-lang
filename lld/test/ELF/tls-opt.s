@@ -20,11 +20,9 @@
 // DISASM-NEXT: 1103f: 4d 8d bf fc ff ff ff leaq -4(%r15), %r15
 // DISASM-NEXT: 11046: 48 81 c4 fc ff ff ff addq $-4, %rsp
 // DISASM-NEXT: 1104d: 49 81 c4 fc ff ff ff addq $-4, %r12
-// Corrupred output:
-// DISASM-NEXT: 11054: 48 8d 80 f8 ff ff ff leaq -8(%rax), %rax
-// DISASM-NEXT: 1105b: 48 d1 81 c4 fc ff ff rolq -828(%rcx)
-// DISASM-NEXT: 11062: ff 48 d1 decl -47(%rax)
-// DISASM-NEXT: 11065: 81 c4 fc ff ff ff addl $4294967292, %esp
+// DISASM-NEXT: 11054: 48 87 05 f8 ff ff ff    xchgq   %rax, -8(%rip)
+// DISASM-NEXT: 1105b: 48 d1 24 25 fc ff ff ff         shlq    -4
+// DISASM-NEXT: 11063: 48 d1 04 25 fc ff ff ff         rolq    -4
 // LD to LE:
 // DISASM-NEXT: 1106b: 66 66 66 64 48 8b 04 25 00 00 00 00 movq %fs:0, %rax
 // DISASM-NEXT: 11077: 48 8d 88 f8 ff ff ff                leaq -8(%rax), %rcx

@@ -677,34 +677,40 @@ void X86_64TargetInfo::relaxTlsGdToIe(uint8_t *Loc, uint32_t Type,
 // R_X86_64_TPOFF32 so that it does not use GOT.
 void X86_64TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
                                       uint64_t Val) const {
-  // Ulrich's document section 6.5 says that @gottpoff(%rip) must be
-  // used in MOVQ or ADDQ instructions only.
-  // "MOVQ foo@GOTTPOFF(%RIP), %REG" is transformed to "MOVQ $foo, %REG".
-  // "ADDQ foo@GOTTPOFF(%RIP), %REG" is transformed to "LEAQ foo(%REG), %REG"
-  // (if the register is not RSP/R12) or "ADDQ $foo, %RSP".
-  // Opcodes info can be found at http://ref.x86asm.net/coder64.html#x48.
-  uint8_t *Prefix = Loc - 3;
-  uint8_t *Inst = Loc - 2;
-  uint8_t *RegSlot = Loc - 1;
+  uint8_t *Inst = Loc - 3;
   uint8_t Reg = Loc[-1] >> 3;
-  bool IsMov = *Inst == 0x8b;
-  bool RspAdd = !IsMov && Reg == 4;
+  uint8_t RegSlot = Loc - 1;
 
-  // r12 and rsp registers requires special handling.
-  // Problem is that for other registers, for example leaq 0xXXXXXXXX(%r11),%r11
-  // result out is 7 bytes: 4d 8d 9b XX XX XX XX,
-  // but leaq 0xXXXXXXXX(%r12),%r12 is 8 bytes: 4d 8d a4 24 XX XX XX XX.
-  // The same true for rsp. So we convert to addq for them, saving 1 byte that
-  // we dont have.
-  if (RspAdd)
-    *Inst = 0x81;
-  else
-    *Inst = IsMov ? 0xc7 : 0x8d;
-  if (*Prefix == 0x4c)
-    *Prefix = (IsMov || RspAdd) ? 0x49 : 0x4d;
-  *RegSlot = (IsMov || RspAdd) ? (0xc0 | Reg) : (0x80 | Reg | (Reg << 3));
-  // The original code used a pc relative relocation and so we have to
-  // compensate for the -4 in had in the addend.
+  // Note that LEA with RSP or R12 is converted to ADD instead of LEA
+  // because LEA with these registers needs 4 bytes to encode and thus
+  // wouldn't fit the space.
+
+  if (memcmp(Inst, "\x48\x03\x25", 3) == 0) {
+    // "addq foo@gottpoff(%rip),%rsp" -> "addq $foo,%rsp"
+    memcpy(Inst, "\x48\x81\xc4", 3);
+  } else if (memcmp(Inst, "\x4c\x03\x25", 3) == 0) {
+    // "addq foo@gottpoff(%rip),%r12" -> "addq $foo,%r12"
+    memcpy(Inst, "\x49\x81\xc4", 3);
+  } else if (memcmp(Inst, "\x4c\x03", 2) == 0) {
+    // "addq foo@gottpoff(%rip),%r[8-15]" -> "leaq foo(%r[8-15]),%r[8-15]"
+    memcpy(Inst, "\x4d\x8d", 2);
+    *RegSlot = 0x80 | (Reg << 3) | Reg;
+  } else if (memcmp(Inst, "\x48\x03", 2) == 0) {
+    // "addq foo@gottpoff(%rip),%reg -> "leaq foo(%reg),%reg"
+    memcpy(Inst, "\x48\x8d", 2);
+    *RegSlot = 0x80 | (Reg << 3) | Reg;
+  } else if (memcmp(Inst, "\x4c\x8b", 2) == 0) {
+    // "movq foo@gottpoff(%rip),%r[8-15]" -> "movq $foo,%r[8-15]"
+    memcpy(Inst, "\x49\xc7", 2);
+    *RegSlot = 0xc0 | Reg;
+  } else if (memcmp(Inst, "\x48\x8b", 2) == 0) {
+    // "movq foo@gottpoff(%rip),%reg" -> "movq $foo,%reg"
+    memcpy(Inst, "\x48\xc7", 2);
+    *RegSlot = 0xc0 | Reg;
+  }
+
+  // The original code used a PC relative relocation.
+  // Need to compensate for the -4 it had in the addend.
   relocateOne(Loc, R_X86_64_TPOFF32, Val + 4);
 }
 
