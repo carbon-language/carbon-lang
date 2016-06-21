@@ -707,6 +707,8 @@ void X86_64TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
     // "movq foo@gottpoff(%rip),%reg" -> "movq $foo,%reg"
     memcpy(Inst, "\x48\xc7", 2);
     *RegSlot = 0xc0 | Reg;
+  } else {
+    fatal("R_X86_64_GOTTPOFF must be used in MOVQ or ADDQ instructions only");
   }
 
   // The original code used a PC relative relocation.
