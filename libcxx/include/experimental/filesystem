@@ -292,7 +292,7 @@ enum class _LIBCPP_TYPE_VIS perms : unsigned
 
     add_perms        = 0x10000,
     remove_perms     = 0x20000,
-    resolve_symlinks = 0x40000
+    symlink_nofollow = 0x40000
 };
 
 _LIBCPP_INLINE_VISIBILITY
