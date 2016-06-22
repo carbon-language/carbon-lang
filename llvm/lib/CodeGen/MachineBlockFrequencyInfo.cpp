@@ -20,7 +20,9 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -80,6 +82,7 @@ struct DOTGraphTraits<MachineBlockFrequencyInfo *>
   explicit DOTGraphTraits(bool isSimple = false)
       : DefaultDOTGraphTraits(isSimple) {}
 
+  typedef MachineBasicBlock::const_succ_iterator EdgeIter;
   static std::string getGraphName(const MachineBlockFrequencyInfo *G) {
     return G->getFunction()->getName();
   }
@@ -103,6 +106,21 @@ struct DOTGraphTraits<MachineBlockFrequencyInfo *>
     }
 
     return Result;
+  }
+  static std::string getEdgeAttributes(const MachineBasicBlock *Node,
+                                       EdgeIter EI,
+                                       const MachineBlockFrequencyInfo *MBFI) {
+    MachineBranchProbabilityInfo &MBPI =
+        MBFI->getAnalysis<MachineBranchProbabilityInfo>();
+    BranchProbability BP = MBPI.getEdgeProbability(Node, EI);
+    uint32_t N = BP.getNumerator();
+    uint32_t D = BP.getDenominator();
+    double Percent = 100.0 * N / D;
+    std::string Str;
+    raw_string_ostream OS(Str);
+    OS << format("label=\"%.1f%%\"", Percent);
+    OS.flush();
+    return Str;
   }
 };
 
