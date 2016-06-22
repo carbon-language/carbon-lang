@@ -193,7 +193,7 @@ protected:
     unsigned : NumExprBits;
 
     // When false, it must not have side effects.
-    bool CleanupsHaveSideEffects : 1;
+    unsigned CleanupsHaveSideEffects : 1;
 
     unsigned NumObjects : 32 - 1 - NumExprBits;
   };
