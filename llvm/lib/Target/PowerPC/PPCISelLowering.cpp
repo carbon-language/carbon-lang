@@ -2465,7 +2465,7 @@ SDValue PPCTargetLowering::LowerINIT_TRAMPOLINE(SDValue Op,
   CLI.setDebugLoc(dl).setChain(Chain)
     .setCallee(CallingConv::C, Type::getVoidTy(*DAG.getContext()),
                DAG.getExternalSymbol("__trampoline_setup", PtrVT),
-               std::move(Args), 0);
+               std::move(Args));
 
   std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
   return CallResult.second;

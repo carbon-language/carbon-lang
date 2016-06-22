@@ -5481,7 +5481,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         CallingConv::C, I.getType(),
         DAG.getExternalSymbol(TrapFuncName.data(),
                               TLI.getPointerTy(DAG.getDataLayout())),
-        std::move(Args), 0);
+        std::move(Args));
 
     std::pair<SDValue, SDValue> Result = TLI.LowerCallTo(CLI);
     DAG.setRoot(Result.second);
@@ -7195,8 +7195,7 @@ void SelectionDAGBuilder::populateCallLoweringInfo(
 
   CLI.setDebugLoc(getCurSDLoc())
       .setChain(getRoot())
-      .setCallee(CS.getCallingConv(), ReturnTy, Callee, std::move(Args),
-                 NumArgs)
+      .setCallee(CS.getCallingConv(), ReturnTy, Callee, std::move(Args))
       .setDiscardResult(CS->use_empty())
       .setIsPatchPoint(IsPatchPoint);
 }

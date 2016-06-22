@@ -4692,7 +4692,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, const SDLoc &dl, SDValue Dst,
                  Dst.getValueType().getTypeForEVT(*getContext()),
                  getExternalSymbol(TLI->getLibcallName(RTLIB::MEMCPY),
                                    TLI->getPointerTy(getDataLayout())),
-                 std::move(Args), 0)
+                 std::move(Args))
       .setDiscardResult()
       .setTailCall(isTailCall);
 
@@ -4753,7 +4753,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, const SDLoc &dl, SDValue Dst,
                  Dst.getValueType().getTypeForEVT(*getContext()),
                  getExternalSymbol(TLI->getLibcallName(RTLIB::MEMMOVE),
                                    TLI->getPointerTy(getDataLayout())),
-                 std::move(Args), 0)
+                 std::move(Args))
       .setDiscardResult()
       .setTailCall(isTailCall);
 
@@ -4815,7 +4815,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, const SDLoc &dl, SDValue Dst,
                  Dst.getValueType().getTypeForEVT(*getContext()),
                  getExternalSymbol(TLI->getLibcallName(RTLIB::MEMSET),
                                    TLI->getPointerTy(getDataLayout())),
-                 std::move(Args), 0)
+                 std::move(Args))
       .setDiscardResult()
       .setTailCall(isTailCall);
 
