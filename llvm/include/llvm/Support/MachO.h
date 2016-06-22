@@ -973,6 +973,14 @@ namespace llvm {
       sys::swapByteOrder(mh.align);
     }
 
+    inline void swapStruct(fat_arch_64 &mh) {
+      sys::swapByteOrder(mh.cputype);
+      sys::swapByteOrder(mh.cpusubtype);
+      sys::swapByteOrder(mh.offset);
+      sys::swapByteOrder(mh.size);
+      sys::swapByteOrder(mh.align);
+      sys::swapByteOrder(mh.reserved);
+    }
 
     inline void swapStruct(mach_header &mh) {
       sys::swapByteOrder(mh.magic);
