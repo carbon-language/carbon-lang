@@ -2020,17 +2020,18 @@ def SI_RETURN : InstSI <
   let hasNoSchedulingInfo = 1;
 }
 
-let Uses = [EXEC], Defs = [EXEC, VCC, M0] in {
+let Uses = [EXEC], Defs = [EXEC, VCC, M0],
+  UseNamedOperandTable = 1 in {
 
 class SI_INDIRECT_SRC<RegisterClass rc> : InstSI <
-  (outs VGPR_32:$dst, SReg_64:$temp),
-  (ins rc:$src, VSrc_32:$idx, i32imm:$off)
+  (outs VGPR_32:$vdst, SReg_64:$sdst),
+  (ins rc:$src, VSrc_32:$idx, i32imm:$offset)
 >;
 
 class SI_INDIRECT_DST<RegisterClass rc> : InstSI <
-  (outs rc:$dst, SReg_64:$temp),
-  (ins unknown:$src, VSrc_32:$idx, i32imm:$off, VGPR_32:$val)> {
-  let Constraints = "$src = $dst";
+  (outs rc:$vdst, SReg_64:$sdst),
+  (ins unknown:$src, VSrc_32:$idx, i32imm:$offset, VGPR_32:$val)> {
+  let Constraints = "$src = $vdst";
 }
 
 // TODO: We can support indirect SGPR access.
