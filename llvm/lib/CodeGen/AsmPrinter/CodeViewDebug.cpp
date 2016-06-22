@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeViewDebug.h"
+#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/FieldListRecordBuilder.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
@@ -1174,12 +1175,6 @@ TypeIndex CodeViewDebug::lowerTypeMemberFunction(const DISubroutineType *Ty,
   // Lower the containing class type.
   TypeIndex ClassType = getTypeIndex(ClassTy);
 
-  // While processing the class type it is possible we already created this
-  // member function.  If so, we check here and return the existing one.
-  auto I = TypeIndices.find({Ty, ClassTy});
-  if (I != TypeIndices.end())
-    return I->second;
-
   SmallVector<TypeIndex, 8> ReturnAndArgTypeIndices;
   for (DITypeRef ArgTypeRef : Ty->getTypeArray())
     ReturnAndArgTypeIndices.push_back(getTypeIndex(ArgTypeRef));
@@ -1313,12 +1308,7 @@ struct llvm::ClassInfo {
   // [MemberInfo]
   typedef std::vector<MemberInfo> MemberList;
 
-  struct MethodInfo {
-    const DISubprogram *Method;
-    bool Introduced;
-  };
-  // [MethodInfo]
-  typedef std::vector<MethodInfo> MethodsList;
+  typedef TinyPtrVector<const DISubprogram *> MethodsList;
   // MethodName -> MethodsList
   typedef MapVector<MDString *, MethodsList> MethodsMap;
 
@@ -1367,10 +1357,7 @@ ClassInfo CodeViewDebug::collectClassInfo(const DICompositeType *Ty) {
     if (!Element)
       continue;
     if (auto *SP = dyn_cast<DISubprogram>(Element)) {
-      // Non-virtual methods does not need the introduced marker.
-      // Set it to false.
-      bool Introduced = false;
-      Info.Methods[SP->getRawName()].push_back({SP, Introduced});
+      Info.Methods[SP->getRawName()].push_back(SP);
     } else if (auto *DDTy = dyn_cast<DIDerivedType>(Element)) {
       if (DDTy->getTag() == dwarf::DW_TAG_member)
         collectMemberInfo(Info, DDTy);
@@ -1491,11 +1478,9 @@ CodeViewDebug::lowerRecordFieldList(const DICompositeType *Ty) {
     StringRef Name = MethodItr.first->getString();
 
     std::vector<OneMethodRecord> Methods;
-    for (ClassInfo::MethodInfo &MethodInfo : MethodItr.second) {
-      const DISubprogram *SP = MethodInfo.Method;
-      bool Introduced = MethodInfo.Introduced;
-
-      TypeIndex MethodType = getTypeIndex(SP->getType(), Ty);
+    for (const DISubprogram *SP : MethodItr.second) {
+      TypeIndex MethodType = getMemberFunctionType(SP, Ty);
+      bool Introduced = SP->getFlags() & DINode::FlagIntroducedVirtual;
 
       unsigned VFTableOffset = -1;
       if (Introduced)
