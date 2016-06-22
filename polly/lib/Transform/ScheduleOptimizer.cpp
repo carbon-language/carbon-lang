@@ -198,7 +198,7 @@ getIsolateOptions(__isl_take isl_set *IsolateDomain) {
   IsolateRelation = isl_map_move_dims(IsolateRelation, isl_dim_out, 0,
                                       isl_dim_in, Dims - 1, 1);
   auto *IsolateOption = isl_map_wrap(IsolateRelation);
-  auto *Id = isl_id_alloc(isl_set_get_ctx(IsolateOption), "isolate", NULL);
+  auto *Id = isl_id_alloc(isl_set_get_ctx(IsolateOption), "isolate", nullptr);
   return isl_union_set_from_set(isl_set_set_tuple_id(IsolateOption, Id));
 }
 
@@ -211,7 +211,7 @@ getIsolateOptions(__isl_take isl_set *IsolateDomain) {
 static __isl_give isl_union_set *getAtomicOptions(__isl_take isl_ctx *Ctx) {
   auto *Space = isl_space_set_alloc(Ctx, 0, 1);
   auto *AtomicOption = isl_set_universe(Space);
-  auto *Id = isl_id_alloc(Ctx, "atomic", NULL);
+  auto *Id = isl_id_alloc(Ctx, "atomic", nullptr);
   return isl_union_set_from_set(isl_set_set_tuple_id(AtomicOption, Id));
 }
 
