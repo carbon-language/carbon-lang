@@ -6763,6 +6763,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     ExtraInfo |= InlineAsm::Extra_HasSideEffects;
   if (IA->isAlignStack())
     ExtraInfo |= InlineAsm::Extra_IsAlignStack;
+  if (CS.isConvergent())
+    ExtraInfo |= InlineAsm::Extra_IsConvergent;
   // Set the asm dialect.
   ExtraInfo |= IA->getDialect() * InlineAsm::Extra_AsmDialect;
 
