@@ -988,7 +988,7 @@ __kmp_init_indirect_csptr(kmp_critical_name * crit, ident_t const * loc, kmp_int
 // Fast-path test futex lock
 #define KMP_TEST_FUTEX_LOCK(lock, gtid, rc) {                                                                       \
     kmp_futex_lock_t *ftx = (kmp_futex_lock_t *)lock;                                                               \
-    if (KMP_COMPARE_AND_STORE_ACQ32(&(ftx->lk.poll), KMP_LOCK_FREE(futex), KMP_LOCK_BUSY(gtid+1, futex) << 1)) {    \
+    if (KMP_COMPARE_AND_STORE_ACQ32(&(ftx->lk.poll), KMP_LOCK_FREE(futex), KMP_LOCK_BUSY(gtid+1 << 1, futex))) {    \
         KMP_FSYNC_ACQUIRED(ftx);                                                                                    \
         rc = TRUE;                                                                                                  \
     } else {                                                                                                        \
