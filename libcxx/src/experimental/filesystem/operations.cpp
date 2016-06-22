@@ -602,7 +602,8 @@ void __permissions(const path& p, perms prms, std::error_code *ec)
                    "Both add_perms and remove_perms are set");
 
     std::error_code m_ec;
-    file_status st = detail::posix_lstat(p, &m_ec);
+    file_status st = resolve_symlinks ? detail::posix_stat(p, &m_ec)
+                                      : detail::posix_lstat(p, &m_ec);
     if (m_ec) return set_or_throw(m_ec, ec, "permissions", p);
 
     // AT_SYMLINK_NOFOLLOW can only be used on symlinks, using it on a regular
