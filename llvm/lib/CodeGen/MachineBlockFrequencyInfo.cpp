@@ -42,6 +42,9 @@ static cl::opt<GVDAGType> ViewMachineBlockFreqPropagationDAG(
                           "integer fractional block frequency representation."),
                clEnumValEnd));
 
+static cl::opt<std::string> ViewMachineBlockFreqFuncName("view-mbfi-func-name",
+                                                         cl::Hidden);
+
 namespace llvm {
 
 template <> struct GraphTraits<MachineBlockFrequencyInfo *> {
@@ -137,7 +140,9 @@ bool MachineBlockFrequencyInfo::runOnMachineFunction(MachineFunction &F) {
     MBFI.reset(new ImplType);
   MBFI->calculate(F, MBPI, MLI);
 #ifndef NDEBUG
-  if (ViewMachineBlockFreqPropagationDAG != GVDT_None) {
+  if (ViewMachineBlockFreqPropagationDAG != GVDT_None &&
+      (ViewMachineBlockFreqFuncName.empty() ||
+       F.getName().equals(ViewMachineBlockFreqFuncName))) {
     view();
   }
 #endif
