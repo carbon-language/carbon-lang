@@ -23,6 +23,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -4287,11 +4288,10 @@ PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag, SDValue &Chain,
     Reloc::Model RM = DAG.getTarget().getRelocationModel();
     const Triple &TargetTriple = Subtarget.getTargetTriple();
     const GlobalValue *GV = G->getGlobal();
-    if ((RM != Reloc::Static &&
-         (TargetTriple.isMacOSX() && TargetTriple.isMacOSXVersionLT(10, 5)) &&
-         !GV->isStrongDefinitionForLinker()) ||
-        (Subtarget.isTargetELF() && !isPPC64 && !GV->hasLocalLinkage() &&
-         RM == Reloc::PIC_)) {
+    bool OldMachOLinker =
+        TargetTriple.isMacOSX() && TargetTriple.isMacOSXVersionLT(10, 5);
+    if (!shouldAssumeDSOLocal(RM, TargetTriple, *GV->getParent(), GV) &&
+        (OldMachOLinker || (Subtarget.isTargetELF() && !isPPC64))) {
       // PC-relative references to external symbols should go through $stub,
       // unless we're building with the leopard linker or later, which
       // automatically synthesizes these stubs.
