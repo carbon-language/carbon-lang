@@ -329,10 +329,6 @@ protected:
   void recordSccnum(MachineBasicBlock *MBB, int SCCNum);
   void retireBlock(MachineBasicBlock *MBB);
 
-  /// This is work around solution for findNearestCommonDominator not available
-  /// to post dom a proper fix should go to Dominators.h.
-  MachineBasicBlock *findNearestCommonPostDom(MachineBasicBlock *MBB1,
-      MachineBasicBlock *MBB2);
 
 private:
   MBBInfoMap BlockInfoMap;
@@ -1734,37 +1730,6 @@ void AMDGPUCFGStructurizer::retireBlock(MachineBasicBlock *MBB) {
   SrcBlkInfo->IsRetired = true;
   assert(MBB->succ_size() == 0 && MBB->pred_size() == 0
          && "can't retire block yet");
-}
-
-MachineBasicBlock *
-AMDGPUCFGStructurizer::findNearestCommonPostDom(MachineBasicBlock *MBB1,
-    MachineBasicBlock *MBB2) {
-
-  if (PDT->dominates(MBB1, MBB2))
-    return MBB1;
-  if (PDT->dominates(MBB2, MBB1))
-    return MBB2;
-
-  MachineDomTreeNode *Node1 = PDT->getNode(MBB1);
-  MachineDomTreeNode *Node2 = PDT->getNode(MBB2);
-
-  // Handle newly cloned node.
-  if (!Node1 && MBB1->succ_size() == 1)
-    return findNearestCommonPostDom(*MBB1->succ_begin(), MBB2);
-  if (!Node2 && MBB2->succ_size() == 1)
-    return findNearestCommonPostDom(MBB1, *MBB2->succ_begin());
-
-  if (!Node1 || !Node2)
-    return nullptr;
-
-  Node1 = Node1->getIDom();
-  while (Node1) {
-    if (PDT->dominates(Node1, Node2))
-      return Node1->getBlock();
-    Node1 = Node1->getIDom();
-  }
-
-  return nullptr;
 }
 
 char AMDGPUCFGStructurizer::ID = 0;
