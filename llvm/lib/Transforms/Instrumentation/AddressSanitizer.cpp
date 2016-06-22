@@ -952,6 +952,14 @@ Value *AddressSanitizer::isInterestingMemoryAccess(Instruction *I,
     PtrOperand = XCHG->getPointerOperand();
   }
 
+  // Do not instrument acesses from different address spaces; we cannot deal
+  // with them.
+  if (PtrOperand) {
+    Type *PtrTy = cast<PointerType>(PtrOperand->getType()->getScalarType());
+    if (PtrTy->getPointerAddressSpace() != 0)
+      return nullptr;
+  }
+
   // Treat memory accesses to promotable allocas as non-interesting since they
   // will not cause memory violations. This greatly speeds up the instrumented
   // executable at -O0.
