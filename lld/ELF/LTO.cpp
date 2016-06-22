@@ -309,7 +309,7 @@ std::vector<std::unique_ptr<InputFile>> BitcodeCompiler::compile() {
 
   // Update llvm.compiler.used so that optimizations won't strip
   // off AsmUndefinedReferences.
-  UpdateCompilerUsed(*Combined, *TM, AsmUndefinedRefs);
+  updateCompilerUsed(*Combined, *TM, AsmUndefinedRefs);
 
   if (Config->SaveTemps)
     saveBCFile(*Combined, ".lto.bc");
