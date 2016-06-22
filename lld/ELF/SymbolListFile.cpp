@@ -94,6 +94,8 @@ void VersionScriptParser::parseVersion(StringRef Version) {
     parseVersionSymbols(Version);
 
   expect("}");
+  if (!Version.empty() && peek() != ";")
+    Config->SymbolVersions.back().Parent = next();
   expect(";");
 }
 
