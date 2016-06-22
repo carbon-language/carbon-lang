@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: c++98, c++03
-
 // <list>
 
 // list(list&& c);
@@ -22,7 +20,8 @@
 
 int main()
 {
-    std::list<int> l1 = {1, 2, 3};
+    std::list<int> l1;
+    l1.push_back(1); l1.push_back(2); l1.push_back(3);
     std::list<int>::iterator i = l1.begin();
     std::list<int> l2 = l1;
     l2.erase(i);
