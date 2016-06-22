@@ -11,7 +11,7 @@
 ; CHECK-ERROR: Error loading index file 'bad.thinlto.bc'
 
 ; Ensure f2 was imported
-; RUN: %clang -O2 -o %t3.o -x ir %t1.o -c -fthinlto-index=%t.thinlto.bc
+; RUN: %clang -target x86_64-unknown-linux-gnu -O2 -o %t3.o -x ir %t1.o -c -fthinlto-index=%t.thinlto.bc
 ; RUN: llvm-nm %t3.o | FileCheck --check-prefix=CHECK-OBJ %s
 ; CHECK-OBJ: T f1
 ; CHECK-OBJ-NOT: U f2
