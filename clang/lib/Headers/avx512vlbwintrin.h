@@ -33,7 +33,7 @@
 
 static  __inline __m128i __DEFAULT_FN_ATTRS
 _mm_setzero_hi(void){
-    return (__m128i){ 0LL, 0LL };
+    return (__m128i)(__v8hi){ 0, 0, 0, 0, 0, 0, 0, 0 };
 }
 
 /* Integer compare */
