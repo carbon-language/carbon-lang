@@ -4284,13 +4284,14 @@ PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag, SDValue &Chain,
     // A call to a TLS address is actually an indirect call to a
     // thread-specific pointer.
     unsigned OpFlags = 0;
-    if ((DAG.getTarget().getRelocationModel() != Reloc::Static &&
-         (Subtarget.getTargetTriple().isMacOSX() &&
-          Subtarget.getTargetTriple().isMacOSXVersionLT(10, 5)) &&
-         !G->getGlobal()->isStrongDefinitionForLinker()) ||
-        (Subtarget.isTargetELF() && !isPPC64 &&
-         !G->getGlobal()->hasLocalLinkage() &&
-         DAG.getTarget().getRelocationModel() == Reloc::PIC_)) {
+    Reloc::Model RM = DAG.getTarget().getRelocationModel();
+    const Triple &TargetTriple = Subtarget.getTargetTriple();
+    const GlobalValue *GV = G->getGlobal();
+    if ((RM != Reloc::Static &&
+         (TargetTriple.isMacOSX() && TargetTriple.isMacOSXVersionLT(10, 5)) &&
+         !GV->isStrongDefinitionForLinker()) ||
+        (Subtarget.isTargetELF() && !isPPC64 && !GV->hasLocalLinkage() &&
+         RM == Reloc::PIC_)) {
       // PC-relative references to external symbols should go through $stub,
       // unless we're building with the leopard linker or later, which
       // automatically synthesizes these stubs.
