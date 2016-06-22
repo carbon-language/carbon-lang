@@ -388,3 +388,45 @@ define i32 @exact_ashr_lowbit(i32 %shiftval) {
   %shr = ashr exact i32 7, %shiftval
   ret i32 %shr
 }
+
+define i32 @ashr_zero(i32 %shiftval) {
+; CHECK-LABEL: @ashr_zero(
+; CHECK-NEXT:    ret i32 0
+;
+  %shr = ashr i32 0, %shiftval
+  ret i32 %shr
+}
+
+define i257 @ashr_minus1(i257 %shiftval) {
+; CHECK-LABEL: @ashr_minus1(
+; CHECK-NEXT:    ret i257 -1
+;
+  %shr = ashr i257 -1, %shiftval
+  ret i257 %shr
+}
+
+define <2 x i4097> @ashr_zero_vec(<2 x i4097> %shiftval) {
+; CHECK-LABEL: @ashr_zero_vec(
+; CHECK-NEXT:    ret <2 x i4097> zeroinitializer
+;
+  %shr = ashr <2 x i4097> zeroinitializer, %shiftval
+  ret <2 x i4097> %shr
+}
+
+define <2 x i64> @ashr_minus1_vec(<2 x i64> %shiftval) {
+; CHECK-LABEL: @ashr_minus1_vec(
+; CHECK-NEXT:    ret <2 x i64> <i64 -1, i64 -1>
+;
+  %shr = ashr <2 x i64> <i64 -1, i64 -1>, %shiftval
+  ret <2 x i64> %shr
+}
+
+define <2 x i4> @ashr_zero_minus1_vec(<2 x i4> %shiftval) {
+; CHECK-LABEL: @ashr_zero_minus1_vec(
+; CHECK-NEXT:    [[SHR:%.*]] = ashr <2 x i4> <i4 0, i4 -1>, %shiftval
+; CHECK-NEXT:    ret <2 x i4> [[SHR]]
+;
+  %shr = ashr <2 x i4> <i4 0, i4 -1>, %shiftval
+  ret <2 x i4> %shr
+}
+
