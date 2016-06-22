@@ -71,7 +71,7 @@ int main()
     }
     {
         // test for presense of is_swappable_v
-        static_assert(std::is_swappable_v<int>);
-        static_assert(!std::is_swappable_v<M>);
+        static_assert(std::is_swappable_v<int>, "");
+        static_assert(!std::is_swappable_v<M>, "");
     }
 }

@@ -327,17 +327,17 @@ void noexcept_test() {
     {
         NoThrowCallable obj; ((void)obj); // suppress unused warning
         CopyThrows arg; ((void)arg); // suppress unused warning
-        static_assert(noexcept(std::invoke(obj)));
-        static_assert(!noexcept(std::invoke(obj, arg)));
-        static_assert(noexcept(std::invoke(obj, std::move(arg))));
+        static_assert(noexcept(std::invoke(obj)), "");
+        static_assert(!noexcept(std::invoke(obj, arg)), "");
+        static_assert(noexcept(std::invoke(obj, std::move(arg))), "");
     }
     {
         ThrowsCallable obj; ((void)obj); // suppress unused warning
-        static_assert(!noexcept(std::invoke(obj)));
+        static_assert(!noexcept(std::invoke(obj)), "");
     }
     {
         MemberObj obj{42}; ((void)obj); // suppress unused warning.
-        static_assert(noexcept(std::invoke(&MemberObj::x, obj)));
+        static_assert(noexcept(std::invoke(&MemberObj::x, obj)), "");
     }
 }
 
