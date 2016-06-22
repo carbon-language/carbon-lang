@@ -150,8 +150,6 @@ class LLVM_LIBRARY_VISIBILITY CodeViewDebug : public DebugHandlerBase {
   /// always looked up in the normal TypeIndices map.
   DenseMap<const DICompositeType *, codeview::TypeIndex> CompleteTypeIndices;
 
-  /// Map from DICompositeType* to class info.
-  DenseMap<const DICompositeType *, std::unique_ptr<ClassInfo>> ClassInfoMap;
   const DISubprogram *CurrentSubprogram = nullptr;
 
   // The UDTs we have seen while processing types; each entry is a pair of type
@@ -249,7 +247,7 @@ class LLVM_LIBRARY_VISIBILITY CodeViewDebug : public DebugHandlerBase {
   codeview::TypeIndex lowerCompleteTypeUnion(const DICompositeType *Ty);
 
   void collectMemberInfo(ClassInfo &Info, const DIDerivedType *DDTy);
-  ClassInfo &collectClassInfo(const DICompositeType *Ty);
+  ClassInfo collectClassInfo(const DICompositeType *Ty);
 
   /// Common record member lowering functionality for record types, which are
   /// structs, classes, and unions. Returns the field list index and the member

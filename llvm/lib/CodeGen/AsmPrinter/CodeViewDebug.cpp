@@ -1337,7 +1337,6 @@ void CodeViewDebug::clear() {
   GlobalUDTs.clear();
   TypeIndices.clear();
   CompleteTypeIndices.clear();
-  ClassInfoMap.clear();
 }
 
 void CodeViewDebug::collectMemberInfo(ClassInfo &Info,
@@ -1346,29 +1345,20 @@ void CodeViewDebug::collectMemberInfo(ClassInfo &Info,
     Info.Members.push_back({DDTy, 0});
     return;
   }
-  // Member with no name, must be nested structure/union, collects its memebers
+  // An unnamed member must represent a nested struct or union. Add all the
+  // indirect fields to the current record.
   assert((DDTy->getOffsetInBits() % 8) == 0 && "Unnamed bitfield member!");
-  unsigned offset = DDTy->getOffsetInBits() / 8;
+  unsigned Offset = DDTy->getOffsetInBits() / 8;
   const DIType *Ty = DDTy->getBaseType().resolve();
   const DICompositeType *DCTy = cast<DICompositeType>(Ty);
-  ClassInfo &NestedInfo = collectClassInfo(DCTy);
-  ClassInfo::MemberList &Members = NestedInfo.Members;
-  for (unsigned i = 0, e = Members.size(); i != e; ++i)
+  ClassInfo NestedInfo = collectClassInfo(DCTy);
+  for (const ClassInfo::MemberInfo &IndirectField : NestedInfo.Members)
     Info.Members.push_back(
-        {Members[i].MemberTypeNode, Members[i].BaseOffset + offset});
+        {IndirectField.MemberTypeNode, IndirectField.BaseOffset + Offset});
 }
 
-ClassInfo &CodeViewDebug::collectClassInfo(const DICompositeType *Ty) {
-  auto Insertion = ClassInfoMap.insert({Ty, std::unique_ptr<ClassInfo>()});
-  ClassInfo *Info = nullptr;
-  {
-    std::unique_ptr<ClassInfo> &InfoEntry = Insertion.first->second;
-    if (!Insertion.second)
-      return *InfoEntry;
-    InfoEntry.reset(new ClassInfo());
-    Info = InfoEntry.get();
-  }
-
+ClassInfo CodeViewDebug::collectClassInfo(const DICompositeType *Ty) {
+  ClassInfo Info;
   // Add elements to structure type.
   DINodeArray Elements = Ty->getElements();
   for (auto *Element : Elements) {
@@ -1380,10 +1370,10 @@ ClassInfo &CodeViewDebug::collectClassInfo(const DICompositeType *Ty) {
       // Non-virtual methods does not need the introduced marker.
       // Set it to false.
       bool Introduced = false;
-      Info->Methods[SP->getRawName()].push_back({SP, Introduced});
+      Info.Methods[SP->getRawName()].push_back({SP, Introduced});
     } else if (auto *DDTy = dyn_cast<DIDerivedType>(Element)) {
       if (DDTy->getTag() == dwarf::DW_TAG_member)
-        collectMemberInfo(*Info, DDTy);
+        collectMemberInfo(Info, DDTy);
       else if (DDTy->getTag() == dwarf::DW_TAG_inheritance) {
         // FIXME: collect class info from inheritance.
       } else if (DDTy->getTag() == dwarf::DW_TAG_friend) {
@@ -1396,8 +1386,7 @@ ClassInfo &CodeViewDebug::collectClassInfo(const DICompositeType *Ty) {
     }
     // Skip other unrecognized kinds of elements.
   }
-
-  return *Info;
+  return Info;
 }
 
 TypeIndex CodeViewDebug::lowerTypeClass(const DICompositeType *Ty) {
@@ -1466,7 +1455,7 @@ CodeViewDebug::lowerRecordFieldList(const DICompositeType *Ty) {
   // contributes to this count, even though the overload group is a single field
   // list record.
   unsigned MemberCount = 0;
-  ClassInfo &Info = collectClassInfo(Ty);
+  ClassInfo Info = collectClassInfo(Ty);
   FieldListRecordBuilder Fields;
 
   // Create members.
