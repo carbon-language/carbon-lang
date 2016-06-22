@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // merge-fdata 1.fdata 2.fdata 3.fdata > merged.fdata
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #include "../DataReader.h"
@@ -99,6 +99,27 @@ int main(int argc, char **argv) {
                             std::vector<BranchInfo> &BIData) {
     auto FromNamePtr = MergedStringPool.intern(BI.From.Name);
     auto ToNamePtr = MergedStringPool.intern(BI.To.Name);
+    BranchHistories Histories;
+    for (const auto &HI : BI.Histories) {
+      BranchContext Context;
+      for (const auto &CI : HI.Context) {
+        const auto &CtxFrom = CI.first;
+        const auto CtxFromNamePtr = MergedStringPool.intern(CtxFrom.Name);
+        const auto &CtxTo = CI.second;
+        const auto CtxToNamePtr = MergedStringPool.intern(CtxTo.Name);
+        Context.emplace_back(std::make_pair(Location(CtxFrom.IsSymbol,
+                                                     *CtxFromNamePtr,
+                                                     CtxFrom.Offset),
+                                            Location(CtxTo.IsSymbol,
+                                                     *CtxToNamePtr,
+                                                     CtxTo.Offset)));
+        AllStrings.emplace_back(CtxFromNamePtr); // keep the reference
+        AllStrings.emplace_back(CtxToNamePtr); // keep the reference
+      }
+      Histories.emplace_back(BranchHistory(HI.Mispreds,
+                                           HI.Branches,
+                                           std::move(Context)));
+    }
     BIData.emplace_back(BranchInfo(Location(BI.From.IsSymbol,
                                             *FromNamePtr,
                                             BI.From.Offset),
@@ -106,9 +127,33 @@ int main(int argc, char **argv) {
                                             *ToNamePtr,
                                             BI.To.Offset),
                                    BI.Mispreds,
-                                   BI.Branches));
+                                   BI.Branches,
+                                   std::move(Histories)));
     AllStrings.emplace_back(FromNamePtr); // keep the reference
     AllStrings.emplace_back(ToNamePtr);   // keep the reference
+  };
+
+  // Simply replace string references in BranchInfo with internal storage
+  // references.
+  auto replaceStringRefs = [&] (BranchInfo &BI) {
+    auto FromNamePtr = MergedStringPool.intern(BI.From.Name);
+    BI.From.Name = *FromNamePtr;
+    AllStrings.emplace_back(FromNamePtr); // keep the reference
+
+    auto ToNamePtr = MergedStringPool.intern(BI.To.Name);
+    BI.To.Name = *ToNamePtr;
+    AllStrings.emplace_back(ToNamePtr);   // keep the reference
+
+    for (auto &HI : BI.Histories) {
+      for (auto &CI : HI.Context) {
+        auto CtxFromNamePtr = MergedStringPool.intern(CI.first.Name);
+        CI.first.Name = *CtxFromNamePtr;
+        AllStrings.emplace_back(CtxFromNamePtr); // keep the reference
+        auto CtxToNamePtr = MergedStringPool.intern(CI.second.Name);
+        CI.second.Name = *CtxToNamePtr;
+        AllStrings.emplace_back(CtxToNamePtr); // keep the reference
+      }
+    }
   };
 
   for (auto &InputDataFilename : opts::InputDataFilenames) {
@@ -134,8 +179,8 @@ int main(int argc, char **argv) {
                                      MI->second.Data.end(),
                                      BI);
           if (TI != MI->second.Data.end() && *TI == BI) {
-            TI->Branches += BI.Branches;
-            TI->Mispreds += BI.Mispreds;
+            replaceStringRefs(BI);
+            TI->mergeWith(BI);
           } else {
             CopyBranchInfo(BI, TmpBI);
           }
@@ -145,8 +190,7 @@ int main(int argc, char **argv) {
         BranchInfo *PrevBI = nullptr;
         for (auto &BI : TmpBI) {
           if (PrevBI && *PrevBI == BI) {
-            PrevBI->Branches += BI.Branches;
-            PrevBI->Mispreds += BI.Mispreds;
+            PrevBI->mergeWith(BI);
           } else {
             MI->second.Data.emplace_back(BI);
             PrevBI = &MI->second.Data.back();
@@ -167,8 +211,8 @@ int main(int argc, char **argv) {
         BranchInfo *PrevBI = nullptr;
         for (auto &BI : FI.second.Data) {
           if (PrevBI && *PrevBI == BI) {
-            PrevBI->Branches += BI.Branches;
-            PrevBI->Mispreds += BI.Mispreds;
+            replaceStringRefs(BI);
+            PrevBI->mergeWith(BI);
           } else {
             CopyBranchInfo(BI, MI->second.Data);
             PrevBI = &MI->second.Data.back();
@@ -180,13 +224,9 @@ int main(int argc, char **argv) {
 
   if (!opts::SuppressMergedDataOutput) {
     // Print all the data in the original format
-    for (auto &FDI : MergedFunctionsData) {
-      for (auto &BD : FDI.second.Data) {
-        outs() << BD.From.IsSymbol << " " << FDI.first() << " "
-               << Twine::utohexstr(BD.From.Offset) << " "
-               << BD.To.IsSymbol << " " << BD.To.Name << " "
-               << Twine::utohexstr(BD.To.Offset) << " "
-               << BD.Mispreds << " " << BD.Branches << '\n';
+    for (const auto &FDI : MergedFunctionsData) {
+      for (const auto &BD : FDI.second.Data) {
+        BD.print(outs());
       }
     }
   }

@@ -55,15 +55,30 @@ struct Location {
   }
 };
 
+typedef std::vector<std::pair<Location, Location>> BranchContext;
+
+struct BranchHistory {
+  int64_t Mispreds;
+  int64_t Branches;
+  BranchContext Context;
+
+  BranchHistory(int64_t Mispreds, int64_t Branches, BranchContext Context)
+      : Mispreds(Mispreds), Branches(Branches), Context(std::move(Context)) {}
+};
+
+typedef std::vector<BranchHistory> BranchHistories;
+
 struct BranchInfo {
   Location From;
   Location To;
   int64_t Mispreds;
   int64_t Branches;
+  BranchHistories Histories;
 
-  BranchInfo(Location From, Location To, int64_t Mispreds, int64_t Branches)
+  BranchInfo(Location From, Location To, int64_t Mispreds, int64_t Branches,
+             BranchHistories Histories)
       : From(std::move(From)), To(std::move(To)), Mispreds(Mispreds),
-        Branches(Branches) {}
+        Branches(Branches), Histories(std::move(Histories)) {}
 
   bool operator==(const BranchInfo &RHS) const {
     return From == RHS.From &&
@@ -79,6 +94,12 @@ struct BranchInfo {
 
     return false;
   }
+
+  /// Merges the branch and misprediction counts as well as the histories of BI
+  /// with those of this objetc.
+  void mergeWith(const BranchInfo &BI);
+
+  void print(raw_ostream &OS) const;
 };
 
 struct FuncBranchData {
@@ -120,17 +141,43 @@ public:
   ///
   /// <is symbol?> <closest elf symbol or DSO name> <relative FROM address>
   /// <is symbol?> <closest elf symbol or DSO name> <relative TO address>
-  /// <number of mispredictions> <number of branches>
+  /// <number of mispredictions> <number of branches> [<number of histories>
+  /// <history entry>
+  /// <history entry>
+  /// ...]
+  ///
+  /// Each history entry follows the syntax below.
+  ///
+  /// <number of mispredictions> <number of branches> <history length>
+  /// <is symbol?> <closest elf symbol or DSO name> <relative FROM address>
+  /// <is symbol?> <closest elf symbol or DSO name> <relative TO address>
+  /// ...
   ///
   /// In <is symbol?> field we record 0 if our closest address is a DSO load
   /// address or 1 if our closest address is an ELF symbol.
   ///
-  /// Example:
+  /// Examples:
   ///
   ///  1 main 3fb 0 /lib/ld-2.21.so 12 4 221
   ///
   /// The example records branches from symbol main, offset 3fb, to DSO ld-2.21,
-  /// offset 12, with 4 mispredictions and 221 branches
+  /// offset 12, with 4 mispredictions and 221 branches. No history is provided.
+  ///
+  ///  2 t2.c/func 11 1 globalfunc 1d 0 1775 2
+  ///  0 1002 2
+  ///  2 t2.c/func 31 2 t2.c/func d
+  ///  2 t2.c/func 18 2 t2.c/func 20
+  ///  0 773 2
+  ///  2 t2.c/func 71 2 t2.c/func d
+  ///  2 t2.c/func 18 2 t2.c/func 60
+  ///
+  /// The examples records branches from local symbol func (from t2.c), offset
+  /// 11, to global symbol globalfunc, offset 1d, with 1775 branches, no
+  /// mispreds. Of these branches, 1002 were preceeded by a sequence of
+  /// branches from func, offset 18 to offset 20 and then from offset 31 to
+  /// offset d. The rest 773 branches were preceeded by a different sequence
+  /// of branches, from func, offset 18 to offset 60 and then from offset 71 to
+  /// offset d.
   std::error_code parse();
 
   ErrorOr<const FuncBranchData &> getFuncBranchData(
@@ -147,9 +194,11 @@ private:
 
   void reportError(StringRef ErrorMsg);
   bool expectAndConsumeFS();
-  ErrorOr<StringRef> parseString(char EndChar);
-  ErrorOr<int64_t> parseNumberField(char EndChar);
-  ErrorOr<Location> parseLocation();
+  bool checkAndConsumeNewLine();
+  ErrorOr<StringRef> parseString(char EndChar, bool EndNl=false);
+  ErrorOr<int64_t> parseNumberField(char EndChar, bool EndNl=false);
+  ErrorOr<Location> parseLocation(char EndChar, bool EndNl=false);
+  ErrorOr<BranchHistory> parseBranchHistory();
   ErrorOr<BranchInfo> parseBranchInfo();
   bool hasData();
 
