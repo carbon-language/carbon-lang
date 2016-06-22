@@ -288,7 +288,7 @@
 ; CHECK:     DerivedFrom: 0x0
 ; CHECK:     VShape: 0x0
 ; CHECK:     SizeOf: 0
-; CHECK:     Name: Nested
+; CHECK:     Name: Class::Nested
 ; CHECK:     LinkageName: .?AUNested@Class@@
 ; CHECK:   }
 ; CHECK:   FieldList (0x1014) {
@@ -310,7 +310,7 @@
 ; CHECK:     DerivedFrom: 0x0
 ; CHECK:     VShape: 0x0
 ; CHECK:     SizeOf: 4
-; CHECK:     Name: Nested
+; CHECK:     Name: Class::Nested
 ; CHECK:     LinkageName: .?AUNested@Class@@
 ; CHECK:   }
 ; CHECK:   Pointer (0x1016) {
@@ -337,8 +337,8 @@
 ; CHECK:     ThisAdjustment: 0
 ; CHECK:   }
 ; CHECK:   FuncId (0x1018) {
-; CHECK:     TypeLeafKind: LF_FUNC_ID (0x1601)
-; CHECK:     ParentScope: 0x0
+; CHECK:     TypeLeafKind: LF_MFUNC_ID (0x1602)
+; CHECK:     ClassType: DerivedClass (0x100D)
 ; CHECK:     FunctionType: void DerivedClass::() (0x1017)
 ; CHECK:     Name: DerivedClass::DerivedClass
 ; CHECK:   }
