@@ -76,31 +76,27 @@
 ; CHECK:     SizeOf: 1
 ; CHECK:     Name: A
 ; CHECK:   }
-; CHECK:   MemberFuncId (0x1006) {
+; CHECK:   StringId (0x1006) {
+; CHECK:     TypeLeafKind: LF_STRING_ID (0x1605)
+; CHECK:     Id: 0x0
+; CHECK:     StringData: D:\src\llvm\build\t.cpp
+; CHECK:   }
+; CHECK:   UdtSourceLine (0x1007) {
+; CHECK:     TypeLeafKind: LF_UDT_SRC_LINE (0x1606)
+; CHECK:     UDT: A (0x1005)
+; CHECK:     SourceFile: D:\src\llvm\build\t.cpp (0x1006)
+; CHECK:     LineNumber: 1
+; CHECK:   }
+; CHECK:   MemberFuncId (0x1008) {
 ; CHECK:     TypeLeafKind: LF_MFUNC_ID (0x1602)
 ; CHECK:     ClassType: A (0x1000)
 ; CHECK:     FunctionType: void A::() (0x1003)
 ; CHECK:     Name: A::thiscallcc
 ; CHECK:   }
-; CHECK:   Procedure (0x1007) {
-; CHECK:     TypeLeafKind: LF_PROCEDURE (0x1008)
-; CHECK:     ReturnType: void (0x3)
-; CHECK:     CallingConvention: NearC (0x0)
-; CHECK:     FunctionOptions [ (0x0)
-; CHECK:     ]
-; CHECK:     NumParameters: 0
-; CHECK:     ArgListType: () (0x1002)
-; CHECK:   }
-; CHECK:   FuncId (0x1008) {
-; CHECK:     TypeLeafKind: LF_FUNC_ID (0x1601)
-; CHECK:     ParentScope: 0x0
-; CHECK:     FunctionType: void () (0x1007)
-; CHECK:     Name: cdeclcc
-; CHECK:   }
 ; CHECK:   Procedure (0x1009) {
 ; CHECK:     TypeLeafKind: LF_PROCEDURE (0x1008)
 ; CHECK:     ReturnType: void (0x3)
-; CHECK:     CallingConvention: NearFast (0x4)
+; CHECK:     CallingConvention: NearC (0x0)
 ; CHECK:     FunctionOptions [ (0x0)
 ; CHECK:     ]
 ; CHECK:     NumParameters: 0
@@ -110,12 +106,12 @@
 ; CHECK:     TypeLeafKind: LF_FUNC_ID (0x1601)
 ; CHECK:     ParentScope: 0x0
 ; CHECK:     FunctionType: void () (0x1009)
-; CHECK:     Name: fastcallcc
+; CHECK:     Name: cdeclcc
 ; CHECK:   }
 ; CHECK:   Procedure (0x100B) {
 ; CHECK:     TypeLeafKind: LF_PROCEDURE (0x1008)
 ; CHECK:     ReturnType: void (0x3)
-; CHECK:     CallingConvention: NearStdCall (0x7)
+; CHECK:     CallingConvention: NearFast (0x4)
 ; CHECK:     FunctionOptions [ (0x0)
 ; CHECK:     ]
 ; CHECK:     NumParameters: 0
@@ -125,12 +121,12 @@
 ; CHECK:     TypeLeafKind: LF_FUNC_ID (0x1601)
 ; CHECK:     ParentScope: 0x0
 ; CHECK:     FunctionType: void () (0x100B)
-; CHECK:     Name: stdcallcc
+; CHECK:     Name: fastcallcc
 ; CHECK:   }
 ; CHECK:   Procedure (0x100D) {
 ; CHECK:     TypeLeafKind: LF_PROCEDURE (0x1008)
 ; CHECK:     ReturnType: void (0x3)
-; CHECK:     CallingConvention: NearVector (0x18)
+; CHECK:     CallingConvention: NearStdCall (0x7)
 ; CHECK:     FunctionOptions [ (0x0)
 ; CHECK:     ]
 ; CHECK:     NumParameters: 0
@@ -140,6 +136,21 @@
 ; CHECK:     TypeLeafKind: LF_FUNC_ID (0x1601)
 ; CHECK:     ParentScope: 0x0
 ; CHECK:     FunctionType: void () (0x100D)
+; CHECK:     Name: stdcallcc
+; CHECK:   }
+; CHECK:   Procedure (0x100F) {
+; CHECK:     TypeLeafKind: LF_PROCEDURE (0x1008)
+; CHECK:     ReturnType: void (0x3)
+; CHECK:     CallingConvention: NearVector (0x18)
+; CHECK:     FunctionOptions [ (0x0)
+; CHECK:     ]
+; CHECK:     NumParameters: 0
+; CHECK:     ArgListType: () (0x1002)
+; CHECK:   }
+; CHECK:   FuncId (0x1010) {
+; CHECK:     TypeLeafKind: LF_FUNC_ID (0x1601)
+; CHECK:     ParentScope: 0x0
+; CHECK:     FunctionType: void () (0x100F)
 ; CHECK:     Name: vectorcallcc
 ; CHECK:   }
 ; CHECK: ]

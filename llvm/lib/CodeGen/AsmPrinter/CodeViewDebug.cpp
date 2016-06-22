@@ -1406,10 +1406,17 @@ TypeIndex CodeViewDebug::lowerCompleteTypeClass(const DICompositeType *Ty) {
       getFullyQualifiedName(Ty->getScope().resolve(), Ty->getName());
 
   uint64_t SizeInBytes = Ty->getSizeInBits() / 8;
-  return TypeTable.writeClass(ClassRecord(
+
+  TypeIndex ClassTI = TypeTable.writeClass(ClassRecord(
       Kind, FieldCount, CO, HfaKind::None, WindowsRTClassKind::None, FieldTI,
       TypeIndex(), VShapeTI, SizeInBytes, FullName, Ty->getIdentifier()));
-  // FIXME: Make an LF_UDT_SRC_LINE record.
+
+  TypeTable.writeUdtSourceLine(UdtSourceLineRecord(
+      ClassTI, TypeTable.writeStringId(StringIdRecord(
+                   TypeIndex(0x0), getFullFilepath(Ty->getFile()))),
+      Ty->getLine()));
+
+  return ClassTI;
 }
 
 TypeIndex CodeViewDebug::lowerTypeUnion(const DICompositeType *Ty) {
@@ -1433,10 +1440,17 @@ TypeIndex CodeViewDebug::lowerCompleteTypeUnion(const DICompositeType *Ty) {
   uint64_t SizeInBytes = Ty->getSizeInBits() / 8;
   std::string FullName =
       getFullyQualifiedName(Ty->getScope().resolve(), Ty->getName());
-  return TypeTable.writeUnion(UnionRecord(FieldCount, CO, HfaKind::None,
-                                          FieldTI, SizeInBytes, FullName,
-                                          Ty->getIdentifier()));
-  // FIXME: Make an LF_UDT_SRC_LINE record.
+
+  TypeIndex UnionTI = TypeTable.writeUnion(
+      UnionRecord(FieldCount, CO, HfaKind::None, FieldTI, SizeInBytes, FullName,
+                  Ty->getIdentifier()));
+
+  TypeTable.writeUdtSourceLine(UdtSourceLineRecord(
+      UnionTI, TypeTable.writeStringId(StringIdRecord(
+                   TypeIndex(0x0), getFullFilepath(Ty->getFile()))),
+      Ty->getLine()));
+
+  return UnionTI;
 }
 
 std::tuple<TypeIndex, TypeIndex, unsigned>

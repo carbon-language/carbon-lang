@@ -103,7 +103,18 @@
 ; CHECK:     Name: A
 ; CHECK:     LinkageName: .?AUA@@
 ; CHECK:   }
-; CHECK:   FieldList (0x1008) {
+; CHECK:   StringId (0x1008) {
+; CHECK:     TypeLeafKind: LF_STRING_ID (0x1605)
+; CHECK:     Id: 0x0
+; CHECK:     StringData: D:\src\llvm\build\t.cpp
+; CHECK:   }
+; CHECK:   UdtSourceLine (0x1009) {
+; CHECK:     TypeLeafKind: LF_UDT_SRC_LINE (0x1606)
+; CHECK:     UDT: A (0x1007)
+; CHECK:     SourceFile: D:\src\llvm\build\t.cpp (0x1008)
+; CHECK:     LineNumber: 2
+; CHECK:   }
+; CHECK:   FieldList (0x100A) {
 ; CHECK:     TypeLeafKind: LF_FIELDLIST (0x1203)
 ; CHECK:     DataMember {
 ; CHECK:       AccessSpecifier: Public (0x3)
@@ -112,20 +123,26 @@
 ; CHECK:       Name: b
 ; CHECK:     }
 ; CHECK:   }
-; CHECK:   Struct (0x1009) {
+; CHECK:   Struct (0x100B) {
 ; CHECK:     TypeLeafKind: LF_STRUCTURE (0x1505)
 ; CHECK:     MemberCount: 1
 ; CHECK:     Properties [ (0x200)
 ; CHECK:       HasUniqueName (0x200)
 ; CHECK:     ]
-; CHECK:     FieldList: <field list> (0x1008)
+; CHECK:     FieldList: <field list> (0x100A)
 ; CHECK:     DerivedFrom: 0x0
 ; CHECK:     VShape: 0x0
 ; CHECK:     SizeOf: 4
 ; CHECK:     Name: B
 ; CHECK:     LinkageName: .?AUB@@
 ; CHECK:   }
-; CHECK:   FuncId (0x100A) {
+; CHECK:   UdtSourceLine (0x100C) {
+; CHECK:     TypeLeafKind: LF_UDT_SRC_LINE (0x1606)
+; CHECK:     UDT: B (0x100B)
+; CHECK:     SourceFile: D:\src\llvm\build\t.cpp (0x1008)
+; CHECK:     LineNumber: 1
+; CHECK:   }
+; CHECK:   FuncId (0x100D) {
 ; CHECK:     TypeLeafKind: LF_FUNC_ID (0x1601)
 ; CHECK:     ParentScope: 0x0
 ; CHECK:     FunctionType: int (A*) (0x1003)
