@@ -823,7 +823,11 @@ defm DS_CMPST_RTN_B32 : DS_1A2D_RET <0x30, "ds_cmpst_rtn_b32", VGPR_32, "ds_cmps
 defm DS_CMPST_RTN_F32 : DS_1A2D_RET <0x31, "ds_cmpst_rtn_f32", VGPR_32, "ds_cmpst_f32">;
 defm DS_MIN_RTN_F32 : DS_1A2D_RET <0x32, "ds_min_rtn_f32", VGPR_32, "ds_min_f32">;
 defm DS_MAX_RTN_F32 : DS_1A2D_RET <0x33, "ds_max_rtn_f32", VGPR_32, "ds_max_f32">;
+
+let Uses = [EXEC], mayLoad =0, mayStore = 0, isConvergent = 1 in {
 defm DS_SWIZZLE_B32 : DS_1A_RET <0x35, "ds_swizzle_b32", VGPR_32>;
+}
+
 let mayStore = 0 in {
 defm DS_READ_B32 : DS_1A_RET <0x36, "ds_read_b32", VGPR_32>;
 defm DS_READ2_B32 : DS_1A_Off8_RET <0x37, "ds_read2_b32", VReg_64>;
@@ -2336,6 +2340,14 @@ def : Pat<
 def : Pat <
   (int_amdgcn_s_getreg imm:$simm16),
   (S_GETREG_B32 (as_i16imm $simm16))
+>;
+
+//===----------------------------------------------------------------------===//
+// DS_SWIZZLE Intrinsic Pattern.
+//===----------------------------------------------------------------------===//
+def : Pat <
+  (int_amdgcn_ds_swizzle i32:$src, imm:$offset16),
+  (DS_SWIZZLE_B32 $src, (as_i16imm $offset16), (i1 0))
 >;
 
 //===----------------------------------------------------------------------===//
