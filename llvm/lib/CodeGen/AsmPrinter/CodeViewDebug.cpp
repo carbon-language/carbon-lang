@@ -1400,6 +1400,8 @@ TypeIndex CodeViewDebug::lowerTypeClass(const DICompositeType *Ty) {
   TypeIndex FwdDeclTI = TypeTable.writeClass(ClassRecord(
       Kind, 0, CO, HfaKind::None, WindowsRTClassKind::None, TypeIndex(),
       TypeIndex(), TypeIndex(), 0, FullName, Ty->getIdentifier()));
+  if (!Ty->isForwardDecl())
+    DeferredCompleteTypes.push_back(Ty);
   return FwdDeclTI;
 }
 
@@ -1431,6 +1433,8 @@ TypeIndex CodeViewDebug::lowerTypeUnion(const DICompositeType *Ty) {
   TypeIndex FwdDeclTI =
       TypeTable.writeUnion(UnionRecord(0, CO, HfaKind::None, TypeIndex(), 0,
                                        FullName, Ty->getIdentifier()));
+  if (!Ty->isForwardDecl())
+    DeferredCompleteTypes.push_back(Ty);
   return FwdDeclTI;
 }
 
@@ -1518,6 +1522,18 @@ CodeViewDebug::lowerRecordFieldList(const DICompositeType *Ty) {
   return std::make_tuple(FieldTI, TypeIndex(), MemberCount);
 }
 
+struct CodeViewDebug::TypeLoweringScope {
+  TypeLoweringScope(CodeViewDebug &CVD) : CVD(CVD) { ++CVD.TypeEmissionLevel; }
+  ~TypeLoweringScope() {
+    // Don't decrement TypeEmissionLevel until after emitting deferred types, so
+    // inner TypeLoweringScopes don't attempt to emit deferred types.
+    if (CVD.TypeEmissionLevel == 1)
+      CVD.emitDeferredCompleteTypes();
+    --CVD.TypeEmissionLevel;
+  }
+  CodeViewDebug &CVD;
+};
+
 TypeIndex CodeViewDebug::getTypeIndex(DITypeRef TypeRef, DITypeRef ClassTyRef) {
   const DIType *Ty = TypeRef.resolve();
   const DIType *ClassTy = ClassTyRef.resolve();
@@ -1533,9 +1549,14 @@ TypeIndex CodeViewDebug::getTypeIndex(DITypeRef TypeRef, DITypeRef ClassTyRef) {
   if (I != TypeIndices.end())
     return I->second;
 
-  TypeIndex TI = lowerType(Ty, ClassTy);
+  TypeIndex TI;
+  {
+    TypeLoweringScope S(*this);
+    TI = lowerType(Ty, ClassTy);
+    recordTypeIndexForDINode(Ty, TI, ClassTy);
+  }
 
-  return recordTypeIndexForDINode(Ty, TI, ClassTy);
+  return TI;
 }
 
 TypeIndex CodeViewDebug::getCompleteTypeIndex(DITypeRef TypeRef) {
@@ -1564,6 +1585,8 @@ TypeIndex CodeViewDebug::getCompleteTypeIndex(DITypeRef TypeRef) {
   if (!InsertResult.second)
     return InsertResult.first->second;
 
+  TypeLoweringScope S(*this);
+
   // Make sure the forward declaration is emitted first. It's unclear if this
   // is necessary, but MSVC does it, and we should follow suit until we can show
   // otherwise.
@@ -1590,6 +1613,19 @@ TypeIndex CodeViewDebug::getCompleteTypeIndex(DITypeRef TypeRef) {
 
   InsertResult.first->second = TI;
   return TI;
+}
+
+/// Emit all the deferred complete record types. Try to do this in FIFO order,
+/// and do this until fixpoint, as each complete record type typically references
+/// many other record types.
+void CodeViewDebug::emitDeferredCompleteTypes() {
+  SmallVector<const DICompositeType *, 4> TypesToEmit;
+  while (!DeferredCompleteTypes.empty()) {
+    std::swap(DeferredCompleteTypes, TypesToEmit);
+    for (const DICompositeType *RecordTy : TypesToEmit)
+      getCompleteTypeIndex(RecordTy);
+    TypesToEmit.clear();
+  }
 }
 
 void CodeViewDebug::emitLocalVariable(const LocalVariable &Var) {

@@ -150,6 +150,13 @@ class LLVM_LIBRARY_VISIBILITY CodeViewDebug : public DebugHandlerBase {
   /// always looked up in the normal TypeIndices map.
   DenseMap<const DICompositeType *, codeview::TypeIndex> CompleteTypeIndices;
 
+  /// Complete record types to emit after all active type lowerings are
+  /// finished.
+  SmallVector<const DICompositeType *, 4> DeferredCompleteTypes;
+
+  /// Number of type lowering frames active on the stack.
+  unsigned TypeEmissionLevel = 0;
+
   const DISubprogram *CurrentSubprogram = nullptr;
 
   // The UDTs we have seen while processing types; each entry is a pair of type
@@ -245,6 +252,10 @@ class LLVM_LIBRARY_VISIBILITY CodeViewDebug : public DebugHandlerBase {
 
   codeview::TypeIndex lowerCompleteTypeClass(const DICompositeType *Ty);
   codeview::TypeIndex lowerCompleteTypeUnion(const DICompositeType *Ty);
+
+  struct TypeLoweringScope;
+
+  void emitDeferredCompleteTypes();
 
   void collectMemberInfo(ClassInfo &Info, const DIDerivedType *DDTy);
   ClassInfo collectClassInfo(const DICompositeType *Ty);
