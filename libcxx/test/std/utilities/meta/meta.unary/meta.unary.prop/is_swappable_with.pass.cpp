@@ -65,7 +65,7 @@ int main()
         static_assert(!std::is_swappable_with<D&, C&>::value, "");
     }
     {
-        // test that cv void  is guarded against as required.
+        // test that cv void is guarded against as required.
         static_assert(!std::is_swappable_with_v<void, int>, "");
         static_assert(!std::is_swappable_with_v<int, void>, "");
         static_assert(!std::is_swappable_with_v<const void, const volatile void>, "");

@@ -74,7 +74,7 @@ int main()
 
     }
     {
-        // test for presense of is_nothrow_swappable_with_v
+        // test for presence of is_nothrow_swappable_with_v
         static_assert(std::is_nothrow_swappable_with_v<int&, int&>, "");
         static_assert(!std::is_nothrow_swappable_with_v<int&&, int&&>, "");
     }
