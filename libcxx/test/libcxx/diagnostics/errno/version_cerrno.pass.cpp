@@ -1,3 +1,4 @@
+// -*- C++ -*-
 //===----------------------------------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -7,14 +8,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-// test <cassert>
+// test <cerrno>
 
-#include <cassert>
+#include <cerrno>
 
-#ifndef assert
-#error assert not defined
+#ifndef _LIBCPP_VERSION
+#error _LIBCPP_VERSION not defined
 #endif
 
-int main()
-{
-}
+int main() {}
