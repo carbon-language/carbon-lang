@@ -514,17 +514,12 @@ bool ScheduleTreeOptimizer::isMatrMultPattern(
     __isl_keep isl_schedule_node *Node) {
   auto *PartialSchedule =
       isl_schedule_node_band_get_partial_schedule_union_map(Node);
-  if (isl_union_map_n_map(PartialSchedule) != 1)
-    return false;
-  auto *NewPartialSchedule = isl_map_from_union_map(PartialSchedule);
-  auto DimNum = isl_map_dim(NewPartialSchedule, isl_dim_in);
-  if (DimNum != 3) {
-    isl_map_free(NewPartialSchedule);
+  if (isl_schedule_node_band_n_member(Node) != 3 ||
+      isl_union_map_n_map(PartialSchedule) != 1) {
+    isl_union_map_free(PartialSchedule);
     return false;
   }
-  assert(isl_map_dim(NewPartialSchedule, isl_dim_out) == 3 &&
-         "Each schedule dimension should be represented by a union piecewise"
-         "quasi-affine expression.");
+  auto *NewPartialSchedule = isl_map_from_union_map(PartialSchedule);
   NewPartialSchedule = circularShiftOutputDims(NewPartialSchedule);
   if (containsMatrMult(NewPartialSchedule)) {
     isl_map_free(NewPartialSchedule);
