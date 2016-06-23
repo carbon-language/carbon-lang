@@ -2218,7 +2218,6 @@ void SchedBoundary::releasePending() {
     Pending.remove(Pending.begin()+i);
     --i; --e;
   }
-  DEBUG(if (!Pending.empty()) Pending.dump());
   CheckPending = false;
 }
 
