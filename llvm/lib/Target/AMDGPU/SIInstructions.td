@@ -1586,7 +1586,8 @@ defm V_SUBBREV_U32 : VOP2bInst <vop2<0x2a, 0x1e>, "v_subbrev_u32",
 
 } // End isCommutable = 1
 
-let isConvergent = 1 in {
+// These are special and do not read the exec mask.
+let isConvergent = 1, Uses = []<Register> in {
 
 defm V_READLANE_B32 : VOP2SI_3VI_m <
   vop3 <0x001, 0x289>,
