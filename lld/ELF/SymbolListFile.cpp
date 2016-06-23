@@ -116,9 +116,9 @@ void VersionScriptParser::parseVersionSymbols(StringRef Version) {
   }
 
   for (;;) {
-    if (peek() == "extern")
-      setError("extern keyword is not supported");
     StringRef Cur = peek();
+    if (Cur == "extern")
+      setError("extern keyword is not supported");
     if (Cur == "}" || Cur == "local:" || Error)
       return;
     next();
