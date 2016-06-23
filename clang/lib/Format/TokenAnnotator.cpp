@@ -639,7 +639,7 @@ private:
       }
       // Declarations cannot be conditional expressions, this can only be part
       // of a type declaration.
-      if (Line.MustBeDeclaration &&
+      if (Line.MustBeDeclaration && !Contexts.back().IsExpression &&
           Style.Language == FormatStyle::LK_JavaScript)
         break;
       parseConditional();
@@ -1009,7 +1009,7 @@ private:
       Current.Type = TT_UnaryOperator;
     } else if (Current.is(tok::question)) {
       if (Style.Language == FormatStyle::LK_JavaScript &&
-          Line.MustBeDeclaration) {
+          Line.MustBeDeclaration && !Contexts.back().IsExpression) {
         // In JavaScript, `interface X { foo?(): bar; }` is an optional method
         // on the interface, not a ternary expression.
         Current.Type = TT_JsTypeOptionalQuestion;
