@@ -14341,7 +14341,7 @@ void Sema::DiagnoseEqualityWithExtraParens(ParenExpr *ParenE) {
     }
 }
 
-ExprResult Sema::CheckBooleanCondition(SourceLocation Loc, Expr *E) {
+ExprResult Sema::CheckBooleanCondition(Expr *E, SourceLocation Loc) {
   DiagnoseAssignmentAsCondition(E);
   if (ParenExpr *parenE = dyn_cast<ParenExpr>(E))
     DiagnoseEqualityWithExtraParens(parenE);
@@ -14371,26 +14371,12 @@ ExprResult Sema::CheckBooleanCondition(SourceLocation Loc, Expr *E) {
   return E;
 }
 
-Sema::ConditionResult Sema::ActOnCondition(Scope *S, SourceLocation Loc,
-                                           Expr *SubExpr, ConditionKind CK) {
-  // Empty conditions are valid in for-statements.
+ExprResult Sema::ActOnBooleanCondition(Scope *S, SourceLocation Loc,
+                                       Expr *SubExpr) {
   if (!SubExpr)
-    return ConditionResult();
+    return ExprError();
 
-  ExprResult Cond;
-  switch (CK) {
-  case ConditionKind::Boolean:
-    Cond = CheckBooleanCondition(Loc, SubExpr);
-    break;
-
-  case ConditionKind::Switch:
-    Cond = CheckSwitchCondition(Loc, SubExpr);
-    break;
-  }
-  if (Cond.isInvalid())
-    return ConditionError();
-
-  return ConditionResult(nullptr, MakeFullExpr(Cond.get(), Loc));
+  return CheckBooleanCondition(SubExpr, Loc);
 }
 
 namespace {

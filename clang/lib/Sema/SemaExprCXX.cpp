@@ -3054,21 +3054,11 @@ void Sema::CheckVirtualDtorCall(CXXDestructorDecl *dtor, SourceLocation Loc,
   }
 }
 
-Sema::ConditionResult Sema::ActOnConditionVariable(Decl *ConditionVar,
-                                                   SourceLocation StmtLoc,
-                                                   ConditionKind CK) {
-  ExprResult E =
-      CheckConditionVariable(cast<VarDecl>(ConditionVar), StmtLoc, CK);
-  if (E.isInvalid())
-    return ConditionError();
-  return ConditionResult(ConditionVar, MakeFullExpr(E.get(), StmtLoc));
-}
-
 /// \brief Check the use of the given variable as a C++ condition in an if,
 /// while, do-while, or switch statement.
 ExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
                                         SourceLocation StmtLoc,
-                                        ConditionKind CK) {
+                                        bool ConvertToBoolean) {
   if (ConditionVar->isInvalidDecl())
     return ExprError();
 
@@ -3092,15 +3082,13 @@ ExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
 
   MarkDeclRefReferenced(cast<DeclRefExpr>(Condition.get()));
 
-  switch (CK) {
-  case ConditionKind::Boolean:
-    return CheckBooleanCondition(StmtLoc, Condition.get());
-
-  case ConditionKind::Switch:
-    return CheckSwitchCondition(StmtLoc, Condition.get());
+  if (ConvertToBoolean) {
+    Condition = CheckBooleanCondition(Condition.get(), StmtLoc);
+    if (Condition.isInvalid())
+      return ExprError();
   }
 
-  llvm_unreachable("unexpected condition kind");
+  return Condition;
 }
 
 /// CheckCXXBooleanCondition - Returns true if a conversion to bool is invalid.

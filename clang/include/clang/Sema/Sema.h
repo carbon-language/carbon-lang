@@ -3298,7 +3298,6 @@ public:
 public:
   class FullExprArg {
   public:
-    FullExprArg() : E(nullptr) { }
     FullExprArg(Sema &actions) : E(nullptr) { }
 
     ExprResult release() {
@@ -3392,23 +3391,27 @@ public:
                                  ArrayRef<const Attr*> Attrs,
                                  Stmt *SubStmt);
 
-  class ConditionResult;
-  StmtResult ActOnIfStmt(SourceLocation IfLoc, ConditionResult Cond,
-                         Stmt *ThenVal, SourceLocation ElseLoc, Stmt *ElseVal);
+  StmtResult ActOnIfStmt(SourceLocation IfLoc,
+                         FullExprArg CondVal, Decl *CondVar,
+                         Stmt *ThenVal,
+                         SourceLocation ElseLoc, Stmt *ElseVal);
   StmtResult ActOnStartOfSwitchStmt(SourceLocation SwitchLoc,
-                                    ConditionResult Cond);
+                                            Expr *Cond,
+                                            Decl *CondVar);
   StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                            Stmt *Switch, Stmt *Body);
-  StmtResult ActOnWhileStmt(SourceLocation WhileLoc, ConditionResult Cond,
-                            Stmt *Body);
+  StmtResult ActOnWhileStmt(SourceLocation WhileLoc,
+                            FullExprArg Cond,
+                            Decl *CondVar, Stmt *Body);
   StmtResult ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
-                         SourceLocation WhileLoc, SourceLocation CondLParen,
-                         Expr *Cond, SourceLocation CondRParen);
+                                 SourceLocation WhileLoc,
+                                 SourceLocation CondLParen, Expr *Cond,
+                                 SourceLocation CondRParen);
 
   StmtResult ActOnForStmt(SourceLocation ForLoc,
                           SourceLocation LParenLoc,
-                          Stmt *First,
-                          ConditionResult Second,
+                          Stmt *First, FullExprArg Second,
+                          Decl *SecondVar,
                           FullExprArg Third,
                           SourceLocation RParenLoc,
                           Stmt *Body);
@@ -4797,6 +4800,11 @@ public:
                             bool IsDelete, bool CallCanBeVirtual,
                             bool WarnOnNonAbstractTypes,
                             SourceLocation DtorLoc);
+
+  DeclResult ActOnCXXConditionDeclaration(Scope *S, Declarator &D);
+  ExprResult CheckConditionVariable(VarDecl *ConditionVar,
+                                    SourceLocation StmtLoc,
+                                    bool ConvertToBoolean);
 
   ExprResult ActOnNoexceptExpr(SourceLocation KeyLoc, SourceLocation LParen,
                                Expr *Operand, SourceLocation RParen);
@@ -8915,46 +8923,6 @@ public:
   /// type, and if so, emit a note describing what happened.
   void EmitRelatedResultTypeNoteForReturn(QualType destType);
 
-  class ConditionResult {
-    Decl *ConditionVar;
-    FullExprArg Condition;
-    bool Invalid;
-
-    friend class Sema;
-    ConditionResult(Decl *ConditionVar, FullExprArg Condition)
-        : ConditionVar(ConditionVar), Condition(Condition), Invalid(false) {}
-    explicit ConditionResult(bool Invalid)
-        : ConditionVar(nullptr), Condition(nullptr), Invalid(Invalid) {}
-
-  public:
-    ConditionResult() : ConditionResult(false) {}
-    bool isInvalid() const { return Invalid; }
-    std::pair<VarDecl *, Expr *> get() const {
-      return std::make_pair(cast_or_null<VarDecl>(ConditionVar),
-                            Condition.get());
-    }
-  };
-  static ConditionResult ConditionError() { return ConditionResult(true); }
-
-  enum class ConditionKind {
-    Boolean, ///< A boolean condition, from 'if', 'while', 'for', or 'do'.
-    Switch   ///< An integral condition for a 'switch' statement.
-  };
-
-  ConditionResult ActOnCondition(Scope *S, SourceLocation Loc,
-                                 Expr *SubExpr, ConditionKind CK);
-
-  ConditionResult ActOnConditionVariable(Decl *ConditionVar,
-                                         SourceLocation StmtLoc,
-                                         ConditionKind CK);
-
-  DeclResult ActOnCXXConditionDeclaration(Scope *S, Declarator &D);
-
-  ExprResult CheckConditionVariable(VarDecl *ConditionVar,
-                                    SourceLocation StmtLoc,
-                                    ConditionKind CK);
-  ExprResult CheckSwitchCondition(SourceLocation SwitchLoc, Expr *Cond);
-
   /// CheckBooleanCondition - Diagnose problems involving the use of
   /// the given expression as a boolean condition (e.g. in an if
   /// statement).  Also performs the standard function and array
@@ -8963,7 +8931,10 @@ public:
   /// \param Loc - A location associated with the condition, e.g. the
   /// 'if' keyword.
   /// \return true iff there were any errors
-  ExprResult CheckBooleanCondition(SourceLocation Loc, Expr *E);
+  ExprResult CheckBooleanCondition(Expr *E, SourceLocation Loc);
+
+  ExprResult ActOnBooleanCondition(Scope *S, SourceLocation Loc,
+                                   Expr *SubExpr);
 
   /// DiagnoseAssignmentAsCondition - Given that an expression is
   /// being used as a boolean condition, warn if it's an assignment.
