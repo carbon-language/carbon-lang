@@ -764,8 +764,8 @@ CFLAAResult::FunctionInfo::FunctionInfo(Function &Fn,
   // in InterfaceMap: if it is not, we add the correspondence to the map;
   // otherwise, an aliasing relation is found and we add it to
   // RetParamRelations.
-  auto AddToRetParamRelations = [this, &InterfaceMap](
-      unsigned InterfaceIndex, StratifiedIndex SetIndex) {
+  auto AddToRetParamRelations = [&](unsigned InterfaceIndex,
+                                    StratifiedIndex SetIndex) {
     unsigned Level = 0;
     while (true) {
       InterfaceValue CurrValue{InterfaceIndex, Level};

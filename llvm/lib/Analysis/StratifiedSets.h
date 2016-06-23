@@ -419,7 +419,7 @@ public:
     assert(has(Main));
     assert(has(ToAdd));
 
-    auto GetIndexBelow = [this](StratifiedIndex Index, unsigned NumLevel) {
+    auto GetIndexBelow = [&](StratifiedIndex Index, unsigned NumLevel) {
       for (unsigned I = 0; I < NumLevel; ++I) {
         auto Link = linksAt(Index);
         Index = Link.hasBelow() ? Link.getBelow() : addLinkBelow(Index);
