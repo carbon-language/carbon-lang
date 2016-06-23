@@ -914,6 +914,12 @@ TEST_F(FormatTestJS, UnionIntersectionTypes) {
   verifyFormat("function(x: A|B = A | B): C&D {}");
   verifyFormat("function x(path: number|string) {}");
   verifyFormat("function x(): string|number {}");
+  verifyFormat("type Foo = Bar|Baz;");
+  verifyFormat("type Foo = Bar<X>|Baz;");
+  verifyFormat("type Foo = (Bar<X>|Baz);");
+  verifyFormat("let x: Bar|Baz;");
+  verifyFormat("let x: Bar<X>|Baz;");
+  verifyFormat("let x: (Foo|Bar)[];");
 }
 
 TEST_F(FormatTestJS, ClassDeclarations) {

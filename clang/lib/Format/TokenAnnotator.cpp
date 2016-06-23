@@ -134,6 +134,10 @@ private:
 
     if (Left->is(TT_OverloadedOperatorLParen)) {
       Contexts.back().IsExpression = false;
+    } else if (Style.Language == FormatStyle::LK_JavaScript &&
+               Line.startsWith(Keywords.kw_type, tok::identifier)) {
+      // type X = (...);
+      Contexts.back().IsExpression = false;
     } else if (Left->Previous &&
         (Left->Previous->isOneOf(tok::kw_static_assert, tok::kw_decltype,
                                  tok::kw_if, tok::kw_while, tok::l_paren,
@@ -146,6 +150,10 @@ private:
                 (Left->Previous->endsSequence(tok::identifier,
                                               Keywords.kw_function)))) {
       // function(...) or function f(...)
+      Contexts.back().IsExpression = false;
+    } else if (Style.Language == FormatStyle::LK_JavaScript && Left->Previous &&
+               Left->Previous->is(TT_JsTypeColon)) {
+      // let x: (SomeType);
       Contexts.back().IsExpression = false;
     } else if (Left->Previous && Left->Previous->is(tok::r_square) &&
                Left->Previous->MatchingParen &&
@@ -913,6 +921,9 @@ private:
   void modifyContext(const FormatToken &Current) {
     if (Current.getPrecedence() == prec::Assignment &&
         !Line.First->isOneOf(tok::kw_template, tok::kw_using, tok::kw_return) &&
+        // Type aliases use `type X = ...;` in TypeScript.
+        !(Style.Language == FormatStyle::LK_JavaScript &&
+          Line.startsWith(Keywords.kw_type, tok::identifier)) &&
         (!Current.Previous || Current.Previous->isNot(tok::kw_operator))) {
       Contexts.back().IsExpression = true;
       if (!Line.startsWith(TT_UnaryOperator)) {
