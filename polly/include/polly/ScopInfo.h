@@ -43,7 +43,7 @@ class ScalarEvolution;
 class SCEV;
 class SCEVAddRecExpr;
 class Type;
-}
+} // namespace llvm
 
 struct isl_ctx;
 struct isl_map;
@@ -2536,6 +2536,6 @@ public:
 namespace llvm {
 class PassRegistry;
 void initializeScopInfoRegionPassPass(llvm::PassRegistry &);
-}
+} // namespace llvm
 
 #endif

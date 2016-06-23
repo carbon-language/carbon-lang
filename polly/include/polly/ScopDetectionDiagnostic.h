@@ -39,7 +39,7 @@ class SCEV;
 class BasicBlock;
 class Value;
 class Region;
-}
+} // namespace llvm
 
 namespace polly {
 

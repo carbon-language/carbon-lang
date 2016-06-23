@@ -29,7 +29,7 @@ namespace llvm {
 class Pass;
 class Region;
 class ScalarEvolution;
-}
+} // namespace llvm
 
 namespace polly {
 using namespace llvm;
@@ -833,5 +833,5 @@ private:
                                   ValueMapT &BBMap,
                                   LoopToScevMapT &LTS) override;
 };
-}
+} // namespace polly
 #endif

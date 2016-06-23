@@ -52,6 +52,6 @@ private:
   void print(raw_ostream &OS, const Module *) const override;
 };
 
-} // End llvm namespace
+} // namespace polly
 
 #endif
