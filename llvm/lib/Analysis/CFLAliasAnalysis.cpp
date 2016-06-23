@@ -64,13 +64,30 @@ CFLAAResult::CFLAAResult(CFLAAResult &&Arg)
     : AAResultBase(std::move(Arg)), TLI(Arg.TLI) {}
 CFLAAResult::~CFLAAResult() {}
 
-/// We use ExternalRelation to describe an externally visible interaction
+/// We use InterfaceValue to describe parameters/return value, as well as
+/// potential memory locations that are pointed to by parameters/return value,
+/// of a function.
+/// Index is an integer which represents a single parameter or a return value.
+/// When the index is 0, it refers to the return value. Non-zero index i refers
+/// to the i-th parameter.
+/// DerefLevel indicates the number of dereferences one must perform on the
+/// parameter/return value to get this InterfaceValue.
+struct InterfaceValue {
+  unsigned Index;
+  unsigned DerefLevel;
+};
+
+bool operator==(InterfaceValue lhs, InterfaceValue rhs) {
+  return lhs.Index == rhs.Index && lhs.DerefLevel == rhs.DerefLevel;
+}
+bool operator!=(InterfaceValue lhs, InterfaceValue rhs) {
+  return !(lhs == rhs);
+}
+
+/// We use ExternalRelation to describe an externally visible aliasing relations
 /// between parameters/return value of a function.
-/// Both From and To are integer indices that represent a single parameter or
-/// return value. When the index is 0, they represent the return value. Non-zero
-/// index i represents the i-th parameter.
 struct ExternalRelation {
-  unsigned From, To;
+  InterfaceValue From, To;
 };
 
 /// Information we have about a function and would like to keep around.
@@ -244,6 +261,16 @@ public:
   std::size_t size() const { return NodeImpls.size(); }
 };
 
+// Interprocedural assignment edges that CFLGraph may not easily model
+struct InterprocEdge {
+  struct Node {
+    Value *Value;
+    unsigned DerefLevel;
+  };
+
+  Node From, To;
+};
+
 /// Gets the edges our graph should have, based on an Instruction*
 class GetEdgesVisitor : public InstVisitor<GetEdgesVisitor, void> {
   CFLAAResult &AA;
@@ -252,6 +279,7 @@ class GetEdgesVisitor : public InstVisitor<GetEdgesVisitor, void> {
   CFLGraph &Graph;
   SmallPtrSetImpl<Value *> &Externals;
   SmallPtrSetImpl<Value *> &Escapes;
+  SmallVectorImpl<InterprocEdge> &InterprocEdges;
 
   static bool hasUsefulEdges(ConstantExpr *CE) {
     // ConstantExpr doesn't have terminators, invokes, or fences, so only needs
@@ -288,9 +316,10 @@ class GetEdgesVisitor : public InstVisitor<GetEdgesVisitor, void> {
 public:
   GetEdgesVisitor(CFLAAResult &AA, const TargetLibraryInfo &TLI,
                   CFLGraph &Graph, SmallPtrSetImpl<Value *> &Externals,
-                  SmallPtrSetImpl<Value *> &Escapes)
-      : AA(AA), TLI(TLI), Graph(Graph), Externals(Externals), Escapes(Escapes) {
-  }
+                  SmallPtrSetImpl<Value *> &Escapes,
+                  SmallVectorImpl<InterprocEdge> &InterprocEdges)
+      : AA(AA), TLI(TLI), Graph(Graph), Externals(Externals), Escapes(Escapes),
+        InterprocEdges(InterprocEdges) {}
 
   void visitInstruction(Instruction &) {
     llvm_unreachable("Unsupported instruction encountered");
@@ -404,18 +433,20 @@ public:
 
       auto &RetParamRelations = FnInfo->getRetParamRelations();
       for (auto &Relation : RetParamRelations) {
-        auto FromIndex = Relation.From;
-        auto ToIndex = Relation.To;
+        auto FromIndex = Relation.From.Index;
+        auto ToIndex = Relation.To.Index;
         auto FromVal = (FromIndex == 0) ? CS.getInstruction()
                                         : CS.getArgument(FromIndex - 1);
         auto ToVal =
             (ToIndex == 0) ? CS.getInstruction() : CS.getArgument(ToIndex - 1);
         if (FromVal->getType()->isPointerTy() &&
-            ToVal->getType()->isPointerTy())
-          // Actual arguments must be defined before they are used at callsite.
-          // Therefore by the time we reach here, FromVal and ToVal should
-          // already exist in the graph. We can go ahead and add them directly.
-          Graph.addEdge(FromVal, ToVal, EdgeType::Assign);
+            ToVal->getType()->isPointerTy()) {
+          auto FromLevel = Relation.From.DerefLevel;
+          auto ToLevel = Relation.To.DerefLevel;
+          InterprocEdges.push_back(
+              InterprocEdge{InterprocEdge::Node{FromVal, FromLevel},
+                            InterprocEdge::Node{ToVal, ToLevel}});
+        }
       }
     }
 
@@ -532,6 +563,7 @@ class CFLGraphBuilder {
   // Auxiliary structures used by the builder
   SmallPtrSet<Value *, 8> ExternalValues;
   SmallPtrSet<Value *, 8> EscapedValues;
+  SmallVector<InterprocEdge, 8> InterprocEdges;
 
   // Helper functions
 
@@ -568,7 +600,8 @@ class CFLGraphBuilder {
     if (!hasUsefulEdges(&Inst))
       return;
 
-    GetEdgesVisitor(Analysis, TLI, Graph, ExternalValues, EscapedValues)
+    GetEdgesVisitor(Analysis, TLI, Graph, ExternalValues, EscapedValues,
+                    InterprocEdges)
         .visit(Inst);
   }
 
@@ -599,6 +632,9 @@ public:
   }
   const SmallPtrSet<Value *, 8> &getEscapedValues() const {
     return EscapedValues;
+  }
+  const SmallVector<InterprocEdge, 8> &getInterprocEdges() const {
+    return InterprocEdges;
   }
 };
 }
@@ -711,91 +747,62 @@ static bool canSkipAddingToSets(Value *Val) {
   return false;
 }
 
-/// Gets whether the sets at Index1 above, below, or equal to the sets at
-/// Index2. Returns None if they are not in the same set chain.
-static Optional<Level> getIndexRelation(const StratifiedSets<Value *> &Sets,
-                                        StratifiedIndex Index1,
-                                        StratifiedIndex Index2) {
-  if (Index1 == Index2)
-    return Level::Same;
-
-  const auto *Current = &Sets.getLink(Index1);
-  while (Current->hasBelow()) {
-    if (Current->Below == Index2)
-      return Level::Below;
-    Current = &Sets.getLink(Current->Below);
-  }
-
-  Current = &Sets.getLink(Index1);
-  while (Current->hasAbove()) {
-    if (Current->Above == Index2)
-      return Level::Above;
-    Current = &Sets.getLink(Current->Above);
-  }
-
-  return None;
-}
-
 CFLAAResult::FunctionInfo::FunctionInfo(Function &Fn,
                                         const SmallVectorImpl<Value *> &RetVals,
                                         StratifiedSets<Value *> S)
     : Sets(std::move(S)) {
-  // Collect StratifiedInfo for each parameter
-  SmallVector<Optional<StratifiedInfo>, 8> ParamInfos;
-  for (auto &Param : Fn.args()) {
-    if (Param.getType()->isPointerTy())
-      ParamInfos.push_back(Sets.find(&Param));
-    else
-      ParamInfos.push_back(None);
-  }
-  // Collect StratifiedInfo for each return value
-  SmallVector<Optional<StratifiedInfo>, 4> RetInfos;
-  RetInfos.reserve(RetVals.size());
-  for (unsigned I = 0, E = RetVals.size(); I != E; ++I)
-    RetInfos.push_back(Sets.find(RetVals[I]));
+  // Historically, an arbitrary upper-bound of 50 args was selected. We may want
+  // to remove this if it doesn't really matter in practice.
+  if (Fn.arg_size() > MaxSupportedArgsInSummary)
+    return;
 
-  // This summary generation algorithm is n^2. An arbitrary upper-bound of 50
-  // args was selected, so it doesn't take too long in insane cases.
-  if (Fn.arg_size() <= MaxSupportedArgsInSummary) {
-    for (unsigned I = 0, E = ParamInfos.size(); I != E; ++I) {
-      auto &MainInfo = ParamInfos[I];
-      if (!MainInfo)
-        continue;
+  DenseMap<StratifiedIndex, InterfaceValue> InterfaceMap;
 
-      // Adding edges between arguments for arguments that may end up aliasing
-      // each other. This is necessary for functions such as
-      // void foo(int** a, int** b) { *a = *b; }
-      // (Technically, the proper sets for this would be those below
-      // Arguments[I] and Arguments[X], but our algorithm will produce
-      // extremely similar, and equally correct, results either way)
-      for (unsigned X = I + 1; X != E; ++X) {
-        auto &SubInfo = ParamInfos[X];
-        if (!SubInfo)
-          continue;
+  // Our intention here is to record all InterfaceValues that share the same
+  // StratifiedIndex in RetParamRelations. For each valid InterfaceValue, we
+  // have its StratifiedIndex scanned here and check if the index is presented
+  // in InterfaceMap: if it is not, we add the correspondence to the map;
+  // otherwise, an aliasing relation is found and we add it to
+  // RetParamRelations.
+  auto AddToRetParamRelations = [this, &InterfaceMap](
+      unsigned InterfaceIndex, StratifiedIndex SetIndex) {
+    unsigned Level = 0;
+    while (true) {
+      InterfaceValue CurrValue{InterfaceIndex, Level};
 
-        auto MaybeRelation =
-            getIndexRelation(Sets, MainInfo->Index, SubInfo->Index);
-        if (!MaybeRelation.hasValue())
-          continue;
+      auto Itr = InterfaceMap.find(SetIndex);
+      if (Itr != InterfaceMap.end()) {
+        if (CurrValue != Itr->second)
+          RetParamRelations.push_back(ExternalRelation{CurrValue, Itr->second});
+        break;
+      } else
+        InterfaceMap.insert(std::make_pair(SetIndex, CurrValue));
 
-        RetParamRelations.push_back(ExternalRelation{1 + I, 1 + X});
-      }
+      auto &Link = Sets.getLink(SetIndex);
+      if (!Link.hasBelow())
+        break;
 
-      // Adding an edge from argument -> return value for each parameter that
-      // may alias the return value
-      for (unsigned X = 0, XE = RetInfos.size(); X != XE; ++X) {
-        auto &RetInfo = RetInfos[X];
-        if (!RetInfo)
-          continue;
-
-        auto MaybeRelation =
-            getIndexRelation(Sets, MainInfo->Index, RetInfo->Index);
-        if (!MaybeRelation.hasValue())
-          continue;
-
-        RetParamRelations.push_back(ExternalRelation{1 + I, 0});
-      }
+      ++Level;
+      SetIndex = Link.Below;
     }
+  };
+
+  // Populate RetParamRelations for return values
+  for (auto *RetVal : RetVals) {
+    auto RetInfo = Sets.find(RetVal);
+    if (RetInfo.hasValue())
+      AddToRetParamRelations(0, RetInfo->Index);
+  }
+
+  // Populate RetParamRelations for parameters
+  unsigned I = 0;
+  for (auto &Param : Fn.args()) {
+    if (Param.getType()->isPointerTy()) {
+      auto ParamInfo = Sets.find(&Param);
+      if (ParamInfo.hasValue())
+        AddToRetParamRelations(I + 1, ParamInfo->Index);
+    }
+    ++I;
   }
 }
 
@@ -853,6 +860,17 @@ CFLAAResult::FunctionInfo CFLAAResult::buildSetsFrom(Function *Fn) {
     }
   }
 
+  // Special handling for interprocedural aliases
+  for (auto &Edge : GraphBuilder.getInterprocEdges()) {
+    auto FromVal = Edge.From.Value;
+    auto ToVal = Edge.To.Value;
+    SetBuilder.add(FromVal);
+    SetBuilder.add(ToVal);
+    SetBuilder.addBelowWith(FromVal, Edge.From.DerefLevel, ToVal,
+                            Edge.To.DerefLevel);
+  }
+
+  // Special handling for opaque external functions
   for (auto *Escape : GraphBuilder.getEscapedValues()) {
     SetBuilder.add(Escape);
     SetBuilder.noteAttributes(Escape, AttrEscaped);

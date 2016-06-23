@@ -412,6 +412,26 @@ public:
     return addAtMerging(ToAdd, MainIndex);
   }
 
+  /// \brief Merge the set "MainBelow"-levels below "Main" and the set
+  /// "ToAddBelow"-levels below "ToAdd".
+  void addBelowWith(const T &Main, unsigned MainBelow, const T &ToAdd,
+                    unsigned ToAddBelow) {
+    assert(has(Main));
+    assert(has(ToAdd));
+
+    auto GetIndexBelow = [this](StratifiedIndex Index, unsigned NumLevel) {
+      for (unsigned I = 0; I < NumLevel; ++I) {
+        auto Link = linksAt(Index);
+        Index = Link.hasBelow() ? Link.getBelow() : addLinkBelow(Index);
+      }
+      return Index;
+    };
+    auto MainIndex = GetIndexBelow(*indexOf(Main), MainBelow);
+    auto ToAddIndex = GetIndexBelow(*indexOf(ToAdd), ToAddBelow);
+    if (&linksAt(MainIndex) != &linksAt(ToAddIndex))
+      merge(MainIndex, ToAddIndex);
+  }
+
   void noteAttributes(const T &Main, const StratifiedAttrs &NewAttrs) {
     assert(has(Main));
     auto *Info = *get(Main);
