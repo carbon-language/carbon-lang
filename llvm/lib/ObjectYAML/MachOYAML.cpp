@@ -182,8 +182,10 @@ void mapLoadCommandData<MachO::dylinker_command>(
 
 void MappingTraits<MachOYAML::LoadCommand>::mapping(
     IO &IO, MachOYAML::LoadCommand &LoadCommand) {
-  IO.mapRequired(
-      "cmd", (MachO::LoadCommandType &)LoadCommand.Data.load_command_data.cmd);
+  MachO::LoadCommandType TempCmd = static_cast<MachO::LoadCommandType>(
+      LoadCommand.Data.load_command_data.cmd);
+  IO.mapRequired("cmd", TempCmd);
+  LoadCommand.Data.load_command_data.cmd = TempCmd;
   IO.mapRequired("cmdsize", LoadCommand.Data.load_command_data.cmdsize);
 
 #define HANDLE_LOAD_COMMAND(LCName, LCValue, LCStruct)                         \
