@@ -8780,46 +8780,44 @@ TreeTransform<Derived>::TransformDesignatedInitExpr(DesignatedInitExpr *E) {
   // transform the designators.
   SmallVector<Expr*, 4> ArrayExprs;
   bool ExprChanged = false;
-  for (DesignatedInitExpr::designators_iterator D = E->designators_begin(),
-                                             DEnd = E->designators_end();
-       D != DEnd; ++D) {
-    if (D->isFieldDesignator()) {
-      Desig.AddDesignator(Designator::getField(D->getFieldName(),
-                                               D->getDotLoc(),
-                                               D->getFieldLoc()));
+  for (const DesignatedInitExpr::Designator &D : E->designators()) {
+    if (D.isFieldDesignator()) {
+      Desig.AddDesignator(Designator::getField(D.getFieldName(),
+                                               D.getDotLoc(),
+                                               D.getFieldLoc()));
       continue;
     }
 
-    if (D->isArrayDesignator()) {
-      ExprResult Index = getDerived().TransformExpr(E->getArrayIndex(*D));
+    if (D.isArrayDesignator()) {
+      ExprResult Index = getDerived().TransformExpr(E->getArrayIndex(D));
       if (Index.isInvalid())
         return ExprError();
 
-      Desig.AddDesignator(Designator::getArray(Index.get(),
-                                               D->getLBracketLoc()));
+      Desig.AddDesignator(
+          Designator::getArray(Index.get(), D.getLBracketLoc()));
 
-      ExprChanged = ExprChanged || Init.get() != E->getArrayIndex(*D);
+      ExprChanged = ExprChanged || Init.get() != E->getArrayIndex(D);
       ArrayExprs.push_back(Index.get());
       continue;
     }
 
-    assert(D->isArrayRangeDesignator() && "New kind of designator?");
+    assert(D.isArrayRangeDesignator() && "New kind of designator?");
     ExprResult Start
-      = getDerived().TransformExpr(E->getArrayRangeStart(*D));
+      = getDerived().TransformExpr(E->getArrayRangeStart(D));
     if (Start.isInvalid())
       return ExprError();
 
-    ExprResult End = getDerived().TransformExpr(E->getArrayRangeEnd(*D));
+    ExprResult End = getDerived().TransformExpr(E->getArrayRangeEnd(D));
     if (End.isInvalid())
       return ExprError();
 
     Desig.AddDesignator(Designator::getArrayRange(Start.get(),
                                                   End.get(),
-                                                  D->getLBracketLoc(),
-                                                  D->getEllipsisLoc()));
+                                                  D.getLBracketLoc(),
+                                                  D.getEllipsisLoc()));
 
-    ExprChanged = ExprChanged || Start.get() != E->getArrayRangeStart(*D) ||
-      End.get() != E->getArrayRangeEnd(*D);
+    ExprChanged = ExprChanged || Start.get() != E->getArrayRangeStart(D) ||
+                  End.get() != E->getArrayRangeEnd(D);
 
     ArrayExprs.push_back(Start.get());
     ArrayExprs.push_back(End.get());
