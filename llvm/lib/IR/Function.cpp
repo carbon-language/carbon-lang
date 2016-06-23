@@ -1060,37 +1060,6 @@ bool Intrinsic::matchIntrinsicType(Type *Ty, ArrayRef<Intrinsic::IITDescriptor> 
   llvm_unreachable("unhandled");
 }
 
-Optional<Function*> Intrinsic::remangleIntrinsicFunction(Function *F) {
-  Intrinsic::ID ID = F->getIntrinsicID();
-  if (!ID)
-    return None;
-
-  // Accumulate an array of overloaded types for the given intrinsic
-  SmallVector<Type *, 4> ArgTys;
-  {
-    SmallVector<Intrinsic::IITDescriptor, 8> Table;
-    getIntrinsicInfoTableEntries(ID, Table);
-    ArrayRef<Intrinsic::IITDescriptor> TableRef = Table;
-    FunctionType *FTy = F->getFunctionType();
-
-    // If we encounter any problems matching the signature with the descriptor
-    // just give up remangling. It's up to verifier to report the discrepancy.
-    if (Intrinsic::matchIntrinsicType(FTy->getReturnType(), TableRef, ArgTys))
-      return None;
-    for (auto Ty : FTy->params())
-      if (Intrinsic::matchIntrinsicType(Ty, TableRef, ArgTys))
-        return None;
-  }
-
-  StringRef Name = F->getName();
-  if (Name == Intrinsic::getName(ID, ArgTys))
-    return None;
-
-  auto NewDecl = Intrinsic::getDeclaration(F->getParent(), ID, ArgTys);
-  NewDecl->setCallingConv(F->getCallingConv());
-  return NewDecl;
-}
-
 /// hasAddressTaken - returns true if there are any uses of this function
 /// other than direct calls or invokes to it.
 bool Function::hasAddressTaken(const User* *PutOffender) const {
