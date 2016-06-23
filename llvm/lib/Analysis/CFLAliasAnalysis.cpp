@@ -264,7 +264,7 @@ public:
 // Interprocedural assignment edges that CFLGraph may not easily model
 struct InterprocEdge {
   struct Node {
-    Value *Value;
+    Value *Val;
     unsigned DerefLevel;
   };
 
@@ -862,8 +862,8 @@ CFLAAResult::FunctionInfo CFLAAResult::buildSetsFrom(Function *Fn) {
 
   // Special handling for interprocedural aliases
   for (auto &Edge : GraphBuilder.getInterprocEdges()) {
-    auto FromVal = Edge.From.Value;
-    auto ToVal = Edge.To.Value;
+    auto FromVal = Edge.From.Val;
+    auto ToVal = Edge.To.Val;
     SetBuilder.add(FromVal);
     SetBuilder.add(ToVal);
     SetBuilder.addBelowWith(FromVal, Edge.From.DerefLevel, ToVal,
