@@ -7,8 +7,8 @@
 # RUN: %p/Inputs/trace-symbols-foo-strong.s -o %t2
 # RUN: ld.lld -shared %t1 -o %t1.so
 # RUN: ld.lld -shared %t2 -o %t2.so
-# RUN: ar -r %t1.a %t1
-# RUN: ar -r %t2.a %t2
+# RUN: llvm-ar rcs %t1.a %t1
+# RUN: llvm-ar rcs %t2.a %t2
 
 # RUN: ld.lld -y foo -trace-symbol=common -trace-symbol=hsymbol \
 # RUN:   %t %t1 %t2 -o %t3 2>&1 | FileCheck -check-prefix=OBJECTRFOO %s
