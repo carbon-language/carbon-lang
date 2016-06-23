@@ -40,7 +40,7 @@ protected:
   virtual bool runOnScop(Scop &S) = 0;
 
   /// @brief Print method for SCoPs.
-  virtual void printScop(raw_ostream &OS, Scop &S) const {};
+  virtual void printScop(raw_ostream &OS, Scop &S) const {}
 
   /// getAnalysisUsage - Subclasses that override getAnalysisUsage
   /// must call this.
