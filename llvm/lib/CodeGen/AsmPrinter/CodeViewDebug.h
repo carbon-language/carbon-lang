@@ -191,6 +191,8 @@ class LLVM_LIBRARY_VISIBILITY CodeViewDebug : public DebugHandlerBase {
 
   void emitDebugInfoForGlobals();
 
+  void emitDebugInfoForRetainedTypes();
+
   void emitDebugInfoForUDTs(
       ArrayRef<std::pair<std::string, codeview::TypeIndex>> UDTs);
 

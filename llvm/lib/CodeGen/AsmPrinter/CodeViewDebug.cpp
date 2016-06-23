@@ -344,6 +344,9 @@ void CodeViewDebug::endModule() {
   setCurrentSubprogram(nullptr);
   emitDebugInfoForGlobals();
 
+  // Emit retained types.
+  emitDebugInfoForRetainedTypes();
+
   // Switch back to the generic .debug$S section after potentially processing
   // comdat symbol sections.
   switchToDebugSectionForSymbol(nullptr);
@@ -1797,6 +1800,18 @@ void CodeViewDebug::emitDebugInfoForGlobals() {
           emitDebugInfoForGlobal(G, GVSym);
           endCVSubsection(EndLabel);
         }
+      }
+    }
+  }
+}
+
+void CodeViewDebug::emitDebugInfoForRetainedTypes() {
+  NamedMDNode *CUs = MMI->getModule()->getNamedMetadata("llvm.dbg.cu");
+  for (const MDNode *Node : CUs->operands()) {
+    for (auto *Ty : cast<DICompileUnit>(Node)->getRetainedTypes()) {
+      if (DIType *RT = dyn_cast<DIType>(Ty)) {
+        getTypeIndex(RT);
+        // FIXME: Add to global/local DTU list.
       }
     }
   }
