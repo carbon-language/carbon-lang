@@ -4684,6 +4684,7 @@ static SDValue getOnesVector(EVT VT, const X86Subtarget &Subtarget,
 /// Returns a vector_shuffle node for an unpackl operation.
 static SDValue getUnpackl(SelectionDAG &DAG, const SDLoc &dl, MVT VT,
                           SDValue V1, SDValue V2) {
+  assert(VT.is128BitVector() && "Expected a 128-bit vector type");
   unsigned NumElems = VT.getVectorNumElements();
   SmallVector<int, 8> Mask(NumElems);
   for (unsigned i = 0, e = NumElems/2; i != e; ++i) {
@@ -4696,6 +4697,7 @@ static SDValue getUnpackl(SelectionDAG &DAG, const SDLoc &dl, MVT VT,
 /// Returns a vector_shuffle node for an unpackh operation.
 static SDValue getUnpackh(SelectionDAG &DAG, const SDLoc &dl, MVT VT,
                           SDValue V1, SDValue V2) {
+  assert(VT.is128BitVector() && "Expected a 128-bit vector type");
   unsigned NumElems = VT.getVectorNumElements();
   SmallVector<int, 8> Mask(NumElems);
   for (unsigned i = 0, Half = NumElems/2; i != Half; ++i) {
