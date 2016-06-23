@@ -1017,9 +1017,9 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     assert(BDV && base);
     assert(!isKnownBaseResult(BDV) && "why did it get added?");
 
-    StringRef FromStr = cache.count(BDV) ? cache[BDV]->getName() : "none";
     DEBUG(dbgs() << "Updating base value cache"
-                 << " for: " << BDV->getName() << " from: " << FromStr
+                 << " for: " << BDV->getName() << " from: "
+                 << (cache.count(BDV) ? cache[BDV]->getName().str() : "none")
                  << " to: " << base->getName() << "\n");
 
     if (cache.count(BDV)) {
