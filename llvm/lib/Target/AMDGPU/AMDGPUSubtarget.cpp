@@ -103,7 +103,6 @@ AMDGPUSubtarget::AMDGPUSubtarget(const Triple &TT, StringRef GPU, StringRef FS,
     DebuggerReserveRegs(false),
 
     EnableVGPRSpilling(false),
-    EnableIRStructurizer(true),
     EnablePromoteAlloca(false),
     EnableIfCvt(true),
     EnableLoadStoreOpt(false),

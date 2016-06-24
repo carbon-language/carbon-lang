@@ -80,7 +80,6 @@ protected:
 
   // Used as options.
   bool EnableVGPRSpilling;
-  bool EnableIRStructurizer;
   bool EnablePromoteAlloca;
   bool EnableIfCvt;
   bool EnableLoadStoreOpt;
@@ -216,10 +215,6 @@ public:
 
   bool hasCaymanISA() const {
     return CaymanISA;
-  }
-
-  bool IsIRStructurizerEnabled() const {
-    return EnableIRStructurizer;
   }
 
   bool isPromoteAllocaEnabled() const {

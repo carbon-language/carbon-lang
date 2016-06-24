@@ -40,6 +40,11 @@
 
 using namespace llvm;
 
+static cl::opt<bool> EnableR600StructurizeCFG(
+  "r600-ir-structurize",
+  cl::desc("Use StructurizeCFG IR pass"),
+  cl::init(true));
+
 extern "C" void LLVMInitializeAMDGPUTarget() {
   // Register the target
   RegisterTargetMachine<R600TargetMachine> X(TheAMDGPUTarget);
@@ -326,8 +331,8 @@ bool AMDGPUPassConfig::addGCPasses() {
 
 bool R600PassConfig::addPreISel() {
   AMDGPUPassConfig::addPreISel();
-  const AMDGPUSubtarget &ST = *getAMDGPUTargetMachine().getSubtargetImpl();
-  if (ST.IsIRStructurizerEnabled())
+
+  if (EnableR600StructurizeCFG)
     addPass(createStructurizeCFGPass());
   addPass(createR600TextureIntrinsicsReplacer());
   return false;
