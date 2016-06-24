@@ -96,7 +96,7 @@ static std::string formatCount(uint64_t N) {
 
 void
 SourceCoverageView::renderLineCoverageColumn(raw_ostream &OS,
-                                             const LineCoverageInfo &Line) {
+                                             const LineCoverageStats &Line) {
   if (!Line.isMapped()) {
     OS.indent(LineCoverageColumnWidth) << '|';
     return;
@@ -186,7 +186,7 @@ void SourceCoverageView::render(raw_ostream &OS, bool WholeFile,
       LineSegments.push_back(&*NextSegment++);
 
     // Calculate a count to be for the line as a whole.
-    LineCoverageInfo LineCount;
+    LineCoverageStats LineCount;
     if (WrappedSegment && WrappedSegment->HasCount)
       LineCount.addRegionCount(WrappedSegment->Count);
     for (const auto *S : LineSegments)

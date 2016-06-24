@@ -73,34 +73,34 @@ struct InstantiationView {
   }
 };
 
+/// \brief Coverage statistics for a single line.
+struct LineCoverageStats {
+  uint64_t ExecutionCount;
+  unsigned RegionCount;
+  bool Mapped;
+
+  LineCoverageStats() : ExecutionCount(0), RegionCount(0), Mapped(false) {}
+
+  bool isMapped() const { return Mapped; }
+
+  bool hasMultipleRegions() const { return RegionCount > 1; }
+
+  void addRegionStartCount(uint64_t Count) {
+    // The max of all region starts is the most interesting value.
+    addRegionCount(RegionCount ? std::max(ExecutionCount, Count) : Count);
+    ++RegionCount;
+  }
+
+  void addRegionCount(uint64_t Count) {
+    Mapped = true;
+    ExecutionCount = Count;
+  }
+};
+
 /// \brief A code coverage view of a specific source file.
 /// It can have embedded coverage views.
 class SourceCoverageView {
 private:
-  /// \brief Coverage information for a single line.
-  struct LineCoverageInfo {
-    uint64_t ExecutionCount;
-    unsigned RegionCount;
-    bool Mapped;
-
-    LineCoverageInfo() : ExecutionCount(0), RegionCount(0), Mapped(false) {}
-
-    bool isMapped() const { return Mapped; }
-
-    bool hasMultipleRegions() const { return RegionCount > 1; }
-
-    void addRegionStartCount(uint64_t Count) {
-      // The max of all region starts is the most interesting value.
-      addRegionCount(RegionCount ? std::max(ExecutionCount, Count) : Count);
-      ++RegionCount;
-    }
-
-    void addRegionCount(uint64_t Count) {
-      Mapped = true;
-      ExecutionCount = Count;
-    }
-  };
-
   const MemoryBuffer &File;
   const CoverageViewOptions &Options;
   coverage::CoverageData CoverageInfo;
@@ -118,7 +118,7 @@ private:
   void renderViewDivider(unsigned Offset, unsigned Length, raw_ostream &OS);
 
   /// \brief Render the line's execution count column.
-  void renderLineCoverageColumn(raw_ostream &OS, const LineCoverageInfo &Line);
+  void renderLineCoverageColumn(raw_ostream &OS, const LineCoverageStats &Line);
 
   /// \brief Render the line number column.
   void renderLineNumberColumn(raw_ostream &OS, unsigned LineNo);
