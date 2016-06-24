@@ -142,13 +142,17 @@ LLVM_CONSTEXPR unsigned AttrFirstArgIndex = 4;
 LLVM_CONSTEXPR unsigned AttrLastArgIndex = MaxStratifiedAttrIndex;
 LLVM_CONSTEXPR unsigned AttrMaxNumArgs = AttrLastArgIndex - AttrFirstArgIndex;
 
-LLVM_CONSTEXPR StratifiedAttrs AttrNone = 0;
-LLVM_CONSTEXPR StratifiedAttrs AttrEscaped = 1 << AttrEscapedIndex;
-LLVM_CONSTEXPR StratifiedAttrs AttrUnknown = 1 << AttrUnknownIndex;
-LLVM_CONSTEXPR StratifiedAttrs AttrGlobal = 1 << AttrGlobalIndex;
-LLVM_CONSTEXPR StratifiedAttrs AttrCaller = 1 << AttrCallerIndex;
-LLVM_CONSTEXPR StratifiedAttrs ExternalAttrMask =
-    (1 << AttrEscapedIndex) | (1 << AttrUnknownIndex) | (1 << AttrGlobalIndex);
+// NOTE: These aren't StratifiedAttrs because bitsets don't have a constexpr
+// ctor for some versions of MSVC that we support. We could maybe refactor,
+// but...
+using StratifiedAttr = unsigned;
+LLVM_CONSTEXPR StratifiedAttr AttrNone = 0;
+LLVM_CONSTEXPR StratifiedAttr AttrEscaped = 1 << AttrEscapedIndex;
+LLVM_CONSTEXPR StratifiedAttr AttrUnknown = 1 << AttrUnknownIndex;
+LLVM_CONSTEXPR StratifiedAttr AttrGlobal = 1 << AttrGlobalIndex;
+LLVM_CONSTEXPR StratifiedAttr AttrCaller = 1 << AttrCallerIndex;
+LLVM_CONSTEXPR StratifiedAttr ExternalAttrMask =
+    AttrEscaped | AttrUnknown | AttrGlobal;
 
 /// The maximum number of arguments we can put into a summary.
 LLVM_CONSTEXPR unsigned MaxSupportedArgsInSummary = 50;
@@ -744,7 +748,7 @@ static bool isUnknownAttr(StratifiedAttrs Attr) {
 
 static Optional<StratifiedAttrs> valueToAttr(Value *Val) {
   if (isa<GlobalValue>(Val))
-    return AttrGlobal;
+    return StratifiedAttrs(AttrGlobal);
 
   if (auto *Arg = dyn_cast<Argument>(Val))
     // Only pointer arguments should have the argument attribute,
@@ -827,7 +831,7 @@ CFLAAResult::FunctionInfo::FunctionInfo(Function &Fn,
 
       auto &Link = Sets.getLink(SetIndex);
       InterfaceMap.insert(std::make_pair(SetIndex, CurrValue));
-      auto ExternalAttrs = Link.Attrs & ExternalAttrMask;
+      auto ExternalAttrs = Link.Attrs & StratifiedAttrs(ExternalAttrMask);
       if (ExternalAttrs.any())
         RetParamAttributes.push_back(
             ExternalAttribute{CurrValue, ExternalAttrs});
