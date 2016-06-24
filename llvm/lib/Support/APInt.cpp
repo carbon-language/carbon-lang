@@ -880,7 +880,7 @@ double APInt::roundToDouble(bool isSigned) const {
   // It is wrong to optimize getWord(0) to VAL; there might be more than one word.
   if (isSingleWord() || getActiveBits() <= APINT_BITS_PER_WORD) {
     if (isSigned) {
-      int64_t sext = (int64_t(getWord(0)) << (64-BitWidth)) >> (64-BitWidth);
+      int64_t sext = SignExtend64(getWord(0), BitWidth);
       return double(sext);
     } else
       return double(getWord(0));
