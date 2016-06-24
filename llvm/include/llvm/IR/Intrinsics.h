@@ -143,6 +143,12 @@ namespace Intrinsic {
   bool matchIntrinsicType(Type *Ty, ArrayRef<IITDescriptor> &Infos,
                           SmallVectorImpl<Type*> &ArgTys);
 
+  /// Verify if the intrinsic has variable arguments. This method is intended to
+  /// be called after all the fixed arguments have been matched first.
+  ///
+  /// This method returns true on error.
+  bool matchIntrinsicVarArg(bool isVarArg, ArrayRef<IITDescriptor> &Infos);
+
 } // End Intrinsic namespace
 
 } // End llvm namespace
