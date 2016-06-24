@@ -461,6 +461,9 @@ private:
          QUERY( (y & ~mask = y) =>
                 ((x & ~mask = y) <=> (x = y OR x = (y |  mask)))
          );
+         QUERY( (y |  mask = y) =>
+                ((x |  mask = y) <=> (x = y OR x = (y & ~mask)))
+         );
       */
 
       // Please note that each pattern must be a dual implication (<--> or
@@ -498,6 +501,28 @@ private:
           Vals.push_back(
               ConstantInt::get(C->getContext(),
                                C->getValue() | Mask));
+          UsedICmps++;
+          return true;
+        }
+      }
+
+      // Pattern match a special case:
+      /*
+        QUERY( (y |  mask = y) =>
+               ((x |  mask = y) <=> (x = y OR x = (y & ~mask)))
+        );
+      */
+      if (match(ICI->getOperand(0),
+                m_Or(m_Value(RHSVal), m_APInt(RHSC)))) {
+        APInt Mask = *RHSC;
+        if (Mask.isPowerOf2() && (C->getValue() | Mask) == C->getValue()) {
+          // If we already have a value for the switch, it has to match!
+          if (!setValueOnce(RHSVal))
+            return false;
+
+          Vals.push_back(C);
+          Vals.push_back(ConstantInt::get(C->getContext(),
+                                          C->getValue() & ~Mask));
           UsedICmps++;
           return true;
         }
