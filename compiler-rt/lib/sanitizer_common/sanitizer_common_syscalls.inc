@@ -1237,17 +1237,15 @@ POST_SYSCALL(fcntl64)(long res, long fd, long cmd, long arg) {}
 PRE_SYSCALL(pipe)(void *fildes) {}
 
 POST_SYSCALL(pipe)(long res, void *fildes) {
-  if (res >= 0) {
-    if (fildes) POST_WRITE(fildes, sizeof(int));
-  }
+  if (res >= 0)
+    if (fildes) POST_WRITE(fildes, sizeof(int) * 2);
 }
 
 PRE_SYSCALL(pipe2)(void *fildes, long flags) {}
 
 POST_SYSCALL(pipe2)(long res, void *fildes, long flags) {
-  if (res >= 0) {
-    if (fildes) POST_WRITE(fildes, sizeof(int));
-  }
+  if (res >= 0)
+    if (fildes) POST_WRITE(fildes, sizeof(int) * 2);
 }
 
 PRE_SYSCALL(dup)(long fildes) {}
@@ -1880,13 +1878,11 @@ PRE_SYSCALL(socket)(long arg0, long arg1, long arg2) {}
 
 POST_SYSCALL(socket)(long res, long arg0, long arg1, long arg2) {}
 
-PRE_SYSCALL(socketpair)(long arg0, long arg1, long arg2, void *arg3) {}
+PRE_SYSCALL(socketpair)(long arg0, long arg1, long arg2, int *sv) {}
 
-POST_SYSCALL(socketpair)(long res, long arg0, long arg1, long arg2,
-                         void *arg3) {
-  if (res >= 0) {
-    if (arg3) POST_WRITE(arg3, sizeof(int));
-  }
+POST_SYSCALL(socketpair)(long res, long arg0, long arg1, long arg2, int *sv) {
+  if (res >= 0)
+    if (sv) POST_WRITE(sv, sizeof(int) * 2);
 }
 
 PRE_SYSCALL(socketcall)(long call, void *args) {}
