@@ -98,8 +98,7 @@ void CrossDSOCFI::buildCFICheck() {
     GO.getMetadata(LLVMContext::MD_type, Types);
     for (MDNode *Type : Types) {
       // Sanity check. GO must not be a function declaration.
-      auto F = dyn_cast<Function>(&GO);
-      assert(!F || !F->isDeclaration());
+      assert(!isa<Function>(&GO) || !cast<Function>(&GO)->isDeclaration());
 
       if (ConstantInt *TypeId = extractNumericTypeId(Type))
         TypeIds.insert(TypeId->getZExtValue());
