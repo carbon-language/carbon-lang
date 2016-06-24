@@ -52,6 +52,7 @@ add_llvm_target(AMDGPUCodeGen
   R600ControlFlowFinalizer.cpp
   R600EmitClauseMarkers.cpp
   R600ExpandSpecialInstrs.cpp
+  R600FrameLowering.cpp
   R600InstrInfo.cpp
   R600ISelLowering.cpp
   R600MachineFunctionInfo.cpp
