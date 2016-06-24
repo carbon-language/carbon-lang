@@ -7759,7 +7759,7 @@ ClangASTContext::BuildIndirectFields (const CompilerType& type)
                 }
                 else if (clang::IndirectFieldDecl *nested_indirect_field_decl = llvm::dyn_cast<clang::IndirectFieldDecl>(*di))
                 {
-                    int nested_chain_size = nested_indirect_field_decl->getChainingSize();
+                    size_t nested_chain_size = nested_indirect_field_decl->getChainingSize();
                     clang::NamedDecl **chain = new (*ast->getASTContext()) clang::NamedDecl*[nested_chain_size + 1];
                     chain[0] = *field_pos;
                     
