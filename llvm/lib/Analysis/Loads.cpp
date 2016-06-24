@@ -300,25 +300,6 @@ llvm::DefMaxInstsToScan("available-load-scan-limit", cl::init(6), cl::Hidden,
            "to scan backward from a given instruction, when searching for "
            "available loaded value"));
 
-/// \brief Scan the ScanBB block backwards to see if we have the value at the
-/// memory address *Ptr locally available within a small number of instructions.
-///
-/// The scan starts from \c ScanFrom. \c MaxInstsToScan specifies the maximum
-/// instructions to scan in the block. If it is set to \c 0, it will scan the whole
-/// block.
-///
-/// If the value is available, this function returns it. If not, it returns the
-/// iterator for the last validated instruction that the value would be live
-/// through. If we scanned the entire block and didn't find something that
-/// invalidates \c *Ptr or provides it, \c ScanFrom is left at the last
-/// instruction processed and this returns null.
-///
-/// You can also optionally specify an alias analysis implementation, which
-/// makes this more precise.
-///
-/// If \c AATags is non-null and a load or store is found, the AA tags from the
-/// load or store are recorded there. If there are no AA tags or if no access is
-/// found, it is left unmodified.
 Value *llvm::FindAvailableLoadedValue(LoadInst *Load, BasicBlock *ScanBB,
                                       BasicBlock::iterator &ScanFrom,
                                       unsigned MaxInstsToScan,
