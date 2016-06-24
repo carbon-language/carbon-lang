@@ -280,10 +280,6 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::OMPTargetUpdateDirectiveClass:
     EmitOMPTargetUpdateDirective(cast<OMPTargetUpdateDirective>(*S));
     break;
-  case Stmt::OMPDistributeParallelForDirectiveClass:
-    EmitOMPDistributeParallelForDirective(
-        cast<OMPDistributeParallelForDirective>(*S));
-    break;
   }
 }
 

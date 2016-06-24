@@ -299,11 +299,9 @@ class OMPLoopDirective : public OMPExecutableDirective {
   /// This enumeration contains offsets to all the pointers to children
   /// expressions stored in OMPLoopDirective.
   /// The first 9 children are nesessary for all the loop directives, and
-  /// the next 10 are specific to the worksharing ones.
+  /// the next 7 are specific to the worksharing ones.
   /// After the fixed children, three arrays of length CollapsedNum are
   /// allocated: loop counters, their updates and final values.
-  /// PrevLowerBound and PrevUpperBound are used to communicate blocking
-  /// information in composite constructs which require loop blocking
   ///
   enum {
     AssociatedStmtOffset = 0,
@@ -328,11 +326,9 @@ class OMPLoopDirective : public OMPExecutableDirective {
     NextLowerBoundOffset = 14,
     NextUpperBoundOffset = 15,
     NumIterationsOffset = 16,
-    PrevLowerBoundVariableOffset = 17,
-    PrevUpperBoundVariableOffset = 18,
     // Offset to the end (and start of the following counters/updates/finals
     // arrays) for worksharing loop directives.
-    WorksharingEnd = 19,
+    WorksharingEnd = 17,
   };
 
   /// \brief Get the counters storage.
@@ -487,20 +483,6 @@ protected:
            "expected worksharing loop directive");
     *std::next(child_begin(), NumIterationsOffset) = NI;
   }
-  void setPrevLowerBoundVariable(Expr *PrevLB) {
-    assert((isOpenMPWorksharingDirective(getDirectiveKind()) ||
-            isOpenMPTaskLoopDirective(getDirectiveKind()) ||
-            isOpenMPDistributeDirective(getDirectiveKind())) &&
-           "expected worksharing loop directive");
-    *std::next(child_begin(), PrevLowerBoundVariableOffset) = PrevLB;
-  }
-  void setPrevUpperBoundVariable(Expr *PrevUB) {
-    assert((isOpenMPWorksharingDirective(getDirectiveKind()) ||
-            isOpenMPTaskLoopDirective(getDirectiveKind()) ||
-            isOpenMPDistributeDirective(getDirectiveKind())) &&
-           "expected worksharing loop directive");
-    *std::next(child_begin(), PrevUpperBoundVariableOffset) = PrevUB;
-  }
   void setCounters(ArrayRef<Expr *> A);
   void setPrivateCounters(ArrayRef<Expr *> A);
   void setInits(ArrayRef<Expr *> A);
@@ -541,12 +523,6 @@ public:
     Expr *NLB;
     /// \brief Update of UpperBound for statically sheduled 'omp for' loops.
     Expr *NUB;
-    /// \brief PreviousLowerBound - local variable passed to runtime in the
-    /// enclosing schedule or null if that does not apply.
-    Expr *PrevLB;
-    /// \brief PreviousUpperBound - local variable passed to runtime in the
-    /// enclosing schedule or null if that does not apply.
-    Expr *PrevUB;
     /// \brief Counters Loop counters.
     SmallVector<Expr *, 4> Counters;
     /// \brief PrivateCounters Loop counters.
@@ -586,8 +562,6 @@ public:
       NLB = nullptr;
       NUB = nullptr;
       NumIterations = nullptr;
-      PrevLB = nullptr;
-      PrevUB = nullptr;
       Counters.resize(Size);
       PrivateCounters.resize(Size);
       Inits.resize(Size);
@@ -703,22 +677,6 @@ public:
     return const_cast<Expr *>(reinterpret_cast<const Expr *>(
         *std::next(child_begin(), NumIterationsOffset)));
   }
-  Expr *getPrevLowerBoundVariable() const {
-    assert((isOpenMPWorksharingDirective(getDirectiveKind()) ||
-            isOpenMPTaskLoopDirective(getDirectiveKind()) ||
-            isOpenMPDistributeDirective(getDirectiveKind())) &&
-           "expected worksharing loop directive");
-    return const_cast<Expr *>(reinterpret_cast<const Expr *>(
-        *std::next(child_begin(), PrevLowerBoundVariableOffset)));
-  }
-  Expr *getPrevUpperBoundVariable() const {
-    assert((isOpenMPWorksharingDirective(getDirectiveKind()) ||
-            isOpenMPTaskLoopDirective(getDirectiveKind()) ||
-            isOpenMPDistributeDirective(getDirectiveKind())) &&
-           "expected worksharing loop directive");
-    return const_cast<Expr *>(reinterpret_cast<const Expr *>(
-        *std::next(child_begin(), PrevUpperBoundVariableOffset)));
-  }
   const Stmt *getBody() const {
     // This relies on the loop form is already checked by Sema.
     Stmt *Body = getAssociatedStmt()->IgnoreContainers(true);
@@ -769,8 +727,7 @@ public:
            T->getStmtClass() == OMPTaskLoopDirectiveClass ||
            T->getStmtClass() == OMPTaskLoopSimdDirectiveClass ||
            T->getStmtClass() == OMPDistributeDirectiveClass ||
-           T->getStmtClass() == OMPTargetParallelForDirectiveClass ||
-           T->getStmtClass() == OMPDistributeParallelForDirectiveClass;
+           T->getStmtClass() == OMPTargetParallelForDirectiveClass;
   }
 };
 
@@ -2812,75 +2769,6 @@ public:
   }
 };
 
-/// \brief This represents '#pragma omp distribute parallel for' composite
-///  directive.
-///
-/// \code
-/// #pragma omp distribute parallel for private(a,b)
-/// \endcode
-/// In this example directive '#pragma omp distribute parallel for' has clause
-/// 'private' with the variables 'a' and 'b'
-///
-class OMPDistributeParallelForDirective : public OMPLoopDirective {
-  friend class ASTStmtReader;
-
-  /// \brief Build directive with the given start and end location.
-  ///
-  /// \param StartLoc Starting location of the directive kind.
-  /// \param EndLoc Ending location of the directive.
-  /// \param CollapsedNum Number of collapsed nested loops.
-  /// \param NumClauses Number of clauses.
-  ///
-  OMPDistributeParallelForDirective(SourceLocation StartLoc,
-                                    SourceLocation EndLoc,
-                                    unsigned CollapsedNum, unsigned NumClauses)
-      : OMPLoopDirective(this, OMPDistributeParallelForDirectiveClass,
-                         OMPD_distribute_parallel_for, StartLoc, EndLoc,
-                         CollapsedNum, NumClauses) {}
-
-  /// \brief Build an empty directive.
-  ///
-  /// \param CollapsedNum Number of collapsed nested loops.
-  /// \param NumClauses Number of clauses.
-  ///
-  explicit OMPDistributeParallelForDirective(unsigned CollapsedNum,
-                                             unsigned NumClauses)
-      : OMPLoopDirective(this, OMPDistributeParallelForDirectiveClass,
-                         OMPD_distribute_parallel_for, SourceLocation(),
-                         SourceLocation(), CollapsedNum, NumClauses) {}
-
-public:
-  /// \brief Creates directive with a list of \a Clauses.
-  ///
-  /// \param C AST context.
-  /// \param StartLoc Starting location of the directive kind.
-  /// \param EndLoc Ending Location of the directive.
-  /// \param CollapsedNum Number of collapsed loops.
-  /// \param Clauses List of clauses.
-  /// \param AssociatedStmt Statement, associated with the directive.
-  /// \param Exprs Helper expressions for CodeGen.
-  ///
-  static OMPDistributeParallelForDirective *
-  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
-         unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
-         Stmt *AssociatedStmt, const HelperExprs &Exprs);
-
-  /// \brief Creates an empty directive with the place
-  /// for \a NumClauses clauses.
-  ///
-  /// \param C AST context.
-  /// \param CollapsedNum Number of collapsed nested loops.
-  /// \param NumClauses Number of clauses.
-  ///
-  static OMPDistributeParallelForDirective *CreateEmpty(const ASTContext &C,
-                                                        unsigned NumClauses,
-                                                        unsigned CollapsedNum,
-                                                        EmptyShell);
-
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == OMPDistributeParallelForDirectiveClass;
-  }
-};
 } // end namespace clang
 
 #endif

@@ -2392,8 +2392,6 @@ public:
   void EmitOMPTaskLoopSimdDirective(const OMPTaskLoopSimdDirective &S);
   void EmitOMPDistributeDirective(const OMPDistributeDirective &S);
   void EmitOMPDistributeLoop(const OMPDistributeDirective &S);
-  void EmitOMPDistributeParallelForDirective(
-      const OMPDistributeParallelForDirective &S);
 
   /// Emit outlined function for the target directive.
   static std::pair<llvm::Function * /*OutlinedFn*/,

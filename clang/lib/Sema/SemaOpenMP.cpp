@@ -1814,21 +1814,6 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
                              Params);
     break;
   }
-  case OMPD_distribute_parallel_for: {
-    QualType KmpInt32Ty = Context.getIntTypeForBitwidth(32, 1);
-    QualType KmpInt32PtrTy =
-        Context.getPointerType(KmpInt32Ty).withConst().withRestrict();
-    Sema::CapturedParamNameType Params[] = {
-        std::make_pair(".global_tid.", KmpInt32PtrTy),
-        std::make_pair(".bound_tid.", KmpInt32PtrTy),
-        std::make_pair(".previous.lb.", Context.getSizeType()),
-        std::make_pair(".previous.ub.", Context.getSizeType()),
-        std::make_pair(StringRef(), QualType()) // __context with shared vars
-    };
-    ActOnCapturedRegionStart(DSAStack->getConstructLoc(), CurScope, CR_OpenMP,
-                             Params);
-    break;
-  }
   case OMPD_threadprivate:
   case OMPD_taskyield:
   case OMPD_barrier:
@@ -2035,9 +2020,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel         | cancel          | !                                  |
   // | parallel         | taskloop        | *                                  |
   // | parallel         | taskloop simd   | *                                  |
-  // | parallel         | distribute      | +                                  |
-  // | parallel         | distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | parallel         | distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | for              | parallel        | *                                  |
   // | for              | for             | +                                  |
@@ -2073,9 +2056,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | for              | cancel          | !                                  |
   // | for              | taskloop        | *                                  |
   // | for              | taskloop simd   | *                                  |
-  // | for              | distribute      | +                                  |
-  // | for              | distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | for              | distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | master           | parallel        | *                                  |
   // | master           | for             | +                                  |
@@ -2111,9 +2092,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | master           | cancel          |                                    |
   // | master           | taskloop        | *                                  |
   // | master           | taskloop simd   | *                                  |
-  // | master           | distribute      | +                                  |
-  // | master           | distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | master           | distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | critical         | parallel        | *                                  |
   // | critical         | for             | +                                  |
@@ -2148,9 +2127,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | critical         | cancel          |                                    |
   // | critical         | taskloop        | *                                  |
   // | critical         | taskloop simd   | *                                  |
-  // | critical         | distribute      | +                                  |
-  // | critical         | distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | critical         | distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | simd             | parallel        |                                    |
   // | simd             | for             |                                    |
@@ -2187,8 +2164,6 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | simd             | taskloop        |                                    |
   // | simd             | taskloop simd   |                                    |
   // | simd             | distribute      |                                    |
-  // | simd             | distribute      |                                    |
-  // |                  | parallel for    |                                    |
   // +------------------+-----------------+------------------------------------+
   // | for simd         | parallel        |                                    |
   // | for simd         | for             |                                    |
@@ -2225,8 +2200,6 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | for simd         | taskloop        |                                    |
   // | for simd         | taskloop simd   |                                    |
   // | for simd         | distribute      |                                    |
-  // | for simd         | distribute      |                                    |
-  // |                  | parallel for    |                                    |
   // +------------------+-----------------+------------------------------------+
   // | parallel for simd| parallel        |                                    |
   // | parallel for simd| for             |                                    |
@@ -2263,8 +2236,6 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel for simd| taskloop        |                                    |
   // | parallel for simd| taskloop simd   |                                    |
   // | parallel for simd| distribute      |                                    |
-  // | parallel for simd| distribute      |                                    |
-  // |                  | parallel for    |                                    |
   // +------------------+-----------------+------------------------------------+
   // | sections         | parallel        | *                                  |
   // | sections         | for             | +                                  |
@@ -2300,9 +2271,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | sections         | cancel          | !                                  |
   // | sections         | taskloop        | *                                  |
   // | sections         | taskloop simd   | *                                  |
-  // | sections         | distribute      | +                                  |
-  // | sections         | distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | sections         | distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | section          | parallel        | *                                  |
   // | section          | for             | +                                  |
@@ -2338,9 +2307,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | section          | cancel          | !                                  |
   // | section          | taskloop        | *                                  |
   // | section          | taskloop simd   | *                                  |
-  // | section          | distribute      | +                                  |
-  // | section          | distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | section          | distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | single           | parallel        | *                                  |
   // | single           | for             | +                                  |
@@ -2376,9 +2343,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | single           | cancel          |                                    |
   // | single           | taskloop        | *                                  |
   // | single           | taskloop simd   | *                                  |
-  // | single           | distribute      | +                                  |
-  // | single           | distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | single           | distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | parallel for     | parallel        | *                                  |
   // | parallel for     | for             | +                                  |
@@ -2414,9 +2379,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel for     | cancel          | !                                  |
   // | parallel for     | taskloop        | *                                  |
   // | parallel for     | taskloop simd   | *                                  |
-  // | parallel for     | distribute      | +                                  |
-  // | parallel for     | distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | parallel for     | distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | parallel sections| parallel        | *                                  |
   // | parallel sections| for             | +                                  |
@@ -2452,9 +2415,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel sections| cancel          | !                                  |
   // | parallel sections| taskloop        | *                                  |
   // | parallel sections| taskloop simd   | *                                  |
-  // | parallel sections| distribute      | +                                  |
-  // | parallel sections| distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | parallel sections| distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | task             | parallel        | *                                  |
   // | task             | for             | +                                  |
@@ -2490,9 +2451,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | task             | cancel          | !                                  |
   // | task             | taskloop        | *                                  |
   // | task             | taskloop simd   | *                                  |
-  // | task             | distribute      | +                                  |
-  // | task             | distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | task             | distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | ordered          | parallel        | *                                  |
   // | ordered          | for             | +                                  |
@@ -2528,9 +2487,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | ordered          | cancel          |                                    |
   // | ordered          | taskloop        | *                                  |
   // | ordered          | taskloop simd   | *                                  |
-  // | ordered          | distribute      | +                                  |
-  // | ordered          | distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | ordered          | distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | atomic           | parallel        |                                    |
   // | atomic           | for             |                                    |
@@ -2567,8 +2524,6 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | atomic           | taskloop        |                                    |
   // | atomic           | taskloop simd   |                                    |
   // | atomic           | distribute      |                                    |
-  // | atomic           | distribute      |                                    |
-  // |                  | parallel for    |                                    |
   // +------------------+-----------------+------------------------------------+
   // | target           | parallel        | *                                  |
   // | target           | for             | *                                  |
@@ -2604,9 +2559,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | target           | cancel          |                                    |
   // | target           | taskloop        | *                                  |
   // | target           | taskloop simd   | *                                  |
-  // | target           | distribute      | +                                  |
-  // | target           | distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | target           | distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | target parallel  | parallel        | *                                  |
   // | target parallel  | for             | *                                  |
@@ -2643,8 +2596,6 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | target parallel  | taskloop        | *                                  |
   // | target parallel  | taskloop simd   | *                                  |
   // | target parallel  | distribute      |                                    |
-  // | target parallel  | distribute      |                                    |
-  // |                  | parallel for    |                                    |
   // +------------------+-----------------+------------------------------------+
   // | target parallel  | parallel        | *                                  |
   // | for              |                 |                                    |
@@ -2708,8 +2659,6 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | for              |                 |                                    |
   // | target parallel  | distribute      |                                    |
   // | for              |                 |                                    |
-  // | parallel         | distribute      |                                    |
-  // | for              | parallel for    |                                    |
   // +------------------+-----------------+------------------------------------+
   // | teams            | parallel        | *                                  |
   // | teams            | for             | +                                  |
@@ -2746,8 +2695,6 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | teams            | taskloop        | +                                  |
   // | teams            | taskloop simd   | +                                  |
   // | teams            | distribute      | !                                  |
-  // | teams            | distribute      | !                                  |
-  // |                  | parallel for    |                                    |
   // +------------------+-----------------+------------------------------------+
   // | taskloop         | parallel        | *                                  |
   // | taskloop         | for             | +                                  |
@@ -2782,9 +2729,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // |                  | point           |                                    |
   // | taskloop         | cancel          |                                    |
   // | taskloop         | taskloop        | *                                  |
-  // | taskloop         | distribute      | +                                  |
-  // | taskloop         | distribute      | +                                  |
-  // |                  | parallel for    |                                    |
+  // | taskloop         | distribute      |                                    |
   // +------------------+-----------------+------------------------------------+
   // | taskloop simd    | parallel        |                                    |
   // | taskloop simd    | for             |                                    |
@@ -2821,8 +2766,6 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | taskloop simd    | taskloop        |                                    |
   // | taskloop simd    | taskloop simd   |                                    |
   // | taskloop simd    | distribute      |                                    |
-  // | taskloop simd    | distribute      |                                    |
-  // |                  | parallel for    |                                    |
   // +------------------+-----------------+------------------------------------+
   // | distribute       | parallel        | *                                  |
   // | distribute       | for             | *                                  |
@@ -2859,74 +2802,6 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | distribute       | taskloop        | *                                  |
   // | distribute       | taskloop simd   | *                                  |
   // | distribute       | distribute      |                                    |
-  // | distribute       | distribute      |                                    |
-  // |                  | parallel for    |                                    |
-  // +------------------+-----------------+------------------------------------+
-  // | distribute       | parallel        | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | for             | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | for simd        | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | master          | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | critical        | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | simd            | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | sections        | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | section         | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | single          | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | parallel for    | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       |parallel for simd| *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       |parallel sections| *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | task            | *                                  |
-  // | parallel for     |                 |                                    |
-  // | parallel for     |                 |                                    |
-  // | distribute       | taskyield       | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | barrier         | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | taskwait        | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | taskgroup       | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | flush           | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | ordered         | +                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | atomic          | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | target          |                                    |
-  // | parallel for     |                 |                                    |
-  // | distribute       | target parallel |                                    |
-  // | parallel for     |                 |                                    |
-  // | distribute       | target parallel |                                    |
-  // | parallel for     | for             |                                    |
-  // | distribute       | target enter    |                                    |
-  // | parallel for     | data            |                                    |
-  // | distribute       | target exit     |                                    |
-  // | parallel for     | data            |                                    |
-  // | distribute       | teams           |                                    |
-  // | parallel for     |                 |                                    |
-  // | distribute       | cancellation    | +                                  |
-  // | parallel for     | point           |                                    |
-  // | distribute       | cancel          | +                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | taskloop        | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | taskloop simd   | *                                  |
-  // | parallel for     |                 |                                    |
-  // | distribute       | distribute      |                                    |
-  // | parallel for     |                 |                                    |
-  // | distribute       | distribute      |                                    |
-  // | parallel for     | parallel for    |                                    |
   // +------------------+-----------------+------------------------------------+
   if (Stack->getCurScope()) {
     auto ParentRegion = Stack->getParentDirective();
@@ -3407,11 +3282,6 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(
     Res =
         ActOnOpenMPTargetUpdateDirective(ClausesWithImplicit, StartLoc, EndLoc);
     AllowedNameModifiers.push_back(OMPD_target_update);
-    break;
-  case OMPD_distribute_parallel_for:
-    Res = ActOnOpenMPDistributeParallelForDirective(
-        ClausesWithImplicit, AStmt, StartLoc, EndLoc, VarsWithInheritedDSA);
-    AllowedNameModifiers.push_back(OMPD_parallel);
     break;
   case OMPD_declare_target:
   case OMPD_end_declare_target:
@@ -4920,7 +4790,7 @@ CheckOpenMPLoop(OpenMPDirectiveKind DKind, Expr *CollapseLoopCountExpr,
   SourceLocation InitLoc = IterSpaces[0].InitSrcRange.getBegin();
 
   // Build variables passed into runtime, nesessary for worksharing directives.
-  ExprResult LB, UB, IL, ST, EUB, PrevLB, PrevUB;
+  ExprResult LB, UB, IL, ST, EUB;
   if (isOpenMPWorksharingDirective(DKind) || isOpenMPTaskLoopDirective(DKind) ||
       isOpenMPDistributeDirective(DKind)) {
     // Lower bound variable, initialized with zero.
@@ -4963,31 +4833,6 @@ CheckOpenMPLoop(OpenMPDirectiveKind DKind, Expr *CollapseLoopCountExpr,
     EUB = SemaRef.BuildBinOp(CurScope, InitLoc, BO_Assign, UB.get(),
                              CondOp.get());
     EUB = SemaRef.ActOnFinishFullExpr(EUB.get());
-
-    // If we have a combined directive that combines 'distribute', 'for' or
-    // 'simd' we need to be able to access the bounds of the schedule of the
-    // enclosing region. E.g. in 'distribute parallel for' the bounds obtained
-    // by scheduling 'distribute' have to be passed to the schedule of 'for'.
-    if (isOpenMPLoopBoundSharingDirective(DKind)) {
-      auto *CD = cast<CapturedStmt>(AStmt)->getCapturedDecl();
-
-      // We expect to have at least 2 more parameters than the 'parallel'
-      // directive does - the lower and upper bounds of the previous schedule.
-      assert(CD->getNumParams() >= 4 &&
-             "Unexpected number of parameters in loop combined directive");
-
-      // Set the proper type for the bounds given what we learned from the
-      // enclosed loops.
-      auto *PrevLBDecl = CD->getParam(/*PrevLB=*/2);
-      auto *PrevUBDecl = CD->getParam(/*PrevUB=*/3);
-
-      // Previous lower and upper bounds are obtained from the region
-      // parameters.
-      PrevLB =
-          buildDeclRefExpr(SemaRef, PrevLBDecl, PrevLBDecl->getType(), InitLoc);
-      PrevUB =
-          buildDeclRefExpr(SemaRef, PrevUBDecl, PrevUBDecl->getType(), InitLoc);
-    }
   }
 
   // Build the iteration variable and its initialization before loop.
@@ -5165,8 +5010,6 @@ CheckOpenMPLoop(OpenMPDirectiveKind DKind, Expr *CollapseLoopCountExpr,
   Built.EUB = EUB.get();
   Built.NLB = NextLB.get();
   Built.NUB = NextUB.get();
-  Built.PrevLB = PrevLB.get();
-  Built.PrevUB = PrevUB.get();
 
   Expr *CounterVal = SemaRef.DefaultLvalueConversion(IV.get()).get();
   // Fill data for doacross depend clauses.
@@ -6887,39 +6730,6 @@ StmtResult Sema::ActOnOpenMPDistributeDirective(
   getCurFunction()->setHasBranchProtectedScope();
   return OMPDistributeDirective::Create(Context, StartLoc, EndLoc,
                                         NestedLoopCount, Clauses, AStmt, B);
-}
-
-StmtResult Sema::ActOnOpenMPDistributeParallelForDirective(
-    ArrayRef<OMPClause *> Clauses, Stmt *AStmt, SourceLocation StartLoc,
-    SourceLocation EndLoc,
-    llvm::DenseMap<ValueDecl *, Expr *> &VarsWithImplicitDSA) {
-  if (!AStmt)
-    return StmtError();
-
-  CapturedStmt *CS = cast<CapturedStmt>(AStmt);
-  // 1.2.2 OpenMP Language Terminology
-  // Structured block - An executable statement with a single entry at the
-  // top and a single exit at the bottom.
-  // The point of exit cannot be a branch out of the structured block.
-  // longjmp() and throw() must not violate the entry/exit criteria.
-  CS->getCapturedDecl()->setNothrow();
-
-  OMPLoopDirective::HelperExprs B;
-  // In presence of clause 'collapse' with number of loops, it will
-  // define the nested loops number.
-  unsigned NestedLoopCount = CheckOpenMPLoop(
-      OMPD_distribute_parallel_for, getCollapseNumberExpr(Clauses),
-      nullptr /*ordered not a clause on distribute*/, AStmt, *this, *DSAStack,
-      VarsWithImplicitDSA, B);
-  if (NestedLoopCount == 0)
-    return StmtError();
-
-  assert((CurContext->isDependentContext() || B.builtAll()) &&
-         "omp for loop exprs were not built");
-
-  getCurFunction()->setHasBranchProtectedScope();
-  return OMPDistributeParallelForDirective::Create(
-      Context, StartLoc, EndLoc, NestedLoopCount, Clauses, AStmt, B);
 }
 
 OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
