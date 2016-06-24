@@ -7748,8 +7748,7 @@ ClangASTContext::BuildIndirectFields (const CompilerType& type)
                                                                                                 clang::SourceLocation(),
                                                                                                 nested_field_decl->getIdentifier(),
                                                                                                 nested_field_decl->getType(),
-                                                                                                chain,
-                                                                                                2);
+                                                                                                {chain, 2});
                     
                     indirect_field->setImplicit();
                     
@@ -7779,8 +7778,7 @@ ClangASTContext::BuildIndirectFields (const CompilerType& type)
                                                                                                 clang::SourceLocation(),
                                                                                                 nested_indirect_field_decl->getIdentifier(),
                                                                                                 nested_indirect_field_decl->getType(),
-                                                                                                chain,
-                                                                                                nested_chain_size + 1);
+                                                                                                {chain, nested_chain_size + 1});
                     
                     indirect_field->setImplicit();
                     
