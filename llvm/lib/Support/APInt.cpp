@@ -555,8 +555,8 @@ bool APInt::ult(const APInt& RHS) const {
 bool APInt::slt(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be same for comparison");
   if (isSingleWord()) {
-    int64_t lhsSext = (int64_t(VAL) << (64-BitWidth)) >> (64-BitWidth);
-    int64_t rhsSext = (int64_t(RHS.VAL) << (64-BitWidth)) >> (64-BitWidth);
+    int64_t lhsSext = SignExtend64(VAL, BitWidth);
+    int64_t rhsSext = SignExtend64(RHS.VAL, BitWidth);
     return lhsSext < rhsSext;
   }
 
