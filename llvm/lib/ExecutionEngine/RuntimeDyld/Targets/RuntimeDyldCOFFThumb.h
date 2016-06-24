@@ -244,6 +244,7 @@ public:
       DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
                    << " RelType: IMAGE_REL_ARM_BRANCH20T"
                    << " Value: " << static_cast<int32_t>(Value) << '\n');
+      static_cast<void>(Value);
       llvm_unreachable("unimplemented relocation");
       break;
     }
@@ -258,6 +259,7 @@ public:
       DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
                    << " RelType: IMAGE_REL_ARM_BRANCH24T"
                    << " Value: " << static_cast<int32_t>(Value) << '\n');
+      static_cast<void>(Value);
       llvm_unreachable("unimplemented relocation");
       break;
     }
@@ -272,6 +274,7 @@ public:
       DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
                    << " RelType: IMAGE_REL_ARM_BLX23T"
                    << " Value: " << static_cast<int32_t>(Value) << '\n');
+      static_cast<void>(Value);
       llvm_unreachable("unimplemented relocation");
       break;
     }
