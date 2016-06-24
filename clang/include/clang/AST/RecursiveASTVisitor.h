@@ -1831,8 +1831,9 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
     // if the traverser is visiting implicit code. Parameter variable
     // declarations do not have valid TypeSourceInfo, so to visit them
     // we need to traverse the declarations explicitly.
-    for (ParmVarDecl *Parameter : D->parameters())
+    for (ParmVarDecl *Parameter : D->parameters()) {
       TRY_TO(TraverseDecl(Parameter));
+    }
   }
 
   if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(D)) {
