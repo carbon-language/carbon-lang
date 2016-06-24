@@ -2270,7 +2270,7 @@ public:
 /// represent a member of a struct/union/class.
 class FieldDecl : public DeclaratorDecl, public Mergeable<FieldDecl> {
   // FIXME: This can be packed into the bitfields in Decl.
-  bool Mutable : 1;
+  unsigned Mutable : 1;
   mutable unsigned CachedFieldIndex : 31;
 
   /// The kinds of value we can store in InitializerOrBitWidth.
@@ -2717,20 +2717,20 @@ private:
   /// IsCompleteDefinition - True if this is a definition ("struct foo
   /// {};"), false if it is a declaration ("struct foo;").  It is not
   /// a definition until the definition has been fully processed.
-  bool IsCompleteDefinition : 1;
+  unsigned IsCompleteDefinition : 1;
 
 protected:
   /// IsBeingDefined - True if this is currently being defined.
-  bool IsBeingDefined : 1;
+  unsigned IsBeingDefined : 1;
 
 private:
   /// IsEmbeddedInDeclarator - True if this tag declaration is
   /// "embedded" (i.e., defined or declared for the very first time)
   /// in the syntax of a declarator.
-  bool IsEmbeddedInDeclarator : 1;
+  unsigned IsEmbeddedInDeclarator : 1;
 
   /// \brief True if this tag is free standing, e.g. "struct foo;".
-  bool IsFreeStanding : 1;
+  unsigned IsFreeStanding : 1;
 
 protected:
   // These are used by (and only defined for) EnumDecl.
@@ -2739,26 +2739,26 @@ protected:
 
   /// IsScoped - True if this tag declaration is a scoped enumeration. Only
   /// possible in C++11 mode.
-  bool IsScoped : 1;
+  unsigned IsScoped : 1;
   /// IsScopedUsingClassTag - If this tag declaration is a scoped enum,
   /// then this is true if the scoped enum was declared using the class
   /// tag, false if it was declared with the struct tag. No meaning is
   /// associated if this tag declaration is not a scoped enum.
-  bool IsScopedUsingClassTag : 1;
+  unsigned IsScopedUsingClassTag : 1;
 
   /// IsFixed - True if this is an enumeration with fixed underlying type. Only
   /// possible in C++11, Microsoft extensions, or Objective C mode.
-  bool IsFixed : 1;
+  unsigned IsFixed : 1;
 
   /// \brief Indicates whether it is possible for declarations of this kind
   /// to have an out-of-date definition.
   ///
   /// This option is only enabled when modules are enabled.
-  bool MayHaveOutOfDateDef : 1;
+  unsigned MayHaveOutOfDateDef : 1;
 
   /// Has the full definition of this type been required by a use somewhere in
   /// the TU.
-  bool IsCompleteDefinitionRequired : 1;
+  unsigned IsCompleteDefinitionRequired : 1;
 private:
   SourceLocation RBraceLoc;
 
