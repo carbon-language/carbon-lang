@@ -199,11 +199,7 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     MCSymbol *SymToPrint;
 
     // External or weakly linked global variables need non-lazily-resolved stubs
-    if (TM.getRelocationModel() != Reloc::Static &&
-        !GV->isStrongDefinitionForLinker() &&
-        (!GV->hasHiddenVisibility() ||
-         (GV->isDeclaration() || GV->hasCommonLinkage() ||
-          GV->hasAvailableExternallyLinkage()))) {
+    if (Subtarget->hasLazyResolverStub(GV)) {
       SymToPrint = getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
       MachineModuleInfoImpl::StubValueTy &StubSym =
           MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(
