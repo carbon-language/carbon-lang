@@ -9186,13 +9186,10 @@ static void diagnoseArrayStarInParamType(Sema &S, QualType PType,
 /// takes care of any checks that cannot be performed on the
 /// declaration itself, e.g., that the types of each of the function
 /// parameters are complete.
-bool Sema::CheckParmsForFunctionDef(ParmVarDecl *const *P,
-                                    ParmVarDecl *const *PEnd,
+bool Sema::CheckParmsForFunctionDef(ArrayRef<ParmVarDecl *> Parameters,
                                     bool CheckParameterNames) {
   bool HasInvalidParm = false;
-  for (; P != PEnd; ++P) {
-    ParmVarDecl *Param = *P;
-    
+  for (ParmVarDecl *Param : Parameters) {
     // C99 6.7.5.3p4: the parameters in a parameter type list in a
     // function declarator that is part of a function definition of
     // that function shall not have incomplete type.

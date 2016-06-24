@@ -268,7 +268,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     // Print the parameters.
     Out << "(";
     bool PrintComma = false;
-    for (auto I : FD->params()) {
+    for (auto I : FD->parameters()) {
       if (PrintComma)
         Out << ", ";
       else

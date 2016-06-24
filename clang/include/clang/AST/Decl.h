@@ -1952,28 +1952,23 @@ public:
 
   unsigned getBuiltinID() const;
 
+  // ArrayRef interface to parameters.
+  ArrayRef<ParmVarDecl *> parameters() const {
+    return {ParamInfo, getNumParams()};
+  }
+  MutableArrayRef<ParmVarDecl *> parameters() {
+    return {ParamInfo, getNumParams()};
+  }
+
   // Iterator access to formal parameters.
-  unsigned param_size() const { return getNumParams(); }
-  typedef ParmVarDecl **param_iterator;
-  typedef ParmVarDecl * const *param_const_iterator;
-  typedef llvm::iterator_range<param_iterator> param_range;
-  typedef llvm::iterator_range<param_const_iterator> param_const_range;
-
-  param_iterator param_begin() { return param_iterator(ParamInfo); }
-  param_iterator param_end() {
-    return param_iterator(ParamInfo + param_size());
-  }
-  param_range params() { return param_range(param_begin(), param_end()); }
-
-  param_const_iterator param_begin() const {
-    return param_const_iterator(ParamInfo);
-  }
-  param_const_iterator param_end() const {
-    return param_const_iterator(ParamInfo + param_size());
-  }
-  param_const_range params() const {
-    return param_const_range(param_begin(), param_end());
-  }
+  typedef MutableArrayRef<ParmVarDecl *>::iterator param_iterator;
+  typedef ArrayRef<ParmVarDecl *>::const_iterator param_const_iterator;
+  bool param_empty() const { return parameters().empty(); }
+  param_iterator param_begin() { return parameters().begin(); }
+  param_iterator param_end() { return parameters().end(); }
+  param_const_iterator param_begin() const { return parameters().begin(); }
+  param_const_iterator param_end() const { return parameters().end(); }
+  size_t param_size() const { return parameters().size(); }
 
   /// getNumParams - Return the number of parameters this function must have
   /// based on its FunctionType.  This is the length of the ParamInfo array
@@ -1990,12 +1985,6 @@ public:
   }
   void setParams(ArrayRef<ParmVarDecl *> NewParamInfo) {
     setParams(getASTContext(), NewParamInfo);
-  }
-
-  // ArrayRef iterface to parameters.
-  // FIXME: Should one day replace iterator interface.
-  ArrayRef<ParmVarDecl*> parameters() const {
-    return llvm::makeArrayRef(ParamInfo, getNumParams());
   }
 
   ArrayRef<NamedDecl *> getDeclsInPrototypeScope() const {
@@ -2504,34 +2493,33 @@ class IndirectFieldDecl : public ValueDecl,
 
   IndirectFieldDecl(ASTContext &C, DeclContext *DC, SourceLocation L,
                     DeclarationName N, QualType T,
-                    NamedDecl **CH, unsigned CHS);
+                    MutableArrayRef<NamedDecl *> CH);
 
 public:
   static IndirectFieldDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, IdentifierInfo *Id,
-                                   QualType T, NamedDecl **CH, unsigned CHS);
+                                   QualType T, llvm::MutableArrayRef<NamedDecl *> CH);
 
   static IndirectFieldDecl *CreateDeserialized(ASTContext &C, unsigned ID);
-  
-  typedef NamedDecl * const *chain_iterator;
-  typedef llvm::iterator_range<chain_iterator> chain_range;
 
-  chain_range chain() const { return chain_range(chain_begin(), chain_end()); }
-  chain_iterator chain_begin() const { return chain_iterator(Chaining); }
-  chain_iterator chain_end() const {
-    return chain_iterator(Chaining + ChainingSize);
+  typedef ArrayRef<NamedDecl *>::const_iterator chain_iterator;
+
+  ArrayRef<NamedDecl *> chain() const {
+    return llvm::makeArrayRef(Chaining, ChainingSize);
   }
+  chain_iterator chain_begin() const { return chain().begin(); }
+  chain_iterator chain_end() const { return chain().end(); }
 
   unsigned getChainingSize() const { return ChainingSize; }
 
   FieldDecl *getAnonField() const {
-    assert(ChainingSize >= 2);
-    return cast<FieldDecl>(Chaining[ChainingSize - 1]);
+    assert(chain().size() >= 2);
+    return cast<FieldDecl>(chain().back());
   }
 
   VarDecl *getVarDecl() const {
-    assert(ChainingSize >= 2);
-    return dyn_cast<VarDecl>(*chain_begin());
+    assert(chain().size() >= 2);
+    return dyn_cast<VarDecl>(chain().front());
   }
 
   IndirectFieldDecl *getCanonicalDecl() override { return getFirstDecl(); }
@@ -3518,35 +3506,23 @@ public:
   void setSignatureAsWritten(TypeSourceInfo *Sig) { SignatureAsWritten = Sig; }
   TypeSourceInfo *getSignatureAsWritten() const { return SignatureAsWritten; }
 
-  // Iterator access to formal parameters.
-  unsigned param_size() const { return getNumParams(); }
-  typedef ParmVarDecl **param_iterator;
-  typedef ParmVarDecl * const *param_const_iterator;
-  typedef llvm::iterator_range<param_iterator> param_range;
-  typedef llvm::iterator_range<param_const_iterator> param_const_range;
-
   // ArrayRef access to formal parameters.
-  // FIXME: Should eventual replace iterator access.
-  ArrayRef<ParmVarDecl*> parameters() const {
-    return llvm::makeArrayRef(ParamInfo, param_size());
+  ArrayRef<ParmVarDecl *> parameters() const {
+    return {ParamInfo, getNumParams()};
+  }
+  MutableArrayRef<ParmVarDecl *> parameters() {
+    return {ParamInfo, getNumParams()};
   }
 
-  bool param_empty() const { return NumParams == 0; }
-  param_range params() { return param_range(param_begin(), param_end()); }
-  param_iterator param_begin() { return param_iterator(ParamInfo); }
-  param_iterator param_end() {
-    return param_iterator(ParamInfo + param_size());
-  }
-
-  param_const_range params() const {
-    return param_const_range(param_begin(), param_end());
-  }
-  param_const_iterator param_begin() const {
-    return param_const_iterator(ParamInfo);
-  }
-  param_const_iterator param_end() const {
-    return param_const_iterator(ParamInfo + param_size());
-  }
+  // Iterator access to formal parameters.
+  typedef MutableArrayRef<ParmVarDecl *>::iterator param_iterator;
+  typedef ArrayRef<ParmVarDecl *>::const_iterator param_const_iterator;
+  bool param_empty() const { return parameters().empty(); }
+  param_iterator param_begin() { return parameters().begin(); }
+  param_iterator param_end() { return parameters().end(); }
+  param_const_iterator param_begin() const { return parameters().begin(); }
+  param_const_iterator param_end() const { return parameters().end(); }
+  size_t param_size() const { return parameters().size(); }
 
   unsigned getNumParams() const { return NumParams; }
   const ParmVarDecl *getParamDecl(unsigned i) const {
@@ -3567,22 +3543,12 @@ public:
   /// Does not include an entry for 'this'.
   unsigned getNumCaptures() const { return NumCaptures; }
 
-  typedef const Capture *capture_iterator;
-  typedef const Capture *capture_const_iterator;
-  typedef llvm::iterator_range<capture_iterator> capture_range;
-  typedef llvm::iterator_range<capture_const_iterator> capture_const_range;
+  typedef ArrayRef<Capture>::const_iterator capture_const_iterator;
 
-  capture_range captures() {
-    return capture_range(capture_begin(), capture_end());
-  }
-  capture_const_range captures() const {
-    return capture_const_range(capture_begin(), capture_end());
-  }
+  ArrayRef<Capture> captures() const { return {Captures, NumCaptures}; }
 
-  capture_iterator capture_begin() { return Captures; }
-  capture_iterator capture_end() { return Captures + NumCaptures; }
-  capture_const_iterator capture_begin() const { return Captures; }
-  capture_const_iterator capture_end() const { return Captures + NumCaptures; }
+  capture_const_iterator capture_begin() const { return captures().begin(); }
+  capture_const_iterator capture_end() const { return captures().end(); }
 
   bool capturesCXXThis() const { return CapturesCXXThis; }
   bool blockMissingReturnType() const { return BlockMissingReturnType; }
@@ -3692,9 +3658,6 @@ public:
   param_iterator param_begin() const { return getParams(); }
   /// \brief Retrieve an iterator one past the last parameter decl.
   param_iterator param_end() const { return getParams() + NumParams; }
-
-  /// \brief Retrieve an iterator range for the parameter declarations.
-  param_range params() const { return param_range(param_begin(), param_end()); }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

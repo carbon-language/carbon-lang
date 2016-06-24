@@ -597,7 +597,7 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   }
 
   Record.push_back(D->param_size());
-  for (auto P : D->params())
+  for (auto P : D->parameters())
     Record.AddDeclRef(P);
   Code = serialization::DECL_FUNCTION;
 }
@@ -637,7 +637,7 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Record.AddTypeSourceInfo(D->getReturnTypeSourceInfo());
   Record.AddSourceLocation(D->getLocEnd());
   Record.push_back(D->param_size());
-  for (const auto *P : D->params())
+  for (const auto *P : D->parameters())
     Record.AddDeclRef(P);
 
   Record.push_back(D->SelLocsKind);

@@ -1681,7 +1681,7 @@ void ASTDumper::VisitObjCPropertyImplDecl(const ObjCPropertyImplDecl *D) {
 }
 
 void ASTDumper::VisitBlockDecl(const BlockDecl *D) {
-  for (auto I : D->params())
+  for (auto I : D->parameters())
     dumpDecl(I);
 
   if (D->isVariadic())
