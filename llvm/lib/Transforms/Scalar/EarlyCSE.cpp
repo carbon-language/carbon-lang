@@ -582,18 +582,11 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     // its simpler value.
     if (Value *V = SimplifyInstruction(Inst, DL, &TLI, &DT, &AC)) {
       DEBUG(dbgs() << "EarlyCSE Simplify: " << *Inst << "  to: " << *V << '\n');
-      if (!Inst->use_empty()) {
-        Inst->replaceAllUsesWith(V);
-        Changed = true;
-      }
-      if (isInstructionTriviallyDead(Inst, &TLI)) {
-        Inst->eraseFromParent();
-        Changed = true;
-      }
-      if (Changed) {
-        ++NumSimplify;
-        continue;
-      }
+      Inst->replaceAllUsesWith(V);
+      Inst->eraseFromParent();
+      Changed = true;
+      ++NumSimplify;
+      continue;
     }
 
     // If this is a simple instruction that we can value number, process it.

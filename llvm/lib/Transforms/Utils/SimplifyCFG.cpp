@@ -1885,19 +1885,14 @@ static bool FoldCondBranchOnPHI(BranchInst *BI, const DataLayout &DL) {
 
       // Check for trivial simplification.
       if (Value *V = SimplifyInstruction(N, DL)) {
-        if (!BBI->use_empty())
-          TranslateMap[&*BBI] = V;
-        if (!N->mayHaveSideEffects()) {
-          delete N; // Instruction folded away, don't need actual inst
-          N = nullptr;
-        }
+        TranslateMap[&*BBI] = V;
+        delete N; // Instruction folded away, don't need actual inst
       } else {
+        // Insert the new instruction into its new home.
+        EdgeBB->getInstList().insert(InsertPt, N);
         if (!BBI->use_empty())
           TranslateMap[&*BBI] = N;
       }
-      // Insert the new instruction into its new home.
-      if (N)
-        EdgeBB->getInstList().insert(InsertPt, N);
     }
 
     // Loop over all of the edges from PredBB to BB, changing them to branch
