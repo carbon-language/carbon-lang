@@ -250,9 +250,7 @@ void SourceCoverageView::render(raw_ostream &OS, bool WholeFile,
       OS << "\n";
       renderIndent(OS, NestedIndent);
       OS << ' ';
-      Options.colored_ostream(OS, raw_ostream::CYAN) << NextISV->FunctionName
-                                                     << ":";
-      OS << "\n";
+      NextISV->View->renderSourceName(OS);
       NextISV->View->render(OS, false, NestedIndent);
       RenderedSubView = true;
     }
@@ -261,4 +259,9 @@ void SourceCoverageView::render(raw_ostream &OS, bool WholeFile,
       OS << "\n";
     }
   }
+}
+
+void SourceCoverageView::renderSourceName(raw_ostream &OS) {
+  getOptions().colored_ostream(OS, raw_ostream::CYAN) << getSourceName()
+                                                      << ":\n";
 }

@@ -101,10 +101,23 @@ struct LineCoverageStats {
 /// It can have embedded coverage views.
 class SourceCoverageView {
 private:
+  /// A function or file name.
+  StringRef SourceName;
+
+  /// A memory buffer backing the source on display.
   const MemoryBuffer &File;
+
+  /// Various options to guide the coverage renderer.
   const CoverageViewOptions &Options;
+
+  /// Complete coverage information about the source on display.
   coverage::CoverageData CoverageInfo;
+
+  /// A container for all expansions (e.g macros) in the source on display.
   std::vector<ExpansionView> ExpansionSubViews;
+
+  /// A container for all instantiations (e.g template functions) in the source
+  /// on display.
   std::vector<InstantiationView> InstantiationSubViews;
 
   /// \brief Render a source line with highlighting.
@@ -132,10 +145,13 @@ private:
   static const unsigned LineNumberColumnWidth = 5;
 
 public:
-  SourceCoverageView(const MemoryBuffer &File,
+  SourceCoverageView(StringRef SourceName, const MemoryBuffer &File,
                      const CoverageViewOptions &Options,
                      coverage::CoverageData &&CoverageInfo)
-      : File(File), Options(Options), CoverageInfo(std::move(CoverageInfo)) {}
+      : SourceName(SourceName), File(File), Options(Options),
+        CoverageInfo(std::move(CoverageInfo)) {}
+
+  StringRef getSourceName() const { return SourceName; }
 
   const CoverageViewOptions &getOptions() const { return Options; }
 
@@ -154,6 +170,9 @@ public:
   /// \brief Print the code coverage information for a specific
   /// portion of a source file to the output stream.
   void render(raw_ostream &OS, bool WholeFile, unsigned IndentLevel = 0);
+
+  /// \brief Print the source name corresponding to this view.
+  void renderSourceName(raw_ostream &OS);
 };
 
 } // namespace llvm
