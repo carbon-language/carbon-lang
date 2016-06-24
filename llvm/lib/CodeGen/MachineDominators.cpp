@@ -19,9 +19,9 @@
 
 using namespace llvm;
 
-// FIXME: Always verify dominfo if expensive checking is enabled.
+// Always verify dominfo if expensive checking is enabled.
 #ifdef EXPENSIVE_CHECKS
-static bool VerifyMachineDomInfo = false;
+static bool VerifyMachineDomInfo = true;
 #else
 static bool VerifyMachineDomInfo = false;
 #endif
