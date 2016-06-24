@@ -1,9 +1,10 @@
-// RUN: %clang -O2 -target mips-linux-gnu  -EB -S -emit-llvm %s -o - | FileCheck %s -check-prefix=MIPS
-// RUN: %clang -O2 -target mips64-linux-gnu  -EB -S -emit-llvm %s -o - | FileCheck %s -check-prefix=MIPS64
-// RUN: %clang -O2 -target armeb-linux-gnueabihf -march=armv7a  -EB -S -emit-llvm %s -o - | FileCheck %s -check-prefix=ARM
+// RUN: %clang_cc1 -triple mips-linux-gnu  -S -emit-llvm %s -o - | FileCheck %s -check-prefix=MIPS
+// RUN: %clang_cc1 -triple mips64-linux-gnu  -S -emit-llvm %s -o - | FileCheck %s -check-prefix=MIPS64
+// RUN: %clang_cc1 -triple armebv7-linux-gnueabihf -S -emit-llvm %s -o - | FileCheck %s -check-prefix=ARM
 
 #include <stdarg.h>
-#include <stdlib.h>
+
+extern void abort() __attribute__((noreturn));
 
 struct tiny {
   char c;
