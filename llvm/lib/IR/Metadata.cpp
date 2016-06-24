@@ -1393,6 +1393,13 @@ MDNode *GlobalObject::getMetadata(StringRef Kind) const {
   return getMetadata(getContext().getMDKindID(Kind));
 }
 
+void GlobalObject::copyMetadata(const GlobalObject *Other) {
+  SmallVector<std::pair<unsigned, MDNode *>, 8> MDs;
+  Other->getAllMetadata(MDs);
+  for (auto &MD : MDs)
+    addMetadata(MD.first, *MD.second);
+}
+
 void Function::setSubprogram(DISubprogram *SP) {
   setMetadata(LLVMContext::MD_dbg, SP);
 }

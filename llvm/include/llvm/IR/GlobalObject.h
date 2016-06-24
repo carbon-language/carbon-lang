@@ -114,6 +114,9 @@ public:
   /// Erase all metadata attachments with the given kind.
   void eraseMetadata(unsigned KindID);
 
+  /// Copy metadata from Src.
+  void copyMetadata(const GlobalObject *Src);
+
   void copyAttributesFrom(const GlobalValue *Src) override;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
