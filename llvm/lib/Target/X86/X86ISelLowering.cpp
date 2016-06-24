@@ -24002,7 +24002,7 @@ X86TargetLowering::EmitSjLjDispatchBlock(MachineInstr *MI,
     // 'implicit defined' so that they're spilled.  This prevents code from
     // moving instructions to before the EH block, where they will never be
     // executed.
-    for (auto &II : make_range(MBB->rbegin(), MBB->rend())) {
+    for (auto &II : reverse(*MBB)) {
       if (!II.isCall())
         continue;
 

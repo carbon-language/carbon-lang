@@ -1534,25 +1534,25 @@ static Value *isSafeToSpeculateStore(Instruction *I, BasicBlock *BrBB,
 
   // Look for a store to the same pointer in BrBB.
   unsigned MaxNumInstToLookAt = 9;
-  for (BasicBlock::reverse_iterator RI = BrBB->rbegin(), RE = BrBB->rend();
-       RI != RE && MaxNumInstToLookAt; ++RI) {
-    Instruction *CurI = &*RI;
+  for (Instruction &CurI : reverse(*BrBB)) {
+    if (!MaxNumInstToLookAt)
+      break;
     // Skip debug info.
     if (isa<DbgInfoIntrinsic>(CurI))
       continue;
     --MaxNumInstToLookAt;
 
     // Could be calling an instruction that effects memory like free().
-    if (CurI->mayHaveSideEffects() && !isa<StoreInst>(CurI))
+    if (CurI.mayHaveSideEffects() && !isa<StoreInst>(CurI))
       return nullptr;
 
-    StoreInst *SI = dyn_cast<StoreInst>(CurI);
-    // Found the previous store make sure it stores to the same location.
-    if (SI && SI->getPointerOperand() == StorePtr)
-      // Found the previous store, return its value operand.
-      return SI->getValueOperand();
-    else if (SI)
+    if (auto *SI = dyn_cast<StoreInst>(&CurI)) {
+      // Found the previous store make sure it stores to the same location.
+      if (SI->getPointerOperand() == StorePtr)
+        // Found the previous store, return its value operand.
+        return SI->getValueOperand();
       return nullptr; // Unknown store.
+    }
   }
 
   return nullptr;
