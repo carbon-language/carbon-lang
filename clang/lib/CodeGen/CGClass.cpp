@@ -2485,21 +2485,21 @@ LeastDerivedClassWithSameLayout(const CXXRecordDecl *RD) {
       RD->bases_begin()->getType()->getAsCXXRecordDecl());
 }
 
-void CodeGenFunction::EmitBitSetCodeForVCall(const CXXRecordDecl *RD,
-                                             llvm::Value *VTable,
-                                             SourceLocation Loc) {
+void CodeGenFunction::EmitTypeMetadataCodeForVCall(const CXXRecordDecl *RD,
+                                                   llvm::Value *VTable,
+                                                   SourceLocation Loc) {
   if (CGM.getCodeGenOpts().WholeProgramVTables &&
       CGM.HasHiddenLTOVisibility(RD)) {
     llvm::Metadata *MD =
         CGM.CreateMetadataIdentifierForType(QualType(RD->getTypeForDecl(), 0));
-    llvm::Value *BitSetName =
+    llvm::Value *TypeId =
         llvm::MetadataAsValue::get(CGM.getLLVMContext(), MD);
 
     llvm::Value *CastedVTable = Builder.CreateBitCast(VTable, Int8PtrTy);
-    llvm::Value *BitSetTest =
-        Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::bitset_test),
-                           {CastedVTable, BitSetName});
-    Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::assume), BitSetTest);
+    llvm::Value *TypeTest =
+        Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::type_test),
+                           {CastedVTable, TypeId});
+    Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::assume), TypeTest);
   }
 
   if (SanOpts.has(SanitizerKind::CFIVCall))
@@ -2595,12 +2595,11 @@ void CodeGenFunction::EmitVTablePtrCheck(const CXXRecordDecl *RD,
 
   llvm::Metadata *MD =
       CGM.CreateMetadataIdentifierForType(QualType(RD->getTypeForDecl(), 0));
-  llvm::Value *BitSetName = llvm::MetadataAsValue::get(getLLVMContext(), MD);
+  llvm::Value *TypeId = llvm::MetadataAsValue::get(getLLVMContext(), MD);
 
   llvm::Value *CastedVTable = Builder.CreateBitCast(VTable, Int8PtrTy);
-  llvm::Value *BitSetTest =
-      Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::bitset_test),
-                         {CastedVTable, BitSetName});
+  llvm::Value *TypeTest = Builder.CreateCall(
+      CGM.getIntrinsic(llvm::Intrinsic::type_test), {CastedVTable, TypeId});
 
   SanitizerMask M;
   switch (TCK) {
@@ -2626,24 +2625,23 @@ void CodeGenFunction::EmitVTablePtrCheck(const CXXRecordDecl *RD,
       EmitCheckTypeDescriptor(QualType(RD->getTypeForDecl(), 0)),
   };
 
-  auto TypeId = CGM.CreateCfiIdForTypeMetadata(MD);
-  if (CGM.getCodeGenOpts().SanitizeCfiCrossDso && TypeId) {
-    EmitCfiSlowPathCheck(M, BitSetTest, TypeId, CastedVTable, StaticData);
+  auto CrossDsoTypeId = CGM.CreateCrossDsoCfiTypeId(MD);
+  if (CGM.getCodeGenOpts().SanitizeCfiCrossDso && CrossDsoTypeId) {
+    EmitCfiSlowPathCheck(M, TypeTest, CrossDsoTypeId, CastedVTable, StaticData);
     return;
   }
 
   if (CGM.getCodeGenOpts().SanitizeTrap.has(M)) {
-    EmitTrapCheck(BitSetTest);
+    EmitTrapCheck(TypeTest);
     return;
   }
 
   llvm::Value *AllVtables = llvm::MetadataAsValue::get(
       CGM.getLLVMContext(),
       llvm::MDString::get(CGM.getLLVMContext(), "all-vtables"));
-  llvm::Value *ValidVtable =
-      Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::bitset_test),
-                         {CastedVTable, AllVtables});
-  EmitCheck(std::make_pair(BitSetTest, M), "cfi_check_fail", StaticData,
+  llvm::Value *ValidVtable = Builder.CreateCall(
+      CGM.getIntrinsic(llvm::Intrinsic::type_test), {CastedVTable, AllVtables});
+  EmitCheck(std::make_pair(TypeTest, M), "cfi_check_fail", StaticData,
             {CastedVTable, ValidVtable});
 }
 
