@@ -9,14 +9,14 @@ i8* null,
 i8* bitcast (i1 (i8*)* @vf0i1 to i8*),
 i8* bitcast (i1 (i8*)* @vf1i1 to i8*),
 i8* bitcast (i32 (i8*)* @vf1i32 to i8*)
-]
+], !type !1
 
 ; CHECK: [[VT2DATA:@[^ ]*]] = private constant { [0 x i8], [3 x i8*], [8 x i8] } { [0 x i8] zeroinitializer, [3 x i8*] [i8* bitcast (i1 (i8*)* @vf1i1 to i8*), i8* bitcast (i1 (i8*)* @vf0i1 to i8*), i8* bitcast (i32 (i8*)* @vf2i32 to i8*)], [8 x i8] c"\02\00\00\00\02\00\00\00" }
 @vt2 = constant [3 x i8*] [
 i8* bitcast (i1 (i8*)* @vf1i1 to i8*),
 i8* bitcast (i1 (i8*)* @vf0i1 to i8*),
 i8* bitcast (i32 (i8*)* @vf2i32 to i8*)
-]
+], !type !0
 
 ; CHECK: [[VT3DATA:@[^ ]*]] = private constant { [0 x i8], [4 x i8*], [8 x i8] } { [0 x i8] zeroinitializer, [4 x i8*] [i8* null, i8* bitcast (i1 (i8*)* @vf0i1 to i8*), i8* bitcast (i1 (i8*)* @vf1i1 to i8*), i8* bitcast (i32 (i8*)* @vf3i32 to i8*)], [8 x i8] c"\03\00\00\00\01\00\00\00" }
 @vt3 = constant [4 x i8*] [
@@ -24,14 +24,14 @@ i8* null,
 i8* bitcast (i1 (i8*)* @vf0i1 to i8*),
 i8* bitcast (i1 (i8*)* @vf1i1 to i8*),
 i8* bitcast (i32 (i8*)* @vf3i32 to i8*)
-]
+], !type !1
 
 ; CHECK: [[VT4DATA:@[^ ]*]] = private constant { [0 x i8], [3 x i8*], [8 x i8] } { [0 x i8] zeroinitializer, [3 x i8*] [i8* bitcast (i1 (i8*)* @vf1i1 to i8*), i8* bitcast (i1 (i8*)* @vf0i1 to i8*), i8* bitcast (i32 (i8*)* @vf4i32 to i8*)], [8 x i8] c"\04\00\00\00\02\00\00\00" }
 @vt4 = constant [3 x i8*] [
 i8* bitcast (i1 (i8*)* @vf1i1 to i8*),
 i8* bitcast (i1 (i8*)* @vf0i1 to i8*),
 i8* bitcast (i32 (i8*)* @vf4i32 to i8*)
-]
+], !type !0
 
 ; CHECK: @vt1 = alias [4 x i8*], getelementptr inbounds ({ [0 x i8], [4 x i8*], [8 x i8] }, { [0 x i8], [4 x i8*], [8 x i8] }* [[VT1DATA]], i32 0, i32 1)
 ; CHECK: @vt2 = alias [3 x i8*], getelementptr inbounds ({ [0 x i8], [3 x i8*], [8 x i8] }, { [0 x i8], [3 x i8*], [8 x i8] }* [[VT2DATA]], i32 0, i32 1)
@@ -68,7 +68,7 @@ define i1 @call1(i8* %obj) {
   %vtable = load [3 x i8*]*, [3 x i8*]** %vtableptr
   ; CHECK: [[VT1:%[^ ]*]] = bitcast [3 x i8*]* {{.*}} to i8*
   %vtablei8 = bitcast [3 x i8*]* %vtable to i8*
-  %p = call i1 @llvm.bitset.test(i8* %vtablei8, metadata !"bitset")
+  %p = call i1 @llvm.type.test(i8* %vtablei8, metadata !"typeid")
   call void @llvm.assume(i1 %p)
   %fptrptr = getelementptr [3 x i8*], [3 x i8*]* %vtable, i32 0, i32 0
   %fptr = load i8*, i8** %fptrptr
@@ -88,7 +88,7 @@ define i1 @call2(i8* %obj) {
   %vtable = load [3 x i8*]*, [3 x i8*]** %vtableptr
   ; CHECK: [[VT2:%[^ ]*]] = bitcast [3 x i8*]* {{.*}} to i8*
   %vtablei8 = bitcast [3 x i8*]* %vtable to i8*
-  %p = call i1 @llvm.bitset.test(i8* %vtablei8, metadata !"bitset")
+  %p = call i1 @llvm.type.test(i8* %vtablei8, metadata !"typeid")
   call void @llvm.assume(i1 %p)
   %fptrptr = getelementptr [3 x i8*], [3 x i8*]* %vtable, i32 0, i32 1
   %fptr = load i8*, i8** %fptrptr
@@ -108,7 +108,7 @@ define i32 @call3(i8* %obj) {
   %vtable = load [3 x i8*]*, [3 x i8*]** %vtableptr
   ; CHECK: [[VT3:%[^ ]*]] = bitcast [3 x i8*]* {{.*}} to i8*
   %vtablei8 = bitcast [3 x i8*]* %vtable to i8*
-  %p = call i1 @llvm.bitset.test(i8* %vtablei8, metadata !"bitset")
+  %p = call i1 @llvm.type.test(i8* %vtablei8, metadata !"typeid")
   call void @llvm.assume(i1 %p)
   %fptrptr = getelementptr [3 x i8*], [3 x i8*]* %vtable, i32 0, i32 2
   %fptr = load i8*, i8** %fptrptr
@@ -121,11 +121,8 @@ define i32 @call3(i8* %obj) {
   ret i32 %result
 }
 
-declare i1 @llvm.bitset.test(i8*, metadata)
+declare i1 @llvm.type.test(i8*, metadata)
 declare void @llvm.assume(i1)
 
-!0 = !{!"bitset", [4 x i8*]* @vt1, i32 8}
-!1 = !{!"bitset", [3 x i8*]* @vt2, i32 0}
-!2 = !{!"bitset", [4 x i8*]* @vt3, i32 8}
-!3 = !{!"bitset", [3 x i8*]* @vt4, i32 0}
-!llvm.bitsets = !{!0, !1, !2, !3}
+!0 = !{i32 0, !"typeid"}
+!1 = !{i32 8, !"typeid"}

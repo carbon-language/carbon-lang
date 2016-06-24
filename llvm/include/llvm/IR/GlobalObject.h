@@ -21,6 +21,7 @@
 namespace llvm {
 class Comdat;
 class MDNode;
+class Metadata;
 class Module;
 
 class GlobalObject : public GlobalValue {
@@ -114,8 +115,10 @@ public:
   /// Erase all metadata attachments with the given kind.
   void eraseMetadata(unsigned KindID);
 
-  /// Copy metadata from Src.
-  void copyMetadata(const GlobalObject *Src);
+  /// Copy metadata from Src, adjusting offsets by Offset.
+  void copyMetadata(const GlobalObject *Src, unsigned Offset);
+
+  void addTypeMetadata(unsigned Offset, Metadata *TypeID);
 
   void copyAttributesFrom(const GlobalValue *Src) override;
 

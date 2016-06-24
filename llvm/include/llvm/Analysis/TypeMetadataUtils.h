@@ -1,4 +1,4 @@
-//===- BitSetUtils.h - Utilities related to pointer bitsets ------*- C++ -*-==//
+//===- TypeMetadataUtils.h - Utilities related to type metadata --*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains functions that make it easier to manipulate bitsets for
-// devirtualization.
+// This file contains functions that make it easier to manipulate type metadata
+// for devirtualization.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_BITSETUTILS_H
-#define LLVM_ANALYSIS_BITSETUTILS_H
+#ifndef LLVM_ANALYSIS_TYPEMETADATAUTILS_H
+#define LLVM_ANALYSIS_TYPEMETADATAUTILS_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/CallSite.h"
@@ -28,7 +28,7 @@ struct DevirtCallSite {
   CallSite CS;
 };
 
-/// Given a call to the intrinsic @llvm.bitset.test, find all devirtualizable
+/// Given a call to the intrinsic @llvm.type.test, find all devirtualizable
 /// call sites based on the call and return them in DevirtCalls.
 void findDevirtualizableCalls(SmallVectorImpl<DevirtCallSite> &DevirtCalls,
                               SmallVectorImpl<CallInst *> &Assumes,

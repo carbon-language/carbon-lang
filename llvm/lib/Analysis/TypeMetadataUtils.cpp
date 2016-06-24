@@ -1,4 +1,4 @@
-//===- BitSetUtils.cpp - Utilities related to pointer bitsets -------------===//
+//===- TypeMetadataUtils.cpp - Utilities related to type metadata ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains functions that make it easier to manipulate bitsets for
-// devirtualization.
+// This file contains functions that make it easier to manipulate type metadata
+// for devirtualization.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/BitSetUtils.h"
+#include "llvm/Analysis/TypeMetadataUtils.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 
@@ -60,11 +60,11 @@ findLoadCallsAtConstantOffset(Module *M,
 void llvm::findDevirtualizableCalls(
     SmallVectorImpl<DevirtCallSite> &DevirtCalls,
     SmallVectorImpl<CallInst *> &Assumes, CallInst *CI) {
-  assert(CI->getCalledFunction()->getIntrinsicID() == Intrinsic::bitset_test);
+  assert(CI->getCalledFunction()->getIntrinsicID() == Intrinsic::type_test);
 
   Module *M = CI->getParent()->getParent()->getParent();
 
-  // Find llvm.assume intrinsics for this llvm.bitset.test call.
+  // Find llvm.assume intrinsics for this llvm.type.test call.
   for (const Use &CIU : CI->uses()) {
     auto AssumeCI = dyn_cast<CallInst>(CIU.getUser());
     if (AssumeCI) {

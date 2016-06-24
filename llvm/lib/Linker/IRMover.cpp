@@ -641,7 +641,7 @@ GlobalValue *IRLinker::copyGlobalValueProto(const GlobalValue *SGV,
   if (auto *NewGO = dyn_cast<GlobalObject>(NewGV)) {
     // Metadata for global variables and function declarations is copied eagerly.
     if (isa<GlobalVariable>(SGV) || SGV->isDeclaration())
-      NewGO->copyMetadata(cast<GlobalObject>(SGV));
+      NewGO->copyMetadata(cast<GlobalObject>(SGV), 0);
   }
 
   // Remove these copied constants in case this stays a declaration, since
@@ -967,7 +967,7 @@ Error IRLinker::linkFunctionBody(Function &Dst, Function &Src) {
     Dst.setPersonalityFn(Src.getPersonalityFn());
 
   // Copy over the metadata attachments without remapping.
-  Dst.copyMetadata(&Src);
+  Dst.copyMetadata(&Src, 0);
 
   // Steal arguments and splice the body of Src into Dst.
   Dst.stealArgumentListFrom(Src);
