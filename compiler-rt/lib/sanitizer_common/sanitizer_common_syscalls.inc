@@ -2840,6 +2840,40 @@ PRE_SYSCALL(vfork)() {
 POST_SYSCALL(vfork)(long res) {
   COMMON_SYSCALL_POST_FORK(res);
 }
+
+PRE_SYSCALL(sigaction)(long signum, const __sanitizer_kernel_sigaction_t *act,
+                       __sanitizer_kernel_sigaction_t *oldact) {
+  if (act) {
+    PRE_READ(&act->sigaction, sizeof(act->sigaction));
+    PRE_READ(&act->sa_flags, sizeof(act->sa_flags));
+    PRE_READ(&act->sa_mask, sizeof(act->sa_mask));
+  }
+}
+
+POST_SYSCALL(sigaction)(long res, long signum,
+                        const __sanitizer_kernel_sigaction_t *act,
+                        __sanitizer_kernel_sigaction_t *oldact) {
+  if (res >= 0 && oldact) POST_WRITE(oldact, sizeof(*oldact));
+}
+
+PRE_SYSCALL(rt_sigaction)(long signum,
+                          const __sanitizer_kernel_sigaction_t *act,
+                          __sanitizer_kernel_sigaction_t *oldact, SIZE_T sz) {
+  if (act) {
+    PRE_READ(&act->sigaction, sizeof(act->sigaction));
+    PRE_READ(&act->sa_flags, sizeof(act->sa_flags));
+    PRE_READ(&act->sa_mask, sz);
+  }
+}
+
+POST_SYSCALL(rt_sigaction)(long res, long signum,
+                           const __sanitizer_kernel_sigaction_t *act,
+                           __sanitizer_kernel_sigaction_t *oldact, SIZE_T sz) {
+  if (res >= 0 && oldact) {
+    SIZE_T oldact_sz = ((char *)&oldact->sa_mask) - ((char *)oldact) + sz;
+    POST_WRITE(oldact, oldact_sz);
+  }
+}
 }  // extern "C"
 
 #undef PRE_SYSCALL
