@@ -395,15 +395,18 @@ public:
     return addAtMerging(ToAdd, Below);
   }
 
-  /// \brief Set the StratifiedAttrs of the set below "Main". If there is no set
-  /// below "Main", create one for it.
-  void addAttributesBelow(const T &Main, StratifiedAttrs Attr) {
+  /// \brief Set the StratifiedAttrs of the set "Level"-levels below "Main". If
+  /// there is no set below "Main", create one for it.
+  void addAttributesBelow(const T &Main, unsigned Level, StratifiedAttrs Attr) {
     assert(has(Main));
     auto Index = *indexOf(Main);
-    auto Link = linksAt(Index);
+    auto *Link = &linksAt(Index);
 
-    auto BelowIndex = Link.hasBelow() ? Link.getBelow() : addLinkBelow(Index);
-    linksAt(BelowIndex).setAttrs(Attr);
+    for (unsigned I = 0; I < Level; ++I) {
+      Index = Link->hasBelow() ? Link->getBelow() : addLinkBelow(Index);
+      Link = &linksAt(Index);
+    }
+    Link->setAttrs(Attr);
   }
 
   bool addWith(const T &Main, const T &ToAdd) {

@@ -90,12 +90,22 @@ struct ExternalRelation {
   InterfaceValue From, To;
 };
 
+/// We use ExternalAttribute to describe an externally visible StratifiedAttrs
+/// for parameters/return value.
+struct ExternalAttribute {
+  InterfaceValue IValue;
+  StratifiedAttrs Attr;
+};
+
 /// Information we have about a function and would like to keep around.
 class CFLAAResult::FunctionInfo {
   StratifiedSets<Value *> Sets;
 
   // RetParamRelations is a collection of ExternalRelations.
   SmallVector<ExternalRelation, 8> RetParamRelations;
+
+  // RetParamAttributes is a collection of ExternalAttributes.
+  SmallVector<ExternalAttribute, 8> RetParamAttributes;
 
 public:
   FunctionInfo(Function &Fn, const SmallVectorImpl<Value *> &RetVals,
@@ -104,6 +114,9 @@ public:
   const StratifiedSets<Value *> &getStratifiedSets() const { return Sets; }
   const SmallVectorImpl<ExternalRelation> &getRetParamRelations() const {
     return RetParamRelations;
+  }
+  const SmallVectorImpl<ExternalAttribute> &getRetParamAttributes() const {
+    return RetParamAttributes;
   }
 };
 
@@ -120,19 +133,22 @@ const StratifiedIndex StratifiedLink::SetSentinel =
 
 namespace {
 /// StratifiedInfo Attribute things.
-typedef unsigned StratifiedAttr;
 LLVM_CONSTEXPR unsigned MaxStratifiedAttrIndex = NumStratifiedAttrs;
 LLVM_CONSTEXPR unsigned AttrEscapedIndex = 0;
 LLVM_CONSTEXPR unsigned AttrUnknownIndex = 1;
 LLVM_CONSTEXPR unsigned AttrGlobalIndex = 2;
-LLVM_CONSTEXPR unsigned AttrFirstArgIndex = 3;
+LLVM_CONSTEXPR unsigned AttrCallerIndex = 3;
+LLVM_CONSTEXPR unsigned AttrFirstArgIndex = 4;
 LLVM_CONSTEXPR unsigned AttrLastArgIndex = MaxStratifiedAttrIndex;
 LLVM_CONSTEXPR unsigned AttrMaxNumArgs = AttrLastArgIndex - AttrFirstArgIndex;
 
-LLVM_CONSTEXPR StratifiedAttr AttrNone = 0;
-LLVM_CONSTEXPR StratifiedAttr AttrEscaped = 1 << AttrEscapedIndex;
-LLVM_CONSTEXPR StratifiedAttr AttrUnknown = 1 << AttrUnknownIndex;
-LLVM_CONSTEXPR StratifiedAttr AttrGlobal = 1 << AttrGlobalIndex;
+LLVM_CONSTEXPR StratifiedAttrs AttrNone = 0;
+LLVM_CONSTEXPR StratifiedAttrs AttrEscaped = 1 << AttrEscapedIndex;
+LLVM_CONSTEXPR StratifiedAttrs AttrUnknown = 1 << AttrUnknownIndex;
+LLVM_CONSTEXPR StratifiedAttrs AttrGlobal = 1 << AttrGlobalIndex;
+LLVM_CONSTEXPR StratifiedAttrs AttrCaller = 1 << AttrCallerIndex;
+LLVM_CONSTEXPR StratifiedAttrs ExternalAttrMask =
+    (1 << AttrEscapedIndex) | (1 << AttrUnknownIndex) | (1 << AttrGlobalIndex);
 
 /// The maximum number of arguments we can put into a summary.
 LLVM_CONSTEXPR unsigned MaxSupportedArgsInSummary = 50;
@@ -261,14 +277,21 @@ public:
   std::size_t size() const { return NodeImpls.size(); }
 };
 
+// This is the result of instantiating InterfaceValue at a particular callsite
+struct InterprocNode {
+  Value *Val;
+  unsigned DerefLevel;
+};
+
 // Interprocedural assignment edges that CFLGraph may not easily model
 struct InterprocEdge {
-  struct Node {
-    Value *Val;
-    unsigned DerefLevel;
-  };
+  InterprocNode From, To;
+};
 
-  Node From, To;
+// Interprocedural attribute tagging that CFLGraph may not easily model
+struct InterprocAttr {
+  InterprocNode Node;
+  StratifiedAttrs Attr;
 };
 
 /// Gets the edges our graph should have, based on an Instruction*
@@ -277,9 +300,11 @@ class GetEdgesVisitor : public InstVisitor<GetEdgesVisitor, void> {
   const TargetLibraryInfo &TLI;
 
   CFLGraph &Graph;
+  SmallVectorImpl<Value *> &ReturnValues;
   SmallPtrSetImpl<Value *> &Externals;
   SmallPtrSetImpl<Value *> &Escapes;
   SmallVectorImpl<InterprocEdge> &InterprocEdges;
+  SmallVectorImpl<InterprocAttr> &InterprocAttrs;
 
   static bool hasUsefulEdges(ConstantExpr *CE) {
     // ConstantExpr doesn't have terminators, invokes, or fences, so only needs
@@ -315,14 +340,26 @@ class GetEdgesVisitor : public InstVisitor<GetEdgesVisitor, void> {
 
 public:
   GetEdgesVisitor(CFLAAResult &AA, const TargetLibraryInfo &TLI,
-                  CFLGraph &Graph, SmallPtrSetImpl<Value *> &Externals,
+                  CFLGraph &Graph, SmallVectorImpl<Value *> &ReturnValues,
+                  SmallPtrSetImpl<Value *> &Externals,
                   SmallPtrSetImpl<Value *> &Escapes,
-                  SmallVectorImpl<InterprocEdge> &InterprocEdges)
-      : AA(AA), TLI(TLI), Graph(Graph), Externals(Externals), Escapes(Escapes),
-        InterprocEdges(InterprocEdges) {}
+                  SmallVectorImpl<InterprocEdge> &InterprocEdges,
+                  SmallVectorImpl<InterprocAttr> &InterprocAttrs)
+      : AA(AA), TLI(TLI), Graph(Graph), ReturnValues(ReturnValues),
+        Externals(Externals), Escapes(Escapes), InterprocEdges(InterprocEdges),
+        InterprocAttrs(InterprocAttrs) {}
 
   void visitInstruction(Instruction &) {
     llvm_unreachable("Unsupported instruction encountered");
+  }
+
+  void visitReturnInst(ReturnInst &Inst) {
+    if (auto RetVal = Inst.getReturnValue()) {
+      if (RetVal->getType()->isPointerTy()) {
+        addNode(RetVal);
+        ReturnValues.push_back(RetVal);
+      }
+    }
   }
 
   void visitPtrToIntInst(PtrToIntInst &Inst) {
@@ -427,25 +464,34 @@ public:
         return false;
     }
 
+    auto InstantiateInterfaceIndex = [&CS](unsigned Index) {
+      auto Value =
+          (Index == 0) ? CS.getInstruction() : CS.getArgument(Index - 1);
+      return Value->getType()->isPointerTy() ? Value : nullptr;
+    };
+
     for (auto *Fn : Fns) {
       auto &FnInfo = AA.ensureCached(Fn);
       assert(FnInfo.hasValue());
 
       auto &RetParamRelations = FnInfo->getRetParamRelations();
       for (auto &Relation : RetParamRelations) {
-        auto FromIndex = Relation.From.Index;
-        auto ToIndex = Relation.To.Index;
-        auto FromVal = (FromIndex == 0) ? CS.getInstruction()
-                                        : CS.getArgument(FromIndex - 1);
-        auto ToVal =
-            (ToIndex == 0) ? CS.getInstruction() : CS.getArgument(ToIndex - 1);
-        if (FromVal->getType()->isPointerTy() &&
-            ToVal->getType()->isPointerTy()) {
+        auto FromVal = InstantiateInterfaceIndex(Relation.From.Index);
+        auto ToVal = InstantiateInterfaceIndex(Relation.To.Index);
+        if (FromVal && ToVal) {
           auto FromLevel = Relation.From.DerefLevel;
           auto ToLevel = Relation.To.DerefLevel;
           InterprocEdges.push_back(
-              InterprocEdge{InterprocEdge::Node{FromVal, FromLevel},
-                            InterprocEdge::Node{ToVal, ToLevel}});
+              InterprocEdge{InterprocNode{FromVal, FromLevel},
+                            InterprocNode{ToVal, ToLevel}});
+        }
+      }
+
+      auto &RetParamAttributes = FnInfo->getRetParamAttributes();
+      for (auto &Attribute : RetParamAttributes) {
+        if (auto Val = InstantiateInterfaceIndex(Attribute.IValue.Index)) {
+          InterprocAttrs.push_back(InterprocAttr{
+              InterprocNode{Val, Attribute.IValue.DerefLevel}, Attribute.Attr});
         }
       }
     }
@@ -564,16 +610,18 @@ class CFLGraphBuilder {
   SmallPtrSet<Value *, 8> ExternalValues;
   SmallPtrSet<Value *, 8> EscapedValues;
   SmallVector<InterprocEdge, 8> InterprocEdges;
+  SmallVector<InterprocAttr, 8> InterprocAttrs;
 
   // Helper functions
 
   // Determines whether or not we an instruction is useless to us (e.g.
   // FenceInst)
   static bool hasUsefulEdges(Instruction *Inst) {
-    bool IsNonInvokeTerminator =
-        isa<TerminatorInst>(Inst) && !isa<InvokeInst>(Inst);
+    bool IsNonInvokeRetTerminator = isa<TerminatorInst>(Inst) &&
+                                    !isa<InvokeInst>(Inst) &&
+                                    !isa<ReturnInst>(Inst);
     return !isa<CmpInst>(Inst) && !isa<FenceInst>(Inst) &&
-           !IsNonInvokeTerminator;
+           !IsNonInvokeRetTerminator;
   }
 
   void addArgumentToGraph(Argument &Arg) {
@@ -590,18 +638,11 @@ class CFLGraphBuilder {
   // addInstructionToGraph would add both the `load` and `getelementptr`
   // instructions to the graph appropriately.
   void addInstructionToGraph(Instruction &Inst) {
-    // We don't want the edges of most "return" instructions, but we *do* want
-    // to know what can be returned.
-    if (auto RetInst = dyn_cast<ReturnInst>(&Inst))
-      if (auto RetVal = RetInst->getReturnValue())
-        if (RetVal->getType()->isPointerTy())
-          ReturnedValues.push_back(RetVal);
-
     if (!hasUsefulEdges(&Inst))
       return;
 
-    GetEdgesVisitor(Analysis, TLI, Graph, ExternalValues, EscapedValues,
-                    InterprocEdges)
+    GetEdgesVisitor(Analysis, TLI, Graph, ReturnedValues, ExternalValues,
+                    EscapedValues, InterprocEdges, InterprocAttrs)
         .visit(Inst);
   }
 
@@ -636,6 +677,9 @@ public:
   const SmallVector<InterprocEdge, 8> &getInterprocEdges() const {
     return InterprocEdges;
   }
+  const SmallVector<InterprocAttr, 8> &getInterprocAttrs() const {
+    return InterprocAttrs;
+  }
 };
 }
 
@@ -652,10 +696,10 @@ static bool isGlobalOrArgAttr(StratifiedAttrs Attr);
 static bool isUnknownAttr(StratifiedAttrs Attr);
 
 /// Given an argument number, returns the appropriate StratifiedAttr to set.
-static StratifiedAttr argNumberToAttr(unsigned ArgNum);
+static StratifiedAttrs argNumberToAttr(unsigned ArgNum);
 
 /// Given a Value, potentially return which StratifiedAttr it maps to.
-static Optional<StratifiedAttr> valueToAttr(Value *Val);
+static Optional<StratifiedAttrs> valueToAttr(Value *Val);
 
 /// Gets the "Level" that one should travel in StratifiedSets
 /// given an EdgeType.
@@ -688,14 +732,17 @@ static bool getPossibleTargets(CallSite CS,
 }
 
 static bool isGlobalOrArgAttr(StratifiedAttrs Attr) {
-  return Attr.reset(AttrEscapedIndex).reset(AttrUnknownIndex).any();
+  return Attr.reset(AttrEscapedIndex)
+      .reset(AttrUnknownIndex)
+      .reset(AttrCallerIndex)
+      .any();
 }
 
 static bool isUnknownAttr(StratifiedAttrs Attr) {
-  return Attr.test(AttrUnknownIndex);
+  return Attr.test(AttrUnknownIndex) || Attr.test(AttrCallerIndex);
 }
 
-static Optional<StratifiedAttr> valueToAttr(Value *Val) {
+static Optional<StratifiedAttrs> valueToAttr(Value *Val) {
   if (isa<GlobalValue>(Val))
     return AttrGlobal;
 
@@ -708,10 +755,10 @@ static Optional<StratifiedAttr> valueToAttr(Value *Val) {
   return None;
 }
 
-static StratifiedAttr argNumberToAttr(unsigned ArgNum) {
+static StratifiedAttrs argNumberToAttr(unsigned ArgNum) {
   if (ArgNum >= AttrMaxNumArgs)
     return AttrUnknown;
-  return 1 << (ArgNum + AttrFirstArgIndex);
+  return StratifiedAttrs(1 << (ArgNum + AttrFirstArgIndex));
 }
 
 static Level directionOfEdgeType(EdgeType Weight) {
@@ -764,6 +811,7 @@ CFLAAResult::FunctionInfo::FunctionInfo(Function &Fn,
   // in InterfaceMap: if it is not, we add the correspondence to the map;
   // otherwise, an aliasing relation is found and we add it to
   // RetParamRelations.
+
   auto AddToRetParamRelations = [&](unsigned InterfaceIndex,
                                     StratifiedIndex SetIndex) {
     unsigned Level = 0;
@@ -775,10 +823,15 @@ CFLAAResult::FunctionInfo::FunctionInfo(Function &Fn,
         if (CurrValue != Itr->second)
           RetParamRelations.push_back(ExternalRelation{CurrValue, Itr->second});
         break;
-      } else
-        InterfaceMap.insert(std::make_pair(SetIndex, CurrValue));
+      }
 
       auto &Link = Sets.getLink(SetIndex);
+      InterfaceMap.insert(std::make_pair(SetIndex, CurrValue));
+      auto ExternalAttrs = Link.Attrs & ExternalAttrMask;
+      if (ExternalAttrs.any())
+        RetParamAttributes.push_back(
+            ExternalAttribute{CurrValue, ExternalAttrs});
+
       if (!Link.hasBelow())
         break;
 
@@ -789,6 +842,8 @@ CFLAAResult::FunctionInfo::FunctionInfo(Function &Fn,
 
   // Populate RetParamRelations for return values
   for (auto *RetVal : RetVals) {
+    assert(RetVal != nullptr);
+    assert(RetVal->getType()->isPointerTy());
     auto RetInfo = Sets.find(RetVal);
     if (RetInfo.hasValue())
       AddToRetParamRelations(0, RetInfo->Index);
@@ -856,7 +911,10 @@ CFLAAResult::FunctionInfo CFLAAResult::buildSetsFrom(Function *Fn) {
     auto Attr = valueToAttr(External);
     if (Attr.hasValue()) {
       SetBuilder.noteAttributes(External, *Attr);
-      SetBuilder.addAttributesBelow(External, AttrUnknown);
+      if (*Attr == AttrGlobal)
+        SetBuilder.addAttributesBelow(External, 1, AttrUnknown);
+      else
+        SetBuilder.addAttributesBelow(External, 1, AttrCaller);
     }
   }
 
@@ -870,11 +928,18 @@ CFLAAResult::FunctionInfo CFLAAResult::buildSetsFrom(Function *Fn) {
                             Edge.To.DerefLevel);
   }
 
+  // Special handling for interprocedural attributes
+  for (auto &IPAttr : GraphBuilder.getInterprocAttrs()) {
+    auto Val = IPAttr.Node.Val;
+    SetBuilder.add(Val);
+    SetBuilder.addAttributesBelow(Val, IPAttr.Node.DerefLevel, IPAttr.Attr);
+  }
+
   // Special handling for opaque external functions
   for (auto *Escape : GraphBuilder.getEscapedValues()) {
     SetBuilder.add(Escape);
     SetBuilder.noteAttributes(Escape, AttrEscaped);
-    SetBuilder.addAttributesBelow(Escape, AttrUnknown);
+    SetBuilder.addAttributesBelow(Escape, 1, AttrUnknown);
   }
 
   return FunctionInfo(*Fn, GraphBuilder.getReturnValues(), SetBuilder.build());
