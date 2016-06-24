@@ -456,14 +456,23 @@ simplifyAndDCEInstruction(Instruction *I,
   if (Value *SimpleV = SimplifyInstruction(I, DL)) {
     // Add the users to the worklist. CAREFUL: an instruction can use itself,
     // in the case of a phi node.
-    for (User *U : I->users())
-      if (U != I)
+    for (User *U : I->users()) {
+      if (U != I) {
         WorkList.insert(cast<Instruction>(U));
+      }
+    }
 
     // Replace the instruction with its simplified value.
-    I->replaceAllUsesWith(SimpleV);
-    I->eraseFromParent();
-    return true;
+    bool Changed = false;
+    if (!I->use_empty()) {
+      I->replaceAllUsesWith(SimpleV);
+      Changed = true;
+    }
+    if (isInstructionTriviallyDead(I, TLI)) {
+      I->eraseFromParent();
+      Changed = true;
+    }
+    return Changed;
   }
   return false;
 }

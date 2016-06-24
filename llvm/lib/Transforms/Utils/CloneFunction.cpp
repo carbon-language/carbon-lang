@@ -279,6 +279,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
        II != IE; ++II) {
 
     Instruction *NewInst = II->clone();
+    VMap[&*II] = NewInst; // Add instruction map to value.
 
     // Eagerly remap operands to the newly cloned instruction, except for PHI
     // nodes for which we defer processing until we update the CFG.
@@ -297,14 +298,15 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
           V = MappedV;
 
         VMap[&*II] = V;
-        delete NewInst;
-        continue;
+        if (!NewInst->mayHaveSideEffects()) {
+          delete NewInst;
+          continue;
+        }
       }
     }
 
     if (II->hasName())
       NewInst->setName(II->getName()+NameSuffix);
-    VMap[&*II] = NewInst; // Add instruction map to value.
     NewBB->getInstList().push_back(NewInst);
     hasCalls |= (isa<CallInst>(II) && !isa<DbgInfoIntrinsic>(II));
 
