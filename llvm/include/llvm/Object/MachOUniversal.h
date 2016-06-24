@@ -88,7 +88,7 @@ public:
       if (Parent->getMagic() == MachO::FAT_MAGIC)
         return 0;
       else // Parent->getMagic() == MachO::FAT_MAGIC_64
-        return Header64.align;
+        return Header64.reserved;
     }
     std::string getArchTypeName() const {
       if (Parent->getMagic() == MachO::FAT_MAGIC) {
