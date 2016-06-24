@@ -207,8 +207,8 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
             MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(
                 SymToPrint);
         if (!StubSym.getPointer())
-          StubSym = MachineModuleInfoImpl::
-            StubValueTy(getSymbol(GV), !GV->hasInternalLinkage());
+          StubSym = MachineModuleInfoImpl::StubValueTy(
+              getSymbol(GV), !GV->hasInternalLinkage());
       } else if (GV->isDeclaration() || GV->hasCommonLinkage() ||
                  GV->hasAvailableExternallyLinkage()) {
         SymToPrint = getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
@@ -217,8 +217,8 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
             MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(
                 SymToPrint);
         if (!StubSym.getPointer())
-          StubSym = MachineModuleInfoImpl::
-            StubValueTy(getSymbol(GV), !GV->hasInternalLinkage());
+          StubSym = MachineModuleInfoImpl::StubValueTy(
+              getSymbol(GV), !GV->hasInternalLinkage());
       } else {
         SymToPrint = getSymbol(GV);
       }
