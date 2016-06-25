@@ -12,7 +12,6 @@ declare i32 @fn()
 ; CHECK-LABEL: @f1(
 define i8* @f1() nounwind uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
-; CHECK: call void @llvm.trap()
 ; CHECK: unreachable
   %call = invoke noalias i8* undef()
           to label %invoke.cont unwind label %lpad
@@ -31,7 +30,6 @@ lpad:
 ; CHECK-LABEL: @f2(
 define i8* @f2() nounwind uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
-; CHECK: call void @llvm.trap()
 ; CHECK: unreachable
   %call = invoke noalias i8* null()
           to label %invoke.cont unwind label %lpad

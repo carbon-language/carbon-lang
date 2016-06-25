@@ -258,7 +258,7 @@ void PruneEH::DeleteBasicBlock(BasicBlock *BB) {
 
   if (TokenInst) {
     if (!isa<TerminatorInst>(TokenInst))
-      changeToUnreachable(TokenInst->getNextNode(), /*UseLLVMTrap=*/false);
+      changeToUnreachable(TokenInst->getNextNode());
   } else {
     // Get the list of successors of this block.
     std::vector<BasicBlock *> Succs(succ_begin(BB), succ_end(BB));
