@@ -7739,6 +7739,12 @@ static SDValue lowerVectorShuffleAsByteRotate(const SDLoc &DL, MVT VT,
   else if (!Hi)
     Hi = Lo;
 
+  // Cast the inputs to i8 vector of correct length to match PALIGNR or
+  // PSLLDQ/PSRLDQ.
+  MVT ByteVT = MVT::getVectorVT(MVT::i8, 16 * NumLanes);
+  Lo = DAG.getBitcast(ByteVT, Lo);
+  Hi = DAG.getBitcast(ByteVT, Hi);
+
   // The actual rotate instruction rotates bytes, so we need to scale the
   // rotation based on how many bytes are in the vector lane.
   int Scale = 16 / NumLaneElts;
@@ -7747,13 +7753,8 @@ static SDValue lowerVectorShuffleAsByteRotate(const SDLoc &DL, MVT VT,
   if (Subtarget.hasSSSE3()) {
     assert((!VT.is512BitVector() || Subtarget.hasBWI()) &&
            "512-bit PALIGNR requires BWI instructions");
-    // Cast the inputs to i8 vector of correct length to match PALIGNR.
-    MVT AlignVT = MVT::getVectorVT(MVT::i8, 16 * NumLanes);
-    Lo = DAG.getBitcast(AlignVT, Lo);
-    Hi = DAG.getBitcast(AlignVT, Hi);
-
     return DAG.getBitcast(
-        VT, DAG.getNode(X86ISD::PALIGNR, DL, AlignVT, Lo, Hi,
+        VT, DAG.getNode(X86ISD::PALIGNR, DL, ByteVT, Lo, Hi,
                         DAG.getConstant(Rotation * Scale, DL, MVT::i8)));
   }
 
@@ -7761,14 +7762,12 @@ static SDValue lowerVectorShuffleAsByteRotate(const SDLoc &DL, MVT VT,
          "Rotate-based lowering only supports 128-bit lowering!");
   assert(Mask.size() <= 16 &&
          "Can shuffle at most 16 bytes in a 128-bit vector!");
+  assert(ByteVT == MVT::v16i8 &&
+         "SSE2 rotate lowering only needed for v16i8!");
 
   // Default SSE2 implementation
   int LoByteShift = 16 - Rotation * Scale;
   int HiByteShift = Rotation * Scale;
-
-  // Cast the inputs to v16i8 to match PSLLDQ/PSRLDQ.
-  Lo = DAG.getBitcast(MVT::v16i8, Lo);
-  Hi = DAG.getBitcast(MVT::v16i8, Hi);
 
   SDValue LoShift = DAG.getNode(X86ISD::VSHLDQ, DL, MVT::v16i8, Lo,
                                 DAG.getConstant(LoByteShift, DL, MVT::i8));
