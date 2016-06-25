@@ -763,7 +763,7 @@ class GenericSchedulerBase : public MachineSchedStrategy {
 public:
   /// Represent the type of SchedCandidate found within a single queue.
   /// pickNodeBidirectional depends on these listed by decreasing priority.
-  enum CandReason {
+  enum CandReason : uint8_t {
     NoCand, Only1, PhysRegCopy, RegExcess, RegCritical, Stall, Cluster, Weak,
     RegMax, ResourceReduce, ResourceDemand, BotHeightReduce, BotPathReduce,
     TopDepthReduce, TopPathReduce, NextDefUse, NodeOrder};
@@ -811,8 +811,8 @@ public:
     // The reason for this candidate.
     CandReason Reason;
 
-    // Set of reasons that apply to multiple candidates.
-    uint32_t RepeatReasonSet;
+    // Whether this candidate should be scheduled at top/bottom.
+    bool AtTop;
 
     // Register pressure values for the best candidate.
     RegPressureDelta RPDelta;
@@ -821,7 +821,7 @@ public:
     SchedResourceDelta ResDelta;
 
     SchedCandidate(const CandPolicy &policy)
-      : Policy(policy), SU(nullptr), Reason(NoCand), RepeatReasonSet(0) {}
+      : Policy(policy), SU(nullptr), Reason(NoCand), AtTop(false) {}
 
     bool isValid() const { return SU; }
 
@@ -830,12 +830,10 @@ public:
       assert(Best.Reason != NoCand && "uninitialized Sched candidate");
       SU = Best.SU;
       Reason = Best.Reason;
+      AtTop = Best.AtTop;
       RPDelta = Best.RPDelta;
       ResDelta = Best.ResDelta;
     }
-
-    bool isRepeat(CandReason R) { return RepeatReasonSet & (1 << R); }
-    void setRepeat(CandReason R) { RepeatReasonSet |= (1 << R); }
 
     void initResourceDelta(const ScheduleDAGMI *DAG,
                            const TargetSchedModel *SchedModel);
@@ -913,11 +911,12 @@ protected:
 
   void tryCandidate(SchedCandidate &Cand,
                     SchedCandidate &TryCand,
-                    SchedBoundary &Zone);
+                    SchedBoundary *Zone);
 
   SUnit *pickNodeBidirectional(bool &IsTopNode);
 
   void pickNodeFromQueue(SchedBoundary &Zone,
+                         const CandPolicy &ZonePolicy,
                          const RegPressureTracker &RPTracker,
                          SchedCandidate &Candidate);
 
