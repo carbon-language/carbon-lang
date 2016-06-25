@@ -1414,6 +1414,12 @@ static bool markAliveBlocks(Function &F,
       }
 
       if (CallInst *CI = dyn_cast<CallInst>(BBI)) {
+        Value *Callee = CI->getCalledValue();
+        if (isa<ConstantPointerNull>(Callee) || isa<UndefValue>(Callee)) {
+          changeToUnreachable(CI, /*UseLLVMTrap=*/false);
+          Changed = true;
+          break;
+        }
         if (CI->doesNotReturn()) {
           // If we found a call to a no-return function, insert an unreachable
           // instruction after it.  Make sure there isn't *already* one there

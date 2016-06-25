@@ -5388,7 +5388,7 @@ static bool passingValueIsAlwaysUndefined(Value *V, Instruction *I) {
   if (I->use_empty())
     return false;
 
-  if (C->isNullValue()) {
+  if (C->isNullValue() || isa<UndefValue>(C)) {
     // Only look at the first use, avoid hurting compile time with long uselists
     User *Use = *I->user_begin();
 
@@ -5417,6 +5417,10 @@ static bool passingValueIsAlwaysUndefined(Value *V, Instruction *I) {
       if (!SI->isVolatile())
         return SI->getPointerAddressSpace() == 0 &&
                SI->getPointerOperand() == I;
+
+    // A call to null is undefined.
+    if (auto CS = CallSite(Use))
+      return CS.getCalledValue() == I;
   }
   return false;
 }
