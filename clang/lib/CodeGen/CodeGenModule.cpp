@@ -3746,6 +3746,12 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::Namespace:
     EmitNamespace(cast<NamespaceDecl>(D));
     break;
+  case Decl::CXXRecord:
+    // Emit any static data members, they may be definitions.
+    for (auto *I : cast<CXXRecordDecl>(D)->decls())
+      if (isa<VarDecl>(I) || isa<CXXRecordDecl>(I))
+        EmitTopLevelDecl(I);
+    break;
     // No code generation needed.
   case Decl::UsingShadow:
   case Decl::ClassTemplate:

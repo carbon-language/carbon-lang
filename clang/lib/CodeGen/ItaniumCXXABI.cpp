@@ -1905,10 +1905,18 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
                                     bool shouldPerformInit) {
   CGBuilderTy &Builder = CGF.Builder;
 
-  // We only need to use thread-safe statics for local non-TLS variables;
-  // global initialization is always single-threaded.
+  // Inline variables that weren't instantiated from variable templates have
+  // partially-ordered initialization within their translation unit.
+  bool NonTemplateInline =
+      D.isInline() &&
+      !isTemplateInstantiation(D.getTemplateSpecializationKind());
+
+  // We only need to use thread-safe statics for local non-TLS variables and
+  // inline variables; other global initialization is always single-threaded
+  // or (through lazy dynamic loading in multiple threads) unsequenced.
   bool threadsafe = getContext().getLangOpts().ThreadsafeStatics &&
-                    D.isLocalVarDecl() && !D.getTLSKind();
+                    (D.isLocalVarDecl() || NonTemplateInline) &&
+                    !D.getTLSKind();
 
   // If we have a global variable with internal linkage and thread-safe statics
   // are disabled, we can just let the guard variable be of type i8.
@@ -1962,7 +1970,11 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
     if (!D.isLocalVarDecl() && C &&
         CGM.getTarget().getTriple().isOSBinFormatELF()) {
       guard->setComdat(C);
-      CGF.CurFn->setComdat(C);
+      // An inline variable's guard function is run from the per-TU
+      // initialization function, not via a dedicated global ctor function, so
+      // we can't put it in a comdat.
+      if (!NonTemplateInline)
+        CGF.CurFn->setComdat(C);
     } else if (CGM.supportsCOMDAT() && guard->isWeakForLinker()) {
       guard->setComdat(CGM.getModule().getOrInsertComdat(guard->getName()));
     }
