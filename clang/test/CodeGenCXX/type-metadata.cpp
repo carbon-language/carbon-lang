@@ -108,8 +108,8 @@ void D::h() {
 void af(A *a) {
   // TT-ITANIUM: [[P:%[^ ]*]] = call i1 @llvm.type.test(i8* [[VT:%[^ ]*]], metadata !"_ZTS1A")
   // TT-MS: [[P:%[^ ]*]] = call i1 @llvm.type.test(i8* [[VT:%[^ ]*]], metadata !"?AUA@@")
-  // TC-ITANIUM: [[PAIR:%[^ ]*]] = call { i8*, i1 } @llvm.type.checked.load(i8* %2, i32 0, metadata !"_ZTS1A")
-  // TC-MS: [[PAIR:%[^ ]*]] = call { i8*, i1 } @llvm.type.checked.load(i8* %2, i32 0, metadata !"?AUA@@")
+  // TC-ITANIUM: [[PAIR:%[^ ]*]] = call { i8*, i1 } @llvm.type.checked.load(i8* {{%[^ ]*}}, i32 0, metadata !"_ZTS1A")
+  // TC-MS: [[PAIR:%[^ ]*]] = call { i8*, i1 } @llvm.type.checked.load(i8* {{%[^ ]*}}, i32 0, metadata !"?AUA@@")
   // CFI-VT: [[P:%[^ ]*]] = extractvalue { i8*, i1 } [[PAIR]], 1
   // DIAG-NEXT: [[VTVALID0:%[^ ]*]] = call i1 @llvm.type.test(i8* [[VT]], metadata !"all-vtables")
   // VTABLE-OPT: call void @llvm.assume(i1 [[P]])
