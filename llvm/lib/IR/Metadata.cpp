@@ -1369,7 +1369,6 @@ void GlobalObject::clearMetadata() {
   setHasMetadataHashEntry(false);
 }
 
-
 void GlobalObject::setMetadata(unsigned KindID, MDNode *N) {
   eraseMetadata(KindID);
   if (N)

@@ -73,18 +73,19 @@ define i1 @call1(i8* %obj) {
   %vtable = load [3 x i8*]*, [3 x i8*]** %vtableptr
   ; CHECK: [[VT1:%[^ ]*]] = bitcast [3 x i8*]* {{.*}} to i8*
   %vtablei8 = bitcast [3 x i8*]* %vtable to i8*
-  %p = call i1 @llvm.type.test(i8* %vtablei8, metadata !"typeid")
-  call void @llvm.assume(i1 %p)
-  %fptrptr = getelementptr [3 x i8*], [3 x i8*]* %vtable, i32 0, i32 0
-  %fptr = load i8*, i8** %fptrptr
+  %pair = call {i8*, i1} @llvm.type.checked.load(i8* %vtablei8, i32 0, metadata !"typeid")
+  %fptr = extractvalue {i8*, i1} %pair, 0
   %fptr_casted = bitcast i8* %fptr to i1 (i8*)*
   ; CHECK: [[VTGEP1:%[^ ]*]] = getelementptr i8, i8* [[VT1]], i64 -5
   ; CHECK: [[VTLOAD1:%[^ ]*]] = load i8, i8* [[VTGEP1]]
   ; CHECK: [[VTAND1:%[^ ]*]] = and i8 [[VTLOAD1]], 2
   ; CHECK: [[VTCMP1:%[^ ]*]] = icmp ne i8 [[VTAND1]], 0
   %result = call i1 %fptr_casted(i8* %obj)
-  ; CHECK: ret i1 [[VTCMP1]]
-  ret i1 %result
+  ; CHECK: [[AND1:%[^ ]*]] = and i1 [[VTCMP1]], true
+  %p = extractvalue {i8*, i1} %pair, 1
+  %and = and i1 %result, %p
+  ; CHECK: ret i1 [[AND1]]
+  ret i1 %and
 }
 
 ; CHECK: define i1 @call2(
@@ -93,18 +94,19 @@ define i1 @call2(i8* %obj) {
   %vtable = load [3 x i8*]*, [3 x i8*]** %vtableptr
   ; CHECK: [[VT2:%[^ ]*]] = bitcast [3 x i8*]* {{.*}} to i8*
   %vtablei8 = bitcast [3 x i8*]* %vtable to i8*
-  %p = call i1 @llvm.type.test(i8* %vtablei8, metadata !"typeid")
-  call void @llvm.assume(i1 %p)
-  %fptrptr = getelementptr [3 x i8*], [3 x i8*]* %vtable, i32 0, i32 1
-  %fptr = load i8*, i8** %fptrptr
+  %pair = call {i8*, i1} @llvm.type.checked.load(i8* %vtablei8, i32 8, metadata !"typeid")
+  %fptr = extractvalue {i8*, i1} %pair, 0
   %fptr_casted = bitcast i8* %fptr to i1 (i8*)*
   ; CHECK: [[VTGEP2:%[^ ]*]] = getelementptr i8, i8* [[VT2]], i64 -5
   ; CHECK: [[VTLOAD2:%[^ ]*]] = load i8, i8* [[VTGEP2]]
   ; CHECK: [[VTAND2:%[^ ]*]] = and i8 [[VTLOAD2]], 1
   ; CHECK: [[VTCMP2:%[^ ]*]] = icmp ne i8 [[VTAND2]], 0
   %result = call i1 %fptr_casted(i8* %obj)
-  ; CHECK: ret i1 [[VTCMP2]]
-  ret i1 %result
+  ; CHECK: [[AND2:%[^ ]*]] = and i1 [[VTCMP2]], true
+  %p = extractvalue {i8*, i1} %pair, 1
+  %and = and i1 %result, %p
+  ; CHECK: ret i1 [[AND2]]
+  ret i1 %and
 }
 
 ; CHECK: define i32 @call3(
@@ -113,10 +115,8 @@ define i32 @call3(i8* %obj) {
   %vtable = load [3 x i8*]*, [3 x i8*]** %vtableptr
   ; CHECK: [[VT3:%[^ ]*]] = bitcast [3 x i8*]* {{.*}} to i8*
   %vtablei8 = bitcast [3 x i8*]* %vtable to i8*
-  %p = call i1 @llvm.type.test(i8* %vtablei8, metadata !"typeid")
-  call void @llvm.assume(i1 %p)
-  %fptrptr = getelementptr [3 x i8*], [3 x i8*]* %vtable, i32 0, i32 2
-  %fptr = load i8*, i8** %fptrptr
+  %pair = call {i8*, i1} @llvm.type.checked.load(i8* %vtablei8, i32 16, metadata !"typeid")
+  %fptr = extractvalue {i8*, i1} %pair, 0
   %fptr_casted = bitcast i8* %fptr to i32 (i8*)*
   ; CHECK: [[VTGEP3:%[^ ]*]] = getelementptr i8, i8* [[VT3]], i64 -4
   ; CHECK: [[VTBC3:%[^ ]*]] = bitcast i8* [[VTGEP3]] to i32*
@@ -126,7 +126,7 @@ define i32 @call3(i8* %obj) {
   ret i32 %result
 }
 
-declare i1 @llvm.type.test(i8*, metadata)
+declare {i8*, i1} @llvm.type.checked.load(i8*, i32, metadata)
 declare void @llvm.assume(i1)
 declare void @__cxa_pure_virtual()
 

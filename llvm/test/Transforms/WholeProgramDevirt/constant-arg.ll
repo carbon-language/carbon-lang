@@ -4,10 +4,10 @@
 target datalayout = "e-p:64:64"
 target triple = "x86_64-unknown-linux-gnu"
 
-; CHECK: private constant { [8 x i8], [1 x i8*], [0 x i8] } { [8 x i8] c"\00\00\00\00\00\00\00\01", [1 x i8*] [i8* bitcast (i1 (i8*, i32)* @vf1 to i8*)], [0 x i8] zeroinitializer }
-; CHECK: private constant { [8 x i8], [1 x i8*], [0 x i8] } { [8 x i8] c"\00\00\00\00\00\00\00\02", [1 x i8*] [i8* bitcast (i1 (i8*, i32)* @vf2 to i8*)], [0 x i8] zeroinitializer }
-; CHECK: private constant { [8 x i8], [1 x i8*], [0 x i8] } { [8 x i8] c"\00\00\00\00\00\00\00\01", [1 x i8*] [i8* bitcast (i1 (i8*, i32)* @vf4 to i8*)], [0 x i8] zeroinitializer }
-; CHECK: private constant { [8 x i8], [1 x i8*], [0 x i8] } { [8 x i8] c"\00\00\00\00\00\00\00\02", [1 x i8*] [i8* bitcast (i1 (i8*, i32)* @vf8 to i8*)], [0 x i8] zeroinitializer }
+; CHECK: private constant { [8 x i8], [1 x i8*], [0 x i8] } { [8 x i8] c"\00\00\00\00\00\00\00\01", [1 x i8*] [i8* bitcast (i1 (i8*, i32)* @vf1 to i8*)], [0 x i8] zeroinitializer }, !type [[T8:![0-9]+]]
+; CHECK: private constant { [8 x i8], [1 x i8*], [0 x i8] } { [8 x i8] c"\00\00\00\00\00\00\00\02", [1 x i8*] [i8* bitcast (i1 (i8*, i32)* @vf2 to i8*)], [0 x i8] zeroinitializer }, !type [[T8]]
+; CHECK: private constant { [8 x i8], [1 x i8*], [0 x i8] } { [8 x i8] c"\00\00\00\00\00\00\00\01", [1 x i8*] [i8* bitcast (i1 (i8*, i32)* @vf4 to i8*)], [0 x i8] zeroinitializer }, !type [[T8]]
+; CHECK: private constant { [8 x i8], [1 x i8*], [0 x i8] } { [8 x i8] c"\00\00\00\00\00\00\00\02", [1 x i8*] [i8* bitcast (i1 (i8*, i32)* @vf8 to i8*)], [0 x i8] zeroinitializer }, !type [[T8]]
 
 @vt1 = constant [1 x i8*] [i8* bitcast (i1 (i8*, i32)* @vf1 to i8*)], !type !0
 @vt2 = constant [1 x i8*] [i8* bitcast (i1 (i8*, i32)* @vf2 to i8*)], !type !0
@@ -73,4 +73,5 @@ define i1 @call2(i8* %obj) {
 declare i1 @llvm.type.test(i8*, metadata)
 declare void @llvm.assume(i1)
 
+; CHECK: [[T8]] = !{i32 8, !"typeid"}
 !0 = !{i32 0, !"typeid"}

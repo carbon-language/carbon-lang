@@ -30,9 +30,16 @@ struct DevirtCallSite {
 
 /// Given a call to the intrinsic @llvm.type.test, find all devirtualizable
 /// call sites based on the call and return them in DevirtCalls.
-void findDevirtualizableCalls(SmallVectorImpl<DevirtCallSite> &DevirtCalls,
-                              SmallVectorImpl<CallInst *> &Assumes,
-                              CallInst *CI);
+void findDevirtualizableCallsForTypeTest(
+    SmallVectorImpl<DevirtCallSite> &DevirtCalls,
+    SmallVectorImpl<CallInst *> &Assumes, CallInst *CI);
+
+/// Given a call to the intrinsic @llvm.type.checked.load, find all
+/// devirtualizable call sites based on the call and return them in DevirtCalls.
+void findDevirtualizableCallsForTypeCheckedLoad(
+    SmallVectorImpl<DevirtCallSite> &DevirtCalls,
+    SmallVectorImpl<Instruction *> &LoadedPtrs,
+    SmallVectorImpl<Instruction *> &Preds, bool &HasNonCallUses, CallInst *CI);
 }
 
 #endif

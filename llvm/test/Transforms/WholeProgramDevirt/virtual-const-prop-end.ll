@@ -3,7 +3,7 @@
 target datalayout = "e-p:64:64"
 target triple = "x86_64-unknown-linux-gnu"
 
-; CHECK: [[VT1DATA:@[^ ]*]] = private constant { [0 x i8], [4 x i8*], [8 x i8] } { [0 x i8] zeroinitializer, [4 x i8*] [i8* null, i8* bitcast (i1 (i8*)* @vf0i1 to i8*), i8* bitcast (i1 (i8*)* @vf1i1 to i8*), i8* bitcast (i32 (i8*)* @vf1i32 to i8*)], [8 x i8] c"\01\00\00\00\01\00\00\00" }
+; CHECK: [[VT1DATA:@[^ ]*]] = private constant { [0 x i8], [4 x i8*], [8 x i8] } { [0 x i8] zeroinitializer, [4 x i8*] [i8* null, i8* bitcast (i1 (i8*)* @vf0i1 to i8*), i8* bitcast (i1 (i8*)* @vf1i1 to i8*), i8* bitcast (i32 (i8*)* @vf1i32 to i8*)], [8 x i8] c"\01\00\00\00\01\00\00\00" }, !type [[T8:![0-9]+]]
 @vt1 = constant [4 x i8*] [
 i8* null,
 i8* bitcast (i1 (i8*)* @vf0i1 to i8*),
@@ -11,14 +11,14 @@ i8* bitcast (i1 (i8*)* @vf1i1 to i8*),
 i8* bitcast (i32 (i8*)* @vf1i32 to i8*)
 ], !type !1
 
-; CHECK: [[VT2DATA:@[^ ]*]] = private constant { [0 x i8], [3 x i8*], [8 x i8] } { [0 x i8] zeroinitializer, [3 x i8*] [i8* bitcast (i1 (i8*)* @vf1i1 to i8*), i8* bitcast (i1 (i8*)* @vf0i1 to i8*), i8* bitcast (i32 (i8*)* @vf2i32 to i8*)], [8 x i8] c"\02\00\00\00\02\00\00\00" }
+; CHECK: [[VT2DATA:@[^ ]*]] = private constant { [0 x i8], [3 x i8*], [8 x i8] } { [0 x i8] zeroinitializer, [3 x i8*] [i8* bitcast (i1 (i8*)* @vf1i1 to i8*), i8* bitcast (i1 (i8*)* @vf0i1 to i8*), i8* bitcast (i32 (i8*)* @vf2i32 to i8*)], [8 x i8] c"\02\00\00\00\02\00\00\00" }, !type [[T0:![0-9]+]]
 @vt2 = constant [3 x i8*] [
 i8* bitcast (i1 (i8*)* @vf1i1 to i8*),
 i8* bitcast (i1 (i8*)* @vf0i1 to i8*),
 i8* bitcast (i32 (i8*)* @vf2i32 to i8*)
 ], !type !0
 
-; CHECK: [[VT3DATA:@[^ ]*]] = private constant { [0 x i8], [4 x i8*], [8 x i8] } { [0 x i8] zeroinitializer, [4 x i8*] [i8* null, i8* bitcast (i1 (i8*)* @vf0i1 to i8*), i8* bitcast (i1 (i8*)* @vf1i1 to i8*), i8* bitcast (i32 (i8*)* @vf3i32 to i8*)], [8 x i8] c"\03\00\00\00\01\00\00\00" }
+; CHECK: [[VT3DATA:@[^ ]*]] = private constant { [0 x i8], [4 x i8*], [8 x i8] } { [0 x i8] zeroinitializer, [4 x i8*] [i8* null, i8* bitcast (i1 (i8*)* @vf0i1 to i8*), i8* bitcast (i1 (i8*)* @vf1i1 to i8*), i8* bitcast (i32 (i8*)* @vf3i32 to i8*)], [8 x i8] c"\03\00\00\00\01\00\00\00" }, !type [[T8]]
 @vt3 = constant [4 x i8*] [
 i8* null,
 i8* bitcast (i1 (i8*)* @vf0i1 to i8*),
@@ -26,7 +26,7 @@ i8* bitcast (i1 (i8*)* @vf1i1 to i8*),
 i8* bitcast (i32 (i8*)* @vf3i32 to i8*)
 ], !type !1
 
-; CHECK: [[VT4DATA:@[^ ]*]] = private constant { [0 x i8], [3 x i8*], [8 x i8] } { [0 x i8] zeroinitializer, [3 x i8*] [i8* bitcast (i1 (i8*)* @vf1i1 to i8*), i8* bitcast (i1 (i8*)* @vf0i1 to i8*), i8* bitcast (i32 (i8*)* @vf4i32 to i8*)], [8 x i8] c"\04\00\00\00\02\00\00\00" }
+; CHECK: [[VT4DATA:@[^ ]*]] = private constant { [0 x i8], [3 x i8*], [8 x i8] } { [0 x i8] zeroinitializer, [3 x i8*] [i8* bitcast (i1 (i8*)* @vf1i1 to i8*), i8* bitcast (i1 (i8*)* @vf0i1 to i8*), i8* bitcast (i32 (i8*)* @vf4i32 to i8*)], [8 x i8] c"\04\00\00\00\02\00\00\00" }, !type [[T0]]
 @vt4 = constant [3 x i8*] [
 i8* bitcast (i1 (i8*)* @vf1i1 to i8*),
 i8* bitcast (i1 (i8*)* @vf0i1 to i8*),
@@ -123,6 +123,9 @@ define i32 @call3(i8* %obj) {
 
 declare i1 @llvm.type.test(i8*, metadata)
 declare void @llvm.assume(i1)
+
+; CHECK: [[T8]] = !{i32 8, !"typeid"}
+; CHECK: [[T0]] = !{i32 0, !"typeid"}
 
 !0 = !{i32 0, !"typeid"}
 !1 = !{i32 8, !"typeid"}
