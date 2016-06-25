@@ -163,12 +163,14 @@ protected:
                                    CoverageSegmentArray Segments,
                                    unsigned ViewDepth) = 0;
 
-  /// \brief Render an expansion view. If \p FirstLine is provided, it points
-  /// to the expansion site, which must be re-rendered for clarity.
-  virtual unsigned renderExpansionView(
-      raw_ostream &OS, ExpansionView &ESV, Optional<LineRef> FirstLine,
-      unsigned ExpansionCol, const coverage::CoverageSegment *WrappedSegment,
-      CoverageSegmentArray LineSegments, unsigned ViewDepth) = 0;
+  /// \brief Render an expansion view. If the expansion site must be re-rendered
+  /// for clarity, it is passed in via \p FirstLine.
+  virtual unsigned
+  renderExpansionView(raw_ostream &OS, ExpansionView &ESV,
+                      Optional<LineRef> FirstLine,
+                      const coverage::CoverageSegment *WrappedSegment,
+                      CoverageSegmentArray Segments, unsigned ExpansionCol,
+                      unsigned ViewDepth) = 0;
 
   /// \brief Render an instantiation view.
   virtual void renderInstantiationView(raw_ostream &OS, InstantiationView &ISV,

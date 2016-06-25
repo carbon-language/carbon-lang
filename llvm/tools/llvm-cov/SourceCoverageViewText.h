@@ -33,9 +33,9 @@ class SourceCoverageViewText : public SourceCoverageView {
 
   unsigned renderExpansionView(raw_ostream &OS, ExpansionView &ESV,
                                Optional<LineRef> FirstLine,
-                               unsigned ExpansionCol,
                                const coverage::CoverageSegment *WrappedSegment,
-                               CoverageSegmentArray LineSegments,
+                               CoverageSegmentArray Segments,
+                               unsigned ExpansionCol,
                                unsigned ViewDepth) override;
 
   void renderInstantiationView(raw_ostream &OS, InstantiationView &ISV,

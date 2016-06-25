@@ -133,7 +133,7 @@ void SourceCoverageView::print(raw_ostream &OS, bool WholeFile,
           OS, *NextESV,
           RenderedSubView ? Optional<LineRef>({*LI, LI.line_number()})
                           : Optional<LineRef>(),
-          ExpansionColumn, WrappedSegment, LineSegments, ViewDepth);
+          WrappedSegment, LineSegments, ExpansionColumn, ViewDepth);
       RenderedSubView = true;
     }
     for (; NextISV != EndISV && NextISV->Line == LI.line_number(); ++NextISV) {

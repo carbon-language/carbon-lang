@@ -158,8 +158,8 @@ void SourceCoverageViewText::renderRegionMarkers(
 
 unsigned SourceCoverageViewText::renderExpansionView(
     raw_ostream &OS, ExpansionView &ESV, Optional<LineRef> FirstLine,
-    unsigned ExpansionCol, const coverage::CoverageSegment *WrappedSegment,
-    CoverageSegmentArray LineSegments, unsigned ViewDepth) {
+    const coverage::CoverageSegment *WrappedSegment,
+    CoverageSegmentArray Segments, unsigned ExpansionCol, unsigned ViewDepth) {
   unsigned NextExpansionCol = ExpansionCol;
 
   if (FirstLine.hasValue()) {
@@ -168,7 +168,7 @@ unsigned SourceCoverageViewText::renderExpansionView(
     NextExpansionCol = ESV.getStartCol();
     renderLinePrefix(OS, ViewDepth);
     OS.indent(getCombinedColumnWidth(getOptions()) + (ViewDepth == 0 ? 0 : 1));
-    renderLine(OS, *FirstLine, WrappedSegment, LineSegments, ExpansionCol,
+    renderLine(OS, *FirstLine, WrappedSegment, Segments, ExpansionCol,
                ViewDepth);
     renderViewDivider(OS, ViewDepth + 1);
   }
