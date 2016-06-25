@@ -6039,7 +6039,7 @@ X86TargetLowering::LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const {
       Immediate |= cast<ConstantSDNode>(In)->getZExtValue() << idx;
       HasConstElts = true;
     }
-    if (SplatIdx == -1)
+    if (SplatIdx < 0)
       SplatIdx = idx;
     else if (In != Op.getOperand(SplatIdx))
       IsSplat = false;
@@ -7018,9 +7018,11 @@ static SDValue LowerCONCAT_VECTORS(SDValue Op,
 /// ShuffleVectorSDNode mask) requires any shuffles to occur. Both undef and an
 /// in-place shuffle are 'no-op's.
 static bool isNoopShuffleMask(ArrayRef<int> Mask) {
-  for (int i = 0, Size = Mask.size(); i < Size; ++i)
-    if (Mask[i] != -1 && Mask[i] != i)
+  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
+    assert(Mask[i] >= -1 && "Out of bound mask element!");
+    if (Mask[i] >= 0 && Mask[i] != i)
       return false;
+  }
   return true;
 }
 
@@ -7113,8 +7115,9 @@ static bool isShuffleEquivalent(SDValue V1, SDValue V2, ArrayRef<int> Mask,
   auto *BV1 = dyn_cast<BuildVectorSDNode>(V1);
   auto *BV2 = dyn_cast<BuildVectorSDNode>(V2);
 
-  for (int i = 0; i < Size; ++i)
-    if (Mask[i] != -1 && Mask[i] != ExpectedMask[i]) {
+  for (int i = 0; i < Size; ++i) {
+    assert(Mask[i] >= -1 && "Out of bound mask element!");
+    if (Mask[i] >= 0 && Mask[i] != ExpectedMask[i]) {
       auto *MaskBV = Mask[i] < Size ? BV1 : BV2;
       auto *ExpectedBV = ExpectedMask[i] < Size ? BV1 : BV2;
       if (!MaskBV || !ExpectedBV ||
@@ -7122,6 +7125,7 @@ static bool isShuffleEquivalent(SDValue V1, SDValue V2, ArrayRef<int> Mask,
               ExpectedBV->getOperand(ExpectedMask[i] % Size))
         return false;
     }
+}
 
   return true;
 }
@@ -7168,10 +7172,10 @@ static SDValue getV4X86ShuffleImm8ForMask(ArrayRef<int> Mask, const SDLoc &DL,
   assert(Mask[3] >= -1 && Mask[3] < 4 && "Out of bound mask element!");
 
   unsigned Imm = 0;
-  Imm |= (Mask[0] == -1 ? 0 : Mask[0]) << 0;
-  Imm |= (Mask[1] == -1 ? 1 : Mask[1]) << 2;
-  Imm |= (Mask[2] == -1 ? 2 : Mask[2]) << 4;
-  Imm |= (Mask[3] == -1 ? 3 : Mask[3]) << 6;
+  Imm |= (Mask[0] < 0 ? 0 : Mask[0]) << 0;
+  Imm |= (Mask[1] < 0 ? 1 : Mask[1]) << 2;
+  Imm |= (Mask[2] < 0 ? 2 : Mask[2]) << 4;
+  Imm |= (Mask[3] < 0 ? 3 : Mask[3]) << 6;
   return DAG.getConstant(Imm, DL, MVT::i8);
 }
 
@@ -7396,7 +7400,7 @@ static SDValue lowerVectorShuffleAsBitBlend(const SDLoc &DL, MVT VT, SDValue V1,
                                     EltVT);
   SmallVector<SDValue, 16> MaskOps;
   for (int i = 0, Size = Mask.size(); i < Size; ++i) {
-    if (Mask[i] != -1 && Mask[i] != i && Mask[i] != i + Size)
+    if (Mask[i] >= 0 && Mask[i] != i && Mask[i] != i + Size)
       return SDValue(); // Shuffled input!
     MaskOps.push_back(Mask[i] < Size ? AllOnes : Zero);
   }
@@ -7594,7 +7598,7 @@ static SDValue lowerVectorShuffleAsBlendAndPermute(const SDLoc &DL, MVT VT,
 
     assert(Mask[i] < Size * 2 && "Shuffle input is out of bounds.");
 
-    if (BlendMask[Mask[i] % Size] == -1)
+    if (BlendMask[Mask[i] % Size] < 0)
       BlendMask[Mask[i] % Size] = Mask[i];
     else if (BlendMask[Mask[i] % Size] != Mask[i])
       return SDValue(); // Can't blend in the needed input!
@@ -7685,9 +7689,8 @@ static SDValue lowerVectorShuffleAsByteRotate(const SDLoc &DL, MVT VT,
   SDValue Lo, Hi;
   for (int l = 0; l < NumElts; l += NumLaneElts) {
     for (int i = 0; i < NumLaneElts; ++i) {
-      if (Mask[l + i] == -1)
+      if (Mask[l + i] < 0)
         continue;
-      assert(Mask[l + i] >= 0 && "Only -1 is a valid negative mask element!");
 
       // Get the mod-Size index and lane correct it.
       int LaneIdx = (Mask[l + i] % NumElts) - l;
@@ -8195,7 +8198,7 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
     int Matches = 0;
     for (int i = 0; i < NumElements; ++i) {
       int M = Mask[i];
-      if (M == -1)
+      if (M < 0)
         continue; // Valid anywhere but doesn't tell us anything.
       if (i % Scale != 0) {
         // Each of the extended elements need to be zeroable.
@@ -8656,7 +8659,7 @@ static SDValue lowerVectorShuffleAsInsertPS(const SDLoc &DL,
     }
 
     // We can only insert a single non-zeroable element.
-    if (V1DstIndex != -1 || V2DstIndex != -1)
+    if (V1DstIndex >= 0 || V2DstIndex >= 0)
       return SDValue();
 
     if (Mask[i] < 4) {
@@ -8669,13 +8672,13 @@ static SDValue lowerVectorShuffleAsInsertPS(const SDLoc &DL,
   }
 
   // Don't bother if we have no (non-zeroable) element for insertion.
-  if (V1DstIndex == -1 && V2DstIndex == -1)
+  if (V1DstIndex >= 0 && V2DstIndex >= 0)
     return SDValue();
 
   // Determine element insertion src/dst indices. The src index is from the
   // start of the inserted vector, not the start of the concatenated vector.
   unsigned V2SrcIndex = 0;
-  if (V1DstIndex != -1) {
+  if (V1DstIndex >= 0) {
     // If we have a V1 input out of place, we use V1 as the V2 element insertion
     // and don't use the original V2 at all.
     V2SrcIndex = Mask[V1DstIndex];
@@ -9007,12 +9010,16 @@ static SDValue lowerV2I64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
 static bool isSingleSHUFPSMask(ArrayRef<int> Mask) {
   // This routine only handles 128-bit shufps.
   assert(Mask.size() == 4 && "Unsupported mask size!");
+  assert(Mask[0] >= -1 && Mask[0] < 8 && "Out of bound mask element!");
+  assert(Mask[1] >= -1 && Mask[1] < 8 && "Out of bound mask element!");
+  assert(Mask[2] >= -1 && Mask[2] < 8 && "Out of bound mask element!");
+  assert(Mask[3] >= -1 && Mask[3] < 8 && "Out of bound mask element!");
 
   // To lower with a single SHUFPS we need to have the low half and high half
   // each requiring a single input.
-  if (Mask[0] != -1 && Mask[1] != -1 && (Mask[0] < 4) != (Mask[1] < 4))
+  if (Mask[0] >= 0 && Mask[1] >= 0 && (Mask[0] < 4) != (Mask[1] < 4))
     return false;
-  if (Mask[2] != -1 && Mask[3] != -1 && (Mask[2] < 4) != (Mask[3] < 4))
+  if (Mask[2] >= 0 && Mask[3] >= 0 && (Mask[2] < 4) != (Mask[3] < 4))
     return false;
 
   return true;
@@ -9040,7 +9047,7 @@ static SDValue lowerVectorShuffleWithSHUFPS(const SDLoc &DL, MVT VT,
     // the low bit.
     int V2AdjIndex = V2Index ^ 1;
 
-    if (Mask[V2AdjIndex] == -1) {
+    if (Mask[V2AdjIndex] < 0) {
       // Handles all the cases where we have a single V2 element and an undef.
       // This will only ever happen in the high lanes because we commute the
       // vector otherwise.
@@ -9465,9 +9472,9 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
                           getV4X86ShuffleImm8ForMask(PSHUFHalfMask, DL, DAG));
 
           for (int &M : Mask)
-            if (M != -1 && M == FixIdx)
+            if (M >= 0 && M == FixIdx)
               M = FixFreeIdx;
-            else if (M != -1 && M == FixFreeIdx)
+            else if (M >= 0 && M == FixFreeIdx)
               M = FixIdx;
         };
         if (NumFlippedBToBInputs != 0) {
@@ -9492,9 +9499,9 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
 
     // Adjust the mask to match the new locations of A and B.
     for (int &M : Mask)
-      if (M != -1 && M/2 == ADWord)
+      if (M >= 0 && M/2 == ADWord)
         M = 2 * BDWord + M % 2;
-      else if (M != -1 && M/2 == BDWord)
+      else if (M >= 0 && M/2 == BDWord)
         M = 2 * ADWord + M % 2;
 
     // Recurse back into this routine to re-compute state now that this isn't
@@ -9563,7 +9570,7 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
       MutableArrayRef<int> FinalSourceHalfMask, int SourceOffset,
       int DestOffset) {
     auto isWordClobbered = [](ArrayRef<int> SourceHalfMask, int Word) {
-      return SourceHalfMask[Word] != -1 && SourceHalfMask[Word] != Word;
+      return SourceHalfMask[Word] >= 0 && SourceHalfMask[Word] != Word;
     };
     auto isDWordClobbered = [&isWordClobbered](ArrayRef<int> SourceHalfMask,
                                                int Word) {
@@ -9582,7 +9589,7 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
         // If the source half mask maps over the inputs, turn those into
         // swaps and use the swapped lane.
         if (isWordClobbered(SourceHalfMask, Input - SourceOffset)) {
-          if (SourceHalfMask[SourceHalfMask[Input - SourceOffset]] == -1) {
+          if (SourceHalfMask[SourceHalfMask[Input - SourceOffset]] < 0) {
             SourceHalfMask[SourceHalfMask[Input - SourceOffset]] =
                 Input - SourceOffset;
             // We have to swap the uses in our half mask in one sweep.
@@ -9603,7 +9610,7 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
         }
 
         // Map the input's dword into the correct half.
-        if (PSHUFDMask[(Input - SourceOffset + DestOffset) / 2] == -1)
+        if (PSHUFDMask[(Input - SourceOffset + DestOffset) / 2] < 0)
           PSHUFDMask[(Input - SourceOffset + DestOffset) / 2] = Input / 2;
         else
           assert(PSHUFDMask[(Input - SourceOffset + DestOffset) / 2] ==
@@ -9649,17 +9656,17 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
         // the inputs, place the other input in it. We use (Index XOR 1) to
         // compute an adjacent index.
         if (!isWordClobbered(SourceHalfMask, InputsFixed[0]) &&
-            SourceHalfMask[InputsFixed[0] ^ 1] == -1) {
+            SourceHalfMask[InputsFixed[0] ^ 1] < 0) {
           SourceHalfMask[InputsFixed[0]] = InputsFixed[0];
           SourceHalfMask[InputsFixed[0] ^ 1] = InputsFixed[1];
           InputsFixed[1] = InputsFixed[0] ^ 1;
         } else if (!isWordClobbered(SourceHalfMask, InputsFixed[1]) &&
-                   SourceHalfMask[InputsFixed[1] ^ 1] == -1) {
+                   SourceHalfMask[InputsFixed[1] ^ 1] < 0) {
           SourceHalfMask[InputsFixed[1]] = InputsFixed[1];
           SourceHalfMask[InputsFixed[1] ^ 1] = InputsFixed[0];
           InputsFixed[0] = InputsFixed[1] ^ 1;
-        } else if (SourceHalfMask[2 * ((InputsFixed[0] / 2) ^ 1)] == -1 &&
-                   SourceHalfMask[2 * ((InputsFixed[0] / 2) ^ 1) + 1] == -1) {
+        } else if (SourceHalfMask[2 * ((InputsFixed[0] / 2) ^ 1)] < 0 &&
+                   SourceHalfMask[2 * ((InputsFixed[0] / 2) ^ 1) + 1] < 0) {
           // The two inputs are in the same DWord but it is clobbered and the
           // adjacent DWord isn't used at all. Move both inputs to the free
           // slot.
@@ -9673,7 +9680,7 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
           // free slot adjacent to one of the inputs. In this case, we have to
           // swap an input with a non-input.
           for (int i = 0; i < 4; ++i)
-            assert((SourceHalfMask[i] == -1 || SourceHalfMask[i] == i) &&
+            assert((SourceHalfMask[i] < 0 || SourceHalfMask[i] == i) &&
                    "We can't handle any clobbers here!");
           assert(InputsFixed[1] != (InputsFixed[0] ^ 1) &&
                  "Cannot have adjacent inputs here!");
@@ -9707,8 +9714,8 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
     }
 
     // Now hoist the DWord down to the right half.
-    int FreeDWord = (PSHUFDMask[DestOffset / 2] == -1 ? 0 : 1) + DestOffset / 2;
-    assert(PSHUFDMask[FreeDWord] == -1 && "DWord not free");
+    int FreeDWord = (PSHUFDMask[DestOffset / 2] < 0 ? 0 : 1) + DestOffset / 2;
+    assert(PSHUFDMask[FreeDWord] < 0 && "DWord not free");
     PSHUFDMask[FreeDWord] = IncomingInputs[0] / 2;
     for (int &M : HalfMask)
       for (int Input : IncomingInputs)
@@ -9771,7 +9778,7 @@ static SDValue lowerVectorShuffleAsBlendOfPSHUFBs(
   int Size = Mask.size();
   int Scale = 16 / Size;
   for (int i = 0; i < 16; ++i) {
-    if (Mask[i / Scale] == -1) {
+    if (Mask[i / Scale] < 0) {
       V1Mask[i] = V2Mask[i] = DAG.getUNDEF(MVT::i8);
     } else {
       const int ZeroMask = 0x80;
@@ -9968,7 +9975,7 @@ static int canLowerByDroppingEvenElements(ArrayRef<int> Mask,
   for (int i = 0, e = Mask.size(); i < e; ++i) {
     // Ignore undef lanes, we'll optimistically collapse them to the pattern we
     // want.
-    if (Mask[i] == -1)
+    if (Mask[i] < 0)
       continue;
 
     bool IsAnyViable = false;
@@ -10049,7 +10056,7 @@ static SDValue lowerV16I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
     // i16 shuffle as well.
     auto canWidenViaDuplication = [](ArrayRef<int> Mask) {
       for (int i = 0; i < 16; i += 2)
-        if (Mask[i] != -1 && Mask[i + 1] != -1 && Mask[i] != Mask[i + 1])
+        if (Mask[i] >= 0 && Mask[i + 1] >= 0 && Mask[i] != Mask[i + 1])
           return false;
 
       return true;
@@ -10087,7 +10094,7 @@ static SDValue lowerV16I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
         if (PreDupI16Shuffle[j] != MovingInputs[i] / 2) {
           // If we haven't yet mapped the input, search for a slot into which
           // we can map it.
-          while (j < je && PreDupI16Shuffle[j] != -1)
+          while (j < je && PreDupI16Shuffle[j] >= 0)
             ++j;
 
           if (j == je)
@@ -10112,10 +10119,10 @@ static SDValue lowerV16I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
 
       int PostDupI16Shuffle[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
       for (int i = 0; i < 16; ++i)
-        if (Mask[i] != -1) {
+        if (Mask[i] >= 0) {
           int MappedMask = LaneMap[Mask[i]] - (TargetLo ? 0 : 8);
           assert(MappedMask < 8 && "Invalid v8 shuffle mask!");
-          if (PostDupI16Shuffle[i / 2] == -1)
+          if (PostDupI16Shuffle[i / 2] < 0)
             PostDupI16Shuffle[i / 2] = MappedMask;
           else
             assert(PostDupI16Shuffle[i / 2] == MappedMask &&
@@ -10517,12 +10524,12 @@ static SDValue lowerVectorShuffleAsSplitOrBlend(const SDLoc &DL, MVT VT,
     int V1BroadcastIdx = -1, V2BroadcastIdx = -1;
     for (int M : Mask)
       if (M >= Size) {
-        if (V2BroadcastIdx == -1)
+        if (V2BroadcastIdx < 0)
           V2BroadcastIdx = M - Size;
         else if (M - Size != V2BroadcastIdx)
           return false;
       } else if (M >= 0) {
-        if (V1BroadcastIdx == -1)
+        if (V1BroadcastIdx < 0)
           V1BroadcastIdx = M;
         else if (M != V1BroadcastIdx)
           return false;
@@ -10828,12 +10835,12 @@ static SDValue lowerVectorShuffleWithUndefHalf(const SDLoc &DL, MVT VT,
 
     // We can shuffle with up to 2 half vectors, set the new 'half'
     // shuffle mask accordingly.
-    if (-1 == HalfIdx1 || HalfIdx1 == HalfIdx) {
+    if (HalfIdx1 < 0 || HalfIdx1 == HalfIdx) {
       HalfMask[i] = HalfElt;
       HalfIdx1 = HalfIdx;
       continue;
     }
-    if (-1 == HalfIdx2 || HalfIdx2 == HalfIdx) {
+    if (HalfIdx2 < 0 || HalfIdx2 == HalfIdx) {
       HalfMask[i] = HalfElt + HalfNumElts;
       HalfIdx2 = HalfIdx;
       continue;
@@ -26615,7 +26622,7 @@ static SDValue checkBoolTestSetCCCombine(SDValue Cmp, X86::CondCode &CC) {
         OpIdx = 1;
       if (isOneConstant(SetCC.getOperand(1)))
         OpIdx = 0;
-      if (OpIdx == -1)
+      if (OpIdx < 0)
         break;
       SetCC = SetCC.getOperand(OpIdx);
       truncatedToBoolWithAnd = true;
@@ -28870,7 +28877,7 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
                                   Ld->isNonTemporal(), Ld->isInvariant(),
                                   Ld->getAlignment());
       SDValue NewChain = NewLd.getValue(1);
-      if (TokenFactorIndex != -1) {
+      if (TokenFactorIndex >= 0) {
         Ops.push_back(NewChain);
         NewChain = DAG.getNode(ISD::TokenFactor, LdDL, MVT::Other, Ops);
       }
@@ -28895,7 +28902,7 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
                                MinAlign(Ld->getAlignment(), 4));
 
     SDValue NewChain = LoLd.getValue(1);
-    if (TokenFactorIndex != -1) {
+    if (TokenFactorIndex >= 0) {
       Ops.push_back(LoLd);
       Ops.push_back(HiLd);
       NewChain = DAG.getNode(ISD::TokenFactor, LdDL, MVT::Other, Ops);
