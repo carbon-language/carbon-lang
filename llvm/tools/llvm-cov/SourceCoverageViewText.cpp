@@ -19,8 +19,8 @@ using namespace llvm;
 
 namespace {
 
-constexpr unsigned LineCoverageColumnWidth = 7;
-constexpr unsigned LineNumberColumnWidth = 5;
+static const unsigned LineCoverageColumnWidth = 7;
+static const unsigned LineNumberColumnWidth = 5;
 
 /// \brief Get the width of the leading columns.
 unsigned getCombinedColumnWidth(const CoverageViewOptions &Opts) {
