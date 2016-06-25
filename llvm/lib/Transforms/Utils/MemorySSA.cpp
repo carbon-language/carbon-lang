@@ -763,8 +763,8 @@ void MemorySSA::verifyDefUses(Function &F) const {
   for (BasicBlock &B : F) {
     // Phi nodes are attached to basic blocks
     if (MemoryPhi *Phi = getMemoryAccess(&B)) {
-      assert(Phi->getNumOperands() ==
-                 std::distance(pred_begin(&B), pred_end(&B)) &&
+      assert(Phi->getNumOperands() == static_cast<unsigned>(std::distance(
+                                          pred_begin(&B), pred_end(&B))) &&
              "Incomplete MemoryPhi Node");
       for (unsigned I = 0, E = Phi->getNumIncomingValues(); I != E; ++I)
         verifyUseInDefs(Phi->getIncomingValue(I), Phi);
