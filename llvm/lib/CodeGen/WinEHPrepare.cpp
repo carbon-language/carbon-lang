@@ -963,9 +963,9 @@ void WinEHPrepare::removeImplausibleInstructions(Function &F) {
           BasicBlock::iterator CallI =
               std::prev(BB->getTerminator()->getIterator());
           auto *CI = cast<CallInst>(&*CallI);
-          changeToUnreachable(CI);
+          changeToUnreachable(CI, /*UseLLVMTrap=*/false);
         } else {
-          changeToUnreachable(&I);
+          changeToUnreachable(&I, /*UseLLVMTrap=*/false);
         }
 
         // There are no more instructions in the block (except for unreachable),
@@ -986,7 +986,7 @@ void WinEHPrepare::removeImplausibleInstructions(Function &F) {
         IsUnreachableCleanupret = CRI->getCleanupPad() != CleanupPad;
       if (IsUnreachableRet || IsUnreachableCatchret ||
           IsUnreachableCleanupret) {
-        changeToUnreachable(TI);
+        changeToUnreachable(TI, /*UseLLVMTrap=*/false);
       } else if (isa<InvokeInst>(TI)) {
         if (Personality == EHPersonality::MSVC_CXX && CleanupPad) {
           // Invokes within a cleanuppad for the MSVC++ personality never

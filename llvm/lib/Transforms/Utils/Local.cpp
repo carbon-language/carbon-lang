@@ -42,13 +42,11 @@
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Operator.h"
-#include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
-using namespace llvm::PatternMatch;
 
 #define DEBUG_TYPE "local"
 
@@ -1312,13 +1310,21 @@ unsigned llvm::removeAllNonTerminatorAndEHPadInstructions(BasicBlock *BB) {
   return NumDeadInst;
 }
 
-unsigned llvm::changeToUnreachable(Instruction *I) {
+unsigned llvm::changeToUnreachable(Instruction *I, bool UseLLVMTrap) {
   BasicBlock *BB = I->getParent();
   // Loop over all of the successors, removing BB's entry from any PHI
   // nodes.
-  for (BasicBlock *Succ : successors(BB))
-    Succ->removePredecessor(BB);
+  for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
+    (*SI)->removePredecessor(BB);
 
+  // Insert a call to llvm.trap right before this.  This turns the undefined
+  // behavior into a hard fail instead of falling through into random code.
+  if (UseLLVMTrap) {
+    Function *TrapFn =
+      Intrinsic::getDeclaration(BB->getParent()->getParent(), Intrinsic::trap);
+    CallInst *CallTrap = CallInst::Create(TrapFn, "", I);
+    CallTrap->setDebugLoc(I->getDebugLoc());
+  }
   new UnreachableInst(I->getContext(), I);
 
   // All instructions after this are dead.
@@ -1368,14 +1374,22 @@ static bool markAliveBlocks(Function &F,
     // Do a quick scan of the basic block, turning any obviously unreachable
     // instructions into LLVM unreachable insts.  The instruction combining pass
     // canonicalizes unreachable insts into stores to null or undef.
-    for (Instruction &I : *BB) {
+    for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E;++BBI){
       // Assumptions that are known to be false are equivalent to unreachable.
       // Also, if the condition is undefined, then we make the choice most
       // beneficial to the optimizer, and choose that to also be unreachable.
-      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(&I)) {
+      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(BBI)) {
         if (II->getIntrinsicID() == Intrinsic::assume) {
-          if (match(II->getArgOperand(0), m_CombineOr(m_Zero(), m_Undef()))) {
-            changeToUnreachable(II);
+          bool MakeUnreachable = false;
+          if (isa<UndefValue>(II->getArgOperand(0)))
+            MakeUnreachable = true;
+          else if (ConstantInt *Cond =
+                   dyn_cast<ConstantInt>(II->getArgOperand(0)))
+            MakeUnreachable = Cond->isZero();
+
+          if (MakeUnreachable) {
+            // Don't insert a call to llvm.trap right before the unreachable.
+            changeToUnreachable(&*BBI, false);
             Changed = true;
             break;
           }
@@ -1390,19 +1404,19 @@ static bool markAliveBlocks(Function &F,
           // Note: unlike in llvm.assume, it is not "obviously profitable" for
           // guards to treat `undef` as `false` since a guard on `undef` can
           // still be useful for widening.
-          if (match(II->getArgOperand(0), m_Zero()))
-            if (!isa<UnreachableInst>(II->getNextNode())) {
-              changeToUnreachable(II->getNextNode());
+          if (auto *CI = dyn_cast<ConstantInt>(II->getArgOperand(0)))
+            if (CI->isZero() && !isa<UnreachableInst>(II->getNextNode())) {
+              changeToUnreachable(II->getNextNode(), /*UseLLVMTrap=*/ false);
               Changed = true;
               break;
             }
         }
       }
 
-      if (auto *CI = dyn_cast<CallInst>(&I)) {
+      if (CallInst *CI = dyn_cast<CallInst>(BBI)) {
         Value *Callee = CI->getCalledValue();
         if (isa<ConstantPointerNull>(Callee) || isa<UndefValue>(Callee)) {
-          changeToUnreachable(CI);
+          changeToUnreachable(CI, /*UseLLVMTrap=*/false);
           Changed = true;
           break;
         }
@@ -1410,8 +1424,10 @@ static bool markAliveBlocks(Function &F,
           // If we found a call to a no-return function, insert an unreachable
           // instruction after it.  Make sure there isn't *already* one there
           // though.
-          if (!isa<UnreachableInst>(CI->getNextNode())) {
-            changeToUnreachable(CI->getNextNode());
+          ++BBI;
+          if (!isa<UnreachableInst>(BBI)) {
+            // Don't insert a call to llvm.trap right before the unreachable.
+            changeToUnreachable(&*BBI, false);
             Changed = true;
           }
           break;
@@ -1421,7 +1437,7 @@ static bool markAliveBlocks(Function &F,
       // Store to undef and store to null are undefined and used to signal that
       // they should be changed to unreachable by passes that can't modify the
       // CFG.
-      if (auto *SI = dyn_cast<StoreInst>(&I)) {
+      if (StoreInst *SI = dyn_cast<StoreInst>(BBI)) {
         // Don't touch volatile stores.
         if (SI->isVolatile()) continue;
 
@@ -1430,7 +1446,7 @@ static bool markAliveBlocks(Function &F,
         if (isa<UndefValue>(Ptr) ||
             (isa<ConstantPointerNull>(Ptr) &&
              SI->getPointerAddressSpace() == 0)) {
-          changeToUnreachable(SI);
+          changeToUnreachable(SI, true);
           Changed = true;
           break;
         }
@@ -1442,7 +1458,7 @@ static bool markAliveBlocks(Function &F,
       // Turn invokes that call 'nounwind' functions into ordinary calls.
       Value *Callee = II->getCalledValue();
       if (isa<ConstantPointerNull>(Callee) || isa<UndefValue>(Callee)) {
-        changeToUnreachable(II);
+        changeToUnreachable(II, true);
         Changed = true;
       } else if (II->doesNotThrow() && canSimplifyInvokeNoUnwind(&F)) {
         if (II->use_empty() && II->onlyReadsMemory()) {
@@ -1495,9 +1511,9 @@ static bool markAliveBlocks(Function &F,
     }
 
     Changed |= ConstantFoldTerminator(BB, true);
-    for (BasicBlock *Succ : successors(BB))
-      if (Reachable.insert(Succ).second)
-        Worklist.push_back(Succ);
+    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
+      if (Reachable.insert(*SI).second)
+        Worklist.push_back(*SI);
   } while (!Worklist.empty());
   return Changed;
 }

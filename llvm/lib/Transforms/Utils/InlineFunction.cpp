@@ -1833,7 +1833,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
       // As such, we replace the cleanupret with unreachable.
       if (auto *CleanupRet = dyn_cast<CleanupReturnInst>(BB->getTerminator()))
         if (CleanupRet->unwindsToCaller() && EHPadForCallUnwindsLocally)
-          changeToUnreachable(CleanupRet);
+          changeToUnreachable(CleanupRet, /*UseLLVMTrap=*/false);
 
       Instruction *I = BB->getFirstNonPHI();
       if (!I->isEHPad())

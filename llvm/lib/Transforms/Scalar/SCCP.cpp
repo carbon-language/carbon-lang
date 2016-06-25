@@ -1802,7 +1802,8 @@ static bool runIPSCCP(Module &M, const DataLayout &DL,
         DEBUG(dbgs() << "  BasicBlock Dead:" << *BB);
 
         ++NumDeadBlocks;
-        NumInstRemoved += changeToUnreachable(BB->getFirstNonPHI());
+        NumInstRemoved +=
+            changeToUnreachable(BB->getFirstNonPHI(), /*UseLLVMTrap=*/false);
 
         MadeChanges = true;
 

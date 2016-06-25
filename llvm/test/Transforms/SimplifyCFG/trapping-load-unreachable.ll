@@ -28,6 +28,7 @@ entry:
         ret void
         
 ; CHECK-LABEL: @test2(
+; CHECK: call void @llvm.trap
 ; CHECK: unreachable
 }
 
