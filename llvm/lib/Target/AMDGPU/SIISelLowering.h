@@ -105,6 +105,8 @@ public:
 
   bool isTypeDesirableForOp(unsigned Op, EVT VT) const override;
 
+  bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const override;
+
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
                                bool isVarArg,
                                const SmallVectorImpl<ISD::InputArg> &Ins,

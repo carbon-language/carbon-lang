@@ -1422,6 +1422,14 @@ SDValue SITargetLowering::lowerADDRSPACECAST(SDValue Op,
   return DAG.getUNDEF(ASC->getValueType(0));
 }
 
+bool
+SITargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
+  if (GA->getAddressSpace() != AMDGPUAS::GLOBAL_ADDRESS)
+    return false;
+
+  return TargetLowering::isOffsetFoldingLegal(GA);
+}
+
 SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
                                              SDValue Op,
                                              SelectionDAG &DAG) const {
