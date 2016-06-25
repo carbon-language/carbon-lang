@@ -2557,6 +2557,8 @@ void GenericScheduler::initialize(ScheduleDAGMI *dag) {
         DAG->MF.getSubtarget().getInstrInfo()->CreateTargetMIHazardRecognizer(
             Itin, DAG);
   }
+  TopCand.SU = nullptr;
+  BotCand.SU = nullptr;
 }
 
 /// Initialize the per-region scheduling policy.
@@ -2954,17 +2956,56 @@ SUnit *GenericScheduler::pickNodeBidirectional(bool &IsTopNode) {
   CandPolicy TopPolicy;
   setPolicy(TopPolicy, /*IsPostRA=*/false, Top, &Bot);
 
-  // Prefer bottom scheduling when heuristics are silent.
-  CandPolicy NoPolicy;
-  SchedCandidate Cand(NoPolicy);
+  // See if BotCand is still valid (because we previously scheduled from Top).
   DEBUG(dbgs() << "Picking from Bot:\n");
-  pickNodeFromQueue(Bot, BotPolicy, DAG->getBotRPTracker(), Cand);
-  assert(Cand.Reason != NoCand && "failed to find the first candidate");
+  if (!BotCand.isValid() || BotCand.SU->isScheduled ||
+      BotCand.Policy != BotPolicy) {
+    BotCand.reset(CandPolicy());
+    pickNodeFromQueue(Bot, BotPolicy, DAG->getBotRPTracker(), BotCand);
+    assert(BotCand.Reason != NoCand && "failed to find the first candidate");
+  } else {
+    DEBUG(traceCandidate(BotCand));
+#ifndef NDEBUG
+    if (VerifyScheduling) {
+      SchedCandidate TCand;
+      TCand.reset(CandPolicy());
+      pickNodeFromQueue(Bot, BotPolicy, DAG->getBotRPTracker(), TCand);
+      assert(TCand.SU == BotCand.SU &&
+             "Last pick result should correspond to re-picking right now");
+    }
+#endif
+  }
 
   // Check if the top Q has a better candidate.
   DEBUG(dbgs() << "Picking from Top:\n");
-  pickNodeFromQueue(Top, TopPolicy, DAG->getTopRPTracker(), Cand);
-  assert(Cand.Reason != NoCand && "failed to find the first candidate");
+  if (!TopCand.isValid() || TopCand.SU->isScheduled ||
+      TopCand.Policy != TopPolicy) {
+    TopCand.reset(CandPolicy());
+    pickNodeFromQueue(Top, TopPolicy, DAG->getTopRPTracker(), TopCand);
+    assert(TopCand.Reason != NoCand && "failed to find the first candidate");
+  } else {
+    DEBUG(traceCandidate(TopCand));
+#ifndef NDEBUG
+    if (VerifyScheduling) {
+      SchedCandidate TCand;
+      TCand.reset(CandPolicy());
+      pickNodeFromQueue(Top, TopPolicy, DAG->getTopRPTracker(), TCand);
+      assert(TCand.SU == TopCand.SU &&
+           "Last pick result should correspond to re-picking right now");
+    }
+#endif
+  }
+
+  // Pick best from BotCand and TopCand.
+  assert(BotCand.isValid());
+  assert(TopCand.isValid());
+  SchedCandidate Cand = BotCand;
+  TopCand.Reason = NoCand;
+  tryCandidate(Cand, TopCand, nullptr);
+  if (TopCand.Reason != NoCand) {
+    Cand.setBest(TopCand);
+    DEBUG(traceCandidate(Cand));
+  }
 
   IsTopNode = Cand.AtTop;
   tracePick(Cand);
@@ -2984,7 +3025,7 @@ SUnit *GenericScheduler::pickNode(bool &IsTopNode) {
       SU = Top.pickOnlyChoice();
       if (!SU) {
         CandPolicy NoPolicy;
-        SchedCandidate TopCand(NoPolicy);
+        TopCand.reset(NoPolicy);
         pickNodeFromQueue(Top, NoPolicy, DAG->getTopRPTracker(), TopCand);
         assert(TopCand.Reason != NoCand && "failed to find a candidate");
         tracePick(TopCand);
@@ -2995,7 +3036,7 @@ SUnit *GenericScheduler::pickNode(bool &IsTopNode) {
       SU = Bot.pickOnlyChoice();
       if (!SU) {
         CandPolicy NoPolicy;
-        SchedCandidate BotCand(NoPolicy);
+        BotCand.reset(NoPolicy);
         pickNodeFromQueue(Bot, NoPolicy, DAG->getBotRPTracker(), BotCand);
         assert(BotCand.Reason != NoCand && "failed to find a candidate");
         tracePick(BotCand);

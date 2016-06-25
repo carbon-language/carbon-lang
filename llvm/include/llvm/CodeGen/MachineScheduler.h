@@ -779,6 +779,15 @@ public:
     unsigned DemandResIdx;
 
     CandPolicy(): ReduceLatency(false), ReduceResIdx(0), DemandResIdx(0) {}
+
+    bool operator==(const CandPolicy &RHS) const {
+      return ReduceLatency == RHS.ReduceLatency &&
+             ReduceResIdx == RHS.ReduceResIdx &&
+             DemandResIdx == RHS.DemandResIdx;
+    }
+    bool operator!=(const CandPolicy &RHS) const {
+      return !(*this == RHS);
+    }
   };
 
   /// Status of an instruction's critical resource consumption.
@@ -820,8 +829,17 @@ public:
     // Critical resource consumption of the best candidate.
     SchedResourceDelta ResDelta;
 
-    SchedCandidate(const CandPolicy &policy)
-      : Policy(policy), SU(nullptr), Reason(NoCand), AtTop(false) {}
+    SchedCandidate() { reset(CandPolicy()); }
+    SchedCandidate(const CandPolicy &Policy) { reset(Policy); }
+
+    void reset(const CandPolicy &NewPolicy) {
+      Policy = NewPolicy;
+      SU = nullptr;
+      Reason = NoCand;
+      AtTop = false;
+      RPDelta = RegPressureDelta();
+      ResDelta = SchedResourceDelta();
+    }
 
     bool isValid() const { return SU; }
 
@@ -866,6 +884,11 @@ class GenericScheduler : public GenericSchedulerBase {
   SchedBoundary Top;
   SchedBoundary Bot;
 
+  /// Candidate last picked from Top boundary.
+  SchedCandidate TopCand;
+  /// Candidate last picked from Bot boundary.
+  SchedCandidate BotCand;
+
   MachineSchedPolicy RegionPolicy;
 public:
   GenericScheduler(const MachineSchedContext *C):
@@ -894,10 +917,12 @@ public:
 
   void releaseTopNode(SUnit *SU) override {
     Top.releaseTopNode(SU);
+    TopCand.SU = nullptr;
   }
 
   void releaseBottomNode(SUnit *SU) override {
     Bot.releaseBottomNode(SU);
+    BotCand.SU = nullptr;
   }
 
   void registerRoots() override;
