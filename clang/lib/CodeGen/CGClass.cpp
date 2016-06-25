@@ -2645,6 +2645,42 @@ void CodeGenFunction::EmitVTablePtrCheck(const CXXRecordDecl *RD,
             {CastedVTable, ValidVtable});
 }
 
+bool CodeGenFunction::ShouldEmitVTableTypeCheckedLoad(const CXXRecordDecl *RD) {
+  if (!CGM.getCodeGenOpts().WholeProgramVTables ||
+      !SanOpts.has(SanitizerKind::CFIVCall) ||
+      !CGM.getCodeGenOpts().SanitizeTrap.has(SanitizerKind::CFIVCall) ||
+      !CGM.HasHiddenLTOVisibility(RD))
+    return false;
+
+  std::string TypeName = RD->getQualifiedNameAsString();
+  return !getContext().getSanitizerBlacklist().isBlacklistedType(TypeName);
+}
+
+llvm::Value *CodeGenFunction::EmitVTableTypeCheckedLoad(
+    const CXXRecordDecl *RD, llvm::Value *VTable, uint64_t VTableByteOffset) {
+  SanitizerScope SanScope(this);
+
+  EmitSanitizerStatReport(llvm::SanStat_CFI_VCall);
+
+  llvm::Metadata *MD =
+      CGM.CreateMetadataIdentifierForType(QualType(RD->getTypeForDecl(), 0));
+  llvm::Value *TypeId = llvm::MetadataAsValue::get(CGM.getLLVMContext(), MD);
+
+  llvm::Value *CastedVTable = Builder.CreateBitCast(VTable, Int8PtrTy);
+  llvm::Value *CheckedLoad = Builder.CreateCall(
+      CGM.getIntrinsic(llvm::Intrinsic::type_checked_load),
+      {CastedVTable, llvm::ConstantInt::get(Int32Ty, VTableByteOffset),
+       TypeId});
+  llvm::Value *CheckResult = Builder.CreateExtractValue(CheckedLoad, 1);
+
+  EmitCheck(std::make_pair(CheckResult, SanitizerKind::CFIVCall),
+            "cfi_check_fail", nullptr, nullptr);
+
+  return Builder.CreateBitCast(
+      Builder.CreateExtractValue(CheckedLoad, 0),
+      cast<llvm::PointerType>(VTable->getType())->getElementType());
+}
+
 // FIXME: Ideally Expr::IgnoreParenNoopCasts should do this, but it doesn't do
 // quite what we want.
 static const Expr *skipNoOpCastsAndParens(const Expr *E) {

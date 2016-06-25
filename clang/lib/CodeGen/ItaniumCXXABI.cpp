@@ -1595,12 +1595,18 @@ llvm::Value *ItaniumCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
   auto *MethodDecl = cast<CXXMethodDecl>(GD.getDecl());
   llvm::Value *VTable = CGF.GetVTablePtr(This, Ty, MethodDecl->getParent());
 
-  CGF.EmitTypeMetadataCodeForVCall(MethodDecl->getParent(), VTable, Loc);
-
   uint64_t VTableIndex = CGM.getItaniumVTableContext().getMethodVTableIndex(GD);
-  llvm::Value *VFuncPtr =
-      CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfn");
-  return CGF.Builder.CreateAlignedLoad(VFuncPtr, CGF.getPointerAlign());
+  if (CGF.ShouldEmitVTableTypeCheckedLoad(MethodDecl->getParent())) {
+    return CGF.EmitVTableTypeCheckedLoad(
+        MethodDecl->getParent(), VTable,
+        VTableIndex * CGM.getContext().getTargetInfo().getPointerWidth(0) / 8);
+  } else {
+    CGF.EmitTypeMetadataCodeForVCall(MethodDecl->getParent(), VTable, Loc);
+
+    llvm::Value *VFuncPtr =
+        CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfn");
+    return CGF.Builder.CreateAlignedLoad(VFuncPtr, CGF.getPointerAlign());
+  }
 }
 
 llvm::Value *ItaniumCXXABI::EmitVirtualDestructorCall(

@@ -1815,13 +1815,20 @@ llvm::Value *MicrosoftCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
 
   MicrosoftVTableContext::MethodVFTableLocation ML =
       CGM.getMicrosoftVTableContext().getMethodVFTableLocation(GD);
-  if (CGM.getCodeGenOpts().PrepareForLTO)
-    CGF.EmitTypeMetadataCodeForVCall(
-        getClassAtVTableLocation(getContext(), GD, ML), VTable, Loc);
 
-  llvm::Value *VFuncPtr =
-      Builder.CreateConstInBoundsGEP1_64(VTable, ML.Index, "vfn");
-  return Builder.CreateAlignedLoad(VFuncPtr, CGF.getPointerAlign());
+  if (CGF.ShouldEmitVTableTypeCheckedLoad(MethodDecl->getParent())) {
+    return CGF.EmitVTableTypeCheckedLoad(
+        getClassAtVTableLocation(getContext(), GD, ML), VTable,
+        ML.Index * CGM.getContext().getTargetInfo().getPointerWidth(0) / 8);
+  } else {
+    if (CGM.getCodeGenOpts().PrepareForLTO)
+      CGF.EmitTypeMetadataCodeForVCall(
+          getClassAtVTableLocation(getContext(), GD, ML), VTable, Loc);
+
+    llvm::Value *VFuncPtr =
+        Builder.CreateConstInBoundsGEP1_64(VTable, ML.Index, "vfn");
+    return Builder.CreateAlignedLoad(VFuncPtr, CGF.getPointerAlign());
+  }
 }
 
 llvm::Value *MicrosoftCXXABI::EmitVirtualDestructorCall(

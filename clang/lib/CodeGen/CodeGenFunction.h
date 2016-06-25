@@ -1423,6 +1423,15 @@ public:
   void EmitTypeMetadataCodeForVCall(const CXXRecordDecl *RD,
                                     llvm::Value *VTable, SourceLocation Loc);
 
+  /// Returns whether we should perform a type checked load when loading a
+  /// virtual function for virtual calls to members of RD. This is generally
+  /// true when both vcall CFI and whole-program-vtables are enabled.
+  bool ShouldEmitVTableTypeCheckedLoad(const CXXRecordDecl *RD);
+
+  /// Emit a type checked load from the given vtable.
+  llvm::Value *EmitVTableTypeCheckedLoad(const CXXRecordDecl *RD, llvm::Value *VTable,
+                                         uint64_t VTableByteOffset);
+
   /// CanDevirtualizeMemberFunctionCalls - Checks whether virtual calls on given
   /// expr can be devirtualized.
   bool CanDevirtualizeMemberFunctionCall(const Expr *Base,
