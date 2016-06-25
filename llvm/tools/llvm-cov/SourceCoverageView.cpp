@@ -6,9 +6,9 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This class implements rendering for code coverage of source code.
-//
+///
+/// \file This class implements rendering for code coverage of source code.
+///
 //===----------------------------------------------------------------------===//
 
 #include "SourceCoverageView.h"

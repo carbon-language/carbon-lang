@@ -6,9 +6,9 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file implements the text-based coverage renderer.
-//
+///
+/// \file This file implements the text-based coverage renderer.
+///
 //===----------------------------------------------------------------------===//
 
 #include "SourceCoverageViewText.h"

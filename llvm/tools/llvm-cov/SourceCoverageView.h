@@ -6,9 +6,9 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This class implements rendering for code coverage of source code.
-//
+///
+/// \file This class implements rendering for code coverage of source code.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_COV_SOURCECOVERAGEVIEW_H
@@ -24,7 +24,7 @@ namespace llvm {
 
 class SourceCoverageView;
 
-/// \brief A view that represents a macro or include expansion
+/// \brief A view that represents a macro or include expansion.
 struct ExpansionView {
   coverage::CounterMappingRegion Region;
   std::unique_ptr<SourceCoverageView> View;
@@ -49,7 +49,7 @@ struct ExpansionView {
   }
 };
 
-/// \brief A view that represents a function instantiation
+/// \brief A view that represents a function instantiation.
 struct InstantiationView {
   StringRef FunctionName;
   unsigned Line;
@@ -98,8 +98,11 @@ struct LineCoverageStats {
   }
 };
 
-/// \brief A code coverage view of a specific source file.
-/// It can have embedded coverage views.
+/// \brief A code coverage view of a source file or function.
+///
+/// A source coverage view and its nested sub-views form a file-oriented
+/// representation of code coverage data. This view can be printed out by a
+/// renderer which implements the Rendering Interface.
 class SourceCoverageView {
   /// A function or file name.
   StringRef SourceName;

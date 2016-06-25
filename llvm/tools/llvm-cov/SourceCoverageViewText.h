@@ -6,9 +6,9 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the interface to the text-based coverage renderer.
-//
+///
+/// \file This file defines the interface to the text-based coverage renderer.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_COV_SOURCECOVERAGEVIEWTEXT_H
@@ -18,6 +18,7 @@
 
 namespace llvm {
 
+/// \brief A code coverage view which supports text-based rendering.
 class SourceCoverageViewText : public SourceCoverageView {
   void renderSourceName(raw_ostream &OS) override;
 
