@@ -83,7 +83,7 @@ extern cl::opt<unsigned> DefMaxInstsToScan;
 /// precise.
 /// \param [out] AATags The aliasing metadata for the operation which produced
 /// the value. FIXME: This is basically useless.
-/// \param [out] isLoadCSE Whether the returned value is a load from the same
+/// \param [out] IsLoadCSE Whether the returned value is a load from the same
 /// location in memory, as opposed to the value operand of a store.
 ///
 /// \returns The found value, or nullptr if no value is found.
