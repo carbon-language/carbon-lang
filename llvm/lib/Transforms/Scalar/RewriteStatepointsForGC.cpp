@@ -277,22 +277,22 @@ static std::string suffixed_name_or(Value *V, StringRef Suffix,
 static void
 analyzeParsePointLiveness(DominatorTree &DT,
                           GCPtrLivenessData &OriginalLivenessData, CallSite CS,
-                          PartiallyConstructedSafepointRecord &result) {
-  Instruction *inst = CS.getInstruction();
+                          PartiallyConstructedSafepointRecord &Result) {
+  Instruction *Inst = CS.getInstruction();
 
   StatepointLiveSetTy LiveSet;
-  findLiveSetAtInst(inst, OriginalLivenessData, LiveSet);
+  findLiveSetAtInst(Inst, OriginalLivenessData, LiveSet);
 
   if (PrintLiveSet) {
-    errs() << "Live Variables:\n";
+    dbgs() << "Live Variables:\n";
     for (Value *V : LiveSet)
       dbgs() << " " << V->getName() << " " << *V << "\n";
   }
   if (PrintLiveSetSize) {
-    errs() << "Safepoint For: " << CS.getCalledValue()->getName() << "\n";
-    errs() << "Number live values: " << LiveSet.size() << "\n";
+    dbgs() << "Safepoint For: " << CS.getCalledValue()->getName() << "\n";
+    dbgs() << "Number live values: " << LiveSet.size() << "\n";
   }
-  result.LiveSet = LiveSet;
+  Result.LiveSet = LiveSet;
 }
 
 static bool isKnownBaseResult(Value *V);
