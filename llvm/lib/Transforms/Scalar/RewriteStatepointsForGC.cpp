@@ -219,7 +219,7 @@ static bool isGCPointerType(Type *T) {
     // For the sake of this example GC, we arbitrarily pick addrspace(1) as our
     // GC managed heap.  We know that a pointer into this heap needs to be
     // updated and that no other pointer does.
-    return (1 == PT->getAddressSpace());
+    return PT->getAddressSpace() == 1;
   return false;
 }
 
@@ -250,8 +250,7 @@ static bool containsGCPtrType(Type *Ty) {
   if (ArrayType *AT = dyn_cast<ArrayType>(Ty))
     return containsGCPtrType(AT->getElementType());
   if (StructType *ST = dyn_cast<StructType>(Ty))
-    return std::any_of(ST->subtypes().begin(), ST->subtypes().end(),
-                       containsGCPtrType);
+    return any_of(ST->subtypes(), containsGCPtrType);
   return false;
 }
 
