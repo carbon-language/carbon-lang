@@ -326,7 +326,7 @@ TargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
     return false;
 
   // If the code is position independent we will have to add a base register.
-  if (RM == Reloc::PIC_)
+  if (isPositionIndependent())
     return false;
 
   // Otherwise we can do it.
