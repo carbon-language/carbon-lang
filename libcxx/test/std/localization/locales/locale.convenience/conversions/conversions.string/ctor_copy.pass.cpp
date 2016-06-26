@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// These constructors are still unavailable in C++03, but this test depends
+// on access control SFINAE and fails without it.
+// UNSUPPORTED: c++98, c++03
+
 // <locale>
 
 // wstring_convert<Codecvt, Elem, Wide_alloc, Byte_alloc>
