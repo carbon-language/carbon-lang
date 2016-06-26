@@ -44,6 +44,10 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
   return nullptr;
 }
 
+bool TargetLowering::isPositionIndependent() const {
+  return getTargetMachine().getRelocationModel() == Reloc::PIC_;
+}
+
 /// Check whether a given call node is in tail position within its function. If
 /// so, it sets Chain to the input chain of the tail call.
 bool TargetLowering::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,

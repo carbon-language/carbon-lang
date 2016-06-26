@@ -12978,10 +12978,6 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   return DAG.getNode(ISD::ADD, dl, PtrVT, ThreadPointer, Offset);
 }
 
-bool X86TargetLowering::isPositionIndependent() const {
-  return getTargetMachine().getRelocationModel() == Reloc::PIC_;
-}
-
 SDValue
 X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
 
