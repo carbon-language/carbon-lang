@@ -956,6 +956,7 @@ TypeIndex CodeViewDebug::lowerTypeArray(const DICompositeType *Ty) {
         ArrayRecord(ElementTypeIndex, IndexType, ElementSize, Name));
   }
 
+  (void)UndefinedSubrange;
   assert(UndefinedSubrange || ElementSize == (Ty->getSizeInBits() / 8));
 
   return ElementTypeIndex;
