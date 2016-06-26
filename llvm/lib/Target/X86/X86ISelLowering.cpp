@@ -7026,21 +7026,6 @@ static bool isNoopShuffleMask(ArrayRef<int> Mask) {
   return true;
 }
 
-/// \brief Helper function to classify a mask as a single-input mask.
-///
-/// This isn't a generic single-input test because in the vector shuffle
-/// lowering we canonicalize single inputs to be the first input operand. This
-/// means we can more quickly test for a single input by only checking whether
-/// an input from the second operand exists. We also assume that the size of
-/// mask corresponds to the size of the input vectors which isn't true in the
-/// fully general case.
-static bool isSingleInputShuffleMask(ArrayRef<int> Mask) {
-  for (int M : Mask)
-    if (M >= (int)Mask.size())
-      return false;
-  return true;
-}
-
 /// \brief Test whether there are elements crossing 128-bit lanes in this
 /// shuffle mask.
 ///
@@ -7254,16 +7239,6 @@ static SmallBitVector computeZeroableShuffleElements(ArrayRef<int> Mask,
   return Zeroable;
 }
 
-/// Mutate a shuffle mask, replacing zeroable elements with SM_SentinelZero.
-static void computeZeroableShuffleMask(MutableArrayRef<int> Mask,
-                                       SDValue V1, SDValue V2) {
-  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
-  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
-    if (Mask[i] != SM_SentinelUndef && Zeroable[i])
-      Mask[i] = SM_SentinelZero;
-  }
-}
-
 /// Try to lower a shuffle with a single PSHUFB of V1.
 /// This is only possible if V2 is unused (at all, or only for zero elements).
 static SDValue lowerVectorShuffleWithPSHUFB(const SDLoc &DL, MVT VT,
@@ -7271,34 +7246,41 @@ static SDValue lowerVectorShuffleWithPSHUFB(const SDLoc &DL, MVT VT,
                                             SDValue V2,
                                             const X86Subtarget &Subtarget,
                                             SelectionDAG &DAG) {
-  const int NumBytes = VT.is128BitVector() ? 16 : 32;
+  int Size = Mask.size();
+  int LaneSize = 128 / VT.getScalarSizeInBits();
+  const int NumBytes = VT.getSizeInBits() / 8;
   const int NumEltBytes = VT.getScalarSizeInBits() / 8;
 
   assert((Subtarget.hasSSSE3() && VT.is128BitVector()) ||
          (Subtarget.hasAVX2() && VT.is256BitVector()));
 
-  SmallVector<int, 32> ZeroableMask(Mask.begin(), Mask.end());
-  computeZeroableShuffleMask(ZeroableMask, V1, V2);
-
-  if (!isSingleInputShuffleMask(ZeroableMask) ||
-      is128BitLaneCrossingShuffleMask(VT, Mask))
-    return SDValue();
+  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
 
   SmallVector<SDValue, 32> PSHUFBMask(NumBytes);
   // Sign bit set in i8 mask means zero element.
   SDValue ZeroMask = DAG.getConstant(0x80, DL, MVT::i8);
 
   for (int i = 0; i < NumBytes; ++i) {
-    int M = ZeroableMask[i / NumEltBytes];
-    if (M == SM_SentinelUndef) {
+    int M = Mask[i / NumEltBytes];
+    if (M < 0) {
       PSHUFBMask[i] = DAG.getUNDEF(MVT::i8);
-    } else if (M == SM_SentinelZero) {
-      PSHUFBMask[i] = ZeroMask;
-    } else {
-      M = M * NumEltBytes + (i % NumEltBytes);
-      M = i < 16 ? M : M - 16;
-      PSHUFBMask[i] = DAG.getConstant(M, DL, MVT::i8);
+      continue;
     }
+    if (Zeroable[i / NumEltBytes]) {
+      PSHUFBMask[i] = ZeroMask;
+      continue;
+    }
+    // Only allow V1.
+    if (M >= Size)
+      return SDValue();
+
+    // PSHUFB can't cross lanes, ensure this doesn't happen.
+    if ((M / LaneSize) != ((i / NumEltBytes) / LaneSize))
+      return SDValue();
+
+    M = M % LaneSize;
+    M = M * NumEltBytes + (i % NumEltBytes);
+    PSHUFBMask[i] = DAG.getConstant(M, DL, MVT::i8);
   }
 
   MVT I8VT = MVT::getVectorVT(MVT::i8, NumBytes);
