@@ -2566,32 +2566,32 @@ static void recomputeLiveInValues(GCPtrLivenessData &RevisedLivenessData,
 
 #ifndef NDEBUG
   DenseSet<Value *> Bases;
-  for (auto KVPair : Info.PointerToBase) {
+  for (auto KVPair : Info.PointerToBase)
     Bases.insert(KVPair.second);
-  }
 #endif
+
   // We may have base pointers which are now live that weren't before.  We need
   // to update the PointerToBase structure to reflect this.
   for (auto V : Updated)
-    if (Info.PointerToBase.insert(std::make_pair(V, V)).second) {
-      assert(Bases.count(V) && "can't find base for unexpected live value");
+    if (Info.PointerToBase.insert({V, V}).second) {
+      assert(Bases.count(V) && "Can't find base for unexpected live value!");
       continue;
     }
 
 #ifndef NDEBUG
-  for (auto V : Updated) {
+  for (auto V : Updated)
     assert(Info.PointerToBase.count(V) &&
-           "must be able to find base for live value");
-  }
+           "Must be able to find base for live value!");
 #endif
 
   // Remove any stale base mappings - this can happen since our liveness is
-  // more precise then the one inherent in the base pointer analysis
+  // more precise then the one inherent in the base pointer analysis.
   DenseSet<Value *> ToErase;
   for (auto KVPair : Info.PointerToBase)
     if (!Updated.count(KVPair.first))
       ToErase.insert(KVPair.first);
-  for (auto V : ToErase)
+
+  for (auto *V : ToErase)
     Info.PointerToBase.erase(V);
 
 #ifndef NDEBUG
