@@ -86,6 +86,12 @@
 #define TEST_HAS_SANITIZERS
 #endif
 
+#if defined(_LIBCPP_NORETURN)
+#define TEST_NORETURN _LIBCPP_NORETURN
+#else
+#define TEST_NORETURN [[noreturn]]
+#endif
+
 /* Macros for testing libc++ specific behavior and extensions */
 #if defined(_LIBCPP_VERSION)
 #define LIBCPP_ASSERT(...) assert(__VA_ARGS__)
