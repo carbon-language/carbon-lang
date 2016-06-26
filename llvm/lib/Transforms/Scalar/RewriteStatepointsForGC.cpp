@@ -549,30 +549,36 @@ class BDVState {
 public:
   enum Status { Unknown, Base, Conflict };
 
-  BDVState(Status s, Value *b = nullptr) : status(s), base(b) {
-    assert(status != Base || b);
-  }
-  explicit BDVState(Value *b) : status(Base), base(b) {}
-  BDVState() : status(Unknown), base(nullptr) {}
+  BDVState() : Status(Unknown), BaseValue(nullptr) {}
 
-  Status getStatus() const { return status; }
-  Value *getBase() const { return base; }
+  explicit BDVState(Status Status, Value *BaseValue = nullptr)
+      : Status(Status), BaseValue(BaseValue) {
+    assert(Status != Base || BaseValue);
+  }
+
+  explicit BDVState(Value *BaseValue) : Status(Base), BaseValue(BaseValue) {}
+
+  Status getStatus() const { return Status; }
+  Value *getBaseValue() const { return BaseValue; }
 
   bool isBase() const { return getStatus() == Base; }
   bool isUnknown() const { return getStatus() == Unknown; }
   bool isConflict() const { return getStatus() == Conflict; }
 
-  bool operator==(const BDVState &other) const {
-    return base == other.base && status == other.status;
+  bool operator==(const BDVState &Other) const {
+    return BaseValue == Other.BaseValue && Status == Other.Status;
   }
 
   bool operator!=(const BDVState &other) const { return !(*this == other); }
 
   LLVM_DUMP_METHOD
-  void dump() const { print(dbgs()); dbgs() << '\n'; }
-  
+  void dump() const {
+    print(dbgs());
+    dbgs() << '\n';
+  }
+
   void print(raw_ostream &OS) const {
-    switch (status) {
+    switch (getStatus()) {
     case Unknown:
       OS << "U";
       break;
@@ -583,13 +589,13 @@ public:
       OS << "C";
       break;
     };
-    OS << " (" << base << " - "
-       << (base ? base->getName() : "nullptr") << "): ";
+    OS << " (" << getBaseValue() << " - "
+       << (getBaseValue() ? getBaseValue()->getName() : "nullptr") << "): ";
   }
 
 private:
-  Status status;
-  AssertingVH<Value> base; // non null only if status == base
+  Status Status;
+  AssertingVH<Value> BaseValue; // Non-null only if Status == Base.
 };
 }
 
@@ -606,12 +612,12 @@ static BDVState meetBDVStateImpl(const BDVState &LHS, const BDVState &RHS) {
     return RHS;
 
   case BDVState::Base:
-    assert(LHS.getBase() && "can't be null");
+    assert(LHS.getBaseValue() && "can't be null");
     if (RHS.isUnknown())
       return LHS;
 
     if (RHS.isBase()) {
-      if (LHS.getBase() == RHS.getBase()) {
+      if (LHS.getBaseValue() == RHS.getBaseValue()) {
         assert(LHS == RHS && "equality broken!");
         return LHS;
       }
@@ -809,13 +815,13 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &Cache) {
     // The problem is that we need to convert from a vector base to a scalar
     // base for the particular indice we're interested in.
     if (State.isBase() && isa<ExtractElementInst>(I) &&
-        isa<VectorType>(State.getBase()->getType())) {
+        isa<VectorType>(State.getBaseValue()->getType())) {
       auto *EE = cast<ExtractElementInst>(I);
       // TODO: In many cases, the new instruction is just EE itself.  We should
       // exploit this, but can't do it here since it would break the invariant
       // about the BDV not being known to be a base.
       auto *BaseInst = ExtractElementInst::Create(
-          State.getBase(), EE->getIndexOperand(), "base_ee", EE);
+          State.getBaseValue(), EE->getIndexOperand(), "base_ee", EE);
       BaseInst->setMetadata("is_base_value", MDNode::get(I->getContext(), {}));
       States[I] = BDVState(BDVState::Base, BaseInst);
     }
@@ -878,7 +884,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &Cache) {
     } else {
       // Either conflict or base.
       assert(States.count(BDV));
-      Base = States[BDV].getBase();
+      Base = States[BDV].getBaseValue();
     }
     assert(Base && "Can't be null");
     // The cast is needed since base traversal may strip away bitcasts
@@ -899,7 +905,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &Cache) {
     if (!State.isConflict())
       continue;
 
-    if (PHINode *BasePHI = dyn_cast<PHINode>(State.getBase())) {
+    if (PHINode *BasePHI = dyn_cast<PHINode>(State.getBaseValue())) {
       PHINode *PN = cast<PHINode>(BDV);
       unsigned NumPHIValues = PN->getNumIncomingValues();
       for (unsigned i = 0; i < NumPHIValues; i++) {
@@ -941,20 +947,22 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &Cache) {
         BasePHI->addIncoming(Base, InBB);
       }
       assert(BasePHI->getNumIncomingValues() == NumPHIValues);
-    } else if (SelectInst *BaseSI = dyn_cast<SelectInst>(State.getBase())) {
+    } else if (SelectInst *BaseSI =
+                   dyn_cast<SelectInst>(State.getBaseValue())) {
       SelectInst *SI = cast<SelectInst>(BDV);
 
       // Find the instruction which produces the base for each input.
       // We may need to insert a bitcast.
       BaseSI->setTrueValue(getBaseForInput(SI->getTrueValue(), BaseSI));
       BaseSI->setFalseValue(getBaseForInput(SI->getFalseValue(), BaseSI));
-    } else if (auto *BaseEE = dyn_cast<ExtractElementInst>(State.getBase())) {
+    } else if (auto *BaseEE =
+                   dyn_cast<ExtractElementInst>(State.getBaseValue())) {
       Value *InVal = cast<ExtractElementInst>(BDV)->getVectorOperand();
       // Find the instruction which produces the base for each input.  We may
       // need to insert a bitcast.
       BaseEE->setOperand(0, getBaseForInput(InVal, BaseEE));
     } else {
-      auto *BaseIE = cast<InsertElementInst>(State.getBase());
+      auto *BaseIE = cast<InsertElementInst>(State.getBaseValue());
       auto *BdvIE = cast<InsertElementInst>(BDV);
       auto UpdateOperand = [&](int OperandIdx) {
         Value *InVal = BdvIE->getOperand(OperandIdx);
@@ -971,7 +979,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &Cache) {
   // relation and one of the base pointer relation!  FIXME
   for (auto Pair : States) {
     auto *BDV = Pair.first;
-    Value *Base = Pair.second.getBase();
+    Value *Base = Pair.second.getBaseValue();
     assert(BDV && Base);
     assert(!isKnownBaseResult(BDV) && "why did it get added?");
 
