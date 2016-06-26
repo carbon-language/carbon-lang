@@ -315,10 +315,12 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
       paramTy.push_back(PointerType::getUnqual(output->getType()));
   }
 
-  DEBUG(dbgs() << "Function type: " << *RetTy << " f(");
-  for (Type *i : paramTy)
-    DEBUG(dbgs() << *i << ", ");
-  DEBUG(dbgs() << ")\n");
+  DEBUG({
+    dbgs() << "Function type: " << *RetTy << " f(";
+    for (Type *i : paramTy)
+      dbgs() << *i << ", ";
+    dbgs() << ")\n";
+  });
 
   StructType *StructTy;
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
