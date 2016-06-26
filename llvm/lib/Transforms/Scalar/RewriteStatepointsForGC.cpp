@@ -601,29 +601,28 @@ static raw_ostream &operator<<(raw_ostream &OS, const BDVState &State) {
 }
 #endif
 
-static BDVState meetBDVStateImpl(const BDVState &stateA,
-                                 const BDVState &stateB) {
-  switch (stateA.getStatus()) {
+static BDVState meetBDVStateImpl(const BDVState &LHS, const BDVState &RHS) {
+  switch (LHS.getStatus()) {
   case BDVState::Unknown:
-    return stateB;
+    return RHS;
 
   case BDVState::Base:
-    assert(stateA.getBase() && "can't be null");
-    if (stateB.isUnknown())
-      return stateA;
+    assert(LHS.getBase() && "can't be null");
+    if (RHS.isUnknown())
+      return LHS;
 
-    if (stateB.isBase()) {
-      if (stateA.getBase() == stateB.getBase()) {
-        assert(stateA == stateB && "equality broken!");
-        return stateA;
+    if (RHS.isBase()) {
+      if (LHS.getBase() == RHS.getBase()) {
+        assert(LHS == RHS && "equality broken!");
+        return LHS;
       }
       return BDVState(BDVState::Conflict);
     }
-    assert(stateB.isConflict() && "only three states!");
+    assert(RHS.isConflict() && "only three states!");
     return BDVState(BDVState::Conflict);
 
   case BDVState::Conflict:
-    return stateA;
+    return LHS;
   }
   llvm_unreachable("only three states!");
 }
