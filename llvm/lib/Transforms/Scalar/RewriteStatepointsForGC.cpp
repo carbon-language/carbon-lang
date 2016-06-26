@@ -729,8 +729,9 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &Cache) {
 
 #ifndef NDEBUG
   DEBUG(dbgs() << "States after initialization:\n");
-  for (auto Pair : States)
+  for (auto Pair : States) {
     DEBUG(dbgs() << " " << Pair.second << " for " << *Pair.first << "\n");
+  }
 #endif
 
   // Return a phi state for a base defining value.  We'll generate a new
@@ -798,8 +799,9 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &Cache) {
 
 #ifndef NDEBUG
   DEBUG(dbgs() << "States after meet iteration:\n");
-  for (auto Pair : States)
+  for (auto Pair : States) {
     DEBUG(dbgs() << " " << Pair.second << " for " << *Pair.first << "\n");
+  }
 #endif
 
   // Insert Phis for all conflicts
