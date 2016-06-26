@@ -2462,17 +2462,7 @@ static void checkBasicSSA(DominatorTree &DT, GCPtrLivenessData &Data,
 
 static void computeLiveInValues(DominatorTree &DT, Function &F,
                                 GCPtrLivenessData &Data) {
-
   SmallSetVector<BasicBlock *, 32> Worklist;
-  auto AddPredsToWorklist = [&](BasicBlock *BB) {
-    // We use a SetVector so that we don't have duplicates in the worklist.
-    Worklist.insert(pred_begin(BB), pred_end(BB));
-  };
-  auto NextItem = [&]() {
-    BasicBlock *BB = Worklist.back();
-    Worklist.pop_back();
-    return BB;
-  };
 
   // Seed the liveness for each individual block
   for (BasicBlock &BB : F) {
@@ -2491,15 +2481,15 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
     Data.LiveIn[&BB].set_union(Data.LiveOut[&BB]);
     Data.LiveIn[&BB].set_subtract(Data.KillSet[&BB]);
     if (!Data.LiveIn[&BB].empty())
-      AddPredsToWorklist(&BB);
+      Worklist.insert(pred_begin(&BB), pred_end(&BB));
   }
 
   // Propagate that liveness until stable
   while (!Worklist.empty()) {
-    BasicBlock *BB = NextItem();
+    BasicBlock *BB = Worklist.pop_back_val();
 
-    // Compute our new liveout set, then exit early if it hasn't changed
-    // despite the contribution of our successor.
+    // Compute our new liveout set, then exit early if it hasn't changed despite
+    // the contribution of our successor.
     SetVector<Value *> LiveOut = Data.LiveOut[BB];
     const auto OldLiveOutSize = LiveOut.size();
     for (BasicBlock *Succ : successors(BB)) {
@@ -2509,7 +2499,7 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
     // assert OutLiveOut is a subset of LiveOut
     if (OldLiveOutSize == LiveOut.size()) {
       // If the sets are the same size, then we didn't actually add anything
-      // when unioning our successors LiveIn  Thus, the LiveIn of this block
+      // when unioning our successors LiveIn.  Thus, the LiveIn of this block
       // hasn't changed.
       continue;
     }
@@ -2525,16 +2515,15 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
     // assert: OldLiveIn is a subset of LiveTmp
     if (OldLiveIn.size() != LiveTmp.size()) {
       Data.LiveIn[BB] = LiveTmp;
-      AddPredsToWorklist(BB);
+      Worklist.insert(pred_begin(BB), pred_end(BB));
     }
-  } // while( !worklist.empty() )
+  } // while (!Worklist.empty())
 
 #ifndef NDEBUG
   // Sanity check our output against SSA properties.  This helps catch any
   // missing kills during the above iteration.
-  for (BasicBlock &BB : F) {
+  for (BasicBlock &BB : F)
     checkBasicSSA(DT, Data, BB);
-  }
 #endif
 }
 
