@@ -2371,15 +2371,12 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F) {
 
 /// Compute the live-in set for the location rbegin starting from
 /// the live-out set of the basic block
-static void computeLiveInValues(BasicBlock::reverse_iterator rbegin,
-                                BasicBlock::reverse_iterator rend,
+static void computeLiveInValues(BasicBlock::reverse_iterator Begin,
+                                BasicBlock::reverse_iterator End,
                                 SetVector<Value *> &LiveTmp) {
-
-  for (BasicBlock::reverse_iterator ritr = rbegin; ritr != rend; ritr++) {
-    Instruction *I = &*ritr;
-
+  for (auto &I : make_range(Begin, End)) {
     // KILL/Def - Remove this definition from LiveIn
-    LiveTmp.remove(I);
+    LiveTmp.remove(&I);
 
     // Don't consider *uses* in PHI nodes, we handle their contribution to
     // predecessor blocks when we seed the LiveOut sets
@@ -2387,7 +2384,7 @@ static void computeLiveInValues(BasicBlock::reverse_iterator rbegin,
       continue;
 
     // USE - Add to the LiveIn set for this instruction
-    for (Value *V : I->operands()) {
+    for (Value *V : I.operands()) {
       assert(!isUnhandledGCPointerType(V->getType()) &&
              "support for FCA unimplemented");
       if (isHandledGCPointerType(V->getType()) && !isa<Constant>(V)) {
