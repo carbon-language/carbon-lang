@@ -911,7 +911,6 @@ TypeIndex CodeViewDebug::lowerTypeArray(const DICompositeType *Ty) {
   TypeIndex IndexType = Asm->MAI->getPointerSize() == 8
                             ? TypeIndex(SimpleTypeKind::UInt64Quad)
                             : TypeIndex(SimpleTypeKind::UInt32Long);
-  uint64_t Size = Ty->getSizeInBits() / 8;
   assert(ElementTypeRef.resolve());
   uint64_t ElementSize = ElementTypeRef.resolve()->getSizeInBits() / 8;
 
@@ -957,8 +956,7 @@ TypeIndex CodeViewDebug::lowerTypeArray(const DICompositeType *Ty) {
         ArrayRecord(ElementTypeIndex, IndexType, ElementSize, Name));
   }
 
-  (void)UndefinedSubrange;
-  assert(UndefinedSubrange || ElementSize == Size);
+  assert(UndefinedSubrange || ElementSize == (Ty->getSizeInBits() / 8));
 
   return ElementTypeIndex;
 }
