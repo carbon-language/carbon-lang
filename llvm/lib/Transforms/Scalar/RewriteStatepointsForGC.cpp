@@ -601,64 +601,41 @@ static raw_ostream &operator<<(raw_ostream &OS, const BDVState &State) {
 }
 #endif
 
-namespace {
-// Values of type BDVState form a lattice, and this is a helper
-// class that implementes the meet operation.  The meat of the meet
-// operation is implemented in MeetBDVStates::pureMeet
-class MeetBDVStates {
-public:
-  /// Initializes the currentResult to the TOP state so that if can be met with
-  /// any other state to produce that state.
-  MeetBDVStates() {}
+static BDVState meetBDVStateImpl(const BDVState &stateA,
+                                 const BDVState &stateB) {
+  switch (stateA.getStatus()) {
+  case BDVState::Unknown:
+    return stateB;
 
-  // Destructively meet the current result with the given BDVState
-  void meetWith(BDVState otherState) {
-    currentResult = meet(otherState, currentResult);
-  }
-
-  BDVState getResult() const { return currentResult; }
-
-private:
-  BDVState currentResult;
-
-  /// Perform a meet operation on two elements of the BDVState lattice.
-  static BDVState meet(BDVState LHS, BDVState RHS) {
-    assert((pureMeet(LHS, RHS) == pureMeet(RHS, LHS)) &&
-           "math is wrong: meet does not commute!");
-    BDVState Result = pureMeet(LHS, RHS);
-    DEBUG(dbgs() << "meet of " << LHS << " with " << RHS
-                 << " produced " << Result << "\n");
-    return Result;
-  }
-
-  static BDVState pureMeet(const BDVState &stateA, const BDVState &stateB) {
-    switch (stateA.getStatus()) {
-    case BDVState::Unknown:
-      return stateB;
-
-    case BDVState::Base:
-      assert(stateA.getBase() && "can't be null");
-      if (stateB.isUnknown())
-        return stateA;
-
-      if (stateB.isBase()) {
-        if (stateA.getBase() == stateB.getBase()) {
-          assert(stateA == stateB && "equality broken!");
-          return stateA;
-        }
-        return BDVState(BDVState::Conflict);
-      }
-      assert(stateB.isConflict() && "only three states!");
-      return BDVState(BDVState::Conflict);
-
-    case BDVState::Conflict:
+  case BDVState::Base:
+    assert(stateA.getBase() && "can't be null");
+    if (stateB.isUnknown())
       return stateA;
+
+    if (stateB.isBase()) {
+      if (stateA.getBase() == stateB.getBase()) {
+        assert(stateA == stateB && "equality broken!");
+        return stateA;
+      }
+      return BDVState(BDVState::Conflict);
     }
-    llvm_unreachable("only three states!");
+    assert(stateB.isConflict() && "only three states!");
+    return BDVState(BDVState::Conflict);
+
+  case BDVState::Conflict:
+    return stateA;
   }
-};
+  llvm_unreachable("only three states!");
 }
 
+// Values of type BDVState form a lattice, and this function implements the meet
+// operation.
+static BDVState meetBDVState(BDVState LHS, BDVState RHS) {
+  BDVState Result = meetBDVStateImpl(LHS, RHS);
+  assert(Result == meetBDVStateImpl(RHS, LHS) &&
+         "Math is wrong: meet does not commute!");
+  return Result;
+}
 
 /// For a given value or instruction, figure out what base ptr its derived from.
 /// For gc objects, this is simply itself.  On success, returns a value which is
@@ -783,27 +760,28 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &Cache) {
         return getStateForBDV(BDV);
       };
 
-      MeetBDVStates CalculateMeet;
+      BDVState NewState;
       if (SelectInst *SI = dyn_cast<SelectInst>(BDV)) {
-        CalculateMeet.meetWith(getStateForInput(SI->getTrueValue()));
-        CalculateMeet.meetWith(getStateForInput(SI->getFalseValue()));
+        NewState = meetBDVState(NewState, getStateForInput(SI->getTrueValue()));
+        NewState =
+            meetBDVState(NewState, getStateForInput(SI->getFalseValue()));
       } else if (PHINode *PN = dyn_cast<PHINode>(BDV)) {
         for (Value *Val : PN->incoming_values())
-          CalculateMeet.meetWith(getStateForInput(Val));
+          NewState = meetBDVState(NewState, getStateForInput(Val));
       } else if (auto *EE = dyn_cast<ExtractElementInst>(BDV)) {
         // The 'meet' for an extractelement is slightly trivial, but it's still
         // useful in that it drives us to conflict if our input is.
-        CalculateMeet.meetWith(getStateForInput(EE->getVectorOperand()));
+        NewState =
+            meetBDVState(NewState, getStateForInput(EE->getVectorOperand()));
       } else {
         // Given there's a inherent type mismatch between the operands, will
         // *always* produce Conflict.
         auto *IE = cast<InsertElementInst>(BDV);
-        CalculateMeet.meetWith(getStateForInput(IE->getOperand(0)));
-        CalculateMeet.meetWith(getStateForInput(IE->getOperand(1)));
+        NewState = meetBDVState(NewState, getStateForInput(IE->getOperand(0)));
+        NewState = meetBDVState(NewState, getStateForInput(IE->getOperand(1)));
       }
 
       BDVState OldState = States[BDV];
-      BDVState NewState = CalculateMeet.getResult();
       if (OldState != NewState) {
         Progress = true;
         States[BDV] = NewState;
