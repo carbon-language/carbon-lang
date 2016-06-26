@@ -281,7 +281,7 @@ void TargetLowering::softenSetCCOperands(SelectionDAG &DAG, EVT VT,
 /// returned value is a member of the MachineJumpTableInfo::JTEntryKind enum.
 unsigned TargetLowering::getJumpTableEncoding() const {
   // In non-pic modes, just use the address of a block.
-  if (getTargetMachine().getRelocationModel() != Reloc::PIC_)
+  if (!isPositionIndependent())
     return MachineJumpTableInfo::EK_BlockAddress;
 
   // In PIC mode, if the target supports a GPRel32 directive, use it.
