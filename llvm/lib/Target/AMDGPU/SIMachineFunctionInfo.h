@@ -106,7 +106,6 @@ private:
   bool WorkItemIDY : 1;
   bool WorkItemIDZ : 1;
 
-
   MCPhysReg getNextUserSGPR() const {
     assert(NumSystemSGPRs == 0 && "System SGPRs must be added after user SGPRs");
     return AMDGPU::SGPR0 + NumUserSGPRs;

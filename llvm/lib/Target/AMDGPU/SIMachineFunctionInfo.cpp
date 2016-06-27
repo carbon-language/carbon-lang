@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "SIMachineFunctionInfo.h"
 #include "AMDGPUSubtarget.h"
 #include "SIInstrInfo.h"
@@ -207,7 +206,6 @@ SIMachineFunctionInfo::SpilledReg SIMachineFunctionInfo::getSpilledReg (
     if (LaneVGPR == AMDGPU::NoRegister)
       // We have no VGPRs left for spilling SGPRs.
       return Spill;
-
 
     LaneVGPRs[LaneVGPRIdx] = LaneVGPR;
 
