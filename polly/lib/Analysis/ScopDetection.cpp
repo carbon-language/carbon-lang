@@ -309,6 +309,35 @@ bool ScopDetection::addOverApproximatedRegion(Region *AR,
 
   // Reject if the surrounding loop does not entirely contain the nonaffine
   // subregion.
+  // This can happen because a region can contain BBs that have no path to the
+  // exit block (Infinite loops, UnreachableInst), but such blocks are never
+  // part of a loop.
+  //
+  // _______________
+  // | Loop Header | <-----------.
+  // ---------------             |
+  //        |                    |
+  // _______________       ______________
+  // | RegionEntry |-----> | RegionExit |----->
+  // ---------------       --------------
+  //        |
+  // _______________
+  // | EndlessLoop | <--.
+  // ---------------    |
+  //       |            |
+  //       \------------/
+  //
+  // In the example above, the loop (LoopHeader,RegionEntry,RegionExit) is
+  // neither entirely contained in the region RegionEntry->RegionExit
+  // (containing RegionEntry,EndlessLoop) nor is the region entirely contained
+  // in the loop.
+  // The block EndlessLoop is contained is in the region because
+  // Region::contains tests whether it is not dominated by RegionExit. This is
+  // probably to not having to query the PostdominatorTree.
+  // Instead of an endless loop, a dead end can also be formed by
+  // UnreachableInst. This case is already caught by isErrorBlock(). We hence
+  // only have to test whether there is an endless loop not contained in the
+  // surrounding loop.
   BasicBlock *BBEntry = AR->getEntry();
   Loop *L = LI->getLoopFor(BBEntry);
   while (L && AR->contains(L))
