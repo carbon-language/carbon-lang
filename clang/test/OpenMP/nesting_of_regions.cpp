@@ -2960,6 +2960,12 @@ void foo() {
 #pragma omp teams  // expected-note {{nested teams construct here}}
     ++a;
   }
+#pragma omp target // expected-error {{target construct with nested teams region contains statements outside of the teams construct}}
+  {
+    while (0)      // expected-note {{statement outside teams construct here}}
+#pragma omp teams  // expected-note {{nested teams construct here}}
+    ++a;
+  }
 #pragma omp target
   {
 #pragma omp taskloop

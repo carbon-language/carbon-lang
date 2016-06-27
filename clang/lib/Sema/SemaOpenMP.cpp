@@ -6537,6 +6537,9 @@ StmtResult Sema::ActOnOpenMPTargetDirective(ArrayRef<OMPClause *> Clauses,
       }
       assert(I != CS->body_end() && "Not found statement");
       S = *I;
+    } else {
+      auto *OED = dyn_cast<OMPExecutableDirective>(S);
+      OMPTeamsFound = OED && isOpenMPTeamsDirective(OED->getDirectiveKind());
     }
     if (!OMPTeamsFound) {
       Diag(StartLoc, diag::err_omp_target_contains_not_only_teams);
