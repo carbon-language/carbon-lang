@@ -12,6 +12,7 @@
 # REL:      Relocations [
 # REL-NEXT: ]
 
+!ELF
 FileHeader:
   Class:    ELFCLASS32
   Data:     ELFDATA2LSB
