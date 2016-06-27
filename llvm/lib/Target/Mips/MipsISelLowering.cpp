@@ -1766,7 +1766,7 @@ SDValue MipsTargetLowering::lowerGlobalAddress(SDValue Op,
 
   // Every other architecture would use shouldAssumeDSOLocal in here, but
   // mips is special.
-  // * In PIC code mips requires got loads oven for local statics!
+  // * In PIC code mips requires got loads even for local statics!
   // * To save on got entries, for local statics the got entry contains the
   //   page and an additional add instruction takes care of the low bits.
   // * It is legal to access a hidden symbol with a non hidden undefined,
