@@ -145,6 +145,20 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, const Triple &TT,
 
 AMDGPUTargetMachine::~AMDGPUTargetMachine() { }
 
+StringRef AMDGPUTargetMachine::getGPUName(const Function &F) const {
+  Attribute GPUAttr = F.getFnAttribute("target-cpu");
+  return GPUAttr.hasAttribute(Attribute::None) ?
+    getTargetCPU() : GPUAttr.getValueAsString();
+}
+
+StringRef AMDGPUTargetMachine::getFeatureString(const Function &F) const {
+  Attribute FSAttr = F.getFnAttribute("target-features");
+
+  return FSAttr.hasAttribute(Attribute::None) ?
+    getTargetFeatureString() :
+    FSAttr.getValueAsString();
+}
+
 //===----------------------------------------------------------------------===//
 // R600 Target Machine (R600 -> Cayman)
 //===----------------------------------------------------------------------===//
@@ -154,8 +168,27 @@ R600TargetMachine::R600TargetMachine(const Target &T, const Triple &TT,
                                      TargetOptions Options,
                                      Optional<Reloc::Model> RM,
                                      CodeModel::Model CM, CodeGenOpt::Level OL)
-  : AMDGPUTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, getTargetCPU(), FS, *this) {}
+  : AMDGPUTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {}
+
+const R600Subtarget *R600TargetMachine::getSubtargetImpl(
+  const Function &F) const {
+  StringRef GPU = getGPUName(F);
+  StringRef FS = getFeatureString(F);
+
+  SmallString<128> SubtargetKey(GPU);
+  SubtargetKey.append(FS);
+
+  auto &I = SubtargetMap[SubtargetKey];
+  if (!I) {
+    // This needs to be done before we create a new subtarget since any
+    // creation will depend on the TM and the code generation flags on the
+    // function that reside in TargetOptions.
+    resetTargetOptions(F);
+    I = llvm::make_unique<R600Subtarget>(TargetTriple, GPU, FS, *this);
+  }
+
+  return I.get();
+}
 
 //===----------------------------------------------------------------------===//
 // GCN Target Machine (SI+)
@@ -166,8 +199,34 @@ GCNTargetMachine::GCNTargetMachine(const Target &T, const Triple &TT,
                                    TargetOptions Options,
                                    Optional<Reloc::Model> RM,
                                    CodeModel::Model CM, CodeGenOpt::Level OL)
-  : AMDGPUTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, getTargetCPU(), FS, *this) {}
+  : AMDGPUTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {}
+
+const SISubtarget *GCNTargetMachine::getSubtargetImpl(const Function &F) const {
+  StringRef GPU = getGPUName(F);
+  StringRef FS = getFeatureString(F);
+
+  SmallString<128> SubtargetKey(GPU);
+  SubtargetKey.append(FS);
+
+  auto &I = SubtargetMap[SubtargetKey];
+  if (!I) {
+    // This needs to be done before we create a new subtarget since any
+    // creation will depend on the TM and the code generation flags on the
+    // function that reside in TargetOptions.
+    resetTargetOptions(F);
+    I = llvm::make_unique<SISubtarget>(TargetTriple, GPU, FS, *this);
+
+#ifndef LLVM_BUILD_GLOBAL_ISEL
+    GISelAccessor *GISel = new GISelAccessor();
+#else
+    SIGISelActualAccessor *GISel = new SIGISelActualAccessor();
+#endif
+
+    I->setGISelAccessor(*GISel);
+  }
+
+  return I.get();
+}
 
 //===----------------------------------------------------------------------===//
 // AMDGPU Pass Setup
@@ -244,8 +303,7 @@ public:
 
 TargetIRAnalysis AMDGPUTargetMachine::getTargetIRAnalysis() {
   return TargetIRAnalysis([this](const Function &F) {
-    return TargetTransformInfo(
-        AMDGPUTTIImpl(this, F.getParent()->getDataLayout()));
+    return TargetTransformInfo(AMDGPUTTIImpl(this, F));
   });
 }
 

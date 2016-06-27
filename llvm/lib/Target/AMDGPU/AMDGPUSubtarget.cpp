@@ -202,17 +202,7 @@ SISubtarget::SISubtarget(const Triple &TT, StringRef GPU, StringRef FS,
   AMDGPUSubtarget(TT, GPU, FS, TM),
   InstrInfo(*this),
   FrameLowering(TargetFrameLowering::StackGrowsUp, getStackAlignment(), 0),
-  TLInfo(TM, *this) {
-#ifndef LLVM_BUILD_GLOBAL_ISEL
-  GISelAccessor *GISel = new GISelAccessor();
-#else
-  AMDGPUGISelActualAccessor *GISel =
-    new AMDGPUGISelActualAccessor();
-  GISel->CallLoweringInfo.reset(
-    new AMDGPUCallLowering(*getTargetLowering()));
-#endif
-  setGISelAccessor(*GISel);
-}
+  TLInfo(TM, *this) {}
 
 unsigned R600Subtarget::getStackEntrySize() const {
   switch (getWavefrontSize()) {
