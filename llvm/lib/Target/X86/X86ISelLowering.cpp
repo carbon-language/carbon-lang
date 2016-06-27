@@ -8510,6 +8510,13 @@ static SDValue lowerVectorShuffleAsBroadcast(const SDLoc &DL, MVT VT,
   SDValue V = V1;
   for (;;) {
     switch (V.getOpcode()) {
+    case ISD::BITCAST: {
+      SDValue VSrc = V.getOperand(0);
+      if (NumElts != VSrc.getSimpleValueType().getVectorNumElements())
+        break;
+      V = VSrc;
+      continue;
+    }
     case ISD::CONCAT_VECTORS: {
       int OperandSize = Mask.size() / V.getNumOperands();
       V = V.getOperand(BroadcastIdx / OperandSize);
