@@ -296,10 +296,28 @@ bool ScopDetection::addOverApproximatedRegion(Region *AR,
 
   // All loops in the region have to be overapproximated too if there
   // are accesses that depend on the iteration count.
+
+  BoxedLoopsSetTy ARBoxedLoopsSet;
+
   for (BasicBlock *BB : AR->blocks()) {
     Loop *L = LI->getLoopFor(BB);
-    if (AR->contains(L))
+    if (AR->contains(L)) {
       Context.BoxedLoopsSet.insert(L);
+      ARBoxedLoopsSet.insert(L);
+    }
+  }
+
+  // Reject if the surrounding loop does not entirely contain the nonaffine
+  // subregion.
+  BasicBlock *BBEntry = AR->getEntry();
+  Loop *L = LI->getLoopFor(BBEntry);
+  while (L && AR->contains(L))
+    L = L->getParentLoop();
+  if (L) {
+    for (const auto *ARBoxedLoop : ARBoxedLoopsSet)
+      if (!L->contains(ARBoxedLoop))
+        return invalid<ReportLoopOverlapWithNonAffineSubRegion>(
+            Context, /*Assert=*/true, L, AR);
   }
 
   return (AllowNonAffineSubLoops || Context.BoxedLoopsSet.empty());
