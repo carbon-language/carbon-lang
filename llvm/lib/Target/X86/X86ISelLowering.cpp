@@ -14597,10 +14597,8 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
                        : APInt::getLowBitsSet(BitWidth, BitWidth - ShAmt);
       if (!Mask.isSignedIntN(32)) // Avoid large immediates.
         break;
-      SDValue New = DAG.getNode(ISD::AND, dl, VT, Op->getOperand(0),
-                                DAG.getConstant(Mask, dl, VT));
-      DAG.ReplaceAllUsesWith(Op, New);
-      Op = New;
+      Op = DAG.getNode(ISD::AND, dl, VT, Op->getOperand(0),
+                       DAG.getConstant(Mask, dl, VT));
     }
     break;
 
