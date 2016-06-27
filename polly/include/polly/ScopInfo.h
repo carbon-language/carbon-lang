@@ -2288,9 +2288,6 @@ class ScopBuilder {
   // The Scop
   std::unique_ptr<Scop> scop;
 
-  // Clear the context.
-  void clear();
-
   // Build the SCoP for Region @p R.
   void buildScop(Region &R, AssumptionCache &AC);
 
@@ -2485,18 +2482,16 @@ public:
   /// @brief Try to build the Polly IR of static control part on the current
   ///        SESE-Region.
   ///
-  /// @return If the current region is a valid for a static control part,
-  ///         return the Polly IR representing this static control part,
-  ///         return null otherwise.
-  Scop *getScop() { return scop.get(); }
-  const Scop *getScop() const { return scop.get(); }
+  /// @return Give up the ownership of the scop object or static control part
+  ///         for the region
+  std::unique_ptr<Scop> getScop() { return std::move(scop); }
 };
 
 /// @brief The legacy pass manager's analysis pass to compute scop information
 ///        for a region.
 class ScopInfoRegionPass : public RegionPass {
-  /// @brief The ScopBuilder pointer which is used to construct a Scop.
-  std::unique_ptr<ScopBuilder> SI;
+  /// @brief The Scop pointer which is used to construct a Scop.
+  std::unique_ptr<Scop> S;
 
 public:
   static char ID; // Pass identification, replacement for typeid
@@ -2504,27 +2499,19 @@ public:
   ScopInfoRegionPass() : RegionPass(ID) {}
   ~ScopInfoRegionPass() {}
 
-  /// @brief Build ScopBuilder object, which constructs Polly IR of static
-  ///        control part for the current SESE-Region.
+  /// @brief Build Scop object, the Polly IR of static control
+  ///        part for the current SESE-Region.
   ///
-  /// @return Return Scop for the current Region.
-  Scop *getScop() {
-    if (SI)
-      return SI.get()->getScop();
-    else
-      return nullptr;
-  }
-  const Scop *getScop() const {
-    if (SI)
-      return SI.get()->getScop();
-    else
-      return nullptr;
-  }
+  /// @return If the current region is a valid for a static control part,
+  ///         return the Polly IR representing this static control part,
+  ///         return null otherwise.
+  Scop *getScop() { return S.get(); }
+  const Scop *getScop() const { return S.get(); }
 
   /// @brief Calculate the polyhedral scop information for a given Region.
   bool runOnRegion(Region *R, RGPassManager &RGM) override;
 
-  void releaseMemory() override { SI.reset(); }
+  void releaseMemory() override { S.reset(); }
 
   void print(raw_ostream &O, const Module *M = nullptr) const override;
 

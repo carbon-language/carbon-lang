@@ -4881,8 +4881,6 @@ ScopBuilder::ScopBuilder(Region *R, AssumptionCache &AC, AliasAnalysis &AA,
   emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F, End, Msg);
 }
 
-void ScopBuilder::clear() { scop.reset(); }
-
 //===----------------------------------------------------------------------===//
 void ScopInfoRegionPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfoWrapperPass>();
@@ -4909,19 +4907,16 @@ bool ScopInfoRegionPass::runOnRegion(Region *R, RGPassManager &RGM) {
   auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(*F);
 
-  SI.reset(new ScopBuilder(R, AC, AA, DL, DT, LI, SD, SE));
+  ScopBuilder SB(R, AC, AA, DL, DT, LI, SD, SE);
+  S = SB.getScop(); // take ownership of scop object
   return false;
 }
 
 void ScopInfoRegionPass::print(raw_ostream &OS, const Module *) const {
-  Scop *scop;
-  if (SI) {
-    if ((scop = SI->getScop())) {
-      scop->print(OS);
-      return;
-    }
-  }
-  OS << "Invalid Scop!\n";
+  if (S)
+    S->print(OS);
+  else
+    OS << "Invalid Scop!\n";
 }
 
 char ScopInfoRegionPass::ID = 0;
