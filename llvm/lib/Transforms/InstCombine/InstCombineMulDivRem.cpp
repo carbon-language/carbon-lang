@@ -1139,16 +1139,17 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   if (Instruction *Common = commonIDivTransforms(I))
     return Common;
 
-  // sdiv X, -1 == -X
-  if (match(Op1, m_AllOnes()))
-    return BinaryOperator::CreateNeg(Op0);
-
-  // sdiv exact X, C  -->  ashr exact X, log2(C)
   const APInt *Op1C;
-  if (match(Op1, m_APInt(Op1C)) && I.isExact() && Op1C->isNonNegative() &&
-      Op1C->isPowerOf2()) {
-    Value *ShAmt = ConstantInt::get(Op1->getType(), Op1C->exactLogBase2());
-    return BinaryOperator::CreateExactAShr(Op0, ShAmt, I.getName());
+  if (match(Op1, m_APInt(Op1C))) {
+    // sdiv X, -1 == -X
+    if (Op1C->isAllOnesValue())
+      return BinaryOperator::CreateNeg(Op0);
+
+    // sdiv exact X, C  -->  ashr exact X, log2(C)
+    if (I.isExact() && Op1C->isNonNegative() && Op1C->isPowerOf2()) {
+      Value *ShAmt = ConstantInt::get(Op1->getType(), Op1C->exactLogBase2());
+      return BinaryOperator::CreateExactAShr(Op0, ShAmt, I.getName());
+    }
   }
 
   if (Constant *RHS = dyn_cast<Constant>(Op1)) {
