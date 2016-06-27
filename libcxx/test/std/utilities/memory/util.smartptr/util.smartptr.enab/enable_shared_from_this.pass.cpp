@@ -56,9 +56,10 @@ int main()
     std::shared_ptr<T const> t2(std::make_shared<T>());
     }
     { // https://llvm.org/bugs/show_bug.cgi?id=27115
+    int x = 42;
     std::shared_ptr<Bar> t1(new Bar(42));
     assert(t1->shared_from_this() == t1);
-    std::shared_ptr<Bar> t2(std::make_shared<Bar>(42));
+    std::shared_ptr<Bar> t2(std::make_shared<Bar>(x));
     assert(t2->shared_from_this() == t2);
     }
     {
