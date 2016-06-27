@@ -94,6 +94,27 @@ entry:
   ret void
 }
 
+; CHECK-LABEL: {{^}}extract_undef_offset_sgpr:
+define void @extract_undef_offset_sgpr(i32 addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
+entry:
+  %ld = load volatile <4 x i32>, <4  x i32> addrspace(1)* %in
+  %value = extractelement <4 x i32> %ld, i32 undef
+  store i32 %value, i32 addrspace(1)* %out
+  ret void
+}
+
+; CHECK-LABEL: {{^}}insert_undef_offset_sgpr_vector_src:
+; CHECK: buffer_load_dwordx4
+; CHECK: s_mov_b32 m0,
+; CHECK-NEXT: v_movreld_b32
+define void @insert_undef_offset_sgpr_vector_src(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
+entry:
+  %ld = load <4 x i32>, <4  x i32> addrspace(1)* %in
+  %value = insertelement <4 x i32> %ld, i32 5, i32 undef
+  store <4 x i32> %value, <4 x i32> addrspace(1)* %out
+  ret void
+}
+
 ; CHECK-LABEL: {{^}}insert_w_offset:
 ; CHECK: s_mov_b32 m0
 ; CHECK-NEXT: v_movreld_b32_e32
