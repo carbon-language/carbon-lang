@@ -651,33 +651,32 @@ bool llvm::shouldAssumeDSOLocal(Reloc::Model RM, const Triple &TT,
   if (TT.isOSBinFormatCOFF())
     return true;
 
-  if (RM == Reloc::Static)
-    return true;
-
   if (GV && (GV->hasLocalLinkage() || !GV->hasDefaultVisibility()))
     return true;
 
-  if (TT.isOSBinFormatELF()) {
-    assert(RM != Reloc::DynamicNoPIC);
-    // Some linkers can use copy relocations with pie executables.
-    if (M.getPIELevel() != PIELevel::Default) {
-      if (CanUseCopyRelocWithPIE)
-        return true;
-
-      // If the symbol is defined, it cannot be preempted.
-      if (GV && !GV->isDeclarationForLinker())
-        return true;
-      return false;
-    }
-
-    // ELF supports preemption of other symbols.
-    return false;
+  if (TT.isOSBinFormatMachO()) {
+    if (RM == Reloc::Static)
+      return true;
+    return GV && GV->isStrongDefinitionForLinker();
   }
 
-  assert(TT.isOSBinFormatMachO());
-  if (GV && GV->isStrongDefinitionForLinker())
-    return true;
+  assert(TT.isOSBinFormatELF());
+  assert(RM != Reloc::DynamicNoPIC);
 
+  bool IsExecutable =
+      RM == Reloc::Static || M.getPIELevel() != PIELevel::Default;
+  if (IsExecutable) {
+    // If the symbol is defined, it cannot be preempted.
+    if (GV && !GV->isDeclarationForLinker())
+      return true;
+
+    bool IsTLS = GV && GV->isThreadLocal();
+    // Check if we can use copy relocations.
+    if (!IsTLS && (RM == Reloc::Static || CanUseCopyRelocWithPIE))
+      return true;
+  }
+
+  // ELF supports preemption of other symbols.
   return false;
 }
 

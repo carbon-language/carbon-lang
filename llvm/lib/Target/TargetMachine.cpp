@@ -13,6 +13,7 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalAlias.h"
@@ -106,22 +107,19 @@ static TLSModel::Model getSelectedTLSModel(const GlobalValue *GV) {
 }
 
 TLSModel::Model TargetMachine::getTLSModel(const GlobalValue *GV) const {
-  bool isLocal = GV->hasLocalLinkage();
-  bool isDeclaration = GV->isDeclaration();
-  bool isPIC = getRelocationModel() == Reloc::PIC_;
-  bool isPIE = GV->getParent()->getPIELevel() != PIELevel::Default;
-  // FIXME: what should we do for protected and internal visibility?
-  // For variables, is internal different from hidden?
-  bool isHidden = GV->hasHiddenVisibility();
+  bool IsPIE = GV->getParent()->getPIELevel() != PIELevel::Default;
+  Reloc::Model RM = getRelocationModel();
+  bool IsSharedLibrary = RM == Reloc::PIC_ && !IsPIE;
+  bool IsLocal = shouldAssumeDSOLocal(RM, TargetTriple, *GV->getParent(), GV);
 
   TLSModel::Model Model;
-  if (isPIC && !isPIE) {
-    if (isLocal || isHidden)
+  if (IsSharedLibrary) {
+    if (IsLocal)
       Model = TLSModel::LocalDynamic;
     else
       Model = TLSModel::GeneralDynamic;
   } else {
-    if (!isDeclaration || isHidden)
+    if (IsLocal)
       Model = TLSModel::LocalExec;
     else
       Model = TLSModel::InitialExec;
