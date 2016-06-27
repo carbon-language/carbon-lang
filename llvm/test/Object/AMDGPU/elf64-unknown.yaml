@@ -3,7 +3,7 @@
 
 # CHECK: Format: ELF64-amdgpu
 
----
+--- !ELF
 FileHeader:
   Class:   ELFCLASS64
   Data:    ELFDATA2LSB
