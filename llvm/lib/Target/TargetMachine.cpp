@@ -110,11 +110,56 @@ static TLSModel::Model getSelectedTLSModel(const GlobalValue *GV) {
   llvm_unreachable("invalid TLS model");
 }
 
+// FIXME: make this a proper option
+static bool CanUseCopyRelocWithPIE = false;
+
+bool TargetMachine::shouldAssumeDSOLocal(const Module &M,
+                                         const GlobalValue *GV) const {
+  Reloc::Model RM = getRelocationModel();
+  const Triple &TT = getTargetTriple();
+
+  // DLLImport explicitly marks the GV as external.
+  if (GV && GV->hasDLLImportStorageClass())
+    return false;
+
+  // Every other GV is local on COFF
+  if (TT.isOSBinFormatCOFF())
+    return true;
+
+  if (GV && (GV->hasLocalLinkage() || !GV->hasDefaultVisibility()))
+    return true;
+
+  if (TT.isOSBinFormatMachO()) {
+    if (RM == Reloc::Static)
+      return true;
+    return GV && GV->isStrongDefinitionForLinker();
+  }
+
+  assert(TT.isOSBinFormatELF());
+  assert(RM != Reloc::DynamicNoPIC);
+
+  bool IsExecutable =
+      RM == Reloc::Static || M.getPIELevel() != PIELevel::Default;
+  if (IsExecutable) {
+    // If the symbol is defined, it cannot be preempted.
+    if (GV && !GV->isDeclarationForLinker())
+      return true;
+
+    bool IsTLS = GV && GV->isThreadLocal();
+    // Check if we can use copy relocations.
+    if (!IsTLS && (RM == Reloc::Static || CanUseCopyRelocWithPIE))
+      return true;
+  }
+
+  // ELF supports preemption of other symbols.
+  return false;
+}
+
 TLSModel::Model TargetMachine::getTLSModel(const GlobalValue *GV) const {
   bool IsPIE = GV->getParent()->getPIELevel() != PIELevel::Default;
   Reloc::Model RM = getRelocationModel();
   bool IsSharedLibrary = RM == Reloc::PIC_ && !IsPIE;
-  bool IsLocal = shouldAssumeDSOLocal(RM, TargetTriple, *GV->getParent(), GV);
+  bool IsLocal = shouldAssumeDSOLocal(*GV->getParent(), GV);
 
   TLSModel::Model Model;
   if (IsSharedLibrary) {

@@ -4278,7 +4278,7 @@ PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag, SDValue &Chain,
   // PC-relative references to external symbols should go through $stub, unless
   // we're building with the leopard linker or later, which automatically
   // synthesizes these stubs.
-  Reloc::Model RM = DAG.getTarget().getRelocationModel();
+  const TargetMachine &TM = DAG.getTarget();
   const Triple &TargetTriple = Subtarget.getTargetTriple();
   bool OldMachOLinker =
       TargetTriple.isMacOSX() && TargetTriple.isMacOSXVersionLT(10, 5);
@@ -4286,7 +4286,7 @@ PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag, SDValue &Chain,
   const GlobalValue *GV = nullptr;
   if (auto *G = dyn_cast<GlobalAddressSDNode>(Callee))
     GV = G->getGlobal();
-  bool Local = shouldAssumeDSOLocal(RM, TargetTriple, *Mod, GV);
+  bool Local = TM.shouldAssumeDSOLocal(*Mod, GV);
   bool UsePlt =
       !Local && (OldMachOLinker || (Subtarget.isTargetELF() && !isPPC64));
 

@@ -638,48 +638,6 @@ bool llvm::canBeOmittedFromSymbolTable(const GlobalValue *GV) {
   return GV->hasAtLeastLocalUnnamedAddr();
 }
 
-// FIXME: make this a proper option
-static bool CanUseCopyRelocWithPIE = false;
-
-bool llvm::shouldAssumeDSOLocal(Reloc::Model RM, const Triple &TT,
-                                const Module &M, const GlobalValue *GV) {
-  // DLLImport explicitly marks the GV as external.
-  if (GV && GV->hasDLLImportStorageClass())
-    return false;
-
-  // Every other GV is local on COFF
-  if (TT.isOSBinFormatCOFF())
-    return true;
-
-  if (GV && (GV->hasLocalLinkage() || !GV->hasDefaultVisibility()))
-    return true;
-
-  if (TT.isOSBinFormatMachO()) {
-    if (RM == Reloc::Static)
-      return true;
-    return GV && GV->isStrongDefinitionForLinker();
-  }
-
-  assert(TT.isOSBinFormatELF());
-  assert(RM != Reloc::DynamicNoPIC);
-
-  bool IsExecutable =
-      RM == Reloc::Static || M.getPIELevel() != PIELevel::Default;
-  if (IsExecutable) {
-    // If the symbol is defined, it cannot be preempted.
-    if (GV && !GV->isDeclarationForLinker())
-      return true;
-
-    bool IsTLS = GV && GV->isThreadLocal();
-    // Check if we can use copy relocations.
-    if (!IsTLS && (RM == Reloc::Static || CanUseCopyRelocWithPIE))
-      return true;
-  }
-
-  // ELF supports preemption of other symbols.
-  return false;
-}
-
 static void collectFuncletMembers(
     DenseMap<const MachineBasicBlock *, int> &FuncletMembership, int Funclet,
     const MachineBasicBlock *MBB) {

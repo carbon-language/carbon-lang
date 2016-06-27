@@ -264,7 +264,7 @@ bool ARMSubtarget::isAAPCS16_ABI() const {
 bool
 ARMSubtarget::GVIsIndirectSymbol(const GlobalValue *GV,
                                  Reloc::Model RelocM) const {
-  if (!shouldAssumeDSOLocal(RelocM, TargetTriple, *GV->getParent(), GV))
+  if (!TM.shouldAssumeDSOLocal(*GV->getParent(), GV))
     return true;
 
   // 32 bit macho has no relocation for a-b if a is undefined, even if b is in

@@ -177,6 +177,8 @@ public:
 
   bool isPositionIndependent() const;
 
+  bool shouldAssumeDSOLocal(const Module &M, const GlobalValue *GV) const;
+
   /// Returns the TLS model which should be used for the given global variable.
   TLSModel::Model getTLSModel(const GlobalValue *GV) const;
 
