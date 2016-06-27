@@ -762,7 +762,7 @@ static Optional<StratifiedAttrs> valueToAttr(Value *Val) {
 static StratifiedAttrs argNumberToAttr(unsigned ArgNum) {
   if (ArgNum >= AttrMaxNumArgs)
     return AttrUnknown;
-  return StratifiedAttrs(1 << (ArgNum + AttrFirstArgIndex));
+  return StratifiedAttrs(1U << (ArgNum + AttrFirstArgIndex));
 }
 
 static Level directionOfEdgeType(EdgeType Weight) {
