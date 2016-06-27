@@ -8695,10 +8695,8 @@ PPCTargetLowering::emitEHSjLjLongJmp(MachineInstr *MI,
   unsigned BP =
       (PVT == MVT::i64)
           ? PPC::X30
-          : (Subtarget.isSVR4ABI() &&
-                     MF->getTarget().getRelocationModel() == Reloc::PIC_
-                 ? PPC::R29
-                 : PPC::R30);
+          : (Subtarget.isSVR4ABI() && isPositionIndependent() ? PPC::R29
+                                                              : PPC::R30);
 
   MachineInstrBuilder MIB;
 
