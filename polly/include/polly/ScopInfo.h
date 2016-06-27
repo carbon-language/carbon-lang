@@ -2518,11 +2518,66 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
+//===----------------------------------------------------------------------===//
+/// @brief The legacy pass manager's analysis pass to compute scop information
+///        for the whole function.
+///
+/// This pass will maintain a map of the maximal region within a scop to its
+/// scop object for all the feasible scops present in a function.
+/// This pass is an alternative to the ScopInfoRegionPass in order to avoid a
+/// region pass manager.
+class ScopInfoWrapperPass : public FunctionPass {
+
+public:
+  using RegionToScopMapTy = DenseMap<Region *, std::unique_ptr<Scop>>;
+  using iterator = RegionToScopMapTy::iterator;
+  using const_iterator = RegionToScopMapTy::const_iterator;
+
+private:
+  /// @brief A map of Region to its Scop object containing
+  ///        Polly IR of static control part
+  RegionToScopMapTy RegionToScopMap;
+
+public:
+  static char ID; // Pass identification, replacement for typeid
+
+  ScopInfoWrapperPass() : FunctionPass(ID) {}
+  ~ScopInfoWrapperPass() {}
+
+  /// @brief Get the Scop object for the given Region
+  ///
+  /// @return If the given region is the maximal region within a scop, return
+  ///         the scop object. If the given region is a subregion, return a
+  ///         nullptr. Top level region containing the entry block of a function
+  ///         is not considered in the scop creation.
+  Scop *getScop(Region *R) const {
+    auto MapIt = RegionToScopMap.find(R);
+    if (MapIt != RegionToScopMap.end())
+      return MapIt->second.get();
+    return nullptr;
+  }
+
+  iterator begin() { return RegionToScopMap.begin(); }
+  iterator end() { return RegionToScopMap.end(); }
+  const_iterator begin() const { return RegionToScopMap.begin(); }
+  const_iterator end() const { return RegionToScopMap.end(); }
+
+  /// @brief Calculate all the polyhedral scops for a given function.
+  bool runOnFunction(Function &F) override;
+
+  void releaseMemory() override { RegionToScopMap.clear(); }
+
+  void print(raw_ostream &O, const Module *M = nullptr) const override;
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+};
+
 } // end namespace polly
 
 namespace llvm {
 class PassRegistry;
 void initializeScopInfoRegionPassPass(llvm::PassRegistry &);
+void initializeScopInfoWrapperPassPass(llvm::PassRegistry &);
 } // namespace llvm
 
 #endif

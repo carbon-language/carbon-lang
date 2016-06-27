@@ -4936,3 +4936,72 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_END(ScopInfoRegionPass, "polly-scops",
                     "Polly - Create polyhedral description of Scops", false,
                     false)
+
+//===----------------------------------------------------------------------===//
+void ScopInfoWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<LoopInfoWrapperPass>();
+  AU.addRequired<RegionInfoPass>();
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addRequiredTransitive<ScalarEvolutionWrapperPass>();
+  AU.addRequiredTransitive<ScopDetection>();
+  AU.addRequired<AAResultsWrapperPass>();
+  AU.addRequired<AssumptionCacheTracker>();
+  AU.setPreservesAll();
+}
+
+bool ScopInfoWrapperPass::runOnFunction(Function &F) {
+  auto &SD = getAnalysis<ScopDetection>();
+
+  auto &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+  auto &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  auto &AA = getAnalysis<AAResultsWrapperPass>().getAAResults();
+  auto const &DL = F.getParent()->getDataLayout();
+  auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
+
+  /// Create polyhedral descripton of scops for all the valid regions of a
+  /// function.
+  for (auto &It : SD) {
+    Region *R = const_cast<Region *>(It);
+    if (!SD.isMaxRegionInScop(*R))
+      continue;
+
+    ScopBuilder SB(R, AC, AA, DL, DT, LI, SD, SE);
+    bool Inserted =
+        RegionToScopMap.insert(std::make_pair(R, SB.getScop())).second;
+    assert(Inserted && "Building Scop for the same region twice!");
+    (void)Inserted;
+  }
+  return false;
+}
+
+void ScopInfoWrapperPass::print(raw_ostream &OS, const Module *) const {
+  for (auto &It : RegionToScopMap) {
+    if (It.second)
+      It.second->print(OS);
+    else
+      OS << "Invalid Scop!\n";
+  }
+}
+
+char ScopInfoWrapperPass::ID = 0;
+
+Pass *polly::createScopInfoWrapperPassPass() {
+  return new ScopInfoWrapperPass();
+}
+
+INITIALIZE_PASS_BEGIN(
+    ScopInfoWrapperPass, "polly-function-scops",
+    "Polly - Create polyhedral description of all Scops of a function", false,
+    false);
+INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass);
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker);
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
+INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass);
+INITIALIZE_PASS_DEPENDENCY(ScopDetection);
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
+INITIALIZE_PASS_END(
+    ScopInfoWrapperPass, "polly-function-scops",
+    "Polly - Create polyhedral description of all Scops of a function", false,
+    false)
