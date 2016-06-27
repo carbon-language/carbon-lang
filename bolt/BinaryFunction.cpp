@@ -775,11 +775,28 @@ bool BinaryFunction::buildCFG() {
                  << Twine::utohexstr(Branch.second) << "]\n");
     BinaryBasicBlock *FromBB = getBasicBlockContainingOffset(Branch.first);
     assert(FromBB && "cannot find BB containing FROM branch");
+    // Try to find the destination basic block. If the jump instruction was
+    // followed by a no-op then the destination offset recorded in FTBranches
+    // will point to that no-op but the destination basic block will start
+    // after the no-op due to ingoring no-ops when creating basic blocks.
+    // So we have to skip any no-ops when trying to find the destination
+    // basic block.
     BinaryBasicBlock *ToBB = getBasicBlockAtOffset(Branch.second);
-    // We have a fall-through that does not point to another BB, ignore it as
-    // it may happen in cases where we have a BB finished by two branches.
-    if (ToBB == nullptr)
-      continue;
+    if (ToBB == nullptr) {
+      auto I = Instructions.find(Branch.second), E = Instructions.end();
+      while (ToBB == nullptr && I != E && MIA->isNoop(I->second)) {
+        ++I;
+        if (I == E)
+          break;
+        ToBB = getBasicBlockAtOffset(I->first);
+      }
+      if (ToBB == nullptr) {
+        // We have a fall-through that does not point to another BB, ignore it
+        // as it may happen in cases where we have a BB finished by two
+        // branches.
+        continue;
+      }
+    }
 
     // Does not add a successor if we can't find profile data, leave it to the
     // inference pass to guess its frequency
