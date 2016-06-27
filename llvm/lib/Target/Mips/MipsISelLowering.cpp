@@ -1764,6 +1764,17 @@ SDValue MipsTargetLowering::lowerGlobalAddress(SDValue Op,
     return getAddrNonPIC(N, SDLoc(N), Ty, DAG);
   }
 
+  // Every other architecture would use shouldAssumeDSOLocal in here, but
+  // mips is special.
+  // * In PIC code mips requires got loads oven for local statics!
+  // * To save on got entries, for local statics the got entry contains the
+  //   page and an additional add instruction takes care of the low bits.
+  // * It is legal to access a hidden symbol with a non hidden undefined,
+  //   so one cannot guarantee that all access to a hidden symbol will know
+  //   it is hidden.
+  // * Mips linkers don't support creating a page and a full got entry for
+  //   the same symbol.
+  // * Given all that, we have to use a full got entry for hidden symbols :-(
   if (GV->hasLocalLinkage())
     return getAddrLocal(N, SDLoc(N), Ty, DAG, ABI.IsN32() || ABI.IsN64());
 
