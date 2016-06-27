@@ -43,7 +43,7 @@
 #elif __cplusplus <= 201402L
 # define TEST_STD_VER 14
 #else
-# define TEST_STD_VER 99    // greater than current standard
+# define TEST_STD_VER 16    // current year; greater than current standard
 #endif
 #endif
 
