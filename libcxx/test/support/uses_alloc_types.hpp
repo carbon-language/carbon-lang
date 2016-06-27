@@ -172,12 +172,12 @@ protected:
 
 private:
     template <class ...LArgs, class ...Args>
-    static CtorAlloc const& getAllocatorFromPack(ArgumentListID<LArgs...>, Args&&... args) {
+    static CtorAlloc getAllocatorFromPack(ArgumentListID<LArgs...>, Args&&... args) {
         return getAllocatorFromPackImp<LArgs const&...>(args...);
     }
 
     template <class ...LArgs>
-    static CtorAlloc const& getAllocatorFromPackImp(
+    static CtorAlloc getAllocatorFromPackImp(
         typename detail::Identity<LArgs>::type..., CtorAlloc const& alloc) {
         return alloc;
     }
