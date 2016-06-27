@@ -1976,8 +1976,8 @@ SDValue SparcTargetLowering::makeAddress(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   EVT VT = getPointerTy(DAG.getDataLayout());
 
-  // Handle PIC mode first.
-  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+  // Handle PIC mode first. SPARC needs a got load for every variable!
+  if (isPositionIndependent()) {
     // This is the pic32 code model, the GOT is known to be smaller than 4GB.
     SDValue HiLo = makeHiLoPair(Op, SparcMCExpr::VK_Sparc_GOT22,
                                 SparcMCExpr::VK_Sparc_GOT10, DAG);
