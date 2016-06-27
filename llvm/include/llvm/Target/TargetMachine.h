@@ -175,6 +175,8 @@ public:
   /// target default.
   CodeModel::Model getCodeModel() const;
 
+  bool isPositionIndependent() const;
+
   /// Returns the TLS model which should be used for the given global variable.
   TLSModel::Model getTLSModel(const GlobalValue *GV) const;
 

@@ -53,6 +53,10 @@ TargetMachine::~TargetMachine() {
   delete STI;
 }
 
+bool TargetMachine::isPositionIndependent() const {
+  return getRelocationModel() == Reloc::PIC_;
+}
+
 /// \brief Reset the target options based on the function's attributes.
 // FIXME: This function needs to go away for a number of reasons:
 // a) global state on the TargetMachine is terrible in general,
