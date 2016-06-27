@@ -1150,6 +1150,23 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
       Value *ShAmt = ConstantInt::get(Op1->getType(), Op1C->exactLogBase2());
       return BinaryOperator::CreateExactAShr(Op0, ShAmt, I.getName());
     }
+
+    // If the dividend is sign-extended and the constant divisor is small enough
+    // to fit in the source type, shrink the division to the narrower type:
+    // (sext X) sdiv C --> sext (X sdiv C)
+    Value *Op0Src;
+    if (match(Op0, m_OneUse(m_SExt(m_Value(Op0Src)))) &&
+        Op0Src->getType()->getScalarSizeInBits() >= Op1C->getMinSignedBits()) {
+
+      // In the general case, we need to make sure that the dividend is not the
+      // minimum signed value because dividing that by -1 is UB. But here, we
+      // know that the -1 divisor case is already handled above.
+
+      Constant *NarrowDivisor =
+          ConstantExpr::getTrunc(cast<Constant>(Op1), Op0Src->getType());
+      Value *NarrowOp = Builder->CreateSDiv(Op0Src, NarrowDivisor);
+      return new SExtInst(NarrowOp, Op0->getType());
+    }
   }
 
   if (Constant *RHS = dyn_cast<Constant>(Op1)) {
