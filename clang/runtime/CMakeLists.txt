@@ -102,7 +102,8 @@ if(LLVM_BUILD_EXTERNAL_COMPILER_RT AND EXISTS ${COMPILER_RT_SRC_ROOT}/)
                     DEPENDS compiler-rt
                     COMMAND "${CMAKE_COMMAND}"
                              -DCMAKE_INSTALL_COMPONENT=compiler-rt
-                             -P "${CMAKE_BINARY_DIR}/cmake_install.cmake")
+                             -P "${CMAKE_BINARY_DIR}/cmake_install.cmake"
+                    USES_TERMINAL)
 
   # Add top-level targets that build specific compiler-rt runtimes.
   set(COMPILER_RT_RUNTIMES asan builtins dfsan lsan msan profile tsan ubsan)
@@ -112,7 +113,7 @@ if(LLVM_BUILD_EXTERNAL_COMPILER_RT AND EXISTS ${COMPILER_RT_SRC_ROOT}/)
       COMMAND ${build_runtime_cmd}
       DEPENDS compiler-rt-configure
       WORKING_DIRECTORY ${BINARY_DIR}
-      VERBATIM)
+      VERBATIM USES_TERMINAL)
   endforeach()
 
   if(LLVM_INCLUDE_TESTS)
