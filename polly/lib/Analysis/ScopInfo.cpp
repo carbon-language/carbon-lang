@@ -491,67 +491,6 @@ static MemoryAccess::ReductionType getReductionType(const BinaryOperator *BinOp,
   }
 }
 
-/// @brief Derive the individual index expressions from a GEP instruction
-///
-/// This function optimistically assumes the GEP references into a fixed size
-/// array. If this is actually true, this function returns a list of array
-/// subscript expressions as SCEV as well as a list of integers describing
-/// the size of the individual array dimensions. Both lists have either equal
-/// length of the size list is one element shorter in case there is no known
-/// size available for the outermost array dimension.
-///
-/// @param GEP The GetElementPtr instruction to analyze.
-///
-/// @return A tuple with the subscript expressions and the dimension sizes.
-static std::tuple<std::vector<const SCEV *>, std::vector<int>>
-getIndexExpressionsFromGEP(GetElementPtrInst *GEP, ScalarEvolution &SE) {
-  std::vector<const SCEV *> Subscripts;
-  std::vector<int> Sizes;
-
-  Type *Ty = GEP->getPointerOperandType();
-
-  bool DroppedFirstDim = false;
-
-  for (unsigned i = 1; i < GEP->getNumOperands(); i++) {
-
-    const SCEV *Expr = SE.getSCEV(GEP->getOperand(i));
-
-    if (i == 1) {
-      if (auto *PtrTy = dyn_cast<PointerType>(Ty)) {
-        Ty = PtrTy->getElementType();
-      } else if (auto *ArrayTy = dyn_cast<ArrayType>(Ty)) {
-        Ty = ArrayTy->getElementType();
-      } else {
-        Subscripts.clear();
-        Sizes.clear();
-        break;
-      }
-      if (auto *Const = dyn_cast<SCEVConstant>(Expr))
-        if (Const->getValue()->isZero()) {
-          DroppedFirstDim = true;
-          continue;
-        }
-      Subscripts.push_back(Expr);
-      continue;
-    }
-
-    auto *ArrayTy = dyn_cast<ArrayType>(Ty);
-    if (!ArrayTy) {
-      Subscripts.clear();
-      Sizes.clear();
-      break;
-    }
-
-    Subscripts.push_back(Expr);
-    if (!(DroppedFirstDim && i == 2))
-      Sizes.push_back(ArrayTy->getNumElements());
-
-    Ty = ArrayTy->getElementType();
-  }
-
-  return std::make_tuple(Subscripts, Sizes);
-}
-
 MemoryAccess::~MemoryAccess() {
   isl_id_free(Id);
   isl_set_free(InvalidDomain);
