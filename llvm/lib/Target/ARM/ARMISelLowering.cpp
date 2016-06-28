@@ -3182,7 +3182,7 @@ void ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
   // Try to store any remaining integer argument regs
-  // to their spots on the stack so that they may be loaded by deferencing
+  // to their spots on the stack so that they may be loaded by dereferencing
   // the result of va_next.
   // If there is no regs to be stored, just point address after last
   // argument passed via stack.

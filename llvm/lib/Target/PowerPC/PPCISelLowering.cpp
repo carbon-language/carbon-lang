@@ -2975,8 +2975,8 @@ SDValue PPCTargetLowering::LowerFormalArguments_32SVR4(
     SDValue FIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
 
     // The fixed integer arguments of a variadic function are stored to the
-    // VarArgsFrameIndex on the stack so that they may be loaded by deferencing
-    // the result of va_next.
+    // VarArgsFrameIndex on the stack so that they may be loaded by
+    // dereferencing the result of va_next.
     for (unsigned GPRIndex = 0; GPRIndex != NumGPArgRegs; ++GPRIndex) {
       // Get an existing live-in vreg, or add a new one.
       unsigned VReg = MF.getRegInfo().getLiveInVirtReg(GPArgRegs[GPRIndex]);
@@ -3432,8 +3432,8 @@ SDValue PPCTargetLowering::LowerFormalArguments_64SVR4(
     SDValue FIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
 
     // If this function is vararg, store any remaining integer argument regs
-    // to their spots on the stack so that they may be loaded by deferencing the
-    // result of va_next.
+    // to their spots on the stack so that they may be loaded by dereferencing
+    // the result of va_next.
     for (GPR_idx = (ArgOffset - LinkageSize) / PtrByteSize;
          GPR_idx < Num_GPR_Regs; ++GPR_idx) {
       unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
@@ -3789,8 +3789,8 @@ SDValue PPCTargetLowering::LowerFormalArguments_Darwin(
     SDValue FIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
 
     // If this function is vararg, store any remaining integer argument regs
-    // to their spots on the stack so that they may be loaded by deferencing the
-    // result of va_next.
+    // to their spots on the stack so that they may be loaded by dereferencing
+    // the result of va_next.
     for (; GPR_idx != Num_GPR_Regs; ++GPR_idx) {
       unsigned VReg;
 
