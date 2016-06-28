@@ -27,18 +27,22 @@ using namespace llvm;
 #define DEBUG_TYPE "block-freq"
 
 #ifndef NDEBUG
-static cl::opt<GVDAGType>
-ViewBlockFreqPropagationDAG("view-block-freq-propagation-dags", cl::Hidden,
-          cl::desc("Pop up a window to show a dag displaying how block "
-                   "frequencies propagation through the CFG."),
-          cl::values(
-            clEnumValN(GVDT_None, "none",
-                       "do not display graphs."),
-            clEnumValN(GVDT_Fraction, "fraction", "display a graph using the "
-                       "fractional block frequency representation."),
-            clEnumValN(GVDT_Integer, "integer", "display a graph using the raw "
-                       "integer fractional block frequency representation."),
-            clEnumValEnd));
+static cl::opt<GVDAGType> ViewBlockFreqPropagationDAG(
+    "view-block-freq-propagation-dags", cl::Hidden,
+    cl::desc("Pop up a window to show a dag displaying how block "
+             "frequencies propagation through the CFG."),
+    cl::values(clEnumValN(GVDT_None, "none", "do not display graphs."),
+               clEnumValN(GVDT_Fraction, "fraction",
+                          "display a graph using the "
+                          "fractional block frequency representation."),
+               clEnumValN(GVDT_Integer, "integer",
+                          "display a graph using the raw "
+                          "integer fractional block frequency representation."),
+               clEnumValN(GVDT_Count, "count", "display a graph using the real "
+                                               "profile count if available."),
+               clEnumValEnd));
+
+cl::opt<std::string> ViewBlockFreqFuncName("view-bfi-func-name", cl::Hidden);
 
 namespace llvm {
 
@@ -113,8 +117,11 @@ void BlockFrequencyInfo::calculate(const Function &F,
     BFI.reset(new ImplType);
   BFI->calculate(F, BPI, LI);
 #ifndef NDEBUG
-  if (ViewBlockFreqPropagationDAG != GVDT_None)
+  if (ViewBlockFreqPropagationDAG != GVDT_None &&
+      (ViewBlockFreqFuncName.empty() ||
+       F.getName().equals(ViewBlockFreqFuncName))) {
     view();
+  }
 #endif
 }
 

@@ -46,8 +46,7 @@ static cl::opt<GVDAGType> ViewMachineBlockFreqPropagationDAG(
 
                clEnumValEnd));
 
-static cl::opt<std::string> ViewMachineBlockFreqFuncName("view-mbfi-func-name",
-                                                         cl::Hidden);
+extern cl::opt<std::string> ViewBlockFreqFuncName;
 
 namespace llvm {
 
@@ -134,8 +133,8 @@ bool MachineBlockFrequencyInfo::runOnMachineFunction(MachineFunction &F) {
   MBFI->calculate(F, MBPI, MLI);
 #ifndef NDEBUG
   if (ViewMachineBlockFreqPropagationDAG != GVDT_None &&
-      (ViewMachineBlockFreqFuncName.empty() ||
-       F.getName().equals(ViewMachineBlockFreqFuncName))) {
+      (ViewBlockFreqFuncName.empty() ||
+       F.getName().equals(ViewBlockFreqFuncName))) {
     view();
   }
 #endif
