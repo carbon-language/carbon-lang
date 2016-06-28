@@ -6601,6 +6601,7 @@ public:
       PtrDiffType = SignedLong;
       break;
     }
+    MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
   }
 
   void getTargetDefines(const LangOptions &Opts,
