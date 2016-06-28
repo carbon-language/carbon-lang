@@ -4109,8 +4109,6 @@ void ARMBaseInstrInfo::expandLoadStackGuardBase(MachineBasicBlock::iterator MI,
                                                 unsigned LoadImmOpc,
                                                 unsigned LoadOpc) const {
   MachineBasicBlock &MBB = *MI->getParent();
-  const TargetMachine &TM = MBB.getParent()->getTarget();
-  Reloc::Model RM = TM.getRelocationModel();
   DebugLoc DL = MI->getDebugLoc();
   unsigned Reg = MI->getOperand(0).getReg();
   const GlobalValue *GV =
@@ -4120,7 +4118,7 @@ void ARMBaseInstrInfo::expandLoadStackGuardBase(MachineBasicBlock::iterator MI,
   BuildMI(MBB, MI, DL, get(LoadImmOpc), Reg)
       .addGlobalAddress(GV, 0, ARMII::MO_NONLAZY);
 
-  if (Subtarget.GVIsIndirectSymbol(GV, RM)) {
+  if (Subtarget.isGVIndirectSymbol(GV)) {
     MIB = BuildMI(MBB, MI, DL, get(LoadOpc), Reg);
     MIB.addReg(Reg, RegState::Kill).addImm(0);
     unsigned Flag = MachineMemOperand::MOLoad | MachineMemOperand::MOInvariant;

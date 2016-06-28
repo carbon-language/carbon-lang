@@ -94,7 +94,6 @@ void ARMInstrInfo::expandLoadStackGuard(MachineBasicBlock::iterator MI) const {
   MachineFunction &MF = *MI->getParent()->getParent();
   const ARMSubtarget &Subtarget = MF.getSubtarget<ARMSubtarget>();
   const TargetMachine &TM = MF.getTarget();
-  Reloc::Model RM = TM.getRelocationModel();
 
   if (!Subtarget.useMovt(MF)) {
     if (TM.isPositionIndependent())
@@ -112,7 +111,7 @@ void ARMInstrInfo::expandLoadStackGuard(MachineBasicBlock::iterator MI) const {
   const GlobalValue *GV =
       cast<GlobalValue>((*MI->memoperands_begin())->getValue());
 
-  if (!Subtarget.GVIsIndirectSymbol(GV, RM)) {
+  if (!Subtarget.isGVIndirectSymbol(GV)) {
     expandLoadStackGuardBase(MI, ARM::MOV_ga_pcrel, ARM::LDRi12);
     return;
   }
