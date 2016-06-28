@@ -7761,6 +7761,8 @@ def err_typecheck_member_reference_ivar_suggest : Error<
   "%0 does not have a member named %1; did you mean %2?">;
 def err_property_not_found_suggest : Error<
   "property %0 not found on object of type %1; did you mean %2?">;
+def err_class_property_found : Error<
+  "property %0 is a class property; did you mean to access it with class '%1'?">;
 def err_ivar_access_using_property_syntax_suggest : Error<
   "property %0 not found on object of type %1; did you mean to access instance variable %2?">;
 def warn_property_access_suggest : Warning<
