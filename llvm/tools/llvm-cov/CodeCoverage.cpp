@@ -48,6 +48,9 @@ public:
   /// \brief Print the error message to the error output stream.
   void error(const Twine &Message, StringRef Whence = "");
 
+  /// \brief Append a reference to a private copy of \p Path into SourceFiles.
+  void addCollectedPath(const std::string &Path);
+
   /// \brief Return a memory buffer for the given source file.
   ErrorOr<const MemoryBuffer &> getSourceFile(StringRef SourceFile);
 
@@ -81,12 +84,15 @@ public:
   CoverageViewOptions ViewOpts;
   std::string PGOFilename;
   CoverageFiltersMatchAll Filters;
-  std::vector<std::string> SourceFiles;
+  std::vector<StringRef> SourceFiles;
   std::vector<std::pair<std::string, std::unique_ptr<MemoryBuffer>>>
       LoadedSourceFiles;
   bool CompareFilenamesOnly;
   StringMap<std::string> RemappedFilenames;
   std::string CoverageArch;
+
+private:
+  std::vector<std::string> CollectedPaths;
 };
 }
 
@@ -95,6 +101,11 @@ void CodeCoverageTool::error(const Twine &Message, StringRef Whence) {
   if (!Whence.empty())
     errs() << Whence << ": ";
   errs() << Message << "\n";
+}
+
+void CodeCoverageTool::addCollectedPath(const std::string &Path) {
+  CollectedPaths.push_back(Path);
+  SourceFiles.emplace_back(CollectedPaths.back());
 }
 
 ErrorOr<const MemoryBuffer &>
@@ -356,7 +367,7 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
           errs() << "error: " << File << ": " << EC.message();
           return 1;
         }
-      SourceFiles.push_back(Path.str());
+      addCollectedPath(Path.str());
     }
     return 0;
   };
