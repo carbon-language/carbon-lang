@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "polly/ScopBuilder.h"
 #include "polly/Options.h"
-#include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/SCEVValidator.h"
 #include "llvm/Analysis/RegionIterator.h"
