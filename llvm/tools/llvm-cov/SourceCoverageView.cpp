@@ -102,6 +102,7 @@ SourceCoverageView::create(StringRef SourceName, const MemoryBuffer &File,
     return llvm::make_unique<SourceCoverageViewText>(SourceName, File, Options,
                                                      std::move(CoverageInfo));
   }
+  llvm_unreachable("Unknown coverage output format!");
 }
 
 void SourceCoverageView::print(raw_ostream &OS, bool WholeFile,
