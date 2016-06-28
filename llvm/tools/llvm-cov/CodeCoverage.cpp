@@ -454,8 +454,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
       auto OSOrErr =
           mainView->createOutputFile("functions", /*InToplevel=*/true);
       if (Error E = OSOrErr.takeError()) {
-        handleAllErrors(OSOrErr.takeError(),
-                        [&](const ErrorInfoBase &EI) { error(EI.message()); });
+        error(toString(std::move(E)));
         return 1;
       }
       auto OS = std::move(OSOrErr.get());
@@ -484,8 +483,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
 
     auto OSOrErr = mainView->createOutputFile(SourceFile, /*InToplevel=*/false);
     if (Error E = OSOrErr.takeError()) {
-      handleAllErrors(OSOrErr.takeError(),
-                      [&](const ErrorInfoBase &EI) { error(EI.message()); });
+      error(toString(std::move(E)));
       return 1;
     }
     auto OS = std::move(OSOrErr.get());
