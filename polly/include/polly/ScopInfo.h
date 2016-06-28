@@ -7,10 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Create a polyhedral description for a static control flow region.
-//
-// The pass creates a polyhedral description of the Scops detected by the Scop
-// detection derived from their LLVM-IR code.
+// Store the polyhedral model representation of a static control flow region,
+// also called SCoP (Static Control Part).
 //
 // This representation is shared among several tools in the polyhedral
 // community, which are e.g. CLooG, Pluto, Loopo, Graphite.
