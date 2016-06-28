@@ -437,7 +437,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
   ViewOpts.Format = Format;
   ViewOpts.ShowOutputDirectory = ShowOutputDirectory;
 
-  if (ViewOpts.ShowOutputDirectory != "") {
+  if (ViewOpts.hasOutputDirectory()) {
     if (auto E = sys::fs::create_directories(ViewOpts.ShowOutputDirectory)) {
       error("Could not create output directory!", E.message());
       return 1;
@@ -479,7 +479,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
   bool ShowFilenames = SourceFiles.size() != 1;
 
   if (SourceFiles.empty())
-    // Get the source files from the function coverage mapping
+    // Get the source files from the function coverage mapping.
     for (StringRef Filename : Coverage->getUniqueSourceFiles())
       SourceFiles.push_back(Filename);
 
