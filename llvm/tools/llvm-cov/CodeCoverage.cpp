@@ -399,7 +399,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
                                    cl::desc("Show function instantiations"),
                                    cl::cat(ViewCategory));
 
-  cl::opt<CoverageViewOptions::OutputFormat> ShowFormat(
+  cl::opt<CoverageViewOptions::OutputFormat> Format(
       "format", cl::desc("Output format for line-based coverage reports"),
       cl::values(clEnumValN(CoverageViewOptions::OutputFormat::Text, "text",
                             "Text output"),
@@ -423,7 +423,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
   ViewOpts.ShowLineStatsOrRegionMarkers = ShowBestLineRegionsCounts;
   ViewOpts.ShowExpandedRegions = ShowExpansions;
   ViewOpts.ShowFunctionInstantiations = ShowInstantiations;
-  ViewOpts.ShowFormat = ShowFormat;
+  ViewOpts.Format = Format;
   ViewOpts.ShowOutputDirectory = ShowOutputDirectory;
 
   if (ViewOpts.ShowOutputDirectory != "") {

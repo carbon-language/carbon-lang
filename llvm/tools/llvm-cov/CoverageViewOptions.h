@@ -29,7 +29,7 @@ struct CoverageViewOptions {
   bool ShowExpandedRegions;
   bool ShowFunctionInstantiations;
   bool ShowFullFilenames;
-  OutputFormat ShowFormat;
+  OutputFormat Format;
   std::string ShowOutputDirectory;
 
   /// \brief Change the output's stream color if the colors are enabled.

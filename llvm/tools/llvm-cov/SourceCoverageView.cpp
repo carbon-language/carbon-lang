@@ -97,7 +97,7 @@ std::unique_ptr<SourceCoverageView>
 SourceCoverageView::create(StringRef SourceName, const MemoryBuffer &File,
                            const CoverageViewOptions &Options,
                            coverage::CoverageData &&CoverageInfo) {
-  switch (Options.ShowFormat) {
+  switch (Options.Format) {
   case CoverageViewOptions::OutputFormat::Text:
     return llvm::make_unique<SourceCoverageViewText>(SourceName, File, Options,
                                                      std::move(CoverageInfo));
