@@ -459,7 +459,8 @@ int CodeCoverageTool::show(int argc, const char **argv,
       continue;
     }
 
-    mainView->print(outs(), /*Wholefile=*/true, /*ShowSourceName=*/ShowFilenames);
+    mainView->print(outs(), /*Wholefile=*/true,
+                    /*ShowSourceName=*/ShowFilenames);
     if (SourceFiles.size() > 1)
       outs() << "\n";
   }
