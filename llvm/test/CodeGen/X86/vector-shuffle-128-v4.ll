@@ -227,7 +227,7 @@ define <4 x float> @shuffle_v4f32_0011(<4 x float> %a, <4 x float> %b) {
 ;
 ; AVX-LABEL: shuffle_v4f32_0011:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vunpcklps {{.*#+}} xmm0 = xmm0[0,0,1,1]
+; AVX-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,1,1]
 ; AVX-NEXT:    retq
   %shuffle = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
   ret <4 x float> %shuffle
@@ -240,7 +240,7 @@ define <4 x float> @shuffle_v4f32_2233(<4 x float> %a, <4 x float> %b) {
 ;
 ; AVX-LABEL: shuffle_v4f32_2233:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vunpckhps {{.*#+}} xmm0 = xmm0[2,2,3,3]
+; AVX-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[2,2,3,3]
 ; AVX-NEXT:    retq
   %shuffle = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 2, i32 2, i32 3, i32 3>
   ret <4 x float> %shuffle
@@ -1952,30 +1952,16 @@ define <4 x i32> @mask_v4i32_0127(<4 x i32> %a, <4 x i32> %b) {
 }
 
 define <4 x float> @broadcast_v4f32_0101_from_v2f32(<2 x float>* %x) {
-; SSE2-LABEL: broadcast_v4f32_0101_from_v2f32:
-; SSE2:       # BB#0:
-; SSE2-NEXT:    movq {{.*#+}} xmm0 = mem[0],zero
-; SSE2-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[0,0]
-; SSE2-NEXT:    retq
-;
-; SSE3-LABEL: broadcast_v4f32_0101_from_v2f32:
-; SSE3:       # BB#0:
-; SSE3-NEXT:    movddup {{.*#+}} xmm0 = mem[0,0]
-; SSE3-NEXT:    retq
-;
-; SSSE3-LABEL: broadcast_v4f32_0101_from_v2f32:
-; SSSE3:       # BB#0:
-; SSSE3-NEXT:    movddup {{.*#+}} xmm0 = mem[0,0]
-; SSSE3-NEXT:    retq
-;
-; SSE41-LABEL: broadcast_v4f32_0101_from_v2f32:
-; SSE41:       # BB#0:
-; SSE41-NEXT:    movddup {{.*#+}} xmm0 = mem[0,0]
-; SSE41-NEXT:    retq
+; SSE-LABEL: broadcast_v4f32_0101_from_v2f32:
+; SSE:       # BB#0:
+; SSE-NEXT:    movq {{.*#+}} xmm0 = mem[0],zero
+; SSE-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,0,1]
+; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: broadcast_v4f32_0101_from_v2f32:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
+; AVX-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; AVX-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,1,0,1]
 ; AVX-NEXT:    retq
   %1 = load <2 x float>, <2 x float>* %x, align 1
   %2 = shufflevector <2 x float> %1, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
