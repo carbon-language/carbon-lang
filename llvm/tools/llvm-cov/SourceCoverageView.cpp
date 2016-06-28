@@ -15,7 +15,9 @@
 #include "SourceCoverageViewText.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/LineIterator.h"
+#include "llvm/Support/Path.h"
 
 using namespace llvm;
 
@@ -32,6 +34,49 @@ std::string SourceCoverageView::formatCount(uint64_t N) {
   }
   Result.push_back(" kMGTPEZY"[(Len - 1) / 3]);
   return Result;
+}
+
+/// \brief Create a file at ``Dir/ToplevelDir/@Path.Extension``. If
+/// \p ToplevelDir is empty, its path component is skipped.
+static Expected<std::unique_ptr<raw_ostream>>
+createFileInDirectory(StringRef Dir, StringRef ToplevelDir, StringRef Path,
+                      StringRef Extension) {
+  assert(Extension.size() && "The file extension may not be empty");
+
+  SmallString<256> FullPath(Dir);
+  if (!ToplevelDir.empty())
+    sys::path::append(FullPath, ToplevelDir);
+
+  auto PathBaseDir = sys::path::relative_path(sys::path::parent_path(Path));
+  sys::path::append(FullPath, PathBaseDir);
+
+  if (auto E = sys::fs::create_directories(FullPath))
+    return errorCodeToError(E);
+
+  auto PathFilename = (sys::path::filename(Path) + "." + Extension).str();
+  sys::path::append(FullPath, PathFilename);
+
+  std::error_code E;
+  auto OS = llvm::make_unique<raw_fd_ostream>(FullPath, E, sys::fs::F_RW);
+  if (E)
+    return errorCodeToError(E);
+  return std::move(OS);
+}
+
+Expected<std::unique_ptr<raw_ostream>>
+SourceCoverageView::createOutputStream(const CoverageViewOptions &Opts,
+                                       StringRef Path, StringRef Extension,
+                                       bool InToplevel) {
+  if (Opts.ShowOutputDirectory == "") {
+    std::error_code E;
+    auto OS = llvm::make_unique<raw_fd_ostream>("-", E, sys::fs::F_None);
+    if (E)
+      return errorCodeToError(E);
+    return std::move(OS);
+  }
+
+  return createFileInDirectory(Opts.ShowOutputDirectory,
+                               InToplevel ? "" : "coverage", Path, Extension);
 }
 
 void SourceCoverageView::addExpansion(

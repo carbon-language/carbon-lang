@@ -406,6 +406,12 @@ int CodeCoverageTool::show(int argc, const char **argv,
                  clEnumValEnd),
       cl::init(CoverageViewOptions::OutputFormat::Text));
 
+  cl::opt<std::string> ShowOutputDirectory(
+      "output-dir", cl::init(""),
+      cl::desc("Directory in which coverage information is written out"));
+  cl::alias ShowOutputDirectoryA("o", cl::desc("Alias for --output-dir"),
+                                 cl::aliasopt(ShowOutputDirectory));
+
   auto Err = commandLineParser(argc, argv);
   if (Err)
     return Err;
@@ -418,6 +424,14 @@ int CodeCoverageTool::show(int argc, const char **argv,
   ViewOpts.ShowExpandedRegions = ShowExpansions;
   ViewOpts.ShowFunctionInstantiations = ShowInstantiations;
   ViewOpts.ShowFormat = ShowFormat;
+  ViewOpts.ShowOutputDirectory = ShowOutputDirectory;
+
+  if (ViewOpts.ShowOutputDirectory != "") {
+    if (auto E = sys::fs::create_directories(ViewOpts.ShowOutputDirectory)) {
+      error("Could not create output directory!", E.message());
+      return 1;
+    }
+  }
 
   auto Coverage = load();
   if (!Coverage)
@@ -436,8 +450,17 @@ int CodeCoverageTool::show(int argc, const char **argv,
             << "\n";
         continue;
       }
-      mainView->print(outs(), /*WholeFile=*/false, /*ShowSourceName=*/true);
-      outs() << "\n";
+
+      auto OSOrErr =
+          mainView->createOutputFile("functions", /*InToplevel=*/true);
+      if (Error E = OSOrErr.takeError()) {
+        handleAllErrors(OSOrErr.takeError(),
+                        [&](const ErrorInfoBase &EI) { error(EI.message()); });
+        return 1;
+      }
+      std::unique_ptr<raw_ostream> OS = std::move(OSOrErr.get());
+      mainView->print(*OS.get(), /*WholeFile=*/false, /*ShowSourceName=*/true);
+      mainView->closeOutputFile(std::move(OS));
     }
     return 0;
   }
@@ -459,10 +482,16 @@ int CodeCoverageTool::show(int argc, const char **argv,
       continue;
     }
 
-    mainView->print(outs(), /*Wholefile=*/true,
+    auto OSOrErr = mainView->createOutputFile(SourceFile, /*InToplevel=*/false);
+    if (Error E = OSOrErr.takeError()) {
+      handleAllErrors(OSOrErr.takeError(),
+                      [&](const ErrorInfoBase &EI) { error(EI.message()); });
+      return 1;
+    }
+    std::unique_ptr<raw_ostream> OS = std::move(OSOrErr.get());
+    mainView->print(*OS.get(), /*Wholefile=*/true,
                     /*ShowSourceName=*/ShowFilenames);
-    if (SourceFiles.size() > 1)
-      outs() << "\n";
+    mainView->closeOutputFile(std::move(OS));
   }
 
   return 0;
