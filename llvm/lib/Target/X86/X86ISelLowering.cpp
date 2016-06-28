@@ -22547,13 +22547,11 @@ static MachineBasicBlock *emitWRPKRU(MachineInstr *MI, MachineBasicBlock *BB,
   BuildMI(*BB, MI, dl, TII->get(TargetOpcode::COPY), X86::EAX)
                            .addReg(MI->getOperand(0).getReg());
   // insert zero to ECX
-  BuildMI(*BB, MI, dl, TII->get(X86::XOR32rr), X86::ECX)
-                           .addReg(X86::ECX)
-                           .addReg(X86::ECX);
+  BuildMI(*BB, MI, dl, TII->get(X86::MOV32r0), X86::ECX);
+
   // insert zero to EDX
-  BuildMI(*BB, MI, dl, TII->get(X86::XOR32rr), X86::EDX)
-                           .addReg(X86::EDX)
-                           .addReg(X86::EDX);
+  BuildMI(*BB, MI, dl, TII->get(X86::MOV32r0), X86::EDX);
+
   // insert WRPKRU instruction
   BuildMI(*BB, MI, dl, TII->get(X86::WRPKRUr));
 
@@ -22567,9 +22565,8 @@ static MachineBasicBlock *emitRDPKRU(MachineInstr *MI, MachineBasicBlock *BB,
   const TargetInstrInfo *TII = Subtarget.getInstrInfo();
 
   // insert zero to ECX
-  BuildMI(*BB, MI, dl, TII->get(X86::XOR32rr), X86::ECX)
-                           .addReg(X86::ECX)
-                           .addReg(X86::ECX);
+  BuildMI(*BB, MI, dl, TII->get(X86::MOV32r0), X86::ECX);
+
   // insert RDPKRU instruction
   BuildMI(*BB, MI, dl, TII->get(X86::RDPKRUr));
   BuildMI(*BB, MI, dl, TII->get(TargetOpcode::COPY), MI->getOperand(0).getReg())
