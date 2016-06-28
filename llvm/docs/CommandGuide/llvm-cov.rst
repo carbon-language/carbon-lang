@@ -236,6 +236,10 @@ OPTIONS
 
  Show code coverage only for functions that match the given regular expression.
 
+.. option:: -format=<FORMAT>
+
+ Use the specified output format. The supported formats are: "text".
+
 .. option:: -line-coverage-gt=<N>
 
  Show code coverage only for functions with line coverage greater than the

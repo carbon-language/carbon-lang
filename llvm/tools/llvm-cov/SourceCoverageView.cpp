@@ -50,8 +50,11 @@ std::unique_ptr<SourceCoverageView>
 SourceCoverageView::create(StringRef SourceName, const MemoryBuffer &File,
                            const CoverageViewOptions &Options,
                            coverage::CoverageData &&CoverageInfo) {
-  return llvm::make_unique<SourceCoverageViewText>(SourceName, File, Options,
-                                                   std::move(CoverageInfo));
+  switch (Options.ShowFormat) {
+  case CoverageViewOptions::OutputFormat::Text:
+    return llvm::make_unique<SourceCoverageViewText>(SourceName, File, Options,
+                                                     std::move(CoverageInfo));
+  }
 }
 
 void SourceCoverageView::print(raw_ostream &OS, bool WholeFile,
