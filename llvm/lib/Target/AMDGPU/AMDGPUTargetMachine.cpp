@@ -535,15 +535,14 @@ void GCNPassConfig::addPreSched2() {
 }
 
 void GCNPassConfig::addPreEmitPass() {
-
   // The hazard recognizer that runs as part of the post-ra scheduler does not
-  // gaurantee to be able handle all hazards correctly.  This is because
-  // if there are multiple scheduling regions in a basic block, the regions
-  // are scheduled bottom up, so when we begin to schedule a region we don't
-  // know what instructions were emitted directly before it.
+  // guarantee to be able handle all hazards correctly. This is because if there
+  // are multiple scheduling regions in a basic block, the regions are scheduled
+  // bottom up, so when we begin to schedule a region we don't know what
+  // instructions were emitted directly before it.
   //
-  // Here we add a stand-alone hazard recognizer pass which can handle all cases.
-  // hazard recognizer pass.
+  // Here we add a stand-alone hazard recognizer pass which can handle all
+  // cases.
   addPass(&PostRAHazardRecognizerID);
 
   addPass(createSIInsertWaitsPass());
