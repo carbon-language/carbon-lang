@@ -47,6 +47,7 @@ static cl::opt<GVDAGType> ViewMachineBlockFreqPropagationDAG(
                clEnumValEnd));
 
 extern cl::opt<std::string> ViewBlockFreqFuncName;
+extern cl::opt<uint64_t> ViewHotFreqPercent;
 
 namespace llvm {
 
@@ -92,9 +93,16 @@ struct DOTGraphTraits<MachineBlockFrequencyInfo *>
         Node, Graph, ViewMachineBlockFreqPropagationDAG);
   }
 
+  std::string getNodeAttributes(const MachineBasicBlock *Node,
+                                const MachineBlockFrequencyInfo *Graph) {
+    return MBFIDOTGraphTraitsBase::getNodeAttributes(Node, Graph,
+                                                     ViewHotFreqPercent);
+  }
+
   std::string getEdgeAttributes(const MachineBasicBlock *Node, EdgeIter EI,
                                 const MachineBlockFrequencyInfo *MBFI) {
-    return MBFIDOTGraphTraitsBase::getEdgeAttributes(Node, EI, MBFI->getMBPI());
+    return MBFIDOTGraphTraitsBase::getEdgeAttributes(
+        Node, EI, MBFI, MBFI->getMBPI(), ViewHotFreqPercent);
   }
 };
 

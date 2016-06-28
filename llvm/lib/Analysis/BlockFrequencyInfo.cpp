@@ -42,7 +42,19 @@ static cl::opt<GVDAGType> ViewBlockFreqPropagationDAG(
                                                "profile count if available."),
                clEnumValEnd));
 
-cl::opt<std::string> ViewBlockFreqFuncName("view-bfi-func-name", cl::Hidden);
+cl::opt<std::string>
+    ViewBlockFreqFuncName("view-bfi-func-name", cl::Hidden,
+                          cl::desc("The option to specify "
+                                   "the name of the function "
+                                   "whose CFG will be displayed."));
+
+cl::opt<unsigned>
+    ViewHotFreqPercent("view-hot-freq-percent", cl::init(10), cl::Hidden,
+                       cl::desc("An integer in percent used to specify "
+                                "the hot blocks/edges to be displayed "
+                                "in red: a block or edge whose frequency "
+                                "is no less than the max frequency of the "
+                                "function multiplied by this percent."));
 
 namespace llvm {
 
@@ -84,9 +96,16 @@ struct DOTGraphTraits<BlockFrequencyInfo *> : public BFIDOTGTraitsBase {
                                            ViewBlockFreqPropagationDAG);
   }
 
+  std::string getNodeAttributes(const BasicBlock *Node,
+                                const BlockFrequencyInfo *Graph) {
+    return BFIDOTGTraitsBase::getNodeAttributes(Node, Graph,
+                                                ViewHotFreqPercent);
+  }
+
   std::string getEdgeAttributes(const BasicBlock *Node, EdgeIter EI,
                                 const BlockFrequencyInfo *BFI) {
-    return BFIDOTGTraitsBase::getEdgeAttributes(Node, EI, BFI->getBPI());
+    return BFIDOTGTraitsBase::getEdgeAttributes(Node, EI, BFI, BFI->getBPI(),
+                                                ViewHotFreqPercent);
   }
 };
 
