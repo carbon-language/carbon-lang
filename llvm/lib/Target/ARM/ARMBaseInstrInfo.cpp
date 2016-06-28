@@ -1276,13 +1276,10 @@ void ARMBaseInstrInfo::expandMEMCPY(MachineBasicBlock::iterator MBBI) const {
 
 bool
 ARMBaseInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
-  MachineFunction &MF = *MI->getParent()->getParent();
-  Reloc::Model RM = MF.getTarget().getRelocationModel();
-
   if (MI->getOpcode() == TargetOpcode::LOAD_STACK_GUARD) {
     assert(getSubtarget().getTargetTriple().isOSBinFormatMachO() &&
            "LOAD_STACK_GUARD currently supported only for MachO.");
-    expandLoadStackGuard(MI, RM);
+    expandLoadStackGuard(MI);
     MI->getParent()->erase(MI);
     return true;
   }
@@ -4110,9 +4107,10 @@ bool ARMBaseInstrInfo::verifyInstruction(const MachineInstr *MI,
 // sequence is needed for other targets.
 void ARMBaseInstrInfo::expandLoadStackGuardBase(MachineBasicBlock::iterator MI,
                                                 unsigned LoadImmOpc,
-                                                unsigned LoadOpc,
-                                                Reloc::Model RM) const {
+                                                unsigned LoadOpc) const {
   MachineBasicBlock &MBB = *MI->getParent();
+  const TargetMachine &TM = MBB.getParent()->getTarget();
+  Reloc::Model RM = TM.getRelocationModel();
   DebugLoc DL = MI->getDebugLoc();
   unsigned Reg = MI->getOperand(0).getReg();
   const GlobalValue *GV =
