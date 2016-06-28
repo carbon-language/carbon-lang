@@ -37,15 +37,6 @@ unsigned getDividerWidth(const CoverageViewOptions &Opts) {
 
 } // anonymous namespace
 
-Expected<std::unique_ptr<raw_ostream>>
-SourceCoverageViewText::createOutputFile(StringRef Path, bool InToplevel) {
-  return createOutputStream(getOptions(), Path, "txt", InToplevel);
-}
-
-void SourceCoverageViewText::closeOutputFile(std::unique_ptr<raw_ostream> OS) {
-  OS.get()->operator<<('\n');
-}
-
 void SourceCoverageViewText::renderSourceName(raw_ostream &OS) {
   getOptions().colored_ostream(OS, raw_ostream::CYAN) << getSourceName()
                                                       << ":\n";

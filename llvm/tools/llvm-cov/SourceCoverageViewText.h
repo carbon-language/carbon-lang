@@ -20,13 +20,6 @@ namespace llvm {
 
 /// \brief A code coverage view which supports text-based rendering.
 class SourceCoverageViewText : public SourceCoverageView {
-public:
-  Expected<std::unique_ptr<raw_ostream>>
-  createOutputFile(StringRef Path, bool InToplevel) override;
-
-  void closeOutputFile(std::unique_ptr<raw_ostream> OS) override;
-
-private:
   void renderSourceName(raw_ostream &OS) override;
 
   void renderLinePrefix(raw_ostream &OS, unsigned ViewDepth) override;

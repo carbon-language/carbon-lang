@@ -30,7 +30,6 @@ struct CoverageViewOptions {
   bool ShowFunctionInstantiations;
   bool ShowFullFilenames;
   OutputFormat ShowFormat;
-  std::string ShowOutputDirectory;
 
   /// \brief Change the output's stream color if the colors are enabled.
   ColoredRawOstream colored_ostream(raw_ostream &OS,
