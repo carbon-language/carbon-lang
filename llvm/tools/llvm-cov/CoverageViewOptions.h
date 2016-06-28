@@ -37,6 +37,9 @@ struct CoverageViewOptions {
                                     raw_ostream::Colors Color) const {
     return llvm::colored_ostream(OS, Color, Colors);
   }
+
+  /// \brief Check if an output directory has been specified.
+  bool hasOutputDirectory() const { return ShowOutputDirectory != ""; }
 };
 }
 

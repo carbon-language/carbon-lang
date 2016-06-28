@@ -74,7 +74,7 @@ Expected<SourceCoverageView::OwnedStream>
 SourceCoverageView::createOutputStream(const CoverageViewOptions &Opts,
                                        StringRef Path, StringRef Extension,
                                        bool InToplevel) {
-  if (Opts.ShowOutputDirectory == "")
+  if (!Opts.hasOutputDirectory())
     return OwnedStream(&outs());
 
   return createFileInDirectory(Opts.ShowOutputDirectory,
