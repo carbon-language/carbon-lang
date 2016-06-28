@@ -386,12 +386,12 @@ namespace inline_virt {
   // B base object inheriting constructor does not get passed arguments.
   // ITANIUM-LABEL: define linkonce_odr void @_ZN11inline_virt1BCI2NS_1AEE1QiS1_OS1_z(
   // ITANIUM-NOT: call
-  // ITANIUM: call void @_ZN1ZC2Ev(%struct.Z* %2)
+  // ITANIUM: call void @_ZN1ZC2Ev(
   // ITANIUM-NOT: call
   // VTT -> vtable
   // ITANIUM: store
   // ITANIUM-NOT: call
-  // ITANIUM: call void @_ZN1ZC1Ev(%struct.Z* %z)
+  // ITANIUM: call void @_ZN1ZC1Ev(
   // ITANIUM-NOT: call
   // ITANIUM: }
 }
