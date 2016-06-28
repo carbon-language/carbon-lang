@@ -34,3 +34,13 @@ namespace WrongIdent {
     using B::A;
   };
 }
+
+namespace DefaultCtorConflict {
+  struct A { A(int = 0); };
+  struct B : A {
+    using A::A;
+  } b; // ok, not ambiguous, inherited constructor suppresses implicit default constructor
+  struct C {
+    B b;
+  } c;
+}
