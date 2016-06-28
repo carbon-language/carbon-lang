@@ -421,6 +421,37 @@ bb:
   ret void
 }
 
+; offset puts outside of superegister bounaries, so clamp to 1st element.
+; CHECK-LABEL: {{^}}extract_largest_inbounds_offset:
+; CHECK: buffer_load_dwordx4 v{{\[}}[[LO_ELT:[0-9]+]]:[[HI_ELT:[0-9]+]]{{\]}}
+; CHECK: s_load_dword [[IDX:s[0-9]+]]
+; CHECK: s_mov_b32 m0, [[IDX]]
+; CHECK-NEXT: v_movrels_b32_e32 [[EXTRACT:v[0-9]+]], v[[HI_ELT]]
+; CHECK: buffer_store_dword [[EXTRACT]]
+define void @extract_largest_inbounds_offset(i32 addrspace(1)* %out, <4 x i32> addrspace(1)* %in, i32 %idx) {
+entry:
+  %ld = load volatile <4 x i32>, <4  x i32> addrspace(1)* %in
+  %offset = add i32 %idx, 3
+  %value = extractelement <4 x i32> %ld, i32 %offset
+  store i32 %value, i32 addrspace(1)* %out
+  ret void
+}
+
+; CHECK-LABL: {{^}}extract_out_of_bounds_offset:
+; CHECK: buffer_load_dwordx4 v{{\[}}[[LO_ELT:[0-9]+]]:[[HI_ELT:[0-9]+]]{{\]}}
+; CHECK: s_load_dword [[IDX:s[0-9]+]]
+; CHECK: s_add_i32 m0, [[IDX]], 4
+; CHECK-NEXT: v_movrels_b32_e32 [[EXTRACT:v[0-9]+]], v[[LO_ELT]]
+; CHECK: buffer_store_dword [[EXTRACT]]
+define void @extract_out_of_bounds_offset(i32 addrspace(1)* %out, <4 x i32> addrspace(1)* %in, i32 %idx) {
+entry:
+  %ld = load volatile <4 x i32>, <4  x i32> addrspace(1)* %in
+  %offset = add i32 %idx, 4
+  %value = extractelement <4 x i32> %ld, i32 %offset
+  store i32 %value, i32 addrspace(1)* %out
+  ret void
+}
+
 declare i32 @llvm.amdgcn.workitem.id.x() #1
 
 attributes #0 = { nounwind }

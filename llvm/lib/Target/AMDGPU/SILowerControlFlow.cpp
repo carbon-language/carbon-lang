@@ -102,7 +102,8 @@ private:
                               int Offset);
 
   bool loadM0(MachineInstr &MI, MachineInstr *MovRel, int Offset = 0);
-  void computeIndirectRegAndOffset(unsigned VecReg, unsigned &Reg, int &Offset);
+  std::pair<unsigned, int> computeIndirectRegAndOffset(unsigned VecReg,
+                                                       int Offset) const;
   bool indirectSrc(MachineInstr &MI);
   bool indirectDst(MachineInstr &MI);
 
@@ -538,16 +539,25 @@ bool SILowerControlFlow::loadM0(MachineInstr &MI, MachineInstr *MovRel, int Offs
 //                         indirect Index. e.g. v0 = v[VecReg + Offset]
 //                         As an output, this is a constant value that needs
 //                         to be added to the value stored in M0.
-void SILowerControlFlow::computeIndirectRegAndOffset(unsigned VecReg,
-                                                     unsigned &Reg,
-                                                     int &Offset) {
+std::pair<unsigned, int>
+SILowerControlFlow::computeIndirectRegAndOffset(unsigned VecReg,
+                                                int Offset) const {
   unsigned SubReg = TRI->getSubReg(VecReg, AMDGPU::sub0);
   if (!SubReg)
     SubReg = VecReg;
 
+  const TargetRegisterClass *SuperRC = TRI->getPhysRegClass(VecReg);
   const TargetRegisterClass *RC = TRI->getPhysRegClass(SubReg);
-  int RegIdx = TRI->getHWRegIndex(SubReg) + Offset;
+  int NumElts = SuperRC->getSize() / RC->getSize();
 
+  int BaseRegIdx = TRI->getHWRegIndex(SubReg);
+
+  // Skip out of bounds offsets, or else we would end up using an undefined
+  // register.
+  if (Offset >= NumElts)
+    return std::make_pair(RC->getRegister(BaseRegIdx), Offset);
+
+  int RegIdx = BaseRegIdx + Offset;
   if (RegIdx < 0) {
     Offset = RegIdx;
     RegIdx = 0;
@@ -555,7 +565,8 @@ void SILowerControlFlow::computeIndirectRegAndOffset(unsigned VecReg,
     Offset = 0;
   }
 
-  Reg = RC->getRegister(RegIdx);
+  unsigned Reg = RC->getRegister(RegIdx);
+  return std::make_pair(Reg, Offset);
 }
 
 // Return true if a new block was inserted.
@@ -568,7 +579,7 @@ bool SILowerControlFlow::indirectSrc(MachineInstr &MI) {
   int Off = TII->getNamedOperand(MI, AMDGPU::OpName::offset)->getImm();
   unsigned Reg;
 
-  computeIndirectRegAndOffset(SrcVec->getReg(), Reg, Off);
+  std::tie(Reg, Off) = computeIndirectRegAndOffset(SrcVec->getReg(), Off);
 
   MachineInstr *MovRel =
     BuildMI(*MBB.getParent(), DL, TII->get(AMDGPU::V_MOVRELS_B32_e32), Dst)
@@ -588,7 +599,7 @@ bool SILowerControlFlow::indirectDst(MachineInstr &MI) {
   MachineOperand *Val = TII->getNamedOperand(MI, AMDGPU::OpName::val);
   unsigned Reg;
 
-  computeIndirectRegAndOffset(Dst, Reg, Off);
+  std::tie(Reg, Off) = computeIndirectRegAndOffset(Dst, Off);
 
   MachineInstr *MovRel =
     BuildMI(*MBB.getParent(), DL, TII->get(AMDGPU::V_MOVRELD_B32_e32))
