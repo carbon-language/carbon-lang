@@ -448,6 +448,8 @@ int CodeCoverageTool::show(int argc, const char **argv,
   if (!Coverage)
     return 1;
 
+  auto Printer = CoveragePrinter::create(ViewOpts);
+
   if (!Filters.empty()) {
     // Show functions
     for (const auto &Function : Coverage->getCoveredFunctions()) {
@@ -462,15 +464,14 @@ int CodeCoverageTool::show(int argc, const char **argv,
         continue;
       }
 
-      auto OSOrErr =
-          mainView->createOutputFile("functions", /*InToplevel=*/true);
+      auto OSOrErr = Printer->createViewFile("functions", /*InToplevel=*/true);
       if (Error E = OSOrErr.takeError()) {
         error(toString(std::move(E)));
         return 1;
       }
       auto OS = std::move(OSOrErr.get());
       mainView->print(*OS.get(), /*WholeFile=*/false, /*ShowSourceName=*/true);
-      mainView->closeOutputFile(std::move(OS));
+      Printer->closeViewFile(std::move(OS));
     }
     return 0;
   }
@@ -483,6 +484,14 @@ int CodeCoverageTool::show(int argc, const char **argv,
     for (StringRef Filename : Coverage->getUniqueSourceFiles())
       SourceFiles.push_back(Filename);
 
+  // Create an index out of the source files.
+  if (ViewOpts.hasOutputDirectory()) {
+    if (Error E = Printer->createIndexFile(SourceFiles)) {
+      error(toString(std::move(E)));
+      return 1;
+    }
+  }
+
   for (const auto &SourceFile : SourceFiles) {
     auto mainView = createSourceFileView(SourceFile, *Coverage);
     if (!mainView) {
@@ -492,7 +501,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
       continue;
     }
 
-    auto OSOrErr = mainView->createOutputFile(SourceFile, /*InToplevel=*/false);
+    auto OSOrErr = Printer->createViewFile(SourceFile, /*InToplevel=*/false);
     if (Error E = OSOrErr.takeError()) {
       error(toString(std::move(E)));
       return 1;
@@ -500,7 +509,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
     auto OS = std::move(OSOrErr.get());
     mainView->print(*OS.get(), /*Wholefile=*/true,
                     /*ShowSourceName=*/ShowFilenames);
-    mainView->closeOutputFile(std::move(OS));
+    Printer->closeViewFile(std::move(OS));
   }
 
   return 0;

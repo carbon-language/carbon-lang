@@ -21,6 +21,57 @@
 
 using namespace llvm;
 
+void CoveragePrinter::StreamDestructor::operator()(raw_ostream *OS) const {
+  if (OS == &outs())
+    return;
+  delete OS;
+}
+
+std::string CoveragePrinter::getOutputPath(StringRef Path, StringRef Extension,
+                                           bool InToplevel) {
+  assert(Extension.size() && "The file extension may not be empty");
+
+  SmallString<256> FullPath(Opts.ShowOutputDirectory);
+  if (!InToplevel)
+    sys::path::append(FullPath, getCoverageDir());
+
+  auto PathBaseDir = sys::path::relative_path(sys::path::parent_path(Path));
+  sys::path::append(FullPath, PathBaseDir);
+
+  auto PathFilename = (sys::path::filename(Path) + "." + Extension).str();
+  sys::path::append(FullPath, PathFilename);
+
+  return FullPath.str();
+}
+
+Expected<CoveragePrinter::OwnedStream>
+CoveragePrinter::createOutputStream(StringRef Path, StringRef Extension,
+                                    bool InToplevel) {
+  if (!Opts.hasOutputDirectory())
+    return OwnedStream(&outs());
+
+  std::string FullPath = getOutputPath(Path, Extension, InToplevel);
+
+  auto ParentDir = sys::path::parent_path(FullPath);
+  if (auto E = sys::fs::create_directories(ParentDir))
+    return errorCodeToError(E);
+
+  std::error_code E;
+  raw_ostream *RawStream = new raw_fd_ostream(FullPath, E, sys::fs::F_RW);
+  auto OS = CoveragePrinter::OwnedStream(RawStream);
+  if (E)
+    return errorCodeToError(E);
+  return std::move(OS);
+}
+
+std::unique_ptr<CoveragePrinter>
+CoveragePrinter::create(const CoverageViewOptions &Opts) {
+  switch (Opts.Format) {
+  case CoverageViewOptions::OutputFormat::Text:
+    return llvm::make_unique<CoveragePrinterText>(Opts);
+  }
+}
+
 std::string SourceCoverageView::formatCount(uint64_t N) {
   std::string Number = utostr(N);
   int Len = Number.size();
@@ -36,49 +87,16 @@ std::string SourceCoverageView::formatCount(uint64_t N) {
   return Result;
 }
 
-void SourceCoverageView::StreamDestructor::operator()(raw_ostream *OS) const {
-  if (OS == &outs())
-    return;
-  delete OS;
-}
-
-/// \brief Create a file at ``Dir/ToplevelDir/@Path.Extension``. If
-/// \p ToplevelDir is empty, its path component is skipped.
-static Expected<SourceCoverageView::OwnedStream>
-createFileInDirectory(StringRef Dir, StringRef ToplevelDir, StringRef Path,
-                      StringRef Extension) {
-  assert(Extension.size() && "The file extension may not be empty");
-
-  SmallString<256> FullPath(Dir);
-  if (!ToplevelDir.empty())
-    sys::path::append(FullPath, ToplevelDir);
-
-  auto PathBaseDir = sys::path::relative_path(sys::path::parent_path(Path));
-  sys::path::append(FullPath, PathBaseDir);
-
-  if (auto E = sys::fs::create_directories(FullPath))
-    return errorCodeToError(E);
-
-  auto PathFilename = (sys::path::filename(Path) + "." + Extension).str();
-  sys::path::append(FullPath, PathFilename);
-
-  std::error_code E;
-  auto OS = SourceCoverageView::OwnedStream(
-      new raw_fd_ostream(FullPath, E, sys::fs::F_RW));
-  if (E)
-    return errorCodeToError(E);
-  return std::move(OS);
-}
-
-Expected<SourceCoverageView::OwnedStream>
-SourceCoverageView::createOutputStream(const CoverageViewOptions &Opts,
-                                       StringRef Path, StringRef Extension,
-                                       bool InToplevel) {
-  if (!Opts.hasOutputDirectory())
-    return OwnedStream(&outs());
-
-  return createFileInDirectory(Opts.ShowOutputDirectory,
-                               InToplevel ? "" : "coverage", Path, Extension);
+std::unique_ptr<SourceCoverageView>
+SourceCoverageView::create(StringRef SourceName, const MemoryBuffer &File,
+                           const CoverageViewOptions &Options,
+                           coverage::CoverageData &&CoverageInfo) {
+  switch (Options.Format) {
+  case CoverageViewOptions::OutputFormat::Text:
+    return llvm::make_unique<SourceCoverageViewText>(SourceName, File, Options,
+                                                     std::move(CoverageInfo));
+  }
+  llvm_unreachable("Unknown coverage output format!");
 }
 
 void SourceCoverageView::addExpansion(
@@ -91,18 +109,6 @@ void SourceCoverageView::addInstantiation(
     StringRef FunctionName, unsigned Line,
     std::unique_ptr<SourceCoverageView> View) {
   InstantiationSubViews.emplace_back(FunctionName, Line, std::move(View));
-}
-
-std::unique_ptr<SourceCoverageView>
-SourceCoverageView::create(StringRef SourceName, const MemoryBuffer &File,
-                           const CoverageViewOptions &Options,
-                           coverage::CoverageData &&CoverageInfo) {
-  switch (Options.Format) {
-  case CoverageViewOptions::OutputFormat::Text:
-    return llvm::make_unique<SourceCoverageViewText>(SourceName, File, Options,
-                                                     std::move(CoverageInfo));
-  }
-  llvm_unreachable("Unknown coverage output format!");
 }
 
 void SourceCoverageView::print(raw_ostream &OS, bool WholeFile,

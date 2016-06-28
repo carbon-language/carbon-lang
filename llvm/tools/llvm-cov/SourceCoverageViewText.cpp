@@ -18,6 +18,28 @@
 
 using namespace llvm;
 
+Expected<CoveragePrinter::OwnedStream>
+CoveragePrinterText::createViewFile(StringRef Path, bool InToplevel) {
+  return createOutputStream(Path, "txt", InToplevel);
+}
+
+void CoveragePrinterText::closeViewFile(OwnedStream OS) {
+  OS->operator<<('\n');
+}
+
+Error CoveragePrinterText::createIndexFile(ArrayRef<StringRef> SourceFiles) {
+  auto OSOrErr = createOutputStream("index", "txt", /*InToplevel=*/true);
+  if (Error E = OSOrErr.takeError())
+    return E;
+  auto OS = std::move(OSOrErr.get());
+  raw_ostream &OSRef = *OS.get();
+
+  for (StringRef SF : SourceFiles)
+    OSRef << getOutputPath(SF, "txt", /*InToplevel=*/false) << '\n';
+
+  return Error::success();
+}
+
 namespace {
 
 static const unsigned LineCoverageColumnWidth = 7;
@@ -36,15 +58,6 @@ unsigned getDividerWidth(const CoverageViewOptions &Opts) {
 }
 
 } // anonymous namespace
-
-Expected<SourceCoverageView::OwnedStream>
-SourceCoverageViewText::createOutputFile(StringRef Path, bool InToplevel) {
-  return createOutputStream(getOptions(), Path, "txt", InToplevel);
-}
-
-void SourceCoverageViewText::closeOutputFile(OwnedStream OS) {
-  OS->operator<<('\n');
-}
 
 void SourceCoverageViewText::renderSourceName(raw_ostream &OS) {
   getOptions().colored_ostream(OS, raw_ostream::CYAN) << getSourceName()
