@@ -21,12 +21,10 @@
 #define LLVM_SUPPORT_COMMANDLINE_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/ManagedStatic.h"
 #include <cassert>
 #include <climits>
 #include <cstdarg>
@@ -45,9 +43,8 @@ namespace cl {
 //===----------------------------------------------------------------------===//
 // ParseCommandLineOptions - Command line option processing entry point.
 //
-bool ParseCommandLineOptions(int argc, const char *const *argv,
-                             const char *Overview = nullptr,
-                             bool IgnoreErrors = false);
+void ParseCommandLineOptions(int argc, const char *const *argv,
+                             const char *Overview = nullptr);
 
 //===----------------------------------------------------------------------===//
 // ParseEnvironmentOptions - Environment variable option processing alternate
@@ -174,45 +171,6 @@ public:
 extern OptionCategory GeneralCategory;
 
 //===----------------------------------------------------------------------===//
-// SubCommand class
-//
-class SubCommand {
-private:
-  const char *const Name = nullptr;
-  const char *const Description = nullptr;
-
-protected:
-  void registerSubCommand();
-  void unregisterSubCommand();
-
-public:
-  SubCommand(const char *const Name, const char *const Description = nullptr)
-      : Name(Name), Description(Description) {
-    registerSubCommand();
-  }
-  SubCommand() {}
-
-  void reset();
-
-  operator bool() const;
-
-  const char *getName() const { return Name; }
-  const char *getDescription() const { return Description; }
-
-  SmallVector<Option *, 4> PositionalOpts;
-  SmallVector<Option *, 4> SinkOpts;
-  StringMap<Option *> OptionsMap;
-
-  Option *ConsumeAfterOpt = nullptr; // The ConsumeAfter option if it exists.
-};
-
-// A special subcommand representing no subcommand
-extern ManagedStatic<SubCommand> TopLevelSubCommand;
-
-// A special subcommand that can be used to put an option into all subcommands.
-extern ManagedStatic<SubCommand> AllSubCommands;
-
-//===----------------------------------------------------------------------===//
 // Option Base class
 //
 class alias;
@@ -251,7 +209,6 @@ public:
   StringRef HelpStr;  // The descriptive text message for -help
   StringRef ValueStr; // String describing what the value of this option is
   OptionCategory *Category; // The Category this option belongs to
-  SmallPtrSet<SubCommand *, 4> Subs; // The subcommands this option belongs to.
   bool FullyInitialized;    // Has addArguemnt been called?
 
   inline enum NumOccurrencesFlag getNumOccurrencesFlag() const {
@@ -272,16 +229,6 @@ public:
 
   // hasArgStr - Return true if the argstr != ""
   bool hasArgStr() const { return !ArgStr.empty(); }
-  bool isPositional() const { return getFormattingFlag() == cl::Positional; }
-  bool isSink() const { return getMiscFlags() & cl::Sink; }
-  bool isConsumeAfter() const {
-    return getNumOccurrencesFlag() == cl::ConsumeAfter;
-  }
-  bool isInAllSubCommands() const {
-    return std::any_of(Subs.begin(), Subs.end(), [](const SubCommand *SC) {
-      return SC == &*AllSubCommands;
-    });
-  }
 
   //-------------------------------------------------------------------------===
   // Accessor functions set by OptionModifiers
@@ -296,7 +243,6 @@ public:
   void setMiscFlag(enum MiscFlags M) { Misc |= M; }
   void setPosition(unsigned pos) { Position = pos; }
   void setCategory(OptionCategory &C) { Category = &C; }
-  void addSubCommand(SubCommand &S) { Subs.insert(&S); }
 
 protected:
   explicit Option(enum NumOccurrencesFlag OccurrencesFlag,
@@ -341,7 +287,6 @@ public:
 
 public:
   inline int getNumOccurrences() const { return NumOccurrences; }
-  inline void reset() { NumOccurrences = 0; }
   virtual ~Option() {}
 };
 
@@ -402,14 +347,6 @@ struct cat {
   cat(OptionCategory &c) : Category(c) {}
 
   template <class Opt> void apply(Opt &O) const { O.setCategory(Category); }
-};
-
-// sub - Specify the subcommand that this option belongs to.
-struct sub {
-  SubCommand &Sub;
-  sub(SubCommand &S) : Sub(S) {}
-
-  template <class Opt> void apply(Opt &O) const { O.addSubCommand(Sub); }
 };
 
 //===----------------------------------------------------------------------===//
@@ -1652,7 +1589,6 @@ class alias : public Option {
       error("cl::alias must have argument name specified!");
     if (!AliasFor)
       error("cl::alias must have an cl::aliasopt(option) specified!");
-    Subs = AliasFor->Subs;
     addArgument();
   }
 
@@ -1733,7 +1669,7 @@ void PrintHelpMessage(bool Hidden = false, bool Categorized = false);
 /// Hopefully this API can be depricated soon. Any situation where options need
 /// to be modified by tools or libraries should be handled by sane APIs rather
 /// than just handing around a global list.
-StringMap<Option *> &getRegisteredOptions(SubCommand &Sub);
+StringMap<Option *> &getRegisteredOptions();
 
 //===----------------------------------------------------------------------===//
 // Standalone command line processing utilities.
@@ -1801,8 +1737,7 @@ bool ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
 /// Some tools (like clang-format) like to be able to hide all options that are
 /// not specific to the tool. This function allows a tool to specify a single
 /// option category to display in the -help output.
-void HideUnrelatedOptions(cl::OptionCategory &Category,
-                          SubCommand &Sub = *TopLevelSubCommand);
+void HideUnrelatedOptions(cl::OptionCategory &Category);
 
 /// \brief Mark all options not part of the categories as cl::ReallyHidden.
 ///
@@ -1811,10 +1746,7 @@ void HideUnrelatedOptions(cl::OptionCategory &Category,
 /// Some tools (like clang-format) like to be able to hide all options that are
 /// not specific to the tool. This function allows a tool to specify a single
 /// option category to display in the -help output.
-void HideUnrelatedOptions(ArrayRef<const cl::OptionCategory *> Categories,
-                          SubCommand &Sub = *TopLevelSubCommand);
-
-void ResetCommandLineOptions();
+void HideUnrelatedOptions(ArrayRef<const cl::OptionCategory *> Categories);
 
 } // End namespace cl
 
