@@ -70,6 +70,7 @@ CoveragePrinter::create(const CoverageViewOptions &Opts) {
   case CoverageViewOptions::OutputFormat::Text:
     return llvm::make_unique<CoveragePrinterText>(Opts);
   }
+  llvm_unreachable("Unknown coverage output format!");
 }
 
 std::string SourceCoverageView::formatCount(uint64_t N) {
