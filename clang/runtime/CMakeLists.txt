@@ -141,6 +141,7 @@ if(LLVM_BUILD_EXTERNAL_COMPILER_RT AND EXISTS ${COMPILER_RT_SRC_ROOT}/)
       COMMAND ${run_check_compiler_rt}
       DEPENDS compiler-rt-build ${COMPILER_RT_TEST_DEPENDENCIES}
       WORKING_DIRECTORY ${BINARY_DIR}
-      VERBATIM)
+      VERBATIM USES_TERMINAL)
+    set_property(GLOBAL APPEND PROPERTY LLVM_LIT_DEPENDS check-compiler-rt)
   endif()
 endif()
