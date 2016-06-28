@@ -16,7 +16,6 @@
 #include "AMDGPUCallLowering.h"
 #include "R600ISelLowering.h"
 #include "R600InstrInfo.h"
-#include "R600MachineScheduler.h"
 #include "SIFrameLowering.h"
 #include "SIISelLowering.h"
 #include "SIInstrInfo.h"
@@ -32,17 +31,6 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "AMDGPUGenSubtargetInfo.inc"
-
-#ifdef LLVM_BUILD_GLOBAL_ISEL
-namespace {
-struct AMDGPUGISelActualAccessor : public GISelAccessor {
-  std::unique_ptr<CallLowering> CallLoweringInfo;
-  const CallLowering *getCallLowering() const override {
-    return CallLoweringInfo.get();
-  }
-};
-} // End anonymous namespace.
-#endif
 
 AMDGPUSubtarget::~AMDGPUSubtarget() {}
 
@@ -218,9 +206,9 @@ unsigned R600Subtarget::getStackEntrySize() const {
 }
 
 void SISubtarget::overrideSchedPolicy(MachineSchedPolicy &Policy,
-                                          MachineInstr *begin,
-                                          MachineInstr *end,
-                                          unsigned NumRegionInstrs) const {
+                                      MachineInstr *begin,
+                                      MachineInstr *end,
+                                      unsigned NumRegionInstrs) const {
   // Track register pressure so the scheduler can try to decrease
   // pressure once register usage is above the threshold defined by
   // SIRegisterInfo::getRegPressureSetLimit()

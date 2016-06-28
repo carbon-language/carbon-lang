@@ -23,6 +23,7 @@
 #include "SIISelLowering.h"
 #include "SIInstrInfo.h"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -193,6 +194,17 @@ const R600Subtarget *R600TargetMachine::getSubtargetImpl(
 //===----------------------------------------------------------------------===//
 // GCN Target Machine (SI+)
 //===----------------------------------------------------------------------===//
+
+#ifdef LLVM_BUILD_GLOBAL_ISEL
+namespace {
+struct SIGISelActualAccessor : public GISelAccessor {
+  std::unique_ptr<CallLowering> CallLoweringInfo;
+  const CallLowering *getCallLowering() const override {
+    return CallLoweringInfo.get();
+  }
+};
+} // End anonymous namespace.
+#endif
 
 GCNTargetMachine::GCNTargetMachine(const Target &T, const Triple &TT,
                                    StringRef CPU, StringRef FS,
