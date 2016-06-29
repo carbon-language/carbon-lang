@@ -9,3 +9,9 @@
 // CHECK-NOT: coverage{{.*}}dots{{.*}}..{{.*}}dots
 
 int main() {}
+
+// Re-purpose this file to test that we use relative paths when creating
+// report indices:
+
+// RUN: FileCheck -check-prefix=REL-INDEX -input-file %t.dir/index.txt %s
+// REL-INDEX-NOT: %t.dir
