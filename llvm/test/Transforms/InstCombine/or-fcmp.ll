@@ -319,11 +319,9 @@ define i1 @auto_gen_28(double %a, double %b) {
   ret i1 %retval
 }
 
-; FIXME: this test, along with the several following ones,
-;        is wrong and will be fixed shortly.
 define i1 @auto_gen_29(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_29(
-; CHECK-NEXT:    [[TMP1:%.*]] = fcmp oeq double %a, %b
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ord double %a, %b
 ; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ord double %a, %b
@@ -334,7 +332,7 @@ define i1 @auto_gen_29(double %a, double %b) {
 
 define i1 @auto_gen_30(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_30(
-; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ogt double %a, %b
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ord double %a, %b
 ; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ord double %a, %b
@@ -345,7 +343,7 @@ define i1 @auto_gen_30(double %a, double %b) {
 
 define i1 @auto_gen_31(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_31(
-; CHECK-NEXT:    [[TMP1:%.*]] = fcmp oge double %a, %b
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ord double %a, %b
 ; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ord double %a, %b
@@ -356,7 +354,7 @@ define i1 @auto_gen_31(double %a, double %b) {
 
 define i1 @auto_gen_32(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_32(
-; CHECK-NEXT:    [[TMP1:%.*]] = fcmp olt double %a, %b
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ord double %a, %b
 ; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ord double %a, %b
@@ -367,7 +365,7 @@ define i1 @auto_gen_32(double %a, double %b) {
 
 define i1 @auto_gen_33(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_33(
-; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ole double %a, %b
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ord double %a, %b
 ; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ord double %a, %b
@@ -378,7 +376,7 @@ define i1 @auto_gen_33(double %a, double %b) {
 
 define i1 @auto_gen_34(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_34(
-; CHECK-NEXT:    [[TMP1:%.*]] = fcmp one double %a, %b
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ord double %a, %b
 ; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ord double %a, %b
@@ -411,10 +409,8 @@ define i1 @auto_gen_36(double %a, double %b) {
 
 define i1 @auto_gen_37(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_37(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ueq double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oeq double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ueq double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ueq double %a, %b
   %cmp1 = fcmp oeq double %a, %b
@@ -424,10 +420,8 @@ define i1 @auto_gen_37(double %a, double %b) {
 
 define i1 @auto_gen_38(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_38(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ueq double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ogt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp uge double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ueq double %a, %b
   %cmp1 = fcmp ogt double %a, %b
@@ -437,10 +431,8 @@ define i1 @auto_gen_38(double %a, double %b) {
 
 define i1 @auto_gen_39(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_39(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ueq double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oge double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp uge double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ueq double %a, %b
   %cmp1 = fcmp oge double %a, %b
@@ -450,10 +442,8 @@ define i1 @auto_gen_39(double %a, double %b) {
 
 define i1 @auto_gen_40(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_40(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ueq double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp olt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ule double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ueq double %a, %b
   %cmp1 = fcmp olt double %a, %b
@@ -463,10 +453,8 @@ define i1 @auto_gen_40(double %a, double %b) {
 
 define i1 @auto_gen_41(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_41(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ueq double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ole double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ule double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ueq double %a, %b
   %cmp1 = fcmp ole double %a, %b
@@ -476,10 +464,7 @@ define i1 @auto_gen_41(double %a, double %b) {
 
 define i1 @auto_gen_42(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_42(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ueq double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp one double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp ueq double %a, %b
   %cmp1 = fcmp one double %a, %b
@@ -489,10 +474,7 @@ define i1 @auto_gen_42(double %a, double %b) {
 
 define i1 @auto_gen_43(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_43(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ueq double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ord double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp ueq double %a, %b
   %cmp1 = fcmp ord double %a, %b
@@ -524,10 +506,8 @@ define i1 @auto_gen_45(double %a, double %b) {
 
 define i1 @auto_gen_46(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_46(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ugt double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oeq double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp uge double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ugt double %a, %b
   %cmp1 = fcmp oeq double %a, %b
@@ -537,10 +517,8 @@ define i1 @auto_gen_46(double %a, double %b) {
 
 define i1 @auto_gen_47(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_47(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ugt double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ogt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ugt double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ugt double %a, %b
   %cmp1 = fcmp ogt double %a, %b
@@ -550,10 +528,8 @@ define i1 @auto_gen_47(double %a, double %b) {
 
 define i1 @auto_gen_48(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_48(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ugt double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oge double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp uge double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ugt double %a, %b
   %cmp1 = fcmp oge double %a, %b
@@ -563,10 +539,8 @@ define i1 @auto_gen_48(double %a, double %b) {
 
 define i1 @auto_gen_49(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_49(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ugt double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp olt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp une double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ugt double %a, %b
   %cmp1 = fcmp olt double %a, %b
@@ -576,10 +550,7 @@ define i1 @auto_gen_49(double %a, double %b) {
 
 define i1 @auto_gen_50(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_50(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ugt double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ole double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp ugt double %a, %b
   %cmp1 = fcmp ole double %a, %b
@@ -589,10 +560,8 @@ define i1 @auto_gen_50(double %a, double %b) {
 
 define i1 @auto_gen_51(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_51(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ugt double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp one double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp une double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ugt double %a, %b
   %cmp1 = fcmp one double %a, %b
@@ -602,10 +571,7 @@ define i1 @auto_gen_51(double %a, double %b) {
 
 define i1 @auto_gen_52(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_52(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ugt double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ord double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp ugt double %a, %b
   %cmp1 = fcmp ord double %a, %b
@@ -648,10 +614,8 @@ define i1 @auto_gen_55(double %a, double %b) {
 
 define i1 @auto_gen_56(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_56(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uge double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oeq double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp uge double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp uge double %a, %b
   %cmp1 = fcmp oeq double %a, %b
@@ -661,10 +625,8 @@ define i1 @auto_gen_56(double %a, double %b) {
 
 define i1 @auto_gen_57(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_57(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uge double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ogt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp uge double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp uge double %a, %b
   %cmp1 = fcmp ogt double %a, %b
@@ -674,10 +636,8 @@ define i1 @auto_gen_57(double %a, double %b) {
 
 define i1 @auto_gen_58(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_58(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uge double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oge double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp uge double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp uge double %a, %b
   %cmp1 = fcmp oge double %a, %b
@@ -687,10 +647,7 @@ define i1 @auto_gen_58(double %a, double %b) {
 
 define i1 @auto_gen_59(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_59(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uge double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp olt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp uge double %a, %b
   %cmp1 = fcmp olt double %a, %b
@@ -700,10 +657,7 @@ define i1 @auto_gen_59(double %a, double %b) {
 
 define i1 @auto_gen_60(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_60(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uge double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ole double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp uge double %a, %b
   %cmp1 = fcmp ole double %a, %b
@@ -713,10 +667,7 @@ define i1 @auto_gen_60(double %a, double %b) {
 
 define i1 @auto_gen_61(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_61(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uge double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp one double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp uge double %a, %b
   %cmp1 = fcmp one double %a, %b
@@ -726,10 +677,7 @@ define i1 @auto_gen_61(double %a, double %b) {
 
 define i1 @auto_gen_62(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_62(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uge double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ord double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp uge double %a, %b
   %cmp1 = fcmp ord double %a, %b
@@ -783,10 +731,8 @@ define i1 @auto_gen_66(double %a, double %b) {
 
 define i1 @auto_gen_67(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_67(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ult double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oeq double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ule double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ult double %a, %b
   %cmp1 = fcmp oeq double %a, %b
@@ -796,10 +742,8 @@ define i1 @auto_gen_67(double %a, double %b) {
 
 define i1 @auto_gen_68(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_68(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ult double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ogt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp une double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ult double %a, %b
   %cmp1 = fcmp ogt double %a, %b
@@ -809,10 +753,7 @@ define i1 @auto_gen_68(double %a, double %b) {
 
 define i1 @auto_gen_69(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_69(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ult double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oge double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp ult double %a, %b
   %cmp1 = fcmp oge double %a, %b
@@ -822,10 +763,8 @@ define i1 @auto_gen_69(double %a, double %b) {
 
 define i1 @auto_gen_70(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_70(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ult double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp olt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ult double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ult double %a, %b
   %cmp1 = fcmp olt double %a, %b
@@ -835,10 +774,8 @@ define i1 @auto_gen_70(double %a, double %b) {
 
 define i1 @auto_gen_71(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_71(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ult double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ole double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ule double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ult double %a, %b
   %cmp1 = fcmp ole double %a, %b
@@ -848,10 +785,8 @@ define i1 @auto_gen_71(double %a, double %b) {
 
 define i1 @auto_gen_72(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_72(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ult double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp one double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp une double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ult double %a, %b
   %cmp1 = fcmp one double %a, %b
@@ -861,10 +796,7 @@ define i1 @auto_gen_72(double %a, double %b) {
 
 define i1 @auto_gen_73(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_73(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ult double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ord double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp ult double %a, %b
   %cmp1 = fcmp ord double %a, %b
@@ -928,10 +860,8 @@ define i1 @auto_gen_78(double %a, double %b) {
 
 define i1 @auto_gen_79(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_79(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ule double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oeq double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ule double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ule double %a, %b
   %cmp1 = fcmp oeq double %a, %b
@@ -941,10 +871,7 @@ define i1 @auto_gen_79(double %a, double %b) {
 
 define i1 @auto_gen_80(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_80(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ule double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ogt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp ule double %a, %b
   %cmp1 = fcmp ogt double %a, %b
@@ -954,10 +881,7 @@ define i1 @auto_gen_80(double %a, double %b) {
 
 define i1 @auto_gen_81(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_81(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ule double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oge double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp ule double %a, %b
   %cmp1 = fcmp oge double %a, %b
@@ -967,10 +891,8 @@ define i1 @auto_gen_81(double %a, double %b) {
 
 define i1 @auto_gen_82(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_82(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ule double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp olt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ule double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ule double %a, %b
   %cmp1 = fcmp olt double %a, %b
@@ -980,10 +902,8 @@ define i1 @auto_gen_82(double %a, double %b) {
 
 define i1 @auto_gen_83(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_83(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ule double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ole double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ule double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp ule double %a, %b
   %cmp1 = fcmp ole double %a, %b
@@ -993,10 +913,7 @@ define i1 @auto_gen_83(double %a, double %b) {
 
 define i1 @auto_gen_84(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_84(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ule double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp one double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp ule double %a, %b
   %cmp1 = fcmp one double %a, %b
@@ -1006,10 +923,7 @@ define i1 @auto_gen_84(double %a, double %b) {
 
 define i1 @auto_gen_85(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_85(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ule double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ord double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp ule double %a, %b
   %cmp1 = fcmp ord double %a, %b
@@ -1083,10 +997,7 @@ define i1 @auto_gen_91(double %a, double %b) {
 
 define i1 @auto_gen_92(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_92(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp une double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oeq double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp une double %a, %b
   %cmp1 = fcmp oeq double %a, %b
@@ -1096,10 +1007,8 @@ define i1 @auto_gen_92(double %a, double %b) {
 
 define i1 @auto_gen_93(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_93(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp une double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ogt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp une double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp une double %a, %b
   %cmp1 = fcmp ogt double %a, %b
@@ -1109,10 +1018,7 @@ define i1 @auto_gen_93(double %a, double %b) {
 
 define i1 @auto_gen_94(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_94(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp une double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oge double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp une double %a, %b
   %cmp1 = fcmp oge double %a, %b
@@ -1122,10 +1028,8 @@ define i1 @auto_gen_94(double %a, double %b) {
 
 define i1 @auto_gen_95(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_95(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp une double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp olt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp une double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp une double %a, %b
   %cmp1 = fcmp olt double %a, %b
@@ -1135,10 +1039,7 @@ define i1 @auto_gen_95(double %a, double %b) {
 
 define i1 @auto_gen_96(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_96(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp une double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ole double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp une double %a, %b
   %cmp1 = fcmp ole double %a, %b
@@ -1148,10 +1049,8 @@ define i1 @auto_gen_96(double %a, double %b) {
 
 define i1 @auto_gen_97(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_97(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp une double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp one double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp une double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp une double %a, %b
   %cmp1 = fcmp one double %a, %b
@@ -1161,10 +1060,7 @@ define i1 @auto_gen_97(double %a, double %b) {
 
 define i1 @auto_gen_98(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_98(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp une double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ord double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp une double %a, %b
   %cmp1 = fcmp ord double %a, %b
@@ -1248,10 +1144,8 @@ define i1 @auto_gen_105(double %a, double %b) {
 
 define i1 @auto_gen_106(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_106(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uno double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oeq double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ueq double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp uno double %a, %b
   %cmp1 = fcmp oeq double %a, %b
@@ -1261,10 +1155,8 @@ define i1 @auto_gen_106(double %a, double %b) {
 
 define i1 @auto_gen_107(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_107(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uno double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ogt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ugt double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp uno double %a, %b
   %cmp1 = fcmp ogt double %a, %b
@@ -1274,10 +1166,8 @@ define i1 @auto_gen_107(double %a, double %b) {
 
 define i1 @auto_gen_108(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_108(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uno double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp oge double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp uge double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp uno double %a, %b
   %cmp1 = fcmp oge double %a, %b
@@ -1287,10 +1177,8 @@ define i1 @auto_gen_108(double %a, double %b) {
 
 define i1 @auto_gen_109(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_109(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uno double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp olt double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ult double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp uno double %a, %b
   %cmp1 = fcmp olt double %a, %b
@@ -1300,10 +1188,8 @@ define i1 @auto_gen_109(double %a, double %b) {
 
 define i1 @auto_gen_110(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_110(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uno double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ole double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ule double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp uno double %a, %b
   %cmp1 = fcmp ole double %a, %b
@@ -1313,10 +1199,8 @@ define i1 @auto_gen_110(double %a, double %b) {
 
 define i1 @auto_gen_111(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_111(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uno double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp one double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp une double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp uno double %a, %b
   %cmp1 = fcmp one double %a, %b
@@ -1326,10 +1210,7 @@ define i1 @auto_gen_111(double %a, double %b) {
 
 define i1 @auto_gen_112(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_112(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uno double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ord double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    ret i1 true
 ;
   %cmp = fcmp uno double %a, %b
   %cmp1 = fcmp ord double %a, %b
@@ -1405,10 +1286,8 @@ define i1 @auto_gen_118(double %a, double %b) {
 
 define i1 @auto_gen_119(double %a, double %b) {
 ; CHECK-LABEL: @auto_gen_119(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp uno double %a, %b
-; CHECK-NEXT:    [[CMP1:%.*]] = fcmp uno double %a, %b
-; CHECK-NEXT:    [[RETVAL:%.*]] = or i1 [[CMP]], [[CMP1]]
-; CHECK-NEXT:    ret i1 [[RETVAL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp uno double %a, %b
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %cmp = fcmp uno double %a, %b
   %cmp1 = fcmp uno double %a, %b
