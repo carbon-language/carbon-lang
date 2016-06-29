@@ -5741,8 +5741,11 @@ PerformConstructorInitialization(Sema &S,
       : Kind.getParenRange();
 
     if (auto *Shadow = dyn_cast<ConstructorUsingShadowDecl>(
-            Step.Function.FoundDecl.getDecl()))
+            Step.Function.FoundDecl.getDecl())) {
       Constructor = S.findInheritingConstructor(Loc, Constructor, Shadow);
+      if (S.DiagnoseUseOfDecl(Constructor, Loc))
+        return ExprError();
+    }
     S.MarkFunctionReferenced(Loc, Constructor);
 
     CurInit = new (S.Context) CXXTemporaryObjectExpr(

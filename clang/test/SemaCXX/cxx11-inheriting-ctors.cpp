@@ -44,3 +44,15 @@ namespace DefaultCtorConflict {
     B b;
   } c;
 }
+
+namespace InvalidConstruction {
+  struct A { A(int); };
+  struct B { B() = delete; };
+  struct C : A, B { using A::A; };
+  // Initialization here is performed as if by a defaulted default constructor,
+  // which would be ill-formed (in the immediate context) in this case because
+  // it would be defined as deleted.
+  template<typename T> void f(decltype(T(0))*);
+  template<typename T> int &f(...);
+  int &r = f<C>(0);
+}

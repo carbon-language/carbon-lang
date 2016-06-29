@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -std=c++11 -verify %s
 
 namespace std_example {
-  struct B1 { // expected-note {{declared here}}
+  struct B1 {
     B1(int, ...) {}
   };
 
@@ -25,11 +25,11 @@ namespace std_example {
   }
 
   struct D2 : B2 {
-    using B2::B2; // expected-error {{cannot use constructor inherited from base class 'B2'; member 'b' of 'std_example::D2' does not have a default constructor}}
-    B1 b; // expected-note {{member}}
+    using B2::B2;
+    B1 b; // expected-note {{constructor inherited by 'D2' is implicitly deleted because field 'b' has no default constructor}}
   };
 
-  D2 f(1.0); // expected-note {{inherited constructor for 'D2' first required here}}
+  D2 f(1.0); // expected-error {{constructor inherited by 'D2' from base class 'B2' is implicitly deleted}}
 
   struct W {
     W(int);
@@ -53,7 +53,7 @@ namespace std_example {
 }
 
 namespace vbase {
-  struct V { // expected-note 2{{declared here}}
+  struct V {
     V(int);
   };
 
@@ -61,17 +61,17 @@ namespace vbase {
     A() = delete; // expected-note 2{{deleted here}} expected-note {{deleted}}
     using V::V;
   };
-  struct B : virtual V {
+  struct B : virtual V { // expected-note {{no default constructor}}
     B() = delete; // expected-note 2{{deleted here}}
     B(int, int);
     using V::V;
   };
   struct C : B { // expected-note {{deleted default constructor}}
-    using B::B; // expected-error {{cannot use constructor inherited from base class 'B'; base class 'vbase::V' of 'vbase::C' does not have a default constructor}}
+    using B::B;
   };
-  struct D : A, C { // expected-note {{deleted default constructor}}
+  struct D : A, C { // expected-note {{deleted default constructor}} expected-note {{deleted corresponding constructor}}
     using A::A;
-    using C::C; // expected-error {{cannot use constructor inherited from base class 'C'; base class 'vbase::V' of 'vbase::D' does not have a default constructor}} expected-error {{call to deleted constructor of 'vbase::A'}}
+    using C::C;
   };
 
   A a0; // expected-error {{deleted}}
@@ -81,10 +81,10 @@ namespace vbase {
   B b2(0, 0);
   C c0; // expected-error {{deleted}}
   C c1(0);
-  C c2(0, 0); // expected-note {{first required here}}
-  D d0; // expected-error {{implicitly-deleted}}
+  C c2(0, 0); // expected-error {{deleted}}
+  D d0; // expected-error {{deleted}}
   D d1(0);
-  D d2(0, 0); // expected-note {{first required here}}
+  D d2(0, 0); // expected-error {{deleted}}
 }
 
 namespace constexpr_init_order {

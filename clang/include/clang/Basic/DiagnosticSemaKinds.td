@@ -4295,20 +4295,25 @@ def err_new_abi_tag_on_redeclaration : Error<
 def note_deleted_dtor_no_operator_delete : Note<
   "virtual destructor requires an unambiguous, accessible 'operator delete'">;
 def note_deleted_special_member_class_subobject : Note<
-  "%select{default constructor|copy constructor|move constructor|"
-  "copy assignment operator|move assignment operator|destructor}0 of "
+  "%select{default constructor of|copy constructor of|move constructor of|"
+  "copy assignment operator of|move assignment operator of|destructor of|"
+  "constructor inherited by}0 "
   "%1 is implicitly deleted because "
   "%select{base class %3|%select{||||variant }4field %3}2 has "
   "%select{no|a deleted|multiple|an inaccessible|a non-trivial}4 "
   "%select{%select{default constructor|copy constructor|move constructor|copy "
-  "assignment operator|move assignment operator|destructor}0|destructor}5"
+  "assignment operator|move assignment operator|destructor|"
+  "%select{default|corresponding|default|default|default}4 constructor}0|"
+  "destructor}5"
   "%select{||s||}4">;
 def note_deleted_default_ctor_uninit_field : Note<
-  "default constructor of %0 is implicitly deleted because field %1 of "
-  "%select{reference|const-qualified}3 type %2 would not be initialized">;
+  "%select{default constructor of|constructor inherited by}0 "
+  "%1 is implicitly deleted because field %2 of "
+  "%select{reference|const-qualified}4 type %3 would not be initialized">;
 def note_deleted_default_ctor_all_const : Note<
-  "default constructor of %0 is implicitly deleted because all "
-  "%select{data members|data members of an anonymous union member}1"
+  "%select{default constructor of|constructor inherited by}0 "
+  "%1 is implicitly deleted because all "
+  "%select{data members|data members of an anonymous union member}2"
   " are const-qualified">;
 def note_deleted_copy_ctor_rvalue_reference : Note<
   "copy constructor of %0 is implicitly deleted because field %1 is of "
@@ -6567,6 +6572,8 @@ def err_nontemporal_builtin_must_be_pointer_intfltptr_or_vector : Error<
   "pointer, or a vector of such types (%0 invalid)">;
 
 def err_deleted_function_use : Error<"attempt to use a deleted function">;
+def err_deleted_inherited_ctor_use : Error<
+  "constructor inherited by %0 from base class %1 is implicitly deleted">;
 
 def err_kern_type_not_void_return : Error<
   "kernel function type %0 must have void return type">;

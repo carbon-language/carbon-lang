@@ -41,9 +41,9 @@ namespace dr1573 { // dr1573: 3.9
   constexpr F f = F(0); // expected-error {{constant expression}} expected-note {{constructor inherited from base class 'C'}}
 
   // inherited constructor is effectively deleted if the user-written constructor would be
-  struct G { G(int); }; // expected-note {{declared here}}
-  struct H : G { using G::G; G g; }; // expected-error {{cannot use constructor inherited from base class 'G'; member 'g' of 'dr1573::H' does not have a default constructor}} expected-note {{declared here}}
-  H h(0); // expected-note {{first required here}}
+  struct G { G(int); };
+  struct H : G { using G::G; G g; }; // expected-note {{constructor inherited by 'H' is implicitly deleted because field 'g' has no default constructor}}
+  H h(0); // expected-error {{constructor inherited by 'H' from base class 'G' is implicitly deleted}}
 #endif
 }
 

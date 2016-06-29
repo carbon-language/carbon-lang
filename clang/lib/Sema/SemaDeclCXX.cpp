@@ -5071,11 +5071,9 @@ static Sema::SpecialMemberOverloadResult *lookupCallFromSpecialMember(
                                LHSQuals & Qualifiers::Volatile);
 }
 
-namespace {
-struct InheritedConstructorInfo {
+class Sema::InheritedConstructorInfo {
   Sema &S;
   SourceLocation UseLoc;
-  ConstructorUsingShadowDecl *Shadow;
 
   /// A mapping from the base classes through which the constructor was
   /// inherited to the using shadow declaration in that base class (or a null
@@ -5083,9 +5081,10 @@ struct InheritedConstructorInfo {
   llvm::DenseMap<CXXRecordDecl *, ConstructorUsingShadowDecl *>
       InheritedFromBases;
 
+public:
   InheritedConstructorInfo(Sema &S, SourceLocation UseLoc,
                            ConstructorUsingShadowDecl *Shadow)
-      : S(S), UseLoc(UseLoc), Shadow(Shadow) {
+      : S(S), UseLoc(UseLoc) {
     bool DiagnosedMultipleConstructedBases = false;
     CXXRecordDecl *ConstructedBase = nullptr;
     UsingDecl *ConstructedBaseUsing = nullptr;
@@ -5152,7 +5151,6 @@ struct InheritedConstructorInfo {
     return std::make_pair(Ctor, false);
   }
 };
-}
 
 /// Is the special member function which would be selected to perform the
 /// specified operation on the specified class type a constexpr constructor?
@@ -5161,7 +5159,7 @@ specialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
                          Sema::CXXSpecialMember CSM, unsigned Quals,
                          bool ConstRHS,
                          CXXConstructorDecl *InheritedCtor = nullptr,
-                         InheritedConstructorInfo *Inherited = nullptr) {
+                         Sema::InheritedConstructorInfo *Inherited = nullptr) {
   // If we're inheriting a constructor, see if we need to call it for this base
   // class.
   if (InheritedCtor) {
@@ -5189,7 +5187,7 @@ specialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
 static bool defaultedSpecialMemberIsConstexpr(
     Sema &S, CXXRecordDecl *ClassDecl, Sema::CXXSpecialMember CSM,
     bool ConstArg, CXXConstructorDecl *InheritedCtor = nullptr,
-    InheritedConstructorInfo *Inherited = nullptr) {
+    Sema::InheritedConstructorInfo *Inherited = nullptr) {
   if (!S.getLangOpts().CPlusPlus11)
     return false;
 
@@ -5508,7 +5506,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
       //   [For a] user-provided explicitly-defaulted function [...] if such a
       //   function is implicitly defined as deleted, the program is ill-formed.
       Diag(MD->getLocation(), diag::err_out_of_line_default_deletes) << CSM;
-      ShouldDeleteSpecialMember(MD, CSM, /*Diagnose*/true);
+      ShouldDeleteSpecialMember(MD, CSM, nullptr, /*Diagnose*/true);
       HadError = true;
     }
   }
@@ -5569,6 +5567,7 @@ struct SpecialMemberDeletionInfo {
   Sema &S;
   CXXMethodDecl *MD;
   Sema::CXXSpecialMember CSM;
+  Sema::InheritedConstructorInfo *ICI;
   bool Diagnose;
 
   // Properties of the special member, computed for convenience.
@@ -5578,11 +5577,11 @@ struct SpecialMemberDeletionInfo {
   bool AllFieldsAreConst;
 
   SpecialMemberDeletionInfo(Sema &S, CXXMethodDecl *MD,
-                            Sema::CXXSpecialMember CSM, bool Diagnose)
-    : S(S), MD(MD), CSM(CSM), Diagnose(Diagnose),
-      IsConstructor(false), IsAssignment(false), IsMove(false),
-      ConstArg(false), Loc(MD->getLocation()),
-      AllFieldsAreConst(true) {
+                            Sema::CXXSpecialMember CSM,
+                            Sema::InheritedConstructorInfo *ICI, bool Diagnose)
+      : S(S), MD(MD), CSM(CSM), ICI(ICI), Diagnose(Diagnose),
+        IsConstructor(false), IsAssignment(false), IsMove(false),
+        ConstArg(false), Loc(MD->getLocation()), AllFieldsAreConst(true) {
     switch (CSM) {
       case Sema::CXXDefaultConstructor:
       case Sema::CXXCopyConstructor:
@@ -5613,6 +5612,10 @@ struct SpecialMemberDeletionInfo {
   }
 
   bool inUnion() const { return MD->getParent()->isUnion(); }
+
+  Sema::CXXSpecialMember getEffectiveCSM() {
+    return ICI ? Sema::CXXInvalid : CSM;
+  }
 
   /// Look up the corresponding special member in the given class.
   Sema::SpecialMemberOverloadResult *lookupIn(CXXRecordDecl *Class,
@@ -5690,13 +5693,13 @@ bool SpecialMemberDeletionInfo::shouldDeleteForSubobjectCall(
     if (Field) {
       S.Diag(Field->getLocation(),
              diag::note_deleted_special_member_class_subobject)
-        << CSM << MD->getParent() << /*IsField*/true
+        << getEffectiveCSM() << MD->getParent() << /*IsField*/true
         << Field << DiagKind << IsDtorCallInCtor;
     } else {
       CXXBaseSpecifier *Base = Subobj.get<CXXBaseSpecifier*>();
       S.Diag(Base->getLocStart(),
              diag::note_deleted_special_member_class_subobject)
-        << CSM << MD->getParent() << /*IsField*/false
+        << getEffectiveCSM() << MD->getParent() << /*IsField*/false
         << Base->getType() << DiagKind << IsDtorCallInCtor;
     }
 
@@ -5755,7 +5758,29 @@ bool SpecialMemberDeletionInfo::shouldDeleteForBase(CXXBaseSpecifier *Base) {
   CXXRecordDecl *BaseClass = Base->getType()->getAsCXXRecordDecl();
   // If program is correct, BaseClass cannot be null, but if it is, the error
   // must be reported elsewhere.
-  return BaseClass && shouldDeleteForClassSubobject(BaseClass, Base, 0);
+  if (!BaseClass)
+    return false;
+  // If we have an inheriting constructor, check whether we're calling an
+  // inherited constructor instead of a default constructor.
+  if (ICI) {
+    assert(CSM == Sema::CXXDefaultConstructor);
+    auto *BaseCtor =
+        ICI->findConstructorForBase(BaseClass, cast<CXXConstructorDecl>(MD)
+                                                   ->getInheritedConstructor()
+                                                   .getConstructor())
+            .first;
+    if (BaseCtor) {
+      if (BaseCtor->isDeleted() && Diagnose) {
+        S.Diag(Base->getLocStart(),
+               diag::note_deleted_special_member_class_subobject)
+          << getEffectiveCSM() << MD->getParent() << /*IsField*/false
+          << Base->getType() << /*Deleted*/1 << /*IsDtorCallInCtor*/false;
+        S.NoteDeletedFunction(BaseCtor);
+      }
+      return BaseCtor->isDeleted();
+    }
+  }
+  return shouldDeleteForClassSubobject(BaseClass, Base, 0);
 }
 
 /// Check whether we should delete a special member function due to the class
@@ -5770,7 +5795,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
     if (FieldType->isReferenceType() && !FD->hasInClassInitializer()) {
       if (Diagnose)
         S.Diag(FD->getLocation(), diag::note_deleted_default_ctor_uninit_field)
-          << MD->getParent() << FD << FieldType << /*Reference*/0;
+          << !!ICI << MD->getParent() << FD << FieldType << /*Reference*/0;
       return true;
     }
     // C++11 [class.ctor]p5: any non-variant non-static data member of
@@ -5782,7 +5807,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
         (!FieldRecord || !FieldRecord->hasUserProvidedDefaultConstructor())) {
       if (Diagnose)
         S.Diag(FD->getLocation(), diag::note_deleted_default_ctor_uninit_field)
-          << MD->getParent() << FD << FD->getType() << /*Const*/1;
+          << !!ICI << MD->getParent() << FD << FD->getType() << /*Const*/1;
       return true;
     }
 
@@ -5841,7 +5866,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
         if (Diagnose)
           S.Diag(FieldRecord->getLocation(),
                  diag::note_deleted_default_ctor_all_const)
-            << MD->getParent() << /*anonymous union*/1;
+            << !!ICI << MD->getParent() << /*anonymous union*/1;
         return true;
       }
 
@@ -5869,7 +5894,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForAllConstMembers() {
     if (Diagnose)
       S.Diag(MD->getParent()->getLocation(),
              diag::note_deleted_default_ctor_all_const)
-        << MD->getParent() << /*not anonymous union*/0;
+        << !!ICI << MD->getParent() << /*not anonymous union*/0;
     return true;
   }
   return false;
@@ -5879,6 +5904,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForAllConstMembers() {
 /// deleted, as specified in C++11 [class.ctor]p5, C++11 [class.copy]p11,
 /// C++11 [class.copy]p23, and C++11 [class.dtor]p5.
 bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
+                                     InheritedConstructorInfo *ICI,
                                      bool Diagnose) {
   if (MD->isInvalidDecl())
     return false;
@@ -5968,7 +5994,7 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
     }
   }
 
-  SpecialMemberDeletionInfo SMI(*this, MD, CSM, Diagnose);
+  SpecialMemberDeletionInfo SMI(*this, MD, CSM, ICI, Diagnose);
 
   for (auto &BI : RD->bases())
     if (!BI.isVirtual() &&
@@ -9288,7 +9314,18 @@ Sema::findInheritingConstructor(SourceLocation Loc,
   DerivedCtor->setAccess(BaseCtor->getAccess());
   DerivedCtor->setParams(ParamDecls);
   Derived->addDecl(DerivedCtor);
+
+  if (ShouldDeleteSpecialMember(DerivedCtor, CXXDefaultConstructor, &ICI))
+    SetDeclDeleted(DerivedCtor, UsingLoc);
+
   return DerivedCtor;
+}
+
+void Sema::NoteDeletedInheritingConstructor(CXXConstructorDecl *Ctor) {
+  InheritedConstructorInfo ICI(*this, Ctor->getLocation(),
+                               Ctor->getInheritedConstructor().getShadowDecl());
+  ShouldDeleteSpecialMember(Ctor, CXXDefaultConstructor, &ICI,
+                            /*Diagnose*/true);
 }
 
 void Sema::DefineInheritingConstructor(SourceLocation CurrentLocation,
@@ -11441,8 +11478,11 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             bool RequiresZeroInit,
                             unsigned ConstructKind,
                             SourceRange ParenRange) {
-  if (auto *Shadow = dyn_cast<ConstructorUsingShadowDecl>(FoundDecl))
+  if (auto *Shadow = dyn_cast<ConstructorUsingShadowDecl>(FoundDecl)) {
     Constructor = findInheritingConstructor(ConstructLoc, Constructor, Shadow);
+    if (DiagnoseUseOfDecl(Constructor, ConstructLoc))
+      return ExprError(); 
+  }
 
   return BuildCXXConstructExpr(
       ConstructLoc, DeclInitType, Constructor, Elidable, ExprArgs,
