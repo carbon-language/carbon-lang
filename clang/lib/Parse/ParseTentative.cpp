@@ -125,10 +125,11 @@ bool Parser::isCXXSimpleDeclaration(bool AllowForRangeDecl) {
   // Ok, we have a simple-type-specifier/typename-specifier followed by a '(',
   // or an identifier which doesn't resolve as anything. We need tentative
   // parsing...
-
-  TentativeParsingAction PA(*this);
-  TPR = TryParseSimpleDeclaration(AllowForRangeDecl);
-  PA.Revert();
+ 
+  {
+    RevertingTentativeParsingAction PA(*this);
+    TPR = TryParseSimpleDeclaration(AllowForRangeDecl);
+  }
 
   // In case of an error, let the declaration parsing code handle it.
   if (TPR == TPResult::Error)
@@ -354,7 +355,7 @@ bool Parser::isCXXConditionDeclaration() {
   // Ok, we have a simple-type-specifier/typename-specifier followed by a '('.
   // We need tentative parsing...
 
-  TentativeParsingAction PA(*this);
+  RevertingTentativeParsingAction PA(*this);
 
   // type-specifier-seq
   TryConsumeDeclarationSpecifier();
@@ -377,8 +378,6 @@ bool Parser::isCXXConditionDeclaration() {
     else
       TPR = TPResult::False;
   }
-
-  PA.Revert();
 
   assert(TPR == TPResult::True || TPR == TPResult::False);
   return TPR == TPResult::True;
@@ -423,7 +422,7 @@ bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
   // Ok, we have a simple-type-specifier/typename-specifier followed by a '('.
   // We need tentative parsing...
 
-  TentativeParsingAction PA(*this);
+  RevertingTentativeParsingAction PA(*this);
 
   // type-specifier-seq
   TryConsumeDeclarationSpecifier();
@@ -455,8 +454,6 @@ bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
     } else
       TPR = TPResult::False;
   }
-
-  PA.Revert();
 
   assert(TPR == TPResult::True || TPR == TPResult::False);
   return TPR == TPResult::True;
@@ -508,7 +505,7 @@ Parser::isCXX11AttributeSpecifier(bool Disambiguate,
   if (!Disambiguate && !getLangOpts().ObjC1)
     return CAK_AttributeSpecifier;
 
-  TentativeParsingAction PA(*this);
+  RevertingTentativeParsingAction PA(*this);
 
   // Opening brackets were checked for above.
   ConsumeBracket();
@@ -519,8 +516,6 @@ Parser::isCXX11AttributeSpecifier(bool Disambiguate,
 
     bool IsAttribute = SkipUntil(tok::r_square);
     IsAttribute &= Tok.is(tok::r_square);
-
-    PA.Revert();
 
     return IsAttribute ? CAK_AttributeSpecifier : CAK_InvalidAttributeSpecifier;
   }
@@ -542,8 +537,6 @@ Parser::isCXX11AttributeSpecifier(bool Disambiguate,
     // A lambda cannot end with ']]', and an attribute must.
     bool IsAttribute = Tok.is(tok::r_square);
 
-    PA.Revert();
-
     if (IsAttribute)
       // Case 1: C++11 attribute.
       return CAK_AttributeSpecifier;
@@ -564,7 +557,6 @@ Parser::isCXX11AttributeSpecifier(bool Disambiguate,
   while (Tok.isNot(tok::r_square)) {
     if (Tok.is(tok::comma)) {
       // Case 1: Stray commas can only occur in attributes.
-      PA.Revert();
       return CAK_AttributeSpecifier;
     }
 
@@ -610,8 +602,6 @@ Parser::isCXX11AttributeSpecifier(bool Disambiguate,
       IsAttribute = false;
     }
   }
-
-  PA.Revert();
 
   if (IsAttribute)
     // Case 1: C++11 statement attribute.
@@ -1340,6 +1330,8 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
             *HasMissingTypename = true;
             return TPResult::Ambiguous;
           }
+
+          // FIXME: Fails to either revert or commit the tentative parse!
         } else {
           // Try to resolve the name. If it doesn't exist, assume it was
           // intended to name a type and keep disambiguating.
@@ -1391,14 +1383,12 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
     // In Objective-C, we might have a protocol-qualified type.
     if (getLangOpts().ObjC1 && NextToken().is(tok::less)) {
       // Tentatively parse the protocol qualifiers.
-      TentativeParsingAction PA(*this);
+      RevertingTentativeParsingAction PA(*this);
       ConsumeToken(); // The type token
       
       TPResult TPR = TryParseProtocolQualifiers();
       bool isFollowedByParen = Tok.is(tok::l_paren);
       bool isFollowedByBrace = Tok.is(tok::l_brace);
-      
-      PA.Revert();
       
       if (TPR == TPResult::Error)
         return TPResult::Error;
@@ -1452,13 +1442,11 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
     if (NextToken().isNot(tok::l_paren))
       return TPResult::True;
 
-    TentativeParsingAction PA(*this);
+    RevertingTentativeParsingAction PA(*this);
 
     TPResult TPR = TryParseTypeofSpecifier();
     bool isFollowedByParen = Tok.is(tok::l_paren);
     bool isFollowedByBrace = Tok.is(tok::l_brace);
-
-    PA.Revert();
 
     if (TPR == TPResult::Error)
       return TPResult::Error;
@@ -1599,7 +1587,7 @@ bool Parser::isCXXFunctionDeclarator(bool *IsAmbiguous) {
   // ambiguities mentioned in 6.8, the resolution is to consider any construct
   // that could possibly be a declaration a declaration.
 
-  TentativeParsingAction PA(*this);
+  RevertingTentativeParsingAction PA(*this);
 
   ConsumeParen();
   bool InvalidAsDeclaration = false;
@@ -1622,8 +1610,6 @@ bool Parser::isCXXFunctionDeclarator(bool *IsAmbiguous) {
         TPR = TPResult::False;
     }
   }
-
-  PA.Revert();
 
   if (IsAmbiguous && TPR == TPResult::Ambiguous)
     *IsAmbiguous = true;

@@ -715,6 +715,16 @@ private:
       assert(!isActive && "Forgot to call Commit or Revert!");
     }
   };
+  /// A TentativeParsingAction that automatically reverts in its destructor.
+  /// Useful for disambiguation parses that will always be reverted.
+  class RevertingTentativeParsingAction
+      : private Parser::TentativeParsingAction {
+  public:
+    RevertingTentativeParsingAction(Parser &P)
+        : Parser::TentativeParsingAction(P) {}
+    ~RevertingTentativeParsingAction() { Revert(); }
+  };
+
   class UnannotatedTentativeParsingAction;
 
   /// ObjCDeclContextSwitch - An object used to switch context from
