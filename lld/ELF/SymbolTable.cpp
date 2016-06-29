@@ -457,19 +457,26 @@ template <class ELFT> SymbolBody *SymbolTable<ELFT>::find(StringRef Name) {
   return SymVector[It->second]->body();
 }
 
+// Returns a list of defined symbols that match with a given glob pattern.
 template <class ELFT>
 std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(StringRef Pattern) {
   // Fast-path. Fallback to find() if Pattern doesn't contain any wildcard
   // characters.
-  bool HasWildcards = (Pattern.find_first_of("?*") != StringRef::npos);
-  if (!HasWildcards)
-    return {find(Pattern)};
+  if (Pattern.find_first_of("?*") == StringRef::npos) {
+    if (SymbolBody *B = find(Pattern))
+      if (!B->isUndefined())
+        return {B};
+    return {};
+  }
 
-  std::vector<SymbolBody *> Result;
-  for (auto &It : Symtab)
-    if (matchStr(Pattern, It.first.Val))
-      Result.push_back(SymVector[It.second]->body());
-  return Result;
+  std::vector<SymbolBody *> Res;
+  for (auto &It : Symtab) {
+    StringRef Name = It.first.Val;
+    SymbolBody *B = SymVector[It.second]->body();
+    if (!B->isUndefined() && matchStr(Pattern, Name))
+      Res.push_back(B);
+  }
+  return Res;
 }
 
 template <class ELFT>
@@ -572,14 +579,15 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
   size_t I = 2;
   for (Version &V : Config->SymbolVersions) {
     for (StringRef Name : V.Globals) {
-      for (SymbolBody *B : findAll(Name)) {
-        if (!B || B->isUndefined()) {
-          if (Config->NoUndefinedVersion)
-            error("version script assignment of " + V.Name + " to symbol " +
-                  Name + " failed: symbol not defined");
-          continue;
-        }
+      std::vector<SymbolBody *> Syms = findAll(Name);
+      if (Syms.empty()) {
+        if (Config->NoUndefinedVersion)
+          error("version script assignment of " + V.Name + " to symbol " +
+                Name + " failed: symbol not defined");
+        continue;
+      }
 
+      for (SymbolBody *B : Syms) {
         if (B->symbol()->VersionId != VER_NDX_GLOBAL &&
             B->symbol()->VersionId != VER_NDX_LOCAL)
           warning("duplicate symbol " + Name + " in version script");
