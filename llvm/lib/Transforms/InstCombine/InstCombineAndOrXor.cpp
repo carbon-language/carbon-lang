@@ -1148,9 +1148,9 @@ Value *InstCombiner::FoldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
     if (Op0CC == FCmpInst::FCMP_FALSE || Op1CC == FCmpInst::FCMP_FALSE)
       return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 0);
     if (Op0CC == FCmpInst::FCMP_TRUE)
-      return RHS;
+      return Builder->CreateFCmp(Op1CC, Op0LHS, Op0RHS);
     if (Op1CC == FCmpInst::FCMP_TRUE)
-      return LHS;
+      return Builder->CreateFCmp(Op0CC, Op0LHS, Op0RHS);
 
     bool Op0Ordered;
     bool Op1Ordered;
@@ -1168,9 +1168,9 @@ Value *InstCombiner::FoldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
       // uno && ueq -> uno && (uno || eq) -> uno
       // ord && olt -> ord && (ord && lt) -> olt
       if (!Op0Ordered && (Op0Ordered == Op1Ordered))
-        return LHS;
+        return Builder->CreateFCmp(Op0CC, Op0LHS, Op0RHS);
       if (Op0Ordered && (Op0Ordered == Op1Ordered))
-        return RHS;
+        return Builder->CreateFCmp(Op1CC, Op0LHS, Op0RHS);
 
       // uno && oeq -> uno && (ord && eq) -> false
       if (!Op0Ordered)
@@ -2036,9 +2036,9 @@ Value *InstCombiner::FoldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
     if (Op0CC == FCmpInst::FCMP_TRUE || Op1CC == FCmpInst::FCMP_TRUE)
       return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 1);
     if (Op0CC == FCmpInst::FCMP_FALSE)
-      return RHS;
+      return Builder->CreateFCmp(Op1CC, Op0LHS, Op0RHS);
     if (Op1CC == FCmpInst::FCMP_FALSE)
-      return LHS;
+      return Builder->CreateFCmp(Op0CC, Op0LHS, Op0RHS);
     bool Op0Ordered;
     bool Op1Ordered;
     unsigned Op0Pred = getFCmpCode(Op0CC, Op0Ordered);
