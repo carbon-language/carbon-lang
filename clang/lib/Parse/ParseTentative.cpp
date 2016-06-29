@@ -330,10 +330,70 @@ Parser::TPResult Parser::TryParseInitDeclaratorList() {
   return TPResult::Ambiguous;
 }
 
-/// isCXXConditionDeclaration - Disambiguates between a declaration or an
-/// expression for a condition of a if/switch/while/for statement.
-/// If during the disambiguation process a parsing error is encountered,
-/// the function returns true to let the declaration parsing code handle it.
+struct Parser::ConditionDeclarationOrInitStatementState {
+  Parser &P;
+  bool CanBeExpression = true;
+  bool CanBeCondition = true;
+  bool CanBeInitStatement;
+
+  ConditionDeclarationOrInitStatementState(Parser &P, bool CanBeInitStatement)
+      : P(P), CanBeInitStatement(CanBeInitStatement) {}
+
+  void markNotExpression() {
+    CanBeExpression = false;
+
+    if (CanBeCondition && CanBeInitStatement) {
+      // FIXME: Unify the parsing codepaths for condition variables and
+      // simple-declarations so that we don't need to eagerly figure out which
+      // kind we have here. (Just parse init-declarators until we reach a
+      // semicolon or right paren.)
+      RevertingTentativeParsingAction PA(P);
+      P.SkipUntil(tok::r_paren, tok::semi, StopBeforeMatch);
+      if (P.Tok.isNot(tok::r_paren))
+        CanBeCondition = false;
+      if (P.Tok.isNot(tok::semi))
+        CanBeInitStatement = false;
+    }
+  }
+
+  bool markNotCondition() {
+    CanBeCondition = false;
+    return !CanBeInitStatement || !CanBeExpression;
+  }
+
+  bool update(TPResult IsDecl) {
+    switch (IsDecl) {
+    case TPResult::True:
+      markNotExpression();
+      return true;
+    case TPResult::False:
+      CanBeCondition = CanBeInitStatement = false;
+      return true;
+    case TPResult::Ambiguous:
+      return false;
+    case TPResult::Error:
+      CanBeExpression = CanBeCondition = CanBeInitStatement = false;
+      return true;
+    }
+    llvm_unreachable("unknown tentative parse result");
+  }
+
+  ConditionOrInitStatement result() const {
+    assert(CanBeExpression + CanBeCondition + CanBeInitStatement < 2 &&
+           "result called but not yet resolved");
+    if (CanBeExpression)
+      return ConditionOrInitStatement::Expression;
+    if (CanBeCondition)
+      return ConditionOrInitStatement::ConditionDecl;
+    if (CanBeInitStatement)
+      return ConditionOrInitStatement::InitStmtDecl;
+    return ConditionOrInitStatement::Error;
+  }
+};
+
+/// \brief Disambiguates between a declaration in a condition, a
+/// simple-declaration in an init-statement, and an expression for
+/// a condition of a if/switch statement.
 ///
 ///       condition:
 ///         expression
@@ -342,45 +402,64 @@ Parser::TPResult Parser::TryParseInitDeclaratorList() {
 /// [C++11] type-specifier-seq declarator braced-init-list
 /// [GNU]   type-specifier-seq declarator simple-asm-expr[opt] attributes[opt]
 ///             '=' assignment-expression
+///       simple-declaration:
+///         decl-specifier-seq init-declarator-list[opt] ';'
 ///
-bool Parser::isCXXConditionDeclaration() {
-  TPResult TPR = isCXXDeclarationSpecifier();
-  if (TPR != TPResult::Ambiguous)
-    return TPR != TPResult::False; // Returns true for TPResult::True or
-                                   // TPResult::Error.
+/// Note that, unlike isCXXSimpleDeclaration, we must disambiguate all the way
+/// to the ';' to disambiguate cases like 'int(x))' (an expression) from
+/// 'int(x);' (a simple-declaration in an init-statement).
+Parser::ConditionOrInitStatement
+Parser::isCXXConditionDeclarationOrInitStatement(bool CanBeInitStatement) {
+  ConditionDeclarationOrInitStatementState State(*this, CanBeInitStatement);
 
-  // FIXME: Add statistics about the number of ambiguous statements encountered
-  // and how they were resolved (number of declarations+number of expressions).
+  if (State.update(isCXXDeclarationSpecifier()))
+    return State.result();
 
-  // Ok, we have a simple-type-specifier/typename-specifier followed by a '('.
-  // We need tentative parsing...
-
+  // It might be a declaration; we need tentative parsing.
   RevertingTentativeParsingAction PA(*this);
 
-  // type-specifier-seq
-  TryConsumeDeclarationSpecifier();
+  // FIXME: A tag definition unambiguously tells us this is an init-statement.
+  if (State.update(TryConsumeDeclarationSpecifier()))
+    return State.result();
   assert(Tok.is(tok::l_paren) && "Expected '('");
 
-  // declarator
-  TPR = TryParseDeclarator(false/*mayBeAbstract*/);
+  while (true) {
+    // Consume a declarator.
+    if (State.update(TryParseDeclarator(false/*mayBeAbstract*/)))
+      return State.result();
 
-  // In case of an error, let the declaration parsing code handle it.
-  if (TPR == TPResult::Error)
-    TPR = TPResult::True;
+    // Attributes, asm label, or an initializer imply this is not an expression.
+    // FIXME: Disambiguate properly after an = instead of assuming that it's a
+    // valid declaration.
+    if (Tok.isOneOf(tok::equal, tok::kw_asm, tok::kw___attribute) ||
+        (getLangOpts().CPlusPlus11 && Tok.is(tok::l_brace))) {
+      State.markNotExpression();
+      return State.result();
+    }
 
-  if (TPR == TPResult::Ambiguous) {
-    // '='
-    // [GNU] simple-asm-expr[opt] attributes[opt]
-    if (Tok.isOneOf(tok::equal, tok::kw_asm, tok::kw___attribute))
-      TPR = TPResult::True;
-    else if (getLangOpts().CPlusPlus11 && Tok.is(tok::l_brace))
-      TPR = TPResult::True;
-    else
-      TPR = TPResult::False;
+    // At this point, it can't be a condition any more, because a condition
+    // must have a brace-or-equal-initializer.
+    if (State.markNotCondition())
+      return State.result();
+
+    // A parenthesized initializer could be part of an expression or a
+    // simple-declaration.
+    if (Tok.is(tok::l_paren)) {
+      ConsumeParen();
+      SkipUntil(tok::r_paren, StopAtSemi);
+    }
+
+    if (!TryConsumeToken(tok::comma))
+      break;
   }
 
-  assert(TPR == TPResult::True || TPR == TPResult::False);
-  return TPR == TPResult::True;
+  // We reached the end. If it can now be some kind of decl, then it is.
+  if (State.CanBeCondition && Tok.is(tok::r_paren))
+    return ConditionOrInitStatement::ConditionDecl;
+  else if (State.CanBeInitStatement && Tok.is(tok::semi))
+    return ConditionOrInitStatement::InitStmtDecl;
+  else
+    return ConditionOrInitStatement::Expression;
 }
 
   /// \brief Determine whether the next set of tokens contains a type-id.
@@ -1329,6 +1408,8 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
             *HasMissingTypename = true;
             return TPResult::Ambiguous;
           }
+
+          // FIXME: Fails to either revert or commit the tentative parse!
         } else {
           // Try to resolve the name. If it doesn't exist, assume it was
           // intended to name a type and keep disambiguating.
