@@ -814,10 +814,9 @@ static bool DebugACrash(BugDriver &BD,
     }
 
   } while (Simplification);
+  BD.EmitProgressBitcode(BD.getProgram(), "reduced-instructions");
 
   if (!NoNamedMDRM) {
-    BD.EmitProgressBitcode(BD.getProgram(), "reduced-instructions");
-
     if (!BugpointIsInterrupted) {
       // Try to reduce the amount of global metadata (particularly debug info),
       // by dropping global named metadata that anchors them
@@ -837,6 +836,7 @@ static bool DebugACrash(BugDriver &BD,
           NamedMDOps.push_back(op);
       ReduceCrashingNamedMDOps(BD, TestFn).reduceList(NamedMDOps, Error);
     }
+    BD.EmitProgressBitcode(BD.getProgram(), "reduced-named-md");
   }
 
 ExitLoops:
