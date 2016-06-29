@@ -17,6 +17,7 @@
 #include "SymbolTable.h"
 #include "Config.h"
 #include "Error.h"
+#include "LinkerScript.h"
 #include "Symbols.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/StringSaver.h"
@@ -457,6 +458,21 @@ template <class ELFT> SymbolBody *SymbolTable<ELFT>::find(StringRef Name) {
 }
 
 template <class ELFT>
+std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(StringRef Pattern) {
+  // Fast-path. Fallback to find() if Pattern doesn't contain any wildcard
+  // characters.
+  bool HasWildcards = (Pattern.find_first_of("?*") != StringRef::npos);
+  if (!HasWildcards)
+    return {find(Pattern)};
+
+  std::vector<SymbolBody *> Result;
+  for (auto &It : Symtab)
+    if (matchStr(Pattern, It.first.Val))
+      Result.push_back(SymVector[It.second]->body());
+  return Result;
+}
+
+template <class ELFT>
 void SymbolTable<ELFT>::addLazyArchive(
     ArchiveFile *F, const llvm::object::Archive::Symbol Sym) {
   Symbol *S;
@@ -556,18 +572,19 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
   size_t I = 2;
   for (Version &V : Config->SymbolVersions) {
     for (StringRef Name : V.Globals) {
-      SymbolBody *B = find(Name);
-      if (!B || B->isUndefined()) {
-        if (Config->NoUndefinedVersion)
-          error("version script assignment of " + V.Name + " to symbol " +
-                Name + " failed: symbol not defined");
-        continue;
-      }
+      for (SymbolBody *B : findAll(Name)) {
+        if (!B || B->isUndefined()) {
+          if (Config->NoUndefinedVersion)
+            error("version script assignment of " + V.Name + " to symbol " +
+                  Name + " failed: symbol not defined");
+          continue;
+        }
 
-      if (B->symbol()->VersionId != VER_NDX_GLOBAL &&
-          B->symbol()->VersionId != VER_NDX_LOCAL)
-        warning("duplicate symbol " + Name + " in version script");
-      B->symbol()->VersionId = I;
+        if (B->symbol()->VersionId != VER_NDX_GLOBAL &&
+            B->symbol()->VersionId != VER_NDX_LOCAL)
+          warning("duplicate symbol " + Name + " in version script");
+        B->symbol()->VersionId = I;
+      }
     }
     ++I;
   }
