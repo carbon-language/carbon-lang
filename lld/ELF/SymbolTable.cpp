@@ -35,7 +35,7 @@ template <class ELFT> static bool isCompatible(InputFile *FileP) {
   auto *F = dyn_cast<ELFFileBase<ELFT>>(FileP);
   if (!F)
     return true;
-  if (F->getELFKind() == Config->EKind && F->getEMachine() == Config->EMachine)
+  if (F->EKind == Config->EKind && F->EMachine == Config->EMachine)
     return true;
   StringRef A = F->getName();
   StringRef B = Config->Emulation;
