@@ -361,10 +361,7 @@ define <4 x i8> @test_crash(<4 x i8> %a, <4 x i8> %b) {
 define <4 x i32> @test2b(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: test2b:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pxor %xmm2, %xmm2
-; CHECK-NEXT:    pblendw {{.*#+}} xmm0 = xmm2[0,1,2,3],xmm0[4,5,6,7]
-; CHECK-NEXT:    movq {{.*#+}} xmm1 = xmm1[0],zero
-; CHECK-NEXT:    por %xmm1, %xmm0
+; CHECK-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
 ; CHECK-NEXT:    retq
   %shuf1 = shufflevector <4 x i32> zeroinitializer, <4 x i32> %a, <4 x i32><i32 0, i32 0, i32 6, i32 7>
   %shuf2 = shufflevector <4 x i32> %b, <4 x i32> zeroinitializer, <4 x i32><i32 0, i32 1, i32 4, i32 4>
@@ -375,10 +372,7 @@ define <4 x i32> @test2b(<4 x i32> %a, <4 x i32> %b) {
 define <4 x i32> @test2c(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: test2c:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pxor %xmm2, %xmm2
-; CHECK-NEXT:    pblendw {{.*#+}} xmm0 = xmm2[0,1,2,3],xmm0[4,5,6,7]
-; CHECK-NEXT:    movq {{.*#+}} xmm1 = xmm1[0],zero
-; CHECK-NEXT:    por %xmm1, %xmm0
+; CHECK-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
 ; CHECK-NEXT:    retq
   %shuf1 = shufflevector <4 x i32> zeroinitializer, <4 x i32> %a, <4 x i32><i32 0, i32 0, i32 6, i32 7>
   %shuf2 = shufflevector <4 x i32> zeroinitializer, <4 x i32> %b, <4 x i32><i32 4, i32 5, i32 0, i32 0>
@@ -390,10 +384,7 @@ define <4 x i32> @test2c(<4 x i32> %a, <4 x i32> %b) {
 define <4 x i32> @test2d(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: test2d:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pxor %xmm2, %xmm2
-; CHECK-NEXT:    pblendw {{.*#+}} xmm0 = xmm2[0,1,2,3],xmm0[4,5,6,7]
-; CHECK-NEXT:    movq {{.*#+}} xmm1 = xmm1[0],zero
-; CHECK-NEXT:    por %xmm1, %xmm0
+; CHECK-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
 ; CHECK-NEXT:    retq
   %shuf1 = shufflevector <4 x i32> %a, <4 x i32> zeroinitializer, <4 x i32><i32 4, i32 4, i32 2, i32 3>
   %shuf2 = shufflevector <4 x i32> zeroinitializer, <4 x i32> %b, <4 x i32><i32 4, i32 5, i32 0, i32 0>
