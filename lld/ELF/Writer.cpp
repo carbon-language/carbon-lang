@@ -12,6 +12,7 @@
 #include "LinkerScript.h"
 #include "OutputSections.h"
 #include "Relocations.h"
+#include "Strings.h"
 #include "SymbolTable.h"
 #include "Target.h"
 
