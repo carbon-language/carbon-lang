@@ -59,6 +59,10 @@ unsigned getDividerWidth(const CoverageViewOptions &Opts) {
 
 } // anonymous namespace
 
+void SourceCoverageViewText::renderViewHeader(raw_ostream &OS) { (void)OS; }
+
+void SourceCoverageViewText::renderViewFooter(raw_ostream &OS) { (void)OS; }
+
 void SourceCoverageViewText::renderSourceName(raw_ostream &OS) {
   getOptions().colored_ostream(OS, raw_ostream::CYAN) << getSourceName()
                                                       << ":\n";
@@ -68,6 +72,12 @@ void SourceCoverageViewText::renderLinePrefix(raw_ostream &OS,
                                               unsigned ViewDepth) {
   for (unsigned I = 0; I < ViewDepth; ++I)
     OS << "  |";
+}
+
+void SourceCoverageViewText::renderLineSuffix(raw_ostream &OS,
+                                              unsigned ViewDepth) {
+  (void)OS;
+  (void)ViewDepth;
 }
 
 void SourceCoverageViewText::renderViewDivider(raw_ostream &OS,
@@ -180,8 +190,7 @@ void SourceCoverageViewText::renderRegionMarkers(
 }
 
 void SourceCoverageViewText::renderExpansionSite(
-    raw_ostream &OS, ExpansionView &ESV, LineRef L,
-    const coverage::CoverageSegment *WrappedSegment,
+    raw_ostream &OS, LineRef L, const coverage::CoverageSegment *WrappedSegment,
     CoverageSegmentArray Segments, unsigned ExpansionCol, unsigned ViewDepth) {
   renderLinePrefix(OS, ViewDepth);
   OS.indent(getCombinedColumnWidth(getOptions()) + (ViewDepth == 0 ? 0 : 1));

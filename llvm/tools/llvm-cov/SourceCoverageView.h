@@ -183,11 +183,20 @@ protected:
   /// @name Rendering Interface
   /// @{
 
+  /// \brief Render a header for the view.
+  virtual void renderViewHeader(raw_ostream &OS) = 0;
+
+  /// \brief Render a footer for the view.
+  virtual void renderViewFooter(raw_ostream &OS) = 0;
+
   /// \brief Render the source name for the view.
   virtual void renderSourceName(raw_ostream &OS) = 0;
 
   /// \brief Render the line prefix at the given \p ViewDepth.
   virtual void renderLinePrefix(raw_ostream &OS, unsigned ViewDepth) = 0;
+
+  /// \brief Render the line suffix at the given \p ViewDepth.
+  virtual void renderLineSuffix(raw_ostream &OS, unsigned ViewDepth) = 0;
 
   /// \brief Render a view divider at the given \p ViewDepth.
   virtual void renderViewDivider(raw_ostream &OS, unsigned ViewDepth) = 0;
@@ -212,7 +221,7 @@ protected:
 
   /// \brief Render the site of an expansion.
   virtual void
-  renderExpansionSite(raw_ostream &OS, ExpansionView &ESV, LineRef L,
+  renderExpansionSite(raw_ostream &OS, LineRef L,
                       const coverage::CoverageSegment *WrappedSegment,
                       CoverageSegmentArray Segments, unsigned ExpansionCol,
                       unsigned ViewDepth) = 0;
@@ -230,6 +239,12 @@ protected:
   /// \brief Format a count using engineering notation with 3 significant
   /// digits.
   static std::string formatCount(uint64_t N);
+
+  /// \brief Check if region marker output is expected for a line.
+  bool shouldRenderRegionMarkers(bool LineHasMultipleRegions) const;
+
+  /// \brief Check if there are any sub-views attached to this view.
+  bool hasSubViews() const;
 
   SourceCoverageView(StringRef SourceName, const MemoryBuffer &File,
                      const CoverageViewOptions &Options,

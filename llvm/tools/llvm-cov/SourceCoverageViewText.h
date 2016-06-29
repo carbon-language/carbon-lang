@@ -34,9 +34,15 @@ public:
 
 /// \brief A code coverage view which supports text-based rendering.
 class SourceCoverageViewText : public SourceCoverageView {
+  void renderViewHeader(raw_ostream &OS) override;
+
+  void renderViewFooter(raw_ostream &OS) override;
+
   void renderSourceName(raw_ostream &OS) override;
 
   void renderLinePrefix(raw_ostream &OS, unsigned ViewDepth) override;
+
+  void renderLineSuffix(raw_ostream &OS, unsigned ViewDepth) override;
 
   void renderViewDivider(raw_ostream &OS, unsigned ViewDepth) override;
 
@@ -45,7 +51,7 @@ class SourceCoverageViewText : public SourceCoverageView {
                   CoverageSegmentArray Segments, unsigned ExpansionCol,
                   unsigned ViewDepth) override;
 
-  void renderExpansionSite(raw_ostream &OS, ExpansionView &ESV, LineRef L,
+  void renderExpansionSite(raw_ostream &OS, LineRef L,
                            const coverage::CoverageSegment *WrappedSegment,
                            CoverageSegmentArray Segments, unsigned ExpansionCol,
                            unsigned ViewDepth) override;
