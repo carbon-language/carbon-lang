@@ -33,9 +33,8 @@ using namespace lld::elf;
 // All input object files must be for the same architecture
 // (e.g. it does not make sense to link x86 object files with
 // MIPS object files.) This function checks for that error.
-template <class ELFT> static bool isCompatible(InputFile *FileP) {
-  auto *F = dyn_cast<ELFFileBase<ELFT>>(FileP);
-  if (!F)
+template <class ELFT> static bool isCompatible(InputFile *F) {
+  if (!isa<ELFFileBase<ELFT>>(F) && !isa<BitcodeFile>(F))
     return true;
   if (F->EKind == Config->EKind && F->EMachine == Config->EMachine)
     return true;
