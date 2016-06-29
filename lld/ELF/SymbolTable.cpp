@@ -473,7 +473,7 @@ std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(StringRef Pattern) {
   for (auto &It : Symtab) {
     StringRef Name = It.first.Val;
     SymbolBody *B = SymVector[It.second]->body();
-    if (!B->isUndefined() && matchStr(Pattern, Name))
+    if (!B->isUndefined() && globMatch(Pattern, Name))
       Res.push_back(B);
   }
   return Res;
