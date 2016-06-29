@@ -713,7 +713,9 @@ static int performOperation(ArchiveOperation Operation,
     fail("error opening '" + ArchiveName + "': " + EC.message() + "!");
 
   if (!EC) {
-    object::Archive Archive(Buf.get()->getMemBufferRef(), EC);
+    Error Err;
+    object::Archive Archive(Buf.get()->getMemBufferRef(), Err);
+    EC = errorToErrorCode(std::move(Err));
     failIfError(EC,
                 "error loading '" + ArchiveName + "': " + EC.message() + "!");
     performOperation(Operation, &Archive, std::move(Buf.get()), NewMembers);
@@ -768,7 +770,8 @@ static void runMRIScript() {
       ArchiveBuffers.push_back(std::move(*BufOrErr));
       auto LibOrErr =
           object::Archive::create(ArchiveBuffers.back()->getMemBufferRef());
-      failIfError(LibOrErr.getError(), "Could not parse library");
+      failIfError(errorToErrorCode(LibOrErr.takeError()),
+                  "Could not parse library");
       Archives.push_back(std::move(*LibOrErr));
       object::Archive &Lib = *Archives.back();
       for (auto &MemberOrErr : Lib.children()) {
