@@ -14,6 +14,7 @@
 #include "SymbolTable.h"
 #include "Symbols.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -552,7 +553,45 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
   }
 }
 
-BitcodeFile::BitcodeFile(MemoryBufferRef M) : InputFile(BitcodeKind, M) {}
+static ELFKind getELFKind(MemoryBufferRef MB) {
+  std::string TripleStr = getBitcodeTargetTriple(MB, Driver->Context);
+  Triple TheTriple(TripleStr);
+  bool Is64Bits = TheTriple.isArch64Bit();
+  if (TheTriple.isLittleEndian())
+    return Is64Bits ? ELF64LEKind : ELF32LEKind;
+  return Is64Bits ? ELF64BEKind : ELF32BEKind;
+}
+
+static uint8_t getMachineKind(MemoryBufferRef MB) {
+  std::string TripleStr = getBitcodeTargetTriple(MB, Driver->Context);
+  switch (Triple(TripleStr).getArch()) {
+    case Triple::aarch64:
+      return EM_AARCH64;
+    case Triple::arm:
+      return EM_ARM;
+    case Triple::mips:
+    case Triple::mipsel:
+    case Triple::mips64:
+    case Triple::mips64el:
+      return EM_MIPS;
+    case Triple::ppc:
+      return EM_PPC;
+    case Triple::ppc64:
+      return EM_PPC64;
+    case Triple::x86:
+      return EM_386;
+    case Triple::x86_64:
+      return EM_X86_64;
+    default:
+      fatal("unsupported architecture: " + TripleStr);
+  }
+}
+
+BitcodeFile::BitcodeFile(MemoryBufferRef MB) :
+    InputFile(BitcodeKind, MB) {
+  EKind = getELFKind(MB);
+  EMachine = getMachineKind(MB);
+}
 
 static uint8_t getGvVisibility(const GlobalValue *GV) {
   switch (GV->getVisibility()) {
