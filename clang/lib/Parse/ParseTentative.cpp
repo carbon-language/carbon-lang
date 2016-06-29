@@ -1310,7 +1310,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
                                                      Tok.getAnnotationRange(),
                                                      SS);
         if (SS.getScopeRep() && SS.getScopeRep()->isDependent()) {
-          TentativeParsingAction PA(*this);
+          RevertingTentativeParsingAction PA(*this);
           ConsumeToken();
           ConsumeToken();
           bool isIdentifier = Tok.is(tok::identifier);
@@ -1318,7 +1318,6 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
           if (!isIdentifier)
             TPR = isCXXDeclarationSpecifier(BracedCastResult,
                                             HasMissingTypename);
-          PA.Revert();
 
           if (isIdentifier ||
               TPR == TPResult::True || TPR == TPResult::Error)
@@ -1330,8 +1329,6 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
             *HasMissingTypename = true;
             return TPResult::Ambiguous;
           }
-
-          // FIXME: Fails to either revert or commit the tentative parse!
         } else {
           // Try to resolve the name. If it doesn't exist, assume it was
           // intended to name a type and keep disambiguating.
