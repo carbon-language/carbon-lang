@@ -35,8 +35,9 @@ std::string CoveragePrinter::getOutputPath(StringRef Path, StringRef Extension,
   if (!InToplevel)
     sys::path::append(FullPath, getCoverageDir());
 
-  auto PathBaseDir = sys::path::relative_path(sys::path::parent_path(Path));
-  sys::path::append(FullPath, PathBaseDir);
+  SmallString<256> ParentPath = sys::path::parent_path(Path);
+  sys::path::remove_dots(ParentPath, /*remove_dot_dots=*/true);
+  sys::path::append(FullPath, sys::path::relative_path(ParentPath));
 
   auto PathFilename = (sys::path::filename(Path) + "." + Extension).str();
   sys::path::append(FullPath, PathFilename);
