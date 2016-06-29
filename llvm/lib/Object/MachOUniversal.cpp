@@ -123,7 +123,8 @@ MachOUniversalBinary::MachOUniversalBinary(MemoryBufferRef Source, Error &Err)
   }
   // Check for magic value and sufficient header size.
   StringRef Buf = getData();
-  MachO::fat_header H= getUniversalBinaryStruct<MachO::fat_header>(Buf.begin());
+  MachO::fat_header H =
+      getUniversalBinaryStruct<MachO::fat_header>(Buf.begin());
   Magic = H.magic;
   NumberOfObjects = H.nfat_arch;
   uint32_t MinSize = sizeof(MachO::fat_header);
@@ -147,15 +148,17 @@ MachOUniversalBinary::MachOUniversalBinary(MemoryBufferRef Source, Error &Err)
 Expected<std::unique_ptr<MachOObjectFile>>
 MachOUniversalBinary::getObjectForArch(StringRef ArchName) const {
   if (Triple(ArchName).getArch() == Triple::ArchType::UnknownArch)
-    return make_error<GenericBinaryError>(std::move("Unknown architecture "
-                                                    "named: " + ArchName),
+    return make_error<GenericBinaryError>("Unknown architecture "
+                                          "named: " +
+                                              ArchName,
                                           object_error::arch_not_found);
 
   for (object_iterator I = begin_objects(), E = end_objects(); I != E; ++I) {
     if (I->getArchTypeName() == ArchName)
       return I->getAsObjectFile();
   }
-  return make_error<GenericBinaryError>(std::move("fat file does not "
-                                                  "contain " + ArchName),
+  return make_error<GenericBinaryError>("fat file does not "
+                                        "contain " +
+                                            ArchName,
                                         object_error::arch_not_found);
 }
