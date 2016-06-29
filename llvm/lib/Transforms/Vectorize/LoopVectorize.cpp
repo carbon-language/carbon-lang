@@ -1153,9 +1153,10 @@ public:
   unsigned getWidth() const { return Width.Value; }
   unsigned getInterleave() const { return Interleave.Value; }
   enum ForceKind getForce() const { return (ForceKind)Force.Value; }
+
+  /// \brief If hints are provided that force vectorization, use the AlwaysPrint
+  /// pass name to force the frontend to print the diagnostic.
   const char *vectorizeAnalysisPassName() const {
-    // If hints are provided that don't disable vectorization use the
-    // AlwaysPrint pass name to force the frontend to print the diagnostic.
     if (getWidth() == 1)
       return LV_NAME;
     if (getForce() == LoopVectorizeHints::FK_Disabled)
