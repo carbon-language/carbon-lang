@@ -237,9 +237,6 @@ public:
 
   /// Carefully run the specified set of pass on the specified/ module,
   /// returning the transformed module on success, or a null pointer on failure.
-  /// If AutoDebugCrashes is set to true, then bugpoint will automatically
-  /// attempt to track down a crashing pass if one exists, and this method will
-  /// never return null.
   std::unique_ptr<Module> runPassesOn(Module *M,
                                       const std::vector<std::string> &Passes,
                                       unsigned NumExtraArgs = 0,
