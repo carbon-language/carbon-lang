@@ -8,6 +8,7 @@
 __mmask8 test_mm_cmpeq_epu32_mask(__m128i __a, __m128i __b) {
   // CHECK-LABEL: @test_mm_cmpeq_epu32_mask
   // CHECK: icmp eq <4 x i32> %{{.*}}, %{{.*}}
+  // CHECK: shufflevector <4 x i1> %{{.*}}, <4 x i1> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 4, i32 4, i32 4>
   return (__mmask8)_mm_cmpeq_epu32_mask(__a, __b);
 }
 
