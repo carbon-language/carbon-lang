@@ -15,7 +15,6 @@
 #include "PPC.h"
 #include "PPCRegisterInfo.h"
 #include "PPCTargetMachine.h"
-#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/IR/Attributes.h"

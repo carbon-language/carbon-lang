@@ -14,7 +14,6 @@
 #include "AArch64Subtarget.h"
 #include "AArch64InstrInfo.h"
 #include "AArch64PBQPRegAlloc.h"
-#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/TargetRegistry.h"
