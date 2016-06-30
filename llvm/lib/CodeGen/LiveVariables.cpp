@@ -575,14 +575,12 @@ void LiveVariables::runOnBlock(MachineBasicBlock *MBB, const unsigned NumRegs) {
   // Loop over all of the instructions, processing them.
   DistanceMap.clear();
   unsigned Dist = 0;
-  for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
-       I != E; ++I) {
-    MachineInstr *MI = I;
-    if (MI->isDebugValue())
+  for (MachineInstr &MI : *MBB) {
+    if (MI.isDebugValue())
       continue;
-    DistanceMap.insert(std::make_pair(MI, Dist++));
+    DistanceMap.insert(std::make_pair(&MI, Dist++));
 
-    runOnInstr(MI, Defs);
+    runOnInstr(&MI, Defs);
   }
 
   // Handle any virtual assignments from PHI nodes which might be at the
