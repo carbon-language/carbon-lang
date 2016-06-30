@@ -1056,7 +1056,7 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
     if (I->getOpcode() == FrameSetupOpcode ||
         I->getOpcode() == FrameDestroyOpcode) {
       InsideCallSequence = (I->getOpcode() == FrameSetupOpcode);
-      SPAdj += TII.getSPAdjust(I);
+      SPAdj += TII.getSPAdjust(*I);
 
       I = TFI->eliminateCallFramePseudoInstr(Fn, *BB, I);
       continue;
@@ -1135,7 +1135,7 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
     // if I itself referred to a frame index, we shouldn't count its own
     // adjustment.
     if (MI && InsideCallSequence)
-      SPAdj += TII.getSPAdjust(MI);
+      SPAdj += TII.getSPAdjust(*MI);
 
     if (DoIncr && I != BB->end()) ++I;
 
