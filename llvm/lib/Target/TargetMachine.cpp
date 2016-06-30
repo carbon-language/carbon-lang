@@ -83,8 +83,8 @@ Reloc::Model TargetMachine::getRelocationModel() const {
   return CodeGenInfo->getRelocationModel();
 }
 
-/// getCodeModel - Returns the code model. The choices are small, kernel,
-/// medium, large, and target default.
+/// Returns the code model. The choices are small, kernel, medium, large, and
+/// target default.
 CodeModel::Model TargetMachine::getCodeModel() const {
   if (!CodeGenInfo)
     return CodeModel::Default;
@@ -181,8 +181,7 @@ TLSModel::Model TargetMachine::getTLSModel(const GlobalValue *GV) const {
   return Model;
 }
 
-/// getOptLevel - Returns the optimization level: None, Less,
-/// Default, or Aggressive.
+/// Returns the optimization level: None, Less, Default, or Aggressive.
 CodeGenOpt::Level TargetMachine::getOptLevel() const {
   if (!CodeGenInfo)
     return CodeGenOpt::Default;
