@@ -21,7 +21,6 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -40,12 +39,10 @@ TargetMachine::TargetMachine(const Target &T, StringRef DataLayoutString,
                              const Triple &TT, StringRef CPU, StringRef FS,
                              const TargetOptions &Options)
     : TheTarget(T), DL(DataLayoutString), TargetTriple(TT), TargetCPU(CPU),
-      TargetFS(FS), CodeGenInfo(nullptr), AsmInfo(nullptr), MRI(nullptr),
-      MII(nullptr), STI(nullptr), RequireStructuredCFG(false),
-      Options(Options) {}
+      TargetFS(FS), AsmInfo(nullptr), MRI(nullptr), MII(nullptr), STI(nullptr),
+      RequireStructuredCFG(false), Options(Options) {}
 
 TargetMachine::~TargetMachine() {
-  delete CodeGenInfo;
   delete AsmInfo;
   delete MRI;
   delete MII;
@@ -77,19 +74,11 @@ void TargetMachine::resetTargetOptions(const Function &F) const {
 
 /// Returns the code generation relocation model. The choices are static, PIC,
 /// and dynamic-no-pic.
-Reloc::Model TargetMachine::getRelocationModel() const {
-  if (!CodeGenInfo)
-    return Reloc::Static; // FIXME
-  return CodeGenInfo->getRelocationModel();
-}
+Reloc::Model TargetMachine::getRelocationModel() const { return RM; }
 
 /// Returns the code model. The choices are small, kernel, medium, large, and
 /// target default.
-CodeModel::Model TargetMachine::getCodeModel() const {
-  if (!CodeGenInfo)
-    return CodeModel::Default;
-  return CodeGenInfo->getCodeModel();
-}
+CodeModel::Model TargetMachine::getCodeModel() const { return CMModel; }
 
 /// Get the IR-specified TLS model for Var.
 static TLSModel::Model getSelectedTLSModel(const GlobalValue *GV) {
@@ -182,16 +171,9 @@ TLSModel::Model TargetMachine::getTLSModel(const GlobalValue *GV) const {
 }
 
 /// Returns the optimization level: None, Less, Default, or Aggressive.
-CodeGenOpt::Level TargetMachine::getOptLevel() const {
-  if (!CodeGenInfo)
-    return CodeGenOpt::Default;
-  return CodeGenInfo->getOptLevel();
-}
+CodeGenOpt::Level TargetMachine::getOptLevel() const { return OptLevel; }
 
-void TargetMachine::setOptLevel(CodeGenOpt::Level Level) const {
-  if (CodeGenInfo)
-    CodeGenInfo->setOptLevel(Level);
-}
+void TargetMachine::setOptLevel(CodeGenOpt::Level Level) { OptLevel = Level; }
 
 TargetIRAnalysis TargetMachine::getTargetIRAnalysis() {
   return TargetIRAnalysis([this](const Function &F) {
