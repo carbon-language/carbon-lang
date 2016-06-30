@@ -5007,38 +5007,83 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 void LoopVectorizationLegality::collectLoopUniforms() {
   // We now know that the loop is vectorizable!
   // Collect variables that will remain uniform after vectorization.
-  std::vector<Value *> Worklist;
-  BasicBlock *Latch = TheLoop->getLoopLatch();
 
-  // Start with the conditional branch and walk up the block.
-  Worklist.push_back(Latch->getTerminator()->getOperand(0));
+  // If V is not an instruction inside the current loop, it is a Value
+  // outside of the scope which we are interesting in.
+  auto isOutOfScope = [&](Value *V) -> bool {
+    Instruction *I = dyn_cast<Instruction>(V);
+    return (!I || !TheLoop->contains(I));
+  };
+
+  SetVector<Instruction *> Worklist;
+  BasicBlock *Latch = TheLoop->getLoopLatch();
+  // Start with the conditional branch.
+  if (!isOutOfScope(Latch->getTerminator()->getOperand(0))) {
+    Instruction *Cmp = cast<Instruction>(Latch->getTerminator()->getOperand(0));
+    Worklist.insert(Cmp);
+    DEBUG(dbgs() << "LV: Found uniform instruction: " << *Cmp << "\n");
+  }
 
   // Also add all consecutive pointer values; these values will be uniform
-  // after vectorization (and subsequent cleanup) and, until revectorization is
-  // supported, all dependencies must also be uniform.
-  for (Loop::block_iterator B = TheLoop->block_begin(),
-                            BE = TheLoop->block_end();
-       B != BE; ++B)
-    for (Instruction &I : **B)
-      if (I.getType()->isPointerTy() && isConsecutivePtr(&I))
-        Worklist.insert(Worklist.end(), I.op_begin(), I.op_end());
-
-  while (!Worklist.empty()) {
-    Instruction *I = dyn_cast<Instruction>(Worklist.back());
-    Worklist.pop_back();
-
-    // Look at instructions inside this loop.
-    // Stop when reaching PHI nodes.
-    // TODO: we need to follow values all over the loop, not only in this block.
-    if (!I || !TheLoop->contains(I) || isa<PHINode>(I))
-      continue;
-
-    // This is a known uniform.
-    Uniforms.insert(I);
-
-    // Insert all operands.
-    Worklist.insert(Worklist.end(), I->op_begin(), I->op_end());
+  // after vectorization (and subsequent cleanup).
+  for (auto *BB : TheLoop->getBlocks()) {
+    for (auto &I : *BB) {
+      if (I.getType()->isPointerTy() && isConsecutivePtr(&I)) {
+        Worklist.insert(&I);
+        DEBUG(dbgs() << "LV: Found uniform instruction: " << I << "\n");
+      }
+    }
   }
+
+  // Expand Worklist in topological order: whenever a new instruction
+  // is added , its users should be either already inside Worklist, or
+  // out of scope. It ensures a uniform instruction will only be used
+  // by uniform instructions or out of scope instructions.
+  unsigned idx = 0;
+  do {
+    Instruction *I = Worklist[idx++];
+
+    for (auto OV : I->operand_values()) {
+      if (isOutOfScope(OV))
+        continue;
+      Instruction *OI = cast<Instruction>(OV);
+      if (std::all_of(OI->user_begin(), OI->user_end(), [&](User *U) -> bool {
+            return isOutOfScope(U) || Worklist.count(cast<Instruction>(U));
+          })) {
+        Worklist.insert(OI);
+        DEBUG(dbgs() << "LV: Found uniform instruction: " << *OI << "\n");
+      }
+    }
+  } while (idx != Worklist.size());
+
+  // For an instruction to be added into Worklist above, all its users inside
+  // the current loop should be already added into Worklist. This condition
+  // cannot be true for phi instructions which is always in a dependence loop.
+  // Because any instruction in the dependence cycle always depends on others
+  // in the cycle to be added into Worklist first, the result is no ones in
+  // the cycle will be added into Worklist in the end.
+  // That is why we process PHI separately.
+  for (auto &Induction : *getInductionVars()) {
+    auto *PN = Induction.first;
+    auto *UpdateV = PN->getIncomingValueForBlock(TheLoop->getLoopLatch());
+    if (std::all_of(PN->user_begin(), PN->user_end(),
+                    [&](User *U) -> bool {
+                      return U == UpdateV || isOutOfScope(U) ||
+                             Worklist.count(cast<Instruction>(U));
+                    }) &&
+        std::all_of(UpdateV->user_begin(), UpdateV->user_end(),
+                    [&](User *U) -> bool {
+                      return U == PN || isOutOfScope(U) ||
+                             Worklist.count(cast<Instruction>(U));
+                    })) {
+      Worklist.insert(cast<Instruction>(PN));
+      Worklist.insert(cast<Instruction>(UpdateV));
+      DEBUG(dbgs() << "LV: Found uniform instruction: " << *PN << "\n");
+      DEBUG(dbgs() << "LV: Found uniform instruction: " << *UpdateV << "\n");
+    }
+  }
+
+  Uniforms.insert(Worklist.begin(), Worklist.end());
 }
 
 bool LoopVectorizationLegality::canVectorizeMemory() {
