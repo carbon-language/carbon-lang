@@ -721,6 +721,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   isl_options_set_schedule_max_coefficient(Ctx, MaxCoefficient);
   isl_options_set_tile_scale_tile_loops(Ctx, 0);
 
+  auto OnErrorStatus = isl_options_get_on_error(Ctx);
   isl_options_set_on_error(Ctx, ISL_ON_ERROR_CONTINUE);
 
   isl_schedule_constraints *ScheduleConstraints;
@@ -733,7 +734,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
       isl_schedule_constraints_set_coincidence(ScheduleConstraints, Validity);
   isl_schedule *Schedule;
   Schedule = isl_schedule_constraints_compute_schedule(ScheduleConstraints);
-  isl_options_set_on_error(Ctx, ISL_ON_ERROR_ABORT);
+  isl_options_set_on_error(Ctx, OnErrorStatus);
 
   // In cases the scheduler is not able to optimize the code, we just do not
   // touch the schedule.
