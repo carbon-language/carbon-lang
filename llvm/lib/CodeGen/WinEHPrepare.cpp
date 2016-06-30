@@ -20,7 +20,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/EHPersonalities.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -68,7 +67,6 @@ public:
   }
 
 private:
-  void promoteEHPersonality(Function &F);
   void insertPHIStores(PHINode *OriginalPHI, AllocaInst *SpillSlot);
   void
   insertPHIStore(BasicBlock *PredBlock, Value *PredVal, AllocaInst *SpillSlot,
@@ -465,39 +463,6 @@ static int addClrEHHandler(WinEHFuncInfo &FuncInfo, int HandlerParentState,
   FuncInfo.ClrEHUnwindMap.push_back(Entry);
   return FuncInfo.ClrEHUnwindMap.size() - 1;
 }
-
-static Value *getStackGuardEHPersonality(Value *Pers) {
-  Function *F =
-      Pers ? dyn_cast<Function>(Pers->stripPointerCasts()) : nullptr;
-  if (!F)
-    return nullptr;
-
-  // TODO(etienneb): Upgrade exception handlers when they are working.
-  StringRef NewName = llvm::StringSwitch<StringRef>(F->getName())  
-      .Case("_except_handler3", "_except_handler4")
-      .Default("");
-  if (NewName.empty())
-    return nullptr;
-
-  Module *M = F->getParent();
-  return M->getOrInsertFunction("_except_handler4", F->getFunctionType(),
-                                F->getAttributes());
-}
-
-void WinEHPrepare::promoteEHPersonality(Function &F) {
-  // Promote the exception handler when stack protection is activated.
-  if (!F.hasFnAttribute(Attribute::StackProtect) &&
-      !F.hasFnAttribute(Attribute::StackProtectReq) &&
-      !F.hasFnAttribute(Attribute::StackProtectStrong))
-    return;
-
-  if (Value *PersonalityFn = F.getPersonalityFn()) {
-    if (Value *Personality = getStackGuardEHPersonality(PersonalityFn)) {
-      Function* PromotedFn = cast<Function>(Personality);
-      F.setPersonalityFn(PromotedFn);
-    }
-  }
-}    
 
 void llvm::calculateClrEHStateNumbers(const Function *Fn,
                                       WinEHFuncInfo &FuncInfo) {
@@ -1063,10 +1028,6 @@ void WinEHPrepare::verifyPreparedFunclets(Function &F) {
 }
 
 bool WinEHPrepare::prepareExplicitEH(Function &F) {
-  // When stack-protector is present, some exception handlers need to be
-  // promoted to a compatible handlers.
-  promoteEHPersonality(F);
-
   // Remove unreachable blocks.  It is not valuable to assign them a color and
   // their existence can trick us into thinking values are alive when they are
   // not.
