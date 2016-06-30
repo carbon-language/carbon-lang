@@ -159,7 +159,7 @@ bool LoadStoreVectorizer::runOnFunction(Function &F) {
   ScalarEvolution &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
 
   // Don't vectorize when the attribute NoImplicitFloat is used.
-  if (F.hasFnAttribute(Attribute::NoImplicitFloat))
+  if (F.hasFnAttribute(Attribute::NoImplicitFloat) || skipFunction(F))
     return false;
 
   Vectorizer V(F, AA, DT, SE, VecRegSize);
