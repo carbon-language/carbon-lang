@@ -2610,7 +2610,7 @@ static bool isVarDeclStrongDefinition(const ASTContext &Context,
   if (shouldBeInCOMDAT(CGM, *D))
     return true;
 
-  // Declarations with a required alignment do not have common linakge in MSVC
+  // Declarations with a required alignment do not have common linkage in MSVC
   // mode.
   if (Context.getTargetInfo().getCXXABI().isMicrosoft()) {
     if (D->hasAttr<AlignedAttr>())
