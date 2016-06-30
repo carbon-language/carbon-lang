@@ -72,6 +72,12 @@ public:
                                             Buffer->getBufferEnd())),
         FileBuffer(std::move(Buffer)) {}
 
+  Error commit() const override {
+    if (FileBuffer->commit())
+      return llvm::make_error<RawError>(raw_error_code::not_writable);
+    return Error::success();
+  }
+
 private:
   std::unique_ptr<FileOutputBuffer> FileBuffer;
 };
@@ -83,7 +89,9 @@ cl::SubCommand RawSubcommand("raw", "Dump raw structure of the PDB file");
 cl::SubCommand
     PrettySubcommand("pretty",
                      "Dump semantic information about types and symbols");
-cl::SubCommand YamlToPdbSubcommand("yaml2pdb", "Generate a PDB file from a YAML description");
+cl::SubCommand
+    YamlToPdbSubcommand("yaml2pdb",
+                        "Generate a PDB file from a YAML description");
 cl::SubCommand
     PdbToYamlSubcommand("pdb2yaml",
                         "Generate a detailed YAML description of a PDB File");
@@ -200,8 +208,8 @@ cl::opt<bool> DumpModules("modules", cl::desc("dump compiland information"),
 cl::opt<bool> DumpModuleFiles("module-files", cl::desc("dump file information"),
                               cl::cat(FileOptions), cl::sub(RawSubcommand));
 cl::opt<bool> DumpLineInfo("line-info",
-  cl::desc("dump file and line information"),
-  cl::cat(FileOptions), cl::sub(RawSubcommand));
+                           cl::desc("dump file and line information"),
+                           cl::cat(FileOptions), cl::sub(RawSubcommand));
 
 // SYMBOL OPTIONS
 cl::opt<bool> DumpModuleSyms("module-syms", cl::desc("dump module symbols"),
@@ -216,29 +224,25 @@ cl::opt<bool>
 // MISCELLANEOUS OPTIONS
 cl::opt<bool> DumpSectionContribs("section-contribs",
                                   cl::desc("dump section contributions"),
-                                  cl::cat(MiscOptions),
-                                  cl::sub(RawSubcommand));
+                                  cl::cat(MiscOptions), cl::sub(RawSubcommand));
 cl::opt<bool> DumpSectionMap("section-map", cl::desc("dump section map"),
                              cl::cat(MiscOptions), cl::sub(RawSubcommand));
 cl::opt<bool> DumpSectionHeaders("section-headers",
                                  cl::desc("dump section headers"),
-                                 cl::cat(MiscOptions),
-                                 cl::sub(RawSubcommand));
-cl::opt<bool> DumpFpo("fpo", cl::desc("dump FPO records"),
-                      cl::cat(MiscOptions), cl::sub(RawSubcommand));
+                                 cl::cat(MiscOptions), cl::sub(RawSubcommand));
+cl::opt<bool> DumpFpo("fpo", cl::desc("dump FPO records"), cl::cat(MiscOptions),
+                      cl::sub(RawSubcommand));
 
 cl::opt<std::string> DumpStreamDataIdx("stream", cl::desc("dump stream data"),
-  cl::cat(MiscOptions),
-  cl::sub(RawSubcommand));
+                                       cl::cat(MiscOptions),
+                                       cl::sub(RawSubcommand));
 cl::opt<std::string> DumpStreamDataName("stream-name",
-  cl::desc("dump stream data"),
-  cl::cat(MiscOptions),
-  cl::sub(RawSubcommand));
+                                        cl::desc("dump stream data"),
+                                        cl::cat(MiscOptions),
+                                        cl::sub(RawSubcommand));
 
-cl::opt<bool>
-    RawAll("all",
-           cl::desc("Implies most other options."),
-           cl::cat(MiscOptions), cl::sub(RawSubcommand));
+cl::opt<bool> RawAll("all", cl::desc("Implies most other options."),
+                     cl::cat(MiscOptions), cl::sub(RawSubcommand));
 
 cl::list<std::string> InputFilenames(cl::Positional,
                                      cl::desc("<input PDB files>"),
@@ -256,8 +260,14 @@ cl::list<std::string> InputFilename(cl::Positional,
 }
 
 namespace pdb2yaml {
-  cl::opt<bool> StreamMetadata("stream-metadata", cl::desc("Dump the number of streams and each stream's size"), cl::sub(PdbToYamlSubcommand));
-  cl::opt<bool> StreamDirectory("stream-directory", cl::desc("Dump each stream's block map (implies -stream-metadata)"), cl::sub(PdbToYamlSubcommand));
+cl::opt<bool> StreamMetadata(
+    "stream-metadata",
+    cl::desc("Dump the number of streams and each stream's size"),
+    cl::sub(PdbToYamlSubcommand));
+cl::opt<bool> StreamDirectory(
+    "stream-directory",
+    cl::desc("Dump each stream's block map (implies -stream-metadata)"),
+    cl::sub(PdbToYamlSubcommand));
 
 cl::list<std::string> InputFilename(cl::Positional,
                                     cl::desc("<input PDB file>"), cl::Required,
@@ -291,19 +301,19 @@ static void yamlToPdb(StringRef Path) {
   auto FileByteStream =
       llvm::make_unique<FileBufferByteStream>(std::move(*OutFileOrError));
   PDBFile Pdb(std::move(FileByteStream));
-  Pdb.setSuperBlock(&YamlObj.Headers.SuperBlock);
+  ExitOnErr(Pdb.setSuperBlock(&YamlObj.Headers.SuperBlock));
   if (YamlObj.StreamMap.hasValue()) {
     std::vector<ArrayRef<support::ulittle32_t>> StreamMap;
     for (auto &E : YamlObj.StreamMap.getValue()) {
       StreamMap.push_back(E.Blocks);
     }
-    Pdb.setStreamMap(StreamMap);
+    Pdb.setStreamMap(YamlObj.Headers.DirectoryBlocks, StreamMap);
   }
   if (YamlObj.StreamSizes.hasValue()) {
     Pdb.setStreamSizes(YamlObj.StreamSizes.getValue());
   }
 
-  Pdb.commit();
+  ExitOnErr(Pdb.commit());
 }
 
 static void dumpRaw(StringRef Path) {

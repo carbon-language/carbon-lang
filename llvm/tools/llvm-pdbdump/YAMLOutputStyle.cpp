@@ -12,8 +12,8 @@
 #include "PdbYaml.h"
 #include "llvm-pdbdump.h"
 
-#include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
+#include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 
 using namespace llvm;
 using namespace llvm::pdb;
@@ -44,7 +44,8 @@ Error YAMLOutputStyle::dumpFileHeaders() {
   Obj.Headers.DirectoryBlocks.assign(Blocks.begin(), Blocks.end());
   Obj.Headers.NumDirectoryBlocks = File.getNumDirectoryBlocks();
   Obj.Headers.SuperBlock.NumDirectoryBytes = File.getNumDirectoryBytes();
-  Obj.Headers.NumStreams = opts::pdb2yaml::StreamMetadata ? File.getNumStreams() : 0;
+  Obj.Headers.NumStreams =
+      opts::pdb2yaml::StreamMetadata ? File.getNumStreams() : 0;
   Obj.Headers.SuperBlock.Unknown0 = File.getUnknown0();
   Obj.Headers.SuperBlock.Unknown1 = File.getUnknown1();
   Obj.Headers.FileSize = File.getFileSize();
