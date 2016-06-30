@@ -41,6 +41,44 @@ define i999 @not_sext(i1 %C) {
   ret i999 %V
 }
 
+; FIXME: Vector selects of vector splat constants match APInt too.
+
+define <2 x i41> @zext_vec(<2 x i1> %C) {
+; CHECK-LABEL: @zext_vec(
+; CHECK-NEXT:    [[V:%.*]] = select <2 x i1> %C, <2 x i41> <i41 1, i41 1>, <2 x i41> zeroinitializer
+; CHECK-NEXT:    ret <2 x i41> [[V]]
+;
+  %V = select <2 x i1> %C, <2 x i41> <i41 1, i41 1>, <2 x i41> <i41 0, i41 0>
+  ret <2 x i41> %V
+}
+
+define <2 x i32> @sext_vec(<2 x i1> %C) {
+; CHECK-LABEL: @sext_vec(
+; CHECK-NEXT:    [[V:%.*]] = select <2 x i1> %C, <2 x i32> <i32 -1, i32 -1>, <2 x i32> zeroinitializer
+; CHECK-NEXT:    ret <2 x i32> [[V]]
+;
+  %V = select <2 x i1> %C, <2 x i32> <i32 -1, i32 -1>, <2 x i32> <i32 0, i32 0>
+  ret <2 x i32> %V
+}
+
+define <2 x i999> @not_zext_vec(<2 x i1> %C) {
+; CHECK-LABEL: @not_zext_vec(
+; CHECK-NEXT:    [[V:%.*]] = select <2 x i1> %C, <2 x i999> zeroinitializer, <2 x i999> <i999 1, i999 1>
+; CHECK-NEXT:    ret <2 x i999> [[V]]
+;
+  %V = select <2 x i1> %C, <2 x i999> <i999 0, i999 0>, <2 x i999> <i999 1, i999 1>
+  ret <2 x i999> %V
+}
+
+define <2 x i64> @not_sext_vec(<2 x i1> %C) {
+; CHECK-LABEL: @not_sext_vec(
+; CHECK-NEXT:    [[V:%.*]] = select <2 x i1> %C, <2 x i64> zeroinitializer, <2 x i64> <i64 -1, i64 -1>
+; CHECK-NEXT:    ret <2 x i64> [[V]]
+;
+  %V = select <2 x i1> %C, <2 x i64> <i64 0, i64 0>, <2 x i64> <i64 -1, i64 -1>
+  ret <2 x i64> %V
+}
+
 ;; (x <s 0) ? -1 : 0 -> ashr x, 31
 
 define i41 @test3(i41 %X) {
