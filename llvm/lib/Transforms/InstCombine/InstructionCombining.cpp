@@ -2185,17 +2185,15 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
 
   unsigned NewWidth = BitWidth - std::max(LeadingKnownZeros, LeadingKnownOnes);
 
-  // Truncate the condition operand if the new type is equal to or larger than
-  // the largest legal integer type. We need to be conservative here since
-  // x86 generates redundant zero-extension instructions if the operand is
-  // truncated to i8 or i16.
+  // Shrink the condition operand if the new type is smaller than the old type.
+  // This may produce a non-standard type for the switch, but that's ok because
+  // the backend should extend back to a legal type for the target.
   bool TruncCond = false;
-  if (NewWidth > 0 && BitWidth > NewWidth &&
-      NewWidth >= DL.getLargestLegalIntTypeSizeInBits()) {
+ if (NewWidth > 0 && NewWidth < BitWidth) {
     TruncCond = true;
     IntegerType *Ty = IntegerType::get(SI.getContext(), NewWidth);
     Builder->SetInsertPoint(&SI);
-    Value *NewCond = Builder->CreateTrunc(SI.getCondition(), Ty, "trunc");
+    Value *NewCond = Builder->CreateTrunc(Cond, Ty, "trunc");
     SI.setCondition(NewCond);
 
     for (auto &C : SI.cases())
