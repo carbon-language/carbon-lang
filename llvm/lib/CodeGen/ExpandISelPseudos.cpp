@@ -58,8 +58,7 @@ bool ExpandISelPseudos::runOnMachineFunction(MachineFunction &MF) {
       // If MI is a pseudo, expand it.
       if (MI->usesCustomInsertionHook()) {
         Changed = true;
-        MachineBasicBlock *NewMBB =
-          TLI->EmitInstrWithCustomInserter(MI, MBB);
+        MachineBasicBlock *NewMBB = TLI->EmitInstrWithCustomInserter(*MI, MBB);
         // The expansion may involve new basic blocks.
         if (NewMBB != MBB) {
           MBB = NewMBB;

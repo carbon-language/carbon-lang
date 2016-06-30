@@ -330,7 +330,7 @@ namespace llvm {
 // are modified, the method should insert pairs of <OldSucc, NewSucc> into the
 // DenseMap.
 MachineBasicBlock *
-TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
+TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                                             MachineBasicBlock *MBB) const {
 #ifndef NDEBUG
   dbgs() << "If a target marks an instruction with "
@@ -340,9 +340,9 @@ TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   llvm_unreachable(nullptr);
 }
 
-void TargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
+void TargetLowering::AdjustInstrPostInstrSelection(MachineInstr &MI,
                                                    SDNode *Node) const {
-  assert(!MI->hasPostISelHook() &&
+  assert(!MI.hasPostISelHook() &&
          "If a target marks an instruction with 'hasPostISelHook', "
          "it must implement TargetLowering::AdjustInstrPostInstrSelection!");
 }
