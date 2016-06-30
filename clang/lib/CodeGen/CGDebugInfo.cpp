@@ -848,7 +848,7 @@ static unsigned getDwarfCC(CallingConv CC) {
   case CC_AAPCS_VFP:
   case CC_IntelOclBicc:
   case CC_SpirFunction:
-  case CC_SpirKernel:
+  case CC_OpenCLKernel:
   case CC_Swift:
   case CC_PreserveMost:
   case CC_PreserveAll:
