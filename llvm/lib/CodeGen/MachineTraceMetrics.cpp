@@ -625,16 +625,16 @@ struct DataDep {
 
 // Get the input data dependencies that must be ready before UseMI can issue.
 // Return true if UseMI has any physreg operands.
-static bool getDataDeps(const MachineInstr *UseMI,
+static bool getDataDeps(const MachineInstr &UseMI,
                         SmallVectorImpl<DataDep> &Deps,
                         const MachineRegisterInfo *MRI) {
   // Debug values should not be included in any calculations.
-  if (UseMI->isDebugValue())
+  if (UseMI.isDebugValue())
     return false;
   
   bool HasPhysRegs = false;
-  for (MachineInstr::const_mop_iterator I = UseMI->operands_begin(),
-       E = UseMI->operands_end(); I != E; ++I) {
+  for (MachineInstr::const_mop_iterator I = UseMI.operands_begin(),
+       E = UseMI.operands_end(); I != E; ++I) {
     const MachineOperand &MO = *I;
     if (!MO.isReg())
       continue;
@@ -647,7 +647,7 @@ static bool getDataDeps(const MachineInstr *UseMI,
     }
     // Collect virtual register reads.
     if (MO.readsReg())
-      Deps.push_back(DataDep(MRI, Reg, UseMI->getOperandNo(I)));
+      Deps.push_back(DataDep(MRI, Reg, UseMI.getOperandNo(I)));
   }
   return HasPhysRegs;
 }
@@ -828,7 +828,7 @@ computeInstrDepths(const MachineBasicBlock *MBB) {
       Deps.clear();
       if (UseMI.isPHI())
         getPHIDeps(UseMI, Deps, TBI.Pred, MTM.MRI);
-      else if (getDataDeps(&UseMI, Deps, MTM.MRI))
+      else if (getDataDeps(UseMI, Deps, MTM.MRI))
         updatePhysDepsDownwards(&UseMI, Deps, RegUnits, MTM.TRI);
 
       // Filter and process dependencies, computing the earliest issue cycle.
@@ -1067,12 +1067,12 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
     // Go through the block backwards.
     for (MachineBasicBlock::const_iterator BI = MBB->end(), BB = MBB->begin();
          BI != BB;) {
-      const MachineInstr *MI = --BI;
+      const MachineInstr &MI = *--BI;
 
       // Find the MI height as determined by virtual register uses in the
       // trace below.
       unsigned Cycle = 0;
-      MIHeightMap::iterator HeightI = Heights.find(MI);
+      MIHeightMap::iterator HeightI = Heights.find(&MI);
       if (HeightI != Heights.end()) {
         Cycle = HeightI->second;
         // We won't be seeing any more MI uses.
@@ -1082,27 +1082,27 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
       // Don't process PHI deps. They depend on the specific predecessor, and
       // we'll get them when visiting the predecessor.
       Deps.clear();
-      bool HasPhysRegs = !MI->isPHI() && getDataDeps(MI, Deps, MTM.MRI);
+      bool HasPhysRegs = !MI.isPHI() && getDataDeps(MI, Deps, MTM.MRI);
 
       // There may also be regunit dependencies to include in the height.
       if (HasPhysRegs)
-        Cycle = updatePhysDepsUpwards(MI, Cycle, RegUnits,
+        Cycle = updatePhysDepsUpwards(&MI, Cycle, RegUnits,
                                       MTM.SchedModel, MTM.TII, MTM.TRI);
 
       // Update the required height of any virtual registers read by MI.
       for (const DataDep &Dep : Deps)
-        if (pushDepHeight(Dep, MI, Cycle, Heights, MTM.SchedModel, MTM.TII))
+        if (pushDepHeight(Dep, &MI, Cycle, Heights, MTM.SchedModel, MTM.TII))
           addLiveIns(Dep.DefMI, Dep.DefOp, Stack);
 
-      InstrCycles &MICycles = Cycles[MI];
+      InstrCycles &MICycles = Cycles[&MI];
       MICycles.Height = Cycle;
       if (!TBI.HasValidInstrDepths) {
-        DEBUG(dbgs() << Cycle << '\t' << *MI);
+        DEBUG(dbgs() << Cycle << '\t' << MI);
         continue;
       }
       // Update critical path length.
       TBI.CriticalPath = std::max(TBI.CriticalPath, Cycle + MICycles.Depth);
-      DEBUG(dbgs() << TBI.CriticalPath << '\t' << Cycle << '\t' << *MI);
+      DEBUG(dbgs() << TBI.CriticalPath << '\t' << Cycle << '\t' << MI);
     }
 
     // Update virtual live-in heights. They were added by addLiveIns() with a 0
