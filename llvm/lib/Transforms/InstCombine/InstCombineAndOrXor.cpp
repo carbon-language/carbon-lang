@@ -1590,10 +1590,32 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
   return LastInst;
 }
 
-/// We have an expression of the form (A & C) | (B & D). If A is (Cond?-1:0)
-/// and B is ~(Cond?-1,0), then simplify this expression to "Cond ? C : D".
+/// We have an expression of the form (A & C) | (B & D). If A is a scalar or
+/// vector composed of all-zeros or all-ones values and is the bitwise 'not' of
+/// B, it can be used as the condition operand of a select instruction.
+static Value *getSelectCondition(Value *A, Value *B) {
+  // If these are scalars or vectors of i1, A can be used directly.
+  Type *Ty = A->getType();
+  if (match(A, m_Not(m_Specific(B))) && Ty->getScalarType()->isIntegerTy(1))
+    return A;
+
+  // If A and B are sign-extended, look through the sexts to find the booleans.
+  Value *Cond;
+  if (match(A, m_SExt(m_Value(Cond))) &&
+      Cond->getType()->getScalarType()->isIntegerTy(1) &&
+      match(B, m_CombineOr(m_Not(m_SExt(m_Specific(Cond))),
+                           m_SExt(m_Not(m_Specific(Cond))))))
+    return Cond;
+
+  // TODO: Try more matches that only apply to non-splat constant vectors.
+
+  return nullptr;
+}
+
+/// We have an expression of the form (A & C) | (B & D). Try to simplify this
+/// to "A' ? C : D", where A' is a boolean or vector of booleans.
 static Value *matchSelectFromAndOr(Value *A, Value *C, Value *B, Value *D,
-                                         InstCombiner::BuilderTy &Builder) {
+                                   InstCombiner::BuilderTy &Builder) {
   // The potential condition of the select may be bitcasted. In that case, look
   // through its bitcast and the corresponding bitcast of the 'not' condition.
   Type *OrigType = A->getType();
@@ -1604,13 +1626,7 @@ static Value *matchSelectFromAndOr(Value *A, Value *C, Value *B, Value *D,
     B = SrcB;
   }
 
-  // The condition must be a value of -1/0, and B must be the 'not' of that
-  // condition.
-  Value *Cond;
-  if (match(A, m_SExt(m_Value(Cond))) &&
-      Cond->getType()->getScalarType()->isIntegerTy(1) &&
-      match(B, m_CombineOr(m_Not(m_SExt(m_Specific(Cond))),
-                           m_SExt(m_Not(m_Specific(Cond)))))) {
+  if (Value *Cond = getSelectCondition(A, B)) {
     // ((bc Cond) & C) | ((bc ~Cond) & D) --> bc (select Cond, (bc C), (bc D))
     // The bitcasts will either all exist or all not exist. The builder will
     // not create unnecessary casts if the types already match.
