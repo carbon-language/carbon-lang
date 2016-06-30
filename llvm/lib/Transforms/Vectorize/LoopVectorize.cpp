@@ -463,11 +463,11 @@ protected:
   /// This includes both the original MDs from \p From and additional ones (\see
   /// addNewMetadata).  Use this for *newly created* instructions in the vector
   /// loop.
-  void addMetadata(Instruction *To, const Instruction *From);
+  void addMetadata(Instruction *To, Instruction *From);
 
   /// \brief Similar to the previous function but it adds the metadata to a
   /// vector of instructions.
-  void addMetadata(SmallVectorImpl<Value *> &To, const Instruction *From);
+  void addMetadata(ArrayRef<Value *> To, Instruction *From);
 
   /// This is a helper class that holds the vectorizer state. It maps scalar
   /// instructions to vector instructions. When the code is 'unrolled' then
@@ -654,28 +654,6 @@ static std::string getDebugLocString(const Loop *L) {
 }
 #endif
 
-/// \brief Propagate known metadata from one instruction to another.
-static void propagateMetadata(Instruction *To, const Instruction *From) {
-  SmallVector<std::pair<unsigned, MDNode *>, 4> Metadata;
-  From->getAllMetadataOtherThanDebugLoc(Metadata);
-
-  for (auto M : Metadata) {
-    unsigned Kind = M.first;
-
-    // These are safe to transfer (this is safe for TBAA, even when we
-    // if-convert, because should that metadata have had a control dependency
-    // on the condition, and thus actually aliased with some other
-    // non-speculated memory access when the condition was false, this would be
-    // caught by the runtime overlap checks).
-    if (Kind != LLVMContext::MD_tbaa && Kind != LLVMContext::MD_alias_scope &&
-        Kind != LLVMContext::MD_noalias && Kind != LLVMContext::MD_fpmath &&
-        Kind != LLVMContext::MD_nontemporal)
-      continue;
-
-    To->setMetadata(Kind, M.second);
-  }
-}
-
 void InnerLoopVectorizer::addNewMetadata(Instruction *To,
                                          const Instruction *Orig) {
   // If the loop was versioned with memchecks, add the corresponding no-alias
@@ -685,16 +663,17 @@ void InnerLoopVectorizer::addNewMetadata(Instruction *To,
 }
 
 void InnerLoopVectorizer::addMetadata(Instruction *To,
-                                      const Instruction *From) {
+                                      Instruction *From) {
   propagateMetadata(To, From);
   addNewMetadata(To, From);
 }
 
-void InnerLoopVectorizer::addMetadata(SmallVectorImpl<Value *> &To,
-                                      const Instruction *From) {
-  for (Value *V : To)
+void InnerLoopVectorizer::addMetadata(ArrayRef<Value *> To,
+                                      Instruction *From) {
+  for (Value *V : To) {
     if (Instruction *I = dyn_cast<Instruction>(V))
       addMetadata(I, From);
+  }
 }
 
 /// \brief The group of interleaved loads/stores sharing the same stride and
