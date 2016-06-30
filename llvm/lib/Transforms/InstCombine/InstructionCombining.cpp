@@ -2176,6 +2176,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   unsigned LeadingKnownOnes = KnownOne.countLeadingOnes();
 
   // Compute the number of leading bits we can ignore.
+  // TODO: A better way to determine this would use ComputeNumSignBits().
   for (auto &C : SI.cases()) {
     LeadingKnownZeros = std::min(
         LeadingKnownZeros, C.getCaseValue()->getValue().countLeadingZeros());
@@ -2189,7 +2190,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   // This may produce a non-standard type for the switch, but that's ok because
   // the backend should extend back to a legal type for the target.
   bool TruncCond = false;
- if (NewWidth > 0 && NewWidth < BitWidth) {
+  if (NewWidth > 0 && NewWidth < BitWidth) {
     TruncCond = true;
     IntegerType *Ty = IntegerType::get(SI.getContext(), NewWidth);
     Builder->SetInsertPoint(&SI);
