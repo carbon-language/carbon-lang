@@ -154,13 +154,13 @@ Pass *llvm::createLoadStoreVectorizerPass(unsigned VecRegSize) {
 }
 
 bool LoadStoreVectorizer::runOnFunction(Function &F) {
+  // Don't vectorize when the attribute NoImplicitFloat is used.
+  if (skipFunction(F) || F.hasFnAttribute(Attribute::NoImplicitFloat))
+    return false;
+
   AliasAnalysis &AA = getAnalysis<AAResultsWrapperPass>().getAAResults();
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   ScalarEvolution &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
-
-  // Don't vectorize when the attribute NoImplicitFloat is used.
-  if (F.hasFnAttribute(Attribute::NoImplicitFloat) || skipFunction(F))
-    return false;
 
   Vectorizer V(F, AA, DT, SE, VecRegSize);
   return V.run();

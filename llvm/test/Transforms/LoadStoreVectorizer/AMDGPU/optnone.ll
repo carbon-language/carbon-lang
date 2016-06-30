@@ -10,3 +10,13 @@ define void @optnone(i32 addrspace(1)* %out) noinline optnone {
   store i32 456, i32 addrspace(1)* %out
   ret void
 }
+
+; CHECK-LABEL: @do_opt(
+; CHECK: store <2 x i32>
+define void @do_opt(i32 addrspace(1)* %out) {
+  %out.gep.1 = getelementptr i32, i32 addrspace(1)* %out, i32 1
+
+  store i32 123, i32 addrspace(1)* %out.gep.1
+  store i32 456, i32 addrspace(1)* %out
+  ret void
+}
