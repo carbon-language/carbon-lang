@@ -2560,7 +2560,7 @@ void InnerLoopVectorizer::vectorizeInterleaveGroup(Instruction *Instr) {
       assert(Member && "Fail to get a member from an interleaved store group");
 
       Value *StoredVec =
-          getVectorValue(dyn_cast<StoreInst>(Member)->getValueOperand())[Part];
+          getVectorValue(cast<StoreInst>(Member)->getValueOperand())[Part];
       if (Group->isReverse())
         StoredVec = reverseVector(StoredVec);
 
