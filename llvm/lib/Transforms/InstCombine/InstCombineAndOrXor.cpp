@@ -1219,8 +1219,7 @@ Instruction *InstCombiner::foldCastedBitwiseLogic(BinaryOperator &I) {
   Value *BC = nullptr;
   Constant *C = nullptr;
   if ((match(Op0, m_BitCast(m_Value(BC))) && match(Op1, m_Constant(C)))) {
-    // A bitcast of a constant will be removed.
-    Value *NewConstant = Builder->CreateBitCast(C, SrcTy);
+    Value *NewConstant = ConstantExpr::getBitCast(C, SrcTy);
     Value *NewOp = Builder->CreateBinOp(LogicOpc, BC, NewConstant, I.getName());
     return CastInst::CreateBitOrPointerCast(NewOp, DestTy);
   }
