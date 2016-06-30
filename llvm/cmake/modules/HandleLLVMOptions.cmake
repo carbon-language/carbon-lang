@@ -473,6 +473,11 @@ elseif( LLVM_COMPILER_IS_GCC_COMPATIBLE )
     if (LLVM_ENABLE_LOCAL_SUBMODULE_VISIBILITY)
       set(module_flags "${module_flags} -Xclang -fmodules-local-submodule-visibility")
     endif()
+    if (LLVM_ENABLE_MODULE_DEBUGGING AND
+        ((uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG") OR
+         (uppercase_CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")))
+      set(module_flags "${module_flags} -gmodules")
+    endif()
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${module_flags}")
 
     # Check that we can build code with modules enabled, and that repeatedly
