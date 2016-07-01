@@ -1,5 +1,5 @@
-; RUN: llc -march=x86 -disable-debug-info-print < %s | FileCheck %s
-; RUN: opt -strip -S < %s | llc -march=x86 -disable-debug-info-print | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux-gnueabi -disable-debug-info-print < %s | FileCheck %s
+; RUN: opt -strip -S < %s | llc -mtriple=x86_64-linux-gnueabi -disable-debug-info-print | FileCheck %s
 
 ; This test checks if the code is generated correctly with and without debug info.
 
@@ -41,7 +41,7 @@ entry:
   %tobool = icmp ne i32 %0, 0, !dbg !26
   br i1 %tobool, label %if.then, label %if.else, !dbg !27
 
-;CHECK: movl [[REG:.*]], 24(%esp)
+;CHECK: movl [[REG:.*]], 20(%rsp)
 ;CHECK: je [[LABEL:.*]]
 
 if.then:                                          ; preds = %entry
@@ -52,7 +52,7 @@ if.then:                                          ; preds = %entry
   call void @capture(i32* %a), !dbg !31
   br label %if.end, !dbg !32
 
-;CHECK: movl    $3, 16(%esp)
+;CHECK: movl    $3, 12(%rsp)
 
 if.else:                                          ; preds = %entry
   call void @llvm.dbg.declare(metadata i32* %b, metadata !33, metadata !16), !dbg !34
@@ -63,7 +63,7 @@ if.else:                                          ; preds = %entry
   br label %if.end
 
 ;CHECK: [[LABEL]]:
-;CHECK: movl    $3, 20(%esp)
+;CHECK: movl    $3, 16(%rsp)
 
 if.end:                                           ; preds = %if.else, %if.then
   ret void, !dbg !37
