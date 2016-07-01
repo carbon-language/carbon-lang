@@ -140,7 +140,7 @@ define void @merge_global_store_4_constants_f32(float addrspace(1)* %out) #0 {
 }
 
 ; CHECK-LABEL: @merge_global_store_4_constants_mixed_i32_f32
-; CHECK: store <4 x float> <float 8.000000e+00, float 0x36D6000000000000, float 2.000000e+00, float 0x36E1000000000000>, <4 x float> addrspace(1)* %{{[0-9]+}}
+; CHECK: store <4 x i32> <i32 1090519040, i32 11, i32 1073741824, i32 17>, <4 x i32> addrspace(1)* %{{[0-9]+$}}
 define void @merge_global_store_4_constants_mixed_i32_f32(float addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr float, float addrspace(1)* %out, i32 1
   %out.gep.2 = getelementptr float, float addrspace(1)* %out, i32 2

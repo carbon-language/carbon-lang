@@ -579,7 +579,15 @@ bool Vectorizer::vectorizeInstructions(ArrayRef<Value *> Instrs) {
 
 bool Vectorizer::vectorizeStoreChain(ArrayRef<Value *> Chain) {
   StoreInst *S0 = cast<StoreInst>(Chain[0]);
-  Type *StoreTy = S0->getValueOperand()->getType();
+
+  // If the vector has an int element, default to int for the whole load.
+  Type *StoreTy;
+  for (const auto &V : Chain) {
+    StoreTy = cast<StoreInst>(V)->getValueOperand()->getType();
+    if (StoreTy->isIntOrIntVectorTy())
+      break;
+  }
+
   unsigned Sz = DL.getTypeSizeInBits(StoreTy);
   unsigned VF = VecRegSize / Sz;
   unsigned ChainSize = Chain.size();
@@ -700,7 +708,15 @@ bool Vectorizer::vectorizeStoreChain(ArrayRef<Value *> Chain) {
 
 bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
   LoadInst *L0 = cast<LoadInst>(Chain[0]);
-  Type *LoadTy = L0->getType();
+
+  // If the vector has an int element, default to int for the whole load.
+  Type *LoadTy;
+  for (const auto &V : Chain) {
+    LoadTy = cast<LoadInst>(V)->getType();
+    if (LoadTy->isIntOrIntVectorTy())
+      break;
+  }
+
   unsigned Sz = DL.getTypeSizeInBits(LoadTy);
   unsigned VF = VecRegSize / Sz;
   unsigned ChainSize = Chain.size();
