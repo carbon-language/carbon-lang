@@ -138,8 +138,7 @@ const char *AArch64Subtarget::getBZeroEntry() const {
 }
 
 void AArch64Subtarget::overrideSchedPolicy(MachineSchedPolicy &Policy,
-                                         MachineInstr *begin, MachineInstr *end,
-                                         unsigned NumRegionInstrs) const {
+                                           unsigned NumRegionInstrs) const {
   // LNT run (at least on Cyclone) showed reasonably significant gains for
   // bi-directional scheduling. 253.perlbmk.
   Policy.OnlyTopDown = false;
