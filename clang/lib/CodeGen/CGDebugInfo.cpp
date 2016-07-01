@@ -1206,6 +1206,7 @@ llvm::DISubprogram *CGDebugInfo::CreateCXXMemberFunction(
   unsigned Virtuality = 0;
   unsigned VIndex = 0;
   unsigned Flags = 0;
+  int ThisAdjustment = 0;
 
   if (Method->isVirtual()) {
     if (Method->isPure())
@@ -1235,9 +1236,12 @@ llvm::DISubprogram *CGDebugInfo::CreateCXXMemberFunction(
       if (Method->begin_overridden_methods() == Method->end_overridden_methods())
         Flags |= llvm::DINode::FlagIntroducedVirtual;
 
-      // FIXME: Pass down ML.VFPtrOffset and ML.VBTableIndex. The debugger needs
-      // these to synthesize a call to a virtual method in a complex inheritance
-      // hierarchy.
+      // The 'this' adjustment accounts for both the virtual and non-virtual
+      // portions of the adjustment. Presumably the debugger only uses it when
+      // it knows the dynamic type of an object.
+      ThisAdjustment = CGM.getCXXABI()
+                           .getVirtualFunctionPrologueThisAdjustment(GD)
+                           .getQuantity();
     }
     ContainingType = RecordTy;
   }
@@ -1263,9 +1267,9 @@ llvm::DISubprogram *CGDebugInfo::CreateCXXMemberFunction(
   llvm::DINodeArray TParamsArray = CollectFunctionTemplateParams(Method, Unit);
   llvm::DISubprogram *SP = DBuilder.createMethod(
       RecordTy, MethodName, MethodLinkageName, MethodDefUnit, MethodLine,
-      MethodTy, /*isLocalToUnit=*/false,
-      /* isDefinition=*/false, Virtuality, VIndex, ContainingType, Flags,
-      CGM.getLangOpts().Optimize, TParamsArray.get());
+      MethodTy, /*isLocalToUnit=*/false, /*isDefinition=*/false, Virtuality,
+      VIndex, ThisAdjustment, ContainingType, Flags, CGM.getLangOpts().Optimize,
+      TParamsArray.get());
 
   SPCache[Method->getCanonicalDecl()].reset(SP);
 
