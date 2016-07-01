@@ -9950,6 +9950,10 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                                            WindowsSdkLibPath.c_str()));
   }
 
+  if (!C.getDriver().IsCLMode() && Args.hasArg(options::OPT_L))
+    for (const auto &LibPath : Args.getAllArgValues(options::OPT_L))
+      CmdArgs.push_back(Args.MakeArgString("-libpath:" + LibPath));
+
   CmdArgs.push_back("-nologo");
 
   if (Args.hasArg(options::OPT_g_Group, options::OPT__SLASH_Z7))
