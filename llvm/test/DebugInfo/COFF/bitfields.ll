@@ -63,6 +63,16 @@
 ; CHECK:    BitSize: 2
 ; CHECK:    BitOffset: 23
 ; CHECK:  }
+; CHECK:  Struct ([[anon_ty:.*]]) {
+; CHECK:    TypeLeafKind: LF_STRUCTURE (0x1505)
+; CHECK:    MemberCount: 0
+; CHECK:    Properties [ (0x80)
+; CHECK:      ForwardReference (0x80)
+; CHECK:    ]
+; CHECK:    FieldList: 0x0
+; CHECK:    SizeOf: 0
+; CHECK:    Name: S1::<unnamed-tag>
+; CHECK:  }
 ; CHECK:  BitField ([[S1_u:.*]]) {
 ; CHECK:    TypeLeafKind: LF_BITFIELD (0x1205)
 ; CHECK:    Type: short (0x11)
@@ -96,6 +106,7 @@
 ; CHECK:      Name: w
 ; CHECK:    }
 ; CHECK:    DataMember {
+; CHECK:      Type: S1::<unnamed-tag> ([[anon_ty]])
 ; CHECK:      FieldOffset: 0xB
 ; CHECK:      Name: v
 ; CHECK:    }
@@ -134,7 +145,7 @@
 ; CHECK:    ]
 ; CHECK:    FieldList: <field list> ([[anon_fl]])
 ; CHECK:    SizeOf: 3
-; CHECK:    Name: S1::
+; CHECK:    Name: S1::<unnamed-tag>
 ; CHECK:  }
 ; CHECK:  BitField ([[S2_y:.*]]) {
 ; CHECK:    TypeLeafKind: LF_BITFIELD (0x1205)

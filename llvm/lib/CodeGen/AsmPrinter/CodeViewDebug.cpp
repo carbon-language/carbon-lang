@@ -128,13 +128,31 @@ CodeViewDebug::getInlineSite(const DILocation *InlinedAt,
   return *Site;
 }
 
+static StringRef getPrettyScopeName(const DIScope *Scope) {
+  StringRef ScopeName = Scope->getName();
+  if (!ScopeName.empty())
+    return ScopeName;
+
+  switch (Scope->getTag()) {
+  case dwarf::DW_TAG_enumeration_type:
+  case dwarf::DW_TAG_class_type:
+  case dwarf::DW_TAG_structure_type:
+  case dwarf::DW_TAG_union_type:
+    return "<unnamed-tag>";
+  case dwarf::DW_TAG_namespace:
+    return "`anonymous namespace'";
+  }
+
+  return StringRef();
+}
+
 static const DISubprogram *getQualifiedNameComponents(
     const DIScope *Scope, SmallVectorImpl<StringRef> &QualifiedNameComponents) {
   const DISubprogram *ClosestSubprogram = nullptr;
   while (Scope != nullptr) {
     if (ClosestSubprogram == nullptr)
       ClosestSubprogram = dyn_cast<DISubprogram>(Scope);
-    StringRef ScopeName = Scope->getName();
+    StringRef ScopeName = getPrettyScopeName(Scope);
     if (!ScopeName.empty())
       QualifiedNameComponents.push_back(ScopeName);
     Scope = Scope->getScope().resolve();
@@ -171,6 +189,11 @@ struct CodeViewDebug::TypeLoweringScope {
   CodeViewDebug &CVD;
 };
 
+static std::string getFullyQualifiedName(const DIScope *Ty) {
+  const DIScope *Scope = Ty->getScope().resolve();
+  return getFullyQualifiedName(Scope, getPrettyScopeName(Ty));
+}
+
 TypeIndex CodeViewDebug::getScopeIndex(const DIScope *Scope) {
   // No scope means global scope and that uses the zero index.
   if (!Scope || isa<DIFile>(Scope))
@@ -184,8 +207,7 @@ TypeIndex CodeViewDebug::getScopeIndex(const DIScope *Scope) {
     return I->second;
 
   // Build the fully qualified name of the scope.
-  std::string ScopeName =
-      getFullyQualifiedName(Scope->getScope().resolve(), Scope->getName());
+  std::string ScopeName = getFullyQualifiedName(Scope);
   TypeIndex TI =
       TypeTable.writeStringId(StringIdRecord(TypeIndex(), ScopeName));
   return recordTypeIndexForDINode(Scope, TI);
@@ -882,7 +904,7 @@ void CodeViewDebug::addToUDTs(const DIType *Ty, TypeIndex TI) {
       Ty->getScope().resolve(), QualifiedNameComponents);
 
   std::string FullyQualifiedName =
-      getQualifiedName(QualifiedNameComponents, Ty->getName());
+      getQualifiedName(QualifiedNameComponents, getPrettyScopeName(Ty));
 
   if (ClosestSubprogram == nullptr)
     GlobalUDTs.emplace_back(std::move(FullyQualifiedName), TI);
@@ -1342,8 +1364,7 @@ TypeIndex CodeViewDebug::lowerTypeEnum(const DICompositeType *Ty) {
     FTI = TypeTable.writeFieldList(Fields);
   }
 
-  std::string FullName =
-      getFullyQualifiedName(Ty->getScope().resolve(), Ty->getName());
+  std::string FullName = getFullyQualifiedName(Ty);
 
   return TypeTable.writeEnum(EnumRecord(EnumeratorCount, CO, FTI, FullName,
                                         Ty->getIdentifier(),
@@ -1439,8 +1460,7 @@ TypeIndex CodeViewDebug::lowerTypeClass(const DICompositeType *Ty) {
   TypeRecordKind Kind = getRecordKind(Ty);
   ClassOptions CO =
       ClassOptions::ForwardReference | getRecordUniqueNameOption(Ty);
-  std::string FullName =
-      getFullyQualifiedName(Ty->getScope().resolve(), Ty->getName());
+  std::string FullName = getFullyQualifiedName(Ty);
   TypeIndex FwdDeclTI = TypeTable.writeClass(ClassRecord(
       Kind, 0, CO, HfaKind::None, WindowsRTClassKind::None, TypeIndex(),
       TypeIndex(), TypeIndex(), 0, FullName, Ty->getIdentifier()));
@@ -1459,8 +1479,7 @@ TypeIndex CodeViewDebug::lowerCompleteTypeClass(const DICompositeType *Ty) {
   unsigned FieldCount;
   std::tie(FieldTI, VShapeTI, FieldCount) = lowerRecordFieldList(Ty);
 
-  std::string FullName =
-      getFullyQualifiedName(Ty->getScope().resolve(), Ty->getName());
+  std::string FullName = getFullyQualifiedName(Ty);
 
   uint64_t SizeInBytes = Ty->getSizeInBits() / 8;
 
@@ -1481,8 +1500,7 @@ TypeIndex CodeViewDebug::lowerCompleteTypeClass(const DICompositeType *Ty) {
 TypeIndex CodeViewDebug::lowerTypeUnion(const DICompositeType *Ty) {
   ClassOptions CO =
       ClassOptions::ForwardReference | getRecordUniqueNameOption(Ty);
-  std::string FullName =
-      getFullyQualifiedName(Ty->getScope().resolve(), Ty->getName());
+  std::string FullName = getFullyQualifiedName(Ty);
   TypeIndex FwdDeclTI =
       TypeTable.writeUnion(UnionRecord(0, CO, HfaKind::None, TypeIndex(), 0,
                                        FullName, Ty->getIdentifier()));
@@ -1497,8 +1515,7 @@ TypeIndex CodeViewDebug::lowerCompleteTypeUnion(const DICompositeType *Ty) {
   unsigned FieldCount;
   std::tie(FieldTI, std::ignore, FieldCount) = lowerRecordFieldList(Ty);
   uint64_t SizeInBytes = Ty->getSizeInBits() / 8;
-  std::string FullName =
-      getFullyQualifiedName(Ty->getScope().resolve(), Ty->getName());
+  std::string FullName = getFullyQualifiedName(Ty);
 
   TypeIndex UnionTI = TypeTable.writeUnion(
       UnionRecord(FieldCount, CO, HfaKind::None, FieldTI, SizeInBytes, FullName,

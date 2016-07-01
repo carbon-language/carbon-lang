@@ -46,7 +46,7 @@ target triple = "i686-pc-windows-msvc18.0.0"
 ; CHECK-NEXT: Type: S (0x{{[0-9A-F]+}})
 ; CHECK-NEXT: UDTName: S
 ; CHECK:      UDT {
-; CHECK-NEXT: Type: 0x{{[0-9A-F]+}}
+; CHECK-NEXT: Type: <unnamed-tag> (0x{{[0-9A-F]+}})
 ; CHECK-NEXT: UDTName: U
 ; CHECK-NOT: UDT {
 
