@@ -2347,81 +2347,6 @@ SDValue SITargetLowering::performUCharToFloatCombine(SDNode *N,
     }
   }
 
-  // We are primarily trying to catch operations on illegal vector types
-  // before they are expanded.
-  // For scalars, we can use the more flexible method of checking masked bits
-  // after legalization.
-  if (!DCI.isBeforeLegalize() ||
-      !SrcVT.isVector() ||
-      SrcVT.getVectorElementType() != MVT::i8) {
-    return SDValue();
-  }
-
-  assert(DCI.isBeforeLegalize() && "Unexpected legal type");
-
-  // Weird sized vectors are a pain to handle, but we know 3 is really the same
-  // size as 4.
-  unsigned NElts = SrcVT.getVectorNumElements();
-  if (!SrcVT.isSimple() && NElts != 3)
-    return SDValue();
-
-  // Handle v4i8 -> v4f32 extload. Replace the v4i8 with a legal i32 load to
-  // prevent a mess from expanding to v4i32 and repacking.
-  if (ISD::isNormalLoad(Src.getNode()) && Src.hasOneUse()) {
-    EVT LoadVT = getEquivalentMemType(*DAG.getContext(), SrcVT);
-    EVT RegVT = getEquivalentLoadRegType(*DAG.getContext(), SrcVT);
-    EVT FloatVT = EVT::getVectorVT(*DAG.getContext(), MVT::f32, NElts);
-    LoadSDNode *Load = cast<LoadSDNode>(Src);
-
-    unsigned AS = Load->getAddressSpace();
-    unsigned Align = Load->getAlignment();
-    Type *Ty = LoadVT.getTypeForEVT(*DAG.getContext());
-    unsigned ABIAlignment = DAG.getDataLayout().getABITypeAlignment(Ty);
-
-    // Don't try to replace the load if we have to expand it due to alignment
-    // problems. Otherwise we will end up scalarizing the load, and trying to
-    // repack into the vector for no real reason.
-    if (Align < ABIAlignment &&
-        !allowsMisalignedMemoryAccesses(LoadVT, AS, Align, nullptr)) {
-      return SDValue();
-    }
-
-    SDValue NewLoad = DAG.getExtLoad(ISD::ZEXTLOAD, DL, RegVT,
-                                     Load->getChain(),
-                                     Load->getBasePtr(),
-                                     LoadVT,
-                                     Load->getMemOperand());
-
-    // Make sure successors of the original load stay after it by updating
-    // them to use the new Chain.
-    DAG.ReplaceAllUsesOfValueWith(SDValue(Load, 1), NewLoad.getValue(1));
-
-    SmallVector<SDValue, 4> Elts;
-    if (RegVT.isVector())
-      DAG.ExtractVectorElements(NewLoad, Elts);
-    else
-      Elts.push_back(NewLoad);
-
-    SmallVector<SDValue, 4> Ops;
-
-    unsigned EltIdx = 0;
-    for (SDValue Elt : Elts) {
-      unsigned ComponentsInElt = std::min(4u, NElts - 4 * EltIdx);
-      for (unsigned I = 0; I < ComponentsInElt; ++I) {
-        unsigned Opc = AMDGPUISD::CVT_F32_UBYTE0 + I;
-        SDValue Cvt = DAG.getNode(Opc, DL, MVT::f32, Elt);
-        DCI.AddToWorklist(Cvt.getNode());
-        Ops.push_back(Cvt);
-      }
-
-      ++EltIdx;
-    }
-
-    assert(Ops.size() == NElts);
-
-    return DAG.getBuildVector(FloatVT, DL, Ops);
-  }
-
   return SDValue();
 }
 
@@ -2874,6 +2799,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     unsigned Offset = N->getOpcode() - AMDGPUISD::CVT_F32_UBYTE0;
     SDValue Src = N->getOperand(0);
 
+    // TODO: Handle (or x, (srl y, 8)) pattern when known bits are zero.
     if (Src.getOpcode() == ISD::SRL) {
       // cvt_f32_ubyte0 (srl x, 16) -> cvt_f32_ubyte2 x
       // cvt_f32_ubyte1 (srl x, 16) -> cvt_f32_ubyte3 x

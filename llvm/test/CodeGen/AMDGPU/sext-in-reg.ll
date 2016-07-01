@@ -1,4 +1,4 @@
-; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=cypress -verify-machineinstrs < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
 declare i32 @llvm.AMDGPU.imax(i32, i32) nounwind readnone
@@ -95,17 +95,6 @@ define void @sext_in_reg_i1_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounw
 ; SI-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], s[[SLO]]
 ; SI-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[SHI]]
 ; SI: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
-
-; EG: MEM_{{.*}} STORE_{{.*}} [[RES_LO:T[0-9]+\.[XYZW]]], [[ADDR_LO:T[0-9]+.[XYZW]]]
-; EG: MEM_{{.*}} STORE_{{.*}} [[RES_HI:T[0-9]+\.[XYZW]]], [[ADDR_HI:T[0-9]+.[XYZW]]]
-; EG: LSHL
-; EG: BFE_INT {{\*?}} [[RES_LO]], {{.*}}, 0.0, literal
-; EG: ASHR [[RES_HI]]
-; EG-NOT: BFE_INT
-; EG: LSHR
-; EG: LSHR
-;; TODO Check address computation, using | with variables in {{}} does not work,
-;; also the _LO/_HI order might be different
 define void @sext_in_reg_i8_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
   %c = shl i64 %a, %b
   %shl = shl i64 %c, 56
@@ -121,16 +110,6 @@ define void @sext_in_reg_i8_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounw
 ; SI-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[SHI]]
 ; SI: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
 
-; EG: MEM_{{.*}} STORE_{{.*}} [[RES_LO:T[0-9]+\.[XYZW]]], [[ADDR_LO:T[0-9]+.[XYZW]]]
-; EG: MEM_{{.*}} STORE_{{.*}} [[RES_HI:T[0-9]+\.[XYZW]]], [[ADDR_HI:T[0-9]+.[XYZW]]]
-; EG: LSHL
-; EG: BFE_INT {{\*?}} [[RES_LO]], {{.*}}, 0.0, literal
-; EG: ASHR [[RES_HI]]
-; EG-NOT: BFE_INT
-; EG: LSHR
-; EG: LSHR
-;; TODO Check address computation, using | with variables in {{}} does not work,
-;; also the _LO/_HI order might be different
 define void @sext_in_reg_i16_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
   %c = shl i64 %a, %b
   %shl = shl i64 %c, 48
@@ -145,17 +124,6 @@ define void @sext_in_reg_i16_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) noun
 ; SI-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], s[[SLO]]
 ; SI-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[SHI]]
 ; SI: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
-
-; EG: MEM_{{.*}} STORE_{{.*}} [[RES_LO:T[0-9]+\.[XYZW]]], [[ADDR_LO:T[0-9]+.[XYZW]]]
-; EG: MEM_{{.*}} STORE_{{.*}} [[RES_HI:T[0-9]+\.[XYZW]]], [[ADDR_HI:T[0-9]+.[XYZW]]]
-; EG-NOT: BFE_INT
-
-; EG: ASHR [[RES_HI]]
-
-; EG: LSHR
-; EG: LSHR
-;; TODO Check address computation, using | with variables in {{}} does not work,
-;; also the _LO/_HI order might be different
 define void @sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
   %c = shl i64 %a, %b
   %shl = shl i64 %c, 32
