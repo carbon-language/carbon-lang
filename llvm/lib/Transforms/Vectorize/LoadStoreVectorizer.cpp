@@ -437,8 +437,14 @@ void Vectorizer::collectInstructions(BasicBlock *BB) {
       if (!VectorType::isValidElementType(Ty->getScalarType()))
         continue;
 
+      // Skip weird non-byte sizes. They probably aren't worth the effort of
+      // handling correctly.
+      unsigned TySize = DL.getTypeSizeInBits(Ty);
+      if (TySize < 8)
+        continue;
+
       // No point in looking at these if they're too big to vectorize.
-      if (DL.getTypeSizeInBits(Ty) > VecRegSize / 2)
+      if (TySize > VecRegSize / 2)
         continue;
 
       // Make sure all the users of a vector are constant-index extracts.
@@ -464,7 +470,13 @@ void Vectorizer::collectInstructions(BasicBlock *BB) {
       if (!VectorType::isValidElementType(Ty->getScalarType()))
         continue;
 
-      if (DL.getTypeSizeInBits(Ty) > VecRegSize / 2)
+      // Skip weird non-byte sizes. They probably aren't worth the effort of
+      // handling correctly.
+      unsigned TySize = DL.getTypeSizeInBits(Ty);
+      if (TySize < 8)
+        continue;
+
+      if (TySize > VecRegSize / 2)
         continue;
 
       if (isa<VectorType>(Ty) &&
