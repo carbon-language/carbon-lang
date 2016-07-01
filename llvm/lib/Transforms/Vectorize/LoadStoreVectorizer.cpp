@@ -155,14 +155,14 @@ public:
 }
 
 INITIALIZE_PASS_BEGIN(LoadStoreVectorizer, DEBUG_TYPE,
-                      "Vectorize load and Store instructions", false, false);
+                      "Vectorize load and Store instructions", false, false)
 INITIALIZE_PASS_DEPENDENCY(SCEVAAWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(GlobalsAAWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_END(LoadStoreVectorizer, DEBUG_TYPE,
-                    "Vectorize load and store instructions", false, false);
+                    "Vectorize load and store instructions", false, false)
 
 char LoadStoreVectorizer::ID = 0;
 
