@@ -777,8 +777,10 @@ __kmp_enter_single( int gtid, ident_t *id_ref, int push_ws )
            single block
         */
         /* TODO: Should this be acquire or release? */
-        status = KMP_COMPARE_AND_STORE_ACQ32(&team->t.t_construct, old_this,
-                                             th->th.th_local.this_construct);
+        if (team->t.t_construct == old_this) {
+            status = KMP_COMPARE_AND_STORE_ACQ32(&team->t.t_construct, old_this,
+                                                 th->th.th_local.this_construct);
+        }
 #if USE_ITT_BUILD
         if ( __itt_metadata_add_ptr && __kmp_forkjoin_frames_mode == 3 && KMP_MASTER_GTID(gtid) &&
 #if OMP_40_ENABLED
