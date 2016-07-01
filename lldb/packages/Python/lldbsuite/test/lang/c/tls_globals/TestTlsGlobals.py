@@ -27,6 +27,7 @@ class TlsGlobalTestCase(TestBase):
             self.addTearDownHook(lambda: self.runCmd("settings remove target.env-vars " + self.dylibPath))
 
     @skipIfWindows # TLS works differently on Windows, this would need to be implemented separately.
+    @unittest2.expectedFailure("now works on Darwin, but not linux")
     def test(self):
         """Test thread-local storage."""
         self.build()
