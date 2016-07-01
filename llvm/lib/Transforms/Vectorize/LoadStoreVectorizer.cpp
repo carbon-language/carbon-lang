@@ -583,6 +583,12 @@ bool Vectorizer::vectorizeStoreChain(ArrayRef<Value *> Chain) {
     StoreTy = cast<StoreInst>(V)->getValueOperand()->getType();
     if (StoreTy->isIntOrIntVectorTy())
       break;
+
+    if (StoreTy->isPtrOrPtrVectorTy()) {
+      StoreTy = Type::getIntNTy(F.getParent()->getContext(),
+                                DL.getTypeSizeInBits(StoreTy));
+      break;
+    }
   }
 
   unsigned Sz = DL.getTypeSizeInBits(StoreTy);
@@ -683,7 +689,7 @@ bool Vectorizer::vectorizeStoreChain(ArrayRef<Value *> Chain) {
       StoreInst *Store = cast<StoreInst>(Chain[I]);
       Value *Extract = Store->getValueOperand();
       if (Extract->getType() != StoreTy->getScalarType())
-        Extract = Builder.CreateBitCast(Extract, StoreTy->getScalarType());
+        Extract = Builder.CreateBitOrPointerCast(Extract, StoreTy->getScalarType());
 
       Value *Insert = Builder.CreateInsertElement(Vec, Extract,
                                                   Builder.getInt32(I));
@@ -712,6 +718,13 @@ bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
     LoadTy = cast<LoadInst>(V)->getType();
     if (LoadTy->isIntOrIntVectorTy())
       break;
+
+    if (LoadTy->isPtrOrPtrVectorTy()) {
+      LoadTy = Type::getIntNTy(F.getParent()->getContext(),
+                               DL.getTypeSizeInBits(LoadTy));
+      break;
+    }
+
   }
 
   unsigned Sz = DL.getTypeSizeInBits(LoadTy);
@@ -828,9 +841,10 @@ bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
       Value *V = Builder.CreateExtractElement(LI, Builder.getInt32(I));
       Instruction *Extracted = cast<Instruction>(V);
       Instruction *UI = cast<Instruction>(Chain[I]);
-      if (Extracted->getType() != UI->getType())
+      if (Extracted->getType() != UI->getType()) {
         Extracted =
-          cast<Instruction>(Builder.CreateBitCast(Extracted, UI->getType()));
+          cast<Instruction>(Builder.CreateBitOrPointerCast(Extracted, UI->getType()));
+      }
 
       // Replace the old instruction.
       UI->replaceAllUsesWith(Extracted);
