@@ -283,7 +283,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
       if (reusedIncoming)
         if (MachineInstr *OldKill = VI.findKill(&MBB)) {
           DEBUG(dbgs() << "Remove old kill from " << *OldKill);
-          LV->removeVirtualRegisterKilled(IncomingReg, OldKill);
+          LV->removeVirtualRegisterKilled(IncomingReg, *OldKill);
           DEBUG(MBB.dump());
         }
 
@@ -291,18 +291,18 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
       // killed.  Note that because the value is defined in several places (once
       // each for each incoming block), the "def" block and instruction fields
       // for the VarInfo is not filled in.
-      LV->addVirtualRegisterKilled(IncomingReg, &PHICopy);
+      LV->addVirtualRegisterKilled(IncomingReg, PHICopy);
     }
 
     // Since we are going to be deleting the PHI node, if it is the last use of
     // any registers, or if the value itself is dead, we need to move this
     // information over to the new copy we just inserted.
-    LV->removeVirtualRegistersKilled(MPhi);
+    LV->removeVirtualRegistersKilled(*MPhi);
 
     // If the result is dead, update LV.
     if (isDead) {
-      LV->addVirtualRegisterDead(DestReg, &PHICopy);
-      LV->removeVirtualRegisterDead(DestReg, MPhi);
+      LV->addVirtualRegisterDead(DestReg, PHICopy);
+      LV->removeVirtualRegisterDead(DestReg, *MPhi);
     }
   }
 
@@ -452,7 +452,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
       assert(KillInst->readsRegister(SrcReg) && "Cannot find kill instruction");
 
       // Finally, mark it killed.
-      LV->addVirtualRegisterKilled(SrcReg, &*KillInst);
+      LV->addVirtualRegisterKilled(SrcReg, *KillInst);
 
       // This vreg no longer lives all of the way through opBlock.
       unsigned opBlockNum = opBlock.getNumber();
