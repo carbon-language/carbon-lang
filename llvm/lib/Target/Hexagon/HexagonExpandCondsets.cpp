@@ -349,7 +349,7 @@ void HexagonExpandCondsets::updateKillFlags(unsigned Reg) {
     // Set the <kill> flag on a use of Reg whose lane mask is contained in LM.
     MachineInstr *MI = LIS->getInstructionFromIndex(K);
     for (auto &Op : MI->operands()) {
-      if (!Op.isReg() || !Op.isUse() || Op.getReg() != Reg)
+      if (!Op.isReg() || !Op.readsReg() || Op.getReg() != Reg)
         continue;
       LaneBitmask SLM = getLaneMask(Reg, Op.getSubReg());
       if ((SLM & LM) == SLM) {
