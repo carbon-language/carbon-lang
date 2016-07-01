@@ -1484,7 +1484,9 @@ static void commuteShuffle(SDValue &N1, SDValue &N2, MutableArrayRef<int> M) {
 }
 
 SDValue SelectionDAG::getVectorShuffle(EVT VT, const SDLoc &dl, SDValue N1,
-                                       SDValue N2, const int *Mask) {
+                                       SDValue N2, ArrayRef<int> Mask) {
+  assert(VT.getVectorNumElements() == Mask.size() &&
+           "Must have the same number of vector elements as mask elements!");
   assert(VT == N1.getValueType() && VT == N2.getValueType() &&
          "Invalid VECTOR_SHUFFLE");
 
@@ -1656,7 +1658,7 @@ SDValue SelectionDAG::getCommutedVectorShuffle(const ShuffleVectorSDNode &SV) {
 
   SDValue Op0 = SV.getOperand(0);
   SDValue Op1 = SV.getOperand(1);
-  return getVectorShuffle(VT, SDLoc(&SV), Op1, Op0, &MaskVec[0]);
+  return getVectorShuffle(VT, SDLoc(&SV), Op1, Op0, MaskVec);
 }
 
 SDValue SelectionDAG::getConvertRndSat(EVT VT, const SDLoc &dl, SDValue Val,

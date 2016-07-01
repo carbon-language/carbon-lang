@@ -6045,7 +6045,7 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
     ShuffleOps[i] = Sources[i].ShuffleVec;
 
   SDValue Shuffle = DAG.getVectorShuffle(ShuffleVT, dl, ShuffleOps[0],
-                                         ShuffleOps[1], &Mask[0]);
+                                         ShuffleOps[1], Mask);
   return DAG.getNode(ISD::BITCAST, dl, VT, Shuffle);
 }
 
@@ -9879,7 +9879,7 @@ static SDValue PerformVECTOR_SHUFFLECombine(SDNode *N, SelectionDAG &DAG) {
     NewMask.push_back(NewElt);
   }
   return DAG.getVectorShuffle(VT, SDLoc(N), NewConcat,
-                              DAG.getUNDEF(VT), NewMask.data());
+                              DAG.getUNDEF(VT), NewMask);
 }
 
 /// CombineBaseUpdate - Target-specific DAG combine function for VLDDUP,
@@ -10275,7 +10275,7 @@ static SDValue PerformSTORECombine(SDNode *N,
 
     SDValue Shuff = DAG.getVectorShuffle(WideVecVT, DL, WideVec,
                                 DAG.getUNDEF(WideVec.getValueType()),
-                                ShuffleVec.data());
+                                ShuffleVec);
     // At this point all of the data is stored at the bottom of the
     // register. We now need to save it to mem.
 

@@ -2953,7 +2953,7 @@ static SDValue getMOVL(SelectionDAG &DAG, const SDLoc &dl, MVT VT, SDValue V1,
   Mask.push_back(NumElems);
   for (unsigned i = 1; i != NumElems; ++i)
     Mask.push_back(i);
-  return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
+  return DAG.getVectorShuffle(VT, dl, V1, V2, Mask);
 }
 
 SDValue
@@ -4691,7 +4691,7 @@ static SDValue getUnpackl(SelectionDAG &DAG, const SDLoc &dl, MVT VT,
     Mask[i * 2]     = i;
     Mask[i * 2 + 1] = i + NumElems;
   }
-  return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
+  return DAG.getVectorShuffle(VT, dl, V1, V2, Mask);
 }
 
 /// Returns a vector_shuffle node for an unpackh operation.
@@ -4704,7 +4704,7 @@ static SDValue getUnpackh(SelectionDAG &DAG, const SDLoc &dl, MVT VT,
     Mask[i * 2]     = i + Half;
     Mask[i * 2 + 1] = i + NumElems + Half;
   }
-  return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
+  return DAG.getVectorShuffle(VT, dl, V1, V2, Mask);
 }
 
 /// Return a vector_shuffle of the specified vector of zero or undef vector.
@@ -4723,7 +4723,7 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, int Idx,
   for (int i = 0; i != NumElems; ++i)
     // If this is the insertion idx, put the low elt of V2 here.
     MaskVec[i] = (i == Idx) ? NumElems : i;
-  return DAG.getVectorShuffle(VT, SDLoc(V2), V1, V2, &MaskVec[0]);
+  return DAG.getVectorShuffle(VT, SDLoc(V2), V1, V2, MaskVec);
 }
 
 static SDValue peekThroughBitcasts(SDValue V) {
@@ -5403,7 +5403,7 @@ static SDValue LowerBuildVectorv4x32(SDValue Op, SelectionDAG &DAG,
     SDValue VZero = getZeroVector(VT, Subtarget, DAG, SDLoc(Op));
     if (V1.getSimpleValueType() != VT)
       V1 = DAG.getBitcast(VT, V1);
-    return DAG.getVectorShuffle(VT, SDLoc(V1), V1, VZero, &Mask[0]);
+    return DAG.getVectorShuffle(VT, SDLoc(V1), V1, VZero, Mask);
   }
 
   // See if we can lower this build_vector to a INSERTPS.
@@ -5529,7 +5529,7 @@ static SDValue LowerAsSplatVectorLoad(SDValue SrcOp, MVT VT, const SDLoc &dl,
 
     SmallVector<int, 8> Mask(NumElems, EltNo);
 
-    return DAG.getVectorShuffle(NVT, dl, V1, DAG.getUNDEF(NVT), &Mask[0]);
+    return DAG.getVectorShuffle(NVT, dl, V1, DAG.getUNDEF(NVT), Mask);
   }
 
   return SDValue();
@@ -5974,7 +5974,7 @@ static SDValue buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) {
     return SDValue();
 
   VecIn2 = VecIn2.getNode() ? VecIn2 : DAG.getUNDEF(VT);
-  SDValue NV = DAG.getVectorShuffle(VT, DL, VecIn1, VecIn2, &Mask[0]);
+  SDValue NV = DAG.getVectorShuffle(VT, DL, VecIn1, VecIn2, Mask);
   for (unsigned i = 0, e = InsertIndices.size(); i != e; ++i) {
     unsigned Idx = InsertIndices[i];
     NV = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, VT, NV, Op.getOperand(Idx),
@@ -6816,7 +6816,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       static_cast<int>(Reverse2 ? NumElems+1 : NumElems),
       static_cast<int>(Reverse2 ? NumElems   : NumElems+1)
     };
-    return DAG.getVectorShuffle(VT, dl, Ops[0], Ops[1], &MaskVec[0]);
+    return DAG.getVectorShuffle(VT, dl, Ops[0], Ops[1], MaskVec);
   }
 
   if (Values.size() > 1 && VT.is128BitVector()) {
@@ -14072,7 +14072,7 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
 
       static const int ShufMask[] = {0,  2,  -1,  -1};
       In = DAG.getVectorShuffle(MVT::v4i64, DL,  In, DAG.getUNDEF(MVT::v4i64),
-                                &ShufMask[0]);
+                                ShufMask);
       In = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, MVT::v2i64, In,
                        DAG.getIntPtrConstant(0, DL));
       return DAG.getBitcast(VT, In);
@@ -14118,7 +14118,7 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   for (unsigned i = 0; i != NumElems; ++i)
     MaskVec[i] = i * 2;
   SDValue V = DAG.getVectorShuffle(NVT, DL, DAG.getBitcast(NVT, In),
-                                   DAG.getUNDEF(NVT), &MaskVec[0]);
+                                   DAG.getUNDEF(NVT), MaskVec);
   return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, V,
                      DAG.getIntPtrConstant(0, DL));
 }
@@ -16009,13 +16009,13 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget &Subtarget,
   for (unsigned i = 0; i != NumElems/2; ++i)
     ShufMask1[i] = i;
 
-  SDValue OpLo = DAG.getVectorShuffle(InVT, dl, In, Undef, &ShufMask1[0]);
+  SDValue OpLo = DAG.getVectorShuffle(InVT, dl, In, Undef, ShufMask1);
 
   SmallVector<int,8> ShufMask2(NumElems, -1);
   for (unsigned i = 0; i != NumElems/2; ++i)
     ShufMask2[i] = i + NumElems/2;
 
-  SDValue OpHi = DAG.getVectorShuffle(InVT, dl, In, Undef, &ShufMask2[0]);
+  SDValue OpHi = DAG.getVectorShuffle(InVT, dl, In, Undef, ShufMask2);
 
   MVT HalfVT = MVT::getVectorVT(VT.getVectorElementType(),
                                 VT.getVectorNumElements()/2);
@@ -16359,7 +16359,7 @@ static SDValue LowerExtendedLoad(SDValue Op, const X86Subtarget &Subtarget,
     ShuffleVec[i * SizeRatio] = i;
 
   SDValue Shuff = DAG.getVectorShuffle(WideVecVT, dl, SlicedVec,
-                                       DAG.getUNDEF(WideVecVT), &ShuffleVec[0]);
+                                       DAG.getUNDEF(WideVecVT), ShuffleVec);
 
   // Bitcast to the requested type.
   Shuff = DAG.getBitcast(RegVT, Shuff);
@@ -19534,9 +19534,11 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget &Subtarget,
   // step to the left):
   const int Mask[] = {1, -1, 3, -1, 5, -1, 7, -1};
   // <a|b|c|d> => <b|undef|d|undef>
-  SDValue Odd0 = DAG.getVectorShuffle(VT, dl, Op0, Op0, Mask);
+  SDValue Odd0 = DAG.getVectorShuffle(VT, dl, Op0, Op0,
+                             makeArrayRef(&Mask[0], VT.getVectorNumElements()));
   // <e|f|g|h> => <f|undef|h|undef>
-  SDValue Odd1 = DAG.getVectorShuffle(VT, dl, Op1, Op1, Mask);
+  SDValue Odd1 = DAG.getVectorShuffle(VT, dl, Op1, Op1,
+                             makeArrayRef(&Mask[0], VT.getVectorNumElements()));
 
   // Emit two multiplies, one for the lower 2 ints and one for the higher 2
   // ints.
@@ -25832,7 +25834,7 @@ static SDValue combineShuffle(SDNode *N, SelectionDAG &DAG,
         SDValue BC00 = DAG.getBitcast(VT, BC0.getOperand(0));
         SDValue BC01 = DAG.getBitcast(VT, BC0.getOperand(1));
         SDValue NewBinOp = DAG.getNode(BC0.getOpcode(), dl, VT, BC00, BC01);
-        return DAG.getVectorShuffle(VT, dl, NewBinOp, N1, &SVOp->getMask()[0]);
+        return DAG.getVectorShuffle(VT, dl, NewBinOp, N1, SVOp->getMask());
       }
     }
   }
@@ -25965,9 +25967,8 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
 
   // Create shuffle node taking into account the case that its a unary shuffle
   SDValue Shuffle = (UnaryShuffle) ? DAG.getUNDEF(CurrentVT) : ShuffleOps[1];
-  Shuffle = DAG.getVectorShuffle(CurrentVT, dl,
-                                 ShuffleOps[0], Shuffle,
-                                 &ShuffleMask[0]);
+  Shuffle = DAG.getVectorShuffle(CurrentVT, dl, ShuffleOps[0], Shuffle,
+                                 ShuffleMask);
   Shuffle = DAG.getBitcast(OriginalVT, Shuffle);
   return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, N->getValueType(0), Shuffle,
                      EltNo);
@@ -27256,7 +27257,7 @@ static SDValue reduceVMULWidth(SDNode *N, SelectionDAG &DAG,
         ShuffleMask[2 * i + 1] = i + VT.getVectorNumElements();
       }
       SDValue ResLo =
-          DAG.getVectorShuffle(ReducedVT, DL, MulLo, MulHi, &ShuffleMask[0]);
+          DAG.getVectorShuffle(ReducedVT, DL, MulLo, MulHi, ShuffleMask);
       ResLo = DAG.getNode(ISD::BITCAST, DL, ResVT, ResLo);
       // Generate shuffle functioning as punpckhwd.
       for (unsigned i = 0; i < VT.getVectorNumElements() / 2; i++) {
@@ -27264,7 +27265,7 @@ static SDValue reduceVMULWidth(SDNode *N, SelectionDAG &DAG,
         ShuffleMask[2 * i + 1] = i + VT.getVectorNumElements() * 3 / 2;
       }
       SDValue ResHi =
-          DAG.getVectorShuffle(ReducedVT, DL, MulLo, MulHi, &ShuffleMask[0]);
+          DAG.getVectorShuffle(ReducedVT, DL, MulLo, MulHi, ShuffleMask);
       ResHi = DAG.getNode(ISD::BITCAST, DL, ResVT, ResHi);
       return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, ResLo, ResHi);
     }
@@ -28691,7 +28692,7 @@ static SDValue combineMaskedLoad(SDNode *N, SelectionDAG &DAG,
     assert(DAG.getTargetLoweringInfo().isTypeLegal(WideVecVT) &&
            "WideVecVT should be legal");
     WideSrc0 = DAG.getVectorShuffle(WideVecVT, dl, WideSrc0,
-                                    DAG.getUNDEF(WideVecVT), &ShuffleVec[0]);
+                                    DAG.getUNDEF(WideVecVT), ShuffleVec);
   }
   // Prepare the new mask.
   SDValue NewMask;
@@ -28706,7 +28707,7 @@ static SDValue combineMaskedLoad(SDNode *N, SelectionDAG &DAG,
       ShuffleVec[i] = NumElems * SizeRatio;
     NewMask = DAG.getVectorShuffle(WideVecVT, dl, NewMask,
                                    DAG.getConstant(0, dl, WideVecVT),
-                                   &ShuffleVec[0]);
+                                   ShuffleVec);
   } else {
     assert(Mask.getValueType().getVectorElementType() == MVT::i1);
     unsigned WidenNumElts = NumElems*SizeRatio;
@@ -28812,7 +28813,7 @@ static SDValue combineMaskedStore(SDNode *N, SelectionDAG &DAG,
 
   SDValue TruncatedVal = DAG.getVectorShuffle(WideVecVT, dl, WideVec,
                                               DAG.getUNDEF(WideVecVT),
-                                              &ShuffleVec[0]);
+                                              ShuffleVec);
 
   SDValue NewMask;
   SDValue Mask = Mst->getMask();
@@ -28825,7 +28826,7 @@ static SDValue combineMaskedStore(SDNode *N, SelectionDAG &DAG,
       ShuffleVec[i] = NumElems*SizeRatio;
     NewMask = DAG.getVectorShuffle(WideVecVT, dl, NewMask,
                                    DAG.getConstant(0, dl, WideVecVT),
-                                   &ShuffleVec[0]);
+                                   ShuffleVec);
   } else {
     assert(Mask.getValueType().getVectorElementType() == MVT::i1);
     unsigned WidenNumElts = NumElems*SizeRatio;
@@ -28939,7 +28940,7 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
 
     SDValue Shuff = DAG.getVectorShuffle(WideVecVT, dl, WideVec,
                                          DAG.getUNDEF(WideVecVT),
-                                         &ShuffleVec[0]);
+                                         ShuffleVec);
     // At this point all of the data is stored at the bottom of the
     // register. We now need to save it to mem.
 
