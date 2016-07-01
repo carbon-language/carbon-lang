@@ -552,7 +552,7 @@ MachineInstr *TargetInstrInfo::foldMemoryOperand(MachineInstr &MI,
     storeRegToStackSlot(*MBB, Pos, MO.getReg(), MO.isKill(), FI, RC, TRI);
   else
     loadRegFromStackSlot(*MBB, Pos, MO.getReg(), FI, RC, TRI);
-  return --Pos;
+  return &*--Pos;
 }
 
 bool TargetInstrInfo::hasReassociableOperands(
@@ -793,7 +793,7 @@ MachineInstr *TargetInstrInfo::foldMemoryOperand(MachineInstr &MI,
     // Fold stackmap/patchpoint.
     NewMI = foldPatchpoint(MF, MI, Ops, FrameIndex, *this);
     if (NewMI)
-      NewMI = MBB.insert(MI, NewMI);
+      NewMI = &*MBB.insert(MI, NewMI);
   } else {
     // Ask the target to do the actual folding.
     NewMI = foldMemoryOperandImpl(MF, MI, Ops, MI, LoadMI, LIS);
