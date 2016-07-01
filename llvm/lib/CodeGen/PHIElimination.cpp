@@ -227,7 +227,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
   MachineBasicBlock::iterator AfterPHIsIt = std::next(LastPHIIt);
 
   // Unlink the PHI node from the basic block, but don't delete the PHI yet.
-  MachineInstr *MPhi = MBB.remove(MBB.begin());
+  MachineInstr *MPhi = MBB.remove(&*MBB.begin());
 
   unsigned NumSrcs = (MPhi->getNumOperands() - 1) / 2;
   unsigned DestReg = MPhi->getOperand(0).getReg();
@@ -269,7 +269,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
 
   // Update live variable information if there is any.
   if (LV) {
-    MachineInstr *PHICopy = std::prev(AfterPHIsIt);
+    MachineInstr &PHICopy = *std::prev(AfterPHIsIt);
 
     if (IncomingReg) {
       LiveVariables::VarInfo &VI = LV->getVarInfo(IncomingReg);
@@ -291,7 +291,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
       // killed.  Note that because the value is defined in several places (once
       // each for each incoming block), the "def" block and instruction fields
       // for the VarInfo is not filled in.
-      LV->addVirtualRegisterKilled(IncomingReg, PHICopy);
+      LV->addVirtualRegisterKilled(IncomingReg, &PHICopy);
     }
 
     // Since we are going to be deleting the PHI node, if it is the last use of
@@ -301,15 +301,15 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
 
     // If the result is dead, update LV.
     if (isDead) {
-      LV->addVirtualRegisterDead(DestReg, PHICopy);
+      LV->addVirtualRegisterDead(DestReg, &PHICopy);
       LV->removeVirtualRegisterDead(DestReg, MPhi);
     }
   }
 
   // Update LiveIntervals for the new copy or implicit def.
   if (LIS) {
-    MachineInstr *NewInstr = std::prev(AfterPHIsIt);
-    SlotIndex DestCopyIndex = LIS->InsertMachineInstrInMaps(*NewInstr);
+    SlotIndex DestCopyIndex =
+        LIS->InsertMachineInstrInMaps(*std::prev(AfterPHIsIt));
 
     SlotIndex MBBStartIndex = LIS->getMBBStartIdx(&MBB);
     if (IncomingReg) {
@@ -452,7 +452,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
       assert(KillInst->readsRegister(SrcReg) && "Cannot find kill instruction");
 
       // Finally, mark it killed.
-      LV->addVirtualRegisterKilled(SrcReg, KillInst);
+      LV->addVirtualRegisterKilled(SrcReg, &*KillInst);
 
       // This vreg no longer lives all of the way through opBlock.
       unsigned opBlockNum = opBlock.getNumber();
