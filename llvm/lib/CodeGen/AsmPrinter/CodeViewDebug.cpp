@@ -1378,7 +1378,7 @@ TypeIndex CodeViewDebug::lowerTypeEnum(const DICompositeType *Ty) {
 struct llvm::ClassInfo {
   struct MemberInfo {
     const DIDerivedType *MemberTypeNode;
-    unsigned BaseOffset;
+    uint64_t BaseOffset;
   };
   // [MemberInfo]
   typedef std::vector<MemberInfo> MemberList;
@@ -1416,7 +1416,7 @@ void CodeViewDebug::collectMemberInfo(ClassInfo &Info,
   // An unnamed member must represent a nested struct or union. Add all the
   // indirect fields to the current record.
   assert((DDTy->getOffsetInBits() % 8) == 0 && "Unnamed bitfield member!");
-  unsigned Offset = DDTy->getOffsetInBits() / 8;
+  uint64_t Offset = DDTy->getOffsetInBits();
   const DIType *Ty = DDTy->getBaseType().resolve();
   const DICompositeType *DCTy = cast<DICompositeType>(Ty);
   ClassInfo NestedInfo = collectClassInfo(DCTy);
@@ -1578,12 +1578,13 @@ CodeViewDebug::lowerRecordFieldList(const DICompositeType *Ty) {
     }
 
     // Data member.
-    uint64_t MemberOffsetInBits = Member->getOffsetInBits();
+    uint64_t MemberOffsetInBits =
+        Member->getOffsetInBits() + MemberInfo.BaseOffset;
     if (Member->isBitField()) {
       uint64_t StartBitOffset = MemberOffsetInBits;
       if (const auto *CI =
               dyn_cast_or_null<ConstantInt>(Member->getStorageOffsetInBits())) {
-        MemberOffsetInBits = CI->getZExtValue();
+        MemberOffsetInBits = CI->getZExtValue() + MemberInfo.BaseOffset;
       }
       StartBitOffset -= MemberOffsetInBits;
       MemberBaseType = TypeTable.writeBitField(BitFieldRecord(
