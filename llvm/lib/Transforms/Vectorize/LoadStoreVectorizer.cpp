@@ -286,20 +286,41 @@ bool Vectorizer::isConsecutiveAccess(Value *A, Value *B) {
   if (!isa<SExtInst>(OpA) && !isa<ZExtInst>(OpA))
     return false;
 
+  bool Signed = isa<SExtInst>(OpA);
+
   OpA = dyn_cast<Instruction>(OpA->getOperand(0));
   OpB = dyn_cast<Instruction>(OpB->getOperand(0));
   if (!OpA || !OpB || OpA->getType() != OpB->getType())
     return false;
 
   // Now we need to prove that adding 1 to OpA won't overflow.
+  bool Safe = false;
+  // First attempt: if OpB is an add with NSW/NUW, and OpB is 1 added to OpA,
+  // we're okay.
+  if (OpB->getOpcode() == Instruction::Add &&
+      isa<ConstantInt>(OpB->getOperand(1)) &&
+      cast<ConstantInt>(OpB->getOperand(1))->getSExtValue() > 0) {
+    if (Signed)
+      Safe = cast<BinaryOperator>(OpB)->hasNoSignedWrap();
+    else
+      Safe = cast<BinaryOperator>(OpB)->hasNoUnsignedWrap();
+  }
+
   unsigned BitWidth = OpA->getType()->getScalarSizeInBits();
-  APInt KnownZero = APInt(BitWidth, 0);
-  APInt KnownOne = APInt(BitWidth, 0);
-  computeKnownBits(OpA, KnownZero, KnownOne, DL, 0, nullptr, OpA, &DT);
+
+  // Second attempt:
   // If any bits are known to be zero other than the sign bit in OpA, we can
   // add 1 to it while guaranteeing no overflow of any sort.
-  KnownZero &= ~APInt::getHighBitsSet(BitWidth, 1);
-  if (KnownZero == 0)
+  if (!Safe) {
+    APInt KnownZero(BitWidth, 0);
+    APInt KnownOne(BitWidth, 0);
+    computeKnownBits(OpA, KnownZero, KnownOne, DL, 0, nullptr, OpA, &DT);
+    KnownZero &= ~APInt::getHighBitsSet(BitWidth, 1);
+    if (KnownZero != 0)
+      Safe = true;
+  }
+
+  if (!Safe)
     return false;
 
   const SCEV *OffsetSCEVA = SE.getSCEV(OpA);
