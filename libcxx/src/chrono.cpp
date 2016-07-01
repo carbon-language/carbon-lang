@@ -6,7 +6,7 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#define _LIBCPP_BUILDING_CHRONO
+
 #include "chrono"
 #include "cerrno"        // errno
 #include "system_error"  // __throw_system_error
