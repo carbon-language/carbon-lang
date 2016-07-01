@@ -13,6 +13,8 @@
 
 #include "CodeViewDebug.h"
 #include "llvm/ADT/TinyPtrVector.h"
+#include "llvm/DebugInfo/CodeView/ByteStream.h"
+#include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/FieldListRecordBuilder.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
@@ -20,6 +22,7 @@
 #include "llvm/DebugInfo/CodeView/TypeDumper.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
+#include "llvm/DebugInfo/CodeView/TypeVisitorCallbacks.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionCOFF.h"
@@ -433,14 +436,35 @@ void CodeViewDebug::emitTypeInformation() {
           ScopedPrinter SP(CommentOS);
           SP.setPrefix(CommentPrefix);
           CVTD.setPrinter(&SP);
-          Error EC = CVTD.dump({Record.bytes_begin(), Record.bytes_end()});
-          assert(!EC && "produced malformed type record");
-          consumeError(std::move(EC));
+          Error E = CVTD.dump({Record.bytes_begin(), Record.bytes_end()});
+          if (E) {
+            logAllUnhandledErrors(std::move(E), errs(), "error: ");
+            llvm_unreachable("produced malformed type record");
+          }
           // emitRawComment will insert its own tab and comment string before
           // the first line, so strip off our first one. It also prints its own
           // newline.
           OS.emitRawComment(
               CommentOS.str().drop_front(CommentPrefix.size() - 1).rtrim());
+        } else {
+#ifndef NDEBUG
+          // Assert that the type data is valid even if we aren't dumping
+          // comments. The MSVC linker doesn't do much type record validation,
+          // so the first link of an invalid type record can succeed while
+          // subsequent links will fail with LNK1285.
+          ByteStream<> Stream({Record.bytes_begin(), Record.bytes_end()});
+          CVTypeArray Types;
+          StreamReader Reader(Stream);
+          Error E = Reader.readArray(Types, Reader.getLength());
+          if (!E) {
+            TypeVisitorCallbacks C;
+            E = CVTypeVisitor(C).visitTypeStream(Types);
+          }
+          if (E) {
+            logAllUnhandledErrors(std::move(E), errs(), "error: ");
+            llvm_unreachable("produced malformed type record");
+          }
+#endif
         }
         OS.EmitBinaryData(Record);
       });
