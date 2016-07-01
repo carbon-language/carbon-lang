@@ -397,15 +397,12 @@ bool Vectorizer::isVectorizable(ArrayRef<Value *> Chain,
 
       Instruction *M0 = cast<Instruction>(V);
       Instruction *M1 = cast<Instruction>(VV);
-      Value *Ptr0 = getPointerOperand(M0);
-      Value *Ptr1 = getPointerOperand(M1);
-      unsigned S0 =
-        DL.getTypeStoreSize(Ptr0->getType()->getPointerElementType());
-      unsigned S1 =
-        DL.getTypeStoreSize(Ptr1->getType()->getPointerElementType());
 
-      if (AA.alias(MemoryLocation(Ptr0, S0), MemoryLocation(Ptr1, S1))) {
+      if (!AA.isNoAlias(MemoryLocation::get(M0), MemoryLocation::get(M1))) {
         DEBUG(
+          Value *Ptr0 = getPointerOperand(M0);
+          Value *Ptr1 = getPointerOperand(M1);
+
           dbgs() << "LSV: Found alias.\n"
                     "        Aliasing instruction and pointer:\n"
             << *V << " aliases " << *Ptr0 << '\n'
