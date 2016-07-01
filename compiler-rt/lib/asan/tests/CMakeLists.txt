@@ -46,9 +46,9 @@ else()
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -g)
 endif()
 if(MSVC)
-  list(APPEND SANITIZER_TEST_CFLAGS_COMMON -gcodeview)
+  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -gcodeview)
 endif()
-list(APPEND SANITIZER_TEST_LINK_FLAGS_COMMON -g)
+list(APPEND ASAN_UNITTEST_COMMON_LINKFLAGS -g)
 
 # Use -D instead of definitions to please custom compile command.
 list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
