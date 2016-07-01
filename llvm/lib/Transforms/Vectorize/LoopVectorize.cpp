@@ -5083,7 +5083,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
   }
 
   Requirements->addRuntimePointerChecks(LAI->getNumRuntimePointerChecks());
-  PSE.addPredicate(LAI->PSE.getUnionPredicate());
+  PSE.addPredicate(LAI->getPSE().getUnionPredicate());
 
   return true;
 }
