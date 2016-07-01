@@ -15,7 +15,7 @@ define void @local_unaligned_load_store_i16(i16 addrspace(3)* %p, i16 addrspace(
   ret void
 }
 
-; FUNC-LABEL: {{^}}unaligned_load_store_i16_global:
+; FUNC-LABEL: {{^}}global_unaligned_load_store_i16:
 ; GCN-NOHSA: buffer_load_ubyte
 ; GCN-NOHSA: buffer_load_ubyte
 ; GCN-NOHSA: buffer_store_byte
@@ -25,22 +25,25 @@ define void @local_unaligned_load_store_i16(i16 addrspace(3)* %p, i16 addrspace(
 ; GCN-HSA: flat_load_ubyte
 ; GCN-HSA: flat_store_byte
 ; GCN-HSA: flat_store_byte
-define void @unaligned_load_store_i16_global(i16 addrspace(1)* %p, i16 addrspace(1)* %r) #0 {
+define void @global_unaligned_load_store_i16(i16 addrspace(1)* %p, i16 addrspace(1)* %r) #0 {
   %v = load i16, i16 addrspace(1)* %p, align 1
   store i16 %v, i16 addrspace(1)* %r, align 1
   ret void
 }
 
 ; FUNC-LABEL: {{^}}local_unaligned_load_store_i32:
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_write_b8
-; GCN: ds_write_b8
-; GCN: ds_write_b8
-; GCN: ds_write_b8
-; GCN: s_endpgm
+
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI-NOT: v_or
+; SI-NOT: v_lshl
+; SI: ds_write_b8
+; SI: ds_write_b8
+; SI: ds_write_b8
+; SI: ds_write_b8
+; SI: s_endpgm
 define void @local_unaligned_load_store_i32(i32 addrspace(3)* %p, i32 addrspace(3)* %r) #0 {
   %v = load i32, i32 addrspace(3)* %p, align 1
   store i32 %v, i32 addrspace(3)* %r, align 1
@@ -98,141 +101,149 @@ define void @local_align2_load_store_i32(i32 addrspace(3)* %p, i32 addrspace(3)*
   ret void
 }
 
-; FIXME: Unnecessary packing and unpacking of bytes.
 ; FUNC-LABEL: {{^}}local_unaligned_load_store_i64:
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
 
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
 
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
 
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
 
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
 
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
 
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
 
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
-; GCN: ds_write_b8
-; GCN: s_endpgm
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
+; SI: ds_write_b8
+; SI: s_endpgm
 define void @local_unaligned_load_store_i64(i64 addrspace(3)* %p, i64 addrspace(3)* %r) {
   %v = load i64, i64 addrspace(3)* %p, align 1
   store i64 %v, i64 addrspace(3)* %r, align 1
   ret void
 }
 
-; FUNC-LABEL: {{^}}local_unaligned_load_store_v2i32:
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
-; GCN: ds_read_u8
+; SI-LABEL: {{^}}local_unaligned_load_store_v2i32:
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
 
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
 
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
 
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
 
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
 
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
 
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
 
-; GCN: ds_write_b8
-; XGCN-NOT: v_or_b32
-; XGCN-NOT: v_lshl
-; GCN: ds_write_b8
-; GCN: s_endpgm
+; SI: ds_write_b8
+; SI-NOT: v_or_b32
+; SI-NOT: v_lshl
+; SI: ds_write_b8
+; SI: s_endpgm
 define void @local_unaligned_load_store_v2i32(<2 x i32> addrspace(3)* %p, <2 x i32> addrspace(3)* %r) {
   %v = load <2 x i32>, <2 x i32> addrspace(3)* %p, align 1
   store <2 x i32> %v, <2 x i32> addrspace(3)* %r, align 1
   ret void
 }
 
-; FUNC-LABEL: {{^}}unaligned_load_store_i64_global:
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
+; SI-LABEL: {{^}}global_align2_load_store_i64:
+; SI: buffer_load_ushort
+; SI: buffer_load_ushort
 
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
+; SI-NOT: v_or_
+; SI-NOT: v_lshl
 
-; XGCN-NOT: v_or_
-; XGCN-NOT: v_lshl
+; SI: buffer_load_ushort
 
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
+; SI-NOT: v_or_
+; SI-NOT: v_lshl
 
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-define void @unaligned_load_store_i64_global(i64 addrspace(1)* %p, i64 addrspace(1)* %r) #0 {
+; SI: buffer_load_ushort
+
+; SI-NOT: v_or_
+; SI-NOT: v_lshl
+
+; SI: buffer_store_short
+; SI: buffer_store_short
+; SI: buffer_store_short
+; SI: buffer_store_short
+define void @global_align2_load_store_i64(i64 addrspace(1)* %p, i64 addrspace(1)* %r) {
+  %v = load i64, i64 addrspace(1)* %p, align 2
+  store i64 %v, i64 addrspace(1)* %r, align 2
+  ret void
+}
+
+; SI-LABEL: {{^}}unaligned_load_store_i64_global:
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+
+; SI-NOT: v_or_
+; SI-NOT: v_lshl
+
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+define void @unaligned_load_store_i64_global(i64 addrspace(1)* %p, i64 addrspace(1)* %r) {
   %v = load i64, i64 addrspace(1)* %p, align 1
   store i64 %v, i64 addrspace(1)* %r, align 1
   ret void
@@ -285,76 +296,41 @@ define void @local_unaligned_load_store_v4i32(<4 x i32> addrspace(3)* %p, <4 x i
   ret void
 }
 
-; FUNC-LABEL: {{^}}global_unaligned_load_store_v4i32:
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
-; GCN-NOHSA: buffer_load_ubyte
+; SI-LABEL: {{^}}global_unaligned_load_store_v4i32
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
 
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-; GCN-NOHSA: buffer_store_byte
-
-
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-; GCN-HSA: flat_load_ubyte
-
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-; GCN-HSA: flat_store_byte
-define void @global_unaligned_load_store_v4i32(<4 x i32> addrspace(1)* %p, <4 x i32> addrspace(1)* %r) #0 {
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+define void @global_unaligned_load_store_v4i32(<4 x i32> addrspace(1)* %p, <4 x i32> addrspace(1)* %r) nounwind {
   %v = load <4 x i32>, <4 x i32> addrspace(1)* %p, align 1
   store <4 x i32> %v, <4 x i32> addrspace(1)* %r, align 1
   ret void

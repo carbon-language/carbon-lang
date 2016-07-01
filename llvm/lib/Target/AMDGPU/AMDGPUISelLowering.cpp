@@ -2182,13 +2182,10 @@ static bool hasVolatileUser(SDNode *Val) {
   return false;
 }
 
-bool AMDGPUTargetLowering::shouldCombineMemoryType(const MemSDNode *M) const {
-  EVT VT = M->getMemoryVT();
-
+bool AMDGPUTargetLowering::shouldCombineMemoryType(EVT VT) const {
   // i32 vectors are the canonical memory type.
   if (VT.getScalarType() == MVT::i32 || isTypeLegal(VT))
     return false;
-
 
   if (!VT.isByteSized())
     return false;
@@ -2200,15 +2197,6 @@ bool AMDGPUTargetLowering::shouldCombineMemoryType(const MemSDNode *M) const {
 
   if (Size == 3 || (Size > 4 && (Size % 4 != 0)))
     return false;
-
-  unsigned Align = M->getAlignment();
-  if (Align < Size) {
-    bool IsFast;
-    if (!allowsMisalignedMemoryAccesses(VT, M->getAddressSpace(), Align, &IsFast) ||
-        !IsFast) {
-      return false;
-    }
-  }
 
   return true;
 }
@@ -2224,12 +2212,32 @@ SDValue AMDGPUTargetLowering::performLoadCombine(SDNode *N,
   if (LN->isVolatile() || !ISD::isNormalLoad(LN) || hasVolatileUser(LN))
     return SDValue();
 
-  if (!shouldCombineMemoryType(LN))
-    return SDValue();
-
   SDLoc SL(N);
   SelectionDAG &DAG = DCI.DAG;
   EVT VT = LN->getMemoryVT();
+
+  unsigned Size = VT.getStoreSize();
+  unsigned Align = LN->getAlignment();
+  if (Align < Size && isTypeLegal(VT)) {
+    bool IsFast;
+    unsigned AS = LN->getAddressSpace();
+
+    // Expand unaligned loads earlier than legalization. Due to visitation order
+    // problems during legalization, the emitted instructions to pack and unpack
+    // the bytes again are not eliminated in the case of an unaligned copy.
+    if (!allowsMisalignedMemoryAccesses(VT, AS, Align, &IsFast)) {
+      SDValue Ops[2];
+      std::tie(Ops[0], Ops[1]) = expandUnalignedLoad(LN, DAG);
+      return DAG.getMergeValues(Ops, SDLoc(N));
+    }
+
+    if (!IsFast)
+      return SDValue();
+  }
+
+  if (!shouldCombineMemoryType(VT))
+    return SDValue();
+
   EVT NewVT = getEquivalentMemType(*DAG.getContext(), VT);
 
   SDValue NewLoad
@@ -2252,15 +2260,34 @@ SDValue AMDGPUTargetLowering::performStoreCombine(SDNode *N,
   if (SN->isVolatile() || !ISD::isNormalStore(SN))
     return SDValue();
 
-  if (!shouldCombineMemoryType(SN))
-    return SDValue();
-
-  SDValue Val = SN->getValue();
   EVT VT = SN->getMemoryVT();
+  unsigned Size = VT.getStoreSize();
 
   SDLoc SL(N);
   SelectionDAG &DAG = DCI.DAG;
+  unsigned Align = SN->getAlignment();
+  if (Align < Size && isTypeLegal(VT)) {
+    bool IsFast;
+    unsigned AS = SN->getAddressSpace();
+
+    // Expand unaligned stores earlier than legalization. Due to visitation
+    // order problems during legalization, the emitted instructions to pack and
+    // unpack the bytes again are not eliminated in the case of an unaligned
+    // copy.
+    if (!allowsMisalignedMemoryAccesses(VT, AS, Align, &IsFast))
+      return expandUnalignedStore(SN, DAG);
+
+    if (!IsFast)
+      return SDValue();
+  }
+
+  if (!shouldCombineMemoryType(VT))
+    return SDValue();
+
   EVT NewVT = getEquivalentMemType(*DAG.getContext(), VT);
+  SDValue Val = SN->getValue();
+
+  //DCI.AddToWorklist(Val.getNode());
 
   bool OtherUses = !Val.hasOneUse();
   SDValue CastVal = DAG.getNode(ISD::BITCAST, SL, NewVT, Val);

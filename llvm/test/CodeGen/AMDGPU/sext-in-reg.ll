@@ -268,7 +268,7 @@ define void @sext_in_reg_v2i1_in_v2i32_other_amount(<2 x i32> addrspace(1)* %out
   %c = add <2 x i32> %a, %b
   %x = shl <2 x i32> %c, <i32 6, i32 6>
   %y = ashr <2 x i32> %x, <i32 7, i32 7>
-  store <2 x i32> %y, <2 x i32> addrspace(1)* %out, align 2
+  store <2 x i32> %y, <2 x i32> addrspace(1)* %out
   ret void
 }
 

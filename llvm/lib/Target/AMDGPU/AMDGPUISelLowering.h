@@ -66,7 +66,7 @@ protected:
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
 
 protected:
-  bool shouldCombineMemoryType(const MemSDNode *M) const;
+  bool shouldCombineMemoryType(EVT VT) const;
   SDValue performLoadCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue performStoreCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue performAndCombine(SDNode *N, DAGCombinerInfo &DCI) const;
