@@ -85,7 +85,6 @@ void Test2() {
 
 void Test3() {
   // CHECK-DTOR-LABEL: Test3
-  // CHECK-DTOR: entry:
   // CHECK-DTOR: call void @llvm.lifetime.start
   // CHECK-DTOR: call void @llvm.lifetime.start
   // CHECK-DTOR: if.then:
@@ -105,7 +104,6 @@ void Test3() {
 
 void Test4() {
   // CHECK-DTOR-LABEL: Test4
-  // CHECK-DTOR: entry:
   // CHECK-DTOR: call void @llvm.lifetime.start
   // CHECK-DTOR: for.cond.cleanup:
   // CHECK-DTOR: call void @llvm.lifetime.end
