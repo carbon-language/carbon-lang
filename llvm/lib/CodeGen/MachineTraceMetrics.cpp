@@ -865,15 +865,16 @@ computeInstrDepths(const MachineBasicBlock *MBB) {
 // Identify physreg dependencies for MI when scanning instructions upwards.
 // Return the issue height of MI after considering any live regunits.
 // Height is the issue height computed from virtual register dependencies alone.
-static unsigned updatePhysDepsUpwards(const MachineInstr *MI, unsigned Height,
+static unsigned updatePhysDepsUpwards(const MachineInstr &MI, unsigned Height,
                                       SparseSet<LiveRegUnit> &RegUnits,
                                       const TargetSchedModel &SchedModel,
                                       const TargetInstrInfo *TII,
                                       const TargetRegisterInfo *TRI) {
   SmallVector<unsigned, 8> ReadOps;
 
-  for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
-       MOE = MI->operands_end(); MOI != MOE; ++MOI) {
+  for (MachineInstr::const_mop_iterator MOI = MI.operands_begin(),
+                                        MOE = MI.operands_end();
+       MOI != MOE; ++MOI) {
     const MachineOperand &MO = *MOI;
     if (!MO.isReg())
       continue;
@@ -881,7 +882,7 @@ static unsigned updatePhysDepsUpwards(const MachineInstr *MI, unsigned Height,
     if (!TargetRegisterInfo::isPhysicalRegister(Reg))
       continue;
     if (MO.readsReg())
-      ReadOps.push_back(MI->getOperandNo(MOI));
+      ReadOps.push_back(MI.getOperandNo(MOI));
     if (!MO.isDef())
       continue;
     // This is a def of Reg. Remove corresponding entries from RegUnits, and
@@ -891,11 +892,11 @@ static unsigned updatePhysDepsUpwards(const MachineInstr *MI, unsigned Height,
       if (I == RegUnits.end())
         continue;
       unsigned DepHeight = I->Cycle;
-      if (!MI->isTransient()) {
+      if (!MI.isTransient()) {
         // We may not know the UseMI of this dependency, if it came from the
         // live-in list. SchedModel can handle a NULL UseMI.
-        DepHeight += SchedModel
-          .computeOperandLatency(MI, MI->getOperandNo(MOI), I->MI, I->Op);
+        DepHeight += SchedModel.computeOperandLatency(&MI, MI.getOperandNo(MOI),
+                                                      I->MI, I->Op);
       }
       Height = std::max(Height, DepHeight);
       // This regunit is dead above MI.
@@ -905,13 +906,13 @@ static unsigned updatePhysDepsUpwards(const MachineInstr *MI, unsigned Height,
 
   // Now we know the height of MI. Update any regunits read.
   for (unsigned i = 0, e = ReadOps.size(); i != e; ++i) {
-    unsigned Reg = MI->getOperand(ReadOps[i]).getReg();
+    unsigned Reg = MI.getOperand(ReadOps[i]).getReg();
     for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units) {
       LiveRegUnit &LRU = RegUnits[*Units];
       // Set the height to the highest reader of the unit.
-      if (LRU.Cycle <= Height && LRU.MI != MI) {
+      if (LRU.Cycle <= Height && LRU.MI != &MI) {
         LRU.Cycle = Height;
-        LRU.MI = MI;
+        LRU.MI = &MI;
         LRU.Op = ReadOps[i];
       }
     }
@@ -925,15 +926,14 @@ typedef DenseMap<const MachineInstr *, unsigned> MIHeightMap;
 
 // Push the height of DefMI upwards if required to match UseMI.
 // Return true if this is the first time DefMI was seen.
-static bool pushDepHeight(const DataDep &Dep,
-                          const MachineInstr *UseMI, unsigned UseHeight,
-                          MIHeightMap &Heights,
+static bool pushDepHeight(const DataDep &Dep, const MachineInstr &UseMI,
+                          unsigned UseHeight, MIHeightMap &Heights,
                           const TargetSchedModel &SchedModel,
                           const TargetInstrInfo *TII) {
   // Adjust height by Dep.DefMI latency.
   if (!Dep.DefMI->isTransient())
-    UseHeight += SchedModel.computeOperandLatency(Dep.DefMI, Dep.DefOp,
-                                                  UseMI, Dep.UseOp);
+    UseHeight += SchedModel.computeOperandLatency(Dep.DefMI, Dep.DefOp, &UseMI,
+                                                  Dep.UseOp);
 
   // Update Heights[DefMI] to be the maximum height seen.
   MIHeightMap::iterator I;
@@ -1057,8 +1057,8 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
           // Loop header PHI heights are all 0.
           unsigned Height = TBI.Succ ? Cycles.lookup(&PHI).Height : 0;
           DEBUG(dbgs() << "pred\t" << Height << '\t' << PHI);
-          if (pushDepHeight(Deps.front(), &PHI, Height,
-                            Heights, MTM.SchedModel, MTM.TII))
+          if (pushDepHeight(Deps.front(), PHI, Height, Heights, MTM.SchedModel,
+                            MTM.TII))
             addLiveIns(Deps.front().DefMI, Deps.front().DefOp, Stack);
         }
       }
@@ -1086,12 +1086,12 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
 
       // There may also be regunit dependencies to include in the height.
       if (HasPhysRegs)
-        Cycle = updatePhysDepsUpwards(&MI, Cycle, RegUnits,
-                                      MTM.SchedModel, MTM.TII, MTM.TRI);
+        Cycle = updatePhysDepsUpwards(MI, Cycle, RegUnits, MTM.SchedModel,
+                                      MTM.TII, MTM.TRI);
 
       // Update the required height of any virtual registers read by MI.
       for (const DataDep &Dep : Deps)
-        if (pushDepHeight(Dep, &MI, Cycle, Heights, MTM.SchedModel, MTM.TII))
+        if (pushDepHeight(Dep, MI, Cycle, Heights, MTM.SchedModel, MTM.TII))
           addLiveIns(Dep.DefMI, Dep.DefOp, Stack);
 
       InstrCycles &MICycles = Cycles[&MI];
