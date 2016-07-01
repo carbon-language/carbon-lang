@@ -87,11 +87,14 @@ void Test3() {
   // CHECK-DTOR-LABEL: Test3
   // CHECK-DTOR: call void @llvm.lifetime.start
   // CHECK-DTOR: call void @llvm.lifetime.start
-  // CHECK-DTOR: if.then:
+
+  // if.then:
   // CHECK-DTOR: call void @llvm.lifetime.end
-  // CHECK-DTOR: cleanup{{.*}}:
+
+  // cleanup:
   // CHECK-DTOR: call void @llvm.lifetime.end
-  // CHECK-DTOR: cleanup{{.*}}:
+
+  // cleanup:
   // CHECK-DTOR: call void @llvm.lifetime.end
   // CHECK-DTOR: }
   const A &a = A{};
@@ -105,9 +108,11 @@ void Test3() {
 void Test4() {
   // CHECK-DTOR-LABEL: Test4
   // CHECK-DTOR: call void @llvm.lifetime.start
-  // CHECK-DTOR: for.cond.cleanup:
+
+  // for.cond.cleanup:
   // CHECK-DTOR: call void @llvm.lifetime.end
-  // CHECK-DTOR: for.body:
+
+  // for.body:
   // CHECK-DTOR: }
   for (const A &a = A{}; a;) {
     Foo(a);
