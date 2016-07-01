@@ -1131,9 +1131,9 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
 // list, but have them to simplify the code.
 template <class ELFT> void Writer<ELFT>::fixHeaders() {
   uintX_t BaseVA = ScriptConfig->DoLayout ? 0 : Target->getVAStart();
-  Out<ELFT>::ElfHeader->setVA(BaseVA);  
+  Out<ELFT>::ElfHeader->setVA(BaseVA);
   uintX_t Off = Out<ELFT>::ElfHeader->getSize();
-  Out<ELFT>::ProgramHeaders->setVA(Off + BaseVA);  
+  Out<ELFT>::ProgramHeaders->setVA(Off + BaseVA);
 }
 
 // Assign VAs (addresses at run-time) to output sections.

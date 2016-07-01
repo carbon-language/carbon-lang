@@ -221,7 +221,7 @@ void LinkerScript<ELFT>::assignAddresses(
   }
 
   // Assign addresses as instructed by linker script SECTIONS sub-commands.
-  Dot = Out<ELFT>::ElfHeader->getSize() + Out<ELFT>::ProgramHeaders->getSize();  
+  Dot = Out<ELFT>::ElfHeader->getSize() + Out<ELFT>::ProgramHeaders->getSize();
   uintX_t MinVA = std::numeric_limits<uintX_t>::max();
   uintX_t ThreadBssOffset = 0;
 
@@ -249,13 +249,13 @@ void LinkerScript<ELFT>::assignAddresses(
       if (Sec->getFlags() & SHF_ALLOC) {
         Dot = alignTo(Dot, Sec->getAlignment());
         Sec->setVA(Dot);
-        MinVA = std::min(MinVA, Dot);        
+        MinVA = std::min(MinVA, Dot);
         Dot += Sec->getSize();
         continue;
       }
     }
   }
-  
+
   // ELF and Program headers need to be right before the first section in memory.
   // Set their addresses accordingly.
   MinVA = alignDown(MinVA - Out<ELFT>::ElfHeader->getSize() -
