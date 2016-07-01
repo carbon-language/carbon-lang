@@ -602,15 +602,6 @@ lldb::addr_t
 DynamicLoaderPOSIXDYLD::GetThreadLocalData(const lldb::ModuleSP module_sp, const lldb::ThreadSP thread,
                                            lldb::addr_t tls_file_addr)
 {
-    lldb_private::Address tls_addr;
-    if (!module_sp->ResolveFileAddress(tls_file_addr, tls_addr))
-        return LLDB_INVALID_ADDRESS;
-
-    const lldb::addr_t tls_load_addr = tls_addr.GetLoadAddress(&m_process->GetTarget());;
-
-    if (tls_load_addr == LLDB_INVALID_ADDRESS)
-        return LLDB_INVALID_ADDRESS;
-
     auto it = m_loaded_modules.find (module_sp);
     if (it == m_loaded_modules.end())
         return LLDB_INVALID_ADDRESS;
@@ -650,7 +641,7 @@ DynamicLoaderPOSIXDYLD::GetThreadLocalData(const lldb::ModuleSP module_sp, const
                     "module=%s, link_map=0x%" PRIx64 ", tp=0x%" PRIx64 ", modid=%" PRId64 ", tls_block=0x%" PRIx64 "\n",
                     module_sp->GetObjectName().AsCString(""), link_map, tp, (int64_t)modid, tls_block);
 
-    return tls_block + tls_load_addr;
+    return tls_block + tls_file_addr;
 }
 
 void
