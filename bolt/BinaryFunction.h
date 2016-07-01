@@ -392,9 +392,20 @@ public:
   void modifyLayout(LayoutType Type, bool Split);
 
   /// View CFG in graphviz program
-  void viewGraph();
+  void viewGraph() const;
 
-  /// Get basic block index assuming it belongs to this function.
+  /// Dump CFG in graphviz format
+  void dumpGraph(raw_ostream& OS) const;
+
+  /// Dump CFG in graphviz format to file.
+  void dumpGraphToFile(std::string Filename) const;
+
+  /// Dump CFG in graphviz format to a file with a filename that is derived
+  /// from the function name and Annotation strings.  Useful for dumping the
+  /// CFG after an optimization pass.
+  void dumpGraphForPass(std::string Annotation = "") const;
+
+    /// Get basic block index assuming it belongs to this function.
   unsigned getIndex(const BinaryBasicBlock *BB) const {
     assert(BasicBlockIndices.find(BB) != BasicBlockIndices.end());
     return BasicBlockIndices.find(BB)->second;

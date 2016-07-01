@@ -24,6 +24,7 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
 #include <queue>
@@ -1314,6 +1315,76 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
   if (Split)
     splitFunction();
   fixBranches();
+}
+
+namespace {
+
+#ifndef MAX_PATH
+#define MAX_PATH 255
+#endif
+
+std::string constructFilename(std::string Filename,
+                              std::string Annotation,
+                              std::string Suffix) {
+  std::replace(Filename.begin(), Filename.end(), '/', '-');
+  if (!Annotation.empty()) {
+    Annotation.insert(0, "-");
+  }
+  if (Filename.size() + Annotation.size() + Suffix.size() > MAX_PATH) {
+    assert(Suffix.size() + Annotation.size() <= MAX_PATH);
+    dbgs() << "BOLT-WARNING: Filename \"" << Filename << Annotation << Suffix
+           << "\" exceeds the " << MAX_PATH << " size limit, truncating.\n";
+    Filename.resize(MAX_PATH - (Suffix.size() + Annotation.size()));
+  }
+  Filename += Annotation;
+  Filename += Suffix;
+  return Filename;
+}
+
+}
+
+void BinaryFunction::dumpGraph(raw_ostream& OS) const {
+  OS << "strict digraph \"" << getName() << "\" {\n";
+  for (auto *BB : BasicBlocks) {
+    for (auto *Succ : BB->successors()) {
+      OS << "\"" << BB->getName() << "\" -> "
+         << "\"" << Succ->getName() << "\"\n";
+    }
+  }
+  OS << "}\n";
+}
+
+void BinaryFunction::viewGraph() const {
+  SmallString<MAX_PATH> Filename;
+  if (auto EC = sys::fs::createTemporaryFile("bolt-cfg", "dot", Filename)) {
+    dbgs() << "BOLT-WARNING: " << EC.message() << ", unable to create "
+           << " bolt-cfg-XXXXX.dot temporary file.\n";
+    return;
+  }
+  dumpGraphToFile(Filename.str());
+  if (DisplayGraph(Filename)) {
+    dbgs() << "BOLT-WARNING: Can't display " << Filename
+           << " with graphviz.\n";
+  }
+  if (auto EC = sys::fs::remove(Filename)) {
+    dbgs() << "BOLT-WARNING: " << EC.message() << ", failed to remove "
+           << Filename.str() << "\n";
+  }
+}
+
+void BinaryFunction::dumpGraphForPass(std::string Annotation) const {
+  dumpGraphToFile(constructFilename(getName(), Annotation, ".dot"));
+}
+
+void BinaryFunction::dumpGraphToFile(std::string Filename) const {
+  std::error_code EC;
+  raw_fd_ostream of(Filename, EC, sys::fs::F_None);
+  if (EC) {
+    dbgs() << "BOLT-WARNING: " << EC.message() << ", unable to open "
+           << Filename << " for output.\n";
+    return;
+  }
+  dumpGraph(of);
 }
 
 const BinaryBasicBlock *

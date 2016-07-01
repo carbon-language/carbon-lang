@@ -148,6 +148,11 @@ cl::opt<bool>
 PrintAll("print-all", cl::desc("print functions after each stage"),
          cl::Hidden);
 
+cl::opt<bool>
+DumpDotAll("dump-dot-all",
+           cl::desc("dump function CFGs to graphviz format after each stage"),
+           cl::Hidden);
+
 static cl::opt<bool>
 PrintCFG("print-cfg", cl::desc("print functions after CFG construction"),
          cl::Hidden);
@@ -912,6 +917,9 @@ void RewriteInstance::disassembleFunctions() {
 
     if (opts::PrintAll || opts::PrintCFG)
       Function.print(errs(), "after building cfg", true);
+
+    if (opts::DumpDotAll)
+      Function.dumpGraphForPass("build-cfg");
 
     TotalScore += Function.getFunctionScore();
 

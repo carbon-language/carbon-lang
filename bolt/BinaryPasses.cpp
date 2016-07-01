@@ -17,6 +17,7 @@
 namespace opts {
 
 extern llvm::cl::opt<bool> PrintAll;
+extern llvm::cl::opt<bool> DumpDotAll;
 extern llvm::cl::opt<bool> PrintReordered;
 extern llvm::cl::opt<bool> PrintEHRanges;
 extern llvm::cl::opt<bool> PrintUCE;
@@ -343,6 +344,9 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
 
     if (opts::PrintAll || opts::PrintUCE)
       Function.print(errs(), "after unreachable code elimination", true);
+
+    if (opts::DumpDotAll)
+      Function.dumpGraphForPass("unreachable-code");
   }
 }
 
@@ -379,6 +383,8 @@ void ReorderBasicBlocks::runOnFunctions(
       Function.modifyLayout(opts::ReorderBlocks, ShouldSplit);
       if (opts::PrintAll || opts::PrintReordered)
         Function.print(errs(), "after reordering blocks", true);
+      if (opts::DumpDotAll)
+        Function.dumpGraphForPass("reordering");
     }
   }
 }
@@ -409,6 +415,8 @@ void FixupFunctions::runOnFunctions(
     Function.updateEHRanges();
     if (opts::PrintAll || opts::PrintEHRanges)
       Function.print(errs(), "after updating EH ranges", true);
+    if (opts::DumpDotAll)
+      Function.dumpGraphForPass("update-EH-ranges");
   }
 }
 
@@ -518,6 +526,9 @@ void SimplifyConditionalTailCalls::runOnFunctions(
     if (fixTailCalls(BC, Function)) {
       if (opts::PrintAll || opts::PrintReordered) {
         Function.print(errs(), "after tail call patching", true);
+      }
+      if (opts::DumpDotAll) {
+        Function.dumpGraphForPass("tail-call-patching");
       }
     }
   }
