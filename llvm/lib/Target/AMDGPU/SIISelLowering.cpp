@@ -438,24 +438,30 @@ bool SITargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
   if (!VT.isSimple() || VT == MVT::Other)
     return false;
 
-  // TODO - CI+ supports unaligned memory accesses, but this requires driver
-  // support.
-
-  // XXX - The only mention I see of this in the ISA manual is for LDS direct
-  // reads the "byte address and must be dword aligned". Is it also true for the
-  // normal loads and stores?
-  if (AddrSpace == AMDGPUAS::LOCAL_ADDRESS) {
+  if (AddrSpace == AMDGPUAS::LOCAL_ADDRESS ||
+      AddrSpace == AMDGPUAS::REGION_ADDRESS) {
     // ds_read/write_b64 require 8-byte alignment, but we can do a 4 byte
     // aligned, 8 byte access in a single operation using ds_read2/write2_b32
     // with adjacent offsets.
     bool AlignedBy4 = (Align % 4 == 0);
     if (IsFast)
       *IsFast = AlignedBy4;
+
     return AlignedBy4;
   }
 
+  if (Subtarget->hasUnalignedBufferAccess()) {
+    // If we have an uniform constant load, it still requires using a slow
+    // buffer instruction if unaligned.
+    if (IsFast) {
+      *IsFast = (AddrSpace == AMDGPUAS::CONSTANT_ADDRESS) ?
+        (Align % 4 == 0) : true;
+    }
+
+    return true;
+  }
+
   // Smaller than dword value must be aligned.
-  // FIXME: This should be allowed on CI+
   if (VT.bitsLT(MVT::i32))
     return false;
 

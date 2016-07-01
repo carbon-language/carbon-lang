@@ -183,8 +183,10 @@ def mubuf_load_atomic : PatFrag <(ops node:$ptr), (atomic_load node:$ptr), [{
 
 
 def smrd_load : PatFrag <(ops node:$ptr), (load node:$ptr), [{
-  return isConstantLoad(cast<LoadSDNode>(N), -1) &&
-  static_cast<const SITargetLowering *>(getTargetLowering())->isMemOpUniform(N);
+  auto Ld = cast<LoadSDNode>(N);
+  return Ld->getAlignment() >= 4  &&
+    isConstantLoad(Ld, -1) &&
+    static_cast<const SITargetLowering *>(getTargetLowering())->isMemOpUniform(N);
 }]>;
 
 //===----------------------------------------------------------------------===//
