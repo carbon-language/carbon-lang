@@ -873,6 +873,10 @@ void CodeViewDebug::beginFunction(const MachineFunction *MF) {
 }
 
 void CodeViewDebug::addToUDTs(const DIType *Ty, TypeIndex TI) {
+  // Don't record empty UDTs.
+  if (Ty->getName().empty())
+    return;
+
   SmallVector<StringRef, 5> QualifiedNameComponents;
   const DISubprogram *ClosestSubprogram = getQualifiedNameComponents(
       Ty->getScope().resolve(), QualifiedNameComponents);
