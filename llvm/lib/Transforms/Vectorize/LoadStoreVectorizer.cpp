@@ -71,6 +71,22 @@ private:
 
   unsigned getPointerAddressSpace(Value *I);
 
+  unsigned getAlignment(LoadInst *LI) const {
+    unsigned Align = LI->getAlignment();
+    if (Align != 0)
+      return Align;
+
+    return DL.getABITypeAlignment(LI->getType());
+  }
+
+  unsigned getAlignment(StoreInst *SI) const {
+    unsigned Align = SI->getAlignment();
+    if (Align != 0)
+      return Align;
+
+    return DL.getABITypeAlignment(SI->getValueOperand()->getType());
+  }
+
   bool isConsecutiveAccess(Value *A, Value *B);
 
   /// Reorders the users of I after vectorization to ensure that I dominates its
@@ -648,7 +664,7 @@ bool Vectorizer::vectorizeStoreChain(ArrayRef<Value *> Chain) {
   );
 
   // Check alignment restrictions.
-  unsigned Alignment = S0->getAlignment();
+  unsigned Alignment = getAlignment(S0);
 
   // If the store is going to be misaligned, don't vectorize it.
   // TODO: Check TLI.allowsMisalignedMemoryAccess
@@ -776,7 +792,7 @@ bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
   }
 
   // Check alignment restrictions.
-  unsigned Alignment = L0->getAlignment();
+  unsigned Alignment = getAlignment(L0);
 
   // If the load is going to be misaligned, don't vectorize it.
   // TODO: Check TLI.allowsMisalignedMemoryAccess and remove TargetBaseAlign.

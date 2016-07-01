@@ -1,6 +1,8 @@
 ; RUN: opt -mtriple=amdgcn-amd-amdhsa -load-store-vectorizer -S -o - %s | FileCheck %s
 ; Copy of test/CodeGen/AMDGPU/merge-stores.ll with some additions
 
+target datalayout = "e-p:32:32-p1:64:64-p2:64:64-p3:32:32-p4:64:64-p5:32:32-p24:64:64-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64"
+
 ; TODO: Vector element tests
 ; TODO: Non-zero base offset for load and store combinations
 ; TODO: Same base addrspacecasted
@@ -17,7 +19,8 @@ define void @merge_global_store_2_constants_i8(i8 addrspace(1)* %out) #0 {
 }
 
 ; CHECK-LABEL: @merge_global_store_2_constants_i8_natural_align
-; CHECK: store <2 x i8> <i8 -56, i8 123>, <2 x i8> addrspace(1)* %{{[0-9]+$}}
+; CHECK: store i8
+; CHECK: store i8
 define void @merge_global_store_2_constants_i8_natural_align(i8 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i8, i8 addrspace(1)* %out, i32 1
 
@@ -47,7 +50,8 @@ define void @merge_global_store_2_constants_0_i16(i16 addrspace(1)* %out) #0 {
 }
 
 ; CHECK-LABEL: @merge_global_store_2_constants_i16_natural_align
-; CHECK: store <2 x i16> <i16 456, i16 123>, <2 x i16> addrspace(1)* %{{[0-9]+$}}
+; CHECK: store i16
+; CHECK: store i16
 define void @merge_global_store_2_constants_i16_natural_align(i16 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i16, i16 addrspace(1)* %out, i32 1
 
@@ -57,7 +61,8 @@ define void @merge_global_store_2_constants_i16_natural_align(i16 addrspace(1)* 
 }
 
 ; CHECK-LABEL: @merge_global_store_2_constants_half_natural_align
-; CHECK: store <2 x half> <half 0xH3C00, half 0xH4000>, <2 x half> addrspace(1)* %{{[0-9]+$}}
+; CHECK: store half
+; CHECK: store half
 define void @merge_global_store_2_constants_half_natural_align(half addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr half, half addrspace(1)* %out, i32 1
 
@@ -67,7 +72,7 @@ define void @merge_global_store_2_constants_half_natural_align(half addrspace(1)
 }
 
 ; CHECK-LABEL: @merge_global_store_2_constants_i32
-; CHECK: store <2 x i32> <i32 456, i32 123>, <2 x i32> addrspace(1)* %{{[0-9]+$}}
+; CHECK: store <2 x i32> <i32 456, i32 123>, <2 x i32> addrspace(1)* %{{[0-9]+}}, align 4
 define void @merge_global_store_2_constants_i32(i32 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i32, i32 addrspace(1)* %out, i32 1
 
@@ -77,7 +82,7 @@ define void @merge_global_store_2_constants_i32(i32 addrspace(1)* %out) #0 {
 }
 
 ; CHECK-LABEL: @merge_global_store_2_constants_i32_f32
-; CHECK: store <2 x i32> <i32 456, i32 1065353216>, <2 x i32> addrspace(1)* %{{[0-9]+$}}
+; CHECK: store <2 x i32> <i32 456, i32 1065353216>, <2 x i32> addrspace(1)* %{{[0-9]+}}, align 4
 define void @merge_global_store_2_constants_i32_f32(i32 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i32, i32 addrspace(1)* %out, i32 1
   %out.gep.1.bc = bitcast i32 addrspace(1)* %out.gep.1 to float addrspace(1)*
@@ -97,7 +102,7 @@ define void @merge_global_store_2_constants_f32_i32(float addrspace(1)* %out) #0
 }
 
 ; CHECK-LABEL: @merge_global_store_4_constants_i32
-; CHECK: store <4 x i32> <i32 1234, i32 123, i32 456, i32 333>, <4 x i32> addrspace(1)* %{{[0-9]+$}}
+; CHECK: store <4 x i32> <i32 1234, i32 123, i32 456, i32 333>, <4 x i32> addrspace(1)* %{{[0-9]+}}, align 4
 define void @merge_global_store_4_constants_i32(i32 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i32, i32 addrspace(1)* %out, i32 1
   %out.gep.2 = getelementptr i32, i32 addrspace(1)* %out, i32 2
@@ -126,7 +131,7 @@ define void @merge_global_store_4_constants_f32_order(float addrspace(1)* %out) 
 
 ; First store is out of order.
 ; CHECK-LABEL: @merge_global_store_4_constants_f32
-; CHECK: store <4 x float> <float 8.000000e+00, float 1.000000e+00, float 2.000000e+00, float 4.000000e+00>, <4 x float> addrspace(1)* %{{[0-9]+$}}
+; CHECK: store <4 x float> <float 8.000000e+00, float 1.000000e+00, float 2.000000e+00, float 4.000000e+00>, <4 x float> addrspace(1)* %{{[0-9]+}}, align 4
 define void @merge_global_store_4_constants_f32(float addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr float, float addrspace(1)* %out, i32 1
   %out.gep.2 = getelementptr float, float addrspace(1)* %out, i32 2
@@ -140,7 +145,7 @@ define void @merge_global_store_4_constants_f32(float addrspace(1)* %out) #0 {
 }
 
 ; CHECK-LABEL: @merge_global_store_4_constants_mixed_i32_f32
-; CHECK: store <4 x i32> <i32 1090519040, i32 11, i32 1073741824, i32 17>, <4 x i32> addrspace(1)* %{{[0-9]+$}}
+; CHECK: store <4 x i32> <i32 1090519040, i32 11, i32 1073741824, i32 17>, <4 x i32> addrspace(1)* %{{[0-9]+}}, align 4
 define void @merge_global_store_4_constants_mixed_i32_f32(float addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr float, float addrspace(1)* %out, i32 1
   %out.gep.2 = getelementptr float, float addrspace(1)* %out, i32 2
@@ -157,7 +162,7 @@ define void @merge_global_store_4_constants_mixed_i32_f32(float addrspace(1)* %o
 }
 
 ; CHECK-LABEL: @merge_global_store_3_constants_i32
-; CHECK: store <3 x i32> <i32 1234, i32 123, i32 456>, <3 x i32> addrspace(1)* %{{[0-9]+$}}
+; CHECK: store <3 x i32> <i32 1234, i32 123, i32 456>, <3 x i32> addrspace(1)* %{{[0-9]+}}, align 4
 define void @merge_global_store_3_constants_i32(i32 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i32, i32 addrspace(1)* %out, i32 1
   %out.gep.2 = getelementptr i32, i32 addrspace(1)* %out, i32 2
@@ -169,7 +174,7 @@ define void @merge_global_store_3_constants_i32(i32 addrspace(1)* %out) #0 {
 }
 
 ; CHECK-LABEL: @merge_global_store_2_constants_i64
-; CHECK: store <2 x i64> <i64 456, i64 123>, <2 x i64> addrspace(1)* %{{[0-9]+$}}
+; CHECK: store <2 x i64> <i64 456, i64 123>, <2 x i64> addrspace(1)* %{{[0-9]+}}, align 8
 define void @merge_global_store_2_constants_i64(i64 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i64, i64 addrspace(1)* %out, i64 1
 
@@ -179,8 +184,8 @@ define void @merge_global_store_2_constants_i64(i64 addrspace(1)* %out) #0 {
 }
 
 ; CHECK-LABEL: @merge_global_store_4_constants_i64
-; CHECK: store <2 x i64> <i64 456, i64 333>, <2 x i64> addrspace(1)* %{{[0-9]+$}}
-; CHECK: store <2 x i64> <i64 1234, i64 123>, <2 x i64> addrspace(1)* %{{[0-9]+$}}
+; CHECK: store <2 x i64> <i64 456, i64 333>, <2 x i64> addrspace(1)* %{{[0-9]+}}, align 8
+; CHECK: store <2 x i64> <i64 1234, i64 123>, <2 x i64> addrspace(1)* %{{[0-9]+}}, align 8
 define void @merge_global_store_4_constants_i64(i64 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i64, i64 addrspace(1)* %out, i64 1
   %out.gep.2 = getelementptr i64, i64 addrspace(1)* %out, i64 2
@@ -427,8 +432,14 @@ define void @merge_global_store_4_adjacent_loads_i8(i8 addrspace(1)* %out, i8 ad
 }
 
 ; CHECK-LABEL: @merge_global_store_4_adjacent_loads_i8_natural_align
-; CHECK: load <4 x i8>
-; CHECK: store <4 x i8>
+; CHECK: load i8
+; CHECK: load i8
+; CHECK: load i8
+; CHECK: load i8
+; CHECK: store i8
+; CHECK: store i8
+; CHECK: store i8
+; CHECK: store i8
 define void @merge_global_store_4_adjacent_loads_i8_natural_align(i8 addrspace(1)* %out, i8 addrspace(1)* %in) #0 {
   %out.gep.1 = getelementptr i8, i8 addrspace(1)* %out, i8 1
   %out.gep.2 = getelementptr i8, i8 addrspace(1)* %out, i8 2
@@ -481,7 +492,7 @@ define void @merge_local_store_2_constants_i8(i8 addrspace(3)* %out) #0 {
 }
 
 ; CHECK-LABEL: @merge_local_store_2_constants_i32
-; CHECK: store <2 x i32> <i32 456, i32 123>, <2 x i32> addrspace(3)* %{{[0-9]+$}}
+; CHECK: store <2 x i32> <i32 456, i32 123>, <2 x i32> addrspace(3)* %{{[0-9]+}}, align 4
 define void @merge_local_store_2_constants_i32(i32 addrspace(3)* %out) #0 {
   %out.gep.1 = getelementptr i32, i32 addrspace(3)* %out, i32 1
 
