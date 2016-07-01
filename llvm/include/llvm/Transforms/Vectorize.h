@@ -144,7 +144,7 @@ bool vectorizeBasicBlock(Pass *P, BasicBlock &BB,
 // LoadStoreVectorizer - Create vector loads and stores, but leave scalar
 // operations.
 //
-Pass *createLoadStoreVectorizerPass(unsigned VecRegSize = 128);
+Pass *createLoadStoreVectorizerPass();
 
 } // End llvm namespace
 

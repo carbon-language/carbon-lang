@@ -51,17 +51,18 @@ class Vectorizer {
   AliasAnalysis &AA;
   DominatorTree &DT;
   ScalarEvolution &SE;
+  TargetTransformInfo &TTI;
   const DataLayout &DL;
   IRBuilder<> Builder;
   ValueListMap StoreRefs;
   ValueListMap LoadRefs;
-  unsigned VecRegSize;
 
 public:
   Vectorizer(Function &F, AliasAnalysis &AA, DominatorTree &DT,
-             ScalarEvolution &SE, unsigned VecRegSize)
-    : F(F), AA(AA), DT(DT), SE(SE), DL(F.getParent()->getDataLayout()),
-      Builder(SE.getContext()), VecRegSize(VecRegSize) {}
+             ScalarEvolution &SE, TargetTransformInfo &TTI)
+    : F(F), AA(AA), DT(DT), SE(SE), TTI(TTI),
+      DL(F.getParent()->getDataLayout()),
+      Builder(SE.getContext()) {}
 
   bool run();
 
@@ -116,10 +117,8 @@ private:
 class LoadStoreVectorizer : public FunctionPass {
 public:
   static char ID;
-  unsigned VecRegSize;
 
-  LoadStoreVectorizer(unsigned VecRegSize = 128) : FunctionPass(ID),
-                                                   VecRegSize(VecRegSize) {
+  LoadStoreVectorizer() : FunctionPass(ID) {
     initializeLoadStoreVectorizerPass(*PassRegistry::getPassRegistry());
   }
 
@@ -133,6 +132,7 @@ public:
     AU.addRequired<AAResultsWrapperPass>();
     AU.addRequired<ScalarEvolutionWrapperPass>();
     AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<TargetTransformInfoWrapperPass>();
     AU.setPreservesCFG();
   }
 };
@@ -144,13 +144,14 @@ INITIALIZE_PASS_DEPENDENCY(SCEVAAWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(GlobalsAAWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_END(LoadStoreVectorizer, DEBUG_TYPE,
                     "Vectorize load and store instructions", false, false);
 
 char LoadStoreVectorizer::ID = 0;
 
-Pass *llvm::createLoadStoreVectorizerPass(unsigned VecRegSize) {
-  return new LoadStoreVectorizer(VecRegSize);
+Pass *llvm::createLoadStoreVectorizerPass() {
+  return new LoadStoreVectorizer();
 }
 
 bool LoadStoreVectorizer::runOnFunction(Function &F) {
@@ -161,8 +162,10 @@ bool LoadStoreVectorizer::runOnFunction(Function &F) {
   AliasAnalysis &AA = getAnalysis<AAResultsWrapperPass>().getAAResults();
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   ScalarEvolution &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+  TargetTransformInfo &TTI
+    = getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
 
-  Vectorizer V(F, AA, DT, SE, VecRegSize);
+  Vectorizer V(F, AA, DT, SE, TTI);
   return V.run();
 }
 
@@ -440,6 +443,10 @@ void Vectorizer::collectInstructions(BasicBlock *BB) {
       if (TySize < 8)
         continue;
 
+      Value *Ptr = LI->getPointerOperand();
+      unsigned AS = Ptr->getType()->getPointerAddressSpace();
+      unsigned VecRegSize = TTI.getLoadStoreVecRegBitWidth(AS);
+
       // No point in looking at these if they're too big to vectorize.
       if (TySize > VecRegSize / 2)
         continue;
@@ -456,8 +463,8 @@ void Vectorizer::collectInstructions(BasicBlock *BB) {
       // TODO: Target hook to filter types.
 
       // Save the load locations.
-      Value *Ptr = GetUnderlyingObject(LI->getPointerOperand(), DL);
-      LoadRefs[Ptr].push_back(LI);
+      Value *ObjPtr = GetUnderlyingObject(Ptr, DL);
+      LoadRefs[ObjPtr].push_back(LI);
 
     } else if (StoreInst *SI = dyn_cast<StoreInst>(&I)) {
       if (!SI->isSimple())
@@ -473,6 +480,9 @@ void Vectorizer::collectInstructions(BasicBlock *BB) {
       if (TySize < 8)
         continue;
 
+      Value *Ptr = SI->getPointerOperand();
+      unsigned AS = Ptr->getType()->getPointerAddressSpace();
+      unsigned VecRegSize = TTI.getLoadStoreVecRegBitWidth(AS);
       if (TySize > VecRegSize / 2)
         continue;
 
@@ -485,8 +495,8 @@ void Vectorizer::collectInstructions(BasicBlock *BB) {
         continue;
 
       // Save store location.
-      Value *Ptr = GetUnderlyingObject(SI->getPointerOperand(), DL);
-      StoreRefs[Ptr].push_back(SI);
+      Value *ObjPtr = GetUnderlyingObject(Ptr, DL);
+      StoreRefs[ObjPtr].push_back(SI);
     }
   }
 }
@@ -592,6 +602,8 @@ bool Vectorizer::vectorizeStoreChain(ArrayRef<Value *> Chain) {
   }
 
   unsigned Sz = DL.getTypeSizeInBits(StoreTy);
+  unsigned AS = S0->getPointerAddressSpace();
+  unsigned VecRegSize = TTI.getLoadStoreVecRegBitWidth(AS);
   unsigned VF = VecRegSize / Sz;
   unsigned ChainSize = Chain.size();
 
@@ -664,7 +676,6 @@ bool Vectorizer::vectorizeStoreChain(ArrayRef<Value *> Chain) {
 
   // Set insert point.
   Builder.SetInsertPoint(&*Last);
-  unsigned AS = S0->getPointerAddressSpace();
 
   Value *Vec = UndefValue::get(VecTy);
 
@@ -728,6 +739,8 @@ bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
   }
 
   unsigned Sz = DL.getTypeSizeInBits(LoadTy);
+  unsigned AS = L0->getPointerAddressSpace();
+  unsigned VecRegSize = TTI.getLoadStoreVecRegBitWidth(AS);
   unsigned VF = VecRegSize / Sz;
   unsigned ChainSize = Chain.size();
 
@@ -798,7 +811,6 @@ bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
   // Set insert point.
   Builder.SetInsertPoint(&*Last);
 
-  unsigned AS = L0->getPointerAddressSpace();
   Value *Bitcast =
     Builder.CreateBitCast(L0->getPointerOperand(), VecTy->getPointerTo(AS));
 
