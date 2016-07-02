@@ -1332,18 +1332,38 @@ static TypeRecordKind getRecordKind(const DICompositeType *Ty) {
   llvm_unreachable("unexpected tag");
 }
 
-/// Return the HasUniqueName option if it should be present in ClassOptions, or
-/// None otherwise.
-static ClassOptions getRecordUniqueNameOption(const DICompositeType *Ty) {
-  // MSVC always sets this flag now, even for local types. Clang doesn't always
+/// Return ClassOptions that should be present on both the forward declaration
+/// and the defintion of a tag type.
+static ClassOptions getCommonClassOptions(const DICompositeType *Ty) {
+  ClassOptions CO = ClassOptions::None;
+
+  // MSVC always sets this flag, even for local types. Clang doesn't always
   // appear to give every type a linkage name, which may be problematic for us.
   // FIXME: Investigate the consequences of not following them here.
-  return !Ty->getIdentifier().empty() ? ClassOptions::HasUniqueName
-                                      : ClassOptions::None;
+  if (!Ty->getIdentifier().empty())
+    CO |= ClassOptions::HasUniqueName;
+
+  // Put the Nested flag on a type if it appears immediately inside a tag type.
+  // Do not walk the scope chain. Do not attempt to compute ContainsNestedClass
+  // here. That flag is only set on definitions, and not forward declarations.
+  const DIScope *ImmediateScope = Ty->getScope().resolve();
+  if (ImmediateScope && isa<DICompositeType>(ImmediateScope))
+    CO |= ClassOptions::Nested;
+
+  // Put the Scoped flag on function-local types.
+  for (const DIScope *Scope = ImmediateScope; Scope != nullptr;
+       Scope = Scope->getScope().resolve()) {
+    if (isa<DISubprogram>(Scope)) {
+      CO |= ClassOptions::Scoped;
+      break;
+    }
+  }
+
+  return CO;
 }
 
 TypeIndex CodeViewDebug::lowerTypeEnum(const DICompositeType *Ty) {
-  ClassOptions CO = ClassOptions::None | getRecordUniqueNameOption(Ty);
+  ClassOptions CO = getCommonClassOptions(Ty);
   TypeIndex FTI;
   unsigned EnumeratorCount = 0;
 
@@ -1459,7 +1479,7 @@ TypeIndex CodeViewDebug::lowerTypeClass(const DICompositeType *Ty) {
   // forward decl options, since it might not be available in all TUs.
   TypeRecordKind Kind = getRecordKind(Ty);
   ClassOptions CO =
-      ClassOptions::ForwardReference | getRecordUniqueNameOption(Ty);
+      ClassOptions::ForwardReference | getCommonClassOptions(Ty);
   std::string FullName = getFullyQualifiedName(Ty);
   TypeIndex FwdDeclTI = TypeTable.writeClass(ClassRecord(
       Kind, 0, CO, HfaKind::None, WindowsRTClassKind::None, TypeIndex(),
@@ -1472,8 +1492,7 @@ TypeIndex CodeViewDebug::lowerTypeClass(const DICompositeType *Ty) {
 TypeIndex CodeViewDebug::lowerCompleteTypeClass(const DICompositeType *Ty) {
   // Construct the field list and complete type record.
   TypeRecordKind Kind = getRecordKind(Ty);
-  // FIXME: Other ClassOptions, like ContainsNestedClass and NestedClass.
-  ClassOptions CO = ClassOptions::None | getRecordUniqueNameOption(Ty);
+  ClassOptions CO = getCommonClassOptions(Ty);
   TypeIndex FieldTI;
   TypeIndex VShapeTI;
   unsigned FieldCount;
@@ -1499,7 +1518,7 @@ TypeIndex CodeViewDebug::lowerCompleteTypeClass(const DICompositeType *Ty) {
 
 TypeIndex CodeViewDebug::lowerTypeUnion(const DICompositeType *Ty) {
   ClassOptions CO =
-      ClassOptions::ForwardReference | getRecordUniqueNameOption(Ty);
+      ClassOptions::ForwardReference | getCommonClassOptions(Ty);
   std::string FullName = getFullyQualifiedName(Ty);
   TypeIndex FwdDeclTI =
       TypeTable.writeUnion(UnionRecord(0, CO, HfaKind::None, TypeIndex(), 0,
@@ -1510,7 +1529,7 @@ TypeIndex CodeViewDebug::lowerTypeUnion(const DICompositeType *Ty) {
 }
 
 TypeIndex CodeViewDebug::lowerCompleteTypeUnion(const DICompositeType *Ty) {
-  ClassOptions CO = ClassOptions::None | getRecordUniqueNameOption(Ty);
+  ClassOptions CO = getCommonClassOptions(Ty);
   TypeIndex FieldTI;
   unsigned FieldCount;
   std::tie(FieldTI, std::ignore, FieldCount) = lowerRecordFieldList(Ty);

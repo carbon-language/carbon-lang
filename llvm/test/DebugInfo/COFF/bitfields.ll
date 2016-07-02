@@ -66,8 +66,9 @@
 ; CHECK:  Struct ([[anon_ty:.*]]) {
 ; CHECK:    TypeLeafKind: LF_STRUCTURE (0x1505)
 ; CHECK:    MemberCount: 0
-; CHECK:    Properties [ (0x80)
+; CHECK:    Properties [ (0x88)
 ; CHECK:      ForwardReference (0x80)
+; CHECK:      Nested (0x8)
 ; CHECK:    ]
 ; CHECK:    FieldList: 0x0
 ; CHECK:    SizeOf: 0
@@ -141,7 +142,8 @@
 ; CHECK:  Struct ({{.*}}) {
 ; CHECK:    TypeLeafKind: LF_STRUCTURE (0x1505)
 ; CHECK:    MemberCount: 2
-; CHECK:    Properties [ (0x0)
+; CHECK:    Properties [ (0x8)
+; CHECK:      Nested (0x8)
 ; CHECK:    ]
 ; CHECK:    FieldList: <field list> ([[anon_fl]])
 ; CHECK:    SizeOf: 3
