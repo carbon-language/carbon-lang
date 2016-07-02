@@ -46,7 +46,7 @@ returns the target triple of the current machine.
 
 LLVM doesn't require us to to link in all the target
 functionality. For example, if we're just using the JIT, we don't need
-the assembly printers. Similarly, if we're only targetting certain
+the assembly printers. Similarly, if we're only targeting certain
 architectures, we can only link in the functionality for those
 architectures.
 
@@ -80,7 +80,7 @@ Target Machine
 ==============
 
 We will also need a ``TargetMachine``. This class provides a complete
-machine description of the machine we're targetting. If we want to
+machine description of the machine we're targeting. If we want to
 target a specific feature (such as SSE) or a specific CPU (such as
 Intel's Sandylake), we do so now.
 
