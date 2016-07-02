@@ -373,21 +373,27 @@ using __all = is_same<__all_dummy<_Pred...>, __all_dummy<(_Pred, true)...>>;
 struct __tuple_sfinae_base {
   template <class ..._FromArgs, class ..._ToArgs>
   static auto __test_constructible(__tuple_types<_FromArgs...>, __tuple_types<_ToArgs...>)
-    -> __all<is_constructible<_ToArgs, _FromArgs>::value...>;
+    -> __all<typename enable_if<
+        is_constructible<_ToArgs, _FromArgs>::value
+      , bool>::type{true}...>;
   static auto __test_constructible(...) -> false_type;
   template <class _Types1, class _Types2>
   using __constructible = decltype(__test_constructible(_Types1{}, _Types2{}));
 
   template <class ..._FromArgs, class ..._ToArgs>
   static auto __test_convertible(__tuple_types<_FromArgs...>, __tuple_types<_ToArgs...>)
-    -> __all<is_convertible<_FromArgs, _ToArgs>::value...>;
+    -> __all<typename enable_if<
+          is_convertible<_FromArgs, _ToArgs>::value
+      , bool>::type{true}...>;
   static auto __test_convertible(...) -> false_type;
   template <class _Types1, class _Types2>
   using __convertible = decltype(__test_convertible(_Types1{}, _Types2{}));
 
   template <class ..._FromArgs, class ..._ToArgs>
   static auto __test_assignable(__tuple_types<_FromArgs...>, __tuple_types<_ToArgs...>)
-    -> __all<is_assignable<_ToArgs&, _FromArgs>::value...>;
+    -> __all<typename enable_if<
+          is_assignable<_ToArgs&, _FromArgs>::value
+      , bool>::type{true}...>;
   static auto __test_assignable(...) -> false_type;
   template <class _Types1, class _Types2>
   using __assignable = decltype(__test_assignable(_Types1{}, _Types2{}));
