@@ -7256,11 +7256,12 @@ static SDValue lowerVectorShuffleWithPSHUFB(const SDLoc &DL, MVT VT,
   const int NumEltBytes = VT.getScalarSizeInBits() / 8;
 
   assert((Subtarget.hasSSSE3() && VT.is128BitVector()) ||
-         (Subtarget.hasAVX2() && VT.is256BitVector()));
+         (Subtarget.hasAVX2() && VT.is256BitVector()) ||
+         (Subtarget.hasBWI() && VT.is512BitVector()));
 
   SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
 
-  SmallVector<SDValue, 32> PSHUFBMask(NumBytes);
+  SmallVector<SDValue, 64> PSHUFBMask(NumBytes);
   // Sign bit set in i8 mask means zero element.
   SDValue ZeroMask = DAG.getConstant(0x80, DL, MVT::i8);
 
@@ -11908,6 +11909,10 @@ static SDValue lowerV64I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
           DL, MVT::v64i8, V1, V2, Mask, Subtarget, DAG))
     return Rotate;
+
+  if (SDValue PSHUFB = lowerVectorShuffleWithPSHUFB(DL, MVT::v64i8, Mask, V1,
+                                                    V2, Subtarget, DAG))
+    return PSHUFB;
 
   // FIXME: Implement direct support for this type!
   return splitAndLowerVectorShuffle(DL, MVT::v64i8, V1, V2, Mask, DAG);
