@@ -11721,6 +11721,17 @@ static SDValue lowerV8F64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
     // Use low duplicate instructions for masks that match their pattern.
     if (isShuffleEquivalent(V1, V2, Mask, {0, 0, 2, 2, 4, 4, 6, 6}))
       return DAG.getNode(X86ISD::MOVDDUP, DL, MVT::v8f64, V1);
+
+    if (!is128BitLaneCrossingShuffleMask(MVT::v8f64, Mask)) {
+      // Non-half-crossing single input shuffles can be lowered with an
+      // interleaved permutation.
+      unsigned VPERMILPMask = (Mask[0] == 1) | ((Mask[1] == 1) << 1) |
+                              ((Mask[2] == 3) << 2) | ((Mask[3] == 3) << 3) |
+                              ((Mask[4] == 5) << 4) | ((Mask[5] == 5) << 5) |
+                              ((Mask[6] == 7) << 6) | ((Mask[7] == 7) << 7);
+      return DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v8f64, V1,
+                         DAG.getConstant(VPERMILPMask, DL, MVT::i8));
+    }
   }
 
   if (SDValue Shuf128 =
