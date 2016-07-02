@@ -784,7 +784,7 @@ public:
   static StringRef name() { return "LoopAccessInfoAnalysis"; }
 };
 
-/// \brief Printer pass for the \c BlockFrequencyInfo results.
+/// \brief Printer pass for the \c LoopAccessInfo results.
 class LoopAccessInfoPrinterPass
     : public PassInfoMixin<LoopAccessInfoPrinterPass> {
   raw_ostream &OS;
