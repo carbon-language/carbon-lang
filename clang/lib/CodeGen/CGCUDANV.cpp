@@ -189,7 +189,7 @@ llvm::Function *CGNVCUDARuntime::makeRegisterGlobalsFn() {
 
   // void __cudaRegisterFunction(void **, const char *, char *, const char *,
   //                             int, uint3*, uint3*, dim3*, dim3*, int*)
-  std::vector<llvm::Type *> RegisterFuncParams = {
+  llvm::Type *RegisterFuncParams[] = {
       VoidPtrPtrTy, CharPtrTy, CharPtrTy, CharPtrTy, IntTy,
       VoidPtrTy,    VoidPtrTy, VoidPtrTy, VoidPtrTy, IntTy->getPointerTo()};
   llvm::Constant *RegisterFunc = CGM.CreateRuntimeFunction(
@@ -213,9 +213,9 @@ llvm::Function *CGNVCUDARuntime::makeRegisterGlobalsFn() {
 
   // void __cudaRegisterVar(void **, char *, char *, const char *,
   //                        int, int, int, int)
-  std::vector<llvm::Type *> RegisterVarParams = {
-      VoidPtrPtrTy, CharPtrTy, CharPtrTy, CharPtrTy,
-      IntTy,        IntTy,     IntTy,     IntTy};
+  llvm::Type *RegisterVarParams[] = {VoidPtrPtrTy, CharPtrTy, CharPtrTy,
+                                     CharPtrTy,    IntTy,     IntTy,
+                                     IntTy,        IntTy};
   llvm::Constant *RegisterVar = CGM.CreateRuntimeFunction(
       llvm::FunctionType::get(IntTy, RegisterVarParams, false),
       "__cudaRegisterVar");
