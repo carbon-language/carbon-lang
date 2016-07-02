@@ -40,8 +40,6 @@ template <class ELFT> class SharedFile;
 template <class ELFT> class SharedSymbol;
 template <class ELFT> class DefinedRegular;
 
-bool isValidCIdentifier(StringRef S);
-
 // This represents a section in an output file.
 // Different sub classes represent different types of sections. Some contain
 // input sections, others are created by the linker.
