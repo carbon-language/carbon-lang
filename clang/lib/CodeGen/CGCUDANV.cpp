@@ -98,10 +98,7 @@ CGNVCUDARuntime::CGNVCUDARuntime(CodeGenModule &CGM)
 
 llvm::Constant *CGNVCUDARuntime::getSetupArgumentFn() const {
   // cudaError_t cudaSetupArgument(void *, size_t, size_t)
-  std::vector<llvm::Type*> Params;
-  Params.push_back(VoidPtrTy);
-  Params.push_back(SizeTy);
-  Params.push_back(SizeTy);
+  llvm::Type *Params[] = {VoidPtrTy, SizeTy, SizeTy};
   return CGM.CreateRuntimeFunction(llvm::FunctionType::get(IntTy,
                                                            Params, false),
                                    "cudaSetupArgument");
