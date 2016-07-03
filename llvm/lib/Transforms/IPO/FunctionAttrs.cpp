@@ -1067,21 +1067,9 @@ INITIALIZE_PASS_END(PostOrderFunctionAttrsLegacyPass, "functionattrs",
 
 Pass *llvm::createPostOrderFunctionAttrsLegacyPass() { return new PostOrderFunctionAttrsLegacyPass(); }
 
-bool PostOrderFunctionAttrsLegacyPass::runOnSCC(CallGraphSCC &SCC) {
-  if (skipSCC(SCC))
-    return false;
+template <typename AARGetterT>
+static bool runImpl(CallGraphSCC &SCC, AARGetterT AARGetter) {
   bool Changed = false;
-
-  // We compute dedicated AA results for each function in the SCC as needed. We
-  // use a lambda referencing external objects so that they live long enough to
-  // be queried, but we re-use them each time.
-  Optional<BasicAAResult> BAR;
-  Optional<AAResults> AAR;
-  auto AARGetter = [&](Function &F) -> AAResults & {
-    BAR.emplace(createLegacyPMBasicAAResult(*this, F));
-    AAR.emplace(createLegacyPMAAResults(*this, F, *BAR));
-    return *AAR;
-  };
 
   // Fill SCCNodes with the elements of the SCC. Used for quickly looking up
   // whether a given CallGraphNode is in this SCC. Also track whether there are
@@ -1114,6 +1102,24 @@ bool PostOrderFunctionAttrsLegacyPass::runOnSCC(CallGraphSCC &SCC) {
   }
 
   return Changed;
+}
+
+bool PostOrderFunctionAttrsLegacyPass::runOnSCC(CallGraphSCC &SCC) {
+  if (skipSCC(SCC))
+    return false;
+
+  // We compute dedicated AA results for each function in the SCC as needed. We
+  // use a lambda referencing external objects so that they live long enough to
+  // be queried, but we re-use them each time.
+  Optional<BasicAAResult> BAR;
+  Optional<AAResults> AAR;
+  auto AARGetter = [&](Function &F) -> AAResults & {
+    BAR.emplace(createLegacyPMBasicAAResult(*this, F));
+    AAR.emplace(createLegacyPMAAResults(*this, F, *BAR));
+    return *AAR;
+  };
+
+  return runImpl(SCC, AARGetter);
 }
 
 namespace {
