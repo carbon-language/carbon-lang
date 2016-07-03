@@ -7092,6 +7092,28 @@ is256BitLaneRepeatedShuffleMask(MVT VT, ArrayRef<int> Mask,
   return isRepeatedShuffleMask(256, VT, Mask, RepeatedMask);
 }
 
+static void scaleShuffleMask(int Scale, ArrayRef<int> Mask,
+                             SmallVectorImpl<int> &ScaledMask) {
+  assert(0 < Scale && "Unexpected scaling factor");
+  int NumElts = Mask.size();
+  ScaledMask.assign(NumElts * Scale, -1);
+
+  for (int i = 0; i != NumElts; ++i) {
+    int M = Mask[i];
+
+    // Repeat sentinel values in every mask element.
+    if (M < 0) {
+      for (int s = 0; s != Scale; ++s)
+        ScaledMask[(Scale * i) + s] = M;
+      continue;
+    }
+
+    // Scale mask element and increment across each mask element.
+    for (int s = 0; s != Scale; ++s)
+      ScaledMask[(Scale * i) + s] = (Scale * M) + s;
+  }
+}
+
 /// \brief Checks whether a shuffle mask is equivalent to an explicit list of
 /// arguments.
 ///
@@ -11221,12 +11243,8 @@ static SDValue lowerV4I64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
     // can use lower latency instructions that will operate on both lanes.
     SmallVector<int, 2> RepeatedMask;
     if (is128BitLaneRepeatedShuffleMask(MVT::v4i64, Mask, RepeatedMask)) {
-      int PSHUFDMask[] = {-1, -1, -1, -1};
-      for (int i = 0; i < 2; ++i)
-        if (RepeatedMask[i] >= 0) {
-          PSHUFDMask[2 * i] = 2 * RepeatedMask[i];
-          PSHUFDMask[2 * i + 1] = 2 * RepeatedMask[i] + 1;
-        }
+      SmallVector<int, 4> PSHUFDMask;
+      scaleShuffleMask(2, RepeatedMask, PSHUFDMask);
       return DAG.getBitcast(
           MVT::v4i64,
           DAG.getNode(X86ISD::PSHUFD, DL, MVT::v8i32,
@@ -11815,12 +11833,8 @@ static SDValue lowerV8I64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
     // 128-bit lanes.
     SmallVector<int, 2> Repeated128Mask;
     if (is128BitLaneRepeatedShuffleMask(MVT::v8i64, Mask, Repeated128Mask)) {
-      int PSHUFDMask[] = {-1, -1, -1, -1};
-      for (int i = 0; i < 2; ++i)
-        if (Repeated128Mask[i] >= 0) {
-          PSHUFDMask[2 * i] = 2 * Repeated128Mask[i];
-          PSHUFDMask[2 * i + 1] = 2 * Repeated128Mask[i] + 1;
-        }
+      SmallVector<int, 4> PSHUFDMask;
+      scaleShuffleMask(2, Repeated128Mask, PSHUFDMask);
       return DAG.getBitcast(
           MVT::v8i64,
           DAG.getNode(X86ISD::PSHUFD, DL, MVT::v16i32,
