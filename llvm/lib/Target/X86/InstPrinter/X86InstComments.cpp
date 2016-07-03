@@ -64,6 +64,16 @@ using namespace llvm;
   CASE_AVX_INS_COMMON(Inst, Y, r##src)            \
   CASE_SSE_INS_COMMON(Inst, r##src)
 
+#define CASE_MASK_PMOVZX(Inst, src)               \
+  CASE_MASK_INS_COMMON(Inst, Z, r##src)           \
+  CASE_MASK_INS_COMMON(Inst, Z256, r##src)        \
+  CASE_MASK_INS_COMMON(Inst, Z128, r##src)
+
+#define CASE_MASKZ_PMOVZX(Inst, src)              \
+  CASE_MASKZ_INS_COMMON(Inst, Z, r##src)          \
+  CASE_MASKZ_INS_COMMON(Inst, Z256, r##src)       \
+  CASE_MASKZ_INS_COMMON(Inst, Z128, r##src)
+
 #define CASE_UNPCK(Inst, src)                     \
   CASE_AVX512_INS_COMMON(Inst, Z, r##src)         \
   CASE_AVX512_INS_COMMON(Inst, Z256, r##src)      \
@@ -156,6 +166,18 @@ static std::string getMaskName(const MCInst *MI, const char *DestName,
   CASE_MASKZ_MOVDUP(MOVSHDUP, r)
   CASE_MASKZ_MOVDUP(MOVSLDUP, m)
   CASE_MASKZ_MOVDUP(MOVSLDUP, r)
+  CASE_MASKZ_PMOVZX(PMOVZXBD, m)
+  CASE_MASKZ_PMOVZX(PMOVZXBD, r)
+  CASE_MASKZ_PMOVZX(PMOVZXBQ, m)
+  CASE_MASKZ_PMOVZX(PMOVZXBQ, r)
+  CASE_MASKZ_PMOVZX(PMOVZXBW, m)
+  CASE_MASKZ_PMOVZX(PMOVZXBW, r)
+  CASE_MASKZ_PMOVZX(PMOVZXDQ, m)
+  CASE_MASKZ_PMOVZX(PMOVZXDQ, r)
+  CASE_MASKZ_PMOVZX(PMOVZXWD, m)
+  CASE_MASKZ_PMOVZX(PMOVZXWD, r)
+  CASE_MASKZ_PMOVZX(PMOVZXWQ, m)
+  CASE_MASKZ_PMOVZX(PMOVZXWQ, r)
     MaskWithZero = true;
     MaskRegName = getRegName(MI->getOperand(1).getReg());
     break;
@@ -165,6 +187,18 @@ static std::string getMaskName(const MCInst *MI, const char *DestName,
   CASE_MASK_MOVDUP(MOVSHDUP, r)
   CASE_MASK_MOVDUP(MOVSLDUP, m)
   CASE_MASK_MOVDUP(MOVSLDUP, r)
+  CASE_MASK_PMOVZX(PMOVZXBD, m)
+  CASE_MASK_PMOVZX(PMOVZXBD, r)
+  CASE_MASK_PMOVZX(PMOVZXBQ, m)
+  CASE_MASK_PMOVZX(PMOVZXBQ, r)
+  CASE_MASK_PMOVZX(PMOVZXBW, m)
+  CASE_MASK_PMOVZX(PMOVZXBW, r)
+  CASE_MASK_PMOVZX(PMOVZXDQ, m)
+  CASE_MASK_PMOVZX(PMOVZXDQ, r)
+  CASE_MASK_PMOVZX(PMOVZXWD, m)
+  CASE_MASK_PMOVZX(PMOVZXWD, r)
+  CASE_MASK_PMOVZX(PMOVZXWQ, m)
+  CASE_MASK_PMOVZX(PMOVZXWQ, r)
     MaskRegName = getRegName(MI->getOperand(2).getReg());
     break;
   }

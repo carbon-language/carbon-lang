@@ -7686,9 +7686,9 @@ define <4 x i32>@test_int_x86_avx512_mask_pmovzxb_d_128(<16 x i8> %x0, <4 x i32>
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpmovzxbd %xmm0, %xmm1 {%k1} ## encoding: [0x62,0xf2,0x7d,0x09,0x31,0xc8]
-; CHECK-NEXT:    ## xmm1 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
+; CHECK-NEXT:    ## xmm1 {%k1} = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
 ; CHECK-NEXT:    vpmovzxbd %xmm0, %xmm2 {%k1} {z} ## encoding: [0x62,0xf2,0x7d,0x89,0x31,0xd0]
-; CHECK-NEXT:    ## xmm2 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
+; CHECK-NEXT:    ## xmm2 {%k1} {z} = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
 ; CHECK-NEXT:    vpmovzxbd %xmm0, %xmm0 ## encoding: [0x62,0xf2,0x7d,0x08,0x31,0xc0]
 ; CHECK-NEXT:    ## xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
 ; CHECK-NEXT:    vpaddd %xmm2, %xmm1, %xmm1 ## encoding: [0x62,0xf1,0x75,0x08,0xfe,0xca]
@@ -7709,9 +7709,9 @@ define <8 x i32>@test_int_x86_avx512_mask_pmovzxb_d_256(<16 x i8> %x0, <8 x i32>
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpmovzxbd %xmm0, %ymm1 {%k1} ## encoding: [0x62,0xf2,0x7d,0x29,0x31,0xc8]
-; CHECK-NEXT:    ## ymm1 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero,xmm0[4],zero,zero,zero,xmm0[5],zero,zero,zero,xmm0[6],zero,zero,zero,xmm0[7],zero,zero,zero
+; CHECK-NEXT:    ## ymm1 {%k1} = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero,xmm0[4],zero,zero,zero,xmm0[5],zero,zero,zero,xmm0[6],zero,zero,zero,xmm0[7],zero,zero,zero
 ; CHECK-NEXT:    vpmovzxbd %xmm0, %ymm2 {%k1} {z} ## encoding: [0x62,0xf2,0x7d,0xa9,0x31,0xd0]
-; CHECK-NEXT:    ## ymm2 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero,xmm0[4],zero,zero,zero,xmm0[5],zero,zero,zero,xmm0[6],zero,zero,zero,xmm0[7],zero,zero,zero
+; CHECK-NEXT:    ## ymm2 {%k1} {z} = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero,xmm0[4],zero,zero,zero,xmm0[5],zero,zero,zero,xmm0[6],zero,zero,zero,xmm0[7],zero,zero,zero
 ; CHECK-NEXT:    vpmovzxbd %xmm0, %ymm0 ## encoding: [0x62,0xf2,0x7d,0x28,0x31,0xc0]
 ; CHECK-NEXT:    ## ymm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero,xmm0[4],zero,zero,zero,xmm0[5],zero,zero,zero,xmm0[6],zero,zero,zero,xmm0[7],zero,zero,zero
 ; CHECK-NEXT:    vpaddd %ymm2, %ymm1, %ymm1 ## encoding: [0x62,0xf1,0x75,0x28,0xfe,0xca]
@@ -7732,9 +7732,9 @@ define <2 x i64>@test_int_x86_avx512_mask_pmovzxb_q_128(<16 x i8> %x0, <2 x i64>
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpmovzxbq %xmm0, %xmm1 {%k1} ## encoding: [0x62,0xf2,0x7d,0x09,0x32,0xc8]
-; CHECK-NEXT:    ## xmm1 = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero
+; CHECK-NEXT:    ## xmm1 {%k1} = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero
 ; CHECK-NEXT:    vpmovzxbq %xmm0, %xmm2 {%k1} {z} ## encoding: [0x62,0xf2,0x7d,0x89,0x32,0xd0]
-; CHECK-NEXT:    ## xmm2 = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero
+; CHECK-NEXT:    ## xmm2 {%k1} {z} = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero
 ; CHECK-NEXT:    vpmovzxbq %xmm0, %xmm0 ## encoding: [0x62,0xf2,0x7d,0x08,0x32,0xc0]
 ; CHECK-NEXT:    ## xmm0 = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero
 ; CHECK-NEXT:    vpaddq %xmm2, %xmm1, %xmm1 ## encoding: [0x62,0xf1,0xf5,0x08,0xd4,0xca]
@@ -7755,9 +7755,9 @@ define <4 x i64>@test_int_x86_avx512_mask_pmovzxb_q_256(<16 x i8> %x0, <4 x i64>
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpmovzxbq %xmm0, %ymm1 {%k1} ## encoding: [0x62,0xf2,0x7d,0x29,0x32,0xc8]
-; CHECK-NEXT:    ## ymm1 = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero,xmm0[2],zero,zero,zero,zero,zero,zero,zero,xmm0[3],zero,zero,zero,zero,zero,zero,zero
+; CHECK-NEXT:    ## ymm1 {%k1} = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero,xmm0[2],zero,zero,zero,zero,zero,zero,zero,xmm0[3],zero,zero,zero,zero,zero,zero,zero
 ; CHECK-NEXT:    vpmovzxbq %xmm0, %ymm2 {%k1} {z} ## encoding: [0x62,0xf2,0x7d,0xa9,0x32,0xd0]
-; CHECK-NEXT:    ## ymm2 = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero,xmm0[2],zero,zero,zero,zero,zero,zero,zero,xmm0[3],zero,zero,zero,zero,zero,zero,zero
+; CHECK-NEXT:    ## ymm2 {%k1} {z} = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero,xmm0[2],zero,zero,zero,zero,zero,zero,zero,xmm0[3],zero,zero,zero,zero,zero,zero,zero
 ; CHECK-NEXT:    vpmovzxbq %xmm0, %ymm0 ## encoding: [0x62,0xf2,0x7d,0x28,0x32,0xc0]
 ; CHECK-NEXT:    ## ymm0 = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero,xmm0[2],zero,zero,zero,zero,zero,zero,zero,xmm0[3],zero,zero,zero,zero,zero,zero,zero
 ; CHECK-NEXT:    vpaddq %ymm2, %ymm1, %ymm1 ## encoding: [0x62,0xf1,0xf5,0x28,0xd4,0xca]
@@ -7778,9 +7778,9 @@ define <2 x i64>@test_int_x86_avx512_mask_pmovzxd_q_128(<4 x i32> %x0, <2 x i64>
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpmovzxdq %xmm0, %xmm1 {%k1} ## encoding: [0x62,0xf2,0x7d,0x09,0x35,0xc8]
-; CHECK-NEXT:    ## xmm1 = xmm0[0],zero,xmm0[1],zero
+; CHECK-NEXT:    ## xmm1 {%k1} = xmm0[0],zero,xmm0[1],zero
 ; CHECK-NEXT:    vpmovzxdq %xmm0, %xmm2 {%k1} {z} ## encoding: [0x62,0xf2,0x7d,0x89,0x35,0xd0]
-; CHECK-NEXT:    ## xmm2 = xmm0[0],zero,xmm0[1],zero
+; CHECK-NEXT:    ## xmm2 {%k1} {z} = xmm0[0],zero,xmm0[1],zero
 ; CHECK-NEXT:    vpmovzxdq %xmm0, %xmm0 ## encoding: [0x62,0xf2,0x7d,0x08,0x35,0xc0]
 ; CHECK-NEXT:    ## xmm0 = xmm0[0],zero,xmm0[1],zero
 ; CHECK-NEXT:    vpaddq %xmm2, %xmm1, %xmm1 ## encoding: [0x62,0xf1,0xf5,0x08,0xd4,0xca]
@@ -7801,9 +7801,9 @@ define <4 x i64>@test_int_x86_avx512_mask_pmovzxd_q_256(<4 x i32> %x0, <4 x i64>
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpmovzxdq %xmm0, %ymm1 {%k1} ## encoding: [0x62,0xf2,0x7d,0x29,0x35,0xc8]
-; CHECK-NEXT:    ## ymm1 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
+; CHECK-NEXT:    ## ymm1 {%k1} = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
 ; CHECK-NEXT:    vpmovzxdq %xmm0, %ymm2 {%k1} {z} ## encoding: [0x62,0xf2,0x7d,0xa9,0x35,0xd0]
-; CHECK-NEXT:    ## ymm2 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
+; CHECK-NEXT:    ## ymm2 {%k1} {z} = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
 ; CHECK-NEXT:    vpmovzxdq %xmm0, %ymm0 ## encoding: [0x62,0xf2,0x7d,0x28,0x35,0xc0]
 ; CHECK-NEXT:    ## ymm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
 ; CHECK-NEXT:    vpaddq %ymm2, %ymm1, %ymm1 ## encoding: [0x62,0xf1,0xf5,0x28,0xd4,0xca]
@@ -7824,9 +7824,9 @@ define <4 x i32>@test_int_x86_avx512_mask_pmovzxw_d_128(<8 x i16> %x0, <4 x i32>
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpmovzxwd %xmm0, %xmm1 {%k1} ## encoding: [0x62,0xf2,0x7d,0x09,0x33,0xc8]
-; CHECK-NEXT:    ## xmm1 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
+; CHECK-NEXT:    ## xmm1 {%k1} = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
 ; CHECK-NEXT:    vpmovzxwd %xmm0, %xmm2 {%k1} {z} ## encoding: [0x62,0xf2,0x7d,0x89,0x33,0xd0]
-; CHECK-NEXT:    ## xmm2 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
+; CHECK-NEXT:    ## xmm2 {%k1} {z} = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
 ; CHECK-NEXT:    vpmovzxwd %xmm0, %xmm0 ## encoding: [0x62,0xf2,0x7d,0x08,0x33,0xc0]
 ; CHECK-NEXT:    ## xmm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
 ; CHECK-NEXT:    vpaddd %xmm2, %xmm1, %xmm1 ## encoding: [0x62,0xf1,0x75,0x08,0xfe,0xca]
@@ -7847,9 +7847,9 @@ define <8 x i32>@test_int_x86_avx512_mask_pmovzxw_d_256(<8 x i16> %x0, <8 x i32>
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpmovzxwd %xmm0, %ymm1 {%k1} ## encoding: [0x62,0xf2,0x7d,0x29,0x33,0xc8]
-; CHECK-NEXT:    ## ymm1 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; CHECK-NEXT:    ## ymm1 {%k1} = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
 ; CHECK-NEXT:    vpmovzxwd %xmm0, %ymm2 {%k1} {z} ## encoding: [0x62,0xf2,0x7d,0xa9,0x33,0xd0]
-; CHECK-NEXT:    ## ymm2 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; CHECK-NEXT:    ## ymm2 {%k1} {z} = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
 ; CHECK-NEXT:    vpmovzxwd %xmm0, %ymm0 ## encoding: [0x62,0xf2,0x7d,0x28,0x33,0xc0]
 ; CHECK-NEXT:    ## ymm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
 ; CHECK-NEXT:    vpaddd %ymm2, %ymm1, %ymm1 ## encoding: [0x62,0xf1,0x75,0x28,0xfe,0xca]
@@ -7870,9 +7870,9 @@ define <2 x i64>@test_int_x86_avx512_mask_pmovzxw_q_128(<8 x i16> %x0, <2 x i64>
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpmovzxwq %xmm0, %xmm1 {%k1} ## encoding: [0x62,0xf2,0x7d,0x09,0x34,0xc8]
-; CHECK-NEXT:    ## xmm1 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
+; CHECK-NEXT:    ## xmm1 {%k1} = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
 ; CHECK-NEXT:    vpmovzxwq %xmm0, %xmm2 {%k1} {z} ## encoding: [0x62,0xf2,0x7d,0x89,0x34,0xd0]
-; CHECK-NEXT:    ## xmm2 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
+; CHECK-NEXT:    ## xmm2 {%k1} {z} = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
 ; CHECK-NEXT:    vpmovzxwq %xmm0, %xmm0 ## encoding: [0x62,0xf2,0x7d,0x08,0x34,0xc0]
 ; CHECK-NEXT:    ## xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
 ; CHECK-NEXT:    vpaddq %xmm2, %xmm1, %xmm1 ## encoding: [0x62,0xf1,0xf5,0x08,0xd4,0xca]
@@ -7893,9 +7893,9 @@ define <4 x i64>@test_int_x86_avx512_mask_pmovzxw_q_256(<8 x i16> %x0, <4 x i64>
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpmovzxwq %xmm0, %ymm1 {%k1} ## encoding: [0x62,0xf2,0x7d,0x29,0x34,0xc8]
-; CHECK-NEXT:    ## ymm1 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
+; CHECK-NEXT:    ## ymm1 {%k1} = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
 ; CHECK-NEXT:    vpmovzxwq %xmm0, %ymm2 {%k1} {z} ## encoding: [0x62,0xf2,0x7d,0xa9,0x34,0xd0]
-; CHECK-NEXT:    ## ymm2 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
+; CHECK-NEXT:    ## ymm2 {%k1} {z} = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
 ; CHECK-NEXT:    vpmovzxwq %xmm0, %ymm0 ## encoding: [0x62,0xf2,0x7d,0x28,0x34,0xc0]
 ; CHECK-NEXT:    ## ymm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
 ; CHECK-NEXT:    vpaddq %ymm2, %ymm1, %ymm1 ## encoding: [0x62,0xf1,0xf5,0x28,0xd4,0xca]
