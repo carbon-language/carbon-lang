@@ -132,6 +132,14 @@ using namespace llvm;
   CASE_AVX512_INS_COMMON(Inst, Z256, src##i)      \
   CASE_AVX_INS_COMMON(Inst, Y, src##i)
 
+#define CASE_MASK_VPERM(Inst, src)                \
+  CASE_MASK_INS_COMMON(Inst, Z, src##i)           \
+  CASE_MASK_INS_COMMON(Inst, Z256, src##i)
+
+#define CASE_MASKZ_VPERM(Inst, src)               \
+  CASE_MASKZ_INS_COMMON(Inst, Z, src##i)          \
+  CASE_MASKZ_INS_COMMON(Inst, Z256, src##i)
+
 #define CASE_VSHUF(Inst, src)                          \
   CASE_AVX512_INS_COMMON(SHUFF##Inst, Z, r##src##i)    \
   CASE_AVX512_INS_COMMON(SHUFI##Inst, Z, r##src##i)    \
@@ -261,6 +269,10 @@ static std::string getMaskName(const MCInst *MI, const char *DestName,
   CASE_MASKZ_VPERMILPI(PSHUFHW, r)
   CASE_MASKZ_VPERMILPI(PSHUFLW, m)
   CASE_MASKZ_VPERMILPI(PSHUFLW, r)
+  CASE_MASKZ_VPERM(PERMPD, m)
+  CASE_MASKZ_VPERM(PERMPD, r)
+  CASE_MASKZ_VPERM(PERMQ, m)
+  CASE_MASKZ_VPERM(PERMQ, r)
   CASE_MASKZ_VSHUF(64X2, m)
   CASE_MASKZ_VSHUF(64X2, r)
   CASE_MASKZ_VSHUF(32X4, m)
@@ -322,6 +334,10 @@ static std::string getMaskName(const MCInst *MI, const char *DestName,
   CASE_MASK_VPERMILPI(PSHUFHW, r)
   CASE_MASK_VPERMILPI(PSHUFLW, m)
   CASE_MASK_VPERMILPI(PSHUFLW, r)
+  CASE_MASK_VPERM(PERMPD, m)
+  CASE_MASK_VPERM(PERMPD, r)
+  CASE_MASK_VPERM(PERMQ, m)
+  CASE_MASK_VPERM(PERMQ, r)
   CASE_MASK_VSHUF(64X2, m)
   CASE_MASK_VSHUF(64X2, r)
   CASE_MASK_VSHUF(32X4, m)

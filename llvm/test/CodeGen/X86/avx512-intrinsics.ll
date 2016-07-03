@@ -6352,8 +6352,8 @@ define <8 x double>@test_int_x86_avx512_mask_perm_df_512(<8 x double> %x0, i32 %
 ; CHECK-LABEL: test_int_x86_avx512_mask_perm_df_512:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %esi, %k1
-; CHECK-NEXT:    vpermpd {{.*#+}} zmm1 = zmm0[3,0,0,0,7,4,4,4]
-; CHECK-NEXT:    vpermpd {{.*#+}} zmm2 = zmm0[3,0,0,0,7,4,4,4]
+; CHECK-NEXT:    vpermpd {{.*#+}} zmm1 {%k1} = zmm0[3,0,0,0,7,4,4,4]
+; CHECK-NEXT:    vpermpd {{.*#+}} zmm2 {%k1} {z} = zmm0[3,0,0,0,7,4,4,4]
 ; CHECK-NEXT:    vpermpd {{.*#+}} zmm0 = zmm0[3,0,0,0,7,4,4,4]
 ; CHECK-NEXT:    vaddpd %zmm2, %zmm1, %zmm1
 ; CHECK-NEXT:    vaddpd %zmm0, %zmm1, %zmm0
@@ -6372,8 +6372,8 @@ define <8 x i64>@test_int_x86_avx512_mask_perm_di_512(<8 x i64> %x0, i32 %x1, <8
 ; CHECK-LABEL: test_int_x86_avx512_mask_perm_di_512:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %esi, %k1
-; CHECK-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[3,0,0,0,7,4,4,4]
-; CHECK-NEXT:    vpermq {{.*#+}} zmm2 = zmm0[3,0,0,0,7,4,4,4]
+; CHECK-NEXT:    vpermq {{.*#+}} zmm1 {%k1} = zmm0[3,0,0,0,7,4,4,4]
+; CHECK-NEXT:    vpermq {{.*#+}} zmm2 {%k1} {z} = zmm0[3,0,0,0,7,4,4,4]
 ; CHECK-NEXT:    vpermq {{.*#+}} zmm0 = zmm0[3,0,0,0,7,4,4,4]
 ; CHECK-NEXT:    vpaddq %zmm2, %zmm1, %zmm1
 ; CHECK-NEXT:    vpaddq %zmm0, %zmm1, %zmm0
