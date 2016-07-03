@@ -918,9 +918,11 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
           SimplifySelectInst(CondVal, TrueVal, FalseVal, DL, TLI, DT, AC))
     return replaceInstUsesWith(SI, V);
 
-  if (SI.getType()->isIntegerTy(1)) {
-    if (ConstantInt *C = dyn_cast<ConstantInt>(TrueVal)) {
-      if (C->getZExtValue()) {
+  if (SI.getType()->getScalarType()->isIntegerTy(1) &&
+      TrueVal->getType() == CondVal->getType()) {
+    const APInt *TrueC;
+    if (match(TrueVal, m_APInt(TrueC))) {
+      if (TrueC->isAllOnesValue()) {
         // Change: A = select B, true, C --> A = or B, C
         return BinaryOperator::CreateOr(CondVal, FalseVal);
       }
@@ -928,8 +930,9 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       Value *NotCond = Builder->CreateNot(CondVal, "not." + CondVal->getName());
       return BinaryOperator::CreateAnd(NotCond, FalseVal);
     }
-    if (ConstantInt *C = dyn_cast<ConstantInt>(FalseVal)) {
-      if (!C->getZExtValue()) {
+    const APInt *FalseC;
+    if (match(FalseVal, m_APInt(FalseC))) {
+      if (*FalseC == 0) {
         // Change: A = select B, C, false --> A = and B, C
         return BinaryOperator::CreateAnd(CondVal, TrueVal);
       }
