@@ -8,8 +8,8 @@ define <16 x float>@test_int_x86_avx512_mask_movsldup_512(<16 x float> %x0, <16 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vmovsldup {{.*#+}} zmm2 = zmm0[0,0,2,2,4,4,6,6,8,8,10,10,12,12,14,14]
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vmovsldup {{.*#+}} zmm1 = zmm0[0,0,2,2,4,4,6,6,8,8,10,10,12,12,14,14]
-; CHECK-NEXT:    vmovsldup {{.*#+}} zmm0 = zmm0[0,0,2,2,4,4,6,6,8,8,10,10,12,12,14,14]
+; CHECK-NEXT:    vmovsldup {{.*#+}} zmm1 {%k1} = zmm0[0,0,2,2,4,4,6,6,8,8,10,10,12,12,14,14]
+; CHECK-NEXT:    vmovsldup {{.*#+}} zmm0 {%k1} {z} = zmm0[0,0,2,2,4,4,6,6,8,8,10,10,12,12,14,14]
 ; CHECK-NEXT:    vaddps %zmm2, %zmm1, %zmm1
 ; CHECK-NEXT:    vaddps %zmm1, %zmm0, %zmm0
 ; CHECK-NEXT:    retq
@@ -28,8 +28,8 @@ define <16 x float>@test_int_x86_avx512_mask_movshdup_512(<16 x float> %x0, <16 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vmovshdup {{.*#+}} zmm2 = zmm0[1,1,3,3,5,5,7,7,9,9,11,11,13,13,15,15]
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vmovshdup {{.*#+}} zmm1 = zmm0[1,1,3,3,5,5,7,7,9,9,11,11,13,13,15,15]
-; CHECK-NEXT:    vmovshdup {{.*#+}} zmm0 = zmm0[1,1,3,3,5,5,7,7,9,9,11,11,13,13,15,15]
+; CHECK-NEXT:    vmovshdup {{.*#+}} zmm1 {%k1} = zmm0[1,1,3,3,5,5,7,7,9,9,11,11,13,13,15,15]
+; CHECK-NEXT:    vmovshdup {{.*#+}} zmm0 {%k1} {z} = zmm0[1,1,3,3,5,5,7,7,9,9,11,11,13,13,15,15]
 ; CHECK-NEXT:    vaddps %zmm2, %zmm1, %zmm1
 ; CHECK-NEXT:    vaddps %zmm1, %zmm0, %zmm0
 ; CHECK-NEXT:    retq
@@ -48,8 +48,8 @@ define <8 x double>@test_int_x86_avx512_mask_movddup_512(<8 x double> %x0, <8 x 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vmovddup {{.*#+}} zmm2 = zmm0[0,0,2,2,4,4,6,6]
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vmovddup {{.*#+}} zmm1 = zmm0[0,0,2,2,4,4,6,6]
-; CHECK-NEXT:    vmovddup {{.*#+}} zmm0 = zmm0[0,0,2,2,4,4,6,6]
+; CHECK-NEXT:    vmovddup {{.*#+}} zmm1 {%k1} = zmm0[0,0,2,2,4,4,6,6]
+; CHECK-NEXT:    vmovddup {{.*#+}} zmm0 {%k1} {z} = zmm0[0,0,2,2,4,4,6,6]
 ; CHECK-NEXT:    vaddpd %zmm2, %zmm1, %zmm1
 ; CHECK-NEXT:    vaddpd %zmm1, %zmm0, %zmm0
 ; CHECK-NEXT:    retq

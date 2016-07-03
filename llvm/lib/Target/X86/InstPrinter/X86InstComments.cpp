@@ -46,6 +46,16 @@ using namespace llvm;
   CASE_AVX_INS_COMMON(Inst, Y, r##src)            \
   CASE_SSE_INS_COMMON(Inst, r##src)
 
+#define CASE_MASK_MOVDUP(Inst, src)               \
+  CASE_MASK_INS_COMMON(Inst, Z, r##src)           \
+  CASE_MASK_INS_COMMON(Inst, Z256, r##src)        \
+  CASE_MASK_INS_COMMON(Inst, Z128, r##src)
+
+#define CASE_MASKZ_MOVDUP(Inst, src)              \
+  CASE_MASKZ_INS_COMMON(Inst, Z, r##src)          \
+  CASE_MASKZ_INS_COMMON(Inst, Z256, r##src)       \
+  CASE_MASKZ_INS_COMMON(Inst, Z128, r##src)
+
 #define CASE_PMOVZX(Inst, src)                    \
   CASE_AVX512_INS_COMMON(Inst, Z, r##src)         \
   CASE_AVX512_INS_COMMON(Inst, Z256, r##src)      \
@@ -127,6 +137,48 @@ static MVT getZeroExtensionResultType(const MCInst *MI) {
   CASE_PMOVZX(PMOVZXDQ, r)
     return getRegOperandVectorVT(MI, MVT::i64, 0);
   }
+}
+
+/// Wraps the destination register name with AVX512 mask/maskz filtering.
+static std::string getMaskName(const MCInst *MI, const char *DestName,
+                               const char *(*getRegName)(unsigned)) {
+  std::string OpMaskName(DestName);
+
+  bool MaskWithZero = false;
+  const char *MaskRegName = nullptr;
+
+  switch (MI->getOpcode()) {
+  default:
+    return OpMaskName;
+  CASE_MASKZ_MOVDUP(MOVDDUP, m)
+  CASE_MASKZ_MOVDUP(MOVDDUP, r)
+  CASE_MASKZ_MOVDUP(MOVSHDUP, m)
+  CASE_MASKZ_MOVDUP(MOVSHDUP, r)
+  CASE_MASKZ_MOVDUP(MOVSLDUP, m)
+  CASE_MASKZ_MOVDUP(MOVSLDUP, r)
+    MaskWithZero = true;
+    MaskRegName = getRegName(MI->getOperand(1).getReg());
+    break;
+  CASE_MASK_MOVDUP(MOVDDUP, m)
+  CASE_MASK_MOVDUP(MOVDDUP, r)
+  CASE_MASK_MOVDUP(MOVSHDUP, m)
+  CASE_MASK_MOVDUP(MOVSHDUP, r)
+  CASE_MASK_MOVDUP(MOVSLDUP, m)
+  CASE_MASK_MOVDUP(MOVSLDUP, r)
+    MaskRegName = getRegName(MI->getOperand(2).getReg());
+    break;
+  }
+
+  // MASK: zmmX {%kY}
+  OpMaskName += " {%";
+  OpMaskName += MaskRegName;
+  OpMaskName += "}";
+
+  // MASKZ: zmmX {%kY} {z}
+  if (MaskWithZero)
+    OpMaskName += " {z}";
+
+  return OpMaskName;
 }
 
 //===----------------------------------------------------------------------===//
@@ -753,9 +805,8 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
   if (ShuffleMask.empty())
     return false;
 
-  // TODO: Add support for specifying an AVX512 style mask register in the comment.
   if (!DestName) DestName = Src1Name;
-  OS << (DestName ? DestName : "mem") << " = ";
+  OS << (DestName ? getMaskName(MI, DestName, getRegName) : "mem") << " = ";
 
   // If the two sources are the same, canonicalize the input elements to be
   // from the first src so that we get larger element spans.
