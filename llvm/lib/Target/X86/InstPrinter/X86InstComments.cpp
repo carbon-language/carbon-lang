@@ -90,6 +90,16 @@ using namespace llvm;
   CASE_AVX_INS_COMMON(Inst, Y, suf)               \
   CASE_SSE_INS_COMMON(Inst, suf)
 
+#define CASE_MASK_SHUF(Inst, src)                 \
+  CASE_MASK_INS_COMMON(Inst, Z, r##src##i)        \
+  CASE_MASK_INS_COMMON(Inst, Z256, r##src##i)     \
+  CASE_MASK_INS_COMMON(Inst, Z128, r##src##i)
+
+#define CASE_MASKZ_SHUF(Inst, src)                \
+  CASE_MASKZ_INS_COMMON(Inst, Z, r##src##i)       \
+  CASE_MASKZ_INS_COMMON(Inst, Z256, r##src##i)    \
+  CASE_MASKZ_INS_COMMON(Inst, Z128, r##src##i)
+
 #define CASE_VPERM(Inst, src)                     \
   CASE_AVX512_INS_COMMON(Inst, Z, src##i)         \
   CASE_AVX512_INS_COMMON(Inst, Z256, src##i)      \
@@ -97,11 +107,33 @@ using namespace llvm;
   CASE_AVX_INS_COMMON(Inst, , src##i)             \
   CASE_AVX_INS_COMMON(Inst, Y, src##i)
 
+#define CASE_MASK_VPERM(Inst, src)                \
+  CASE_MASK_INS_COMMON(Inst, Z, src##i)           \
+  CASE_MASK_INS_COMMON(Inst, Z256, src##i)        \
+  CASE_MASK_INS_COMMON(Inst, Z128, src##i)
+
+#define CASE_MASKZ_VPERM(Inst, src)               \
+  CASE_MASKZ_INS_COMMON(Inst, Z, src##i)          \
+  CASE_MASKZ_INS_COMMON(Inst, Z256, src##i)       \
+  CASE_MASKZ_INS_COMMON(Inst, Z128, src##i)
+
 #define CASE_VSHUF(Inst, src)                          \
   CASE_AVX512_INS_COMMON(SHUFF##Inst, Z, r##src##i)    \
   CASE_AVX512_INS_COMMON(SHUFI##Inst, Z, r##src##i)    \
   CASE_AVX512_INS_COMMON(SHUFF##Inst, Z256, r##src##i) \
   CASE_AVX512_INS_COMMON(SHUFI##Inst, Z256, r##src##i)
+
+#define CASE_MASK_VSHUF(Inst, src)                    \
+  CASE_MASK_INS_COMMON(SHUFF##Inst, Z, r##src##i)     \
+  CASE_MASK_INS_COMMON(SHUFI##Inst, Z, r##src##i)     \
+  CASE_MASK_INS_COMMON(SHUFF##Inst, Z256, r##src##i)  \
+  CASE_MASK_INS_COMMON(SHUFI##Inst, Z256, r##src##i)
+
+#define CASE_MASKZ_VSHUF(Inst, src)                   \
+  CASE_MASKZ_INS_COMMON(SHUFF##Inst, Z, r##src##i)    \
+  CASE_MASKZ_INS_COMMON(SHUFI##Inst, Z, r##src##i)    \
+  CASE_MASKZ_INS_COMMON(SHUFF##Inst, Z256, r##src##i) \
+  CASE_MASKZ_INS_COMMON(SHUFI##Inst, Z256, r##src##i)
 
 static unsigned getVectorRegSize(unsigned RegNo) {
   if (X86::ZMM0 <= RegNo && RegNo <= X86::ZMM31)
@@ -178,6 +210,18 @@ static std::string getMaskName(const MCInst *MI, const char *DestName,
   CASE_MASKZ_PMOVZX(PMOVZXWD, r)
   CASE_MASKZ_PMOVZX(PMOVZXWQ, m)
   CASE_MASKZ_PMOVZX(PMOVZXWQ, r)
+  CASE_MASKZ_SHUF(SHUFPD, m)
+  CASE_MASKZ_SHUF(SHUFPD, r)
+  CASE_MASKZ_SHUF(SHUFPS, m)
+  CASE_MASKZ_SHUF(SHUFPS, r)
+  CASE_MASKZ_VPERM(PERMILPD, m)
+  CASE_MASKZ_VPERM(PERMILPD, r)
+  CASE_MASKZ_VPERM(PERMILPS, m)
+  CASE_MASKZ_VPERM(PERMILPS, r)
+  CASE_MASKZ_VSHUF(64X2, m)
+  CASE_MASKZ_VSHUF(64X2, r)
+  CASE_MASKZ_VSHUF(32X4, m)
+  CASE_MASKZ_VSHUF(32X4, r)
     MaskWithZero = true;
     MaskRegName = getRegName(MI->getOperand(1).getReg());
     break;
@@ -199,6 +243,18 @@ static std::string getMaskName(const MCInst *MI, const char *DestName,
   CASE_MASK_PMOVZX(PMOVZXWD, r)
   CASE_MASK_PMOVZX(PMOVZXWQ, m)
   CASE_MASK_PMOVZX(PMOVZXWQ, r)
+  CASE_MASK_SHUF(SHUFPD, m)
+  CASE_MASK_SHUF(SHUFPD, r)
+  CASE_MASK_SHUF(SHUFPS, m)
+  CASE_MASK_SHUF(SHUFPS, r)
+  CASE_MASK_VPERM(PERMILPD, m)
+  CASE_MASK_VPERM(PERMILPD, r)
+  CASE_MASK_VPERM(PERMILPS, m)
+  CASE_MASK_VPERM(PERMILPS, r)
+  CASE_MASK_VSHUF(64X2, m)
+  CASE_MASK_VSHUF(64X2, r)
+  CASE_MASK_VSHUF(32X4, m)
+  CASE_MASK_VSHUF(32X4, r)
     MaskRegName = getRegName(MI->getOperand(2).getReg());
     break;
   }
