@@ -11765,6 +11765,10 @@ static SDValue lowerV16F32VectorShuffle(SDLoc DL, ArrayRef<int> Mask,
       return DAG.getNode(X86ISD::MOVSLDUP, DL, MVT::v16f32, V1);
     if (isShuffleEquivalent(V1, V2, RepeatedMask, {1, 1, 3, 3}))
       return DAG.getNode(X86ISD::MOVSHDUP, DL, MVT::v16f32, V1);
+
+    if (V2.isUndef())
+      return DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v16f32, V1,
+                         getV4X86ShuffleImm8ForMask(RepeatedMask, DL, DAG));
   }
 
   if (SDValue Unpck =
