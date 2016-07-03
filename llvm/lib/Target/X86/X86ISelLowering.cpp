@@ -7040,10 +7040,10 @@ static bool is128BitLaneCrossingShuffleMask(MVT VT, ArrayRef<int> Mask) {
   return false;
 }
 
-/// \brief Test whether a shuffle mask is equivalent within each 128-bit lane.
+/// \brief Test whether a shuffle mask is equivalent within each sub-lane.
 ///
 /// This checks a shuffle mask to see if it is performing the same
-/// 128-bit lane-relative shuffle in each 128-bit lane. This trivially implies
+/// lane-relative shuffle in each sub-lane. This trivially implies
 /// that it is also not lane-crossing. It may however involve a blend from the
 /// same lane of a second vector.
 ///
@@ -7051,10 +7051,10 @@ static bool is128BitLaneCrossingShuffleMask(MVT VT, ArrayRef<int> Mask) {
 /// non-trivial to compute in the face of undef lanes. The representation is
 /// suitable for use with existing 128-bit shuffles as entries from the second
 /// vector have been remapped to [LaneSize, 2*LaneSize).
-static bool
-is128BitLaneRepeatedShuffleMask(MVT VT, ArrayRef<int> Mask,
-                                SmallVectorImpl<int> &RepeatedMask) {
-  int LaneSize = 128 / VT.getScalarSizeInBits();
+static bool isRepeatedShuffleMask(unsigned LaneSizeInBits, MVT VT,
+                                  ArrayRef<int> Mask,
+                                  SmallVectorImpl<int> &RepeatedMask) {
+  int LaneSize = LaneSizeInBits / VT.getScalarSizeInBits();
   RepeatedMask.assign(LaneSize, -1);
   int Size = Mask.size();
   for (int i = 0; i < Size; ++i) {
@@ -7076,6 +7076,20 @@ is128BitLaneRepeatedShuffleMask(MVT VT, ArrayRef<int> Mask,
       return false;
   }
   return true;
+}
+
+/// Test whether a shuffle mask is equivalent within each 128-bit lane.
+static bool
+is128BitLaneRepeatedShuffleMask(MVT VT, ArrayRef<int> Mask,
+                                SmallVectorImpl<int> &RepeatedMask) {
+  return isRepeatedShuffleMask(128, VT, Mask, RepeatedMask);
+}
+
+/// Test whether a shuffle mask is equivalent within each 256-bit lane.
+static bool
+is256BitLaneRepeatedShuffleMask(MVT VT, ArrayRef<int> Mask,
+                                SmallVectorImpl<int> &RepeatedMask) {
+  return isRepeatedShuffleMask(256, VT, Mask, RepeatedMask);
 }
 
 /// \brief Checks whether a shuffle mask is equivalent to an explicit list of
@@ -11732,6 +11746,11 @@ static SDValue lowerV8F64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
       return DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v8f64, V1,
                          DAG.getConstant(VPERMILPMask, DL, MVT::i8));
     }
+
+    SmallVector<int, 4> RepeatedMask;
+    if (is256BitLaneRepeatedShuffleMask(MVT::v8f64, Mask, RepeatedMask))
+      return DAG.getNode(X86ISD::VPERMI, DL, MVT::v8f64, V1,
+                         getV4X86ShuffleImm8ForMask(RepeatedMask, DL, DAG));
   }
 
   if (SDValue Shuf128 =
@@ -11791,16 +11810,17 @@ static SDValue lowerV8I64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
           lowerV4X128VectorShuffle(DL, MVT::v8i64, Mask, V1, V2, DAG))
     return Shuf128;
 
-  // When the shuffle is mirrored between the 128-bit lanes of the unit, we can
-  // use lower latency instructions that will operate on both 128-bit lanes.
-  SmallVector<int, 2> RepeatedMask;
-  if (is128BitLaneRepeatedShuffleMask(MVT::v8i64, Mask, RepeatedMask)) {
-    if (V2.isUndef()) {
+  if (V2.isUndef()) {
+    // When the shuffle is mirrored between the 128-bit lanes of the unit, we
+    // can use lower latency instructions that will operate on all four
+    // 128-bit lanes.
+    SmallVector<int, 2> Repeated128Mask;
+    if (is128BitLaneRepeatedShuffleMask(MVT::v8i64, Mask, Repeated128Mask)) {
       int PSHUFDMask[] = {-1, -1, -1, -1};
       for (int i = 0; i < 2; ++i)
-        if (RepeatedMask[i] >= 0) {
-          PSHUFDMask[2 * i] = 2 * RepeatedMask[i];
-          PSHUFDMask[2 * i + 1] = 2 * RepeatedMask[i] + 1;
+        if (Repeated128Mask[i] >= 0) {
+          PSHUFDMask[2 * i] = 2 * Repeated128Mask[i];
+          PSHUFDMask[2 * i + 1] = 2 * Repeated128Mask[i] + 1;
         }
       return DAG.getBitcast(
           MVT::v8i64,
@@ -11808,6 +11828,11 @@ static SDValue lowerV8I64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
                       DAG.getBitcast(MVT::v16i32, V1),
                       getV4X86ShuffleImm8ForMask(PSHUFDMask, DL, DAG)));
     }
+
+    SmallVector<int, 4> Repeated256Mask;
+    if (is256BitLaneRepeatedShuffleMask(MVT::v8i64, Mask, Repeated256Mask))
+      return DAG.getNode(X86ISD::VPERMI, DL, MVT::v8i64, V1,
+                         getV4X86ShuffleImm8ForMask(Repeated256Mask, DL, DAG));
   }
 
   // Try to use shift instructions.
