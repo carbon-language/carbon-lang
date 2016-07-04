@@ -8803,8 +8803,8 @@ _mm256_mask_cvtepi64_storeu_epi16 (void * __P, __mmask8 __M, __m256i __A)
 #define _mm256_permutex_pd(X, C) __extension__ ({ \
   (__m256d)__builtin_shufflevector((__v4df)(__m256d)(X), \
                                    (__v4df)_mm256_undefined_pd(), \
-                                   (C) & 0x3, ((C) & 0xc) >> 2, \
-                                   ((C) & 0x30) >> 4, ((C) & 0xc0) >> 6); })
+                                   ((C) >> 0) & 0x3, ((C) >> 2) & 0x3, \
+                                   ((C) >> 4) & 0x3, ((C) >> 6) & 0x3); })
 
 #define _mm256_mask_permutex_pd(W, U, X, C) __extension__ ({ \
   (__m256d)__builtin_ia32_selectpd_256((__mmask8)(U), \
@@ -8819,8 +8819,8 @@ _mm256_mask_cvtepi64_storeu_epi16 (void * __P, __mmask8 __M, __m256i __A)
 #define _mm256_permutex_epi64(X, C) __extension__ ({ \
   (__m256i)__builtin_shufflevector((__v4di)(__m256i)(X), \
                                    (__v4di)_mm256_undefined_si256(), \
-                                   (C) & 0x3, ((C) & 0xc) >> 2, \
-                                   ((C) & 0x30) >> 4, ((C) & 0xc0) >> 6); })
+                                   ((C) >> 0) & 0x3, ((C) >> 2) & 0x3, \
+                                   ((C) >> 4) & 0x3, ((C) >> 6) & 0x3); })
 
 #define _mm256_mask_permutex_epi64(W, U, X, C) __extension__ ({ \
   (__m256i)__builtin_ia32_selectq_256((__mmask8)(U), \
