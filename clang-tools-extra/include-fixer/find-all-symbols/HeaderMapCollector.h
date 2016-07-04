@@ -13,6 +13,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Regex.h"
 #include <string>
+#include <vector>
 
 namespace clang {
 namespace find_all_symbols {
