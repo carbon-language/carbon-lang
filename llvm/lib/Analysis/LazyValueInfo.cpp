@@ -441,34 +441,31 @@ namespace {
         lookup(Val)[BB] = Result;
     }
 
-    LVILatticeVal getBlockValue(Value *Val, BasicBlock *BB);
-    bool getEdgeValue(Value *V, BasicBlock *F, BasicBlock *T,
-                      LVILatticeVal &Result,
-                      Instruction *CxtI = nullptr);
-    bool hasBlockValue(Value *Val, BasicBlock *BB);
+  LVILatticeVal getBlockValue(Value *Val, BasicBlock *BB);
+  bool getEdgeValue(Value *V, BasicBlock *F, BasicBlock *T,
+                    LVILatticeVal &Result, Instruction *CxtI = nullptr);
+  bool hasBlockValue(Value *Val, BasicBlock *BB);
 
-    // These methods process one work item and may add more. A false value
-    // returned means that the work item was not completely processed and must
-    // be revisited after going through the new items.
-    bool solveBlockValue(Value *Val, BasicBlock *BB);
-    bool solveBlockValueNonLocal(LVILatticeVal &BBLV,
-                                 Value *Val, BasicBlock *BB);
-    bool solveBlockValuePHINode(LVILatticeVal &BBLV,
-                                PHINode *PN, BasicBlock *BB);
-    bool solveBlockValueSelect(LVILatticeVal &BBLV,
-                               SelectInst *S, BasicBlock *BB); 
-    bool solveBlockValueBinaryOp(LVILatticeVal &BBLV,
-                              Instruction *BBI, BasicBlock *BB);
-    bool solveBlockValueCast(LVILatticeVal &BBLV,
-                             Instruction *BBI, BasicBlock *BB);
-   void intersectAssumeBlockValueConstantRange(Value *Val, LVILatticeVal &BBLV,
-                                            Instruction *BBI);
+  // These methods process one work item and may add more. A false value
+  // returned means that the work item was not completely processed and must
+  // be revisited after going through the new items.
+  bool solveBlockValue(Value *Val, BasicBlock *BB);
+  bool solveBlockValueNonLocal(LVILatticeVal &BBLV, Value *Val, BasicBlock *BB);
+  bool solveBlockValuePHINode(LVILatticeVal &BBLV, PHINode *PN, BasicBlock *BB);
+  bool solveBlockValueSelect(LVILatticeVal &BBLV, SelectInst *S,
+                             BasicBlock *BB);
+  bool solveBlockValueBinaryOp(LVILatticeVal &BBLV, Instruction *BBI,
+                               BasicBlock *BB);
+  bool solveBlockValueCast(LVILatticeVal &BBLV, Instruction *BBI,
+                           BasicBlock *BB);
+  void intersectAssumeBlockValueConstantRange(Value *Val, LVILatticeVal &BBLV,
+                                              Instruction *BBI);
 
-    void solve();
+  void solve();
 
-    ValueCacheEntryTy &lookup(Value *V) {
-      return ValueCache[LVIValueHandle(V, this)];
-    }
+  ValueCacheEntryTy &lookup(Value *V) {
+    return ValueCache[LVIValueHandle(V, this)];
+  }
 
     bool isOverdefined(Value *V, BasicBlock *BB) const {
       auto ODI = OverDefinedCache.find(BB);

@@ -361,10 +361,11 @@ static bool isRequiredForExecution(const SectionRef Section) {
     // may be zero for sections with content. In Obj files, SizeOfRawData 
     // gives the section size, and VirtualSize is always zero. Hence
     // the need to check for both cases below.
-    bool HasContent = (CoffSection->VirtualSize > 0) 
-      || (CoffSection->SizeOfRawData > 0);
-    bool IsDiscardable = CoffSection->Characteristics &
-      (COFF::IMAGE_SCN_MEM_DISCARDABLE | COFF::IMAGE_SCN_LNK_INFO);
+    bool HasContent =
+        (CoffSection->VirtualSize > 0) || (CoffSection->SizeOfRawData > 0);
+    bool IsDiscardable =
+        CoffSection->Characteristics &
+        (COFF::IMAGE_SCN_MEM_DISCARDABLE | COFF::IMAGE_SCN_LNK_INFO);
     return HasContent && !IsDiscardable;
   }
   
