@@ -8678,35 +8678,49 @@ _mm_mask3_fnmsub_sd (__m128d __W, __m128d __X, __m128d __Y, __mmask8 __U)
                                           -(__v2df)(__m128d)(Y), \
                                           (__mmask8)(U), (int)(R)); })
 
-#define _mm512_permutex_pd(X, M) __extension__ ({ \
-  (__m512d)__builtin_ia32_permdf512_mask((__v8df)(__m512d)(X), (int)(M), \
-                                         (__v8df)_mm512_undefined_pd(), \
-                                         (__mmask8)-1); })
+#define _mm512_permutex_pd(X, C) __extension__ ({ \
+  (__m512d)__builtin_shufflevector((__v8df)(__m512d)(X), \
+                                   (__v8df)_mm512_undefined_pd(), \
+                                   0 + (((C) & 0x03) >> 0), \
+                                   0 + (((C) & 0x0c) >> 2), \
+                                   0 + (((C) & 0x30) >> 4), \
+                                   0 + (((C) & 0xc0) >> 6), \
+                                   4 + (((C) & 0x03) >> 0), \
+                                   4 + (((C) & 0x0c) >> 2), \
+                                   4 + (((C) & 0x30) >> 4), \
+                                   4 + (((C) & 0xc0) >> 6)); })
 
-#define _mm512_mask_permutex_pd(W, U, X, M) __extension__ ({ \
-  (__m512d)__builtin_ia32_permdf512_mask((__v8df)(__m512d)(X), (int)(M), \
-                                         (__v8df)(__m512d)(W), \
-                                         (__mmask8)(U)); })
+#define _mm512_mask_permutex_pd(W, U, X, C) __extension__ ({ \
+  (__m512d)__builtin_ia32_selectpd_512((__mmask8)(U), \
+                                       (__v8df)_mm512_permutex_pd((X), (C)), \
+                                       (__v8df)(__m512d)(W)); })
 
-#define _mm512_maskz_permutex_pd(U, X, M) __extension__ ({ \
-  (__m512d)__builtin_ia32_permdf512_mask((__v8df)(__m512d)(X), (int)(M), \
-                                         (__v8df)_mm512_setzero_pd(), \
-                                         (__mmask8)(U)); })
+#define _mm512_maskz_permutex_pd(U, X, C) __extension__ ({ \
+  (__m512d)__builtin_ia32_selectpd_512((__mmask8)(U), \
+                                       (__v8df)_mm512_permutex_pd((X), (C)), \
+                                       (__v8df)_mm512_setzero_pd()); })
 
-#define _mm512_permutex_epi64(X, I) __extension__ ({ \
-  (__m512i)__builtin_ia32_permdi512_mask((__v8di)(__m512i)(X), (int)(I), \
-                                         (__v8di)_mm512_undefined_epi32(), \
-                                         (__mmask8)-1); })
+#define _mm512_permutex_epi64(X, C) __extension__ ({ \
+  (__m512i)__builtin_shufflevector((__v8di)(__m512i)(X), \
+                                   (__v8di)_mm512_undefined_epi32(), \
+                                   0 + (((C) & 0x03) >> 0), \
+                                   0 + (((C) & 0x0c) >> 2), \
+                                   0 + (((C) & 0x30) >> 4), \
+                                   0 + (((C) & 0xc0) >> 6), \
+                                   4 + (((C) & 0x03) >> 0), \
+                                   4 + (((C) & 0x0c) >> 2), \
+                                   4 + (((C) & 0x30) >> 4), \
+                                   4 + (((C) & 0xc0) >> 6)); })
 
-#define _mm512_mask_permutex_epi64(W, M, X, I) __extension__ ({ \
-  (__m512i)__builtin_ia32_permdi512_mask((__v8di)(__m512i)(X), (int)(I), \
-                                         (__v8di)(__m512i)(W), \
-                                         (__mmask8)(M)); })
+#define _mm512_mask_permutex_epi64(W, U, X, C) __extension__ ({ \
+  (__m512i)__builtin_ia32_selectq_512((__mmask8)(U), \
+                                      (__v8di)_mm512_permutex_epi64((X), (C)), \
+                                      (__v8di)(__m512i)(W)); })
 
-#define _mm512_maskz_permutex_epi64(M, X, I) __extension__ ({ \
-  (__m512i)__builtin_ia32_permdi512_mask((__v8di)(__m512i)(X), (int)(I), \
-                                         (__v8di)_mm512_setzero_si512(), \
-                                         (__mmask8)(M)); })
+#define _mm512_maskz_permutex_epi64(U, X, C) __extension__ ({ \
+  (__m512i)__builtin_ia32_selectq_512((__mmask8)(U), \
+                                      (__v8di)_mm512_permutex_epi64((X), (C)), \
+                                      (__v8di)_mm512_setzero_si512()); })
 
 static __inline__ __m512d __DEFAULT_FN_ATTRS
 _mm512_permutexvar_pd (__m512i __X, __m512d __Y)

@@ -8806,35 +8806,37 @@ _mm256_mask_cvtepi64_storeu_epi16 (void * __P, __mmask8 __M, __m256i __A)
                                         (__v8si)(__m256i)(index), \
                                         (__mmask8)(mask), (int)(scale)); })
 
-#define _mm256_mask_permutex_pd(W, U, X, imm) __extension__ ({ \
-  (__m256d)__builtin_ia32_permdf256_mask((__v4df)(__m256d)(X), (int)(imm), \
-                                         (__v4df)(__m256d)(W), \
-                                         (__mmask8)(U)); })
+#define _mm256_permutex_pd(X, C) __extension__ ({ \
+  (__m256d)__builtin_shufflevector((__v4df)(__m256d)(X), \
+                                   (__v4df)_mm256_undefined_pd(), \
+                                   (C) & 0x3, ((C) & 0xc) >> 2, \
+                                   ((C) & 0x30) >> 4, ((C) & 0xc0) >> 6); })
 
-#define _mm256_maskz_permutex_pd(U, X, imm) __extension__ ({ \
-  (__m256d)__builtin_ia32_permdf256_mask((__v4df)(__m256d)(X), (int)(imm), \
-                                         (__v4df)_mm256_setzero_pd(), \
-                                         (__mmask8)(U)); })
+#define _mm256_mask_permutex_pd(W, U, X, C) __extension__ ({ \
+  (__m256d)__builtin_ia32_selectpd_256((__mmask8)(U), \
+                                       (__v4df)_mm256_permutex_pd((X), (C)), \
+                                       (__v4df)(__m256d)(W)); })
 
-#define _mm256_permutex_pd(X, M) __extension__ ({ \
-  (__m256d)__builtin_ia32_permdf256_mask((__v4df)(__m256d)(X), (int)(M), \
-                                         (__v4df)_mm256_undefined_pd(), \
-                                         (__mmask8)-1); })
+#define _mm256_maskz_permutex_pd(U, X, C) __extension__ ({ \
+  (__m256d)__builtin_ia32_selectpd_256((__mmask8)(U), \
+                                       (__v4df)_mm256_permutex_pd((X), (C)), \
+                                       (__v4df)_mm256_setzero_pd()); })
 
-#define _mm256_mask_permutex_epi64(W, M, X, I) __extension__ ({ \
-  (__m256i)__builtin_ia32_permdi256_mask((__v4di)(__m256i)(X), (int)(I), \
-                                         (__v4di)(__m256i)(W), \
-                                         (__mmask8)(M)); })
+#define _mm256_permutex_epi64(X, C) __extension__ ({ \
+  (__m256i)__builtin_shufflevector((__v4di)(__m256i)(X), \
+                                   (__v4di)_mm256_undefined_si256(), \
+                                   (C) & 0x3, ((C) & 0xc) >> 2, \
+                                   ((C) & 0x30) >> 4, ((C) & 0xc0) >> 6); })
 
-#define _mm256_maskz_permutex_epi64(M, X, I) __extension__ ({ \
-  (__m256i)__builtin_ia32_permdi256_mask((__v4di)(__m256i)(X), (int)(I), \
-                                         (__v4di)_mm256_setzero_si256(), \
-                                         (__mmask8)(M)); })
+#define _mm256_mask_permutex_epi64(W, U, X, C) __extension__ ({ \
+  (__m256i)__builtin_ia32_selectq_256((__mmask8)(U), \
+                                      (__v4di)_mm256_permutex_epi64((X), (C)), \
+                                      (__v4di)(__m256i)(W)); })
 
-#define _mm256_permutex_epi64(X, I) __extension__ ({ \
-  (__m256i)__builtin_ia32_permdi256_mask((__v4di)(__m256i)(X), (int)(I), \
-                                         (__v4di)_mm256_undefined_si256(), \
-                                         (__mmask8)-1); })
+#define _mm256_maskz_permutex_epi64(U, X, C) __extension__ ({ \
+  (__m256i)__builtin_ia32_selectq_256((__mmask8)(U), \
+                                      (__v4di)_mm256_permutex_epi64((X), (C)), \
+                                      (__v4di)_mm256_setzero_si256()); })
 
 static __inline__ __m256d __DEFAULT_FN_ATTRS
 _mm256_permutexvar_pd (__m256i __X, __m256d __Y)
