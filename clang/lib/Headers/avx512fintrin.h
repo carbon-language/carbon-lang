@@ -6540,34 +6540,56 @@ _mm512_mask2_permutex2var_epi64 (__m512i __A, __m512i __I,
 }
 
 #define _mm512_permute_pd(X, C) __extension__ ({ \
-  (__m512d)__builtin_ia32_vpermilpd512_mask((__v8df)(__m512d)(X), (int)(C), \
-                                            (__v8df)_mm512_undefined_pd(), \
-                                            (__mmask8)-1); })
+  (__m512d)__builtin_shufflevector((__v8df)(__m512d)(X), \
+                                   (__v8df)_mm512_setzero_pd(), \
+                                   0 + (((C) & 0x01) >> 0), \
+                                   0 + (((C) & 0x02) >> 1), \
+                                   2 + (((C) & 0x04) >> 2), \
+                                   2 + (((C) & 0x08) >> 3), \
+                                   4 + (((C) & 0x10) >> 4), \
+                                   4 + (((C) & 0x20) >> 5), \
+                                   6 + (((C) & 0x40) >> 6), \
+                                   6 + (((C) & 0x80) >> 7)); })
 
 #define _mm512_mask_permute_pd(W, U, X, C) __extension__ ({ \
-  (__m512d)__builtin_ia32_vpermilpd512_mask((__v8df)(__m512d)(X), (int)(C), \
-                                            (__v8df)(__m512d)(W), \
-                                            (__mmask8)(U)); })
+  (__m512d)__builtin_ia32_selectpd_512((__mmask8)(U), \
+                                       (__v8df)_mm512_permute_pd((X), (C)), \
+                                       (__v8df)(__m512d)(W)); })
 
 #define _mm512_maskz_permute_pd(U, X, C) __extension__ ({ \
-  (__m512d)__builtin_ia32_vpermilpd512_mask((__v8df)(__m512d)(X), (int)(C), \
-                                            (__v8df)_mm512_setzero_pd(), \
-                                            (__mmask8)(U)); })
+  (__m512d)__builtin_ia32_selectpd_512((__mmask8)(U), \
+                                       (__v8df)_mm512_permute_pd((X), (C)), \
+                                       (__v8df)_mm512_setzero_pd()); })
 
 #define _mm512_permute_ps(X, C) __extension__ ({ \
-  (__m512)__builtin_ia32_vpermilps512_mask((__v16sf)(__m512)(X), (int)(C), \
-                                           (__v16sf)_mm512_undefined_ps(), \
-                                           (__mmask16)-1); })
+  (__m512)__builtin_shufflevector((__v16sf)(__m512)(X), \
+                                  (__v16sf)_mm512_setzero_ps(), \
+                                   0  + (((C) & 0x03) >> 0), \
+                                   0  + (((C) & 0x0c) >> 2), \
+                                   0  + (((C) & 0x30) >> 4), \
+                                   0  + (((C) & 0xc0) >> 6), \
+                                   4  + (((C) & 0x03) >> 0), \
+                                   4  + (((C) & 0x0c) >> 2), \
+                                   4  + (((C) & 0x30) >> 4), \
+                                   4  + (((C) & 0xc0) >> 6), \
+                                   8  + (((C) & 0x03) >> 0), \
+                                   8  + (((C) & 0x0c) >> 2), \
+                                   8  + (((C) & 0x30) >> 4), \
+                                   8  + (((C) & 0xc0) >> 6), \
+                                   12 + (((C) & 0x03) >> 0), \
+                                   12 + (((C) & 0x0c) >> 2), \
+                                   12 + (((C) & 0x30) >> 4), \
+                                   12 + (((C) & 0xc0) >> 6)); })
 
 #define _mm512_mask_permute_ps(W, U, X, C) __extension__ ({ \
-  (__m512)__builtin_ia32_vpermilps512_mask((__v16sf)(__m512)(X), (int)(C), \
-                                           (__v16sf)(__m512)(W), \
-                                           (__mmask16)(U)); })
+  (__m512)__builtin_ia32_selectps_512((__mmask16)(U), \
+                                      (__v16sf)_mm512_permute_ps((X), (C)), \
+                                      (__v16sf)(__m512)(W)); })
 
 #define _mm512_maskz_permute_ps(U, X, C) __extension__ ({ \
-  (__m512)__builtin_ia32_vpermilps512_mask((__v16sf)(__m512)(X), (int)(C), \
-                                           (__v16sf)_mm512_setzero_ps(), \
-                                           (__mmask16)(U)); })
+  (__m512)__builtin_ia32_selectps_512((__mmask16)(U), \
+                                      (__v16sf)_mm512_permute_ps((X), (C)), \
+                                      (__v16sf)_mm512_setzero_ps()); })
 
 static __inline__ __m512d __DEFAULT_FN_ATTRS
 _mm512_permutevar_pd (__m512d __A, __m512i __C)
