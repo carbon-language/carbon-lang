@@ -116,7 +116,7 @@ public:
     Res.markOverdefined();
     return Res;
   }
-  
+
   bool isUndefined() const     { return Tag == undefined; }
   bool isConstant() const      { return Tag == constant; }
   bool isNotConstant() const   { return Tag == notconstant; }
@@ -494,7 +494,7 @@ namespace {
 
       return lookup(V)[BB];
     }
-    
+
   public:
     /// This is the query interface to determine the lattice
     /// value for the specified Value* at the end of the specified block.
@@ -933,7 +933,7 @@ bool LazyValueInfoCache::solveBlockValueSelect(LVILatticeVal &BBLV,
         return true;
       };
     }
-    
+
     // TODO: ABS, NABS from the SelectPatternResult
   }
 
@@ -993,7 +993,7 @@ bool LazyValueInfoCache::solveBlockValueSelect(LVILatticeVal &BBLV,
       };
     }
   }
-  
+
   LVILatticeVal Result;  // Start Undefined.
   Result.mergeIn(TrueVal, DL);
   Result.mergeIn(FalseVal, DL);
@@ -1028,7 +1028,6 @@ bool LazyValueInfoCache::solveBlockValueCast(LVILatticeVal &BBLV,
     return true;
   }
 
-  
   // Figure out the range of the LHS.  If that fails, we still apply the
   // transfer rule on the full set since we may be able to locally infer
   // interesting facts.
@@ -1105,7 +1104,7 @@ bool LazyValueInfoCache::solveBlockValueBinaryOp(LVILatticeVal &BBLV,
     BBLV.markOverdefined();
     return true;
   };
-  
+
   // Figure out the range of the LHS.  If that fails, use a conservative range,
   // but apply the transfer rule anyways.  This lets us pick up facts from
   // expressions like "and i32 (call i32 @foo()), 32"
@@ -1204,7 +1203,7 @@ bool getValueFromFromCondition(Value *Val, ICmpInst *ICI,
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -1282,7 +1281,7 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
     // If we couldn't constrain the value on the edge, LocalResult doesn't
     // provide any information.
     LocalResult.markOverdefined();
-  
+
   if (hasSingleValue(LocalResult)) {
     // Can't get any more precise here
     Result = LocalResult;
@@ -1664,7 +1663,7 @@ LazyValueInfo::getPredicateAt(unsigned Pred, Value *V, Constant *C,
           // Note that PredBB may be BB itself.
           Tristate Result = getPredicateOnEdge(Pred, Incoming, C, PredBB, BB,
                                                CxtI);
-          
+
           // Keep going as long as we've seen a consistent known result for
           // all inputs.
           Baseline = (i == 0) ? Result /* First iteration */

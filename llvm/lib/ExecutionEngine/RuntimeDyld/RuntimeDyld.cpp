@@ -368,7 +368,7 @@ static bool isRequiredForExecution(const SectionRef Section) {
         (COFF::IMAGE_SCN_MEM_DISCARDABLE | COFF::IMAGE_SCN_LNK_INFO);
     return HasContent && !IsDiscardable;
   }
-  
+
   assert(isa<MachOObjectFile>(Obj));
   return true;
 }
@@ -595,7 +595,7 @@ Error RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
     uint64_t Size = Sym.getCommonSize();
 
     CommonSize = alignTo(CommonSize, Align) + Size;
-    
+
     SymbolsToAllocate.push_back(Sym);
   }
 
