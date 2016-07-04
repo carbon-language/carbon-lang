@@ -1003,8 +1003,10 @@ void BinaryFunction::inferFallThroughCounts() {
     for (auto Succ : CurBB->successors()) {
       // Do not update execution count of the entry block (when we have tail
       // calls). We already accounted for those when computing the func count.
-      if (Succ == *BasicBlocks.begin())
+      if (Succ == *BasicBlocks.begin()) {
+        ++SuccCount;
         continue;
+      }
       if (SuccCount->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
         Succ->ExecutionCount += SuccCount->Count;
       ++SuccCount;
@@ -1067,9 +1069,6 @@ void BinaryFunction::inferFallThroughCounts() {
             << Twine::utohexstr(getAddress() + CurBB->getOffset()) << '\n';
     });
 
-    // Put this information into the fall-through edge
-    if (CurBB->succ_size() == 0)
-      continue;
     // If there is a FT, the last successor will be it.
     auto &SuccCount = CurBB->BranchInfo.back();
     auto &Succ = CurBB->Successors.back();
