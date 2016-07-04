@@ -23,8 +23,7 @@ namespace find_all_symbols {
 class HeaderMapCollector {
 public:
   typedef llvm::StringMap<std::string> HeaderMap;
-  typedef std::vector<std::pair<llvm::StringRef, llvm::StringRef>>
-      RegexHeaderMap;
+  typedef std::vector<std::pair<const char *, const char *>> RegexHeaderMap;
 
   HeaderMapCollector() : RegexHeaderMappingTable(nullptr) {}
 

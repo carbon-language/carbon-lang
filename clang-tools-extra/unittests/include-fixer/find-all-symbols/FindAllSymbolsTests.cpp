@@ -74,7 +74,7 @@ public:
     std::string IncHeaderCode = "class IncHeaderClass {};";
 
     HeaderMapCollector::RegexHeaderMap RegexMap = {
-        {R"(internal_.*\.h$)", TopHeader},
+        {R"(internal_.*\.h$)", TopHeader.c_str()},
     };
 
     std::string InternalCode =
