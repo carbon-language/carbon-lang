@@ -226,6 +226,8 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name.startswith("x86.avx512.mask.pshufl.w.") ||
         Name.startswith("x86.avx512.mask.pshufh.w.") ||
         Name.startswith("x86.avx512.mask.vpermil.p") ||
+        Name.startswith("x86.avx512.mask.perm.df.") ||
+        Name.startswith("x86.avx512.mask.perm.di.") ||
         Name.startswith("x86.avx512.mask.punpckl") ||
         Name.startswith("x86.avx512.mask.punpckh") ||
         Name.startswith("x86.avx512.mask.unpckl.") ||
@@ -1006,6 +1008,22 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep = Builder.CreateShuffleVector(Op0, UndefV, Idxs);
     } else if (Name == "llvm.stackprotectorcheck") {
       Rep = nullptr;
+    } else if (Name.startswith("llvm.x86.avx512.mask.perm.df.") ||
+               Name.startswith("llvm.x86.avx512.mask.perm.di.")) {
+      Value *Op0 = CI->getArgOperand(0);
+      unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
+      VectorType *VecTy = cast<VectorType>(CI->getType());
+      unsigned NumElts = VecTy->getNumElements();
+
+      SmallVector<uint32_t, 8> Idxs(NumElts);
+      for (unsigned i = 0; i != NumElts; ++i)
+        Idxs[i] = (i & ~0x3) + ((Imm >> (2 * (i & 0x3))) & 3);
+
+      Rep = Builder.CreateShuffleVector(Op0, Op0, Idxs);
+
+      if (CI->getNumArgOperands() == 4)
+        Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
+                            CI->getArgOperand(2));
     } else if (Name.startswith("llvm.x86.avx.vpermil.") ||
                Name == "llvm.x86.sse2.pshuf.d" ||
                Name.startswith("llvm.x86.avx512.mask.vpermil.p") ||
