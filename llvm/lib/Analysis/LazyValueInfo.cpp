@@ -67,7 +67,7 @@ class LVILatticeVal {
     /// This Value has no known value yet.  As a result, this implies the
     /// producing instruction is dead.  Caution: We use this as the starting
     /// state in our local meet rules.  In this usage, it's taken to mean
-    /// "nothing known yet".  
+    /// "nothing known yet".
     undefined,
 
     /// This Value has a specific constant value.  (For integers, constantrange
@@ -318,7 +318,7 @@ static bool hasSingleValue(const LVILatticeVal &Val) {
 /// * This method does not promise to return the most precise possible lattice
 ///   value implied by A and B.  It is allowed to return any lattice element
 ///   which is at least as strong as *either* A or B (unless our facts
-///   conflict, see below).  
+///   conflict, see below).
 /// * Due to unreachable code, the intersection of two lattice values could be
 ///   contradictory.  If this happens, we return some valid lattice value so as
 ///   not confuse the rest of LVI.  Ideally, we'd always return Undefined, but
@@ -354,7 +354,7 @@ static LVILatticeVal intersect(LVILatticeVal A, LVILatticeVal B) {
     A.getConstantRange().intersectWith(B.getConstantRange());
   // Note: An empty range is implicitly converted to overdefined internally.
   // TODO: We could instead use Undefined here since we've proven a conflict
-  // and thus know this path must be unreachable. 
+  // and thus know this path must be unreachable.
   return LVILatticeVal::getRange(std::move(Range));
 }
 
@@ -928,7 +928,7 @@ bool LazyValueInfoCache::solveBlockValueSelect(LVILatticeVal &BBLV,
       case SPF_SMAX:                   /// Signed maximum
         BBLV.markConstantRange(TrueCR.smax(FalseCR));
         return true;
-      case SPF_UMAX:                   /// Unsigned maximum        
+      case SPF_UMAX:                   /// Unsigned maximum
         BBLV.markConstantRange(TrueCR.umax(FalseCR));
         return true;
       };
@@ -960,7 +960,7 @@ bool LazyValueInfoCache::solveBlockValueSelect(LVILatticeVal &BBLV,
     //   %siv.next = select i1 %39, i32 16, i32 %40
     //   %siv.next = constantrange<0, 17> not <-1, 17>
     // In general, this can handle any clamp idiom which tests the edge
-    // condition via an equality or inequality.  
+    // condition via an equality or inequality.
     ICmpInst::Predicate Pred = ICI->getPredicate();
     Value *A = ICI->getOperand(0);
     if (ConstantInt *CIBase = dyn_cast<ConstantInt>(ICI->getOperand(1))) {
@@ -1172,7 +1172,7 @@ bool getValueFromFromCondition(Value *Val, ICmpInst *ICI,
   if (isa<Constant>(ICI->getOperand(1))) {
     if (ICI->isEquality() && ICI->getOperand(0) == Val) {
       // We know that V has the RHS constant if this is a true SETEQ or
-      // false SETNE. 
+      // false SETNE.
       if (isTrueDest == (ICI->getPredicate() == ICmpInst::ICMP_EQ))
         Result = LVILatticeVal::get(cast<Constant>(ICI->getOperand(1)));
       else
@@ -1641,7 +1641,7 @@ LazyValueInfo::getPredicateAt(unsigned Pred, Value *V, Constant *C,
   // We limit the search to one step backwards from the current BB and value.
   // We could consider extending this to search further backwards through the
   // CFG and/or value graph, but there are non-obvious compile time vs quality
-  // tradeoffs.  
+  // tradeoffs.
   if (CxtI) {
     BasicBlock *BB = CxtI->getParent();
 
@@ -1661,7 +1661,7 @@ LazyValueInfo::getPredicateAt(unsigned Pred, Value *V, Constant *C,
         for (unsigned i = 0, e = PHI->getNumIncomingValues(); i < e; i++) {
           Value *Incoming = PHI->getIncomingValue(i);
           BasicBlock *PredBB = PHI->getIncomingBlock(i);
-          // Note that PredBB may be BB itself.        
+          // Note that PredBB may be BB itself.
           Tristate Result = getPredicateOnEdge(Pred, Incoming, C, PredBB, BB,
                                                CxtI);
           

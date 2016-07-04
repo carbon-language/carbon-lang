@@ -358,7 +358,7 @@ static bool isRequiredForExecution(const SectionRef Section) {
     const coff_section *CoffSection = COFFObj->getCOFFSection(Section);
     // Avoid loading zero-sized COFF sections.
     // In PE files, VirtualSize gives the section size, and SizeOfRawData
-    // may be zero for sections with content. In Obj files, SizeOfRawData 
+    // may be zero for sections with content. In Obj files, SizeOfRawData
     // gives the section size, and VirtualSize is always zero. Hence
     // the need to check for both cases below.
     bool HasContent =
