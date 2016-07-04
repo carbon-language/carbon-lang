@@ -479,7 +479,7 @@ Error RuntimeDyldImpl::computeTotalAllocSize(const ObjectFile &Obj,
       // If this is the first common symbol, use its alignment as the alignment
       // for the common symbols section.
       if (CommonSize == 0)
-	CommonAlign = Align;
+        CommonAlign = Align;
       CommonSize = alignTo(CommonSize, Align) + Size;
     }
   }
@@ -601,9 +601,8 @@ Error RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
 
   // Allocate memory for the section
   unsigned SectionID = Sections.size();
-  uint8_t *Addr = MemMgr.allocateDataSection(CommonSize, CommonAlign,
-                                             SectionID, "<common symbols>",
-					     false);
+  uint8_t *Addr = MemMgr.allocateDataSection(CommonSize, CommonAlign, SectionID,
+                                             "<common symbols>", false);
   if (!Addr)
     report_fatal_error("Unable to allocate memory for common symbols!");
   uint64_t Offset = 0;

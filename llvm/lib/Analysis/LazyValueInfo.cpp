@@ -1497,7 +1497,7 @@ Constant *LazyValueInfo::getConstant(Value *V, BasicBlock *BB,
 }
 
 ConstantRange LazyValueInfo::getConstantRange(Value *V, BasicBlock *BB,
-					      Instruction *CxtI) {
+                                              Instruction *CxtI) {
   assert(V->getType()->isIntegerTy());
   unsigned Width = V->getType()->getIntegerBitWidth();
   const DataLayout &DL = BB->getModule()->getDataLayout();
