@@ -225,6 +225,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name.startswith("x86.avx512.mask.pshuf.d.") ||
         Name.startswith("x86.avx512.mask.pshufl.w.") ||
         Name.startswith("x86.avx512.mask.pshufh.w.") ||
+        Name.startswith("x86.avx512.mask.vpermil.p") ||
         Name.startswith("x86.avx512.mask.punpckl") ||
         Name.startswith("x86.avx512.mask.punpckh") ||
         Name.startswith("x86.avx512.mask.unpckl.") ||
@@ -1007,12 +1008,13 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep = nullptr;
     } else if (Name.startswith("llvm.x86.avx.vpermil.") ||
                Name == "llvm.x86.sse2.pshuf.d" ||
+               Name.startswith("llvm.x86.avx512.mask.vpermil.p") ||
                Name.startswith("llvm.x86.avx512.mask.pshuf.d.")) {
       Value *Op0 = CI->getArgOperand(0);
       unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
       VectorType *VecTy = cast<VectorType>(CI->getType());
       unsigned NumElts = VecTy->getNumElements();
-      // Calcuate the size of each index in the immediate.
+      // Calculate the size of each index in the immediate.
       unsigned IdxSize = 64 / VecTy->getScalarSizeInBits();
       unsigned IdxMask = ((1 << IdxSize) - 1);
 

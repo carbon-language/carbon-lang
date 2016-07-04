@@ -138,6 +138,98 @@ define <4 x double>@test_int_x86_avx512_mask_movddup_256(<4 x double> %x0, <4 x 
   ret <4 x double> %res4
 }
 
+declare <4 x double> @llvm.x86.avx512.mask.vpermil.pd.256(<4 x double>, i32, <4 x double>, i8)
+
+define <4 x double>@test_int_x86_avx512_mask_vpermil_pd_256(<4 x double> %x0, <4 x double> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_vpermil_pd_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vpermilpd $6, %ymm0, %ymm2 ## encoding: [0x62,0xf3,0xfd,0x28,0x05,0xd0,0x06]
+; CHECK-NEXT:    ## ymm2 = ymm0[0,1,3,2]
+; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
+; CHECK-NEXT:    vpermilpd $6, %ymm0, %ymm1 {%k1} ## encoding: [0x62,0xf3,0xfd,0x29,0x05,0xc8,0x06]
+; CHECK-NEXT:    ## ymm1 {%k1} = ymm0[0,1,3,2]
+; CHECK-NEXT:    vpermilpd $6, %ymm0, %ymm0 {%k1} {z} ## encoding: [0x62,0xf3,0xfd,0xa9,0x05,0xc0,0x06]
+; CHECK-NEXT:    ## ymm0 {%k1} {z} = ymm0[0,1,3,2]
+; CHECK-NEXT:    vaddpd %ymm0, %ymm1, %ymm0 ## encoding: [0x62,0xf1,0xf5,0x28,0x58,0xc0]
+; CHECK-NEXT:    vaddpd %ymm0, %ymm2, %ymm0 ## encoding: [0x62,0xf1,0xed,0x28,0x58,0xc0]
+; CHECK-NEXT:    retq ## encoding: [0xc3]
+  %res = call <4 x double> @llvm.x86.avx512.mask.vpermil.pd.256(<4 x double> %x0, i32 22, <4 x double> %x2, i8 %x3)
+  %res1 = call <4 x double> @llvm.x86.avx512.mask.vpermil.pd.256(<4 x double> %x0, i32 22, <4 x double> zeroinitializer, i8 %x3)
+  %res2 = call <4 x double> @llvm.x86.avx512.mask.vpermil.pd.256(<4 x double> %x0, i32 22, <4 x double> %x2, i8 -1)
+  %res3 = fadd <4 x double> %res, %res1
+  %res4 = fadd <4 x double> %res2, %res3
+  ret <4 x double> %res4
+}
+
+declare <2 x double> @llvm.x86.avx512.mask.vpermil.pd.128(<2 x double>, i32, <2 x double>, i8)
+
+define <2 x double>@test_int_x86_avx512_mask_vpermil_pd_128(<2 x double> %x0, <2 x double> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_vpermil_pd_128:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vpermilpd $1, %xmm0, %xmm2 ## encoding: [0x62,0xf3,0xfd,0x08,0x05,0xd0,0x01]
+; CHECK-NEXT:    ## xmm2 = xmm0[1,0]
+; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
+; CHECK-NEXT:    vpermilpd $1, %xmm0, %xmm1 {%k1} ## encoding: [0x62,0xf3,0xfd,0x09,0x05,0xc8,0x01]
+; CHECK-NEXT:    ## xmm1 {%k1} = xmm0[1,0]
+; CHECK-NEXT:    vpermilpd $1, %xmm0, %xmm0 {%k1} {z} ## encoding: [0x62,0xf3,0xfd,0x89,0x05,0xc0,0x01]
+; CHECK-NEXT:    ## xmm0 {%k1} {z} = xmm0[1,0]
+; CHECK-NEXT:    vaddpd %xmm0, %xmm1, %xmm0 ## encoding: [0x62,0xf1,0xf5,0x08,0x58,0xc0]
+; CHECK-NEXT:    vaddpd %xmm2, %xmm0, %xmm0 ## encoding: [0x62,0xf1,0xfd,0x08,0x58,0xc2]
+; CHECK-NEXT:    retq ## encoding: [0xc3]
+  %res = call <2 x double> @llvm.x86.avx512.mask.vpermil.pd.128(<2 x double> %x0, i32 1, <2 x double> %x2, i8 %x3)
+  %res1 = call <2 x double> @llvm.x86.avx512.mask.vpermil.pd.128(<2 x double> %x0, i32 1, <2 x double> zeroinitializer, i8 %x3)
+  %res2 = call <2 x double> @llvm.x86.avx512.mask.vpermil.pd.128(<2 x double> %x0, i32 1, <2 x double> %x2, i8 -1)
+  %res3 = fadd <2 x double> %res, %res1
+  %res4 = fadd <2 x double> %res3, %res2
+  ret <2 x double> %res4
+}
+
+declare <8 x float> @llvm.x86.avx512.mask.vpermil.ps.256(<8 x float>, i32, <8 x float>, i8)
+
+define <8 x float>@test_int_x86_avx512_mask_vpermil_ps_256(<8 x float> %x0, <8 x float> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_vpermil_ps_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vpermilps $22, %ymm0, %ymm2 ## encoding: [0x62,0xf3,0x7d,0x28,0x04,0xd0,0x16]
+; CHECK-NEXT:    ## ymm2 = ymm0[2,1,1,0,6,5,5,4]
+; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
+; CHECK-NEXT:    vpermilps $22, %ymm0, %ymm1 {%k1} ## encoding: [0x62,0xf3,0x7d,0x29,0x04,0xc8,0x16]
+; CHECK-NEXT:    ## ymm1 {%k1} = ymm0[2,1,1,0,6,5,5,4]
+; CHECK-NEXT:    vpermilps $22, %ymm0, %ymm0 {%k1} {z} ## encoding: [0x62,0xf3,0x7d,0xa9,0x04,0xc0,0x16]
+; CHECK-NEXT:    ## ymm0 {%k1} {z} = ymm0[2,1,1,0,6,5,5,4]
+; CHECK-NEXT:    vaddps %ymm0, %ymm1, %ymm0 ## encoding: [0x62,0xf1,0x74,0x28,0x58,0xc0]
+; CHECK-NEXT:    vaddps %ymm2, %ymm0, %ymm0 ## encoding: [0x62,0xf1,0x7c,0x28,0x58,0xc2]
+; CHECK-NEXT:    retq ## encoding: [0xc3]
+  %res = call <8 x float> @llvm.x86.avx512.mask.vpermil.ps.256(<8 x float> %x0, i32 22, <8 x float> %x2, i8 %x3)
+  %res1 = call <8 x float> @llvm.x86.avx512.mask.vpermil.ps.256(<8 x float> %x0, i32 22, <8 x float> zeroinitializer, i8 %x3)
+  %res2 = call <8 x float> @llvm.x86.avx512.mask.vpermil.ps.256(<8 x float> %x0, i32 22, <8 x float> %x2, i8 -1)
+  %res3 = fadd <8 x float> %res, %res1
+  %res4 = fadd <8 x float> %res3, %res2
+  ret <8 x float> %res4
+}
+
+declare <4 x float> @llvm.x86.avx512.mask.vpermil.ps.128(<4 x float>, i32, <4 x float>, i8)
+
+define <4 x float>@test_int_x86_avx512_mask_vpermil_ps_128(<4 x float> %x0, <4 x float> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_vpermil_ps_128:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vpermilps $22, %xmm0, %xmm2 ## encoding: [0x62,0xf3,0x7d,0x08,0x04,0xd0,0x16]
+; CHECK-NEXT:    ## xmm2 = xmm0[2,1,1,0]
+; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
+; CHECK-NEXT:    vpermilps $22, %xmm0, %xmm1 {%k1} ## encoding: [0x62,0xf3,0x7d,0x09,0x04,0xc8,0x16]
+; CHECK-NEXT:    ## xmm1 {%k1} = xmm0[2,1,1,0]
+; CHECK-NEXT:    vpermilps $22, %xmm0, %xmm0 {%k1} {z} ## encoding: [0x62,0xf3,0x7d,0x89,0x04,0xc0,0x16]
+; CHECK-NEXT:    ## xmm0 {%k1} {z} = xmm0[2,1,1,0]
+; CHECK-NEXT:    vaddps %xmm0, %xmm1, %xmm0 ## encoding: [0x62,0xf1,0x74,0x08,0x58,0xc0]
+; CHECK-NEXT:    vaddps %xmm0, %xmm2, %xmm0 ## encoding: [0x62,0xf1,0x6c,0x08,0x58,0xc0]
+; CHECK-NEXT:    retq ## encoding: [0xc3]
+  %res = call <4 x float> @llvm.x86.avx512.mask.vpermil.ps.128(<4 x float> %x0, i32 22, <4 x float> %x2, i8 %x3)
+  %res1 = call <4 x float> @llvm.x86.avx512.mask.vpermil.ps.128(<4 x float> %x0, i32 22, <4 x float> zeroinitializer, i8 %x3)
+  %res2 = call <4 x float> @llvm.x86.avx512.mask.vpermil.ps.128(<4 x float> %x0, i32 22, <4 x float> %x2, i8 -1)
+  %res3 = fadd <4 x float> %res, %res1
+  %res4 = fadd <4 x float> %res2, %res3
+  ret <4 x float> %res4
+}
+
 declare void @llvm.x86.avx512.mask.store.pd.128(i8*, <2 x double>, i8)
 
 define void@test_int_x86_avx512_mask_store_pd_128(i8* %ptr1, i8* %ptr2, <2 x double> %x1, i8 %x2) {
