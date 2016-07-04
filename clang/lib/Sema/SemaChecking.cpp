@@ -454,7 +454,7 @@ static bool SemaBuiltinPipePackets(Sema &S, CallExpr *Call) {
 
   return false;
 }
-
+// \brief OpenCL v2.0 s6.13.9 - Address space qualifier functions.
 // \brief Performs semantic analysis for the to_global/local/private call.
 // \param S Reference to the semantic analyzer.
 // \param BuiltinID ID of the builtin function.
@@ -462,13 +462,6 @@ static bool SemaBuiltinPipePackets(Sema &S, CallExpr *Call) {
 // \return True if a semantic error has been found, false otherwise.
 static bool SemaOpenCLBuiltinToAddr(Sema &S, unsigned BuiltinID,
                                     CallExpr *Call) {
-  // OpenCL v2.0 s6.13.9 - Address space qualifier functions.
-  if (S.getLangOpts().OpenCLVersion < 200) {
-    S.Diag(Call->getLocStart(), diag::err_opencl_builtin_requires_version)
-        << Call->getDirectCallee() << "2.0" << 1 << Call->getSourceRange();
-    return true;
-  }
-
   if (Call->getNumArgs() != 1) {
     S.Diag(Call->getLocStart(), diag::err_opencl_builtin_to_addr_arg_num)
         << Call->getDirectCallee() << Call->getSourceRange();
@@ -801,6 +794,7 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
 
     TheCall->setType(Context.VoidPtrTy);
     break;
+  // OpenCL v2.0, s6.13.16 - Pipe functions
   case Builtin::BIread_pipe:
   case Builtin::BIwrite_pipe:
     // Since those two functions are declared with var args, we need a semantic
