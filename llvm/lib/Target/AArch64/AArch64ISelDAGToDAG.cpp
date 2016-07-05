@@ -2172,7 +2172,8 @@ static bool tryBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
     SDValue Dst, Src;
     unsigned ImmR, ImmS;
     bool BiggerPattern = I / 2;
-    SDNode *OrOpd0 = N->getOperand(I % 2).getNode();
+    SDValue OrOpd0Val = N->getOperand(I % 2);
+    SDNode *OrOpd0 = OrOpd0Val.getNode();
     SDValue OrOpd1Val = N->getOperand((I + 1) % 2);
     SDNode *OrOpd1 = OrOpd1Val.getNode();
 
@@ -2197,7 +2198,7 @@ static bool tryBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
 
       // If the mask on the insertee is correct, we have a BFXIL operation. We
       // can share the ImmR and ImmS values from the already-computed UBFM.
-    } else if (isBitfieldPositioningOp(CurDAG, SDValue(OrOpd0, 0),
+    } else if (isBitfieldPositioningOp(CurDAG, OrOpd0Val,
                                        BiggerPattern,
                                        Src, DstLSB, Width)) {
       ImmR = (BitWidth - DstLSB) % BitWidth;
