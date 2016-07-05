@@ -8870,7 +8870,7 @@ _mm256_maskz_permutexvar_epi64 (__mmask8 __M, __m256i __X, __m256i __Y)
 }
 
 static __inline__ __m256i __DEFAULT_FN_ATTRS
-_mm256_permutexvar_epi64 (__mmask8 __M, __m256i __X, __m256i __Y)
+_mm256_permutexvar_epi64 ( __m256i __X, __m256i __Y)
 {
   return (__m256i) __builtin_ia32_permvardi256_mask ((__v4di) __Y,
                  (__v4di) __X,
