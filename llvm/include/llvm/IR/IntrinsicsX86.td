@@ -4190,6 +4190,13 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 }
 
 //===----------------------------------------------------------------------===//
+// CLFLUSHOPT
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_clflushopt : GCCBuiltin<"__builtin_ia32_clflushopt">,
+              Intrinsic<[], [llvm_ptr_ty], []>;
+}
+
+//===----------------------------------------------------------------------===//
 // Support protection key
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_rdpkru : GCCBuiltin <"__builtin_ia32_rdpkru">,
