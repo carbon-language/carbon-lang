@@ -230,7 +230,7 @@ void SearchableTableEmitter::emitLookupDeclaration(StringRef Name,
 
 void SearchableTableEmitter::emitMapping(Record *InstanceClass,
                                          raw_ostream &OS) {
-  std::string TableName = InstanceClass->getName();
+  const std::string &TableName = InstanceClass->getName();
   std::vector<Record *> Items = Records.getAllDerivedDefinitions(TableName);
 
   // Gather all the records we're going to need for this particular mapping.
