@@ -3327,8 +3327,6 @@ bool TreeTransform<Derived>::TransformExprs(Expr *const *Inputs,
         if (Out.isInvalid())
           return true;
 
-        // FIXME: Can this happen? We should not try to expand the pack
-        // in this case.
         if (Out.get()->containsUnexpandedParameterPack()) {
           Out = getDerived().RebuildPackExpansion(
               Out.get(), Expansion->getEllipsisLoc(), OrigNumExpansions);
@@ -4821,6 +4819,14 @@ bool TreeTransform<Derived>::TransformFunctionTypeParams(
           QualType NewType = getDerived().TransformType(Pattern);
           if (NewType.isNull())
             return true;
+
+          if (NewType->containsUnexpandedParameterPack()) {
+            NewType =
+                getSema().getASTContext().getPackExpansionType(NewType, None);
+
+            if (NewType.isNull())
+              return true;
+          }
 
           if (ParamInfos)
             PInfos.set(OutParamTypes.size(), ParamInfos[i]);
