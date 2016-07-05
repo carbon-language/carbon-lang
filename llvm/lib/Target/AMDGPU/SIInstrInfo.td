@@ -2630,7 +2630,7 @@ multiclass DS_1A1D_NORET <bits<8> op, string opName, RegisterClass rc,
   }
 }
 
-multiclass DS_1A1D_Off8_NORET <bits<8> op, string opName, RegisterClass rc,
+multiclass DS_1A2D_Off8_NORET <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs),
   dag ins = (ins VGPR_32:$addr, rc:$data0, rc:$data1,
               offset0:$offset0, offset1:$offset1, gds:$gds),
