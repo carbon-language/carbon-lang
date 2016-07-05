@@ -599,8 +599,7 @@ private:
   MipsAsmParser &AsmParser;
 
   struct Token {
-    const char *Data;
-    unsigned Length;
+    StringRef Str;
   };
 
   struct PhysRegOp {
@@ -1166,7 +1165,7 @@ public:
 
   StringRef getToken() const {
     assert(Kind == k_Token && "Invalid access!");
-    return StringRef(Tok.Data, Tok.Length);
+    return Tok.Str;
   }
   bool isRegPair() const {
     return Kind == k_RegPair && RegIdx.Index <= 30;
@@ -1220,8 +1219,7 @@ public:
   static std::unique_ptr<MipsOperand> CreateToken(StringRef Str, SMLoc S,
                                                   MipsAsmParser &Parser) {
     auto Op = make_unique<MipsOperand>(k_Token, Parser);
-    Op->Tok.Data = Str.data();
-    Op->Tok.Length = Str.size();
+    Op->Tok.Str = Str;
     Op->StartLoc = S;
     Op->EndLoc = S;
     return Op;
@@ -1437,7 +1435,7 @@ public:
       OS << "RegIdx<" << RegIdx.Index << ":" << RegIdx.Kind << ">";
       break;
     case k_Token:
-      OS << Tok.Data;
+      OS << Tok.Str;
       break;
     case k_RegList:
       OS << "RegList< ";
