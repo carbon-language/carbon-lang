@@ -1394,6 +1394,24 @@ _mm512_maskz_cvtepi16_epi8 (__mmask32 __M, __m512i __A) {
               __M);
 }
 
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm512_mask_cvtepi16_storeu_epi8 (void * __P, __mmask32 __M, __m512i __A)
+{
+  __builtin_ia32_pmovwb512mem_mask ((__v32qi *) __P, (__v32hi) __A, __M);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm512_mask_cvtsepi16_storeu_epi8 (void * __P, __mmask32 __M, __m512i __A)
+{
+  __builtin_ia32_pmovswb512mem_mask ((__v32qi *) __P, (__v32hi) __A, __M);
+}
+
+static __inline__ void __DEFAULT_FN_ATTRS
+_mm512_mask_cvtusepi16_storeu_epi8 (void * __P, __mmask32 __M, __m512i __A)
+{
+  __builtin_ia32_pmovuswb512mem_mask ((__v32qi *) __P, (__v32hi) __A, __M);
+}
+
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_unpackhi_epi8(__m512i __A, __m512i __B) {
   return (__m512i)__builtin_shufflevector((__v64qi)__A, (__v64qi)__B,
