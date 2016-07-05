@@ -24717,13 +24717,10 @@ static bool matchUnaryVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
     return true;
   }
 
-  if (!FloatDomain)
-    return false;
-
   // Check if we have SSE3 which will let us use MOVDDUP etc. The
   // instructions are no slower than UNPCKLPD but has the option to
   // fold the input operand into even an unaligned memory load.
-  if (SrcVT.is128BitVector() && Subtarget.hasSSE3()) {
+  if (SrcVT.is128BitVector() && Subtarget.hasSSE3() && FloatDomain) {
     if (isTargetShuffleEquivalent(Mask, {0, 0})) {
       Shuffle = X86ISD::MOVDDUP;
       ShuffleVT = MVT::v2f64;
@@ -24741,7 +24738,7 @@ static bool matchUnaryVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
     }
   }
 
-  if (SrcVT.is256BitVector()) {
+  if (SrcVT.is256BitVector() && FloatDomain) {
     assert(Subtarget.hasAVX() && "AVX required for 256-bit vector shuffles");
     if (isTargetShuffleEquivalent(Mask, {0, 0, 2, 2})) {
       Shuffle = X86ISD::MOVDDUP;
@@ -24760,7 +24757,7 @@ static bool matchUnaryVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
     }
   }
 
-  if (SrcVT.is512BitVector()) {
+  if (SrcVT.is512BitVector() && FloatDomain) {
     assert(Subtarget.hasAVX512() &&
            "AVX512 required for 512-bit vector shuffles");
     if (isTargetShuffleEquivalent(Mask, {0, 0, 2, 2, 4, 4, 6, 6})) {
@@ -24779,6 +24776,23 @@ static bool matchUnaryVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
       Shuffle = X86ISD::MOVSHDUP;
       ShuffleVT = MVT::v16f32;
       return true;
+    }
+  }
+
+  // Attempt to match against broadcast-from-vector.
+  if (Subtarget.hasAVX2()) {
+    for (MVT SVT :
+         {MVT::i8, MVT::i16, MVT::i32, MVT::i64, MVT::f32, MVT::f64}) {
+      if (FloatDomain != SVT.isFloatingPoint())
+        continue;
+
+      unsigned NumElts = SrcVT.getSizeInBits() / SVT.getSizeInBits();
+      SmallVector<int, 64> BroadcastMask(NumElts, 0);
+      if (isTargetShuffleEquivalent(Mask, BroadcastMask)) {
+        Shuffle = X86ISD::VBROADCAST;
+        ShuffleVT = MVT::getVectorVT(SVT, NumElts);
+        return true;
+      }
     }
   }
 
