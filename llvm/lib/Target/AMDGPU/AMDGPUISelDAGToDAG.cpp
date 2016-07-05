@@ -529,11 +529,6 @@ bool AMDGPUDAGToDAGISel::isConstantLoad(const MemSDNode *N, int CbId) const {
 bool AMDGPUDAGToDAGISel::isGlobalLoad(const MemSDNode *N) const {
   if (!N->readMem())
     return false;
-  if (N->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS) {
-    if (Subtarget->getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS)
-      return !isa<GlobalValue>(GetUnderlyingObject(
-          N->getMemOperand()->getValue(), CurDAG->getDataLayout()));
-  }
 
   return checkType(N->getMemOperand()->getValue(), AMDGPUAS::GLOBAL_ADDRESS);
 }
