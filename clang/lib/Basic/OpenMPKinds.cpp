@@ -644,7 +644,6 @@ bool clang::isOpenMPTargetExecutionDirective(OpenMPDirectiveKind DKind) {
 }
 
 bool clang::isOpenMPTargetDataManagementDirective(OpenMPDirectiveKind DKind) {
-  // TODO add target update directive check.
   return DKind == OMPD_target_data || DKind == OMPD_target_enter_data ||
          DKind == OMPD_target_exit_data || DKind == OMPD_target_update;
 }
