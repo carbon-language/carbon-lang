@@ -147,9 +147,10 @@ def SIpc_add_rel_offset : SDNode<"AMDGPUISD::PC_ADD_REL_OFFSET",
 
 class flat_ld <SDPatternOperator ld> : PatFrag<(ops node:$ptr),
                                                (ld node:$ptr), [{
-  return isFlatLoad(dyn_cast<MemSDNode>(N)) ||
-         isGlobalLoad(dyn_cast<MemSDNode>(N)) ||
-         isConstantLoad(cast<MemSDNode>(N), -1);
+  const MemSDNode *LD = cast<MemSDNode>(N);
+  return LD->getAddressSpace() == AMDGPUAS::FLAT_ADDRESS ||
+         LD->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS ||
+         LD->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS;
 }]>;
 
 def flat_load : flat_ld <load>;
@@ -161,8 +162,9 @@ def flat_sextloadi16 : flat_ld <sextloadi16>;
 
 class flat_st <SDPatternOperator st> : PatFrag<(ops node:$val, node:$ptr),
                                                (st node:$val, node:$ptr), [{
-  return isFlatStore(dyn_cast<MemSDNode>(N)) ||
-         isGlobalStore(dyn_cast<MemSDNode>(N));
+  const MemSDNode *ST = cast<MemSDNode>(N);
+  return ST->getAddressSpace() == AMDGPUAS::FLAT_ADDRESS ||
+         ST->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS;
 }]>;
 
 def flat_store: flat_st <store>;
@@ -189,7 +191,7 @@ def mubuf_load_atomic : MubufLoad <atomic_load>;
 def smrd_load : PatFrag <(ops node:$ptr), (load node:$ptr), [{
   auto Ld = cast<LoadSDNode>(N);
   return Ld->getAlignment() >= 4  &&
-    isConstantLoad(Ld, -1) &&
+    Ld->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS &&
     static_cast<const SITargetLowering *>(getTargetLowering())->isMemOpUniform(N);
 }]>;
 
@@ -213,7 +215,7 @@ def SIld_local : SDNode <"ISD::LOAD", SDTLoad,
 >;
 
 def si_ld_local : PatFrag <(ops node:$ptr), (SIld_local node:$ptr), [{
-  return isLocalLoad(cast<LoadSDNode>(N));
+  return cast<LoadSDNode>(N)->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
 }]>;
 
 def si_load_local : PatFrag <(ops node:$ptr), (si_ld_local node:$ptr), [{
@@ -250,7 +252,7 @@ def SIst_local : SDNode <"ISD::STORE", SDTStore,
 
 def si_st_local : PatFrag <
   (ops node:$val, node:$ptr), (SIst_local node:$val, node:$ptr), [{
-  return isLocalStore(cast<StoreSDNode>(N));
+  return cast<StoreSDNode>(N)->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
 }]>;
 
 def si_store_local : PatFrag <
