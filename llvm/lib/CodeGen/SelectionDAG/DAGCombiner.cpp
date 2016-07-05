@@ -1735,7 +1735,7 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     return SDValue(N, 0);
 
   // fold (a+b) -> (a|b) iff a and b share no bits.
-  if ((!LegalOperations || TLI.isOperationLegalOrCustom(ISD::OR, VT)) &&
+  if ((!LegalOperations || TLI.isOperationLegal(ISD::OR, VT)) &&
       VT.isInteger() && !VT.isVector() && DAG.haveNoCommonBitsSet(N0, N1))
     return DAG.getNode(ISD::OR, SDLoc(N), VT, N0, N1);
 
@@ -6445,7 +6445,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
       isa<LoadSDNode>(N0.getOperand(0)) &&
       N0.getOperand(1).getOpcode() == ISD::Constant &&
       TLI.isLoadExtLegal(ISD::ZEXTLOAD, VT, N0.getValueType()) &&
-      (!LegalOperations && TLI.isOperationLegalOrCustom(N0.getOpcode(), VT))) {
+      (!LegalOperations && TLI.isOperationLegal(N0.getOpcode(), VT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0.getOperand(0));
     if (LN0->getExtensionType() != ISD::SEXTLOAD && LN0->isUnindexed()) {
       bool DoXform = true;
