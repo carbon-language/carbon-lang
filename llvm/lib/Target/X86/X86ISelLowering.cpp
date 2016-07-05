@@ -24781,18 +24781,15 @@ static bool matchUnaryVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
 
   // Attempt to match against broadcast-from-vector.
   if (Subtarget.hasAVX2()) {
-    for (MVT SVT :
-         {MVT::i8, MVT::i16, MVT::i32, MVT::i64, MVT::f32, MVT::f64}) {
-      if (FloatDomain != SVT.isFloatingPoint())
-        continue;
-
-      unsigned NumElts = SrcVT.getSizeInBits() / SVT.getSizeInBits();
-      SmallVector<int, 64> BroadcastMask(NumElts, 0);
-      if (isTargetShuffleEquivalent(Mask, BroadcastMask)) {
-        Shuffle = X86ISD::VBROADCAST;
-        ShuffleVT = MVT::getVectorVT(SVT, NumElts);
-        return true;
-      }
+    unsigned NumElts = Mask.size();
+    SmallVector<int, 64> BroadcastMask(NumElts, 0);
+    if (isTargetShuffleEquivalent(Mask, BroadcastMask)) {
+      unsigned EltSize = SrcVT.getSizeInBits() / NumElts;
+      ShuffleVT = FloatDomain ? MVT::getFloatingPointVT(EltSize)
+                              : MVT::getIntegerVT(EltSize);
+      ShuffleVT = MVT::getVectorVT(ShuffleVT, NumElts);
+      Shuffle = X86ISD::VBROADCAST;
+      return true;
     }
   }
 
