@@ -5008,8 +5008,8 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
     Ops.push_back(N->getOperand(1));
     SDValue MaskNode = N->getOperand(0);
     SmallVector<uint64_t, 32> RawMask;
-    unsigned MaskLoBits = Log2_64(VT.getVectorNumElements());
-    if (getTargetShuffleMaskIndices(MaskNode, MaskLoBits, RawMask)) {
+    unsigned MaskEltSize = VT.getScalarSizeInBits();
+    if (getTargetShuffleMaskIndices(MaskNode, MaskEltSize, RawMask)) {
       DecodeVPERMVMask(RawMask, Mask);
       break;
     }
@@ -30778,6 +30778,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::VPPERM:
+  case X86ISD::VPERMV:
   case X86ISD::VPERMV3:
   case X86ISD::VPERMIL2:
   case X86ISD::VPERMILPI:
