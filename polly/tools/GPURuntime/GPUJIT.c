@@ -290,7 +290,7 @@ void polly_initDevice(PollyGPUContext **Context, PollyGPUDevice **Device) {
   /* Get compute capabilities and the device name. */
   CuDeviceComputeCapabilityFcnPtr(&Major, &Minor, (*Device)->Cuda);
   CuDeviceGetNameFcnPtr(DeviceName, 256, (*Device)->Cuda);
-  fprintf(stderr, "> Running on GPU device %d : %s.\n", DeviceID, DeviceName);
+  debug_print("> Running on GPU device %d : %s.\n", DeviceID, DeviceName);
 
   /* Create context on the device. */
   *Context = malloc(sizeof(PollyGPUContext));
@@ -369,7 +369,7 @@ void polly_stopTimerByCudaEvent(PollyGPUEvent *Start, PollyGPUEvent *Stop,
   CudaEventElapsedTimeFcnPtr(ElapsedTimes, Start->Cuda, Stop->Cuda);
   CudaEventDestroyFcnPtr(Start->Cuda);
   CudaEventDestroyFcnPtr(Stop->Cuda);
-  fprintf(stderr, "Processing time: %f (ms).\n", *ElapsedTimes);
+  debug_print("Processing time: %f (ms).\n", *ElapsedTimes);
 
   free(Start);
   free(Stop);
@@ -415,7 +415,7 @@ void polly_launchKernel(PollyGPUFunction *Kernel, int GridWidth,
     exit(-1);
   }
   CudaThreadSynchronizeFcnPtr();
-  fprintf(stdout, "CUDA kernel launched.\n");
+  debug_print("CUDA kernel launched.\n");
 }
 
 void polly_cleanupGPGPUResources(void *HostData, PollyGPUDevicePtr *DevData,
