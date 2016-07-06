@@ -33,9 +33,6 @@ def immDouble1 : PatLeaf<(fpimm), [{
 // Synchronization and shuffle functions
 //-----------------------------------
 let isConvergent = 1 in {
-def INT_CUDA_SYNCTHREADS : NVPTXInst<(outs), (ins),
-                  "bar.sync \t0;",
-      [(int_cuda_syncthreads)]>;
 def INT_BARRIER0 : NVPTXInst<(outs), (ins),
                   "bar.sync \t0;",
       [(int_nvvm_barrier0)]>;

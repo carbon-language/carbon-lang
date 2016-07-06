@@ -729,8 +729,6 @@ def llvm_anyi64ptr_ty     : LLVMAnyPointerType<llvm_i64_ty>;     // (space)i64*
                                       [IntrArgMemOnly, NoCapture<0>]>;
 
 // Bar.Sync
-  def int_cuda_syncthreads : GCCBuiltin<"__syncthreads">,
-      Intrinsic<[], [], [IntrConvergent]>;
   def int_nvvm_barrier0 : GCCBuiltin<"__nvvm_bar0">,
       Intrinsic<[], [], [IntrConvergent]>;
   def int_nvvm_barrier0_popc : GCCBuiltin<"__nvvm_bar0_popc">,
