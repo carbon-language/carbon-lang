@@ -245,7 +245,7 @@ void MemorySSA::computeDomLevels(DenseMap<DomTreeNode *, unsigned> &DomLevels) {
     DomLevels[*DFI] = DFI.getPathLength() - 1;
 }
 
-/// \brief This handles unreachable block acccesses by deleting phi nodes in
+/// \brief This handles unreachable block accesses by deleting phi nodes in
 /// unreachable blocks, and marking all other unreachable MemoryAccess's as
 /// being uses of the live on entry definition.
 void MemorySSA::markUnreachableAsLiveOnEntry(BasicBlock *BB) {
