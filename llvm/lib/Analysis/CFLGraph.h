@@ -15,14 +15,11 @@
 #ifndef LLVM_ANALYSIS_CFLGRAPH_H
 #define LLVM_ANALYSIS_CFLGRAPH_H
 
-#include "StratifiedSets.h"
+#include "AliasAnalysisSummary.h"
+#include "llvm/ADT/STLExtras.h"
 
 namespace llvm {
-
-class Value;
-
 namespace cflaa {
-
 /// Edges can be one of four "weights" -- each weight must have an inverse
 /// weight (Assign has Assign; Reference has Dereference).
 enum class EdgeType {
@@ -62,7 +59,7 @@ class CFLGraph {
 
   struct NodeInfo {
     EdgeList Edges;
-    StratifiedAttrs Attr;
+    AliasAttrs Attr;
   };
 
   typedef DenseMap<Node, NodeInfo> NodeMap;
@@ -104,10 +101,12 @@ public:
       const_node_iterator;
 
   bool addNode(Node N) {
-    return NodeImpls.insert(std::make_pair(N, NodeInfo{EdgeList(), 0})).second;
+    return NodeImpls
+        .insert(std::make_pair(N, NodeInfo{EdgeList(), getAttrNone()}))
+        .second;
   }
 
-  void addAttr(Node N, StratifiedAttrs Attr) {
+  void addAttr(Node N, AliasAttrs Attr) {
     auto *Info = getNode(N);
     assert(Info != nullptr);
     Info->Attr |= Attr;
@@ -123,7 +122,7 @@ public:
     ToInfo->Edges.push_back(Edge{flipWeight(Type), From});
   }
 
-  StratifiedAttrs attrFor(Node N) const {
+  AliasAttrs attrFor(Node N) const {
     auto *Info = getNode(N);
     assert(Info != nullptr);
     return Info->Attr;
