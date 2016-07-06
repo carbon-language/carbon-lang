@@ -66,6 +66,9 @@ static const char* GpuArchToComputeName(const char *ArchName) {
       .Case("sm_50", "compute_50")
       .Case("sm_52", "compute_52")
       .Case("sm_53", "compute_53")
+      .Case("sm_60", "compute_60")
+      .Case("sm_61", "compute_61")
+      .Case("sm_62", "compute_62")
       .Default(nullptr);
 }
 

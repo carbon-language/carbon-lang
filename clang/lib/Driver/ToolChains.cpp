@@ -1715,6 +1715,8 @@ void Generic_GCC::CudaInstallationDetector::init(
         Args.getLastArgValue(options::OPT_cuda_path_EQ));
   else {
     CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda");
+    // FIXME: Uncomment this once we can compile the cuda 8 headers.
+    // CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda-8.0");
     CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda-7.5");
     CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda-7.0");
   }
@@ -1761,6 +1763,9 @@ void Generic_GCC::CudaInstallationDetector::init(
         CudaLibDeviceMap["sm_50"] = FilePath;
         CudaLibDeviceMap["sm_52"] = FilePath;
         CudaLibDeviceMap["sm_53"] = FilePath;
+        CudaLibDeviceMap["sm_60"] = FilePath;
+        CudaLibDeviceMap["sm_61"] = FilePath;
+        CudaLibDeviceMap["sm_62"] = FilePath;
       }
     }
 

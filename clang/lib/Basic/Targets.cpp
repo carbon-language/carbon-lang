@@ -1701,11 +1701,15 @@ class NVPTXTargetInfo : public TargetInfo {
     GK_SM20,
     GK_SM21,
     GK_SM30,
+    GK_SM32,
     GK_SM35,
     GK_SM37,
     GK_SM50,
     GK_SM52,
     GK_SM53,
+    GK_SM60,
+    GK_SM61,
+    GK_SM62,
   } GPU;
 
 public:
@@ -1787,35 +1791,37 @@ public:
     Builder.defineMacro("__NVPTX__");
     if (Opts.CUDAIsDevice) {
       // Set __CUDA_ARCH__ for the GPU specified.
-      std::string CUDAArchCode;
-      switch (GPU) {
-      case GK_SM20:
-        CUDAArchCode = "200";
-        break;
-      case GK_SM21:
-        CUDAArchCode = "210";
-        break;
-      case GK_SM30:
-        CUDAArchCode = "300";
-        break;
-      case GK_SM35:
-        CUDAArchCode = "350";
-        break;
-      case GK_SM37:
-        CUDAArchCode = "370";
-        break;
-      case GK_SM50:
-        CUDAArchCode = "500";
-        break;
-      case GK_SM52:
-        CUDAArchCode = "520";
-        break;
-      case GK_SM53:
-        CUDAArchCode = "530";
-        break;
-      default:
-        llvm_unreachable("Unhandled target CPU");
-      }
+      std::string CUDAArchCode = [this] {
+        switch (GPU) {
+        case GK_NONE:
+          assert(false && "No GPU arch when compiling CUDA device code.");
+          return "";
+        case GK_SM20:
+          return "200";
+        case GK_SM21:
+          return "210";
+        case GK_SM30:
+          return "300";
+        case GK_SM32:
+          return "320";
+        case GK_SM35:
+          return "350";
+        case GK_SM37:
+          return "370";
+        case GK_SM50:
+          return "500";
+        case GK_SM52:
+          return "520";
+        case GK_SM53:
+          return "530";
+        case GK_SM60:
+          return "600";
+        case GK_SM61:
+          return "610";
+        case GK_SM62:
+          return "620";
+        }
+      }();
       Builder.defineMacro("__CUDA_ARCH__", CUDAArchCode);
     }
   }
@@ -1860,11 +1866,15 @@ public:
               .Case("sm_20", GK_SM20)
               .Case("sm_21", GK_SM21)
               .Case("sm_30", GK_SM30)
+              .Case("sm_32", GK_SM32)
               .Case("sm_35", GK_SM35)
               .Case("sm_37", GK_SM37)
               .Case("sm_50", GK_SM50)
               .Case("sm_52", GK_SM52)
               .Case("sm_53", GK_SM53)
+              .Case("sm_60", GK_SM60)
+              .Case("sm_61", GK_SM61)
+              .Case("sm_62", GK_SM62)
               .Default(GK_NONE);
 
     return GPU != GK_NONE;
