@@ -17,9 +17,9 @@ target triple = "x86_64-pc_linux"
 ;}
 
 ;AVX512-LABEL: @foo1
-;AVX512:  llvm.masked.load.v8i32
-;AVX512: llvm.masked.gather.v8f32
-;AVX512: llvm.masked.store.v8f32
+;AVX512: llvm.masked.load.v16i32
+;AVX512: llvm.masked.gather.v16f32
+;AVX512: llvm.masked.store.v16f32
 ;AVX512: ret void
 
 ; Function Attrs: nounwind uwtable
