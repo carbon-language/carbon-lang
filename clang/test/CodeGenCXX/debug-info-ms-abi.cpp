@@ -14,6 +14,9 @@ Foo::Nested n;
 // CHECK: ![[Foo:[^ ]*]] = distinct !DICompositeType(tag: DW_TAG_structure_type, name: "Foo",
 // CHECK-SAME: identifier: ".?AUFoo@@"
 
+// CHECK: distinct !DICompositeType(tag: DW_TAG_structure_type, name: "Nested",
+// CHECK-SAME: identifier: ".?AUNested@Foo@@"
+
 // CHECK: !DISubprogram(name: "f",
 // CHECK-SAME: containingType: ![[Foo]], virtuality: DW_VIRTUALITY_virtual, virtualIndex: 0,
 // CHECK-SAME: flags: DIFlagPrototyped | DIFlagIntroducedVirtual,
@@ -25,6 +28,3 @@ Foo::Nested n;
 // CHECK: !DISubprogram(name: "h",
 // CHECK-SAME: containingType: ![[Foo]], virtuality: DW_VIRTUALITY_virtual, virtualIndex: 2,
 // CHECK-SAME: flags: DIFlagPrototyped | DIFlagIntroducedVirtual,
-
-// CHECK: distinct !DICompositeType(tag: DW_TAG_structure_type, name: "Nested",
-// CHECK-SAME: identifier: ".?AUNested@Foo@@"
