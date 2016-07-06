@@ -341,7 +341,7 @@ define <2 x float> @sitofpv2i8v2float(<2 x i8> %a) {
 
 define <4 x float> @sitofpv4i8v4float(<4 x i8> %a) {
   ; SSE2-LABEL: sitofpv4i8v4float
-  ; SSE2: cost of 15 {{.*}} sitofp
+  ; SSE2: cost of 5 {{.*}} sitofp
   ;
   ; AVX1-LABEL: sitofpv4i8v4float
   ; AVX1: cost of 3 {{.*}} sitofp
@@ -421,7 +421,7 @@ define <2 x float> @sitofpv2i16v2float(<2 x i16> %a) {
 
 define <4 x float> @sitofpv4i16v4float(<4 x i16> %a) {
   ; SSE2-LABEL: sitofpv4i16v4float
-  ; SSE2: cost of 15 {{.*}} sitofp
+  ; SSE2: cost of 5 {{.*}} sitofp
   ;
   ; AVX1-LABEL: sitofpv4i16v4float
   ; AVX1: cost of 3 {{.*}} sitofp
@@ -501,7 +501,7 @@ define <2 x float> @sitofpv2i32v2float(<2 x i32> %a) {
 
 define <4 x float> @sitofpv4i32v4float(<4 x i32> %a) {
   ; SSE2-LABEL: sitofpv4i32v4float
-  ; SSE2: cost of 15 {{.*}} sitofp
+  ; SSE2: cost of 5 {{.*}} sitofp
   ;
   ; AVX1-LABEL: sitofpv4i32v4float
   ; AVX1: cost of 1 {{.*}} sitofp
@@ -517,7 +517,7 @@ define <4 x float> @sitofpv4i32v4float(<4 x i32> %a) {
 
 define <8 x float> @sitofpv8i32v8float(<8 x i32> %a) {
   ; SSE2-LABEL: sitofpv8i32v8float
-  ; SSE2: cost of 30 {{.*}} sitofp
+  ; SSE2: cost of 10 {{.*}} sitofp
   ;
   ; AVX1-LABEL: sitofpv8i32v8float
   ; AVX1: cost of 1 {{.*}} sitofp
@@ -533,7 +533,7 @@ define <8 x float> @sitofpv8i32v8float(<8 x i32> %a) {
 
 define <16 x float> @sitofpv16i32v16float(<16 x i32> %a) {
   ; SSE2-LABEL: sitofpv16i32v16float
-  ; SSE2: cost of 60 {{.*}} sitofp
+  ; SSE2: cost of 20 {{.*}} sitofp
   ;
   ; AVX1-LABEL: sitofpv16i32v16float
   ; AVX1: cost of 3 {{.*}} sitofp
@@ -549,7 +549,7 @@ define <16 x float> @sitofpv16i32v16float(<16 x i32> %a) {
 
 define <32 x float> @sitofpv32i32v32float(<32 x i32> %a) {
   ; SSE2-LABEL: sitofpv32i32v32float
-  ; SSE2: cost of 120 {{.*}} sitofp
+  ; SSE2: cost of 40 {{.*}} sitofp
   ;
   ; AVX1-LABEL: sitofpv32i32v32float
   ; AVX1: cost of 7 {{.*}} sitofp
