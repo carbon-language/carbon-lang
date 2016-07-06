@@ -145,6 +145,10 @@ def FeatureSlowOddRegister : SubtargetFeature<"slow-odd-reg", "SlowOddRegister",
 def FeatureSlowLoadDSubreg : SubtargetFeature<"slow-load-D-subreg",
                                               "SlowLoadDSubregister", "true",
                                               "Loading into D subregs is slow">;
+// Some targets (e.g. Cortex-A15) never want VMOVS to be widened to VMOVD.
+def FeatureDontWidenVMOVS : SubtargetFeature<"dont-widen-vmovs",
+                                             "DontWidenVMOVS", "true",
+                                             "Don't widen VMOVS to VMOVD">;
 
 // Some targets (e.g. Cortex-A9) want to convert VMOVRS, VMOVSR and VMOVS from
 // VFP to NEON, as an execution domain optimization.
@@ -612,6 +616,7 @@ def : ProcessorModel<"cortex-a12",  CortexA9Model,      [ARMv7a, ProcA12,
 
 // FIXME: A15 has currently the same Schedule model as A9.
 def : ProcessorModel<"cortex-a15",  CortexA9Model,      [ARMv7a, ProcA15,
+                                                         FeatureDontWidenVMOVS,
                                                          FeatureHasRetAddrStack,
                                                          FeatureMuxedUnits,
                                                          FeatureTrustZone,

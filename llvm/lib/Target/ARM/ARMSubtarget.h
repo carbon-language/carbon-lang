@@ -259,6 +259,9 @@ protected:
   /// If true, the AGU and NEON/FPU units are multiplexed.
   bool HasMuxedUnits = false;
 
+  /// If true, VMOVS will never be widened to VMOVD
+  bool DontWidenVMOVS = false;
+
   /// If true, VMOVRS, VMOVSR and VMOVS will be converted from VFP to NEON.
   bool UseNEONForFPMovs = false;
 
@@ -301,6 +304,9 @@ protected:
   std::string CPUString;
 
   unsigned MaxInterleaveFactor = 1;
+
+  /// Clearance before partial register updates (in number of instructions)
+  unsigned PartialUpdateClearance = 0;
 
   /// What kind of timing do load multiple/store multiple have (double issue,
   /// single issue etc).
@@ -448,6 +454,7 @@ public:
   bool hasSlowOddRegister() const { return SlowOddRegister; }
   bool hasSlowLoadDSubregister() const { return SlowLoadDSubregister; }
   bool hasMuxedUnits() const { return HasMuxedUnits; }
+  bool dontWidenVMOVS() const { return DontWidenVMOVS; }
   bool useNEONForFPMovs() const { return UseNEONForFPMovs; }
   bool checkVLDnAccessAlignment() const { return CheckVLDnAlign; }
   bool nonpipelinedVFP() const { return NonpipelinedVFP; }
@@ -590,6 +597,8 @@ public:
   unsigned getStackAlignment() const { return stackAlignment; }
 
   unsigned getMaxInterleaveFactor() const { return MaxInterleaveFactor; }
+
+  unsigned getPartialUpdateClearance() const { return PartialUpdateClearance; }
 
   ARMLdStMultipleTiming getLdStMultipleTiming() const {
     return LdStMultipleTiming;
