@@ -7163,6 +7163,18 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return EmitX86MaskedCompare(*this, CC, false, Ops);
   }
 
+  case X86::BI__builtin_ia32_vplzcntd_128_mask:
+  case X86::BI__builtin_ia32_vplzcntd_256_mask:
+  case X86::BI__builtin_ia32_vplzcntd_512_mask:
+  case X86::BI__builtin_ia32_vplzcntq_128_mask:
+  case X86::BI__builtin_ia32_vplzcntq_256_mask:
+  case X86::BI__builtin_ia32_vplzcntq_512_mask: {
+    Function *F = CGM.getIntrinsic(Intrinsic::ctlz, Ops[0]->getType());
+    return EmitX86Select(*this, Ops[2],
+                         Builder.CreateCall(F, {Ops[0],Builder.getInt1(false)}),
+                         Ops[1]);
+  }
+
   // TODO: Handle 64/512-bit vector widths of min/max.
   case X86::BI__builtin_ia32_pmaxsb128:
   case X86::BI__builtin_ia32_pmaxsw128:
