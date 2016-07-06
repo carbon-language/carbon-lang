@@ -1536,7 +1536,7 @@ TypeIndex CodeViewDebug::lowerTypeUnion(const DICompositeType *Ty) {
 }
 
 TypeIndex CodeViewDebug::lowerCompleteTypeUnion(const DICompositeType *Ty) {
-  ClassOptions CO = getCommonClassOptions(Ty);
+  ClassOptions CO = ClassOptions::Sealed | getCommonClassOptions(Ty);
   TypeIndex FieldTI;
   unsigned FieldCount;
   bool ContainsNestedClass;
