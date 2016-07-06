@@ -673,6 +673,8 @@ int internal_sigaction_norestorer(int signum, const void *act, void *oldact) {
 // We disable for Go simply because we have not yet added to buildgo.sh.
 #if defined(__x86_64__) && !SANITIZER_GO
 int internal_sigaction_syscall(int signum, const void *act, void *oldact) {
+  if (act == nullptr)
+    return internal_sigaction_norestorer(signum, act, oldact);
   __sanitizer_sigaction u_adjust;
   internal_memcpy(&u_adjust, act, sizeof(u_adjust));
 #if !SANITIZER_ANDROID || !SANITIZER_MIPS32
