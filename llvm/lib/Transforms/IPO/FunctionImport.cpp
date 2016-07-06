@@ -591,6 +591,12 @@ bool FunctionImporter::importFunctions(
                    << SrcModule->getSourceFileName() << "\n");
       if (Import) {
         F.materialize();
+        // Add 'thinlto_src_module' metadata for statistics and debugging.
+        F.setMetadata("thinlto_src_module",
+                      llvm::MDNode::get(DestModule.getContext(),
+                                        {llvm::MDString::get(
+                                            DestModule.getContext(),
+                                            SrcModule->getSourceFileName())}));
         GlobalsToImport.insert(&F);
       }
     }
