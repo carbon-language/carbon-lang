@@ -53,7 +53,7 @@ BindArchAction::BindArchAction(Action *Input, const char *_ArchName)
 
 void CudaDeviceAction::anchor() {}
 
-CudaDeviceAction::CudaDeviceAction(Action *Input, CudaArch Arch,
+CudaDeviceAction::CudaDeviceAction(Action *Input, clang::CudaArch Arch,
                                    bool AtTopLevel)
     : Action(CudaDeviceClass, Input), GpuArch(Arch), AtTopLevel(AtTopLevel) {}
 
