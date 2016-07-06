@@ -671,7 +671,7 @@ bool EfficiencySanitizer::instrumentLoadOrStore(Instruction *I,
       NumFastpaths++;
       return true;
     }
-    if (Alignment == 0 || Alignment >= 8 || (Alignment % TypeSizeBytes) == 0)
+    if (Alignment == 0 || (Alignment % TypeSizeBytes) == 0)
       OnAccessFunc = IsStore ? EsanAlignedStore[Idx] : EsanAlignedLoad[Idx];
     else
       OnAccessFunc = IsStore ? EsanUnalignedStore[Idx] : EsanUnalignedLoad[Idx];
@@ -832,7 +832,7 @@ bool EfficiencySanitizer::instrumentFastpathWorkingSet(
   // getMemoryAccessFuncIndex has already ruled out a size larger than 16
   // and thus larger than a cache line for platforms this tool targets
   // (and our shadow memory setup assumes 64-byte cache lines).
-  assert(TypeSize <= 64);
+  assert(TypeSize <= 128);
   if (!(TypeSize == 8 ||
         (Alignment % (TypeSize / 8)) == 0)) {
     if (ClAssumeIntraCacheLine)
