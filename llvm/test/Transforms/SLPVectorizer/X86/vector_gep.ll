@@ -1,10 +1,17 @@
-;RUN: opt < %s -slp-vectorizer -S
+;RUN: opt < %s -slp-vectorizer -S | FileCheck %s
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
+; This test checks that SLP vectorizer does not fail on vector GEP.
+; The GEP has scalar and vector parameters and returns vector of pointers.
+
 ; Function Attrs: noreturn readonly uwtable
 define void @_Z3fn1v(i32 %x, <16 x i32*>%y) local_unnamed_addr #0 {
+; CHECK-LABEL: _Z3fn1v
+; CHECK: getelementptr i32, <16 x i32*>
+; CHECK: getelementptr i32, <16 x i32*>
+
 entry:
   %conv42.le = sext i32 %x to i64
   %conv36109.le = zext i32 2 to i64
