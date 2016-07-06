@@ -25,9 +25,11 @@
 // FunctionPasses to run concurrently.
 
 #include "llvm/Analysis/CFLAndersAliasAnalysis.h"
+#include "CFLGraph.h"
 #include "llvm/Pass.h"
 
 using namespace llvm;
+using namespace llvm::cflaa;
 
 #define DEBUG_TYPE "cfl-anders-aa"
 

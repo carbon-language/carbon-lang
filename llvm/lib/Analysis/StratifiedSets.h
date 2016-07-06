@@ -22,6 +22,7 @@
 #include <vector>
 
 namespace llvm {
+namespace cflaa {
 /// An index into Stratified Sets.
 typedef unsigned StratifiedIndex;
 /// NOTE: ^ This can't be a short -- bootstrapping clang has a case where
@@ -643,5 +644,6 @@ private:
 
   bool inbounds(StratifiedIndex N) const { return N < Links.size(); }
 };
+}
 }
 #endif // LLVM_ADT_STRATIFIEDSETS_H
