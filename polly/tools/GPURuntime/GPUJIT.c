@@ -375,24 +375,6 @@ void polly_stopTimerByCudaEvent(PollyGPUEvent *Start, PollyGPUEvent *Stop,
   free(Stop);
 }
 
-void polly_allocateMemoryForHostAndDevice(void **HostData,
-                                          PollyGPUDevicePtr **DevData,
-                                          int MemSize) {
-  dump_function();
-
-  if ((*HostData = (int *)malloc(MemSize)) == 0) {
-    fprintf(stdout, "Could not allocate host memory.\n");
-    exit(-1);
-  }
-
-  *DevData = malloc(sizeof(PollyGPUDevicePtr));
-  if (*DevData == 0) {
-    fprintf(stdout, "Allocate memory for GPU device memory pointer failed.\n");
-    exit(-1);
-  }
-  CuMemAllocFcnPtr(&((*DevData)->Cuda), MemSize);
-}
-
 void polly_copyFromHostToDevice(PollyGPUDevicePtr *DevData, void *HostData,
                                 int MemSize) {
   dump_function();
