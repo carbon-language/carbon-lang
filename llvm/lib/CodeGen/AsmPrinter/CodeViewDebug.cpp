@@ -642,8 +642,13 @@ void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
     OS.emitAbsoluteSymbolDiff(ProcRecordEnd, ProcRecordBegin, 2);
     OS.EmitLabel(ProcRecordBegin);
 
+  if (GV->hasLocalLinkage()) {
+    OS.AddComment("Record kind: S_LPROC32_ID");
+    OS.EmitIntValue(unsigned(SymbolKind::S_LPROC32_ID), 2);
+  } else {
     OS.AddComment("Record kind: S_GPROC32_ID");
     OS.EmitIntValue(unsigned(SymbolKind::S_GPROC32_ID), 2);
+  }
 
     // These fields are filled in by tools like CVPACK which run after the fact.
     OS.AddComment("PtrParent");
@@ -1993,8 +1998,13 @@ void CodeViewDebug::emitDebugInfoForGlobal(const DIGlobalVariable *DIGV,
   OS.AddComment("Record length");
   OS.emitAbsoluteSymbolDiff(DataEnd, DataBegin, 2);
   OS.EmitLabel(DataBegin);
-  OS.AddComment("Record kind: S_GDATA32");
-  OS.EmitIntValue(unsigned(SymbolKind::S_GDATA32), 2);
+  if (DIGV->isLocalToUnit()) {
+    OS.AddComment("Record kind: S_LDATA32");
+    OS.EmitIntValue(unsigned(SymbolKind::S_LDATA32), 2);
+  } else {
+    OS.AddComment("Record kind: S_GDATA32");
+    OS.EmitIntValue(unsigned(SymbolKind::S_GDATA32), 2);
+  }
   OS.AddComment("Type");
   OS.EmitIntValue(getCompleteTypeIndex(DIGV->getType()).getIndex(), 4);
   OS.AddComment("DataOffset");
