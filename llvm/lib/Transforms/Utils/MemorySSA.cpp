@@ -201,8 +201,6 @@ MemoryAccess *MemorySSA::renameBlock(BasicBlock *BB,
       continue;
     AccessList *Accesses = It->second.get();
     auto *Phi = cast<MemoryPhi>(&Accesses->front());
-    assert(std::find(succ_begin(BB), succ_end(BB), S) != succ_end(BB) &&
-           "Must be at least one edge from Succ to BB!");
     Phi->addIncoming(IncomingVal, BB);
   }
 
@@ -251,6 +249,22 @@ void MemorySSA::computeDomLevels(DenseMap<DomTreeNode *, unsigned> &DomLevels) {
 void MemorySSA::markUnreachableAsLiveOnEntry(BasicBlock *BB) {
   assert(!DT->isReachableFromEntry(BB) &&
          "Reachable block found while handling unreachable blocks");
+
+  // Make sure phi nodes in our reachable successors end up with a
+  // LiveOnEntryDef for our incoming edge, even though our block is forward
+  // unreachable.  We could just disconnect these blocks from the CFG fully,
+  // but we do not right now.
+  for (const BasicBlock *S : successors(BB)) {
+    if (!DT->isReachableFromEntry(S))
+      continue;
+    auto It = PerBlockAccesses.find(S);
+    // Rename the phi nodes in our successor block
+    if (It == PerBlockAccesses.end() || !isa<MemoryPhi>(It->second->front()))
+      continue;
+    AccessList *Accesses = It->second.get();
+    auto *Phi = cast<MemoryPhi>(&Accesses->front());
+    Phi->addIncoming(LiveOnEntryDef.get(), BB);
+  }
 
   auto It = PerBlockAccesses.find(BB);
   if (It == PerBlockAccesses.end())
