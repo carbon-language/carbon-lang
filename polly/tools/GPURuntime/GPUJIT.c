@@ -15,7 +15,21 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <dlfcn.h>
+#include <stdarg.h>
 #include <stdio.h>
+
+static int DebugMode;
+
+static void debug_print(const char *format, ...) {
+  if (!DebugMode)
+    return;
+
+  va_list args;
+  va_start(args, format);
+  vfprintf(stderr, format, args);
+  va_end(args);
+}
+#define dump_function() debug_print("-> %s\n", __func__)
 
 /* Define Polly's GPGPU data types. */
 struct PollyGPUContextT {
@@ -241,6 +255,8 @@ static int initialDeviceAPIs() {
 }
 
 void polly_initDevice(PollyGPUContext **Context, PollyGPUDevice **Device) {
+  dump_function();
+
   int Major = 0, Minor = 0, DeviceID = 0;
   char DeviceName[256];
   int DeviceCount = 0;
@@ -283,9 +299,13 @@ void polly_initDevice(PollyGPUContext **Context, PollyGPUDevice **Device) {
     exit(-1);
   }
   CuCtxCreateFcnPtr(&((*Context)->Cuda), 0, (*Device)->Cuda);
+
+  DebugMode = getenv("POLLY_DEBUG") != 0;
 }
 
 void polly_getPTXModule(void *PTXBuffer, PollyGPUModule **Module) {
+  dump_function();
+
   *Module = malloc(sizeof(PollyGPUModule));
   if (*Module == 0) {
     fprintf(stdout, "Allocate memory for Polly GPU module failed.\n");
@@ -301,6 +321,8 @@ void polly_getPTXModule(void *PTXBuffer, PollyGPUModule **Module) {
 
 void polly_getPTXKernelEntry(const char *KernelName, PollyGPUModule *Module,
                              PollyGPUFunction **Kernel) {
+  dump_function();
+
   *Kernel = malloc(sizeof(PollyGPUFunction));
   if (*Kernel == 0) {
     fprintf(stdout, "Allocate memory for Polly GPU kernel failed.\n");
@@ -316,6 +338,8 @@ void polly_getPTXKernelEntry(const char *KernelName, PollyGPUModule *Module,
 }
 
 void polly_startTimerByCudaEvent(PollyGPUEvent **Start, PollyGPUEvent **Stop) {
+  dump_function();
+
   *Start = malloc(sizeof(PollyGPUEvent));
   if (*Start == 0) {
     fprintf(stdout, "Allocate memory for Polly GPU start timer failed.\n");
@@ -336,6 +360,8 @@ void polly_startTimerByCudaEvent(PollyGPUEvent **Start, PollyGPUEvent **Stop) {
 
 void polly_stopTimerByCudaEvent(PollyGPUEvent *Start, PollyGPUEvent *Stop,
                                 float *ElapsedTimes) {
+  dump_function();
+
   /* Record the end time. */
   CudaEventRecordFcnPtr(Stop->Cuda, 0);
   CudaEventSynchronizeFcnPtr(Start->Cuda);
@@ -352,6 +378,8 @@ void polly_stopTimerByCudaEvent(PollyGPUEvent *Start, PollyGPUEvent *Stop,
 void polly_allocateMemoryForHostAndDevice(void **HostData,
                                           PollyGPUDevicePtr **DevData,
                                           int MemSize) {
+  dump_function();
+
   if ((*HostData = (int *)malloc(MemSize)) == 0) {
     fprintf(stdout, "Could not allocate host memory.\n");
     exit(-1);
@@ -367,12 +395,16 @@ void polly_allocateMemoryForHostAndDevice(void **HostData,
 
 void polly_copyFromHostToDevice(PollyGPUDevicePtr *DevData, void *HostData,
                                 int MemSize) {
+  dump_function();
+
   CUdeviceptr CuDevData = DevData->Cuda;
   CuMemcpyHtoDFcnPtr(CuDevData, HostData, MemSize);
 }
 
 void polly_copyFromDeviceToHost(void *HostData, PollyGPUDevicePtr *DevData,
                                 int MemSize) {
+  dump_function();
+
   if (CuMemcpyDtoHFcnPtr(HostData, DevData->Cuda, MemSize) != CUDA_SUCCESS) {
     fprintf(stdout, "Copying results from device to host memory failed.\n");
     exit(-1);
@@ -381,6 +413,8 @@ void polly_copyFromDeviceToHost(void *HostData, PollyGPUDevicePtr *DevData,
 
 void polly_setKernelParameters(PollyGPUFunction *Kernel, int BlockWidth,
                                int BlockHeight, PollyGPUDevicePtr *DevData) {
+  dump_function();
+
   int ParamOffset = 0;
 
   CuFuncSetBlockShapeFcnPtr(Kernel->Cuda, BlockWidth, BlockHeight, 1);
@@ -392,6 +426,8 @@ void polly_setKernelParameters(PollyGPUFunction *Kernel, int BlockWidth,
 
 void polly_launchKernel(PollyGPUFunction *Kernel, int GridWidth,
                         int GridHeight) {
+  dump_function();
+
   if (CuLaunchGridFcnPtr(Kernel->Cuda, GridWidth, GridHeight) != CUDA_SUCCESS) {
     fprintf(stdout, "Launching CUDA kernel failed.\n");
     exit(-1);
@@ -404,6 +440,8 @@ void polly_cleanupGPGPUResources(void *HostData, PollyGPUDevicePtr *DevData,
                                  PollyGPUModule *Module,
                                  PollyGPUContext *Context,
                                  PollyGPUFunction *Kernel) {
+  dump_function();
+
   if (HostData) {
     free(HostData);
     HostData = 0;
