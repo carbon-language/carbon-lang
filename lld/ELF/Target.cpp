@@ -321,6 +321,7 @@ RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   case R_386_TLS_IE:
     return R_GOT;
   case R_386_GOT32:
+  case R_386_GOT32X:
   case R_386_TLS_GOTIE:
     return R_GOT_FROM_END;
   case R_386_GOTOFF:
