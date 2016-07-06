@@ -424,6 +424,7 @@ uint64_t X86TargetInfo::getImplicitAddend(const uint8_t *Buf,
     return 0;
   case R_386_32:
   case R_386_GOT32:
+  case R_386_GOT32X:
   case R_386_GOTOFF:
   case R_386_GOTPC:
   case R_386_PC32:
