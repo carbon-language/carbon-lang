@@ -317,8 +317,9 @@ PlatformAndroid::DownloadSymbolFile (const lldb::ModuleSP& module_sp,
                                      const FileSpec& dst_file_spec)
 {
     // For oat file we can try to fetch additional debug info from the device
-    if (module_sp->GetFileSpec().GetFileNameExtension() != ConstString("oat"))
-        return Error("Symbol file downloading only supported for oat files");
+    ConstString extension = module_sp->GetFileSpec().GetFileNameExtension();
+    if (extension != ConstString("oat") && extension != ConstString("odex"))
+        return Error("Symbol file downloading only supported for oat and odex files");
 
     // If we have no information about the platform file we can't execute oatdump
     if (!module_sp->GetPlatformFileSpec())
