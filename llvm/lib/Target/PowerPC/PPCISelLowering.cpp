@@ -2269,7 +2269,7 @@ SDValue PPCTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // If we're comparing for equality to zero, expose the fact that this is
-  // implented as a ctlz/srl pair on ppc, so that the dag combiner can
+  // implemented as a ctlz/srl pair on ppc, so that the dag combiner can
   // fold the new nodes.
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
     if (C->isNullValue() && CC == ISD::SETEQ) {
