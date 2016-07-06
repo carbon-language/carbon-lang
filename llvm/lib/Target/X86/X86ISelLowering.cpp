@@ -8719,7 +8719,7 @@ static SDValue lowerVectorShuffleAsInsertPS(const SDLoc &DL,
   }
 
   // Don't bother if we have no (non-zeroable) element for insertion.
-  if (V1DstIndex >= 0 && V2DstIndex >= 0)
+  if (V1DstIndex < 0 && V2DstIndex < 0)
     return SDValue();
 
   // Determine element insertion src/dst indices. The src index is from the
