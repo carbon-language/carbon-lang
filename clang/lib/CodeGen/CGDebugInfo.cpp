@@ -1095,6 +1095,13 @@ void CGDebugInfo::CollectRecordNormalField(
   elements.push_back(FieldType);
 }
 
+void CGDebugInfo::CollectRecordNestedRecord(
+    const RecordDecl *RD, SmallVectorImpl<llvm::Metadata *> &elements) {
+  QualType Ty = CGM.getContext().getTypeDeclType(RD);
+  llvm::DIType *nestedType = getOrCreateType(Ty, getOrCreateMainFile());
+  elements.push_back(nestedType);
+}
+
 void CGDebugInfo::CollectRecordFields(
     const RecordDecl *record, llvm::DIFile *tunit,
     SmallVectorImpl<llvm::Metadata *> &elements,
@@ -1131,6 +1138,9 @@ void CGDebugInfo::CollectRecordFields(
 
         // Bump field number for next field.
         ++fieldNo;
+      } else if (const auto *nestedRec = dyn_cast<CXXRecordDecl>(I)) {
+        if (!nestedRec->isImplicit() && nestedRec->getDeclContext() == record)
+          CollectRecordNestedRecord(nestedRec, elements);
       }
   }
 }
@@ -3633,8 +3643,8 @@ void CGDebugInfo::EmitUsingDirective(const UsingDirectiveDecl &UD) {
   if (CGM.getCodeGenOpts().getDebugInfo() < codegenoptions::LimitedDebugInfo)
     return;
   const NamespaceDecl *NSDecl = UD.getNominatedNamespace();
-  if (!NSDecl->isAnonymousNamespace() || 
-      CGM.getCodeGenOpts().DebugExplicitImport) { 
+  if (!NSDecl->isAnonymousNamespace() ||
+      CGM.getCodeGenOpts().DebugExplicitImport) {
     DBuilder.createImportedModule(
         getCurrentContextDescriptor(cast<Decl>(UD.getDeclContext())),
         getOrCreateNameSpace(NSDecl),
