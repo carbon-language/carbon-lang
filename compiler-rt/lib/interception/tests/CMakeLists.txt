@@ -127,7 +127,7 @@ macro(add_interception_tests_for_arch arch)
 
 endmacro()
 
-if(COMPILER_RT_CAN_EXECUTE_TESTS AND NOT ANDROID)
+if(COMPILER_RT_CAN_EXECUTE_TESTS AND NOT ANDROID AND NOT APPLE)
   # We use just-built clang to build interception unittests, so we must
   # be sure that produced binaries would work.
   if(APPLE)
@@ -143,5 +143,3 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS AND NOT ANDROID)
     add_interception_tests_for_arch(${arch})
   endforeach()
 endif()
-
-
