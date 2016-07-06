@@ -2923,7 +2923,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, SourceLocation Loc,
   // are emitted as CU level entities by the backend.
   llvm::DISubprogram *SP = DBuilder.createFunction(
       FDContext, Name, LinkageName, Unit, LineNo,
-      getOrCreateFunctionType(D, FnType, Unit), Fn->hasInternalLinkage(),
+      getOrCreateFunctionType(D, FnType, Unit), Fn->hasLocalLinkage(),
       true /*definition*/, ScopeLine, Flags, CGM.getLangOpts().Optimize,
       TParamsArray.get(), getFunctionDeclaration(D));
   Fn->setSubprogram(SP);
@@ -3537,7 +3537,7 @@ llvm::DIGlobalVariable *CGDebugInfo::CollectAnonRecordDecls(
     // Use VarDecl's Tag, Scope and Line number.
     GV = DBuilder.createGlobalVariable(DContext, FieldName, LinkageName, Unit,
                                        LineNo, FieldTy,
-                                       Var->hasInternalLinkage(), Var, nullptr);
+                                       Var->hasLocalLinkage(), Var, nullptr);
   }
   return GV;
 }
@@ -3570,7 +3570,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   } else {
     GV = DBuilder.createGlobalVariable(
         DContext, DeclName, LinkageName, Unit, LineNo, getOrCreateType(T, Unit),
-        Var->hasInternalLinkage(), Var,
+        Var->hasLocalLinkage(), Var,
         getOrCreateStaticDataMemberDeclarationOrNull(D));
   }
   DeclCache[D->getCanonicalDecl()].reset(static_cast<llvm::Metadata *>(GV));
