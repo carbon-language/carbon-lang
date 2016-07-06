@@ -194,7 +194,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_cmp_ss : GCCBuiltin<"__builtin_ia32_cmpss">,
               Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty,
                          llvm_v4f32_ty, llvm_i8_ty], [IntrNoMem]>;
-  def int_x86_sse_cmp_ps : GCCBuiltin<"__builtin_ia32_cmpps">,
+  def int_x86_sse_cmp_ps :
               Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty,
                          llvm_v4f32_ty, llvm_i8_ty], [IntrNoMem]>;
   def int_x86_sse_comieq_ss : GCCBuiltin<"__builtin_ia32_comieq">,
@@ -324,7 +324,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_cmp_sd : GCCBuiltin<"__builtin_ia32_cmpsd">,
               Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty,
                          llvm_v2f64_ty, llvm_i8_ty], [IntrNoMem]>;
-  def int_x86_sse2_cmp_pd : GCCBuiltin<"__builtin_ia32_cmppd">,
+  def int_x86_sse2_cmp_pd :
               Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty,
                          llvm_v2f64_ty, llvm_i8_ty], [IntrNoMem]>;
   def int_x86_sse2_comieq_sd : GCCBuiltin<"__builtin_ia32_comisdeq">,
@@ -1512,10 +1512,10 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 
 // Vector compare
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx_cmp_pd_256 : GCCBuiltin<"__builtin_ia32_cmppd256">,
+  def int_x86_avx_cmp_pd_256 :
         Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
                   llvm_v4f64_ty, llvm_i8_ty], [IntrNoMem]>;
-  def int_x86_avx_cmp_ps_256 : GCCBuiltin<"__builtin_ia32_cmpps256">,
+  def int_x86_avx_cmp_ps_256 :
         Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
                   llvm_v8f32_ty, llvm_i8_ty], [IntrNoMem]>;
 }
