@@ -1,7 +1,5 @@
 include(CompilerRTCompile)
 
-clang_compiler_add_cxx_check()
-
 filter_available_targets(INTERCEPTION_UNITTEST_SUPPORTED_ARCH x86_64 i386 mips64 mips64el)
 
 set(INTERCEPTION_UNITTESTS
