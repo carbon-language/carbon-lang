@@ -7289,6 +7289,51 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return getVectorFCmpIR(CmpInst::FCMP_UGT, V2F64);
   case X86::BI__builtin_ia32_cmpordpd:
     return getVectorFCmpIR(CmpInst::FCMP_ORD, V2F64);
+  case X86::BI__builtin_ia32_cmpps:
+  case X86::BI__builtin_ia32_cmpps256:
+  case X86::BI__builtin_ia32_cmppd:
+  case X86::BI__builtin_ia32_cmppd256: {
+    unsigned CC = cast<llvm::ConstantInt>(Ops[2])->getZExtValue();
+    // If this one of the SSE immediates, we can use native IR.
+    if (CC < 8) {
+      FCmpInst::Predicate Pred;
+      switch (CC) {
+      case 0: Pred = FCmpInst::FCMP_OEQ; break;
+      case 1: Pred = FCmpInst::FCMP_OLT; break;
+      case 2: Pred = FCmpInst::FCMP_OLE; break;
+      case 3: Pred = FCmpInst::FCMP_UNO; break;
+      case 4: Pred = FCmpInst::FCMP_UNE; break;
+      case 5: Pred = FCmpInst::FCMP_UGE; break;
+      case 6: Pred = FCmpInst::FCMP_UGT; break;
+      case 7: Pred = FCmpInst::FCMP_ORD; break;
+      }
+      Value *Cmp = Builder.CreateFCmp(Pred, Ops[0], Ops[1]);
+      auto *FPVecTy = cast<llvm::VectorType>(Ops[0]->getType());
+      auto *IntVecTy = llvm::VectorType::getInteger(FPVecTy);
+      Value *Sext = Builder.CreateSExt(Cmp, IntVecTy);
+      return Builder.CreateBitCast(Sext, FPVecTy);
+    }
+
+    // We can't handle 8-31 immediates with native IR, use the intrinsic.
+    Intrinsic::ID ID;
+    switch (BuiltinID) {
+    default: llvm_unreachable("Unsupported intrinsic!");
+    case X86::BI__builtin_ia32_cmpps:
+      ID = Intrinsic::x86_sse_cmp_ps;
+      break;
+    case X86::BI__builtin_ia32_cmpps256:
+      ID = Intrinsic::x86_avx_cmp_ps_256;
+      break;
+    case X86::BI__builtin_ia32_cmppd:
+      ID = Intrinsic::x86_sse2_cmp_pd;
+      break;
+    case X86::BI__builtin_ia32_cmppd256:
+      ID = Intrinsic::x86_avx_cmp_pd_256;
+      break;
+    }
+
+    return Builder.CreateCall(CGM.getIntrinsic(ID), Ops);
+  }
 
   // SSE scalar comparison intrinsics
   case X86::BI__builtin_ia32_cmpeqss:
