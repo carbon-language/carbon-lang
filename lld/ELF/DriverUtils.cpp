@@ -152,6 +152,11 @@ void CpioFile::append(StringRef Path, StringRef Data) {
   // (i.e. in that case we are creating baz.cpio.)
   SmallString<128> Fullpath;
   path::append(Fullpath, Basename, Path);
+
+  // Use unix path separators so the cpio can be extracted on both unix and
+  // windows.
+  std::replace(Fullpath.begin(), Fullpath.end(), '\\', '/');
+
   writeMember(*OS, Fullpath, Data);
 
   // Print the trailer and seek back.
