@@ -2310,7 +2310,7 @@ SDValue PPCTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
 SDValue PPCTargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
   SDNode *Node = Op.getNode();
   EVT VT = Node->getValueType(0);
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+  EVT PtrVT = getPointerTy(DAG.getDataLayout());
   SDValue InChain = Node->getOperand(0);
   SDValue VAListPtr = Node->getOperand(1);
   const Value *SV = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
@@ -2438,7 +2438,7 @@ SDValue PPCTargetLowering::LowerINIT_TRAMPOLINE(SDValue Op,
   SDValue Nest = Op.getOperand(3); // 'nest' parameter value
   SDLoc dl(Op);
 
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+  EVT PtrVT = getPointerTy(DAG.getDataLayout());
   bool isPPC64 = (PtrVT == MVT::i64);
   Type *IntPtrTy = DAG.getDataLayout().getIntPtrType(*DAG.getContext());
 
@@ -2470,13 +2470,13 @@ SDValue PPCTargetLowering::LowerINIT_TRAMPOLINE(SDValue Op,
 SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+  EVT PtrVT = getPointerTy(MF.getDataLayout());
 
   SDLoc dl(Op);
 
   if (Subtarget.isDarwinABI() || Subtarget.isPPC64()) {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
     // memory location argument.
-    EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(MF.getDataLayout());
     SDValue FR = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
     const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
     return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1),
@@ -2510,9 +2510,6 @@ SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue ArgGPR = DAG.getConstant(FuncInfo->getVarArgsNumGPR(), dl, MVT::i32);
   SDValue ArgFPR = DAG.getConstant(FuncInfo->getVarArgsNumFPR(), dl, MVT::i32);
-
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(MF.getDataLayout());
-
   SDValue StackOffsetFI = DAG.getFrameIndex(FuncInfo->getVarArgsStackOffset(),
                                             PtrVT);
   SDValue FR = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
@@ -2823,7 +2820,7 @@ SDValue PPCTargetLowering::LowerFormalArguments_32SVR4(
   MachineFrameInfo *MFI = MF.getFrameInfo();
   PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
 
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(MF.getDataLayout());
+  EVT PtrVT = getPointerTy(MF.getDataLayout());
   // Potential tail calls could cause overwriting of argument stack slots.
   bool isImmutable = !(getTargetMachine().Options.GuaranteedTailCallOpt &&
                        (CallConv == CallingConv::Fast));
@@ -3049,7 +3046,7 @@ SDValue PPCTargetLowering::LowerFormalArguments_64SVR4(
   assert(!(CallConv == CallingConv::Fast && isVarArg) &&
          "fastcc not supported on varargs functions");
 
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(MF.getDataLayout());
+  EVT PtrVT = getPointerTy(MF.getDataLayout());
   // Potential tail calls could cause overwriting of argument stack slots.
   bool isImmutable = !(getTargetMachine().Options.GuaranteedTailCallOpt &&
                        (CallConv == CallingConv::Fast));
@@ -3462,7 +3459,7 @@ SDValue PPCTargetLowering::LowerFormalArguments_Darwin(
   MachineFrameInfo *MFI = MF.getFrameInfo();
   PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
 
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(MF.getDataLayout());
+  EVT PtrVT = getPointerTy(MF.getDataLayout());
   bool isPPC64 = PtrVT == MVT::i64;
   // Potential tail calls could cause overwriting of argument stack slots.
   bool isImmutable = !(getTargetMachine().Options.GuaranteedTailCallOpt &&
@@ -4051,9 +4048,11 @@ static SDNode *isBLACompatibleAddress(SDValue Op, SelectionDAG &DAG) {
       SignExtend32<26>(Addr) != Addr)
     return nullptr;  // Top 6 bits have to be sext of immediate.
 
-  return DAG.getConstant((int)C->getZExtValue() >> 2, SDLoc(Op),
-                         DAG.getTargetLoweringInfo().getPointerTy(
-                             DAG.getDataLayout())).getNode();
+  return DAG
+      .getConstant(
+          (int)C->getZExtValue() >> 2, SDLoc(Op),
+          DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout()))
+      .getNode();
 }
 
 namespace {
@@ -4562,7 +4561,7 @@ SDValue PPCTargetLowering::FinishCall(
       // allocated and an unnecessary move instruction being generated.
       CallOpc = PPCISD::BCTRL_LOAD_TOC;
 
-      EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+      EVT PtrVT = getPointerTy(DAG.getDataLayout());
       SDValue StackPtr = DAG.getRegister(PPC::X1, PtrVT);
       unsigned TOCSaveOffset = Subtarget.getFrameLowering()->getTOCSaveOffset();
       SDValue TOCOff = DAG.getIntPtrConstant(TOCSaveOffset, dl);
@@ -4906,7 +4905,7 @@ SDValue PPCTargetLowering::LowerCall_64SVR4(
   bool hasNest = false;
   bool IsSibCall = false;
 
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+  EVT PtrVT = getPointerTy(DAG.getDataLayout());
   unsigned PtrByteSize = 8;
 
   MachineFunction &MF = DAG.getMachineFunction();
@@ -5537,7 +5536,7 @@ SDValue PPCTargetLowering::LowerCall_Darwin(
 
   unsigned NumOps = Outs.size();
 
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+  EVT PtrVT = getPointerTy(DAG.getDataLayout());
   bool isPPC64 = PtrVT == MVT::i64;
   unsigned PtrByteSize = isPPC64 ? 8 : 4;
 
@@ -6017,7 +6016,7 @@ SDValue PPCTargetLowering::LowerSTACKRESTORE(SDValue Op,
   SDLoc dl(Op);
 
   // Get the corect type for pointers.
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+  EVT PtrVT = getPointerTy(DAG.getDataLayout());
 
   // Construct the stack pointer operand.
   bool isPPC64 = Subtarget.isPPC64();
@@ -6044,7 +6043,7 @@ SDValue PPCTargetLowering::LowerSTACKRESTORE(SDValue Op,
 SDValue PPCTargetLowering::getReturnAddrFrameIndex(SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   bool isPPC64 = Subtarget.isPPC64();
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(MF.getDataLayout());
+  EVT PtrVT = getPointerTy(MF.getDataLayout());
 
   // Get current frame pointer save index.  The users of this index will be
   // primarily DYNALLOC instructions.
@@ -6067,7 +6066,7 @@ SDValue
 PPCTargetLowering::getFramePointerFrameIndex(SelectionDAG & DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   bool isPPC64 = Subtarget.isPPC64();
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(MF.getDataLayout());
+  EVT PtrVT = getPointerTy(MF.getDataLayout());
 
   // Get current frame pointer save index.  The users of this index will be
   // primarily DYNALLOC instructions.
@@ -6094,7 +6093,7 @@ SDValue PPCTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   SDLoc dl(Op);
 
   // Get the corect type for pointers.
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+  EVT PtrVT = getPointerTy(DAG.getDataLayout());
   // Negate the size.
   SDValue NegSize = DAG.getNode(ISD::SUB, dl, PtrVT,
                                 DAG.getConstant(0, dl, PtrVT), Size);
@@ -6653,7 +6652,7 @@ SDValue PPCTargetLowering::LowerINT_TO_FP(SDValue Op,
                  SINT.getOpcode() == ISD::ZERO_EXTEND)) &&
                SINT.getOperand(0).getValueType() == MVT::i32) {
       MachineFrameInfo *FrameInfo = MF.getFrameInfo();
-      EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+      EVT PtrVT = getPointerTy(DAG.getDataLayout());
 
       int FrameIdx = FrameInfo->CreateStackObject(4, 4, false);
       SDValue FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
@@ -6699,7 +6698,7 @@ SDValue PPCTargetLowering::LowerINT_TO_FP(SDValue Op,
   // then lfd it and fcfid it.
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *FrameInfo = MF.getFrameInfo();
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(MF.getDataLayout());
+  EVT PtrVT = getPointerTy(MF.getDataLayout());
 
   SDValue Ld;
   if (Subtarget.hasLFIWAX() || Subtarget.hasFPCVT()) {
@@ -6790,7 +6789,7 @@ SDValue PPCTargetLowering::LowerFLT_ROUNDS_(SDValue Op,
 
   MachineFunction &MF = DAG.getMachineFunction();
   EVT VT = Op.getValueType();
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(MF.getDataLayout());
+  EVT PtrVT = getPointerTy(MF.getDataLayout());
 
   // Save FP Control Word to register
   EVT NodeTys[] = {
@@ -11513,7 +11512,7 @@ SDValue PPCTargetLowering::LowerFRAMEADDR(SDValue Op,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MFI->setFrameAddressIsTaken(true);
 
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(MF.getDataLayout());
+  EVT PtrVT = getPointerTy(MF.getDataLayout());
   bool isPPC64 = PtrVT == MVT::i64;
 
   // Naked functions never have a frame pointer, and so we use r1. For all
