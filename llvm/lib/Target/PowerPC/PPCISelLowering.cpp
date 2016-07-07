@@ -4088,15 +4088,15 @@ static void StoreTailCallArgumentsToStackSlot(
 /// the appropriate stack slot for the tail call optimized function call.
 static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG, SDValue Chain,
                                              SDValue OldRetAddr, SDValue OldFP,
-                                             int SPDiff, bool isPPC64,
-                                             bool isDarwinABI,
+                                             int SPDiff, bool isDarwinABI,
                                              const SDLoc &dl) {
   if (SPDiff) {
     // Calculate the new stack slot for the return address.
-    int SlotSize = isPPC64 ? 8 : 4;
     MachineFunction &MF = DAG.getMachineFunction();
-    const PPCFrameLowering *FL =
-        MF.getSubtarget<PPCSubtarget>().getFrameLowering();
+    const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
+    const PPCFrameLowering *FL = Subtarget.getFrameLowering();
+    bool isPPC64 = Subtarget.isPPC64();
+    int SlotSize = isPPC64 ? 8 : 4;
     int NewRetAddrLoc = SPDiff + FL->getReturnSaveOffset();
     int NewRetAddr = MF.getFrameInfo()->CreateFixedObject(SlotSize,
                                                           NewRetAddrLoc, true);
@@ -4208,7 +4208,7 @@ static void LowerMemOpCallTo(
 
 static void
 PrepareTailCall(SelectionDAG &DAG, SDValue &InFlag, SDValue &Chain,
-                const SDLoc &dl, bool isPPC64, int SPDiff, unsigned NumBytes,
+                const SDLoc &dl, int SPDiff, unsigned NumBytes,
                 SDValue LROp, SDValue FPOp, bool isDarwinABI,
                 SmallVectorImpl<TailCallArgumentInfo> &TailCallArguments) {
   // Emit a sequence of copyto/copyfrom virtual registers for arguments that
@@ -4222,7 +4222,7 @@ PrepareTailCall(SelectionDAG &DAG, SDValue &InFlag, SDValue &Chain,
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOpChains2);
 
   // Store the return address to the appropriate stack slot.
-  Chain = EmitTailCallStoreFPAndRetAddr(DAG, Chain, LROp, FPOp, SPDiff, isPPC64,
+  Chain = EmitTailCallStoreFPAndRetAddr(DAG, Chain, LROp, FPOp, SPDiff,
                                         isDarwinABI, dl);
 
   // Emit callseq_end just before tailcall node.
@@ -4870,8 +4870,8 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
   }
 
   if (isTailCall)
-    PrepareTailCall(DAG, InFlag, Chain, dl, false, SPDiff, NumBytes, LROp, FPOp,
-                    false, TailCallArguments);
+    PrepareTailCall(DAG, InFlag, Chain, dl, SPDiff, NumBytes, LROp, FPOp, false,
+                    TailCallArguments);
 
   return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint,
                     /* unused except on PPC64 ELFv1 */ false, DAG,
@@ -5524,8 +5524,8 @@ SDValue PPCTargetLowering::LowerCall_64SVR4(
   }
 
   if (isTailCall && !IsSibCall)
-    PrepareTailCall(DAG, InFlag, Chain, dl, true, SPDiff, NumBytes, LROp,
-                    FPOp, true, TailCallArguments);
+    PrepareTailCall(DAG, InFlag, Chain, dl, SPDiff, NumBytes, LROp, FPOp, true,
+                    TailCallArguments);
 
   return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint, hasNest,
                     DAG, RegsToPass, InFlag, Chain, CallSeqStart, Callee,
@@ -5913,8 +5913,8 @@ SDValue PPCTargetLowering::LowerCall_Darwin(
   }
 
   if (isTailCall)
-    PrepareTailCall(DAG, InFlag, Chain, dl, isPPC64, SPDiff, NumBytes, LROp,
-                    FPOp, true, TailCallArguments);
+    PrepareTailCall(DAG, InFlag, Chain, dl, SPDiff, NumBytes, LROp, FPOp, true,
+                    TailCallArguments);
 
   return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint,
                     /* unused except on PPC64 ELFv1 */ false, DAG,
