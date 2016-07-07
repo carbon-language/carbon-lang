@@ -4687,8 +4687,7 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
 
   // Assign locations to all of the outgoing arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  PPCCCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs,
-                 *DAG.getContext());
+  PPCCCState CCInfo(CallConv, isVarArg, MF, ArgLocs, *DAG.getContext());
 
   // Reserve space for the linkage area on the stack.
   CCInfo.AllocateStack(Subtarget.getFrameLowering()->getLinkageSize(),
@@ -4731,8 +4730,7 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
 
   // Assign locations to all of the outgoing aggregate by value arguments.
   SmallVector<CCValAssign, 16> ByValArgLocs;
-  CCState CCByValInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                      ByValArgLocs, *DAG.getContext());
+  CCState CCByValInfo(CallConv, isVarArg, MF, ByValArgLocs, *DAG.getContext());
 
   // Reserve stack space for the allocations in CCInfo.
   CCByValInfo.AllocateStack(CCInfo.getNextStackOffset(), PtrByteSize);
