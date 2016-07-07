@@ -87,11 +87,8 @@ opt::InputArgList ELFOptTable::parse(ArrayRef<const char *> Argv) {
           "\", expected " + Twine(MissingCount) +
           (MissingCount == 1 ? " argument.\n" : " arguments"));
 
-  iterator_range<opt::arg_iterator> Unknowns = Args.filtered(OPT_UNKNOWN);
-  for (auto *Arg : Unknowns)
-    warning("warning: unknown argument: " + Arg->getSpelling());
-  if (Unknowns.begin() != Unknowns.end())
-    error("unknown argument(s) found");
+  for (auto *Arg : Args.filtered(OPT_UNKNOWN))
+    error("unknown argument: " + Arg->getSpelling());
   return Args;
 }
 
