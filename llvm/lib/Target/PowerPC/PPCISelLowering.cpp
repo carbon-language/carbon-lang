@@ -2307,8 +2307,7 @@ SDValue PPCTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   return SDValue();
 }
 
-SDValue PPCTargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG,
-                                      const PPCSubtarget &Subtarget) const {
+SDValue PPCTargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
   SDNode *Node = Op.getNode();
   EVT VT = Node->getValueType(0);
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
@@ -2415,8 +2414,7 @@ SDValue PPCTargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG,
                      false, false, false, 0);
 }
 
-SDValue PPCTargetLowering::LowerVACOPY(SDValue Op, SelectionDAG &DAG,
-                                       const PPCSubtarget &Subtarget) const {
+SDValue PPCTargetLowering::LowerVACOPY(SDValue Op, SelectionDAG &DAG) const {
   assert(!Subtarget.isPPC64() && "LowerVACOPY is PPC32 only");
 
   // We have to copy the entire va_list struct:
@@ -2469,8 +2467,7 @@ SDValue PPCTargetLowering::LowerINIT_TRAMPOLINE(SDValue Op,
   return CallResult.second;
 }
 
-SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
-                                        const PPCSubtarget &Subtarget) const {
+SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
 
@@ -6007,8 +6004,9 @@ PPCTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   return DAG.getNode(PPCISD::RET_FLAG, dl, MVT::Other, RetOps);
 }
 
-SDValue PPCTargetLowering::LowerGET_DYNAMIC_AREA_OFFSET(
-    SDValue Op, SelectionDAG &DAG, const PPCSubtarget &Subtarget) const {
+SDValue
+PPCTargetLowering::LowerGET_DYNAMIC_AREA_OFFSET(SDValue Op,
+                                                SelectionDAG &DAG) const {
   SDLoc dl(Op);
 
   // Get the corect type for integers.
@@ -6023,8 +6021,8 @@ SDValue PPCTargetLowering::LowerGET_DYNAMIC_AREA_OFFSET(
   return DAG.getNode(PPCISD::DYNAREAOFFSET, dl, VTs, Ops);
 }
 
-SDValue PPCTargetLowering::LowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG,
-                                   const PPCSubtarget &Subtarget) const {
+SDValue PPCTargetLowering::LowerSTACKRESTORE(SDValue Op,
+                                             SelectionDAG &DAG) const {
   // When we pop the dynamic allocation we need to restore the SP link.
   SDLoc dl(Op);
 
@@ -6099,8 +6097,7 @@ PPCTargetLowering::getFramePointerFrameIndex(SelectionDAG & DAG) const {
 }
 
 SDValue PPCTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
-                                         SelectionDAG &DAG,
-                                         const PPCSubtarget &Subtarget) const {
+                                                   SelectionDAG &DAG) const {
   // Get the inputs.
   SDValue Chain = Op.getOperand(0);
   SDValue Size  = Op.getOperand(1);
@@ -8144,18 +8141,22 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::INIT_TRAMPOLINE:    return LowerINIT_TRAMPOLINE(Op, DAG);
   case ISD::ADJUST_TRAMPOLINE:  return LowerADJUST_TRAMPOLINE(Op, DAG);
   case ISD::VASTART:
-    return LowerVASTART(Op, DAG, Subtarget);
+    return LowerVASTART(Op, DAG);
 
   case ISD::VAARG:
-    return LowerVAARG(Op, DAG, Subtarget);
+    return LowerVAARG(Op, DAG);
 
   case ISD::VACOPY:
-    return LowerVACOPY(Op, DAG, Subtarget);
+    return LowerVACOPY(Op, DAG);
 
-  case ISD::STACKRESTORE:       return LowerSTACKRESTORE(Op, DAG, Subtarget);
+  case ISD::STACKRESTORE:
+    return LowerSTACKRESTORE(Op, DAG);
+
   case ISD::DYNAMIC_STACKALLOC:
-    return LowerDYNAMIC_STACKALLOC(Op, DAG, Subtarget);
-  case ISD::GET_DYNAMIC_AREA_OFFSET: return LowerGET_DYNAMIC_AREA_OFFSET(Op, DAG, Subtarget);
+    return LowerDYNAMIC_STACKALLOC(Op, DAG);
+
+  case ISD::GET_DYNAMIC_AREA_OFFSET:
+    return LowerGET_DYNAMIC_AREA_OFFSET(Op, DAG);
 
   case ISD::EH_SJLJ_SETJMP:     return lowerEH_SJLJ_SETJMP(Op, DAG);
   case ISD::EH_SJLJ_LONGJMP:    return lowerEH_SJLJ_LONGJMP(Op, DAG);
@@ -8234,7 +8235,7 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
     EVT VT = N->getValueType(0);
 
     if (VT == MVT::i64) {
-      SDValue NewNode = LowerVAARG(SDValue(N, 1), DAG, Subtarget);
+      SDValue NewNode = LowerVAARG(SDValue(N, 1), DAG);
 
       Results.push_back(NewNode);
       Results.push_back(NewNode.getValue(1));

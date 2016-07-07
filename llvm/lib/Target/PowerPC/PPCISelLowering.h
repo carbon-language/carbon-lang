@@ -783,18 +783,12 @@ namespace llvm {
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerINIT_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerADJUST_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
-                         const PPCSubtarget &Subtarget) const;
-    SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG,
-                       const PPCSubtarget &Subtarget) const;
-    SDValue LowerVACOPY(SDValue Op, SelectionDAG &DAG,
-                        const PPCSubtarget &Subtarget) const;
-    SDValue LowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG,
-                                const PPCSubtarget &Subtarget) const;
-    SDValue LowerGET_DYNAMIC_AREA_OFFSET(SDValue Op, SelectionDAG &DAG,
-                                         const PPCSubtarget &Subtarget) const;
-    SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG,
-                                      const PPCSubtarget &Subtarget) const;
+    SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerVACOPY(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerGET_DYNAMIC_AREA_OFFSET(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const;
