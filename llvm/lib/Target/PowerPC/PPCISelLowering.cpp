@@ -4144,7 +4144,7 @@ CalculateTailCallArgDest(SelectionDAG &DAG, MachineFunction &MF, bool isPPC64,
 /// LROpOut/FPOpout. Used when tail calling.
 SDValue PPCTargetLowering::EmitTailCallLoadFPAndRetAddr(
     SelectionDAG &DAG, int SPDiff, SDValue Chain, SDValue &LROpOut,
-    SDValue &FPOpOut, bool isDarwinABI, const SDLoc &dl) const {
+    SDValue &FPOpOut, const SDLoc &dl) const {
   if (SPDiff) {
     // Load the LR and FP stack slot for later adjusting.
     EVT VT = Subtarget.isPPC64() ? MVT::i64 : MVT::i32;
@@ -4155,7 +4155,7 @@ SDValue PPCTargetLowering::EmitTailCallLoadFPAndRetAddr(
 
     // When using the 32/64-bit SVR4 ABI there is no need to load the FP stack
     // slot as the FP is never overwritten.
-    if (isDarwinABI) {
+    if (Subtarget.isDarwinABI()) {
       FPOpOut = getFramePointerFrameIndex(DAG);
       FPOpOut = DAG.getLoad(VT, dl, Chain, FPOpOut, MachinePointerInfo(),
                             false, false, false, 0);
@@ -4755,8 +4755,7 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
   // Load the return address and frame pointer so it can be moved somewhere else
   // later.
   SDValue LROp, FPOp;
-  Chain = EmitTailCallLoadFPAndRetAddr(DAG, SPDiff, Chain, LROp, FPOp, false,
-                                       dl);
+  Chain = EmitTailCallLoadFPAndRetAddr(DAG, SPDiff, Chain, LROp, FPOp, dl);
 
   // Set up a copy of the stack pointer for use loading and storing any
   // arguments that may not fit in the registers available for argument
@@ -5056,8 +5055,7 @@ SDValue PPCTargetLowering::LowerCall_64SVR4(
   // Load the return address and frame pointer so it can be move somewhere else
   // later.
   SDValue LROp, FPOp;
-  Chain = EmitTailCallLoadFPAndRetAddr(DAG, SPDiff, Chain, LROp, FPOp, true,
-                                       dl);
+  Chain = EmitTailCallLoadFPAndRetAddr(DAG, SPDiff, Chain, LROp, FPOp, dl);
 
   // Set up a copy of the stack pointer for use loading and storing any
   // arguments that may not fit in the registers available for argument
@@ -5622,8 +5620,7 @@ SDValue PPCTargetLowering::LowerCall_Darwin(
   // Load the return address and frame pointer so it can be move somewhere else
   // later.
   SDValue LROp, FPOp;
-  Chain = EmitTailCallLoadFPAndRetAddr(DAG, SPDiff, Chain, LROp, FPOp, true,
-                                       dl);
+  Chain = EmitTailCallLoadFPAndRetAddr(DAG, SPDiff, Chain, LROp, FPOp, dl);
 
   // Set up a copy of the stack pointer for use loading and storing any
   // arguments that may not fit in the registers available for argument

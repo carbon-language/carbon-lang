@@ -770,7 +770,7 @@ namespace llvm {
 
     SDValue EmitTailCallLoadFPAndRetAddr(SelectionDAG &DAG, int SPDiff,
                                          SDValue Chain, SDValue &LROpOut,
-                                         SDValue &FPOpOut, bool isDarwinABI,
+                                         SDValue &FPOpOut,
                                          const SDLoc &dl) const;
 
     SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
