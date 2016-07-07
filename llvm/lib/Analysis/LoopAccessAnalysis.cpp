@@ -2027,15 +2027,23 @@ INITIALIZE_PASS_END(LoopAccessAnalysis, LAA_NAME, laa_name, false, true)
 char LoopAccessInfoAnalysis::PassID;
 
 LoopAccessInfo LoopAccessInfoAnalysis::run(Loop &L, AnalysisManager<Loop> &AM) {
-  // FIXME: ugly const cast
-  AnalysisManager<Function> &FAM = const_cast<FunctionAnalysisManager &>(
-      AM.getResult<FunctionAnalysisManagerLoopProxy>(L).getManager());
+  const AnalysisManager<Function> &FAM =
+      AM.getResult<FunctionAnalysisManagerLoopProxy>(L).getManager();
   Function &F = *L.getHeader()->getParent();
-  auto *SE = &FAM.getResult<ScalarEvolutionAnalysis>(F);
+  auto *SE = FAM.getCachedResult<ScalarEvolutionAnalysis>(F);
   auto *TLI = FAM.getCachedResult<TargetLibraryAnalysis>(F);
-  auto *AA = &FAM.getResult<AAManager>(F);
-  auto *DT = &FAM.getResult<DominatorTreeAnalysis>(F);
-  auto *LI = &FAM.getResult<LoopAnalysis>(F);
+  auto *AA = FAM.getCachedResult<AAManager>(F);
+  auto *DT = FAM.getCachedResult<DominatorTreeAnalysis>(F);
+  auto *LI = FAM.getCachedResult<LoopAnalysis>(F);
+  if (!SE)
+    report_fatal_error(
+        "ScalarEvolution must have been cached at a higher level");
+  if (!AA)
+    report_fatal_error("AliasAnalysis must have been cached at a higher level");
+  if (!DT)
+    report_fatal_error("DominatorTree must have been cached at a higher level");
+  if (!LI)
+    report_fatal_error("LoopInfo must have been cached at a higher level");
   const DataLayout &DL = F.getParent()->getDataLayout();
   return LoopAccessInfo(&L, SE, DL, TLI, AA, DT, LI);
 }
