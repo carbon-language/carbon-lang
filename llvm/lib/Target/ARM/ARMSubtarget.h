@@ -262,6 +262,12 @@ protected:
   /// If true, VMOVS will never be widened to VMOVD
   bool DontWidenVMOVS = false;
 
+  /// If true, run the MLx expansion pass.
+  bool ExpandMLx = false;
+
+  /// If true, VFP/NEON VMLA/VMLS have special RAW hazards.
+  bool HasVMLxHazards = false;
+
   /// If true, VMOVRS, VMOVSR and VMOVS will be converted from VFP to NEON.
   bool UseNEONForFPMovs = false;
 
@@ -451,6 +457,8 @@ public:
   bool hasSlowVDUP32() const { return HasSlowVDUP32; }
   bool preferVMOVSR() const { return PreferVMOVSR; }
   bool preferISHSTBarriers() const { return PreferISHST; }
+  bool expandMLx() const { return ExpandMLx; }
+  bool hasVMLxHazards() const { return HasVMLxHazards; }
   bool hasSlowOddRegister() const { return SlowOddRegister; }
   bool hasSlowLoadDSubregister() const { return SlowLoadDSubregister; }
   bool hasMuxedUnits() const { return HasMuxedUnits; }

@@ -150,6 +150,14 @@ def FeatureDontWidenVMOVS : SubtargetFeature<"dont-widen-vmovs",
                                              "DontWidenVMOVS", "true",
                                              "Don't widen VMOVS to VMOVD">;
 
+// Whether or not it is profitable to expand VFP/NEON MLA/MLS instructions.
+def FeatureExpandMLx : SubtargetFeature<"expand-fp-mlx", "ExpandMLx", "true",
+                                        "Expand VFP/NEON MLA/MLS instructions">;
+
+// Some targets have special RAW hazards for VFP/NEON VMLA/VMLS.
+def FeatureHasVMLxHazards : SubtargetFeature<"vmlx-hazards", "HasVMLxHazards",
+                                             "true", "Has VMLx hazards">;
+
 // Some targets (e.g. Cortex-A9) want to convert VMOVRS, VMOVSR and VMOVS from
 // VFP to NEON, as an execution domain optimization.
 def FeatureNEONForFPMovs : SubtargetFeature<"neon-fpmovs", "UseNEONForFPMovs",
@@ -570,6 +578,7 @@ def : ProcessorModel<"cortex-a7",   CortexA8Model,      [ARMv7a, ProcA7,
                                                          FeatureHasRetAddrStack,
                                                          FeatureTrustZone,
                                                          FeatureSlowFPBrcc,
+                                                         FeatureHasVMLxHazards,
                                                          FeatureHasSlowFPVMLx,
                                                          FeatureVMLxForwarding,
                                                          FeatureT2XtPk,
@@ -584,6 +593,7 @@ def : ProcessorModel<"cortex-a8",   CortexA8Model,      [ARMv7a, ProcA8,
                                                          FeatureNonpipelinedVFP,
                                                          FeatureTrustZone,
                                                          FeatureSlowFPBrcc,
+                                                         FeatureHasVMLxHazards,
                                                          FeatureHasSlowFPVMLx,
                                                          FeatureVMLxForwarding,
                                                          FeatureT2XtPk]>;
@@ -591,10 +601,12 @@ def : ProcessorModel<"cortex-a8",   CortexA8Model,      [ARMv7a, ProcA8,
 def : ProcessorModel<"cortex-a9",   CortexA9Model,      [ARMv7a, ProcA9,
                                                          FeatureHasRetAddrStack,
                                                          FeatureTrustZone,
+                                                         FeatureHasVMLxHazards,
                                                          FeatureVMLxForwarding,
                                                          FeatureT2XtPk,
                                                          FeatureFP16,
                                                          FeatureAvoidPartialCPSR,
+                                                         FeatureExpandMLx,
                                                          FeaturePreferVMOVSR,
                                                          FeatureMuxedUnits,
                                                          FeatureNEONForFPMovs,
@@ -668,6 +680,7 @@ def : ProcessorModel<"swift",       SwiftModel,         [ARMv7a, ProcSwift,
                                                          FeatureAvoidPartialCPSR,
                                                          FeatureAvoidMOVsShOp,
                                                          FeatureHasSlowFPVMLx,
+                                                         FeatureHasVMLxHazards,
                                                          FeatureProfUnpredicate,
                                                          FeaturePrefISHSTBarrier,
                                                          FeatureSlowOddRegister,
