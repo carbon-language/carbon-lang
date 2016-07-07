@@ -129,11 +129,14 @@ bool SymbolBody::isPreemptible() const {
   if (!symbol()->includeInDynsym())
     return false;
 
-  // Normally only default visibility symbols can be preempted, but -Bsymbolic
-  // means that not even they can be preempted.
+  // Only default visibility symbols can be preempted.
+  if (symbol()->Visibility != STV_DEFAULT)
+    return false;
+
+  // -Bsymbolic means that definitions are not preempted.
   if (Config->Bsymbolic || (Config->BsymbolicFunctions && isFunc()))
     return !isDefined();
-  return symbol()->Visibility == STV_DEFAULT;
+  return true;
 }
 
 template <class ELFT> InputFile *SymbolBody::getSourceFile() {
