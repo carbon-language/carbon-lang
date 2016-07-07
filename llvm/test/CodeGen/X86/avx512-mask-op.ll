@@ -571,9 +571,9 @@ define <64 x i8> @test17(i64 %x, i32 %y, i32 %z) {
 ; KNL-NEXT:    vpbroadcastd %eax, %zmm1 {%k1} {z}
 ; KNL-NEXT:    vpmovdb %zmm1, %xmm1
 ; KNL-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm1
+; KNL-NEXT:    xorl %ecx, %ecx
 ; KNL-NEXT:    cmpl %edx, %esi
 ; KNL-NEXT:    setg %cl
-; KNL-NEXT:    movzbl %cl, %ecx
 ; KNL-NEXT:    vpinsrb $5, %ecx, %xmm0, %xmm0
 ; KNL-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; KNL-NEXT:    vpsllw $7, %ymm0, %ymm0

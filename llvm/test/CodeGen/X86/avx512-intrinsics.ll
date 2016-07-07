@@ -7,9 +7,9 @@ define i32 @test_kortestz(i16 %a0, i16 %a1) {
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %esi, %k0
 ; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    xorl %eax, %eax
 ; CHECK-NEXT:    kortestw %k0, %k1
 ; CHECK-NEXT:    sete %al
-; CHECK-NEXT:    movzbl %al, %eax
 ; CHECK-NEXT:    retq
   %res = call i32 @llvm.x86.avx512.kortestz.w(i16 %a0, i16 %a1)
   ret i32 %res
