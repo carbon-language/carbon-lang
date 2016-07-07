@@ -2056,6 +2056,8 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
     case LibFunc::fwrite:
       return optimizeFWrite(CI, Builder);
     case LibFunc::fputs:
+      if (CI->getParent()->getParent()->optForSize())
+        return nullptr;
       return optimizeFPuts(CI, Builder);
     case LibFunc::log:
     case LibFunc::log10:
