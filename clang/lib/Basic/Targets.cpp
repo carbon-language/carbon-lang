@@ -1777,7 +1777,7 @@ public:
       // Set __CUDA_ARCH__ for the GPU specified.
       std::string CUDAArchCode = [this] {
         switch (GPU) {
-        case CudaArch::UNKNOWN:
+        default:
           assert(false && "No GPU arch when compiling CUDA device code.");
           return "";
         case CudaArch::SM_20:
@@ -1804,8 +1804,6 @@ public:
           return "610";
         case CudaArch::SM_62:
           return "620";
-         default:
-           llvm_unreachable("unhandled CudaArch");
         }
       }();
       Builder.defineMacro("__CUDA_ARCH__", CUDAArchCode);
