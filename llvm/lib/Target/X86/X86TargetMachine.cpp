@@ -285,6 +285,7 @@ bool X86PassConfig::addInstSelector() {
     addPass(createCleanupLocalDynamicTLSPass());
 
   addPass(createX86GlobalBaseRegPass());
+
   return false;
 }
 
@@ -304,8 +305,6 @@ bool X86PassConfig::addPreISel() {
 }
 
 void X86PassConfig::addPreRegAlloc() {
-  addPass(createX86FixupSetCC());
-
   if (getOptLevel() != CodeGenOpt::None)
     addPass(createX86OptimizeLEAs());
 

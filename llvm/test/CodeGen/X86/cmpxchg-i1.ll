@@ -34,7 +34,7 @@ define i64 @cmpxchg_sext(i32* %addr, i32 %desired, i32 %new) {
 ; CHECK-LABEL: cmpxchg_sext:
 ; CHECK-DAG: cmpxchgl
 ; CHECK-NOT: cmpl
-; CHECK: sete %cl
+; CHECK: sete %al
 ; CHECK: retq
   %pair = cmpxchg i32* %addr, i32 %desired, i32 %new seq_cst seq_cst
   %success = extractvalue { i32, i1 } %pair, 1
@@ -44,10 +44,10 @@ define i64 @cmpxchg_sext(i32* %addr, i32 %desired, i32 %new) {
 
 define i32 @cmpxchg_zext(i32* %addr, i32 %desired, i32 %new) {
 ; CHECK-LABEL: cmpxchg_zext:
-; CHECK: xorl %e[[R:[a-z]]]x
 ; CHECK: cmpxchgl
 ; CHECK-NOT: cmp
-; CHECK: sete %[[R]]l
+; CHECK: sete [[BYTE:%[a-z0-9]+]]
+; CHECK: movzbl [[BYTE]], %eax
   %pair = cmpxchg i32* %addr, i32 %desired, i32 %new seq_cst seq_cst
   %success = extractvalue { i32, i1 } %pair, 1
   %mask = zext i1 %success to i32

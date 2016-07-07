@@ -42,9 +42,9 @@ entry:
 
 ; Except on Darwin, for legacy reasons.
 ; DARWIN-LABEL: unsigned_i8:
-; DARWIN:       xorl
-; DARWIN-NEXT:  cmp
+; DARWIN:			  cmp
 ; DARWIN-NEXT:  sete
+; DARWIN-NEXT:  movzbl
 ; DARWIN-NEXT:  ret
 }
 
@@ -63,9 +63,9 @@ entry:
 
 ; Except on Darwin, for legacy reasons.
 ; DARWIN-LABEL: signed_i8:
-; DARWIN:       xorl
-; DARWIN-NEXT:  cmp
+; DARWIN:			  cmp
 ; DARWIN-NEXT:  sete
+; DARWIN-NEXT:  movzbl
 ; DARWIN-NEXT:  ret
 }
 
@@ -85,7 +85,7 @@ entry:
 ; CHECK-NEXT:  addw
 ; CHECK-NEXT:  ret
 
-; Except on Darwin, for legacy reasons.
+; Except on Darwin, for legay reasons.
 ; DARWIN-LABEL: unsigned_i16:
 ; DARWIN-BWOFF: movw
 ; DARWIN-BWON:  movzwl
