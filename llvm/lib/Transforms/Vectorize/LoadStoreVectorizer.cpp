@@ -453,7 +453,7 @@ bool Vectorizer::isVectorizable(ArrayRef<Value *> Chain,
                     "        Aliasing instruction and pointer:\n"
                  << *V << " aliases " << *Ptr0 << '\n'
                  << "        Aliased instruction and pointer:\n"
-                 << *VV << " aliases " << *Ptr1 << '\n'
+                 << *VV << " aliases " << *Ptr1 << '\n';
         });
 
         return false;
