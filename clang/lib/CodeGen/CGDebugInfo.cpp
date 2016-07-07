@@ -209,9 +209,7 @@ StringRef CGDebugInfo::getFunctionName(const FunctionDecl *FD) {
   // Add any template specialization args.
   if (Info) {
     const TemplateArgumentList *TArgs = Info->TemplateArguments;
-    const TemplateArgument *Args = TArgs->data();
-    unsigned NumArgs = TArgs->size();
-    TemplateSpecializationType::PrintTemplateArgumentList(OS, Args, NumArgs,
+    TemplateSpecializationType::PrintTemplateArgumentList(OS, TArgs->asArray(),
                                                           Policy);
   }
 
@@ -845,7 +843,7 @@ llvm::DIType *CGDebugInfo::CreateType(const TemplateSpecializationType *Ty,
                               /*qualified*/ false);
 
   TemplateSpecializationType::PrintTemplateArgumentList(
-      OS, Ty->getArgs(), Ty->getNumArgs(),
+      OS, Ty->template_arguments(),
       CGM.getContext().getPrintingPolicy());
 
   TypeAliasDecl *AliasDecl = cast<TypeAliasTemplateDecl>(
