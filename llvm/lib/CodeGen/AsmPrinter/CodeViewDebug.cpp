@@ -1998,12 +1998,23 @@ void CodeViewDebug::emitDebugInfoForGlobal(const DIGlobalVariable *DIGV,
   OS.AddComment("Record length");
   OS.emitAbsoluteSymbolDiff(DataEnd, DataBegin, 2);
   OS.EmitLabel(DataBegin);
+  const auto *GV = cast<GlobalVariable>(DIGV->getVariable());
   if (DIGV->isLocalToUnit()) {
-    OS.AddComment("Record kind: S_LDATA32");
-    OS.EmitIntValue(unsigned(SymbolKind::S_LDATA32), 2);
+    if (GV->isThreadLocal()) {
+      OS.AddComment("Record kind: S_LTHREAD32");
+      OS.EmitIntValue(unsigned(SymbolKind::S_LTHREAD32), 2);
+    } else {
+      OS.AddComment("Record kind: S_LDATA32");
+      OS.EmitIntValue(unsigned(SymbolKind::S_LDATA32), 2);
+    }
   } else {
-    OS.AddComment("Record kind: S_GDATA32");
-    OS.EmitIntValue(unsigned(SymbolKind::S_GDATA32), 2);
+    if (GV->isThreadLocal()) {
+      OS.AddComment("Record kind: S_GTHREAD32");
+      OS.EmitIntValue(unsigned(SymbolKind::S_GTHREAD32), 2);
+    } else {
+      OS.AddComment("Record kind: S_GDATA32");
+      OS.EmitIntValue(unsigned(SymbolKind::S_GDATA32), 2);
+    }
   }
   OS.AddComment("Type");
   OS.EmitIntValue(getCompleteTypeIndex(DIGV->getType()).getIndex(), 4);
