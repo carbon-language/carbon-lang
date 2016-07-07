@@ -15,7 +15,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_REORDER_ALGORITHM_H
 
 #include "llvm/Support/ErrorHandling.h"
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <vector>
 
@@ -35,7 +35,7 @@ class ClusterAlgorithm {
 public:
   typedef std::vector<BinaryBasicBlock *> ClusterTy;
   std::vector<ClusterTy> Clusters;
-  std::vector<std::map<uint32_t, uint64_t>> ClusterEdges;
+  std::vector<std::unordered_map<uint32_t, uint64_t>> ClusterEdges;
   std::vector<double> AvgFreq;
 
   /// Group the basic blocks the given function into clusters stored in the

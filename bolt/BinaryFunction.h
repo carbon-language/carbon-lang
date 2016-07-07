@@ -36,7 +36,7 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 using namespace llvm::object;
@@ -259,7 +259,7 @@ private:
 
   // Map that keeps track of the index of each basic block in the BasicBlocks
   // vector.  Used to make getIndex fast.
-  std::map<const BinaryBasicBlock*, unsigned> BasicBlockIndices;
+  std::unordered_map<const BinaryBasicBlock*, unsigned> BasicBlockIndices;
 
   // At each basic block entry we attach a CFI state to detect if reordering
   // corrupts the CFI state for a block. The CFI state is simply the index in

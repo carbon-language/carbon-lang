@@ -16,6 +16,7 @@
 #include "BinaryFunction.h"
 #include "llvm/Support/CommandLine.h"
 #include <queue>
+#include <functional>
 
 using namespace llvm;
 using namespace bolt;
@@ -26,6 +27,26 @@ static cl::opt<bool>
 PrintClusters("print-clusters", cl::desc("print clusters"), cl::Optional);
 
 } // namespace opts
+
+namespace {
+
+template <class T>
+inline void hashCombine(size_t &Seed, const T &Val) {
+  std::hash<T> Hasher;
+  Seed ^= Hasher(Val) + 0x9e3779b9 + (Seed << 6) + (Seed >> 2);
+}
+
+template <typename A, typename B>
+struct HashPair {
+  size_t operator()(const std::pair<A,B>& Val) const {
+    std::hash<A> Hasher;
+    size_t Seed = Hasher(Val.first);
+    hashCombine(Seed, Val.second);
+    return Seed;
+  }
+};
+
+}
 
 void ClusterAlgorithm::computeClusterAverageFrequency() {
   AvgFreq.resize(Clusters.size(), 0.0);
@@ -70,7 +91,8 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF) {
 
   // Encode an edge between two basic blocks, source and destination
   typedef std::pair<BinaryBasicBlock *, BinaryBasicBlock *> EdgeTy;
-  std::map<EdgeTy, uint64_t> Weight;
+  typedef HashPair<BinaryBasicBlock *, BinaryBasicBlock *> Hasher;
+  std::unordered_map<EdgeTy, uint64_t, Hasher> Weight;
 
   // Define a comparison function to establish SWO between edges
   auto Comp = [&] (EdgeTy A, EdgeTy B) {
@@ -88,7 +110,7 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF) {
   };
   std::priority_queue<EdgeTy, std::vector<EdgeTy>, decltype(Comp)> Queue(Comp);
 
-  typedef std::map<BinaryBasicBlock *, int> BBToClusterMapTy;
+  typedef std::unordered_map<BinaryBasicBlock *, int> BBToClusterMapTy;
   BBToClusterMapTy BBToClusterMap;
 
   ClusterEdges.resize(BF.layout_size());
@@ -162,7 +184,7 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF) {
 void OptimalReorderAlgorithm::reorderBasicBlocks(
       const BinaryFunction &BF, BasicBlockOrder &Order) const {
   std::vector<std::vector<uint64_t>> Weight;
-  std::map<BinaryBasicBlock *, int> BBToIndex;
+  std::unordered_map<BinaryBasicBlock *, int> BBToIndex;
   std::vector<BinaryBasicBlock *> IndexToBB;
 
   unsigned N = BF.layout_size();
@@ -280,7 +302,7 @@ void OptimizeBranchReorderAlgorithm::reorderBasicBlocks(
   // Cluster basic blocks.
   CAlgo->clusterBasicBlocks(BF);
   std::vector<ClusterAlgorithm::ClusterTy> &Clusters = CAlgo->Clusters;;
-  std::vector<std::map<uint32_t, uint64_t>> &ClusterEdges = CAlgo->ClusterEdges;
+  auto &ClusterEdges = CAlgo->ClusterEdges;
 
   // Compute clusters' average frequencies.
   CAlgo->computeClusterAverageFrequency();
