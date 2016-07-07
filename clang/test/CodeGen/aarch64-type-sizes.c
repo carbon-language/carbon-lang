@@ -1,7 +1,8 @@
-// RUN: %clang_cc1 -triple aarch64_be-none-linux-gnu -emit-llvm -w -o - %s | FileCheck --check-prefix=CHECK %s
+// RUN: %clang_cc1 -triple aarch64_be-none-linux-gnu -emit-llvm -w -o - %s | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
 // char by definition has size 1
 
-// CHECK: target datalayout = "E-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128"
+// CHECK-LE: target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128"
+// CHECK-BE: target datalayout = "E-m:e-i64:64-i128:128-n32:64-S128"
 
 int check_short() {
   return sizeof(short);
@@ -88,3 +89,4 @@ int foo() {
   return sizeof(enum Small);
 // CHECK: ret i32 4
 }
+
