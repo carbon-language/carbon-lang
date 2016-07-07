@@ -4086,8 +4086,7 @@ static void StoreTailCallArgumentsToStackSlot(
 
 /// EmitTailCallStoreFPAndRetAddr - Move the frame pointer and return address to
 /// the appropriate stack slot for the tail call optimized function call.
-static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG,
-                                             MachineFunction &MF, SDValue Chain,
+static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG, SDValue Chain,
                                              SDValue OldRetAddr, SDValue OldFP,
                                              int SPDiff, bool isPPC64,
                                              bool isDarwinABI,
@@ -4095,6 +4094,7 @@ static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG,
   if (SPDiff) {
     // Calculate the new stack slot for the return address.
     int SlotSize = isPPC64 ? 8 : 4;
+    MachineFunction &MF = DAG.getMachineFunction();
     const PPCFrameLowering *FL =
         MF.getSubtarget<PPCSubtarget>().getFrameLowering();
     int NewRetAddrLoc = SPDiff + FL->getReturnSaveOffset();
@@ -4102,10 +4102,9 @@ static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG,
                                                           NewRetAddrLoc, true);
     EVT VT = isPPC64 ? MVT::i64 : MVT::i32;
     SDValue NewRetAddrFrIdx = DAG.getFrameIndex(NewRetAddr, VT);
-    Chain = DAG.getStore(
-        Chain, dl, OldRetAddr, NewRetAddrFrIdx,
-        MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), NewRetAddr),
-        false, false, 0);
+    Chain = DAG.getStore(Chain, dl, OldRetAddr, NewRetAddrFrIdx,
+                         MachinePointerInfo::getFixedStack(MF, NewRetAddr),
+                         false, false, 0);
 
     // When using the 32/64-bit SVR4 ABI there is no need to move the FP stack
     // slot as the FP is never overwritten.
@@ -4212,8 +4211,6 @@ PrepareTailCall(SelectionDAG &DAG, SDValue &InFlag, SDValue &Chain,
                 const SDLoc &dl, bool isPPC64, int SPDiff, unsigned NumBytes,
                 SDValue LROp, SDValue FPOp, bool isDarwinABI,
                 SmallVectorImpl<TailCallArgumentInfo> &TailCallArguments) {
-  MachineFunction &MF = DAG.getMachineFunction();
-
   // Emit a sequence of copyto/copyfrom virtual registers for arguments that
   // might overwrite each other in case of tail call optimization.
   SmallVector<SDValue, 8> MemOpChains2;
@@ -4225,8 +4222,8 @@ PrepareTailCall(SelectionDAG &DAG, SDValue &InFlag, SDValue &Chain,
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOpChains2);
 
   // Store the return address to the appropriate stack slot.
-  Chain = EmitTailCallStoreFPAndRetAddr(DAG, MF, Chain, LROp, FPOp, SPDiff,
-                                        isPPC64, isDarwinABI, dl);
+  Chain = EmitTailCallStoreFPAndRetAddr(DAG, Chain, LROp, FPOp, SPDiff, isPPC64,
+                                        isDarwinABI, dl);
 
   // Emit callseq_end just before tailcall node.
   Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, dl, true),
