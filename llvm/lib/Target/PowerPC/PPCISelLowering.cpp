@@ -80,7 +80,7 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
 
   // Set up the register classes.
   addRegisterClass(MVT::i32, &PPC::GPRCRegClass);
-  if (!Subtarget.useSoftFloat()) {
+  if (!useSoftFloat()) {
     addRegisterClass(MVT::f32, &PPC::F4RCRegClass);
     addRegisterClass(MVT::f64, &PPC::F8RCRegClass);
   }
@@ -2837,7 +2837,7 @@ SDValue PPCTargetLowering::LowerFormalArguments_32SVR4(
   // Reserve space for the linkage area on the stack.
   unsigned LinkageSize = Subtarget.getFrameLowering()->getLinkageSize();
   CCInfo.AllocateStack(LinkageSize, PtrByteSize);
-  if (Subtarget.useSoftFloat())
+  if (useSoftFloat())
     CCInfo.PreAnalyzeFormalArguments(Ins);
 
   CCInfo.AnalyzeFormalArguments(Ins, CC_PPC32_SVR4);
@@ -2956,7 +2956,7 @@ SDValue PPCTargetLowering::LowerFormalArguments_32SVR4(
     };
     unsigned NumFPArgRegs = array_lengthof(FPArgRegs);
 
-    if (Subtarget.useSoftFloat())
+    if (useSoftFloat())
        NumFPArgRegs = 0;
 
     FuncInfo->setVarArgsNumGPR(CCInfo.getFirstUnallocated(GPArgRegs));
@@ -4692,7 +4692,7 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
   // Reserve space for the linkage area on the stack.
   CCInfo.AllocateStack(Subtarget.getFrameLowering()->getLinkageSize(),
                        PtrByteSize);
-  if (Subtarget.useSoftFloat())
+  if (useSoftFloat())
     CCInfo.PreAnalyzeCallOperands(Outs);
 
   if (isVarArg) {
