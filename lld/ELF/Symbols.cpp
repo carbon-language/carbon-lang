@@ -15,11 +15,6 @@
 #include "Target.h"
 
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Config/config.h"
-
-#ifdef HAVE_CXXABI_H
-#include <cxxabi.h>
-#endif
 
 using namespace llvm;
 using namespace llvm::object;
@@ -247,32 +242,6 @@ std::unique_ptr<InputFile> LazyObject::getFile() {
   if (MBRef.getBuffer().empty())
     return std::unique_ptr<InputFile>(nullptr);
   return createObjectFile(MBRef);
-}
-
-// Returns the demangled C++ symbol name for Name.
-std::string elf::demangle(StringRef Name) {
-#if !defined(HAVE_CXXABI_H)
-  return Name;
-#else
-  if (!Config->Demangle)
-    return Name;
-
-  // __cxa_demangle can be used to demangle strings other than symbol
-  // names which do not necessarily start with "_Z". Name can be
-  // either a C or C++ symbol. Don't call __cxa_demangle if the name
-  // does not look like a C++ symbol name to avoid getting unexpected
-  // result for a C symbol that happens to match a mangled type name.
-  if (!Name.startswith("_Z"))
-    return Name;
-
-  char *Buf =
-      abi::__cxa_demangle(Name.str().c_str(), nullptr, nullptr, nullptr);
-  if (!Buf)
-    return Name;
-  std::string S(Buf);
-  free(Buf);
-  return S;
-#endif
 }
 
 bool Symbol::includeInDynsym() const {
