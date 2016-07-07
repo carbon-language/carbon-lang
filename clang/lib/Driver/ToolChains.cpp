@@ -4725,7 +4725,7 @@ void CudaToolChain::AddCudaIncludeArgs(const ArgList &DriverArgs,
                                        ArgStringList &CC1Args) const {
   // Check our CUDA version if we're going to include the CUDA headers.
   if (!DriverArgs.hasArg(options::OPT_nocudainc) &&
-      !DriverArgs.hasArg(options::OPT_nocuda_version_check)) {
+      !DriverArgs.hasArg(options::OPT_no_cuda_version_check)) {
     StringRef Arch = DriverArgs.getLastArgValue(options::OPT_march_EQ);
     assert(!Arch.empty() && "Must have an explicit GPU arch.");
     CudaInstallation.CheckCudaVersionSupportsArch(StringToCudaArch(Arch));
