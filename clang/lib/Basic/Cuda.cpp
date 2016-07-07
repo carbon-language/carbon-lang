@@ -2,6 +2,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace clang {
 
@@ -16,6 +17,7 @@ const char *CudaVersionToString(CudaVersion V) {
   case CudaVersion::CUDA_80:
     return "8.0";
   }
+  llvm_unreachable("invalid enum");
 }
 
 const char *CudaArchToString(CudaArch A) {
@@ -47,6 +49,7 @@ const char *CudaArchToString(CudaArch A) {
   case CudaArch::SM_62:
     return "sm_62";
   }
+  llvm_unreachable("invalid enum");
 }
 
 CudaArch StringToCudaArch(llvm::StringRef S) {
@@ -93,6 +96,7 @@ const char *CudaVirtualArchToString(CudaVirtualArch A) {
   case CudaVirtualArch::COMPUTE_62:
     return "compute_62";
   }
+  llvm_unreachable("invalid enum");
 }
 
 CudaVirtualArch StringToCudaVirtualArch(llvm::StringRef S) {
@@ -139,6 +143,7 @@ CudaVirtualArch VirtualArchForCudaArch(CudaArch A) {
   case CudaArch::SM_62:
     return CudaVirtualArch::COMPUTE_62;
   }
+  llvm_unreachable("invalid enum");
 }
 
 CudaVersion MinVersionForCudaArch(CudaArch A) {
@@ -160,6 +165,7 @@ CudaVersion MinVersionForCudaArch(CudaArch A) {
   case CudaArch::SM_62:
     return CudaVersion::CUDA_80;
   }
+  llvm_unreachable("invalid enum");
 }
 
 } // namespace clang
