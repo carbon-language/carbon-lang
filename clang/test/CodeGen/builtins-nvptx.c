@@ -179,7 +179,7 @@ __device__ void nvvm_math(float f1, float f2, double d1, double d2) {
 // CHECK: call void @llvm.nvvm.membar.sys()
   __nvvm_membar_sys();
 // CHECK: call void @llvm.nvvm.barrier0()
-  __nvvm_bar0();
+  __syncthreads();
 }
 
 __device__ int di;

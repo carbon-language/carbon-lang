@@ -393,7 +393,7 @@ BUILTIN(__nvvm_bitcast_d2ll, "LLid", "")
 
 // Sync
 
-BUILTIN(__nvvm_bar0, "v", "")
+BUILTIN(__syncthreads, "v", "")
 BUILTIN(__nvvm_bar0_popc, "ii", "")
 BUILTIN(__nvvm_bar0_and, "ii", "")
 BUILTIN(__nvvm_bar0_or, "ii", "")
