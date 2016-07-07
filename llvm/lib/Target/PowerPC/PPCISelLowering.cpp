@@ -4088,8 +4088,7 @@ static void StoreTailCallArgumentsToStackSlot(
 /// the appropriate stack slot for the tail call optimized function call.
 static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG, SDValue Chain,
                                              SDValue OldRetAddr, SDValue OldFP,
-                                             int SPDiff, bool isDarwinABI,
-                                             const SDLoc &dl) {
+                                             int SPDiff, const SDLoc &dl) {
   if (SPDiff) {
     // Calculate the new stack slot for the return address.
     MachineFunction &MF = DAG.getMachineFunction();
@@ -4108,7 +4107,7 @@ static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG, SDValue Chain,
 
     // When using the 32/64-bit SVR4 ABI there is no need to move the FP stack
     // slot as the FP is never overwritten.
-    if (isDarwinABI) {
+    if (Subtarget.isDarwinABI()) {
       int NewFPLoc = SPDiff + FL->getFramePointerSaveOffset();
       int NewFPIdx = MF.getFrameInfo()->CreateFixedObject(SlotSize, NewFPLoc,
                                                           true);
@@ -4208,8 +4207,8 @@ static void LowerMemOpCallTo(
 
 static void
 PrepareTailCall(SelectionDAG &DAG, SDValue &InFlag, SDValue &Chain,
-                const SDLoc &dl, int SPDiff, unsigned NumBytes,
-                SDValue LROp, SDValue FPOp, bool isDarwinABI,
+                const SDLoc &dl, int SPDiff, unsigned NumBytes, SDValue LROp,
+                SDValue FPOp,
                 SmallVectorImpl<TailCallArgumentInfo> &TailCallArguments) {
   // Emit a sequence of copyto/copyfrom virtual registers for arguments that
   // might overwrite each other in case of tail call optimization.
@@ -4222,8 +4221,7 @@ PrepareTailCall(SelectionDAG &DAG, SDValue &InFlag, SDValue &Chain,
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOpChains2);
 
   // Store the return address to the appropriate stack slot.
-  Chain = EmitTailCallStoreFPAndRetAddr(DAG, Chain, LROp, FPOp, SPDiff,
-                                        isDarwinABI, dl);
+  Chain = EmitTailCallStoreFPAndRetAddr(DAG, Chain, LROp, FPOp, SPDiff, dl);
 
   // Emit callseq_end just before tailcall node.
   Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, dl, true),
@@ -4870,7 +4868,7 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
   }
 
   if (isTailCall)
-    PrepareTailCall(DAG, InFlag, Chain, dl, SPDiff, NumBytes, LROp, FPOp, false,
+    PrepareTailCall(DAG, InFlag, Chain, dl, SPDiff, NumBytes, LROp, FPOp,
                     TailCallArguments);
 
   return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint,
@@ -5524,7 +5522,7 @@ SDValue PPCTargetLowering::LowerCall_64SVR4(
   }
 
   if (isTailCall && !IsSibCall)
-    PrepareTailCall(DAG, InFlag, Chain, dl, SPDiff, NumBytes, LROp, FPOp, true,
+    PrepareTailCall(DAG, InFlag, Chain, dl, SPDiff, NumBytes, LROp, FPOp,
                     TailCallArguments);
 
   return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint, hasNest,
@@ -5913,7 +5911,7 @@ SDValue PPCTargetLowering::LowerCall_Darwin(
   }
 
   if (isTailCall)
-    PrepareTailCall(DAG, InFlag, Chain, dl, SPDiff, NumBytes, LROp, FPOp, true,
+    PrepareTailCall(DAG, InFlag, Chain, dl, SPDiff, NumBytes, LROp, FPOp,
                     TailCallArguments);
 
   return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint,
