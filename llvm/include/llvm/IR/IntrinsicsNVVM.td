@@ -729,7 +729,10 @@ def llvm_anyi64ptr_ty     : LLVMAnyPointerType<llvm_i64_ty>;     // (space)i64*
                                       [IntrArgMemOnly, NoCapture<0>]>;
 
 // Bar.Sync
-  def int_nvvm_barrier0 : GCCBuiltin<"__nvvm_bar0">,
+
+  // The builtin for "bar.sync 0" is called __syncthreads.  Unlike most of the
+  // intrinsics in this file, this one is a user-facing API.
+  def int_nvvm_barrier0 : GCCBuiltin<"__syncthreads">,
       Intrinsic<[], [], [IntrConvergent]>;
   def int_nvvm_barrier0_popc : GCCBuiltin<"__nvvm_bar0_popc">,
       Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrConvergent]>;
