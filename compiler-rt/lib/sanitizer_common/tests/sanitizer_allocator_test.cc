@@ -601,6 +601,8 @@ TEST(Allocator, AllocatorCacheDeallocNewThread) {
   pthread_t t;
   PTHREAD_CREATE(&t, 0, DeallocNewThreadWorker, params);
   PTHREAD_JOIN(t, 0);
+
+  allocator.TestOnlyUnmap();
 }
 #endif
 
