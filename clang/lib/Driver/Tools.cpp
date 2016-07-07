@@ -11146,6 +11146,12 @@ void NVPTX::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   assert(gpu_archs.size() == 1 && "Exactly one GPU Arch required for ptxas.");
   const std::string& gpu_arch = gpu_archs[0];
 
+  // Check that our installation's ptxas supports gpu_arch.
+  if (!Args.hasArg(options::OPT_nocuda_version_check)) {
+    TC.cudaInstallation().CheckCudaVersionSupportsArch(
+        StringToCudaArch(gpu_arch));
+  }
+
   ArgStringList CmdArgs;
   CmdArgs.push_back(TC.getTriple().isArch64Bit() ? "-m64" : "-m32");
   if (Args.hasFlag(options::OPT_cuda_noopt_device_debug,
