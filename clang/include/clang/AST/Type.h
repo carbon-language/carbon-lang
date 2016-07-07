@@ -4168,7 +4168,7 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) TemplateSpecializationType
   unsigned NumArgs : 31;
 
   /// Whether this template specialization type is a substituted type alias.
-  bool TypeAlias : 1;
+  unsigned TypeAlias : 1;
 
   TemplateSpecializationType(TemplateName T,
                              ArrayRef<TemplateArgument> Args,
