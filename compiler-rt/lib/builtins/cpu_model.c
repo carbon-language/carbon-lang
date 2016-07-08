@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <assert.h>
 
 #define bool int
@@ -120,8 +119,9 @@ enum ProcessorFeatures {
   FEATURE_EM64T
 };
 
-#if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)\
- || defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
+#if defined(i386) || defined(__i386__) || defined(__x86__) ||                  \
+    defined(_M_IX86) || defined(__x86_64__) || defined(_M_AMD64) ||            \
+    defined(_M_X64)
 
 /// getX86CpuIDAndInfo - Execute the specified cpuid and return the 4 values in
 /// the specified arguments.  If we can't run cpuid on the host, return true.
@@ -251,10 +251,11 @@ static void detectX86FamilyModel(unsigned EAX, unsigned *Family,
   }
 }
 
-static void
-getIntelProcessorTypeAndSubtype(unsigned int Family, unsigned int Model,
-                                unsigned int Brand_id, unsigned int Features,
-                                unsigned *Type, unsigned *Subtype) {
+static void getIntelProcessorTypeAndSubtype(unsigned int Family,
+                                            unsigned int Model,
+                                            unsigned int Brand_id,
+                                            unsigned int Features,
+                                            unsigned *Type, unsigned *Subtype) {
   if (Brand_id != 0)
     return;
   switch (Family) {
@@ -352,7 +353,7 @@ getIntelProcessorTypeAndSubtype(unsigned int Family, unsigned int Model,
     case 0x1e: // Intel(R) Core(TM) i7 CPU         870  @ 2.93GHz.
                // As found in a Summer 2010 model iMac.
     case 0x1f:
-    case 0x2e:             // Nehalem EX
+    case 0x2e:              // Nehalem EX
       *Type = INTEL_COREI7; // "nehalem"
       *Subtype = INTEL_COREI7_NEHALEM;
       break;
@@ -370,7 +371,7 @@ getIntelProcessorTypeAndSubtype(unsigned int Family, unsigned int Model,
       *Subtype = INTEL_COREI7_SANDYBRIDGE;
       break;
     case 0x3a:
-    case 0x3e:             // Ivy Bridge EP
+    case 0x3e:              // Ivy Bridge EP
       *Type = INTEL_COREI7; // "ivybridge"
       *Subtype = INTEL_COREI7_IVYBRIDGE;
       break;
@@ -536,8 +537,7 @@ getIntelProcessorTypeAndSubtype(unsigned int Family, unsigned int Model,
 
 static void getAMDProcessorTypeAndSubtype(unsigned int Family,
                                           unsigned int Model,
-                                          unsigned int Features,
-                                          unsigned *Type,
+                                          unsigned int Features, unsigned *Type,
                                           unsigned *Subtype) {
   // FIXME: this poorly matches the generated SubtargetFeatureKV table.  There
   // appears to be no way to generate the wide variety of AMD-specific targets
@@ -698,17 +698,15 @@ unsigned getAvailableFeatures(unsigned int ECX, unsigned int EDX,
 #define CONSTRUCTOR_PRIORITY
 #endif
 
-int __cpu_indicator_init (void)
-  __attribute__ ((constructor CONSTRUCTOR_PRIORITY));
+int __cpu_indicator_init(void)
+    __attribute__((constructor CONSTRUCTOR_PRIORITY));
 
-struct __processor_model
-{
+struct __processor_model {
   unsigned int __cpu_vendor;
   unsigned int __cpu_type;
   unsigned int __cpu_subtype;
   unsigned int __cpu_features[1];
 } __cpu_model;
-
 
 /* A constructor function that is sets __cpu_model and __cpu_features with
    the right values.  This needs to run only once.  This constructor is
@@ -716,9 +714,8 @@ struct __processor_model
    the priority set.  However, it still runs after ifunc initializers and
    needs to be called explicitly there.  */
 
-int __attribute__ ((constructor CONSTRUCTOR_PRIORITY))
-__cpu_indicator_init (void)
-{
+int __attribute__((constructor CONSTRUCTOR_PRIORITY))
+__cpu_indicator_init(void) {
   unsigned int EAX, EBX, ECX, EDX;
   unsigned int MaxLeaf = 5;
   unsigned int Vendor;
@@ -730,40 +727,41 @@ __cpu_indicator_init (void)
     return 0;
 
   /* Assume cpuid insn present. Run in level 0 to get vendor id. */
-  if (getX86CpuIDAndInfo (0, &MaxLeaf, &Vendor, &ECX, &EDX)) {
-      __cpu_model.__cpu_vendor = VENDOR_OTHER;
-      return -1;
+  if (getX86CpuIDAndInfo(0, &MaxLeaf, &Vendor, &ECX, &EDX)) {
+    __cpu_model.__cpu_vendor = VENDOR_OTHER;
+    return -1;
   }
 
-  if (MaxLeaf < 1 || getX86CpuIDAndInfo (1, &EAX, &EBX, &ECX, &EDX)) {
-      __cpu_model.__cpu_vendor = VENDOR_OTHER;
-      return -1;
+  if (MaxLeaf < 1 || getX86CpuIDAndInfo(1, &EAX, &EBX, &ECX, &EDX)) {
+    __cpu_model.__cpu_vendor = VENDOR_OTHER;
+    return -1;
   }
 
   detectX86FamilyModel(EAX, &Family, &Model);
   Brand_id = EBX & 0xff;
 
   /* Find available features. */
-  Features = getAvailableFeatures (ECX, EDX, MaxLeaf);
+  Features = getAvailableFeatures(ECX, EDX, MaxLeaf);
   __cpu_model.__cpu_features[0] = Features;
 
   if (Vendor == SIG_INTEL) {
-      /* Get CPU type.  */
-      getIntelProcessorTypeAndSubtype (Family, Model, Brand_id, Features, &(__cpu_model.__cpu_type), &(__cpu_model.__cpu_subtype));
-      __cpu_model.__cpu_vendor = VENDOR_INTEL;
-  }
-  else if (Vendor == SIG_AMD) {
-      /* Get CPU type.  */
-      getAMDProcessorTypeAndSubtype (Family, Model, Features, &(__cpu_model.__cpu_type), &(__cpu_model.__cpu_subtype));
-      __cpu_model.__cpu_vendor = VENDOR_AMD;
-  }
-  else
+    /* Get CPU type.  */
+    getIntelProcessorTypeAndSubtype(Family, Model, Brand_id, Features,
+                                    &(__cpu_model.__cpu_type),
+                                    &(__cpu_model.__cpu_subtype));
+    __cpu_model.__cpu_vendor = VENDOR_INTEL;
+  } else if (Vendor == SIG_AMD) {
+    /* Get CPU type.  */
+    getAMDProcessorTypeAndSubtype(Family, Model, Features,
+                                  &(__cpu_model.__cpu_type),
+                                  &(__cpu_model.__cpu_subtype));
+    __cpu_model.__cpu_vendor = VENDOR_AMD;
+  } else
     __cpu_model.__cpu_vendor = VENDOR_OTHER;
 
-  assert (__cpu_model.__cpu_vendor < VENDOR_MAX);
-  assert (__cpu_model.__cpu_type < CPU_TYPE_MAX);
-  assert (__cpu_model.__cpu_subtype < CPU_SUBTYPE_MAX);
+  assert(__cpu_model.__cpu_vendor < VENDOR_MAX);
+  assert(__cpu_model.__cpu_type < CPU_TYPE_MAX);
+  assert(__cpu_model.__cpu_subtype < CPU_SUBTYPE_MAX);
 
   return 0;
 }
-
