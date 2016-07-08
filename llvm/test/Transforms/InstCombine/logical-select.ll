@@ -302,16 +302,16 @@ define i1 @bools_multi_uses2(i1 %a, i1 %b, i1 %c) {
 ; CHECK-NEXT:    [[AND2:%.*]] = and i1 %c, %b
 ; CHECK-NEXT:    [[TMP1:%.*]] = select i1 %c, i1 %b, i1 %a
 ; CHECK-NEXT:    [[ADD:%.*]] = xor i1 [[AND1]], [[AND2]]
-; CHECK-NEXT:    [[XOR:%.*]] = xor i1 [[TMP1]], [[ADD]]
-; CHECK-NEXT:    ret i1 [[XOR]]
+; CHECK-NEXT:    [[AND3:%.*]] = and i1 [[TMP1]], [[ADD]]
+; CHECK-NEXT:    ret i1 [[AND3]]
 ;
   %not = xor i1 %c, -1
   %and1 = and i1 %not, %a
   %and2 = and i1 %c, %b
   %or = or i1 %and1, %and2
   %add = add i1 %and1, %and2
-  %xor = xor i1 %or, %add
-  ret i1 %xor
+  %and3 = and i1 %or, %add
+  ret i1 %and3
 }
 
 define <4 x i1> @vec_of_bools(<4 x i1> %a, <4 x i1> %b, <4 x i1> %c) {
