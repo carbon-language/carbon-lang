@@ -644,7 +644,7 @@ bool SILowerControlFlow::runOnMachineFunction(MachineFunction &MF) {
       if (TII->isFLAT(MI))
         NeedFlat = true;
 
-      if (I->definesRegister(AMDGPU::EXEC, TRI))
+      if (I->modifiesRegister(AMDGPU::EXEC, TRI))
         ExecModified = true;
 
       switch (MI.getOpcode()) {
