@@ -2946,15 +2946,15 @@ void SIInstrInfo::addSCCDefUsersToVALUWorklist(
     MachineInstr &SCCDefInst, SmallVectorImpl<MachineInstr *> &Worklist) const {
   // This assumes that all the users of SCC are in the same block
   // as the SCC def.
-  for (MachineBasicBlock::iterator I = SCCDefInst,
-                                   E = SCCDefInst.getParent()->end();
-       I != E; ++I) {
+  for (MachineInstr &MI :
+       llvm::make_range(MachineBasicBlock::iterator(SCCDefInst),
+                        SCCDefInst.getParent()->end())) {
     // Exit if we find another SCC def.
-    if (I->findRegisterDefOperandIdx(AMDGPU::SCC) != -1)
+    if (MI.findRegisterDefOperandIdx(AMDGPU::SCC) != -1)
       return;
 
-    if (I->findRegisterUseOperandIdx(AMDGPU::SCC) != -1)
-      Worklist.push_back(I);
+    if (MI.findRegisterUseOperandIdx(AMDGPU::SCC) != -1)
+      Worklist.push_back(&MI);
   }
 }
 
