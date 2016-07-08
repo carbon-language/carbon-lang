@@ -119,6 +119,7 @@ enum ProcessorFeatures {
   FEATURE_EM64T
 };
 
+// The check below fori386 was copied from clang's cpuid.h.
 static bool isCpuIdSupported() {
 #if defined(i386) || defined(__i386__)
   int __cpuid_supported;
@@ -143,6 +144,9 @@ static bool isCpuIdSupported() {
 #endif
   return 1;
 }
+
+// This code is copied from lib/Support/Host.cpp.
+// Changes to either file should be mirrored in the other.
 
 #if defined(i386) || defined(__i386__) || defined(__x86__) ||                  \
     defined(_M_IX86) || defined(__x86_64__) || defined(_M_AMD64) ||            \
