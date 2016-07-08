@@ -29,7 +29,6 @@
 #include "InputFiles.h"
 #include "OutputSections.h"
 #include "Symbols.h"
-#include "Thunks.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/ELF.h"
@@ -182,9 +181,6 @@ public:
   void writePltHeader(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
-  RelExpr getThunkExpr(RelExpr Expr, uint32_t RelocType,
-                       const InputFile &File,
-                       const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 };
 
@@ -201,9 +197,8 @@ public:
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   void writeThunk(uint8_t *Buf, uint64_t S) const override;
-  RelExpr getThunkExpr(RelExpr Expr, uint32_t RelocType,
-                       const InputFile &File,
-                       const SymbolBody &S) const override;
+  bool needsThunk(uint32_t Type, const InputFile &File,
+                  const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
   bool usesOnlyLowPageBits(uint32_t Type) const override;
 };
@@ -253,10 +248,9 @@ uint64_t TargetInfo::getVAStart() const { return Config->Pic ? 0 : VAStart; }
 
 bool TargetInfo::usesOnlyLowPageBits(uint32_t Type) const { return false; }
 
-RelExpr TargetInfo::getThunkExpr(RelExpr Expr, uint32_t RelocType,
-                                 const InputFile &File,
-                                 const SymbolBody &S) const {
-  return Expr;
+bool TargetInfo::needsThunk(uint32_t Type, const InputFile &File,
+                            const SymbolBody &S) const {
+  return false;
 }
 
 bool TargetInfo::isTlsInitialExecRel(uint32_t Type) const { return false; }
@@ -1489,12 +1483,8 @@ RelExpr ARMTargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
     // FIXME: currently B(S) assumed to be .got, this may not hold for all
     // platforms.
     return R_GOTONLY_PC;
-  case R_ARM_MOVW_PREL_NC:
-  case R_ARM_MOVT_PREL:
   case R_ARM_PREL31:
   case R_ARM_REL32:
-  case R_ARM_THM_MOVW_PREL_NC:
-  case R_ARM_THM_MOVT_PREL:
     return R_PC;
   }
 }
@@ -1540,34 +1530,6 @@ void ARMTargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   memcpy(Buf, PltData, sizeof(PltData));
   uint64_t L1 = PltEntryAddr + 4;
   write32le(Buf + 12, GotEntryAddr - L1 - 8);
-}
-
-RelExpr ARMTargetInfo::getThunkExpr(RelExpr Expr, uint32_t RelocType,
-                                    const InputFile &File,
-                                    const SymbolBody &S) const {
-  // A state change from ARM to Thumb and vice versa must go through an
-  // interworking thunk if the relocation type is not R_ARM_CALL or
-  // R_ARM_THM_CALL.
-  switch (RelocType) {
-  case R_ARM_PC24:
-  case R_ARM_PLT32:
-  case R_ARM_JUMP24:
-    // Source is ARM, all PLT entries are ARM so no interworking required.
-    // Otherwise we need to interwork if Symbol has bit 0 set (Thumb).
-    if (Expr == R_PC && ((S.getVA<ELF32LE>() & 1) == 1))
-      return R_THUNK_PC;
-    break;
-  case R_ARM_THM_JUMP19:
-  case R_ARM_THM_JUMP24:
-    // Source is Thumb, all PLT entries are ARM so interworking is required.
-    // Otherwise we need to interwork if Symbol has bit 0 clear (ARM).
-    if (Expr == R_PLT_PC)
-      return R_THUNK_PLT_PC;
-    if ((S.getVA<ELF32LE>() & 1) == 0)
-      return R_THUNK_PC;
-    break;
-  }
-  return Expr;
 }
 
 void ARMTargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
@@ -1653,20 +1615,17 @@ void ARMTargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
                   ((Val >> 1) & 0x07ff));                     // imm11
     break;
   case R_ARM_MOVW_ABS_NC:
-  case R_ARM_MOVW_PREL_NC:
     write32le(Loc, (read32le(Loc) & ~0x000f0fff) | ((Val & 0xf000) << 4) |
                        (Val & 0x0fff));
     break;
   case R_ARM_MOVT_ABS:
-  case R_ARM_MOVT_PREL:
-    checkInt<32>(Val, Type);
+    checkUInt<32>(Val, Type);
     write32le(Loc, (read32le(Loc) & ~0x000f0fff) |
                        (((Val >> 16) & 0xf000) << 4) | ((Val >> 16) & 0xfff));
     break;
   case R_ARM_THM_MOVT_ABS:
-  case R_ARM_THM_MOVT_PREL:
     // Encoding T1: A = imm4:i:imm3:imm8
-    checkInt<32>(Val, Type);
+    checkUInt<32>(Val, Type);
     write16le(Loc,
               0xf2c0 |                     // opcode
                   ((Val >> 17) & 0x0400) | // i
@@ -1677,7 +1636,6 @@ void ARMTargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
                   ((Val >> 16) & 0x00ff));   // imm8
     break;
   case R_ARM_THM_MOVW_ABS_NC:
-  case R_ARM_THM_MOVW_PREL_NC:
     // Encoding T3: A = imm4:i:imm3:imm8
     write16le(Loc,
               0xf240 |                     // opcode
@@ -1724,8 +1682,8 @@ uint64_t ARMTargetInfo::getImplicitAddend(const uint8_t *Buf,
                             ((Hi & 0x003f) << 12) | // imm6
                             ((Lo & 0x07ff) << 1));  // imm11:0
   }
-  case R_ARM_THM_CALL:
-  case R_ARM_THM_JUMP24: {
+  case R_ARM_THM_JUMP24:
+  case R_ARM_THM_CALL: {
     // Encoding B T4, BL T1, BLX T2: A = S:I1:I2:imm10:imm11:0
     // I1 = NOT(J1 EOR S), I2 = NOT(J2 EOR S)
     // FIXME: I1 and I2 require v6T2ops
@@ -1740,16 +1698,12 @@ uint64_t ARMTargetInfo::getImplicitAddend(const uint8_t *Buf,
   // ELF for the ARM Architecture 4.6.1.1 the implicit addend for MOVW and
   // MOVT is in the range -32768 <= A < 32768
   case R_ARM_MOVW_ABS_NC:
-  case R_ARM_MOVT_ABS:
-  case R_ARM_MOVW_PREL_NC:
-  case R_ARM_MOVT_PREL: {
+  case R_ARM_MOVT_ABS: {
     uint64_t Val = read32le(Buf) & 0x000f0fff;
     return SignExtend64<16>(((Val & 0x000f0000) >> 4) | (Val & 0x00fff));
   }
   case R_ARM_THM_MOVW_ABS_NC:
-  case R_ARM_THM_MOVT_ABS:
-  case R_ARM_THM_MOVW_PREL_NC:
-  case R_ARM_THM_MOVT_PREL: {
+  case R_ARM_THM_MOVT_ABS: {
     // Encoding T3: A = imm4:i:imm3:imm8
     uint16_t Hi = read16le(Buf);
     uint16_t Lo = read16le(Buf + 2);
@@ -1766,6 +1720,7 @@ template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
   PageSize = 65536;
   PltEntrySize = 16;
   PltHeaderSize = 32;
+  ThunkSize = 16;
   CopyRel = R_MIPS_COPY;
   PltRel = R_MIPS_JUMP_SLOT;
   if (ELFT::Is64Bits) {
@@ -1932,31 +1887,28 @@ void MipsTargetInfo<ELFT>::writeThunk(uint8_t *Buf, uint64_t S) const {
 }
 
 template <class ELFT>
-RelExpr MipsTargetInfo<ELFT>::getThunkExpr(RelExpr Expr, uint32_t Type,
-                                           const InputFile &File,
-                                           const SymbolBody &S) const {
+bool MipsTargetInfo<ELFT>::needsThunk(uint32_t Type, const InputFile &File,
+                                      const SymbolBody &S) const {
   // Any MIPS PIC code function is invoked with its address in register $t9.
   // So if we have a branch instruction from non-PIC code to the PIC one
   // we cannot make the jump directly and need to create a small stubs
   // to save the target function address.
   // See page 3-38 ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
   if (Type != R_MIPS_26)
-    return Expr;
+    return false;
   auto *F = dyn_cast<ELFFileBase<ELFT>>(&File);
   if (!F)
-    return Expr;
+    return false;
   // If current file has PIC code, LA25 stub is not required.
   if (F->getObj().getHeader()->e_flags & EF_MIPS_PIC)
-    return Expr;
+    return false;
   auto *D = dyn_cast<DefinedRegular<ELFT>>(&S);
   if (!D || !D->Section)
-    return Expr;
+    return false;
   // LA25 is required if target file has PIC code
   // or target symbol is a PIC symbol.
-  const ELFFile<ELFT> &DefFile = D->Section->getFile()->getObj();
-  bool PicFile = DefFile.getHeader()->e_flags & EF_MIPS_PIC;
-  bool PicSym = (D->StOther & STO_MIPS_MIPS16) == STO_MIPS_PIC;
-  return (PicFile || PicSym) ? R_THUNK_ABS : Expr;
+  return (D->Section->getFile()->getObj().getHeader()->e_flags & EF_MIPS_PIC) ||
+         (D->StOther & STO_MIPS_MIPS16) == STO_MIPS_PIC;
 }
 
 template <class ELFT>
