@@ -274,6 +274,46 @@ define i1 @bools(i1 %a, i1 %b, i1 %c) {
   ret i1 %or
 }
 
+; Form a select if we know we can get replace 2 simple logic ops.
+
+define i1 @bools_multi_uses1(i1 %a, i1 %b, i1 %c) {
+; CHECK-LABEL: @bools_multi_uses1(
+; CHECK-NEXT:    [[NOT:%.*]] = xor i1 %c, true
+; CHECK-NEXT:    [[AND1:%.*]] = and i1 [[NOT]], %a
+; CHECK-NEXT:    [[TMP1:%.*]] = select i1 %c, i1 %b, i1 %a
+; CHECK-NEXT:    [[XOR:%.*]] = xor i1 [[TMP1]], [[AND1]]
+; CHECK-NEXT:    ret i1 [[XOR]]
+;
+  %not = xor i1 %c, -1
+  %and1 = and i1 %not, %a
+  %and2 = and i1 %c, %b
+  %or = or i1 %and1, %and2
+  %xor = xor i1 %or, %and1
+  ret i1 %xor
+}
+
+; FIXME: Don't replace a cheap logic op with a potentially expensive select
+; unless we can also eliminate one of the other original ops.
+
+define i1 @bools_multi_uses2(i1 %a, i1 %b, i1 %c) {
+; CHECK-LABEL: @bools_multi_uses2(
+; CHECK-NEXT:    [[NOT:%.*]] = xor i1 %c, true
+; CHECK-NEXT:    [[AND1:%.*]] = and i1 [[NOT]], %a
+; CHECK-NEXT:    [[AND2:%.*]] = and i1 %c, %b
+; CHECK-NEXT:    [[TMP1:%.*]] = select i1 %c, i1 %b, i1 %a
+; CHECK-NEXT:    [[ADD:%.*]] = xor i1 [[AND1]], [[AND2]]
+; CHECK-NEXT:    [[XOR:%.*]] = xor i1 [[TMP1]], [[ADD]]
+; CHECK-NEXT:    ret i1 [[XOR]]
+;
+  %not = xor i1 %c, -1
+  %and1 = and i1 %not, %a
+  %and2 = and i1 %c, %b
+  %or = or i1 %and1, %and2
+  %add = add i1 %and1, %and2
+  %xor = xor i1 %or, %add
+  ret i1 %xor
+}
+
 define <4 x i1> @vec_of_bools(<4 x i1> %a, <4 x i1> %b, <4 x i1> %c) {
 ; CHECK-LABEL: @vec_of_bools(
 ; CHECK-NEXT:    [[TMP1:%.*]] = select <4 x i1> %c, <4 x i1> %b, <4 x i1> %a
