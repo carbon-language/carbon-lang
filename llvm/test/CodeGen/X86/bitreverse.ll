@@ -5,20 +5,38 @@
 
 declare <2 x i16> @llvm.bitreverse.v2i16(<2 x i16>) readnone
 
-define <2 x i16> @f(<2 x i16> %a) {
-; CHECK-LABEL: f:
+define <2 x i16> @test_bitreverse_v2i16(<2 x i16> %a) {
+; CHECK-LABEL: test_bitreverse_v2i16:
 ; CHECK: shll
   %b = call <2 x i16> @llvm.bitreverse.v2i16(<2 x i16> %a)
   ret <2 x i16> %b
 }
 
+declare i24 @llvm.bitreverse.i24(i24) readnone
+
+define i24 @test_bitreverse_i24(i24 %a) {
+; CHECK-LABEL: test_bitreverse_i24:
+; CHECK: shll
+  %b = call i24 @llvm.bitreverse.i24(i24 %a)
+  ret i24 %b
+}
+
 declare i8 @llvm.bitreverse.i8(i8) readnone
 
-define i8 @g(i8 %a) {
-; CHECK-LABEL: g:
+define i8 @test_bitreverse_i8(i8 %a) {
+; CHECK-LABEL: test_bitreverse_i8:
 ; CHECK: shlb
   %b = call i8 @llvm.bitreverse.i8(i8 %a)
   ret i8 %b
+}
+
+declare i4 @llvm.bitreverse.i4(i4) readnone
+
+define i4 @test_bitreverse_i4(i4 %a) {
+; CHECK-LABEL: test_bitreverse_i4:
+; CHECK: shlb
+  %b = call i4 @llvm.bitreverse.i4(i4 %a)
+  ret i4 %b
 }
 
 ; These tests check that bitreverse(constant) calls are folded
@@ -33,6 +51,15 @@ define <2 x i16> @fold_v2i16() {
   ret <2 x i16> %b
 }
 
+define i24 @fold_i24() {
+; CHECK-LABEL: fold_i24:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movl $2048, %eax
+; CHECK-NEXT:    retl
+  %b = call i24 @llvm.bitreverse.i24(i24 4096)
+  ret i24 %b
+}
+
 define i8 @fold_i8() {
 ; CHECK-LABEL: fold_i8:
 ; CHECK:       # BB#0:
@@ -40,6 +67,15 @@ define i8 @fold_i8() {
 ; CHECK-NEXT:    retl
   %b = call i8 @llvm.bitreverse.i8(i8 15)
   ret i8 %b
+}
+
+define i4 @fold_i4() {
+; CHECK-LABEL: fold_i4:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movb $1, %al
+; CHECK-NEXT:    retl
+  %b = call i4 @llvm.bitreverse.i4(i4 8)
+  ret i4 %b
 }
 
 ; These tests check that bitreverse(bitreverse()) calls are removed
