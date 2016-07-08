@@ -22,6 +22,7 @@
 #include "OutputSections.h"
 #include "Symbols.h"
 #include "Target.h"
+#include "llvm/Support/Allocator.h"
 
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
@@ -175,7 +176,9 @@ static void addThunkARM(uint32_t RelocType, SymbolBody &S,
     return;
 
   bool NeedsPI = Config->Pic || Config->Pie || Config->Shared;
-  Thunk<ELFT> *thunk;
+  Thunk<ELFT> *T;
+  BumpPtrAllocator &Alloc = IS.getFile()->Alloc;
+
   // ARM relocations need ARM to Thumb interworking Thunks, Thumb relocations
   // need Thumb to ARM relocations. Use position independent Thunks if we
   // require position independent code.
@@ -184,43 +187,46 @@ static void addThunkARM(uint32_t RelocType, SymbolBody &S,
   case R_ARM_PLT32:
   case R_ARM_JUMP24:
     if (NeedsPI)
-      thunk = new ARMToThumbV7PILongThunk<ELFT>(S, IS);
+      T = new (Alloc) ARMToThumbV7PILongThunk<ELFT>(S, IS);
     else
-      thunk = new ARMToThumbV7ABSLongThunk<ELFT>(S, IS);
+      T = new (Alloc) ARMToThumbV7ABSLongThunk<ELFT>(S, IS);
     break;
   case R_ARM_THM_JUMP19:
   case R_ARM_THM_JUMP24:
     if (NeedsPI)
-      thunk = new ThumbToARMV7PILongThunk<ELFT>(S, IS);
+      T = new (Alloc) ThumbToARMV7PILongThunk<ELFT>(S, IS);
     else
-      thunk = new ThumbToARMV7ABSLongThunk<ELFT>(S, IS);
+      T = new (Alloc) ThumbToARMV7ABSLongThunk<ELFT>(S, IS);
     break;
   default:
     fatal("Unrecognised Relocation type\n");
   }
+
   // ARM Thunks are added to the same InputSection as the relocation. This
   // isn't strictly necessary but it makes it more likely that a limited range
   // branch can reach the Thunk, and it makes Thunks to the PLT section easier
-  IS.addThunk(thunk);
+  IS.addThunk(T);
   if (DefinedRegular<ELFT> *DR = dyn_cast<DefinedRegular<ELFT>>(&S))
-    DR->ThunkData.reset(thunk);
+    DR->ThunkData = T;
   else if (SharedSymbol<ELFT> *SH = dyn_cast<SharedSymbol<ELFT>>(&S))
-    SH->ThunkData.reset(thunk);
+    SH->ThunkData = T;
   else
     fatal("symbol not DefinedRegular or Shared\n");
 }
 
 template <class ELFT>
-static void addThunkMips(uint32_t RelocType, SymbolBody &S) {
+static void addThunkMips(uint32_t RelocType, SymbolBody &S,
+                         InputSection<ELFT> &IS) {
   if (S.hasThunk<ELFT>())
     // only one Thunk supported per symbol
     return;
-  // Mips Thunks are added to the InputSection defining S
+
+  // Mips Thunks are added to the InputSection defining S.
   auto *R = cast<DefinedRegular<ELFT>>(&S);
   auto *Sec = cast<InputSection<ELFT>>(R->Section);
-  auto *T = new MipsThunk<ELFT>(S, *Sec);
+  auto *T = new (IS.getFile()->Alloc) MipsThunk<ELFT>(S, *Sec);
   Sec->addThunk(T);
-  R->ThunkData.reset(T);
+  R->ThunkData = T;
 }
 
 template <class ELFT>
@@ -228,7 +234,7 @@ void addThunk(uint32_t RelocType, SymbolBody &S, InputSection<ELFT> &IS) {
   if (Config->EMachine == EM_ARM)
     addThunkARM<ELFT>(RelocType, S, IS);
   else if (Config->EMachine == EM_MIPS)
-    addThunkMips<ELFT>(RelocType, S);
+    addThunkMips<ELFT>(RelocType, S, IS);
   else
     llvm_unreachable("add Thunk only supported for ARM and Mips");
 }

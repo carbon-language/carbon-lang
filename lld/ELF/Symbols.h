@@ -230,7 +230,7 @@ public:
 
   // If non-null the symbol has a Thunk that may be used as an alternative
   // destination for callers of this Symbol.
-  std::unique_ptr<Thunk<ELFT>> ThunkData;
+  Thunk<ELFT> *ThunkData;
 
 private:
   static InputSectionBase<ELFT> *NullInputSection;
@@ -306,7 +306,7 @@ public:
 
   // If non-null the symbol has a Thunk that may be used as an alternative
   // destination for callers of this Symbol.
-  std::unique_ptr<Thunk<ELFT>> ThunkData;
+  Thunk<ELFT> *ThunkData;
   bool needsCopy() const { return this->NeedsCopyOrPltAddr && !this->isFunc(); }
 };
 
