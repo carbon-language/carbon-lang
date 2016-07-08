@@ -132,6 +132,8 @@ static QualType GetBaseType(QualType T) {
       BaseType = VTy->getElementType();
     else if (const ReferenceType *RTy = BaseType->getAs<ReferenceType>())
       BaseType = RTy->getPointeeType();
+    else if (const AutoType *ATy = BaseType->getAs<AutoType>())
+      BaseType = ATy->getDeducedType();
     else
       llvm_unreachable("Unknown declarator!");
   }
