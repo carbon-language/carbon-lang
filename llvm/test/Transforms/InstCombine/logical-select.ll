@@ -262,6 +262,32 @@ define <2 x i64> @bitcast_select_swap7(<4 x i1> %cmp, <2 x double> %a, <2 x doub
   ret <2 x i64> %or
 }
 
+define <2 x i64> @bitcast_select_multi_uses(<4 x i1> %cmp, <2 x i64> %a, <2 x i64> %b) {
+; CHECK-LABEL: @bitcast_select_multi_uses(
+; CHECK-NEXT:    [[SEXT:%.*]] = sext <4 x i1> %cmp to <4 x i32>
+; CHECK-NEXT:    [[NEG:%.*]] = xor <4 x i32> [[SEXT]], <i32 -1, i32 -1, i32 -1, i32 -1>
+; CHECK-NEXT:    [[BC2:%.*]] = bitcast <4 x i32> [[NEG]] to <2 x i64>
+; CHECK-NEXT:    [[AND2:%.*]] = and <2 x i64> [[BC2]], %b
+; CHECK-NEXT:    [[TMP1:%.*]] = bitcast <2 x i64> %a to <4 x i32>
+; CHECK-NEXT:    [[TMP2:%.*]] = bitcast <2 x i64> %b to <4 x i32>
+; CHECK-NEXT:    [[TMP3:%.*]] = select <4 x i1> %cmp, <4 x i32> [[TMP1]], <4 x i32> [[TMP2]]
+; CHECK-NEXT:    [[TMP4:%.*]] = bitcast <4 x i32> [[TMP3]] to <2 x i64>
+; CHECK-NEXT:    [[ADD:%.*]] = add <2 x i64> [[AND2]], [[BC2]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i64> [[TMP4]], [[ADD]]
+; CHECK-NEXT:    ret <2 x i64> [[SUB]]
+;
+  %sext = sext <4 x i1> %cmp to <4 x i32>
+  %bc1 = bitcast <4 x i32> %sext to <2 x i64>
+  %and1 = and <2 x i64> %a, %bc1
+  %neg = xor <4 x i32> %sext, <i32 -1, i32 -1, i32 -1, i32 -1>
+  %bc2 = bitcast <4 x i32> %neg to <2 x i64>
+  %and2 = and <2 x i64> %b, %bc2
+  %or = or <2 x i64> %and2, %and1
+  %add = add <2 x i64> %and2, %bc2
+  %sub = sub <2 x i64> %or, %add
+  ret <2 x i64> %sub
+}
+
 define i1 @bools(i1 %a, i1 %b, i1 %c) {
 ; CHECK-LABEL: @bools(
 ; CHECK-NEXT:    [[TMP1:%.*]] = select i1 %c, i1 %b, i1 %a
@@ -292,7 +318,7 @@ define i1 @bools_multi_uses1(i1 %a, i1 %b, i1 %c) {
   ret i1 %xor
 }
 
-; FIXME: Don't replace a cheap logic op with a potentially expensive select
+; Don't replace a cheap logic op with a potentially expensive select
 ; unless we can also eliminate one of the other original ops.
 
 define i1 @bools_multi_uses2(i1 %a, i1 %b, i1 %c) {
