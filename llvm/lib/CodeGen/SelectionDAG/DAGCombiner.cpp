@@ -14516,9 +14516,9 @@ SDValue DAGCombiner::BuildSDIVPow2(SDNode *N) {
 /// number.
 /// Ref: "Hacker's Delight" or "The PowerPC Compiler Writer's Guide".
 SDValue DAGCombiner::BuildUDIV(SDNode *N) {
-  // when optimising for size, we don't want to expand a div to a mul and
+  // when optimising for minimum size, we don't want to expand a div to a mul
   // and a shift.
-  if (ForCodeSize)
+  if (DAG.getMachineFunction().getFunction()->optForMinSize())
     return SDValue();
 
   ConstantSDNode *C = isConstOrConstSplat(N->getOperand(1));

@@ -1,4 +1,4 @@
-; When optimising for size, we don't want to expand a div to a mul and
+; When optimising for minimum size, we don't want to expand a udiv to a mul
 ; and a shift sequence. As a result, the urem instruction will not be
 ; expanded to a sequence of umull, lsrs, muls and sub instructions, but
 ; just a call to __aeabi_uidivmod.
