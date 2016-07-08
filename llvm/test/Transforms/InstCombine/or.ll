@@ -425,30 +425,22 @@ define i1 @test36(i32 %x) {
   ret i1 %ret2
 }
 
-define i32 @test37(i32* %xp, i32 %y) {
-; CHECK-LABEL: @test37(
-; CHECK-NEXT:    [[TOBOOL:%.*]] = icmp ne i32 %y, 0
-; CHECK-NEXT:    [[X:%.*]] = load i32, i32* [[X:%.*]]p, align 4
-; CHECK-NEXT:    [[OR:%.*]] = select i1 [[TOBOOL]], i32 -1, i32 [[X]]
+define i32 @orsext_to_sel(i32 %x, i1 %y) {
+; CHECK-LABEL: @orsext_to_sel(
+; CHECK-NEXT:    [[OR:%.*]] = select i1 %y, i32 -1, i32 %x
 ; CHECK-NEXT:    ret i32 [[OR]]
 ;
-  %tobool = icmp ne i32 %y, 0
-  %sext = sext i1 %tobool to i32
-  %x = load i32, i32* %xp
+  %sext = sext i1 %y to i32
   %or = or i32 %sext, %x
   ret i32 %or
 }
 
-define i32 @test38(i32* %xp, i32 %y) {
-; CHECK-LABEL: @test38(
-; CHECK-NEXT:    [[TOBOOL:%.*]] = icmp ne i32 %y, 0
-; CHECK-NEXT:    [[X:%.*]] = load i32, i32* [[X:%.*]]p, align 4
-; CHECK-NEXT:    [[OR:%.*]] = select i1 [[TOBOOL]], i32 -1, i32 [[X]]
+define i32 @orsext_to_sel_swap(i32 %x, i1 %y) {
+; CHECK-LABEL: @orsext_to_sel_swap(
+; CHECK-NEXT:    [[OR:%.*]] = select i1 %y, i32 -1, i32 %x
 ; CHECK-NEXT:    ret i32 [[OR]]
 ;
-  %tobool = icmp ne i32 %y, 0
-  %sext = sext i1 %tobool to i32
-  %x = load i32, i32* %xp
+  %sext = sext i1 %y to i32
   %or = or i32 %x, %sext
   ret i32 %or
 }
