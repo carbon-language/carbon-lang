@@ -67,10 +67,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   assert(F && "Illegal to upgrade a non-existent Function.");
 
   // Quickly eliminate it, if it's not a candidate.
-  // Make a copy of the name so that we don't need to worry about the life-time
-  // of StringRef.
-  std::string NameStr = F->getName().str();
-  StringRef Name = NameStr;
+  StringRef Name = F->getName();
   if (Name.size() <= 8 || !Name.startswith("llvm."))
     return false;
   Name = Name.substr(5); // Strip off "llvm."
@@ -348,7 +345,6 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     if (IsX86 && (Name.startswith("avx512.mask.pslli.") ||
                   Name.startswith("avx512.mask.psrai.") ||
                   Name.startswith("avx512.mask.psrli."))) {
-      F->setName("llvm.x86." + Name + ".old");
       Intrinsic::ID ShiftID;
       if (Name.slice(12, 16) == "psll")
         ShiftID = Name[18] == 'd' ? Intrinsic::x86_avx512_mask_psll_di_512
@@ -359,6 +355,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       else
         ShiftID = Name[18] == 'd' ? Intrinsic::x86_avx512_mask_psrl_di_512
                                   : Intrinsic::x86_avx512_mask_psrl_qi_512;
+      F->setName("llvm.x86." + Name + ".old");
       NewFn = Intrinsic::getDeclaration(F->getParent(), ShiftID);
       return true;
     }
