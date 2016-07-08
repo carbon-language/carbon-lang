@@ -2222,23 +2222,28 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       }
     }
 
-    // (Cond & C) | (~Cond & D) -> Cond ? C : D, and commuted variants.
-    if (Value *V = matchSelectFromAndOr(A, C, B, D, *Builder))
-      return replaceInstUsesWith(I, V);
-    if (Value *V = matchSelectFromAndOr(A, C, D, B, *Builder))
-      return replaceInstUsesWith(I, V);
-    if (Value *V = matchSelectFromAndOr(C, A, B, D, *Builder))
-      return replaceInstUsesWith(I, V);
-    if (Value *V = matchSelectFromAndOr(C, A, D, B, *Builder))
-      return replaceInstUsesWith(I, V);
-    if (Value *V = matchSelectFromAndOr(B, D, A, C, *Builder))
-      return replaceInstUsesWith(I, V);
-    if (Value *V = matchSelectFromAndOr(B, D, C, A, *Builder))
-      return replaceInstUsesWith(I, V);
-    if (Value *V = matchSelectFromAndOr(D, B, A, C, *Builder))
-      return replaceInstUsesWith(I, V);
-    if (Value *V = matchSelectFromAndOr(D, B, C, A, *Builder))
-      return replaceInstUsesWith(I, V);
+    // Don't try to form a select if it's unlikely that we'll get rid of at
+    // least one of the operands. A select is generally more expensive than the
+    // 'or' that it is replacing.
+    if (Op0->hasOneUse() || Op1->hasOneUse()) {
+      // (Cond & C) | (~Cond & D) -> Cond ? C : D, and commuted variants.
+      if (Value *V = matchSelectFromAndOr(A, C, B, D, *Builder))
+        return replaceInstUsesWith(I, V);
+      if (Value *V = matchSelectFromAndOr(A, C, D, B, *Builder))
+        return replaceInstUsesWith(I, V);
+      if (Value *V = matchSelectFromAndOr(C, A, B, D, *Builder))
+        return replaceInstUsesWith(I, V);
+      if (Value *V = matchSelectFromAndOr(C, A, D, B, *Builder))
+        return replaceInstUsesWith(I, V);
+      if (Value *V = matchSelectFromAndOr(B, D, A, C, *Builder))
+        return replaceInstUsesWith(I, V);
+      if (Value *V = matchSelectFromAndOr(B, D, C, A, *Builder))
+        return replaceInstUsesWith(I, V);
+      if (Value *V = matchSelectFromAndOr(D, B, A, C, *Builder))
+        return replaceInstUsesWith(I, V);
+      if (Value *V = matchSelectFromAndOr(D, B, C, A, *Builder))
+        return replaceInstUsesWith(I, V);
+    }
 
     // ((A&~B)|(~A&B)) -> A^B
     if ((match(C, m_Not(m_Specific(D))) &&

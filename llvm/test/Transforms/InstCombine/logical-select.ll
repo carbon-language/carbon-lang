@@ -300,10 +300,8 @@ define i1 @bools_multi_uses2(i1 %a, i1 %b, i1 %c) {
 ; CHECK-NEXT:    [[NOT:%.*]] = xor i1 %c, true
 ; CHECK-NEXT:    [[AND1:%.*]] = and i1 [[NOT]], %a
 ; CHECK-NEXT:    [[AND2:%.*]] = and i1 %c, %b
-; CHECK-NEXT:    [[TMP1:%.*]] = select i1 %c, i1 %b, i1 %a
 ; CHECK-NEXT:    [[ADD:%.*]] = xor i1 [[AND1]], [[AND2]]
-; CHECK-NEXT:    [[AND3:%.*]] = and i1 [[TMP1]], [[ADD]]
-; CHECK-NEXT:    ret i1 [[AND3]]
+; CHECK-NEXT:    ret i1 [[ADD]]
 ;
   %not = xor i1 %c, -1
   %and1 = and i1 %not, %a
