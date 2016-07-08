@@ -423,7 +423,8 @@ bool AMDGPUCFGStructurizer::needMigrateBlock(MachineBasicBlock *MBB) const {
 
 void AMDGPUCFGStructurizer::reversePredicateSetter(
     MachineBasicBlock::iterator I) {
-  while (I--) {
+  assert(static_cast<MachineInstr *>(I) && "Expected valid iterator");
+  for (;; --I) {
     if (I->getOpcode() == AMDGPU::PRED_X) {
       switch (static_cast<MachineInstr *>(I)->getOperand(2).getImm()) {
       case OPCODE_IS_ZERO_INT:
