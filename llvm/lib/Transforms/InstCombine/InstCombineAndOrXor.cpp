@@ -1619,8 +1619,8 @@ static Value *matchSelectFromAndOr(Value *A, Value *C, Value *B, Value *D,
   // through its bitcast and the corresponding bitcast of the 'not' condition.
   Type *OrigType = A->getType();
   Value *SrcA, *SrcB;
-  if (match(A, m_BitCast(m_Value(SrcA))) &&
-      match(B, m_BitCast(m_Value(SrcB)))) {
+  if (match(A, m_OneUse(m_BitCast(m_Value(SrcA)))) &&
+      match(B, m_OneUse(m_BitCast(m_Value(SrcB))))) {
     A = SrcA;
     B = SrcB;
   }

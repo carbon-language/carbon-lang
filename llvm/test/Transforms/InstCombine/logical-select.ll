@@ -265,15 +265,14 @@ define <2 x i64> @bitcast_select_swap7(<4 x i1> %cmp, <2 x double> %a, <2 x doub
 define <2 x i64> @bitcast_select_multi_uses(<4 x i1> %cmp, <2 x i64> %a, <2 x i64> %b) {
 ; CHECK-LABEL: @bitcast_select_multi_uses(
 ; CHECK-NEXT:    [[SEXT:%.*]] = sext <4 x i1> %cmp to <4 x i32>
+; CHECK-NEXT:    [[BC1:%.*]] = bitcast <4 x i32> [[SEXT]] to <2 x i64>
+; CHECK-NEXT:    [[AND1:%.*]] = and <2 x i64> [[BC1]], %a
 ; CHECK-NEXT:    [[NEG:%.*]] = xor <4 x i32> [[SEXT]], <i32 -1, i32 -1, i32 -1, i32 -1>
 ; CHECK-NEXT:    [[BC2:%.*]] = bitcast <4 x i32> [[NEG]] to <2 x i64>
 ; CHECK-NEXT:    [[AND2:%.*]] = and <2 x i64> [[BC2]], %b
-; CHECK-NEXT:    [[TMP1:%.*]] = bitcast <2 x i64> %a to <4 x i32>
-; CHECK-NEXT:    [[TMP2:%.*]] = bitcast <2 x i64> %b to <4 x i32>
-; CHECK-NEXT:    [[TMP3:%.*]] = select <4 x i1> %cmp, <4 x i32> [[TMP1]], <4 x i32> [[TMP2]]
-; CHECK-NEXT:    [[TMP4:%.*]] = bitcast <4 x i32> [[TMP3]] to <2 x i64>
+; CHECK-NEXT:    [[OR:%.*]] = or <2 x i64> [[AND2]], [[AND1]]
 ; CHECK-NEXT:    [[ADD:%.*]] = add <2 x i64> [[AND2]], [[BC2]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i64> [[TMP4]], [[ADD]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i64> [[OR]], [[ADD]]
 ; CHECK-NEXT:    ret <2 x i64> [[SUB]]
 ;
   %sext = sext <4 x i1> %cmp to <4 x i32>
