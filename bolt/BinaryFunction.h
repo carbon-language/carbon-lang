@@ -257,10 +257,6 @@ private:
   BasicBlockListType BasicBlocks;
   BasicBlockOrderType BasicBlocksLayout;
 
-  // Map that keeps track of the index of each basic block in the BasicBlocks
-  // vector.  Used to make getIndex fast.
-  std::unordered_map<const BinaryBasicBlock*, unsigned> BasicBlockIndices;
-
   // At each basic block entry we attach a CFI state to detect if reordering
   // corrupts the CFI state for a block. The CFI state is simply the index in
   // FrameInstructions for the CFI responsible for creating this state.
@@ -405,10 +401,10 @@ public:
   /// CFG after an optimization pass.
   void dumpGraphForPass(std::string Annotation = "") const;
 
-    /// Get basic block index assuming it belongs to this function.
+  /// Get basic block index assuming it belongs to this function.
   unsigned getIndex(const BinaryBasicBlock *BB) const {
-    assert(BasicBlockIndices.find(BB) != BasicBlockIndices.end());
-    return BasicBlockIndices.find(BB)->second;
+    assert(BB->Index < BasicBlocks.size());
+    return BB->Index;
   }
 
   /// Returns the n-th basic block in this function in its original layout, or
@@ -563,7 +559,7 @@ public:
       BB->setAlignment(std::min(DerivedAlignment, uint64_t(32)));
     }
 
-    BasicBlockIndices[BB] = BasicBlocks.size() - 1;
+    BB->Index = BasicBlocks.size() - 1;
 
     return BB;
   }

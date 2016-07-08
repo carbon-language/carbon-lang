@@ -56,6 +56,9 @@ class BinaryBasicBlock {
   /// Alignment requirements for the block.
   uint64_t Alignment{1};
 
+  /// Index to BasicBlocks vector in BinaryFunction.
+  unsigned Index{~0u};
+
   /// Number of pseudo instructions in this block.
   uint32_t NumPseudos{0};
 
