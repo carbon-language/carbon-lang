@@ -58,16 +58,6 @@ static cl::opt<bool>
     DontForceImportReferencedDiscardableSymbols("disable-force-link-odr",
                                                 cl::init(false), cl::Hidden);
 
-static cl::opt<bool> EnableImportMetadata(
-    "enable-import-metadata", cl::init(
-#if !defined(NDEBUG)
-                                  true /*Enabled with asserts.*/
-#else
-                                  false
-#endif
-                                  ),
-    cl::Hidden, cl::desc("Enable import metadata like 'thinlto_src_module'"));
-
 // Load lazily a module from \p FileName in \p Context.
 static std::unique_ptr<Module> loadFile(const std::string &FileName,
                                         LLVMContext &Context) {
@@ -601,15 +591,12 @@ bool FunctionImporter::importFunctions(
                    << SrcModule->getSourceFileName() << "\n");
       if (Import) {
         F.materialize();
-        if (EnableImportMetadata) {
-          // Add 'thinlto_src_module' metadata for statistics and debugging.
-          F.setMetadata(
-              "thinlto_src_module",
-              llvm::MDNode::get(
-                  DestModule.getContext(),
-                  {llvm::MDString::get(DestModule.getContext(),
-                                       SrcModule->getSourceFileName())}));
-        }
+        // Add 'thinlto_src_module' metadata for statistics and debugging.
+        F.setMetadata("thinlto_src_module",
+                      llvm::MDNode::get(DestModule.getContext(),
+                                        {llvm::MDString::get(
+                                            DestModule.getContext(),
+                                            SrcModule->getSourceFileName())}));
         GlobalsToImport.insert(&F);
       }
     }
