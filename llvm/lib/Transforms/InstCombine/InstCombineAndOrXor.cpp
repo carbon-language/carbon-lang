@@ -2393,11 +2393,12 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (Instruction *CastedOr = foldCastedBitwiseLogic(I))
     return CastedOr;
 
-  // or(sext(A), B) -> A ? -1 : B where A is an i1
-  // or(A, sext(B)) -> B ? -1 : A where B is an i1
-  if (match(Op0, m_SExt(m_Value(A))) && A->getType()->isIntegerTy(1))
+  // or(sext(A), B) / or(B, sext(A)) --> A ? -1 : B, where A is i1 or <N x i1>.
+  if (match(Op0, m_SExt(m_Value(A))) &&
+      A->getType()->getScalarType()->isIntegerTy(1))
     return SelectInst::Create(A, ConstantInt::getSigned(I.getType(), -1), Op1);
-  if (match(Op1, m_SExt(m_Value(A))) && A->getType()->isIntegerTy(1))
+  if (match(Op1, m_SExt(m_Value(A))) &&
+      A->getType()->getScalarType()->isIntegerTy(1))
     return SelectInst::Create(A, ConstantInt::getSigned(I.getType(), -1), Op0);
 
   // Note: If we've gotten to the point of visiting the outer OR, then the

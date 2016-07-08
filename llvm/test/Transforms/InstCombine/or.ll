@@ -447,8 +447,7 @@ define i32 @orsext_to_sel_swap(i32 %x, i1 %y) {
 
 define <2 x i32> @orsext_to_sel_vec(<2 x i32> %x, <2 x i1> %y) {
 ; CHECK-LABEL: @orsext_to_sel_vec(
-; CHECK-NEXT:    [[SEXT:%.*]] = sext <2 x i1> %y to <2 x i32>
-; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[SEXT]], %x
+; CHECK-NEXT:    [[OR:%.*]] = select <2 x i1> %y, <2 x i32> <i32 -1, i32 -1>, <2 x i32> %x
 ; CHECK-NEXT:    ret <2 x i32> [[OR]]
 ;
   %sext = sext <2 x i1> %y to <2 x i32>
@@ -458,8 +457,7 @@ define <2 x i32> @orsext_to_sel_vec(<2 x i32> %x, <2 x i1> %y) {
 
 define <2 x i132> @orsext_to_sel_vec_swap(<2 x i132> %x, <2 x i1> %y) {
 ; CHECK-LABEL: @orsext_to_sel_vec_swap(
-; CHECK-NEXT:    [[SEXT:%.*]] = sext <2 x i1> %y to <2 x i132>
-; CHECK-NEXT:    [[OR:%.*]] = or <2 x i132> [[SEXT]], %x
+; CHECK-NEXT:    [[OR:%.*]] = select <2 x i1> %y, <2 x i132> <i132 -1, i132 -1>, <2 x i132> %x
 ; CHECK-NEXT:    ret <2 x i132> [[OR]]
 ;
   %sext = sext <2 x i1> %y to <2 x i132>
