@@ -173,7 +173,7 @@ MachineInstr *AArch64ConditionOptimizer::findSuitableCompare(
         DEBUG(dbgs() << "Destination of cmp is not dead, " << *I << '\n');
         return nullptr;
       }
-      return I;
+      return &*I;
     }
     // Prevent false positive case like:
     // cmp      w19, #0
