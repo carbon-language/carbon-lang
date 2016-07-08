@@ -58,44 +58,6 @@ bool isSafeToLoadUnconditionally(Value *V, unsigned Align,
 /// to scan in the block, used by FindAvailableLoadedValue().
 extern cl::opt<unsigned> DefMaxInstsToScan;
 
-/// \brief Scan backwards to see if we have the value of type \p AccessTy
-/// at the memory address \p Ptr locally available within a
-/// small number of instructions. If the value is available, return it.
-///
-/// You can use this function to scan across multiple blocks: after you call
-/// this function, if ScanFrom points at the beginning of the block, it's safe
-/// to continue scanning the predecessors.
-/// Note that we assume the \p *Ptr is accessed through a non-volatile but
-/// potentially atomic load. Any other constraints should be verified at the
-/// caller.
-///
-/// \param Ptr The memory location whose contents we are retrieving
-/// \param AccessTy The type (and size) of the contents we need from \p Ptr
-/// \param IsAtomicMemOp specifies the atomicity of the memory operation that accesses
-/// \p *Ptr. We verify atomicity constraints are satisfied when value forwarding
-/// from another memory operation that has value \p *Ptr available.
-/// \param ScanBB The basic block to scan. FIXME: This is redundant.
-/// \param [in,out] ScanFrom The location to start scanning from. When this
-/// function returns, it points at the last instruction scanned.
-/// \param MaxInstsToScan The maximum number of instructions to scan. If this
-/// is zero, the whole block will be scanned.
-/// \param AA Optional pointer to alias analysis, to make the scan more
-/// precise.
-/// \param [out] AATags The aliasing metadata for the operation which produced
-/// the value. FIXME: This is basically useless.
-///
-/// \param [out] IsLoadCSE Whether the returned value is a load from the same
-/// location in memory, as opposed to the value operand of a store.
-///
-/// \returns The found value, or nullptr if no value is found.
-Value *FindAvailableLoadedValue(Value *Ptr, Type *AccessTy, bool IsAtomicMemOp,
-                                BasicBlock *ScanBB,
-                                BasicBlock::iterator &ScanFrom,
-                                unsigned MaxInstsToScan,
-                                AliasAnalysis *AA = nullptr,
-                                AAMDNodes *AATags = nullptr,
-                                bool *IsLoadCSE = nullptr);
-
 /// \brief Scan backwards to see if we have the value of the given load
 /// available locally within a small number of instructions.
 ///
