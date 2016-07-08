@@ -2394,10 +2394,10 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     return CastedOr;
 
   // or(sext(A), B) / or(B, sext(A)) --> A ? -1 : B, where A is i1 or <N x i1>.
-  if (match(Op0, m_SExt(m_Value(A))) &&
+  if (match(Op0, m_OneUse(m_SExt(m_Value(A)))) &&
       A->getType()->getScalarType()->isIntegerTy(1))
     return SelectInst::Create(A, ConstantInt::getSigned(I.getType(), -1), Op1);
-  if (match(Op1, m_SExt(m_Value(A))) &&
+  if (match(Op1, m_OneUse(m_SExt(m_Value(A)))) &&
       A->getType()->getScalarType()->isIntegerTy(1))
     return SelectInst::Create(A, ConstantInt::getSigned(I.getType(), -1), Op0);
 
