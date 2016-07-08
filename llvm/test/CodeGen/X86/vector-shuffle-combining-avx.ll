@@ -139,8 +139,7 @@ define <2 x double> @combine_vpermilvar_2f64_identity(<2 x double> %a0) {
 define <2 x double> @combine_vpermilvar_2f64_movddup(<2 x double> %a0) {
 ; ALL-LABEL: combine_vpermilvar_2f64_movddup:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vxorpd %xmm1, %xmm1, %xmm1
-; ALL-NEXT:    vpermilpd %xmm1, %xmm0, %xmm0
+; ALL-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
 ; ALL-NEXT:    retq
   %1 = tail call <2 x double> @llvm.x86.avx.vpermilvar.pd(<2 x double> %a0, <2 x i64> <i64 0, i64 0>)
   ret <2 x double> %1

@@ -393,8 +393,7 @@ define <16 x i32> @combine_permvar_as_vpbroadcastd512(<16 x i32> %x0) {
 define <8 x i64> @combine_permvar_as_vpbroadcastq512(<8 x i64> %x0) {
 ; CHECK-LABEL: combine_permvar_as_vpbroadcastq512:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vpxord %zmm1, %zmm1, %zmm1
-; CHECK-NEXT:    vpermq %zmm0, %zmm1, %zmm0
+; CHECK-NEXT:    vpbroadcastq %xmm0, %zmm0
 ; CHECK-NEXT:    retq
   %1 = call <8 x i64> @llvm.x86.avx512.mask.permvar.di.512(<8 x i64> %x0, <8 x i64> zeroinitializer, <8 x i64> undef, i8 -1)
   ret <8 x i64> %1
