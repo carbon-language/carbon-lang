@@ -445,6 +445,21 @@ define i32 @orsext_to_sel_swap(i32 %x, i1 %y) {
   ret i32 %or
 }
 
+; FIXME: Don't replace an 'or' with a select unless it allows further simplification.
+
+define i32 @orsext_to_sel_multi_use(i32 %x, i1 %y) {
+; CHECK-LABEL: @orsext_to_sel_multi_use(
+; CHECK-NEXT:    [[SEXT:%.*]] = sext i1 %y to i32
+; CHECK-NEXT:    [[OR:%.*]] = select i1 %y, i32 -1, i32 %x
+; CHECK-NEXT:    [[ADD:%.*]] = add i32 [[SEXT]], [[OR]]
+; CHECK-NEXT:    ret i32 [[ADD]]
+;
+  %sext = sext i1 %y to i32
+  %or = or i32 %sext, %x
+  %add = add i32 %sext, %or
+  ret i32 %add
+}
+
 define <2 x i32> @orsext_to_sel_vec(<2 x i32> %x, <2 x i1> %y) {
 ; CHECK-LABEL: @orsext_to_sel_vec(
 ; CHECK-NEXT:    [[OR:%.*]] = select <2 x i1> %y, <2 x i32> <i32 -1, i32 -1>, <2 x i32> %x
