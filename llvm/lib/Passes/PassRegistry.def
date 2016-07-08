@@ -176,7 +176,7 @@ FUNCTION_PASS("verify<regions>", RegionInfoVerifierPass())
 #define LOOP_ANALYSIS(NAME, CREATE_PASS)
 #endif
 LOOP_ANALYSIS("no-op-loop", NoOpLoopAnalysis())
-LOOP_ANALYSIS("access-info", LoopAccessInfoAnalysis())
+LOOP_ANALYSIS("access-info", LoopAccessAnalysis())
 #undef LOOP_ANALYSIS
 
 #ifndef LOOP_PASS

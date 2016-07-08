@@ -2024,9 +2024,9 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_END(LoopAccessLegacyAnalysis, LAA_NAME, laa_name, false, true)
 
-char LoopAccessInfoAnalysis::PassID;
+char LoopAccessAnalysis::PassID;
 
-LoopAccessInfo LoopAccessInfoAnalysis::run(Loop &L, AnalysisManager<Loop> &AM) {
+LoopAccessInfo LoopAccessAnalysis::run(Loop &L, AnalysisManager<Loop> &AM) {
   const AnalysisManager<Function> &FAM =
       AM.getResult<FunctionAnalysisManagerLoopProxy>(L).getManager();
   Function &F = *L.getHeader()->getParent();
@@ -2051,7 +2051,7 @@ LoopAccessInfo LoopAccessInfoAnalysis::run(Loop &L, AnalysisManager<Loop> &AM) {
 PreservedAnalyses LoopAccessInfoPrinterPass::run(Loop &L,
                                                  AnalysisManager<Loop> &AM) {
   Function &F = *L.getHeader()->getParent();
-  auto &LAI = AM.getResult<LoopAccessInfoAnalysis>(L);
+  auto &LAI = AM.getResult<LoopAccessAnalysis>(L);
   OS << "Loop access info in function '" << F.getName() << "':\n";
   OS.indent(2) << L.getHeader()->getName() << ":\n";
   LAI.print(OS, 4);
