@@ -14516,6 +14516,11 @@ SDValue DAGCombiner::BuildSDIVPow2(SDNode *N) {
 /// number.
 /// Ref: "Hacker's Delight" or "The PowerPC Compiler Writer's Guide".
 SDValue DAGCombiner::BuildUDIV(SDNode *N) {
+  // when optimising for size, we don't want to expand a div to a mul and
+  // and a shift.
+  if (ForCodeSize)
+    return SDValue();
+
   ConstantSDNode *C = isConstOrConstSplat(N->getOperand(1));
   if (!C)
     return SDValue();
