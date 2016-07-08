@@ -8,6 +8,9 @@ add_clang_unittest(CFGTests
 
 target_link_libraries(CFGTests
   clangAnalysis
+  clangAST
   clangASTMatchers
+  clangBasic
+  clangFrontend
   clangTooling
   )
