@@ -825,7 +825,7 @@ defm DS_MIN_RTN_F32 : DS_1A2D_RET <0x32, "ds_min_rtn_f32", VGPR_32, "ds_min_f32"
 defm DS_MAX_RTN_F32 : DS_1A2D_RET <0x33, "ds_max_rtn_f32", VGPR_32, "ds_max_f32">;
 
 let Uses = [EXEC], mayLoad =0, mayStore = 0, isConvergent = 1 in {
-defm DS_SWIZZLE_B32 : DS_1A_RET <0x35, "ds_swizzle_b32", VGPR_32>;
+defm DS_SWIZZLE_B32 : DS_1A_RET_ <dsop<0x35, 0x3d>, "ds_swizzle_b32", VGPR_32>;
 }
 
 let mayStore = 0 in {

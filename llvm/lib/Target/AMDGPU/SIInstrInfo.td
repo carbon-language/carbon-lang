@@ -69,6 +69,11 @@ class sopk <bits<5> si, bits<5> vi = si> {
   field bits<5> VI = vi;
 }
 
+class dsop <bits<8> si, bits<8> vi = si> {
+  field bits<8> SI = si;
+  field bits<8> VI = vi;
+}
+
 // Specify an SMRD opcode for SI and SMEM opcode for VI
 
 // FIXME: This should really be bits<5> si, Tablegen crashes if
@@ -2591,6 +2596,21 @@ class DS_Off16_Real_vi <bits<8> op, string opName, dag outs, dag ins, string asm
   let offset1 = offset{15-8};
 }
 
+multiclass DS_1A_RET_ <dsop op, string opName, RegisterClass rc,
+  dag outs = (outs rc:$vdst),
+  dag ins = (ins VGPR_32:$addr, offset:$offset, gds:$gds),
+  string asm = opName#" $vdst, $addr"#"$offset$gds"> {
+
+  def "" : DS_Pseudo <opName, outs, ins, []>;
+
+  let data0 = 0, data1 = 0 in {
+    def _si : DS_Off16_Real_si <op.SI, opName, outs, ins, asm>;
+    def _vi : DS_Off16_Real_vi <op.VI, opName, outs, ins, asm>;
+  }
+}
+
+// TODO: DS_1A_RET can be inherited from DS_1A_RET_ but its not working
+// for some reason. In fact we can remove this class if use dsop everywhere
 multiclass DS_1A_RET <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs rc:$vdst),
   dag ins = (ins VGPR_32:$addr, offset:$offset, gds:$gds),
