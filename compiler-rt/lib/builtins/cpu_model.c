@@ -706,7 +706,7 @@ struct __processor_model {
   unsigned int __cpu_type;
   unsigned int __cpu_subtype;
   unsigned int __cpu_features[1];
-} __cpu_model;
+} __cpu_model = { 0, 0, 0, { 0 } };
 
 /* A constructor function that is sets __cpu_model and __cpu_features with
    the right values.  This needs to run only once.  This constructor is
