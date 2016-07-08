@@ -67,7 +67,10 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   assert(F && "Illegal to upgrade a non-existent Function.");
 
   // Quickly eliminate it, if it's not a candidate.
-  StringRef Name = F->getName();
+  // Make a copy of the name so that we don't need to worry about the life-time
+  // of StringRef.
+  std::string NameStr = F->getName().str();
+  StringRef Name = NameStr;
   if (Name.size() <= 8 || !Name.startswith("llvm."))
     return false;
   Name = Name.substr(5); // Strip off "llvm."
