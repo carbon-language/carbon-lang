@@ -119,6 +119,31 @@ enum ProcessorFeatures {
   FEATURE_EM64T
 };
 
+static bool isCpuIdSupported() {
+#if defined(i386) || defined(__i386__)
+  int __cpuid_supported;
+  __asm("  pushfl\n"
+        "  popl   %%eax\n"
+        "  movl   %%eax,%%ecx\n"
+        "  xorl   $0x00200000,%%eax\n"
+        "  pushl  %%eax\n"
+        "  popfl\n"
+        "  pushfl\n"
+        "  popl   %%eax\n"
+        "  movl   $0,%0\n"
+        "  cmpl   %%eax,%%ecx\n"
+        "  je     1f\n"
+        "  movl   $1,%0\n"
+        "1:"
+        : "=r"(__cpuid_supported)
+        :
+        : "eax", "ecx");
+  if (!__cpuid_supported)
+    return 0;
+#endif
+  return 1;
+}
+
 #if defined(i386) || defined(__i386__) || defined(__x86__) ||                  \
     defined(_M_IX86) || defined(__x86_64__) || defined(_M_AMD64) ||            \
     defined(_M_X64)
@@ -706,7 +731,7 @@ struct __processor_model {
   unsigned int __cpu_type;
   unsigned int __cpu_subtype;
   unsigned int __cpu_features[1];
-} __cpu_model = { 0, 0, 0, { 0 } };
+} __cpu_model = {0, 0, 0, {0}};
 
 /* A constructor function that is sets __cpu_model and __cpu_features with
    the right values.  This needs to run only once.  This constructor is
@@ -725,6 +750,9 @@ __cpu_indicator_init(void) {
   /* This function needs to run just once.  */
   if (__cpu_model.__cpu_vendor)
     return 0;
+
+  if (!isCpuIdSupported())
+    return -1;
 
   /* Assume cpuid insn present. Run in level 0 to get vendor id. */
   if (getX86CpuIDAndInfo(0, &MaxLeaf, &Vendor, &ECX, &EDX)) {
