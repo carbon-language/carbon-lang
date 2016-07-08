@@ -642,12 +642,8 @@ bool SILowerControlFlow::runOnMachineFunction(MachineFunction &MF) {
       if (TII->isFLAT(MI))
         NeedFlat = true;
 
-      for (const auto &Def : I->defs()) {
-        if (Def.isReg() && Def.isDef() && Def.getReg() == AMDGPU::EXEC) {
-          ExecModified = true;
-          break;
-        }
-      }
+      if (I->definesRegister(AMDGPU::EXEC, TRI))
+        ExecModified = true;
 
       switch (MI.getOpcode()) {
         default: break;
