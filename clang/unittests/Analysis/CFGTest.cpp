@@ -48,7 +48,7 @@ TEST(CFG, RangeBasedForOverDependentType) {
   Finder.addMatcher(ast_matchers::functionDecl().bind("func"), &Callback);
   std::unique_ptr<tooling::FrontendActionFactory> Factory(
       tooling::newFrontendActionFactory(&Finder));
-  std::vector<std::string> Args = {"-std=c++11"};
+  std::vector<std::string> Args = {"-std=c++11", "-fno-delayed-template-parsing"};
   ASSERT_TRUE(tooling::runToolOnCodeWithArgs(Factory->create(), Code, Args));
   EXPECT_TRUE(Callback.SawFunctionBody);
 }
