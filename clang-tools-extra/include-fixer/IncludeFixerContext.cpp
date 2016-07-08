@@ -34,6 +34,10 @@ tooling::Replacement
 IncludeFixerContext::createSymbolReplacement(llvm::StringRef FilePath,
                                              size_t Idx) {
   assert(Idx < MatchedSymbols.size());
+  // No need to add missing qualifiers if SymbolIndentifer has a global scope
+  // operator "::".
+  if (getSymbolIdentifier().startswith("::"))
+    return tooling::Replacement();
   std::string QualifiedName = MatchedSymbols[Idx].getQualifiedName();
   // For nested classes, the qualified name constructed from database misses
   // some stripped qualifiers, because when we search a symbol in database,

@@ -242,18 +242,18 @@ TEST(IncludeFixer, FixNamespaceQualifiers) {
   EXPECT_EQ("#include \"bar.h\"\nnamespace a {\nb::bar::t b;\n}\n",
             runIncludeFixer("namespace a {\nbar::t b;\n}\n"));
 
-  EXPECT_EQ(
-      "#include \"color.h\"\nint test = a::b::Green;\n",
-      runIncludeFixer("int test = Green;\n"));
+  EXPECT_EQ("#include \"color.h\"\nint test = a::b::Green;\n",
+            runIncludeFixer("int test = Green;\n"));
   EXPECT_EQ("#include \"color.h\"\nnamespace d {\nint test = a::b::Green;\n}\n",
             runIncludeFixer("namespace d {\nint test = Green;\n}\n"));
   EXPECT_EQ("#include \"color.h\"\nnamespace a {\nint test = b::Green;\n}\n",
             runIncludeFixer("namespace a {\nint test = Green;\n}\n"));
 
-  // FIXME: Fix-namespace should not fix the global qualified identifier.
-  EXPECT_EQ(
-      "#include \"bar.h\"\na::b::bar b;\n",
-      runIncludeFixer("::a::b::bar b;\n"));
+  // Test global scope operator.
+  EXPECT_EQ("#include \"bar.h\"\n::a::b::bar b;\n",
+            runIncludeFixer("::a::b::bar b;\n"));
+  EXPECT_EQ("#include \"bar.h\"\nnamespace a {\n::a::b::bar b;\n}\n",
+            runIncludeFixer("namespace a {\n::a::b::bar b;\n}\n"));
 }
 
 } // namespace

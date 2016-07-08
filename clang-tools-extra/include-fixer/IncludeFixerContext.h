@@ -30,6 +30,7 @@ public:
   /// symbol.
   tooling::Replacement createSymbolReplacement(llvm::StringRef FilePath,
                                                size_t Idx = 0);
+
   /// \brief Get symbol name.
   llvm::StringRef getSymbolIdentifier() const { return SymbolIdentifier; }
 
