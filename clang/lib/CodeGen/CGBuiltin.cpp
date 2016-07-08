@@ -6730,10 +6730,9 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   // TODO: The builtins could be removed if the SSE header files used vector
   // extension comparisons directly (vector ordered/unordered may need
   // additional support via __builtin_isnan()).
-  auto getVectorFCmpIR = [this, &Ops](CmpInst::Predicate Pred,
-                                      llvm::Type *VecTy) {
+  auto getVectorFCmpIR = [this, &Ops](CmpInst::Predicate Pred) {
     Value *Cmp = Builder.CreateFCmp(Pred, Ops[0], Ops[1]);
-    llvm::VectorType *FPVecTy = cast<llvm::VectorType>(VecTy);
+    llvm::VectorType *FPVecTy = cast<llvm::VectorType>(Ops[0]->getType());
     llvm::VectorType *IntVecTy = llvm::VectorType::getInteger(FPVecTy);
     Value *Sext = Builder.CreateSExt(Cmp, IntVecTy);
     return Builder.CreateBitCast(Sext, FPVecTy);
@@ -7255,28 +7254,28 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   // SSE packed comparison intrinsics
   case X86::BI__builtin_ia32_cmpeqps:
   case X86::BI__builtin_ia32_cmpeqpd:
-    return getVectorFCmpIR(CmpInst::FCMP_OEQ, Ops[0]->getType());
+    return getVectorFCmpIR(CmpInst::FCMP_OEQ);
   case X86::BI__builtin_ia32_cmpltps:
   case X86::BI__builtin_ia32_cmpltpd:
-    return getVectorFCmpIR(CmpInst::FCMP_OLT, Ops[0]->getType());
+    return getVectorFCmpIR(CmpInst::FCMP_OLT);
   case X86::BI__builtin_ia32_cmpleps:
   case X86::BI__builtin_ia32_cmplepd:
-    return getVectorFCmpIR(CmpInst::FCMP_OLE, Ops[0]->getType());
+    return getVectorFCmpIR(CmpInst::FCMP_OLE);
   case X86::BI__builtin_ia32_cmpunordps:
   case X86::BI__builtin_ia32_cmpunordpd:
-    return getVectorFCmpIR(CmpInst::FCMP_UNO, Ops[0]->getType());
+    return getVectorFCmpIR(CmpInst::FCMP_UNO);
   case X86::BI__builtin_ia32_cmpneqps:
   case X86::BI__builtin_ia32_cmpneqpd:
-    return getVectorFCmpIR(CmpInst::FCMP_UNE, Ops[0]->getType());
+    return getVectorFCmpIR(CmpInst::FCMP_UNE);
   case X86::BI__builtin_ia32_cmpnltps:
   case X86::BI__builtin_ia32_cmpnltpd:
-    return getVectorFCmpIR(CmpInst::FCMP_UGE, Ops[0]->getType());
+    return getVectorFCmpIR(CmpInst::FCMP_UGE);
   case X86::BI__builtin_ia32_cmpnleps:
   case X86::BI__builtin_ia32_cmpnlepd:
-    return getVectorFCmpIR(CmpInst::FCMP_UGT, Ops[0]->getType());
+    return getVectorFCmpIR(CmpInst::FCMP_UGT);
   case X86::BI__builtin_ia32_cmpordps:
   case X86::BI__builtin_ia32_cmpordpd:
-    return getVectorFCmpIR(CmpInst::FCMP_ORD, Ops[0]->getType());
+    return getVectorFCmpIR(CmpInst::FCMP_ORD);
   case X86::BI__builtin_ia32_cmpps:
   case X86::BI__builtin_ia32_cmpps256:
   case X86::BI__builtin_ia32_cmppd:
@@ -7295,11 +7294,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
       case 6: Pred = FCmpInst::FCMP_UGT; break;
       case 7: Pred = FCmpInst::FCMP_ORD; break;
       }
-      Value *Cmp = Builder.CreateFCmp(Pred, Ops[0], Ops[1]);
-      auto *FPVecTy = cast<llvm::VectorType>(Ops[0]->getType());
-      auto *IntVecTy = llvm::VectorType::getInteger(FPVecTy);
-      Value *Sext = Builder.CreateSExt(Cmp, IntVecTy);
-      return Builder.CreateBitCast(Sext, FPVecTy);
+      return getVectorFCmpIR(Pred);
     }
 
     // We can't handle 8-31 immediates with native IR, use the intrinsic.
