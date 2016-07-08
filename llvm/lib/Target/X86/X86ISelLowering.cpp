@@ -24857,9 +24857,26 @@ static bool matchPermuteVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
   if (SrcVT.is256BitVector() && !Subtarget.hasAVX2())
     FloatDomain = true;
 
-  // TODO - support LaneCrossing for AVX2 PERMQ/PERMPD
-  if (is128BitLaneCrossingShuffleMask(MaskEltVT, Mask))
+  // Check for lane crossing permutes.
+  if (is128BitLaneCrossingShuffleMask(MaskEltVT, Mask)) {
+    // PERMPD/PERMQ permutes within a 256-bit vector (AVX2+).
+    if (Subtarget.hasAVX2() && SrcVT.is256BitVector() && Mask.size() == 4) {
+      Shuffle = X86ISD::VPERMI;
+      ShuffleVT = (FloatDomain ? MVT::v4f64 : MVT::v4i64);
+      PermuteImm = getV4X86ShuffleImm(Mask);
+      return true;
+    }
+    if (Subtarget.hasAVX512() && SrcVT.is512BitVector() && Mask.size() == 8) {
+      SmallVector<int, 4> RepeatedMask;
+      if (is256BitLaneRepeatedShuffleMask(MVT::v8f64, Mask, RepeatedMask)) {
+        Shuffle = X86ISD::VPERMI;
+        ShuffleVT = (FloatDomain ? MVT::v8f64 : MVT::v8i64);
+        PermuteImm = getV4X86ShuffleImm(RepeatedMask);
+        return true;
+      }
+    }
     return false;
+  }
 
   // VPERMILPD can permute with a non-repeating shuffle.
   if (FloatDomain && MaskScalarSizeInBits == 64) {

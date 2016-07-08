@@ -184,6 +184,24 @@ define <4 x double> @combine_permd_as_vpbroadcastsd256(<2 x double> %a) {
   ret <4 x double> %4
 }
 
+define <8 x i32> @combine_permd_as_permq(<8 x i32> %a) {
+; CHECK-LABEL: combine_permd_as_permq:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,2,1]
+; CHECK-NEXT:    retq
+  %1 = call <8 x i32> @llvm.x86.avx2.permd(<8 x i32> %a, <8 x i32> <i32 0, i32 1, i32 4, i32 5, i32 4, i32 5, i32 2, i32 3>)
+  ret <8 x i32> %1
+}
+
+define <8 x float> @combine_permps_as_permpd(<8 x float> %a) {
+; CHECK-LABEL: combine_permps_as_permpd:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[3,2,0,1]
+; CHECK-NEXT:    retq
+  %1 = call <8 x float> @llvm.x86.avx2.permps(<8 x float> %a, <8 x i32> <i32 6, i32 7, i32 4, i32 5, i32 0, i32 1, i32 2, i32 3>)
+  ret <8 x float> %1
+}
+
 define <32 x i8> @combine_pshufb_as_pslldq(<32 x i8> %a0) {
 ; CHECK-LABEL: combine_pshufb_as_pslldq:
 ; CHECK:       # BB#0:
