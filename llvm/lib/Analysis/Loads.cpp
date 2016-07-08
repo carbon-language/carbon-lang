@@ -297,27 +297,17 @@ llvm::DefMaxInstsToScan("available-load-scan-limit", cl::init(6), cl::Hidden,
            "to scan backward from a given instruction, when searching for "
            "available loaded value"));
 
-Value *llvm::FindAvailableLoadedValue(LoadInst *Load, BasicBlock *ScanBB,
+
+Value *llvm::FindAvailableLoadedValue(Value *Ptr, Type *AccessTy,
+                                      bool IsAtomicMemOp, BasicBlock *ScanBB,
                                       BasicBlock::iterator &ScanFrom,
                                       unsigned MaxInstsToScan,
                                       AliasAnalysis *AA, AAMDNodes *AATags,
                                       bool *IsLoadCSE) {
+
   if (MaxInstsToScan == 0)
     MaxInstsToScan = ~0U;
-
-  Value *Ptr = Load->getPointerOperand();
-  Type *AccessTy = Load->getType();
-
-  // We can never remove a volatile load
-  if (Load->isVolatile())
-    return nullptr;
-
-  // Anything stronger than unordered is currently unimplemented.
-  if (!Load->isUnordered())
-    return nullptr;
-
   const DataLayout &DL = ScanBB->getModule()->getDataLayout();
-
   // Try to get the store size for the type.
   uint64_t AccessSize = DL.getTypeStoreSize(AccessTy);
 
@@ -348,7 +338,7 @@ Value *llvm::FindAvailableLoadedValue(LoadInst *Load, BasicBlock *ScanBB,
 
         // We can value forward from an atomic to a non-atomic, but not the
         // other way around.
-        if (LI->isAtomic() < Load->isAtomic())
+        if (LI->isAtomic() < IsAtomicMemOp)
           return nullptr;
 
         if (AATags)
@@ -369,7 +359,7 @@ Value *llvm::FindAvailableLoadedValue(LoadInst *Load, BasicBlock *ScanBB,
 
         // We can value forward from an atomic to a non-atomic, but not the
         // other way around.
-        if (SI->isAtomic() < Load->isAtomic())
+        if (SI->isAtomic() < IsAtomicMemOp)
           return nullptr;
 
         if (AATags)
@@ -412,4 +402,25 @@ Value *llvm::FindAvailableLoadedValue(LoadInst *Load, BasicBlock *ScanBB,
   // Got to the start of the block, we didn't find it, but are done for this
   // block.
   return nullptr;
+}
+
+
+Value *llvm::FindAvailableLoadedValue(LoadInst *Load, BasicBlock *ScanBB,
+                                      BasicBlock::iterator &ScanFrom,
+                                      unsigned MaxInstsToScan,
+                                      AliasAnalysis *AA, AAMDNodes *AATags,
+                                      bool *IsLoadCSE) {
+
+  // We can never remove a volatile load
+  if (Load->isVolatile())
+    return nullptr;
+
+  // Anything stronger than unordered is currently unimplemented.
+  if (!Load->isUnordered())
+    return nullptr;
+
+  // Return the full value of the load if available.
+  return FindAvailableLoadedValue(Load->getPointerOperand(), Load->getType(),
+                                  Load->isAtomic(), ScanBB, ScanFrom,
+                                  MaxInstsToScan, AA, AATags, IsLoadCSE);
 }
