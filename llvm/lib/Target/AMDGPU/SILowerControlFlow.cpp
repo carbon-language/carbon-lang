@@ -80,7 +80,6 @@ private:
 
   void If(MachineInstr &MI);
   void Else(MachineInstr &MI, bool ExecModified);
-  void Break(MachineInstr &MI);
   void IfBreak(MachineInstr &MI);
   void ElseBreak(MachineInstr &MI);
   void Loop(MachineInstr &MI);
@@ -273,20 +272,6 @@ void SILowerControlFlow::Else(MachineInstr &MI, bool ExecModified) {
   BuildMI(MBB, &MI, DL, TII->get(AMDGPU::SI_MASK_BRANCH))
     .addOperand(MI.getOperand(2))
     .addReg(Dst);
-
-  MI.eraseFromParent();
-}
-
-void SILowerControlFlow::Break(MachineInstr &MI) {
-  MachineBasicBlock &MBB = *MI.getParent();
-  DebugLoc DL = MI.getDebugLoc();
-
-  unsigned Dst = MI.getOperand(0).getReg();
-  unsigned Src = MI.getOperand(1).getReg();
-
-  BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_OR_B64), Dst)
-          .addReg(AMDGPU::EXEC)
-          .addReg(Src);
 
   MI.eraseFromParent();
 }
@@ -656,10 +641,6 @@ bool SILowerControlFlow::runOnMachineFunction(MachineFunction &MF) {
 
         case AMDGPU::SI_ELSE:
           Else(MI, ExecModified);
-          break;
-
-        case AMDGPU::SI_BREAK:
-          Break(MI);
           break;
 
         case AMDGPU::SI_IF_BREAK:
