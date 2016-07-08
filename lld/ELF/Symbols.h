@@ -306,7 +306,7 @@ public:
 
   // If non-null the symbol has a Thunk that may be used as an alternative
   // destination for callers of this Symbol.
-  Thunk<ELFT> *ThunkData;
+  Thunk<ELFT> *ThunkData = nullptr;
   bool needsCopy() const { return this->NeedsCopyOrPltAddr && !this->isFunc(); }
 };
 
