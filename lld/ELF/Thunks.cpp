@@ -7,12 +7,18 @@
 //
 //===---------------------------------------------------------------------===//
 //
-// This file contains both the Target independent and Target specific Thunk
-// classes
+// This file contains Thunk subclasses.
 //
-// A Thunk Object represents a single Thunk that will be written to an
-// InputSection when the InputSection contents are written. The InputSection
-// maintains a list of Thunks that it owns.
+// A thunk is a small piece of code written after an input section
+// which is used to jump between "incompatible" functions
+// such as MIPS PIC and non-PIC or ARM non-Thumb and Thumb functions.
+//
+// If a jump target is too far and its address doesn't fit to a
+// short jump instruction, we need to create a thunk too, but we
+// haven't supported it yet.
+//
+// i386 and x86-64 don't need thunks.
+//
 //===---------------------------------------------------------------------===//
 
 #include "Thunks.h"
