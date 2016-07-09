@@ -948,69 +948,16 @@ void SCCPSolver::visitCmpInst(CmpInst &I) {
 void SCCPSolver::visitExtractElementInst(ExtractElementInst &I) {
   // TODO : SCCP does not handle vectors properly.
   return markOverdefined(&I);
-
-#if 0
-  LatticeVal &ValState = getValueState(I.getOperand(0));
-  LatticeVal &IdxState = getValueState(I.getOperand(1));
-
-  if (ValState.isOverdefined() || IdxState.isOverdefined())
-    markOverdefined(&I);
-  else if(ValState.isConstant() && IdxState.isConstant())
-    markConstant(&I, ConstantExpr::getExtractElement(ValState.getConstant(),
-                                                     IdxState.getConstant()));
-#endif
 }
 
 void SCCPSolver::visitInsertElementInst(InsertElementInst &I) {
   // TODO : SCCP does not handle vectors properly.
   return markOverdefined(&I);
-#if 0
-  LatticeVal &ValState = getValueState(I.getOperand(0));
-  LatticeVal &EltState = getValueState(I.getOperand(1));
-  LatticeVal &IdxState = getValueState(I.getOperand(2));
-
-  if (ValState.isOverdefined() || EltState.isOverdefined() ||
-      IdxState.isOverdefined())
-    markOverdefined(&I);
-  else if(ValState.isConstant() && EltState.isConstant() &&
-          IdxState.isConstant())
-    markConstant(&I, ConstantExpr::getInsertElement(ValState.getConstant(),
-                                                    EltState.getConstant(),
-                                                    IdxState.getConstant()));
-  else if (ValState.isUndefined() && EltState.isConstant() &&
-           IdxState.isConstant())
-    markConstant(&I,ConstantExpr::getInsertElement(UndefValue::get(I.getType()),
-                                                   EltState.getConstant(),
-                                                   IdxState.getConstant()));
-#endif
 }
 
 void SCCPSolver::visitShuffleVectorInst(ShuffleVectorInst &I) {
   // TODO : SCCP does not handle vectors properly.
   return markOverdefined(&I);
-#if 0
-  LatticeVal &V1State   = getValueState(I.getOperand(0));
-  LatticeVal &V2State   = getValueState(I.getOperand(1));
-  LatticeVal &MaskState = getValueState(I.getOperand(2));
-
-  if (MaskState.isUndefined() ||
-      (V1State.isUndefined() && V2State.isUndefined()))
-    return;  // Undefined output if mask or both inputs undefined.
-
-  if (V1State.isOverdefined() || V2State.isOverdefined() ||
-      MaskState.isOverdefined()) {
-    markOverdefined(&I);
-  } else {
-    // A mix of constant/undef inputs.
-    Constant *V1 = V1State.isConstant() ?
-        V1State.getConstant() : UndefValue::get(I.getType());
-    Constant *V2 = V2State.isConstant() ?
-        V2State.getConstant() : UndefValue::get(I.getType());
-    Constant *Mask = MaskState.isConstant() ?
-      MaskState.getConstant() : UndefValue::get(I.getOperand(2)->getType());
-    markConstant(&I, ConstantExpr::getShuffleVector(V1, V2, Mask));
-  }
-#endif
 }
 
 // Handle getelementptr instructions.  If all operands are constants then we
