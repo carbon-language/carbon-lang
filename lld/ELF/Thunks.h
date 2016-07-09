@@ -30,12 +30,15 @@ template <class ELFT> class InputSectionBase;
 // is stored in a field of the Symbol Destination.
 // Thunks to be written to an InputSection are recorded by the InputSection.
 template <class ELFT> class Thunk {
+  typedef typename ELFT::uint uintX_t;
+
 public:
-  virtual uint32_t size() const { return 0; }
-  typename ELFT::uint getVA() const;
-  virtual void writeTo(uint8_t *Buf) const {};
   Thunk(const SymbolBody &Destination, const InputSection<ELFT> &Owner);
   virtual ~Thunk();
+
+  virtual uint32_t size() const = 0;
+  virtual void writeTo(uint8_t *Buf) const = 0;
+  uintX_t getVA() const;
 
 protected:
   const SymbolBody &Destination;
