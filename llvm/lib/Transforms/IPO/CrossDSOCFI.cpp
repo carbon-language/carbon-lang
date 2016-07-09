@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/IPO/CrossDSOCFI.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/Statistic.h"
@@ -30,6 +30,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
@@ -152,4 +153,12 @@ bool CrossDSOCFI::runOnModule(Module &M) {
     return false;
   buildCFICheck(M);
   return true;
+}
+
+PreservedAnalyses CrossDSOCFIPass::run(Module &M, AnalysisManager<Module> &AM) {
+  CrossDSOCFI Impl;
+  bool Changed = Impl.runOnModule(M);
+  if (!Changed)
+    return PreservedAnalyses::all();
+  return PreservedAnalyses::none();
 }
