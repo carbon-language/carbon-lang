@@ -81,9 +81,7 @@ public:
   void writeTo(uint8_t *Buf) const override;
 };
 
-// Mips thunk.
-// Only the MIPS LA25 Thunk is supported, the implementation is delegated
-// to the MipsTargetInfo class in Target.cpp
+// MIPS LA25 thunk
 template <class ELFT> class MipsThunk final : public Thunk<ELFT> {
 public:
   MipsThunk(const SymbolBody &Dest, const InputSection<ELFT> &Owner)
@@ -155,10 +153,17 @@ void ThumbToARMV7PILongThunk<ELFT>::writeTo(uint8_t *Buf) const {
   Target->relocateOne(Buf + 4, R_ARM_THM_MOVT_PREL, S - P - 8);
 }
 
+// Write MIPS LA25 thunk code to call PIC function from the non-PIC one.
 template <class ELFT> void MipsThunk<ELFT>::writeTo(uint8_t *Buf) const {
-  const SymbolBody &D = this->Destination;
-  uint64_t S = D.getVA<ELFT>();
-  Target->writeThunk(Buf, S);
+  const endianness E = ELFT::TargetEndianness;
+
+  uint64_t S = this->Destination.template getVA<ELFT>();
+  write32<E>(Buf, 0x3c190000);                // lui   $25, %hi(func)
+  write32<E>(Buf + 4, 0x08000000 | (S >> 2)); // j     func
+  write32<E>(Buf + 8, 0x27390000);            // addiu $25, $25, %lo(func)
+  write32<E>(Buf + 12, 0x00000000);           // nop
+  Target->relocateOne(Buf, R_MIPS_HI16, S);
+  Target->relocateOne(Buf + 8, R_MIPS_LO16, S);
 }
 
 template <class ELFT>
