@@ -247,10 +247,10 @@ template void addThunk<ELF64LE>(uint32_t, SymbolBody &,
 template void addThunk<ELF64BE>(uint32_t, SymbolBody &,
                                 InputSection<ELF64BE> &);
 
-template uint32_t Thunk<ELF32LE>::getVA() const;
-template uint32_t Thunk<ELF32BE>::getVA() const;
-template uint64_t Thunk<ELF64LE>::getVA() const;
-template uint64_t Thunk<ELF64BE>::getVA() const;
+template class Thunk<ELF32LE>;
+template class Thunk<ELF32BE>;
+template class Thunk<ELF64LE>;
+template class Thunk<ELF64BE>;
 
 } // namespace elf
 } // namespace lld
