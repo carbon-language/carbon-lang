@@ -1455,14 +1455,13 @@ MachineInstr *SIInstrInfo::convertToThreeAddress(MachineFunction::iterator &MBB,
 bool SIInstrInfo::isSchedulingBoundary(const MachineInstr &MI,
                                        const MachineBasicBlock *MBB,
                                        const MachineFunction &MF) const {
+  // XXX - Do we want the SP check in the base implementation?
+
   // Target-independent instructions do not have an implicit-use of EXEC, even
   // when they operate on VGPRs. Treating EXEC modifications as scheduling
   // boundaries prevents incorrect movements of such instructions.
-  const SIRegisterInfo *TRI = MF.getSubtarget<SISubtarget>().getRegisterInfo();
-  if (MI.modifiesRegister(AMDGPU::EXEC, TRI))
-    return true;
-
-  return AMDGPUInstrInfo::isSchedulingBoundary(MI, MBB, MF);
+  return TargetInstrInfo::isSchedulingBoundary(MI, MBB, MF) ||
+         MI.modifiesRegister(AMDGPU::EXEC, &RI);
 }
 
 bool SIInstrInfo::isInlineConstant(const APInt &Imm) const {
