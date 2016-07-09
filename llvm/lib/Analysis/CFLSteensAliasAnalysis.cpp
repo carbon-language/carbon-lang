@@ -118,8 +118,6 @@ class GetEdgesVisitor : public InstVisitor<GetEdgesVisitor, void> {
 
   CFLGraph &Graph;
   SmallVectorImpl<Value *> &ReturnValues;
-  SmallPtrSetImpl<Value *> &Externals;
-  SmallPtrSetImpl<Value *> &Escapes;
   SmallVectorImpl<InstantiatedRelation> &InstantiatedRelations;
   SmallVectorImpl<InstantiatedAttr> &InstantiatedAttrs;
 
@@ -131,12 +129,16 @@ class GetEdgesVisitor : public InstVisitor<GetEdgesVisitor, void> {
   }
 
   void addNode(Value *Val) {
+    assert(Val != nullptr);
     if (!Graph.addNode(Val))
       return;
 
-    if (isa<GlobalValue>(Val))
-      Externals.insert(Val);
-    else if (auto CExpr = dyn_cast<ConstantExpr>(Val))
+    if (isa<GlobalValue>(Val)) {
+      Graph.addAttr(Val, getGlobalOrArgAttrFromValue(*Val));
+      // Currently we do not attempt to be smart on globals
+      InstantiatedAttrs.push_back(
+          InstantiatedAttr{InstantiatedValue{Val, 1}, getAttrUnknown()});
+    } else if (auto CExpr = dyn_cast<ConstantExpr>(Val))
       if (hasUsefulEdges(CExpr))
         visitConstantExpr(CExpr);
   }
@@ -147,6 +149,7 @@ class GetEdgesVisitor : public InstVisitor<GetEdgesVisitor, void> {
   }
 
   void addEdge(Value *From, Value *To, EdgeType Type) {
+    assert(From != nullptr && To != nullptr);
     if (!From->getType()->isPointerTy() || !To->getType()->isPointerTy())
       return;
     addNode(From);
@@ -158,12 +161,9 @@ class GetEdgesVisitor : public InstVisitor<GetEdgesVisitor, void> {
 public:
   GetEdgesVisitor(CFLSteensAAResult &AA, const TargetLibraryInfo &TLI,
                   CFLGraph &Graph, SmallVectorImpl<Value *> &ReturnValues,
-                  SmallPtrSetImpl<Value *> &Externals,
-                  SmallPtrSetImpl<Value *> &Escapes,
                   SmallVectorImpl<InstantiatedRelation> &InstantiatedRelations,
                   SmallVectorImpl<InstantiatedAttr> &InstantiatedAttrs)
       : AA(AA), TLI(TLI), Graph(Graph), ReturnValues(ReturnValues),
-        Externals(Externals), Escapes(Escapes),
         InstantiatedRelations(InstantiatedRelations),
         InstantiatedAttrs(InstantiatedAttrs) {}
 
@@ -334,13 +334,22 @@ public:
     // anything, too (unless the result is marked noalias).
     if (!CS.onlyReadsMemory())
       for (Value *V : CS.args()) {
-        if (V->getType()->isPointerTy())
-          Escapes.insert(V);
+        if (V->getType()->isPointerTy()) {
+          // The argument itself escapes.
+          addNodeWithAttr(V, getAttrEscaped());
+          // The fate of argument memory is unknown. Note that since AliasAttrs
+          // is transitive with respect to dereference, we only need to specify
+          // it for the first-level memory.
+          InstantiatedAttrs.push_back(
+              InstantiatedAttr{InstantiatedValue{V, 1}, getAttrUnknown()});
+        }
       }
 
     if (Inst->getType()->isPointerTy()) {
       auto *Fn = CS.getCalledFunction();
       if (Fn == nullptr || !Fn->doesNotAlias(0))
+        // No need to call addNodeWithAttr() since we've added Inst at the
+        // beginning of this function and we know it is not a global.
         Graph.addAttr(Inst, getAttrUnknown());
     }
   }
@@ -412,8 +421,6 @@ class CFLGraphBuilder {
   SmallVector<Value *, 4> ReturnedValues;
 
   // Auxiliary structures used by the builder
-  SmallPtrSet<Value *, 8> ExternalValues;
-  SmallPtrSet<Value *, 8> EscapedValues;
   SmallVector<InstantiatedRelation, 8> InstantiatedRelations;
   SmallVector<InstantiatedAttr, 8> InstantiatedAttrs;
 
@@ -432,7 +439,10 @@ class CFLGraphBuilder {
   void addArgumentToGraph(Argument &Arg) {
     if (Arg.getType()->isPointerTy()) {
       Graph.addNode(&Arg);
-      ExternalValues.insert(&Arg);
+      Graph.addAttr(&Arg, getGlobalOrArgAttrFromValue(Arg));
+      // Pointees of a formal parameter is known to the caller
+      InstantiatedAttrs.push_back(
+          InstantiatedAttr{InstantiatedValue{&Arg, 1}, getAttrCaller()});
     }
   }
 
@@ -446,8 +456,8 @@ class CFLGraphBuilder {
     if (!hasUsefulEdges(&Inst))
       return;
 
-    GetEdgesVisitor(Analysis, TLI, Graph, ReturnedValues, ExternalValues,
-                    EscapedValues, InstantiatedRelations, InstantiatedAttrs)
+    GetEdgesVisitor(Analysis, TLI, Graph, ReturnedValues, InstantiatedRelations,
+                    InstantiatedAttrs)
         .visit(Inst);
   }
 
@@ -472,12 +482,6 @@ public:
   const CFLGraph &getCFLGraph() const { return Graph; }
   const SmallVector<Value *, 4> &getReturnValues() const {
     return ReturnedValues;
-  }
-  const SmallPtrSet<Value *, 8> &getExternalValues() const {
-    return ExternalValues;
-  }
-  const SmallPtrSet<Value *, 8> &getEscapedValues() const {
-    return EscapedValues;
   }
   const SmallVector<InstantiatedRelation, 8> &getInstantiatedRelations() const {
     return InstantiatedRelations;
@@ -666,19 +670,6 @@ CFLSteensAAResult::FunctionInfo CFLSteensAAResult::buildSetsFrom(Function *Fn) {
     }
   }
 
-  // Special handling for globals and arguments
-  for (auto *External : GraphBuilder.getExternalValues()) {
-    SetBuilder.add(External);
-    auto Attr = getGlobalOrArgAttrFromValue(*External);
-    if (Attr.any()) {
-      SetBuilder.noteAttributes(External, Attr);
-      if (isa<GlobalValue>(External))
-        SetBuilder.addAttributesBelow(External, 1, getAttrUnknown());
-      else
-        SetBuilder.addAttributesBelow(External, 1, getAttrCaller());
-    }
-  }
-
   // Special handling for interprocedural aliases
   for (auto &Edge : GraphBuilder.getInstantiatedRelations()) {
     auto FromVal = Edge.From.Val;
@@ -694,13 +685,6 @@ CFLSteensAAResult::FunctionInfo CFLSteensAAResult::buildSetsFrom(Function *Fn) {
     auto Val = IPAttr.IValue.Val;
     SetBuilder.add(Val);
     SetBuilder.addAttributesBelow(Val, IPAttr.IValue.DerefLevel, IPAttr.Attr);
-  }
-
-  // Special handling for opaque external functions
-  for (auto *Escape : GraphBuilder.getEscapedValues()) {
-    SetBuilder.add(Escape);
-    SetBuilder.noteAttributes(Escape, getAttrEscaped());
-    SetBuilder.addAttributesBelow(Escape, 1, getAttrUnknown());
   }
 
   return FunctionInfo(*Fn, GraphBuilder.getReturnValues(), SetBuilder.build());
