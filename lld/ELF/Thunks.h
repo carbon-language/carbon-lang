@@ -34,8 +34,8 @@ public:
   Thunk(const SymbolBody &Destination, const InputSection<ELFT> &Owner);
   virtual ~Thunk();
 
-  virtual uint32_t size() const = 0;
-  virtual void writeTo(uint8_t *Buf) const = 0;
+  virtual uint32_t size() const { return 0; }
+  virtual void writeTo(uint8_t *Buf) const {}
   uintX_t getVA() const;
 
 protected:
