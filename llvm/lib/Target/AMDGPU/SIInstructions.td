@@ -2021,12 +2021,11 @@ let Uses = [EXEC], Defs = [EXEC, VCC, M0],
 
 class SI_INDIRECT_SRC<RegisterClass rc> : InstSI <
   (outs VGPR_32:$vdst, SReg_64:$sdst),
-  (ins rc:$src, VSrc_32:$idx, i32imm:$offset)
->;
+  (ins rc:$src, VS_32:$idx, i32imm:$offset)>;
 
 class SI_INDIRECT_DST<RegisterClass rc> : InstSI <
   (outs rc:$vdst, SReg_64:$sdst),
-  (ins unknown:$src, VSrc_32:$idx, i32imm:$offset, VGPR_32:$val)> {
+  (ins unknown:$src, VS_32:$idx, i32imm:$offset, VGPR_32:$val)> {
   let Constraints = "$src = $vdst";
 }
 
@@ -3308,29 +3307,16 @@ def : MTBUF_StoreResource <v4i32, 4, TBUFFER_STORE_FORMAT_XYZW>;
 /********** ====================== **********/
 
 multiclass SI_INDIRECT_Pattern <ValueType vt, ValueType eltvt, string VecSize> {
-
-  // 1. Extract with offset
+  // Extract with offset
   def : Pat<
-    (eltvt (extractelt vt:$vec, (add i32:$idx, imm:$off))),
-    (!cast<Instruction>("SI_INDIRECT_SRC_"#VecSize) $vec, $idx, imm:$off)
+    (eltvt (extractelt vt:$src, (MOVRELSOffset i32:$idx, (i32 imm:$offset)))),
+    (!cast<Instruction>("SI_INDIRECT_SRC_"#VecSize) $src, $idx, imm:$offset)
   >;
 
-  // 2. Extract without offset
+  // Insert with offset
   def : Pat<
-    (eltvt (extractelt vt:$vec, i32:$idx)),
-    (!cast<Instruction>("SI_INDIRECT_SRC_"#VecSize) $vec, $idx, 0)
-  >;
-
-  // 3. Insert with offset
-  def : Pat<
-    (insertelt vt:$vec, eltvt:$val, (add i32:$idx, imm:$off)),
-    (!cast<Instruction>("SI_INDIRECT_DST_"#VecSize) $vec, $idx, imm:$off, $val)
-  >;
-
-  // 4. Insert without offset
-  def : Pat<
-    (insertelt vt:$vec, eltvt:$val, i32:$idx),
-    (!cast<Instruction>("SI_INDIRECT_DST_"#VecSize) $vec, $idx, 0, $val)
+    (insertelt vt:$src, eltvt:$val, (MOVRELDOffset i32:$idx, (i32 imm:$offset))),
+    (!cast<Instruction>("SI_INDIRECT_DST_"#VecSize) $src, $idx, imm:$offset, $val)
   >;
 }
 

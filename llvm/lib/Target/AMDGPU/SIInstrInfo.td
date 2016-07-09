@@ -624,6 +624,9 @@ def SMRDBufferImm   : ComplexPattern<i32, 1, "SelectSMRDBufferImm">;
 def SMRDBufferImm32 : ComplexPattern<i32, 1, "SelectSMRDBufferImm32">;
 def SMRDBufferSgpr  : ComplexPattern<i32, 1, "SelectSMRDBufferSgpr">;
 
+def MOVRELSOffset : ComplexPattern<i32, 2, "selectMOVRELSOffset">;
+def MOVRELDOffset : ComplexPattern<i32, 2, "selectMOVRELDOffset">;
+
 def VOP3Mods0 : ComplexPattern<untyped, 4, "SelectVOP3Mods0">;
 def VOP3NoMods0 : ComplexPattern<untyped, 4, "SelectVOP3NoMods0">;
 def VOP3Mods0Clamp : ComplexPattern<untyped, 3, "SelectVOP3Mods0Clamp">;

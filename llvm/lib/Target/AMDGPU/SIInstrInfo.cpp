@@ -1712,7 +1712,8 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr &MI,
 
     if (RegClass != -1) {
       unsigned Reg = MI.getOperand(i).getReg();
-      if (TargetRegisterInfo::isVirtualRegister(Reg))
+      if (Reg == AMDGPU::NoRegister ||
+          TargetRegisterInfo::isVirtualRegister(Reg))
         continue;
 
       const TargetRegisterClass *RC = RI.getRegClass(RegClass);
