@@ -141,15 +141,15 @@ private:
       return false;
     }
 
-    const Decl *getDecl(const DeclRefExpr *DR) { return DR->getDecl(); }
-
-    const Decl *getDecl(const MemberExpr *ME) { return ME->getMemberDecl(); }
+    static const Decl *getDecl(const DeclRefExpr *DR) { return DR->getDecl(); }
+    static const Decl *getDecl(const MemberExpr *ME) {
+      return ME->getMemberDecl();
+    }
 
     template <typename T1>
     void Erase(const T1 *DR,
-               llvm::function_ref<bool(const MallocOverflowCheck &)> Pred =
-                   [](const MallocOverflowCheck &) { return true; }) {
-      auto P = [this, DR, Pred](const MallocOverflowCheck &Check) {
+               llvm::function_ref<bool(const MallocOverflowCheck &)> Pred) {
+      auto P = [DR, Pred](const MallocOverflowCheck &Check) {
         if (const auto *CheckDR = dyn_cast<T1>(Check.variable))
           return getDecl(CheckDR) == getDecl(DR) && Pred(Check);
         return false;
@@ -159,11 +159,12 @@ private:
     }
 
     void CheckExpr(const Expr *E_p) {
+      auto PredTrue = [](const MallocOverflowCheck &) { return true; };
       const Expr *E = E_p->IgnoreParenImpCasts();
       if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E))
-        Erase<DeclRefExpr>(DR);
+        Erase<DeclRefExpr>(DR, PredTrue);
       else if (const auto *ME = dyn_cast<MemberExpr>(E)) {
-        Erase<MemberExpr>(ME);
+        Erase<MemberExpr>(ME, PredTrue);
       }
     }
 
