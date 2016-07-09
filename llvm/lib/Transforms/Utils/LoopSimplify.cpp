@@ -819,10 +819,6 @@ PreservedAnalyses LoopSimplifyPass::run(Function &F,
   if (!Changed)
     return PreservedAnalyses::all();
   PreservedAnalyses PA;
-
-  // The old PM also preserved LCSSAID and BreakCriticalEdgesID.
-  // This makes no sense in the new PM so we omit those from the set
-  // of preserved passes.
   PA.preserve<DominatorTreeAnalysis>();
   PA.preserve<LoopAnalysis>();
   PA.preserve<BasicAA>();
