@@ -15,9 +15,7 @@
 namespace lld {
 namespace elf {
 class SymbolBody;
-class InputFile;
 template <class ELFT> class InputSection;
-template <class ELFT> class InputSectionBase;
 
 // Class to describe an instance of a Thunk.
 // A Thunk is a code-sequence inserted by the linker in between a caller and
