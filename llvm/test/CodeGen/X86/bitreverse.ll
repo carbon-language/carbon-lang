@@ -131,6 +131,8 @@ define <2 x i16> @test_bitreverse_v2i16(<2 x i16> %a) nounwind {
 ; CHECK-NEXT:    shrl $15, %edx
 ; CHECK-NEXT:    orl %esi, %edx
 ; CHECK-NEXT:    orl %ecx, %edx
+; CHECK-NEXT:    # kill: %AX<def> %AX<kill> %EAX<kill>
+; CHECK-NEXT:    # kill: %DX<def> %DX<kill> %EDX<kill>
 ; CHECK-NEXT:    popl %esi
 ; CHECK-NEXT:    popl %edi
 ; CHECK-NEXT:    retl
