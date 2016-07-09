@@ -236,6 +236,10 @@ TEST_F(SortImportsTestJS, SortingCanShrink) {
              "1;");
 }
 
+TEST_F(SortImportsTestJS, TrailingComma) {
+  verifySort("import {A, B,} from 'aa';\n", "import {B, A,} from 'aa';\n");
+}
+
 } // end namespace
 } // end namespace format
 } // end namespace clang

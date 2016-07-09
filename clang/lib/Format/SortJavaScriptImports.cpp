@@ -396,6 +396,8 @@ private:
     // {sym as alias, sym2 as ...} from '...';
     nextToken();
     while (true) {
+      if (Current->is(tok::r_brace))
+        return true;
       if (Current->isNot(tok::identifier))
         return false;
 
