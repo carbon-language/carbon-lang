@@ -98,7 +98,7 @@ AliasAttrs getExternallyVisibleAttrs(AliasAttrs);
 //===----------------------------------------------------------------------===//
 
 /// The maximum number of arguments we can put into a summary.
-static unsigned MaxSupportedArgsInSummary = 50;
+LLVM_CONSTEXPR static unsigned MaxSupportedArgsInSummary = 50;
 
 /// We use InterfaceValue to describe parameters/return value, as well as
 /// potential memory locations that are pointed to by parameters/return value,
