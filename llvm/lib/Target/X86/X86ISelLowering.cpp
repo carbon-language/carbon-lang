@@ -4105,13 +4105,6 @@ bool X86TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.writeMem = true;
     break;
   }
-  case STOREANT: {
-    Info.ptrVal = I.getArgOperand(0);
-    Info.memVT = MVT::getVT(I.getArgOperand(1)->getType());
-    Info.align = Info.memVT.getSizeInBits()/8;
-    Info.writeMem = true;
-    break;
-  }
   default:
     return false;
   }
@@ -18522,20 +18515,6 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget &Subtarget,
       getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, DataToExpand),
                            Mask, PassThru, Subtarget, DAG), Chain};
     return DAG.getMergeValues(Results, dl);
-  }
-  case STOREANT: {
-    // Store (MOVNTPD, MOVNTPS, MOVNTDQ) using non-temporal hint intrinsic implementation.
-    SDValue Data = Op.getOperand(3);
-    SDValue Addr = Op.getOperand(2);
-    SDValue Chain = Op.getOperand(0);
-
-    MemIntrinsicSDNode *MemIntr = dyn_cast<MemIntrinsicSDNode>(Op);
-    assert(MemIntr && "Expected MemIntrinsicSDNode!");
-    MachineMemOperand *MMO = MemIntr->getMemOperand();
-
-    MMO->setFlags(MachineMemOperand::MONonTemporal);
-
-    return DAG.getStore(Chain, dl, Data, Addr, MMO);
   }
   }
 }

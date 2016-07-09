@@ -255,6 +255,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name == "avx2.vextracti128" ||
          Name.startswith("sse4a.movnt.") ||
          Name.startswith("avx.movnt.") ||
+         Name.startswith("avx512.storent.") ||
          Name == "sse2.storel.dq" ||
          Name.startswith("sse.storeu.") ||
          Name.startswith("sse2.storeu.") ||
@@ -738,7 +739,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       // Remove intrinsic.
       CI->eraseFromParent();
       return;
-    } else if (IsX86 && Name.startswith("avx.movnt.")) {
+    } else if (IsX86 && (Name.startswith("avx.movnt.") ||
+                         Name.startswith("avx512.storent."))) {
       Module *M = F->getParent();
       SmallVector<Metadata *, 1> Elts;
       Elts.push_back(
@@ -752,7 +754,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Value *BC = Builder.CreateBitCast(Arg0,
                                         PointerType::getUnqual(Arg1->getType()),
                                         "cast");
-      StoreInst *SI = Builder.CreateAlignedStore(Arg1, BC, 32);
+      VectorType *VTy = cast<VectorType>(Arg1->getType());
+      StoreInst *SI = Builder.CreateAlignedStore(Arg1, BC,
+                                                 VTy->getBitWidth() / 8);
       SI->setMetadata(M->getMDKindID("nontemporal"), Node);
 
       // Remove intrinsic.
