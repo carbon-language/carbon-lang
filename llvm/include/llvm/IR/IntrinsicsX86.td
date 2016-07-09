@@ -770,22 +770,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                         [IntrNoMem, Commutative]>;
 }
 
-// Vector extract
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_sse41_pextrb         :
-              Intrinsic<[llvm_i32_ty], [llvm_v16i8_ty, llvm_i32_ty],
-                        [IntrNoMem]>;
-  def int_x86_sse41_pextrd         :
-              Intrinsic<[llvm_i32_ty], [llvm_v4i32_ty, llvm_i32_ty],
-                        [IntrNoMem]>;
-  def int_x86_sse41_pextrq         :
-              Intrinsic<[llvm_i64_ty], [llvm_v2i64_ty, llvm_i32_ty],
-                        [IntrNoMem]>;
-  def int_x86_sse41_extractps      : GCCBuiltin<"__builtin_ia32_extractps128">,
-              Intrinsic<[llvm_i32_ty], [llvm_v4f32_ty, llvm_i32_ty],
-                        [IntrNoMem]>;
-}
-
 // Vector insert
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse41_insertps       : GCCBuiltin<"__builtin_ia32_insertps128">,
