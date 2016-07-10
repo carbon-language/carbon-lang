@@ -73,13 +73,13 @@ PDBFile::getStreamBlockList(uint32_t StreamIndex) const {
 
 size_t PDBFile::getFileSize() const { return Buffer->getLength(); }
 
-ArrayRef<uint8_t> PDBFile::getBlockData(uint32_t BlockIndex,
-                                        uint32_t NumBytes) const {
+Expected<ArrayRef<uint8_t>> PDBFile::getBlockData(uint32_t BlockIndex,
+                                                  uint32_t NumBytes) const {
   uint64_t StreamBlockOffset = blockToOffset(BlockIndex, getBlockSize());
 
   ArrayRef<uint8_t> Result;
   if (auto EC = Buffer->readBytes(StreamBlockOffset, NumBytes, Result))
-    consumeError(std::move(EC));
+    return std::move(EC);
   return Result;
 }
 
