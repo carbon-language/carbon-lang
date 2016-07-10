@@ -66,6 +66,10 @@ struct SDVTList {
 namespace ISD {
   /// Node predicates
 
+  /// If N is a BUILD_VECTOR node whose elements are all the same constant or
+  /// undefined, return true and return the constant value in \p SplatValue.
+  bool isConstantSplatVector(const SDNode *N, APInt &SplatValue);
+
   /// Return true if the specified node is a BUILD_VECTOR where all of the
   /// elements are ~0 or undef.
   bool isBuildVectorAllOnes(const SDNode *N);
