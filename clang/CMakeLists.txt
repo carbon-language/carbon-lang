@@ -342,6 +342,9 @@ endif()
 
 add_definitions( -D_GNU_SOURCE )
 
+option(CLANG_BUILD_TOOLS
+  "Build the Clang tools. If OFF, just generate build targets." ON)
+
 option(CLANG_ENABLE_ARCMT "Build ARCMT." ON)
 if (CLANG_ENABLE_ARCMT)
   set(ENABLE_CLANG_ARCMT "1")

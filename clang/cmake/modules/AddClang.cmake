@@ -121,17 +121,24 @@ macro(add_clang_executable name)
 endmacro(add_clang_executable)
 
 macro(add_clang_tool name)
-  add_clang_executable(${name} ${ARGN})
-  install(TARGETS ${name}
-    RUNTIME DESTINATION bin
-    COMPONENT ${name})
+  if (NOT CLANG_BUILD_TOOLS)
+    set(EXCLUDE_FROM_ALL ON)
+  endif()
 
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    add_custom_target(install-${name}
-      DEPENDS ${name}
-      COMMAND "${CMAKE_COMMAND}"
-              -DCMAKE_INSTALL_COMPONENT=${name}
-              -P "${CMAKE_BINARY_DIR}/cmake_install.cmake")
+  add_clang_executable(${name} ${ARGN})
+
+  if (CLANG_BUILD_TOOLS)
+    install(TARGETS ${name}
+      RUNTIME DESTINATION bin
+      COMPONENT ${name})
+
+    if(NOT CMAKE_CONFIGURATION_TYPES)
+      add_custom_target(install-${name}
+        DEPENDS ${name}
+        COMMAND "${CMAKE_COMMAND}"
+        -DCMAKE_INSTALL_COMPONENT=${name}
+        -P "${CMAKE_BINARY_DIR}/cmake_install.cmake")
+    endif()
   endif()
 endmacro()
 
