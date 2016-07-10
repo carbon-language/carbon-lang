@@ -82,7 +82,7 @@ public:
   uint32_t getStreamByteSize(uint32_t StreamIndex) const override;
   ArrayRef<support::ulittle32_t>
   getStreamBlockList(uint32_t StreamIndex) const override;
-  size_t getFileSize() const;
+  uint32_t getFileSize() const;
 
   Expected<ArrayRef<uint8_t>> getBlockData(uint32_t BlockIndex,
                                            uint32_t NumBytes) const override;

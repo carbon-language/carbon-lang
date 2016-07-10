@@ -71,7 +71,7 @@ PDBFile::getStreamBlockList(uint32_t StreamIndex) const {
   return StreamMap[StreamIndex];
 }
 
-size_t PDBFile::getFileSize() const { return Buffer->getLength(); }
+uint32_t PDBFile::getFileSize() const { return Buffer->getLength(); }
 
 Expected<ArrayRef<uint8_t>> PDBFile::getBlockData(uint32_t BlockIndex,
                                                   uint32_t NumBytes) const {
@@ -154,6 +154,12 @@ Error PDBFile::parseStreamData() {
     ArrayRef<support::ulittle32_t> Blocks;
     if (auto EC = Reader.readArray(Blocks, NumExpectedStreamBlocks))
       return EC;
+    for (uint32_t Block : Blocks) {
+      uint64_t BlockEndOffset = (uint64_t)(Block + 1) * SB->BlockSize;
+      if (BlockEndOffset > getFileSize())
+        return make_error<RawError>(raw_error_code::corrupt_file,
+                                    "Stream block map is corrupt.");
+    }
     StreamMap.push_back(Blocks);
   }
 
