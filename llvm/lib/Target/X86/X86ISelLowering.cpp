@@ -8692,8 +8692,8 @@ static bool matchVectorShuffleAsInsertPS(SDValue &V1, SDValue &V2,
                                          const SmallBitVector &Zeroable,
                                          ArrayRef<int> Mask,
                                          SelectionDAG &DAG) {
-  assert(V1.getSimpleValueType() == MVT::v4f32 && "Bad operand type!");
-  assert(V2.getSimpleValueType() == MVT::v4f32 && "Bad operand type!");
+  assert(V1.getSimpleValueType().is128BitVector() && "Bad operand type!");
+  assert(V2.getSimpleValueType().is128BitVector() && "Bad operand type!");
   assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
   unsigned ZMask = 0;
   int V1DstIndex = -1;
@@ -8757,6 +8757,8 @@ static bool matchVectorShuffleAsInsertPS(SDValue &V1, SDValue &V2,
 static SDValue lowerVectorShuffleAsInsertPS(const SDLoc &DL, SDValue V1,
                                             SDValue V2, ArrayRef<int> Mask,
                                             SelectionDAG &DAG) {
+  assert(V1.getSimpleValueType() == MVT::v4f32 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v4f32 && "Bad operand type!");
   SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
 
   // Attempt to match the insertps pattern.
