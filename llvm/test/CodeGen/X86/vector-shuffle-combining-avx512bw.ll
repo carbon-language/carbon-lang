@@ -476,8 +476,7 @@ define <64 x i8> @combine_pshufb_as_psrldq_mask(<64 x i8> %a0, i64 %m) {
 define <32 x i16> @combine_permvar_as_pshuflw(<32 x i16> %a0) {
 ; CHECK-LABEL: combine_permvar_as_pshuflw:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vmovdqu16 {{.*#+}} zmm1 = [1,0,3,2,4,5,6,7,9,8,11,10,12,13,14,15,17,16,19,18,20,21,22,23,25,24,27,26,28,29,30,31]
-; CHECK-NEXT:    vpermw %zmm0, %zmm1, %zmm0
+; CHECK-NEXT:    vpshuflw {{.*#+}} zmm0 = zmm0[1,0,3,2,4,5,6,7,9,8,11,10,12,13,14,15,17,16,19,18,20,21,22,23,25,24,27,26,28,29,30,31]
 ; CHECK-NEXT:    retq
   %res0 = call <32 x i16> @llvm.x86.avx512.mask.permvar.hi.512(<32 x i16> %a0, <32 x i16> <i16 1, i16 0, i16 3, i16 2, i16 4, i16 5, i16 6, i16 7, i16 9, i16 8, i16 11, i16 10, i16 12, i16 13, i16 14, i16 15, i16 17, i16 16, i16 19, i16 18, i16 20, i16 21, i16 22, i16 23, i16 25, i16 24, i16 27, i16 26, i16 28, i16 29, i16 30, i16 31>, <32 x i16> undef, i32 -1)
   ret <32 x i16> %res0
@@ -486,8 +485,7 @@ define <32 x i16> @combine_permvar_as_pshuflw(<32 x i16> %a0) {
 define <32 x i16> @combine_pshufb_as_pshufhw(<32 x i16> %a0) {
 ; CHECK-LABEL: combine_pshufb_as_pshufhw:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vmovdqu16 {{.*#+}} zmm1 = [0,1,2,3,5,4,7,6,8,9,10,11,13,12,15,14,16,17,18,19,21,20,23,22,24,25,26,27,29,28,31,30]
-; CHECK-NEXT:    vpermw %zmm0, %zmm1, %zmm0
+; CHECK-NEXT:    vpshufhw {{.*#+}} zmm0 = zmm0[0,1,2,3,5,4,7,6,8,9,10,11,13,12,15,14,16,17,18,19,21,20,23,22,24,25,26,27,29,28,31,30]
 ; CHECK-NEXT:    retq
   %res0 = call <32 x i16> @llvm.x86.avx512.mask.permvar.hi.512(<32 x i16> %a0, <32 x i16> <i16 0, i16 1, i16 2, i16 3, i16 5, i16 4, i16 7, i16 6, i16 8, i16 9, i16 10, i16 11, i16 13, i16 12, i16 15, i16 14, i16 16, i16 17, i16 18, i16 19, i16 21, i16 20, i16 23, i16 22, i16 24, i16 25, i16 26, i16 27, i16 29, i16 28, i16 31, i16 30>, <32 x i16> undef, i32 -1)
   ret <32 x i16> %res0
@@ -496,10 +494,8 @@ define <32 x i16> @combine_pshufb_as_pshufhw(<32 x i16> %a0) {
 define <32 x i16> @combine_pshufb_as_pshufw(<32 x i16> %a0) {
 ; CHECK-LABEL: combine_pshufb_as_pshufw:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vmovdqu16 {{.*#+}} zmm1 = [1,0,3,2,4,5,6,7,9,8,11,10,12,13,14,15,17,16,19,18,20,21,22,23,25,24,27,26,28,29,30,31]
-; CHECK-NEXT:    vpermw %zmm0, %zmm1, %zmm0
-; CHECK-NEXT:    vmovdqu16 {{.*#+}} zmm1 = [0,1,2,3,5,4,7,6,8,9,10,11,13,12,15,14,16,17,18,19,21,20,23,22,24,25,26,27,29,28,31,30]
-; CHECK-NEXT:    vpermw %zmm0, %zmm1, %zmm0
+; CHECK-NEXT:    vpshuflw {{.*#+}} zmm0 = zmm0[1,0,3,2,4,5,6,7,9,8,11,10,12,13,14,15,17,16,19,18,20,21,22,23,25,24,27,26,28,29,30,31]
+; CHECK-NEXT:    vpshufhw {{.*#+}} zmm0 = zmm0[0,1,2,3,5,4,7,6,8,9,10,11,13,12,15,14,16,17,18,19,21,20,23,22,24,25,26,27,29,28,31,30]
 ; CHECK-NEXT:    retq
   %res0 = call <32 x i16> @llvm.x86.avx512.mask.permvar.hi.512(<32 x i16> %a0, <32 x i16> <i16 1, i16 0, i16 3, i16 2, i16 4, i16 5, i16 6, i16 7, i16 9, i16 8, i16 11, i16 10, i16 12, i16 13, i16 14, i16 15, i16 17, i16 16, i16 19, i16 18, i16 20, i16 21, i16 22, i16 23, i16 25, i16 24, i16 27, i16 26, i16 28, i16 29, i16 30, i16 31>, <32 x i16> undef, i32 -1)
   %res1 = call <32 x i16> @llvm.x86.avx512.mask.permvar.hi.512(<32 x i16> %res0, <32 x i16> <i16 0, i16 1, i16 2, i16 3, i16 5, i16 4, i16 7, i16 6, i16 8, i16 9, i16 10, i16 11, i16 13, i16 12, i16 15, i16 14, i16 16, i16 17, i16 18, i16 19, i16 21, i16 20, i16 23, i16 22, i16 24, i16 25, i16 26, i16 27, i16 29, i16 28, i16 31, i16 30>, <32 x i16> undef, i32 -1)
