@@ -6512,43 +6512,38 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   }
 
   if (N0.getOpcode() == ISD::SETCC) {
+    // Only do this before legalize for now.
     if (!LegalOperations && VT.isVector() &&
         N0.getValueType().getVectorElementType() == MVT::i1) {
-      EVT N0VT = N0.getOperand(0).getValueType();
-      if (getSetCCResultType(N0VT) == N0.getValueType())
+      EVT N00VT = N0.getOperand(0).getValueType();
+      if (getSetCCResultType(N00VT) == N0.getValueType())
         return SDValue();
 
-      // zext(setcc) -> (and (vsetcc), (1, 1, ...) for vectors.
-      // Only do this before legalize for now.
+      // We know that the # elements of the results is the same as the #
+      // elements of the compare (and the # elements of the compare result for
+      // that matter). Check to see that they are the same size. If so, we know
+      // that the element size of the sext'd result matches the element size of
+      // the compare operands.
       SDLoc DL(N);
       SDValue VecOnes = DAG.getConstant(1, DL, VT);
-      if (VT.getSizeInBits() == N0VT.getSizeInBits())
-        // We know that the # elements of the results is the same as the
-        // # elements of the compare (and the # elements of the compare result
-        // for that matter).  Check to see that they are the same size.  If so,
-        // we know that the element size of the sext'd result matches the
-        // element size of the compare operands.
-        return DAG.getNode(ISD::AND, DL, VT,
-                           DAG.getSetCC(DL, VT, N0.getOperand(0),
-                                         N0.getOperand(1),
-                                 cast<CondCodeSDNode>(N0.getOperand(2))->get()),
-                           VecOnes);
+      if (VT.getSizeInBits() == N00VT.getSizeInBits()) {
+        // zext(setcc) -> (and (vsetcc), (1, 1, ...) for vectors.
+        SDValue VSetCC = DAG.getNode(ISD::SETCC, DL, VT, N0.getOperand(0),
+                                     N0.getOperand(1), N0.getOperand(2));
+        return DAG.getNode(ISD::AND, DL, VT, VSetCC, VecOnes);
+      }
 
       // If the desired elements are smaller or larger than the source
       // elements we can use a matching integer vector type and then
-      // truncate/sign extend
-      EVT MatchingElementType =
-        EVT::getIntegerVT(*DAG.getContext(),
-                          N0VT.getScalarType().getSizeInBits());
-      EVT MatchingVectorType =
-        EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
-                         N0VT.getVectorNumElements());
+      // truncate/sign extend.
+      EVT MatchingElementType = EVT::getIntegerVT(
+          *DAG.getContext(), N00VT.getScalarType().getSizeInBits());
+      EVT MatchingVectorType = EVT::getVectorVT(
+          *DAG.getContext(), MatchingElementType, N00VT.getVectorNumElements());
       SDValue VsetCC =
-        DAG.getSetCC(DL, MatchingVectorType, N0.getOperand(0),
-                      N0.getOperand(1),
-                      cast<CondCodeSDNode>(N0.getOperand(2))->get());
-      return DAG.getNode(ISD::AND, DL, VT,
-                         DAG.getSExtOrTrunc(VsetCC, DL, VT),
+          DAG.getNode(ISD::SETCC, DL, MatchingVectorType, N0.getOperand(0),
+                      N0.getOperand(1), N0.getOperand(2));
+      return DAG.getNode(ISD::AND, DL, VT, DAG.getSExtOrTrunc(VsetCC, DL, VT),
                          VecOnes);
     }
 
