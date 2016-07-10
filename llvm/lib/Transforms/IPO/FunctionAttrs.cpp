@@ -42,6 +42,7 @@ using namespace llvm;
 STATISTIC(NumReadNone, "Number of functions marked readnone");
 STATISTIC(NumReadOnly, "Number of functions marked readonly");
 STATISTIC(NumNoCapture, "Number of arguments marked nocapture");
+STATISTIC(NumReturned, "Number of arguments marked returned");
 STATISTIC(NumReadNoneArg, "Number of arguments marked readnone");
 STATISTIC(NumReadOnlyArg, "Number of arguments marked readonly");
 STATISTIC(NumNoAlias, "Number of function returns marked noalias");
@@ -481,6 +482,45 @@ determinePointerReadAttrs(Argument *A,
   }
 
   return IsRead ? Attribute::ReadOnly : Attribute::ReadNone;
+}
+
+/// Deduce returned attributes for the SCC.
+static bool addArgumentReturnedAttrs(const SCCNodeSet &SCCNodes) {
+  bool Changed = false;
+
+  AttrBuilder B;
+  B.addAttribute(Attribute::Returned);
+
+  // Check each function in turn, determining if an argument is always returned.
+  for (Function *F : SCCNodes) {
+    // We can infer and propagate function attributes only when we know that the
+    // definition we'll get at link time is *exactly* the definition we see now.
+    // For more details, see GlobalValue::mayBeDerefined.
+    if (!F->hasExactDefinition())
+      continue;
+
+    if (F->getReturnType()->isVoidTy())
+      continue;
+
+    SmallPtrSet<Value *, 2> RetArgs;
+    for (BasicBlock &BB : *F)
+      if (auto *Ret = dyn_cast<ReturnInst>(BB.getTerminator())) {
+        // Note that stripPointerCasts should look through functions with
+        // returned arguments.
+        Value *RetVal = Ret->getReturnValue()->stripPointerCasts();
+        if (RetVal->getType() == F->getReturnType() && isa<Argument>(RetVal))
+          RetArgs.insert(RetVal);
+      }
+
+    if (RetArgs.size() == 1) {
+      auto *A = cast<Argument>(*RetArgs.begin());
+      A->addAttr(AttributeSet::get(F->getContext(), A->getArgNo() + 1, B));
+      ++NumReturned;
+      Changed = true;
+    }
+  }
+
+  return Changed;
 }
 
 /// Deduce nocapture attributes for the SCC.
@@ -1024,6 +1064,7 @@ PreservedAnalyses PostOrderFunctionAttrsPass::run(LazyCallGraph::SCC &C,
   }
 
   bool Changed = false;
+  Changed |= addArgumentReturnedAttrs(SCCNodes);
   Changed |= addReadAttrs(SCCNodes, AARGetter);
   Changed |= addArgumentAttrs(SCCNodes);
 
@@ -1089,6 +1130,7 @@ static bool runImpl(CallGraphSCC &SCC, AARGetterT AARGetter) {
     SCCNodes.insert(F);
   }
 
+  Changed |= addArgumentReturnedAttrs(SCCNodes);
   Changed |= addReadAttrs(SCCNodes, AARGetter);
   Changed |= addArgumentAttrs(SCCNodes);
 
