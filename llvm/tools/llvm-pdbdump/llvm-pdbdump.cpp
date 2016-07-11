@@ -261,18 +261,24 @@ cl::list<std::string> InputFilename(cl::Positional,
 }
 
 namespace pdb2yaml {
+cl::opt<bool>
+    NoFileHeaders("no-file-headers",
+                  cl::desc("Do not dump MSF file headers (you will not be able "
+                           "to generate a fresh PDB from the resulting YAML)"),
+                  cl::sub(PdbToYamlSubcommand), cl::init(false));
+
 cl::opt<bool> StreamMetadata(
     "stream-metadata",
     cl::desc("Dump the number of streams and each stream's size"),
-    cl::sub(PdbToYamlSubcommand));
+    cl::sub(PdbToYamlSubcommand), cl::init(false));
 cl::opt<bool> StreamDirectory(
     "stream-directory",
     cl::desc("Dump each stream's block map (implies -stream-metadata)"),
-    cl::sub(PdbToYamlSubcommand));
+    cl::sub(PdbToYamlSubcommand), cl::init(false));
 cl::opt<bool> PdbStream(
     "pdb-stream",
     cl::desc("Dump the PDB Stream (Stream 1) (implies -stream-metadata)"),
-    cl::sub(PdbToYamlSubcommand));
+    cl::sub(PdbToYamlSubcommand), cl::init(false));
 
 cl::list<std::string> InputFilename(cl::Positional,
                                     cl::desc("<input PDB file>"), cl::Required,
@@ -296,9 +302,12 @@ static void yamlToPdb(StringRef Path) {
   llvm::yaml::Input In(Buffer->getBuffer());
   pdb::yaml::PdbObject YamlObj;
   In >> YamlObj;
+  if (!YamlObj.Headers.hasValue())
+    ExitOnErr(make_error<GenericError>(generic_error_code::unspecified,
+                                       "Yaml does not contain MSF headers"));
 
   auto OutFileOrError = FileOutputBuffer::create(
-      opts::yaml2pdb::YamlPdbOutputFile, YamlObj.Headers.FileSize);
+      opts::yaml2pdb::YamlPdbOutputFile, YamlObj.Headers->FileSize);
   if (OutFileOrError.getError())
     ExitOnErr(make_error<GenericError>(generic_error_code::invalid_path,
                                        opts::yaml2pdb::YamlPdbOutputFile));
@@ -306,11 +315,11 @@ static void yamlToPdb(StringRef Path) {
   auto FileByteStream =
       llvm::make_unique<FileBufferByteStream>(std::move(*OutFileOrError));
   PDBFile Pdb(std::move(FileByteStream));
-  ExitOnErr(Pdb.setSuperBlock(&YamlObj.Headers.SuperBlock));
+  ExitOnErr(Pdb.setSuperBlock(&YamlObj.Headers->SuperBlock));
   if (YamlObj.StreamSizes.hasValue()) {
     Pdb.setStreamSizes(YamlObj.StreamSizes.getValue());
   }
-  Pdb.setDirectoryBlocks(YamlObj.Headers.DirectoryBlocks);
+  Pdb.setDirectoryBlocks(YamlObj.Headers->DirectoryBlocks);
 
   if (YamlObj.StreamMap.hasValue()) {
     std::vector<ArrayRef<support::ulittle32_t>> StreamMap;

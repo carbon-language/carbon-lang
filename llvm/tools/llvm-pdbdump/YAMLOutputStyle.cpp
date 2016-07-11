@@ -42,20 +42,24 @@ Error YAMLOutputStyle::dump() {
 }
 
 Error YAMLOutputStyle::dumpFileHeaders() {
+  if (opts::pdb2yaml::NoFileHeaders)
+    return Error::success();
+
   yaml::MsfHeaders Headers;
-  Obj.Headers.SuperBlock.NumBlocks = File.getBlockCount();
-  Obj.Headers.SuperBlock.BlockMapAddr = File.getBlockMapIndex();
-  Obj.Headers.BlockMapOffset = File.getBlockMapOffset();
-  Obj.Headers.SuperBlock.BlockSize = File.getBlockSize();
+  Obj.Headers.emplace();
+  Obj.Headers->SuperBlock.NumBlocks = File.getBlockCount();
+  Obj.Headers->SuperBlock.BlockMapAddr = File.getBlockMapIndex();
+  Obj.Headers->BlockMapOffset = File.getBlockMapOffset();
+  Obj.Headers->SuperBlock.BlockSize = File.getBlockSize();
   auto Blocks = File.getDirectoryBlockArray();
-  Obj.Headers.DirectoryBlocks.assign(Blocks.begin(), Blocks.end());
-  Obj.Headers.NumDirectoryBlocks = File.getNumDirectoryBlocks();
-  Obj.Headers.SuperBlock.NumDirectoryBytes = File.getNumDirectoryBytes();
-  Obj.Headers.NumStreams =
+  Obj.Headers->DirectoryBlocks.assign(Blocks.begin(), Blocks.end());
+  Obj.Headers->NumDirectoryBlocks = File.getNumDirectoryBlocks();
+  Obj.Headers->SuperBlock.NumDirectoryBytes = File.getNumDirectoryBytes();
+  Obj.Headers->NumStreams =
       opts::pdb2yaml::StreamMetadata ? File.getNumStreams() : 0;
-  Obj.Headers.SuperBlock.Unknown0 = File.getUnknown0();
-  Obj.Headers.SuperBlock.Unknown1 = File.getUnknown1();
-  Obj.Headers.FileSize = File.getFileSize();
+  Obj.Headers->SuperBlock.Unknown0 = File.getUnknown0();
+  Obj.Headers->SuperBlock.Unknown1 = File.getUnknown1();
+  Obj.Headers->FileSize = File.getFileSize();
 
   return Error::success();
 }

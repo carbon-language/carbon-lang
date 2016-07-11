@@ -46,7 +46,7 @@ struct PdbInfoStream {
 };
 
 struct PdbObject {
-  MsfHeaders Headers;
+  Optional<MsfHeaders> Headers;
   Optional<std::vector<support::ulittle32_t>> StreamSizes;
   Optional<std::vector<StreamBlockList>> StreamMap;
   Optional<PdbInfoStream> PdbStream;
