@@ -1328,7 +1328,7 @@ bool Instruction::extractProfTotalWeight(uint64_t &TotalVal) {
     return false;
 
   TotalVal = 0;
-  for (int i = 1; i < ProfileData->getNumOperands(); i++) {
+  for (unsigned i = 1; i < ProfileData->getNumOperands(); i++) {
     auto *V = mdconst::dyn_extract<ConstantInt>(ProfileData->getOperand(i));
     if (!V)
       return false;
