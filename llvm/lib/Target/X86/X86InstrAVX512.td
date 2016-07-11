@@ -413,13 +413,13 @@ def : Pat<(v64i8  (bitconvert (v16f32 VR512:$src))), (v64i8  VR512:$src)>;
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-zeros value if folding it would be beneficial.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isPseudo = 1, Predicates = [HasAVX512] in {
+    isPseudo = 1, Predicates = [HasAVX512], SchedRW = [WriteZero] in {
 def AVX512_512_SET0 : I<0, Pseudo, (outs VR512:$dst), (ins), "",
                [(set VR512:$dst, (v16i32 immAllZerosV))]>;
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isPseudo = 1, Predicates = [HasVLX] in {
+    isPseudo = 1, Predicates = [HasVLX], SchedRW = [WriteZero] in {
 def AVX512_128_SET0 : I<0, Pseudo, (outs VR128X:$dst), (ins), "",
                [(set VR128X:$dst, (v4i32 immAllZerosV))]>;
 def AVX512_256_SET0 : I<0, Pseudo, (outs VR256X:$dst), (ins), "",
