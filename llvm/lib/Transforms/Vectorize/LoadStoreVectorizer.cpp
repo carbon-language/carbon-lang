@@ -127,6 +127,10 @@ private:
 
   /// Vectorizes the store instructions in Chain.
   bool vectorizeStoreChain(ArrayRef<Value *> Chain);
+
+  /// Check if this load/store access is misaligned accesses
+  bool accessIsMisaligned(unsigned SzInBytes, unsigned AddressSpace,
+                          unsigned Alignment);
 };
 
 class LoadStoreVectorizer : public FunctionPass {
@@ -692,18 +696,16 @@ bool Vectorizer::vectorizeStoreChain(ArrayRef<Value *> Chain) {
   unsigned Alignment = getAlignment(S0);
 
   // If the store is going to be misaligned, don't vectorize it.
-  // TODO: Check TLI.allowsMisalignedMemoryAccess
-  if ((Alignment % SzInBytes) != 0 && (Alignment % TargetBaseAlign) != 0) {
-    if (S0->getPointerAddressSpace() == 0) {
-      // If we're storing to an object on the stack, we control its alignment,
-      // so we can cheat and change it!
-      Value *V = GetUnderlyingObject(S0->getPointerOperand(), DL);
-      if (AllocaInst *AI = dyn_cast_or_null<AllocaInst>(V)) {
-        AI->setAlignment(TargetBaseAlign);
-        Alignment = TargetBaseAlign;
-      } else {
-        return false;
-      }
+  if (accessIsMisaligned(SzInBytes, AS, Alignment)) {
+    if (S0->getPointerAddressSpace() != 0)
+      return false;
+
+    // If we're storing to an object on the stack, we control its alignment,
+    // so we can cheat and change it!
+    Value *V = GetUnderlyingObject(S0->getPointerOperand(), DL);
+    if (AllocaInst *AI = dyn_cast_or_null<AllocaInst>(V)) {
+      AI->setAlignment(TargetBaseAlign);
+      Alignment = TargetBaseAlign;
     } else {
       return false;
     }
@@ -821,18 +823,16 @@ bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
   unsigned Alignment = getAlignment(L0);
 
   // If the load is going to be misaligned, don't vectorize it.
-  // TODO: Check TLI.allowsMisalignedMemoryAccess and remove TargetBaseAlign.
-  if ((Alignment % SzInBytes) != 0 && (Alignment % TargetBaseAlign) != 0) {
-    if (L0->getPointerAddressSpace() == 0) {
-      // If we're loading from an object on the stack, we control its alignment,
-      // so we can cheat and change it!
-      Value *V = GetUnderlyingObject(L0->getPointerOperand(), DL);
-      if (AllocaInst *AI = dyn_cast_or_null<AllocaInst>(V)) {
-        AI->setAlignment(TargetBaseAlign);
-        Alignment = TargetBaseAlign;
-      } else {
-        return false;
-      }
+  if (accessIsMisaligned(SzInBytes, AS, Alignment)) {
+    if (L0->getPointerAddressSpace() != 0)
+      return false;
+
+    // If we're loading from an object on the stack, we control its alignment,
+    // so we can cheat and change it!
+    Value *V = GetUnderlyingObject(L0->getPointerOperand(), DL);
+    if (AllocaInst *AI = dyn_cast_or_null<AllocaInst>(V)) {
+      AI->setAlignment(TargetBaseAlign);
+      Alignment = TargetBaseAlign;
     } else {
       return false;
     }
@@ -914,4 +914,14 @@ bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
   ++NumVectorInstructions;
   NumScalarsVectorized += Chain.size();
   return true;
+}
+
+bool Vectorizer::accessIsMisaligned(unsigned SzInBytes, unsigned AddressSpace,
+                                    unsigned Alignment) {
+  bool Fast = false;
+  bool Allows = TTI.allowsMisalignedMemoryAccesses(SzInBytes * 8, AddressSpace,
+                                                   Alignment, &Fast);
+  // TODO: Remove TargetBaseAlign
+  return !(Allows && Fast) && (Alignment % SzInBytes) != 0 &&
+         (Alignment % TargetBaseAlign) != 0;
 }
