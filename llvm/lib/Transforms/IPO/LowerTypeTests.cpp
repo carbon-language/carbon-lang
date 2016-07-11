@@ -253,8 +253,6 @@ struct LowerTypeTests : public ModulePass {
   void buildBitSetsFromDisjointSet(ArrayRef<Metadata *> TypeIds,
                                    ArrayRef<GlobalObject *> Globals);
   bool lower();
-
-  bool doInitialization(Module &M) override;
   bool runOnModule(Module &M) override;
 };
 
@@ -265,27 +263,6 @@ INITIALIZE_PASS(LowerTypeTests, "lowertypetests", "Lower type metadata", false,
 char LowerTypeTests::ID = 0;
 
 ModulePass *llvm::createLowerTypeTestsPass() { return new LowerTypeTests; }
-
-bool LowerTypeTests::doInitialization(Module &Mod) {
-  M = &Mod;
-  const DataLayout &DL = Mod.getDataLayout();
-
-  Triple TargetTriple(M->getTargetTriple());
-  LinkerSubsectionsViaSymbols = TargetTriple.isMacOSX();
-  Arch = TargetTriple.getArch();
-  ObjectFormat = TargetTriple.getObjectFormat();
-
-  Int1Ty = Type::getInt1Ty(M->getContext());
-  Int8Ty = Type::getInt8Ty(M->getContext());
-  Int32Ty = Type::getInt32Ty(M->getContext());
-  Int32PtrTy = PointerType::getUnqual(Int32Ty);
-  Int64Ty = Type::getInt64Ty(M->getContext());
-  IntPtrTy = DL.getIntPtrType(M->getContext(), 0);
-
-  TypeTestCallSites.clear();
-
-  return false;
-}
 
 /// Build a bit set for TypeId using the object layouts in
 /// GlobalLayout.
@@ -1012,5 +989,21 @@ bool LowerTypeTests::runOnModule(Module &M) {
   if (skipModule(M))
     return false;
 
+  this->M = &M;
+  const DataLayout &DL = M.getDataLayout();
+
+  Triple TargetTriple(M.getTargetTriple());
+  LinkerSubsectionsViaSymbols = TargetTriple.isMacOSX();
+  Arch = TargetTriple.getArch();
+  ObjectFormat = TargetTriple.getObjectFormat();
+
+  Int1Ty = Type::getInt1Ty(M.getContext());
+  Int8Ty = Type::getInt8Ty(M.getContext());
+  Int32Ty = Type::getInt32Ty(M.getContext());
+  Int32PtrTy = PointerType::getUnqual(Int32Ty);
+  Int64Ty = Type::getInt64Ty(M.getContext());
+  IntPtrTy = DL.getIntPtrType(M.getContext(), 0);
+
+  TypeTestCallSites.clear();
   return lower();
 }
