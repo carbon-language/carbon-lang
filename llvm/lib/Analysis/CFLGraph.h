@@ -108,11 +108,10 @@ public:
   }
 
   void addEdge(Node From, Node To, int64_t Offset = 0) {
+    assert(getNode(To) != nullptr);
+
     auto *FromInfo = getNode(From);
     assert(FromInfo != nullptr);
-    auto *ToInfo = getNode(To);
-    assert(ToInfo != nullptr);
-
     FromInfo->Edges.push_back(Edge{To});
   }
 
