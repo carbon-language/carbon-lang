@@ -869,7 +869,9 @@ void MemoryAccess::dump() const { print(errs()); }
 __isl_give isl_pw_aff *MemoryAccess::getPwAff(const SCEV *E) {
   auto *Stmt = getStatement();
   PWACtx PWAC = Stmt->getParent()->getPwAff(E, Stmt->getEntryBlock());
-  InvalidDomain = isl_set_union(InvalidDomain, PWAC.second);
+  isl_set *StmtDom = isl_set_reset_tuple_id(getStatement()->getDomain());
+  isl_set *NewInvalidDom = isl_set_intersect(StmtDom, PWAC.second);
+  InvalidDomain = isl_set_union(InvalidDomain, NewInvalidDom);
   return PWAC.first;
 }
 
