@@ -985,25 +985,36 @@ bool LowerTypeTests::lower() {
   return true;
 }
 
+// Initialization helper shared by the old and the new PM.
+static void init(LowerTypeTests *LTT, Module &M) {
+  LTT->M = &M;
+  const DataLayout &DL = M.getDataLayout();
+  Triple TargetTriple(M.getTargetTriple());
+  LTT->LinkerSubsectionsViaSymbols = TargetTriple.isMacOSX();
+  LTT->Arch = TargetTriple.getArch();
+  LTT->ObjectFormat = TargetTriple.getObjectFormat();
+  LTT->Int1Ty = Type::getInt1Ty(M.getContext());
+  LTT->Int8Ty = Type::getInt8Ty(M.getContext());
+  LTT->Int32Ty = Type::getInt32Ty(M.getContext());
+  LTT->Int32PtrTy = PointerType::getUnqual(LTT->Int32Ty);
+  LTT->Int64Ty = Type::getInt64Ty(M.getContext());
+  LTT->IntPtrTy = DL.getIntPtrType(M.getContext(), 0);
+  LTT->TypeTestCallSites.clear();
+}
+
 bool LowerTypeTests::runOnModule(Module &M) {
   if (skipModule(M))
     return false;
-
-  this->M = &M;
-  const DataLayout &DL = M.getDataLayout();
-
-  Triple TargetTriple(M.getTargetTriple());
-  LinkerSubsectionsViaSymbols = TargetTriple.isMacOSX();
-  Arch = TargetTriple.getArch();
-  ObjectFormat = TargetTriple.getObjectFormat();
-
-  Int1Ty = Type::getInt1Ty(M.getContext());
-  Int8Ty = Type::getInt8Ty(M.getContext());
-  Int32Ty = Type::getInt32Ty(M.getContext());
-  Int32PtrTy = PointerType::getUnqual(Int32Ty);
-  Int64Ty = Type::getInt64Ty(M.getContext());
-  IntPtrTy = DL.getIntPtrType(M.getContext(), 0);
-
-  TypeTestCallSites.clear();
+  init(this, M);
   return lower();
+}
+
+PreservedAnalyses LowerTypeTestsPass::run(Module &M,
+                                          AnalysisManager<Module> &AM) {
+  LowerTypeTests Impl;
+  init(&Impl, M);
+  bool Changed = Impl.lower();
+  if (!Changed)
+    return PreservedAnalyses::all();
+  return PreservedAnalyses::none();
 }
