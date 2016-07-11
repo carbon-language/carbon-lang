@@ -502,18 +502,26 @@ static bool addArgumentReturnedAttrs(const SCCNodeSet &SCCNodes) {
     if (F->getReturnType()->isVoidTy())
       continue;
 
-    SmallPtrSet<Value *, 2> RetArgs;
-    for (BasicBlock &BB : *F)
-      if (auto *Ret = dyn_cast<ReturnInst>(BB.getTerminator())) {
-        // Note that stripPointerCasts should look through functions with
-        // returned arguments.
-        Value *RetVal = Ret->getReturnValue()->stripPointerCasts();
-        if (RetVal->getType() == F->getReturnType() && isa<Argument>(RetVal))
-          RetArgs.insert(RetVal);
-      }
+    auto FindRetArg = [&]() -> Value * {
+      Value *RetArg = nullptr;
+      for (BasicBlock &BB : *F)
+        if (auto *Ret = dyn_cast<ReturnInst>(BB.getTerminator())) {
+          // Note that stripPointerCasts should look through functions with
+          // returned arguments.
+          Value *RetVal = Ret->getReturnValue()->stripPointerCasts();
+          if (RetVal->getType() == F->getReturnType() && isa<Argument>(RetVal)) {
+            if (!RetArg)
+              RetArg = RetVal;
+            else if (RetArg != RetVal)
+              return nullptr;
+          }
+        }
 
-    if (RetArgs.size() == 1) {
-      auto *A = cast<Argument>(*RetArgs.begin());
+      return RetArg;
+    };
+
+    if (Value *RetArg = FindRetArg()) {
+      auto *A = cast<Argument>(RetArg);
       A->addAttr(AttributeSet::get(F->getContext(), A->getArgNo() + 1, B));
       ++NumReturned;
       Changed = true;
