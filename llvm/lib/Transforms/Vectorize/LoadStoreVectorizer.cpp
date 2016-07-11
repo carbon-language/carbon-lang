@@ -88,8 +88,8 @@ private:
 
   bool isConsecutiveAccess(Value *A, Value *B);
 
-  /// Reorders the users of I after vectorization to ensure that I dominates its
-  /// users.
+  /// After vectorization, reorder the instructions that I depends on
+  /// (the instructions defining its operands), to ensure they dominate I.
   void reorder(Instruction *I);
 
   /// Returns the first and the last instructions in Chain.
@@ -334,18 +334,36 @@ bool Vectorizer::isConsecutiveAccess(Value *A, Value *B) {
 }
 
 void Vectorizer::reorder(Instruction *I) {
-  Instruction *InsertAfter = I;
-  for (User *U : I->users()) {
-    Instruction *User = dyn_cast<Instruction>(U);
-    if (!User || User->getOpcode() == Instruction::PHI)
-      continue;
+  SmallPtrSet<Instruction *, 16> InstructionsToMove;
+  SmallVector<Instruction *, 16> Worklist;
 
-    if (!DT.dominates(I, User)) {
-      User->removeFromParent();
-      User->insertAfter(InsertAfter);
-      InsertAfter = User;
-      reorder(User);
+  Worklist.push_back(I);
+  while (!Worklist.empty()) {
+    Instruction *IW = Worklist.pop_back_val();
+    int NumOperands = IW->getNumOperands();
+    for (int i = 0; i < NumOperands; i++) {
+      Instruction *IM = dyn_cast<Instruction>(IW->getOperand(i));
+      if (!IM || IM->getOpcode() == Instruction::PHI)
+        continue;
+
+      if (!DT.dominates(IM, I)) {
+        InstructionsToMove.insert(IM);
+        Worklist.push_back(IM);
+        assert(IM->getParent() == IW->getParent() &&
+               "Instructions to move should be in the same basic block");
+      }
     }
+  }
+
+  // All instructions to move should follow I. Start from I, not from begin().
+  for (auto BBI = I->getIterator(), E = I->getParent()->end(); BBI != E;
+       ++BBI) {
+    if (!is_contained(InstructionsToMove, &*BBI))
+      continue;
+    Instruction *IM = &*BBI;
+    --BBI;
+    IM->removeFromParent();
+    IM->insertBefore(I);
   }
 }
 
@@ -851,7 +869,7 @@ bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
     return false;
 
   // Set insert point.
-  Builder.SetInsertPoint(&*Last);
+  Builder.SetInsertPoint(&*First);
 
   Value *Bitcast =
       Builder.CreateBitCast(L0->getPointerOperand(), VecTy->getPointerTo(AS));
@@ -863,6 +881,7 @@ bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
   if (VecLoadTy) {
     SmallVector<Instruction *, 16> InstrsToErase;
     SmallVector<Instruction *, 16> InstrsToReorder;
+    InstrsToReorder.push_back(cast<Instruction>(Bitcast));
 
     unsigned VecWidth = VecLoadTy->getNumElements();
     for (unsigned I = 0, E = Chain.size(); I != E; ++I) {
@@ -878,7 +897,6 @@ bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
 
         // Replace the old instruction.
         UI->replaceAllUsesWith(Extracted);
-        InstrsToReorder.push_back(Extracted);
         InstrsToErase.push_back(UI);
       }
     }
@@ -890,6 +908,7 @@ bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
       I->eraseFromParent();
   } else {
     SmallVector<Instruction *, 16> InstrsToReorder;
+    InstrsToReorder.push_back(cast<Instruction>(Bitcast));
 
     for (unsigned I = 0, E = Chain.size(); I != E; ++I) {
       Value *V = Builder.CreateExtractElement(LI, Builder.getInt32(I));
@@ -902,7 +921,6 @@ bool Vectorizer::vectorizeLoadChain(ArrayRef<Value *> Chain) {
 
       // Replace the old instruction.
       UI->replaceAllUsesWith(Extracted);
-      InstrsToReorder.push_back(Extracted);
     }
 
     for (Instruction *ModUser : InstrsToReorder)
