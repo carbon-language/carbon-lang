@@ -1315,7 +1315,8 @@ bool Instruction::extractProfMetadata(uint64_t &TrueVal, uint64_t &FalseVal) {
 bool Instruction::extractProfTotalWeight(uint64_t &TotalVal) {
   assert((getOpcode() == Instruction::Br ||
           getOpcode() == Instruction::Select ||
-          getOpcode() == Instruction::Call) &&
+          getOpcode() == Instruction::Call ||
+          getOpcode() == Instruction::Invoke) &&
          "Looking for branch weights on something besides branch");
 
   TotalVal = 0;
