@@ -358,9 +358,9 @@ define <64 x i8> @combine_pshufb_identity_mask(<64 x i8> %x0, i64 %m) {
 ; CHECK-LABEL: combine_pshufb_identity_mask:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    kmovq %rdi, %k1
-; CHECK-NEXT:    vmovdqu8 {{.*#+}} zmm1 = [255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255]
+; CHECK-NEXT:    vpternlogd $255, %zmm1, %zmm1, %zmm1
 ; CHECK-NEXT:    vmovdqu8 {{.*#+}} zmm2 = [15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0]
-; CHECK-NEXT:    vmovaps %zmm1, %zmm3
+; CHECK-NEXT:    vpternlogd $255, %zmm3, %zmm3, %zmm3
 ; CHECK-NEXT:    vpshufb %zmm2, %zmm0, %zmm3 {%k1}
 ; CHECK-NEXT:    vpshufb %zmm2, %zmm3, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
