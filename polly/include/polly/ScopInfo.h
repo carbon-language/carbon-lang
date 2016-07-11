@@ -944,7 +944,7 @@ struct InvariantEquivClassTy {
   ///
   /// It is used to differentiate between differently typed invariant loads from
   /// the same location.
-  Type *Type;
+  Type *AccessType;
 };
 
 /// @brief Type for invariant accesses equivalence classes.
