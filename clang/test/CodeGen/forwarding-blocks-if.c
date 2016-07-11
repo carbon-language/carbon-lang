@@ -12,7 +12,7 @@ int f0(int val) {
   return 0;
 }
 
-// CHECK-LABEL: define {{.*}} i32 @f0
+// CHECK-LABEL: define {{.*}}i32 @f0
 // CHECK: call void {{.*}} @func
 // CHECK: call void {{.*}} @func
 // CHECK: br label %[[RETBLOCK1:[^ ]*]]
@@ -28,7 +28,7 @@ int f1(int val, int g) {
   return 0;
 }
 
-// CHECK-LABEL: define {{.*}} i32 @f1
+// CHECK-LABEL: define {{.*}}i32 @f1
 // CHECK: call void {{.*}} @func
 // CHECK: br label %[[RETBLOCK2:[^ ]*]]
 // CHECK: [[RETBLOCK2]]:
