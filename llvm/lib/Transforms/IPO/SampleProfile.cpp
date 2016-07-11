@@ -987,6 +987,19 @@ void SampleProfileLoader::propagateWeights(Function &F) {
   MDBuilder MDB(Ctx);
   for (auto &BI : F) {
     BasicBlock *BB = &BI;
+
+    if (BlockWeights[BB]) {
+      for (auto &I : BB->getInstList()) {
+        if (CallInst *CI = dyn_cast<CallInst>(&I)) {
+          if (!dyn_cast<IntrinsicInst>(&I)) {
+            SmallVector<uint32_t, 1> Weights;
+            Weights.push_back(BlockWeights[BB]);
+            CI->setMetadata(LLVMContext::MD_prof, 
+                            MDB.createBranchWeights(Weights));
+          }
+        }
+      }
+    }
     TerminatorInst *TI = BB->getTerminator();
     if (TI->getNumSuccessors() == 1)
       continue;
