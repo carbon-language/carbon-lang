@@ -48,6 +48,8 @@ class InstSI <dag outs, dag ins, string asm = "",
   // is unable to infer the encoding from the operands.
   field bits<1> VOPAsmPrefer32Bit = 0;
 
+  field bits<1> Gather4 = 0;
+
   // These need to be kept in sync with the enum in SIInstrFlags.
   let TSFlags{0} = VM_CNT;
   let TSFlags{1} = EXP_CNT;
@@ -78,6 +80,7 @@ class InstSI <dag outs, dag ins, string asm = "",
   let TSFlags{22} = WQM;
   let TSFlags{23} = VGPRSpill;
   let TSFlags{24} = VOPAsmPrefer32Bit;
+  let TSFlags{25} = Gather4;
 
   let SchedRW = [Write32Bit];
 

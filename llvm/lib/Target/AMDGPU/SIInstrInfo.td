@@ -3557,8 +3557,8 @@ class MIMG_Gather_Helper <bits<7> op, string asm,
   // 1=red, 2=green, 4=blue, 8=alpha. (e.g. 1 returns
   // (red,red,red,red) etc.) The ISA document doesn't mention
   // this.
-  // Therefore, disable all code which updates DMASK by setting these two:
-  let MIMG = 0;
+  // Therefore, disable all code which updates DMASK by setting this:
+  let Gather4 = 1;
   let hasPostISelHook = 0;
   let WQM = wqm;
 
