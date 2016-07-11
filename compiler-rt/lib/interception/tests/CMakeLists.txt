@@ -121,8 +121,6 @@ macro(add_interception_tests_for_arch arch)
                        DEPS ${INTERCEPTION_TEST_OBJECTS} ${INTERCEPTION_COMMON_LIB}
                        LINK_FLAGS ${INTERCEPTION_TEST_LINK_FLAGS_COMMON}
                                   ${TARGET_FLAGS})
-
-
 endmacro()
 
 if(COMPILER_RT_CAN_EXECUTE_TESTS AND NOT ANDROID AND NOT APPLE)
