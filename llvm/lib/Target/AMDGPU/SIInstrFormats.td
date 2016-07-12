@@ -91,6 +91,12 @@ class InstSI <dag outs, dag ins, string asm = "",
   let isAsmParserOnly = !if(!eq(DisableDecoder{0}, {0}), 0, 1);
 }
 
+class PseudoInstSI<dag outs, dag ins, list<dag> pattern = []>
+  : InstSI<outs, ins, "", pattern> {
+  let isPseudo = 1;
+  let isCodeGenOnly = 1;
+}
+
 class Enc32 {
   field bits<32> Inst;
   int Size = 4;
@@ -137,8 +143,10 @@ class VOP2Common <dag outs, dag ins, string asm, list<dag> pattern> :
   let Size = 4;
 }
 
-class VOP3Common <dag outs, dag ins, string asm, list<dag> pattern, bit HasMods = 0, bit VOP3Only = 0> :
-    VOPAnyCommon <outs, ins, asm, pattern> {
+class VOP3Common <dag outs, dag ins, string asm = "",
+                  list<dag> pattern = [], bit HasMods = 0,
+                  bit VOP3Only = 0> :
+  VOPAnyCommon <outs, ins, asm, pattern> {
 
   // Using complex patterns gives VOP3 patterns a very high complexity rating,
   // but standalone patterns are almost always prefered, so we need to adjust the
