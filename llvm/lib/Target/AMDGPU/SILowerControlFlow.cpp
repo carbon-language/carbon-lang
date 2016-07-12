@@ -76,7 +76,7 @@ private:
   bool shouldSkip(MachineBasicBlock *From, MachineBasicBlock *To);
 
   void Skip(MachineInstr &From, MachineOperand &To);
-  bool skipIfDead(MachineInstr &MI);
+  bool skipIfDead(MachineInstr &MI, MachineBasicBlock &NextBB);
 
   void If(MachineInstr &MI);
   void Else(MachineInstr &MI, bool ExecModified);
@@ -88,6 +88,9 @@ private:
 
   void Kill(MachineInstr &MI);
   void Branch(MachineInstr &MI);
+
+  MachineBasicBlock *insertSkipBlock(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I) const;
 
   std::pair<MachineBasicBlock *, MachineBasicBlock *>
   splitBlock(MachineBasicBlock &MBB, MachineBasicBlock::iterator I);
@@ -205,27 +208,22 @@ void SILowerControlFlow::Skip(MachineInstr &From, MachineOperand &To) {
     .addOperand(To);
 }
 
-bool SILowerControlFlow::skipIfDead(MachineInstr &MI) {
+bool SILowerControlFlow::skipIfDead(MachineInstr &MI, MachineBasicBlock &NextBB) {
   MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction *MF = MBB.getParent();
 
-  if (MBB.getParent()->getFunction()->getCallingConv() != CallingConv::AMDGPU_PS ||
+  if (MF->getFunction()->getCallingConv() != CallingConv::AMDGPU_PS ||
       !shouldSkip(&MBB, &MBB.getParent()->back()))
     return false;
 
-  LivePhysRegs RemainderLiveRegs(TRI);
-  RemainderLiveRegs.addLiveOuts(MBB);
-
-  MachineBasicBlock *SkipBB;
-  MachineBasicBlock *RemainderBB;
-  std::tie(SkipBB, RemainderBB) = splitBlock(MBB, MI.getIterator());
+  MachineBasicBlock *SkipBB = insertSkipBlock(MBB, MI.getIterator());
+  SkipBB->addSuccessor(&NextBB);
 
   const DebugLoc &DL = MI.getDebugLoc();
 
   // If the exec mask is non-zero, skip the next two instructions
   BuildMI(&MBB, DL, TII->get(AMDGPU::S_CBRANCH_EXECNZ))
-    .addMBB(RemainderBB);
-
-  MBB.addSuccessor(RemainderBB);
+    .addMBB(&NextBB);
 
   MachineBasicBlock::iterator Insert = SkipBB->begin();
 
@@ -243,15 +241,6 @@ bool SILowerControlFlow::skipIfDead(MachineInstr &MI) {
 
   // ... and terminate wavefront.
   BuildMI(*SkipBB, Insert, DL, TII->get(AMDGPU::S_ENDPGM));
-
-  for (const MachineInstr &Inst : reverse(*RemainderBB))
-    RemainderLiveRegs.stepBackward(Inst);
-
-  const MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
-  for (unsigned Reg : RemainderLiveRegs) {
-    if (MRI.isAllocatable(Reg))
-      RemainderBB->addLiveIn(Reg);
-  }
 
   return true;
 }
@@ -493,6 +482,20 @@ void SILowerControlFlow::emitLoadM0FromVGPRLoop(MachineBasicBlock &LoopBB,
   // Loop back to V_READFIRSTLANE_B32 if there are still variants to cover
   BuildMI(LoopBB, I, DL, TII->get(AMDGPU::S_CBRANCH_EXECNZ))
     .addMBB(&LoopBB);
+}
+
+MachineBasicBlock *SILowerControlFlow::insertSkipBlock(
+  MachineBasicBlock &MBB, MachineBasicBlock::iterator I) const {
+  MachineFunction *MF = MBB.getParent();
+
+  MachineBasicBlock *SkipBB = MF->CreateMachineBasicBlock();
+  MachineFunction::iterator MBBI(MBB);
+  ++MBBI;
+
+  MF->insert(MBBI, SkipBB);
+  MBB.addSuccessor(SkipBB);
+
+  return SkipBB;
 }
 
 std::pair<MachineBasicBlock *, MachineBasicBlock *>
@@ -745,7 +748,7 @@ bool SILowerControlFlow::runOnMachineFunction(MachineFunction &MF) {
           if (--Depth == 0 && HaveKill) {
             HaveKill = false;
 
-            if (skipIfDead(MI)) {
+            if (skipIfDead(MI, *NextBB)) {
               NextBB = std::next(BI);
               BE = MF.end();
               Next = MBB.end();
@@ -754,9 +757,9 @@ bool SILowerControlFlow::runOnMachineFunction(MachineFunction &MF) {
           EndCf(MI);
           break;
 
-        case AMDGPU::SI_KILL:
+        case AMDGPU::SI_KILL_TERMINATOR:
           if (Depth == 0) {
-            if (skipIfDead(MI)) {
+            if (skipIfDead(MI, *NextBB)) {
               NextBB = std::next(BI);
               BE = MF.end();
               Next = MBB.end();

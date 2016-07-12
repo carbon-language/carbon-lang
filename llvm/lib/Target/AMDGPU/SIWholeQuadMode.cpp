@@ -223,7 +223,7 @@ void SIWholeQuadMode::propagateInstruction(const MachineInstr &MI,
   // Control flow-type instructions that are followed by WQM computations
   // must themselves be in WQM.
   if ((II.OutNeeds & StateWQM) && !(II.Needs & StateWQM) &&
-      (MI.isBranch() || MI.isTerminator() || MI.getOpcode() == AMDGPU::SI_KILL)) {
+      (MI.isBranch() || MI.isTerminator())) {
     Instructions[&MI].Needs = StateWQM;
     II.Needs = StateWQM;
   }
@@ -444,9 +444,6 @@ void SIWholeQuadMode::processBlock(MachineBasicBlock &MBB, unsigned LiveMaskReg,
 
       State = Needs;
     }
-
-    if (MI.getOpcode() == AMDGPU::SI_KILL)
-      WQMFromExec = false;
   }
 
   if ((BI.OutNeeds & StateWQM) && State != StateWQM) {

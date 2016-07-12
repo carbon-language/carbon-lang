@@ -1989,8 +1989,16 @@ def SI_END_CF : PseudoInstSI <
 let Uses = [EXEC], Defs = [EXEC,VCC] in {
 def SI_KILL : PseudoInstSI <
   (outs), (ins VSrc_32:$src),
-  [(int_AMDGPU_kill f32:$src)]
->;
+  [(int_AMDGPU_kill f32:$src)]> {
+  let isConvergent = 1;
+  let usesCustomInserter = 1;
+}
+
+def SI_KILL_TERMINATOR : PseudoInstSI <
+  (outs), (ins VSrc_32:$src)> {
+  let isTerminator = 1;
+}
+
 } // End Uses = [EXEC], Defs = [EXEC,VCC]
 
 } // End mayLoad = 1, mayStore = 1, hasSideEffects = 1
