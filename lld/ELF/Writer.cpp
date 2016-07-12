@@ -74,8 +74,6 @@ private:
   void writeHeader();
   void writeSections();
   void writeBuildId();
-  bool isDiscarded(InputSectionBase<ELFT> *IS) const;
-  StringRef getOutputSectionName(InputSectionBase<ELFT> *S) const;
   bool needsInterpSection() const {
     return !Symtab.getSharedFiles().empty() && !Config->DynamicLinker.empty();
   }
@@ -102,6 +100,30 @@ private:
   uintX_t SectionHeaderOff;
 };
 } // anonymous namespace
+
+template <class ELFT>
+StringRef elf::getOutputSectionName(InputSectionBase<ELFT> *S) {
+  StringRef Dest = Script<ELFT>::X->getOutputSection(S);
+  if (!Dest.empty())
+    return Dest;
+
+  StringRef Name = S->getSectionName();
+  for (StringRef V : {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.",
+                      ".init_array.", ".fini_array.", ".ctors.", ".dtors.",
+                      ".tbss.", ".gcc_except_table.", ".tdata."})
+    if (Name.startswith(V))
+      return V.drop_back();
+  return Name;
+}
+
+template <class ELFT>
+void elf::reportDiscarded(InputSectionBase<ELFT> *IS,
+                          const std::unique_ptr<elf::ObjectFile<ELFT>> &File) {
+  if (!Config->PrintGcSections || !IS || IS->Live)
+    return;
+  errs() << "removing unused section from '" << IS->getSectionName()
+         << "' in file '" << File->getName() << "'\n";
+}
 
 template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   typedef typename ELFT::uint uintX_t;
@@ -471,36 +493,6 @@ void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon *> &Syms) {
   }
 
   Out<ELFT>::Bss->setSize(Off);
-}
-
-template <class ELFT>
-StringRef Writer<ELFT>::getOutputSectionName(InputSectionBase<ELFT> *S) const {
-  StringRef Dest = Script<ELFT>::X->getOutputSection(S);
-  if (!Dest.empty())
-    return Dest;
-
-  StringRef Name = S->getSectionName();
-  for (StringRef V : {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.",
-                      ".init_array.", ".fini_array.", ".ctors.", ".dtors.",
-                      ".tbss.", ".gcc_except_table.", ".tdata."})
-    if (Name.startswith(V))
-      return V.drop_back();
-  return Name;
-}
-
-template <class ELFT>
-void reportDiscarded(InputSectionBase<ELFT> *IS,
-                     const std::unique_ptr<elf::ObjectFile<ELFT>> &File) {
-  if (!Config->PrintGcSections || !IS || IS->Live)
-    return;
-  llvm::errs() << "removing unused section from '" << IS->getSectionName()
-               << "' in file '" << File->getName() << "'\n";
-}
-
-template <class ELFT>
-bool Writer<ELFT>::isDiscarded(InputSectionBase<ELFT> *S) const {
-  return !S || S == &InputSection<ELFT>::Discarded || !S->Live ||
-         Script<ELFT>::X->isDiscarded(S);
 }
 
 template <class ELFT>
