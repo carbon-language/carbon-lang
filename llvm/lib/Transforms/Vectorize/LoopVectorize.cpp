@@ -3112,9 +3112,6 @@ void InnerLoopVectorizer::fixupIVUsers(PHINode *OrigPhi,
   // value (the value that feeds into the phi from the loop latch).
   // We allow both, but they, obviously, have different values.
 
-  // We only expect at most one of each kind of user. This is because LCSSA will
-  // canonicalize the users to a single PHI node per exit block, and we
-  // currently only vectorize loops with a single exit.
   assert(OrigLoop->getExitBlock() && "Expected a single exit block");
 
   // An external user of the last iteration's value should see the value that
@@ -3132,7 +3129,6 @@ void InnerLoopVectorizer::fixupIVUsers(PHINode *OrigPhi,
       auto *User = cast<PHINode>(UI);
       if (User->getBasicBlockIndex(MiddleBlock) == -1)
         User->addIncoming(EndValue, MiddleBlock);
-      break;
     }
   }
 
@@ -3159,7 +3155,6 @@ void InnerLoopVectorizer::fixupIVUsers(PHINode *OrigPhi,
       Value *Escape = II.transform(B, CMO, PSE.getSE(), DL);
       Escape->setName("ind.escape");
       User->addIncoming(Escape, MiddleBlock);
-      break;
     }
   }
 }
