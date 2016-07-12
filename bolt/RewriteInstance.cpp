@@ -181,6 +181,11 @@ KeepTmp("keep-tmp",
         cl::desc("preserve intermediate .o file"),
         cl::Hidden);
 
+cl::opt<bool>
+AllowStripped("allow-stripped",
+              cl::desc("allow processing of stripped binaries"),
+              cl::Hidden);
+
 // Check against lists of functions from options if we should
 // optimize the function with a given name.
 bool shouldProcess(const BinaryFunction &Function) {
@@ -611,6 +616,7 @@ void RewriteInstance::run() {
 
 void RewriteInstance::discoverFileObjects() {
   std::string FileSymbolName;
+  bool SeenFileName = false;
 
   FileSymRefs.clear();
   BinaryFunctions.clear();
@@ -623,12 +629,13 @@ void RewriteInstance::discoverFileObjects() {
     if (Symbol.getFlags() & SymbolRef::SF_Undefined)
       continue;
 
-    ErrorOr<StringRef> Name = Symbol.getName();
-    check_error(Name.getError(), "cannot get symbol name");
+    ErrorOr<StringRef> NameOrError = Symbol.getName();
+    check_error(NameOrError.getError(), "cannot get symbol name");
 
     if (Symbol.getType() == SymbolRef::ST_File) {
       // Could be used for local symbol disambiguation.
-      FileSymbolName = *Name;
+      FileSymbolName = *NameOrError;
+      SeenFileName = true;
       continue;
     }
 
@@ -645,43 +652,61 @@ void RewriteInstance::discoverFileObjects() {
 
     // There's nothing horribly wrong with anonymous symbols, but let's
     // ignore them for now.
-    if (Name->empty())
+    if (NameOrError->empty())
       continue;
 
+    /// It is possible we are seeing a globalized local. LLVM might treat it as
+    /// a local if it has a "private global" prefix, e.g. ".L". Thus we have to
+    /// change the prefix to enforce global scope of the symbol.
+    std::string Name =
+      NameOrError->startswith(BC->AsmInfo->getPrivateGlobalPrefix())
+        ? "PG." + std::string(*NameOrError)
+        : std::string(*NameOrError);
+
     // Disambiguate all local symbols before adding to symbol table.
-    // Since we don't know if we'll see a global with the same name,
+    // Since we don't know if we will see a global with the same name,
     // always modify the local name.
+    //
+    // NOTE: the naming convention for local symbols should match
+    //       the one we use for profile data.
     std::string UniqueName;
+    std::string AlternativeName;
     if (Symbol.getFlags() & SymbolRef::SF_Global) {
-      assert(BC->GlobalSymbols.find(*Name) == BC->GlobalSymbols.end() &&
+      assert(BC->GlobalSymbols.find(Name) == BC->GlobalSymbols.end() &&
              "global name not unique");
-      UniqueName = *Name;
-      /// It's possible we are seeing a globalized local. LLVM might treat it as
-      /// local if it has a "private global" prefix, e.g. ".L". Thus we have to
-      /// change the prefix to enforce global scope of the symbol.
-      if (StringRef(UniqueName)
-              .startswith(BC->AsmInfo->getPrivateGlobalPrefix()))
-        UniqueName = "PG." + UniqueName;
+      UniqueName = Name;
     } else {
-      unsigned LocalCount = 1;
-      std::string LocalName = (*Name).str() + "/" + FileSymbolName + "/";
+      // If we have a local file name, we should create 2 variants for the
+      // function name. The reason is that perf profile might have been
+      // collected on a binary that did not have the local file name (e.g. as
+      // a side effect of stripping debug info from the binary):
+      //
+      //   primary:     <function>/<id>
+      //   alternative: <function>/<file>/<id2>
+      //
+      // The <id> field is used for disambiguation of local symbols since there
+      // could be identical function names coming from identical file names
+      // (e.g. from different directories).
+      std::string Prefix = Name + "/";
+      std::string AltPrefix;
+      if (!FileSymbolName.empty())
+        AltPrefix = Prefix + FileSymbolName + "/";
 
-      if ((*Name).startswith(BC->AsmInfo->getPrivateGlobalPrefix())) {
-        LocalName = "PG." + LocalName;
-      }
-
-      while (BC->GlobalSymbols.find(LocalName + std::to_string(LocalCount)) !=
-             BC->GlobalSymbols.end()) {
-        ++LocalCount;
-      }
-      UniqueName = LocalName + std::to_string(LocalCount);
+      auto uniquifyName = [&] (std::string NamePrefix) {
+        unsigned LocalID = 1;
+        while (BC->GlobalSymbols.find(NamePrefix + std::to_string(LocalID))
+               != BC->GlobalSymbols.end())
+          ++LocalID;
+        return NamePrefix + std::to_string(LocalID);
+      };
+      UniqueName = uniquifyName(Prefix);
+      if (!AltPrefix.empty())
+        AlternativeName = uniquifyName(AltPrefix);
     }
 
-    // Add the name to global symbols map.
-    BC->GlobalSymbols[UniqueName] = Address;
-
-    // Add to the reverse map. There could multiple names at the same address.
-    BC->GlobalAddresses.emplace(std::make_pair(Address, UniqueName));
+    BC->registerNameAtAddress(UniqueName, Address);
+    if (!AlternativeName.empty())
+      BC->registerNameAtAddress(AlternativeName, Address);
 
     // Only consider ST_Function symbols for functions. Although this
     // assumption  could be broken by assembly functions for which the type
@@ -750,13 +775,24 @@ void RewriteInstance::discoverFileObjects() {
       }
       BFI->second.addAlternativeName(UniqueName);
     } else {
-      // Create the function and add to the map.
-      BinaryFunctions.emplace(
+      // Create the function and add it to the map.
+      auto Result = BinaryFunctions.emplace(
           Address,
-          BinaryFunction(UniqueName, Symbol, *Section, Address,
-                         SymbolSize, *BC, IsSimple)
-      );
+          BinaryFunction(UniqueName, Symbol, *Section, Address, SymbolSize,
+                         *BC, IsSimple));
+      BFI = Result.first;
     }
+    if (!AlternativeName.empty())
+      BFI->second.addAlternativeName(AlternativeName);
+  }
+
+  if (!SeenFileName && BC->DR.hasLocalsWithFileName() && !opts::AllowStripped) {
+    errs() << "BOLT-ERROR: input binary does not have local file symbols "
+              "but profile data includes function names with embedded file "
+              "names. It appears that the input binary was stripped while a "
+              "profiled binary was not. If you know what you are doing and "
+              "wish to proceed, use -allow-stripped option.\n";
+    exit(1);
   }
 }
 

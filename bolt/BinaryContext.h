@@ -150,6 +150,15 @@ public:
   /// return the first one.
   MCSymbol *getOrCreateGlobalSymbol(uint64_t Address, Twine Prefix);
 
+  /// Register a symbol with \p Name at a given \p Address.
+  void registerNameAtAddress(const std::string &Name, uint64_t Address) {
+    // Add the name to global symbols map.
+    GlobalSymbols[Name] = Address;
+
+    // Add to the reverse map. There could multiple names at the same address.
+    GlobalAddresses.emplace(std::make_pair(Address, Name));
+  }
+
   /// Populate some internal data structures with debug info.
   void preprocessDebugInfo(
       std::map<uint64_t, BinaryFunction> &BinaryFunctions);

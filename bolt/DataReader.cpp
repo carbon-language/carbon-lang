@@ -394,6 +394,15 @@ DataReader::getFuncBranchData(const std::vector<std::string> &FuncNames) const {
   return make_error_code(llvm::errc::invalid_argument);
 }
 
+bool DataReader::hasLocalsWithFileName() const {
+  for (const auto &Func : FuncsMap) {
+    const auto &FuncName = Func.getKey();
+    if (FuncName.count('/') == 2 && FuncName[0] != '/')
+      return true;
+  }
+  return false;
+}
+
 void DataReader::dump() const {
   for (const auto &Func : FuncsMap) {
     Diag << Func.getKey() << " branches:\n";

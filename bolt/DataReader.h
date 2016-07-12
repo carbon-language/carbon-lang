@@ -187,6 +187,13 @@ public:
 
   FuncsMapType &getAllFuncsData() { return FuncsMap; }
 
+  const FuncsMapType &getAllFuncsData() const { return FuncsMap; }
+
+  /// Return true if profile contains an entry for a local function
+  /// that has a non-empty associated file name.
+  bool hasLocalsWithFileName() const;
+
+
   /// Dumps the entire data structures parsed. Used for debugging.
   void dump() const;
 
