@@ -55,7 +55,7 @@ void SystemZInstrInfo::splitMove(MachineBasicBlock::iterator MI,
 
   // Get two load or store instructions.  Use the original instruction for one
   // of them (arbitrarily the second here) and create a clone for the other.
-  MachineInstr *EarlierMI = MF.CloneMachineInstr(MI);
+  MachineInstr *EarlierMI = MF.CloneMachineInstr(&*MI);
   MBB->insert(MI, EarlierMI);
 
   // Set up the two 64-bit registers.
@@ -496,8 +496,8 @@ static bool removeIPMBasedCompare(MachineInstr &Compare, unsigned SrcReg,
     return false;
   MachineBasicBlock::iterator MBBI = IPM, MBBE = Compare.getIterator();
   for (++MBBI; MBBI != MBBE; ++MBBI) {
-    MachineInstr *MI = MBBI;
-    if (MI->modifiesRegister(SystemZ::CC, TRI))
+    MachineInstr &MI = *MBBI;
+    if (MI.modifiesRegister(SystemZ::CC, TRI))
       return false;
   }
 
