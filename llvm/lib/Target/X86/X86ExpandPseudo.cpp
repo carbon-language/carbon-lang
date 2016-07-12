@@ -134,8 +134,8 @@ bool X86ExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
           .addReg(JumpTarget.getReg(), RegState::Kill);
     }
 
-    MachineInstr *NewMI = std::prev(MBBI);
-    NewMI->copyImplicitOps(*MBBI->getParent()->getParent(), *MBBI);
+    MachineInstr &NewMI = *std::prev(MBBI);
+    NewMI.copyImplicitOps(*MBBI->getParent()->getParent(), *MBBI);
 
     // Delete the pseudo instruction TCRETURN.
     MBB.erase(MBBI);
