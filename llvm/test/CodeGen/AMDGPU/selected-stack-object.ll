@@ -1,4 +1,7 @@
+; "Assertion failure" should be caught with both XFAIL:* and +Asserts.
 ; XFAIL: *
+; REQUIRES: asserts
+
 ; RUN: llc -march=amdgcn -mcpu=verde -verify-machineinstrs < %s | FileCheck %s
 
 ; See also local-stack-slot-bug.ll
