@@ -81,9 +81,8 @@ uint32_t ICallPromotionAnalysis::getProfitablePromotionCandidates(
   for (; I < MaxNumPromotions && I < NumVals; I++) {
     uint64_t Count = ValueDataRef[I].Count;
     assert(Count <= TotalCount);
-    uint64_t Target = ValueDataRef[I].Value;
     DEBUG(dbgs() << " Candidate " << I << " Count=" << Count
-                 << "  Target_func: " << Target << "\n");
+                 << "  Target_func: " << ValueDataRef[I].Value << "\n");
 
     if (!isPromotionProfitable(Count, TotalCount)) {
       DEBUG(dbgs() << " Not promote: Cold target.\n");
