@@ -1717,6 +1717,10 @@ defm V_FMA_F32 : VOP3Inst <vop3<0x14b, 0x1cb>, "v_fma_f32",
 defm V_FMA_F64 : VOP3Inst <vop3<0x14c, 0x1cc>, "v_fma_f64",
   VOP_F64_F64_F64_F64, fma
 >;
+
+defm V_LERP_U8 : VOP3Inst <vop3<0x14d, 0x1cd>, "v_lerp_u8",
+  VOP_I32_I32_I32_I32, int_amdgcn_lerp
+>;
 } // End isCommutable = 1
 
 //def V_LERP_U8 : VOP3_U8 <0x0000014d, "v_lerp_u8", []>;
