@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -analyze < %s
+; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 
 ; Derived from test-suite/SingleSource/UnitTests/Vector/SSE/sse.stepfft.c
 
@@ -9,7 +9,7 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
 ; Function Attrs: nounwind uwtable
-define void @cfft2(i32 %n) local_unnamed_addr #0 {
+define void @cfft2(i32 %n, double* %A) local_unnamed_addr #0 {
 entry:
   br i1 undef, label %for.body.lr.ph, label %for.end
 
@@ -38,6 +38,7 @@ for.body.i58.us:                                  ; preds = %for.body.i58.us, %f
   br i1 undef, label %for.inc, label %for.body.i58.us
 
 for.body.i58:                                     ; preds = %for.body.i58, %for.body.i58.preheader
+  store double 0.0, double* %A
   %exitcond42 = icmp eq i32 0, %div.i45
   br i1 %exitcond42, label %for.inc, label %for.body.i58
 
@@ -53,3 +54,7 @@ attributes #0 = { nounwind uwtable "disable-tail-calls"="false" "less-precise-fp
 !llvm.ident = !{!0}
 
 !0 = !{!"clang version 3.9.0 (trunk 273249) (llvm/trunk 273255)"}
+
+; CHECK-LABEL: Stmt_for_body_i58
+; CHECK-NEXT:      Domain :=
+; CHECK-NEXT:          [n] -> { Stmt_for_body_i58[0] : -3 <= n <= 3 };
