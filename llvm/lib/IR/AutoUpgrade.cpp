@@ -239,6 +239,10 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name.startswith("avx512.mask.punpckh") ||
          Name.startswith("avx512.mask.unpckl.") ||
          Name.startswith("avx512.mask.unpckh.") ||
+         Name.startswith("avx512.mask.pand.") ||
+         Name.startswith("avx512.mask.pandn.") ||
+         Name.startswith("avx512.mask.por.") ||
+         Name.startswith("avx512.mask.pxor.") ||
          Name.startswith("sse41.pmovsx") ||
          Name.startswith("sse41.pmovzx") ||
          Name.startswith("avx2.pmovsx") ||
@@ -1179,6 +1183,23 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
 
       Rep = Builder.CreateShuffleVector(Op0, Op1, Idxs);
 
+      Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
+                          CI->getArgOperand(2));
+    } else if (IsX86 && Name.startswith("avx512.mask.pand.")) {
+      Rep = Builder.CreateAnd(CI->getArgOperand(0), CI->getArgOperand(1));
+      Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
+                          CI->getArgOperand(2));
+    } else if (IsX86 && Name.startswith("avx512.mask.pandn.")) {
+      Rep = Builder.CreateAnd(Builder.CreateNot(CI->getArgOperand(0)),
+                              CI->getArgOperand(1));
+      Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
+                          CI->getArgOperand(2));
+    } else if (IsX86 && Name.startswith("avx512.mask.por.")) {
+      Rep = Builder.CreateOr(CI->getArgOperand(0), CI->getArgOperand(1));
+      Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
+                          CI->getArgOperand(2));
+    } else if (IsX86 && Name.startswith("avx512.mask.pxor.")) {
+      Rep = Builder.CreateXor(CI->getArgOperand(0), CI->getArgOperand(1));
       Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
                           CI->getArgOperand(2));
     } else {
