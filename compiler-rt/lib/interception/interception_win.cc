@@ -461,6 +461,7 @@ static size_t GetInstructionSize(uptr address) {
     case 0x5541:  // push r13
     case 0x5641:  // push r14
     case 0x5741:  // push r15
+    case 0x9066:  // Two-byte NOP
       return 2;
   }
 
