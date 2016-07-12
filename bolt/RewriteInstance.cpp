@@ -1697,14 +1697,14 @@ void RewriteInstance::patchELFPHDRTable() {
       NewPhdr.p_memsz = sizeof(NewPhdr) * Phnum;
     } else if (Phdr.p_type == ELF::PT_GNU_EH_FRAME) {
       auto SMII = SectionMM->SectionMapInfo.find(".eh_frame_hdr");
-      assert(SMII != SectionMM->SectionMapInfo.end() &&
-             ".eh_frame_hdr could not be found for PT_GNU_EH_FRAME");
-      auto &EHFrameHdrSecInfo = SMII->second;
-      NewPhdr.p_offset = EHFrameHdrSecInfo.FileOffset;
-      NewPhdr.p_vaddr = EHFrameHdrSecInfo.FileAddress;
-      NewPhdr.p_paddr = EHFrameHdrSecInfo.FileAddress;
-      NewPhdr.p_filesz = EHFrameHdrSecInfo.Size;
-      NewPhdr.p_memsz = EHFrameHdrSecInfo.Size;
+      if (SMII != SectionMM->SectionMapInfo.end()) {
+        auto &EHFrameHdrSecInfo = SMII->second;
+        NewPhdr.p_offset = EHFrameHdrSecInfo.FileOffset;
+        NewPhdr.p_vaddr = EHFrameHdrSecInfo.FileAddress;
+        NewPhdr.p_paddr = EHFrameHdrSecInfo.FileAddress;
+        NewPhdr.p_filesz = EHFrameHdrSecInfo.Size;
+        NewPhdr.p_memsz = EHFrameHdrSecInfo.Size;
+      }
     } else if (opts::UseGnuStack && Phdr.p_type == ELF::PT_GNU_STACK) {
       NewPhdr.p_type = ELF::PT_LOAD;
       NewPhdr.p_offset = NewTextSegmentOffset;
