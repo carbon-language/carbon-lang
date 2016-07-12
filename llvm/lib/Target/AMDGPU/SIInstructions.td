@@ -1936,7 +1936,7 @@ def SI_MASK_BRANCH : InstSI <
   let SALU = 1;
 }
 
-let Uses = [EXEC], Defs = [EXEC] in {
+let Uses = [EXEC], Defs = [EXEC, SCC] in {
 
 let isBranch = 1, isTerminator = 1 in {
 
@@ -1978,7 +1978,7 @@ def SI_END_CF : InstSI <
   [(int_amdgcn_end_cf i64:$saved)]
 >;
 
-} // End Uses = [EXEC], Defs = [EXEC]
+} // End Uses = [EXEC], Defs = [EXEC, SCC]
 
 let Uses = [EXEC], Defs = [EXEC,VCC] in {
 def SI_KILL : InstSI <
