@@ -257,11 +257,10 @@ std::vector<ICallPromotionFunc::PromotionCandidate>
 ICallPromotionFunc::getPromotionCandidatesForCallSite(
     Instruction *Inst, const ArrayRef<InstrProfValueData> &ValueDataRef,
     uint64_t TotalCount, uint32_t NumCandidates) {
-  uint32_t NumVals = ValueDataRef.size();
   std::vector<PromotionCandidate> Ret;
 
   DEBUG(dbgs() << " \nWork on callsite #" << NumOfPGOICallsites << *Inst
-               << " Num_targets: " << NumVals
+               << " Num_targets: " << ValueDataRef.size()
                << " Num_candidates: " << NumCandidates << "\n");
   NumOfPGOICallsites++;
   if (ICPCSSkip != 0 && NumOfPGOICallsites <= ICPCSSkip) {
