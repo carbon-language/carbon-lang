@@ -311,6 +311,10 @@ namespace llvm {
       /// of outputs.
       XXSWAPD,
 
+      /// An SDNode for swaps that are not associated with any loads/stores
+      /// and thereby have no chain.
+      SWAP_NO_CHAIN,
+
       /// QVFPERM = This corresponds to the QPX qvfperm instruction.
       QVFPERM,
 

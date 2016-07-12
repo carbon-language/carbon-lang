@@ -71,6 +71,7 @@ def PPCmtvsra : SDNode<"PPCISD::MTVSRA", SDTUnaryOp, []>;
 def PPCmtvsrz : SDNode<"PPCISD::MTVSRZ", SDTUnaryOp, []>;
 def PPCsvec2fp : SDNode<"PPCISD::SINT_VEC_TO_FP", SDTVecConv, []>;
 def PPCuvec2fp: SDNode<"PPCISD::UINT_VEC_TO_FP", SDTVecConv, []>;
+def PPCswapNoChain : SDNode<"PPCISD::SWAP_NO_CHAIN", SDT_PPCxxswapd>;
 
 multiclass XX3Form_Rcr<bits<6> opcode, bits<7> xo, string asmbase,
                     string asmstr, InstrItinClass itin, Intrinsic Int,
@@ -963,6 +964,7 @@ def : Pat<(v2f64 (PPCxxswapd v2f64:$src)), (XXPERMDI $src, $src, 2)>;
 def : Pat<(v2i64 (PPCxxswapd v2i64:$src)), (XXPERMDI $src, $src, 2)>;
 def : Pat<(v4f32 (PPCxxswapd v4f32:$src)), (XXPERMDI $src, $src, 2)>;
 def : Pat<(v4i32 (PPCxxswapd v4i32:$src)), (XXPERMDI $src, $src, 2)>;
+def : Pat<(v2f64 (PPCswapNoChain v2f64:$src)), (XXPERMDI $src, $src, 2)>;
 
 // Selects.
 def : Pat<(v2f64 (selectcc i1:$lhs, i1:$rhs, v2f64:$tval, v2f64:$fval, SETLT)),
@@ -1318,7 +1320,7 @@ def VectorExtractions {
                        (v2i64 (COPY_TO_REGCLASS $S, VSRC)), sub_64));
 
   // Word extraction
-  dag LE_WORD_0 = (MFVSRWZ (EXTRACT_SUBREG (XXSLDWI $S, $S, 2), sub_64));
+  dag LE_WORD_0 = (MFVSRWZ (EXTRACT_SUBREG (XXPERMDI $S, $S, 2), sub_64));
   dag LE_WORD_1 = (MFVSRWZ (EXTRACT_SUBREG (XXSLDWI $S, $S, 1), sub_64));
   dag LE_WORD_2 = (MFVSRWZ (EXTRACT_SUBREG
                              (v2i64 (COPY_TO_REGCLASS $S, VSRC)), sub_64));
@@ -1588,7 +1590,7 @@ let Predicates = [IsBigEndian, HasP8Vector] in {
   def : Pat<(f32 (vector_extract v4f32:$S, 1)),
             (f32 (XSCVSPDPN (XXSLDWI $S, $S, 1)))>;
   def : Pat<(f32 (vector_extract v4f32:$S, 2)),
-            (f32 (XSCVSPDPN (XXSLDWI $S, $S, 2)))>;
+            (f32 (XSCVSPDPN (XXPERMDI $S, $S, 2)))>;
   def : Pat<(f32 (vector_extract v4f32:$S, 3)),
             (f32 (XSCVSPDPN (XXSLDWI $S, $S, 3)))>;
   def : Pat<(f32 (vector_extract v4f32:$S, i64:$Idx)),
@@ -1693,7 +1695,7 @@ let Predicates = [IsLittleEndian, HasP8Vector] in {
   def : Pat<(f32 (vector_extract v4f32:$S, 0)),
             (f32 (XSCVSPDPN (XXSLDWI $S, $S, 3)))>;
   def : Pat<(f32 (vector_extract v4f32:$S, 1)),
-            (f32 (XSCVSPDPN (XXSLDWI $S, $S, 2)))>;
+            (f32 (XSCVSPDPN (XXPERMDI $S, $S, 2)))>;
   def : Pat<(f32 (vector_extract v4f32:$S, 2)),
             (f32 (XSCVSPDPN (XXSLDWI $S, $S, 1)))>;
   def : Pat<(f32 (vector_extract v4f32:$S, 3)),

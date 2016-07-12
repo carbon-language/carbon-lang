@@ -1083,6 +1083,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::MFBHRBE:         return "PPCISD::MFBHRBE";
   case PPCISD::RFEBB:           return "PPCISD::RFEBB";
   case PPCISD::XXSWAPD:         return "PPCISD::XXSWAPD";
+  case PPCISD::SWAP_NO_CHAIN:   return "PPCISD::SWAP_NO_CHAIN";
   case PPCISD::QVFPERM:         return "PPCISD::QVFPERM";
   case PPCISD::QVGPCI:          return "PPCISD::QVGPCI";
   case PPCISD::QVALIGNI:        return "PPCISD::QVALIGNI";
@@ -7356,6 +7357,14 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
                                   DAG.getConstant(SplatIdx, dl, MVT::i32));
       return DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, Splat);
     }
+
+    // Left shifts of 8 bytes are actually swaps. Convert accordingly.
+    if (V2.isUndef() && PPC::isVSLDOIShuffleMask(SVOp, 1, DAG) == 8) {
+      SDValue Conv = DAG.getNode(ISD::BITCAST, dl, MVT::v2f64, V1);
+      SDValue Swap = DAG.getNode(PPCISD::SWAP_NO_CHAIN, dl, MVT::v2f64, Conv);
+      return DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, Swap);
+    }
+
   }
 
   if (Subtarget.hasQPX()) {
