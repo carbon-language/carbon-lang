@@ -339,7 +339,7 @@ static uptr AllocateMemoryForTrampoline(uptr image_address, size_t size) {
         // In 64-bits, the memory space must be allocated within 2G boundary.
         uptr next_address = current->content + current->allocated_size;
         if (next_address < image_address ||
-            next_address - image_address >= 0x7FFFF0000)
+            next_address - image_address >= 0x7FFF0000)
           continue;
 #endif
       // The space can be allocated in the current region.
