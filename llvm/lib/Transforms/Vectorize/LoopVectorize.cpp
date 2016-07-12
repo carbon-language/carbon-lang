@@ -3114,6 +3114,8 @@ void InnerLoopVectorizer::fixupIVUsers(PHINode *OrigPhi,
 
   assert(OrigLoop->getExitBlock() && "Expected a single exit block");
 
+  DenseMap<Value *, Value *> MissingVals;
+
   // An external user of the last iteration's value should see the value that
   // the remainder loop uses to initialize its own IV.
   Value *PostInc = OrigPhi->getIncomingValueForBlock(OrigLoop->getLoopLatch());
@@ -3121,14 +3123,7 @@ void InnerLoopVectorizer::fixupIVUsers(PHINode *OrigPhi,
     Instruction *UI = cast<Instruction>(U);
     if (!OrigLoop->contains(UI)) {
       assert(isa<PHINode>(UI) && "Expected LCSSA form");
-      // One corner case we have to handle is two IVs "chasing" each-other,
-      // that is %IV2 = phi [...], [ %IV1, %latch ]
-      // In this case, if IV1 has an external use, we need to avoid adding both
-      // "last value of IV1" and "penultimate value of IV2". Since we don't know
-      // which IV will be handled first, check we haven't handled this user yet.
-      auto *User = cast<PHINode>(UI);
-      if (User->getBasicBlockIndex(MiddleBlock) == -1)
-        User->addIncoming(EndValue, MiddleBlock);
+      MissingVals[UI] = EndValue;
     }
   }
 
@@ -3140,12 +3135,7 @@ void InnerLoopVectorizer::fixupIVUsers(PHINode *OrigPhi,
     if (!OrigLoop->contains(UI)) {
       const DataLayout &DL =
           OrigLoop->getHeader()->getModule()->getDataLayout();
-
       assert(isa<PHINode>(UI) && "Expected LCSSA form");
-      auto *User = cast<PHINode>(UI);
-      // As above, check we haven't already handled this user.
-      if (User->getBasicBlockIndex(MiddleBlock) != -1)
-        break;
 
       IRBuilder<> B(MiddleBlock->getTerminator());
       Value *CountMinusOne = B.CreateSub(
@@ -3154,8 +3144,19 @@ void InnerLoopVectorizer::fixupIVUsers(PHINode *OrigPhi,
                                        "cast.cmo");
       Value *Escape = II.transform(B, CMO, PSE.getSE(), DL);
       Escape->setName("ind.escape");
-      User->addIncoming(Escape, MiddleBlock);
+      MissingVals[UI] = Escape;
     }
+  }
+
+  for (auto &I : MissingVals) {
+    PHINode *PHI = cast<PHINode>(I.first);
+    // One corner case we have to handle is two IVs "chasing" each-other,
+    // that is %IV2 = phi [...], [ %IV1, %latch ]
+    // In this case, if IV1 has an external use, we need to avoid adding both
+    // "last value of IV1" and "penultimate value of IV2". So, verify that we
+    // don't already have an incoming value for the middle block.
+    if (PHI->getBasicBlockIndex(MiddleBlock) == -1)
+      PHI->addIncoming(I.second, MiddleBlock);
   }
 }
 
