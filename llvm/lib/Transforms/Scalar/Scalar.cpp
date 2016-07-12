@@ -48,7 +48,7 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeInductiveRangeCheckEliminationPass(Registry);
   initializeIndVarSimplifyLegacyPassPass(Registry);
   initializeJumpThreadingPass(Registry);
-  initializeLegacyLICMPassPass(Registry);
+  initializeLICMPass(Registry);
   initializeLoopDataPrefetchPass(Registry);
   initializeLoopDeletionPass(Registry);
   initializeLoopAccessLegacyAnalysisPass(Registry);
