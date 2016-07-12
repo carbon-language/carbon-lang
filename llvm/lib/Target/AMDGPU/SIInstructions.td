@@ -3308,13 +3308,13 @@ def : MTBUF_StoreResource <v4i32, 4, TBUFFER_STORE_FORMAT_XYZW>;
 multiclass SI_INDIRECT_Pattern <ValueType vt, ValueType eltvt, string VecSize> {
   // Extract with offset
   def : Pat<
-    (eltvt (extractelt vt:$src, (MOVRELSOffset i32:$idx, (i32 imm:$offset)))),
+    (eltvt (extractelt vt:$src, (MOVRELOffset i32:$idx, (i32 imm:$offset)))),
     (!cast<Instruction>("SI_INDIRECT_SRC_"#VecSize) $src, $idx, imm:$offset)
   >;
 
   // Insert with offset
   def : Pat<
-    (insertelt vt:$src, eltvt:$val, (MOVRELDOffset i32:$idx, (i32 imm:$offset))),
+    (insertelt vt:$src, eltvt:$val, (MOVRELOffset i32:$idx, (i32 imm:$offset))),
     (!cast<Instruction>("SI_INDIRECT_DST_"#VecSize) $src, $idx, imm:$offset, $val)
   >;
 }

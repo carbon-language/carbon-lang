@@ -467,12 +467,9 @@ main_body:
 ; This crashed at some point due to a bug in FixSGPRCopies. Derived from the
 ; report in https://bugs.freedesktop.org/show_bug.cgi?id=96877
 ;
-;TODO: the readfirstlanes are unnecessary, see http://reviews.llvm.org/D22217
-;
-;CHECK: v_readfirstlane_b32 s[[LO:[0-9]+]], v{{[0-9]+}}
-;CHECK: v_readfirstlane_b32
-;CHECK: v_readfirstlane_b32
-;CHECK: v_readfirstlane_b32 s[[HI:[0-9]+]], v{{[0-9]+}}
+;CHECK: s_load_dwordx4 s{{\[}}[[LO:[0-9]+]]:[[HI:[0-9]+]]], {{s\[[0-9]+:[0-9]+\]}}, 0x0
+;CHECK: s_waitcnt lgkmcnt(0)
+;CHECK: s_mov_b32 s[[LO]], 0
 ;CHECK: image_gather4_lz {{v\[[0-9]+:[0-9]+\]}}, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, s{{\[}}[[LO]]:[[HI]]] dmask:0x8
 define amdgpu_ps float @gather4_sgpr_bug() {
 main_body:
