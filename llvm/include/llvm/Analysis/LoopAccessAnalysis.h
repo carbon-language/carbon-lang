@@ -522,9 +522,9 @@ public:
   LoopAccessInfo(LoopAccessInfo &&LAI)
       : PSE(std::move(LAI.PSE)), PtrRtChecking(std::move(LAI.PtrRtChecking)),
         DepChecker(std::move(LAI.DepChecker)), TheLoop(LAI.TheLoop), DL(LAI.DL),
-        TLI(LAI.TLI), AA(LAI.AA), DT(LAI.DT), LI(LAI.LI),
-        NumLoads(LAI.NumLoads), NumStores(LAI.NumStores),
-        MaxSafeDepDistBytes(LAI.MaxSafeDepDistBytes), CanVecMem(LAI.CanVecMem),
+        TLI(LAI.TLI), DT(LAI.DT), LI(LAI.LI), NumLoads(LAI.NumLoads),
+        NumStores(LAI.NumStores), MaxSafeDepDistBytes(LAI.MaxSafeDepDistBytes),
+        CanVecMem(LAI.CanVecMem),
         StoreToLoopInvariantAddress(LAI.StoreToLoopInvariantAddress),
         Report(std::move(LAI.Report)),
         SymbolicStrides(std::move(LAI.SymbolicStrides)),
@@ -539,7 +539,6 @@ public:
     TheLoop = LAI.TheLoop;
     DL = LAI.DL;
     TLI = LAI.TLI;
-    AA = LAI.AA;
     DT = LAI.DT;
     LI = LAI.LI;
     NumLoads = LAI.NumLoads;
@@ -638,7 +637,7 @@ public:
 
 private:
   /// \brief Analyze the loop.
-  void analyzeLoop();
+  void analyzeLoop(AliasAnalysis *AA);
 
   /// \brief Check if the structure of the loop allows it to be analyzed by this
   /// pass.
@@ -665,7 +664,6 @@ private:
   Loop *TheLoop;
   const DataLayout *DL;
   const TargetLibraryInfo *TLI;
-  AliasAnalysis *AA;
   DominatorTree *DT;
   LoopInfo *LI;
 
