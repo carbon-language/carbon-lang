@@ -36,6 +36,10 @@
 
 using namespace llvm;
 
+PerFunctionMIParsingState::PerFunctionMIParsingState(MachineFunction &MF)
+  : MF(MF) {
+}
+
 namespace {
 
 /// A wrapper struct around the 'MachineOperand' struct that includes a source
@@ -84,9 +88,8 @@ class MIParser {
   StringMap<unsigned> Names2BitmaskTargetFlags;
 
 public:
-  MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
-           StringRef Source, const PerFunctionMIParsingState &PFS,
-           const SlotMapping &IRSlots);
+  MIParser(const PerFunctionMIParsingState &PFS, SourceMgr &SM,
+           SMDiagnostic &Error, StringRef Source, const SlotMapping &IRSlots);
 
   /// \p SkipChar gives the number of characters to skip before looking
   /// for the next token.
@@ -253,10 +256,10 @@ private:
 
 } // end anonymous namespace
 
-MIParser::MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
-                   StringRef Source, const PerFunctionMIParsingState &PFS,
+MIParser::MIParser(const PerFunctionMIParsingState &PFS, SourceMgr &SM,
+                   SMDiagnostic &Error, StringRef Source,
                    const SlotMapping &IRSlots)
-    : SM(SM), MF(MF), Error(Error), Source(Source), CurrentSource(Source),
+    : SM(SM), MF(PFS.MF), Error(Error), Source(Source), CurrentSource(Source),
       PFS(PFS), IRSlots(IRSlots) {}
 
 void MIParser::lex(unsigned SkipChar) {
@@ -2050,65 +2053,63 @@ bool MIParser::getBitmaskTargetFlag(StringRef Name, unsigned &Flag) {
   return false;
 }
 
-bool llvm::parseMachineBasicBlockDefinitions(MachineFunction &MF, StringRef Src,
-                                             PerFunctionMIParsingState &PFS,
+bool llvm::parseMachineBasicBlockDefinitions(PerFunctionMIParsingState &PFS,
+                                             StringRef Src,
                                              const SlotMapping &IRSlots,
                                              SMDiagnostic &Error) {
   SourceMgr SM;
   SM.AddNewSourceBuffer(
       MemoryBuffer::getMemBuffer(Src, "", /*RequiresNullTerminator=*/false),
       SMLoc());
-  return MIParser(SM, MF, Error, Src, PFS, IRSlots)
+  return MIParser(PFS, SM, Error, Src, IRSlots)
       .parseBasicBlockDefinitions(PFS.MBBSlots);
 }
 
-bool llvm::parseMachineInstructions(MachineFunction &MF, StringRef Src,
-                                    const PerFunctionMIParsingState &PFS,
-                                    const SlotMapping &IRSlots,
+bool llvm::parseMachineInstructions(const PerFunctionMIParsingState &PFS,
+                                    StringRef Src, const SlotMapping &IRSlots,
                                     SMDiagnostic &Error) {
   SourceMgr SM;
   SM.AddNewSourceBuffer(
       MemoryBuffer::getMemBuffer(Src, "", /*RequiresNullTerminator=*/false),
       SMLoc());
-  return MIParser(SM, MF, Error, Src, PFS, IRSlots).parseBasicBlocks();
+  return MIParser(PFS, SM, Error, Src, IRSlots).parseBasicBlocks();
 }
 
-bool llvm::parseMBBReference(MachineBasicBlock *&MBB, SourceMgr &SM,
-                             MachineFunction &MF, StringRef Src,
-                             const PerFunctionMIParsingState &PFS,
-                             const SlotMapping &IRSlots, SMDiagnostic &Error) {
-  return MIParser(SM, MF, Error, Src, PFS, IRSlots).parseStandaloneMBB(MBB);
+bool llvm::parseMBBReference(const PerFunctionMIParsingState &PFS,
+                             MachineBasicBlock *&MBB, SourceMgr &SM,
+                             StringRef Src, const SlotMapping &IRSlots,
+                             SMDiagnostic &Error) {
+  return MIParser(PFS, SM, Error, Src, IRSlots).parseStandaloneMBB(MBB);
 }
 
-bool llvm::parseNamedRegisterReference(unsigned &Reg, SourceMgr &SM,
-                                       MachineFunction &MF, StringRef Src,
-                                       const PerFunctionMIParsingState &PFS,
+bool llvm::parseNamedRegisterReference(const PerFunctionMIParsingState &PFS,
+                                       unsigned &Reg, SourceMgr &SM,
+                                       StringRef Src,
                                        const SlotMapping &IRSlots,
                                        SMDiagnostic &Error) {
-  return MIParser(SM, MF, Error, Src, PFS, IRSlots)
+  return MIParser(PFS, SM, Error, Src, IRSlots)
       .parseStandaloneNamedRegister(Reg);
 }
 
-bool llvm::parseVirtualRegisterReference(unsigned &Reg, SourceMgr &SM,
-                                         MachineFunction &MF, StringRef Src,
-                                         const PerFunctionMIParsingState &PFS,
+bool llvm::parseVirtualRegisterReference(const PerFunctionMIParsingState &PFS,
+                                         unsigned &Reg, SourceMgr &SM,
+                                         StringRef Src,
                                          const SlotMapping &IRSlots,
                                          SMDiagnostic &Error) {
-  return MIParser(SM, MF, Error, Src, PFS, IRSlots)
+  return MIParser(PFS, SM, Error, Src, IRSlots)
       .parseStandaloneVirtualRegister(Reg);
 }
 
-bool llvm::parseStackObjectReference(int &FI, SourceMgr &SM,
-                                     MachineFunction &MF, StringRef Src,
-                                     const PerFunctionMIParsingState &PFS,
+bool llvm::parseStackObjectReference(const PerFunctionMIParsingState &PFS,
+                                     int &FI, SourceMgr &SM, StringRef Src,
                                      const SlotMapping &IRSlots,
                                      SMDiagnostic &Error) {
-  return MIParser(SM, MF, Error, Src, PFS, IRSlots)
+  return MIParser(PFS, SM, Error, Src, IRSlots)
       .parseStandaloneStackObject(FI);
 }
 
-bool llvm::parseMDNode(MDNode *&Node, SourceMgr &SM, MachineFunction &MF,
-                       StringRef Src, const PerFunctionMIParsingState &PFS,
+bool llvm::parseMDNode(const PerFunctionMIParsingState &PFS,
+                       MDNode *&Node, SourceMgr &SM, StringRef Src,
                        const SlotMapping &IRSlots, SMDiagnostic &Error) {
-  return MIParser(SM, MF, Error, Src, PFS, IRSlots).parseStandaloneMDNode(Node);
+  return MIParser(PFS, SM, Error, Src, IRSlots).parseStandaloneMDNode(Node);
 }
