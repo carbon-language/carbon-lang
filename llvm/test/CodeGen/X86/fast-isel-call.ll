@@ -22,12 +22,12 @@ define void @test2(%struct.s* %d) nounwind {
   call void @foo2(%struct.s* byval %d )
   ret void
 ; CHECK-LABEL: test2:
-; CHECK: movl	(%eax)
-; CHECK: movl {{.*}}, (%esp)
-; CHECK: movl	4(%eax)
-; CHECK: movl {{.*}}, 4(%esp)
-; CHECK: movl	8(%eax)
-; CHECK: movl {{.*}}, 8(%esp)
+; CHECK: movl	(%eax), %[[reg1:e[a-d]x]]
+; CHECK: movl	4(%eax), %[[reg2:e[a-d]x]]
+; CHECK: movl	8(%eax), %[[reg3:e[a-d]x]]
+; CHECK: pushl %[[reg3]]
+; CHECK: pushl %[[reg2]]
+; CHECK: pushl %[[reg1]]
 }
 
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
