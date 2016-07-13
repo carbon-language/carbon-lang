@@ -423,7 +423,7 @@ public:
   bool empty() { return Segments.empty(); }
 
   /// \brief Expansions that can be further processed.
-  std::vector<ExpansionRecord> getExpansions() { return Expansions; }
+  ArrayRef<ExpansionRecord> getExpansions() { return Expansions; }
 };
 
 /// \brief The mapping of profile information to coverage data.
