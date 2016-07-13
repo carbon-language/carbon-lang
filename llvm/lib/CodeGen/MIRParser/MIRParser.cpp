@@ -292,7 +292,7 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   MF.setHasInlineAsm(YamlMF.HasInlineAsm);
   if (YamlMF.AllVRegsAllocated)
     MF.getProperties().set(MachineFunctionProperties::Property::AllVRegsAllocated);
-  PerFunctionMIParsingState PFS(MF);
+  PerFunctionMIParsingState PFS(MF, SM, IRSlots);
   if (initializeRegisterInfo(PFS, YamlMF))
     return true;
   if (!YamlMF.Constants.empty()) {
@@ -302,13 +302,19 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
       return true;
   }
 
+  StringRef BlockStr = YamlMF.Body.Value.Value;
   SMDiagnostic Error;
-  if (parseMachineBasicBlockDefinitions(PFS, YamlMF.Body.Value.Value, IRSlots,
-                                        Error)) {
+  SourceMgr BlockSM;
+  BlockSM.AddNewSourceBuffer(
+      MemoryBuffer::getMemBuffer(BlockStr, "",/*RequiresNullTerminator=*/false),
+      SMLoc());
+  PFS.SM = &BlockSM;
+  if (parseMachineBasicBlockDefinitions(PFS, BlockStr, Error)) {
     reportDiagnostic(
         diagFromBlockStringDiag(Error, YamlMF.Body.Value.SourceRange));
     return true;
   }
+  PFS.SM = &SM;
 
   if (MF.empty())
     return error(Twine("machine function '") + Twine(MF.getName()) +
@@ -324,12 +330,20 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
     return true;
   // Parse the machine instructions after creating all of the MBBs so that the
   // parser can resolve the MBB references.
-  if (parseMachineInstructions(PFS, YamlMF.Body.Value.Value, IRSlots, Error)) {
+  StringRef InsnStr = YamlMF.Body.Value.Value;
+  SourceMgr InsnSM;
+  InsnSM.AddNewSourceBuffer(
+      MemoryBuffer::getMemBuffer(InsnStr, "", /*RequiresNullTerminator=*/false),
+      SMLoc());
+  PFS.SM = &InsnSM;
+  if (parseMachineInstructions(PFS, InsnStr, Error)) {
     reportDiagnostic(
         diagFromBlockStringDiag(Error, YamlMF.Body.Value.SourceRange));
     return true;
   }
-  inferRegisterInfo(MF, YamlMF);
+  PFS.SM = &SM;
+
+  inferRegisterInfo(PFS, YamlMF);
   // FIXME: This is a temporary workaround until the reserved registers can be
   // serialized.
   MF.getRegInfo().freezeReservedRegs(MF);
@@ -381,9 +395,8 @@ bool MIRParserImpl::initializeRegisterInfo(PerFunctionMIParsingState &PFS,
                        Twine(VReg.ID.Value) + "'");
     if (!VReg.PreferredRegister.Value.empty()) {
       unsigned PreferredReg = 0;
-      if (parseNamedRegisterReference(PFS, PreferredReg, SM,
-                                      VReg.PreferredRegister.Value, IRSlots,
-                                      Error))
+      if (parseNamedRegisterReference(PFS, PreferredReg,
+                                      VReg.PreferredRegister.Value, Error))
         return error(Error, VReg.PreferredRegister.SourceRange);
       RegInfo.setSimpleHint(Reg, PreferredReg);
     }
@@ -392,13 +405,12 @@ bool MIRParserImpl::initializeRegisterInfo(PerFunctionMIParsingState &PFS,
   // Parse the liveins.
   for (const auto &LiveIn : YamlMF.LiveIns) {
     unsigned Reg = 0;
-    if (parseNamedRegisterReference(PFS, Reg, SM, LiveIn.Register.Value,
-                                    IRSlots, Error))
+    if (parseNamedRegisterReference(PFS, Reg, LiveIn.Register.Value, Error))
       return error(Error, LiveIn.Register.SourceRange);
     unsigned VReg = 0;
     if (!LiveIn.VirtualRegister.Value.empty()) {
-      if (parseVirtualRegisterReference(
-              PFS, VReg, SM, LiveIn.VirtualRegister.Value, IRSlots, Error))
+      if (parseVirtualRegisterReference(PFS, VReg, LiveIn.VirtualRegister.Value,
+                                        Error))
         return error(Error, LiveIn.VirtualRegister.SourceRange);
     }
     RegInfo.addLiveIn(Reg, VReg);
@@ -410,8 +422,7 @@ bool MIRParserImpl::initializeRegisterInfo(PerFunctionMIParsingState &PFS,
     return false;
   for (const auto &RegSource : YamlMF.CalleeSavedRegisters.getValue()) {
     unsigned Reg = 0;
-    if (parseNamedRegisterReference(PFS, Reg, SM, RegSource.Value, IRSlots,
-                                    Error))
+    if (parseNamedRegisterReference(PFS, Reg, RegSource.Value, Error))
       return error(Error, RegSource.SourceRange);
     CalleeSavedRegisterMask[Reg] = true;
   }
@@ -532,8 +543,7 @@ bool MIRParserImpl::initializeFrameInfo(PerFunctionMIParsingState &PFS,
   if (!YamlMFI.StackProtector.Value.empty()) {
     SMDiagnostic Error;
     int FI;
-    if (parseStackObjectReference(PFS, FI, SM, YamlMFI.StackProtector.Value,
-                                  IRSlots, Error))
+    if (parseStackObjectReference(PFS, FI, YamlMFI.StackProtector.Value, Error))
       return error(Error, YamlMFI.StackProtector.SourceRange);
     MFI.setStackProtectorIndex(FI);
   }
@@ -547,8 +557,7 @@ bool MIRParserImpl::parseCalleeSavedRegister(PerFunctionMIParsingState &PFS,
     return false;
   unsigned Reg = 0;
   SMDiagnostic Error;
-  if (parseNamedRegisterReference(PFS, Reg, SM, RegisterSource.Value, IRSlots,
-                                  Error))
+  if (parseNamedRegisterReference(PFS, Reg, RegisterSource.Value, Error))
     return error(Error, RegisterSource.SourceRange);
   CSIInfo.push_back(CalleeSavedInfo(Reg, FrameIdx));
   return false;
@@ -597,7 +606,7 @@ bool MIRParserImpl::parseMDNode(const PerFunctionMIParsingState &PFS,
   if (Source.Value.empty())
     return false;
   SMDiagnostic Error;
-  if (llvm::parseMDNode(PFS, Node, SM, Source.Value, IRSlots, Error))
+  if (llvm::parseMDNode(PFS, Node, Source.Value, Error))
     return error(Error, Source.SourceRange);
   return false;
 }
@@ -652,7 +661,7 @@ bool MIRParserImpl::parseMBBReference(const PerFunctionMIParsingState &PFS,
                                       MachineBasicBlock *&MBB,
                                       const yaml::StringValue &Source) {
   SMDiagnostic Error;
-  if (llvm::parseMBBReference(PFS, MBB, SM, Source.Value, IRSlots, Error))
+  if (llvm::parseMBBReference(PFS, MBB, Source.Value, Error))
     return error(Error, Source.SourceRange);
   return false;
 }

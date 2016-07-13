@@ -32,6 +32,8 @@ class SourceMgr;
 
 struct PerFunctionMIParsingState {
   MachineFunction &MF;
+  SourceMgr *SM;
+  const SlotMapping &IRSlots;
 
   DenseMap<unsigned, MachineBasicBlock *> MBBSlots;
   DenseMap<unsigned, unsigned> VirtualRegisterSlots;
@@ -42,7 +44,8 @@ struct PerFunctionMIParsingState {
   /// Hold the generic virtual registers.
   SmallSet<unsigned, 8> GenericVRegs;
 
-  PerFunctionMIParsingState(MachineFunction &MF);
+  PerFunctionMIParsingState(MachineFunction &MF, SourceMgr &SM,
+                            const SlotMapping &IRSlots);
 };
 
 /// Parse the machine basic block definitions, and skip the machine
@@ -58,9 +61,7 @@ struct PerFunctionMIParsingState {
 ///
 /// Return true if an error occurred.
 bool parseMachineBasicBlockDefinitions(PerFunctionMIParsingState &PFS,
-                                       StringRef Src,
-                                       const SlotMapping &IRSlots,
-                                       SMDiagnostic &Error);
+                                       StringRef Src, SMDiagnostic &Error);
 
 /// Parse the machine instructions.
 ///
@@ -73,31 +74,25 @@ bool parseMachineBasicBlockDefinitions(PerFunctionMIParsingState &PFS,
 ///
 /// Return true if an error occurred.
 bool parseMachineInstructions(const PerFunctionMIParsingState &PFS,
-                              StringRef Src, const SlotMapping &IRSlots,
-                              SMDiagnostic &Error);
+                              StringRef Src, SMDiagnostic &Error);
 
 bool parseMBBReference(const PerFunctionMIParsingState &PFS,
-                       MachineBasicBlock *&MBB, SourceMgr &SM,
-                       StringRef Src, const SlotMapping &IRSlots,
+                       MachineBasicBlock *&MBB, StringRef Src,
                        SMDiagnostic &Error);
 
 bool parseNamedRegisterReference(const PerFunctionMIParsingState &PFS,
-                                 unsigned &Reg, SourceMgr &SM,
-                                 StringRef Src, const SlotMapping &IRSlots,
+                                 unsigned &Reg, StringRef Src,
                                  SMDiagnostic &Error);
 
 bool parseVirtualRegisterReference(const PerFunctionMIParsingState &PFS,
-                                   unsigned &Reg, SourceMgr &SM,
-                                   StringRef Src, const SlotMapping &IRSlots,
+                                   unsigned &Reg, StringRef Src,
                                    SMDiagnostic &Error);
 
 bool parseStackObjectReference(const PerFunctionMIParsingState &PFS,
-                               int &FI, SourceMgr &SM, StringRef Src,
-                               const SlotMapping &IRSlots, SMDiagnostic &Error);
+                               int &FI, StringRef Src, SMDiagnostic &Error);
 
 bool parseMDNode(const PerFunctionMIParsingState &PFS, MDNode *&Node,
-                 SourceMgr &SM, StringRef Src, const SlotMapping &IRSlots,
-                 SMDiagnostic &Error);
+                 StringRef Src, SMDiagnostic &Error);
 
 } // end namespace llvm
 

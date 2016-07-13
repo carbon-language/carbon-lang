@@ -36,8 +36,9 @@
 
 using namespace llvm;
 
-PerFunctionMIParsingState::PerFunctionMIParsingState(MachineFunction &MF)
-  : MF(MF) {
+PerFunctionMIParsingState::PerFunctionMIParsingState(MachineFunction &MF,
+    SourceMgr &SM, const SlotMapping &IRSlots)
+  : MF(MF), SM(&SM), IRSlots(IRSlots) {
 }
 
 namespace {
@@ -60,14 +61,11 @@ struct ParsedMachineOperand {
 };
 
 class MIParser {
-  SourceMgr &SM;
   MachineFunction &MF;
   SMDiagnostic &Error;
   StringRef Source, CurrentSource;
   MIToken Token;
   const PerFunctionMIParsingState &PFS;
-  /// Maps from indices to unnamed global values and metadata nodes.
-  const SlotMapping &IRSlots;
   /// Maps from instruction names to op codes.
   StringMap<unsigned> Names2InstrOpCodes;
   /// Maps from register names to registers.
@@ -88,8 +86,8 @@ class MIParser {
   StringMap<unsigned> Names2BitmaskTargetFlags;
 
 public:
-  MIParser(const PerFunctionMIParsingState &PFS, SourceMgr &SM,
-           SMDiagnostic &Error, StringRef Source, const SlotMapping &IRSlots);
+  MIParser(const PerFunctionMIParsingState &PFS, SMDiagnostic &Error,
+           StringRef Source);
 
   /// \p SkipChar gives the number of characters to skip before looking
   /// for the next token.
@@ -256,11 +254,10 @@ private:
 
 } // end anonymous namespace
 
-MIParser::MIParser(const PerFunctionMIParsingState &PFS, SourceMgr &SM,
-                   SMDiagnostic &Error, StringRef Source,
-                   const SlotMapping &IRSlots)
-    : SM(SM), MF(PFS.MF), Error(Error), Source(Source), CurrentSource(Source),
-      PFS(PFS), IRSlots(IRSlots) {}
+MIParser::MIParser(const PerFunctionMIParsingState &PFS, SMDiagnostic &Error,
+                   StringRef Source)
+    : MF(PFS.MF), Error(Error), Source(Source), CurrentSource(Source), PFS(PFS)
+{}
 
 void MIParser::lex(unsigned SkipChar) {
   CurrentSource = lexMIToken(
@@ -271,6 +268,7 @@ void MIParser::lex(unsigned SkipChar) {
 bool MIParser::error(const Twine &Msg) { return error(Token.location(), Msg); }
 
 bool MIParser::error(StringRef::iterator Loc, const Twine &Msg) {
+  const SourceMgr &SM = *PFS.SM;
   assert(Loc >= Source.data() && Loc <= (Source.data() + Source.size()));
   const MemoryBuffer &Buffer = *SM.getMemoryBuffer(SM.getMainFileID());
   if (Loc >= Buffer.getBufferStart() && Loc <= Buffer.getBufferEnd()) {
@@ -1011,7 +1009,7 @@ bool MIParser::parseIRConstant(StringRef::iterator Loc, StringRef StringValue,
   auto Source = StringValue.str(); // The source has to be null terminated.
   SMDiagnostic Err;
   C = parseConstantValue(Source.c_str(), Err, *MF.getFunction()->getParent(),
-                         &IRSlots);
+                         &PFS.IRSlots);
   if (!C)
     return error(Loc + Err.getColumnNo(), Err.getMessage());
   return false;
@@ -1029,7 +1027,7 @@ bool MIParser::parseIRType(StringRef::iterator Loc, StringRef StringValue,
   auto Source = StringValue.str(); // The source has to be null terminated.
   SMDiagnostic Err;
   Ty = parseTypeAtBeginning(Source.c_str(), Read, Err,
-                            *MF.getFunction()->getParent(), &IRSlots);
+                            *MF.getFunction()->getParent(), &PFS.IRSlots);
   if (!Ty)
     return error(Loc + Err.getColumnNo(), Err.getMessage());
   return false;
@@ -1182,10 +1180,10 @@ bool MIParser::parseGlobalValue(GlobalValue *&GV) {
     unsigned GVIdx;
     if (getUnsigned(GVIdx))
       return true;
-    if (GVIdx >= IRSlots.GlobalValues.size())
+    if (GVIdx >= PFS.IRSlots.GlobalValues.size())
       return error(Twine("use of undefined global value '@") + Twine(GVIdx) +
                    "'");
-    GV = IRSlots.GlobalValues[GVIdx];
+    GV = PFS.IRSlots.GlobalValues[GVIdx];
     break;
   }
   default:
@@ -1263,8 +1261,8 @@ bool MIParser::parseMDNode(MDNode *&Node) {
   unsigned ID;
   if (getUnsigned(ID))
     return true;
-  auto NodeInfo = IRSlots.MetadataNodes.find(ID);
-  if (NodeInfo == IRSlots.MetadataNodes.end())
+  auto NodeInfo = PFS.IRSlots.MetadataNodes.find(ID);
+  if (NodeInfo == PFS.IRSlots.MetadataNodes.end())
     return error(Loc, "use of undefined metadata '!" + Twine(ID) + "'");
   lex();
   Node = NodeInfo->second.get();
@@ -2055,61 +2053,40 @@ bool MIParser::getBitmaskTargetFlag(StringRef Name, unsigned &Flag) {
 
 bool llvm::parseMachineBasicBlockDefinitions(PerFunctionMIParsingState &PFS,
                                              StringRef Src,
-                                             const SlotMapping &IRSlots,
                                              SMDiagnostic &Error) {
-  SourceMgr SM;
-  SM.AddNewSourceBuffer(
-      MemoryBuffer::getMemBuffer(Src, "", /*RequiresNullTerminator=*/false),
-      SMLoc());
-  return MIParser(PFS, SM, Error, Src, IRSlots)
-      .parseBasicBlockDefinitions(PFS.MBBSlots);
+  return MIParser(PFS, Error, Src).parseBasicBlockDefinitions(PFS.MBBSlots);
 }
 
 bool llvm::parseMachineInstructions(const PerFunctionMIParsingState &PFS,
-                                    StringRef Src, const SlotMapping &IRSlots,
-                                    SMDiagnostic &Error) {
-  SourceMgr SM;
-  SM.AddNewSourceBuffer(
-      MemoryBuffer::getMemBuffer(Src, "", /*RequiresNullTerminator=*/false),
-      SMLoc());
-  return MIParser(PFS, SM, Error, Src, IRSlots).parseBasicBlocks();
+                                    StringRef Src, SMDiagnostic &Error) {
+  return MIParser(PFS, Error, Src).parseBasicBlocks();
 }
 
 bool llvm::parseMBBReference(const PerFunctionMIParsingState &PFS,
-                             MachineBasicBlock *&MBB, SourceMgr &SM,
-                             StringRef Src, const SlotMapping &IRSlots,
+                             MachineBasicBlock *&MBB, StringRef Src,
                              SMDiagnostic &Error) {
-  return MIParser(PFS, SM, Error, Src, IRSlots).parseStandaloneMBB(MBB);
+  return MIParser(PFS, Error, Src).parseStandaloneMBB(MBB);
 }
 
 bool llvm::parseNamedRegisterReference(const PerFunctionMIParsingState &PFS,
-                                       unsigned &Reg, SourceMgr &SM,
-                                       StringRef Src,
-                                       const SlotMapping &IRSlots,
+                                       unsigned &Reg, StringRef Src,
                                        SMDiagnostic &Error) {
-  return MIParser(PFS, SM, Error, Src, IRSlots)
-      .parseStandaloneNamedRegister(Reg);
+  return MIParser(PFS, Error, Src).parseStandaloneNamedRegister(Reg);
 }
 
 bool llvm::parseVirtualRegisterReference(const PerFunctionMIParsingState &PFS,
-                                         unsigned &Reg, SourceMgr &SM,
-                                         StringRef Src,
-                                         const SlotMapping &IRSlots,
+                                         unsigned &Reg, StringRef Src,
                                          SMDiagnostic &Error) {
-  return MIParser(PFS, SM, Error, Src, IRSlots)
-      .parseStandaloneVirtualRegister(Reg);
+  return MIParser(PFS, Error, Src).parseStandaloneVirtualRegister(Reg);
 }
 
 bool llvm::parseStackObjectReference(const PerFunctionMIParsingState &PFS,
-                                     int &FI, SourceMgr &SM, StringRef Src,
-                                     const SlotMapping &IRSlots,
+                                     int &FI, StringRef Src,
                                      SMDiagnostic &Error) {
-  return MIParser(PFS, SM, Error, Src, IRSlots)
-      .parseStandaloneStackObject(FI);
+  return MIParser(PFS, Error, Src).parseStandaloneStackObject(FI);
 }
 
 bool llvm::parseMDNode(const PerFunctionMIParsingState &PFS,
-                       MDNode *&Node, SourceMgr &SM, StringRef Src,
-                       const SlotMapping &IRSlots, SMDiagnostic &Error) {
-  return MIParser(PFS, SM, Error, Src, IRSlots).parseStandaloneMDNode(Node);
+                       MDNode *&Node, StringRef Src, SMDiagnostic &Error) {
+  return MIParser(PFS, Error, Src).parseStandaloneMDNode(Node);
 }
