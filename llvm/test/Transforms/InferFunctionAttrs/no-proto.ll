@@ -480,9 +480,6 @@ declare void @memcmp(...)
 ; CHECK: declare void @memcpy(...)
 declare void @memcpy(...)
 
-; CHECK: declare void @mempcpy(...)
-declare void @mempcpy(...)
-
 ; CHECK: declare void @memmove(...)
 declare void @memmove(...)
 

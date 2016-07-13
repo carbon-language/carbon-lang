@@ -6039,48 +6039,6 @@ bool SelectionDAGBuilder::visitMemChrCall(const CallInst &I) {
   return false;
 }
 
-///
-/// visitMemPCpyCall -- lower a mempcpy call as a memcpy followed by code to
-/// to adjust the dst pointer by the size of the copied memory.
-bool SelectionDAGBuilder::visitMemPCpyCall(const CallInst &I) {
-
-  unsigned int NumOperands = I.getNumArgOperands();
-  if (NumOperands < 3 || NumOperands > 5)
-    return false;
-
-  SDValue Dst = getValue(I.getArgOperand(0));
-  SDValue Src = getValue(I.getArgOperand(1));
-  SDValue Size = getValue(I.getArgOperand(2));
-
-  unsigned Align = 0;
-  if (NumOperands >= 4)
-    Align = cast<ConstantInt>(I.getArgOperand(3))->getZExtValue();
-  if (!Align)
-    Align = 1; // @llvm.memcpy defines 0 and 1 to both mean no alignment.
-
-  bool isVol = false;
-  if (NumOperands == 5)
-    isVol = cast<ConstantInt>(I.getArgOperand(4))->getZExtValue();
-
-  SDLoc sdl = getCurSDLoc();
-  // In the mempcpy context we need to pass in a false value for isTailCall
-  // because the return pointer needs to be adjusted by the size of
-  // the copied memory.
-  SDValue MC = DAG.getMemcpy(getRoot(), sdl, Dst, Src, Size, Align, isVol,
-                             false, /*isTailCall=*/false,
-                             MachinePointerInfo(I.getArgOperand(0)),
-                             MachinePointerInfo(I.getArgOperand(1)));
-  assert(MC.getNode() != nullptr &&
-         "** memcpy should not be lowered as TailCall in mempcpy context **");
-  DAG.setRoot(MC);
-
-  // Adjust return pointer to point just past the last dst byte.
-  SDValue DstPlusSize = DAG.getNode(ISD::ADD, sdl, Dst.getValueType(),
-                                    Dst, Size);
-  setValue(&I, DstPlusSize);
-  return true;
-}
-
 /// visitStrCpyCall -- See if we can lower a strcpy or stpcpy call into an
 /// optimized form.  If so, return true and lower it, otherwise return false
 /// and it will be lowered like a normal call.
@@ -6369,10 +6327,6 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
         break;
       case LibFunc::memcmp:
         if (visitMemCmpCall(I))
-          return;
-        break;
-      case LibFunc::mempcpy:
-        if (visitMemPCpyCall(I))
           return;
         break;
       case LibFunc::memchr:
