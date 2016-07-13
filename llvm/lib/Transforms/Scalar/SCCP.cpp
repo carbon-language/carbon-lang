@@ -365,11 +365,11 @@ private:
     if (IV.isOverdefined() || MergeWithV.isUnknown())
       return;  // Noop.
     if (MergeWithV.isOverdefined())
-      markOverdefined(IV, V);
-    else if (IV.isUnknown())
-      markConstant(IV, V, MergeWithV.getConstant());
-    else if (IV.getConstant() != MergeWithV.getConstant())
-      markOverdefined(IV, V);
+      return markOverdefined(IV, V);
+    if (IV.isUnknown())
+      return markConstant(IV, V, MergeWithV.getConstant());
+    if (IV.getConstant() != MergeWithV.getConstant())
+      return markOverdefined(IV, V);
   }
 
   void mergeInValue(Value *V, LatticeVal MergeWithV) {
