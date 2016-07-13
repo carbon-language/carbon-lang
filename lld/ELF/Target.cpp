@@ -250,7 +250,9 @@ uint64_t TargetInfo::getImplicitAddend(const uint8_t *Buf,
   return 0;
 }
 
-uint64_t TargetInfo::getVAStart() const { return Config->Pic ? 0 : VAStart; }
+uint64_t TargetInfo::getImageBase() const {
+  return Config->Pic ? 0 : ImageBase;
+}
 
 bool TargetInfo::usesOnlyLowPageBits(uint32_t Type) const { return false; }
 
@@ -989,7 +991,7 @@ PPC64TargetInfo::PPC64TargetInfo() {
   //
   // And because the lowest non-zero 256M boundary is 0x10000000, PPC64 linkers
   // use 0x10000000 as the starting address.
-  VAStart = 0x10000000;
+  ImageBase = 0x10000000;
 }
 
 static uint64_t PPC64TocOffset = 0x8000;
