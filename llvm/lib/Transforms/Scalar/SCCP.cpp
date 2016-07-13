@@ -316,6 +316,13 @@ public:
   }
 
 private:
+  // pushToWorkList - Helper for markConstant/markForcedConstant
+  void pushToWorkList(LatticeVal &IV, Value *V) {
+    if (IV.isOverdefined())
+      return OverdefinedInstWorkList.push_back(V);
+    InstWorkList.push_back(V);
+  }
+
   // markConstant - Make a value be marked as "constant".  If the value
   // is not already a constant, add it to the instruction work list so that
   // the users of the instruction are updated later.
@@ -323,10 +330,7 @@ private:
   void markConstant(LatticeVal &IV, Value *V, Constant *C) {
     if (!IV.markConstant(C)) return;
     DEBUG(dbgs() << "markConstant: " << *C << ": " << *V << '\n');
-    if (IV.isOverdefined())
-      OverdefinedInstWorkList.push_back(V);
-    else
-      InstWorkList.push_back(V);
+    pushToWorkList(IV, V);
   }
 
   void markConstant(Value *V, Constant *C) {
@@ -339,10 +343,7 @@ private:
     LatticeVal &IV = ValueState[V];
     IV.markForcedConstant(C);
     DEBUG(dbgs() << "markForcedConstant: " << *C << ": " << *V << '\n');
-    if (IV.isOverdefined())
-      OverdefinedInstWorkList.push_back(V);
-    else
-      InstWorkList.push_back(V);
+    pushToWorkList(IV, V);
   }
 
 
