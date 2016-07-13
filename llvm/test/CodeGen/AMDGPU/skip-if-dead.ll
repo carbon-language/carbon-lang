@@ -2,7 +2,6 @@
 
 ; CHECK-LABEL: {{^}}test_kill_depth_0_imm_pos:
 ; CHECK-NEXT: ; BB#0:
-; CHECK-NEXT: ; BB#1:
 ; CHECK-NEXT: s_endpgm
 define amdgpu_ps void @test_kill_depth_0_imm_pos() #0 {
   call void @llvm.AMDGPU.kill(float 0.0)

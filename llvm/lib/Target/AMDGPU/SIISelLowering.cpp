@@ -1961,6 +1961,14 @@ SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
     return DAG.getMemIntrinsicNode(AMDGPUISD::TBUFFER_STORE_FORMAT, DL,
                                    Op->getVTList(), Ops, VT, MMO);
   }
+  case AMDGPUIntrinsic::AMDGPU_kill: {
+    if (const ConstantFPSDNode *K = dyn_cast<ConstantFPSDNode>(Op.getOperand(2))) {
+      if (!K->isNegative())
+        return Chain;
+    }
+
+    return Op;
+  }
   default:
     return SDValue();
   }
