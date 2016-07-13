@@ -1094,13 +1094,91 @@ public:
     ///     set to true to indicate any matches will need to be checked
     ///     to make sure they contain \a name.
     //------------------------------------------------------------------
-    static void
-    PrepareForFunctionNameLookup (const ConstString &name,
-                                  uint32_t name_type_mask,
-                                  lldb::LanguageType language,
-                                  ConstString &lookup_name,
-                                  uint32_t &lookup_name_type_mask,
-                                  bool &match_name_after_lookup);
+
+    //----------------------------------------------------------------------
+    /// @class LookupInfo Module.h "lldb/Core/Module.h"
+    /// @brief A class that encapsulates name lookup information.
+    ///
+    /// Users can type a wide variety of partial names when setting
+    /// breakpoints by name or when looking for functions by name.
+    /// SymbolVendor and SymbolFile objects are only required to implement
+    /// name lookup for function basenames and for fully mangled names.
+    /// This means if the user types in a partial name, we must reduce this
+    /// to a name lookup that will work with all SymbolFile objects. So we
+    /// might reduce a name lookup to look for a basename, and then prune
+    /// out any results that don't match.
+    ///
+    /// The "m_name" member variable represents the name as it was typed
+    /// by the user. "m_lookup_name" will be the name we actually search
+    /// for through the symbol or objects files. Lanaguage is included in
+    /// case we need to filter results by language at a later date. The
+    /// "m_name_type_mask" member variable tells us what kinds of names we
+    /// are looking for and can help us prune out unwanted results.
+    ///
+    /// Function lookups are done in Module.cpp, ModuleList.cpp and in
+    /// BreakpointResolverName.cpp and they all now use this class to do
+    /// lookups correctly.
+    //----------------------------------------------------------------------
+    class LookupInfo
+    {
+    public:
+        LookupInfo() :
+            m_name(),
+            m_lookup_name(),
+            m_language(lldb::eLanguageTypeUnknown),
+            m_name_type_mask(0),
+            m_match_name_after_lookup(false)
+        {
+        }
+
+        LookupInfo(const ConstString &name, uint32_t name_type_mask, lldb::LanguageType language);
+
+        const ConstString &
+        GetName() const
+        {
+            return m_name;
+        }
+
+        void
+        SetName(const ConstString &name)
+        {
+            m_name = name;
+        }
+
+        const ConstString &
+        GetLookupName() const
+        {
+            return m_lookup_name;
+        }
+
+        void
+        SetLookupName(const ConstString &name)
+        {
+            m_lookup_name = name;
+        }
+
+        uint32_t
+        GetNameTypeMask() const
+        {
+            return m_name_type_mask;
+        }
+
+        void
+        SetNameTypeMask(uint32_t mask)
+        {
+            m_name_type_mask = mask;
+        }
+
+        void
+        Prune(SymbolContextList &sc_list, size_t start_idx) const;
+
+    protected:
+        ConstString m_name; ///< What the user originally typed
+        ConstString m_lookup_name; ///< The actual name will lookup when calling in the object or symbol file
+        lldb::LanguageType m_language; ///< Limit matches to only be for this language
+        uint32_t m_name_type_mask; ///< One or more bits from lldb::FunctionNameType that indicate what kind of names we are looking for
+        bool m_match_name_after_lookup; ///< If \b true, then demangled names that match will need to contain "m_name" in order to be considered a match
+    };
 
 protected:
     //------------------------------------------------------------------
