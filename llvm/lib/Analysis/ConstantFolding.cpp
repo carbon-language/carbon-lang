@@ -850,13 +850,13 @@ Constant *SymbolicallyEvaluateGEP(const GEPOperator *GEP,
         // index for this level and proceed to the next level to see if it can
         // accommodate the offset.
         NewIdxs.push_back(ConstantInt::get(IntPtrTy, 0));
-      } else if (ElemSize.isAllOnesValue()) {
-        // Avoid signed overflow.
-        break;
       } else {
         // The element size is non-zero divide the offset by the element
         // size (rounding down), to compute the index at this level.
-        APInt NewIdx = Offset.sdiv(ElemSize);
+        bool Overflow;
+        APInt NewIdx = Offset.sdiv_ov(ElemSize, Overflow);
+        if (Overflow)
+          break;
         Offset -= NewIdx * ElemSize;
         NewIdxs.push_back(ConstantInt::get(IntPtrTy, NewIdx));
       }
