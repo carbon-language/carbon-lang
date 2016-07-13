@@ -16,7 +16,10 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Support/CodeGen.h"
+#include "llvm/Support/CommandLine.h"
 #include <string>
+
+extern llvm::cl::opt<bool> UseIPRA;
 
 namespace llvm {
 
