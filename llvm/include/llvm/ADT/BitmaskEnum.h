@@ -60,7 +60,8 @@
   using ::llvm::BitmaskEnumDetail::operator^;                                  \
   using ::llvm::BitmaskEnumDetail::operator|=;                                 \
   using ::llvm::BitmaskEnumDetail::operator&=;                                 \
-  using ::llvm::BitmaskEnumDetail::operator^=;
+  /* Force a semicolon at the end of this macro. */                            \
+  using ::llvm::BitmaskEnumDetail::operator^=
 
 namespace llvm {
 
