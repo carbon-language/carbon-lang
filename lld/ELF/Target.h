@@ -81,6 +81,8 @@ public:
   uint32_t TlsGotRel;
   uint32_t TlsModuleIndexRel;
   uint32_t TlsOffsetRel;
+  unsigned GotEntrySize;
+  unsigned GotPltEntrySize;
   unsigned PltEntrySize;
   unsigned PltHeaderSize;
 

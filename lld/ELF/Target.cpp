@@ -308,6 +308,8 @@ X86TargetInfo::X86TargetInfo() {
   TlsGotRel = R_386_TLS_TPOFF;
   TlsModuleIndexRel = R_386_TLS_DTPMOD32;
   TlsOffsetRel = R_386_TLS_DTPOFF32;
+  GotEntrySize = 4;
+  GotPltEntrySize = 4;
   PltEntrySize = 16;
   PltHeaderSize = 16;
   TlsGdRelaxSkip = 2;
@@ -551,6 +553,8 @@ template <class ELFT> X86_64TargetInfo<ELFT>::X86_64TargetInfo() {
   TlsGotRel = R_X86_64_TPOFF64;
   TlsModuleIndexRel = R_X86_64_DTPMOD64;
   TlsOffsetRel = R_X86_64_DTPOFF64;
+  GotEntrySize = 8;
+  GotPltEntrySize = 8;
   PltEntrySize = 16;
   PltHeaderSize = 16;
   TlsGdRelaxSkip = 2;
@@ -976,6 +980,8 @@ RelExpr PPCTargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
 PPC64TargetInfo::PPC64TargetInfo() {
   PltRel = GotRel = R_PPC64_GLOB_DAT;
   RelativeRel = R_PPC64_RELATIVE;
+  GotEntrySize = 8;
+  GotPltEntrySize = 8;
   PltEntrySize = 32;
   PltHeaderSize = 0;
 
@@ -1140,6 +1146,8 @@ AArch64TargetInfo::AArch64TargetInfo() {
   PltRel = R_AARCH64_JUMP_SLOT;
   TlsDescRel = R_AARCH64_TLSDESC;
   TlsGotRel = R_AARCH64_TLS_TPREL64;
+  GotEntrySize = 8;
+  GotPltEntrySize = 8;
   PltEntrySize = 16;
   PltHeaderSize = 32;
 
@@ -1480,6 +1488,8 @@ ARMTargetInfo::ARMTargetInfo() {
   TlsGotRel = R_ARM_TLS_TPOFF32;
   TlsModuleIndexRel = R_ARM_TLS_DTPMOD32;
   TlsOffsetRel = R_ARM_TLS_DTPOFF32;
+  GotEntrySize = 4;
+  GotPltEntrySize = 4;
   PltEntrySize = 16;
   PltHeaderSize = 20;
 }
@@ -1787,6 +1797,8 @@ uint64_t ARMTargetInfo::getImplicitAddend(const uint8_t *Buf,
 template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
   GotPltHeaderEntriesNum = 2;
   PageSize = 65536;
+  GotEntrySize = sizeof(typename ELFT::uint);
+  GotPltEntrySize = sizeof(typename ELFT::uint);
   PltEntrySize = 16;
   PltHeaderSize = 32;
   CopyRel = R_MIPS_COPY;
