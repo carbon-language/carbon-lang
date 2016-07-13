@@ -520,7 +520,7 @@ public:
   // LoopAccessInfo(LoopAccessInfo &&LAI) = default;
   LoopAccessInfo(LoopAccessInfo &&LAI)
       : PSE(std::move(LAI.PSE)), PtrRtChecking(std::move(LAI.PtrRtChecking)),
-        DepChecker(std::move(LAI.DepChecker)), TheLoop(LAI.TheLoop), DT(LAI.DT),
+        DepChecker(std::move(LAI.DepChecker)), TheLoop(LAI.TheLoop),
         NumLoads(LAI.NumLoads), NumStores(LAI.NumStores),
         MaxSafeDepDistBytes(LAI.MaxSafeDepDistBytes), CanVecMem(LAI.CanVecMem),
         StoreToLoopInvariantAddress(LAI.StoreToLoopInvariantAddress),
@@ -535,7 +535,6 @@ public:
     PtrRtChecking = std::move(LAI.PtrRtChecking);
     DepChecker = std::move(LAI.DepChecker);
     TheLoop = LAI.TheLoop;
-    DT = LAI.DT;
     NumLoads = LAI.NumLoads;
     NumStores = LAI.NumStores;
     MaxSafeDepDistBytes = LAI.MaxSafeDepDistBytes;
@@ -633,7 +632,7 @@ public:
 private:
   /// \brief Analyze the loop.
   void analyzeLoop(AliasAnalysis *AA, LoopInfo *LI,
-                   const TargetLibraryInfo *TLI);
+                   const TargetLibraryInfo *TLI, DominatorTree *DT);
 
   /// \brief Check if the structure of the loop allows it to be analyzed by this
   /// pass.
@@ -658,7 +657,6 @@ private:
   std::unique_ptr<MemoryDepChecker> DepChecker;
 
   Loop *TheLoop;
-  DominatorTree *DT;
 
   unsigned NumLoads;
   unsigned NumStores;
