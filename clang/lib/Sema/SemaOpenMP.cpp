@@ -7270,6 +7270,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_to:
   case OMPC_from:
   case OMPC_use_device_ptr:
+  case OMPC_is_device_ptr:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;
@@ -7557,6 +7558,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_to:
   case OMPC_from:
   case OMPC_use_device_ptr:
+  case OMPC_is_device_ptr:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;
@@ -7711,6 +7713,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_to:
   case OMPC_from:
   case OMPC_use_device_ptr:
+  case OMPC_is_device_ptr:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;
@@ -7899,6 +7902,7 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_to:
   case OMPC_from:
   case OMPC_use_device_ptr:
+  case OMPC_is_device_ptr:
     llvm_unreachable("Clause is not allowed.");
   }
   return Res;
@@ -8020,6 +8024,9 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
     break;
   case OMPC_use_device_ptr:
     Res = ActOnOpenMPUseDevicePtrClause(VarList, StartLoc, LParenLoc, EndLoc);
+    break;
+  case OMPC_is_device_ptr:
+    Res = ActOnOpenMPIsDevicePtrClause(VarList, StartLoc, LParenLoc, EndLoc);
     break;
   case OMPC_if:
   case OMPC_final:
@@ -11658,4 +11665,41 @@ OMPClause *Sema::ActOnOpenMPUseDevicePtrClause(ArrayRef<Expr *> VarList,
 
   return OMPUseDevicePtrClause::Create(Context, StartLoc, LParenLoc, EndLoc,
                                        Vars);
+}
+
+OMPClause *Sema::ActOnOpenMPIsDevicePtrClause(ArrayRef<Expr *> VarList,
+                                              SourceLocation StartLoc,
+                                              SourceLocation LParenLoc,
+                                              SourceLocation EndLoc) {
+  SmallVector<Expr *, 8> Vars;
+  for (auto &RefExpr : VarList) {
+    assert(RefExpr && "NULL expr in OpenMP use_device_ptr clause.");
+    SourceLocation ELoc;
+    SourceRange ERange;
+    Expr *SimpleRefExpr = RefExpr;
+    auto Res = getPrivateItem(*this, SimpleRefExpr, ELoc, ERange);
+    if (Res.second) {
+      // It will be analyzed later.
+      Vars.push_back(RefExpr);
+    }
+    ValueDecl *D = Res.first;
+    if (!D)
+      continue;
+
+    QualType Type = D->getType();
+    // item should be a pointer or array or reference to pointer or array
+    if (!Type.getNonReferenceType()->isPointerType() &&
+        !Type.getNonReferenceType()->isArrayType()) {
+      Diag(ELoc, diag::err_omp_argument_type_isdeviceptr)
+          << 0 << RefExpr->getSourceRange();
+      continue;
+    }
+    Vars.push_back(RefExpr->IgnoreParens());
+  }
+
+  if (Vars.empty())
+    return nullptr;
+
+  return OMPIsDevicePtrClause::Create(Context, StartLoc, LParenLoc, EndLoc,
+                                      Vars);
 }
