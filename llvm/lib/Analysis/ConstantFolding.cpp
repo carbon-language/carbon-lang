@@ -442,8 +442,8 @@ Constant *FoldReinterpretLoadFromConstPtr(Constant *C, Type *LoadTy,
     return nullptr;
 
   GlobalValue *GVal;
-  APInt Offset;
-  if (!IsConstantOffsetFromGlobal(C, GVal, Offset, DL))
+  APInt OffsetAI;
+  if (!IsConstantOffsetFromGlobal(C, GVal, OffsetAI, DL))
     return nullptr;
 
   auto *GV = dyn_cast<GlobalVariable>(GVal);
@@ -451,19 +451,29 @@ Constant *FoldReinterpretLoadFromConstPtr(Constant *C, Type *LoadTy,
       !GV->getInitializer()->getType()->isSized())
     return nullptr;
 
-  // If we're loading off the beginning of the global, some bytes may be valid,
-  // but we don't try to handle this.
-  if (Offset.isNegative())
-    return nullptr;
+  int64_t Offset = OffsetAI.getSExtValue();
+  int64_t InitializerSize = DL.getTypeAllocSize(GV->getInitializer()->getType());
 
   // If we're not accessing anything in this constant, the result is undefined.
-  if (Offset.getZExtValue() >=
-      DL.getTypeAllocSize(GV->getInitializer()->getType()))
+  if (Offset + BytesLoaded <= 0)
+    return UndefValue::get(IntType);
+
+  // If we're not accessing anything in this constant, the result is undefined.
+  if (Offset >= InitializerSize)
     return UndefValue::get(IntType);
 
   unsigned char RawBytes[32] = {0};
-  if (!ReadDataFromGlobal(GV->getInitializer(), Offset.getZExtValue(), RawBytes,
-                          BytesLoaded, DL))
+  unsigned char *CurPtr = RawBytes;
+  unsigned BytesLeft = BytesLoaded;
+
+  // If we're loading off the beginning of the global, some bytes may be valid.
+  if (Offset < 0) {
+    CurPtr += -Offset;
+    BytesLeft += Offset;
+    Offset = 0;
+  }
+
+  if (!ReadDataFromGlobal(GV->getInitializer(), Offset, CurPtr, BytesLeft, DL))
     return nullptr;
 
   APInt ResultVal = APInt(IntType->getBitWidth(), 0);
