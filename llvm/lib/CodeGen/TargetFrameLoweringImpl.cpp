@@ -69,7 +69,7 @@ void TargetFrameLowering::determineCalleeSaves(MachineFunction &MF,
 
   // When interprocedural register allocation is enabled caller saved registers
   // are preferred over callee saved registers.
-  if (UseIPRA && isSafeForNoCSROpt(MF.getFunction()))
+  if (MF.getTarget().Options.EnableIPRA && isSafeForNoCSROpt(MF.getFunction()))
     return;
 
   // Get the callee saved register list...

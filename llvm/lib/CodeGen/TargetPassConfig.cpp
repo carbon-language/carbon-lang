@@ -124,10 +124,6 @@ static cl::opt<CFLAAType> UseCFLAA(
                           "Enable both variants of CFL-AA"),
                clEnumValEnd));
 
-cl::opt<bool> UseIPRA("enable-ipra", cl::init(false), cl::Hidden,
-                      cl::desc("Enable interprocedural register allocation "
-                               "to reduce load/store at procedure calls."));
-
 /// Allow standard passes to be disabled by command line options. This supports
 /// simple binary flags that either suppress the pass or do nothing.
 /// i.e. -disable-mypass=false has no effect.
@@ -522,7 +518,7 @@ void TargetPassConfig::addISelPrepare() {
   addPreISel();
 
   // Force codegen to run according to the callgraph.
-  if (UseIPRA)
+  if (TM->Options.EnableIPRA)
     addPass(new DummyCGSCCPass);
 
   // Add both the safe stack and the stack protection passes: each of them will
@@ -561,7 +557,7 @@ void TargetPassConfig::addISelPrepare() {
 void TargetPassConfig::addMachinePasses() {
   AddingMachinePasses = true;
 
-  if (UseIPRA)
+  if (TM->Options.EnableIPRA)
     addPass(createRegUsageInfoPropPass());
 
   // Insert a machine instr printer pass after the specified pass.
@@ -649,7 +645,7 @@ void TargetPassConfig::addMachinePasses() {
 
   addPreEmitPass();
 
-  if (UseIPRA)
+  if (TM->Options.EnableIPRA)
     // Collect register usage information and produce a register mask of
     // clobbered registers, to be used to optimize call sites.
     addPass(createRegUsageInfoCollector());
