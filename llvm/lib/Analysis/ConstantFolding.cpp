@@ -845,15 +845,18 @@ Constant *SymbolicallyEvaluateGEP(const GEPOperator *GEP,
 
       // Determine which element of the array the offset points into.
       APInt ElemSize(BitWidth, DL.getTypeAllocSize(Ty));
-      if (ElemSize == 0)
+      if (ElemSize == 0) {
         // The element size is 0. This may be [0 x Ty]*, so just use a zero
         // index for this level and proceed to the next level to see if it can
         // accommodate the offset.
         NewIdxs.push_back(ConstantInt::get(IntPtrTy, 0));
-      else {
+      } else if (ElemSize.isAllOnesValue()) {
+        // Avoid signed overflow.
+        break;
+      } else {
         // The element size is non-zero divide the offset by the element
         // size (rounding down), to compute the index at this level.
-        APInt NewIdx = Offset.udiv(ElemSize);
+        APInt NewIdx = Offset.sdiv(ElemSize);
         Offset -= NewIdx * ElemSize;
         NewIdxs.push_back(ConstantInt::get(IntPtrTy, NewIdx));
       }
@@ -864,7 +867,7 @@ Constant *SymbolicallyEvaluateGEP(const GEPOperator *GEP,
       // operand likely went through casts that are necessary to make the GEP
       // sensible.
       const StructLayout &SL = *DL.getStructLayout(STy);
-      if (Offset.uge(SL.getSizeInBytes()))
+      if (Offset.isNegative() || Offset.uge(SL.getSizeInBytes()))
         break;
 
       // Determine which field of the struct the offset points into. The
