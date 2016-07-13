@@ -208,6 +208,8 @@ module LLVM_ProfileData {
 
   umbrella "ProfileData"
   module * { export * }
+
+  textual header "ProfileData/InstrProfData.inc"
 }
 
 module LLVM_TableGen { requires cplusplus umbrella "TableGen" module * { export * } }
