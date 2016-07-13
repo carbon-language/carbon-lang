@@ -45,12 +45,12 @@ syn keyword llvmKeyword distinct dllexport dllimport except extern_weak external
 syn keyword llvmKeyword externally_initialized fastcc filter gc global hhvmcc
 syn keyword llvmKeyword hhvm_ccc hidden initialexec inlinehint inreg
 syn keyword llvmKeyword intel_ocl_bicc inteldialect internal linkonce
-syn keyword llvmKeyword linkonce_odr localdynamic localexec minsize module
-syn keyword llvmKeyword monotonic msp430_intrcc musttail naked nest
-syn keyword llvmKeyword noalias nocapture noimplicitfloat noinline nonlazybind
-syn keyword llvmKeyword noredzone noreturn nounwind optnone optsize personality
-syn keyword llvmKeyword private protected ptx_device ptx_kernel readnone
-syn keyword llvmKeyword readonly release returns_twice sanitize_thread
+syn keyword llvmKeyword linkonce_odr local_unnamed_addr localdynamic localexec
+syn keyword llvmKeyword minsize module monotonic msp430_intrcc musttail naked
+syn keyword llvmKeyword nest noalias nocapture noimplicitfloat noinline
+syn keyword llvmKeyword nonlazybind noredzone noreturn nounwind optnone optsize
+syn keyword llvmKeyword personality private protected ptx_device ptx_kernel
+syn keyword llvmKeyword readnone readonly release returns_twice sanitize_thread
 syn keyword llvmKeyword sanitize_memory section seq_cst sideeffect signext
 syn keyword llvmKeyword singlethread source_filename spir_func spir_kernel sret
 syn keyword llvmKeyword ssp sspreq sspstrong swiftcc tail target thread_local to
