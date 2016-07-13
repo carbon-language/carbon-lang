@@ -511,9 +511,8 @@ private:
 /// PSE must be emitted in order for the results of this analysis to be valid.
 class LoopAccessInfo {
 public:
-  LoopAccessInfo(Loop *L, ScalarEvolution *SE, const DataLayout &DL,
-                 const TargetLibraryInfo *TLI, AliasAnalysis *AA,
-                 DominatorTree *DT, LoopInfo *LI);
+  LoopAccessInfo(Loop *L, ScalarEvolution *SE, const TargetLibraryInfo *TLI,
+                 AliasAnalysis *AA, DominatorTree *DT, LoopInfo *LI);
 
   // FIXME:
   // Hack for MSVC 2013 which sems like it can't synthesize this even 
@@ -521,7 +520,7 @@ public:
   // LoopAccessInfo(LoopAccessInfo &&LAI) = default;
   LoopAccessInfo(LoopAccessInfo &&LAI)
       : PSE(std::move(LAI.PSE)), PtrRtChecking(std::move(LAI.PtrRtChecking)),
-        DepChecker(std::move(LAI.DepChecker)), TheLoop(LAI.TheLoop), DL(LAI.DL),
+        DepChecker(std::move(LAI.DepChecker)), TheLoop(LAI.TheLoop),
         TLI(LAI.TLI), DT(LAI.DT), NumLoads(LAI.NumLoads),
         NumStores(LAI.NumStores), MaxSafeDepDistBytes(LAI.MaxSafeDepDistBytes),
         CanVecMem(LAI.CanVecMem),
@@ -537,7 +536,6 @@ public:
     PtrRtChecking = std::move(LAI.PtrRtChecking);
     DepChecker = std::move(LAI.DepChecker);
     TheLoop = LAI.TheLoop;
-    DL = LAI.DL;
     TLI = LAI.TLI;
     DT = LAI.DT;
     NumLoads = LAI.NumLoads;
@@ -661,7 +659,6 @@ private:
   std::unique_ptr<MemoryDepChecker> DepChecker;
 
   Loop *TheLoop;
-  const DataLayout *DL;
   const TargetLibraryInfo *TLI;
   DominatorTree *DT;
 
