@@ -920,7 +920,7 @@ Constant *ConstantFoldInstOperandsImpl(const Value *InstOrCE, Type *DestTy,
   if (Instruction::isCast(Opcode))
     return ConstantFoldCastOperand(Opcode, Ops[0], DestTy, DL);
 
-  if(auto *GEP = dyn_cast<GEPOperator>(InstOrCE)) {
+  if (auto *GEP = dyn_cast<GEPOperator>(InstOrCE)) {
     if (Constant *C = SymbolicallyEvaluateGEP(GEP, Ops, DL, TLI))
       return C;
 
