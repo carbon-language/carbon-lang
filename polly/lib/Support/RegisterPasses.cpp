@@ -90,7 +90,9 @@ enum TargetChoice { TARGET_CPU, TARGET_GPU };
 static cl::opt<TargetChoice>
     Target("polly-target", cl::desc("The hardware to target"),
            cl::values(clEnumValN(TARGET_CPU, "cpu", "generate CPU code"),
+#ifdef GPU_CODEGEN
                       clEnumValN(TARGET_GPU, "gpu", "generate GPU code"),
+#endif
                       clEnumValEnd),
            cl::init(TARGET_CPU), cl::ZeroOrMore, cl::cat(PollyCategory));
 
@@ -153,7 +155,10 @@ static cl::opt<bool>
 namespace polly {
 void initializePollyPasses(PassRegistry &Registry) {
   initializeCodeGenerationPass(Registry);
+
+#ifdef GPU_CODEGEN
   initializePPCGCodeGenerationPass(Registry);
+#endif
   initializeCodePreparationPass(Registry);
   initializeDeadCodeElimPass(Registry);
   initializeDependenceInfoPass(Registry);
@@ -235,7 +240,9 @@ void registerPollyPasses(llvm::legacy::PassManagerBase &PM) {
     PM.add(polly::createJSONExporterPass());
 
   if (Target == TARGET_GPU) {
+#ifdef GPU_CODEGEN
     PM.add(polly::createPPCGCodeGenerationPass());
+#endif
   } else {
     switch (CodeGenerator) {
     case CODEGEN_ISL:
