@@ -13,7 +13,9 @@ set(ISL_CODEGEN_FILES
     CodeGen/CodeGeneration.cpp)
 
 if (GPU_CODEGEN)
-  set (GPGPU_CODEGEN_FILES)
+  set (GPGPU_CODEGEN_FILES
+       CodeGen/PPCGCodeGeneration.cpp
+       )
 endif (GPU_CODEGEN)
 
 # Compile ISL into a separate library.

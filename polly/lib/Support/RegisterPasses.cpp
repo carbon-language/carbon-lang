@@ -86,6 +86,14 @@ static cl::opt<CodeGenChoice> CodeGenerator(
                clEnumValEnd),
     cl::Hidden, cl::init(CODEGEN_ISL), cl::ZeroOrMore, cl::cat(PollyCategory));
 
+enum TargetChoice { TARGET_CPU, TARGET_GPU };
+static cl::opt<TargetChoice>
+    Target("polly-target", cl::desc("The hardware to target"),
+           cl::values(clEnumValN(TARGET_CPU, "cpu", "generate CPU code"),
+                      clEnumValN(TARGET_GPU, "gpu", "generate GPU code"),
+                      clEnumValEnd),
+           cl::init(TARGET_CPU), cl::ZeroOrMore, cl::cat(PollyCategory));
+
 VectorizerChoice polly::PollyVectorizerChoice;
 static cl::opt<polly::VectorizerChoice, true> Vectorizer(
     "polly-vectorizer", cl::desc("Select the vectorization strategy"),
@@ -145,6 +153,7 @@ static cl::opt<bool>
 namespace polly {
 void initializePollyPasses(PassRegistry &Registry) {
   initializeCodeGenerationPass(Registry);
+  initializePPCGCodeGenerationPass(Registry);
   initializeCodePreparationPass(Registry);
   initializeDeadCodeElimPass(Registry);
   initializeDependenceInfoPass(Registry);
@@ -209,24 +218,32 @@ void registerPollyPasses(llvm::legacy::PassManagerBase &PM) {
   if (DeadCodeElim)
     PM.add(polly::createDeadCodeElimPass());
 
-  switch (Optimizer) {
-  case OPTIMIZER_NONE:
-    break; /* Do nothing */
+  if (Target == TARGET_GPU) {
+    // GPU generation provides its own scheduling optimization strategy.
+  } else {
+    switch (Optimizer) {
+    case OPTIMIZER_NONE:
+      break; /* Do nothing */
 
-  case OPTIMIZER_ISL:
-    PM.add(polly::createIslScheduleOptimizerPass());
-    break;
+    case OPTIMIZER_ISL:
+      PM.add(polly::createIslScheduleOptimizerPass());
+      break;
+    }
   }
 
   if (ExportJScop)
     PM.add(polly::createJSONExporterPass());
 
-  switch (CodeGenerator) {
-  case CODEGEN_ISL:
-    PM.add(polly::createCodeGenerationPass());
-    break;
-  case CODEGEN_NONE:
-    break;
+  if (Target == TARGET_GPU) {
+    PM.add(polly::createPPCGCodeGenerationPass());
+  } else {
+    switch (CodeGenerator) {
+    case CODEGEN_ISL:
+      PM.add(polly::createCodeGenerationPass());
+      break;
+    case CODEGEN_NONE:
+      break;
+    }
   }
 
   // FIXME: This dummy ModulePass keeps some programs from miscompiling,
