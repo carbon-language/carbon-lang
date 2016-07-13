@@ -256,6 +256,18 @@ define i32 @fold_zext_xor_sandwich(i1 %X) {
   ret i32 %Q
 }
 
+define <2 x i32> @fold_zext_xor_sandwich_vec(<2 x i1> %X) {
+; CHECK-LABEL: @fold_zext_xor_sandwich_vec(
+; CHECK-NEXT:    [[TMP1:%.*]] = zext <2 x i1> %X to <2 x i32>
+; CHECK-NEXT:    [[Q:%.*]] = xor <2 x i32> [[TMP1]], <i32 3, i32 3>
+; CHECK-NEXT:    ret <2 x i32> [[Q]]
+;
+  %Y = xor <2 x i1> %X, <i1 true, i1 true>
+  %Z = zext <2 x i1> %Y to <2 x i32>
+  %Q = xor <2 x i32> %Z, <i32 2, i32 2>
+  ret <2 x i32> %Q
+}
+
 define i1 @test23(i32 %a, i32 %b) {
 ; CHECK-LABEL: @test23(
 ; CHECK-NEXT:    [[T4:%.*]] = icmp eq i32 %b, 0
