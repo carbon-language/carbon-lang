@@ -2601,9 +2601,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
   setDebugLocFromInst(Builder, Instr);
 
   // Find all of the vectorized parameters.
-  for (unsigned op = 0, e = Instr->getNumOperands(); op != e; ++op) {
-    Value *SrcOp = Instr->getOperand(op);
-
+  for (Value *SrcOp : Instr->operands()) {
     // If we are accessing the old induction variable, use the new one.
     if (SrcOp == OldInduction) {
       Params.push_back(getVectorValue(SrcOp));
@@ -2611,7 +2609,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
     }
 
     // Try using previously calculated values.
-    Instruction *SrcInst = dyn_cast<Instruction>(SrcOp);
+    auto *SrcInst = dyn_cast<Instruction>(SrcOp);
 
     // If the src is an instruction that appeared earlier in the basic block,
     // then it should already be vectorized.
