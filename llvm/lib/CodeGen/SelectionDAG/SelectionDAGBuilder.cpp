@@ -3834,7 +3834,7 @@ void SelectionDAGBuilder::visitMaskedLoad(const CallInst &I) {
   // Do not serialize masked loads of constant memory with anything.
   bool AddToChain = !AA->pointsToConstantMemory(MemoryLocation(
       PtrOperand, DAG.getDataLayout().getTypeStoreSize(I.getType()), AAInfo));
-  SDValue InChain = AddToChain ? DAG.getRoot() : InChain = DAG.getEntryNode();
+  SDValue InChain = AddToChain ? DAG.getRoot() : DAG.getEntryNode();
 
   MachineMemOperand *MMO =
     DAG.getMachineFunction().
