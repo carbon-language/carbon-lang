@@ -55,6 +55,10 @@ add_polly_library(Polly
   ${POLLY_HEADER_FILES}
   )
 
+if (GPU_CODEGEN)
+  target_link_libraries(Polly PollyPPCG)
+endif (GPU_CODEGEN)
+
 target_link_libraries(Polly PollyISL)
 
 if (BUILD_SHARED_LIBS)
