@@ -1510,6 +1510,43 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
   return false;
 }
 
+static bool tryToReplaceInstWithConstant(SCCPSolver Solver, Instruction *Inst,
+                                         bool shouldEraseFromParent) {
+  Constant *Const = nullptr;
+  if (Inst->getType()->isStructTy()) {
+    std::vector<LatticeVal> IVs = Solver.getStructLatticeValueFor(Inst);
+    if (std::any_of(IVs.begin(), IVs.end(),
+                    [](LatticeVal &LV) { return LV.isOverdefined(); }))
+      return false;
+    std::vector<Constant *> ConstVals;
+    StructType *ST = dyn_cast<StructType>(Inst->getType());
+    for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
+      LatticeVal V = IVs[i];
+      ConstVals.push_back(V.isConstant()
+                              ? V.getConstant()
+                              : UndefValue::get(ST->getElementType(i)));
+    }
+    Const = ConstantStruct::get(ST, ConstVals);
+  } else {
+    LatticeVal IV = Solver.getLatticeValueFor(Inst);
+    if (IV.isOverdefined())
+      return false;
+
+    Const =
+        IV.isConstant() ? IV.getConstant() : UndefValue::get(Inst->getType());
+  }
+  assert(Const && "Constant is nullptr here!");
+  DEBUG(dbgs() << "  Constant: " << *Const << " = " << *Inst << '\n');
+
+  // Replaces all of the uses of a variable with uses of the constant.
+  Inst->replaceAllUsesWith(Const);
+
+  // Delete the instruction.
+  if (shouldEraseFromParent)
+    Inst->eraseFromParent();
+  return true;
+}
+
 // runSCCP() - Run the Sparse Conditional Constant Propagation algorithm,
 // and return true if the function was modified.
 //
@@ -1558,41 +1595,12 @@ static bool runSCCP(Function &F, const DataLayout &DL,
       if (Inst->getType()->isVoidTy() || isa<TerminatorInst>(Inst))
         continue;
 
-      Constant *Const = nullptr;
-      if (Inst->getType()->isStructTy()) {
-        std::vector<LatticeVal> IVs = Solver.getStructLatticeValueFor(Inst);
-        if (std::any_of(IVs.begin(), IVs.end(),
-                        [](LatticeVal &LV) { return LV.isOverdefined(); }))
-          continue;
-        std::vector<Constant *> ConstVals;
-        StructType *ST = dyn_cast<StructType>(Inst->getType());
-        for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
-          LatticeVal V = IVs[i];
-          ConstVals.push_back(V.isConstant()
-                                  ? V.getConstant()
-                                  : UndefValue::get(ST->getElementType(i)));
-        }
-        Const = ConstantStruct::get(ST, ConstVals);
-      } else {
-        LatticeVal IV = Solver.getLatticeValueFor(Inst);
-        if (IV.isOverdefined())
-          continue;
-
-        Const = IV.isConstant() ? IV.getConstant()
-                                : UndefValue::get(Inst->getType());
+      if (tryToReplaceInstWithConstant(Solver, Inst,
+                                       true /* shouldEraseFromParent */)) {
+        // Hey, we just changed something!
+        MadeChanges = true;
+        ++NumInstRemoved;
       }
-      assert(Const && "Constant is nullptr here!");
-      DEBUG(dbgs() << "  Constant: " << *Const << " = " << *Inst << '\n');
-
-      // Replaces all of the uses of a variable with uses of the constant.
-      Inst->replaceAllUsesWith(Const);
-
-      // Delete the instruction.
-      Inst->eraseFromParent();
-
-      // Hey, we just changed something!
-      MadeChanges = true;
-      ++NumInstRemoved;
     }
   }
 
@@ -1795,25 +1803,14 @@ static bool runIPSCCP(Module &M, const DataLayout &DL,
         // TODO: Could use getStructLatticeValueFor to find out if the entire
         // result is a constant and replace it entirely if so.
 
-        LatticeVal IV = Solver.getLatticeValueFor(Inst);
-        if (IV.isOverdefined())
-          continue;
-
-        Constant *Const = IV.isConstant()
-          ? IV.getConstant() : UndefValue::get(Inst->getType());
-        DEBUG(dbgs() << "  Constant: " << *Const << " = " << *Inst << '\n');
-
-        // Replaces all of the uses of a variable with uses of the
-        // constant.
-        Inst->replaceAllUsesWith(Const);
-
-        // Delete the instruction.
-        if (!isa<CallInst>(Inst) && !isa<TerminatorInst>(Inst))
-          Inst->eraseFromParent();
-
-        // Hey, we just changed something!
-        MadeChanges = true;
-        ++IPNumInstRemoved;
+        if (tryToReplaceInstWithConstant(
+                Solver, Inst,
+                !isa<CallInst>(Inst) &&
+                    !isa<TerminatorInst>(Inst) /* shouldEraseFromParent */)) {
+          // Hey, we just changed something!
+          MadeChanges = true;
+          ++IPNumInstRemoved;
+        }
       }
     }
 
