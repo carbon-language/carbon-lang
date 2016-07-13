@@ -1505,7 +1505,7 @@ bool LoopAccessInfo::canAnalyzeLoop() {
   return true;
 }
 
-void LoopAccessInfo::analyzeLoop(AliasAnalysis *AA) {
+void LoopAccessInfo::analyzeLoop(AliasAnalysis *AA, LoopInfo *LI) {
   typedef SmallPtrSet<Value*, 16> ValueSet;
 
   // Holds the Load and Store instructions.
@@ -1921,11 +1921,11 @@ LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
     : PSE(llvm::make_unique<PredicatedScalarEvolution>(*SE, *L)),
       PtrRtChecking(llvm::make_unique<RuntimePointerChecking>(SE)),
       DepChecker(llvm::make_unique<MemoryDepChecker>(*PSE, L)), TheLoop(L),
-      DL(&DL), TLI(TLI), DT(DT), LI(LI), NumLoads(0), NumStores(0),
+      DL(&DL), TLI(TLI), DT(DT), NumLoads(0), NumStores(0),
       MaxSafeDepDistBytes(-1), CanVecMem(false),
       StoreToLoopInvariantAddress(false) {
   if (canAnalyzeLoop())
-    analyzeLoop(AA);
+    analyzeLoop(AA, LI);
 }
 
 void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
