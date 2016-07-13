@@ -642,6 +642,7 @@ bool TargetLibraryInfoImpl::isValidProtoForLibFunc(const FunctionType &FTy,
       return false;
   // fallthrough
   case LibFunc::memcpy:
+  case LibFunc::mempcpy:
   case LibFunc::memmove:
     return (NumParams == 3 && FTy.getReturnType() == FTy.getParamType(0) &&
             FTy.getParamType(0)->isPointerTy() &&
