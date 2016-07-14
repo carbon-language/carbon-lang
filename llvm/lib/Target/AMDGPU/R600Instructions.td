@@ -1332,9 +1332,7 @@ def TXD: InstR600 <
   (outs R600_Reg128:$dst),
   (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2,
        i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),
-  "TXD $dst, $src0, $src1, $src2, $resourceId, $samplerId, $textureTarget",
-  [(set v4f32:$dst, (int_AMDGPU_txd v4f32:$src0, v4f32:$src1, v4f32:$src2,
-                     imm:$resourceId, imm:$samplerId, imm:$textureTarget))],
+  "TXD $dst, $src0, $src1, $src2, $resourceId, $samplerId, $textureTarget", [],
   NullALU > {
   let TEXInst = 1;
 }
@@ -1344,10 +1342,7 @@ def TXD_SHADOW: InstR600 <
   (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2,
        i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),
   "TXD_SHADOW $dst, $src0, $src1, $src2, $resourceId, $samplerId, $textureTarget",
-  [(set v4f32:$dst, (int_AMDGPU_txd v4f32:$src0, v4f32:$src1, v4f32:$src2,
-        imm:$resourceId, imm:$samplerId, TEX_SHADOW:$textureTarget))],
-   NullALU
-> {
+  [], NullALU> {
   let TEXInst = 1;
 }
 } // End isPseudo = 1

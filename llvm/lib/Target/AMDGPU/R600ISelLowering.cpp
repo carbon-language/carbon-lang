@@ -738,7 +738,7 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
       };
       return DAG.getNode(AMDGPUISD::TEXTURE_FETCH, DL, MVT::v4f32, TexArgs);
     }
-    case AMDGPUIntrinsic::AMDGPU_dp4: {
+    case AMDGPUIntrinsic::r600_dot4: {
       SDValue Args[8] = {
       DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::f32, Op.getOperand(1),
           DAG.getConstant(0, DL, MVT::i32)),
