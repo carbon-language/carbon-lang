@@ -1766,11 +1766,8 @@ static bool runIPSCCP(Module &M, const DataLayout &DL,
     if (Solver.isBlockExecutable(&F.front())) {
       for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E;
            ++AI) {
-        if (AI->use_empty() || AI->getType()->isStructTy()) continue;
-
-        // TODO: Could use getStructLatticeValueFor to find out if the entire
-        // result is a constant and replace it entirely if so.
-
+        if (AI->use_empty())
+          continue;
         if (tryToReplaceWithConstant(Solver, &*AI))
           ++IPNumArgsElimed;
       }
@@ -1793,12 +1790,8 @@ static bool runIPSCCP(Module &M, const DataLayout &DL,
 
       for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
         Instruction *Inst = &*BI++;
-        if (Inst->getType()->isVoidTy() || Inst->getType()->isStructTy())
+        if (Inst->getType()->isVoidTy())
           continue;
-
-        // TODO: Could use getStructLatticeValueFor to find out if the entire
-        // result is a constant and replace it entirely if so.
-
         if (tryToReplaceInstWithConstant(
                 Solver, Inst,
                 !isa<CallInst>(Inst) &&
