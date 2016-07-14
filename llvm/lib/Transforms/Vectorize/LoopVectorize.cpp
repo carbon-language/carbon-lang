@@ -947,6 +947,11 @@ private:
     return Factor >= 2 && Factor <= MaxInterleaveGroupFactor;
   }
 
+  /// \brief Returns true if \p BB is a predicated block.
+  bool isPredicated(BasicBlock *BB) const {
+    return LoopAccessInfo::blockNeedsPredication(BB, TheLoop, DT);
+  }
+
   /// \brief Returns true if LoopAccessInfo can be used for dependence queries.
   bool areDependencesValid() const {
     return LAI && LAI->getDepChecker().getDependences();
@@ -4925,53 +4930,38 @@ bool LoopVectorizationLegality::blockCanBePredicated(
 void InterleavedAccessInfo::collectConstStridedAccesses(
     MapVector<Instruction *, StrideDescriptor> &StrideAccesses,
     const ValueToValueMap &Strides) {
-  // Holds load/store instructions in program order.
-  SmallVector<Instruction *, 16> AccessList;
+
+  auto &DL = TheLoop->getHeader()->getModule()->getDataLayout();
 
   // Since it's desired that the load/store instructions be maintained in
   // "program order" for the interleaved access analysis, we have to visit the
   // blocks in the loop in reverse postorder (i.e., in a topological order).
   // Such an ordering will ensure that any load/store that may be executed
-  // before a second load/store will precede the second load/store in the
-  // AccessList.
+  // before a second load/store will precede the second load/store in
+  // StrideAccesses.
   LoopBlocksDFS DFS(TheLoop);
   DFS.perform(LI);
-  for (BasicBlock *BB : make_range(DFS.beginRPO(), DFS.endRPO())) {
-    bool IsPred = LoopAccessInfo::blockNeedsPredication(BB, TheLoop, DT);
-
+  for (BasicBlock *BB : make_range(DFS.beginRPO(), DFS.endRPO()))
     for (auto &I : *BB) {
-      if (!isa<LoadInst>(&I) && !isa<StoreInst>(&I))
+      auto *LI = dyn_cast<LoadInst>(&I);
+      auto *SI = dyn_cast<StoreInst>(&I);
+      if (!LI && !SI)
         continue;
-      // FIXME: Currently we can't handle mixed accesses and predicated accesses
-      if (IsPred)
-        return;
 
-      AccessList.push_back(&I);
+      Value *Ptr = LI ? LI->getPointerOperand() : SI->getPointerOperand();
+      int64_t Stride = getPtrStride(PSE, Ptr, TheLoop, Strides);
+
+      const SCEV *Scev = replaceSymbolicStrideSCEV(PSE, Strides, Ptr);
+      PointerType *PtrTy = dyn_cast<PointerType>(Ptr->getType());
+      uint64_t Size = DL.getTypeAllocSize(PtrTy->getElementType());
+
+      // An alignment of 0 means target ABI alignment.
+      unsigned Align = LI ? LI->getAlignment() : SI->getAlignment();
+      if (!Align)
+        Align = DL.getABITypeAlignment(PtrTy->getElementType());
+
+      StrideAccesses[&I] = StrideDescriptor(Stride, Scev, Size, Align);
     }
-  }
-
-  if (AccessList.empty())
-    return;
-
-  auto &DL = TheLoop->getHeader()->getModule()->getDataLayout();
-  for (auto I : AccessList) {
-    auto *LI = dyn_cast<LoadInst>(I);
-    auto *SI = dyn_cast<StoreInst>(I);
-
-    Value *Ptr = LI ? LI->getPointerOperand() : SI->getPointerOperand();
-    int64_t Stride = getPtrStride(PSE, Ptr, TheLoop, Strides);
-
-    const SCEV *Scev = replaceSymbolicStrideSCEV(PSE, Strides, Ptr);
-    PointerType *PtrTy = dyn_cast<PointerType>(Ptr->getType());
-    uint64_t Size = DL.getTypeAllocSize(PtrTy->getElementType());
-
-    // An alignment of 0 means target ABI alignment.
-    unsigned Align = LI ? LI->getAlignment() : SI->getAlignment();
-    if (!Align)
-      Align = DL.getABITypeAlignment(PtrTy->getElementType());
-
-    StrideAccesses[I] = StrideDescriptor(Stride, Scev, Size, Align);
-  }
 }
 
 // Analyze interleaved accesses and collect them into interleaved load and
@@ -5123,6 +5113,12 @@ void InterleavedAccessInfo::analyzeInterleaving(
       // Skip if the distance is not multiple of size as they are not in the
       // same group.
       if (DistanceToA % static_cast<int64_t>(DesA.Size))
+        continue;
+
+      // If either A or B is in a predicated block, we prevent adding them to a
+      // group. We may be able to relax this limitation in the future once we
+      // handle more complicated blocks.
+      if (isPredicated(A->getParent()) || isPredicated(B->getParent()))
         continue;
 
       // The index of B is the index of A plus the related index to A.
