@@ -57,7 +57,7 @@ define void @test4(i8* %a, i8* %b) {
 
 ; STDERR-NOT: FastISel missed call:   call x86_thiscallcc void @thiscallfun
 %struct.S = type { i8 }
-define void @test5() #0 {
+define void @test5() {
 entry:
   %s = alloca %struct.S, align 1
 ; CHECK-LABEL: test5:
@@ -70,3 +70,16 @@ entry:
   ret void
 }
 declare x86_thiscallcc void @thiscallfun(%struct.S*, i32) #1
+
+; STDERR-NOT: FastISel missed call:   call x86_stdcallcc void @stdcallfun
+define void @test6() {
+entry:
+; CHECK-LABEL: test6:
+; CHECK: subl $12, %esp
+; CHECK: movl $43, (%esp)
+; CHECK: calll {{.*}}stdcallfun
+; CHECK: addl $8, %esp
+  call x86_stdcallcc void @stdcallfun(i32 43)
+  ret void
+}
+declare x86_stdcallcc void @stdcallfun(i32) #1
