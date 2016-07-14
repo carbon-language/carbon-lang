@@ -89,32 +89,27 @@ struct MachinePointerInfo {
 ///
 class MachineMemOperand {
 public:
-  // This is the number of bits we need to represent flags.
-  static LLVM_CONSTEXPR unsigned MOMaxBits = 8;
-
-  // Target hints allow target passes to annotate memory operations.
-  static LLVM_CONSTEXPR unsigned MOTargetStartBit = 5;
-  static LLVM_CONSTEXPR unsigned MOTargetNumBits = 3;
-
   /// Flags values. These may be or'd together.
   enum Flags : uint16_t {
     // No flags set.
     MONone = 0,
     /// The memory access reads data.
-    MOLoad = 1,
+    MOLoad = 1u << 0,
     /// The memory access writes data.
-    MOStore = 2,
+    MOStore = 1u << 1,
     /// The memory access is volatile.
-    MOVolatile = 4,
+    MOVolatile = 1u << 2,
     /// The memory access is non-temporal.
-    MONonTemporal = 8,
+    MONonTemporal = 1u << 3,
     /// The memory access is invariant.
-    MOInvariant = 16,
+    MOInvariant = 1u << 4,
 
-    // Maximum MemOperandFlag value (inclusive).
-    MOMaxFlag = (1 << MOMaxBits) - 1,
+    // Reserved for use by target-specific passes.
+    MOTargetFlag1 = 1u << 5,
+    MOTargetFlag2 = 1u << 6,
+    MOTargetFlag3 = 1u << 7,
 
-    LLVM_MARK_AS_BITMASK_ENUM(MOMaxFlag)
+    LLVM_MARK_AS_BITMASK_ENUM(/* LargestFlag = */ MOTargetFlag3)
   };
 
 private:
