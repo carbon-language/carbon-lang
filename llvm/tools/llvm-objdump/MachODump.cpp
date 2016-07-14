@@ -6708,11 +6708,13 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
         outs() << "-dis-symname: __mh_execute_header not in any section\n";
         return;
       }
-      // When this code is trying to disassemble a symbol at a time and in the case
-      // there is only the __mh_execute_header symbol left as in a stripped
-      // executable, we need to deal with this by ignoring this symbol so the whole
-      // section is disassembled and this symbol is then not displayed.
-      if (SymName == "__mh_execute_header")
+      // When this code is trying to disassemble a symbol at a time and in the
+      // case there is only the __mh_execute_header symbol left as in a stripped
+      // executable, we need to deal with this by ignoring this symbol so the
+      // whole section is disassembled and this symbol is then not displayed.
+      if (SymName == "__mh_execute_header" || SymName == "__mh_dylib_header" ||
+          SymName == "__mh_bundle_header" || SymName == "__mh_object_header" ||
+          SymName == "__mh_preload_header" || SymName == "__mh_dylinker_header")
         continue;
 
       // If we are only disassembling one symbol see if this is that symbol.
