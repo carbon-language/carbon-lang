@@ -231,7 +231,7 @@ std::unique_ptr<Module> MIRParserImpl::parse() {
                       Context, &IRSlots);
     if (!M) {
       reportDiagnostic(diagFromBlockStringDiag(Error, BSN->getSourceRange()));
-      return M;
+      return nullptr;
     }
     In.nextDocument();
     if (!In.setCurrentDocument())
