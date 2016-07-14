@@ -135,15 +135,10 @@ template <typename T> static void FailIfError(const ErrorOr<T> &E) {
   FailIfError(E.getError());
 }
 
-static void FailIfError(Error Err) {
-  if (Err) {
-    logAllUnhandledErrors(std::move(Err), errs(), "Error: ");
-    exit(1);
-  }
-}
-
 template <typename T> static void FailIfError(Expected<T> &E) {
-  FailIfError(E.takeError());
+  if (E)
+    return;
+  logAllUnhandledErrors(E.takeError(), errs(), "Error: ");
 }
 
 static void FailIfNotEmpty(const llvm::Twine &E) {
@@ -422,8 +417,9 @@ static void getObjectCoveragePoints(const object::ObjectFile &O,
 static void
 visitObjectFiles(const object::Archive &A,
                  function_ref<void(const object::ObjectFile &)> Fn) {
-  Error Err;
-  for (auto &C : A.children(Err)) {
+  for (auto &ErrorOrChild : A.children()) {
+    FailIfError(ErrorOrChild);
+    const object::Archive::Child &C = *ErrorOrChild;
     Expected<std::unique_ptr<object::Binary>> ChildOrErr = C.getAsBinary();
     FailIfError(errorToErrorCode(ChildOrErr.takeError()));
     if (auto *O = dyn_cast<object::ObjectFile>(&*ChildOrErr.get()))
@@ -431,7 +427,6 @@ visitObjectFiles(const object::Archive &A,
     else
       FailIfError(object::object_error::invalid_file_type);
   }
-  FailIfError(std::move(Err));
 }
 
 static void

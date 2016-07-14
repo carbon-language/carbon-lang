@@ -106,20 +106,21 @@ public:
   };
 
   class child_iterator {
-    Child C;
-    Error *E;
+    ErrorOr<Child> child;
 
   public:
-    child_iterator() : C(Child(nullptr, nullptr, nullptr)), E(nullptr) {}
-    child_iterator(const Child &C, Error *E) : C(C), E(E) {}
-    const Child *operator->() const { return &C; }
-    const Child &operator*() const { return C; }
+    child_iterator() : child(Child(nullptr, nullptr, nullptr)) {}
+    child_iterator(const Child &c) : child(c) {}
+    child_iterator(std::error_code EC) : child(EC) {}
+    const ErrorOr<Child> *operator->() const { return &child; }
+    const ErrorOr<Child> &operator*() const { return child; }
 
     bool operator==(const child_iterator &other) const {
-      // Ignore errors here: If an error occurred during increment then getNext
-      // will have been set to child_end(), and the following comparison should
-      // do the right thing.
-      return C == other.C;
+      // We ignore error states so that comparisions with end() work, which
+      // allows range loops.
+      if (child.getError() || other.child.getError())
+        return false;
+      return *child == *other.child;
     }
 
     bool operator!=(const child_iterator &other) const {
@@ -129,15 +130,8 @@ public:
     // Code in loops with child_iterators must check for errors on each loop
     // iteration.  And if there is an error break out of the loop.
     child_iterator &operator++() { // Preincrement
-      assert(E && "Can't increment iterator with no Error attached");
-      if (auto ChildOrErr = C.getNext())
-        C = *ChildOrErr;
-      else {
-        ErrorAsOutParameter ErrAsOutParam(*E);
-        C = C.getParent()->child_end().C;
-        *E = errorCodeToError(ChildOrErr.getError());
-        E = nullptr;
-      }
+      assert(child && "Can't increment iterator with error");
+      child = child->getNext();
       return *this;
     }
   };
@@ -196,11 +190,10 @@ public:
   Kind kind() const { return (Kind)Format; }
   bool isThin() const { return IsThin; }
 
-  child_iterator child_begin(Error &Err, bool SkipInternal = true) const;
+  child_iterator child_begin(bool SkipInternal = true) const;
   child_iterator child_end() const;
-  iterator_range<child_iterator> children(Error &Err,
-                                          bool SkipInternal = true) const {
-    return make_range(child_begin(Err, SkipInternal), child_end());
+  iterator_range<child_iterator> children(bool SkipInternal = true) const {
+    return make_range(child_begin(SkipInternal), child_end());
   }
 
   symbol_iterator symbol_begin() const;
@@ -215,7 +208,7 @@ public:
   }
 
   // check if a symbol is in the archive
-  child_iterator findSym(Error &Err, StringRef name) const;
+  child_iterator findSym(StringRef name) const;
 
   bool hasSymbolTable() const;
   StringRef getSymbolTable() const { return SymbolTable; }

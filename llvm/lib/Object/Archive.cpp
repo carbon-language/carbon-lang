@@ -298,9 +298,12 @@ Archive::Archive(MemoryBufferRef Source, Error &Err)
   }
 
   // Get the special members.
-  child_iterator I = child_begin(Err, false);
-  if (Err)
+  child_iterator I = child_begin(false);
+  std::error_code ec;
+  if ((ec = I->getError())) {
+    Err = errorCodeToError(ec);
     return;
+  }
   child_iterator E = child_end();
 
   // This is at least a valid empty archive. Since an empty archive is the
@@ -312,13 +315,13 @@ Archive::Archive(MemoryBufferRef Source, Error &Err)
     Err = Error::success();
     return;
   }
-  const Child *C = &*I;
+  const Child *C = &**I;
 
   auto Increment = [&]() {
     ++I;
-    if (Err)
+    if ((Err = errorCodeToError(I->getError())))
       return true;
-    C = &*I;
+    C = &**I;
     return false;
   };
 
@@ -363,7 +366,8 @@ Archive::Archive(MemoryBufferRef Source, Error &Err)
     Format = K_BSD;
     // We know this is BSD, so getName will work since there is no string table.
     ErrorOr<StringRef> NameOrErr = C->getName();
-    if (auto ec = NameOrErr.getError()) {
+    ec = NameOrErr.getError();
+    if (ec) {
       Err = errorCodeToError(ec);
       return;
     }
@@ -461,29 +465,23 @@ Archive::Archive(MemoryBufferRef Source, Error &Err)
   Err = Error::success();
 }
 
-Archive::child_iterator Archive::child_begin(Error &Err,
-                                             bool SkipInternal) const {
+Archive::child_iterator Archive::child_begin(bool SkipInternal) const {
   if (Data.getBufferSize() == 8) // empty archive.
     return child_end();
 
   if (SkipInternal)
-    return child_iterator(Child(this, FirstRegularData,
-                                FirstRegularStartOfFile),
-                          &Err);
+    return Child(this, FirstRegularData, FirstRegularStartOfFile);
 
   const char *Loc = Data.getBufferStart() + strlen(Magic);
   std::error_code EC;
-  Child C(this, Loc, &EC);
-  if (EC) {
-    ErrorAsOutParameter ErrAsOutParam(Err);
-    Err = errorCodeToError(EC);
-    return child_end();
-  }
-  return child_iterator(C, &Err);
+  Child c(this, Loc, &EC);
+  if (EC)
+    return child_iterator(EC);
+  return child_iterator(c);
 }
 
 Archive::child_iterator Archive::child_end() const {
-  return child_iterator(Child(this, nullptr, nullptr), nullptr);
+  return Child(this, nullptr, nullptr);
 }
 
 StringRef Archive::Symbol::getName() const {
@@ -667,20 +665,18 @@ uint32_t Archive::getNumberOfSymbols() const {
   return read32le(buf);
 }
 
-Archive::child_iterator Archive::findSym(Error &Err, StringRef name) const {
+Archive::child_iterator Archive::findSym(StringRef name) const {
   Archive::symbol_iterator bs = symbol_begin();
   Archive::symbol_iterator es = symbol_end();
 
   for (; bs != es; ++bs) {
     StringRef SymName = bs->getName();
     if (SymName == name) {
-      if (auto MemberOrErr = bs->getMember()) {
-        return child_iterator(*MemberOrErr, &Err);
-      } else {
-        ErrorAsOutParameter ErrAsOutParam(Err);
-        Err = errorCodeToError(MemberOrErr.getError());
+      ErrorOr<Archive::child_iterator> ResultOrErr = bs->getMember();
+      // FIXME: Should we really eat the error?
+      if (ResultOrErr.getError())
         return child_end();
-      }
+      return ResultOrErr.get();
     }
   }
   return child_end();
