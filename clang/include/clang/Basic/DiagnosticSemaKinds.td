@@ -5425,11 +5425,6 @@ def warn_pointer_indirection_from_incompatible_type : Warning<
   "dereference of type %1 that was reinterpret_cast from type %0 has undefined "
   "behavior">,
   InGroup<UndefinedReinterpretCast>, DefaultIgnore;
-def warn_taking_address_of_packed_member : Warning<
-  "taking address of packed member %0 of class or structure %q1 may result in an unaligned pointer value">,
-  InGroup<DiagGroup<"address-of-packed-member">>;
-def err_binding_reference_to_packed_member : Error<
-  "binding reference to packed member %0 of class or structure %q1">;
 
 def err_objc_object_assignment : Error<
   "cannot assign to class object (%0 invalid)">;
