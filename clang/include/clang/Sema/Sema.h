@@ -3401,6 +3401,7 @@ public:
                          ConditionResult Cond, Stmt *ThenVal,
                          SourceLocation ElseLoc, Stmt *ElseVal);
   StmtResult BuildIfStmt(SourceLocation IfLoc, bool IsConstexpr,
+                         Stmt *InitStmt,
                          ConditionResult Cond, Stmt *ThenVal,
                          SourceLocation ElseLoc, Stmt *ElseVal);
   StmtResult ActOnStartOfSwitchStmt(SourceLocation SwitchLoc,
