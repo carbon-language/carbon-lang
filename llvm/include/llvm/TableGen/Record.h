@@ -1543,9 +1543,9 @@ public:
   // High-level helper methods, useful for tablegen backends...
 
   /// getAllDerivedDefinitions - This method returns all concrete definitions
-  /// that derive from the specified class name.  If a class with the specified
-  /// name does not exist, an exception is thrown.
-  std::vector<Record*>
+  /// that derive from the specified class name.  A class with the specified
+  /// name must exist.
+  std::vector<Record *>
   getAllDerivedDefinitions(const std::string &ClassName) const;
 
   void dump() const;
