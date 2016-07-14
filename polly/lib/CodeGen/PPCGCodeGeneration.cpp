@@ -41,6 +41,23 @@ static cl::opt<bool> DumpSchedule("polly-acc-dump-schedule",
                                   cl::desc("Dump the computed GPU Schedule"),
                                   cl::Hidden, cl::init(false), cl::ZeroOrMore,
                                   cl::cat(PollyCategory));
+/// Create the ast expressions for a ScopStmt.
+///
+/// This function is a callback for to generate the ast expressions for each
+/// of the scheduled ScopStmts.
+static __isl_give isl_id_to_ast_expr *pollyBuildAstExprForStmt(
+    void *Stmt, isl_ast_build *Build,
+    isl_multi_pw_aff *(*FunctionIndex)(__isl_take isl_multi_pw_aff *MPA,
+                                       isl_id *Id, void *User),
+    void *UserIndex,
+    isl_ast_expr *(*FunctionExpr)(isl_ast_expr *Expr, isl_id *Id, void *User),
+    void *User_expr) {
+
+  // TODO: Implement the AST expression generation. For now we just return a
+  // nullptr to ensure that we do not free uninitialized pointers.
+
+  return nullptr;
+}
 
 namespace {
 class PPCGCodeGeneration : public ScopPass {
@@ -288,6 +305,7 @@ public:
     PPCGGen->options = PPCGScop->options;
     PPCGGen->print = nullptr;
     PPCGGen->print_user = nullptr;
+    PPCGGen->build_ast_expr = &pollyBuildAstExprForStmt;
     PPCGGen->prog = PPCGProg;
     PPCGGen->tree = nullptr;
     PPCGGen->types.n = 0;

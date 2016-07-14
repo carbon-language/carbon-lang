@@ -148,6 +148,17 @@ struct gpu_gen {
 		struct gpu_types *types, void *user);
 	void *print_user;
 
+        isl_id_to_ast_expr *(*build_ast_expr)(void *stmt,
+	        isl_ast_build *build,
+        	isl_multi_pw_aff *(*fn_index)(
+	        	__isl_take isl_multi_pw_aff *mpa, isl_id *id,
+		        void *user),
+                void *user_index,
+        	isl_ast_expr *(*fn_expr)(isl_ast_expr *expr,
+		        isl_id *id, void *user),
+        void *user_expr);
+
+
 	struct gpu_prog *prog;
 	/* The generated AST. */
 	isl_ast_node *tree;
