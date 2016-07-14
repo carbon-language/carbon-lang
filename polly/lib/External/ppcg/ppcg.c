@@ -336,7 +336,7 @@ static __isl_give isl_union_map *project_out_tags(
  *
  *	{ [S[i,j] -> R_1[]] -> S[i,j]; [S[i,j] -> R_2[]] -> S[i,j] }
  */
-static void compute_tagger(struct ppcg_scop *ps)
+void compute_tagger(struct ppcg_scop *ps)
 {
 	isl_union_map *tagged;
 	isl_union_pw_multi_aff *tagger;
@@ -694,7 +694,7 @@ static void compute_flow_dep(struct ppcg_scop *ps)
  * set of order dependences and a set of external false dependences
  * in compute_live_range_reordering_dependences.
  */
-static void compute_dependences(struct ppcg_scop *scop)
+void compute_dependences(struct ppcg_scop *scop)
 {
 	isl_union_map *may_source;
 	isl_union_access_info *access;

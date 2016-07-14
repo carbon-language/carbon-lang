@@ -352,4 +352,5 @@ int generate_gpu(isl_ctx *ctx, const char *input, FILE *out,
 		struct gpu_prog *prog, __isl_keep isl_ast_node *tree,
 		struct gpu_types *types, void *user), void *user);
 
+__isl_give isl_schedule *get_schedule(struct gpu_gen *gen);
 #endif

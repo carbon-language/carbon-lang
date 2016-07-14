@@ -1,5 +1,8 @@
 ; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-codegen-ppcg -S < %s
+; RUN: opt %loadPolly -polly-codegen-ppcg -polly-acc-dump-schedule \
+; RUN: -disable-output < %s | \
+; RUN: FileCheck -check-prefix=SCHED %s
+
 ; REQUIRES: pollyacc
 
 ; CHECK: Stmt_bb5
@@ -11,7 +14,13 @@
 ; CHECK:           { Stmt_bb5[i0, i1] -> MemRef_A[i0, i1] };
 ; CHECK:       MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:           { Stmt_bb5[i0, i1] -> MemRef_A[i0, i1] };
-;
+
+; SCHED: domain: "{ Stmt_bb5[i0, i1] : 0 <= i0 <= 1023 and 0 <= i1 <= 1023 }"
+; SCHED: child:
+; SCHED:   schedule: "[{ Stmt_bb5[i0, i1] -> [(i0)] }, { Stmt_bb5[i0, i1] -> [(i1)] }]"
+; SCHED:   permutable: 1
+; SCHED:   coincident: [ 1, 1 ]
+
 ;    void double_parallel_loop(float A[][1024]) {
 ;      for (long i = 0; i < 1024; i++)
 ;        for (long j = 0; j < 1024; j++)

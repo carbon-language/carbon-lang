@@ -4265,7 +4265,7 @@ static __isl_give isl_schedule *determine_properties_original_schedule(
  * a file, by computing one or by determining the properties
  * of the original schedule.
  */
-static __isl_give isl_schedule *get_schedule(struct gpu_gen *gen)
+__isl_give isl_schedule *get_schedule(struct gpu_gen *gen)
 {
 	isl_schedule *schedule;
 

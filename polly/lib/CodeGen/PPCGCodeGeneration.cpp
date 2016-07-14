@@ -15,12 +15,15 @@
 #include "polly/CodeGen/IslNodeBuilder.h"
 #include "polly/DependenceInfo.h"
 #include "polly/LinkAllPasses.h"
+#include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/ScalarEvolutionAliasAnalysis.h"
+
+#include "isl/union_map.h"
 
 extern "C" {
 #include "gpu.h"
@@ -33,6 +36,11 @@ using namespace polly;
 using namespace llvm;
 
 #define DEBUG_TYPE "polly-codegen-ppcg"
+
+static cl::opt<bool> DumpSchedule("polly-acc-dump-schedule",
+                                  cl::desc("Dump the computed GPU Schedule"),
+                                  cl::Hidden, cl::init(true), cl::ZeroOrMore,
+                                  cl::cat(PollyCategory));
 
 namespace {
 class PPCGCodeGeneration : public ScopPass {
@@ -89,10 +97,70 @@ public:
     return Options;
   }
 
+  /// Get a tagged access relation containing all accesses of type @p AccessTy.
+  ///
+  /// Instead of a normal access of the form:
+  ///
+  ///   Stmt[i,j,k] -> Array[f_0(i,j,k), f_1(i,j,k)]
+  ///
+  /// a tagged access has the form
+  ///
+  ///   [Stmt[i,j,k] -> id[]] -> Array[f_0(i,j,k), f_1(i,j,k)]
+  ///
+  /// where 'id' is an additional space that references the memory access that
+  /// triggered the access.
+  ///
+  /// @param AccessTy The type of the memory accesses to collect.
+  ///
+  /// @return The relation describing all tagged memory accesses.
+  isl_union_map *getTaggedAccesses(enum MemoryAccess::AccessType AccessTy) {
+    isl_union_map *Accesses = isl_union_map_empty(S->getParamSpace());
+
+    for (auto &Stmt : *S)
+      for (auto &Acc : Stmt)
+        if (Acc->getType() == AccessTy) {
+          isl_map *Relation = Acc->getAccessRelation();
+          Relation = isl_map_intersect_domain(Relation, Stmt.getDomain());
+
+          isl_space *Space = isl_map_get_space(Relation);
+          Space = isl_space_range(Space);
+          Space = isl_space_from_range(Space);
+          isl_map *Universe = isl_map_universe(Space);
+          Relation = isl_map_domain_product(Relation, Universe);
+          Accesses = isl_union_map_add_map(Accesses, Relation);
+        }
+
+    return Accesses;
+  }
+
+  /// Get the set of all read accesses, tagged with the access id.
+  ///
+  /// @see getTaggedAccesses
+  isl_union_map *getTaggedReads() {
+    return getTaggedAccesses(MemoryAccess::READ);
+  }
+
+  /// Get the set of all may (and must) accesses, tagged with the access id.
+  ///
+  /// @see getTaggedAccesses
+  isl_union_map *getTaggedMayWrites() {
+    return isl_union_map_union(getTaggedAccesses(MemoryAccess::MAY_WRITE),
+                               getTaggedAccesses(MemoryAccess::MUST_WRITE));
+  }
+
+  /// Get the set of all must accesses, tagged with the access id.
+  ///
+  /// @see getTaggedAccesses
+  isl_union_map *getTaggedMustWrites() {
+    return getTaggedAccesses(MemoryAccess::MUST_WRITE);
+  }
+
   /// Create a new PPCG scop from the current scop.
   ///
-  /// For now the created scop is initialized to 'zero' and does not contain
-  /// any scop-specific information.
+  /// The PPCG scop is initialized with data from the current polly::Scop. From
+  /// this initial data, the data-dependences in the PPCG scop are initialized.
+  /// We do not use Polly's dependence analysis for now, to ensure we match
+  /// the PPCG default behaviour more closely.
   ///
   /// @returns A new ppcg scop.
   ppcg_scop *createPPCGScop() {
@@ -103,18 +171,18 @@ public:
     PPCGScop->start = 0;
     PPCGScop->end = 0;
 
-    PPCGScop->context = nullptr;
-    PPCGScop->domain = nullptr;
+    PPCGScop->context = S->getContext();
+    PPCGScop->domain = S->getDomains();
     PPCGScop->call = nullptr;
-    PPCGScop->tagged_reads = nullptr;
-    PPCGScop->reads = nullptr;
+    PPCGScop->tagged_reads = getTaggedReads();
+    PPCGScop->reads = S->getReads();
     PPCGScop->live_in = nullptr;
-    PPCGScop->tagged_may_writes = nullptr;
-    PPCGScop->may_writes = nullptr;
-    PPCGScop->tagged_must_writes = nullptr;
-    PPCGScop->must_writes = nullptr;
+    PPCGScop->tagged_may_writes = getTaggedMayWrites();
+    PPCGScop->may_writes = S->getWrites();
+    PPCGScop->tagged_must_writes = getTaggedMustWrites();
+    PPCGScop->must_writes = S->getMustWrites();
     PPCGScop->live_out = nullptr;
-    PPCGScop->tagged_must_kills = nullptr;
+    PPCGScop->tagged_must_kills = isl_union_map_empty(S->getParamSpace());
     PPCGScop->tagger = nullptr;
 
     PPCGScop->independence = nullptr;
@@ -125,10 +193,13 @@ public:
     PPCGScop->dep_order = nullptr;
     PPCGScop->tagged_dep_order = nullptr;
 
-    PPCGScop->schedule = nullptr;
+    PPCGScop->schedule = S->getScheduleTree();
     PPCGScop->names = nullptr;
 
     PPCGScop->pet = nullptr;
+
+    compute_tagger(PPCGScop);
+    compute_dependences(PPCGScop);
 
     return PPCGScop;
   }
@@ -163,11 +234,75 @@ public:
     return PPCGProg;
   }
 
+  // Generate a GPU program using PPCG.
+  //
+  // GPU mapping consists of multiple steps:
+  //
+  //  1) Compute new schedule for the program.
+  //  2) Map schedule to GPU (TODO)
+  //  3) Generate code for new schedule (TODO)
+  //
+  // We do not use here the Polly ScheduleOptimizer, as the schedule optimizer
+  // is mostly CPU specific. Instead, we use PPCG's GPU code generation
+  // strategy directly from this pass.
+  gpu_gen *generateGPU(ppcg_scop *PPCGScop, gpu_prog *PPCGProg) {
+
+    auto PPCGGen = isl_calloc_type(S->getIslCtx(), struct gpu_gen);
+
+    PPCGGen->ctx = S->getIslCtx();
+    PPCGGen->options = PPCGScop->options;
+    PPCGGen->print = nullptr;
+    PPCGGen->print_user = nullptr;
+    PPCGGen->prog = PPCGProg;
+    PPCGGen->tree = nullptr;
+    PPCGGen->types.n = 0;
+    PPCGGen->types.name = nullptr;
+    PPCGGen->sizes = nullptr;
+    PPCGGen->used_sizes = nullptr;
+    PPCGGen->kernel_id = 0;
+
+    // Set scheduling strategy to same strategy PPCG is using.
+    isl_options_set_schedule_outer_coincidence(PPCGGen->ctx, true);
+    isl_options_set_schedule_maximize_band_depth(PPCGGen->ctx, true);
+
+    isl_schedule *Schedule = get_schedule(PPCGGen);
+
+    if (DumpSchedule) {
+      isl_printer *P = isl_printer_to_str(S->getIslCtx());
+      P = isl_printer_set_yaml_style(P, ISL_YAML_STYLE_BLOCK);
+      P = isl_printer_print_str(P, "Schedule\n");
+      P = isl_printer_print_str(P, "========\n");
+      if (Schedule)
+        P = isl_printer_print_schedule(P, Schedule);
+      else
+        P = isl_printer_print_str(P, "No schedule found\n");
+
+      printf("%s\n", isl_printer_get_str(P));
+      isl_printer_free(P);
+    }
+
+    isl_schedule_free(Schedule);
+
+    return PPCGGen;
+  }
+
+  /// Free gpu_gen structure.
+  ///
+  /// @param PPCGGen The ppcg_gen object to free.
+  void freePPCGGen(gpu_gen *PPCGGen) {
+    isl_ast_node_free(PPCGGen->tree);
+    isl_union_map_free(PPCGGen->sizes);
+    isl_union_map_free(PPCGGen->used_sizes);
+    free(PPCGGen);
+  }
+
   bool runOnScop(Scop &CurrentScop) override {
     S = &CurrentScop;
 
     auto PPCGScop = createPPCGScop();
     auto PPCGProg = createPPCGProg(PPCGScop);
+    auto PPCGGen = generateGPU(PPCGScop, PPCGProg);
+    freePPCGGen(PPCGGen);
     gpu_prog_free(PPCGProg);
     ppcg_scop_free(PPCGScop);
 
