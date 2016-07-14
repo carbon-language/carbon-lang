@@ -937,8 +937,8 @@ private:
   }
 
   /// \brief Collect all the accesses with a constant stride in program order.
-  void collectConstStridedAccesses(
-      MapVector<Instruction *, StrideDescriptor> &StrideAccesses,
+  void collectConstStrideAccesses(
+      MapVector<Instruction *, StrideDescriptor> &AccessStrideInfo,
       const ValueToValueMap &Strides);
 
   /// \brief Returns true if \p Stride is allowed in an interleaved group.
@@ -4927,8 +4927,8 @@ bool LoopVectorizationLegality::blockCanBePredicated(
   return true;
 }
 
-void InterleavedAccessInfo::collectConstStridedAccesses(
-    MapVector<Instruction *, StrideDescriptor> &StrideAccesses,
+void InterleavedAccessInfo::collectConstStrideAccesses(
+    MapVector<Instruction *, StrideDescriptor> &AccessStrideInfo,
     const ValueToValueMap &Strides) {
 
   auto &DL = TheLoop->getHeader()->getModule()->getDataLayout();
@@ -4938,7 +4938,7 @@ void InterleavedAccessInfo::collectConstStridedAccesses(
   // blocks in the loop in reverse postorder (i.e., in a topological order).
   // Such an ordering will ensure that any load/store that may be executed
   // before a second load/store will precede the second load/store in
-  // StrideAccesses.
+  // AccessStrideInfo.
   LoopBlocksDFS DFS(TheLoop);
   DFS.perform(LI);
   for (BasicBlock *BB : make_range(DFS.beginRPO(), DFS.endRPO()))
@@ -4960,7 +4960,7 @@ void InterleavedAccessInfo::collectConstStridedAccesses(
       if (!Align)
         Align = DL.getABITypeAlignment(PtrTy->getElementType());
 
-      StrideAccesses[&I] = StrideDescriptor(Stride, Scev, Size, Align);
+      AccessStrideInfo[&I] = StrideDescriptor(Stride, Scev, Size, Align);
     }
 }
 
@@ -5004,11 +5004,11 @@ void InterleavedAccessInfo::analyzeInterleaving(
     const ValueToValueMap &Strides) {
   DEBUG(dbgs() << "LV: Analyzing interleaved accesses...\n");
 
-  // Holds all the stride accesses.
-  MapVector<Instruction *, StrideDescriptor> StrideAccesses;
-  collectConstStridedAccesses(StrideAccesses, Strides);
+  // Holds all accesses with a constant stride.
+  MapVector<Instruction *, StrideDescriptor> AccessStrideInfo;
+  collectConstStrideAccesses(AccessStrideInfo, Strides);
 
-  if (StrideAccesses.empty())
+  if (AccessStrideInfo.empty())
     return;
 
   // Collect the dependences in the loop.
@@ -5024,8 +5024,8 @@ void InterleavedAccessInfo::analyzeInterleaving(
   //   1. A and B have the same stride.
   //   2. A and B have the same memory object size.
   //   3. B belongs to the group according to the distance.
-  for (auto AI = StrideAccesses.rbegin(), E = StrideAccesses.rend(); AI != E;
-       ++AI) {
+  for (auto AI = AccessStrideInfo.rbegin(), E = AccessStrideInfo.rend();
+       AI != E; ++AI) {
     Instruction *A = AI->first;
     StrideDescriptor DesA = AI->second;
 
