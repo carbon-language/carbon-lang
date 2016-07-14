@@ -17,11 +17,11 @@ namespace lld {
 namespace coff {
 
 LLVM_ATTRIBUTE_NORETURN void error(const Twine &Msg);
-void error(std::error_code EC, const Twine &Prefix);
-void error(llvm::Error E, const Twine &Prefix);
+void check(std::error_code EC, const Twine &Prefix);
+void check(llvm::Error E, const Twine &Prefix);
 
-template <typename T> void error(const ErrorOr<T> &V, const Twine &Prefix) {
-  error(V.getError(), Prefix);
+template <typename T> void check(const ErrorOr<T> &V, const Twine &Prefix) {
+  check(V.getError(), Prefix);
 }
 
 template <class T> T check(Expected<T> E, const Twine &Prefix) {

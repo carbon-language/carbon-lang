@@ -20,13 +20,13 @@ void error(const Twine &Msg) {
   exit(1);
 }
 
-void error(std::error_code EC, const Twine &Prefix) {
+void check(std::error_code EC, const Twine &Prefix) {
   if (!EC)
     return;
   error(Prefix + ": " + EC.message());
 }
 
-void error(llvm::Error E, const Twine &Prefix) {
+void check(llvm::Error E, const Twine &Prefix) {
   if (!E)
     return;
   handleAllErrors(std::move(E), [&](const llvm::ErrorInfoBase &EIB) {
