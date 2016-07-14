@@ -813,7 +813,7 @@ static __isl_give isl_set *set_intersect_str(__isl_take isl_set *set,
 	return set;
 }
 
-static void *ppcg_scop_free(struct ppcg_scop *ps)
+void *ppcg_scop_free(struct ppcg_scop *ps)
 {
 	if (!ps)
 		return NULL;
@@ -1007,6 +1007,7 @@ static int check_options(isl_ctx *ctx)
 	return 0;
 }
 
+#if 0
 int main(int argc, char **argv)
 {
 	int r;
@@ -1037,3 +1038,4 @@ int main(int argc, char **argv)
 
 	return r;
 }
+#endif
