@@ -1510,16 +1510,16 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
   return false;
 }
 
-static bool tryToReplaceInstWithConstant(SCCPSolver Solver, Instruction *Inst,
-                                         bool shouldEraseFromParent) {
+template <typename ArgOrInst>
+static bool tryToReplaceWithConstant(SCCPSolver Solver, ArgOrInst *AI) {
   Constant *Const = nullptr;
-  if (Inst->getType()->isStructTy()) {
-    std::vector<LatticeVal> IVs = Solver.getStructLatticeValueFor(Inst);
+  if (AI->getType()->isStructTy()) {
+    std::vector<LatticeVal> IVs = Solver.getStructLatticeValueFor(AI);
     if (std::any_of(IVs.begin(), IVs.end(),
                     [](LatticeVal &LV) { return LV.isOverdefined(); }))
       return false;
     std::vector<Constant *> ConstVals;
-    StructType *ST = dyn_cast<StructType>(Inst->getType());
+    StructType *ST = dyn_cast<StructType>(AI->getType());
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
       LatticeVal V = IVs[i];
       ConstVals.push_back(V.isConstant()
@@ -1528,18 +1528,23 @@ static bool tryToReplaceInstWithConstant(SCCPSolver Solver, Instruction *Inst,
     }
     Const = ConstantStruct::get(ST, ConstVals);
   } else {
-    LatticeVal IV = Solver.getLatticeValueFor(Inst);
+    LatticeVal IV = Solver.getLatticeValueFor(AI);
     if (IV.isOverdefined())
       return false;
-
-    Const =
-        IV.isConstant() ? IV.getConstant() : UndefValue::get(Inst->getType());
+    Const = IV.isConstant() ? IV.getConstant() : UndefValue::get(AI->getType());
   }
   assert(Const && "Constant is nullptr here!");
-  DEBUG(dbgs() << "  Constant: " << *Const << " = " << *Inst << '\n');
+  DEBUG(dbgs() << "  Constant: " << *Const << " = " << *AI << '\n');
 
   // Replaces all of the uses of a variable with uses of the constant.
-  Inst->replaceAllUsesWith(Const);
+  AI->replaceAllUsesWith(Const);
+  return true;
+}
+
+static bool tryToReplaceInstWithConstant(SCCPSolver Solver, Instruction *Inst,
+                                         bool shouldEraseFromParent) {
+  if (!tryToReplaceWithConstant(Solver, Inst))
+    return false;
 
   // Delete the instruction.
   if (shouldEraseFromParent)
@@ -1766,17 +1771,8 @@ static bool runIPSCCP(Module &M, const DataLayout &DL,
         // TODO: Could use getStructLatticeValueFor to find out if the entire
         // result is a constant and replace it entirely if so.
 
-        LatticeVal IV = Solver.getLatticeValueFor(&*AI);
-        if (IV.isOverdefined()) continue;
-
-        Constant *CST = IV.isConstant() ?
-        IV.getConstant() : UndefValue::get(AI->getType());
-        DEBUG(dbgs() << "***  Arg " << *AI << " = " << *CST <<"\n");
-
-        // Replaces all of the uses of a variable with uses of the
-        // constant.
-        AI->replaceAllUsesWith(CST);
-        ++IPNumArgsElimed;
+        if (tryToReplaceWithConstant(Solver, &*AI))
+          ++IPNumArgsElimed;
       }
     }
 
