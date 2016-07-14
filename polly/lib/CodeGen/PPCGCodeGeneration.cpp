@@ -155,6 +155,38 @@ public:
     return getTaggedAccesses(MemoryAccess::MUST_WRITE);
   }
 
+  /// Collect parameter and array names as isl_ids.
+  ///
+  /// To reason about the different parameters and arrays used, ppcg requires
+  /// a list of all isl_ids in use. As PPCG traditionally performs
+  /// source-to-source compilation each of these isl_ids is mapped to the
+  /// expression that represents it. As we do not have a corresponding
+  /// expression in Polly, we just map each id to a 'zero' expression to match
+  /// the data format that ppcg expects.
+  ///
+  /// @returns Retun a map from collected ids to 'zero' ast expressions.
+  __isl_give isl_id_to_ast_expr *getNames() {
+    auto *Names = isl_id_to_ast_expr_alloc(
+        S->getIslCtx(), S->getNumParams() + std::distance(S->array_begin(), S->array_end()));
+    auto *Zero = isl_ast_expr_from_val(isl_val_zero(S->getIslCtx()));
+    auto *Space = S->getParamSpace();
+
+    for (int I = 0, E = S->getNumParams(); I < E; ++I) {
+      isl_id *Id = isl_space_get_dim_id(Space, isl_dim_param, I);
+      Names = isl_id_to_ast_expr_set(Names, Id, isl_ast_expr_copy(Zero));
+    }
+
+    for (auto &Array : S->arrays()) {
+      auto Id = Array.second->getBasePtrId();
+      Names = isl_id_to_ast_expr_set(Names, Id, isl_ast_expr_copy(Zero));
+    }
+
+    isl_space_free(Space);
+    isl_ast_expr_free(Zero);
+
+    return Names;
+  }
+
   /// Create a new PPCG scop from the current scop.
   ///
   /// The PPCG scop is initialized with data from the current polly::Scop. From
@@ -194,7 +226,7 @@ public:
     PPCGScop->tagged_dep_order = nullptr;
 
     PPCGScop->schedule = S->getScheduleTree();
-    PPCGScop->names = nullptr;
+    PPCGScop->names = getNames();
 
     PPCGScop->pet = nullptr;
 
@@ -216,7 +248,7 @@ public:
 
     PPCGProg->ctx = S->getIslCtx();
     PPCGProg->scop = PPCGScop;
-    PPCGProg->context = nullptr;
+    PPCGProg->context = isl_set_copy(PPCGScop->context);
     PPCGProg->read = nullptr;
     PPCGProg->may_write = nullptr;
     PPCGProg->must_write = nullptr;
@@ -266,6 +298,13 @@ public:
     isl_options_set_schedule_maximize_band_depth(PPCGGen->ctx, true);
 
     isl_schedule *Schedule = get_schedule(PPCGGen);
+
+    int has_permutable = has_any_permutable_node(Schedule);
+
+    if (!has_permutable || has_permutable < 0)
+      Schedule = isl_schedule_free(Schedule);
+    else
+      Schedule = map_to_device(PPCGGen, Schedule);
 
     if (DumpSchedule) {
       isl_printer *P = isl_printer_to_str(S->getIslCtx());

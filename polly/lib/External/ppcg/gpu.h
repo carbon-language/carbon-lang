@@ -353,4 +353,7 @@ int generate_gpu(isl_ctx *ctx, const char *input, FILE *out,
 		struct gpu_types *types, void *user), void *user);
 
 __isl_give isl_schedule *get_schedule(struct gpu_gen *gen);
+int has_any_permutable_node(__isl_keep isl_schedule *schedule);
+__isl_give isl_schedule *map_to_device(struct gpu_gen *gen,
+                                       __isl_take isl_schedule *schedule);
 #endif

@@ -2375,7 +2375,7 @@ static isl_bool set_permutable(__isl_keep isl_schedule_node *node, void *user)
 /* Does "schedule" contain any permutable band with at least one coincident
  * member?
  */
-static int has_any_permutable_node(__isl_keep isl_schedule *schedule)
+int has_any_permutable_node(__isl_keep isl_schedule *schedule)
 {
 	int any_permutable = 0;
 
@@ -4938,7 +4938,7 @@ static __isl_give isl_schedule_node *add_to_from_device(
  * are separated from the other children and are not mapped to
  * the device.
  */
-static __isl_give isl_schedule *map_to_device(struct gpu_gen *gen,
+__isl_give isl_schedule *map_to_device(struct gpu_gen *gen,
 	__isl_take isl_schedule *schedule)
 {
 	isl_schedule_node *node;
