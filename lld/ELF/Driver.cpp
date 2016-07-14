@@ -535,6 +535,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
       Config->EntrySym = Symtab.addUndefined(S);
   }
 
+  // Initialize Config->ImageBase.
   if (auto *Arg = Args.getLastArg(OPT_image_base)) {
     StringRef S = Arg->getValue();
     if (S.getAsInteger(0, Config->ImageBase))
@@ -542,7 +543,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
     else if ((Config->ImageBase % Target->PageSize) != 0)
       warning(Arg->getSpelling() + ": address isn't multiple of page size");
   } else {
-    Config->ImageBase = Target->getImageBase();
+    Config->ImageBase = Config->Pic ? 0 : Target->DefaultImageBase;
   }
 
   for (std::unique_ptr<InputFile> &F : Files)
