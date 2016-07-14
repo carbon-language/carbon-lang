@@ -39,7 +39,7 @@ using namespace llvm;
 
 static cl::opt<bool> DumpSchedule("polly-acc-dump-schedule",
                                   cl::desc("Dump the computed GPU Schedule"),
-                                  cl::Hidden, cl::init(true), cl::ZeroOrMore,
+                                  cl::Hidden, cl::init(false), cl::ZeroOrMore,
                                   cl::cat(PollyCategory));
 
 namespace {
