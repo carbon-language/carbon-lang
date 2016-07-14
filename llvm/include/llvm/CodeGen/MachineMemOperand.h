@@ -90,11 +90,11 @@ struct MachinePointerInfo {
 class MachineMemOperand {
 public:
   // This is the number of bits we need to represent flags.
-  static constexpr unsigned MOMaxBits = 8;
+  static LLVM_CONSTEXPR unsigned MOMaxBits = 8;
 
   // Target hints allow target passes to annotate memory operations.
-  static constexpr unsigned MOTargetStartBit = 5;
-  static constexpr unsigned MOTargetNumBits = 3;
+  static LLVM_CONSTEXPR unsigned MOTargetStartBit = 5;
+  static LLVM_CONSTEXPR unsigned MOTargetNumBits = 3;
 
   /// Flags values. These may be or'd together.
   enum Flags : uint16_t {
