@@ -20549,7 +20549,7 @@ static SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG) {
     DAG.getNode(X86ISD::SETCC, DL, MVT::i8,
                 DAG.getConstant(Cond, DL, MVT::i32),
                 SDValue(Sum.getNode(), 1));
-  
+
   if (N->getValueType(1) == MVT::i1) {
     SetCC = DAG.getNode(ISD::AssertZext, DL, MVT::i8, SetCC,
                         DAG.getValueType(MVT::i1));
