@@ -167,7 +167,8 @@ public:
   /// @returns Retun a map from collected ids to 'zero' ast expressions.
   __isl_give isl_id_to_ast_expr *getNames() {
     auto *Names = isl_id_to_ast_expr_alloc(
-        S->getIslCtx(), S->getNumParams() + std::distance(S->array_begin(), S->array_end()));
+        S->getIslCtx(),
+        S->getNumParams() + std::distance(S->array_begin(), S->array_end()));
     auto *Zero = isl_ast_expr_from_val(isl_val_zero(S->getIslCtx()));
     auto *Space = S->getParamSpace();
 
