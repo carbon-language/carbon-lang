@@ -1299,6 +1299,7 @@ bool llvm::canConstantFoldCallTo(const Function *F) {
   case Intrinsic::fmuladd:
   case Intrinsic::copysign:
   case Intrinsic::round:
+  case Intrinsic::masked_load:
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::uadd_with_overflow:
   case Intrinsic::ssub_with_overflow:
@@ -1843,10 +1844,43 @@ Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID, Type *Ty,
 
 Constant *ConstantFoldVectorCall(StringRef Name, unsigned IntrinsicID,
                                  VectorType *VTy, ArrayRef<Constant *> Operands,
+                                 const DataLayout &DL,
                                  const TargetLibraryInfo *TLI) {
   SmallVector<Constant *, 4> Result(VTy->getNumElements());
   SmallVector<Constant *, 4> Lane(Operands.size());
   Type *Ty = VTy->getElementType();
+
+  if (IntrinsicID == Intrinsic::masked_load) {
+    auto *SrcPtr = Operands[0];
+    auto *Mask = Operands[2];
+    auto *Passthru = Operands[3];
+    Constant *VecData = ConstantFoldLoadFromConstPtr(SrcPtr, VTy, DL);
+    if (!VecData)
+      return nullptr;
+
+    SmallVector<Constant *, 32> NewElements;
+    for (unsigned I = 0, E = VTy->getNumElements(); I != E; ++I) {
+      auto *MaskElt =
+          dyn_cast_or_null<ConstantInt>(Mask->getAggregateElement(I));
+      if (!MaskElt)
+        break;
+      if (MaskElt->isZero()) {
+        auto *PassthruElt = Passthru->getAggregateElement(I);
+        if (!PassthruElt)
+          break;
+        NewElements.push_back(PassthruElt);
+      } else {
+        assert(MaskElt->isOne());
+        auto *VecElt = VecData->getAggregateElement(I);
+        if (!VecElt)
+          break;
+        NewElements.push_back(VecElt);
+      }
+    }
+    if (NewElements.size() == VTy->getNumElements())
+      return ConstantVector::get(NewElements);
+    return nullptr;
+  }
 
   for (unsigned I = 0, E = VTy->getNumElements(); I != E; ++I) {
     // Gather a column of constants.
@@ -1880,7 +1914,8 @@ llvm::ConstantFoldCall(Function *F, ArrayRef<Constant *> Operands,
   Type *Ty = F->getReturnType();
 
   if (auto *VTy = dyn_cast<VectorType>(Ty))
-    return ConstantFoldVectorCall(Name, F->getIntrinsicID(), VTy, Operands, TLI);
+    return ConstantFoldVectorCall(Name, F->getIntrinsicID(), VTy, Operands,
+                                  F->getParent()->getDataLayout(), TLI);
 
   return ConstantFoldScalarCall(Name, F->getIntrinsicID(), Ty, Operands, TLI);
 }
