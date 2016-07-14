@@ -75,6 +75,8 @@ public:
     Options->ctx = nullptr;
     Options->sizes = nullptr;
 
+    Options->tile_size = 32;
+
     Options->use_private_memory = false;
     Options->use_shared_memory = false;
     Options->max_shared_memory = 0;

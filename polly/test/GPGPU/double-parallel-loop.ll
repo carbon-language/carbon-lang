@@ -29,21 +29,20 @@
 ; SCHED:           child:
 ; SCHED:             mark: "kernel"
 ; SCHED:             child:
-; SCHED:               context: "[b0, b1, t0, t1] -> { [] : 0 <= b0 <= 255 and 0 <= b1 <= 255 and 0 <= t0 <= 3 and 0 <= t1 <= 3 }"
+; SCHED:               context: "[b0, b1, t0, t1] -> { [] : 0 <= b0 <= 31 and 0 <= b1 <= 31 and 0 <= t0 <= 31 and 0 <= t1 <= 15 }"
 ; SCHED:               child:
-; SCHED:                 filter: "[b0, b1] -> { Stmt_bb5[i0, i1] : -3 - 4b0 + i0 <= 1024*floor((i0)/1024) <= -4b0 + i0 and -3 - 4b1 + i1 <= 1024*floor((i1)/1024) <= -4b1 + i1 }"
+; SCHED:                 filter: "[b0, b1] -> { Stmt_bb5[i0, i1] : -31 - 32b0 + i0 <= 8192*floor((i0)/8192) <= -32b0 + i0 and -31 - 32b1 + i1 <= 8192*floor((i1)/8192) <= -32b1 + i1 }"
 ; SCHED:                 child:
-; SCHED:                   schedule: "[{ Stmt_bb5[i0, i1] -> [(floor((i0)/1024))] }, { Stmt_bb5[i0, i1] -> [(floor((i1)/1024))] }]"
+; SCHED:                   schedule: "[{ Stmt_bb5[i0, i1] -> [(floor((i0)/8192))] }, { Stmt_bb5[i0, i1] -> [(floor((i1)/8192))] }]"
 ; SCHED:                   permutable: 1
 ; SCHED:                   coincident: [ 1, 1 ]
 ; SCHED:                   child:
-; SCHED:                     filter: "[t0, t1] -> { Stmt_bb5[i0, i1] : 4*floor((-t0 + i0)/4) = -t0 + i0 and 4*floor((-t1 + i1)/4) = -t1 + i1 and 0 <= t0 <= 3 and 0 <= t1 <= 3 }"
+; SCHED:                     filter: "[t0, t1] -> { Stmt_bb5[i0, i1] : 32*floor((-t0 + i0)/32) = -t0 + i0 and 16*floor((-t1 + i1)/16) = -t1 + i1 and 0 <= t0 <= 31 and 0 <= t1 <= 15 }"
 ; SCHED:                     child:
-; SCHED:                       schedule: "[{ Stmt_bb5[i0, i1] -> [(0)] }, { Stmt_bb5[i0, i1] -> [(0)] }]"
+; SCHED:                       schedule: "[{ Stmt_bb5[i0, i1] -> [(0)] }, { Stmt_bb5[i0, i1] -> [(floor((i1)/16) - 2*floor((i1)/32))] }]"
 ; SCHED:                       permutable: 1
 ; SCHED:                       coincident: [ 1, 1 ]
 ; SCHED:       - filter: "{  }"
-
 
 ;    void double_parallel_loop(float A[][1024]) {
 ;      for (long i = 0; i < 1024; i++)
