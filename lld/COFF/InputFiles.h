@@ -104,7 +104,7 @@ public:
 
   // All symbols returned by ArchiveFiles are of Lazy type.
   std::vector<SymbolBody *> &getSymbols() override {
-    llvm_unreachable("internal error");
+    llvm_unreachable("internal fatal");
   }
 
 private:

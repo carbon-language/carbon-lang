@@ -113,7 +113,7 @@ void ObjectFile::parse() {
     Bin.release();
     COFFObj.reset(Obj);
   } else {
-    error(Twine(getName()) + " is not a COFF file.");
+    fatal(Twine(getName()) + " is not a COFF file.");
   }
 
   // Read section and symbol tables.
@@ -231,12 +231,12 @@ Defined *ObjectFile::createDefined(COFFSymbolRef Sym, const void *AuxP,
 
   // Reserved sections numbers don't have contents.
   if (llvm::COFF::isReservedSectionNumber(SectionNumber))
-    error(Twine("broken object file: ") + getName());
+    fatal(Twine("broken object file: ") + getName());
 
   // This symbol references a section which is not present in the section
   // header.
   if ((uint32_t)SectionNumber >= SparseChunks.size())
-    error(Twine("broken object file: ") + getName());
+    fatal(Twine("broken object file: ") + getName());
 
   // Nothing else to do without a section chunk.
   auto *SC = cast_or_null<SectionChunk>(SparseChunks[SectionNumber]);
@@ -266,7 +266,7 @@ void ObjectFile::initializeSEH() {
   ArrayRef<uint8_t> A;
   COFFObj->getSectionContents(SXData, A);
   if (A.size() % 4 != 0)
-    error(".sxdata must be an array of symbol table indices");
+    fatal(".sxdata must be an array of symbol table indices");
   auto *I = reinterpret_cast<const ulittle32_t *>(A.data());
   auto *E = reinterpret_cast<const ulittle32_t *>(A.data() + A.size());
   for (; I != E; ++I)
@@ -292,7 +292,7 @@ void ImportFile::parse() {
 
   // Check if the total size is valid.
   if ((size_t)(End - Buf) != (sizeof(*Hdr) + Hdr->SizeOfData))
-    error("broken import library");
+    fatal("broken import library");
 
   // Read names and create an __imp_ symbol.
   StringRef Name = StringAlloc.save(StringRef(Buf + sizeof(*Hdr)));

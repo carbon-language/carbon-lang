@@ -58,7 +58,7 @@ public:
       for (const char *S : Args)
         if (S)
           llvm::errs() << S << " ";
-      error("failed");
+      fatal("failed");
     }
   }
 
@@ -82,7 +82,7 @@ MachineTypes getMachineType(StringRef S) {
                         .Default(IMAGE_FILE_MACHINE_UNKNOWN);
   if (MT != IMAGE_FILE_MACHINE_UNKNOWN)
     return MT;
-  error(Twine("unknown /machine argument: ") + S);
+  fatal(Twine("unknown /machine argument: ") + S);
 }
 
 StringRef machineToStr(MachineTypes MT) {
@@ -103,9 +103,9 @@ void parseNumbers(StringRef Arg, uint64_t *Addr, uint64_t *Size) {
   StringRef S1, S2;
   std::tie(S1, S2) = Arg.split(',');
   if (S1.getAsInteger(0, *Addr))
-    error(Twine("invalid number: ") + S1);
+    fatal(Twine("invalid number: ") + S1);
   if (Size && !S2.empty() && S2.getAsInteger(0, *Size))
-    error(Twine("invalid number: ") + S2);
+    fatal(Twine("invalid number: ") + S2);
 }
 
 // Parses a string in the form of "<integer>[.<integer>]".
@@ -114,10 +114,10 @@ void parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor) {
   StringRef S1, S2;
   std::tie(S1, S2) = Arg.split('.');
   if (S1.getAsInteger(0, *Major))
-    error(Twine("invalid number: ") + S1);
+    fatal(Twine("invalid number: ") + S1);
   *Minor = 0;
   if (!S2.empty() && S2.getAsInteger(0, *Minor))
-    error(Twine("invalid number: ") + S2);
+    fatal(Twine("invalid number: ") + S2);
 }
 
 // Parses a string in the form of "<subsystem>[,<integer>[.<integer>]]".
@@ -137,7 +137,7 @@ void parseSubsystem(StringRef Arg, WindowsSubsystem *Sys, uint32_t *Major,
     .Case("windows", IMAGE_SUBSYSTEM_WINDOWS_GUI)
     .Default(IMAGE_SUBSYSTEM_UNKNOWN);
   if (*Sys == IMAGE_SUBSYSTEM_UNKNOWN)
-    error(Twine("unknown subsystem: ") + SysStr);
+    fatal(Twine("unknown subsystem: ") + SysStr);
   if (!Ver.empty())
     parseVersion(Ver, Major, Minor);
 }
@@ -148,10 +148,10 @@ void parseAlternateName(StringRef S) {
   StringRef From, To;
   std::tie(From, To) = S.split('=');
   if (From.empty() || To.empty())
-    error(Twine("/alternatename: invalid argument: ") + S);
+    fatal(Twine("/alternatename: invalid argument: ") + S);
   auto It = Config->AlternateNames.find(From);
   if (It != Config->AlternateNames.end() && It->second != To)
-    error(Twine("/alternatename: conflicts: ") + S);
+    fatal(Twine("/alternatename: conflicts: ") + S);
   Config->AlternateNames.insert(It, std::make_pair(From, To));
 }
 
@@ -161,7 +161,7 @@ void parseMerge(StringRef S) {
   StringRef From, To;
   std::tie(From, To) = S.split('=');
   if (From.empty() || To.empty())
-    error(Twine("/merge: invalid argument: ") + S);
+    fatal(Twine("/merge: invalid argument: ") + S);
   auto Pair = Config->Merge.insert(std::make_pair(From, To));
   bool Inserted = Pair.second;
   if (!Inserted) {
@@ -198,7 +198,7 @@ static uint32_t parseSectionAttributes(StringRef S) {
       Ret |= IMAGE_SCN_MEM_WRITE;
       break;
     default:
-      error(Twine("/section: invalid argument: ") + S);
+      fatal(Twine("/section: invalid argument: ") + S);
     }
   }
   return Ret;
@@ -209,7 +209,7 @@ void parseSection(StringRef S) {
   StringRef Name, Attrs;
   std::tie(Name, Attrs) = S.split(',');
   if (Name.empty() || Attrs.empty())
-    error(Twine("/section: invalid argument: ") + S);
+    fatal(Twine("/section: invalid argument: ") + S);
   Config->Section[Name] = parseSectionAttributes(Attrs);
 }
 
@@ -221,16 +221,16 @@ void parseManifest(StringRef Arg) {
     return;
   }
   if (!Arg.startswith_lower("embed"))
-    error(Twine("Invalid option ") + Arg);
+    fatal(Twine("Invalid option ") + Arg);
   Config->Manifest = Configuration::Embed;
   Arg = Arg.substr(strlen("embed"));
   if (Arg.empty())
     return;
   if (!Arg.startswith_lower(",id="))
-    error(Twine("Invalid option ") + Arg);
+    fatal(Twine("Invalid option ") + Arg);
   Arg = Arg.substr(strlen(",id="));
   if (Arg.getAsInteger(0, Config->ManifestID))
-    error(Twine("Invalid option ") + Arg);
+    fatal(Twine("Invalid option ") + Arg);
 }
 
 // Parses a string in the form of "level=<string>|uiAccess=<string>|NO".
@@ -254,7 +254,7 @@ void parseManifestUAC(StringRef Arg) {
       std::tie(Config->ManifestUIAccess, Arg) = Arg.split(" ");
       continue;
     }
-    error(Twine("Invalid option ") + Arg);
+    fatal(Twine("Invalid option ") + Arg);
   }
 }
 
@@ -459,7 +459,7 @@ Export parseExport(StringRef Arg) {
   return E;
 
 err:
-  error(Twine("invalid /export: ") + Arg);
+  fatal(Twine("invalid /export: ") + Arg);
 }
 
 static StringRef undecorate(StringRef Sym) {
@@ -477,7 +477,7 @@ void fixupExports() {
     if (E.Ordinal == 0)
       continue;
     if (!Ords.insert(E.Ordinal).second)
-      error("duplicate export ordinal: " + E.Name);
+      fatal("duplicate export ordinal: " + E.Name);
   }
 
   for (Export &E : Config->Exports) {
@@ -538,10 +538,10 @@ void checkFailIfMismatch(StringRef Arg) {
   StringRef K, V;
   std::tie(K, V) = Arg.split('=');
   if (K.empty() || V.empty())
-    error(Twine("/failifmismatch: invalid argument: ") + Arg);
+    fatal(Twine("/failifmismatch: invalid argument: ") + Arg);
   StringRef Existing = Config->MustMatch[K];
   if (!Existing.empty() && V != Existing)
-    error(Twine("/failifmismatch: mismatch detected: ") + Existing + " and " +
+    fatal(Twine("/failifmismatch: mismatch detected: ") + Existing + " and " +
           V + " for key " + K);
   Config->MustMatch[K] = V;
 }
@@ -553,7 +553,7 @@ convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
   // Create an output file path.
   SmallString<128> Path;
   if (llvm::sys::fs::createTemporaryFile("resource", "obj", Path))
-    error("Could not create temporary file");
+    fatal("Could not create temporary file");
 
   // Execute cvtres.exe.
   Executor E("cvtres.exe");
@@ -613,7 +613,7 @@ llvm::opt::InputArgList ArgParser::parse(ArrayRef<const char *> ArgsArr) {
   }
 
   if (MissingCount)
-    error(Twine("missing arg value for \"") + Args.getArgString(MissingIndex) +
+    fatal(Twine("missing arg value for \"") + Args.getArgString(MissingIndex) +
           "\", expected " + Twine(MissingCount) +
           (MissingCount == 1 ? " argument." : " arguments."));
   for (auto *Arg : Args.filtered(OPT_UNKNOWN))

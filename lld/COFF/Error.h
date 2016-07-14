@@ -16,7 +16,7 @@
 namespace lld {
 namespace coff {
 
-LLVM_ATTRIBUTE_NORETURN void error(const Twine &Msg);
+LLVM_ATTRIBUTE_NORETURN void fatal(const Twine &Msg);
 void check(std::error_code EC, const Twine &Prefix);
 void check(llvm::Error E, const Twine &Prefix);
 
@@ -27,7 +27,7 @@ template <typename T> void check(const ErrorOr<T> &V, const Twine &Prefix) {
 template <class T> T check(Expected<T> E, const Twine &Prefix) {
   if (E)
     return std::move(*E);
-  error(E.takeError(), Prefix);
+  fatal(E.takeError(), Prefix);
   return T();
 }
 

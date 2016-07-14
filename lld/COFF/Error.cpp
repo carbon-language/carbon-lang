@@ -15,7 +15,7 @@
 namespace lld {
 namespace coff {
 
-void error(const Twine &Msg) {
+void fatal(const Twine &Msg) {
   llvm::errs() << Msg << "\n";
   exit(1);
 }
@@ -23,14 +23,14 @@ void error(const Twine &Msg) {
 void check(std::error_code EC, const Twine &Prefix) {
   if (!EC)
     return;
-  error(Prefix + ": " + EC.message());
+  fatal(Prefix + ": " + EC.message());
 }
 
 void check(llvm::Error E, const Twine &Prefix) {
   if (!E)
     return;
   handleAllErrors(std::move(E), [&](const llvm::ErrorInfoBase &EIB) {
-    error(Prefix + ": " + EIB.message());
+    fatal(Prefix + ": " + EIB.message());
   });
 }
 

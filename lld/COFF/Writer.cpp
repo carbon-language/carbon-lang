@@ -199,13 +199,13 @@ void OutputSection::writeHeaderTo(uint8_t *Buf) {
 uint64_t Defined::getSecrel() {
   if (auto *D = dyn_cast<DefinedRegular>(this))
     return getRVA() - D->getChunk()->getOutputSection()->getRVA();
-  error("SECREL relocation points to a non-regular symbol");
+  fatal("SECREL relocation points to a non-regular symbol");
 }
 
 uint64_t Defined::getSectionIndex() {
   if (auto *D = dyn_cast<DefinedRegular>(this))
     return D->getChunk()->getOutputSection()->SectionIndex;
-  error("SECTION relocation points to a non-regular symbol");
+  fatal("SECTION relocation points to a non-regular symbol");
 }
 
 bool Defined::isExecutable() {
@@ -614,13 +614,13 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
       assert(B->getRVA() >= SC->getRVA());
       uint64_t OffsetInChunk = B->getRVA() - SC->getRVA();
       if (!SC->hasData() || OffsetInChunk + 4 > SC->getSize())
-        error("_load_config_used is malformed");
+        fatal("_load_config_used is malformed");
 
       ArrayRef<uint8_t> SecContents = SC->getContents();
       uint32_t LoadConfigSize =
           *reinterpret_cast<const ulittle32_t *>(&SecContents[OffsetInChunk]);
       if (OffsetInChunk + LoadConfigSize > SC->getSize())
-        error("_load_config_used is too large");
+        fatal("_load_config_used is too large");
       Dir[LOAD_CONFIG_TABLE].RelativeVirtualAddress = B->getRVA();
       Dir[LOAD_CONFIG_TABLE].Size = LoadConfigSize;
     }
