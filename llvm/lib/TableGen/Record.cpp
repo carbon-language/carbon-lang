@@ -32,8 +32,8 @@ using namespace llvm;
 
 namespace llvm {
 
-/// TableGenStringKey - This is a wrapper for std::string suitable for
-/// using as a key to a DenseMap.  Because there isn't a particularly
+/// This is a wrapper for std::string suitable for using as a key to a DenseMap.
+/// Because there isn't a particularly
 /// good way to indicate tombstone or empty keys for strings, we want
 /// to wrap std::string to indicate that this is a "special" string
 /// not expected to take on certain values (those of the tombstone and
