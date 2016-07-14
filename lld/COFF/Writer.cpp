@@ -653,7 +653,7 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
 void Writer::openFile(StringRef Path) {
   ErrorOr<std::unique_ptr<FileOutputBuffer>> BufferOrErr =
       FileOutputBuffer::create(Path, FileSize, FileOutputBuffer::F_executable);
-  check(BufferOrErr, Twine("failed to open ") + Path);
+  check(BufferOrErr, "failed to open " + Path);
   Buffer = std::move(*BufferOrErr);
 }
 

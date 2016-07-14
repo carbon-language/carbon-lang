@@ -89,14 +89,14 @@ void ArchiveFile::parse() {
 // This function is thread-safe.
 MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
   auto COrErr = Sym->getMember();
-  check(COrErr, Twine("Could not get the member for symbol ") + Sym->getName());
+  check(COrErr, "Could not get the member for symbol " + Sym->getName());
   const Archive::Child &C = *COrErr;
 
   // Return an empty buffer if we have already returned the same buffer.
   if (Seen[C.getChildOffset()].test_and_set())
     return MemoryBufferRef();
   ErrorOr<MemoryBufferRef> Ret = C.getMemoryBufferRef();
-  check(Ret, Twine("Could not get the buffer for the member defining symbol ") +
+  check(Ret, "Could not get the buffer for the member defining symbol " +
                  Sym->getName());
   return *Ret;
 }
@@ -113,7 +113,7 @@ void ObjectFile::parse() {
     Bin.release();
     COFFObj.reset(Obj);
   } else {
-    fatal(Twine(getName()) + " is not a COFF file.");
+    fatal(getName() + " is not a COFF file.");
   }
 
   // Read section and symbol tables.
@@ -130,9 +130,9 @@ void ObjectFile::initializeChunks() {
     const coff_section *Sec;
     StringRef Name;
     std::error_code EC = COFFObj->getSection(I, Sec);
-    check(EC, Twine("getSection failed: #") + Twine(I));
+    check(EC, "getSection failed: #" + Twine(I));
     EC = COFFObj->getSectionName(Sec, Name);
-    check(EC, Twine("getSectionName failed: #") + Twine(I));
+    check(EC, "getSectionName failed: #" + Twine(I));
     if (Name == ".sxdata") {
       SXData = Sec;
       continue;
@@ -167,7 +167,7 @@ void ObjectFile::initializeSymbols() {
   for (uint32_t I = 0; I < NumSymbols; ++I) {
     // Get a COFFSymbolRef object.
     auto SymOrErr = COFFObj->getSymbol(I);
-    check(SymOrErr, Twine("broken object file: ") + getName());
+    check(SymOrErr, "broken object file: " + getName());
 
     COFFSymbolRef Sym = *SymOrErr;
 
@@ -231,12 +231,12 @@ Defined *ObjectFile::createDefined(COFFSymbolRef Sym, const void *AuxP,
 
   // Reserved sections numbers don't have contents.
   if (llvm::COFF::isReservedSectionNumber(SectionNumber))
-    fatal(Twine("broken object file: ") + getName());
+    fatal("broken object file: " + getName());
 
   // This symbol references a section which is not present in the section
   // header.
   if ((uint32_t)SectionNumber >= SparseChunks.size())
-    fatal(Twine("broken object file: ") + getName());
+    fatal("broken object file: " + getName());
 
   // Nothing else to do without a section chunk.
   auto *SC = cast_or_null<SectionChunk>(SparseChunks[SectionNumber]);
@@ -296,7 +296,7 @@ void ImportFile::parse() {
 
   // Read names and create an __imp_ symbol.
   StringRef Name = StringAlloc.save(StringRef(Buf + sizeof(*Hdr)));
-  StringRef ImpName = StringAlloc.save(Twine("__imp_") + Name);
+  StringRef ImpName = StringAlloc.save("__imp_" + Name);
   const char *NameStart = Buf + sizeof(coff_import_header) + Name.size() + 1;
   DLLName = StringRef(NameStart);
   StringRef ExtName;

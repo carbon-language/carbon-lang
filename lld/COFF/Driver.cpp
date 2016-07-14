@@ -62,7 +62,7 @@ static std::string getOutputPath(StringRef Path) {
 // Newly created memory buffers are owned by this driver.
 MemoryBufferRef LinkerDriver::openFile(StringRef Path) {
   auto MBOrErr = MemoryBuffer::getFile(Path);
-  check(MBOrErr, Twine("Could not open ") + Path);
+  check(MBOrErr, "Could not open " + Path);
   std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
   MemoryBufferRef MBRef = MB->getMemBufferRef();
   OwningMBs.push_back(std::move(MB)); // take ownership
@@ -128,7 +128,7 @@ void LinkerDriver::parseDirectives(StringRef S) {
     case OPT_throwingnew:
       break;
     default:
-      fatal(Twine(Arg->getSpelling()) + " is not allowed in .drectve");
+      fatal(Arg->getSpelling() + " is not allowed in .drectve");
     }
   }
 }
@@ -399,7 +399,7 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
         continue;
       }
       if (S != "ref" && S != "lbr" && S != "nolbr")
-        fatal(Twine("/opt: unknown option: ") + S);
+        fatal("/opt: unknown option: " + S);
     }
   }
 
@@ -500,7 +500,7 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
       continue;
     }
     if (Config->Machine != MT)
-      fatal(Twine(File->getShortName()) + ": machine type " + machineToStr(MT) +
+      fatal(File->getShortName() + ": machine type " + machineToStr(MT) +
             " conflicts with " + machineToStr(Config->Machine));
   }
   if (Config->Machine == IMAGE_FILE_MACHINE_UNKNOWN) {

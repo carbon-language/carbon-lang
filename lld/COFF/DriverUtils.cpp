@@ -50,7 +50,7 @@ public:
 
   void run() {
     ErrorOr<std::string> ExeOrErr = llvm::sys::findProgramByName(Prog);
-    check(ExeOrErr, Twine("unable to find ") + Prog + " in PATH: ");
+    check(ExeOrErr, "unable to find " + Prog + " in PATH: ");
     const char *Exe = Saver.save(*ExeOrErr);
     Args.insert(Args.begin(), Exe);
     Args.push_back(nullptr);
@@ -82,7 +82,7 @@ MachineTypes getMachineType(StringRef S) {
                         .Default(IMAGE_FILE_MACHINE_UNKNOWN);
   if (MT != IMAGE_FILE_MACHINE_UNKNOWN)
     return MT;
-  fatal(Twine("unknown /machine argument: ") + S);
+  fatal("unknown /machine argument: " + S);
 }
 
 StringRef machineToStr(MachineTypes MT) {
@@ -103,9 +103,9 @@ void parseNumbers(StringRef Arg, uint64_t *Addr, uint64_t *Size) {
   StringRef S1, S2;
   std::tie(S1, S2) = Arg.split(',');
   if (S1.getAsInteger(0, *Addr))
-    fatal(Twine("invalid number: ") + S1);
+    fatal("invalid number: " + S1);
   if (Size && !S2.empty() && S2.getAsInteger(0, *Size))
-    fatal(Twine("invalid number: ") + S2);
+    fatal("invalid number: " + S2);
 }
 
 // Parses a string in the form of "<integer>[.<integer>]".
@@ -114,10 +114,10 @@ void parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor) {
   StringRef S1, S2;
   std::tie(S1, S2) = Arg.split('.');
   if (S1.getAsInteger(0, *Major))
-    fatal(Twine("invalid number: ") + S1);
+    fatal("invalid number: " + S1);
   *Minor = 0;
   if (!S2.empty() && S2.getAsInteger(0, *Minor))
-    fatal(Twine("invalid number: ") + S2);
+    fatal("invalid number: " + S2);
 }
 
 // Parses a string in the form of "<subsystem>[,<integer>[.<integer>]]".
@@ -137,7 +137,7 @@ void parseSubsystem(StringRef Arg, WindowsSubsystem *Sys, uint32_t *Major,
     .Case("windows", IMAGE_SUBSYSTEM_WINDOWS_GUI)
     .Default(IMAGE_SUBSYSTEM_UNKNOWN);
   if (*Sys == IMAGE_SUBSYSTEM_UNKNOWN)
-    fatal(Twine("unknown subsystem: ") + SysStr);
+    fatal("unknown subsystem: " + SysStr);
   if (!Ver.empty())
     parseVersion(Ver, Major, Minor);
 }
@@ -148,10 +148,10 @@ void parseAlternateName(StringRef S) {
   StringRef From, To;
   std::tie(From, To) = S.split('=');
   if (From.empty() || To.empty())
-    fatal(Twine("/alternatename: invalid argument: ") + S);
+    fatal("/alternatename: invalid argument: " + S);
   auto It = Config->AlternateNames.find(From);
   if (It != Config->AlternateNames.end() && It->second != To)
-    fatal(Twine("/alternatename: conflicts: ") + S);
+    fatal("/alternatename: conflicts: " + S);
   Config->AlternateNames.insert(It, std::make_pair(From, To));
 }
 
@@ -161,7 +161,7 @@ void parseMerge(StringRef S) {
   StringRef From, To;
   std::tie(From, To) = S.split('=');
   if (From.empty() || To.empty())
-    fatal(Twine("/merge: invalid argument: ") + S);
+    fatal("/merge: invalid argument: " + S);
   auto Pair = Config->Merge.insert(std::make_pair(From, To));
   bool Inserted = Pair.second;
   if (!Inserted) {
@@ -198,7 +198,7 @@ static uint32_t parseSectionAttributes(StringRef S) {
       Ret |= IMAGE_SCN_MEM_WRITE;
       break;
     default:
-      fatal(Twine("/section: invalid argument: ") + S);
+      fatal("/section: invalid argument: " + S);
     }
   }
   return Ret;
@@ -209,7 +209,7 @@ void parseSection(StringRef S) {
   StringRef Name, Attrs;
   std::tie(Name, Attrs) = S.split(',');
   if (Name.empty() || Attrs.empty())
-    fatal(Twine("/section: invalid argument: ") + S);
+    fatal("/section: invalid argument: " + S);
   Config->Section[Name] = parseSectionAttributes(Attrs);
 }
 
@@ -221,16 +221,16 @@ void parseManifest(StringRef Arg) {
     return;
   }
   if (!Arg.startswith_lower("embed"))
-    fatal(Twine("Invalid option ") + Arg);
+    fatal("Invalid option " + Arg);
   Config->Manifest = Configuration::Embed;
   Arg = Arg.substr(strlen("embed"));
   if (Arg.empty())
     return;
   if (!Arg.startswith_lower(",id="))
-    fatal(Twine("Invalid option ") + Arg);
+    fatal("Invalid option " + Arg);
   Arg = Arg.substr(strlen(",id="));
   if (Arg.getAsInteger(0, Config->ManifestID))
-    fatal(Twine("Invalid option ") + Arg);
+    fatal("Invalid option " + Arg);
 }
 
 // Parses a string in the form of "level=<string>|uiAccess=<string>|NO".
@@ -254,7 +254,7 @@ void parseManifestUAC(StringRef Arg) {
       std::tie(Config->ManifestUIAccess, Arg) = Arg.split(" ");
       continue;
     }
-    fatal(Twine("Invalid option ") + Arg);
+    fatal("Invalid option " + Arg);
   }
 }
 
@@ -287,7 +287,7 @@ static std::string createDefaultXml() {
 
   // Open the temporary file for writing.
   llvm::raw_fd_ostream OS(Path, EC, sys::fs::F_Text);
-  check(EC, Twine("failed to open ") + Path);
+  check(EC, "failed to open " + Path);
 
   // Emit the XML. Note that we do *not* verify that the XML attributes are
   // syntactically correct. This is intentional for link.exe compatibility.
@@ -360,7 +360,7 @@ std::unique_ptr<MemoryBuffer> createManifestRes() {
 
   // Open the temporary file for writing.
   llvm::raw_fd_ostream Out(RCPath, EC, sys::fs::F_Text);
-  check(EC, Twine("failed to open ") + RCPath);
+  check(EC, "failed to open " + RCPath);
 
   // Write resource script to the RC file.
   Out << "#define LANG_ENGLISH 9\n"
@@ -385,14 +385,14 @@ std::unique_ptr<MemoryBuffer> createManifestRes() {
   E.add(RCPath.str());
   E.run();
   ErrorOr<std::unique_ptr<MemoryBuffer>> Ret = MemoryBuffer::getFile(ResPath);
-  check(Ret, Twine("Could not open ") + ResPath);
+  check(Ret, "Could not open " + ResPath);
   return std::move(*Ret);
 }
 
 void createSideBySideManifest() {
   std::string Path = Config->ManifestFile;
   if (Path == "")
-    Path = (Twine(Config->OutputFile) + ".manifest").str();
+    Path = Config->OutputFile + ".manifest";
   std::error_code EC;
   llvm::raw_fd_ostream Out(Path, EC, llvm::sys::fs::F_Text);
   check(EC, "failed to create manifest");
@@ -459,7 +459,7 @@ Export parseExport(StringRef Arg) {
   return E;
 
 err:
-  fatal(Twine("invalid /export: ") + Arg);
+  fatal("invalid /export: " + Arg);
 }
 
 static StringRef undecorate(StringRef Sym) {
@@ -538,11 +538,11 @@ void checkFailIfMismatch(StringRef Arg) {
   StringRef K, V;
   std::tie(K, V) = Arg.split('=');
   if (K.empty() || V.empty())
-    fatal(Twine("/failifmismatch: invalid argument: ") + Arg);
+    fatal("/failifmismatch: invalid argument: " + Arg);
   StringRef Existing = Config->MustMatch[K];
   if (!Existing.empty() && V != Existing)
-    fatal(Twine("/failifmismatch: mismatch detected: ") + Existing + " and " +
-          V + " for key " + K);
+    fatal("/failifmismatch: mismatch detected: " + Existing + " and " + V +
+          " for key " + K);
   Config->MustMatch[K] = V;
 }
 
@@ -565,7 +565,7 @@ convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
     E.add(MB.getBufferIdentifier());
   E.run();
   ErrorOr<std::unique_ptr<MemoryBuffer>> Ret = MemoryBuffer::getFile(Path);
-  check(Ret, Twine("Could not open ") + Path);
+  check(Ret, "Could not open " + Path);
   return std::move(*Ret);
 }
 
@@ -613,7 +613,7 @@ llvm::opt::InputArgList ArgParser::parse(ArrayRef<const char *> ArgsArr) {
   }
 
   if (MissingCount)
-    fatal(Twine("missing arg value for \"") + Args.getArgString(MissingIndex) +
+    fatal("missing arg value for \"" + Twine(Args.getArgString(MissingIndex)) +
           "\", expected " + Twine(MissingCount) +
           (MissingCount == 1 ? " argument." : " arguments."));
   for (auto *Arg : Args.filtered(OPT_UNKNOWN))
