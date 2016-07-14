@@ -1468,7 +1468,8 @@ void AArch64InstrInfo::suppressLdStPair(MachineInstr &MI) const {
   static_assert(MOSuppressPair < (1 << MachineMemOperand::MOTargetNumBits),
                 "Too many target MO flags");
   (*MI.memoperands_begin())
-      ->setFlags(MOSuppressPair << MachineMemOperand::MOTargetStartBit);
+      ->setFlags(static_cast<MachineMemOperand::Flags>(
+          MOSuppressPair << MachineMemOperand::MOTargetStartBit));
 }
 
 bool AArch64InstrInfo::isUnscaledLdSt(unsigned Opc) const {
