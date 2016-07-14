@@ -14,7 +14,7 @@
 #include "Symbols.h"
 #include "lld/Core/Parallel.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/LTO/LTOCodeGenerator.h"
+#include "llvm/LTO/legacy/LTOCodeGenerator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <utility>
