@@ -4609,8 +4609,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_finstrument_functions);
 
-  if (Args.hasArg(options::OPT_fxray_instrument,
-                  options::OPT_fnoxray_instrument, false)) {
+  if (Args.hasFlag(options::OPT_fxray_instrument,
+                   options::OPT_fnoxray_instrument, false)) {
     CmdArgs.push_back("-fxray-instrument");
     if (Arg *A = Args.getLastArg(options::OPT_fxray_instruction_threshold_,
                                  options::OPT_fxray_instruction_threshold_EQ)) {
