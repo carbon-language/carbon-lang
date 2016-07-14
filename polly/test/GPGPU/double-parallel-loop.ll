@@ -3,6 +3,10 @@
 ; RUN: -disable-output < %s | \
 ; RUN: FileCheck -check-prefix=SCHED %s
 
+; RUN: opt %loadPolly -polly-codegen-ppcg -polly-acc-dump-code \
+; RUN: -disable-output < %s | \
+; RUN: FileCheck -check-prefix=CODE %s
+
 ; REQUIRES: pollyacc
 
 ; CHECK: Stmt_bb5
@@ -43,6 +47,20 @@
 ; SCHED:                       permutable: 1
 ; SCHED:                       coincident: [ 1, 1 ]
 ; SCHED:       - filter: "{  }"
+
+; CODE: Code
+; CODE: ====
+; CODE: # host
+; CODE: {
+; CODE:   dim3 k0_dimBlock(16, 32);
+; CODE:   dim3 k0_dimGrid(32, 32);
+; CODE:   kernel0 <<<k0_dimGrid, k0_dimBlock>>> ();
+; CODE: }
+
+; CODE: # kernel0
+; CODE: for (int c3 = 0; c3 <= 1; c3 += 1)
+; CODE:   Stmt_bb5(32 * b0 + t0, 32 * b1 + t1 + 16 * c3);
+
 
 ;    void double_parallel_loop(float A[][1024]) {
 ;      for (long i = 0; i < 1024; i++)

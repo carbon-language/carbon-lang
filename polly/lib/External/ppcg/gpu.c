@@ -2297,7 +2297,7 @@ static isl_bool update_depth(__isl_keep isl_schedule_node *node, void *user)
  * The ASTs for the device code are embedded in ppcg_kernel objects
  * attached to the leaf nodes that call "kernel".
  */
-static __isl_give isl_ast_node *generate_code(struct gpu_gen *gen,
+__isl_give isl_ast_node *generate_code(struct gpu_gen *gen,
 	__isl_take isl_schedule *schedule)
 {
 	struct ppcg_at_domain_data data;

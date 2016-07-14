@@ -26,8 +26,11 @@
 #include "isl/union_map.h"
 
 extern "C" {
+#include "cuda.h"
 #include "gpu.h"
+#include "gpu_print.h"
 #include "ppcg.h"
+#include "schedule.h"
 }
 
 #include "llvm/Support/Debug.h"
@@ -41,6 +44,12 @@ static cl::opt<bool> DumpSchedule("polly-acc-dump-schedule",
                                   cl::desc("Dump the computed GPU Schedule"),
                                   cl::Hidden, cl::init(false), cl::ZeroOrMore,
                                   cl::cat(PollyCategory));
+
+static cl::opt<bool>
+    DumpCode("polly-acc-dump-code",
+             cl::desc("Dump C code describing the GPU mapping"), cl::Hidden,
+             cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+
 /// Create the ast expressions for a ScopStmt.
 ///
 /// This function is a callback for to generate the ast expressions for each
@@ -256,6 +265,33 @@ public:
     return PPCGScop;
   }
 
+  /// Collect the list of GPU statements.
+  ///
+  /// Each statement has an id, a pointer to the underlying data structure,
+  /// as well as a list with all memory accesses.
+  ///
+  /// TODO: Initialize the list of memory accesses.
+  ///
+  /// @returns A linked-list of statements.
+  gpu_stmt *getStatements() {
+    gpu_stmt *Stmts = isl_calloc_array(S->getIslCtx(), struct gpu_stmt,
+                                       std::distance(S->begin(), S->end()));
+
+    int i = 0;
+    for (auto &Stmt : *S) {
+      gpu_stmt *GPUStmt = &Stmts[i];
+
+      GPUStmt->id = Stmt.getDomainId();
+
+      // We use the pet stmt pointer to keep track of the Polly statements.
+      GPUStmt->stmt = (pet_stmt *)&Stmt;
+      GPUStmt->accesses = nullptr;
+      i++;
+    }
+
+    return Stmts;
+  }
+
   /// Create a default-initialized PPCG GPU program.
   ///
   /// @returns A new gpu grogram description.
@@ -278,12 +314,88 @@ public:
     PPCGProg->to_inner = nullptr;
     PPCGProg->any_to_outer = nullptr;
     PPCGProg->array_order = nullptr;
-    PPCGProg->n_stmts = 0;
-    PPCGProg->stmts = nullptr;
+    PPCGProg->n_stmts = std::distance(S->begin(), S->end());
+    PPCGProg->stmts = getStatements();
     PPCGProg->n_array = 0;
     PPCGProg->array = nullptr;
 
     return PPCGProg;
+  }
+
+  struct PrintGPUUserData {
+    struct cuda_info *CudaInfo;
+    struct gpu_prog *PPCGProg;
+    std::vector<ppcg_kernel *> Kernels;
+  };
+
+  /// Print a user statement node in the host code.
+  ///
+  /// We use ppcg's printing facilities to print the actual statement and
+  /// additionally build up a list of all kernels that are encountered in the
+  /// host ast.
+  ///
+  /// @param P The printer to print to
+  /// @param Options The printing options to use
+  /// @param Node The node to print
+  /// @param User A user pointer to carry additional data. This pointer is
+  ///             expected to be of type PrintGPUUserData.
+  ///
+  /// @returns A printer to which the output has been printed.
+  static __isl_give isl_printer *
+  printHostUser(__isl_take isl_printer *P,
+                __isl_take isl_ast_print_options *Options,
+                __isl_take isl_ast_node *Node, void *User) {
+    auto Data = (struct PrintGPUUserData *)User;
+    auto Id = isl_ast_node_get_annotation(Node);
+
+    if (Id) {
+      auto Kernel = (struct ppcg_kernel *)isl_id_get_user(Id);
+      isl_id_free(Id);
+      Data->Kernels.push_back(Kernel);
+    }
+
+    return print_host_user(P, Options, Node, User);
+  }
+
+  /// Print C code corresponding to the control flow in @p Kernel.
+  ///
+  /// @param Kernel The kernel to print
+  void printKernel(ppcg_kernel *Kernel) {
+    auto *P = isl_printer_to_str(S->getIslCtx());
+    P = isl_printer_set_output_format(P, ISL_FORMAT_C);
+    auto *Options = isl_ast_print_options_alloc(S->getIslCtx());
+    P = isl_ast_node_print(Kernel->tree, P, Options);
+    char *String = isl_printer_get_str(P);
+    printf("%s\n", String);
+    free(String);
+    isl_printer_free(P);
+  }
+
+  /// Print C code corresponding to the GPU code described by @p Tree.
+  ///
+  /// @param Tree An AST describing GPU code
+  /// @param PPCGProg The PPCG program from which @Tree has been constructed.
+  void printGPUTree(isl_ast_node *Tree, gpu_prog *PPCGProg) {
+    auto *P = isl_printer_to_str(S->getIslCtx());
+    P = isl_printer_set_output_format(P, ISL_FORMAT_C);
+
+    PrintGPUUserData Data;
+    Data.PPCGProg = PPCGProg;
+
+    auto *Options = isl_ast_print_options_alloc(S->getIslCtx());
+    Options =
+        isl_ast_print_options_set_print_user(Options, printHostUser, &Data);
+    P = isl_ast_node_print(Tree, P, Options);
+    char *String = isl_printer_get_str(P);
+    printf("# host\n");
+    printf("%s\n", String);
+    free(String);
+    isl_printer_free(P);
+
+    for (auto Kernel : Data.Kernels) {
+      printf("# kernel%d\n", Kernel->id);
+      printKernel(Kernel);
+    }
   }
 
   // Generate a GPU program using PPCG.
@@ -322,10 +434,12 @@ public:
 
     int has_permutable = has_any_permutable_node(Schedule);
 
-    if (!has_permutable || has_permutable < 0)
+    if (!has_permutable || has_permutable < 0) {
       Schedule = isl_schedule_free(Schedule);
-    else
+    } else {
       Schedule = map_to_device(PPCGGen, Schedule);
+      PPCGGen->tree = generate_code(PPCGGen, isl_schedule_copy(Schedule));
+    }
 
     if (DumpSchedule) {
       isl_printer *P = isl_printer_to_str(S->getIslCtx());
@@ -339,6 +453,15 @@ public:
 
       printf("%s\n", isl_printer_get_str(P));
       isl_printer_free(P);
+    }
+
+    if (DumpCode) {
+      printf("Code\n");
+      printf("====\n");
+      if (PPCGGen->tree)
+        printGPUTree(PPCGGen->tree, PPCGProg);
+      else
+        printf("No code generated\n");
     }
 
     isl_schedule_free(Schedule);
