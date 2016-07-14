@@ -268,6 +268,29 @@ private:
   using InstrMapType = std::map<uint32_t, MCInst>;
   InstrMapType Instructions;
 
+  /// Temporary holder of offsets of tail call instructions before CFG is
+  /// constructed. Map from offset to the corresponding target address of the
+  /// tail call.
+  using TailCallOffsetMapType = std::map<uint32_t, uint64_t>;
+  TailCallOffsetMapType TailCallOffsets;
+
+  /// Temporary holder of tail call terminated basic blocks used during CFG
+  /// construction. Map from tail call terminated basic block to a struct with
+  /// information about the tail call.
+  struct TailCallInfo {
+    uint32_t Offset;            // offset of the tail call from the function start
+    uint32_t Index;             // index of the tail call in the basic block
+    uint64_t TargetAddress;     // address of the callee
+    uint64_t Count{0};          // taken count from profile data
+    uint64_t Mispreds{0};       // mispredicted count from progile data
+    uint32_t CFIStateBefore{0}; // CFI state before the tail call instruction
+
+    TailCallInfo(uint32_t Offset, uint32_t Index, uint64_t TargetAddress) :
+      Offset(Offset), Index(Index), TargetAddress(TargetAddress) { }
+  };
+  using TailCallBasicBlockMapType = std::map<BinaryBasicBlock *, TailCallInfo>;
+  TailCallBasicBlockMapType TailCallTerminatedBlocks;
+
   /// List of DWARF CFI instructions. Original CFI from the binary must be
   /// sorted w.r.t. offset that it appears. We rely on this to replay CFIs
   /// if needed (to fix state after reordering BBs).
@@ -672,13 +695,15 @@ public:
   BinaryBasicBlock *getBasicBlockContainingOffset(uint64_t Offset);
 
   /// Insert the BBs contained in NewBBs into the basic blocks for this
-  /// function.  Update the associated state of all blocks as needed, i.e.
-  /// CFI state, BB offsets, BB indices.  The new BBs are inserted after
-  /// Start.  This operation could affect fallthrough branches for Start.
+  /// function. Update the associated state of all blocks as needed, i.e.
+  /// BB offsets, BB indices, and optionally CFI state. The new BBs are
+  /// inserted after Start. This operation could affect fallthrough branches
+  /// for Start.
   ///
   void insertBasicBlocks(
     BinaryBasicBlock *Start,
-    std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs);
+    std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
+    bool UpdateCFIState = true);
 
   /// Update the basic block layout for this function.  The BBs from
   /// [Start->Index, Start->Index + NumNewBlocks) are inserted into the
@@ -688,7 +713,7 @@ public:
   /// Update the basic block layout for this function.  The layout is
   /// computed from scratch using modifyLayout.
   void updateLayout(LayoutType Type, bool MinBranchClusters, bool Split);
- 
+
   /// Dump function information to debug output. If \p PrintInstructions
   /// is true - include instruction disassembly.
   void dump(std::string Annotation = "", bool PrintInstructions = true) const;
@@ -931,6 +956,12 @@ public:
   /// Assumes the CFG has been built and edge frequency for taken branches
   /// has been filled with LBR data.
   void inferFallThroughCounts();
+
+  /// Converts conditional tail calls to unconditional tail calls. We do this to
+  /// handle conditional tail calls correctly and to give a chance to the
+  /// simplify conditional tail call pass to decide whether to re-optimize them
+  /// using profile information.
+  void removeConditionalTailCalls();
 
   /// Computes a function hotness score: the sum of the products of BB frequency
   /// and size.

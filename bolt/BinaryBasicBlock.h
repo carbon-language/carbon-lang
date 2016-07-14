@@ -302,13 +302,17 @@ public:
   }
 
   /// Add instruction at the end of this basic block.
-  void addInstruction(MCInst &&Inst) {
+  /// Returns the index of the instruction in the Instructions vector of the BB.
+  uint32_t addInstruction(MCInst &&Inst) {
     Instructions.emplace_back(Inst);
+    return Instructions.size() - 1;
   }
 
   /// Add instruction at the end of this basic block.
-  void addInstruction(const MCInst &Inst) {
+  /// Returns the index of the instruction in the Instructions vector of the BB.
+  uint32_t addInstruction(const MCInst &Inst) {
     Instructions.push_back(Inst);
+    return Instructions.size() - 1;
   }
 
   /// Add a range of instructions to the end of this basic block.

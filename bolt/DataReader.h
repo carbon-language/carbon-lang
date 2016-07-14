@@ -42,16 +42,13 @@ struct Location {
   }
 
   bool operator<(const Location &RHS) const {
-    if (IsSymbol < RHS.IsSymbol)
-      return true;
+    if (IsSymbol != RHS.IsSymbol)
+      return IsSymbol < RHS.IsSymbol;
 
-    if (Name < RHS.Name)
-      return true;
+    if (Name != RHS.Name)
+      return Name < RHS.Name;
 
-    return IsSymbol == RHS.IsSymbol &&
-           Name == RHS.Name &&
-           Name != "[heap]" &&
-           Offset < RHS.Offset;
+    return Name != "[heap]" && Offset < RHS.Offset;
   }
 };
 
@@ -119,6 +116,12 @@ struct FuncBranchData {
       : Name(Name), Data(std::move(Data)), EntryData(std::move(EntryData)) {}
 
   ErrorOr<const BranchInfo &> getBranch(uint64_t From, uint64_t To) const;
+
+  /// Returns the branch info object associated with a direct call originating
+  /// from the given offset. If no branch info object is found, an error is
+  /// returned. If the offset corresponds to an indirect call the behavior is
+  /// undefined.
+  ErrorOr<const BranchInfo &> getDirectCallBranch(uint64_t From) const;
 };
 
 //===----------------------------------------------------------------------===//

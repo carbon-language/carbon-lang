@@ -129,6 +129,26 @@ ErrorOr<const BranchInfo &> FuncBranchData::getBranch(uint64_t From,
   return make_error_code(llvm::errc::invalid_argument);
 }
 
+ErrorOr<const BranchInfo &>
+FuncBranchData::getDirectCallBranch(uint64_t From) const {
+  // Commented out because it can be expensive.
+  // assert(std::is_sorted(Data.begin(), Data.end()));
+  struct Compare {
+    bool operator()(const BranchInfo &BI, const uint64_t Val) const {
+      return BI.From.Offset < Val;
+    }
+    bool operator()(const uint64_t Val, const BranchInfo &BI) const {
+      return Val < BI.From.Offset;
+    }
+  };
+  auto Range = std::equal_range(Data.begin(), Data.end(), From, Compare());
+  for (auto I = Range.first; I != Range.second; ++I) {
+    if (I->From.Name != I->To.Name)
+      return *I;
+  }
+  return make_error_code(llvm::errc::invalid_argument);
+}
+
 ErrorOr<std::unique_ptr<DataReader>>
 DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
@@ -377,8 +397,13 @@ std::error_code DataReader::parse() {
       I = GetOrCreateFuncEntry(BI.To.Name);
       I->getValue().ExecutionCount += BI.Branches;
     }
-
   }
+
+  for (auto &FuncBranches : FuncsMap) {
+    std::stable_sort(FuncBranches.second.Data.begin(),
+                     FuncBranches.second.Data.end());
+  }
+
   return std::error_code();
 }
 
