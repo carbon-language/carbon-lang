@@ -65,8 +65,8 @@ define <4 x i64> @combine_permq_pshufb_as_vperm2i128(<4 x i64> %a0) {
 define <32 x i8> @combine_permq_pshufb_as_vpblendd(<4 x i64> %a0) {
 ; CHECK-LABEL: combine_permq_pshufb_as_vpblendd:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[2,3,0,1,6,7,4,5]
-; CHECK-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero
+; CHECK-NEXT:    vpxor %ymm1, %ymm1, %ymm1
+; CHECK-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x i64> %a0, <4 x i64> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
   %2 = bitcast <4 x i64> %1 to <32 x i8>
