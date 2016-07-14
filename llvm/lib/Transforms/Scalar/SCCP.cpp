@@ -1510,16 +1510,15 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
   return false;
 }
 
-template <typename ArgOrInst>
-static bool tryToReplaceWithConstant(SCCPSolver Solver, ArgOrInst *AI) {
+static bool tryToReplaceWithConstant(SCCPSolver Solver, Value *V) {
   Constant *Const = nullptr;
-  if (AI->getType()->isStructTy()) {
-    std::vector<LatticeVal> IVs = Solver.getStructLatticeValueFor(AI);
+  if (V->getType()->isStructTy()) {
+    std::vector<LatticeVal> IVs = Solver.getStructLatticeValueFor(V);
     if (std::any_of(IVs.begin(), IVs.end(),
                     [](LatticeVal &LV) { return LV.isOverdefined(); }))
       return false;
     std::vector<Constant *> ConstVals;
-    StructType *ST = dyn_cast<StructType>(AI->getType());
+    StructType *ST = dyn_cast<StructType>(V->getType());
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
       LatticeVal V = IVs[i];
       ConstVals.push_back(V.isConstant()
@@ -1528,16 +1527,16 @@ static bool tryToReplaceWithConstant(SCCPSolver Solver, ArgOrInst *AI) {
     }
     Const = ConstantStruct::get(ST, ConstVals);
   } else {
-    LatticeVal IV = Solver.getLatticeValueFor(AI);
+    LatticeVal IV = Solver.getLatticeValueFor(V);
     if (IV.isOverdefined())
       return false;
-    Const = IV.isConstant() ? IV.getConstant() : UndefValue::get(AI->getType());
+    Const = IV.isConstant() ? IV.getConstant() : UndefValue::get(V->getType());
   }
   assert(Const && "Constant is nullptr here!");
-  DEBUG(dbgs() << "  Constant: " << *Const << " = " << *AI << '\n');
+  DEBUG(dbgs() << "  Constant: " << *Const << " = " << *V << '\n');
 
   // Replaces all of the uses of a variable with uses of the constant.
-  AI->replaceAllUsesWith(Const);
+  V->replaceAllUsesWith(Const);
   return true;
 }
 
