@@ -12,7 +12,6 @@ add_llvm_library(LLVMScalarOpts
   Float2Int.cpp
   GuardWidening.cpp
   GVN.cpp
-  GVNHoist.cpp
   InductiveRangeCheckElimination.cpp
   IndVarSimplify.cpp
   JumpThreading.cpp
