@@ -298,6 +298,44 @@ end:
   ret void
 }
 
+; CHECK-LABEL: {{^}}no_skip_no_successors:
+; CHECK: v_cmp_nle_f32
+; CHECK: s_and_b64 vcc, exec,
+; CHECK: s_cbranch_vccz [[SKIPKILL:BB[0-9]+_[0-9]+]]
+
+; CHECK: ; BB#3: ; %bb6
+; CHECK: s_mov_b64 exec, 0
+
+; CHECK: [[SKIPKILL]]:
+; CHECK: v_cmp_nge_f32
+; CHECK: s_and_b64 vcc, exec, vcc
+; CHECK: s_cbranch_vccz [[UNREACHABLE:BB[0-9]+_[0-9]+]]
+
+; CHECK: [[UNREACHABLE]]:
+; CHECK-NEXT: .Lfunc_end{{[0-9]+}}
+define amdgpu_ps void @no_skip_no_successors(float inreg %arg, float inreg %arg1) #0 {
+bb:
+  %tmp = fcmp ult float %arg1, 0.000000e+00
+  %tmp2 = fcmp ult float %arg, 0x3FCF5C2900000000
+  br i1 %tmp, label %bb6, label %bb3
+
+bb3:                                              ; preds = %bb
+  br i1 %tmp2, label %bb5, label %bb4
+
+bb4:                                              ; preds = %bb3
+  br i1 true, label %bb5, label %bb7
+
+bb5:                                              ; preds = %bb4, %bb3
+  unreachable
+
+bb6:                                              ; preds = %bb
+  call void @llvm.AMDGPU.kill(float -1.000000e+00)
+  unreachable
+
+bb7:                                              ; preds = %bb4
+  ret void
+}
+
 declare void @llvm.AMDGPU.kill(float) #0
 
 attributes #0 = { nounwind }

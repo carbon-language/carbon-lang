@@ -158,6 +158,8 @@ static bool opcodeEmitsNoInsts(unsigned Opc) {
 
 bool SILowerControlFlow::shouldSkip(MachineBasicBlock *From,
                                     MachineBasicBlock *To) {
+  if (From->succ_empty())
+    return false;
 
   unsigned NumInstr = 0;
   MachineFunction *MF = From->getParent();
@@ -217,7 +219,7 @@ bool SILowerControlFlow::skipIfDead(MachineInstr &MI, MachineBasicBlock &NextBB)
     return false;
 
   MachineBasicBlock *SkipBB = insertSkipBlock(MBB, MI.getIterator());
-  SkipBB->addSuccessor(&NextBB);
+  MBB.addSuccessor(SkipBB);
 
   const DebugLoc &DL = MI.getDebugLoc();
 
@@ -493,7 +495,6 @@ MachineBasicBlock *SILowerControlFlow::insertSkipBlock(
   ++MBBI;
 
   MF->insert(MBBI, SkipBB);
-  MBB.addSuccessor(SkipBB);
 
   return SkipBB;
 }
