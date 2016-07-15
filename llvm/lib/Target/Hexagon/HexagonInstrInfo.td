@@ -2052,7 +2052,7 @@ let Defs = [R29, R30, R31], Uses = [R30], hasSideEffects = 0 in
 }
 
 // Load / Post increment circular addressing mode.
-let Uses = [CS], hasSideEffects = 0 in
+let Uses = [CS], hasSideEffects = 0, addrMode = PostInc in
 class T_load_pcr<string mnemonic, RegisterClass RC, bits<4> MajOp>
   : LDInst <(outs RC:$dst, IntRegs:$_dst_),
             (ins IntRegs:$Rz, ModRegs:$Mu),
@@ -2099,7 +2099,7 @@ let accessSize = DoubleWordAccess in
 def L2_loadrd_pcr  : T_load_pcr <"memd", DoubleRegs, 0b1110>;
 
 // Load / Post increment circular addressing mode.
-let Uses = [CS], hasSideEffects = 0 in
+let Uses = [CS], hasSideEffects = 0, addrMode = PostInc in
 class T_loadalign_pcr<string mnemonic, bits<4> MajOp, MemAccessSize AccessSz >
   : LDInst <(outs DoubleRegs:$dst, IntRegs:$_dst_),
             (ins DoubleRegs:$_src_, IntRegs:$Rz, ModRegs:$Mu),
@@ -2128,7 +2128,7 @@ def L2_loadalignh_pcr : T_loadalign_pcr <"memh_fifo", 0b0010, HalfWordAccess>;
 //===----------------------------------------------------------------------===//
 // Circular loads with immediate offset.
 //===----------------------------------------------------------------------===//
-let Uses = [CS], mayLoad = 1, hasSideEffects = 0 in
+let Uses = [CS], mayLoad = 1, hasSideEffects = 0, addrMode = PostInc in
 class T_load_pci <string mnemonic, RegisterClass RC,
                   Operand ImmOp, bits<4> MajOp>
   : LDInstPI<(outs RC:$dst, IntRegs:$_dst_),
@@ -2240,7 +2240,7 @@ def S4_stored_locked : T_store_locked <"memd_locked", DoubleRegs>;
 //===----------------------------------------------------------------------===//
 // Bit-reversed loads with auto-increment register
 //===----------------------------------------------------------------------===//
-let hasSideEffects = 0 in
+let hasSideEffects = 0, addrMode = PostInc in
 class T_load_pbr<string mnemonic, RegisterClass RC,
                             MemAccessSize addrSize, bits<4> majOp>
   : LDInst
@@ -3609,7 +3609,8 @@ multiclass Storexm_pat<PatFrag Store, PatFrag Value, PatLeaf ImmPred,
 // swapped. This relies on the knowledge that the F.Fragment uses names
 // "ptr" and "val".
 class SwapSt<PatFrag F>
-  : PatFrag<(ops node:$val, node:$ptr), F.Fragment>;
+  : PatFrag<(ops node:$val, node:$ptr), F.Fragment, F.PredicateCode,
+            F.OperandTransform>;
 
 let AddedComplexity = 20 in {
   defm: Storex_pat<truncstorei8,    I32, s32_0ImmPred, S2_storerb_io>;
@@ -3673,7 +3674,7 @@ def S2_allocframe: ST0Inst <
 
 // S2_storer[bhwdf]_pci: Store byte/half/word/double.
 // S2_storer[bhwdf]_pci -> S2_storerbnew_pci
-let Uses = [CS] in
+let Uses = [CS], addrMode = PostInc in
 class T_store_pci <string mnemonic, RegisterClass RC,
                          Operand Imm, bits<4>MajOp,
                          MemAccessSize AlignSize, string RegSrc = "Rt">
@@ -3716,7 +3717,8 @@ def S2_storeri_pci : T_store_pci<"memw", IntRegs, s4_2Imm, 0b1100,
 def S2_storerd_pci : T_store_pci<"memd", DoubleRegs, s4_3Imm, 0b1110,
                                  DoubleWordAccess>;
 
-let Uses = [CS], isNewValue = 1, mayStore = 1, isNVStore = 1, opNewValue = 4 in
+let Uses = [CS], isNewValue = 1, mayStore = 1, isNVStore = 1, opNewValue = 4,
+    addrMode = PostInc in
 class T_storenew_pci <string mnemonic, Operand Imm,
                              bits<2>MajOp, MemAccessSize AlignSize>
   : NVInst < (outs IntRegs:$_dst_),
@@ -3752,7 +3754,7 @@ def S2_storerinew_pci : T_storenew_pci <"memw", s4_2Imm, 0b10, WordAccess>;
 //===----------------------------------------------------------------------===//
 // Circular stores with auto-increment register
 //===----------------------------------------------------------------------===//
-let Uses = [CS] in
+let Uses = [CS], addrMode = PostInc in
 class T_store_pcr <string mnemonic, RegisterClass RC, bits<4>MajOp,
                                MemAccessSize AlignSize, string RegSrc = "Rt">
   : STInst <(outs IntRegs:$_dst_),
@@ -3788,7 +3790,8 @@ def S2_storerf_pcr : T_store_pcr<"memh", IntRegs, 0b1011,
 //===----------------------------------------------------------------------===//
 // Circular .new stores with auto-increment register
 //===----------------------------------------------------------------------===//
-let Uses = [CS], isNewValue = 1, mayStore = 1, isNVStore = 1, opNewValue = 3 in
+let Uses = [CS], isNewValue = 1, mayStore = 1, isNVStore = 1, opNewValue = 3,
+    addrMode = PostInc in
 class T_storenew_pcr <string mnemonic, bits<2>MajOp,
                                    MemAccessSize AlignSize>
   : NVInst <(outs IntRegs:$_dst_),
@@ -3819,7 +3822,7 @@ def S2_storerinew_pcr : T_storenew_pcr <"memw", 0b10, WordAccess>;
 //===----------------------------------------------------------------------===//
 // Bit-reversed stores with auto-increment register
 //===----------------------------------------------------------------------===//
-let hasSideEffects = 0 in
+let hasSideEffects = 0, addrMode = PostInc in
 class T_store_pbr<string mnemonic, RegisterClass RC,
                             MemAccessSize addrSize, bits<3> majOp,
                             bit isHalf = 0>
@@ -3864,7 +3867,7 @@ def S2_storerd_pbr : T_store_pbr<"memd", DoubleRegs, DoubleWordAccess, 0b110>;
 // Bit-reversed .new stores with auto-increment register
 //===----------------------------------------------------------------------===//
 let isNewValue = 1, mayStore = 1, isNVStore = 1, opNewValue = 3,
-    hasSideEffects = 0 in
+    hasSideEffects = 0, addrMode = PostInc in
 class T_storenew_pbr<string mnemonic, MemAccessSize addrSize, bits<2> majOp>
   : NVInst <(outs IntRegs:$_dst_),
             (ins IntRegs:$Rz, ModRegs:$Mu, IntRegs:$Nt),
@@ -4741,10 +4744,10 @@ def HexagonCONST32_GP : SDNode<"HexagonISD::CONST32_GP", SDTHexagonCONST32>;
 // HI/LO Instructions
 let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
     hasNewValue = 1, opNewValue = 0 in
-class REG_IMMED<string RegHalf, string Op, bit Rs, bits<3> MajOp, bit MinOp>
+class REG_IMMED<string RegHalf, bit Rs, bits<3> MajOp, bit MinOp>
   : ALU32_ri<(outs IntRegs:$dst),
-              (ins i32imm:$imm_value),
-              "$dst"#RegHalf#" = #"#Op#"($imm_value)", []> {
+              (ins u16Imm:$imm_value),
+              "$dst"#RegHalf#" = $imm_value", []> {
     bits<5> dst;
     bits<32> imm_value;
     let IClass = 0b0111;
@@ -4753,15 +4756,13 @@ class REG_IMMED<string RegHalf, string Op, bit Rs, bits<3> MajOp, bit MinOp>
     let Inst{26-24} = MajOp;
     let Inst{21} = MinOp;
     let Inst{20-16} = dst;
-    let Inst{23-22} = !if (!eq(Op, "LO"), imm_value{15-14}, imm_value{31-30});
-    let Inst{13-0} = !if (!eq(Op, "LO"), imm_value{13-0}, imm_value{29-16});
+    let Inst{23-22} = imm_value{15-14};
+    let Inst{13-0} = imm_value{13-0};
 }
 
 let isAsmParserOnly = 1 in {
-  def LO : REG_IMMED<".l", "LO", 0b0, 0b001, 0b1>;
-  def LO_H : REG_IMMED<".l", "HI", 0b0, 0b001, 0b1>;
-  def HI : REG_IMMED<".h", "HI", 0b0, 0b010, 0b1>;
-  def HI_L : REG_IMMED<".h", "LO", 0b0, 0b010, 0b1>;
+  def LO : REG_IMMED<".l", 0b0, 0b001, 0b1>;
+  def HI : REG_IMMED<".h", 0b0, 0b010, 0b1>;
 }
 
 let  isMoveImm = 1, isCodeGenOnly = 1 in
@@ -4828,7 +4829,7 @@ def TFR_PdTrue : SInst<(outs PredRegs:$dst), (ins), "",
 
 let hasSideEffects = 0, isReMaterializable = 1, isPseudo = 1,
     isCodeGenOnly = 1 in
-def TFR_PdFalse : SInst<(outs PredRegs:$dst), (ins), "$dst = xor($dst, $dst)",
+def TFR_PdFalse : SInst<(outs PredRegs:$dst), (ins), "",
                   [(set (i1 PredRegs:$dst), 0)]>;
 
 // Pseudo instructions.
