@@ -30,7 +30,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CODE:Code
 ; CODE-NEXT:====
 ; CODE-NEXT:# host
-; CODE-NEXT:{
+; CODE-NEXT: {
 ; CODE-NEXT:   cudaCheckReturn(cudaMemcpy(dev_MemRef_A, MemRef_A, (4096) * (4096) * sizeof(float), cudaMemcpyHostToDevice));
 ; CODE-NEXT:   cudaCheckReturn(cudaMemcpy(dev_MemRef_alpha, &MemRef_alpha, sizeof(float), cudaMemcpyHostToDevice));
 ; CODE-NEXT:   cudaCheckReturn(cudaMemcpy(dev_MemRef_B, MemRef_B, (4096) * (4096) * sizeof(float), cudaMemcpyHostToDevice));
@@ -38,9 +38,16 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CODE-NEXT:   cudaCheckReturn(cudaMemcpy(dev_MemRef_beta, &MemRef_beta, sizeof(float), cudaMemcpyHostToDevice));
 ; CODE-NEXT:   cudaCheckReturn(cudaMemcpy(dev_MemRef_C, MemRef_C, (4096) * (4096) * sizeof(float), cudaMemcpyHostToDevice));
 ; CODE-NEXT:   {
-; CODE-NEXT:     dim3 k0_dimBlock(32);
-; CODE-NEXT:     dim3 k0_dimGrid(128);
+; CODE-NEXT:     dim3 k0_dimBlock(16, 32);
+; CODE-NEXT:     dim3 k0_dimGrid(128, 128);
 ; CODE-NEXT:     kernel0 <<<k0_dimGrid, k0_dimBlock>>> ();
+; CODE-NEXT:     cudaCheckKernel();
+; CODE-NEXT:   }
+
+; CODE:   {
+; CODE-NEXT:     dim3 k1_dimBlock(16, 32);
+; CODE-NEXT:     dim3 k1_dimGrid(128, 128);
+; CODE-NEXT:     kernel1 <<<k1_dimGrid, k1_dimBlock>>> ();
 ; CODE-NEXT:     cudaCheckKernel();
 ; CODE-NEXT:   }
 
@@ -49,23 +56,23 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CODE-NEXT: }
 
 ; CODE: # kernel0
-; CODE-NEXT: for (int c1 = 0; c1 <= 255; c1 += 1)
-; CODE-NEXT:   for (int c2 = c1; c2 <= min(255, c1 + 128); c2 += 1)
-; CODE-NEXT:     for (int c4 = max(0, -32 * c1 + 32 * c2 - 4095); c4 <= min(31, -32 * c1 + 8190); c4 += 1) {
-; CODE-NEXT:       if (c1 == 127 && c2 == 127 && c4 == 31)
-; CODE-NEXT:         Stmt_for_body36(32 * b0 + t0, 4095);
-; CODE-NEXT:       for (int c5 = max(0, 32 * c1 - 32 * c2 + c4); c5 <= min(min(31, -32 * c2 + 8190), 32 * c1 - 32 * c2 + c4 + 4095); c5 += 1) {
-; CODE-NEXT:         if (c2 == c1 && 32 * c1 + c4 <= 4095 && c5 == c4)
-; CODE-NEXT:           Stmt_for_body6(32 * b0 + t0, 32 * c1 + c4);
-; CODE-NEXT:         if (32 * c1 + c4 <= 4095) {
-; CODE-NEXT:           Stmt_for_body11(32 * b0 + t0, 32 * c1 + c4, -32 * c1 + 32 * c2 - c4 + c5);
-; CODE-NEXT:           if (c2 == 127 && c5 == 30)
-; CODE-NEXT:             Stmt_for_body36(32 * b0 + t0, 32 * c1 + c4);
-; CODE-NEXT:         }
-; CODE-NEXT:         if (32 * c2 + c5 >= 4095)
-; CODE-NEXT:           Stmt_for_body44(32 * b0 + t0, 32 * c1 - 32 * c2 + c4 - c5 + 4095, 32 * c2 + c5 - 4095);
-; CODE-NEXT:       }
-; CODE-NEXT:     }
+; CODE-NEXT: for (int c2 = 0; c2 <= 127; c2 += 1)
+; CODE-NEXT:   for (int c4 = 0; c4 <= 1; c4 += 1) {
+; CODE-NEXT:     if (c2 == 0)
+; CODE-NEXT:       Stmt_for_body6(32 * b0 + t0, 32 * b1 + t1 + 16 * c4);
+; CODE-NEXT:     for (int c5 = 0; c5 <= 31; c5 += 1)
+; CODE-NEXT:       Stmt_for_body11(32 * b0 + t0, 32 * b1 + t1 + 16 * c4, 32 * c2 + c5);
+; CODE-NEXT:   }
+
+; CODE: # kernel1
+; CODE-NEXT: for (int c2 = 0; c2 <= 127; c2 += 1)
+; CODE-NEXT:   for (int c4 = 0; c4 <= 1; c4 += 1) {
+; CODE-NEXT:     if (c2 == 0)
+; CODE-NEXT:       Stmt_for_body36(32 * b0 + t0, 32 * b1 + t1 + 16 * c4);
+; CODE-NEXT:     for (int c5 = 0; c5 <= 31; c5 += 1)
+; CODE-NEXT:       Stmt_for_body44(32 * b0 + t0, 32 * b1 + t1 + 16 * c4, 32 * c2 + c5);
+; CODE-NEXT:   }
+
 
 
 ; Function Attrs: argmemonly nounwind
