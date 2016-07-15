@@ -44,22 +44,24 @@ using namespace lld::elf;
 
 // This is for use when debugging LTO.
 static void saveLtoObjectFile(StringRef Buffer, unsigned I, bool Many) {
-  SmallString<128> Filename = Config->OutputFile;
+  SmallString<128> Path = Config->OutputFile;
   if (Many)
-    Filename += utostr(I);
-  Filename += ".lto.o";
+    Path += utostr(I);
+  Path += ".lto.o";
   std::error_code EC;
-  raw_fd_ostream OS(Filename, EC, sys::fs::OpenFlags::F_None);
-  check(EC);
+  raw_fd_ostream OS(Path, EC, sys::fs::OpenFlags::F_None);
+  if (EC)
+    error(EC, "cannot create " + Path);
   OS << Buffer;
 }
 
 // This is for use when debugging LTO.
 static void saveBCFile(Module &M, StringRef Suffix) {
+  std::string Path = (Config->OutputFile + Suffix).str();
   std::error_code EC;
-  raw_fd_ostream OS(Config->OutputFile.str() + Suffix.str(), EC,
-                    sys::fs::OpenFlags::F_None);
-  check(EC);
+  raw_fd_ostream OS(Path, EC, sys::fs::OpenFlags::F_None);
+  if (EC)
+    error(EC, "cannot create " + Path);
   WriteBitcodeToFile(&M, OS, /* ShouldPreserveUseListOrder */ true);
 }
 
