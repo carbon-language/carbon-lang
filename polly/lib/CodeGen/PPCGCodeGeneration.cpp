@@ -492,6 +492,20 @@ public:
     auto Id = isl_ast_node_get_annotation(Node);
 
     if (Id) {
+      bool IsUser = !strcmp(isl_id_get_name(Id), "user");
+
+      // If this is a user statement, format it ourselves as ppcg would
+      // otherwise try to call pet functionality that is not available in
+      // Polly.
+      if (IsUser) {
+        P = isl_printer_start_line(P);
+        P = isl_printer_print_ast_node(P, Node);
+        P = isl_printer_end_line(P);
+        isl_id_free(Id);
+        isl_ast_print_options_free(Options);
+        return P;
+      }
+
       auto Kernel = (struct ppcg_kernel *)isl_id_get_user(Id);
       isl_id_free(Id);
       Data->Kernels.push_back(Kernel);
