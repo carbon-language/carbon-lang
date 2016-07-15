@@ -37,9 +37,9 @@ Error PDBFileBuilder::initialize(const msf::SuperBlock &Super) {
   auto &MsfResult = *ExpectedMsf;
   if (auto EC = MsfResult.setBlockMapAddr(Super.BlockMapAddr))
     return EC;
-  MsfResult.setUnknown0(Super.Unknown0);
-  MsfResult.setUnknown1(Super.Unknown1);
   Msf = llvm::make_unique<MsfBuilder>(std::move(MsfResult));
+  Msf->setFreePageMap(Super.FreeBlockMapBlock);
+  Msf->setUnknown1(Super.Unknown1);
   return Error::success();
 }
 

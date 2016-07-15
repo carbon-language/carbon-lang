@@ -64,7 +64,7 @@ public:
   /// when editing a PDB and you want the layout to be as stable as possible.
   Error setBlockMapAddr(uint32_t Addr);
   Error setDirectoryBlocksHint(ArrayRef<uint32_t> DirBlocks);
-  void setUnknown0(uint32_t Unk0);
+  void setFreePageMap(uint32_t Fpm);
   void setUnknown1(uint32_t Unk1);
 
   /// Add a stream to the MSF file with the given size, occupying the given
@@ -126,7 +126,7 @@ private:
   BumpPtrAllocator &Allocator;
 
   bool IsGrowable;
-  uint32_t Unknown0;
+  uint32_t FreePageMap;
   uint32_t Unknown1;
   uint32_t BlockSize;
   uint32_t MininumBlocks;

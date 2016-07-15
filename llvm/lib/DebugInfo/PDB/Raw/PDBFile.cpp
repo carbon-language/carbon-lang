@@ -42,7 +42,7 @@ PDBFile::~PDBFile() {}
 
 uint32_t PDBFile::getBlockSize() const { return SB->BlockSize; }
 
-uint32_t PDBFile::getUnknown0() const { return SB->Unknown0; }
+uint32_t PDBFile::getFreeBlockMapBlock() const { return SB->FreeBlockMapBlock; }
 
 uint32_t PDBFile::getBlockCount() const { return SB->NumBlocks; }
 

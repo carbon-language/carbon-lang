@@ -126,7 +126,7 @@ void MappingTraits<msf::SuperBlock>::mapping(IO &IO, msf::SuperBlock &SB) {
   }
 
   IO.mapRequired("BlockSize", SB.BlockSize);
-  IO.mapRequired("Unknown0", SB.Unknown0);
+  IO.mapRequired("FreeBlockMap", SB.FreeBlockMapBlock);
   IO.mapRequired("NumBlocks", SB.NumBlocks);
   IO.mapRequired("NumDirectoryBytes", SB.NumDirectoryBytes);
   IO.mapRequired("Unknown1", SB.Unknown1);

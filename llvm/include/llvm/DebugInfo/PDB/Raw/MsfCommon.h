@@ -35,8 +35,8 @@ struct SuperBlock {
   // These elements are referred to as blocks.  The size of a block may vary
   // from system to system.
   support::ulittle32_t BlockSize;
-  // This field's purpose is not yet known.
-  support::ulittle32_t Unknown0;
+  // The index of the free block map.
+  support::ulittle32_t FreeBlockMapBlock;
   // This contains the number of blocks resident in the file system.  In
   // practice, NumBlocks * BlockSize is equivalent to the size of the PDB
   // file.
@@ -66,6 +66,13 @@ inline bool isValidBlockSize(uint32_t Size) {
   }
   return false;
 }
+
+// Super Block, Fpm0, Fpm1, and Block Map
+inline uint32_t getMinimumBlockCount() { return 4; }
+
+// Super Block, Fpm0, and Fpm1 are reserved.  The Block Map, although required
+// need not be at block 3.
+inline uint32_t getFirstUnreservedBlock() { return 3; }
 
 inline uint64_t bytesToBlocks(uint64_t NumBytes, uint64_t BlockSize) {
   return alignTo(NumBytes, BlockSize) / BlockSize;

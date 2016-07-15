@@ -10,7 +10,7 @@
 
 ; EMPTY:      FileHeaders {
 ; EMPTY-NEXT:   BlockSize: 4096
-; EMPTY-NEXT:   Unknown0: 2
+; EMPTY-NEXT:   FreeBlockMap: 2
 ; EMPTY-NEXT:   NumBlocks: 25
 ; EMPTY-NEXT:   NumDirectoryBytes: 136
 ; EMPTY-NEXT:   Unknown1: 0
@@ -945,7 +945,7 @@
 
 ; ALL: FileHeaders {
 ; ALL:   BlockSize: 4096
-; ALL:   Unknown0: 2
+; ALL:   FreeBlockMap: 2
 ; ALL:   NumBlocks: 25
 ; ALL:   NumDirectoryBytes: 136
 ; ALL:   Unknown1: 0
@@ -1660,7 +1660,7 @@
 
 ; BIG:      FileHeaders {
 ; BIG-NEXT:   BlockSize: 4096
-; BIG-NEXT:   Unknown0: 2
+; BIG-NEXT:   FreeBlockMap: 2
 ; BIG-NEXT:   NumBlocks: 99
 ; BIG-NEXT:   NumDirectoryBytes: 616
 ; BIG-NEXT:   Unknown1: 0

@@ -45,7 +45,7 @@ public:
   explicit PDBFile(std::unique_ptr<codeview::StreamInterface> PdbFileBuffer);
   ~PDBFile() override;
 
-  uint32_t getUnknown0() const;
+  uint32_t getFreeBlockMapBlock() const;
   uint32_t getUnknown1() const;
 
   uint32_t getBlockSize() const override;

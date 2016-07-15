@@ -81,11 +81,11 @@ TEST_F(MsfBuilderTest, TestUsedBlocksMarkedAsUsed) {
   // are correctly marked as used after adding, but no other incorrect blocks
   // are accidentally marked as used.
 
+  std::vector<uint32_t> Blocks = {4, 5, 6, 7, 8, 9, 10, 11, 12};
   // Allocate some extra blocks at the end so we can verify that they're free
   // after the initialization.
-  std::vector<uint32_t> Blocks = {2, 3, 4, 5, 6, 7, 8, 9, 10};
-  auto ExpectedMsf =
-      MsfBuilder::create(Allocator, 4096, 2 + Blocks.size() + 10);
+  uint32_t NumBlocks = msf::getMinimumBlockCount() + Blocks.size() + 10;
+  auto ExpectedMsf = MsfBuilder::create(Allocator, 4096, NumBlocks);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
@@ -94,7 +94,9 @@ TEST_F(MsfBuilderTest, TestUsedBlocksMarkedAsUsed) {
   for (auto B : Blocks) {
     EXPECT_FALSE(Msf.isBlockFree(B));
   }
-  for (int I = 11; I < 21; ++I) {
+
+  uint32_t FreeBlockStart = Blocks.back() + 1;
+  for (uint32_t I = FreeBlockStart; I < NumBlocks; ++I) {
     EXPECT_TRUE(Msf.isBlockFree(I));
   }
 }
@@ -256,7 +258,7 @@ TEST_F(MsfBuilderTest, TestBlockCountsWhenAddingStreams) {
 
   // one for the super block, one for the directory block map
   uint32_t NumUsedBlocks = Msf.getNumUsedBlocks();
-  EXPECT_EQ(2U, NumUsedBlocks);
+  EXPECT_EQ(msf::getMinimumBlockCount(), NumUsedBlocks);
   EXPECT_EQ(0U, Msf.getNumFreeBlocks());
 
   const uint32_t StreamSizes[] = {4000, 6193, 189723};
@@ -276,7 +278,7 @@ TEST_F(MsfBuilderTest, BuildMsfLayout) {
   auto &Msf = *ExpectedMsf;
 
   const uint32_t StreamSizes[] = {4000, 6193, 189723};
-  uint32_t ExpectedNumBlocks = 2;
+  uint32_t ExpectedNumBlocks = msf::getMinimumBlockCount();
   for (int I = 0; I < 3; ++I) {
     EXPECT_NO_ERROR(Msf.addStream(StreamSizes[I]));
     ExpectedNumBlocks += bytesToBlocks(StreamSizes[I], 4096);
@@ -301,31 +303,33 @@ TEST_F(MsfBuilderTest, BuildMsfLayout) {
 }
 
 TEST_F(MsfBuilderTest, UseDirectoryBlockHint) {
-  Expected<MsfBuilder> ExpectedMsf =
-      MsfBuilder::create(Allocator, 4096, 4, false);
+  Expected<MsfBuilder> ExpectedMsf = MsfBuilder::create(
+      Allocator, 4096, msf::getMinimumBlockCount() + 1, false);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
-  EXPECT_NO_ERROR(Msf.setDirectoryBlocksHint({2}));
-  EXPECT_NO_ERROR(Msf.addStream(2048, {3}));
+  uint32_t B = msf::getFirstUnreservedBlock();
+  EXPECT_NO_ERROR(Msf.setDirectoryBlocksHint({B + 1}));
+  EXPECT_NO_ERROR(Msf.addStream(2048, {B + 2}));
 
   auto ExpectedLayout = Msf.build();
   EXPECT_EXPECTED(ExpectedLayout);
   Layout &L = *ExpectedLayout;
-  EXPECT_EQ(4U, L.SB->NumBlocks);
+  EXPECT_EQ(msf::getMinimumBlockCount() + 2, L.SB->NumBlocks);
   EXPECT_EQ(1U, L.DirectoryBlocks.size());
   EXPECT_EQ(1U, L.StreamMap[0].size());
 
-  EXPECT_EQ(2U, L.DirectoryBlocks[0]);
-  EXPECT_EQ(3U, L.StreamMap[0].front());
+  EXPECT_EQ(B + 1, L.DirectoryBlocks[0]);
+  EXPECT_EQ(B + 2, L.StreamMap[0].front());
 }
 
 TEST_F(MsfBuilderTest, DirectoryBlockHintInsufficient) {
-  Expected<MsfBuilder> ExpectedMsf = MsfBuilder::create(Allocator, 4096, 4);
+  Expected<MsfBuilder> ExpectedMsf =
+      MsfBuilder::create(Allocator, 4096, msf::getMinimumBlockCount() + 2);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
-
-  EXPECT_NO_ERROR(Msf.setDirectoryBlocksHint({2}));
+  uint32_t B = msf::getFirstUnreservedBlock();
+  EXPECT_NO_ERROR(Msf.setDirectoryBlocksHint({B + 1}));
 
   uint32_t Size = 4096 * 4096 / 4;
   EXPECT_NO_ERROR(Msf.addStream(Size));
@@ -334,15 +338,17 @@ TEST_F(MsfBuilderTest, DirectoryBlockHintInsufficient) {
   EXPECT_EXPECTED(ExpectedLayout);
   Layout &L = *ExpectedLayout;
   EXPECT_EQ(2U, L.DirectoryBlocks.size());
-  EXPECT_EQ(2U, L.DirectoryBlocks[0]);
+  EXPECT_EQ(B + 1, L.DirectoryBlocks[0]);
 }
 
 TEST_F(MsfBuilderTest, DirectoryBlockHintOverestimated) {
-  Expected<MsfBuilder> ExpectedMsf = MsfBuilder::create(Allocator, 4096, 4);
+  Expected<MsfBuilder> ExpectedMsf =
+      MsfBuilder::create(Allocator, 4096, msf::getMinimumBlockCount() + 2);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
-  EXPECT_NO_ERROR(Msf.setDirectoryBlocksHint({2, 3}));
+  uint32_t B = msf::getFirstUnreservedBlock();
+  EXPECT_NO_ERROR(Msf.setDirectoryBlocksHint({B + 1, B + 2}));
 
   EXPECT_NO_ERROR(Msf.addStream(2048));
 
@@ -350,5 +356,5 @@ TEST_F(MsfBuilderTest, DirectoryBlockHintOverestimated) {
   EXPECT_EXPECTED(ExpectedLayout);
   Layout &L = *ExpectedLayout;
   EXPECT_EQ(1U, L.DirectoryBlocks.size());
-  EXPECT_EQ(2U, L.DirectoryBlocks[0]);
+  EXPECT_EQ(B + 1, L.DirectoryBlocks[0]);
 }

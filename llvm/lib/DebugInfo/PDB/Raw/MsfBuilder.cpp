@@ -17,15 +17,21 @@ using namespace llvm::support;
 
 namespace {
 const uint32_t kSuperBlockBlock = 0;
-const uint32_t kDefaultBlockMapAddr = 1;
+const uint32_t kFreePageMap0Block = 1;
+const uint32_t kFreePageMap1Block = 2;
+const uint32_t kNumReservedPages = 3;
+
+const uint32_t kDefaultBlockMapAddr = kNumReservedPages;
 }
 
 MsfBuilder::MsfBuilder(uint32_t BlockSize, uint32_t MinBlockCount, bool CanGrow,
                        BumpPtrAllocator &Allocator)
     : Allocator(Allocator), IsGrowable(CanGrow), BlockSize(BlockSize),
       MininumBlocks(MinBlockCount), BlockMapAddr(kDefaultBlockMapAddr),
-      FreeBlocks(std::max(MinBlockCount, 2U), true) {
+      FreeBlocks(MinBlockCount, true) {
   FreeBlocks[kSuperBlockBlock] = false;
+  FreeBlocks[kFreePageMap0Block] = false;
+  FreeBlocks[kFreePageMap1Block] = false;
   FreeBlocks[BlockMapAddr] = false;
 }
 
@@ -36,7 +42,9 @@ Expected<MsfBuilder> MsfBuilder::create(BumpPtrAllocator &Allocator,
     return make_error<RawError>(raw_error_code::unspecified,
                                 "The requested block size is unsupported");
 
-  return MsfBuilder(BlockSize, MinBlockCount, CanGrow, Allocator);
+  return MsfBuilder(BlockSize,
+                    std::max(MinBlockCount, msf::getMinimumBlockCount()),
+                    CanGrow, Allocator);
 }
 
 Error MsfBuilder::setBlockMapAddr(uint32_t Addr) {
@@ -59,7 +67,7 @@ Error MsfBuilder::setBlockMapAddr(uint32_t Addr) {
   return Error::success();
 }
 
-void MsfBuilder::setUnknown0(uint32_t Unk0) { Unknown0 = Unk0; }
+void MsfBuilder::setFreePageMap(uint32_t Fpm) { FreePageMap = Fpm; }
 
 void MsfBuilder::setUnknown1(uint32_t Unk1) { Unknown1 = Unk1; }
 
@@ -217,7 +225,7 @@ Expected<Layout> MsfBuilder::build() {
   L.SB->BlockMapAddr = BlockMapAddr;
   L.SB->BlockSize = BlockSize;
   L.SB->NumDirectoryBytes = computeDirectoryByteSize();
-  L.SB->Unknown0 = Unknown0;
+  L.SB->FreeBlockMapBlock = FreePageMap;
   L.SB->Unknown1 = Unknown1;
 
   uint32_t NumDirectoryBlocks =

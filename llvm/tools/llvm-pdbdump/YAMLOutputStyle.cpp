@@ -60,7 +60,7 @@ Error YAMLOutputStyle::dumpFileHeaders() {
   Obj.Headers->SuperBlock.NumDirectoryBytes = File.getNumDirectoryBytes();
   Obj.Headers->NumStreams =
       opts::pdb2yaml::StreamMetadata ? File.getNumStreams() : 0;
-  Obj.Headers->SuperBlock.Unknown0 = File.getUnknown0();
+  Obj.Headers->SuperBlock.FreeBlockMapBlock = File.getFreeBlockMapBlock();
   Obj.Headers->SuperBlock.Unknown1 = File.getUnknown1();
   Obj.Headers->FileSize = File.getFileSize();
 

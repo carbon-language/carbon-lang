@@ -7,7 +7,7 @@
 ; YAML-NEXT: MSF:
 ; YAML-NEXT:   SuperBlock:
 ; YAML-NEXT:     BlockSize:       4096
-; YAML-NEXT:     Unknown0:        2
+; YAML-NEXT:     FreeBlockMap:     2
 ; YAML-NEXT:     NumBlocks:       25
 ; YAML-NEXT:     NumDirectoryBytes: 136
 ; YAML-NEXT:     Unknown1:        0
