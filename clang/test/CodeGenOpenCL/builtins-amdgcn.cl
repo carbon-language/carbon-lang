@@ -192,6 +192,13 @@ void test_fract_f64(global int* out, double a)
   *out = __builtin_amdgcn_fract(a);
 }
 
+// CHECK-LABEL: @test_lerp
+// CHECK: call i32 @llvm.amdgcn.lerp
+void test_lerp(global int* out, int a, int b, int c)
+{
+  *out = __builtin_amdgcn_lerp(a, b, c);
+}
+
 // CHECK-LABEL: @test_class_f32
 // CHECK: call i1 @llvm.amdgcn.class.f32
 void test_class_f32(global float* out, float a, int b)
