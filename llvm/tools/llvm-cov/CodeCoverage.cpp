@@ -151,6 +151,7 @@ void CodeCoverageTool::addCollectedPath(const std::string &Path) {
 ErrorOr<const MemoryBuffer &>
 CodeCoverageTool::getSourceFile(StringRef SourceFile) {
   // If we've remapped filenames, look up the real location for this file.
+  std::unique_lock<std::mutex> Guard{LoadedSourceFilesLock};
   if (!RemappedFilenames.empty()) {
     auto Loc = RemappedFilenames.find(SourceFile);
     if (Loc != RemappedFilenames.end())
@@ -164,7 +165,6 @@ CodeCoverageTool::getSourceFile(StringRef SourceFile) {
     deferError(EC.message(), SourceFile);
     return EC;
   }
-  std::unique_lock<std::mutex> Guard{LoadedSourceFilesLock};
   LoadedSourceFiles.emplace_back(SourceFile, std::move(Buffer.get()));
   return *LoadedSourceFiles.back().second;
 }
