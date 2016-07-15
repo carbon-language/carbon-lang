@@ -308,10 +308,12 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
     }
   }
 
-  // We dont need special handling of .eh_frame sections if relocatable
-  // output was choosen. Proccess them as usual input sections.
-  if (!Config->Relocatable && Name == ".eh_frame")
+  // The linker merges EH (exception handling) frames and creates a
+  // .eh_frame_hdr section for runtime. So we handle them with a special
+  // class. For relocatable outputs, they are just passed through.
+  if (Name == ".eh_frame" && !Config->Relocatable)
     return new (EHAlloc.Allocate()) EhInputSection<ELFT>(this, &Sec);
+
   if (shouldMerge<ELFT>(Sec))
     return new (MAlloc.Allocate()) MergeInputSection<ELFT>(this, &Sec);
   return new (IAlloc.Allocate()) InputSection<ELFT>(this, &Sec);
