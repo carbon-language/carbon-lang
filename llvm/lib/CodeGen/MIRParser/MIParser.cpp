@@ -165,7 +165,7 @@ public:
   bool parseAlignment(unsigned &Alignment);
   bool parseOperandsOffset(MachineOperand &Op);
   bool parseIRValue(const Value *&V);
-  bool parseMemoryOperandFlag(unsigned &Flags);
+  bool parseMemoryOperandFlag(MachineMemOperand::Flags &Flags);
   bool parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV);
   bool parseMachinePointerInfo(MachinePointerInfo &Dest);
   bool parseMachineMemoryOperand(MachineMemOperand *&Dest);
@@ -1652,8 +1652,8 @@ bool MIParser::getUint64(uint64_t &Result) {
   return false;
 }
 
-bool MIParser::parseMemoryOperandFlag(unsigned &Flags) {
-  const unsigned OldFlags = Flags;
+bool MIParser::parseMemoryOperandFlag(MachineMemOperand::Flags &Flags) {
+  const auto OldFlags = Flags;
   switch (Token.kind()) {
   case MIToken::kw_volatile:
     Flags |= MachineMemOperand::MOVolatile;
@@ -1769,7 +1769,7 @@ bool MIParser::parseMachinePointerInfo(MachinePointerInfo &Dest) {
 bool MIParser::parseMachineMemoryOperand(MachineMemOperand *&Dest) {
   if (expectAndConsume(MIToken::lparen))
     return true;
-  unsigned Flags = 0;
+  MachineMemOperand::Flags Flags = MachineMemOperand::MONone;
   while (Token.isMemoryOperandFlag()) {
     if (parseMemoryOperandFlag(Flags))
       return true;

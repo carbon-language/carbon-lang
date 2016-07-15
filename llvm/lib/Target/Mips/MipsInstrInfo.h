@@ -137,7 +137,7 @@ protected:
   bool isZeroImm(const MachineOperand &op) const;
 
   MachineMemOperand *GetMemOperand(MachineBasicBlock &MBB, int FI,
-                                   unsigned Flag) const;
+                                   MachineMemOperand::Flags Flags) const;
 
 private:
   virtual unsigned getAnalyzableBrOpc(unsigned Opc) const = 0;

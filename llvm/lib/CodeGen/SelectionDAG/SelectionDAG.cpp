@@ -4845,10 +4845,8 @@ SDValue SelectionDAG::getAtomicCmpSwap(
 
   // FIXME: Volatile isn't really correct; we should keep track of atomic
   // orderings in the memoperand.
-  unsigned Flags = MachineMemOperand::MOVolatile;
-  Flags |= MachineMemOperand::MOLoad;
-  Flags |= MachineMemOperand::MOStore;
-
+  auto Flags = MachineMemOperand::MOVolatile | MachineMemOperand::MOLoad |
+               MachineMemOperand::MOStore;
   MachineMemOperand *MMO =
     MF.getMachineMemOperand(PtrInfo, Flags, MemVT.getStoreSize(), Alignment);
 
@@ -4887,7 +4885,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, const SDLoc &dl, EVT MemVT,
   // chained as such.
   // FIXME: Volatile isn't really correct; we should keep track of atomic
   // orderings in the memoperand.
-  unsigned Flags = MachineMemOperand::MOVolatile;
+  auto Flags = MachineMemOperand::MOVolatile;
   if (Opcode != ISD::ATOMIC_STORE)
     Flags |= MachineMemOperand::MOLoad;
   if (Opcode != ISD::ATOMIC_LOAD)
@@ -4958,7 +4956,7 @@ SDValue SelectionDAG::getMemIntrinsicNode(
     Align = getEVTAlignment(MemVT);
 
   MachineFunction &MF = getMachineFunction();
-  unsigned Flags = 0;
+  auto Flags = MachineMemOperand::MONone;
   if (WriteMem)
     Flags |= MachineMemOperand::MOStore;
   if (ReadMem)
@@ -5061,7 +5059,7 @@ SDValue SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(VT);
 
-  unsigned Flags = MachineMemOperand::MOLoad;
+  auto Flags = MachineMemOperand::MOLoad;
   if (isVolatile)
     Flags |= MachineMemOperand::MOVolatile;
   if (isNonTemporal)
@@ -5186,7 +5184,7 @@ SDValue SelectionDAG::getStore(SDValue Chain, const SDLoc &dl, SDValue Val,
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(Val.getValueType());
 
-  unsigned Flags = MachineMemOperand::MOStore;
+  auto Flags = MachineMemOperand::MOStore;
   if (isVolatile)
     Flags |= MachineMemOperand::MOVolatile;
   if (isNonTemporal)
@@ -5242,7 +5240,7 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, const SDLoc &dl, SDValue Val,
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(SVT);
 
-  unsigned Flags = MachineMemOperand::MOStore;
+  auto Flags = MachineMemOperand::MOStore;
   if (isVolatile)
     Flags |= MachineMemOperand::MOVolatile;
   if (isNonTemporal)

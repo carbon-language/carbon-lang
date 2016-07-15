@@ -642,7 +642,7 @@ void HexagonSplitDoubleRegs::splitMemRef(MachineInstr *MI,
   MachineFunction &MF = *B.getParent();
   for (auto &MO : MI->memoperands()) {
     const MachinePointerInfo &Ptr = MO->getPointerInfo();
-    unsigned F = MO->getFlags();
+    MachineMemOperand::Flags F = MO->getFlags();
     int A = MO->getAlignment();
 
     auto *Tmp1 = MF.getMachineMemOperand(Ptr, F, 4/*size*/, A);

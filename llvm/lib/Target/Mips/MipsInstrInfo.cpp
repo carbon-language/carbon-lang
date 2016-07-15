@@ -54,14 +54,15 @@ insertNoop(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI) const
   BuildMI(MBB, MI, DL, get(Mips::NOP));
 }
 
-MachineMemOperand *MipsInstrInfo::GetMemOperand(MachineBasicBlock &MBB, int FI,
-                                                unsigned Flag) const {
+MachineMemOperand *
+MipsInstrInfo::GetMemOperand(MachineBasicBlock &MBB, int FI,
+                             MachineMemOperand::Flags Flags) const {
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo &MFI = *MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
 
   return MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(MF, FI),
-                                 Flag, MFI.getObjectSize(FI), Align);
+                                 Flags, MFI.getObjectSize(FI), Align);
 }
 
 //===----------------------------------------------------------------------===//
