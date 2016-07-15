@@ -67,17 +67,18 @@ public:
   /// \brief Create source views for the expansions of the view.
   void attachExpansionSubViews(SourceCoverageView &View,
                                ArrayRef<ExpansionRecord> Expansions,
-                               CoverageMapping &Coverage);
+                               const CoverageMapping &Coverage);
 
   /// \brief Create the source view of a particular function.
   std::unique_ptr<SourceCoverageView>
-  createFunctionView(const FunctionRecord &Function, CoverageMapping &Coverage);
+  createFunctionView(const FunctionRecord &Function,
+                     const CoverageMapping &Coverage);
 
   /// \brief Create the main source view of a particular source file.
   std::unique_ptr<SourceCoverageView>
-  createSourceFileView(StringRef SourceFile, CoverageMapping &Coverage);
+  createSourceFileView(StringRef SourceFile, const CoverageMapping &Coverage);
 
-  /// \brief Load the coverage mapping data. Return true if an error occured.
+  /// \brief Load the coverage mapping data. Return nullptr if an error occured.
   std::unique_ptr<CoverageMapping> load();
 
   int run(Command Cmd, int argc, const char **argv);
@@ -168,10 +169,9 @@ CodeCoverageTool::getSourceFile(StringRef SourceFile) {
   return *LoadedSourceFiles.back().second;
 }
 
-void
-CodeCoverageTool::attachExpansionSubViews(SourceCoverageView &View,
-                                          ArrayRef<ExpansionRecord> Expansions,
-                                          CoverageMapping &Coverage) {
+void CodeCoverageTool::attachExpansionSubViews(
+    SourceCoverageView &View, ArrayRef<ExpansionRecord> Expansions,
+    const CoverageMapping &Coverage) {
   if (!ViewOpts.ShowExpandedRegions)
     return;
   for (const auto &Expansion : Expansions) {
@@ -193,7 +193,7 @@ CodeCoverageTool::attachExpansionSubViews(SourceCoverageView &View,
 
 std::unique_ptr<SourceCoverageView>
 CodeCoverageTool::createFunctionView(const FunctionRecord &Function,
-                                     CoverageMapping &Coverage) {
+                                     const CoverageMapping &Coverage) {
   auto FunctionCoverage = Coverage.getCoverageForFunction(Function);
   if (FunctionCoverage.empty())
     return nullptr;
@@ -211,7 +211,7 @@ CodeCoverageTool::createFunctionView(const FunctionRecord &Function,
 
 std::unique_ptr<SourceCoverageView>
 CodeCoverageTool::createSourceFileView(StringRef SourceFile,
-                                       CoverageMapping &Coverage) {
+                                       const CoverageMapping &Coverage) {
   auto SourceBuffer = getSourceFile(SourceFile);
   if (!SourceBuffer)
     return nullptr;
@@ -224,7 +224,7 @@ CodeCoverageTool::createSourceFileView(StringRef SourceFile,
                                          ViewOpts, std::move(FileCoverage));
   attachExpansionSubViews(*View, Expansions, Coverage);
 
-  for (auto Function : Coverage.getInstantiations(SourceFile)) {
+  for (const auto *Function : Coverage.getInstantiations(SourceFile)) {
     auto SubViewCoverage = Coverage.getCoverageForFunction(*Function);
     auto SubViewExpansions = SubViewCoverage.getExpansions();
     auto SubView =
