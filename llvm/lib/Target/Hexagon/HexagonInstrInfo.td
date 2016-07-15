@@ -32,6 +32,9 @@ def LoReg: OutPatFrag<(ops node:$Rs),
 def HiReg: OutPatFrag<(ops node:$Rs),
                       (EXTRACT_SUBREG (i64 $Rs), subreg_hireg)>;
 
+def orisadd: PatFrag<(ops node:$Addr, node:$off),
+    (or node:$Addr, node:$off), [{ return orIsAdd(N); }]>;
+
 // SDNode for converting immediate C to C-1.
 def DEC_CONST_SIGNED : SDNodeXForm<imm, [{
    // Return the byte immediate const-1 as an SDNode.
@@ -1787,6 +1790,8 @@ multiclass Loadx_pat<PatFrag Load, ValueType VT, PatLeaf ImmPred,
   def: Pat<(VT (Load AddrFI:$fi)), (VT (MI AddrFI:$fi, 0))>;
   def: Pat<(VT (Load (add (i32 AddrFI:$fi), ImmPred:$Off))),
            (VT (MI AddrFI:$fi, imm:$Off))>;
+  def: Pat<(VT (Load (orisadd (i32 AddrFI:$fi), ImmPred:$Off))),
+           (VT (MI AddrFI:$fi, imm:$Off))>;
   def: Pat<(VT (Load (add (i32 IntRegs:$Rs), ImmPred:$Off))),
            (VT (MI IntRegs:$Rs, imm:$Off))>;
   def: Pat<(VT (Load (i32 IntRegs:$Rs))), (VT (MI IntRegs:$Rs, 0))>;
@@ -3540,14 +3545,20 @@ let addrMode = BaseImmOffset, InputType = "imm" in {
 // AddedComplexity) to the individual patterns.
 class Storex_fi_pat<PatFrag Store, PatFrag Value, InstHexagon MI>
   : Pat<(Store Value:$Rs, AddrFI:$fi), (MI AddrFI:$fi, 0, Value:$Rs)>;
-class Storex_fi_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
-                        InstHexagon MI>
-  : Pat<(Store Value:$Rs, (add (i32 AddrFI:$fi), ImmPred:$Off)),
-        (MI AddrFI:$fi, imm:$Off, Value:$Rs)>;
-class Storex_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
-                     InstHexagon MI>
-  : Pat<(Store Value:$Rt, (add (i32 IntRegs:$Rs), ImmPred:$Off)),
-        (MI IntRegs:$Rs, imm:$Off, Value:$Rt)>;
+multiclass Storex_fi_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
+                             InstHexagon MI> {
+  def: Pat<(Store Value:$Rs, (add (i32 AddrFI:$fi), ImmPred:$Off)),
+           (MI AddrFI:$fi, imm:$Off, Value:$Rs)>;
+  def: Pat<(Store Value:$Rs, (orisadd (i32 AddrFI:$fi), ImmPred:$Off)),
+           (MI AddrFI:$fi, imm:$Off, Value:$Rs)>;
+}
+multiclass Storex_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
+                          InstHexagon MI> {
+  def: Pat<(Store Value:$Rt, (add (i32 IntRegs:$Rs), ImmPred:$Off)),
+           (MI IntRegs:$Rs, imm:$Off, Value:$Rt)>;
+  def: Pat<(Store Value:$Rt, (orisadd (i32 IntRegs:$Rs), ImmPred:$Off)),
+           (MI IntRegs:$Rs, imm:$Off, Value:$Rt)>;
+}
 class Storex_simple_pat<PatFrag Store, PatFrag Value, InstHexagon MI>
   : Pat<(Store Value:$Rt, (i32 IntRegs:$Rs)),
         (MI IntRegs:$Rs, 0, Value:$Rt)>;
@@ -3559,14 +3570,20 @@ class Storexm_fi_pat<PatFrag Store, PatFrag Value, PatFrag ValueMod,
                      InstHexagon MI>
   : Pat<(Store Value:$Rs, AddrFI:$fi),
         (MI AddrFI:$fi, 0, (ValueMod Value:$Rs))>;
-class Storexm_fi_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
-                         PatFrag ValueMod, InstHexagon MI>
-  : Pat<(Store Value:$Rs, (add (i32 AddrFI:$fi), ImmPred:$Off)),
-        (MI AddrFI:$fi, imm:$Off, (ValueMod Value:$Rs))>;
-class Storexm_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
-                      PatFrag ValueMod, InstHexagon MI>
-  : Pat<(Store Value:$Rt, (add (i32 IntRegs:$Rs), ImmPred:$Off)),
-        (MI IntRegs:$Rs, imm:$Off, (ValueMod Value:$Rt))>;
+multiclass Storexm_fi_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
+                              PatFrag ValueMod, InstHexagon MI> {
+  def: Pat<(Store Value:$Rs, (add (i32 AddrFI:$fi), ImmPred:$Off)),
+           (MI AddrFI:$fi, imm:$Off, (ValueMod Value:$Rs))>;
+  def: Pat<(Store Value:$Rs, (orisadd (i32 AddrFI:$fi), ImmPred:$Off)),
+           (MI AddrFI:$fi, imm:$Off, (ValueMod Value:$Rs))>;
+}
+multiclass Storexm_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
+                           PatFrag ValueMod, InstHexagon MI> {
+  def: Pat<(Store Value:$Rt, (add (i32 IntRegs:$Rs), ImmPred:$Off)),
+           (MI IntRegs:$Rs, imm:$Off, (ValueMod Value:$Rt))>;
+  def: Pat<(Store Value:$Rt, (orisadd (i32 IntRegs:$Rs), ImmPred:$Off)),
+           (MI IntRegs:$Rs, imm:$Off, (ValueMod Value:$Rt))>;
+}
 class Storexm_simple_pat<PatFrag Store, PatFrag Value, PatFrag ValueMod,
                          InstHexagon MI>
   : Pat<(Store Value:$Rt, (i32 IntRegs:$Rs)),
@@ -3574,16 +3591,16 @@ class Storexm_simple_pat<PatFrag Store, PatFrag Value, PatFrag ValueMod,
 
 multiclass Storex_pat<PatFrag Store, PatFrag Value, PatLeaf ImmPred,
                       InstHexagon MI> {
-  def: Storex_fi_pat     <Store, Value,          MI>;
-  def: Storex_fi_add_pat <Store, Value, ImmPred, MI>;
-  def: Storex_add_pat    <Store, Value, ImmPred, MI>;
+  def:  Storex_fi_pat     <Store, Value,          MI>;
+  defm: Storex_fi_add_pat <Store, Value, ImmPred, MI>;
+  defm: Storex_add_pat    <Store, Value, ImmPred, MI>;
 }
 
 multiclass Storexm_pat<PatFrag Store, PatFrag Value, PatLeaf ImmPred,
                        PatFrag ValueMod, InstHexagon MI> {
-  def: Storexm_fi_pat     <Store, Value,          ValueMod, MI>;
-  def: Storexm_fi_add_pat <Store, Value, ImmPred, ValueMod, MI>;
-  def: Storexm_add_pat    <Store, Value, ImmPred, ValueMod, MI>;
+  def:  Storexm_fi_pat     <Store, Value,          ValueMod, MI>;
+  defm: Storexm_fi_add_pat <Store, Value, ImmPred, ValueMod, MI>;
+  defm: Storexm_add_pat    <Store, Value, ImmPred, ValueMod, MI>;
 }
 
 // Regular stores in the DAG have two operands: value and address.
@@ -4502,6 +4519,9 @@ let isMoveImm = 1, isAsCheapAsAMove = 1, isReMaterializable = 1,
   def TFR_FIA : ALU32_ri<(outs IntRegs:$Rd),
                          (ins IntRegs:$Rs, IntRegs:$fi, s32Imm:$off), "">;
 }
+
+def: Pat<(i32 (orisadd (i32 AddrFI:$Rs), s32ImmPred:$off)),
+         (i32 (TFR_FI (i32 AddrFI:$Rs), s32ImmPred:$off))>;
 
 //===----------------------------------------------------------------------===//
 // CRUSER - Type.
