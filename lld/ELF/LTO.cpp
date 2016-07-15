@@ -297,16 +297,14 @@ std::vector<std::unique_ptr<InputFile>> BitcodeCompiler::compile() {
   const Target *T = TargetRegistry::lookupTarget(TheTriple, Msg);
   if (!T)
     fatal("target not found: " + Msg);
-  TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
 
-  // lld supports the new relocations.
+  // LLD supports the new relocations.
+  TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
   Options.RelaxELFRelocations = true;
 
-  Reloc::Model R = Config->Pic ? Reloc::PIC_ : Reloc::Static;
-
   auto CreateTargetMachine = [&]() {
-    return std::unique_ptr<TargetMachine>(
-        T->createTargetMachine(TheTriple, "", "", Options, R));
+    return std::unique_ptr<TargetMachine>(T->createTargetMachine(
+        TheTriple, "", "", Options, Config->Pic ? Reloc::PIC_ : Reloc::Static));
   };
 
   std::unique_ptr<TargetMachine> TM = CreateTargetMachine();
