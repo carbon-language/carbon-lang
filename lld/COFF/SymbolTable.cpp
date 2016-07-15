@@ -211,7 +211,7 @@ void SymbolTable::addSymbol(SymbolBody *New) {
   // equivalent (conflicting), or more preferable, respectively.
   int Comp = Existing->compare(New);
   if (Comp == 0)
-    fatal(Twine("duplicate symbol: ") + Existing->getDebugName() + " and " +
+    fatal("duplicate symbol: " + Existing->getDebugName() + " and " +
           New->getDebugName());
   if (Comp < 0)
     Sym->Body = New;
@@ -356,7 +356,7 @@ void SymbolTable::addCombinedLTOObject(ObjectFile *Obj) {
 
     int Comp = Existing->compare(Body);
     if (Comp == 0)
-      fatal(Twine("LTO: unexpected duplicate symbol: ") + Name);
+      fatal("LTO: unexpected duplicate symbol: " + Name);
     if (Comp < 0)
       Sym->Body = Body;
   }
