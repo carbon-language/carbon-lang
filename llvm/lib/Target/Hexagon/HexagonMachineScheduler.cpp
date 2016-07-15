@@ -13,7 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "HexagonMachineScheduler.h"
+#include "HexagonSubtarget.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/ScheduleDAGMutation.h"
 #include "llvm/IR/Function.h"
 
 using namespace llvm;
@@ -223,6 +225,8 @@ void ConvergingVLIWScheduler::initialize(ScheduleDAGMI *dag) {
 
   assert((!llvm::ForceTopDown || !llvm::ForceBottomUp) &&
          "-misched-topdown incompatible with -misched-bottomup");
+
+  DAG->addMutation(make_unique<HexagonSubtarget::HexagonDAGMutation>());
 }
 
 void ConvergingVLIWScheduler::releaseTopNode(SUnit *SU) {

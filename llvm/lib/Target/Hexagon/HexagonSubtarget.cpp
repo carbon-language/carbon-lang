@@ -14,6 +14,8 @@
 #include "HexagonSubtarget.h"
 #include "Hexagon.h"
 #include "HexagonRegisterInfo.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <map>
@@ -118,6 +120,57 @@ HexagonSubtarget::HexagonSubtarget(const Triple &TT, StringRef CPU,
 
   UseBSBScheduling = hasV60TOps() && EnableBSBSched;
 }
+
+
+void HexagonSubtarget::HexagonDAGMutation::apply(ScheduleDAGInstrs *DAG) {
+  for (auto &SU : DAG->SUnits) {
+    if (!SU.isInstr())
+      continue;
+    SmallVector<SDep, 4> Erase;
+    for (auto &D : SU.Preds)
+      if (D.getKind() == SDep::Output && D.getReg() == Hexagon::USR_OVF)
+        Erase.push_back(D);
+    for (auto &E : Erase)
+      SU.removePred(E);
+  }
+
+  for (auto &SU : DAG->SUnits) {
+    // Update the latency of chain edges between v60 vector load or store
+    // instructions to be 1. These instructions cannot be scheduled in the
+    // same packet.
+    MachineInstr *MI1 = SU.getInstr();
+    auto *QII = static_cast<const HexagonInstrInfo*>(DAG->TII);
+    bool IsStoreMI1 = MI1->mayStore();
+    bool IsLoadMI1 = MI1->mayLoad();
+    if (!QII->isV60VectorInstruction(MI1) || !(IsStoreMI1 || IsLoadMI1))
+      continue;
+    for (auto &SI : SU.Succs) {
+      if (SI.getKind() != SDep::Order || SI.getLatency() != 0)
+        continue;
+      MachineInstr *MI2 = SI.getSUnit()->getInstr();
+      if (!QII->isV60VectorInstruction(MI2))
+        continue;
+      if ((IsStoreMI1 && MI2->mayStore()) || (IsLoadMI1 && MI2->mayLoad())) {
+        SI.setLatency(1);
+        SU.setHeightDirty();
+        // Change the dependence in the opposite direction too.
+        for (auto &PI : SI.getSUnit()->Preds) {
+          if (PI.getSUnit() != &SU || PI.getKind() != SDep::Order)
+            continue;
+          PI.setLatency(1);
+          SI.getSUnit()->setDepthDirty();
+        }
+      }
+    }
+  }
+}
+
+
+void HexagonSubtarget::getPostRAMutations(
+      std::vector<std::unique_ptr<ScheduleDAGMutation>> &Mutations) const {
+  Mutations.push_back(make_unique<HexagonSubtarget::HexagonDAGMutation>());
+}
+
 
 // Pin the vtable to this file.
 void HexagonSubtarget::anchor() {}
