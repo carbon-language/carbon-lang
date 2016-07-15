@@ -1,4 +1,5 @@
 // Currently unsupported test.
+// RUN: cat %s > %t.cpp
 // FIXME: clang-rename should be able to rename template parameters correctly.
 
 template <typename T>

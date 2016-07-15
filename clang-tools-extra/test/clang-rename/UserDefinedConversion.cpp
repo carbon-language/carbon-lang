@@ -1,4 +1,5 @@
 // Currently unsupported test.
+// RUN: cat %s > %t.cpp
 // FIXME: clang-rename should handle conversions from a class type to another
 // type.
 
