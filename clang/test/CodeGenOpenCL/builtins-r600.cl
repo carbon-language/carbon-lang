@@ -1,19 +1,19 @@
 // REQUIRES: amdgpu-registered-target
 // RUN: %clang_cc1 -triple r600-unknown-unknown -target-cpu cypress -S -emit-llvm -o - %s | FileCheck %s
 
-// CHECK-LABEL: @test_rsq_f32
-// CHECK: call float @llvm.r600.rsq.f32
-void test_rsq_f32(global float* out, float a)
+// CHECK-LABEL: @test_recipsqrt_ieee_f32
+// CHECK: call float @llvm.r600.recipsqrt.ieee.f32
+void test_recipsqrt_ieee_f32(global float* out, float a)
 {
-  *out = __builtin_amdgpu_rsqf(a);
+  *out = __builtin_r600_recipsqrt_ieeef(a);
 }
 
 #if cl_khr_fp64
-// XCHECK-LABEL: @test_rsq_f64
-// XCHECK: call double @llvm.r600.rsq.f64
-void test_rsq_f64(global double* out, double a)
+// XCHECK-LABEL: @test_recipsqrt_ieee_f64
+// XCHECK: call double @llvm.r600.recipsqrt.ieee.f64
+void test_recipsqrt_ieee_f64(global double* out, double a)
 {
-  *out = __builtin_amdgpu_rsq(a);
+  *out = __builtin_r600_recipsqrt_ieee(a);
 }
 #endif
 

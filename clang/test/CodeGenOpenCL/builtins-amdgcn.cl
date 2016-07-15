@@ -270,20 +270,6 @@ void test_read_exec(global ulong* out) {
 
 // Legacy intrinsics with AMDGPU prefix
 
-// CHECK-LABEL: @test_legacy_rsq_f32
-// CHECK: call float @llvm.amdgcn.rsq.f32
-void test_legacy_rsq_f32(global float* out, float a)
-{
-  *out = __builtin_amdgpu_rsqf(a);
-}
-
-// CHECK-LABEL: @test_legacy_rsq_f64
-// CHECK: call double @llvm.amdgcn.rsq.f64
-void test_legacy_rsq_f64(global double* out, double a)
-{
-  *out = __builtin_amdgpu_rsq(a);
-}
-
 // CHECK-LABEL: @test_legacy_ldexp_f32
 // CHECK: call float @llvm.amdgcn.ldexp.f32
 void test_legacy_ldexp_f32(global float* out, float a, int b)
