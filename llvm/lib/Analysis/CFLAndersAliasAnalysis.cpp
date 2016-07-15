@@ -141,6 +141,38 @@ public:
   }
 };
 
+// We use AliasAttrMap to keep track of the AliasAttr of each node.
+class AliasAttrMap {
+  typedef DenseMap<InstantiatedValue, AliasAttrs> MapType;
+  MapType AttrMap;
+
+public:
+  typedef MapType::const_iterator const_iterator;
+
+  bool add(InstantiatedValue V, AliasAttrs Attr) {
+    if (Attr.none())
+      return false;
+    auto &OldAttr = AttrMap[V];
+    auto NewAttr = OldAttr | Attr;
+    if (OldAttr == NewAttr)
+      return false;
+    OldAttr = NewAttr;
+    return true;
+  }
+
+  AliasAttrs getAttrs(InstantiatedValue V) const {
+    AliasAttrs Attr;
+    auto Itr = AttrMap.find(V);
+    if (Itr != AttrMap.end())
+      Attr = Itr->second;
+    return Attr;
+  }
+
+  iterator_range<const_iterator> mappings() const {
+    return make_range<const_iterator>(AttrMap.begin(), AttrMap.end());
+  }
+};
+
 struct WorkListItem {
   InstantiatedValue From;
   InstantiatedValue To;
@@ -155,17 +187,33 @@ class CFLAndersAAResult::FunctionInfo {
   /// AliasMap[a] but not vice versa.
   DenseMap<const Value *, std::vector<const Value *>> AliasMap;
 
+  /// Map a value to its corresponding AliasAttrs
+  DenseMap<const Value *, AliasAttrs> AttrMap;
+
   /// Summary of externally visible effects.
   AliasSummary Summary;
 
+  AliasAttrs getAttrs(const Value *) const;
+
 public:
-  FunctionInfo(const ReachabilitySet &);
+  FunctionInfo(const ReachabilitySet &, AliasAttrMap);
 
   bool mayAlias(const Value *LHS, const Value *RHS) const;
   const AliasSummary &getAliasSummary() const { return Summary; }
 };
 
-CFLAndersAAResult::FunctionInfo::FunctionInfo(const ReachabilitySet &ReachSet) {
+CFLAndersAAResult::FunctionInfo::FunctionInfo(const ReachabilitySet &ReachSet,
+                                              AliasAttrMap AMap) {
+  // Populate AttrMap
+  for (const auto &Mapping : AMap.mappings()) {
+    auto IVal = Mapping.first;
+
+    // AttrMap only cares about top-level values
+    if (IVal.DerefLevel == 0)
+      AttrMap[IVal.Val] = Mapping.second;
+  }
+
+  // Populate AliasMap
   for (const auto &OuterMapping : ReachSet.value_mappings()) {
     // AliasMap only cares about top-level values
     if (OuterMapping.first.DerefLevel > 0)
@@ -186,18 +234,39 @@ CFLAndersAAResult::FunctionInfo::FunctionInfo(const ReachabilitySet &ReachSet) {
   // TODO: Populate function summary here
 }
 
+AliasAttrs CFLAndersAAResult::FunctionInfo::getAttrs(const Value *V) const {
+  assert(V != nullptr);
+
+  AliasAttrs Attr;
+  auto Itr = AttrMap.find(V);
+  if (Itr != AttrMap.end())
+    Attr = Itr->second;
+  return Attr;
+}
+
 bool CFLAndersAAResult::FunctionInfo::mayAlias(const Value *LHS,
                                                const Value *RHS) const {
   assert(LHS && RHS);
 
   auto Itr = AliasMap.find(LHS);
-  if (Itr == AliasMap.end())
+  if (Itr != AliasMap.end()) {
+    if (std::binary_search(Itr->second.begin(), Itr->second.end(), RHS,
+                           std::less<const Value *>()))
+      return true;
+  }
+
+  // Even if LHS and RHS are not reachable, they may still alias due to their
+  // AliasAttrs
+  auto AttrsA = getAttrs(LHS);
+  auto AttrsB = getAttrs(RHS);
+
+  if (AttrsA.none() || AttrsB.none())
     return false;
-
-  // TODO: Check AliasAttrs before drawing any conclusions
-
-  return std::binary_search(Itr->second.begin(), Itr->second.end(), RHS,
-                            std::less<const Value *>());
+  if (hasUnknownOrCallerAttr(AttrsA) || hasUnknownOrCallerAttr(AttrsB))
+    return true;
+  if (isGlobalOrArgAttr(AttrsA) && isGlobalOrArgAttr(AttrsB))
+    return true;
+  return false;
 }
 
 static void propagate(InstantiatedValue From, InstantiatedValue To,
@@ -247,7 +316,6 @@ static void processWorkListItem(const WorkListItem &Item, const CFLGraph &Graph,
   auto NodeInfo = Graph.getNode(ToNode);
   assert(NodeInfo != nullptr);
 
-  // TODO: propagate AliasAttr as well
   // TODO: propagate field offsets
 
   // FIXME: Here is a neat trick we can do: since both ReachSet and MemSet holds
@@ -325,6 +393,52 @@ static void processWorkListItem(const WorkListItem &Item, const CFLGraph &Graph,
   }
 }
 
+static AliasAttrMap buildAttrMap(const CFLGraph &Graph,
+                                 const ReachabilitySet &ReachSet) {
+  AliasAttrMap AttrMap;
+  std::vector<InstantiatedValue> WorkList, NextList;
+
+  // Initialize each node with its original AliasAttrs in CFLGraph
+  for (const auto &Mapping : Graph.value_mappings()) {
+    auto Val = Mapping.first;
+    auto &ValueInfo = Mapping.second;
+    for (unsigned I = 0, E = ValueInfo.getNumLevels(); I < E; ++I) {
+      auto Node = InstantiatedValue{Val, I};
+      AttrMap.add(Node, ValueInfo.getNodeInfoAtLevel(I).Attr);
+      WorkList.push_back(Node);
+    }
+  }
+
+  while (!WorkList.empty()) {
+    for (const auto &Dst : WorkList) {
+      auto DstAttr = AttrMap.getAttrs(Dst);
+      if (DstAttr.none())
+        continue;
+
+      // Propagate attr on the same level
+      for (const auto &Mapping : ReachSet.reachableValueAliases(Dst)) {
+        auto Src = Mapping.first;
+        if (AttrMap.add(Src, DstAttr))
+          NextList.push_back(Src);
+      }
+
+      // Propagate attr to the levels below
+      auto DstBelow = getNodeBelow(Graph, Dst);
+      while (DstBelow) {
+        if (AttrMap.add(*DstBelow, DstAttr)) {
+          NextList.push_back(*DstBelow);
+          break;
+        }
+        DstBelow = getNodeBelow(Graph, *DstBelow);
+      }
+    }
+    WorkList.swap(NextList);
+    NextList.clear();
+  }
+
+  return AttrMap;
+}
+
 CFLAndersAAResult::FunctionInfo
 CFLAndersAAResult::buildInfoFrom(const Function &Fn) {
   CFLGraphBuilder<CFLAndersAAResult> GraphBuilder(
@@ -347,7 +461,11 @@ CFLAndersAAResult::buildInfoFrom(const Function &Fn) {
     NextList.clear();
   }
 
-  return FunctionInfo(ReachSet);
+  // Now that we have all the reachability info, propagate AliasAttrs according
+  // to it
+  auto IValueAttrMap = buildAttrMap(Graph, ReachSet);
+
+  return FunctionInfo(ReachSet, std::move(IValueAttrMap));
 }
 
 void CFLAndersAAResult::scan(const Function &Fn) {
