@@ -144,8 +144,7 @@ static bool shouldInternalize(const SmallPtrSet<GlobalValue *, 8> &Used,
 }
 
 BitcodeCompiler::BitcodeCompiler()
-    : Combined(new llvm::Module("ld-temp.o", Driver->Context)),
-      Mover(*Combined) {}
+    : Combined(new llvm::Module("ld-temp.o", Driver->Context)) {}
 
 static void undefine(Symbol *S) {
   replaceBody<Undefined>(S, S->body()->getName(), STV_DEFAULT, S->body()->Type);
@@ -236,6 +235,7 @@ void BitcodeCompiler::add(BitcodeFile &F) {
     Keep.push_back(GV);
   }
 
+  IRMover Mover(*Combined);
   if (Error E = Mover.move(Obj->takeModule(), Keep,
                            [](GlobalValue &, IRMover::ValueAdder) {})) {
     handleAllErrors(std::move(E), [&](const llvm::ErrorInfoBase &EIB) {
@@ -286,13 +286,13 @@ std::vector<std::unique_ptr<InputFile>> BitcodeCompiler::runSplitCodegen(
 // Merge all the bitcode files we have seen, codegen the result
 // and return the resulting ObjectFile.
 std::vector<std::unique_ptr<InputFile>> BitcodeCompiler::compile() {
-  TheTriple = Combined->getTargetTriple();
   for (const auto &Name : InternalizedSyms) {
     GlobalValue *GV = Combined->getNamedValue(Name.first());
     assert(GV);
     internalize(*GV);
   }
 
+  std::string TheTriple = Combined->getTargetTriple();
   std::string Msg;
   const Target *T = TargetRegistry::lookupTarget(TheTriple, Msg);
   if (!T)
