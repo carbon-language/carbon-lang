@@ -138,12 +138,10 @@ void elf::ObjectFile<ELFT>::parse(DenseSet<StringRef> &ComdatGroups) {
 template <class ELFT>
 StringRef elf::ObjectFile<ELFT>::getShtGroupSignature(const Elf_Shdr &Sec) {
   const ELFFile<ELFT> &Obj = this->ELFObj;
-  uint32_t SymtabdSectionIndex = Sec.sh_link;
-  const Elf_Shdr *SymtabSec = check(Obj.getSection(SymtabdSectionIndex));
-  uint32_t SymIndex = Sec.sh_info;
-  const Elf_Sym *Sym = Obj.getSymbol(SymtabSec, SymIndex);
-  StringRef StringTable = check(Obj.getStringTableForSymtab(*SymtabSec));
-  return check(Sym->getName(StringTable));
+  const Elf_Shdr *Symtab = check(Obj.getSection(Sec.sh_link));
+  const Elf_Sym *Sym = Obj.getSymbol(Symtab, Sec.sh_info);
+  StringRef Strtab = check(Obj.getStringTableForSymtab(*Symtab));
+  return check(Sym->getName(Strtab));
 }
 
 template <class ELFT>
