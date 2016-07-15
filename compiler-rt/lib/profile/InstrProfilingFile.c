@@ -231,7 +231,7 @@ static void truncateCurrentFile(void) {
   /* Create the directory holding the file, if needed. */
   if (strchr(Filename, DIR_SEPARATOR)
 #if defined(DIR_SEPARATOR_2)
-      || strchr(Filename, DIR_SEPERATOR_2)
+      || strchr(Filename, DIR_SEPARATOR_2)
 #endif
           ) {
     char *Copy = (char *)COMPILER_RT_ALLOCA(Length + 1);
