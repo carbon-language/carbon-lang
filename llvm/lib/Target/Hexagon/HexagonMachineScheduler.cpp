@@ -105,6 +105,11 @@ void HexagonCallMutation::apply(ScheduleDAGInstrs *DAG) {
 }
 
 
+/// Save the last formed packet
+void VLIWResourceModel::savePacket() {
+  OldPacket = Packet;
+}
+
 /// Check if scheduling of this SU is possible
 /// in the current packet.
 /// It is _not_ precise (statefull), it is more like
@@ -155,6 +160,7 @@ bool VLIWResourceModel::reserveResources(SUnit *SU) {
   // Artificially reset state.
   if (!SU) {
     ResourcesModel->clearResources();
+    savePacket();
     Packet.clear();
     TotalPackets++;
     return false;
@@ -163,6 +169,7 @@ bool VLIWResourceModel::reserveResources(SUnit *SU) {
   // start a new one.
   if (!isResourceAvailable(SU)) {
     ResourcesModel->clearResources();
+    savePacket();
     Packet.clear();
     TotalPackets++;
     startNewCycle = true;
@@ -199,6 +206,7 @@ bool VLIWResourceModel::reserveResources(SUnit *SU) {
   // we start fresh.
   if (Packet.size() >= SchedModel->getIssueWidth()) {
     ResourcesModel->clearResources();
+    savePacket();
     Packet.clear();
     TotalPackets++;
     startNewCycle = true;
@@ -552,6 +560,8 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
   if (!SU || SU->isScheduled)
     return ResCount;
 
+  MachineInstr *Instr = SU->getInstr();
+
   // Forced priority is high.
   if (SU->isScheduleHigh)
     ResCount += PriorityOne;
@@ -595,6 +605,24 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
   // Factor in reg pressure as a heuristic.
   ResCount -= (Delta.Excess.getUnitInc()*PriorityTwo);
   ResCount -= (Delta.CriticalMax.getUnitInc()*PriorityTwo);
+
+  auto &QST = DAG->MF.getSubtarget<HexagonSubtarget>();
+  auto &QII = *QST.getInstrInfo();
+
+  // Give less preference to an instruction that will cause a stall with
+  // an instruction in the previous packet.
+  if (QII.isV60VectorInstruction(Instr)) {
+    // Check for stalls in the previous packet.
+    if (Q.getID() == TopQID) {
+      for (auto J : Top.ResourceModel->OldPacket)
+        if (QII.producesStall(J->getInstr(), Instr))
+          ResCount -= PriorityOne;
+    } else {
+      for (auto J : Bot.ResourceModel->OldPacket)
+        if (QII.producesStall(Instr, J->getInstr()))
+          ResCount -= PriorityOne;
+    }
+  }
 
   DEBUG(if (verbose) dbgs() << " Total(" << ResCount << ")");
 
