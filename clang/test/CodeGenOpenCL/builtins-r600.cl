@@ -17,22 +17,6 @@ void test_recipsqrt_ieee_f64(global double* out, double a)
 }
 #endif
 
-// CHECK-LABEL: @test_legacy_ldexp_f32
-// CHECK: call float @llvm.AMDGPU.ldexp.f32
-void test_legacy_ldexp_f32(global float* out, float a, int b)
-{
-  *out = __builtin_amdgpu_ldexpf(a, b);
-}
-
-#if cl_khr_fp64
-// XCHECK-LABEL: @test_legacy_ldexp_f64
-// XCHECK: call double @llvm.AMDGPU.ldexp.f64
-void test_legacy_ldexp_f64(global double* out, double a, int b)
-{
-  *out = __builtin_amdgpu_ldexp(a, b);
-}
-#endif
-
 // CHECK-LABEL: @test_implicitarg_ptr
 // CHECK: call i8 addrspace(7)* @llvm.r600.implicitarg.ptr()
 void test_implicitarg_ptr(__attribute__((address_space(7))) unsigned char ** out)

@@ -99,12 +99,5 @@ BUILTIN(__builtin_r600_read_tidig_z, "Ui", "nc")
 BUILTIN(__builtin_r600_recipsqrt_ieee, "dd", "nc")
 BUILTIN(__builtin_r600_recipsqrt_ieeef, "ff", "nc")
 
-//===----------------------------------------------------------------------===//
-// Legacy names with amdgpu prefix
-//===----------------------------------------------------------------------===//
-
-BUILTIN(__builtin_amdgpu_ldexp, "ddi", "nc")
-BUILTIN(__builtin_amdgpu_ldexpf, "ffi", "nc")
-
 #undef BUILTIN
 #undef TARGET_BUILTIN

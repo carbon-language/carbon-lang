@@ -7690,14 +7690,6 @@ Value *CodeGenFunction::EmitAMDGPUBuiltinExpr(unsigned BuiltinID,
     return emitRangedBuiltin(*this, Intrinsic::r600_read_tidig_y, 0, 1024);
   case AMDGPU::BI__builtin_r600_read_tidig_z:
     return emitRangedBuiltin(*this, Intrinsic::r600_read_tidig_z, 0, 1024);
-
-   // Legacy amdgpu prefix
-  case AMDGPU::BI__builtin_amdgpu_ldexp:
-  case AMDGPU::BI__builtin_amdgpu_ldexpf: {
-    if (getTarget().getTriple().getArch() == Triple::amdgcn)
-      return emitFPIntBuiltin(*this, E, Intrinsic::amdgcn_ldexp);
-    return emitFPIntBuiltin(*this, E, Intrinsic::AMDGPU_ldexp);
-  }
   default:
     return nullptr;
   }
