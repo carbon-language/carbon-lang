@@ -66,13 +66,6 @@ def int_r600_recipsqrt_clamped : Intrinsic<
 
 } // End TargetPrefix = "r600"
 
-// FIXME: These should be renamed/moved to r600
-let TargetPrefix = "AMDGPU" in {
-def int_AMDGPU_ldexp : Intrinsic<
-  [llvm_anyfloat_ty], [LLVMMatchType<0>, llvm_i32_ty], [IntrNoMem]
->;
-}
-
 let TargetPrefix = "amdgcn" in {
 
 defm int_amdgcn_workitem_id : AMDGPUReadPreloadRegisterIntrinsic_xyz;
