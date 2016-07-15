@@ -327,7 +327,7 @@ void CodeCoverageTool::demangleSymbols(const CoverageMapping &Coverage) {
     InputTOF.os() << Function.Name << '\n';
     ++NumSymbols;
   }
-  InputTOF.os().flush();
+  InputTOF.os().close();
 
   // Use another temporary file to store the demangler's output.
   int OutputFD;
@@ -339,6 +339,7 @@ void CodeCoverageTool::demangleSymbols(const CoverageMapping &Coverage) {
     return;
   }
   tool_output_file OutputTOF{OutputPath, OutputFD};
+  OutputTOF.os().close();
 
   // Invoke the demangler.
   std::vector<const char *> ArgsV;
