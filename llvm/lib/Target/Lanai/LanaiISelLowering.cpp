@@ -487,8 +487,7 @@ SDValue LanaiTargetLowering::LowerCCCArguments(
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
       InVals.push_back(DAG.getLoad(
           VA.getLocVT(), DL, Chain, FIN,
-          MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI),
-          false, false, false, 0));
+          MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI)));
     }
   }
 
@@ -683,8 +682,8 @@ SDValue LanaiTargetLowering::LowerCCCCallTo(
           DAG.getNode(ISD::ADD, DL, getPointerTy(DAG.getDataLayout()), StackPtr,
                       DAG.getIntPtrConstant(VA.getLocMemOffset(), DL));
 
-      MemOpChains.push_back(DAG.getStore(
-          Chain, DL, Arg, PtrOff, MachinePointerInfo(), false, false, 0));
+      MemOpChains.push_back(
+          DAG.getStore(Chain, DL, Arg, PtrOff, MachinePointerInfo()));
     }
   }
 
@@ -1013,7 +1012,7 @@ SDValue LanaiTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   // memory location argument.
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
   return DAG.getStore(Op.getOperand(0), DL, FI, Op.getOperand(1),
-                      MachinePointerInfo(SV), false, false, 0);
+                      MachinePointerInfo(SV));
 }
 
 SDValue LanaiTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
@@ -1065,8 +1064,7 @@ SDValue LanaiTargetLowering::LowerRETURNADDR(SDValue Op,
     const unsigned Offset = -4;
     SDValue Ptr = DAG.getNode(ISD::ADD, DL, VT, FrameAddr,
                               DAG.getIntPtrConstant(Offset, DL));
-    return DAG.getLoad(VT, DL, DAG.getEntryNode(), Ptr, MachinePointerInfo(),
-                       false, false, false, 0);
+    return DAG.getLoad(VT, DL, DAG.getEntryNode(), Ptr, MachinePointerInfo());
   }
 
   // Return the link register, which contains the return address.
@@ -1088,8 +1086,8 @@ SDValue LanaiTargetLowering::LowerFRAMEADDR(SDValue Op,
     const unsigned Offset = -8;
     SDValue Ptr = DAG.getNode(ISD::ADD, DL, VT, FrameAddr,
                               DAG.getIntPtrConstant(Offset, DL));
-    FrameAddr = DAG.getLoad(VT, DL, DAG.getEntryNode(), Ptr,
-                            MachinePointerInfo(), false, false, false, 0);
+    FrameAddr =
+        DAG.getLoad(VT, DL, DAG.getEntryNode(), Ptr, MachinePointerInfo());
   }
   return FrameAddr;
 }
