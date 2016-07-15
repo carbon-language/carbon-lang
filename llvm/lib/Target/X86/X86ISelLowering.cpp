@@ -11044,6 +11044,10 @@ static SDValue lowerShuffleAsRepeatedMaskAndLanePermute(
     }
   }
 
+  // Bail if the shuffle mask doesn't cross 128-bit lanes.
+  if (!is128BitLaneCrossingShuffleMask(VT, Mask))
+    return SDValue();
+
   // Bail if we already have a repeated lane shuffle mask.
   SmallVector<int, 8> RepeatedShuffleMask;
   if (is128BitLaneRepeatedShuffleMask(VT, Mask, RepeatedShuffleMask))
@@ -11055,52 +11059,89 @@ static SDValue lowerShuffleAsRepeatedMaskAndLanePermute(
   int NumSubLanes = NumLanes * SubLaneScale;
   int NumSubLaneElts = NumLaneElts / SubLaneScale;
 
-  // Check that all the sources are coming from the same lane and see if we
-  // can form a repeating shuffle mask (local to each lane). At the same time,
+  // Check that all the sources are coming from the same lane and see if we can
+  // form a repeating shuffle mask (local to each sub-lane). At the same time,
   // determine the source sub-lane for each destination sub-lane.
   int TopSrcSubLane = -1;
-  SmallVector<int, 8> RepeatedLaneMask((unsigned)NumLaneElts, -1);
   SmallVector<int, 8> Dst2SrcSubLanes((unsigned)NumSubLanes, -1);
-  for (int i = 0; i != NumElts; ++i) {
-    int M = Mask[i];
-    if (M < 0)
+  SmallVector<int, 8> RepeatedSubLaneMasks[2] = {
+      SmallVector<int, 8>((unsigned)NumSubLaneElts, SM_SentinelUndef),
+      SmallVector<int, 8>((unsigned)NumSubLaneElts, SM_SentinelUndef)};
+
+  for (int DstSubLane = 0; DstSubLane != NumSubLanes; ++DstSubLane) {
+    // Extract the sub-lane mask, check that it all comes from the same lane
+    // and normalize the mask entries to come from the first lane.
+    int SrcLane = -1;
+    SmallVector<int, 8> SubLaneMask((unsigned)NumSubLaneElts, -1);
+    for (int Elt = 0; Elt != NumSubLaneElts; ++Elt) {
+      int M = Mask[(DstSubLane * NumSubLaneElts) + Elt];
+      if (M < 0)
+        continue;
+      int Lane = (M % NumElts) / NumLaneElts;
+      if ((0 <= SrcLane) && (SrcLane != Lane))
+        return SDValue();
+      SrcLane = Lane;
+      int LocalM = (M % NumLaneElts) + (M < NumElts ? 0 : NumElts);
+      SubLaneMask[Elt] = LocalM;
+    }
+
+    // Whole sub-lane is UNDEF.
+    if (SrcLane < 0)
       continue;
-    assert(0 <= M && M < 2 * NumElts);
 
-    // Check that the local mask index is the same for every lane. We always do
-    // this with 128-bit lanes to match in is128BitLaneRepeatedShuffleMask.
-    int LocalM = M < NumElts ? (M % NumLaneElts) : (M % NumLaneElts) + NumElts;
-    int &RepeatM = RepeatedLaneMask[i % NumLaneElts];
-    if (0 <= RepeatM && RepeatM != LocalM)
+    // Attempt to match against the candidate repeated sub-lane masks.
+    for (int SubLane = 0; SubLane != SubLaneScale; ++SubLane) {
+      auto MatchMasks = [NumSubLaneElts](ArrayRef<int> M1, ArrayRef<int> M2) {
+        for (int i = 0; i != NumSubLaneElts; ++i) {
+          if (M1[i] < 0 || M2[i] < 0)
+            continue;
+          if (M1[i] != M2[i])
+            return false;
+        }
+        return true;
+      };
+
+      auto &RepeatedSubLaneMask = RepeatedSubLaneMasks[SubLane];
+      if (!MatchMasks(SubLaneMask, RepeatedSubLaneMask))
+        continue;
+
+      // Merge the sub-lane mask into the matching repeated sub-lane mask.
+      for (int i = 0; i != NumSubLaneElts; ++i) {
+        int M = SubLaneMask[i];
+        if (M < 0)
+          continue;
+        assert((RepeatedSubLaneMask[i] < 0 || RepeatedSubLaneMask[i] == M) &&
+               "Unexpected mask element");
+        RepeatedSubLaneMask[i] = M;
+      }
+
+      // Track the top most source sub-lane - by setting the remaining to UNDEF
+      // we can greatly simplify shuffle matching.
+      int SrcSubLane = (SrcLane * SubLaneScale) + SubLane;
+      TopSrcSubLane = std::max(TopSrcSubLane, SrcSubLane);
+      Dst2SrcSubLanes[DstSubLane] = SrcSubLane;
+      break;
+    }
+
+    // Bail if we failed to find a matching repeated sub-lane mask.
+    if (Dst2SrcSubLanes[DstSubLane] < 0)
       return SDValue();
-    RepeatM = LocalM;
-
-    // Check that the whole of each destination sub-lane comes from the same
-    // sub-lane, we need to calculate the source based off where the repeated
-    // lane mask will have left it.
-    int SrcLane = (M % NumElts) / NumLaneElts;
-    int SrcSubLane = (SrcLane * SubLaneScale) +
-                     ((i % NumLaneElts) / NumSubLaneElts);
-    int &Dst2SrcSubLane = Dst2SrcSubLanes[i / NumSubLaneElts];
-    if (0 <= Dst2SrcSubLane && SrcSubLane != Dst2SrcSubLane)
-      return SDValue();
-    Dst2SrcSubLane = SrcSubLane;
-
-    // Track the top most source sub-lane - by setting the remaining to UNDEF
-    // we can greatly simplify shuffle matching.
-    TopSrcSubLane = std::max(TopSrcSubLane, SrcSubLane);
   }
   assert(0 <= TopSrcSubLane && TopSrcSubLane < NumSubLanes &&
          "Unexpected source lane");
 
   // Create a repeating shuffle mask for the entire vector.
   SmallVector<int, 8> RepeatedMask((unsigned)NumElts, -1);
-  for (int i = 0, e = ((TopSrcSubLane + 1) * NumSubLaneElts); i != e; ++i) {
-    int M = RepeatedLaneMask[i % NumLaneElts];
-    if (M < 0)
-      continue;
-    int Lane = i / NumLaneElts;
-    RepeatedMask[i] = M + (Lane * NumLaneElts);
+  for (int SubLane = 0; SubLane <= TopSrcSubLane; ++SubLane) {
+    int Lane = SubLane / SubLaneScale;
+    auto &RepeatedSubLaneMask = RepeatedSubLaneMasks[SubLane % SubLaneScale];
+    for (int Elt = 0; Elt != NumSubLaneElts; ++Elt) {
+      int M = RepeatedSubLaneMask[Elt];
+      if (M < 0)
+        continue;
+      int Idx = (SubLane * NumSubLaneElts) + Elt;
+      RepeatedMask[Idx] = M + (Lane * NumLaneElts);
+    }
   }
   SDValue RepeatedShuffle = DAG.getVectorShuffle(VT, DL, V1, V2, RepeatedMask);
 
