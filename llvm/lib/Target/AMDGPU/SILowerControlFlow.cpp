@@ -748,13 +748,9 @@ bool SILowerControlFlow::runOnMachineFunction(MachineFunction &MF) {
         case AMDGPU::SI_END_CF:
           if (--Depth == 0 && HaveKill) {
             HaveKill = false;
-
-            if (skipIfDead(MI, *NextBB)) {
-              NextBB = std::next(BI);
-              BE = MF.end();
-              Next = MBB.end();
-            }
+            // TODO: Insert skip if exec is 0?
           }
+
           EndCf(MI);
           break;
 
@@ -763,7 +759,6 @@ bool SILowerControlFlow::runOnMachineFunction(MachineFunction &MF) {
             if (skipIfDead(MI, *NextBB)) {
               NextBB = std::next(BI);
               BE = MF.end();
-              Next = MBB.end();
             }
           } else
             HaveKill = true;
