@@ -30,9 +30,6 @@ let TargetPrefix = "AMDGPU", isTarget = 1 in {
     [llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]
   >;
 
-  // Deprecated in favor of llvm.bitreverse
-  def int_AMDGPU_brev : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
-
   // Deprecated in favor of llvm.amdgcn.s.barrier
   def int_AMDGPU_barrier_local  : Intrinsic<[], [], [IntrConvergent]>;
   def int_AMDGPU_barrier_global : Intrinsic<[], [], [IntrConvergent]>;
