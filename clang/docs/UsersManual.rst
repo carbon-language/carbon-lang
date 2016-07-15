@@ -783,7 +783,7 @@ the pragma onwards within the same file.
   #if foo
   #endif foo // no warning
 
-The :option:`--system-header-prefix=` and :option:`--no-system-header-prefix=`
+The `--system-header-prefix=` and `--no-system-header-prefix=`
 command-line arguments can be used to override whether subsets of an include
 path are treated as system headers. When the name in a ``#include`` directive
 is found within a header search path and starts with a system prefix, the
@@ -852,7 +852,7 @@ Generating a PCH File
 ^^^^^^^^^^^^^^^^^^^^^
 
 To generate a PCH file using Clang, one invokes Clang with the
-:option:`-x <language>-header` option. This mirrors the interface in GCC
+`-x <language>-header` option. This mirrors the interface in GCC
 for generating PCH files:
 
 .. code-block:: console
@@ -915,7 +915,7 @@ location.
 Building a relocatable precompiled header requires two additional
 arguments. First, pass the ``--relocatable-pch`` flag to indicate that
 the resulting PCH file should be relocatable. Second, pass
-:option:`-isysroot /path/to/build`, which makes all includes for your library
+`-isysroot /path/to/build`, which makes all includes for your library
 relative to the build directory. For example:
 
 .. code-block:: console
@@ -925,9 +925,9 @@ relative to the build directory. For example:
 When loading the relocatable PCH file, the various headers used in the
 PCH file are found from the system header root. For example, ``mylib.h``
 can be found in ``/usr/include/mylib.h``. If the headers are installed
-in some other system root, the :option:`-isysroot` option can be used provide
+in some other system root, the `-isysroot` option can be used provide
 a different system root from which the headers will be based. For
-example, :option:`-isysroot /Developer/SDKs/MacOSX10.4u.sdk` will look for
+example, `-isysroot /Developer/SDKs/MacOSX10.4u.sdk` will look for
 ``mylib.h`` in ``/Developer/SDKs/MacOSX10.4u.sdk/usr/include/mylib.h``.
 
 Relocatable precompiled headers are intended to be used in a limited
@@ -1872,8 +1872,8 @@ directives, ``depend`` clause for ``#pragma omp task`` directive (except for
 array sections), ``#pragma omp cancel`` and ``#pragma omp cancellation point``
 directives, and ``#pragma omp taskgroup`` directive.
 
-Use :option:`-fopenmp` to enable OpenMP. Support for OpenMP can be disabled with
-:option:`-fno-openmp`.
+Use `-fopenmp` to enable OpenMP. Support for OpenMP can be disabled with
+`-fno-openmp`.
 
 Controlling implementation limits
 ---------------------------------
@@ -1882,7 +1882,7 @@ Controlling implementation limits
 
  Controls code generation for OpenMP threadprivate variables. In presence of
  this option all threadprivate variables are generated the same way as thread
- local variables, using TLS support. If :option:`-fno-openmp-use-tls`
+ local variables, using TLS support. If `-fno-openmp-use-tls`
  is provided or target does not support TLS, code generation for threadprivate
  variables relies on OpenMP runtime library.
 
@@ -1906,7 +1906,7 @@ On ``x86_64-mingw32``, passing i128(by value) is incompatible with the
 Microsoft x64 calling convention. You might need to tweak
 ``WinX86_64ABIInfo::classify()`` in lib/CodeGen/TargetInfo.cpp.
 
-For the X86 target, clang supports the :option:`-m16` command line
+For the X86 target, clang supports the `-m16` command line
 argument which enables 16-bit code output. This is broadly similar to
 using ``asm(".code16gcc")`` with the GNU toolchain. The generated code
 and the ABI remains 32-bit but the assembler emits instructions
