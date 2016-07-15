@@ -543,15 +543,15 @@ vectorize a loop body.
 Clang offers a family of flags which the optimizers can use to emit
 a diagnostic in three cases:
 
-1. When the pass makes a transformation (:option:`-Rpass`).
+1. When the pass makes a transformation (`-Rpass`).
 
-2. When the pass fails to make a transformation (:option:`-Rpass-missed`).
+2. When the pass fails to make a transformation (`-Rpass-missed`).
 
 3. When the pass determines whether or not to make a transformation
-   (:option:`-Rpass-analysis`).
+   (`-Rpass-analysis`).
 
-NOTE: Although the discussion below focuses on :option:`-Rpass`, the exact
-same options apply to :option:`-Rpass-missed` and :option:`-Rpass-analysis`.
+NOTE: Although the discussion below focuses on `-Rpass`, the exact
+same options apply to `-Rpass-missed` and `-Rpass-analysis`.
 
 Since there are dozens of passes inside the compiler, each of these flags
 take a regular expression that identifies the name of the pass which should
@@ -567,7 +567,7 @@ compile the code with:
 
 Note that remarks from the inliner are identified with `[-Rpass=inline]`.
 To request a report from every optimization pass, you should use
-:option:`-Rpass=.*` (in fact, you can use any valid POSIX regular
+`-Rpass=.*` (in fact, you can use any valid POSIX regular
 expression). However, do not expect a report from every transformation
 made by the compiler. Optimization remarks do not really make sense
 outside of the major transformations (e.g., inlining, vectorization,
@@ -585,7 +585,7 @@ Current limitations
 2. Some source locations are not displayed correctly. The front end has
    a more detailed source location tracking than the locations included
    in the debug info (e.g., the front end can locate code inside macro
-   expansions). However, the locations used by :option:`-Rpass` are
+   expansions). However, the locations used by `-Rpass` are
    translated from debug annotations. That translation can be lossy,
    which results in some remarks having no location information.
 
