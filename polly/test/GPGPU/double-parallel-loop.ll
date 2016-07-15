@@ -23,10 +23,15 @@
 ; SCHED-NEXT: child:
 ; SCHED-NEXT:   context: "{ [] }"
 ; SCHED-NEXT:   child:
-; SCHED-NEXT:     extension: "{  }"
+; SCHED-NEXT:     extension: "{ [] -> from_device_MemRef_A[]; [] -> to_device_MemRef_A[] }"
 ; SCHED-NEXT:     child:
 ; SCHED-NEXT:       sequence:
-; SCHED-NEXT:       - filter: "{  }"
+; SCHED-NEXT:       - filter: "{ to_device_MemRef_A[] }"
+; SCHED-NEXT:         child:
+; SCHED-NEXT:           set:
+; SCHED-NEXT:           - filter: "{ to_device_MemRef_A[] }"
+; SCHED-NEXT:             child:
+; SCHED-NEXT:               guard: "{ [] }"
 ; SCHED-NEXT:       - filter: "{ Stmt_bb5[i0, i1] }"
 ; SCHED-NEXT:         child:
 ; SCHED-NEXT:           guard: "{ [] }"
@@ -46,21 +51,32 @@
 ; SCHED-NEXT:                       schedule: "[{ Stmt_bb5[i0, i1] -> [(0)] }, { Stmt_bb5[i0, i1] -> [(floor((i1)/16) - 2*floor((i1)/32))] }]"
 ; SCHED-NEXT:                       permutable: 1
 ; SCHED-NEXT:                       coincident: [ 1, 1 ]
-; SCHED-NEXT:       - filter: "{  }"
+; SCHED-NEXT:       - filter: "{ from_device_MemRef_A[] }"
+; SCHED-NEXT:         child:
+; SCHED-NEXT:           set:
+; SCHED-NEXT:           - filter: "{ from_device_MemRef_A[] }"
+; SCHED-NEXT:             child:
+; SCHED-NEXT:               guard: "{ [] }"
 
 ; CODE: Code
 ; CODE-NEXT: ====
 ; CODE-NEXT: # host
 ; CODE-NEXT: {
-; CODE-NEXT:   dim3 k0_dimBlock(16, 32);
-; CODE-NEXT:   dim3 k0_dimGrid(32, 32);
-; CODE-NEXT:   kernel0 <<<k0_dimGrid, k0_dimBlock>>> ();
-; CODE-NEXT:   cudaCheckKernel();
+; CODE-NEXT:   cudaCheckReturn(cudaMemcpy(dev_MemRef_A, MemRef_A, (1024) * (1024) * sizeof(float), cudaMemcpyHostToDevice));
+; CODE-NEXT:   {
+; CODE-NEXT:     dim3 k0_dimBlock(16, 32);
+; CODE-NEXT:     dim3 k0_dimGrid(32, 32);
+; CODE-NEXT:     kernel0 <<<k0_dimGrid, k0_dimBlock>>> ();
+; CODE-NEXT:     cudaCheckKernel();
+; CODE-NEXT:   }
+
+; CODE:   cudaCheckReturn(cudaMemcpy(MemRef_A, dev_MemRef_A, (1024) * (1024) * sizeof(float), cudaMemcpyDeviceToHost));
 ; CODE-NEXT: }
 
 ; CODE: # kernel0
 ; CODE-NEXT: for (int c3 = 0; c3 <= 1; c3 += 1)
 ; CODE-NEXT:   Stmt_bb5(32 * b0 + t0, 32 * b1 + t1 + 16 * c3);
+
 
 
 ;    void double_parallel_loop(float A[][1024]) {
