@@ -484,5 +484,6 @@ void lld::coff::writeImportLibrary() {
   std::pair<StringRef, std::error_code> Result =
       writeArchive(Path, Members, /*WriteSymtab*/ true, object::Archive::K_GNU,
                    /*Deterministic*/ true, /*Thin*/ false);
-  check(Result.second, Twine("Failed to write ") + Path);
+  if (auto EC = Result.second)
+    fatal(EC, Twine("Failed to write ") + Path);
 }

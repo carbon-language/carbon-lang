@@ -64,8 +64,8 @@ std::string InputFile::getShortName() {
 void ArchiveFile::parse() {
   // Parse a MemoryBufferRef as an archive file.
   auto ArchiveOrErr = Archive::create(MB);
-  check(errorToErrorCode(ArchiveOrErr.takeError()),
-        "Failed to parse static library");
+  if (auto Err = ArchiveOrErr.takeError())
+    fatal(Err, "Failed to parse static library");
   File = std::move(*ArchiveOrErr);
 
   // Allocate a buffer for Lazy objects.
@@ -82,31 +82,33 @@ void ArchiveFile::parse() {
   Error Err;
   for (auto &Child : File->children(Err))
     Seen[Child.getChildOffset()].clear();
-  check(std::move(Err), "Failed to parse static library");
+  if (Err)
+    fatal(Err, "Failed to parse static library");
 }
 
 // Returns a buffer pointing to a member file containing a given symbol.
 // This function is thread-safe.
 MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
   auto COrErr = Sym->getMember();
-  check(COrErr, "Could not get the member for symbol " + Sym->getName());
+  if (auto EC = COrErr.getError())
+    fatal(EC, "Could not get the member for symbol " + Sym->getName());
   const Archive::Child &C = *COrErr;
 
   // Return an empty buffer if we have already returned the same buffer.
   if (Seen[C.getChildOffset()].test_and_set())
     return MemoryBufferRef();
   ErrorOr<MemoryBufferRef> Ret = C.getMemoryBufferRef();
-  check(Ret, "Could not get the buffer for the member defining symbol " +
-                 Sym->getName());
+  if (auto EC = Ret.getError())
+    fatal(EC, "Could not get the buffer for the member defining symbol " +
+                  Sym->getName());
   return *Ret;
 }
 
 void ObjectFile::parse() {
   // Parse a memory buffer as a COFF file.
   auto BinOrErr = createBinary(MB);
-  if (!BinOrErr)
-    check(errorToErrorCode(BinOrErr.takeError()),
-                           "Failed to parse object file");
+  if (auto Err = BinOrErr.takeError())
+    fatal(Err, "Failed to parse object file");
   std::unique_ptr<Binary> Bin = std::move(*BinOrErr);
 
   if (auto *Obj = dyn_cast<COFFObjectFile>(Bin.get())) {
@@ -129,10 +131,10 @@ void ObjectFile::initializeChunks() {
   for (uint32_t I = 1; I < NumSections + 1; ++I) {
     const coff_section *Sec;
     StringRef Name;
-    std::error_code EC = COFFObj->getSection(I, Sec);
-    check(EC, "getSection failed: #" + Twine(I));
-    EC = COFFObj->getSectionName(Sec, Name);
-    check(EC, "getSectionName failed: #" + Twine(I));
+    if (auto EC = COFFObj->getSection(I, Sec))
+      fatal(EC, "getSection failed: #" + Twine(I));
+    if (auto EC = COFFObj->getSectionName(Sec, Name))
+      fatal(EC, "getSectionName failed: #" + Twine(I));
     if (Name == ".sxdata") {
       SXData = Sec;
       continue;
@@ -167,7 +169,8 @@ void ObjectFile::initializeSymbols() {
   for (uint32_t I = 0; I < NumSymbols; ++I) {
     // Get a COFFSymbolRef object.
     auto SymOrErr = COFFObj->getSymbol(I);
-    check(SymOrErr, "broken object file: " + getName());
+    if (auto EC = SymOrErr.getError())
+      fatal(EC, "broken object file: " + getName());
 
     COFFSymbolRef Sym = *SymOrErr;
 
@@ -334,7 +337,8 @@ void BitcodeFile::parse() {
   Context.enableDebugTypeODRUniquing();
   ErrorOr<std::unique_ptr<LTOModule>> ModOrErr = LTOModule::createFromBuffer(
       Context, MB.getBufferStart(), MB.getBufferSize(), llvm::TargetOptions());
-  check(ModOrErr, "Could not create lto module");
+  if (auto EC = ModOrErr.getError())
+    fatal(EC, "Could not create lto module");
   M = std::move(*ModOrErr);
 
   llvm::StringSaver Saver(Alloc);

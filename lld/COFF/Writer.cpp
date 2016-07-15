@@ -239,7 +239,8 @@ void Writer::run() {
   fixSafeSEHSymbols();
   writeSections();
   sortExceptionTable();
-  check(Buffer->commit(), "Failed to write the output file");
+  if (auto EC = Buffer->commit())
+    fatal(EC, "Failed to write the output file");
 }
 
 static StringRef getOutputSection(StringRef Name) {
@@ -653,7 +654,8 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
 void Writer::openFile(StringRef Path) {
   ErrorOr<std::unique_ptr<FileOutputBuffer>> BufferOrErr =
       FileOutputBuffer::create(Path, FileSize, FileOutputBuffer::F_executable);
-  check(BufferOrErr, "failed to open " + Path);
+  if (auto EC = BufferOrErr.getError())
+    fatal(EC, "failed to open " + Path);
   Buffer = std::move(*BufferOrErr);
 }
 

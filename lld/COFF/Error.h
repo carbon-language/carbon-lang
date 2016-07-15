@@ -17,18 +17,18 @@ namespace lld {
 namespace coff {
 
 LLVM_ATTRIBUTE_NORETURN void fatal(const Twine &Msg);
-void check(std::error_code EC, const Twine &Prefix);
-void check(llvm::Error E, const Twine &Prefix);
+LLVM_ATTRIBUTE_NORETURN void fatal(std::error_code EC, const Twine &Prefix);
+LLVM_ATTRIBUTE_NORETURN void fatal(llvm::Error &Err, const Twine &Prefix);
 
 template <typename T> void check(const ErrorOr<T> &V, const Twine &Prefix) {
-  check(V.getError(), Prefix);
+  if (auto EC = V.getError())
+    fatal(EC, Prefix);
 }
 
 template <class T> T check(Expected<T> E, const Twine &Prefix) {
   if (E)
     return std::move(*E);
   fatal(E.takeError(), Prefix);
-  return T();
 }
 
 } // namespace coff

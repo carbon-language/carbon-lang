@@ -50,7 +50,8 @@ public:
 
   void run() {
     ErrorOr<std::string> ExeOrErr = llvm::sys::findProgramByName(Prog);
-    check(ExeOrErr, "unable to find " + Prog + " in PATH: ");
+    if (auto EC = ExeOrErr.getError())
+      fatal(EC, "unable to find " + Prog + " in PATH: ");
     const char *Exe = Saver.save(*ExeOrErr);
     Args.insert(Args.begin(), Exe);
     Args.push_back(nullptr);
@@ -282,12 +283,14 @@ static void quoteAndPrint(raw_ostream &Out, StringRef S) {
 static std::string createDefaultXml() {
   // Create a temporary file.
   SmallString<128> Path;
-  std::error_code EC = sys::fs::createTemporaryFile("tmp", "manifest", Path);
-  check(EC, "cannot create a temporary file");
+  if (auto EC = sys::fs::createTemporaryFile("tmp", "manifest", Path))
+    fatal(EC, "cannot create a temporary file");
 
   // Open the temporary file for writing.
+  std::error_code EC;
   llvm::raw_fd_ostream OS(Path, EC, sys::fs::F_Text);
-  check(EC, "failed to open " + Path);
+  if (EC)
+    fatal(EC, "failed to open " + Path);
 
   // Emit the XML. Note that we do *not* verify that the XML attributes are
   // syntactically correct. This is intentional for link.exe compatibility.
@@ -318,7 +321,8 @@ static std::string createDefaultXml() {
 
 static std::string readFile(StringRef Path) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrErr = MemoryBuffer::getFile(Path);
-  check(BufOrErr, "Could not open " + Path);
+  if (auto EC = BufOrErr.getError())
+    fatal(EC, "Could not open " + Path);
   std::unique_ptr<MemoryBuffer> Buf(std::move(*BufOrErr));
   return Buf->getBuffer();
 }
@@ -332,8 +336,8 @@ static std::string createManifestXml() {
   // If manifest files are supplied by the user using /MANIFESTINPUT
   // option, we need to merge them with the default manifest.
   SmallString<128> Path2;
-  std::error_code EC = sys::fs::createTemporaryFile("tmp", "manifest", Path2);
-  check(EC, "cannot create a temporary file");
+  if (auto EC = sys::fs::createTemporaryFile("tmp", "manifest", Path2))
+    fatal(EC, "cannot create a temporary file");
   FileRemover Remover1(Path1);
   FileRemover Remover2(Path2);
 
@@ -354,13 +358,15 @@ static std::string createManifestXml() {
 std::unique_ptr<MemoryBuffer> createManifestRes() {
   // Create a temporary file for the resource script file.
   SmallString<128> RCPath;
-  std::error_code EC = sys::fs::createTemporaryFile("tmp", "rc", RCPath);
-  check(EC, "cannot create a temporary file");
+  if (auto EC = sys::fs::createTemporaryFile("tmp", "rc", RCPath))
+    fatal(EC, "cannot create a temporary file");
   FileRemover RCRemover(RCPath);
 
   // Open the temporary file for writing.
+  std::error_code EC;
   llvm::raw_fd_ostream Out(RCPath, EC, sys::fs::F_Text);
-  check(EC, "failed to open " + RCPath);
+  if (EC)
+    fatal(EC, "failed to open " + RCPath);
 
   // Write resource script to the RC file.
   Out << "#define LANG_ENGLISH 9\n"
@@ -375,8 +381,8 @@ std::unique_ptr<MemoryBuffer> createManifestRes() {
 
   // Create output resource file.
   SmallString<128> ResPath;
-  EC = sys::fs::createTemporaryFile("tmp", "res", ResPath);
-  check(EC, "cannot create a temporary file");
+  if (auto EC = sys::fs::createTemporaryFile("tmp", "res", ResPath))
+    fatal(EC, "cannot create a temporary file");
 
   Executor E("rc.exe");
   E.add("/fo");
@@ -385,7 +391,8 @@ std::unique_ptr<MemoryBuffer> createManifestRes() {
   E.add(RCPath.str());
   E.run();
   ErrorOr<std::unique_ptr<MemoryBuffer>> Ret = MemoryBuffer::getFile(ResPath);
-  check(Ret, "Could not open " + ResPath);
+  if (auto EC = Ret.getError())
+    fatal(EC, "Could not open " + ResPath);
   return std::move(*Ret);
 }
 
@@ -395,7 +402,8 @@ void createSideBySideManifest() {
     Path = Config->OutputFile + ".manifest";
   std::error_code EC;
   llvm::raw_fd_ostream Out(Path, EC, llvm::sys::fs::F_Text);
-  check(EC, "failed to create manifest");
+  if (EC)
+    fatal(EC, "failed to create manifest");
   Out << createManifestXml();
 }
 
@@ -565,7 +573,8 @@ convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
     E.add(MB.getBufferIdentifier());
   E.run();
   ErrorOr<std::unique_ptr<MemoryBuffer>> Ret = MemoryBuffer::getFile(Path);
-  check(Ret, "Could not open " + Path);
+  if (auto EC = Ret.getError())
+    fatal(EC, "Could not open " + Path);
   return std::move(*Ret);
 }
 
