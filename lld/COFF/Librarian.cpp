@@ -485,5 +485,5 @@ void lld::coff::writeImportLibrary() {
       writeArchive(Path, Members, /*WriteSymtab*/ true, object::Archive::K_GNU,
                    /*Deterministic*/ true, /*Thin*/ false);
   if (auto EC = Result.second)
-    fatal(EC, Twine("Failed to write ") + Path);
+    fatal(EC, "failed to write " + Path);
 }

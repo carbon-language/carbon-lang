@@ -59,7 +59,7 @@ public:
       for (const char *S : Args)
         if (S)
           llvm::errs() << S << " ";
-      fatal("failed");
+      fatal("ExecuteAndWait failed");
     }
   }
 
@@ -222,16 +222,16 @@ void parseManifest(StringRef Arg) {
     return;
   }
   if (!Arg.startswith_lower("embed"))
-    fatal("Invalid option " + Arg);
+    fatal("invalid option " + Arg);
   Config->Manifest = Configuration::Embed;
   Arg = Arg.substr(strlen("embed"));
   if (Arg.empty())
     return;
   if (!Arg.startswith_lower(",id="))
-    fatal("Invalid option " + Arg);
+    fatal("invalid option " + Arg);
   Arg = Arg.substr(strlen(",id="));
   if (Arg.getAsInteger(0, Config->ManifestID))
-    fatal("Invalid option " + Arg);
+    fatal("invalid option " + Arg);
 }
 
 // Parses a string in the form of "level=<string>|uiAccess=<string>|NO".
@@ -255,7 +255,7 @@ void parseManifestUAC(StringRef Arg) {
       std::tie(Config->ManifestUIAccess, Arg) = Arg.split(" ");
       continue;
     }
-    fatal("Invalid option " + Arg);
+    fatal("invalid option " + Arg);
   }
 }
 
@@ -321,7 +321,7 @@ static std::string createDefaultXml() {
 
 static std::string readFile(StringRef Path) {
   std::unique_ptr<MemoryBuffer> MB =
-      check(MemoryBuffer::getFile(Path), "Could not open " + Path);
+      check(MemoryBuffer::getFile(Path), "could not open " + Path);
   std::unique_ptr<MemoryBuffer> Buf(std::move(MB));
   return Buf->getBuffer();
 }
@@ -389,7 +389,7 @@ std::unique_ptr<MemoryBuffer> createManifestRes() {
   E.add("/nologo");
   E.add(RCPath.str());
   E.run();
-  return check(MemoryBuffer::getFile(ResPath), "Could not open " + ResPath);
+  return check(MemoryBuffer::getFile(ResPath), "could not open " + ResPath);
 }
 
 void createSideBySideManifest() {
@@ -556,8 +556,8 @@ std::unique_ptr<MemoryBuffer>
 convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
   // Create an output file path.
   SmallString<128> Path;
-  if (llvm::sys::fs::createTemporaryFile("resource", "obj", Path))
-    fatal("Could not create temporary file");
+  if (auto EC = llvm::sys::fs::createTemporaryFile("resource", "obj", Path))
+    fatal(EC, "could not create temporary file");
 
   // Execute cvtres.exe.
   Executor E("cvtres.exe");
@@ -568,7 +568,7 @@ convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
   for (MemoryBufferRef MB : MBs)
     E.add(MB.getBufferIdentifier());
   E.run();
-  return check(MemoryBuffer::getFile(Path), "Could not open " + Path);
+  return check(MemoryBuffer::getFile(Path), "could not open " + Path);
 }
 
 // Create OptTable

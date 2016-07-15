@@ -240,7 +240,7 @@ void Writer::run() {
   writeSections();
   sortExceptionTable();
   if (auto EC = Buffer->commit())
-    fatal(EC, "Failed to write the output file");
+    fatal(EC, "failed to write the output file");
 }
 
 static StringRef getOutputSection(StringRef Name) {

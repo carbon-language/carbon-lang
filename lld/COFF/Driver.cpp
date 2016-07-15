@@ -62,7 +62,7 @@ static std::string getOutputPath(StringRef Path) {
 // Newly created memory buffers are owned by this driver.
 MemoryBufferRef LinkerDriver::openFile(StringRef Path) {
   std::unique_ptr<MemoryBuffer> MB =
-      check(MemoryBuffer::getFile(Path), "Could not open " + Path);
+      check(MemoryBuffer::getFile(Path), "could not open " + Path);
   MemoryBufferRef MBRef = MB->getMemBufferRef();
   OwningMBs.push_back(std::move(MB)); // take ownership
   return MBRef;
@@ -274,7 +274,7 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   if (Args.filtered_begin(OPT_INPUT) == Args.filtered_end())
-    fatal("no input files.");
+    fatal("no input files");
 
   // Construct search path list.
   SearchPaths.push_back("");
@@ -683,7 +683,7 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     std::error_code EC;
     llvm::raw_fd_ostream Out(Arg->getValue(), EC, OpenFlags::F_Text);
     if (EC)
-      fatal(EC, "Could not create the symbol map");
+      fatal(EC, "could not create the symbol map");
     Symtab.printMap(Out);
   }
   // Call exit to avoid calling destructors.

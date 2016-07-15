@@ -63,7 +63,7 @@ std::string InputFile::getShortName() {
 
 void ArchiveFile::parse() {
   // Parse a MemoryBufferRef as an archive file.
-  File = check(Archive::create(MB), "Failed to parse static library");
+  File = check(Archive::create(MB), "failed to parse static library");
 
   // Allocate a buffer for Lazy objects.
   size_t NumSyms = File->getNumberOfSymbols();
@@ -80,7 +80,7 @@ void ArchiveFile::parse() {
   for (auto &Child : File->children(Err))
     Seen[Child.getChildOffset()].clear();
   if (Err)
-    fatal(Err, "Failed to parse static library");
+    fatal(Err, "failed to parse static library");
 }
 
 // Returns a buffer pointing to a member file containing a given symbol.
@@ -88,26 +88,26 @@ void ArchiveFile::parse() {
 MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
   const Archive::Child &C =
       check(Sym->getMember(),
-            "Could not get the member for symbol " + Sym->getName());
+            "could not get the member for symbol " + Sym->getName());
 
   // Return an empty buffer if we have already returned the same buffer.
   if (Seen[C.getChildOffset()].test_and_set())
     return MemoryBufferRef();
   return check(C.getMemoryBufferRef(),
-               "Could not get the buffer for the member defining symbol " +
+               "could not get the buffer for the member defining symbol " +
                    Sym->getName());
 }
 
 void ObjectFile::parse() {
   // Parse a memory buffer as a COFF file.
   std::unique_ptr<Binary> Bin =
-      check(createBinary(MB), "Failed to parse object file");
+      check(createBinary(MB), "failed to parse object file");
 
   if (auto *Obj = dyn_cast<COFFObjectFile>(Bin.get())) {
     Bin.release();
     COFFObj.reset(Obj);
   } else {
-    fatal(getName() + " is not a COFF file.");
+    fatal(getName() + " is not a COFF file");
   }
 
   // Read section and symbol tables.
@@ -326,7 +326,7 @@ void BitcodeFile::parse() {
   Context.enableDebugTypeODRUniquing();
   ErrorOr<std::unique_ptr<LTOModule>> ModOrErr = LTOModule::createFromBuffer(
       Context, MB.getBufferStart(), MB.getBufferSize(), llvm::TargetOptions());
-  M = check(std::move(ModOrErr), "Could not create lto module");
+  M = check(std::move(ModOrErr), "could not create LTO module");
 
   llvm::StringSaver Saver(Alloc);
   for (unsigned I = 0, E = M->getSymbolCount(); I != E; ++I) {

@@ -164,7 +164,7 @@ void SymbolTable::reportRemainingUndefines(bool Resolve) {
           llvm::errs() << File->getShortName() << ": undefined symbol: "
                        << Sym->getName() << "\n";
   if (!Config->Force)
-    fatal("Link failed");
+    fatal("link failed");
 }
 
 void SymbolTable::addLazy(Lazy *New, std::vector<Symbol *> *Accum) {
