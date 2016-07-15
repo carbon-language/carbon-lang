@@ -4612,16 +4612,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasFlag(options::OPT_fxray_instrument,
                    options::OPT_fnoxray_instrument, false)) {
     CmdArgs.push_back("-fxray-instrument");
-    if (Arg *A = Args.getLastArg(options::OPT_fxray_instruction_threshold_,
-                                 options::OPT_fxray_instruction_threshold_EQ)) {
-      CmdArgs.push_back("-fxray-instruction-threshold");
-      CmdArgs.push_back(A->getValue());
-    }
-  }
-
-  if (Args.hasFlag(options::OPT_fxray_instrument,
-                   options::OPT_fnoxray_instrument, false)) {
-    CmdArgs.push_back("-fxray-instrument");
     if (const Arg *A =
             Args.getLastArg(options::OPT_fxray_instruction_threshold_,
                             options::OPT_fxray_instruction_threshold_EQ)) {
