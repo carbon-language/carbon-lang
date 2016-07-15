@@ -652,11 +652,9 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
 }
 
 void Writer::openFile(StringRef Path) {
-  ErrorOr<std::unique_ptr<FileOutputBuffer>> BufferOrErr =
-      FileOutputBuffer::create(Path, FileSize, FileOutputBuffer::F_executable);
-  if (auto EC = BufferOrErr.getError())
-    fatal(EC, "failed to open " + Path);
-  Buffer = std::move(*BufferOrErr);
+  Buffer = check(
+      FileOutputBuffer::create(Path, FileSize, FileOutputBuffer::F_executable),
+      "failed to open " + Path);
 }
 
 void Writer::fixSafeSEHSymbols() {

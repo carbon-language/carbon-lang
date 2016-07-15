@@ -61,10 +61,8 @@ static std::string getOutputPath(StringRef Path) {
 // Opens a file. Path has to be resolved already.
 // Newly created memory buffers are owned by this driver.
 MemoryBufferRef LinkerDriver::openFile(StringRef Path) {
-  auto MBOrErr = MemoryBuffer::getFile(Path);
-  if (auto EC = MBOrErr.getError())
-    fatal(EC, "Could not open " + Path);
-  std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
+  std::unique_ptr<MemoryBuffer> MB =
+      check(MemoryBuffer::getFile(Path), "Could not open " + Path);
   MemoryBufferRef MBRef = MB->getMemBufferRef();
   OwningMBs.push_back(std::move(MB)); // take ownership
   return MBRef;

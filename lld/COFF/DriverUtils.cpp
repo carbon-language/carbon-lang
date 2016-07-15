@@ -320,10 +320,9 @@ static std::string createDefaultXml() {
 }
 
 static std::string readFile(StringRef Path) {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrErr = MemoryBuffer::getFile(Path);
-  if (auto EC = BufOrErr.getError())
-    fatal(EC, "Could not open " + Path);
-  std::unique_ptr<MemoryBuffer> Buf(std::move(*BufOrErr));
+  std::unique_ptr<MemoryBuffer> MB =
+      check(MemoryBuffer::getFile(Path), "Could not open " + Path);
+  std::unique_ptr<MemoryBuffer> Buf(std::move(MB));
   return Buf->getBuffer();
 }
 
@@ -390,10 +389,7 @@ std::unique_ptr<MemoryBuffer> createManifestRes() {
   E.add("/nologo");
   E.add(RCPath.str());
   E.run();
-  ErrorOr<std::unique_ptr<MemoryBuffer>> Ret = MemoryBuffer::getFile(ResPath);
-  if (auto EC = Ret.getError())
-    fatal(EC, "Could not open " + ResPath);
-  return std::move(*Ret);
+  return check(MemoryBuffer::getFile(ResPath), "Could not open " + ResPath);
 }
 
 void createSideBySideManifest() {
@@ -572,10 +568,7 @@ convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
   for (MemoryBufferRef MB : MBs)
     E.add(MB.getBufferIdentifier());
   E.run();
-  ErrorOr<std::unique_ptr<MemoryBuffer>> Ret = MemoryBuffer::getFile(Path);
-  if (auto EC = Ret.getError())
-    fatal(EC, "Could not open " + Path);
-  return std::move(*Ret);
+  return check(MemoryBuffer::getFile(Path), "Could not open " + Path);
 }
 
 // Create OptTable
