@@ -22,8 +22,8 @@ const uint32_t kDefaultBlockMapAddr = 1;
 
 MsfBuilder::MsfBuilder(uint32_t BlockSize, uint32_t MinBlockCount, bool CanGrow,
                        BumpPtrAllocator &Allocator)
-    : Allocator(Allocator), BlockSize(BlockSize), MininumBlocks(MinBlockCount),
-      IsGrowable(CanGrow), BlockMapAddr(kDefaultBlockMapAddr),
+    : Allocator(Allocator), IsGrowable(CanGrow), BlockSize(BlockSize),
+      MininumBlocks(MinBlockCount), BlockMapAddr(kDefaultBlockMapAddr),
       FreeBlocks(MinBlockCount + 2U, true) {
   FreeBlocks[kSuperBlockBlock] = false;
   FreeBlocks[BlockMapAddr] = false;
