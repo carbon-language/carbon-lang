@@ -142,6 +142,7 @@ void MappingTraits<PdbInfoStream>::mapping(IO &IO, PdbInfoStream &Obj) {
   IO.mapRequired("Guid", Obj.Guid);
   IO.mapRequired("Signature", Obj.Signature);
   IO.mapRequired("Version", Obj.Version);
+  IO.mapRequired("NamedStreams", Obj.NamedStreams);
 }
 
 void MappingTraits<PdbDbiStream>::mapping(IO &IO, PdbDbiStream &Obj) {
@@ -152,4 +153,10 @@ void MappingTraits<PdbDbiStream>::mapping(IO &IO, PdbDbiStream &Obj) {
   IO.mapRequired("PdbDllRbld", Obj.PdbDllRbld);
   IO.mapRequired("Flags", Obj.Flags);
   IO.mapRequired("MachineType", Obj.MachineType);
+}
+
+void MappingTraits<NamedStreamMapping>::mapping(IO &IO,
+                                                NamedStreamMapping &Obj) {
+  IO.mapRequired("Name", Obj.StreamName);
+  IO.mapRequired("StreamNum", Obj.StreamNumber);
 }

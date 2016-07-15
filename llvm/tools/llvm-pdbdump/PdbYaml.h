@@ -38,11 +38,17 @@ struct StreamBlockList {
   std::vector<uint32_t> Blocks;
 };
 
+struct NamedStreamMapping {
+  StringRef StreamName;
+  uint32_t StreamNumber;
+};
+
 struct PdbInfoStream {
   PdbRaw_ImplVer Version;
   uint32_t Signature;
   uint32_t Age;
   PDB_UniqueId Guid;
+  std::vector<NamedStreamMapping> NamedStreams;
 };
 
 struct PdbDbiStream {
@@ -92,10 +98,15 @@ template <> struct MappingTraits<pdb::yaml::PdbInfoStream> {
 template <> struct MappingTraits<pdb::yaml::PdbDbiStream> {
   static void mapping(IO &IO, pdb::yaml::PdbDbiStream &Obj);
 };
+
+template <> struct MappingTraits<pdb::yaml::NamedStreamMapping> {
+  static void mapping(IO &IO, pdb::yaml::NamedStreamMapping &Obj);
+};
 }
 }
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(uint32_t)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::pdb::yaml::NamedStreamMapping)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::pdb::yaml::StreamBlockList)
 
 #endif // LLVM_TOOLS_LLVMPDBDUMP_PDBYAML_H

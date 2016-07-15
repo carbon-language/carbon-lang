@@ -106,6 +106,12 @@ Error YAMLOutputStyle::dumpPDBStream() {
   Obj.PdbStream->Guid = InfoS.getGuid();
   Obj.PdbStream->Signature = InfoS.getSignature();
   Obj.PdbStream->Version = InfoS.getVersion();
+  for (auto &NS : InfoS.named_streams()) {
+    yaml::NamedStreamMapping Mapping;
+    Mapping.StreamName = NS.getKey();
+    Mapping.StreamNumber = NS.getValue();
+    Obj.PdbStream->NamedStreams.push_back(Mapping);
+  }
 
   return Error::success();
 }

@@ -33,6 +33,8 @@ public:
   void setAge(uint32_t A);
   void setGuid(PDB_UniqueId G);
 
+  NameMapBuilder &getNamedStreamsBuilder();
+
   uint32_t calculateSerializedLength() const;
 
   Expected<std::unique_ptr<InfoStream>> build(PDBFile &File);

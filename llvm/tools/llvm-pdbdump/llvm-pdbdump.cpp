@@ -361,6 +361,9 @@ static void yamlToPdb(StringRef Path) {
     InfoBuilder.setGuid(YamlObj.PdbStream->Guid);
     InfoBuilder.setSignature(YamlObj.PdbStream->Signature);
     InfoBuilder.setVersion(YamlObj.PdbStream->Version);
+    for (auto &NM : YamlObj.PdbStream->NamedStreams)
+      InfoBuilder.getNamedStreamsBuilder().addMapping(NM.StreamName,
+                                                      NM.StreamNumber);
   }
 
   if (YamlObj.DbiStream.hasValue()) {

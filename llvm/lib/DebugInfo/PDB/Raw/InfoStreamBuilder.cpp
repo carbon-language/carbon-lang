@@ -28,6 +28,10 @@ void InfoStreamBuilder::setAge(uint32_t A) { Age = A; }
 
 void InfoStreamBuilder::setGuid(PDB_UniqueId G) { Guid = G; }
 
+NameMapBuilder &InfoStreamBuilder::getNamedStreamsBuilder() {
+  return NamedStreams;
+}
+
 uint32_t InfoStreamBuilder::calculateSerializedLength() const {
   return sizeof(InfoStream::HeaderInfo) +
          NamedStreams.calculateSerializedLength();
@@ -55,5 +59,9 @@ Expected<std::unique_ptr<InfoStream>> InfoStreamBuilder::build(PDBFile &File) {
   Info->Signature = *Sig;
   Info->Age = *Age;
   Info->Guid = *Guid;
+  auto NS = NamedStreams.build();
+  if (!NS)
+    return NS.takeError();
+  Info->NamedStreams = **NS;
   return std::move(Info);
 }
