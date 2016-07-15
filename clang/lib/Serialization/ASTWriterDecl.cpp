@@ -2126,7 +2126,7 @@ static bool isRequiredDecl(const Decl *D, ASTContext &Context,
   // ImportDecl is used by codegen to determine the set of imported modules to
   // search for inputs for automatic linking; include it if it has a semantic
   // effect.
-  if (isa<ImportDecl>(D))
+  if (isa<ImportDecl>(D) && !WritingModule)
     return true;
 
   return Context.DeclMustBeEmitted(D);
