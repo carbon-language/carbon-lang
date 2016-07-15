@@ -52,6 +52,13 @@ ReorderBlocks(
                                 "behavior"),
                      clEnumValEnd));
 
+static llvm::cl::opt<bool>
+MinBranchClusters(
+    "min-branch-clusters",
+    llvm::cl::desc("use a modified clustering algorithm geared towards "
+                   "minimizing branches"),
+    llvm::cl::Hidden);
+
 } // namespace opts
 
 namespace llvm {
@@ -384,7 +391,8 @@ void ReorderBasicBlocks::runOnFunctions(
         (opts::SplitFunctions == BinaryFunction::ST_EH &&
          Function.hasEHRanges()) ||
         (LargeFunctions.find(It.first) != LargeFunctions.end());
-      Function.modifyLayout(opts::ReorderBlocks, ShouldSplit);
+      Function.modifyLayout(opts::ReorderBlocks, opts::MinBranchClusters,
+                            ShouldSplit);
       if (opts::PrintAll || opts::PrintReordered)
         Function.print(errs(), "after reordering blocks", true);
       if (opts::DumpDotAll)

@@ -21,8 +21,11 @@
 
 
 namespace llvm {
-namespace bolt {
 
+class raw_ostream;
+
+
+namespace bolt {
 
 class BinaryBasicBlock;
 class BinaryFunction;
@@ -51,7 +54,7 @@ public:
   void computeClusterAverageFrequency();
 
   /// Clear clusters and related info.
-  void reset();
+  virtual void reset();
 
   void printClusters() const;
 
@@ -59,12 +62,96 @@ public:
 };
 
 
-/// This clustering algorithm is based on a greedy heuristic suggested by
-/// Pettis (PLDI '90).
+/// Base class for a greedy clustering algorithm that selects edges in order
+/// based on some heuristic and uses them to join basic blocks into clusters.
 class GreedyClusterAlgorithm : public ClusterAlgorithm {
+protected:
+  // Represents an edge between two basic blocks, with source, destination, and
+  // profile count.
+  struct EdgeTy {
+    BinaryBasicBlock *Src;
+    BinaryBasicBlock *Dst;
+    uint64_t Count;
+
+    EdgeTy(BinaryBasicBlock *Src, BinaryBasicBlock *Dst, uint64_t Count) :
+      Src(Src), Dst(Dst), Count(Count) { }
+
+    void print(raw_ostream &OS) const;
+  };
+
+  struct EdgeHash {
+   size_t operator() (const EdgeTy &E) const;
+  };
+
+  struct EdgeEqual {
+    bool operator() (const EdgeTy &A, const EdgeTy &B) const;
+  };
+
+  // Virtual methods that allow custom specialization of the heuristic used by
+  // the algorithm to select edges.
+  virtual void initQueue(
+      std::vector<EdgeTy> &Queue, const BinaryFunction &BF) =0;
+  virtual void adjustQueue(
+      std::vector<EdgeTy> &Queue, const BinaryFunction &BF) =0;
+  virtual bool areClustersCompatible(
+      const ClusterTy &Front, const ClusterTy &Back, const EdgeTy &E) const =0;
+
+  // Map from basic block to owning cluster index.
+  using BBToClusterMapTy = std::unordered_map<BinaryBasicBlock *, unsigned>;
+  BBToClusterMapTy BBToClusterMap;
+
 public:
   void clusterBasicBlocks(const BinaryFunction &BF) override;
+  void reset() override;
 };
+
+
+/// This clustering algorithm is based on a greedy heuristic suggested by
+/// Pettis and Hansen (PLDI '90).
+class PHGreedyClusterAlgorithm : public GreedyClusterAlgorithm {
+protected:
+  void initQueue(
+      std::vector<EdgeTy> &Queue, const BinaryFunction &BF)  override;
+  void adjustQueue(
+      std::vector<EdgeTy> &Queue, const BinaryFunction &BF) override;
+  bool areClustersCompatible(
+      const ClusterTy &Front, const ClusterTy &Back, const EdgeTy &E) const
+  override;
+};
+
+
+/// This clustering algorithm is based on a greedy heuristic that is a
+/// modification of the heuristic suggested by Pettis (PLDI '90). It is
+/// geared towards minimizing branches.
+class MinBranchGreedyClusterAlgorithm : public GreedyClusterAlgorithm {
+private:
+  // Map from an edge to its weight which is used by the algorithm to sort the
+  // edges.
+  std::unordered_map<EdgeTy, int64_t, EdgeHash, EdgeEqual> Weight;
+
+  // The weight of an edge is calculated as the win in branches if we choose
+  // to layout this edge as a fall-through. For example, consider the edges
+  //  A -> B with execution count 500,
+  //  A -> C with execution count 100, and
+  //  D -> B with execution count 150
+  // wher B, C are the only successors of A and A, D are thr only predessecors
+  // of B. Then if we choose to layout edge A -> B as a fallthrough, the win in
+  // branches would be 500 - 100 - 150 = 250. That is the weight of edge A->B.
+  int64_t calculateWeight(const EdgeTy &E, const BinaryFunction &BF) const;
+
+protected:
+  void initQueue(
+      std::vector<EdgeTy> &Queue, const BinaryFunction &BF)  override;
+  void adjustQueue(
+      std::vector<EdgeTy> &Queue, const BinaryFunction &BF) override;
+  bool areClustersCompatible(
+      const ClusterTy &Front, const ClusterTy &Back, const EdgeTy &E) const
+  override;
+
+public:
+  void reset() override;
+};
+
 
 /// Objects of this class implement various basic block reordering alogrithms.
 /// Most of these algorithms depend on a clustering alogrithm.

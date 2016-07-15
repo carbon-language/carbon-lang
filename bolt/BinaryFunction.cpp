@@ -1181,7 +1181,8 @@ bool BinaryFunction::fixCFIState() {
   return true;
 }
 
-void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
+void BinaryFunction::modifyLayout(LayoutType Type, bool MinBranchClusters,
+                                 bool Split) {
   if (BasicBlocksLayout.empty() || Type == LT_NONE)
     return;
 
@@ -1203,7 +1204,11 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool Split) {
   else {
     DEBUG(dbgs() << "running block layout heuristics on " << getName() << "\n");
 
-    std::unique_ptr<ClusterAlgorithm> CAlgo(new GreedyClusterAlgorithm());
+    std::unique_ptr<ClusterAlgorithm> CAlgo;
+    if (MinBranchClusters)
+      CAlgo.reset(new MinBranchGreedyClusterAlgorithm());
+    else
+      CAlgo.reset(new PHGreedyClusterAlgorithm());
 
     switch(Type) {
     case LT_OPTIMIZE:

@@ -424,7 +424,7 @@ public:
 
   /// Modify code layout making necessary adjustments to instructions at the
   /// end of basic blocks.
-  void modifyLayout(LayoutType Type, bool Split);
+  void modifyLayout(LayoutType Type, bool MinBranchClusters, bool Split);
 
   /// Find the loops in the CFG of the function and store infromation about
   /// them.

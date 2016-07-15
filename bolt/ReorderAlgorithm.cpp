@@ -18,6 +18,9 @@
 #include <queue>
 #include <functional>
 
+#undef  DEBUG_TYPE
+#define DEBUG_TYPE "bolt"
+
 using namespace llvm;
 using namespace bolt;
 
@@ -82,6 +85,20 @@ void ClusterAlgorithm::reset() {
   AvgFreq.clear();
 }
 
+void GreedyClusterAlgorithm::EdgeTy::print(raw_ostream &OS) const {
+  OS << Src->getName() << " -> " << Dst->getName() << ", count: " << Count;
+}
+
+size_t GreedyClusterAlgorithm::EdgeHash::operator()(const EdgeTy &E) const {
+  HashPair<BinaryBasicBlock *, BinaryBasicBlock *> Hasher;
+  return Hasher(std::make_pair(E.Src, E.Dst));
+}
+
+bool GreedyClusterAlgorithm::EdgeEqual::operator()(
+    const EdgeTy &A, const EdgeTy &B) const {
+  return A.Src == B.Src && A.Dst == B.Dst;
+}
+
 void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF) {
   reset();
 
@@ -89,96 +106,270 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF) {
   // maximize weight during a path traversing all BBs. In this way, we will
   // convert the hottest branches into fall-throughs.
 
-  // Encode an edge between two basic blocks, source and destination
-  typedef std::pair<BinaryBasicBlock *, BinaryBasicBlock *> EdgeTy;
-  typedef HashPair<BinaryBasicBlock *, BinaryBasicBlock *> Hasher;
-  std::unordered_map<EdgeTy, uint64_t, Hasher> Weight;
+  // This is the queue of edges from which we will pop edges and use them to
+  // cluster basic blocks in a greedy fashion.
+  std::vector<EdgeTy> Queue;
 
-  // Define a comparison function to establish SWO between edges
-  auto Comp = [&] (EdgeTy A, EdgeTy B) {
-    // With equal weights, prioritize branches with lower index
-    // source/destination. This helps to keep original block order for blocks
-    // when optimal order cannot be deducted from a profile.
-    if (Weight[A] == Weight[B]) {
-      uint32_t ASrcBBIndex = BF.getIndex(A.first);
-      uint32_t BSrcBBIndex = BF.getIndex(B.first);
-      if (ASrcBBIndex != BSrcBBIndex)
-        return ASrcBBIndex > BSrcBBIndex;
-      return BF.getIndex(A.second) > BF.getIndex(B.second);
-    }
-    return Weight[A] < Weight[B];
-  };
-  std::priority_queue<EdgeTy, std::vector<EdgeTy>, decltype(Comp)> Queue(Comp);
-
-  typedef std::unordered_map<BinaryBasicBlock *, int> BBToClusterMapTy;
-  BBToClusterMapTy BBToClusterMap;
-
+  // Initialize inter-cluster weights.
   ClusterEdges.resize(BF.layout_size());
 
+  // Initialize clusters and edge queue.
   for (auto BB : BF.layout()) {
-    // Create a cluster for this BB
+    // Create a cluster for this BB.
     uint32_t I = Clusters.size();
     Clusters.emplace_back();
     auto &Cluster = Clusters.back();
     Cluster.push_back(BB);
     BBToClusterMap[BB] = I;
-    // Populate priority queue with edges
+    // Populate priority queue with edges.
     auto BI = BB->branch_info_begin();
     for (auto &I : BB->successors()) {
-      if (BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
-        Weight[std::make_pair(BB, I)] = BI->Count;
-      Queue.push(std::make_pair(BB, I));
+      assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
+             "attempted reordering blocks of function with no profile data");
+      Queue.emplace_back(EdgeTy(BB, I, BI->Count));
       ++BI;
     }
   }
+  // Sort and adjust the edge queue.
+  initQueue(Queue, BF);
 
-  // Grow clusters in a greedy fashion
+  // Grow clusters in a greedy fashion.
   while (!Queue.empty()) {
-    auto elmt = Queue.top();
-    Queue.pop();
+    auto E = Queue.back();
+    Queue.pop_back();
 
-    BinaryBasicBlock *BBSrc = elmt.first;
-    BinaryBasicBlock *BBDst = elmt.second;
+    BinaryBasicBlock *SrcBB = E.Src;
+    BinaryBasicBlock *DstBB = E.Dst;
+
+    DEBUG(dbgs() << "Popped edge ";
+          E.print(dbgs());
+          dbgs() << "\n");
 
     // Case 1: BBSrc and BBDst are the same. Ignore this edge
-    if (BBSrc == BBDst || BBDst == *BF.layout_begin())
+    if (SrcBB == DstBB || DstBB == *BF.layout_begin()) {
+      DEBUG(dbgs() << "\tIgnored (same src, dst)\n");
       continue;
+    }
 
-    int I = BBToClusterMap[BBSrc];
-    int J = BBToClusterMap[BBDst];
+    int I = BBToClusterMap[SrcBB];
+    int J = BBToClusterMap[DstBB];
 
     // Case 2: If they are already allocated at the same cluster, just increase
     // the weight of this cluster
     if (I == J) {
-      ClusterEdges[I][I] += Weight[elmt];
+      ClusterEdges[I][I] += E.Count;
+      DEBUG(dbgs() << "\tIgnored (src, dst belong to the same cluster)\n");
       continue;
     }
 
     auto &ClusterA = Clusters[I];
     auto &ClusterB = Clusters[J];
-    if (ClusterA.back() == BBSrc && ClusterB.front() == BBDst) {
-      // Case 3: BBSrc is at the end of a cluster and BBDst is at the start,
-      // allowing us to merge two clusters
+    if (areClustersCompatible(ClusterA, ClusterB, E)) {
+      // Case 3: SrcBB is at the end of a cluster and DstBB is at the start,
+      // allowing us to merge two clusters.
       for (auto BB : ClusterB)
         BBToClusterMap[BB] = I;
       ClusterA.insert(ClusterA.end(), ClusterB.begin(), ClusterB.end());
       ClusterB.clear();
+      // Increase the intra-cluster edge count of cluster A with the count of
+      // this edge as well as with the total count of previously visited edges
+      // from cluster B cluster A.
+      ClusterEdges[I][I] += E.Count;
+      ClusterEdges[I][I] += ClusterEdges[J][I];
       // Iterate through all inter-cluster edges and transfer edges targeting
       // cluster B to cluster A.
-      // It is bad to have to iterate though all edges when we could have a list
-      // of predecessors for cluster B. However, it's not clear if it is worth
-      // the added code complexity to create a data structure for clusters that
-      // maintains a list of predecessors. Maybe change this if it becomes a
-      // deal breaker.
       for (uint32_t K = 0, E = ClusterEdges.size(); K != E; ++K)
         ClusterEdges[K][I] += ClusterEdges[K][J];
+      DEBUG(dbgs() << "\tMerged clusters of src, dst\n");
+      // Adjust the weights of the remaining edges and re-sort the queue.
+      adjustQueue(Queue, BF);
     } else {
-      // Case 4: Both BBSrc and BBDst are allocated in positions we cannot
-      // merge them. Annotate the weight of this edge in the weight between
-      // clusters to help us decide ordering between these clusters.
-      ClusterEdges[I][J] += Weight[elmt];
+      // Case 4: Both SrcBB and DstBB are allocated in positions we cannot
+      // merge them. Add the count of this edge to the inter-cluster edge count
+      // between clusters A and B to help us decide ordering between these
+      // clusters.
+      ClusterEdges[I][J] += E.Count;
+      DEBUG(dbgs() << "\tIgnored (src, dst belong to incompatible clusters)\n");
     }
   }
+}
+
+void GreedyClusterAlgorithm::reset() {
+  ClusterAlgorithm::reset();
+  BBToClusterMap.clear();
+}
+
+void PHGreedyClusterAlgorithm::initQueue(
+    std::vector<EdgeTy> &Queue, const BinaryFunction &BF) {
+  // Define a comparison function to establish SWO between edges.
+  auto Comp = [&BF] (const EdgeTy &A, const EdgeTy &B) {
+    // With equal weights, prioritize branches with lower index
+    // source/destination. This helps to keep original block order for blocks
+    // when optimal order cannot be deducted from a profile.
+    if (A.Count == B.Count) {
+      uint32_t ASrcBBIndex = BF.getIndex(A.Src);
+      uint32_t BSrcBBIndex = BF.getIndex(B.Src);
+      if (ASrcBBIndex != BSrcBBIndex)
+        return ASrcBBIndex > BSrcBBIndex;
+      return BF.getIndex(A.Dst) > BF.getIndex(B.Dst);
+    }
+    return A.Count < B.Count;
+  };
+
+  // Sort edges in increasing profile count order.
+  std::sort(Queue.begin(), Queue.end(), Comp);
+}
+
+void PHGreedyClusterAlgorithm::adjustQueue(
+    std::vector<EdgeTy> &Queue, const BinaryFunction &BF) {
+  // Nothing to do.
+  return;
+}
+
+bool PHGreedyClusterAlgorithm::areClustersCompatible(
+    const ClusterTy &Front, const ClusterTy &Back, const EdgeTy &E) const {
+  return Front.back() == E.Src && Back.front() == E.Dst;
+}
+
+int64_t MinBranchGreedyClusterAlgorithm::calculateWeight(
+    const EdgeTy &E, const BinaryFunction &BF) const {
+  const BinaryBasicBlock *SrcBB = E.Src;
+  const BinaryBasicBlock *DstBB = E.Dst;
+
+  // Initial weight value.
+  int64_t W = (int64_t)E.Count;
+
+  // Adjust the weight by taking into account other edges with the same source.
+  auto BI = SrcBB->branch_info_begin();
+  for (const BinaryBasicBlock *SuccBB : SrcBB->successors()) {
+    assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
+           "attempted reordering blocks of function with no profile data");
+    assert(BI->Count <= std::numeric_limits<int64_t>::max() &&
+           "overflow detected");
+    // Ignore edges with same source and destination, edges that target the
+    // entry block as well as the edge E itself.
+    if (SuccBB != SrcBB && SuccBB != *BF.layout_begin() && SuccBB != DstBB)
+      W -= (int64_t)BI->Count;
+    ++BI;
+  }
+
+  // Adjust the weight by taking into account other edges with the same
+  // destination.
+  for (const BinaryBasicBlock *PredBB : DstBB->predecessors()) {
+    // Ignore edges with same source and destination as well as the edge E
+    // itself.
+    if (PredBB == DstBB || PredBB == SrcBB)
+      continue;
+    auto BI = PredBB->branch_info_begin();
+    for (const BinaryBasicBlock *SuccBB : PredBB->successors()) {
+      if (SuccBB == DstBB)
+        break;
+      ++BI;
+    }
+    assert(BI != PredBB->branch_info_end() && "invalied control flow graph");
+    assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
+           "attempted reordering blocks of function with no profile data");
+    assert(BI->Count <= std::numeric_limits<int64_t>::max() &&
+           "overflow detected");
+    W -= (int64_t)BI->Count;
+  }
+
+  return W;
+}
+
+void MinBranchGreedyClusterAlgorithm::initQueue(
+    std::vector<EdgeTy> &Queue, const BinaryFunction &BF) {
+  // Initialize edge weights.
+  for (const EdgeTy &E : Queue)
+    Weight.emplace(std::make_pair(E, calculateWeight(E, BF)));
+
+  // Sort edges in increasing weight order.
+  adjustQueue(Queue, BF);
+}
+
+void MinBranchGreedyClusterAlgorithm::adjustQueue(
+    std::vector<EdgeTy> &Queue, const BinaryFunction &BF) {
+  // Define a comparison function to establish SWO between edges.
+  auto Comp = [&] (const EdgeTy &A, const EdgeTy &B) {
+    // With equal weights, prioritize branches with lower index
+    // source/destination. This helps to keep original block order for blocks
+    // when optimal order cannot be deducted from a profile.
+    if (Weight[A] == Weight[B]) {
+      uint32_t ASrcBBIndex = BF.getIndex(A.Src);
+      uint32_t BSrcBBIndex = BF.getIndex(B.Src);
+      if (ASrcBBIndex != BSrcBBIndex)
+        return ASrcBBIndex > BSrcBBIndex;
+      return BF.getIndex(A.Dst) > BF.getIndex(B.Dst);
+    }
+    return Weight[A] < Weight[B];
+  };
+
+  // Iterate through all remaining edges to find edges that have their
+  // source and destination in the same cluster.
+  std::vector<EdgeTy> NewQueue;
+  for (const EdgeTy &E : Queue) {
+    BinaryBasicBlock *SrcBB = E.Src;
+    BinaryBasicBlock *DstBB = E.Dst;
+
+    // Case 1: SrcBB and DstBB are the same or DstBB is the entry block. Ignore
+    // this edge.
+    if (SrcBB == DstBB || DstBB == *BF.layout_begin()) {
+      DEBUG(dbgs() << "\tAdjustment: Ignored edge ";
+            E.print(dbgs());
+            dbgs() << " (same src, dst)\n");
+      continue;
+    }
+
+    int I = BBToClusterMap[SrcBB];
+    int J = BBToClusterMap[DstBB];
+    auto &ClusterA = Clusters[I];
+    auto &ClusterB = Clusters[J];
+
+    // Case 2: They are already allocated at the same cluster or incompatible
+    // clusters. Adjust the weights of edges with the same source or
+    // destination, so that this edge has no effect on them any more, and ignore
+    // this edge. Also increase the intra- (or inter-) cluster edge count.
+    if (I == J || !areClustersCompatible(ClusterA, ClusterB, E)) {
+      ClusterEdges[I][J] += E.Count;
+      DEBUG(dbgs() << "\tAdjustment: Ignored edge ";
+            E.print(dbgs());
+            dbgs() << " (src, dst belong to same cluster or incompatible "
+                      "clusters)\n");
+      for (BinaryBasicBlock *SuccBB : SrcBB->successors()) {
+        if (SuccBB == DstBB)
+          continue;
+        auto WI = Weight.find(EdgeTy(SrcBB, SuccBB, 0));
+        assert(WI != Weight.end() && "CFG edge not found in Weight map");
+        WI->second += (int64_t)E.Count;
+      }
+      for (BinaryBasicBlock *PredBB : DstBB->predecessors()) {
+        if (PredBB == SrcBB)
+          continue;
+        auto WI = Weight.find(EdgeTy(PredBB, DstBB, 0));
+        assert(WI != Weight.end() && "CFG edge not found in Weight map");
+        WI->second += (int64_t)E.Count;
+      }
+      continue;
+    }
+
+    // Case 3: None of the previous cases is true, so just keep this edge in
+    // the queue.
+    NewQueue.emplace_back(E);
+  }
+
+  // Sort remaining edges in increasing weight order.
+  Queue.swap(NewQueue);
+  std::sort(Queue.begin(), Queue.end(), Comp);
+}
+
+bool MinBranchGreedyClusterAlgorithm::areClustersCompatible(
+    const ClusterTy &Front, const ClusterTy &Back, const EdgeTy &E) const {
+  return Front.back() == E.Src && Back.front() == E.Dst;
+}
+
+void MinBranchGreedyClusterAlgorithm::reset() {
+  GreedyClusterAlgorithm::reset();
+  Weight.clear();
 }
 
 void OptimalReorderAlgorithm::reorderBasicBlocks(
