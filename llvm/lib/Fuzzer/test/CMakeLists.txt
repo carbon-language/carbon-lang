@@ -90,6 +90,7 @@ set(Tests
   SpamyTest
   StrcmpTest
   StrncmpTest
+  StrstrTest
   SwitchTest
   ThreadedLeakTest
   ThreadedTest
