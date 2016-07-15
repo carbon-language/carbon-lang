@@ -551,8 +551,8 @@ int CodeCoverageTool::show(int argc, const char **argv,
     ThreadCount = std::thread::hardware_concurrency();
   ThreadPool Pool(ThreadCount);
 
-  for (StringRef &SourceFile : SourceFiles) {
-    Pool.async([this, &SourceFile, &Coverage, &Printer, ShowFilenames] {
+  for (StringRef SourceFile : SourceFiles) {
+    Pool.async([this, SourceFile, &Coverage, &Printer, ShowFilenames] {
       auto View = createSourceFileView(SourceFile, *Coverage);
       if (!View) {
         deferWarning("The file '" + SourceFile.str() + "' isn't covered.");
