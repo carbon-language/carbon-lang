@@ -26,11 +26,11 @@
 #include "isl/union_map.h"
 
 extern "C" {
-#include "cuda.h"
-#include "gpu.h"
-#include "gpu_print.h"
-#include "ppcg.h"
-#include "schedule.h"
+#include "ppcg/cuda.h"
+#include "ppcg/gpu.h"
+#include "ppcg/gpu_print.h"
+#include "ppcg/ppcg.h"
+#include "ppcg/schedule.h"
 }
 
 #include "llvm/Support/Debug.h"
