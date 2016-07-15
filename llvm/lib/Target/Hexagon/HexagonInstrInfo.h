@@ -79,10 +79,10 @@ public:
   /// If AllowModify is true, then this routine is allowed to modify the basic
   /// block (e.g. delete instructions after the unconditional branch).
   ///
-  bool AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
-                         MachineBasicBlock *&FBB,
-                         SmallVectorImpl<MachineOperand> &Cond,
-                         bool AllowModify) const override;
+  bool analyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                     MachineBasicBlock *&FBB,
+                     SmallVectorImpl<MachineOperand> &Cond,
+                     bool AllowModify) const override;
 
   /// Remove the branching code at the end of the specific MBB.
   /// This is only invoked in cases where AnalyzeBranch returns success. It

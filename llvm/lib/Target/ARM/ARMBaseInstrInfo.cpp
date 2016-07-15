@@ -290,11 +290,11 @@ MachineInstr *ARMBaseInstrInfo::convertToThreeAddress(
 }
 
 // Branch analysis.
-bool
-ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
-                                MachineBasicBlock *&FBB,
-                                SmallVectorImpl<MachineOperand> &Cond,
-                                bool AllowModify) const {
+bool ARMBaseInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
+                                     MachineBasicBlock *&TBB,
+                                     MachineBasicBlock *&FBB,
+                                     SmallVectorImpl<MachineOperand> &Cond,
+                                     bool AllowModify) const {
   TBB = nullptr;
   FBB = nullptr;
 

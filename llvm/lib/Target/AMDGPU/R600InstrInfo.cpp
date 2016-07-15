@@ -683,12 +683,11 @@ static bool isBranch(unsigned Opcode) {
       Opcode == AMDGPU::BRANCH_COND_f32;
 }
 
-bool
-R600InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
-                             MachineBasicBlock *&TBB,
-                             MachineBasicBlock *&FBB,
-                             SmallVectorImpl<MachineOperand> &Cond,
-                             bool AllowModify) const {
+bool R600InstrInfo::analyzeBranch(MachineBasicBlock &MBB,
+                                  MachineBasicBlock *&TBB,
+                                  MachineBasicBlock *&FBB,
+                                  SmallVectorImpl<MachineOperand> &Cond,
+                                  bool AllowModify) const {
   // Most of the following comes from the ARM implementation of AnalyzeBranch
 
   // If the block has no terminators, it just falls into the block after it.

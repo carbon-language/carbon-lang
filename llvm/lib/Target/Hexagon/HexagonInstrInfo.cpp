@@ -370,7 +370,7 @@ unsigned HexagonInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
 /// Cond[1] = R
 /// Cond[2] = Imm
 ///
-bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
+bool HexagonInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
                                      MachineBasicBlock *&TBB,
                                      MachineBasicBlock *&FBB,
                                      SmallVectorImpl<MachineOperand> &Cond,
@@ -587,7 +587,7 @@ unsigned HexagonInstrInfo::InsertBranch(MachineBasicBlock &MBB,
       SmallVector<MachineOperand, 4> Cond;
       auto Term = MBB.getFirstTerminator();
       if (Term != MBB.end() && isPredicated(*Term) &&
-          !AnalyzeBranch(MBB, NewTBB, NewFBB, Cond, false)) {
+          !analyzeBranch(MBB, NewTBB, NewFBB, Cond, false)) {
         MachineBasicBlock *NextBB = &*++MBB.getIterator();
         if (NewTBB == NextBB) {
           ReverseBranchCondition(Cond);

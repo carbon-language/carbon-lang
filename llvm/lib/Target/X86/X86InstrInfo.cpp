@@ -4117,7 +4117,7 @@ bool X86InstrInfo::AnalyzeBranchImpl(
   return false;
 }
 
-bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
+bool X86InstrInfo::analyzeBranch(MachineBasicBlock &MBB,
                                  MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
                                  SmallVectorImpl<MachineOperand> &Cond,
@@ -4126,7 +4126,7 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   return AnalyzeBranchImpl(MBB, TBB, FBB, Cond, CondBranches, AllowModify);
 }
 
-bool X86InstrInfo::AnalyzeBranchPredicate(MachineBasicBlock &MBB,
+bool X86InstrInfo::analyzeBranchPredicate(MachineBasicBlock &MBB,
                                           MachineBranchPredicate &MBP,
                                           bool AllowModify) const {
   using namespace std::placeholders;

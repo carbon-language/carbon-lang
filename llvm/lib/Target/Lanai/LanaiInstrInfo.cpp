@@ -562,7 +562,7 @@ LanaiInstrInfo::optimizeSelect(MachineInstr &MI,
 // - condition is populated with machine operands needed to generate the branch
 //   to insert in InsertBranch;
 // Returns: false if branch could successfully be analyzed.
-bool LanaiInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
+bool LanaiInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
                                    MachineBasicBlock *&TrueBlock,
                                    MachineBasicBlock *&FalseBlock,
                                    SmallVectorImpl<MachineOperand> &Condition,

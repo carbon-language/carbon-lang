@@ -439,7 +439,7 @@ void HexagonSplitDoubleRegs::collectIndRegsForLoop(const MachineLoop *L,
   MachineBasicBlock *TB = 0, *FB = 0;
   MachineBasicBlock *TmpLB = const_cast<MachineBasicBlock*>(LB);
   SmallVector<MachineOperand,2> Cond;
-  bool BadLB = TII->AnalyzeBranch(*TmpLB, TB, FB, Cond, false);
+  bool BadLB = TII->analyzeBranch(*TmpLB, TB, FB, Cond, false);
   // Only analyzable conditional branches. HII::AnalyzeBranch will put
   // the branch opcode as the first element of Cond, and the predicate
   // operand as the second.
