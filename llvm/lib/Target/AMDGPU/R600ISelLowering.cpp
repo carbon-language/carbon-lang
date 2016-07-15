@@ -641,7 +641,7 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
     unsigned IntrinsicID =
                          cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
     switch (IntrinsicID) {
-    case AMDGPUIntrinsic::R600_store_swizzle: {
+    case AMDGPUIntrinsic::r600_store_swizzle: {
       SDLoc DL(Op);
       const SDValue Args[8] = {
         Chain,

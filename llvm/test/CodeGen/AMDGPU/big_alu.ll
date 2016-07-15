@@ -1284,7 +1284,7 @@ ENDIF178:                                         ; preds = %IF179, %ENDIF175
   %tmp954 = insertelement <4 x float> %tmp953, float %result.i8, i32 1
   %tmp955 = insertelement <4 x float> %tmp954, float %result.i4, i32 2
   %tmp956 = insertelement <4 x float> %tmp955, float %tmp931, i32 3
-  call void @llvm.R600.store.swizzle(<4 x float> %tmp956, i32 0, i32 0)
+  call void @llvm.r600.store.swizzle(<4 x float> %tmp956, i32 0, i32 0)
   ret void
 }
 
@@ -1303,7 +1303,7 @@ declare float @llvm.exp2.f32(float) #0
 ; Function Attrs: nounwind readnone
 declare float @llvm.AMDGPU.clamp.f32(float, float, float) #0
 
-declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
+declare void @llvm.r600.store.swizzle(<4 x float>, i32, i32)
 
 ; Function Attrs: nounwind readnone
 declare <4 x float> @llvm.r600.tex(<4 x float>, i32, i32, i32, i32, i32, i32, i32, i32, i32) #0

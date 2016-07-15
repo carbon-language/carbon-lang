@@ -209,12 +209,12 @@ main_body:
   %201 = insertelement <4 x float> %200, float %79, i32 1
   %202 = insertelement <4 x float> %201, float %83, i32 2
   %203 = insertelement <4 x float> %202, float %87, i32 3
-  call void @llvm.R600.store.swizzle(<4 x float> %203, i32 60, i32 1)
+  call void @llvm.r600.store.swizzle(<4 x float> %203, i32 60, i32 1)
   %204 = insertelement <4 x float> undef, float %197, i32 0
   %205 = insertelement <4 x float> %204, float %198, i32 1
   %206 = insertelement <4 x float> %205, float %199, i32 2
   %207 = insertelement <4 x float> %206, float %117, i32 3
-  call void @llvm.R600.store.swizzle(<4 x float> %207, i32 0, i32 2)
+  call void @llvm.r600.store.swizzle(<4 x float> %207, i32 0, i32 2)
   ret void
 }
 
@@ -233,7 +233,7 @@ declare float @llvm.AMDGPU.clamp.f32(float, float, float) #1
 ; Function Attrs: nounwind readonly
 declare float @llvm.pow.f32(float, float) #2
 
-declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32) #3
+declare void @llvm.r600.store.swizzle(<4 x float>, i32, i32) #3
 
 attributes #1 = { nounwind readnone }
 attributes #2 = { nounwind readonly }
