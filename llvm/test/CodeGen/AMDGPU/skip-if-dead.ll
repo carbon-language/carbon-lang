@@ -249,6 +249,54 @@ exit:
   ret void
 }
 
+; bug 28550
+; CHECK-LABEL: {{^}}phi_use_def_before_kill:
+; CHECK: v_cndmask_b32_e64 [[PHIREG:v[0-9]+]], 0, -1.0,
+; CHECK: v_cmpx_le_f32_e32 vcc, 0,
+; CHECK-NEXT: s_cbranch_execnz [[BB4:BB[0-9]+_[0-9]+]]
+
+; CHECK: exp
+; CHECK-NEXT: s_endpgm
+
+; CHECK: [[KILLBB:BB[0-9]+_[0-9]+]]:
+; CHECK: s_and_b64 vcc, exec,
+; CHECK-NEXT: s_cbranch_vccz [[PHIBB:BB[0-9]+_[0-9]+]]
+
+; CHECK: [[PHIBB]]:
+; CHECK: v_cmp_eq_f32_e32 vcc, 0, [[PHIREG]]
+; CHECK: s_and_b64 vcc, exec, vcc
+; CHECK: s_cbranch_vccz [[ENDBB:BB[0-9]+_[0-9]+]]
+
+; CHECK: ; BB#3: ; %bb10
+; CHECK: v_mov_b32_e32 v{{[0-9]+}}, 9
+; CHECK: buffer_store_dword
+
+; CHECK: [[ENDBB]]:
+; CHECK-NEXT: s_endpgm
+define amdgpu_ps void @phi_use_def_before_kill() #0 {
+bb:
+  %tmp = fadd float undef, 1.000000e+00
+  %tmp1 = fcmp olt float 0.000000e+00, %tmp
+  %tmp2 = select i1 %tmp1, float -1.000000e+00, float 0.000000e+00
+  call void @llvm.AMDGPU.kill(float %tmp2)
+  br i1 undef, label %phibb, label %bb8
+
+phibb:
+  %tmp5 = phi float [ %tmp2, %bb ], [ 4.0, %bb8 ]
+  %tmp6 = fcmp oeq float %tmp5, 0.000000e+00
+  br i1 %tmp6, label %bb10, label %end
+
+bb8:
+  store volatile i32 8, i32 addrspace(1)* undef
+  br label %phibb
+
+bb10:
+  store volatile i32 9, i32 addrspace(1)* undef
+  br label %end
+
+end:
+  ret void
+}
 
 declare void @llvm.AMDGPU.kill(float) #0
 
