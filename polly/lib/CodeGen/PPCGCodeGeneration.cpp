@@ -619,12 +619,26 @@ public:
     free(PPCGGen);
   }
 
+  /// Free the options in the ppcg scop structure.
+  ///
+  /// ppcg is not freeing these options for us. To avoid leaks we do this
+  /// ourselves.
+  ///
+  /// @param PPCGScop The scop referencing the options to free.
+  void freeOptions(ppcg_scop *PPCGScop) {
+    free(PPCGScop->options->debug);
+    PPCGScop->options->debug = nullptr;
+    free(PPCGScop->options);
+    PPCGScop->options = nullptr;
+  }
+
   bool runOnScop(Scop &CurrentScop) override {
     S = &CurrentScop;
 
     auto PPCGScop = createPPCGScop();
     auto PPCGProg = createPPCGProg(PPCGScop);
     auto PPCGGen = generateGPU(PPCGScop, PPCGProg);
+    freeOptions(PPCGScop);
     freePPCGGen(PPCGGen);
     gpu_prog_free(PPCGProg);
     ppcg_scop_free(PPCGScop);
