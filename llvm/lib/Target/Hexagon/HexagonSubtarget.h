@@ -127,6 +127,16 @@ public:
   void getPostRAMutations(
       std::vector<std::unique_ptr<ScheduleDAGMutation>> &Mutations)
       const override;
+
+  /// \brief Perform target specific adjustments to the latency of a schedule
+  /// dependency.
+  void adjustSchedDependency(SUnit *def, SUnit *use, SDep& dep) const override;
+
+private:
+  // Helper function responsible for increasing the latency only.
+  void updateLatency(MachineInstr *SrcInst, MachineInstr *DstInst, SDep &Dep) const;
+  bool isBestZeroLatency(SUnit *Src, SUnit *Dst, const HexagonInstrInfo *TII) const;
+  void changePhiLatency(MachineInstr *SrcInst, SUnit *Dst, SDep &Dep) const;
 };
 
 } // end namespace llvm

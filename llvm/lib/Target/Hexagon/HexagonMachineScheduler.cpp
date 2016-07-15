@@ -609,6 +609,28 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
   auto &QST = DAG->MF.getSubtarget<HexagonSubtarget>();
   auto &QII = *QST.getInstrInfo();
 
+  // Give preference to a zero latency instruction if the dependent
+  // instruction is in the current packet.
+  if (Q.getID() == TopQID) {
+    for (const SDep &PI : SU->Preds) {
+      if (!PI.getSUnit()->getInstr()->isPseudo() && PI.isAssignedRegDep() &&
+          PI.getLatency() == 0 &&
+          Top.ResourceModel->isInPacket(PI.getSUnit())) {
+        ResCount += PriorityTwo;
+        DEBUG(if (verbose) dbgs() << "Z|");
+      }
+    }
+  } else {
+    for (const SDep &SI : SU->Succs) {
+      if (!SI.getSUnit()->getInstr()->isPseudo() && SI.isAssignedRegDep() &&
+          SI.getLatency() == 0 &&
+          Bot.ResourceModel->isInPacket(SI.getSUnit())) {
+        ResCount += PriorityTwo;
+        DEBUG(if (verbose) dbgs() << "Z|");
+      }
+    }
+  }
+
   // Give less preference to an instruction that will cause a stall with
   // an instruction in the previous packet.
   if (QII.isV60VectorInstruction(Instr)) {

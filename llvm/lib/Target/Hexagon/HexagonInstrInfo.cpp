@@ -2515,6 +2515,28 @@ bool HexagonInstrInfo::isTC4x(const MachineInstr *MI) const {
 }
 
 
+// Schedule this ASAP.
+bool HexagonInstrInfo::isToBeScheduledASAP(const MachineInstr *MI1,
+      const MachineInstr *MI2) const {
+  if (!MI1 || !MI2)
+    return false;
+  if (mayBeCurLoad(MI1)) {
+    // if (result of SU is used in Next) return true;
+    unsigned DstReg = MI1->getOperand(0).getReg();
+    int N = MI2->getNumOperands();
+    for (int I = 0; I < N; I++)
+      if (MI2->getOperand(I).isReg() && DstReg == MI2->getOperand(I).getReg())
+        return true;
+  }
+  if (mayBeNewStore(MI2))
+    if (MI2->getOpcode() == Hexagon::V6_vS32b_pi)
+      if (MI1->getOperand(0).isReg() && MI2->getOperand(3).isReg() &&
+          MI1->getOperand(0).getReg() == MI2->getOperand(3).getReg())
+        return true;
+  return false;
+}
+
+
 bool HexagonInstrInfo::isV60VectorInstruction(const MachineInstr *MI) const {
   if (!MI)
     return false;
@@ -2836,6 +2858,16 @@ bool HexagonInstrInfo::isZeroExtendingLoad(const MachineInstr &MI) const {
   default:
     return false;
   }
+}
+
+
+// Add latency to instruction.
+bool HexagonInstrInfo::addLatencyToSchedule(const MachineInstr *MI1,
+      const MachineInstr *MI2) const {
+  if (isV60VectorInstruction(MI1) && isV60VectorInstruction(MI2))
+    if (!isVecUsableNextPacket(MI1, MI2))
+      return true;
+  return false;
 }
 
 
