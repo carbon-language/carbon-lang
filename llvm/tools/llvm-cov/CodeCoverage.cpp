@@ -117,7 +117,7 @@ static std::string getErrorString(const Twine &Message, StringRef Whence,
   std::string Str = (Warning ? "warning" : "error");
   Str += ": ";
   if (!Whence.empty())
-    Str += Whence;
+    Str += Whence.str() + ": ";
   Str += Message.str() + "\n";
   return Str;
 }
@@ -504,7 +504,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
   if (!Filters.empty()) {
     auto OSOrErr = Printer->createViewFile("functions", /*InToplevel=*/true);
     if (Error E = OSOrErr.takeError()) {
-      error(toString(std::move(E)));
+      error("Could not create view file!", toString(std::move(E)));
       return 1;
     }
     auto OS = std::move(OSOrErr.get());
@@ -540,7 +540,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
   // Create an index out of the source files.
   if (ViewOpts.hasOutputDirectory()) {
     if (Error E = Printer->createIndexFile(SourceFiles)) {
-      error(toString(std::move(E)));
+      error("Could not create index file!", toString(std::move(E)));
       return 1;
     }
   }
@@ -561,7 +561,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
 
       auto OSOrErr = Printer->createViewFile(SourceFile, /*InToplevel=*/false);
       if (Error E = OSOrErr.takeError()) {
-        deferError(toString(std::move(E)));
+        deferError("Could not create view file!", toString(std::move(E)));
         return;
       }
       auto OS = std::move(OSOrErr.get());
