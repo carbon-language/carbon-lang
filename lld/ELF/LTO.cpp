@@ -43,23 +43,18 @@ using namespace lld;
 using namespace lld::elf;
 
 // This is for use when debugging LTO.
-static void saveLtoObjectFile(StringRef Buffer, unsigned I, bool Many) {
-  SmallString<128> Path = Config->OutputFile;
-  if (Many)
-    Path += utostr(I);
-  Path += ".lto.o";
+static void saveBuffer(StringRef Buffer, const Twine &Path) {
   std::error_code EC;
-  raw_fd_ostream OS(Path, EC, sys::fs::OpenFlags::F_None);
+  raw_fd_ostream OS(Path.str(), EC, sys::fs::OpenFlags::F_None);
   if (EC)
     error(EC, "cannot create " + Path);
   OS << Buffer;
 }
 
 // This is for use when debugging LTO.
-static void saveBCFile(Module &M, StringRef Suffix) {
-  std::string Path = (Config->OutputFile + Suffix).str();
+static void saveBCFile(Module &M, const Twine &Path) {
   std::error_code EC;
-  raw_fd_ostream OS(Path, EC, sys::fs::OpenFlags::F_None);
+  raw_fd_ostream OS(Path.str(), EC, sys::fs::OpenFlags::F_None);
   if (EC)
     error(EC, "cannot create " + Path);
   WriteBitcodeToFile(&M, OS, /* ShouldPreserveUseListOrder */ true);
@@ -138,7 +133,7 @@ static void runLTOPasses(Module &M, TargetMachine &TM) {
   }
 
   if (Config->SaveTemps)
-    saveBCFile(M, ".lto.opt.bc");
+    saveBCFile(M, Config->OutputFile + ".lto.opt.bc");
 }
 
 static bool shouldInternalize(const SmallPtrSet<GlobalValue *, 8> &Used,
@@ -274,9 +269,16 @@ std::vector<std::unique_ptr<InputFile>> BitcodeCompiler::runSplitCodegen(
     ObjFiles.push_back(createObjectFile(
         MemoryBufferRef(Obj, "LLD-INTERNAL-combined-lto-object")));
 
-  if (Config->SaveTemps)
-    for (unsigned I = 0; I < NumThreads; ++I)
-      saveLtoObjectFile(OwningData[I], I, NumThreads > 1);
+  // If -save-temps is given, we need to save temporary objects to files.
+  // This is for debugging.
+  if (Config->SaveTemps) {
+    if (NumThreads == 1) {
+      saveBuffer(OwningData[0], Config->OutputFile + ".lto.o");
+    } else {
+      for (unsigned I = 0; I < NumThreads; ++I)
+        saveBuffer(OwningData[I], Config->OutputFile + Twine(I) + ".lto.o");
+    }
+  }
 
   return ObjFiles;
 }
@@ -314,7 +316,7 @@ std::vector<std::unique_ptr<InputFile>> BitcodeCompiler::compile() {
   updateCompilerUsed(*Combined, *TM, AsmUndefinedRefs);
 
   if (Config->SaveTemps)
-    saveBCFile(*Combined, ".lto.bc");
+    saveBCFile(*Combined, Config->OutputFile + ".lto.bc");
 
   runLTOPasses(*Combined, *TM);
   if (HasError)
