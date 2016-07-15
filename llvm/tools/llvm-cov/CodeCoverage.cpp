@@ -101,11 +101,14 @@ public:
   std::string CoverageArch;
 
 private:
+  /// File paths (absolute, or otherwise) to input source files.
   std::vector<std::string> CollectedPaths;
 
+  /// Errors and warnings which have not been printed.
   std::mutex DeferredMessagesLock;
   std::vector<std::string> DeferredMessages;
 
+  /// A container for input source file buffers.
   std::mutex LoadedSourceFilesLock;
   std::vector<std::pair<std::string, std::unique_ptr<MemoryBuffer>>>
       LoadedSourceFiles;

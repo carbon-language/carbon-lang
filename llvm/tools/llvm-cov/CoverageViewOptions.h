@@ -40,7 +40,7 @@ struct CoverageViewOptions {
   }
 
   /// \brief Check if an output directory has been specified.
-  bool hasOutputDirectory() const { return ShowOutputDirectory != ""; }
+  bool hasOutputDirectory() const { return !ShowOutputDirectory.empty(); }
 };
 }
 
