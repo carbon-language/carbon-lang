@@ -16,7 +16,6 @@
 ; EMPTY-NEXT:   Unknown1: 0
 ; EMPTY-NEXT:   BlockMapAddr: 24
 ; EMPTY-NEXT:   NumDirectoryBlocks: 1
-; EMPTY-NEXT:   BlockMapOffset: 98304
 ; EMPTY-NEXT:   DirectoryBlocks: [23]
 ; EMPTY-NEXT:   NumStreams: 17
 ; EMPTY-NEXT: }
@@ -952,7 +951,6 @@
 ; ALL:   Unknown1: 0
 ; ALL:   BlockMapAddr: 24
 ; ALL:   NumDirectoryBlocks: 1
-; ALL:   BlockMapOffset: 98304
 ; ALL:   DirectoryBlocks: [23]
 ; ALL:   NumStreams: 17
 ; ALL: }
@@ -1668,7 +1666,6 @@
 ; BIG-NEXT:   Unknown1: 0
 ; BIG-NEXT:   BlockMapAddr: 97
 ; BIG-NEXT:   NumDirectoryBlocks: 1
-; BIG-NEXT:   BlockMapOffset: 397312
 ; BIG-NEXT:   DirectoryBlocks: [96]
 ; BIG-NEXT:   NumStreams: 64
 ; BIG-NEXT: }

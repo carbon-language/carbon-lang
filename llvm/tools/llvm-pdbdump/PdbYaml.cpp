@@ -115,16 +115,14 @@ void MappingTraits<PdbObject>::mapping(IO &IO, PdbObject &Obj) {
 void MappingTraits<MsfHeaders>::mapping(IO &IO, MsfHeaders &Obj) {
   IO.mapRequired("SuperBlock", Obj.SuperBlock);
   IO.mapRequired("NumDirectoryBlocks", Obj.NumDirectoryBlocks);
-  IO.mapRequired("BlockMapOffset", Obj.BlockMapOffset);
   IO.mapRequired("DirectoryBlocks", Obj.DirectoryBlocks);
   IO.mapRequired("NumStreams", Obj.NumStreams);
   IO.mapRequired("FileSize", Obj.FileSize);
 }
 
-void MappingTraits<PDBFile::SuperBlock>::mapping(IO &IO,
-                                                 PDBFile::SuperBlock &SB) {
+void MappingTraits<msf::SuperBlock>::mapping(IO &IO, msf::SuperBlock &SB) {
   if (!IO.outputting()) {
-    ::memcpy(SB.MagicBytes, MsfMagic, sizeof(MsfMagic));
+    ::memcpy(SB.MagicBytes, msf::Magic, sizeof(msf::Magic));
   }
 
   IO.mapRequired("BlockSize", SB.BlockSize);

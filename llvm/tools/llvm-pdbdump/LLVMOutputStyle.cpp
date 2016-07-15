@@ -101,7 +101,6 @@ Error LLVMOutputStyle::dumpFileHeaders() {
   P.printNumber("Unknown1", File.getUnknown1());
   P.printNumber("BlockMapAddr", File.getBlockMapIndex());
   P.printNumber("NumDirectoryBlocks", File.getNumDirectoryBlocks());
-  P.printNumber("BlockMapOffset", File.getBlockMapOffset());
 
   // The directory is not contiguous.  Instead, the block map contains a
   // contiguous list of block numbers whose contents, when concatenated in

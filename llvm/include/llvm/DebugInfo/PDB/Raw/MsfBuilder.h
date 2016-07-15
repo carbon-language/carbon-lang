@@ -63,6 +63,9 @@ public:
   /// Request the block map to be at a specific block address.  This is useful
   /// when editing a PDB and you want the layout to be as stable as possible.
   Error setBlockMapAddr(uint32_t Addr);
+  Error setDirectoryBlocksHint(ArrayRef<uint32_t> DirBlocks);
+  void setUnknown0(uint32_t Unk0);
+  void setUnknown1(uint32_t Unk1);
 
   /// Add a stream to the MSF file with the given size, occupying the given
   /// list of blocks.  This is useful when reading a PDB file and you want a
@@ -123,6 +126,8 @@ private:
   BumpPtrAllocator &Allocator;
 
   bool IsGrowable;
+  uint32_t Unknown0;
+  uint32_t Unknown1;
   uint32_t BlockSize;
   uint32_t MininumBlocks;
   uint32_t BlockMapAddr;

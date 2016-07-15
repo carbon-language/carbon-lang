@@ -42,6 +42,7 @@ add_pdb_impl_folder(Raw
   Raw/MsfCommon.cpp
   Raw/NameHashTable.cpp
   Raw/NameMap.cpp
+  Raw/NameMapBuilder.cpp
   Raw/PDBFile.cpp
   Raw/PDBFileBuilder.cpp
   Raw/PublicsStream.cpp

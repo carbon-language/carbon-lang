@@ -24,7 +24,7 @@ MsfBuilder::MsfBuilder(uint32_t BlockSize, uint32_t MinBlockCount, bool CanGrow,
                        BumpPtrAllocator &Allocator)
     : Allocator(Allocator), IsGrowable(CanGrow), BlockSize(BlockSize),
       MininumBlocks(MinBlockCount), BlockMapAddr(kDefaultBlockMapAddr),
-      FreeBlocks(MinBlockCount + 2U, true) {
+      FreeBlocks(std::max(MinBlockCount, 2U), true) {
   FreeBlocks[kSuperBlockBlock] = false;
   FreeBlocks[BlockMapAddr] = false;
 }
@@ -56,6 +56,25 @@ Error MsfBuilder::setBlockMapAddr(uint32_t Addr) {
   FreeBlocks[BlockMapAddr] = true;
   FreeBlocks[Addr] = false;
   BlockMapAddr = Addr;
+  return Error::success();
+}
+
+void MsfBuilder::setUnknown0(uint32_t Unk0) { Unknown0 = Unk0; }
+
+void MsfBuilder::setUnknown1(uint32_t Unk1) { Unknown1 = Unk1; }
+
+Error MsfBuilder::setDirectoryBlocksHint(ArrayRef<uint32_t> DirBlocks) {
+  for (auto B : DirectoryBlocks)
+    FreeBlocks[B] = true;
+  for (auto B : DirBlocks) {
+    if (!isBlockFree(B)) {
+      return make_error<RawError>(raw_error_code::unspecified,
+                                  "Attempt to reuse an allocated block");
+    }
+    FreeBlocks[B] = false;
+  }
+
+  DirectoryBlocks = DirBlocks;
   return Error::success();
 }
 
@@ -198,16 +217,28 @@ Expected<Layout> MsfBuilder::build() {
   L.SB->BlockMapAddr = BlockMapAddr;
   L.SB->BlockSize = BlockSize;
   L.SB->NumDirectoryBytes = computeDirectoryByteSize();
-  L.SB->Unknown0 = 0;
-  L.SB->Unknown1 = 0;
+  L.SB->Unknown0 = Unknown0;
+  L.SB->Unknown1 = Unknown1;
 
   uint32_t NumDirectoryBlocks =
       bytesToBlocks(L.SB->NumDirectoryBytes, BlockSize);
-  // The directory blocks should be re-allocated as a stable pointer.
-  std::vector<uint32_t> DirectoryBlocks;
-  DirectoryBlocks.resize(NumDirectoryBlocks);
-  if (auto EC = allocateBlocks(NumDirectoryBlocks, DirectoryBlocks))
-    return std::move(EC);
+  if (NumDirectoryBlocks > DirectoryBlocks.size()) {
+    // Our hint wasn't enough to satisfy the entire directory.  Allocate
+    // remaining pages.
+    std::vector<uint32_t> ExtraBlocks;
+    uint32_t NumExtraBlocks = NumDirectoryBlocks - DirectoryBlocks.size();
+    ExtraBlocks.resize(NumExtraBlocks);
+    if (auto EC = allocateBlocks(NumExtraBlocks, ExtraBlocks))
+      return std::move(EC);
+    DirectoryBlocks.insert(DirectoryBlocks.end(), ExtraBlocks.begin(),
+                           ExtraBlocks.end());
+  } else if (NumDirectoryBlocks < DirectoryBlocks.size()) {
+    uint32_t NumUnnecessaryBlocks = DirectoryBlocks.size() - NumDirectoryBlocks;
+    for (auto B :
+         ArrayRef<uint32_t>(DirectoryBlocks).drop_back(NumUnnecessaryBlocks))
+      FreeBlocks[B] = true;
+    DirectoryBlocks.resize(NumDirectoryBlocks);
+  }
 
   // Don't set the number of blocks in the file until after allocating Blocks
   // for

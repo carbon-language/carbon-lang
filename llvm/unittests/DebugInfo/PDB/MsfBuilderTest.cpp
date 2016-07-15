@@ -84,7 +84,8 @@ TEST_F(MsfBuilderTest, TestUsedBlocksMarkedAsUsed) {
   // Allocate some extra blocks at the end so we can verify that they're free
   // after the initialization.
   std::vector<uint32_t> Blocks = {2, 3, 4, 5, 6, 7, 8, 9, 10};
-  auto ExpectedMsf = MsfBuilder::create(Allocator, 4096, Blocks.size() + 10);
+  auto ExpectedMsf =
+      MsfBuilder::create(Allocator, 4096, 2 + Blocks.size() + 10);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
@@ -267,7 +268,7 @@ TEST_F(MsfBuilderTest, TestBlockCountsWhenAddingStreams) {
   }
 }
 
-TEST_F(MsfBuilderTest, TestBuildMsfLayout) {
+TEST_F(MsfBuilderTest, BuildMsfLayout) {
   // Test that we can generate an Msf Layout structure from a valid layout
   // specification.
   auto ExpectedMsf = MsfBuilder::create(Allocator, 4096);
@@ -297,4 +298,57 @@ TEST_F(MsfBuilderTest, TestBuildMsfLayout) {
     uint32_t ExpectedNumBlocks = bytesToBlocks(StreamSizes[I], 4096);
     EXPECT_EQ(ExpectedNumBlocks, L.StreamMap[I].size());
   }
+}
+
+TEST_F(MsfBuilderTest, UseDirectoryBlockHint) {
+  Expected<MsfBuilder> ExpectedMsf =
+      MsfBuilder::create(Allocator, 4096, 4, false);
+  EXPECT_EXPECTED(ExpectedMsf);
+  auto &Msf = *ExpectedMsf;
+
+  EXPECT_NO_ERROR(Msf.setDirectoryBlocksHint({2}));
+  EXPECT_NO_ERROR(Msf.addStream(2048, {3}));
+
+  auto ExpectedLayout = Msf.build();
+  EXPECT_EXPECTED(ExpectedLayout);
+  Layout &L = *ExpectedLayout;
+  EXPECT_EQ(4U, L.SB->NumBlocks);
+  EXPECT_EQ(1U, L.DirectoryBlocks.size());
+  EXPECT_EQ(1U, L.StreamMap[0].size());
+
+  EXPECT_EQ(2U, L.DirectoryBlocks[0]);
+  EXPECT_EQ(3U, L.StreamMap[0].front());
+}
+
+TEST_F(MsfBuilderTest, DirectoryBlockHintInsufficient) {
+  Expected<MsfBuilder> ExpectedMsf = MsfBuilder::create(Allocator, 4096, 4);
+  EXPECT_EXPECTED(ExpectedMsf);
+  auto &Msf = *ExpectedMsf;
+
+  EXPECT_NO_ERROR(Msf.setDirectoryBlocksHint({2}));
+
+  uint32_t Size = 4096 * 4096 / 4;
+  EXPECT_NO_ERROR(Msf.addStream(Size));
+
+  auto ExpectedLayout = Msf.build();
+  EXPECT_EXPECTED(ExpectedLayout);
+  Layout &L = *ExpectedLayout;
+  EXPECT_EQ(2U, L.DirectoryBlocks.size());
+  EXPECT_EQ(2U, L.DirectoryBlocks[0]);
+}
+
+TEST_F(MsfBuilderTest, DirectoryBlockHintOverestimated) {
+  Expected<MsfBuilder> ExpectedMsf = MsfBuilder::create(Allocator, 4096, 4);
+  EXPECT_EXPECTED(ExpectedMsf);
+  auto &Msf = *ExpectedMsf;
+
+  EXPECT_NO_ERROR(Msf.setDirectoryBlocksHint({2, 3}));
+
+  EXPECT_NO_ERROR(Msf.addStream(2048));
+
+  auto ExpectedLayout = Msf.build();
+  EXPECT_EXPECTED(ExpectedLayout);
+  Layout &L = *ExpectedLayout;
+  EXPECT_EQ(1U, L.DirectoryBlocks.size());
+  EXPECT_EQ(2U, L.DirectoryBlocks[0]);
 }
