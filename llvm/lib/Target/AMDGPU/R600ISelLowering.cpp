@@ -1077,8 +1077,7 @@ SDValue R600TargetLowering::LowerImplicitParameter(SelectionDAG &DAG, EVT VT,
 
   return DAG.getLoad(VT, DL, DAG.getEntryNode(),
                      DAG.getConstant(ByteOffset, DL, MVT::i32), // PTR
-                     MachinePointerInfo(ConstantPointerNull::get(PtrType)),
-                     false, false, false, 0);
+                     MachinePointerInfo(ConstantPointerNull::get(PtrType)));
 }
 
 bool R600TargetLowering::isZero(SDValue Op) const {
@@ -1646,12 +1645,9 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   if (LoadNode->getExtensionType() == ISD::SEXTLOAD) {
     EVT MemVT = LoadNode->getMemoryVT();
     assert(!MemVT.isVector() && (MemVT == MVT::i16 || MemVT == MVT::i8));
-    SDValue NewLoad = DAG.getExtLoad(ISD::EXTLOAD, DL, VT, Chain, Ptr,
-                                  LoadNode->getPointerInfo(), MemVT,
-                                  LoadNode->isVolatile(),
-                                  LoadNode->isNonTemporal(),
-                                  LoadNode->isInvariant(),
-                                  LoadNode->getAlignment());
+    SDValue NewLoad = DAG.getExtLoad(
+        ISD::EXTLOAD, DL, VT, Chain, Ptr, LoadNode->getPointerInfo(), MemVT,
+        LoadNode->getAlignment(), LoadNode->getMemOperand()->getFlags());
     SDValue Res = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, VT, NewLoad,
                               DAG.getValueType(MemVT));
 
@@ -1794,11 +1790,11 @@ SDValue R600TargetLowering::LowerFormalArguments(
     unsigned Offset = 36 + VA.getLocMemOffset();
 
     MachinePointerInfo PtrInfo(UndefValue::get(PtrTy), PartOffset - ValBase);
-    SDValue Arg = DAG.getLoad(ISD::UNINDEXED, Ext, VT, DL, Chain,
-                              DAG.getConstant(Offset, DL, MVT::i32),
-                              DAG.getUNDEF(MVT::i32),
-                              PtrInfo,
-                              MemVT, false, true, true, 4);
+    SDValue Arg = DAG.getLoad(
+        ISD::UNINDEXED, Ext, VT, DL, Chain,
+        DAG.getConstant(Offset, DL, MVT::i32), DAG.getUNDEF(MVT::i32), PtrInfo,
+        MemVT, /* Alignment = */ 4,
+        MachineMemOperand::MONonTemporal | MachineMemOperand::MOInvariant);
 
     // 4 is the preferred alignment for the CONSTANT memory space.
     InVals.push_back(Arg);
