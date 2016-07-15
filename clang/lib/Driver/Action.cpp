@@ -104,7 +104,7 @@ std::string Action::getOffloadingKindPrefix() const {
 }
 
 std::string
-Action::getOffloadingFileNamePrefix(StringRef NormalizedTriple) const {
+Action::getOffloadingFileNamePrefix(llvm::StringRef NormalizedTriple) const {
   // A file prefix is only generated for device actions and consists of the
   // offload kind and triple.
   if (!OffloadingDeviceKind)
