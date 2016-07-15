@@ -29,7 +29,7 @@ using namespace lld;
 using namespace lld::elf;
 
 // Returns "(internal)", "foo.a(bar.o)" or "baz.o".
-std::string elf::getFilename(InputFile *F) {
+std::string elf::getFilename(const InputFile *F) {
   if (!F)
     return "(internal)";
   if (!F->ArchiveName.empty())
@@ -67,7 +67,7 @@ typename ELFT::SymRange ELFFileBase<ELFT>::getElfSymbols(bool OnlyGlobals) {
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   uint32_t FirstNonLocal = Symtab->sh_info;
   if (FirstNonLocal > NumSymbols)
-    fatal("invalid sh_info in symbol table");
+    fatal(getFilename(this) + ": invalid sh_info in symbol table");
 
   if (OnlyGlobals)
     return makeArrayRef(Syms.begin() + FirstNonLocal, Syms.end());
@@ -151,13 +151,12 @@ elf::ObjectFile<ELFT>::getShtGroupEntries(const Elf_Shdr &Sec) {
   ArrayRef<Elf_Word> Entries =
       check(Obj.template getSectionContentsAsArray<Elf_Word>(&Sec));
   if (Entries.empty() || Entries[0] != GRP_COMDAT)
-    fatal("unsupported SHT_GROUP format");
+    fatal(getFilename(this) + ": unsupported SHT_GROUP format");
   return Entries.slice(1);
 }
 
-template <class ELFT> static bool shouldMerge(const typename ELFT::Shdr &Sec) {
-  typedef typename ELFT::uint uintX_t;
-
+template <class ELFT>
+bool elf::ObjectFile<ELFT>::shouldMerge(const Elf_Shdr &Sec) {
   // We don't merge sections if -O0 (default is -O1). This makes sometimes
   // the linker significantly faster, although the output will be bigger.
   if (Config->Optimize == 0)
@@ -167,10 +166,11 @@ template <class ELFT> static bool shouldMerge(const typename ELFT::Shdr &Sec) {
   if (!(Flags & SHF_MERGE))
     return false;
   if (Flags & SHF_WRITE)
-    fatal("writable SHF_MERGE sections are not supported");
+    fatal(getFilename(this) + ": writable SHF_MERGE section is not supported");
   uintX_t EntSize = Sec.sh_entsize;
   if (!EntSize || Sec.sh_size % EntSize)
-    fatal("SHF_MERGE section size must be a multiple of sh_entsize");
+    fatal(getFilename(this) +
+          ": SHF_MERGE section size must be a multiple of sh_entsize");
 
   // Don't try to merge if the alignment is larger than the sh_entsize and this
   // is not SHF_STRINGS.
@@ -203,7 +203,8 @@ void elf::ObjectFile<ELFT>::initializeSections(
         continue;
       for (uint32_t SecIndex : getShtGroupEntries(Sec)) {
         if (SecIndex >= Size)
-          fatal("invalid section index in group");
+          fatal(getFilename(this) + ": invalid section index in group: " +
+                Twine(SecIndex));
         Sections[SecIndex] = &InputSection<ELFT>::Discarded;
       }
       break;
@@ -237,11 +238,14 @@ void elf::ObjectFile<ELFT>::initializeSections(
       }
       if (auto *S = dyn_cast<EhInputSection<ELFT>>(Target)) {
         if (S->RelocSection)
-          fatal("multiple relocation sections to .eh_frame are not supported");
+          fatal(
+              getFilename(this) +
+              ": multiple relocation sections to .eh_frame are not supported");
         S->RelocSection = &Sec;
         break;
       }
-      fatal("relocations pointing to SHF_MERGE are not supported");
+      fatal(getFilename(this) +
+            ": relocations pointing to SHF_MERGE are not supported");
     }
     case SHT_ARM_ATTRIBUTES:
       // FIXME: ARM meta-data section. At present attributes are ignored,
@@ -259,7 +263,8 @@ InputSectionBase<ELFT> *
 elf::ObjectFile<ELFT>::getRelocTarget(const Elf_Shdr &Sec) {
   uint32_t Idx = Sec.sh_info;
   if (Idx >= Sections.size())
-    fatal("invalid relocated section index");
+    fatal(getFilename(this) + ": invalid relocated section index: " +
+          Twine(Idx));
   InputSectionBase<ELFT> *Target = Sections[Idx];
 
   // Strictly speaking, a relocation section must be included in the
@@ -269,7 +274,7 @@ elf::ObjectFile<ELFT>::getRelocTarget(const Elf_Shdr &Sec) {
     return nullptr;
 
   if (!Target)
-    fatal("unsupported relocation reference");
+    fatal(getFilename(this) + ": unsupported relocation reference");
   return Target;
 }
 
@@ -312,7 +317,7 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
   if (Name == ".eh_frame" && !Config->Relocatable)
     return new (EHAlloc.Allocate()) EhInputSection<ELFT>(this, &Sec);
 
-  if (shouldMerge<ELFT>(Sec))
+  if (shouldMerge(Sec))
     return new (MAlloc.Allocate()) MergeInputSection<ELFT>(this, &Sec);
   return new (IAlloc.Allocate()) InputSection<ELFT>(this, &Sec);
 }
@@ -333,7 +338,7 @@ elf::ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
   if (Index == 0)
     return nullptr;
   if (Index >= Sections.size() || !Sections[Index])
-    fatal("invalid section index");
+    fatal(getFilename(this) + ": invalid section index: " + Twine(Index));
   InputSectionBase<ELFT> *S = Sections[Index];
   if (S == &InputSectionBase<ELFT>::Discarded)
     return S;
@@ -342,7 +347,7 @@ elf::ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
 
 template <class ELFT>
 SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
-  unsigned char Binding = Sym->getBinding();
+  int Binding = Sym->getBinding();
   InputSectionBase<ELFT> *Sec = getSection(*Sym);
   if (Binding == STB_LOCAL) {
     if (Sym->st_shndx == SHN_UNDEF)
@@ -373,7 +378,7 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
 
   switch (Binding) {
   default:
-    fatal("unexpected binding");
+    fatal(getFilename(this) + ": unexpected binding: " + Twine(Binding));
   case STB_GLOBAL:
   case STB_WEAK:
   case STB_GNU_UNIQUE:
@@ -471,7 +476,7 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
     if (Dyn.d_tag == DT_SONAME) {
       uintX_t Val = Dyn.getVal();
       if (Val >= this->StringTable.size())
-        fatal("invalid DT_SONAME entry");
+        fatal(getFilename(this) + ": invalid DT_SONAME entry");
       SoName = StringRef(this->StringTable.data() + Val);
       return;
     }
@@ -581,7 +586,9 @@ static uint8_t getMachineKind(MemoryBufferRef MB) {
   case Triple::x86_64:
     return EM_X86_64;
   default:
-    fatal("could not infer e_machine from bitcode target triple " + TripleStr);
+    fatal(MB.getBufferIdentifier() +
+          ": could not infer e_machine from bitcode target triple " +
+          TripleStr);
   }
 }
 
