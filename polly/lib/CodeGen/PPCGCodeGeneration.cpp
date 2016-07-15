@@ -408,6 +408,7 @@ public:
       PPCGArray.dep_order = nullptr;
 
       setArrayBounds(PPCGArray, Array);
+      i++;
     }
   }
 
