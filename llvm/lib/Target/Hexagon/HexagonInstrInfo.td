@@ -1447,9 +1447,9 @@ let isBranch = 1, isBarrier = 1, Defs = [PC], hasSideEffects = 0,
     isExtendable = 1, opExtendable = 0, isExtentSigned = 1,
     opExtentBits = 24, opExtentAlign = 2, InputType = "imm" in
 class T_JMP<string ExtStr>
-  : JInst<(outs), (ins brtarget:$dst),
+  : JInst_CJUMP_UCJUMP<(outs), (ins brtarget:$dst),
       "jump " # ExtStr # "$dst",
-      [], "", J_tc_2early_SLOT23> {
+      [], "", J_tc_2early_CJUMP_UCJUMP_ARCHDEPSLOT> {
     bits<24> dst;
     let IClass = 0b0101;
 
@@ -1462,11 +1462,11 @@ let isBranch = 1, Defs = [PC], hasSideEffects = 0, isPredicated = 1,
     isExtendable = 1, opExtendable = 1, isExtentSigned = 1,
     opExtentBits = 17, opExtentAlign = 2, InputType = "imm" in
 class T_JMP_c<bit PredNot, bit isPredNew, bit isTak, string ExtStr>
-  : JInst<(outs), (ins PredRegs:$src, brtarget:$dst),
+  : JInst_CJUMP_UCJUMP<(outs), (ins PredRegs:$src, brtarget:$dst),
       CondStr<"$src", !if(PredNot,0,1), isPredNew>.S #
         JumpOpcStr<"jump", isPredNew, isTak>.S # " " #
         ExtStr # "$dst",
-      [], "", J_tc_2early_SLOT23>, ImmRegRel {
+      [], "", J_tc_2early_CJUMP_UCJUMP_ARCHDEPSLOT>, ImmRegRel {
     let isTaken = isTak;
     let isPredicatedFalse = PredNot;
     let isPredicatedNew = isPredNew;

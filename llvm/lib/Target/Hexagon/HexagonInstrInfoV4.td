@@ -4151,7 +4151,7 @@ class CJInst_tstbit_R0<string px, bit np, string tnt>
   : InstHexagon<(outs), (ins IntRegs:$Rs, brtarget:$r9_2),
   ""#px#" = tstbit($Rs, #0); if ("
     #!if(np, "!","")#""#px#".new) jump:"#tnt#" $r9_2",
-  [], "", COMPOUND, TypeCOMPOUND>, OpcodeHexagon {
+  [], "", COMPOUND_CJ_ARCHDEPSLOT, TypeCOMPOUND>, OpcodeHexagon {
   bits<4> Rs;
   bits<11> r9_2;
 
@@ -4197,7 +4197,7 @@ class CJInst_RR<string px, string op, bit np, string tnt>
   : InstHexagon<(outs), (ins IntRegs:$Rs, IntRegs:$Rt, brtarget:$r9_2),
   ""#px#" = cmp."#op#"($Rs, $Rt); if ("
    #!if(np, "!","")#""#px#".new) jump:"#tnt#" $r9_2",
-  [], "", COMPOUND, TypeCOMPOUND>, OpcodeHexagon {
+  [], "", COMPOUND_CJ_ARCHDEPSLOT, TypeCOMPOUND>, OpcodeHexagon {
   bits<4> Rs;
   bits<4> Rt;
   bits<11> r9_2;
@@ -4251,7 +4251,7 @@ class CJInst_RU5<string px, string op, bit np, string tnt>
   : InstHexagon<(outs), (ins IntRegs:$Rs, u5Imm:$U5, brtarget:$r9_2),
   ""#px#" = cmp."#op#"($Rs, #$U5); if ("
     #!if(np, "!","")#""#px#".new) jump:"#tnt#" $r9_2",
-  [], "", COMPOUND, TypeCOMPOUND>, OpcodeHexagon {
+  [], "", COMPOUND_CJ_ARCHDEPSLOT, TypeCOMPOUND>, OpcodeHexagon {
   bits<4> Rs;
   bits<5> U5;
   bits<11> r9_2;
@@ -4306,7 +4306,7 @@ class CJInst_Rn1<string px, string op, bit np, string tnt>
   : InstHexagon<(outs), (ins IntRegs:$Rs, brtarget:$r9_2),
   ""#px#" = cmp."#op#"($Rs,#-1); if ("
   #!if(np, "!","")#""#px#".new) jump:"#tnt#" $r9_2",
-  [], "", COMPOUND, TypeCOMPOUND>, OpcodeHexagon {
+  [], "", COMPOUND_CJ_ARCHDEPSLOT, TypeCOMPOUND>, OpcodeHexagon {
   bits<4> Rs;
   bits<11> r9_2;
 
@@ -4355,7 +4355,7 @@ defm gt : T_pnp_CJInst_Rn1<"gt">;
 let Defs = [PC], isBranch = 1, hasSideEffects = 0, hasNewValue = 1,
     isExtentSigned = 1, opNewValue = 0, isExtendable = 1, opExtentBits = 11,
     opExtentAlign = 2, opExtendable = 2 in
-def J4_jumpseti: CJInst <
+def J4_jumpseti: CJInst_JMPSET <
   (outs IntRegs:$Rd),
   (ins u6Imm:$U6, brtarget:$r9_2),
   "$Rd = #$U6 ; jump $r9_2"> {
@@ -4375,7 +4375,7 @@ def J4_jumpseti: CJInst <
 let Defs = [PC], isBranch = 1, hasSideEffects = 0, hasNewValue = 1,
     isExtentSigned = 1, opNewValue = 0, isExtendable = 1, opExtentBits = 11,
     opExtentAlign = 2, opExtendable = 2 in
-def J4_jumpsetr: CJInst <
+def J4_jumpsetr: CJInst_JMPSET <
   (outs IntRegs:$Rd),
   (ins IntRegs:$Rs, brtarget:$r9_2),
   "$Rd = $Rs ; jump $r9_2"> {
