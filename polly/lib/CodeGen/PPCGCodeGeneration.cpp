@@ -263,6 +263,15 @@ public:
     compute_tagger(PPCGScop);
     compute_dependences(PPCGScop);
 
+    // Remove domain constraints from flow dependences.
+    //
+    // The isl scheduler does not terminate even for some smaller cases in case
+    // domain constraints remain within these dependences.
+    //
+    // TODO: Improve the isl scheduler to not handle this case better.
+    PPCGScop->dep_flow = isl_union_map_gist_domain(
+        PPCGScop->dep_flow, isl_union_set_copy(PPCGScop->domain));
+
     return PPCGScop;
   }
 
