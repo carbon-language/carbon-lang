@@ -38,6 +38,8 @@ add_pdb_impl_folder(Raw
   Raw/MappedBlockStream.cpp
   Raw/ModInfo.cpp
   Raw/ModStream.cpp
+  Raw/MsfBuilder.cpp
+  Raw/MsfCommon.cpp
   Raw/NameHashTable.cpp
   Raw/NameMap.cpp
   Raw/PDBFile.cpp
