@@ -153,6 +153,7 @@ public:
           isl_space *Space = isl_map_get_space(Relation);
           Space = isl_space_range(Space);
           Space = isl_space_from_range(Space);
+          Space = isl_space_set_tuple_id(Space, isl_dim_in, Acc->getId());
           isl_map *Universe = isl_map_universe(Space);
           Relation = isl_map_domain_product(Relation, Universe);
           Accesses = isl_union_map_add_map(Accesses, Relation);
@@ -281,6 +282,7 @@ public:
       isl_space *Space = isl_map_get_space(Access->access);
       Space = isl_space_range(Space);
       Space = isl_space_from_range(Space);
+      Space = isl_space_set_tuple_id(Space, isl_dim_in, Acc->getId());
       isl_map *Universe = isl_map_universe(Space);
       Access->tagged_access =
           isl_map_domain_product(Acc->getAccessRelation(), Universe);
