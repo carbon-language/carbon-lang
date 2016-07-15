@@ -91,6 +91,7 @@ set(Tests
   StrcmpTest
   StrncmpTest
   SwitchTest
+  ThreadedLeakTest
   ThreadedTest
   TimeoutTest
   )
