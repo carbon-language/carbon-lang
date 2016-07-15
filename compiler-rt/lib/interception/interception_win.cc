@@ -410,6 +410,7 @@ static size_t GetInstructionSize(uptr address) {
 
     case 0xb8:  // b8 XX XX XX XX : mov eax, XX XX XX XX
     case 0xB9:  // b9 XX XX XX XX : mov ecx, XX XX XX XX
+    case 0xA1:  // A1 XX XX XX XX : mov eax, dword ptr ds:[XXXXXXXX]
       return 5;
 
     // Cannot overwrite control-instruction. Return 0 to indicate failure.
@@ -452,11 +453,6 @@ static size_t GetInstructionSize(uptr address) {
   }
 
 #if SANITIZER_WINDOWS64
-  switch (*(u8*)address) {
-    case 0xA1:  // A1 XX XX XX XX XX XX XX XX :
-                //   movabs eax, dword ptr ds:[XXXXXXXX]
-      return 8;
-  }
   switch (*(u16*)address) {
     case 0x5040:  // push rax
     case 0x5140:  // push rcx
@@ -504,12 +500,7 @@ static size_t GetInstructionSize(uptr address) {
                       //   mov rax, QWORD PTR [rip + XXXXXXXX]
     case 0x25ff48:    // 48 ff 25 XX XX XX XX :
                       //   rex.W jmp QWORD PTR [rip + XXXXXXXX]
-      // Instructions having offset relative to 'rip' cannot be copied.
-      return 0;
-
-    case 0x2444c7:    // C7 44 24 XX YY YY YY YY
-                      //   mov dword ptr [rsp + XX], YYYYYYYY
-      return 8;
+      return 7;
   }
 
   switch (*(u32*)(address)) {
@@ -521,10 +512,7 @@ static size_t GetInstructionSize(uptr address) {
   }
 
 #else
-  switch (*(u8*)address) {
-    case 0xA1:  // A1 XX XX XX XX :  mov eax, dword ptr ds:[XXXXXXXX]
-      return 5;
-  }
+
   switch (*(u16*)address) {
     case 0x458B:  // 8B 45 XX : mov eax, dword ptr [ebp + XX]
     case 0x5D8B:  // 8B 5D XX : mov ebx, dword ptr [ebp + XX]
