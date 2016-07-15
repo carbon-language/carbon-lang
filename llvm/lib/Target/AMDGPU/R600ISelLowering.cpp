@@ -809,15 +809,13 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
                                   AMDGPU::T0_Z, VT);
 
-    // FIXME: Should be renamed to r600 prefix
-    case AMDGPUIntrinsic::AMDGPU_rsq_clamped:
-      return DAG.getNode(AMDGPUISD::RSQ_CLAMP, DL, VT, Op.getOperand(1));
+    case Intrinsic::r600_recipsqrt_ieee:
+      return DAG.getNode(AMDGPUISD::RSQ, DL, VT, Op.getOperand(1));
 
-    case Intrinsic::r600_rsq:
-    case AMDGPUIntrinsic::AMDGPU_rsq: // Legacy name
-      // XXX - I'm assuming SI's RSQ_LEGACY matches R600's behavior.
-      return DAG.getNode(AMDGPUISD::RSQ_LEGACY, DL, VT, Op.getOperand(1));
+    case Intrinsic::r600_recipsqrt_clamped:
+      return DAG.getNode(AMDGPUISD::RSQ_CLAMP, DL, VT, Op.getOperand(1));
     }
+
     // break out of case ISD::INTRINSIC_WO_CHAIN in switch(Op.getOpcode())
     break;
   }

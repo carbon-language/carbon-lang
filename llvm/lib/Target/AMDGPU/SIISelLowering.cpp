@@ -1682,8 +1682,7 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
     return DAG.getNode(AMDGPUISD::RSQ_LEGACY, DL, VT, Op.getOperand(1));
   }
-  case Intrinsic::amdgcn_rsq_clamp:
-  case AMDGPUIntrinsic::AMDGPU_rsq_clamped: { // Legacy name
+  case Intrinsic::amdgcn_rsq_clamp: {
     if (Subtarget->getGeneration() < SISubtarget::VOLCANIC_ISLANDS)
       return DAG.getNode(AMDGPUISD::RSQ_CLAMP, DL, VT, Op.getOperand(1));
 
