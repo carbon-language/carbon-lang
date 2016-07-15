@@ -1849,8 +1849,8 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
           false, false, 0);
     }
   } else if (isa<GlobalAddressSDNode>(Callee)) {
-    // If we're optimizing for minimum size and the function is called many
-    // times in this block, we can improve codesize by calling indirectly
+    // If we're optimizing for minimum size and the function is called three or
+    // more times in this block, we can improve codesize by calling indirectly
     // as BLXr has a 16-bit encoding.
     auto *GV = cast<GlobalAddressSDNode>(Callee)->getGlobal();
     auto *BB = CLI.CS->getParent();
