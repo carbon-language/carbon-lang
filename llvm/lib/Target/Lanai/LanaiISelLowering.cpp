@@ -197,8 +197,8 @@ SDValue LanaiTargetLowering::LowerOperation(SDValue Op,
 //                       Lanai Inline Assembly Support
 //===----------------------------------------------------------------------===//
 
-unsigned LanaiTargetLowering::getRegisterByName(const char *RegName, EVT VT,
-                                                SelectionDAG &DAG) const {
+unsigned LanaiTargetLowering::getRegisterByName(const char *RegName, EVT /*VT*/,
+                                                SelectionDAG & /*DAG*/) const {
   // Only unallocatable registers should be matched here.
   unsigned Reg = StringSwitch<unsigned>(RegName)
                      .Case("pc", Lanai::PC)
@@ -579,7 +579,7 @@ LanaiTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
 // (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
 SDValue LanaiTargetLowering::LowerCCCCallTo(
     SDValue Chain, SDValue Callee, CallingConv::ID CallConv, bool IsVarArg,
-    bool IsTailCall, const SmallVectorImpl<ISD::OutputArg> &Outs,
+    bool /*IsTailCall*/, const SmallVectorImpl<ISD::OutputArg> &Outs,
     const SmallVectorImpl<SDValue> &OutVals,
     const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &DL,
     SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
@@ -626,7 +626,7 @@ SDValue LanaiTargetLowering::LowerCCCCallTo(
     Chain = DAG.getMemcpy(Chain, DL, FIPtr, Arg, SizeNode, Align,
                           /*IsVolatile=*/false,
                           /*AlwaysInline=*/false,
-                          /*IsTailCall=*/false, MachinePointerInfo(),
+                          /*isTailCall=*/false, MachinePointerInfo(),
                           MachinePointerInfo());
     ByValArgs.push_back(FIPtr);
   }
@@ -786,8 +786,7 @@ SDValue LanaiTargetLowering::LowerCallResult(
 //===----------------------------------------------------------------------===//
 
 static LPCC::CondCode IntCondCCodeToICC(SDValue CC, const SDLoc &DL,
-                                        SDValue &LHS, SDValue &RHS,
-                                        SelectionDAG &DAG) {
+                                        SDValue &RHS, SelectionDAG &DAG) {
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
 
   // For integer, only the SETEQ, SETNE, SETLT, SETLE, SETGT, SETGE, SETULT,
@@ -859,7 +858,7 @@ SDValue LanaiTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Dest = Op.getOperand(4);
   SDLoc DL(Op);
 
-  LPCC::CondCode CC = IntCondCCodeToICC(Cond, DL, LHS, RHS, DAG);
+  LPCC::CondCode CC = IntCondCCodeToICC(Cond, DL, RHS, DAG);
   SDValue TargetCC = DAG.getConstant(CC, DL, MVT::i32);
   SDValue Flag =
       DAG.getNode(LanaiISD::SET_FLAG, DL, MVT::Glue, LHS, RHS, TargetCC);
@@ -961,7 +960,7 @@ SDValue LanaiTargetLowering::LowerSETCCE(SDValue Op, SelectionDAG &DAG) const {
   SDValue Cond = Op.getOperand(3);
   SDLoc DL(Op);
 
-  LPCC::CondCode CC = IntCondCCodeToICC(Cond, DL, LHS, RHS, DAG);
+  LPCC::CondCode CC = IntCondCCodeToICC(Cond, DL, RHS, DAG);
   SDValue TargetCC = DAG.getConstant(CC, DL, MVT::i32);
   SDValue Flag = DAG.getNode(LanaiISD::SUBBF, DL, MVT::Glue, LHS, RHS, Carry);
   return DAG.getNode(LanaiISD::SETCC, DL, Op.getValueType(), TargetCC, Flag);
@@ -973,7 +972,7 @@ SDValue LanaiTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Cond = Op.getOperand(2);
   SDLoc DL(Op);
 
-  LPCC::CondCode CC = IntCondCCodeToICC(Cond, DL, LHS, RHS, DAG);
+  LPCC::CondCode CC = IntCondCCodeToICC(Cond, DL, RHS, DAG);
   SDValue TargetCC = DAG.getConstant(CC, DL, MVT::i32);
   SDValue Flag =
       DAG.getNode(LanaiISD::SET_FLAG, DL, MVT::Glue, LHS, RHS, TargetCC);
@@ -990,7 +989,7 @@ SDValue LanaiTargetLowering::LowerSELECT_CC(SDValue Op,
   SDValue Cond = Op.getOperand(4);
   SDLoc DL(Op);
 
-  LPCC::CondCode CC = IntCondCCodeToICC(Cond, DL, LHS, RHS, DAG);
+  LPCC::CondCode CC = IntCondCCodeToICC(Cond, DL, RHS, DAG);
   SDValue TargetCC = DAG.getConstant(CC, DL, MVT::i32);
   SDValue Flag =
       DAG.getNode(LanaiISD::SET_FLAG, DL, MVT::Glue, LHS, RHS, TargetCC);
