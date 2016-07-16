@@ -5991,8 +5991,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
           CGM.getModule(), ObjCTypes.ImpnfABITy, false,
           llvm::GlobalValue::ExternalLinkage, nullptr, "_objc_empty_vtable");
   }
-  assert(ID->getClassInterface() &&
-         "CGObjCNonFragileABIMac::GenerateClass - class is 0");
+
   // FIXME: Is this correct (that meta class size is never computed)?
   uint32_t InstanceStart =
     CGM.getDataLayout().getTypeAllocSize(ObjCTypes.ClassnfABITy);
@@ -6004,9 +6003,11 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
 
   llvm::GlobalVariable *SuperClassGV, *IsAGV;
 
+  const auto *CI = ID->getClassInterface();
+  assert(CI && "CGObjCNonFragileABIMac::GenerateClass - class is 0");
+
   // Build the flags for the metaclass.
-  bool classIsHidden =
-    ID->getClassInterface()->getVisibility() == HiddenVisibility;
+  bool classIsHidden = CI->getVisibility() == HiddenVisibility;
   if (classIsHidden)
     flags |= NonFragileABI_Class_Hidden;
 
@@ -6018,42 +6019,43 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
       flags |= NonFragileABI_Class_HasCXXDestructorOnly;  
   }
 
-  if (!ID->getClassInterface()->getSuperClass()) {
+  if (!CI->getSuperClass()) {
     // class is root
     flags |= NonFragileABI_Class_Root;
+
     TClassName = ObjCClassName;
     TClassName += ClassName;
-    SuperClassGV = GetClassGlobal(TClassName.str(),
-                                  ID->getClassInterface()->isWeakImported());
+    SuperClassGV = GetClassGlobal(TClassName.str(), CI->isWeakImported());
+
     TClassName = ObjCMetaClassName;
     TClassName += ClassName;
-    IsAGV = GetClassGlobal(TClassName.str(),
-                           ID->getClassInterface()->isWeakImported());
+    IsAGV = GetClassGlobal(TClassName.str(), CI->isWeakImported());
   } else {
     // Has a root. Current class is not a root.
     const ObjCInterfaceDecl *Root = ID->getClassInterface();
     while (const ObjCInterfaceDecl *Super = Root->getSuperClass())
       Root = Super;
+
+    const auto *Super = CI->getSuperClass();
+
     TClassName = ObjCMetaClassName ;
     TClassName += Root->getObjCRuntimeNameAsString();
-    IsAGV = GetClassGlobal(TClassName.str(),
-                           Root->isWeakImported());
+    IsAGV = GetClassGlobal(TClassName.str(), Root->isWeakImported());
 
     // work on super class metadata symbol.
     TClassName = ObjCMetaClassName;
-    TClassName += ID->getClassInterface()->getSuperClass()->getObjCRuntimeNameAsString();
-    SuperClassGV = GetClassGlobal(
-                                  TClassName.str(),
-                                  ID->getClassInterface()->getSuperClass()->isWeakImported());
+    TClassName += Super->getObjCRuntimeNameAsString();
+    SuperClassGV = GetClassGlobal(TClassName.str(), Super->isWeakImported());
   }
-  llvm::GlobalVariable *CLASS_RO_GV = BuildClassRoTInitializer(flags,
-                                                               InstanceStart,
-                                                               InstanceSize,ID);
+
+  llvm::GlobalVariable *CLASS_RO_GV =
+      BuildClassRoTInitializer(flags, InstanceStart, InstanceSize, ID);
+
   TClassName = ObjCMetaClassName;
   TClassName += ClassName;
-  llvm::GlobalVariable *MetaTClass = BuildClassMetaData(
-      TClassName.str(), IsAGV, SuperClassGV, CLASS_RO_GV, classIsHidden,
-      ID->getClassInterface()->isWeakImported());
+  llvm::GlobalVariable *MetaTClass =
+      BuildClassMetaData(TClassName.str(), IsAGV, SuperClassGV, CLASS_RO_GV,
+                         classIsHidden, CI->isWeakImported());
   DefinedMetaClasses.push_back(MetaTClass);
 
   // Metadata for the class
@@ -6074,34 +6076,32 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
       flags |= NonFragileABI_Class_HasCXXDestructorOnly;
   }
 
-  if (hasObjCExceptionAttribute(CGM.getContext(), ID->getClassInterface()))
+  if (hasObjCExceptionAttribute(CGM.getContext(), CI))
     flags |= NonFragileABI_Class_Exception;
 
-  if (!ID->getClassInterface()->getSuperClass()) {
+  if (!CI->getSuperClass()) {
     flags |= NonFragileABI_Class_Root;
     SuperClassGV = nullptr;
   } else {
     // Has a root. Current class is not a root.
+    const auto *Super = CI->getSuperClass();
+
     TClassName = ObjCClassName;
-    TClassName += ID->getClassInterface()->getSuperClass()->getObjCRuntimeNameAsString();
-    SuperClassGV = GetClassGlobal(
-                                  TClassName.str(),
-                                  ID->getClassInterface()->getSuperClass()->isWeakImported());
+    TClassName += Super->getObjCRuntimeNameAsString();
+    SuperClassGV = GetClassGlobal(TClassName.str(), Super->isWeakImported());
   }
+
   GetClassSizeInfo(ID, InstanceStart, InstanceSize);
-  CLASS_RO_GV = BuildClassRoTInitializer(flags,
-                                         InstanceStart,
-                                         InstanceSize,
-                                         ID);
+  CLASS_RO_GV =
+      BuildClassRoTInitializer(flags, InstanceStart, InstanceSize, ID);
 
   TClassName = ObjCClassName;
   TClassName += ClassName;
   llvm::GlobalVariable *ClassMD =
     BuildClassMetaData(TClassName.str(), MetaTClass, SuperClassGV, CLASS_RO_GV,
-                       classIsHidden,
-                       ID->getClassInterface()->isWeakImported());
+                       classIsHidden, CI->isWeakImported());
   DefinedClasses.push_back(ClassMD);
-  ImplementedClasses.push_back(ID->getClassInterface());
+  ImplementedClasses.push_back(CI);
 
   // Determine if this class is also "non-lazy".
   if (ImplementationIsNonLazy(ID))
@@ -6109,7 +6109,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
 
   // Force the definition of the EHType if necessary.
   if (flags & NonFragileABI_Class_Exception)
-    GetInterfaceEHType(ID->getClassInterface(), true);
+    GetInterfaceEHType(CI, true);
   // Make sure method definition entries are all clear for next implementation.
   MethodDefinitions.clear();
 }
