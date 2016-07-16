@@ -576,7 +576,7 @@ static void setVersionId(SymbolBody *Body, StringRef VersionName,
   }
 
   Symbol *Sym = Body->symbol();
-  if (Sym->VersionId != VER_NDX_GLOBAL && Sym->VersionId != VER_NDX_LOCAL)
+  if (Sym->VersionId != Config->DefaultSymbolVersion)
     warning("duplicate symbol " + Name + " in version script");
   Sym->VersionId = Version;
 }
