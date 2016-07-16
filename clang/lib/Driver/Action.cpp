@@ -136,7 +136,7 @@ OffloadAction::OffloadAction(const HostDependence &HDep)
   ActiveOffloadKindMask = HDep.getOffloadKinds();
   HDep.getAction()->propagateHostOffloadInfo(HDep.getOffloadKinds(),
                                              HDep.getBoundArch());
-};
+}
 
 OffloadAction::OffloadAction(const DeviceDependences &DDeps, types::ID Ty)
     : Action(OffloadClass, DDeps.getActions(), Ty),
