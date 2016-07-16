@@ -1527,9 +1527,8 @@ void VersionDefinitionSection<ELFT>::writeTo(uint8_t *Buf) {
   writeDefinition(Verdef, Verdaux, VER_FLG_BASE, 1, getFileDefName(),
                   FileDefNameOff);
 
-  uint32_t I = 2;
   for (Version &V : Config->SymbolVersions)
-    writeDefinition(Verdef, Verdaux, 0 /* Flags */, I++, V.Name, V.NameOff);
+    writeDefinition(Verdef, Verdaux, 0, V.Id, V.Name, V.NameOff);
 
   Verdef[-1].vd_next = 0;
 }
