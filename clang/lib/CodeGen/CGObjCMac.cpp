@@ -5978,7 +5978,6 @@ void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCImplementationDecl *OID,
 }
 
 void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
-  std::string ClassName = ID->getObjCRuntimeNameAsString();
   if (!ObjCEmptyCacheVar) {
     ObjCEmptyCacheVar = new llvm::GlobalVariable(
         CGM.getModule(), ObjCTypes.CacheTy, false,
@@ -5997,12 +5996,10 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     CGM.getDataLayout().getTypeAllocSize(ObjCTypes.ClassnfABITy);
   uint32_t InstanceSize = InstanceStart;
   uint32_t flags = NonFragileABI_Class_Meta;
-  llvm::SmallString<64> ObjCMetaClassName(getMetaclassSymbolPrefix());
-  llvm::SmallString<64> ObjCClassName(getClassSymbolPrefix());
-  llvm::SmallString<64> TClassName;
 
   llvm::GlobalVariable *SuperClassGV, *IsAGV;
 
+  StringRef ClassName = ID->getObjCRuntimeNameAsString();
   const auto *CI = ID->getClassInterface();
   assert(CI && "CGObjCNonFragileABIMac::GenerateClass - class is 0");
 
@@ -6023,13 +6020,11 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     // class is root
     flags |= NonFragileABI_Class_Root;
 
-    TClassName = ObjCClassName;
-    TClassName += ClassName;
-    SuperClassGV = GetClassGlobal(TClassName.str(), CI->isWeakImported());
+    SuperClassGV = GetClassGlobal((getClassSymbolPrefix() + ClassName).str(),
+                                  CI->isWeakImported());
 
-    TClassName = ObjCMetaClassName;
-    TClassName += ClassName;
-    IsAGV = GetClassGlobal(TClassName.str(), CI->isWeakImported());
+    IsAGV = GetClassGlobal((getMetaclassSymbolPrefix() + ClassName).str(),
+                           CI->isWeakImported());
   } else {
     // Has a root. Current class is not a root.
     const ObjCInterfaceDecl *Root = ID->getClassInterface();
@@ -6037,25 +6032,25 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
       Root = Super;
 
     const auto *Super = CI->getSuperClass();
+    StringRef RootClassName = Root->getObjCRuntimeNameAsString();
+    StringRef SuperClassName = Super->getObjCRuntimeNameAsString();
 
-    TClassName = ObjCMetaClassName ;
-    TClassName += Root->getObjCRuntimeNameAsString();
-    IsAGV = GetClassGlobal(TClassName.str(), Root->isWeakImported());
+    IsAGV = GetClassGlobal((getMetaclassSymbolPrefix() + RootClassName).str(),
+                           Root->isWeakImported());
 
     // work on super class metadata symbol.
-    TClassName = ObjCMetaClassName;
-    TClassName += Super->getObjCRuntimeNameAsString();
-    SuperClassGV = GetClassGlobal(TClassName.str(), Super->isWeakImported());
+    SuperClassGV =
+        GetClassGlobal((getMetaclassSymbolPrefix() + SuperClassName).str(),
+                       Super->isWeakImported());
   }
 
   llvm::GlobalVariable *CLASS_RO_GV =
       BuildClassRoTInitializer(flags, InstanceStart, InstanceSize, ID);
 
-  TClassName = ObjCMetaClassName;
-  TClassName += ClassName;
   llvm::GlobalVariable *MetaTClass =
-      BuildClassMetaData(TClassName.str(), IsAGV, SuperClassGV, CLASS_RO_GV,
-                         classIsHidden, CI->isWeakImported());
+      BuildClassMetaData((getMetaclassSymbolPrefix() + ClassName).str(), IsAGV,
+                         SuperClassGV, CLASS_RO_GV, classIsHidden,
+                         CI->isWeakImported());
   DefinedMetaClasses.push_back(MetaTClass);
 
   // Metadata for the class
@@ -6085,21 +6080,21 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   } else {
     // Has a root. Current class is not a root.
     const auto *Super = CI->getSuperClass();
+    StringRef SuperClassName = Super->getObjCRuntimeNameAsString();
 
-    TClassName = ObjCClassName;
-    TClassName += Super->getObjCRuntimeNameAsString();
-    SuperClassGV = GetClassGlobal(TClassName.str(), Super->isWeakImported());
+    SuperClassGV =
+        GetClassGlobal((getClassSymbolPrefix() + SuperClassName).str(),
+                       Super->isWeakImported());
   }
 
   GetClassSizeInfo(ID, InstanceStart, InstanceSize);
   CLASS_RO_GV =
       BuildClassRoTInitializer(flags, InstanceStart, InstanceSize, ID);
 
-  TClassName = ObjCClassName;
-  TClassName += ClassName;
   llvm::GlobalVariable *ClassMD =
-    BuildClassMetaData(TClassName.str(), MetaTClass, SuperClassGV, CLASS_RO_GV,
-                       classIsHidden, CI->isWeakImported());
+    BuildClassMetaData((getClassSymbolPrefix() + ClassName).str(), MetaTClass,
+                       SuperClassGV, CLASS_RO_GV, classIsHidden,
+                       CI->isWeakImported());
   DefinedClasses.push_back(ClassMD);
   ImplementedClasses.push_back(CI);
 
