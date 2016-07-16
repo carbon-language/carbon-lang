@@ -962,6 +962,8 @@ bool MIParser::parseRegisterOperand(MachineOperand &Dest,
   if (Token.is(MIToken::colon)) {
     if (parseSubRegisterIndex(SubReg))
       return true;
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
+      return error("subregister index expects a virtual register");
   }
   if ((Flags & RegState::Define) == 0) {
     if (consumeIfPresent(MIToken::lparen)) {
