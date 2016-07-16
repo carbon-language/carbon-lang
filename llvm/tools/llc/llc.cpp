@@ -269,6 +269,9 @@ int main(int argc, char **argv) {
 
 static bool addPass(PassManagerBase &PM, const char *argv0,
                     StringRef PassName, TargetPassConfig &TPC) {
+  if (PassName == "none")
+    return false;
+
   const PassRegistry *PR = PassRegistry::getPassRegistry();
   const PassInfo *PI = PR->getPassInfo(PassName);
   if (!PI) {
