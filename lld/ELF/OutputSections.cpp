@@ -1098,9 +1098,8 @@ static void writeCieFde(uint8_t *Buf, ArrayRef<uint8_t> D) {
 }
 
 template <class ELFT> void EhOutputSection<ELFT>::finalize() {
-  if (Finalized)
-    return;
-  Finalized = true;
+  if (this->Header.sh_size)
+    return; // Already finalized.
 
   size_t Off = 0;
   for (CieRecord *Cie : Cies) {

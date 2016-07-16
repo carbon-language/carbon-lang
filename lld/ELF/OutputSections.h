@@ -414,8 +414,6 @@ private:
 
   // CIE records are uniquified by their contents and personality functions.
   llvm::DenseMap<std::pair<ArrayRef<uint8_t>, SymbolBody *>, CieRecord> CieMap;
-
-  bool Finalized = false;
 };
 
 template <class ELFT>
