@@ -170,8 +170,7 @@ static uint8_t getMinVisibility(uint8_t VA, uint8_t VB) {
 static uint16_t getVersionId(Symbol *Sym, StringRef Name) {
   size_t VersionBegin = Name.find('@');
   if (VersionBegin == StringRef::npos)
-    return Config->VersionScriptGlobalByDefault ? VER_NDX_GLOBAL
-                                                : VER_NDX_LOCAL;
+    return Config->DefaultSymbolVersion;
 
   // If symbol name contains '@' or '@@' we can assign its version id right
   // here. '@@' means the default version. It is usually the most recent one.
@@ -604,8 +603,7 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
         continue;
       }
 
-      if (B->symbol()->VersionId != VER_NDX_GLOBAL &&
-          B->symbol()->VersionId != VER_NDX_LOCAL)
+      if (B->symbol()->VersionId != Config->DefaultSymbolVersion)
         warning("duplicate symbol " + Name + " in version script");
       B->symbol()->VersionId = V.Id;
     }
@@ -618,8 +616,7 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
         continue;
 
       for (SymbolBody *B : findAll(Name))
-        if (B->symbol()->VersionId == VER_NDX_GLOBAL ||
-            B->symbol()->VersionId == VER_NDX_LOCAL)
+        if (B->symbol()->VersionId == Config->DefaultSymbolVersion)
           B->symbol()->VersionId = V.Id;
     }
   }

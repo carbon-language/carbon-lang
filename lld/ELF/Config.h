@@ -104,7 +104,6 @@ struct Configuration {
   bool Threads;
   bool Trace;
   bool Verbose;
-  bool VersionScriptGlobalByDefault = true;
   bool WarnCommon;
   bool ZCombreloc;
   bool ZExecStack;
@@ -115,6 +114,7 @@ struct Configuration {
   UnresolvedPolicy UnresolvedSymbols;
   BuildIdKind BuildId = BuildIdKind::None;
   ELFKind EKind = ELFNoneKind;
+  uint16_t DefaultSymbolVersion = llvm::ELF::VER_NDX_GLOBAL;
   uint16_t EMachine = llvm::ELF::EM_NONE;
   uint64_t EntryAddr = -1;
   uint64_t ImageBase;

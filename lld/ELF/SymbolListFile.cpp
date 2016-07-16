@@ -19,6 +19,8 @@
 #include "llvm/Support/MemoryBuffer.h"
 
 using namespace llvm;
+using namespace llvm::ELF;
+
 using namespace lld;
 using namespace lld::elf;
 
@@ -117,7 +119,7 @@ void VersionScriptParser::parseLocal() {
   expect("local:");
   expect("*");
   expect(";");
-  Config->VersionScriptGlobalByDefault = false;
+  Config->DefaultSymbolVersion = VER_NDX_LOCAL;
 }
 
 void VersionScriptParser::parseVersionSymbols(StringRef Version) {
