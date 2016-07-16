@@ -2599,6 +2599,9 @@ def note_overridden_method : Note<
 def note_protocol_method : Note<
   "protocol method is here">;
 
+def warn_available_using_star_case : Warning<
+  "using '*' case here, platform %0 is not accounted for">, InGroup<UnguardedAvailability>;
+
 // Thread Safety Attributes
 def warn_invalid_capability_name : Warning<
   "invalid capability name '%0'; capability name must be 'mutex' or 'role'">,
