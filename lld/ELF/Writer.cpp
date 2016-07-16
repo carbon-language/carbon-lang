@@ -194,7 +194,7 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
     MipsRldMap->setSize(sizeof(uintX_t));
     MipsRldMap->updateAlignment(sizeof(uintX_t));
   }
-  if (!Config->SymbolVersions.empty())
+  if (!Config->VersionDefinitions.empty())
     VerDef.reset(new VersionDefinitionSection<ELFT>());
 
   Out<ELFT>::Bss = &Bss;

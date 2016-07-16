@@ -77,8 +77,8 @@ private:
 size_t elf::defineSymbolVersion(StringRef VerStr) {
   // Identifiers start at 2 because 0 and 1 are reserved
   // for VER_NDX_LOCAL and VER_NDX_GLOBAL constants.
-  size_t VersionId = Config->SymbolVersions.size() + 2;
-  Config->SymbolVersions.push_back({VerStr, VersionId});
+  size_t VersionId = Config->VersionDefinitions.size() + 2;
+  Config->VersionDefinitions.push_back({VerStr, VersionId});
   return VersionId;
 }
 
@@ -111,7 +111,7 @@ void VersionScriptParser::parseGlobal(StringRef VerStr) {
   if (VerStr.empty())
     Globals = &Config->VersionScriptGlobals;
   else
-    Globals = &Config->SymbolVersions.back().Globals;
+    Globals = &Config->VersionDefinitions.back().Globals;
 
   for (;;) {
     StringRef Cur = peek();

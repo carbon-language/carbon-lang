@@ -605,7 +605,7 @@ void GnuHashTableSection<ELFT>::addSymbols(
 // Returns the number of version definition entries. Because the first entry
 // is for the version definition itself, it is the number of versioned symbols
 // plus one. Note that we don't support multiple versions yet.
-static unsigned getVerDefNum() { return Config->SymbolVersions.size() + 1; }
+static unsigned getVerDefNum() { return Config->VersionDefinitions.size() + 1; }
 
 template <class ELFT>
 DynamicSection<ELFT>::DynamicSection()
@@ -1485,7 +1485,7 @@ static StringRef getFileDefName() {
 
 template <class ELFT> void VersionDefinitionSection<ELFT>::finalize() {
   FileDefNameOff = Out<ELFT>::DynStrTab->addString(getFileDefName());
-  for (VersionDefinition &V : Config->SymbolVersions)
+  for (VersionDefinition &V : Config->VersionDefinitions)
     V.NameOff = Out<ELFT>::DynStrTab->addString(V.Name);
 
   this->Header.sh_size =
@@ -1519,7 +1519,7 @@ template <class ELFT>
 void VersionDefinitionSection<ELFT>::writeTo(uint8_t *Buf) {
   writeOne(Buf, 1, getFileDefName(), FileDefNameOff);
 
-  for (VersionDefinition &V : Config->SymbolVersions) {
+  for (VersionDefinition &V : Config->VersionDefinitions) {
     Buf += sizeof(Elf_Verdef) + sizeof(Elf_Verdaux);
     writeOne(Buf, V.Id, V.Name, V.NameOff);
   }

@@ -64,7 +64,7 @@ struct Configuration {
   llvm::StringRef Sysroot;
   llvm::StringSet<> TraceSymbol;
   std::string RPath;
-  std::vector<VersionDefinition> SymbolVersions;
+  std::vector<VersionDefinition> VersionDefinitions;
   std::vector<llvm::StringRef> DynamicList;
   std::vector<llvm::StringRef> SearchPaths;
   std::vector<llvm::StringRef> Undefined;

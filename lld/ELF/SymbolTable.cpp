@@ -180,7 +180,7 @@ static uint16_t getVersionId(Symbol *Sym, StringRef Name) {
   if (Default)
     Version = Version.drop_front();
 
-  for (VersionDefinition &V : Config->SymbolVersions)
+  for (VersionDefinition &V : Config->VersionDefinitions)
     if (V.Name == Version)
       return Default ? V.Id : (V.Id | VERSYM_HIDDEN);
 
@@ -579,7 +579,7 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
     return;
   }
 
-  if (Config->SymbolVersions.empty())
+  if (Config->VersionDefinitions.empty())
     return;
 
   // If we have symbols version declarations, we should
@@ -589,8 +589,8 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
   // * Otherwise, we look through the wildcard patterns. We look through the
   //   version tags in reverse order. We use the first match we find (the last
   //   matching version tag in the file).
-  for (size_t I = 0, E = Config->SymbolVersions.size(); I < E; ++I) {
-    VersionDefinition &V = Config->SymbolVersions[I];
+  for (size_t I = 0, E = Config->VersionDefinitions.size(); I < E; ++I) {
+    VersionDefinition &V = Config->VersionDefinitions[I];
     for (StringRef Name : V.Globals) {
       if (hasWildcard(Name))
         continue;
@@ -609,8 +609,8 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
     }
   }
 
-  for (size_t I = Config->SymbolVersions.size() - 1; I != (size_t)-1; --I) {
-    VersionDefinition &V = Config->SymbolVersions[I];
+  for (size_t I = Config->VersionDefinitions.size() - 1; I != (size_t)-1; --I) {
+    VersionDefinition &V = Config->VersionDefinitions[I];
     for (StringRef Name : V.Globals)
       if (hasWildcard(Name))
         for (SymbolBody *B : findAll(Name))
