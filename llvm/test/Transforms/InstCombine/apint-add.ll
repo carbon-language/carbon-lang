@@ -33,6 +33,16 @@ define i15 @test3(i15 %x) {
   ret i15 %tmp.4
 }
 
+; X + signbit --> X ^ signbit
+define <2 x i5> @test3vec(<2 x i5> %x) {
+; CHECK-LABEL: @test3vec(
+; CHECK-NEXT:    [[Y:%.*]] = add <2 x i5> %x, <i5 -16, i5 -16>
+; CHECK-NEXT:    ret <2 x i5> [[Y]]
+;
+  %y = add <2 x i5> %x, <i5 16, i5 16>
+  ret <2 x i5> %y
+}
+
 ;; (x & 0b1111..0) + 1 -> x | 1
 define i49 @test4(i49 %x) {
 ; CHECK-LABEL: @test4(
