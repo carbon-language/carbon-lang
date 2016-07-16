@@ -83,7 +83,7 @@ private:
 
   void addCommonSymbols(std::vector<DefinedCommon *> &Syms);
 
-  std::unique_ptr<llvm::FileOutputBuffer> Buffer;
+  std::unique_ptr<FileOutputBuffer> Buffer;
 
   BumpPtrAllocator Alloc;
   std::vector<OutputSectionBase<ELFT> *> OutputSections;

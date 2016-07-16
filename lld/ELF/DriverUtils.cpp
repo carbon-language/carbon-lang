@@ -128,13 +128,13 @@ std::string elf::relativeToRoot(StringRef Path) {
   return Res.str();
 }
 
-CpioFile::CpioFile(std::unique_ptr<llvm::raw_fd_ostream> OS, StringRef S)
+CpioFile::CpioFile(std::unique_ptr<raw_fd_ostream> OS, StringRef S)
     : OS(std::move(OS)), Basename(S) {}
 
 CpioFile *CpioFile::create(StringRef OutputPath) {
   std::string Path = (OutputPath + ".cpio").str();
   std::error_code EC;
-  auto OS = llvm::make_unique<raw_fd_ostream>(Path, EC, fs::F_None);
+  auto OS = make_unique<raw_fd_ostream>(Path, EC, fs::F_None);
   if (EC) {
     error(EC, "--reproduce: failed to open " + Path);
     return nullptr;

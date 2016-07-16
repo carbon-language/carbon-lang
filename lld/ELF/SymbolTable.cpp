@@ -69,7 +69,7 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
   }
 
   if (Config->Trace)
-    llvm::outs() << getFilename(FileP) << "\n";
+    outs() << getFilename(FileP) << "\n";
 
   // .so file
   if (auto *F = dyn_cast<SharedFile<ELFT>>(FileP)) {
@@ -117,7 +117,7 @@ template <class ELFT> void SymbolTable<ELFT>::addCombinedLtoObject() {
   for (auto &IF : IFs) {
     ObjectFile<ELFT> *Obj = cast<ObjectFile<ELFT>>(IF.release());
 
-    llvm::DenseSet<StringRef> DummyGroups;
+    DenseSet<StringRef> DummyGroups;
     Obj->parse(DummyGroups);
     ObjectFiles.emplace_back(Obj);
   }
@@ -481,8 +481,8 @@ std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(StringRef Pattern) {
 }
 
 template <class ELFT>
-void SymbolTable<ELFT>::addLazyArchive(
-    ArchiveFile *F, const llvm::object::Archive::Symbol Sym) {
+void SymbolTable<ELFT>::addLazyArchive(ArchiveFile *F,
+                                       const object::Archive::Symbol Sym) {
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Sym.getName());
