@@ -611,14 +611,11 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
 
   for (size_t I = Config->SymbolVersions.size() - 1; I != (size_t)-1; --I) {
     Version &V = Config->SymbolVersions[I];
-    for (StringRef Name : V.Globals) {
-      if (!hasWildcard(Name))
-        continue;
-
-      for (SymbolBody *B : findAll(Name))
-        if (B->symbol()->VersionId == Config->DefaultSymbolVersion)
-          B->symbol()->VersionId = V.Id;
-    }
+    for (StringRef Name : V.Globals)
+      if (hasWildcard(Name))
+        for (SymbolBody *B : findAll(Name))
+          if (B->symbol()->VersionId == Config->DefaultSymbolVersion)
+            B->symbol()->VersionId = V.Id;
   }
 }
 
