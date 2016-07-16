@@ -108,7 +108,6 @@ void VersionScriptParser::parseLocal() {
 }
 
 void VersionScriptParser::parseExtern(std::vector<SymbolVersion> *Globals) {
-  expect("extern");
   expect("C++");
   expect("{");
 
@@ -131,7 +130,7 @@ void VersionScriptParser::parseGlobal(StringRef VerStr) {
     Globals = &Config->VersionDefinitions.back().Globals;
 
   for (;;) {
-    if (peek() == "extern")
+    if (skip("extern"))
       parseExtern(Globals);
 
     StringRef Cur = peek();
