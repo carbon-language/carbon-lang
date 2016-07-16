@@ -262,12 +262,15 @@ class VersionDefinitionSection final : public OutputSectionBase<ELFT> {
   typedef typename ELFT::Verdef Elf_Verdef;
   typedef typename ELFT::Verdaux Elf_Verdaux;
 
-  unsigned FileDefNameOff;
-
 public:
   VersionDefinitionSection();
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
+
+private:
+  void writeOne(uint8_t *Buf, uint32_t Index, StringRef Name, size_t NameOff);
+
+  unsigned FileDefNameOff;
 };
 
 // The .gnu.version section specifies the required version of each symbol in the

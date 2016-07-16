@@ -1498,39 +1498,35 @@ template <class ELFT> void VersionDefinitionSection<ELFT>::finalize() {
   this->Header.sh_info = getVerDefNum();
 }
 
-template <class Elf_Verdef, class Elf_Verdaux>
-static void writeDefinition(Elf_Verdef *&Verdef, Elf_Verdaux *&Verdaux,
-                            uint32_t Flags, uint32_t Index, StringRef Name,
-                            size_t StrTabOffset) {
+template <class ELFT>
+void VersionDefinitionSection<ELFT>::writeOne(uint8_t *Buf, uint32_t Index,
+                                              StringRef Name, size_t NameOff) {
+  auto *Verdef = reinterpret_cast<Elf_Verdef *>(Buf);
   Verdef->vd_version = 1;
   Verdef->vd_cnt = 1;
-  Verdef->vd_aux =
-      reinterpret_cast<char *>(Verdaux) - reinterpret_cast<char *>(Verdef);
-  Verdef->vd_next = sizeof(Elf_Verdef);
-
-  Verdef->vd_flags = Flags;
+  Verdef->vd_aux = sizeof(Elf_Verdef);
+  Verdef->vd_next = sizeof(Elf_Verdef) + sizeof(Elf_Verdaux);
+  Verdef->vd_flags = (Index == 1 ? VER_FLG_BASE : 0);
   Verdef->vd_ndx = Index;
   Verdef->vd_hash = hashSysv(Name);
-  ++Verdef;
 
-  Verdaux->vda_name = StrTabOffset;
+  auto *Verdaux = reinterpret_cast<Elf_Verdaux *>(Buf + sizeof(Elf_Verdef));
+  Verdaux->vda_name = NameOff;
   Verdaux->vda_next = 0;
-  ++Verdaux;
 }
 
 template <class ELFT>
 void VersionDefinitionSection<ELFT>::writeTo(uint8_t *Buf) {
+  writeOne(Buf, 1, getFileDefName(), FileDefNameOff);
+
+  for (Version &V : Config->SymbolVersions) {
+    Buf += sizeof(Elf_Verdef) + sizeof(Elf_Verdaux);
+    writeOne(Buf, V.Id, V.Name, V.NameOff);
+  }
+
+  // Need to terminate the last version definition.
   Elf_Verdef *Verdef = reinterpret_cast<Elf_Verdef *>(Buf);
-  Elf_Verdaux *Verdaux =
-      reinterpret_cast<Elf_Verdaux *>(Verdef + getVerDefNum());
-
-  writeDefinition(Verdef, Verdaux, VER_FLG_BASE, 1, getFileDefName(),
-                  FileDefNameOff);
-
-  for (Version &V : Config->SymbolVersions)
-    writeDefinition(Verdef, Verdaux, 0, V.Id, V.Name, V.NameOff);
-
-  Verdef[-1].vd_next = 0;
+  Verdef->vd_next = 0;
 }
 
 template <class ELFT>
