@@ -3529,15 +3529,26 @@ VersionTuple visualstudio::getMSVCVersion(const Driver *D, const ToolChain &TC,
 static void addPGOAndCoverageFlags(Compilation &C, const Driver &D,
                                    const InputInfo &Output, const ArgList &Args,
                                    ArgStringList &CmdArgs) {
+
+  auto *PGOGenerateArg = Args.getLastArg(options::OPT_fprofile_generate,
+                                         options::OPT_fprofile_generate_EQ,
+                                         options::OPT_fno_profile_generate);
+  if (PGOGenerateArg &&
+      PGOGenerateArg->getOption().matches(options::OPT_fno_profile_generate))
+    PGOGenerateArg = nullptr;
+
   auto *ProfileGenerateArg = Args.getLastArg(
       options::OPT_fprofile_instr_generate,
-      options::OPT_fprofile_instr_generate_EQ, options::OPT_fprofile_generate,
-      options::OPT_fprofile_generate_EQ,
+      options::OPT_fprofile_instr_generate_EQ,
       options::OPT_fno_profile_instr_generate);
   if (ProfileGenerateArg &&
       ProfileGenerateArg->getOption().matches(
           options::OPT_fno_profile_instr_generate))
     ProfileGenerateArg = nullptr;
+
+  if (PGOGenerateArg && ProfileGenerateArg)
+    D.Diag(diag::err_drv_argument_not_allowed_with)
+        << PGOGenerateArg->getSpelling() << ProfileGenerateArg->getSpelling();
 
   auto *ProfileUseArg = Args.getLastArg(
       options::OPT_fprofile_instr_use, options::OPT_fprofile_instr_use_EQ,
@@ -3546,6 +3557,10 @@ static void addPGOAndCoverageFlags(Compilation &C, const Driver &D,
   if (ProfileUseArg &&
       ProfileUseArg->getOption().matches(options::OPT_fno_profile_instr_use))
     ProfileUseArg = nullptr;
+
+  if (PGOGenerateArg && ProfileUseArg)
+    D.Diag(diag::err_drv_argument_not_allowed_with)
+        << ProfileUseArg->getSpelling() << PGOGenerateArg->getSpelling();
 
   if (ProfileGenerateArg && ProfileUseArg)
     D.Diag(diag::err_drv_argument_not_allowed_with)
@@ -3556,15 +3571,19 @@ static void addPGOAndCoverageFlags(Compilation &C, const Driver &D,
             options::OPT_fprofile_instr_generate_EQ))
       CmdArgs.push_back(Args.MakeArgString(Twine("-fprofile-instrument-path=") +
                                            ProfileGenerateArg->getValue()));
-    else if (ProfileGenerateArg->getOption().matches(
-                 options::OPT_fprofile_generate_EQ)) {
-      SmallString<128> Path(ProfileGenerateArg->getValue());
+    // The default is to use Clang Instrumentation.
+    CmdArgs.push_back("-fprofile-instrument=clang");
+  }
+
+  if (PGOGenerateArg) {
+    CmdArgs.push_back("-fprofile-instrument=llvm");
+    if (PGOGenerateArg->getOption().matches(
+            options::OPT_fprofile_generate_EQ)) {
+      SmallString<128> Path(PGOGenerateArg->getValue());
       llvm::sys::path::append(Path, "default.profraw");
       CmdArgs.push_back(
           Args.MakeArgString(Twine("-fprofile-instrument-path=") + Path));
     }
-    // The default is to use Clang Instrumentation.
-    CmdArgs.push_back("-fprofile-instrument=clang");
   }
 
   if (ProfileUseArg) {

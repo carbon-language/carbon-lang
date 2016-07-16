@@ -1502,19 +1502,21 @@ instrumentation:
    profile. As you make changes to your code, clang may no longer be able to
    use the profile data. It will warn you when this happens.
 
-Profile generation and use can also be controlled by the GCC-compatible flags
-``-fprofile-generate`` and ``-fprofile-use``. Although these flags are
-semantically equivalent to their GCC counterparts, they *do not* handle
-GCC-compatible profiles. They are only meant to implement GCC's semantics
-with respect to profile creation and use.
+Profile generation using an alternative instrumentation method can be
+controlled by the GCC-compatible flags ``-fprofile-generate`` and
+``-fprofile-use``. Although these flags are semantically equivalent to
+their GCC counterparts, they *do not* handle GCC-compatible profiles.
+They are only meant to implement GCC's semantics with respect to
+profile creation and use.
 
 .. option:: -fprofile-generate[=<dirname>]
 
-  Without any other arguments, ``-fprofile-generate`` behaves identically to
-  ``-fprofile-instr-generate``. When given a directory name, it generates the
-  profile file ``default.profraw`` in the directory named ``dirname``. If
-  ``dirname`` does not exist, it will be created at runtime. The environment
-  variable ``LLVM_PROFILE_FILE`` can be used to override the directory and
+  The ``-fprofile-generate`` and ``-fprofile-generate=`` flags will use
+  an alterantive instrumentation method for profile generation. When
+  given a directory name, it generates the profile file
+  ``default.profraw`` in the directory named ``dirname``. If ``dirname``
+  does not exist, it will be created at runtime. The environment variable
+  ``LLVM_PROFILE_FILE`` can be used to override the directory and
   filename for the profile file at runtime. For example,
 
   .. code-block:: console
