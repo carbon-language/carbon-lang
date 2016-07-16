@@ -1,5 +1,4 @@
-# REQUIRES: x86
-# XFAIL: win32
+# REQUIRES: shell
 
 # RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux %s -o %t.o
 # RUN: echo "LIBSAMPLE_1.0 { \
