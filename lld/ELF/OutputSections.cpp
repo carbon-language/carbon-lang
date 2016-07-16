@@ -1485,7 +1485,7 @@ static StringRef getFileDefName() {
 
 template <class ELFT> void VersionDefinitionSection<ELFT>::finalize() {
   FileDefNameOff = Out<ELFT>::DynStrTab->addString(getFileDefName());
-  for (Version &V : Config->SymbolVersions)
+  for (VersionDefinition &V : Config->SymbolVersions)
     V.NameOff = Out<ELFT>::DynStrTab->addString(V.Name);
 
   this->Header.sh_size =
@@ -1519,7 +1519,7 @@ template <class ELFT>
 void VersionDefinitionSection<ELFT>::writeTo(uint8_t *Buf) {
   writeOne(Buf, 1, getFileDefName(), FileDefNameOff);
 
-  for (Version &V : Config->SymbolVersions) {
+  for (VersionDefinition &V : Config->SymbolVersions) {
     Buf += sizeof(Elf_Verdef) + sizeof(Elf_Verdaux);
     writeOne(Buf, V.Id, V.Name, V.NameOff);
   }

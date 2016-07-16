@@ -180,7 +180,7 @@ static uint16_t getVersionId(Symbol *Sym, StringRef Name) {
   if (Default)
     Version = Version.drop_front();
 
-  for (elf::Version &V : Config->SymbolVersions)
+  for (VersionDefinition &V : Config->SymbolVersions)
     if (V.Name == Version)
       return Default ? V.Id : (V.Id | VERSYM_HIDDEN);
 
@@ -590,7 +590,7 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
   //   version tags in reverse order. We use the first match we find (the last
   //   matching version tag in the file).
   for (size_t I = 0, E = Config->SymbolVersions.size(); I < E; ++I) {
-    Version &V = Config->SymbolVersions[I];
+    VersionDefinition &V = Config->SymbolVersions[I];
     for (StringRef Name : V.Globals) {
       if (hasWildcard(Name))
         continue;
@@ -610,7 +610,7 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
   }
 
   for (size_t I = Config->SymbolVersions.size() - 1; I != (size_t)-1; --I) {
-    Version &V = Config->SymbolVersions[I];
+    VersionDefinition &V = Config->SymbolVersions[I];
     for (StringRef Name : V.Globals)
       if (hasWildcard(Name))
         for (SymbolBody *B : findAll(Name))

@@ -69,24 +69,24 @@ public:
   void run();
 
 private:
-  void parseVersion(StringRef Version);
-  void parseGlobal(StringRef Version);
+  void parseVersion(StringRef VerStr);
+  void parseGlobal(StringRef VerStr);
   void parseLocal();
 };
 
-size_t elf::defineSymbolVersion(StringRef Version) {
+size_t elf::defineSymbolVersion(StringRef VerStr) {
   // Identifiers start at 2 because 0 and 1 are reserved
   // for VER_NDX_LOCAL and VER_NDX_GLOBAL constants.
   size_t VersionId = Config->SymbolVersions.size() + 2;
-  Config->SymbolVersions.push_back(elf::Version(Version, VersionId));
+  Config->SymbolVersions.push_back({VerStr, VersionId});
   return VersionId;
 }
 
-void VersionScriptParser::parseVersion(StringRef Version) {
-  defineSymbolVersion(Version);
+void VersionScriptParser::parseVersion(StringRef VerStr) {
+  defineSymbolVersion(VerStr);
 
   if (skip("global:") || peek() != "local:")
-    parseGlobal(Version);
+    parseGlobal(VerStr);
   if (skip("local:"))
     parseLocal();
   expect("}");
@@ -95,7 +95,7 @@ void VersionScriptParser::parseVersion(StringRef Version) {
   // "Ver2 { global: foo; local: *; } Ver1;" has "Ver1" as a parent. This
   // version hierarchy is, probably against your instinct, purely for human; the
   // runtime doesn't care about them at all. In LLD, we simply skip the token.
-  if (!Version.empty() && peek() != ";")
+  if (!VerStr.empty() && peek() != ";")
     next();
   expect(";");
 }
@@ -106,9 +106,9 @@ void VersionScriptParser::parseLocal() {
   expect(";");
 }
 
-void VersionScriptParser::parseGlobal(StringRef Version) {
+void VersionScriptParser::parseGlobal(StringRef VerStr) {
   std::vector<StringRef> *Globals;
-  if (Version.empty())
+  if (VerStr.empty())
     Globals = &Config->VersionScriptGlobals;
   else
     Globals = &Config->SymbolVersions.back().Globals;
@@ -136,13 +136,13 @@ void VersionScriptParser::run() {
   }
 
   while (!atEOF() && !Error) {
-    StringRef Version = next();
-    if (Version == "{") {
+    StringRef VerStr = next();
+    if (VerStr == "{") {
       setError(Msg);
       return;
     }
     expect("{");
-    parseVersion(Version);
+    parseVersion(VerStr);
   }
 }
 

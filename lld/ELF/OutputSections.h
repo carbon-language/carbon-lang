@@ -25,7 +25,6 @@ namespace elf {
 
 class SymbolBody;
 struct SectionPiece;
-struct Version;
 template <class ELFT> class SymbolTable;
 template <class ELFT> class SymbolTableSection;
 template <class ELFT> class StringTableSection;
