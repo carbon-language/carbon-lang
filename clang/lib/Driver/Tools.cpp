@@ -3847,7 +3847,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (IsCuda) {
     // We have to pass the triple of the host if compiling for a CUDA device and
     // vice-versa.
-    StringRef NormalizedTriple;
+    std::string NormalizedTriple;
     if (JA.isDeviceOffloading(Action::OFK_Cuda))
       NormalizedTriple = C.getSingleOffloadToolChain<Action::OFK_Host>()
                              ->getTriple()
