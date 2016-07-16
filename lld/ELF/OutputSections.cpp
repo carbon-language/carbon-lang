@@ -1474,7 +1474,9 @@ SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
 
 template <class ELFT>
 VersionDefinitionSection<ELFT>::VersionDefinitionSection()
-    : OutputSectionBase<ELFT>(".gnu.version_d", SHT_GNU_verdef, SHF_ALLOC) {}
+    : OutputSectionBase<ELFT>(".gnu.version_d", SHT_GNU_verdef, SHF_ALLOC) {
+  this->Header.sh_addralign = sizeof(uint32_t);
+}
 
 static StringRef getFileDefName() {
   if (!Config->SoName.empty())
@@ -1490,7 +1492,6 @@ template <class ELFT> void VersionDefinitionSection<ELFT>::finalize() {
   this->Header.sh_size =
       (sizeof(Elf_Verdef) + sizeof(Elf_Verdaux)) * getVerDefNum();
   this->Header.sh_link = Out<ELFT>::DynStrTab->SectionIndex;
-  this->Header.sh_addralign = sizeof(uint32_t);
 
   // sh_info should be set to the number of definitions. This fact is missed in
   // documentation, but confirmed by binutils community:
