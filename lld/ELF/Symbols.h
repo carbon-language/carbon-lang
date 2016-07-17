@@ -299,7 +299,6 @@ public:
 
   SharedFile<ELFT> *file() { return (SharedFile<ELFT> *)this->File; }
 
-public:
   const Elf_Sym &Sym;
 
   // This field is a pointer to the symbol's version definition.
