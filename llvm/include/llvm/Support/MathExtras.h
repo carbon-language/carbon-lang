@@ -672,27 +672,35 @@ inline uint64_t OffsetToAlignment(uint64_t Value, uint64_t Align) {
   return alignTo(Value, Align) - Value;
 }
 
-/// SignExtend32 - Sign extend B-bit number x to 32-bit int.
-/// Usage int32_t r = SignExtend32<5>(x);
-template <unsigned B> inline int32_t SignExtend32(uint32_t x) {
-  return int32_t(x << (32 - B)) >> (32 - B);
-}
-
-/// \brief Sign extend number in the bottom B bits of X to a 32-bit int.
+/// Sign-extend the number in the bottom B bits of X to a 32-bit integer.
 /// Requires 0 < B <= 32.
-inline int32_t SignExtend32(uint32_t X, unsigned B) {
+template <unsigned B> inline int32_t SignExtend32(uint32_t X) {
+  static_assert(B > 0, "Bit width can't be 0.");
+  static_assert(B <= 32, "Bit width out of range.");
   return int32_t(X << (32 - B)) >> (32 - B);
 }
 
-/// SignExtend64 - Sign extend B-bit number x to 64-bit int.
-/// Usage int64_t r = SignExtend64<5>(x);
+/// Sign-extend the number in the bottom B bits of X to a 32-bit integer.
+/// Requires 0 < B < 32.
+inline int32_t SignExtend32(uint32_t X, unsigned B) {
+  assert(B > 0 && "Bit width can't be 0.");
+  assert(B <= 32 && "Bit width out of range.");
+  return int32_t(X << (32 - B)) >> (32 - B);
+}
+
+/// Sign-extend the number in the bottom B bits of X to a 64-bit integer.
+/// Requires 0 < B < 64.
 template <unsigned B> inline int64_t SignExtend64(uint64_t x) {
+  static_assert(B > 0, "Bit width can't be 0.");
+  static_assert(B <= 64, "Bit width out of range.");
   return int64_t(x << (64 - B)) >> (64 - B);
 }
 
-/// \brief Sign extend number in the bottom B bits of X to a 64-bit int.
-/// Requires 0 < B <= 64.
+/// Sign-extend the number in the bottom B bits of X to a 64-bit integer.
+/// Requires 0 < B < 64.
 inline int64_t SignExtend64(uint64_t X, unsigned B) {
+  assert(B > 0 && "Bit width can't be 0.");
+  assert(B <= 64 && "Bit width out of range.");
   return int64_t(X << (64 - B)) >> (64 - B);
 }
 
