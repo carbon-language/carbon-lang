@@ -187,7 +187,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
 
   if (!Subtarget.useSoftFloat()) {
-    // SSE has no i16 to fp conversion, only i32
+    // SSE has no i16 to fp conversion, only i32.
     if (X86ScalarSSEf32) {
       setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Promote);
       // f32 and f64 cases are Legal, f80 case is not
