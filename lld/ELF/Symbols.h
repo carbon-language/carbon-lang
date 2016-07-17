@@ -320,14 +320,15 @@ public:
 // the same name, it will ask the Lazy to load a file.
 class Lazy : public SymbolBody {
 public:
-  Lazy(SymbolBody::Kind K, StringRef Name, uint8_t Type)
-      : SymbolBody(K, Name, llvm::ELF::STV_DEFAULT, Type) {}
-
   static bool classof(const SymbolBody *S) { return S->isLazy(); }
 
   // Returns an object file for this symbol, or a nullptr if the file
   // was already returned.
   std::unique_ptr<InputFile> fetch();
+
+protected:
+  Lazy(SymbolBody::Kind K, StringRef Name, uint8_t Type)
+      : SymbolBody(K, Name, llvm::ELF::STV_DEFAULT, Type) {}
 };
 
 // LazyArchive symbols represents symbols in archive files.
