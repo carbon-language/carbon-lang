@@ -855,32 +855,29 @@ protected:
 
   llvm::Value *LookupIMPSuper(CodeGenFunction &CGF, Address ObjCSuper,
                               llvm::Value *cmd, MessageSendInfo &MSI) override {
-      CGBuilderTy &Builder = CGF.Builder;
-      llvm::Value *lookupArgs[] = {EnforceType(Builder, ObjCSuper.getPointer(),
-          PtrToObjCSuperTy), cmd};
+    CGBuilderTy &Builder = CGF.Builder;
+    llvm::Value *lookupArgs[] = {
+        EnforceType(Builder, ObjCSuper.getPointer(), PtrToObjCSuperTy), cmd,
+    };
 
-      if (CGM.ReturnTypeUsesSRet(MSI.CallInfo))
-        return CGF.EmitNounwindRuntimeCall(MsgLookupSuperFnSRet, lookupArgs);
-      else
-        return CGF.EmitNounwindRuntimeCall(MsgLookupSuperFn, lookupArgs);
-    }
+    if (CGM.ReturnTypeUsesSRet(MSI.CallInfo))
+      return CGF.EmitNounwindRuntimeCall(MsgLookupSuperFnSRet, lookupArgs);
+    else
+      return CGF.EmitNounwindRuntimeCall(MsgLookupSuperFn, lookupArgs);
+  }
 
-  llvm::Value *GetClassNamed(CodeGenFunction &CGF,
-                             const std::string &Name, bool isWeak) override {
+  llvm::Value *GetClassNamed(CodeGenFunction &CGF, const std::string &Name,
+                             bool isWeak) override {
     if (isWeak)
       return CGObjCGNU::GetClassNamed(CGF, Name, isWeak);
 
     EmitClassRef(Name);
-
     std::string SymbolName = "_OBJC_CLASS_" + Name;
-
     llvm::GlobalVariable *ClassSymbol = TheModule.getGlobalVariable(SymbolName);
-
     if (!ClassSymbol)
       ClassSymbol = new llvm::GlobalVariable(TheModule, LongTy, false,
                                              llvm::GlobalValue::ExternalLinkage,
                                              nullptr, SymbolName);
-
     return ClassSymbol;
   }
 
@@ -1054,8 +1051,7 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
 }
 
 llvm::Value *CGObjCGNU::GetClassNamed(CodeGenFunction &CGF,
-                                      const std::string &Name,
-                                      bool isWeak) {
+                                      const std::string &Name, bool isWeak) {
   llvm::Constant *ClassName = MakeConstantString(Name);
   // With the incompatible ABI, this will need to be replaced with a direct
   // reference to the class symbol.  For the compatible nonfragile ABI we are
@@ -2177,18 +2173,19 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
 
   // Get the class name
   ObjCInterfaceDecl *ClassDecl =
-    const_cast<ObjCInterfaceDecl *>(OID->getClassInterface());
+      const_cast<ObjCInterfaceDecl *>(OID->getClassInterface());
   std::string ClassName = ClassDecl->getNameAsString();
+
   // Emit the symbol that is used to generate linker errors if this class is
   // referenced in other modules but not declared.
   std::string classSymbolName = "__objc_class_name_" + ClassName;
-  if (llvm::GlobalVariable *symbol =
-      TheModule.getGlobalVariable(classSymbolName)) {
+  if (auto *symbol = TheModule.getGlobalVariable(classSymbolName)) {
     symbol->setInitializer(llvm::ConstantInt::get(LongTy, 0));
   } else {
     new llvm::GlobalVariable(TheModule, LongTy, false,
-    llvm::GlobalValue::ExternalLinkage, llvm::ConstantInt::get(LongTy, 0),
-    classSymbolName);
+                             llvm::GlobalValue::ExternalLinkage,
+                             llvm::ConstantInt::get(LongTy, 0),
+                             classSymbolName);
   }
 
   // Get the size of instances.
@@ -2351,19 +2348,19 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       ++ivarIndex;
   }
   llvm::Constant *ZeroPtr = llvm::ConstantInt::get(IntPtrTy, 0);
+
   //Generate metaclass for class methods
-  llvm::Constant *MetaClassStruct = GenerateClassStructure(NULLPtr,
-      NULLPtr, 0x12L, ClassName.c_str(), nullptr, Zeros[0], GenerateIvarList(
-        empty, empty, empty), ClassMethodList, NULLPtr,
-      NULLPtr, NULLPtr, ZeroPtr, ZeroPtr, true);
+  llvm::Constant *MetaClassStruct = GenerateClassStructure(
+      NULLPtr, NULLPtr, 0x12L, ClassName.c_str(), nullptr, Zeros[0],
+      GenerateIvarList(empty, empty, empty), ClassMethodList, NULLPtr, NULLPtr,
+      NULLPtr, ZeroPtr, ZeroPtr, true);
 
   // Generate the class structure
-  llvm::Constant *ClassStruct =
-    GenerateClassStructure(MetaClassStruct, SuperClass, 0x11L,
-                           ClassName.c_str(), nullptr,
-      llvm::ConstantInt::get(LongTy, instanceSize), IvarList,
-      MethodList, GenerateProtocolList(Protocols), IvarOffsetArray,
-      Properties, StrongIvarBitmap, WeakIvarBitmap);
+  llvm::Constant *ClassStruct = GenerateClassStructure(
+      MetaClassStruct, SuperClass, 0x11L, ClassName.c_str(), nullptr,
+      llvm::ConstantInt::get(LongTy, instanceSize), IvarList, MethodList,
+      GenerateProtocolList(Protocols), IvarOffsetArray, Properties,
+      StrongIvarBitmap, WeakIvarBitmap);
 
   // Resolve the class aliases, if they exist.
   if (ClassPtrAlias) {
