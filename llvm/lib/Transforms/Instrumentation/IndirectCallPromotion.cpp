@@ -275,14 +275,6 @@ ICallPromotionFunc::getPromotionCandidatesForCallSite(
     DEBUG(dbgs() << " Candidate " << I << " Count=" << Count
                  << "  Target_func: " << Target << "\n");
 
-    if (ICPInvokeOnly && dyn_cast<CallInst>(Inst)) {
-      DEBUG(dbgs() << " Not promote: User options.\n");
-      break;
-    }
-    if (ICPCallOnly && dyn_cast<InvokeInst>(Inst)) {
-      DEBUG(dbgs() << " Not promote: User option.\n");
-      break;
-    }
     if (ICPCutOff != 0 && NumOfPGOICallPromotion >= ICPCutOff) {
       DEBUG(dbgs() << " Not promote: Cutoff reached.\n");
       break;
