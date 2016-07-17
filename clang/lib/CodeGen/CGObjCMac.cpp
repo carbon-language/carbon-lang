@@ -7177,27 +7177,25 @@ CGObjCNonFragileABIMac::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 llvm::Constant *
 CGObjCNonFragileABIMac::GetEHType(QualType T) {
   // There's a particular fixed type info for 'id'.
-  if (T->isObjCIdType() ||
-      T->isObjCQualifiedIdType()) {
-    llvm::Constant *IDEHType =
-      CGM.getModule().getGlobalVariable("OBJC_EHTYPE_id");
+  if (T->isObjCIdType() || T->isObjCQualifiedIdType()) {
+    auto *IDEHType = CGM.getModule().getGlobalVariable("OBJC_EHTYPE_id");
     if (!IDEHType)
       IDEHType =
-        new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.EHTypeTy,
-                                 false,
-                                 llvm::GlobalValue::ExternalLinkage,
-                                 nullptr, "OBJC_EHTYPE_id");
+          new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.EHTypeTy, false,
+                                   llvm::GlobalValue::ExternalLinkage, nullptr,
+                                   "OBJC_EHTYPE_id");
     return IDEHType;
   }
 
   // All other types should be Objective-C interface pointer types.
-  const ObjCObjectPointerType *PT =
-    T->getAs<ObjCObjectPointerType>();
+  const ObjCObjectPointerType *PT = T->getAs<ObjCObjectPointerType>();
   assert(PT && "Invalid @catch type.");
+
   const ObjCInterfaceType *IT = PT->getInterfaceType();
   assert(IT && "Invalid @catch type.");
+
   return GetInterfaceEHType(IT->getDecl(), false);
-}                                                  
+}
 
 void CGObjCNonFragileABIMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
                                          const ObjCAtTryStmt &S) {
@@ -7230,6 +7228,7 @@ llvm::Constant *
 CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                            bool ForDefinition) {
   llvm::GlobalVariable * &Entry = EHTypeReferences[ID->getIdentifier()];
+  StringRef ClassName = ID->getObjCRuntimeNameAsString();
 
   // If we don't need a definition, return the entry if found or check
   // if we use an external reference.
@@ -7242,35 +7241,29 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
     if (hasObjCExceptionAttribute(CGM.getContext(), ID))
       return Entry =
           new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.EHTypeTy, false,
-                                   llvm::GlobalValue::ExternalLinkage,
-                                   nullptr,
-                                   ("OBJC_EHTYPE_$_" +
-                                    ID->getObjCRuntimeNameAsString()));
+                                   llvm::GlobalValue::ExternalLinkage, nullptr,
+                                   "OBJC_EHTYPE_$_" + ClassName);
   }
 
-  // Otherwise we need to either make a new entry or fill in the
-  // initializer.
+  // Otherwise we need to either make a new entry or fill in the initializer.
   assert((!Entry || !Entry->hasInitializer()) && "Duplicate EHType definition");
-  llvm::SmallString<64> ClassName(getClassSymbolPrefix());
-  ClassName += ID->getObjCRuntimeNameAsString();
+
   std::string VTableName = "objc_ehtype_vtable";
-  llvm::GlobalVariable *VTableGV =
-    CGM.getModule().getGlobalVariable(VTableName);
+  auto *VTableGV = CGM.getModule().getGlobalVariable(VTableName);
   if (!VTableGV)
-    VTableGV = new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.Int8PtrTy,
-                                        false,
-                                        llvm::GlobalValue::ExternalLinkage,
-                                        nullptr, VTableName);
+    VTableGV =
+        new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.Int8PtrTy, false,
+                                 llvm::GlobalValue::ExternalLinkage, nullptr,
+                                 VTableName);
 
   llvm::Value *VTableIdx = llvm::ConstantInt::get(CGM.Int32Ty, 2);
-
   llvm::Constant *Values[] = {
       llvm::ConstantExpr::getGetElementPtr(VTableGV->getValueType(), VTableGV,
                                            VTableIdx),
       GetClassName(ID->getObjCRuntimeNameAsString()),
-      GetClassGlobal(ClassName.str())};
-  llvm::Constant *Init =
-    llvm::ConstantStruct::get(ObjCTypes.EHTypeTy, Values);
+      GetClassGlobal((getClassSymbolPrefix() + ClassName).str()),
+  };
+  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.EHTypeTy, Values);
 
   llvm::GlobalValue::LinkageTypes L = ForDefinition
                                           ? llvm::GlobalValue::ExternalLinkage
@@ -7278,19 +7271,17 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
   if (Entry) {
     Entry->setInitializer(Init);
   } else {
-    llvm::SmallString<64> EHTYPEName("OBJC_EHTYPE_$_");
-    EHTYPEName += ID->getObjCRuntimeNameAsString();
-    Entry = new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.EHTypeTy, false,
-                                     L,
-                                     Init,
-                                     EHTYPEName.str());
+    Entry =
+        new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.EHTypeTy, false, L,
+                                 Init, ("OBJC_EHTYPE_$_" + ClassName).str());
   }
   assert(Entry->getLinkage() == L);
 
   if (ID->getVisibility() == HiddenVisibility)
     Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  Entry->setAlignment(CGM.getDataLayout().getABITypeAlignment(
-      ObjCTypes.EHTypeTy));
+
+  const auto &DL = CGM.getDataLayout();
+  Entry->setAlignment(DL.getABITypeAlignment(ObjCTypes.EHTypeTy));
 
   if (ForDefinition)
     Entry->setSection("__DATA,__objc_const");
