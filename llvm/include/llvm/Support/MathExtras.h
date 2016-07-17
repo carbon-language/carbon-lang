@@ -316,10 +316,11 @@ inline bool isShiftedUInt(uint64_t x) {
 inline uint64_t maxUIntN(uint64_t N) {
   assert(N > 0 && N <= 64 && "integer width out of range");
 
-  // uint64_t(1) << 64 is undefined behavior.
-  if (N == 64)
-    return std::numeric_limits<uint64_t>::max();
-  return (UINT64_C(1) << N) - 1;
+  // uint64_t(1) << 64 is undefined behavior, so we can't do
+  //   (uint64_t(1) << N) - 1
+  // without checking first that N != 64.  But this works and doesn't have a
+  // branch.
+  return UINT64_MAX >> (64 - N);
 }
 
 /// Gets the minimum value for a N-bit signed integer.
