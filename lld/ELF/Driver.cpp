@@ -528,6 +528,10 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   if (Config->OutputFile.empty())
     Config->OutputFile = "a.out";
 
+  // Handle --trace-symbol.
+  for (auto *Arg : Args.filtered(OPT_trace_symbol))
+    Symtab.trace(Arg->getValue());
+
   // Set either EntryAddr (if S is a number) or EntrySym (otherwise).
   if (!Config->Entry.empty()) {
     StringRef S = Config->Entry;
@@ -556,7 +560,6 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   Symtab.scanDynamicList();
   Symtab.scanVersionScript();
   Symtab.scanSymbolVersions();
-  Symtab.traceDefined();
 
   Symtab.addCombinedLtoObject();
   if (HasError)

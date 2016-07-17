@@ -79,6 +79,7 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body,
   case SymbolBody::LazyObjectKind:
     assert(Body.symbol()->IsUsedInRegularObj && "lazy symbol reached writer");
     return 0;
+  case SymbolBody::PlaceholderKind:
   case SymbolBody::DefinedBitcodeKind:
     llvm_unreachable("should have been replaced");
   }
@@ -270,6 +271,21 @@ bool Symbol::includeInDynsym() const {
   return (ExportDynamic && VersionId != VER_NDX_LOCAL) || body()->isShared() ||
          (body()->isUndefined() && Config->Shared);
 }
+
+// Print out a log message for --trace-symbol.
+void elf::printTraceSymbol(Symbol *Sym) {
+  SymbolBody *B = Sym->body();
+  outs() << getFilename(B->File);
+
+  if (B->isUndefined())
+    outs() << ": reference to ";
+  else if (B->isCommon())
+    outs() << ": common definition of ";
+  else
+    outs() << ": definition of ";
+  outs() << B->getName() << "\n";
+}
+
 template bool SymbolBody::hasThunk<ELF32LE>() const;
 template bool SymbolBody::hasThunk<ELF32BE>() const;
 template bool SymbolBody::hasThunk<ELF64LE>() const;

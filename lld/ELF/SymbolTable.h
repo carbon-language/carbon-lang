@@ -83,9 +83,10 @@ public:
   void scanDynamicList();
   void scanVersionScript();
   void scanSymbolVersions();
-  void traceDefined();
 
   SymbolBody *find(StringRef Name);
+
+  void trace(StringRef Name);
   void wrap(StringRef Name);
 
 private:

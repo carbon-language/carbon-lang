@@ -140,6 +140,22 @@ DefinedRegular<ELFT> *SymbolTable<ELFT>::addIgnored(StringRef Name,
   return addAbsolute(Name, Visibility);
 }
 
+// Set a flag for --trace-symbol so that we can print out a log message
+// if a new symbol with the same name is inserted into the symbol table.
+template <class ELFT> void SymbolTable<ELFT>::trace(StringRef Name) {
+  Symbol *S;
+  bool WasInserted;
+  std::tie(S, WasInserted) = insert(Name);
+  assert(WasInserted);
+
+  S->Traced = true;
+
+  // We created a new symbol just to turn on Trace flag.
+  // Write a dummy SymbolBody so that trace() does not affect
+  // normal symbol operations.
+  new (S->body()) SymbolBody(SymbolBody::PlaceholderKind);
+}
+
 // Rename SYM as __wrap_SYM. The original symbol is preserved as __real_SYM.
 // Used to implement --wrap.
 template <class ELFT> void SymbolTable<ELFT>::wrap(StringRef Name) {
@@ -170,19 +186,24 @@ template <class ELFT>
 std::pair<Symbol *, bool> SymbolTable<ELFT>::insert(StringRef Name) {
   unsigned NumSyms = SymVector.size();
   auto P = Symtab.insert(std::make_pair(Name, NumSyms));
+  bool IsNew = P.second;
+
   Symbol *Sym;
-  if (P.second) {
+  if (IsNew) {
     Sym = new (Alloc) Symbol;
     Sym->Binding = STB_WEAK;
     Sym->Visibility = STV_DEFAULT;
     Sym->IsUsedInRegularObj = false;
     Sym->ExportDynamic = false;
     Sym->VersionId = Config->DefaultSymbolVersion;
+    Sym->Traced = false;
     SymVector.push_back(Sym);
   } else {
     Sym = SymVector[P.first->second];
+    if (Sym->body()->kind() == SymbolBody::PlaceholderKind)
+      IsNew = true;
   }
-  return {Sym, P.second};
+  return {Sym, IsNew};
 }
 
 // Find an existing symbol or create and insert a new one, then apply the given
@@ -687,17 +708,6 @@ template <class ELFT> void SymbolTable<ELFT>::scanSymbolVersions() {
     B->setName(Name);
     Sym->VersionId = Version;
   }
-}
-
-// Print the module names which define the notified
-// symbols provided through -y or --trace-symbol option.
-template <class ELFT> void SymbolTable<ELFT>::traceDefined() {
-  for (const auto &Symbol : Config->TraceSymbol)
-    if (SymbolBody *B = find(Symbol.getKey()))
-      if (B->isDefined() || B->isCommon())
-        if (B->File)
-          outs() << getFilename(B->File) << ": definition of " << B->getName()
-                 << "\n";
 }
 
 template class elf::SymbolTable<ELF32LE>;

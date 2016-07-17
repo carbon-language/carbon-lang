@@ -51,7 +51,10 @@ public:
     UndefinedKind,
     LazyArchiveKind,
     LazyObjectKind,
+    PlaceholderKind,
   };
+
+  SymbolBody(Kind K) : SymbolKind(K) {}
 
   Symbol *symbol();
   const Symbol *symbol() const {
@@ -420,6 +423,9 @@ struct Symbol {
   // --export-dynamic, and by dynamic lists.
   unsigned ExportDynamic : 1;
 
+  // True if this symbol is specified by --trace-symbol option.
+  unsigned Traced : 1;
+
   bool includeInDynsym() const;
   bool isWeak() const { return Binding == llvm::ELF::STB_WEAK; }
 
@@ -438,6 +444,8 @@ struct Symbol {
   const SymbolBody *body() const { return const_cast<Symbol *>(this)->body(); }
 };
 
+void printTraceSymbol(Symbol *Sym);
+
 template <typename T, typename... ArgT>
 void replaceBody(Symbol *S, ArgT &&... Arg) {
   static_assert(sizeof(T) <= sizeof(S->Body), "Body too small");
@@ -446,7 +454,13 @@ void replaceBody(Symbol *S, ArgT &&... Arg) {
                 "Body not aligned enough");
   assert(static_cast<SymbolBody *>(static_cast<T *>(nullptr)) == nullptr &&
          "Not a SymbolBody");
+
   new (S->Body.buffer) T(std::forward<ArgT>(Arg)...);
+
+  // Print out a log message if --trace-symbol was specified.
+  // This is for debugging.
+  if (S->Traced)
+    printTraceSymbol(S);
 }
 
 inline Symbol *SymbolBody::symbol() {
