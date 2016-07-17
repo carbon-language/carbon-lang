@@ -121,11 +121,15 @@ TEST(MathExtras, isUIntN) {
 TEST(MathExtras, maxIntN) {
   EXPECT_EQ(32767, maxIntN(16));
   EXPECT_EQ(2147483647, maxIntN(32));
+  EXPECT_EQ(std::numeric_limits<int32_t>::max(), maxIntN(32));
+  EXPECT_EQ(std::numeric_limits<int64_t>::max(), maxIntN(64));
 }
 
 TEST(MathExtras, minIntN) {
   EXPECT_EQ(-32768LL, minIntN(16));
   EXPECT_EQ(-64LL, minIntN(7));
+  EXPECT_EQ(std::numeric_limits<int32_t>::min(), minIntN(32));
+  EXPECT_EQ(std::numeric_limits<int64_t>::min(), minIntN(64));
 }
 
 TEST(MathExtras, maxUIntN) {
