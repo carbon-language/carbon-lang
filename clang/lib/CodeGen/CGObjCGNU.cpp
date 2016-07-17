@@ -1073,11 +1073,44 @@ llvm::Value *CGObjCGNU::GetClassNamed(CodeGenFunction &CGF,
 // techniques can modify the name -> class mapping.
 llvm::Value *CGObjCGNU::GetClass(CodeGenFunction &CGF,
                                  const ObjCInterfaceDecl *OID) {
-  return GetClassNamed(CGF, OID->getNameAsString(), OID->isWeakImported());
+  auto *Value =
+      GetClassNamed(CGF, OID->getNameAsString(), OID->isWeakImported());
+  if (CGM.getTriple().isOSBinFormatCOFF()) {
+    if (auto *ClassSymbol = dyn_cast<llvm::GlobalVariable>(Value)) {
+      auto DLLStorage = llvm::GlobalValue::DefaultStorageClass;
+      if (OID->hasAttr<DLLExportAttr>())
+        DLLStorage = llvm::GlobalValue::DLLExportStorageClass;
+      else if (OID->hasAttr<DLLImportAttr>())
+        DLLStorage = llvm::GlobalValue::DLLImportStorageClass;
+      ClassSymbol->setDLLStorageClass(DLLStorage);
+    }
+  }
+  return Value;
 }
 
 llvm::Value *CGObjCGNU::EmitNSAutoreleasePoolClassRef(CodeGenFunction &CGF) {
-  return GetClassNamed(CGF, "NSAutoreleasePool", false);
+  auto *Value  = GetClassNamed(CGF, "NSAutoreleasePool", false);
+  if (CGM.getTriple().isOSBinFormatCOFF()) {
+    if (auto *ClassSymbol = dyn_cast<llvm::GlobalVariable>(Value)) {
+      IdentifierInfo &II = CGF.CGM.getContext().Idents.get("NSAutoreleasePool");
+      TranslationUnitDecl *TUDecl = CGM.getContext().getTranslationUnitDecl();
+      DeclContext *DC = TranslationUnitDecl::castToDeclContext(TUDecl);
+
+      const VarDecl *VD = nullptr;
+      for (const auto &Result : DC->lookup(&II))
+        if ((VD = dyn_cast<VarDecl>(Result)))
+          break;
+
+      auto DLLStorage = llvm::GlobalValue::DefaultStorageClass;
+      if (!VD || VD->hasAttr<DLLImportAttr>())
+        DLLStorage = llvm::GlobalValue::DLLImportStorageClass;
+      else if (VD->hasAttr<DLLExportAttr>())
+        DLLStorage = llvm::GlobalValue::DLLExportStorageClass;
+
+      ClassSymbol->setDLLStorageClass(DLLStorage);
+    }
+  }
+  return Value;
 }
 
 llvm::Value *CGObjCGNU::GetSelector(CodeGenFunction &CGF, Selector Sel,
@@ -2354,6 +2387,14 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       NULLPtr, NULLPtr, 0x12L, ClassName.c_str(), nullptr, Zeros[0],
       GenerateIvarList(empty, empty, empty), ClassMethodList, NULLPtr, NULLPtr,
       NULLPtr, ZeroPtr, ZeroPtr, true);
+  if (CGM.getTriple().isOSBinFormatCOFF()) {
+    auto Storage = llvm::GlobalValue::DefaultStorageClass;
+    if (OID->getClassInterface()->hasAttr<DLLImportAttr>())
+      Storage = llvm::GlobalValue::DLLImportStorageClass;
+    else if (OID->getClassInterface()->hasAttr<DLLExportAttr>())
+      Storage = llvm::GlobalValue::DLLExportStorageClass;
+    cast<llvm::GlobalValue>(MetaClassStruct)->setDLLStorageClass(Storage);
+  }
 
   // Generate the class structure
   llvm::Constant *ClassStruct = GenerateClassStructure(
@@ -2361,6 +2402,14 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       llvm::ConstantInt::get(LongTy, instanceSize), IvarList, MethodList,
       GenerateProtocolList(Protocols), IvarOffsetArray, Properties,
       StrongIvarBitmap, WeakIvarBitmap);
+  if (CGM.getTriple().isOSBinFormatCOFF()) {
+    auto Storage = llvm::GlobalValue::DefaultStorageClass;
+    if (OID->getClassInterface()->hasAttr<DLLImportAttr>())
+      Storage = llvm::GlobalValue::DLLImportStorageClass;
+    else if (OID->getClassInterface()->hasAttr<DLLExportAttr>())
+      Storage = llvm::GlobalValue::DLLExportStorageClass;
+    cast<llvm::GlobalValue>(ClassStruct)->setDLLStorageClass(Storage);
+  }
 
   // Resolve the class aliases, if they exist.
   if (ClassPtrAlias) {
@@ -2854,7 +2903,12 @@ llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGenFunction &CGF,
                          const ObjCIvarDecl *Ivar) {
   if (CGM.getLangOpts().ObjCRuntime.isNonFragile()) {
     Interface = FindIvarInterface(CGM.getContext(), Interface, Ivar);
-    if (RuntimeVersion < 10)
+
+    // The MSVC linker cannot have a single global defined as LinkOnceAnyLinkage
+    // and ExternalLinkage, so create a reference to the ivar global and rely on
+    // the definition being created as part of GenerateClass.
+    if (RuntimeVersion < 10 ||
+        CGF.CGM.getTarget().getTriple().isKnownWindowsMSVCEnvironment())
       return CGF.Builder.CreateZExtOrBitCast(
           CGF.Builder.CreateDefaultAlignedLoad(CGF.Builder.CreateAlignedLoad(
                   ObjCIvarOffsetVariable(Interface, Ivar),
