@@ -704,18 +704,17 @@ inline int64_t SignExtend64(uint64_t X, unsigned B) {
   return int64_t(X << (64 - B)) >> (64 - B);
 }
 
-/// \brief Subtract two unsigned integers, X and Y, of type T and return their
-/// absolute value.
+/// Subtract two unsigned integers, X and Y, of type T and return the absolute
+/// value of the result.
 template <typename T>
 typename std::enable_if<std::is_unsigned<T>::value, T>::type
 AbsoluteDifference(T X, T Y) {
   return std::max(X, Y) - std::min(X, Y);
 }
 
-/// \brief Add two unsigned integers, X and Y, of type T.
-/// Clamp the result to the maximum representable value of T on overflow.
-/// ResultOverflowed indicates if the result is larger than the maximum
-/// representable value of type T.
+/// Add two unsigned integers, X and Y, of type T.  Clamp the result to the
+/// maximum representable value of T on overflow.  ResultOverflowed indicates if
+/// the result is larger than the maximum representable value of type T.
 template <typename T>
 typename std::enable_if<std::is_unsigned<T>::value, T>::type
 SaturatingAdd(T X, T Y, bool *ResultOverflowed = nullptr) {
@@ -730,10 +729,9 @@ SaturatingAdd(T X, T Y, bool *ResultOverflowed = nullptr) {
     return Z;
 }
 
-/// \brief Multiply two unsigned integers, X and Y, of type T.
-/// Clamp the result to the maximum representable value of T on overflow.
-/// ResultOverflowed indicates if the result is larger than the maximum
-/// representable value of type T.
+/// Multiply two unsigned integers, X and Y, of type T.  Clamp the result to the
+/// maximum representable value of T on overflow.  ResultOverflowed indicates if
+/// the result is larger than the maximum representable value of type T.
 template <typename T>
 typename std::enable_if<std::is_unsigned<T>::value, T>::type
 SaturatingMultiply(T X, T Y, bool *ResultOverflowed = nullptr) {
@@ -776,12 +774,10 @@ SaturatingMultiply(T X, T Y, bool *ResultOverflowed = nullptr) {
   return Z;
 }
 
-/// \brief Multiply two unsigned integers, X and Y, and add the unsigned
-/// integer, A to the product. Clamp the result to the maximum representable
-/// value of T on overflow. ResultOverflowed indicates if the result is larger
-/// than the maximum representable value of type T.
-/// Note that this is purely a convenience function as there is no distinction
-/// where overflow occurred in a 'fused' multiply-add for unsigned numbers.
+/// Multiply two unsigned integers, X and Y, and add the unsigned integer, A to
+/// the product. Clamp the result to the maximum representable value of T on
+/// overflow. ResultOverflowed indicates if the result is larger than the
+/// maximum representable value of type T.
 template <typename T>
 typename std::enable_if<std::is_unsigned<T>::value, T>::type
 SaturatingMultiplyAdd(T X, T Y, T A, bool *ResultOverflowed = nullptr) {
@@ -795,6 +791,7 @@ SaturatingMultiplyAdd(T X, T Y, T A, bool *ResultOverflowed = nullptr) {
   return SaturatingAdd(A, Product, &Overflowed);
 }
 
+/// Use this rather than HUGE_VALF; the latter causes warnings on MSVC.
 extern const float huge_valf;
 } // End llvm namespace
 
