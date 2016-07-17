@@ -82,6 +82,7 @@ public:
   void scanShlibUndefined();
   void scanDynamicList();
   void scanVersionScript();
+  void scanSymbolVersions();
   void traceDefined();
 
   SymbolBody *find(StringRef Name);

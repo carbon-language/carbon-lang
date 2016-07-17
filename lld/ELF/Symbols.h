@@ -70,8 +70,9 @@ public:
   bool isLocal() const { return IsLocal; }
   bool isPreemptible() const;
 
-  // Returns the symbol name.
   StringRef getName() const;
+  void setName(StringRef S);
+
   uint32_t getNameOffset() const {
     assert(isLocal());
     return NameOffset;
@@ -418,11 +419,6 @@ struct Symbol {
   // executables, by most symbols in DSOs and executables built with
   // --export-dynamic, and by dynamic lists.
   unsigned ExportDynamic : 1;
-
-  // If this flag is true then symbol name also contains version name. Such
-  // name can have single or double symbol @. Double means that version is
-  // used as default. Single signals about depricated symbol version.
-  unsigned VersionedName : 1;
 
   bool includeInDynsym() const;
   bool isWeak() const { return Binding == llvm::ELF::STB_WEAK; }

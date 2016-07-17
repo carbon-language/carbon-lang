@@ -98,10 +98,12 @@ SymbolBody::SymbolBody(Kind K, StringRef Name, uint8_t StOther, uint8_t Type)
 
 StringRef SymbolBody::getName() const {
   assert(!isLocal());
-  StringRef S = StringRef(Name.S, Name.Len);
-  if (!symbol()->VersionedName)
-    return S;
-  return S.substr(0, S.find('@'));
+  return StringRef(Name.S, Name.Len);
+}
+
+void SymbolBody::setName(StringRef S) {
+  Name.S = S.data();
+  Name.Len = S.size();
 }
 
 // Returns true if a symbol can be replaced at load-time by a symbol

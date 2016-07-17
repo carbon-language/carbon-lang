@@ -90,7 +90,6 @@ struct Configuration {
   bool FatalWarnings;
   bool GcSections;
   bool GnuHash = false;
-  bool HasVersionScript = false;
   bool ICF;
   bool Mips64EL = false;
   bool NoGnuUnique;

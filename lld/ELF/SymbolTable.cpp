@@ -165,39 +165,6 @@ static uint8_t getMinVisibility(uint8_t VA, uint8_t VB) {
   return std::min(VA, VB);
 }
 
-// A symbol version may be included in a symbol name as a suffix after '@'.
-// This function parses that part and returns a version ID number.
-static uint16_t getVersionId(Symbol *Sym, StringRef Name) {
-  size_t VersionBegin = Name.find('@');
-  if (VersionBegin == StringRef::npos)
-    return Config->DefaultSymbolVersion;
-
-  // If symbol name contains '@' or '@@' we can assign its version id right
-  // here. '@@' means the default version. It is usually the most recent one.
-  // VERSYM_HIDDEN flag should be set for all non-default versions.
-  StringRef Version = Name.drop_front(VersionBegin + 1);
-  bool Default = Version.startswith("@");
-  if (Default)
-    Version = Version.drop_front();
-
-  for (VersionDefinition &V : Config->VersionDefinitions)
-    if (V.Name == Version)
-      return Default ? V.Id : (V.Id | VERSYM_HIDDEN);
-
-
-  // If we are not building shared and version script
-  // is not specified, then it is not a error, it is
-  // in common not to use script for linking executables.
-  // In this case we just create new version.
-  if (!Config->Shared && !Config->HasVersionScript) {
-    size_t Id = defineSymbolVersion(Version);
-    return Default ? Id : (Id | VERSYM_HIDDEN);
-  }
-
-  error("symbol " + Name + " has undefined version " + Version);
-  return 0;
-}
-
 // Find an existing symbol or create and insert a new one.
 template <class ELFT>
 std::pair<Symbol *, bool> SymbolTable<ELFT>::insert(StringRef Name) {
@@ -210,9 +177,7 @@ std::pair<Symbol *, bool> SymbolTable<ELFT>::insert(StringRef Name) {
     Sym->Visibility = STV_DEFAULT;
     Sym->IsUsedInRegularObj = false;
     Sym->ExportDynamic = false;
-    Sym->VersionId = getVersionId(Sym, Name);
-    Sym->VersionedName =
-        Sym->VersionId != VER_NDX_LOCAL && Sym->VersionId != VER_NDX_GLOBAL;
+    Sym->VersionId = Config->DefaultSymbolVersion;
     SymVector.push_back(Sym);
   } else {
     Sym = SymVector[P.first->second];
@@ -643,6 +608,84 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
         for (SymbolBody *B : findAll(Sym.Name))
           if (B->symbol()->VersionId == Config->DefaultSymbolVersion)
             B->symbol()->VersionId = V.Id;
+  }
+}
+
+// Returns the size of the longest version name.
+static int getMaxVersionLen() {
+  size_t Len = 0;
+  for (VersionDefinition &V : Config->VersionDefinitions)
+    Len = std::max(Len, V.Name.size());
+  return Len;
+}
+
+// Parses a symbol name in the form of <name>@<version> or <name>@@<version>.
+static std::pair<StringRef, uint16_t>
+getSymbolVersion(SymbolBody *B, int MaxVersionLen) {
+  StringRef S = B->getName();
+
+  // MaxVersionLen was passed so that we don't need to scan
+  // all characters in a symbol name. It is effective because
+  // versions are usually short and symbol names can be very long.
+  size_t Pos = S.find('@', std::max(0, int(S.size()) - MaxVersionLen - 2));
+  if (Pos == 0 || Pos == StringRef::npos)
+    return {"", 0};
+
+  StringRef Name = S.substr(0, Pos);
+  StringRef Verstr = S.substr(Pos + 1);
+  if (Verstr.empty())
+    return {"", 0};
+
+  // '@@' in a symbol name means the default version.
+  // It is usually the most recent one.
+  bool IsDefault = (Verstr[0] == '@');
+  if (IsDefault)
+    Verstr = Verstr.substr(1);
+
+  for (VersionDefinition &V : Config->VersionDefinitions) {
+    if (V.Name == Verstr)
+      return {Name, IsDefault ? V.Id : (V.Id | VERSYM_HIDDEN)};
+  }
+
+  // It is an error if the specified version was not defined.
+  error("symbol " + S + " has undefined version " + Verstr);
+  return {"", 0};
+}
+
+// Versions are usually assigned to symbols using version scripts,
+// but there's another way to assign versions to symbols.
+// If a symbol name contains '@', the string after it is not
+// actually a part of the symbol name but specifies a version.
+// This function takes care of it.
+template <class ELFT> void SymbolTable<ELFT>::scanSymbolVersions() {
+  if (Config->VersionDefinitions.empty())
+    return;
+
+  int MaxVersionLen = getMaxVersionLen();
+
+  // Unfortunately there's no way other than iterating over all
+  // symbols to look for '@' characters in symbol names.
+  // So this is inherently slow. A good news is that we do this
+  // only when versions have been defined.
+  for (Symbol *Sym : SymVector) {
+    // Symbol versions for exported symbols are by nature
+    // only for defined global symbols.
+    SymbolBody *B = Sym->body();
+    if (!B->isDefined())
+      continue;
+    uint8_t Visibility = B->getVisibility();
+    if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
+      continue;
+
+    // Look for '@' in the symbol name.
+    StringRef Name;
+    uint16_t Version;
+    std::tie(Name, Version) = getSymbolVersion(B, MaxVersionLen);
+    if (Name.empty())
+      continue;
+
+    B->setName(Name);
+    Sym->VersionId = Version;
   }
 }
 

@@ -443,11 +443,9 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   for (auto *Arg : Args.filtered(OPT_export_dynamic_symbol))
     Config->DynamicList.push_back(Arg->getValue());
 
-  if (auto *Arg = Args.getLastArg(OPT_version_script)) {
-    Config->HasVersionScript = true;
+  if (auto *Arg = Args.getLastArg(OPT_version_script))
     if (Optional<MemoryBufferRef> Buffer = readFile(Arg->getValue()))
       parseVersionScript(*Buffer);
-  }
 
   for (auto *Arg : Args.filtered(OPT_trace_symbol))
     Config->TraceSymbol.insert(Arg->getValue());
@@ -557,6 +555,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   Symtab.scanShlibUndefined();
   Symtab.scanDynamicList();
   Symtab.scanVersionScript();
+  Symtab.scanSymbolVersions();
   Symtab.traceDefined();
 
   Symtab.addCombinedLtoObject();
