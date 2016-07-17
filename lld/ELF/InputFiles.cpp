@@ -352,7 +352,7 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
   if (Binding == STB_LOCAL) {
     if (Sym->st_shndx == SHN_UNDEF)
       return new (this->Alloc)
-          Undefined(Sym->st_name, Sym->st_other, Sym->getType());
+          Undefined(Sym->st_name, Sym->st_other, Sym->getType(), this);
     return new (this->Alloc) DefinedRegular<ELFT>(*Sym, Sec);
   }
 

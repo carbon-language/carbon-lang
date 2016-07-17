@@ -1570,7 +1570,7 @@ void VersionNeedSection<ELFT>::addSymbol(SharedSymbol<ELFT> *SS) {
     SS->symbol()->VersionId = VER_NDX_GLOBAL;
     return;
   }
-  SharedFile<ELFT> *F = SS->File;
+  SharedFile<ELFT> *F = SS->file();
   // If we don't already know that we need an Elf_Verneed for this DSO, prepare
   // to create one by adding it to our needed list and creating a dynstr entry
   // for the soname.
@@ -1582,7 +1582,7 @@ void VersionNeedSection<ELFT>::addSymbol(SharedSymbol<ELFT> *SS) {
   // dynstr entry for the version name.
   if (NV.Index == 0) {
     NV.StrTab = Out<ELFT>::DynStrTab->addString(
-        SS->File->getStringTable().data() + SS->Verdef->getAux()->vda_name);
+        SS->file()->getStringTable().data() + SS->Verdef->getAux()->vda_name);
     NV.Index = NextIndex++;
   }
   SS->symbol()->VersionId = NV.Index;

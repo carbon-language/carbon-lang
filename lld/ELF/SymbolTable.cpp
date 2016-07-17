@@ -253,7 +253,7 @@ std::string SymbolTable<ELFT>::conflictMsg(SymbolBody *Existing,
   std::string Sym = Existing->getName();
   if (Config->Demangle)
     Sym = demangle(Sym);
-  return Sym + " in " + getFilename(Existing->getSourceFile<ELFT>()) + " and " +
+  return Sym + " in " + getFilename(Existing->File) + " and " +
          getFilename(NewFile);
 }
 
@@ -274,22 +274,21 @@ Symbol *SymbolTable<ELFT>::addUndefined(StringRef Name, uint8_t Binding,
              /*IsUsedInRegularObj*/ !File || !isa<BitcodeFile>(File), File);
   if (WasInserted) {
     S->Binding = Binding;
-    replaceBody<Undefined>(S, Name, StOther, Type);
-    cast<Undefined>(S->body())->File = File;
+    replaceBody<Undefined>(S, Name, StOther, Type, File);
     return S;
   }
   if (Binding != STB_WEAK) {
     if (S->body()->isShared() || S->body()->isLazy())
       S->Binding = Binding;
     if (auto *SS = dyn_cast<SharedSymbol<ELFT>>(S->body()))
-      SS->File->IsUsed = true;
+      SS->file()->IsUsed = true;
   }
   if (auto *L = dyn_cast<Lazy>(S->body())) {
     // An undefined weak will not fetch archive members, but we have to remember
     // its type. See also comment in addLazyArchive.
     if (S->isWeak())
       L->Type = Type;
-    else if (auto F = L->getFile())
+    else if (auto F = L->fetch())
       addFile(std::move(F));
   }
   return S;
@@ -535,7 +534,7 @@ void SymbolTable<ELFT>::addLazyObject(StringRef Name, LazyObjectFile &Obj) {
 template <class ELFT> void SymbolTable<ELFT>::scanUndefinedFlags() {
   for (StringRef S : Config->Undefined)
     if (auto *L = dyn_cast_or_null<Lazy>(find(S)))
-      if (std::unique_ptr<InputFile> File = L->getFile())
+      if (std::unique_ptr<InputFile> File = L->fetch())
         addFile(std::move(File));
 }
 
@@ -653,9 +652,9 @@ template <class ELFT> void SymbolTable<ELFT>::traceDefined() {
   for (const auto &Symbol : Config->TraceSymbol)
     if (SymbolBody *B = find(Symbol.getKey()))
       if (B->isDefined() || B->isCommon())
-        if (InputFile *File = B->getSourceFile<ELFT>())
-          outs() << getFilename(File) << ": definition of "
-                 << B->getName() << "\n";
+        if (B->File)
+          outs() << getFilename(B->File) << ": definition of " << B->getName()
+                 << "\n";
 }
 
 template class elf::SymbolTable<ELF32LE>;

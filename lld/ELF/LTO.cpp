@@ -147,7 +147,8 @@ BitcodeCompiler::BitcodeCompiler()
     : Combined(new Module("ld-temp.o", Driver->Context)) {}
 
 static void undefine(Symbol *S) {
-  replaceBody<Undefined>(S, S->body()->getName(), STV_DEFAULT, S->body()->Type);
+  replaceBody<Undefined>(S, S->body()->getName(), STV_DEFAULT, S->body()->Type,
+                         nullptr);
 }
 
 static void handleUndefinedAsmRefs(const BasicSymbolRef &Sym, GlobalValue *GV,
@@ -198,7 +199,7 @@ void BitcodeCompiler::add(BitcodeFile &F) {
       continue;
     }
     auto *B = dyn_cast<DefinedBitcode>(S->body());
-    if (!B || B->File != &F)
+    if (!B || B->file() != &F)
       continue;
 
     // We collect the set of symbols we want to internalize here
