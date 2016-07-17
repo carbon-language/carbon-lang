@@ -698,6 +698,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   std::vector<DefinedCommon *> CommonSymbols;
   for (Symbol *S : Symtab.getSymbols()) {
     SymbolBody *Body = S->body();
+    if (Body->kind() == SymbolBody::PlaceholderKind)
+      continue;
 
     // We only report undefined symbols in regular objects. This means that we
     // will accept an undefined reference in bitcode if it can be optimized out.
