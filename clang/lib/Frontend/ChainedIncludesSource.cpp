@@ -66,7 +66,8 @@ class ChainedIncludesSource
 public:
   ChainedIncludesSource(std::vector<std::unique_ptr<CompilerInstance>> CIs,
                         IntrusiveRefCntPtr<ExternalSemaSource> FinalReader)
-      : ChainedIncludesSourceMembers{{std::move(CIs)}, std::move(FinalReader)},
+      : ChainedIncludesSourceMembers(ChainedIncludesSourceMembers{
+            {std::move(CIs)}, std::move(FinalReader)}),
         MultiplexExternalSemaSource(Impl, *this->FinalReader) {}
 };
 }
