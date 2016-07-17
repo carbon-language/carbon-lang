@@ -446,9 +446,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   if (auto *Arg = Args.getLastArg(OPT_version_script))
     if (Optional<MemoryBufferRef> Buffer = readFile(Arg->getValue()))
       parseVersionScript(*Buffer);
-
-  for (auto *Arg : Args.filtered(OPT_trace_symbol))
-    Config->TraceSymbol.insert(Arg->getValue());
 }
 
 void LinkerDriver::createFiles(opt::InputArgList &Args) {
