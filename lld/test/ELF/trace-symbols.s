@@ -16,7 +16,7 @@
 
 # RUN: ld.lld -y foo -trace-symbol=common -trace-symbol=hsymbol \
 # RUN:   %t %t1 %t2 -o %t3 2>&1 | FileCheck -check-prefix=OBJECTDCOMMON %s
-# OBJECTDCOMMON-NOT: trace-symbols.s.tmp1: definition of common
+# OBJECTDCOMMON: trace-symbols.s.tmp1: definition of common
 
 # RUN: ld.lld -y foo -y common %t %t2 %t1 -o %t3 2>&1 | \
 # RUN:   FileCheck -check-prefix=OBJECTD1FOO %s

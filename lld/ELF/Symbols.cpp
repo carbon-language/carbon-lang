@@ -224,9 +224,11 @@ DefinedSynthetic<ELFT>::DefinedSynthetic(StringRef N, uintX_t Value,
       Value(Value), Section(Section) {}
 
 DefinedCommon::DefinedCommon(StringRef N, uint64_t Size, uint64_t Alignment,
-                             uint8_t StOther, uint8_t Type)
+                             uint8_t StOther, uint8_t Type, InputFile *File)
     : Defined(SymbolBody::DefinedCommonKind, N, StOther, Type),
-      Alignment(Alignment), Size(Size) {}
+      Alignment(Alignment), Size(Size) {
+  this->File = File;
+}
 
 std::unique_ptr<InputFile> Lazy::fetch() {
   if (auto *S = dyn_cast<LazyArchive>(this))

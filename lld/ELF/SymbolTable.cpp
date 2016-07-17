@@ -306,7 +306,7 @@ Symbol *SymbolTable<ELFT>::addCommon(StringRef N, uint64_t Size,
   int Cmp = compareDefined(S, WasInserted, Binding);
   if (Cmp > 0) {
     S->Binding = Binding;
-    replaceBody<DefinedCommon>(S, N, Size, Alignment, StOther, Type);
+    replaceBody<DefinedCommon>(S, N, Size, Alignment, StOther, Type, File);
   } else if (Cmp == 0) {
     auto *C = dyn_cast<DefinedCommon>(S->body());
     if (!C) {
