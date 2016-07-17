@@ -344,7 +344,9 @@ inline int64_t minIntN(int64_t N) {
 inline int64_t maxIntN(int64_t N) {
   assert(N > 0 && N <= 64 && "integer width out of range");
 
-  return (INT64_C(1)<<(N-1)) - 1;
+  // This relies on two's complement wraparound when N == 64, so we convert to
+  // int64_t only at the very end to avoid UB.
+  return (UINT64_C(1) << (N - 1)) - 1;
 }
 
 /// isUIntN - Checks if an unsigned integer fits into the given (dynamic)
