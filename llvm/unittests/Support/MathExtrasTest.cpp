@@ -388,4 +388,42 @@ TEST(MathExtras, SaturatingMultiplyAdd) {
   SaturatingMultiplyAddTestHelper<uint64_t>();
 }
 
+TEST(MathExtras, IsShiftedUInt) {
+  EXPECT_TRUE((isShiftedUInt<1, 0>(0)));
+  EXPECT_TRUE((isShiftedUInt<1, 0>(1)));
+  EXPECT_FALSE((isShiftedUInt<1, 0>(2)));
+  EXPECT_FALSE((isShiftedUInt<1, 0>(3)));
+  EXPECT_FALSE((isShiftedUInt<1, 0>(0x8000000000000000)));
+  EXPECT_TRUE((isShiftedUInt<1, 63>(0x8000000000000000)));
+  EXPECT_TRUE((isShiftedUInt<2, 62>(0xC000000000000000)));
+  EXPECT_FALSE((isShiftedUInt<2, 62>(0xE000000000000000)));
+
+  // 0x201 is ten bits long and has a 1 in the MSB and LSB.
+  EXPECT_TRUE((isShiftedUInt<10, 5>(uint64_t(0x201) << 5)));
+  EXPECT_FALSE((isShiftedUInt<10, 5>(uint64_t(0x201) << 4)));
+  EXPECT_FALSE((isShiftedUInt<10, 5>(uint64_t(0x201) << 6)));
 }
+
+TEST(MathExtras, IsShiftedInt) {
+  EXPECT_TRUE((isShiftedInt<1, 0>(0)));
+  EXPECT_TRUE((isShiftedInt<1, 0>(-1)));
+  EXPECT_FALSE((isShiftedInt<1, 0>(2)));
+  EXPECT_FALSE((isShiftedInt<1, 0>(3)));
+  EXPECT_FALSE((isShiftedInt<1, 0>(0x8000000000000000)));
+  EXPECT_TRUE((isShiftedInt<1, 63>(0x8000000000000000)));
+  EXPECT_TRUE((isShiftedInt<2, 62>(0xC000000000000000)));
+  EXPECT_FALSE((isShiftedInt<2, 62>(0xE000000000000000)));
+
+  // 0x201 is ten bits long and has a 1 in the MSB and LSB.
+  EXPECT_TRUE((isShiftedInt<11, 5>(int64_t(0x201) << 5)));
+  EXPECT_FALSE((isShiftedInt<11, 5>(int64_t(0x201) << 3)));
+  EXPECT_FALSE((isShiftedInt<11, 5>(int64_t(0x201) << 6)));
+  EXPECT_TRUE((isShiftedInt<11, 5>(-(int64_t(0x201) << 5))));
+  EXPECT_FALSE((isShiftedInt<11, 5>(-(int64_t(0x201) << 3))));
+  EXPECT_FALSE((isShiftedInt<11, 5>(-(int64_t(0x201) << 6))));
+
+  EXPECT_TRUE((isShiftedInt<6, 10>(-(int64_t(1) << 15))));
+  EXPECT_FALSE((isShiftedInt<6, 10>(int64_t(1) << 15)));
+}
+
+} // namespace

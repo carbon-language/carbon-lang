@@ -283,14 +283,19 @@ inline bool isInt<32>(int64_t x) {
 ///                     left by S.
 template<unsigned N, unsigned S>
 inline bool isShiftedInt(int64_t x) {
-  return isInt<N+S>(x) && (x % (1<<S) == 0);
+  static_assert(
+      N > 0, "isShiftedInt<0> doesn't make sense (refers to a 0-bit number.");
+  static_assert(N + S <= 64, "isShiftedInt<N, S> with N + S > 64 is too wide.");
+  return isInt<N + S>(x) && (x % (UINT64_C(1) << S) == 0);
 }
 
 /// isUInt - Checks if an unsigned integer fits into the given bit width.
 template<unsigned N>
 inline bool isUInt(uint64_t x) {
+  static_assert(N > 0, "isUInt<0> doesn't make sense.");
   return N >= 64 || x < (UINT64_C(1)<<(N));
 }
+
 // Template specializations to get better code for common cases.
 template<>
 inline bool isUInt<8>(uint64_t x) {
@@ -305,11 +310,16 @@ inline bool isUInt<32>(uint64_t x) {
   return static_cast<uint32_t>(x) == x;
 }
 
-/// isShiftedUInt<N,S> - Checks if a unsigned integer is an N bit number shifted
-///                     left by S.
+/// Checks if a unsigned integer is an N bit number shifted left by S.
 template<unsigned N, unsigned S>
 inline bool isShiftedUInt(uint64_t x) {
-  return isUInt<N+S>(x) && (x % (1<<S) == 0);
+  static_assert(
+      N > 0, "isShiftedUInt<0> doesn't make sense (refers to a 0-bit number)");
+  static_assert(N + S <= 64,
+                "isShiftedUInt<N, S> with N + S > 64 is too wide.");
+  // Per the two static_asserts above, S must be strictly less than 64.  So
+  // 1 << S is not undefined behavior.
+  return isUInt<N + S>(x) && (x % (UINT64_C(1) << S) == 0);
 }
 
 /// Gets the maximum value for a N-bit unsigned integer.
