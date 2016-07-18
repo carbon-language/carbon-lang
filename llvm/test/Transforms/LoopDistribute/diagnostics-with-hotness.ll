@@ -8,8 +8,6 @@
 ; RUN: opt -passes='require<aa>,loop-distribute' -S -pass-remarks-missed=loop-distribute \
 ; RUN:                                < %s 2>&1 | FileCheck %s --check-prefix=NO_HOTNESS
 
-; REQUIRES: asserts
-
 ; This is the input program:
 ;
 ;     1	void forced (char *A, char *B, char *C, int N) {
