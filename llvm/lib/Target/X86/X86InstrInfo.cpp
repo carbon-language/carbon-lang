@@ -1680,12 +1680,28 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     // AVX-512 foldable instructions
     { X86::VADDPSZrr,         X86::VADDPSZrm,           0 },
     { X86::VADDPDZrr,         X86::VADDPDZrm,           0 },
+    { X86::VADDSSZrr,         X86::VADDSSZrm,           0 },
+    { X86::VADDSSZrr_Int,     X86::VADDSSZrm_Int,       0 },
+    { X86::VADDSDZrr,         X86::VADDSDZrm,           0 },
+    { X86::VADDSDZrr_Int,     X86::VADDSDZrm_Int,       0 },
     { X86::VSUBPSZrr,         X86::VSUBPSZrm,           0 },
     { X86::VSUBPDZrr,         X86::VSUBPDZrm,           0 },
+    { X86::VSUBSSZrr,         X86::VSUBSSZrm,           0 },
+    { X86::VSUBSSZrr_Int,     X86::VSUBSSZrm_Int,       0 },
+    { X86::VSUBSDZrr,         X86::VSUBSDZrm,           0 },
+    { X86::VSUBSDZrr_Int,     X86::VSUBSDZrm_Int,       0 },
     { X86::VMULPSZrr,         X86::VMULPSZrm,           0 },
     { X86::VMULPDZrr,         X86::VMULPDZrm,           0 },
+    { X86::VMULSSZrr,         X86::VMULSSZrm,           0 },
+    { X86::VMULSSZrr_Int,     X86::VMULSSZrm_Int,       0 },
+    { X86::VMULSDZrr,         X86::VMULSDZrm,           0 },
+    { X86::VMULSDZrr_Int,     X86::VMULSDZrm_Int,       0 },
     { X86::VDIVPSZrr,         X86::VDIVPSZrm,           0 },
     { X86::VDIVPDZrr,         X86::VDIVPDZrm,           0 },
+    { X86::VDIVSSZrr,         X86::VDIVSSZrm,           0 },
+    { X86::VDIVSSZrr_Int,     X86::VDIVSSZrm_Int,       0 },
+    { X86::VDIVSDZrr,         X86::VDIVSDZrm,           0 },
+    { X86::VDIVSDZrr_Int,     X86::VDIVSDZrm_Int,       0 },
     { X86::VMINPSZrr,         X86::VMINPSZrm,           0 },
     { X86::VMINPDZrr,         X86::VMINPDZrm,           0 },
     { X86::VMAXPSZrr,         X86::VMAXPSZrm,           0 },
@@ -6267,15 +6283,16 @@ static bool isNonFoldablePartialRegisterLoad(const MachineInstr &LoadMI,
   unsigned RegSize =
       MF.getRegInfo().getRegClass(LoadMI.getOperand(0).getReg())->getSize();
 
-  if ((Opc == X86::MOVSSrm || Opc == X86::VMOVSSrm) && RegSize > 4) {
+  if ((Opc == X86::MOVSSrm || Opc == X86::VMOVSSrm || Opc == X86::VMOVSSZrm) &&
+      RegSize > 4) {
     // These instructions only load 32 bits, we can't fold them if the
     // destination register is wider than 32 bits (4 bytes), and its user
     // instruction isn't scalar (SS).
     switch (UserOpc) {
-    case X86::ADDSSrr_Int: case X86::VADDSSrr_Int:
-    case X86::DIVSSrr_Int: case X86::VDIVSSrr_Int:
-    case X86::MULSSrr_Int: case X86::VMULSSrr_Int:
-    case X86::SUBSSrr_Int: case X86::VSUBSSrr_Int:
+    case X86::ADDSSrr_Int: case X86::VADDSSrr_Int: case X86::VADDSSZrr_Int:
+    case X86::DIVSSrr_Int: case X86::VDIVSSrr_Int: case X86::VDIVSSZrr_Int:
+    case X86::MULSSrr_Int: case X86::VMULSSrr_Int: case X86::VMULSSZrr_Int:
+    case X86::SUBSSrr_Int: case X86::VSUBSSrr_Int: case X86::VSUBSSZrr_Int:
     case X86::VFMADDSSr132r_Int: case X86::VFNMADDSSr132r_Int:
     case X86::VFMADDSSr213r_Int: case X86::VFNMADDSSr213r_Int:
     case X86::VFMADDSSr231r_Int: case X86::VFNMADDSSr231r_Int:
@@ -6288,15 +6305,16 @@ static bool isNonFoldablePartialRegisterLoad(const MachineInstr &LoadMI,
     }
   }
 
-  if ((Opc == X86::MOVSDrm || Opc == X86::VMOVSDrm) && RegSize > 8) {
+  if ((Opc == X86::MOVSDrm || Opc == X86::VMOVSDrm || Opc == X86::VMOVSDZrm) &&
+      RegSize > 8) {
     // These instructions only load 64 bits, we can't fold them if the
     // destination register is wider than 64 bits (8 bytes), and its user
     // instruction isn't scalar (SD).
     switch (UserOpc) {
-    case X86::ADDSDrr_Int: case X86::VADDSDrr_Int:
-    case X86::DIVSDrr_Int: case X86::VDIVSDrr_Int:
-    case X86::MULSDrr_Int: case X86::VMULSDrr_Int:
-    case X86::SUBSDrr_Int: case X86::VSUBSDrr_Int:
+    case X86::ADDSDrr_Int: case X86::VADDSDrr_Int: case X86::VADDSDZrr_Int:
+    case X86::DIVSDrr_Int: case X86::VDIVSDrr_Int: case X86::VDIVSDZrr_Int:
+    case X86::MULSDrr_Int: case X86::VMULSDrr_Int: case X86::VMULSDZrr_Int:
+    case X86::SUBSDrr_Int: case X86::VSUBSDrr_Int: case X86::VSUBSDZrr_Int:
     case X86::VFMADDSDr132r_Int: case X86::VFNMADDSDr132r_Int:
     case X86::VFMADDSDr213r_Int: case X86::VFNMADDSDr213r_Int:
     case X86::VFMADDSDr231r_Int: case X86::VFNMADDSDr231r_Int:
