@@ -158,11 +158,19 @@ bool VLIWResourceModel::isResourceAvailable(SUnit *SU) {
     break;
   }
 
+  MachineFunction &MF = *SU->getInstr()->getParent()->getParent();
+  auto &QII = *MF.getSubtarget<HexagonSubtarget>().getInstrInfo();
+
   // Now see if there are no other dependencies to instructions already
   // in the packet.
   for (unsigned i = 0, e = Packet.size(); i != e; ++i) {
     if (Packet[i]->Succs.size() == 0)
       continue;
+
+    // Enable .cur formation.
+    if (QII.mayBeCurLoad(Packet[i]->getInstr()))
+      continue;
+
     for (SUnit::const_succ_iterator I = Packet[i]->Succs.begin(),
          E = Packet[i]->Succs.end(); I != E; ++I) {
       // Since we do not add pseudos to packets, might as well
