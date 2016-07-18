@@ -54,12 +54,12 @@ Driver::Driver(StringRef ClangExecutable, StringRef DefaultTargetTriple,
       Mode(GCCMode), SaveTemps(SaveTempsNone), BitcodeEmbed(EmbedNone),
       LTOMode(LTOK_None), ClangExecutable(ClangExecutable),
       SysRoot(DEFAULT_SYSROOT), UseStdLib(true),
-      DefaultTargetTriple(DefaultTargetTriple),
       DriverTitle("clang LLVM compiler"), CCPrintOptionsFilename(nullptr),
       CCPrintHeadersFilename(nullptr), CCLogDiagnosticsFilename(nullptr),
       CCCPrintBindings(false), CCPrintHeaders(false), CCLogDiagnostics(false),
-      CCGenDiagnostics(false), CCCGenericGCCName(""), CheckInputsExist(true),
-      CCCUsePCH(true), SuppressMissingInputWarning(false) {
+      CCGenDiagnostics(false), DefaultTargetTriple(DefaultTargetTriple),
+      CCCGenericGCCName(""), CheckInputsExist(true), CCCUsePCH(true),
+      SuppressMissingInputWarning(false) {
 
   // Provide a sane fallback if no VFS is specified.
   if (!this->VFS)
