@@ -294,7 +294,7 @@ struct TrampolineMemoryRegion {
   uptr max_size;
 };
 
-static const uptr kTrampolineScanLimitRange = 1 << 30;  // 1 gig
+static const uptr kTrampolineScanLimitRange = 1 << 31;  // 2 gig
 static const int kMaxTrampolineRegion = 1024;
 static TrampolineMemoryRegion TrampolineRegions[kMaxTrampolineRegion];
 
