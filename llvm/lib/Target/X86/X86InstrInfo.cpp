@@ -7707,6 +7707,22 @@ bool X86InstrInfo::isAssociativeAndCommutative(const MachineInstr &Inst) const {
   case X86::VXORPSZ256rr:
   case X86::VXORPDZrr:
   case X86::VXORPSZrr:
+  case X86::KADDBrr:
+  case X86::KADDWrr:
+  case X86::KADDDrr:
+  case X86::KADDQrr:
+  case X86::KANDBrr:
+  case X86::KANDWrr:
+  case X86::KANDDrr:
+  case X86::KANDQrr:
+  case X86::KORBrr:
+  case X86::KORWrr:
+  case X86::KORDrr:
+  case X86::KORQrr:
+  case X86::KXORBrr:
+  case X86::KXORWrr:
+  case X86::KXORDrr:
+  case X86::KXORQrr:
   case X86::VPADDBrr:
   case X86::VPADDWrr:
   case X86::VPADDDrr:
