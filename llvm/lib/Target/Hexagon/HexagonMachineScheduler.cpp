@@ -24,6 +24,15 @@ static cl::opt<bool> IgnoreBBRegPressure("ignore-bb-reg-pressure",
 static cl::opt<bool> SchedPredsCloser("sched-preds-closer",
     cl::Hidden, cl::ZeroOrMore, cl::init(true));
 
+static cl::opt<bool> TopUseShorterTie("top-use-shorter-tie",
+    cl::Hidden, cl::ZeroOrMore, cl::init(false));
+
+static cl::opt<bool> BotUseShorterTie("bot-use-shorter-tie",
+    cl::Hidden, cl::ZeroOrMore, cl::init(false));
+
+static cl::opt<bool> DisableTCTie("disable-tc-tie",
+    cl::Hidden, cl::ZeroOrMore, cl::init(false));
+
 static cl::opt<bool> SchedRetvalOptimization("sched-retval-optimization",
     cl::Hidden, cl::ZeroOrMore, cl::init(true));
 
@@ -775,6 +784,55 @@ pickNodeFromQueue(ReadyQueue &Q, const RegPressureTracker &RPTracker,
       continue;
     }
 
+    // Tie breaker using Timing Class.
+    if (!DisableTCTie) {
+      auto &QST = DAG->MF.getSubtarget<HexagonSubtarget>();
+      auto &QII = *QST.getInstrInfo();
+
+      const MachineInstr *MI = (*I)->getInstr();
+      const MachineInstr *CandI = Candidate.SU->getInstr();
+      const InstrItineraryData *InstrItins = QST.getInstrItineraryData();
+
+      unsigned InstrLatency = QII.getInstrTimingClassLatency(InstrItins, MI);
+      unsigned CandLatency = QII.getInstrTimingClassLatency(InstrItins, CandI);
+      DEBUG(dbgs() << "TC Tie Breaker Cand: "
+                   << CandLatency << " Instr:" << InstrLatency << "\n"
+                   << *MI << *CandI << "\n");
+      if (Q.getID() == TopQID && CurrentCost == Candidate.SCost) {
+        if (InstrLatency < CandLatency && TopUseShorterTie) {
+          Candidate.SU = *I;
+          Candidate.RPDelta = RPDelta;
+          Candidate.SCost = CurrentCost;
+          FoundCandidate = BestCost;
+          DEBUG(dbgs() << "Used top shorter tie breaker\n");
+          continue;
+        } else if (InstrLatency > CandLatency && !TopUseShorterTie) {
+          Candidate.SU = *I;
+          Candidate.RPDelta = RPDelta;
+          Candidate.SCost = CurrentCost;
+          FoundCandidate = BestCost;
+          DEBUG(dbgs() << "Used top longer tie breaker\n");
+          continue;
+        }
+      } else if (Q.getID() == BotQID && CurrentCost == Candidate.SCost) {
+        if (InstrLatency < CandLatency && BotUseShorterTie) {
+          Candidate.SU = *I;
+          Candidate.RPDelta = RPDelta;
+          Candidate.SCost = CurrentCost;
+          FoundCandidate = BestCost;
+          DEBUG(dbgs() << "Used Bot shorter tie breaker\n");
+          continue;
+        } else if (InstrLatency > CandLatency && !BotUseShorterTie) {
+          Candidate.SU = *I;
+          Candidate.RPDelta = RPDelta;
+          Candidate.SCost = CurrentCost;
+          FoundCandidate = BestCost;
+          DEBUG(dbgs() << "Used Bot longer tie breaker\n");
+          continue;
+        }
+      }
+    }
+
     if (CurrentCost == Candidate.SCost) {
       if ((Q.getID() == TopQID &&
            (*I)->Succs.size() > Candidate.SU->Succs.size()) ||
@@ -802,10 +860,12 @@ SUnit *ConvergingVLIWScheduler::pickNodeBidrectional(bool &IsTopNode) {
   // Schedule as far as possible in the direction of no choice. This is most
   // efficient, but also provides the best heuristics for CriticalPSets.
   if (SUnit *SU = Bot.pickOnlyChoice()) {
+    DEBUG(dbgs() << "Picked only Bottom\n");
     IsTopNode = false;
     return SU;
   }
   if (SUnit *SU = Top.pickOnlyChoice()) {
+    DEBUG(dbgs() << "Picked only Top\n");
     IsTopNode = true;
     return SU;
   }
@@ -823,6 +883,7 @@ SUnit *ConvergingVLIWScheduler::pickNodeBidrectional(bool &IsTopNode) {
   // increase pressure for one of the excess PSets, then schedule in that
   // direction first to provide more freedom in the other direction.
   if (BotResult == SingleExcess || BotResult == SingleCritical) {
+    DEBUG(dbgs() << "Prefered Bottom Node\n");
     IsTopNode = false;
     return BotCand.SU;
   }
@@ -833,24 +894,29 @@ SUnit *ConvergingVLIWScheduler::pickNodeBidrectional(bool &IsTopNode) {
   assert(TopResult != NoCand && "failed to find the first candidate");
 
   if (TopResult == SingleExcess || TopResult == SingleCritical) {
+    DEBUG(dbgs() << "Prefered Top Node\n");
     IsTopNode = true;
     return TopCand.SU;
   }
   // If either Q has a single candidate that minimizes pressure above the
   // original region's pressure pick it.
   if (BotResult == SingleMax) {
+    DEBUG(dbgs() << "Prefered Bottom Node SingleMax\n");
     IsTopNode = false;
     return BotCand.SU;
   }
   if (TopResult == SingleMax) {
+    DEBUG(dbgs() << "Prefered Top Node SingleMax\n");
     IsTopNode = true;
     return TopCand.SU;
   }
   if (TopCand.SCost > BotCand.SCost) {
+    DEBUG(dbgs() << "Prefered Top Node Cost\n");
     IsTopNode = true;
     return TopCand.SU;
   }
   // Otherwise prefer the bottom candidate in node order.
+  DEBUG(dbgs() << "Prefered Bottom in Node order\n");
   IsTopNode = false;
   return BotCand.SU;
 }
