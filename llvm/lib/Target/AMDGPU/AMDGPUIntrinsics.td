@@ -16,6 +16,8 @@ let TargetPrefix = "AMDGPU", isTarget = 1 in {
 
   def int_AMDGPU_kill : Intrinsic<[], [llvm_float_ty], []>;
   def int_AMDGPU_kilp : Intrinsic<[], [], []>;
+
+  // Deprecated in favor of llvm.amdgcn.sffbh
   def int_AMDGPU_flbit_i32 : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
 
   // Deprecated in favor of separate int_amdgcn_cube* intrinsics.

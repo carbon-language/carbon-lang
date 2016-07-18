@@ -174,6 +174,11 @@ def int_amdgcn_cubetc : GCCBuiltin<"__builtin_amdgcn_cubetc">,
     [llvm_float_ty, llvm_float_ty, llvm_float_ty], [IntrNoMem]
 >;
 
+// v_ffbh_i32, as opposed to v_ffbh_u32. For v_ffbh_u32, llvm.ctlz
+// should be used.
+def int_amdgcn_sffbh :
+  Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+
 // TODO: Do we want an ordering for these?
 def int_amdgcn_atomic_inc : Intrinsic<[llvm_anyint_ty],
   [llvm_anyptr_ty, LLVMMatchType<0>],
