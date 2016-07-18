@@ -47,8 +47,6 @@ static cl::opt<int> MaxNumberOfBBSInPath(
     cl::desc("Max number of basic blocks on the path between "
              "hoisting locations (default = 4, unlimited = -1)"));
 
-static int HoistedCtr = 0;
-
 namespace {
 
 // Provides a sorting function based on the execution order of two instructions.
@@ -183,11 +181,13 @@ public:
   DenseMap<const BasicBlock *, unsigned> DFSNumber;
   BBSideEffectsSet BBSideEffects;
   MemorySSA *MSSA;
+  int HoistedCtr;
+
   enum InsKind { Unknown, Scalar, Load, Store };
 
   GVNHoist(DominatorTree *Dt, AliasAnalysis *Aa, MemoryDependenceResults *Md,
            bool OptForMinSize)
-      : DT(Dt), AA(Aa), MD(Md), OptForMinSize(OptForMinSize) {}
+      : DT(Dt), AA(Aa), MD(Md), OptForMinSize(OptForMinSize), HoistedCtr(0) {}
 
   // Return true when there are exception handling in BB.
   bool hasEH(const BasicBlock *BB) {
