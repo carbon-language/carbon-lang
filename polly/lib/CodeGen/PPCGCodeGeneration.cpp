@@ -450,6 +450,8 @@ public:
 
       setArrayBounds(PPCGArray, Array);
       i++;
+
+      collect_references(PPCGProg, &PPCGArray);
     }
   }
 
