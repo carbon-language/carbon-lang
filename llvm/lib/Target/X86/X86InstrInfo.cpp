@@ -4342,16 +4342,18 @@ static unsigned CopyToFromAsymmetricReg(unsigned DestReg, unsigned SrcReg,
   if (X86::GR64RegClass.contains(DestReg)) {
     if (X86::VR128XRegClass.contains(SrcReg))
       // Copy from a VR128 register to a GR64 register.
-      return HasAVX512 ? X86::VMOVPQIto64Zrr: (HasAVX ? X86::VMOVPQIto64rr :
-                                               X86::MOVPQIto64rr);
+      return HasAVX512 ? X86::VMOVPQIto64Zrr :
+             HasAVX    ? X86::VMOVPQIto64rr  :
+                         X86::MOVPQIto64rr;
     if (X86::VR64RegClass.contains(SrcReg))
       // Copy from a VR64 register to a GR64 register.
       return X86::MMX_MOVD64from64rr;
   } else if (X86::GR64RegClass.contains(SrcReg)) {
     // Copy from a GR64 register to a VR128 register.
     if (X86::VR128XRegClass.contains(DestReg))
-      return HasAVX512 ? X86::VMOV64toPQIZrr: (HasAVX ? X86::VMOV64toPQIrr :
-                                               X86::MOV64toPQIrr);
+      return HasAVX512 ? X86::VMOV64toPQIZrr :
+             HasAVX    ? X86::VMOV64toPQIrr  :
+                         X86::MOV64toPQIrr;
     // Copy from a GR64 register to a VR64 register.
     if (X86::VR64RegClass.contains(DestReg))
       return X86::MMX_MOVD64to64rr;
@@ -4360,13 +4362,19 @@ static unsigned CopyToFromAsymmetricReg(unsigned DestReg, unsigned SrcReg,
   // SrcReg(FR32) -> DestReg(GR32)
   // SrcReg(GR32) -> DestReg(FR32)
 
-  if (X86::GR32RegClass.contains(DestReg) && X86::FR32XRegClass.contains(SrcReg))
+  if (X86::GR32RegClass.contains(DestReg) &&
+      X86::FR32XRegClass.contains(SrcReg))
     // Copy from a FR32 register to a GR32 register.
-    return HasAVX512 ? X86::VMOVSS2DIZrr : (HasAVX ? X86::VMOVSS2DIrr : X86::MOVSS2DIrr);
+    return HasAVX512 ? X86::VMOVSS2DIZrr :
+           HasAVX    ? X86::VMOVSS2DIrr  :
+                       X86::MOVSS2DIrr;
 
-  if (X86::FR32XRegClass.contains(DestReg) && X86::GR32RegClass.contains(SrcReg))
+  if (X86::FR32XRegClass.contains(DestReg) &&
+      X86::GR32RegClass.contains(SrcReg))
     // Copy from a GR32 register to a FR32 register.
-    return HasAVX512 ? X86::VMOVDI2SSZrr : (HasAVX ? X86::VMOVDI2SSrr : X86::MOVDI2SSrr);
+    return HasAVX512 ? X86::VMOVDI2SSZrr :
+           HasAVX    ? X86::VMOVDI2SSrr  :
+                       X86::MOVDI2SSrr;
   return 0;
 }
 
