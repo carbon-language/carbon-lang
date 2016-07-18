@@ -452,7 +452,7 @@ static size_t GetInstructionSize(uptr address) {
   }
 
 #if SANITIZER_WINDOWS64
-  switch (*(u8*)address) {  
+  switch (*(u8*)address) {
     case 0xA1:  // A1 XX XX XX XX XX XX XX XX :
                 //   movabs eax, dword ptr ds:[XXXXXXXX]
       return 8;
@@ -506,7 +506,7 @@ static size_t GetInstructionSize(uptr address) {
     case 0x25ff48:    // 48 ff 25 XX XX XX XX :
                       //   rex.W jmp QWORD PTR [rip + XXXXXXXX]
       // Instructions having offset relative to 'rip' cannot be copied.
-      return 0;    
+      return 0;
 
     case 0x2444c7:    // C7 44 24 XX YY YY YY YY
                       //   mov dword ptr [rsp + XX], YYYYYYYY
