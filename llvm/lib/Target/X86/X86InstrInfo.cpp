@@ -7645,10 +7645,28 @@ bool X86InstrInfo::isAssociativeAndCommutative(const MachineInstr &Inst) const {
   case X86::PXORrr:
   case X86::VPANDrr:
   case X86::VPANDYrr:
+  case X86::VPANDDZ128rr:
+  case X86::VPANDDZ256rr:
+  case X86::VPANDDZrr:
+  case X86::VPANDQZ128rr:
+  case X86::VPANDQZ256rr:
+  case X86::VPANDQZrr:
   case X86::VPORrr:
   case X86::VPORYrr:
+  case X86::VPORDZ128rr:
+  case X86::VPORDZ256rr:
+  case X86::VPORDZrr:
+  case X86::VPORQZ128rr:
+  case X86::VPORQZ256rr:
+  case X86::VPORQZrr:
   case X86::VPXORrr:
   case X86::VPXORYrr:
+  case X86::VPXORDZ128rr:
+  case X86::VPXORDZ256rr:
+  case X86::VPXORDZrr:
+  case X86::VPXORQZ128rr:
+  case X86::VPXORQZ256rr:
+  case X86::VPXORQZrr:
   // Normal min/max instructions are not commutative because of NaN and signed
   // zero semantics, but these are. Thus, there's no need to check for global
   // relaxed math; the instructions themselves have the properties we need.
@@ -7664,14 +7682,30 @@ bool X86InstrInfo::isAssociativeAndCommutative(const MachineInstr &Inst) const {
   case X86::VMAXCPSrr:
   case X86::VMAXCPDYrr:
   case X86::VMAXCPSYrr:
+  case X86::VMAXCPDZ128rr:
+  case X86::VMAXCPSZ128rr:
+  case X86::VMAXCPDZ256rr:
+  case X86::VMAXCPSZ256rr:
+  case X86::VMAXCPDZrr:
+  case X86::VMAXCPSZrr:
   case X86::VMAXCSDrr:
   case X86::VMAXCSSrr:
+  case X86::VMAXCSDZrr:
+  case X86::VMAXCSSZrr:
   case X86::VMINCPDrr:
   case X86::VMINCPSrr:
   case X86::VMINCPDYrr:
   case X86::VMINCPSYrr:
+  case X86::VMINCPDZ128rr:
+  case X86::VMINCPSZ128rr:
+  case X86::VMINCPDZ256rr:
+  case X86::VMINCPSZ256rr:
+  case X86::VMINCPDZrr:
+  case X86::VMINCPSZrr:
   case X86::VMINCSDrr:
   case X86::VMINCSSrr:
+  case X86::VMINCSDZrr:
+  case X86::VMINCSSZrr:
     return true;
   case X86::ADDPDrr:
   case X86::ADDPSrr:
@@ -7685,14 +7719,30 @@ bool X86InstrInfo::isAssociativeAndCommutative(const MachineInstr &Inst) const {
   case X86::VADDPSrr:
   case X86::VADDPDYrr:
   case X86::VADDPSYrr:
+  case X86::VADDPDZ128rr:
+  case X86::VADDPSZ128rr:
+  case X86::VADDPDZ256rr:
+  case X86::VADDPSZ256rr:
+  case X86::VADDPDZrr:
+  case X86::VADDPSZrr:
   case X86::VADDSDrr:
   case X86::VADDSSrr:
+  case X86::VADDSDZrr:
+  case X86::VADDSSZrr:
   case X86::VMULPDrr:
   case X86::VMULPSrr:
   case X86::VMULPDYrr:
   case X86::VMULPSYrr:
+  case X86::VMULPDZ128rr:
+  case X86::VMULPSZ128rr:
+  case X86::VMULPDZ256rr:
+  case X86::VMULPSZ256rr:
+  case X86::VMULPDZrr:
+  case X86::VMULPSZrr:
   case X86::VMULSDrr:
   case X86::VMULSSrr:
+  case X86::VMULSDZrr:
+  case X86::VMULSSZrr:
     return Inst.getParent()->getParent()->getTarget().Options.UnsafeFPMath;
   default:
     return false;
