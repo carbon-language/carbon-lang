@@ -550,7 +550,7 @@ bool AMDGPUPromoteAlloca::collectUsesWithPtrTypes(
     if (UseInst->getOpcode() == Instruction::PtrToInt)
       return false;
 
-    if (LoadInst *LI = dyn_cast_or_null<LoadInst>(UseInst)) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(UseInst)) {
       if (LI->isVolatile())
         return false;
 
@@ -564,11 +564,10 @@ bool AMDGPUPromoteAlloca::collectUsesWithPtrTypes(
       // Reject if the stored value is not the pointer operand.
       if (SI->getPointerOperand() != Val)
         return false;
-    } else if (AtomicRMWInst *RMW = dyn_cast_or_null<AtomicRMWInst>(UseInst)) {
+    } else if (AtomicRMWInst *RMW = dyn_cast<AtomicRMWInst>(UseInst)) {
       if (RMW->isVolatile())
         return false;
-    } else if (AtomicCmpXchgInst *CAS
-               = dyn_cast_or_null<AtomicCmpXchgInst>(UseInst)) {
+    } else if (AtomicCmpXchgInst *CAS = dyn_cast<AtomicCmpXchgInst>(UseInst)) {
       if (CAS->isVolatile())
         return false;
     }
