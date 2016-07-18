@@ -932,8 +932,8 @@ StringRef getCoverageSection(const CodeGenModule &CGM) {
 
 std::string normalizeFilename(StringRef Filename) {
   llvm::SmallString<256> Path(Filename);
-  llvm::sys::path::remove_dots(Path, /*remove_dot_dots=*/true);
   llvm::sys::fs::make_absolute(Path);
+  llvm::sys::path::remove_dots(Path, /*remove_dot_dots=*/true);
   return Path.str().str();
 }
 
