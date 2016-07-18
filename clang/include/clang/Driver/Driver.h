@@ -17,16 +17,14 @@
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Triple.h"
-#include "llvm/Support/Path.h" // FIXME: Kill when CompilationInfo lands.
 
 #include <list>
 #include <map>
-#include <memory>
-#include <set>
 #include <string>
 
 namespace llvm {
+class Triple;
+
 namespace opt {
   class Arg;
   class ArgList;

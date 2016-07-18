@@ -16,7 +16,6 @@
 #include "clang/Driver/Action.h"
 #include "clang/Driver/Multilib.h"
 #include "clang/Driver/ToolChain.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/Compiler.h"

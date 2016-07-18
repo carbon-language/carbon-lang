@@ -18,7 +18,6 @@
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Target/TargetOptions.h"
 #include <memory>
 #include <string>

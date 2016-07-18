@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Sema/SemaInternal.h"
 #include "TreeTransform.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -42,6 +41,7 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/SemaFixItUtils.h"
+#include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Template.h"
 #include "llvm/Support/ConvertUTF.h"
 using namespace clang;

@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Driver/ToolChain.h"
 #include "Tools.h"
 #include "clang/Basic/ObjCRuntime.h"
 #include "clang/Config/config.h"
@@ -15,16 +16,15 @@
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/SanitizerArgs.h"
-#include "clang/Driver/ToolChain.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/TargetParser.h"
+#include "llvm/Support/TargetRegistry.h"
 
 using namespace clang::driver;
 using namespace clang::driver::tools;

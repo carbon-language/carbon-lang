@@ -44,7 +44,6 @@
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/TargetInfo.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstring>
 #include <functional>
