@@ -7281,6 +7281,10 @@ unsigned X86InstrInfo::getJumpInstrTableEntryBound() const {
 bool X86InstrInfo::isHighLatencyDef(int opc) const {
   switch (opc) {
   default: return false;
+  case X86::DIVPDrm:
+  case X86::DIVPDrr:
+  case X86::DIVPSrm:
+  case X86::DIVPSrr:
   case X86::DIVSDrm:
   case X86::DIVSDrm_Int:
   case X86::DIVSDrr:
@@ -7302,6 +7306,14 @@ bool X86InstrInfo::isHighLatencyDef(int opc) const {
   case X86::SQRTSSr:
   case X86::SQRTSSr_Int:
   // AVX instructions with high latency
+  case X86::VDIVPDrm:
+  case X86::VDIVPDrr:
+  case X86::VDIVPDYrm:
+  case X86::VDIVPDYrr:
+  case X86::VDIVPSrm:
+  case X86::VDIVPSrr:
+  case X86::VDIVPSYrm:
+  case X86::VDIVPSYrr:
   case X86::VDIVSDrm:
   case X86::VDIVSDrm_Int:
   case X86::VDIVSDrr:
@@ -7312,45 +7324,266 @@ bool X86InstrInfo::isHighLatencyDef(int opc) const {
   case X86::VDIVSSrr_Int:
   case X86::VSQRTPDm:
   case X86::VSQRTPDr:
+  case X86::VSQRTPDYm:
+  case X86::VSQRTPDYr:
   case X86::VSQRTPSm:
   case X86::VSQRTPSr:
+  case X86::VSQRTPSYm:
+  case X86::VSQRTPSYr:
   case X86::VSQRTSDm:
   case X86::VSQRTSDm_Int:
   case X86::VSQRTSDr:
+  case X86::VSQRTSDr_Int:
   case X86::VSQRTSSm:
   case X86::VSQRTSSm_Int:
   case X86::VSQRTSSr:
-  case X86::VSQRTPDZm:
-  case X86::VSQRTPDZr:
-  case X86::VSQRTPSZm:
-  case X86::VSQRTPSZr:
-  case X86::VSQRTSDZm:
-  case X86::VSQRTSDZm_Int:
-  case X86::VSQRTSDZr:
-  case X86::VSQRTSSZm_Int:
-  case X86::VSQRTSSZr:
-  case X86::VSQRTSSZm:
+  case X86::VSQRTSSr_Int:
+  // AVX512 instructions with high latency
+  case X86::VDIVPDZ128rm:
+  case X86::VDIVPDZ128rmb:
+  case X86::VDIVPDZ128rmbk:
+  case X86::VDIVPDZ128rmbkz:
+  case X86::VDIVPDZ128rmk:
+  case X86::VDIVPDZ128rmkz:
+  case X86::VDIVPDZ128rr:
+  case X86::VDIVPDZ128rrk:
+  case X86::VDIVPDZ128rrkz:
+  case X86::VDIVPDZ256rm:
+  case X86::VDIVPDZ256rmb:
+  case X86::VDIVPDZ256rmbk:
+  case X86::VDIVPDZ256rmbkz:
+  case X86::VDIVPDZ256rmk:
+  case X86::VDIVPDZ256rmkz:
+  case X86::VDIVPDZ256rr:
+  case X86::VDIVPDZ256rrk:
+  case X86::VDIVPDZ256rrkz:
+  case X86::VDIVPDZrb:
+  case X86::VDIVPDZrbk:
+  case X86::VDIVPDZrbkz:
+  case X86::VDIVPDZrm:
+  case X86::VDIVPDZrmb:
+  case X86::VDIVPDZrmbk:
+  case X86::VDIVPDZrmbkz:
+  case X86::VDIVPDZrmk:
+  case X86::VDIVPDZrmkz:
+  case X86::VDIVPDZrr:
+  case X86::VDIVPDZrrk:
+  case X86::VDIVPDZrrkz:
+  case X86::VDIVPSZ128rm:
+  case X86::VDIVPSZ128rmb:
+  case X86::VDIVPSZ128rmbk:
+  case X86::VDIVPSZ128rmbkz:
+  case X86::VDIVPSZ128rmk:
+  case X86::VDIVPSZ128rmkz:
+  case X86::VDIVPSZ128rr:
+  case X86::VDIVPSZ128rrk:
+  case X86::VDIVPSZ128rrkz:
+  case X86::VDIVPSZ256rm:
+  case X86::VDIVPSZ256rmb:
+  case X86::VDIVPSZ256rmbk:
+  case X86::VDIVPSZ256rmbkz:
+  case X86::VDIVPSZ256rmk:
+  case X86::VDIVPSZ256rmkz:
+  case X86::VDIVPSZ256rr:
+  case X86::VDIVPSZ256rrk:
+  case X86::VDIVPSZ256rrkz:
+  case X86::VDIVPSZrb:
+  case X86::VDIVPSZrbk:
+  case X86::VDIVPSZrbkz:
+  case X86::VDIVPSZrm:
+  case X86::VDIVPSZrmb:
+  case X86::VDIVPSZrmbk:
+  case X86::VDIVPSZrmbkz:
+  case X86::VDIVPSZrmk:
+  case X86::VDIVPSZrmkz:
+  case X86::VDIVPSZrr:
+  case X86::VDIVPSZrrk:
+  case X86::VDIVPSZrrkz:
   case X86::VDIVSDZrm:
   case X86::VDIVSDZrr:
+  case X86::VDIVSDZrm_Int:
+  case X86::VDIVSDZrm_Intk:
+  case X86::VDIVSDZrm_Intkz:
+  case X86::VDIVSDZrr_Int:
+  case X86::VDIVSDZrr_Intk:
+  case X86::VDIVSDZrr_Intkz:
+  case X86::VDIVSDZrrb:
+  case X86::VDIVSDZrrbk:
+  case X86::VDIVSDZrrbkz:
   case X86::VDIVSSZrm:
   case X86::VDIVSSZrr:
+  case X86::VDIVSSZrm_Int:
+  case X86::VDIVSSZrm_Intk:
+  case X86::VDIVSSZrm_Intkz:
+  case X86::VDIVSSZrr_Int:
+  case X86::VDIVSSZrr_Intk:
+  case X86::VDIVSSZrr_Intkz:
+  case X86::VDIVSSZrrb:
+  case X86::VDIVSSZrrbk:
+  case X86::VDIVSSZrrbkz:
+  case X86::VSQRTPDZ128m:
+  case X86::VSQRTPDZ128mb:
+  case X86::VSQRTPDZ128mbk:
+  case X86::VSQRTPDZ128mbkz:
+  case X86::VSQRTPDZ128mk:
+  case X86::VSQRTPDZ128mkz:
+  case X86::VSQRTPDZ128r:
+  case X86::VSQRTPDZ128rk:
+  case X86::VSQRTPDZ128rkz:
+  case X86::VSQRTPDZ256m:
+  case X86::VSQRTPDZ256mb:
+  case X86::VSQRTPDZ256mbk:
+  case X86::VSQRTPDZ256mbkz:
+  case X86::VSQRTPDZ256mk:
+  case X86::VSQRTPDZ256mkz:
+  case X86::VSQRTPDZ256r:
+  case X86::VSQRTPDZ256rk:
+  case X86::VSQRTPDZ256rkz:
+  case X86::VSQRTPDZm:
+  case X86::VSQRTPDZmb:
+  case X86::VSQRTPDZmbk:
+  case X86::VSQRTPDZmbkz:
+  case X86::VSQRTPDZmk:
+  case X86::VSQRTPDZmkz:
+  case X86::VSQRTPDZr:
+  case X86::VSQRTPDZrb:
+  case X86::VSQRTPDZrbk:
+  case X86::VSQRTPDZrbkz:
+  case X86::VSQRTPDZrk:
+  case X86::VSQRTPDZrkz:
+  case X86::VSQRTPSZ128m:
+  case X86::VSQRTPSZ128mb:
+  case X86::VSQRTPSZ128mbk:
+  case X86::VSQRTPSZ128mbkz:
+  case X86::VSQRTPSZ128mk:
+  case X86::VSQRTPSZ128mkz:
+  case X86::VSQRTPSZ128r:
+  case X86::VSQRTPSZ128rk:
+  case X86::VSQRTPSZ128rkz:
+  case X86::VSQRTPSZ256m:
+  case X86::VSQRTPSZ256mb:
+  case X86::VSQRTPSZ256mbk:
+  case X86::VSQRTPSZ256mbkz:
+  case X86::VSQRTPSZ256mk:
+  case X86::VSQRTPSZ256mkz:
+  case X86::VSQRTPSZ256r:
+  case X86::VSQRTPSZ256rk:
+  case X86::VSQRTPSZ256rkz:
+  case X86::VSQRTPSZm:
+  case X86::VSQRTPSZmb:
+  case X86::VSQRTPSZmbk:
+  case X86::VSQRTPSZmbkz:
+  case X86::VSQRTPSZmk:
+  case X86::VSQRTPSZmkz:
+  case X86::VSQRTPSZr:
+  case X86::VSQRTPSZrb:
+  case X86::VSQRTPSZrbk:
+  case X86::VSQRTPSZrbkz:
+  case X86::VSQRTPSZrk:
+  case X86::VSQRTPSZrkz:
+  case X86::VSQRTSDZm:
+  case X86::VSQRTSDZm_Int:
+  case X86::VSQRTSDZm_Intk:
+  case X86::VSQRTSDZm_Intkz:
+  case X86::VSQRTSDZr:
+  case X86::VSQRTSDZr_Int:
+  case X86::VSQRTSDZr_Intk:
+  case X86::VSQRTSDZr_Intkz:
+  case X86::VSQRTSDZrb_Int:
+  case X86::VSQRTSDZrb_Intk:
+  case X86::VSQRTSDZrb_Intkz:
+  case X86::VSQRTSSZm:
+  case X86::VSQRTSSZm_Int:
+  case X86::VSQRTSSZm_Intk:
+  case X86::VSQRTSSZm_Intkz:
+  case X86::VSQRTSSZr:
+  case X86::VSQRTSSZr_Int:
+  case X86::VSQRTSSZr_Intk:
+  case X86::VSQRTSSZr_Intkz:
+  case X86::VSQRTSSZrb_Int:
+  case X86::VSQRTSSZrb_Intk:
+  case X86::VSQRTSSZrb_Intkz:
 
-  case X86::VGATHERQPSZrm:
-  case X86::VGATHERQPDZrm:
+  case X86::VGATHERDPDYrm:
+  case X86::VGATHERDPDZ128rm:
+  case X86::VGATHERDPDZ256rm:
   case X86::VGATHERDPDZrm:
+  case X86::VGATHERDPDrm:
+  case X86::VGATHERDPSYrm:
+  case X86::VGATHERDPSZ128rm:
+  case X86::VGATHERDPSZ256rm:
   case X86::VGATHERDPSZrm:
-  case X86::VPGATHERQDZrm:
-  case X86::VPGATHERQQZrm:
+  case X86::VGATHERDPSrm:
+  case X86::VGATHERPF0DPDm:
+  case X86::VGATHERPF0DPSm:
+  case X86::VGATHERPF0QPDm:
+  case X86::VGATHERPF0QPSm:
+  case X86::VGATHERPF1DPDm:
+  case X86::VGATHERPF1DPSm:
+  case X86::VGATHERPF1QPDm:
+  case X86::VGATHERPF1QPSm:
+  case X86::VGATHERQPDYrm:
+  case X86::VGATHERQPDZ128rm:
+  case X86::VGATHERQPDZ256rm:
+  case X86::VGATHERQPDZrm:
+  case X86::VGATHERQPDrm:
+  case X86::VGATHERQPSYrm:
+  case X86::VGATHERQPSZ128rm:
+  case X86::VGATHERQPSZ256rm:
+  case X86::VGATHERQPSZrm:
+  case X86::VGATHERQPSrm:
+  case X86::VPGATHERDDYrm:
+  case X86::VPGATHERDDZ128rm:
+  case X86::VPGATHERDDZ256rm:
   case X86::VPGATHERDDZrm:
+  case X86::VPGATHERDDrm:
+  case X86::VPGATHERDQYrm:
+  case X86::VPGATHERDQZ128rm:
+  case X86::VPGATHERDQZ256rm:
   case X86::VPGATHERDQZrm:
-  case X86::VSCATTERQPDZmr:
-  case X86::VSCATTERQPSZmr:
+  case X86::VPGATHERDQrm:
+  case X86::VPGATHERQDYrm:
+  case X86::VPGATHERQDZ128rm:
+  case X86::VPGATHERQDZ256rm:
+  case X86::VPGATHERQDZrm:
+  case X86::VPGATHERQDrm:
+  case X86::VPGATHERQQYrm:
+  case X86::VPGATHERQQZ128rm:
+  case X86::VPGATHERQQZ256rm:
+  case X86::VPGATHERQQZrm:
+  case X86::VPGATHERQQrm:
+  case X86::VSCATTERDPDZ128mr:
+  case X86::VSCATTERDPDZ256mr:
   case X86::VSCATTERDPDZmr:
+  case X86::VSCATTERDPSZ128mr:
+  case X86::VSCATTERDPSZ256mr:
   case X86::VSCATTERDPSZmr:
-  case X86::VPSCATTERQDZmr:
-  case X86::VPSCATTERQQZmr:
+  case X86::VSCATTERPF0DPDm:
+  case X86::VSCATTERPF0DPSm:
+  case X86::VSCATTERPF0QPDm:
+  case X86::VSCATTERPF0QPSm:
+  case X86::VSCATTERPF1DPDm:
+  case X86::VSCATTERPF1DPSm:
+  case X86::VSCATTERPF1QPDm:
+  case X86::VSCATTERPF1QPSm:
+  case X86::VSCATTERQPDZ128mr:
+  case X86::VSCATTERQPDZ256mr:
+  case X86::VSCATTERQPDZmr:
+  case X86::VSCATTERQPSZ128mr:
+  case X86::VSCATTERQPSZ256mr:
+  case X86::VSCATTERQPSZmr:
+  case X86::VPSCATTERDDZ128mr:
+  case X86::VPSCATTERDDZ256mr:
   case X86::VPSCATTERDDZmr:
+  case X86::VPSCATTERDQZ128mr:
+  case X86::VPSCATTERDQZ256mr:
   case X86::VPSCATTERDQZmr:
+  case X86::VPSCATTERQDZ128mr:
+  case X86::VPSCATTERQDZ256mr:
+  case X86::VPSCATTERQDZmr:
+  case X86::VPSCATTERQQZ128mr:
+  case X86::VPSCATTERQQZ256mr:
+  case X86::VPSCATTERQQZmr:
     return true;
   }
 }
