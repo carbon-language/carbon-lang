@@ -3804,6 +3804,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::MOVSD:
   case X86ISD::UNPCKL:
   case X86ISD::UNPCKH:
+  case X86ISD::VBROADCAST:
   case X86ISD::VPERMILPI:
   case X86ISD::VPERMILPV:
   case X86ISD::VPERM2X128:
@@ -4920,6 +4921,15 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
     DecodeZeroMoveLowMask(VT, Mask);
     IsUnary = true;
     break;
+  case X86ISD::VBROADCAST: {
+    // We only decode broadcasts of same-sized vectors at the moment.
+    if (N->getOperand(0).getValueType() == VT) {
+      DecodeVectorBroadcast(VT, Mask);
+      IsUnary = true;
+      break;
+    }
+    return false;
+  }
   case X86ISD::VPERMILPV: {
     IsUnary = true;
     SDValue MaskNode = N->getOperand(1);
