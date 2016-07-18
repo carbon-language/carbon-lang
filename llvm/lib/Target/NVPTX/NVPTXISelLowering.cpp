@@ -1072,6 +1072,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   MachineFunction &MF = DAG.getMachineFunction();
   const Function *F = MF.getFunction();
   auto &DL = MF.getDataLayout();
+  bool isKernel = llvm::isKernelFunction(*F);
 
   SDValue tempChain = Chain;
   Chain = DAG.getCALLSEQ_START(Chain,
@@ -1337,11 +1338,15 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // The ByValAlign in the Outs[OIdx].Flags is alway set at this point,
     // so we don't need to worry about natural alignment or not.
     // See TargetLowering::LowerCallTo().
-    SDValue DeclareParamOps[] = {
-      Chain, DAG.getConstant(Outs[OIdx].Flags.getByValAlign(), dl, MVT::i32),
-      DAG.getConstant(paramCount, dl, MVT::i32),
-      DAG.getConstant(sz, dl, MVT::i32), InFlag
-    };
+
+    // Enforce minumum alignment of 4 to work around ptxas miscompile
+    // for sm_50+. See corresponding alignment adjustment in
+    // emitFunctionParamList() for details.
+    if (!isKernel && ArgAlign < 4)
+      ArgAlign = 4;
+    SDValue DeclareParamOps[] = {Chain, DAG.getConstant(ArgAlign, dl, MVT::i32),
+                                 DAG.getConstant(paramCount, dl, MVT::i32),
+                                 DAG.getConstant(sz, dl, MVT::i32), InFlag};
     Chain = DAG.getNode(NVPTXISD::DeclareParam, dl, DeclareParamVTs,
                         DeclareParamOps);
     InFlag = Chain.getValue(1);

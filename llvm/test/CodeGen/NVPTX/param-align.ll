@@ -23,3 +23,11 @@ define ptx_device void @t3(%struct.float2* byval %x) {
 ; CHECK: .param .align 4 .b8 t3_param_0[8]
   ret void
 }
+
+;;; Need at least 4-byte alignment in order to avoid miscompilation by
+;;; ptxas for sm_50+
+define ptx_device void @t4(i8* byval %x) {
+; CHECK: .func t4
+; CHECK: .param .align 4 .b8 t4_param_0[1]
+  ret void
+}
