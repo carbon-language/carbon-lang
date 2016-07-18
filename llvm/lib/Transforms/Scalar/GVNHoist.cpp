@@ -81,8 +81,12 @@ public:
   }
 };
 
-// A map from a VN (value number) to all the instructions with that VN.
-typedef DenseMap<unsigned, SmallVector<Instruction *, 4>> VNtoInsns;
+// A map from a pair of VNs to all the instructions with those VNs.
+typedef DenseMap<std::pair<unsigned, unsigned>, SmallVector<Instruction *, 4>>
+    VNtoInsns;
+// An invalid value number Used when inserting a single value number into
+// VNtoInsns.
+enum { InvalidVN = ~2U };
 
 // Records all scalar instructions candidate for code hoisting.
 class InsnInfo {
@@ -93,7 +97,7 @@ public:
   void insert(Instruction *I, GVN::ValueTable &VN) {
     // Scalar instruction.
     unsigned V = VN.lookupOrAdd(I);
-    VNtoScalars[V].push_back(I);
+    VNtoScalars[{V, InvalidVN}].push_back(I);
   }
 
   const VNtoInsns &getVNTable() const { return VNtoScalars; }
@@ -108,7 +112,7 @@ public:
   void insert(LoadInst *Load, GVN::ValueTable &VN) {
     if (Load->isSimple()) {
       unsigned V = VN.lookupOrAdd(Load->getPointerOperand());
-      VNtoLoads[V].push_back(Load);
+      VNtoLoads[{V, InvalidVN}].push_back(Load);
     }
   }
 
@@ -128,8 +132,7 @@ public:
     // Hash the store address and the stored value.
     Value *Ptr = Store->getPointerOperand();
     Value *Val = Store->getValueOperand();
-    VNtoStores[hash_combine(VN.lookupOrAdd(Ptr), VN.lookupOrAdd(Val))]
-        .push_back(Store);
+    VNtoStores[{VN.lookupOrAdd(Ptr), VN.lookupOrAdd(Val)}].push_back(Store);
   }
 
   const VNtoInsns &getVNTable() const { return VNtoStores; }
@@ -148,13 +151,14 @@ public:
     // onlyReadsMemory will be handled as a Load instruction,
     // all other calls will be handled as stores.
     unsigned V = VN.lookupOrAdd(Call);
+    auto Entry = std::make_pair(V, InvalidVN);
 
     if (Call->doesNotAccessMemory())
-      VNtoCallsScalars[V].push_back(Call);
+      VNtoCallsScalars[Entry].push_back(Call);
     else if (Call->onlyReadsMemory())
-      VNtoCallsLoads[V].push_back(Call);
+      VNtoCallsLoads[Entry].push_back(Call);
     else
-      VNtoCallsStores[V].push_back(Call);
+      VNtoCallsStores[Entry].push_back(Call);
   }
 
   const VNtoInsns &getScalarVNTable() const { return VNtoCallsScalars; }
