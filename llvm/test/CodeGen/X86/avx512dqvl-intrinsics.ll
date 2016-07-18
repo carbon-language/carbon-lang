@@ -2237,7 +2237,7 @@ define <8 x i32>@test_int_x86_avx512_mask_broadcasti32x2_256(<4 x i32> %x0, <8 x
 ; CHECK-NEXT:    vbroadcasti32x2 (%rsi), %ymm1 {%k1} ## encoding: [0x62,0xf2,0x7d,0x29,0x59,0x0e]
 ; CHECK-NEXT:    vbroadcasti32x2 %xmm0, %ymm2 {%k1} {z} ## encoding: [0x62,0xf2,0x7d,0xa9,0x59,0xd0]
 ; CHECK-NEXT:    vbroadcasti32x2 %xmm0, %ymm0 ## encoding: [0x62,0xf2,0x7d,0x28,0x59,0xc0]
-; CHECK-NEXT:    vpaddd %ymm2, %ymm1, %ymm1 ## encoding: [0x62,0xf1,0x75,0x28,0xfe,0xca]
+; CHECK-NEXT:    vpaddd %ymm0, %ymm2, %ymm0 ## encoding: [0x62,0xf1,0x6d,0x28,0xfe,0xc0]
 ; CHECK-NEXT:    vpaddd %ymm0, %ymm1, %ymm0 ## encoding: [0x62,0xf1,0x75,0x28,0xfe,0xc0]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
   %y_64  = load i64, i64 * %y_ptr

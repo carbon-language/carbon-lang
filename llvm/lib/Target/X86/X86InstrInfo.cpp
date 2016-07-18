@@ -7649,6 +7649,10 @@ bool X86InstrInfo::isAssociativeAndCommutative(const MachineInstr &Inst) const {
   case X86::ORPSrr:
   case X86::XORPDrr:
   case X86::XORPSrr:
+  case X86::PADDBrr:
+  case X86::PADDWrr:
+  case X86::PADDDrr:
+  case X86::PADDQrr:
   case X86::VPANDrr:
   case X86::VPANDYrr:
   case X86::VPANDDZ128rr:
@@ -7703,6 +7707,26 @@ bool X86InstrInfo::isAssociativeAndCommutative(const MachineInstr &Inst) const {
   case X86::VXORPSZ256rr:
   case X86::VXORPDZrr:
   case X86::VXORPSZrr:
+  case X86::VPADDBrr:
+  case X86::VPADDWrr:
+  case X86::VPADDDrr:
+  case X86::VPADDQrr:
+  case X86::VPADDBYrr:
+  case X86::VPADDWYrr:
+  case X86::VPADDDYrr:
+  case X86::VPADDQYrr:
+  case X86::VPADDBZ128rr:
+  case X86::VPADDWZ128rr:
+  case X86::VPADDDZ128rr:
+  case X86::VPADDQZ128rr:
+  case X86::VPADDBZ256rr:
+  case X86::VPADDWZ256rr:
+  case X86::VPADDDZ256rr:
+  case X86::VPADDQZ256rr:
+  case X86::VPADDBZrr:
+  case X86::VPADDWZrr:
+  case X86::VPADDDZrr:
+  case X86::VPADDQZrr:
   // Normal min/max instructions are not commutative because of NaN and signed
   // zero semantics, but these are. Thus, there's no need to check for global
   // relaxed math; the instructions themselves have the properties we need.
