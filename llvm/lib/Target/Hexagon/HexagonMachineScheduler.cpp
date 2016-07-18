@@ -18,11 +18,19 @@
 #include "llvm/CodeGen/ScheduleDAGMutation.h"
 #include "llvm/IR/Function.h"
 
+static cl::opt<bool> IgnoreBBRegPressure("ignore-bb-reg-pressure",
+    cl::Hidden, cl::ZeroOrMore, cl::init(false));
+
 static cl::opt<bool> SchedPredsCloser("sched-preds-closer",
     cl::Hidden, cl::ZeroOrMore, cl::init(true));
 
 static cl::opt<bool> SchedRetvalOptimization("sched-retval-optimization",
     cl::Hidden, cl::ZeroOrMore, cl::init(true));
+
+// Check if the scheduler should penalize instructions that are available to
+// early due to a zero-latency dependence.
+static cl::opt<bool> CheckEarlyAvail("check-early-avail", cl::Hidden,
+    cl::ZeroOrMore, cl::init(true));
 
 using namespace llvm;
 
@@ -573,15 +581,23 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
 
     // If resources are available for it, multiply the
     // chance of scheduling.
-    if (Top.ResourceModel->isResourceAvailable(SU))
+    if (Top.ResourceModel->isResourceAvailable(SU)) {
       ResCount <<= FactorOne;
+      ResCount += PriorityThree;
+      DEBUG(if (verbose) dbgs() << "A|");
+    } else
+      DEBUG(if (verbose) dbgs() << " |");
   } else {
     ResCount += (SU->getDepth() * ScaleTwo);
 
     // If resources are available for it, multiply the
     // chance of scheduling.
-    if (Bot.ResourceModel->isResourceAvailable(SU))
+    if (Bot.ResourceModel->isResourceAvailable(SU)) {
       ResCount <<= FactorOne;
+      ResCount += PriorityThree;
+      DEBUG(if (verbose) dbgs() << "A|");
+    } else
+      DEBUG(if (verbose) dbgs() << " |");
   }
 
   unsigned NumNodesBlocking = 0;
@@ -590,23 +606,35 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
     // Look at all of the successors of this node.
     // Count the number of nodes that
     // this node is the sole unscheduled node for.
-    for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-         I != E; ++I)
-      if (getSingleUnscheduledPred(I->getSUnit()) == SU)
+    for (const SDep &SI : SU->Succs)
+      if (getSingleUnscheduledPred(SI.getSUnit()) == SU)
         ++NumNodesBlocking;
   } else {
     // How many unscheduled predecessors block this node?
-    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-         I != E; ++I)
-      if (getSingleUnscheduledSucc(I->getSUnit()) == SU)
+    for (const SDep &PI : SU->Preds)
+      if (getSingleUnscheduledSucc(PI.getSUnit()) == SU)
         ++NumNodesBlocking;
   }
   ResCount += (NumNodesBlocking * ScaleTwo);
 
   // Factor in reg pressure as a heuristic.
-  ResCount -= (Delta.Excess.getUnitInc()*PriorityTwo);
-  ResCount -= (Delta.CriticalMax.getUnitInc()*PriorityTwo);
+  if (!IgnoreBBRegPressure) {
+    // Decrease priority by the amount that register pressure exceeds the limit.
+    ResCount -= (Delta.Excess.getUnitInc()*PriorityOne);
+    // Decrease priority if register pressure exceeds the limit.
+    ResCount -= (Delta.CriticalMax.getUnitInc()*PriorityOne);
+    // Decrease priority slightly if register pressure would increase over the
+    // current maximum.
+    ResCount -= (Delta.CurrentMax.getUnitInc()*PriorityTwo);
+    DEBUG(if (verbose) {
+        dbgs() << "RP " << Delta.Excess.getUnitInc() << "/"
+               << Delta.CriticalMax.getUnitInc() <<"/"
+               << Delta.CurrentMax.getUnitInc() << ")|";
+    });
+  }
 
+  // Give a little extra priority to a .cur instruction if there is a resource
+  // available for it.
   auto &QST = DAG->MF.getSubtarget<HexagonSubtarget>();
   auto &QII = *QST.getInstrInfo();
 
@@ -641,6 +669,46 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
           Bot.ResourceModel->isInPacket(SI.getSUnit())) {
         ResCount += PriorityThree;
         DEBUG(if (verbose) dbgs() << "Z|");
+      }
+    }
+  }
+
+  // Give less preference to an instruction that will cause a stall with
+  // an instruction in the previous packet.
+  if (QII.isV60VectorInstruction(Instr)) {
+    // Check for stalls in the previous packet.
+    if (Q.getID() == TopQID) {
+      for (auto J : Top.ResourceModel->OldPacket)
+        if (QII.producesStall(J->getInstr(), Instr))
+          ResCount -= PriorityOne;
+    } else {
+      for (auto J : Bot.ResourceModel->OldPacket)
+        if (QII.producesStall(Instr, J->getInstr()))
+          ResCount -= PriorityOne;
+    }
+  }
+
+  // If the instruction has a non-zero latency dependence with an instruction in
+  // the current packet, then it should not be scheduled yet. The case occurs
+  // when the dependent instruction is scheduled in a new packet, so the
+  // scheduler updates the current cycle and pending instructions become
+  // available.
+  if (CheckEarlyAvail) {
+    if (Q.getID() == TopQID) {
+      for (const auto &PI : SU->Preds) {
+        if (PI.getLatency() > 0 &&
+            Top.ResourceModel->isInPacket(PI.getSUnit())) {
+          ResCount -= PriorityOne;
+          DEBUG(if (verbose) dbgs() << "D|");
+        }
+      }
+    } else {
+      for (const auto &SI : SU->Succs) {
+        if (SI.getLatency() > 0 &&
+            Bot.ResourceModel->isInPacket(SI.getSUnit())) {
+          ResCount -= PriorityOne;
+          DEBUG(if (verbose) dbgs() << "D|");
+        }
       }
     }
   }
