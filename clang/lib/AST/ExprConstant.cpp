@@ -6872,6 +6872,8 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
       // Reduce it to a constant now.
       return Success((Type & 2) ? 0 : -1, E);
     }
+
+    llvm_unreachable("unexpected EvalMode");
   }
 
   case Builtin::BI__builtin_bswap16:
