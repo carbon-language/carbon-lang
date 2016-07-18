@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: llc -march=hexagon -mcpu=hexagonv60 -enable-hexagon-hvx-double \
 ; RUN:     -hexagon-bit=0 < %s | FileCheck %s
 

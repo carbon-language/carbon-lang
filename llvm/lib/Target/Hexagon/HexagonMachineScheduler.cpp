@@ -544,6 +544,7 @@ static SUnit *getSingleUnscheduledSucc(SUnit *SU) {
 // heuristic components for cost computation.
 static const unsigned PriorityOne = 200;
 static const unsigned PriorityTwo = 50;
+static const unsigned PriorityThree = 75;
 static const unsigned ScaleTwo = 10;
 static const unsigned FactorOne = 2;
 
@@ -609,6 +610,19 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
   auto &QST = DAG->MF.getSubtarget<HexagonSubtarget>();
   auto &QII = *QST.getInstrInfo();
 
+  // Give a little extra priority to a .cur instruction if there is a resource
+  // available for it.
+  if (SU->isInstr() && QII.mayBeCurLoad(SU->getInstr())) {
+    if (Q.getID() == TopQID && Top.ResourceModel->isResourceAvailable(SU)) {
+      ResCount += PriorityTwo;
+      DEBUG(if (verbose) dbgs() << "C|");
+    } else if (Q.getID() == BotQID &&
+               Bot.ResourceModel->isResourceAvailable(SU)) {
+      ResCount += PriorityTwo;
+      DEBUG(if (verbose) dbgs() << "C|");
+    }
+  }
+
   // Give preference to a zero latency instruction if the dependent
   // instruction is in the current packet.
   if (Q.getID() == TopQID) {
@@ -616,7 +630,7 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
       if (!PI.getSUnit()->getInstr()->isPseudo() && PI.isAssignedRegDep() &&
           PI.getLatency() == 0 &&
           Top.ResourceModel->isInPacket(PI.getSUnit())) {
-        ResCount += PriorityTwo;
+        ResCount += PriorityThree;
         DEBUG(if (verbose) dbgs() << "Z|");
       }
     }
@@ -625,7 +639,7 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
       if (!SI.getSUnit()->getInstr()->isPseudo() && SI.isAssignedRegDep() &&
           SI.getLatency() == 0 &&
           Bot.ResourceModel->isInPacket(SI.getSUnit())) {
-        ResCount += PriorityTwo;
+        ResCount += PriorityThree;
         DEBUG(if (verbose) dbgs() << "Z|");
       }
     }
@@ -691,6 +705,20 @@ pickNodeFromQueue(ReadyQueue &Q, const RegPressureTracker &RPTracker,
       Candidate.SCost = CurrentCost;
       FoundCandidate = BestCost;
       continue;
+    }
+
+    if (CurrentCost == Candidate.SCost) {
+      if ((Q.getID() == TopQID &&
+           (*I)->Succs.size() > Candidate.SU->Succs.size()) ||
+          (Q.getID() == BotQID &&
+           (*I)->Preds.size() < Candidate.SU->Preds.size())) {
+        DEBUG(traceCandidate("SPCAND", Q, *I, CurrentCost));
+        Candidate.SU = *I;
+        Candidate.RPDelta = RPDelta;
+        Candidate.SCost = CurrentCost;
+        FoundCandidate = BestCost;
+        continue;
+      }
     }
 
     // Fall through to original instruction order.
