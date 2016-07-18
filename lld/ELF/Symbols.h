@@ -51,7 +51,6 @@ public:
     UndefinedKind,
     LazyArchiveKind,
     LazyObjectKind,
-    PlaceholderKind,
   };
 
   SymbolBody(Kind K) : SymbolKind(K) {}

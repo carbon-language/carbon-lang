@@ -143,17 +143,7 @@ DefinedRegular<ELFT> *SymbolTable<ELFT>::addIgnored(StringRef Name,
 // Set a flag for --trace-symbol so that we can print out a log message
 // if a new symbol with the same name is inserted into the symbol table.
 template <class ELFT> void SymbolTable<ELFT>::trace(StringRef Name) {
-  Symbol *S;
-  bool WasInserted;
-  std::tie(S, WasInserted) = insert(Name);
-  assert(WasInserted);
-
-  S->Traced = true;
-
-  // We created a new symbol just to turn on Trace flag.
-  // Write a dummy SymbolBody so that trace() does not affect
-  // normal symbol operations.
-  new (S->body()) SymbolBody(SymbolBody::PlaceholderKind);
+  Symtab.insert({Name, {-1, true}});
 }
 
 // Rename SYM as __wrap_SYM. The original symbol is preserved as __real_SYM.
@@ -184,9 +174,14 @@ static uint8_t getMinVisibility(uint8_t VA, uint8_t VB) {
 // Find an existing symbol or create and insert a new one.
 template <class ELFT>
 std::pair<Symbol *, bool> SymbolTable<ELFT>::insert(StringRef Name) {
-  unsigned NumSyms = SymVector.size();
-  auto P = Symtab.insert(std::make_pair(Name, NumSyms));
+  auto P = Symtab.insert({Name, {(int)SymVector.size(), false}});
+  SymIndex &V = P.first->second;
   bool IsNew = P.second;
+
+  if (V.Idx == -1) {
+    IsNew = true;
+    V = {(int)SymVector.size(), true};
+  }
 
   Symbol *Sym;
   if (IsNew) {
@@ -196,12 +191,10 @@ std::pair<Symbol *, bool> SymbolTable<ELFT>::insert(StringRef Name) {
     Sym->IsUsedInRegularObj = false;
     Sym->ExportDynamic = false;
     Sym->VersionId = Config->DefaultSymbolVersion;
-    Sym->Traced = false;
+    Sym->Traced = V.Traced;
     SymVector.push_back(Sym);
   } else {
-    Sym = SymVector[P.first->second];
-    if (Sym->body()->kind() == SymbolBody::PlaceholderKind)
-      IsNew = true;
+    Sym = SymVector[V.Idx];
   }
   return {Sym, IsNew};
 }
@@ -449,7 +442,10 @@ template <class ELFT> SymbolBody *SymbolTable<ELFT>::find(StringRef Name) {
   auto It = Symtab.find(Name);
   if (It == Symtab.end())
     return nullptr;
-  return SymVector[It->second]->body();
+  SymIndex V = It->second;
+  if (V.Idx == -1)
+    return nullptr;
+  return SymVector[V.Idx]->body();
 }
 
 // Returns a list of defined symbols that match with a given glob pattern.
