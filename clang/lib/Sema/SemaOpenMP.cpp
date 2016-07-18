@@ -10574,16 +10574,16 @@ static Expr *CheckMapClauseExpressionBase(
       bool NotUnity =
           CheckArrayExpressionDoesNotReferToUnitySize(SemaRef, CurE, CurType);
 
-      if (AllowWholeSizeArraySection && AllowUnitySizeArraySection) {
-        // Any array section is currently allowed.
+      if (AllowWholeSizeArraySection) {
+        // Any array section is currently allowed. Allowing a whole size array
+        // section implies allowing a unity array section as well.
         //
         // If this array section refers to the whole dimension we can still
         // accept other array sections before this one, except if the base is a
         // pointer. Otherwise, only unitary sections are accepted.
         if (NotWhole || IsPointer)
           AllowWholeSizeArraySection = false;
-      } else if ((AllowUnitySizeArraySection && NotUnity) ||
-                 (AllowWholeSizeArraySection && NotWhole)) {
+      } else if (AllowUnitySizeArraySection && NotUnity) {
         // A unity or whole array section is not allowed and that is not
         // compatible with the properties of the current array section.
         SemaRef.Diag(
