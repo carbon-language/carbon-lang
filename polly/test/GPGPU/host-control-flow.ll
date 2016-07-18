@@ -9,6 +9,8 @@
 ;          A[(t + 1) % 2][i] += A[t % 2][i - 1] + A[t % 2][i] + A[t % 2][i + 1];
 ;    }
 
+; REQUIRES: pollyacc
+
 ; CODE: # host
 ; CODE-NEXT: {
 ; CODE-NEXT:   cudaCheckReturn(cudaMemcpy(dev_MemRef_A, MemRef_A, (2) * (100) * sizeof(float), cudaMemcpyHostToDevice));
