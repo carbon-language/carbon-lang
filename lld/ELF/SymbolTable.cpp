@@ -456,10 +456,9 @@ template <class ELFT> SymbolBody *SymbolTable<ELFT>::find(StringRef Name) {
 template <class ELFT>
 std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(StringRef Pattern) {
   std::vector<SymbolBody *> Res;
-  for (auto &It : Symtab) {
-    StringRef Name = It.first.Val;
-    SymbolBody *B = SymVector[It.second]->body();
-    if (!B->isUndefined() && globMatch(Pattern, Name))
+  for (Symbol *Sym : SymVector) {
+    SymbolBody *B = Sym->body();
+    if (!B->isUndefined() && globMatch(Pattern, B->getName()))
       Res.push_back(B);
   }
   return Res;
@@ -569,8 +568,10 @@ static void setVersionId(SymbolBody *Body, StringRef VersionName,
 template <class ELFT>
 std::map<std::string, SymbolBody *> SymbolTable<ELFT>::getDemangledSyms() {
   std::map<std::string, SymbolBody *> Result;
-  for (std::pair<SymName, unsigned> Sym : Symtab)
-    Result[demangle(Sym.first.Val)] = SymVector[Sym.second]->body();
+  for (Symbol *Sym : SymVector) {
+    SymbolBody *B = Sym->body();
+    Result[demangle(B->getName())] = B;
+  }
   return Result;
 }
 
