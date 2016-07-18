@@ -18,11 +18,17 @@
 #include "llvm/CodeGen/ScheduleDAGMutation.h"
 #include "llvm/IR/Function.h"
 
+#include <iomanip>
+#include <sstream>
+
 static cl::opt<bool> IgnoreBBRegPressure("ignore-bb-reg-pressure",
     cl::Hidden, cl::ZeroOrMore, cl::init(false));
 
 static cl::opt<bool> SchedPredsCloser("sched-preds-closer",
     cl::Hidden, cl::ZeroOrMore, cl::init(true));
+
+static cl::opt<unsigned> SchedDebugVerboseLevel("misched-verbose-level",
+    cl::Hidden, cl::ZeroOrMore, cl::init(1));
 
 static cl::opt<bool> TopUseShorterTie("top-use-shorter-tie",
     cl::Hidden, cl::ZeroOrMore, cl::init(false));
@@ -289,6 +295,13 @@ void VLIWMachineScheduler::schedule() {
   assert(CurrentTop == CurrentBottom && "Nonempty unscheduled zone.");
 
   placeDebugValues();
+
+  DEBUG({
+    unsigned BBNum = begin()->getParent()->getNumber();
+    dbgs() << "*** Final schedule for BB#" << BBNum << " ***\n";
+    dumpSchedule();
+    dbgs() << '\n';
+  });
 }
 
 void ConvergingVLIWScheduler::initialize(ScheduleDAGMI *dag) {
@@ -416,8 +429,8 @@ void ConvergingVLIWScheduler::VLIWSchedBoundary::bumpCycle() {
   }
   CheckPending = true;
 
-  DEBUG(dbgs() << "*** " << Available.getName() << " cycle "
-        << CurrCycle << '\n');
+  DEBUG(dbgs() << "*** Next cycle " << Available.getName() << " cycle "
+               << CurrCycle << '\n');
 }
 
 /// Move the boundary of scheduled code by one SUnit.
@@ -509,15 +522,37 @@ SUnit *ConvergingVLIWScheduler::VLIWSchedBoundary::pickOnlyChoice() {
 
 #ifndef NDEBUG
 void ConvergingVLIWScheduler::traceCandidate(const char *Label,
-                                             const ReadyQueue &Q,
-                                             SUnit *SU, PressureChange P) {
+      const ReadyQueue &Q, SUnit *SU, int Cost, PressureChange P) {
   dbgs() << Label << " " << Q.getName() << " ";
   if (P.isValid())
     dbgs() << DAG->TRI->getRegPressureSetName(P.getPSet()) << ":"
            << P.getUnitInc() << " ";
   else
     dbgs() << "     ";
+  dbgs() << "cost(" << Cost << ")\t";
   SU->dump(DAG);
+}
+
+// Very detailed queue dump, to be used with higher verbosity levels.
+void ConvergingVLIWScheduler::readyQueueVerboseDump(
+      const RegPressureTracker &RPTracker, SchedCandidate &Candidate,
+      ReadyQueue &Q) {
+  RegPressureTracker &TempTracker = const_cast<RegPressureTracker &>(RPTracker);
+
+  dbgs() << ">>> " << Q.getName() << "\n";
+  for (ReadyQueue::iterator I = Q.begin(), E = Q.end(); I != E; ++I) {
+    RegPressureDelta RPDelta;
+    TempTracker.getMaxPressureDelta((*I)->getInstr(), RPDelta,
+                                    DAG->getRegionCriticalPSets(),
+                                    DAG->getRegPressure().MaxSetPressure);
+    std::stringstream dbgstr;
+    dbgstr << "SU(" << std::setw(3) << (*I)->NodeNum << ")";
+    dbgs() << dbgstr.str();
+    SchedulingCost(Q, *I, Candidate, RPDelta, true);
+    dbgs() << "\t";
+    (*I)->getInstr()->dump();
+  }
+  dbgs() << "\n";
 }
 #endif
 
@@ -580,13 +615,22 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
 
   MachineInstr *Instr = SU->getInstr();
 
+  DEBUG(if (verbose) dbgs() << ((Q.getID() == TopQID) ? "(top|" : "(bot|"));
   // Forced priority is high.
-  if (SU->isScheduleHigh)
+  if (SU->isScheduleHigh) {
     ResCount += PriorityOne;
+    DEBUG(dbgs() << "H|");
+  }
 
   // Critical path first.
   if (Q.getID() == TopQID) {
     ResCount += (SU->getHeight() * ScaleTwo);
+
+    DEBUG(if (verbose) {
+      std::stringstream dbgstr;
+      dbgstr << "h" << std::setw(3) << SU->getHeight() << "|";
+      dbgs() << dbgstr.str();
+    });
 
     // If resources are available for it, multiply the
     // chance of scheduling.
@@ -598,6 +642,12 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
       DEBUG(if (verbose) dbgs() << " |");
   } else {
     ResCount += (SU->getDepth() * ScaleTwo);
+
+    DEBUG(if (verbose) {
+      std::stringstream dbgstr;
+      dbgstr << "d" << std::setw(3) << SU->getDepth() << "|";
+      dbgs() << dbgstr.str();
+    });
 
     // If resources are available for it, multiply the
     // chance of scheduling.
@@ -625,6 +675,12 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
         ++NumNodesBlocking;
   }
   ResCount += (NumNodesBlocking * ScaleTwo);
+
+  DEBUG(if (verbose) {
+    std::stringstream dbgstr;
+    dbgstr << "blk " << std::setw(2) << NumNodesBlocking << ")|";
+    dbgs() << dbgstr.str();
+  });
 
   // Factor in reg pressure as a heuristic.
   if (!IgnoreBBRegPressure) {
@@ -737,7 +793,11 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
     }
   }
 
-  DEBUG(if (verbose) dbgs() << " Total(" << ResCount << ")");
+  DEBUG(if (verbose) {
+    std::stringstream dbgstr;
+    dbgstr << "Total " << std::setw(4) << ResCount << ")";
+    dbgs() << dbgstr.str();
+  });
 
   return ResCount;
 }
@@ -750,7 +810,9 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
 ConvergingVLIWScheduler::CandResult ConvergingVLIWScheduler::
 pickNodeFromQueue(ReadyQueue &Q, const RegPressureTracker &RPTracker,
                   SchedCandidate &Candidate) {
-  DEBUG(Q.dump());
+  DEBUG(if (SchedDebugVerboseLevel > 1)
+        readyQueueVerboseDump(RPTracker, Candidate, Q);
+        else Q.dump(););
 
   // getMaxPressureDelta temporarily modifies the tracker.
   RegPressureTracker &TempTracker = const_cast<RegPressureTracker&>(RPTracker);
@@ -767,6 +829,7 @@ pickNodeFromQueue(ReadyQueue &Q, const RegPressureTracker &RPTracker,
 
     // Initialize the candidate if needed.
     if (!Candidate.SU) {
+      DEBUG(traceCandidate("DCAND", Q, *I, CurrentCost));
       Candidate.SU = *I;
       Candidate.RPDelta = RPDelta;
       Candidate.SCost = CurrentCost;
@@ -776,7 +839,7 @@ pickNodeFromQueue(ReadyQueue &Q, const RegPressureTracker &RPTracker,
 
     // Best cost.
     if (CurrentCost > Candidate.SCost) {
-      DEBUG(traceCandidate("CCAND", Q, *I));
+      DEBUG(traceCandidate("CCAND", Q, *I, CurrentCost));
       Candidate.SU = *I;
       Candidate.RPDelta = RPDelta;
       Candidate.SCost = CurrentCost;
