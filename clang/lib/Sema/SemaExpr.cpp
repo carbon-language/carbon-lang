@@ -12423,10 +12423,14 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     MayHaveConvFixit = true;
     break;
   case IncompatiblePointer:
-      DiagKind =
-        (Action == AA_Passing_CFAudited ?
-          diag::err_arc_typecheck_convert_incompatible_pointer :
-          diag::ext_typecheck_convert_incompatible_pointer);
+    if (Action == AA_Passing_CFAudited)
+      DiagKind = diag::err_arc_typecheck_convert_incompatible_pointer;
+    else if (SrcType->isFunctionPointerType() &&
+             DstType->isFunctionPointerType())
+      DiagKind = diag::ext_typecheck_convert_incompatible_function_pointer;
+    else
+      DiagKind = diag::ext_typecheck_convert_incompatible_pointer;
+
     CheckInferredResultType = DstType->isObjCObjectPointerType() &&
       SrcType->isObjCObjectPointerType();
     if (Hint.isNull() && !CheckInferredResultType) {
