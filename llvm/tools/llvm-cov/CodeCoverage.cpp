@@ -55,7 +55,7 @@ public:
   /// \brief Print the warning message to the error output stream.
   void warning(const Twine &Message, StringRef Whence = "");
 
-  /// \brief Append a reference to a private copy of \p Path into SourceFiles.
+  /// \brief Copy \p Path into the list of input source files.
   void addCollectedPath(const std::string &Path);
 
   /// \brief Return a memory buffer for the given source file.
