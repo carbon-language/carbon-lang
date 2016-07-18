@@ -4432,13 +4432,22 @@ unsigned copyPhysRegOpcode_AVX512(unsigned& DestReg, unsigned& SrcReg,
   if (Subtarget.hasBWI())
     if (auto Opc = copyPhysRegOpcode_AVX512_BW(DestReg, SrcReg))
       return Opc;
-  if (X86::VR128XRegClass.contains(DestReg, SrcReg) ||
-      X86::VR256XRegClass.contains(DestReg, SrcReg) ||
-      X86::VR512RegClass.contains(DestReg, SrcReg)) {
-     DestReg = get512BitSuperRegister(DestReg);
-     SrcReg = get512BitSuperRegister(SrcReg);
-     return X86::VMOVAPSZrr;
+  if (X86::VR128XRegClass.contains(DestReg, SrcReg)) {
+    if (Subtarget.hasVLX())
+      return X86::VMOVAPSZ128rr;
+   DestReg = get512BitSuperRegister(DestReg);
+   SrcReg = get512BitSuperRegister(SrcReg);
+   return X86::VMOVAPSZrr;
   }
+  if (X86::VR256XRegClass.contains(DestReg, SrcReg)) {
+    if (Subtarget.hasVLX())
+      return X86::VMOVAPSZ256rr;
+   DestReg = get512BitSuperRegister(DestReg);
+   SrcReg = get512BitSuperRegister(SrcReg);
+   return X86::VMOVAPSZrr;
+  }
+  if (X86::VR512RegClass.contains(DestReg, SrcReg))
+     return X86::VMOVAPSZrr;
   if (MaskRegClassContains(DestReg) && MaskRegClassContains(SrcReg))
     return X86::KMOVWkk;
   if (MaskRegClassContains(DestReg) && GRRegClassContains(SrcReg)) {
