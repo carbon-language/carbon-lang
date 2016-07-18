@@ -380,13 +380,16 @@ StringRef Darwin::getOSLibraryNameSuffix() const {
   llvm_unreachable("Unsupported platform");
 }
 
-void Darwin::addProfileRTLibs(const ArgList &Args,
+void Darwin::addProfileRTLibs(const llvm::Triple &EffectiveTriple,
+                              const ArgList &Args,
                               ArgStringList &CmdArgs) const {
-  if (!needsProfileRT(Args)) return;
+  if (!needsProfileRT(Args))
+    return;
 
-  AddLinkRuntimeLib(Args, CmdArgs, (Twine("libclang_rt.profile_") +
-       getOSLibraryNameSuffix() + ".a").str(),
-                    /*AlwaysLink*/ true);
+  AddLinkRuntimeLib(
+      Args, CmdArgs,
+      (Twine("libclang_rt.profile_") + getOSLibraryNameSuffix() + ".a").str(),
+      /*AlwaysLink*/ true);
 }
 
 void DarwinClang::AddLinkSanitizerLibArgs(const ArgList &Args,
@@ -400,7 +403,8 @@ void DarwinClang::AddLinkSanitizerLibArgs(const ArgList &Args,
       /*AddRPath*/ true);
 }
 
-void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
+void DarwinClang::AddLinkRuntimeLibArgs(const llvm::Triple &EffectiveTriple,
+                                        const ArgList &Args,
                                         ArgStringList &CmdArgs) const {
   // Darwin only supports the compiler-rt based runtime libraries.
   switch (GetRuntimeLibType(Args)) {
@@ -1012,16 +1016,17 @@ DerivedArgList *MachO::TranslateArgs(const DerivedArgList &Args,
   return DAL;
 }
 
-void MachO::AddLinkRuntimeLibArgs(const ArgList &Args,
+void MachO::AddLinkRuntimeLibArgs(const llvm::Triple &EffectiveTriple,
+                                  const ArgList &Args,
                                   ArgStringList &CmdArgs) const {
   // Embedded targets are simple at the moment, not supporting sanitizers and
   // with different libraries for each member of the product { static, PIC } x
   // { hard-float, soft-float }
   llvm::SmallString<32> CompilerRT = StringRef("libclang_rt.");
-  CompilerRT +=
-      (tools::arm::getARMFloatABI(*this, Args) == tools::arm::FloatABI::Hard)
-          ? "hard"
-          : "soft";
+  CompilerRT += (tools::arm::getARMFloatABI(*this, EffectiveTriple, Args) ==
+                 tools::arm::FloatABI::Hard)
+                    ? "hard"
+                    : "soft";
   CompilerRT += Args.hasArg(options::OPT_fPIC) ? "_pic.a" : "_static.a";
 
   AddLinkRuntimeLib(Args, CmdArgs, CompilerRT, false, true);
@@ -2858,9 +2863,10 @@ void MipsLLVMToolChain::AddCXXStdlibLibArgs(const ArgList &Args,
   CmdArgs.push_back("-lunwind");
 }
 
-std::string MipsLLVMToolChain::getCompilerRT(const ArgList &Args,
-                                             StringRef Component,
-                                             bool Shared) const {
+std::string
+MipsLLVMToolChain::getCompilerRT(const llvm::Triple &EffectiveTriple,
+                                 const ArgList &Args, StringRef Component,
+                                 bool Shared) const {
   SmallString<128> Path(getDriver().ResourceDir);
   llvm::sys::path::append(Path, SelectedMultilib.osSuffix(), "lib" + LibSuffix,
                           getOS());
@@ -4237,9 +4243,9 @@ std::string Linux::getDynamicLinker(const ArgList &Args) const {
   case llvm::Triple::thumb:
   case llvm::Triple::armeb:
   case llvm::Triple::thumbeb: {
-    const bool HF =
-        Triple.getEnvironment() == llvm::Triple::GNUEABIHF ||
-        tools::arm::getARMFloatABI(*this, Args) == tools::arm::FloatABI::Hard;
+    const bool HF = Triple.getEnvironment() == llvm::Triple::GNUEABIHF ||
+                    tools::arm::getARMFloatABI(*this, Triple, Args) ==
+                        tools::arm::FloatABI::Hard;
 
     LibDir = "lib";
     Loader = HF ? "ld-linux-armhf.so.3" : "ld-linux.so.3";
@@ -4631,16 +4637,18 @@ SanitizerMask Linux::getSupportedSanitizers() const {
   return Res;
 }
 
-void Linux::addProfileRTLibs(const llvm::opt::ArgList &Args,
+void Linux::addProfileRTLibs(const llvm::Triple &EffectiveTriple,
+                             const llvm::opt::ArgList &Args,
                              llvm::opt::ArgStringList &CmdArgs) const {
-  if (!needsProfileRT(Args)) return;
+  if (!needsProfileRT(Args))
+    return;
 
   // Add linker option -u__llvm_runtime_variable to cause runtime
   // initialization module to be linked in.
   if (!Args.hasArg(options::OPT_coverage))
     CmdArgs.push_back(Args.MakeArgString(
         Twine("-u", llvm::getInstrProfRuntimeHookVarName())));
-  ToolChain::addProfileRTLibs(Args, CmdArgs);
+  ToolChain::addProfileRTLibs(EffectiveTriple, Args, CmdArgs);
 }
 
 /// DragonFly - DragonFly tool chain which can call as(1) and ld(1) directly.
