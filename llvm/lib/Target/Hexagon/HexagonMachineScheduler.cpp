@@ -265,10 +265,6 @@ void VLIWMachineScheduler::schedule() {
   // Initialize the strategy before modifying the DAG.
   SchedImpl->initialize(this);
 
-  // To view Height/Depth correctly, they should be accessed at least once.
-  //
-  // FIXME: SUnit::dumpAll always recompute depth and height now. The max
-  // depth/height could be computed directly from the roots and leaves.
   DEBUG(unsigned maxH = 0;
         for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           if (SUnits[su].getHeight() > maxH)
@@ -345,10 +341,9 @@ void ConvergingVLIWScheduler::releaseTopNode(SUnit *SU) {
   if (SU->isScheduled)
     return;
 
-  for (SUnit::succ_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-       I != E; ++I) {
-    unsigned PredReadyCycle = I->getSUnit()->TopReadyCycle;
-    unsigned MinLatency = I->getLatency();
+  for (const SDep &PI : SU->Preds) {
+    unsigned PredReadyCycle = PI.getSUnit()->TopReadyCycle;
+    unsigned MinLatency = PI.getLatency();
 #ifndef NDEBUG
     Top.MaxMinLatency = std::max(MinLatency, Top.MaxMinLatency);
 #endif
@@ -710,9 +705,6 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
   // available for it.
   auto &QST = DAG->MF.getSubtarget<HexagonSubtarget>();
   auto &QII = *QST.getInstrInfo();
-
-  // Give a little extra priority to a .cur instruction if there is a resource
-  // available for it.
   if (SU->isInstr() && QII.mayBeCurLoad(SU->getInstr())) {
     if (Q.getID() == TopQID && Top.ResourceModel->isResourceAvailable(SU)) {
       ResCount += PriorityTwo;
@@ -783,21 +775,6 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
           DEBUG(if (verbose) dbgs() << "D|");
         }
       }
-    }
-  }
-
-  // Give less preference to an instruction that will cause a stall with
-  // an instruction in the previous packet.
-  if (QII.isV60VectorInstruction(Instr)) {
-    // Check for stalls in the previous packet.
-    if (Q.getID() == TopQID) {
-      for (auto J : Top.ResourceModel->OldPacket)
-        if (QII.producesStall(J->getInstr(), Instr))
-          ResCount -= PriorityOne;
-    } else {
-      for (auto J : Bot.ResourceModel->OldPacket)
-        if (QII.producesStall(Instr, J->getInstr()))
-          ResCount -= PriorityOne;
     }
   }
 
