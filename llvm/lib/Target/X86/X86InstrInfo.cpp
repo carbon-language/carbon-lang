@@ -2193,13 +2193,19 @@ static bool isFrameLoadOpcode(int Opcode) {
   case X86::MOVSSrm:
   case X86::MOVSDrm:
   case X86::MOVAPSrm:
+  case X86::MOVUPSrm:
   case X86::MOVAPDrm:
+  case X86::MOVUPDrm:
   case X86::MOVDQArm:
+  case X86::MOVDQUrm:
   case X86::VMOVSSrm:
   case X86::VMOVSDrm:
   case X86::VMOVAPSrm:
+  case X86::VMOVUPSrm:
   case X86::VMOVAPDrm:
+  case X86::VMOVUPDrm:
   case X86::VMOVDQArm:
+  case X86::VMOVDQUrm:
   case X86::VMOVUPSYrm:
   case X86::VMOVAPSYrm:
   case X86::VMOVUPDYrm:
@@ -2208,8 +2214,42 @@ static bool isFrameLoadOpcode(int Opcode) {
   case X86::VMOVDQAYrm:
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
+  case X86::VMOVSSZrm:
+  case X86::VMOVSDZrm:
   case X86::VMOVAPSZrm:
+  case X86::VMOVAPSZ128rm:
+  case X86::VMOVAPSZ256rm:
   case X86::VMOVUPSZrm:
+  case X86::VMOVUPSZ128rm:
+  case X86::VMOVUPSZ256rm:
+  case X86::VMOVAPDZrm:
+  case X86::VMOVAPDZ128rm:
+  case X86::VMOVAPDZ256rm:
+  case X86::VMOVUPDZrm:
+  case X86::VMOVUPDZ128rm:
+  case X86::VMOVUPDZ256rm:
+  case X86::VMOVDQA32Zrm:
+  case X86::VMOVDQA32Z128rm:
+  case X86::VMOVDQA32Z256rm:
+  case X86::VMOVDQU32Zrm:
+  case X86::VMOVDQU32Z128rm:
+  case X86::VMOVDQU32Z256rm:
+  case X86::VMOVDQA64Zrm:
+  case X86::VMOVDQA64Z128rm:
+  case X86::VMOVDQA64Z256rm:
+  case X86::VMOVDQU64Zrm:
+  case X86::VMOVDQU64Z128rm:
+  case X86::VMOVDQU64Z256rm:
+  case X86::VMOVDQU8Zrm:
+  case X86::VMOVDQU8Z128rm:
+  case X86::VMOVDQU8Z256rm:
+  case X86::VMOVDQU16Zrm:
+  case X86::VMOVDQU16Z128rm:
+  case X86::VMOVDQU16Z256rm:
+  case X86::KMOVBkm:
+  case X86::KMOVWkm:
+  case X86::KMOVDkm:
+  case X86::KMOVQkm:
     return true;
   }
 }
@@ -2225,24 +2265,64 @@ static bool isFrameStoreOpcode(int Opcode) {
   case X86::MOVSSmr:
   case X86::MOVSDmr:
   case X86::MOVAPSmr:
+  case X86::MOVUPSmr:
   case X86::MOVAPDmr:
+  case X86::MOVUPDmr:
   case X86::MOVDQAmr:
+  case X86::MOVDQUmr:
   case X86::VMOVSSmr:
   case X86::VMOVSDmr:
   case X86::VMOVAPSmr:
+  case X86::VMOVUPSmr:
   case X86::VMOVAPDmr:
+  case X86::VMOVUPDmr:
   case X86::VMOVDQAmr:
+  case X86::VMOVDQUmr:
   case X86::VMOVUPSYmr:
   case X86::VMOVAPSYmr:
   case X86::VMOVUPDYmr:
   case X86::VMOVAPDYmr:
   case X86::VMOVDQUYmr:
   case X86::VMOVDQAYmr:
+  case X86::VMOVSSZmr:
+  case X86::VMOVSDZmr:
   case X86::VMOVUPSZmr:
+  case X86::VMOVUPSZ128mr:
+  case X86::VMOVUPSZ256mr:
   case X86::VMOVAPSZmr:
+  case X86::VMOVAPSZ128mr:
+  case X86::VMOVAPSZ256mr:
+  case X86::VMOVUPDZmr:
+  case X86::VMOVUPDZ128mr:
+  case X86::VMOVUPDZ256mr:
+  case X86::VMOVAPDZmr:
+  case X86::VMOVAPDZ128mr:
+  case X86::VMOVAPDZ256mr:
+  case X86::VMOVDQA32Zmr:
+  case X86::VMOVDQA32Z128mr:
+  case X86::VMOVDQA32Z256mr:
+  case X86::VMOVDQU32Zmr:
+  case X86::VMOVDQU32Z128mr:
+  case X86::VMOVDQU32Z256mr:
+  case X86::VMOVDQA64Zmr:
+  case X86::VMOVDQA64Z128mr:
+  case X86::VMOVDQA64Z256mr:
+  case X86::VMOVDQU64Zmr:
+  case X86::VMOVDQU64Z128mr:
+  case X86::VMOVDQU64Z256mr:
+  case X86::VMOVDQU8Zmr:
+  case X86::VMOVDQU8Z128mr:
+  case X86::VMOVDQU8Z256mr:
+  case X86::VMOVDQU16Zmr:
+  case X86::VMOVDQU16Z128mr:
+  case X86::VMOVDQU16Z256mr:
   case X86::MMX_MOVD64mr:
   case X86::MMX_MOVQ64mr:
   case X86::MMX_MOVNTQmr:
+  case X86::KMOVBmk:
+  case X86::KMOVWmk:
+  case X86::KMOVDmk:
+  case X86::KMOVQmk:
     return true;
   }
   return false;
