@@ -8,13 +8,6 @@
 ;    }
 
 ; KERNEL-IR: define ptx_kernel void @kernel_0(i8* %MemRef_A, i64 %n) {
-; KERNEL-IR-NEXT: entry:
-; KERNEL-IR-NEXT:   %0 = call i32 @llvm.nvvm.read.ptx.sreg.ctaid.x()
-; KERNEL-IR-NEXT:   %b0 = zext i32 %0 to i64
-; KERNEL-IR-NEXT:   %1 = call i32 @llvm.nvvm.read.ptx.sreg.tid.x()
-; KERNEL-IR-NEXT:   %t0 = zext i32 %1 to i64
-; KERNEL-IR-NEXT:   ret void
-; KERNEL-IR-NEXT: }
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

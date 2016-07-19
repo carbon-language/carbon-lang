@@ -192,6 +192,8 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
 
   createKernelFunction(Kernel);
 
+  create(isl_ast_node_copy(Kernel->tree));
+
   Builder.SetInsertPoint(&HostInsertPoint);
   IDToValue = HostIDs;
 
@@ -304,7 +306,11 @@ void GPUNodeBuilder::createKernelFunction(ppcg_kernel *Kernel) {
 
   Function *FN = createKernelFunctionDecl(Kernel);
 
+  BasicBlock *PrevBlock = Builder.GetInsertBlock();
   auto EntryBlock = BasicBlock::Create(Builder.getContext(), "entry", FN);
+
+  DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  DT.addNewBlock(EntryBlock, PrevBlock);
 
   Builder.SetInsertPoint(EntryBlock);
   Builder.CreateRetVoid();
