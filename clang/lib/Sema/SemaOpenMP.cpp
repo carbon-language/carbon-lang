@@ -771,18 +771,12 @@ DSAStackTy::DSAVarData DSAStackTy::hasInnermostDSA(
   D = getCanonicalDecl(D);
   auto StartI = std::next(Stack.rbegin());
   auto EndI = Stack.rend();
-  if (FromParent && StartI != EndI) {
+  if (FromParent && StartI != EndI)
     StartI = std::next(StartI);
-  }
-  for (auto I = StartI, EE = EndI; I != EE; ++I) {
-    if (!DPred(I->Directive))
-      break;
-    DSAVarData DVar = getDSA(I, D);
-    if (CPred(DVar.CKind))
-      return DVar;
+  if (StartI == EndI || !DPred(StartI->Directive))
     return DSAVarData();
-  }
-  return DSAVarData();
+  DSAVarData DVar = getDSA(StartI, D);
+  return CPred(DVar.CKind) ? DVar : DSAVarData();
 }
 
 bool DSAStackTy::hasExplicitDSA(
