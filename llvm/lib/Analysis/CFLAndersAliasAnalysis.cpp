@@ -27,12 +27,23 @@
 // codes: all we do here is to selectively expand the transitive closure by
 // discarding edges that are not recognized by the state machine.
 //
-// There is one difference between our current implementation and the one
-// described in the paper: out algorithm eagerly computes all alias pairs after
-// the CFLGraph is built, while in the paper the authors did the computation in
-// a demand-driven fashion. We did not implement the demand-driven algorithm due
-// to the additional coding complexity and higher memory profile, but if we
-// found it necessary we may switch to it eventually.
+// There are two differences between our current implementation and the one
+// described in the paper:
+// - Our algorithm eagerly computes all alias pairs after the CFLGraph is built,
+// while in the paper the authors did the computation in a demand-driven
+// fashion. We did not implement the demand-driven algorithm due to the
+// additional coding complexity and higher memory profile, but if we found it
+// necessary we may switch to it eventually.
+// - In the paper the authors use a state machine that does not distinguish
+// value reads from value writes. For example, if Y is reachable from X at state
+// S3, it may be the case that X is written into Y, or it may be the case that
+// there's a third value Z that writes into both X and Y. To make that
+// distinction (which is crucial in building function summary as well as
+// retrieving mod-ref info), we choose to duplicate some of the states in the
+// paper's proposed state machine. The duplication does not change the set the
+// machine accepts. Given a pair of reachable values, it only provides more
+// detailed information on which value is being written into and which is being
+// read from.
 //
 //===----------------------------------------------------------------------===//
 
@@ -71,16 +82,34 @@ static const Function *parentFunctionOfValue(const Value *Val) {
 namespace {
 
 enum class MatchState : uint8_t {
-  FlowFrom = 0,     // S1 in the paper
-  FlowFromMemAlias, // S2 in the paper
-  FlowTo,           // S3 in the paper
-  FlowToMemAlias    // S4 in the paper
+  // The following state represents S1 in the paper.
+  FlowFromReadOnly = 0,
+  // The following two states together represent S2 in the paper.
+  // The 'NoReadWrite' suffix indicates that there exists an alias path that
+  // does not contain assignment and reverse assignment edges.
+  // The 'ReadOnly' suffix indicates that there exists an alias path that
+  // contains reverse assignment edges only.
+  FlowFromMemAliasNoReadWrite,
+  FlowFromMemAliasReadOnly,
+  // The following two states together represent S3 in the paper.
+  // The 'WriteOnly' suffix indicates that there exists an alias path that
+  // contains assignment edges only.
+  // The 'ReadWrite' suffix indicates that there exists an alias path that
+  // contains both assignment and reverse assignment edges. Note that if X and Y
+  // are reachable at 'ReadWrite' state, it does NOT mean X is both read from
+  // and written to Y. Instead, it means that a third value Z is written to both
+  // X and Y.
+  FlowToWriteOnly,
+  FlowToReadWrite,
+  // The following two states together represent S4 in the paper.
+  FlowToMemAliasWriteOnly,
+  FlowToMemAliasReadWrite,
 };
 
 // We use ReachabilitySet to keep track of value aliases (The nonterminal "V" in
 // the paper) during the analysis.
 class ReachabilitySet {
-  typedef std::bitset<4> StateSet;
+  typedef std::bitset<7> StateSet;
   typedef DenseMap<InstantiatedValue, StateSet> ValueStateMap;
   typedef DenseMap<InstantiatedValue, ValueStateMap> ValueReachMap;
   ValueReachMap ReachMap;
@@ -292,8 +321,10 @@ static void initializeWorkList(std::vector<WorkListItem> &WorkList,
       // If there's an assignment edge from X to Y, it means Y is reachable from
       // X at S2 and X is reachable from Y at S1
       for (auto &Edge : ValueInfo.getNodeInfoAtLevel(I).Edges) {
-        propagate(Edge.Other, Src, MatchState::FlowFrom, ReachSet, WorkList);
-        propagate(Src, Edge.Other, MatchState::FlowTo, ReachSet, WorkList);
+        propagate(Edge.Other, Src, MatchState::FlowFromReadOnly, ReachSet,
+                  WorkList);
+        propagate(Src, Edge.Other, MatchState::FlowToWriteOnly, ReachSet,
+                  WorkList);
       }
     }
   }
@@ -328,16 +359,21 @@ static void processWorkListItem(const WorkListItem &Item, const CFLGraph &Graph,
   auto ToNodeBelow = getNodeBelow(Graph, ToNode);
   if (FromNodeBelow && ToNodeBelow &&
       MemSet.insert(*FromNodeBelow, *ToNodeBelow)) {
-    propagate(*FromNodeBelow, *ToNodeBelow, MatchState::FlowFromMemAlias,
-              ReachSet, WorkList);
+    propagate(*FromNodeBelow, *ToNodeBelow,
+              MatchState::FlowFromMemAliasNoReadWrite, ReachSet, WorkList);
     for (const auto &Mapping : ReachSet.reachableValueAliases(*FromNodeBelow)) {
       auto Src = Mapping.first;
-      if (Mapping.second.test(static_cast<size_t>(MatchState::FlowFrom)))
-        propagate(Src, *ToNodeBelow, MatchState::FlowFromMemAlias, ReachSet,
-                  WorkList);
-      if (Mapping.second.test(static_cast<size_t>(MatchState::FlowTo)))
-        propagate(Src, *ToNodeBelow, MatchState::FlowToMemAlias, ReachSet,
-                  WorkList);
+      auto MemAliasPropagate = [&](MatchState FromState, MatchState ToState) {
+        if (Mapping.second.test(static_cast<size_t>(FromState)))
+          propagate(Src, *ToNodeBelow, ToState, ReachSet, WorkList);
+      };
+
+      MemAliasPropagate(MatchState::FlowFromReadOnly,
+                        MatchState::FlowFromMemAliasReadOnly);
+      MemAliasPropagate(MatchState::FlowToWriteOnly,
+                        MatchState::FlowToMemAliasWriteOnly);
+      MemAliasPropagate(MatchState::FlowToReadWrite,
+                        MatchState::FlowToMemAliasReadWrite);
     }
   }
 
@@ -349,45 +385,54 @@ static void processWorkListItem(const WorkListItem &Item, const CFLGraph &Graph,
   // - If *X and *Y are memory aliases, then X and Y are value aliases
   // - If Y is an alias of X, then reverse assignment edges (if there is any)
   // should precede any assignment edges on the path from X to Y.
+  auto NextAssignState = [&](MatchState State) {
+    for (const auto &AssignEdge : NodeInfo->Edges)
+      propagate(FromNode, AssignEdge.Other, State, ReachSet, WorkList);
+  };
+  auto NextRevAssignState = [&](MatchState State) {
+    for (const auto &RevAssignEdge : NodeInfo->ReverseEdges)
+      propagate(FromNode, RevAssignEdge.Other, State, ReachSet, WorkList);
+  };
+  auto NextMemState = [&](MatchState State) {
+    if (auto AliasSet = MemSet.getMemoryAliases(ToNode)) {
+      for (const auto &MemAlias : *AliasSet)
+        propagate(FromNode, MemAlias, State, ReachSet, WorkList);
+    }
+  };
+
   switch (Item.State) {
-  case MatchState::FlowFrom: {
-    for (const auto &RevAssignEdge : NodeInfo->ReverseEdges)
-      propagate(FromNode, RevAssignEdge.Other, MatchState::FlowFrom, ReachSet,
-                WorkList);
-    for (const auto &AssignEdge : NodeInfo->Edges)
-      propagate(FromNode, AssignEdge.Other, MatchState::FlowTo, ReachSet,
-                WorkList);
-    if (auto AliasSet = MemSet.getMemoryAliases(ToNode)) {
-      for (const auto &MemAlias : *AliasSet)
-        propagate(FromNode, MemAlias, MatchState::FlowFromMemAlias, ReachSet,
-                  WorkList);
-    }
+  case MatchState::FlowFromReadOnly: {
+    NextRevAssignState(MatchState::FlowFromReadOnly);
+    NextAssignState(MatchState::FlowToReadWrite);
+    NextMemState(MatchState::FlowFromMemAliasReadOnly);
     break;
   }
-  case MatchState::FlowFromMemAlias: {
-    for (const auto &RevAssignEdge : NodeInfo->ReverseEdges)
-      propagate(FromNode, RevAssignEdge.Other, MatchState::FlowFrom, ReachSet,
-                WorkList);
-    for (const auto &AssignEdge : NodeInfo->Edges)
-      propagate(FromNode, AssignEdge.Other, MatchState::FlowTo, ReachSet,
-                WorkList);
+  case MatchState::FlowFromMemAliasNoReadWrite: {
+    NextRevAssignState(MatchState::FlowFromReadOnly);
+    NextAssignState(MatchState::FlowToWriteOnly);
     break;
   }
-  case MatchState::FlowTo: {
-    for (const auto &AssignEdge : NodeInfo->Edges)
-      propagate(FromNode, AssignEdge.Other, MatchState::FlowTo, ReachSet,
-                WorkList);
-    if (auto AliasSet = MemSet.getMemoryAliases(ToNode)) {
-      for (const auto &MemAlias : *AliasSet)
-        propagate(FromNode, MemAlias, MatchState::FlowToMemAlias, ReachSet,
-                  WorkList);
-    }
+  case MatchState::FlowFromMemAliasReadOnly: {
+    NextRevAssignState(MatchState::FlowFromReadOnly);
+    NextAssignState(MatchState::FlowToReadWrite);
     break;
   }
-  case MatchState::FlowToMemAlias: {
-    for (const auto &AssignEdge : NodeInfo->Edges)
-      propagate(FromNode, AssignEdge.Other, MatchState::FlowTo, ReachSet,
-                WorkList);
+  case MatchState::FlowToWriteOnly: {
+    NextAssignState(MatchState::FlowToWriteOnly);
+    NextMemState(MatchState::FlowToMemAliasWriteOnly);
+    break;
+  }
+  case MatchState::FlowToReadWrite: {
+    NextAssignState(MatchState::FlowToReadWrite);
+    NextMemState(MatchState::FlowToMemAliasReadWrite);
+    break;
+  }
+  case MatchState::FlowToMemAliasWriteOnly: {
+    NextAssignState(MatchState::FlowToWriteOnly);
+    break;
+  }
+  case MatchState::FlowToMemAliasReadWrite: {
+    NextAssignState(MatchState::FlowToReadWrite);
     break;
   }
   }
