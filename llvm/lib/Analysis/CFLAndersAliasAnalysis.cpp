@@ -107,12 +107,14 @@ enum class MatchState : uint8_t {
 };
 
 typedef std::bitset<7> StateSet;
-LLVM_CONSTEXPR StateSet ReadOnlyStateMask =
-    (1 << static_cast<uint8_t>(MatchState::FlowFromReadOnly)) |
-    (1 << static_cast<uint8_t>(MatchState::FlowFromMemAliasReadOnly));
-LLVM_CONSTEXPR StateSet WriteOnlyStateMask =
-    (1 << static_cast<uint8_t>(MatchState::FlowToWriteOnly)) |
-    (1 << static_cast<uint8_t>(MatchState::FlowToMemAliasWriteOnly));
+// N.B. These are unsigned instead of StateSets because some MSVC versions
+// apparently lack constexpr bitset ctors.
+LLVM_CONSTEXPR unsigned ReadOnlyStateMask =
+    (1U << static_cast<uint8_t>(MatchState::FlowFromReadOnly)) |
+    (1U << static_cast<uint8_t>(MatchState::FlowFromMemAliasReadOnly));
+LLVM_CONSTEXPR unsigned WriteOnlyStateMask =
+    (1U << static_cast<uint8_t>(MatchState::FlowToWriteOnly)) |
+    (1U << static_cast<uint8_t>(MatchState::FlowToMemAliasWriteOnly));
 
 // We use ReachabilitySet to keep track of value aliases (The nonterminal "V" in
 // the paper) during the analysis.
@@ -249,11 +251,11 @@ public:
 };
 
 static bool hasReadOnlyState(StateSet Set) {
-  return (Set & ReadOnlyStateMask).any();
+  return (Set & StateSet(ReadOnlyStateMask)).any();
 }
 
 static bool hasWriteOnlyState(StateSet Set) {
-  return (Set & WriteOnlyStateMask).any();
+  return (Set & StateSet(WriteOnlyStateMask)).any();
 }
 
 static Optional<InterfaceValue>
