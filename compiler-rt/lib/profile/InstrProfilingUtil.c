@@ -35,7 +35,7 @@ void __llvm_profile_recursive_mkdir(char *path) {
 
   for (i = 1; path[i] != '\0'; ++i) {
     char save = path[i];
-    if (!(path[i] == '/' || path[i] == '\\'))
+    if (!IS_DIR_SEPARATOR(path[i]))
       continue;
     path[i] = '\0';
 #ifdef _WIN32
