@@ -2,6 +2,8 @@
 ; RUN: -disable-output < %s | \
 ; RUN: FileCheck -check-prefix=KERNEL-IR %s
 
+; REQUIRES: pollyacc
+
 ;    void kernel_params_scop_parameter(float A[], long n) {
 ;      for (long i = 0; i < n; i++)
 ;        A[i] += 42;
