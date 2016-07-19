@@ -138,23 +138,23 @@ const char *CFI_Parser<A>::decodeFDE(A &addressSpace, pint_t fdeStart,
   if (err != NULL)
     return err;
   p += 4;
-  // parse pc begin and range
+  // Parse pc begin and range.
   pint_t pcStart =
       addressSpace.getEncodedP(p, nextCFI, cieInfo->pointerEncoding);
   pint_t pcRange =
       addressSpace.getEncodedP(p, nextCFI, cieInfo->pointerEncoding & 0x0F);
-  // parse rest of info
+  // Parse rest of info.
   fdeInfo->lsda = 0;
-  // check for augmentation length
+  // Check for augmentation length.
   if (cieInfo->fdesHaveAugmentationData) {
     pint_t augLen = (pint_t)addressSpace.getULEB128(p, nextCFI);
     pint_t endOfAug = p + augLen;
     if (cieInfo->lsdaEncoding != DW_EH_PE_omit) {
-      // peek at value (without indirection).  Zero means no lsda
+      // Peek at value (without indirection).  Zero means no LSDA.
       pint_t lsdaStart = p;
       if (addressSpace.getEncodedP(p, nextCFI, cieInfo->lsdaEncoding & 0x0F) !=
           0) {
-        // reset pointer and re-parse lsda address
+        // Reset pointer and re-parse LSDA address.
         p = lsdaStart;
         fdeInfo->lsda =
             addressSpace.getEncodedP(p, nextCFI, cieInfo->lsdaEncoding);
@@ -192,23 +192,23 @@ bool CFI_Parser<A>::findFDE(A &addressSpace, pint_t pc, pint_t ehSectionStart,
       return false; // end marker
     uint32_t id = addressSpace.get32(p);
     if (id == 0) {
-      // skip over CIEs
+      // Skip over CIEs.
       p += cfiLength;
     } else {
-      // process FDE to see if it covers pc
+      // Process FDE to see if it covers pc.
       pint_t nextCFI = p + cfiLength;
       uint32_t ciePointer = addressSpace.get32(p);
       pint_t cieStart = p - ciePointer;
-      // validate pointer to CIE is within section
+      // Validate pointer to CIE is within section.
       if ((ehSectionStart <= cieStart) && (cieStart < ehSectionEnd)) {
         if (parseCIE(addressSpace, cieStart, cieInfo) == NULL) {
           p += 4;
-          // parse pc begin and range
+          // Parse pc begin and range.
           pint_t pcStart =
               addressSpace.getEncodedP(p, nextCFI, cieInfo->pointerEncoding);
           pint_t pcRange = addressSpace.getEncodedP(
               p, nextCFI, cieInfo->pointerEncoding & 0x0F);
-          // test if pc is within the function this FDE covers
+          // Test if pc is within the function this FDE covers.
           if ((pcStart < pc) && (pc <= pcStart + pcRange)) {
             // parse rest of info
             fdeInfo->lsda = 0;
@@ -217,11 +217,11 @@ bool CFI_Parser<A>::findFDE(A &addressSpace, pint_t pc, pint_t ehSectionStart,
               pint_t augLen = (pint_t)addressSpace.getULEB128(p, nextCFI);
               pint_t endOfAug = p + augLen;
               if (cieInfo->lsdaEncoding != DW_EH_PE_omit) {
-                // peek at value (without indirection).  Zero means no lsda
+                // Peek at value (without indirection).  Zero means no LSDA.
                 pint_t lsdaStart = p;
                 if (addressSpace.getEncodedP(
                         p, nextCFI, cieInfo->lsdaEncoding & 0x0F) != 0) {
-                  // reset pointer and re-parse lsda address
+                  // Reset pointer and re-parse LSDA address.
                   p = lsdaStart;
                   fdeInfo->lsda = addressSpace
                       .getEncodedP(p, nextCFI, cieInfo->lsdaEncoding);
@@ -239,7 +239,7 @@ bool CFI_Parser<A>::findFDE(A &addressSpace, pint_t pc, pint_t ehSectionStart,
             // pc is not in begin/range, skip this FDE
           }
         } else {
-          // malformed CIE, now augmentation describing pc range encoding
+          // Malformed CIE, now augmentation describing pc range encoding.
         }
       } else {
         // malformed FDE.  CIE is bad
