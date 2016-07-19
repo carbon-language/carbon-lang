@@ -115,6 +115,8 @@ private:
   ///   - ScopStmt:      A computational statement (TODO)
   ///   - Kernel:        A GPU kernel call (TODO)
   ///   - Data-Transfer: A GPU <-> CPU data-transfer (TODO)
+  ///   - In-kernel synchronization
+  ///   - In-kernel memory copy statement
   ///
   /// @param UserStmt The ast node to generate code for.
   virtual void createUser(__isl_take isl_ast_node *UserStmt);
@@ -153,12 +155,23 @@ private:
   /// @param The kernel to generate the intrinsic functions for.
   void insertKernelIntrinsics(ppcg_kernel *Kernel);
 
+  /// Create an in-kernel synchronization call.
+  void createKernelSync();
+
   /// Finalize the generation of the kernel function.
   ///
   /// Free the LLVM-IR module corresponding to the kernel and -- if requested --
   /// dump its IR to stderr.
   void finalizeKernelFunction();
 };
+
+/// Check if one string is a prefix of another.
+///
+/// @param String The string in which to look for the prefix.
+/// @param Prefix The prefix to look for.
+static bool isPrefix(std::string String, std::string Prefix) {
+  return String.find(Prefix) == 0;
+}
 
 void GPUNodeBuilder::createUser(__isl_take isl_ast_node *UserStmt) {
   isl_ast_expr *Expr = isl_ast_node_user_get_expr(UserStmt);
@@ -174,9 +187,45 @@ void GPUNodeBuilder::createUser(__isl_take isl_ast_node *UserStmt) {
     return;
   }
 
+  if (isPrefix(Str, "to_device") || isPrefix(Str, "from_device")) {
+    // TODO: Insert memory copies
+    isl_ast_expr_free(Expr);
+    isl_ast_node_free(UserStmt);
+    return;
+  }
+
+  isl_id *Anno = isl_ast_node_get_annotation(UserStmt);
+  struct ppcg_kernel_stmt *KernelStmt =
+      (struct ppcg_kernel_stmt *)isl_id_get_user(Anno);
+  isl_id_free(Anno);
+
+  switch (KernelStmt->type) {
+  case ppcg_kernel_domain:
+    // TODO Create kernel user stmt
+    isl_ast_expr_free(Expr);
+    isl_ast_node_free(UserStmt);
+    return;
+  case ppcg_kernel_copy:
+    // TODO: Create kernel copy stmt
+    isl_ast_expr_free(Expr);
+    isl_ast_node_free(UserStmt);
+    return;
+  case ppcg_kernel_sync:
+    createKernelSync();
+    isl_ast_expr_free(Expr);
+    isl_ast_node_free(UserStmt);
+    return;
+  }
+
   isl_ast_expr_free(Expr);
   isl_ast_node_free(UserStmt);
   return;
+}
+
+void GPUNodeBuilder::createKernelSync() {
+  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
+  auto *Sync = Intrinsic::getDeclaration(M, Intrinsic::nvvm_barrier0);
+  Builder.CreateCall(Sync, {});
 }
 
 void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
