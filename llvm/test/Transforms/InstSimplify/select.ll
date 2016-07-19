@@ -131,6 +131,20 @@ define i32 @select_icmp_and_8_eq_0_or_8(i32 %x) {
   ret i32 %or.x
 }
 
+; PR28466: https://llvm.org/bugs/show_bug.cgi?id=28466
+; InstSimplify needs to recognize variations of this pattern.
+
+define i32 @select_icmp_and_8_ne_0_or_128(i32 %x) {
+; CHECK-LABEL: @select_icmp_and_8_ne_0_or_128(
+; CHECK-NEXT:    ret i32 %x
+;
+  %and = and i32 %x, 128
+  %cmp = icmp eq i32 %and, 0
+  %or = or i32 %x, 128
+  %or.x = select i1 %cmp, i32 %x, i32 %or
+  ret i32 %or.x
+}
+
 define i32 @select_icmp_and_8_ne_0_and_not_8(i32 %x) {
 ; CHECK-LABEL: @select_icmp_and_8_ne_0_and_not_8(
 ; CHECK-NEXT:    [[AND1:%.*]] = and i32 %x, -9
