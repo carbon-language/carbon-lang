@@ -5552,6 +5552,14 @@ multiclass SS3I_binop_rm_int_y<bits<8> opc, string OpcodeStr,
        Sched<[Sched.Folded, ReadAfterLd]>;
 }
 
+let ImmT = NoImm, Predicates = [HasAVX, NoVLX_Or_NoBWI] in {
+let isCommutable = 0 in {
+  defm VPSHUFB    : SS3I_binop_rm<0x00, "vpshufb", X86pshufb, v16i8, VR128,
+                                  loadv2i64, i128mem,
+                                  SSE_PSHUFB, 0>, VEX_4V;
+}
+}
+
 let ImmT = NoImm, Predicates = [HasAVX] in {
 let isCommutable = 0 in {
   defm VPHADDW    : SS3I_binop_rm<0x01, "vphaddw", X86hadd, v8i16, VR128,
@@ -5575,9 +5583,6 @@ let isCommutable = 0 in {
   defm VPSIGND    : SS3I_binop_rm_int<0x0A, "vpsignd",
                                       int_x86_ssse3_psign_d_128,
                                       SSE_PSIGN, loadv2i64, 0>, VEX_4V;
-  defm VPSHUFB    : SS3I_binop_rm<0x00, "vpshufb", X86pshufb, v16i8, VR128,
-                                  loadv2i64, i128mem,
-                                  SSE_PSHUFB, 0>, VEX_4V;
   defm VPHADDSW   : SS3I_binop_rm_int<0x03, "vphaddsw",
                                       int_x86_ssse3_phadd_sw_128,
                                       SSE_PHADDSUBSW, loadv2i64, 0>, VEX_4V;
@@ -5591,6 +5596,14 @@ let isCommutable = 0 in {
 defm VPMULHRSW    : SS3I_binop_rm_int<0x0B, "vpmulhrsw",
                                       int_x86_ssse3_pmul_hr_sw_128,
                                       SSE_PMULHRSW, loadv2i64, 0>, VEX_4V;
+}
+
+let ImmT = NoImm, Predicates = [HasAVX2, NoVLX_Or_NoBWI] in {
+let isCommutable = 0 in {
+  defm VPSHUFBY   : SS3I_binop_rm<0x00, "vpshufb", X86pshufb, v32i8, VR256,
+                                  loadv4i64, i256mem,
+                                  SSE_PSHUFB, 0>, VEX_4V, VEX_L;
+}
 }
 
 let ImmT = NoImm, Predicates = [HasAVX2] in {
@@ -5613,9 +5626,6 @@ let isCommutable = 0 in {
                                         WriteVecALU>, VEX_4V, VEX_L;
   defm VPSIGNDY   : SS3I_binop_rm_int_y<0x0A, "vpsignd", int_x86_avx2_psign_d,
                                         WriteVecALU>, VEX_4V, VEX_L;
-  defm VPSHUFBY   : SS3I_binop_rm<0x00, "vpshufb", X86pshufb, v32i8, VR256,
-                                  loadv4i64, i256mem,
-                                  SSE_PSHUFB, 0>, VEX_4V, VEX_L;
   defm VPHADDSW   : SS3I_binop_rm_int_y<0x03, "vphaddsw",
                                         int_x86_avx2_phadd_sw,
                                         WriteVecALU>, VEX_4V, VEX_L;
