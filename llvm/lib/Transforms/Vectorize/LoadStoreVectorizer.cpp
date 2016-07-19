@@ -104,13 +104,12 @@ private:
   std::pair<ArrayRef<Value *>, ArrayRef<Value *>>
   splitOddVectorElts(ArrayRef<Value *> Chain, unsigned ElementSizeBits);
 
-  /// Checks for instructions which may affect the memory accessed
-  /// in the chain between \p From and \p To. Returns Index, where
-  /// \p Chain[0, Index) is the largest vectorizable chain prefix.
-  /// The elements of \p Chain should be all loads or all stores.
-  unsigned getVectorizablePrefixEndIdx(ArrayRef<Value *> Chain,
-                                       BasicBlock::iterator From,
-                                       BasicBlock::iterator To);
+  /// Finds the largest prefix of Chain that's vectorizable, checking for
+  /// intervening instructions which may affect the memory accessed by the
+  /// instructions within Chain.
+  ///
+  /// The elements of \p Chain must be all loads or all stores.
+  ArrayRef<Value *> getVectorizablePrefix(ArrayRef<Value *> Chain);
 
   /// Collects load and store instructions to vectorize.
   std::pair<ValueListMap, ValueListMap> collectInstructions(BasicBlock *BB);
@@ -424,14 +423,12 @@ Vectorizer::splitOddVectorElts(ArrayRef<Value *> Chain,
   return std::make_pair(Chain.slice(0, NumLeft), Chain.slice(NumLeft));
 }
 
-unsigned Vectorizer::getVectorizablePrefixEndIdx(ArrayRef<Value *> Chain,
-                                                 BasicBlock::iterator From,
-                                                 BasicBlock::iterator To) {
+ArrayRef<Value *> Vectorizer::getVectorizablePrefix(ArrayRef<Value *> Chain) {
   SmallVector<std::pair<Value *, unsigned>, 16> MemoryInstrs;
   SmallVector<std::pair<Value *, unsigned>, 16> ChainInstrs;
 
   unsigned InstrIdx = 0;
-  for (Instruction &I : make_range(From, To)) {
+  for (Instruction &I : make_range(getBoundaryInstrs(Chain))) {
     ++InstrIdx;
     if (isa<LoadInst>(I) || isa<StoreInst>(I)) {
       if (!is_contained(Chain, &I))
@@ -445,7 +442,7 @@ unsigned Vectorizer::getVectorizablePrefixEndIdx(ArrayRef<Value *> Chain,
   }
 
   assert(Chain.size() == ChainInstrs.size() &&
-         "All instructions in the Chain must exist in [From, To).");
+         "All instrs in Chain must be within range getBoundaryInstrs(Chain).");
 
   unsigned ChainIdx = 0;
   for (auto EntryChain : ChainInstrs) {
@@ -487,12 +484,12 @@ unsigned Vectorizer::getVectorizablePrefixEndIdx(ArrayRef<Value *> Chain,
                  << "  " << *Ptr1 << '\n';
         });
 
-        return ChainIdx;
+        return Chain.slice(0, ChainIdx);
       }
     }
     ChainIdx++;
   }
-  return Chain.size();
+  return Chain;
 }
 
 std::pair<ValueListMap, ValueListMap>
@@ -694,22 +691,20 @@ bool Vectorizer::vectorizeStoreChain(
     return false;
   }
 
-  BasicBlock::iterator First, Last;
-  std::tie(First, Last) = getBoundaryInstrs(Chain);
-  unsigned StopChain = getVectorizablePrefixEndIdx(Chain, First, Last);
-  if (StopChain == 0) {
+  ArrayRef<Value *> NewChain = getVectorizablePrefix(Chain);
+  if (NewChain.empty()) {
     // There exists a side effect instruction, no vectorization possible.
     InstructionsProcessed->insert(Chain.begin(), Chain.end());
     return false;
   }
-  if (StopChain == 1) {
+  if (NewChain.size() == 1) {
     // Failed after the first instruction. Discard it and try the smaller chain.
-    InstructionsProcessed->insert(Chain.front());
+    InstructionsProcessed->insert(NewChain.front());
     return false;
   }
 
   // Update Chain to the valid vectorizable subchain.
-  Chain = Chain.slice(0, StopChain);
+  Chain = NewChain;
   ChainSize = Chain.size();
 
   // Store size should be 1B, 2B or multiple of 4B.
@@ -773,7 +768,8 @@ bool Vectorizer::vectorizeStoreChain(
     }
   }
 
-  // Set insert point.
+  BasicBlock::iterator First, Last;
+  std::tie(First, Last) = getBoundaryInstrs(Chain);
   Builder.SetInsertPoint(&*Last);
 
   Value *Vec = UndefValue::get(VecTy);
@@ -849,22 +845,20 @@ bool Vectorizer::vectorizeLoadChain(
     return false;
   }
 
-  BasicBlock::iterator First, Last;
-  std::tie(First, Last) = getBoundaryInstrs(Chain);
-  unsigned StopChain = getVectorizablePrefixEndIdx(Chain, First, Last);
-  if (StopChain == 0) {
+  ArrayRef<Value *> NewChain = getVectorizablePrefix(Chain);
+  if (NewChain.empty()) {
     // There exists a side effect instruction, no vectorization possible.
     InstructionsProcessed->insert(Chain.begin(), Chain.end());
     return false;
   }
-  if (StopChain == 1) {
+  if (NewChain.size() == 1) {
     // Failed after the first instruction. Discard it and try the smaller chain.
-    InstructionsProcessed->insert(Chain.front());
+    InstructionsProcessed->insert(NewChain.front());
     return false;
   }
 
   // Update Chain to the valid vectorizable subchain.
-  Chain = Chain.slice(0, StopChain);
+  Chain = NewChain;
   ChainSize = Chain.size();
 
   // Load size should be 1B, 2B or multiple of 4B.
@@ -927,7 +921,11 @@ bool Vectorizer::vectorizeLoadChain(
       V->dump();
   });
 
-  // Set insert point.
+  // getVectorizablePrefix already computed getBoundaryInstrs.  The value of
+  // Last may have changed since then, but the value of First won't have.  If it
+  // matters, we could compute getBoundaryInstrs only once and reuse it here.
+  BasicBlock::iterator First, Last;
+  std::tie(First, Last) = getBoundaryInstrs(Chain);
   Builder.SetInsertPoint(&*First);
 
   Value *Bitcast =
