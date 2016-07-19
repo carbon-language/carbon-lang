@@ -239,7 +239,7 @@ void LinkerScript<ELFT>::assignAddresses(
     }
 
     // Find all the sections with required name. There can be more than
-    // ont section with such name, if the alignment, flags or type
+    // one section with such name, if the alignment, flags or type
     // attribute differs.
     assert(Cmd.Kind == SectionKind);
     for (OutputSectionBase<ELFT> *Sec : Sections) {
