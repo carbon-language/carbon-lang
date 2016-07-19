@@ -39,6 +39,13 @@ const char *lprofGetPathPrefix(int *PrefixStrip, size_t *PrefixLen);
 void lprofApplyPathPrefix(char *Dest, const char *PathStr, const char *Prefix,
                           size_t PrefixLen, int PrefixStrip);
 
+/* Returns a pointer to the first occurrence of \c DIR_SEPARATOR char in
+ * the string \c Path, or NULL if the char is not found. */
+const char *lprofFindFirstDirSeparator(const char *Path);
+/* Returns a pointer to the last occurrence of \c DIR_SEPARATOR char in
+ * the string \c Path, or NULL if the char is not found. */
+const char *lprofFindLastDirSeparator(const char *Path);
+
 int lprofGetHostName(char *Name, int Len);
 
 unsigned lprofBoolCmpXchg(void **Ptr, void *OldV, void *NewV);

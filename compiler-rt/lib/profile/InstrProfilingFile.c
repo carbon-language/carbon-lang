@@ -229,11 +229,7 @@ static void truncateCurrentFile(void) {
     return;
 
   /* Create the directory holding the file, if needed. */
-  if (strchr(Filename, DIR_SEPARATOR)
-#if defined(DIR_SEPARATOR_2)
-      || strchr(Filename, DIR_SEPARATOR_2)
-#endif
-          ) {
+  if (lprofFindFirstDirSeparator(Filename)) {
     char *Copy = (char *)COMPILER_RT_ALLOCA(Length + 1);
     strncpy(Copy, Filename, Length + 1);
     __llvm_profile_recursive_mkdir(Copy);
