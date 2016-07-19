@@ -1518,8 +1518,8 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
                                             "mips-mti-linux-gnu",
                                             "mips-img-linux-gnu"};
   static const char *const MIPSELLibDirs[] = {"/lib"};
-  static const char *const MIPSELTriples[] = {
-      "mipsel-linux-gnu", "mipsel-linux-android", "mips-img-linux-gnu"};
+  static const char *const MIPSELTriples[] = {"mipsel-linux-gnu",
+                                              "mips-img-linux-gnu"};
 
   static const char *const MIPS64LibDirs[] = {"/lib64", "/lib"};
   static const char *const MIPS64Triples[] = {
@@ -1528,7 +1528,15 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
   static const char *const MIPS64ELLibDirs[] = {"/lib64", "/lib"};
   static const char *const MIPS64ELTriples[] = {
       "mips64el-linux-gnu", "mips-mti-linux-gnu", "mips-img-linux-gnu",
-      "mips64el-linux-android", "mips64el-linux-gnuabi64"};
+      "mips64el-linux-gnuabi64"};
+
+  static const char *const MIPSELAndroidLibDirs[] = {"/lib", "/libr2",
+                                                     "/libr6"};
+  static const char *const MIPSELAndroidTriples[] = {"mipsel-linux-android"};
+  static const char *const MIPS64ELAndroidLibDirs[] = {"/lib64", "/lib",
+                                                       "/libr2", "/libr6"};
+  static const char *const MIPS64ELAndroidTriples[] = {
+      "mips64el-linux-android"};
 
   static const char *const PPCLibDirs[] = {"/lib32", "/lib"};
   static const char *const PPCTriples[] = {
@@ -1630,11 +1638,22 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
     BiarchTripleAliases.append(begin(MIPS64Triples), end(MIPS64Triples));
     break;
   case llvm::Triple::mipsel:
-    LibDirs.append(begin(MIPSELLibDirs), end(MIPSELLibDirs));
-    TripleAliases.append(begin(MIPSELTriples), end(MIPSELTriples));
-    TripleAliases.append(begin(MIPSTriples), end(MIPSTriples));
-    BiarchLibDirs.append(begin(MIPS64ELLibDirs), end(MIPS64ELLibDirs));
-    BiarchTripleAliases.append(begin(MIPS64ELTriples), end(MIPS64ELTriples));
+    if (TargetTriple.isAndroid()) {
+      LibDirs.append(begin(MIPSELAndroidLibDirs), end(MIPSELAndroidLibDirs));
+      TripleAliases.append(begin(MIPSELAndroidTriples),
+                           end(MIPSELAndroidTriples));
+      BiarchLibDirs.append(begin(MIPS64ELAndroidLibDirs),
+                           end(MIPS64ELAndroidLibDirs));
+      BiarchTripleAliases.append(begin(MIPS64ELAndroidTriples),
+                                 end(MIPS64ELAndroidTriples));
+
+    } else {
+      LibDirs.append(begin(MIPSELLibDirs), end(MIPSELLibDirs));
+      TripleAliases.append(begin(MIPSELTriples), end(MIPSELTriples));
+      TripleAliases.append(begin(MIPSTriples), end(MIPSTriples));
+      BiarchLibDirs.append(begin(MIPS64ELLibDirs), end(MIPS64ELLibDirs));
+      BiarchTripleAliases.append(begin(MIPS64ELTriples), end(MIPS64ELTriples));
+    }
     break;
   case llvm::Triple::mips64:
     LibDirs.append(begin(MIPS64LibDirs), end(MIPS64LibDirs));
@@ -1643,11 +1662,23 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
     BiarchTripleAliases.append(begin(MIPSTriples), end(MIPSTriples));
     break;
   case llvm::Triple::mips64el:
-    LibDirs.append(begin(MIPS64ELLibDirs), end(MIPS64ELLibDirs));
-    TripleAliases.append(begin(MIPS64ELTriples), end(MIPS64ELTriples));
-    BiarchLibDirs.append(begin(MIPSELLibDirs), end(MIPSELLibDirs));
-    BiarchTripleAliases.append(begin(MIPSELTriples), end(MIPSELTriples));
-    BiarchTripleAliases.append(begin(MIPSTriples), end(MIPSTriples));
+    if (TargetTriple.isAndroid()) {
+      LibDirs.append(begin(MIPS64ELAndroidLibDirs),
+                     end(MIPS64ELAndroidLibDirs));
+      TripleAliases.append(begin(MIPS64ELAndroidTriples),
+                           end(MIPS64ELAndroidTriples));
+      BiarchLibDirs.append(begin(MIPSELAndroidLibDirs),
+                           end(MIPSELAndroidLibDirs));
+      BiarchTripleAliases.append(begin(MIPSELAndroidTriples),
+                                 end(MIPSELAndroidTriples));
+
+    } else {
+      LibDirs.append(begin(MIPS64ELLibDirs), end(MIPS64ELLibDirs));
+      TripleAliases.append(begin(MIPS64ELTriples), end(MIPS64ELTriples));
+      BiarchLibDirs.append(begin(MIPSELLibDirs), end(MIPSELLibDirs));
+      BiarchTripleAliases.append(begin(MIPSELTriples), end(MIPSELTriples));
+      BiarchTripleAliases.append(begin(MIPSTriples), end(MIPSTriples));
+    }
     break;
   case llvm::Triple::ppc:
     LibDirs.append(begin(PPCLibDirs), end(PPCLibDirs));
@@ -1985,7 +2016,8 @@ static bool findMipsCsMultilibs(const Multilib::flags_list &Flags,
   return false;
 }
 
-static bool findMipsAndroidMultilibs(const Multilib::flags_list &Flags,
+static bool findMipsAndroidMultilibs(vfs::FileSystem &VFS, StringRef Path,
+                                     const Multilib::flags_list &Flags,
                                      FilterNonExistent &NonExistent,
                                      DetectedMultilibs &Result) {
 
@@ -1995,8 +2027,29 @@ static bool findMipsAndroidMultilibs(const Multilib::flags_list &Flags,
           .Maybe(Multilib("/mips-r6").flag("+march=mips32r6"))
           .FilterOut(NonExistent);
 
-  if (AndroidMipsMultilibs.select(Flags, Result.SelectedMultilib)) {
-    Result.Multilibs = AndroidMipsMultilibs;
+  MultilibSet AndroidMipselMultilibs =
+      MultilibSet()
+          .Either(Multilib().flag("+march=mips32"),
+                  Multilib("/mips-r2", "", "/mips-r2").flag("+march=mips32r2"),
+                  Multilib("/mips-r6", "", "/mips-r6").flag("+march=mips32r6"))
+          .FilterOut(NonExistent);
+
+  MultilibSet AndroidMips64elMultilibs =
+      MultilibSet()
+          .Either(
+              Multilib().flag("+march=mips64r6"),
+              Multilib("/32/mips-r1", "", "/mips-r1").flag("+march=mips32"),
+              Multilib("/32/mips-r2", "", "/mips-r2").flag("+march=mips32r2"),
+              Multilib("/32/mips-r6", "", "/mips-r6").flag("+march=mips32r6"))
+          .FilterOut(NonExistent);
+
+  MultilibSet *MS = &AndroidMipsMultilibs;
+  if (VFS.exists(Path + "/mips-r6"))
+    MS = &AndroidMipselMultilibs;
+  else if (VFS.exists(Path + "/32"))
+    MS = &AndroidMips64elMultilibs;
+  if (MS->select(Flags, Result.SelectedMultilib)) {
+    Result.Multilibs = *MS;
     return true;
   }
   return false;
@@ -2323,6 +2376,7 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
   addMultilibFlag(CPUName == "mips64r2" || CPUName == "mips64r3" ||
                       CPUName == "mips64r5" || CPUName == "octeon",
                   "march=mips64r2", Flags);
+  addMultilibFlag(CPUName == "mips64r6", "march=mips64r6", Flags);
   addMultilibFlag(isMicroMips(Args), "mmicromips", Flags);
   addMultilibFlag(tools::mips::isUCLibc(Args), "muclibc", Flags);
   addMultilibFlag(tools::mips::isNaN2008(Args, TargetTriple), "mnan=2008",
@@ -2335,7 +2389,8 @@ static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
   addMultilibFlag(!isMipsEL(TargetArch), "EB", Flags);
 
   if (TargetTriple.isAndroid())
-    return findMipsAndroidMultilibs(Flags, NonExistent, Result);
+    return findMipsAndroidMultilibs(D.getVFS(), Path, Flags, NonExistent,
+                                    Result);
 
   if (TargetTriple.getVendor() == llvm::Triple::MipsTechnologies &&
       TargetTriple.getOS() == llvm::Triple::Linux &&
@@ -3940,6 +3995,15 @@ static std::string getMultiarchTriple(const Driver &D,
 
 static StringRef getOSLibDir(const llvm::Triple &Triple, const ArgList &Args) {
   if (isMipsArch(Triple.getArch())) {
+    if (Triple.isAndroid()) {
+      StringRef CPUName;
+      StringRef ABIName;
+      tools::mips::getMipsCPUAndABI(Args, Triple, CPUName, ABIName);
+      if (CPUName == "mips32r6")
+        return "libr6";
+      if (CPUName == "mips32r2")
+        return "libr2";
+    }
     // lib32 directory has a special meaning on MIPS targets.
     // It contains N32 ABI binaries. Use this folder if produce
     // code for N32 ABI only.
