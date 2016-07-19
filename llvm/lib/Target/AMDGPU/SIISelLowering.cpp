@@ -2290,12 +2290,17 @@ SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
                                    Op->getVTList(), Ops, VT, MMO);
   }
   case AMDGPUIntrinsic::AMDGPU_kill: {
-    if (const ConstantFPSDNode *K = dyn_cast<ConstantFPSDNode>(Op.getOperand(2))) {
+    SDValue Src = Op.getOperand(2);
+    if (const ConstantFPSDNode *K = dyn_cast<ConstantFPSDNode>(Src)) {
       if (!K->isNegative())
         return Chain;
+
+      SDValue NegOne = DAG.getTargetConstant(FloatToBits(-1.0f), DL, MVT::i32);
+      return DAG.getNode(AMDGPUISD::KILL, DL, MVT::Other, Chain, NegOne);
     }
 
-    return Op;
+    SDValue Cast = DAG.getNode(ISD::BITCAST, DL, MVT::i32, Src);
+    return DAG.getNode(AMDGPUISD::KILL, DL, MVT::Other, Chain, Cast);
   }
   default:
     return SDValue();
