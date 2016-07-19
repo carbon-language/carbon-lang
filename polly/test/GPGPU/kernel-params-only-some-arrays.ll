@@ -2,6 +2,8 @@
 ; RUN: -disable-output < %s | \
 ; RUN: FileCheck -check-prefix=KERNEL %s
 ;
+; REQUIRES: pollyacc
+;
 ;    void kernel_params_only_some_arrays(float A[], float B[]) {
 ;      for (long i = 0; i < 32; i++)
 ;        A[i] += 42;
