@@ -157,11 +157,23 @@ public:
   /// available and do the appropriate bookkeeping. SPAdj is the stack
   /// adjustment due to call frame, it's passed along to eliminateFrameIndex().
   /// Returns the scavenged register.
+  /// This function performs worse if kill flags are incomplete, consider using
+  /// scavengeRegisterBackwards() instead!
   unsigned scavengeRegister(const TargetRegisterClass *RegClass,
                             MachineBasicBlock::iterator I, int SPAdj);
   unsigned scavengeRegister(const TargetRegisterClass *RegClass, int SPAdj) {
     return scavengeRegister(RegClass, MBBI, SPAdj);
   }
+
+  /// Make a register of the specific register class available from the current
+  /// position backwards to the place before \p To. If \p RestoreAfter is true
+  /// this includes the instruction at the current position.
+  /// SPAdj is the stack adjustment due to call frame, it's passed along to
+  /// eliminateFrameIndex().
+  /// Returns the scavenged register.
+  unsigned scavengeRegisterBackwards(const TargetRegisterClass &RC,
+                                     MachineBasicBlock::iterator To,
+                                     bool RestoreAfter, int SPAdj);
 
   /// Tell the scavenger a register is used.
   void setRegUsed(unsigned Reg, LaneBitmask LaneMask = ~0u);
@@ -202,6 +214,12 @@ private:
 
   /// Mark live-in registers of basic block as used.
   void setLiveInsUsed(const MachineBasicBlock &MBB);
+
+  /// Spill a register after position \p After and reload it before position
+  /// \p UseMI.
+  ScavengedInfo &spill(unsigned Reg, const TargetRegisterClass &RC, int SPAdj,
+                       MachineBasicBlock::iterator After,
+                       MachineBasicBlock::iterator &UseMI);
 };
 
 } // End llvm namespace

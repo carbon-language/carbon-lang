@@ -46,8 +46,8 @@ define i32 @test3() {
 ; CHECK-LABEL: test3:
 ; CHECK: ldr [[TEMP:r[0-7]]],
 ; CHECK: add sp, [[TEMP]]
-; CHECK: ldr [[TEMP]],
-; CHECK: add [[TEMP]], sp
+; CHECK: ldr [[TEMP2:r[0-7]]],
+; CHECK: add [[TEMP2]], sp
 ; EABI: ldr [[TEMP:r[0-7]]],
 ; EABI: add sp, [[TEMP]]
 ; IOS: subs r4, r7, #4
