@@ -25,6 +25,20 @@ FILE *lprofOpenFileEx(const char *Filename);
 static inline char *getenv(const char *name) { return NULL; }
 #endif /* #if __ORBIS__ */
 
+/* GCOV_PREFIX and GCOV_PREFIX_STRIP support */
+/* Return the path prefix specified by GCOV_PREFIX environment variable.
+ * If GCOV_PREFIX_STRIP is also specified, the strip level (integer value)
+ * is returned via \c *PrefixStrip. The prefix length is stored in *PrefixLen.
+ */
+const char *lprofGetPathPrefix(int *PrefixStrip, size_t *PrefixLen);
+/* Apply the path prefix specified in \c Prefix to path string in \c PathStr,
+ * and store the result to buffer pointed to by \c Buffer. If \c PrefixStrip
+ * is not zero, path prefixes are stripped from \c PathStr (the level of
+ * stripping is specified by \c PrefixStrip) before \c Prefix is added.
+ */
+void lprofApplyPathPrefix(char *Dest, const char *PathStr, const char *Prefix,
+                          size_t PrefixLen, int PrefixStrip);
+
 int lprofGetHostName(char *Name, int Len);
 
 unsigned lprofBoolCmpXchg(void **Ptr, void *OldV, void *NewV);
