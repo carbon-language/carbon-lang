@@ -480,6 +480,9 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       break;
     }
 
+    // Convert instruction to a shorter version that could be relaxed if needed.
+    MIA->shortenInstruction(Instruction);
+
     if (MIA->isBranch(Instruction) || MIA->isCall(Instruction)) {
       uint64_t InstructionTarget = 0;
       if (MIA->evaluateBranch(Instruction,
