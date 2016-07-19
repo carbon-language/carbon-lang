@@ -141,7 +141,7 @@ private:
   ///
   ///   - One i8 pointer for each external array reference used in the kernel.
   ///   - Host iterators
-  ///   - Parameters (TODO)
+  ///   - Parameters
   ///   - Other LLVM Value references (TODO)
   ///
   /// @param Kernel The kernel to generate the function declaration for.
@@ -228,6 +228,11 @@ Function *GPUNodeBuilder::createKernelFunctionDecl(ppcg_kernel *Kernel) {
   for (long i = 0; i < NumHostIters; i++)
     Args.push_back(Builder.getInt64Ty());
 
+  int NumVars = isl_space_dim(Kernel->space, isl_dim_param);
+
+  for (long i = 0; i < NumVars; i++)
+    Args.push_back(Builder.getInt64Ty());
+
   auto *FT = FunctionType::get(Builder.getVoidTy(), Args, false);
   auto *FN = Function::Create(FT, Function::ExternalLinkage, Identifier,
                               GPUModule.get());
@@ -244,6 +249,14 @@ Function *GPUNodeBuilder::createKernelFunctionDecl(ppcg_kernel *Kernel) {
 
   for (long i = 0; i < NumHostIters; i++) {
     isl_id *Id = isl_space_get_dim_id(Kernel->space, isl_dim_set, i);
+    Arg->setName(isl_id_get_name(Id));
+    IDToValue[Id] = &*Arg;
+    KernelIDs.insert(std::unique_ptr<isl_id, IslIdDeleter>(Id));
+    Arg++;
+  }
+
+  for (long i = 0; i < NumVars; i++) {
+    isl_id *Id = isl_space_get_dim_id(Kernel->space, isl_dim_param, i);
     Arg->setName(isl_id_get_name(Id));
     IDToValue[Id] = &*Arg;
     KernelIDs.insert(std::unique_ptr<isl_id, IslIdDeleter>(Id));
