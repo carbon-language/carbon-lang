@@ -43,10 +43,10 @@ namespace {
 // TODO: Remove this
 static const unsigned TargetBaseAlign = 4;
 
-class Vectorizer {
-  typedef SmallVector<Value *, 8> ValueList;
-  typedef MapVector<Value *, ValueList> ValueListMap;
+typedef SmallVector<Value *, 8> ValueList;
+typedef MapVector<Value *, ValueList> ValueListMap;
 
+class Vectorizer {
   Function &F;
   AliasAnalysis &AA;
   DominatorTree &DT;
@@ -54,8 +54,6 @@ class Vectorizer {
   TargetTransformInfo &TTI;
   const DataLayout &DL;
   IRBuilder<> Builder;
-  ValueListMap StoreRefs;
-  ValueListMap LoadRefs;
 
 public:
   Vectorizer(Function &F, AliasAnalysis &AA, DominatorTree &DT,
@@ -115,7 +113,7 @@ private:
                                        BasicBlock::iterator To);
 
   /// Collects load and store instructions to vectorize.
-  void collectInstructions(BasicBlock *BB);
+  std::pair<ValueListMap, ValueListMap> collectInstructions(BasicBlock *BB);
 
   /// Processes the collected instructions, the \p Map. The elements of \p Map
   /// should be all loads or all stores.
@@ -198,7 +196,8 @@ bool Vectorizer::run() {
 
   // Scan the blocks in the function in post order.
   for (BasicBlock *BB : post_order(&F)) {
-    collectInstructions(BB);
+    ValueListMap LoadRefs, StoreRefs;
+    std::tie(LoadRefs, StoreRefs) = collectInstructions(BB);
     Changed |= vectorizeChains(LoadRefs);
     Changed |= vectorizeChains(StoreRefs);
   }
@@ -493,9 +492,10 @@ unsigned Vectorizer::getVectorizablePrefixEndIdx(ArrayRef<Value *> Chain,
   return Chain.size();
 }
 
-void Vectorizer::collectInstructions(BasicBlock *BB) {
-  LoadRefs.clear();
-  StoreRefs.clear();
+std::pair<ValueListMap, ValueListMap>
+Vectorizer::collectInstructions(BasicBlock *BB) {
+  ValueListMap LoadRefs;
+  ValueListMap StoreRefs;
 
   for (Instruction &I : *BB) {
     if (!I.mayReadOrWriteMemory())
@@ -569,6 +569,8 @@ void Vectorizer::collectInstructions(BasicBlock *BB) {
       StoreRefs[ObjPtr].push_back(SI);
     }
   }
+
+  return {LoadRefs, StoreRefs};
 }
 
 bool Vectorizer::vectorizeChains(ValueListMap &Map) {
