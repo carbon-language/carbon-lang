@@ -106,10 +106,17 @@ enum class MatchState : uint8_t {
   FlowToMemAliasReadWrite,
 };
 
+typedef std::bitset<7> StateSet;
+LLVM_CONSTEXPR StateSet ReadOnlyStateMask =
+    (1 << static_cast<uint8_t>(MatchState::FlowFromReadOnly)) |
+    (1 << static_cast<uint8_t>(MatchState::FlowFromMemAliasReadOnly));
+LLVM_CONSTEXPR StateSet WriteOnlyStateMask =
+    (1 << static_cast<uint8_t>(MatchState::FlowToWriteOnly)) |
+    (1 << static_cast<uint8_t>(MatchState::FlowToMemAliasWriteOnly));
+
 // We use ReachabilitySet to keep track of value aliases (The nonterminal "V" in
 // the paper) during the analysis.
 class ReachabilitySet {
-  typedef std::bitset<7> StateSet;
   typedef DenseMap<InstantiatedValue, StateSet> ValueStateMap;
   typedef DenseMap<InstantiatedValue, ValueStateMap> ValueReachMap;
   ValueReachMap ReachMap;
@@ -120,6 +127,7 @@ public:
 
   // Insert edge 'From->To' at state 'State'
   bool insert(InstantiatedValue From, InstantiatedValue To, MatchState State) {
+    assert(From != To);
     auto &States = ReachMap[To][From];
     auto Idx = static_cast<size_t>(State);
     if (!States.test(Idx)) {
@@ -207,6 +215,14 @@ struct WorkListItem {
   InstantiatedValue To;
   MatchState State;
 };
+
+struct ValueSummary {
+  struct Record {
+    InterfaceValue IValue;
+    unsigned DerefLevel;
+  };
+  SmallVector<Record, 4> FromRecords, ToRecords;
+};
 }
 
 class CFLAndersAAResult::FunctionInfo {
@@ -225,15 +241,39 @@ class CFLAndersAAResult::FunctionInfo {
   AliasAttrs getAttrs(const Value *) const;
 
 public:
-  FunctionInfo(const ReachabilitySet &, AliasAttrMap);
+  FunctionInfo(const Function &, const SmallVectorImpl<Value *> &,
+               const ReachabilitySet &, AliasAttrMap);
 
   bool mayAlias(const Value *LHS, const Value *RHS) const;
   const AliasSummary &getAliasSummary() const { return Summary; }
 };
 
-CFLAndersAAResult::FunctionInfo::FunctionInfo(const ReachabilitySet &ReachSet,
-                                              AliasAttrMap AMap) {
-  // Populate AttrMap
+static bool hasReadOnlyState(StateSet Set) {
+  return (Set & ReadOnlyStateMask).any();
+}
+
+static bool hasWriteOnlyState(StateSet Set) {
+  return (Set & WriteOnlyStateMask).any();
+}
+
+static Optional<InterfaceValue>
+getInterfaceValue(InstantiatedValue IValue,
+                  const SmallVectorImpl<Value *> &RetVals) {
+  auto Val = IValue.Val;
+
+  Optional<unsigned> Index;
+  if (auto Arg = dyn_cast<Argument>(Val))
+    Index = Arg->getArgNo() + 1;
+  else if (is_contained(RetVals, Val))
+    Index = 0;
+
+  if (Index)
+    return InterfaceValue{*Index, IValue.DerefLevel};
+  return None;
+}
+
+static void populateAttrMap(DenseMap<const Value *, AliasAttrs> &AttrMap,
+                            const AliasAttrMap &AMap) {
   for (const auto &Mapping : AMap.mappings()) {
     auto IVal = Mapping.first;
 
@@ -241,8 +281,11 @@ CFLAndersAAResult::FunctionInfo::FunctionInfo(const ReachabilitySet &ReachSet,
     if (IVal.DerefLevel == 0)
       AttrMap[IVal.Val] = Mapping.second;
   }
+}
 
-  // Populate AliasMap
+static void
+populateAliasMap(DenseMap<const Value *, std::vector<const Value *>> &AliasMap,
+                 const ReachabilitySet &ReachSet) {
   for (const auto &OuterMapping : ReachSet.value_mappings()) {
     // AliasMap only cares about top-level values
     if (OuterMapping.first.DerefLevel > 0)
@@ -259,8 +302,112 @@ CFLAndersAAResult::FunctionInfo::FunctionInfo(const ReachabilitySet &ReachSet,
     // Sort AliasList for faster lookup
     std::sort(AliasList.begin(), AliasList.end(), std::less<const Value *>());
   }
+}
 
-  // TODO: Populate function summary here
+static void populateExternalRelations(
+    SmallVectorImpl<ExternalRelation> &ExtRelations, const Function &Fn,
+    const SmallVectorImpl<Value *> &RetVals, const ReachabilitySet &ReachSet) {
+  // If a function only returns one of its argument X, then X will be both an
+  // argument and a return value at the same time. This is an edge case that
+  // needs special handling here.
+  for (const auto &Arg : Fn.args()) {
+    if (is_contained(RetVals, &Arg)) {
+      auto ArgVal = InterfaceValue{Arg.getArgNo() + 1, 0};
+      auto RetVal = InterfaceValue{0, 0};
+      ExtRelations.push_back(ExternalRelation{ArgVal, RetVal});
+    }
+  }
+
+  // Below is the core summary construction logic.
+  // A naive solution of adding only the value aliases that are parameters or
+  // return values in ReachSet to the summary won't work: It is possible that a
+  // parameter P is written into an intermediate value I, and the function
+  // subsequently returns *I. In that case, *I is does not value alias anything
+  // in ReachSet, and the naive solution will miss a summary edge from (P, 1) to
+  // (I, 1).
+  // To account for the aforementioned case, we need to check each non-parameter
+  // and non-return value for the possibility of acting as an intermediate.
+  // 'ValueMap' here records, for each value, which InterfaceValues read from or
+  // write into it. If both the read list and the write list of a given value
+  // are non-empty, we know that a particular value is an intermidate and we
+  // need to add summary edges from the writes to the reads.
+  DenseMap<Value *, ValueSummary> ValueMap;
+  for (const auto &OuterMapping : ReachSet.value_mappings()) {
+    if (auto Dst = getInterfaceValue(OuterMapping.first, RetVals)) {
+      for (const auto &InnerMapping : OuterMapping.second) {
+        // If Src is a param/return value, we get a same-level assignment.
+        if (auto Src = getInterfaceValue(InnerMapping.first, RetVals)) {
+          // This may happen if both Dst and Src are return values
+          if (*Dst == *Src)
+            continue;
+
+          if (hasReadOnlyState(InnerMapping.second))
+            ExtRelations.push_back(ExternalRelation{*Dst, *Src});
+          // No need to check for WriteOnly state, since ReachSet is symmetric
+        } else {
+          // If Src is not a param/return, add it to ValueMap
+          auto SrcIVal = InnerMapping.first;
+          if (hasReadOnlyState(InnerMapping.second))
+            ValueMap[SrcIVal.Val].FromRecords.push_back(
+                ValueSummary::Record{*Dst, SrcIVal.DerefLevel});
+          if (hasWriteOnlyState(InnerMapping.second))
+            ValueMap[SrcIVal.Val].ToRecords.push_back(
+                ValueSummary::Record{*Dst, SrcIVal.DerefLevel});
+        }
+      }
+    }
+  }
+
+  for (const auto &Mapping : ValueMap) {
+    for (const auto &FromRecord : Mapping.second.FromRecords) {
+      for (const auto &ToRecord : Mapping.second.ToRecords) {
+        auto ToLevel = ToRecord.DerefLevel;
+        auto FromLevel = FromRecord.DerefLevel;
+        // Same-level assignments should have already been processed by now
+        if (ToLevel == FromLevel)
+          continue;
+
+        auto SrcIndex = FromRecord.IValue.Index;
+        auto SrcLevel = FromRecord.IValue.DerefLevel;
+        auto DstIndex = ToRecord.IValue.Index;
+        auto DstLevel = ToRecord.IValue.DerefLevel;
+        if (ToLevel > FromLevel)
+          SrcLevel += ToLevel - FromLevel;
+        else
+          DstLevel += FromLevel - ToLevel;
+
+        ExtRelations.push_back(
+            ExternalRelation{InterfaceValue{SrcIndex, SrcLevel},
+                             InterfaceValue{DstIndex, DstLevel}});
+      }
+    }
+  }
+
+  // Remove duplicates in ExtRelations
+  std::sort(ExtRelations.begin(), ExtRelations.end());
+  ExtRelations.erase(std::unique(ExtRelations.begin(), ExtRelations.end()),
+                     ExtRelations.end());
+}
+
+static void populateExternalAttributes(
+    SmallVectorImpl<ExternalAttribute> &ExtAttributes, const Function &Fn,
+    const SmallVectorImpl<Value *> &RetVals, const AliasAttrMap &AMap) {
+  for (const auto &Mapping : AMap.mappings()) {
+    if (auto IVal = getInterfaceValue(Mapping.first, RetVals)) {
+      auto Attr = getExternallyVisibleAttrs(Mapping.second);
+      if (Attr.any())
+        ExtAttributes.push_back(ExternalAttribute{*IVal, Attr});
+    }
+  }
+}
+
+CFLAndersAAResult::FunctionInfo::FunctionInfo(
+    const Function &Fn, const SmallVectorImpl<Value *> &RetVals,
+    const ReachabilitySet &ReachSet, AliasAttrMap AMap) {
+  populateAttrMap(AttrMap, AMap);
+  populateExternalAttributes(Summary.RetParamAttributes, Fn, RetVals, AMap);
+  populateAliasMap(AliasMap, ReachSet);
+  populateExternalRelations(Summary.RetParamRelations, Fn, RetVals, ReachSet);
 }
 
 AliasAttrs CFLAndersAAResult::FunctionInfo::getAttrs(const Value *V) const {
@@ -510,7 +657,8 @@ CFLAndersAAResult::buildInfoFrom(const Function &Fn) {
   // to it
   auto IValueAttrMap = buildAttrMap(Graph, ReachSet);
 
-  return FunctionInfo(ReachSet, std::move(IValueAttrMap));
+  return FunctionInfo(Fn, GraphBuilder.getReturnValues(), ReachSet,
+                      std::move(IValueAttrMap));
 }
 
 void CFLAndersAAResult::scan(const Function &Fn) {
