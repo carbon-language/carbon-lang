@@ -1,6 +1,9 @@
 ; RUN: opt %loadPolly -polly-codegen-ppcg -disable-output \
 ; RUN: -polly-acc-dump-code < %s | FileCheck %s -check-prefix=CODE
 
+; RUN: opt %loadPolly -polly-codegen-ppcg -disable-output \
+; RUN: -polly-acc-dump-kernel-ir < %s | FileCheck %s -check-prefix=KERNEL-IR
+
 ; RUN: opt %loadPolly -polly-codegen-ppcg \
 ; RUN: -S < %s | FileCheck %s -check-prefix=IR
 ;    void foo(float A[2][100]) {
@@ -30,6 +33,15 @@
 ; IR-NEXT:   %polly.indvar_next = add nsw i64 %polly.indvar, 1
 ; IR-NEXT:   %polly.loop_cond = icmp sle i64 %polly.indvar, 98
 ; IR-NEXT:   br i1 %polly.loop_cond, label %polly.loop_header, label %polly.loop_exit
+
+; KERNEL-IR: define ptx_kernel void @kernel_0(i8* %MemRef_A, i64 %c0) {
+; KERNEL-IR-NEXT: entry:
+; KERNEL-IR-NEXT:   %0 = call i32 @llvm.nvvm.read.ptx.sreg.ctaid.x()
+; KERNEL-IR-NEXT:   %b0 = zext i32 %0 to i64
+; KERNEL-IR-NEXT:   %1 = call i32 @llvm.nvvm.read.ptx.sreg.tid.x()
+; KERNEL-IR-NEXT:   %t0 = zext i32 %1 to i64
+; KERNEL-IR-NEXT:   ret void
+; KERNEL-IR-NEXT: }
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
