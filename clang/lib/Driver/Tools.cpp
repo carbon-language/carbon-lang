@@ -314,6 +314,24 @@ static void addExtraOffloadCXXStdlibIncludeArgs(Compilation &C,
   // TODO: Add support for other programming models here.
 }
 
+/// Add the C include args of other offloading toolchains. If this is a host
+/// job, the device toolchains are added. If this is a device job, the host
+/// toolchains will be added.
+static void addExtraOffloadClangSystemIncludeArgs(Compilation &C,
+                                                  const JobAction &JA,
+                                                  const ArgList &Args,
+                                                  ArgStringList &CmdArgs) {
+
+  if (JA.isHostOffloading(Action::OFK_Cuda))
+    C.getSingleOffloadToolChain<Action::OFK_Cuda>()->AddClangSystemIncludeArgs(
+        Args, CmdArgs);
+  else if (JA.isDeviceOffloading(Action::OFK_Cuda))
+    C.getSingleOffloadToolChain<Action::OFK_Host>()->AddClangSystemIncludeArgs(
+        Args, CmdArgs);
+
+  // TODO: Add support for other programming models here.
+}
+
 /// Add the include args that are specific of each offloading programming model.
 static void addExtraOffloadSpecificIncludeArgs(Compilation &C,
                                                const JobAction &JA,
@@ -612,7 +630,7 @@ void Clang::AddPreprocessingOptions(Compilation &C, const JobAction &JA,
   // Add system include arguments for all targets but IAMCU.
   if (!IsIAMCU) {
     getToolChain().AddClangSystemIncludeArgs(Args, CmdArgs);
-    addExtraOffloadCXXStdlibIncludeArgs(C, JA, Args, CmdArgs);
+    addExtraOffloadClangSystemIncludeArgs(C, JA, Args, CmdArgs);
   } else {
     // For IAMCU add special include arguments.
     getToolChain().AddIAMCUIncludeArgs(Args, CmdArgs);
