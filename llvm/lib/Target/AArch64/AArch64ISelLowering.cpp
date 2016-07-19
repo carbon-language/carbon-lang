@@ -4568,6 +4568,12 @@ static SDValue getEstimate(const AArch64Subtarget &ST,
     return SDValue();
 
   EVT VT = Operand.getValueType();
+  if (VT != MVT::f64 && VT != MVT::v1f64 && VT != MVT::v2f64 &&
+      VT != MVT::f32 && VT != MVT::v1f32 &&
+      VT != MVT::v2f32 && VT != MVT::v4f32 &&
+      (!ST.hasFullFP16() ||
+       (VT != MVT::f16 && VT != MVT::v4f16 && VT != MVT::v8f16)))
+    return SDValue();
 
   std::string RecipOp;
   RecipOp = Opcode == (AArch64ISD::FRECPE) ? "div": "sqrt";
