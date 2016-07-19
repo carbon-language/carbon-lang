@@ -87,7 +87,7 @@ template <class ELFT> class LinkerScript {
   typedef typename ELFT::uint uintX_t;
 
 public:
-  typedef Phdr<ELFT> Phdr;
+  typedef PhdrEntry<ELFT> Phdr;
 
   StringRef getOutputSection(InputSectionBase<ELFT> *S);
   ArrayRef<uint8_t> getFiller(StringRef Name);

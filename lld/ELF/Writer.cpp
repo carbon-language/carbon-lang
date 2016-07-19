@@ -44,7 +44,7 @@ public:
   void run();
 
 private:
-  typedef Phdr<ELFT> Phdr;
+  typedef PhdrEntry<ELFT> Phdr;
 
   void copyLocalSymbols();
   void addReservedSymbols();
@@ -479,13 +479,13 @@ template <class ELFT> bool elf::isOutputDynamic() {
 
 // Program header entry
 template<class ELFT>
-Phdr<ELFT>::Phdr(unsigned Type, unsigned Flags) {
+PhdrEntry<ELFT>::PhdrEntry(unsigned Type, unsigned Flags) {
   H.p_type = Type;
   H.p_flags = Flags;
 }
 
 template<class ELFT>
-void Phdr<ELFT>::AddSec(OutputSectionBase<ELFT> *Sec) {
+void PhdrEntry<ELFT>::AddSec(OutputSectionBase<ELFT> *Sec) {
   Last = Sec;
   if (!First)
     First = Sec;
@@ -1285,10 +1285,10 @@ template void elf::writeResult<ELF32BE>(SymbolTable<ELF32BE> *Symtab);
 template void elf::writeResult<ELF64LE>(SymbolTable<ELF64LE> *Symtab);
 template void elf::writeResult<ELF64BE>(SymbolTable<ELF64BE> *Symtab);
 
-template struct elf::Phdr<ELF32LE>;
-template struct elf::Phdr<ELF32BE>;
-template struct elf::Phdr<ELF64LE>;
-template struct elf::Phdr<ELF64BE>;
+template struct elf::PhdrEntry<ELF32LE>;
+template struct elf::PhdrEntry<ELF32BE>;
+template struct elf::PhdrEntry<ELF64LE>;
+template struct elf::PhdrEntry<ELF64BE>;
 
 template bool elf::needsInterpSection<ELF32LE>();
 template bool elf::needsInterpSection<ELF32BE>();

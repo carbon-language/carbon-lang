@@ -275,7 +275,7 @@ void LinkerScript<ELFT>::assignAddresses(
 }
 
 template <class ELFT>
-std::vector<Phdr<ELFT>>
+std::vector<PhdrEntry<ELFT>>
 LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
   int TlsNum = -1;
   int NoteNum = -1;

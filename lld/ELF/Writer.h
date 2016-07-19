@@ -35,8 +35,8 @@ uint32_t toPhdrFlags(uint64_t Flags);
 // Each contains type, access flags and range of output sections that will be
 // placed in it.
 template<class ELFT>
-struct Phdr {
-  Phdr(unsigned Type, unsigned Flags);
+struct PhdrEntry {
+  PhdrEntry(unsigned Type, unsigned Flags);
   void AddSec(OutputSectionBase<ELFT> *Sec);
 
   typename ELFT::Phdr H = {};
