@@ -429,9 +429,7 @@ namespace clang {
 
     ImplicitConversionSequence()
         : ConversionKind(Uninitialized), StdInitializerListElement(false) {
-      Standard.First = ICK_Identity;
-      Standard.Second = ICK_Identity;
-      Standard.Third = ICK_Identity;
+      Standard.setAsIdentityConversion();
     }
     ~ImplicitConversionSequence() {
       destruct();
