@@ -1592,9 +1592,8 @@ bool MemorySSA::locallyDominates(const MemoryAccess *Dominator,
                                  const MemoryAccess *Dominatee) const {
 
   const BasicBlock *DominatorBlock = Dominator->getBlock();
-  const BasicBlock *DominateeBlock = Dominatee->getBlock();
 
-  assert((DominatorBlock == DominateeBlock) &&
+  assert((DominatorBlock == Dominatee->getBlock()) &&
          "Asking for local domination when accesses are in different blocks!");
   // A node dominates itself.
   if (Dominatee == Dominator)
