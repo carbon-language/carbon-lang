@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=aarch64-linu--gnu -aarch64-neon-syntax=generic | FileCheck %s
+; RUN: llc < %s -mtriple=aarch64-linux--gnu -aarch64-neon-syntax=generic | FileCheck %s
 
 target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128"
 
