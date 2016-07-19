@@ -91,9 +91,6 @@ private:
 
   MachineBasicBlock *insertSkipBlock(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
-
-  std::pair<MachineBasicBlock *, MachineBasicBlock *>
-
 public:
   static char ID;
 
