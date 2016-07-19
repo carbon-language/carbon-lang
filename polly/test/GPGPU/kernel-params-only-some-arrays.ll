@@ -17,6 +17,10 @@
 
 ; KERNEL: define ptx_kernel void @kernel_0(i8* %MemRef_A) {
 ; KERNEL-NEXT:   entry:
+; KERNEL-NEXT:     %0 = call i32 @llvm.nvvm.read.ptx.sreg.ctaid.x()
+; KERNEL-NEXT:     %b0 = zext i32 %0 to i64
+; KERNEL-NEXT:     %1 = call i32 @llvm.nvvm.read.ptx.sreg.tid.x()
+; KERNEL-NEXT:     %t0 = zext i32 %1 to i64
 ; KERNEL-NEXT:     ret void
 ; KERNEL-NEXT: }
 
@@ -27,6 +31,10 @@
 
 ; KERNEL: define ptx_kernel void @kernel_1(i8* %MemRef_B) {
 ; KERNEL-NEXT:   entry:
+; KERNEL-NEXT:     %0 = call i32 @llvm.nvvm.read.ptx.sreg.ctaid.x()
+; KERNEL-NEXT:     %b0 = zext i32 %0 to i64
+; KERNEL-NEXT:     %1 = call i32 @llvm.nvvm.read.ptx.sreg.tid.x()
+; KERNEL-NEXT:     %t0 = zext i32 %1 to i64
 ; KERNEL-NEXT:     ret void
 ; KERNEL-NEXT: }
 

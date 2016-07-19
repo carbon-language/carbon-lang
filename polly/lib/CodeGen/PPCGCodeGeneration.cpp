@@ -97,6 +97,17 @@ private:
   /// The GPU program we generate code for.
   gpu_prog *Prog;
 
+  /// Class to free isl_ids.
+  class IslIdDeleter {
+  public:
+    void operator()(__isl_take isl_id *Id) { isl_id_free(Id); };
+  };
+
+  /// A set containing all isl_ids allocated in a GPU kernel.
+  ///
+  /// By releasing this set all isl_ids will be freed.
+  std::set<std::unique_ptr<isl_id, IslIdDeleter>> KernelIDs;
+
   /// Create code for user-defined AST nodes.
   ///
   /// These AST nodes can be of type:
@@ -137,6 +148,11 @@ private:
   /// @returns The newly declared function.
   Function *createKernelFunctionDecl(ppcg_kernel *Kernel);
 
+  /// Insert intrinsic functions to obtain thread and block ids.
+  ///
+  /// @param The kernel to generate the intrinsic functions for.
+  void insertKernelIntrinsics(ppcg_kernel *Kernel);
+
   /// Finalize the generation of the kernel function.
   ///
   /// Free the LLVM-IR module corresponding to the kernel and -- if requested --
@@ -172,10 +188,12 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
   assert(Kernel->tree && "Device AST of kernel node is empty");
 
   Instruction &HostInsertPoint = *Builder.GetInsertPoint();
+  IslExprBuilder::IDToValueTy HostIDs = IDToValue;
 
   createKernelFunction(Kernel);
 
   Builder.SetInsertPoint(&HostInsertPoint);
+  IDToValue = HostIDs;
 
   finalizeKernelFunction();
 }
@@ -222,6 +240,35 @@ Function *GPUNodeBuilder::createKernelFunctionDecl(ppcg_kernel *Kernel) {
   return FN;
 }
 
+void GPUNodeBuilder::insertKernelIntrinsics(ppcg_kernel *Kernel) {
+  Intrinsic::ID IntrinsicsBID[] = {Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
+                                   Intrinsic::nvvm_read_ptx_sreg_ctaid_y};
+
+  Intrinsic::ID IntrinsicsTID[] = {Intrinsic::nvvm_read_ptx_sreg_tid_x,
+                                   Intrinsic::nvvm_read_ptx_sreg_tid_y,
+                                   Intrinsic::nvvm_read_ptx_sreg_tid_z};
+
+  auto addId = [this](__isl_take isl_id *Id, Intrinsic::ID Intr) mutable {
+    std::string Name = isl_id_get_name(Id);
+    Module *M = Builder.GetInsertBlock()->getParent()->getParent();
+    Function *IntrinsicFn = Intrinsic::getDeclaration(M, Intr);
+    Value *Val = Builder.CreateCall(IntrinsicFn, {});
+    Val = Builder.CreateIntCast(Val, Builder.getInt64Ty(), false, Name);
+    IDToValue[Id] = Val;
+    KernelIDs.insert(std::unique_ptr<isl_id, IslIdDeleter>(Id));
+  };
+
+  for (int i = 0; i < Kernel->n_grid; ++i) {
+    isl_id *Id = isl_id_list_get_id(Kernel->block_ids, i);
+    addId(Id, IntrinsicsBID[i]);
+  }
+
+  for (int i = 0; i < Kernel->n_block; ++i) {
+    isl_id *Id = isl_id_list_get_id(Kernel->thread_ids, i);
+    addId(Id, IntrinsicsTID[i]);
+  }
+}
+
 void GPUNodeBuilder::createKernelFunction(ppcg_kernel *Kernel) {
 
   std::string Identifier = "kernel_" + std::to_string(Kernel->id);
@@ -236,6 +283,8 @@ void GPUNodeBuilder::createKernelFunction(ppcg_kernel *Kernel) {
   Builder.SetInsertPoint(EntryBlock);
   Builder.CreateRetVoid();
   Builder.SetInsertPoint(EntryBlock, EntryBlock->begin());
+
+  insertKernelIntrinsics(Kernel);
 }
 
 void GPUNodeBuilder::finalizeKernelFunction() {
@@ -244,6 +293,7 @@ void GPUNodeBuilder::finalizeKernelFunction() {
     outs() << *GPUModule << "\n";
 
   GPUModule.release();
+  KernelIDs.clear();
 }
 
 namespace {

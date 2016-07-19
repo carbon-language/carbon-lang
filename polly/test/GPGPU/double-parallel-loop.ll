@@ -10,6 +10,10 @@
 ; RUN: opt %loadPolly -polly-codegen-ppcg -S < %s | \
 ; RUN: FileCheck %s -check-prefix=IR
 
+; RUN: opt %loadPolly -polly-codegen-ppcg -polly-acc-dump-kernel-ir \
+; RUN: -disable-output < %s | \
+; RUN: FileCheck %s -check-prefix=KERNEL-IR
+
 ; REQUIRES: pollyacc
 
 ; CHECK: Stmt_bb5
@@ -88,6 +92,19 @@
 
 ; IR: polly.exiting:
 ; IR-NEXT:    br label %polly.merge_new_and_old
+
+; KERNEL-IR: define ptx_kernel void @kernel_0(i8* %MemRef_A) {
+; KERNEL-IR-NEXT: entry:
+; KERNEL-IR-NEXT:   %0 = call i32 @llvm.nvvm.read.ptx.sreg.ctaid.x()
+; KERNEL-IR-NEXT:   %b0 = zext i32 %0 to i64
+; KERNEL-IR-NEXT:   %1 = call i32 @llvm.nvvm.read.ptx.sreg.ctaid.y()
+; KERNEL-IR-NEXT:   %b1 = zext i32 %1 to i64
+; KERNEL-IR-NEXT:   %2 = call i32 @llvm.nvvm.read.ptx.sreg.tid.x()
+; KERNEL-IR-NEXT:   %t0 = zext i32 %2 to i64
+; KERNEL-IR-NEXT:   %3 = call i32 @llvm.nvvm.read.ptx.sreg.tid.y()
+; KERNEL-IR-NEXT:   %t1 = zext i32 %3 to i64
+; KERNEL-IR-NEXT:   ret void
+; KERNEL-IR-NEXT: }
 
 ;    void double_parallel_loop(float A[][1024]) {
 ;      for (long i = 0; i < 1024; i++)
