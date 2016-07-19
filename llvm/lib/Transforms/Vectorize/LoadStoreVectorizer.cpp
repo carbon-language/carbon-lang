@@ -431,14 +431,15 @@ unsigned Vectorizer::getVectorizablePrefixEndIdx(ArrayRef<Value *> Chain,
   SmallVector<std::pair<Value *, unsigned>, 16> ChainInstrs;
 
   unsigned InstrIdx = 0;
-  for (auto I = From; I != To; ++I, ++InstrIdx) {
+  for (Instruction &I : make_range(From, To)) {
+    ++InstrIdx;
     if (isa<LoadInst>(I) || isa<StoreInst>(I)) {
-      if (!is_contained(Chain, &*I))
-        MemoryInstrs.push_back({&*I, InstrIdx});
+      if (!is_contained(Chain, &I))
+        MemoryInstrs.push_back({&I, InstrIdx});
       else
-        ChainInstrs.push_back({&*I, InstrIdx});
-    } else if (I->mayHaveSideEffects()) {
-      DEBUG(dbgs() << "LSV: Found side-effecting operation: " << *I << '\n');
+        ChainInstrs.push_back({&I, InstrIdx});
+    } else if (I.mayHaveSideEffects()) {
+      DEBUG(dbgs() << "LSV: Found side-effecting operation: " << I << '\n');
       return 0;
     }
   }
@@ -477,11 +478,13 @@ unsigned Vectorizer::getVectorizablePrefixEndIdx(ArrayRef<Value *> Chain,
           Value *Ptr0 = getPointerOperand(M0);
           Value *Ptr1 = getPointerOperand(M1);
 
-          dbgs() << "LSV: Found alias.\n"
-                    "        Aliasing instruction and pointer:\n"
-                 << *MemInstrValue << " aliases " << *Ptr0 << '\n'
-                 << "        Aliased instruction and pointer:\n"
-                 << *ChainInstrValue << " aliases " << *Ptr1 << '\n';
+          dbgs() << "LSV: Found alias:\n"
+                    "  Aliasing instruction and pointer:\n"
+                 << "  " << *MemInstrValue << '\n'
+                 << "  " << *Ptr0 << '\n'
+                 << "  Aliased instruction and pointer:\n"
+                 << "  " << *ChainInstrValue << '\n'
+                 << "  " << *Ptr1 << '\n';
         });
 
         return ChainIdx;
@@ -744,7 +747,7 @@ bool Vectorizer::vectorizeStoreChain(
   DEBUG({
     dbgs() << "LSV: Stores to vectorize:\n";
     for (Value *V : Chain)
-      V->dump();
+      dbgs() << "  " << *V << "\n";
   });
 
   // We won't try again to vectorize the elements of the chain, regardless of
