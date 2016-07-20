@@ -1496,6 +1496,7 @@ ARMTargetInfo::ARMTargetInfo() {
   PltHeaderSize = 20;
   // ARM uses Variant 1 TLS
   TcbSize = 8;
+  NeedsThunks = true;
 }
 
 RelExpr ARMTargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
@@ -1836,6 +1837,7 @@ template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
   PltHeaderSize = 32;
   CopyRel = R_MIPS_COPY;
   PltRel = R_MIPS_JUMP_SLOT;
+  NeedsThunks = true;
   if (ELFT::Is64Bits) {
     RelativeRel = (R_MIPS_64 << 8) | R_MIPS_REL32;
     TlsGotRel = R_MIPS_TLS_TPREL64;

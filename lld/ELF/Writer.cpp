@@ -49,6 +49,9 @@ private:
   void copyLocalSymbols();
   void addReservedSymbols();
   std::vector<OutputSectionBase<ELFT> *> createSections();
+  void forEachRelSec(
+      std::function<void(InputSectionBase<ELFT> &, const typename ELFT::Shdr &)>
+          Fn);
   void finalizeSections();
   void addPredefinedSections();
   bool needsGot();
@@ -633,6 +636,34 @@ template <class ELFT> static void sortCtorsDtors(OutputSectionBase<ELFT> *S) {
 }
 
 template <class ELFT>
+void Writer<ELFT>::forEachRelSec(
+    std::function<void(InputSectionBase<ELFT> &, const typename ELFT::Shdr &)>
+        Fn) {
+  for (const std::unique_ptr<elf::ObjectFile<ELFT>> &F :
+       Symtab.getObjectFiles()) {
+    for (InputSectionBase<ELFT> *C : F->getSections()) {
+      if (isDiscarded(C))
+        continue;
+      // Scan all relocations. Each relocation goes through a series
+      // of tests to determine if it needs special treatment, such as
+      // creating GOT, PLT, copy relocations, etc.
+      // Note that relocations for non-alloc sections are directly
+      // processed by InputSection::relocateNonAlloc.
+      if (!(C->getSectionHdr()->sh_flags & SHF_ALLOC))
+        continue;
+      if (auto *S = dyn_cast<InputSection<ELFT>>(C)) {
+        for (const Elf_Shdr *RelSec : S->RelocSections)
+          Fn(*S, *RelSec);
+        continue;
+      }
+      if (auto *S = dyn_cast<EhInputSection<ELFT>>(C))
+        if (S->RelocSection)
+          Fn(*S, *S->RelocSection);
+    }
+  }
+}
+
+template <class ELFT>
 std::vector<OutputSectionBase<ELFT> *> Writer<ELFT>::createSections() {
   std::vector<OutputSectionBase<ELFT> *> Result;
 
@@ -705,25 +736,15 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     Out<ELFT>::EhFrame->finalize();
   }
 
-  // Scan relocations. This must be done after every symbol is declared so that
-  // we can correctly decide if a dynamic relocation is needed.
-  for (const std::unique_ptr<elf::ObjectFile<ELFT>> &F :
-       Symtab.getObjectFiles()) {
-    for (InputSectionBase<ELFT> *C : F->getSections()) {
-      if (isDiscarded(C))
-        continue;
-      if (auto *S = dyn_cast<InputSection<ELFT>>(C)) {
-        scanRelocations(*S);
-        continue;
-      }
-      if (auto *S = dyn_cast<EhInputSection<ELFT>>(C))
-        if (S->RelocSection)
-          scanRelocations(*S, *S->RelocSection);
-    }
-  }
+  if (Target->NeedsThunks)
+    forEachRelSec(createThunks<ELFT>);
 
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
     Sec->assignOffsets();
+
+  // Scan relocations. This must be done after every symbol is declared so that
+  // we can correctly decide if a dynamic relocation is needed.
+  forEachRelSec(scanRelocations<ELFT>);
 
   // Now that we have defined all possible symbols including linker-
   // synthesized ones. Visit all symbols to give the finishing touches.
