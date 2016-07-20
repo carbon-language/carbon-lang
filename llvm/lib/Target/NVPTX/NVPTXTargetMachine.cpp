@@ -63,7 +63,7 @@ void initializeNVPTXAssignValidGlobalNamesPass(PassRegistry&);
 void initializeNVPTXFavorNonGenericAddrSpacesPass(PassRegistry &);
 void initializeNVPTXInferAddressSpacesPass(PassRegistry &);
 void initializeNVPTXLowerAggrCopiesPass(PassRegistry &);
-void initializeNVPTXLowerKernelArgsPass(PassRegistry &);
+void initializeNVPTXLowerArgsPass(PassRegistry &);
 void initializeNVPTXLowerAllocaPass(PassRegistry &);
 }
 
@@ -82,7 +82,7 @@ extern "C" void LLVMInitializeNVPTXTarget() {
   initializeNVPTXAssignValidGlobalNamesPass(PR);
   initializeNVPTXFavorNonGenericAddrSpacesPass(PR);
   initializeNVPTXInferAddressSpacesPass(PR);
-  initializeNVPTXLowerKernelArgsPass(PR);
+  initializeNVPTXLowerArgsPass(PR);
   initializeNVPTXLowerAllocaPass(PR);
   initializeNVPTXLowerAggrCopiesPass(PR);
 }
@@ -195,7 +195,7 @@ void NVPTXPassConfig::addEarlyCSEOrGVNPass() {
 }
 
 void NVPTXPassConfig::addAddressSpaceInferencePasses() {
-  // NVPTXLowerKernelArgs emits alloca for byval parameters which can often
+  // NVPTXLowerArgs emits alloca for byval parameters which can often
   // be eliminated by SROA.
   addPass(createSROAPass());
   addPass(createNVPTXLowerAllocaPass());
@@ -253,9 +253,9 @@ void NVPTXPassConfig::addIRPasses() {
   addPass(createNVPTXAssignValidGlobalNamesPass());
   addPass(createGenericToNVVMPass());
 
-  // NVPTXLowerKernelArgs is required for correctness and should be run right
+  // NVPTXLowerArgs is required for correctness and should be run right
   // before the address space inference passes.
-  addPass(createNVPTXLowerKernelArgsPass(&getNVPTXTargetMachine()));
+  addPass(createNVPTXLowerArgsPass(&getNVPTXTargetMachine()));
   if (getOptLevel() != CodeGenOpt::None) {
     addAddressSpaceInferencePasses();
     addStraightLineScalarOptimizationPasses();

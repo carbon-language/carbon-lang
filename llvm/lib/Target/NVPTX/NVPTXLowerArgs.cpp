@@ -1,4 +1,4 @@
-//===-- NVPTXLowerKernelArgs.cpp - Lower kernel arguments -----------------===//
+//===-- NVPTXLowerArgs.cpp - Lower arguments ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -102,11 +102,11 @@
 using namespace llvm;
 
 namespace llvm {
-void initializeNVPTXLowerKernelArgsPass(PassRegistry &);
+void initializeNVPTXLowerArgsPass(PassRegistry &);
 }
 
 namespace {
-class NVPTXLowerKernelArgs : public FunctionPass {
+class NVPTXLowerArgs : public FunctionPass {
   bool runOnFunction(Function &F) override;
 
   bool runOnKernelFunction(Function &F);
@@ -122,7 +122,7 @@ class NVPTXLowerKernelArgs : public FunctionPass {
 
 public:
   static char ID; // Pass identification, replacement for typeid
-  NVPTXLowerKernelArgs(const NVPTXTargetMachine *TM = nullptr)
+  NVPTXLowerArgs(const NVPTXTargetMachine *TM = nullptr)
       : FunctionPass(ID), TM(TM) {}
   const char *getPassName() const override {
     return "Lower pointer arguments of CUDA kernels";
@@ -133,10 +133,10 @@ private:
 };
 } // namespace
 
-char NVPTXLowerKernelArgs::ID = 1;
+char NVPTXLowerArgs::ID = 1;
 
-INITIALIZE_PASS(NVPTXLowerKernelArgs, "nvptx-lower-kernel-args",
-                "Lower kernel arguments (NVPTX)", false, false)
+INITIALIZE_PASS(NVPTXLowerArgs, "nvptx-lower-args",
+                "Lower arguments (NVPTX)", false, false)
 
 // =============================================================================
 // If the function had a byval struct ptr arg, say foo(%struct.x* byval %d),
@@ -151,7 +151,7 @@ INITIALIZE_PASS(NVPTXLowerKernelArgs, "nvptx-lower-kernel-args",
 // struct from param space to local space.
 // Then replace all occurrences of %d by %temp.
 // =============================================================================
-void NVPTXLowerKernelArgs::handleByValParam(Argument *Arg) {
+void NVPTXLowerArgs::handleByValParam(Argument *Arg) {
   Function *Func = Arg->getParent();
   Instruction *FirstInst = &(Func->getEntryBlock().front());
   PointerType *PType = dyn_cast<PointerType>(Arg->getType());
@@ -173,7 +173,7 @@ void NVPTXLowerKernelArgs::handleByValParam(Argument *Arg) {
   new StoreInst(LI, AllocA, FirstInst);
 }
 
-void NVPTXLowerKernelArgs::markPointerAsGlobal(Value *Ptr) {
+void NVPTXLowerArgs::markPointerAsGlobal(Value *Ptr) {
   if (Ptr->getType()->getPointerAddressSpace() == ADDRESS_SPACE_GLOBAL)
     return;
 
@@ -203,7 +203,7 @@ void NVPTXLowerKernelArgs::markPointerAsGlobal(Value *Ptr) {
 // =============================================================================
 // Main function for this pass.
 // =============================================================================
-bool NVPTXLowerKernelArgs::runOnKernelFunction(Function &F) {
+bool NVPTXLowerArgs::runOnKernelFunction(Function &F) {
   if (TM && TM->getDrvInterface() == NVPTX::CUDA) {
     // Mark pointers in byval structs as global.
     for (auto &B : F) {
@@ -236,18 +236,18 @@ bool NVPTXLowerKernelArgs::runOnKernelFunction(Function &F) {
 }
 
 // Device functions only need to copy byval args into local memory.
-bool NVPTXLowerKernelArgs::runOnDeviceFunction(Function &F) {
+bool NVPTXLowerArgs::runOnDeviceFunction(Function &F) {
   for (Argument &Arg : F.args())
     if (Arg.getType()->isPointerTy() && Arg.hasByValAttr())
       handleByValParam(&Arg);
   return true;
 }
 
-bool NVPTXLowerKernelArgs::runOnFunction(Function &F) {
+bool NVPTXLowerArgs::runOnFunction(Function &F) {
   return isKernelFunction(F) ? runOnKernelFunction(F) : runOnDeviceFunction(F);
 }
 
 FunctionPass *
-llvm::createNVPTXLowerKernelArgsPass(const NVPTXTargetMachine *TM) {
-  return new NVPTXLowerKernelArgs(TM);
+llvm::createNVPTXLowerArgsPass(const NVPTXTargetMachine *TM) {
+  return new NVPTXLowerArgs(TM);
 }
