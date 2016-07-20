@@ -684,6 +684,9 @@ namespace clang {
       /// \brief Specifies a header that is private to this submodule but
       /// must be textually included.
       SUBMODULE_PRIVATE_TEXTUAL_HEADER = 15,
+      /// \brief Specifies some declarations with initializers that must be
+      /// emitted to initialize the module.
+      SUBMODULE_INITIALIZERS = 16,
     };
 
     /// \brief Record types used within a comments block.
