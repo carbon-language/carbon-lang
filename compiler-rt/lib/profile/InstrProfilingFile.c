@@ -266,6 +266,11 @@ static int parseFilenamePattern(const char *FilenamePat) {
   char *Hostname = &lprofCurFilename.Hostname[0];
   int MergingEnabled = 0;
 
+  /* Clean up cached prefix.  */
+  if (lprofCurFilename.ProfilePathPrefix)
+    free((void *)lprofCurFilename.ProfilePathPrefix);
+  memset(&lprofCurFilename, 0, sizeof(lprofCurFilename));
+
   lprofCurFilename.FilenamePat = FilenamePat;
   /* Check the filename for "%p", which indicates a pid-substitution. */
   for (I = 0; FilenamePat[I]; ++I)
@@ -343,12 +348,6 @@ static void parseAndSetFilename(const char *FilenamePat,
     PROF_NOTE("Override old profile path \"%s\" via %s to \"%s\" via %s.\n",
               OldFilenamePat, getPNSStr(OldPNS), lprofCurFilename.FilenamePat,
               getPNSStr(PNS));
-  }
-
-  /* Clean up cached prefix.  */
-  if (lprofCurFilename.ProfilePathPrefix) {
-    free((void*)lprofCurFilename.ProfilePathPrefix);
-    lprofCurFilename.ProfilePathPrefix = NULL;
   }
 
   if (!lprofCurFilename.MergePoolSize)
