@@ -7792,63 +7792,29 @@ def VINSERTF128rm : AVXAIi8<0x18, MRMSrcMem, (outs VR256:$dst),
           []>, Sched<[WriteFShuffleLd, ReadAfterLd]>, VEX_4V, VEX_L;
 }
 
-let Predicates = [HasAVX, NoVLX] in {
-def : Pat<(vinsert128_insert:$ins (v8f32 VR256:$src1), (v4f32 VR128:$src2),
+multiclass vinsert_lowering<string InstrStr, ValueType From, ValueType To,
+                            PatFrag memop_frag> {
+  def : Pat<(vinsert128_insert:$ins (To VR256:$src1), (From VR128:$src2),
                                    (iPTR imm)),
-          (VINSERTF128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v4f64 VR256:$src1), (v2f64 VR128:$src2),
-                                   (iPTR imm)),
-          (VINSERTF128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
+            (!cast<Instruction>(InstrStr#rr) VR256:$src1, VR128:$src2,
+                                       (INSERT_get_vinsert128_imm VR256:$ins))>;
+  def : Pat<(vinsert128_insert:$ins (To VR256:$src1),
+                                    (From (bitconvert (memop_frag addr:$src2))),
+                                    (iPTR imm)),
+            (!cast<Instruction>(InstrStr#rm) VR256:$src1, addr:$src2,
+                                       (INSERT_get_vinsert128_imm VR256:$ins))>;
+}
 
-def : Pat<(vinsert128_insert:$ins (v8f32 VR256:$src1), (loadv4f32 addr:$src2),
-                                   (iPTR imm)),
-          (VINSERTF128rm VR256:$src1, addr:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v4f64 VR256:$src1), (loadv2f64 addr:$src2),
-                                   (iPTR imm)),
-          (VINSERTF128rm VR256:$src1, addr:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
+let Predicates = [HasAVX, NoVLX] in {
+  defm : vinsert_lowering<"VINSERTF128", v4f32, v8f32, loadv4f32>;
+  defm : vinsert_lowering<"VINSERTF128", v2f64, v4f64, loadv2f64>;
 }
 
 let Predicates = [HasAVX1Only] in {
-def : Pat<(vinsert128_insert:$ins (v4i64 VR256:$src1), (v2i64 VR128:$src2),
-                                   (iPTR imm)),
-          (VINSERTF128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v8i32 VR256:$src1), (v4i32 VR128:$src2),
-                                   (iPTR imm)),
-          (VINSERTF128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v32i8 VR256:$src1), (v16i8 VR128:$src2),
-                                   (iPTR imm)),
-          (VINSERTF128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v16i16 VR256:$src1), (v8i16 VR128:$src2),
-                                   (iPTR imm)),
-          (VINSERTF128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-
-def : Pat<(vinsert128_insert:$ins (v4i64 VR256:$src1), (loadv2i64 addr:$src2),
-                                   (iPTR imm)),
-          (VINSERTF128rm VR256:$src1, addr:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v8i32 VR256:$src1),
-                                   (bc_v4i32 (loadv2i64 addr:$src2)),
-                                   (iPTR imm)),
-          (VINSERTF128rm VR256:$src1, addr:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v32i8 VR256:$src1),
-                                   (bc_v16i8 (loadv2i64 addr:$src2)),
-                                   (iPTR imm)),
-          (VINSERTF128rm VR256:$src1, addr:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v16i16 VR256:$src1),
-                                   (bc_v8i16 (loadv2i64 addr:$src2)),
-                                   (iPTR imm)),
-          (VINSERTF128rm VR256:$src1, addr:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
+  defm : vinsert_lowering<"VINSERTF128", v2i64, v4i64,  loadv2i64>;
+  defm : vinsert_lowering<"VINSERTF128", v4i32, v8i32,  loadv2i64>;
+  defm : vinsert_lowering<"VINSERTF128", v8i16, v16i16, loadv2i64>;
+  defm : vinsert_lowering<"VINSERTF128", v16i8, v32i8,  loadv2i64>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -7866,61 +7832,28 @@ def VEXTRACTF128mr : AVXAIi8<0x19, MRMDestMem, (outs),
           []>, Sched<[WriteStore]>, VEX, VEX_L;
 }
 
+multiclass vextract_lowering<string InstrStr, ValueType From, ValueType To> {
+  def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
+            (To (!cast<Instruction>(InstrStr#rr)
+                                    (From VR256:$src1),
+                                    (EXTRACT_get_vextract128_imm VR128:$ext)))>;
+  def : Pat<(store (To (vextract128_extract:$ext (From VR256:$src1),
+                                                 (iPTR imm))), addr:$dst),
+            (!cast<Instruction>(InstrStr#mr) addr:$dst, VR256:$src1,
+             (EXTRACT_get_vextract128_imm VR128:$ext))>;
+}
+
 // AVX1 patterns
 let Predicates = [HasAVX, NoVLX] in {
-def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
-          (v4f32 (VEXTRACTF128rr
-                    (v8f32 VR256:$src1),
-                    (EXTRACT_get_vextract128_imm VR128:$ext)))>;
-def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
-          (v2f64 (VEXTRACTF128rr
-                    (v4f64 VR256:$src1),
-                    (EXTRACT_get_vextract128_imm VR128:$ext)))>;
-
-def : Pat<(store (v4f32 (vextract128_extract:$ext (v8f32 VR256:$src1),
-                         (iPTR imm))), addr:$dst),
-          (VEXTRACTF128mr addr:$dst, VR256:$src1,
-           (EXTRACT_get_vextract128_imm VR128:$ext))>;
-def : Pat<(store (v2f64 (vextract128_extract:$ext (v4f64 VR256:$src1),
-                         (iPTR imm))), addr:$dst),
-          (VEXTRACTF128mr addr:$dst, VR256:$src1,
-           (EXTRACT_get_vextract128_imm VR128:$ext))>;
+  defm : vextract_lowering<"VEXTRACTF128", v8f32, v4f32>;
+  defm : vextract_lowering<"VEXTRACTF128", v4f64, v2f64>;
 }
 
 let Predicates = [HasAVX1Only] in {
-def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
-          (v2i64 (VEXTRACTF128rr
-                  (v4i64 VR256:$src1),
-                  (EXTRACT_get_vextract128_imm VR128:$ext)))>;
-def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
-          (v4i32 (VEXTRACTF128rr
-                  (v8i32 VR256:$src1),
-                  (EXTRACT_get_vextract128_imm VR128:$ext)))>;
-def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
-          (v8i16 (VEXTRACTF128rr
-                  (v16i16 VR256:$src1),
-                  (EXTRACT_get_vextract128_imm VR128:$ext)))>;
-def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
-          (v16i8 (VEXTRACTF128rr
-                  (v32i8 VR256:$src1),
-                  (EXTRACT_get_vextract128_imm VR128:$ext)))>;
-
-def : Pat<(store (v2i64 (vextract128_extract:$ext (v4i64 VR256:$src1),
-                         (iPTR imm))), addr:$dst),
-          (VEXTRACTF128mr addr:$dst, VR256:$src1,
-           (EXTRACT_get_vextract128_imm VR128:$ext))>;
-def : Pat<(store (v4i32 (vextract128_extract:$ext (v8i32 VR256:$src1),
-                         (iPTR imm))), addr:$dst),
-          (VEXTRACTF128mr addr:$dst, VR256:$src1,
-           (EXTRACT_get_vextract128_imm VR128:$ext))>;
-def : Pat<(store (v8i16 (vextract128_extract:$ext (v16i16 VR256:$src1),
-                         (iPTR imm))), addr:$dst),
-          (VEXTRACTF128mr addr:$dst, VR256:$src1,
-           (EXTRACT_get_vextract128_imm VR128:$ext))>;
-def : Pat<(store (v16i8 (vextract128_extract:$ext (v32i8 VR256:$src1),
-                         (iPTR imm))), addr:$dst),
-          (VEXTRACTF128mr addr:$dst, VR256:$src1,
-           (EXTRACT_get_vextract128_imm VR128:$ext))>;
+  defm : vextract_lowering<"VEXTRACTF128", v4i64,  v2i64>;
+  defm : vextract_lowering<"VEXTRACTF128", v8i32,  v4i32>;
+  defm : vextract_lowering<"VEXTRACTF128", v16i16, v8i16>;
+  defm : vextract_lowering<"VEXTRACTF128", v32i8,  v16i8>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -8487,42 +8420,10 @@ def VINSERTI128rm : AVX2AIi8<0x38, MRMSrcMem, (outs VR256:$dst),
 }
 
 let Predicates = [HasAVX2, NoVLX] in {
-def : Pat<(vinsert128_insert:$ins (v4i64 VR256:$src1), (v2i64 VR128:$src2),
-                                   (iPTR imm)),
-          (VINSERTI128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v8i32 VR256:$src1), (v4i32 VR128:$src2),
-                                   (iPTR imm)),
-          (VINSERTI128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v32i8 VR256:$src1), (v16i8 VR128:$src2),
-                                   (iPTR imm)),
-          (VINSERTI128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v16i16 VR256:$src1), (v8i16 VR128:$src2),
-                                   (iPTR imm)),
-          (VINSERTI128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-
-def : Pat<(vinsert128_insert:$ins (v4i64 VR256:$src1), (loadv2i64 addr:$src2),
-                                   (iPTR imm)),
-          (VINSERTI128rm VR256:$src1, addr:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v8i32 VR256:$src1),
-                                   (bc_v4i32 (loadv2i64 addr:$src2)),
-                                   (iPTR imm)),
-          (VINSERTI128rm VR256:$src1, addr:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v32i8 VR256:$src1),
-                                   (bc_v16i8 (loadv2i64 addr:$src2)),
-                                   (iPTR imm)),
-          (VINSERTI128rm VR256:$src1, addr:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v16i16 VR256:$src1),
-                                   (bc_v8i16 (loadv2i64 addr:$src2)),
-                                   (iPTR imm)),
-          (VINSERTI128rm VR256:$src1, addr:$src2,
-                         (INSERT_get_vinsert128_imm VR256:$ins))>;
+  defm : vinsert_lowering<"VINSERTI128", v2i64, v4i64,  loadv2i64>;
+  defm : vinsert_lowering<"VINSERTI128", v4i32, v8i32,  loadv2i64>;
+  defm : vinsert_lowering<"VINSERTI128", v8i16, v16i16, loadv2i64>;
+  defm : vinsert_lowering<"VINSERTI128", v16i8, v32i8,  loadv2i64>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -8539,39 +8440,10 @@ def VEXTRACTI128mr : AVX2AIi8<0x39, MRMDestMem, (outs),
           Sched<[WriteStore]>, VEX, VEX_L;
 
 let Predicates = [HasAVX2, NoVLX] in {
-def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
-          (v2i64 (VEXTRACTI128rr
-                    (v4i64 VR256:$src1),
-                    (EXTRACT_get_vextract128_imm VR128:$ext)))>;
-def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
-          (v4i32 (VEXTRACTI128rr
-                    (v8i32 VR256:$src1),
-                    (EXTRACT_get_vextract128_imm VR128:$ext)))>;
-def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
-          (v8i16 (VEXTRACTI128rr
-                    (v16i16 VR256:$src1),
-                    (EXTRACT_get_vextract128_imm VR128:$ext)))>;
-def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
-          (v16i8 (VEXTRACTI128rr
-                    (v32i8 VR256:$src1),
-                    (EXTRACT_get_vextract128_imm VR128:$ext)))>;
-
-def : Pat<(store (v2i64 (vextract128_extract:$ext (v4i64 VR256:$src1),
-                         (iPTR imm))), addr:$dst),
-          (VEXTRACTI128mr addr:$dst, VR256:$src1,
-           (EXTRACT_get_vextract128_imm VR128:$ext))>;
-def : Pat<(store (v4i32 (vextract128_extract:$ext (v8i32 VR256:$src1),
-                         (iPTR imm))), addr:$dst),
-          (VEXTRACTI128mr addr:$dst, VR256:$src1,
-           (EXTRACT_get_vextract128_imm VR128:$ext))>;
-def : Pat<(store (v8i16 (vextract128_extract:$ext (v16i16 VR256:$src1),
-                         (iPTR imm))), addr:$dst),
-          (VEXTRACTI128mr addr:$dst, VR256:$src1,
-           (EXTRACT_get_vextract128_imm VR128:$ext))>;
-def : Pat<(store (v16i8 (vextract128_extract:$ext (v32i8 VR256:$src1),
-                         (iPTR imm))), addr:$dst),
-          (VEXTRACTI128mr addr:$dst, VR256:$src1,
-           (EXTRACT_get_vextract128_imm VR128:$ext))>;
+  defm : vextract_lowering<"VEXTRACTI128", v4i64,  v2i64>;
+  defm : vextract_lowering<"VEXTRACTI128", v8i32,  v4i32>;
+  defm : vextract_lowering<"VEXTRACTI128", v16i16, v8i16>;
+  defm : vextract_lowering<"VEXTRACTI128", v32i8,  v16i8>;
 }
 
 //===----------------------------------------------------------------------===//
