@@ -524,6 +524,14 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
   const elf::ObjectFile<ELFT> &File = *C.getFile();
   ArrayRef<uint8_t> SectionData = C.getSectionData();
   const uint8_t *Buf = SectionData.begin();
+
+  SectionPiece *PieceI = nullptr;
+  SectionPiece *PieceE = nullptr;
+  if (auto *Eh = dyn_cast<EhInputSection<ELFT>>(&C)) {
+    PieceI = &*Eh->Pieces.begin();
+    PieceE = &*Eh->Pieces.end();
+  }
+
   for (auto I = Rels.begin(), E = Rels.end(); I != E; ++I) {
     const RelTy &RI = *I;
     SymbolBody &Body = File.getRelocTargetSym(RI);
@@ -536,8 +544,12 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       continue;
 
     // Skip a relocation that points to a dead piece
-    // in a mergeable section.
-    if (C.getOffset(RI.r_offset) == (uintX_t)-1)
+    // in a eh_frame section.
+    while (PieceI != PieceE &&
+           (PieceI->InputOff + PieceI->size() <= RI.r_offset))
+      ++PieceI;
+    if (PieceI != PieceE && PieceI->InputOff <= RI.r_offset &&
+        PieceI->OutputOff == (uintX_t)-1)
       continue;
 
     // This relocation does not require got entry, but it is relative to got and
