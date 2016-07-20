@@ -60,6 +60,11 @@ namespace llvm {
   /// equality comparison (which is signless).
   bool PredicatesFoldable(CmpInst::Predicate p1, CmpInst::Predicate p2);
 
+  /// Decompose an icmp into the form ((X & Y) pred Z) if possible. The returned
+  /// predicate is either == or !=. Returns false if decomposition fails.
+  bool decomposeBitTestICmp(const ICmpInst *I, CmpInst::Predicate &Pred,
+                            Value *&X, Value *&Y, Value *&Z);
+
 } // end namespace llvm
 
 #endif

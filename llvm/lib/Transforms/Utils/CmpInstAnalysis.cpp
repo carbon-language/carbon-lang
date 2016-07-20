@@ -62,3 +62,47 @@ bool llvm::PredicatesFoldable(ICmpInst::Predicate p1, ICmpInst::Predicate p2) {
          (CmpInst::isSigned(p1) && ICmpInst::isEquality(p2)) ||
          (CmpInst::isSigned(p2) && ICmpInst::isEquality(p1));
 }
+
+bool llvm::decomposeBitTestICmp(const ICmpInst *I, CmpInst::Predicate &Pred,
+                                Value *&X, Value *&Y, Value *&Z) {
+  ConstantInt *C = dyn_cast<ConstantInt>(I->getOperand(1));
+  if (!C)
+    return false;
+
+  switch (I->getPredicate()) {
+  default:
+    return false;
+  case ICmpInst::ICMP_SLT:
+    // X < 0 is equivalent to (X & SignBit) != 0.
+    if (!C->isZero())
+      return false;
+    Y = ConstantInt::get(I->getContext(), APInt::getSignBit(C->getBitWidth()));
+    Pred = ICmpInst::ICMP_NE;
+    break;
+  case ICmpInst::ICMP_SGT:
+    // X > -1 is equivalent to (X & SignBit) == 0.
+    if (!C->isAllOnesValue())
+      return false;
+    Y = ConstantInt::get(I->getContext(), APInt::getSignBit(C->getBitWidth()));
+    Pred = ICmpInst::ICMP_EQ;
+    break;
+  case ICmpInst::ICMP_ULT:
+    // X <u 2^n is equivalent to (X & ~(2^n-1)) == 0.
+    if (!C->getValue().isPowerOf2())
+      return false;
+    Y = ConstantInt::get(I->getContext(), -C->getValue());
+    Pred = ICmpInst::ICMP_EQ;
+    break;
+  case ICmpInst::ICMP_UGT:
+    // X >u 2^n-1 is equivalent to (X & ~(2^n-1)) != 0.
+    if (!(C->getValue() + 1).isPowerOf2())
+      return false;
+    Y = ConstantInt::get(I->getContext(), ~C->getValue());
+    Pred = ICmpInst::ICMP_NE;
+    break;
+  }
+
+  X = I->getOperand(0);
+  Z = ConstantInt::getNullValue(C->getType());
+  return true;
+}
