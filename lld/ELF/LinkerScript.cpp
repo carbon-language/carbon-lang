@@ -777,8 +777,7 @@ std::vector<StringRef> ScriptParser::readOutputSectionPhdrs() {
       setError("section header name is empty");
       break;
     }
-    else
-      Phdrs.push_back(Tok);
+    Phdrs.push_back(Tok);
   }
   return Phdrs;
 }
