@@ -1327,3 +1327,8 @@ template bool elf::needsPtLoad<ELF32LE>(OutputSectionBase<ELF32LE> *);
 template bool elf::needsPtLoad<ELF32BE>(OutputSectionBase<ELF32BE> *);
 template bool elf::needsPtLoad<ELF64LE>(OutputSectionBase<ELF64LE> *);
 template bool elf::needsPtLoad<ELF64BE>(OutputSectionBase<ELF64BE> *);
+
+template StringRef elf::getOutputSectionName<ELF32LE>(InputSectionBase<ELF32LE> *);
+template StringRef elf::getOutputSectionName<ELF32BE>(InputSectionBase<ELF32BE> *);
+template StringRef elf::getOutputSectionName<ELF64LE>(InputSectionBase<ELF64LE> *);
+template StringRef elf::getOutputSectionName<ELF64BE>(InputSectionBase<ELF64BE> *);
