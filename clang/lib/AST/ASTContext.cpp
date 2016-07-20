@@ -787,6 +787,9 @@ ASTContext::~ASTContext() {
        MaterializedTemporaryValues)
     MTVPair.second->~APValue();
 
+  for (const auto &Value : ModuleInitializers)
+    Value.second->~PerModuleInitializers();
+
   llvm::DeleteContainerSeconds(MangleNumberingContexts);
 }
 
