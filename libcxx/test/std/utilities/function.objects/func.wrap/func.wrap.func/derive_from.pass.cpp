@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// UNSUPPORTED: c++98, c++03
+
 // <functional>
 
 // See https://llvm.org/bugs/show_bug.cgi?id=20002
@@ -15,9 +17,10 @@
 #include <type_traits>
 
 using Fn = std::function<void()>;
-struct S : Fn { using function::function; };
+struct S : public std::function<void()> { using function::function; };
 
 int main() {
-    S f1( Fn{} );
-    S f2(std::allocator_arg, std::allocator<void>{}, Fn{});
+    S s( [](){} );
+    S f1( s );
+    S f2(std::allocator_arg, std::allocator<int>{}, s);
 }
