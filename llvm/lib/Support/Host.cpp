@@ -22,7 +22,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <string.h>
 #include <assert.h>
-#include <cpuid.h>
 
 // Include the platform-specific parts of this class.
 #ifdef LLVM_ON_UNIX
@@ -73,6 +72,10 @@ static ssize_t LLVM_ATTRIBUTE_UNUSED readCpuInfo(void *Buf, size_t Size) {
 
 #if defined(__i386__) || defined(_M_IX86) || \
     defined(__x86_64__) || defined(_M_X64)
+
+#if defined(__GNUC__) || defined(__clang__)
+#include <cpuid.h>
+#endif
 
 enum VendorSignatures {
   SIG_INTEL = 0x756e6547 /* Genu */,
@@ -741,11 +744,13 @@ StringRef sys::getHostCPUName() {
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
   unsigned MaxLeaf, Vendor;
 
+#if defined(__GNUC__) || defined(__clang__)
   //FIXME: include cpuid.h from clang or copy __get_cpuid_max here
   // and simplify it to not invoke __cpuid (like cpu_model.c in
   // compiler-rt/lib/builtins/cpu_model.c?
   if(!__get_cpuid_max(0, &Vendor))
     return "generic";
+#endif
   if (getX86CpuIDAndInfo(0, &MaxLeaf, &Vendor, &ECX, &EDX))
     return "generic";
   if (getX86CpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX))
