@@ -1166,16 +1166,22 @@ template <class ELFT> void Writer<ELFT>::setPhdrs() {
   }
 }
 
-static uint32_t getMipsEFlags(bool Is64Bits) {
-  // FIXME: In fact ELF flags depends on ELF flags of input object files
-  // and selected emulation. For now just use hard coded values.
+template <class ELFT>
+static uint32_t getMipsEFlags(bool Is64Bits,
+                              const ELFFileBase<ELFT> &FirstElf) {
+  // FIXME: ELF flags depends on ELF flags of all input object files and
+  // selected emulation. For now pick the arch flag from the fisrt input file
+  // and use hard coded values for other flags.
+  uint32_t FirstElfFlags = FirstElf.getObj().getHeader()->e_flags;
+  uint32_t ElfFlags = FirstElfFlags & EF_MIPS_ARCH;
   if (Is64Bits)
-    return EF_MIPS_CPIC | EF_MIPS_PIC | EF_MIPS_ARCH_64R2;
-
-  uint32_t V = EF_MIPS_CPIC | EF_MIPS_ABI_O32 | EF_MIPS_ARCH_32R2;
-  if (Config->Shared)
-    V |= EF_MIPS_PIC;
-  return V;
+    ElfFlags |= EF_MIPS_CPIC | EF_MIPS_PIC;
+  else {
+    ElfFlags |= EF_MIPS_CPIC | EF_MIPS_ABI_O32;
+    if (Config->Shared)
+      ElfFlags |= EF_MIPS_PIC;
+  }
+  return ElfFlags;
 }
 
 template <class ELFT> static typename ELFT::uint getEntryAddr() {
@@ -1252,7 +1258,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_shstrndx = Out<ELFT>::ShStrTab->SectionIndex;
 
   if (Config->EMachine == EM_MIPS)
-    EHdr->e_flags = getMipsEFlags(ELFT::Is64Bits);
+    EHdr->e_flags = getMipsEFlags(ELFT::Is64Bits, FirstObj);
 
   if (!Config->Relocatable) {
     EHdr->e_phoff = sizeof(Elf_Ehdr);
