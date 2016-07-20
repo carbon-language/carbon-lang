@@ -171,10 +171,6 @@ public:
   static bool classof(const InputSectionBase<ELFT> *S);
   void split();
 
-  // Translate an offset in the input section to an offset in the output
-  // section.
-  uintX_t getOffset(uintX_t Offset) const;
-
   // Relocation section that refer to this one.
   const Elf_Shdr *RelocSection = nullptr;
 };

@@ -68,7 +68,10 @@ typename ELFT::uint InputSectionBase<ELFT>::getOffset(uintX_t Offset) const {
   case Regular:
     return cast<InputSection<ELFT>>(this)->OutSecOff + Offset;
   case EHFrame:
-    return cast<EhInputSection<ELFT>>(this)->getOffset(Offset);
+    // The file crtbeginT.o has relocations pointing to the start of an empty
+    // .eh_frame that is known to be the first in the link. It does that to
+    // identify the start of the output .eh_frame.
+    return Offset;
   case Merge:
     return cast<MergeInputSection<ELFT>>(this)->getOffset(Offset);
   case MipsReginfo:
@@ -459,21 +462,6 @@ void EhInputSection<ELFT>::split() {
       break;
     Off += Size;
   }
-}
-
-template <class ELFT>
-typename ELFT::uint EhInputSection<ELFT>::getOffset(uintX_t Offset) const {
-  // The file crtbeginT.o has relocations pointing to the start of an empty
-  // .eh_frame that is known to be the first in the link. It does that to
-  // identify the start of the output .eh_frame. Handle this special case.
-  if (this->getSectionHdr()->sh_size == 0)
-    return Offset;
-  const SectionPiece *Piece = this->getSectionPiece(Offset);
-  if (Piece->OutputOff == size_t(-1))
-    return -1; // Not in the output
-
-  uintX_t Addend = Offset - Piece->InputOff;
-  return Piece->OutputOff + Addend;
 }
 
 static size_t findNull(ArrayRef<uint8_t> A, size_t EntSize) {

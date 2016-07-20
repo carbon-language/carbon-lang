@@ -557,7 +557,6 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       if (PieceI->OutputOff == (uintX_t)-1)
         continue;
       Offset = PieceI->OutputOff + RI.r_offset - PieceI->InputOff;
-      assert(Offset == C.getOffset(RI.r_offset));
     } else {
       Offset = C.getOffset(RI.r_offset);
     }
