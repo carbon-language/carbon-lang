@@ -8284,7 +8284,7 @@ let Predicates = [HasAVX], AddedComplexity = 20 in {
             (VMOVDDUPrr (COPY_TO_REGCLASS FR64:$src, VR128))>;
 }
 
-let Predicates = [HasAVX, NoVLX], AddedComplexity = 20 in {
+let Predicates = [HasAVX1Only], AddedComplexity = 20 in {
   def : Pat<(v4f32 (X86VBroadcast FR32:$src)),
             (VPSHUFDri (COPY_TO_REGCLASS FR32:$src, VR128), 0)>;
   def : Pat<(v8f32 (X86VBroadcast FR32:$src)),
