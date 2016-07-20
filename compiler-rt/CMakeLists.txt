@@ -37,6 +37,8 @@ option(COMPILER_RT_BUILD_BUILTINS "Build builtins" ON)
 mark_as_advanced(COMPILER_RT_BUILD_BUILTINS)
 option(COMPILER_RT_BUILD_SANITIZERS "Build sanitizers" ON)
 mark_as_advanced(COMPILER_RT_BUILD_SANITIZERS)
+option(COMPILER_RT_BUILD_XRAY "Build xray" ON)
+mark_as_advanced(COMPILER_RT_BUILD_XRAY)
 
 if (COMPILER_RT_STANDALONE_BUILD)
   if (NOT LLVM_CONFIG_PATH)
