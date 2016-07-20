@@ -279,15 +279,15 @@ define void @f10(i32 *%vptr, double *%dst) {
 ; CHECK-NOFP-LABEL: f10:
 ; CHECK-NOFP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r15)
 ; CHECK-NOFP: lghi [[REGISTER]], 4096
-; CHECK-NOFP: lg [[REGISTER]], [[OFFSET]](%r15)
 ; CHECK-NOFP: ldeb {{%f[0-7]}}, 0([[REGISTER]],%r15)
+; CHECK-NOFP: lg [[REGISTER]], [[OFFSET]](%r15)
 ; CHECK-NOFP: br %r14
 ;
 ; CHECK-FP-LABEL: f10:
 ; CHECK-FP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r11)
 ; CHECK-FP: lghi [[REGISTER]], 4096
-; CHECK-FP: lg [[REGISTER]], [[OFFSET]](%r11)
 ; CHECK-FP: ldeb {{%f[0-7]}}, 0([[REGISTER]],%r11)
+; CHECK-FP: lg [[REGISTER]], [[OFFSET]](%r11)
 ; CHECK-FP: br %r14
   %region1 = alloca [978 x float], align 8
   %region2 = alloca [978 x float], align 8

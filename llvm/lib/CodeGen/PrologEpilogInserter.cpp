@@ -41,7 +41,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
-#include <algorithm>
 #include <climits>
 
 using namespace llvm;
@@ -1147,55 +1146,6 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
   }
 }
 
-/// Allocate a register for the virtual register \p VReg. The last use of
-/// \p VReg is around the current position of the register scavenger \p RS.
-/// \p ReserveAfter controls whether the scavenged register needs to be reserved
-/// after the current instruction, otherwise it will only be reserved before the
-/// current instruction.
-static unsigned scavengeVReg(MachineRegisterInfo &MRI, RegScavenger &RS,
-                             unsigned VReg, bool ReserveAfter) {
-#ifndef NDEBUG
-  // Verify that all definitions and uses are in the same basic block.
-  const MachineBasicBlock *CommonMBB = nullptr;
-  bool HadDef = false;
-  for (MachineOperand &MO : MRI.reg_nodbg_operands(VReg)) {
-    MachineBasicBlock *MBB = MO.getParent()->getParent();
-    if (CommonMBB == nullptr)
-      CommonMBB = MBB;
-    assert(MBB == CommonMBB && "All defs+uses must be in the same basic block");
-    if (MO.isDef())
-      HadDef = true;
-  }
-  assert(HadDef && "Must have at least 1 Def");
-#endif
-
-  // We should only have one definition of the register. However to accomodate
-  // the requirements of two address code we also allow definitions in
-  // subsequent instructions provided they also read the register. That way
-  // we get a single contiguous lifetime.
-  //
-  // Definitions in MRI.def_begin() are unordered, search for the first.
-  const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
-  MachineRegisterInfo::def_iterator FirstDef =
-    std::find_if(MRI.def_begin(VReg), MRI.def_end(),
-                 [VReg, TRI](const MachineOperand &MO) {
-      return !MO.getParent()->readsRegister(VReg, TRI);
-    });
-  assert(FirstDef != MRI.def_end() &&
-         "Must have one definition that does not redefine vreg");
-  MachineInstr &DefMI = *FirstDef->getParent();
-
-  // The register scavenger will report a free register inserting an emergency
-  // spill/reload if necessary.
-  int SPAdj = 0;
-  const TargetRegisterClass &RC = *MRI.getRegClass(VReg);
-  unsigned SReg = RS.scavengeRegisterBackwards(RC, DefMI.getIterator(),
-                                               ReserveAfter, SPAdj);
-  MRI.replaceRegWith(VReg, SReg);
-  ++NumScavengedRegs;
-  return SReg;
-}
-
 /// doScavengeFrameVirtualRegs - Replace all frame index virtual registers
 /// with physical registers. Use the register scavenger to find an
 /// appropriate register to use.
@@ -1208,46 +1158,77 @@ doScavengeFrameVirtualRegs(MachineFunction &MF, RegScavenger *RS) {
   // Run through the instructions and find any virtual registers.
   MachineRegisterInfo &MRI = MF.getRegInfo();
   for (MachineBasicBlock &MBB : MF) {
-    RS->enterBasicBlockEnd(MBB);
+    RS->enterBasicBlock(MBB);
 
-    bool LastIterationHadVRegUses = false;
-    for (MachineBasicBlock::iterator I = MBB.end(); I != MBB.begin(); ) {
-      --I;
-      // Move RegScavenger to the position between *I and *std::next(I).
-      RS->backward(I);
+    int SPAdj = 0;
 
-      // Look for unassigned vregs in the uses of *std::next(I).
-      MachineBasicBlock::iterator N = std::next(I);
-      if (LastIterationHadVRegUses) {
-        const MachineInstr &NMI = *N;
-        for (const MachineOperand &MO : NMI.operands()) {
-          if (!MO.isReg() || !MO.readsReg())
-            continue;
-          unsigned Reg = MO.getReg();
-          if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-            unsigned SReg = scavengeVReg(MRI, *RS, Reg, true);
-            RS->setRegUsed(SReg);
-          }
-        }
-      }
+    // The instruction stream may change in the loop, so check MBB.end()
+    // directly.
+    for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ) {
+      // We might end up here again with a NULL iterator if we scavenged a
+      // register for which we inserted spill code for definition by what was
+      // originally the first instruction in MBB.
+      if (I == MachineBasicBlock::iterator(nullptr))
+        I = MBB.begin();
 
-      // Look for unassigned vregs in the defs of *I.
-      LastIterationHadVRegUses = false;
       const MachineInstr &MI = *I;
+      MachineBasicBlock::iterator J = std::next(I);
+      MachineBasicBlock::iterator P =
+                         I == MBB.begin() ? MachineBasicBlock::iterator(nullptr)
+                                          : std::prev(I);
+
+      // RS should process this instruction before we might scavenge at this
+      // location. This is because we might be replacing a virtual register
+      // defined by this instruction, and if so, registers killed by this
+      // instruction are available, and defined registers are not.
+      RS->forward(I);
+
       for (const MachineOperand &MO : MI.operands()) {
         if (!MO.isReg())
           continue;
         unsigned Reg = MO.getReg();
         if (!TargetRegisterInfo::isVirtualRegister(Reg))
           continue;
-        // We have to look at all operands anyway so we can precalculate here
-        // whether there is a reading operand. This allows use to skip the use
-        // step in the next iteration if there was none.
-        if (MO.readsReg())
-          LastIterationHadVRegUses = true;
-        if (MO.isDef())
-          scavengeVReg(MRI, *RS, Reg, false);
+
+        // When we first encounter a new virtual register, it
+        // must be a definition.
+        assert(MO.isDef() && "frame index virtual missing def!");
+        // Scavenge a new scratch register
+        const TargetRegisterClass *RC = MRI.getRegClass(Reg);
+        unsigned ScratchReg = RS->scavengeRegister(RC, J, SPAdj);
+
+        ++NumScavengedRegs;
+
+        // Replace this reference to the virtual register with the
+        // scratch register.
+        assert(ScratchReg && "Missing scratch register!");
+        MRI.replaceRegWith(Reg, ScratchReg);
+
+        // Because this instruction was processed by the RS before this
+        // register was allocated, make sure that the RS now records the
+        // register as being used.
+        RS->setRegUsed(ScratchReg);
       }
+
+      // If the scavenger needed to use one of its spill slots, the
+      // spill code will have been inserted in between I and J. This is a
+      // problem because we need the spill code before I: Move I to just
+      // prior to J.
+      if (I != std::prev(J)) {
+        MBB.splice(J, &MBB, I);
+
+        // Before we move I, we need to prepare the RS to visit I again.
+        // Specifically, RS will assert if it sees uses of registers that
+        // it believes are undefined. Because we have already processed
+        // register kills in I, when it visits I again, it will believe that
+        // those registers are undefined. To avoid this situation, unprocess
+        // the instruction I.
+        assert(RS->getCurrentPosition() == I &&
+          "The register scavenger has an unexpected position");
+        I = P;
+        RS->unprocess(P);
+      } else
+        ++I;
     }
   }
 }

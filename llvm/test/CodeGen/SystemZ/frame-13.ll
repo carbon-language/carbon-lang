@@ -212,15 +212,15 @@ define void @f10(i32 *%vptr) {
 ; CHECK-NOFP-LABEL: f10:
 ; CHECK-NOFP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r15)
 ; CHECK-NOFP: lay [[REGISTER]], 4096(%r15)
-; CHECK-NOFP: lg [[REGISTER]], [[OFFSET]](%r15)
 ; CHECK-NOFP: mvhi 0([[REGISTER]]), 42
+; CHECK-NOFP: lg [[REGISTER]], [[OFFSET]](%r15)
 ; CHECK-NOFP: br %r14
 ;
 ; CHECK-FP-LABEL: f10:
 ; CHECK-FP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r11)
 ; CHECK-FP: lay [[REGISTER]], 4096(%r11)
-; CHECK-FP: lg [[REGISTER]], [[OFFSET]](%r11)
 ; CHECK-FP: mvhi 0([[REGISTER]]), 42
+; CHECK-FP: lg [[REGISTER]], [[OFFSET]](%r11)
 ; CHECK-FP: br %r14
   %i0 = load volatile i32 , i32 *%vptr
   %i1 = load volatile i32 , i32 *%vptr
@@ -250,8 +250,8 @@ define void @f11(i32 *%vptr) {
 ; CHECK-NOFP: stmg %r6, %r15,
 ; CHECK-NOFP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r15)
 ; CHECK-NOFP: lay [[REGISTER]], 4096(%r15)
-; CHECK-NOFP: lg [[REGISTER]], [[OFFSET]](%r15)
 ; CHECK-NOFP: mvhi 0([[REGISTER]]), 42
+; CHECK-NOFP: lg [[REGISTER]], [[OFFSET]](%r15)
 ; CHECK-NOFP: lmg %r6, %r15,
 ; CHECK-NOFP: br %r14
   %i0 = load volatile i32 , i32 *%vptr
