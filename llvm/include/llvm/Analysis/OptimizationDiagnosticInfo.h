@@ -74,6 +74,36 @@ public:
   void emitOptimizationRemarkAnalysis(const char *PassName, Loop *L,
                                       const Twine &Msg);
 
+  /// \brief Emit an optimization analysis remark related to floating-point
+  /// non-commutativity.
+  ///
+  /// \p PassName is the name of the pass emitting the message. If
+  /// -Rpass-analysis= is given and \p PassName matches the regular expression
+  /// in -Rpass, then the remark will be emitted. \p Fn is the function
+  /// triggering the remark, \p DLoc is the debug location where the diagnostic
+  /// is generated.\p V is the IR Value that identifies the code region.  \p Msg
+  /// is the message string to use.
+  void emitOptimizationRemarkAnalysisFPCommute(const char *PassName,
+                                               const DebugLoc &DLoc, Value *V,
+                                               const Twine &Msg);
+
+  /// \brief Emit an optimization analysis remark related to pointer aliasing.
+  ///
+  /// \p PassName is the name of the pass emitting the message. If
+  /// -Rpass-analysis= is given and \p PassName matches the regular expression
+  /// in -Rpass, then the remark will be emitted. \p Fn is the function
+  /// triggering the remark, \p DLoc is the debug location where the diagnostic
+  /// is generated.\p V is the IR Value that identifies the code region.  \p Msg
+  /// is the message string to use.
+  void emitOptimizationRemarkAnalysisAliasing(const char *PassName,
+                                              const DebugLoc &DLoc, Value *V,
+                                              const Twine &Msg);
+
+  /// \brief Same as above but derives the IR Value for the code region and the
+  /// debug location from the Loop parameter \p L.
+  void emitOptimizationRemarkAnalysisAliasing(const char *PassName, Loop *L,
+                                              const Twine &Msg);
+
 private:
   Function *F;
 

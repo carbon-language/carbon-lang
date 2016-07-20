@@ -54,6 +54,26 @@ void OptimizationRemarkEmitter::emitOptimizationRemarkAnalysis(
                                  Msg);
 }
 
+void OptimizationRemarkEmitter::emitOptimizationRemarkAnalysisFPCommute(
+    const char *PassName, const DebugLoc &DLoc, Value *V, const Twine &Msg) {
+  LLVMContext &Ctx = F->getContext();
+  Ctx.diagnose(DiagnosticInfoOptimizationRemarkAnalysisFPCommute(
+      PassName, *F, DLoc, Msg, computeHotness(V)));
+}
+
+void OptimizationRemarkEmitter::emitOptimizationRemarkAnalysisAliasing(
+    const char *PassName, const DebugLoc &DLoc, Value *V, const Twine &Msg) {
+  LLVMContext &Ctx = F->getContext();
+  Ctx.diagnose(DiagnosticInfoOptimizationRemarkAnalysisAliasing(
+      PassName, *F, DLoc, Msg, computeHotness(V)));
+}
+
+void OptimizationRemarkEmitter::emitOptimizationRemarkAnalysisAliasing(
+    const char *PassName, Loop *L, const Twine &Msg) {
+  emitOptimizationRemarkAnalysisAliasing(PassName, L->getStartLoc(),
+                                         L->getHeader(), Msg);
+}
+
 OptimizationRemarkEmitterWrapperPass::OptimizationRemarkEmitterWrapperPass()
     : FunctionPass(ID) {
   initializeOptimizationRemarkEmitterWrapperPassPass(
