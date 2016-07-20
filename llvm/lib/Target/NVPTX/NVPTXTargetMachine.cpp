@@ -46,6 +46,7 @@
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
+#include "llvm/Transforms/Vectorize.h"
 
 using namespace llvm;
 
@@ -53,6 +54,13 @@ static cl::opt<bool> UseInferAddressSpaces(
     "nvptx-use-infer-addrspace", cl::init(false), cl::Hidden,
     cl::desc("Optimize address spaces using NVPTXInferAddressSpaces instead of "
              "NVPTXFavorNonGenericAddrSpaces"));
+
+// LSV is still relatively new; this switch lets us turn it off in case we
+// encounter (or suspect) a bug.
+static cl::opt<bool>
+    DisableLoadStoreVectorizer("disable-nvptx-load-store-vectorizer",
+                               cl::desc("Disable load/store vectorizer"),
+                               cl::init(false), cl::Hidden);
 
 namespace llvm {
 void initializeNVVMIntrRangePass(PassRegistry&);
@@ -258,6 +266,8 @@ void NVPTXPassConfig::addIRPasses() {
   addPass(createNVPTXLowerArgsPass(&getNVPTXTargetMachine()));
   if (getOptLevel() != CodeGenOpt::None) {
     addAddressSpaceInferencePasses();
+    if (!DisableLoadStoreVectorizer)
+      addPass(createLoadStoreVectorizerPass());
     addStraightLineScalarOptimizationPasses();
   }
 
