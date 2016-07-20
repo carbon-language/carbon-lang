@@ -783,23 +783,26 @@ std::vector<StringRef> ScriptParser::readOutputSectionPhdrs() {
 }
 
 unsigned ScriptParser::readPhdrType() {
-  static const char *typeNames[] = {
-      "PT_NULL",         "PT_LOAD",      "PT_DYNAMIC",  "PT_INTERP",
-      "PT_NOTE",         "PT_SHLIB",     "PT_PHDR",     "PT_TLS",
-      "PT_GNU_EH_FRAME", "PT_GNU_STACK", "PT_GNU_RELRO"};
-  static unsigned typeCodes[] = {
-      PT_NULL, PT_LOAD, PT_DYNAMIC,      PT_INTERP,    PT_NOTE,     PT_SHLIB,
-      PT_PHDR, PT_TLS,  PT_GNU_EH_FRAME, PT_GNU_STACK, PT_GNU_RELRO};
-
-  unsigned PhdrType = PT_NULL;
   StringRef Tok = next();
-  auto It = std::find(std::begin(typeNames), std::end(typeNames), Tok);
-  if (It != std::end(typeNames))
-    PhdrType = typeCodes[std::distance(std::begin(typeNames), It)];
-  else
-    setError("invalid program header type");
+  unsigned Ret = StringSwitch<unsigned>(Tok)
+      .Case("PT_NULL", PT_NULL)
+      .Case("PT_LOAD", PT_LOAD)
+      .Case("PT_DYNAMIC", PT_DYNAMIC)
+      .Case("PT_INTERP", PT_INTERP)
+      .Case("PT_NOTE", PT_NOTE)
+      .Case("PT_SHLIB", PT_SHLIB)
+      .Case("PT_PHDR", PT_PHDR)
+      .Case("PT_TLS", PT_TLS)
+      .Case("PT_GNU_EH_FRAME", PT_GNU_EH_FRAME)
+      .Case("PT_GNU_STACK", PT_GNU_STACK)
+      .Case("PT_GNU_RELRO", PT_GNU_RELRO)
+      .Default(-1);
 
-  return PhdrType;
+  if (Ret == (unsigned)-1) {
+    setError("invalid program header type: " + Tok);
+    return PT_NULL;
+  }
+  return Ret;
 }
 
 static bool isUnderSysroot(StringRef Path) {
