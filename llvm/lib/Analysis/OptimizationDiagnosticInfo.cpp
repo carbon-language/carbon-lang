@@ -66,7 +66,8 @@ void OptimizationRemarkEmitterWrapperPass::getAnalysisUsage(
 char OptimizationRemarkEmitterAnalysis::PassID;
 
 OptimizationRemarkEmitter
-OptimizationRemarkEmitterAnalysis::run(Function &F, AnalysisManager<Function> &AM) {
+OptimizationRemarkEmitterAnalysis::run(Function &F,
+                                       AnalysisManager<Function> &AM) {
   BlockFrequencyInfo *BFI;
 
   if (F.getContext().getDiagnosticHotnessRequested())
