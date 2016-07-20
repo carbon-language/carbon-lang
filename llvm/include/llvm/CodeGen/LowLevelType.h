@@ -67,6 +67,7 @@ public:
   }
 
   /// \brief get an unsized but valid low-level type (e.g. for a label).
+
   static LLT unsized() {
     return LLT{Unsized, 1, 0};
   }
