@@ -653,7 +653,7 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
 
   assert(!TTP->getRequiresClause() &&
          "Unexpected requires-clause on template template-parameter");
-  constexpr Expr *const CanonRequiresClause = nullptr;
+  LLVM_CONSTEXPR Expr *const CanonRequiresClause = nullptr;
 
   TemplateTemplateParmDecl *CanonTTP
     = TemplateTemplateParmDecl::Create(*this, getTranslationUnitDecl(), 
