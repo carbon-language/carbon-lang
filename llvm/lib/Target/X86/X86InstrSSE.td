@@ -3915,37 +3915,6 @@ let Predicates = [HasAVX2] in
                                    IsCommutable, 0>, VEX_4V, VEX_L;
 }
 
-multiclass PDI_binop_rmi<bits<8> opc, bits<8> opc2, Format ImmForm,
-                         string OpcodeStr, SDNode OpNode,
-                         SDNode OpNode2, RegisterClass RC,
-                         ValueType DstVT, ValueType SrcVT,
-                         PatFrag ld_frag, ShiftOpndItins itins,
-                         bit Is2Addr = 1> {
-  // src2 is always 128-bit
-  def rr : PDI<opc, MRMSrcReg, (outs RC:$dst),
-       (ins RC:$src1, VR128:$src2),
-       !if(Is2Addr,
-           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (DstVT (OpNode RC:$src1, (SrcVT VR128:$src2))))],
-        itins.rr>, Sched<[WriteVecShift]>;
-  def rm : PDI<opc, MRMSrcMem, (outs RC:$dst),
-       (ins RC:$src1, i128mem:$src2),
-       !if(Is2Addr,
-           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (DstVT (OpNode RC:$src1,
-                       (SrcVT (bitconvert (ld_frag addr:$src2))))))], itins.rm>,
-      Sched<[WriteVecShiftLd, ReadAfterLd]>;
-  def ri : PDIi8<opc2, ImmForm, (outs RC:$dst),
-       (ins RC:$src1, u8imm:$src2),
-       !if(Is2Addr,
-           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (DstVT (OpNode2 RC:$src1, (i8 imm:$src2))))], itins.ri>,
-       Sched<[WriteVecShift]>;
-}
-
 /// PDI_binop_rm2 - Simple SSE2 binary operator with different src and dst types
 multiclass PDI_binop_rm2<bits<8> opc, string OpcodeStr, SDNode OpNode,
                          ValueType DstVT, ValueType SrcVT, RegisterClass RC,
@@ -4053,152 +4022,101 @@ defm PMULUDQ : PDI_binop_rm2<0xF4, "pmuludq", X86pmuludq, v2i64, v4i32, VR128,
 // SSE2 - Packed Integer Logical Instructions
 //===---------------------------------------------------------------------===//
 
-let Predicates = [HasAVX, NoVLX] in {
-defm VPSLLD : PDI_binop_rmi<0xF2, 0x72, MRM6r, "vpslld", X86vshl, X86vshli,
-                            VR128, v4i32, v4i32, loadv2i64,
-                            SSE_INTSHIFT_ITINS_P, 0>, VEX_4V;
-defm VPSLLQ : PDI_binop_rmi<0xF3, 0x73, MRM6r, "vpsllq", X86vshl, X86vshli,
-                            VR128, v2i64, v2i64, loadv2i64,
-                            SSE_INTSHIFT_ITINS_P, 0>, VEX_4V;
-
-defm VPSRLD : PDI_binop_rmi<0xD2, 0x72, MRM2r, "vpsrld", X86vsrl, X86vsrli,
-                            VR128, v4i32, v4i32, loadv2i64,
-                            SSE_INTSHIFT_ITINS_P, 0>, VEX_4V;
-defm VPSRLQ : PDI_binop_rmi<0xD3, 0x73, MRM2r, "vpsrlq", X86vsrl, X86vsrli,
-                            VR128, v2i64, v2i64, loadv2i64,
-                            SSE_INTSHIFT_ITINS_P, 0>, VEX_4V;
-
-defm VPSRAD : PDI_binop_rmi<0xE2, 0x72, MRM4r, "vpsrad", X86vsra, X86vsrai,
-                            VR128, v4i32, v4i32, loadv2i64,
-                            SSE_INTSHIFT_ITINS_P, 0>, VEX_4V;
-} // Predicates = [HasAVX, NoVLX]
-
-let Predicates = [HasAVX, NoVLX_Or_NoBWI] in {
-defm VPSLLW : PDI_binop_rmi<0xF1, 0x71, MRM6r, "vpsllw", X86vshl, X86vshli,
-                            VR128, v8i16, v8i16, loadv2i64,
-                            SSE_INTSHIFT_ITINS_P, 0>, VEX_4V;
-defm VPSRLW : PDI_binop_rmi<0xD1, 0x71, MRM2r, "vpsrlw", X86vsrl, X86vsrli,
-                            VR128, v8i16, v8i16, loadv2i64,
-                            SSE_INTSHIFT_ITINS_P, 0>, VEX_4V;
-defm VPSRAW : PDI_binop_rmi<0xE1, 0x71, MRM4r, "vpsraw", X86vsra, X86vsrai,
-                            VR128, v8i16, v8i16, loadv2i64,
-                            SSE_INTSHIFT_ITINS_P, 0>, VEX_4V;
-} // Predicates = [HasAVX, NoVLX_Or_NoBWI]
-
-
-let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift] ,
-                                    Predicates = [HasAVX, NoVLX_Or_NoBWI]in {
-  // 128-bit logical shifts.
-  def VPSLLDQri : PDIi8<0x73, MRM7r,
-                    (outs VR128:$dst), (ins VR128:$src1, u8imm:$src2),
-                    "vpslldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst,
-                      (v16i8 (X86vshldq VR128:$src1, (i8 imm:$src2))))]>,
-                    VEX_4V;
-  def VPSRLDQri : PDIi8<0x73, MRM3r,
-                    (outs VR128:$dst), (ins VR128:$src1, u8imm:$src2),
-                    "vpsrldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst,
-                      (v16i8 (X86vshrdq VR128:$src1, (i8 imm:$src2))))]>,
-                    VEX_4V;
-  // PSRADQri doesn't exist in SSE[1-3].
-} // Predicates = [HasAVX, NoVLX_Or_NoBWI]
-
-let Predicates = [HasAVX2, NoVLX] in {
-defm VPSLLDY : PDI_binop_rmi<0xF2, 0x72, MRM6r, "vpslld", X86vshl, X86vshli,
-                             VR256, v8i32, v4i32, loadv2i64,
-                             SSE_INTSHIFT_ITINS_P, 0>, VEX_4V, VEX_L;
-defm VPSLLQY : PDI_binop_rmi<0xF3, 0x73, MRM6r, "vpsllq", X86vshl, X86vshli,
-                             VR256, v4i64, v2i64, loadv2i64,
-                             SSE_INTSHIFT_ITINS_P, 0>, VEX_4V, VEX_L;
-
-defm VPSRLDY : PDI_binop_rmi<0xD2, 0x72, MRM2r, "vpsrld", X86vsrl, X86vsrli,
-                             VR256, v8i32, v4i32, loadv2i64,
-                             SSE_INTSHIFT_ITINS_P, 0>, VEX_4V, VEX_L;
-defm VPSRLQY : PDI_binop_rmi<0xD3, 0x73, MRM2r, "vpsrlq", X86vsrl, X86vsrli,
-                             VR256, v4i64, v2i64, loadv2i64,
-                             SSE_INTSHIFT_ITINS_P, 0>, VEX_4V, VEX_L;
-
-defm VPSRADY : PDI_binop_rmi<0xE2, 0x72, MRM4r, "vpsrad", X86vsra, X86vsrai,
-                             VR256, v8i32, v4i32, loadv2i64,
-                             SSE_INTSHIFT_ITINS_P, 0>, VEX_4V, VEX_L;
-}// Predicates = [HasAVX2, NoVLX]
-
-let Predicates = [HasAVX2, NoVLX_Or_NoBWI] in {
-defm VPSLLWY : PDI_binop_rmi<0xF1, 0x71, MRM6r, "vpsllw", X86vshl, X86vshli,
-                             VR256, v16i16, v8i16, loadv2i64,
-                             SSE_INTSHIFT_ITINS_P, 0>, VEX_4V, VEX_L;
-defm VPSRLWY : PDI_binop_rmi<0xD1, 0x71, MRM2r, "vpsrlw", X86vsrl, X86vsrli,
-                             VR256, v16i16, v8i16, loadv2i64,
-                             SSE_INTSHIFT_ITINS_P, 0>, VEX_4V, VEX_L;
-defm VPSRAWY : PDI_binop_rmi<0xE1, 0x71, MRM4r, "vpsraw", X86vsra, X86vsrai,
-                             VR256, v16i16, v8i16, loadv2i64,
-                             SSE_INTSHIFT_ITINS_P, 0>, VEX_4V, VEX_L;
-}// Predicates = [HasAVX2, NoVLX_Or_NoBWI]
-
-let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift], hasSideEffects = 0 ,
-                                    Predicates = [HasAVX2, NoVLX_Or_NoBWI] in {
-  // 256-bit logical shifts.
-  def VPSLLDQYri : PDIi8<0x73, MRM7r,
-                    (outs VR256:$dst), (ins VR256:$src1, u8imm:$src2),
-                    "vpslldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR256:$dst,
-                      (v32i8 (X86vshldq VR256:$src1, (i8 imm:$src2))))]>,
-                    VEX_4V, VEX_L;
-  def VPSRLDQYri : PDIi8<0x73, MRM3r,
-                    (outs VR256:$dst), (ins VR256:$src1, u8imm:$src2),
-                    "vpsrldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR256:$dst,
-                      (v32i8 (X86vshrdq VR256:$src1, (i8 imm:$src2))))]>,
-                    VEX_4V, VEX_L;
-  // PSRADQYri doesn't exist in SSE[1-3].
-} // Predicates = [HasAVX2, NoVLX_Or_NoBWI]
-
-let Constraints = "$src1 = $dst" in {
-defm PSLLW : PDI_binop_rmi<0xF1, 0x71, MRM6r, "psllw", X86vshl, X86vshli,
-                           VR128, v8i16, v8i16, memopv2i64,
-                           SSE_INTSHIFT_ITINS_P>;
-defm PSLLD : PDI_binop_rmi<0xF2, 0x72, MRM6r, "pslld", X86vshl, X86vshli,
-                           VR128, v4i32, v4i32, memopv2i64,
-                           SSE_INTSHIFT_ITINS_P>;
-defm PSLLQ : PDI_binop_rmi<0xF3, 0x73, MRM6r, "psllq", X86vshl, X86vshli,
-                           VR128, v2i64, v2i64, memopv2i64,
-                           SSE_INTSHIFT_ITINS_P>;
-
-defm PSRLW : PDI_binop_rmi<0xD1, 0x71, MRM2r, "psrlw", X86vsrl, X86vsrli,
-                           VR128, v8i16, v8i16, memopv2i64,
-                           SSE_INTSHIFT_ITINS_P>;
-defm PSRLD : PDI_binop_rmi<0xD2, 0x72, MRM2r, "psrld", X86vsrl, X86vsrli,
-                           VR128, v4i32, v4i32, memopv2i64,
-                           SSE_INTSHIFT_ITINS_P>;
-defm PSRLQ : PDI_binop_rmi<0xD3, 0x73, MRM2r, "psrlq", X86vsrl, X86vsrli,
-                           VR128, v2i64, v2i64, memopv2i64,
-                           SSE_INTSHIFT_ITINS_P>;
-
-defm PSRAW : PDI_binop_rmi<0xE1, 0x71, MRM4r, "psraw", X86vsra, X86vsrai,
-                           VR128, v8i16, v8i16, memopv2i64,
-                           SSE_INTSHIFT_ITINS_P>;
-defm PSRAD : PDI_binop_rmi<0xE2, 0x72, MRM4r, "psrad", X86vsra, X86vsrai,
-                           VR128, v4i32, v4i32, memopv2i64,
-                           SSE_INTSHIFT_ITINS_P>;
-
-let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift], hasSideEffects = 0 in {
-  // 128-bit logical shifts.
-  def PSLLDQri : PDIi8<0x73, MRM7r,
-                       (outs VR128:$dst), (ins VR128:$src1, u8imm:$src2),
-                       "pslldq\t{$src2, $dst|$dst, $src2}",
-                       [(set VR128:$dst,
-                         (v16i8 (X86vshldq VR128:$src1, (i8 imm:$src2))))],
-                       IIC_SSE_INTSHDQ_P_RI>;
-  def PSRLDQri : PDIi8<0x73, MRM3r,
-                       (outs VR128:$dst), (ins VR128:$src1, u8imm:$src2),
-                       "psrldq\t{$src2, $dst|$dst, $src2}",
-                       [(set VR128:$dst,
-                         (v16i8 (X86vshrdq VR128:$src1, (i8 imm:$src2))))],
-                       IIC_SSE_INTSHDQ_P_RI>;
-  // PSRADQri doesn't exist in SSE[1-3].
+multiclass PDI_binop_rmi<bits<8> opc, bits<8> opc2, Format ImmForm,
+                         string OpcodeStr, SDNode OpNode,
+                         SDNode OpNode2, RegisterClass RC,
+                         ValueType DstVT, ValueType SrcVT,
+                         PatFrag ld_frag, bit Is2Addr = 1> {
+  // src2 is always 128-bit
+  def rr : PDI<opc, MRMSrcReg, (outs RC:$dst),
+       (ins RC:$src1, VR128:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (DstVT (OpNode RC:$src1, (SrcVT VR128:$src2))))],
+       SSE_INTSHIFT_ITINS_P.rr>, Sched<[WriteVecShift]>;
+  def rm : PDI<opc, MRMSrcMem, (outs RC:$dst),
+       (ins RC:$src1, i128mem:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (DstVT (OpNode RC:$src1,
+                       (SrcVT (bitconvert (ld_frag addr:$src2))))))],
+       SSE_INTSHIFT_ITINS_P.rm>, Sched<[WriteVecShiftLd, ReadAfterLd]>;
+  def ri : PDIi8<opc2, ImmForm, (outs RC:$dst),
+       (ins RC:$src1, u8imm:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (DstVT (OpNode2 RC:$src1, (i8 imm:$src2))))],
+       SSE_INTSHIFT_ITINS_P.ri>, Sched<[WriteVecShift]>;
 }
-} // Constraints = "$src1 = $dst"
+
+multiclass PDI_binop_rmi_all<bits<8> opc, bits<8> opc2, Format ImmForm,
+                             string OpcodeStr, SDNode OpNode,
+                             SDNode OpNode2, ValueType DstVT128,
+                             ValueType DstVT256, ValueType SrcVT,
+                             Predicate prd> {
+let Predicates = [HasAVX, prd] in
+  defm V#NAME : PDI_binop_rmi<opc, opc2, ImmForm, !strconcat("v", OpcodeStr),
+                              OpNode, OpNode2, VR128, DstVT128, SrcVT,
+                              loadv2i64, 0>, VEX_4V;
+let Predicates = [HasAVX2, prd] in
+  defm V#NAME#Y : PDI_binop_rmi<opc, opc2, ImmForm, !strconcat("v", OpcodeStr),
+                                OpNode, OpNode2, VR256, DstVT256, SrcVT,
+                                loadv2i64, 0>, VEX_4V, VEX_L;
+let Constraints = "$src1 = $dst" in
+  defm NAME : PDI_binop_rmi<opc, opc2, ImmForm, OpcodeStr, OpNode, OpNode2,
+                           VR128, DstVT128, SrcVT, memopv2i64>;
+}
+
+multiclass PDI_binop_ri<bits<8> opc, Format ImmForm, string OpcodeStr,
+                        SDNode OpNode, RegisterClass RC, ValueType VT,
+                        bit Is2Addr = 1> {
+  def ri : PDIi8<opc, ImmForm, (outs RC:$dst), (ins RC:$src1, u8imm:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (VT (OpNode RC:$src1, (i8 imm:$src2))))],
+       IIC_SSE_INTSHDQ_P_RI>, Sched<[WriteVecShift]>;
+}
+
+multiclass PDI_binop_ri_all<bits<8> opc, Format ImmForm, string OpcodeStr,
+                           SDNode OpNode> {
+let Predicates = [HasAVX, NoVLX_Or_NoBWI] in
+  defm V#NAME : PDI_binop_ri<opc, ImmForm, !strconcat("v", OpcodeStr), OpNode,
+                             VR128, v16i8, 0>, VEX_4V;
+let Predicates = [HasAVX2, NoVLX_Or_NoBWI] in
+  defm V#NAME#Y : PDI_binop_ri<opc, ImmForm, !strconcat("v", OpcodeStr), OpNode,
+                               VR256, v32i8, 0>, VEX_4V, VEX_L;
+let Constraints = "$src1 = $dst" in
+  defm NAME : PDI_binop_ri<opc, ImmForm, OpcodeStr, OpNode, VR128, v16i8>;
+}
+
+let ExeDomain = SSEPackedInt in {
+  defm PSLLW : PDI_binop_rmi_all<0xF1, 0x71, MRM6r, "psllw", X86vshl, X86vshli,
+                                 v8i16, v16i16, v8i16, NoVLX_Or_NoBWI>;
+  defm PSLLD : PDI_binop_rmi_all<0xF2, 0x72, MRM6r, "pslld", X86vshl, X86vshli,
+                                 v4i32, v8i32, v4i32, NoVLX>;
+  defm PSLLQ : PDI_binop_rmi_all<0xF3, 0x73, MRM6r, "psllq", X86vshl, X86vshli,
+                                 v2i64, v4i64, v2i64, NoVLX>;
+
+  defm PSRLW : PDI_binop_rmi_all<0xD1, 0x71, MRM2r, "psrlw", X86vsrl, X86vsrli,
+                                 v8i16, v16i16, v8i16, NoVLX_Or_NoBWI>;
+  defm PSRLD : PDI_binop_rmi_all<0xD2, 0x72, MRM2r, "psrld", X86vsrl, X86vsrli,
+                                 v4i32, v8i32, v4i32, NoVLX>;
+  defm PSRLQ : PDI_binop_rmi_all<0xD3, 0x73, MRM2r, "psrlq", X86vsrl, X86vsrli,
+                                 v2i64, v4i64, v2i64, NoVLX>;
+
+  defm PSRAW : PDI_binop_rmi_all<0xE1, 0x71, MRM4r, "psraw", X86vsra, X86vsrai,
+                                 v8i16, v16i16, v8i16, NoVLX_Or_NoBWI>;
+  defm PSRAD : PDI_binop_rmi_all<0xE2, 0x72, MRM4r, "psrad", X86vsra, X86vsrai,
+                                 v4i32, v8i32, v4i32, NoVLX>;
+
+  defm PSLLDQ : PDI_binop_ri_all<0x73, MRM7r, "pslldq", X86vshldq>;
+  defm PSRLDQ : PDI_binop_ri_all<0x73, MRM3r, "psrldq", X86vshrdq>;
+  // PSRADQri doesn't exist in SSE[1-3].
+} // ExeDomain = SSEPackedInt
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Comparison Instructions
