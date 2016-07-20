@@ -429,6 +429,18 @@ ArrayRef<Value *> Vectorizer::getVectorizablePrefix(ArrayRef<Value *> Chain) {
   SmallVector<std::pair<Value *, unsigned>, 16> MemoryInstrs;
   SmallVector<std::pair<Value *, unsigned>, 16> ChainInstrs;
 
+  bool IsLoadChain = isa<LoadInst>(Chain[0]);
+  DEBUG({
+    for (Value *V : Chain) {
+      if (IsLoadChain)
+        assert(isa<LoadInst>(V) &&
+               "All elements of Chain must be loads, or all must be stores.");
+      else
+        assert(isa<StoreInst>(V) &&
+               "All elements of Chain must be loads, or all must be stores.");
+    }
+  });
+
   unsigned InstrIdx = 0;
   for (Instruction &I : make_range(getBoundaryInstrs(Chain))) {
     ++InstrIdx;
@@ -437,8 +449,12 @@ ArrayRef<Value *> Vectorizer::getVectorizablePrefix(ArrayRef<Value *> Chain) {
         MemoryInstrs.push_back({&I, InstrIdx});
       else
         ChainInstrs.push_back({&I, InstrIdx});
-    } else if (I.mayHaveSideEffects()) {
-      DEBUG(dbgs() << "LSV: Found side-effecting operation: " << I << '\n');
+    } else if (IsLoadChain && (I.mayWriteToMemory() || I.mayThrow())) {
+      DEBUG(dbgs() << "LSV: Found may-write/throw operation: " << I << '\n');
+      break;
+    } else if (!IsLoadChain && (I.mayReadOrWriteMemory() || I.mayThrow())) {
+      DEBUG(dbgs() << "LSV: Found may-read/write/throw operation: " << I
+                   << '\n');
       break;
     }
   }

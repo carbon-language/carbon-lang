@@ -1,48 +1,209 @@
 ; RUN: opt -mtriple=nvptx64-nvidia-cuda -load-store-vectorizer -S -o - %s | FileCheck %s
 
-; If we have a chain of loads or stores with a side-effecting operation in the
-; middle, we should still be able to merge the loads/stores that appear
-; before/after the side-effecting op.  We just can't merge *across* the
-; side-effecting op.
+; Check that the load/store vectorizer is willing to move loads/stores across
+; intervening instructions only if it's safe.
+;
+;  - Loads can be moved across instructions that don't write or throw.
+;  - Stores can only be moved across instructions which don't read, write, or
+;    throw.
 
-declare void @fn() #0
+declare void @fn()
+declare void @fn_nounwind() #0
+declare void @fn_nounwind_writeonly() #1
+declare void @fn_nounwind_readonly() #2
+declare void @fn_writeonly() #3
+declare void @fn_readonly() #4
+declare void @fn_readnone() #5
 
-; CHECK-LABEL: @merge_stores
-; CHECK: store <2 x i32> <i32 100, i32 101>
+; CHECK-LABEL: @load_fn
+; CHECK: load
 ; CHECK: call void @fn()
-; CHECK: store <2 x i32> <i32 102, i32 103>
-define void @merge_stores(i32* %out) #0 {
-  %out.gep.1 = getelementptr i32, i32* %out, i32 1
-  %out.gep.2 = getelementptr i32, i32* %out, i32 2
-  %out.gep.3 = getelementptr i32, i32* %out, i32 3
+; CHECK: load
+define void @load_fn(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
 
-  store i32 101, i32* %out.gep.1
-  store i32 100, i32* %out
+  %v0 = load i32, i32* %p
   call void @fn()
-  store i32 102, i32* %out.gep.2
-  store i32 103, i32* %out.gep.3
+  %v1 = load i32, i32* %p.1
   ret void
 }
 
-; CHECK-LABEL: @merge_loads
-; CHECK: load <2 x i32>
-; CHECK: call void @fn()
-; CHECK: load <2 x i32>
-define i32 @merge_loads(i32* %in) #0 {
-  %in.gep.1 = getelementptr i32, i32* %in, i32 1
-  %in.gep.2 = getelementptr i32, i32* %in, i32 2
-  %in.gep.3 = getelementptr i32, i32* %in, i32 3
+; CHECK-LABEL: @load_fn_nounwind
+; CHECK: load
+; CHECK: call void @fn_nounwind()
+; CHECK: load
+define void @load_fn_nounwind(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
 
-  %v1 = load i32, i32* %in
-  %v2 = load i32, i32* %in.gep.1
-  call void @fn()
-  %v3 = load i32, i32* %in.gep.2
-  %v4 = load i32, i32* %in.gep.3
-
-  %sum1 = add i32 %v1, %v2
-  %sum2 = add i32 %sum1, %v3
-  %sum3 = add i32 %sum2, %v4
-  ret i32 %v4
+  %v0 = load i32, i32* %p
+  call void @fn_nounwind() #0
+  %v1 = load i32, i32* %p.1
+  ret void
 }
 
+; CHECK-LABEL: @load_fn_nounwind_writeonly
+; CHECK: load
+; CHECK: call void @fn_nounwind_writeonly()
+; CHECK: load
+define void @load_fn_nounwind_writeonly(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
+
+  %v0 = load i32, i32* %p
+  call void @fn_nounwind_writeonly() #1
+  %v1 = load i32, i32* %p.1
+  ret void
+}
+
+; CHECK-LABEL: @load_fn_nounwind_readonly
+; CHECK-DAG: load <2 x i32>
+; CHECK-DAG: call void @fn_nounwind_readonly()
+define void @load_fn_nounwind_readonly(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
+
+  %v0 = load i32, i32* %p
+  call void @fn_nounwind_readonly() #2
+  %v1 = load i32, i32* %p.1
+  ret void
+}
+
+; CHECK-LABEL: @load_fn_readonly
+; CHECK: load
+; CHECK: call void @fn_readonly
+; CHECK: load
+define void @load_fn_readonly(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
+
+  %v0 = load i32, i32* %p
+  call void @fn_readonly() #4
+  %v1 = load i32, i32* %p.1
+  ret void
+}
+
+; CHECK-LABEL: @load_fn_writeonly
+; CHECK: load
+; CHECK: call void @fn_writeonly()
+; CHECK: load
+define void @load_fn_writeonly(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
+
+  %v0 = load i32, i32* %p
+  call void @fn_writeonly() #3
+  %v1 = load i32, i32* %p.1
+  ret void
+}
+
+; CHECK-LABEL: @load_fn_readnone
+; CHECK-DAG: load <2 x i32>
+; CHECK-DAG: call void @fn_readnone()
+define void @load_fn_readnone(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
+
+  %v0 = load i32, i32* %p
+  call void @fn_readnone() #5
+  %v1 = load i32, i32* %p.1
+  ret void
+}
+
+; ------------------------------------------------
+; Same tests, but now for stores instead of loads.
+; ------------------------------------------------
+
+; CHECK-LABEL: @store_fn
+; CHECK: store
+; CHECK: call void @fn()
+; CHECK: store
+define void @store_fn(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
+
+  store i32 0, i32* %p
+  call void @fn()
+  store i32 0, i32* %p.1
+  ret void
+}
+
+; CHECK-LABEL: @store_fn_nounwind
+; CHECK: store
+; CHECK: call void @fn_nounwind()
+; CHECK: store
+define void @store_fn_nounwind(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
+
+  store i32 0, i32* %p
+  call void @fn_nounwind() #0
+  store i32 0, i32* %p.1
+  ret void
+}
+
+; CHECK-LABEL: @store_fn_nounwind_writeonly
+; CHECK: store
+; CHECK: call void @fn_nounwind_writeonly()
+; CHECK: store
+define void @store_fn_nounwind_writeonly(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
+
+  store i32 0, i32* %p
+  call void @fn_nounwind_writeonly() #1
+  store i32 0, i32* %p.1
+  ret void
+}
+
+; CHECK-LABEL: @store_fn_nounwind_readonly
+; CHECK: store
+; CHECK: call void @fn_nounwind_readonly()
+; CHECK: store
+define void @store_fn_nounwind_readonly(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
+
+  store i32 0, i32* %p
+  call void @fn_nounwind_readonly() #2
+  store i32 0, i32* %p.1
+  ret void
+}
+
+; CHECK-LABEL: @store_fn_readonly
+; CHECK: store
+; CHECK: call void @fn_readonly
+; CHECK: store
+define void @store_fn_readonly(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
+
+  store i32 0, i32* %p
+  call void @fn_readonly() #4
+  store i32 0, i32* %p.1
+  ret void
+}
+
+; CHECK-LABEL: @store_fn_writeonly
+; CHECK: store
+; CHECK: call void @fn_writeonly()
+; CHECK: store
+define void @store_fn_writeonly(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
+
+  store i32 0, i32* %p
+  call void @fn_writeonly() #3
+  store i32 0, i32* %p.1
+  ret void
+}
+
+; This is the only store idiom we can vectorize.
+; CHECK-LABEL: @store_fn_readnone
+; CHECK-DAG: store <2 x i32>
+; CHECK-DAG: call void @fn_readnone()
+define void @store_fn_readnone(i32* %p) #0 {
+  %p.1 = getelementptr i32, i32* %p, i32 1
+
+  store i32 0, i32* %p
+  call void @fn_readnone() #5
+  store i32 0, i32* %p.1
+  ret void
+}
+
+
 attributes #0 = { nounwind }
+attributes #1 = { nounwind writeonly }
+attributes #2 = { nounwind readonly }
+attributes #3 = { writeonly }
+attributes #4 = { readonly }
+; readnone implies nounwind, so no need to test separately
+attributes #5 = { nounwind readnone }
