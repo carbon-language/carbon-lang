@@ -525,11 +525,11 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
   ArrayRef<uint8_t> SectionData = C.getSectionData();
   const uint8_t *Buf = SectionData.begin();
 
-  std::vector<SectionPiece>::iterator PieceI;
-  std::vector<SectionPiece>::iterator PieceE;
+  SectionPiece *PieceI = nullptr;
+  SectionPiece *PieceE = nullptr;
   if (auto *Eh = dyn_cast<EhInputSection<ELFT>>(&C)) {
-    PieceI = Eh->Pieces.begin();
-    PieceE = Eh->Pieces.end();
+    PieceI = &*Eh->Pieces.begin();
+    PieceE = PieceI + Eh->Pieces.size();
   }
 
   for (auto I = Rels.begin(), E = Rels.end(); I != E; ++I) {
