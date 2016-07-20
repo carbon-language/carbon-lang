@@ -178,6 +178,7 @@ public:
   RelExpr getRelExpr(uint32_t Type, const SymbolBody &S) const override;
   uint32_t getDynRel(uint32_t Type) const override;
   uint64_t getImplicitAddend(const uint8_t *Buf, uint32_t Type) const override;
+  bool isTlsLocalDynamicRel(uint32_t Type) const override;
   bool isTlsGlobalDynamicRel(uint32_t Type) const override;
   bool isTlsInitialExecRel(uint32_t Type) const override;
   void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
@@ -1523,6 +1524,8 @@ RelExpr ARMTargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
     return R_GOT_PC;
   case R_ARM_TLS_GD32:
     return R_TLSGD_PC;
+  case R_ARM_TLS_LDM32:
+    return R_TLSLD_PC;
   case R_ARM_BASE_PREL:
     // B(S) + A - P
     // FIXME: currently B(S) assumed to be .got, this may not hold for all
@@ -1624,6 +1627,8 @@ void ARMTargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_ARM_REL32:
   case R_ARM_TLS_GD32:
   case R_ARM_TLS_IE32:
+  case R_ARM_TLS_LDM32:
+  case R_ARM_TLS_LDO32:
   case R_ARM_TLS_LE32:
     write32le(Loc, Val);
     break;
@@ -1749,6 +1754,8 @@ uint64_t ARMTargetInfo::getImplicitAddend(const uint8_t *Buf,
   case R_ARM_GOT_PREL:
   case R_ARM_REL32:
   case R_ARM_TLS_GD32:
+  case R_ARM_TLS_LDM32:
+  case R_ARM_TLS_LDO32:
   case R_ARM_TLS_IE32:
   case R_ARM_TLS_LE32:
     return SignExtend64<32>(read32le(Buf));
@@ -1806,6 +1813,10 @@ uint64_t ARMTargetInfo::getImplicitAddend(const uint8_t *Buf,
                             (Lo & 0x00ff));         // imm8
   }
   }
+}
+
+bool ARMTargetInfo::isTlsLocalDynamicRel(uint32_t Type) const {
+  return Type == R_ARM_TLS_LDO32 || Type == R_ARM_TLS_LDM32;
 }
 
 bool ARMTargetInfo::isTlsGlobalDynamicRel(uint32_t Type) const {
