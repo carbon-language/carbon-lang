@@ -23,9 +23,7 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineOperand.h"
-#ifdef LLVM_BUILD_GLOBAL_ISEL
 #include "llvm/CodeGen/LowLevelType.h"
-#endif
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/MC/MCInstrDesc.h"
