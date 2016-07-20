@@ -56,8 +56,4 @@ if(COMPILER_RT_BUILD_SANITIZERS)
   if(COMPILER_RT_HAS_SCUDO)
     add_subdirectory(scudo)
   endif()
-
-  if(COMPILER_RT_HAS_XRAY)
-    add_subdirectory(xray)
-  endif()
 endif()
