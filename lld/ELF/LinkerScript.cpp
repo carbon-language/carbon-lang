@@ -208,9 +208,10 @@ bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
 }
 
 template <class ELFT>
-std::vector<std::unique_ptr<OutputSectionBase<ELFT>>>
+std::vector<OutputSectionBase<ELFT> *>
 LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
-  std::vector<std::unique_ptr<OutputSectionBase<ELFT>>> Result;
+  std::vector<OutputSectionBase<ELFT> *> Result;
+
   // Add input section to output section. If there is no output section yet,
   // then create it and add to output section list.
   auto AddInputSec = [&](InputSectionBase<ELFT> *C, StringRef Name) {
@@ -218,7 +219,7 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
     bool IsNew;
     std::tie(Sec, IsNew) = Factory.create(C, Name);
     if (IsNew)
-      Result.emplace_back(Sec);
+      Result.push_back(Sec);
     Sec->addSection(C);
   };
 

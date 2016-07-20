@@ -1770,6 +1770,7 @@ OutputSectionFactory<ELFT>::create(InputSectionBase<ELFT> *C,
     Sec = new MipsOptionsOutputSection<ELFT>();
     break;
   }
+  OwningSections.emplace_back(Sec);
   return {Sec, true};
 }
 

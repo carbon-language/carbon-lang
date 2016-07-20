@@ -48,7 +48,7 @@ private:
 
   void copyLocalSymbols();
   void addReservedSymbols();
-  std::vector<std::unique_ptr<OutputSectionBase<ELFT>>> createSections();
+  std::vector<OutputSectionBase<ELFT> *> createSections();
   void finalizeSections();
   void addPredefinedSections();
   bool needsGot();
@@ -218,13 +218,9 @@ template <class ELFT> void Writer<ELFT>::run() {
     copyLocalSymbols();
   addReservedSymbols();
 
-  std::vector<std::unique_ptr<OutputSectionBase<ELFT>>> Sections =
-      ScriptConfig->DoLayout ? Script<ELFT>::X->createSections(Factory)
-                             : createSections();
-
-  for (std::unique_ptr<OutputSectionBase<ELFT>> &S : Sections)
-    OutputSections.push_back(S.get());
-
+  OutputSections = ScriptConfig->DoLayout
+                       ? Script<ELFT>::X->createSections(Factory)
+                       : createSections();
   finalizeSections();
   if (HasError)
     return;
@@ -637,9 +633,8 @@ template <class ELFT> static void sortCtorsDtors(OutputSectionBase<ELFT> *S) {
 }
 
 template <class ELFT>
-std::vector<std::unique_ptr<OutputSectionBase<ELFT>>>
-Writer<ELFT>::createSections() {
-  std::vector<std::unique_ptr<OutputSectionBase<ELFT>>> Result;
+std::vector<OutputSectionBase<ELFT> *> Writer<ELFT>::createSections() {
+  std::vector<OutputSectionBase<ELFT> *> Result;
 
   for (const std::unique_ptr<elf::ObjectFile<ELFT>> &F :
        Symtab.getObjectFiles()) {
@@ -652,8 +647,7 @@ Writer<ELFT>::createSections() {
       bool IsNew;
       std::tie(Sec, IsNew) = Factory.create(C, getOutputSectionName(C));
       if (IsNew)
-        Result.emplace_back(Sec);
-
+        Result.push_back(Sec);
       Sec->addSection(C);
     }
   }

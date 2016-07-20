@@ -92,12 +92,13 @@ template <class ELFT> class LinkerScript {
 public:
   typedef PhdrEntry<ELFT> Phdr;
 
+  std::vector<OutputSectionBase<ELFT> *>
+  createSections(OutputSectionFactory<ELFT> &Factory);
+
   StringRef getOutputSection(InputSectionBase<ELFT> *S);
   ArrayRef<uint8_t> getFiller(StringRef Name);
   bool isDiscarded(InputSectionBase<ELFT> *S);
   bool shouldKeep(InputSectionBase<ELFT> *S);
-  std::vector<std::unique_ptr<OutputSectionBase<ELFT>>>
-  createSections(OutputSectionFactory<ELFT> &Factory);
   void assignAddresses(ArrayRef<OutputSectionBase<ELFT> *> S);
   int compareSections(StringRef A, StringRef B);
   void addScriptedSymbols();
