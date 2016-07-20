@@ -8278,7 +8278,7 @@ def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
 
   // Provide fallback in case the load node that is used in the patterns above
   // is used by additional users, which prevents the pattern selection.
-let Predicates = [HasAVX], AddedComplexity = 20 in {
+let Predicates = [HasAVX, NoVLX], AddedComplexity = 20 in {
   // 128bit broadcasts:
   def : Pat<(v2f64 (X86VBroadcast f64:$src)),
             (VMOVDDUPrr (COPY_TO_REGCLASS FR64:$src, VR128))>;
