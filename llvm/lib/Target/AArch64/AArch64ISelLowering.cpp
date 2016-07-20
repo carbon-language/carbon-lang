@@ -53,13 +53,6 @@ cl::opt<bool> EnableAArch64ELFLocalDynamicTLSGeneration(
     cl::desc("Allow AArch64 Local Dynamic TLS code generation"),
     cl::init(false));
 
-// Disabled for causing self-hosting failures once returned-attribute inference
-// was enabled.
-static cl::opt<bool>
-EnableThisRetForwarding("aarch64-this-return-forwarding", cl::Hidden,
-                        cl::desc("Directly forward this return"),
-                        cl::init(false));
-
 /// Value type used for condition codes.
 static const MVT MVT_CC = MVT::i32;
 
@@ -2735,7 +2728,7 @@ SDValue AArch64TargetLowering::LowerCallResult(
 
     // Pass 'this' value directly from the argument to return value, to avoid
     // reg unit interference
-    if (i == 0 && isThisReturn && EnableThisRetForwarding) {
+    if (i == 0 && isThisReturn) {
       assert(!VA.needsCustom() && VA.getLocVT() == MVT::i64 &&
              "unexpected return calling convention register assignment");
       InVals.push_back(ThisVal);
