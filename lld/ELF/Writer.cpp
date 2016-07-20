@@ -56,7 +56,7 @@ private:
   void addPredefinedSections();
   bool needsGot();
 
-  void createPhdrs();
+  std::vector<Phdr> createPhdrs();
   void assignAddresses();
   void assignFileOffsets();
   void setPhdrs();
@@ -231,10 +231,9 @@ template <class ELFT> void Writer<ELFT>::run() {
   if (Config->Relocatable) {
     assignFileOffsets();
   } else {
-    if (Script<ELFT>::X->hasPhdrsCommands())
-      Phdrs = Script<ELFT>::X->createPhdrs(OutputSections);
-    else
-      createPhdrs();
+    Phdrs = Script<ELFT>::X->hasPhdrsCommands()
+                ? Script<ELFT>::X->createPhdrs(OutputSections)
+                : createPhdrs();
     fixHeaders();
     if (ScriptConfig->DoLayout) {
       Script<ELFT>::X->assignAddresses(OutputSections);
@@ -949,9 +948,13 @@ template <class ELFT> bool elf::needsPtLoad(OutputSectionBase<ELFT> *Sec) {
 
 // Decide which program headers to create and which sections to include in each
 // one.
-template <class ELFT> void Writer<ELFT>::createPhdrs() {
-  auto AddHdr = [this](unsigned Type, unsigned Flags) {
-    return &*Phdrs.emplace(Phdrs.end(), Type, Flags);
+template <class ELFT>
+std::vector<PhdrEntry<ELFT>> Writer<ELFT>::createPhdrs() {
+  std::vector<Phdr> Ret;
+
+  auto AddHdr = [&](unsigned Type, unsigned Flags) -> Phdr * {
+    Ret.emplace_back(Type, Flags);
+    return &Ret.back();
   };
 
   // The first phdr entry is PT_PHDR which describes the program header itself.
@@ -1003,7 +1006,7 @@ template <class ELFT> void Writer<ELFT>::createPhdrs() {
 
   // Add the TLS segment unless it's empty.
   if (TlsHdr.First)
-    Phdrs.push_back(std::move(TlsHdr));
+    Ret.push_back(std::move(TlsHdr));
 
   // Add an entry for .dynamic.
   if (isOutputDynamic<ELFT>()) {
@@ -1014,7 +1017,7 @@ template <class ELFT> void Writer<ELFT>::createPhdrs() {
   // PT_GNU_RELRO includes all sections that should be marked as
   // read-only by dynamic linker after proccessing relocations.
   if (RelRo.First)
-    Phdrs.push_back(std::move(RelRo));
+    Ret.push_back(std::move(RelRo));
 
   // PT_GNU_EH_FRAME is a special section pointing on .eh_frame_hdr.
   if (!Out<ELFT>::EhFrame->empty() && Out<ELFT>::EhFrameHdr) {
@@ -1029,7 +1032,8 @@ template <class ELFT> void Writer<ELFT>::createPhdrs() {
     AddHdr(PT_GNU_STACK, PF_R | PF_W);
 
   if (Note.First)
-    Phdrs.push_back(std::move(Note));
+    Ret.push_back(std::move(Note));
+  return Ret;
 }
 
 // The first section of each PT_LOAD and the first section after PT_GNU_RELRO
