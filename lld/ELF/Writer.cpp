@@ -496,7 +496,7 @@ PhdrEntry<ELFT>::PhdrEntry(unsigned Type, unsigned Flags) {
 }
 
 template<class ELFT>
-void PhdrEntry<ELFT>::AddSec(OutputSectionBase<ELFT> *Sec) {
+void PhdrEntry<ELFT>::add(OutputSectionBase<ELFT> *Sec) {
   Last = Sec;
   if (!First)
     First = Sec;
@@ -959,19 +959,19 @@ std::vector<PhdrEntry<ELFT>> Writer<ELFT>::createPhdrs() {
 
   // The first phdr entry is PT_PHDR which describes the program header itself.
   Phdr &Hdr = *AddHdr(PT_PHDR, PF_R);
-  Hdr.AddSec(Out<ELFT>::ProgramHeaders);
+  Hdr.add(Out<ELFT>::ProgramHeaders);
 
   // PT_INTERP must be the second entry if exists.
   if (needsInterpSection<ELFT>()) {
     Phdr &Hdr = *AddHdr(PT_INTERP, toPhdrFlags(Out<ELFT>::Interp->getFlags()));
-    Hdr.AddSec(Out<ELFT>::Interp);
+    Hdr.add(Out<ELFT>::Interp);
   }
 
   // Add the first PT_LOAD segment for regular output sections.
   uintX_t Flags = PF_R;
   Phdr *Load = AddHdr(PT_LOAD, Flags);
-  Load->AddSec(Out<ELFT>::ElfHeader);
-  Load->AddSec(Out<ELFT>::ProgramHeaders);
+  Load->add(Out<ELFT>::ElfHeader);
+  Load->add(Out<ELFT>::ProgramHeaders);
 
   Phdr TlsHdr(PT_TLS, PF_R);
   Phdr RelRo(PT_GNU_RELRO, PF_R);
@@ -984,7 +984,7 @@ std::vector<PhdrEntry<ELFT>> Writer<ELFT>::createPhdrs() {
     // and put all TLS sections inside for futher use when
     // assign addresses.
     if (Sec->getFlags() & SHF_TLS)
-      TlsHdr.AddSec(Sec);
+      TlsHdr.add(Sec);
 
     if (!needsPtLoad<ELFT>(Sec))
       continue;
@@ -996,12 +996,12 @@ std::vector<PhdrEntry<ELFT>> Writer<ELFT>::createPhdrs() {
       Flags = NewFlags;
     }
 
-    Load->AddSec(Sec);
+    Load->add(Sec);
 
     if (isRelroSection(Sec))
-      RelRo.AddSec(Sec);
+      RelRo.add(Sec);
     if (Sec->getType() == SHT_NOTE)
-      Note.AddSec(Sec);
+      Note.add(Sec);
   }
 
   // Add the TLS segment unless it's empty.
@@ -1011,7 +1011,7 @@ std::vector<PhdrEntry<ELFT>> Writer<ELFT>::createPhdrs() {
   // Add an entry for .dynamic.
   if (isOutputDynamic<ELFT>()) {
     Phdr &H = *AddHdr(PT_DYNAMIC, toPhdrFlags(Out<ELFT>::Dynamic->getFlags()));
-    H.AddSec(Out<ELFT>::Dynamic);
+    H.add(Out<ELFT>::Dynamic);
   }
 
   // PT_GNU_RELRO includes all sections that should be marked as
@@ -1023,7 +1023,7 @@ std::vector<PhdrEntry<ELFT>> Writer<ELFT>::createPhdrs() {
   if (!Out<ELFT>::EhFrame->empty() && Out<ELFT>::EhFrameHdr) {
     Phdr &Hdr = *AddHdr(PT_GNU_EH_FRAME,
                         toPhdrFlags(Out<ELFT>::EhFrameHdr->getFlags()));
-    Hdr.AddSec(Out<ELFT>::EhFrameHdr);
+    Hdr.add(Out<ELFT>::EhFrameHdr);
   }
 
   // PT_GNU_STACK is a special section to tell the loader to make the

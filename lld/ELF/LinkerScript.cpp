@@ -330,19 +330,19 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
     Phdr &Added = Phdrs.back();
 
     if (Cmd.HasFilehdr)
-      Added.AddSec(Out<ELFT>::ElfHeader);
+      Added.add(Out<ELFT>::ElfHeader);
     if (Cmd.HasPhdrs)
-      Added.AddSec(Out<ELFT>::ProgramHeaders);
+      Added.add(Out<ELFT>::ProgramHeaders);
 
     switch (Cmd.Type) {
     case PT_INTERP:
       if (needsInterpSection<ELFT>())
-        Added.AddSec(Out<ELFT>::Interp);
+        Added.add(Out<ELFT>::Interp);
       break;
     case PT_DYNAMIC:
       if (isOutputDynamic<ELFT>()) {
         Added.H.p_flags = toPhdrFlags(Out<ELFT>::Dynamic->getFlags());
-        Added.AddSec(Out<ELFT>::Dynamic);
+        Added.add(Out<ELFT>::Dynamic);
       }
       break;
     case PT_TLS:
@@ -357,7 +357,7 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
     case PT_GNU_EH_FRAME:
       if (!Out<ELFT>::EhFrame->empty() && Out<ELFT>::EhFrameHdr) {
         Added.H.p_flags = toPhdrFlags(Out<ELFT>::EhFrameHdr->getFlags());
-        Added.AddSec(Out<ELFT>::EhFrameHdr);
+        Added.add(Out<ELFT>::EhFrameHdr);
       }
       break;
     }
@@ -368,7 +368,7 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
       break;
 
     if (TlsNum != -1 && (Sec->getFlags() & SHF_TLS))
-      Phdrs[TlsNum].AddSec(Sec);
+      Phdrs[TlsNum].add(Sec);
 
     if (!needsPtLoad<ELFT>(Sec))
       continue;
@@ -378,7 +378,7 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
     if (!PhdrIds.empty()) {
       // Assign headers specified by linker script
       for (size_t Id : PhdrIds) {
-        Phdrs[Id].AddSec(Sec);
+        Phdrs[Id].add(Sec);
         Phdrs[Id].H.p_flags |= toPhdrFlags(Sec->getFlags());
       }
     } else {
@@ -389,13 +389,13 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
         Load = &*Phdrs.emplace(Phdrs.end(), PT_LOAD, NewFlags);
         Flags = NewFlags;
       }
-      Load->AddSec(Sec);
+      Load->add(Sec);
     }
 
     if (RelroNum != -1 && isRelroSection(Sec))
-      Phdrs[RelroNum].AddSec(Sec);
+      Phdrs[RelroNum].add(Sec);
     if (NoteNum != -1 && Sec->getType() == SHT_NOTE)
-      Phdrs[NoteNum].AddSec(Sec);
+      Phdrs[NoteNum].add(Sec);
   }
   return Phdrs;
 }
