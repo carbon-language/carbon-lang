@@ -6163,7 +6163,7 @@ bool OpenMPAtomicUpdateChecker::checkStatement(Stmt *S, unsigned DiagId,
             AtomicCompAssignOp->getOpcode());
         OpLoc = AtomicCompAssignOp->getOperatorLoc();
         E = AtomicCompAssignOp->getRHS();
-        X = AtomicCompAssignOp->getLHS();
+        X = AtomicCompAssignOp->getLHS()->IgnoreParens();
         IsXLHSInRHSPart = true;
       } else if (auto *AtomicBinOp = dyn_cast<BinaryOperator>(
                      AtomicBody->IgnoreParenImpCasts())) {
@@ -6177,7 +6177,7 @@ bool OpenMPAtomicUpdateChecker::checkStatement(Stmt *S, unsigned DiagId,
           IsPostfixUpdate = AtomicUnaryOp->isPostfix();
           Op = AtomicUnaryOp->isIncrementOp() ? BO_Add : BO_Sub;
           OpLoc = AtomicUnaryOp->getOperatorLoc();
-          X = AtomicUnaryOp->getSubExpr();
+          X = AtomicUnaryOp->getSubExpr()->IgnoreParens();
           E = SemaRef.ActOnIntegerConstant(OpLoc, /*uint64_t Val=*/1).get();
           IsXLHSInRHSPart = true;
         } else {
