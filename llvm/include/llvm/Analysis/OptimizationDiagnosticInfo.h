@@ -47,10 +47,9 @@ public:
   ///
   /// \p PassName is the name of the pass emitting the message. If
   /// -Rpass-missed= is given and the name matches the regular expression in
-  /// -Rpass, then the remark will be emitted. \p Fn is the function triggering
-  /// the remark, \p DLoc is the debug location where the diagnostic is
-  /// generated. \p V is the IR Value that identifies the code region. \p Msg is
-  /// the message string to use.
+  /// -Rpass, then the remark will be emitted.  \p DLoc is the debug location
+  /// where the diagnostic is generated. \p V is the IR Value that identifies
+  /// the code region. \p Msg is the message string to use.
   void emitOptimizationRemarkMissed(const char *PassName, const DebugLoc &DLoc,
                                     Value *V, const Twine &Msg);
 
