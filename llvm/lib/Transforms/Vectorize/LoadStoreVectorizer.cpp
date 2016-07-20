@@ -108,7 +108,8 @@ private:
   /// intervening instructions which may affect the memory accessed by the
   /// instructions within Chain.
   ///
-  /// The elements of \p Chain must be all loads or all stores.
+  /// The elements of \p Chain must be all loads or all stores and must be in
+  /// address order.
   ArrayRef<Value *> getVectorizablePrefix(ArrayRef<Value *> Chain);
 
   /// Collects load and store instructions to vectorize.
@@ -424,6 +425,7 @@ Vectorizer::splitOddVectorElts(ArrayRef<Value *> Chain,
 }
 
 ArrayRef<Value *> Vectorizer::getVectorizablePrefix(ArrayRef<Value *> Chain) {
+  // These are in BB order, unlike Chain, which is in address order.
   SmallVector<std::pair<Value *, unsigned>, 16> MemoryInstrs;
   SmallVector<std::pair<Value *, unsigned>, 16> ChainInstrs;
 
@@ -444,31 +446,34 @@ ArrayRef<Value *> Vectorizer::getVectorizablePrefix(ArrayRef<Value *> Chain) {
   assert(Chain.size() == ChainInstrs.size() &&
          "All instrs in Chain must be within range getBoundaryInstrs(Chain).");
 
-  unsigned ChainIdx = 0;
-  for (auto EntryChain : ChainInstrs) {
-    Value *ChainInstrValue = EntryChain.first;
-    unsigned ChainInstrIdx = EntryChain.second;
+  // Loop until we find an instruction in ChainInstrs that we can't vectorize.
+  unsigned ChainInstrIdx, ChainInstrsLen;
+  for (ChainInstrIdx = 0, ChainInstrsLen = ChainInstrs.size();
+       ChainInstrIdx < ChainInstrsLen; ++ChainInstrIdx) {
+    Value *ChainInstr = ChainInstrs[ChainInstrIdx].first;
+    unsigned ChainInstrLoc = ChainInstrs[ChainInstrIdx].second;
+    bool AliasFound = false;
     for (auto EntryMem : MemoryInstrs) {
-      Value *MemInstrValue = EntryMem.first;
-      unsigned MemInstrIdx = EntryMem.second;
-      if (isa<LoadInst>(MemInstrValue) && isa<LoadInst>(ChainInstrValue))
+      Value *MemInstr = EntryMem.first;
+      unsigned MemInstrLoc = EntryMem.second;
+      if (isa<LoadInst>(MemInstr) && isa<LoadInst>(ChainInstr))
         continue;
 
       // We can ignore the alias as long as the load comes before the store,
       // because that means we won't be moving the load past the store to
       // vectorize it (the vectorized load is inserted at the location of the
       // first load in the chain).
-      if (isa<StoreInst>(MemInstrValue) && isa<LoadInst>(ChainInstrValue) &&
-          ChainInstrIdx < MemInstrIdx)
+      if (isa<StoreInst>(MemInstr) && isa<LoadInst>(ChainInstr) &&
+          ChainInstrLoc < MemInstrLoc)
         continue;
 
       // Same case, but in reverse.
-      if (isa<LoadInst>(MemInstrValue) && isa<StoreInst>(ChainInstrValue) &&
-          ChainInstrIdx > MemInstrIdx)
+      if (isa<LoadInst>(MemInstr) && isa<StoreInst>(ChainInstr) &&
+          ChainInstrLoc > MemInstrLoc)
         continue;
 
-      Instruction *M0 = cast<Instruction>(MemInstrValue);
-      Instruction *M1 = cast<Instruction>(ChainInstrValue);
+      Instruction *M0 = cast<Instruction>(MemInstr);
+      Instruction *M1 = cast<Instruction>(ChainInstr);
 
       if (!AA.isNoAlias(MemoryLocation::get(M0), MemoryLocation::get(M1))) {
         DEBUG({
@@ -477,19 +482,34 @@ ArrayRef<Value *> Vectorizer::getVectorizablePrefix(ArrayRef<Value *> Chain) {
 
           dbgs() << "LSV: Found alias:\n"
                     "  Aliasing instruction and pointer:\n"
-                 << "  " << *MemInstrValue << '\n'
+                 << "  " << *MemInstr << '\n'
                  << "  " << *Ptr0 << '\n'
                  << "  Aliased instruction and pointer:\n"
-                 << "  " << *ChainInstrValue << '\n'
+                 << "  " << *ChainInstr << '\n'
                  << "  " << *Ptr1 << '\n';
         });
-
-        return Chain.slice(0, ChainIdx);
+        AliasFound = true;
+        break;
       }
     }
-    ChainIdx++;
+    if (AliasFound)
+      break;
   }
-  return Chain;
+
+  // Find the largest prefix of Chain whose elements are all in
+  // ChainInstrs[0, ChainInstrIdx).  This is the largest vectorizable prefix of
+  // Chain.  (Recall that Chain is in address order, but ChainInstrs is in BB
+  // order.)
+  auto VectorizableChainInstrs =
+      makeArrayRef(ChainInstrs.data(), ChainInstrIdx);
+  unsigned ChainIdx, ChainLen;
+  for (ChainIdx = 0, ChainLen = Chain.size(); ChainIdx < ChainLen; ++ChainIdx) {
+    Value *V = Chain[ChainIdx];
+    if (!any_of(VectorizableChainInstrs,
+                [V](std::pair<Value *, unsigned> CI) { return V == CI.first; }))
+      break;
+  }
+  return Chain.slice(0, ChainIdx);
 }
 
 std::pair<ValueListMap, ValueListMap>

@@ -86,4 +86,34 @@ define float @insert_store_point_alias(float addrspace(1)* nocapture %a, i64 %id
   ret float %x
 }
 
+; Here we have four stores, with an aliasing load before the last one.  We
+; could vectorize two of the stores before the load (although we currently
+; don't), but the important thing is that we *don't* sink the store to
+; a[idx + 1] below the load.
+;
+; CHECK-LABEL: @insert_store_point_alias_ooo
+; CHECK: store float
+; CHECK-SAME: %a.idx.3
+; CHECK: store float
+; CHECK-SAME: %a.idx.1
+; CHECK: store float
+; CHECK-SAME: %a.idx.2
+; CHECK: load float, float addrspace(1)* %a.idx.2
+; CHECK: store float
+; CHECK-SAME: %a.idx
+define float @insert_store_point_alias_ooo(float addrspace(1)* nocapture %a, i64 %idx) {
+  %a.idx = getelementptr inbounds float, float addrspace(1)* %a, i64 %idx
+  %a.idx.1 = getelementptr inbounds float, float addrspace(1)* %a.idx, i64 1
+  %a.idx.2 = getelementptr inbounds float, float addrspace(1)* %a.idx.1, i64 1
+  %a.idx.3 = getelementptr inbounds float, float addrspace(1)* %a.idx.2, i64 1
+
+  store float 0.0, float addrspace(1)* %a.idx.3, align 4
+  store float 0.0, float addrspace(1)* %a.idx.1, align 4
+  store float 0.0, float addrspace(1)* %a.idx.2, align 4
+  %x = load float, float addrspace(1)* %a.idx.2, align 4
+  store float 0.0, float addrspace(1)* %a.idx, align 4
+
+  ret float %x
+}
+
 attributes #0 = { nounwind }
