@@ -58,6 +58,22 @@ public:
   void emitOptimizationRemarkMissed(const char *PassName, Loop *L,
                                     const Twine &Msg);
 
+  /// Emit an optimization analysis remark message.
+  ///
+  /// \p PassName is the name of the pass emitting the message. If
+  /// -Rpass-analysis= is given and \p PassName matches the regular expression
+  /// in -Rpass, then the remark will be emitted. \p DLoc is the debug location
+  /// where the diagnostic is generated. \p V is the IR Value that identifies
+  /// the code region. \p Msg is the message string to use.
+  void emitOptimizationRemarkAnalysis(const char *PassName,
+                                      const DebugLoc &DLoc, const Value *V,
+                                      const Twine &Msg);
+
+  /// \brief Same as above but derives the IR Value for the code region and the
+  /// debug location from the Loop parameter \p L.
+  void emitOptimizationRemarkAnalysis(const char *PassName, Loop *L,
+                                      const Twine &Msg);
+
 private:
   Function *F;
 

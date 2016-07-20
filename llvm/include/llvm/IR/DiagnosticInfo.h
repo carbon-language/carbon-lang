@@ -487,9 +487,10 @@ public:
   DiagnosticInfoOptimizationRemarkAnalysis(const char *PassName,
                                            const Function &Fn,
                                            const DebugLoc &DLoc,
-                                           const Twine &Msg)
+                                           const Twine &Msg,
+                                           Optional<uint64_t> Hotness = None)
       : DiagnosticInfoOptimizationBase(DK_OptimizationRemarkAnalysis, DS_Remark,
-                                       PassName, Fn, DLoc, Msg) {}
+                                       PassName, Fn, DLoc, Msg, Hotness) {}
 
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == DK_OptimizationRemarkAnalysis;

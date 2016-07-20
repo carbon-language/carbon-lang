@@ -40,6 +40,20 @@ void OptimizationRemarkEmitter::emitOptimizationRemarkMissed(
   emitOptimizationRemarkMissed(PassName, L->getStartLoc(), L->getHeader(), Msg);
 }
 
+void OptimizationRemarkEmitter::emitOptimizationRemarkAnalysis(
+    const char *PassName, const DebugLoc &DLoc, const Value *V,
+    const Twine &Msg) {
+  LLVMContext &Ctx = F->getContext();
+  Ctx.diagnose(DiagnosticInfoOptimizationRemarkAnalysis(PassName, *F, DLoc, Msg,
+                                                        computeHotness(V)));
+}
+
+void OptimizationRemarkEmitter::emitOptimizationRemarkAnalysis(
+    const char *PassName, Loop *L, const Twine &Msg) {
+  emitOptimizationRemarkAnalysis(PassName, L->getStartLoc(), L->getHeader(),
+                                 Msg);
+}
+
 OptimizationRemarkEmitterWrapperPass::OptimizationRemarkEmitterWrapperPass()
     : FunctionPass(ID) {
   initializeOptimizationRemarkEmitterWrapperPassPass(
