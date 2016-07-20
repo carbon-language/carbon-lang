@@ -1957,6 +1957,12 @@ static void writeMipsLo16(uint8_t *Loc, uint64_t V) {
   write32<E>(Loc, (Instr & 0xffff0000) | (V & 0xffff));
 }
 
+template <class ELFT> static bool isMipsR6() {
+  const auto &FirstObj = cast<ELFFileBase<ELFT>>(*Config->FirstElf);
+  uint32_t Arch = FirstObj.getObj().getHeader()->e_flags & EF_MIPS_ARCH;
+  return Arch == EF_MIPS_ARCH_32R6 || Arch == EF_MIPS_ARCH_64R6;
+}
+
 template <class ELFT>
 void MipsTargetInfo<ELFT>::writePltHeader(uint8_t *Buf) const {
   const endianness E = ELFT::TargetEndianness;
@@ -1981,7 +1987,8 @@ void MipsTargetInfo<ELFT>::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   const endianness E = ELFT::TargetEndianness;
   write32<E>(Buf, 0x3c0f0000);      // lui   $15, %hi(.got.plt entry)
   write32<E>(Buf + 4, 0x8df90000);  // l[wd] $25, %lo(.got.plt entry)($15)
-  write32<E>(Buf + 8, 0x03200008);  // jr    $25
+                                    // jr    $25
+  write32<E>(Buf + 8, isMipsR6<ELFT>() ? 0x03200009 : 0x03200008);
   write32<E>(Buf + 12, 0x25f80000); // addiu $24, $15, %lo(.got.plt entry)
   writeMipsHi16<E>(Buf, GotEntryAddr);
   writeMipsLo16<E>(Buf + 4, GotEntryAddr);
