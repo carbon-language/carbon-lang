@@ -439,12 +439,9 @@ ArrayRef<Value *> Vectorizer::getVectorizablePrefix(ArrayRef<Value *> Chain) {
         ChainInstrs.push_back({&I, InstrIdx});
     } else if (I.mayHaveSideEffects()) {
       DEBUG(dbgs() << "LSV: Found side-effecting operation: " << I << '\n');
-      return 0;
+      break;
     }
   }
-
-  assert(Chain.size() == ChainInstrs.size() &&
-         "All instrs in Chain must be within range getBoundaryInstrs(Chain).");
 
   // Loop until we find an instruction in ChainInstrs that we can't vectorize.
   unsigned ChainInstrIdx, ChainInstrsLen;
@@ -479,7 +476,6 @@ ArrayRef<Value *> Vectorizer::getVectorizablePrefix(ArrayRef<Value *> Chain) {
         DEBUG({
           Value *Ptr0 = getPointerOperand(M0);
           Value *Ptr1 = getPointerOperand(M1);
-
           dbgs() << "LSV: Found alias:\n"
                     "  Aliasing instruction and pointer:\n"
                  << "  " << *MemInstr << '\n'
@@ -713,7 +709,7 @@ bool Vectorizer::vectorizeStoreChain(
 
   ArrayRef<Value *> NewChain = getVectorizablePrefix(Chain);
   if (NewChain.empty()) {
-    // There exists a side effect instruction, no vectorization possible.
+    // No vectorization possible.
     InstructionsProcessed->insert(Chain.begin(), Chain.end());
     return false;
   }
@@ -867,7 +863,7 @@ bool Vectorizer::vectorizeLoadChain(
 
   ArrayRef<Value *> NewChain = getVectorizablePrefix(Chain);
   if (NewChain.empty()) {
-    // There exists a side effect instruction, no vectorization possible.
+    // No vectorization possible.
     InstructionsProcessed->insert(Chain.begin(), Chain.end());
     return false;
   }
