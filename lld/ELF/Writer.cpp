@@ -1347,3 +1347,16 @@ template StringRef elf::getOutputSectionName<ELF32LE>(InputSectionBase<ELF32LE> 
 template StringRef elf::getOutputSectionName<ELF32BE>(InputSectionBase<ELF32BE> *);
 template StringRef elf::getOutputSectionName<ELF64LE>(InputSectionBase<ELF64LE> *);
 template StringRef elf::getOutputSectionName<ELF64BE>(InputSectionBase<ELF64BE> *);
+
+template void elf::reportDiscarded<ELF32LE>(
+    InputSectionBase<ELF32LE> *,
+    const std::unique_ptr<elf::ObjectFile<ELF32LE>> &);
+template void elf::reportDiscarded<ELF32BE>(
+    InputSectionBase<ELF32BE> *,
+    const std::unique_ptr<elf::ObjectFile<ELF32BE>> &);
+template void elf::reportDiscarded<ELF64LE>(
+    InputSectionBase<ELF64LE> *,
+    const std::unique_ptr<elf::ObjectFile<ELF64LE>> &);
+template void elf::reportDiscarded<ELF64BE>(
+    InputSectionBase<ELF64BE> *,
+    const std::unique_ptr<elf::ObjectFile<ELF64BE>> &);
