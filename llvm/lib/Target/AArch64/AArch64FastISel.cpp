@@ -134,6 +134,7 @@ private:
   bool selectFRem(const Instruction *I);
   bool selectSDiv(const Instruction *I);
   bool selectGetElementPtr(const Instruction *I);
+  bool selectAtomicCmpXchg(const AtomicCmpXchgInst *I);
 
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
@@ -4940,6 +4941,58 @@ bool AArch64FastISel::selectGetElementPtr(const Instruction *I) {
   return true;
 }
 
+bool AArch64FastISel::selectAtomicCmpXchg(const AtomicCmpXchgInst *I) {
+  assert(TM.getOptLevel() == CodeGenOpt::None &&
+         "cmpxchg survived AtomicExpand at optlevel > -O0");
+
+  auto *RetPairTy = cast<StructType>(I->getType());
+  Type *RetTy = RetPairTy->getTypeAtIndex(0U);
+  assert(RetPairTy->getTypeAtIndex(1U)->isIntegerTy(1) &&
+         "cmpxchg has a non-i1 status result");
+
+  MVT VT;
+  if (!isTypeLegal(RetTy, VT))
+    return false;
+
+  const TargetRegisterClass *ResRC;
+  unsigned Opc;
+  // This only supports i32/i64, because i8/i16 aren't legal, and the generic
+  // extractvalue selection doesn't support that.
+  if (VT == MVT::i32) {
+    Opc = AArch64::CMP_SWAP_32;
+    ResRC = &AArch64::GPR32RegClass;
+  } else if (VT == MVT::i64) {
+    Opc = AArch64::CMP_SWAP_64;
+    ResRC = &AArch64::GPR64RegClass;
+  } else {
+    return false;
+  }
+
+  const MCInstrDesc &II = TII.get(Opc);
+
+  const unsigned AddrReg = constrainOperandRegClass(
+      II, getRegForValue(I->getPointerOperand()), II.getNumDefs());
+  const unsigned DesiredReg = constrainOperandRegClass(
+      II, getRegForValue(I->getCompareOperand()), II.getNumDefs() + 1);
+  const unsigned NewReg = constrainOperandRegClass(
+      II, getRegForValue(I->getNewValOperand()), II.getNumDefs() + 2);
+
+  const unsigned ResultReg1 = createResultReg(ResRC);
+  const unsigned ResultReg2 = createResultReg(&AArch64::GPR32RegClass);
+
+  // FIXME: MachineMemOperand doesn't support cmpxchg yet.
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II)
+      .addReg(ResultReg1, RegState::Define)
+      .addReg(ResultReg2, RegState::Define)
+      .addReg(AddrReg)
+      .addReg(DesiredReg)
+      .addReg(NewReg);
+
+  assert((ResultReg1 + 1) == ResultReg2 && "Nonconsecutive result registers.");
+  updateValueMap(I, ResultReg1, 2);
+  return true;
+}
+
 bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
   default:
@@ -5013,6 +5066,8 @@ bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
     return selectFRem(I);
   case Instruction::GetElementPtr:
     return selectGetElementPtr(I);
+  case Instruction::AtomicCmpXchg:
+    return selectAtomicCmpXchg(cast<AtomicCmpXchgInst>(I));
   }
 
   // fall-back to target-independent instruction selection.
