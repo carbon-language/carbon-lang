@@ -51,7 +51,7 @@ public:
   /// where the diagnostic is generated. \p V is the IR Value that identifies
   /// the code region. \p Msg is the message string to use.
   void emitOptimizationRemarkMissed(const char *PassName, const DebugLoc &DLoc,
-                                    Value *V, const Twine &Msg);
+                                    const Value *V, const Twine &Msg);
 
   /// \brief Same as above but derives the IR Value for the code region and the
   /// debug location from the Loop parameter \p L.
@@ -63,7 +63,7 @@ private:
 
   BlockFrequencyInfo *BFI;
 
-  Optional<uint64_t> computeHotness(Value *V);
+  Optional<uint64_t> computeHotness(const Value *V);
 
   OptimizationRemarkEmitter(const OptimizationRemarkEmitter &) = delete;
   void operator=(const OptimizationRemarkEmitter &) = delete;

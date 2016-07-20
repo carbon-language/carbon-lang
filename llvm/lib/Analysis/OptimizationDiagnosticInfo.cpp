@@ -20,7 +20,7 @@
 
 using namespace llvm;
 
-Optional<uint64_t> OptimizationRemarkEmitter::computeHotness(Value *V) {
+Optional<uint64_t> OptimizationRemarkEmitter::computeHotness(const Value *V) {
   if (!BFI)
     return None;
 
@@ -28,7 +28,8 @@ Optional<uint64_t> OptimizationRemarkEmitter::computeHotness(Value *V) {
 }
 
 void OptimizationRemarkEmitter::emitOptimizationRemarkMissed(
-    const char *PassName, const DebugLoc &DLoc, Value *V, const Twine &Msg) {
+    const char *PassName, const DebugLoc &DLoc, const Value *V,
+    const Twine &Msg) {
   LLVMContext &Ctx = F->getContext();
   Ctx.diagnose(DiagnosticInfoOptimizationRemarkMissed(PassName, *F, DLoc, Msg,
                                                       computeHotness(V)));
