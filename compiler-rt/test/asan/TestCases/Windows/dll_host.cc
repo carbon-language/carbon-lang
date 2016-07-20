@@ -18,18 +18,20 @@
 // RUN: grep "^INTERFACE_FUNCTION.*sanitizer" %p/../../../../lib/asan/asan_win_dll_thunk.cc | grep -v define | sed -e s/.*(// | sed -e s/).*// >> %t.dll_imports
 //
 // Add functions interecepted in asan_malloc.win.cc and asan_win.cc.
-// RUN: echo "__asan_wrap_HeapAlloc" >> %t.dll_imports
-// RUN: echo "__asan_wrap_HeapFree" >> %t.dll_imports
-// RUN: echo "__asan_wrap_HeapReAlloc" >> %t.dll_imports
-// RUN: echo "__asan_wrap_HeapSize" >> %t.dll_imports
-// RUN: echo "__asan_wrap_CreateThread" >> %t.dll_imports
-// RUN: echo "__asan_wrap_NtWaitForWorkViaWorkerFactory" >> %t.dll_imports
-// RUN: echo "__asan_wrap_RaiseException" >> %t.dll_imports
+// RUN: grep '[I]MPORT:' %s | sed -e 's/.*[I]MPORT: //' >> %t.dll_imports
+// IMPORT: __asan_wrap_HeapAlloc
+// IMPORT: __asan_wrap_HeapFree
+// IMPORT: __asan_wrap_HeapReAlloc
+// IMPORT: __asan_wrap_HeapSize
+// IMPORT: __asan_wrap_CreateThread
+// IMPORT: __asan_wrap_NtWaitForWorkViaWorkerFactory
+// IMPORT: __asan_wrap_RaiseException
 //
 // The exception handlers differ in 32-bit and 64-bit, so we ignore them:
-// RUN: echo "__asan_wrap__except_handler3" >> %t.exported_wrappers
-// RUN: echo "__asan_wrap__except_handler4" >> %t.exported_wrappers
-// RUN: echo "__asan_wrap___C_specific_handler" >> %t.exported_wrappers
+// RUN: grep '[E]XPORT:' %s | sed -e 's/.*[E]XPORT: //' >> %t.exported_wrappers
+// EXPORT: __asan_wrap__except_handler3
+// EXPORT: __asan_wrap__except_handler4
+// EXPORT: __asan_wrap___C_specific_handler
 //
 // RUN: sort %t.dll_imports | uniq > %t.dll_imports-sorted
 // RUN: sort %t.exported_wrappers | uniq > %t.exported_wrappers-sorted
