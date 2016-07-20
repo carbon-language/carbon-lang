@@ -19,6 +19,9 @@
 
 namespace lld {
 namespace elf {
+template <class ELFT> class InputSectionBase;
+template <class ELFT> class OutputSectionBase;
+template <class ELFT> class OutputSectionFactory;
 
 // Parses a linker script. Calling this function updates
 // Config and ScriptConfig.
@@ -93,6 +96,8 @@ public:
   ArrayRef<uint8_t> getFiller(StringRef Name);
   bool isDiscarded(InputSectionBase<ELFT> *S);
   bool shouldKeep(InputSectionBase<ELFT> *S);
+  std::vector<std::unique_ptr<OutputSectionBase<ELFT>>>
+  createSections(OutputSectionFactory<ELFT> &Factory);
   void assignAddresses(ArrayRef<OutputSectionBase<ELFT> *> S);
   int compareSections(StringRef A, StringRef B);
   void addScriptedSymbols();

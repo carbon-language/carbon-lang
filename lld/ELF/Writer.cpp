@@ -48,7 +48,8 @@ private:
 
   void copyLocalSymbols();
   void addReservedSymbols();
-  void createSections();
+  std::vector<std::unique_ptr<OutputSectionBase<ELFT>>> createSections();
+  void finalizeSections();
   void addPredefinedSections();
   bool needsGot();
 
@@ -70,7 +71,7 @@ private:
 
   BumpPtrAllocator Alloc;
   std::vector<OutputSectionBase<ELFT> *> OutputSections;
-  std::vector<std::unique_ptr<OutputSectionBase<ELFT>>> OwningSections;
+  OutputSectionFactory<ELFT> Factory;
 
   void addRelIpltSymbols();
   void addStartEndSymbols();
@@ -216,7 +217,15 @@ template <class ELFT> void Writer<ELFT>::run() {
   if (!Config->DiscardAll)
     copyLocalSymbols();
   addReservedSymbols();
-  createSections();
+
+  std::vector<std::unique_ptr<OutputSectionBase<ELFT>>> Sections =
+      ScriptConfig->DoLayout ? Script<ELFT>::X->createSections(Factory)
+                             : createSections();
+
+  for (std::unique_ptr<OutputSectionBase<ELFT>> &S : Sections)
+    OutputSections.push_back(S.get());
+
+  finalizeSections();
   if (HasError)
     return;
 
@@ -477,6 +486,10 @@ template <class ELFT> bool elf::isOutputDynamic() {
   return !Symtab<ELFT>::X->getSharedFiles().empty() || Config->Pic;
 }
 
+template <class ELFT> static bool isDiscarded(InputSectionBase<ELFT> *S) {
+  return !S || S == &InputSection<ELFT>::Discarded || !S->Live;
+}
+
 // Program header entry
 template<class ELFT>
 PhdrEntry<ELFT>::PhdrEntry(unsigned Type, unsigned Flags) {
@@ -623,11 +636,11 @@ template <class ELFT> static void sortCtorsDtors(OutputSectionBase<ELFT> *S) {
     reinterpret_cast<OutputSection<ELFT> *>(S)->sortCtorsDtors();
 }
 
-// Create output section objects and add them to OutputSections.
-template <class ELFT> void Writer<ELFT>::createSections() {
-  // Create output sections for input object file sections.
-  std::vector<OutputSectionBase<ELFT> *> RegularSections;
-  OutputSectionFactory<ELFT> Factory;
+template <class ELFT>
+std::vector<std::unique_ptr<OutputSectionBase<ELFT>>>
+Writer<ELFT>::createSections() {
+  std::vector<std::unique_ptr<OutputSectionBase<ELFT>>> Result;
+
   for (const std::unique_ptr<elf::ObjectFile<ELFT>> &F :
        Symtab.getObjectFiles()) {
     for (InputSectionBase<ELFT> *C : F->getSections()) {
@@ -638,14 +651,19 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       OutputSectionBase<ELFT> *Sec;
       bool IsNew;
       std::tie(Sec, IsNew) = Factory.create(C, getOutputSectionName(C));
-      if (IsNew) {
-        OwningSections.emplace_back(Sec);
-        OutputSections.push_back(Sec);
-        RegularSections.push_back(Sec);
-      }
+      if (IsNew)
+        Result.emplace_back(Sec);
+
       Sec->addSection(C);
     }
   }
+  return Result;
+}
+
+// Create output section objects and add them to OutputSections.
+template <class ELFT> void Writer<ELFT>::finalizeSections() {
+  // Create output sections for input object file sections.
+  std::vector<OutputSectionBase<ELFT> *> RegularSections = OutputSections;
 
   // If we have a .opd section (used under PPC64 for function descriptors),
   // store a pointer to it here so that we can use it later when processing

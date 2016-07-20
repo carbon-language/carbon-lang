@@ -196,7 +196,7 @@ StringRef LinkerScript<ELFT>::getOutputSection(InputSectionBase<ELFT> *S) {
 
 template <class ELFT>
 bool LinkerScript<ELFT>::isDiscarded(InputSectionBase<ELFT> *S) {
-  return getOutputSection(S) == "/DISCARD/";
+  return !S || !S->Live || getOutputSection(S) == "/DISCARD/";
 }
 
 template <class ELFT>
@@ -205,6 +205,46 @@ bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
     if (globMatch(Pat, S->getSectionName()))
       return true;
   return false;
+}
+
+template <class ELFT>
+std::vector<std::unique_ptr<OutputSectionBase<ELFT>>>
+LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
+  std::vector<std::unique_ptr<OutputSectionBase<ELFT>>> Result;
+  // Add input section to output section. If there is no output section yet,
+  // then create it and add to output section list.
+  auto AddInputSec = [&](InputSectionBase<ELFT> *C, StringRef Name) {
+    OutputSectionBase<ELFT> *Sec;
+    bool IsNew;
+    std::tie(Sec, IsNew) = Factory.create(C, Name);
+    if (IsNew)
+      Result.emplace_back(Sec);
+    Sec->addSection(C);
+  };
+
+  // Select input sections matching rule and add them to corresponding
+  // output section. Section rules are processed in order they're listed
+  // in script, so correct input section order is maintained by design.
+  for (SectionRule &R : Opt.Sections)
+    for (const std::unique_ptr<ObjectFile<ELFT>> &F :
+         Symtab<ELFT>::X->getObjectFiles())
+      for (InputSectionBase<ELFT> *S : F->getSections())
+        if (!isDiscarded(S) && !S->OutSec &&
+            globMatch(R.SectionPattern, S->getSectionName()))
+          // Add single input section to output section.
+          AddInputSec(S, R.Dest);
+
+  // Add all other input sections, which are not listed in script.
+  for (const std::unique_ptr<ObjectFile<ELFT>> &F :
+       Symtab<ELFT>::X->getObjectFiles())
+    for (InputSectionBase<ELFT> *S : F->getSections())
+      if (!isDiscarded(S)) {
+        if (!S->OutSec)
+          AddInputSec(S, getOutputSectionName(S));
+      } else
+        reportDiscarded(S, F);
+
+  return Result;
 }
 
 template <class ELFT>
