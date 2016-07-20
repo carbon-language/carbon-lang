@@ -651,10 +651,6 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
                                            cast<TemplateTemplateParmDecl>(*P)));
   }
 
-  assert(!TTP->getRequiresClause() &&
-         "Unexpected requires-clause on template template-parameter");
-  LLVM_CONSTEXPR Expr *const CanonRequiresClause = nullptr;
-
   TemplateTemplateParmDecl *CanonTTP
     = TemplateTemplateParmDecl::Create(*this, getTranslationUnitDecl(), 
                                        SourceLocation(), TTP->getDepth(),
@@ -664,8 +660,7 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
                          TemplateParameterList::Create(*this, SourceLocation(),
                                                        SourceLocation(),
                                                        CanonParams,
-                                                       SourceLocation(),
-                                                       CanonRequiresClause));
+                                                       SourceLocation()));
 
   // Get the new insert position for the node we care about.
   Canonical = CanonTemplateTemplateParms.FindNodeOrInsertPos(ID, InsertPos);

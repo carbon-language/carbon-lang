@@ -2262,21 +2262,11 @@ TemplateParameterList *ASTNodeImporter::ImportTemplateParameterList(
     ToParams.push_back(cast<NamedDecl>(To));
   }
   
-  Expr *ToRequiresClause;
-  if (Expr *const R = Params->getRequiresClause()) {
-    ToRequiresClause = Importer.Import(R);
-    if (!ToRequiresClause)
-      return nullptr;
-  } else {
-    ToRequiresClause = nullptr;
-  }
-
   return TemplateParameterList::Create(Importer.getToContext(),
                                        Importer.Import(Params->getTemplateLoc()),
                                        Importer.Import(Params->getLAngleLoc()),
                                        ToParams,
-                                       Importer.Import(Params->getRAngleLoc()),
-                                       ToRequiresClause);
+                                       Importer.Import(Params->getRAngleLoc()));
 }
 
 TemplateArgument 
