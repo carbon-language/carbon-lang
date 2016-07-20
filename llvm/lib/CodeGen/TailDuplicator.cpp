@@ -824,6 +824,8 @@ bool TailDuplicator::tailDuplicate(MachineFunction &MF, bool IsSimple,
   // This has to check PrevBB->succ_size() because EH edges are ignored by
   // AnalyzeBranch.
   if (PrevBB->succ_size() == 1 &&
+      // Layout preds are not always CFG preds. Check.
+      *PrevBB->succ_begin() == TailBB &&
       !TII->analyzeBranch(*PrevBB, PriorTBB, PriorFBB, PriorCond, true) &&
       PriorCond.empty() && !PriorTBB && TailBB->pred_size() == 1 &&
       !TailBB->hasAddressTaken()) {
