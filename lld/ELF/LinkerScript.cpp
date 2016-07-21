@@ -8,8 +8,12 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains the parser/evaluator of the linker script.
-// It does not construct an AST but consume linker script directives directly.
-// Results are written to Driver or Config object.
+// It parses a linker script and write the result to Config or ScriptConfig
+// objects.
+//
+// If SECTIONS command is used, a ScriptConfig contains an AST
+// of the command which will later be consumed by createSections() and
+// assignAddresses().
 //
 //===----------------------------------------------------------------------===//
 
