@@ -76,6 +76,18 @@ struct JSONImporter : public ScopPass {
   std::vector<std::string> newAccessStrings;
   explicit JSONImporter() : ScopPass(ID) {}
 
+  /// Import a new schedule from JScop.
+  ///
+  /// ... and verify that the new schedule does preserve existing data
+  /// dependences.
+  ///
+  /// @param S The scop to update.
+  /// @param JScop The JScop file describing the new schedule.
+  /// @param D The data dependences of the @p S.
+  ///
+  /// @returns True if the import succeeded, otherwise False.
+  bool importSchedule(Scop &S, Json::Value &JScop, const Dependences &D);
+
   std::string getFileName(Scop &S) const;
 
   /// @brief Import new access functions for SCoP @p S from a JSON file.
@@ -197,6 +209,50 @@ void JSONImporter::printScop(raw_ostream &OS, Scop &S) const {
 
 typedef Dependences::StatementToIslMapTy StatementToIslMapTy;
 
+bool JSONImporter::importSchedule(Scop &S, Json::Value &JScop,
+                                  const Dependences &D) {
+  StatementToIslMapTy NewSchedule;
+
+  int Index = 0;
+  for (ScopStmt &Stmt : S) {
+    Json::Value Schedule = JScop["statements"][Index]["schedule"];
+    isl_map *Map = isl_map_read_from_str(S.getIslCtx(), Schedule.asCString());
+    isl_space *Space = Stmt.getDomainSpace();
+
+    // Copy the old tuple id. This is necessary to retain the user pointer,
+    // that stores the reference to the ScopStmt this schedule belongs to.
+    Map = isl_map_set_tuple_id(Map, isl_dim_in,
+                               isl_space_get_tuple_id(Space, isl_dim_set));
+    for (unsigned i = 0; i < isl_space_dim(Space, isl_dim_param); i++) {
+      isl_id *Id = isl_space_get_dim_id(Space, isl_dim_param, i);
+      Map = isl_map_set_dim_id(Map, isl_dim_param, i, Id);
+    }
+    isl_space_free(Space);
+    NewSchedule[&Stmt] = Map;
+    Index++;
+  }
+
+  if (!D.isValidSchedule(S, &NewSchedule)) {
+    errs() << "JScop file contains a schedule that changes the "
+           << "dependences. Use -disable-polly-legality to continue anyways\n";
+    for (auto Element : NewSchedule)
+      isl_map_free(Element.second);
+    return false;
+  }
+
+  auto ScheduleMap = isl_union_map_empty(S.getParamSpace());
+  for (ScopStmt &Stmt : S) {
+    if (NewSchedule.find(&Stmt) != NewSchedule.end())
+      ScheduleMap = isl_union_map_add_map(ScheduleMap, NewSchedule[&Stmt]);
+    else
+      ScheduleMap = isl_union_map_add_map(ScheduleMap, Stmt.getSchedule());
+  }
+
+  S.setSchedule(ScheduleMap);
+
+  return true;
+}
+
 bool JSONImporter::runOnScop(Scop &S) {
   const Dependences &D =
       getAnalysis<DependenceInfo>().getDependences(Dependences::AL_Statement);
@@ -238,47 +294,10 @@ bool JSONImporter::runOnScop(Scop &S) {
   isl_set_free(OldContext);
   S.setContext(NewContext);
 
-  StatementToIslMapTy NewSchedule;
+  bool Success = importSchedule(S, jscop, D);
 
-  int index = 0;
-
-  for (ScopStmt &Stmt : S) {
-    Json::Value schedule = jscop["statements"][index]["schedule"];
-    isl_map *m = isl_map_read_from_str(S.getIslCtx(), schedule.asCString());
-    isl_space *Space = Stmt.getDomainSpace();
-
-    // Copy the old tuple id. This is necessary to retain the user pointer,
-    // that stores the reference to the ScopStmt this schedule belongs to.
-    m = isl_map_set_tuple_id(m, isl_dim_in,
-                             isl_space_get_tuple_id(Space, isl_dim_set));
-    for (unsigned i = 0; i < isl_space_dim(Space, isl_dim_param); i++) {
-      isl_id *id = isl_space_get_dim_id(Space, isl_dim_param, i);
-      m = isl_map_set_dim_id(m, isl_dim_param, i, id);
-    }
-    isl_space_free(Space);
-    NewSchedule[&Stmt] = m;
-    index++;
-  }
-
-  if (!D.isValidSchedule(S, &NewSchedule)) {
-    errs() << "JScop file contains a schedule that changes the "
-           << "dependences. Use -disable-polly-legality to continue anyways\n";
-    for (StatementToIslMapTy::iterator SI = NewSchedule.begin(),
-                                       SE = NewSchedule.end();
-         SI != SE; ++SI)
-      isl_map_free(SI->second);
+  if (!Success)
     return false;
-  }
-
-  auto ScheduleMap = isl_union_map_empty(S.getParamSpace());
-  for (ScopStmt &Stmt : S) {
-    if (NewSchedule.find(&Stmt) != NewSchedule.end())
-      ScheduleMap = isl_union_map_add_map(ScheduleMap, NewSchedule[&Stmt]);
-    else
-      ScheduleMap = isl_union_map_add_map(ScheduleMap, Stmt.getSchedule());
-  }
-
-  S.setSchedule(ScheduleMap);
 
   int statementIdx = 0;
   for (ScopStmt &Stmt : S) {
