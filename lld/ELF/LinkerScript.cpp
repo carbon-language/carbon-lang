@@ -105,6 +105,13 @@ uint64_t ExprParser::run() {
   return V;
 }
 
+uint64_t static getConstantValue(StringRef C) {
+  if (C == "COMMONPAGESIZE" || C == "MAXPAGESIZE")
+    return Target->PageSize;
+  error("unknown constant: " + C);
+  return 0;
+}
+
 // This is a part of the operator-precedence parser to evaluate
 // arithmetic expressions in SECTIONS command. This function evaluates an
 // integer literal, a parenthesized expression, the ALIGN function,
@@ -123,6 +130,34 @@ uint64_t ExprParser::parsePrimary() {
     uint64_t V = parseExpr();
     expect(")");
     return alignTo(Dot, V);
+  }
+  if (Tok == "CONSTANT") {
+    expect("(");
+    uint64_t V = getConstantValue(next());
+    expect(")");
+    return V;
+  }
+  // Documentations says there are two ways to compute
+  // the value of DATA_SEGMENT_ALIGN command, depending on whether the second
+  // uses fewer COMMONPAGESIZE sized pages for the data segment(area between the
+  // result of this expression and `DATA_SEGMENT_END') than the first or not.
+  // That is possible optimization, that we do not support, so we compute that
+  // function always as (ALIGN(MAXPAGESIZE) + (. & (MAXPAGESIZE - 1))) now.
+  if (Tok == "DATA_SEGMENT_ALIGN") {
+    expect("(");
+    uint64_t L = parseExpr();
+    expect(",");
+    parseExpr();
+    expect(")");
+    return alignTo(Dot, L) + (Dot & (L - 1));
+  }
+  // Since we do not support the optimization from comment above,
+  // we can just ignore that command.
+  if (Tok == "DATA_SEGMENT_END") {
+    expect("(");
+    expect(".");
+    expect(")");
+    return Dot;
   }
   uint64_t V = 0;
   if (Tok.getAsInteger(0, V))
