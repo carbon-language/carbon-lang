@@ -232,5 +232,15 @@ void BinaryContext::preprocessFunctionDebugInfo(
   }
 }
 
+ErrorOr<SectionRef> BinaryContext::getSectionForAddress(uint64_t Address) const{
+  auto SI = AllocatableSections.upper_bound(Address);
+  if (SI != AllocatableSections.begin()) {
+    --SI;
+    if (SI->first + SI->second.getSize() > Address)
+      return SI->second;
+  }
+  return std::make_error_code(std::errc::bad_address);
+}
+
 } // namespace bolt
 } // namespace llvm

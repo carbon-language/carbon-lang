@@ -30,6 +30,8 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include <functional>
 #include <map>
@@ -42,6 +44,8 @@ namespace llvm {
 
 class DWARFDebugInfoEntryMinimal;
 
+using namespace object;
+
 namespace bolt {
 
 class BinaryFunction;
@@ -53,14 +57,17 @@ class BinaryContext {
 
 public:
 
-  // [name] -> [address] map used for global symbol resolution.
+  /// [name] -> [address] map used for global symbol resolution.
   typedef std::map<std::string, uint64_t> SymbolMapType;
   SymbolMapType GlobalSymbols;
 
-  // [address] -> [name1], [name2], ...
+  /// [address] -> [name1], [name2], ...
   std::multimap<uint64_t, std::string> GlobalAddresses;
 
-  // Set of addresses we cannot relocate because we have a direct branch to it.
+  /// Map virtual address to a section.
+  std::map<uint64_t, SectionRef> AllocatableSections;
+
+  /// Set of addresses we cannot relocate because we have a direct branch to it.
   std::set<uint64_t> InterproceduralBranchTargets;
 
   /// List of DWARF location lists in .debug_loc.
@@ -149,6 +156,9 @@ public:
   /// If there are multiple symbols registered at the \p Address, then
   /// return the first one.
   MCSymbol *getOrCreateGlobalSymbol(uint64_t Address, Twine Prefix);
+
+  /// Return (allocatable) section containing the given \p Address.
+  ErrorOr<SectionRef> getSectionForAddress(uint64_t Address) const;
 
   /// Register a symbol with \p Name at a given \p Address.
   void registerNameAtAddress(const std::string &Name, uint64_t Address) {

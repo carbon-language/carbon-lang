@@ -815,6 +815,11 @@ void RewriteInstance::readSpecialSections() {
     } else if (SectionName == ".debug_loc") {
       DebugLocSize = Section.getSize();
     }
+
+    if (Section.isText() || Section.isData() || Section.isBSS()) {
+      BC->AllocatableSections.emplace(std::make_pair(Section.getAddress(),
+                                                     Section));
+    }
   }
 
   FrameHdrCopy =
