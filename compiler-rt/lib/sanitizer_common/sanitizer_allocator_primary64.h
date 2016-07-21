@@ -144,6 +144,13 @@ class SizeClassAllocator64 {
     UnmapWithCallback(SpaceBeg(), kSpaceSize + AdditionalSize());
   }
 
+  static void FillMemoryProfile(uptr start, uptr rss, bool file, uptr *stats,
+                           uptr stats_size) {
+    for (uptr class_id = 0; class_id < stats_size; class_id++)
+      if (stats[class_id] == start)
+        stats[class_id] = rss;
+  }
+
   void PrintStats() {
     uptr total_mapped = 0;
     uptr n_allocated = 0;
@@ -157,15 +164,24 @@ class SizeClassAllocator64 {
     Printf("Stats: SizeClassAllocator64: %zdM mapped in %zd allocations; "
            "remains %zd\n",
            total_mapped >> 20, n_allocated, n_allocated - n_freed);
+    uptr rss_stats[kNumClasses];
+    for (uptr class_id = 0; class_id < kNumClasses; class_id++)
+      rss_stats[class_id] = SpaceBeg() + kRegionSize * class_id;
+    GetMemoryProfile(FillMemoryProfile, rss_stats, kNumClasses);
     for (uptr class_id = 1; class_id < kNumClasses; class_id++) {
       RegionInfo *region = GetRegionInfo(class_id);
       if (region->mapped_user == 0) continue;
-      Printf("  %02zd (%zd): total: %zd K allocs: %zd remains: %zd\n",
+      uptr in_use = region->n_allocated - region->n_freed;
+      uptr avail_chunks = region->allocated_user / SizeClassMap::Size(class_id);
+      Printf("  %02zd (%zd): mapped: %zdK allocs: %zd frees: %zd inuse: %zd"
+             " avail: %zd rss: %zdK\n",
              class_id,
              SizeClassMap::Size(class_id),
              region->mapped_user >> 10,
              region->n_allocated,
-             region->n_allocated - region->n_freed);
+             region->n_freed,
+             in_use, avail_chunks,
+             rss_stats[class_id] >> 10);
     }
   }
 
