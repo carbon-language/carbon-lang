@@ -603,12 +603,20 @@ public:
     // Copy the gep before moving the ld/st.
     Instruction *ClonedGep = Gep->clone();
     ClonedGep->insertBefore(HoistPt->getTerminator());
+    // Conservatively discard any optimization hints, they may differ on the
+    // other paths.
+    ClonedGep->dropUnknownNonDebugMetadata();
+    ClonedGep->clearSubclassOptionalData();
     Repl->replaceUsesOfWith(Gep, ClonedGep);
 
     // Also copy Val.
     if (Val) {
       Instruction *ClonedVal = Val->clone();
       ClonedVal->insertBefore(HoistPt->getTerminator());
+      // Conservatively discard any optimization hints, they may differ on the
+      // other paths.
+      ClonedVal->dropUnknownNonDebugMetadata();
+      ClonedVal->clearSubclassOptionalData();
       Repl->replaceUsesOfWith(Val, ClonedVal);
     }
 
@@ -647,6 +655,9 @@ public:
             !makeOperandsAvailable(Repl, HoistPt))
           continue;
         Repl->moveBefore(HoistPt->getTerminator());
+        // TBAA may differ on one of the other paths, we need to get rid of
+        // anything which might conflict.
+        Repl->dropUnknownNonDebugMetadata();
       }
 
       if (isa<LoadInst>(Repl))
@@ -668,6 +679,7 @@ public:
             ++NumStoresRemoved;
           else if (isa<CallInst>(Repl))
             ++NumCallsRemoved;
+          Repl->intersectOptionalDataWith(I);
           I->replaceAllUsesWith(Repl);
           I->eraseFromParent();
         }
