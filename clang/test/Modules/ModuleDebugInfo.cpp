@@ -121,7 +121,7 @@
 // CHECK-SAME:                         flags: DIFlagFwdDecl,
 // CHECK-SAME:                         identifier: "_ZTS9Template1IPvE")
 
-// Explicit instatiation.
+// Explicit instantiation.
 // CHECK: !DICompositeType(tag: DW_TAG_class_type, name: "Template1<int>",
 // CHECK-SAME:             templateParams:
 // CHECK-SAME:             identifier: "_ZTS9Template1IiE")
@@ -129,6 +129,10 @@
 // CHECK: !DICompositeType(tag: DW_TAG_class_type, name: "FwdDeclTemplate<int>",
 // CHECK-SAME:             flags: DIFlagFwdDecl
 // CHECK-SAME:             identifier: "_ZTS15FwdDeclTemplateIiE")
+
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "Member",
+// CHECK-SAME:             flags: DIFlagFwdDecl
+// CHECK-SAME:             identifier: "_ZTSN11SpecializedIiE6MemberE")
 
 // Forward-declared member of a template.
 // CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "Member",
