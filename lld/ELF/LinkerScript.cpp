@@ -344,7 +344,7 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
 
     switch (Cmd.Type) {
     case PT_INTERP:
-      if (needsInterpSection<ELFT>())
+      if (Out<ELFT>::Interp)
         Added.add(Out<ELFT>::Interp);
       break;
     case PT_DYNAMIC:
