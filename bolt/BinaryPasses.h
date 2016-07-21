@@ -148,6 +148,15 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
+/// Perform simple peephole optimizations.
+class Peepholes : public BinaryFunctionPass {
+  void shortenInstructions(BinaryContext &BC, BinaryFunction &Function);
+ public:
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
 } // namespace bolt
 } // namespace llvm
 

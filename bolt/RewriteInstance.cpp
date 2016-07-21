@@ -157,6 +157,11 @@ PrintUCE("print-uce",
          cl::desc("print functions after unreachable code elimination"),
          cl::Hidden);
 
+cl::opt<bool>
+PrintPeepholes("print-peepholes",
+               cl::desc("print functions after peephole optimization"),
+               cl::Hidden);
+
 static cl::opt<bool>
 PrintDisasm("print-disasm", cl::desc("print function after disassembly"),
             cl::Hidden);

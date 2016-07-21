@@ -36,6 +36,12 @@ SimplifyConditionalTailCalls("simplify-conditional-tail-calls",
                                             "by removing unnecessary jumps"),
                              llvm::cl::Optional);
 
+static llvm::cl::opt<bool>
+Peepholes("peepholes",
+          llvm::cl::desc("run peephole optimizations"),
+          llvm::cl::init(true),
+          llvm::cl::Optional);
+
 } // namespace opts
 
 namespace llvm {
@@ -81,6 +87,8 @@ void BinaryFunctionPassManager::runAllPasses(
                        opts::InlineSmallFunctions);
 
   Manager.registerPass(std::move(llvm::make_unique<FixupFunctions>()));
+
+  Manager.registerPass(llvm::make_unique<Peepholes>(), opts::Peepholes);
 
   Manager.runPasses();
 }

@@ -21,6 +21,7 @@ extern llvm::cl::opt<bool> DumpDotAll;
 extern llvm::cl::opt<bool> PrintReordered;
 extern llvm::cl::opt<bool> PrintEHRanges;
 extern llvm::cl::opt<bool> PrintUCE;
+extern llvm::cl::opt<bool> PrintPeepholes;
 extern llvm::cl::opt<llvm::bolt::BinaryFunction::SplittingType> SplitFunctions;
 extern bool shouldProcess(const llvm::bolt::BinaryFunction &Function);
 
@@ -536,6 +537,34 @@ void SimplifyConditionalTailCalls::runOnFunctions(
   outs() << "BOLT: patched " << NumTailCallsPatched
          << " tail calls (" << NumOrigForwardBranches << " forward)"
          << " from a total of " << NumTailCallCandidates << "\n";
+}
+
+void Peepholes::shortenInstructions(BinaryContext &BC,
+                                    BinaryFunction &Function) {
+  for (auto &BB : Function) {
+    for (auto &Inst : BB) {
+      BC.MIA->shortenInstruction(Inst);
+    }
+  }
+}
+
+void Peepholes::runOnFunctions(BinaryContext &BC,
+                               std::map<uint64_t, BinaryFunction> &BFs,
+                               std::set<uint64_t> &LargeFunctions) {
+  for (auto &It : BFs) {
+    auto &Function = It.second;
+    if (Function.isSimple() && opts::shouldProcess(Function)) {
+      shortenInstructions(BC, Function);
+
+      if (opts::PrintAll || opts::PrintPeepholes) {
+        Function.print(errs(), "after peepholes", true);
+      }
+
+      if (opts::DumpDotAll) {
+        Function.dumpGraphForPass("peepholes");
+      }
+    }
+  }
 }
 
 } // namespace bolt
