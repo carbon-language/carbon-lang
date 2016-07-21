@@ -76,6 +76,14 @@ struct JSONImporter : public ScopPass {
   std::vector<std::string> newAccessStrings;
   explicit JSONImporter() : ScopPass(ID) {}
 
+  /// Import a new context from JScop.
+  ///
+  /// @param S The scop to update.
+  /// @param JScop The JScop file describing the new schedule.
+  ///
+  /// @returns True if the import succeeded, otherwise False.
+  bool importContext(Scop &S, Json::Value &JScop);
+
   /// Import a new schedule from JScop.
   ///
   /// ... and verify that the new schedule does preserve existing data
@@ -209,6 +217,21 @@ void JSONImporter::printScop(raw_ostream &OS, Scop &S) const {
 
 typedef Dependences::StatementToIslMapTy StatementToIslMapTy;
 
+bool JSONImporter::importContext(Scop &S, Json::Value &JScop) {
+  isl_set *OldContext = S.getContext();
+  isl_set *NewContext =
+      isl_set_read_from_str(S.getIslCtx(), JScop["context"].asCString());
+
+  for (unsigned i = 0; i < isl_set_dim(OldContext, isl_dim_param); i++) {
+    isl_id *Id = isl_set_get_dim_id(OldContext, isl_dim_param, i);
+    NewContext = isl_set_set_dim_id(NewContext, isl_dim_param, i, Id);
+  }
+
+  isl_set_free(OldContext);
+  S.setContext(NewContext);
+  return true;
+}
+
 bool JSONImporter::importSchedule(Scop &S, Json::Value &JScop,
                                   const Dependences &D) {
   StatementToIslMapTy NewSchedule;
@@ -282,19 +305,12 @@ bool JSONImporter::runOnScop(Scop &S) {
     return false;
   }
 
-  isl_set *OldContext = S.getContext();
-  isl_set *NewContext =
-      isl_set_read_from_str(S.getIslCtx(), jscop["context"].asCString());
+  bool Success = importContext(S, jscop);
 
-  for (unsigned i = 0; i < isl_set_dim(OldContext, isl_dim_param); i++) {
-    isl_id *id = isl_set_get_dim_id(OldContext, isl_dim_param, i);
-    NewContext = isl_set_set_dim_id(NewContext, isl_dim_param, i, id);
-  }
+  if (!Success)
+    return false;
 
-  isl_set_free(OldContext);
-  S.setContext(NewContext);
-
-  bool Success = importSchedule(S, jscop, D);
+  Success = importSchedule(S, jscop, D);
 
   if (!Success)
     return false;
