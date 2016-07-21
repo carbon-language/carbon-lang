@@ -413,7 +413,6 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
         Phdrs[Id].add(Sec);
         if (Opt.PhdrsCommands[Id].Flags == UINT_MAX)
           Phdrs[Id].H.p_flags |= toPhdrFlags(Sec->getFlags());
-        Phdrs[Id].H.p_flags |= toPhdrFlags(Sec->getFlags());
       }
     } else {
       // If we have no load segment or flags've changed then we want new load
