@@ -613,6 +613,9 @@ public:
 
     // Also copy Val when it is a GEP.
     if (Val && isa<GetElementPtrInst>(Val)) {
+      // Check whether we can compute the GEP at HoistPt.
+      if (!allOperandsAvailable(Val, HoistPt))
+        return false;
       Instruction *ClonedVal = Val->clone();
       ClonedVal->insertBefore(HoistPt->getTerminator());
       // Conservatively discard any optimization hints, they may differ on the
