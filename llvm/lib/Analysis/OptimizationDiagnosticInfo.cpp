@@ -70,14 +70,16 @@ void OptimizationRemarkEmitter::emitOptimizationRemarkAnalysis(
 }
 
 void OptimizationRemarkEmitter::emitOptimizationRemarkAnalysisFPCommute(
-    const char *PassName, const DebugLoc &DLoc, Value *V, const Twine &Msg) {
+    const char *PassName, const DebugLoc &DLoc, const Value *V,
+    const Twine &Msg) {
   LLVMContext &Ctx = F->getContext();
   Ctx.diagnose(DiagnosticInfoOptimizationRemarkAnalysisFPCommute(
       PassName, *F, DLoc, Msg, computeHotness(V)));
 }
 
 void OptimizationRemarkEmitter::emitOptimizationRemarkAnalysisAliasing(
-    const char *PassName, const DebugLoc &DLoc, Value *V, const Twine &Msg) {
+    const char *PassName, const DebugLoc &DLoc, const Value *V,
+    const Twine &Msg) {
   LLVMContext &Ctx = F->getContext();
   Ctx.diagnose(DiagnosticInfoOptimizationRemarkAnalysisAliasing(
       PassName, *F, DLoc, Msg, computeHotness(V)));

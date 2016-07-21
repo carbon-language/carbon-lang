@@ -99,7 +99,8 @@ public:
   /// is generated.\p V is the IR Value that identifies the code region.  \p Msg
   /// is the message string to use.
   void emitOptimizationRemarkAnalysisFPCommute(const char *PassName,
-                                               const DebugLoc &DLoc, Value *V,
+                                               const DebugLoc &DLoc,
+                                               const Value *V,
                                                const Twine &Msg);
 
   /// \brief Emit an optimization analysis remark related to pointer aliasing.
@@ -111,8 +112,8 @@ public:
   /// is generated.\p V is the IR Value that identifies the code region.  \p Msg
   /// is the message string to use.
   void emitOptimizationRemarkAnalysisAliasing(const char *PassName,
-                                              const DebugLoc &DLoc, Value *V,
-                                              const Twine &Msg);
+                                              const DebugLoc &DLoc,
+                                              const Value *V, const Twine &Msg);
 
   /// \brief Same as above but derives the IR Value for the code region and the
   /// debug location from the Loop parameter \p L.
