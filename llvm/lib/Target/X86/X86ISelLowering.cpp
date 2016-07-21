@@ -12373,21 +12373,6 @@ static SDValue LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::TRUNCATE, dl, VT, Assert);
   }
 
-  if (VT.getSizeInBits() == 16) {
-    // If Idx is 0, it's cheaper to do a move instead of a pextrw.
-    if (isNullConstant(Op.getOperand(1)))
-      return DAG.getNode(
-          ISD::TRUNCATE, dl, MVT::i16,
-          DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32,
-                      DAG.getBitcast(MVT::v4i32, Op.getOperand(0)),
-                      Op.getOperand(1)));
-    SDValue Extract = DAG.getNode(X86ISD::PEXTRW, dl, MVT::i32,
-                                  Op.getOperand(0), Op.getOperand(1));
-    SDValue Assert  = DAG.getNode(ISD::AssertZext, dl, MVT::i32, Extract,
-                                  DAG.getValueType(VT));
-    return DAG.getNode(ISD::TRUNCATE, dl, VT, Assert);
-  }
-
   if (VT == MVT::f32) {
     // EXTRACTPS outputs to a GPR32 register which will require a movd to copy
     // the result back to FR32 register. It's only worth matching if the
@@ -12413,6 +12398,7 @@ static SDValue LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG) {
     if (isa<ConstantSDNode>(Op.getOperand(1)))
       return Op;
   }
+
   return SDValue();
 }
 
@@ -12512,25 +12498,29 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
 
   assert(VecVT.is128BitVector() && "Unexpected vector length");
 
+  MVT VT = Op.getSimpleValueType();
+
+  if (VT.getSizeInBits() == 16) {
+    // If IdxVal is 0, it's cheaper to do a move instead of a pextrw.
+    if (IdxVal == 0)
+      return DAG.getNode(
+          ISD::TRUNCATE, dl, MVT::i16,
+          DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32,
+                      DAG.getBitcast(MVT::v4i32, Vec), Idx));
+
+    // Transform it so it match pextrw which produces a 32-bit result.
+    SDValue Extract = DAG.getNode(X86ISD::PEXTRW, dl, MVT::i32,
+                                  Op.getOperand(0), Op.getOperand(1));
+    SDValue Assert  = DAG.getNode(ISD::AssertZext, dl, MVT::i32, Extract,
+                                  DAG.getValueType(VT));
+    return DAG.getNode(ISD::TRUNCATE, dl, VT, Assert);
+  }
+
   if (Subtarget.hasSSE41())
     if (SDValue Res = LowerEXTRACT_VECTOR_ELT_SSE4(Op, DAG))
       return Res;
 
-  MVT VT = Op.getSimpleValueType();
   // TODO: handle v16i8.
-  if (VT.getSizeInBits() == 16) {
-    if (IdxVal == 0)
-      return DAG.getNode(ISD::TRUNCATE, dl, MVT::i16,
-                         DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32,
-                                     DAG.getBitcast(MVT::v4i32, Vec), Idx));
-
-    // Transform it so it match pextrw which produces a 32-bit result.
-    MVT EltVT = MVT::i32;
-    SDValue Extract = DAG.getNode(X86ISD::PEXTRW, dl, EltVT, Vec, Idx);
-    SDValue Assert  = DAG.getNode(ISD::AssertZext, dl, EltVT, Extract,
-                                  DAG.getValueType(VT));
-    return DAG.getNode(ISD::TRUNCATE, dl, VT, Assert);
-  }
 
   if (VT.getSizeInBits() == 32) {
     if (IdxVal == 0)
