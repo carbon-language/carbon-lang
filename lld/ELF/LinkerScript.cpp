@@ -39,6 +39,14 @@ using namespace lld::elf;
 
 ScriptConfiguration *elf::ScriptConfig;
 
+bool SymbolAssignment::classof(const BaseCommand *C) {
+  return C->Kind == AssignmentKind;
+}
+
+bool OutputSectionCommand::classof(const BaseCommand *C) {
+  return C->Kind == OutputSectionKind;
+}
+
 // This is an operator-precedence parser to parse and evaluate
 // a linker script expression. For each linker script arithmetic
 // expression (e.g. ". = . + 0x1000"), a new instance of ExprParser
@@ -259,7 +267,7 @@ void LinkerScript<ELFT>::assignAddresses(
   for (OutputSectionBase<ELFT> *Sec : Sections) {
     StringRef Name = Sec->getName();
     if (getSectionIndex(Name) == INT_MAX)
-      Opt.Commands.push_back({SectionKind, {}, Name, {}});
+      Opt.Commands.push_back(llvm::make_unique<OutputSectionCommand>(Name));
   }
 
   // Assign addresses as instructed by linker script SECTIONS sub-commands.
@@ -267,14 +275,14 @@ void LinkerScript<ELFT>::assignAddresses(
   uintX_t MinVA = std::numeric_limits<uintX_t>::max();
   uintX_t ThreadBssOffset = 0;
 
-  for (SectionsCommand &Cmd : Opt.Commands) {
-    if (Cmd.Kind == AssignmentKind) {
-      uint64_t Val = evalExpr(Cmd.Expr, Dot);
+  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
+    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get())) {
+      uint64_t Val = evalExpr(Cmd->Expr, Dot);
+      if (Cmd->Name == ".") {
 
-      if (Cmd.Name == ".") {
         Dot = Val;
       } else {
-        auto *D = cast<DefinedRegular<ELFT>>(Symtab<ELFT>::X->find(Cmd.Name));
+        auto *D = cast<DefinedRegular<ELFT>>(Symtab<ELFT>::X->find(Cmd->Name));
         D->Value = Val;
       }
       continue;
@@ -283,9 +291,9 @@ void LinkerScript<ELFT>::assignAddresses(
     // Find all the sections with required name. There can be more than
     // one section with such name, if the alignment, flags or type
     // attribute differs.
-    assert(Cmd.Kind == SectionKind);
+    auto *Cmd = cast<OutputSectionCommand>(Base.get());
     for (OutputSectionBase<ELFT> *Sec : Sections) {
-      if (Sec->getName() != Cmd.Name)
+      if (Sec->getName() != Cmd->Name)
         continue;
 
       if ((Sec->getFlags() & SHF_TLS) && Sec->getType() == SHT_NOBITS) {
@@ -412,13 +420,16 @@ ArrayRef<uint8_t> LinkerScript<ELFT>::getFiller(StringRef Name) {
 // SECTIONS commands. Sections are laid out as the same order as they
 // were in the script. If a given name did not appear in the script,
 // it returns INT_MAX, so that it will be laid out at end of file.
-template <class ELFT>
-int LinkerScript<ELFT>::getSectionIndex(StringRef Name) {
+template <class ELFT> int LinkerScript<ELFT>::getSectionIndex(StringRef Name) {
   auto Begin = Opt.Commands.begin();
   auto End = Opt.Commands.end();
-  auto I = std::find_if(Begin, End, [&](SectionsCommand &N) {
-    return N.Kind == SectionKind && N.Name == Name;
-  });
+  auto I =
+      std::find_if(Begin, End, [&](const std::unique_ptr<BaseCommand> &Base) {
+        if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
+          if (Cmd->Name == Name)
+            return true;
+        return false;
+      });
   return I == End ? INT_MAX : (I - Begin);
 }
 
@@ -433,12 +444,11 @@ int LinkerScript<ELFT>::compareSections(StringRef A, StringRef B) {
   return I < J ? -1 : 1;
 }
 
-template <class ELFT>
-void LinkerScript<ELFT>::addScriptedSymbols() {
-  for (SectionsCommand &Cmd : Opt.Commands)
-    if (Cmd.Kind == AssignmentKind)
-      if (Cmd.Name != "." && Symtab<ELFT>::X->find(Cmd.Name) == nullptr)
-        Symtab<ELFT>::X->addAbsolute(Cmd.Name, STV_DEFAULT);
+template <class ELFT> void LinkerScript<ELFT>::addScriptedSymbols() {
+  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands)
+    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get()))
+      if (Cmd->Name != "." && Symtab<ELFT>::X->find(Cmd->Name) == nullptr)
+        Symtab<ELFT>::X->addAbsolute(Cmd->Name, STV_DEFAULT);
 }
 
 template <class ELFT> bool LinkerScript<ELFT>::hasPhdrsCommands() {
@@ -451,15 +461,16 @@ template <class ELFT> bool LinkerScript<ELFT>::hasPhdrsCommands() {
 template <class ELFT>
 std::vector<size_t>
 LinkerScript<ELFT>::getPhdrIndicesForSection(StringRef Name) {
-  for (SectionsCommand &Cmd : Opt.Commands) {
-    if (Cmd.Kind != SectionKind || Cmd.Name != Name)
+  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
+    auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
+    if (!Cmd || Cmd->Name != Name)
       continue;
 
     std::vector<size_t> Indices;
-    for (StringRef PhdrName : Cmd.Phdrs) {
+    for (StringRef PhdrName : Cmd->Phdrs) {
       auto ItPhdr =
           std::find_if(Opt.PhdrsCommands.rbegin(), Opt.PhdrsCommands.rend(),
-                       [&](PhdrsCommand &Cmd) { return Cmd.Name == PhdrName; });
+                       [&](PhdrsCommand &P) { return P.Name == PhdrName; });
       if (ItPhdr == Opt.PhdrsCommands.rend())
         error("section header '" + PhdrName + "' is not listed in PHDRS");
       else
@@ -705,12 +716,12 @@ void ScriptParser::readLocationCounterValue() {
   if (Expr.empty())
     error("error in location counter expression");
   else
-    Opt.Commands.push_back({AssignmentKind, std::move(Expr), ".", {}});
+    Opt.Commands.push_back(llvm::make_unique<SymbolAssignment>(".", Expr));
 }
 
 void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
-  Opt.Commands.push_back({SectionKind, {}, OutSec, {}});
-  SectionsCommand &Cmd = Opt.Commands.back();
+  OutputSectionCommand *Cmd = new OutputSectionCommand(OutSec);
+  Opt.Commands.emplace_back(Cmd);
   expect(":");
   expect("{");
 
@@ -734,7 +745,7 @@ void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
       setError("unknown command " + Tok);
     }
   }
-  Cmd.Phdrs = readOutputSectionPhdrs();
+  Cmd->Phdrs = readOutputSectionPhdrs();
 
   StringRef Tok = peek();
   if (Tok.startswith("=")) {
@@ -754,7 +765,7 @@ void ScriptParser::readSymbolAssignment(StringRef Name) {
   if (Expr.empty())
     error("error in symbol assignment expression");
   else
-    Opt.Commands.push_back({AssignmentKind, std::move(Expr), Name, {}});
+    Opt.Commands.push_back(llvm::make_unique<SymbolAssignment>(Name, Expr));
 }
 
 std::vector<StringRef> ScriptParser::readSectionsCommandExpr() {
