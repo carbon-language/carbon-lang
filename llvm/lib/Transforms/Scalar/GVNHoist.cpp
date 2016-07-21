@@ -574,7 +574,8 @@ public:
     llvm_unreachable("Both I and J must be from same BB");
   }
 
-  bool makeOperandsAvailable(Instruction *Repl, BasicBlock *HoistPt) const {
+  bool makeOperandsAvailable(Instruction *Repl, BasicBlock *HoistPt,
+                             const SmallVecInsn &InstructionsToHoist) const {
     // Check whether the GEP of a ld/st can be synthesized at HoistPt.
     GetElementPtrInst *Gep = nullptr;
     Instruction *Val = nullptr;
@@ -606,7 +607,15 @@ public:
     // Conservatively discard any optimization hints, they may differ on the
     // other paths.
     ClonedGep->dropUnknownNonDebugMetadata();
-    ClonedGep->clearSubclassOptionalData();
+    for (const Instruction *OtherInst : InstructionsToHoist) {
+      const GetElementPtrInst *OtherGep;
+      if (auto *OtherLd = dyn_cast<LoadInst>(OtherInst))
+        OtherGep = cast<GetElementPtrInst>(OtherLd->getPointerOperand());
+      else
+        OtherGep = cast<GetElementPtrInst>(
+            cast<StoreInst>(OtherInst)->getPointerOperand());
+      ClonedGep->intersectOptionalDataWith(OtherGep);
+    }
     Repl->replaceUsesOfWith(Gep, ClonedGep);
 
     // Also copy Val.
@@ -616,6 +625,11 @@ public:
       // Conservatively discard any optimization hints, they may differ on the
       // other paths.
       ClonedVal->dropUnknownNonDebugMetadata();
+      for (const Instruction *OtherInst : InstructionsToHoist) {
+        const auto *OtherVal =
+            cast<Instruction>(cast<StoreInst>(OtherInst)->getValueOperand());
+        ClonedVal->intersectOptionalDataWith(OtherVal);
+      }
       ClonedVal->clearSubclassOptionalData();
       Repl->replaceUsesOfWith(Val, ClonedVal);
     }
@@ -652,7 +666,7 @@ public:
         // The order in which hoistings are done may influence the availability
         // of operands.
         if (!allOperandsAvailable(Repl, HoistPt) &&
-            !makeOperandsAvailable(Repl, HoistPt))
+            !makeOperandsAvailable(Repl, HoistPt, InstructionsToHoist))
           continue;
         Repl->moveBefore(HoistPt->getTerminator());
         // TBAA may differ on one of the other paths, we need to get rid of
