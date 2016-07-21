@@ -251,7 +251,7 @@ namespace {
   class GCOVBlock : public GCOVRecord {
    public:
     GCOVLines &getFile(StringRef Filename) {
-      return LinesByFile.emplace_second(Filename, Filename, os).first->second;
+      return LinesByFile.try_emplace(Filename, Filename, os).first->second;
     }
 
     void addEdge(GCOVBlock &Successor) {
