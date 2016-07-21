@@ -22,7 +22,7 @@
 
 template<typename CharT>
 void test1(std::basic_string_view<CharT> sv, size_t n, size_t pos) {
-	std::basic_string_view<CharT> sv1;
+    std::basic_string_view<CharT> sv1;
 #ifdef TEST_HAS_NO_EXCEPTIONS
     if (pos > sv.size())
         return ;  // would throw if exceptions were enabled
@@ -37,10 +37,10 @@ void test1(std::basic_string_view<CharT> sv, size_t n, size_t pos) {
         return ;
     }
 #endif
-	const size_t rlen = std::min(n, sv.size() - pos);
-	assert (sv1.size() == rlen);
-	for (size_t i = 0; i <= rlen; ++i)
-		assert(sv[pos+i] == sv1[i]);
+    const size_t rlen = std::min(n, sv.size() - pos);
+    assert (sv1.size() == rlen);
+    for (size_t i = 0; i <= rlen; ++i)
+        assert(sv[pos+i] == sv1[i]);
 }
 
 
