@@ -334,7 +334,7 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
   std::vector<Phdr> Phdrs;
 
   for (const PhdrsCommand &Cmd : Opt.PhdrsCommands) {
-    Phdrs.emplace_back(Cmd.Type, PF_R);
+    Phdrs.emplace_back(Cmd.Type, Cmd.Flags == UINT_MAX ? PF_R : Cmd.Flags);
     Phdr &Added = Phdrs.back();
 
     if (Cmd.HasFilehdr)
@@ -387,6 +387,8 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
       // Assign headers specified by linker script
       for (size_t Id : PhdrIds) {
         Phdrs[Id].add(Sec);
+        if (Opt.PhdrsCommands[Id].Flags == UINT_MAX)
+          Phdrs[Id].H.p_flags |= toPhdrFlags(Sec->getFlags());
         Phdrs[Id].H.p_flags |= toPhdrFlags(Sec->getFlags());
       }
     } else {
@@ -669,7 +671,7 @@ void ScriptParser::readPhdrs() {
   expect("{");
   while (!Error && !skip("}")) {
     StringRef Tok = next();
-    Opt.PhdrsCommands.push_back({Tok, PT_NULL, false, false});
+    Opt.PhdrsCommands.push_back({Tok, PT_NULL, false, false, UINT_MAX});
     PhdrsCommand &PhdrCmd = Opt.PhdrsCommands.back();
 
     PhdrCmd.Type = readPhdrType();
@@ -681,7 +683,11 @@ void ScriptParser::readPhdrs() {
         PhdrCmd.HasFilehdr = true;
       else if (Tok == "PHDRS")
         PhdrCmd.HasPhdrs = true;
-      else
+      else if (Tok == "FLAGS") {
+        expect("(");
+        next().getAsInteger(0, PhdrCmd.Flags);
+        expect(")");
+      } else
         setError("unexpected header attribute: " + Tok);
     } while (!Error);
   }

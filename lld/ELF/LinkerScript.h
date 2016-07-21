@@ -79,6 +79,7 @@ struct PhdrsCommand {
   unsigned Type;
   bool HasFilehdr;
   bool HasPhdrs;
+  unsigned Flags;
 };
 
 // ScriptConfiguration holds linker script parse results.
