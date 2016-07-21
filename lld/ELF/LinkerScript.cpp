@@ -266,12 +266,13 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
 
   // Add all other input sections, which are not listed in script.
   for (ObjectFile &F : Symtab<ELFT>::X->getObjectFiles())
-    for (InputSectionBase<ELFT> *S : F->getSections())
+    for (InputSectionBase<ELFT> *S : F->getSections()) {
       if (!isDiscarded(S)) {
         if (!S->OutSec)
           AddInputSec(S, getOutputSectionName(S));
       } else
         reportDiscarded(S, F);
+    }
 
   return Result;
 }
