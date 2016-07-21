@@ -600,7 +600,7 @@ void InstrProfiling::emitUses() {
 }
 
 void InstrProfiling::emitInitialization() {
-  std::string InstrProfileOutput = Options.InstrProfileOutput;
+  StringRef InstrProfileOutput = Options.InstrProfileOutput;
 
   Constant *RegisterF = M->getFunction(getInstrProfRegFuncsName());
   if (!RegisterF && InstrProfileOutput.empty())
