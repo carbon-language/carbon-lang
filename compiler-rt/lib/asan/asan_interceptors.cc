@@ -730,7 +730,7 @@ void InitializeAsanInterceptors() {
   if (PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE) {
     ASAN_INTERCEPT_FUNC(memcpy);
   } else {
-    REAL(memcpy) = REAL(memmove);
+    ASSIGN_REAL(memcpy, memmove);
   }
   CHECK(REAL(memcpy));
 
