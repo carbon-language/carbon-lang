@@ -121,6 +121,7 @@ private:
 
   int getSectionIndex(StringRef Name);
   std::vector<size_t> getPhdrIndicesForSection(StringRef Name);
+  void dispatchAssignment(SymbolAssignment *Cmd);
 
   uintX_t Dot;
 };

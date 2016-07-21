@@ -277,6 +277,17 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
 }
 
 template <class ELFT>
+void LinkerScript<ELFT>::dispatchAssignment(SymbolAssignment *Cmd) {
+  uint64_t Val = evalExpr(Cmd->Expr, Dot);
+  if (Cmd->Name == ".") {
+    Dot = Val;
+  } else {
+    auto *D = cast<DefinedRegular<ELFT>>(Symtab<ELFT>::X->find(Cmd->Name));
+    D->Value = Val;
+  }
+}
+
+template <class ELFT>
 void LinkerScript<ELFT>::assignAddresses(
     ArrayRef<OutputSectionBase<ELFT> *> Sections) {
   // Orphan sections are sections present in the input files which
@@ -297,14 +308,7 @@ void LinkerScript<ELFT>::assignAddresses(
 
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get())) {
-      uint64_t Val = evalExpr(Cmd->Expr, Dot);
-      if (Cmd->Name == ".") {
-
-        Dot = Val;
-      } else {
-        auto *D = cast<DefinedRegular<ELFT>>(Symtab<ELFT>::X->find(Cmd->Name));
-        D->Value = Val;
-      }
+      dispatchAssignment(Cmd);
       continue;
     }
 
