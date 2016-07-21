@@ -104,6 +104,8 @@ bool IRTranslator::translate(const Instruction &Inst) {
   switch(Inst.getOpcode()) {
   case Instruction::Add:
     return translateBinaryOp(TargetOpcode::G_ADD, Inst);
+  case Instruction::And:
+    return translateBinaryOp(TargetOpcode::G_AND, Inst);
   case Instruction::Or:
     return translateBinaryOp(TargetOpcode::G_OR, Inst);
   case Instruction::Br:
