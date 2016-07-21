@@ -1371,6 +1371,7 @@ _mm_cvtt_ss2si(__m128 __a)
   return _mm_cvttss_si32(__a);
 }
 
+#ifdef __x86_64__
 /// \brief Converts a float value contained in the lower 32 bits of a vector of
 ///    [4 x float] into a 64-bit integer, truncating the result when it is
 ///    inexact.
@@ -1388,6 +1389,7 @@ _mm_cvttss_si64(__m128 __a)
 {
   return __builtin_ia32_cvttss2si64((__v4sf)__a);
 }
+#endif
 
 /// \brief Converts two low-order float values in a 128-bit vector of
 ///    [4 x float] into a 64-bit vector of [2 x i32], truncating the result
