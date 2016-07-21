@@ -272,6 +272,8 @@ public:
   Instruction *visitICmpInstWithCastAndCast(ICmpInst &ICI);
   Instruction *visitICmpInstWithInstAndIntCst(ICmpInst &ICI, Instruction *LHS,
                                               ConstantInt *RHS);
+  Instruction *visitICmpEqualityWithConstant(ICmpInst &ICI, Instruction *LHS,
+                                             ConstantInt *RHS);
   Instruction *FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
                               ConstantInt *DivRHS);
   Instruction *FoldICmpShrCst(ICmpInst &ICI, BinaryOperator *DivI,
