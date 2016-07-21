@@ -6575,9 +6575,9 @@ bool LoopVectorizePass::processLoop(Loop *L) {
     InnerLoopUnroller Unroller(L, PSE, LI, DT, TLI, TTI, AC, ORE, IC);
     Unroller.vectorize(&LVL, CM.MinBWs, CM.VecValuesToIgnore);
 
-    emitOptimizationRemark(F->getContext(), LV_NAME, *F, L->getStartLoc(),
-                           Twine("interleaved loop (interleaved count: ") +
-                               Twine(IC) + ")");
+    ORE->emitOptimizationRemark(LV_NAME, L,
+                                Twine("interleaved loop (interleaved count: ") +
+                                    Twine(IC) + ")");
   } else {
     // If we decided that it is *legal* to vectorize the loop, then do it.
     InnerLoopVectorizer LB(L, PSE, LI, DT, TLI, TTI, AC, ORE, VF.Width, IC);
@@ -6591,10 +6591,10 @@ bool LoopVectorizePass::processLoop(Loop *L) {
       AddRuntimeUnrollDisableMetaData(L);
 
     // Report the vectorization decision.
-    emitOptimizationRemark(F->getContext(), LV_NAME, *F, L->getStartLoc(),
-                           Twine("vectorized loop (vectorization width: ") +
-                               Twine(VF.Width) + ", interleaved count: " +
-                               Twine(IC) + ")");
+    ORE->emitOptimizationRemark(
+        LV_NAME, L, Twine("vectorized loop (vectorization width: ") +
+                        Twine(VF.Width) + ", interleaved count: " + Twine(IC) +
+                        ")");
   }
 
   // Mark the loop as already vectorized to avoid vectorizing again.

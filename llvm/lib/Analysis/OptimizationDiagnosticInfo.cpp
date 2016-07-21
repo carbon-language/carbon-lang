@@ -27,6 +27,21 @@ Optional<uint64_t> OptimizationRemarkEmitter::computeHotness(const Value *V) {
   return BFI->getBlockProfileCount(cast<BasicBlock>(V));
 }
 
+void OptimizationRemarkEmitter::emitOptimizationRemark(const char *PassName,
+                                                       const DebugLoc &DLoc,
+                                                       const Value *V,
+                                                       const Twine &Msg) {
+  LLVMContext &Ctx = F->getContext();
+  Ctx.diagnose(DiagnosticInfoOptimizationRemark(PassName, *F, DLoc, Msg,
+                                                computeHotness(V)));
+}
+
+void OptimizationRemarkEmitter::emitOptimizationRemark(const char *PassName,
+                                                       Loop *L,
+                                                       const Twine &Msg) {
+  emitOptimizationRemark(PassName, L->getStartLoc(), L->getHeader(), Msg);
+}
+
 void OptimizationRemarkEmitter::emitOptimizationRemarkMissed(
     const char *PassName, const DebugLoc &DLoc, const Value *V,
     const Twine &Msg) {

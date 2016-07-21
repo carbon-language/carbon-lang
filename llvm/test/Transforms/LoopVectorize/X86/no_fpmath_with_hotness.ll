@@ -3,7 +3,7 @@
 
 ; CHECK: remark: no_fpmath.c:6:11: loop not vectorized: cannot prove it is safe to reorder floating-point operations (hotness: 300)
 ; CHECK: remark: no_fpmath.c:6:14: loop not vectorized:
-; CHECK: remark: no_fpmath.c:17:14: vectorized loop (vectorization width: 2, interleaved count: 2)
+; CHECK: remark: no_fpmath.c:17:14: vectorized loop (vectorization width: 2, interleaved count: 2) (hotness: 300)
 
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.10.0"
@@ -40,10 +40,10 @@ for.body:                                         ; preds = %for.body.preheader,
 }
 
 ; Function Attrs: nounwind readonly ssp uwtable
-define double @cond_sum_loop_hint(i32* nocapture readonly %v, i32 %n) #0 !dbg !20 {
+define double @cond_sum_loop_hint(i32* nocapture readonly %v, i32 %n) #0 !dbg !20 !prof !29{
 entry:
   %cmp.7 = icmp sgt i32 %n, 0, !dbg !19
-  br i1 %cmp.7, label %for.body.preheader, label %for.cond.cleanup, !dbg !21
+  br i1 %cmp.7, label %for.body.preheader, label %for.cond.cleanup, !dbg !21, !prof !30
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body, !dbg !22
@@ -67,7 +67,7 @@ for.body:                                         ; preds = %for.body.preheader,
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1, !dbg !21
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32, !dbg !21
   %exitcond = icmp eq i32 %lftr.wideiv, %n, !dbg !21
-  br i1 %exitcond, label %for.cond.cleanup.loopexit, label %for.body, !dbg !21, !llvm.loop !26
+  br i1 %exitcond, label %for.cond.cleanup.loopexit, label %for.body, !dbg !21, !llvm.loop !26, !prof !31
 }
 
 attributes #0 = { nounwind }
