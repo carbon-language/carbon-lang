@@ -77,7 +77,7 @@ if(LLVM_PARALLEL_COMPILE_JOBS)
   endif()
 endif()
 
-set(LLVM_BUILD_GLOBAL_ISEL OFF CACHE BOOL "Experimental: Build GlobalISel")
+option(LLVM_BUILD_GLOBAL_ISEL "Experimental: Build GlobalISel" OFF)
 if(LLVM_BUILD_GLOBAL_ISEL)
   add_definitions(-DLLVM_BUILD_GLOBAL_ISEL)
 endif()
