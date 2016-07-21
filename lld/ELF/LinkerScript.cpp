@@ -47,6 +47,10 @@ bool OutputSectionCommand::classof(const BaseCommand *C) {
   return C->Kind == OutputSectionKind;
 }
 
+bool InputSectionDescription::classof(const BaseCommand *C) {
+  return C->Kind == InputSectionKind;
+}
+
 // This is an operator-precedence parser to parse and evaluate
 // a linker script expression. For each linker script arithmetic
 // expression (e.g. ". = . + 0x1000"), a new instance of ExprParser
@@ -195,16 +199,8 @@ uint64_t ExprParser::parseExpr1(uint64_t Lhs, int MinPrec) {
 uint64_t ExprParser::parseExpr() { return parseExpr1(parsePrimary(), 0); }
 
 template <class ELFT>
-StringRef LinkerScript<ELFT>::getOutputSection(InputSectionBase<ELFT> *S) {
-  for (SectionRule &R : Opt.Sections)
-    if (globMatch(R.SectionPattern, S->getSectionName()))
-      return R.Dest;
-  return "";
-}
-
-template <class ELFT>
 bool LinkerScript<ELFT>::isDiscarded(InputSectionBase<ELFT> *S) {
-  return !S || !S->Live || getOutputSection(S) == "/DISCARD/";
+  return !S || !S->Live;
 }
 
 template <class ELFT>
@@ -215,9 +211,17 @@ bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
   return false;
 }
 
+static bool match(StringRef Pattern, ArrayRef<StringRef> Arr) {
+  for (StringRef S : Arr)
+    if (globMatch(S, Pattern))
+      return true;
+  return false;
+}
+
 template <class ELFT>
 std::vector<OutputSectionBase<ELFT> *>
 LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
+  typedef const std::unique_ptr<ObjectFile<ELFT>> ObjectFile;
   std::vector<OutputSectionBase<ELFT> *> Result;
 
   // Add input section to output section. If there is no output section yet,
@@ -234,18 +238,34 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
   // Select input sections matching rule and add them to corresponding
   // output section. Section rules are processed in order they're listed
   // in script, so correct input section order is maintained by design.
-  for (SectionRule &R : Opt.Sections)
-    for (const std::unique_ptr<ObjectFile<ELFT>> &F :
-         Symtab<ELFT>::X->getObjectFiles())
-      for (InputSectionBase<ELFT> *S : F->getSections())
-        if (!isDiscarded(S) && !S->OutSec &&
-            globMatch(R.SectionPattern, S->getSectionName()))
-          // Add single input section to output section.
-          AddInputSec(S, R.Dest);
+  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
+    auto *OutCmd = dyn_cast<OutputSectionCommand>(Base.get());
+    if (!OutCmd)
+      continue;
+
+    for (const std::unique_ptr<BaseCommand> &Cmd : OutCmd->Commands) {
+      auto *InCmd = dyn_cast<InputSectionDescription>(Cmd.get());
+      if (!InCmd)
+        continue;
+
+      for (ObjectFile &F : Symtab<ELFT>::X->getObjectFiles()) {
+        for (InputSectionBase<ELFT> *S : F->getSections()) {
+          if (isDiscarded(S) || S->OutSec)
+            continue;
+
+          if (match(S->getSectionName(), InCmd->Patterns)) {
+            if (OutCmd->Name == "/DISCARD/")
+              S->Live = false;
+            else
+              AddInputSec(S, OutCmd->Name);
+          }
+        }
+      }
+    }
+  }
 
   // Add all other input sections, which are not listed in script.
-  for (const std::unique_ptr<ObjectFile<ELFT>> &F :
-       Symtab<ELFT>::X->getObjectFiles())
+  for (ObjectFile &F : Symtab<ELFT>::X->getObjectFiles())
     for (InputSectionBase<ELFT> *S : F->getSections())
       if (!isDiscarded(S)) {
         if (!S->OutSec)
@@ -735,17 +755,20 @@ void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
   while (!Error && !skip("}")) {
     StringRef Tok = next();
     if (Tok == "*") {
+      auto *InCmd = new InputSectionDescription();
+      Cmd->Commands.emplace_back(InCmd);
       expect("(");
       while (!Error && !skip(")"))
-        Opt.Sections.emplace_back(OutSec, next());
+        InCmd->Patterns.push_back(next());
     } else if (Tok == "KEEP") {
       expect("(");
       expect("*");
       expect("(");
+      auto *InCmd = new InputSectionDescription();
+      Cmd->Commands.emplace_back(InCmd);
       while (!Error && !skip(")")) {
-        StringRef Sec = next();
-        Opt.Sections.emplace_back(OutSec, Sec);
-        Opt.KeptSections.push_back(Sec);
+        Opt.KeptSections.push_back(peek());
+        InCmd->Patterns.push_back(next());
       }
       expect(")");
     } else {

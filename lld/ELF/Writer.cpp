@@ -90,10 +90,6 @@ private:
 
 template <class ELFT>
 StringRef elf::getOutputSectionName(InputSectionBase<ELFT> *S) {
-  StringRef Dest = Script<ELFT>::X->getOutputSection(S);
-  if (!Dest.empty())
-    return Dest;
-
   StringRef Name = S->getSectionName();
   for (StringRef V : {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.",
                       ".init_array.", ".fini_array.", ".ctors.", ".dtors.",
