@@ -194,6 +194,9 @@ The official release testers are volunteered from the community and have
 consistently validated and released binaries for their targets/OSs. To contact
 them, you should email the ``release-testers@lists.llvm.org`` mailing list.
 
+The official testers list is in the file ``RELEASE_TESTERS.TXT``, in the ``LLVM``
+repository.
+
 Community Testing
 -----------------
 
