@@ -22,6 +22,10 @@ int sign ( int x ) { return x > 0 ? 1 : ( x < 0 ? -1 : 0 ); }
 template<typename CharT>
 void test1 ( std::basic_string_view<CharT> sv1,
              size_t pos1, size_t n1, const CharT *s, int expected ) {
+#ifdef TEST_HAS_NO_EXCEPTIONS
+    if (pos1 <= sv1.size())
+        assert(sign(sv1.compare(pos1, n1, s)) == sign(expected));
+#else
     try {
         assert(sign(sv1.compare(pos1, n1, s)) == sign(expected));
         assert(pos1 <= sv1.size());
@@ -29,6 +33,7 @@ void test1 ( std::basic_string_view<CharT> sv1,
     catch (const std::out_of_range&) {
         assert(pos1 > sv1.size());
     }
+#endif
 }
 
 template<typename CharT>
