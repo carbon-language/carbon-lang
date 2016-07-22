@@ -11,13 +11,6 @@
 // that are not yet supported remain commented out.
 //===----------------------------------------------------------------------===//
 
-class InterpSlots {
-int P0 = 2;
-int P10 = 0;
-int P20 = 1;
-}
-def INTERP : InterpSlots;
-
 def isGCN : Predicate<"Subtarget->getGeneration() "
                       ">= SISubtarget::SOUTHERN_ISLANDS">,
             AssemblerPredicate<"FeatureGCN">;
