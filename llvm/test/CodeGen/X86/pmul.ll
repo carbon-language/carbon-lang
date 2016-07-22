@@ -391,7 +391,7 @@ define <2 x i64> @mul_v2i64spill(<2 x i64> %i, <2 x i64> %j) nounwind  {
 ; AVX512-NEXT:    vmovdqa (%rsp), %xmm4 # 16-byte Reload
 ; AVX512-NEXT:    vpmuludq %xmm2, %xmm4, %xmm0
 ; AVX512-NEXT:    vpsrlq $32, %xmm2, %xmm1
-; AVX512-NEXT:    vmovaps %zmm2, %zmm3
+; AVX512-NEXT:    vmovdqa64 %zmm2, %zmm3
 ; AVX512-NEXT:    vpmuludq %xmm1, %xmm4, %xmm1
 ; AVX512-NEXT:    vpsllq $32, %xmm1, %xmm1
 ; AVX512-NEXT:    vpsrlq $32, %xmm4, %xmm2

@@ -76,7 +76,7 @@ declare <4 x float> @llvm.x86.sse.add.ss(<4 x float>, <4 x float>) nounwind read
 
 define <2 x double> @stack_fold_andpd(<2 x double> %a0, <2 x double> %a1) {
   ;CHECK-LABEL: stack_fold_andpd
-  ;CHECK:       vpandq {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
+  ;CHECK:       vandpd {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = bitcast <2 x double> %a0 to <2 x i64>
   %3 = bitcast <2 x double> %a1 to <2 x i64>
@@ -89,7 +89,7 @@ define <2 x double> @stack_fold_andpd(<2 x double> %a0, <2 x double> %a1) {
 
 define <4 x double> @stack_fold_andpd_ymm(<4 x double> %a0, <4 x double> %a1) {
   ;CHECK-LABEL: stack_fold_andpd_ymm
-  ;CHECK:       vpandq {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  ;CHECK:       vandpd {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = bitcast <4 x double> %a0 to <4 x i64>
   %3 = bitcast <4 x double> %a1 to <4 x i64>
@@ -198,7 +198,7 @@ declare <4 x float> @llvm.x86.sse.mul.ss(<4 x float>, <4 x float>) nounwind read
 
 define <2 x double> @stack_fold_orpd(<2 x double> %a0, <2 x double> %a1) {
   ;CHECK-LABEL: stack_fold_orpd
-  ;CHECK:       vporq {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
+  ;CHECK:       vorpd {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = bitcast <2 x double> %a0 to <2 x i64>
   %3 = bitcast <2 x double> %a1 to <2 x i64>
@@ -211,7 +211,7 @@ define <2 x double> @stack_fold_orpd(<2 x double> %a0, <2 x double> %a1) {
 
 define <4 x double> @stack_fold_orpd_ymm(<4 x double> %a0, <4 x double> %a1) {
   ;CHECK-LABEL: stack_fold_orpd_ymm
-  ;CHECK:       vporq {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  ;CHECK:       vorpd {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = bitcast <4 x double> %a0 to <4 x i64>
   %3 = bitcast <4 x double> %a1 to <4 x i64>
@@ -316,7 +316,7 @@ declare <4 x float> @llvm.x86.sse.sub.ss(<4 x float>, <4 x float>) nounwind read
 
 define <2 x double> @stack_fold_xorpd(<2 x double> %a0, <2 x double> %a1) {
   ;CHECK-LABEL: stack_fold_xorpd
-  ;CHECK:       vpxorq {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
+  ;CHECK:       vxorpd {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = bitcast <2 x double> %a0 to <2 x i64>
   %3 = bitcast <2 x double> %a1 to <2 x i64>
@@ -329,7 +329,7 @@ define <2 x double> @stack_fold_xorpd(<2 x double> %a0, <2 x double> %a1) {
 
 define <4 x double> @stack_fold_xorpd_ymm(<4 x double> %a0, <4 x double> %a1) {
   ;CHECK-LABEL: stack_fold_xorpd_ymm
-  ;CHECK:       vpxorq {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  ;CHECK:       vxorpd {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = bitcast <4 x double> %a0 to <4 x i64>
   %3 = bitcast <4 x double> %a1 to <4 x i64>
