@@ -1072,24 +1072,6 @@ unsigned SITargetLowering::getRegisterByName(const char* RegName, EVT VT,
                            + StringRef(RegName) + "\"."));
 }
 
-static void replaceSuccessorPhisWith(MachineBasicBlock &BB,
-                                     MachineBasicBlock &SplitBB) {
-  for (MachineBasicBlock *Succ : BB.successors()) {
-    for (MachineInstr &MI : *Succ) {
-      if (!MI.isPHI())
-        break;
-
-      for (unsigned I = 2, E = MI.getNumOperands(); I != E; I += 2) {
-        MachineOperand &FromBB = MI.getOperand(I);
-        if (&BB == FromBB.getMBB()) {
-          FromBB.setMBB(&SplitBB);
-          break;
-        }
-      }
-    }
-  }
-}
-
 // If kill is not the last instruction, split the block so kill is always a
 // proper terminator.
 MachineBasicBlock *SITargetLowering::splitKillBlock(MachineInstr &MI,
@@ -1109,14 +1091,10 @@ MachineBasicBlock *SITargetLowering::splitKillBlock(MachineInstr &MI,
   MachineBasicBlock *SplitBB
     = MF->CreateMachineBasicBlock(BB->getBasicBlock());
 
-  // Fix the block phi references to point to the new block for the defs in the
-  // second piece of the block.
-  replaceSuccessorPhisWith(*BB, *SplitBB);
-
   MF->insert(++MachineFunction::iterator(BB), SplitBB);
   SplitBB->splice(SplitBB->begin(), BB, SplitPoint, BB->end());
 
-  SplitBB->transferSuccessors(BB);
+  SplitBB->transferSuccessorsAndUpdatePHIs(BB);
   BB->addSuccessor(SplitBB);
 
   MI.setDesc(TII->get(AMDGPU::SI_KILL_TERMINATOR));
@@ -1237,13 +1215,11 @@ static MachineBasicBlock *loadM0FromVGPR(const SIInstrInfo *TII,
   MF->insert(MBBI, LoopBB);
   MF->insert(MBBI, RemainderBB);
 
-  replaceSuccessorPhisWith(MBB, *RemainderBB);
-
   LoopBB->addSuccessor(LoopBB);
   LoopBB->addSuccessor(RemainderBB);
 
   // Move the rest of the block into a new block.
-  RemainderBB->transferSuccessors(&MBB);
+  RemainderBB->transferSuccessorsAndUpdatePHIs(&MBB);
   RemainderBB->splice(RemainderBB->begin(), &MBB, I, MBB.end());
 
   MBB.addSuccessor(LoopBB);
