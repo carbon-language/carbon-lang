@@ -585,9 +585,14 @@ public:
       Gep = dyn_cast<GetElementPtrInst>(St->getPointerOperand());
       Val = dyn_cast<Instruction>(St->getValueOperand());
       // Check that the stored value is available.
-      if (Val && !isa<GetElementPtrInst>(Val) &&
-          !DT->dominates(Val->getParent(), HoistPt))
-        return false;
+      if (Val) {
+        if (isa<GetElementPtrInst>(Val)) {
+          // Check whether we can compute the GEP at HoistPt.
+          if (!allOperandsAvailable(Val, HoistPt))
+            return false;
+        } else if (!DT->dominates(Val->getParent(), HoistPt))
+          return false;
+      }
     }
 
     // Check whether we can compute the Gep at HoistPt.
@@ -613,9 +618,6 @@ public:
 
     // Also copy Val when it is a GEP.
     if (Val && isa<GetElementPtrInst>(Val)) {
-      // Check whether we can compute the GEP at HoistPt.
-      if (!allOperandsAvailable(Val, HoistPt))
-        return false;
       Instruction *ClonedVal = Val->clone();
       ClonedVal->insertBefore(HoistPt->getTerminator());
       // Conservatively discard any optimization hints, they may differ on the
