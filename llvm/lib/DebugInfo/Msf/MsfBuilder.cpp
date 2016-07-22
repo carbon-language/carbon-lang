@@ -219,17 +219,18 @@ uint32_t MsfBuilder::computeDirectoryByteSize() const {
 }
 
 Expected<Layout> MsfBuilder::build() {
+  SuperBlock *SB = Allocator.Allocate<SuperBlock>();
   Layout L;
-  L.SB = Allocator.Allocate<SuperBlock>();
-  std::memcpy(L.SB->MagicBytes, Magic, sizeof(Magic));
-  L.SB->BlockMapAddr = BlockMapAddr;
-  L.SB->BlockSize = BlockSize;
-  L.SB->NumDirectoryBytes = computeDirectoryByteSize();
-  L.SB->FreeBlockMapBlock = FreePageMap;
-  L.SB->Unknown1 = Unknown1;
+  L.SB = SB;
 
-  uint32_t NumDirectoryBlocks =
-      bytesToBlocks(L.SB->NumDirectoryBytes, BlockSize);
+  std::memcpy(SB->MagicBytes, Magic, sizeof(Magic));
+  SB->BlockMapAddr = BlockMapAddr;
+  SB->BlockSize = BlockSize;
+  SB->NumDirectoryBytes = computeDirectoryByteSize();
+  SB->FreeBlockMapBlock = FreePageMap;
+  SB->Unknown1 = Unknown1;
+
+  uint32_t NumDirectoryBlocks = bytesToBlocks(SB->NumDirectoryBytes, BlockSize);
   if (NumDirectoryBlocks > DirectoryBlocks.size()) {
     // Our hint wasn't enough to satisfy the entire directory.  Allocate
     // remaining pages.
@@ -251,7 +252,7 @@ Expected<Layout> MsfBuilder::build() {
   // Don't set the number of blocks in the file until after allocating Blocks
   // for the directory, since the allocation might cause the file to need to
   // grow.
-  L.SB->NumBlocks = FreeBlocks.size();
+  SB->NumBlocks = FreeBlocks.size();
 
   ulittle32_t *DirBlocks = Allocator.Allocate<ulittle32_t>(NumDirectoryBlocks);
   std::uninitialized_copy_n(DirectoryBlocks.begin(), NumDirectoryBlocks,

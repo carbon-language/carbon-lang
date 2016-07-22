@@ -49,7 +49,8 @@ struct SuperBlock {
 };
 
 struct Layout {
-  SuperBlock *SB;
+  Layout() : SB(nullptr) {}
+  const SuperBlock *SB;
   ArrayRef<support::ulittle32_t> DirectoryBlocks;
   ArrayRef<support::ulittle32_t> StreamSizes;
   std::vector<ArrayRef<support::ulittle32_t>> StreamMap;

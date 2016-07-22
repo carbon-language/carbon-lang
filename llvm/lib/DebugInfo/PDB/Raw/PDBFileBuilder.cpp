@@ -76,11 +76,7 @@ PDBFileBuilder::build(std::unique_ptr<msf::StreamInterface> PdbFileBuffer) {
     return ExpectedLayout.takeError();
 
   auto File = llvm::make_unique<PDBFile>(std::move(PdbFileBuffer), Allocator);
-  const msf::Layout &L = *ExpectedLayout;
-  File->StreamMap = L.StreamMap;
-  File->StreamSizes = L.StreamSizes;
-  File->DirectoryBlocks = L.DirectoryBlocks;
-  File->SB = L.SB;
+  File->MsfLayout = *ExpectedLayout;
 
   if (Info) {
     auto ExpectedInfo = Info->build(*File);

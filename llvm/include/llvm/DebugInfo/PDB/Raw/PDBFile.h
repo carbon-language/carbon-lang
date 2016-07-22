@@ -67,9 +67,11 @@ public:
   Error setBlockData(uint32_t BlockIndex, uint32_t Offset,
                      ArrayRef<uint8_t> Data) const override;
 
-  ArrayRef<support::ulittle32_t> getStreamSizes() const { return StreamSizes; }
+  ArrayRef<support::ulittle32_t> getStreamSizes() const {
+    return MsfLayout.StreamSizes;
+  }
   ArrayRef<ArrayRef<support::ulittle32_t>> getStreamMap() const {
-    return StreamMap;
+    return MsfLayout.StreamMap;
   }
 
   ArrayRef<support::ulittle32_t> getDirectoryBlockArray() const;
@@ -88,15 +90,11 @@ public:
   Error commit();
 
 private:
-  Error setSuperBlock(const msf::SuperBlock *Block);
-
   BumpPtrAllocator &Allocator;
 
   std::unique_ptr<msf::StreamInterface> Buffer;
-  const msf::SuperBlock *SB;
-  ArrayRef<support::ulittle32_t> StreamSizes;
-  ArrayRef<support::ulittle32_t> DirectoryBlocks;
-  std::vector<ArrayRef<support::ulittle32_t>> StreamMap;
+
+  msf::Layout MsfLayout;
 
   std::unique_ptr<InfoStream> Info;
   std::unique_ptr<DbiStream> Dbi;
