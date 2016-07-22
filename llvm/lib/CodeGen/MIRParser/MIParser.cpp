@@ -595,12 +595,17 @@ bool MIParser::parse(MachineInstr *&MI) {
   if (Token.isError() || parseInstruction(OpCode, Flags))
     return true;
 
-  LLT Ty{};
+  SmallVector<LLT, 1> Tys;
   if (isPreISelGenericOpcode(OpCode)) {
-    // For generic opcode, a type is mandatory.
-    auto Loc = Token.location();
-    if (parseLowLevelType(Loc, Ty))
-      return true;
+    // For generic opcode, at least one type is mandatory.
+    expectAndConsume(MIToken::lbrace);
+    do {
+      auto Loc = Token.location();
+      Tys.resize(Tys.size() + 1);
+      if (parseLowLevelType(Loc, Tys[Tys.size() - 1]))
+        return true;
+    } while (consumeIfPresent(MIToken::comma));
+    expectAndConsume(MIToken::rbrace);
   }
 
   // Parse the remaining machine operands.
@@ -658,8 +663,10 @@ bool MIParser::parse(MachineInstr *&MI) {
   // TODO: Check for extraneous machine operands.
   MI = MF.CreateMachineInstr(MCID, DebugLocation, /*NoImplicit=*/true);
   MI->setFlags(Flags);
-  if (Ty.isValid())
-    MI->setType(Ty);
+  if (Tys.size() > 0) {
+    for (unsigned i = 0; i < Tys.size(); ++i)
+      MI->setType(Tys[i], i);
+  }
   for (const auto &Operand : Operands)
     MI->addOperand(MF, Operand.Operand);
   if (assignRegisterTies(*MI, Operands))
