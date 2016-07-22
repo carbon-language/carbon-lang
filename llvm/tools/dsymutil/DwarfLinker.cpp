@@ -1641,7 +1641,6 @@ PointerIntPair<DeclContext *, 1> DeclContextTree::getChildDeclContext(
             if (!ResolvedPath.empty()) {
               FileRef = ResolvedPath;
             } else {
-#ifdef HAVE_REALPATH
               std::string File;
               bool gotFileName =
                 LT->getFileNameByIndex(FileNum, "",
@@ -1649,6 +1648,7 @@ PointerIntPair<DeclContext *, 1> DeclContextTree::getChildDeclContext(
                         File);
               (void)gotFileName;
               assert(gotFileName && "Must get file name from line table");
+#ifdef HAVE_REALPATH
               char RealPath[PATH_MAX + 1];
               RealPath[PATH_MAX] = 0;
               if (::realpath(File.c_str(), RealPath))
