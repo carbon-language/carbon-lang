@@ -41,8 +41,9 @@ public:
 };
 }
 
-RawSession::RawSession(std::unique_ptr<PDBFile> PdbFile)
-    : Pdb(std::move(PdbFile)) {}
+RawSession::RawSession(std::unique_ptr<PDBFile> PdbFile,
+                       std::unique_ptr<BumpPtrAllocator> Allocator)
+    : Pdb(std::move(PdbFile)), Allocator(std::move(Allocator)) {}
 
 RawSession::~RawSession() {}
 
@@ -58,13 +59,15 @@ Error RawSession::createFromPdb(StringRef Path,
   std::unique_ptr<MemoryBuffer> Buffer = std::move(*ErrorOrBuffer);
   auto Stream = llvm::make_unique<InputByteStream>(std::move(Buffer));
 
-  std::unique_ptr<PDBFile> File(new PDBFile(std::move(Stream)));
+  auto Allocator = llvm::make_unique<BumpPtrAllocator>();
+  auto File = llvm::make_unique<PDBFile>(std::move(Stream), *Allocator);
   if (auto EC = File->parseFileHeaders())
     return EC;
   if (auto EC = File->parseStreamData())
     return EC;
 
-  Session.reset(new RawSession(std::move(File)));
+  Session =
+      llvm::make_unique<RawSession>(std::move(File), std::move(Allocator));
 
   return Error::success();
 }

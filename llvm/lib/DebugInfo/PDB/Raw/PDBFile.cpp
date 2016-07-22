@@ -36,8 +36,9 @@ namespace {
 typedef FixedStreamArray<support::ulittle32_t> ulittle_array;
 }
 
-PDBFile::PDBFile(std::unique_ptr<StreamInterface> PdbFileBuffer)
-    : Buffer(std::move(PdbFileBuffer)), SB(nullptr) {}
+PDBFile::PDBFile(std::unique_ptr<StreamInterface> PdbFileBuffer,
+                 BumpPtrAllocator &Allocator)
+    : Allocator(Allocator), Buffer(std::move(PdbFileBuffer)), SB(nullptr) {}
 
 PDBFile::~PDBFile() {}
 

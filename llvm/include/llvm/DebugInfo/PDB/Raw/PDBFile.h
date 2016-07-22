@@ -42,7 +42,8 @@ class PDBFile : public msf::IMsfFile {
   friend PDBFileBuilder;
 
 public:
-  explicit PDBFile(std::unique_ptr<msf::StreamInterface> PdbFileBuffer);
+  PDBFile(std::unique_ptr<msf::StreamInterface> PdbFileBuffer,
+          BumpPtrAllocator &Allocator);
   ~PDBFile() override;
 
   uint32_t getFreeBlockMapBlock() const;
@@ -89,7 +90,7 @@ public:
 private:
   Error setSuperBlock(const msf::SuperBlock *Block);
 
-  BumpPtrAllocator Allocator;
+  BumpPtrAllocator &Allocator;
 
   std::unique_ptr<msf::StreamInterface> Buffer;
   const msf::SuperBlock *SB;

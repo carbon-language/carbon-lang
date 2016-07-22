@@ -307,6 +307,7 @@ cl::list<std::string> InputFilename(cl::Positional,
 static ExitOnError ExitOnErr;
 
 static void yamlToPdb(StringRef Path) {
+  BumpPtrAllocator Allocator;
   ErrorOr<std::unique_ptr<MemoryBuffer>> ErrorOrBuffer =
       MemoryBuffer::getFileOrSTDIN(Path, /*FileSize=*/-1,
                                    /*RequiresNullTerminator=*/false);
@@ -332,7 +333,7 @@ static void yamlToPdb(StringRef Path) {
 
   auto FileByteStream =
       llvm::make_unique<FileBufferByteStream>(std::move(*OutFileOrError));
-  PDBFileBuilder Builder(std::move(FileByteStream));
+  PDBFileBuilder Builder(Allocator);
 
   ExitOnErr(Builder.initialize(YamlObj.Headers->SuperBlock));
   ExitOnErr(Builder.getMsfBuilder().setDirectoryBlocksHint(
@@ -394,7 +395,7 @@ static void yamlToPdb(StringRef Path) {
     }
   }
 
-  auto Pdb = Builder.build();
+  auto Pdb = Builder.build(std::move(FileByteStream));
   ExitOnErr(Pdb.takeError());
 
   auto &PdbFile = *Pdb;
