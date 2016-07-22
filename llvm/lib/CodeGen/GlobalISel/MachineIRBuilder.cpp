@@ -102,3 +102,11 @@ MachineInstr *MachineIRBuilder::buildInstr(unsigned Opcode, LLT Ty,
   MachineInstrBuilder(getMF(), NewMI).addMBB(&BB);
   return NewMI;
 }
+
+MachineInstr *MachineIRBuilder::buildFrameIndex(LLT Ty, unsigned Res, int Idx) {
+  MachineInstr *NewMI = buildInstr(TargetOpcode::G_FRAME_INDEX, Ty);
+  auto MIB = MachineInstrBuilder(getMF(), NewMI);
+  MIB.addReg(Res, RegState::Define);
+  MIB.addImm(Idx);
+  return NewMI;
+}

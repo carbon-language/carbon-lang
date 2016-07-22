@@ -168,6 +168,10 @@ HANDLE_TARGET_OPCODE(G_AND)
 /// Generic Bitwise-OR instruction.
 HANDLE_TARGET_OPCODE(G_OR)
 
+/// Generic instruction to materialize the address of an alloca or other
+/// stack-based object.
+HANDLE_TARGET_OPCODE(G_FRAME_INDEX)
+
 /// Generic BRANCH instruction. This is an unconditional branch.
 HANDLE_TARGET_OPCODE(G_BR)
 

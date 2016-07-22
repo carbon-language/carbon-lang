@@ -17,6 +17,22 @@ define i64 @addi64(i64 %arg1, i64 %arg2) {
   ret i64 %res
 }
 
+; Tests for alloca
+; CHECK: name: allocai64
+; CHECK: stack:
+; CHECK-NEXT:   - { id: 0, name: ptr1, offset: 0, size: 8, alignment: 8 }
+; CHECK-NEXT:   - { id: 1, name: ptr2, offset: 0, size: 8, alignment: 1 }
+; CHECK-NEXT:   - { id: 2, name: ptr3, offset: 0, size: 128, alignment: 8 }
+; CHECK: %{{[0-9]+}}(64) = G_FRAME_INDEX p0 0
+; CHECK: %{{[0-9]+}}(64) = G_FRAME_INDEX p0 1
+; CHECK: %{{[0-9]+}}(64) = G_FRAME_INDEX p0 2
+define void @allocai64() {
+  %ptr1 = alloca i64
+  %ptr2 = alloca i64, align 1
+  %ptr3 = alloca i64, i32 16
+  ret void
+}
+
 ; Tests for br.
 ; CHECK: name: uncondbr
 ; CHECK: body:

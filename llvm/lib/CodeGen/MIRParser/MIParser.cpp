@@ -1030,7 +1030,7 @@ bool MIParser::parseLowLevelType(StringRef::iterator Loc, LLT &Ty,
                                  bool MustBeSized) {
   if (Token.is(MIToken::Identifier) && Token.stringValue() == "unsized") {
     if (MustBeSized)
-      return error(Loc, "expected sN or <N x sM> for sized GlobalISel type");
+      return error(Loc, "expected pN, sN or <N x sM> for sized GlobalISel type");
     lex();
     Ty = LLT::unsized();
     return false;
@@ -1038,11 +1038,17 @@ bool MIParser::parseLowLevelType(StringRef::iterator Loc, LLT &Ty,
     Ty = LLT::scalar(APSInt(Token.range().drop_front()).getZExtValue());
     lex();
     return false;
+  } else if (Token.is(MIToken::PointerType)) {
+    Ty = LLT::pointer(APSInt(Token.range().drop_front()).getZExtValue());
+    lex();
+    return false;
   }
 
   // Now we're looking for a vector.
   if (Token.isNot(MIToken::less))
-    return error(Loc, "expected unsized, sN or <N x sM> for GlobalISel type");
+    return error(Loc,
+                 "expected unsized, pN, sN or <N x sM> for GlobalISel type");
+
   lex();
 
   if (Token.isNot(MIToken::IntegerLiteral))

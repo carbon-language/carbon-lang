@@ -141,6 +141,17 @@ public:
   ///
   /// \return The newly created instruction.
   MachineInstr *buildInstr(unsigned Opcode);
+
+  /// Build and insert \p Res<def> = G_FRAME_INDEX \p Ty \p Idx
+  ///
+  /// G_FRAME_INDEX materializes the address of an alloca value or other
+  /// stack-based object.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return The newly created instruction.
+  MachineInstr *buildFrameIndex(LLT Ty, unsigned Res, int Idx);
+
 };
 
 } // End namespace llvm.
