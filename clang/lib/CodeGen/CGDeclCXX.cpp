@@ -127,7 +127,9 @@ static void EmitDeclInvariant(CodeGenFunction &CGF, const VarDecl &D,
 
   // Grab the llvm.invariant.start intrinsic.
   llvm::Intrinsic::ID InvStartID = llvm::Intrinsic::invariant_start;
-  llvm::Constant *InvariantStart = CGF.CGM.getIntrinsic(InvStartID);
+  // Overloaded address space type.
+  llvm::Type *ObjectPtr[1] = {CGF.Int8PtrTy};
+  llvm::Constant *InvariantStart = CGF.CGM.getIntrinsic(InvStartID, ObjectPtr);
 
   // Emit a call with the size in bytes of the object.
   CharUnits WidthChars = CGF.getContext().getTypeSizeInChars(D.getType());
