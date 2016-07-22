@@ -27,7 +27,7 @@ namespace cflaa {
 // We use UnknownOffset to represent pointer offsets that cannot be determined
 // at compile time. Note that MemoryLocation::UnknownSize cannot be used here
 // because we require a signed value.
-enum : int64_t { UnknownOffset = LLONG_MAX };
+enum : int64_t { UnknownOffset = INT64_MAX };
 
 inline int64_t addOffset(int64_t LHS, int64_t RHS) {
   if (LHS == UnknownOffset || RHS == UnknownOffset)
