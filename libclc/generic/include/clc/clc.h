@@ -46,6 +46,7 @@
 #include <clc/math/atanpi.h>
 #include <clc/math/copysign.h>
 #include <clc/math/cos.h>
+#include <clc/math/cosh.h>
 #include <clc/math/cospi.h>
 #include <clc/math/ceil.h>
 #include <clc/math/erf.h>

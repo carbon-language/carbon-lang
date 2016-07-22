@@ -75,6 +75,7 @@ math/atanh.cl
 math/atanpi.cl
 math/copysign.cl
 math/cos.cl
+math/cosh.cl
 math/cospi.cl
 math/ep_log.cl
 math/erf.cl
