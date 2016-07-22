@@ -11,9 +11,8 @@
 // RUN: not %run %t 8 2>&1 | FileCheck %s
 // RUN: not %run %t 9 2>&1 | FileCheck %s
 // RUN: not %run %t 10 2>&1 | FileCheck %s
-// RUN: not %run %t 11 2>&1 | FileCheck %s
 
-// RUN: %env_asan_opts=detect_stack_use_after_scope=0 %run %t 12
+// RUN: %env_asan_opts=detect_stack_use_after_scope=0 %run %t 11
 
 #include <stdlib.h>
 #include <string>
@@ -58,7 +57,6 @@ int main(int argc, char **argv) {
     &test<int>,
     &test<double>,
     &test<float>,
-    &test<uint64_t>,
     &test<void*>,
     &test<std::vector<std::string>>,
     &test<int[3]>,
