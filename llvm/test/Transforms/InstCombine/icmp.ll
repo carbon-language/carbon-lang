@@ -955,6 +955,19 @@ define i1 @test70(i32 %X) {
   ret i1 %C
 }
 
+; FIXME: Vectors should fold the same way.
+
+define <2 x i1> @test70vec(<2 x i32> %X) {
+; CHECK-LABEL: @test70vec(
+; CHECK-NEXT:    [[B:%.*]] = add <2 x i32> %X, <i32 2, i32 2>
+; CHECK-NEXT:    [[C:%.*]] = icmp ne <2 x i32> [[B]], <i32 4, i32 4>
+; CHECK-NEXT:    ret <2 x i1> [[C]]
+;
+  %B = add <2 x i32> %X, <i32 2, i32 2>
+  %C = icmp ne <2 x i32> %B, <i32 4, i32 4>
+  ret <2 x i1> %C
+}
+
 define i1 @icmp_sext16trunc(i32 %x) {
 ; CHECK-LABEL: @icmp_sext16trunc(
 ; CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 %x to i16
