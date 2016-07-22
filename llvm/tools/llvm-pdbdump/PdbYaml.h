@@ -13,8 +13,8 @@
 #include "OutputStyle.h"
 
 #include "llvm/ADT/Optional.h"
+#include "llvm/DebugInfo/Msf/MsfCommon.h"
 #include "llvm/DebugInfo/PDB/PDBTypes.h"
-#include "llvm/DebugInfo/PDB/Raw/MsfCommon.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 #include "llvm/Support/Endian.h"
@@ -91,8 +91,8 @@ template <> struct MappingTraits<pdb::yaml::MsfHeaders> {
   static void mapping(IO &IO, pdb::yaml::MsfHeaders &Obj);
 };
 
-template <> struct MappingTraits<pdb::msf::SuperBlock> {
-  static void mapping(IO &IO, pdb::msf::SuperBlock &SB);
+template <> struct MappingTraits<msf::SuperBlock> {
+  static void mapping(IO &IO, msf::SuperBlock &SB);
 };
 
 template <> struct MappingTraits<pdb::yaml::StreamBlockList> {

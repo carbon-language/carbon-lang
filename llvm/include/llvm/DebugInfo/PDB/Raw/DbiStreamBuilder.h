@@ -14,7 +14,8 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Error.h"
 
-#include "llvm/DebugInfo/CodeView/ByteStream.h"
+#include "llvm/DebugInfo/Msf/ByteStream.h"
+#include "llvm/DebugInfo/Msf/StreamReader.h"
 #include "llvm/DebugInfo/PDB/PDBTypes.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
@@ -75,9 +76,9 @@ private:
 
   StringMap<uint32_t> SourceFileNames;
 
-  codeview::StreamRef NamesBuffer;
-  codeview::ByteStream<true> ModInfoBuffer;
-  codeview::ByteStream<true> FileInfoBuffer;
+  msf::StreamRef NamesBuffer;
+  msf::ByteStream<true> ModInfoBuffer;
+  msf::ByteStream<true> FileInfoBuffer;
 };
 }
 }

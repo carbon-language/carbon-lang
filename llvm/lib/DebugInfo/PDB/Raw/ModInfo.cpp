@@ -9,11 +9,12 @@
 
 #include "llvm/DebugInfo/PDB/Raw/ModInfo.h"
 
-#include "llvm/DebugInfo/CodeView/StreamReader.h"
+#include "llvm/DebugInfo/Msf/StreamReader.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 #include "llvm/Support/Endian.h"
 
 using namespace llvm;
+using namespace llvm::msf;
 using namespace llvm::pdb;
 using namespace llvm::support;
 
@@ -26,8 +27,8 @@ ModInfo::ModInfo(const ModInfo &Info)
 
 ModInfo::~ModInfo() {}
 
-Error ModInfo::initialize(codeview::StreamRef Stream, ModInfo &Info) {
-  codeview::StreamReader Reader(Stream);
+Error ModInfo::initialize(StreamRef Stream, ModInfo &Info) {
+  StreamReader Reader(Stream);
   if (auto EC = Reader.readObject(Info.Layout))
     return EC;
 

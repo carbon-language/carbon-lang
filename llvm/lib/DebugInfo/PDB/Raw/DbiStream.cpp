@@ -9,11 +9,11 @@
 
 #include "llvm/DebugInfo/PDB/Raw/DbiStream.h"
 
-#include "llvm/DebugInfo/CodeView/StreamArray.h"
-#include "llvm/DebugInfo/CodeView/StreamReader.h"
-#include "llvm/DebugInfo/CodeView/StreamWriter.h"
+#include "llvm/DebugInfo/Msf/IndexedStreamData.h"
+#include "llvm/DebugInfo/Msf/StreamArray.h"
+#include "llvm/DebugInfo/Msf/StreamReader.h"
+#include "llvm/DebugInfo/Msf/StreamWriter.h"
 #include "llvm/DebugInfo/PDB/Raw/ISectionContribVisitor.h"
-#include "llvm/DebugInfo/PDB/Raw/IndexedStreamData.h"
 #include "llvm/DebugInfo/PDB/Raw/InfoStream.h"
 #include "llvm/DebugInfo/PDB/Raw/ModInfo.h"
 #include "llvm/DebugInfo/PDB/Raw/NameHashTable.h"
@@ -25,6 +25,7 @@
 
 using namespace llvm;
 using namespace llvm::codeview;
+using namespace llvm::msf;
 using namespace llvm::pdb;
 using namespace llvm::support;
 
@@ -204,17 +205,16 @@ PDB_Machine DbiStream::getMachineType() const {
   return static_cast<PDB_Machine>(Machine);
 }
 
-codeview::FixedStreamArray<object::coff_section>
-DbiStream::getSectionHeaders() {
+msf::FixedStreamArray<object::coff_section> DbiStream::getSectionHeaders() {
   return SectionHeaders;
 }
 
-codeview::FixedStreamArray<object::FpoData> DbiStream::getFpoRecords() {
+msf::FixedStreamArray<object::FpoData> DbiStream::getFpoRecords() {
   return FpoRecords;
 }
 
 ArrayRef<ModuleInfoEx> DbiStream::modules() const { return ModuleInfos; }
-codeview::FixedStreamArray<SecMapEntry> DbiStream::getSectionMap() const {
+msf::FixedStreamArray<SecMapEntry> DbiStream::getSectionMap() const {
   return SectionMap;
 }
 
@@ -283,7 +283,7 @@ Error DbiStream::initializeSectionHeadersData() {
                                 "Corrupted section header stream.");
 
   size_t NumSections = StreamLen / sizeof(object::coff_section);
-  codeview::StreamReader Reader(**SHS);
+  msf::StreamReader Reader(**SHS);
   if (auto EC = Reader.readArray(SectionHeaders, NumSections))
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Could not read a bitmap.");
@@ -316,7 +316,7 @@ Error DbiStream::initializeFpoRecords() {
                                 "Corrupted New FPO stream.");
 
   size_t NumRecords = StreamLen / sizeof(object::FpoData);
-  codeview::StreamReader Reader(**FS);
+  msf::StreamReader Reader(**FS);
   if (auto EC = Reader.readArray(FpoRecords, NumRecords))
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Corrupted New FPO stream.");

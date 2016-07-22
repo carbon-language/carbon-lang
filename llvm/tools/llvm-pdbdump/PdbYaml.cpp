@@ -13,6 +13,7 @@
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 
 using namespace llvm;
+using namespace llvm::msf;
 using namespace llvm::yaml;
 using namespace llvm::pdb;
 using namespace llvm::pdb::yaml;

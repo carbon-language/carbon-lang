@@ -11,8 +11,9 @@
 
 #include "llvm/ADT/BitVector.h"
 
-#include "llvm/DebugInfo/CodeView/StreamInterface.h"
-#include "llvm/DebugInfo/CodeView/StreamWriter.h"
+#include "llvm/DebugInfo/Msf/MsfBuilder.h"
+#include "llvm/DebugInfo/Msf/StreamInterface.h"
+#include "llvm/DebugInfo/Msf/StreamWriter.h"
 #include "llvm/DebugInfo/PDB/Raw/DbiStream.h"
 #include "llvm/DebugInfo/PDB/Raw/DbiStreamBuilder.h"
 #include "llvm/DebugInfo/PDB/Raw/InfoStream.h"
@@ -21,11 +22,11 @@
 
 using namespace llvm;
 using namespace llvm::codeview;
+using namespace llvm::msf;
 using namespace llvm::pdb;
 using namespace llvm::support;
 
-PDBFileBuilder::PDBFileBuilder(
-    std::unique_ptr<codeview::StreamInterface> FileBuffer)
+PDBFileBuilder::PDBFileBuilder(std::unique_ptr<msf::StreamInterface> FileBuffer)
     : File(llvm::make_unique<PDBFile>(std::move(FileBuffer))) {}
 
 Error PDBFileBuilder::initialize(const msf::SuperBlock &Super) {

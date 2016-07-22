@@ -11,10 +11,10 @@
 #define LLVM_DEBUGINFO_PDB_RAW_PDBDBISTREAM_H
 
 #include "llvm/DebugInfo/CodeView/ModuleSubstream.h"
-#include "llvm/DebugInfo/CodeView/StreamArray.h"
-#include "llvm/DebugInfo/CodeView/StreamRef.h"
+#include "llvm/DebugInfo/Msf/MappedBlockStream.h"
+#include "llvm/DebugInfo/Msf/StreamArray.h"
+#include "llvm/DebugInfo/Msf/StreamRef.h"
 #include "llvm/DebugInfo/PDB/PDBTypes.h"
-#include "llvm/DebugInfo/PDB/Raw/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Raw/ModInfo.h"
 #include "llvm/DebugInfo/PDB/Raw/NameHashTable.h"
 #include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
@@ -37,7 +37,7 @@ class DbiStream {
   friend class DbiStreamBuilder;
 
 public:
-  DbiStream(PDBFile &File, std::unique_ptr<MappedBlockStream> Stream);
+  DbiStream(PDBFile &File, std::unique_ptr<msf::MappedBlockStream> Stream);
   ~DbiStream();
   Error reload();
 
@@ -70,11 +70,11 @@ public:
 
   Expected<StringRef> getFileNameForIndex(uint32_t Index) const;
 
-  codeview::FixedStreamArray<object::coff_section> getSectionHeaders();
+  msf::FixedStreamArray<object::coff_section> getSectionHeaders();
 
-  codeview::FixedStreamArray<object::FpoData> getFpoRecords();
+  msf::FixedStreamArray<object::FpoData> getFpoRecords();
 
-  codeview::FixedStreamArray<SecMapEntry> getSectionMap() const;
+  msf::FixedStreamArray<SecMapEntry> getSectionMap() const;
   void visitSectionContributions(ISectionContribVisitor &Visitor) const;
 
   Error commit();
@@ -88,33 +88,33 @@ private:
   Error initializeFpoRecords();
 
   PDBFile &Pdb;
-  std::unique_ptr<MappedBlockStream> Stream;
+  std::unique_ptr<msf::MappedBlockStream> Stream;
 
   std::vector<ModuleInfoEx> ModuleInfos;
   NameHashTable ECNames;
 
-  codeview::StreamRef ModInfoSubstream;
-  codeview::StreamRef SecContrSubstream;
-  codeview::StreamRef SecMapSubstream;
-  codeview::StreamRef FileInfoSubstream;
-  codeview::StreamRef TypeServerMapSubstream;
-  codeview::StreamRef ECSubstream;
+  msf::StreamRef ModInfoSubstream;
+  msf::StreamRef SecContrSubstream;
+  msf::StreamRef SecMapSubstream;
+  msf::StreamRef FileInfoSubstream;
+  msf::StreamRef TypeServerMapSubstream;
+  msf::StreamRef ECSubstream;
 
-  codeview::StreamRef NamesBuffer;
+  msf::StreamRef NamesBuffer;
 
-  codeview::FixedStreamArray<support::ulittle16_t> DbgStreams;
+  msf::FixedStreamArray<support::ulittle16_t> DbgStreams;
 
   PdbRaw_DbiSecContribVer SectionContribVersion;
-  codeview::FixedStreamArray<SectionContrib> SectionContribs;
-  codeview::FixedStreamArray<SectionContrib2> SectionContribs2;
-  codeview::FixedStreamArray<SecMapEntry> SectionMap;
-  codeview::FixedStreamArray<support::little32_t> FileNameOffsets;
+  msf::FixedStreamArray<SectionContrib> SectionContribs;
+  msf::FixedStreamArray<SectionContrib2> SectionContribs2;
+  msf::FixedStreamArray<SecMapEntry> SectionMap;
+  msf::FixedStreamArray<support::little32_t> FileNameOffsets;
 
-  std::unique_ptr<MappedBlockStream> SectionHeaderStream;
-  codeview::FixedStreamArray<object::coff_section> SectionHeaders;
+  std::unique_ptr<msf::MappedBlockStream> SectionHeaderStream;
+  msf::FixedStreamArray<object::coff_section> SectionHeaders;
 
-  std::unique_ptr<MappedBlockStream> FpoStream;
-  codeview::FixedStreamArray<object::FpoData> FpoRecords;
+  std::unique_ptr<msf::MappedBlockStream> FpoStream;
+  msf::FixedStreamArray<object::FpoData> FpoRecords;
 
   const DbiStreamHeader *Header;
 };

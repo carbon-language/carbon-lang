@@ -11,10 +11,10 @@
 #define LLVM_DEBUGINFO_PDB_RAW_PDBFILE_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/DebugInfo/CodeView/StreamArray.h"
-#include "llvm/DebugInfo/CodeView/StreamInterface.h"
-#include "llvm/DebugInfo/PDB/Raw/IPDBFile.h"
-#include "llvm/DebugInfo/PDB/Raw/MsfCommon.h"
+#include "llvm/DebugInfo/Msf/IMsfFile.h"
+#include "llvm/DebugInfo/Msf/MsfCommon.h"
+#include "llvm/DebugInfo/Msf/StreamArray.h"
+#include "llvm/DebugInfo/Msf/StreamInterface.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
@@ -24,25 +24,25 @@
 
 namespace llvm {
 
-namespace codeview {
+namespace msf {
+class MappedBlockStream;
 class StreamInterface;
 }
 
 namespace pdb {
 class DbiStream;
 class InfoStream;
-class MappedBlockStream;
 class NameHashTable;
 class PDBFileBuilder;
 class PublicsStream;
 class SymbolStream;
 class TpiStream;
 
-class PDBFile : public IPDBFile {
+class PDBFile : public msf::IMsfFile {
   friend PDBFileBuilder;
 
 public:
-  explicit PDBFile(std::unique_ptr<codeview::StreamInterface> PdbFileBuffer);
+  explicit PDBFile(std::unique_ptr<msf::StreamInterface> PdbFileBuffer);
   ~PDBFile() override;
 
   uint32_t getFreeBlockMapBlock() const;
@@ -91,7 +91,7 @@ private:
 
   BumpPtrAllocator Allocator;
 
-  std::unique_ptr<codeview::StreamInterface> Buffer;
+  std::unique_ptr<msf::StreamInterface> Buffer;
   const msf::SuperBlock *SB;
   ArrayRef<support::ulittle32_t> StreamSizes;
   ArrayRef<support::ulittle32_t> DirectoryBlocks;
@@ -103,8 +103,8 @@ private:
   std::unique_ptr<TpiStream> Ipi;
   std::unique_ptr<PublicsStream> Publics;
   std::unique_ptr<SymbolStream> Symbols;
-  std::unique_ptr<MappedBlockStream> DirectoryStream;
-  std::unique_ptr<MappedBlockStream> StringTableStream;
+  std::unique_ptr<msf::MappedBlockStream> DirectoryStream;
+  std::unique_ptr<msf::MappedBlockStream> StringTableStream;
   std::unique_ptr<NameHashTable> StringTable;
 };
 }

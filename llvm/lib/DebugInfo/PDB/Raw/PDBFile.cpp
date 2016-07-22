@@ -10,13 +10,13 @@
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/DebugInfo/CodeView/StreamArray.h"
-#include "llvm/DebugInfo/CodeView/StreamInterface.h"
-#include "llvm/DebugInfo/CodeView/StreamReader.h"
-#include "llvm/DebugInfo/CodeView/StreamWriter.h"
+#include "llvm/DebugInfo/Msf/DirectoryStreamData.h"
+#include "llvm/DebugInfo/Msf/IndexedStreamData.h"
+#include "llvm/DebugInfo/Msf/StreamArray.h"
+#include "llvm/DebugInfo/Msf/StreamInterface.h"
+#include "llvm/DebugInfo/Msf/StreamReader.h"
+#include "llvm/DebugInfo/Msf/StreamWriter.h"
 #include "llvm/DebugInfo/PDB/Raw/DbiStream.h"
-#include "llvm/DebugInfo/PDB/Raw/DirectoryStreamData.h"
-#include "llvm/DebugInfo/PDB/Raw/IndexedStreamData.h"
 #include "llvm/DebugInfo/PDB/Raw/InfoStream.h"
 #include "llvm/DebugInfo/PDB/Raw/NameHashTable.h"
 #include "llvm/DebugInfo/PDB/Raw/PublicsStream.h"
@@ -29,6 +29,7 @@
 
 using namespace llvm;
 using namespace llvm::codeview;
+using namespace llvm::msf;
 using namespace llvm::pdb;
 
 namespace {
@@ -130,7 +131,8 @@ Error PDBFile::parseStreamData() {
   // is exactly what we are attempting to parse.  By specifying a custom
   // subclass of IPDBStreamData which only accesses the fields that have already
   // been parsed, we can avoid this and reuse MappedBlockStream.
-  auto DS = MappedBlockStream::createDirectoryStream(*this);
+  auto DS = MappedBlockStream::createDirectoryStream(
+      SB->NumDirectoryBytes, getDirectoryBlockArray(), *this);
   if (!DS)
     return DS.takeError();
   StreamReader Reader(**DS);
@@ -315,7 +317,8 @@ Error PDBFile::commit() {
   if (auto EC = Writer.writeArray(DirectoryBlocks))
     return EC;
 
-  auto DS = MappedBlockStream::createDirectoryStream(*this);
+  auto DS = MappedBlockStream::createDirectoryStream(
+      SB->NumDirectoryBytes, getDirectoryBlockArray(), *this);
   if (!DS)
     return DS.takeError();
   auto DirStream = std::move(*DS);
