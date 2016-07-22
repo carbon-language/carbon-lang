@@ -18,6 +18,7 @@
 #include "llvm/Analysis/CodeMetrics.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/OptimizationDiagnosticInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionAliasAnalysis.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
@@ -25,7 +26,6 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CFG.h"
-#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -77,6 +77,7 @@ namespace {
       AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfoWrapperPass>();
       AU.addPreserved<LoopInfoWrapperPass>();
+      AU.addRequired<OptimizationRemarkEmitterWrapperPass>();
       AU.addRequired<ScalarEvolutionWrapperPass>();
       // FIXME: For some reason, preserving SE here breaks LSR (even if
       // this pass changes nothing).
@@ -116,6 +117,7 @@ namespace {
     ScalarEvolution *SE;
     const TargetTransformInfo *TTI;
     const DataLayout *DL;
+    OptimizationRemarkEmitter *ORE;
   };
 }
 
@@ -125,6 +127,7 @@ INITIALIZE_PASS_BEGIN(LoopDataPrefetch, "loop-data-prefetch",
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(OptimizationRemarkEmitterWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_END(LoopDataPrefetch, "loop-data-prefetch",
                     "Loop Data Prefetch", false, false)
@@ -155,6 +158,7 @@ bool LoopDataPrefetch::runOnFunction(Function &F) {
   SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   DL = &F.getParent()->getDataLayout();
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
+  ORE = &getAnalysis<OptimizationRemarkEmitterWrapperPass>().getORE();
   TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
 
   // If PrefetchDistance is not set, don't run the pass.  This gives an
@@ -291,9 +295,7 @@ bool LoopDataPrefetch::runOnLoop(Loop *L) {
       ++NumPrefetches;
       DEBUG(dbgs() << "  Access: " << *PtrValue << ", SCEV: " << *LSCEV
                    << "\n");
-      emitOptimizationRemark(F->getContext(), DEBUG_TYPE, *F,
-                             MemI->getDebugLoc(), "prefetched memory access");
-
+      ORE->emitOptimizationRemark(DEBUG_TYPE, MemI, "prefetched memory access");
 
       MadeChange = true;
     }
