@@ -43,6 +43,7 @@ TABLE_FUNCTION_DECL(float, log_inv_tbl);
 TABLE_FUNCTION_DECL(float2, log2_tbl);
 TABLE_FUNCTION_DECL(uint4,  pibits_tbl);
 TABLE_FUNCTION_DECL(float2, sinhcosh_tbl);
+TABLE_FUNCTION_DECL(float2, cbrt_tbl);
 
 #ifdef cl_khr_fp64
 
@@ -53,5 +54,8 @@ TABLE_FUNCTION_DECL(double2, atan_jby256_tbl);
 TABLE_FUNCTION_DECL(double2, two_to_jby64_ep_tbl);
 TABLE_FUNCTION_DECL(double2, sinh_tbl);
 TABLE_FUNCTION_DECL(double2, cosh_tbl);
+TABLE_FUNCTION_DECL(double, cbrt_inv_tbl);
+TABLE_FUNCTION_DECL(double2, cbrt_dbl_tbl);
+TABLE_FUNCTION_DECL(double2, cbrt_rem_tbl);
 
 #endif // cl_khr_fp64
