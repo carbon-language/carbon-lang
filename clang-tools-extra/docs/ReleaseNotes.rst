@@ -59,10 +59,7 @@ The improvements are...
 Improvements to clang-tidy
 --------------------------
 
-- New `cppcoreguidelines-slicing
-  <http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-slicing.html>`_ check
-
-  Flags slicing of member variables or vtable.
+The improvements are...
 
 Improvements to include-fixer
 -----------------------------
