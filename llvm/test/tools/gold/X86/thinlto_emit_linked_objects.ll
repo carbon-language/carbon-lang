@@ -17,19 +17,7 @@
 ; RUN:    %t.o \
 ; RUN:    --start-lib %t2.o --end-lib
 
-; Do the same check for a thin archive (note that non-thin archives don't play
-; well with thinlto-index-only because we need to have an object file to
-; import from in the distributed ThinLTO backends).
-; RUN: llvm-ar Tr %t2.a %t2.o
-; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so \
-; RUN:    --plugin-opt=thinlto \
-; RUN:    --plugin-opt=thinlto-index-only=%t4 \
-; RUN:    -o %t5 \
-; RUN:    %t.o \
-; RUN:    %t2.a
-
 ; RUN: cat %t3 | FileCheck %s
-; RUN: cat %t4 | FileCheck %s
 ; CHECK: thinlto_emit_linked_objects.ll.tmp.o
 ; CHECK: thinlto_emit_linked_objects.ll.tmp2.o
 
