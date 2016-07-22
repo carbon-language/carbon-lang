@@ -214,10 +214,9 @@ bool LoopDataPrefetch::runOnLoop(Loop *L) {
   if (ItersAhead > getMaxPrefetchIterationsAhead())
     return MadeChange;
 
-  Function *F = L->getHeader()->getParent();
   DEBUG(dbgs() << "Prefetching " << ItersAhead
                << " iterations ahead (loop size: " << LoopSize << ") in "
-               << F->getName() << ": " << *L);
+               << L->getHeader()->getParent()->getName() << ": " << *L);
 
   SmallVector<std::pair<Instruction *, const SCEVAddRecExpr *>, 16> PrefLoads;
   for (Loop::block_iterator I = L->block_begin(), IE = L->block_end();
