@@ -1,16 +1,15 @@
 // RUN: %clangxx_asan -std=c++11 -O0 -fsanitize-address-use-after-scope %s -o %t
-// RUN: export %env_asan_opts=detect_stack_use_after_scope=1
-// RUN: not %run %t 0 2>&1 | FileCheck %s
-// RUN: not %run %t 1 2>&1 | FileCheck %s
-// RUN: not %run %t 2 2>&1 | FileCheck %s
-// RUN: not %run %t 3 2>&1 | FileCheck %s
-// RUN: not %run %t 4 2>&1 | FileCheck %s
-// RUN: not %run %t 5 2>&1 | FileCheck %s
-// RUN: not %run %t 6 2>&1 | FileCheck %s
-// RUN: not %run %t 7 2>&1 | FileCheck %s
-// RUN: not %run %t 8 2>&1 | FileCheck %s
-// RUN: not %run %t 9 2>&1 | FileCheck %s
-// RUN: not %run %t 10 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=detect_stack_use_after_scope=1 not %run %t 0 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=detect_stack_use_after_scope=1 not %run %t 1 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=detect_stack_use_after_scope=1 not %run %t 2 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=detect_stack_use_after_scope=1 not %run %t 3 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=detect_stack_use_after_scope=1 not %run %t 4 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=detect_stack_use_after_scope=1 not %run %t 5 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=detect_stack_use_after_scope=1 not %run %t 6 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=detect_stack_use_after_scope=1 not %run %t 7 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=detect_stack_use_after_scope=1 not %run %t 8 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=detect_stack_use_after_scope=1 not %run %t 9 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=detect_stack_use_after_scope=1 not %run %t 10 2>&1 | FileCheck %s
 
 // RUN: %env_asan_opts=detect_stack_use_after_scope=0 %run %t 11
 
