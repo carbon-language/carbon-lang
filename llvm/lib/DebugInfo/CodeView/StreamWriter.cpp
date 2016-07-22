@@ -54,7 +54,8 @@ Error StreamWriter::writeFixedString(StringRef Str) {
 Error StreamWriter::writeStreamRef(StreamRef Ref) {
   if (auto EC = writeStreamRef(Ref, Ref.getLength()))
     return EC;
-  Offset += Ref.getLength();
+  // Don't increment Offset here, it is done by the overloaded call to
+  // writeStreamRef.
   return Error::success();
 }
 

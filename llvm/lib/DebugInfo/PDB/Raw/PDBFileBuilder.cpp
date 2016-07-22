@@ -53,7 +53,7 @@ InfoStreamBuilder &PDBFileBuilder::getInfoBuilder() {
 
 DbiStreamBuilder &PDBFileBuilder::getDbiBuilder() {
   if (!Dbi)
-    Dbi = llvm::make_unique<DbiStreamBuilder>();
+    Dbi = llvm::make_unique<DbiStreamBuilder>(File->Allocator);
   return *Dbi;
 }
 

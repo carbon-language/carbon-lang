@@ -142,14 +142,11 @@ Error DbiStream::reload() {
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "DBI type server substream not aligned.");
 
-  // Since each ModInfo in the stream is a variable length, we have to iterate
-  // them to know how many there actually are.
-  VarStreamArray<ModInfo> ModInfoArray;
-  if (auto EC = Reader.readArray(ModInfoArray, Header->ModiSubstreamSize))
+  if (auto EC =
+          Reader.readStreamRef(ModInfoSubstream, Header->ModiSubstreamSize))
     return EC;
-  for (auto &Info : ModInfoArray) {
-    ModuleInfos.emplace_back(Info);
-  }
+  if (auto EC = initializeModInfoArray())
+    return EC;
 
   if (auto EC = Reader.readStreamRef(SecContrSubstream,
                                      Header->SecContrSubstreamSize))
@@ -283,6 +280,24 @@ Error DbiStream::initializeSectionContributionData() {
 
   return make_error<RawError>(raw_error_code::feature_unsupported,
                               "Unsupported DBI Section Contribution version");
+}
+
+Error DbiStream::initializeModInfoArray() {
+  if (ModInfoSubstream.getLength() == 0)
+    return Error::success();
+
+  // Since each ModInfo in the stream is a variable length, we have to iterate
+  // them to know how many there actually are.
+  StreamReader Reader(ModInfoSubstream);
+
+  VarStreamArray<ModInfo> ModInfoArray;
+  if (auto EC = Reader.readArray(ModInfoArray, ModInfoSubstream.getLength()))
+    return EC;
+  for (auto &Info : ModInfoArray) {
+    ModuleInfos.emplace_back(Info);
+  }
+
+  return Error::success();
 }
 
 // Initializes this->SectionHeaders.
@@ -437,7 +452,10 @@ Error DbiStream::initializeFileInfo() {
 }
 
 uint32_t DbiStream::getDebugStreamIndex(DbgHeaderType Type) const {
-  return DbgStreams[static_cast<uint16_t>(Type)];
+  uint16_t T = static_cast<uint16_t>(Type);
+  if (T >= DbgStreams.size())
+    return DbiStream::InvalidStreamIndex;
+  return DbgStreams[T];
 }
 
 Expected<StringRef> DbiStream::getFileNameForIndex(uint32_t Index) const {
@@ -458,5 +476,26 @@ Error DbiStream::commit() {
   if (auto EC = Writer.writeObject(*Header))
     return EC;
 
+  if (auto EC = Writer.writeStreamRef(ModInfoSubstream))
+    return EC;
+
+  if (auto EC = Writer.writeStreamRef(SecContrSubstream,
+                                      SecContrSubstream.getLength()))
+    return EC;
+  if (auto EC =
+          Writer.writeStreamRef(SecMapSubstream, SecMapSubstream.getLength()))
+    return EC;
+  if (auto EC = Writer.writeStreamRef(FileInfoSubstream,
+                                      FileInfoSubstream.getLength()))
+    return EC;
+  if (auto EC = Writer.writeStreamRef(TypeServerMapSubstream,
+                                      TypeServerMapSubstream.getLength()))
+    return EC;
+  if (auto EC = Writer.writeStreamRef(ECSubstream, ECSubstream.getLength()))
+    return EC;
+
+  if (Writer.bytesRemaining() > 0)
+    return make_error<RawError>(raw_error_code::invalid_format,
+                                "Unexpected bytes found in DBI Stream");
   return Error::success();
 }

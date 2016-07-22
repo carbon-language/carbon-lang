@@ -106,6 +106,7 @@ public:
   Error commit();
 
 private:
+  Error initializeModInfoArray();
   Error initializeSectionContributionData();
   Error initializeSectionHeadersData();
   Error initializeSectionMapData();

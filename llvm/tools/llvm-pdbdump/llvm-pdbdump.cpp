@@ -285,6 +285,16 @@ cl::opt<bool> PdbStream("pdb-stream",
 cl::opt<bool> DbiStream("dbi-stream",
                         cl::desc("Dump the DBI Stream (Stream 2)"),
                         cl::sub(PdbToYamlSubcommand), cl::init(false));
+cl::opt<bool>
+    DbiModuleInfo("dbi-module-info",
+                  cl::desc("Dump DBI Module Information (implies -dbi-stream)"),
+                  cl::sub(PdbToYamlSubcommand), cl::init(false));
+
+cl::opt<bool> DbiModuleSourceFileInfo(
+    "dbi-module-source-info",
+    cl::desc(
+        "Dump DBI Module Source File Information (implies -dbi-module-info"),
+    cl::sub(PdbToYamlSubcommand), cl::init(false));
 
 cl::list<std::string> InputFilename(cl::Positional,
                                     cl::desc("<input PDB file>"), cl::Required,
@@ -375,6 +385,11 @@ static void yamlToPdb(StringRef Path) {
     DbiBuilder.setPdbDllRbld(YamlObj.DbiStream->PdbDllRbld);
     DbiBuilder.setPdbDllVersion(YamlObj.DbiStream->PdbDllVersion);
     DbiBuilder.setVersionHeader(YamlObj.DbiStream->VerHeader);
+    for (const auto &MI : YamlObj.DbiStream->ModInfos) {
+      ExitOnErr(DbiBuilder.addModuleInfo(MI.Obj, MI.Mod));
+      for (auto S : MI.SourceFiles)
+        ExitOnErr(DbiBuilder.addModuleSourceFile(MI.Mod, S));
+    }
   }
 
   auto Pdb = Builder.build();
