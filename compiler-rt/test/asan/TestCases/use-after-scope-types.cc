@@ -43,7 +43,7 @@ template <class T> void test() {
 
   ptr.Access();
   // CHECK: ERROR: AddressSanitizer: stack-use-after-scope
-  // CHECK:  #{{[0-9]+}} 0x{{.*}} in void test{{.*}}(){{.*}}use-after-scope-types.cc:[[@LINE-2]]
+  // CHECK:  #{{[0-9]+}} 0x{{.*}} in void test{{.*}}(){{.*}}use-after-scope-types.cc
   // CHECK: Address 0x{{.*}} is located in stack of thread T{{.*}} at offset [[OFFSET:[^ ]+]] in frame
   // {{\[}}[[OFFSET]], {{[0-9]+}}) 'x'
 }
