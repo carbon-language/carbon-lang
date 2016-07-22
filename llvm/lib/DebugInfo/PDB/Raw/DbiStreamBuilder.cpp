@@ -42,7 +42,7 @@ void DbiStreamBuilder::setMachineType(PDB_Machine M) { MachineType = M; }
 
 uint32_t DbiStreamBuilder::calculateSerializedLength() const {
   // For now we only support serializing the header.
-  return sizeof(DbiStream::HeaderInfo) + calculateFileInfoSubstreamSize() +
+  return sizeof(DbiStreamHeader) + calculateFileInfoSubstreamSize() +
          calculateModiSubstreamSize();
 }
 
@@ -74,7 +74,7 @@ Error DbiStreamBuilder::addModuleSourceFile(StringRef Module, StringRef File) {
 uint32_t DbiStreamBuilder::calculateModiSubstreamSize() const {
   uint32_t Size = 0;
   for (const auto &M : ModuleInfoList) {
-    Size += sizeof(ModInfo::FileLayout);
+    Size += sizeof(ModuleInfoHeader);
     Size += M->Mod.size() + 1;
     Size += M->Obj.size() + 1;
   }
@@ -82,12 +82,6 @@ uint32_t DbiStreamBuilder::calculateModiSubstreamSize() const {
 }
 
 uint32_t DbiStreamBuilder::calculateFileInfoSubstreamSize() const {
-  //   ulittle16_t NumModules;
-  //   ulittle16_t NumSourceFiles;
-  //   ulittle16_t ModIndices[NumModules];
-  //   ulittle16_t ModFileCounts[NumModules];
-  //   ulittle32_t FileNameOffsets[NumSourceFiles];
-  //   char Names[NumSourceFiles][];
   uint32_t Size = 0;
   Size += sizeof(ulittle16_t);                         // NumModules
   Size += sizeof(ulittle16_t);                         // NumSourceFiles
@@ -117,8 +111,8 @@ Error DbiStreamBuilder::generateModiSubstream() {
 
   StreamWriter ModiWriter(ModInfoBuffer);
   for (const auto &M : ModuleInfoList) {
-    ModInfo::FileLayout Layout = {};
-    Layout.ModDiStream = DbiStream::InvalidStreamIndex;
+    ModuleInfoHeader Layout = {};
+    Layout.ModDiStream = kInvalidStreamIndex;
     Layout.NumFiles = M->SourceFiles.size();
     if (auto EC = ModiWriter.writeObject(Layout))
       return EC;
@@ -204,10 +198,7 @@ Expected<std::unique_ptr<DbiStream>> DbiStreamBuilder::build(PDBFile &File) {
   if (!DbiS)
     return DbiS.takeError();
   auto DS = std::move(*DbiS);
-  DbiStream::HeaderInfo *H =
-      static_cast<DbiStream::HeaderInfo *>(DS->getAllocator().Allocate(
-          sizeof(DbiStream::HeaderInfo),
-          llvm::AlignOf<DbiStream::HeaderInfo>::Alignment));
+  DbiStreamHeader *H = DS->getAllocator().Allocate<DbiStreamHeader>(1);
 
   if (auto EC = generateModiSubstream())
     return std::move(EC);
@@ -230,10 +221,10 @@ Expected<std::unique_ptr<DbiStream>> DbiStreamBuilder::build(PDBFile &File) {
   H->SecContrSubstreamSize = 0;
   H->SectionMapSize = 0;
   H->TypeServerSize = 0;
-  H->SymRecordStreamIndex = DbiStream::InvalidStreamIndex;
-  H->PublicSymbolStreamIndex = DbiStream::InvalidStreamIndex;
-  H->MFCTypeServerIndex = DbiStream::InvalidStreamIndex;
-  H->GlobalSymbolStreamIndex = DbiStream::InvalidStreamIndex;
+  H->SymRecordStreamIndex = kInvalidStreamIndex;
+  H->PublicSymbolStreamIndex = kInvalidStreamIndex;
+  H->MFCTypeServerIndex = kInvalidStreamIndex;
+  H->GlobalSymbolStreamIndex = kInvalidStreamIndex;
 
   auto Dbi = llvm::make_unique<DbiStream>(File, std::move(DS));
   Dbi->Header = H;

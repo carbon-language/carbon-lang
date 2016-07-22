@@ -39,10 +39,13 @@ Error ModInfo::initialize(codeview::StreamRef Stream, ModInfo &Info) {
   return Error::success();
 }
 
-bool ModInfo::hasECInfo() const { return (Layout->Flags & HasECFlagMask) != 0; }
+bool ModInfo::hasECInfo() const {
+  return (Layout->Flags & ModInfoFlags::HasECFlagMask) != 0;
+}
 
 uint16_t ModInfo::getTypeServerIndex() const {
-  return (Layout->Flags & TypeServerIndexMask) >> TypeServerIndexShift;
+  return (Layout->Flags & ModInfoFlags::TypeServerIndexMask) >>
+         ModInfoFlags::TypeServerIndexShift;
 }
 
 uint16_t ModInfo::getModuleStreamIndex() const { return Layout->ModDiStream; }
@@ -72,7 +75,7 @@ StringRef ModInfo::getObjFileName() const { return ObjFileName; }
 uint32_t ModInfo::getRecordLength() const {
   uint32_t M = ModuleName.str().size() + 1;
   uint32_t O = ObjFileName.str().size() + 1;
-  uint32_t Size = sizeof(FileLayout) + M + O;
+  uint32_t Size = sizeof(ModuleInfoHeader) + M + O;
   Size = llvm::alignTo(Size, 4);
   return Size;
 }

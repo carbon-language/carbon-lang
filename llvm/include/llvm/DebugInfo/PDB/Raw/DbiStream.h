@@ -36,30 +36,6 @@ class ISectionContribVisitor;
 class DbiStream {
   friend class DbiStreamBuilder;
 
-  struct HeaderInfo {
-    support::little32_t VersionSignature;
-    support::ulittle32_t VersionHeader;
-    support::ulittle32_t Age;                     // Should match InfoStream.
-    support::ulittle16_t GlobalSymbolStreamIndex; // Global symbol stream #
-    support::ulittle16_t BuildNumber;             // See DbiBuildNo structure.
-    support::ulittle16_t PublicSymbolStreamIndex; // Public symbols stream #
-    support::ulittle16_t PdbDllVersion;           // version of mspdbNNN.dll
-    support::ulittle16_t SymRecordStreamIndex;    // Symbol records stream #
-    support::ulittle16_t PdbDllRbld;              // rbld number of mspdbNNN.dll
-    support::little32_t ModiSubstreamSize;        // Size of module info stream
-    support::little32_t SecContrSubstreamSize;    // Size of sec. contrib stream
-    support::little32_t SectionMapSize;           // Size of sec. map substream
-    support::little32_t FileInfoSize;             // Size of file info substream
-    support::little32_t TypeServerSize;           // Size of type server map
-    support::ulittle32_t MFCTypeServerIndex;      // Index of MFC Type Server
-    support::little32_t OptionalDbgHdrSize;       // Size of DbgHeader info
-    support::little32_t ECSubstreamSize; // Size of EC stream (what is EC?)
-    support::ulittle16_t Flags;          // See DbiFlags enum.
-    support::ulittle16_t MachineType;    // See PDB_MachineType enum.
-
-    support::ulittle32_t Reserved; // Pad to 64 bytes
-  };
-
 public:
   DbiStream(PDBFile &File, std::unique_ptr<MappedBlockStream> Stream);
   ~DbiStream();
@@ -85,8 +61,6 @@ public:
   uint32_t getSymRecordStreamIndex() const;
 
   PDB_Machine getMachineType() const;
-
-  enum { InvalidStreamIndex = 0xffff };
 
   /// If the given stream type is present, returns its stream index. If it is
   /// not present, returns InvalidStreamIndex.
@@ -142,7 +116,7 @@ private:
   std::unique_ptr<MappedBlockStream> FpoStream;
   codeview::FixedStreamArray<object::FpoData> FpoRecords;
 
-  const HeaderInfo *Header;
+  const DbiStreamHeader *Header;
 };
 }
 }
