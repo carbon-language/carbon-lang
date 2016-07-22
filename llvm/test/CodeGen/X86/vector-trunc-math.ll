@@ -3007,7 +3007,7 @@ define <4 x i32> @trunc_and_v4i64_4i32(<4 x i64> %a0, <4 x i64> %a1) nounwind {
 ;
 ; AVX512-LABEL: trunc_and_v4i64_4i32:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vandps %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpand %ymm1, %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512-NEXT:    retq
@@ -3074,7 +3074,7 @@ define <8 x i16> @trunc_and_v8i64_8i16(<8 x i64> %a0, <8 x i64> %a1) nounwind {
 ;
 ; AVX512-LABEL: trunc_and_v8i64_8i16:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vandps %zmm1, %zmm0, %zmm0
+; AVX512-NEXT:    vpandq %zmm1, %zmm0, %zmm0
 ; AVX512-NEXT:    vpmovqw %zmm0, %xmm0
 ; AVX512-NEXT:    retq
   %1 = and <8 x i64> %a0, %a1
@@ -3116,7 +3116,7 @@ define <8 x i16> @trunc_and_v8i32_8i16(<8 x i32> %a0, <8 x i32> %a1) nounwind {
 ;
 ; AVX512-LABEL: trunc_and_v8i32_8i16:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vandps %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpand %ymm1, %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovdw %zmm0, %ymm0
 ; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512-NEXT:    retq
@@ -3213,8 +3213,8 @@ define <16 x i8> @trunc_and_v16i64_v16i8(<16 x i64> %a0, <16 x i64> %a1) nounwin
 ;
 ; AVX512-LABEL: trunc_and_v16i64_v16i8:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vandps %zmm3, %zmm1, %zmm1
-; AVX512-NEXT:    vandps %zmm2, %zmm0, %zmm0
+; AVX512-NEXT:    vpandq %zmm3, %zmm1, %zmm1
+; AVX512-NEXT:    vpandq %zmm2, %zmm0, %zmm0
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    vpmovqd %zmm1, %ymm1
 ; AVX512-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
@@ -3320,14 +3320,14 @@ define <16 x i8> @trunc_and_v16i16_v16i8(<16 x i16> %a0, <16 x i16> %a1) nounwin
 ;
 ; AVX512F-LABEL: trunc_and_v16i16_v16i8:
 ; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vandps %ymm1, %ymm0, %ymm0
+; AVX512F-NEXT:    vpand %ymm1, %ymm0, %ymm0
 ; AVX512F-NEXT:    vpmovsxwd %ymm0, %zmm0
 ; AVX512F-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: trunc_and_v16i16_v16i8:
 ; AVX512BW:       # BB#0:
-; AVX512BW-NEXT:    vandps %ymm1, %ymm0, %ymm0
+; AVX512BW-NEXT:    vpand %ymm1, %ymm0, %ymm0
 ; AVX512BW-NEXT:    vpmovwb %zmm0, %ymm0
 ; AVX512BW-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512BW-NEXT:    retq
@@ -3374,7 +3374,7 @@ define <4 x i32> @trunc_and_const_v4i64_4i32(<4 x i64> %a0) nounwind {
 ;
 ; AVX512-LABEL: trunc_and_const_v4i64_4i32:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
+; AVX512-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512-NEXT:    retq
@@ -3445,7 +3445,7 @@ define <8 x i16> @trunc_and_const_v16i64_v16i16(<8 x i64> %a0) nounwind {
 ;
 ; AVX512-LABEL: trunc_and_const_v16i64_v16i16:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vandps {{.*}}(%rip), %zmm0, %zmm0
+; AVX512-NEXT:    vpandq {{.*}}(%rip), %zmm0, %zmm0
 ; AVX512-NEXT:    vpmovqw %zmm0, %xmm0
 ; AVX512-NEXT:    retq
   %1 = and <8 x i64> %a0, <i64 0, i64 1, i64 2, i64 3, i64 4, i64 5, i64 6, i64 7>
@@ -3487,7 +3487,7 @@ define <8 x i16> @trunc_and_const_v16i32_v16i16(<8 x i32> %a0) nounwind {
 ;
 ; AVX512-LABEL: trunc_and_const_v16i32_v16i16:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
+; AVX512-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovdw %zmm0, %ymm0
 ; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512-NEXT:    retq
@@ -3587,8 +3587,8 @@ define <16 x i8> @trunc_and_const_v16i64_v16i8(<16 x i64> %a0) nounwind {
 ;
 ; AVX512-LABEL: trunc_and_const_v16i64_v16i8:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vandps {{.*}}(%rip), %zmm1, %zmm1
-; AVX512-NEXT:    vandps {{.*}}(%rip), %zmm0, %zmm0
+; AVX512-NEXT:    vpandq {{.*}}(%rip), %zmm1, %zmm1
+; AVX512-NEXT:    vpandq {{.*}}(%rip), %zmm0, %zmm0
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    vpmovqd %zmm1, %ymm1
 ; AVX512-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
@@ -3694,14 +3694,14 @@ define <16 x i8> @trunc_and_const_v16i16_v16i8(<16 x i16> %a0) nounwind {
 ;
 ; AVX512F-LABEL: trunc_and_const_v16i16_v16i8:
 ; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
+; AVX512F-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512F-NEXT:    vpmovsxwd %ymm0, %zmm0
 ; AVX512F-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: trunc_and_const_v16i16_v16i8:
 ; AVX512BW:       # BB#0:
-; AVX512BW-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
+; AVX512BW-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512BW-NEXT:    vpmovwb %zmm0, %ymm0
 ; AVX512BW-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512BW-NEXT:    retq
@@ -3745,7 +3745,7 @@ define <4 x i32> @trunc_xor_v4i64_4i32(<4 x i64> %a0, <4 x i64> %a1) nounwind {
 ;
 ; AVX512-LABEL: trunc_xor_v4i64_4i32:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vxorps %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpxor %ymm1, %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512-NEXT:    retq
@@ -3812,7 +3812,7 @@ define <8 x i16> @trunc_xor_v8i64_8i16(<8 x i64> %a0, <8 x i64> %a1) nounwind {
 ;
 ; AVX512-LABEL: trunc_xor_v8i64_8i16:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vxorps %zmm1, %zmm0, %zmm0
+; AVX512-NEXT:    vpxorq %zmm1, %zmm0, %zmm0
 ; AVX512-NEXT:    vpmovqw %zmm0, %xmm0
 ; AVX512-NEXT:    retq
   %1 = xor <8 x i64> %a0, %a1
@@ -3854,7 +3854,7 @@ define <8 x i16> @trunc_xor_v8i32_8i16(<8 x i32> %a0, <8 x i32> %a1) nounwind {
 ;
 ; AVX512-LABEL: trunc_xor_v8i32_8i16:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vxorps %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpxor %ymm1, %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovdw %zmm0, %ymm0
 ; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512-NEXT:    retq
@@ -3951,8 +3951,8 @@ define <16 x i8> @trunc_xor_v16i64_v16i8(<16 x i64> %a0, <16 x i64> %a1) nounwin
 ;
 ; AVX512-LABEL: trunc_xor_v16i64_v16i8:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vxorps %zmm3, %zmm1, %zmm1
-; AVX512-NEXT:    vxorps %zmm2, %zmm0, %zmm0
+; AVX512-NEXT:    vpxorq %zmm3, %zmm1, %zmm1
+; AVX512-NEXT:    vpxorq %zmm2, %zmm0, %zmm0
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    vpmovqd %zmm1, %ymm1
 ; AVX512-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
@@ -4058,14 +4058,14 @@ define <16 x i8> @trunc_xor_v16i16_v16i8(<16 x i16> %a0, <16 x i16> %a1) nounwin
 ;
 ; AVX512F-LABEL: trunc_xor_v16i16_v16i8:
 ; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vxorps %ymm1, %ymm0, %ymm0
+; AVX512F-NEXT:    vpxor %ymm1, %ymm0, %ymm0
 ; AVX512F-NEXT:    vpmovsxwd %ymm0, %zmm0
 ; AVX512F-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: trunc_xor_v16i16_v16i8:
 ; AVX512BW:       # BB#0:
-; AVX512BW-NEXT:    vxorps %ymm1, %ymm0, %ymm0
+; AVX512BW-NEXT:    vpxor %ymm1, %ymm0, %ymm0
 ; AVX512BW-NEXT:    vpmovwb %zmm0, %ymm0
 ; AVX512BW-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512BW-NEXT:    retq
@@ -4112,7 +4112,7 @@ define <4 x i32> @trunc_xor_const_v4i64_4i32(<4 x i64> %a0) nounwind {
 ;
 ; AVX512-LABEL: trunc_xor_const_v4i64_4i32:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vxorps {{.*}}(%rip), %ymm0, %ymm0
+; AVX512-NEXT:    vpxor {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512-NEXT:    retq
@@ -4183,7 +4183,7 @@ define <8 x i16> @trunc_xor_const_v16i64_v16i16(<8 x i64> %a0) nounwind {
 ;
 ; AVX512-LABEL: trunc_xor_const_v16i64_v16i16:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vxorps {{.*}}(%rip), %zmm0, %zmm0
+; AVX512-NEXT:    vpxorq {{.*}}(%rip), %zmm0, %zmm0
 ; AVX512-NEXT:    vpmovqw %zmm0, %xmm0
 ; AVX512-NEXT:    retq
   %1 = xor <8 x i64> %a0, <i64 0, i64 1, i64 2, i64 3, i64 4, i64 5, i64 6, i64 7>
@@ -4225,7 +4225,7 @@ define <8 x i16> @trunc_xor_const_v16i32_v16i16(<8 x i32> %a0) nounwind {
 ;
 ; AVX512-LABEL: trunc_xor_const_v16i32_v16i16:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vxorps {{.*}}(%rip), %ymm0, %ymm0
+; AVX512-NEXT:    vpxor {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovdw %zmm0, %ymm0
 ; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512-NEXT:    retq
@@ -4325,8 +4325,8 @@ define <16 x i8> @trunc_xor_const_v16i64_v16i8(<16 x i64> %a0) nounwind {
 ;
 ; AVX512-LABEL: trunc_xor_const_v16i64_v16i8:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vxorps {{.*}}(%rip), %zmm1, %zmm1
-; AVX512-NEXT:    vxorps {{.*}}(%rip), %zmm0, %zmm0
+; AVX512-NEXT:    vpxorq {{.*}}(%rip), %zmm1, %zmm1
+; AVX512-NEXT:    vpxorq {{.*}}(%rip), %zmm0, %zmm0
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    vpmovqd %zmm1, %ymm1
 ; AVX512-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
@@ -4432,14 +4432,14 @@ define <16 x i8> @trunc_xor_const_v16i16_v16i8(<16 x i16> %a0) nounwind {
 ;
 ; AVX512F-LABEL: trunc_xor_const_v16i16_v16i8:
 ; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vxorps {{.*}}(%rip), %ymm0, %ymm0
+; AVX512F-NEXT:    vpxor {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512F-NEXT:    vpmovsxwd %ymm0, %zmm0
 ; AVX512F-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: trunc_xor_const_v16i16_v16i8:
 ; AVX512BW:       # BB#0:
-; AVX512BW-NEXT:    vxorps {{.*}}(%rip), %ymm0, %ymm0
+; AVX512BW-NEXT:    vpxor {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512BW-NEXT:    vpmovwb %zmm0, %ymm0
 ; AVX512BW-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512BW-NEXT:    retq
@@ -4483,7 +4483,7 @@ define <4 x i32> @trunc_or_v4i64_4i32(<4 x i64> %a0, <4 x i64> %a1) nounwind {
 ;
 ; AVX512-LABEL: trunc_or_v4i64_4i32:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vorps %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512-NEXT:    retq
@@ -4550,7 +4550,7 @@ define <8 x i16> @trunc_or_v8i64_8i16(<8 x i64> %a0, <8 x i64> %a1) nounwind {
 ;
 ; AVX512-LABEL: trunc_or_v8i64_8i16:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vorps %zmm1, %zmm0, %zmm0
+; AVX512-NEXT:    vporq %zmm1, %zmm0, %zmm0
 ; AVX512-NEXT:    vpmovqw %zmm0, %xmm0
 ; AVX512-NEXT:    retq
   %1 = or <8 x i64> %a0, %a1
@@ -4592,7 +4592,7 @@ define <8 x i16> @trunc_or_v8i32_8i16(<8 x i32> %a0, <8 x i32> %a1) nounwind {
 ;
 ; AVX512-LABEL: trunc_or_v8i32_8i16:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vorps %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovdw %zmm0, %ymm0
 ; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512-NEXT:    retq
@@ -4689,8 +4689,8 @@ define <16 x i8> @trunc_or_v16i64_v16i8(<16 x i64> %a0, <16 x i64> %a1) nounwind
 ;
 ; AVX512-LABEL: trunc_or_v16i64_v16i8:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vorps %zmm3, %zmm1, %zmm1
-; AVX512-NEXT:    vorps %zmm2, %zmm0, %zmm0
+; AVX512-NEXT:    vporq %zmm3, %zmm1, %zmm1
+; AVX512-NEXT:    vporq %zmm2, %zmm0, %zmm0
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    vpmovqd %zmm1, %ymm1
 ; AVX512-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
@@ -4796,14 +4796,14 @@ define <16 x i8> @trunc_or_v16i16_v16i8(<16 x i16> %a0, <16 x i16> %a1) nounwind
 ;
 ; AVX512F-LABEL: trunc_or_v16i16_v16i8:
 ; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vorps %ymm1, %ymm0, %ymm0
+; AVX512F-NEXT:    vpor %ymm1, %ymm0, %ymm0
 ; AVX512F-NEXT:    vpmovsxwd %ymm0, %zmm0
 ; AVX512F-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: trunc_or_v16i16_v16i8:
 ; AVX512BW:       # BB#0:
-; AVX512BW-NEXT:    vorps %ymm1, %ymm0, %ymm0
+; AVX512BW-NEXT:    vpor %ymm1, %ymm0, %ymm0
 ; AVX512BW-NEXT:    vpmovwb %zmm0, %ymm0
 ; AVX512BW-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512BW-NEXT:    retq
@@ -4850,7 +4850,7 @@ define <4 x i32> @trunc_or_const_v4i64_4i32(<4 x i64> %a0) nounwind {
 ;
 ; AVX512-LABEL: trunc_or_const_v4i64_4i32:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vorps {{.*}}(%rip), %ymm0, %ymm0
+; AVX512-NEXT:    vpor {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512-NEXT:    retq
@@ -4921,7 +4921,7 @@ define <8 x i16> @trunc_or_const_v16i64_v16i16(<8 x i64> %a0) nounwind {
 ;
 ; AVX512-LABEL: trunc_or_const_v16i64_v16i16:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vorps {{.*}}(%rip), %zmm0, %zmm0
+; AVX512-NEXT:    vporq {{.*}}(%rip), %zmm0, %zmm0
 ; AVX512-NEXT:    vpmovqw %zmm0, %xmm0
 ; AVX512-NEXT:    retq
   %1 = or <8 x i64> %a0, <i64 0, i64 1, i64 2, i64 3, i64 4, i64 5, i64 6, i64 7>
@@ -4963,7 +4963,7 @@ define <8 x i16> @trunc_or_const_v16i32_v16i16(<8 x i32> %a0) nounwind {
 ;
 ; AVX512-LABEL: trunc_or_const_v16i32_v16i16:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vorps {{.*}}(%rip), %ymm0, %ymm0
+; AVX512-NEXT:    vpor {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovdw %zmm0, %ymm0
 ; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512-NEXT:    retq
@@ -5063,8 +5063,8 @@ define <16 x i8> @trunc_or_const_v16i64_v16i8(<16 x i64> %a0) nounwind {
 ;
 ; AVX512-LABEL: trunc_or_const_v16i64_v16i8:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vorps {{.*}}(%rip), %zmm1, %zmm1
-; AVX512-NEXT:    vorps {{.*}}(%rip), %zmm0, %zmm0
+; AVX512-NEXT:    vporq {{.*}}(%rip), %zmm1, %zmm1
+; AVX512-NEXT:    vporq {{.*}}(%rip), %zmm0, %zmm0
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    vpmovqd %zmm1, %ymm1
 ; AVX512-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
@@ -5170,14 +5170,14 @@ define <16 x i8> @trunc_or_const_v16i16_v16i8(<16 x i16> %a0) nounwind {
 ;
 ; AVX512F-LABEL: trunc_or_const_v16i16_v16i8:
 ; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vorps {{.*}}(%rip), %ymm0, %ymm0
+; AVX512F-NEXT:    vpor {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512F-NEXT:    vpmovsxwd %ymm0, %zmm0
 ; AVX512F-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: trunc_or_const_v16i16_v16i8:
 ; AVX512BW:       # BB#0:
-; AVX512BW-NEXT:    vorps {{.*}}(%rip), %ymm0, %ymm0
+; AVX512BW-NEXT:    vpor {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512BW-NEXT:    vpmovwb %zmm0, %ymm0
 ; AVX512BW-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
 ; AVX512BW-NEXT:    retq

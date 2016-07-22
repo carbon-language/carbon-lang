@@ -2191,7 +2191,7 @@ define <32 x double> @test_load_32f64(<32 x double>* %ptrs, <32 x i1> %mask, <32
 ;
 ; AVX512F-LABEL: test_load_32f64:
 ; AVX512F:       ## BB#0:
-; AVX512F-NEXT:    vextractf128 $1, %ymm0, %xmm5
+; AVX512F-NEXT:    vextracti128 $1, %ymm0, %xmm5
 ; AVX512F-NEXT:    vpmovsxbd %xmm5, %zmm5
 ; AVX512F-NEXT:    vpslld $31, %zmm5, %zmm5
 ; AVX512F-NEXT:    vptestmd %zmm5, %zmm5, %k1

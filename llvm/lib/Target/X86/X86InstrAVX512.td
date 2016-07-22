@@ -6307,7 +6307,7 @@ defm VRNDSCALESD : avx512_rndscale_scalar<0x0B, "vrndscalesd", f64x_info>, VEX_W
 multiclass avx512_trunc_common<bits<8> opc, string OpcodeStr, SDNode OpNode,
                               X86VectorVTInfo SrcInfo, X86VectorVTInfo DestInfo,
                               X86MemOperand x86memop> {
-
+  let ExeDomain = DestInfo.ExeDomain in
   defm rr  : AVX512_maskable<opc, MRMDestReg, DestInfo, (outs DestInfo.RC:$dst),
                       (ins SrcInfo.RC:$src1), OpcodeStr ,"$src1", "$src1",
                       (DestInfo.VT (OpNode (SrcInfo.VT SrcInfo.RC:$src1)))>,
@@ -6333,7 +6333,8 @@ multiclass avx512_trunc_common<bits<8> opc, string OpcodeStr, SDNode OpNode,
                                       DestInfo.KRCWM:$mask ,
                                       SrcInfo.RC:$src1)>;
 
-  let mayStore = 1, mayLoad = 1, hasSideEffects = 0 in {
+  let mayStore = 1, mayLoad = 1, hasSideEffects = 0,
+      ExeDomain = DestInfo.ExeDomain in {
     def mr : AVX512XS8I<opc, MRMDestMem, (outs),
                (ins x86memop:$dst, SrcInfo.RC:$src),
                OpcodeStr # "\t{$src, $dst|$dst, $src}",
@@ -6536,6 +6537,7 @@ def: Pat<(v16i8 (X86vtrunc (v16i16 VR256X:$src))),
 multiclass avx512_extend_common<bits<8> opc, string OpcodeStr,
               X86VectorVTInfo DestInfo, X86VectorVTInfo SrcInfo,
               X86MemOperand x86memop, PatFrag LdFrag, SDPatternOperator OpNode>{
+  let ExeDomain = DestInfo.ExeDomain in {
   defm rr   : AVX512_maskable<opc, MRMSrcReg, DestInfo, (outs DestInfo.RC:$dst),
                     (ins SrcInfo.RC:$src), OpcodeStr ,"$src", "$src",
                     (DestInfo.VT (OpNode (SrcInfo.VT SrcInfo.RC:$src)))>,
@@ -6545,6 +6547,7 @@ multiclass avx512_extend_common<bits<8> opc, string OpcodeStr,
                   (ins x86memop:$src), OpcodeStr ,"$src", "$src",
                   (DestInfo.VT (LdFrag addr:$src))>,
                 EVEX;
+  }
 }
 
 multiclass avx512_extend_BW<bits<8> opc, string OpcodeStr,

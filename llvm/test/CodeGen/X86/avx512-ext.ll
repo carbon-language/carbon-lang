@@ -1961,8 +1961,8 @@ define <32 x i8> @zext_32xi1_to_32xi8(<32 x i16> %x, <32 x i16> %y) #0 {
 ; KNL-NEXT:    vpcmpeqw %ymm3, %ymm1, %ymm1
 ; KNL-NEXT:    vpmovsxwd %ymm1, %zmm1
 ; KNL-NEXT:    vpmovdb %zmm1, %xmm1
-; KNL-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
-; KNL-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
+; KNL-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; KNL-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: zext_32xi1_to_32xi8:
