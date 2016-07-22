@@ -1186,6 +1186,18 @@ define i1 @icmp_mul_neq0(i32 %x) {
   ret i1 %cmp
 }
 
+; FIXME: Vectors should fold the same way.
+define <2 x i1> @icmp_mul_neq0_vec(<2 x i32> %x) {
+; CHECK-LABEL: @icmp_mul_neq0_vec(
+; CHECK-NEXT:    [[MUL:%.*]] = mul nsw <2 x i32> %x, <i32 -12, i32 -12>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ne <2 x i32> [[MUL]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %mul = mul nsw <2 x i32> %x, <i32 -12, i32 -12>
+  %cmp = icmp ne <2 x i32> %mul, zeroinitializer
+  ret <2 x i1> %cmp
+}
+
 define i1 @icmp_mul_eq0(i32 %x) {
 ; CHECK-LABEL: @icmp_mul_eq0(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 %x, 0
@@ -2003,6 +2015,18 @@ define i1 @cmp_inverse_mask_bits_set_eq(i32 %x) {
   %or = or i32 %x, 42
   %cmp = icmp eq i32 %or, -1
   ret i1 %cmp
+}
+
+; FIXME: Vectors should fold the same way.
+define <2 x i1> @cmp_inverse_mask_bits_set_eq_vec(<2 x i32> %x) {
+; CHECK-LABEL: @cmp_inverse_mask_bits_set_eq_vec(
+; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> %x, <i32 42, i32 42>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> [[OR]], <i32 -1, i32 -1>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %or = or <2 x i32> %x, <i32 42, i32 42>
+  %cmp = icmp eq <2 x i32> %or, <i32 -1, i32 -1>
+  ret <2 x i1> %cmp
 }
 
 define i1 @cmp_inverse_mask_bits_set_ne(i32 %x) {
