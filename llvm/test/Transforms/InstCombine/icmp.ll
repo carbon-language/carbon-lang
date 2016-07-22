@@ -193,7 +193,7 @@ define i1 @test18(i32 %x) nounwind {
   ret i1 %cmp
 }
 
-define i1 @test19(i32 %x) nounwind {
+define i1 @test19(i32 %x) {
 ; CHECK-LABEL: @test19(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 %x, 3
 ; CHECK-NEXT:    ret i1 [[CMP]]
@@ -202,6 +202,31 @@ define i1 @test19(i32 %x) nounwind {
   %and = and i32 %shl, 8
   %cmp = icmp eq i32 %and, 8
   ret i1 %cmp
+}
+
+; FIXME: Vectors should fold the same way.
+define <2 x i1> @test19vec(<2 x i32> %x) {
+; CHECK-LABEL: @test19vec(
+; CHECK-NEXT:    [[SHL:%.*]] = shl <2 x i32> <i32 1, i32 1>, %x
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[SHL]], <i32 8, i32 8>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> [[AND]], <i32 8, i32 8>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %shl = shl <2 x i32> <i32 1, i32 1>, %x
+  %and = and <2 x i32> %shl, <i32 8, i32 8>
+  %cmp = icmp eq <2 x i32> %and, <i32 8, i32 8>
+  ret <2 x i1> %cmp
+}
+
+define <2 x i1> @cmp_and_signbit_vec(<2 x i3> %x) {
+; CHECK-LABEL: @cmp_and_signbit_vec(
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i3> %x, <i3 -4, i3 -4>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ne <2 x i3> [[AND]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %and = and <2 x i3> %x, <i3 4, i3 4>
+  %cmp = icmp ne <2 x i3> %and, zeroinitializer
+  ret <2 x i1> %cmp
 }
 
 define i1 @test20(i32 %x) nounwind {
