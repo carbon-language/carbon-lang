@@ -5780,6 +5780,7 @@ MachineInstr *X86InstrInfo::foldMemoryOperandCustom(
   switch (MI.getOpcode()) {
   case X86::INSERTPSrr:
   case X86::VINSERTPSrr:
+  case X86::VINSERTPSZrr:
     // Attempt to convert the load of inserted vector into a fold load
     // of a single float.
     if (OpNum == 2) {
@@ -5793,8 +5794,9 @@ MachineInstr *X86InstrInfo::foldMemoryOperandCustom(
         int PtrOffset = SrcIdx * 4;
         unsigned NewImm = (DstIdx << 4) | ZMask;
         unsigned NewOpCode =
-            (MI.getOpcode() == X86::VINSERTPSrr ? X86::VINSERTPSrm
-                                                : X86::INSERTPSrm);
+            (MI.getOpcode() == X86::VINSERTPSZrr) ? X86::VINSERTPSZrm :
+            (MI.getOpcode() == X86::VINSERTPSrr)  ? X86::VINSERTPSrm  :
+                                                    X86::INSERTPSrm;
         MachineInstr *NewMI =
             FuseInst(MF, NewOpCode, OpNum, MOs, InsertPt, MI, *this, PtrOffset);
         NewMI->getOperand(NewMI->getNumOperands() - 1).setImm(NewImm);
@@ -5804,6 +5806,7 @@ MachineInstr *X86InstrInfo::foldMemoryOperandCustom(
     break;
   case X86::MOVHLPSrr:
   case X86::VMOVHLPSrr:
+  case X86::VMOVHLPSZrr:
     // Move the upper 64-bits of the second operand to the lower 64-bits.
     // To fold the load, adjust the pointer to the upper and use (V)MOVLPS.
     // TODO: In most cases AVX doesn't have a 8-byte alignment requirement.
@@ -5811,8 +5814,9 @@ MachineInstr *X86InstrInfo::foldMemoryOperandCustom(
       unsigned RCSize = getRegClass(MI.getDesc(), OpNum, &RI, MF)->getSize();
       if (Size <= RCSize && 8 <= Align) {
         unsigned NewOpCode =
-            (MI.getOpcode() == X86::VMOVHLPSrr ? X86::VMOVLPSrm
-                                               : X86::MOVLPSrm);
+            (MI.getOpcode() == X86::VMOVHLPSZrr) ? X86::VMOVLPSZ128rm :
+            (MI.getOpcode() == X86::VMOVHLPSrr)  ? X86::VMOVLPSrm     :
+                                                   X86::MOVLPSrm;
         MachineInstr *NewMI =
             FuseInst(MF, NewOpCode, OpNum, MOs, InsertPt, MI, *this, 8);
         return NewMI;
