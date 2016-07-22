@@ -15,7 +15,7 @@
 #ifndef LLVM_LIB_TARGET_AARCH64_AARCH64MACHINELEGALIZER_H
 #define LLVM_LIB_TARGET_AARCH64_AARCH64MACHINELEGALIZER_H
 
-#include "llvm/CodeGen/GlobalISel/Machinelegalizer.h"
+#include "llvm/CodeGen/GlobalISel/MachineLegalizer.h"
 
 namespace llvm {
 
