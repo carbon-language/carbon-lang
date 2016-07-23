@@ -532,7 +532,8 @@ template <class ELFT> void LinkerScript<ELFT>::addScriptedSymbols() {
     if (!Cmd || Cmd->Name == ".")
       continue;
 
-    if (Symtab<ELFT>::X->find(Cmd->Name) == nullptr)
+    SymbolBody *B = Symtab<ELFT>::X->find(Cmd->Name);
+    if (!B || B->isUndefined())
       Symtab<ELFT>::X->addAbsolute(Cmd->Name,
                                    Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT);
     else
