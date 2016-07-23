@@ -39,7 +39,6 @@ SimplifyConditionalTailCalls("simplify-conditional-tail-calls",
 static llvm::cl::opt<bool>
 Peepholes("peepholes",
           llvm::cl::desc("run peephole optimizations"),
-          llvm::cl::init(true),
           llvm::cl::Optional);
 
 static llvm::cl::opt<bool>

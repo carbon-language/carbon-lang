@@ -252,7 +252,7 @@ bool shouldProcess(const BinaryFunction &Function) {
 } // namespace opts
 
 constexpr const char *RewriteInstance::DebugSectionsToOverwrite[];
-    
+
 static void report_error(StringRef Message, std::error_code EC) {
   assert(EC);
   errs() << "BOLT-ERROR: '" << Message << "': " << EC.message() << ".\n";
