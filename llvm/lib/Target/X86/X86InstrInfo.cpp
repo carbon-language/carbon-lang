@@ -3154,9 +3154,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 /// the function. It is set to true if the given instruction has FMA3 opcode
 /// that is used for lowering of scalar FMA intrinsics, and it is set to false
 /// otherwise.
-static bool isFMA3(unsigned Opcode, bool *IsIntrinsic = nullptr) {
-  if (IsIntrinsic)
-    *IsIntrinsic = false;
+static bool isFMA3(unsigned Opcode, bool &IsIntrinsic) {
+  IsIntrinsic = false;
 
   switch (Opcode) {
   case X86::VFMADDSDr132r:      case X86::VFMADDSDr132m:
@@ -3291,13 +3290,207 @@ static bool isFMA3(unsigned Opcode, bool *IsIntrinsic = nullptr) {
   case X86::VFNMADDSSr231r_Int: case X86::VFNMADDSSr231m_Int:
   case X86::VFNMSUBSDr231r_Int: case X86::VFNMSUBSDr231m_Int:
   case X86::VFNMSUBSSr231r_Int: case X86::VFNMSUBSSr231m_Int:
-    if (IsIntrinsic)
-      *IsIntrinsic = true;
+    IsIntrinsic = true;
     return true;
   default:
     return false;
   }
   llvm_unreachable("Opcode not handled by the switch");
+}
+
+/// Returns an adjusted FMA opcode that must be used in FMA instruction that
+/// performs the same computations as the given MI but which has the operands
+/// \p SrcOpIdx1 and \p SrcOpIdx2 commuted.
+/// It may return 0 if it is unsafe to commute the operands.
+///
+/// The returned FMA opcode may differ from the opcode in the given \p MI.
+/// For example, commuting the operands #1 and #3 in the following FMA
+///     FMA213 #1, #2, #3
+/// results into instruction with adjusted opcode:
+///     FMA231 #3, #2, #1
+static unsigned getFMA3OpcodeToCommuteOperands(unsigned Opc,
+                                               bool IsIntrinOpcode,
+                                               unsigned SrcOpIdx1,
+                                               unsigned SrcOpIdx2) {
+  // Define the array that holds FMA opcodes in groups
+  // of 3 opcodes(132, 213, 231) in each group.
+  static const uint16_t RegularOpcodeGroups[][3] = {
+    { X86::VFMADDSSr132r,   X86::VFMADDSSr213r,   X86::VFMADDSSr231r  },
+    { X86::VFMADDSDr132r,   X86::VFMADDSDr213r,   X86::VFMADDSDr231r  },
+    { X86::VFMADDPSr132r,   X86::VFMADDPSr213r,   X86::VFMADDPSr231r  },
+    { X86::VFMADDPDr132r,   X86::VFMADDPDr213r,   X86::VFMADDPDr231r  },
+    { X86::VFMADDPSr132rY,  X86::VFMADDPSr213rY,  X86::VFMADDPSr231rY },
+    { X86::VFMADDPDr132rY,  X86::VFMADDPDr213rY,  X86::VFMADDPDr231rY },
+    { X86::VFMADDSSr132m,   X86::VFMADDSSr213m,   X86::VFMADDSSr231m  },
+    { X86::VFMADDSDr132m,   X86::VFMADDSDr213m,   X86::VFMADDSDr231m  },
+    { X86::VFMADDPSr132m,   X86::VFMADDPSr213m,   X86::VFMADDPSr231m  },
+    { X86::VFMADDPDr132m,   X86::VFMADDPDr213m,   X86::VFMADDPDr231m  },
+    { X86::VFMADDPSr132mY,  X86::VFMADDPSr213mY,  X86::VFMADDPSr231mY },
+    { X86::VFMADDPDr132mY,  X86::VFMADDPDr213mY,  X86::VFMADDPDr231mY },
+
+    { X86::VFMSUBSSr132r,   X86::VFMSUBSSr213r,   X86::VFMSUBSSr231r  },
+    { X86::VFMSUBSDr132r,   X86::VFMSUBSDr213r,   X86::VFMSUBSDr231r  },
+    { X86::VFMSUBPSr132r,   X86::VFMSUBPSr213r,   X86::VFMSUBPSr231r  },
+    { X86::VFMSUBPDr132r,   X86::VFMSUBPDr213r,   X86::VFMSUBPDr231r  },
+    { X86::VFMSUBPSr132rY,  X86::VFMSUBPSr213rY,  X86::VFMSUBPSr231rY },
+    { X86::VFMSUBPDr132rY,  X86::VFMSUBPDr213rY,  X86::VFMSUBPDr231rY },
+    { X86::VFMSUBSSr132m,   X86::VFMSUBSSr213m,   X86::VFMSUBSSr231m  },
+    { X86::VFMSUBSDr132m,   X86::VFMSUBSDr213m,   X86::VFMSUBSDr231m  },
+    { X86::VFMSUBPSr132m,   X86::VFMSUBPSr213m,   X86::VFMSUBPSr231m  },
+    { X86::VFMSUBPDr132m,   X86::VFMSUBPDr213m,   X86::VFMSUBPDr231m  },
+    { X86::VFMSUBPSr132mY,  X86::VFMSUBPSr213mY,  X86::VFMSUBPSr231mY },
+    { X86::VFMSUBPDr132mY,  X86::VFMSUBPDr213mY,  X86::VFMSUBPDr231mY },
+
+    { X86::VFNMADDSSr132r,  X86::VFNMADDSSr213r,  X86::VFNMADDSSr231r  },
+    { X86::VFNMADDSDr132r,  X86::VFNMADDSDr213r,  X86::VFNMADDSDr231r  },
+    { X86::VFNMADDPSr132r,  X86::VFNMADDPSr213r,  X86::VFNMADDPSr231r  },
+    { X86::VFNMADDPDr132r,  X86::VFNMADDPDr213r,  X86::VFNMADDPDr231r  },
+    { X86::VFNMADDPSr132rY, X86::VFNMADDPSr213rY, X86::VFNMADDPSr231rY },
+    { X86::VFNMADDPDr132rY, X86::VFNMADDPDr213rY, X86::VFNMADDPDr231rY },
+    { X86::VFNMADDSSr132m,  X86::VFNMADDSSr213m,  X86::VFNMADDSSr231m  },
+    { X86::VFNMADDSDr132m,  X86::VFNMADDSDr213m,  X86::VFNMADDSDr231m  },
+    { X86::VFNMADDPSr132m,  X86::VFNMADDPSr213m,  X86::VFNMADDPSr231m  },
+    { X86::VFNMADDPDr132m,  X86::VFNMADDPDr213m,  X86::VFNMADDPDr231m  },
+    { X86::VFNMADDPSr132mY, X86::VFNMADDPSr213mY, X86::VFNMADDPSr231mY },
+    { X86::VFNMADDPDr132mY, X86::VFNMADDPDr213mY, X86::VFNMADDPDr231mY },
+
+    { X86::VFNMSUBSSr132r,  X86::VFNMSUBSSr213r,  X86::VFNMSUBSSr231r  },
+    { X86::VFNMSUBSDr132r,  X86::VFNMSUBSDr213r,  X86::VFNMSUBSDr231r  },
+    { X86::VFNMSUBPSr132r,  X86::VFNMSUBPSr213r,  X86::VFNMSUBPSr231r  },
+    { X86::VFNMSUBPDr132r,  X86::VFNMSUBPDr213r,  X86::VFNMSUBPDr231r  },
+    { X86::VFNMSUBPSr132rY, X86::VFNMSUBPSr213rY, X86::VFNMSUBPSr231rY },
+    { X86::VFNMSUBPDr132rY, X86::VFNMSUBPDr213rY, X86::VFNMSUBPDr231rY },
+    { X86::VFNMSUBSSr132m,  X86::VFNMSUBSSr213m,  X86::VFNMSUBSSr231m  },
+    { X86::VFNMSUBSDr132m,  X86::VFNMSUBSDr213m,  X86::VFNMSUBSDr231m  },
+    { X86::VFNMSUBPSr132m,  X86::VFNMSUBPSr213m,  X86::VFNMSUBPSr231m  },
+    { X86::VFNMSUBPDr132m,  X86::VFNMSUBPDr213m,  X86::VFNMSUBPDr231m  },
+    { X86::VFNMSUBPSr132mY, X86::VFNMSUBPSr213mY, X86::VFNMSUBPSr231mY },
+    { X86::VFNMSUBPDr132mY, X86::VFNMSUBPDr213mY, X86::VFNMSUBPDr231mY },
+
+    { X86::VFMADDSUBPSr132r,  X86::VFMADDSUBPSr213r,  X86::VFMADDSUBPSr231r  },
+    { X86::VFMADDSUBPDr132r,  X86::VFMADDSUBPDr213r,  X86::VFMADDSUBPDr231r  },
+    { X86::VFMADDSUBPSr132rY, X86::VFMADDSUBPSr213rY, X86::VFMADDSUBPSr231rY },
+    { X86::VFMADDSUBPDr132rY, X86::VFMADDSUBPDr213rY, X86::VFMADDSUBPDr231rY },
+    { X86::VFMADDSUBPSr132m,  X86::VFMADDSUBPSr213m,  X86::VFMADDSUBPSr231m  },
+    { X86::VFMADDSUBPDr132m,  X86::VFMADDSUBPDr213m,  X86::VFMADDSUBPDr231m  },
+    { X86::VFMADDSUBPSr132mY, X86::VFMADDSUBPSr213mY, X86::VFMADDSUBPSr231mY },
+    { X86::VFMADDSUBPDr132mY, X86::VFMADDSUBPDr213mY, X86::VFMADDSUBPDr231mY },
+
+    { X86::VFMSUBADDPSr132r,  X86::VFMSUBADDPSr213r,  X86::VFMSUBADDPSr231r  },
+    { X86::VFMSUBADDPDr132r,  X86::VFMSUBADDPDr213r,  X86::VFMSUBADDPDr231r  },
+    { X86::VFMSUBADDPSr132rY, X86::VFMSUBADDPSr213rY, X86::VFMSUBADDPSr231rY },
+    { X86::VFMSUBADDPDr132rY, X86::VFMSUBADDPDr213rY, X86::VFMSUBADDPDr231rY },
+    { X86::VFMSUBADDPSr132m,  X86::VFMSUBADDPSr213m,  X86::VFMSUBADDPSr231m  },
+    { X86::VFMSUBADDPDr132m,  X86::VFMSUBADDPDr213m,  X86::VFMSUBADDPDr231m  },
+    { X86::VFMSUBADDPSr132mY, X86::VFMSUBADDPSr213mY, X86::VFMSUBADDPSr231mY },
+    { X86::VFMSUBADDPDr132mY, X86::VFMSUBADDPDr213mY, X86::VFMSUBADDPDr231mY }
+  };
+
+  // Define the array that holds FMA*_Int opcodes in groups
+  // of 3 opcodes(132, 213, 231) in each group.
+  static const uint16_t IntrinOpcodeGroups[][3] = {
+    { X86::VFMADDSSr132r_Int,  X86::VFMADDSSr213r_Int,  X86::VFMADDSSr231r_Int },
+    { X86::VFMADDSDr132r_Int,  X86::VFMADDSDr213r_Int,  X86::VFMADDSDr231r_Int },
+    { X86::VFMADDSSr132m_Int,  X86::VFMADDSSr213m_Int,  X86::VFMADDSSr231m_Int },
+    { X86::VFMADDSDr132m_Int,  X86::VFMADDSDr213m_Int,  X86::VFMADDSDr231m_Int },
+
+    { X86::VFMSUBSSr132r_Int,  X86::VFMSUBSSr213r_Int,  X86::VFMSUBSSr231r_Int },
+    { X86::VFMSUBSDr132r_Int,  X86::VFMSUBSDr213r_Int,  X86::VFMSUBSDr231r_Int },
+    { X86::VFMSUBSSr132m_Int,  X86::VFMSUBSSr213m_Int,  X86::VFMSUBSSr231m_Int },
+    { X86::VFMSUBSDr132m_Int,  X86::VFMSUBSDr213m_Int,  X86::VFMSUBSDr231m_Int },
+
+    { X86::VFNMADDSSr132r_Int, X86::VFNMADDSSr213r_Int, X86::VFNMADDSSr231r_Int },
+    { X86::VFNMADDSDr132r_Int, X86::VFNMADDSDr213r_Int, X86::VFNMADDSDr231r_Int },
+    { X86::VFNMADDSSr132m_Int, X86::VFNMADDSSr213m_Int, X86::VFNMADDSSr231m_Int },
+    { X86::VFNMADDSDr132m_Int, X86::VFNMADDSDr213m_Int, X86::VFNMADDSDr231m_Int },
+
+    { X86::VFNMSUBSSr132r_Int, X86::VFNMSUBSSr213r_Int, X86::VFNMSUBSSr231r_Int },
+    { X86::VFNMSUBSDr132r_Int, X86::VFNMSUBSDr213r_Int, X86::VFNMSUBSDr231r_Int },
+    { X86::VFNMSUBSSr132m_Int, X86::VFNMSUBSSr213m_Int, X86::VFNMSUBSSr231m_Int },
+    { X86::VFNMSUBSDr132m_Int, X86::VFNMSUBSDr213m_Int, X86::VFNMSUBSDr231m_Int },
+  };
+
+  const unsigned Form132Index = 0;
+  const unsigned Form213Index = 1;
+  const unsigned Form231Index = 2;
+  const unsigned FormsNum = 3;
+
+  size_t GroupsNum;
+  const uint16_t (*OpcodeGroups)[3];
+  if (IsIntrinOpcode) {
+    GroupsNum = array_lengthof(IntrinOpcodeGroups);
+    OpcodeGroups = IntrinOpcodeGroups;
+  } else {
+    GroupsNum = array_lengthof(RegularOpcodeGroups);
+    OpcodeGroups = RegularOpcodeGroups;
+  }
+
+  const uint16_t *FoundOpcodesGroup = nullptr;
+  size_t FormIndex;
+
+  // Look for the input opcode in the corresponding opcodes table.
+  for (size_t GroupIndex = 0; GroupIndex < GroupsNum && !FoundOpcodesGroup;
+         ++GroupIndex) {
+    for (FormIndex = 0; FormIndex < FormsNum; ++FormIndex) {
+      if (OpcodeGroups[GroupIndex][FormIndex] == Opc) {
+        FoundOpcodesGroup = OpcodeGroups[GroupIndex];
+        break;
+      }
+    }
+  }
+
+  // The input opcode does not match with any of the opcodes from the tables.
+  // The unsupported FMA opcode must be added to one of the two opcode groups
+  // defined above.
+  assert(FoundOpcodesGroup != nullptr && "Unexpected FMA3 opcode");
+
+  // Put the lowest index to SrcOpIdx1 to simplify the checks below.
+  if (SrcOpIdx1 > SrcOpIdx2)
+    std::swap(SrcOpIdx1, SrcOpIdx2);
+
+  // TODO: Commuting the 1st operand of FMA*_Int requires some additional
+  // analysis. The commute optimization is legal only if all users of FMA*_Int
+  // use only the lowest element of the FMA*_Int instruction. Such analysis are
+  // not implemented yet. So, just return 0 in that case.
+  // When such analysis are available this place will be the right place for
+  // calling it.
+  if (IsIntrinOpcode && SrcOpIdx1 == 1)
+    return 0;
+
+  unsigned Case;
+  if (SrcOpIdx1 == 1 && SrcOpIdx2 == 2)
+    Case = 0;
+  else if (SrcOpIdx1 == 1 && SrcOpIdx2 == 3)
+    Case = 1;
+  else if (SrcOpIdx1 == 2 && SrcOpIdx2 == 3)
+    Case = 2;
+  else
+    return 0;
+
+  // Define the FMA forms mapping array that helps to map input FMA form
+  // to output FMA form to preserve the operation semantics after
+  // commuting the operands.
+  static const unsigned FormMapping[][3] = {
+    // 0: SrcOpIdx1 == 1 && SrcOpIdx2 == 2;
+    // FMA132 A, C, b; ==> FMA231 C, A, b;
+    // FMA213 B, A, c; ==> FMA213 A, B, c;
+    // FMA231 C, A, b; ==> FMA132 A, C, b;
+    { Form231Index, Form213Index, Form132Index },
+    // 1: SrcOpIdx1 == 1 && SrcOpIdx2 == 3;
+    // FMA132 A, c, B; ==> FMA132 B, c, A;
+    // FMA213 B, a, C; ==> FMA231 C, a, B;
+    // FMA231 C, a, B; ==> FMA213 B, a, C;
+    { Form132Index, Form231Index, Form213Index },
+    // 2: SrcOpIdx1 == 2 && SrcOpIdx2 == 3;
+    // FMA132 a, C, B; ==> FMA213 a, B, C;
+    // FMA213 b, A, C; ==> FMA132 b, C, A;
+    // FMA231 c, A, B; ==> FMA231 c, B, A;
+    { Form213Index, Form132Index, Form231Index }
+  };
+
+  // Everything is ready, just adjust the FMA opcode and return it.
+  FormIndex = FormMapping[Case][FormIndex];
+  return FoundOpcodesGroup[FormIndex];
 }
 
 MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
@@ -3506,8 +3699,11 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
                                                    OpIdx1, OpIdx2);
   }
   default:
-    if (isFMA3(MI.getOpcode())) {
-      unsigned Opc = getFMA3OpcodeToCommuteOperands(MI, OpIdx1, OpIdx2);
+    bool IsIntrinOpcode;
+    if (isFMA3(MI.getOpcode(), IsIntrinOpcode)) {
+      unsigned Opc = getFMA3OpcodeToCommuteOperands(MI.getOpcode(),
+                                                    IsIntrinOpcode,
+                                                    OpIdx1, OpIdx2);
       if (Opc == 0)
         return nullptr;
       auto &WorkingMI = cloneIfNew(MI);
@@ -3521,6 +3717,7 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
 }
 
 bool X86InstrInfo::findFMA3CommutedOpIndices(MachineInstr &MI,
+                                             bool IsIntrinOpcode,
                                              unsigned &SrcOpIdx1,
                                              unsigned &SrcOpIdx2) const {
 
@@ -3577,195 +3774,8 @@ bool X86InstrInfo::findFMA3CommutedOpIndices(MachineInstr &MI,
 
   // Check if we can adjust the opcode to preserve the semantics when
   // commute the register operands.
-  return getFMA3OpcodeToCommuteOperands(MI, SrcOpIdx1, SrcOpIdx2) != 0;
-}
-
-unsigned X86InstrInfo::getFMA3OpcodeToCommuteOperands(
-    MachineInstr &MI, unsigned SrcOpIdx1, unsigned SrcOpIdx2) const {
-  unsigned Opc = MI.getOpcode();
-
-  // Define the array that holds FMA opcodes in groups
-  // of 3 opcodes(132, 213, 231) in each group.
-  static const uint16_t RegularOpcodeGroups[][3] = {
-    { X86::VFMADDSSr132r,   X86::VFMADDSSr213r,   X86::VFMADDSSr231r  },
-    { X86::VFMADDSDr132r,   X86::VFMADDSDr213r,   X86::VFMADDSDr231r  },
-    { X86::VFMADDPSr132r,   X86::VFMADDPSr213r,   X86::VFMADDPSr231r  },
-    { X86::VFMADDPDr132r,   X86::VFMADDPDr213r,   X86::VFMADDPDr231r  },
-    { X86::VFMADDPSr132rY,  X86::VFMADDPSr213rY,  X86::VFMADDPSr231rY },
-    { X86::VFMADDPDr132rY,  X86::VFMADDPDr213rY,  X86::VFMADDPDr231rY },
-    { X86::VFMADDSSr132m,   X86::VFMADDSSr213m,   X86::VFMADDSSr231m  },
-    { X86::VFMADDSDr132m,   X86::VFMADDSDr213m,   X86::VFMADDSDr231m  },
-    { X86::VFMADDPSr132m,   X86::VFMADDPSr213m,   X86::VFMADDPSr231m  },
-    { X86::VFMADDPDr132m,   X86::VFMADDPDr213m,   X86::VFMADDPDr231m  },
-    { X86::VFMADDPSr132mY,  X86::VFMADDPSr213mY,  X86::VFMADDPSr231mY },
-    { X86::VFMADDPDr132mY,  X86::VFMADDPDr213mY,  X86::VFMADDPDr231mY },
-
-    { X86::VFMSUBSSr132r,   X86::VFMSUBSSr213r,   X86::VFMSUBSSr231r  },
-    { X86::VFMSUBSDr132r,   X86::VFMSUBSDr213r,   X86::VFMSUBSDr231r  },
-    { X86::VFMSUBPSr132r,   X86::VFMSUBPSr213r,   X86::VFMSUBPSr231r  },
-    { X86::VFMSUBPDr132r,   X86::VFMSUBPDr213r,   X86::VFMSUBPDr231r  },
-    { X86::VFMSUBPSr132rY,  X86::VFMSUBPSr213rY,  X86::VFMSUBPSr231rY },
-    { X86::VFMSUBPDr132rY,  X86::VFMSUBPDr213rY,  X86::VFMSUBPDr231rY },
-    { X86::VFMSUBSSr132m,   X86::VFMSUBSSr213m,   X86::VFMSUBSSr231m  },
-    { X86::VFMSUBSDr132m,   X86::VFMSUBSDr213m,   X86::VFMSUBSDr231m  },
-    { X86::VFMSUBPSr132m,   X86::VFMSUBPSr213m,   X86::VFMSUBPSr231m  },
-    { X86::VFMSUBPDr132m,   X86::VFMSUBPDr213m,   X86::VFMSUBPDr231m  },
-    { X86::VFMSUBPSr132mY,  X86::VFMSUBPSr213mY,  X86::VFMSUBPSr231mY },
-    { X86::VFMSUBPDr132mY,  X86::VFMSUBPDr213mY,  X86::VFMSUBPDr231mY },
-
-    { X86::VFNMADDSSr132r,  X86::VFNMADDSSr213r,  X86::VFNMADDSSr231r  },
-    { X86::VFNMADDSDr132r,  X86::VFNMADDSDr213r,  X86::VFNMADDSDr231r  },
-    { X86::VFNMADDPSr132r,  X86::VFNMADDPSr213r,  X86::VFNMADDPSr231r  },
-    { X86::VFNMADDPDr132r,  X86::VFNMADDPDr213r,  X86::VFNMADDPDr231r  },
-    { X86::VFNMADDPSr132rY, X86::VFNMADDPSr213rY, X86::VFNMADDPSr231rY },
-    { X86::VFNMADDPDr132rY, X86::VFNMADDPDr213rY, X86::VFNMADDPDr231rY },
-    { X86::VFNMADDSSr132m,  X86::VFNMADDSSr213m,  X86::VFNMADDSSr231m  },
-    { X86::VFNMADDSDr132m,  X86::VFNMADDSDr213m,  X86::VFNMADDSDr231m  },
-    { X86::VFNMADDPSr132m,  X86::VFNMADDPSr213m,  X86::VFNMADDPSr231m  },
-    { X86::VFNMADDPDr132m,  X86::VFNMADDPDr213m,  X86::VFNMADDPDr231m  },
-    { X86::VFNMADDPSr132mY, X86::VFNMADDPSr213mY, X86::VFNMADDPSr231mY },
-    { X86::VFNMADDPDr132mY, X86::VFNMADDPDr213mY, X86::VFNMADDPDr231mY },
-
-    { X86::VFNMSUBSSr132r,  X86::VFNMSUBSSr213r,  X86::VFNMSUBSSr231r  },
-    { X86::VFNMSUBSDr132r,  X86::VFNMSUBSDr213r,  X86::VFNMSUBSDr231r  },
-    { X86::VFNMSUBPSr132r,  X86::VFNMSUBPSr213r,  X86::VFNMSUBPSr231r  },
-    { X86::VFNMSUBPDr132r,  X86::VFNMSUBPDr213r,  X86::VFNMSUBPDr231r  },
-    { X86::VFNMSUBPSr132rY, X86::VFNMSUBPSr213rY, X86::VFNMSUBPSr231rY },
-    { X86::VFNMSUBPDr132rY, X86::VFNMSUBPDr213rY, X86::VFNMSUBPDr231rY },
-    { X86::VFNMSUBSSr132m,  X86::VFNMSUBSSr213m,  X86::VFNMSUBSSr231m  },
-    { X86::VFNMSUBSDr132m,  X86::VFNMSUBSDr213m,  X86::VFNMSUBSDr231m  },
-    { X86::VFNMSUBPSr132m,  X86::VFNMSUBPSr213m,  X86::VFNMSUBPSr231m  },
-    { X86::VFNMSUBPDr132m,  X86::VFNMSUBPDr213m,  X86::VFNMSUBPDr231m  },
-    { X86::VFNMSUBPSr132mY, X86::VFNMSUBPSr213mY, X86::VFNMSUBPSr231mY },
-    { X86::VFNMSUBPDr132mY, X86::VFNMSUBPDr213mY, X86::VFNMSUBPDr231mY },
-
-    { X86::VFMADDSUBPSr132r,  X86::VFMADDSUBPSr213r,  X86::VFMADDSUBPSr231r  },
-    { X86::VFMADDSUBPDr132r,  X86::VFMADDSUBPDr213r,  X86::VFMADDSUBPDr231r  },
-    { X86::VFMADDSUBPSr132rY, X86::VFMADDSUBPSr213rY, X86::VFMADDSUBPSr231rY },
-    { X86::VFMADDSUBPDr132rY, X86::VFMADDSUBPDr213rY, X86::VFMADDSUBPDr231rY },
-    { X86::VFMADDSUBPSr132m,  X86::VFMADDSUBPSr213m,  X86::VFMADDSUBPSr231m  },
-    { X86::VFMADDSUBPDr132m,  X86::VFMADDSUBPDr213m,  X86::VFMADDSUBPDr231m  },
-    { X86::VFMADDSUBPSr132mY, X86::VFMADDSUBPSr213mY, X86::VFMADDSUBPSr231mY },
-    { X86::VFMADDSUBPDr132mY, X86::VFMADDSUBPDr213mY, X86::VFMADDSUBPDr231mY },
-
-    { X86::VFMSUBADDPSr132r,  X86::VFMSUBADDPSr213r,  X86::VFMSUBADDPSr231r  },
-    { X86::VFMSUBADDPDr132r,  X86::VFMSUBADDPDr213r,  X86::VFMSUBADDPDr231r  },
-    { X86::VFMSUBADDPSr132rY, X86::VFMSUBADDPSr213rY, X86::VFMSUBADDPSr231rY },
-    { X86::VFMSUBADDPDr132rY, X86::VFMSUBADDPDr213rY, X86::VFMSUBADDPDr231rY },
-    { X86::VFMSUBADDPSr132m,  X86::VFMSUBADDPSr213m,  X86::VFMSUBADDPSr231m  },
-    { X86::VFMSUBADDPDr132m,  X86::VFMSUBADDPDr213m,  X86::VFMSUBADDPDr231m  },
-    { X86::VFMSUBADDPSr132mY, X86::VFMSUBADDPSr213mY, X86::VFMSUBADDPSr231mY },
-    { X86::VFMSUBADDPDr132mY, X86::VFMSUBADDPDr213mY, X86::VFMSUBADDPDr231mY }
-  };
-
-  // Define the array that holds FMA*_Int opcodes in groups
-  // of 3 opcodes(132, 213, 231) in each group.
-  static const uint16_t IntrinOpcodeGroups[][3] = {
-    { X86::VFMADDSSr132r_Int,  X86::VFMADDSSr213r_Int,  X86::VFMADDSSr231r_Int },
-    { X86::VFMADDSDr132r_Int,  X86::VFMADDSDr213r_Int,  X86::VFMADDSDr231r_Int },
-    { X86::VFMADDSSr132m_Int,  X86::VFMADDSSr213m_Int,  X86::VFMADDSSr231m_Int },
-    { X86::VFMADDSDr132m_Int,  X86::VFMADDSDr213m_Int,  X86::VFMADDSDr231m_Int },
-
-    { X86::VFMSUBSSr132r_Int,  X86::VFMSUBSSr213r_Int,  X86::VFMSUBSSr231r_Int },
-    { X86::VFMSUBSDr132r_Int,  X86::VFMSUBSDr213r_Int,  X86::VFMSUBSDr231r_Int },
-    { X86::VFMSUBSSr132m_Int,  X86::VFMSUBSSr213m_Int,  X86::VFMSUBSSr231m_Int },
-    { X86::VFMSUBSDr132m_Int,  X86::VFMSUBSDr213m_Int,  X86::VFMSUBSDr231m_Int },
-
-    { X86::VFNMADDSSr132r_Int, X86::VFNMADDSSr213r_Int, X86::VFNMADDSSr231r_Int },
-    { X86::VFNMADDSDr132r_Int, X86::VFNMADDSDr213r_Int, X86::VFNMADDSDr231r_Int },
-    { X86::VFNMADDSSr132m_Int, X86::VFNMADDSSr213m_Int, X86::VFNMADDSSr231m_Int },
-    { X86::VFNMADDSDr132m_Int, X86::VFNMADDSDr213m_Int, X86::VFNMADDSDr231m_Int },
-
-    { X86::VFNMSUBSSr132r_Int, X86::VFNMSUBSSr213r_Int, X86::VFNMSUBSSr231r_Int },
-    { X86::VFNMSUBSDr132r_Int, X86::VFNMSUBSDr213r_Int, X86::VFNMSUBSDr231r_Int },
-    { X86::VFNMSUBSSr132m_Int, X86::VFNMSUBSSr213m_Int, X86::VFNMSUBSSr231m_Int },
-    { X86::VFNMSUBSDr132m_Int, X86::VFNMSUBSDr213m_Int, X86::VFNMSUBSDr231m_Int },
-  };
-
-  const unsigned Form132Index = 0;
-  const unsigned Form213Index = 1;
-  const unsigned Form231Index = 2;
-  const unsigned FormsNum = 3;
-
-  bool IsIntrinOpcode;
-  isFMA3(Opc, &IsIntrinOpcode);
-
-  size_t GroupsNum;
-  const uint16_t (*OpcodeGroups)[3];
-  if (IsIntrinOpcode) {
-    GroupsNum = array_lengthof(IntrinOpcodeGroups);
-    OpcodeGroups = IntrinOpcodeGroups;
-  } else {
-    GroupsNum = array_lengthof(RegularOpcodeGroups);
-    OpcodeGroups = RegularOpcodeGroups;
-  }
-
-  const uint16_t *FoundOpcodesGroup = nullptr;
-  size_t FormIndex;
-
-  // Look for the input opcode in the corresponding opcodes table.
-  for (size_t GroupIndex = 0; GroupIndex < GroupsNum && !FoundOpcodesGroup;
-         ++GroupIndex) {
-    for (FormIndex = 0; FormIndex < FormsNum; ++FormIndex) {
-      if (OpcodeGroups[GroupIndex][FormIndex] == Opc) {
-        FoundOpcodesGroup = OpcodeGroups[GroupIndex];
-        break;
-      }
-    }
-  }
-
-  // The input opcode does not match with any of the opcodes from the tables.
-  // The unsupported FMA opcode must be added to one of the two opcode groups
-  // defined above.
-  assert(FoundOpcodesGroup != nullptr && "Unexpected FMA3 opcode");
-
-  // Put the lowest index to SrcOpIdx1 to simplify the checks below.
-  if (SrcOpIdx1 > SrcOpIdx2)
-    std::swap(SrcOpIdx1, SrcOpIdx2);
-
-  // TODO: Commuting the 1st operand of FMA*_Int requires some additional
-  // analysis. The commute optimization is legal only if all users of FMA*_Int
-  // use only the lowest element of the FMA*_Int instruction. Such analysis are
-  // not implemented yet. So, just return 0 in that case.
-  // When such analysis are available this place will be the right place for
-  // calling it.
-  if (IsIntrinOpcode && SrcOpIdx1 == 1)
-    return 0;
-
-  unsigned Case;
-  if (SrcOpIdx1 == 1 && SrcOpIdx2 == 2)
-    Case = 0;
-  else if (SrcOpIdx1 == 1 && SrcOpIdx2 == 3)
-    Case = 1;
-  else if (SrcOpIdx1 == 2 && SrcOpIdx2 == 3)
-    Case = 2;
-  else
-    return 0;
-
-  // Define the FMA forms mapping array that helps to map input FMA form
-  // to output FMA form to preserve the operation semantics after
-  // commuting the operands.
-  static const unsigned FormMapping[][3] = {
-    // 0: SrcOpIdx1 == 1 && SrcOpIdx2 == 2;
-    // FMA132 A, C, b; ==> FMA231 C, A, b;
-    // FMA213 B, A, c; ==> FMA213 A, B, c;
-    // FMA231 C, A, b; ==> FMA132 A, C, b;
-    { Form231Index, Form213Index, Form132Index },
-    // 1: SrcOpIdx1 == 1 && SrcOpIdx2 == 3;
-    // FMA132 A, c, B; ==> FMA132 B, c, A;
-    // FMA213 B, a, C; ==> FMA231 C, a, B;
-    // FMA231 C, a, B; ==> FMA213 B, a, C;
-    { Form132Index, Form231Index, Form213Index },
-    // 2: SrcOpIdx1 == 2 && SrcOpIdx2 == 3;
-    // FMA132 a, C, B; ==> FMA213 a, B, C;
-    // FMA213 b, A, C; ==> FMA132 b, C, A;
-    // FMA231 c, A, B; ==> FMA231 c, B, A;
-    { Form213Index, Form132Index, Form231Index }
-  };
-
-  // Everything is ready, just adjust the FMA opcode and return it.
-  FormIndex = FormMapping[Case][FormIndex];
-  return FoundOpcodesGroup[FormIndex];
+  return getFMA3OpcodeToCommuteOperands(MI.getOpcode(), IsIntrinOpcode,
+                                        SrcOpIdx1, SrcOpIdx2) != 0;
 }
 
 bool X86InstrInfo::findCommutedOpIndices(MachineInstr &MI, unsigned &SrcOpIdx1,
@@ -3792,8 +3802,10 @@ bool X86InstrInfo::findCommutedOpIndices(MachineInstr &MI, unsigned &SrcOpIdx1,
     return false;
   }
   default:
-    if (isFMA3(MI.getOpcode()))
-      return findFMA3CommutedOpIndices(MI, SrcOpIdx1, SrcOpIdx2);
+    bool IsIntrinOpcode;
+    if (isFMA3(MI.getOpcode(), IsIntrinOpcode))
+      return findFMA3CommutedOpIndices(MI, IsIntrinOpcode,
+                                       SrcOpIdx1, SrcOpIdx2);
     return TargetInstrInfo::findCommutedOpIndices(MI, SrcOpIdx1, SrcOpIdx2);
   }
   return false;
