@@ -8571,16 +8571,6 @@ ScalarEvolution::isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
   return false;
 }
 
-Optional<APInt> ScalarEvolution::getConstantDifference(const SCEV *LHS,
-                                                       const SCEV *RHS) {
-  if (const SCEVAddExpr *AddLHS = dyn_cast<SCEVAddExpr>(LHS))
-    if (AddLHS->getOperand(1) == RHS)
-      if (auto *Addend = dyn_cast<SCEVConstant>(AddLHS->getOperand(0)))
-        return Addend->getAPInt();
-
-  return None;
-}
-
 bool ScalarEvolution::isImpliedCondOperandsViaRanges(ICmpInst::Predicate Pred,
                                                      const SCEV *LHS,
                                                      const SCEV *RHS,
@@ -8591,7 +8581,7 @@ bool ScalarEvolution::isImpliedCondOperandsViaRanges(ICmpInst::Predicate Pred,
     // reduce the compile time impact of this optimization.
     return false;
 
-  Optional<APInt> Addend = getConstantDifference(LHS, FoundLHS);
+  Optional<APInt> Addend = computeConstantDifference(LHS, FoundLHS);
   if (!Addend)
     return false;
 
