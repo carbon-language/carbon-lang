@@ -44,11 +44,6 @@ AgressiveSplitting("split-all-cold",
                    cl::desc("outline as many cold basic blocks as possible"),
                    cl::Optional);
 
-static cl::opt<bool>
-PrintDebugInfo("print-debug-info",
-               cl::desc("print debug info when printing functions"),
-               cl::Hidden);
-
 } // namespace opts
 
 namespace {
@@ -136,6 +131,11 @@ unsigned BinaryFunction::eraseDeadBBs(
   return Count;
 }
 
+void BinaryFunction::dump(std::string Annotation,
+                          bool PrintInstructions) const {
+  print(dbgs(), Annotation, PrintInstructions);
+}
+
 void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
                            bool PrintInstructions) const {
   StringRef SectionName;
@@ -187,88 +187,6 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   // Offset of the instruction in function.
   uint64_t Offset{0};
 
-  auto printCFI = [&OS] (uint32_t Operation) {
-    switch(Operation) {
-    case MCCFIInstruction::OpSameValue:        OS << "OpSameValue";       break;
-    case MCCFIInstruction::OpRememberState:    OS << "OpRememberState";   break;
-    case MCCFIInstruction::OpRestoreState:     OS << "OpRestoreState";    break;
-    case MCCFIInstruction::OpOffset:           OS << "OpOffset";          break;
-    case MCCFIInstruction::OpDefCfaRegister:   OS << "OpDefCfaRegister";  break;
-    case MCCFIInstruction::OpDefCfaOffset:     OS << "OpDefCfaOffset";    break;
-    case MCCFIInstruction::OpDefCfa:           OS << "OpDefCfa";          break;
-    case MCCFIInstruction::OpRelOffset:        OS << "OpRelOffset";       break;
-    case MCCFIInstruction::OpAdjustCfaOffset:  OS << "OfAdjustCfaOffset"; break;
-    case MCCFIInstruction::OpEscape:           OS << "OpEscape";          break;
-    case MCCFIInstruction::OpRestore:          OS << "OpRestore";         break;
-    case MCCFIInstruction::OpUndefined:        OS << "OpUndefined";       break;
-    case MCCFIInstruction::OpRegister:         OS << "OpRegister";        break;
-    case MCCFIInstruction::OpWindowSave:       OS << "OpWindowSave";      break;
-    case MCCFIInstruction::OpGnuArgsSize:      OS << "OpGnuArgsSize";     break;
-    default:                                   OS << "Op#" << Operation; break;
-    }
-  };
-
-  // Used in printInstruction below to print debug line information.
-  const DWARFDebugLine::LineTable *LineTable =
-                          opts::PrintDebugInfo ? getDWARFUnitLineTable().second
-                                               : nullptr;
-
-  auto printInstruction = [&](const MCInst &Instruction) {
-    if (BC.MIA->isEHLabel(Instruction)) {
-      OS << "  EH_LABEL: "
-         << cast<MCSymbolRefExpr>(Instruction.getOperand(0).getExpr())->
-                                                                    getSymbol()
-         << '\n';
-      return;
-    }
-    OS << format("    %08" PRIx64 ": ", Offset);
-    if (BC.MIA->isCFI(Instruction)) {
-      uint32_t Offset = Instruction.getOperand(0).getImm();
-      OS << "\t!CFI\t$" << Offset << "\t; ";
-      assert(Offset < FrameInstructions.size() && "Invalid CFI offset");
-      printCFI(FrameInstructions[Offset].getOperation());
-      OS << "\n";
-      return;
-    }
-    BC.InstPrinter->printInst(&Instruction, OS, "", *BC.STI);
-    if (BC.MIA->isCall(Instruction)) {
-      if (BC.MIA->isTailCall(Instruction))
-        OS << " # TAILCALL ";
-      if (BC.MIA->isInvoke(Instruction)) {
-        const MCSymbol *LP;
-        uint64_t Action;
-        std::tie(LP, Action) = BC.MIA->getEHInfo(Instruction);
-        OS << " # handler: ";
-        if (LP)
-          OS << *LP;
-        else
-          OS << '0';
-        OS << "; action: " << Action;
-        auto GnuArgsSize = BC.MIA->getGnuArgsSize(Instruction);
-        if (GnuArgsSize >= 0)
-          OS << "; GNU_args_size = " << GnuArgsSize;
-      }
-    }
-    if (opts::PrintDebugInfo && LineTable) {
-      auto RowRef = DebugLineTableRowRef::fromSMLoc(Instruction.getLoc());
-
-      if (RowRef != DebugLineTableRowRef::NULL_ROW) {
-        const auto &Row = LineTable->Rows[RowRef.RowIndex - 1];
-        OS << " # debug line "
-          << LineTable->Prologue.FileNames[Row.File - 1].Name
-          << ":" << Row.Line;
-
-        if (Row.Column) {
-          OS << ":" << Row.Column;
-        }
-      }
-    }
-
-    OS << "\n";
-    // In case we need MCInst printer:
-    // Instr.dump_pretty(OS, InstructionPrinter.get());
-  };
-
   if (BasicBlocks.empty() && !Instructions.empty()) {
     // Print before CFG was built.
     for (const auto &II : Instructions) {
@@ -279,7 +197,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       if (LI != Labels.end())
         OS << LI->second->getName() << ":\n";
 
-      printInstruction(II.second);
+      BC.printInstruction(OS, II.second, Offset, this);
     }
   }
 
@@ -325,10 +243,8 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
 
     Offset = RoundUpToAlignment(Offset, BB->getAlignment());
 
-    for (auto &Instr : *BB) {
-      printInstruction(Instr);
-      Offset += BC.getInstructionSize(Instr);
-    }
+    // Note: offsets are imprecise since this is happening prior to relaxation.
+    Offset = BC.printInstructions(OS, BB->begin(), BB->end(), Offset, this);
 
     if (!BB->Successors.empty()) {
       OS << "  Successors: ";
@@ -387,7 +303,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     for (auto &Elmt : OffsetToCFI) {
       OS << format("    %08x:\t", Elmt.first);
       assert(Elmt.second < FrameInstructions.size() && "Incorrect CFI offset");
-      printCFI(FrameInstructions[Elmt.second].getOperation());
+      BinaryContext::printCFI(OS, FrameInstructions[Elmt.second].getOperation());
       OS << "\n";
     }
   } else {
@@ -395,7 +311,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     for (uint32_t I = 0, E = FrameInstructions.size(); I != E; ++I) {
       const MCCFIInstruction &CFI = FrameInstructions[I];
       OS << format("    %d:\t", I);
-      printCFI(CFI.getOperation());
+      BinaryContext::printCFI(OS, CFI.getOperation());
       OS << "\n";
     }
   }
@@ -1109,7 +1025,7 @@ void BinaryFunction::annotateCFIState() {
 
     // Advance state
     for (const auto &Instr : *CurBB) {
-      MCCFIInstruction *CFI = getCFIFor(Instr);
+      auto *CFI = getCFIFor(Instr);
       if (CFI == nullptr)
         continue;
       ++HighestState;
@@ -1221,7 +1137,7 @@ bool BinaryFunction::fixCFIState() {
         if (CurBB == BB)
           break;
         for (auto &Instr : *CurBB) {
-          if (MCCFIInstruction *CFI = getCFIFor(Instr)) {
+          if (auto *CFI = getCFIFor(Instr)) {
             if (CFI->getOperation() == MCCFIInstruction::OpRememberState)
               ++StackOffset;
             if (CFI->getOperation() == MCCFIInstruction::OpRestoreState)
@@ -1369,7 +1285,9 @@ void BinaryFunction::viewGraph() const {
 }
 
 void BinaryFunction::dumpGraphForPass(std::string Annotation) const {
-  dumpGraphToFile(constructFilename(getName(), Annotation, ".dot"));
+  auto Filename = constructFilename(getName(), Annotation, ".dot");
+  dbgs() << "BOLT-DEBUG: Dumping CFG to " << Filename << "\n";
+  dumpGraphToFile(Filename);
 }
 
 void BinaryFunction::dumpGraphToFile(std::string Filename) const {
@@ -1463,7 +1381,7 @@ void BinaryFunction::fixBranches() {
       // invert this conditional branch logic so we can make this a fallthrough.
       if (TBB == FT && !HotColdBorder) {
         if (OldFT == nullptr) {
-          errs() << "BOLT-ERROR: malfromed CFG for function " << getName()
+          errs() << "BOLT-ERROR: malformed CFG for function " << getName()
                  << " in basic block " << BB->getName() << '\n';
         }
         assert(OldFT != nullptr && "malformed CFG");

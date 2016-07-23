@@ -1060,7 +1060,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
                   BinaryContext &BC, bool EmitColdPart) {
   // Define a helper to decode and emit CFI instructions at a given point in a
   // BB
-  auto emitCFIInstr = [&Streamer](MCCFIInstruction &CFIInstr) {
+  auto emitCFIInstr = [&Streamer](const MCCFIInstruction &CFIInstr) {
     switch (CFIInstr.getOperation()) {
     default:
       llvm_unreachable("Unexpected instruction");

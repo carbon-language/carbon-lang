@@ -32,6 +32,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ErrorOr.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/TargetRegistry.h"
 #include <functional>
 #include <map>
@@ -157,6 +158,9 @@ public:
   /// return the first one.
   MCSymbol *getOrCreateGlobalSymbol(uint64_t Address, Twine Prefix);
 
+  /// Print the global symbol table.
+  void printGlobalSymbols(raw_ostream& OS) const;
+
   /// Return (allocatable) section containing the given \p Address.
   ErrorOr<SectionRef> getSectionForAddress(uint64_t Address) const;
 
@@ -178,11 +182,53 @@ public:
   void preprocessFunctionDebugInfo(
       std::map<uint64_t, BinaryFunction> &BinaryFunctions);
 
-  /// Calculate the size of the given instruction.
+  /// Compute the native code size for a range of instructions.
   /// Note: this can be imprecise wrt the final binary since happening prior to
   /// relaxation, as well as wrt the original binary because of opcode
   /// shortening.
-  uint64_t getInstructionSize(const MCInst &Instr) const;
+  template <typename Itr>
+  uint64_t computeCodeSize(Itr Beg, Itr End) const {
+    uint64_t Size = 0;
+    while (Beg != End) {
+      // Calculate the size of the instruction.
+      SmallString<256> Code;
+      SmallVector<MCFixup, 4> Fixups;
+      raw_svector_ostream VecOS(Code);
+      MCE->encodeInstruction(*Beg++, VecOS, Fixups, *STI);
+      Size += Code.size();
+    }
+    return Size;
+  }
+
+  /// Print the string name for a CFI operation.
+  static void printCFI(raw_ostream &OS, uint32_t Operation);
+
+  /// Print a single MCInst in native format.  If Function is non-null,
+  /// the instruction will be annotated with CFI and possibly DWARF line table
+  /// info.
+  /// If printMCInst is true, the instruction is also printed in the
+  /// architecture independent format.
+  void printInstruction(raw_ostream &OS,
+                        const MCInst &Instruction,
+                        uint64_t Offset = 0,
+                        const BinaryFunction *Function = nullptr,
+                        bool printMCInst = false) const;
+
+  /// Print a range of instructions.
+  template <typename Itr>
+  uint64_t printInstructions(raw_ostream &OS,
+                             Itr Begin,
+                             Itr End,
+                             uint64_t Offset = 0,
+                             const BinaryFunction *Function = nullptr,
+                             bool printMCInst = false) const {
+    while (Begin != End) {
+      printInstruction(OS, *Begin, Offset, Function, printMCInst);
+      Offset += computeCodeSize(Begin, Begin + 1);
+      ++Begin;
+    }
+    return Offset;
+  }
 };
 
 } // namespace bolt

@@ -15,9 +15,19 @@
 #include "llvm/DebugInfo/DWARF/DWARFUnit.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/CommandLine.h"
 
 namespace llvm {
 namespace bolt {
+
+namespace opts {
+
+static cl::opt<bool>
+PrintDebugInfo("print-debug-info",
+               cl::desc("print debug info when printing functions"),
+               cl::Hidden);
+
+} // namespace opts
 
 BinaryContext::~BinaryContext() { }
 
@@ -45,6 +55,12 @@ MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
   GlobalSymbols[Name] = Address;
 
   return Symbol;
+}
+
+void BinaryContext::printGlobalSymbols(raw_ostream& OS) const {
+  for (auto &entry : GlobalSymbols) {
+    OS << "(" << entry.first << " -> " << entry.second << ")\n";
+  }
 }
 
 } // namespace bolt
@@ -232,6 +248,98 @@ void BinaryContext::preprocessFunctionDebugInfo(
   }
 }
 
+void BinaryContext::printCFI(raw_ostream &OS, uint32_t Operation) {
+  switch(Operation) {
+    case MCCFIInstruction::OpSameValue:        OS << "OpSameValue";       break;
+    case MCCFIInstruction::OpRememberState:    OS << "OpRememberState";   break;
+    case MCCFIInstruction::OpRestoreState:     OS << "OpRestoreState";    break;
+    case MCCFIInstruction::OpOffset:           OS << "OpOffset";          break;
+    case MCCFIInstruction::OpDefCfaRegister:   OS << "OpDefCfaRegister";  break;
+    case MCCFIInstruction::OpDefCfaOffset:     OS << "OpDefCfaOffset";    break;
+    case MCCFIInstruction::OpDefCfa:           OS << "OpDefCfa";          break;
+    case MCCFIInstruction::OpRelOffset:        OS << "OpRelOffset";       break;
+    case MCCFIInstruction::OpAdjustCfaOffset:  OS << "OfAdjustCfaOffset"; break;
+    case MCCFIInstruction::OpEscape:           OS << "OpEscape";          break;
+    case MCCFIInstruction::OpRestore:          OS << "OpRestore";         break;
+    case MCCFIInstruction::OpUndefined:        OS << "OpUndefined";       break;
+    case MCCFIInstruction::OpRegister:         OS << "OpRegister";        break;
+    case MCCFIInstruction::OpWindowSave:       OS << "OpWindowSave";      break;
+    case MCCFIInstruction::OpGnuArgsSize:      OS << "OpGnuArgsSize";     break;
+    default:                                   OS << "Op#" << Operation; break;
+  }
+}
+
+void BinaryContext::printInstruction(raw_ostream &OS,
+                                     const MCInst &Instruction,
+                                     uint64_t Offset,
+                                     const BinaryFunction* Function,
+                                     bool printMCInst) const {
+  if (MIA->isEHLabel(Instruction)) {
+    OS << "  EH_LABEL: "
+       << cast<MCSymbolRefExpr>(Instruction.getOperand(0).getExpr())->
+      getSymbol()
+       << '\n';
+    return;
+  }
+  OS << format("    %08" PRIx64 ": ", Offset);
+  if (Function && MIA->isCFI(Instruction)) {
+    uint32_t Offset = Instruction.getOperand(0).getImm();
+    OS << "\t!CFI\t$" << Offset << "\t; ";
+    printCFI(OS, Function->getCFIFor(Instruction)->getOperation());
+    OS << "\n";
+    return;
+  }
+  if (!MIA->isUnsupported(Instruction)) {
+    InstPrinter->printInst(&Instruction, OS, "", *STI);
+  } else {
+    OS << "unsupported (probably jmpr)";
+  }
+  if (MIA->isCall(Instruction)) {
+    if (MIA->isTailCall(Instruction))
+      OS << " # TAILCALL ";
+    if (MIA->isInvoke(Instruction)) {
+      const MCSymbol *LP;
+      uint64_t Action;
+      std::tie(LP, Action) = MIA->getEHInfo(Instruction);
+      OS << " # handler: ";
+      if (LP)
+        OS << *LP;
+      else
+        OS << '0';
+      OS << "; action: " << Action;
+      auto GnuArgsSize = MIA->getGnuArgsSize(Instruction);
+      if (GnuArgsSize >= 0)
+        OS << "; GNU_args_size = " << GnuArgsSize;
+    }
+  }
+
+  const DWARFDebugLine::LineTable *LineTable =
+    Function && opts::PrintDebugInfo ? Function->getDWARFUnitLineTable().second
+                                     : nullptr;
+
+  if (LineTable) {
+    auto RowRef = DebugLineTableRowRef::fromSMLoc(Instruction.getLoc());
+
+    if (RowRef != DebugLineTableRowRef::NULL_ROW) {
+      const auto &Row = LineTable->Rows[RowRef.RowIndex - 1];
+      OS << " # debug line "
+         << LineTable->Prologue.FileNames[Row.File - 1].Name
+         << ":" << Row.Line;
+
+      if (Row.Column) {
+        OS << ":" << Row.Column;
+      }
+    }
+  }
+
+  OS << "\n";
+
+  if (printMCInst) {
+    Instruction.dump_pretty(OS, InstPrinter.get());
+    OS << "\n";
+  }
+}
+
 ErrorOr<SectionRef> BinaryContext::getSectionForAddress(uint64_t Address) const{
   auto SI = AllocatableSections.upper_bound(Address);
   if (SI != AllocatableSections.begin()) {
@@ -240,14 +348,6 @@ ErrorOr<SectionRef> BinaryContext::getSectionForAddress(uint64_t Address) const{
       return SI->second;
   }
   return std::make_error_code(std::errc::bad_address);
-}
-
-uint64_t BinaryContext::getInstructionSize(const MCInst &Instr) const {
-  SmallString<256> Code;
-  SmallVector<MCFixup, 4> Fixups;
-  raw_svector_ostream VecOS(Code);
-  MCE->encodeInstruction(Instr, VecOS, Fixups, *STI);
-  return Code.size();
 }
 
 } // namespace bolt

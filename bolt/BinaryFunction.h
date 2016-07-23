@@ -424,11 +424,11 @@ public:
 
   /// Returns the n-th basic block in this function in its original layout, or
   /// nullptr if n >= size().
-  const BinaryBasicBlock * getBasicBlockAtIndex(unsigned Index) const {
+  const BinaryBasicBlock *getBasicBlockAtIndex(unsigned Index) const {
     return BasicBlocks.at(Index);
   }
 
-  BinaryBasicBlock * getBasicBlockAtIndex(unsigned Index) {
+  BinaryBasicBlock *getBasicBlockAtIndex(unsigned Index) {
     return BasicBlocks.at(Index);
   }
 
@@ -598,9 +598,7 @@ public:
 
   /// Dump function information to debug output. If \p PrintInstructions
   /// is true - include instruction disassembly.
-  void dump(std::string Annotation = "", bool PrintInstructions = true) const {
-    print(dbgs(), Annotation, PrintInstructions);
-  }
+  void dump(std::string Annotation = "", bool PrintInstructions = true) const;
 
   /// Print function information to the \p OS stream.
   void print(raw_ostream &OS, std::string Annotation = "",
@@ -669,7 +667,7 @@ public:
   }
 
   /// Retrieve the MCCFIInstruction object associated with a CFI pseudo.
-  MCCFIInstruction* getCFIFor(const MCInst &Instr) {
+  const MCCFIInstruction* getCFIFor(const MCInst &Instr) const {
     if (!BC.MIA->isCFI(Instr))
       return nullptr;
     uint32_t Offset = Instr.getOperand(0).getImm();

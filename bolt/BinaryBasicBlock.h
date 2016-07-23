@@ -34,6 +34,7 @@ namespace llvm {
 namespace bolt {
 
 class BinaryFunction;
+class BinaryContext;
 
 /// The intention is to keep the structure similar to MachineBasicBlock as
 /// we might switch to it at some point.
@@ -406,6 +407,9 @@ public:
     }
     OS << getName();
   }
+
+  /// A simple dump function for debugging.
+  void dump(BinaryContext &BC) const;
 
 private:
 

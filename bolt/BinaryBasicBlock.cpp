@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryBasicBlock.h"
+#include "BinaryContext.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -73,6 +74,20 @@ bool BinaryBasicBlock::analyzeBranch(const MCInstrAnalysis &MIA,
                                      MCInst *&CondBranch,
                                      MCInst *&UncondBranch) {
   return MIA.analyzeBranch(Instructions, TBB, FBB, CondBranch, UncondBranch);
+}
+
+void BinaryBasicBlock::dump(BinaryContext& BC) const {
+  if (Label) dbgs() << Label->getName() << ":\n";
+  BC.printInstructions(dbgs(), Instructions.begin(), Instructions.end(), Offset);
+  dbgs() << "preds:";
+  for (auto itr = pred_begin(); itr != pred_end(); ++itr) {
+    dbgs() << " " << (*itr)->getName();
+  }
+  dbgs() << "\nsuccs:";
+  for (auto itr = succ_begin(); itr != succ_end(); ++itr) {
+    dbgs() << " " << (*itr)->getName();
+  }
+  dbgs() << "\n";
 }
 
 } // namespace bolt
