@@ -409,28 +409,28 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
   int TlsNum = -1;
   int NoteNum = -1;
   int RelroNum = -1;
-  Phdr *Load = nullptr;
+  PhdrEntry<ELFT> *Load = nullptr;
   uintX_t Flags = PF_R;
-  std::vector<Phdr> Phdrs;
+  std::vector<PhdrEntry<ELFT>> Phdrs;
 
   for (const PhdrsCommand &Cmd : Opt.PhdrsCommands) {
     Phdrs.emplace_back(Cmd.Type, Cmd.Flags == UINT_MAX ? PF_R : Cmd.Flags);
-    Phdr &Added = Phdrs.back();
+    PhdrEntry<ELFT> &Phdr = Phdrs.back();
 
     if (Cmd.HasFilehdr)
-      Added.add(Out<ELFT>::ElfHeader);
+      Phdr.add(Out<ELFT>::ElfHeader);
     if (Cmd.HasPhdrs)
-      Added.add(Out<ELFT>::ProgramHeaders);
+      Phdr.add(Out<ELFT>::ProgramHeaders);
 
     switch (Cmd.Type) {
     case PT_INTERP:
       if (Out<ELFT>::Interp)
-        Added.add(Out<ELFT>::Interp);
+        Phdr.add(Out<ELFT>::Interp);
       break;
     case PT_DYNAMIC:
       if (isOutputDynamic<ELFT>()) {
-        Added.H.p_flags = toPhdrFlags(Out<ELFT>::Dynamic->getFlags());
-        Added.add(Out<ELFT>::Dynamic);
+        Phdr.H.p_flags = toPhdrFlags(Out<ELFT>::Dynamic->getFlags());
+        Phdr.add(Out<ELFT>::Dynamic);
       }
       break;
     case PT_TLS:
@@ -444,8 +444,8 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
       break;
     case PT_GNU_EH_FRAME:
       if (!Out<ELFT>::EhFrame->empty() && Out<ELFT>::EhFrameHdr) {
-        Added.H.p_flags = toPhdrFlags(Out<ELFT>::EhFrameHdr->getFlags());
-        Added.add(Out<ELFT>::EhFrameHdr);
+        Phdr.H.p_flags = toPhdrFlags(Out<ELFT>::EhFrameHdr->getFlags());
+        Phdr.add(Out<ELFT>::EhFrameHdr);
       }
       break;
     }

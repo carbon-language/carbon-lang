@@ -113,17 +113,17 @@ template <class ELFT> class LinkerScript {
   typedef typename ELFT::uint uintX_t;
 
 public:
-  typedef PhdrEntry<ELFT> Phdr;
-
   std::vector<OutputSectionBase<ELFT> *>
   createSections(OutputSectionFactory<ELFT> &Factory);
+
+  std::vector<PhdrEntry<ELFT>>
+  createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> S);
 
   ArrayRef<uint8_t> getFiller(StringRef Name);
   bool shouldKeep(InputSectionBase<ELFT> *S);
   void assignAddresses(ArrayRef<OutputSectionBase<ELFT> *> S);
   int compareSections(StringRef A, StringRef B);
   void addScriptedSymbols();
-  std::vector<Phdr> createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> S);
   bool hasPhdrsCommands();
 
 private:
