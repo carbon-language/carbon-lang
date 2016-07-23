@@ -89,7 +89,7 @@ and 6 after which the coroutine will be destroyed.
 
 The LLVM IR for this coroutine looks like this:
 
-.. code-block:: llvm
+.. code-block:: none
 
   define i8* @f(i32 %n) {
   entry:
