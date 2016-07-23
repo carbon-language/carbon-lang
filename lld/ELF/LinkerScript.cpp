@@ -237,8 +237,7 @@ uint64_t ExprParser::parseExpr1(uint64_t Lhs, int MinPrec) {
 // Reads and evaluates an arithmetic expression.
 uint64_t ExprParser::parseExpr() { return parseExpr1(parsePrimary(), 0); }
 
-template <class ELFT>
-bool LinkerScript<ELFT>::isDiscarded(InputSectionBase<ELFT> *S) {
+template <class ELFT> static bool isDiscarded(InputSectionBase<ELFT> *S) {
   return !S || !S->Live;
 }
 
