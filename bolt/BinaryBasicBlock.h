@@ -39,7 +39,13 @@ class BinaryContext;
 /// The intention is to keep the structure similar to MachineBasicBlock as
 /// we might switch to it at some point.
 class BinaryBasicBlock {
+ public:
+  struct BinaryBranchInfo {
+    uint64_t Count;
+    uint64_t MispredictedCount; /// number of branches mispredicted
+  };
 
+ private:
   /// Label associated with the block.
   MCSymbol *Label{nullptr};
 
@@ -82,11 +88,6 @@ class BinaryBasicBlock {
   std::vector<BinaryBasicBlock *> Successors;
   std::set<BinaryBasicBlock *> Throwers;
   std::set<BinaryBasicBlock *> LandingPads;
-
-  struct BinaryBranchInfo {
-    uint64_t Count;
-    uint64_t MispredictedCount; /// number of branches mispredicted
-  };
 
   /// Each successor has a corresponding BranchInfo entry in the list.
   std::vector<BinaryBranchInfo> BranchInfo;
@@ -301,8 +302,21 @@ public:
   }
 
   /// Add instruction at the end of this basic block.
-  void addInstruction(MCInst &Inst) {
+  void addInstruction(MCInst &&Inst) {
     Instructions.emplace_back(Inst);
+  }
+
+  /// Add instruction at the end of this basic block.
+  void addInstruction(const MCInst &Inst) {
+    Instructions.push_back(Inst);
+  }
+
+  /// Add a range of instructions to the end of this basic block.
+  template <typename Itr>
+  void addInstructions(Itr Begin, Itr End) {
+    while (Begin != End) {
+      addInstruction(*Begin++);
+    }
   }
 
   /// Add instruction before Pos in this basic block.
@@ -335,6 +349,24 @@ public:
                     uint64_t Count = 0,
                     uint64_t MispredictedCount = 0);
 
+  /// Add a range of successors.
+  template <typename Itr>
+  void addSuccessors(Itr Begin, Itr End) {
+    while (Begin != End) {
+      addSuccessor(*Begin++);
+    }
+  }
+
+  /// Add a range of successors with branch info.
+  template <typename Itr, typename BrItr>
+  void addSuccessors(Itr Begin, Itr End, BrItr BrBegin, BrItr BrEnd) {
+    assert(std::distance(Begin, End) == std::distance(BrBegin, BrEnd));
+    while (Begin != End) {
+      const auto BrInfo = *BrBegin++;
+      addSuccessor(*Begin++, BrInfo.Count, BrInfo.MispredictedCount);
+    }
+  }
+
   /// Adds block to landing pad list.
   void addLandingPad(BinaryBasicBlock *LPBlock);
 
@@ -342,12 +374,25 @@ public:
   /// list of predecessors of /p Succ and update branch info.
   void removeSuccessor(BinaryBasicBlock *Succ);
 
+  /// Remove a range of successor blocks.
+  template <typename Itr>
+  void removeSuccessors(Itr Begin, Itr End) {
+    while (Begin != End) {
+      removeSuccessor(*Begin++);
+    }
+  }
+
   /// Return the information about the number of times this basic block was
   /// executed.
   ///
   /// Return COUNT_NO_PROFILE if there's no profile info.
   uint64_t getExecutionCount() const {
     return ExecutionCount;
+  }
+
+  /// Set the execution count for this block.
+  void setExecutionCount(uint64_t Count) {
+    ExecutionCount = Count;
   }
 
   bool isCold() const {
@@ -383,6 +428,21 @@ public:
       }
     }
     return false;
+  }
+
+  /// Split apart the instructions in this basic block starting at Inst.
+  /// The instructions following Inst are removed and returned in a vector.
+  std::vector<MCInst> splitInstructions(const MCInst *Inst) {
+    std::vector<MCInst> SplitInst;
+
+    assert(!Instructions.empty());
+    while(&Instructions.back() != Inst) {
+      SplitInst.push_back(Instructions.back());
+      Instructions.pop_back();
+    }
+    std::reverse(SplitInst.begin(), SplitInst.end());
+
+    return SplitInst;
   }
 
   /// Sets the symbol pointing to the end of the BB in the output binary.
@@ -436,6 +496,11 @@ private:
   /// Remove predecessor of the basic block. Don't use directly, instead
   /// use removeSuccessor() funciton.
   void removePredecessor(BinaryBasicBlock *Pred);
+
+  /// Set offset of the basic block from the function start.
+  void setOffset(uint64_t NewOffset) {
+    Offset = NewOffset;
+  }
 };
 
 bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS);

@@ -99,6 +99,8 @@ BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
   if (BasicBlocks.empty())
     return nullptr;
 
+  // This is commented out because it makes BOLT too slow.
+  // assert(std::is_sorted(begin(), end()));
   auto I = std::upper_bound(begin(),
                             end(),
                             BinaryBasicBlock(Offset));
@@ -531,8 +533,61 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   return true;
 }
 
-bool BinaryFunction::buildCFG() {
+void BinaryFunction::clearLandingPads(const unsigned StartIndex,
+                                      const unsigned NumBlocks) {
+  // remove all landing pads/throws for the given collection of blocks
+  for (auto I = StartIndex; I < StartIndex + NumBlocks; ++I) {
+    auto *BB = BasicBlocks[I];
+    for (auto *LPBlock : BB->LandingPads) {
+      auto count = LPBlock->Throwers.erase(BB);
+      assert(count == 1);
+    }
+    BB->LandingPads.clear();
+  }
+}
 
+void BinaryFunction::addLandingPads(const unsigned StartIndex,
+                                    const unsigned NumBlocks) {
+  for (auto I = StartIndex; I < StartIndex + NumBlocks; ++I) {
+    auto *BB = BasicBlocks[I];
+    if (LandingPads.find(BB->getLabel()) != LandingPads.end()) {
+      MCSymbol *LP = BB->getLabel();
+      for (unsigned I : LPToBBIndex.at(LP)) {
+        assert(I < BasicBlocks.size());
+        BinaryBasicBlock *ThrowBB = BasicBlocks[I];
+        ThrowBB->addLandingPad(BB);
+      }
+    }
+  }
+}
+
+void BinaryFunction::recomputeLandingPads(const unsigned StartIndex,
+                                          const unsigned NumBlocks) {
+  assert(LPToBBIndex.empty());
+
+  clearLandingPads(StartIndex, NumBlocks);
+  
+  for (auto I = StartIndex; I < StartIndex + NumBlocks; ++I) {
+    auto *BB = BasicBlocks[I];
+    for (auto &Instr : BB->Instructions) {
+      // Store info about associated landing pad.
+      if (BC.MIA->isInvoke(Instr)) {
+        const MCSymbol *LP;
+        uint64_t Action;
+        std::tie(LP, Action) = BC.MIA->getEHInfo(Instr);
+        if (LP) {
+          LPToBBIndex[LP].push_back(BB->Index);
+        }
+      }
+    }
+  }
+
+  addLandingPads(StartIndex, NumBlocks);
+
+  clearList(LPToBBIndex);
+}
+
+bool BinaryFunction::buildCFG() {
   auto &MIA = BC.MIA;
 
   auto BranchDataOrErr = BC.DR.getFuncBranchData(getNames());
@@ -764,15 +819,7 @@ bool BinaryFunction::buildCFG() {
   }
 
   // Add associated landing pad blocks to each basic block.
-  for (auto BB : BasicBlocks) {
-    if (LandingPads.find(BB->getLabel()) != LandingPads.end()) {
-      MCSymbol *LP = BB->getLabel();
-      for (unsigned I : LPToBBIndex.at(LP)) {
-        BinaryBasicBlock *ThrowBB = getBasicBlockAtIndex(I);
-        ThrowBB->addLandingPad(BB);
-      }
-    }
-  }
+  addLandingPads(0, BasicBlocks.size());
 
   // Infer frequency for non-taken branches
   if (hasValidProfile())
@@ -1066,6 +1113,7 @@ bool BinaryFunction::fixCFIState() {
         std::vector<uint32_t> NewCFIs;
         uint32_t NestedLevel = 0;
         for (uint32_t CurState = FromState; CurState < ToState; ++CurState) {
+          assert(CurState < FrameInstructions.size());
           MCCFIInstruction *Instr = &FrameInstructions[CurState];
           if (Instr->getOperation() == MCCFIInstruction::OpRememberState)
             ++NestedLevel;
@@ -1311,6 +1359,8 @@ void BinaryFunction::dumpGraphToFile(std::string Filename) const {
 
 const BinaryBasicBlock *
 BinaryFunction::getOriginalLayoutSuccessor(const BinaryBasicBlock *BB) const {
+  // This is commented out because it makes BOLT run too slowly.
+  //assert(std::is_sorted(begin(), end()));
   auto I = std::upper_bound(begin(), end(), *BB);
   assert(I != begin() && "first basic block not at offset 0");
 
@@ -1343,9 +1393,7 @@ void BinaryFunction::fixBranches() {
         HotColdBorder = true;
     }
     const BinaryBasicBlock *OldFTBB = getOriginalLayoutSuccessor(BB);
-    const MCSymbol *OldFT = nullptr;
-    if (OldFTBB != nullptr)
-      OldFT = OldFTBB->getLabel();
+    const MCSymbol *OldFT = OldFTBB ? OldFTBB->getLabel() : nullptr;
 
     // Case 1: There are no branches in this basic block and it just falls
     // through
@@ -1428,6 +1476,49 @@ void BinaryFunction::fixBranches() {
       continue;
     }
     // Case 4c: Nothing interesting happening.
+  }
+}
+
+void BinaryFunction::fixFallthroughBranch(BinaryBasicBlock *Block) {
+  // No successors, must be a return or similar.
+  if (Block->succ_size() == 0) return;
+
+  const MCSymbol *TBB = nullptr;
+  const MCSymbol *FBB = nullptr;
+  MCInst *CondBranch = nullptr;
+  MCInst *UncondBranch = nullptr;
+
+  if (!BC.MIA->analyzeBranch(Block->Instructions, TBB, FBB, CondBranch,
+                             UncondBranch)) {
+    assert(0);
+    return;
+  }
+
+  if (!UncondBranch) {
+    const BinaryBasicBlock* FallThroughBB = nullptr;
+    if (CondBranch) {
+      assert(TBB);
+      // Find the first successor that is not a target of the conditional
+      // branch.
+      for (auto *Succ : Block->successors()) {
+        if (Succ->getLabel() != TBB) {
+          FallThroughBB = Succ;
+          break;
+        }
+      }
+    } else {
+      // pick first successor as fallthrough.
+      FallThroughBB = *Block->succ_begin();
+    }
+
+    assert(FallThroughBB);
+
+    const auto FallThroughLabel = FallThroughBB->getLabel();
+    MCInst NewInst;
+    if (!BC.MIA->createUncondBranch(NewInst, FallThroughLabel, BC.Ctx.get())) {
+      llvm_unreachable("Target does not support creating new branches");
+    }
+    Block->addInstruction(NewInst);
   }
 }
 
@@ -1914,6 +2005,60 @@ std::size_t BinaryFunction::hash() const {
   }
 
   return std::hash<std::string>{}(Opcodes);
+}
+
+void BinaryFunction::insertBasicBlocks(
+  BinaryBasicBlock *Start,
+  std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs) {
+  const auto StartIndex = getIndex(Start);
+  const auto NumNewBlocks = NewBBs.size();
+
+  BasicBlocks.insert(BasicBlocks.begin() + StartIndex + 1,
+                     NumNewBlocks,
+                     nullptr);
+
+  auto I = StartIndex + 1;
+  for (auto &BB :  NewBBs) {
+    assert(!BasicBlocks[I]);
+    BasicBlocks[I++] = BB.release();
+  }
+
+  // Recompute indices and offsets for all basic blocks after Start.
+  uint64_t Offset = Start->getOffset();
+  for (auto I = StartIndex; I < BasicBlocks.size(); ++I) {
+    auto *BB = BasicBlocks[I];
+    BB->setOffset(Offset);
+    Offset += BC.computeCodeSize(BB->begin(), BB->end());
+    BB->Index = I;
+  }
+
+  // Recompute CFI state for all BBs.
+  BBCFIState.clear();
+  annotateCFIState();
+
+  recomputeLandingPads(StartIndex, NumNewBlocks + 1);
+
+  // Make sure the basic blocks are sorted properly.
+  assert(std::is_sorted(begin(), end()));
+}
+
+// TODO: Which of these methods is better?
+void BinaryFunction::updateLayout(BinaryBasicBlock* Start,
+                                  const unsigned NumNewBlocks) {
+  // Insert new blocks in the layout immediately after Start.
+  auto Pos = std::find(layout_begin(), layout_end(), Start);
+  assert(Pos != layout_end());
+  auto Begin = &BasicBlocks[Start->Index + 1];
+  auto End = &BasicBlocks[Start->Index + NumNewBlocks + 1];
+  BasicBlocksLayout.insert(Pos + 1, Begin, End);
+}
+
+void BinaryFunction::updateLayout(LayoutType Type,
+                                  bool MinBranchClusters,
+                                  bool Split) {
+  // Recompute layout with original parameters.
+  BasicBlocksLayout = BasicBlocks;
+  modifyLayout(Type, MinBranchClusters, Split);
 }
 
 BinaryFunction::~BinaryFunction() {

@@ -232,6 +232,20 @@ private:
       const BinaryBasicBlock &BBOther, const BinaryFunction &BF,
       bool AreInvokes) const;
 
+  /// Clear the landing pads for all blocks contained in the range of
+  /// [StartIndex, StartIndex + NumBlocks).  This also has the effect of
+  /// removing throws that point to any of these blocks.
+  void clearLandingPads(const unsigned StartIndex, const unsigned NumBlocks);
+
+  /// Add landing pads for all blocks in the range
+  /// [StartIndex, StartIndex + NumBlocks) using LPToBBIndex.
+  void addLandingPads(const unsigned StartIndex, const unsigned NumBlocks);
+
+  /// Recompute the landing pad information for all the basic blocks in the
+  /// range of [StartIndex to StartIndex + NumBlocks).
+  void recomputeLandingPads(const unsigned StartIndex,
+                            const unsigned NumBlocks);
+
   /// Return basic block that originally was laid out immediately following
   /// the given /p BB basic block.
   const BinaryBasicBlock *
@@ -594,6 +608,32 @@ public:
   }
 
   /// Create a basic block at a given \p Offset in the
+  /// function.
+  /// If \p DeriveAlignment is true, set the alignment of the block based
+  /// on the alignment of the existing offset.
+  /// The new block is not inserted into the CFG.  The client must
+  /// use insertBasicBlocks to add any new blocks to the CFG.
+  ///
+  std::unique_ptr<BinaryBasicBlock>
+  createBasicBlock(uint64_t Offset,
+                   MCSymbol *Label = nullptr,
+                   bool DeriveAlignment = false) {
+    assert(BC.Ctx && "cannot be called with empty context");
+    if (!Label) {
+      Label = BC.Ctx->createTempSymbol("BB", true);
+    }
+    auto BB = std::unique_ptr<BinaryBasicBlock>(
+      new BinaryBasicBlock(Label, this, Offset));
+
+    if (DeriveAlignment) {
+      uint64_t DerivedAlignment = Offset & (1 + ~Offset);
+      BB->setAlignment(std::min(DerivedAlignment, uint64_t(32)));
+    }
+
+    return BB;
+  }
+
+  /// Create a basic block at a given \p Offset in the
   /// function and append it to the end of list of blocks.
   /// If \p DeriveAlignment is true, set the alignment of the block based
   /// on the alignment of the existing offset.
@@ -601,20 +641,15 @@ public:
   /// Returns NULL if basic block already exists at the \p Offset.
   BinaryBasicBlock *addBasicBlock(uint64_t Offset, MCSymbol *Label,
                                   bool DeriveAlignment = false) {
-    assert(!getBasicBlockAtOffset(Offset) && "basic block already exists");
-    assert(BC.Ctx && "cannot be called with empty context");
-    if (!Label)
-      Label = BC.Ctx->createTempSymbol("BB", true);
-    BasicBlocks.emplace_back(new BinaryBasicBlock(Label, this, Offset));
+    assert(CurrentState == State::CFG ||
+           (!getBasicBlockAtOffset(Offset) && "basic block already exists"));
+    auto BBPtr = createBasicBlock(Offset, Label, DeriveAlignment);
+    BasicBlocks.emplace_back(BBPtr.release());
 
     auto BB = BasicBlocks.back();
-
-    if (DeriveAlignment) {
-      uint64_t DerivedAlignment = Offset & (1 + ~Offset);
-      BB->setAlignment(std::min(DerivedAlignment, uint64_t(32)));
-    }
-
     BB->Index = BasicBlocks.size() - 1;
+
+    assert(CurrentState == State::CFG || std::is_sorted(begin(), end()));
 
     return BB;
   }
@@ -636,6 +671,24 @@ public:
   /// from the function start.
   BinaryBasicBlock *getBasicBlockContainingOffset(uint64_t Offset);
 
+  /// Insert the BBs contained in NewBBs into the basic blocks for this
+  /// function.  Update the associated state of all blocks as needed, i.e.
+  /// CFI state, BB offsets, BB indices.  The new BBs are inserted after
+  /// Start.  This operation could affect fallthrough branches for Start.
+  ///
+  void insertBasicBlocks(
+    BinaryBasicBlock *Start,
+    std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs);
+
+  /// Update the basic block layout for this function.  The BBs from
+  /// [Start->Index, Start->Index + NumNewBlocks) are inserted into the
+  /// layout after the BB indicated by Start.
+  void updateLayout(BinaryBasicBlock* Start, const unsigned NumNewBlocks);
+
+  /// Update the basic block layout for this function.  The layout is
+  /// computed from scratch using modifyLayout.
+  void updateLayout(LayoutType Type, bool MinBranchClusters, bool Split);
+ 
   /// Dump function information to debug output. If \p PrintInstructions
   /// is true - include instruction disassembly.
   void dump(std::string Annotation = "", bool PrintInstructions = true) const;
@@ -901,6 +954,11 @@ public:
   /// Traverse the CFG checking branches, inverting their condition, removing or
   /// adding jumps based on a new layout order.
   void fixBranches();
+
+  /// If needed, add an unconditional jmp to the original fallthrough of
+  /// Block.  This is used by the indirect call promotion optimization
+  /// since it inserts new BBs after the merge block.
+  void fixFallthroughBranch(BinaryBasicBlock *Block);
 
   /// Split function in two: a part with warm or hot BBs and a part with never
   /// executed BBs. The cold part is moved to a new BinaryFunction.
