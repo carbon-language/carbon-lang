@@ -7,6 +7,89 @@
 
 ; Widened shuffle broadcast loads
 
+define <4 x float> @load_splat_4f32_4f32_0101(<4 x float>* %ptr) nounwind uwtable readnone ssp {
+; SSE2-LABEL: load_splat_4f32_4f32_0101:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movaps (%rdi), %xmm0
+; SSE2-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0,0]
+; SSE2-NEXT:    retq
+;
+; SSE42-LABEL: load_splat_4f32_4f32_0101:
+; SSE42:       # BB#0: # %entry
+; SSE42-NEXT:    movddup {{.*#+}} xmm0 = mem[0,0]
+; SSE42-NEXT:    retq
+;
+; AVX-LABEL: load_splat_4f32_4f32_0101:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
+; AVX-NEXT:    retq
+entry:
+  %ld = load <4 x float>, <4 x float>* %ptr
+  %ret = shufflevector <4 x float> %ld, <4 x float> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
+  ret <4 x float> %ret
+}
+
+define <8 x float> @load_splat_8f32_4f32_01010101(<4 x float>* %ptr) nounwind uwtable readnone ssp {
+; SSE2-LABEL: load_splat_8f32_4f32_01010101:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movaps (%rdi), %xmm0
+; SSE2-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0,0]
+; SSE2-NEXT:    movaps %xmm0, %xmm1
+; SSE2-NEXT:    retq
+;
+; SSE42-LABEL: load_splat_8f32_4f32_01010101:
+; SSE42:       # BB#0: # %entry
+; SSE42-NEXT:    movddup {{.*#+}} xmm0 = mem[0,0]
+; SSE42-NEXT:    movapd %xmm0, %xmm1
+; SSE42-NEXT:    retq
+;
+; AVX1-LABEL: load_splat_8f32_4f32_01010101:
+; AVX1:       # BB#0: # %entry
+; AVX1-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: load_splat_8f32_4f32_01010101:
+; AVX2:       # BB#0: # %entry
+; AVX2-NEXT:    vmovaps (%rdi), %xmm0
+; AVX2-NEXT:    vbroadcastsd %xmm0, %ymm0
+; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: load_splat_8f32_4f32_01010101:
+; AVX512:       # BB#0: # %entry
+; AVX512-NEXT:    vmovaps (%rdi), %xmm0
+; AVX512-NEXT:    vbroadcastsd %xmm0, %ymm0
+; AVX512-NEXT:    retq
+entry:
+  %ld = load <4 x float>, <4 x float>* %ptr
+  %ret = shufflevector <4 x float> %ld, <4 x float> undef, <8 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>
+  ret <8 x float> %ret
+}
+
+define <8 x float> @load_splat_8f32_8f32_01010101(<8 x float>* %ptr) nounwind uwtable readnone ssp {
+; SSE2-LABEL: load_splat_8f32_8f32_01010101:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movaps (%rdi), %xmm0
+; SSE2-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0,0]
+; SSE2-NEXT:    movaps %xmm0, %xmm1
+; SSE2-NEXT:    retq
+;
+; SSE42-LABEL: load_splat_8f32_8f32_01010101:
+; SSE42:       # BB#0: # %entry
+; SSE42-NEXT:    movddup {{.*#+}} xmm0 = mem[0,0]
+; SSE42-NEXT:    movapd %xmm0, %xmm1
+; SSE42-NEXT:    retq
+;
+; AVX-LABEL: load_splat_8f32_8f32_01010101:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vbroadcastsd (%rdi), %ymm0
+; AVX-NEXT:    retq
+entry:
+  %ld = load <8 x float>, <8 x float>* %ptr
+  %ret = shufflevector <8 x float> %ld, <8 x float> undef, <8 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>
+  ret <8 x float> %ret
+}
+
 define <4 x i32> @load_splat_4i32_4i32_0101(<4 x i32>* %ptr) nounwind uwtable readnone ssp {
 ; SSE-LABEL: load_splat_4i32_4i32_0101:
 ; SSE:       # BB#0: # %entry
