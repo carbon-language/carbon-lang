@@ -560,29 +560,6 @@ void atomic_signal_fence(memory_order m) noexcept;
 # define __cpp_lib_atomic_is_always_lock_free 201603L
 #endif
 
-
-#if __has_attribute(__enable_if__) && __has_attribute(__unavailable__)
-# define _LIBCPP_CHECK_ATOMIC_MEMORY_ORDER
-# define _LIBCPP_CHECK_LOAD_MEMORY_ORDER(__m)                                 \
-    __attribute__ ((__enable_if__(__m == memory_order_release                 \
-                               || __m == memory_order_acq_rel, "")))          \
-    __attribute__ ((__unavailable__("memory order argument to atomic operation is invalid")))
-
-# define _LIBCPP_CHECK_STORE_MEMORY_ORDER(__m)                                \
-    __attribute__ ((__enable_if__(__m == memory_order_consume                 \
-                               || __m == memory_order_acquire                 \
-                               || __m == memory_order_acq_rel, "")))          \
-    __attribute__ ((__unavailable__("memory order argument to atomic operation is invalid")))
-
-// Note that this is not checking the 'stronger' requirement.
-// See wg21.link/p0418
-# define _LIBCPP_CHECK_EXCHANGE_MEMORY_ORDER(__s, __f)                        \
-    __attribute__ ((__enable_if__(__f == memory_order_release                 \
-                               || __f == memory_order_acq_rel, "")))          \
-    __attribute__ ((__unavailable__("memory order argument to atomic operation is invalid")))
-#endif
-
-
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 typedef enum memory_order
@@ -956,21 +933,6 @@ struct __atomic_base  // false
     bool compare_exchange_strong(_Tp& __e, _Tp __d,
                                  memory_order __m = memory_order_seq_cst) _NOEXCEPT
         {return __c11_atomic_compare_exchange_strong(&__a_, &__e, __d, __m, __m);}
-#if defined(_LIBCPP_CHECK_ATOMIC_MEMORY_ORDER)
-    void store(_Tp __d, memory_order __m) volatile _LIBCPP_CHECK_STORE_MEMORY_ORDER(__m);
-    void store(_Tp __d, memory_order __m) _LIBCPP_CHECK_STORE_MEMORY_ORDER(__m);
-
-    _Tp load(memory_order __m) const volatile _LIBCPP_CHECK_LOAD_MEMORY_ORDER(__m);
-    _Tp load(memory_order __m) const _LIBCPP_CHECK_LOAD_MEMORY_ORDER(__m);
-    bool compare_exchange_weak(_Tp&, _Tp, memory_order __s, memory_order __f) volatile
-        _LIBCPP_CHECK_EXCHANGE_MEMORY_ORDER(__s, __f);
-    bool compare_exchange_weak(_Tp&, _Tp, memory_order __s, memory_order __f)
-        _LIBCPP_CHECK_EXCHANGE_MEMORY_ORDER(__s, __f);
-    bool compare_exchange_strong(_Tp&, _Tp, memory_order __s, memory_order __f) volatile
-        _LIBCPP_CHECK_EXCHANGE_MEMORY_ORDER(__s, __f);
-    bool compare_exchange_strong(_Tp&, _Tp, memory_order __s, memory_order __f)
-        _LIBCPP_CHECK_EXCHANGE_MEMORY_ORDER(__s, __f);
-#endif
 
     _LIBCPP_INLINE_VISIBILITY
 #ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
@@ -1381,46 +1343,6 @@ atomic_compare_exchange_strong_explicit(atomic<_Tp>* __o, _Tp* __e,
 {
     return __o->compare_exchange_strong(*__e, __d, __s, __f);
 }
-
-
-#ifdef _LIBCPP_CHECK_ATOMIC_MEMORY_ORDER
-template <class _Tp>
-void atomic_store_explicit(volatile atomic<_Tp>*, _Tp, memory_order __m)
-_LIBCPP_CHECK_STORE_MEMORY_ORDER(__m);
-
-template <class _Tp>
-void atomic_store_explicit(atomic<_Tp>*, _Tp, memory_order __m)
-_LIBCPP_CHECK_STORE_MEMORY_ORDER(__m);
-
-template <class _Tp>
-_Tp atomic_load_explicit(const volatile atomic<_Tp>*, memory_order __m)
-_LIBCPP_CHECK_LOAD_MEMORY_ORDER(__m);
-
-template <class _Tp>
-_Tp atomic_load_explicit(const atomic<_Tp>*, memory_order __m)
-_LIBCPP_CHECK_LOAD_MEMORY_ORDER(__m);
-
-template <class _Tp>
-bool atomic_compare_exchange_weak_explicit(volatile atomic<_Tp>*, _Tp*, _Tp,
-                                           memory_order __s, memory_order __f)
-_LIBCPP_CHECK_EXCHANGE_MEMORY_ORDER(__s, __f);
-
-template <class _Tp>
-bool atomic_compare_exchange_weak_explicit(atomic<_Tp>*, _Tp*, _Tp,
-                                           memory_order __s, memory_order __f)
-_LIBCPP_CHECK_EXCHANGE_MEMORY_ORDER(__s, __f);
-
-template <class _Tp>
-bool atomic_compare_exchange_strong_explicit(volatile atomic<_Tp>*, _Tp*, _Tp,
-                                             memory_order __s, memory_order __f)
-_LIBCPP_CHECK_EXCHANGE_MEMORY_ORDER(__s, __f);
-
-template <class _Tp>
-bool atomic_compare_exchange_strong_explicit(atomic<_Tp>*, _Tp*, _Tp,
-                                             memory_order __s, memory_order __f)
-_LIBCPP_CHECK_EXCHANGE_MEMORY_ORDER(__s, __f);
-
-#endif
 
 // atomic_fetch_add
 
