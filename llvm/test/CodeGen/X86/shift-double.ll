@@ -109,3 +109,39 @@ define i16 @test5(i16 %A, i16 %B, i8 %C) nounwind {
         ret i16 %Z
 }
 
+; Combine 2xi32/2xi16 shifts into SHRD
+
+define i32 @test6(i32 %A, i32 %B, i8 %C) nounwind {
+; CHECK-LABEL: test6:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %cl
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    shrdl %cl, %edx, %eax
+; CHECK-NEXT:    retl
+        %shift.upgrd.4 = zext i8 %C to i32              ; <i32> [#uses=1]
+        %X = lshr i32 %A, %shift.upgrd.4         ; <i32> [#uses=1]
+        %Cv = sub i8 32, %C             ; <i8> [#uses=1]
+        %shift.upgrd.5 = zext i8 %Cv to i32             ; <i32> [#uses=1]
+        %Y = shl i32 %B, %shift.upgrd.5                ; <i32> [#uses=1]
+        %Z = or i32 %Y, %X              ; <i32> [#uses=1]
+        ret i32 %Z
+}
+
+define i16 @test7(i16 %A, i16 %B, i8 %C) nounwind {
+; CHECK-LABEL: test7:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %cl
+; CHECK-NEXT:    movzwl {{[0-9]+}}(%esp), %edx
+; CHECK-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    shrdw %cl, %dx, %ax
+; CHECK-NEXT:    retl
+        %shift.upgrd.6 = zext i8 %C to i16              ; <i16> [#uses=1]
+        %X = lshr i16 %A, %shift.upgrd.6         ; <i16> [#uses=1]
+        %Cv = sub i8 16, %C             ; <i8> [#uses=1]
+        %shift.upgrd.7 = zext i8 %Cv to i16             ; <i16> [#uses=1]
+        %Y = shl i16 %B, %shift.upgrd.7                ; <i16> [#uses=1]
+        %Z = or i16 %Y, %X              ; <i16> [#uses=1]
+        ret i16 %Z
+}
+
