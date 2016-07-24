@@ -44,7 +44,7 @@ int main()
             P(80, "eighty"),
         };
         const C c(std::begin(a), std::end(a));
-        assert(c.bucket_count() >= 11);
+        assert(c.bucket_count() >= 8);
     }
 #if TEST_STD_VER >= 11
     {
@@ -69,7 +69,7 @@ int main()
             P(80, "eighty"),
         };
         const C c(std::begin(a), std::end(a));
-        assert(c.bucket_count() >= 11);
+        assert(c.bucket_count() >= 8);
     }
 #endif
 }

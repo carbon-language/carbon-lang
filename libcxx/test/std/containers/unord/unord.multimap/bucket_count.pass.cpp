@@ -44,6 +44,6 @@ int main()
             P(80, "eighty"),
         };
         const C c(std::begin(a), std::end(a));
-        assert(c.bucket_count() >= 11);
+        assert(c.bucket_count() >= 8);
     }
 }
