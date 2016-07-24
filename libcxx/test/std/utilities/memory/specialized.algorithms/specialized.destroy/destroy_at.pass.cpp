@@ -56,6 +56,8 @@ int main()
     assert(Counted::count == 1);
     std::destroy_at(ptr2);
     assert(Counted::count == 0);
+    std::free(mem1);
+    std::free(mem2);
     }
     {
     void* mem1 = std::malloc(sizeof(DCounted));
@@ -70,5 +72,7 @@ int main()
     assert(VCounted::count == 1);
     std::destroy_at(ptr2);
     assert(VCounted::count == 0);
+    std::free(mem1);
+    std::free(mem2);
     }
 }
