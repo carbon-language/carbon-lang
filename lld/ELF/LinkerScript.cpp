@@ -415,12 +415,11 @@ private:
   void readSearchDir();
   void readSections();
 
-  void readAssignment();
+  SymbolAssignment *readAssignment(StringRef Name);
   void readOutputSectionDescription(StringRef OutSec);
   std::vector<StringRef> readOutputSectionPhdrs();
   unsigned readPhdrType();
   void readProvide(bool Hidden);
-  SymbolAssignment *readSymbolAssignment(StringRef Name);
 
   Expr readExpr();
   Expr readExpr1(Expr Lhs, int MinPrec);
@@ -616,19 +615,14 @@ void ScriptParser::readSections() {
   Opt.DoLayout = true;
   expect("{");
   while (!Error && !skip("}")) {
-    StringRef Tok = peek();
-    if (Tok == ".") {
-      readAssignment();
-      continue;
-    }
-    next();
-    if (Tok == "PROVIDE") {
+    StringRef Tok = next();
+    if (peek() == "=") {
+      readAssignment(Tok);
+      expect(";");
+    } else if (Tok == "PROVIDE") {
       readProvide(false);
     } else if (Tok == "PROVIDE_HIDDEN") {
       readProvide(true);
-    } else if (peek() == "=") {
-      readSymbolAssignment(Tok);
-      expect(";");
     } else {
       readOutputSectionDescription(Tok);
     }
@@ -649,14 +643,6 @@ static int precedence(StringRef Op) {
       .Case("!=", 2)
       .Case("&", 1)
       .Default(-1);
-}
-
-void ScriptParser::readAssignment() {
-  expect(".");
-  expect("=");
-  Expr E = readExpr();
-  expect(";");
-  Opt.Commands.push_back(llvm::make_unique<SymbolAssignment>(".", E));
 }
 
 void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
@@ -710,7 +696,7 @@ void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
 
 void ScriptParser::readProvide(bool Hidden) {
   expect("(");
-  if (SymbolAssignment *Assignment = readSymbolAssignment(next())) {
+  if (SymbolAssignment *Assignment = readAssignment(next())) {
     Assignment->Provide = true;
     Assignment->Hidden = Hidden;
   }
@@ -718,11 +704,12 @@ void ScriptParser::readProvide(bool Hidden) {
   expect(";");
 }
 
-SymbolAssignment *ScriptParser::readSymbolAssignment(StringRef Name) {
+SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
   expect("=");
   Expr E = readExpr();
-  Opt.Commands.push_back(llvm::make_unique<SymbolAssignment>(Name, E));
-  return static_cast<SymbolAssignment *>(Opt.Commands.back().get());
+  auto *Cmd = new SymbolAssignment(Name, E);
+  Opt.Commands.emplace_back(Cmd);
+  return Cmd;
 }
 
 // This is an operator-precedence parser to parse a linker
