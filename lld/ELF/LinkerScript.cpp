@@ -224,16 +224,14 @@ void LinkerScript<ELFT>::assignAddresses(
 template <class ELFT>
 std::vector<PhdrEntry<ELFT>>
 LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
-  int TlsNum = -1;
-  int NoteNum = -1;
-  int RelroNum = -1;
-  PhdrEntry<ELFT> *Load = nullptr;
-  uintX_t Flags = PF_R;
-  std::vector<PhdrEntry<ELFT>> Phdrs;
+  std::vector<PhdrEntry<ELFT>> Ret;
+  PhdrEntry<ELFT> *TlsPhdr = nullptr;
+  PhdrEntry<ELFT> *NotePhdr = nullptr;
+  PhdrEntry<ELFT> *RelroPhdr = nullptr;
 
   for (const PhdrsCommand &Cmd : Opt.PhdrsCommands) {
-    Phdrs.emplace_back(Cmd.Type, Cmd.Flags == UINT_MAX ? PF_R : Cmd.Flags);
-    PhdrEntry<ELFT> &Phdr = Phdrs.back();
+    Ret.emplace_back(Cmd.Type, Cmd.Flags == UINT_MAX ? PF_R : Cmd.Flags);
+    PhdrEntry<ELFT> &Phdr = Ret.back();
 
     if (Cmd.HasFilehdr)
       Phdr.add(Out<ELFT>::ElfHeader);
@@ -252,13 +250,13 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
       }
       break;
     case PT_TLS:
-      TlsNum = Phdrs.size() - 1;
+      TlsPhdr = &Phdr;
       break;
     case PT_NOTE:
-      NoteNum = Phdrs.size() - 1;
+      NotePhdr = &Phdr;
       break;
     case PT_GNU_RELRO:
-      RelroNum = Phdrs.size() - 1;
+      RelroPhdr = &Phdr;
       break;
     case PT_GNU_EH_FRAME:
       if (!Out<ELFT>::EhFrame->empty() && Out<ELFT>::EhFrameHdr) {
@@ -269,42 +267,43 @@ LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
     }
   }
 
+  PhdrEntry<ELFT> *Load = nullptr;
+  uintX_t Flags = PF_R;
   for (OutputSectionBase<ELFT> *Sec : Sections) {
     if (!(Sec->getFlags() & SHF_ALLOC))
       break;
 
-    if (TlsNum != -1 && (Sec->getFlags() & SHF_TLS))
-      Phdrs[TlsNum].add(Sec);
+    if (TlsPhdr && (Sec->getFlags() & SHF_TLS))
+      TlsPhdr->add(Sec);
 
     if (!needsPtLoad<ELFT>(Sec))
       continue;
 
-    const std::vector<size_t> &PhdrIds =
-        getPhdrIndicesForSection(Sec->getName());
+    std::vector<size_t> PhdrIds = getPhdrIndices(Sec->getName());
     if (!PhdrIds.empty()) {
       // Assign headers specified by linker script
       for (size_t Id : PhdrIds) {
-        Phdrs[Id].add(Sec);
+        Ret[Id].add(Sec);
         if (Opt.PhdrsCommands[Id].Flags == UINT_MAX)
-          Phdrs[Id].H.p_flags |= toPhdrFlags(Sec->getFlags());
+          Ret[Id].H.p_flags |= toPhdrFlags(Sec->getFlags());
       }
     } else {
       // If we have no load segment or flags've changed then we want new load
       // segment.
       uintX_t NewFlags = toPhdrFlags(Sec->getFlags());
       if (Load == nullptr || Flags != NewFlags) {
-        Load = &*Phdrs.emplace(Phdrs.end(), PT_LOAD, NewFlags);
+        Load = &*Ret.emplace(Ret.end(), PT_LOAD, NewFlags);
         Flags = NewFlags;
       }
       Load->add(Sec);
     }
 
-    if (RelroNum != -1 && isRelroSection(Sec))
-      Phdrs[RelroNum].add(Sec);
-    if (NoteNum != -1 && Sec->getType() == SHT_NOTE)
-      Phdrs[NoteNum].add(Sec);
+    if (RelroPhdr && isRelroSection(Sec))
+      RelroPhdr->add(Sec);
+    if (NotePhdr && Sec->getType() == SHT_NOTE)
+      NotePhdr->add(Sec);
   }
-  return Phdrs;
+  return Ret;
 }
 
 template <class ELFT>
@@ -369,11 +368,10 @@ template <class ELFT> bool LinkerScript<ELFT>::hasPhdrsCommands() {
 // by Name. Each index is a zero based number of ELF header listed within
 // PHDRS {} script block.
 template <class ELFT>
-std::vector<size_t>
-LinkerScript<ELFT>::getPhdrIndicesForSection(StringRef Name) {
+std::vector<size_t> LinkerScript<ELFT>::getPhdrIndices(StringRef SectionName) {
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
-    if (!Cmd || Cmd->Name != Name)
+    if (!Cmd || Cmd->Name != SectionName)
       continue;
 
     std::vector<size_t> Indices;

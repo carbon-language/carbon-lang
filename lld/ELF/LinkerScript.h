@@ -134,7 +134,7 @@ private:
   ScriptConfiguration &Opt = *ScriptConfig;
 
   int getSectionIndex(StringRef Name);
-  std::vector<size_t> getPhdrIndicesForSection(StringRef Name);
+  std::vector<size_t> getPhdrIndices(StringRef SectionName);
   void dispatchAssignment(SymbolAssignment *Cmd);
 
   uintX_t Dot;
