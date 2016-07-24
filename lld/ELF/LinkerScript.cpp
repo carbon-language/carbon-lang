@@ -676,6 +676,10 @@ void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
         InCmd->Patterns.push_back(next());
       }
       expect(")");
+    } else if (Tok == "PROVIDE") {
+      readProvide(false);
+    } else if (Tok == "PROVIDE_HIDDEN") {
+      readProvide(true);
     } else {
       setError("unknown command " + Tok);
     }
