@@ -849,6 +849,11 @@ inline in_place_tag in_place(__in_place_index_tag<_Nx>) {
     return in_place_tag(__in_place_tag{});
 }
 
+template <class _Tp>   struct __is_inplace_type : false_type {};
+template <>            struct __is_inplace_type<in_place_t> : true_type {};
+template <class _Tp>   struct __is_inplace_type<in_place_type_t<_Tp>> : true_type {};
+template <size_t _Idx> struct __is_inplace_type<in_place_index_t<_Idx>> : true_type {};
+
 #endif // _LIBCPP_STD_VER > 14
 
 _LIBCPP_END_NAMESPACE_STD
