@@ -32,6 +32,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
 #include "isl/union_map.h"
 
@@ -682,6 +683,14 @@ void GPUNodeBuilder::finalizeKernelFunction() {
 
   if (DumpKernelIR)
     outs() << *GPUModule << "\n";
+
+  // Optimize module.
+  llvm::legacy::PassManager OptPasses;
+  PassManagerBuilder PassBuilder;
+  PassBuilder.OptLevel = 3;
+  PassBuilder.SizeLevel = 0;
+  PassBuilder.populateModulePassManager(OptPasses);
+  OptPasses.run(*GPUModule);
 
   std::string Assembly = createKernelASM();
 
