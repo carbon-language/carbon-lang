@@ -34,6 +34,38 @@ void BM_InsertValueRehash(benchmark::State& st, Container c, GenInputs gen) {
     }
 }
 
+
+template <class Container, class GenInputs>
+void BM_InsertDuplicate(benchmark::State& st, Container c, GenInputs gen) {
+    auto in = gen(st.range_x());
+    const auto end = in.end();
+    c.insert(in.begin(), in.end());
+    benchmark::DoNotOptimize(&c);
+    benchmark::DoNotOptimize(&in);
+    while (st.KeepRunning()) {
+        for (auto it = in.begin(); it != end; ++it) {
+            benchmark::DoNotOptimize(&(*c.insert(*it).first));
+        }
+        benchmark::ClobberMemory();
+    }
+}
+
+
+template <class Container, class GenInputs>
+void BM_EmplaceDuplicate(benchmark::State& st, Container c, GenInputs gen) {
+    auto in = gen(st.range_x());
+    const auto end = in.end();
+    c.insert(in.begin(), in.end());
+    benchmark::DoNotOptimize(&c);
+    benchmark::DoNotOptimize(&in);
+    while (st.KeepRunning()) {
+        for (auto it = in.begin(); it != end; ++it) {
+            benchmark::DoNotOptimize(&(*c.emplace(*it).first));
+        }
+        benchmark::ClobberMemory();
+    }
+}
+
 template <class Container, class GenInputs>
 static void BM_Find(benchmark::State& st, Container c, GenInputs gen) {
     auto in = gen(st.range_x());
