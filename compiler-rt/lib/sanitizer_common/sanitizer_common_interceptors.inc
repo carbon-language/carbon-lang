@@ -664,7 +664,7 @@ INTERCEPTOR(void*, memchr, const void *s, int c, SIZE_T n) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, memchr, s, c, n);
   void *res;
-  if (REAL(&memchr)) {
+  if (REAL(memchr)) {
     res = REAL(memchr)(s, c, n);
   } else {
     res = internal_memchr(s, c, n);
