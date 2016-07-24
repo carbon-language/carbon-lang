@@ -330,23 +330,21 @@ LinkerScript<ELFT>::filter(std::vector<OutputSectionBase<ELFT> *> &Sections) {
     if (!Cmd)
       continue;
 
-    OutputSectionBase<ELFT> *Sec = *It;
-    switch (Cmd->Constraint) {
-    case ConstraintKind::NoConstraint:
-      ++It;
-      continue;
-    case ConstraintKind::ReadOnly:
-      if (Sec->getFlags() & SHF_WRITE)
-        break;
-      ++It;
-      continue;
-    case ConstraintKind::ReadWrite:
-      if (!(Sec->getFlags() & SHF_WRITE))
-        break;
+    if (Cmd->Constraint == ConstraintKind::NoConstraint) {
       ++It;
       continue;
     }
-    Sections.erase(It);
+
+    OutputSectionBase<ELFT> *Sec = *It;
+    bool Writable = (Sec->getFlags() & SHF_WRITE);
+    bool RO = (Cmd->Constraint == ConstraintKind::ReadOnly);
+    bool RW = (Cmd->Constraint == ConstraintKind::ReadWrite);
+
+    if ((RO && Writable) || (RW && !Writable)) {
+      Sections.erase(It);
+      continue;
+    }
+    ++It;
   }
   return Sections;
 }
