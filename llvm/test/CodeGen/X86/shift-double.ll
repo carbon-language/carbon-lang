@@ -145,3 +145,77 @@ define i16 @test7(i16 %A, i16 %B, i8 %C) nounwind {
         ret i16 %Z
 }
 
+; Shift i64 integers on 32-bit target by shift value less then 32 (PR14593)
+
+define i64 @test8(i64 %val, i32 %bits) nounwind {
+; CHECK-LABEL: test8:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pushl %esi
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %ch
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %esi
+; CHECK-NEXT:    movb %ch, %cl
+; CHECK-NEXT:    shll %cl, %esi
+; CHECK-NEXT:    movl %eax, %edx
+; CHECK-NEXT:    shrl %edx
+; CHECK-NEXT:    andb $31, %cl
+; CHECK-NEXT:    xorb $31, %cl
+; CHECK-NEXT:    shrl %cl, %edx
+; CHECK-NEXT:    orl %esi, %edx
+; CHECK-NEXT:    movb %ch, %cl
+; CHECK-NEXT:    shll %cl, %eax
+; CHECK-NEXT:    popl %esi
+; CHECK-NEXT:    retl
+  %and = and i32 %bits, 31
+  %sh_prom = zext i32 %and to i64
+  %shl = shl i64 %val, %sh_prom
+  ret i64 %shl
+}
+
+define i64 @test9(i64 %val, i32 %bits) nounwind {
+; CHECK-LABEL: test9:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pushl %esi
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %ch
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %esi
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; CHECK-NEXT:    movb %ch, %cl
+; CHECK-NEXT:    shrl %cl, %esi
+; CHECK-NEXT:    leal (%edx,%edx), %eax
+; CHECK-NEXT:    andb $31, %cl
+; CHECK-NEXT:    xorb $31, %cl
+; CHECK-NEXT:    shll %cl, %eax
+; CHECK-NEXT:    orl %esi, %eax
+; CHECK-NEXT:    movb %ch, %cl
+; CHECK-NEXT:    sarl %cl, %edx
+; CHECK-NEXT:    popl %esi
+; CHECK-NEXT:    retl
+  %and = and i32 %bits, 31
+  %sh_prom = zext i32 %and to i64
+  %ashr = ashr i64 %val, %sh_prom
+  ret i64 %ashr
+}
+
+define i64 @test10(i64 %val, i32 %bits) nounwind {
+; CHECK-LABEL: test10:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pushl %esi
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %ch
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %esi
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; CHECK-NEXT:    movb %ch, %cl
+; CHECK-NEXT:    shrl %cl, %esi
+; CHECK-NEXT:    leal (%edx,%edx), %eax
+; CHECK-NEXT:    andb $31, %cl
+; CHECK-NEXT:    xorb $31, %cl
+; CHECK-NEXT:    shll %cl, %eax
+; CHECK-NEXT:    orl %esi, %eax
+; CHECK-NEXT:    movb %ch, %cl
+; CHECK-NEXT:    shrl %cl, %edx
+; CHECK-NEXT:    popl %esi
+; CHECK-NEXT:    retl
+  %and = and i32 %bits, 31
+  %sh_prom = zext i32 %and to i64
+  %lshr = lshr i64 %val, %sh_prom
+  ret i64 %lshr
+}
