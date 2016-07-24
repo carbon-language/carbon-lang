@@ -28,6 +28,7 @@
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetMachine.h"
@@ -674,6 +675,10 @@ std::string GPUNodeBuilder::createKernelASM() {
 }
 
 void GPUNodeBuilder::finalizeKernelFunction() {
+  // Verify module.
+  llvm::legacy::PassManager Passes;
+  Passes.add(createVerifierPass());
+  Passes.run(*GPUModule);
 
   if (DumpKernelIR)
     outs() << *GPUModule << "\n";
