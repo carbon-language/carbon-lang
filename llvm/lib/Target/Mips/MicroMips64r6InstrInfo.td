@@ -414,6 +414,9 @@ let DecoderNamespace = "MicroMipsR6" in {
                      ISA_MICROMIPS64R6;
 }
 
+let AdditionalPredicates = [InMicroMips] in
+defm : MaterializeImms<i64, ZERO_64, DADDIU_MM64R6, LUi64, ORi64>;
+
 //===----------------------------------------------------------------------===//
 //
 // Arbitrary patterns that map to one or more instructions

@@ -494,6 +494,16 @@ def DMTC2 : MTC3OP<"dmtc2", COP2Opnd, GPR64Opnd, II_DMTC2>, MFC3OP_FM<0x12, 5>,
 //  Arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
 
+// Materialize i64 constants.
+defm : MaterializeImms<i64, ZERO_64, DADDiu, LUi64, ORi64>;
+
+def : MipsPat<(i64 immZExt32Low16Zero:$imm),
+              (DSLL (ORi64 ZERO_64, (HI16 imm:$imm)), 16)>;
+
+def : MipsPat<(i64 immZExt32:$imm),
+              (ORi64 (DSLL (ORi64 ZERO_64, (HI16 imm:$imm)), 16),
+                     (LO16 imm:$imm))>;
+
 // extended loads
 def : MipsPat<(i64 (extloadi1  addr:$src)), (LB64 addr:$src)>;
 def : MipsPat<(i64 (extloadi8  addr:$src)), (LB64 addr:$src)>;

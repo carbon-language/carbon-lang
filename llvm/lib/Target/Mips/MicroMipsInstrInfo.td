@@ -981,6 +981,12 @@ let DecoderNamespace = "MicroMips" in {
 // MicroMips arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
 
+def : MipsPat<(i32 immLi16:$imm),
+              (LI16_MM immLi16:$imm)>;
+
+let AdditionalPredicates = [InMicroMips] in
+defm :  MaterializeImms<i32, ZERO, ADDiu_MM, LUi_MM, ORi_MM>;
+
 let Predicates = [InMicroMips] in {
   def : MipsPat<(i32 immLi16:$imm),
                 (LI16_MM immLi16:$imm)>;
