@@ -340,6 +340,7 @@ void polly_launchKernel(PollyGPUFunction *Kernel, int GridWidth,
 }
 
 void polly_freeContext(PollyGPUContext *Context) {
+  dump_function();
 
   if (Context->Cuda) {
     CuCtxDestroyFcnPtr(Context->Cuda);
