@@ -4763,21 +4763,21 @@ multiclass avx512_fma3p_213_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
   defm r: AVX512_maskable_3src<opc, MRMSrcReg, _, (outs _.RC:$dst),
           (ins _.RC:$src2, _.RC:$src3),
           OpcodeStr, "$src3, $src2", "$src2, $src3",
-          (_.VT (OpNode _.RC:$src1, _.RC:$src2, _.RC:$src3))>,
+          (_.VT (OpNode _.RC:$src2, _.RC:$src1, _.RC:$src3))>,
          AVX512FMA3Base;
 
   defm m: AVX512_maskable_3src<opc, MRMSrcMem, _, (outs _.RC:$dst),
           (ins _.RC:$src2, _.MemOp:$src3),
           OpcodeStr, "$src3, $src2", "$src2, $src3",
-          (_.VT (OpNode _.RC:$src1, _.RC:$src2, (_.LdFrag addr:$src3)))>,
+          (_.VT (OpNode _.RC:$src2, _.RC:$src1, (_.LdFrag addr:$src3)))>,
           AVX512FMA3Base;
 
   defm mb: AVX512_maskable_3src<opc, MRMSrcMem, _, (outs _.RC:$dst),
             (ins _.RC:$src2, _.ScalarMemOp:$src3),
             OpcodeStr,   !strconcat("${src3}", _.BroadcastStr,", $src2"),
             !strconcat("$src2, ${src3}", _.BroadcastStr ),
-            (OpNode _.RC:$src1,
-             _.RC:$src2,(_.VT (X86VBroadcast (_.ScalarLdFrag addr:$src3))))>,
+            (OpNode _.RC:$src2,
+             _.RC:$src1,(_.VT (X86VBroadcast (_.ScalarLdFrag addr:$src3))))>,
             AVX512FMA3Base, EVEX_B;
   }
 }
@@ -4788,7 +4788,7 @@ multiclass avx512_fma3_213_round<bits<8> opc, string OpcodeStr, SDNode OpNode,
   defm rb: AVX512_maskable_3src<opc, MRMSrcReg, _, (outs _.RC:$dst),
           (ins _.RC:$src2, _.RC:$src3, AVX512RC:$rc),
           OpcodeStr, "$rc, $src3, $src2", "$src2, $src3, $rc",
-          (_.VT ( OpNode _.RC:$src1, _.RC:$src2, _.RC:$src3, (i32 imm:$rc)))>,
+          (_.VT ( OpNode _.RC:$src2, _.RC:$src1, _.RC:$src3, (i32 imm:$rc)))>,
           AVX512FMA3Base, EVEX_B, EVEX_RC;
 }
 } // Constraints = "$src1 = $dst"
@@ -4896,24 +4896,24 @@ multiclass avx512_fma3p_132_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                                                             X86VectorVTInfo _> {
   let ExeDomain = _.ExeDomain in {
   defm r: AVX512_maskable_3src<opc, MRMSrcReg, _, (outs _.RC:$dst),
-          (ins _.RC:$src3, _.RC:$src2),
-          OpcodeStr, "$src2, $src3", "$src3, $src2",
-          (_.VT (OpNode _.RC:$src1, _.RC:$src2, _.RC:$src3))>,
+          (ins _.RC:$src2, _.RC:$src3),
+          OpcodeStr, "$src3, $src2", "$src2, $src3",
+          (_.VT (OpNode _.RC:$src1, _.RC:$src3, _.RC:$src2))>,
          AVX512FMA3Base;
 
   defm m: AVX512_maskable_3src<opc, MRMSrcMem, _, (outs _.RC:$dst),
-          (ins _.RC:$src3, _.MemOp:$src2),
-          OpcodeStr, "$src2, $src3", "$src3, $src2",
-          (_.VT (OpNode _.RC:$src1, (_.LdFrag addr:$src2), _.RC:$src3))>,
+          (ins _.RC:$src2, _.MemOp:$src3),
+          OpcodeStr, "$src3, $src2", "$src2, $src3",
+          (_.VT (OpNode _.RC:$src1, (_.LdFrag addr:$src3), _.RC:$src2))>,
          AVX512FMA3Base;
 
   defm mb: AVX512_maskable_3src<opc, MRMSrcMem, _, (outs _.RC:$dst),
-         (ins _.RC:$src3, _.ScalarMemOp:$src2),
-         OpcodeStr, "${src2}"##_.BroadcastStr##", $src3",
-         "$src3, ${src2}"##_.BroadcastStr,
+         (ins _.RC:$src2, _.ScalarMemOp:$src3),
+         OpcodeStr, "${src3}"##_.BroadcastStr##", $src2",
+         "$src2, ${src3}"##_.BroadcastStr,
          (_.VT (OpNode _.RC:$src1,
-                      (_.VT (X86VBroadcast(_.ScalarLdFrag addr:$src2))),
-                      _.RC:$src3))>, AVX512FMA3Base, EVEX_B;
+                      (_.VT (X86VBroadcast(_.ScalarLdFrag addr:$src3))),
+                      _.RC:$src2))>, AVX512FMA3Base, EVEX_B;
   }
 }
 
@@ -4921,9 +4921,9 @@ multiclass avx512_fma3_132_round<bits<8> opc, string OpcodeStr, SDNode OpNode,
                                                             X86VectorVTInfo _> {
   let ExeDomain = _.ExeDomain in
   defm rb: AVX512_maskable_3src<opc, MRMSrcReg, _, (outs _.RC:$dst),
-          (ins _.RC:$src3, _.RC:$src2, AVX512RC:$rc),
-          OpcodeStr, "$rc, $src2, $src3", "$src3, $src2, $rc",
-          (_.VT ( OpNode _.RC:$src1, _.RC:$src2, _.RC:$src3, (i32 imm:$rc)))>,
+          (ins _.RC:$src2, _.RC:$src3, AVX512RC:$rc),
+          OpcodeStr, "$rc, $src3, $src2", "$src2, $src3, $rc",
+          (_.VT ( OpNode _.RC:$src1, _.RC:$src3, _.RC:$src2, (i32 imm:$rc)))>,
           AVX512FMA3Base, EVEX_B, EVEX_RC;
 }
 } // Constraints = "$src1 = $dst"
