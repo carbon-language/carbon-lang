@@ -2604,12 +2604,11 @@ class T2FourRegSMMLA<bits<3> op22_20, bits<4> op7_4, string opc,
   let Inst{7-4} = op7_4;
 }
 
-def t2SMMLA : T2FourRegSMMLA<0b101, 0b0000, "smmla",
+def t2SMMLA :   T2FourRegSMMLA<0b101, 0b0000, "smmla",
                 [(set rGPR:$Rd, (add (mulhs rGPR:$Rm, rGPR:$Rn), rGPR:$Ra))]>;
-def t2SMMLAR: T2FourRegSMMLA<0b101, 0b0001, "smmlar", []>;
-def t2SMMLS: T2FourRegSMMLA<0b110, 0b0000, "smmls",
-                [(set rGPR:$Rd, (sub rGPR:$Ra, (mulhs rGPR:$Rn, rGPR:$Rm)))]>;
-def t2SMMLSR:T2FourRegSMMLA<0b110, 0b0001, "smmlsr", []>;
+def t2SMMLAR:   T2FourRegSMMLA<0b101, 0b0001, "smmlar", []>;
+def t2SMMLS:    T2FourRegSMMLA<0b110, 0b0000, "smmls", []>;
+def t2SMMLSR:   T2FourRegSMMLA<0b110, 0b0001, "smmlsr", []>;
 
 class T2ThreeRegSMUL<bits<3> op22_20, bits<2> op5_4, string opc,
                      list<dag> pattern>
