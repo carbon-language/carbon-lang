@@ -494,7 +494,6 @@ if (CLANG_ENABLE_BOOTSTRAP)
   
   set(STAMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/${NEXT_CLANG_STAGE}-stamps/)
   set(BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${NEXT_CLANG_STAGE}-bins/)
-  set(cmake_command ${CMAKE_COMMAND})
 
   # If the next stage is LTO we need to depend on LTO and possibly LLVMgold
   if(BOOTSTRAP_LLVM_ENABLE_LTO OR LLVM_ENABLE_LTO)
@@ -503,8 +502,13 @@ if (CLANG_ENABLE_BOOTSTRAP)
       # on Darwin we need to set DARWIN_LTO_LIBRARY so that -flto will work
       # using the just-built compiler, and we need to override DYLD_LIBRARY_PATH
       # so that the host object file tools will use the just-built libLTO.
-      set(LTO_LIBRARY -DDARWIN_LTO_LIBRARY=${LLVM_SHLIB_OUTPUT_INTDIR}/libLTO.dylib)
-      set(cmake_command ${CMAKE_COMMAND} -E env DYLD_LIBRARY_PATH=${LLVM_LIBRARY_OUTPUT_INTDIR} ${CMAKE_COMMAND})
+      # However if System Integrity Protection is enabled the DYLD variables
+      # will be scrubbed from the environment of any base system commands. This
+      # includes /bin/sh, which ninja uses when executing build commands. To
+      # work around the envar being filtered away we pass it in as a CMake
+      # variable, and have LLVM's CMake append the envar to the archiver calls.
+      set(LTO_LIBRARY -DDARWIN_LTO_LIBRARY=${LLVM_SHLIB_OUTPUT_INTDIR}/libLTO.dylib
+        -DDYLD_LIBRARY_PATH=${LLVM_LIBRARY_OUTPUT_INTDIR})
     elseif(NOT WIN32)
       list(APPEND LTO_DEP LLVMgold llvm-ar llvm-ranlib)
       set(LTO_AR -DCMAKE_AR=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ar)
@@ -604,7 +608,6 @@ if (CLANG_ENABLE_BOOTSTRAP)
                  -DCLANG_STAGE=${NEXT_CLANG_STAGE}
                 ${COMPILER_OPTIONS}
                 ${LTO_LIBRARY} ${LTO_AR} ${LTO_RANLIB} ${verbose} ${PGO_OPT}
-    CMAKE_COMMAND ${cmake_command}
     INSTALL_COMMAND ""
     STEP_TARGETS configure build
     USES_TERMINAL_CONFIGURE 1
@@ -615,7 +618,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
   # exclude really-install from main target
   set_target_properties(${NEXT_CLANG_STAGE} PROPERTIES _EP_really-install_EXCLUDE_FROM_MAIN On)
   ExternalProject_Add_Step(${NEXT_CLANG_STAGE} really-install
-    COMMAND ${cmake_command} --build <BINARY_DIR> --target install
+    COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --target install
     COMMENT "Performing install step for '${NEXT_CLANG_STAGE}'"
     DEPENDEES build
     USES_TERMINAL 1
@@ -631,7 +634,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
     set_target_properties(${NEXT_CLANG_STAGE} PROPERTIES _EP_${target}_EXCLUDE_FROM_MAIN On)
 
     ExternalProject_Add_Step(${NEXT_CLANG_STAGE} ${target}
-      COMMAND ${cmake_command} --build <BINARY_DIR> --target ${target}
+      COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --target ${target}
       COMMENT "Performing ${target} for '${NEXT_CLANG_STAGE}'"
       DEPENDEES configure
       USES_TERMINAL 1
