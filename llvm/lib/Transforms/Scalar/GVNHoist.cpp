@@ -187,6 +187,42 @@ static void combineKnownMetadata(Instruction *ReplInst, Instruction *I) {
 // cases reduce critical path (by exposing more ILP).
 class GVNHoist {
 public:
+  GVNHoist(DominatorTree *Dt, AliasAnalysis *Aa, MemoryDependenceResults *Md,
+           bool OptForMinSize)
+      : DT(Dt), AA(Aa), MD(Md), OptForMinSize(OptForMinSize), HoistedCtr(0) {}
+  bool run(Function &F) {
+    VN.setDomTree(DT);
+    VN.setAliasAnalysis(AA);
+    VN.setMemDep(MD);
+    bool Res = false;
+
+    unsigned I = 0;
+    for (const BasicBlock *BB : depth_first(&F.getEntryBlock()))
+      DFSNumber.insert({BB, ++I});
+
+    // FIXME: use lazy evaluation of VN to avoid the fix-point computation.
+    while (1) {
+      // FIXME: only compute MemorySSA once. We need to update the analysis in
+      // the same time as transforming the code.
+      MemorySSA M(F, AA, DT);
+      MSSA = &M;
+
+      auto HoistStat = hoistExpressions(F);
+      if (HoistStat.first + HoistStat.second == 0) {
+        return Res;
+      }
+      if (HoistStat.second > 0) {
+        // To address a limitation of the current GVN, we need to rerun the
+        // hoisting after we hoisted loads in order to be able to hoist all
+        // scalars dependent on the hoisted loads. Same for stores.
+        VN.clear();
+      }
+      Res = true;
+    }
+
+    return Res;
+  }
+private:
   GVN::ValueTable VN;
   DominatorTree *DT;
   AliasAnalysis *AA;
@@ -198,10 +234,6 @@ public:
   int HoistedCtr;
 
   enum InsKind { Unknown, Scalar, Load, Store };
-
-  GVNHoist(DominatorTree *Dt, AliasAnalysis *Aa, MemoryDependenceResults *Md,
-           bool OptForMinSize)
-      : DT(Dt), AA(Aa), MD(Md), OptForMinSize(OptForMinSize), HoistedCtr(0) {}
 
   // Return true when there are exception handling in BB.
   bool hasEH(const BasicBlock *BB) {
@@ -769,39 +801,6 @@ public:
     computeInsertionPoints(CI.getLoadVNTable(), HPL, InsKind::Load);
     computeInsertionPoints(CI.getStoreVNTable(), HPL, InsKind::Store);
     return hoist(HPL);
-  }
-
-  bool run(Function &F) {
-    VN.setDomTree(DT);
-    VN.setAliasAnalysis(AA);
-    VN.setMemDep(MD);
-    bool Res = false;
-
-    unsigned I = 0;
-    for (const BasicBlock *BB : depth_first(&F.getEntryBlock()))
-      DFSNumber.insert({BB, ++I});
-
-    // FIXME: use lazy evaluation of VN to avoid the fix-point computation.
-    while (1) {
-      // FIXME: only compute MemorySSA once. We need to update the analysis in
-      // the same time as transforming the code.
-      MemorySSA M(F, AA, DT);
-      MSSA = &M;
-
-      auto HoistStat = hoistExpressions(F);
-      if (HoistStat.first + HoistStat.second == 0) {
-        return Res;
-      }
-      if (HoistStat.second > 0) {
-        // To address a limitation of the current GVN, we need to rerun the
-        // hoisting after we hoisted loads in order to be able to hoist all
-        // scalars dependent on the hoisted loads. Same for stores.
-        VN.clear();
-      }
-      Res = true;
-    }
-
-    return Res;
   }
 };
 
