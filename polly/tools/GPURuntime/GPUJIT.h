@@ -73,7 +73,6 @@ typedef struct PollyGPUModuleT PollyGPUModule;
 typedef struct PollyGPUFunctionT PollyGPUFunction;
 typedef struct PollyGPUDeviceT PollyGPUDevice;
 typedef struct PollyGPUDevicePtrT PollyGPUDevicePtr;
-typedef struct PollyGPUEventT PollyGPUEvent;
 
 void polly_initDevice(PollyGPUContext **Context, PollyGPUDevice **Device);
 void polly_getPTXModule(void *PTXBuffer, PollyGPUModule **Module);

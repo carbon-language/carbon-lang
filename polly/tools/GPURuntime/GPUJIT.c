@@ -52,10 +52,6 @@ struct PollyGPUDevicePtrT {
   CUdeviceptr Cuda;
 };
 
-struct PollyGPUEventT {
-  cudaEvent_t Cuda;
-};
-
 /* Dynamic library handles for the CUDA and CUDA runtime library. */
 static void *HandleCuda;
 static void *HandleCudaRT;
@@ -120,22 +116,6 @@ typedef CUresult CUDAAPI CuDeviceGetNameFcnTy(char *, int, CUdevice);
 static CuDeviceGetNameFcnTy *CuDeviceGetNameFcnPtr;
 
 /* Type-defines of function pointer ot CUDA runtime APIs. */
-typedef cudaError_t CUDARTAPI CudaEventCreateFcnTy(cudaEvent_t *);
-static CudaEventCreateFcnTy *CudaEventCreateFcnPtr;
-
-typedef cudaError_t CUDARTAPI CudaEventRecordFcnTy(cudaEvent_t, cudaStream_t);
-static CudaEventRecordFcnTy *CudaEventRecordFcnPtr;
-
-typedef cudaError_t CUDARTAPI CudaEventSynchronizeFcnTy(cudaEvent_t);
-static CudaEventSynchronizeFcnTy *CudaEventSynchronizeFcnPtr;
-
-typedef cudaError_t CUDARTAPI CudaEventElapsedTimeFcnTy(float *, cudaEvent_t,
-                                                        cudaEvent_t);
-static CudaEventElapsedTimeFcnTy *CudaEventElapsedTimeFcnPtr;
-
-typedef cudaError_t CUDARTAPI CudaEventDestroyFcnTy(cudaEvent_t);
-static CudaEventDestroyFcnTy *CudaEventDestroyFcnPtr;
-
 typedef cudaError_t CUDARTAPI CudaThreadSynchronizeFcnTy(void);
 static CudaThreadSynchronizeFcnTy *CudaThreadSynchronizeFcnPtr;
 
@@ -233,21 +213,6 @@ static int initialDeviceAPIs() {
       (CuDeviceGetNameFcnTy *)getAPIHandle(HandleCuda, "cuDeviceGetName");
 
   /* Get function pointer to CUDA Runtime APIs. */
-  CudaEventCreateFcnPtr =
-      (CudaEventCreateFcnTy *)getAPIHandle(HandleCudaRT, "cudaEventCreate");
-
-  CudaEventRecordFcnPtr =
-      (CudaEventRecordFcnTy *)getAPIHandle(HandleCudaRT, "cudaEventRecord");
-
-  CudaEventSynchronizeFcnPtr = (CudaEventSynchronizeFcnTy *)getAPIHandle(
-      HandleCudaRT, "cudaEventSynchronize");
-
-  CudaEventElapsedTimeFcnPtr = (CudaEventElapsedTimeFcnTy *)getAPIHandle(
-      HandleCudaRT, "cudaEventElapsedTime");
-
-  CudaEventDestroyFcnPtr =
-      (CudaEventDestroyFcnTy *)getAPIHandle(HandleCudaRT, "cudaEventDestroy");
-
   CudaThreadSynchronizeFcnPtr = (CudaThreadSynchronizeFcnTy *)getAPIHandle(
       HandleCudaRT, "cudaThreadSynchronize");
 
