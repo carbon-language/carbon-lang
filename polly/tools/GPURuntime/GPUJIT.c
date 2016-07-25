@@ -220,6 +220,8 @@ static int initialDeviceAPIs() {
 }
 
 void polly_initDevice(PollyGPUContext **Context, PollyGPUDevice **Device) {
+  DebugMode = getenv("POLLY_DEBUG") != 0;
+
   dump_function();
 
   int Major = 0, Minor = 0, DeviceID = 0;
@@ -264,8 +266,6 @@ void polly_initDevice(PollyGPUContext **Context, PollyGPUDevice **Device) {
     exit(-1);
   }
   CuCtxCreateFcnPtr(&((*Context)->Cuda), 0, (*Device)->Cuda);
-
-  DebugMode = getenv("POLLY_DEBUG") != 0;
 }
 
 void polly_getPTXModule(void *PTXBuffer, PollyGPUModule **Module) {
