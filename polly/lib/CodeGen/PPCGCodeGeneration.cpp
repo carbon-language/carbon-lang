@@ -281,7 +281,9 @@ private:
   ///
   /// Free the LLVM-IR module corresponding to the kernel and -- if requested --
   /// dump its IR to stderr.
-  void finalizeKernelFunction();
+  ///
+  /// @returns The Assembly string of the kernel.
+  std::string finalizeKernelFunction();
 
   /// Create code that allocates memory to store arrays on device.
   void allocateDeviceArrays();
@@ -324,6 +326,19 @@ private:
   /// @param HostPtr A host pointer specifying the location to copy to.
   void createCallCopyFromDeviceToHost(Value *DevicePtr, Value *HostPtr,
                                       Value *Size);
+
+  /// Create a call to get a kernel from an assembly string.
+  ///
+  /// @param Buffer The string describing the kernel.
+  /// @param Entry  The name of the kernel function to call.
+  ///
+  /// @returns A pointer to a kernel object
+  Value *createCallGetKernel(Value *Buffer, Value *Entry);
+
+  /// Create a call to free a GPU kernel.
+  ///
+  /// @param GPUKernel THe kernel to free.
+  void createCallFreeKernel(Value *GPUKernel);
 };
 
 void GPUNodeBuilder::initializeAfterRTH() {
@@ -358,6 +373,41 @@ void GPUNodeBuilder::allocateDeviceArrays() {
 void GPUNodeBuilder::freeDeviceArrays() {
   for (auto &Array : DeviceAllocations)
     createCallFreeDeviceMemory(Array.second);
+}
+
+Value *GPUNodeBuilder::createCallGetKernel(Value *Buffer, Value *Entry) {
+  const char *Name = "polly_getKernel";
+  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
+  Function *F = M->getFunction(Name);
+
+  // If F is not available, declare it.
+  if (!F) {
+    GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
+    std::vector<Type *> Args;
+    Args.push_back(Builder.getInt8PtrTy());
+    Args.push_back(Builder.getInt8PtrTy());
+    FunctionType *Ty = FunctionType::get(Builder.getInt8PtrTy(), Args, false);
+    F = Function::Create(Ty, Linkage, Name, M);
+  }
+
+  return Builder.CreateCall(F, {Buffer, Entry});
+}
+
+void GPUNodeBuilder::createCallFreeKernel(Value *GPUKernel) {
+  const char *Name = "polly_freeKernel";
+  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
+  Function *F = M->getFunction(Name);
+
+  // If F is not available, declare it.
+  if (!F) {
+    GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
+    std::vector<Type *> Args;
+    Args.push_back(Builder.getInt8PtrTy());
+    FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), Args, false);
+    F = Function::Create(Ty, Linkage, Name, M);
+  }
+
+  Builder.CreateCall(F, {GPUKernel});
 }
 
 void GPUNodeBuilder::createCallFreeDeviceMemory(Value *Array) {
@@ -755,7 +805,12 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
     S.invalidateScopArrayInfo(BasePtr, ScopArrayInfo::MK_Array);
   LocalArrays.clear();
 
-  finalizeKernelFunction();
+  std::string ASMString = finalizeKernelFunction();
+  std::string Name = "kernel_" + std::to_string(Kernel->id);
+  Value *KernelString = Builder.CreateGlobalStringPtr(ASMString, Name);
+  Value *NameString = Builder.CreateGlobalStringPtr(Name, Name + "_name");
+  Value *GPUKernel = createCallGetKernel(KernelString, NameString);
+  createCallFreeKernel(GPUKernel);
 }
 
 /// Compute the DataLayout string for the NVPTX backend.
@@ -943,7 +998,7 @@ std::string GPUNodeBuilder::createKernelASM() {
   return ASMStream.str();
 }
 
-void GPUNodeBuilder::finalizeKernelFunction() {
+std::string GPUNodeBuilder::finalizeKernelFunction() {
   // Verify module.
   llvm::legacy::PassManager Passes;
   Passes.add(createVerifierPass());
@@ -967,6 +1022,8 @@ void GPUNodeBuilder::finalizeKernelFunction() {
 
   GPUModule.release();
   KernelIDs.clear();
+
+  return Assembly;
 }
 
 namespace {
