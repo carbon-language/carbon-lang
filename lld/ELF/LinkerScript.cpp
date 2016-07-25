@@ -127,7 +127,7 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
         if (!S->OutSec)
           AddInputSec(S, getOutputSectionName(S));
       } else
-        reportDiscarded(S, F);
+        reportDiscarded(S);
     }
 
   // Remove from the output all the sections which did not meet
