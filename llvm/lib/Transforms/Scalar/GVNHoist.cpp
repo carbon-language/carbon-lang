@@ -628,7 +628,6 @@ public:
             cast<Instruction>(cast<StoreInst>(OtherInst)->getValueOperand());
         ClonedVal->intersectOptionalDataWith(OtherVal);
       }
-      ClonedVal->clearSubclassOptionalData();
       Repl->replaceUsesOfWith(Val, ClonedVal);
     }
 
@@ -685,12 +684,23 @@ public:
       for (Instruction *I : InstructionsToHoist)
         if (I != Repl) {
           ++NR;
-          if (isa<LoadInst>(Repl))
+          if (auto *ReplacementLoad = dyn_cast<LoadInst>(Repl)) {
+            ReplacementLoad->setAlignment(
+                std::min(ReplacementLoad->getAlignment(),
+                         cast<LoadInst>(I)->getAlignment()));
             ++NumLoadsRemoved;
-          else if (isa<StoreInst>(Repl))
+          } else if (auto *ReplacementStore = dyn_cast<StoreInst>(Repl)) {
+            ReplacementStore->setAlignment(
+                std::min(ReplacementStore->getAlignment(),
+                         cast<StoreInst>(I)->getAlignment()));
             ++NumStoresRemoved;
-          else if (isa<CallInst>(Repl))
+          } else if (auto *ReplacementAlloca = dyn_cast<AllocaInst>(Repl)) {
+            ReplacementAlloca->setAlignment(
+                std::max(ReplacementAlloca->getAlignment(),
+                         cast<AllocaInst>(I)->getAlignment()));
+          } else if (isa<CallInst>(Repl)) {
             ++NumCallsRemoved;
+          }
           Repl->intersectOptionalDataWith(I);
           I->replaceAllUsesWith(Repl);
           I->eraseFromParent();
