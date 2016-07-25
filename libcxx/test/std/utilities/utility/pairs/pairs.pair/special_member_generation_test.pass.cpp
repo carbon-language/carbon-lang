@@ -32,10 +32,10 @@ namespace ConstructorTest {
 template <class T1, bool CanCopy = true, bool CanMove = CanCopy> void test() {
   using P1 = std::pair<T1, int>;
   using P2 = std::pair<int, T1>;
-  static_assert(std::is_copy_constructible<P1>::value == CanCopy);
-  static_assert(std::is_move_constructible<P1>::value == CanMove);
-  static_assert(std::is_copy_constructible<P2>::value == CanCopy);
-  static_assert(std::is_move_constructible<P2>::value == CanMove);
+  static_assert(std::is_copy_constructible<P1>::value == CanCopy, "");
+  static_assert(std::is_move_constructible<P1>::value == CanMove, "");
+  static_assert(std::is_copy_constructible<P2>::value == CanCopy, "");
+  static_assert(std::is_move_constructible<P2>::value == CanMove, "");
 };
 
 } // namespace ConstructorTest
@@ -80,10 +80,10 @@ namespace AssignmentOperatorTest {
 template <class T1, bool CanCopy = true, bool CanMove = CanCopy> void test() {
   using P1 = std::pair<T1, int>;
   using P2 = std::pair<int, T1>;
-  static_assert(std::is_copy_assignable<P1>::value == CanCopy);
-  static_assert(std::is_move_assignable<P1>::value == CanMove);
-  static_assert(std::is_copy_assignable<P2>::value == CanCopy);
-  static_assert(std::is_move_assignable<P2>::value == CanMove);
+  static_assert(std::is_copy_assignable<P1>::value == CanCopy, "");
+  static_assert(std::is_move_assignable<P1>::value == CanMove, "");
+  static_assert(std::is_copy_assignable<P2>::value == CanCopy, "");
+  static_assert(std::is_move_assignable<P2>::value == CanMove, "");
 };
 
 } // namespace AssignmentOperatorTest
