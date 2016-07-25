@@ -74,8 +74,10 @@ public:
     if (NA < NB)
       return true;
     if (NA == NB) {
-      assert (DFSNumber.count(A) && DFSNumber.count(B));
-      return DFSNumber[A] < DFSNumber[B];
+      unsigned ADFS = DFSNumber.lookup(A);
+      unsigned BDFS = DFSNumber.lookup(B);
+      assert (ADFS && ADFS);
+      return ADFS < BDFS;
     }
     return false;
   }
@@ -295,8 +297,10 @@ private:
   /* Return true when I1 appears before I2 in the instructions of BB.  */
   bool firstInBB(const Instruction *I1, const Instruction *I2) {
     assert (I1->getParent() == I2->getParent());
-    assert (DFSNumber.count(I1) && DFSNumber.count(I2));
-    return DFSNumber[I1] < DFSNumber[I2];
+    unsigned I1DFS = DFSNumber.lookup(I1);
+    unsigned I2DFS = DFSNumber.lookup(I2);
+    assert (I1DFS && I2DFS);
+    return I1DFS < I2DFS;
   }
 
   // Return true when there are users of Def in BB.
