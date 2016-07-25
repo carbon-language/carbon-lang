@@ -53,10 +53,10 @@ namespace {
 // Provides a sorting function based on the execution order of two instructions.
 struct SortByDFSIn {
 private:
-  DenseMap<const BasicBlock *, unsigned> &DFSNumber;
+  DenseMap<const Value *, unsigned> &DFSNumber;
 
 public:
-  SortByDFSIn(DenseMap<const BasicBlock *, unsigned> &D) : DFSNumber(D) {}
+  SortByDFSIn(DenseMap<const Value *, unsigned> &D) : DFSNumber(D) {}
 
   // Returns true when A executes before B.
   bool operator()(const Instruction *A, const Instruction *B) const {
@@ -74,9 +74,8 @@ public:
     if (NA < NB)
       return true;
     if (NA == NB) {
-      // Sort them in the order they occur in the same basic block.
-      BasicBlock::const_iterator AI(A), BI(B);
-      return std::distance(AI, BI) < 0;
+      assert (DFSNumber.count(A) && DFSNumber.count(B));
+      return DFSNumber[A] < DFSNumber[B];
     }
     return false;
   }
@@ -196,9 +195,13 @@ public:
     VN.setMemDep(MD);
     bool Res = false;
 
+    // Perform DFS Numbering of blocks and instructions.
     unsigned I = 0;
-    for (const BasicBlock *BB : depth_first(&F.getEntryBlock()))
+    for (const BasicBlock *BB : depth_first(&F.getEntryBlock())) {
       DFSNumber.insert({BB, ++I});
+      for (auto &Inst: *BB)
+        DFSNumber.insert({&Inst, ++I});
+    }
 
     // FIXME: use lazy evaluation of VN to avoid the fix-point computation.
     while (1) {
@@ -228,7 +231,7 @@ private:
   AliasAnalysis *AA;
   MemoryDependenceResults *MD;
   const bool OptForMinSize;
-  DenseMap<const BasicBlock *, unsigned> DFSNumber;
+  DenseMap<const Value *, unsigned> DFSNumber;
   BBSideEffectsSet BBSideEffects;
   MemorySSA *MSSA;
   int HoistedCtr;
@@ -290,16 +293,12 @@ private:
   }
 
   /* Return true when I1 appears before I2 in the instructions of BB.  */
-  bool firstInBB(BasicBlock *BB, const Instruction *I1, const Instruction *I2) {
-    for (Instruction &I : *BB) {
-      if (&I == I1)
-        return true;
-      if (&I == I2)
-        return false;
-    }
-
-    llvm_unreachable("I1 and I2 not found in BB");
+  bool firstInBB(const Instruction *I1, const Instruction *I2) {
+    assert (I1->getParent() == I2->getParent());
+    assert (DFSNumber.count(I1) && DFSNumber.count(I2));
+    return DFSNumber[I1] < DFSNumber[I2];
   }
+
   // Return true when there are users of Def in BB.
   bool hasMemoryUseOnPath(MemoryAccess *Def, const BasicBlock *BB,
                           const Instruction *OldPt) {
@@ -323,7 +322,7 @@ private:
           return true;
 
         // It is only harmful to hoist when the use is before OldPt.
-        if (firstInBB(UBB, MU->getMemoryInst(), OldPt))
+        if (firstInBB(MU->getMemoryInst(), OldPt))
           return true;
       }
 
@@ -437,7 +436,7 @@ private:
 
     if (NewBB == DBB && !MSSA->isLiveOnEntryDef(D))
       if (auto *UD = dyn_cast<MemoryUseOrDef>(D))
-        if (firstInBB(DBB, NewPt, UD->getMemoryInst()))
+        if (firstInBB(NewPt, UD->getMemoryInst()))
           // Cannot move the load or store to NewPt above its definition in D.
           return false;
 
@@ -514,7 +513,7 @@ private:
 
       if (BB == HoistBB) {
         NewHoistBB = HoistBB;
-        NewHoistPt = firstInBB(BB, Insn, HoistPt) ? Insn : HoistPt;
+        NewHoistPt = firstInBB(Insn, HoistPt) ? Insn : HoistPt;
       } else {
         NewHoistBB = DT->findNearestCommonDominator(HoistBB, BB);
         if (NewHoistBB == BB)
