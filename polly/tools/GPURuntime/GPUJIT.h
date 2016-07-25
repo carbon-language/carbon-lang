@@ -78,10 +78,10 @@ PollyGPUContext *polly_initContext();
 void polly_getPTXModule(void *PTXBuffer, PollyGPUModule **Module);
 void polly_getPTXKernelEntry(const char *KernelName, PollyGPUModule *Module,
                              PollyGPUFunction **Kernel);
-void polly_copyFromHostToDevice(PollyGPUDevicePtr *DevData, void *HostData,
-                                int MemSize);
-void polly_copyFromDeviceToHost(void *HostData, PollyGPUDevicePtr *DevData,
-                                int MemSize);
+void polly_copyFromHostToDevice(void *HostData, PollyGPUDevicePtr *DevData,
+                                long MemSize);
+void polly_copyFromDeviceToHost(PollyGPUDevicePtr *DevData, void *HostData,
+                                long MemSize);
 void polly_setKernelParameters(PollyGPUFunction *Kernel, int BlockWidth,
                                int BlockHeight, PollyGPUDevicePtr *DevData);
 void polly_launchKernel(PollyGPUFunction *Kernel, int GridWidth,

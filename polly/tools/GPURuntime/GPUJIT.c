@@ -296,16 +296,16 @@ void polly_getPTXKernelEntry(const char *KernelName, PollyGPUModule *Module,
   }
 }
 
-void polly_copyFromHostToDevice(PollyGPUDevicePtr *DevData, void *HostData,
-                                int MemSize) {
+void polly_copyFromHostToDevice(void *HostData, PollyGPUDevicePtr *DevData,
+                                long MemSize) {
   dump_function();
 
   CUdeviceptr CuDevData = DevData->Cuda;
   CuMemcpyHtoDFcnPtr(CuDevData, HostData, MemSize);
 }
 
-void polly_copyFromDeviceToHost(void *HostData, PollyGPUDevicePtr *DevData,
-                                int MemSize) {
+void polly_copyFromDeviceToHost(PollyGPUDevicePtr *DevData, void *HostData,
+                                long MemSize) {
   dump_function();
 
   if (CuMemcpyDtoHFcnPtr(HostData, DevData->Cuda, MemSize) != CUDA_SUCCESS) {
