@@ -1326,7 +1326,7 @@ public:
     NodeBuilder.addParameters(S->getContext());
     Builder.SetInsertPoint(&*StartBlock->begin());
     NodeBuilder.create(Root);
-    NodeBuilder.finalizeSCoP(*S);
+    NodeBuilder.finalize();
   }
 
   bool runOnScop(Scop &CurrentScop) override {
