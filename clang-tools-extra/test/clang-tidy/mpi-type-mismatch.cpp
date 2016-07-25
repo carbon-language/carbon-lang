@@ -6,11 +6,11 @@ void charNegativeTest() {
   unsigned char buf;
   MPI_Send(&buf, 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'unsigned char' does not match the MPI datatype 'MPI_CHAR' [mpi-type-mismatch]
-  
+
   int buf2;
   MPI_Send(&buf2, 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'int' does not match the MPI datatype 'MPI_CHAR'
-  
+
   short buf3;
   MPI_Send(&buf3, 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'short' does not match the MPI datatype 'MPI_CHAR'
@@ -18,7 +18,7 @@ void charNegativeTest() {
   long buf4;
   MPI_Send(&buf4, 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'long' does not match the MPI datatype 'MPI_CHAR'
-  
+
   int8_t buf5;
   MPI_Send(&buf5, 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'int8_t' does not match the MPI datatype 'MPI_CHAR'
@@ -40,11 +40,11 @@ void intNegativeTest() {
   unsigned char buf;
   MPI_Send(&buf, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'unsigned char' does not match the MPI datatype 'MPI_INT'
-  
+
   unsigned buf2;
   MPI_Send(&buf2, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'unsigned int' does not match the MPI datatype 'MPI_INT'
-  
+
   short buf3;
   MPI_Send(&buf3, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'short' does not match the MPI datatype 'MPI_INT'
@@ -52,7 +52,7 @@ void intNegativeTest() {
   long buf4;
   MPI_Send(&buf4, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'long' does not match the MPI datatype 'MPI_INT'
-  
+
   int8_t buf5;
   MPI_Send(&buf5, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'int8_t' does not match the MPI datatype 'MPI_INT'
@@ -74,11 +74,11 @@ void longNegativeTest() {
   char buf;
   MPI_Send(&buf, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'char' does not match the MPI datatype 'MPI_LONG'
-  
+
   unsigned buf2;
   MPI_Send(&buf2, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'unsigned int' does not match the MPI datatype 'MPI_LONG'
-  
+
   unsigned short buf3;
   MPI_Send(&buf3, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'unsigned short' does not match the MPI datatype 'MPI_LONG'
@@ -86,7 +86,7 @@ void longNegativeTest() {
   unsigned long buf4;
   MPI_Send(&buf4, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'unsigned long' does not match the MPI datatype 'MPI_LONG'
-  
+
   int8_t buf5;
   MPI_Send(&buf5, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'int8_t' does not match the MPI datatype 'MPI_LONG'
@@ -108,11 +108,11 @@ void int8_tNegativeTest() {
   char buf;
   MPI_Send(&buf, 1, MPI_INT8_T, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'char' does not match the MPI datatype 'MPI_INT8_T'
-  
+
   unsigned buf2;
   MPI_Send(&buf2, 1, MPI_INT8_T, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'unsigned int' does not match the MPI datatype 'MPI_INT8_T'
-  
+
   short buf3;
   MPI_Send(&buf3, 1, MPI_INT8_T, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'short' does not match the MPI datatype 'MPI_INT8_T'
@@ -120,7 +120,7 @@ void int8_tNegativeTest() {
   unsigned long buf4;
   MPI_Send(&buf4, 1, MPI_INT8_T, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'unsigned long' does not match the MPI datatype 'MPI_INT8_T'
-  
+
   uint8_t buf5;
   MPI_Send(&buf5, 1, MPI_INT8_T, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'uint8_t' does not match the MPI datatype 'MPI_INT8_T'
@@ -142,11 +142,11 @@ void complex_c_long_double_complexNegativeTest() {
   char buf;
   MPI_Send(&buf, 1, MPI_C_LONG_DOUBLE_COMPLEX, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'char' does not match the MPI datatype 'MPI_C_LONG_DOUBLE_COMPLEX'
-  
+
   unsigned buf2;
   MPI_Send(&buf2, 1, MPI_C_LONG_DOUBLE_COMPLEX, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'unsigned int' does not match the MPI datatype 'MPI_C_LONG_DOUBLE_COMPLEX'
-  
+
   short buf3;
   MPI_Send(&buf3, 1, MPI_C_LONG_DOUBLE_COMPLEX, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'short' does not match the MPI datatype 'MPI_C_LONG_DOUBLE_COMPLEX'
@@ -154,7 +154,7 @@ void complex_c_long_double_complexNegativeTest() {
   unsigned long buf4;
   MPI_Send(&buf4, 1, MPI_C_LONG_DOUBLE_COMPLEX, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'unsigned long' does not match the MPI datatype 'MPI_C_LONG_DOUBLE_COMPLEX'
-  
+
   uint8_t buf5;
   MPI_Send(&buf5, 1, MPI_C_LONG_DOUBLE_COMPLEX, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'uint8_t' does not match the MPI datatype 'MPI_C_LONG_DOUBLE_COMPLEX'
@@ -176,11 +176,11 @@ void complex_cxx_float_complexNegativeTest() {
   char buf;
   MPI_Send(&buf, 1, MPI_CXX_FLOAT_COMPLEX, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'char' does not match the MPI datatype 'MPI_CXX_FLOAT_COMPLEX'
-  
+
   unsigned buf2;
   MPI_Send(&buf2, 1, MPI_CXX_FLOAT_COMPLEX, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'unsigned int' does not match the MPI datatype 'MPI_CXX_FLOAT_COMPLEX'
-  
+
   short buf3;
   MPI_Send(&buf3, 1, MPI_CXX_FLOAT_COMPLEX, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'short' does not match the MPI datatype 'MPI_CXX_FLOAT_COMPLEX'
@@ -188,7 +188,7 @@ void complex_cxx_float_complexNegativeTest() {
   unsigned long buf4;
   MPI_Send(&buf4, 1, MPI_CXX_FLOAT_COMPLEX, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'unsigned long' does not match the MPI datatype 'MPI_CXX_FLOAT_COMPLEX'
-  
+
   uint8_t buf5;
   MPI_Send(&buf5, 1, MPI_CXX_FLOAT_COMPLEX, 0, 0, MPI_COMM_WORLD);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer type 'uint8_t' does not match the MPI datatype 'MPI_CXX_FLOAT_COMPLEX'
@@ -211,15 +211,15 @@ void skippedTypesTests() {
   typedef char CHAR;
   CHAR buf;
   MPI_Send(&buf, 1, MPI_CXX_FLOAT_COMPLEX, 0, 0, MPI_COMM_WORLD);
-  
+
   typedef unsigned UNSIGNED;
   UNSIGNED buf2;
   MPI_Send(&buf2, 1, MPI_CXX_FLOAT_COMPLEX, 0, 0, MPI_COMM_WORLD);
-  
+
 #define _MPI_LONG MPI_LONG
   int buf3;
   MPI_Send(&buf3, 1, _MPI_LONG, 0, 0, MPI_COMM_WORLD);
-  
+
 #define _MPI_CXX_FLOAT_COMPLEX MPI_CXX_FLOAT_COMPLEX
   short buf4;
   MPI_Send(&buf4, 1, _MPI_CXX_FLOAT_COMPLEX, 0, 0, MPI_COMM_WORLD);
