@@ -34,6 +34,7 @@
 #define LLVM_TRANSFORMS_UTILS_SYMBOLREWRITER_H
 
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PassManager.h"
 #include <list>
 
 namespace llvm {
@@ -111,6 +112,24 @@ private:
 
 ModulePass *createRewriteSymbolsPass();
 ModulePass *createRewriteSymbolsPass(SymbolRewriter::RewriteDescriptorList &);
+
+class RewriteSymbolPass : public PassInfoMixin<RewriteSymbolPass> {
+public:
+  RewriteSymbolPass() { loadAndParseMapFiles(); }
+  RewriteSymbolPass(SymbolRewriter::RewriteDescriptorList &DL) {
+    Descriptors.splice(Descriptors.begin(), DL);
+  }
+
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+
+  // Glue for old PM
+  bool runImpl(Module &M);
+
+private:
+  void loadAndParseMapFiles();
+
+  SymbolRewriter::RewriteDescriptorList Descriptors;  
+};
 }
 
 #endif //LLVM_TRANSFORMS_UTILS_SYMBOLREWRITER_H
