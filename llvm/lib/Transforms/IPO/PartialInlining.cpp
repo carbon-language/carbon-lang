@@ -29,40 +29,45 @@ using namespace llvm;
 STATISTIC(NumPartialInlined, "Number of functions partially inlined");
 
 namespace {
+struct PartialInlinerImpl {
+  PartialInlinerImpl(InlineFunctionInfo IFI) : IFI(IFI) {}
+  bool run(Module &M);
+  Function *unswitchFunction(Function *F);
+
+private:
+  InlineFunctionInfo IFI;
+};
 struct PartialInlinerLegacyPass : public ModulePass {
   static char ID; // Pass identification, replacement for typeid
   PartialInlinerLegacyPass() : ModulePass(ID) {
     initializePartialInlinerLegacyPassPass(*PassRegistry::getPassRegistry());
   }
 
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<AssumptionCacheTracker>();
+  }
   bool runOnModule(Module &M) override {
     if (skipModule(M))
       return false;
-    ModuleAnalysisManager DummyMAM;
-    auto PA = Impl.run(M, DummyMAM);
-    return !PA.areAllPreserved();
-  }
 
-private:
-  PartialInlinerPass Impl;
+    AssumptionCacheTracker *ACT = &getAnalysis<AssumptionCacheTracker>();
+    std::function<AssumptionCache &(Function &)> GetAssumptionCache = [&ACT](
+        Function &F) -> AssumptionCache & {
+      return ACT->getAssumptionCache(F);
+    };
+    InlineFunctionInfo IFI(nullptr, &GetAssumptionCache);
+    return PartialInlinerImpl(IFI).run(M);
+  }
   };
 }
 
-char PartialInlinerLegacyPass::ID = 0;
-INITIALIZE_PASS(PartialInlinerLegacyPass, "partial-inliner", "Partial Inliner",
-                false, false)
-
-ModulePass *llvm::createPartialInliningPass() {
-  return new PartialInlinerLegacyPass();
-}
-
-Function *PartialInlinerPass::unswitchFunction(Function *F) {
+Function *PartialInlinerImpl::unswitchFunction(Function *F) {
   // First, verify that this function is an unswitching candidate...
   BasicBlock *entryBlock = &F->front();
   BranchInst *BR = dyn_cast<BranchInst>(entryBlock->getTerminator());
   if (!BR || BR->isUnconditional())
     return nullptr;
-  
+
   BasicBlock* returnBlock = nullptr;
   BasicBlock* nonReturnBlock = nullptr;
   unsigned returnCount = 0;
@@ -73,10 +78,10 @@ Function *PartialInlinerPass::unswitchFunction(Function *F) {
     } else
       nonReturnBlock = BB;
   }
-  
+
   if (returnCount != 1)
     return nullptr;
-  
+
   // Clone the function, so that we can hack away on it.
   ValueToValueMapTy VMap;
   Function* duplicateFunction = CloneFunction(F, VMap);
@@ -84,11 +89,11 @@ Function *PartialInlinerPass::unswitchFunction(Function *F) {
   BasicBlock* newEntryBlock = cast<BasicBlock>(VMap[entryBlock]);
   BasicBlock* newReturnBlock = cast<BasicBlock>(VMap[returnBlock]);
   BasicBlock* newNonReturnBlock = cast<BasicBlock>(VMap[nonReturnBlock]);
-  
+
   // Go ahead and update all uses to the duplicate, so that we can just
   // use the inliner functionality when we're done hacking.
   F->replaceAllUsesWith(duplicateFunction);
-  
+
   // Special hackery is needed with PHI nodes that have inputs from more than
   // one extracted block.  For simplicity, just split the PHIs into a two-level
   // sequence of PHIs, some of which will go in the extracted region, and some
@@ -110,11 +115,11 @@ Function *PartialInlinerPass::unswitchFunction(Function *F) {
     retPhi->addIncoming(OldPhi->getIncomingValueForBlock(newEntryBlock),
                         newEntryBlock);
     OldPhi->removeIncomingValue(newEntryBlock);
-    
+
     ++I;
   }
   newEntryBlock->getTerminator()->replaceUsesOfWith(preReturn, newReturnBlock);
-  
+
   // Gather up the blocks that we're going to extract.
   std::vector<BasicBlock*> toExtract;
   toExtract.push_back(newNonReturnBlock);
@@ -130,9 +135,7 @@ Function *PartialInlinerPass::unswitchFunction(Function *F) {
   // Extract the body of the if.
   Function* extractedFunction
     = CodeExtractor(toExtract, &DT).extractCodeRegion();
-  
-  InlineFunctionInfo IFI;
-  
+
   // Inline the top-level if test into all callers.
   std::vector<User *> Users(duplicateFunction->user_begin(),
                             duplicateFunction->user_end());
@@ -141,18 +144,18 @@ Function *PartialInlinerPass::unswitchFunction(Function *F) {
       InlineFunction(CI, IFI);
     else if (InvokeInst *II = dyn_cast<InvokeInst>(User))
       InlineFunction(II, IFI);
-  
+
   // Ditch the duplicate, since we're done with it, and rewrite all remaining
   // users (function pointers, etc.) back to the original function.
   duplicateFunction->replaceAllUsesWith(F);
   duplicateFunction->eraseFromParent();
-  
+
   ++NumPartialInlined;
-  
+
   return extractedFunction;
 }
 
-PreservedAnalyses PartialInlinerPass::run(Module &M, ModuleAnalysisManager &) {
+bool PartialInlinerImpl::run(Module &M) {
   std::vector<Function*> worklist;
   worklist.reserve(M.size());
   for (Function &F : M)
@@ -163,9 +166,9 @@ PreservedAnalyses PartialInlinerPass::run(Module &M, ModuleAnalysisManager &) {
   while (!worklist.empty()) {
     Function* currFunc = worklist.back();
     worklist.pop_back();
-  
+
     if (currFunc->use_empty()) continue;
-    
+
     bool recursive = false;
     for (User *U : currFunc->users())
       if (Instruction* I = dyn_cast<Instruction>(U))
@@ -174,16 +177,36 @@ PreservedAnalyses PartialInlinerPass::run(Module &M, ModuleAnalysisManager &) {
           break;
         }
     if (recursive) continue;
-          
-    
+
     if (Function* newFunc = unswitchFunction(currFunc)) {
       worklist.push_back(newFunc);
       changed = true;
     }
-    
   }
 
-  if (changed)
+  return changed;
+}
+
+char PartialInlinerLegacyPass::ID = 0;
+INITIALIZE_PASS_BEGIN(PartialInlinerLegacyPass, "partial-inliner",
+                      "Partial Inliner", false, false)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
+INITIALIZE_PASS_END(PartialInlinerLegacyPass, "partial-inliner",
+                    "Partial Inliner", false, false)
+
+ModulePass *llvm::createPartialInliningPass() {
+  return new PartialInlinerLegacyPass();
+}
+
+PreservedAnalyses PartialInlinerPass::run(Module &M,
+                                          ModuleAnalysisManager &AM) {
+  auto &FAM = AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+  std::function<AssumptionCache &(Function &)> GetAssumptionCache = [&FAM](
+      Function &F) -> AssumptionCache & {
+    return FAM.getResult<AssumptionAnalysis>(F);
+  };
+  InlineFunctionInfo IFI(nullptr, &GetAssumptionCache);
+  if (PartialInlinerImpl(IFI).run(M))
     return PreservedAnalyses::none();
   return PreservedAnalyses::all();
 }
