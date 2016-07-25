@@ -29,8 +29,8 @@
 # PROVIDE2: 0000000000000000         *ABS*    00000000 somesym
 
 # Provide existing symbol. The value should be 0, even though we
-# have value of 1 in PROVIDE(). Visibility should not change
-# RUN: echo "SECTIONS { PROVIDE(somesym = 1);}" > %t.script
+# have value of 1 in PROVIDE_HIDDEN(). Visibility should not change
+# RUN: echo "SECTIONS { PROVIDE_HIDDEN(somesym = 1);}" > %t.script
 # RUN: ld.lld -o %t1 --script %t.script %t
 # RUN: llvm-objdump -t %t1 | FileCheck --check-prefix=HIDDEN2 %s
 # HIDDEN2: 0000000000000000         *ABS*    00000000 somesym
