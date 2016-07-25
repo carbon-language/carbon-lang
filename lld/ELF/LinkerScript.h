@@ -131,6 +131,11 @@ public:
   bool hasPhdrsCommands();
 
 private:
+  std::vector<std::pair<StringRef, ArrayRef<StringRef>>> getSectionMap();
+
+  std::vector<InputSectionBase<ELFT> *>
+  getInputSections(ArrayRef<StringRef> Patterns);
+
   // "ScriptConfig" is a bit too long, so define a short name for it.
   ScriptConfiguration &Opt = *ScriptConfig;
 
