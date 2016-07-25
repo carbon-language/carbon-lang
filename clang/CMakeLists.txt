@@ -463,12 +463,15 @@ endif()
 
 add_subdirectory(cmake/modules)
 
+if(CLANG_STAGE)
+  message(STATUS "Setting current clang stage to: ${CLANG_STAGE}")
+endif()
+
 if (CLANG_ENABLE_BOOTSTRAP)
   include(ExternalProject)
 
   if(NOT CLANG_STAGE)
     set(CLANG_STAGE stage1)
-    message(STATUS "Setting current clang stage to: ${CLANG_STAGE}")
   endif()
 
   string(REGEX MATCH "stage([0-9]*)" MATCHED_STAGE "${CLANG_STAGE}")
@@ -526,7 +529,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
     set(verbose -DCMAKE_VERBOSE_MAKEFILE=On)
   endif()
 
-  set(BOOTSTRAP_DEFAULT_PASSTHROUGH
+  set(_BOOTSTRAP_DEFAULT_PASSTHROUGH
     PACKAGE_VERSION
     LLVM_VERSION_MAJOR
     LLVM_VERSION_MINOR
@@ -577,7 +580,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
   endforeach()
 
   # Populate the passthrough variables
-  foreach(variableName ${CLANG_BOOTSTRAP_PASSTHROUGH} ${BOOTSTRAP_DEFAULT_PASSTHROUGH})
+  foreach(variableName ${CLANG_BOOTSTRAP_PASSTHROUGH} ${_BOOTSTRAP_DEFAULT_PASSTHROUGH})
     if(${variableName})
       string(REPLACE ";" "\;" value ${${variableName}})
       list(APPEND PASSTHROUGH_VARIABLES
