@@ -351,9 +351,13 @@ struct _LIBCPP_TYPE_VIS_ONLY pair
     typedef typename remove_reference<_T1>::type _T1Unref;
     typedef typename remove_reference<_T2>::type _T2Unref;
 
+#if !defined(_LIBCPP_CXX03_LANG)
     typedef integral_constant<bool,
            is_copy_assignable<_T1>::value
         && is_copy_assignable<_T2>::value> _CanCopyAssign;
+#else
+    typedef true_type _CanCopyAssign;
+#endif
 
     _LIBCPP_INLINE_VISIBILITY
     pair& operator=(typename conditional<_CanCopyAssign::value, pair, __nat>::type const& __p)
