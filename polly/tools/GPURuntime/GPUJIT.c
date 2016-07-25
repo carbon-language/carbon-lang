@@ -339,30 +339,6 @@ void polly_launchKernel(PollyGPUFunction *Kernel, int GridWidth,
   debug_print("CUDA kernel launched.\n");
 }
 
-void polly_cleanupGPGPUResources(void *HostData, PollyGPUDevicePtr *DevData,
-                                 PollyGPUModule *Module,
-                                 PollyGPUFunction *Kernel) {
-  dump_function();
-
-  if (HostData) {
-    free(HostData);
-    HostData = 0;
-  }
-
-  if (DevData->Cuda) {
-    CuMemFreeFcnPtr(DevData->Cuda);
-    free(DevData);
-  }
-
-  if (Module->Cuda) {
-    CuModuleUnloadFcnPtr(Module->Cuda);
-    free(Module);
-  }
-  if (Kernel) {
-    free(Kernel);
-  }
-}
-
 void polly_freeContext(PollyGPUContext *Context) {
 
   if (Context->Cuda) {

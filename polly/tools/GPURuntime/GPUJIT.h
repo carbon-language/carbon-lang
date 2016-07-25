@@ -62,7 +62,6 @@
  *   polly_setKernelParameters(Kernel, BlockWidth, BlockHeight, DevData);
  *   polly_launchKernel(Kernel, GridWidth, GridHeight);
  *   polly_copyFromDeviceToHost(HostData, DevData, MemSize);
- *   polly_cleanupGPGPUResources(HostData, DevData, Module, Kernel);
  *   polly_freeContext(Context);
  * }
  *
@@ -85,8 +84,5 @@ void polly_setKernelParameters(PollyGPUFunction *Kernel, int BlockWidth,
                                int BlockHeight, PollyGPUDevicePtr *DevData);
 void polly_launchKernel(PollyGPUFunction *Kernel, int GridWidth,
                         int GridHeight);
-void polly_cleanupGPGPUResources(void *HostData, PollyGPUDevicePtr *DevData,
-                                 PollyGPUModule *Module,
-                                 PollyGPUFunction *Kernel);
 void free_Context(PollyGPUContext *Context);
 #endif /* GPUJIT_H_ */
