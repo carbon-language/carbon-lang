@@ -148,6 +148,9 @@ private:
   /// more.
   std::vector<Value *> LocalArrays;
 
+  /// A list of device arrays that has been allocated.
+  std::vector<Value *> AllocatedDevArrays;
+
   /// The current GPU context.
   Value *GPUContext;
 
@@ -266,7 +269,11 @@ private:
   /// dump its IR to stderr.
   void finalizeKernelFunction();
 
+  /// Create code that allocates memory to store arrays on device.
   void allocateDeviceArrays();
+
+  /// Free all allocated device arrays.
+  void freeDeviceArrays();
 
   /// Create a call to initialize the GPU context.
   ///
@@ -278,7 +285,17 @@ private:
   /// @param Context A pointer to an initialized GPU context.
   void createCallFreeContext(Value *Context);
 
+  /// Create a call to allocate memory on the device.
+  ///
+  /// @param Size The size of memory to allocate
+  ///
+  /// @returns A pointer that identifies this allocation.
   Value *createCallAllocateMemoryForDevice(Value *Size);
+
+  /// Create a call to free a device array.
+  ///
+  /// @param Array The device array to free.
+  void createCallFreeDeviceMemory(Value *Array);
 };
 
 void GPUNodeBuilder::initializeAfterRTH() {
@@ -287,6 +304,7 @@ void GPUNodeBuilder::initializeAfterRTH() {
 }
 
 void GPUNodeBuilder::finalize() {
+  freeDeviceArrays();
   createCallFreeContext(GPUContext);
   IslNodeBuilder::finalize();
 }
@@ -296,8 +314,8 @@ void GPUNodeBuilder::allocateDeviceArrays() {
 
   for (int i = 0; i < Prog->n_array; ++i) {
     gpu_array_info *Array = &Prog->array[i];
-    std::string DevPtrName("p_devptr_");
-    DevPtrName.append(Array->name);
+    std::string DevArrayName("p_dev_array_");
+    DevArrayName.append(Array->name);
 
     Value *ArraySize = ConstantInt::get(Builder.getInt64Ty(), Array->size);
 
@@ -315,11 +333,34 @@ void GPUNodeBuilder::allocateDeviceArrays() {
       ArraySize = Builder.CreateMul(ArraySize, NumElements);
     }
 
-    Value *DevPtr = createCallAllocateMemoryForDevice(ArraySize);
-    DevPtr->setName(DevPtrName);
+    Value *DevArray = createCallAllocateMemoryForDevice(ArraySize);
+    DevArray->setName(DevArrayName);
+    AllocatedDevArrays.push_back(DevArray);
   }
 
   isl_ast_build_free(Build);
+}
+
+void GPUNodeBuilder::freeDeviceArrays() {
+  for (auto &Array : AllocatedDevArrays)
+    createCallFreeDeviceMemory(Array);
+}
+
+void GPUNodeBuilder::createCallFreeDeviceMemory(Value *Array) {
+  const char *Name = "polly_freeDeviceMemory";
+  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
+  Function *F = M->getFunction(Name);
+
+  // If F is not available, declare it.
+  if (!F) {
+    GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
+    std::vector<Type *> Args;
+    Args.push_back(Builder.getInt8PtrTy());
+    FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), Args, false);
+    F = Function::Create(Ty, Linkage, Name, M);
+  }
+
+  Builder.CreateCall(F, {Array});
 }
 
 Value *GPUNodeBuilder::createCallAllocateMemoryForDevice(Value *Size) {

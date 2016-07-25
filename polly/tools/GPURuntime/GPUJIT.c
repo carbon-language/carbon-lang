@@ -339,6 +339,32 @@ void polly_launchKernel(PollyGPUFunction *Kernel, int GridWidth,
   debug_print("CUDA kernel launched.\n");
 }
 
+void polly_freeDeviceMemory(PollyGPUDevicePtr *Allocation) {
+  dump_function();
+  CuMemFreeFcnPtr((CUdeviceptr)Allocation->Cuda);
+  free(Allocation);
+}
+
+PollyGPUDevicePtr *polly_allocateMemoryForDevice(long MemSize) {
+  dump_function();
+
+  PollyGPUDevicePtr *DevData = malloc(sizeof(PollyGPUDevicePtr));
+
+  if (DevData == 0) {
+    fprintf(stdout, "Allocate memory for GPU device memory pointer failed.\n");
+    exit(-1);
+  }
+
+  CUresult Res = CuMemAllocFcnPtr(&(DevData->Cuda), MemSize);
+
+  if (Res != CUDA_SUCCESS) {
+    fprintf(stdout, "Allocate memory for GPU device memory pointer failed.\n");
+    exit(-1);
+  }
+
+  return DevData;
+}
+
 void polly_freeContext(PollyGPUContext *Context) {
   dump_function();
 
