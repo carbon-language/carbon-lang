@@ -350,7 +350,9 @@ template <class ELFT> void LinkerScript<ELFT>::addScriptedSymbols() {
       continue;
 
     SymbolBody *B = Symtab<ELFT>::X->find(Cmd->Name);
-    if (!B || B->isUndefined())
+    // The semantic of PROVIDE is that of introducing a symbol only if
+    // it's not defined and there's at least a reference to it.
+    if ((!B && !Cmd->Provide) || (B && B->isUndefined()))
       Symtab<ELFT>::X->addAbsolute(Cmd->Name,
                                    Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT);
     else
