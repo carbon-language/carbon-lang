@@ -1,7 +1,7 @@
 # REQUIRES: x86
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
 
-# This test case should place input sections in script order: 
+# This test case should place input sections in script order:
 # .foo.1 .foo.2 .bar.1 .bar.2
 # RUN: echo "SECTIONS { . = 0x1000; .foo : {*(.foo.*) *(.bar.*)  } }" > %t.script
 # RUN: ld.lld -o %t1 --script %t.script %t
