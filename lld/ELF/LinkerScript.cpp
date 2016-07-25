@@ -426,6 +426,7 @@ private:
   void readEntry();
   void readExtern();
   void readGroup();
+  void readKeep(OutputSectionCommand *Cmd);
   void readInclude();
   void readNothing() {}
   void readOutput();
@@ -665,6 +666,19 @@ static int precedence(StringRef Op) {
       .Default(-1);
 }
 
+void ScriptParser::readKeep(OutputSectionCommand *Cmd) {
+  expect("(");
+  expect("*");
+  expect("(");
+  auto *InCmd = new InputSectionDescription();
+  Cmd->Commands.emplace_back(InCmd);
+  while (!Error && !skip(")")) {
+    Opt.KeptSections.push_back(peek());
+    InCmd->Patterns.push_back(next());
+  }
+  expect(")");
+}
+
 void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
   OutputSectionCommand *Cmd = new OutputSectionCommand(OutSec);
   Opt.Commands.emplace_back(Cmd);
@@ -692,16 +706,7 @@ void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
       while (!Error && !skip(")"))
         InCmd->Patterns.push_back(next());
     } else if (Tok == "KEEP") {
-      expect("(");
-      expect("*");
-      expect("(");
-      auto *InCmd = new InputSectionDescription();
-      Cmd->Commands.emplace_back(InCmd);
-      while (!Error && !skip(")")) {
-        Opt.KeptSections.push_back(peek());
-        InCmd->Patterns.push_back(next());
-      }
-      expect(")");
+      readKeep(Cmd);
     } else if (Tok == "PROVIDE") {
       readProvide(false);
     } else if (Tok == "PROVIDE_HIDDEN") {
