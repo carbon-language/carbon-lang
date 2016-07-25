@@ -134,6 +134,9 @@ private:
   // "ScriptConfig" is a bit too long, so define a short name for it.
   ScriptConfiguration &Opt = *ScriptConfig;
 
+  std::vector<OutputSectionBase<ELFT> *>
+  filter(std::vector<OutputSectionBase<ELFT> *> &Sections);
+
   int getSectionIndex(StringRef Name);
   std::vector<size_t> getPhdrIndices(StringRef SectionName);
   void dispatchAssignment(SymbolAssignment *Cmd);
