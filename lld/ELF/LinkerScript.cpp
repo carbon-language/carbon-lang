@@ -692,9 +692,9 @@ void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
 
   // Parse constraints.
   if (skip("ONLY_IF_RO"))
-    Cmd->Constraint = ReadOnly;
+    Cmd->Constraint = ConstraintKind::ReadOnly;
   if (skip("ONLY_IF_RW"))
-    Cmd->Constraint = ReadWrite;
+    Cmd->Constraint = ConstraintKind::ReadWrite;
   expect("{");
 
   while (!Error && !skip("}")) {
