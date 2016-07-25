@@ -18,6 +18,7 @@
 #include <unordered_set>
 #include <cassert>
 
+#include "test_macros.h"
 #include "min_allocator.h"
 
 int main()
@@ -27,7 +28,7 @@ int main()
         typedef C::const_iterator I;
         typedef int P;
         const C c;
-        assert(c.bucket_count() == 0);
+        LIBCPP_ASSERT(c.bucket_count() == 0);
     }
     {
         typedef std::unordered_set<int> C;
@@ -53,7 +54,7 @@ int main()
         typedef C::const_iterator I;
         typedef int P;
         const C c;
-        assert(c.bucket_count() == 0);
+        LIBCPP_ASSERT(c.bucket_count() == 0);
     }
     {
         typedef std::unordered_set<int, std::hash<int>, std::equal_to<int>, min_allocator<int>> C;
