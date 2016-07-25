@@ -67,9 +67,9 @@ bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
   return false;
 }
 
-static bool match(StringRef Pattern, ArrayRef<StringRef> Arr) {
-  for (StringRef S : Arr)
-    if (globMatch(S, Pattern))
+static bool match(ArrayRef<StringRef> Patterns, StringRef S) {
+  for (StringRef Pat : Patterns)
+    if (globMatch(Pat, S))
       return true;
   return false;
 }
@@ -109,7 +109,7 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
           if (isDiscarded(S) || S->OutSec)
             continue;
 
-          if (match(S->getSectionName(), InCmd->Patterns)) {
+          if (match(InCmd->Patterns, S->getSectionName())) {
             if (OutCmd->Name == "/DISCARD/")
               S->Live = false;
             else
