@@ -50,8 +50,6 @@
  *   PollyGPUDevice *Device;
  *   PollyGPUDevicePtr *PtrDevData;
  *   int *HostData;
- *   PollyGPUEvent *Start;
- *   PollyGPUEvent *Stop;
  *   int MemSize;
  *   int BlockWidth = 16;
  *   int BlockHeight = 16;
