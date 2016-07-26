@@ -94,6 +94,23 @@ MachineInstr *MachineIRBuilder::buildCopy(unsigned Res, unsigned Op) {
   return buildInstr(TargetOpcode::COPY, Res, Op);
 }
 
+MachineInstr *MachineIRBuilder::buildLoad(LLT VTy, LLT PTy, unsigned Res,
+                                          unsigned Addr,
+                                          MachineMemOperand &MMO) {
+  MachineInstr *NewMI = buildInstr(TargetOpcode::G_LOAD, {VTy, PTy}, Res, Addr);
+  NewMI->addMemOperand(getMF(), &MMO);
+  return NewMI;
+}
+
+MachineInstr *MachineIRBuilder::buildStore(LLT VTy, LLT PTy, unsigned Val,
+                                           unsigned Addr,
+                                           MachineMemOperand &MMO) {
+  MachineInstr *NewMI = buildInstr(TargetOpcode::G_STORE, {VTy, PTy});
+  NewMI->addMemOperand(getMF(), &MMO);
+  MachineInstrBuilder(getMF(), NewMI).addReg(Val).addReg(Addr);
+  return NewMI;
+}
+
 MachineInstr *MachineIRBuilder::buildExtract(LLT Ty, ArrayRef<unsigned> Results,
                                              unsigned Src,
                                              ArrayRef<unsigned> Indexes) {

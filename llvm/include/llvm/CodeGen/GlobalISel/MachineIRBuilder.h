@@ -192,6 +192,28 @@ public:
   /// \return The newly created instruction.
   MachineInstr *buildCopy(unsigned Res, unsigned Op);
 
+  /// Build and insert `Res<def> = G_LOAD { VTy, PTy } Addr, MMO`.
+  ///
+  /// Loads the value of (sized) type \p VTy stored at \p Addr (in address space
+  /// given by \p PTy). Puts the result in Res.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return The newly created instruction.
+  MachineInstr *buildLoad(LLT VTy, LLT PTy, unsigned Res, unsigned Addr,
+                          MachineMemOperand &MMO);
+
+  /// Build and insert `G_STORE { VTy, PTy } Val, Addr, MMO`.
+  ///
+  /// Stores the value \p Val of (sized) \p VTy to \p Addr (in address space
+  /// given by \p PTy).
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return The newly created instruction.
+  MachineInstr *buildStore(LLT VTy, LLT PTy, unsigned Val, unsigned Addr,
+                          MachineMemOperand &MMO);
+
   /// Build and insert `Res0<def>, ... = G_EXTRACT Ty Src, Idx0, ...`.
   ///
   /// If \p Ty has size N bits, G_EXTRACT sets \p Res[0] to bits `[Idxs[0],

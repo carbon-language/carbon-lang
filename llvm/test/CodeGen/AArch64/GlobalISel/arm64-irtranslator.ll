@@ -165,3 +165,33 @@ define i64 @bitcast(i64 %a) {
   %res2 = bitcast <2 x i32> %res1 to i64
   ret i64 %res2
 }
+
+; CHECK-LABEL: name: load
+; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x0
+; CHECK: [[ADDR42:%[0-9]+]](64) = COPY %x1
+; CHECK: [[VAL1:%[0-9]+]](64) = G_LOAD { s64, p0 } [[ADDR]] :: (load 8 from %ir.addr, align 16)
+; CHECK: [[VAL2:%[0-9]+]](64) = G_LOAD { s64, p42 } [[ADDR42]] :: (load 8 from %ir.addr42)
+; CHECK: [[SUM:%.*]](64) = G_ADD s64 [[VAL1]], [[VAL2]]
+; CHECK: %x0 = COPY [[SUM]]
+; CHECK: RET_ReallyLR implicit %x0
+define i64 @load(i64* %addr, i64 addrspace(42)* %addr42) {
+  %val1 = load i64, i64* %addr, align 16
+  %val2 = load i64, i64 addrspace(42)* %addr42
+  %sum = add i64 %val1, %val2
+  ret i64 %sum
+}
+
+; CHECK-LABEL: name: store
+; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x0
+; CHECK: [[ADDR42:%[0-9]+]](64) = COPY %x1
+; CHECK: [[VAL1:%[0-9]+]](64) = COPY %x2
+; CHECK: [[VAL2:%[0-9]+]](64) = COPY %x3
+; CHECK: G_STORE { s64, p0 } [[VAL1]], [[ADDR]] :: (store 8 into %ir.addr, align 16)
+; CHECK: G_STORE { s64, p42 } [[VAL2]], [[ADDR42]] :: (store 8 into %ir.addr42)
+; CHECK: RET_ReallyLR
+define void @store(i64* %addr, i64 addrspace(42)* %addr42, i64 %val1, i64 %val2) {
+  store i64 %val1, i64* %addr, align 16
+  store i64 %val2, i64 addrspace(42)* %addr42
+  %sum = add i64 %val1, %val2
+  ret void
+}
