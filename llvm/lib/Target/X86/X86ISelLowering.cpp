@@ -29708,7 +29708,7 @@ combineVectorTruncationWithPACKSS(SDNode *N, SelectionDAG &DAG,
 /// X86ISD::PACKUS/X86ISD::PACKSS operations. We do it here because after type
 /// legalization the truncation will be translated into a BUILD_VECTOR with each
 /// element that is extracted from a vector and then truncated, and it is
-/// diffcult to do this optimization based on them.
+/// difficult to do this optimization based on them.
 static SDValue combineVectorTruncation(SDNode *N, SelectionDAG &DAG,
                                        const X86Subtarget &Subtarget) {
   EVT OutVT = N->getValueType(0);
