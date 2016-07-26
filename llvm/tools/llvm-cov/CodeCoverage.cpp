@@ -38,10 +38,6 @@
 using namespace llvm;
 using namespace coverage;
 
-void exportCoverageDataToJson(StringRef ObjectFilename,
-                              const coverage::CoverageMapping &CoverageMapping,
-                              raw_ostream &OS);
-
 namespace {
 /// \brief The implementation of the coverage tool.
 class CodeCoverageTool {
@@ -50,9 +46,7 @@ public:
     /// \brief The show command.
     Show,
     /// \brief The report command.
-    Report,
-    /// \brief The export command.
-    Export
+    Report
   };
 
   /// \brief Print the error message to the error output stream.
@@ -99,9 +93,6 @@ public:
 
   int report(int argc, const char **argv,
              CommandLineParserType commandLineParser);
-
-  int export_(int argc, const char **argv,
-              CommandLineParserType commandLineParser);
 
   std::string ObjectFilename;
   CoverageViewOptions ViewOpts;
@@ -543,8 +534,6 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
     return show(argc, argv, commandLineParser);
   case Report:
     return report(argc, argv, commandLineParser);
-  case Export:
-    return export_(argc, argv, commandLineParser);
   }
   return 0;
 }
@@ -705,24 +694,6 @@ int CodeCoverageTool::report(int argc, const char **argv,
   return 0;
 }
 
-int CodeCoverageTool::export_(int argc, const char **argv,
-                              CommandLineParserType commandLineParser) {
-
-  auto Err = commandLineParser(argc, argv);
-  if (Err)
-    return Err;
-
-  auto Coverage = load();
-  if (!Coverage) {
-    error("Could not load coverage information");
-    return 1;
-  }
-
-  exportCoverageDataToJson(ObjectFilename, *Coverage.get(), outs());
-
-  return 0;
-}
-
 int showMain(int argc, const char *argv[]) {
   CodeCoverageTool Tool;
   return Tool.run(CodeCoverageTool::Show, argc, argv);
@@ -731,9 +702,4 @@ int showMain(int argc, const char *argv[]) {
 int reportMain(int argc, const char *argv[]) {
   CodeCoverageTool Tool;
   return Tool.run(CodeCoverageTool::Report, argc, argv);
-}
-
-int exportMain(int argc, const char *argv[]) {
-  CodeCoverageTool Tool;
-  return Tool.run(CodeCoverageTool::Export, argc, argv);
 }
