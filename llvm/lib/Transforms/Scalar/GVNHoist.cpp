@@ -48,6 +48,11 @@ static cl::opt<int> MaxNumberOfBBSInPath(
     cl::desc("Max number of basic blocks on the path between "
              "hoisting locations (default = 4, unlimited = -1)"));
 
+static cl::opt<int> MaxDepthInBB(
+    "gvn-hoist-max-depth", cl::Hidden, cl::init(100),
+    cl::desc("Hoist instructions from the beginning of the BB up to the "
+             "maximum specified depth (default = 100, unlimited = -1)"));
+
 namespace {
 
 // Provides a sorting function based on the execution order of two instructions.
@@ -765,7 +770,13 @@ private:
     StoreInfo SI;
     CallInfo CI;
     for (BasicBlock *BB : depth_first(&F.getEntryBlock())) {
+      int InstructionNb = 0;
       for (Instruction &I1 : *BB) {
+        // Only hoist the first instructions in BB up to MaxDepthInBB. Hoisting
+        // deeper may increase the register pressure and compilation time.
+        if (MaxDepthInBB != -1 && InstructionNb++ >= MaxDepthInBB)
+          break;
+
         if (auto *Load = dyn_cast<LoadInst>(&I1))
           LI.insert(Load, VN);
         else if (auto *Store = dyn_cast<StoreInst>(&I1))
