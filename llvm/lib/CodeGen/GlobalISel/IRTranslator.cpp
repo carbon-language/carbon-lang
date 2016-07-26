@@ -89,7 +89,7 @@ bool IRTranslator::translateBr(const Instruction &Inst) {
   if (BrInst.isUnconditional()) {
     const BasicBlock &BrTgt = *cast<BasicBlock>(BrInst.getOperand(0));
     MachineBasicBlock &TgtBB = getOrCreateBB(BrTgt);
-    MIRBuilder.buildInstr(TargetOpcode::G_BR, LLT{*BrTgt.getType()}, TgtBB);
+    MIRBuilder.buildBr(TgtBB);
   } else {
     assert(0 && "Not yet implemented");
   }
