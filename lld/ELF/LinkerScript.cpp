@@ -150,19 +150,21 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
 template <class ELFT>
 std::vector<OutputSectionBase<ELFT> *>
 LinkerScript<ELFT>::filter(std::vector<OutputSectionBase<ELFT> *> &Sections) {
-  // Sections and OutputSectionCommands are parallel arrays.
   // In this loop, we remove output sections if they don't satisfy
   // requested properties.
-  auto It = Sections.begin();
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
     if (!Cmd || Cmd->Name == "/DISCARD/")
       continue;
 
-    if (Cmd->Constraint == ConstraintKind::NoConstraint) {
-      ++It;
+    if (Cmd->Constraint == ConstraintKind::NoConstraint)
       continue;
-    }
+
+    auto It = llvm::find_if(Sections, [&](OutputSectionBase<ELFT> *S) {
+      return S->getName() == Cmd->Name;
+    });
+    if (It == Sections.end())
+      continue;
 
     OutputSectionBase<ELFT> *Sec = *It;
     bool Writable = (Sec->getFlags() & SHF_WRITE);
@@ -173,7 +175,6 @@ LinkerScript<ELFT>::filter(std::vector<OutputSectionBase<ELFT> *> &Sections) {
       Sections.erase(It);
       continue;
     }
-    ++It;
   }
   return Sections;
 }
