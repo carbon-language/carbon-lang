@@ -26,7 +26,7 @@ CpioFile::CpioFile(std::unique_ptr<raw_fd_ostream> OS, StringRef S)
 ErrorOr<CpioFile *> CpioFile::create(StringRef OutputPath) {
   std::string Path = (OutputPath + ".cpio").str();
   std::error_code EC;
-  auto OS = make_unique<raw_fd_ostream>(Path, EC, sys::fs::F_None);
+  auto OS = llvm::make_unique<raw_fd_ostream>(Path, EC, sys::fs::F_None);
   if (EC)
     return EC;
   return new CpioFile(std::move(OS), path::filename(OutputPath));
