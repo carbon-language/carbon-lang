@@ -668,10 +668,13 @@ let AdditionalPredicates = [NotInMicroMips] in {
                       (DSUB GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rs), 1>,
                       ISA_MIPS3;
   def : MipsInstAlias<"dneg $rt",
-                      (DSUB GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rt), 0>,
+                      (DSUB GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rt), 1>,
                       ISA_MIPS3;
   def : MipsInstAlias<"dnegu $rt, $rs",
                       (DSUBu GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rs), 1>,
+                      ISA_MIPS3;
+  def : MipsInstAlias<"dnegu $rt",
+                      (DSUBu GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rt), 1>,
                       ISA_MIPS3;
 }
 def : MipsInstAlias<"dsubi $rs, $rt, $imm",

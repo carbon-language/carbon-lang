@@ -506,11 +506,11 @@ def : MipsInstAlias<"dneg $rt, $rs",
                     (DSUB_MM64R6 GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rs), 1>,
                     ISA_MICROMIPS64R6;
 def : MipsInstAlias<"dneg $rt",
-                    (DSUB_MM64R6 GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rt), 0>,
+                    (DSUB_MM64R6 GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rt), 1>,
                     ISA_MICROMIPS64R6;
 def : MipsInstAlias<"dnegu $rt, $rs",
                     (DSUBU_MM64R6 GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rs), 1>,
                     ISA_MICROMIPS64R6;
 def : MipsInstAlias<"dnegu $rt",
-                    (DSUBU_MM64R6 GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rt), 0>,
+                    (DSUBU_MM64R6 GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rt), 1>,
                     ISA_MICROMIPS64R6;
