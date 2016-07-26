@@ -10505,7 +10505,7 @@ bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
   MCAsmParser &Parser = getParser();
 
   if (getLexer().isNot(AsmToken::Identifier)) {
-    Error(getLexer().getLoc(), "unexpected token");
+    Error(getLexer().getLoc(), "expected architecture extension name");
     Parser.eatToEndOfStatement();
     return false;
   }
@@ -10520,15 +10520,19 @@ bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
     Name = Name.substr(2);
   }
   unsigned FeatureKind = ARM::parseArchExt(Name);
-  if (FeatureKind == ARM::AEK_INVALID)
+  if (FeatureKind == ARM::AEK_INVALID) {
     Error(ExtLoc, "unknown architectural extension: " + Name);
+    return false;
+  }
 
   for (const auto &Extension : Extensions) {
     if (Extension.Kind != FeatureKind)
       continue;
 
-    if (Extension.Features.none())
-      report_fatal_error("unsupported architectural extension: " + Name);
+    if (Extension.Features.none()) {
+      Error(ExtLoc, "unsupported architectural extension: " + Name);
+      return false;
+    }
 
     if ((getAvailableFeatures() & Extension.ArchCheck) != Extension.ArchCheck) {
       Error(ExtLoc, "architectural extension '" + Name + "' is not "
