@@ -301,11 +301,11 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
   // A MIPS object file has a special sections that contain register
   // usage info, which need to be handled by the linker specially.
   if (Config->EMachine == EM_MIPS) {
-    if (Name == ".reginfo") {
+    switch (Sec.sh_type) {
+    case SHT_MIPS_REGINFO:
       MipsReginfo.reset(new MipsReginfoInputSection<ELFT>(this, &Sec));
       return MipsReginfo.get();
-    }
-    if (Name == ".MIPS.options") {
+    case SHT_MIPS_OPTIONS:
       MipsOptions.reset(new MipsOptionsInputSection<ELFT>(this, &Sec));
       return MipsOptions.get();
     }
