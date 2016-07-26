@@ -756,6 +756,29 @@ SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
 // script expression.
 Expr ScriptParser::readExpr() { return readExpr1(readPrimary(), 0); }
 
+static uint64_t getSymbolValue(StringRef S) {
+  switch (Config->EKind) {
+  case ELF32LEKind:
+    if (SymbolBody *B = Symtab<ELF32LE>::X->find(S))
+      return B->getVA<ELF32LE>();
+    break;
+  case ELF32BEKind:
+    if (SymbolBody *B = Symtab<ELF32BE>::X->find(S))
+      return B->getVA<ELF32BE>();
+    break;
+  case ELF64LEKind:
+    if (SymbolBody *B = Symtab<ELF64LE>::X->find(S))
+      return B->getVA<ELF64LE>();
+    break;
+  case ELF64BEKind:
+    if (SymbolBody *B = Symtab<ELF64BE>::X->find(S))
+      return B->getVA<ELF64BE>();
+    break;
+  }
+  error("symbol not found: " + S);
+  return 0;
+}
+
 // This is a part of the operator-precedence parser. This function
 // assumes that the remaining token stream starts with an operator.
 Expr ScriptParser::readExpr1(Expr Lhs, int MinPrec) {
@@ -844,10 +867,13 @@ Expr ScriptParser::readPrimary() {
     return [](uint64_t Dot) { return alignTo(Dot, Target->PageSize); };
   }
 
-  // Parse a number literal
+  // Parse a symbol name or a number literal.
   uint64_t V = 0;
-  if (Tok.getAsInteger(0, V))
-    setError("malformed number: " + Tok);
+  if (Tok.getAsInteger(0, V)) {
+    if (!isValidCIdentifier(Tok))
+      setError("malformed number: " + Tok);
+    return [=](uint64_t Dot) { return getSymbolValue(Tok); };
+  }
   return [=](uint64_t Dot) { return V; };
 }
 
