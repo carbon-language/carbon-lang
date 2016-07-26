@@ -9,6 +9,7 @@
 
 #include "MoveConstantArgumentCheck.h"
 
+
 #include "clang/Lex/Lexer.h"
 
 using namespace clang::ast_matchers;
