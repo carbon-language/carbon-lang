@@ -779,7 +779,7 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI,
     printReg(Op.getReg(), OS, TRI);
     // Print the sub register.
     if (Op.getSubReg() != 0)
-      OS << ':' << TRI->getSubRegIndexName(Op.getSubReg());
+      OS << '.' << TRI->getSubRegIndexName(Op.getSubReg());
     if (ShouldPrintRegisterTies && Op.isTied() && !Op.isDef())
       OS << "(tied-def " << Op.getParent()->findTiedOperandIdx(I) << ")";
     assert((!IsDef || MRI) && "for IsDef, MRI must be provided");

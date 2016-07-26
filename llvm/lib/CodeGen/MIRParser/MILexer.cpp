@@ -237,7 +237,7 @@ static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
 }
 
 static Cursor maybeLexIdentifier(Cursor C, MIToken &Token) {
-  if (!isalpha(C.peek()) && C.peek() != '_' && C.peek() != '.')
+  if (!isalpha(C.peek()) && C.peek() != '_')
     return None;
   auto Range = C;
   while (isIdentifierChar(C.peek()))
@@ -372,6 +372,11 @@ static Cursor lexVirtualRegister(Cursor C, MIToken &Token) {
   return C;
 }
 
+/// Returns true for a character allowed in a register name.
+static bool isRegisterChar(char C) {
+  return isIdentifierChar(C) && C != '.';
+}
+
 static Cursor maybeLexRegister(Cursor C, MIToken &Token) {
   if (C.peek() != '%')
     return None;
@@ -379,7 +384,7 @@ static Cursor maybeLexRegister(Cursor C, MIToken &Token) {
     return lexVirtualRegister(C, Token);
   auto Range = C;
   C.advance(); // Skip '%'
-  while (isIdentifierChar(C.peek()))
+  while (isRegisterChar(C.peek()))
     C.advance();
   Token.reset(MIToken::NamedRegister, Range.upto(C))
       .setStringValue(Range.upto(C).drop_front(1)); // Drop the '%'
@@ -491,6 +496,8 @@ static MIToken::TokenKind symbolToken(char C) {
   switch (C) {
   case ',':
     return MIToken::comma;
+  case '.':
+    return MIToken::dot;
   case '=':
     return MIToken::equal;
   case ':':

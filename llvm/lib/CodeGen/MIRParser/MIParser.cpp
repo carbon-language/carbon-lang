@@ -882,10 +882,10 @@ bool MIParser::parseRegisterFlag(unsigned &Flags) {
 }
 
 bool MIParser::parseSubRegisterIndex(unsigned &SubReg) {
-  assert(Token.is(MIToken::colon));
+  assert(Token.is(MIToken::dot));
   lex();
   if (Token.isNot(MIToken::Identifier))
-    return error("expected a subregister index after ':'");
+    return error("expected a subregister index after '.'");
   auto Name = Token.stringValue();
   SubReg = getSubRegIndex(Name);
   if (!SubReg)
@@ -970,7 +970,7 @@ bool MIParser::parseRegisterOperand(MachineOperand &Dest,
     return true;
   lex();
   unsigned SubReg = 0;
-  if (Token.is(MIToken::colon)) {
+  if (Token.is(MIToken::dot)) {
     if (parseSubRegisterIndex(SubReg))
       return true;
     if (!TargetRegisterInfo::isVirtualRegister(Reg))
