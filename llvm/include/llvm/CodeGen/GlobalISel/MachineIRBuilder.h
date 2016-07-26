@@ -183,6 +183,15 @@ public:
   /// \return The newly created instruction.
   MachineInstr *buildBr(MachineBasicBlock &BB);
 
+  /// Build and insert \p Res<def> = COPY Op
+  ///
+  /// Register-to-register COPY sets \p Res to \p Op.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return The newly created instruction.
+  MachineInstr *buildCopy(unsigned Res, unsigned Op);
+
   /// Build and insert `Res0<def>, ... = G_EXTRACT Ty Src, Idx0, ...`.
   ///
   /// If \p Ty has size N bits, G_EXTRACT sets \p Res[0] to bits `[Idxs[0],

@@ -102,8 +102,8 @@ bool IRTranslator::translateBr(const Instruction &Inst) {
 
 bool IRTranslator::translateBitCast(const CastInst &CI) {
   if (LLT{*CI.getDestTy()} == LLT{*CI.getSrcTy()}) {
-    MIRBuilder.buildInstr(TargetOpcode::COPY, getOrCreateVReg(CI),
-                          getOrCreateVReg(*CI.getOperand(0)));
+    MIRBuilder.buildCopy(getOrCreateVReg(CI),
+                         getOrCreateVReg(*CI.getOperand(0)));
     return true;
   }
   return translateCast(TargetOpcode::G_BITCAST, CI);

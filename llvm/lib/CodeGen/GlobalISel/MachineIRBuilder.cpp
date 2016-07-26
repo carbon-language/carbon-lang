@@ -90,6 +90,10 @@ MachineInstr *MachineIRBuilder::buildBr(MachineBasicBlock &Dest) {
   return NewMI;
 }
 
+MachineInstr *MachineIRBuilder::buildCopy(unsigned Res, unsigned Op) {
+  return buildInstr(TargetOpcode::COPY, Res, Op);
+}
+
 MachineInstr *MachineIRBuilder::buildExtract(LLT Ty, ArrayRef<unsigned> Results,
                                              unsigned Src,
                                              ArrayRef<unsigned> Indexes) {
