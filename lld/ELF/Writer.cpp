@@ -930,7 +930,7 @@ void Writer<ELFT>::addStartStopSymbols(OutputSectionBase<ELFT> *Sec) {
       Symtab.addSynthetic(Stop, Sec, DefinedSynthetic<ELFT>::SectionEnd);
 }
 
-template <class ELFT> bool elf::needsPtLoad(OutputSectionBase<ELFT> *Sec) {
+template <class ELFT> static bool needsPtLoad(OutputSectionBase<ELFT> *Sec) {
   if (!(Sec->getFlags() & SHF_ALLOC))
     return false;
 
@@ -982,7 +982,7 @@ std::vector<PhdrEntry<ELFT>> Writer<ELFT>::createPhdrs() {
     if (Sec->getFlags() & SHF_TLS)
       TlsHdr.add(Sec);
 
-    if (!needsPtLoad<ELFT>(Sec))
+    if (!needsPtLoad(Sec))
       continue;
 
     // If flags changed then we want new load segment.
@@ -1077,7 +1077,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       Alignment = std::max<uintX_t>(Alignment, Target->PageSize);
 
     // We only assign VAs to allocated sections.
-    if (needsPtLoad<ELFT>(Sec)) {
+    if (needsPtLoad(Sec)) {
       VA = alignTo(VA, Alignment);
       Sec->setVA(VA);
       VA += Sec->getSize();
@@ -1337,11 +1337,6 @@ template bool elf::isRelroSection<ELF32LE>(OutputSectionBase<ELF32LE> *);
 template bool elf::isRelroSection<ELF32BE>(OutputSectionBase<ELF32BE> *);
 template bool elf::isRelroSection<ELF64LE>(OutputSectionBase<ELF64LE> *);
 template bool elf::isRelroSection<ELF64BE>(OutputSectionBase<ELF64BE> *);
-
-template bool elf::needsPtLoad<ELF32LE>(OutputSectionBase<ELF32LE> *);
-template bool elf::needsPtLoad<ELF32BE>(OutputSectionBase<ELF32BE> *);
-template bool elf::needsPtLoad<ELF64LE>(OutputSectionBase<ELF64LE> *);
-template bool elf::needsPtLoad<ELF64BE>(OutputSectionBase<ELF64BE> *);
 
 template StringRef elf::getOutputSectionName<ELF32LE>(InputSectionBase<ELF32LE> *);
 template StringRef elf::getOutputSectionName<ELF32BE>(InputSectionBase<ELF32BE> *);
