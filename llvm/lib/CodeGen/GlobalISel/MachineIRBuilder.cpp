@@ -75,7 +75,7 @@ MachineInstr *MachineIRBuilder::buildFrameIndex(LLT Ty, unsigned Res, int Idx) {
   MachineInstr *NewMI = buildInstr(TargetOpcode::G_FRAME_INDEX, Ty);
   auto MIB = MachineInstrBuilder(getMF(), NewMI);
   MIB.addReg(Res, RegState::Define);
-  MIB.addImm(Idx);
+  MIB.addFrameIndex(Idx);
   return NewMI;
 }
 

@@ -23,9 +23,9 @@ define i64 @addi64(i64 %arg1, i64 %arg2) {
 ; CHECK-NEXT:   - { id: 0, name: ptr1, offset: 0, size: 8, alignment: 8 }
 ; CHECK-NEXT:   - { id: 1, name: ptr2, offset: 0, size: 8, alignment: 1 }
 ; CHECK-NEXT:   - { id: 2, name: ptr3, offset: 0, size: 128, alignment: 8 }
-; CHECK: %{{[0-9]+}}(64) = G_FRAME_INDEX p0 0
-; CHECK: %{{[0-9]+}}(64) = G_FRAME_INDEX p0 1
-; CHECK: %{{[0-9]+}}(64) = G_FRAME_INDEX p0 2
+; CHECK: %{{[0-9]+}}(64) = G_FRAME_INDEX p0 %stack.0.ptr1
+; CHECK: %{{[0-9]+}}(64) = G_FRAME_INDEX p0 %stack.1.ptr2
+; CHECK: %{{[0-9]+}}(64) = G_FRAME_INDEX p0 %stack.2.ptr3
 define void @allocai64() {
   %ptr1 = alloca i64
   %ptr2 = alloca i64, align 1
