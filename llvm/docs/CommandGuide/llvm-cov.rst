@@ -317,6 +317,10 @@ OPTIONS
  universal binary or to use an architecture that does not match a
  non-universal binary.
 
+.. program:: llvm-cov export
+
+.. _llvm-cov-export:
+
 EXPORT COMMAND
 --------------
 
