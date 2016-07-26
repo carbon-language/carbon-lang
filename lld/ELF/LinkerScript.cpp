@@ -774,6 +774,8 @@ static uint64_t getSymbolValue(StringRef S) {
     if (SymbolBody *B = Symtab<ELF64BE>::X->find(S))
       return B->getVA<ELF64BE>();
     break;
+  default:
+    fatal("unsupported target");
   }
   error("symbol not found: " + S);
   return 0;
