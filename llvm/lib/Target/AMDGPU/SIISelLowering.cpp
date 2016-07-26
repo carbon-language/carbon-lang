@@ -770,7 +770,7 @@ SDValue SITargetLowering::LowerFormalArguments(
       }
 
       InVals.push_back(Arg);
-      Info->ABIArgOffset = Offset + MemVT.getStoreSize();
+      Info->setABIArgOffset(Offset + MemVT.getStoreSize());
       continue;
     }
     assert(VA.isRegLoc() && "Parameter must be in a register!");
@@ -1435,7 +1435,7 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
     DebugLoc DL = MI.getDebugLoc();
     BuildMI(*BB, MI, DL, TII->get(AMDGPU::S_MOV_B32))
       .addOperand(MI.getOperand(0))
-      .addImm(MFI->LDSSize);
+      .addImm(MFI->getLDSSize());
     MI.eraseFromParent();
     return BB;
   }
