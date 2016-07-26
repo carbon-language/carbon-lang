@@ -1996,6 +1996,11 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
     return DAG.getNode(AMDGPUISD::RSQ_LEGACY, DL, VT, Op.getOperand(1));
   }
+  case Intrinsic::amdgcn_rcp_legacy: {
+    if (Subtarget->getGeneration() >= SISubtarget::VOLCANIC_ISLANDS)
+      return emitRemovedIntrinsicError(DAG, DL, VT);
+    return DAG.getNode(AMDGPUISD::RCP_LEGACY, DL, VT, Op.getOperand(1));
+  }
   case Intrinsic::amdgcn_rsq_clamp: {
     if (Subtarget->getGeneration() < SISubtarget::VOLCANIC_ISLANDS)
       return DAG.getNode(AMDGPUISD::RSQ_CLAMP, DL, VT, Op.getOperand(1));
@@ -2208,6 +2213,9 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     return DAG.getNode(AMDGPUISD::DIV_SCALE, DL, Op->getVTList(), Src0,
                        Denominator, Numerator);
   }
+  case Intrinsic::amdgcn_fmul_legacy:
+    return DAG.getNode(AMDGPUISD::FMUL_LEGACY, DL, VT,
+                       Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::amdgcn_sffbh:
   case AMDGPUIntrinsic::AMDGPU_flbit_i32: // Legacy name.
     return DAG.getNode(AMDGPUISD::FFBH_I32, DL, VT, Op.getOperand(1));
@@ -3356,6 +3364,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
   case AMDGPUISD::FRACT:
   case AMDGPUISD::RCP:
   case AMDGPUISD::RSQ:
+  case AMDGPUISD::RCP_LEGACY:
   case AMDGPUISD::RSQ_LEGACY:
   case AMDGPUISD::RSQ_CLAMP:
   case AMDGPUISD::LDEXP: {
