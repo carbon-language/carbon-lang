@@ -405,19 +405,24 @@ std::vector<size_t> LinkerScript<ELFT>::getPhdrIndices(StringRef SectionName) {
     if (!Cmd || Cmd->Name != SectionName)
       continue;
 
-    std::vector<size_t> Indices;
-    for (StringRef PhdrName : Cmd->Phdrs) {
-      auto ItPhdr =
-          std::find_if(Opt.PhdrsCommands.rbegin(), Opt.PhdrsCommands.rend(),
-                       [&](PhdrsCommand &P) { return P.Name == PhdrName; });
-      if (ItPhdr == Opt.PhdrsCommands.rend())
-        error("section header '" + PhdrName + "' is not listed in PHDRS");
-      else
-        Indices.push_back(std::distance(ItPhdr, Opt.PhdrsCommands.rend()) - 1);
-    }
-    return Indices;
+    std::vector<size_t> Ret;
+    for (StringRef PhdrName : Cmd->Phdrs)
+      Ret.push_back(getPhdrIndex(PhdrName));
+    return Ret;
   }
   return {};
+}
+
+template <class ELFT>
+size_t LinkerScript<ELFT>::getPhdrIndex(StringRef PhdrName) {
+  size_t I = 0;
+  for (PhdrsCommand &Cmd : Opt.PhdrsCommands) {
+    if (Cmd.Name == PhdrName)
+      return I;
+    ++I;
+  }
+  error("section header '" + PhdrName + "' is not listed in PHDRS");
+  return 0;
 }
 
 class elf::ScriptParser : public ScriptParserBase {
