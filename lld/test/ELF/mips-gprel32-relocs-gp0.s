@@ -9,9 +9,9 @@
 
 # REQUIRES: mips
 
-# CHECK: {{.*}}/mips-gprel32-relocs-gp0.s.tmp-r.o
+# CHECK: {{.*}}mips-gprel32-relocs-gp0.s.tmp-r.o
 # CHECK: GP: 0x7FF0
-# CHECK: {{.*}}/mips-gprel32-relocs-gp0.s.tmp.so
+# CHECK: {{.*}}mips-gprel32-relocs-gp0.s.tmp.so
 # CHECK: GP: 0x27FF0
 
 # DUMP: Contents of section .rodata:
