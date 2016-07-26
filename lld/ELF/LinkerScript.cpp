@@ -226,6 +226,9 @@ void LinkerScript<ELFT>::assignAddresses(
       if (Cmd->AddrExpr)
         Dot = Cmd->AddrExpr(Dot);
 
+      if (Cmd->AlignExpr)
+        Sec->updateAlignment(Cmd->AlignExpr(Dot));
+
       if ((Sec->getFlags() & SHF_TLS) && Sec->getType() == SHT_NOBITS) {
         uintX_t TVA = Dot + ThreadBssOffset;
         TVA = alignTo(TVA, Sec->getAlignment());
@@ -433,6 +436,7 @@ private:
   std::vector<StringRef> readOutputSectionPhdrs();
   unsigned readPhdrType();
   void readProvide(bool Hidden);
+  void readAlign(OutputSectionCommand *Cmd);
 
   Expr readExpr();
   Expr readExpr1(Expr Lhs, int MinPrec);
@@ -671,6 +675,12 @@ void ScriptParser::readKeep(OutputSectionCommand *Cmd) {
   expect(")");
 }
 
+void ScriptParser::readAlign(OutputSectionCommand *Cmd) {
+  expect("(");
+  Cmd->AlignExpr = readExpr();
+  expect(")");
+}
+
 void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
   OutputSectionCommand *Cmd = new OutputSectionCommand(OutSec);
   Opt.Commands.emplace_back(Cmd);
@@ -681,6 +691,9 @@ void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
     Cmd->AddrExpr = readExpr();
 
   expect(":");
+
+  if (skip("ALIGN"))
+    readAlign(Cmd);
 
   // Parse constraints.
   if (skip("ONLY_IF_RO"))
