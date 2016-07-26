@@ -775,7 +775,7 @@ static uint64_t getSymbolValue(StringRef S) {
       return B->getVA<ELF64BE>();
     break;
   default:
-    fatal("unsupported target");
+    llvm_unreachable("unsupported target");
   }
   error("symbol not found: " + S);
   return 0;
