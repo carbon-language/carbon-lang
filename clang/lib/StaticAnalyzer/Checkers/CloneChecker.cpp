@@ -26,7 +26,7 @@ using namespace ento;
 namespace {
 class CloneChecker
     : public Checker<check::ASTCodeBody, check::EndOfTranslationUnit> {
-  mutable CloneDetector CloneDetector;
+  mutable CloneDetector Detector;
 
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager &Mgr,
@@ -41,7 +41,7 @@ void CloneChecker::checkASTCodeBody(const Decl *D, AnalysisManager &Mgr,
                                     BugReporter &BR) const {
   // Every statement that should be included in the search for clones needs to
   // be passed to the CloneDetector.
-  CloneDetector.analyzeCodeBody(D);
+  Detector.analyzeCodeBody(D);
 }
 
 void CloneChecker::checkEndOfTranslationUnit(const TranslationUnitDecl *TU,
@@ -58,7 +58,7 @@ void CloneChecker::checkEndOfTranslationUnit(const TranslationUnitDecl *TU,
   SourceManager &SM = BR.getSourceManager();
 
   std::vector<CloneDetector::CloneGroup> CloneGroups;
-  CloneDetector.findClones(CloneGroups, MinComplexity);
+  Detector.findClones(CloneGroups, MinComplexity);
 
   DiagnosticsEngine &DiagEngine = Mgr.getDiagnostic();
 
