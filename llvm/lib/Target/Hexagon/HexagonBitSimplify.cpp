@@ -2382,8 +2382,8 @@ namespace {
     struct PhiInfo {
       PhiInfo(MachineInstr &P, MachineBasicBlock &B);
       unsigned DefR;
-      BitTracker::RegisterRef LR, PR;
-      MachineBasicBlock *LB, *PB;
+      BitTracker::RegisterRef LR, PR; // Loop Register, Preheader Register
+      MachineBasicBlock *LB, *PB;     // Loop Block, Preheader Block
     };
 
     static unsigned getDefReg(const MachineInstr *MI);
@@ -2742,31 +2742,37 @@ bool HexagonLoopRescheduling::processLoop(LoopCand &C) {
     auto F = std::find_if(Phis.begin(), Phis.end(), LoopInpEq);
     if (F == Phis.end())
       continue;
-    unsigned PredR = 0;
-    if (!isSameShuffle(G.Out.Reg, G.Inp.Reg, F->PR.Reg, PredR)) {
-      const MachineInstr *DefPredR = MRI->getVRegDef(F->PR.Reg);
-      unsigned Opc = DefPredR->getOpcode();
+    unsigned PrehR = 0;
+    if (!isSameShuffle(G.Out.Reg, G.Inp.Reg, F->PR.Reg, PrehR)) {
+      const MachineInstr *DefPrehR = MRI->getVRegDef(F->PR.Reg);
+      unsigned Opc = DefPrehR->getOpcode();
       if (Opc != Hexagon::A2_tfrsi && Opc != Hexagon::A2_tfrpi)
         continue;
-      if (!DefPredR->getOperand(1).isImm())
+      if (!DefPrehR->getOperand(1).isImm())
         continue;
-      if (DefPredR->getOperand(1).getImm() != 0)
+      if (DefPrehR->getOperand(1).getImm() != 0)
         continue;
       const TargetRegisterClass *RC = MRI->getRegClass(G.Inp.Reg);
       if (RC != MRI->getRegClass(F->PR.Reg)) {
-        PredR = MRI->createVirtualRegister(RC);
+        PrehR = MRI->createVirtualRegister(RC);
         unsigned TfrI = (RC == &Hexagon::IntRegsRegClass) ? Hexagon::A2_tfrsi
                                                           : Hexagon::A2_tfrpi;
         auto T = C.PB->getFirstTerminator();
         DebugLoc DL = (T != C.PB->end()) ? T->getDebugLoc() : DebugLoc();
-        BuildMI(*C.PB, T, DL, HII->get(TfrI), PredR)
+        BuildMI(*C.PB, T, DL, HII->get(TfrI), PrehR)
           .addImm(0);
       } else {
-        PredR = F->PR.Reg;
+        PrehR = F->PR.Reg;
       }
     }
-    assert(MRI->getRegClass(PredR) == MRI->getRegClass(G.Inp.Reg));
-    moveGroup(G, *F->LB, *F->PB, F->LB->getFirstNonPHI(), F->DefR, PredR);
+    // isSameShuffle could match with PrehR being of a wider class than
+    // G.Inp.Reg, for example if G shuffles the low 32 bits of its input,
+    // it would match for the input being a 32-bit register, and PrehR
+    // being a 64-bit register (where the low 32 bits match). This could
+    // be handled, but for now skip these cases.
+    if (MRI->getRegClass(PrehR) != MRI->getRegClass(G.Inp.Reg))
+      continue;
+    moveGroup(G, *F->LB, *F->PB, F->LB->getFirstNonPHI(), F->DefR, PrehR);
     Changed = true;
   }
 
