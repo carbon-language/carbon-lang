@@ -1294,18 +1294,20 @@ bool RedundantInstrElimination::processBlock(MachineBasicBlock &B,
       const DebugLoc &DL = MI->getDebugLoc();
       const TargetRegisterClass *FRC = HBS::getFinalVRegClass(RD, MRI);
       unsigned NewR = MRI.createVirtualRegister(FRC);
-      BuildMI(B, At, DL, HII.get(TargetOpcode::COPY), NewR)
-          .addReg(RS.Reg, 0, RS.Sub);
+      MachineInstr *CopyI =
+          BuildMI(B, At, DL, HII.get(TargetOpcode::COPY), NewR)
+            .addReg(RS.Reg, 0, RS.Sub);
       HBS::replaceSubWithSub(RD.Reg, RD.Sub, NewR, 0, MRI);
-      // Do not update the bit tracker. This pass can create copies between
-      // registers that don't have the exact same values. Updating the
-      // tracker here may be tricky.  E.g.
+      // This pass can create copies between registers that don't have the
+      // exact same values. Updating the tracker has to involve updating
+      // all dependent cells. Example:
       //   vreg1 = inst vreg2     ; vreg1 != vreg2, but used bits are equal
       //
       //   vreg3 = copy vreg2     ; <- inserted
       //     ... = vreg3          ; <- replaced from vreg2
       // Indirectly, we can create a "copy" between vreg1 and vreg2 even
       // though their exact values do not match.
+      BT.visit(*CopyI);
       Changed = true;
       break;
     }
