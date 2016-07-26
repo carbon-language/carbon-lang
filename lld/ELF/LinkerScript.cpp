@@ -819,6 +819,17 @@ Expr ScriptParser::readPrimary() {
     expect(")");
     return [](uint64_t Dot) { return Dot; };
   }
+  // GNU linkers implements more complicated logic to handle
+  // DATA_SEGMENT_RELRO_END. We instead ignore the arguments and just align to
+  // the next page boundary for simplicity.
+  if (Tok == "DATA_SEGMENT_RELRO_END") {
+    expect("(");
+    next();
+    expect(",");
+    readExpr();
+    expect(")");
+    return [](uint64_t Dot) { return alignTo(Dot, Target->PageSize); };
+  }
 
   // Parse a number literal
   uint64_t V = 0;
