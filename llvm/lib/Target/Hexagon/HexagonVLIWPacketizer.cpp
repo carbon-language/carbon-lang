@@ -326,7 +326,13 @@ static bool doesModifyCalleeSavedReg(const MachineInstr *MI,
 // TODO: MI->isIndirectBranch() and IsRegisterJump(MI)
 // Returns true if an instruction can be promoted to .new predicate or
 // new-value store.
-bool HexagonPacketizerList::isNewifiable(const MachineInstr* MI) {
+bool HexagonPacketizerList::isNewifiable(const MachineInstr* MI,
+      const TargetRegisterClass *NewRC) {
+  // Vector stores can be predicated, and can be new-value stores, but
+  // they cannot be predicated on a .new predicate value.
+  if (NewRC == &Hexagon::PredRegsRegClass)
+    if (HII->isV60VectorInstruction(MI) && MI->mayStore())
+      return false;
   return HII->isCondInst(MI) || MI->isReturn() || HII->mayBeNewStore(MI);
 }
 
@@ -767,7 +773,7 @@ bool HexagonPacketizerList::canPromoteToDotNew(const MachineInstr *MI,
   if (HII->isDotNewInst(MI) && !HII->mayBeNewStore(MI))
     return false;
 
-  if (!isNewifiable(MI))
+  if (!isNewifiable(MI, RC))
     return false;
 
   const MachineInstr *PI = PacketSU->getInstr();
