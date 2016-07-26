@@ -813,7 +813,7 @@ Expr ScriptParser::readPrimary() {
     expect(")");
     return [=](uint64_t Dot) -> uint64_t {
       uint64_t Val = E(Dot);
-      return alignTo(Dot, Val) + (Dot & (Val - 1));
+      return alignTo(Dot, Val);
     };
   }
   if (Tok == "DATA_SEGMENT_END") {
