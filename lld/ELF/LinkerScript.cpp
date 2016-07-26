@@ -351,16 +351,14 @@ ArrayRef<uint8_t> LinkerScript<ELFT>::getFiller(StringRef Name) {
 // were in the script. If a given name did not appear in the script,
 // it returns INT_MAX, so that it will be laid out at end of file.
 template <class ELFT> int LinkerScript<ELFT>::getSectionIndex(StringRef Name) {
-  auto Begin = Opt.Commands.begin();
-  auto End = Opt.Commands.end();
-  auto I =
-      std::find_if(Begin, End, [&](const std::unique_ptr<BaseCommand> &Base) {
-        if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
-          if (Cmd->Name == Name)
-            return true;
-        return false;
-      });
-  return I == End ? INT_MAX : (I - Begin);
+  int I = 0;
+  for (std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
+    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
+      if (Cmd->Name == Name)
+        return I;
+    ++I;
+  }
+  return INT_MAX;
 }
 
 // A compartor to sort output sections. Returns -1 or 1 if
