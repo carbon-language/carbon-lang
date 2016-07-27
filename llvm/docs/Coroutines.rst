@@ -166,7 +166,7 @@ execution of the coroutine until a suspend point is reached:
   entry:
     %alloc = call noalias i8* @malloc(i32 24)
     %0 = call noalias i8* @llvm.coro.begin(i8* %alloc, i32 0, i8* null, i8* null)
-    %frame = bitcast i8* %frame to %f.frame*
+    %frame = bitcast i8* %0 to %f.frame*
     %1 = getelementptr %f.frame, %f.frame* %frame, i32 0, i32 0
     store void (%f.frame*)* @f.resume, void (%f.frame*)** %1
     %2 = getelementptr %f.frame, %f.frame* %frame, i32 0, i32 1
