@@ -168,6 +168,19 @@ public:
     return false;
   }
 
+  /// Returns true if \p BB is a loop-latch.
+  /// A latch block is a block that contains a branch back to the header.
+  /// This function is useful when there are multiple latches in a loop
+  /// because \fn getLoopLatch will return nullptr in that case.
+  bool isLoopLatch(const BlockT *BB) const {
+    assert(contains(BB) && "block does not belong to the loop");
+
+    BlockT *Header = getHeader();
+    auto PredBegin = GraphTraits<Inverse<BlockT*> >::child_begin(Header);
+    auto PredEnd = GraphTraits<Inverse<BlockT*> >::child_end(Header);
+    return std::find(PredBegin, PredEnd, BB) != PredEnd;
+  }
+
   /// Calculate the number of back edges to the loop header.
   unsigned getNumBackEdges() const {
     unsigned NumBackEdges = 0;
