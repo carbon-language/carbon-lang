@@ -64,10 +64,14 @@ following key binding to your ``.vimrc``:
 
 .. code-block:: console
 
-  map ,cf :pyf path/to/llvm/source/tools/clang/tools/extra/include-fixer/tool/clang-include-fixer.py<cr>
+  noremap <leader>cf :pyf path/to/llvm/source/tools/clang/tools/extra/include-fixer/tool/clang-include-fixer.py<cr>
 
-This enables `clang-include-fixer` for NORMAL and VISUAL mode. Change ``,cf`` to
-another binding if you need clang-include-fixer on a different key.
+This enables `clang-include-fixer` for NORMAL and VISUAL mode. Change
+``<leader>cf`` to another binding if you need clang-include-fixer on a different
+key. The
+[``<leader> key``](http://vim.wikia.com/wiki/Mapping_keys_in_Vim_-_Tutorial_(Part_3)#Map_leader)
+is a reference to a specific key defined by the mapleader variable and is binded
+to backslash by default.
 
 Make sure vim can find :program:`clang-include-fixer`:
 
