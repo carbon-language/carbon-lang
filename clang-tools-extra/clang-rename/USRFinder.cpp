@@ -52,8 +52,8 @@ public:
   // checking if the point lies within the length of the name of the declaration
   // and the start location is sufficient.
   bool VisitNamedDecl(const NamedDecl *Decl) {
-    return setResult(Decl, Decl->getLocation(),
-                     Decl->getNameAsString().length());
+    return dyn_cast<CXXConversionDecl>(Decl) ? true :
+        setResult(Decl, Decl->getLocation(), Decl->getNameAsString().length());
   }
 
   // Expression visitors:
