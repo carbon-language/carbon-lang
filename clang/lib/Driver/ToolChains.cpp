@@ -176,13 +176,6 @@ Darwin::~Darwin() {}
 
 MachO::~MachO() {}
 
-std::string MachO::ComputeEffectiveClangTriple(const ArgList &Args,
-                                               types::ID InputType) const {
-  llvm::Triple Triple(ComputeLLVMTriple(Args, InputType));
-
-  return Triple.getTriple();
-}
-
 std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args,
                                                 types::ID InputType) const {
   llvm::Triple Triple(ComputeLLVMTriple(Args, InputType));

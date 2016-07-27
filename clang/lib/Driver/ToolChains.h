@@ -312,9 +312,6 @@ public:
   /// @name ToolChain Implementation
   /// {
 
-  std::string ComputeEffectiveClangTriple(const llvm::opt::ArgList &Args,
-                                          types::ID InputType) const override;
-
   types::ID LookupTypeForExtension(const char *Ext) const override;
 
   bool HasNativeLLVMSupport() const override;
