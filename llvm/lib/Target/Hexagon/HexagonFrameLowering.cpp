@@ -1938,19 +1938,6 @@ void HexagonFrameLowering::optimizeSpillSlots(MachineFunction &MF,
   SmallSet<int,4> BadFIs;
   std::map<int,SlotInfo> FIRangeMap;
 
-  auto getRegClass = [&MRI,&HRI] (HexagonBlockRanges::RegisterRef R)
-        -> const TargetRegisterClass* {
-    if (TargetRegisterInfo::isPhysicalRegister(R.Reg))
-      assert(R.Sub == 0);
-    if (TargetRegisterInfo::isVirtualRegister(R.Reg)) {
-      auto *RCR = MRI.getRegClass(R.Reg);
-      if (R.Sub == 0)
-        return RCR;
-      unsigned PR = *RCR->begin();
-      R.Reg = HRI.getSubReg(PR, R.Sub);
-    }
-    return HRI.getMinimalPhysRegClass(R.Reg);
-  };
   // Accumulate register classes: get a common class for a pre-existing
   // class HaveRC and a new class NewRC. Return nullptr if a common class
   // cannot be found, otherwise return the resulting class. If HaveRC is
@@ -2003,14 +1990,8 @@ void HexagonFrameLowering::optimizeSpillSlots(MachineFunction &MF,
         bool Bad = (AM != HexagonII::BaseImmOffset);
         if (!Bad) {
           // If the addressing mode is ok, check the register class.
-          const TargetRegisterClass *RC = nullptr;
-          if (Load) {
-            MachineOperand &DataOp = In.getOperand(0);
-            RC = getRegClass({DataOp.getReg(), DataOp.getSubReg()});
-          } else {
-            MachineOperand &DataOp = In.getOperand(2);
-            RC = getRegClass({DataOp.getReg(), DataOp.getSubReg()});
-          }
+          unsigned OpNum = Load ? 0 : 2;
+          auto *RC = HII.getRegClass(In.getDesc(), OpNum, &HRI, MF);
           RC = getCommonRC(SI.RC, RC);
           if (RC == nullptr)
             Bad = true;
@@ -2024,6 +2005,14 @@ void HexagonFrameLowering::optimizeSpillSlots(MachineFunction &MF,
             Bad = true;
           else
             SI.Size = S;
+        }
+        if (!Bad) {
+          for (auto *Mo : In.memoperands()) {
+            if (!Mo->isVolatile())
+              continue;
+            Bad = true;
+            break;
+          }
         }
         if (Bad)
           BadFIs.insert(TFI);
@@ -2165,7 +2154,7 @@ void HexagonFrameLowering::optimizeSpillSlots(MachineFunction &MF,
 
         HexagonBlockRanges::RegisterRef SrcRR = { SrcOp.getReg(),
                                                   SrcOp.getSubReg() };
-        auto *RC = getRegClass({SrcOp.getReg(), SrcOp.getSubReg()});
+        auto *RC = HII.getRegClass(SI->getDesc(), 2, &HRI, MF);
         // The this-> is needed to unconfuse MSVC.
         unsigned FoundR = this->findPhysReg(MF, Range, IM, DM, RC);
         DEBUG(dbgs() << "Replacement reg:" << PrintReg(FoundR, &HRI) << '\n');
