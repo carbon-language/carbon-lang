@@ -98,5 +98,5 @@ happen before running the tool**.
 Once installed, you can point your cursor to symbols you want to rename, press
 ``<leader>cr`` and print new desired name. The
 [``<leader> key``](http://vim.wikia.com/wiki/Mapping_keys_in_Vim_-_Tutorial_(Part_3)#Map_leader)
-is a reference to a specific key defined by the mapleader variable and is binded
+is a reference to a specific key defined by the mapleader variable and is bound
 to backslash by default.

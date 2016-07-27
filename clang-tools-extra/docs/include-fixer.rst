@@ -70,7 +70,7 @@ This enables `clang-include-fixer` for NORMAL and VISUAL mode. Change
 ``<leader>cf`` to another binding if you need clang-include-fixer on a different
 key. The
 [``<leader> key``](http://vim.wikia.com/wiki/Mapping_keys_in_Vim_-_Tutorial_(Part_3)#Map_leader)
-is a reference to a specific key defined by the mapleader variable and is binded
+is a reference to a specific key defined by the mapleader variable and is bound
 to backslash by default.
 
 Make sure vim can find :program:`clang-include-fixer`:
