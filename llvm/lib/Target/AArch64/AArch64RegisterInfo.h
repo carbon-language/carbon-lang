@@ -24,7 +24,7 @@ class RegScavenger;
 class TargetRegisterClass;
 class Triple;
 
-class AArch64RegisterInfo : public AArch64GenRegisterInfo {
+class AArch64RegisterInfo final : public AArch64GenRegisterInfo {
   const Triple &TT;
 
 public:

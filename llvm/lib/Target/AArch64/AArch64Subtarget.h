@@ -32,7 +32,7 @@ class GlobalValue;
 class StringRef;
 class Triple;
 
-class AArch64Subtarget : public AArch64GenSubtargetInfo {
+class AArch64Subtarget final : public AArch64GenSubtargetInfo {
 public:
   enum ARMProcFamilyEnum : uint8_t {
     Others,
