@@ -5727,14 +5727,17 @@ public:
 
   bool setCPU(const std::string &Name) override {
     bool CPUKnown = llvm::StringSwitch<bool>(Name)
-                        .Case("generic", true)
-                        .Cases("cortex-a53", "cortex-a57", "cortex-a72",
-                               "cortex-a35", "exynos-m1", true)
-                        .Case("cortex-a73", true)
-                        .Case("cyclone", true)
-                        .Case("kryo", true)
-                        .Case("vulcan", true)
-                        .Default(false);
+      .Case("cortex-a35", true)
+      .Case("cortex-a53", true)
+      .Case("cortex-a57", true)
+      .Case("cortex-a72", true)
+      .Case("cortex-a73", true)
+      .Case("cyclone", true)
+      .Case("exynos-m1", true)
+      .Case("generic", true)
+      .Case("kryo", true)
+      .Case("vulcan", true)
+      .Default(false);
     return CPUKnown;
   }
 
