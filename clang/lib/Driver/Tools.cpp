@@ -4193,6 +4193,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     true))
     CmdArgs.push_back("-fno-jump-tables");
 
+  if (!Args.hasFlag(options::OPT_fpreserve_as_comments,
+                    options::OPT_fno_preserve_as_comments, true))
+    CmdArgs.push_back("-fno-preserve-as-comments");
+
   if (Arg *A = Args.getLastArg(options::OPT_mregparm_EQ)) {
     CmdArgs.push_back("-mregparm");
     CmdArgs.push_back(A->getValue());
