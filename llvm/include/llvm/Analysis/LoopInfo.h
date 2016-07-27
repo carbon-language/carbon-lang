@@ -342,7 +342,10 @@ public:
   /// Verify loop structure of this loop and all nested loops.
   void verifyLoopNest(DenseSet<const LoopT*> *Loops) const;
 
-  void print(raw_ostream &OS, unsigned Depth = 0) const;
+  void print(raw_ostream &OS, unsigned Depth = 0, bool Verbose = false) const;
+
+  /// Print loop with all the BBs inside it.
+  void printVerbose(raw_ostream &OS, unsigned Depth = 0) const;
 
 protected:
   friend class LoopInfoBase<BlockT, LoopT>;
@@ -464,6 +467,7 @@ public:
   BasicBlock *getUniqueExitBlock() const;
 
   void dump() const;
+  void dumpVerbose() const;
 
   /// Return the debug location of the start of this loop.
   /// This looks for a BB terminating instruction with a known debug

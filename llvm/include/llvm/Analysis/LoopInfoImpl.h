@@ -309,17 +309,24 @@ void LoopBase<BlockT, LoopT>::verifyLoopNest(
 }
 
 template<class BlockT, class LoopT>
-void LoopBase<BlockT, LoopT>::print(raw_ostream &OS, unsigned Depth) const {
+void LoopBase<BlockT, LoopT>::print(raw_ostream &OS, unsigned Depth,
+                                    bool Verbose) const {
   OS.indent(Depth*2) << "Loop at depth " << getLoopDepth()
        << " containing: ";
 
+  BlockT *H = getHeader();
   for (unsigned i = 0; i < getBlocks().size(); ++i) {
-    if (i) OS << ",";
     BlockT *BB = getBlocks()[i];
-    BB->printAsOperand(OS, false);
-    if (BB == getHeader())    OS << "<header>";
-    if (BB == getLoopLatch()) OS << "<latch>";
-    if (isLoopExiting(BB))    OS << "<exiting>";
+    if (!Verbose) {
+      if (i) OS << ",";
+      BB->printAsOperand(OS, false);
+    } else OS << "\n";
+
+    if (BB == H) OS << "<header>";
+    if (isLoopLatch(BB)) OS << "<latch>";
+    if (isLoopExiting(BB)) OS << "<exiting>";
+    if (Verbose)
+      BB->print(OS);
   }
   OS << "\n";
 
