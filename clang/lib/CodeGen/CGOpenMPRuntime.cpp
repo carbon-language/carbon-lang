@@ -5271,15 +5271,13 @@ private:
 
       // If the variable is a pointer and is being dereferenced (i.e. is not
       // the last component), the base has to be the pointer itself, not its
-      // reference.
-      if (I->getAssociatedDeclaration()->getType()->isAnyPointerType() &&
-          std::next(I) != CE) {
-        auto PtrAddr = CGF.MakeNaturalAlignAddrLValue(
-            BP, I->getAssociatedDeclaration()->getType());
+      // reference. References are ignored for mapping purposes.
+      QualType Ty =
+          I->getAssociatedDeclaration()->getType().getNonReferenceType();
+      if (Ty->isAnyPointerType() && std::next(I) != CE) {
+        auto PtrAddr = CGF.MakeNaturalAlignAddrLValue(BP, Ty);
         BP = CGF.EmitLoadOfPointerLValue(PtrAddr.getAddress(),
-                                         I->getAssociatedDeclaration()
-                                             ->getType()
-                                             ->getAs<PointerType>())
+                                         Ty->castAs<PointerType>())
                  .getPointer();
 
         // We do not need to generate individual map information for the
