@@ -337,9 +337,9 @@ void SourceCoverageViewHTML::renderLine(
   for (unsigned I = 0, E = Snippets.size(); I < E; ++I)
     Snippets[I] = escape(Snippets[I]);
 
-  // 3. Use \p WrappedSegment to set the highlight for snippets 0 and 1. Use
-  //    segment 1 to set the highlight for snippet 2, segment 2 to set the
-  //    highlight for snippet 3, and so on.
+  // 3. Use \p WrappedSegment to set the highlight for snippet 0. Use segment
+  //    1 to set the highlight for snippet 2, segment 2 to set the highlight for
+  //    snippet 3, and so on.
 
   Optional<std::string> Color;
   auto Highlight = [&](const std::string &Snippet) {
@@ -347,17 +347,16 @@ void SourceCoverageViewHTML::renderLine(
   };
 
   auto CheckIfUncovered = [](const coverage::CoverageSegment *S) {
-    return S && S->HasCount && S->Count == 0;
+    return !S || (S->HasCount && S->Count == 0);
   };
 
   if (CheckIfUncovered(WrappedSegment) ||
       CheckIfUncovered(Segments.empty() ? nullptr : Segments.front())) {
     Color = "red";
     Snippets[0] = Highlight(Snippets[0]);
-    Snippets[1] = Highlight(Snippets[1]);
   }
 
-  for (unsigned I = 1, E = Segments.size(); I < E; ++I) {
+  for (unsigned I = 0, E = Segments.size(); I < E; ++I) {
     const auto *CurSeg = Segments[I];
     if (CurSeg->Col == ExpansionCol)
       Color = "cyan";
@@ -369,6 +368,9 @@ void SourceCoverageViewHTML::renderLine(
     if (Color.hasValue())
       Snippets[I + 1] = Highlight(Snippets[I + 1]);
   }
+
+  if (Color.hasValue() && Segments.empty())
+    Snippets.back() = Highlight(Snippets.back());
 
   // 4. Snippets[1:N+1] correspond to \p Segments[0:N]: use these to generate
   //    sub-line region count tooltips if needed.
@@ -390,7 +392,7 @@ void SourceCoverageViewHTML::renderLine(
 
       Snippets[I + 1] =
           tag("div", Snippets[I + 1] + tag("span", formatCount(CurSeg->Count),
-                                          "tooltip-content"),
+                                           "tooltip-content"),
               "tooltip");
     }
   }
