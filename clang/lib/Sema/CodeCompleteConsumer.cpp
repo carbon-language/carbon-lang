@@ -445,8 +445,8 @@ bool PrintingCodeCompleteConsumer::isResultFilteredOut(StringRef Filter,
   case CodeCompletionResult::RK_Pattern: {
     return !StringRef(Result.Pattern->getAsString()).startswith(Filter);
   }
-  default: llvm_unreachable("Unknown code completion result Kind.");
   }
+  llvm_unreachable("Unknown code completion result Kind.");
 }
 
 void 
