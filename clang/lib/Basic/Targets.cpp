@@ -8113,6 +8113,7 @@ public:
                                      Triple.getOSName(),
                                      Triple.getEnvironmentName()),
                         Opts) {
+    IsRenderScriptTarget = true;
     LongWidth = LongAlign = 64;
   }
   void getTargetDefines(const LangOptions &Opts,
@@ -8130,7 +8131,9 @@ public:
       : AArch64leTargetInfo(llvm::Triple("aarch64", Triple.getVendorName(),
                                          Triple.getOSName(),
                                          Triple.getEnvironmentName()),
-                            Opts) {}
+                            Opts) {
+    IsRenderScriptTarget = true;
+  }
 
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
