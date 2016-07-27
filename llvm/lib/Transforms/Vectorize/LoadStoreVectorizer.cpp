@@ -969,8 +969,6 @@ bool Vectorizer::vectorizeLoadChain(
 
   if (VecLoadTy) {
     SmallVector<Instruction *, 16> InstrsToErase;
-    SmallVector<Instruction *, 16> InstrsToReorder;
-    InstrsToReorder.push_back(cast<Instruction>(Bitcast));
 
     unsigned VecWidth = VecLoadTy->getNumElements();
     for (unsigned I = 0, E = Chain.size(); I != E; ++I) {
@@ -990,15 +988,14 @@ bool Vectorizer::vectorizeLoadChain(
       }
     }
 
-    for (Instruction *ModUser : InstrsToReorder)
-      reorder(ModUser);
+    // Bitcast might not be an Instruction, if the value being loaded is a
+    // constant.  In that case, no need to reorder anything.
+    if (Instruction *BitcastInst = dyn_cast<Instruction>(Bitcast))
+      reorder(BitcastInst);
 
     for (auto I : InstrsToErase)
       I->eraseFromParent();
   } else {
-    SmallVector<Instruction *, 16> InstrsToReorder;
-    InstrsToReorder.push_back(cast<Instruction>(Bitcast));
-
     for (unsigned I = 0, E = Chain.size(); I != E; ++I) {
       Value *V = Builder.CreateExtractElement(LI, Builder.getInt32(I));
       Instruction *Extracted = cast<Instruction>(V);
@@ -1012,8 +1009,8 @@ bool Vectorizer::vectorizeLoadChain(
       UI->replaceAllUsesWith(Extracted);
     }
 
-    for (Instruction *ModUser : InstrsToReorder)
-      reorder(ModUser);
+    if (Instruction *BitcastInst = dyn_cast<Instruction>(Bitcast))
+      reorder(BitcastInst);
   }
 
   eraseInstructions(Chain);
