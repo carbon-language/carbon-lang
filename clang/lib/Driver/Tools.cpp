@@ -296,56 +296,25 @@ static bool forwardToGCC(const Option &O) {
          !O.hasFlag(options::DriverOption) && !O.hasFlag(options::LinkerInput);
 }
 
-/// Add the C++ include args of other offloading toolchains. If this is a host
-/// job, the device toolchains are added. If this is a device job, the host
-/// toolchains will be added.
-static void addExtraOffloadCXXStdlibIncludeArgs(Compilation &C,
-                                                const JobAction &JA,
-                                                const ArgList &Args,
-                                                ArgStringList &CmdArgs) {
+/// Apply \a Work on the current tool chain \a RegularToolChain and any other
+/// offloading tool chain that is associated with the current action \a JA.
+static void
+forAllAssociatedToolChains(Compilation &C, const JobAction &JA,
+                           const ToolChain &RegularToolChain,
+                           llvm::function_ref<void(const ToolChain &)> Work) {
+  // Apply Work on the current/regular tool chain.
+  Work(RegularToolChain);
 
+  // Apply Work on all the offloading tool chains associated with the current
+  // action.
   if (JA.isHostOffloading(Action::OFK_Cuda))
-    C.getSingleOffloadToolChain<Action::OFK_Cuda>()
-        ->AddClangCXXStdlibIncludeArgs(Args, CmdArgs);
+    Work(*C.getSingleOffloadToolChain<Action::OFK_Host>());
   else if (JA.isDeviceOffloading(Action::OFK_Cuda))
-    C.getSingleOffloadToolChain<Action::OFK_Host>()
-        ->AddClangCXXStdlibIncludeArgs(Args, CmdArgs);
+    Work(*C.getSingleOffloadToolChain<Action::OFK_Cuda>());
 
-  // TODO: Add support for other programming models here.
-}
-
-/// Add the C include args of other offloading toolchains. If this is a host
-/// job, the device toolchains are added. If this is a device job, the host
-/// toolchains will be added.
-static void addExtraOffloadClangSystemIncludeArgs(Compilation &C,
-                                                  const JobAction &JA,
-                                                  const ArgList &Args,
-                                                  ArgStringList &CmdArgs) {
-
-  if (JA.isHostOffloading(Action::OFK_Cuda))
-    C.getSingleOffloadToolChain<Action::OFK_Cuda>()->AddClangSystemIncludeArgs(
-        Args, CmdArgs);
-  else if (JA.isDeviceOffloading(Action::OFK_Cuda))
-    C.getSingleOffloadToolChain<Action::OFK_Host>()->AddClangSystemIncludeArgs(
-        Args, CmdArgs);
-
-  // TODO: Add support for other programming models here.
-}
-
-/// Add the include args that are specific of each offloading programming model.
-static void addExtraOffloadSpecificIncludeArgs(Compilation &C,
-                                               const JobAction &JA,
-                                               const ArgList &Args,
-                                               ArgStringList &CmdArgs) {
-
-  if (JA.isHostOffloading(Action::OFK_Cuda))
-    C.getSingleOffloadToolChain<Action::OFK_Host>()->AddCudaIncludeArgs(
-        Args, CmdArgs);
-  else if (JA.isDeviceOffloading(Action::OFK_Cuda))
-    C.getSingleOffloadToolChain<Action::OFK_Cuda>()->AddCudaIncludeArgs(
-        Args, CmdArgs);
-
-  // TODO: Add support for other programming models here.
+  //
+  // TODO: Add support for other offloading programming models here.
+  //
 }
 
 void Clang::AddPreprocessingOptions(Compilation &C, const JobAction &JA,
@@ -622,22 +591,26 @@ void Clang::AddPreprocessingOptions(Compilation &C, const JobAction &JA,
   // of an offloading programming model.
 
   // Add C++ include arguments, if needed.
-  if (types::isCXX(Inputs[0].getType())) {
-    getToolChain().AddClangCXXStdlibIncludeArgs(Args, CmdArgs);
-    addExtraOffloadCXXStdlibIncludeArgs(C, JA, Args, CmdArgs);
-  }
+  if (types::isCXX(Inputs[0].getType()))
+    forAllAssociatedToolChains(C, JA, getToolChain(),
+                               [&Args, &CmdArgs](const ToolChain &TC) {
+                                 TC.AddClangCXXStdlibIncludeArgs(Args, CmdArgs);
+                               });
 
   // Add system include arguments for all targets but IAMCU.
-  if (!IsIAMCU) {
-    getToolChain().AddClangSystemIncludeArgs(Args, CmdArgs);
-    addExtraOffloadClangSystemIncludeArgs(C, JA, Args, CmdArgs);
-  } else {
+  if (!IsIAMCU)
+    forAllAssociatedToolChains(C, JA, getToolChain(),
+                               [&Args, &CmdArgs](const ToolChain &TC) {
+                                 TC.AddClangSystemIncludeArgs(Args, CmdArgs);
+                               });
+  else {
     // For IAMCU add special include arguments.
     getToolChain().AddIAMCUIncludeArgs(Args, CmdArgs);
   }
 
-  // Add offload include arguments, if needed.
-  addExtraOffloadSpecificIncludeArgs(C, JA, Args, CmdArgs);
+  // Add offload include arguments specific for CUDA if that is required.
+  if (JA.isOffloading(Action::OFK_Cuda))
+    getToolChain().AddCudaIncludeArgs(Args, CmdArgs);
 }
 
 // FIXME: Move to target hook.
