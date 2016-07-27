@@ -75,6 +75,25 @@ You can customize the number of headers being shown by setting
 
 See ``clang-include-fixer.py`` for more details.
 
+Integrate with Emacs
+--------------------
+To run `clang-include-fixer` on a potentially unsaved buffer in Emacs.
+Ensure that Emacs finds ``clang-include-fixer.el`` by adding the directory containing the file to the ``load-path``
+and requiring the `clang-include-fixer` in your ```.emacs``:
+
+.. code-block:: console
+
+ (add-to-list 'load-path "path/to/llvm/source/tools/clang/tools/extra/include-fixer/tool/"
+ (require 'clang-include-fixer)
+
+Within Emacs the tool can be invoked with the command ``M-x clang-include-fixer``.
+
+Make sure Emacs can find :program:`clang-include-fixer`:
+
+- Add the path to :program:`clang-include-fixer` to the PATH environment variable.
+
+See ``clang-include-fixer.el`` for more details.
+
 How it Works
 ============
 
