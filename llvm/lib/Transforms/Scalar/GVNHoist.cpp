@@ -74,7 +74,7 @@ public:
 
     unsigned ADFS = DFSNumber.lookup(A);
     unsigned BDFS = DFSNumber.lookup(B);
-    assert (ADFS && ADFS);
+    assert (ADFS && BDFS);
     return ADFS < BDFS;
   }
 };
