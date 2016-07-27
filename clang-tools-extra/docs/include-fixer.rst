@@ -10,6 +10,10 @@ management of ``#include`` directives in any file.
 an automated way of adding ``#include`` directives for missing symbols in one
 translation unit.
 
+While inserting missing ``#include``, :program:`clang-include-fixer` adds
+missing namespace qualifiers to all instances of an unidentified symbol if
+the symbol is missing some prefix namespace qualifiers.
+
 Setup
 =====
 
@@ -31,7 +35,7 @@ so only implementation files can be handled by tools.
 .. _How To Setup Tooling For LLVM: http://clang.llvm.org/docs/HowToSetupToolingForLLVM.html
 
 Creating a Symbol Index From a Compilation Database
-------------------------------------------------------
+---------------------------------------------------
 
 The include fixer contains :program:`find-all-symbols`, a tool to create a
 symbol database in YAML format from a compilation database by parsing all
@@ -54,7 +58,7 @@ database for LLVM, any project built by CMake should follow similar steps.
     Added #include "foo.h"
 
 Integrate with Vim
--------------------
+------------------
 To run `clang-include-fixer` on a potentially unsaved buffer in Vim. Add the
 following key binding to your ``.vimrc``:
 
