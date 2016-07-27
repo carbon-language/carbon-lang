@@ -14,8 +14,6 @@
 #include "llvm/CodeGen/GCMetadataPrinter.h"
 using namespace llvm;
 
-LLVM_INSTANTIATE_REGISTRY(GCMetadataPrinterRegistry)
-
 GCMetadataPrinter::GCMetadataPrinter() {}
 
 GCMetadataPrinter::~GCMetadataPrinter() {}

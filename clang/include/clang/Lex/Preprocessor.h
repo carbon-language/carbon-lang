@@ -1956,4 +1956,6 @@ typedef llvm::Registry<PragmaHandler> PragmaHandlerRegistry;
 
 }  // end namespace clang
 
+extern template class llvm::Registry<clang::PragmaHandler>;
+
 #endif

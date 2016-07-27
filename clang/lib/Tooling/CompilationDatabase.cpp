@@ -32,8 +32,6 @@
 using namespace clang;
 using namespace tooling;
 
-LLVM_INSTANTIATE_REGISTRY(CompilationDatabasePluginRegistry)
-
 CompilationDatabase::~CompilationDatabase() {}
 
 std::unique_ptr<CompilationDatabase>
