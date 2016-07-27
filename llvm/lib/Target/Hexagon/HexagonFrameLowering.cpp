@@ -159,6 +159,12 @@ static cl::opt<bool> UseAllocframe("use-allocframe", cl::init(true),
 static cl::opt<bool> OptimizeSpillSlots("hexagon-opt-spill", cl::Hidden,
     cl::init(true), cl::desc("Optimize spill slots"));
 
+#ifndef NDEBUG
+static cl::opt<unsigned> SpillOptMax("spill-opt-max", cl::Hidden,
+    cl::init(UINT_MAX));
+static unsigned SpillOptCount = 0;
+#endif
+
 
 namespace llvm {
   void initializeHexagonCallFrameInformationPass(PassRegistry&);
@@ -1427,7 +1433,6 @@ bool HexagonFrameLowering::assignCalleeSavedSpillSlots(MachineFunction &MF,
   return true;
 }
 
-
 bool HexagonFrameLowering::expandCopy(MachineBasicBlock &B,
       MachineBasicBlock::iterator It, MachineRegisterInfo &MRI,
       const HexagonInstrInfo &HII, SmallVectorImpl<unsigned> &NewRegs) const {
@@ -2126,6 +2131,10 @@ void HexagonFrameLowering::optimizeSpillSlots(MachineFunction &MF,
     }
   });
 
+#ifndef NDEBUG
+  bool HasOptLimit = SpillOptMax.getPosition();
+#endif
+
   // eliminate loads, when all loads eliminated, eliminate all stores.
   for (auto &B : MF) {
     auto F = BlockIndexes.find(&B);
@@ -2160,6 +2169,13 @@ void HexagonFrameLowering::optimizeSpillSlots(MachineFunction &MF,
         DEBUG(dbgs() << "Replacement reg:" << PrintReg(FoundR, &HRI) << '\n');
         if (FoundR == 0)
           continue;
+#ifndef NDEBUG
+        if (HasOptLimit) {
+          if (SpillOptCount >= SpillOptMax)
+            return;
+          SpillOptCount++;
+        }
+#endif
 
         // Generate the copy-in: "FoundR = COPY SrcR" at the store location.
         MachineBasicBlock::iterator StartIt = SI, NextIt;
@@ -2220,7 +2236,6 @@ void HexagonFrameLowering::optimizeSpillSlots(MachineFunction &MF,
     }
   }
 }
-
 
 void HexagonFrameLowering::expandAlloca(MachineInstr *AI,
       const HexagonInstrInfo &HII, unsigned SP, unsigned CF) const {
