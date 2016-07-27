@@ -309,6 +309,10 @@ namespace {
     switch (Opc) {
       case Hexagon::RESTORE_DEALLOC_RET_JMP_V4:
       case Hexagon::RESTORE_DEALLOC_RET_JMP_V4_PIC:
+      case Hexagon::RESTORE_DEALLOC_RET_JMP_V4_EXT:
+      case Hexagon::RESTORE_DEALLOC_RET_JMP_V4_EXT_PIC:
+      case Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4_EXT:
+      case Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4_EXT_PIC:
       case Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4:
       case Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4_PIC:
         return true;
@@ -610,7 +614,9 @@ void HexagonFrameLowering::insertEpilogueInBlock(MachineBasicBlock &MBB) const {
   // Check for RESTORE_DEALLOC_RET* tail call. Don't emit an extra dealloc-
   // frame instruction if we encounter it.
   if (RetOpc == Hexagon::RESTORE_DEALLOC_RET_JMP_V4 ||
-      RetOpc == Hexagon::RESTORE_DEALLOC_RET_JMP_V4_PIC) {
+      RetOpc == Hexagon::RESTORE_DEALLOC_RET_JMP_V4_PIC ||
+      RetOpc == Hexagon::RESTORE_DEALLOC_RET_JMP_V4_EXT ||
+      RetOpc == Hexagon::RESTORE_DEALLOC_RET_JMP_V4_EXT_PIC) {
     MachineBasicBlock::iterator It = RetI;
     ++It;
     // Delete all instructions after the RESTORE (except labels).
@@ -631,7 +637,10 @@ void HexagonFrameLowering::insertEpilogueInBlock(MachineBasicBlock &MBB) const {
     MachineBasicBlock::iterator PrevIt = std::prev(InsertPt);
     unsigned COpc = PrevIt->getOpcode();
     if (COpc == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4 ||
-        COpc == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4_PIC)
+        COpc == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4_PIC ||
+        COpc == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4_EXT ||
+        COpc == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4_EXT_PIC ||
+        COpc == Hexagon::CALLv3nr || COpc == Hexagon::CALLRv3nr)
       NeedsDeallocframe = false;
   }
 
