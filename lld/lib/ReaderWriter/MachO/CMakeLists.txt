@@ -21,7 +21,6 @@ add_lld_library(lldMachO
   LINK_LIBS
     lldCore
     lldYAML
-    LLVMDebugInfoDWARF
     LLVMObject
     LLVMSupport
     ${PTHREAD_LIB}

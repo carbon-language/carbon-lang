@@ -11,13 +11,11 @@
 #define LLD_READER_WRITER_MACHO_FILE_H
 
 #include "Atoms.h"
-#include "DebugInfo.h"
 #include "MachONormalizedFile.h"
 #include "lld/Core/SharedLibraryFile.h"
 #include "lld/Core/Simple.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Support/Format.h"
 #include <unordered_map>
 
 namespace lld {
@@ -27,15 +25,11 @@ using lld::mach_o::normalized::Section;
 
 class MachOFile : public SimpleFile {
 public:
-
-  /// Real file constructor - for on-disk files.
   MachOFile(std::unique_ptr<MemoryBuffer> mb, MachOLinkingContext *ctx)
     : SimpleFile(mb->getBufferIdentifier(), File::kindMachObject),
       _mb(std::move(mb)), _ctx(ctx) {}
 
-  /// Dummy file constructor - for virtual files.
-  MachOFile(StringRef path)
-    : SimpleFile(path, File::kindMachObject) {}
+  MachOFile(StringRef path) : SimpleFile(path, File::kindMachObject) {}
 
   void addDefinedAtom(StringRef name, Atom::Scope scope,
                       DefinedAtom::ContentType type, DefinedAtom::Merge merge,
@@ -231,13 +225,6 @@ public:
     return F->kind() == File::kindMachObject;
   }
 
-  void setDebugInfo(std::unique_ptr<DebugInfo> debugInfo) {
-    _debugInfo = std::move(debugInfo);
-  }
-
-  DebugInfo* debugInfo() const { return _debugInfo.get(); }
-  std::unique_ptr<DebugInfo> takeDebugInfo() { return std::move(_debugInfo); }
-
 protected:
   std::error_code doParse() override {
     // Convert binary file to normalized mach-o.
@@ -278,7 +265,6 @@ private:
       MachOLinkingContext::objc_unknown;
   uint32_t                       _swiftVersion = 0;
   normalized::FileFlags        _flags = llvm::MachO::MH_SUBSECTIONS_VIA_SYMBOLS;
-  std::unique_ptr<DebugInfo>   _debugInfo;
 };
 
 class MachODylibFile : public SharedLibraryFile {

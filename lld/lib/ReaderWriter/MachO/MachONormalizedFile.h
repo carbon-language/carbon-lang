@@ -42,7 +42,6 @@
 #ifndef LLD_READER_WRITER_MACHO_NORMALIZE_FILE_H
 #define LLD_READER_WRITER_MACHO_NORMALIZE_FILE_H
 
-#include "DebugInfo.h"
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
@@ -92,21 +91,7 @@ struct Relocation {
   bool                isExtern;
   Hex32               value;
   uint32_t            symbol;
-
-#ifndef NDEBUG
-  raw_ostream& operator<<(raw_ostream &OS) const {
-    dump(OS);
-    return OS;
-  }
-
-  void dump(raw_ostream &OS = llvm::dbgs()) const;
-#endif
 };
-
-inline raw_ostream& operator<<(raw_ostream &OS, const Relocation &R) {
-  R.dump(OS);
-  return OS;
-}
 
 /// A typedef so that YAML I/O can treat this vector as a sequence.
 typedef std::vector<Relocation> Relocations;
@@ -241,6 +226,7 @@ struct DataInCode {
   DataRegionType  kind;
 };
 
+
 /// A typedef so that YAML I/O can encode/decode mach_header.flags.
 LLVM_YAML_STRONG_TYPEDEF(uint32_t, FileFlags)
 
@@ -256,7 +242,6 @@ struct NormalizedFile {
   std::vector<Symbol>         localSymbols;
   std::vector<Symbol>         globalSymbols;
   std::vector<Symbol>         undefinedSymbols;
-  std::vector<Symbol>         stabsSymbols;
 
   // Maps to load commands with no LINKEDIT content (final linked images only).
   std::vector<DependentDylib> dependentDylibs;

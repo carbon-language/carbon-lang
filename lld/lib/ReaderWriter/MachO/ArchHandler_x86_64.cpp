@@ -463,10 +463,7 @@ ArchHandler_x86_64::getPairReferenceInfo(const normalized::Relocation &reloc1,
       return ec;
     uint64_t encodedAddend = (int64_t)*(const little64_t *)fixupContent;
     if (inAtom == fromTarget) {
-      if (inAtom->contentType() == DefinedAtom::typeCFI)
-        *kind = unwindFDEToFunction;
-      else
-        *kind = delta64;
+      *kind = delta64;
       *addend = encodedAddend + offsetInAtom;
     } else if (inAtom == *target) {
       *kind = negDelta64;
