@@ -609,13 +609,6 @@ private:
     return true;
   }
 
-  Instruction *firstOfTwo(Instruction *I, Instruction *J) const {
-    for (Instruction &I1 : *I->getParent())
-      if (&I1 == I || &I1 == J)
-        return &I1;
-    llvm_unreachable("Both I and J must be from same BB");
-  }
-
   bool makeOperandsAvailable(Instruction *Repl, BasicBlock *HoistPt,
                              const SmallVecInsn &InstructionsToHoist) const {
     // Check whether the GEP of a ld/st can be synthesized at HoistPt.
@@ -685,12 +678,12 @@ private:
       const SmallVecInsn &InstructionsToHoist = HP.second;
       Instruction *Repl = nullptr;
       for (Instruction *I : InstructionsToHoist)
-        if (I->getParent() == HoistPt) {
+        if (I->getParent() == HoistPt)
           // If there are two instructions in HoistPt to be hoisted in place:
           // update Repl to be the first one, such that we can rename the uses
           // of the second based on the first.
-          Repl = !Repl ? I : firstOfTwo(Repl, I);
-        }
+          if (!Repl || firstInBB(I, Repl))
+            Repl = I;
 
       if (Repl) {
         // Repl is already in HoistPt: it remains in place.
