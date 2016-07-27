@@ -279,8 +279,7 @@ public:
                               llvm::opt::ArgStringList &CmdArgs) const {}
 
   /// Add the linker arguments to link the compiler runtime library.
-  virtual void AddLinkRuntimeLibArgs(const llvm::Triple &EffectiveTriple,
-                                     const llvm::opt::ArgList &Args,
+  virtual void AddLinkRuntimeLibArgs(const llvm::opt::ArgList &Args,
                                      llvm::opt::ArgStringList &CmdArgs) const;
 
   virtual void addStartObjectFileArgs(const llvm::opt::ArgList &Args,
@@ -304,8 +303,7 @@ public:
 
   /// Add any profiling runtime libraries that are needed. This is essentially a
   /// MachO specific version of addProfileRT in Tools.cpp.
-  void addProfileRTLibs(const llvm::Triple &EffectiveTriple,
-                        const llvm::opt::ArgList &Args,
+  void addProfileRTLibs(const llvm::opt::ArgList &Args,
                         llvm::opt::ArgStringList &CmdArgs) const override {
     // There aren't any profiling libs for embedded targets currently.
   }
@@ -419,8 +417,7 @@ public:
             !isTargetWatchOS());
   }
 
-  void addProfileRTLibs(const llvm::Triple &EffectiveTriple,
-                        const llvm::opt::ArgList &Args,
+  void addProfileRTLibs(const llvm::opt::ArgList &Args,
                         llvm::opt::ArgStringList &CmdArgs) const override;
 
 protected:
@@ -577,8 +574,7 @@ public:
 
   RuntimeLibType GetRuntimeLibType(const llvm::opt::ArgList &Args) const override;
 
-  void AddLinkRuntimeLibArgs(const llvm::Triple &EffectiveTriple,
-                             const llvm::opt::ArgList &Args,
+  void AddLinkRuntimeLibArgs(const llvm::opt::ArgList &Args,
                              llvm::opt::ArgStringList &CmdArgs) const override;
 
   void AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
@@ -844,8 +840,7 @@ public:
                            llvm::opt::ArgStringList &CC1Args) const override;
   bool isPIEDefault() const override;
   SanitizerMask getSupportedSanitizers() const override;
-  void addProfileRTLibs(const llvm::Triple &EffectiveTriple,
-                        const llvm::opt::ArgList &Args,
+  void addProfileRTLibs(const llvm::opt::ArgList &Args,
                         llvm::opt::ArgStringList &CmdArgs) const override;
   virtual std::string computeSysRoot() const;
 
@@ -909,8 +904,7 @@ public:
   void AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
                            llvm::opt::ArgStringList &CmdArgs) const override;
 
-  std::string getCompilerRT(const llvm::Triple &EffectiveTriple,
-                            const llvm::opt::ArgList &Args, StringRef Component,
+  std::string getCompilerRT(const llvm::opt::ArgList &Args, StringRef Component,
                             bool Shared = false) const override;
 
   std::string computeSysRoot() const override;
