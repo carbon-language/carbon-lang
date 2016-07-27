@@ -5320,14 +5320,34 @@ private:
                 isa<OMPArraySectionExpr>(Next->getAssociatedExpression())) &&
                "Unexpected expression");
 
-        // Save the base we are currently using.
-        BasePointers.push_back(BP);
-
         auto *LB = CGF.EmitLValue(I->getAssociatedExpression()).getPointer();
         auto *Size = getExprTypeSize(I->getAssociatedExpression());
 
+        // If we have a member expression and the current component is a
+        // reference, we have to map the reference too. Whenever we have a
+        // reference, the section that reference refers to is going to be a
+        // load instruction from the storage assigned to the reference.
+        if (isa<MemberExpr>(I->getAssociatedExpression()) &&
+            I->getAssociatedDeclaration()->getType()->isReferenceType()) {
+          auto *LI = cast<llvm::LoadInst>(LB);
+          auto *RefAddr = LI->getPointerOperand();
+
+          BasePointers.push_back(BP);
+          Pointers.push_back(RefAddr);
+          Sizes.push_back(CGF.getTypeSize(CGF.getContext().VoidPtrTy));
+          Types.push_back(getMapTypeBits(
+              /*MapType*/ OMPC_MAP_alloc, /*MapTypeModifier=*/OMPC_MAP_unknown,
+              !IsExpressionFirstInfo, IsCaptureFirstInfo));
+          IsExpressionFirstInfo = false;
+          IsCaptureFirstInfo = false;
+          // The reference will be the next base address.
+          BP = RefAddr;
+        }
+
+        BasePointers.push_back(BP);
         Pointers.push_back(LB);
         Sizes.push_back(Size);
+
         // We need to add a pointer flag for each map that comes from the
         // same expression except for the first one. We also need to signal
         // this map is the first one that relates with the current capture

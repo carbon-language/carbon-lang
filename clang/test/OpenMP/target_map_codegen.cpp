@@ -4564,4 +4564,193 @@ void explicit_maps_pointer_references (int *p){
   }
 }
 #endif
+///==========================================================================///
+// RUN: %clang_cc1 -DCK29 -verify -fopenmp -fopenmp-targets=powerpc64le-ibm-linux-gnu -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -o - | FileCheck %s --check-prefix CK29 --check-prefix CK29-64
+// RUN: %clang_cc1 -DCK29 -fopenmp -fopenmp-targets=powerpc64le-ibm-linux-gnu -x c++ -std=c++11 -triple powerpc64le-unknown-unknown -emit-pch -o %t %s
+// RUN: %clang_cc1 -fopenmp -fopenmp-targets=powerpc64le-ibm-linux-gnu -x c++ -triple powerpc64le-unknown-unknown -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s  --check-prefix CK29 --check-prefix CK29-64
+// RUN: %clang_cc1 -DCK29 -verify -fopenmp -fopenmp-targets=i386-pc-linux-gnu -x c++ -triple i386-unknown-unknown -emit-llvm %s -o - | FileCheck %s  --check-prefix CK29 --check-prefix CK29-32
+// RUN: %clang_cc1 -DCK29 -fopenmp -fopenmp-targets=i386-pc-linux-gnu -x c++ -std=c++11 -triple i386-unknown-unknown -emit-pch -o %t %s
+// RUN: %clang_cc1 -fopenmp -fopenmp-targets=i386-pc-linux-gnu -x c++ -triple i386-unknown-unknown -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s  --check-prefix CK29 --check-prefix CK29-32
+#ifdef CK29
+
+// CK29: [[SSA:%.+]] = type { double*, double** }
+// CK29: [[SSB:%.+]]  = type { [[SSA]]*, [[SSA]]** }
+
+// CK29: [[SIZE00:@.+]] = private {{.*}}constant [4 x i[[Z:64|32]]] [i[[Z:64|32]] {{8|4}}, i[[Z:64|32]] {{8|4}}, i[[Z:64|32]] {{8|4}}, i[[Z:64|32]] 80]
+// CK29: [[MTYPE00:@.+]] = private {{.*}}constant [4 x i32] [i32 35, i32 16, i32 19, i32 19]
+
+// CK29: [[SIZE01:@.+]] = private {{.*}}constant [4 x i[[Z]]] [i[[Z]] {{8|4}}, i[[Z]] {{8|4}}, i[[Z]] {{8|4}}, i[[Z]] 80]
+// CK29: [[MTYPE01:@.+]] = private {{.*}}constant [4 x i32] [i32 32, i32 19, i32 19, i32 19]
+
+// CK29: [[SIZE02:@.+]] = private {{.*}}constant [5 x i[[Z]]] [i[[Z]] {{8|4}}, i[[Z]] {{8|4}}, i[[Z]] {{8|4}}, i[[Z]] {{8|4}}, i[[Z]] 80]
+// CK29: [[MTYPE02:@.+]] = private {{.*}}constant [5 x i32] [i32 32, i32 19, i32 16, i32 19, i32 19]
+
+struct SSA{
+  double *p;
+  double *&pr;
+  SSA(double *&pr) : pr(pr) {}
+};
+
+struct SSB{
+  SSA *p;
+  SSA *&pr;
+  SSB(SSA *&pr) : pr(pr) {}
+
+  // CK29-LABEL: define {{.+}}foo
+  void foo() {
+
+    // Region 00
+    // CK29-DAG: call i32 @__tgt_target(i32 {{[^,]+}}, i8* {{[^,]+}}, i32 4, i8** [[GEPBP:%.+]], i8** [[GEPP:%.+]], {{.+}}getelementptr {{.+}}[4 x i{{.+}}]* [[SIZE00]], {{.+}}getelementptr {{.+}}[4 x i{{.+}}]* [[MTYPE00]]{{.+}})
+
+    // CK29-DAG: [[GEPBP]] = getelementptr inbounds {{.+}}[[BP:%[^,]+]]
+    // CK29-DAG: [[GEPP]] = getelementptr inbounds {{.+}}[[P:%[^,]+]]
+
+    // CK29-DAG: [[BP0:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 0
+    // CK29-DAG: [[P0:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 0
+    // CK29-DAG: store i8* [[CBPVAL0:%[^,]+]], i8** [[BP0]]
+    // CK29-DAG: store i8* [[CPVAL0:%[^,]+]], i8** [[P0]]
+    // CK29-DAG: [[CBPVAL0]] = bitcast [[SSB]]* [[VAR0:%.+]] to i8*
+    // CK29-DAG: [[CPVAL0]] = bitcast [[SSA]]** [[VAR00:%.+]] to i8*
+    // CK29-DAG: [[VAR0]] = load [[SSB]]*, [[SSB]]** %
+    // CK29-DAG: [[VAR00]] = getelementptr inbounds [[SSB]], [[SSB]]* [[VAR0]], i32 0, i32 0
+
+    // CK29-DAG: [[BP1:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 1
+    // CK29-DAG: [[P1:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 1
+    // CK29-DAG: store i8* [[CBPVAL1:%[^,]+]], i8** [[BP1]]
+    // CK29-DAG: store i8* [[CPVAL1:%[^,]+]], i8** [[P1]]
+    // CK29-DAG: [[CBPVAL1]] = bitcast [[SSA]]** [[VAR00]] to i8*
+    // CK29-DAG: [[CPVAL1]] = bitcast double*** [[VAR1:%.+]] to i8*
+    // CK29-DAG: [[VAR1]] = getelementptr inbounds [[SSA]], [[SSA]]* %{{.+}}, i32 0, i32 1
+
+    // CK29-DAG: [[BP2:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 2
+    // CK29-DAG: [[P2:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 2
+    // CK29-DAG: store i8* [[CBPVAL2:%[^,]+]], i8** [[BP2]]
+    // CK29-DAG: store i8* [[CPVAL2:%[^,]+]], i8** [[P2]]
+    // CK29-DAG: [[CBPVAL2]] = bitcast double*** [[VAR1]] to i8*
+    // CK29-DAG: [[CPVAL2]] = bitcast double** [[VAR2:%.+]] to i8*
+    // CK29-DAG: [[VAR2]] = load double**, double*** [[VAR22:%.+]],
+    // CK29-DAG: [[VAR22]] = getelementptr inbounds [[SSA]], [[SSA]]* %{{.+}}, i32 0, i32 1
+
+    // CK29-DAG: [[BP3:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 3
+    // CK29-DAG: [[P3:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 3
+    // CK29-DAG: store i8* [[CBPVAL3:%[^,]+]], i8** [[BP3]]
+    // CK29-DAG: store i8* [[CPVAL3:%[^,]+]], i8** [[P3]]
+    // CK29-DAG: [[CBPVAL3]] = bitcast double** [[VAR2]] to i8*
+    // CK29-DAG: [[CPVAL3]] = bitcast double* [[VAR3:%.+]] to i8*
+    // CK29-DAG: [[VAR3]] = getelementptr inbounds double, double* [[VAR33:%.+]], i{{.+}} 0
+    // CK29-DAG: [[VAR33]] = load double*, double** %{{.+}},
+
+    // CK29: call void [[CALL00:@.+]]([[SSB]]* {{[^,]+}})
+    #pragma omp target map(p->pr[:10])
+    {
+      p->pr++;
+    }
+
+    // Region 01
+    // CK29-DAG: call i32 @__tgt_target(i32 {{[^,]+}}, i8* {{[^,]+}}, i32 4, i8** [[GEPBP:%.+]], i8** [[GEPP:%.+]], {{.+}}getelementptr {{.+}}[4 x i{{.+}}]* [[SIZE01]], {{.+}}getelementptr {{.+}}[4 x i{{.+}}]* [[MTYPE01]]{{.+}})
+
+    // CK29-DAG: [[GEPBP]] = getelementptr inbounds {{.+}}[[BP:%[^,]+]]
+    // CK29-DAG: [[GEPP]] = getelementptr inbounds {{.+}}[[P:%[^,]+]]
+
+    // CK29-DAG: [[BP0:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 0
+    // CK29-DAG: [[P0:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 0
+    // CK29-DAG: store i8* [[CBPVAL0:%[^,]+]], i8** [[BP0]]
+    // CK29-DAG: store i8* [[CPVAL0:%[^,]+]], i8** [[P0]]
+    // CK29-DAG: [[CBPVAL0]] = bitcast [[SSB]]* [[VAR0:%.+]] to i8*
+    // CK29-DAG: [[CPVAL0]] = bitcast [[SSA]]*** [[VAR00:%.+]] to i8*
+    // CK29-DAG: [[VAR00]] = getelementptr inbounds [[SSB]], [[SSB]]* [[VAR0]], i32 0, i32 1
+
+    // CK29-DAG: [[BP1:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 1
+    // CK29-DAG: [[P1:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 1
+    // CK29-DAG: store i8* [[CBPVAL1:%[^,]+]], i8** [[BP1]]
+    // CK29-DAG: store i8* [[CPVAL1:%[^,]+]], i8** [[P1]]
+    // CK29-DAG: [[CBPVAL1]] = bitcast [[SSA]]*** [[VAR00]] to i8*
+    // CK29-DAG: [[CPVAL1]] = bitcast [[SSA]]** [[VAR1:%.+]] to i8*
+    // CK29-DAG: [[VAR1]] = load [[SSA]]**, [[SSA]]*** [[VAR00]],
+
+    // CK29-DAG: [[BP2:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 2
+    // CK29-DAG: [[P2:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 2
+    // CK29-DAG: store i8* [[CBPVAL2:%[^,]+]], i8** [[BP2]]
+    // CK29-DAG: store i8* [[CPVAL2:%[^,]+]], i8** [[P2]]
+    // CK29-DAG: [[CBPVAL2]] = bitcast [[SSA]]** [[VAR1]] to i8*
+    // CK29-DAG: [[CPVAL2]] = bitcast double** [[VAR2:%.+]] to i8*
+    // CK29-DAG: [[VAR2]] = getelementptr inbounds [[SSA]], [[SSA]]* %{{.+}}, i32 0, i32 0
+
+    // CK29-DAG: [[BP3:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 3
+    // CK29-DAG: [[P3:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 3
+    // CK29-DAG: store i8* [[CBPVAL3:%[^,]+]], i8** [[BP3]]
+    // CK29-DAG: store i8* [[CPVAL3:%[^,]+]], i8** [[P3]]
+    // CK29-DAG: [[CBPVAL3]] = bitcast double** [[VAR2]] to i8*
+    // CK29-DAG: [[CPVAL3]] = bitcast double* [[VAR3:%.+]] to i8*
+    // CK29-DAG: [[VAR3]] = getelementptr inbounds double, double* [[VAR33:%.+]], i{{.+}} 0
+    // CK29-DAG: [[VAR33]] = load double*, double** %{{.+}},
+
+    // CK29: call void [[CALL00:@.+]]([[SSB]]* {{[^,]+}})
+    #pragma omp target map(pr->p[:10])
+    {
+      pr->p++;
+    }
+
+    // Region 02
+    // CK29-DAG: call i32 @__tgt_target(i32 {{[^,]+}}, i8* {{[^,]+}}, i32 5, i8** [[GEPBP:%.+]], i8** [[GEPP:%.+]], {{.+}}getelementptr {{.+}}[5 x i{{.+}}]* [[SIZE02]], {{.+}}getelementptr {{.+}}[5 x i{{.+}}]* [[MTYPE02]]{{.+}})
+
+    // CK29-DAG: [[GEPBP]] = getelementptr inbounds {{.+}}[[BP:%[^,]+]]
+    // CK29-DAG: [[GEPP]] = getelementptr inbounds {{.+}}[[P:%[^,]+]]
+
+    // CK29-DAG: [[BP0:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 0
+    // CK29-DAG: [[P0:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 0
+    // CK29-DAG: store i8* [[CBPVAL0:%[^,]+]], i8** [[BP0]]
+    // CK29-DAG: store i8* [[CPVAL0:%[^,]+]], i8** [[P0]]
+    // CK29-DAG: [[CBPVAL0]] = bitcast [[SSB]]* [[VAR0:%.+]] to i8*
+    // CK29-DAG: [[CPVAL0]] = bitcast [[SSA]]*** [[VAR00:%.+]] to i8*
+    // CK29-DAG: [[VAR00]] = getelementptr inbounds [[SSB]], [[SSB]]* [[VAR0]], i32 0, i32 1
+
+    // CK29-DAG: [[BP1:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 1
+    // CK29-DAG: [[P1:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 1
+    // CK29-DAG: store i8* [[CBPVAL1:%[^,]+]], i8** [[BP1]]
+    // CK29-DAG: store i8* [[CPVAL1:%[^,]+]], i8** [[P1]]
+    // CK29-DAG: [[CBPVAL1]] = bitcast [[SSA]]*** [[VAR00]] to i8*
+    // CK29-DAG: [[CPVAL1]] = bitcast [[SSA]]** [[VAR1:%.+]] to i8*
+    // CK29-DAG: [[VAR1]] = load [[SSA]]**, [[SSA]]*** [[VAR00]],
+
+    // CK29-DAG: [[BP2:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 2
+    // CK29-DAG: [[P2:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 2
+    // CK29-DAG: store i8* [[CBPVAL2:%[^,]+]], i8** [[BP2]]
+    // CK29-DAG: store i8* [[CPVAL2:%[^,]+]], i8** [[P2]]
+    // CK29-DAG: [[CBPVAL2]] = bitcast [[SSA]]** [[VAR1]] to i8*
+    // CK29-DAG: [[CPVAL2]] = bitcast double*** [[VAR2:%.+]] to i8*
+    // CK29-DAG: [[VAR2]] = getelementptr inbounds [[SSA]], [[SSA]]* %{{.+}}, i32 0, i32 1
+
+    // CK29-DAG: [[BP3:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 3
+    // CK29-DAG: [[P3:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 3
+    // CK29-DAG: store i8* [[CBPVAL3:%[^,]+]], i8** [[BP3]]
+    // CK29-DAG: store i8* [[CPVAL3:%[^,]+]], i8** [[P3]]
+    // CK29-DAG: [[CBPVAL3]] = bitcast double*** [[VAR2]] to i8*
+    // CK29-DAG: [[CPVAL3]] = bitcast double** [[VAR3:%.+]] to i8*
+    // CK29-DAG: [[VAR3]] = load double**, double*** [[VAR2]],
+
+    // CK29-DAG: [[BP4:%.+]] = getelementptr inbounds {{.+}}[[BP]], i{{.+}} 0, i{{.+}} 4
+    // CK29-DAG: [[P4:%.+]] = getelementptr inbounds {{.+}}[[P]], i{{.+}} 0, i{{.+}} 4
+    // CK29-DAG: store i8* [[CBPVAL4:%[^,]+]], i8** [[BP4]]
+    // CK29-DAG: store i8* [[CPVAL4:%[^,]+]], i8** [[P4]]
+    // CK29-DAG: [[CBPVAL4]] = bitcast double** [[VAR3]] to i8*
+    // CK29-DAG: [[CPVAL4]] = bitcast double* [[VAR4:%.+]] to i8*
+    // CK29-DAG: [[VAR4]] = getelementptr inbounds double, double* [[VAR44:%.+]], i{{.+}} 0
+    // CK29-DAG: [[VAR44]] = load double*, double**
+
+    // CK29: call void [[CALL00:@.+]]([[SSB]]* {{[^,]+}})
+    #pragma omp target map(pr->pr[:10])
+    {
+      pr->pr++;
+    }
+  }
+};
+
+void explicit_maps_member_pointer_references(SSA *sap) {
+  double *d;
+  SSA sa(d);
+  SSB sb(sap);
+  sb.foo();
+}
+#endif
 #endif
