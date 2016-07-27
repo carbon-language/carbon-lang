@@ -457,6 +457,7 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF,
   bool PrologueStubs = false;
   insertCSRSpillsInBlock(*PrologB, CSI, HRI, PrologueStubs);
   insertPrologueInBlock(*PrologB, PrologueStubs);
+  updateEntryPaths(MF, *PrologB);
 
   if (EpilogB) {
     insertCSRRestoresInBlock(*EpilogB, CSI, HRI);
@@ -485,12 +486,9 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF,
     // If there is an epilog block, it may not have a return instruction.
     // In such case, we need to add the callee-saved registers as live-ins
     // in all blocks on all paths from the epilog to any return block.
-    unsigned MaxBN = 0;
-    for (auto &B : MF)
-      if (B.getNumber() >= 0)
-        MaxBN = std::max(MaxBN, unsigned(B.getNumber()));
+    unsigned MaxBN = MF.getNumBlockIDs();
     BitVector DoneT(MaxBN+1), DoneF(MaxBN+1), Path(MaxBN+1);
-    updateExitPaths(*EpilogB, EpilogB, DoneT, DoneF, Path);
+    updateExitPaths(*EpilogB, *EpilogB, DoneT, DoneF, Path);
   }
 }
 
@@ -653,9 +651,30 @@ void HexagonFrameLowering::insertEpilogueInBlock(MachineBasicBlock &MBB) const {
   MBB.erase(RetI);
 }
 
+void HexagonFrameLowering::updateEntryPaths(MachineFunction &MF,
+      MachineBasicBlock &SaveB) const {
+  SetVector<unsigned> Worklist;
+
+  MachineBasicBlock &EntryB = MF.front();
+  Worklist.insert(EntryB.getNumber());
+
+  unsigned SaveN = SaveB.getNumber();
+  auto &CSI = MF.getFrameInfo()->getCalleeSavedInfo();
+
+  for (unsigned i = 0; i < Worklist.size(); ++i) {
+    unsigned BN = Worklist[i];
+    MachineBasicBlock &MBB = *MF.getBlockNumbered(BN);
+    for (auto &R : CSI)
+      if (!MBB.isLiveIn(R.getReg()))
+        MBB.addLiveIn(R.getReg());
+    if (BN != SaveN)
+      for (auto &SB : MBB.successors())
+        Worklist.insert(SB->getNumber());
+  }
+}
 
 bool HexagonFrameLowering::updateExitPaths(MachineBasicBlock &MBB,
-      MachineBasicBlock *RestoreB, BitVector &DoneT, BitVector &DoneF,
+      MachineBasicBlock &RestoreB, BitVector &DoneT, BitVector &DoneF,
       BitVector &Path) const {
   assert(MBB.getNumber() >= 0);
   unsigned BN = MBB.getNumber();
@@ -685,7 +704,7 @@ bool HexagonFrameLowering::updateExitPaths(MachineBasicBlock &MBB,
   // We don't want to add unnecessary live-ins to the restore block: since
   // the callee-saved registers are being defined in it, the entry of the
   // restore block cannot be on the path from the definitions to any exit.
-  if (ReachedExit && &MBB != RestoreB) {
+  if (ReachedExit && &MBB != &RestoreB) {
     for (auto &R : CSI)
       if (!MBB.isLiveIn(R.getReg()))
         MBB.addLiveIn(R.getReg());
