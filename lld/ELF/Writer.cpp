@@ -72,7 +72,6 @@ private:
 
   BumpPtrAllocator Alloc;
   std::vector<OutputSectionBase<ELFT> *> OutputSections;
-  std::unique_ptr<CommonInputSection<ELFT>> CommonSection;
   OutputSectionFactory<ELFT> Factory;
 
   void addRelIpltSymbols();
@@ -222,10 +221,12 @@ template <class ELFT> void Writer<ELFT>::run() {
     copyLocalSymbols();
   addReservedSymbols();
 
-  CommonSection = llvm::make_unique<CommonInputSection<ELFT>>();
+  CommonInputSection<ELFT> Common;
+  CommonInputSection<ELFT>::X = &Common;
+
   OutputSections =
       ScriptConfig->DoLayout
-          ? Script<ELFT>::X->createSections(Factory, CommonSection.get())
+          ? Script<ELFT>::X->createSections(Factory)
           : createSections();
   finalizeSections();
   if (HasError)
@@ -738,8 +739,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 
   // If linker script processor hasn't added common symbol section yet,
   // then add it to .bss now.
-  if (!CommonSection->OutSec) {
-    Out<ELFT>::Bss->addSection(CommonSection.get());
+  if (!CommonInputSection<ELFT>::X->OutSec) {
+    Out<ELFT>::Bss->addSection(CommonInputSection<ELFT>::X);
     Out<ELFT>::Bss->assignOffsets();
   }
 

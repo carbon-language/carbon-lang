@@ -667,17 +667,9 @@ bool MipsOptionsInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
   return S->SectionKind == InputSectionBase<ELFT>::MipsOptions;
 }
 
-// Due to initialization order in C++ memberwise initialization or
-// construction is invoked after base class construction. This helper
-// function is needed to zero initialize Elf_Shdr, before passing it
-// to InputSection<ELFT> constructor
-template <class T> static T *zero(T *Val) {
-  return static_cast<T *>(memset(Val, 0, sizeof(*Val)));
-}
-
 template <class ELFT>
 CommonInputSection<ELFT>::CommonInputSection()
-    : InputSection<ELFT>(nullptr, zero(&Hdr)) {
+    : InputSection<ELFT>(nullptr, &Hdr) {
   std::vector<DefinedCommon<ELFT> *> Symbols;
   Hdr.sh_size = 0;
   Hdr.sh_type = SHT_NOBITS;

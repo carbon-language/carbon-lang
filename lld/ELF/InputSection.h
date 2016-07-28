@@ -257,16 +257,25 @@ public:
   const llvm::object::Elf_Mips_RegInfo<ELFT> *Reginfo = nullptr;
 };
 
-// A special kind of section used to store common symbols
+// Common symbols don't belong to any section. But it is easier for us
+// to handle them as if they belong to some input section. So we defined
+// this class. CommonInputSection is a virtual singleton class that
+// "contains" all common symbols.
 template <class ELFT> class CommonInputSection : public InputSection<ELFT> {
   typedef typename ELFT::uint uintX_t;
 
 public:
   CommonInputSection();
 
+  // The singleton instance of this class.
+  static CommonInputSection<ELFT> *X;
+
 private:
-  typename ELFT::Shdr Hdr;
+  static typename ELFT::Shdr Hdr;
 };
+
+template <class ELFT> CommonInputSection<ELFT> *CommonInputSection<ELFT>::X;
+template <class ELFT> typename ELFT::Shdr CommonInputSection<ELFT>::Hdr;
 
 } // namespace elf
 } // namespace lld
