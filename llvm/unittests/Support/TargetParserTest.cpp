@@ -391,9 +391,9 @@ TEST(TargetParserTest, ARMparseArchProfile) {
 TEST(TargetParserTest, ARMparseArchVersion) {
   for (unsigned i = 0; i < array_lengthof(ARMArch); i++)
     if (((std::string)ARMArch[i]).substr(0, 4) == "armv")
-      EXPECT_EQ((ARMArch[i][4] - 48), ARM::parseArchVersion(ARMArch[i]));
+      EXPECT_EQ((ARMArch[i][4] - 48u), ARM::parseArchVersion(ARMArch[i]));
     else
-      EXPECT_EQ(5, ARM::parseArchVersion(ARMArch[i]));
+      EXPECT_EQ(5u, ARM::parseArchVersion(ARMArch[i]));
 }
 
 TEST(TargetParserTest, AArch64DefaultFPU) {
