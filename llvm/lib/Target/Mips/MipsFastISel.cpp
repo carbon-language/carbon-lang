@@ -1269,7 +1269,7 @@ bool MipsFastISel::fastLowerArguments() {
 
   CallingConv::ID CC = F->getCallingConv();
   if (CC != CallingConv::C) {
-    DEBUG(dbgs() << ".. gave up (wrong calling convention)\n");
+    DEBUG(dbgs() << ".. gave up (calling convention is not C)\n");
     return false;
   }
 
