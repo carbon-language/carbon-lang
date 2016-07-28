@@ -6,3 +6,4 @@ add_llvm_library(LLVMCoroutines
   CoroSplit.cpp
   )
 
+add_dependencies(LLVMInstCombine intrinsics_gen)
