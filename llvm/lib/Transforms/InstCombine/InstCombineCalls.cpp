@@ -30,6 +30,8 @@ using namespace PatternMatch;
 
 STATISTIC(NumSimplified, "Number of library calls simplified");
 
+extern cl::opt<bool> ClUseAfterScope;
+
 /// Return the specified type promoted as it would be to pass though a va_arg
 /// area.
 static Type *getPromotedType(Type *Ty) {
@@ -1209,6 +1211,10 @@ static bool removeTriviallyEmptyRange(IntrinsicInst &I, unsigned StartID,
                                       unsigned EndID, InstCombiner &IC) {
   assert(I.getIntrinsicID() == StartID &&
          "Start intrinsic does not have expected ID");
+  // Even if the range is empty asan need to poison memory to detect invalid
+  // access latter.
+  if (ClUseAfterScope)
+    return false;
   BasicBlock::iterator BI(I), BE(I.getParent()->end());
   for (++BI; BI != BE; ++BI) {
     if (auto *E = dyn_cast<IntrinsicInst>(BI)) {
