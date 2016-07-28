@@ -11,9 +11,8 @@
 
 #include "llvm/DebugInfo/Msf/ByteStream.h"
 #include "llvm/DebugInfo/Msf/IMsfFile.h"
-#include "llvm/DebugInfo/Msf/IMsfStreamData.h"
-#include "llvm/DebugInfo/Msf/IndexedStreamData.h"
 #include "llvm/DebugInfo/Msf/MappedBlockStream.h"
+#include "llvm/DebugInfo/Msf/MsfStreamLayout.h"
 #include "llvm/DebugInfo/Msf/StreamReader.h"
 #include "llvm/DebugInfo/Msf/StreamRef.h"
 #include "llvm/DebugInfo/Msf/StreamWriter.h"
@@ -66,19 +65,15 @@ private:
   MutableArrayRef<uint8_t> Data;
 };
 
-class MappedBlockStreamImpl : public MappedBlockStream {
-public:
-  MappedBlockStreamImpl(std::unique_ptr<IMsfStreamData> Data,
-                        const IMsfFile &File)
-      : MappedBlockStream(std::move(Data), File) {}
-};
-
 // Tests that a read which is entirely contained within a single block works
 // and does not allocate.
 TEST(MappedBlockStreamTest, ReadBeyondEndOfStreamRef) {
   DiscontiguousFile F(BlocksAry, DataAry);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
-  StreamReader R(S);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
+
+  StreamReader R(*S);
   StreamRef SR;
   EXPECT_NO_ERROR(R.readStreamRef(SR, 0U));
   ArrayRef<uint8_t> Buffer;
@@ -91,12 +86,14 @@ TEST(MappedBlockStreamTest, ReadBeyondEndOfStreamRef) {
 // does not fail due to the length of the output buffer.
 TEST(MappedBlockStreamTest, ReadOntoNonEmptyBuffer) {
   DiscontiguousFile F(BlocksAry, DataAry);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
-  StreamReader R(S);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
+  StreamReader R(*S);
   StringRef Str = "ZYXWVUTSRQPONMLKJIHGFEDCBA";
   EXPECT_NO_ERROR(R.readFixedString(Str, 1));
   EXPECT_EQ(Str, StringRef("A"));
-  EXPECT_EQ(0U, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S->getNumBytesCopied());
 }
 
 // Tests that a read which crosses a block boundary, but where the subsequent
@@ -104,17 +101,19 @@ TEST(MappedBlockStreamTest, ReadOntoNonEmptyBuffer) {
 // not allocate memory.
 TEST(MappedBlockStreamTest, ZeroCopyReadContiguousBreak) {
   DiscontiguousFile F(BlocksAry, DataAry);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
-  StreamReader R(S);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
+  StreamReader R(*S);
   StringRef Str;
   EXPECT_NO_ERROR(R.readFixedString(Str, 2));
   EXPECT_EQ(Str, StringRef("AB"));
-  EXPECT_EQ(0U, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S->getNumBytesCopied());
 
   R.setOffset(6);
   EXPECT_NO_ERROR(R.readFixedString(Str, 4));
   EXPECT_EQ(Str, StringRef("GHIJ"));
-  EXPECT_EQ(0U, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S->getNumBytesCopied());
 }
 
 // Tests that a read which crosses a block boundary and cannot be referenced
@@ -122,62 +121,72 @@ TEST(MappedBlockStreamTest, ZeroCopyReadContiguousBreak) {
 // requested.
 TEST(MappedBlockStreamTest, CopyReadNonContiguousBreak) {
   DiscontiguousFile F(BlocksAry, DataAry);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
-  StreamReader R(S);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
+  StreamReader R(*S);
   StringRef Str;
   EXPECT_NO_ERROR(R.readFixedString(Str, 10));
   EXPECT_EQ(Str, StringRef("ABCDEFGHIJ"));
-  EXPECT_EQ(10U, S.getNumBytesCopied());
+  EXPECT_EQ(10U, S->getNumBytesCopied());
 }
 
 // Test that an out of bounds read which doesn't cross a block boundary
 // fails and allocates no memory.
 TEST(MappedBlockStreamTest, InvalidReadSizeNoBreak) {
   DiscontiguousFile F(BlocksAry, DataAry);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
-  StreamReader R(S);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
+  StreamReader R(*S);
   StringRef Str;
 
   R.setOffset(10);
   EXPECT_ERROR(R.readFixedString(Str, 1));
-  EXPECT_EQ(0U, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S->getNumBytesCopied());
 }
 
 // Test that an out of bounds read which crosses a contiguous block boundary
 // fails and allocates no memory.
 TEST(MappedBlockStreamTest, InvalidReadSizeContiguousBreak) {
   DiscontiguousFile F(BlocksAry, DataAry);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
-  StreamReader R(S);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
+  StreamReader R(*S);
   StringRef Str;
 
   R.setOffset(6);
   EXPECT_ERROR(R.readFixedString(Str, 5));
-  EXPECT_EQ(0U, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S->getNumBytesCopied());
 }
 
 // Test that an out of bounds read which crosses a discontiguous block
 // boundary fails and allocates no memory.
 TEST(MappedBlockStreamTest, InvalidReadSizeNonContiguousBreak) {
   DiscontiguousFile F(BlocksAry, DataAry);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
-  StreamReader R(S);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
+  StreamReader R(*S);
   StringRef Str;
 
   EXPECT_ERROR(R.readFixedString(Str, 11));
-  EXPECT_EQ(0U, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S->getNumBytesCopied());
 }
 
 // Tests that a read which is entirely contained within a single block but
 // beyond the end of a StreamRef fails.
 TEST(MappedBlockStreamTest, ZeroCopyReadNoBreak) {
   DiscontiguousFile F(BlocksAry, DataAry);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
-  StreamReader R(S);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
+  StreamReader R(*S);
   StringRef Str;
   EXPECT_NO_ERROR(R.readFixedString(Str, 1));
   EXPECT_EQ(Str, StringRef("A"));
-  EXPECT_EQ(0U, S.getNumBytesCopied());
+  EXPECT_EQ(0U, S->getNumBytesCopied());
 }
 
 // Tests that a read which is not aligned on the same boundary as a previous
@@ -185,19 +194,21 @@ TEST(MappedBlockStreamTest, ZeroCopyReadNoBreak) {
 // previous allocation.
 TEST(MappedBlockStreamTest, UnalignedOverlappingRead) {
   DiscontiguousFile F(BlocksAry, DataAry);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
-  StreamReader R(S);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
+  StreamReader R(*S);
   StringRef Str1;
   StringRef Str2;
   EXPECT_NO_ERROR(R.readFixedString(Str1, 7));
   EXPECT_EQ(Str1, StringRef("ABCDEFG"));
-  EXPECT_EQ(7U, S.getNumBytesCopied());
+  EXPECT_EQ(7U, S->getNumBytesCopied());
 
   R.setOffset(2);
   EXPECT_NO_ERROR(R.readFixedString(Str2, 3));
   EXPECT_EQ(Str2, StringRef("CDE"));
   EXPECT_EQ(Str1.data() + 2, Str2.data());
-  EXPECT_EQ(7U, S.getNumBytesCopied());
+  EXPECT_EQ(7U, S->getNumBytesCopied());
 }
 
 // Tests that a read which is not aligned on the same boundary as a previous
@@ -205,18 +216,20 @@ TEST(MappedBlockStreamTest, UnalignedOverlappingRead) {
 // still works correctly and allocates again from the shared pool.
 TEST(MappedBlockStreamTest, UnalignedOverlappingReadFail) {
   DiscontiguousFile F(BlocksAry, DataAry);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
-  StreamReader R(S);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
+  StreamReader R(*S);
   StringRef Str1;
   StringRef Str2;
   EXPECT_NO_ERROR(R.readFixedString(Str1, 6));
   EXPECT_EQ(Str1, StringRef("ABCDEF"));
-  EXPECT_EQ(6U, S.getNumBytesCopied());
+  EXPECT_EQ(6U, S->getNumBytesCopied());
 
   R.setOffset(4);
   EXPECT_NO_ERROR(R.readFixedString(Str2, 4));
   EXPECT_EQ(Str2, StringRef("EFGH"));
-  EXPECT_EQ(10U, S.getNumBytesCopied());
+  EXPECT_EQ(10U, S->getNumBytesCopied());
 }
 
 TEST(MappedBlockStreamTest, WriteBeyondEndOfStream) {
@@ -228,40 +241,44 @@ TEST(MappedBlockStreamTest, WriteBeyondEndOfStream) {
                 "LargeBuffer is not big enough");
 
   DiscontiguousFile F(BlocksAry, Data);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
   ArrayRef<uint8_t> Buffer;
 
-  EXPECT_ERROR(S.writeBytes(0, ArrayRef<uint8_t>(LargeBuffer)));
-  EXPECT_NO_ERROR(S.writeBytes(0, ArrayRef<uint8_t>(SmallBuffer)));
-  EXPECT_NO_ERROR(S.writeBytes(7, ArrayRef<uint8_t>(SmallBuffer)));
-  EXPECT_ERROR(S.writeBytes(8, ArrayRef<uint8_t>(SmallBuffer)));
+  EXPECT_ERROR(S->writeBytes(0, ArrayRef<uint8_t>(LargeBuffer)));
+  EXPECT_NO_ERROR(S->writeBytes(0, ArrayRef<uint8_t>(SmallBuffer)));
+  EXPECT_NO_ERROR(S->writeBytes(7, ArrayRef<uint8_t>(SmallBuffer)));
+  EXPECT_ERROR(S->writeBytes(8, ArrayRef<uint8_t>(SmallBuffer)));
 }
 
 TEST(MappedBlockStreamTest, TestWriteBytesNoBreakBoundary) {
   static uint8_t Data[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'};
   DiscontiguousFile F(BlocksAry, Data);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
   ArrayRef<uint8_t> Buffer;
 
-  EXPECT_NO_ERROR(S.readBytes(0, 1, Buffer));
+  EXPECT_NO_ERROR(S->readBytes(0, 1, Buffer));
   EXPECT_EQ(Buffer, ArrayRef<uint8_t>('A'));
-  EXPECT_NO_ERROR(S.readBytes(9, 1, Buffer));
+  EXPECT_NO_ERROR(S->readBytes(9, 1, Buffer));
   EXPECT_EQ(Buffer, ArrayRef<uint8_t>('J'));
 
-  EXPECT_NO_ERROR(S.writeBytes(0, ArrayRef<uint8_t>('J')));
-  EXPECT_NO_ERROR(S.writeBytes(9, ArrayRef<uint8_t>('A')));
+  EXPECT_NO_ERROR(S->writeBytes(0, ArrayRef<uint8_t>('J')));
+  EXPECT_NO_ERROR(S->writeBytes(9, ArrayRef<uint8_t>('A')));
 
-  EXPECT_NO_ERROR(S.readBytes(0, 1, Buffer));
+  EXPECT_NO_ERROR(S->readBytes(0, 1, Buffer));
   EXPECT_EQ(Buffer, ArrayRef<uint8_t>('J'));
-  EXPECT_NO_ERROR(S.readBytes(9, 1, Buffer));
+  EXPECT_NO_ERROR(S->readBytes(9, 1, Buffer));
   EXPECT_EQ(Buffer, ArrayRef<uint8_t>('A'));
 
-  EXPECT_NO_ERROR(S.writeBytes(0, ArrayRef<uint8_t>('A')));
-  EXPECT_NO_ERROR(S.writeBytes(9, ArrayRef<uint8_t>('J')));
+  EXPECT_NO_ERROR(S->writeBytes(0, ArrayRef<uint8_t>('A')));
+  EXPECT_NO_ERROR(S->writeBytes(9, ArrayRef<uint8_t>('J')));
 
-  EXPECT_NO_ERROR(S.readBytes(0, 1, Buffer));
+  EXPECT_NO_ERROR(S->readBytes(0, 1, Buffer));
   EXPECT_EQ(Buffer, ArrayRef<uint8_t>('A'));
-  EXPECT_NO_ERROR(S.readBytes(9, 1, Buffer));
+  EXPECT_NO_ERROR(S->readBytes(9, 1, Buffer));
   EXPECT_EQ(Buffer, ArrayRef<uint8_t>('J'));
 }
 
@@ -272,15 +289,17 @@ TEST(MappedBlockStreamTest, TestWriteBytesBreakBoundary) {
                                'T', 'G', '.', '0', '0'};
 
   DiscontiguousFile F(BlocksAry, Data);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
   ArrayRef<uint8_t> Buffer;
 
-  EXPECT_NO_ERROR(S.writeBytes(0, TestData));
+  EXPECT_NO_ERROR(S->writeBytes(0, TestData));
   // First just compare the memory, then compare the result of reading the
   // string out.
   EXPECT_EQ(ArrayRef<uint8_t>(Data), ArrayRef<uint8_t>(Expected));
 
-  EXPECT_NO_ERROR(S.readBytes(0, 8, Buffer));
+  EXPECT_NO_ERROR(S->readBytes(0, 8, Buffer));
   EXPECT_EQ(Buffer, ArrayRef<uint8_t>(TestData));
 }
 
@@ -290,7 +309,9 @@ TEST(MappedBlockStreamTest, TestWriteThenRead) {
   const uint32_t Blocks[] = {2, 1, 0, 6, 3, 4, 5, 7, 9, 8};
 
   DiscontiguousFile F(Blocks, Data);
-  MappedBlockStreamImpl S(llvm::make_unique<IndexedStreamData>(0, F), F);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &S = *ExpectedS;
 
   enum class MyEnum : uint32_t { Val1 = 2908234, Val2 = 120891234 };
   using support::ulittle32_t;
@@ -309,8 +330,8 @@ TEST(MappedBlockStreamTest, TestWriteThenRead) {
   uint32_t intArr1[] = {890723408, 29082234};
   ArrayRef<uint32_t> intArray[] = {intArr0, intArr1};
 
-  StreamReader Reader(S);
-  StreamWriter Writer(S);
+  StreamReader Reader(*S);
+  StreamWriter Writer(*S);
   EXPECT_NO_ERROR(Writer.writeInteger(u16[0]));
   EXPECT_NO_ERROR(Reader.readInteger(u16[1]));
   EXPECT_EQ(u16[0], u16[1]);
@@ -381,8 +402,9 @@ TEST(MappedBlockStreamTest, TestWriteContiguousStreamRef) {
   MutableArrayRef<uint8_t> SrcData(SrcDataBytes);
 
   DiscontiguousFile F(DestBlocks, DestData);
-  MappedBlockStreamImpl DestStream(llvm::make_unique<IndexedStreamData>(0, F),
-                                   F);
+  auto ExpectedS = MappedBlockStream::createIndexedStream(0, F);
+  EXPECT_EXPECTED(ExpectedS);
+  auto &DestStream = *ExpectedS;
 
   // First write "Test Str" into the source stream.
   ByteStream<true> SourceStream(SrcData);
@@ -392,14 +414,14 @@ TEST(MappedBlockStreamTest, TestWriteContiguousStreamRef) {
                               {'T', 'e', 's', 't', ' ', 'S', 't', 'r', 0, 0}));
 
   // Then write the source stream into the dest stream.
-  StreamWriter DestWriter(DestStream);
+  StreamWriter DestWriter(*DestStream);
   EXPECT_NO_ERROR(DestWriter.writeStreamRef(SourceStream));
   EXPECT_EQ(DestDataBytes, std::vector<uint8_t>(
                                {'s', 'e', 'T', ' ', 'S', 't', 't', 'r', 0, 0}));
 
   // Then read the string back out of the dest stream.
   StringRef Result;
-  StreamReader DestReader(DestStream);
+  StreamReader DestReader(*DestStream);
   EXPECT_NO_ERROR(DestReader.readZeroString(Result));
   EXPECT_EQ(Result, "Test Str");
 }
@@ -416,26 +438,28 @@ TEST(MappedBlockStreamTest, TestWriteDiscontiguousStreamRef) {
   DiscontiguousFile DestFile(DestBlocks, DestData);
   DiscontiguousFile SrcFile(SrcBlocks, SrcData);
 
-  MappedBlockStreamImpl DestStream(
-      llvm::make_unique<IndexedStreamData>(0, DestFile), DestFile);
-  MappedBlockStreamImpl SrcStream(
-      llvm::make_unique<IndexedStreamData>(0, SrcFile), SrcFile);
+  auto ExpectedDest = MappedBlockStream::createIndexedStream(0, DestFile);
+  auto ExpectedSrc = MappedBlockStream::createIndexedStream(0, SrcFile);
+  EXPECT_EXPECTED(ExpectedDest);
+  EXPECT_EXPECTED(ExpectedSrc);
+  auto &DestStream = *ExpectedDest;
+  auto &SrcStream = *ExpectedSrc;
 
   // First write "Test Str" into the source stream.
-  StreamWriter SourceWriter(SrcStream);
+  StreamWriter SourceWriter(*SrcStream);
   EXPECT_NO_ERROR(SourceWriter.writeZeroString("Test Str"));
   EXPECT_EQ(SrcDataBytes, std::vector<uint8_t>(
                               {'e', 'T', 't', 't', ' ', 'S', 's', 'r', 0, 0}));
 
   // Then write the source stream into the dest stream.
-  StreamWriter DestWriter(DestStream);
-  EXPECT_NO_ERROR(DestWriter.writeStreamRef(SrcStream));
+  StreamWriter DestWriter(*DestStream);
+  EXPECT_NO_ERROR(DestWriter.writeStreamRef(*SrcStream));
   EXPECT_EQ(DestDataBytes, std::vector<uint8_t>(
                                {'s', 'e', 'T', ' ', 'S', 't', 't', 'r', 0, 0}));
 
   // Then read the string back out of the dest stream.
   StringRef Result;
-  StreamReader DestReader(DestStream);
+  StreamReader DestReader(*DestStream);
   EXPECT_NO_ERROR(DestReader.readZeroString(Result));
   EXPECT_EQ(Result, "Test Str");
 }

@@ -13,7 +13,6 @@
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
-#include "llvm/DebugInfo/Msf/IndexedStreamData.h"
 #include "llvm/DebugInfo/Msf/MappedBlockStream.h"
 #include "llvm/DebugInfo/Msf/StreamReader.h"
 #include "llvm/DebugInfo/PDB/Raw/Hash.h"

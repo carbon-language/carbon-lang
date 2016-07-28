@@ -46,6 +46,8 @@ public:
   build(std::unique_ptr<msf::StreamInterface> PdbFileBuffer);
 
 private:
+  Expected<msf::Layout> finalizeMsfLayout() const;
+
   BumpPtrAllocator &Allocator;
 
   std::unique_ptr<msf::MsfBuilder> Msf;

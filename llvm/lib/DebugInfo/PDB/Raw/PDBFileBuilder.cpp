@@ -58,8 +58,7 @@ DbiStreamBuilder &PDBFileBuilder::getDbiBuilder() {
   return *Dbi;
 }
 
-Expected<std::unique_ptr<PDBFile>>
-PDBFileBuilder::build(std::unique_ptr<msf::StreamInterface> PdbFileBuffer) {
+Expected<msf::Layout> PDBFileBuilder::finalizeMsfLayout() const {
   if (Info) {
     uint32_t Length = Info->calculateSerializedLength();
     if (auto EC = Msf->setStreamSize(StreamPDB, Length))
@@ -71,7 +70,12 @@ PDBFileBuilder::build(std::unique_ptr<msf::StreamInterface> PdbFileBuffer) {
       return std::move(EC);
   }
 
-  auto ExpectedLayout = Msf->build();
+  return Msf->build();
+}
+
+Expected<std::unique_ptr<PDBFile>>
+PDBFileBuilder::build(std::unique_ptr<msf::StreamInterface> PdbFileBuffer) {
+  auto ExpectedLayout = finalizeMsfLayout();
   if (!ExpectedLayout)
     return ExpectedLayout.takeError();
 

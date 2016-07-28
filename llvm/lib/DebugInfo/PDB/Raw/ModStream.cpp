@@ -9,7 +9,6 @@
 
 #include "llvm/DebugInfo/PDB/Raw/ModStream.h"
 
-#include "llvm/DebugInfo/Msf/IndexedStreamData.h"
 #include "llvm/DebugInfo/Msf/StreamReader.h"
 #include "llvm/DebugInfo/PDB/Raw/ModInfo.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"

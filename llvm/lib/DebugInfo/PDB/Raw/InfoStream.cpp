@@ -10,7 +10,6 @@
 #include "llvm/DebugInfo/PDB/Raw/InfoStream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/DebugInfo/Msf/IndexedStreamData.h"
 #include "llvm/DebugInfo/Msf/StreamReader.h"
 #include "llvm/DebugInfo/Msf/StreamWriter.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"

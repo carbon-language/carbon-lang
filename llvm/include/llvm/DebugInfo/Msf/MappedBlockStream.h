@@ -14,7 +14,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/DebugInfo/Msf/IMsfStreamData.h"
+#include "llvm/DebugInfo/Msf/MsfStreamLayout.h"
 #include "llvm/DebugInfo/Msf/StreamInterface.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Endian.h"
@@ -59,14 +59,14 @@ public:
   llvm::BumpPtrAllocator &getAllocator() { return Pool; }
 
 protected:
-  MappedBlockStream(std::unique_ptr<IMsfStreamData> Data, const IMsfFile &File);
+  MappedBlockStream(const MsfStreamLayout &Layout, const IMsfFile &File);
 
   Error readBytes(uint32_t Offset, MutableArrayRef<uint8_t> Buffer) const;
   bool tryReadContiguously(uint32_t Offset, uint32_t Size,
                            ArrayRef<uint8_t> &Buffer) const;
 
   const IMsfFile &Msf;
-  std::unique_ptr<IMsfStreamData> Data;
+  const MsfStreamLayout Layout;
 
   typedef MutableArrayRef<uint8_t> CacheEntry;
   mutable llvm::BumpPtrAllocator Pool;

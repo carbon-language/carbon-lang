@@ -13,7 +13,6 @@
 #include "llvm/DebugInfo/CodeView/EnumTables.h"
 #include "llvm/DebugInfo/CodeView/ModuleSubstreamVisitor.h"
 #include "llvm/DebugInfo/CodeView/SymbolDumper.h"
-#include "llvm/DebugInfo/Msf/IndexedStreamData.h"
 #include "llvm/DebugInfo/Msf/MappedBlockStream.h"
 #include "llvm/DebugInfo/Msf/StreamReader.h"
 #include "llvm/DebugInfo/PDB/PDBExtras.h"

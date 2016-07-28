@@ -9,7 +9,6 @@
 
 #include "llvm/DebugInfo/PDB/Raw/DbiStream.h"
 
-#include "llvm/DebugInfo/Msf/IndexedStreamData.h"
 #include "llvm/DebugInfo/Msf/StreamArray.h"
 #include "llvm/DebugInfo/Msf/StreamReader.h"
 #include "llvm/DebugInfo/Msf/StreamWriter.h"

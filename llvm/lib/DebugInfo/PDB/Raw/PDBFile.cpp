@@ -10,8 +10,6 @@
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/DebugInfo/Msf/DirectoryStreamData.h"
-#include "llvm/DebugInfo/Msf/IndexedStreamData.h"
 #include "llvm/DebugInfo/Msf/StreamArray.h"
 #include "llvm/DebugInfo/Msf/StreamInterface.h"
 #include "llvm/DebugInfo/Msf/StreamReader.h"
