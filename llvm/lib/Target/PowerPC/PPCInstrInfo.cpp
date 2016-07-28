@@ -1808,7 +1808,7 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr &CmpInstr, unsigned SrcReg,
 /// GetInstSize - Return the number of bytes of code the specified
 /// instruction may be.  This returns the maximum number of bytes.
 ///
-unsigned PPCInstrInfo::GetInstSizeInBytes(const MachineInstr &MI) const {
+unsigned PPCInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   unsigned Opcode = MI.getOpcode();
 
   if (Opcode == PPC::INLINEASM) {

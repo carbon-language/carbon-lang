@@ -602,7 +602,7 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
         // Get instruction with delay slot.
         MachineBasicBlock::instr_iterator DSI = I.getInstrIterator();
 
-        if (InMicroMipsMode && TII->GetInstSizeInBytes(*std::next(DSI)) == 2 &&
+        if (InMicroMipsMode && TII->getInstSizeInBytes(*std::next(DSI)) == 2 &&
             DSI->isCall()) {
           // If instruction in delay slot is 16b change opcode to
           // corresponding instruction with short delay slot.
@@ -692,7 +692,7 @@ bool Filler::searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
     bool InMicroMipsMode = STI.inMicroMipsMode();
     const MipsInstrInfo *TII = STI.getInstrInfo();
     unsigned Opcode = (*Slot).getOpcode();
-    if (InMicroMipsMode && TII->GetInstSizeInBytes(*CurrI) == 2 &&
+    if (InMicroMipsMode && TII->getInstSizeInBytes(*CurrI) == 2 &&
         (Opcode == Mips::JR || Opcode == Mips::PseudoIndirectBranch ||
          Opcode == Mips::PseudoReturn))
       continue;

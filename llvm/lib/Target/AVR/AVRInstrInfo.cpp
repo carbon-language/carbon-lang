@@ -439,7 +439,7 @@ bool AVRInstrInfo::ReverseBranchCondition(
   return false;
 }
 
-unsigned AVRInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
+unsigned AVRInstrInfo::getInstSizeInBytes(const MachineInstr *MI) const {
   unsigned Opcode = MI->getOpcode();
 
   switch (Opcode) {

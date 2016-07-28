@@ -38,7 +38,7 @@ AArch64InstrInfo::AArch64InstrInfo(const AArch64Subtarget &STI)
 
 /// GetInstSize - Return the number of bytes of code the specified
 /// instruction may be.  This returns the maximum number of bytes.
-unsigned AArch64InstrInfo::GetInstSizeInBytes(const MachineInstr &MI) const {
+unsigned AArch64InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   const MachineBasicBlock &MBB = *MI.getParent();
   const MachineFunction *MF = MBB.getParent();
   const MCAsmInfo *MAI = MF->getTarget().getMCAsmInfo();
@@ -58,7 +58,7 @@ unsigned AArch64InstrInfo::GetInstSizeInBytes(const MachineInstr &MI) const {
     return 0;
   }
 
-  llvm_unreachable("GetInstSizeInBytes()- Unable to determin insn size");
+  llvm_unreachable("getInstSizeInBytes()- Unable to determin insn size");
 }
 
 static void parseCondBranch(MachineInstr *LastInst, MachineBasicBlock *&Target,

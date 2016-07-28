@@ -293,7 +293,7 @@ unsigned MSP430InstrInfo::InsertBranch(MachineBasicBlock &MBB,
 /// GetInstSize - Return the number of bytes of code the specified
 /// instruction may be.  This returns the maximum number of bytes.
 ///
-unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr &MI) const {
+unsigned MSP430InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   const MCInstrDesc &Desc = MI.getDesc();
 
   switch (Desc.TSFlags & MSP430II::SizeMask) {
