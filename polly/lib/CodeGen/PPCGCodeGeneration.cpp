@@ -880,7 +880,8 @@ GPUNodeBuilder::getBlockSizes(ppcg_kernel *Kernel) {
 
 Value *GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel,
                                               Function *F) {
-  Type *ArrayTy = ArrayType::get(Builder.getInt8PtrTy(), F->getNumOperands());
+  Type *ArrayTy = ArrayType::get(Builder.getInt8PtrTy(),
+                                 std::distance(F->arg_begin(), F->arg_end()));
 
   BasicBlock *EntryBlock =
       &Builder.GetInsertBlock()->getParent()->getEntryBlock();
