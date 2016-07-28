@@ -308,9 +308,9 @@ forAllAssociatedToolChains(Compilation &C, const JobAction &JA,
   // Apply Work on all the offloading tool chains associated with the current
   // action.
   if (JA.isHostOffloading(Action::OFK_Cuda))
-    Work(*C.getSingleOffloadToolChain<Action::OFK_Host>());
-  else if (JA.isDeviceOffloading(Action::OFK_Cuda))
     Work(*C.getSingleOffloadToolChain<Action::OFK_Cuda>());
+  else if (JA.isDeviceOffloading(Action::OFK_Cuda))
+    Work(*C.getSingleOffloadToolChain<Action::OFK_Host>());
 
   //
   // TODO: Add support for other offloading programming models here.
