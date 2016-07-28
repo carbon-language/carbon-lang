@@ -130,8 +130,7 @@ public:
   bool parseIRConstant(StringRef::iterator Loc, StringRef Source,
                        const Constant *&C);
   bool parseIRConstant(StringRef::iterator Loc, const Constant *&C);
-  bool parseLowLevelType(StringRef::iterator Loc, LLT &Ty,
-                         bool MustBeSized = true);
+  bool parseLowLevelType(StringRef::iterator Loc, LLT &Ty);
   bool parseTypedImmediateOperand(MachineOperand &Dest);
   bool parseFPImmediateOperand(MachineOperand &Dest);
   bool parseMBBReference(MachineBasicBlock *&MBB);
@@ -1039,11 +1038,8 @@ bool MIParser::parseIRConstant(StringRef::iterator Loc, const Constant *&C) {
   return false;
 }
 
-bool MIParser::parseLowLevelType(StringRef::iterator Loc, LLT &Ty,
-                                 bool MustBeSized) {
+bool MIParser::parseLowLevelType(StringRef::iterator Loc, LLT &Ty) {
   if (Token.is(MIToken::Identifier) && Token.stringValue() == "unsized") {
-    if (MustBeSized)
-      return error(Loc, "expected pN, sN or <N x sM> for sized GlobalISel type");
     lex();
     Ty = LLT::unsized();
     return false;
