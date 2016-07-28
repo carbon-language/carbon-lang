@@ -198,9 +198,9 @@ Error DbiStreamBuilder::finalize() {
   DbiStreamHeader *H = Allocator.Allocate<DbiStreamHeader>();
 
   if (auto EC = generateModiSubstream())
-    return std::move(EC);
+    return EC;
   if (auto EC = generateFileInfoSubstream())
-    return std::move(EC);
+    return EC;
 
   H->VersionHeader = *VerHeader;
   H->VersionSignature = -1;

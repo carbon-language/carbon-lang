@@ -17,7 +17,7 @@ namespace llvm {
 namespace msf {
 template <class StreamType, class RefType> class StreamRefBase {
 public:
-  StreamRefBase() : Stream(nullptr), Length(0), ViewOffset(0) {}
+  StreamRefBase() : Stream(nullptr), ViewOffset(0), Length(0) {}
   StreamRefBase(const StreamType &Stream, uint32_t Offset, uint32_t Length)
       : Stream(&Stream), ViewOffset(Offset), Length(Length) {}
 
