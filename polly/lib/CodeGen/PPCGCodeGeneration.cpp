@@ -903,8 +903,8 @@ Value *GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel,
         Builder.getInt8PtrTy(), Launch + "_param_" + std::to_string(Index),
         EntryBlock->getTerminator());
     Builder.CreateStore(DevArray, Param);
-    Value *Slot = Builder.CreateGEP(Parameters,
-                                    {Builder.getInt64(0), Builder.getInt64(i)});
+    Value *Slot = Builder.CreateGEP(
+        Parameters, {Builder.getInt64(0), Builder.getInt64(Index)});
     Value *ParamTyped =
         Builder.CreatePointerCast(Param, Builder.getInt8PtrTy());
     Builder.CreateStore(ParamTyped, Slot);
