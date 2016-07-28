@@ -40,8 +40,9 @@ STATISTIC(NumScalarsVectorized, "Number of scalar accesses vectorized");
 
 namespace {
 
-// FIXME: Assuming stack alignment of 4 is always good enough
-static const unsigned StackAdjustedAlignment = 4;
+// TODO: Remove this
+static const unsigned TargetBaseAlign = 4;
+
 typedef SmallVector<Instruction *, 8> InstrList;
 typedef MapVector<Value *, InstrList> InstrListMap;
 
@@ -797,8 +798,8 @@ bool Vectorizer::vectorizeStoreChain(
     // so we can cheat and change it!
     Value *V = GetUnderlyingObject(S0->getPointerOperand(), DL);
     if (AllocaInst *AI = dyn_cast_or_null<AllocaInst>(V)) {
-      AI->setAlignment(StackAdjustedAlignment);
-      Alignment = StackAdjustedAlignment;
+      AI->setAlignment(TargetBaseAlign);
+      Alignment = TargetBaseAlign;
     } else {
       return false;
     }
@@ -947,8 +948,8 @@ bool Vectorizer::vectorizeLoadChain(
     // so we can cheat and change it!
     Value *V = GetUnderlyingObject(L0->getPointerOperand(), DL);
     if (AllocaInst *AI = dyn_cast_or_null<AllocaInst>(V)) {
-      AI->setAlignment(StackAdjustedAlignment);
-      Alignment = StackAdjustedAlignment;
+      AI->setAlignment(TargetBaseAlign);
+      Alignment = TargetBaseAlign;
     } else {
       return false;
     }
@@ -1028,10 +1029,10 @@ bool Vectorizer::vectorizeLoadChain(
 
 bool Vectorizer::accessIsMisaligned(unsigned SzInBytes, unsigned AddressSpace,
                                     unsigned Alignment) {
-  if (Alignment % SzInBytes == 0)
-    return false;
   bool Fast = false;
   bool Allows = TTI.allowsMisalignedMemoryAccesses(SzInBytes * 8, AddressSpace,
                                                    Alignment, &Fast);
-  return !Allows || !Fast;
+  // TODO: Remove TargetBaseAlign
+  return !(Allows && Fast) && (Alignment % SzInBytes) != 0 &&
+         (Alignment % TargetBaseAlign) != 0;
 }
