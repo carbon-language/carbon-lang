@@ -643,7 +643,7 @@ void ScriptParser::readSections() {
   expect("{");
   while (!Error && !skip("}")) {
     StringRef Tok = next();
-    if (peek() == "=") {
+    if (peek() == "=" || peek() == "+=") {
       readAssignment(Tok);
       expect(";");
     } else if (Tok == "PROVIDE") {
@@ -777,19 +777,10 @@ void ScriptParser::readProvide(bool Hidden) {
   expect(";");
 }
 
-SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
-  expect("=");
-  Expr E = readExpr();
-  auto *Cmd = new SymbolAssignment(Name, E);
-  Opt.Commands.emplace_back(Cmd);
-  return Cmd;
-}
+static uint64_t getSymbolValue(StringRef S, uint64_t Dot) {
+  if (S == ".")
+    return Dot;
 
-// This is an operator-precedence parser to parse a linker
-// script expression.
-Expr ScriptParser::readExpr() { return readExpr1(readPrimary(), 0); }
-
-static uint64_t getSymbolValue(StringRef S) {
   switch (Config->EKind) {
   case ELF32LEKind:
     if (SymbolBody *B = Symtab<ELF32LE>::X->find(S))
@@ -813,6 +804,21 @@ static uint64_t getSymbolValue(StringRef S) {
   error("symbol not found: " + S);
   return 0;
 }
+
+SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
+  StringRef Op = next();
+  assert(Op == "=" || Op == "+=");
+  Expr E = readExpr();
+  if (Op == "+=")
+    E = [=](uint64_t Dot) { return getSymbolValue(Name, Dot) + E(Dot); };
+  auto *Cmd = new SymbolAssignment(Name, E);
+  Opt.Commands.emplace_back(Cmd);
+  return Cmd;
+}
+
+// This is an operator-precedence parser to parse a linker
+// script expression.
+Expr ScriptParser::readExpr() { return readExpr1(readPrimary(), 0); }
 
 // This is a part of the operator-precedence parser. This function
 // assumes that the remaining token stream starts with an operator.
@@ -852,9 +858,6 @@ uint64_t static getConstant(StringRef S) {
 
 Expr ScriptParser::readPrimary() {
   StringRef Tok = next();
-
-  if (Tok == ".")
-    return [](uint64_t Dot) { return Dot; };
 
   if (Tok == "(") {
     Expr E = readExpr();
@@ -914,9 +917,9 @@ Expr ScriptParser::readPrimary() {
   // Parse a symbol name or a number literal.
   uint64_t V = 0;
   if (Tok.getAsInteger(0, V)) {
-    if (!isValidCIdentifier(Tok))
+    if (Tok != "." && !isValidCIdentifier(Tok))
       setError("malformed number: " + Tok);
-    return [=](uint64_t Dot) { return getSymbolValue(Tok); };
+    return [=](uint64_t Dot) { return getSymbolValue(Tok, Dot); };
   }
   return [=](uint64_t Dot) { return V; };
 }
