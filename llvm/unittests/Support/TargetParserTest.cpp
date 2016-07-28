@@ -213,15 +213,6 @@ TEST(TargetParserTest, ARMArchAttr) {
                     : (kARMARCHNames[AK].ArchAttr == ARM::getArchAttr(AK)));
 }
 
-TEST(TargetParserTest, ARMArchExtName) {
-  for (ARM::ArchExtKind AEK = static_cast<ARM::ArchExtKind>(0);
-       AEK <= ARM::ArchExtKind::AEK_XSCALE;
-       AEK = static_cast<ARM::ArchExtKind>(static_cast<unsigned>(AEK) + 1))
-    EXPECT_TRUE(contains(kARMArchExtKinds, static_cast<unsigned>(AEK))
-                    ? !ARM::getArchExtName(AEK).empty()
-                    : ARM::getArchExtName(AEK).empty());
-}
-
 TEST(TargetParserTest, ARMArchExtFeature) {
   const char *ArchExt[][4] = {{"crc", "nocrc", "+crc", "-crc"},
                               {"crypto", "nocrypto", "+crypto", "-crypto"},
@@ -244,15 +235,6 @@ TEST(TargetParserTest, ARMArchExtFeature) {
     EXPECT_STREQ(ArchExt[i][2], ARM::getArchExtFeature(ArchExt[i][0]));
     EXPECT_STREQ(ArchExt[i][3], ARM::getArchExtFeature(ArchExt[i][1]));
   }
-}
-
-TEST(TargetParserTest, ARMHWDivName) {
-  for (ARM::ArchExtKind AEK = static_cast<ARM::ArchExtKind>(0);
-       AEK <= ARM::ArchExtKind::AEK_XSCALE;
-       AEK = static_cast<ARM::ArchExtKind>(static_cast<unsigned>(AEK) + 1))
-    EXPECT_TRUE(contains(kHWDivKinds, static_cast<unsigned>(AEK))
-                    ? !ARM::getHWDivName(AEK).empty()
-                    : ARM::getHWDivName(AEK).empty());
 }
 
 TEST(TargetParserTest, ARMDefaultCPU) {
