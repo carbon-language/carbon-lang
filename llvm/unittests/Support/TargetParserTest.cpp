@@ -16,18 +16,6 @@
 using namespace llvm;
 
 namespace {
-static const unsigned kHWDivKinds[] = {
-#define ARM_HW_DIV_NAME(NAME, ID) ID,
-#include "llvm/Support/ARMTargetParser.def"
-#undef ARM_HW_DIV_NAME
-};
-
-static const unsigned kARMArchExtKinds[] = {
-#define ARM_ARCH_EXT_NAME(NAME, ID, FEATURE, NEGFEATURE) ID,
-#include "llvm/Support/ARMTargetParser.def"
-#undef ARM_ARCH_EXT_NAME
-};
-
 static const unsigned kAArch64ArchExtKinds[] = {
 #define AARCH64_ARCH_EXT_NAME(NAME, ID, FEATURE, NEGFEATURE) ID,
 #include "llvm/Support/AArch64TargetParser.def"
