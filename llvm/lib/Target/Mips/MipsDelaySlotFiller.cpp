@@ -710,7 +710,7 @@ bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot) const {
 
   auto *Fn = MBB.getParent();
   RegDefsUses RegDU(*Fn->getSubtarget().getRegisterInfo());
-  MemDefsUses MemDU(Fn->getDataLayout(), Fn->getFrameInfo());
+  MemDefsUses MemDU(Fn->getDataLayout(), &Fn->getFrameInfo());
   ReverseIter Filler;
 
   RegDU.init(*Slot);
@@ -776,8 +776,8 @@ bool Filler::searchSuccBBs(MachineBasicBlock &MBB, Iter Slot) const {
   if (HasMultipleSuccs) {
     IM.reset(new LoadFromStackOrConst());
   } else {
-    const MachineFrameInfo *MFI = Fn->getFrameInfo();
-    IM.reset(new MemDefsUses(Fn->getDataLayout(), MFI));
+    const MachineFrameInfo &MFI = Fn->getFrameInfo();
+    IM.reset(new MemDefsUses(Fn->getDataLayout(), &MFI));
   }
 
   if (!searchRange(MBB, SuccBB->begin(), SuccBB->end(), RegDU, *IM, Slot,

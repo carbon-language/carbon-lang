@@ -1591,7 +1591,7 @@ bool MachineInstr::isInvariantLoad(AliasAnalysis *AA) const {
   if (memoperands_empty())
     return false;
 
-  const MachineFrameInfo *MFI = getParent()->getParent()->getFrameInfo();
+  const MachineFrameInfo &MFI = getParent()->getParent()->getFrameInfo();
 
   for (MachineMemOperand *MMO : memoperands()) {
     if (MMO->isVolatile()) return false;
@@ -1600,7 +1600,7 @@ bool MachineInstr::isInvariantLoad(AliasAnalysis *AA) const {
 
     // A load from a constant PseudoSourceValue is invariant.
     if (const PseudoSourceValue *PSV = MMO->getPseudoValue())
-      if (PSV->isConstant(MFI))
+      if (PSV->isConstant(&MFI))
         continue;
 
     if (const Value *V = MMO->getValue()) {

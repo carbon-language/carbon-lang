@@ -864,7 +864,7 @@ SDValue SITargetLowering::LowerFormalArguments(
 
   // Now that we've figured out where the scratch register inputs are, see if
   // should reserve the arguments and use them directly.
-  bool HasStackObjects = MF.getFrameInfo()->hasStackObjects();
+  bool HasStackObjects = MF.getFrameInfo().hasStackObjects();
   // Record that we know we have non-spill stack objects so we don't need to
   // check all stack objects later.
   if (HasStackObjects)
@@ -1645,10 +1645,10 @@ void SITargetLowering::createDebuggerPrologueStackObjects(
   // For each dimension:
   for (unsigned i = 0; i < 3; ++i) {
     // Create fixed stack object for work group ID.
-    ObjectIdx = MF.getFrameInfo()->CreateFixedObject(4, i * 4, true);
+    ObjectIdx = MF.getFrameInfo().CreateFixedObject(4, i * 4, true);
     Info->setDebuggerWorkGroupIDStackObjectIndex(i, ObjectIdx);
     // Create fixed stack object for work item ID.
-    ObjectIdx = MF.getFrameInfo()->CreateFixedObject(4, i * 4 + 16, true);
+    ObjectIdx = MF.getFrameInfo().CreateFixedObject(4, i * 4 + 16, true);
     Info->setDebuggerWorkItemIDStackObjectIndex(i, ObjectIdx);
   }
 }

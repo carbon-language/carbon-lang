@@ -1660,10 +1660,10 @@ void NVPTXAsmPrinter::setAndEmitFunctionVirtualRegisters(
   //unsigned numRegClasses = TRI->getNumRegClasses();
 
   // Emit the Fake Stack Object
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  int NumBytes = (int) MFI->getStackSize();
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  int NumBytes = (int) MFI.getStackSize();
   if (NumBytes) {
-    O << "\t.local .align " << MFI->getMaxAlignment() << " .b8 \t" << DEPOTNAME
+    O << "\t.local .align " << MFI.getMaxAlignment() << " .b8 \t" << DEPOTNAME
       << getFunctionNumber() << "[" << NumBytes << "];\n";
     if (static_cast<const NVPTXTargetMachine &>(MF.getTarget()).is64Bit()) {
       O << "\t.reg .b64 \t%SP;\n";

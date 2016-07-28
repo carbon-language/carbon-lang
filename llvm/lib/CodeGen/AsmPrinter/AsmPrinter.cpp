@@ -632,26 +632,26 @@ static void emitComments(const MachineInstr &MI, raw_ostream &CommentOS) {
   // Check for spills and reloads
   int FI;
 
-  const MachineFrameInfo *FrameInfo = MF->getFrameInfo();
+  const MachineFrameInfo &MFI = MF->getFrameInfo();
 
   // We assume a single instruction only has a spill or reload, not
   // both.
   const MachineMemOperand *MMO;
   if (TII->isLoadFromStackSlotPostFE(MI, FI)) {
-    if (FrameInfo->isSpillSlotObjectIndex(FI)) {
+    if (MFI.isSpillSlotObjectIndex(FI)) {
       MMO = *MI.memoperands_begin();
       CommentOS << MMO->getSize() << "-byte Reload\n";
     }
   } else if (TII->hasLoadFromStackSlot(MI, MMO, FI)) {
-    if (FrameInfo->isSpillSlotObjectIndex(FI))
+    if (MFI.isSpillSlotObjectIndex(FI))
       CommentOS << MMO->getSize() << "-byte Folded Reload\n";
   } else if (TII->isStoreToStackSlotPostFE(MI, FI)) {
-    if (FrameInfo->isSpillSlotObjectIndex(FI)) {
+    if (MFI.isSpillSlotObjectIndex(FI)) {
       MMO = *MI.memoperands_begin();
       CommentOS << MMO->getSize() << "-byte Spill\n";
     }
   } else if (TII->hasStoreToStackSlot(MI, MMO, FI)) {
-    if (FrameInfo->isSpillSlotObjectIndex(FI))
+    if (MFI.isSpillSlotObjectIndex(FI))
       CommentOS << MMO->getSize() << "-byte Folded Spill\n";
   }
 
