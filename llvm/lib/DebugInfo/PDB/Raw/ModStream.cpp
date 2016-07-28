@@ -36,7 +36,7 @@ Error ModStream::reload() {
     return llvm::make_error<RawError>(raw_error_code::corrupt_file,
                                       "Module has both C11 and C13 line info");
 
-  StreamRef S;
+  ReadableStreamRef S;
 
   uint32_t SymbolSubstreamSig = 0;
   if (auto EC = Reader.readInteger(SymbolSubstreamSig))

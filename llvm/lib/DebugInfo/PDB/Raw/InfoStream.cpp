@@ -15,6 +15,7 @@
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Raw/RawError.h"
+#include "llvm/DebugInfo/PDB/Raw/RawTypes.h"
 
 using namespace llvm;
 using namespace llvm::codeview;
@@ -27,7 +28,7 @@ InfoStream::InfoStream(std::unique_ptr<MappedBlockStream> Stream)
 Error InfoStream::reload() {
   StreamReader Reader(*Stream);
 
-  const HeaderInfo *H;
+  const InfoStreamHeader *H;
   if (auto EC = Reader.readObject(H))
     return joinErrors(
         std::move(EC),
@@ -74,17 +75,3 @@ uint32_t InfoStream::getSignature() const { return Signature; }
 uint32_t InfoStream::getAge() const { return Age; }
 
 PDB_UniqueId InfoStream::getGuid() const { return Guid; }
-
-Error InfoStream::commit() {
-  StreamWriter Writer(*Stream);
-
-  HeaderInfo H;
-  H.Age = Age;
-  H.Signature = Signature;
-  H.Version = Version;
-  H.Guid = Guid;
-  if (auto EC = Writer.writeObject(H))
-    return EC;
-
-  return NamedStreams.commit(Writer);
-}

@@ -188,12 +188,9 @@ Error TpiStream::reload() {
   if (Header->HashStreamIndex >= Pdb.getNumStreams())
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Invalid TPI hash stream index.");
-
-  auto HS =
-      MappedBlockStream::createIndexedStream(Header->HashStreamIndex, Pdb);
-  if (!HS)
-    return HS.takeError();
-  StreamReader HSR(**HS);
+  auto HS = MappedBlockStream::createIndexedStream(
+      Pdb.getMsfLayout(), Pdb.getMsfBuffer(), Header->HashStreamIndex);
+  StreamReader HSR(*HS);
 
   uint32_t NumHashValues = Header->HashValueBuffer.Length / sizeof(ulittle32_t);
   if (NumHashValues != NumTypeRecords())
@@ -216,7 +213,7 @@ Error TpiStream::reload() {
   if (auto EC = HSR.readArray(HashAdjustments, NumHashAdjustments))
     return EC;
 
-  HashStream = std::move(*HS);
+  HashStream = std::move(HS);
 
   // TPI hash table is a parallel array for the type records.
   // Verify that the hash values match with type records.

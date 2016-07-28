@@ -259,10 +259,9 @@ Error LLVMOutputStyle::dumpStreamData() {
   if (DumpStreamNum >= StreamCount)
     return make_error<RawError>(raw_error_code::no_stream);
 
-  auto S = MappedBlockStream::createIndexedStream(DumpStreamNum, File);
-  if (!S)
-    return S.takeError();
-  StreamReader R(**S);
+  auto S = MappedBlockStream::createIndexedStream(
+      File.getMsfLayout(), File.getMsfBuffer(), DumpStreamNum);
+  StreamReader R(*S);
   while (R.bytesRemaining() > 0) {
     ArrayRef<uint8_t> Data;
     uint32_t BytesToReadInBlock = std::min(
@@ -311,11 +310,9 @@ Error LLVMOutputStyle::dumpNamedStream() {
     DictScope D(P, Name);
     P.printNumber("Index", NameStreamIndex);
 
-    auto NameStream =
-        MappedBlockStream::createIndexedStream(NameStreamIndex, File);
-    if (!NameStream)
-      return NameStream.takeError();
-    StreamReader Reader(**NameStream);
+    auto NameStream = MappedBlockStream::createIndexedStream(
+        File.getMsfLayout(), File.getMsfBuffer(), NameStreamIndex);
+    StreamReader Reader(*NameStream);
 
     NameHashTable NameTable;
     if (auto EC = NameTable.load(Reader))
@@ -486,10 +483,10 @@ Error LLVMOutputStyle::dumpDbiStream() {
           (opts::raw::DumpModuleSyms || opts::raw::DumpSymRecordBytes);
       if (HasModuleDI && (ShouldDumpSymbols || opts::raw::DumpLineInfo)) {
         auto ModStreamData = MappedBlockStream::createIndexedStream(
-            Modi.Info.getModuleStreamIndex(), File);
-        if (!ModStreamData)
-          return ModStreamData.takeError();
-        ModStream ModS(Modi.Info, std::move(*ModStreamData));
+            File.getMsfLayout(), File.getMsfBuffer(),
+            Modi.Info.getModuleStreamIndex());
+
+        ModStream ModS(Modi.Info, std::move(ModStreamData));
         if (auto EC = ModS.reload())
           return EC;
 
@@ -519,7 +516,7 @@ Error LLVMOutputStyle::dumpDbiStream() {
           public:
             RecordVisitor(ScopedPrinter &P, PDBFile &F) : P(P), F(F) {}
             Error visitUnknown(ModuleSubstreamKind Kind,
-                               StreamRef Stream) override {
+                               ReadableStreamRef Stream) override {
               DictScope DD(P, "Unknown");
               ArrayRef<uint8_t> Data;
               StreamReader R(Stream);
@@ -532,7 +529,7 @@ Error LLVMOutputStyle::dumpDbiStream() {
               return Error::success();
             }
             Error
-            visitFileChecksums(StreamRef Data,
+            visitFileChecksums(ReadableStreamRef Data,
                                const FileChecksumArray &Checksums) override {
               DictScope DD(P, "FileChecksums");
               for (const auto &C : Checksums) {
@@ -548,7 +545,8 @@ Error LLVMOutputStyle::dumpDbiStream() {
               return Error::success();
             }
 
-            Error visitLines(StreamRef Data, const LineSubstreamHeader *Header,
+            Error visitLines(ReadableStreamRef Data,
+                             const LineSubstreamHeader *Header,
                              const LineInfoArray &Lines) override {
               DictScope DD(P, "Lines");
               for (const auto &L : Lines) {

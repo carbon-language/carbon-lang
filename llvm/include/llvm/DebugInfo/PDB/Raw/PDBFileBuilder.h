@@ -24,7 +24,6 @@
 namespace llvm {
 namespace msf {
 class MsfBuilder;
-class StreamInterface;
 }
 namespace pdb {
 class DbiStreamBuilder;
@@ -43,10 +42,12 @@ public:
   DbiStreamBuilder &getDbiBuilder();
 
   Expected<std::unique_ptr<PDBFile>>
-  build(std::unique_ptr<msf::StreamInterface> PdbFileBuffer);
+  build(std::unique_ptr<msf::WritableStream> PdbFileBuffer);
+
+  Error commit(const msf::WritableStream &Buffer);
 
 private:
-  Expected<msf::Layout> finalizeMsfLayout() const;
+  Expected<msf::MsfLayout> finalizeMsfLayout() const;
 
   BumpPtrAllocator &Allocator;
 
