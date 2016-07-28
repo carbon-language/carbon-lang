@@ -1211,10 +1211,6 @@ static bool removeTriviallyEmptyRange(IntrinsicInst &I, unsigned StartID,
                                       unsigned EndID, InstCombiner &IC) {
   assert(I.getIntrinsicID() == StartID &&
          "Start intrinsic does not have expected ID");
-  // Even if the range is empty asan need to poison memory to detect invalid
-  // access latter.
-  if (ClUseAfterScope)
-    return false;
   BasicBlock::iterator BI(I), BE(I.getParent()->end());
   for (++BI; BI != BE; ++BI) {
     if (auto *E = dyn_cast<IntrinsicInst>(BI)) {
@@ -2248,11 +2244,18 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return eraseInstFromFunction(CI);
     break;
   }
-  case Intrinsic::lifetime_start:
+  case Intrinsic::lifetime_start: {
+    const Function *func = II->getFunction();
+    // Asan needs to poison memory to detect invalid access possible even for
+    // empty lifetime range.
+    if (func && func->hasFnAttribute(Attribute::SanitizeAddress))
+      break;
+
     if (removeTriviallyEmptyRange(*II, Intrinsic::lifetime_start,
                                   Intrinsic::lifetime_end, *this))
       return nullptr;
     break;
+  }
   case Intrinsic::assume: {
     Value *IIOperand = II->getArgOperand(0);
     // Remove an assume if it is immediately followed by an identical assume.
@@ -2483,7 +2486,6 @@ static IntrinsicInst *findInitTrampoline(Value *Callee) {
 
 /// Improvements for call and invoke instructions.
 Instruction *InstCombiner::visitCallSite(CallSite CS) {
-
   if (isAllocLikeFn(CS.getInstruction(), TLI))
     return visitAllocSite(*CS.getInstruction());
 
