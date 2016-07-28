@@ -20,6 +20,8 @@
   define void @and_s32_gpr() { ret void }
   define void @and_s64_gpr() { ret void }
 
+  define void @unconditional_br() { ret void }
+
 ...
 
 ---
@@ -213,4 +215,20 @@ body:             |
 
     %0(64) = COPY %x0
     %1(64) = G_AND s64 %0, %0
+...
+
+---
+# CHECK-LABEL: name: unconditional_br
+name:            unconditional_br
+isSSA:           true
+
+# CHECK:  body:
+# CHECK:   bb.0:
+# CHECK:    successors: %bb.0
+# CHECK:    B %bb.0
+body:             |
+  bb.0:
+    successors: %bb.0
+
+    G_BR unsized %bb.0
 ...

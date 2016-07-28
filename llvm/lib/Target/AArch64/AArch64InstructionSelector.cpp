@@ -102,21 +102,26 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
   LLT Ty = I.getType();
   assert(Ty.isValid() && "Generic instruction doesn't have a type");
 
-  // FIXME: Support unsized instructions (e.g., G_BR).
-  if (!Ty.isSized()) {
-    DEBUG(dbgs() << "Unsized generic instructions are unsupported\n");
-    return false;
+  switch (I.getOpcode()) {
+  case TargetOpcode::G_BR: {
+    I.setDesc(TII.get(AArch64::B));
+    I.removeTypes();
+    return true;
   }
 
-  // The size (in bits) of the operation, or 0 for the label type.
-  const unsigned OpSize = Ty.getSizeInBits();
-
-  switch (I.getOpcode()) {
   case TargetOpcode::G_OR:
   case TargetOpcode::G_AND:
   case TargetOpcode::G_ADD:
   case TargetOpcode::G_SUB: {
     DEBUG(dbgs() << "AArch64: Selecting: binop\n");
+
+    if (!Ty.isSized()) {
+      DEBUG(dbgs() << "Generic binop should be sized\n");
+      return false;
+    }
+
+    // The size (in bits) of the operation, or 0 for the label type.
+    const unsigned OpSize = Ty.getSizeInBits();
 
     // Reject the various things we don't support yet.
     {
