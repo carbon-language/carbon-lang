@@ -6255,6 +6255,9 @@ void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To) {
          "Cannot replace with this method!");
   assert(From != To.getNode() && "Cannot replace uses of with self");
 
+  // Preserve Debug Values
+  TransferDbgValues(FromN, To);
+
   // Iterate over all the existing uses of From. New uses will be added
   // to the beginning of the use list, which we avoid visiting.
   // This specifically avoids visiting uses of From that arise while the
@@ -6285,8 +6288,6 @@ void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To) {
     AddModifiedNodeToCSEMaps(User);
   }
 
-  // Preserve Debug Values
-  TransferDbgValues(FromN, To);
 
   // If we just RAUW'd the root, take note.
   if (FromN == getRoot())
