@@ -30,8 +30,6 @@ using namespace PatternMatch;
 
 STATISTIC(NumSimplified, "Number of library calls simplified");
 
-extern cl::opt<bool> ClUseAfterScope;
-
 /// Return the specified type promoted as it would be to pass though a va_arg
 /// area.
 static Type *getPromotedType(Type *Ty) {
@@ -2244,18 +2242,16 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return eraseInstFromFunction(CI);
     break;
   }
-  case Intrinsic::lifetime_start: {
-    const Function *func = II->getFunction();
-    // Asan needs to poison memory to detect invalid access possible even for
-    // empty lifetime range.
-    if (func && func->hasFnAttribute(Attribute::SanitizeAddress))
+  case Intrinsic::lifetime_start:
+    // Asan needs to poison memory to detect invalid access which is possible
+    // even for empty lifetime range.
+    if (II->getFunction()->hasFnAttribute(Attribute::SanitizeAddress))
       break;
 
     if (removeTriviallyEmptyRange(*II, Intrinsic::lifetime_start,
                                   Intrinsic::lifetime_end, *this))
       return nullptr;
     break;
-  }
   case Intrinsic::assume: {
     Value *IIOperand = II->getArgOperand(0);
     // Remove an assume if it is immediately followed by an identical assume.
@@ -2486,6 +2482,7 @@ static IntrinsicInst *findInitTrampoline(Value *Callee) {
 
 /// Improvements for call and invoke instructions.
 Instruction *InstCombiner::visitCallSite(CallSite CS) {
+
   if (isAllocLikeFn(CS.getInstruction(), TLI))
     return visitAllocSite(*CS.getInstruction());
 

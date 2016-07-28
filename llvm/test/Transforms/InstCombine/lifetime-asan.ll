@@ -7,15 +7,14 @@ declare void @foo(i8* nocapture)
 define void @asan() sanitize_address {
 entry:
   ; CHECK-LABEL: @asan(
-  %text = alloca [1 x i8], align 1
-  %0 = getelementptr inbounds [1 x i8], [1 x i8]* %text, i64 0, i64 0
+  %text = alloca i8, align 1
 
-  call void @llvm.lifetime.start(i64 1, i8* %0)
-  call void @llvm.lifetime.end(i64 1, i8* %0)
+  call void @llvm.lifetime.start(i64 1, i8* %text)
+  call void @llvm.lifetime.end(i64 1, i8* %text)
   ; CHECK: call void @llvm.lifetime.start
   ; CHECK-NEXT: call void @llvm.lifetime.end
 
-  call void @foo(i8* %0) ; Keep alloca alive
+  call void @foo(i8* %text) ; Keep alloca alive
 
   ret void
 }
@@ -24,14 +23,13 @@ entry:
 define void @no_asan() {
 entry:
   ; CHECK-LABEL: @no_asan(
-  %text = alloca [1 x i8], align 1
-  %0 = getelementptr inbounds [1 x i8], [1 x i8]* %text, i64 0, i64 0
+  %text = alloca i8, align 1
 
-  call void @llvm.lifetime.start(i64 1, i8* %0)
-  call void @llvm.lifetime.end(i64 1, i8* %0)
+  call void @llvm.lifetime.start(i64 1, i8* %text)
+  call void @llvm.lifetime.end(i64 1, i8* %text)
   ; CHECK-NO: call void @llvm.lifetime
 
-  call void @foo(i8* %0) ; Keep alloca alive
+  call void @foo(i8* %text) ; Keep alloca alive
 
   ret void
 }
