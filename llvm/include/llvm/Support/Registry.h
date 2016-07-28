@@ -69,14 +69,13 @@ namespace llvm {
       node(const entry &V) : Next(nullptr), Val(V) {}
     };
 
-    /// Add a node to the Registry: this is the interface between the plugin and
-    /// the executable.
-    ///
-    /// This function is exported by the executable and called by the plugin to
-    /// add a node to the executable's registry. Therefore it's not defined here
-    /// to avoid it being instantiated in the plugin and is instead defined in
-    /// the executable (see LLVM_INSTANTIATE_REGISTRY below).
-    static void add_node(node *N);
+    static void add_node(node *N) {
+      if (Tail)
+        Tail->Next = N;
+      else
+        Head = N;
+      Tail = N;
+    }
 
     /// Iterators for registry entries.
     ///
@@ -121,23 +120,61 @@ namespace llvm {
         add_node(&Node);
       }
     };
+
+    /// A dynamic import facility.  This is used on Windows to
+    /// import the entries added in the plugin.
+    static void import(sys::DynamicLibrary &DL, const char *RegistryName) {
+      typedef void *(*GetRegistry)();
+      std::string Name("LLVMGetRegistry_");
+      Name.append(RegistryName);
+      GetRegistry Getter =
+          (GetRegistry)(intptr_t)DL.getAddressOfSymbol(Name.c_str());
+      if (Getter) {
+        // Call the getter function in order to get the full copy of the
+        // registry defined in the plugin DLL, and copy them over to the
+        // current Registry.
+        typedef std::pair<const node *, const node *> Info;
+        Info *I = static_cast<Info *>(Getter());
+        iterator begin(I->first);
+        iterator end(I->second);
+        for (++end; begin != end; ++begin) {
+          // This Node object needs to remain alive for the
+          // duration of the program.
+          add_node(new node(*begin));
+        }
+      }
+    }
+
+    /// Retrieve the data to be passed across DLL boundaries when
+    /// importing registries from another DLL on Windows.
+    static void *exportRegistry() {
+      static std::pair<const node *, const node *> Info(Head, Tail);
+      return &Info;
+    }
   };
+
+  
+  // Since these are defined in a header file, plugins must be sure to export
+  // these symbols.
+  template <typename T>
+  typename Registry<T>::node *Registry<T>::Head;
+
+  template <typename T>
+  typename Registry<T>::node *Registry<T>::Tail;
 } // end namespace llvm
 
-/// Instantiate a registry class.
-///
-/// This instantiates add_node and the Head and Tail pointers.
-#define LLVM_INSTANTIATE_REGISTRY(REGISTRY_CLASS) \
-  namespace llvm { \
-  template<> typename REGISTRY_CLASS::node *REGISTRY_CLASS::Head = nullptr; \
-  template<> typename REGISTRY_CLASS::node *REGISTRY_CLASS::Tail = nullptr; \
-  template<> void REGISTRY_CLASS::add_node(REGISTRY_CLASS::node *N) { \
-    if (Tail) \
-      Tail->Next = N; \
-    else \
-      Head = N; \
-    Tail = N; \
-  } \
+#ifdef LLVM_ON_WIN32
+#define LLVM_EXPORT_REGISTRY(REGISTRY_CLASS)                                   \
+  extern "C" {                                                                 \
+  __declspec(dllexport) void *__cdecl LLVMGetRegistry_##REGISTRY_CLASS() {     \
+    return REGISTRY_CLASS::exportRegistry();                                   \
+  }                                                                            \
   }
+#define LLVM_IMPORT_REGISTRY(REGISTRY_CLASS, DL)                               \
+  REGISTRY_CLASS::import(DL, #REGISTRY_CLASS)
+#else
+#define LLVM_EXPORT_REGISTRY(REGISTRY_CLASS)
+#define LLVM_IMPORT_REGISTRY(REGISTRY_CLASS, DL)
+#endif
 
 #endif // LLVM_SUPPORT_REGISTRY_H

@@ -33,7 +33,7 @@
 #include <system_error>
 using namespace clang;
 
-LLVM_INSTANTIATE_REGISTRY(FrontendPluginRegistry)
+template class llvm::Registry<clang::PluginASTAction>;
 
 namespace {
 
