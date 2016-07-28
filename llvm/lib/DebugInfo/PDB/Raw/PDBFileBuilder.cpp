@@ -122,7 +122,8 @@ Error PDBFileBuilder::commit(const msf::WritableStream &Buffer) {
   auto DirStream =
       WritableMappedBlockStream::createDirectoryStream(Layout, Buffer);
   StreamWriter DW(*DirStream);
-  if (auto EC = DW.writeInteger(Layout.StreamSizes.size()))
+  if (auto EC =
+          DW.writeInteger(static_cast<uint32_t>(Layout.StreamSizes.size())))
     return EC;
 
   if (auto EC = DW.writeArray(Layout.StreamSizes))
