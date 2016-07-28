@@ -1952,8 +1952,7 @@ def SI_IF: PseudoInstSI <
 }
 
 def SI_ELSE : PseudoInstSI <
-  (outs SReg_64:$dst), (ins SReg_64:$src, brtarget:$target),
-  [(set i64:$dst, (int_amdgcn_else i64:$src, bb:$target))]> {
+  (outs SReg_64:$dst), (ins SReg_64:$src, brtarget:$target, i1imm:$execfix)> {
   let Constraints = "$src = $dst";
 }
 
@@ -2131,6 +2130,11 @@ def SI_PC_ADD_REL_OFFSET : PseudoInstSI <
 } // End SubtargetPredicate = isGCN
 
 let Predicates = [isGCN] in {
+
+def : Pat<
+  (int_amdgcn_else i64:$src, bb:$target),
+  (SI_ELSE $src, $target, 0)
+>;
 
 def : Pat <
   (int_AMDGPU_kilp),
