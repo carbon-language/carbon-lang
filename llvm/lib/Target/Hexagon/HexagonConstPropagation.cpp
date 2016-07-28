@@ -1592,6 +1592,7 @@ bool MachineConstEvaluator::evaluateZEXTr(const Register &R1, unsigned Width,
 bool MachineConstEvaluator::evaluateZEXTi(const APInt &A1, unsigned Width,
       unsigned Bits, APInt &Result) {
   unsigned BW = A1.getBitWidth();
+  (void)BW;
   assert(Width >= Bits && BW >= Bits);
   APInt Mask = APInt::getLowBitsSet(Width, Bits);
   Result = A1.zextOrTrunc(Width) & Mask;
