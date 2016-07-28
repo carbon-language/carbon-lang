@@ -21,7 +21,6 @@
 # Also check that we constrain the register class of the COPY to GPR32.
 # CHECK-LABEL: name: add_s32_gpr
 name:            add_s32_gpr
-alignment:       2
 isSSA:           true
 
 # CHECK:      registers:
@@ -46,7 +45,6 @@ body:             |
 # Same as add_s32_gpr, for 64-bit operations.
 # CHECK-LABEL: name: add_s64_gpr
 name:            add_s64_gpr
-alignment:       2
 isSSA:           true
 
 # CHECK:      registers:
@@ -71,7 +69,6 @@ body:             |
 # Same as add_s32_gpr, for G_OR operations.
 # CHECK-LABEL: name: or_s32_gpr
 name:            or_s32_gpr
-alignment:       2
 isSSA:           true
 
 # CHECK:      registers:
@@ -96,7 +93,6 @@ body:             |
 # Same as add_s64_gpr, for G_OR operations.
 # CHECK-LABEL: name: or_s64_gpr
 name:            or_s64_gpr
-alignment:       2
 isSSA:           true
 
 # CHECK:      registers:
