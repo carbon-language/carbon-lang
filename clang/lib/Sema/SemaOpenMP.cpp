@@ -11800,7 +11800,10 @@ OMPClause *Sema::ActOnOpenMPUseDevicePtrClause(ArrayRef<Expr *> VarList,
                                                SourceLocation StartLoc,
                                                SourceLocation LParenLoc,
                                                SourceLocation EndLoc) {
-  SmallVector<Expr *, 8> Vars;
+  MappableVarListInfo MVLI(VarList);
+  SmallVector<Expr *, 8> PrivateCopies;
+  SmallVector<Expr *, 8> Inits;
+
   for (auto &RefExpr : VarList) {
     assert(RefExpr && "NULL expr in OpenMP use_device_ptr clause.");
     SourceLocation ELoc;
@@ -11809,27 +11812,73 @@ OMPClause *Sema::ActOnOpenMPUseDevicePtrClause(ArrayRef<Expr *> VarList,
     auto Res = getPrivateItem(*this, SimpleRefExpr, ELoc, ERange);
     if (Res.second) {
       // It will be analyzed later.
-      Vars.push_back(RefExpr);
+      MVLI.ProcessedVarList.push_back(RefExpr);
+      PrivateCopies.push_back(nullptr);
+      Inits.push_back(nullptr);
     }
     ValueDecl *D = Res.first;
     if (!D)
       continue;
 
     QualType Type = D->getType();
-    // item should be a pointer or reference to pointer
-    if (!Type.getNonReferenceType()->isPointerType()) {
+    Type = Type.getNonReferenceType().getUnqualifiedType();
+
+    auto *VD = dyn_cast<VarDecl>(D);
+
+    // Item should be a pointer or reference to pointer.
+    if (!Type->isPointerType()) {
       Diag(ELoc, diag::err_omp_usedeviceptr_not_a_pointer)
           << 0 << RefExpr->getSourceRange();
       continue;
     }
-    Vars.push_back(RefExpr->IgnoreParens());
+
+    // Build the private variable and the expression that refers to it.
+    auto VDPrivate = buildVarDecl(*this, ELoc, Type, D->getName(),
+                                  D->hasAttrs() ? &D->getAttrs() : nullptr);
+    if (VDPrivate->isInvalidDecl())
+      continue;
+
+    CurContext->addDecl(VDPrivate);
+    auto VDPrivateRefExpr = buildDeclRefExpr(
+        *this, VDPrivate, RefExpr->getType().getUnqualifiedType(), ELoc);
+
+    // Add temporary variable to initialize the private copy of the pointer.
+    auto *VDInit =
+        buildVarDecl(*this, RefExpr->getExprLoc(), Type, ".devptr.temp");
+    auto *VDInitRefExpr = buildDeclRefExpr(*this, VDInit, RefExpr->getType(),
+                                           RefExpr->getExprLoc());
+    AddInitializerToDecl(VDPrivate,
+                         DefaultLvalueConversion(VDInitRefExpr).get(),
+                         /*DirectInit=*/false, /*TypeMayContainAuto=*/false);
+
+    // If required, build a capture to implement the privatization initialized
+    // with the current list item value.
+    DeclRefExpr *Ref = nullptr;
+    if (!VD)
+      Ref = buildCapture(*this, D, SimpleRefExpr, /*WithInit=*/true);
+    MVLI.ProcessedVarList.push_back(VD ? RefExpr->IgnoreParens() : Ref);
+    PrivateCopies.push_back(VDPrivateRefExpr);
+    Inits.push_back(VDInitRefExpr);
+
+    // We need to add a data sharing attribute for this variable to make sure it
+    // is correctly captured. A variable that shows up in a use_device_ptr has
+    // similar properties of a first private variable.
+    DSAStack->addDSA(D, RefExpr->IgnoreParens(), OMPC_firstprivate, Ref);
+
+    // Create a mappable component for the list item. List items in this clause
+    // only need a component.
+    MVLI.VarBaseDeclarations.push_back(D);
+    MVLI.VarComponents.resize(MVLI.VarComponents.size() + 1);
+    MVLI.VarComponents.back().push_back(
+        OMPClauseMappableExprCommon::MappableComponent(SimpleRefExpr, D));
   }
 
-  if (Vars.empty())
+  if (MVLI.ProcessedVarList.empty())
     return nullptr;
 
-  return OMPUseDevicePtrClause::Create(Context, StartLoc, LParenLoc, EndLoc,
-                                       Vars);
+  return OMPUseDevicePtrClause::Create(
+      Context, StartLoc, LParenLoc, EndLoc, MVLI.ProcessedVarList,
+      PrivateCopies, Inits, MVLI.VarBaseDeclarations, MVLI.VarComponents);
 }
 
 OMPClause *Sema::ActOnOpenMPIsDevicePtrClause(ArrayRef<Expr *> VarList,
