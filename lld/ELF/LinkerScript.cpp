@@ -872,6 +872,15 @@ Expr ScriptParser::readPrimary() {
     expect(")");
     return [=](uint64_t Dot) { return getConstant(Tok); };
   }
+  if (Tok == "SEGMENT_START") {
+    expect("(");
+    next();
+    expect(",");
+    uint64_t Val;
+    next().getAsInteger(0, Val);
+    expect(")");
+    return [=](uint64_t Dot) { return Val; };
+  }
   if (Tok == "DATA_SEGMENT_ALIGN") {
     expect("(");
     Expr E = readExpr();
