@@ -115,7 +115,7 @@ To generate the same report in html with demangling turned on, use:
 
 .. code-block:: console
 
-    % llvm-cov show ./foo -instr-profile=foo.profdata -format html -Xdemangler c++filt -Xdemangler -n
+    % llvm-cov show ./foo -instr-profile=foo.profdata -format html -o report.dir -Xdemangler c++filt -Xdemangler -n
 
 This report includes a summary view as well as dedicated sub-views for
 templated functions and their instantiations. For our example program, we get
