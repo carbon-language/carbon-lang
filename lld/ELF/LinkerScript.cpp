@@ -95,7 +95,8 @@ LinkerScript<ELFT>::getSectionMap() {
 // Returns input sections filtered by given glob patterns.
 template <class ELFT>
 std::vector<InputSectionBase<ELFT> *>
-LinkerScript<ELFT>::getInputSections(const InputSectionDescription *I) {
+LinkerScript<ELFT>::getInputSections(const InputSectionDescription *I,
+                                     CommonInputSection<ELFT> *Common) {
   ArrayRef<StringRef> Patterns = I->Patterns;
   ArrayRef<StringRef> ExcludedFiles = I->ExcludedFiles;
   std::vector<InputSectionBase<ELFT> *> Ret;
@@ -106,12 +107,17 @@ LinkerScript<ELFT>::getInputSections(const InputSectionDescription *I) {
         if (ExcludedFiles.empty() ||
             !match(ExcludedFiles, sys::path::filename(F->getName())))
           Ret.push_back(S);
+
+  if ((llvm::find(Patterns, "COMMON") != Patterns.end()))
+    Ret.push_back(Common);
+
   return Ret;
 }
 
 template <class ELFT>
 std::vector<OutputSectionBase<ELFT> *>
-LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
+LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory,
+                                   CommonInputSection<ELFT> *Common) {
   std::vector<OutputSectionBase<ELFT> *> Ret;
 
   // Add input section to output section. If there is no output section yet,
@@ -128,7 +134,7 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
   for (auto &P : getSectionMap()) {
     StringRef OutputName = P.first;
     const InputSectionDescription *I = P.second;
-    for (InputSectionBase<ELFT> *S : getInputSections(I)) {
+    for (InputSectionBase<ELFT> *S : getInputSections(I, Common)) {
       if (OutputName == "/DISCARD/") {
         S->Live = false;
         reportDiscarded(S);

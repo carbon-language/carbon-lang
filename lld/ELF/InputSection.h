@@ -25,6 +25,7 @@ class SymbolBody;
 
 template <class ELFT> class ICF;
 template <class ELFT> class DefinedRegular;
+template <class ELFT> class DefinedCommon;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class OutputSection;
 template <class ELFT> class OutputSectionBase;
@@ -254,6 +255,17 @@ public:
   static bool classof(const InputSectionBase<ELFT> *S);
 
   const llvm::object::Elf_Mips_RegInfo<ELFT> *Reginfo = nullptr;
+};
+
+// A special kind of section used to store common symbols
+template <class ELFT> class CommonInputSection : public InputSection<ELFT> {
+  typedef typename ELFT::uint uintX_t;
+
+public:
+  CommonInputSection();
+
+private:
+  typename ELFT::Shdr Hdr;
 };
 
 } // namespace elf
