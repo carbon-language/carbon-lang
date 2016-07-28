@@ -241,8 +241,8 @@ TEST(TargetParserTest, ARMArchExtFeature) {
                               {"xscale", "noxscale", nullptr, nullptr}};
 
   for (unsigned i = 0; i < array_lengthof(ArchExt); i++) {
-    EXPECT_EQ(ArchExt[i][2], ARM::getArchExtFeature(ArchExt[i][0]));
-    EXPECT_EQ(ArchExt[i][3], ARM::getArchExtFeature(ArchExt[i][1]));
+    EXPECT_STREQ(ArchExt[i][2], ARM::getArchExtFeature(ArchExt[i][0]));
+    EXPECT_STREQ(ArchExt[i][3], ARM::getArchExtFeature(ArchExt[i][1]));
   }
 }
 
@@ -528,8 +528,8 @@ TEST(TargetParserTest, AArch64ArchExtFeature) {
                               {"ras", "noras", "+ras", "-ras"}};
 
   for (unsigned i = 0; i < array_lengthof(ArchExt); i++) {
-    EXPECT_EQ(ArchExt[i][2], AArch64::getArchExtFeature(ArchExt[i][0]));
-    EXPECT_EQ(ArchExt[i][3], AArch64::getArchExtFeature(ArchExt[i][1]));
+    EXPECT_STREQ(ArchExt[i][2], AArch64::getArchExtFeature(ArchExt[i][0]));
+    EXPECT_STREQ(ArchExt[i][3], AArch64::getArchExtFeature(ArchExt[i][1]));
   }
 }
 
