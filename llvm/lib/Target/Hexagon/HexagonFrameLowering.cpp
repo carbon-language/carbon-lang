@@ -734,32 +734,43 @@ bool HexagonFrameLowering::updateExitPaths(MachineBasicBlock &MBB,
 
 
 namespace {
-  bool IsAllocFrame(MachineBasicBlock::const_iterator It) {
-    if (!It->isBundle())
-      return It->getOpcode() == Hexagon::S2_allocframe;
-    auto End = It->getParent()->instr_end();
-    MachineBasicBlock::const_instr_iterator I = It.getInstrIterator();
-    while (++I != End && I->isBundled())
-      if (I->getOpcode() == Hexagon::S2_allocframe)
-        return true;
-    return false;
-  }
+  Optional<MachineBasicBlock::iterator> findCFILocation(MachineBasicBlock &B) {
+    // The CFI instructions need to be inserted right after allocframe.
+    // An exception to this is a situation where allocframe is bundled
+    // with a call: then the CFI instructions need to be inserted before
+    // the packet with the allocframe+call (in case the call throws an
+    // exception).
+    auto End = B.instr_end();
 
-  MachineBasicBlock::iterator FindAllocFrame(MachineBasicBlock &B) {
-    for (auto &I : B)
-      if (IsAllocFrame(I))
-        return I;
-    return B.end();
+    for (MachineInstr &I : B) {
+      MachineBasicBlock::iterator It = I.getIterator();
+      if (!I.isBundle()) {
+        if (I.getOpcode() == Hexagon::S2_allocframe)
+          return std::next(It);
+        continue;
+      }
+      // I is a bundle.
+      bool HasCall = false, HasAllocFrame = false;
+      auto T = It.getInstrIterator();
+      while (++T != End && T->isBundled()) {
+        if (T->getOpcode() == Hexagon::S2_allocframe)
+          HasAllocFrame = true;
+        else if (T->isCall())
+          HasCall = true;
+      }
+      if (HasAllocFrame)
+        return HasCall ? It : std::next(It);
+    }
+    return None;
   }
 }
 
 
 void HexagonFrameLowering::insertCFIInstructions(MachineFunction &MF) const {
   for (auto &B : MF) {
-    auto AF = FindAllocFrame(B);
-    if (AF == B.end())
-      continue;
-    insertCFIInstructionsAt(B, ++AF);
+    auto At = findCFILocation(B);
+    if (At.hasValue())
+      insertCFIInstructionsAt(B, At.getValue());
   }
 }
 
