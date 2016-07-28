@@ -15,22 +15,17 @@
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_BASIC_BLOCK_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/ilist.h"
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/MC/MCCodeEmitter.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCInstrAnalysis.h"
-#include "llvm/MC/MCInstPrinter.h"
-#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
 #include <utility>
+#include <set>
 
 namespace llvm {
+class MCInstrAnalysis;
 namespace bolt {
 
 class BinaryFunction;

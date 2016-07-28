@@ -1794,13 +1794,9 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
         continue;
       }
 
-      if (BC.MIA->isInvoke(Instr)) {
-        // Add the value of GNU_args_size as an extra operand if landing pad
-        // is non-emptry.
-        if (BC.MIA->getEHInfo(Instr).first) {
-          Instr.addOperand(MCOperand::createImm(CurrentGnuArgsSize));
-        }
-      }
+      // Add the value of GNU_args_size as an extra operand if landing pad
+      // is non-empty.
+      BC.MIA->addGnuArgsSize(Instr, CurrentGnuArgsSize);
       ++II;
     }
   }

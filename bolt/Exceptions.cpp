@@ -197,15 +197,9 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
                "overlapping exception ranges detected");
         // Add extra operands to a call instruction making it an invoke from
         // now on.
-        if (LPSymbol) {
-          Instruction.addOperand(MCOperand::createExpr(
-              MCSymbolRefExpr::create(LPSymbol,
-                                      MCSymbolRefExpr::VK_None,
-                                      *BC.Ctx)));
-        } else {
-          Instruction.addOperand(MCOperand::createImm(0));
-        }
-        Instruction.addOperand(MCOperand::createImm(ActionEntry));
+        BC.MIA->addEHInfo(Instruction,
+                          MCLandingPad(LPSymbol, ActionEntry),
+                          BC.Ctx.get());
       }
       ++II;
     } while (II != IE && II->first < Start + Length);
