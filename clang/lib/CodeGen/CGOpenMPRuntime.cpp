@@ -5479,7 +5479,7 @@ public:
         const ValueDecl *D,
         OMPClauseMappableExprCommon::MappableExprComponentListRef L,
         OpenMPMapClauseKind MapType, OpenMPMapClauseKind MapModifier,
-        MapInfo::ReturnPointerKind ReturnDevicePointer = MapInfo::RPK_None) {
+        MapInfo::ReturnPointerKind ReturnDevicePointer) {
       const ValueDecl *VD =
           D ? cast<ValueDecl>(D->getCanonicalDecl()) : nullptr;
       Info[VD].push_back({L, MapType, MapModifier, ReturnDevicePointer});
@@ -5487,13 +5487,16 @@ public:
 
     for (auto *C : Directive.getClausesOfKind<OMPMapClause>())
       for (auto L : C->component_lists())
-        InfoGen(L.first, L.second, C->getMapType(), C->getMapTypeModifier());
+        InfoGen(L.first, L.second, C->getMapType(), C->getMapTypeModifier(),
+                MapInfo::RPK_None);
     for (auto *C : Directive.getClausesOfKind<OMPToClause>())
       for (auto L : C->component_lists())
-        InfoGen(L.first, L.second, OMPC_MAP_to, OMPC_MAP_unknown);
+        InfoGen(L.first, L.second, OMPC_MAP_to, OMPC_MAP_unknown,
+                MapInfo::RPK_None);
     for (auto *C : Directive.getClausesOfKind<OMPFromClause>())
       for (auto L : C->component_lists())
-        InfoGen(L.first, L.second, OMPC_MAP_from, OMPC_MAP_unknown);
+        InfoGen(L.first, L.second, OMPC_MAP_from, OMPC_MAP_unknown,
+                MapInfo::RPK_None);
 
     // Look at the use_device_ptr clause information and mark the existing map
     // entries as such. If there is no map information for an entry in the
