@@ -14,6 +14,9 @@
   define void @or_s32_gpr() { ret void }
   define void @or_s64_gpr() { ret void }
 
+  define void @and_s32_gpr() { ret void }
+  define void @and_s64_gpr() { ret void }
+
 ...
 
 ---
@@ -111,4 +114,52 @@ body:             |
 
     %0(64) = COPY %x0
     %1(64) = G_OR s64 %0, %0
+...
+
+---
+# Same as add_s32_gpr, for G_AND operations.
+# CHECK-LABEL: name: and_s32_gpr
+name:            and_s32_gpr
+isSSA:           true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr32 }
+# CHECK-NEXT:  - { id: 1, class: gpr32 }
+registers:
+  - { id: 0, class: gpr }
+  - { id: 1, class: gpr }
+
+# CHECK:  body:
+# CHECK:    %0 = COPY %w0
+# CHECK:    %1 = ANDWrr %0, %0
+body:             |
+  bb.0:
+    liveins: %w0
+
+    %0(32) = COPY %w0
+    %1(32) = G_AND s32 %0, %0
+...
+
+---
+# Same as add_s64_gpr, for G_AND operations.
+# CHECK-LABEL: name: and_s64_gpr
+name:            and_s64_gpr
+isSSA:           true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr64 }
+# CHECK-NEXT:  - { id: 1, class: gpr64 }
+registers:
+  - { id: 0, class: gpr }
+  - { id: 1, class: gpr }
+
+# CHECK:  body:
+# CHECK:    %0 = COPY %x0
+# CHECK:    %1 = ANDXrr %0, %0
+body:             |
+  bb.0:
+    liveins: %x0
+
+    %0(64) = COPY %x0
+    %1(64) = G_AND s64 %0, %0
 ...

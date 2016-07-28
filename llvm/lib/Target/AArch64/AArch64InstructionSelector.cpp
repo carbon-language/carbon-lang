@@ -52,6 +52,8 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
       switch (GenericOpc) {
       case TargetOpcode::G_OR:
         return AArch64::ORRWrr;
+      case TargetOpcode::G_AND:
+        return AArch64::ANDWrr;
       case TargetOpcode::G_ADD:
         return AArch64::ADDWrr;
       default:
@@ -61,6 +63,8 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
       switch (GenericOpc) {
       case TargetOpcode::G_OR:
         return AArch64::ORRXrr;
+      case TargetOpcode::G_AND:
+        return AArch64::ANDXrr;
       case TargetOpcode::G_ADD:
         return AArch64::ADDXrr;
       default:
@@ -105,6 +109,7 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
 
   switch (I.getOpcode()) {
   case TargetOpcode::G_OR:
+  case TargetOpcode::G_AND:
   case TargetOpcode::G_ADD: {
     DEBUG(dbgs() << "AArch64: Selecting: binop\n");
 
