@@ -305,7 +305,9 @@ TEST(MappedBlockStreamTest, TestWriteThenRead) {
   ArrayRef<uint8_t> byteArrayRef0(byteArray0);
   ArrayRef<uint8_t> byteArrayRef1(byteArray1);
   ArrayRef<uint8_t> byteArray[] = { byteArrayRef0, byteArrayRef1 };
-  ArrayRef<uint32_t> intArray[] = {{890723408, 29082234}, {0, 0}};
+  uint32_t intArr0[] = {890723408, 29082234};
+  uint32_t intArr1[] = {890723408, 29082234};
+  ArrayRef<uint32_t> intArray[] = {intArr0, intArr1};
 
   StreamReader Reader(S);
   StreamWriter Writer(S);
