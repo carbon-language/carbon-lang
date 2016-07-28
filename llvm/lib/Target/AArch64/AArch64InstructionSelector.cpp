@@ -56,6 +56,8 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
         return AArch64::ANDWrr;
       case TargetOpcode::G_ADD:
         return AArch64::ADDWrr;
+      case TargetOpcode::G_SUB:
+        return AArch64::SUBWrr;
       default:
         return GenericOpc;
       }
@@ -67,6 +69,8 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
         return AArch64::ANDXrr;
       case TargetOpcode::G_ADD:
         return AArch64::ADDXrr;
+      case TargetOpcode::G_SUB:
+        return AArch64::SUBXrr;
       default:
         return GenericOpc;
       }
@@ -110,7 +114,8 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
   switch (I.getOpcode()) {
   case TargetOpcode::G_OR:
   case TargetOpcode::G_AND:
-  case TargetOpcode::G_ADD: {
+  case TargetOpcode::G_ADD:
+  case TargetOpcode::G_SUB: {
     DEBUG(dbgs() << "AArch64: Selecting: binop\n");
 
     // Reject the various things we don't support yet.
