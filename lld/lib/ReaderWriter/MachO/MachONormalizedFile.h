@@ -92,21 +92,7 @@ struct Relocation {
   bool                isExtern;
   Hex32               value;
   uint32_t            symbol;
-
-#ifndef NDEBUG
-  raw_ostream& operator<<(raw_ostream &OS) const {
-    dump(OS);
-    return OS;
-  }
-
-  void dump(raw_ostream &OS = llvm::dbgs()) const;
-#endif
 };
-
-inline raw_ostream& operator<<(raw_ostream &OS, const Relocation &R) {
-  R.dump(OS);
-  return OS;
-}
 
 /// A typedef so that YAML I/O can treat this vector as a sequence.
 typedef std::vector<Relocation> Relocations;

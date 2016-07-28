@@ -1433,7 +1433,6 @@ normalizedObjectToAtoms(MachOFile *file,
 
   // Create atoms from each section.
   for (auto &sect : normalizedFile.sections) {
-    DEBUG(llvm::dbgs() << "Creating atoms: "; sect.dump());
 
     // If this is a debug-info section parse it specially.
     if (isDebugInfoSection(sect))
@@ -1626,21 +1625,6 @@ normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path,
     llvm_unreachable("unhandled MachO file type!");
   }
 }
-
-#ifndef NDEBUG
-void Relocation::dump(llvm::raw_ostream &OS) const {
-  OS << "Relocation (offset=" << llvm::format_hex(offset, 8, true)
-     << ", scatered=" << scattered << ", type=" << type << ", length=" << length
-     << ", pcrel=" << pcRel << ", isExtern=" << isExtern << ", value="
-     << llvm::format_hex(value, 8, true) << ", symbol=" << symbol << ")\n";
-}
-
-void Section::dump(llvm::raw_ostream &OS) const {
-  OS << "Section (\"" << segmentName << ", " << sectionName << "\"";
-  OS << ", addr: " << llvm::format_hex(address, 16, true);
-  OS << ", size: " << llvm::format_hex(content.size(), 8, true) << ")\n";
-}
-#endif
 
 } // namespace normalized
 } // namespace mach_o
