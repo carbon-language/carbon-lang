@@ -72,8 +72,13 @@ private:
   typedef llvm::DenseMap<ValueDecl *, Expr *> AlignedMapTy;
   typedef std::pair<unsigned, VarDecl *> LCDeclInfo;
   typedef llvm::DenseMap<ValueDecl *, LCDeclInfo> LoopControlVariablesMapTy;
-  typedef llvm::DenseMap<
-      ValueDecl *, OMPClauseMappableExprCommon::MappableExprComponentLists>
+  /// Struct that associates a component with the clause kind where they are
+  /// found.
+  struct MappedExprComponentTy {
+    OMPClauseMappableExprCommon::MappableExprComponentLists Components;
+    OpenMPClauseKind Kind = OMPC_unknown;
+  };
+  typedef llvm::DenseMap<ValueDecl *, MappedExprComponentTy>
       MappedExprComponentsTy;
   typedef llvm::StringMap<std::pair<OMPCriticalDirective *, llvm::APSInt>>
       CriticalsWithHintsTy;
@@ -327,8 +332,9 @@ public:
   // if any issue is found.
   bool checkMappableExprComponentListsForDecl(
       ValueDecl *VD, bool CurrentRegionOnly,
-      const llvm::function_ref<bool(
-          OMPClauseMappableExprCommon::MappableExprComponentListRef)> &Check) {
+      const llvm::function_ref<
+          bool(OMPClauseMappableExprCommon::MappableExprComponentListRef,
+               OpenMPClauseKind)> &Check) {
     auto SI = Stack.rbegin();
     auto SE = Stack.rend();
 
@@ -344,8 +350,8 @@ public:
     for (; SI != SE; ++SI) {
       auto MI = SI->MappedExprComponents.find(VD);
       if (MI != SI->MappedExprComponents.end())
-        for (auto &L : MI->second)
-          if (Check(L))
+        for (auto &L : MI->second.Components)
+          if (Check(L, MI->second.Kind))
             return true;
     }
     return false;
@@ -355,13 +361,15 @@ public:
   // declaration and initialize it with the provided list of components.
   void addMappableExpressionComponents(
       ValueDecl *VD,
-      OMPClauseMappableExprCommon::MappableExprComponentListRef Components) {
+      OMPClauseMappableExprCommon::MappableExprComponentListRef Components,
+      OpenMPClauseKind WhereFoundClauseKind) {
     assert(Stack.size() > 1 &&
            "Not expecting to retrieve components from a empty stack!");
     auto &MEC = Stack.back().MappedExprComponents[VD];
     // Create new entry and append the new components there.
-    MEC.resize(MEC.size() + 1);
-    MEC.back().append(Components.begin(), Components.end());
+    MEC.Components.resize(MEC.Components.size() + 1);
+    MEC.Components.back().append(Components.begin(), Components.end());
+    MEC.Kind = WhereFoundClauseKind;
   }
 
   unsigned getNestingLevel() const {
@@ -910,7 +918,13 @@ bool Sema::IsOpenMPCapturedByRef(ValueDecl *D, unsigned Level) {
     DSAStack->checkMappableExprComponentListsForDecl(
         D, /*CurrentRegionOnly=*/true,
         [&](OMPClauseMappableExprCommon::MappableExprComponentListRef
-                MapExprComponents) {
+                MapExprComponents,
+            OpenMPClauseKind WhereFoundClauseKind) {
+          // Only the map clause information influences how a variable is
+          // captured. E.g. is_device_ptr does not require changing the default
+          // behaviour.
+          if (WhereFoundClauseKind != OMPC_map)
+            return false;
 
           auto EI = MapExprComponents.rbegin();
           auto EE = MapExprComponents.rend();
@@ -8355,12 +8369,17 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
     // A list item cannot appear in both a map clause and a data-sharing
     // attribute clause on the same construct
     if (DSAStack->getCurrentDirective() == OMPD_target) {
+      OpenMPClauseKind ConflictKind;
       if (DSAStack->checkMappableExprComponentListsForDecl(
               VD, /* CurrentRegionOnly = */ true,
-              [&](OMPClauseMappableExprCommon::MappableExprComponentListRef)
-                  -> bool { return true; })) {
-        Diag(ELoc, diag::err_omp_variable_in_map_and_dsa)
+              [&](OMPClauseMappableExprCommon::MappableExprComponentListRef,
+                  OpenMPClauseKind WhereFoundClauseKind) -> bool {
+                ConflictKind = WhereFoundClauseKind;
+                return true;
+              })) {
+        Diag(ELoc, diag::err_omp_variable_in_given_clause_and_dsa)
             << getOpenMPClauseName(OMPC_private)
+            << getOpenMPClauseName(ConflictKind)
             << getOpenMPDirectiveName(DSAStack->getCurrentDirective());
         ReportOriginalDSA(*this, DSAStack, D, DVar);
         continue;
@@ -8606,12 +8625,17 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
       // A list item cannot appear in both a map clause and a data-sharing
       // attribute clause on the same construct
       if (CurrDir == OMPD_target) {
+        OpenMPClauseKind ConflictKind;
         if (DSAStack->checkMappableExprComponentListsForDecl(
                 VD, /* CurrentRegionOnly = */ true,
-                [&](OMPClauseMappableExprCommon::MappableExprComponentListRef)
-                    -> bool { return true; })) {
-          Diag(ELoc, diag::err_omp_variable_in_map_and_dsa)
+                [&](OMPClauseMappableExprCommon::MappableExprComponentListRef,
+                    OpenMPClauseKind WhereFoundClauseKind) -> bool {
+                  ConflictKind = WhereFoundClauseKind;
+                  return true;
+                })) {
+          Diag(ELoc, diag::err_omp_variable_in_given_clause_and_dsa)
               << getOpenMPClauseName(OMPC_firstprivate)
+              << getOpenMPClauseName(ConflictKind)
               << getOpenMPDirectiveName(DSAStack->getCurrentDirective());
           ReportOriginalDSA(*this, DSAStack, D, DVar);
           continue;
@@ -10763,7 +10787,8 @@ static bool CheckMapConflicts(
   bool FoundError = DSAS->checkMappableExprComponentListsForDecl(
       VD, CurrentRegionOnly,
       [&](OMPClauseMappableExprCommon::MappableExprComponentListRef
-              StackComponents) -> bool {
+              StackComponents,
+          OpenMPClauseKind) -> bool {
 
         assert(!StackComponents.empty() &&
                "Map clause expression with no components!");
@@ -11121,8 +11146,9 @@ checkMappableExpressionList(Sema &SemaRef, DSAStackTy *DSAS,
       if (DKind == OMPD_target && VD) {
         auto DVar = DSAS->getTopDSA(VD, false);
         if (isOpenMPPrivate(DVar.CKind)) {
-          SemaRef.Diag(ELoc, diag::err_omp_variable_in_map_and_dsa)
+          SemaRef.Diag(ELoc, diag::err_omp_variable_in_given_clause_and_dsa)
               << getOpenMPClauseName(DVar.CKind)
+              << getOpenMPClauseName(OMPC_map)
               << getOpenMPDirectiveName(DSAS->getCurrentDirective());
           ReportOriginalDSA(SemaRef, DSAS, CurDeclaration, DVar);
           continue;
@@ -11135,7 +11161,8 @@ checkMappableExpressionList(Sema &SemaRef, DSAStackTy *DSAS,
 
     // Store the components in the stack so that they can be used to check
     // against other clauses later on.
-    DSAS->addMappableExpressionComponents(CurDeclaration, CurComponents);
+    DSAS->addMappableExpressionComponents(CurDeclaration, CurComponents,
+                                          /*WhereFoundClauseKind=*/OMPC_map);
 
     // Save the components and declaration to create the clause. For purposes of
     // the clause creation, any component list that has has base 'this' uses
@@ -11885,7 +11912,7 @@ OMPClause *Sema::ActOnOpenMPIsDevicePtrClause(ArrayRef<Expr *> VarList,
                                               SourceLocation StartLoc,
                                               SourceLocation LParenLoc,
                                               SourceLocation EndLoc) {
-  SmallVector<Expr *, 8> Vars;
+  MappableVarListInfo MVLI(VarList);
   for (auto &RefExpr : VarList) {
     assert(RefExpr && "NULL expr in OpenMP use_device_ptr clause.");
     SourceLocation ELoc;
@@ -11894,7 +11921,7 @@ OMPClause *Sema::ActOnOpenMPIsDevicePtrClause(ArrayRef<Expr *> VarList,
     auto Res = getPrivateItem(*this, SimpleRefExpr, ELoc, ERange);
     if (Res.second) {
       // It will be analyzed later.
-      Vars.push_back(RefExpr);
+      MVLI.ProcessedVarList.push_back(RefExpr);
     }
     ValueDecl *D = Res.first;
     if (!D)
@@ -11908,12 +11935,59 @@ OMPClause *Sema::ActOnOpenMPIsDevicePtrClause(ArrayRef<Expr *> VarList,
           << 0 << RefExpr->getSourceRange();
       continue;
     }
-    Vars.push_back(RefExpr->IgnoreParens());
+
+    // Check if the declaration in the clause does not show up in any data
+    // sharing attribute.
+    auto DVar = DSAStack->getTopDSA(D, false);
+    if (isOpenMPPrivate(DVar.CKind)) {
+      Diag(ELoc, diag::err_omp_variable_in_given_clause_and_dsa)
+          << getOpenMPClauseName(DVar.CKind)
+          << getOpenMPClauseName(OMPC_is_device_ptr)
+          << getOpenMPDirectiveName(DSAStack->getCurrentDirective());
+      ReportOriginalDSA(*this, DSAStack, D, DVar);
+      continue;
+    }
+
+    Expr *ConflictExpr;
+    if (DSAStack->checkMappableExprComponentListsForDecl(
+            D, /* CurrentRegionOnly = */ true,
+            [&ConflictExpr](
+                OMPClauseMappableExprCommon::MappableExprComponentListRef R,
+                OpenMPClauseKind) -> bool {
+              ConflictExpr = R.front().getAssociatedExpression();
+              return true;
+            })) {
+      Diag(ELoc, diag::err_omp_map_shared_storage) << RefExpr->getSourceRange();
+      Diag(ConflictExpr->getExprLoc(), diag::note_used_here)
+          << ConflictExpr->getSourceRange();
+      continue;
+    }
+
+    // Store the components in the stack so that they can be used to check
+    // against other clauses later on.
+    OMPClauseMappableExprCommon::MappableComponent MC(SimpleRefExpr, D);
+    DSAStack->addMappableExpressionComponents(
+        D, MC, /*WhereFoundClauseKind=*/OMPC_is_device_ptr);
+
+    // Record the expression we've just processed.
+    MVLI.ProcessedVarList.push_back(SimpleRefExpr);
+
+    // Create a mappable component for the list item. List items in this clause
+    // only need a component. We use a null declaration to signal fields in
+    // 'this'.
+    assert((isa<DeclRefExpr>(SimpleRefExpr) ||
+            isa<CXXThisExpr>(cast<MemberExpr>(SimpleRefExpr)->getBase())) &&
+           "Unexpected device pointer expression!");
+    MVLI.VarBaseDeclarations.push_back(
+        isa<DeclRefExpr>(SimpleRefExpr) ? D : nullptr);
+    MVLI.VarComponents.resize(MVLI.VarComponents.size() + 1);
+    MVLI.VarComponents.back().push_back(MC);
   }
 
-  if (Vars.empty())
+  if (MVLI.ProcessedVarList.empty())
     return nullptr;
 
-  return OMPIsDevicePtrClause::Create(Context, StartLoc, LParenLoc, EndLoc,
-                                      Vars);
+  return OMPIsDevicePtrClause::Create(
+      Context, StartLoc, LParenLoc, EndLoc, MVLI.ProcessedVarList,
+      MVLI.VarBaseDeclarations, MVLI.VarComponents);
 }

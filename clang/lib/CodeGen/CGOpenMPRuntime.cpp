@@ -5022,6 +5022,13 @@ private:
   /// \brief Set of all first private variables in the current directive.
   llvm::SmallPtrSet<const VarDecl *, 8> FirstPrivateDecls;
 
+  /// Map between device pointer declarations and their expression components.
+  /// The key value for declarations in 'this' is null.
+  llvm::DenseMap<
+      const ValueDecl *,
+      SmallVector<OMPClauseMappableExprCommon::MappableExprComponentListRef, 4>>
+      DevPointersMap;
+
   llvm::Value *getExprTypeSize(const Expr *E) const {
     auto ExprTy = E->getType().getCanonicalType();
 
@@ -5418,6 +5425,10 @@ public:
       for (const auto *D : C->varlists())
         FirstPrivateDecls.insert(
             cast<VarDecl>(cast<DeclRefExpr>(D)->getDecl())->getCanonicalDecl());
+    // Extract device pointer clause information.
+    for (const auto *C : Dir.getClausesOfKind<OMPIsDevicePtrClause>())
+      for (auto L : C->component_lists())
+        DevPointersMap[L.first].push_back(L.second);
   }
 
   /// \brief Generate all the base pointers, section pointers, sizes and map
@@ -5573,6 +5584,7 @@ public:
   /// \brief Generate the base pointers, section pointers, sizes and map types
   /// associated to a given capture.
   void generateInfoForCapture(const CapturedStmt::Capture *Cap,
+                              llvm::Value *Arg,
                               MapBaseValuesArrayTy &BasePointers,
                               MapValuesArrayTy &Pointers,
                               MapValuesArrayTy &Sizes,
@@ -5585,14 +5597,38 @@ public:
     Sizes.clear();
     Types.clear();
 
+    // We need to know when we generating information for the first component
+    // associated with a capture, because the mapping flags depend on it.
+    bool IsFirstComponentList = true;
+
     const ValueDecl *VD =
         Cap->capturesThis()
             ? nullptr
             : cast<ValueDecl>(Cap->getCapturedVar()->getCanonicalDecl());
 
-    // We need to know when we generating information for the first component
-    // associated with a capture, because the mapping flags depend on it.
-    bool IsFirstComponentList = true;
+    // If this declaration appears in a is_device_ptr clause we just have to
+    // pass the pointer by value. If it is a reference to a declaration, we just
+    // pass its value, otherwise, if it is a member expression, we need to map
+    // 'to' the field.
+    if (!VD) {
+      auto It = DevPointersMap.find(VD);
+      if (It != DevPointersMap.end()) {
+        for (auto L : It->second) {
+          generateInfoForComponentList(
+              /*MapType=*/OMPC_MAP_to, /*MapTypeModifier=*/OMPC_MAP_unknown, L,
+              BasePointers, Pointers, Sizes, Types, IsFirstComponentList);
+          IsFirstComponentList = false;
+        }
+        return;
+      }
+    } else if (DevPointersMap.count(VD)) {
+      BasePointers.push_back({Arg, VD});
+      Pointers.push_back(Arg);
+      Sizes.push_back(CGF.getTypeSize(CGF.getContext().VoidPtrTy));
+      Types.push_back(OMP_MAP_PRIVATE_VAL | OMP_MAP_FIRST_REF);
+      return;
+    }
+
     for (auto *C : Directive.getClausesOfKind<OMPMapClause>())
       for (auto L : C->decl_component_lists(VD)) {
         assert(L.first == VD &&
@@ -5883,7 +5919,7 @@ void CGOpenMPRuntime::emitTargetCall(CodeGenFunction &CGF,
     } else {
       // If we have any information in the map clause, we use it, otherwise we
       // just do a default mapping.
-      MEHandler.generateInfoForCapture(CI, CurBasePointers, CurPointers,
+      MEHandler.generateInfoForCapture(CI, *CV, CurBasePointers, CurPointers,
                                        CurSizes, CurMapTypes);
       if (CurBasePointers.empty())
         MEHandler.generateDefaultMapInfo(*CI, **RI, *CV, CurBasePointers,

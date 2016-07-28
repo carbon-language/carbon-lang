@@ -4396,50 +4396,94 @@ public:
 /// 'is_device_ptr' with the variables 'a' and 'b'.
 ///
 class OMPIsDevicePtrClause final
-    : public OMPVarListClause<OMPIsDevicePtrClause>,
-      private llvm::TrailingObjects<OMPIsDevicePtrClause, Expr *> {
+    : public OMPMappableExprListClause<OMPIsDevicePtrClause>,
+      private llvm::TrailingObjects<
+          OMPIsDevicePtrClause, Expr *, ValueDecl *, unsigned,
+          OMPClauseMappableExprCommon::MappableComponent> {
   friend TrailingObjects;
   friend OMPVarListClause;
+  friend OMPMappableExprListClause;
   friend class OMPClauseReader;
-  /// Build clause with number of variables \a N.
+
+  /// Define the sizes of each trailing object array except the last one. This
+  /// is required for TrailingObjects to work properly.
+  size_t numTrailingObjects(OverloadToken<Expr *>) const {
+    return varlist_size();
+  }
+  size_t numTrailingObjects(OverloadToken<ValueDecl *>) const {
+    return getUniqueDeclarationsNum();
+  }
+  size_t numTrailingObjects(OverloadToken<unsigned>) const {
+    return getUniqueDeclarationsNum() + getTotalComponentListNum();
+  }
+  /// Build clause with number of variables \a NumVars.
   ///
   /// \param StartLoc Starting location of the clause.
-  /// \param LParenLoc Location of '('.
   /// \param EndLoc Ending location of the clause.
-  /// \param N Number of the variables in the clause.
+  /// \param NumVars Number of expressions listed in this clause.
+  /// \param NumUniqueDeclarations Number of unique base declarations in this
+  /// clause.
+  /// \param NumComponentLists Number of component lists in this clause.
+  /// \param NumComponents Total number of expression components in the clause.
   ///
-  OMPIsDevicePtrClause(SourceLocation StartLoc, SourceLocation LParenLoc,
-                       SourceLocation EndLoc, unsigned N)
-      : OMPVarListClause<OMPIsDevicePtrClause>(OMPC_is_device_ptr, StartLoc,
-                                               LParenLoc, EndLoc, N) {}
+  explicit OMPIsDevicePtrClause(SourceLocation StartLoc,
+                                SourceLocation LParenLoc, SourceLocation EndLoc,
+                                unsigned NumVars,
+                                unsigned NumUniqueDeclarations,
+                                unsigned NumComponentLists,
+                                unsigned NumComponents)
+      : OMPMappableExprListClause(OMPC_is_device_ptr, StartLoc, LParenLoc,
+                                  EndLoc, NumVars, NumUniqueDeclarations,
+                                  NumComponentLists, NumComponents) {}
 
   /// Build an empty clause.
   ///
-  /// \param N Number of variables.
+  /// \param NumVars Number of expressions listed in this clause.
+  /// \param NumUniqueDeclarations Number of unique base declarations in this
+  /// clause.
+  /// \param NumComponentLists Number of component lists in this clause.
+  /// \param NumComponents Total number of expression components in the clause.
   ///
-  explicit OMPIsDevicePtrClause(unsigned N)
-      : OMPVarListClause<OMPIsDevicePtrClause>(
-            OMPC_is_device_ptr, SourceLocation(), SourceLocation(),
-            SourceLocation(), N) {}
+  explicit OMPIsDevicePtrClause(unsigned NumVars,
+                                unsigned NumUniqueDeclarations,
+                                unsigned NumComponentLists,
+                                unsigned NumComponents)
+      : OMPMappableExprListClause(OMPC_is_device_ptr, SourceLocation(),
+                                  SourceLocation(), SourceLocation(), NumVars,
+                                  NumUniqueDeclarations, NumComponentLists,
+                                  NumComponents) {}
 
 public:
-  /// Creates clause with a list of variables \a VL.
+  /// Creates clause with a list of variables \a Vars.
   ///
   /// \param C AST context.
   /// \param StartLoc Starting location of the clause.
-  /// \param LParenLoc Location of '('.
   /// \param EndLoc Ending location of the clause.
-  /// \param VL List of references to the variables.
+  /// \param Vars The original expression used in the clause.
+  /// \param Declarations Declarations used in the clause.
+  /// \param ComponentLists Component lists used in the clause.
   ///
   static OMPIsDevicePtrClause *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
-         SourceLocation EndLoc, ArrayRef<Expr *> VL);
-  /// Creates an empty clause with the place for \a N variables.
+         SourceLocation EndLoc, ArrayRef<Expr *> Vars,
+         ArrayRef<ValueDecl *> Declarations,
+         MappableExprComponentListsRef ComponentLists);
+
+  /// Creates an empty clause with the place for \a NumVars variables.
   ///
   /// \param C AST context.
-  /// \param N The number of variables.
+  /// \param NumVars Number of expressions listed in the clause.
+  /// \param NumUniqueDeclarations Number of unique base declarations in this
+  /// clause.
+  /// \param NumComponentLists Number of unique base declarations in this
+  /// clause.
+  /// \param NumComponents Total number of expression components in the clause.
   ///
-  static OMPIsDevicePtrClause *CreateEmpty(const ASTContext &C, unsigned N);
+  static OMPIsDevicePtrClause *CreateEmpty(const ASTContext &C,
+                                           unsigned NumVars,
+                                           unsigned NumUniqueDeclarations,
+                                           unsigned NumComponentLists,
+                                           unsigned NumComponents);
 
   child_range children() {
     return child_range(reinterpret_cast<Stmt **>(varlist_begin()),

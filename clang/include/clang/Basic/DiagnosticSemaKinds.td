@@ -8372,8 +8372,8 @@ def err_omp_schedule_nonmonotonic_ordered : Error<
   "'schedule' clause with 'nonmonotonic' modifier cannot be specified if an 'ordered' clause is specified">;
 def err_omp_ordered_simd : Error<
   "'ordered' clause with a parameter can not be specified in '#pragma omp %0' directive">;
-def err_omp_variable_in_map_and_dsa : Error<
-  "%0 variable cannot be in a map clause in '#pragma omp %1' directive">;
+def err_omp_variable_in_given_clause_and_dsa : Error<
+  "%0 variable cannot be in a %1 clause in '#pragma omp %2' directive">;
 def err_omp_param_or_this_in_clause : Error<
   "expected reference to one of the parameters of function %0%select{| or 'this'}1">;
 def err_omp_expected_uniform_param : Error<
