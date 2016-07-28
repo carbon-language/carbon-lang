@@ -4,7 +4,6 @@ macro(add_host_subdirectory group)
 endmacro()
 
 add_host_subdirectory(common
-  common/Condition.cpp
   common/File.cpp
   common/FileCache.cpp
   common/FileSpec.cpp
@@ -17,7 +16,6 @@ add_host_subdirectory(common
   common/HostThread.cpp
   common/IOObject.cpp
   common/LockFileBase.cpp
-  common/Mutex.cpp
   common/MonitoringProcessLauncher.cpp
   common/NativeBreakpoint.cpp
   common/NativeBreakpointList.cpp
@@ -60,7 +58,6 @@ add_host_subdirectory(posix
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
   add_host_subdirectory(windows
-    windows/Condition.cpp
     windows/ConnectionGenericFileWindows.cpp
     windows/EditLineWin.cpp
     windows/FileSystem.cpp
@@ -69,7 +66,6 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     windows/HostProcessWindows.cpp
     windows/HostThreadWindows.cpp
     windows/LockFileWindows.cpp
-    windows/Mutex.cpp
     windows/PipeWindows.cpp
     windows/ProcessLauncherWindows.cpp
     windows/ProcessRunLock.cpp

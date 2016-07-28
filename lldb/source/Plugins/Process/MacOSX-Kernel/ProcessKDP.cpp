@@ -941,7 +941,7 @@ ProcessKDP::AsyncThread (void *arg)
             if (log)
                 log->Printf ("ProcessKDP::AsyncThread (pid = %" PRIu64 ") listener.WaitForEvent (NULL, event_sp)...",
                              pid);
-            if (listener_sp->WaitForEvent (NULL, event_sp))
+            if (listener_sp->WaitForEvent(stsd::chrono::micrseconds(0), event_sp))
             {
                 uint32_t event_type = event_sp->GetType();
                 if (log)
