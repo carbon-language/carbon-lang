@@ -698,7 +698,7 @@ void ScriptParser::readInputSectionRules(InputSectionDescription *InCmd, bool Ke
 
 std::unique_ptr<InputSectionDescription>
 ScriptParser::readInputSectionDescription() {
-  auto InCmd = std::make_unique<InputSectionDescription>();
+  auto InCmd = llvm::make_unique<InputSectionDescription>();
 
   // Input section wildcard can be surrounded by KEEP.
   // https://sourceware.org/binutils/docs/ld/Input-Section-Keep.html#Input-Section-Keep
