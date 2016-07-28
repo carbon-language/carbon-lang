@@ -435,7 +435,7 @@ public:
             }
             else
             {
-                std::cv_status result = m_condition.wait_for(m_mutex, timeout);
+                std::cv_status result = m_condition.wait_for(lock, timeout);
                 if (result == std::cv_status::timeout)
                 {
                     if (timed_out)
