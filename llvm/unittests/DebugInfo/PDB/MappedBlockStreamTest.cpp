@@ -63,7 +63,7 @@ public:
   Error commit() const override { return Error::success(); }
 
   MsfStreamLayout layout() const {
-    return MsfStreamLayout{Data.size(), Blocks};
+    return MsfStreamLayout{static_cast<uint32_t>(Data.size()), Blocks};
   }
 
 private:
