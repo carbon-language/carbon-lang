@@ -133,9 +133,9 @@ TEST(TargetParserTest, ARMFPUVersion) {
        FK <= ARM::FPUKind::FK_LAST;
        FK = static_cast<ARM::FPUKind>(static_cast<unsigned>(FK) + 1))
     if (FK == ARM::FK_LAST)
-      EXPECT_EQ(0, ARM::getFPUVersion(FK));
+      EXPECT_EQ(0U, ARM::getFPUVersion(FK));
     else
-      EXPECT_LE(0, ARM::getFPUVersion(FK));
+      EXPECT_LE(0U, ARM::getFPUVersion(FK));
 }
 
 TEST(TargetParserTest, ARMFPUNeonSupportLevel) {
@@ -143,9 +143,9 @@ TEST(TargetParserTest, ARMFPUNeonSupportLevel) {
        FK <= ARM::FPUKind::FK_LAST;
        FK = static_cast<ARM::FPUKind>(static_cast<unsigned>(FK) + 1))
     if (FK == ARM::FK_LAST)
-      EXPECT_EQ(0, ARM::getFPUNeonSupportLevel(FK));
+      EXPECT_EQ(0U, ARM::getFPUNeonSupportLevel(FK));
     else
-      EXPECT_LE(0, ARM::getFPUNeonSupportLevel(FK));
+      EXPECT_LE(0U, ARM::getFPUNeonSupportLevel(FK));
 }
 
 TEST(TargetParserTest, ARMFPURestriction) {
@@ -153,9 +153,9 @@ TEST(TargetParserTest, ARMFPURestriction) {
        FK <= ARM::FPUKind::FK_LAST;
        FK = static_cast<ARM::FPUKind>(static_cast<unsigned>(FK) + 1))
     if (FK == ARM::FK_LAST)
-      EXPECT_EQ(0, ARM::getFPURestriction(FK));
+      EXPECT_EQ(0U, ARM::getFPURestriction(FK));
     else
-      EXPECT_LE(0, ARM::getFPURestriction(FK));
+      EXPECT_LE(0U, ARM::getFPURestriction(FK));
 }
 
 TEST(TargetParserTest, ARMDefaultFPU) {
