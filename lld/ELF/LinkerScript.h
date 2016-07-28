@@ -84,8 +84,9 @@ struct OutputSectionCommand : BaseCommand {
 struct InputSectionDescription : BaseCommand {
   InputSectionDescription() : BaseCommand(InputSectionKind) {}
   static bool classof(const BaseCommand *C);
+  StringRef FilePattern;
   std::vector<StringRef> ExcludedFiles;
-  std::vector<StringRef> Patterns;
+  std::vector<StringRef> SectionPatterns;
 };
 
 struct PhdrsCommand {
