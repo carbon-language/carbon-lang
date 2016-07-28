@@ -879,6 +879,16 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
     }
   }
 
+  // Check types.
+  const unsigned NumTypes = MI->getNumTypes();
+  if (isPreISelGenericOpcode(MCID.getOpcode())) {
+    if (NumTypes == 0)
+      report("Generic instruction must have a type", MI);
+  } else {
+    if (NumTypes != 0)
+      report("Non-generic instruction cannot have a type", MI);
+  }
+
   StringRef ErrorInfo;
   if (!TII->verifyInstruction(*MI, ErrorInfo))
     report(ErrorInfo.data(), MI);

@@ -716,6 +716,8 @@ void MachineInstr::setType(LLT Ty, unsigned Idx) {}
 
 LLT MachineInstr::getType(unsigned Idx) const { return LLT{}; }
 
+void MachineInstr::removeTypes() {}
+
 #else
 unsigned MachineInstr::getNumTypes() const { return Tys.size(); }
 
@@ -728,6 +730,10 @@ void MachineInstr::setType(LLT Ty, unsigned Idx) {
 }
 
 LLT MachineInstr::getType(unsigned Idx) const { return Tys[Idx]; }
+
+void MachineInstr::removeTypes() {
+  Tys.clear();
+}
 #endif // LLVM_BUILD_GLOBAL_ISEL
 
 /// RemoveRegOperandsFromUseLists - Unlink all of the register operands in

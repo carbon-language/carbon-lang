@@ -150,7 +150,7 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
 
     I.setDesc(TII.get(NewOpc));
     // FIXME: Should the type be always reset in setDesc?
-    I.setType(LLT());
+    I.removeTypes();
 
     // Now that we selected an opcode, we need to constrain the register
     // operands to use appropriate classes.
