@@ -5014,7 +5014,7 @@ public:
 
 private:
   /// \brief Directive from where the map clauses were extracted.
-  const OMPExecutableDirective &Directive;
+  const OMPExecutableDirective &CurDir;
 
   /// \brief Function the directive is being generated for.
   CodeGenFunction &CGF;
@@ -5419,7 +5419,7 @@ private:
 
 public:
   MappableExprsHandler(const OMPExecutableDirective &Dir, CodeGenFunction &CGF)
-      : Directive(Dir), CGF(CGF) {
+      : CurDir(Dir), CGF(CGF) {
     // Extract firstprivate clause information.
     for (const auto *C : Dir.getClausesOfKind<OMPFirstprivateClause>())
       for (const auto *D : C->varlists())
@@ -5485,15 +5485,15 @@ public:
       Info[VD].push_back({L, MapType, MapModifier, ReturnDevicePointer});
     };
 
-    for (auto *C : Directive.getClausesOfKind<OMPMapClause>())
+    for (auto *C : CurDir.getClausesOfKind<OMPMapClause>())
       for (auto L : C->component_lists())
         InfoGen(L.first, L.second, C->getMapType(), C->getMapTypeModifier(),
                 MapInfo::RPK_None);
-    for (auto *C : Directive.getClausesOfKind<OMPToClause>())
+    for (auto *C : CurDir.getClausesOfKind<OMPToClause>())
       for (auto L : C->component_lists())
         InfoGen(L.first, L.second, OMPC_MAP_to, OMPC_MAP_unknown,
                 MapInfo::RPK_None);
-    for (auto *C : Directive.getClausesOfKind<OMPFromClause>())
+    for (auto *C : CurDir.getClausesOfKind<OMPFromClause>())
       for (auto L : C->component_lists())
         InfoGen(L.first, L.second, OMPC_MAP_from, OMPC_MAP_unknown,
                 MapInfo::RPK_None);
@@ -5502,7 +5502,7 @@ public:
     // entries as such. If there is no map information for an entry in the
     // use_device_ptr list, we create one with map type 'alloc' and zero size
     // section. It is the user fault if that was not mapped before.
-    for (auto *C : Directive.getClausesOfKind<OMPUseDevicePtrClause>())
+    for (auto *C : CurDir.getClausesOfKind<OMPUseDevicePtrClause>())
       for (auto L : C->component_lists()) {
         assert(!L.second.empty() && "Not expecting empty list of components!");
         const ValueDecl *VD = L.second.back().getAssociatedDeclaration();
@@ -5632,7 +5632,7 @@ public:
       return;
     }
 
-    for (auto *C : Directive.getClausesOfKind<OMPMapClause>())
+    for (auto *C : CurDir.getClausesOfKind<OMPMapClause>())
       for (auto L : C->decl_component_lists(VD)) {
         assert(L.first == VD &&
                "We got information for the wrong declaration??");
