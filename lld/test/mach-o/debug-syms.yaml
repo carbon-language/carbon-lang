@@ -3,7 +3,7 @@
 
 # CHECK:      0000000000000000 - 00 0000    SO /Users/lhames/Projects/lld/lld-svn-tot/scratch/
 # CHECK-NEXT: 0000000000000000 - 00 0000    SO hw.c
-# CHECK-NEXT:    {{[0-9a-f]+}} - 03 0001   OSO {{.*}}/test/mach-o/debug-syms.yaml
+# CHECK-NEXT:    {{[0-9a-f]+}} - 03 0001   OSO {{.*}}{{/|\\}}test{{/|\\}}mach-o{{/|\\}}debug-syms.yaml
 # CHECK-NEXT: 0000000000000fa0 - 01 0000 BNSYM 
 # CHECK-NEXT: 0000000000000fa0 - 01 0000   FUN _main
 # CHECK-NEXT: 0000000000000016 - 00 0000   FUN 
