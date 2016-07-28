@@ -747,7 +747,7 @@ void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
   expect("{");
 
   while (!Error && !skip("}")) {
-    if ((!peek().empty() && peek().startswith("*")) || peek() == "KEEP") {
+    if (peek().startswith("*") || peek() == "KEEP") {
       Cmd->Commands.push_back(readInputSectionDescription());
       continue;
     }
