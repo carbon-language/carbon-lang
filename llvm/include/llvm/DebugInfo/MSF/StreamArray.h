@@ -10,7 +10,7 @@
 #ifndef LLVM_DEBUGINFO_MSF_STREAMARRAY_H
 #define LLVM_DEBUGINFO_MSF_STREAMARRAY_H
 
-#include "llvm/DebugInfo/Msf/StreamRef.h"
+#include "llvm/DebugInfo/MSF/StreamRef.h"
 #include "llvm/Support/Error.h"
 
 #include <functional>

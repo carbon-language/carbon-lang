@@ -1,4 +1,4 @@
-//===- MappedBlockStream.h - Discontiguous stream data in an Msf -*- C++
+//===- MappedBlockStream.h - Discontiguous stream data in an MSF -*- C++
 //-*-===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -14,8 +14,8 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/DebugInfo/Msf/MsfStreamLayout.h"
-#include "llvm/DebugInfo/Msf/StreamInterface.h"
+#include "llvm/DebugInfo/MSF/MSFStreamLayout.h"
+#include "llvm/DebugInfo/MSF/StreamInterface.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
@@ -25,16 +25,16 @@
 namespace llvm {
 namespace msf {
 
-struct MsfLayout;
+struct MSFLayout;
 
-/// MappedBlockStream represents data stored in an Msf file into chunks of a
+/// MappedBlockStream represents data stored in an MSF file into chunks of a
 /// particular size (called the Block Size), and whose chunks may not be
-/// necessarily contiguous.  The arrangement of these chunks within the file
-/// is described by some other metadata contained within the Msf file.  In
-/// the case of a standard Msf Stream, the layout of the stream's blocks
-/// is described by the Msf "directory", but in the case of the directory
+/// necessarily contiguous.  The arrangement of these chunks MSF the file
+/// is described by some other metadata contained within the MSF file.  In
+/// the case of a standard MSF Stream, the layout of the stream's blocks
+/// is described by the MSF "directory", but in the case of the directory
 /// itself, the layout is described by an array at a fixed location within
-/// the Msf.  MappedBlockStream provides methods for reading from and writing
+/// the MSF.  MappedBlockStream provides methods for reading from and writing
 /// to one of these streams transparently, as if it were a contiguous sequence
 /// of bytes.
 class MappedBlockStream : public ReadableStream {
@@ -43,14 +43,14 @@ class MappedBlockStream : public ReadableStream {
 public:
   static std::unique_ptr<MappedBlockStream>
   createStream(uint32_t BlockSize, uint32_t NumBlocks,
-               const MsfStreamLayout &Layout, const ReadableStream &MsfData);
+               const MSFStreamLayout &Layout, const ReadableStream &MsfData);
 
   static std::unique_ptr<MappedBlockStream>
-  createIndexedStream(const MsfLayout &Layout, const ReadableStream &MsfData,
+  createIndexedStream(const MSFLayout &Layout, const ReadableStream &MsfData,
                       uint32_t StreamIndex);
 
   static std::unique_ptr<MappedBlockStream>
-  createDirectoryStream(const MsfLayout &Layout, const ReadableStream &MsfData);
+  createDirectoryStream(const MSFLayout &Layout, const ReadableStream &MsfData);
 
   Error readBytes(uint32_t Offset, uint32_t Size,
                   ArrayRef<uint8_t> &Buffer) const override;
@@ -71,11 +71,11 @@ public:
 
 protected:
   MappedBlockStream(uint32_t BlockSize, uint32_t NumBlocks,
-                    const MsfStreamLayout &StreamLayout,
+                    const MSFStreamLayout &StreamLayout,
                     const ReadableStream &MsfData);
 
 private:
-  const MsfStreamLayout &getStreamLayout() const { return StreamLayout; }
+  const MSFStreamLayout &getStreamLayout() const { return StreamLayout; }
   void fixCacheAfterWrite(uint32_t Offset, ArrayRef<uint8_t> Data) const;
 
   Error readBytes(uint32_t Offset, MutableArrayRef<uint8_t> Buffer) const;
@@ -84,7 +84,7 @@ private:
 
   const uint32_t BlockSize;
   const uint32_t NumBlocks;
-  const MsfStreamLayout StreamLayout;
+  const MSFStreamLayout StreamLayout;
   const ReadableStream &MsfData;
 
   typedef MutableArrayRef<uint8_t> CacheEntry;
@@ -96,14 +96,14 @@ class WritableMappedBlockStream : public WritableStream {
 public:
   static std::unique_ptr<WritableMappedBlockStream>
   createStream(uint32_t BlockSize, uint32_t NumBlocks,
-               const MsfStreamLayout &Layout, const WritableStream &MsfData);
+               const MSFStreamLayout &Layout, const WritableStream &MsfData);
 
   static std::unique_ptr<WritableMappedBlockStream>
-  createIndexedStream(const MsfLayout &Layout, const WritableStream &MsfData,
+  createIndexedStream(const MSFLayout &Layout, const WritableStream &MsfData,
                       uint32_t StreamIndex);
 
   static std::unique_ptr<WritableMappedBlockStream>
-  createDirectoryStream(const MsfLayout &Layout, const WritableStream &MsfData);
+  createDirectoryStream(const MSFLayout &Layout, const WritableStream &MsfData);
 
   Error readBytes(uint32_t Offset, uint32_t Size,
                   ArrayRef<uint8_t> &Buffer) const override;
@@ -115,7 +115,7 @@ public:
 
   Error commit() const override;
 
-  const MsfStreamLayout &getStreamLayout() const {
+  const MSFStreamLayout &getStreamLayout() const {
     return ReadInterface.getStreamLayout();
   }
   uint32_t getBlockSize() const { return ReadInterface.getBlockSize(); }
@@ -124,7 +124,7 @@ public:
 
 protected:
   WritableMappedBlockStream(uint32_t BlockSize, uint32_t NumBlocks,
-                            const MsfStreamLayout &StreamLayout,
+                            const MSFStreamLayout &StreamLayout,
                             const WritableStream &MsfData);
 
 private:

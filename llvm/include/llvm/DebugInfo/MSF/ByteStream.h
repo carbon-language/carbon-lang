@@ -12,8 +12,8 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/DebugInfo/Msf/MsfError.h"
-#include "llvm/DebugInfo/Msf/StreamInterface.h"
+#include "llvm/DebugInfo/MSF/MSFError.h"
+#include "llvm/DebugInfo/MSF/StreamInterface.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -32,16 +32,16 @@ public:
   Error readBytes(uint32_t Offset, uint32_t Size,
                   ArrayRef<uint8_t> &Buffer) const override {
     if (Offset > Data.size())
-      return make_error<MsfError>(msf_error_code::insufficient_buffer);
+      return make_error<MSFError>(msf_error_code::insufficient_buffer);
     if (Data.size() < Size + Offset)
-      return make_error<MsfError>(msf_error_code::insufficient_buffer);
+      return make_error<MSFError>(msf_error_code::insufficient_buffer);
     Buffer = Data.slice(Offset, Size);
     return Error::success();
   }
   Error readLongestContiguousChunk(uint32_t Offset,
                                    ArrayRef<uint8_t> &Buffer) const override {
     if (Offset >= Data.size())
-      return make_error<MsfError>(msf_error_code::insufficient_buffer);
+      return make_error<MSFError>(msf_error_code::insufficient_buffer);
     Buffer = Data.slice(Offset);
     return Error::success();
   }
@@ -90,9 +90,9 @@ public:
 
   Error writeBytes(uint32_t Offset, ArrayRef<uint8_t> Buffer) const override {
     if (Data.size() < Buffer.size())
-      return make_error<MsfError>(msf_error_code::insufficient_buffer);
+      return make_error<MSFError>(msf_error_code::insufficient_buffer);
     if (Offset > Buffer.size() - Data.size())
-      return make_error<MsfError>(msf_error_code::insufficient_buffer);
+      return make_error<MSFError>(msf_error_code::insufficient_buffer);
 
     uint8_t *DataPtr = const_cast<uint8_t *>(Data.data());
     ::memcpy(DataPtr + Offset, Buffer.data(), Buffer.size());
@@ -121,7 +121,7 @@ private:
 
     Error commit() const override {
       if (FileBuffer->commit())
-        return llvm::make_error<MsfError>(msf_error_code::not_writable);
+        return llvm::make_error<MSFError>(msf_error_code::not_writable);
       return Error::success();
     }
 

@@ -13,7 +13,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 
-#include "llvm/DebugInfo/Msf/MsfCommon.h"
+#include "llvm/DebugInfo/MSF/MSFCommon.h"
 
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Endian.h"
@@ -24,15 +24,15 @@
 
 namespace llvm {
 namespace msf {
-class MsfBuilder {
+class MSFBuilder {
 public:
-  /// \brief Create a new `MsfBuilder`.
+  /// \brief Create a new `MSFBuilder`.
   ///
   /// \param BlockSize The internal block size used by the PDB file.  See
   /// isValidBlockSize() for a list of valid block sizes.
   ///
   /// \param MinBlockCount Causes the builder to reserve up front space for
-  /// at least `MinBlockCount` blocks.  This is useful when using `MsfBuilder`
+  /// at least `MinBlockCount` blocks.  This is useful when using `MSFBuilder`
   /// to read an existing MSF that you want to write back out later.  The
   /// original MSF file's SuperBlock contains the exact number of blocks used
   /// by the file, so is a good hint as to how many blocks the new MSF file
@@ -54,7 +54,7 @@ public:
   /// failed.  Currently the only way this can fail is if an invalid block size
   /// is specified, or `MinBlockCount` does not leave enough room for the
   /// mandatory reserved blocks required by an MSF file.
-  static Expected<MsfBuilder> create(BumpPtrAllocator &Allocator,
+  static Expected<MSFBuilder> create(BumpPtrAllocator &Allocator,
                                      uint32_t BlockSize,
                                      uint32_t MinBlockCount = 0,
                                      bool CanGrow = true);
@@ -81,7 +81,7 @@ public:
 
   /// Update the size of an existing stream.  This will allocate or deallocate
   /// blocks as needed to match the requested size.  This can fail if `CanGrow`
-  /// was set to false when initializing the `MsfBuilder`.
+  /// was set to false when initializing the `MSFBuilder`.
   Error setStreamSize(uint32_t Idx, uint32_t Size);
 
   /// Get the total number of streams in the MSF layout.  This should return 1
@@ -111,10 +111,10 @@ public:
 
   /// Finalize the layout and build the headers and structures that describe the
   /// MSF layout and can be written directly to the MSF file.
-  Expected<MsfLayout> build();
+  Expected<MSFLayout> build();
 
 private:
-  MsfBuilder(uint32_t BlockSize, uint32_t MinBlockCount, bool CanGrow,
+  MSFBuilder(uint32_t BlockSize, uint32_t MinBlockCount, bool CanGrow,
              BumpPtrAllocator &Allocator);
 
   Error allocateBlocks(uint32_t NumBlocks, MutableArrayRef<uint32_t> Blocks);

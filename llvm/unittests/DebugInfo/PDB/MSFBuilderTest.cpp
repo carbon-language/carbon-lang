@@ -1,4 +1,4 @@
-//===- MsfBuilderTest.cpp  Tests manipulation of MSF stream metadata ------===//
+//===- MSFBuilderTest.cpp  Tests manipulation of MSF stream metadata ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,8 +9,8 @@
 
 #include "ErrorChecking.h"
 
-#include "llvm/DebugInfo/Msf/MsfBuilder.h"
-#include "llvm/DebugInfo/Msf/MsfCommon.h"
+#include "llvm/DebugInfo/MSF/MSFBuilder.h"
+#include "llvm/DebugInfo/MSF/MSFCommon.h"
 
 #include "gtest/gtest.h"
 
@@ -18,7 +18,7 @@ using namespace llvm;
 using namespace llvm::msf;
 
 namespace {
-class MsfBuilderTest : public testing::Test {
+class MSFBuilderTest : public testing::Test {
 protected:
   void initializeSimpleSuperBlock(msf::SuperBlock &SB) {
     initializeSuperBlock(SB);
@@ -40,7 +40,7 @@ protected:
 };
 }
 
-TEST_F(MsfBuilderTest, ValidateSuperBlockAccept) {
+TEST_F(MSFBuilderTest, ValidateSuperBlockAccept) {
   // Test that a known good super block passes validation.
   SuperBlock SB;
   initializeSuperBlock(SB);
@@ -48,7 +48,7 @@ TEST_F(MsfBuilderTest, ValidateSuperBlockAccept) {
   EXPECT_NO_ERROR(msf::validateSuperBlock(SB));
 }
 
-TEST_F(MsfBuilderTest, ValidateSuperBlockReject) {
+TEST_F(MSFBuilderTest, ValidateSuperBlockReject) {
   // Test that various known problems cause a super block to be rejected.
   SuperBlock SB;
   initializeSimpleSuperBlock(SB);
@@ -75,7 +75,7 @@ TEST_F(MsfBuilderTest, ValidateSuperBlockReject) {
   EXPECT_ERROR(msf::validateSuperBlock(SB));
 }
 
-TEST_F(MsfBuilderTest, TestUsedBlocksMarkedAsUsed) {
+TEST_F(MSFBuilderTest, TestUsedBlocksMarkedAsUsed) {
   // Test that when assigning a stream to a known list of blocks, the blocks
   // are correctly marked as used after adding, but no other incorrect blocks
   // are accidentally marked as used.
@@ -84,7 +84,7 @@ TEST_F(MsfBuilderTest, TestUsedBlocksMarkedAsUsed) {
   // Allocate some extra blocks at the end so we can verify that they're free
   // after the initialization.
   uint32_t NumBlocks = msf::getMinimumBlockCount() + Blocks.size() + 10;
-  auto ExpectedMsf = MsfBuilder::create(Allocator, 4096, NumBlocks);
+  auto ExpectedMsf = MSFBuilder::create(Allocator, 4096, NumBlocks);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
@@ -100,22 +100,22 @@ TEST_F(MsfBuilderTest, TestUsedBlocksMarkedAsUsed) {
   }
 }
 
-TEST_F(MsfBuilderTest, TestAddStreamNoDirectoryBlockIncrease) {
+TEST_F(MSFBuilderTest, TestAddStreamNoDirectoryBlockIncrease) {
   // Test that adding a new stream correctly updates the directory.  This only
   // tests the case where the directory *DOES NOT* grow large enough that it
   // crosses a Block boundary.
-  auto ExpectedMsf = MsfBuilder::create(Allocator, 4096);
+  auto ExpectedMsf = MSFBuilder::create(Allocator, 4096);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
   auto ExpectedL1 = Msf.build();
   EXPECT_EXPECTED(ExpectedL1);
-  MsfLayout &L1 = *ExpectedL1;
+  MSFLayout &L1 = *ExpectedL1;
 
   auto OldDirBlocks = L1.DirectoryBlocks;
   EXPECT_EQ(1U, OldDirBlocks.size());
 
-  auto ExpectedMsf2 = MsfBuilder::create(Allocator, 4096);
+  auto ExpectedMsf2 = MSFBuilder::create(Allocator, 4096);
   EXPECT_EXPECTED(ExpectedMsf2);
   auto &Msf2 = *ExpectedMsf2;
 
@@ -127,18 +127,18 @@ TEST_F(MsfBuilderTest, TestAddStreamNoDirectoryBlockIncrease) {
 
   auto ExpectedL2 = Msf2.build();
   EXPECT_EXPECTED(ExpectedL2);
-  MsfLayout &L2 = *ExpectedL2;
+  MSFLayout &L2 = *ExpectedL2;
   auto NewDirBlocks = L2.DirectoryBlocks;
   EXPECT_EQ(1U, NewDirBlocks.size());
 }
 
-TEST_F(MsfBuilderTest, TestAddStreamWithDirectoryBlockIncrease) {
+TEST_F(MSFBuilderTest, TestAddStreamWithDirectoryBlockIncrease) {
   // Test that adding a new stream correctly updates the directory.  This only
   // tests the case where the directory *DOES* grow large enough that it
   // crosses a Block boundary.  This is because the newly added stream occupies
   // so many Blocks that need to be indexed in the directory that the directory
   // crosses a Block boundary.
-  auto ExpectedMsf = MsfBuilder::create(Allocator, 4096);
+  auto ExpectedMsf = MSFBuilder::create(Allocator, 4096);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
@@ -146,15 +146,15 @@ TEST_F(MsfBuilderTest, TestAddStreamWithDirectoryBlockIncrease) {
 
   auto ExpectedL1 = Msf.build();
   EXPECT_EXPECTED(ExpectedL1);
-  MsfLayout &L1 = *ExpectedL1;
+  MSFLayout &L1 = *ExpectedL1;
   auto DirBlocks = L1.DirectoryBlocks;
   EXPECT_EQ(2U, DirBlocks.size());
 }
 
-TEST_F(MsfBuilderTest, TestGrowStreamNoBlockIncrease) {
+TEST_F(MSFBuilderTest, TestGrowStreamNoBlockIncrease) {
   // Test growing an existing stream by a value that does not affect the number
   // of blocks it occupies.
-  auto ExpectedMsf = MsfBuilder::create(Allocator, 4096);
+  auto ExpectedMsf = MSFBuilder::create(Allocator, 4096);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
@@ -171,12 +171,12 @@ TEST_F(MsfBuilderTest, TestGrowStreamNoBlockIncrease) {
   EXPECT_EQ(OldStreamBlocks, NewStreamBlocks);
 }
 
-TEST_F(MsfBuilderTest, TestGrowStreamWithBlockIncrease) {
+TEST_F(MSFBuilderTest, TestGrowStreamWithBlockIncrease) {
   // Test that growing an existing stream to a value large enough that it causes
   // the need to allocate new Blocks to the stream correctly updates the
   // stream's
   // block list.
-  auto ExpectedMsf = MsfBuilder::create(Allocator, 4096);
+  auto ExpectedMsf = MSFBuilder::create(Allocator, 4096);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
@@ -194,10 +194,10 @@ TEST_F(MsfBuilderTest, TestGrowStreamWithBlockIncrease) {
   EXPECT_NE(NewStreamBlocks[0], NewStreamBlocks[1]);
 }
 
-TEST_F(MsfBuilderTest, TestShrinkStreamNoBlockDecrease) {
+TEST_F(MSFBuilderTest, TestShrinkStreamNoBlockDecrease) {
   // Test that shrinking an existing stream by a value that does not affect the
   // number of Blocks it occupies makes no changes to stream's block list.
-  auto ExpectedMsf = MsfBuilder::create(Allocator, 4096);
+  auto ExpectedMsf = MSFBuilder::create(Allocator, 4096);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
@@ -214,11 +214,11 @@ TEST_F(MsfBuilderTest, TestShrinkStreamNoBlockDecrease) {
   EXPECT_EQ(OldStreamBlocks, NewStreamBlocks);
 }
 
-TEST_F(MsfBuilderTest, TestShrinkStreamWithBlockDecrease) {
+TEST_F(MSFBuilderTest, TestShrinkStreamWithBlockDecrease) {
   // Test that shrinking an existing stream to a value large enough that it
   // causes the need to deallocate new Blocks to the stream correctly updates
   // the stream's block list.
-  auto ExpectedMsf = MsfBuilder::create(Allocator, 4096);
+  auto ExpectedMsf = MSFBuilder::create(Allocator, 4096);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
@@ -235,10 +235,10 @@ TEST_F(MsfBuilderTest, TestShrinkStreamWithBlockDecrease) {
   EXPECT_EQ(OldStreamBlocks[0], NewStreamBlocks[0]);
 }
 
-TEST_F(MsfBuilderTest, TestRejectReusedStreamBlock) {
+TEST_F(MSFBuilderTest, TestRejectReusedStreamBlock) {
   // Test that attempting to add a stream and assigning a block that is already
   // in use by another stream fails.
-  auto ExpectedMsf = MsfBuilder::create(Allocator, 4096);
+  auto ExpectedMsf = MSFBuilder::create(Allocator, 4096);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
@@ -248,10 +248,10 @@ TEST_F(MsfBuilderTest, TestRejectReusedStreamBlock) {
   EXPECT_ERROR(Msf.addStream(6144, Blocks));
 }
 
-TEST_F(MsfBuilderTest, TestBlockCountsWhenAddingStreams) {
+TEST_F(MSFBuilderTest, TestBlockCountsWhenAddingStreams) {
   // Test that when adding multiple streams, the number of used and free Blocks
   // allocated to the MSF file are as expected.
-  auto ExpectedMsf = MsfBuilder::create(Allocator, 4096);
+  auto ExpectedMsf = MSFBuilder::create(Allocator, 4096);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
@@ -269,10 +269,10 @@ TEST_F(MsfBuilderTest, TestBlockCountsWhenAddingStreams) {
   }
 }
 
-TEST_F(MsfBuilderTest, BuildMsfLayout) {
-  // Test that we can generate an Msf MsfLayout structure from a valid layout
+TEST_F(MSFBuilderTest, BuildMsfLayout) {
+  // Test that we can generate an MSFLayout structure from a valid layout
   // specification.
-  auto ExpectedMsf = MsfBuilder::create(Allocator, 4096);
+  auto ExpectedMsf = MSFBuilder::create(Allocator, 4096);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
@@ -286,7 +286,7 @@ TEST_F(MsfBuilderTest, BuildMsfLayout) {
 
   auto ExpectedLayout = Msf.build();
   EXPECT_EXPECTED(ExpectedLayout);
-  MsfLayout &L = *ExpectedLayout;
+  MSFLayout &L = *ExpectedLayout;
   EXPECT_EQ(4096U, L.SB->BlockSize);
   EXPECT_EQ(ExpectedNumBlocks, L.SB->NumBlocks);
 
@@ -301,8 +301,8 @@ TEST_F(MsfBuilderTest, BuildMsfLayout) {
   }
 }
 
-TEST_F(MsfBuilderTest, UseDirectoryBlockHint) {
-  Expected<MsfBuilder> ExpectedMsf = MsfBuilder::create(
+TEST_F(MSFBuilderTest, UseDirectoryBlockHint) {
+  Expected<MSFBuilder> ExpectedMsf = MSFBuilder::create(
       Allocator, 4096, msf::getMinimumBlockCount() + 1, false);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
@@ -313,7 +313,7 @@ TEST_F(MsfBuilderTest, UseDirectoryBlockHint) {
 
   auto ExpectedLayout = Msf.build();
   EXPECT_EXPECTED(ExpectedLayout);
-  MsfLayout &L = *ExpectedLayout;
+  MSFLayout &L = *ExpectedLayout;
   EXPECT_EQ(msf::getMinimumBlockCount() + 2, L.SB->NumBlocks);
   EXPECT_EQ(1U, L.DirectoryBlocks.size());
   EXPECT_EQ(1U, L.StreamMap[0].size());
@@ -322,9 +322,9 @@ TEST_F(MsfBuilderTest, UseDirectoryBlockHint) {
   EXPECT_EQ(B + 2, L.StreamMap[0].front());
 }
 
-TEST_F(MsfBuilderTest, DirectoryBlockHintInsufficient) {
-  Expected<MsfBuilder> ExpectedMsf =
-      MsfBuilder::create(Allocator, 4096, msf::getMinimumBlockCount() + 2);
+TEST_F(MSFBuilderTest, DirectoryBlockHintInsufficient) {
+  Expected<MSFBuilder> ExpectedMsf =
+      MSFBuilder::create(Allocator, 4096, msf::getMinimumBlockCount() + 2);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
   uint32_t B = msf::getFirstUnreservedBlock();
@@ -335,14 +335,14 @@ TEST_F(MsfBuilderTest, DirectoryBlockHintInsufficient) {
 
   auto ExpectedLayout = Msf.build();
   EXPECT_EXPECTED(ExpectedLayout);
-  MsfLayout &L = *ExpectedLayout;
+  MSFLayout &L = *ExpectedLayout;
   EXPECT_EQ(2U, L.DirectoryBlocks.size());
   EXPECT_EQ(B + 1, L.DirectoryBlocks[0]);
 }
 
-TEST_F(MsfBuilderTest, DirectoryBlockHintOverestimated) {
-  Expected<MsfBuilder> ExpectedMsf =
-      MsfBuilder::create(Allocator, 4096, msf::getMinimumBlockCount() + 2);
+TEST_F(MSFBuilderTest, DirectoryBlockHintOverestimated) {
+  Expected<MSFBuilder> ExpectedMsf =
+      MSFBuilder::create(Allocator, 4096, msf::getMinimumBlockCount() + 2);
   EXPECT_EXPECTED(ExpectedMsf);
   auto &Msf = *ExpectedMsf;
 
@@ -353,7 +353,7 @@ TEST_F(MsfBuilderTest, DirectoryBlockHintOverestimated) {
 
   auto ExpectedLayout = Msf.build();
   EXPECT_EXPECTED(ExpectedLayout);
-  MsfLayout &L = *ExpectedLayout;
+  MSFLayout &L = *ExpectedLayout;
   EXPECT_EQ(1U, L.DirectoryBlocks.size());
   EXPECT_EQ(B + 1, L.DirectoryBlocks[0]);
 }

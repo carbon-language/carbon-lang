@@ -1,4 +1,4 @@
-//===- MsfStreamLayout.h - Describes the layout of a stream -----*- C++ -*-===//
+//===- MSFStreamLayout.h - Describes the layout of a stream -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,13 +18,13 @@
 namespace llvm {
 namespace msf {
 
-/// \brief Describes the layout of a stream in an Msf layout.  A "stream" here
-/// is defined as any logical unit of data which may be arranged inside the Msf
+/// \brief Describes the layout of a stream in an MSF layout.  A "stream" here
+/// is defined as any logical unit of data which may be arranged inside the MSF
 /// file as a sequence of (possibly discontiguous) blocks.  When we want to read
-/// from a particular Msf Stream, we fill out a stream layout structure and the
-/// reader uses it to determine which blocks in the underlying Msf file contain
+/// from a particular MSF Stream, we fill out a stream layout structure and the
+/// reader uses it to determine which blocks in the underlying MSF file contain
 /// the data, so that it can be pieced together in the right order.
-class MsfStreamLayout {
+class MSFStreamLayout {
 public:
   uint32_t Length;
   ArrayRef<support::ulittle32_t> Blocks;

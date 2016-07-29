@@ -1,8 +1,8 @@
-add_llvm_library(LLVMDebugInfoMsf
+add_llvm_library(LLVMDebugInfoMSF
   MappedBlockStream.cpp
-  MsfBuilder.cpp
-  MsfCommon.cpp
-  MsfError.cpp
+  MSFBuilder.cpp
+  MSFCommon.cpp
+  MSFError.cpp
   StreamReader.cpp
   StreamWriter.cpp
   ADDITIONAL_HEADER_DIRS

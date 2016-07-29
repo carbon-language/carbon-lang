@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/Msf/StreamReader.h"
+#include "llvm/DebugInfo/MSF/StreamReader.h"
 
-#include "llvm/DebugInfo/Msf/MsfError.h"
-#include "llvm/DebugInfo/Msf/StreamRef.h"
+#include "llvm/DebugInfo/MSF/MSFError.h"
+#include "llvm/DebugInfo/MSF/StreamRef.h"
 
 using namespace llvm;
 using namespace llvm::msf;
@@ -86,7 +86,7 @@ Error StreamReader::readStreamRef(ReadableStreamRef &Ref) {
 
 Error StreamReader::readStreamRef(ReadableStreamRef &Ref, uint32_t Length) {
   if (bytesRemaining() < Length)
-    return make_error<MsfError>(msf_error_code::insufficient_buffer);
+    return make_error<MSFError>(msf_error_code::insufficient_buffer);
   Ref = Stream.slice(Offset, Length);
   Offset += Length;
   return Error::success();

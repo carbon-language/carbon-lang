@@ -11,10 +11,10 @@
 #define LLVM_DEBUGINFO_MSF_STREAMREADER_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/DebugInfo/Msf/MsfError.h"
-#include "llvm/DebugInfo/Msf/StreamArray.h"
-#include "llvm/DebugInfo/Msf/StreamInterface.h"
-#include "llvm/DebugInfo/Msf/StreamRef.h"
+#include "llvm/DebugInfo/MSF/MSFError.h"
+#include "llvm/DebugInfo/MSF/StreamArray.h"
+#include "llvm/DebugInfo/MSF/StreamInterface.h"
+#include "llvm/DebugInfo/MSF/StreamRef.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 
@@ -61,7 +61,7 @@ public:
     }
 
     if (NumElements > UINT32_MAX / sizeof(T))
-      return make_error<MsfError>(msf_error_code::insufficient_buffer);
+      return make_error<MSFError>(msf_error_code::insufficient_buffer);
 
     if (auto EC = readBytes(Bytes, NumElements * sizeof(T)))
       return EC;
@@ -86,9 +86,9 @@ public:
     }
     uint32_t Length = NumItems * sizeof(T);
     if (Length / sizeof(T) != NumItems)
-      return make_error<MsfError>(msf_error_code::invalid_format);
+      return make_error<MSFError>(msf_error_code::invalid_format);
     if (Offset + Length > Stream.getLength())
-      return make_error<MsfError>(msf_error_code::insufficient_buffer);
+      return make_error<MSFError>(msf_error_code::insufficient_buffer);
     ReadableStreamRef View = Stream.slice(Offset, Length);
     Array = FixedStreamArray<T>(View);
     Offset += Length;
