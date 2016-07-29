@@ -3819,7 +3819,6 @@ bool SMSchedule::isLoopCarriedDefOfUse(SwingSchedulerDAG *SSD,
 // different stage than the definition. The pipeliner does not handle
 // physical register values that may cross a basic block boundary.
 bool SMSchedule::isValidSchedule(SwingSchedulerDAG *SSD) {
-  const TargetRegisterInfo *TRI = ST.getRegisterInfo();
   for (int i = 0, e = SSD->SUnits.size(); i < e; ++i) {
     SUnit &SU = SSD->SUnits[i];
     if (!SU.hasPhysRegDefs)
@@ -3828,7 +3827,7 @@ bool SMSchedule::isValidSchedule(SwingSchedulerDAG *SSD) {
     assert(StageDef != -1 && "Instruction should have been scheduled.");
     for (auto &SI : SU.Succs)
       if (SI.isAssignedRegDep())
-        if (TRI->isPhysicalRegister(SI.getReg()))
+        if (ST.getRegisterInfo()->isPhysicalRegister(SI.getReg()))
           if (stageScheduled(SI.getSUnit()) != StageDef)
             return false;
   }
