@@ -42,7 +42,7 @@ HexagonHazardRecognizer::getHazardType(SUnit *SU, int stalls) {
   if (!Resources->canReserveResources(*MI)) {
     DEBUG(dbgs() << "*** Hazard in cycle " << PacketNum << ", " << *MI);
     HazardType RetVal = Hazard;
-    if (TII->mayBeNewStore(MI)) {
+    if (TII->mayBeNewStore(*MI)) {
       // Make sure the register to be stored is defined by an instruction in the
       // packet.
       MachineOperand &MO = MI->getOperand(MI->getNumOperands() - 1);
@@ -52,7 +52,7 @@ HexagonHazardRecognizer::getHazardType(SUnit *SU, int stalls) {
       // causes a hazard.
       MachineFunction *MF = MI->getParent()->getParent();
       MachineInstr *NewMI =
-        MF->CreateMachineInstr(TII->get(TII->getDotNewOp(MI)),
+        MF->CreateMachineInstr(TII->get(TII->getDotNewOp(*MI)),
                                MI->getDebugLoc());
       if (Resources->canReserveResources(*NewMI))
         RetVal = NoHazard;
@@ -106,10 +106,11 @@ void HexagonHazardRecognizer::EmitInstruction(SUnit *SU) {
   if (!Resources->canReserveResources(*MI)) {
     // It must be a .new store since other instructions must be able to be
     // reserved at this point.
-    assert(TII->mayBeNewStore(MI) && "Expecting .new store");
+    assert(TII->mayBeNewStore(*MI) && "Expecting .new store");
     MachineFunction *MF = MI->getParent()->getParent();
-    MachineInstr *NewMI = MF->CreateMachineInstr(TII->get(TII->getDotNewOp(MI)),
-                                                 MI->getDebugLoc());
+    MachineInstr *NewMI =
+        MF->CreateMachineInstr(TII->get(TII->getDotNewOp(*MI)),
+                               MI->getDebugLoc());
     assert(Resources->canReserveResources(*NewMI));
     Resources->reserveResources(*NewMI);
     MF->DeleteMachineInstr(NewMI);
@@ -123,7 +124,7 @@ void HexagonHazardRecognizer::EmitInstruction(SUnit *SU) {
   // schedule it before other instructions. We only do this if the use has
   // the same height as the dot cur. Otherwise, we may miss scheduling an
   // instruction with a greater height, which is more important.
-  if (TII->mayBeCurLoad(MI))
+  if (TII->mayBeCurLoad(*MI))
     for (auto &S : SU->Succs)
       if (S.isAssignedRegDep() && S.getLatency() == 0 &&
           SU->getHeight() == S.getSUnit()->getHeight()) {
