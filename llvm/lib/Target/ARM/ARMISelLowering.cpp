@@ -7904,6 +7904,7 @@ ARMTargetLowering::EmitStructByval(MachineInstr &MI,
 
   bool IsThumb1 = Subtarget->isThumb1Only();
   bool IsThumb2 = Subtarget->isThumb2();
+  bool IsThumb = Subtarget->isThumb();
 
   if (Align & 1) {
     UnitSize = 1;
@@ -7925,7 +7926,7 @@ ARMTargetLowering::EmitStructByval(MachineInstr &MI,
 
   // Select the correct opcode and register class for unit size load/store
   bool IsNeon = UnitSize >= 8;
-  TRC = (IsThumb1 || IsThumb2) ? &ARM::tGPRRegClass : &ARM::GPRRegClass;
+  TRC = IsThumb ? &ARM::tGPRRegClass : &ARM::GPRRegClass;
   if (IsNeon)
     VecTRC = UnitSize == 16 ? &ARM::DPairRegClass
                             : UnitSize == 8 ? &ARM::DPRRegClass
@@ -8007,12 +8008,12 @@ ARMTargetLowering::EmitStructByval(MachineInstr &MI,
     if ((LoopSize & 0xFFFF0000) != 0)
       Vtmp = MRI.createVirtualRegister(TRC);
     AddDefaultPred(BuildMI(BB, dl,
-                           TII->get(IsThumb2 ? ARM::t2MOVi16 : ARM::MOVi16),
+                           TII->get(IsThumb ? ARM::t2MOVi16 : ARM::MOVi16),
                            Vtmp).addImm(LoopSize & 0xFFFF));
 
     if ((LoopSize & 0xFFFF0000) != 0)
       AddDefaultPred(BuildMI(BB, dl,
-                             TII->get(IsThumb2 ? ARM::t2MOVTi16 : ARM::MOVTi16),
+                             TII->get(IsThumb ? ARM::t2MOVTi16 : ARM::MOVTi16),
                              varEnd)
                          .addReg(Vtmp)
                          .addImm(LoopSize >> 16));
@@ -8027,7 +8028,7 @@ ARMTargetLowering::EmitStructByval(MachineInstr &MI,
       Align = MF->getDataLayout().getTypeAllocSize(C->getType());
     unsigned Idx = ConstantPool->getConstantPoolIndex(C, Align);
 
-    if (IsThumb1)
+    if (IsThumb)
       AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::tLDRpci)).addReg(
           varEnd, RegState::Define).addConstantPoolIndex(Idx));
     else
