@@ -1,4 +1,4 @@
-//===- MSFError.h - Error extensions for MSF Files --------------*- C++ -*-===//
+//===- MsfError.h - Error extensions for Msf Files --------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,12 +26,12 @@ enum class msf_error_code {
 };
 
 /// Base class for errors originating when parsing raw PDB files
-class MSFError : public ErrorInfo<MSFError> {
+class MsfError : public ErrorInfo<MsfError> {
 public:
   static char ID;
-  MSFError(msf_error_code C);
-  MSFError(const std::string &Context);
-  MSFError(msf_error_code C, const std::string &Context);
+  MsfError(msf_error_code C);
+  MsfError(const std::string &Context);
+  MsfError(msf_error_code C, const std::string &Context);
 
   void log(raw_ostream &OS) const override;
   const std::string &getErrorMessage() const;

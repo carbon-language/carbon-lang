@@ -1,4 +1,4 @@
-//===- MSFCommon.cpp - Common types and functions for MSF files -*- C++ -*-===//
+//===- MsfCommon.cpp - Common types and functions for MSF files -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/MSF/MSFCommon.h"
-#include "llvm/DebugInfo/MSF/MSFError.h"
+#include "llvm/DebugInfo/Msf/MsfCommon.h"
+#include "llvm/DebugInfo/Msf/MsfError.h"
 
 using namespace llvm;
 using namespace llvm::msf;
@@ -16,16 +16,16 @@ using namespace llvm::msf;
 Error llvm::msf::validateSuperBlock(const SuperBlock &SB) {
   // Check the magic bytes.
   if (std::memcmp(SB.MagicBytes, Magic, sizeof(Magic)) != 0)
-    return make_error<MSFError>(msf_error_code::invalid_format,
+    return make_error<MsfError>(msf_error_code::invalid_format,
                                 "MSF magic header doesn't match");
 
   if (!isValidBlockSize(SB.BlockSize))
-    return make_error<MSFError>(msf_error_code::invalid_format,
+    return make_error<MsfError>(msf_error_code::invalid_format,
                                 "Unsupported block size.");
 
   // We don't support directories whose sizes aren't a multiple of four bytes.
   if (SB.NumDirectoryBytes % sizeof(support::ulittle32_t) != 0)
-    return make_error<MSFError>(msf_error_code::invalid_format,
+    return make_error<MsfError>(msf_error_code::invalid_format,
                                 "Directory size is not multiple of 4.");
 
   // The number of blocks which comprise the directory is a simple function of
@@ -37,11 +37,11 @@ Error llvm::msf::validateSuperBlock(const SuperBlock &SB) {
   // block numbers.  It is unclear what would happen if the number of blocks
   // couldn't fit on a single block.
   if (NumDirectoryBlocks > SB.BlockSize / sizeof(support::ulittle32_t))
-    return make_error<MSFError>(msf_error_code::invalid_format,
+    return make_error<MsfError>(msf_error_code::invalid_format,
                                 "Too many directory blocks.");
 
   if (SB.BlockMapAddr == 0)
-    return make_error<MSFError>(msf_error_code::invalid_format,
+    return make_error<MsfError>(msf_error_code::invalid_format,
                                 "Block 0 is reserved");
 
   return Error::success();

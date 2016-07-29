@@ -11,10 +11,10 @@
 #define LLVM_DEBUGINFO_MSF_STREAMWRITER_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/DebugInfo/MSF/MSFError.h"
-#include "llvm/DebugInfo/MSF/StreamArray.h"
-#include "llvm/DebugInfo/MSF/StreamInterface.h"
-#include "llvm/DebugInfo/MSF/StreamRef.h"
+#include "llvm/DebugInfo/Msf/MsfError.h"
+#include "llvm/DebugInfo/Msf/StreamArray.h"
+#include "llvm/DebugInfo/Msf/StreamInterface.h"
+#include "llvm/DebugInfo/Msf/StreamRef.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 
@@ -54,7 +54,7 @@ public:
       return Error::success();
 
     if (Array.size() > UINT32_MAX / sizeof(T))
-      return make_error<MSFError>(msf_error_code::insufficient_buffer);
+      return make_error<MsfError>(msf_error_code::insufficient_buffer);
 
     return writeBytes(
         ArrayRef<uint8_t>(reinterpret_cast<const uint8_t *>(Array.data()),

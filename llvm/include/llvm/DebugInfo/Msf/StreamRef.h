@@ -10,8 +10,8 @@
 #ifndef LLVM_DEBUGINFO_MSF_STREAMREF_H
 #define LLVM_DEBUGINFO_MSF_STREAMREF_H
 
-#include "llvm/DebugInfo/MSF/MSFError.h"
-#include "llvm/DebugInfo/MSF/StreamInterface.h"
+#include "llvm/DebugInfo/Msf/MsfError.h"
+#include "llvm/DebugInfo/Msf/StreamInterface.h"
 
 namespace llvm {
 namespace msf {
@@ -76,9 +76,9 @@ public:
   Error readBytes(uint32_t Offset, uint32_t Size,
                   ArrayRef<uint8_t> &Buffer) const {
     if (ViewOffset + Offset < Offset)
-      return make_error<MSFError>(msf_error_code::insufficient_buffer);
+      return make_error<MsfError>(msf_error_code::insufficient_buffer);
     if (Size + Offset > Length)
-      return make_error<MSFError>(msf_error_code::insufficient_buffer);
+      return make_error<MsfError>(msf_error_code::insufficient_buffer);
     return Stream->readBytes(ViewOffset + Offset, Size, Buffer);
   }
 
@@ -87,7 +87,7 @@ public:
   Error readLongestContiguousChunk(uint32_t Offset,
                                    ArrayRef<uint8_t> &Buffer) const {
     if (Offset >= Length)
-      return make_error<MSFError>(msf_error_code::insufficient_buffer);
+      return make_error<MsfError>(msf_error_code::insufficient_buffer);
 
     if (auto EC = Stream->readLongestContiguousChunk(Offset, Buffer))
       return EC;
@@ -117,7 +117,7 @@ public:
 
   Error writeBytes(uint32_t Offset, ArrayRef<uint8_t> Data) const {
     if (Data.size() + Offset > Length)
-      return make_error<MSFError>(msf_error_code::insufficient_buffer);
+      return make_error<MsfError>(msf_error_code::insufficient_buffer);
     return Stream->writeBytes(ViewOffset + Offset, Data);
   }
 

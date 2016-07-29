@@ -1,4 +1,4 @@
-//===- IMSFFile.h - Abstract base class for an MSF file ---------*- C++ -*-===//
+//===- IMsfFile.h - Abstract base class for an MSF file ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/DebugInfo/MSF/StreamArray.h"
+#include "llvm/DebugInfo/Msf/StreamArray.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 
@@ -21,9 +21,9 @@
 namespace llvm {
 namespace msf {
 
-class IMSFFile {
+class IMsfFile {
 public:
-  virtual ~IMSFFile() {}
+  virtual ~IMsfFile() {}
 
   virtual uint32_t getBlockSize() const = 0;
   virtual uint32_t getBlockCount() const = 0;

@@ -1,6 +1,6 @@
 set(LLVM_LINK_COMPONENTS
   DebugInfoCodeView
-  DebugInfoMSF
+  DebugInfoMsf
   DebugInfoPDB
   Object
   Support

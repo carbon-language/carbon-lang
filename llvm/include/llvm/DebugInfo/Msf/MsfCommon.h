@@ -1,4 +1,4 @@
-//===- MSFCommon.h - Common types and functions for MSF files ---*- C++ -*-===//
+//===- MsfCommon.h - Common types and functions for MSF files ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -48,8 +48,8 @@ struct SuperBlock {
   support::ulittle32_t BlockMapAddr;
 };
 
-struct MSFLayout {
-  MSFLayout() : SB(nullptr) {}
+struct MsfLayout {
+  MsfLayout() : SB(nullptr) {}
   const SuperBlock *SB;
   ArrayRef<support::ulittle32_t> DirectoryBlocks;
   ArrayRef<support::ulittle32_t> StreamSizes;
