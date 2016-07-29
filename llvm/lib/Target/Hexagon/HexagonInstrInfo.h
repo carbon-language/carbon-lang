@@ -103,6 +103,22 @@ public:
                         MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
                         const DebugLoc &DL) const override;
 
+  /// Analyze the loop code, return true if it cannot be understood. Upon
+  /// success, this function returns false and returns information about the
+  /// induction variable and compare instruction used at the end.
+  bool analyzeLoop(MachineLoop &L, MachineInstr *&IndVarInst,
+                   MachineInstr *&CmpInst) const override;
+
+  /// Generate code to reduce the loop iteration by one and check if the loop is
+  /// finished.  Return the value/register of the the new loop count.  We need
+  /// this function when peeling off one or more iterations of a loop. This
+  /// function assumes the nth iteration is peeled first.
+  unsigned reduceLoopCount(MachineBasicBlock &MBB,
+                           MachineInstr *IndVar, MachineInstr *Cmp,
+                           SmallVectorImpl<MachineOperand> &Cond,
+                           SmallVectorImpl<MachineInstr *> &PrevInsts,
+                           unsigned Iter, unsigned MaxIter) const override;
+
   /// Return true if it's profitable to predicate
   /// instructions with accumulated instruction latency of "NumCycles"
   /// of the specified basic block, where the probability of the instructions
@@ -171,6 +187,11 @@ public:
   /// new instructions and erase MI. The function should return true if
   /// anything was changed.
   bool expandPostRAPseudo(MachineInstr &MI) const override;
+
+  /// \brief Get the base register and byte offset of a load/store instr.
+  bool getMemOpBaseRegImmOfs(MachineInstr &LdSt, unsigned &BaseReg,
+                             int64_t &Offset,
+                             const TargetRegisterInfo *TRI) const override;
 
   /// Reverses the branch condition of the specified condition list,
   /// returning false on success and true if it cannot be reversed.
@@ -248,6 +269,14 @@ public:
   areMemAccessesTriviallyDisjoint(MachineInstr &MIa, MachineInstr &MIb,
                                   AliasAnalysis *AA = nullptr) const override;
 
+  /// For instructions with a base and offset, return the position of the
+  /// base register and offset operands.
+  bool getBaseAndOffsetPosition(const MachineInstr *MI, unsigned &BasePos,
+                                unsigned &OffsetPos) const override;
+
+  /// If the instruction is an increment of a constant value, return the amount.
+  bool getIncrementValue(const MachineInstr *MI, int &Value) const override;
+
   /// HexagonInstrInfo specifics.
   ///
 
@@ -297,7 +326,7 @@ public:
   bool isNewValueStore(const MachineInstr* MI) const;
   bool isNewValueStore(unsigned Opcode) const;
   bool isOperandExtended(const MachineInstr *MI, unsigned OperandNum) const;
-  bool isPostIncrement(const MachineInstr* MI) const;
+  bool isPostIncrement(const MachineInstr* MI) const override;
   bool isPredicatedNew(const MachineInstr &MI) const;
   bool isPredicatedNew(unsigned Opcode) const;
   bool isPredicatedTrue(const MachineInstr &MI) const;
@@ -348,8 +377,6 @@ public:
   unsigned getAddrMode(const MachineInstr* MI) const;
   unsigned getBaseAndOffset(const MachineInstr *MI, int &Offset,
                             unsigned &AccessSize) const;
-  bool getBaseAndOffsetPosition(const MachineInstr *MI, unsigned &BasePos,
-                                unsigned &OffsetPos) const;
   short getBaseWithLongOffset(short Opcode) const;
   short getBaseWithLongOffset(const MachineInstr *MI) const;
   short getBaseWithRegOffset(const MachineInstr *MI) const;

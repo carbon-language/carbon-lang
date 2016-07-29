@@ -660,6 +660,85 @@ unsigned HexagonInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   return 2;
 }
 
+/// Analyze the loop code to find the loop induction variable and compare used
+/// to compute the number of iterations. Currently, we analyze loop that are
+/// controlled using hardware loops.  In this case, the induction variable
+/// instruction is null.  For all other cases, this function returns true, which
+/// means we're unable to analyze it.
+bool HexagonInstrInfo::analyzeLoop(MachineLoop &L,
+                                   MachineInstr *&IndVarInst,
+                                   MachineInstr *&CmpInst) const {
+
+  MachineBasicBlock *LoopEnd = L.getBottomBlock();
+  MachineBasicBlock::iterator I = LoopEnd->getFirstTerminator();
+  // We really "analyze" only hardware loops right now.
+  if (I != LoopEnd->end() && isEndLoopN(I->getOpcode())) {
+    IndVarInst = nullptr;
+    CmpInst = &*I;
+    return false;
+  }
+  return true;
+}
+
+/// Generate code to reduce the loop iteration by one and check if the loop is
+/// finished. Return the value/register of the new loop count. this function
+/// assumes the nth iteration is peeled first.
+unsigned HexagonInstrInfo::reduceLoopCount(MachineBasicBlock &MBB,
+      MachineInstr *IndVar, MachineInstr *Cmp,
+      SmallVectorImpl<MachineOperand> &Cond,
+      SmallVectorImpl<MachineInstr *> &PrevInsts,
+      unsigned Iter, unsigned MaxIter) const {
+  // We expect a hardware loop currently. This means that IndVar is set
+  // to null, and the compare is the ENDLOOP instruction.
+  assert((!IndVar) && isEndLoopN(Cmp->getOpcode())
+                   && "Expecting a hardware loop");
+  MachineFunction *MF = MBB.getParent();
+  DebugLoc DL = Cmp->getDebugLoc();
+  SmallPtrSet<MachineBasicBlock *, 8> VisitedBBs;
+  MachineInstr *Loop = findLoopInstr(&MBB, Cmp->getOpcode(), VisitedBBs);
+  if (!Loop)
+    return 0;
+  // If the loop trip count is a compile-time value, then just change the
+  // value.
+  if (Loop->getOpcode() == Hexagon::J2_loop0i ||
+      Loop->getOpcode() == Hexagon::J2_loop1i) {
+    int64_t Offset = Loop->getOperand(1).getImm();
+    if (Offset <= 1)
+      Loop->eraseFromParent();
+    else
+      Loop->getOperand(1).setImm(Offset - 1);
+    return Offset - 1;
+  }
+  // The loop trip count is a run-time value. We generate code to subtract
+  // one from the trip count, and update the loop instruction.
+  assert(Loop->getOpcode() == Hexagon::J2_loop0r && "Unexpected instruction");
+  unsigned LoopCount = Loop->getOperand(1).getReg();
+  // Check if we're done with the loop.
+  unsigned LoopEnd = createVR(MF, MVT::i1);
+  MachineInstr *NewCmp = BuildMI(&MBB, DL, get(Hexagon::C2_cmpgtui), LoopEnd).
+    addReg(LoopCount).addImm(1);
+  unsigned NewLoopCount = createVR(MF, MVT::i32);
+  MachineInstr *NewAdd = BuildMI(&MBB, DL, get(Hexagon::A2_addi), NewLoopCount).
+    addReg(LoopCount).addImm(-1);
+  // Update the previously generated instructions with the new loop counter.
+  for (SmallVectorImpl<MachineInstr *>::iterator I = PrevInsts.begin(),
+         E = PrevInsts.end(); I != E; ++I)
+    (*I)->substituteRegister(LoopCount, NewLoopCount, 0, getRegisterInfo());
+  PrevInsts.clear();
+  PrevInsts.push_back(NewCmp);
+  PrevInsts.push_back(NewAdd);
+  // Insert the new loop instruction if this is the last time the loop is
+  // decremented.
+  if (Iter == MaxIter)
+    BuildMI(&MBB, DL, get(Hexagon::J2_loop0r)).
+      addMBB(Loop->getOperand(0).getMBB()).addReg(NewLoopCount);
+  // Delete the old loop instruction.
+  if (Iter == 0)
+    Loop->eraseFromParent();
+  Cond.push_back(MachineOperand::CreateImm(Hexagon::J2_jumpf));
+  Cond.push_back(NewCmp->getOperand(0));
+  return NewLoopCount;
+}
 
 bool HexagonInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
       unsigned NumCycles, unsigned ExtraPredCycles,
@@ -1586,6 +1665,22 @@ bool HexagonInstrInfo::areMemAccessesTriviallyDisjoint(
   } else if (OffsetA < OffsetB) {
     uint64_t offDiff = (uint64_t)((int64_t)OffsetB - (int64_t)OffsetA);
     return (SizeA <= offDiff);
+  }
+
+  return false;
+}
+
+
+/// If the instruction is an increment of a constant value, return the amount.
+bool HexagonInstrInfo::getIncrementValue(const MachineInstr *MI,
+      int &Value) const {
+  if (isPostIncrement(MI)) {
+    unsigned AccessSize;
+    return getBaseAndOffset(MI, Value, AccessSize);
+  }
+  if (MI->getOpcode() == Hexagon::A2_addi) {
+    Value = MI->getOperand(2).getImm();
+    return true;
   }
 
   return false;
@@ -2875,6 +2970,18 @@ bool HexagonInstrInfo::addLatencyToSchedule(const MachineInstr *MI1,
     if (!isVecUsableNextPacket(MI1, MI2))
       return true;
   return false;
+}
+
+
+/// \brief Get the base register and byte offset of a load/store instr.
+bool HexagonInstrInfo::getMemOpBaseRegImmOfs(MachineInstr &LdSt,
+      unsigned &BaseReg, int64_t &Offset, const TargetRegisterInfo *TRI)
+      const {
+  unsigned AccessSize = 0;
+  int OffsetVal = 0;
+  BaseReg = getBaseAndOffset(&LdSt, OffsetVal, AccessSize);
+  Offset = OffsetVal;
+  return BaseReg != 0;
 }
 
 
