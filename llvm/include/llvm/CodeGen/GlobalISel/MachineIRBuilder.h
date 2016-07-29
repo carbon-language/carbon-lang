@@ -52,16 +52,6 @@ class MachineIRBuilder {
     return *TII;
   }
 
-  static void addRegs(MachineInstrBuilder &MIB) {}
-
-  template <typename... MoreRegs>
-  static void addRegs(MachineInstrBuilder &MIB, unsigned Reg,
-                      MoreRegs... Regs) {
-    MIB.addReg(Reg);
-    addRegs(MIB, Regs...);
-  }
-
-
 public:
   /// Getter for the function we currently build.
   MachineFunction &getMF() {
@@ -107,51 +97,17 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   /// \pre Ty == LLT{} or isPreISelGenericOpcode(Opcode)
   ///
-  /// \return The newly created instruction.
-  MachineInstr *buildInstr(unsigned Opcode, ArrayRef<LLT> Tys);
-
-  /// Build and insert \p Res = \p Opcode [\p Ty] \p Uses....
-  /// \p Ty is the type of the instruction if \p Opcode describes
-  /// a generic machine instruction. \p Ty must be LLT{} if \p Opcode
-  /// does not describe a generic instruction.
-  /// The insertion point is the one set by the last call of either
-  /// setBasicBlock or setMI.
-  ///
-  /// \pre setBasicBlock or setMI must have been called.
-  /// \pre Ty == LLT{} or isPreISelGenericOpcode(Opcode)
-  ///
-  /// \return The newly created instruction.
-  template <typename... MoreRegs>
-  MachineInstr *buildInstr(unsigned Opcode, ArrayRef<LLT> Tys, unsigned Res,
-                           MoreRegs... Uses) {
-    MachineInstr *NewMI = buildInstr(Opcode, Tys);
-    MachineInstrBuilder MIB{getMF(), NewMI};
-    MIB.addReg(Res, RegState::Define);
-    addRegs(MIB, Uses...);
-
-    return NewMI;
-  }
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildInstr(unsigned Opcode, ArrayRef<LLT> Tys);
 
   /// Build and insert <empty> = \p Opcode <empty>.
   ///
   /// \pre setBasicBlock or setMI must have been called.
   /// \pre not isPreISelGenericOpcode(\p Opcode)
   ///
-  /// \return The newly created instruction.
-  MachineInstr *buildInstr(unsigned Opcode) {
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildInstr(unsigned Opcode) {
     return buildInstr(Opcode, ArrayRef<LLT>());
-  }
-
-  /// Build and insert \p Res = \p Opcode \p Uses....
-  /// The insertion point is the one set by the last call of either
-  /// setBasicBlock or setMI.
-  ///
-  /// \pre setBasicBlock or setMI must have been called.
-  ///
-  /// \return The newly created instruction.
-  template <typename... MoreRegs>
-  MachineInstr *buildInstr(unsigned Opcode, unsigned Res, MoreRegs... Uses) {
-    return buildInstr(Opcode, ArrayRef<LLT>(), Res, Uses...);
   }
 
   /// Build and insert \p Res<def> = G_FRAME_INDEX \p Ty \p Idx
@@ -161,8 +117,8 @@ public:
   ///
   /// \pre setBasicBlock or setMI must have been called.
   ///
-  /// \return The newly created instruction.
-  MachineInstr *buildFrameIndex(LLT Ty, unsigned Res, int Idx);
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildFrameIndex(LLT Ty, unsigned Res, int Idx);
 
   /// Build and insert \p Res<def> = G_ADD \p Ty \p Op0, \p Op1
   ///
@@ -171,8 +127,9 @@ public:
   ///
   /// \pre setBasicBlock or setMI must have been called.
   ///
-  /// \return The newly created instruction.
-  MachineInstr *buildAdd(LLT Ty, unsigned Res, unsigned Op0, unsigned Op1);
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildAdd(LLT Ty, unsigned Res, unsigned Op0,
+                                unsigned Op1);
 
   /// Build and insert G_BR unsized \p Dest
   ///
@@ -180,8 +137,8 @@ public:
   ///
   /// \pre setBasicBlock or setMI must have been called.
   ///
-  /// \return The newly created instruction.
-  MachineInstr *buildBr(MachineBasicBlock &BB);
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildBr(MachineBasicBlock &BB);
 
   /// Build and insert \p Res<def> = COPY Op
   ///
@@ -189,8 +146,8 @@ public:
   ///
   /// \pre setBasicBlock or setMI must have been called.
   ///
-  /// \return The newly created instruction.
-  MachineInstr *buildCopy(unsigned Res, unsigned Op);
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildCopy(unsigned Res, unsigned Op);
 
   /// Build and insert `Res<def> = G_LOAD { VTy, PTy } Addr, MMO`.
   ///
@@ -199,9 +156,9 @@ public:
   ///
   /// \pre setBasicBlock or setMI must have been called.
   ///
-  /// \return The newly created instruction.
-  MachineInstr *buildLoad(LLT VTy, LLT PTy, unsigned Res, unsigned Addr,
-                          MachineMemOperand &MMO);
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildLoad(LLT VTy, LLT PTy, unsigned Res, unsigned Addr,
+                                MachineMemOperand &MMO);
 
   /// Build and insert `G_STORE { VTy, PTy } Val, Addr, MMO`.
   ///
@@ -210,9 +167,9 @@ public:
   ///
   /// \pre setBasicBlock or setMI must have been called.
   ///
-  /// \return The newly created instruction.
-  MachineInstr *buildStore(LLT VTy, LLT PTy, unsigned Val, unsigned Addr,
-                          MachineMemOperand &MMO);
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildStore(LLT VTy, LLT PTy, unsigned Val, unsigned Addr,
+                                 MachineMemOperand &MMO);
 
   /// Build and insert `Res0<def>, ... = G_EXTRACT Ty Src, Idx0, ...`.
   ///
@@ -221,9 +178,9 @@ public:
   ///
   /// \pre setBasicBlock or setMI must have been called.
   ///
-  /// \return The newly created instruction.
-  MachineInstr *buildExtract(LLT Ty, ArrayRef<unsigned> Results, unsigned Src,
-                             ArrayRef<unsigned> Indexes);
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildExtract(LLT Ty, ArrayRef<unsigned> Results,
+                                   unsigned Src, ArrayRef<unsigned> Indexes);
 
   /// Build and insert \p Res<def> = G_SEQUENCE \p Ty \p Ops[0], ...
   ///
@@ -233,8 +190,9 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   /// \pre The sum of the input sizes must equal the result's size.
   ///
-  /// \return The newly created instruction.
-  MachineInstr *buildSequence(LLT Ty, unsigned Res, ArrayRef<unsigned> Ops);
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildSequence(LLT Ty, unsigned Res,
+                                    ArrayRef<unsigned> Ops);
 };
 
 } // End namespace llvm.

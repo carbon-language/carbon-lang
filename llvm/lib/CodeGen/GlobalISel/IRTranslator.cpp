@@ -85,7 +85,10 @@ bool IRTranslator::translateBinaryOp(unsigned Opcode, const Instruction &Inst) {
   unsigned Op0 = getOrCreateVReg(*Inst.getOperand(0));
   unsigned Op1 = getOrCreateVReg(*Inst.getOperand(1));
   unsigned Res = getOrCreateVReg(Inst);
-  MIRBuilder.buildInstr(Opcode, LLT{*Inst.getType()}, Res, Op0, Op1);
+  MIRBuilder.buildInstr(Opcode, LLT{*Inst.getType()})
+      .addDef(Res)
+      .addUse(Op0)
+      .addUse(Op1);
   return true;
 }
 
@@ -160,8 +163,9 @@ bool IRTranslator::translateBitCast(const CastInst &CI) {
 bool IRTranslator::translateCast(unsigned Opcode, const CastInst &CI) {
   unsigned Op = getOrCreateVReg(*CI.getOperand(0));
   unsigned Res = getOrCreateVReg(CI);
-  MIRBuilder.buildInstr(Opcode, {LLT{*CI.getDestTy()}, LLT{*CI.getSrcTy()}},
-                        Res, Op);
+  MIRBuilder.buildInstr(Opcode, {LLT{*CI.getDestTy()}, LLT{*CI.getSrcTy()}})
+      .addDef(Res)
+      .addUse(Op);
   return true;
 }
 
