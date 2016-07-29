@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "HexagonHazardRecognizer.h"
 #include "HexagonInstrInfo.h"
-#include "Hexagon.h"
 #include "HexagonRegisterInfo.h"
 #include "HexagonSubtarget.h"
 #include "llvm/ADT/STLExtras.h"
@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -38,8 +39,6 @@ using namespace llvm;
 #define GET_INSTRMAP_INFO
 #include "HexagonGenInstrInfo.inc"
 #include "HexagonGenDFAPacketizer.inc"
-
-using namespace llvm;
 
 cl::opt<bool> ScheduleInlineAsm("hexagon-sched-inline-asm", cl::Hidden,
   cl::init(false), cl::desc("Do not consider inline-asm a scheduling/"
@@ -66,6 +65,10 @@ static cl::opt<bool> EnableACCForwarding(
 
 static cl::opt<bool> BranchRelaxAsmLarge("branch-relax-asm-large",
   cl::init(true), cl::Hidden, cl::ZeroOrMore, cl::desc("branch relax asm"));
+
+static cl::opt<bool> UseDFAHazardRec("dfa-hazard-rec",
+  cl::init(true), cl::Hidden, cl::ZeroOrMore,
+  cl::desc("Use the DFA based hazard recognizer."));
 
 ///
 /// Constants for Hexagon instructions.
@@ -1433,6 +1436,10 @@ unsigned HexagonInstrInfo::getInlineAsmLength(const char *Str,
 ScheduleHazardRecognizer*
 HexagonInstrInfo::CreateTargetPostRAHazardRecognizer(
       const InstrItineraryData *II, const ScheduleDAG *DAG) const {
+  if (UseDFAHazardRec) {
+    auto &HST = DAG->MF.getSubtarget<HexagonSubtarget>();
+    return new HexagonHazardRecognizer(II, this, HST);
+  }
   return TargetInstrInfo::CreateTargetPostRAHazardRecognizer(II, DAG);
 }
 
