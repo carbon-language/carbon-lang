@@ -54,11 +54,17 @@ struct SymbolAssignment : BaseCommand {
   SymbolAssignment(StringRef Name, Expr E)
       : BaseCommand(AssignmentKind), Name(Name), Expression(E) {}
   static bool classof(const BaseCommand *C);
+
+  // The LHS of an expression. Name is either a symbol name or ".".
   StringRef Name;
+  SymbolBody *Sym = nullptr;
+
+  // The RHS of an expression.
   Expr Expression;
+
+  // Command attributes for PROVIDE, HIDDEN and PROVIDE_HIDDEN.
   bool Provide = false;
   bool Hidden = false;
-  SymbolBody *Sym = nullptr;
 };
 
 // Linker scripts allow additional constraints to be put on ouput sections.
