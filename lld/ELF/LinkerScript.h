@@ -105,7 +105,7 @@ struct ScriptConfiguration {
   // Used to assign sections to headers.
   std::vector<PhdrsCommand> PhdrsCommands;
 
-  bool DoLayout = false;
+  bool HasContents = false;
 
   llvm::BumpPtrAllocator Alloc;
 

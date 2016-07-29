@@ -646,7 +646,7 @@ void ScriptParser::readSearchDir() {
 }
 
 void ScriptParser::readSections() {
-  Opt.DoLayout = true;
+  Opt.HasContents = true;
   expect("{");
   while (!Error && !skip("}")) {
     StringRef Tok = next();

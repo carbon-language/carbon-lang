@@ -224,10 +224,9 @@ template <class ELFT> void Writer<ELFT>::run() {
   CommonInputSection<ELFT> Common;
   CommonInputSection<ELFT>::X = &Common;
 
-  OutputSections =
-      ScriptConfig->DoLayout
-          ? Script<ELFT>::X->createSections(Factory)
-          : createSections();
+  OutputSections = ScriptConfig->HasContents
+                       ? Script<ELFT>::X->createSections(Factory)
+                       : createSections();
   finalizeSections();
   if (HasError)
     return;
@@ -239,7 +238,7 @@ template <class ELFT> void Writer<ELFT>::run() {
                 ? Script<ELFT>::X->createPhdrs(OutputSections)
                 : createPhdrs();
     fixHeaders();
-    if (ScriptConfig->DoLayout) {
+    if (ScriptConfig->HasContents) {
       Script<ELFT>::X->assignAddresses(OutputSections);
     } else {
       fixSectionAlignments();
@@ -1027,7 +1026,7 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
 // sections. These are special, we do not include them into output sections
 // list, but have them to simplify the code.
 template <class ELFT> void Writer<ELFT>::fixHeaders() {
-  uintX_t BaseVA = ScriptConfig->DoLayout ? 0 : Config->ImageBase;
+  uintX_t BaseVA = ScriptConfig->HasContents ? 0 : Config->ImageBase;
   Out<ELFT>::ElfHeader->setVA(BaseVA);
   uintX_t Off = Out<ELFT>::ElfHeader->getSize();
   Out<ELFT>::ProgramHeaders->setVA(Off + BaseVA);
