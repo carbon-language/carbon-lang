@@ -125,6 +125,22 @@ def G_SEQUENCE : Instruction {
   let hasSideEffects = 0;
 }
 
+// Intrinsic without side effects.
+def G_INTRINSIC : Instruction {
+  let OutOperandList = (outs);
+  let InOperandList = (ins unknown:$intrin, variable_ops);
+  let hasSideEffects = 0;
+}
+
+// Intrinsic with side effects.
+def G_INTRINSIC_W_SIDE_EFFECTS : Instruction {
+  let OutOperandList = (outs);
+  let InOperandList = (ins unknown:$intrin, variable_ops);
+  let hasSideEffects = 1;
+  let mayLoad = 1;
+  let mayStore = 1;
+}
+
 //------------------------------------------------------------------------------
 // Branches.
 //------------------------------------------------------------------------------

@@ -252,3 +252,22 @@ define void @store(i64* %addr, i64 addrspace(42)* %addr42, i64 %val1, i64 %val2)
   %sum = add i64 %val1, %val2
   ret void
 }
+
+; CHECK-LABEL: name: intrinsics
+; CHECK: [[CUR:%[0-9]+]](32) = COPY %w0
+; CHECK: [[BITS:%[0-9]+]](32) = COPY %w1
+; CHECK: [[PTR:%[0-9]+]](64) = G_INTRINSIC { p0, s32 } intrinsic(@llvm.returnaddress), 0
+; CHECK: [[PTR_VEC:%[0-9]+]](64) = G_FRAME_INDEX p0 %stack.0.ptr.vec
+; CHECK: [[VEC:%[0-9]+]](64) = G_LOAD { <8 x s8>, p0 } [[PTR_VEC]]
+; CHECK: G_INTRINSIC_W_SIDE_EFFECTS { unsized, <8 x s8>, <8 x s8>, p0 } intrinsic(@llvm.aarch64.neon.st2), [[VEC]], [[VEC]], [[PTR]]
+; CHECK: RET_ReallyLR
+declare i8* @llvm.returnaddress(i32)
+declare void @llvm.aarch64.neon.st2.v8i8.p0i8(<8 x i8>, <8 x i8>, i8*)
+declare { <8 x i8>, <8 x i8> } @llvm.aarch64.neon.ld2.v8i8.p0v8i8(<8 x i8>*)
+define void @intrinsics(i32 %cur, i32 %bits) {
+  %ptr = call i8* @llvm.returnaddress(i32 0)
+  %ptr.vec = alloca <8 x i8>
+  %vec = load <8 x i8>, <8 x i8>* %ptr.vec
+  call void @llvm.aarch64.neon.st2.v8i8.p0i8(<8 x i8> %vec, <8 x i8> %vec, i8* %ptr)
+  ret void
+}

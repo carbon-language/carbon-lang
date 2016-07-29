@@ -204,6 +204,19 @@ public:
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildSequence(LLT Ty, unsigned Res,
                                     ArrayRef<unsigned> Ops);
+
+  /// Build and insert either a G_INTRINSIC (if \p HasSideEffects is false) or
+  /// G_INTRINSIC_W_SIDE_EFFECTS instruction. Its first operand will be the
+  /// result register definition unless \p Reg is NoReg (== 0). The second
+  /// operand will be the intrinsic's ID.
+  ///
+  /// Callers are expected to add the required definitions and uses afterwards.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildIntrinsic(ArrayRef<LLT> Tys, Intrinsic::ID ID,
+                                     unsigned Res, bool HasSideEffects);
 };
 
 } // End namespace llvm.

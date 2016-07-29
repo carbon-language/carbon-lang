@@ -19,8 +19,10 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
+#include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetLowering.h"
 
 #define DEBUG_TYPE "irtranslator"
@@ -175,6 +177,34 @@ bool IRTranslator::translateCast(unsigned Opcode, const CastInst &CI) {
   return true;
 }
 
+bool IRTranslator::translateCall(const CallInst &CI) {
+  auto TII = MIRBuilder.getMF().getTarget().getIntrinsicInfo();
+  const Function &F = *CI.getCalledFunction();
+  Intrinsic::ID ID = F.getIntrinsicID();
+  if (TII && ID == Intrinsic::not_intrinsic)
+    ID = static_cast<Intrinsic::ID>(TII->getIntrinsicID(&F));
+
+  assert(ID != Intrinsic::not_intrinsic && "FIXME: support real calls");
+
+  // Need types (starting with return) & args.
+  SmallVector<LLT, 4> Tys;
+  Tys.emplace_back(*CI.getType());
+  for (auto &Arg : CI.arg_operands())
+    Tys.emplace_back(*Arg->getType());
+
+  unsigned Res = CI.getType()->isVoidTy() ? 0 : getOrCreateVReg(CI);
+  MachineInstrBuilder MIB =
+      MIRBuilder.buildIntrinsic(Tys, ID, Res, !CI.doesNotAccessMemory());
+
+  for (auto &Arg : CI.arg_operands()) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Arg))
+      MIB.addImm(CI->getSExtValue());
+    else
+      MIB.addUse(getOrCreateVReg(*Arg));
+  }
+  return true;
+}
+
 bool IRTranslator::translateStaticAlloca(const AllocaInst &AI) {
   assert(AI.isStaticAlloca() && "only handle static allocas now");
   MachineFunction &MF = MIRBuilder.getMF();
@@ -217,6 +247,10 @@ bool IRTranslator::translate(const Instruction &Inst) {
     return translateBr(cast<BranchInst>(Inst));
   case Instruction::Ret:
     return translateReturn(cast<ReturnInst>(Inst));
+
+  // Calls
+  case Instruction::Call:
+    return translateCall(cast<CallInst>(Inst));
 
   // Casts
   case Instruction::BitCast:

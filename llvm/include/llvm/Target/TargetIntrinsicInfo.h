@@ -53,7 +53,7 @@ public:
   }
 
   /// Return the target intrinsic ID of a function, or 0.
-  virtual unsigned getIntrinsicID(Function *F) const;
+  virtual unsigned getIntrinsicID(const Function *F) const;
 
   /// Returns true if the intrinsic can be overloaded.
   virtual bool isOverloaded(unsigned IID) const = 0;

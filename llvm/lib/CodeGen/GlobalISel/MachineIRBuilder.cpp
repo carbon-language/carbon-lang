@@ -143,3 +143,17 @@ MachineInstrBuilder MachineIRBuilder::buildSequence(LLT Ty, unsigned Res,
     MIB.addUse(Op);
   return MIB;
 }
+
+MachineInstrBuilder MachineIRBuilder::buildIntrinsic(ArrayRef<LLT> Tys,
+                                                     Intrinsic::ID ID,
+                                                     unsigned Res,
+                                                     bool HasSideEffects) {
+  auto MIB =
+      buildInstr(HasSideEffects ? TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS
+                                : TargetOpcode::G_INTRINSIC,
+                 Tys);
+  if (Res)
+    MIB.addDef(Res);
+  MIB.addIntrinsicID(ID);
+  return MIB;
+}

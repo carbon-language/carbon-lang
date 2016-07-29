@@ -103,6 +103,10 @@ private:
   /// Translate an LLVM store instruction into generic IR.
   bool translateStore(const StoreInst &SI);
 
+  /// Translate call instruction.
+  /// \pre \p Inst is a branch instruction.
+  bool translateCall(const CallInst &Inst);
+
   /// Translate one of LLVM's cast instructions into MachineInstrs, with the
   /// given generic Opcode.
   bool translateCast(unsigned Opcode, const CastInst &CI);
@@ -118,6 +122,7 @@ private:
   /// Translate branch (br) instruction.
   /// \pre \p Inst is a branch instruction.
   bool translateBr(const BranchInst &Inst);
+
 
   /// Translate return (ret) instruction.
   /// The target needs to implement CallLowering::lowerReturn for
