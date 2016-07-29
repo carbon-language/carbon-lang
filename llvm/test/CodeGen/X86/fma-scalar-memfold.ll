@@ -15,20 +15,12 @@ declare <2 x double> @llvm.x86.fma.vfnmadd.sd(<2 x double>, <2 x double>, <2 x d
 declare <2 x double> @llvm.x86.fma.vfnmsub.sd(<2 x double>, <2 x double>, <2 x double>)
 
 define void @fmadd_aab_ss(float* %a, float* %b) {
-; AVX2-LABEL: fmadd_aab_ss:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX2-NEXT:    vfmadd213ss (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovss %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fmadd_aab_ss:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vfmadd213ss %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    vmovss %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fmadd_aab_ss:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    vfmadd213ss (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovss %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load float, float* %a
   %av0 = insertelement <4 x float> undef, float %a.val, i32 0
   %av1 = insertelement <4 x float> %av0, float 0.000000e+00, i32 1
@@ -49,20 +41,12 @@ define void @fmadd_aab_ss(float* %a, float* %b) {
 }
 
 define void @fmadd_aba_ss(float* %a, float* %b) {
-; AVX2-LABEL: fmadd_aba_ss:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX2-NEXT:    vfmadd132ss (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovss %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fmadd_aba_ss:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vfmadd213ss %xmm0, %xmm1, %xmm0
-; AVX512-NEXT:    vmovss %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fmadd_aba_ss:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    vfmadd132ss (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovss %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load float, float* %a
   %av0 = insertelement <4 x float> undef, float %a.val, i32 0
   %av1 = insertelement <4 x float> %av0, float 0.000000e+00, i32 1
@@ -83,20 +67,12 @@ define void @fmadd_aba_ss(float* %a, float* %b) {
 }
 
 define void @fmsub_aab_ss(float* %a, float* %b) {
-; AVX2-LABEL: fmsub_aab_ss:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX2-NEXT:    vfmsub213ss (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovss %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fmsub_aab_ss:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vfmsub213ss %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    vmovss %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fmsub_aab_ss:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    vfmsub213ss (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovss %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load float, float* %a
   %av0 = insertelement <4 x float> undef, float %a.val, i32 0
   %av1 = insertelement <4 x float> %av0, float 0.000000e+00, i32 1
@@ -117,20 +93,12 @@ define void @fmsub_aab_ss(float* %a, float* %b) {
 }
 
 define void @fmsub_aba_ss(float* %a, float* %b) {
-; AVX2-LABEL: fmsub_aba_ss:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX2-NEXT:    vfmsub132ss (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovss %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fmsub_aba_ss:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vfmsub213ss %xmm0, %xmm1, %xmm0
-; AVX512-NEXT:    vmovss %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fmsub_aba_ss:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    vfmsub132ss (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovss %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load float, float* %a
   %av0 = insertelement <4 x float> undef, float %a.val, i32 0
   %av1 = insertelement <4 x float> %av0, float 0.000000e+00, i32 1
@@ -151,20 +119,12 @@ define void @fmsub_aba_ss(float* %a, float* %b) {
 }
 
 define void @fnmadd_aab_ss(float* %a, float* %b) {
-; AVX2-LABEL: fnmadd_aab_ss:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX2-NEXT:    vfnmadd213ss (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovss %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fnmadd_aab_ss:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vfnmadd213ss %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    vmovss %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fnmadd_aab_ss:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    vfnmadd213ss (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovss %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load float, float* %a
   %av0 = insertelement <4 x float> undef, float %a.val, i32 0
   %av1 = insertelement <4 x float> %av0, float 0.000000e+00, i32 1
@@ -185,20 +145,12 @@ define void @fnmadd_aab_ss(float* %a, float* %b) {
 }
 
 define void @fnmadd_aba_ss(float* %a, float* %b) {
-; AVX2-LABEL: fnmadd_aba_ss:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX2-NEXT:    vfnmadd132ss (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovss %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fnmadd_aba_ss:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vfnmadd213ss %xmm0, %xmm1, %xmm0
-; AVX512-NEXT:    vmovss %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fnmadd_aba_ss:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    vfnmadd132ss (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovss %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load float, float* %a
   %av0 = insertelement <4 x float> undef, float %a.val, i32 0
   %av1 = insertelement <4 x float> %av0, float 0.000000e+00, i32 1
@@ -219,20 +171,12 @@ define void @fnmadd_aba_ss(float* %a, float* %b) {
 }
 
 define void @fnmsub_aab_ss(float* %a, float* %b) {
-; AVX2-LABEL: fnmsub_aab_ss:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX2-NEXT:    vfnmsub213ss (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovss %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fnmsub_aab_ss:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vfnmsub213ss %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    vmovss %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fnmsub_aab_ss:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    vfnmsub213ss (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovss %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load float, float* %a
   %av0 = insertelement <4 x float> undef, float %a.val, i32 0
   %av1 = insertelement <4 x float> %av0, float 0.000000e+00, i32 1
@@ -253,20 +197,12 @@ define void @fnmsub_aab_ss(float* %a, float* %b) {
 }
 
 define void @fnmsub_aba_ss(float* %a, float* %b) {
-; AVX2-LABEL: fnmsub_aba_ss:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX2-NEXT:    vfnmsub132ss (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovss %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fnmsub_aba_ss:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vfnmsub213ss %xmm0, %xmm1, %xmm0
-; AVX512-NEXT:    vmovss %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fnmsub_aba_ss:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    vfnmsub132ss (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovss %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load float, float* %a
   %av0 = insertelement <4 x float> undef, float %a.val, i32 0
   %av1 = insertelement <4 x float> %av0, float 0.000000e+00, i32 1
@@ -287,20 +223,12 @@ define void @fnmsub_aba_ss(float* %a, float* %b) {
 }
 
 define void @fmadd_aab_sd(double* %a, double* %b) {
-; AVX2-LABEL: fmadd_aab_sd:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vfmadd213sd (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fmadd_aab_sd:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512-NEXT:    vfmadd213sd %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fmadd_aab_sd:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vfmadd213sd (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovlpd %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load double, double* %a
   %av0 = insertelement <2 x double> undef, double %a.val, i32 0
   %av  = insertelement <2 x double> %av0, double 0.000000e+00, i32 1
@@ -317,20 +245,12 @@ define void @fmadd_aab_sd(double* %a, double* %b) {
 }
 
 define void @fmadd_aba_sd(double* %a, double* %b) {
-; AVX2-LABEL: fmadd_aba_sd:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vfmadd132sd (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fmadd_aba_sd:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512-NEXT:    vfmadd213sd %xmm0, %xmm1, %xmm0
-; AVX512-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fmadd_aba_sd:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vfmadd132sd (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovlpd %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load double, double* %a
   %av0 = insertelement <2 x double> undef, double %a.val, i32 0
   %av  = insertelement <2 x double> %av0, double 0.000000e+00, i32 1
@@ -347,20 +267,12 @@ define void @fmadd_aba_sd(double* %a, double* %b) {
 }
 
 define void @fmsub_aab_sd(double* %a, double* %b) {
-; AVX2-LABEL: fmsub_aab_sd:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vfmsub213sd (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fmsub_aab_sd:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512-NEXT:    vfmsub213sd %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fmsub_aab_sd:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vfmsub213sd (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovlpd %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load double, double* %a
   %av0 = insertelement <2 x double> undef, double %a.val, i32 0
   %av  = insertelement <2 x double> %av0, double 0.000000e+00, i32 1
@@ -377,20 +289,12 @@ define void @fmsub_aab_sd(double* %a, double* %b) {
 }
 
 define void @fmsub_aba_sd(double* %a, double* %b) {
-; AVX2-LABEL: fmsub_aba_sd:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vfmsub132sd (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fmsub_aba_sd:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512-NEXT:    vfmsub213sd %xmm0, %xmm1, %xmm0
-; AVX512-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fmsub_aba_sd:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vfmsub132sd (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovlpd %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load double, double* %a
   %av0 = insertelement <2 x double> undef, double %a.val, i32 0
   %av  = insertelement <2 x double> %av0, double 0.000000e+00, i32 1
@@ -407,20 +311,12 @@ define void @fmsub_aba_sd(double* %a, double* %b) {
 }
 
 define void @fnmadd_aab_sd(double* %a, double* %b) {
-; AVX2-LABEL: fnmadd_aab_sd:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vfnmadd213sd (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fnmadd_aab_sd:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512-NEXT:    vfnmadd213sd %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fnmadd_aab_sd:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vfnmadd213sd (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovlpd %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load double, double* %a
   %av0 = insertelement <2 x double> undef, double %a.val, i32 0
   %av  = insertelement <2 x double> %av0, double 0.000000e+00, i32 1
@@ -437,20 +333,12 @@ define void @fnmadd_aab_sd(double* %a, double* %b) {
 }
 
 define void @fnmadd_aba_sd(double* %a, double* %b) {
-; AVX2-LABEL: fnmadd_aba_sd:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vfnmadd132sd (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fnmadd_aba_sd:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512-NEXT:    vfnmadd213sd %xmm0, %xmm1, %xmm0
-; AVX512-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fnmadd_aba_sd:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vfnmadd132sd (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovlpd %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load double, double* %a
   %av0 = insertelement <2 x double> undef, double %a.val, i32 0
   %av  = insertelement <2 x double> %av0, double 0.000000e+00, i32 1
@@ -467,20 +355,12 @@ define void @fnmadd_aba_sd(double* %a, double* %b) {
 }
 
 define void @fnmsub_aab_sd(double* %a, double* %b) {
-; AVX2-LABEL: fnmsub_aab_sd:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vfnmsub213sd (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fnmsub_aab_sd:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512-NEXT:    vfnmsub213sd %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fnmsub_aab_sd:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vfnmsub213sd (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovlpd %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load double, double* %a
   %av0 = insertelement <2 x double> undef, double %a.val, i32 0
   %av  = insertelement <2 x double> %av0, double 0.000000e+00, i32 1
@@ -497,20 +377,12 @@ define void @fnmsub_aab_sd(double* %a, double* %b) {
 }
 
 define void @fnmsub_aba_sd(double* %a, double* %b) {
-; AVX2-LABEL: fnmsub_aba_sd:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vfnmsub132sd (%rsi), %xmm0, %xmm0
-; AVX2-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: fnmsub_aba_sd:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512-NEXT:    vfnmsub213sd %xmm0, %xmm1, %xmm0
-; AVX512-NEXT:    vmovlpd %xmm0, (%rdi)
-; AVX512-NEXT:    retq
+; CHECK-LABEL: fnmsub_aba_sd:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vfnmsub132sd (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovlpd %xmm0, (%rdi)
+; CHECK-NEXT:    retq
   %a.val = load double, double* %a
   %av0 = insertelement <2 x double> undef, double %a.val, i32 0
   %av  = insertelement <2 x double> %av0, double 0.000000e+00, i32 1

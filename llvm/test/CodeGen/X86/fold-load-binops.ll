@@ -13,16 +13,10 @@ define <4 x float> @addss(<4 x float> %va, float* %pb) {
 ; SSE-NEXT:    addss (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: addss:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vaddss (%rdi), %xmm0, %xmm0
-; AVX1-NEXT:    retq
-;
-; AVX512-LABEL: addss:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vaddss %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX-LABEL: addss:
+; AVX:       # BB#0:
+; AVX-NEXT:    vaddss (%rdi), %xmm0, %xmm0
+; AVX-NEXT:    retq
     %a = extractelement <4 x float> %va, i32 0
     %b = load float, float* %pb
     %r = fadd float %a, %b
@@ -36,16 +30,10 @@ define <2 x double> @addsd(<2 x double> %va, double* %pb) {
 ; SSE-NEXT:    addsd (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: addsd:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vaddsd (%rdi), %xmm0, %xmm0
-; AVX1-NEXT:    retq
-;
-; AVX512-LABEL: addsd:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512-NEXT:    vaddsd %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX-LABEL: addsd:
+; AVX:       # BB#0:
+; AVX-NEXT:    vaddsd (%rdi), %xmm0, %xmm0
+; AVX-NEXT:    retq
     %a = extractelement <2 x double> %va, i32 0
     %b = load double, double* %pb
     %r = fadd double %a, %b
@@ -59,16 +47,10 @@ define <4 x float> @subss(<4 x float> %va, float* %pb) {
 ; SSE-NEXT:    subss (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: subss:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vsubss (%rdi), %xmm0, %xmm0
-; AVX1-NEXT:    retq
-;
-; AVX512-LABEL: subss:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vsubss %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX-LABEL: subss:
+; AVX:       # BB#0:
+; AVX-NEXT:    vsubss (%rdi), %xmm0, %xmm0
+; AVX-NEXT:    retq
     %a = extractelement <4 x float> %va, i32 0
     %b = load float, float* %pb
     %r = fsub float %a, %b
@@ -82,16 +64,10 @@ define <2 x double> @subsd(<2 x double> %va, double* %pb) {
 ; SSE-NEXT:    subsd (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: subsd:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vsubsd (%rdi), %xmm0, %xmm0
-; AVX1-NEXT:    retq
-;
-; AVX512-LABEL: subsd:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512-NEXT:    vsubsd %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX-LABEL: subsd:
+; AVX:       # BB#0:
+; AVX-NEXT:    vsubsd (%rdi), %xmm0, %xmm0
+; AVX-NEXT:    retq
     %a = extractelement <2 x double> %va, i32 0
     %b = load double, double* %pb
     %r = fsub double %a, %b
@@ -105,16 +81,10 @@ define <4 x float> @mulss(<4 x float> %va, float* %pb) {
 ; SSE-NEXT:    mulss (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: mulss:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vmulss (%rdi), %xmm0, %xmm0
-; AVX1-NEXT:    retq
-;
-; AVX512-LABEL: mulss:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vmulss %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX-LABEL: mulss:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmulss (%rdi), %xmm0, %xmm0
+; AVX-NEXT:    retq
     %a = extractelement <4 x float> %va, i32 0
     %b = load float, float* %pb
     %r = fmul float %a, %b
@@ -128,16 +98,10 @@ define <2 x double> @mulsd(<2 x double> %va, double* %pb) {
 ; SSE-NEXT:    mulsd (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: mulsd:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vmulsd (%rdi), %xmm0, %xmm0
-; AVX1-NEXT:    retq
-;
-; AVX512-LABEL: mulsd:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512-NEXT:    vmulsd %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX-LABEL: mulsd:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmulsd (%rdi), %xmm0, %xmm0
+; AVX-NEXT:    retq
     %a = extractelement <2 x double> %va, i32 0
     %b = load double, double* %pb
     %r = fmul double %a, %b
@@ -151,16 +115,10 @@ define <4 x float> @divss(<4 x float> %va, float* %pb) {
 ; SSE-NEXT:    divss (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: divss:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vdivss (%rdi), %xmm0, %xmm0
-; AVX1-NEXT:    retq
-;
-; AVX512-LABEL: divss:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX512-NEXT:    vdivss %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX-LABEL: divss:
+; AVX:       # BB#0:
+; AVX-NEXT:    vdivss (%rdi), %xmm0, %xmm0
+; AVX-NEXT:    retq
     %a = extractelement <4 x float> %va, i32 0
     %b = load float, float* %pb
     %r = fdiv float %a, %b
@@ -174,16 +132,10 @@ define <2 x double> @divsd(<2 x double> %va, double* %pb) {
 ; SSE-NEXT:    divsd (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: divsd:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vdivsd (%rdi), %xmm0, %xmm0
-; AVX1-NEXT:    retq
-;
-; AVX512-LABEL: divsd:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512-NEXT:    vdivsd %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX-LABEL: divsd:
+; AVX:       # BB#0:
+; AVX-NEXT:    vdivsd (%rdi), %xmm0, %xmm0
+; AVX-NEXT:    retq
     %a = extractelement <2 x double> %va, i32 0
     %b = load double, double* %pb
     %r = fdiv double %a, %b
