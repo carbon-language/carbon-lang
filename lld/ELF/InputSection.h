@@ -265,7 +265,7 @@ template <class ELFT> class CommonInputSection : public InputSection<ELFT> {
   typedef typename ELFT::uint uintX_t;
 
 public:
-  CommonInputSection();
+  CommonInputSection(std::vector<DefinedCommon<ELFT> *> Syms);
 
   // The singleton instance of this class.
   static CommonInputSection<ELFT> *X;

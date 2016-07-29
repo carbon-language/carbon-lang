@@ -215,13 +215,22 @@ template <class ELFT> void elf::writeResult(SymbolTable<ELFT> *Symtab) {
   Writer<ELFT>(*Symtab).run();
 }
 
+template <class ELFT>
+static std::vector<DefinedCommon<ELFT> *> getCommonSymbols() {
+  std::vector<DefinedCommon<ELFT> *> V;
+  for (Symbol *S : Symtab<ELFT>::X->getSymbols())
+    if (auto *B = dyn_cast<DefinedCommon<ELFT>>(S->body()))
+      V.push_back(B);
+  return V;
+}
+
 // The main function of the writer.
 template <class ELFT> void Writer<ELFT>::run() {
   if (!Config->DiscardAll)
     copyLocalSymbols();
   addReservedSymbols();
 
-  CommonInputSection<ELFT> Common;
+  CommonInputSection<ELFT> Common(getCommonSymbols<ELFT>());
   CommonInputSection<ELFT>::X = &Common;
 
   OutputSections = ScriptConfig->HasContents
