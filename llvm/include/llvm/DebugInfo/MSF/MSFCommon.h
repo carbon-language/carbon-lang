@@ -11,6 +11,7 @@
 #define LLVM_DEBUGINFO_MSF_MSFCOMMON_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/BitVector.h"
 
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
@@ -51,6 +52,7 @@ struct SuperBlock {
 struct MSFLayout {
   MSFLayout() : SB(nullptr) {}
   const SuperBlock *SB;
+  BitVector FreePageMap;
   ArrayRef<support::ulittle32_t> DirectoryBlocks;
   ArrayRef<support::ulittle32_t> StreamSizes;
   std::vector<ArrayRef<support::ulittle32_t>> StreamMap;

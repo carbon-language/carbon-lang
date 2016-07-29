@@ -50,6 +50,9 @@ Error LLVMOutputStyle::dump() {
   if (auto EC = dumpStreamSummary())
     return EC;
 
+  if (auto EC = dumpFreePageMap())
+    return EC;
+
   if (auto EC = dumpStreamBlocks())
     return EC;
 
@@ -231,6 +234,22 @@ Error LLVMOutputStyle::dumpStreamSummary() {
     consumeError(Info.takeError());
 
   P.flush();
+  return Error::success();
+}
+
+Error LLVMOutputStyle::dumpFreePageMap() {
+  if (!opts::raw::DumpFreePageMap)
+    return Error::success();
+  const BitVector &FPM = File.getMsfLayout().FreePageMap;
+
+  std::vector<uint32_t> Vec;
+  for (uint32_t I = 0, E = FPM.size(); I != E; ++I)
+    if (!FPM[I])
+      Vec.push_back(I);
+
+  // Prints out used pages instead of free pages because
+  // the number of free pages is far larger than used pages.
+  P.printList("Used Page Map", Vec);
   return Error::success();
 }
 
