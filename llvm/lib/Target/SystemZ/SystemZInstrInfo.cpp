@@ -1194,7 +1194,7 @@ bool SystemZInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   }
 }
 
-uint64_t SystemZInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
+unsigned SystemZInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   if (MI.getOpcode() == TargetOpcode::INLINEASM) {
     const MachineFunction *MF = MI.getParent()->getParent();
     const char *AsmStr = MI.getOperand(0).getSymbolName();
