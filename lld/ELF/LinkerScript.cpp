@@ -132,11 +132,18 @@ static void addSection(OutputSectionFactory<ELFT> &Factory,
 }
 
 template <class ELFT>
+static bool compareByName(InputSectionBase<ELFT> *A,
+                          InputSectionBase<ELFT> *B) {
+  return A->getSectionName() < B->getSectionName();
+}
+
+template <class ELFT>
 std::vector<OutputSectionBase<ELFT> *>
 LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
   std::vector<OutputSectionBase<ELFT> *> Ret;
 
   for (auto &P : getSectionMap()) {
+    std::vector<InputSectionBase<ELFT> *> Sections;
     StringRef OutputName = P.first;
     const InputSectionDescription *I = P.second;
     for (InputSectionBase<ELFT> *S : getInputSections(I)) {
@@ -145,8 +152,12 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
         reportDiscarded(S);
         continue;
       }
-      addSection(Factory, Ret, S, OutputName);
+      Sections.push_back(S);
     }
+    if (I->Sort)
+      std::stable_sort(Sections.begin(), Sections.end(), compareByName<ELFT>);
+    for (InputSectionBase<ELFT> *S : Sections)
+      addSection(Factory, Ret, S, OutputName);
   }
 
   // Add all other input sections, which are not listed in script.
@@ -444,6 +455,7 @@ private:
   std::vector<uint8_t> readOutputSectionFiller();
   std::vector<StringRef> readOutputSectionPhdrs();
   std::unique_ptr<InputSectionDescription> readInputSectionDescription();
+  void readInputFilePattern(InputSectionDescription *InCmd, bool Keep);
   void readInputSectionRules(InputSectionDescription *InCmd, bool Keep);
   unsigned readPhdrType();
   void readProvide(bool Hidden);
@@ -674,7 +686,17 @@ static int precedence(StringRef Op) {
       .Default(-1);
 }
 
-void ScriptParser::readInputSectionRules(InputSectionDescription *InCmd, bool Keep) {
+void ScriptParser::readInputFilePattern(InputSectionDescription *InCmd,
+                                        bool Keep) {
+  while (!Error && !skip(")")) {
+    if (Keep)
+      Opt.KeptSections.push_back(peek());
+    InCmd->SectionPatterns.push_back(next());
+  }
+}
+
+void ScriptParser::readInputSectionRules(InputSectionDescription *InCmd,
+                                         bool Keep) {
   InCmd->FilePattern = next();
   expect("(");
 
@@ -684,11 +706,15 @@ void ScriptParser::readInputSectionRules(InputSectionDescription *InCmd, bool Ke
       InCmd->ExcludedFiles.push_back(next());
   }
 
-  while (!Error && !skip(")")) {
-    if (Keep)
-      Opt.KeptSections.push_back(peek());
-    InCmd->SectionPatterns.push_back(next());
+  if (skip("SORT")) {
+    expect("(");
+    InCmd->Sort = true;
+    readInputFilePattern(InCmd, Keep);
+    expect(")");
+    return;
   }
+
+  readInputFilePattern(InCmd, Keep);
 }
 
 std::unique_ptr<InputSectionDescription>
