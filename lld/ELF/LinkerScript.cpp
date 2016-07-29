@@ -779,10 +779,9 @@ void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
 
 void ScriptParser::readProvide(bool Hidden) {
   expect("(");
-  if (SymbolAssignment *Assignment = readAssignment(next())) {
-    Assignment->Provide = true;
-    Assignment->Hidden = Hidden;
-  }
+  SymbolAssignment *Cmd = readAssignment(next());
+  Cmd->Provide = true;
+  Cmd->Hidden = Hidden;
   expect(")");
   expect(";");
 }
