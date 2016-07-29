@@ -5,6 +5,7 @@ set(LLVM_LINK_COMPONENTS
 
 set(CodeGenSources
   DIEHashTest.cpp
+  LowLevelTypeTest.cpp
   )
 
 add_llvm_unittest(CodeGenTests

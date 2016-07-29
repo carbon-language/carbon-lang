@@ -49,6 +49,7 @@ public:
 
   /// \brief get a low-level scalar or aggregate "bag of bits".
   static LLT scalar(unsigned SizeInBits) {
+    assert(SizeInBits > 0 && "invalid scalar size");
     return LLT{Scalar, 1, SizeInBits};
   }
 
