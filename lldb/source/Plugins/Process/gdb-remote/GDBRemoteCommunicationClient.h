@@ -12,7 +12,6 @@
 
 // C Includes
 // C++ Includes
-#include <chrono>
 #include <map>
 #include <mutex>
 #include <string>
@@ -24,12 +23,12 @@
 #include "lldb/Core/StructuredData.h"
 #include "lldb/Target/Process.h"
 
-#include "GDBRemoteClientBase.h"
+#include "GDBRemoteCommunication.h"
 
 namespace lldb_private {
 namespace process_gdb_remote {
 
-class GDBRemoteCommunicationClient : public GDBRemoteClientBase
+class GDBRemoteCommunicationClient : public GDBRemoteCommunication
 {
 public:
     GDBRemoteCommunicationClient();
@@ -42,6 +41,17 @@ public:
     //------------------------------------------------------------------
     bool
     HandshakeWithServer (Error *error_ptr);
+
+    PacketResult
+    SendPacketAndWaitForResponse (const char *send_payload,
+                                  StringExtractorGDBRemote &response,
+                                  bool send_async);
+
+    PacketResult
+    SendPacketAndWaitForResponse (const char *send_payload,
+                                  size_t send_length,
+                                  StringExtractorGDBRemote &response,
+                                  bool send_async);
 
     // For packets which specify a range of output to be returned,
     // return all of the output via a series of request packets of the form
@@ -64,6 +74,18 @@ public:
     SendPacketsAndConcatenateResponses (const char *send_payload_prefix,
                                         std::string &response_string);
 
+    lldb::StateType
+    SendContinuePacketAndWaitForResponse (ProcessGDBRemote *process,
+                                          const char *packet_payload,
+                                          size_t packet_length,
+                                          StringExtractorGDBRemote &response);
+
+    bool
+    SendvContPacket (ProcessGDBRemote *process,
+                     const char *payload,
+                     size_t packet_length,
+                     StringExtractorGDBRemote &response);
+
     bool
     GetThreadSuffixSupported () override;
 
@@ -78,6 +100,12 @@ public:
 
     void
     GetListThreadsInStopReplySupported ();
+
+    bool
+    SendAsyncSignal (int signo);
+
+    bool
+    SendInterrupt(std::unique_lock<std::recursive_mutex> &lock, uint32_t seconds_to_wait_for_stop, bool &timed_out);
 
     lldb::pid_t
     GetCurrentProcessID (bool allow_lazy = true);
@@ -433,6 +461,12 @@ public:
     GetCurrentThreadIDs (std::vector<lldb::tid_t> &thread_ids,
                          bool &sequence_mutex_unavailable);
     
+    bool
+    GetInterruptWasSent () const
+    {
+        return m_interrupt_sent;
+    }
+    
     lldb::user_id_t
     OpenFile (const FileSpec& file_spec, uint32_t flags, mode_t mode, Error &error);
     
@@ -486,6 +520,9 @@ public:
     bool
     CalculateMD5 (const FileSpec& file_spec, uint64_t &high, uint64_t &low);
     
+    std::string
+    HarmonizeThreadIdsForProfileData (ProcessGDBRemote *process,
+                                      StringExtractorGDBRemote &inputStringExtractor);
 
     bool
     ReadRegister(lldb::tid_t tid,
@@ -595,6 +632,18 @@ protected:
 
     uint32_t m_num_supported_hardware_watchpoints;
 
+    // If we need to send a packet while the target is running, the m_async_XXX
+    // member variables take care of making this happen.
+    std::recursive_mutex m_async_mutex;
+    Predicate<bool> m_async_packet_predicate;
+    std::string m_async_packet;
+    PacketResult m_async_result;
+    StringExtractorGDBRemote m_async_response;
+    int m_async_signal; // We were asked to deliver a signal to the inferior process.
+    bool m_interrupt_sent;
+    std::string m_partial_profile_data;
+    std::map<uint64_t, uint32_t> m_thread_id_to_used_usec_map;
+    
     ArchSpec m_host_arch;
     ArchSpec m_process_arch;
     uint32_t m_os_version_major;
@@ -607,6 +656,11 @@ protected:
     uint32_t m_gdb_server_version; // from reply to qGDBServerVersion, zero if qGDBServerVersion is not supported
     uint32_t m_default_packet_timeout;
     uint64_t m_max_packet_size;  // as returned by qSupported
+
+    PacketResult
+    SendPacketAndWaitForResponseNoLock (const char *payload,
+                                        size_t payload_length,
+                                        StringExtractorGDBRemote &response);
 
     bool
     GetCurrentProcessInfo (bool allow_lazy_pid = true);
@@ -622,9 +676,6 @@ protected:
     bool
     DecodeProcessInfoResponse (StringExtractorGDBRemote &response, 
                                ProcessInstanceInfo &process_info);
-
-    void
-    OnRunPacketSent(bool first) override;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (GDBRemoteCommunicationClient);

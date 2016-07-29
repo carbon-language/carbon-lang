@@ -433,7 +433,6 @@ size_t
 StringExtractor::GetHexByteString (std::string &str)
 {
     str.clear();
-    str.reserve(GetBytesLeft() / 2);
     char ch;
     while ((ch = GetHexU8()) != '\0')
         str.append(1, ch);
