@@ -1318,6 +1318,17 @@ templateArgument()
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateName.html">TemplateName</a>&gt;</td><td class="name" onclick="toggle('templateName0')"><a name="templateName0Anchor">templateName</a></td><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateName.html">TemplateName</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="templateName0"><pre>Matches template name.
+
+Given
+  template &lt;typename T&gt; class X { };
+  X&lt;int&gt; xi;
+templateName()
+  matches 'X' in X&lt;int&gt;.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;</td><td class="name" onclick="toggle('typeLoc0')"><a name="typeLoc0Anchor">typeLoc</a></td><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="typeLoc0"><pre>Matches TypeLocs in the clang AST.
 </pre></td></tr>
@@ -5350,6 +5361,19 @@ Given
 classTemplateSpecializationDecl(
   hasAnyTemplateArgument(refersToIntegralType(asString("int"))))
   matches the implicit instantiation of C in C&lt;42&gt;.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateArgument.html">TemplateArgument</a>&gt;</td><td class="name" onclick="toggle('refersToTemplate0')"><a name="refersToTemplate0Anchor">refersToTemplate</a></td><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateName.html">TemplateName</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="refersToTemplate0"><pre>Matches a TemplateArgument that refers to a certain template.
+
+Given
+  template&lt;template &lt;typename&gt; class S&gt; class X {};
+  template&lt;typename T&gt; class Y {};"
+  X&lt;Y&gt; xi;
+classTemplateSpecializationDecl(hasAnyTemplateArgument(
+    refersToTemplate(templateName())))
+  matches the specialization X&lt;Y&gt;
 </pre></td></tr>
 
 

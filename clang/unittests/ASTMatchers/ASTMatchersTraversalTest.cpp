@@ -543,6 +543,14 @@ TEST(Matcher, MatchesTypeTemplateArgument) {
       asString("int"))))));
 }
 
+TEST(Matcher, MatchesTemplateTemplateArgument) {
+  EXPECT_TRUE(matches("template<template <typename> class S> class X {};"
+                      "template<typename T> class Y {};"
+                      "X<Y> xi;",
+                      classTemplateSpecializationDecl(hasAnyTemplateArgument(
+                          refersToTemplate(templateName())))));
+}
+
 TEST(Matcher, MatchesDeclarationReferenceTemplateArgument) {
   EXPECT_TRUE(matches(
     "struct B { int next; };"
