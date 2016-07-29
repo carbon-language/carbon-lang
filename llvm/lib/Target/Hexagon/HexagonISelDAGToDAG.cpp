@@ -1759,7 +1759,7 @@ WeightedLeaf LeafPrioQueue::findMULbyConst() {
 }
 
 SDValue HexagonDAGToDAGISel::getMultiplierForSHL(SDNode *N) {
-  uint64_t MulFactor = 1 << N->getConstantOperandVal(1);
+  uint64_t MulFactor = 1ull << N->getConstantOperandVal(1);
   return CurDAG->getConstant(MulFactor, SDLoc(N),
                              N->getOperand(1).getValueType());
 }
