@@ -82,6 +82,9 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(),
                        opts::IdenticalCodeFolding);
 
+  Manager.registerPass(llvm::make_unique<InlineSmallFunctions>(),
+                       opts::InlineSmallFunctions);
+
   Manager.registerPass(
     std::move(llvm::make_unique<EliminateUnreachableBlocks>(Manager.NagUser)),
     opts::EliminateUnreachable);
@@ -102,9 +105,6 @@ void BinaryFunctionPassManager::runAllPasses(
 
   Manager.registerPass(llvm::make_unique<OptimizeBodylessFunctions>(),
                        opts::OptimizeBodylessFunctions);
-
-  Manager.registerPass(llvm::make_unique<InlineSmallFunctions>(),
-                       opts::InlineSmallFunctions);
 
   Manager.registerPass(std::move(llvm::make_unique<FixupFunctions>()));
 

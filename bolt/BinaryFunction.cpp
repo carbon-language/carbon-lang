@@ -550,14 +550,15 @@ void BinaryFunction::clearLandingPads(const unsigned StartIndex,
 
 void BinaryFunction::addLandingPads(const unsigned StartIndex,
                                     const unsigned NumBlocks) {
-  for (auto I = StartIndex; I < StartIndex + NumBlocks; ++I) {
-    auto *BB = BasicBlocks[I];
+  for (auto *BB : BasicBlocks) {
     if (LandingPads.find(BB->getLabel()) != LandingPads.end()) {
       MCSymbol *LP = BB->getLabel();
-      for (unsigned I : LPToBBIndex.at(LP)) {
+      for (unsigned I : LPToBBIndex[LP]) {
         assert(I < BasicBlocks.size());
         BinaryBasicBlock *ThrowBB = BasicBlocks[I];
-        ThrowBB->addLandingPad(BB);
+        const unsigned ThrowBBIndex = getIndex(ThrowBB);
+        if (ThrowBBIndex >= StartIndex && ThrowBBIndex < StartIndex + NumBlocks)
+          ThrowBB->addLandingPad(BB);
       }
     }
   }

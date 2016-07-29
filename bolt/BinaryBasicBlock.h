@@ -412,21 +412,23 @@ public:
 
   /// Replace an instruction with a sequence of instructions. Returns true
   /// if the instruction to be replaced was found and replaced.
-  bool replaceInstruction(MCInst *Inst,
-                          const std::vector<MCInst> &Replacement) {
+  template <typename Itr>
+  bool replaceInstruction(MCInst *Inst, Itr Begin, Itr End) {
     auto I = Instructions.end();
     auto B = Instructions.begin();
     while (I > B) {
       --I;
       if (&*I == Inst) {
-        Instructions.insert(
-            Instructions.erase(I),
-            Replacement.begin(),
-            Replacement.end());
+        Instructions.insert(Instructions.erase(I), Begin, End);
         return true;
       }
     }
     return false;
+  }
+
+  bool replaceInstruction(MCInst *Inst,
+                          const std::vector<MCInst> &Replacement) {
+    return replaceInstruction(Inst, Replacement.begin(), Replacement.end());
   }
 
   /// Split apart the instructions in this basic block starting at Inst.

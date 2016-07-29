@@ -505,6 +505,24 @@ public:
     return BasicBlocks.at(Index);
   }
 
+  /// Returns the basic block after the given basic block in the layout or
+  /// nullptr the last basic block is given.
+  const BinaryBasicBlock *getBasicBlockAfter(const BinaryBasicBlock *BB) const {
+    for (auto I = layout_begin(), E = layout_end(); I != E; ++I) {
+      if (*I == BB && std::next(I) != E)
+        return *std::next(I);
+    }
+    return nullptr;
+  }
+
+  BinaryBasicBlock *getBasicBlockAfter(const BinaryBasicBlock *BB) {
+    for (auto I = layout_begin(), E = layout_end(); I != E; ++I) {
+      if (*I == BB && std::next(I) != E)
+        return *std::next(I);
+    }
+    return nullptr;
+  }
+
   /// Return the name of the function as extracted from the binary file.
   /// If the function has multiple names - return the last one
   /// followed by "(*#<numnames>)".

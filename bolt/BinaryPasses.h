@@ -64,8 +64,11 @@ private:
 
   /// Maximum number of instructions in an inlined function.
   static const unsigned kMaxInstructions = 8;
+  /// Maximum code size (in bytes) of inlined function (used by aggressive
+  /// inlining).
+  static const uint64_t kMaxSize = 60;
   /// Maximum number of functions that will be considered for inlining (in
-  /// ascending address order).
+  /// descending hottness order).
   static const unsigned kMaxFunctions = 30000;
 
   /// Statistics collected for debugging.
@@ -83,8 +86,31 @@ private:
                   MCInst *CallInst,
                   const BinaryBasicBlock &InlinedFunctionBB);
 
-  void inlineCallsInFunction(BinaryContext &BC,
+  bool inlineCallsInFunction(BinaryContext &BC,
                              BinaryFunction &Function);
+
+  /// The following methods do a more aggressive inlining pass, where we
+  /// inline calls as well as tail calls and we are not limited to inlining
+  /// functions with only one basic block.
+  /// FIXME: Currently these are broken since they do not work with the split
+  /// function option.
+  void findInliningCandidatesAggressive(
+      BinaryContext &BC, const std::map<uint64_t, BinaryFunction> &BFs);
+
+  bool inlineCallsInFunctionAggressive(
+      BinaryContext &BC, BinaryFunction &Function);
+
+  /// Inline the call in CallInst to InlinedFunction. Inlined function should not
+  /// contain any landing pad or thrower edges but can have more than one blocks.
+  ///
+  /// Return the location (basic block and instruction index) where the code of
+  /// the caller function continues after the the inlined code.
+  std::pair<BinaryBasicBlock *, unsigned>
+  inlineCall(BinaryContext &BC,
+             BinaryFunction &CallerFunction,
+             BinaryBasicBlock *CallerBB,
+             const unsigned CallInstIdex,
+             const BinaryFunction &InlinedFunction);
 
 public:
   void runOnFunctions(BinaryContext &BC,
