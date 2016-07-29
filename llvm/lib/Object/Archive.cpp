@@ -45,15 +45,15 @@ ArchiveMemberHeader::ArchiveMemberHeader(const Archive *Parent,
 
   if (Size < sizeof(ArMemHdrType)) {
     if (Err) {
-      Twine Msg("remaining size of archive too small for next archive member "
-                "header ");
+      std::string Msg("remaining size of archive too small for next archive "
+                      "member header ");
       Expected<StringRef> NameOrErr = getName(Size);
       if (!NameOrErr) {
         consumeError(NameOrErr.takeError());
         uint64_t Offset = RawHeaderPtr - Parent->getData().data();
         *Err = malformedError(Msg + "at offset " + Twine(Offset));
       } else
-        *Err = malformedError(Msg + "for " + Twine(NameOrErr.get()));
+        *Err = malformedError(Msg + "for " + NameOrErr.get());
     }
     return;
   }
@@ -64,15 +64,16 @@ ArchiveMemberHeader::ArchiveMemberHeader(const Archive *Parent,
       OS.write_escaped(llvm::StringRef(ArMemHdr->Terminator,
                                        sizeof(ArMemHdr->Terminator)));
       OS.flush();
-      Twine Msg("terminator characters in archive member \"" + Buf + "\" not "
-                "the correct \"`\\n\" values for the archive member header ");
+      std::string Msg("terminator characters in archive member \"" + Buf +
+                      "\" not the correct \"`\\n\" values for the archive "
+                      "member header ");
       Expected<StringRef> NameOrErr = getName(Size);
       if (!NameOrErr) {
         consumeError(NameOrErr.takeError());
         uint64_t Offset = RawHeaderPtr - Parent->getData().data();
         *Err = malformedError(Msg + "at offset " + Twine(Offset));
       } else
-        *Err = malformedError(Msg + "for " + Twine(NameOrErr.get()));
+        *Err = malformedError(Msg + "for " + NameOrErr.get());
     }
     return;
   }
@@ -139,8 +140,7 @@ Expected<StringRef> ArchiveMemberHeader::getName(uint64_t Size) const {
     if (Name.substr(1).rtrim(' ').getAsInteger(10, StringOffset)) {
       std::string Buf;
       raw_string_ostream OS(Buf);
-      OS.write_escaped(Name.substr(1).rtrim(' '),
-                                       sizeof(Name.substr(1)).rtrim(' '));
+      OS.write_escaped(Name.substr(1).rtrim(' '));
       OS.flush();
       uint64_t ArchiveOffset = reinterpret_cast<const char *>(ArMemHdr) -
                                Parent->getData().data();
@@ -172,8 +172,7 @@ Expected<StringRef> ArchiveMemberHeader::getName(uint64_t Size) const {
     if (Name.substr(3).rtrim(' ').getAsInteger(10, NameLength)) {
       std::string Buf;
       raw_string_ostream OS(Buf);
-      OS.write_escaped(Name.substr(3).rtrim(' '),
-                                       sizeof(Name.substr(3)).rtrim(' '));
+      OS.write_escaped(Name.substr(3).rtrim(' '));
       OS.flush();
       uint64_t ArchiveOffset = reinterpret_cast<const char *>(ArMemHdr) -
                         Parent->getData().data();
@@ -316,8 +315,7 @@ Archive::Child::Child(const Archive *Parent, const char *Start, Error *Err)
       if (Err) {
         std::string Buf;
         raw_string_ostream OS(Buf);
-        OS.write_escaped(Name.substr(3).rtrim(' '),
-                                         sizeof(Name.substr(3)).rtrim(' '));
+        OS.write_escaped(Name.substr(3).rtrim(' '));
         OS.flush();
         uint64_t Offset = Start - Parent->getData().data();
         *Err = malformedError("long name length characters after the #1/ are "
@@ -407,15 +405,15 @@ Expected<Archive::Child> Archive::Child::getNext() const {
 
   // Check to see if this is past the end of the archive.
   if (NextLoc > Parent->Data.getBufferEnd()) {
-    Twine Msg("offset to next archive member past the end of the archive after "
-              "member ");
+    std::string Msg("offset to next archive member past the end of the archive "
+                    "after member ");
     Expected<StringRef> NameOrErr = getName();
     if (!NameOrErr) {
       consumeError(NameOrErr.takeError());
       uint64_t Offset = Data.data() - Parent->getData().data();
       return malformedError(Msg + "at offset " + Twine(Offset));
     } else
-      return malformedError(Msg + Twine(NameOrErr.get()));
+      return malformedError(Msg + NameOrErr.get());
   }
 
   Error Err;
