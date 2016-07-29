@@ -138,9 +138,10 @@ static bool compareByName(InputSectionBase<ELFT> *A,
 }
 
 template <class ELFT>
-std::vector<OutputSectionBase<ELFT> *>
-LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
-  std::vector<OutputSectionBase<ELFT> *> Ret;
+void LinkerScript<ELFT>::createSections(
+    std::vector<OutputSectionBase<ELFT> *> *Out,
+    OutputSectionFactory<ELFT> &Factory) {
+  OutputSections = Out;
 
   for (auto &P : getSectionMap()) {
     std::vector<InputSectionBase<ELFT> *> Sections;
@@ -157,7 +158,7 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
     if (I->Sort)
       std::stable_sort(Sections.begin(), Sections.end(), compareByName<ELFT>);
     for (InputSectionBase<ELFT> *S : Sections)
-      addSection(Factory, Ret, S, OutputName);
+      addSection(Factory, *Out, S, OutputName);
   }
 
   // Add all other input sections, which are not listed in script.
@@ -165,17 +166,15 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
        Symtab<ELFT>::X->getObjectFiles())
     for (InputSectionBase<ELFT> *S : F->getSections())
       if (!isDiscarded(S) && !S->OutSec)
-        addSection(Factory, Ret, S, getOutputSectionName(S));
+        addSection(Factory, *Out, S, getOutputSectionName(S));
 
   // Remove from the output all the sections which did not meet
   // the optional constraints.
-  return filter(Ret);
+  filter();
 }
 
 // Process ONLY_IF_RO and ONLY_IF_RW.
-template <class ELFT>
-std::vector<OutputSectionBase<ELFT> *>
-LinkerScript<ELFT>::filter(std::vector<OutputSectionBase<ELFT> *> &Sections) {
+template <class ELFT> void LinkerScript<ELFT>::filter() {
   // In this loop, we remove output sections if they don't satisfy
   // requested properties.
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
@@ -186,10 +185,10 @@ LinkerScript<ELFT>::filter(std::vector<OutputSectionBase<ELFT> *> &Sections) {
     if (Cmd->Constraint == ConstraintKind::NoConstraint)
       continue;
 
-    auto It = llvm::find_if(Sections, [&](OutputSectionBase<ELFT> *S) {
+    auto It = llvm::find_if(*OutputSections, [&](OutputSectionBase<ELFT> *S) {
       return S->getName() == Cmd->Name;
     });
-    if (It == Sections.end())
+    if (It == OutputSections->end())
       continue;
 
     OutputSectionBase<ELFT> *Sec = *It;
@@ -198,9 +197,8 @@ LinkerScript<ELFT>::filter(std::vector<OutputSectionBase<ELFT> *> &Sections) {
     bool RW = (Cmd->Constraint == ConstraintKind::ReadWrite);
 
     if ((RO && Writable) || (RW && !Writable))
-      Sections.erase(It);
+      OutputSections->erase(It);
   }
-  return Sections;
 }
 
 template <class ELFT>
@@ -394,6 +392,15 @@ template <class ELFT> void LinkerScript<ELFT>::addScriptedSymbols() {
 
 template <class ELFT> bool LinkerScript<ELFT>::hasPhdrsCommands() {
   return !Opt.PhdrsCommands.empty();
+}
+
+template <class ELFT>
+typename ELFT::uint LinkerScript<ELFT>::getOutputSectionSize(StringRef Name) {
+  for (OutputSectionBase<ELFT> *Sec : *OutputSections)
+    if (Sec->getName() == Name)
+      return Sec->getSize();
+  error("undefined section " + Name);
+  return 0;
 }
 
 // Returns indices of ELF headers containing specific section, identified
@@ -838,6 +845,22 @@ static uint64_t getSymbolValue(StringRef S, uint64_t Dot) {
   return 0;
 }
 
+static uint64_t getSectionSize(StringRef Name) {
+  switch (Config->EKind) {
+  case ELF32LEKind:
+    return Script<ELF32LE>::X->getOutputSectionSize(Name);
+  case ELF32BEKind:
+    return Script<ELF32BE>::X->getOutputSectionSize(Name);
+  case ELF64LEKind:
+    return Script<ELF64LE>::X->getOutputSectionSize(Name);
+  case ELF64BEKind:
+    return Script<ELF64BE>::X->getOutputSectionSize(Name);
+  default:
+    llvm_unreachable("unsupported target");
+  }
+  return 0;
+}
+
 SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
   StringRef Op = next();
   assert(Op == "=" || Op == "+=");
@@ -945,6 +968,12 @@ Expr ScriptParser::readPrimary() {
     readExpr();
     expect(")");
     return [](uint64_t Dot) { return alignTo(Dot, Target->PageSize); };
+  }
+  if (Tok == "SIZEOF") {
+    expect("(");
+    StringRef Name = next();
+    expect(")");
+    return [=](uint64_t Dot) { return getSectionSize(Name); };
   }
 
   // Parse a symbol name or a number literal.
