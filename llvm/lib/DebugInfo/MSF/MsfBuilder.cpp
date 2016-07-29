@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/Msf/MsfBuilder.h"
-#include "llvm/DebugInfo/Msf/MsfError.h"
+#include "llvm/DebugInfo/MSF/MSFBuilder.h"
+#include "llvm/DebugInfo/MSF/MSFError.h"
 
 using namespace llvm;
 using namespace llvm::msf;
@@ -22,7 +22,7 @@ const uint32_t kNumReservedPages = 3;
 const uint32_t kDefaultBlockMapAddr = kNumReservedPages;
 }
 
-MsfBuilder::MsfBuilder(uint32_t BlockSize, uint32_t MinBlockCount, bool CanGrow,
+MSFBuilder::MSFBuilder(uint32_t BlockSize, uint32_t MinBlockCount, bool CanGrow,
                        BumpPtrAllocator &Allocator)
     : Allocator(Allocator), IsGrowable(CanGrow), BlockSize(BlockSize),
       MininumBlocks(MinBlockCount), BlockMapAddr(kDefaultBlockMapAddr),
@@ -33,31 +33,31 @@ MsfBuilder::MsfBuilder(uint32_t BlockSize, uint32_t MinBlockCount, bool CanGrow,
   FreeBlocks[BlockMapAddr] = false;
 }
 
-Expected<MsfBuilder> MsfBuilder::create(BumpPtrAllocator &Allocator,
+Expected<MSFBuilder> MSFBuilder::create(BumpPtrAllocator &Allocator,
                                         uint32_t BlockSize,
                                         uint32_t MinBlockCount, bool CanGrow) {
   if (!isValidBlockSize(BlockSize))
-    return make_error<MsfError>(msf_error_code::invalid_format,
+    return make_error<MSFError>(msf_error_code::invalid_format,
                                 "The requested block size is unsupported");
 
-  return MsfBuilder(BlockSize,
+  return MSFBuilder(BlockSize,
                     std::max(MinBlockCount, msf::getMinimumBlockCount()),
                     CanGrow, Allocator);
 }
 
-Error MsfBuilder::setBlockMapAddr(uint32_t Addr) {
+Error MSFBuilder::setBlockMapAddr(uint32_t Addr) {
   if (Addr == BlockMapAddr)
     return Error::success();
 
   if (Addr >= FreeBlocks.size()) {
     if (!IsGrowable)
-      return make_error<MsfError>(msf_error_code::insufficient_buffer,
+      return make_error<MSFError>(msf_error_code::insufficient_buffer,
                                   "Cannot grow the number of blocks");
     FreeBlocks.resize(Addr + 1);
   }
 
   if (!isBlockFree(Addr))
-    return make_error<MsfError>(
+    return make_error<MSFError>(
         msf_error_code::block_in_use,
         "Requested block map address is already in use");
   FreeBlocks[BlockMapAddr] = true;
@@ -66,16 +66,16 @@ Error MsfBuilder::setBlockMapAddr(uint32_t Addr) {
   return Error::success();
 }
 
-void MsfBuilder::setFreePageMap(uint32_t Fpm) { FreePageMap = Fpm; }
+void MSFBuilder::setFreePageMap(uint32_t Fpm) { FreePageMap = Fpm; }
 
-void MsfBuilder::setUnknown1(uint32_t Unk1) { Unknown1 = Unk1; }
+void MSFBuilder::setUnknown1(uint32_t Unk1) { Unknown1 = Unk1; }
 
-Error MsfBuilder::setDirectoryBlocksHint(ArrayRef<uint32_t> DirBlocks) {
+Error MSFBuilder::setDirectoryBlocksHint(ArrayRef<uint32_t> DirBlocks) {
   for (auto B : DirectoryBlocks)
     FreeBlocks[B] = true;
   for (auto B : DirBlocks) {
     if (!isBlockFree(B)) {
-      return make_error<MsfError>(msf_error_code::unspecified,
+      return make_error<MSFError>(msf_error_code::unspecified,
                                   "Attempt to reuse an allocated block");
     }
     FreeBlocks[B] = false;
@@ -85,7 +85,7 @@ Error MsfBuilder::setDirectoryBlocksHint(ArrayRef<uint32_t> DirBlocks) {
   return Error::success();
 }
 
-Error MsfBuilder::allocateBlocks(uint32_t NumBlocks,
+Error MSFBuilder::allocateBlocks(uint32_t NumBlocks,
                                  MutableArrayRef<uint32_t> Blocks) {
   if (NumBlocks == 0)
     return Error::success();
@@ -93,7 +93,7 @@ Error MsfBuilder::allocateBlocks(uint32_t NumBlocks,
   uint32_t NumFreeBlocks = FreeBlocks.count();
   if (NumFreeBlocks < NumBlocks) {
     if (!IsGrowable)
-      return make_error<MsfError>(msf_error_code::insufficient_buffer,
+      return make_error<MSFError>(msf_error_code::insufficient_buffer,
                                   "There are no free Blocks in the file");
     uint32_t AllocBlocks = NumBlocks - NumFreeBlocks;
     FreeBlocks.resize(AllocBlocks + FreeBlocks.size(), true);
@@ -112,23 +112,23 @@ Error MsfBuilder::allocateBlocks(uint32_t NumBlocks,
   return Error::success();
 }
 
-uint32_t MsfBuilder::getNumUsedBlocks() const {
+uint32_t MSFBuilder::getNumUsedBlocks() const {
   return getTotalBlockCount() - getNumFreeBlocks();
 }
 
-uint32_t MsfBuilder::getNumFreeBlocks() const { return FreeBlocks.count(); }
+uint32_t MSFBuilder::getNumFreeBlocks() const { return FreeBlocks.count(); }
 
-uint32_t MsfBuilder::getTotalBlockCount() const { return FreeBlocks.size(); }
+uint32_t MSFBuilder::getTotalBlockCount() const { return FreeBlocks.size(); }
 
-bool MsfBuilder::isBlockFree(uint32_t Idx) const { return FreeBlocks[Idx]; }
+bool MSFBuilder::isBlockFree(uint32_t Idx) const { return FreeBlocks[Idx]; }
 
-Error MsfBuilder::addStream(uint32_t Size, ArrayRef<uint32_t> Blocks) {
+Error MSFBuilder::addStream(uint32_t Size, ArrayRef<uint32_t> Blocks) {
   // Add a new stream mapped to the specified blocks.  Verify that the specified
   // blocks are both necessary and sufficient for holding the requested number
   // of bytes, and verify that all requested blocks are free.
   uint32_t ReqBlocks = bytesToBlocks(Size, BlockSize);
   if (ReqBlocks != Blocks.size())
-    return make_error<MsfError>(
+    return make_error<MSFError>(
         msf_error_code::invalid_format,
         "Incorrect number of blocks for requested stream size");
   for (auto Block : Blocks) {
@@ -136,7 +136,7 @@ Error MsfBuilder::addStream(uint32_t Size, ArrayRef<uint32_t> Blocks) {
       FreeBlocks.resize(Block + 1, true);
 
     if (!FreeBlocks.test(Block))
-      return make_error<MsfError>(
+      return make_error<MSFError>(
           msf_error_code::unspecified,
           "Attempt to re-use an already allocated block");
   }
@@ -148,7 +148,7 @@ Error MsfBuilder::addStream(uint32_t Size, ArrayRef<uint32_t> Blocks) {
   return Error::success();
 }
 
-Error MsfBuilder::addStream(uint32_t Size) {
+Error MSFBuilder::addStream(uint32_t Size) {
   uint32_t ReqBlocks = bytesToBlocks(Size, BlockSize);
   std::vector<uint32_t> NewBlocks;
   NewBlocks.resize(ReqBlocks);
@@ -158,7 +158,7 @@ Error MsfBuilder::addStream(uint32_t Size) {
   return Error::success();
 }
 
-Error MsfBuilder::setStreamSize(uint32_t Idx, uint32_t Size) {
+Error MSFBuilder::setStreamSize(uint32_t Idx, uint32_t Size) {
   uint32_t OldSize = getStreamSize(Idx);
   if (OldSize == Size)
     return Error::success();
@@ -191,17 +191,17 @@ Error MsfBuilder::setStreamSize(uint32_t Idx, uint32_t Size) {
   return Error::success();
 }
 
-uint32_t MsfBuilder::getNumStreams() const { return StreamData.size(); }
+uint32_t MSFBuilder::getNumStreams() const { return StreamData.size(); }
 
-uint32_t MsfBuilder::getStreamSize(uint32_t StreamIdx) const {
+uint32_t MSFBuilder::getStreamSize(uint32_t StreamIdx) const {
   return StreamData[StreamIdx].first;
 }
 
-ArrayRef<uint32_t> MsfBuilder::getStreamBlocks(uint32_t StreamIdx) const {
+ArrayRef<uint32_t> MSFBuilder::getStreamBlocks(uint32_t StreamIdx) const {
   return StreamData[StreamIdx].second;
 }
 
-uint32_t MsfBuilder::computeDirectoryByteSize() const {
+uint32_t MSFBuilder::computeDirectoryByteSize() const {
   // The directory has the following layout, where each item is a ulittle32_t:
   //    NumStreams
   //    StreamSizes[NumStreams]
@@ -217,9 +217,9 @@ uint32_t MsfBuilder::computeDirectoryByteSize() const {
   return Size;
 }
 
-Expected<MsfLayout> MsfBuilder::build() {
+Expected<MSFLayout> MSFBuilder::build() {
   SuperBlock *SB = Allocator.Allocate<SuperBlock>();
-  MsfLayout L;
+  MSFLayout L;
   L.SB = SB;
 
   std::memcpy(SB->MagicBytes, Magic, sizeof(Magic));

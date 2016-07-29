@@ -1,4 +1,4 @@
-//===- MsfError.cpp - Error extensions for Msf files ------------*- C++ -*-===//
+//===- MSFError.cpp - Error extensions for MSF files ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/Msf/MsfError.h"
+#include "llvm/DebugInfo/MSF/MSFError.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 
@@ -18,7 +18,7 @@ namespace {
 // FIXME: This class is only here to support the transition to llvm::Error. It
 // will be removed once this transition is complete. Clients should prefer to
 // deal with the Error value directly, rather than converting to error_code.
-class MsfErrorCategory : public std::error_category {
+class MSFErrorCategory : public std::error_category {
 public:
   const char *name() const LLVM_NOEXCEPT override { return "llvm.msf"; }
 
@@ -43,17 +43,17 @@ public:
 };
 } // end anonymous namespace
 
-static ManagedStatic<MsfErrorCategory> Category;
+static ManagedStatic<MSFErrorCategory> Category;
 
-char MsfError::ID = 0;
+char MSFError::ID = 0;
 
-MsfError::MsfError(msf_error_code C) : MsfError(C, "") {}
+MSFError::MSFError(msf_error_code C) : MSFError(C, "") {}
 
-MsfError::MsfError(const std::string &Context)
-    : MsfError(msf_error_code::unspecified, Context) {}
+MSFError::MSFError(const std::string &Context)
+    : MSFError(msf_error_code::unspecified, Context) {}
 
-MsfError::MsfError(msf_error_code C, const std::string &Context) : Code(C) {
-  ErrMsg = "Msf Error: ";
+MSFError::MSFError(msf_error_code C, const std::string &Context) : Code(C) {
+  ErrMsg = "MSF Error: ";
   std::error_code EC = convertToErrorCode();
   if (Code != msf_error_code::unspecified)
     ErrMsg += EC.message() + "  ";
@@ -61,10 +61,10 @@ MsfError::MsfError(msf_error_code C, const std::string &Context) : Code(C) {
     ErrMsg += Context;
 }
 
-void MsfError::log(raw_ostream &OS) const { OS << ErrMsg << "\n"; }
+void MSFError::log(raw_ostream &OS) const { OS << ErrMsg << "\n"; }
 
-const std::string &MsfError::getErrorMessage() const { return ErrMsg; }
+const std::string &MSFError::getErrorMessage() const { return ErrMsg; }
 
-std::error_code MsfError::convertToErrorCode() const {
+std::error_code MSFError::convertToErrorCode() const {
   return std::error_code(static_cast<int>(Code), *Category);
 }
