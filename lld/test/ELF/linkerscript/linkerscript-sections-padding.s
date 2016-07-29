@@ -23,7 +23,7 @@
 # RUN: echo "SECTIONS { .mysec : { *(.mysec*) } =99 }" > %t.script
 # RUN: ld.lld -o %t.out --script %t.script %t
 # RUN: hexdump -C %t.out | FileCheck -check-prefix=DEC %s
-# DEC: 00000120  66 63 63 63 63 63 63 63  63 63 63 63 63 63 63 63 
+# DEC: 00000120  66 63 63 63 63 63 63 63  63 63 63 63 63 63 63 63
 
 ## Invalid hex value:
 # RUN: echo "SECTIONS { .mysec : { *(.mysec*) } =0x99XX }" > %t.script
