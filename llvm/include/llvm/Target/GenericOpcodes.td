@@ -76,6 +76,14 @@ def G_OR : Instruction {
   let isCommutable = 1;
 }
 
+// Generic bitwise xor.
+def G_XOR : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+  let isCommutable = 1;
+}
+
 //------------------------------------------------------------------------------
 // Memory ops
 //------------------------------------------------------------------------------

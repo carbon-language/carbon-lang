@@ -199,6 +199,8 @@ bool IRTranslator::translate(const Instruction &Inst) {
     return translateBinaryOp(TargetOpcode::G_AND, Inst);
   case Instruction::Or:
     return translateBinaryOp(TargetOpcode::G_OR, Inst);
+  case Instruction::Xor:
+    return translateBinaryOp(TargetOpcode::G_XOR, Inst);
 
   // Branch operations.
   case Instruction::Br:

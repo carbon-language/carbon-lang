@@ -168,6 +168,9 @@ HANDLE_TARGET_OPCODE(G_AND)
 /// Generic Bitwise-OR instruction.
 HANDLE_TARGET_OPCODE(G_OR)
 
+/// Generic Bitwise-OR instruction.
+HANDLE_TARGET_OPCODE(G_XOR)
+
 /// Generic instruction to materialize the address of an alloca or other
 /// stack-based object.
 HANDLE_TARGET_OPCODE(G_FRAME_INDEX)
