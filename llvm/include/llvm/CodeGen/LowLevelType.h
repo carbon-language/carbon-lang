@@ -179,6 +179,11 @@ private:
   TypeKind Kind;
 };
 
+inline raw_ostream& operator<<(raw_ostream &OS, const LLT &Ty) {
+  Ty.print(OS);
+  return OS;
+}
+
 template<> struct DenseMapInfo<LLT> {
   static inline LLT getEmptyKey() {
     return LLT{LLT::Invalid, 0, -1u};
