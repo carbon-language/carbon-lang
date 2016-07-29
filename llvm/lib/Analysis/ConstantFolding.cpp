@@ -90,6 +90,11 @@ Constant *FoldBitCast(Constant *C, Type *DestTy, const DataLayout &DL) {
       else
         Element = C->getAggregateElement(i);
 
+      if (Element && isa<UndefValue>(Element)) {
+        Result <<= BitShift;
+        continue;
+      }
+
       auto *ElementCI = dyn_cast_or_null<ConstantInt>(Element);
       if (!ElementCI)
         return ConstantExpr::getBitCast(C, DestTy);
@@ -180,7 +185,11 @@ Constant *FoldBitCast(Constant *C, Type *DestTy, const DataLayout &DL) {
       Constant *Elt = Zero;
       unsigned ShiftAmt = isLittleEndian ? 0 : SrcBitSize*(Ratio-1);
       for (unsigned j = 0; j != Ratio; ++j) {
-        Constant *Src = dyn_cast<ConstantInt>(C->getAggregateElement(SrcElt++));
+        Constant *Src = C->getAggregateElement(SrcElt++);
+        if (Src && isa<UndefValue>(Src))
+          Src = Constant::getNullValue(SrcEltTy);
+        else
+          Src = dyn_cast_or_null<ConstantInt>(Src);
         if (!Src)  // Reject constantexpr elements.
           return ConstantExpr::getBitCast(C, DestTy);
 
@@ -206,7 +215,7 @@ Constant *FoldBitCast(Constant *C, Type *DestTy, const DataLayout &DL) {
 
   // Loop over each source value, expanding into multiple results.
   for (unsigned i = 0; i != NumSrcElt; ++i) {
-    auto *Src = dyn_cast<ConstantInt>(C->getAggregateElement(i));
+    auto *Src = dyn_cast_or_null<ConstantInt>(C->getAggregateElement(i));
     if (!Src)  // Reject constantexpr elements.
       return ConstantExpr::getBitCast(C, DestTy);
 
