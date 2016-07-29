@@ -918,11 +918,12 @@ Constant *SymbolicallyEvaluateGEP(const GEPOperator *GEP,
 /// information, due to only being passed an opcode and operands. Constant
 /// folding using this function strips this information.
 ///
-Constant *ConstantFoldInstOperandsImpl(const Value *InstOrCE, Type *DestTy,
-                                       unsigned Opcode,
+Constant *ConstantFoldInstOperandsImpl(const Value *InstOrCE, unsigned Opcode,
                                        ArrayRef<Constant *> Ops,
                                        const DataLayout &DL,
                                        const TargetLibraryInfo *TLI) {
+  Type *DestTy = InstOrCE->getType();
+
   // Handle easy binops first.
   if (Instruction::isBinaryOp(Opcode))
     return ConstantFoldBinaryOpOperands(Opcode, Ops[0], Ops[1], DL);
@@ -1003,8 +1004,7 @@ ConstantFoldConstantImpl(const Constant *C, const DataLayout &DL,
       return ConstantFoldCompareInstOperands(CE->getPredicate(), Ops[0], Ops[1],
                                              DL, TLI);
 
-    return ConstantFoldInstOperandsImpl(CE, CE->getType(), CE->getOpcode(), Ops,
-                                        DL, TLI);
+    return ConstantFoldInstOperandsImpl(CE, CE->getOpcode(), Ops, DL, TLI);
   }
 
   assert(isa<ConstantVector>(C));
@@ -1094,16 +1094,7 @@ Constant *llvm::ConstantFoldInstOperands(Instruction *I,
                                          ArrayRef<Constant *> Ops,
                                          const DataLayout &DL,
                                          const TargetLibraryInfo *TLI) {
-  return ConstantFoldInstOperandsImpl(I, I->getType(), I->getOpcode(), Ops, DL,
-                                      TLI);
-}
-
-Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
-                                         ArrayRef<Constant *> Ops,
-                                         const DataLayout &DL,
-                                         const TargetLibraryInfo *TLI) {
-  assert(Opcode != Instruction::GetElementPtr && "Invalid for GEPs");
-  return ConstantFoldInstOperandsImpl(nullptr, DestTy, Opcode, Ops, DL, TLI);
+  return ConstantFoldInstOperandsImpl(I, I->getOpcode(), Ops, DL, TLI);
 }
 
 Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
