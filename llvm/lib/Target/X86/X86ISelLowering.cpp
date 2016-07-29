@@ -4750,6 +4750,13 @@ static SDValue peekThroughBitcasts(SDValue V) {
   return V;
 }
 
+static SDValue peekThroughOneUseBitcasts(SDValue V) {
+  while (V.getNode() && V.getOpcode() == ISD::BITCAST &&
+         V.getOperand(0).hasOneUse())
+    V = V.getOperand(0);
+  return V;
+}
+
 static bool getTargetShuffleMaskIndices(SDValue MaskNode,
                                         unsigned MaskEltSizeInBits,
                                         SmallVectorImpl<uint64_t> &RawMask) {
@@ -12785,6 +12792,14 @@ static SDValue LowerEXTRACT_SUBVECTOR(SDValue Op, const X86Subtarget &Subtarget,
   return SDValue();
 }
 
+static bool areOnlyUsersOf(SDNode *N, ArrayRef<SDValue> ValidUsers) {
+  for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I)
+    if (llvm::all_of(ValidUsers,
+                     [&I](SDValue V) { return V.getNode() != *I; }))
+      return false;
+  return true;
+}
+
 // Lower a node with an INSERT_SUBVECTOR opcode.  This may result in a
 // simple superregister reference or explicit instructions to insert
 // the upper bits of a vector.
@@ -12818,23 +12833,26 @@ static SDValue LowerINSERT_SUBVECTOR(SDValue Op, const X86Subtarget &Subtarget,
       OpVT.is256BitVector() && SubVecVT.is128BitVector()) {
     auto *Idx2 = dyn_cast<ConstantSDNode>(Vec.getOperand(2));
     if (Idx2 && Idx2->getZExtValue() == 0) {
+      SDValue SubVec2 = Vec.getOperand(1);
       // If needed, look through bitcasts to get to the load.
-      SDValue SubVec2 = peekThroughBitcasts(Vec.getOperand(1));
-      if (auto *FirstLd = dyn_cast<LoadSDNode>(SubVec2)) {
+      if (auto *FirstLd = dyn_cast<LoadSDNode>(peekThroughBitcasts(SubVec2))) {
         bool Fast;
         unsigned Alignment = FirstLd->getAlignment();
         unsigned AS = FirstLd->getAddressSpace();
         const X86TargetLowering *TLI = Subtarget.getTargetLowering();
         if (TLI->allowsMemoryAccess(*DAG.getContext(), DAG.getDataLayout(),
                                     OpVT, AS, Alignment, &Fast) && Fast) {
-          SDValue Ops[] = { SubVec2, SubVec };
+          SDValue Ops[] = {SubVec2, SubVec};
           if (SDValue Ld = EltsFromConsecutiveLoads(OpVT, Ops, dl, DAG, false))
             return Ld;
         }
-
-        // If lower/upper loads are the same then lower to a VBROADCASTF128.
-        if (SubVec2 == peekThroughBitcasts(SubVec))
-          return DAG.getNode(X86ISD::SUBV_BROADCAST, dl, OpVT, SubVec);
+      }
+      // If lower/upper loads are the same and the only users of the load, then
+      // lower to a VBROADCASTF128/VBROADCASTI128/etc.
+      if (SubVec2 == SubVec &&
+          isa<LoadSDNode>(peekThroughOneUseBitcasts(SubVec2)) &&
+          areOnlyUsersOf(SubVec2.getNode(), {Op, Vec})) {
+        return DAG.getNode(X86ISD::SUBV_BROADCAST, dl, OpVT, SubVec);
       }
     }
   }
