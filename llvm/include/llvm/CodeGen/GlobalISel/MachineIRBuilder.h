@@ -140,6 +140,17 @@ public:
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildBr(MachineBasicBlock &BB);
 
+  /// Build and insert G_BRCOND \p Ty \p Tst, \p Dest
+  ///
+  /// G_BRCOND is a conditional branch to \p Dest. At the beginning of
+  /// legalization, \p Ty will be a single bit (s1). Targets with interesting
+  /// flags registers may change this.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return The newly created instruction.
+  MachineInstrBuilder buildBrCond(LLT Ty, unsigned Tst, MachineBasicBlock &BB);
+
   /// Build and insert \p Res<def> = COPY Op
   ///
   /// Register-to-register COPY sets \p Res to \p Op.

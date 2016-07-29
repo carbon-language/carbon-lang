@@ -104,13 +104,20 @@ bool IRTranslator::translateReturn(const Instruction &Inst) {
 bool IRTranslator::translateBr(const Instruction &Inst) {
   assert(isa<BranchInst>(Inst) && "Branch expected");
   const BranchInst &BrInst = *cast<BranchInst>(&Inst);
-  if (BrInst.isUnconditional()) {
-    const BasicBlock &BrTgt = *cast<BasicBlock>(BrInst.getOperand(0));
-    MachineBasicBlock &TgtBB = getOrCreateBB(BrTgt);
-    MIRBuilder.buildBr(TgtBB);
-  } else {
-    assert(0 && "Not yet implemented");
+
+  unsigned Succ = 0;
+  if (!BrInst.isUnconditional()) {
+    // We want a G_BRCOND to the true BB followed by an unconditional branch.
+    unsigned Tst = getOrCreateVReg(*BrInst.getCondition());
+    const BasicBlock &TrueTgt = *cast<BasicBlock>(BrInst.getSuccessor(Succ++));
+    MachineBasicBlock &TrueBB = getOrCreateBB(TrueTgt);
+    MIRBuilder.buildBrCond(LLT{*BrInst.getCondition()->getType()}, Tst, TrueBB);
   }
+
+  const BasicBlock &BrTgt = *cast<BasicBlock>(BrInst.getSuccessor(Succ));
+  MachineBasicBlock &TgtBB = getOrCreateBB(BrTgt);
+  MIRBuilder.buildBr(TgtBB);
+
   // Link successors.
   MachineBasicBlock &CurBB = MIRBuilder.getMBB();
   for (const BasicBlock *Succ : BrInst.successors())

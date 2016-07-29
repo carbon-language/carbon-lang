@@ -135,6 +135,16 @@ def G_BR : Instruction {
   let hasSideEffects = 0;
   let isBranch = 1;
   let isTerminator = 1;
+  let isBarrier = 1;
+}
+
+// Generic conditional branch.
+def G_BRCOND : Instruction {
+  let OutOperandList = (outs);
+  let InOperandList = (ins unknown:$tst, unknown:$truebb);
+  let hasSideEffects = 0;
+  let isBranch = 1;
+  let isTerminator = 1;
 }
 
 // TODO: Add the other generic opcodes.

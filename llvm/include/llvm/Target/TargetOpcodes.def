@@ -199,6 +199,9 @@ HANDLE_TARGET_OPCODE(G_LOAD)
 /// Generic store.
 HANDLE_TARGET_OPCODE(G_STORE)
 
+/// Generic conditional branch instruction.
+HANDLE_TARGET_OPCODE(G_BRCOND)
+
 /// Generic BRANCH instruction. This is an unconditional branch.
 HANDLE_TARGET_OPCODE(G_BR)
 

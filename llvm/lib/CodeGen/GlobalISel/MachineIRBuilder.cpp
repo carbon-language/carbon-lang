@@ -95,7 +95,13 @@ MachineInstrBuilder MachineIRBuilder::buildCopy(unsigned Res, unsigned Op) {
   return buildInstr(TargetOpcode::COPY).addDef(Res).addUse(Op);
 }
 
-MachineInstrBuilder MachineIRBuilder::buildLoad(LLT VTy, LLT PTy, unsigned Res,
+MachineInstrBuilder MachineIRBuilder::buildBrCond(LLT Ty, unsigned Tst,
+                                                  MachineBasicBlock &Dest) {
+  return buildInstr(TargetOpcode::G_BRCOND, Ty).addUse(Tst).addMBB(&Dest);
+}
+
+
+ MachineInstrBuilder MachineIRBuilder::buildLoad(LLT VTy, LLT PTy, unsigned Res,
                                                  unsigned Addr,
                                                  MachineMemOperand &MMO) {
   return buildInstr(TargetOpcode::G_LOAD, {VTy, PTy})

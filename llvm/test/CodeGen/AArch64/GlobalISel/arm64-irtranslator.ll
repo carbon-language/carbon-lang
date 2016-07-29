@@ -58,6 +58,37 @@ end:
   ret void
 }
 
+; Tests for conditional br.
+; CHECK-LABEL: name: condbr
+; CHECK: body:
+;
+; Entry basic block.
+; CHECK: {{[0-9a-zA-Z._-]+}}:
+;
+; Make sure we have two successors
+; CHECK-NEXT: successors: %[[TRUE:[0-9a-zA-Z._-]+]]({{0x[a-f0-9]+ / 0x[a-f0-9]+}} = 50.00%),
+; CHECK:                  %[[FALSE:[0-9a-zA-Z._-]+]]({{0x[a-f0-9]+ / 0x[a-f0-9]+}} = 50.00%)
+;
+; Check that we emit the correct branch.
+; CHECK: [[ADDR:%.*]](64) = COPY %x0
+; CHECK: [[TST:%.*]](1) = G_LOAD { s1, p0 } [[ADDR]]
+; CHECK: G_BRCOND s1 [[TST]], %[[TRUE]]
+; CHECK: G_BR unsized %[[FALSE]]
+;
+; Check that each successor contains the return instruction.
+; CHECK: [[TRUE]]:
+; CHECK-NEXT: RET_ReallyLR
+; CHECK: [[FALSE]]:
+; CHECK-NEXT: RET_ReallyLR
+define void @condbr(i1* %tstaddr) {
+  %tst = load i1, i1* %tstaddr
+  br i1 %tst, label %true, label %false
+true:
+  ret void
+false:
+  ret void
+}
+
 ; Tests for or.
 ; CHECK-LABEL: name: ori64
 ; CHECK: [[ARG1:%[0-9]+]](64) = COPY %x0
