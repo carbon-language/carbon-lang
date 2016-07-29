@@ -938,6 +938,9 @@ Constant *ConstantFoldInstOperandsImpl(const Value *InstOrCE, Type *DestTy,
                                           Ops[0], Ops.slice(1));
   }
 
+  if (auto *CE = dyn_cast<ConstantExpr>(InstOrCE))
+    return CE->getWithOperands(Ops);
+
   switch (Opcode) {
   default: return nullptr;
   case Instruction::ICmp:
