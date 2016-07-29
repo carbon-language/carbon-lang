@@ -443,6 +443,7 @@ private:
 
   SymbolAssignment *readAssignment(StringRef Name);
   void readOutputSectionDescription(StringRef OutSec);
+  std::vector<uint8_t> readOutputSectionFiller();
   std::vector<StringRef> readOutputSectionPhdrs();
   std::unique_ptr<InputSectionDescription> readInputSectionDescription();
   void readInputSectionRules(InputSectionDescription *InCmd, bool Keep);
@@ -760,17 +761,20 @@ void ScriptParser::readOutputSectionDescription(StringRef OutSec) {
     }
   }
   Cmd->Phdrs = readOutputSectionPhdrs();
+  Cmd->Filler = readOutputSectionFiller();
+}
 
+std::vector<uint8_t> ScriptParser::readOutputSectionFiller() {
   StringRef Tok = peek();
-  if (Tok.startswith("=")) {
-    if (!Tok.startswith("=0x")) {
-      setError("filler should be a hexadecimal value");
-      return;
-    }
-    Tok = Tok.substr(3);
-    Cmd->Filler = parseHex(Tok);
-    next();
+  if (!Tok.startswith("="))
+    return {};
+  if (!Tok.startswith("=0x")) {
+    setError("filler should be a hexadecimal value");
+    return {};
   }
+  Tok = Tok.substr(3);
+  next();
+  return parseHex(Tok);
 }
 
 void ScriptParser::readProvide(bool Hidden) {
