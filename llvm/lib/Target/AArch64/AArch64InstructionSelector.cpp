@@ -79,6 +79,26 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
   return GenericOpc;
 }
 
+/// Select the AArch64 opcode for the G_LOAD or G_STORE operation \p GenericOpc,
+/// appropriate for the (value) register bank \p RegBankID and of memory access
+/// size \p OpSize.  This returns the variant with the base+unsigned-immediate
+/// addressing mode (e.g., LDRXui).
+/// \returns \p GenericOpc if the combination is unsupported.
+static unsigned selectLoadStoreUIOp(unsigned GenericOpc, unsigned RegBankID,
+                                    unsigned OpSize) {
+  const bool isStore = GenericOpc == TargetOpcode::G_STORE;
+  switch (RegBankID) {
+  case AArch64::GPRRegBankID:
+    switch (OpSize) {
+    case 32:
+      return isStore ? AArch64::STRWui : AArch64::LDRWui;
+    case 64:
+      return isStore ? AArch64::STRXui : AArch64::LDRXui;
+    }
+  };
+  return GenericOpc;
+}
+
 bool AArch64InstructionSelector::select(MachineInstr &I) const {
   assert(I.getParent() && "Instruction should be in a basic block!");
   assert(I.getParent()->getParent() && "Instruction should be in a function!");
@@ -107,6 +127,42 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
     I.setDesc(TII.get(AArch64::B));
     I.removeTypes();
     return true;
+  }
+
+  case TargetOpcode::G_LOAD:
+  case TargetOpcode::G_STORE: {
+    LLT MemTy = I.getType(0);
+    LLT PtrTy = I.getType(1);
+
+    if (PtrTy != LLT::pointer(0)) {
+      DEBUG(dbgs() << "Load/Store pointer has type: " << PtrTy
+                   << ", expected: " << LLT::pointer(0) << '\n');
+      return false;
+    }
+
+#ifndef NDEBUG
+    // Sanity-check the pointer register.
+    const unsigned PtrReg = I.getOperand(1).getReg();
+    const RegisterBank &PtrRB = *RBI.getRegBank(PtrReg, MRI, TRI);
+    assert(PtrRB.getID() == AArch64::GPRRegBankID &&
+           "Load/Store pointer operand isn't a GPR");
+    assert(MRI.getSize(PtrReg) == 64 &&
+           "Load/Store pointer operand isn't 64-bit");
+#endif
+
+    const unsigned ValReg = I.getOperand(0).getReg();
+    const RegisterBank &RB = *RBI.getRegBank(ValReg, MRI, TRI);
+
+    const unsigned NewOpc =
+        selectLoadStoreUIOp(I.getOpcode(), RB.getID(), MemTy.getSizeInBits());
+    if (NewOpc == I.getOpcode())
+      return false;
+
+    I.setDesc(TII.get(NewOpc));
+    I.removeTypes();
+
+    I.addOperand(MachineOperand::CreateImm(0));
+    return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
   }
 
   case TargetOpcode::G_OR:
