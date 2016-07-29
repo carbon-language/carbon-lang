@@ -74,10 +74,7 @@ static bool match(ArrayRef<StringRef> Patterns, StringRef S) {
   return false;
 }
 
-// Create a vector of (<output section name>, <input section name patterns>).
-// For example, if a returned vector contains (".text" (".foo.*" ".bar.*")),
-// input sections start with ".foo." or ".bar." should be added to
-// ".text" section.
+// Create a vector of (<output section name>, <input section description>).
 template <class ELFT>
 std::vector<std::pair<StringRef, const InputSectionDescription *>>
 LinkerScript<ELFT>::getSectionMap() {
