@@ -594,6 +594,14 @@ TEST(Matcher, MatchesSpecificArgument) {
       "A<int, bool> a;",
     templateSpecializationType(hasTemplateArgument(
       1, refersToType(asString("int"))))));
+
+  EXPECT_TRUE(matches(
+    "template<typename T> void f() {};"
+      "void func() { f<int>(); }",
+    functionDecl(hasTemplateArgument(0, refersToType(asString("int"))))));
+  EXPECT_TRUE(notMatches(
+    "template<typename T> void f() {};",
+    functionDecl(hasTemplateArgument(0, refersToType(asString("int"))))));
 }
 
 TEST(TemplateArgument, Matches) {
@@ -603,6 +611,11 @@ TEST(TemplateArgument, Matches) {
   EXPECT_TRUE(matches(
     "template<typename T> struct C {}; C<int> c;",
     templateSpecializationType(hasAnyTemplateArgument(templateArgument()))));
+
+  EXPECT_TRUE(matches(
+    "template<typename T> void f() {};"
+      "void func() { f<int>(); }",
+    functionDecl(hasAnyTemplateArgument(templateArgument()))));
 }
 
 TEST(RefersToIntegralType, Matches) {

@@ -556,22 +556,32 @@ AST_MATCHER(Decl, isImplicit) {
   return Node.isImplicit();
 }
 
-/// \brief Matches classTemplateSpecializations that have at least one
-/// TemplateArgument matching the given InnerMatcher.
+/// \brief Matches classTemplateSpecializations, templateSpecializationType and
+/// functionDecl that have at least one TemplateArgument matching the given
+/// InnerMatcher.
 ///
 /// Given
 /// \code
 ///   template<typename T> class A {};
 ///   template<> class A<double> {};
 ///   A<int> a;
+///
+///   template<typenmae T> f() {};
+///   void func() { f<int>(); };
+/// \endcode
+///
 /// \endcode
 /// classTemplateSpecializationDecl(hasAnyTemplateArgument(
 ///     refersToType(asString("int"))))
 ///   matches the specialization \c A<int>
+///
+/// functionDecl(hasAnyTemplateArgument(refersToType(asString("int"))))
+///   matches the specialization \c f<int>
 AST_POLYMORPHIC_MATCHER_P(
     hasAnyTemplateArgument,
     AST_POLYMORPHIC_SUPPORTED_TYPES(ClassTemplateSpecializationDecl,
-                                    TemplateSpecializationType),
+                                    TemplateSpecializationType,
+                                    FunctionDecl),
     internal::Matcher<TemplateArgument>, InnerMatcher) {
   ArrayRef<TemplateArgument> List =
       internal::getTemplateSpecializationArgs(Node);
@@ -698,22 +708,29 @@ AST_MATCHER_P(QualType, ignoringParens,
   return InnerMatcher.matches(Node.IgnoreParens(), Finder, Builder);
 }
 
-/// \brief Matches classTemplateSpecializations where the n'th TemplateArgument
-/// matches the given InnerMatcher.
+/// \brief Matches classTemplateSpecializations, templateSpecializationType and
+/// functionDecl where the n'th TemplateArgument matches the given InnerMatcher.
 ///
 /// Given
 /// \code
 ///   template<typename T, typename U> class A {};
 ///   A<bool, int> b;
 ///   A<int, bool> c;
+///
+///   template<typenmae T> f() {};
+///   void func() { f<int>(); };
 /// \endcode
 /// classTemplateSpecializationDecl(hasTemplateArgument(
 ///     1, refersToType(asString("int"))))
 ///   matches the specialization \c A<bool, int>
+///
+/// functionDecl(hasTemplateArgument(0, refersToType(asString("int"))))
+///   matches the specialization \c f<int>
 AST_POLYMORPHIC_MATCHER_P2(
     hasTemplateArgument,
     AST_POLYMORPHIC_SUPPORTED_TYPES(ClassTemplateSpecializationDecl,
-                                    TemplateSpecializationType),
+                                    TemplateSpecializationType,
+                                    FunctionDecl),
     unsigned, N, internal::Matcher<TemplateArgument>, InnerMatcher) {
   ArrayRef<TemplateArgument> List =
       internal::getTemplateSpecializationArgs(Node);
