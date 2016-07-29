@@ -205,6 +205,11 @@ public:
     return *this;
   }
 
+  const MachineInstrBuilder &addIntrinsicID(Intrinsic::ID ID) const {
+    MI->addOperand(*MF, MachineOperand::CreateIntrinsicID(ID));
+    return *this;
+  }
+
   const MachineInstrBuilder &addSym(MCSymbol *Sym,
                                     unsigned char TargetFlags = 0) const {
     MI->addOperand(*MF, MachineOperand::CreateMCSymbol(Sym, TargetFlags));
