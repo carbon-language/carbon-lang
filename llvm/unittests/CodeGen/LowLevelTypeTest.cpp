@@ -187,6 +187,8 @@ TEST(LowLevelTypeTest, Invalid) {
 }
 
 TEST(LowLevelTypeTest, Unsized) {
+  LLVMContext C;
+
   const LLT Ty = LLT::unsized();
 
   ASSERT_TRUE(Ty.isValid());
@@ -194,5 +196,8 @@ TEST(LowLevelTypeTest, Unsized) {
   ASSERT_FALSE(Ty.isSized());
   ASSERT_FALSE(Ty.isPointer());
   ASSERT_FALSE(Ty.isVector());
+
+  const Type *IRTy = Type::getLabelTy(C);
+  EXPECT_EQ(Ty, LLT(*IRTy));
 }
 }

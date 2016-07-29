@@ -77,7 +77,7 @@ public:
   /// \brief get an unsized but valid low-level type (e.g. for a label).
 
   static LLT unsized() {
-    return LLT{Unsized, 1, 0};
+    return LLT{Unsized, 0, 0};
   }
 
   explicit LLT(TypeKind Kind, uint16_t NumElements, unsigned SizeOrAddrSpace)
