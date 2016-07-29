@@ -117,21 +117,24 @@ LinkerScript<ELFT>::getInputSections(const InputSectionDescription *I) {
   return Ret;
 }
 
+// Add input section to output section. If there is no output section yet,
+// then create it and add to output section list.
+template <class ELFT>
+static void addSection(OutputSectionFactory<ELFT> &Factory,
+                       std::vector<OutputSectionBase<ELFT> *> &Out,
+                       InputSectionBase<ELFT> *C, StringRef Name) {
+  OutputSectionBase<ELFT> *Sec;
+  bool IsNew;
+  std::tie(Sec, IsNew) = Factory.create(C, Name);
+  if (IsNew)
+    Out.push_back(Sec);
+  Sec->addSection(C);
+}
+
 template <class ELFT>
 std::vector<OutputSectionBase<ELFT> *>
 LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
   std::vector<OutputSectionBase<ELFT> *> Ret;
-
-  // Add input section to output section. If there is no output section yet,
-  // then create it and add to output section list.
-  auto Add = [&](InputSectionBase<ELFT> *C, StringRef Name) {
-    OutputSectionBase<ELFT> *Sec;
-    bool IsNew;
-    std::tie(Sec, IsNew) = Factory.create(C, Name);
-    if (IsNew)
-      Ret.push_back(Sec);
-    Sec->addSection(C);
-  };
 
   for (auto &P : getSectionMap()) {
     StringRef OutputName = P.first;
@@ -142,7 +145,7 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
         reportDiscarded(S);
         continue;
       }
-      Add(S, OutputName);
+      addSection(Factory, Ret, S, OutputName);
     }
   }
 
@@ -151,7 +154,7 @@ LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
        Symtab<ELFT>::X->getObjectFiles())
     for (InputSectionBase<ELFT> *S : F->getSections())
       if (!isDiscarded(S) && !S->OutSec)
-        Add(S, getOutputSectionName(S));
+        addSection(Factory, Ret, S, getOutputSectionName(S));
 
   // Remove from the output all the sections which did not meet
   // the optional constraints.
