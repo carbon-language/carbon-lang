@@ -1,9 +1,12 @@
 //===--- HexagonHazardRecognizer.h - Hexagon Post RA Hazard Recognizer ----===//
 //
-// (c) 2014 Qualcomm Innovation Center, Inc. All rights reserved.
+//                     The LLVM Compiler Infrastructure
 //
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
 // This file defines the hazard recognizer for scheduling on Hexagon.
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef HEXAGONPROFITRECOGNIZER_H
