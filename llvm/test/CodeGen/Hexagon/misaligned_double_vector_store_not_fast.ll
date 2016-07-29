@@ -1,4 +1,5 @@
 ; RUN: llc -march=hexagon -O3 -debug-only=isel 2>&1 < %s | FileCheck %s
+; REQUIRES: asserts
 
 ; DAGCombiner converts the two vector stores to a double vector store,
 ; even if the double vector store is unaligned. This is not good. If it
