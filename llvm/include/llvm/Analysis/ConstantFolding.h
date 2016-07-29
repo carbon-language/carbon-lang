@@ -25,6 +25,7 @@ class APInt;
 template <typename T> class ArrayRef;
 class Constant;
 class ConstantExpr;
+class ConstantVector;
 class DataLayout;
 class Function;
 class GlobalValue;
@@ -45,11 +46,11 @@ bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV, APInt &Offset,
 Constant *ConstantFoldInstruction(Instruction *I, const DataLayout &DL,
                                   const TargetLibraryInfo *TLI = nullptr);
 
-/// ConstantFoldConstantExpression - Attempt to fold the constant expression
-/// using the specified DataLayout.  If successful, the constant result is
-/// result is returned, if not, null is returned.
-Constant *
-ConstantFoldConstantExpression(const ConstantExpr *CE, const DataLayout &DL,
+/// ConstantFoldConstant - Attempt to fold the constant using the
+/// specified DataLayout.
+/// If successful, the constant result is result is returned, if not,
+/// null is returned.
+Constant *ConstantFoldConstant(const Constant *C, const DataLayout &DL,
                                const TargetLibraryInfo *TLI = nullptr);
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
