@@ -269,6 +269,9 @@ bool IRTranslator::translate(const Instruction &Inst) {
   case Instruction::Alloca:
     return translateStaticAlloca(cast<AllocaInst>(Inst));
 
+  case Instruction::Unreachable:
+    return true;
+
   default:
     llvm_unreachable("Opcode not supported");
   }

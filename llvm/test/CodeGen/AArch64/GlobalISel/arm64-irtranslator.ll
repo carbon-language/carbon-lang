@@ -271,3 +271,13 @@ define void @intrinsics(i32 %cur, i32 %bits) {
   call void @llvm.aarch64.neon.st2.v8i8.p0i8(<8 x i8> %vec, <8 x i8> %vec, i8* %ptr)
   ret void
 }
+
+
+; CHECK-LABEL: name: unreachable
+; CHECK: G_ADD
+; CHECK-NEXT: {{^$}}
+; CHECK-NEXT: ...
+define void @unreachable(i32 %a) {
+  %sum = add i32 %a, %a
+  unreachable
+}
