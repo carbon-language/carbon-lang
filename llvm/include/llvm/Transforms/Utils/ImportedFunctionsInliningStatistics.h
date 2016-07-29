@@ -92,15 +92,12 @@ private:
   SortedNodesTy getSortedNodes();
 
 private:
-  /// FIXME: Change map keys to std::string/StringRef to avoid using pointers
-  /// to dead functions.
   /// This map manage life of all InlineGraphNodes. Unique pointer to
   /// InlineGraphNode used since the node pointers are also saved in the
   /// InlinedCallees vector. If it would store InlineGraphNode instead then the
   /// address of the node would not be invariant.
   NodesMapTy NodesMap;
   /// Non external functions that have some other function inlined inside.
-  /// Should not dereference pointers because Functions might be deleted.
   std::vector<std::string> NonImportedCallers;
   int AllFunctions = 0;
   int ImportedFunctions = 0;
