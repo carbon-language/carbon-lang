@@ -186,10 +186,8 @@ LinkerScript<ELFT>::filter(std::vector<OutputSectionBase<ELFT> *> &Sections) {
     bool RO = (Cmd->Constraint == ConstraintKind::ReadOnly);
     bool RW = (Cmd->Constraint == ConstraintKind::ReadWrite);
 
-    if ((RO && Writable) || (RW && !Writable)) {
+    if ((RO && Writable) || (RW && !Writable))
       Sections.erase(It);
-      continue;
-    }
   }
   return Sections;
 }
