@@ -577,7 +577,7 @@ AST_MATCHER(Decl, isImplicit) {
 ///   template<> class A<double> {};
 ///   A<int> a;
 ///
-///   template<typenmae T> f() {};
+///   template<typename T> f() {};
 ///   void func() { f<int>(); };
 /// \endcode
 ///
@@ -728,7 +728,7 @@ AST_MATCHER_P(QualType, ignoringParens,
 ///   A<bool, int> b;
 ///   A<int, bool> c;
 ///
-///   template<typenmae T> f() {};
+///   template<typename T> f() {};
 ///   void func() { f<int>(); };
 /// \endcode
 /// classTemplateSpecializationDecl(hasTemplateArgument(

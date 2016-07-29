@@ -4260,7 +4260,7 @@ Given
   template&lt;&gt; class A&lt;double&gt; {};
   A&lt;int&gt; a;
 
-  template&lt;typenmae T&gt; f() {};
+  template&lt;typename T&gt; f() {};
   void func() { f&lt;int&gt;(); };
 
 classTemplateSpecializationDecl(hasAnyTemplateArgument(
@@ -4281,7 +4281,7 @@ Given
   A&lt;bool, int&gt; b;
   A&lt;int, bool&gt; c;
 
-  template&lt;typenmae T&gt; f() {};
+  template&lt;typename T&gt; f() {};
   void func() { f&lt;int&gt;(); };
 classTemplateSpecializationDecl(hasTemplateArgument(
     1, refersToType(asString("int"))))
@@ -4714,7 +4714,7 @@ Given
   template&lt;&gt; class A&lt;double&gt; {};
   A&lt;int&gt; a;
 
-  template&lt;typenmae T&gt; f() {};
+  template&lt;typename T&gt; f() {};
   void func() { f&lt;int&gt;(); };
 
 classTemplateSpecializationDecl(hasAnyTemplateArgument(
@@ -4760,7 +4760,7 @@ Given
   A&lt;bool, int&gt; b;
   A&lt;int, bool&gt; c;
 
-  template&lt;typenmae T&gt; f() {};
+  template&lt;typename T&gt; f() {};
   void func() { f&lt;int&gt;(); };
 classTemplateSpecializationDecl(hasTemplateArgument(
     1, refersToType(asString("int"))))
@@ -5400,7 +5400,7 @@ Given
   template&lt;&gt; class A&lt;double&gt; {};
   A&lt;int&gt; a;
 
-  template&lt;typenmae T&gt; f() {};
+  template&lt;typename T&gt; f() {};
   void func() { f&lt;int&gt;(); };
 
 classTemplateSpecializationDecl(hasAnyTemplateArgument(
@@ -5443,7 +5443,7 @@ Given
   A&lt;bool, int&gt; b;
   A&lt;int, bool&gt; c;
 
-  template&lt;typenmae T&gt; f() {};
+  template&lt;typename T&gt; f() {};
   void func() { f&lt;int&gt;(); };
 classTemplateSpecializationDecl(hasTemplateArgument(
     1, refersToType(asString("int"))))
