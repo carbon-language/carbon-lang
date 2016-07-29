@@ -3173,6 +3173,7 @@ bool HexagonTargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
   return false;
 }
 
+
 std::pair<const TargetRegisterClass*, uint8_t>
 HexagonTargetLowering::findRepresentativeClass(const TargetRegisterInfo *TRI,
       MVT VT) const {
