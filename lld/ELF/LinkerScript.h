@@ -20,6 +20,7 @@
 
 namespace lld {
 namespace elf {
+class SymbolBody;
 template <class ELFT> class InputSectionBase;
 template <class ELFT> class OutputSectionBase;
 template <class ELFT> class OutputSectionFactory;
@@ -56,9 +57,8 @@ struct SymbolAssignment : BaseCommand {
   StringRef Name;
   Expr Expression;
   bool Provide = false;
-  // Hidden and Ignore can be true, only if Provide is true
   bool Hidden = false;
-  bool Ignore = false;
+  SymbolBody *Sym = nullptr;
 };
 
 // Linker scripts allow additional constraints to be put on ouput sections.

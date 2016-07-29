@@ -195,17 +195,6 @@ LinkerScript<ELFT>::filter(std::vector<OutputSectionBase<ELFT> *> &Sections) {
 }
 
 template <class ELFT>
-void LinkerScript<ELFT>::dispatchAssignment(SymbolAssignment *Cmd) {
-  uint64_t Val = Cmd->Expression(Dot);
-  if (Cmd->Name == ".") {
-    Dot = Val;
-  } else if (!Cmd->Ignore) {
-    auto *D = cast<DefinedRegular<ELFT>>(Symtab<ELFT>::X->find(Cmd->Name));
-    D->Value = Val;
-  }
-}
-
-template <class ELFT>
 void LinkerScript<ELFT>::assignAddresses(
     ArrayRef<OutputSectionBase<ELFT> *> Sections) {
   // Orphan sections are sections present in the input files which
@@ -226,7 +215,11 @@ void LinkerScript<ELFT>::assignAddresses(
 
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get())) {
-      dispatchAssignment(Cmd);
+      if (Cmd->Name == ".") {
+        Dot = Cmd->Expression(Dot);
+      } else if (Cmd->Sym) {
+        cast<DefinedRegular<ELFT>>(Cmd->Sym)->Value = Cmd->Expression(Dot);
+      }
       continue;
     }
 
@@ -368,22 +361,25 @@ int LinkerScript<ELFT>::compareSections(StringRef A, StringRef B) {
   return I < J ? -1 : 1;
 }
 
+// Add symbols defined by linker scripts.
 template <class ELFT> void LinkerScript<ELFT>::addScriptedSymbols() {
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     auto *Cmd = dyn_cast<SymbolAssignment>(Base.get());
     if (!Cmd || Cmd->Name == ".")
       continue;
 
+    // If a symbol was in PROVIDE(), define it only when it is an
+    // undefined symbol.
     SymbolBody *B = Symtab<ELFT>::X->find(Cmd->Name);
-    // The semantic of PROVIDE is that of introducing a symbol only if
-    // it's not defined and there's at least a reference to it.
-    if ((!B && !Cmd->Provide) || (B && B->isUndefined()))
-      Symtab<ELFT>::X->addAbsolute(Cmd->Name,
-                                   Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT);
-    else
-      // Symbol already exists in symbol table. If it is provided
-      // then we can't override its value.
-      Cmd->Ignore = Cmd->Provide;
+    if (Cmd->Provide && !(B && B->isUndefined()))
+      continue;
+
+    // Define an absolute symbol. The symbol value will be assigned later.
+    // (At this point, we don't know the final address yet.)
+    Symbol *Sym = Symtab<ELFT>::X->addUndefined(Cmd->Name);
+    replaceBody<DefinedRegular<ELFT>>(Sym, Cmd->Name, STV_DEFAULT);
+    Sym->Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
+    Cmd->Sym = Sym->body();
   }
 }
 
