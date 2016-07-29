@@ -169,10 +169,12 @@ public:
 
   void print(raw_ostream &OS) const;
 
-  bool operator ==(const LLT &RHS) const {
+  bool operator==(const LLT &RHS) const {
     return Kind == RHS.Kind && SizeOrAddrSpace == RHS.SizeOrAddrSpace &&
            NumElements == RHS.NumElements;
   }
+
+  bool operator!=(const LLT &RHS) const { return !(*this == RHS); }
 
   friend struct DenseMapInfo<LLT>;
 private:

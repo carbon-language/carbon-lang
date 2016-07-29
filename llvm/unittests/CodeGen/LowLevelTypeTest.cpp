@@ -60,6 +60,9 @@ TEST(LowLevelTypeTest, Scalar) {
 
     // Test equality operators.
     EXPECT_TRUE(Ty == Ty);
+    EXPECT_FALSE(Ty != Ty);
+
+    EXPECT_NE(Ty, DoubleTy);
 
     // Test Type->LLT conversion.
     const Type *IRTy = IntegerType::get(C, S);
@@ -141,6 +144,15 @@ TEST(LowLevelTypeTest, Vector) {
 
       // Test equality operators.
       EXPECT_TRUE(VTy == VTy);
+      EXPECT_FALSE(VTy != VTy);
+
+      // Test inequality operators on..
+      // ..different kind.
+      EXPECT_NE(VTy, STy);
+      // ..different #elts.
+      EXPECT_NE(VTy, DoubleEltTy);
+      // ..different scalar size.
+      EXPECT_NE(VTy, DoubleSzTy);
 
       // Test Type->LLT conversion.
       Type *IRSTy = IntegerType::get(C, S);
@@ -169,6 +181,7 @@ TEST(LowLevelTypeTest, Pointer) {
 
     // Test equality operators.
     EXPECT_TRUE(Ty == Ty);
+    EXPECT_FALSE(Ty != Ty);
 
     // Test Type->LLT conversion.
     const Type *IRTy = PointerType::get(IntegerType::get(C, 8), AS);
