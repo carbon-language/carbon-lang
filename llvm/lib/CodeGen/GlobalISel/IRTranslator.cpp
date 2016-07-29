@@ -77,7 +77,10 @@ MachineBasicBlock &IRTranslator::getOrCreateBB(const BasicBlock &BB) {
   return *MBB;
 }
 
-bool IRTranslator::translateBinaryOp(unsigned Opcode, const Instruction &Inst) {
+bool IRTranslator::translateBinaryOp(unsigned Opcode,
+                                     const BinaryOperator &Inst) {
+  // FIXME: handle signed/unsigned wrapping flags.
+
   // Get or create a virtual register for each value.
   // Unless the value is a Constant => loadimm cst?
   // or inline constant each time?
@@ -92,19 +95,15 @@ bool IRTranslator::translateBinaryOp(unsigned Opcode, const Instruction &Inst) {
   return true;
 }
 
-bool IRTranslator::translateReturn(const Instruction &Inst) {
-  assert(isa<ReturnInst>(Inst) && "Return expected");
-  const Value *Ret = cast<ReturnInst>(Inst).getReturnValue();
+bool IRTranslator::translateReturn(const ReturnInst &RI) {
+  const Value *Ret = RI.getReturnValue();
   // The target may mess up with the insertion point, but
   // this is not important as a return is the last instruction
   // of the block anyway.
   return CLI->lowerReturn(MIRBuilder, Ret, !Ret ? 0 : getOrCreateVReg(*Ret));
 }
 
-bool IRTranslator::translateBr(const Instruction &Inst) {
-  assert(isa<BranchInst>(Inst) && "Branch expected");
-  const BranchInst &BrInst = *cast<BranchInst>(&Inst);
-
+bool IRTranslator::translateBr(const BranchInst &BrInst) {
   unsigned Succ = 0;
   if (!BrInst.isUnconditional()) {
     // We want a G_BRCOND to the true BB followed by an unconditional branch.
@@ -201,23 +200,23 @@ bool IRTranslator::translate(const Instruction &Inst) {
   switch(Inst.getOpcode()) {
   // Arithmetic operations.
   case Instruction::Add:
-    return translateBinaryOp(TargetOpcode::G_ADD, Inst);
+    return translateBinaryOp(TargetOpcode::G_ADD, cast<BinaryOperator>(Inst));
   case Instruction::Sub:
-    return translateBinaryOp(TargetOpcode::G_SUB, Inst);
+    return translateBinaryOp(TargetOpcode::G_SUB, cast<BinaryOperator>(Inst));
 
   // Bitwise operations.
   case Instruction::And:
-    return translateBinaryOp(TargetOpcode::G_AND, Inst);
+    return translateBinaryOp(TargetOpcode::G_AND, cast<BinaryOperator>(Inst));
   case Instruction::Or:
-    return translateBinaryOp(TargetOpcode::G_OR, Inst);
+    return translateBinaryOp(TargetOpcode::G_OR, cast<BinaryOperator>(Inst));
   case Instruction::Xor:
-    return translateBinaryOp(TargetOpcode::G_XOR, Inst);
+    return translateBinaryOp(TargetOpcode::G_XOR, cast<BinaryOperator>(Inst));
 
   // Branch operations.
   case Instruction::Br:
-    return translateBr(Inst);
+    return translateBr(cast<BranchInst>(Inst));
   case Instruction::Ret:
-    return translateReturn(Inst);
+    return translateReturn(cast<ReturnInst>(Inst));
 
   // Casts
   case Instruction::BitCast:

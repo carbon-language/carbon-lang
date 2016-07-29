@@ -113,17 +113,17 @@ private:
 
   /// Translate \p Inst into a binary operation \p Opcode.
   /// \pre \p Inst is a binary operation.
-  bool translateBinaryOp(unsigned Opcode, const Instruction &Inst);
+  bool translateBinaryOp(unsigned Opcode, const BinaryOperator &Inst);
 
   /// Translate branch (br) instruction.
   /// \pre \p Inst is a branch instruction.
-  bool translateBr(const Instruction &Inst);
+  bool translateBr(const BranchInst &Inst);
 
   /// Translate return (ret) instruction.
   /// The target needs to implement CallLowering::lowerReturn for
   /// this to succeed.
   /// \pre \p Inst is a return instruction.
-  bool translateReturn(const Instruction &Inst);
+  bool translateReturn(const ReturnInst &Inst);
   /// @}
 
   // Builder for machine instruction a la IRBuilder.
