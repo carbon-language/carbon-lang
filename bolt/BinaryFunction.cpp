@@ -386,15 +386,6 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       break;
     }
 
-    if (MIA->isUnsupported(Instruction)) {
-      errs() << "BOLT-WARNING: unsupported instruction seen at offset 0x"
-             << Twine::utohexstr(Offset) << " (address 0x"
-             << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
-             << getName() << '\n';
-      IsSimple = false;
-      break;
-    }
-
     // Convert instruction to a shorter version that could be relaxed if needed.
     MIA->shortenInstruction(Instruction);
 

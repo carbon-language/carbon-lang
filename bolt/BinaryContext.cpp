@@ -289,11 +289,7 @@ void BinaryContext::printInstruction(raw_ostream &OS,
     OS << "\n";
     return;
   }
-  if (!MIA->isUnsupported(Instruction)) {
-    InstPrinter->printInst(&Instruction, OS, "", *STI);
-  } else {
-    OS << "unsupported (probably jmpr)";
-  }
+  InstPrinter->printInst(&Instruction, OS, "", *STI);
   if (MIA->isCall(Instruction)) {
     if (MIA->isTailCall(Instruction))
       OS << " # TAILCALL ";
