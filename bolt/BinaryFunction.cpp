@@ -45,6 +45,12 @@ AgressiveSplitting("split-all-cold",
                    cl::desc("outline as many cold basic blocks as possible"),
                    cl::Optional);
 
+static cl::opt<bool>
+DotToolTipCode("dot-tooltip-code",
+               cl::desc("add basic block instructions as tool tips on nodes"),
+               cl::Optional,
+               cl::Hidden);
+
 } // namespace opts
 
 namespace {
@@ -1480,14 +1486,94 @@ std::string constructFilename(std::string Filename,
   return Filename;
 }
 
+std::string formatEscapes(const std::string& Str) {
+  std::string Result;
+  for (unsigned I = 0; I < Str.size(); ++I) {
+    auto C = Str[I];
+    switch (C) {
+    case '\n':
+      Result += "&#13;";
+      break;
+    case '"':
+      break;
+    default:
+      Result += C;
+      break;
+    }
+  }
+  return Result;
+}
+
 }
 
 void BinaryFunction::dumpGraph(raw_ostream& OS) const {
-  OS << "strict digraph \"" << *this << "\" {\n";
+  OS << "strict digraph \"" << getPrintName() << "\" {\n";
+  uint64_t Offset = Address;
   for (auto *BB : BasicBlocks) {
+    auto LayoutPos = std::find(BasicBlocksLayout.begin(),
+                               BasicBlocksLayout.end(),
+                               BB);
+    unsigned Layout = LayoutPos - BasicBlocksLayout.begin();
+    OS << format("\"%s\" [label=\"%s\\n(O:%lu,I:%u,L%u)\"]\n",
+                 BB->getName().data(),
+                 BB->getName().data(),
+                 BB->getOffset(),
+                 BB->Index,
+                 Layout);
+    OS << format("\"%s\" [shape=box]\n", BB->getName().data());
+    if (opts::DotToolTipCode) {
+      std::string Str;
+      raw_string_ostream CS(Str);
+      Offset = BC.printInstructions(CS, BB->begin(), BB->end(), Offset, this);
+      const auto Code = formatEscapes(CS.str());
+      OS << format("\"%s\" [tooltip=\"%s\"]\n",
+                   BB->getName().data(),
+                   Code.c_str());
+    }
+
+    const MCSymbol *TBB = nullptr;
+    const MCSymbol *FBB = nullptr;
+    MCInst *CondBranch = nullptr;
+    MCInst *UncondBranch = nullptr;
+    const bool Success = BC.MIA->analyzeBranch(BB->Instructions,
+                                               TBB,
+                                               FBB,
+                                               CondBranch,
+                                               UncondBranch);
+
+    unsigned Idx = 0;
     for (auto *Succ : BB->successors()) {
-      OS << "\"" << BB->getName() << "\" -> "
-         << "\"" << Succ->getName() << "\"\n";
+      std::string Branch;
+      if (Success) {
+        if (CondBranch && Succ->getLabel() == TBB) {
+          Branch = BC.InstPrinter->getOpcodeName(CondBranch->getOpcode());
+        } else if(UncondBranch && Succ->getLabel() == TBB) {
+          Branch = BC.InstPrinter->getOpcodeName(UncondBranch->getOpcode());
+        } else {
+          Branch = "FT";
+        }
+      }
+      OS << format("\"%s\" -> \"%s\" [label=\"%s",
+                   BB->getName().data(),
+                   Succ->getName().data(),
+                   Branch.c_str());
+
+      const auto &BI = BB->BranchInfo[Idx];
+      if (BB->ExecutionCount != COUNT_NO_PROFILE &&
+          BI.MispredictedCount != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+        OS << "\\n(M:" << BI.MispredictedCount << ",C:" << BI.Count << ")";
+      } else if (ExecutionCount != COUNT_NO_PROFILE &&
+                 BI.Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+        OS << "\\n(IC:" << BI.Count << ")";
+      }
+      OS << "\"]\n";
+
+      ++Idx;
+    }
+    for (auto *LP : BB->LandingPads) {
+      OS << format("\"%s\" -> \"%s\" [constraint=false style=dashed]\n",
+                   BB->getName().data(),
+                   LP->getName().data());
     }
   }
   OS << "}\n";
