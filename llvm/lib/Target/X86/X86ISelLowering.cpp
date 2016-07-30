@@ -834,10 +834,9 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
     setOperationAction(ISD::UINT_TO_FP,         MVT::v4i8,  Custom);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v4i16, Custom);
-    // As there is no 64-bit GPR available, we need build a special custom
-    // sequence to convert from v2i32 to v2f32.
-    if (!Subtarget.is64Bit())
-      setOperationAction(ISD::UINT_TO_FP,       MVT::v2f32, Custom);
+
+    // Fast v2f32 UINT_TO_FP( v2i32 ) custom conversion.
+    setOperationAction(ISD::UINT_TO_FP,         MVT::v2f32, Custom);
 
     setOperationAction(ISD::FP_EXTEND,          MVT::v2f32, Custom);
     setOperationAction(ISD::FP_ROUND,           MVT::v2f32, Custom);
