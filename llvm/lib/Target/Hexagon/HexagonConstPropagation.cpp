@@ -218,8 +218,6 @@ namespace {
     void visitNonBranch(const MachineInstr &MI);
     void visitBranchesFrom(const MachineInstr &BrI);
     void visitUsesOf(unsigned R);
-    bool isExecutable(const MachineBasicBlock *MB) const;
-    void pushLayoutSuccessor(const MachineBasicBlock *MB);
     bool computeBlockSuccessors(const MachineBasicBlock *MB,
           SetVector<const MachineBasicBlock*> &Targets);
     void removeCFGEdge(MachineBasicBlock *From, MachineBasicBlock *To);
@@ -770,26 +768,6 @@ void MachineConstPropagator::visitUsesOf(unsigned Reg) {
       visitBranchesFrom(MI);
   }
 }
-
-
-bool MachineConstPropagator::isExecutable(const MachineBasicBlock *MB) const {
-  unsigned MBN = MB->getNumber();
-  for (const MachineBasicBlock *PB : MB->predecessors()) {
-    unsigned PBN = PB->getNumber();
-    if (EdgeExec.count(CFGEdge(PBN, MBN)))
-      return true;
-  }
-  return false;
-}
-
-
-void MachineConstPropagator::pushLayoutSuccessor(const MachineBasicBlock *MB) {
-  MachineFunction::const_iterator BI = MB->getIterator();
-  unsigned MBN = MB->getNumber();
-  unsigned SBN = std::next(BI)->getNumber();
-  FlowQ.push(CFGEdge(MBN, SBN));
-}
-
 
 bool MachineConstPropagator::computeBlockSuccessors(const MachineBasicBlock *MB,
       SetVector<const MachineBasicBlock*> &Targets) {
