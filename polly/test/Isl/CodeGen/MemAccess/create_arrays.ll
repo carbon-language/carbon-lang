@@ -17,13 +17,13 @@
 ;
 ; CHECK:New access function '{ Stmt_bb12[i0, i1, i2] -> E[i2, i0] }'detected in JSCOP file
 ;
-;define internal void @create_arrays(i32 %arg, i32 %arg1, i32 %arg2, double %arg3, double %beta, [1056 x double]* %A, [1024 x double]* %B, [1056 x double]* %arg7) #0 {
-;bb:
-;  %beta.s2a = alloca double
-;  %D = alloca [270336 x double]
-;  %E = alloca [270336 x [200000 x double]]
-;  %F = alloca [270336 x i64]
-;  br label %bb8
+; CODEGEN:define internal void @create_arrays(i32 %arg, i32 %arg1, i32 %arg2, double %arg3, double %beta, [1056 x double]* %A, [1024 x double]* %B, [1056 x double]* %arg7) #0 {
+; CODEGEN:bb:
+; CODEGEN:  %beta.s2a = alloca double
+; CODEGEN:  %D = alloca [270336 x double]
+; CODEGEN:  %E = alloca [270336 x [200000 x double]]
+; CODEGEN:  %F = alloca [270336 x i64]
+; CODEGEN:  br label %bb8
 ;
 ; CODEGEN:  %polly.access.cast.E = bitcast [270336 x [200000 x double]]* %E to double*
 ; CODEGEN:  %polly.access.mul.E = mul nsw i64 %polly.indvar33, 270336
