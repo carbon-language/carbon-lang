@@ -5456,9 +5456,13 @@ public:
         RPK_MemberReference,
       };
       OMPClauseMappableExprCommon::MappableExprComponentListRef Components;
-      OpenMPMapClauseKind MapType = OMPC_MAP_unknown;
-      OpenMPMapClauseKind MapTypeModifier = OMPC_MAP_unknown;
-      ReturnPointerKind ReturnDevicePointer = RPK_None;
+      OpenMPMapClauseKind MapType;
+      OpenMPMapClauseKind MapTypeModifier;
+      ReturnPointerKind ReturnDevicePointer;
+
+      MapInfo()
+          : MapType(OMPC_MAP_unknown), MapTypeModifier(OMPC_MAP_unknown),
+            ReturnDevicePointer(RPK_None) {}
       MapInfo(
           OMPClauseMappableExprCommon::MappableExprComponentListRef Components,
           OpenMPMapClauseKind MapType, OpenMPMapClauseKind MapTypeModifier,
