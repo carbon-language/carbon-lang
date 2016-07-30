@@ -2047,8 +2047,8 @@ bool HexagonConstEvaluator::evaluate(const MachineInstr &MI,
     case Hexagon::A2_combineii:  // combine(#s8Ext, #s8)
     case Hexagon::A4_combineii:  // combine(#s8, #u6Ext)
     {
-      int64_t Hi = MI.getOperand(1).getImm();
-      int64_t Lo = MI.getOperand(2).getImm();
+      uint64_t Hi = MI.getOperand(1).getImm();
+      uint64_t Lo = MI.getOperand(2).getImm();
       uint64_t Res = (Hi << 32) | (Lo & 0xFFFFFFFF);
       IntegerType *Ty = Type::getInt64Ty(CX);
       const ConstantInt *CI = ConstantInt::get(Ty, Res, false);
