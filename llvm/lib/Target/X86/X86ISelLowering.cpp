@@ -25322,8 +25322,7 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
     return false;
 
   // Directly rip through bitcasts to find the underlying operand.
-  while (Op.getOpcode() == ISD::BITCAST && Op.getOperand(0).hasOneUse())
-    Op = Op.getOperand(0);
+  Op = peekThroughOneUseBitcasts(Op);
 
   MVT VT = Op.getSimpleValueType();
   if (!VT.isVector())
@@ -25923,9 +25922,7 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
          V.getOpcode() == X86ISD::PSHUFHW) &&
         V.getOpcode() != N.getOpcode() &&
         V.hasOneUse()) {
-      SDValue D = V.getOperand(0);
-      while (D.getOpcode() == ISD::BITCAST && D.hasOneUse())
-        D = D.getOperand(0);
+      SDValue D = peekThroughOneUseBitcasts(V.getOperand(0));
       if (D.getOpcode() == X86ISD::PSHUFD && D.hasOneUse()) {
         SmallVector<int, 4> VMask = getPSHUFShuffleMask(V);
         SmallVector<int, 4> DMask = getPSHUFShuffleMask(D);
