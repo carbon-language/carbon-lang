@@ -26452,9 +26452,9 @@ static SDValue combineBasicSADPattern(SDNode *Extract, SelectionDAG &DAG,
   // in the SAD vector.
   unsigned Stages = Log2_32(VT.getVectorNumElements());
   MVT SadVT = SAD.getSimpleValueType();
-  if (Stages > 3) {    
+  if (Stages > 3) {
     unsigned SadElems = SadVT.getVectorNumElements();
-    
+
     for(unsigned i = Stages - 3; i > 0; --i) {
       SmallVector<int, 16> Mask(SadElems, -1);
       for(unsigned j = 0, MaskEnd = 1 << (i - 1); j < MaskEnd; ++j)
@@ -26465,11 +26465,10 @@ static SDValue combineBasicSADPattern(SDNode *Extract, SelectionDAG &DAG,
       SAD = DAG.getNode(ISD::ADD, DL, SadVT, SAD, Shuffle);
     }
   }
-  
 
   // Return the lowest i32.
-  MVT ResVT = MVT::getVectorVT(MVT::i32, SadVT.getSizeInBits() / 32);  
-  SAD = DAG.getNode(ISD::BITCAST, DL, ResVT, SAD);  
+  MVT ResVT = MVT::getVectorVT(MVT::i32, SadVT.getSizeInBits() / 32);
+  SAD = DAG.getNode(ISD::BITCAST, DL, ResVT, SAD);
   return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::i32, SAD,
                      Extract->getOperand(1));
 }
@@ -30868,7 +30867,7 @@ static SDValue combineLoopSADPattern(SDNode *N, SelectionDAG &DAG,
 
   // We only handle v16i32 for SSE2 / v32i32 for AVX2 / v64i32 for AVX512.
   // TODO: We should be able to handle larger vectors by splitting them before
-  // feeding them into several SADs, and then reducing over those.  
+  // feeding them into several SADs, and then reducing over those.
   if (VT.getSizeInBits() / 4 > RegSize)
     return SDValue();
 
