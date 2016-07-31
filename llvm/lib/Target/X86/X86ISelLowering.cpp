@@ -15779,11 +15779,8 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   if (Op0.hasOneUse() && isNullConstant(Op1) &&
       (CC == ISD::SETEQ || CC == ISD::SETNE)) {
     if (SDValue NewSetCC = LowerToBT(Op0, CC, dl, DAG)) {
-      if (VT == MVT::i1) {
-        NewSetCC = DAG.getNode(ISD::AssertZext, dl, MVT::i8, NewSetCC,
-                               DAG.getValueType(MVT::i1));
+      if (VT == MVT::i1)
         return DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, NewSetCC);
-      }
       return NewSetCC;
     }
   }
@@ -15805,11 +15802,8 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
       SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
                                   DAG.getConstant(CCode, dl, MVT::i8),
                                   Op0.getOperand(1));
-      if (VT == MVT::i1) {
-        SetCC = DAG.getNode(ISD::AssertZext, dl, MVT::i8, SetCC,
-                            DAG.getValueType(MVT::i1));
+      if (VT == MVT::i1)
         return DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, SetCC);
-      }
       return SetCC;
     }
   }
@@ -15833,11 +15827,8 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   EFLAGS = ConvertCmpIfNecessary(EFLAGS, DAG);
   SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
                               DAG.getConstant(X86CC, dl, MVT::i8), EFLAGS);
-  if (VT == MVT::i1) {
-    SetCC = DAG.getNode(ISD::AssertZext, dl, MVT::i8, SetCC,
-                        DAG.getValueType(MVT::i1));
+  if (VT == MVT::i1)
     return DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, SetCC);
-  }
   return SetCC;
 }
 
@@ -15856,11 +15847,8 @@ SDValue X86TargetLowering::LowerSETCCE(SDValue Op, SelectionDAG &DAG) const {
   SDValue Cmp = DAG.getNode(X86ISD::SBB, DL, VTs, LHS, RHS, Carry);
   SDValue SetCC = DAG.getNode(X86ISD::SETCC, DL, MVT::i8,
                               DAG.getConstant(CC, DL, MVT::i8), Cmp.getValue(1));
-  if (Op.getSimpleValueType() == MVT::i1) {
-    SetCC = DAG.getNode(ISD::AssertZext, DL, MVT::i8, SetCC,
-                        DAG.getValueType(MVT::i1));
+  if (Op.getSimpleValueType() == MVT::i1)
     return DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, SetCC);
-  }
   return SetCC;
 }
 
@@ -15897,11 +15885,6 @@ static SDValue getCondAfterTruncWithZeroHighBitsInput(SDValue V, SelectionDAG &D
     return V;
 
   SDValue VOp0 = V.getOperand(0);
-  if (VOp0.getOpcode() == ISD::AssertZext &&
-      V.getValueSizeInBits() ==
-      cast<VTSDNode>(VOp0.getOperand(1))->getVT().getSizeInBits())
-    return VOp0.getOperand(0);
-
   unsigned InBits = VOp0.getValueSizeInBits();
   unsigned Bits = V.getValueSizeInBits();
   if (DAG.MaskedValueIsZero(VOp0, APInt::getHighBitsSet(InBits,InBits-Bits)))
@@ -20708,11 +20691,8 @@ static SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG) {
                   DAG.getConstant(X86::COND_O, DL, MVT::i32),
                   SDValue(Sum.getNode(), 2));
 
-    if (N->getValueType(1) == MVT::i1) {
-      SetCC = DAG.getNode(ISD::AssertZext, DL, MVT::i8, SetCC,
-                          DAG.getValueType(MVT::i1));
+    if (N->getValueType(1) == MVT::i1)
       SetCC = DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, SetCC);
-    }
     return DAG.getNode(ISD::MERGE_VALUES, DL, N->getVTList(), Sum, SetCC);
   }
   }
@@ -20726,11 +20706,8 @@ static SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG) {
                 DAG.getConstant(Cond, DL, MVT::i32),
                 SDValue(Sum.getNode(), 1));
 
-  if (N->getValueType(1) == MVT::i1) {
-    SetCC = DAG.getNode(ISD::AssertZext, DL, MVT::i8, SetCC,
-                        DAG.getValueType(MVT::i1));
+  if (N->getValueType(1) == MVT::i1)
     SetCC = DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, SetCC);
-  }
   return DAG.getNode(ISD::MERGE_VALUES, DL, N->getVTList(), Sum, SetCC);
 }
 
@@ -27239,7 +27216,6 @@ static SDValue checkBoolTestSetCCCombine(SDValue Cmp, X86::CondCode &CC) {
   // Skip (zext $x), (trunc $x), or (and $x, 1) node.
   while (SetCC.getOpcode() == ISD::ZERO_EXTEND ||
          SetCC.getOpcode() == ISD::TRUNCATE ||
-         SetCC.getOpcode() == ISD::AssertZext ||
          SetCC.getOpcode() == ISD::AND) {
     if (SetCC.getOpcode() == ISD::AND) {
       int OpIdx = -1;
@@ -30588,18 +30564,12 @@ static SDValue combineGatherScatter(SDNode *N, SelectionDAG &DAG) {
 // as "sbb reg,reg", since it can be extended without zext and produces
 // an all-ones bit which is more useful than 0/1 in some cases.
 static SDValue MaterializeSETB(const SDLoc &DL, SDValue EFLAGS,
-                               SelectionDAG &DAG, MVT VT) {
-  if (VT == MVT::i8)
-    return DAG.getNode(ISD::AND, DL, VT,
-                       DAG.getNode(X86ISD::SETCC_CARRY, DL, MVT::i8,
-                                   DAG.getConstant(X86::COND_B, DL, MVT::i8),
-                                   EFLAGS),
-                       DAG.getConstant(1, DL, VT));
-  assert (VT == MVT::i1 && "Unexpected type for SECCC node");
-  return DAG.getNode(ISD::TRUNCATE, DL, MVT::i1,
+                               SelectionDAG &DAG) {
+  return DAG.getNode(ISD::AND, DL, MVT::i8,
                      DAG.getNode(X86ISD::SETCC_CARRY, DL, MVT::i8,
                                  DAG.getConstant(X86::COND_B, DL, MVT::i8),
-                                 EFLAGS));
+                                 EFLAGS),
+                     DAG.getConstant(1, DL, MVT::i8));
 }
 
 // Optimize  RES = X86ISD::SETCC CONDCODE, EFLAG_INPUT
@@ -30624,7 +30594,7 @@ static SDValue combineX86SetCC(SDNode *N, SelectionDAG &DAG,
                                    EFLAGS.getNode()->getVTList(),
                                    EFLAGS.getOperand(1), EFLAGS.getOperand(0));
       SDValue NewEFLAGS = SDValue(NewSub.getNode(), EFLAGS.getResNo());
-      return MaterializeSETB(DL, NewEFLAGS, DAG, N->getSimpleValueType(0));
+      return MaterializeSETB(DL, NewEFLAGS, DAG);
     }
   }
 
@@ -30632,7 +30602,7 @@ static SDValue combineX86SetCC(SDNode *N, SelectionDAG &DAG,
   // a zext and produces an all-ones bit which is more useful than 0/1 in some
   // cases.
   if (CC == X86::COND_B)
-    return MaterializeSETB(DL, EFLAGS, DAG, N->getSimpleValueType(0));
+    return MaterializeSETB(DL, EFLAGS, DAG);
 
   // Try to simplify the EFLAGS and condition code operands.
   if (SDValue Flags = combineSetCCEFLAGS(EFLAGS, CC, DAG)) {
