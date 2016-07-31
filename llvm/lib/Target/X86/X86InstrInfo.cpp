@@ -4838,16 +4838,12 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
                                       bool isStackAligned,
                                       const X86Subtarget &STI,
                                       bool load) {
-  if (STI.hasAVX512()) {
-    if (isMaskRegClass(RC))
-      return getLoadStoreMaskRegOpcode(RC, load);
-    if (RC->getSize() == 4 && X86::FR32XRegClass.hasSubClassEq(RC))
-      return load ? X86::VMOVSSZrm : X86::VMOVSSZmr;
-    if (RC->getSize() == 8 && X86::FR64XRegClass.hasSubClassEq(RC))
-      return load ? X86::VMOVSDZrm : X86::VMOVSDZmr;
-  }
-
   bool HasAVX = STI.hasAVX();
+  bool HasAVX512 = STI.hasAVX512();
+
+  if (HasAVX512 && isMaskRegClass(RC))
+    return getLoadStoreMaskRegOpcode(RC, load);
+
   switch (RC->getSize()) {
   default:
     llvm_unreachable("Unknown spill size");
@@ -4865,20 +4861,20 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
   case 4:
     if (X86::GR32RegClass.hasSubClassEq(RC))
       return load ? X86::MOV32rm : X86::MOV32mr;
-    if (X86::FR32RegClass.hasSubClassEq(RC))
+    if (X86::FR32XRegClass.hasSubClassEq(RC))
       return load ?
-        (HasAVX ? X86::VMOVSSrm : X86::MOVSSrm) :
-        (HasAVX ? X86::VMOVSSmr : X86::MOVSSmr);
+        (HasAVX512 ? X86::VMOVSSZrm : HasAVX ? X86::VMOVSSrm : X86::MOVSSrm) :
+        (HasAVX512 ? X86::VMOVSSZmr : HasAVX ? X86::VMOVSSmr : X86::MOVSSmr);
     if (X86::RFP32RegClass.hasSubClassEq(RC))
       return load ? X86::LD_Fp32m : X86::ST_Fp32m;
     llvm_unreachable("Unknown 4-byte regclass");
   case 8:
     if (X86::GR64RegClass.hasSubClassEq(RC))
       return load ? X86::MOV64rm : X86::MOV64mr;
-    if (X86::FR64RegClass.hasSubClassEq(RC))
+    if (X86::FR64XRegClass.hasSubClassEq(RC))
       return load ?
-        (HasAVX ? X86::VMOVSDrm : X86::MOVSDrm) :
-        (HasAVX ? X86::VMOVSDmr : X86::MOVSDmr);
+        (HasAVX512 ? X86::VMOVSDZrm : HasAVX ? X86::VMOVSDrm : X86::MOVSDrm) :
+        (HasAVX512 ? X86::VMOVSDZmr : HasAVX ? X86::VMOVSDmr : X86::MOVSDmr);
     if (X86::VR64RegClass.hasSubClassEq(RC))
       return load ? X86::MMX_MOVQ64rm : X86::MMX_MOVQ64mr;
     if (X86::RFP64RegClass.hasSubClassEq(RC))
