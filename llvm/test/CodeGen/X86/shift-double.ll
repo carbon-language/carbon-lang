@@ -219,3 +219,71 @@ define i64 @test10(i64 %val, i32 %bits) nounwind {
   %lshr = lshr i64 %val, %sh_prom
   ret i64 %lshr
 }
+
+; SHLD/SHRD manual shifts
+
+define i32 @test11(i32 %hi, i32 %lo, i32 %bits) nounwind {
+; CHECK-LABEL: test11:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; CHECK-NEXT:    andl $31, %ecx
+; CHECK-NEXT:    # kill: %CL<def> %CL<kill> %ECX<kill>
+; CHECK-NEXT:    shldl %cl, %edx, %eax
+; CHECK-NEXT:    retl
+  %and = and i32 %bits, 31
+  %and32 = sub i32 32, %and
+  %sh_lo = lshr i32 %lo, %and32
+  %sh_hi = shl i32 %hi, %and
+  %sh = or i32 %sh_lo, %sh_hi
+  ret i32 %sh
+}
+
+define i32 @test12(i32 %hi, i32 %lo, i32 %bits) nounwind {
+; CHECK-LABEL: test12:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; CHECK-NEXT:    andl $31, %ecx
+; CHECK-NEXT:    # kill: %CL<def> %CL<kill> %ECX<kill>
+; CHECK-NEXT:    shrdl %cl, %edx, %eax
+; CHECK-NEXT:    retl
+  %and = and i32 %bits, 31
+  %and32 = sub i32 32, %and
+  %sh_lo = shl i32 %hi, %and32
+  %sh_hi = lshr i32 %lo, %and
+  %sh = or i32 %sh_lo, %sh_hi
+  ret i32 %sh
+}
+
+define i32 @test13(i32 %hi, i32 %lo, i32 %bits) nounwind {
+; CHECK-LABEL: test13:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %cl
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    shldl %cl, %edx, %eax
+; CHECK-NEXT:    retl
+  %bits32 = sub i32 32, %bits
+  %sh_lo = lshr i32 %lo, %bits32
+  %sh_hi = shl i32 %hi, %bits
+  %sh = or i32 %sh_lo, %sh_hi
+  ret i32 %sh
+}
+
+define i32 @test14(i32 %hi, i32 %lo, i32 %bits) nounwind {
+; CHECK-LABEL: test14:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %cl
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    shrdl %cl, %edx, %eax
+; CHECK-NEXT:    retl
+  %bits32 = sub i32 32, %bits
+  %sh_lo = shl i32 %hi, %bits32
+  %sh_hi = lshr i32 %lo, %bits
+  %sh = or i32 %sh_lo, %sh_hi
+  ret i32 %sh
+}
