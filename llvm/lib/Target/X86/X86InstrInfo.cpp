@@ -7349,7 +7349,17 @@ static const uint16_t ReplaceableInstrsAVX2[][3] = {
 
 static const uint16_t ReplaceableInstrsAVX512[][4] = {
   // Two integer columns for 64-bit and 32-bit elements.
-  //PackedSingle     PackedDouble     PackedInt        PackedInt
+  //PackedSingle        PackedDouble        PackedInt           PackedInt
+  { X86::VMOVAPSZmr,    X86::VMOVAPDZmr,    X86::VMOVDQA64Zmr,  X86::VMOVDQA64Zmr  },
+  { X86::VMOVAPSZrm,    X86::VMOVAPDZrm,    X86::VMOVDQA64Zrm,  X86::VMOVDQA64Zrm  },
+  { X86::VMOVAPSZrr,    X86::VMOVAPDZrr,    X86::VMOVDQA64Zrr,  X86::VMOVDQA64Zrr  },
+  { X86::VMOVUPSZmr,    X86::VMOVUPDZmr,    X86::VMOVDQU64Zmr,  X86::VMOVDQU64Zmr  },
+  { X86::VMOVUPSZrm,    X86::VMOVUPDZrm,    X86::VMOVDQU64Zrm,  X86::VMOVDQU64Zrm  },
+};
+
+static const uint16_t ReplaceableInstrsAVX512DQ[][4] = {
+  // Two integer columns for 64-bit and 32-bit elements.
+  //PackedSingle        PackedDouble        PackedInt           PackedInt
   { X86::VANDNPSZ128rm, X86::VANDNPDZ128rm, X86::VPANDNQZ128rm, X86::VPANDNDZ128rm },
   { X86::VANDNPSZ128rr, X86::VANDNPDZ128rr, X86::VPANDNQZ128rr, X86::VPANDNDZ128rr },
   { X86::VANDPSZ128rm,  X86::VANDPDZ128rm,  X86::VPANDQZ128rm,  X86::VPANDDZ128rm  },
@@ -7374,11 +7384,6 @@ static const uint16_t ReplaceableInstrsAVX512[][4] = {
   { X86::VORPSZrr,      X86::VORPDZrr,      X86::VPORQZrr,      X86::VPORDZrr      },
   { X86::VXORPSZrm,     X86::VXORPDZrm,     X86::VPXORQZrm,     X86::VPXORDZrm     },
   { X86::VXORPSZrr,     X86::VXORPDZrr,     X86::VPXORQZrr,     X86::VPXORDZrr     },
-  { X86::VMOVAPSZmr,    X86::VMOVAPDZmr,    X86::VMOVDQA64Zmr,  X86::VMOVDQA64Zmr  },
-  { X86::VMOVAPSZrm,    X86::VMOVAPDZrm,    X86::VMOVDQA64Zrm,  X86::VMOVDQA64Zrm  },
-  { X86::VMOVAPSZrr,    X86::VMOVAPDZrr,    X86::VMOVDQA64Zrr,  X86::VMOVDQA64Zrr  },
-  { X86::VMOVUPSZmr,    X86::VMOVUPDZmr,    X86::VMOVDQU64Zmr,  X86::VMOVDQU64Zmr  },
-  { X86::VMOVUPSZrm,    X86::VMOVUPDZrm,    X86::VMOVDQU64Zrm,  X86::VMOVDQU64Zrm  },
 };
 
 // FIXME: Some shuffle and unpack instructions have equivalents in different
@@ -7406,17 +7411,26 @@ static const uint16_t *lookupAVX512(unsigned opcode, unsigned domain) {
   return nullptr;
 }
 
+static const uint16_t *lookupAVX512DQ(unsigned opcode, unsigned domain) {
+  // If this is the integer domain make sure to check both integer columns.
+  for (const uint16_t (&Row)[4] : ReplaceableInstrsAVX512DQ)
+    if (Row[domain-1] == opcode || (domain == 3 && Row[3] == opcode))
+      return Row;
+  return nullptr;
+}
+
 std::pair<uint16_t, uint16_t>
 X86InstrInfo::getExecutionDomain(const MachineInstr &MI) const {
   uint16_t domain = (MI.getDesc().TSFlags >> X86II::SSEDomainShift) & 3;
-  bool hasAVX2 = Subtarget.hasAVX2();
   uint16_t validDomains = 0;
   if (domain && lookup(MI.getOpcode(), domain))
     validDomains = 0xe;
   else if (domain && lookupAVX2(MI.getOpcode(), domain))
-    validDomains = hasAVX2 ? 0xe : 0x6;
+    validDomains = Subtarget.hasAVX2() ? 0xe : 0x6;
   else if (domain && lookupAVX512(MI.getOpcode(), domain))
     validDomains = 0xe;
+  else if (domain && lookupAVX512DQ(MI.getOpcode(), domain))
+    validDomains = Subtarget.hasDQI() ? 0xe : 0x8;
   return std::make_pair(domain, validDomains);
 }
 
@@ -7431,9 +7445,17 @@ void X86InstrInfo::setExecutionDomain(MachineInstr &MI, unsigned Domain) const {
     table = lookupAVX2(MI.getOpcode(), dom);
   }
   if (!table) { // try the AVX512 table
+    assert(Subtarget.hasAVX512() && "Requires AVX-512");
     table = lookupAVX512(MI.getOpcode(), dom);
     // Don't change integer Q instructions to D instructions.
-    if (dom == 3 && table[3] == MI.getOpcode())
+    if (table && dom == 3 && table[3] == MI.getOpcode())
+      Domain = 4;
+  }
+  if (!table) { // try the AVX512DQ table
+    assert((Subtarget.hasDQI() || Domain >=3) && "Requires AVX-512DQ");
+    table = lookupAVX512DQ(MI.getOpcode(), dom);
+    // Don't change integer Q instructions to D instructions.
+    if (table && dom == 3 && table[3] == MI.getOpcode())
       Domain = 4;
   }
   assert(table && "Cannot change domain");

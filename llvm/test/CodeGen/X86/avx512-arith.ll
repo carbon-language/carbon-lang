@@ -962,10 +962,30 @@ define <8 x float>  @test_fxor_8f32(<8 x float> %a) {
 }
 
 define <8 x double> @fabs_v8f64(<8 x double> %p)
-; CHECK-LABEL: fabs_v8f64:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vandps {{.*}}(%rip), %zmm0, %zmm0
-; CHECK-NEXT:    retq
+; AVX512F-LABEL: fabs_v8f64:
+; AVX512F:       ## BB#0:
+; AVX512F-NEXT:    vpandq {{.*}}(%rip), %zmm0, %zmm0
+; AVX512F-NEXT:    retq
+;
+; AVX512VL-LABEL: fabs_v8f64:
+; AVX512VL:       ## BB#0:
+; AVX512VL-NEXT:    vpandq {{.*}}(%rip), %zmm0, %zmm0
+; AVX512VL-NEXT:    retq
+;
+; AVX512BW-LABEL: fabs_v8f64:
+; AVX512BW:       ## BB#0:
+; AVX512BW-NEXT:    vpandq {{.*}}(%rip), %zmm0, %zmm0
+; AVX512BW-NEXT:    retq
+;
+; AVX512DQ-LABEL: fabs_v8f64:
+; AVX512DQ:       ## BB#0:
+; AVX512DQ-NEXT:    vandps {{.*}}(%rip), %zmm0, %zmm0
+; AVX512DQ-NEXT:    retq
+;
+; SKX-LABEL: fabs_v8f64:
+; SKX:       ## BB#0:
+; SKX-NEXT:    vandps {{.*}}(%rip), %zmm0, %zmm0
+; SKX-NEXT:    retq
 {
   %t = call <8 x double> @llvm.fabs.v8f64(<8 x double> %p)
   ret <8 x double> %t
