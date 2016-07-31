@@ -67,13 +67,7 @@ define i64 @test5(i64 %hi, i64 %lo, i64 %bits) nounwind {
 ; CHECK-LABEL: test5:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movl %edx, %ecx
-; CHECK-NEXT:    xorl $63, %ecx
-; CHECK-NEXT:    shrq %rsi
-; CHECK-NEXT:    # kill: %CL<def> %CL<kill> %ECX<kill>
-; CHECK-NEXT:    shrq %cl, %rsi
-; CHECK-NEXT:    movl %edx, %ecx
-; CHECK-NEXT:    shlq %cl, %rdi
-; CHECK-NEXT:    orq %rsi, %rdi
+; CHECK-NEXT:    shldq %cl, %rsi, %rdi
 ; CHECK-NEXT:    movq %rdi, %rax
 ; CHECK-NEXT:    retq
   %bits64 = xor i64 %bits, 63
@@ -88,13 +82,8 @@ define i64 @test6(i64 %hi, i64 %lo, i64 %bits) nounwind {
 ; CHECK-LABEL: test6:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movl %edx, %ecx
-; CHECK-NEXT:    xorl $63, %ecx
-; CHECK-NEXT:    leaq (%rsi,%rsi), %rax
-; CHECK-NEXT:    # kill: %CL<def> %CL<kill> %ECX<kill>
-; CHECK-NEXT:    shlq %cl, %rax
-; CHECK-NEXT:    movl %edx, %ecx
-; CHECK-NEXT:    shrq %cl, %rdi
-; CHECK-NEXT:    orq %rdi, %rax
+; CHECK-NEXT:    shrdq %cl, %rsi, %rdi
+; CHECK-NEXT:    movq %rdi, %rax
 ; CHECK-NEXT:    retq
   %bits64 = xor i64 %bits, 63
   %lo2 = shl i64 %lo, 1
@@ -108,13 +97,8 @@ define i64 @test7(i64 %hi, i64 %lo, i64 %bits) nounwind {
 ; CHECK-LABEL: test7:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movl %edx, %ecx
-; CHECK-NEXT:    xorl $63, %ecx
-; CHECK-NEXT:    leaq (%rsi,%rsi), %rax
-; CHECK-NEXT:    # kill: %CL<def> %CL<kill> %ECX<kill>
-; CHECK-NEXT:    shlq %cl, %rax
-; CHECK-NEXT:    movl %edx, %ecx
-; CHECK-NEXT:    shrq %cl, %rdi
-; CHECK-NEXT:    orq %rdi, %rax
+; CHECK-NEXT:    shrdq %cl, %rsi, %rdi
+; CHECK-NEXT:    movq %rdi, %rax
 ; CHECK-NEXT:    retq
   %bits64 = xor i64 %bits, 63
   %lo2 = add i64 %lo, %lo

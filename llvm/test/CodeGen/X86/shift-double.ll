@@ -151,19 +151,13 @@ define i64 @test8(i64 %val, i32 %bits) nounwind {
 ; CHECK-LABEL: test8:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    pushl %esi
-; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %ch
-; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %esi
-; CHECK-NEXT:    movb %ch, %cl
-; CHECK-NEXT:    shll %cl, %esi
-; CHECK-NEXT:    movl %eax, %edx
-; CHECK-NEXT:    shrl %edx
-; CHECK-NEXT:    andb $31, %cl
-; CHECK-NEXT:    xorb $31, %cl
-; CHECK-NEXT:    shrl %cl, %edx
-; CHECK-NEXT:    orl %esi, %edx
-; CHECK-NEXT:    movb %ch, %cl
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; CHECK-NEXT:    movl %esi, %eax
 ; CHECK-NEXT:    shll %cl, %eax
+; CHECK-NEXT:    andb $31, %cl
+; CHECK-NEXT:    shldl %cl, %esi, %edx
 ; CHECK-NEXT:    popl %esi
 ; CHECK-NEXT:    retl
   %and = and i32 %bits, 31
@@ -176,18 +170,13 @@ define i64 @test9(i64 %val, i32 %bits) nounwind {
 ; CHECK-LABEL: test9:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    pushl %esi
-; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %ch
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %cl
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %esi
-; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
-; CHECK-NEXT:    movb %ch, %cl
-; CHECK-NEXT:    shrl %cl, %esi
-; CHECK-NEXT:    leal (%edx,%edx), %eax
-; CHECK-NEXT:    andb $31, %cl
-; CHECK-NEXT:    xorb $31, %cl
-; CHECK-NEXT:    shll %cl, %eax
-; CHECK-NEXT:    orl %esi, %eax
-; CHECK-NEXT:    movb %ch, %cl
+; CHECK-NEXT:    movl %esi, %edx
 ; CHECK-NEXT:    sarl %cl, %edx
+; CHECK-NEXT:    andb $31, %cl
+; CHECK-NEXT:    shrdl %cl, %esi, %eax
 ; CHECK-NEXT:    popl %esi
 ; CHECK-NEXT:    retl
   %and = and i32 %bits, 31
@@ -200,18 +189,13 @@ define i64 @test10(i64 %val, i32 %bits) nounwind {
 ; CHECK-LABEL: test10:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    pushl %esi
-; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %ch
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %cl
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %esi
-; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
-; CHECK-NEXT:    movb %ch, %cl
-; CHECK-NEXT:    shrl %cl, %esi
-; CHECK-NEXT:    leal (%edx,%edx), %eax
-; CHECK-NEXT:    andb $31, %cl
-; CHECK-NEXT:    xorb $31, %cl
-; CHECK-NEXT:    shll %cl, %eax
-; CHECK-NEXT:    orl %esi, %eax
-; CHECK-NEXT:    movb %ch, %cl
+; CHECK-NEXT:    movl %esi, %edx
 ; CHECK-NEXT:    shrl %cl, %edx
+; CHECK-NEXT:    andb $31, %cl
+; CHECK-NEXT:    shrdl %cl, %esi, %eax
 ; CHECK-NEXT:    popl %esi
 ; CHECK-NEXT:    retl
   %and = and i32 %bits, 31
@@ -291,19 +275,10 @@ define i32 @test14(i32 %hi, i32 %lo, i32 %bits) nounwind {
 define i32 @test15(i32 %hi, i32 %lo, i32 %bits) nounwind {
 ; CHECK-LABEL: test15:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pushl %esi
-; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %esi
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
-; CHECK-NEXT:    movl %edx, %ecx
-; CHECK-NEXT:    xorl $31, %ecx
-; CHECK-NEXT:    shrl %esi
-; CHECK-NEXT:    # kill: %CL<def> %CL<kill> %ECX<kill>
-; CHECK-NEXT:    shrl %cl, %esi
-; CHECK-NEXT:    movl %edx, %ecx
-; CHECK-NEXT:    shll %cl, %eax
-; CHECK-NEXT:    orl %esi, %eax
-; CHECK-NEXT:    popl %esi
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    shldl %cl, %edx, %eax
 ; CHECK-NEXT:    retl
   %bits32 = xor i32 %bits, 31
   %lo2 = lshr i32 %lo, 1
@@ -316,19 +291,10 @@ define i32 @test15(i32 %hi, i32 %lo, i32 %bits) nounwind {
 define i32 @test16(i32 %hi, i32 %lo, i32 %bits) nounwind {
 ; CHECK-LABEL: test16:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pushl %esi
-; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %esi
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
-; CHECK-NEXT:    movl %edx, %ecx
-; CHECK-NEXT:    xorl $31, %ecx
-; CHECK-NEXT:    addl %esi, %esi
-; CHECK-NEXT:    # kill: %CL<def> %CL<kill> %ECX<kill>
-; CHECK-NEXT:    shll %cl, %esi
-; CHECK-NEXT:    movl %edx, %ecx
-; CHECK-NEXT:    shrl %cl, %eax
-; CHECK-NEXT:    orl %esi, %eax
-; CHECK-NEXT:    popl %esi
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    shrdl %cl, %edx, %eax
 ; CHECK-NEXT:    retl
   %bits32 = xor i32 %bits, 31
   %lo2 = shl i32 %lo, 1
@@ -341,19 +307,10 @@ define i32 @test16(i32 %hi, i32 %lo, i32 %bits) nounwind {
 define i32 @test17(i32 %hi, i32 %lo, i32 %bits) nounwind {
 ; CHECK-LABEL: test17:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pushl %esi
-; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %esi
+; CHECK-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
-; CHECK-NEXT:    movl %edx, %ecx
-; CHECK-NEXT:    xorl $31, %ecx
-; CHECK-NEXT:    addl %esi, %esi
-; CHECK-NEXT:    # kill: %CL<def> %CL<kill> %ECX<kill>
-; CHECK-NEXT:    shll %cl, %esi
-; CHECK-NEXT:    movl %edx, %ecx
-; CHECK-NEXT:    shrl %cl, %eax
-; CHECK-NEXT:    orl %esi, %eax
-; CHECK-NEXT:    popl %esi
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    shrdl %cl, %edx, %eax
 ; CHECK-NEXT:    retl
   %bits32 = xor i32 %bits, 31
   %lo2 = add i32 %lo, %lo

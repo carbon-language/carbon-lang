@@ -28631,18 +28631,23 @@ static SDValue combineOr(SDNode *N, SelectionDAG &DAG,
   unsigned Opc = X86ISD::SHLD;
   SDValue Op0 = N0.getOperand(0);
   SDValue Op1 = N1.getOperand(0);
-  if (ShAmt0.getOpcode() == ISD::SUB) {
+  if (ShAmt0.getOpcode() == ISD::SUB ||
+      ShAmt0.getOpcode() == ISD::XOR) {
     Opc = X86ISD::SHRD;
     std::swap(Op0, Op1);
     std::swap(ShAmt0, ShAmt1);
   }
 
+  // OR( SHL( X, C ), SRL( Y, 32 - C ) ) -> SHLD( X, Y, C )
+  // OR( SRL( X, C ), SHL( Y, 32 - C ) ) -> SHRD( X, Y, C )
+  // OR( SHL( X, C ), SRL( SRL( Y, 1 ), XOR( C, 31 ) ) ) -> SHLD( X, Y, C )
+  // OR( SRL( X, C ), SHL( SHL( Y, 1 ), XOR( C, 31 ) ) ) -> SHRD( X, Y, C )
   unsigned Bits = VT.getSizeInBits();
   if (ShAmt1.getOpcode() == ISD::SUB) {
     SDValue Sum = ShAmt1.getOperand(0);
     if (ConstantSDNode *SumC = dyn_cast<ConstantSDNode>(Sum)) {
       SDValue ShAmt1Op1 = ShAmt1.getOperand(1);
-      if (ShAmt1Op1.getNode()->getOpcode() == ISD::TRUNCATE)
+      if (ShAmt1Op1.getOpcode() == ISD::TRUNCATE)
         ShAmt1Op1 = ShAmt1Op1.getOperand(0);
       if (SumC->getSExtValue() == Bits && ShAmt1Op1 == ShAmt0)
         return DAG.getNode(Opc, DL, VT,
@@ -28652,12 +28657,33 @@ static SDValue combineOr(SDNode *N, SelectionDAG &DAG,
     }
   } else if (ConstantSDNode *ShAmt1C = dyn_cast<ConstantSDNode>(ShAmt1)) {
     ConstantSDNode *ShAmt0C = dyn_cast<ConstantSDNode>(ShAmt0);
-    if (ShAmt0C &&
-        ShAmt0C->getSExtValue() + ShAmt1C->getSExtValue() == Bits)
+    if (ShAmt0C && (ShAmt0C->getSExtValue() + ShAmt1C->getSExtValue()) == Bits)
       return DAG.getNode(Opc, DL, VT,
                          N0.getOperand(0), N1.getOperand(0),
                          DAG.getNode(ISD::TRUNCATE, DL,
                                        MVT::i8, ShAmt0));
+  } else if (ShAmt1.getOpcode() == ISD::XOR) {
+    SDValue Mask = ShAmt1.getOperand(1);
+    if (ConstantSDNode *MaskC = dyn_cast<ConstantSDNode>(Mask)) {
+      unsigned InnerShift = (X86ISD::SHLD == Opc ? ISD::SRL : ISD::SHL);
+      SDValue ShAmt1Op0 = ShAmt1.getOperand(0);
+      if (ShAmt1Op0.getOpcode() == ISD::TRUNCATE)
+        ShAmt1Op0 = ShAmt1Op0.getOperand(0);
+      if (MaskC->getSExtValue() == (Bits - 1) && ShAmt1Op0 == ShAmt0) {
+        if (Op1.getOpcode() == InnerShift &&
+            isa<ConstantSDNode>(Op1.getOperand(1)) &&
+            Op1.getConstantOperandVal(1) == 1) {
+          return DAG.getNode(Opc, DL, VT, Op0, Op1.getOperand(0),
+                             DAG.getNode(ISD::TRUNCATE, DL, MVT::i8, ShAmt0));
+        }
+        // Test for ADD( Y, Y ) as an equivalent to SHL( Y, 1 ).
+        if (InnerShift == ISD::SHL && Op1.getOpcode() == ISD::ADD &&
+            Op1.getOperand(0) == Op1.getOperand(1)) {
+          return DAG.getNode(Opc, DL, VT, Op0, Op1.getOperand(0),
+                     DAG.getNode(ISD::TRUNCATE, DL, MVT::i8, ShAmt0));
+        }
+      }
+    }
   }
 
   return SDValue();
