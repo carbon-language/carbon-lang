@@ -67,7 +67,7 @@ public:
 
 TEST_F(MemorySSATest, CreateALoadAndPhi) {
   // We create a diamond where there is a store on one side, and then after
-  // running memory ssa, create a load after the merge point, and use it to test
+  // building MemorySSA, create a load after the merge point, and use it to test
   // updating by creating an access for the load and a memoryphi.
   F = Function::Create(
       FunctionType::get(B.getVoidTy(), {B.getInt8PtrTy()}, false),
