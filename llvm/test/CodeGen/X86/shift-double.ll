@@ -287,3 +287,78 @@ define i32 @test14(i32 %hi, i32 %lo, i32 %bits) nounwind {
   %sh = or i32 %sh_lo, %sh_hi
   ret i32 %sh
 }
+
+define i32 @test15(i32 %hi, i32 %lo, i32 %bits) nounwind {
+; CHECK-LABEL: test15:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pushl %esi
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %esi
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; CHECK-NEXT:    movl %edx, %ecx
+; CHECK-NEXT:    xorl $31, %ecx
+; CHECK-NEXT:    shrl %esi
+; CHECK-NEXT:    # kill: %CL<def> %CL<kill> %ECX<kill>
+; CHECK-NEXT:    shrl %cl, %esi
+; CHECK-NEXT:    movl %edx, %ecx
+; CHECK-NEXT:    shll %cl, %eax
+; CHECK-NEXT:    orl %esi, %eax
+; CHECK-NEXT:    popl %esi
+; CHECK-NEXT:    retl
+  %bits32 = xor i32 %bits, 31
+  %lo2 = lshr i32 %lo, 1
+  %sh_lo = lshr i32 %lo2, %bits32
+  %sh_hi = shl i32 %hi, %bits
+  %sh = or i32 %sh_lo, %sh_hi
+  ret i32 %sh
+}
+
+define i32 @test16(i32 %hi, i32 %lo, i32 %bits) nounwind {
+; CHECK-LABEL: test16:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pushl %esi
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %esi
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; CHECK-NEXT:    movl %edx, %ecx
+; CHECK-NEXT:    xorl $31, %ecx
+; CHECK-NEXT:    addl %esi, %esi
+; CHECK-NEXT:    # kill: %CL<def> %CL<kill> %ECX<kill>
+; CHECK-NEXT:    shll %cl, %esi
+; CHECK-NEXT:    movl %edx, %ecx
+; CHECK-NEXT:    shrl %cl, %eax
+; CHECK-NEXT:    orl %esi, %eax
+; CHECK-NEXT:    popl %esi
+; CHECK-NEXT:    retl
+  %bits32 = xor i32 %bits, 31
+  %lo2 = shl i32 %lo, 1
+  %sh_lo = shl i32 %lo2, %bits32
+  %sh_hi = lshr i32 %hi, %bits
+  %sh = or i32 %sh_lo, %sh_hi
+  ret i32 %sh
+}
+
+define i32 @test17(i32 %hi, i32 %lo, i32 %bits) nounwind {
+; CHECK-LABEL: test17:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pushl %esi
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %esi
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; CHECK-NEXT:    movl %edx, %ecx
+; CHECK-NEXT:    xorl $31, %ecx
+; CHECK-NEXT:    addl %esi, %esi
+; CHECK-NEXT:    # kill: %CL<def> %CL<kill> %ECX<kill>
+; CHECK-NEXT:    shll %cl, %esi
+; CHECK-NEXT:    movl %edx, %ecx
+; CHECK-NEXT:    shrl %cl, %eax
+; CHECK-NEXT:    orl %esi, %eax
+; CHECK-NEXT:    popl %esi
+; CHECK-NEXT:    retl
+  %bits32 = xor i32 %bits, 31
+  %lo2 = add i32 %lo, %lo
+  %sh_lo = shl i32 %lo2, %bits32
+  %sh_hi = lshr i32 %hi, %bits
+  %sh = or i32 %sh_lo, %sh_hi
+  ret i32 %sh
+}
