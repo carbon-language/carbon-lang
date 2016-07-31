@@ -132,7 +132,7 @@ entry:
 define void @extract_subvector256_v4f64_store_lo(double* nocapture %addr, <4 x double> %a) nounwind uwtable ssp {
 ; SKX-LABEL: extract_subvector256_v4f64_store_lo:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vmovupd %xmm0, (%rdi)
+; SKX-NEXT:    vmovups %xmm0, (%rdi)
 ; SKX-NEXT:    retq
 entry:
   %0 = shufflevector <4 x double> %a, <4 x double> undef, <2 x i32> <i32 0, i32 1>
@@ -204,7 +204,7 @@ entry:
 define void @extract_subvector512_v2f64_store_lo(double* nocapture %addr, <8 x double> %a) nounwind uwtable ssp {
 ; SKX-LABEL: extract_subvector512_v2f64_store_lo:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vmovupd %xmm0, (%rdi)
+; SKX-NEXT:    vmovups %xmm0, (%rdi)
 ; SKX-NEXT:    retq
 entry:
   %0 = shufflevector <8 x double> %a, <8 x double> undef, <2 x i32> <i32 0, i32 1>
@@ -276,7 +276,7 @@ entry:
 define void @extract_subvector512_v4f64_store_lo(double* nocapture %addr, <8 x double> %a) nounwind uwtable ssp {
 ; SKX-LABEL: extract_subvector512_v4f64_store_lo:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vmovupd %ymm0, (%rdi)
+; SKX-NEXT:    vmovups %ymm0, (%rdi)
 ; SKX-NEXT:    retq
 entry:
   %0 = shufflevector <8 x double> %a, <8 x double> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>

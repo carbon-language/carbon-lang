@@ -1194,20 +1194,10 @@ define <2 x double> @test_unaligned_v2f64(<2 x double>* %src) {
 ; AVX-NEXT:    vmovups (%rdi), %xmm0
 ; AVX-NEXT:    retq
 ;
-; AVX512F-LABEL: test_unaligned_v2f64:
-; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vmovups (%rdi), %xmm0
-; AVX512F-NEXT:    retq
-;
-; AVX512BW-LABEL: test_unaligned_v2f64:
-; AVX512BW:       # BB#0:
-; AVX512BW-NEXT:    vmovups (%rdi), %xmm0
-; AVX512BW-NEXT:    retq
-;
-; AVX512VL-LABEL: test_unaligned_v2f64:
-; AVX512VL:       # BB#0:
-; AVX512VL-NEXT:    vmovupd (%rdi), %xmm0
-; AVX512VL-NEXT:    retq
+; AVX512-LABEL: test_unaligned_v2f64:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vmovups (%rdi), %xmm0
+; AVX512-NEXT:    retq
   %1 = load <2 x double>, <2 x double>* %src, align 1, !nontemporal !1
   ret <2 x double> %1
 }
@@ -1363,20 +1353,10 @@ define <4 x double> @test_unaligned_v4f64(<4 x double>* %src) {
 ; AVX-NEXT:    vmovups (%rdi), %ymm0
 ; AVX-NEXT:    retq
 ;
-; AVX512F-LABEL: test_unaligned_v4f64:
-; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vmovups (%rdi), %ymm0
-; AVX512F-NEXT:    retq
-;
-; AVX512BW-LABEL: test_unaligned_v4f64:
-; AVX512BW:       # BB#0:
-; AVX512BW-NEXT:    vmovups (%rdi), %ymm0
-; AVX512BW-NEXT:    retq
-;
-; AVX512VL-LABEL: test_unaligned_v4f64:
-; AVX512VL:       # BB#0:
-; AVX512VL-NEXT:    vmovupd (%rdi), %ymm0
-; AVX512VL-NEXT:    retq
+; AVX512-LABEL: test_unaligned_v4f64:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vmovups (%rdi), %ymm0
+; AVX512-NEXT:    retq
   %1 = load <4 x double>, <4 x double>* %src, align 1, !nontemporal !1
   ret <4 x double> %1
 }
