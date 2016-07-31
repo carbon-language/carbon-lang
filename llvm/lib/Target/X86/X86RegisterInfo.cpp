@@ -143,6 +143,7 @@ X86RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
     case X86::RFP80RegClassID:
     case X86::VR128RegClassID:
     case X86::VR256RegClassID:
+    case X86::VR512RegClassID:
       // Don't return a super-class that would shrink the spill size.
       // That can happen with the vector and float classes.
       if (Super->getSize() == RC->getSize())
