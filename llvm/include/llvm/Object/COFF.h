@@ -899,6 +899,10 @@ public:
   imported_symbol_iterator imported_symbol_end() const;
   iterator_range<imported_symbol_iterator> imported_symbols() const;
 
+  imported_symbol_iterator lookup_table_begin() const;
+  imported_symbol_iterator lookup_table_end() const;
+  iterator_range<imported_symbol_iterator> lookup_table_symbols() const;
+
   std::error_code getName(StringRef &Result) const;
   std::error_code getImportLookupTableRVA(uint32_t &Result) const;
   std::error_code getImportAddressTableRVA(uint32_t &Result) const;
