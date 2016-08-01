@@ -6505,5 +6505,5 @@ VersionTuple Sema::getVersionForDecl(const Decl *D) const {
         DeclVersion = AA->getIntroduced();
   }
 
-  return DeclVersion;
+  return std::max(DeclVersion, Context.getTargetInfo().getPlatformMinVersion());
 }
