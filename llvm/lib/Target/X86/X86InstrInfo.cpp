@@ -4590,11 +4590,6 @@ static unsigned CopyToFromAsymmetricReg(unsigned DestReg, unsigned SrcReg,
   return 0;
 }
 
-static bool isMaskRegClass(const TargetRegisterClass *RC) {
-  // All KMASK RegClasses hold the same k registers, can be tested against anyone.
-  return X86::VK16RegClass.hasSubClassEq(RC);
-}
-
 static bool MaskRegClassContains(unsigned Reg) {
   // All KMASK RegClasses hold the same k registers, can be tested against anyone.
   return X86::VK16RegClass.contains(Reg);
@@ -4819,20 +4814,6 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   llvm_unreachable("Cannot emit physreg copy instruction");
 }
 
-static unsigned getLoadStoreMaskRegOpcode(const TargetRegisterClass *RC,
-                                          bool load) {
-  switch (RC->getSize()) {
-  default:
-    llvm_unreachable("Unknown spill size");
-  case 2:
-    return load ? X86::KMOVWkm : X86::KMOVWmk;
-  case 4:
-    return load ? X86::KMOVDkm : X86::KMOVDmk;
-  case 8:
-    return load ? X86::KMOVQkm : X86::KMOVQmk;
-  }
-}
-
 static unsigned getLoadStoreRegOpcode(unsigned Reg,
                                       const TargetRegisterClass *RC,
                                       bool isStackAligned,
@@ -4841,9 +4822,6 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
   bool HasAVX = STI.hasAVX();
   bool HasAVX512 = STI.hasAVX512();
   bool HasVLX = STI.hasVLX();
-
-  if (HasAVX512 && isMaskRegClass(RC))
-    return getLoadStoreMaskRegOpcode(RC, load);
 
   switch (RC->getSize()) {
   default:
@@ -4857,6 +4835,8 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
         return load ? X86::MOV8rm_NOREX : X86::MOV8mr_NOREX;
     return load ? X86::MOV8rm : X86::MOV8mr;
   case 2:
+    if (X86::VK16RegClass.hasSubClassEq(RC))
+      return load ? X86::KMOVWkm : X86::KMOVWmk;
     assert(X86::GR16RegClass.hasSubClassEq(RC) && "Unknown 2-byte regclass");
     return load ? X86::MOV16rm : X86::MOV16mr;
   case 4:
@@ -4868,6 +4848,8 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
         (HasAVX512 ? X86::VMOVSSZmr : HasAVX ? X86::VMOVSSmr : X86::MOVSSmr);
     if (X86::RFP32RegClass.hasSubClassEq(RC))
       return load ? X86::LD_Fp32m : X86::ST_Fp32m;
+    if (X86::VK32RegClass.hasSubClassEq(RC))
+      return load ? X86::KMOVDkm : X86::KMOVDmk;
     llvm_unreachable("Unknown 4-byte regclass");
   case 8:
     if (X86::GR64RegClass.hasSubClassEq(RC))
@@ -4880,6 +4862,8 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
       return load ? X86::MMX_MOVQ64rm : X86::MMX_MOVQ64mr;
     if (X86::RFP64RegClass.hasSubClassEq(RC))
       return load ? X86::LD_Fp64m : X86::ST_Fp64m;
+    if (X86::VK64RegClass.hasSubClassEq(RC))
+      return load ? X86::KMOVQkm : X86::KMOVQmk;
     llvm_unreachable("Unknown 8-byte regclass");
   case 10:
     assert(X86::RFP80RegClass.hasSubClassEq(RC) && "Unknown 10-byte regclass");
