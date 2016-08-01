@@ -13,6 +13,6 @@ int main() {
 // CHECK-LABEL: define {{.*}}caller{{.*}}
 // CHECK: {{.*}} call {{.*}}
 // CHECK-NOT: br i1 {{.*}}
-// CHECK: br {{.*}}label %[[BB1:[0-9]+]], label{{.*}}!prof ![[PD1:[0-9]+]]
+// CHECK: br {{.*}}label %[[BB1:.*]], label{{.*}}!prof ![[PD1:[0-9]+]]
 // CHECK: ; <label>:[[BB1]]: 
 // CHECK:![[PD1]] = !{!"branch_weights", i32 0, i32 1}
