@@ -122,10 +122,10 @@ private:
       RTDyld.setProcessAllSections(PFC->ProcessAllSections);
       PFC->RTDyld = &RTDyld;
 
+      this->Finalized = true;
       PFC->Finalizer(PFC->Handle, RTDyld, std::move(PFC->Objects),
                      [&]() {
                        this->updateSymbolTable(RTDyld);
-                       this->Finalized = true;
                      });
 
       // Release resources.

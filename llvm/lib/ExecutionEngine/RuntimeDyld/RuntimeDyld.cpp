@@ -584,13 +584,19 @@ Error RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
       return NameOrErr.takeError();
 
     // Skip common symbols already elsewhere.
-    if (GlobalSymbolTable.count(Name) ||
-        Resolver.findSymbolInLogicalDylib(Name)) {
+    if (GlobalSymbolTable.count(Name)) {
       DEBUG(dbgs() << "\tSkipping already emitted common symbol '" << Name
                    << "'\n");
       continue;
     }
 
+    if (auto Sym = Resolver.findSymbolInLogicalDylib(Name)) {
+      if (!Sym.isCommon()) {
+        DEBUG(dbgs() << "\tSkipping common symbol '" << Name
+                     << "' in favor of stronger definition.\n");
+        continue;
+      }
+    }
     uint32_t Align = Sym.getAlignment();
     uint64_t Size = Sym.getCommonSize();
 
