@@ -14,6 +14,8 @@
 
 #include "llvm/Transforms/IPO/PartialInlining.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/BlockFrequencyInfo.h"
+#include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
@@ -29,13 +31,18 @@ using namespace llvm;
 STATISTIC(NumPartialInlined, "Number of functions partially inlined");
 
 namespace {
+typedef std::function<std::pair<BlockFrequencyInfo *, BranchProbabilityInfo *>(
+    Function &)>
+    GetProfileDataFn;
 struct PartialInlinerImpl {
-  PartialInlinerImpl(InlineFunctionInfo IFI) : IFI(IFI) {}
+  PartialInlinerImpl(InlineFunctionInfo IFI, GetProfileDataFn GetProfileInfo)
+      : IFI(IFI), GetProfileInfo(GetProfileInfo) {}
   bool run(Module &M);
   Function *unswitchFunction(Function *F);
 
 private:
   InlineFunctionInfo IFI;
+  GetProfileDataFn GetProfileInfo;
 };
 struct PartialInlinerLegacyPass : public ModulePass {
   static char ID; // Pass identification, replacement for typeid
@@ -45,6 +52,8 @@ struct PartialInlinerLegacyPass : public ModulePass {
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<AssumptionCacheTracker>();
+    AU.addRequired<BlockFrequencyInfoWrapperPass>();
+    AU.addRequired<BranchProbabilityInfoWrapperPass>();
   }
   bool runOnModule(Module &M) override {
     if (skipModule(M))
@@ -55,8 +64,14 @@ struct PartialInlinerLegacyPass : public ModulePass {
         [&ACT](Function &F) -> AssumptionCache & {
       return ACT->getAssumptionCache(F);
     };
+    GetProfileDataFn GetProfileData = [this](Function &F)
+        -> std::pair<BlockFrequencyInfo *, BranchProbabilityInfo *> {
+      auto *BFI = &getAnalysis<BlockFrequencyInfoWrapperPass>(F).getBFI();
+      auto *BPI = &getAnalysis<BranchProbabilityInfoWrapperPass>(F).getBPI();
+      return std::make_pair(BFI, BPI);
+    };
     InlineFunctionInfo IFI(nullptr, &GetAssumptionCache);
-    return PartialInlinerImpl(IFI).run(M);
+    return PartialInlinerImpl(IFI, GetProfileData).run(M);
   }
 };
 }
@@ -133,9 +148,13 @@ Function *PartialInlinerImpl::unswitchFunction(Function *F) {
   DominatorTree DT;
   DT.recalculate(*DuplicateFunction);
 
+  auto ProfileInfo = GetProfileInfo(*DuplicateFunction);
+
   // Extract the body of the if.
   Function *ExtractedFunction =
-      CodeExtractor(ToExtract, &DT).extractCodeRegion();
+      CodeExtractor(ToExtract, &DT, /*AggregateArgs*/false, ProfileInfo.first,
+                    ProfileInfo.second)
+          .extractCodeRegion();
 
   // Inline the top-level if test into all callers.
   std::vector<User *> Users(DuplicateFunction->user_begin(),
@@ -181,8 +200,8 @@ bool PartialInlinerImpl::run(Module &M) {
     if (Recursive)
       continue;
 
-    if (Function *newFunc = unswitchFunction(CurrFunc)) {
-      Worklist.push_back(newFunc);
+    if (Function *NewFunc = unswitchFunction(CurrFunc)) {
+      Worklist.push_back(NewFunc);
       Changed = true;
     }
   }
@@ -194,6 +213,8 @@ char PartialInlinerLegacyPass::ID = 0;
 INITIALIZE_PASS_BEGIN(PartialInlinerLegacyPass, "partial-inliner",
                       "Partial Inliner", false, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
+INITIALIZE_PASS_DEPENDENCY(BlockFrequencyInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(BranchProbabilityInfoWrapperPass)
 INITIALIZE_PASS_END(PartialInlinerLegacyPass, "partial-inliner",
                     "Partial Inliner", false, false)
 
@@ -208,8 +229,14 @@ PreservedAnalyses PartialInlinerPass::run(Module &M,
       [&FAM](Function &F) -> AssumptionCache & {
     return FAM.getResult<AssumptionAnalysis>(F);
   };
+  GetProfileDataFn GetProfileData = [&FAM](
+      Function &F) -> std::pair<BlockFrequencyInfo *, BranchProbabilityInfo *> {
+    auto *BFI = &FAM.getResult<BlockFrequencyAnalysis>(F);
+    auto *BPI = &FAM.getResult<BranchProbabilityAnalysis>(F);
+    return std::make_pair(BFI, BPI);
+  };
   InlineFunctionInfo IFI(nullptr, &GetAssumptionCache);
-  if (PartialInlinerImpl(IFI).run(M))
+  if (PartialInlinerImpl(IFI, GetProfileData).run(M))
     return PreservedAnalyses::none();
   return PreservedAnalyses::all();
 }
