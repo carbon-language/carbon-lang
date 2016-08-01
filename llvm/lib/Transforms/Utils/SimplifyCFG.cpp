@@ -5132,11 +5132,12 @@ static bool ReduceSwitchRange(SwitchInst *SI, IRBuilder<> &Builder,
                                Builder.CreateShl(Sub, Ty->getBitWidth() - Shift));
   SI->replaceUsesOfWith(SI->getCondition(), Rot);
 
-  for (auto &C : SI->cases()) {
+  for (SwitchInst::CaseIt C = SI->case_begin(), E = SI->case_end(); C != E;
+       ++C) {
     auto *Orig = C.getCaseValue();
     auto Sub = Orig->getValue() - APInt(Ty->getBitWidth(), Base);
-    SI->replaceUsesOfWith(Orig,
-                          ConstantInt::get(Ty, Sub.lshr(ShiftC->getValue())));
+    C.setValue(
+        cast<ConstantInt>(ConstantInt::get(Ty, Sub.lshr(ShiftC->getValue()))));
   }
   return true;
 }

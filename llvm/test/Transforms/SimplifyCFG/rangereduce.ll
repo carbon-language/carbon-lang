@@ -193,3 +193,29 @@ two:
 three:
   ret i32 99783
 }
+
+; CHECK-LABEL: @test9
+; CHECK:  switch
+; CHECK:  i32 6
+; CHECK:  i32 7
+; CHECK:  i32 0
+; CHECK:  i32 2
+define i32 @test9(i32 %a) {
+  switch i32 %a, label %def [
+    i32 18, label %one
+    i32 20, label %two
+    i32 6, label %three
+    i32 10, label %three
+  ]
+
+def:
+  ret i32 8867
+
+one:
+  ret i32 11984
+two:
+  ret i32 1143
+three:
+  ret i32 99783
+}
+
