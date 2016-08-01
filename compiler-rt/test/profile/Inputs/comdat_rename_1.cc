@@ -7,7 +7,7 @@ int FOO::callee() {
   // CHECK-LABEL: define {{.*}}callee{{.*}}
   // CHECK-NOT: br i1 {{.*}}
   // CHECK: br {{.*}}label{{.*}}, label %[[BB1:.*]], !prof ![[PD1:[0-9]+]]
-  // CHECK: ; <label>:[[BB1]]: 
+  // CHECK: {{.*}}[[BB1]]: 
   if (b != 0)
     return a / b;
   if (a != 0)
@@ -21,10 +21,10 @@ int FOO::callee() {
 // CHECK-LABEL: define {{.*}}caller{{.*}}
 // CHECK-NOT: br i1 {{.*}}
 // CHECK: br {{.*}}label{{.*}}, label %[[BB2:.*]], !prof ![[PD2:[0-9]+]]
-// CHECK: ; <label>:[[BB2]]: 
+// CHECK: {{.*}}[[BB2]]: 
 // CHECK: br {{.*}}label{{.*}}, label %{{.*}}, !prof !{{.*}}
 // CHECK: br {{.*}}label %[[BB3:.*]], label %{{.*}} !prof ![[PD3:[0-9]+]]
-// CHECK: ; <label>:[[BB3]]: 
+// CHECK: {{.*}}[[BB3]]: 
 //
 // CHECK:![[PD1]] = !{!"branch_weights", i32 0, i32 1}
 // CHECK:![[PD2]] = !{!"branch_weights", i32 1, i32 0}
