@@ -1490,6 +1490,17 @@ public:
   bool isLegalMaskedGather(Type *DataType) {
     return TTI->isLegalMaskedGather(DataType);
   }
+  /// Returns true if the target machine can represent \p V as a masked gather
+  /// or scatter operation.
+  bool isLegalGatherOrScatter(Value *V) {
+    auto *LI = dyn_cast<LoadInst>(V);
+    auto *SI = dyn_cast<StoreInst>(V);
+    if (!LI && !SI)
+      return false;
+    auto *Ptr = getPointerOperand(V);
+    auto *Ty = cast<PointerType>(Ptr->getType())->getElementType();
+    return (LI && isLegalMaskedGather(Ty)) || (SI && isLegalMaskedScatter(Ty));
+  }
 
   /// Returns true if vector representation of the instruction \p I
   /// requires mask.
@@ -5828,19 +5839,6 @@ LoopVectorizationCostModel::expectedCost(unsigned VF) {
   return Cost;
 }
 
-/// \brief Check if the load/store instruction \p I may be translated into
-/// gather/scatter during vectorization.
-///
-/// Pointer \p Ptr specifies address in memory for the given scalar memory
-/// instruction. We need it to retrieve data type.
-/// Using gather/scatter is possible when it is supported by target.
-static bool isGatherOrScatterLegal(Instruction *I, Value *Ptr,
-                                   LoopVectorizationLegality *Legal) {
-  auto *DataTy = cast<PointerType>(Ptr->getType())->getElementType();
-  return (isa<LoadInst>(I) && Legal->isLegalMaskedGather(DataTy)) ||
-         (isa<StoreInst>(I) && Legal->isLegalMaskedScatter(DataTy));
-}
-
 /// \brief Check whether the address computation for a non-consecutive memory
 /// access looks like an unlikely candidate for being merged into the indexing
 /// mode.
@@ -6088,7 +6086,7 @@ unsigned LoopVectorizationCostModel::getInstructionCost(Instruction *I,
     // Scalarized loads/stores.
     int ConsecutiveStride = Legal->isConsecutivePtr(Ptr);
     bool UseGatherOrScatter =
-        (ConsecutiveStride == 0) && isGatherOrScatterLegal(I, Ptr, Legal);
+        (ConsecutiveStride == 0) && Legal->isLegalGatherOrScatter(I);
 
     bool Reverse = ConsecutiveStride < 0;
     const DataLayout &DL = I->getModule()->getDataLayout();
@@ -6269,7 +6267,7 @@ void LoopVectorizationCostModel::collectValuesToIgnore() {
         VecValuesToIgnore.insert(&I);
       Instruction *PI = dyn_cast_or_null<Instruction>(getPointerOperand(&I));
       if (PI && !Legal->isConsecutivePtr(PI) &&
-          !isGatherOrScatterLegal(&I, PI, Legal))
+          !Legal->isLegalGatherOrScatter(&I))
         NonConsecutivePtr.insert(PI);
     }
   }
