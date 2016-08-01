@@ -428,6 +428,7 @@ private:
   void visitInsertValueInst(InsertValueInst &IVI);
   void visitEHPadPredecessors(Instruction &I);
   void visitLandingPadInst(LandingPadInst &LPI);
+  void visitResumeInst(ResumeInst &RI);
   void visitCatchPadInst(CatchPadInst &CPI);
   void visitCatchReturnInst(CatchReturnInst &CatchReturn);
   void visitCleanupPadInst(CleanupPadInst &CPI);
@@ -3296,6 +3297,21 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
   }
 
   visitInstruction(LPI);
+}
+
+void Verifier::visitResumeInst(ResumeInst &RI) {
+  Assert(RI.getFunction()->hasPersonalityFn(),
+         "ResumeInst needs to be in a function with a personality.", &RI);
+
+  if (!LandingPadResultTy)
+    LandingPadResultTy = RI.getValue()->getType();
+  else
+    Assert(LandingPadResultTy == RI.getValue()->getType(),
+           "The resume instruction should have a consistent result type "
+           "inside a function.",
+           &RI);
+
+  visitTerminatorInst(RI);
 }
 
 void Verifier::visitCatchPadInst(CatchPadInst &CPI) {
