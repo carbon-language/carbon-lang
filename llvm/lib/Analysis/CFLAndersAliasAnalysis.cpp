@@ -213,8 +213,6 @@ public:
   typedef MapType::const_iterator const_iterator;
 
   bool add(InstantiatedValue V, AliasAttrs Attr) {
-    if (Attr.none())
-      return false;
     auto &OldAttr = AttrMap[V];
     auto NewAttr = OldAttr | Attr;
     if (OldAttr == NewAttr)
@@ -346,9 +344,11 @@ static void populateAttrMap(DenseMap<const Value *, AliasAttrs> &AttrMap,
   for (const auto &Mapping : AMap.mappings()) {
     auto IVal = Mapping.first;
 
+    // Insert IVal into the map
+    auto &Attr = AttrMap[IVal.Val];
     // AttrMap only cares about top-level values
     if (IVal.DerefLevel == 0)
-      AttrMap[IVal.Val] |= Mapping.second;
+      Attr |= Mapping.second;
   }
 }
 
@@ -482,7 +482,10 @@ CFLAndersAAResult::FunctionInfo::FunctionInfo(
 AliasAttrs CFLAndersAAResult::FunctionInfo::getAttrs(const Value *V) const {
   assert(V != nullptr);
 
-  AliasAttrs Attr;
+  // Return AttrUnknown if V is not found in AttrMap. Sometimes V can be created
+  // after the analysis gets executed, and we want to be conservative in
+  // those cases.
+  AliasAttrs Attr = getAttrUnknown();
   auto Itr = AttrMap.find(V);
   if (Itr != AttrMap.end())
     Attr = Itr->second;
