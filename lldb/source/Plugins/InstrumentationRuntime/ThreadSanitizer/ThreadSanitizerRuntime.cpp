@@ -335,10 +335,11 @@ GetRenumberedThreadIds(ProcessSP process_sp, ValueObjectSP data, std::map<uint64
 }
 
 static user_id_t Renumber(uint64_t id, std::map<uint64_t, user_id_t> &thread_id_map) {
-    if (! thread_id_map.count(id))
+    auto IT = thread_id_map.find(id);
+    if (IT == thread_id_map.end())
         return 0;
     
-    return thread_id_map[id];
+    return IT->second;
 }
 
 StructuredData::ObjectSP
