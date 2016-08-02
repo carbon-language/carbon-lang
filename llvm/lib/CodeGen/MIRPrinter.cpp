@@ -178,6 +178,9 @@ void MIRPrinter::print(const MachineFunction &MF) {
   YamlMF.AllVRegsAllocated = MF.getProperties().hasProperty(
       MachineFunctionProperties::Property::AllVRegsAllocated);
 
+  YamlMF.Legalized = MF.getProperties().hasProperty(
+      MachineFunctionProperties::Property::Legalized);
+
   convert(YamlMF, MF.getRegInfo(), MF.getSubtarget().getRegisterInfo());
   ModuleSlotTracker MST(MF.getFunction()->getParent());
   MST.incorporateFunction(*MF.getFunction());

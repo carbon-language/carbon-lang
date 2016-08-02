@@ -76,6 +76,9 @@ void MachineFunctionProperties::print(raw_ostream &ROS, bool OnlySet) const {
       case Property::AllVRegsAllocated:
         ROS << (HasProperty ? "AllVRegsAllocated" : "HasVRegs");
         break;
+      case Property::Legalized:
+        ROS << (HasProperty ? "" : "not ") << "legalized";
+        break;
       default:
         break;
     }
