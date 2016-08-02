@@ -14,6 +14,7 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
+#include "llvm/CodeGen/GlobalISel/MachineLegalizer.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/CommandLine.h"
@@ -51,6 +52,19 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
   // other MF/MFI fields we need to initialize.
 
 #ifndef NDEBUG
+  // Check that our input is fully legal: we require the function to have the
+  // Legalized property, so it should be.
+  // FIXME: This should be in the MachineVerifier, but it can't use the
+  // MachineLegalizer as it's currently in the separate GlobalISel library.
+  // The RegBankSelected property is already checked in the verifier. Note
+  // that it has the same layering problem, but we only use inline methods so
+  // end up not needing to link against the GlobalISel library.
+  if (const MachineLegalizer *MLI = MF.getSubtarget().getMachineLegalizer())
+    for (const MachineBasicBlock &MBB : MF)
+      for (const MachineInstr &MI : MBB)
+        if (isPreISelGenericOpcode(MI.getOpcode()) && !MLI->isLegal(MI))
+          reportSelectionError(MI, "Instruction is not legal");
+
   // FIXME: We could introduce new blocks and will need to fix the outer loop.
   // Until then, keep track of the number of blocks to assert that we don't.
   const size_t NumBlocks = MF.size();

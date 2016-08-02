@@ -39,6 +39,7 @@
 # CHECK-LABEL: name: add_s32_gpr
 name:            add_s32_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
@@ -63,6 +64,7 @@ body:             |
 # CHECK-LABEL: name: add_s64_gpr
 name:            add_s64_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
@@ -87,6 +89,7 @@ body:             |
 # CHECK-LABEL: name: sub_s32_gpr
 name:            sub_s32_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
@@ -111,6 +114,7 @@ body:             |
 # CHECK-LABEL: name: sub_s64_gpr
 name:            sub_s64_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
@@ -135,6 +139,7 @@ body:             |
 # CHECK-LABEL: name: or_s32_gpr
 name:            or_s32_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
@@ -159,6 +164,7 @@ body:             |
 # CHECK-LABEL: name: or_s64_gpr
 name:            or_s64_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
@@ -183,6 +189,7 @@ body:             |
 # CHECK-LABEL: name: xor_s32_gpr
 name:            xor_s32_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
@@ -207,6 +214,7 @@ body:             |
 # CHECK-LABEL: name: xor_s64_gpr
 name:            xor_s64_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
@@ -231,6 +239,7 @@ body:             |
 # CHECK-LABEL: name: and_s32_gpr
 name:            and_s32_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
@@ -255,6 +264,7 @@ body:             |
 # CHECK-LABEL: name: and_s64_gpr
 name:            and_s64_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
@@ -278,6 +288,7 @@ body:             |
 # CHECK-LABEL: name: unconditional_br
 name:            unconditional_br
 isSSA:           true
+legalized:       true
 
 # CHECK:  body:
 # CHECK:   bb.0:
@@ -294,6 +305,7 @@ body:             |
 # CHECK-LABEL: name: load_s64_gpr
 name:            load_s64_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64sp }
@@ -318,6 +330,7 @@ body:             |
 # CHECK-LABEL: name: load_s32_gpr
 name:            load_s32_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64sp }
@@ -342,6 +355,7 @@ body:             |
 # CHECK-LABEL: name: store_s64_gpr
 name:            store_s64_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64sp }
@@ -368,6 +382,7 @@ body:             |
 # CHECK-LABEL: name: store_s32_gpr
 name:            store_s32_gpr
 isSSA:           true
+legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64sp }
