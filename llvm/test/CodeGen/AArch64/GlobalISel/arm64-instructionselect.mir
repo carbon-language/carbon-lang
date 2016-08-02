@@ -1,5 +1,4 @@
 # RUN: llc -O0 -run-pass=instruction-select -verify-machineinstrs -global-isel %s -o - | FileCheck %s
-# REQUIRES: global-isel
 
 # Test the instruction selector.
 # As we support more instructions, we need to split this up.
