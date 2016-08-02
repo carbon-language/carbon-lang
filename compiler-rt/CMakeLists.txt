@@ -32,6 +32,7 @@ list(INSERT CMAKE_MODULE_PATH 0
   )
 
 include(base-config-ix)
+include(CompilerRTUtils)
 
 option(COMPILER_RT_BUILD_BUILTINS "Build builtins" ON)
 mark_as_advanced(COMPILER_RT_BUILD_BUILTINS)
@@ -43,35 +44,7 @@ option(COMPILER_RT_BUILD_XRAY "Build xray" OFF)
 mark_as_advanced(COMPILER_RT_BUILD_XRAY)
 
 if (COMPILER_RT_STANDALONE_BUILD)
-  if (NOT LLVM_CONFIG_PATH)
-    find_program(LLVM_CONFIG_PATH "llvm-config"
-                 DOC "Path to llvm-config binary")
-    if (NOT LLVM_CONFIG_PATH)
-      message(FATAL_ERROR "llvm-config not found: specify LLVM_CONFIG_PATH")
-    endif()
-  endif()
-  execute_process(
-    COMMAND ${LLVM_CONFIG_PATH} "--obj-root" "--bindir" "--libdir" "--src-root"
-    RESULT_VARIABLE HAD_ERROR
-    OUTPUT_VARIABLE CONFIG_OUTPUT)
-  if (HAD_ERROR)
-    message(FATAL_ERROR "llvm-config failed with status ${HAD_ERROR}")
-  endif()
-  string(REGEX REPLACE "[ \t]*[\r\n]+[ \t]*" ";" CONFIG_OUTPUT ${CONFIG_OUTPUT})
-  list(GET CONFIG_OUTPUT 0 LLVM_BINARY_DIR)
-  list(GET CONFIG_OUTPUT 1 LLVM_TOOLS_BINARY_DIR)
-  list(GET CONFIG_OUTPUT 2 LLVM_LIBRARY_DIR)
-  list(GET CONFIG_OUTPUT 3 LLVM_MAIN_SRC_DIR)
-
-  # Make use of LLVM CMake modules.
-  file(TO_CMAKE_PATH ${LLVM_BINARY_DIR} LLVM_BINARY_DIR_CMAKE_STYLE)
-  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR_CMAKE_STYLE}/lib${LLVM_LIBDIR_SUFFIX}/cmake/llvm")
-  list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
-  # Get some LLVM variables from LLVMConfig.
-  include("${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
-
-  set(LLVM_LIBRARY_OUTPUT_INTDIR
-    ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib${LLVM_LIBDIR_SUFFIX})
+  load_llvm_config()
 
   # Find Python interpreter.
   set(Python_ADDITIONAL_VERSIONS 2.7 2.6 2.5)
@@ -90,29 +63,10 @@ if (COMPILER_RT_STANDALONE_BUILD)
   set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
 endif()
 
-set(COMPILER_RT_DEFAULT_TARGET_TRIPLE ${TARGET_TRIPLE} CACHE STRING
-    "Default triple for which compiler-rt runtimes will be built.")
-if(DEFINED COMPILER_RT_TEST_TARGET_TRIPLE)
-  # Backwards compatibility: this variable used to be called
-  # COMPILER_RT_TEST_TARGET_TRIPLE.
-  set(COMPILER_RT_DEFAULT_TARGET_TRIPLE ${COMPILER_RT_TEST_TARGET_TRIPLE})
-endif()
-
-string(REPLACE "-" ";" TARGET_TRIPLE_LIST ${COMPILER_RT_DEFAULT_TARGET_TRIPLE})
-list(GET TARGET_TRIPLE_LIST 0 COMPILER_RT_DEFAULT_TARGET_ARCH)
-list(GET TARGET_TRIPLE_LIST 1 COMPILER_RT_DEFAULT_TARGET_OS)
-list(GET TARGET_TRIPLE_LIST 2 COMPILER_RT_DEFAULT_TARGET_ABI)
-# Determine if test target triple is specified explicitly, and doesn't match the
-# default.
-if(NOT COMPILER_RT_DEFAULT_TARGET_TRIPLE STREQUAL TARGET_TRIPLE)
-  set(COMPILER_RT_HAS_EXPLICIT_DEFAULT_TARGET_TRIPLE TRUE)
-else()
-  set(COMPILER_RT_HAS_EXPLICIT_DEFAULT_TARGET_TRIPLE FALSE)
-endif()
+construct_compiler_rt_default_triple()
 if ("${COMPILER_RT_DEFAULT_TARGET_ABI}" STREQUAL "androideabi")
   set(ANDROID 1)
 endif()
-include(CompilerRTUtils)
 
 set(COMPILER_RT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(COMPILER_RT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
