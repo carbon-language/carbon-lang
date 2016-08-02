@@ -574,7 +574,7 @@ class LoopConstrainer {
 
   // Information about the original loop we started out with.
   Loop &OriginalLoop;
-  LoopInfo &OriginalLoopInfo;
+  LoopInfo &LI;
   const SCEV *LatchTakenCount;
   BasicBlock *OriginalPreheader;
 
@@ -594,9 +594,9 @@ public:
                   ScalarEvolution &SE, DominatorTree &DT,
                   InductiveRangeCheck::Range R)
       : F(*L.getHeader()->getParent()), Ctx(L.getHeader()->getContext()),
-        SE(SE), DT(DT), OriginalLoop(L), OriginalLoopInfo(LI),
-        LatchTakenCount(nullptr), OriginalPreheader(nullptr),
-        MainLoopPreheader(nullptr), Range(R), MainLoopStructure(LS) {}
+        SE(SE), DT(DT), OriginalLoop(L), LI(LI), LatchTakenCount(nullptr),
+        OriginalPreheader(nullptr), MainLoopPreheader(nullptr), Range(R),
+        MainLoopStructure(LS) {}
 
   // Entry point for the algorithm.  Returns true on success.
   bool run();
@@ -1149,7 +1149,7 @@ void LoopConstrainer::addToParentLoopIfNeeded(ArrayRef<BasicBlock *> BBs) {
     return;
 
   for (BasicBlock *BB : BBs)
-    ParentLoop->addBasicBlockToLoop(BB, OriginalLoopInfo);
+    ParentLoop->addBasicBlockToLoop(BB, LI);
 }
 
 bool LoopConstrainer::run() {
@@ -1277,7 +1277,7 @@ bool LoopConstrainer::run() {
   addToParentLoopIfNeeded(PostLoop.Blocks);
 
   DT.recalculate(F);
-  formLCSSARecursively(OriginalLoop, DT, &OriginalLoopInfo, &SE);
+  formLCSSARecursively(OriginalLoop, DT, &LI, &SE);
 
   return true;
 }
