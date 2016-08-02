@@ -111,6 +111,8 @@ if(COMPILER_RT_ENABLE_WERROR)
 endif()
 
 append_string_if(COMPILER_RT_HAS_STD_CXX11_FLAG -std=c++11 CMAKE_CXX_FLAGS)
+# we don't need to link with the C++ library
+append_string_if(COMPILER_RT_HAS_NOSTDLIB_FLAG -nostdlib CMAKE_CXX_FLAGS)
 
 # Emulate C99 and C++11's __func__ for MSVC prior to 2013 CTP.
 if(NOT COMPILER_RT_HAS_FUNC_SYMBOL)
