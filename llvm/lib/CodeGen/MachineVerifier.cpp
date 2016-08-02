@@ -72,6 +72,7 @@ namespace {
 
     // Avoid querying the MachineFunctionProperties for each operand.
     bool isFunctionRegBankSelected;
+    bool isFunctionSelected;
 
     typedef SmallVector<unsigned, 16> RegVector;
     typedef SmallVector<const uint32_t*, 4> RegMaskVector;
@@ -335,6 +336,8 @@ unsigned MachineVerifier::verify(MachineFunction &MF) {
 
   isFunctionRegBankSelected = MF.getProperties().hasProperty(
       MachineFunctionProperties::Property::RegBankSelected);
+  isFunctionSelected = MF.getProperties().hasProperty(
+      MachineFunctionProperties::Property::Selected);
 
   LiveVars = nullptr;
   LiveInts = nullptr;
@@ -887,6 +890,9 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
   // Check types.
   const unsigned NumTypes = MI->getNumTypes();
   if (isPreISelGenericOpcode(MCID.getOpcode())) {
+    if (isFunctionSelected)
+      report("Unexpected generic instruction in a Selected function", MI);
+
     if (NumTypes == 0)
       report("Generic instruction must have a type", MI);
   } else {
@@ -1003,7 +1009,15 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         const TargetRegisterClass *RC = MRI->getRegClassOrNull(Reg);
         if (!RC) {
           // This is a generic virtual register.
-          // It must have a size and it must not have a SubIdx.
+
+          // If we're post-Select, we can't have gvregs anymore.
+          if (isFunctionSelected) {
+            report("Generic virtual register invalid in a Selected function",
+                   MO, MONum);
+            return;
+          }
+
+          // The gvreg must have a size and it must not have a SubIdx.
           unsigned Size = MRI->getSize(Reg);
           if (!Size) {
             report("Generic virtual register must have a size", MO, MONum);
