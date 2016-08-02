@@ -859,9 +859,9 @@ bool LazyValueInfoCache::solveBlockValuePHINode(LVILatticeVal &BBLV,
   return true;
 }
 
-static bool getValueFromFromCondition(Value *Val, ICmpInst *ICI,
-                                      LVILatticeVal &Result,
-                                      bool isTrueDest = true);
+static bool getValueFromCondition(Value *Val, ICmpInst *ICI,
+                                  LVILatticeVal &Result,
+                                  bool isTrueDest = true);
 
 // If we can determine a constraint on the value given conditions assumed by
 // the program, intersect those constraints with BBLV
@@ -882,7 +882,7 @@ void LazyValueInfoCache::intersectAssumeBlockValueConstantRange(Value *Val,
     Value *C = I->getArgOperand(0);
     if (ICmpInst *ICI = dyn_cast<ICmpInst>(C)) {
       LVILatticeVal Result;
-      if (getValueFromFromCondition(Val, ICI, Result))
+      if (getValueFromCondition(Val, ICI, Result))
         BBLV = intersect(BBLV, Result);
     }
   }
@@ -956,11 +956,9 @@ bool LazyValueInfoCache::solveBlockValueSelect(LVILatticeVal &BBLV,
   // TODO: We could potentially refine an overdefined true value above.
   if (auto *ICI = dyn_cast<ICmpInst>(SI->getCondition())) {
     LVILatticeVal TrueValTaken, FalseValTaken;
-    if (!getValueFromFromCondition(SI->getTrueValue(), ICI,
-                                   TrueValTaken, true))
+    if (!getValueFromCondition(SI->getTrueValue(), ICI, TrueValTaken, true))
       TrueValTaken.markOverdefined();
-    if (!getValueFromFromCondition(SI->getFalseValue(), ICI,
-                                   FalseValTaken, false))
+    if (!getValueFromCondition(SI->getFalseValue(), ICI, FalseValTaken, false))
       FalseValTaken.markOverdefined();
 
     TrueVal = intersect(TrueVal, TrueValTaken);
@@ -1179,8 +1177,8 @@ bool LazyValueInfoCache::solveBlockValueBinaryOp(LVILatticeVal &BBLV,
   return true;
 }
 
-bool getValueFromFromCondition(Value *Val, ICmpInst *ICI,
-                               LVILatticeVal &Result, bool isTrueDest) {
+bool getValueFromCondition(Value *Val, ICmpInst *ICI, LVILatticeVal &Result,
+                           bool isTrueDest) {
   assert(ICI && "precondition");
   if (isa<Constant>(ICI->getOperand(1))) {
     if (ICI->isEquality() && ICI->getOperand(0) == Val) {
@@ -1248,7 +1246,7 @@ static bool getEdgeValueLocal(Value *Val, BasicBlock *BBFrom,
       // If the condition of the branch is an equality comparison, we may be
       // able to infer the value.
       if (ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition()))
-        if (getValueFromFromCondition(Val, ICI, Result, isTrueDest))
+        if (getValueFromCondition(Val, ICI, Result, isTrueDest))
           return true;
     }
   }
