@@ -129,37 +129,6 @@ INTERCEPTOR_WINAPI(DWORD, CreateThread,
                             asan_thread_start, t, thr_flags, tid);
 }
 
-namespace {
-BlockingMutex mu_for_thread_tracking(LINKER_INITIALIZED);
-
-void EnsureWorkerThreadRegistered() {
-  // FIXME: GetCurrentThread relies on TSD, which might not play well with
-  // system thread pools.  We might want to use something like reference
-  // counting to zero out GetCurrentThread() underlying storage when the last
-  // work item finishes?  Or can we disable reclaiming of threads in the pool?
-  BlockingMutexLock l(&mu_for_thread_tracking);
-  if (__asan::GetCurrentThread())
-    return;
-
-  AsanThread *t = AsanThread::Create(
-      /* start_routine */ nullptr, /* arg */ nullptr,
-      /* parent_tid */ -1, /* stack */ nullptr, /* detached */ true);
-  t->Init();
-  asanThreadRegistry().StartThread(t->tid(), 0, 0);
-  SetCurrentThread(t);
-}
-}  // namespace
-
-INTERCEPTOR_WINAPI(DWORD, NtWaitForWorkViaWorkerFactory, DWORD a, DWORD b) {
-  // NtWaitForWorkViaWorkerFactory is called from system worker pool threads to
-  // query work scheduled by BindIoCompletionCallback, QueueUserWorkItem, etc.
-  // System worker pool threads are created at arbitrary point in time and
-  // without using CreateThread, so we wrap NtWaitForWorkViaWorkerFactory
-  // instead and don't register a specific parent_tid/stack.
-  EnsureWorkerThreadRegistered();
-  return REAL(NtWaitForWorkViaWorkerFactory)(a, b);
-}
-
 // }}}
 
 namespace __asan {
@@ -174,12 +143,6 @@ void InitializePlatformInterceptors() {
   ASAN_INTERCEPT_FUNC(_except_handler3);
   ASAN_INTERCEPT_FUNC(_except_handler4);
 #endif
-
-  // NtWaitForWorkViaWorkerFactory is always linked dynamically.
-  CHECK(::__interception::OverrideFunction(
-      "NtWaitForWorkViaWorkerFactory",
-      (uptr)WRAP(NtWaitForWorkViaWorkerFactory),
-      (uptr *)&REAL(NtWaitForWorkViaWorkerFactory)));
 }
 
 void AsanApplyToGlobals(globals_op_fptr op, const void *needle) {

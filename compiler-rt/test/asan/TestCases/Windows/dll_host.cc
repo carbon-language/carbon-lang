@@ -24,7 +24,6 @@
 // IMPORT: __asan_wrap_HeapReAlloc
 // IMPORT: __asan_wrap_HeapSize
 // IMPORT: __asan_wrap_CreateThread
-// IMPORT: __asan_wrap_NtWaitForWorkViaWorkerFactory
 // IMPORT: __asan_wrap_RaiseException
 //
 // The exception handlers differ in 32-bit and 64-bit, so we ignore them:
