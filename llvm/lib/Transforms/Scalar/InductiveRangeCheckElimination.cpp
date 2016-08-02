@@ -570,6 +570,7 @@ class LoopConstrainer {
   Function &F;
   LLVMContext &Ctx;
   ScalarEvolution &SE;
+  DominatorTree &DT;
 
   // Information about the original loop we started out with.
   Loop &OriginalLoop;
@@ -590,11 +591,12 @@ class LoopConstrainer {
 
 public:
   LoopConstrainer(Loop &L, LoopInfo &LI, const LoopStructure &LS,
-                  ScalarEvolution &SE, InductiveRangeCheck::Range R)
+                  ScalarEvolution &SE, DominatorTree &DT,
+                  InductiveRangeCheck::Range R)
       : F(*L.getHeader()->getParent()), Ctx(L.getHeader()->getContext()),
-        SE(SE), OriginalLoop(L), OriginalLoopInfo(LI), LatchTakenCount(nullptr),
-        OriginalPreheader(nullptr), MainLoopPreheader(nullptr), Range(R),
-        MainLoopStructure(LS) {}
+        SE(SE), DT(DT), OriginalLoop(L), OriginalLoopInfo(LI),
+        LatchTakenCount(nullptr), OriginalPreheader(nullptr),
+        MainLoopPreheader(nullptr), Range(R), MainLoopStructure(LS) {}
 
   // Entry point for the algorithm.  Returns true on success.
   bool run();
@@ -1274,6 +1276,9 @@ bool LoopConstrainer::run() {
   addToParentLoopIfNeeded(PreLoop.Blocks);
   addToParentLoopIfNeeded(PostLoop.Blocks);
 
+  DT.recalculate(F);
+  formLCSSARecursively(OriginalLoop, DT, &OriginalLoopInfo, &SE);
+
   return true;
 }
 
@@ -1444,8 +1449,9 @@ bool InductiveRangeCheckElimination::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!SafeIterRange.hasValue())
     return false;
 
+  auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LoopConstrainer LC(*L, getAnalysis<LoopInfoWrapperPass>().getLoopInfo(), LS,
-                     SE, SafeIterRange.getValue());
+                     SE, DT, SafeIterRange.getValue());
   bool Changed = LC.run();
 
   if (Changed) {
