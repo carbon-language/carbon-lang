@@ -4946,10 +4946,11 @@ void LoopVectorizationLegality::collectLoopScalars() {
 
 void LoopVectorizationLegality::collectLoopUniforms() {
   // We now know that the loop is vectorizable!
-  // Collect variables that will remain uniform after vectorization.
+  // Collect instructions inside the loop that will remain uniform after
+  // vectorization.
 
-  // If V is not an instruction inside the current loop, it is a Value
-  // outside of the scope which we are interesting in.
+  // Global values, params and instructions outside of current loop are out of
+  // scope.
   auto isOutOfScope = [&](Value *V) -> bool {
     Instruction *I = dyn_cast<Instruction>(V);
     return (!I || !TheLoop->contains(I));
