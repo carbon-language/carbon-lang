@@ -43,6 +43,11 @@ public:
     return "MachineLegalizePass";
   }
 
+  MachineFunctionProperties getRequiredProperties() const override {
+    return MachineFunctionProperties().set(
+        MachineFunctionProperties::Property::IsSSA);
+  }
+
   bool runOnMachineFunction(MachineFunction &MF) override;
 };
 } // End namespace llvm.
