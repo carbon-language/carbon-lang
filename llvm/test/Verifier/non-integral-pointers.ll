@@ -43,3 +43,15 @@ define i64 @f_6(i8 addrspace(6)* %ptr) {
   %val = ptrtoint i8 addrspace(6)* %ptr to i64
   ret i64 %val
 }
+
+define i8 addrspace(4)* @f_7() {
+; CHECK: inttoptr not supported for non-integral pointers
+  ret i8 addrspace(4)* inttoptr (i64 50 to i8 addrspace(4)*)
+}
+
+@global0 = addrspace(4) constant i8 42
+
+define i64 @f_8() {
+; CHECK: ptrtoint not supported for non-integral pointers
+  ret i64 ptrtoint (i8 addrspace(4)* @global0 to i64)
+}
