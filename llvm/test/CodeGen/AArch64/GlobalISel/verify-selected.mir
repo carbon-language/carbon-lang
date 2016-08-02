@@ -1,7 +1,10 @@
-# RUN: not llc -mtriple aarch64-- -verify-machineinstrs -run-pass none -o /dev/null %s 2>&1 | FileCheck %s
+# RUN: not llc -verify-machineinstrs -run-pass none -o /dev/null %s 2>&1 | FileCheck %s
+# REQUIRES: global-isel
 
 --- |
 
+  target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
+  target triple = "aarch64--"
   define void @test() { ret void }
 
 ...
