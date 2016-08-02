@@ -14,5 +14,5 @@ T member;                         // CHECK: U member;
 };
 
 // RUN: cat %s > %t.cpp
-// RUN: clang-rename -offset=19 -new-name=U %t.cpp -i --
+// RUN: clang-rename -offset=19 -new-name=U %t.cpp -i -- -fno-delayed-template-parsing
 // RUN: sed 's,//.*,,' %t.cpp | FileCheck %s
