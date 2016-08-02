@@ -122,11 +122,14 @@ public:
   //   - generic and always legal (e.g., COPY)
   //   - target-specific
   //   - legal pre-isel generic instructions.
+  // RegBankSelected: In GlobalISel: the RegBankSelect pass ran and all generic
+  //  virtual registers have been assigned to a register bank.
   enum class Property : unsigned {
     IsSSA,
     TracksLiveness,
     AllVRegsAllocated,
     Legalized,
+    RegBankSelected,
     LastProperty,
   };
 

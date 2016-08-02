@@ -79,6 +79,9 @@ void MachineFunctionProperties::print(raw_ostream &ROS, bool OnlySet) const {
       case Property::Legalized:
         ROS << (HasProperty ? "" : "not ") << "legalized";
         break;
+      case Property::RegBankSelected:
+        ROS << (HasProperty ? "" : "not ") << "RegBank-selected";
+        break;
       default:
         break;
     }

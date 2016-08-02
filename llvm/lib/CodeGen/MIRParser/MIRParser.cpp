@@ -295,6 +295,9 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
 
   if (YamlMF.Legalized)
     MF.getProperties().set(MachineFunctionProperties::Property::Legalized);
+  if (YamlMF.RegBankSelected)
+    MF.getProperties().set(
+        MachineFunctionProperties::Property::RegBankSelected);
 
   PerFunctionMIParsingState PFS(MF, SM, IRSlots);
   if (initializeRegisterInfo(PFS, YamlMF))

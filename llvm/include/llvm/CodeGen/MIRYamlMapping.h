@@ -386,6 +386,7 @@ struct MachineFunction {
   bool AllVRegsAllocated = false;
   // GISel MachineFunctionProperties.
   bool Legalized = false;
+  bool RegBankSelected = false;
   // Register information
   bool IsSSA = false;
   bool TracksRegLiveness = false;
@@ -411,6 +412,7 @@ template <> struct MappingTraits<MachineFunction> {
     YamlIO.mapOptional("hasInlineAsm", MF.HasInlineAsm);
     YamlIO.mapOptional("allVRegsAllocated", MF.AllVRegsAllocated);
     YamlIO.mapOptional("legalized", MF.Legalized);
+    YamlIO.mapOptional("regBankSelected", MF.RegBankSelected);
     YamlIO.mapOptional("isSSA", MF.IsSSA);
     YamlIO.mapOptional("tracksRegLiveness", MF.TracksRegLiveness);
     YamlIO.mapOptional("tracksSubRegLiveness", MF.TracksSubRegLiveness);
