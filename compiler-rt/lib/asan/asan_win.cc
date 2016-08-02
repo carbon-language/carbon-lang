@@ -71,10 +71,10 @@ void __asan_default_on_error() {}
 }  // extern "C"
 
 // ---------------------- Windows-specific interceptors ---------------- {{{
-INTERCEPTOR_WINAPI(void, RaiseException, void *a, void *b, void *c, void *d) {
-  CHECK(REAL(RaiseException));
+INTERCEPTOR_WINAPI(void, RtlRaiseException, void *ExceptionRecord) {
+  CHECK(REAL(RtlRaiseException));
   __asan_handle_no_return();
-  REAL(RaiseException)(a, b, c, d);
+  REAL(RtlRaiseException)(ExceptionRecord);
 }
 
 
@@ -135,7 +135,10 @@ namespace __asan {
 
 void InitializePlatformInterceptors() {
   ASAN_INTERCEPT_FUNC(CreateThread);
-  ASAN_INTERCEPT_FUNC(RaiseException);
+  // RtlRaiseException is always linked dynamically.
+  CHECK(::__interception::OverrideFunction("RtlRaiseException",
+                                           (uptr)WRAP(RtlRaiseException),
+                                           (uptr *)&REAL(RtlRaiseException)));
 
 #ifdef _WIN64
   ASAN_INTERCEPT_FUNC(__C_specific_handler);
