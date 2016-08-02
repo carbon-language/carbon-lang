@@ -132,6 +132,13 @@ static unsigned getBranchMaxDisplacementBytes(unsigned Opc) {
 
   unsigned Bits = getBranchDisplacementBits(Opc);
   unsigned MaxOffs = ((1 << (Bits - 1)) - 1) << 2;
+
+  // Verify the displacement bits options have sane values.
+  // XXX: Is there a better place for this?
+  assert(MaxOffs >= 8 &&
+         "max branch displacement must be enough to jump"
+         "over conditional branch expansion");
+
   return MaxOffs;
 }
 
