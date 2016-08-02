@@ -2640,7 +2640,15 @@ def t2SMULTT : T2ThreeRegSMUL<0b001, 0b11, "smultt",
 def t2SMULWB : T2ThreeRegSMUL<0b011, 0b00, "smulwb", []>;
 def t2SMULWT : T2ThreeRegSMUL<0b011, 0b01, "smulwt", []>;
 
-class T2FourRegSMLA<bits<3> op22_20, bits<2> op5_4, string opc, list<dag> pattern>
+def : Thumb2DSPPat<(mul sext_16_node:$Rm, sext_16_node:$Rn),
+                   (t2SMULBB rGPR:$Rm, rGPR:$Rn)>;
+def : Thumb2DSPPat<(mul sext_16_node:$Rn, (sra rGPR:$Rm, (i32 16))),
+                   (t2SMULBT rGPR:$Rn, rGPR:$Rm)>;
+def : Thumb2DSPPat<(mul (sra rGPR:$Rn, (i32 16)), sext_16_node:$Rm),
+                   (t2SMULTB rGPR:$Rn, rGPR:$Rm)>;
+
+class T2FourRegSMLA<bits<3> op22_20, bits<2> op5_4, string opc,
+                    list<dag> pattern>
   : T2FourReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, rGPR:$Ra), IIC_iMUL16,
                opc, "\t$Rd, $Rn, $Rm, $Ra", pattern>,
     Requires<[IsThumb2, HasDSP, UseMulOps]> {
@@ -2666,6 +2674,15 @@ def t2SMLATT : T2FourRegSMLA<0b001, 0b11, "smlatt",
                                                  (sra rGPR:$Rm, (i32 16)))))]>;
 def t2SMLAWB : T2FourRegSMLA<0b011, 0b00, "smlawb", []>;
 def t2SMLAWT : T2FourRegSMLA<0b011, 0b01, "smlawt", []>;
+
+def : Thumb2DSPMulPat<(add rGPR:$Ra, (mul sext_16_node:$Rn, sext_16_node:$Rm)),
+                      (t2SMLABB rGPR:$Rn, rGPR:$Rm, rGPR:$Ra)>;
+def : Thumb2DSPMulPat<(add rGPR:$Ra,
+                        (mul sext_16_node:$Rn, (sra rGPR:$Rm, (i32 16)))),
+                      (t2SMLABT rGPR:$Rn, rGPR:$Rm, rGPR:$Ra)>;
+def : Thumb2DSPMulPat<(add rGPR:$Ra,
+                        (mul (sra rGPR:$Rn, (i32 16)), sext_16_node:$Rm)),
+                      (t2SMLATB rGPR:$Rn, rGPR:$Rm, rGPR:$Ra)>;
 
 class T2SMLAL<bits<3> op22_20, bits<4> op7_4, string opc, list<dag> pattern>
   : T2FourReg_mac<1, op22_20, op7_4,
