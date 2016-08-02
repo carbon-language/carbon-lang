@@ -12,4 +12,5 @@ add_clang_library(clangTidyMPIModule
   clangTidy
   clangTidyUtils
   clangTooling
+  clangStaticAnalyzerCheckers
   )
