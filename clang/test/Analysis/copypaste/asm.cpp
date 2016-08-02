@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -std=c++11 -analyzer-checker=alpha.clone.CloneChecker -verify %s
+// RUN: %clang_cc1 -triple x86_64-unknown-linux -analyze -analyzer-checker=alpha.clone.CloneChecker -verify %s
 
 // expected-no-diagnostics
 
