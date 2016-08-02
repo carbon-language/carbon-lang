@@ -70,6 +70,9 @@ namespace {
 
     unsigned foundErrors;
 
+    // Avoid querying the MachineFunctionProperties for each operand.
+    bool isFunctionRegBankSelected;
+
     typedef SmallVector<unsigned, 16> RegVector;
     typedef SmallVector<const uint32_t*, 4> RegMaskVector;
     typedef DenseSet<unsigned> RegSet;
@@ -329,6 +332,9 @@ unsigned MachineVerifier::verify(MachineFunction &MF) {
   TII = MF.getSubtarget().getInstrInfo();
   TRI = MF.getSubtarget().getRegisterInfo();
   MRI = &MF.getRegInfo();
+
+  isFunctionRegBankSelected = MF.getProperties().hasProperty(
+      MachineFunctionProperties::Property::RegBankSelected);
 
   LiveVars = nullptr;
   LiveInts = nullptr;
@@ -1003,8 +1009,18 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
             report("Generic virtual register must have a size", MO, MONum);
             return;
           }
-          // Make sure the register fits into its register bank if any.
+
           const RegisterBank *RegBank = MRI->getRegBankOrNull(Reg);
+
+          // If we're post-RegBankSelect, the gvreg must have a bank.
+          if (!RegBank && isFunctionRegBankSelected) {
+            report("Generic virtual register must have a bank in a "
+                   "RegBankSelected function",
+                   MO, MONum);
+            return;
+          }
+
+          // Make sure the register fits into its register bank if any.
           if (RegBank && RegBank->getSize() < Size) {
             report("Register bank is too small for virtual register", MO,
                    MONum);
