@@ -554,7 +554,13 @@ bool RegBankSelect::runOnMachineFunction(MachineFunction &MF) {
          MII != End;) {
       // MI might be invalidated by the assignment, so move the
       // iterator before hand.
-      assignInstr(*MII++);
+      MachineInstr &MI = *MII++;
+
+      // Ignore target-specific instructions: they should use proper regclasses.
+      if (isTargetSpecificOpcode(MI.getOpcode()))
+        continue;
+
+      assignInstr(MI);
     }
   }
   OptMode = SaveOptMode;

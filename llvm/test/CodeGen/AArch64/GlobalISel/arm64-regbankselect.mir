@@ -54,6 +54,8 @@
   entry:
     ret void
   }
+
+  define void @ignoreTargetSpecificInst() { ret void }
 ...
 
 ---
@@ -326,4 +328,29 @@ body: |
     %0(64) = COPY %x0
     %1(64) = COPY %x1
     %2(64) = G_OR <2 x s32> %0, %1
+...
+
+---
+# CHECK-LABEL: name: ignoreTargetSpecificInst
+name:            ignoreTargetSpecificInst
+isSSA:           true
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr64 }
+# CHECK-NEXT:  - { id: 1, class: gpr64 }
+registers:
+  - { id: 0, class: gpr64 }
+  - { id: 1, class: gpr64 }
+body: |
+  bb.0:
+    liveins: %x0
+
+    ; CHECK: %0 = COPY %x0
+    ; CHECK-NEXT: %1 = ADDXrr %0, %0
+    ; CHECK-NEXT: %x0 = COPY %1
+    ; CHECK-NEXT: RET_ReallyLR implicit %x0
+
+    %0 = COPY %x0
+    %1 = ADDXrr %0, %0
+    %x0 = COPY %1
+    RET_ReallyLR implicit %x0
 ...
