@@ -21,6 +21,7 @@
 # CHECK-LABEL: name: test_defaults
 # CHECK:      legalized: false
 # CHECK-NEXT: regBankSelected: false
+# CHECK-NEXT: selected: false
 name:            test_defaults
 body: |
   bb.0:
@@ -29,9 +30,11 @@ body: |
 # CHECK-LABEL: name: test
 # CHECK:      legalized: true
 # CHECK-NEXT: regBankSelected: true
+# CHECK-NEXT: selected: true
 name: test
 legalized: true
 regBankSelected: true
+selected: true
 body: |
   bb.0:
 ...
