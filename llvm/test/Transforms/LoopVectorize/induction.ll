@@ -248,6 +248,51 @@ for.end:
   ret void
 }
 
+; Make sure we scalarize the step vectors used for the pointer arithmetic. We
+; can't easily simplify vectorized step vectors. (Interleaved accesses.)
+;
+; for (int i = 0; i < n; ++i)
+;   p[i].f = a[i * 4]
+;
+; INTERLEAVE-LABEL: @scalarize_induction_variable_04(
+; INTERLEAVE: vector.body:
+; INTERLEAVE:   %[[i0:.+]] = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
+; INTERLEAVE:   %[[i1:.+]] = or i64 %[[i0]], 1
+; INTERLEAVE:   %[[i2:.+]] = or i64 %[[i0]], 2
+; INTERLEAVE:   %[[i3:.+]] = or i64 %[[i0]], 3
+; INTERLEAVE:   %[[i4:.+]] = or i64 %[[i0]], 4
+; INTERLEAVE:   %[[i5:.+]] = or i64 %[[i0]], 5
+; INTERLEAVE:   %[[i6:.+]] = or i64 %[[i0]], 6
+; INTERLEAVE:   %[[i7:.+]] = or i64 %[[i0]], 7
+; INTERLEAVE:   getelementptr inbounds %pair, %pair* %p, i64 %[[i0]], i32 1
+; INTERLEAVE:   getelementptr inbounds %pair, %pair* %p, i64 %[[i1]], i32 1
+; INTERLEAVE:   getelementptr inbounds %pair, %pair* %p, i64 %[[i2]], i32 1
+; INTERLEAVE:   getelementptr inbounds %pair, %pair* %p, i64 %[[i3]], i32 1
+; INTERLEAVE:   getelementptr inbounds %pair, %pair* %p, i64 %[[i4]], i32 1
+; INTERLEAVE:   getelementptr inbounds %pair, %pair* %p, i64 %[[i5]], i32 1
+; INTERLEAVE:   getelementptr inbounds %pair, %pair* %p, i64 %[[i6]], i32 1
+; INTERLEAVE:   getelementptr inbounds %pair, %pair* %p, i64 %[[i7]], i32 1
+
+define void @scalarize_induction_variable_04(i32* %a, %pair* %p, i32 %n) {
+entry:
+  br label %for.body
+
+for.body:
+  %i = phi i64 [ %i.next, %for.body ], [ 0, %entry]
+  %0 = shl nsw i64 %i, 2
+  %1 = getelementptr inbounds i32, i32* %a, i64 %0
+  %2 = load i32, i32* %1, align 1
+  %3 = getelementptr inbounds %pair, %pair* %p, i64 %i, i32 1
+  store i32 %2, i32* %3, align 1
+  %i.next = add nuw nsw i64 %i, 1
+  %4 = trunc i64 %i.next to i32
+  %cond = icmp eq i32 %4, %n
+  br i1 %cond, label %for.end, label %for.body
+
+for.end:
+  ret void
+}
+
 ; Make sure that the loop exit count computation does not overflow for i8 and
 ; i16. The exit count of these loops is i8/i16 max + 1. If we don't cast the
 ; induction variable to a bigger type the exit count computation will overflow

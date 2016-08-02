@@ -315,10 +315,8 @@ public:
   // that the cost model has chosen to ignore because they will not be
   // vectorized.
   void vectorize(LoopVectorizationLegality *L,
-                 const MapVector<Instruction *, uint64_t> &MinimumBitWidths,
-                 SmallPtrSetImpl<const Value *> &VecValuesToIgnore) {
+                 const MapVector<Instruction *, uint64_t> &MinimumBitWidths) {
     MinBWs = &MinimumBitWidths;
-    ValuesNotWidened = &VecValuesToIgnore;
     Legal = L;
     // Create a new empty loop. Unlink the old loop and connect the new one.
     createEmptyLoop();
@@ -612,10 +610,6 @@ protected:
   /// represented as. The vector equivalents of these values should be truncated
   /// to this type.
   const MapVector<Instruction *, uint64_t> *MinBWs;
-
-  /// A set of values that should not be widened. This is taken from
-  /// VecValuesToIgnore in the cost model.
-  SmallPtrSetImpl<const Value *> *ValuesNotWidened;
 
   LoopVectorizationLegality *Legal;
 
@@ -1435,8 +1429,11 @@ public:
   /// Returns true if the value V is uniform within the loop.
   bool isUniform(Value *V);
 
-  /// Returns true if this instruction will remain scalar after vectorization.
+  /// Returns true if \p I is known to be uniform after vectorization.
   bool isUniformAfterVectorization(Instruction *I) { return Uniforms.count(I); }
+
+  /// Returns true if \p I is known to be scalar after vectorization.
+  bool isScalarAfterVectorization(Instruction *I) { return Scalars.count(I); }
 
   /// Returns the information that we collected about runtime memory check.
   const RuntimePointerChecking *getRuntimePointerChecking() const {
@@ -1525,8 +1522,23 @@ private:
   /// transformation.
   bool canVectorizeWithIfConvert();
 
-  /// Collect the variables that need to stay uniform after vectorization.
+  /// Collect the instructions that are uniform after vectorization. An
+  /// instruction is uniform if we represent it with a single scalar value in
+  /// the vectorized loop corresponding to each vector iteration. Examples of
+  /// uniform instructions include pointer operands of consecutive or
+  /// interleaved memory accesses. Note that although uniformity implies an
+  /// instruction will be scalar, the reverse is not true. In general, a
+  /// scalarized instruction will be represented by VF scalar values in the
+  /// vectorized loop, each corresponding to an iteration of the original
+  /// scalar loop.
   void collectLoopUniforms();
+
+  /// Collect the instructions that are scalar after vectorization. An
+  /// instruction is scalar if it is known to be uniform or will be scalarized
+  /// during vectorization. Non-uniform scalarized instructions will be
+  /// represented by VF values in the vectorized loop, each corresponding to an
+  /// iteration of the original scalar loop.
+  void collectLoopScalars();
 
   /// Return true if all of the instructions in the block can be speculatively
   /// executed. \p SafePtrs is a list of addresses that are known to be legal
@@ -1604,9 +1616,12 @@ private:
   /// Allowed outside users. This holds the induction and reduction
   /// vars which can be accessed from outside the loop.
   SmallPtrSet<Value *, 4> AllowedExit;
-  /// This set holds the variables which are known to be uniform after
-  /// vectorization.
+
+  /// Holds the instructions known to be uniform after vectorization.
   SmallPtrSet<Instruction *, 4> Uniforms;
+
+  /// Holds the instructions known to be scalar after vectorization.
+  SmallPtrSet<Instruction *, 4> Scalars;
 
   /// Can we assume the absence of NaNs.
   bool HasFunNoNaNAttr;
@@ -1979,7 +1994,7 @@ void InnerLoopVectorizer::widenIntInduction(PHINode *IV, VectorParts &Entry,
   // create the phi node, we will splat the scalar induction variable in each
   // loop iteration.
   if (VF > 1 && IV->getType() == Induction->getType() && Step &&
-      !ValuesNotWidened->count(IV))
+      !Legal->isScalarAfterVectorization(IV))
     return createVectorIntInductionPHI(ID, Entry, TruncType);
 
   // The scalar value to broadcast. This will be derived from the canonical
@@ -2020,7 +2035,7 @@ void InnerLoopVectorizer::widenIntInduction(PHINode *IV, VectorParts &Entry,
   // addition of the scalar steps will not increase the number of instructions
   // in the loop in the common case prior to InstCombine. We will be trading
   // one vector extract for each scalar step.
-  if (VF > 1 && ValuesNotWidened->count(IV)) {
+  if (VF > 1 && Legal->isScalarAfterVectorization(IV)) {
     auto *EntryVal = Trunc ? cast<Value>(Trunc) : IV;
     buildScalarSteps(ScalarIV, Step, EntryVal);
   }
@@ -4557,9 +4572,6 @@ bool LoopVectorizationLegality::canVectorize() {
     return false;
   }
 
-  // Collect all of the variables that remain uniform after vectorization.
-  collectLoopUniforms();
-
   DEBUG(dbgs() << "LV: We can vectorize this loop"
                << (LAI->getRuntimePointerChecking()->Need
                        ? " (with a runtime bound check)"
@@ -4575,6 +4587,12 @@ bool LoopVectorizationLegality::canVectorize() {
   // Analyze interleaved memory accesses.
   if (UseInterleaved)
     InterleaveInfo.analyzeInterleaving(*getSymbolicStrides());
+
+  // Collect all instructions that are known to be uniform after vectorization.
+  collectLoopUniforms();
+
+  // Collect all instructions that are known to be scalar after vectorization.
+  collectLoopScalars();
 
   unsigned SCEVThreshold = VectorizeSCEVCheckThreshold;
   if (Hints->getForce() == LoopVectorizeHints::FK_Enabled)
@@ -4841,6 +4859,59 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
   return true;
 }
 
+void LoopVectorizationLegality::collectLoopScalars() {
+
+  // If an instruction is uniform after vectorization, it will remain scalar.
+  Scalars.insert(Uniforms.begin(), Uniforms.end());
+
+  // Collect the getelementptr instructions that will not be vectorized. A
+  // getelementptr instruction is only vectorized if it is used for a legal
+  // gather or scatter operation.
+  for (auto *BB : TheLoop->blocks())
+    for (auto &I : *BB) {
+      if (auto *GEP = dyn_cast<GetElementPtrInst>(&I)) {
+        Scalars.insert(GEP);
+        continue;
+      }
+      auto *Ptr = getPointerOperand(&I);
+      if (!Ptr)
+        continue;
+      auto *GEP = getGEPInstruction(Ptr);
+      if (GEP && isLegalGatherOrScatter(&I))
+        Scalars.erase(GEP);
+    }
+
+  // An induction variable will remain scalar if all users of the induction
+  // variable and induction variable update remain scalar.
+  auto *Latch = TheLoop->getLoopLatch();
+  for (auto &Induction : *getInductionVars()) {
+    auto *Ind = Induction.first;
+    auto *IndUpdate = cast<Instruction>(Ind->getIncomingValueForBlock(Latch));
+
+    // Determine if all users of the induction variable are scalar after
+    // vectorization.
+    auto ScalarInd = all_of(Ind->users(), [&](User *U) -> bool {
+      auto *I = cast<Instruction>(U);
+      return I == IndUpdate || !TheLoop->contains(I) || Scalars.count(I);
+    });
+    if (!ScalarInd)
+      continue;
+
+    // Determine if all users of the induction variable update instruction are
+    // scalar after vectorization.
+    auto ScalarIndUpdate = all_of(IndUpdate->users(), [&](User *U) -> bool {
+      auto *I = cast<Instruction>(U);
+      return I == Ind || !TheLoop->contains(I) || Scalars.count(I);
+    });
+    if (!ScalarIndUpdate)
+      continue;
+
+    // The induction variable and its update instruction will remain scalar.
+    Scalars.insert(Ind);
+    Scalars.insert(IndUpdate);
+  }
+}
+
 void LoopVectorizationLegality::collectLoopUniforms() {
   // We now know that the loop is vectorizable!
   // Collect variables that will remain uniform after vectorization.
@@ -4861,16 +4932,22 @@ void LoopVectorizationLegality::collectLoopUniforms() {
     DEBUG(dbgs() << "LV: Found uniform instruction: " << *Cmp << "\n");
   }
 
-  // Also add all consecutive pointer values; these values will be uniform
-  // after vectorization (and subsequent cleanup).
-  for (auto *BB : TheLoop->blocks()) {
+  // Add all consecutive pointer values; these values will be uniform after
+  // vectorization (and subsequent cleanup). Although non-consecutive, we also
+  // add the pointer operands of interleaved accesses since they are treated
+  // like consecutive pointers during vectorization.
+  for (auto *BB : TheLoop->blocks())
     for (auto &I : *BB) {
-      if (I.getType()->isPointerTy() && isConsecutivePtr(&I)) {
-        Worklist.insert(&I);
-        DEBUG(dbgs() << "LV: Found uniform instruction: " << I << "\n");
-      }
+      Instruction *Ptr = nullptr;
+      if (I.getType()->isPointerTy() && isConsecutivePtr(&I))
+        Ptr = &I;
+      else if (isAccessInterleaved(&I))
+        Ptr = cast<Instruction>(getPointerOperand(&I));
+      else
+        continue;
+      Worklist.insert(Ptr);
+      DEBUG(dbgs() << "LV: Found uniform instruction: " << *Ptr << "\n");
     }
-  }
 
   // Expand Worklist in topological order: whenever a new instruction
   // is added , its users should be either already inside Worklist, or
@@ -6258,44 +6335,11 @@ void LoopVectorizationCostModel::collectValuesToIgnore() {
     VecValuesToIgnore.insert(Casts.begin(), Casts.end());
   }
 
-  // Insert uniform instruction into VecValuesToIgnore.
-  // Collect non-gather/scatter and non-consecutive ptr in NonConsecutivePtr.
-  SmallPtrSet<Instruction *, 8> NonConsecutivePtr;
-  for (auto *BB : TheLoop->getBlocks()) {
-    for (auto &I : *BB) {
-      if (Legal->isUniformAfterVectorization(&I))
+  // Insert values known to be scalar into VecValuesToIgnore.
+  for (auto *BB : TheLoop->getBlocks())
+    for (auto &I : *BB)
+      if (Legal->isScalarAfterVectorization(&I))
         VecValuesToIgnore.insert(&I);
-      Instruction *PI = dyn_cast_or_null<Instruction>(getPointerOperand(&I));
-      if (PI && !Legal->isConsecutivePtr(PI) &&
-          !Legal->isLegalGatherOrScatter(&I))
-        NonConsecutivePtr.insert(PI);
-    }
-  }
-
-  // Ignore induction phis that are either used in uniform instructions or
-  // NonConsecutivePtr.
-  for (auto &Induction : *Legal->getInductionVars()) {
-    auto *PN = Induction.first;
-    auto *UpdateV = PN->getIncomingValueForBlock(TheLoop->getLoopLatch());
-
-    if (std::all_of(PN->user_begin(), PN->user_end(),
-                    [&](User *U) -> bool {
-                      Instruction *UI = dyn_cast<Instruction>(U);
-                      return U == UpdateV || !TheLoop->contains(UI) ||
-                             Legal->isUniformAfterVectorization(UI) ||
-                             NonConsecutivePtr.count(UI);
-                    }) &&
-        std::all_of(UpdateV->user_begin(), UpdateV->user_end(),
-                    [&](User *U) -> bool {
-                      Instruction *UI = dyn_cast<Instruction>(U);
-                      return U == PN || !TheLoop->contains(UI) ||
-                             Legal->isUniformAfterVectorization(UI) ||
-                             NonConsecutivePtr.count(UI);
-                    })) {
-      VecValuesToIgnore.insert(PN);
-      VecValuesToIgnore.insert(UpdateV);
-    }
-  }
 }
 
 void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
@@ -6645,7 +6689,7 @@ bool LoopVectorizePass::processLoop(Loop *L) {
     // If we decided that it is not legal to vectorize the loop, then
     // interleave it.
     InnerLoopUnroller Unroller(L, PSE, LI, DT, TLI, TTI, AC, ORE, IC);
-    Unroller.vectorize(&LVL, CM.MinBWs, CM.VecValuesToIgnore);
+    Unroller.vectorize(&LVL, CM.MinBWs);
 
     ORE->emitOptimizationRemark(LV_NAME, L,
                                 Twine("interleaved loop (interleaved count: ") +
@@ -6653,7 +6697,7 @@ bool LoopVectorizePass::processLoop(Loop *L) {
   } else {
     // If we decided that it is *legal* to vectorize the loop, then do it.
     InnerLoopVectorizer LB(L, PSE, LI, DT, TLI, TTI, AC, ORE, VF.Width, IC);
-    LB.vectorize(&LVL, CM.MinBWs, CM.VecValuesToIgnore);
+    LB.vectorize(&LVL, CM.MinBWs);
     ++LoopsVectorized;
 
     // Add metadata to disable runtime unrolling a scalar loop when there are
