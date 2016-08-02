@@ -108,8 +108,7 @@ bool WebAssemblyPeephole::runOnMachineFunction(MachineFunction &MF) {
 
   MachineRegisterInfo &MRI = MF.getRegInfo();
   WebAssemblyFunctionInfo &MFI = *MF.getInfo<WebAssemblyFunctionInfo>();
-  const auto &Subtarget = MF.getSubtarget<WebAssemblySubtarget>();
-  const auto &TII = *Subtarget.getInstrInfo();
+  const auto &TII = *MF.getSubtarget<WebAssemblySubtarget>().getInstrInfo();
   const WebAssemblyTargetLowering &TLI =
       *MF.getSubtarget<WebAssemblySubtarget>().getTargetLowering();
   auto &LibInfo = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
@@ -188,32 +187,24 @@ bool WebAssemblyPeephole::runOnMachineFunction(MachineFunction &MF) {
             WebAssembly::COPY_LOCAL_F64);
         break;
       case WebAssembly::RETURN_v16i8:
-        Changed |=
-            Subtarget.hasSIMD128() &&
-            MaybeRewriteToFallthrough(MI, MBB, MF, MFI, MRI, TII,
-                                      WebAssembly::FALLTHROUGH_RETURN_v16i8,
-                                      WebAssembly::COPY_LOCAL_V128);
+        Changed |= MaybeRewriteToFallthrough(
+            MI, MBB, MF, MFI, MRI, TII, WebAssembly::FALLTHROUGH_RETURN_v16i8,
+            WebAssembly::COPY_LOCAL_V128);
         break;
       case WebAssembly::RETURN_v8i16:
-        Changed |=
-            Subtarget.hasSIMD128() &&
-            MaybeRewriteToFallthrough(MI, MBB, MF, MFI, MRI, TII,
-                                      WebAssembly::FALLTHROUGH_RETURN_v8i16,
-                                      WebAssembly::COPY_LOCAL_V128);
+        Changed |= MaybeRewriteToFallthrough(
+            MI, MBB, MF, MFI, MRI, TII, WebAssembly::FALLTHROUGH_RETURN_v8i16,
+            WebAssembly::COPY_LOCAL_V128);
         break;
       case WebAssembly::RETURN_v4i32:
-        Changed |=
-            Subtarget.hasSIMD128() &&
-            MaybeRewriteToFallthrough(MI, MBB, MF, MFI, MRI, TII,
-                                      WebAssembly::FALLTHROUGH_RETURN_v4i32,
-                                      WebAssembly::COPY_LOCAL_V128);
+        Changed |= MaybeRewriteToFallthrough(
+            MI, MBB, MF, MFI, MRI, TII, WebAssembly::FALLTHROUGH_RETURN_v4i32,
+            WebAssembly::COPY_LOCAL_V128);
         break;
       case WebAssembly::RETURN_v4f32:
-        Changed |=
-            Subtarget.hasSIMD128() &&
-            MaybeRewriteToFallthrough(MI, MBB, MF, MFI, MRI, TII,
-                                      WebAssembly::FALLTHROUGH_RETURN_v4f32,
-                                      WebAssembly::COPY_LOCAL_V128);
+        Changed |= MaybeRewriteToFallthrough(
+            MI, MBB, MF, MFI, MRI, TII, WebAssembly::FALLTHROUGH_RETURN_v4f32,
+            WebAssembly::COPY_LOCAL_V128);
         break;
       case WebAssembly::RETURN_VOID:
         if (!DisableWebAssemblyFallthroughReturnOpt &&
