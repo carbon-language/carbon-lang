@@ -40,6 +40,7 @@
 name:            add_s32_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
@@ -65,6 +66,7 @@ body:             |
 name:            add_s64_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
@@ -90,6 +92,7 @@ body:             |
 name:            sub_s32_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
@@ -115,6 +118,7 @@ body:             |
 name:            sub_s64_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
@@ -140,6 +144,7 @@ body:             |
 name:            or_s32_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
@@ -165,6 +170,7 @@ body:             |
 name:            or_s64_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
@@ -190,6 +196,7 @@ body:             |
 name:            xor_s32_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
@@ -215,6 +222,7 @@ body:             |
 name:            xor_s64_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
@@ -240,6 +248,7 @@ body:             |
 name:            and_s32_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
@@ -265,6 +274,7 @@ body:             |
 name:            and_s64_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
@@ -289,6 +299,7 @@ body:             |
 name:            unconditional_br
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:  body:
 # CHECK:   bb.0:
@@ -306,6 +317,7 @@ body:             |
 name:            load_s64_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64sp }
@@ -331,6 +343,7 @@ body:             |
 name:            load_s32_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64sp }
@@ -356,6 +369,7 @@ body:             |
 name:            store_s64_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64sp }
@@ -383,6 +397,7 @@ body:             |
 name:            store_s32_gpr
 isSSA:           true
 legalized:       true
+regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64sp }

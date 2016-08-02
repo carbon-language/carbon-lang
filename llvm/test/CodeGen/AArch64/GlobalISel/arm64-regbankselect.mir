@@ -56,6 +56,8 @@
   }
 
   define void @ignoreTargetSpecificInst() { ret void }
+
+  define void @regBankSelected_property() { ret void }
 ...
 
 ---
@@ -364,4 +366,18 @@ body: |
     %1 = ADDXrr %0, %0
     %x0 = COPY %1
     RET_ReallyLR implicit %x0
+...
+
+---
+# Check that we set the "regBankSelected" property.
+# CHECK-LABEL: name: regBankSelected_property
+# CHECK: legalized: true
+# CHECK: regBankSelected: true
+# CHECK: isSSA: true
+name:            regBankSelected_property
+isSSA:           true
+legalized:       true
+regBankSelected: false
+body:             |
+  bb.0:
 ...
