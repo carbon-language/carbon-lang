@@ -3904,9 +3904,9 @@ multiclass avx512_binop_s_sae<bits<8> opc, string OpcodeStr, SDNode OpNode,
                               XD, VEX_W, EVEX_4V, VEX_LIG, EVEX_CD8<64, CD8VT1>;
 }
 defm VADD : avx512_binop_s_round<0x58, "vadd", fadd, X86faddRnd, SSE_ALU_ITINS_S, 1>;
-defm VMUL : avx512_binop_s_round<0x59, "vmul", fmul, X86fmulRnd, SSE_ALU_ITINS_S, 1>;
+defm VMUL : avx512_binop_s_round<0x59, "vmul", fmul, X86fmulRnd, SSE_MUL_ITINS_S, 1>;
 defm VSUB : avx512_binop_s_round<0x5C, "vsub", fsub, X86fsubRnd, SSE_ALU_ITINS_S, 0>;
-defm VDIV : avx512_binop_s_round<0x5E, "vdiv", fdiv, X86fdivRnd, SSE_ALU_ITINS_S, 0>;
+defm VDIV : avx512_binop_s_round<0x5E, "vdiv", fdiv, X86fdivRnd, SSE_DIV_ITINS_S, 0>;
 defm VMIN : avx512_binop_s_sae  <0x5D, "vmin", X86fmin, X86fminRnd, SSE_ALU_ITINS_S, 0>;
 defm VMAX : avx512_binop_s_sae  <0x5F, "vmax", X86fmax, X86fmaxRnd, SSE_ALU_ITINS_S, 0>;
 
