@@ -73,8 +73,10 @@ class AArch64BranchRelaxation : public MachineFunctionPass {
   MachineBasicBlock *splitBlockBeforeInstr(MachineInstr &MI);
   void adjustBlockOffsets(MachineBasicBlock &MBB);
   bool isBlockInRange(const MachineInstr &MI, const MachineBasicBlock &BB) const;
-  void invertConditionalBranch(MachineInstr &MI) const;
-  unsigned insertInvertedConditionalBranch(MachineBasicBlock &MBB,
+
+  unsigned insertInvertedConditionalBranch(MachineBasicBlock &SrcBB,
+                                           MachineBasicBlock::iterator InsPt,
+                                           const DebugLoc &DL,
                                            const MachineInstr &OldBr,
                                            MachineBasicBlock &NewDestBB) const;
   unsigned insertUnconditionalBranch(MachineBasicBlock &MBB,
@@ -226,7 +228,7 @@ AArch64BranchRelaxation::splitBlockBeforeInstr(MachineInstr &MI) {
   // Note the new unconditional branch is not being recorded.
   // There doesn't seem to be meaningful DebugInfo available; this doesn't
   // correspond to anything in the source.
-  BuildMI(OrigBB, DebugLoc(), TII->get(AArch64::B)).addMBB(NewBB);
+  insertUnconditionalBranch(*OrigBB, *NewBB, DebugLoc());
 
   // Insert an entry into BlockInfo to align it properly with the block numbers.
   BlockInfo.insert(BlockInfo.begin() + NewBB->getNumber(), BasicBlockInfo());
@@ -315,25 +317,19 @@ static inline void invertBccCondition(MachineInstr &MI) {
   CCOp.setImm(AArch64CC::getInvertedCondCode(CC));
 }
 
-/// Invert the branch condition of \p MI and change the destination to \p NewB
-void AArch64BranchRelaxation::invertConditionalBranch(MachineInstr &MI) const {
-  MI.setDesc(TII->get(getOppositeConditionOpcode(MI.getOpcode())));
-
-  if (MI.getOpcode() == AArch64::Bcc)
-    invertBccCondition(MI);
-}
-
 /// Insert a conditional branch at the end of \p MBB to \p NewDestBB, using the
 /// inverse condition of branch \p OldBr.
 /// \returns The number of bytes added to the block.
 unsigned AArch64BranchRelaxation::insertInvertedConditionalBranch(
-  MachineBasicBlock &MBB,
+  MachineBasicBlock &SrcMBB,
+  MachineBasicBlock::iterator InsPt,
+  const DebugLoc &DL,
   const MachineInstr &OldBr,
   MachineBasicBlock &NewDestBB) const {
   unsigned OppositeCondOpc = getOppositeConditionOpcode(OldBr.getOpcode());
 
   MachineInstrBuilder MIB =
-    BuildMI(&MBB, OldBr.getDebugLoc(), TII->get(OppositeCondOpc))
+    BuildMI(SrcMBB, InsPt, DL, TII->get(OppositeCondOpc))
     .addOperand(OldBr.getOperand(0));
 
   unsigned Opc = OldBr.getOpcode();
@@ -414,8 +410,13 @@ bool AArch64BranchRelaxation::fixupConditionalBranch(MachineInstr &MI) {
         DEBUG(dbgs() << "  Invert condition and swap its destination with "
                      << *BMI);
         changeBranchDestBlock(*BMI, *DestBB);
-        invertConditionalBranch(MI);
-        changeBranchDestBlock(MI, *NewDest);
+
+        int NewSize =
+          insertInvertedConditionalBranch(*MBB, MI.getIterator(),
+                                          MI.getDebugLoc(), MI, *NewDest);
+        int OldSize = TII->getInstSizeInBytes(MI);
+        BlockInfo[MBB->getNumber()].Size += (NewSize - OldSize);
+        MI.eraseFromParent();
         return true;
       }
     }
@@ -447,15 +448,16 @@ bool AArch64BranchRelaxation::fixupConditionalBranch(MachineInstr &MI) {
                << ", invert condition and change dest. to BB#"
                << NextBB.getNumber() << '\n');
 
-  // Insert a new conditional branch and a new unconditional branch.
-  BlockInfo[MBB->getNumber()].Size
-    += insertInvertedConditionalBranch(*MBB, MI, NextBB);
+  unsigned &MBBSize = BlockInfo[MBB->getNumber()].Size;
 
-  BlockInfo[MBB->getNumber()].Size +=
-    insertUnconditionalBranch(*MBB, *DestBB, MI.getDebugLoc());
+  // Insert a new conditional branch and a new unconditional branch.
+  MBBSize += insertInvertedConditionalBranch(*MBB, MBB->end(),
+                                             MI.getDebugLoc(), MI, NextBB);
+
+  MBBSize += insertUnconditionalBranch(*MBB, *DestBB, MI.getDebugLoc());
 
   // Remove the old conditional branch.  It may or may not still be in MBB.
-  BlockInfo[MBB->getNumber()].Size -= TII->getInstSizeInBytes(MI);
+  MBBSize -= TII->getInstSizeInBytes(MI);
   MI.eraseFromParent();
 
   // Finally, keep the block offsets up to date.
