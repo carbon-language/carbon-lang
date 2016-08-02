@@ -30,6 +30,7 @@ def err_drv_cuda_version_too_low : Error<
   "GPU arch %1 requires CUDA version at least %3, but installation at %0 is %2. "
   "Use --cuda-path to specify a different CUDA install, or pass "
   "--no-cuda-version-check.">;
+def err_drv_cuda_nvptx_host : Error<"unsupported use of NVPTX for host compilation.">;
 def err_drv_invalid_thread_model_for_target : Error<
   "invalid thread model '%0' in '%1' for this target">;
 def err_drv_invalid_linker_name : Error<
