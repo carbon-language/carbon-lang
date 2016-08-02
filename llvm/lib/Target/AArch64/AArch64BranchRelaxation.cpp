@@ -84,12 +84,12 @@ class AArch64BranchRelaxation : public MachineFunctionPass {
 
   bool relaxBranchInstructions();
   void scanFunction();
-  MachineBasicBlock *splitBlockBeforeInstr(MachineInstr *MI);
+  MachineBasicBlock *splitBlockBeforeInstr(MachineInstr &MI);
   void adjustBlockOffsets(MachineBasicBlock &MBB);
-  bool isBlockInRange(MachineInstr *MI, MachineBasicBlock *BB, unsigned Disp);
-  bool fixupConditionalBranch(MachineInstr *MI);
+  bool isBlockInRange(MachineInstr &MI, MachineBasicBlock &BB, unsigned Disp);
+  bool fixupConditionalBranch(MachineInstr &MI);
   void computeBlockSize(const MachineBasicBlock &MBB);
-  unsigned getInstrOffset(MachineInstr *MI) const;
+  unsigned getInstrOffset(MachineInstr &MI) const;
   void dumpBBs();
   void verify();
 
@@ -180,8 +180,8 @@ void AArch64BranchRelaxation::computeBlockSize(const MachineBasicBlock &MBB) {
 /// getInstrOffset - Return the current offset of the specified machine
 /// instruction from the start of the function.  This offset changes as stuff is
 /// moved around inside the function.
-unsigned AArch64BranchRelaxation::getInstrOffset(MachineInstr *MI) const {
-  MachineBasicBlock *MBB = MI->getParent();
+unsigned AArch64BranchRelaxation::getInstrOffset(MachineInstr &MI) const {
+  MachineBasicBlock *MBB = MI.getParent();
 
   // The offset is composed of two things: the sum of the sizes of all MBB's
   // before this instruction's block, and the offset from the start of the block
@@ -189,10 +189,11 @@ unsigned AArch64BranchRelaxation::getInstrOffset(MachineInstr *MI) const {
   unsigned Offset = BlockInfo[MBB->getNumber()].Offset;
 
   // Sum instructions before MI in MBB.
-  for (MachineBasicBlock::iterator I = MBB->begin(); &*I != MI; ++I) {
+  for (MachineBasicBlock::iterator I = MBB->begin(); &*I != &MI; ++I) {
     assert(I != MBB->end() && "Didn't find MI in its own basic block?");
     Offset += TII->getInstSizeInBytes(*I);
   }
+
   return Offset;
 }
 
@@ -217,8 +218,8 @@ void AArch64BranchRelaxation::adjustBlockOffsets(MachineBasicBlock &Start) {
 /// and must be updated by the caller! Other transforms follow using this
 /// utility function, so no point updating now rather than waiting.
 MachineBasicBlock *
-AArch64BranchRelaxation::splitBlockBeforeInstr(MachineInstr *MI) {
-  MachineBasicBlock *OrigBB = MI->getParent();
+AArch64BranchRelaxation::splitBlockBeforeInstr(MachineInstr &MI) {
+  MachineBasicBlock *OrigBB = MI.getParent();
 
   // Create a new MBB for the code after the OrigBB.
   MachineBasicBlock *NewBB =
@@ -226,7 +227,7 @@ AArch64BranchRelaxation::splitBlockBeforeInstr(MachineInstr *MI) {
   MF->insert(++OrigBB->getIterator(), NewBB);
 
   // Splice the instructions starting with MI over to NewBB.
-  NewBB->splice(NewBB->end(), OrigBB, MI, OrigBB->end());
+  NewBB->splice(NewBB->end(), OrigBB, MI.getIterator(), OrigBB->end());
 
   // Add an unconditional branch from OrigBB to NewBB.
   // Note the new unconditional branch is not being recorded.
@@ -258,18 +259,18 @@ AArch64BranchRelaxation::splitBlockBeforeInstr(MachineInstr *MI) {
 
 /// isBlockInRange - Returns true if the distance between specific MI and
 /// specific BB can fit in MI's displacement field.
-bool AArch64BranchRelaxation::isBlockInRange(MachineInstr *MI,
-                                             MachineBasicBlock *DestBB,
+bool AArch64BranchRelaxation::isBlockInRange(MachineInstr &MI,
+                                             MachineBasicBlock &DestBB,
                                              unsigned Bits) {
   unsigned MaxOffs = ((1 << (Bits - 1)) - 1) << 2;
   unsigned BrOffset = getInstrOffset(MI);
-  unsigned DestOffset = BlockInfo[DestBB->getNumber()].Offset;
+  unsigned DestOffset = BlockInfo[DestBB.getNumber()].Offset;
 
-  DEBUG(dbgs() << "Branch of destination BB#" << DestBB->getNumber()
-               << " from BB#" << MI->getParent()->getNumber()
-               << " max delta=" << MaxOffs << " from " << getInstrOffset(MI)
+  DEBUG(dbgs() << "Branch of destination BB#" << DestBB.getNumber()
+               << " from BB#" << MI.getParent()->getNumber()
+               << " max delta=" << MaxOffs << " from " << BrOffset
                << " to " << DestOffset << " offset "
-               << int(DestOffset - BrOffset) << "\t" << *MI);
+               << static_cast<int>(DestOffset - BrOffset) << '\t' << MI);
 
   // Branch before the Dest.
   if (BrOffset <= DestOffset)
@@ -294,21 +295,21 @@ static bool isConditionalBranch(unsigned Opc) {
   }
 }
 
-static MachineBasicBlock *getDestBlock(MachineInstr *MI) {
-  switch (MI->getOpcode()) {
+static MachineBasicBlock *getDestBlock(MachineInstr &MI) {
+  switch (MI.getOpcode()) {
   default:
     llvm_unreachable("unexpected opcode!");
   case AArch64::TBZW:
   case AArch64::TBNZW:
   case AArch64::TBZX:
   case AArch64::TBNZX:
-    return MI->getOperand(2).getMBB();
+    return MI.getOperand(2).getMBB();
   case AArch64::CBZW:
   case AArch64::CBNZW:
   case AArch64::CBZX:
   case AArch64::CBNZX:
   case AArch64::Bcc:
-    return MI->getOperand(1).getMBB();
+    return MI.getOperand(1).getMBB();
   }
 }
 
@@ -347,17 +348,17 @@ static unsigned getBranchDisplacementBits(unsigned Opc) {
   }
 }
 
-static inline void invertBccCondition(MachineInstr *MI) {
-  assert(MI->getOpcode() == AArch64::Bcc && "Unexpected opcode!");
-  AArch64CC::CondCode CC = (AArch64CC::CondCode)MI->getOperand(0).getImm();
+static inline void invertBccCondition(MachineInstr &MI) {
+  assert(MI.getOpcode() == AArch64::Bcc && "Unexpected opcode!");
+  AArch64CC::CondCode CC = (AArch64CC::CondCode)MI.getOperand(0).getImm();
   CC = AArch64CC::getInvertedCondCode(CC);
-  MI->getOperand(0).setImm((int64_t)CC);
+  MI.getOperand(0).setImm((int64_t)CC);
 }
 
 /// fixupConditionalBranch - Fix up a conditional branch whose destination is
 /// too far away to fit in its displacement field. It is converted to an inverse
 /// conditional branch + an unconditional branch to the destination.
-bool AArch64BranchRelaxation::fixupConditionalBranch(MachineInstr *MI) {
+bool AArch64BranchRelaxation::fixupConditionalBranch(MachineInstr &MI) {
   MachineBasicBlock *DestBB = getDestBlock(MI);
 
   // Add an unconditional branch to the destination and invert the branch
@@ -371,11 +372,11 @@ bool AArch64BranchRelaxation::fixupConditionalBranch(MachineInstr *MI) {
   // If the branch is at the end of its MBB and that has a fall-through block,
   // direct the updated conditional branch to the fall-through block. Otherwise,
   // split the MBB before the next instruction.
-  MachineBasicBlock *MBB = MI->getParent();
+  MachineBasicBlock *MBB = MI.getParent();
   MachineInstr *BMI = &MBB->back();
-  bool NeedSplit = (BMI != MI) || !BBHasFallthrough(MBB);
+  bool NeedSplit = (BMI != &MI) || !BBHasFallthrough(MBB);
 
-  if (BMI != MI) {
+  if (BMI != &MI) {
     if (std::next(MachineBasicBlock::iterator(MI)) ==
             std::prev(MBB->getLastNonDebugInstr()) &&
         BMI->getOpcode() == AArch64::B) {
@@ -387,20 +388,20 @@ bool AArch64BranchRelaxation::fixupConditionalBranch(MachineInstr *MI) {
       // bne L2
       // b   L1
       MachineBasicBlock *NewDest = BMI->getOperand(0).getMBB();
-      if (isBlockInRange(MI, NewDest,
-                         getBranchDisplacementBits(MI->getOpcode()))) {
+      if (isBlockInRange(MI, *NewDest,
+                         getBranchDisplacementBits(MI.getOpcode()))) {
         DEBUG(dbgs() << "  Invert condition and swap its destination with "
                      << *BMI);
         BMI->getOperand(0).setMBB(DestBB);
-        unsigned OpNum = (MI->getOpcode() == AArch64::TBZW ||
-                          MI->getOpcode() == AArch64::TBNZW ||
-                          MI->getOpcode() == AArch64::TBZX ||
-                          MI->getOpcode() == AArch64::TBNZX)
+        unsigned OpNum = (MI.getOpcode() == AArch64::TBZW ||
+                          MI.getOpcode() == AArch64::TBNZW ||
+                          MI.getOpcode() == AArch64::TBZX ||
+                          MI.getOpcode() == AArch64::TBNZX)
                              ? 2
                              : 1;
-        MI->getOperand(OpNum).setMBB(NewDest);
-        MI->setDesc(TII->get(getOppositeConditionOpcode(MI->getOpcode())));
-        if (MI->getOpcode() == AArch64::Bcc)
+        MI.getOperand(OpNum).setMBB(NewDest);
+        MI.setDesc(TII->get(getOppositeConditionOpcode(MI.getOpcode())));
+        if (MI.getOpcode() == AArch64::Bcc)
           invertBccCondition(MI);
         return true;
       }
@@ -432,23 +433,24 @@ bool AArch64BranchRelaxation::fixupConditionalBranch(MachineInstr *MI) {
                << ", invert condition and change dest. to BB#"
                << NextBB->getNumber() << "\n");
 
+  unsigned OppositeCondOpc = getOppositeConditionOpcode(MI.getOpcode());
   // Insert a new conditional branch and a new unconditional branch.
-  MachineInstrBuilder MIB = BuildMI(
-      MBB, DebugLoc(), TII->get(getOppositeConditionOpcode(MI->getOpcode())))
-                                .addOperand(MI->getOperand(0));
-  if (MI->getOpcode() == AArch64::TBZW || MI->getOpcode() == AArch64::TBNZW ||
-      MI->getOpcode() == AArch64::TBZX || MI->getOpcode() == AArch64::TBNZX)
-    MIB.addOperand(MI->getOperand(1));
-  if (MI->getOpcode() == AArch64::Bcc)
-    invertBccCondition(MIB);
+  MachineInstrBuilder MIB = BuildMI(MBB, DebugLoc(), TII->get(OppositeCondOpc))
+    .addOperand(MI.getOperand(0));
+
+  if (MI.getOpcode() == AArch64::TBZW || MI.getOpcode() == AArch64::TBNZW ||
+      MI.getOpcode() == AArch64::TBZX || MI.getOpcode() == AArch64::TBNZX)
+    MIB.addOperand(MI.getOperand(1));
+  if (MI.getOpcode() == AArch64::Bcc)
+    invertBccCondition(*MIB);
   MIB.addMBB(NextBB);
   BlockInfo[MBB->getNumber()].Size += TII->getInstSizeInBytes(MBB->back());
   BuildMI(MBB, DebugLoc(), TII->get(AArch64::B)).addMBB(DestBB);
   BlockInfo[MBB->getNumber()].Size += TII->getInstSizeInBytes(MBB->back());
 
   // Remove the old conditional branch.  It may or may not still be in MBB.
-  BlockInfo[MI->getParent()->getNumber()].Size -= TII->getInstSizeInBytes(*MI);
-  MI->eraseFromParent();
+  BlockInfo[MI.getParent()->getNumber()].Size -= TII->getInstSizeInBytes(MI);
+  MI.eraseFromParent();
 
   // Finally, keep the block offsets up to date.
   adjustBlockOffsets(*MBB);
@@ -461,11 +463,15 @@ bool AArch64BranchRelaxation::relaxBranchInstructions() {
   // end() for termination.
   for (MachineFunction::iterator I = MF->begin(); I != MF->end(); ++I) {
     MachineBasicBlock &MBB = *I;
-    MachineInstr &MI = *MBB.getFirstTerminator();
+    MachineBasicBlock::iterator J = MBB.getFirstTerminator();
+    if (J == MBB.end())
+      continue;
+
+    MachineInstr &MI = *J;
     if (isConditionalBranch(MI.getOpcode()) &&
-        !isBlockInRange(&MI, getDestBlock(&MI),
+        !isBlockInRange(MI, *getDestBlock(MI),
                         getBranchDisplacementBits(MI.getOpcode()))) {
-      fixupConditionalBranch(&MI);
+      fixupConditionalBranch(MI);
       ++NumRelaxed;
       Changed = true;
     }
