@@ -3946,23 +3946,26 @@ defm VMAXCSDZ : avx512_comutable_binop_s<0x5F, "vmaxsd", f64x_info, X86fmaxc,
                                 EVEX_CD8<64, CD8VT1>;
 
 multiclass avx512_fp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                            X86VectorVTInfo _, bit IsCommutable> {
+                            X86VectorVTInfo _, OpndItins itins,
+                            bit IsCommutable> {
   let ExeDomain = _.ExeDomain in {
   defm rr: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                   (ins _.RC:$src1, _.RC:$src2), OpcodeStr##_.Suffix,
                   "$src2, $src1", "$src1, $src2",
-                  (_.VT (OpNode _.RC:$src1, _.RC:$src2))>, EVEX_4V;
+                  (_.VT (OpNode _.RC:$src1, _.RC:$src2)), itins.rr,
+                  IsCommutable>, EVEX_4V;
   defm rm: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                   (ins _.RC:$src1, _.MemOp:$src2), OpcodeStr##_.Suffix,
                   "$src2, $src1", "$src1, $src2",
-                  (OpNode _.RC:$src1, (_.LdFrag addr:$src2))>, EVEX_4V;
+                  (OpNode _.RC:$src1, (_.LdFrag addr:$src2)), itins.rm>,
+                  EVEX_4V;
   defm rmb: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                    (ins _.RC:$src1, _.ScalarMemOp:$src2), OpcodeStr##_.Suffix,
                    "${src2}"##_.BroadcastStr##", $src1",
                    "$src1, ${src2}"##_.BroadcastStr,
                    (OpNode  _.RC:$src1, (_.VT (X86VBroadcast
-                                              (_.ScalarLdFrag addr:$src2))))>,
-                   EVEX_4V, EVEX_B;
+                                              (_.ScalarLdFrag addr:$src2)))),
+                   itins.rm>, EVEX_4V, EVEX_B;
   }
 }
 
@@ -3988,29 +3991,30 @@ multiclass avx512_fp_sae_packed<bits<8> opc, string OpcodeStr, SDNode OpNodeRnd,
 }
 
 multiclass avx512_fp_binop_p<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                             Predicate prd, bit IsCommutable = 0> {
+                             Predicate prd, SizeItins itins,
+                             bit IsCommutable = 0> {
   let Predicates = [prd] in {
   defm PSZ : avx512_fp_packed<opc, OpcodeStr, OpNode, v16f32_info,
-                              IsCommutable>, EVEX_V512, PS,
+                              itins.s, IsCommutable>, EVEX_V512, PS,
                               EVEX_CD8<32, CD8VF>;
   defm PDZ : avx512_fp_packed<opc, OpcodeStr, OpNode, v8f64_info,
-                              IsCommutable>, EVEX_V512, PD, VEX_W,
+                              itins.d, IsCommutable>, EVEX_V512, PD, VEX_W,
                               EVEX_CD8<64, CD8VF>;
   }
 
     // Define only if AVX512VL feature is present.
   let Predicates = [prd, HasVLX] in {
     defm PSZ128 : avx512_fp_packed<opc, OpcodeStr, OpNode, v4f32x_info,
-                                   IsCommutable>, EVEX_V128, PS,
+                                   itins.s, IsCommutable>, EVEX_V128, PS,
                                    EVEX_CD8<32, CD8VF>;
     defm PSZ256 : avx512_fp_packed<opc, OpcodeStr, OpNode, v8f32x_info,
-                                   IsCommutable>, EVEX_V256, PS,
+                                   itins.s, IsCommutable>, EVEX_V256, PS,
                                    EVEX_CD8<32, CD8VF>;
     defm PDZ128 : avx512_fp_packed<opc, OpcodeStr, OpNode, v2f64x_info,
-                                   IsCommutable>, EVEX_V128, PD, VEX_W,
+                                   itins.d, IsCommutable>, EVEX_V128, PD, VEX_W,
                                    EVEX_CD8<64, CD8VF>;
     defm PDZ256 : avx512_fp_packed<opc, OpcodeStr, OpNode, v4f64x_info,
-                                   IsCommutable>, EVEX_V256, PD, VEX_W,
+                                   itins.d, IsCommutable>, EVEX_V256, PD, VEX_W,
                                    EVEX_CD8<64, CD8VF>;
   }
 }
@@ -4029,26 +4033,36 @@ multiclass avx512_fp_binop_p_sae<bits<8> opc, string OpcodeStr, SDNode OpNodeRnd
                               EVEX_V512, PD, VEX_W,EVEX_CD8<64, CD8VF>;
 }
 
-defm VADD : avx512_fp_binop_p<0x58, "vadd", fadd, HasAVX512, 1>,
+defm VADD : avx512_fp_binop_p<0x58, "vadd", fadd, HasAVX512,
+                              SSE_ALU_ITINS_P, 1>,
             avx512_fp_binop_p_round<0x58, "vadd", X86faddRnd>;
-defm VMUL : avx512_fp_binop_p<0x59, "vmul", fmul, HasAVX512, 1>,
+defm VMUL : avx512_fp_binop_p<0x59, "vmul", fmul, HasAVX512,
+                              SSE_MUL_ITINS_P, 1>,
             avx512_fp_binop_p_round<0x59, "vmul", X86fmulRnd>;
-defm VSUB : avx512_fp_binop_p<0x5C, "vsub", fsub, HasAVX512>,
+defm VSUB : avx512_fp_binop_p<0x5C, "vsub", fsub, HasAVX512, SSE_ALU_ITINS_P>,
             avx512_fp_binop_p_round<0x5C, "vsub", X86fsubRnd>;
-defm VDIV : avx512_fp_binop_p<0x5E, "vdiv", fdiv, HasAVX512>,
+defm VDIV : avx512_fp_binop_p<0x5E, "vdiv", fdiv, HasAVX512, SSE_DIV_ITINS_P>,
             avx512_fp_binop_p_round<0x5E, "vdiv", X86fdivRnd>;
-defm VMIN : avx512_fp_binop_p<0x5D, "vmin", X86fmin, HasAVX512, 0>,
+defm VMIN : avx512_fp_binop_p<0x5D, "vmin", X86fmin, HasAVX512,
+                              SSE_ALU_ITINS_P, 0>,
             avx512_fp_binop_p_sae<0x5D, "vmin", X86fminRnd>;
-defm VMAX : avx512_fp_binop_p<0x5F, "vmax", X86fmax, HasAVX512, 0>,
+defm VMAX : avx512_fp_binop_p<0x5F, "vmax", X86fmax, HasAVX512,
+                              SSE_ALU_ITINS_P, 0>,
             avx512_fp_binop_p_sae<0x5F, "vmax", X86fmaxRnd>;
 let isCodeGenOnly = 1 in {
-  defm VMINC : avx512_fp_binop_p<0x5D, "vmin", X86fminc, HasAVX512, 1>;
-  defm VMAXC : avx512_fp_binop_p<0x5F, "vmax", X86fmaxc, HasAVX512, 1>;
+  defm VMINC : avx512_fp_binop_p<0x5D, "vmin", X86fminc, HasAVX512,
+                                 SSE_ALU_ITINS_P, 1>;
+  defm VMAXC : avx512_fp_binop_p<0x5F, "vmax", X86fmaxc, HasAVX512,
+                                 SSE_ALU_ITINS_P, 1>;
 }
-defm VAND  : avx512_fp_binop_p<0x54, "vand", X86fand, HasDQI, 1>;
-defm VANDN : avx512_fp_binop_p<0x55, "vandn", X86fandn, HasDQI, 0>;
-defm VOR   : avx512_fp_binop_p<0x56, "vor", X86for, HasDQI, 1>;
-defm VXOR  : avx512_fp_binop_p<0x57, "vxor", X86fxor, HasDQI, 1>;
+defm VAND  : avx512_fp_binop_p<0x54, "vand", X86fand, HasDQI,
+                               SSE_ALU_ITINS_P, 1>;
+defm VANDN : avx512_fp_binop_p<0x55, "vandn", X86fandn, HasDQI,
+                               SSE_ALU_ITINS_P, 0>;
+defm VOR   : avx512_fp_binop_p<0x56, "vor", X86for, HasDQI,
+                               SSE_ALU_ITINS_P, 1>;
+defm VXOR  : avx512_fp_binop_p<0x57, "vxor", X86fxor, HasDQI,
+                               SSE_ALU_ITINS_P, 1>;
 
 multiclass avx512_fp_scalef_p<bits<8> opc, string OpcodeStr, SDNode OpNode,
                             X86VectorVTInfo _> {
@@ -7707,8 +7721,10 @@ def : Pat<(v2f64 (X86VBroadcast (loadf64 addr:$src))),
 //===----------------------------------------------------------------------===//
 // AVX-512 - Unpack Instructions
 //===----------------------------------------------------------------------===//
-defm VUNPCKH : avx512_fp_binop_p<0x15, "vunpckh", X86Unpckh, HasAVX512>;
-defm VUNPCKL : avx512_fp_binop_p<0x14, "vunpckl", X86Unpckl, HasAVX512>;
+defm VUNPCKH : avx512_fp_binop_p<0x15, "vunpckh", X86Unpckh, HasAVX512,
+                                 SSE_ALU_ITINS_S>;
+defm VUNPCKL : avx512_fp_binop_p<0x14, "vunpckl", X86Unpckl, HasAVX512,
+                                 SSE_ALU_ITINS_S>;
 
 defm VPUNPCKLBW : avx512_binop_rm_vl_b<0x60, "vpunpcklbw", X86Unpckl,
                                        SSE_INTALU_ITINS_P, HasBWI>;
