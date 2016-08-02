@@ -34,9 +34,7 @@
           ;; Run clang-rename via bash.
           (shell-command rename-command)
           ;; Reload buffer.
-          (lambda ()
-            (interactive)
-            (revert-buffer t t))
+          (revert-buffer t t)
     )
   )
 )
