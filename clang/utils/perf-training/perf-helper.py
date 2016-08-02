@@ -75,13 +75,12 @@ def dtrace(args):
       target = "oneshot$target:::entry"
   else:
       target = "pid$target:::entry"
-  predicate = '%s/probemod=="%s"/' % (target, os.path.basename(cmd[0]))
   log_timestamp = 'printf("dtrace-TS: %d\\n", timestamp)'
   if opts.use_ustack:
       action = 'ustack(1);'
   else:
       action = 'printf("dtrace-Symbol: %s\\n", probefunc);'
-  dtrace_script = "%s { %s; %s }" % (predicate, log_timestamp, action)
+  dtrace_script = "%s { %s; %s }" % (target, log_timestamp, action)
 
   dtrace_args = []
   if not os.geteuid() == 0:
