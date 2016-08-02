@@ -1113,15 +1113,14 @@ public:
 
     if (IsCall)
       return CS.getCalledValue() == Other.CS.getCalledValue();
-    else
-      return Loc == Other.Loc;
+    return Loc == Other.Loc;
   }
 
 private:
   // FIXME: MSVC 2013 does not properly implement C++11 union rules, once we
   // require newer versions, this should be made an anonymous union again.
-    ImmutableCallSite CS;
-    MemoryLocation Loc;
+  ImmutableCallSite CS;
+  MemoryLocation Loc;
 };
 
 template <> struct DenseMapInfo<MemoryLocOrCall> {
@@ -1136,10 +1135,8 @@ template <> struct DenseMapInfo<MemoryLocOrCall> {
       return hash_combine(MLOC.IsCall,
                           DenseMapInfo<const Value *>::getHashValue(
                               MLOC.getCS().getCalledValue()));
-    else
-      return hash_combine(
-          MLOC.IsCall,
-          DenseMapInfo<MemoryLocation>::getHashValue(MLOC.getLoc()));
+    return hash_combine(
+        MLOC.IsCall, DenseMapInfo<MemoryLocation>::getHashValue(MLOC.getLoc()));
   }
   static bool isEqual(const MemoryLocOrCall &LHS, const MemoryLocOrCall &RHS) {
     return LHS == RHS;
@@ -1243,7 +1240,7 @@ void MemorySSA::OptimizeUses::optimizeUsesInBlock(
 
     MemoryLocOrCall UseMLOC(MU);
     auto &LocInfo = LocStackInfo[UseMLOC];
-    // If the pop epoch changed, if means we've removed stuff from top of
+    // If the pop epoch changed, it means we've removed stuff from top of
     // stack due to changing blocks. We may have to reset the lower bound or
     // last kill info.
     if (LocInfo.PopEpoch != PopEpoch) {
@@ -1280,9 +1277,10 @@ void MemorySSA::OptimizeUses::optimizeUsesInBlock(
     unsigned long UpperBound = VersionStack.size() - 1;
 
     if (UpperBound - LocInfo.LowerBound > MaxCheckLimit) {
-      DEBUG(dbgs() << "We are being asked to check up to "
-                   << UpperBound - LocInfo.LowerBound
-                   << " loads and stores, so we didn't.\n");
+      DEBUG(dbgs() << "MemorySSA skipping optimization of " << *MU << " ("
+                   << *(MU->getMemoryInst()) << ")"
+                   << " because there are " << UpperBound - LocInfo.LowerBound
+                   << " stores to disambiguate\n");
       // Because we did not walk, LastKill is no longer valid, as this may
       // have been a kill.
       LocInfo.LastKillValid = false;
