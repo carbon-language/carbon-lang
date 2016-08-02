@@ -26,6 +26,9 @@ def err_drv_cuda_bad_gpu_arch : Error<"Unsupported CUDA gpu architecture: %0">;
 def err_drv_no_cuda_installation : Error<
   "cannot find CUDA installation.  Provide its path via --cuda-path, or pass "
   "-nocudainc to build without CUDA includes.">;
+def err_drv_no_cuda_libdevice : Error<
+  "cannot find libdevice for %0. Provide path to different CUDA installation "
+  "via --cuda-path, or pass -nocudalib to build without linking with libdevice.">;
 def err_drv_cuda_version_too_low : Error<
   "GPU arch %1 requires CUDA version at least %3, but installation at %0 is %2. "
   "Use --cuda-path to specify a different CUDA install, or pass "
