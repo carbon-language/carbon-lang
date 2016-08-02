@@ -435,6 +435,9 @@ protected:
   void widenIntInduction(PHINode *IV, VectorParts &Entry,
                          TruncInst *Trunc = nullptr);
 
+  /// Returns true if we should generate a scalar version of \p IV.
+  bool needsScalarInduction(Instruction *IV) const;
+
   /// When we go over instructions in the basic block we rely on previous
   /// values within the current basic block or on loop invariant values.
   /// When we widen (vectorize) values we place them in the map. If the values
@@ -1970,6 +1973,16 @@ void InnerLoopVectorizer::createVectorIntInductionPHI(
   VecInd->addIncoming(LastInduction, LoopVectorLatch);
 }
 
+bool InnerLoopVectorizer::needsScalarInduction(Instruction *IV) const {
+  if (Legal->isScalarAfterVectorization(IV))
+    return true;
+  auto isScalarInst = [&](User *U) -> bool {
+    auto *I = cast<Instruction>(U);
+    return (OrigLoop->contains(I) && Legal->isScalarAfterVectorization(I));
+  };
+  return any_of(IV->users(), isScalarInst);
+}
+
 void InnerLoopVectorizer::widenIntInduction(PHINode *IV, VectorParts &Entry,
                                             TruncInst *Trunc) {
 
@@ -1982,8 +1995,24 @@ void InnerLoopVectorizer::widenIntInduction(PHINode *IV, VectorParts &Entry,
   // If a truncate instruction was provided, get the smaller type.
   auto *TruncType = Trunc ? cast<IntegerType>(Trunc->getType()) : nullptr;
 
+  // The scalar value to broadcast. This will be derived from the canonical
+  // induction variable.
+  Value *ScalarIV = nullptr;
+
   // The step of the induction.
   Value *Step = nullptr;
+
+  // The value from the original loop to which we are mapping the new induction
+  // variable.
+  Instruction *EntryVal = Trunc ? cast<Instruction>(Trunc) : IV;
+
+  // True if we have vectorized the induction variable.
+  auto VectorizedIV = false;
+
+  // Determine if we want a scalar version of the induction variable. This is
+  // true if the induction variable itself is not widened, or if it has at
+  // least one user in the loop that is not widened.
+  auto NeedsScalarIV = VF > 1 && needsScalarInduction(EntryVal);
 
   // If the induction variable has a constant integer step value, go ahead and
   // get it now.
@@ -1994,40 +2023,45 @@ void InnerLoopVectorizer::widenIntInduction(PHINode *IV, VectorParts &Entry,
   // create the phi node, we will splat the scalar induction variable in each
   // loop iteration.
   if (VF > 1 && IV->getType() == Induction->getType() && Step &&
-      !Legal->isScalarAfterVectorization(IV))
-    return createVectorIntInductionPHI(ID, Entry, TruncType);
+      !Legal->isScalarAfterVectorization(EntryVal)) {
+    createVectorIntInductionPHI(ID, Entry, TruncType);
+    VectorizedIV = true;
+  }
 
-  // The scalar value to broadcast. This will be derived from the canonical
-  // induction variable.
-  Value *ScalarIV = nullptr;
-
-  // Define the scalar induction variable and step values. If we were given a
-  // truncation type, truncate the canonical induction variable and constant
-  // step. Otherwise, derive these values from the induction descriptor.
-  if (TruncType) {
-    assert(Step && "Truncation requires constant integer step");
-    auto StepInt = cast<ConstantInt>(Step)->getSExtValue();
-    ScalarIV = Builder.CreateCast(Instruction::Trunc, Induction, TruncType);
-    Step = ConstantInt::getSigned(TruncType, StepInt);
-  } else {
-    ScalarIV = Induction;
-    auto &DL = OrigLoop->getHeader()->getModule()->getDataLayout();
-    if (IV != OldInduction) {
-      ScalarIV = Builder.CreateSExtOrTrunc(ScalarIV, IV->getType());
-      ScalarIV = ID.transform(Builder, ScalarIV, PSE.getSE(), DL);
-      ScalarIV->setName("offset.idx");
-    }
-    if (!Step) {
-      SCEVExpander Exp(*PSE.getSE(), DL, "induction");
-      Step = Exp.expandCodeFor(ID.getStep(), ID.getStep()->getType(),
-                               &*Builder.GetInsertPoint());
+  // If we haven't yet vectorized the induction variable, or if we will create
+  // a scalar one, we need to define the scalar induction variable and step
+  // values. If we were given a truncation type, truncate the canonical
+  // induction variable and constant step. Otherwise, derive these values from
+  // the induction descriptor.
+  if (!VectorizedIV || NeedsScalarIV) {
+    if (TruncType) {
+      assert(Step && "Truncation requires constant integer step");
+      auto StepInt = cast<ConstantInt>(Step)->getSExtValue();
+      ScalarIV = Builder.CreateCast(Instruction::Trunc, Induction, TruncType);
+      Step = ConstantInt::getSigned(TruncType, StepInt);
+    } else {
+      ScalarIV = Induction;
+      auto &DL = OrigLoop->getHeader()->getModule()->getDataLayout();
+      if (IV != OldInduction) {
+        ScalarIV = Builder.CreateSExtOrTrunc(ScalarIV, IV->getType());
+        ScalarIV = ID.transform(Builder, ScalarIV, PSE.getSE(), DL);
+        ScalarIV->setName("offset.idx");
+      }
+      if (!Step) {
+        SCEVExpander Exp(*PSE.getSE(), DL, "induction");
+        Step = Exp.expandCodeFor(ID.getStep(), ID.getStep()->getType(),
+                                 &*Builder.GetInsertPoint());
+      }
     }
   }
 
-  // Splat the scalar induction variable, and build the necessary step vectors.
-  Value *Broadcasted = getBroadcastInstrs(ScalarIV);
-  for (unsigned Part = 0; Part < UF; ++Part)
-    Entry[Part] = getStepVector(Broadcasted, VF * Part, Step);
+  // If we haven't yet vectorized the induction variable, splat the scalar
+  // induction variable, and build the necessary step vectors.
+  if (!VectorizedIV) {
+    Value *Broadcasted = getBroadcastInstrs(ScalarIV);
+    for (unsigned Part = 0; Part < UF; ++Part)
+      Entry[Part] = getStepVector(Broadcasted, VF * Part, Step);
+  }
 
   // If an induction variable is only used for counting loop iterations or
   // calculating addresses, it doesn't need to be widened. Create scalar steps
@@ -2035,10 +2069,8 @@ void InnerLoopVectorizer::widenIntInduction(PHINode *IV, VectorParts &Entry,
   // addition of the scalar steps will not increase the number of instructions
   // in the loop in the common case prior to InstCombine. We will be trading
   // one vector extract for each scalar step.
-  if (VF > 1 && Legal->isScalarAfterVectorization(IV)) {
-    auto *EntryVal = Trunc ? cast<Value>(Trunc) : IV;
+  if (NeedsScalarIV)
     buildScalarSteps(ScalarIV, Step, EntryVal);
-  }
 }
 
 Value *InnerLoopVectorizer::getStepVector(Value *Val, int StartIdx, Value *Step,
