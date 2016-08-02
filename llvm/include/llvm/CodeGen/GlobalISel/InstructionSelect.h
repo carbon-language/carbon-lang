@@ -37,6 +37,11 @@ public:
         .set(MachineFunctionProperties::Property::RegBankSelected);
   }
 
+  MachineFunctionProperties getSetProperties() const override {
+    return MachineFunctionProperties().set(
+        MachineFunctionProperties::Property::Selected);
+  }
+
   InstructionSelect();
 
   bool runOnMachineFunction(MachineFunction &MF) override;

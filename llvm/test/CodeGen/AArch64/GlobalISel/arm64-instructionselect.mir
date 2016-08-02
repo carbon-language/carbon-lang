@@ -31,6 +31,8 @@
   define void @store_s64_gpr(i64* %addr) { ret void }
   define void @store_s32_gpr(i32* %addr) { ret void }
 
+  define void @selected_property() { ret void }
+
 ...
 
 ---
@@ -418,4 +420,20 @@ body:             |
     %1(32) = COPY %w1
     G_STORE { s32, p0 }  %1, %0 :: (store 4 into %ir.addr)
 
+...
+
+---
+# Check that we set the "selected" property.
+# CHECK-LABEL: name: selected_property
+# CHECK: legalized: true
+# CHECK-NEXT: regBankSelected: true
+# CHECK-NEXT: selected: true
+# CHECK-NEXT: isSSA: true
+name:            selected_property
+isSSA:           true
+legalized:       true
+regBankSelected: true
+selected:        false
+body:             |
+  bb.0:
 ...

@@ -85,20 +85,6 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
 
   assert(MF.size() == NumBlocks && "Inserting blocks is not supported yet");
 
-  // Check that we did select everything. Do this separately to make sure we
-  // didn't miss any newly inserted instructions.
-  // FIXME: This (and other checks) should move into a verifier, predicated on
-  // a "post-isel" MachineFunction property. That would also let us selectively
-  // enable it depending on build configuration.
-  for (MachineBasicBlock &MBB : MF) {
-    for (MachineInstr &MI : MBB) {
-      if (isPreISelGenericOpcode(MI.getOpcode())) {
-        reportSelectionError(
-            MI, "Generic instruction survived instruction selection");
-      }
-    }
-  }
-
   // Now that selection is complete, there are no more generic vregs.
   // FIXME: We're still discussing what to do with the vreg->size map:
   // it's somewhat redundant (with the def MIs type size), but having to
