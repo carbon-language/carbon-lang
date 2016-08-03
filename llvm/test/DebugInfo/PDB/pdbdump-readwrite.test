@@ -1,0 +1,4 @@
+; RUN: llvm-pdbdump pdb2yaml -dbi-module-info -dbi-module-source-info \
+; RUN:   -dbi-stream -pdb-stream -stream-directory -stream-metadata \
+; RUN:   %p/Inputs/empty.pdb > %t.1
+; RUN: llvm-pdbdump yaml2pdb -pdb=%t.2 %t.1
