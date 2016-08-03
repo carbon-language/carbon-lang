@@ -2227,13 +2227,14 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
       }
     }
     break;
-  case Instruction::Add:
+  case Instruction::Add: {
     // Replace ((add A, B) != C) with (A != C-B) if B & C are constants.
-    // FIXME: Vectors are excluded by ConstantInt.
-    if (ConstantInt *BOp1C = dyn_cast<ConstantInt>(BOp1)) {
-      if (BO->hasOneUse())
-        return new ICmpInst(ICI.getPredicate(), BOp0,
-                            ConstantExpr::getSub(RHS, BOp1C));
+    const APInt *BOC;
+    if (match(BOp1, m_APInt(BOC))) {
+      if (BO->hasOneUse()) {
+        Constant *SubC = ConstantExpr::getSub(RHS, cast<Constant>(BOp1));
+        return new ICmpInst(ICI.getPredicate(), BOp0, SubC);
+      }
     } else if (*RHSV == 0) {
       // Replace ((add A, B) != 0) with (A != -B) if A or B is
       // efficiently invertible, or if the add has just this one use.
@@ -2248,6 +2249,7 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
       }
     }
     break;
+  }
   case Instruction::Xor:
     if (BO->hasOneUse()) {
       if (Constant *BOC = dyn_cast<Constant>(BOp1)) {

@@ -264,11 +264,9 @@ define i1 @test21(i32 %x) {
   ret i1 %y
 }
 
-; FIXME: Vectors should fold the same way.
 define <2 x i1> @test21vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test21vec(
-; CHECK-NEXT:    [[T:%.*]] = add <2 x i32> %x, <i32 4, i32 4>
-; CHECK-NEXT:    [[Y:%.*]] = icmp eq <2 x i32> [[T]], <i32 123, i32 123>
+; CHECK-NEXT:    [[Y:%.*]] = icmp eq <2 x i32> %x, <i32 119, i32 119>
 ; CHECK-NEXT:    ret <2 x i1> [[Y]]
 ;
   %t = add <2 x i32> %x, <i32 4, i32 4>
