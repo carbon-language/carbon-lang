@@ -160,20 +160,22 @@ void LinkerScript<ELFT>::createSections(
   OutputSections = Out;
 
   for (auto &P : getSectionMap()) {
-    std::vector<InputSectionBase<ELFT> *> Sections;
     StringRef OutputName = P.first;
-    const InputSectionDescription *I = P.second;
-    for (InputSectionBase<ELFT> *S : getInputSections(I)) {
-      if (OutputName == "/DISCARD/") {
+    const InputSectionDescription *Cmd = P.second;
+    std::vector<InputSectionBase<ELFT> *> Sections = getInputSections(Cmd);
+
+    if (OutputName == "/DISCARD/") {
+      for (InputSectionBase<ELFT> *S : Sections) {
         S->Live = false;
         reportDiscarded(S);
-        continue;
       }
-      Sections.push_back(S);
+      continue;
     }
-    if (I->Sort != SortKind::None)
+
+    if (Cmd->Sort != SortKind::None)
       std::stable_sort(Sections.begin(), Sections.end(),
-                       SectionsSorter<ELFT>(I->Sort));
+                       SectionsSorter<ELFT>(Cmd->Sort));
+
     for (InputSectionBase<ELFT> *S : Sections)
       addSection(Factory, *Out, S, OutputName);
   }
