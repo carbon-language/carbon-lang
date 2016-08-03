@@ -481,7 +481,11 @@ TEST(Interception, PatchableFunction) {
   EXPECT_TRUE(TestFunctionPatching(kPatchableCode3, override));
 #endif
   EXPECT_TRUE(TestFunctionPatching(kPatchableCode4, override));
+#if SANITIZER_WINDOWS64
+  EXPECT_FALSE(TestFunctionPatching(kPatchableCode5, override));
+#else
   EXPECT_TRUE(TestFunctionPatching(kPatchableCode5, override));
+#endif
 
   EXPECT_FALSE(TestFunctionPatching(kUnpatchableCode1, override));
   EXPECT_FALSE(TestFunctionPatching(kUnpatchableCode2, override));
