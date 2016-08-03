@@ -2203,22 +2203,23 @@ Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &ICI,
 /// Simplify icmp_eq and icmp_ne instructions with binary operator LHS and
 /// integer constant RHS.
 Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
-  // FIXME: If we use m_APInt() instead of m_ConstantInt(), it would enable
-  // vector types with constant splat vectors to be optimized too.
   BinaryOperator *BO;
-  ConstantInt *RHS;
+  const APInt *RHSV;
+  // FIXME: Some of these folds could work with arbitrary constants, but this
+  // match is limited to scalars and vector splat constants.
   if (!ICI.isEquality() || !match(ICI.getOperand(0), m_BinOp(BO)) ||
-      !match(ICI.getOperand(1), m_ConstantInt(RHS)))
+      !match(ICI.getOperand(1), m_APInt(RHSV)))
     return nullptr;
 
-  const APInt &RHSV = RHS->getValue();
+  Constant *RHS = cast<Constant>(ICI.getOperand(1));
   bool isICMP_NE = ICI.getPredicate() == ICmpInst::ICMP_NE;
   Value *BOp0 = BO->getOperand(0), *BOp1 = BO->getOperand(1);
 
   switch (BO->getOpcode()) {
   case Instruction::SRem:
     // If we have a signed (X % (2^c)) == 0, turn it into an unsigned one.
-    if (RHSV == 0 && isa<ConstantInt>(BOp1) && BO->hasOneUse()) {
+    // FIXME: Vectors are excluded by ConstantInt.
+    if (*RHSV == 0 && isa<ConstantInt>(BOp1) && BO->hasOneUse()) {
       const APInt &V = cast<ConstantInt>(BOp1)->getValue();
       if (V.sgt(1) && V.isPowerOf2()) {
         Value *NewRem = Builder->CreateURem(BOp0, BOp1, BO->getName());
@@ -2229,11 +2230,12 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
     break;
   case Instruction::Add:
     // Replace ((add A, B) != C) with (A != C-B) if B & C are constants.
+    // FIXME: Vectors are excluded by ConstantInt.
     if (ConstantInt *BOp1C = dyn_cast<ConstantInt>(BOp1)) {
       if (BO->hasOneUse())
         return new ICmpInst(ICI.getPredicate(), BOp0,
                             ConstantExpr::getSub(RHS, BOp1C));
-    } else if (RHSV == 0) {
+    } else if (*RHSV == 0) {
       // Replace ((add A, B) != 0) with (A != -B) if A or B is
       // efficiently invertible, or if the add has just this one use.
       if (Value *NegVal = dyn_castNegVal(BOp1))
@@ -2254,7 +2256,7 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
         // the explicit xor.
         return new ICmpInst(ICI.getPredicate(), BOp0,
                             ConstantExpr::getXor(RHS, BOC));
-      } else if (RHSV == 0) {
+      } else if (*RHSV == 0) {
         // Replace ((xor A, B) != 0) with (A != B)
         return new ICmpInst(ICI.getPredicate(), BOp0, BOp1);
       }
@@ -2262,11 +2264,12 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
     break;
   case Instruction::Sub:
     if (BO->hasOneUse()) {
+      // FIXME: Vectors are excluded by ConstantInt.
       if (ConstantInt *BOp0C = dyn_cast<ConstantInt>(BOp0)) {
         // Replace ((sub A, B) != C) with (B != A-C) if A & C are constants.
         return new ICmpInst(ICI.getPredicate(), BOp1,
                             ConstantExpr::getSub(BOp0C, RHS));
-      } else if (RHSV == 0) {
+      } else if (*RHSV == 0) {
         // Replace ((sub A, B) != 0) with (A != B)
         return new ICmpInst(ICI.getPredicate(), BOp0, BOp1);
       }
@@ -2275,6 +2278,7 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
   case Instruction::Or:
     // If bits are being or'd in that are not present in the constant we
     // are comparing against, then the comparison could never succeed!
+    // FIXME: Vectors are excluded by ConstantInt.
     if (ConstantInt *BOC = dyn_cast<ConstantInt>(BOp1)) {
       Constant *NotCI = ConstantExpr::getNot(RHS);
       if (!ConstantExpr::getAnd(BOC, NotCI)->isNullValue())
@@ -2292,14 +2296,15 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
     break;
 
   case Instruction::And:
+    // FIXME: Vectors are excluded by ConstantInt.
     if (ConstantInt *BOC = dyn_cast<ConstantInt>(BOp1)) {
       // If bits are being compared against that are and'd out, then the
       // comparison can never succeed!
-      if ((RHSV & ~BOC->getValue()) != 0)
+      if ((*RHSV & ~BOC->getValue()) != 0)
         return replaceInstUsesWith(ICI, Builder->getInt1(isICMP_NE));
 
       // If we have ((X & C) == C), turn it into ((X & C) != 0).
-      if (RHS == BOC && RHSV.isPowerOf2())
+      if (RHS == BOC && RHSV->isPowerOf2())
         return new ICmpInst(isICMP_NE ? ICmpInst::ICMP_EQ : ICmpInst::ICMP_NE,
                             BO, Constant::getNullValue(RHS->getType()));
 
@@ -2316,7 +2321,7 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
       }
 
       // ((X & ~7) == 0) --> X < 8
-      if (RHSV == 0 && isHighOnes(BOC)) {
+      if (*RHSV == 0 && isHighOnes(BOC)) {
         Constant *NegX = ConstantExpr::getNeg(BOC);
         ICmpInst::Predicate Pred =
             isICMP_NE ? ICmpInst::ICMP_UGE : ICmpInst::ICMP_ULT;
@@ -2325,7 +2330,8 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
     }
     break;
   case Instruction::Mul:
-    if (RHSV == 0 && BO->hasNoSignedWrap()) {
+    if (*RHSV == 0 && BO->hasNoSignedWrap()) {
+      // FIXME: Vectors are excluded by ConstantInt.
       if (ConstantInt *BOC = dyn_cast<ConstantInt>(BOp1)) {
         // The trivial case (mul X, 0) is handled by InstSimplify
         // General case : (mul X, C) != 0 iff X != 0
@@ -2337,7 +2343,7 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
     }
     break;
   case Instruction::UDiv:
-    if (RHSV == 0) {
+    if (*RHSV == 0) {
       // (icmp eq/ne (udiv A, B), 0) -> (icmp ugt/ule i32 B, A)
       ICmpInst::Predicate Pred =
           isICMP_NE ? ICmpInst::ICMP_ULE : ICmpInst::ICMP_UGT;
