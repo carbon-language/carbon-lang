@@ -207,6 +207,50 @@ static bool lifetimeEndsAt(MemoryDef *MD, const MemoryLocation &Loc,
   return false;
 }
 
+enum class Reorderability {
+  Always,
+  IfNoAlias,
+  Never
+};
+
+/// This does one-way checks to see if Use could theoretically be hoisted above
+/// MayClobber. This will not check the other way around.
+///
+/// This assumes that, for the purposes of MemorySSA, Use comes directly after
+/// MayClobber, with no potentially clobbering operations in between them.
+/// (Where potentially clobbering ops are memory barriers, aliased stores, etc.)
+static Reorderability getLoadReorderability(const LoadInst *Use,
+                                            const LoadInst *MayClobber) {
+  bool VolatileUse = Use->isVolatile();
+  bool VolatileClobber = MayClobber->isVolatile();
+  // Volatile operations may never be reordered with other volatile operations.
+  if (VolatileUse && VolatileClobber)
+    return Reorderability::Never;
+
+  // The lang ref allows reordering of volatile and non-volatile operations.
+  // Whether an aliasing nonvolatile load and volatile load can be reordered,
+  // though, is ambiguous. Because it may not be best to exploit this ambiguity,
+  // we only allow volatile/non-volatile reordering if the volatile and
+  // non-volatile operations don't alias.
+  Reorderability Result = VolatileUse || VolatileClobber
+                              ? Reorderability::IfNoAlias
+                              : Reorderability::Always;
+
+  // If a load is seq_cst, it cannot be moved above other loads. If its ordering
+  // is weaker, it can be moved above other loads. We just need to be sure that
+  // MayClobber isn't an acquire load, because loads can't be moved above
+  // acquire loads.
+  //
+  // Note that this explicitly *does* allow the free reordering of monotonic (or
+  // weaker) loads of the same address.
+  bool SeqCstUse = Use->getOrdering() == AtomicOrdering::SequentiallyConsistent;
+  bool MayClobberIsAcquire = isAtLeastOrStrongerThan(MayClobber->getOrdering(),
+                                                     AtomicOrdering::Acquire);
+  if (SeqCstUse || MayClobberIsAcquire)
+    return Reorderability::Never;
+  return Result;
+}
+
 static bool instructionClobbersQuery(MemoryDef *MD,
                                      const MemoryLocation &UseLoc,
                                      const Instruction *UseInst,
@@ -234,6 +278,20 @@ static bool instructionClobbersQuery(MemoryDef *MD,
     ModRefInfo I = AA.getModRefInfo(DefInst, UseCS);
     return I != MRI_NoModRef;
   }
+
+  if (auto *DefLoad = dyn_cast<LoadInst>(DefInst)) {
+    if (auto *UseLoad = dyn_cast<LoadInst>(UseInst)) {
+      switch (getLoadReorderability(UseLoad, DefLoad)) {
+      case Reorderability::Always:
+        return false;
+      case Reorderability::Never:
+        return true;
+      case Reorderability::IfNoAlias:
+        return !AA.isNoAlias(UseLoc, MemoryLocation::get(DefLoad));
+      }
+    }
+  }
+
   return AA.getModRefInfo(DefInst, UseLoc) & MRI_Mod;
 }
 
