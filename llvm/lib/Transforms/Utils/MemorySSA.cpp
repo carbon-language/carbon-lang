@@ -1236,6 +1236,8 @@ MemorySSA::MemorySSA(MemorySSA &&MSSA)
       ValueToMemoryAccess(std::move(MSSA.ValueToMemoryAccess)),
       PerBlockAccesses(std::move(MSSA.PerBlockAccesses)),
       LiveOnEntryDef(std::move(MSSA.LiveOnEntryDef)),
+      BlockNumberingValid(std::move(MSSA.BlockNumberingValid)),
+      BlockNumbering(std::move(MSSA.BlockNumbering)),
       Walker(std::move(MSSA.Walker)), NextID(MSSA.NextID) {
   // Update the Walker MSSA pointer so it doesn't point to the moved-from MSSA
   // object any more.
