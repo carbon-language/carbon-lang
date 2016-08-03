@@ -157,6 +157,26 @@ TEST_F(ReplacementTest, FailAddRegression) {
   llvm::consumeError(std::move(Err));
 }
 
+TEST_F(ReplacementTest, FailAddInsertAtOffsetOfReplacement) {
+  Replacements Replaces;
+  auto Err = Replaces.add(Replacement("x.cc", 10, 2, ""));
+  EXPECT_TRUE(!Err);
+  llvm::consumeError(std::move(Err));
+  Err = Replaces.add(Replacement("x.cc", 10, 0, ""));
+  EXPECT_TRUE((bool)Err);
+  llvm::consumeError(std::move(Err));
+}
+
+TEST_F(ReplacementTest, FailAddInsertAtOtherInsert) {
+  Replacements Replaces;
+  auto Err = Replaces.add(Replacement("x.cc", 10, 0, "a"));
+  EXPECT_TRUE(!Err);
+  llvm::consumeError(std::move(Err));
+  Err = Replaces.add(Replacement("x.cc", 10, 0, "b"));
+  EXPECT_TRUE((bool)Err);
+  llvm::consumeError(std::move(Err));
+}
+
 TEST_F(ReplacementTest, CanApplyReplacements) {
   FileID ID = Context.createInMemoryFile("input.cpp",
                                          "line1\nline2\nline3\nline4");

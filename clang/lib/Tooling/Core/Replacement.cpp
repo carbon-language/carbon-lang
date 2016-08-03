@@ -159,15 +159,16 @@ llvm::Error Replacements::add(const Replacement &R) {
   // replacement cannot overlap.
   Replacement AtEnd(R.getFilePath(), R.getOffset() + R.getLength(), 0, "");
 
-  // Find the first entry that starts after the end of R.
-  // We cannot use upper_bound for that, as there might be an element equal to
-  // AtEnd in Replaces, and AtEnd does not overlap.
-  // Instead, we use lower_bound and special-case finding AtEnd below.
+  // Find the first entry that starts after or at the end of R. Note that
+  // entries that start at the end can still be conflicting if R is an
+  // insertion.
   auto I = Replaces.lower_bound(AtEnd);
-  // If *I == R (which can only happen if R == AtEnd) the first entry that
-  // starts after R is (I+1).
-  if (I != Replaces.end() && *I == R)
+  // If it starts at the same offset as R (can only happen if R is an
+  // insertion), we have a conflict.  In that case, increase I to fall through
+  // to the conflict check.
+  if (I != Replaces.end() && R.getOffset() == I->getOffset())
     ++I;
+
   // I is the smallest iterator whose entry cannot overlap.
   // If that is begin(), there are no overlaps.
   if (I == Replaces.begin()) {
