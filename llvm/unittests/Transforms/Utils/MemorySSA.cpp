@@ -418,3 +418,36 @@ TEST_F(MemorySSATest, PartialWalkerCacheWithPhis) {
   MemoryAccess *UseClobber = Walker->getClobberingMemoryAccess(ALoad);
   EXPECT_EQ(UseClobber, MSSA.getMemoryAccess(FirstStore));
 }
+
+// Test that our walker properly handles loads with the invariant group
+// attribute. It's a bit hacky, since we add the invariant attribute *after*
+// building MSSA. Otherwise, the use optimizer will optimize it for us, which
+// isn't what we want.
+// FIXME: It may be easier/cleaner to just add an 'optimize uses?' flag to MSSA.
+TEST_F(MemorySSATest, WalkerInvariantLoadOpt) {
+  F = Function::Create(FunctionType::get(B.getVoidTy(), {}, false),
+                       GlobalValue::ExternalLinkage, "F", &M);
+  B.SetInsertPoint(BasicBlock::Create(C, "", F));
+  Type *Int8 = Type::getInt8Ty(C);
+  Constant *One = ConstantInt::get(Int8, 1);
+  Value *AllocA = B.CreateAlloca(Int8, One, "");
+
+  Instruction *Store = B.CreateStore(One, AllocA);
+  Instruction *Load = B.CreateLoad(AllocA);
+
+  setupAnalyses();
+  MemorySSA &MSSA = Analyses->MSSA;
+  MemorySSAWalker *Walker = Analyses->Walker;
+
+  auto *LoadMA = cast<MemoryUse>(MSSA.getMemoryAccess(Load));
+  auto *StoreMA = cast<MemoryDef>(MSSA.getMemoryAccess(Store));
+  EXPECT_EQ(LoadMA->getDefiningAccess(), StoreMA);
+
+  // ...At the time of writing, no cache should exist for LoadMA. Be a bit
+  // flexible to future changes.
+  Walker->invalidateInfo(LoadMA);
+  Load->setMetadata(LLVMContext::MD_invariant_load, MDNode::get(C, {}));
+
+  MemoryAccess *LoadClobber = Walker->getClobberingMemoryAccess(LoadMA);
+  EXPECT_EQ(LoadClobber, MSSA.getLiveOnEntryDef());
+}

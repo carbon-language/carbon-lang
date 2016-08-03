@@ -170,6 +170,7 @@ template <> struct DenseMapInfo<MemoryLocOrCall> {
   }
 };
 }
+
 namespace {
 struct UpwardsMemoryQuery {
   // True if our original query started off as a call
@@ -249,6 +250,17 @@ static Reorderability getLoadReorderability(const LoadInst *Use,
   if (SeqCstUse || MayClobberIsAcquire)
     return Reorderability::Never;
   return Result;
+}
+
+static bool isUseTriviallyOptimizableToLiveOnEntry(AliasAnalysis &AA,
+                                                   const Instruction *I) {
+  // If the memory can't be changed, then loads of the memory can't be
+  // clobbered.
+  //
+  // FIXME: We should handle invariant groups, as well. It's a bit harder,
+  // because we need to pay close attention to invariant group barriers.
+  return isa<LoadInst>(I) && (I->getMetadata(LLVMContext::MD_invariant_load) ||
+                              AA.pointsToConstantMemory(I));
 }
 
 static bool instructionClobbersQuery(MemoryDef *MD,
@@ -1332,6 +1344,11 @@ void MemorySSA::OptimizeUses::optimizeUsesInBlock(
       continue;
     }
 
+    if (isUseTriviallyOptimizableToLiveOnEntry(*AA, MU->getMemoryInst())) {
+      MU->setDefiningAccess(MSSA->getLiveOnEntryDef());
+      continue;
+    }
+
     MemoryLocOrCall UseMLOC(MU);
     auto &LocInfo = LocStackInfo[UseMLOC];
     // If the pop epoch changed, it means we've removed stuff from top of
@@ -2245,6 +2262,12 @@ MemorySSA::CachingWalker::getClobberingMemoryAccess(MemoryAccess *MA) {
 
   if (auto *CacheResult = Cache.lookup(StartingAccess, Q.StartingLoc, Q.IsCall))
     return CacheResult;
+
+  if (isUseTriviallyOptimizableToLiveOnEntry(*MSSA->AA, I)) {
+    MemoryAccess *LiveOnEntry = MSSA->getLiveOnEntryDef();
+    Cache.insert(StartingAccess, LiveOnEntry, Q.StartingLoc, Q.IsCall);
+    return LiveOnEntry;
+  }
 
   // Start with the thing we already think clobbers this location
   MemoryAccess *DefiningAccess = StartingAccess->getDefiningAccess();
