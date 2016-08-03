@@ -134,9 +134,8 @@ TEST_F(MemorySSATest, MoveAStore) {
   SideStore->moveBefore(Entry->getTerminator());
   MemoryAccess *EntryStoreAccess = MSSA.getMemoryAccess(EntryStore);
   MemoryAccess *SideStoreAccess = MSSA.getMemoryAccess(SideStore);
-  MemoryAccess *NewStoreAccess = MSSA.createMemoryAccessAfter(SideStore,
-                                                         EntryStoreAccess,
-                                                         EntryStoreAccess);
+  MemoryAccess *NewStoreAccess = MSSA.createMemoryAccessAfter(
+      SideStore, EntryStoreAccess, EntryStoreAccess);
   EntryStoreAccess->replaceAllUsesWith(NewStoreAccess);
   MSSA.removeMemoryAccess(SideStoreAccess);
   MSSA.verifyMemorySSA();

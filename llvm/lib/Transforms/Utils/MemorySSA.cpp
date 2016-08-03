@@ -198,9 +198,9 @@ static bool lifetimeEndsAt(MemoryDef *MD, const MemoryLocation &Loc,
   Instruction *Inst = MD->getMemoryInst();
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
     switch (II->getIntrinsicID()) {
-      case Intrinsic::lifetime_start:
-      case Intrinsic::lifetime_end:
-        return AA.isMustAlias(MemoryLocation(II->getArgOperand(1)), Loc);
+    case Intrinsic::lifetime_start:
+    case Intrinsic::lifetime_end:
+      return AA.isMustAlias(MemoryLocation(II->getArgOperand(1)), Loc);
     default:
       return false;
     }
@@ -208,11 +208,7 @@ static bool lifetimeEndsAt(MemoryDef *MD, const MemoryLocation &Loc,
   return false;
 }
 
-enum class Reorderability {
-  Always,
-  IfNoAlias,
-  Never
-};
+enum class Reorderability { Always, IfNoAlias, Never };
 
 /// This does one-way checks to see if Use could theoretically be hoisted above
 /// MayClobber. This will not check the other way around.
