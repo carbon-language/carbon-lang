@@ -245,11 +245,12 @@ template <class ELFT> void Writer<ELFT>::run() {
   if (Config->Relocatable) {
     assignFileOffsets();
   } else {
-    Phdrs = Script<ELFT>::X->hasPhdrsCommands() ? Script<ELFT>::X->createPhdrs()
-                                                : createPhdrs();
+    Phdrs = Script<ELFT>::X->hasPhdrsCommands()
+                ? Script<ELFT>::X->createPhdrs(OutputSections)
+                : createPhdrs();
     fixHeaders();
     if (ScriptConfig->HasContents) {
-      Script<ELFT>::X->assignAddresses();
+      Script<ELFT>::X->assignAddresses(OutputSections);
     } else {
       fixSectionAlignments();
       assignAddresses();

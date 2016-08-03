@@ -133,11 +133,12 @@ public:
   void createSections(std::vector<OutputSectionBase<ELFT> *> *Out,
                       OutputSectionFactory<ELFT> &Factory);
 
-  std::vector<PhdrEntry<ELFT>> createPhdrs();
+  std::vector<PhdrEntry<ELFT>>
+  createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> S);
 
   ArrayRef<uint8_t> getFiller(StringRef Name);
   bool shouldKeep(InputSectionBase<ELFT> *S);
-  void assignAddresses();
+  void assignAddresses(ArrayRef<OutputSectionBase<ELFT> *> S);
   int compareSections(StringRef A, StringRef B);
   void addScriptedSymbols();
   bool hasPhdrsCommands();
