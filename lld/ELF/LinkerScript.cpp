@@ -218,9 +218,8 @@ template <class ELFT> void LinkerScript<ELFT>::filter() {
   }
 }
 
-template <class ELFT>
-void LinkerScript<ELFT>::assignAddresses(
-    ArrayRef<OutputSectionBase<ELFT> *> Sections) {
+template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
+  ArrayRef<OutputSectionBase<ELFT> *> Sections = *OutputSections;
   // Orphan sections are sections present in the input files which
   // are not explicitly placed into the output file by the linker script.
   // We place orphan sections at end of file.
@@ -289,8 +288,8 @@ void LinkerScript<ELFT>::assignAddresses(
 }
 
 template <class ELFT>
-std::vector<PhdrEntry<ELFT>>
-LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
+std::vector<PhdrEntry<ELFT>> LinkerScript<ELFT>::createPhdrs() {
+  ArrayRef<OutputSectionBase<ELFT> *> Sections = *OutputSections;
   std::vector<PhdrEntry<ELFT>> Ret;
 
   for (const PhdrsCommand &Cmd : Opt.PhdrsCommands) {
