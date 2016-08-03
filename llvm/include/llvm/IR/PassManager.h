@@ -995,6 +995,21 @@ template <typename PassT>
 class RepeatingPassWrapper : public PassInfoMixin<RepeatingPassWrapper<PassT>> {
 public:
   RepeatingPassWrapper(int Count, PassT P) : Count(Count), P(std::move(P)) {}
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
+  RepeatingPassWrapper(const RepeatingPassWrapper &Arg)
+      : Count(Arg.Count), P(Arg.P) {}
+  RepeatingPassWrapper(RepeatingPassWrapper &&Arg)
+      : Count(Arg.Count), P(std::move(Arg.P)) {}
+  friend void swap(RepeatingPassWrapper &LHS, RepeatingPassWrapper &RHS) {
+    using std::swap;
+    swap(LHS.Count, RHS.Count);
+    swap(LHS.P, RHS.P);
+  }
+  RepeatingPassWrapper &operator=(RepeatingPassWrapper RHS) {
+    swap(*this, RHS);
+    return *this;
+  }
 
   template <typename IRUnitT, typename... Ts>
   PreservedAnalyses run(IRUnitT &Arg, AnalysisManager<IRUnitT> &AM,
@@ -1006,7 +1021,7 @@ public:
   }
 
 private:
-  const int Count;
+  int Count;
   PassT P;
 };
 
