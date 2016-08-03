@@ -138,25 +138,55 @@ void Replacement::setFromSourceRange(const SourceManager &Sources,
 }
 
 llvm::Error Replacements::add(const Replacement &R) {
-  if (R.getOffset() != UINT_MAX)
-    for (auto Replace : Replaces) {
-      if (R.getFilePath() != Replace.getFilePath())
-        return llvm::make_error<llvm::StringError>(
-            "All replacements must have the same file path. New replacement: " +
-                R.getFilePath() + ", existing replacements: " +
-                Replace.getFilePath() + "\n",
-            llvm::inconvertibleErrorCode());
-      if (R.getOffset() == Replace.getOffset() ||
-          Range(R.getOffset(), R.getLength())
-              .overlapsWith(Range(Replace.getOffset(), Replace.getLength())))
-        return llvm::make_error<llvm::StringError>(
-            "New replacement:\n" + R.toString() +
-                "\nconflicts with existing replacement:\n" + Replace.toString(),
-            llvm::inconvertibleErrorCode());
-    }
+  // Check the file path.
+  if (!Replaces.empty() && R.getFilePath() != Replaces.begin()->getFilePath())
+    return llvm::make_error<llvm::StringError>(
+        "All replacements must have the same file path. New replacement: " +
+            R.getFilePath() + ", existing replacements: " +
+            Replaces.begin()->getFilePath() + "\n",
+        llvm::inconvertibleErrorCode());
 
-  Replaces.insert(R);
-  return llvm::Error::success();
+  // Special-case header insertions.
+  if (R.getOffset() == UINT_MAX) {
+    Replaces.insert(R);
+    return llvm::Error::success();
+  }
+
+  // This replacement cannot conflict with replacements that end before
+  // this replacement starts or start after this replacement ends.
+  // We also know that there currently are no overlapping replacements.
+  // Thus, we know that all replacements that start after the end of the current
+  // replacement cannot overlap.
+  Replacement AtEnd(R.getFilePath(), R.getOffset() + R.getLength(), 0, "");
+
+  // Find the first entry that starts after the end of R.
+  // We cannot use upper_bound for that, as there might be an element equal to
+  // AtEnd in Replaces, and AtEnd does not overlap.
+  // Instead, we use lower_bound and special-case finding AtEnd below.
+  auto I = Replaces.lower_bound(AtEnd);
+  // If *I == R (which can only happen if R == AtEnd) the first entry that
+  // starts after R is (I+1).
+  if (I != Replaces.end() && *I == R)
+    ++I;
+  // I is the smallest iterator whose entry cannot overlap.
+  // If that is begin(), there are no overlaps.
+  if (I == Replaces.begin()) {
+    Replaces.insert(R);
+    return llvm::Error::success();
+  }
+  --I;
+  // If the previous entry does not overlap, we know that entries before it
+  // can also not overlap.
+  if (R.getOffset() != I->getOffset() &&
+      !Range(R.getOffset(), R.getLength())
+           .overlapsWith(Range(I->getOffset(), I->getLength()))) {
+    Replaces.insert(R);
+    return llvm::Error::success();
+  }
+  return llvm::make_error<llvm::StringError>(
+      "New replacement:\n" + R.toString() +
+          "\nconflicts with existing replacement:\n" + I->toString(),
+      llvm::inconvertibleErrorCode());
 }
 
 namespace {
