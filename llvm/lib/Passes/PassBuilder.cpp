@@ -274,6 +274,15 @@ void PassBuilder::addLTODefaultPipeline(ModulePassManager &MPM,
   MPM.addPass(createModuleToFunctionPassAdaptor(std::move(LateFPM)));
 }
 
+static Optional<int> parseRepeatPassName(StringRef Name) {
+  if (!Name.consume_front("repeat<") || !Name.consume_back(">"))
+    return None;
+  int Count;
+  if (Name.getAsInteger(0, Count) || Count <= 0)
+    return None;
+  return Count;
+}
+
 static bool isModulePassName(StringRef Name) {
   // Manually handle aliases for pre-configured pipeline fragments.
   if (Name.startswith("default") || Name.startswith("lto"))
@@ -285,6 +294,10 @@ static bool isModulePassName(StringRef Name) {
   if (Name == "cgscc")
     return true;
   if (Name == "function")
+    return true;
+
+  // Explicitly handle custom-parsed pass names.
+  if (parseRepeatPassName(Name))
     return true;
 
 #define MODULE_PASS(NAME, CREATE_PASS)                                         \
@@ -305,6 +318,10 @@ static bool isCGSCCPassName(StringRef Name) {
   if (Name == "function")
     return true;
 
+  // Explicitly handle custom-parsed pass names.
+  if (parseRepeatPassName(Name))
+    return true;
+
 #define CGSCC_PASS(NAME, CREATE_PASS)                                          \
   if (Name == NAME)                                                            \
     return true;
@@ -323,6 +340,10 @@ static bool isFunctionPassName(StringRef Name) {
   if (Name == "loop")
     return true;
 
+  // Explicitly handle custom-parsed pass names.
+  if (parseRepeatPassName(Name))
+    return true;
+
 #define FUNCTION_PASS(NAME, CREATE_PASS)                                       \
   if (Name == NAME)                                                            \
     return true;
@@ -337,6 +358,10 @@ static bool isFunctionPassName(StringRef Name) {
 static bool isLoopPassName(StringRef Name) {
   // Explicitly handle pass manager names.
   if (Name == "loop")
+    return true;
+
+  // Explicitly handle custom-parsed pass names.
+  if (parseRepeatPassName(Name))
     return true;
 
 #define LOOP_PASS(NAME, CREATE_PASS)                                           \
@@ -440,6 +465,14 @@ bool PassBuilder::parseModulePass(ModulePassManager &MPM,
       MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
       return true;
     }
+    if (auto Count = parseRepeatPassName(Name)) {
+      ModulePassManager NestedMPM(DebugLogging);
+      if (!parseModulePassPipeline(NestedMPM, InnerPipeline, VerifyEachPass,
+                                   DebugLogging))
+        return false;
+      MPM.addPass(createRepeatingPassWrapper(*Count, std::move(NestedMPM)));
+      return true;
+    }
     // Normal passes can't have pipelines.
     return false;
   }
@@ -519,6 +552,14 @@ bool PassBuilder::parseCGSCCPass(CGSCCPassManager &CGPM,
           createCGSCCToFunctionPassAdaptor(std::move(FPM), DebugLogging));
       return true;
     }
+    if (auto Count = parseRepeatPassName(Name)) {
+      CGSCCPassManager NestedCGPM(DebugLogging);
+      if (!parseCGSCCPassPipeline(NestedCGPM, InnerPipeline, VerifyEachPass,
+                                  DebugLogging))
+        return false;
+      CGPM.addPass(createRepeatingPassWrapper(*Count, std::move(NestedCGPM)));
+      return true;
+    }
     // Normal passes can't have pipelines.
     return false;
   }
@@ -571,6 +612,14 @@ bool PassBuilder::parseFunctionPass(FunctionPassManager &FPM,
       FPM.addPass(createFunctionToLoopPassAdaptor(std::move(LPM)));
       return true;
     }
+    if (auto Count = parseRepeatPassName(Name)) {
+      FunctionPassManager NestedFPM(DebugLogging);
+      if (!parseFunctionPassPipeline(NestedFPM, InnerPipeline, VerifyEachPass,
+                                     DebugLogging))
+        return false;
+      FPM.addPass(createRepeatingPassWrapper(*Count, std::move(NestedFPM)));
+      return true;
+    }
     // Normal passes can't have pipelines.
     return false;
   }
@@ -599,7 +648,7 @@ bool PassBuilder::parseFunctionPass(FunctionPassManager &FPM,
 
 bool PassBuilder::parseLoopPass(LoopPassManager &FPM, const PipelineElement &E,
                                 bool VerifyEachPass, bool DebugLogging) {
-  auto &Name = E.Name;
+  StringRef Name = E.Name;
   auto &InnerPipeline = E.InnerPipeline;
 
   // First handle complex passes like the pass managers which carry pipelines.
@@ -611,6 +660,14 @@ bool PassBuilder::parseLoopPass(LoopPassManager &FPM, const PipelineElement &E,
         return false;
       // Add the nested pass manager with the appropriate adaptor.
       FPM.addPass(std::move(NestedLPM));
+      return true;
+    }
+    if (auto Count = parseRepeatPassName(Name)) {
+      LoopPassManager NestedLPM(DebugLogging);
+      if (!parseLoopPassPipeline(NestedLPM, InnerPipeline, VerifyEachPass,
+                                 DebugLogging))
+        return false;
+      FPM.addPass(createRepeatingPassWrapper(*Count, std::move(NestedLPM)));
       return true;
     }
     // Normal passes can't have pipelines.
