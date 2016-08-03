@@ -594,7 +594,7 @@ class ClobberWalker {
   ///
   /// If this returns None, NewPaused is a vector of searches that terminated
   /// at StopWhere. Otherwise, NewPaused is left in an unspecified state.
-  Optional<ListIndex>
+  Optional<TerminatedPath>
   getBlockingAccess(MemoryAccess *StopWhere,
                     SmallVectorImpl<ListIndex> &PausedSearches,
                     SmallVectorImpl<ListIndex> &NewPaused,
@@ -633,11 +633,12 @@ class ClobberWalker {
         assert(Res.Result != StopWhere || Res.FromCache);
         // If this wasn't a cache hit, we hit a clobber when walking. That's a
         // failure.
+        TerminatedPath Term{Res.Result, PathIndex};
         if (!Res.FromCache || !MSSA.dominates(Res.Result, StopWhere))
-          return PathIndex;
+          return Term;
 
         // Otherwise, it's a valid thing to potentially optimize to.
-        Terminated.push_back({Res.Result, PathIndex});
+        Terminated.push_back(Term);
         continue;
       }
 
@@ -769,22 +770,21 @@ class ClobberWalker {
       // liveOnEntry, and we'll happily wait for that to disappear (read: never)
       // For the moment, this is fine, since we do basically nothing with
       // blocker info.
-      if (Optional<ListIndex> Blocker = getBlockingAccess(
+      if (Optional<TerminatedPath> Blocker = getBlockingAccess(
               Target, PausedSearches, NewPaused, TerminatedPaths)) {
-        MemoryAccess *BlockingAccess = Paths[*Blocker].Last;
         // Cache our work on the blocking node, since we know that's correct.
-        cacheDefPath(Paths[*Blocker], BlockingAccess);
+        cacheDefPath(Paths[Blocker->LastNode], Blocker->Clobber);
 
         // Find the node we started at. We can't search based on N->Last, since
         // we may have gone around a loop with a different MemoryLocation.
-        auto Iter = find_if(def_path(*Blocker), [&](const DefPath &N) {
+        auto Iter = find_if(def_path(Blocker->LastNode), [&](const DefPath &N) {
           return defPathIndex(N) < PriorPathsSize;
         });
         assert(Iter != def_path_iterator());
 
         DefPath &CurNode = *Iter;
         assert(CurNode.Last == Current);
-        CurNode.Blocker = BlockingAccess;
+        CurNode.Blocker = Blocker->Clobber;
 
         // Two things:
         // A. We can't reliably cache all of NewPaused back. Consider a case
