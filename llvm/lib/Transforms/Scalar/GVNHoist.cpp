@@ -53,6 +53,11 @@ static cl::opt<int> MaxDepthInBB(
     cl::desc("Hoist instructions from the beginning of the BB up to the "
              "maximum specified depth (default = 100, unlimited = -1)"));
 
+static cl::opt<int> MaxChainLength(
+    "gvn-hoist-max-chain-length", cl::Hidden, cl::init(10),
+    cl::desc("Maximum length of dependent chains to hoist "
+             "(default = 10, unlimited = -1)"));
+
 namespace {
 
 // Provides a sorting function based on the execution order of two instructions.
@@ -212,8 +217,13 @@ public:
         DFSNumber[&Inst] = ++I;
     }
 
+    int ChainLength = 0;
+
     // FIXME: use lazy evaluation of VN to avoid the fix-point computation.
     while (1) {
+      if (MaxChainLength != -1 && ++ChainLength >= MaxChainLength)
+        return Res;
+
       auto HoistStat = hoistExpressions(F);
       if (HoistStat.first + HoistStat.second == 0)
         return Res;
