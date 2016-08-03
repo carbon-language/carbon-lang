@@ -192,12 +192,42 @@ struct UpwardsMemoryQuery {
   }
 };
 
+static bool lifetimeEndsAt(MemoryDef *MD, const MemoryLocation &Loc,
+                           AliasAnalysis &AA) {
+  Instruction *Inst = MD->getMemoryInst();
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
+    switch (II->getIntrinsicID()) {
+      case Intrinsic::lifetime_start:
+      case Intrinsic::lifetime_end:
+        return AA.isMustAlias(MemoryLocation(II->getArgOperand(1)), Loc);
+    default:
+      return false;
+    }
+  }
+  return false;
+}
+
 static bool instructionClobbersQuery(MemoryDef *MD,
                                      const MemoryLocation &UseLoc,
                                      const Instruction *UseInst,
                                      AliasAnalysis &AA) {
   Instruction *DefInst = MD->getMemoryInst();
   assert(DefInst && "Defining instruction not actually an instruction");
+
+  if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(DefInst)) {
+    // These intrinsics will show up as affecting memory, but they are just
+    // markers.
+    switch (II->getIntrinsicID()) {
+    case Intrinsic::lifetime_start:
+    case Intrinsic::lifetime_end:
+    case Intrinsic::invariant_start:
+    case Intrinsic::invariant_end:
+    case Intrinsic::assume:
+      return false;
+    default:
+      break;
+    }
+  }
 
   ImmutableCallSite UseCS(UseInst);
   if (UseCS) {
@@ -1308,7 +1338,14 @@ void MemorySSA::OptimizeUses::optimizeUsesInBlock(
       }
 
       MemoryDef *MD = cast<MemoryDef>(VersionStack[UpperBound]);
-
+      // If the lifetime of the pointer ends at this instruction, it's live on
+      // entry.
+      if (!UseMLOC.IsCall && lifetimeEndsAt(MD, UseMLOC.getLoc(), *AA)) {
+        // Reset UpperBound to liveOnEntryDef's place in the stack
+        UpperBound = 0;
+        FoundClobberResult = true;
+        break;
+      }
       if (instructionClobbersQuery(MD, MU, UseMLOC, *AA)) {
         FoundClobberResult = true;
         break;
