@@ -553,14 +553,14 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
   }
 }
 
-static ELFKind getELFKind(MemoryBufferRef MB) {
+static ELFKind getBitcodeELFKind(MemoryBufferRef MB) {
   Triple T(getBitcodeTargetTriple(MB, Driver->Context));
   if (T.isLittleEndian())
     return T.isArch64Bit() ? ELF64LEKind : ELF32LEKind;
   return T.isArch64Bit() ? ELF64BEKind : ELF32BEKind;
 }
 
-static uint8_t getMachineKind(MemoryBufferRef MB) {
+static uint8_t getBitcodeMachineKind(MemoryBufferRef MB) {
   Triple T(getBitcodeTargetTriple(MB, Driver->Context));
   switch (T.getArch()) {
   case Triple::aarch64:
@@ -587,8 +587,8 @@ static uint8_t getMachineKind(MemoryBufferRef MB) {
 }
 
 BitcodeFile::BitcodeFile(MemoryBufferRef MB) : InputFile(BitcodeKind, MB) {
-  EKind = getELFKind(MB);
-  EMachine = getMachineKind(MB);
+  EKind = getBitcodeELFKind(MB);
+  EMachine = getBitcodeMachineKind(MB);
 }
 
 static uint8_t getGvVisibility(const GlobalValue *GV) {
