@@ -2218,10 +2218,9 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
   switch (BO->getOpcode()) {
   case Instruction::SRem:
     // If we have a signed (X % (2^c)) == 0, turn it into an unsigned one.
-    // FIXME: Vectors are excluded by ConstantInt.
-    if (*RHSV == 0 && isa<ConstantInt>(BOp1) && BO->hasOneUse()) {
-      const APInt &V = cast<ConstantInt>(BOp1)->getValue();
-      if (V.sgt(1) && V.isPowerOf2()) {
+    if (*RHSV == 0 && BO->hasOneUse()) {
+      const APInt *BOC;
+      if (match(BOp1, m_APInt(BOC)) && BOC->sgt(1) && BOC->isPowerOf2()) {
         Value *NewRem = Builder->CreateURem(BOp0, BOp1, BO->getName());
         return new ICmpInst(ICI.getPredicate(), NewRem,
                             Constant::getNullValue(BO->getType()));
