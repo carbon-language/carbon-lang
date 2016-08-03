@@ -221,81 +221,43 @@ Expected<uint32_t> ArchiveMemberHeader::getSize() const {
   return Ret;
 }
 
-Expected<sys::fs::perms> ArchiveMemberHeader::getAccessMode() const {
+sys::fs::perms ArchiveMemberHeader::getAccessMode() const {
   unsigned Ret;
   if (StringRef(ArMemHdr->AccessMode,
-                sizeof(ArMemHdr->AccessMode)).rtrim(' ').getAsInteger(8, Ret)) {
-    std::string Buf;
-    raw_string_ostream OS(Buf);
-    OS.write_escaped(llvm::StringRef(ArMemHdr->AccessMode,
-                                   sizeof(ArMemHdr->AccessMode)).rtrim(" "));
-    OS.flush();
-    uint64_t Offset = reinterpret_cast<const char *>(ArMemHdr) -
-                      Parent->getData().data();
-    return malformedError("characters in AccessMode field in archive header "
-                          "are not all decimal numbers: '" + Buf + "' for the "
-                          "archive member header at offset " + Twine(Offset));
-  }
+                sizeof(ArMemHdr->AccessMode)).rtrim(' ').getAsInteger(8, Ret))
+    llvm_unreachable("Access mode is not an octal number.");
   return static_cast<sys::fs::perms>(Ret);
 }
 
-Expected<sys::TimeValue> ArchiveMemberHeader::getLastModified() const {
+sys::TimeValue ArchiveMemberHeader::getLastModified() const {
   unsigned Seconds;
   if (StringRef(ArMemHdr->LastModified,
                 sizeof(ArMemHdr->LastModified)).rtrim(' ')
-          .getAsInteger(10, Seconds)) {
-    std::string Buf;
-    raw_string_ostream OS(Buf);
-    OS.write_escaped(llvm::StringRef(ArMemHdr->LastModified,
-                                   sizeof(ArMemHdr->LastModified)).rtrim(" "));
-    OS.flush();
-    uint64_t Offset = reinterpret_cast<const char *>(ArMemHdr) -
-                      Parent->getData().data();
-    return malformedError("characters in LastModified field in archive header "
-                          "are not all decimal numbers: '" + Buf + "' for the "
-                          "archive member header at offset " + Twine(Offset));
-  }
+          .getAsInteger(10, Seconds))
+    llvm_unreachable("Last modified time not a decimal number.");
 
   sys::TimeValue Ret;
   Ret.fromEpochTime(Seconds);
   return Ret;
 }
 
-Expected<unsigned> ArchiveMemberHeader::getUID() const {
+unsigned ArchiveMemberHeader::getUID() const {
   unsigned Ret;
   StringRef User = StringRef(ArMemHdr->UID, sizeof(ArMemHdr->UID)).rtrim(' ');
   if (User.empty())
     return 0;
-  if (User.getAsInteger(10, Ret)) {
-    std::string Buf;
-    raw_string_ostream OS(Buf);
-    OS.write_escaped(User);
-    OS.flush();
-    uint64_t Offset = reinterpret_cast<const char *>(ArMemHdr) -
-                      Parent->getData().data();
-    return malformedError("characters in UID field in archive header "
-                          "are not all decimal numbers: '" + Buf + "' for the "
-                          "archive member header at offset " + Twine(Offset));
-  }
+  if (User.getAsInteger(10, Ret))
+    llvm_unreachable("UID time not a decimal number.");
   return Ret;
 }
 
-Expected<unsigned> ArchiveMemberHeader::getGID() const {
+unsigned ArchiveMemberHeader::getGID() const {
   unsigned Ret;
   StringRef Group = StringRef(ArMemHdr->GID, sizeof(ArMemHdr->GID)).rtrim(' ');
   if (Group.empty())
     return 0;
-  if (Group.getAsInteger(10, Ret)) {
-    std::string Buf;
-    raw_string_ostream OS(Buf);
-    OS.write_escaped(Group);
-    OS.flush();
-    uint64_t Offset = reinterpret_cast<const char *>(ArMemHdr) -
-                      Parent->getData().data();
-    return malformedError("characters in GID field in archive header "
-                          "are not all decimal numbers: '" + Buf + "' for the "
-                          "archive member header at offset " + Twine(Offset));
-  }
+  if (Group.getAsInteger(10, Ret))
+    llvm_unreachable("GID time not a decimal number.");
   return Ret;
 }
 
