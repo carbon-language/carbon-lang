@@ -579,7 +579,7 @@ static uint8_t getMachineKind(MemoryBufferRef MB) {
   case Triple::ppc64:
     return EM_PPC64;
   case Triple::x86:
-    return EM_386;
+    return Triple(TripleStr).isOSIAMCU() ? EM_IAMCU : EM_386;
   case Triple::x86_64:
     return EM_X86_64;
   default:
