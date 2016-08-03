@@ -42,21 +42,4 @@ define i32 @foo1(i32 %a) {
   ret i32 %1
 }
 
-; NO-OPTION-LABEL: {{_?}}foo2
-; NO-OPTION: mov.w	r0, #-536813568
-; NO-OPTION-LABEL-NOT: .long
-
-; USE-MOVT-LABEL: {{_?}}foo2
-; USE-MOVT: mov.w	r0, #-536813568
-; USE-MOVT-NOT: .long
-
-; NO-USE-MOVT-LABEL: {{_?}}foo2
-; NO-USE-MOVT: mov.w	r0, #-536813568
-; NO-USE-MOVT-NOT: .long
-define i32 @foo2() {
-  %1 = load i32, i32* inttoptr (i32 -536813568 to i32*) ; load from 0xe000e000
-  ret i32 %1
-}
-
-
 attributes #0 = { "target-features"="+no-movt" }
