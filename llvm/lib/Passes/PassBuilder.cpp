@@ -646,7 +646,7 @@ bool PassBuilder::parseFunctionPass(FunctionPassManager &FPM,
   return false;
 }
 
-bool PassBuilder::parseLoopPass(LoopPassManager &FPM, const PipelineElement &E,
+bool PassBuilder::parseLoopPass(LoopPassManager &LPM, const PipelineElement &E,
                                 bool VerifyEachPass, bool DebugLogging) {
   StringRef Name = E.Name;
   auto &InnerPipeline = E.InnerPipeline;
@@ -659,7 +659,7 @@ bool PassBuilder::parseLoopPass(LoopPassManager &FPM, const PipelineElement &E,
                                  DebugLogging))
         return false;
       // Add the nested pass manager with the appropriate adaptor.
-      FPM.addPass(std::move(NestedLPM));
+      LPM.addPass(std::move(NestedLPM));
       return true;
     }
     if (auto Count = parseRepeatPassName(Name)) {
@@ -667,7 +667,7 @@ bool PassBuilder::parseLoopPass(LoopPassManager &FPM, const PipelineElement &E,
       if (!parseLoopPassPipeline(NestedLPM, InnerPipeline, VerifyEachPass,
                                  DebugLogging))
         return false;
-      FPM.addPass(createRepeatingPassWrapper(*Count, std::move(NestedLPM)));
+      LPM.addPass(createRepeatingPassWrapper(*Count, std::move(NestedLPM)));
       return true;
     }
     // Normal passes can't have pipelines.
@@ -677,17 +677,17 @@ bool PassBuilder::parseLoopPass(LoopPassManager &FPM, const PipelineElement &E,
   // Now expand the basic registered passes from the .inc file.
 #define LOOP_PASS(NAME, CREATE_PASS)                                           \
   if (Name == NAME) {                                                          \
-    FPM.addPass(CREATE_PASS);                                                  \
+    LPM.addPass(CREATE_PASS);                                                  \
     return true;                                                               \
   }
 #define LOOP_ANALYSIS(NAME, CREATE_PASS)                                       \
   if (Name == "require<" NAME ">") {                                           \
-    FPM.addPass(RequireAnalysisPass<                                           \
+    LPM.addPass(RequireAnalysisPass<                                           \
                 std::remove_reference<decltype(CREATE_PASS)>::type>());        \
     return true;                                                               \
   }                                                                            \
   if (Name == "invalidate<" NAME ">") {                                        \
-    FPM.addPass(InvalidateAnalysisPass<                                        \
+    LPM.addPass(InvalidateAnalysisPass<                                        \
                 std::remove_reference<decltype(CREATE_PASS)>::type>());        \
     return true;                                                               \
   }
