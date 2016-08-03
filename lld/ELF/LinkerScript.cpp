@@ -843,18 +843,19 @@ std::vector<uint8_t> ScriptParser::readOutputSectionFiller() {
   if (!Tok.startswith("="))
     return {};
   next();
+
+  // Read a hexstring of arbitrary length.
   if (Tok.startswith("=0x"))
     return parseHex(Tok.substr(3));
 
-  // This must be a decimal.
-  unsigned int Value;
-  if (Tok.substr(1).getAsInteger(10, Value)) {
-    setError("filler should be a decimal/hexadecimal value");
+  // Read a decimal or octal value as a big-endian 32 bit value.
+  // Why do this? I don't know, but that's what gold does.
+  uint32_t V;
+  if (Tok.substr(1).getAsInteger(0, V)) {
+    setError("invalid filler expression: " + Tok);
     return {};
   }
-  if (Value > 255)
-    setError("only single bytes decimal are supported for the filler now");
-  return {static_cast<unsigned char>(Value)};
+  return { uint8_t(V >> 24), uint8_t(V >> 16), uint8_t(V >> 8), uint8_t(V) };
 }
 
 void ScriptParser::readProvide(bool Hidden) {
