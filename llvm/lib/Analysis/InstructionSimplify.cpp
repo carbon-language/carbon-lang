@@ -4356,8 +4356,7 @@ static bool replaceAndRecursivelySimplifyImpl(Instruction *I, Value *SimpleV,
 
     // Gracefully handle edge cases where the instruction is not wired into any
     // parent block.
-    if (I->getParent() && !I->isEHPad() && !isa<TerminatorInst>(I) &&
-        !I->mayHaveSideEffects())
+    if (I->getParent())
       I->eraseFromParent();
   } else {
     Worklist.insert(I);
@@ -4385,8 +4384,7 @@ static bool replaceAndRecursivelySimplifyImpl(Instruction *I, Value *SimpleV,
 
     // Gracefully handle edge cases where the instruction is not wired into any
     // parent block.
-    if (I->getParent() && !I->isEHPad() && !isa<TerminatorInst>(I) &&
-        !I->mayHaveSideEffects())
+    if (I->getParent())
       I->eraseFromParent();
   }
   return Simplified;
