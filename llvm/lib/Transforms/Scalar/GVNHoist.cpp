@@ -72,8 +72,16 @@ public:
     //
     // assert(A != B);
 
-    unsigned ADFS = DFSNumber.lookup(A);
-    unsigned BDFS = DFSNumber.lookup(B);
+    const BasicBlock *BA = A->getParent();
+    const BasicBlock *BB = B->getParent();
+    unsigned ADFS, BDFS;
+    if (BA == BB) {
+      ADFS = DFSNumber.lookup(A);
+      BDFS = DFSNumber.lookup(B);
+    } else {
+      ADFS = DFSNumber.lookup(BA);
+      BDFS = DFSNumber.lookup(BB);
+    }
     assert (ADFS && BDFS);
     return ADFS < BDFS;
   }
@@ -195,15 +203,17 @@ public:
     bool Res = false;
     MemorySSA M(F, AA, DT);
     MSSA = &M;
+    // Perform DFS Numbering of instructions.
+    unsigned BBI = 0;
+    for (const BasicBlock *BB : depth_first(&F.getEntryBlock())) {
+      DFSNumber[BB] = ++BBI;
+      unsigned I = 0;
+      for (auto &Inst: *BB)
+        DFSNumber[&Inst] = ++I;
+    }
 
     // FIXME: use lazy evaluation of VN to avoid the fix-point computation.
     while (1) {
-      // Perform DFS Numbering of instructions.
-      unsigned I = 0;
-      for (const BasicBlock *BB : depth_first(&F.getEntryBlock()))
-        for (auto &Inst: *BB)
-          DFSNumber.insert({&Inst, ++I});
-
       auto HoistStat = hoistExpressions(F);
       if (HoistStat.first + HoistStat.second == 0)
         return Res;
@@ -215,9 +225,6 @@ public:
         VN.clear();
 
       Res = true;
-
-      // DFS numbers change when instructions are hoisted: clear and recompute.
-      DFSNumber.clear();
     }
 
     return Res;
@@ -741,7 +748,10 @@ private:
           continue;
 
         // Move the instruction at the end of HoistPt.
-        Repl->moveBefore(HoistPt->getTerminator());
+        Instruction *Last = HoistPt->getTerminator();
+        Repl->moveBefore(Last);
+
+        DFSNumber[Repl] = DFSNumber[Last]++;
       }
 
       MemoryAccess *NewMemAcc = nullptr;
