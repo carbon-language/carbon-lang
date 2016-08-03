@@ -274,7 +274,6 @@ void PassBuilder::addLTODefaultPipeline(ModulePassManager &MPM,
   MPM.addPass(createModuleToFunctionPassAdaptor(std::move(LateFPM)));
 }
 
-#ifndef NDEBUG
 static bool isModulePassName(StringRef Name) {
   // Manually handle aliases for pre-configured pipeline fragments.
   if (Name.startswith("default") || Name.startswith("lto"))
@@ -298,7 +297,6 @@ static bool isModulePassName(StringRef Name) {
 
   return false;
 }
-#endif
 
 static bool isCGSCCPassName(StringRef Name) {
   // Explicitly handle pass manager names.
