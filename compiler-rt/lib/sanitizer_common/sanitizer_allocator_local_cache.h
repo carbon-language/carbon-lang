@@ -119,12 +119,11 @@ struct SizeClassAllocatorLocalCache {
   NOINLINE void Drain(SizeClassAllocator *allocator, uptr class_id) {
     InitCache();
     PerClass *c = &per_class_[class_id];
-    Batch *b = CreateBatch(class_id, allocator, (Batch*)c->batch[0]);
     uptr cnt = Min(c->max_count / 2, c->count);
-    b->SetFromArray(c->batch, cnt);
-    for (uptr i = 0; i < cnt; i++)
-      c->batch[i] = c->batch[i + c->max_count / 2];
-
+    uptr first_idx_to_drain = c->count - cnt;
+    Batch *b =
+        CreateBatch(class_id, allocator, (Batch *)c->batch[first_idx_to_drain]);
+    b->SetFromArray(&c->batch[first_idx_to_drain], cnt);
     c->count -= cnt;
     allocator->DeallocateBatch(&stats_, class_id, b);
   }
