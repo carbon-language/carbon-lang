@@ -240,9 +240,16 @@ int X86TTIImpl::getArithmeticInstrCost(
 
   static const CostTblEntry
   SSE2UniformConstCostTable[] = {
-    // We don't correctly identify costs of casts because they are marked as
-    // custom.
     // Constant splats are cheaper for the following instructions.
+    { ISD::SDIV, MVT::v8i16,  6 }, // pmulhw sequence
+    { ISD::UDIV, MVT::v8i16,  6 }, // pmulhuw sequence
+    { ISD::SDIV, MVT::v4i32, 19 }, // pmuludq sequence
+    { ISD::UDIV, MVT::v4i32, 15 }, // pmuludq sequence
+  };
+
+  static const CostTblEntry
+  SSE2UniformCostTable[] = {
+    // Uniform splats are cheaper for the following instructions.
     { ISD::SHL,  MVT::v16i8,  1 }, // psllw.
     { ISD::SHL,  MVT::v32i8,  2 }, // psllw.
     { ISD::SHL,  MVT::v8i16,  1 }, // psllw.
@@ -269,21 +276,21 @@ int X86TTIImpl::getArithmeticInstrCost(
     { ISD::SRA,  MVT::v8i32,  2 }, // psrad.
     { ISD::SRA,  MVT::v2i64,  4 }, // 2 x psrad + shuffle.
     { ISD::SRA,  MVT::v4i64,  8 }, // 2 x psrad + shuffle.
-
-    { ISD::SDIV, MVT::v8i16,  6 }, // pmulhw sequence
-    { ISD::UDIV, MVT::v8i16,  6 }, // pmulhuw sequence
-    { ISD::SDIV, MVT::v4i32, 19 }, // pmuludq sequence
-    { ISD::UDIV, MVT::v4i32, 15 }, // pmuludq sequence
   };
 
-  if (Op2Info == TargetTransformInfo::OK_UniformConstantValue &&
-      ST->hasSSE2()) {
-    // pmuldq sequence.
-    if (ISD == ISD::SDIV && LT.second == MVT::v4i32 && ST->hasSSE41())
-      return LT.first * 15;
-
-    if (const auto *Entry = CostTableLookup(SSE2UniformConstCostTable, ISD,
-                                            LT.second))
+  if (ST->hasSSE2() &&
+      ((Op2Info == TargetTransformInfo::OK_UniformConstantValue) ||
+       (Op2Info == TargetTransformInfo::OK_UniformValue))) {
+    if (Op2Info == TargetTransformInfo::OK_UniformConstantValue) {
+      // pmuldq sequence.
+      if (ISD == ISD::SDIV && LT.second == MVT::v4i32 && ST->hasSSE41())
+        return LT.first * 15;
+      if (const auto *Entry =
+              CostTableLookup(SSE2UniformConstCostTable, ISD, LT.second))
+        return LT.first * Entry->Cost;
+    }
+    if (const auto *Entry =
+            CostTableLookup(SSE2UniformCostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
   }
 
@@ -312,12 +319,6 @@ int X86TTIImpl::getArithmeticInstrCost(
   static const CostTblEntry SSE2CostTable[] = {
     // We don't correctly identify costs of casts because they are marked as
     // custom.
-    // For some cases, where the shift amount is a scalar we would be able
-    // to generate better code. Unfortunately, when this is the case the value
-    // (the splat) will get hoisted out of the loop, thereby making it invisible
-    // to ISel. The cost model must return worst case assumptions because it is
-    // used for vectorization and we don't want to make vectorized code worse
-    // than scalar code.
     { ISD::SHL,  MVT::v16i8,    26 }, // cmpgtb sequence.
     { ISD::SHL,  MVT::v32i8,  2*26 }, // cmpgtb sequence.
     { ISD::SHL,  MVT::v8i16,    32 }, // cmpgtb sequence.
