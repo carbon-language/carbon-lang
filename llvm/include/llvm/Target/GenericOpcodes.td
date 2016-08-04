@@ -59,6 +59,12 @@ def G_BITCAST : Instruction {
   let hasSideEffects = 0;
 }
 
+def G_CONSTANT : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$imm);
+  let hasSideEffects = 0;
+}
+
 //------------------------------------------------------------------------------
 // Binary ops.
 //------------------------------------------------------------------------------
@@ -77,6 +83,14 @@ def G_SUB : Instruction {
   let InOperandList = (ins unknown:$src1, unknown:$src2);
   let hasSideEffects = 0;
   let isCommutable = 0;
+}
+
+// Generic addition consuming and producing a carry flag.
+def G_ADDE : Instruction {
+  let OutOperandList = (outs unknown:$dst, unknown:$carry_out);
+  let InOperandList = (ins unknown:$src1, unknown:$src2, unknown:$carry_in);
+  let hasSideEffects = 0;
+  let isCommutable = 1;
 }
 
 // Generic bitwise and.
@@ -163,6 +177,7 @@ def G_INTRINSIC_W_SIDE_EFFECTS : Instruction {
 //------------------------------------------------------------------------------
 // Branches.
 //------------------------------------------------------------------------------
+
 // Generic unconditional branch.
 def G_BR : Instruction {
   let OutOperandList = (outs);

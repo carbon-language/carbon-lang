@@ -61,7 +61,38 @@ void MachineLegalizeHelper::extractParts(unsigned Reg, LLT Ty, int NumParts,
 
 MachineLegalizeHelper::LegalizeResult
 MachineLegalizeHelper::narrowScalar(MachineInstr &MI, LLT NarrowTy) {
-  return UnableToLegalize;
+  switch (MI.getOpcode()) {
+  default:
+    return UnableToLegalize;
+  case TargetOpcode::G_ADD: {
+    // Expand in terms of carry-setting/consuming G_ADDE instructions.
+    unsigned NarrowSize = NarrowTy.getSizeInBits();
+    int NumParts = MI.getType().getSizeInBits() / NarrowSize;
+
+    MIRBuilder.setInstr(MI);
+
+    SmallVector<unsigned, 2> Src1Regs, Src2Regs, DstRegs;
+    extractParts(MI.getOperand(1).getReg(), NarrowTy, NumParts, Src1Regs);
+    extractParts(MI.getOperand(2).getReg(), NarrowTy, NumParts, Src2Regs);
+
+    unsigned CarryIn = MRI.createGenericVirtualRegister(1);
+    MIRBuilder.buildConstant(LLT::scalar(1), CarryIn, 0);
+
+    for (int i = 0; i < NumParts; ++i) {
+      unsigned DstReg = MRI.createGenericVirtualRegister(NarrowSize);
+      unsigned CarryOut = MRI.createGenericVirtualRegister(1);
+
+      MIRBuilder.buildAdde(NarrowTy, DstReg, CarryOut, Src1Regs[i], Src2Regs[i],
+                           CarryIn);
+
+      DstRegs.push_back(DstReg);
+      CarryIn = CarryOut;
+    }
+    MIRBuilder.buildSequence(MI.getType(), MI.getOperand(0).getReg(), DstRegs);
+    MI.eraseFromParent();
+    return Legalized;
+  }
+  }
 }
 
 MachineLegalizeHelper::LegalizeResult

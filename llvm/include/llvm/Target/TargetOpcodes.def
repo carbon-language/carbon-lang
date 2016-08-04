@@ -159,16 +159,20 @@ HANDLE_TARGET_OPCODE(PATCHABLE_RET)
 HANDLE_TARGET_OPCODE(G_ADD)
 HANDLE_TARGET_OPCODE_MARKER(PRE_ISEL_GENERIC_OPCODE_START, G_ADD)
 
+/// Generic ADD instruction, consuming the normal operands plus a carry flag,
+/// and similarly producing the result and a carry flag.
+HANDLE_TARGET_OPCODE(G_ADDE)
+
 /// Generic SUB instruction. This is an integer sub.
 HANDLE_TARGET_OPCODE(G_SUB)
 
 /// Generic Bitwise-AND instruction.
 HANDLE_TARGET_OPCODE(G_AND)
 
-/// Generic Bitwise-OR instruction.
+/// Generic bitwise or instruction.
 HANDLE_TARGET_OPCODE(G_OR)
 
-/// Generic Bitwise-OR instruction.
+/// Generic bitwise exclusive-or instruction.
 HANDLE_TARGET_OPCODE(G_XOR)
 
 /// Generic instruction to materialize the address of an alloca or other
@@ -213,6 +217,9 @@ HANDLE_TARGET_OPCODE(G_ANYEXTEND)
 
 /// Generic truncation.
 HANDLE_TARGET_OPCODE(G_TRUNC)
+
+/// Generic integer constant.
+HANDLE_TARGET_OPCODE(G_CONSTANT)
 
 /// Generic BRANCH instruction. This is an unconditional branch.
 HANDLE_TARGET_OPCODE(G_BR)
