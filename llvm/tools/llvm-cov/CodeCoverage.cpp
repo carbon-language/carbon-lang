@@ -585,8 +585,9 @@ int CodeCoverageTool::show(int argc, const char **argv,
                                  cl::aliasopt(ShowOutputDirectory));
 
   cl::opt<uint32_t> TabSize(
-      "tab-size", cl::Hidden, cl::init(2),
-      cl::desc("Set tab size for the HTML coverage report (default = 2)"));
+      "tab-size", cl::init(2),
+      cl::desc(
+          "Set tab expansion size for html coverage reports (default = 2)"));
 
   auto Err = commandLineParser(argc, argv);
   if (Err)
