@@ -80,6 +80,10 @@ static cl::opt<bool> SharedMemory("polly-acc-use-shared",
                                   cl::desc("Use shared memory"), cl::Hidden,
                                   cl::init(false), cl::ZeroOrMore,
                                   cl::cat(PollyCategory));
+static cl::opt<bool> PrivateMemory("polly-acc-use-private",
+                                   cl::desc("Use private memory"), cl::Hidden,
+                                   cl::init(false), cl::ZeroOrMore,
+                                   cl::cat(PollyCategory));
 
 static cl::opt<std::string>
     CudaVersion("polly-acc-cuda-version",
@@ -1263,20 +1267,27 @@ void GPUNodeBuilder::createKernelVariables(ppcg_kernel *Kernel, Function *FN) {
       ArrayTy = ArrayType::get(ArrayTy, Bound);
     }
 
-    assert(Var.type == ppcg_access_shared && "Only shared memory supported");
-
-    GlobalVariable *SharedVar = new GlobalVariable(
-        *M, ArrayTy, false, GlobalValue::InternalLinkage, 0, Var.name, nullptr,
-        GlobalValue::ThreadLocalMode::NotThreadLocal, 3);
-    SharedVar->setAlignment(EleTy->getPrimitiveSizeInBits() / 8);
-    ConstantAggregateZero *Zero = ConstantAggregateZero::get(ArrayTy);
-    SharedVar->setInitializer(Zero);
-
+    const ScopArrayInfo *SAI;
+    Value *Allocation;
+    if (Var.type == ppcg_access_shared) {
+      auto GlobalVar = new GlobalVariable(
+          *M, ArrayTy, false, GlobalValue::InternalLinkage, 0, Var.name,
+          nullptr, GlobalValue::ThreadLocalMode::NotThreadLocal, 3);
+      GlobalVar->setAlignment(EleTy->getPrimitiveSizeInBits() / 8);
+      ConstantAggregateZero *Zero = ConstantAggregateZero::get(ArrayTy);
+      GlobalVar->setInitializer(Zero);
+      Allocation = GlobalVar;
+    } else if (Var.type == ppcg_access_private) {
+      Allocation = Builder.CreateAlloca(ArrayTy, 0, "private_array");
+    } else {
+      llvm_unreachable("unknown variable type");
+    }
+    Builder.GetInsertBlock()->dump();
+    SAI = S.getOrCreateScopArrayInfo(Allocation, EleTy, Sizes,
+                                     ScopArrayInfo::MK_Array);
     Id = isl_id_alloc(S.getIslCtx(), Var.name, nullptr);
-    IDToValue[Id] = SharedVar;
-    const ScopArrayInfo *SAI = S.getOrCreateScopArrayInfo(
-        SharedVar, EleTy, Sizes, ScopArrayInfo::MK_Array);
-    LocalArrays.push_back(SharedVar);
+    IDToValue[Id] = Allocation;
+    LocalArrays.push_back(Allocation);
     KernelIds.push_back(Id);
     IDToSAI[Id] = SAI;
   }
@@ -1411,7 +1422,7 @@ public:
 
     Options->tile_size = 32;
 
-    Options->use_private_memory = false;
+    Options->use_private_memory = PrivateMemory;
     Options->use_shared_memory = SharedMemory;
     Options->max_shared_memory = 48 * 1024;
 
