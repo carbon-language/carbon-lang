@@ -166,7 +166,10 @@ HANDLE_TARGET_OPCODE(G_ADDE)
 /// Generic SUB instruction. This is an integer sub.
 HANDLE_TARGET_OPCODE(G_SUB)
 
-/// Generic Bitwise-AND instruction.
+// Generic multiply instruction.
+HANDLE_TARGET_OPCODE(G_MUL)
+
+/// Generic bitwise and instruction.
 HANDLE_TARGET_OPCODE(G_AND)
 
 /// Generic bitwise or instruction.
@@ -174,6 +177,7 @@ HANDLE_TARGET_OPCODE(G_OR)
 
 /// Generic bitwise exclusive-or instruction.
 HANDLE_TARGET_OPCODE(G_XOR)
+
 
 /// Generic instruction to materialize the address of an alloca or other
 /// stack-based object.
@@ -215,7 +219,10 @@ HANDLE_TARGET_OPCODE(G_INTRINSIC_W_SIDE_EFFECTS)
 /// Generic extension allowing rubbish in high bits.
 HANDLE_TARGET_OPCODE(G_ANYEXTEND)
 
-/// Generic truncation.
+/// Generic instruction to discard the high bits of a register. This differs
+/// from (G_EXTRACT val, 0) on its action on vectors: G_TRUNC will truncate
+/// each element individually, G_EXTRACT will typically discard the high
+/// elements of the vector.
 HANDLE_TARGET_OPCODE(G_TRUNC)
 
 /// Generic integer constant.

@@ -237,6 +237,8 @@ bool IRTranslator::translate(const Instruction &Inst) {
   // Bitwise operations.
   case Instruction::And:
     return translateBinaryOp(TargetOpcode::G_AND, cast<BinaryOperator>(Inst));
+  case Instruction::Mul:
+    return translateBinaryOp(TargetOpcode::G_MUL, cast<BinaryOperator>(Inst));
   case Instruction::Or:
     return translateBinaryOp(TargetOpcode::G_OR, cast<BinaryOperator>(Inst));
   case Instruction::Xor:

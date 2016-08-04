@@ -17,6 +17,17 @@ define i64 @addi64(i64 %arg1, i64 %arg2) {
   ret i64 %res
 }
 
+; CHECK-LABEL: name: muli64
+; CHECK: [[ARG1:%[0-9]+]](64) = COPY %x0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](64) = COPY %x1
+; CHECK-NEXT: [[RES:%[0-9]+]](64) = G_MUL s64 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %x0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %x0
+define i64 @muli64(i64 %arg1, i64 %arg2) {
+  %res = mul i64 %arg1, %arg2
+  ret i64 %res
+}
+
 ; Tests for alloca
 ; CHECK-LABEL: name: allocai64
 ; CHECK: stack:

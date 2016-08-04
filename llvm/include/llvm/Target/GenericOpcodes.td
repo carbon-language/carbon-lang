@@ -85,6 +85,14 @@ def G_SUB : Instruction {
   let isCommutable = 0;
 }
 
+// Generic subtraction.
+def G_MUL : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+  let isCommutable = 1;
+}
+
 // Generic addition consuming and producing a carry flag.
 def G_ADDE : Instruction {
   let OutOperandList = (outs unknown:$dst, unknown:$carry_out);
