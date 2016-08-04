@@ -2314,14 +2314,13 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
   }
   case Instruction::Mul:
     if (*RHSV == 0 && BO->hasNoSignedWrap()) {
-      // FIXME: Vectors are excluded by ConstantInt.
-      if (ConstantInt *BOC = dyn_cast<ConstantInt>(BOp1)) {
-        // The trivial case (mul X, 0) is handled by InstSimplify
+      const APInt *BOC;
+      if (match(BOp1, m_APInt(BOC)) && *BOC != 0) {
+        // The trivial case (mul X, 0) is handled by InstSimplify.
         // General case : (mul X, C) != 0 iff X != 0
         //                (mul X, C) == 0 iff X == 0
-        if (!BOC->isZero())
-          return new ICmpInst(ICI.getPredicate(), BOp0,
-                              Constant::getNullValue(RHS->getType()));
+        return new ICmpInst(ICI.getPredicate(), BOp0,
+                            Constant::getNullValue(RHS->getType()));
       }
     }
     break;
