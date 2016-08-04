@@ -2372,7 +2372,7 @@ Instruction *InstCombiner::foldICmpIntrinsicWithConstant(ICmpInst &ICI) {
     return &ICI;
   case Intrinsic::ctlz:
   case Intrinsic::cttz:
-    // ctz(A) == bitwidth(a)  ->  A == 0 and likewise for !=
+    // ctz(A) == bitwidth(A)  ->  A == 0 and likewise for !=
     if (*Op1C == Op1C->getBitWidth()) {
       Worklist.Add(II);
       ICI.setOperand(0, II->getArgOperand(0));
@@ -2380,13 +2380,19 @@ Instruction *InstCombiner::foldICmpIntrinsicWithConstant(ICmpInst &ICI) {
       return &ICI;
     }
     break;
-  case Intrinsic::ctpop:
+  case Intrinsic::ctpop: {
     // popcount(A) == 0  ->  A == 0 and likewise for !=
-    if (*Op1C == 0) {
+    // popcount(A) == bitwidth(A)  ->  A == -1 and likewise for !=
+    bool IsZero = *Op1C == 0;
+    if (IsZero || *Op1C == Op1C->getBitWidth()) {
       Worklist.Add(II);
       ICI.setOperand(0, II->getArgOperand(0));
-      ICI.setOperand(1, ConstantInt::getNullValue(II->getType()));
+      auto *NewOp = IsZero
+        ? ConstantInt::getNullValue(II->getType())
+        : ConstantInt::getAllOnesValue(II->getType());
+      ICI.setOperand(1, NewOp);
       return &ICI;
+    }
     }
     break;
   default:
