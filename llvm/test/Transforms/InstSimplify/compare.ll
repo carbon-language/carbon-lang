@@ -1005,22 +1005,46 @@ define i1 @nonnull_load_as_inner(i32 addrspace(1)** %addr) {
 
 ; If a bit is known to be zero for A and known to be one for B,
 ; then A and B cannot be equal.
-define i1 @icmp_eq_const(i32 %a) nounwind {
+define i1 @icmp_eq_const(i32 %a) {
+; CHECK-LABEL: @icmp_eq_const(
+; CHECK-NEXT:    ret i1 false
+;
   %b = mul nsw i32 %a, -2
   %c = icmp eq i32 %b, 1
   ret i1 %c
-
-; CHECK-LABEL: @icmp_eq_const
-; CHECK-NEXT: ret i1 false 
 }
 
-define i1 @icmp_ne_const(i32 %a) nounwind {
+; FIXME: Vectors should fold the same way.
+define <2 x i1> @icmp_eq_const_vec(<2 x i32> %a) {
+; CHECK-LABEL: @icmp_eq_const_vec(
+; CHECK-NEXT:    [[B:%.*]] = mul nsw <2 x i32> %a, <i32 -2, i32 -2>
+; CHECK-NEXT:    [[C:%.*]] = icmp eq <2 x i32> [[B]], <i32 1, i32 1>
+; CHECK-NEXT:    ret <2 x i1> [[C]]
+;
+  %b = mul nsw <2 x i32> %a, <i32 -2, i32 -2>
+  %c = icmp eq <2 x i32> %b, <i32 1, i32 1>
+  ret <2 x i1> %c
+}
+
+define i1 @icmp_ne_const(i32 %a) {
+; CHECK-LABEL: @icmp_ne_const(
+; CHECK-NEXT:    ret i1 true
+;
   %b = mul nsw i32 %a, -2
   %c = icmp ne i32 %b, 1
   ret i1 %c
+}
 
-; CHECK-LABEL: @icmp_ne_const
-; CHECK-NEXT: ret i1 true
+; FIXME: Vectors should fold the same way.
+define <2 x i1> @icmp_ne_const_vec(<2 x i32> %a) {
+; CHECK-LABEL: @icmp_ne_const_vec(
+; CHECK-NEXT:    [[B:%.*]] = mul nsw <2 x i32> %a, <i32 -2, i32 -2>
+; CHECK-NEXT:    [[C:%.*]] = icmp ne <2 x i32> [[B]], <i32 1, i32 1>
+; CHECK-NEXT:    ret <2 x i1> [[C]]
+;
+  %b = mul nsw <2 x i32> %a, <i32 -2, i32 -2>
+  %c = icmp ne <2 x i32> %b, <i32 1, i32 1>
+  ret <2 x i1> %c
 }
 
 define i1 @icmp_sdiv_int_min(i32 %a) {
