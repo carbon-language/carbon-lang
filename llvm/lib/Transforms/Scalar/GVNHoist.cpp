@@ -879,6 +879,10 @@ private:
             if (Call->mayThrow())
               break;
           }
+
+          if (Call->isConvergent())
+            break;
+
           CI.insert(Call, VN);
         } else if (HoistingGeps || !isa<GetElementPtrInst>(&I1))
           // Do not hoist scalars past calls that may write to memory because
