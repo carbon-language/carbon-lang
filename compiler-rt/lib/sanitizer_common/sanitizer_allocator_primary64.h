@@ -98,7 +98,8 @@ class SizeClassAllocator64 {
     if (kUsingConstantSpaceBeg)
       return reinterpret_cast<uptr>(p) & ~(kRegionSize - 1);
     uptr space_beg = SpaceBeg();
-    return ((reinterpret_cast<uptr>(p)  - space_beg) & ~(kRegionSize - 1)) + space_beg;
+    return ((reinterpret_cast<uptr>(p)  - space_beg) & ~(kRegionSize - 1)) +
+        space_beg;
   }
 
   uptr GetSizeClass(const void *p) {
@@ -113,7 +114,7 @@ class SizeClassAllocator64 {
     uptr size = SizeClassMap::Size(class_id);
     if (!size) return nullptr;
     uptr chunk_idx = GetChunkIdx((uptr)p, size);
-    uptr reg_beg = GetRegionBegin(p);    
+    uptr reg_beg = GetRegionBegin(p);
     uptr beg = chunk_idx * size;
     uptr next_beg = beg + size;
     if (class_id >= kNumClasses) return nullptr;
