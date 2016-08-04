@@ -660,11 +660,9 @@ define i1 @test55(i32 %a) {
   ret i1 %cmp
 }
 
-; FIXME: Vectors should fold the same way.
 define <2 x i1> @test55vec(<2 x i32> %a) {
 ; CHECK-LABEL: @test55vec(
-; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i32> zeroinitializer, %a
-; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> [[SUB]], <i32 123, i32 123>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> %a, <i32 -123, i32 -123>
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %sub = sub <2 x i32> zeroinitializer, %a
@@ -682,11 +680,9 @@ define i1 @test56(i32 %a) {
   ret i1 %cmp
 }
 
-; FIXME: Vectors should fold the same way.
 define <2 x i1> @test56vec(<2 x i32> %a) {
 ; CHECK-LABEL: @test56vec(
-; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i32> <i32 10, i32 10>, %a
-; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> [[SUB]], <i32 123, i32 123>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> %a, <i32 -113, i32 -113>
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %sub = sub <2 x i32> <i32 10, i32 10>, %a

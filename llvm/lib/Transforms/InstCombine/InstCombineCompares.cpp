@@ -2265,11 +2265,11 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
     break;
   case Instruction::Sub:
     if (BO->hasOneUse()) {
-      // FIXME: Vectors are excluded by ConstantInt.
-      if (ConstantInt *BOp0C = dyn_cast<ConstantInt>(BOp0)) {
+      const APInt *BOC;
+      if (match(BOp0, m_APInt(BOC))) {
         // Replace ((sub A, B) != C) with (B != A-C) if A & C are constants.
-        return new ICmpInst(ICI.getPredicate(), BOp1,
-                            ConstantExpr::getSub(BOp0C, RHS));
+        Constant *SubC = ConstantExpr::getSub(cast<Constant>(BOp0), RHS);
+        return new ICmpInst(ICI.getPredicate(), BOp1, SubC);
       } else if (*RHSV == 0) {
         // Replace ((sub A, B) != 0) with (A != B)
         return new ICmpInst(ICI.getPredicate(), BOp0, BOp1);
