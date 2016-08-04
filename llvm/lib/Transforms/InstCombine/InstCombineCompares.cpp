@@ -2277,14 +2277,8 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
     }
     break;
   case Instruction::Or:
-    // If bits are being or'd in that are not present in the constant we
-    // are comparing against, then the comparison could never succeed!
     // FIXME: Vectors are excluded by ConstantInt.
     if (ConstantInt *BOC = dyn_cast<ConstantInt>(BOp1)) {
-      Constant *NotCI = ConstantExpr::getNot(RHS);
-      if (!ConstantExpr::getAnd(BOC, NotCI)->isNullValue())
-        return replaceInstUsesWith(ICI, Builder->getInt1(isICMP_NE));
-
       // Comparing if all bits outside of a constant mask are set?
       // Replace (X | C) == -1 with (X & ~C) == ~C.
       // This removes the -1 constant.
@@ -2299,11 +2293,6 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
   case Instruction::And:
     // FIXME: Vectors are excluded by ConstantInt.
     if (ConstantInt *BOC = dyn_cast<ConstantInt>(BOp1)) {
-      // If bits are being compared against that are and'd out, then the
-      // comparison can never succeed!
-      if ((*RHSV & ~BOC->getValue()) != 0)
-        return replaceInstUsesWith(ICI, Builder->getInt1(isICMP_NE));
-
       // If we have ((X & C) == C), turn it into ((X & C) != 0).
       if (RHS == BOC && RHSV->isPowerOf2())
         return new ICmpInst(isICMP_NE ? ICmpInst::ICMP_EQ : ICmpInst::ICMP_NE,
