@@ -221,12 +221,14 @@ private:
 
   /// Create kernel launch parameters.
   ///
-  /// @param Kernel The kernel to create parameters for.
-  /// @param F      The kernel function that has been created.
+  /// @param Kernel        The kernel to create parameters for.
+  /// @param F             The kernel function that has been created.
+  /// @param SubtreeValues The set of llvm::Values referenced by this kernel.
   ///
   /// @returns A stack allocated array with pointers to the parameter
   ///          values that are passed to the kernel.
-  Value *createLaunchParameters(ppcg_kernel *Kernel, Function *F);
+  Value *createLaunchParameters(ppcg_kernel *Kernel, Function *F,
+                                SetVector<Value *> SubtreeValues);
 
   /// Create GPU kernel.
   ///
@@ -879,8 +881,9 @@ GPUNodeBuilder::getBlockSizes(ppcg_kernel *Kernel) {
   return std::make_tuple(Sizes[0], Sizes[1], Sizes[2]);
 }
 
-Value *GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel,
-                                              Function *F) {
+Value *
+GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
+                                       SetVector<Value *> SubtreeValues) {
   Type *ArrayTy = ArrayType::get(Builder.getInt8PtrTy(),
                                  std::distance(F->arg_begin(), F->arg_end()));
 
@@ -948,6 +951,19 @@ Value *GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel,
     Index++;
   }
 
+  for (auto Val : SubtreeValues) {
+    Instruction *Param = new AllocaInst(
+        Val->getType(), Launch + "_param_" + std::to_string(Index),
+        EntryBlock->getTerminator());
+    Builder.CreateStore(Val, Param);
+    Value *Slot = Builder.CreateGEP(
+        Parameters, {Builder.getInt64(0), Builder.getInt64(Index)});
+    Value *ParamTyped =
+        Builder.CreatePointerCast(Param, Builder.getInt8PtrTy());
+    Builder.CreateStore(ParamTyped, Slot);
+    Index++;
+  }
+
   auto Location = EntryBlock->getTerminator();
   return new BitCastInst(Parameters, Builder.getInt8PtrTy(),
                          Launch + "_params_i8ptr", Location);
@@ -1003,7 +1019,7 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
     S.invalidateScopArrayInfo(BasePtr, ScopArrayInfo::MK_Array);
   LocalArrays.clear();
 
-  Value *Parameters = createLaunchParameters(Kernel, F);
+  Value *Parameters = createLaunchParameters(Kernel, F, SubtreeValues);
 
   std::string ASMString = finalizeKernelFunction();
   std::string Name = "kernel_" + std::to_string(Kernel->id);
