@@ -34,7 +34,7 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
   const LLT v4s32 = LLT::vector(4, 32);
   const LLT v2s64 = LLT::vector(2, 64);
 
-  for (auto BinOp : {G_ADD, G_SUB, G_AND, G_OR, G_XOR}) {
+  for (auto BinOp : {G_ADD, G_SUB, G_MUL, G_AND, G_OR, G_XOR}) {
     for (auto Ty : {s32, s64, v2s32, v4s32, v2s64})
       setAction(BinOp, Ty, Legal);
 

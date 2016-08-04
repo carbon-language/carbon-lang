@@ -100,7 +100,12 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, LLT WideTy) {
   switch (MI.getOpcode()) {
   default:
     return UnableToLegalize;
-  case TargetOpcode::G_ADD: {
+  case TargetOpcode::G_ADD:
+  case TargetOpcode::G_AND:
+  case TargetOpcode::G_MUL:
+  case TargetOpcode::G_OR:
+  case TargetOpcode::G_XOR:
+  case TargetOpcode::G_SUB: {
     // Perform operation at larger width (any extension is fine here, high bits
     // don't affect the result) and then truncate the result back to the
     // original type.
@@ -114,7 +119,8 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, LLT WideTy) {
     MIRBuilder.buildAnyExtend(WideTy, Src2Ext, MI.getOperand(2).getReg());
 
     unsigned DstExt = MRI.createGenericVirtualRegister(WideSize);
-    MIRBuilder.buildAdd(WideTy, DstExt, Src1Ext, Src2Ext);
+    MIRBuilder.buildInstr(MI.getOpcode(), WideTy)
+      .addDef(DstExt).addUse(Src1Ext).addUse(Src2Ext);
 
     MIRBuilder.buildTrunc(MI.getType(), MI.getOperand(0).getReg(), DstExt);
     MI.eraseFromParent();
