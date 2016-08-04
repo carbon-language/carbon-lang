@@ -2276,20 +2276,18 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
       }
     }
     break;
-  case Instruction::Or:
-    // FIXME: Vectors are excluded by ConstantInt.
-    if (ConstantInt *BOC = dyn_cast<ConstantInt>(BOp1)) {
+  case Instruction::Or: {
+    const APInt *BOC;
+    if (match(BOp1, m_APInt(BOC)) && BO->hasOneUse() && RHS->isAllOnesValue()) {
       // Comparing if all bits outside of a constant mask are set?
       // Replace (X | C) == -1 with (X & ~C) == ~C.
       // This removes the -1 constant.
-      if (BO->hasOneUse() && RHS->isAllOnesValue()) {
-        Constant *NotBOC = ConstantExpr::getNot(BOC);
-        Value *And = Builder->CreateAnd(BOp0, NotBOC);
-        return new ICmpInst(ICI.getPredicate(), And, NotBOC);
-      }
+      Constant *NotBOC = ConstantExpr::getNot(cast<Constant>(BOp1));
+      Value *And = Builder->CreateAnd(BOp0, NotBOC);
+      return new ICmpInst(ICI.getPredicate(), And, NotBOC);
     }
     break;
-
+  }
   case Instruction::And:
     // FIXME: Vectors are excluded by ConstantInt.
     if (ConstantInt *BOC = dyn_cast<ConstantInt>(BOp1)) {

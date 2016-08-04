@@ -2035,11 +2035,10 @@ define i1 @cmp_inverse_mask_bits_set_eq(i32 %x) {
   ret i1 %cmp
 }
 
-; FIXME: Vectors should fold the same way.
 define <2 x i1> @cmp_inverse_mask_bits_set_eq_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @cmp_inverse_mask_bits_set_eq_vec(
-; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> %x, <i32 42, i32 42>
-; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> [[OR]], <i32 -1, i32 -1>
+; CHECK-NEXT:    [[TMP1:%.*]] = and <2 x i32> %x, <i32 -43, i32 -43>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> [[TMP1]], <i32 -43, i32 -43>
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %or = or <2 x i32> %x, <i32 42, i32 42>
