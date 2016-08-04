@@ -584,6 +584,10 @@ int CodeCoverageTool::show(int argc, const char **argv,
   cl::alias ShowOutputDirectoryA("o", cl::desc("Alias for --output-dir"),
                                  cl::aliasopt(ShowOutputDirectory));
 
+  cl::opt<uint32_t> TabSize(
+      "tab-size", cl::Hidden, cl::init(2),
+      cl::desc("Set tab size for the HTML coverage report (default = 2)"));
+
   auto Err = commandLineParser(argc, argv);
   if (Err)
     return Err;
@@ -596,6 +600,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
   ViewOpts.ShowExpandedRegions = ShowExpansions;
   ViewOpts.ShowFunctionInstantiations = ShowInstantiations;
   ViewOpts.ShowOutputDirectory = ShowOutputDirectory;
+  ViewOpts.TabSize = TabSize;
 
   if (ViewOpts.hasOutputDirectory()) {
     if (auto E = sys::fs::create_directories(ViewOpts.ShowOutputDirectory)) {
