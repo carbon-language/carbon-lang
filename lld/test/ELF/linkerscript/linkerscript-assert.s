@@ -14,7 +14,7 @@
 # RUN: llvm-readobj %t2 > /dev/null
 
 # RUN: echo "SECTIONS {     \
-# RUN:   ASSERT(0,\ "fail\") \
+# RUN:   ASSERT(0, \"fail\") \
 # RUN:  }" > %t3.script
 # RUN: not ld.lld -shared -o %t3 --script %t3.script %t1.o > %t.log 2>&1
 # RUN: FileCheck %s -check-prefix=FAIL < %t.log
