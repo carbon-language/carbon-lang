@@ -136,14 +136,14 @@ template <class ELFT> struct SectionsSorter {
   bool operator()(InputSectionBase<ELFT> *A, InputSectionBase<ELFT> *B) {
     int AlignmentCmp = A->Alignment - B->Alignment;
     if (Kind == SortKind::Align || (Kind == SortKind::AlignName && AlignmentCmp != 0))
-      return AlignmentCmp < 0;
+      return AlignmentCmp > 0;
 
     int NameCmp = A->getSectionName().compare(B->getSectionName());
     if (Kind == SortKind::Name || (Kind == SortKind::NameAlign && NameCmp != 0))
       return NameCmp < 0;
 
     if (Kind == SortKind::NameAlign)
-      return AlignmentCmp < 0;
+      return AlignmentCmp > 0;
     if (Kind == SortKind::AlignName)
       return NameCmp < 0;
 
