@@ -176,12 +176,6 @@ static bool isSignTest(ICmpInst::Predicate &Pred, const ConstantInt *RHS) {
   return false;
 }
 
-/// Return true if the constant is of the form 1+0+. This is the same as
-/// lowones(~X).
-static bool isHighOnes(const ConstantInt *CI) {
-  return (~CI->getValue() + 1).isPowerOf2();
-}
-
 /// Given a signed integer type and a set of known zero and one bits, compute
 /// the maximum and minimum values that could have the specified known zero and
 /// known one bits, returning them in Min/Max.
@@ -2288,11 +2282,11 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
     }
     break;
   }
-  case Instruction::And:
-    // FIXME: Vectors are excluded by ConstantInt.
-    if (ConstantInt *BOC = dyn_cast<ConstantInt>(BOp1)) {
+  case Instruction::And: {
+    const APInt *BOC;
+    if (match(BOp1, m_APInt(BOC))) {
       // If we have ((X & C) == C), turn it into ((X & C) != 0).
-      if (RHS == BOC && RHSV->isPowerOf2())
+      if (RHSV == BOC && RHSV->isPowerOf2())
         return new ICmpInst(isICMP_NE ? ICmpInst::ICMP_EQ : ICmpInst::ICMP_NE,
                             BO, Constant::getNullValue(RHS->getType()));
 
@@ -2301,7 +2295,7 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
         break;
 
       // Replace (and X, (1 << size(X)-1) != 0) with x s< 0
-      if (BOC->getValue().isSignBit()) {
+      if (BOC->isSignBit()) {
         Constant *Zero = Constant::getNullValue(BOp0->getType());
         ICmpInst::Predicate Pred =
             isICMP_NE ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_SGE;
@@ -2309,14 +2303,15 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
       }
 
       // ((X & ~7) == 0) --> X < 8
-      if (*RHSV == 0 && isHighOnes(BOC)) {
-        Constant *NegX = ConstantExpr::getNeg(BOC);
+      if (*RHSV == 0 && (~(*BOC) + 1).isPowerOf2()) {
+        Constant *NegBOC = ConstantExpr::getNeg(cast<Constant>(BOp1));
         ICmpInst::Predicate Pred =
             isICMP_NE ? ICmpInst::ICMP_UGE : ICmpInst::ICMP_ULT;
-        return new ICmpInst(Pred, BOp0, NegX);
+        return new ICmpInst(Pred, BOp0, NegBOC);
       }
     }
     break;
+  }
   case Instruction::Mul:
     if (*RHSV == 0 && BO->hasNoSignedWrap()) {
       // FIXME: Vectors are excluded by ConstantInt.

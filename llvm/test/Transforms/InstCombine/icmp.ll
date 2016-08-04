@@ -205,11 +205,12 @@ define i1 @test19(i32 %x) {
 }
 
 ; FIXME: Vectors should fold the same way.
+
 define <2 x i1> @test19vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test19vec(
 ; CHECK-NEXT:    [[SHL:%.*]] = shl <2 x i32> <i32 1, i32 1>, %x
 ; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[SHL]], <i32 8, i32 8>
-; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> [[AND]], <i32 8, i32 8>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ne <2 x i32> [[AND]], zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %shl = shl <2 x i32> <i32 1, i32 1>, %x
@@ -220,8 +221,7 @@ define <2 x i1> @test19vec(<2 x i32> %x) {
 
 define <2 x i1> @cmp_and_signbit_vec(<2 x i3> %x) {
 ; CHECK-LABEL: @cmp_and_signbit_vec(
-; CHECK-NEXT:    [[AND:%.*]] = and <2 x i3> %x, <i3 -4, i3 -4>
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ne <2 x i3> [[AND]], zeroinitializer
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt <2 x i3> %x, zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %and = and <2 x i3> %x, <i3 4, i3 4>
