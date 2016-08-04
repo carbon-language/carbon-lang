@@ -1252,16 +1252,12 @@ void GPUNodeBuilder::createKernelVariables(ppcg_kernel *Kernel, Function *FN) {
     isl_id *Id = isl_space_get_tuple_id(Var.array->space, isl_dim_set);
     Type *EleTy = ScopArrayInfo::getFromId(Id)->getElementType();
 
+    Type *ArrayTy = EleTy;
     SmallVector<const SCEV *, 4> Sizes;
-    isl_val *V0 = isl_vec_get_element_val(Var.size, 0);
-    long Bound = isl_val_get_num_si(V0);
-    isl_val_free(V0);
-    Sizes.push_back(S.getSE()->getConstant(Builder.getInt64Ty(), Bound));
 
-    ArrayType *ArrayTy = ArrayType::get(EleTy, Bound);
-    for (unsigned int j = 1; j < Var.array->n_index; ++j) {
+    for (unsigned int j = 0; j < Var.array->n_index; ++j) {
       isl_val *Val = isl_vec_get_element_val(Var.size, j);
-      Bound = isl_val_get_num_si(Val);
+      long Bound = isl_val_get_num_si(Val);
       isl_val_free(Val);
       Sizes.push_back(S.getSE()->getConstant(Builder.getInt64Ty(), Bound));
       ArrayTy = ArrayType::get(ArrayTy, Bound);
@@ -1274,8 +1270,8 @@ void GPUNodeBuilder::createKernelVariables(ppcg_kernel *Kernel, Function *FN) {
           *M, ArrayTy, false, GlobalValue::InternalLinkage, 0, Var.name,
           nullptr, GlobalValue::ThreadLocalMode::NotThreadLocal, 3);
       GlobalVar->setAlignment(EleTy->getPrimitiveSizeInBits() / 8);
-      ConstantAggregateZero *Zero = ConstantAggregateZero::get(ArrayTy);
-      GlobalVar->setInitializer(Zero);
+      GlobalVar->setInitializer(Constant::getNullValue(ArrayTy));
+
       Allocation = GlobalVar;
     } else if (Var.type == ppcg_access_private) {
       Allocation = Builder.CreateAlloca(ArrayTy, 0, "private_array");
