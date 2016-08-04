@@ -785,7 +785,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::CTTZ,               MVT::v16i8, Custom);
     setOperationAction(ISD::CTTZ,               MVT::v8i16, Custom);
     setOperationAction(ISD::CTTZ,               MVT::v4i32, Custom);
-    // ISD::CTTZ v2i64 - scalarization is faster.
+    setOperationAction(ISD::CTTZ,               MVT::v2i64, Custom);
 
     // Custom lower build_vector, vector_shuffle, and extract_vector_elt.
     for (auto VT : { MVT::v16i8, MVT::v8i16, MVT::v4i32 }) {
@@ -880,8 +880,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::BITREVERSE,         MVT::v16i8, Custom);
     setOperationAction(ISD::CTLZ,               MVT::v16i8, Custom);
     setOperationAction(ISD::CTLZ,               MVT::v8i16, Custom);
-    // ISD::CTLZ v4i32 - scalarization is faster.
-    // ISD::CTLZ v2i64 - scalarization is faster.
+    setOperationAction(ISD::CTLZ,               MVT::v4i32, Custom);
+    setOperationAction(ISD::CTLZ,               MVT::v2i64, Custom);
   }
 
   if (!Subtarget.useSoftFloat() && Subtarget.hasSSE41()) {
@@ -1025,16 +1025,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     for (auto VT : { MVT::v32i8, MVT::v16i16, MVT::v8i32, MVT::v4i64 }) {
       setOperationAction(ISD::CTPOP,           VT, Custom);
       setOperationAction(ISD::CTTZ,            VT, Custom);
-    }
-
-    // ISD::CTLZ v8i32/v4i64 - scalarization is faster without AVX2
-    // as we end up splitting the 256-bit vectors.
-    for (auto VT : { MVT::v32i8, MVT::v16i16 })
       setOperationAction(ISD::CTLZ,            VT, Custom);
-
-    if (HasInt256)
-      for (auto VT : { MVT::v8i32, MVT::v4i64 })
-        setOperationAction(ISD::CTLZ,          VT, Custom);
+    }
 
     if (Subtarget.hasAnyFMA()) {
       for (auto VT : { MVT::f32, MVT::f64, MVT::v4f32, MVT::v8f32,
