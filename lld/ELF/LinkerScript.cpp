@@ -159,10 +159,7 @@ template <class ELFT> struct SectionsSorter {
 
 template <class ELFT>
 void LinkerScript<ELFT>::createSections(
-    std::vector<OutputSectionBase<ELFT> *> *Out,
     OutputSectionFactory<ELFT> &Factory) {
-  OutputSections = Out;
-
   for (auto &P : getSectionMap()) {
     StringRef OutputName = P.first;
     const InputSectionDescription *Cmd = P.second;
@@ -181,7 +178,7 @@ void LinkerScript<ELFT>::createSections(
                        SectionsSorter<ELFT>(Cmd->Sort));
 
     for (InputSectionBase<ELFT> *S : Sections)
-      addSection(Factory, *Out, S, OutputName);
+      addSection(Factory, *OutputSections, S, OutputName);
   }
 
   // Add all other input sections, which are not listed in script.
@@ -189,7 +186,7 @@ void LinkerScript<ELFT>::createSections(
        Symtab<ELFT>::X->getObjectFiles())
     for (InputSectionBase<ELFT> *S : F->getSections())
       if (!isDiscarded(S) && !S->OutSec)
-        addSection(Factory, *Out, S, getOutputSectionName(S));
+        addSection(Factory, *OutputSections, S, getOutputSectionName(S));
 
   // Remove from the output all the sections which did not meet
   // the optional constraints.
@@ -224,9 +221,8 @@ template <class ELFT> void LinkerScript<ELFT>::filter() {
   }
 }
 
-template <class ELFT>
-void LinkerScript<ELFT>::assignAddresses(
-    ArrayRef<OutputSectionBase<ELFT> *> Sections) {
+template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
+  ArrayRef<OutputSectionBase<ELFT> *> Sections = *OutputSections;
   // Orphan sections are sections present in the input files which
   // are not explicitly placed into the output file by the linker script.
   // We place orphan sections at end of file.
@@ -300,8 +296,8 @@ void LinkerScript<ELFT>::assignAddresses(
 }
 
 template <class ELFT>
-std::vector<PhdrEntry<ELFT>>
-LinkerScript<ELFT>::createPhdrs(ArrayRef<OutputSectionBase<ELFT> *> Sections) {
+std::vector<PhdrEntry<ELFT>> LinkerScript<ELFT>::createPhdrs() {
+  ArrayRef<OutputSectionBase<ELFT> *> Sections = *OutputSections;
   std::vector<PhdrEntry<ELFT>> Ret;
 
   for (const PhdrsCommand &Cmd : Opt.PhdrsCommands) {
