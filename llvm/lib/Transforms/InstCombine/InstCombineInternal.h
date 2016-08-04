@@ -135,28 +135,6 @@ IntrinsicIDToOverflowCheckFlavor(unsigned ID) {
   }
 }
 
-/// \brief An IRBuilder inserter that adds new instructions to the instcombine
-/// worklist.
-class LLVM_LIBRARY_VISIBILITY InstCombineIRInserter
-    : public IRBuilderDefaultInserter {
-  InstCombineWorklist &Worklist;
-  AssumptionCache *AC;
-
-public:
-  InstCombineIRInserter(InstCombineWorklist &WL, AssumptionCache *AC)
-      : Worklist(WL), AC(AC) {}
-
-  void InsertHelper(Instruction *I, const Twine &Name, BasicBlock *BB,
-                    BasicBlock::iterator InsertPt) const {
-    IRBuilderDefaultInserter::InsertHelper(I, Name, BB, InsertPt);
-    Worklist.Add(I);
-
-    using namespace llvm::PatternMatch;
-    if (match(I, m_Intrinsic<Intrinsic::assume>()))
-      AC->registerAssumption(cast<CallInst>(I));
-  }
-};
-
 /// \brief The core instruction combiner logic.
 ///
 /// This class provides both the logic to recursively visit instructions and
@@ -171,7 +149,7 @@ public:
 
   /// \brief An IRBuilder that automatically inserts new instructions into the
   /// worklist.
-  typedef IRBuilder<TargetFolder, InstCombineIRInserter> BuilderTy;
+  typedef IRBuilder<TargetFolder, IRBuilderCallbackInserter> BuilderTy;
   BuilderTy *Builder;
 
 private:

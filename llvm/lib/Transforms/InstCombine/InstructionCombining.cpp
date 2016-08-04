@@ -3120,8 +3120,15 @@ combineInstructionsOverFunction(Function &F, InstCombineWorklist &Worklist,
 
   /// Builder - This is an IRBuilder that automatically inserts new
   /// instructions into the worklist when they are created.
-  IRBuilder<TargetFolder, InstCombineIRInserter> Builder(
-      F.getContext(), TargetFolder(DL), InstCombineIRInserter(Worklist, &AC));
+  IRBuilder<TargetFolder, IRBuilderCallbackInserter> Builder(
+      F.getContext(), TargetFolder(DL),
+      IRBuilderCallbackInserter([&Worklist, &AC](Instruction *I) {
+        Worklist.Add(I);
+
+        using namespace llvm::PatternMatch;
+        if (match(I, m_Intrinsic<Intrinsic::assume>()))
+          AC.registerAssumption(cast<CallInst>(I));
+      }));
 
   // Lower dbg.declare intrinsics otherwise their value may be clobbered
   // by instcombiner.
