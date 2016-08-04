@@ -1015,7 +1015,6 @@ define i1 @icmp_eq_const(i32 %a) {
   ret i1 %c
 }
 
-; FIXME: Vectors should fold the same way.
 define <2 x i1> @icmp_eq_const_vec(<2 x i32> %a) {
 ; CHECK-LABEL: @icmp_eq_const_vec(
 ; CHECK-NEXT:    ret <2 x i1> zeroinitializer
@@ -1034,7 +1033,6 @@ define i1 @icmp_ne_const(i32 %a) {
   ret i1 %c
 }
 
-; FIXME: Vectors should fold the same way.
 define <2 x i1> @icmp_ne_const_vec(<2 x i32> %a) {
 ; CHECK-LABEL: @icmp_ne_const_vec(
 ; CHECK-NEXT:    ret <2 x i1> <i1 true, i1 true>
