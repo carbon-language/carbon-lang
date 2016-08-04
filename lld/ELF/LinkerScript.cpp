@@ -822,17 +822,11 @@ ScriptParser::readOutputSectionDescription(StringRef OutSec) {
       Cmd->Commands.emplace_back(readInputSectionDescription());
       continue;
     }
-
-    StringRef Tok = next();
-    if (Tok == "PROVIDE") {
-      Opt.Commands.emplace_back(readProvide(false));
-    } else if (Tok == "PROVIDE_HIDDEN") {
-      Opt.Commands.emplace_back(readProvide(true));
-    } else if (Tok == "SORT") {
+    if (skip("SORT")) {
       readSort();
-    } else {
-      setError("unknown command " + Tok);
+      continue;
     }
+    setError("unknown command " + peek());
   }
   Cmd->Phdrs = readOutputSectionPhdrs();
   Cmd->Filler = readOutputSectionFiller();
