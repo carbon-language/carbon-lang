@@ -192,6 +192,11 @@ void LinkerScript<ELFT>::createSections(
   filter();
 }
 
+template <class R, class T>
+static inline void removeElementsIf(R &Range, const T &Pred) {
+  Range.erase(std::remove_if(Range.begin(), Range.end(), Pred), Range.end());
+}
+
 // Process ONLY_IF_RO and ONLY_IF_RW.
 template <class ELFT> void LinkerScript<ELFT>::filter() {
   // In this loop, we remove output sections if they don't satisfy
@@ -204,19 +209,14 @@ template <class ELFT> void LinkerScript<ELFT>::filter() {
     if (Cmd->Constraint == ConstraintKind::NoConstraint)
       continue;
 
-    auto It = llvm::find_if(*OutputSections, [&](OutputSectionBase<ELFT> *S) {
-      return S->getName() == Cmd->Name;
+    removeElementsIf(*OutputSections, [&](OutputSectionBase<ELFT> *S) {
+      bool Writable = (S->getFlags() & SHF_WRITE);
+      bool RO = (Cmd->Constraint == ConstraintKind::ReadOnly);
+      bool RW = (Cmd->Constraint == ConstraintKind::ReadWrite);
+
+      return S->getName() == Cmd->Name &&
+             ((RO && Writable) || (RW && !Writable));
     });
-    if (It == OutputSections->end())
-      continue;
-
-    OutputSectionBase<ELFT> *Sec = *It;
-    bool Writable = (Sec->getFlags() & SHF_WRITE);
-    bool RO = (Cmd->Constraint == ConstraintKind::ReadOnly);
-    bool RW = (Cmd->Constraint == ConstraintKind::ReadWrite);
-
-    if ((RO && Writable) || (RW && !Writable))
-      OutputSections->erase(It);
   }
 }
 
