@@ -12,6 +12,25 @@
 //
 //===----------------------------------------------------------------------===//
 
+// Unary ops.
+//------------------------------------------------------------------------------
+
+// Extend the underlying scalar type of an operation, leaving the high bits
+// unspecified.
+def G_ANYEXTEND : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src);
+  let hasSideEffects = 0;
+}
+
+// Truncate the underlying scalar type of an operation. This is equivalent to
+// G_EXTRACT for scalar types, but acts elementwise on vectors.
+def G_TRUNC : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src);
+  let hasSideEffects = 0;
+}
+
 //------------------------------------------------------------------------------
 // Unary ops.
 //------------------------------------------------------------------------------

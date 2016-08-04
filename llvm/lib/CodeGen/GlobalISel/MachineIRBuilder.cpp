@@ -119,6 +119,11 @@ MachineInstrBuilder MachineIRBuilder::buildStore(LLT VTy, LLT PTy,
       .addMemOperand(&MMO);
 }
 
+MachineInstrBuilder MachineIRBuilder::buildAnyExtend(LLT Ty, unsigned Res,
+                                                     unsigned Op) {
+  return buildInstr(TargetOpcode::G_ANYEXTEND, Ty).addDef(Res).addUse(Op);
+}
+
 MachineInstrBuilder
 MachineIRBuilder::buildExtract(LLT Ty, ArrayRef<unsigned> Results, unsigned Src,
                                ArrayRef<unsigned> Indexes) {
@@ -156,4 +161,9 @@ MachineInstrBuilder MachineIRBuilder::buildIntrinsic(ArrayRef<LLT> Tys,
     MIB.addDef(Res);
   MIB.addIntrinsicID(ID);
   return MIB;
+}
+
+MachineInstrBuilder MachineIRBuilder::buildTrunc(LLT Ty, unsigned Res,
+                                           unsigned Op) {
+  return buildInstr(TargetOpcode::G_TRUNC, Ty).addDef(Res).addUse(Op);
 }

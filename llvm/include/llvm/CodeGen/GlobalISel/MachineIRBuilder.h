@@ -131,6 +131,18 @@ public:
   MachineInstrBuilder buildAdd(LLT Ty, unsigned Res, unsigned Op0,
                                 unsigned Op1);
 
+  /// Build and insert \p Res<def> = G_ANYEXTEND \p Ty \p Op0
+  ///
+  /// G_ANYEXTEND produces a register of the specified width, with bits 0 to
+  /// sizeof(\p Ty) * 8 set to \p Op. The remaining bits are unspecified
+  /// (i.e. this is neither zero nor sign-extension). For a vector register,
+  /// each element is extended individually.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return The newly created instruction.
+  MachineInstrBuilder buildAnyExtend(LLT Ty, unsigned Res, unsigned Op);
+
   /// Build and insert G_BR unsized \p Dest
   ///
   /// G_BR is an unconditional branch to \p Dest.
@@ -217,6 +229,16 @@ public:
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildIntrinsic(ArrayRef<LLT> Tys, Intrinsic::ID ID,
                                      unsigned Res, bool HasSideEffects);
+
+  /// Build and insert \p Res<def> = G_TRUNC \p Ty \p Op
+  ///
+  /// G_TRUNC extracts the low bits of a type. For a vector type each element is
+  /// truncated independently before being packed into the destination.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return The newly created instruction.
+  MachineInstrBuilder buildTrunc(LLT Ty, unsigned Res, unsigned Op);
 };
 
 } // End namespace llvm.
