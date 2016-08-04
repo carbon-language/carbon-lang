@@ -242,6 +242,12 @@ private:
   /// @param Array The array for which to compute a size.
   Value *getArraySize(gpu_array_info *Array);
 
+  /// Prepare the kernel arguments for kernel code generation
+  ///
+  /// @param Kernel The kernel to generate code for.
+  /// @param FN     The function created for the kernel.
+  void prepareKernelArguments(ppcg_kernel *Kernel, Function *FN);
+
   /// Create kernel function.
   ///
   /// Create a kernel function located in a newly created module that can serve
@@ -775,7 +781,7 @@ isl_bool collectReferencesInGPUStmt(__isl_keep isl_ast_node *Node, void *User) {
   auto Stmt = (ScopStmt *)KernelStmt->u.d.stmt->stmt;
   isl_id_free(Id);
 
-  addReferencesFromStmt(Stmt, User);
+  addReferencesFromStmt(Stmt, User, false /* CreateScalarRefs */);
 
   return isl_bool_true;
 }
@@ -1167,6 +1173,32 @@ void GPUNodeBuilder::insertKernelIntrinsics(ppcg_kernel *Kernel) {
   }
 }
 
+void GPUNodeBuilder::prepareKernelArguments(ppcg_kernel *Kernel, Function *FN) {
+  auto Arg = FN->arg_begin();
+  for (long i = 0; i < Kernel->n_array; i++) {
+    if (!ppcg_kernel_requires_array_argument(Kernel, i))
+      continue;
+
+    isl_id *Id = isl_space_get_tuple_id(Prog->array[i].space, isl_dim_set);
+    const ScopArrayInfo *SAI = ScopArrayInfo::getFromId(isl_id_copy(Id));
+    isl_id_free(Id);
+
+    if (SAI->getNumberOfDimensions() > 0) {
+      Arg++;
+      continue;
+    }
+
+    Value *Alloca = BlockGen.getOrCreateScalarAlloca(SAI->getBasePtr());
+    Value *ArgPtr = &*Arg;
+    Type *TypePtr = SAI->getElementType()->getPointerTo();
+    Value *TypedArgPtr = Builder.CreatePointerCast(ArgPtr, TypePtr);
+    Value *Val = Builder.CreateLoad(TypedArgPtr);
+    Builder.CreateStore(Val, Alloca);
+
+    Arg++;
+  }
+}
+
 void GPUNodeBuilder::createKernelFunction(ppcg_kernel *Kernel,
                                           SetVector<Value *> &SubtreeValues) {
 
@@ -1189,6 +1221,7 @@ void GPUNodeBuilder::createKernelFunction(ppcg_kernel *Kernel,
 
   ScopDetection::markFunctionAsInvalid(FN);
 
+  prepareKernelArguments(Kernel, FN);
   insertKernelIntrinsics(Kernel);
 }
 

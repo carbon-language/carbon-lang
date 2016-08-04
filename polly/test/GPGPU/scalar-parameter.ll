@@ -6,6 +6,10 @@
 ; RUN: -S < %s | \
 ; RUN: FileCheck -check-prefix=IR %s
 
+; RUN: opt %loadPolly -polly-codegen-ppcg \
+; RUN: -disable-output -polly-acc-dump-kernel-ir < %s | \
+; RUN: FileCheck -check-prefix=KERNEL %s
+
 ; REQUIRES: pollyacc
 
 ; CODE: Code
@@ -58,6 +62,8 @@ bb7:                                              ; preds = %bb1
   ret void
 }
 
+; KERNEL: define ptx_kernel void @kernel_0(i8* %MemRef_A, i8* %MemRef_b)
+
 ; CODE: Code
 ; CODE-NEXT: ====
 ; CODE-NEXT: # host
@@ -107,6 +113,13 @@ bb5:                                              ; preds = %bb2
 bb7:                                              ; preds = %bb1
   ret void
 }
+
+; KERNEL: define ptx_kernel void @kernel_0(i8* %MemRef_A, i8* %MemRef_b)
+; KERNEL-NEXT: entry:
+; KERNEL-NEXT:   %b.s2a = alloca float
+; KERNEL-NEXT:   %0 = bitcast i8* %MemRef_b to float*
+; KERNEL-NEXT:   %1 = load float, float* %0
+; KERNEL-NEXT:   store float %1, float* %b.s2a
 
 ; CODE: Code
 ; CODE-NEXT: ====
