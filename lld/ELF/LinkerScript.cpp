@@ -135,27 +135,27 @@ static void addSection(OutputSectionFactory<ELFT> &Factory,
   Sec->addSection(C);
 }
 
-template <class ELFT> struct SectionsSorter {
-  SectionsSorter(SortKind Kind) : Kind(Kind) {}
-  bool operator()(InputSectionBase<ELFT> *A, InputSectionBase<ELFT> *B) {
-    int AlignmentCmp = A->Alignment - B->Alignment;
-    if (Kind == SortKind::Align || (Kind == SortKind::AlignName && AlignmentCmp != 0))
-      return AlignmentCmp > 0;
+template <class ELFT>
+static bool compareName(InputSectionBase<ELFT> *A, InputSectionBase<ELFT> *B) {
+  return A->getSectionName() < B->getSectionName();
+}
 
-    int NameCmp = A->getSectionName().compare(B->getSectionName());
-    if (Kind == SortKind::Name || (Kind == SortKind::NameAlign && NameCmp != 0))
-      return NameCmp < 0;
+template <class ELFT>
+static bool compareAlignment(InputSectionBase<ELFT> *A,
+                             InputSectionBase<ELFT> *B) {
+  // ">" is not a mistake. Larger alignments are placed before smaller
+  // alignments in order to reduce the amount of padding necessary.
+  // This is compatible with GNU.
+  return A->Alignment > B->Alignment;
+}
 
-    if (Kind == SortKind::NameAlign)
-      return AlignmentCmp > 0;
-    if (Kind == SortKind::AlignName)
-      return NameCmp < 0;
-
-    llvm_unreachable("unknown section sort kind in predicate");
-    return false;
-  }
-  SortKind Kind;
-};
+template <class ELFT>
+static std::function<bool(InputSectionBase<ELFT> *, InputSectionBase<ELFT> *)>
+getComparator(SortKind K) {
+  if (K == SortByName)
+    return compareName<ELFT>;
+  return compareAlignment<ELFT>;
+}
 
 template <class ELFT>
 void LinkerScript<ELFT>::createSections(
@@ -173,9 +173,12 @@ void LinkerScript<ELFT>::createSections(
       continue;
     }
 
-    if (Cmd->Sort != SortKind::None)
+    if (Cmd->SortInner)
       std::stable_sort(Sections.begin(), Sections.end(),
-                       SectionsSorter<ELFT>(Cmd->Sort));
+                       getComparator<ELFT>(Cmd->SortInner));
+    if (Cmd->SortOuter)
+      std::stable_sort(Sections.begin(), Sections.end(),
+                       getComparator<ELFT>(Cmd->SortOuter));
 
     for (InputSectionBase<ELFT> *S : Sections)
       addSection(Factory, *OutputSections, S, OutputName);
@@ -489,6 +492,7 @@ private:
   std::vector<StringRef> readInputFilePatterns();
   InputSectionDescription *readInputSectionRules();
   unsigned readPhdrType();
+  SortKind readSortKind();
   SymbolAssignment *readProvide(bool Hidden);
   Expr readAlign();
   void readSort();
@@ -731,41 +735,36 @@ std::vector<StringRef> ScriptParser::readInputFilePatterns() {
   return V;
 }
 
+SortKind ScriptParser::readSortKind() {
+  if (skip("SORT") || skip("SORT_BY_NAME"))
+    return SortByName;
+  if (skip("SORT_BY_ALIGNMENT"))
+    return SortByAlignment;
+  return SortNone;
+}
+
 InputSectionDescription *ScriptParser::readInputSectionRules() {
   auto *Cmd = new InputSectionDescription;
   Cmd->FilePattern = next();
   expect("(");
 
+  // Read EXCLUDE_FILE().
   if (skip("EXCLUDE_FILE")) {
     expect("(");
     while (!Error && !skip(")"))
       Cmd->ExcludedFiles.push_back(next());
   }
 
-  if (skip("SORT") || skip("SORT_BY_NAME")) {
+  // Read SORT().
+  if (SortKind K1 = readSortKind()) {
+    Cmd->SortOuter = K1;
     expect("(");
-    if (skip("SORT_BY_ALIGNMENT")) {
-      Cmd->Sort = SortKind::NameAlign;
+    if (SortKind K2 = readSortKind()) {
+      Cmd->SortInner = K2;
       expect("(");
       Cmd->SectionPatterns = readInputFilePatterns();
       expect(")");
     } else {
-      Cmd->Sort = SortKind::Name;
-      Cmd->SectionPatterns = readInputFilePatterns();
-    }
-    expect(")");
-    return Cmd;
-  }
-
-  if (skip("SORT_BY_ALIGNMENT")) {
-    expect("(");
-    if (skip("SORT") || skip("SORT_BY_NAME")) {
-      Cmd->Sort = SortKind::AlignName;
-      expect("(");
-      Cmd->SectionPatterns = readInputFilePatterns();
-      expect(")");
-    } else {
-      Cmd->Sort = SortKind::Align;
       Cmd->SectionPatterns = readInputFilePatterns();
     }
     expect(")");
