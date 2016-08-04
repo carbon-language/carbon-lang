@@ -12171,6 +12171,71 @@ static SDValue lower1BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   return DAG.getNode(ISD::TRUNCATE, DL, VT,
                      DAG.getVectorShuffle(ExtVT, DL, V1, V2, Mask));
 }
+
+/// Helper function that returns true if the shuffle mask should be
+/// commuted to improve canonicalization.
+static bool canonicalizeShuffleMaskWithCommute(ArrayRef<int> Mask) {
+  int NumElements = Mask.size();
+
+  int NumV1Elements = 0, NumV2Elements = 0, NumSentinelElements = 0;
+  for (int M : Mask)
+    if (M < 0)
+      ++NumSentinelElements;
+    else if (M < NumElements)
+      ++NumV1Elements;
+    else
+      ++NumV2Elements;
+
+  // Commute the shuffle as needed such that more elements come from V1 than
+  // V2. This allows us to match the shuffle pattern strictly on how many
+  // elements come from V1 without handling the symmetric cases.
+  if (NumV2Elements > NumV1Elements)
+    return true;
+
+  assert(NumV1Elements > 0 && "No V1 indices");
+
+  if (NumV2Elements == 0)
+    return false;
+
+  // When the number of V1 and V2 elements are the same, try to minimize the
+  // number of uses of V2 in the low half of the vector. When that is tied,
+  // ensure that the sum of indices for V1 is equal to or lower than the sum
+  // indices for V2. When those are equal, try to ensure that the number of odd
+  // indices for V1 is lower than the number of odd indices for V2.
+  if (NumV1Elements == NumV2Elements) {
+    int LowV1Elements = 0, LowV2Elements = 0;
+    for (int M : Mask.slice(0, NumElements / 2))
+      if (M >= NumElements)
+        ++LowV2Elements;
+      else if (M >= 0)
+        ++LowV1Elements;
+    if (LowV2Elements > LowV1Elements)
+      return true;
+    if (LowV2Elements == LowV1Elements) {
+      int SumV1Indices = 0, SumV2Indices = 0;
+      for (int i = 0, Size = Mask.size(); i < Size; ++i)
+        if (Mask[i] >= NumElements)
+          SumV2Indices += i;
+        else if (Mask[i] >= 0)
+          SumV1Indices += i;
+      if (SumV2Indices < SumV1Indices)
+        return true;
+      if (SumV2Indices == SumV1Indices) {
+        int NumV1OddIndices = 0, NumV2OddIndices = 0;
+        for (int i = 0, Size = Mask.size(); i < Size; ++i)
+          if (Mask[i] >= NumElements)
+            NumV2OddIndices += i % 2;
+          else if (Mask[i] >= 0)
+            NumV1OddIndices += i % 2;
+        if (NumV2OddIndices < NumV1OddIndices)
+          return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 /// \brief Top-level lowering for x86 vector shuffles.
 ///
 /// This handles decomposition, canonicalization, and lowering of all x86
@@ -12244,59 +12309,9 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget &Subtarget,
     }
   }
 
-  int NumV1Elements = 0, NumUndefElements = 0, NumV2Elements = 0;
-  for (int M : Mask)
-    if (M < 0)
-      ++NumUndefElements;
-    else if (M < NumElements)
-      ++NumV1Elements;
-    else
-      ++NumV2Elements;
-
-  // Commute the shuffle as needed such that more elements come from V1 than
-  // V2. This allows us to match the shuffle pattern strictly on how many
-  // elements come from V1 without handling the symmetric cases.
-  if (NumV2Elements > NumV1Elements)
+  // Commute the shuffle if it will improve canonicalization.
+  if (canonicalizeShuffleMaskWithCommute(Mask))
     return DAG.getCommutedVectorShuffle(*SVOp);
-
-  assert(NumV1Elements > 0 && "No V1 indices");
-  assert((NumV2Elements > 0 || V2IsUndef) && "V2 not undef, but not used");
-
-  // When the number of V1 and V2 elements are the same, try to minimize the
-  // number of uses of V2 in the low half of the vector. When that is tied,
-  // ensure that the sum of indices for V1 is equal to or lower than the sum
-  // indices for V2. When those are equal, try to ensure that the number of odd
-  // indices for V1 is lower than the number of odd indices for V2.
-  if (NumV1Elements == NumV2Elements) {
-    int LowV1Elements = 0, LowV2Elements = 0;
-    for (int M : Mask.slice(0, NumElements / 2))
-      if (M >= NumElements)
-        ++LowV2Elements;
-      else if (M >= 0)
-        ++LowV1Elements;
-    if (LowV2Elements > LowV1Elements)
-      return DAG.getCommutedVectorShuffle(*SVOp);
-    if (LowV2Elements == LowV1Elements) {
-      int SumV1Indices = 0, SumV2Indices = 0;
-      for (int i = 0, Size = Mask.size(); i < Size; ++i)
-        if (Mask[i] >= NumElements)
-          SumV2Indices += i;
-        else if (Mask[i] >= 0)
-          SumV1Indices += i;
-      if (SumV2Indices < SumV1Indices)
-        return DAG.getCommutedVectorShuffle(*SVOp);
-      if (SumV2Indices == SumV1Indices) {
-        int NumV1OddIndices = 0, NumV2OddIndices = 0;
-        for (int i = 0, Size = Mask.size(); i < Size; ++i)
-          if (Mask[i] >= NumElements)
-            NumV2OddIndices += i % 2;
-          else if (Mask[i] >= 0)
-            NumV1OddIndices += i % 2;
-        if (NumV2OddIndices < NumV1OddIndices)
-          return DAG.getCommutedVectorShuffle(*SVOp);
-      }
-    }
-  }
 
   // For each vector width, delegate to a specialized lowering routine.
   if (VT.is128BitVector())
