@@ -351,9 +351,9 @@ define void @ctpop_cmp_vec(<2 x i32> %a, <2 x i1>* %b) {
   ret void
 ; CHECK-LABEL: @ctpop_cmp_vec(
 ; CHECK-NEXT: %pop0.cmp = icmp eq <2 x i32> %a, zeroinitializer
-; CHECK-NEXT: store volatile <2 x i1> %pop0.cmp, <2 x i1>* %c
-; CHECK-NEXT: %pop1.cmp = icmp eq <2 x i32> %a, zeroinitializer
-; CHECK-NEXT: store volatile <2 x i1> %pop1.cmp, <2 x i1>* %c
+; CHECK-NEXT: store volatile <2 x i1> %pop0.cmp, <2 x i1>* %b
+; CHECK-NEXT: %pop1.cmp = icmp eq <2 x i32> %a, <i32 -1, i32 -1>
+; CHECK-NEXT: store volatile <2 x i1> %pop1.cmp, <2 x i1>* %b
 }
 
 define i32 @cttz_simplify1a(i32 %x) nounwind readnone ssp {
