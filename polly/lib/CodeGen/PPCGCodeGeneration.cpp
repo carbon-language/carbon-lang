@@ -1408,6 +1408,7 @@ public:
     DebugOptions->dump_schedule = false;
     DebugOptions->dump_final_schedule = false;
     DebugOptions->dump_sizes = false;
+    DebugOptions->verbose = false;
 
     Options->debug = DebugOptions;
 
