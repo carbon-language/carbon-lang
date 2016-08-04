@@ -55,6 +55,10 @@ bool InputSectionDescription::classof(const BaseCommand *C) {
   return C->Kind == InputSectionKind;
 }
 
+bool AssertCommand::classof(const BaseCommand *C) {
+  return C->Kind == AssertKind;
+}
+
 template <class ELFT> static bool isDiscarded(InputSectionBase<ELFT> *S) {
   return !S || !S->Live;
 }
@@ -246,6 +250,11 @@ void LinkerScript<ELFT>::assignAddresses(
       } else if (Cmd->Sym) {
         cast<DefinedRegular<ELFT>>(Cmd->Sym)->Value = Cmd->Expression(Dot);
       }
+      continue;
+    }
+
+    if (auto *Cmd = dyn_cast<AssertCommand>(Base.get())) {
+      Cmd->Expression(Dot);
       continue;
     }
 
@@ -487,6 +496,7 @@ private:
   SymbolAssignment *readProvide(bool Hidden);
   Expr readAlign();
   void readSort();
+  Expr readAssert();
 
   Expr readExpr();
   Expr readExpr1(Expr Lhs, int MinPrec);
@@ -693,6 +703,8 @@ void ScriptParser::readSections() {
       Cmd = readProvide(false);
     } else if (Tok == "PROVIDE_HIDDEN") {
       Cmd = readProvide(true);
+    } else if (Tok == "ASSERT") {
+      Cmd = new AssertCommand(readAssert());
     } else {
       Cmd = readOutputSectionDescription(Tok);
     }
@@ -794,6 +806,20 @@ void ScriptParser::readSort() {
   expect("(");
   expect("CONSTRUCTORS");
   expect(")");
+}
+
+Expr ScriptParser::readAssert() {
+  expect("(");
+  Expr E = readExpr();
+  expect(",");
+  StringRef Msg = next();
+  expect(")");
+  return [=](uint64_t Dot) {
+    uint64_t V = E(Dot);
+    if (!V)
+      error(Msg);
+    return V;
+  };
 }
 
 OutputSectionCommand *
@@ -967,6 +993,8 @@ Expr ScriptParser::readPrimary() {
 
   // Built-in functions are parsed here.
   // https://sourceware.org/binutils/docs/ld/Builtin-Functions.html.
+  if (Tok == "ASSERT")
+    return readAssert();
   if (Tok == "ALIGN") {
     expect("(");
     Expr E = readExpr();

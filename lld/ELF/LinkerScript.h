@@ -41,7 +41,8 @@ template <class ELFT> class OutputSectionBase;
 enum SectionsCommandKind {
   AssignmentKind,
   OutputSectionKind,
-  InputSectionKind
+  InputSectionKind,
+  AssertKind
 };
 
 struct BaseCommand {
@@ -96,6 +97,12 @@ struct InputSectionDescription : BaseCommand {
   SortKind Sort = SortKind::None;
   std::vector<StringRef> ExcludedFiles;
   std::vector<StringRef> SectionPatterns;
+};
+
+struct AssertCommand : BaseCommand {
+  AssertCommand(Expr E) : BaseCommand(AssertKind), Expression(E) {}
+  static bool classof(const BaseCommand *C);
+  Expr Expression;
 };
 
 struct PhdrsCommand {
