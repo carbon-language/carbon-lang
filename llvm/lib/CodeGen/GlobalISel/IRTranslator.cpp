@@ -252,13 +252,15 @@ bool IRTranslator::translate(const Instruction &Inst) {
   case Instruction::Call:
     return translateCall(cast<CallInst>(Inst));
 
-  // Casts
+  // Casts and allied operations
   case Instruction::BitCast:
     return translateBitCast(cast<CastInst>(Inst));
   case Instruction::IntToPtr:
     return translateCast(TargetOpcode::G_INTTOPTR, cast<CastInst>(Inst));
   case Instruction::PtrToInt:
     return translateCast(TargetOpcode::G_PTRTOINT, cast<CastInst>(Inst));
+  case Instruction::Trunc:
+    return translateCast(TargetOpcode::G_TRUNC, cast<CastInst>(Inst));
 
   // Memory ops.
   case Instruction::Load:

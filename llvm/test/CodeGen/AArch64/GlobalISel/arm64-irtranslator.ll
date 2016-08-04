@@ -223,6 +223,19 @@ define i64 @bitcast(i64 %a) {
   ret i64 %res2
 }
 
+; CHECK-LABEL: name: trunc
+; CHECK: [[ARG1:%[0-9]+]](64) = COPY %x0
+; CHECK: [[VEC:%[0-9]+]](128) = G_LOAD { <4 x s32>, p0 }
+; CHECK: [[RES1:%[0-9]+]](8) = G_TRUNC { s8, s64 } [[ARG1]]
+; CHECK: [[RES2:%[0-9]+]](64) = G_TRUNC { <4 x s16>, <4 x s32> } [[VEC]]
+define void @trunc(i64 %a) {
+  %vecptr = alloca <4 x i32>
+  %vec = load <4 x i32>, <4 x i32>* %vecptr
+  %res1 = trunc i64 %a to i8
+  %res2 = trunc <4 x i32> %vec to <4 x i16>
+  ret void
+}
+
 ; CHECK-LABEL: name: load
 ; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x0
 ; CHECK: [[ADDR42:%[0-9]+]](64) = COPY %x1
