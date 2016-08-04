@@ -24841,10 +24841,10 @@ static bool matchUnaryVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
 // Attempt to match a combined shuffle mask against supported unary immediate
 // permute instructions.
 // TODO: Investigate sharing more of this with shuffle lowering.
-static bool matchPermuteVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
-                                      const X86Subtarget &Subtarget,
-                                      unsigned &Shuffle, MVT &ShuffleVT,
-                                      unsigned &PermuteImm) {
+static bool matchUnaryPermuteVectorShuffle(MVT SrcVT, ArrayRef<int> Mask,
+                                           const X86Subtarget &Subtarget,
+                                           unsigned &Shuffle, MVT &ShuffleVT,
+                                           unsigned &PermuteImm) {
   // Ensure we don't contain any zero elements.
   for (int M : Mask) {
     if (M == SM_SentinelZero)
@@ -25116,8 +25116,8 @@ static bool combineX86ShuffleChain(SDValue Input, SDValue Root,
     return true;
   }
 
-  if (matchPermuteVectorShuffle(VT, Mask, Subtarget, Shuffle, ShuffleVT,
-                                PermuteImm)) {
+  if (matchUnaryPermuteVectorShuffle(VT, Mask, Subtarget, Shuffle, ShuffleVT,
+                                     PermuteImm)) {
     if (Depth == 1 && Root.getOpcode() == Shuffle)
       return false; // Nothing to do!
     Res = DAG.getBitcast(ShuffleVT, Input);
