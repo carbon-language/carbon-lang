@@ -15081,6 +15081,19 @@ SDValue X86TargetLowering::ConvertCmpIfNecessary(SDValue Cmp,
   return DAG.getNode(X86ISD::SAHF, dl, MVT::i32, TruncSrl);
 }
 
+/// Check if replacement of SQRT with RSQRT should be disabled.
+bool X86TargetLowering::isFsqrtCheap(SDValue Op, SelectionDAG &DAG) const {
+  EVT VT = Op.getValueType();
+
+  // We never want to use both SQRT and RSQRT instructions for the same input.
+  if (DAG.getNodeIfExists(X86ISD::FRSQRT, DAG.getVTList(VT), Op))
+    return false;
+
+  if (VT.isVector())
+    return Subtarget.hasFastVectorFSQRT();
+  return Subtarget.hasFastScalarFSQRT();
+}
+
 /// The minimum architected relative accuracy is 2^-12. We need one
 /// Newton-Raphson step to have a good float result (24 bits of precision).
 SDValue X86TargetLowering::getRsqrtEstimate(SDValue Op,
