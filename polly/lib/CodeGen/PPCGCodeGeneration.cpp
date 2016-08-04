@@ -1282,7 +1282,6 @@ void GPUNodeBuilder::createKernelVariables(ppcg_kernel *Kernel, Function *FN) {
     } else {
       llvm_unreachable("unknown variable type");
     }
-    Builder.GetInsertBlock()->dump();
     SAI = S.getOrCreateScopArrayInfo(Allocation, EleTy, Sizes,
                                      ScopArrayInfo::MK_Array);
     Id = isl_id_alloc(S.getIslCtx(), Var.name, nullptr);
