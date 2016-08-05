@@ -1268,7 +1268,7 @@ static Instruction *foldBoolSextMaskToSelect(BinaryOperator &I) {
     Value *Zero = Constant::getNullValue(Op0->getType());
     return SelectInst::Create(X, Zero, Op1);
   }
-  
+
   return nullptr;
 }
 
@@ -1792,7 +1792,7 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS,
   // E.g. (icmp sgt x, n) | (icmp slt x, 0) --> icmp ugt x, n
   if (Value *V = simplifyRangeCheck(RHS, LHS, /*Inverted=*/true))
     return V;
- 
+
   // This only handles icmp of constants: (icmp1 A, C1) | (icmp2 B, C2).
   if (!LHSCst || !RHSCst) return nullptr;
 

@@ -1279,7 +1279,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
 bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   assert(SI.isUnordered() &&
          "this code has not been auditted for volatile or ordered store case");
-  
+
   BasicBlock *StoreBB = SI.getParent();
 
   // Check to see if the successor block has exactly two incoming edges.  If

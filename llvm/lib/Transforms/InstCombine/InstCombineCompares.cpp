@@ -1712,7 +1712,7 @@ Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &ICI,
               cast<ConstantInt>(ConstantExpr::getShl(AndCst, ShAmt));
             ConstantInt *ShiftedRHSCst =
               cast<ConstantInt>(ConstantExpr::getShl(RHS, ShAmt));
-            
+
             if (!ShiftedAndCst->isNegative() && !ShiftedRHSCst->isNegative())
               CanFold = true;
           }
@@ -3286,7 +3286,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             return new ICmpInst(I.getPredicate(), A, CI);
         }
       }
-    
+
 
     // The following transforms are only 'worth it' if the only user of the
     // subtraction is the icmp.
@@ -4347,21 +4347,21 @@ Instruction *InstCombiner::foldFCmpIntToFPConst(FCmpInst &I, Instruction *LHSI,
   // This would allow us to handle (fptosi (x >>s 62) to float) if x is i64 f.e.
   unsigned InputSize = IntTy->getScalarSizeInBits();
 
-  // Following test does NOT adjust InputSize downwards for signed inputs, 
-  // because the most negative value still requires all the mantissa bits 
+  // Following test does NOT adjust InputSize downwards for signed inputs,
+  // because the most negative value still requires all the mantissa bits
   // to distinguish it from one less than that value.
   if ((int)InputSize > MantissaWidth) {
     // Conversion would lose accuracy. Check if loss can impact comparison.
     int Exp = ilogb(RHS);
     if (Exp == APFloat::IEK_Inf) {
       int MaxExponent = ilogb(APFloat::getLargest(RHS.getSemantics()));
-      if (MaxExponent < (int)InputSize - !LHSUnsigned) 
+      if (MaxExponent < (int)InputSize - !LHSUnsigned)
         // Conversion could create infinity.
         return nullptr;
     } else {
-      // Note that if RHS is zero or NaN, then Exp is negative 
+      // Note that if RHS is zero or NaN, then Exp is negative
       // and first condition is trivially false.
-      if (MantissaWidth <= Exp && Exp <= (int)InputSize - !LHSUnsigned) 
+      if (MantissaWidth <= Exp && Exp <= (int)InputSize - !LHSUnsigned)
         // Conversion could affect comparison.
         return nullptr;
     }
