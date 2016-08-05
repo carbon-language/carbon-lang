@@ -225,6 +225,32 @@ bool IRTranslator::translateStaticAlloca(const AllocaInst &AI) {
   return true;
 }
 
+bool IRTranslator::translatePhi(const PHINode &PI) {
+  MachineInstrBuilder MIB = MIRBuilder.buildInstr(TargetOpcode::PHI);
+  MIB.addDef(getOrCreateVReg(PI));
+
+  PendingPHIs.emplace_back(&PI, MIB.getInstr());
+  return true;
+}
+
+void IRTranslator::finishPendingPhis() {
+  for (std::pair<const PHINode *, MachineInstr *> &Phi : PendingPHIs) {
+    const PHINode *PI = Phi.first;
+    MachineInstrBuilder MIB(MIRBuilder.getMF(), Phi.second);
+
+    // All MachineBasicBlocks exist, add them to the PHI. We assume IRTranslator
+    // won't create extra control flow here, otherwise we need to find the
+    // dominating predecessor here (or perhaps force the weirder IRTranslators
+    // to provide a simple boundary).
+    for (unsigned i = 0; i < PI->getNumIncomingValues(); ++i) {
+      assert(BBToMBB[PI->getIncomingBlock(i)]->isSuccessor(MIB->getParent()) &&
+             "I appear to have misunderstood Machine PHIs");
+      MIB.addUse(getOrCreateVReg(*PI->getIncomingValue(i)));
+      MIB.addMBB(BBToMBB[PI->getIncomingBlock(i)]);
+    }
+  }
+}
+
 bool IRTranslator::translate(const Instruction &Inst) {
   MIRBuilder.setDebugLoc(Inst.getDebugLoc());
   switch(Inst.getOpcode()) {
@@ -272,6 +298,9 @@ bool IRTranslator::translate(const Instruction &Inst) {
 
   case Instruction::Alloca:
     return translateStaticAlloca(cast<AllocaInst>(Inst));
+
+  case Instruction::PHI:
+    return translatePhi(cast<PHINode>(Inst));
 
   case Instruction::Unreachable:
     return true;
@@ -322,6 +351,8 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
       }
     }
   }
+
+  finishPendingPhis();
 
   // Now that the MachineFrameInfo has been configured, no further changes to
   // the reserved registers are possible.
