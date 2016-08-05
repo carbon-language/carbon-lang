@@ -2,6 +2,8 @@
 ; RUN: -disable-output < %s | \
 ; RUN: FileCheck -check-prefix=KERNEL %s
 
+; REQUIRES: pollyacc
+
 ; KERNEL: define ptx_kernel void @kernel_0(i8* %MemRef_A, i64 %n) #0 {
 
 ; KERNEL: !nvvm.annotations = !{!0}
