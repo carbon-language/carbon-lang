@@ -29,7 +29,6 @@ static Error visitKnownRecord(const CVRecord<TypeLeafKind> &Record,
 }
 
 Error CVTypeVisitor::visitTypeRecord(const CVRecord<TypeLeafKind> &Record) {
-  ArrayRef<uint8_t> LeafData = Record.Data;
   if (auto EC = Callbacks.visitTypeBegin(Record))
     return EC;
 
