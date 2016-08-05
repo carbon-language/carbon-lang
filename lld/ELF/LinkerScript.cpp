@@ -502,7 +502,6 @@ private:
   Expr readExpr1(Expr Lhs, int MinPrec);
   Expr readPrimary();
   Expr readTernary(Expr Cond);
-  Expr combine(StringRef Op, Expr Lhs, Expr Rhs);
 
   const static StringMap<Handler> Cmd;
   ScriptConfiguration &Opt = *ScriptConfig;
@@ -941,6 +940,40 @@ SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
 // script expression.
 Expr ScriptParser::readExpr() { return readExpr1(readPrimary(), 0); }
 
+static Expr combine(StringRef Op, Expr L, Expr R) {
+  if (Op == "*")
+    return [=](uint64_t Dot) { return L(Dot) * R(Dot); };
+  if (Op == "/") {
+    return [=](uint64_t Dot) -> uint64_t {
+      uint64_t RHS = R(Dot);
+      if (RHS == 0) {
+        error("division by zero");
+        return 0;
+      }
+      return L(Dot) / RHS;
+    };
+  }
+  if (Op == "+")
+    return [=](uint64_t Dot) { return L(Dot) + R(Dot); };
+  if (Op == "-")
+    return [=](uint64_t Dot) { return L(Dot) - R(Dot); };
+  if (Op == "<")
+    return [=](uint64_t Dot) { return L(Dot) < R(Dot); };
+  if (Op == ">")
+    return [=](uint64_t Dot) { return L(Dot) > R(Dot); };
+  if (Op == ">=")
+    return [=](uint64_t Dot) { return L(Dot) >= R(Dot); };
+  if (Op == "<=")
+    return [=](uint64_t Dot) { return L(Dot) <= R(Dot); };
+  if (Op == "==")
+    return [=](uint64_t Dot) { return L(Dot) == R(Dot); };
+  if (Op == "!=")
+    return [=](uint64_t Dot) { return L(Dot) != R(Dot); };
+  if (Op == "&")
+    return [=](uint64_t Dot) { return L(Dot) & R(Dot); };
+  llvm_unreachable("invalid operator");
+}
+
 // This is a part of the operator-precedence parser. This function
 // assumes that the remaining token stream starts with an operator.
 Expr ScriptParser::readExpr1(Expr Lhs, int MinPrec) {
@@ -1059,40 +1092,6 @@ Expr ScriptParser::readTernary(Expr Cond) {
   expect(":");
   Expr R = readExpr();
   return [=](uint64_t Dot) { return Cond(Dot) ? L(Dot) : R(Dot); };
-}
-
-Expr ScriptParser::combine(StringRef Op, Expr L, Expr R) {
-  if (Op == "*")
-    return [=](uint64_t Dot) { return L(Dot) * R(Dot); };
-  if (Op == "/") {
-    return [=](uint64_t Dot) -> uint64_t {
-      uint64_t RHS = R(Dot);
-      if (RHS == 0) {
-        error("division by zero");
-        return 0;
-      }
-      return L(Dot) / RHS;
-    };
-  }
-  if (Op == "+")
-    return [=](uint64_t Dot) { return L(Dot) + R(Dot); };
-  if (Op == "-")
-    return [=](uint64_t Dot) { return L(Dot) - R(Dot); };
-  if (Op == "<")
-    return [=](uint64_t Dot) { return L(Dot) < R(Dot); };
-  if (Op == ">")
-    return [=](uint64_t Dot) { return L(Dot) > R(Dot); };
-  if (Op == ">=")
-    return [=](uint64_t Dot) { return L(Dot) >= R(Dot); };
-  if (Op == "<=")
-    return [=](uint64_t Dot) { return L(Dot) <= R(Dot); };
-  if (Op == "==")
-    return [=](uint64_t Dot) { return L(Dot) == R(Dot); };
-  if (Op == "!=")
-    return [=](uint64_t Dot) { return L(Dot) != R(Dot); };
-  if (Op == "&")
-    return [=](uint64_t Dot) { return L(Dot) & R(Dot); };
-  llvm_unreachable("invalid operator");
 }
 
 std::vector<StringRef> ScriptParser::readOutputSectionPhdrs() {
