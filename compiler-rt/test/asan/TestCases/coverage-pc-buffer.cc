@@ -11,7 +11,6 @@
 #include <stdio.h>
 
 static volatile int sink;
-__attribute__((noinline)) void bar() { sink = 2; }
 __attribute__((noinline)) void foo() { sink = 1; }
 
 void assertNotZeroPcs(uintptr_t *buf, uintptr_t size) {
@@ -33,21 +32,10 @@ int main() {
 
   {
     uintptr_t sz = __sanitizer_get_coverage_pc_buffer_pos();
-    // call functions for the first time.
     foo();
-    bar();
     uintptr_t sz1 = __sanitizer_get_coverage_pc_buffer_pos();
     assertNotZeroPcs(buf.get(), sz1);
     assert(sz1 > sz);
-  }
-
-  {
-    uintptr_t sz = __sanitizer_get_coverage_pc_buffer_pos();
-    // second call shouldn't increase coverage.
-    bar();
-    uintptr_t sz1 = __sanitizer_get_coverage_pc_buffer_pos();
-    assert(sz1 == sz);
-    assertNotZeroPcs(buf.get(), sz1);
   }
 
   {
