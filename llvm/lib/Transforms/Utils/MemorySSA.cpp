@@ -1865,11 +1865,13 @@ void MemorySSA::verifyOrdering(Function &F) const {
 /// \brief Verify the domination properties of MemorySSA by checking that each
 /// definition dominates all of its uses.
 void MemorySSA::verifyDomination(Function &F) const {
+#ifndef NDEBUG
   for (BasicBlock &B : F) {
     // Phi nodes are attached to basic blocks
     if (MemoryPhi *MP = getMemoryAccess(&B))
       for (const Use &U : MP->uses())
         assert(dominates(MP, U) && "Memory PHI does not dominate it's uses");
+
     for (Instruction &I : B) {
       MemoryAccess *MD = dyn_cast_or_null<MemoryDef>(getMemoryAccess(&I));
       if (!MD)
@@ -1879,23 +1881,22 @@ void MemorySSA::verifyDomination(Function &F) const {
         assert(dominates(MD, U) && "Memory Def does not dominate it's uses");
     }
   }
+#endif
 }
 
 /// \brief Verify the def-use lists in MemorySSA, by verifying that \p Use
 /// appears in the use list of \p Def.
-///
-/// llvm_unreachable is used instead of asserts because this may be called in
-/// a build without asserts. In that case, we don't want this to turn into a
-/// nop.
+
 void MemorySSA::verifyUseInDefs(MemoryAccess *Def, MemoryAccess *Use) const {
+#ifndef NDEBUG
   // The live on entry use may cause us to get a NULL def here
-  if (!Def) {
-    if (!isLiveOnEntryDef(Use))
-      llvm_unreachable("Null def but use not point to live on entry def");
-  } else if (std::find(Def->user_begin(), Def->user_end(), Use) ==
-             Def->user_end()) {
-    llvm_unreachable("Did not find use in def's use list");
-  }
+  if (!Def)
+    assert(isLiveOnEntryDef(Use) &&
+           "Null def but use not point to live on entry def");
+  else
+    assert(find(Def->users(), Use) != Def->user_end() &&
+           "Did not find use in def's use list");
+#endif
 }
 
 /// \brief Verify the immediate use information, by walking all the memory
