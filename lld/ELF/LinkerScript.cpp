@@ -567,12 +567,8 @@ void ScriptParser::readAsNeeded() {
   expect("(");
   bool Orig = Config->AsNeeded;
   Config->AsNeeded = true;
-  while (!Error) {
-    StringRef Tok = next();
-    if (Tok == ")")
-      break;
-    addFile(Tok);
-  }
+  while (!Error && !skip(")"))
+    addFile(next());
   Config->AsNeeded = Orig;
 }
 
@@ -587,25 +583,18 @@ void ScriptParser::readEntry() {
 
 void ScriptParser::readExtern() {
   expect("(");
-  while (!Error) {
-    StringRef Tok = next();
-    if (Tok == ")")
-      return;
-    Config->Undefined.push_back(Tok);
-  }
+  while (!Error && !skip(")"))
+    Config->Undefined.push_back(next());
 }
 
 void ScriptParser::readGroup() {
   expect("(");
-  while (!Error) {
+  while (!Error && !skip(")")) {
     StringRef Tok = next();
-    if (Tok == ")")
-      return;
-    if (Tok == "AS_NEEDED") {
+    if (Tok == "AS_NEEDED")
       readAsNeeded();
-      continue;
-    }
-    addFile(Tok);
+    else
+      addFile(Tok);
   }
 }
 
