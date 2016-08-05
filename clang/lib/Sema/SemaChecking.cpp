@@ -6572,6 +6572,12 @@ CheckReturnStackAddr(Sema &S, Expr *RetValExp, QualType lhsType,
   if (!stackE)
     return; // Nothing suspicious was found.
 
+  // Parameters are initalized in the calling scope, so taking the address
+  // of a parameter reference doesn't need a warning.
+  for (auto *DRE : refVars)
+    if (isa<ParmVarDecl>(DRE->getDecl()))
+      return;
+
   SourceLocation diagLoc;
   SourceRange diagRange;
   if (refVars.empty()) {
@@ -6595,6 +6601,13 @@ CheckReturnStackAddr(Sema &S, Expr *RetValExp, QualType lhsType,
   } else if (isa<AddrLabelExpr>(stackE)) { // address of label.
     S.Diag(diagLoc, diag::warn_ret_addr_label) << diagRange;
   } else { // local temporary.
+    // If there is an LValue->RValue conversion, then the value of the
+    // reference type is used, not the reference.
+    if (auto *ICE = dyn_cast<ImplicitCastExpr>(RetValExp)) {
+      if (ICE->getCastKind() == CK_LValueToRValue) {
+        return;
+      }
+    }
     S.Diag(diagLoc, diag::warn_ret_local_temp_addr_ref)
      << lhsType->isReferenceType() << diagRange;
   }
