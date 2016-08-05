@@ -249,6 +249,8 @@ void IRTranslator::finishPendingPhis() {
       MIB.addMBB(BBToMBB[PI->getIncomingBlock(i)]);
     }
   }
+
+  PendingPHIs.clear();
 }
 
 bool IRTranslator::translate(const Instruction &Inst) {
@@ -326,6 +328,8 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
   MIRBuilder.setMF(MF);
   MRI = &MF.getRegInfo();
   DL = &F.getParent()->getDataLayout();
+
+  assert(PendingPHIs.empty() && "stale PHIs");
 
   // Setup the arguments.
   MachineBasicBlock &MBB = getOrCreateBB(F.front());
