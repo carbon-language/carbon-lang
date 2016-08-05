@@ -9427,7 +9427,8 @@ void Sema::CheckUnsequencedOperations(Expr *E) {
 void Sema::CheckCompletedExpr(Expr *E, SourceLocation CheckLoc,
                               bool IsConstexpr) {
   CheckImplicitConversions(E, CheckLoc);
-  CheckUnsequencedOperations(E);
+  if (!E->isInstantiationDependent())
+    CheckUnsequencedOperations(E);
   if (!IsConstexpr && !E->isValueDependent())
     CheckForIntOverflow(E);
 }
