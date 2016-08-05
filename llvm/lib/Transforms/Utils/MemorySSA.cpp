@@ -1867,49 +1867,16 @@ void MemorySSA::verifyOrdering(Function &F) const {
 void MemorySSA::verifyDomination(Function &F) const {
   for (BasicBlock &B : F) {
     // Phi nodes are attached to basic blocks
-    if (MemoryPhi *MP = getMemoryAccess(&B)) {
-      for (User *U : MP->users()) {
-        BasicBlock *UseBlock;
-        // Phi operands are used on edges, we simulate the right domination by
-        // acting as if the use occurred at the end of the predecessor block.
-        if (MemoryPhi *P = dyn_cast<MemoryPhi>(U)) {
-          for (const auto &Arg : P->operands()) {
-            if (Arg == MP) {
-              UseBlock = P->getIncomingBlock(Arg);
-              break;
-            }
-          }
-        } else {
-          UseBlock = cast<MemoryAccess>(U)->getBlock();
-        }
-        (void)UseBlock;
-        assert(DT->dominates(MP->getBlock(), UseBlock) &&
-               "Memory PHI does not dominate it's uses");
-      }
-    }
-
+    if (MemoryPhi *MP = getMemoryAccess(&B))
+      for (const Use &U : MP->uses())
+        assert(dominates(MP, U) && "Memory PHI does not dominate it's uses");
     for (Instruction &I : B) {
       MemoryAccess *MD = dyn_cast_or_null<MemoryDef>(getMemoryAccess(&I));
       if (!MD)
         continue;
 
-      for (User *U : MD->users()) {
-        BasicBlock *UseBlock;
-        (void)UseBlock;
-        // Things are allowed to flow to phi nodes over their predecessor edge.
-        if (auto *P = dyn_cast<MemoryPhi>(U)) {
-          for (const auto &Arg : P->operands()) {
-            if (Arg == MD) {
-              UseBlock = P->getIncomingBlock(Arg);
-              break;
-            }
-          }
-        } else {
-          UseBlock = cast<MemoryAccess>(U)->getBlock();
-        }
-        assert(DT->dominates(MD->getBlock(), UseBlock) &&
-               "Memory Def does not dominate it's uses");
-      }
+      for (const Use &U : MD->uses())
+        assert(dominates(MD, U) && "Memory Def does not dominate it's uses");
     }
   }
 }
@@ -2025,6 +1992,20 @@ bool MemorySSA::dominates(const MemoryAccess *Dominator,
   if (Dominator->getBlock() != Dominatee->getBlock())
     return DT->dominates(Dominator->getBlock(), Dominatee->getBlock());
   return locallyDominates(Dominator, Dominatee);
+}
+
+bool MemorySSA::dominates(const MemoryAccess *Dominator,
+                          const Use &Dominatee) const {
+  if (MemoryPhi *MP = dyn_cast<MemoryPhi>(Dominatee.getUser())) {
+    BasicBlock *UseBB = MP->getIncomingBlock(Dominatee);
+    // The def must dominate the incoming block of the phi.
+    if (UseBB != Dominator->getBlock())
+      return DT->dominates(Dominator->getBlock(), UseBB);
+    // If the UseBB and the DefBB are the same, compare locally.
+    return locallyDominates(Dominator, cast<MemoryAccess>(Dominatee));
+  }
+  // If it's not a PHI node use, the normal dominates can already handle it.
+  return dominates(Dominator, cast<MemoryAccess>(Dominatee.getUser()));
 }
 
 const static char LiveOnEntryStr[] = "liveOnEntry";
