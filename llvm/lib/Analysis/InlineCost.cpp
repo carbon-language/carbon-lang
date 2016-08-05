@@ -640,13 +640,11 @@ void CallAnalyzer::updateThreshold(CallSite CS, Function &Callee) {
   }
 
   bool HotCallsite = false;
-  bool ColdCallsite = false;
   uint64_t TotalWeight;
-  if (CS.getInstruction()->extractProfTotalWeight(TotalWeight))
-    if (PSI->isHotCount(TotalWeight))
-      HotCallsite = true;
-    else if (PSI->isColdCount(TotalWeight))
-      ColdCallsite = true;
+  if (CS.getInstruction()->extractProfTotalWeight(TotalWeight) &&
+      PSI->isHotCount(TotalWeight)) {
+    HotCallsite = true;
+  }
 
   // Listen to the inlinehint attribute or profile based hotness information
   // when it would increase the threshold and the caller does not need to
@@ -666,7 +664,7 @@ void CallAnalyzer::updateThreshold(CallSite CS, Function &Callee) {
   // do not use the default cold threshold even if it is smaller.
   if ((DefaultInlineThreshold.getNumOccurrences() == 0 ||
        ColdThreshold.getNumOccurrences() > 0) &&
-      (ColdCallee || ColdCallsite) && ColdThreshold < Threshold)
+       ColdCallee && ColdThreshold < Threshold)
     Threshold = ColdThreshold;
 
   // Finally, take the target-specific inlining threshold multiplier into
