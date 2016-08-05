@@ -1292,11 +1292,17 @@ void GPUNodeBuilder::createKernelVariables(ppcg_kernel *Kernel, Function *FN) {
     Type *ArrayTy = EleTy;
     SmallVector<const SCEV *, 4> Sizes;
 
-    for (unsigned int j = 0; j < Var.array->n_index; ++j) {
+    for (unsigned int j = 1; j < Var.array->n_index; ++j) {
       isl_val *Val = isl_vec_get_element_val(Var.size, j);
       long Bound = isl_val_get_num_si(Val);
       isl_val_free(Val);
       Sizes.push_back(S.getSE()->getConstant(Builder.getInt64Ty(), Bound));
+    }
+
+    for (int j = Var.array->n_index - 1; j >= 0; --j) {
+      isl_val *Val = isl_vec_get_element_val(Var.size, j);
+      long Bound = isl_val_get_num_si(Val);
+      isl_val_free(Val);
       ArrayTy = ArrayType::get(ArrayTy, Bound);
     }
 
