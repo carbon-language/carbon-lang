@@ -211,6 +211,9 @@ void SizeClassAllocatorMetadataStress() {
 }
 
 #if SANITIZER_CAN_USE_ALLOCATOR64
+// These tests can fail on Windows if memory is somewhat full and lit happens
+// to run them all at the same time. FIXME: Make them not flaky and reenable.
+#if !SANITIZER_WINDOWS
 TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
   SizeClassAllocatorMetadataStress<Allocator64>();
 }
@@ -222,6 +225,7 @@ TEST(SanitizerCommon, SizeClassAllocator64DynamicMetadataStress) {
 TEST(SanitizerCommon, SizeClassAllocator64CompactMetadataStress) {
   SizeClassAllocatorMetadataStress<Allocator64Compact>();
 }
+#endif
 #endif  // SANITIZER_CAN_USE_ALLOCATOR64
 TEST(SanitizerCommon, SizeClassAllocator32CompactMetadataStress) {
   SizeClassAllocatorMetadataStress<Allocator32Compact>();
@@ -279,6 +283,9 @@ int TestMapUnmapCallback::map_count;
 int TestMapUnmapCallback::unmap_count;
 
 #if SANITIZER_CAN_USE_ALLOCATOR64
+// These tests can fail on Windows if memory is somewhat full and lit happens
+// to run them all at the same time. FIXME: Make them not flaky and reenable.
+#if !SANITIZER_WINDOWS
 TEST(SanitizerCommon, SizeClassAllocator64MapUnmapCallback) {
   TestMapUnmapCallback::map_count = 0;
   TestMapUnmapCallback::unmap_count = 0;
@@ -299,6 +306,7 @@ TEST(SanitizerCommon, SizeClassAllocator64MapUnmapCallback) {
   EXPECT_EQ(TestMapUnmapCallback::unmap_count, 1);  // The whole thing.
   delete a;
 }
+#endif
 #endif
 
 TEST(SanitizerCommon, SizeClassAllocator32MapUnmapCallback) {
@@ -746,12 +754,16 @@ void TestSizeClassAllocatorIteration() {
 }
 
 #if SANITIZER_CAN_USE_ALLOCATOR64
+// These tests can fail on Windows if memory is somewhat full and lit happens
+// to run them all at the same time. FIXME: Make them not flaky and reenable.
+#if !SANITIZER_WINDOWS
 TEST(SanitizerCommon, SizeClassAllocator64Iteration) {
   TestSizeClassAllocatorIteration<Allocator64>();
 }
 TEST(SanitizerCommon, SizeClassAllocator64DynamicIteration) {
   TestSizeClassAllocatorIteration<Allocator64Dynamic>();
 }
+#endif
 #endif
 
 TEST(SanitizerCommon, SizeClassAllocator32Iteration) {
