@@ -1,11 +1,13 @@
 // Test __sanitizer_coverage_pc_buffer().
 
-// RUN: %clangxx_asan -fsanitize-coverage=edge %s -o %t && %run %t
+// RUN: %clangxx_asan -fsanitize-coverage=edge -std=c++11 %s -O3 -o %t && %run %t
 
 // UNSUPPORTED: android
 
 #include <assert.h>
+#include <memory>
 #include <sanitizer/coverage_interface.h>
+#include <stdint.h>
 #include <stdio.h>
 
 static volatile int sink;
@@ -19,47 +21,41 @@ void assertNotZeroPcs(uintptr_t *buf, uintptr_t size) {
 }
 
 int main() {
+  uintptr_t buf_size = 1 << 20;
+  std::unique_ptr<uintptr_t[]> buf(new uintptr_t[buf_size]);
+  __sanitizer_set_coverage_pc_buffer(buf.get(), buf_size);
+
   {
-    uintptr_t *buf = NULL;
-    uintptr_t sz = __sanitizer_get_coverage_pc_buffer(&buf);
-    assertNotZeroPcs(buf, sz);
+    uintptr_t sz = __sanitizer_get_coverage_pc_buffer_pos();
+    assertNotZeroPcs(buf.get(), sz);
     assert(sz);
   }
 
   {
-    uintptr_t *buf = NULL;
-    uintptr_t sz = __sanitizer_get_coverage_pc_buffer(&buf);
+    uintptr_t sz = __sanitizer_get_coverage_pc_buffer_pos();
     // call functions for the first time.
     foo();
     bar();
-    uintptr_t *buf1 = NULL;
-    uintptr_t sz1 = __sanitizer_get_coverage_pc_buffer(&buf1);
-    assertNotZeroPcs(buf1, sz1);
-    assert(buf1 == buf);
+    uintptr_t sz1 = __sanitizer_get_coverage_pc_buffer_pos();
+    assertNotZeroPcs(buf.get(), sz1);
     assert(sz1 > sz);
   }
 
   {
-    uintptr_t *buf = NULL;
-    uintptr_t sz = __sanitizer_get_coverage_pc_buffer(&buf);
+    uintptr_t sz = __sanitizer_get_coverage_pc_buffer_pos();
     // second call shouldn't increase coverage.
     bar();
-    uintptr_t *buf1 = NULL;
-    uintptr_t sz1 = __sanitizer_get_coverage_pc_buffer(&buf1);
-    assertNotZeroPcs(buf1, sz1);
-    assert(buf1 == buf);
+    uintptr_t sz1 = __sanitizer_get_coverage_pc_buffer_pos();
     assert(sz1 == sz);
+    assertNotZeroPcs(buf.get(), sz1);
   }
 
   {
-    uintptr_t *buf = NULL;
-    uintptr_t sz = __sanitizer_get_coverage_pc_buffer(&buf);
+    uintptr_t sz = __sanitizer_get_coverage_pc_buffer_pos();
     // reset coverage to 0.
     __sanitizer_reset_coverage();
-    uintptr_t *buf1 = NULL;
-    uintptr_t sz1 = __sanitizer_get_coverage_pc_buffer(&buf1);
-    assertNotZeroPcs(buf1, sz1);
-    assert(buf1 == buf);
+    uintptr_t sz1 = __sanitizer_get_coverage_pc_buffer_pos();
+    assertNotZeroPcs(buf.get(), sz1);
     assert(sz1 < sz);
   }
 }
