@@ -152,7 +152,7 @@ namespace llvm {
   } \
   template REGISTRY_CLASS::node *Registry<REGISTRY_CLASS::type>::Head; \
   template REGISTRY_CLASS::node *Registry<REGISTRY_CLASS::type>::Tail; \
-  template
+  template \
   void Registry<REGISTRY_CLASS::type>::add_node(REGISTRY_CLASS::node*); \
   template REGISTRY_CLASS::iterator Registry<REGISTRY_CLASS::type>::begin(); \
   }
