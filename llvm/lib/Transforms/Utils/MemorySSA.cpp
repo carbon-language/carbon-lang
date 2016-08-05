@@ -1452,29 +1452,13 @@ void MemorySSA::OptimizeUses::optimizeUses() {
   SmallVector<MemoryAccess *, 16> VersionStack;
   SmallVector<StackInfo, 16> DomTreeWorklist;
   DenseMap<MemoryLocOrCall, MemlocStackInfo> LocStackInfo;
-  DomTreeWorklist.push_back({DT->getRootNode(), DT->getRootNode()->begin()});
-  // Bottom of the version stack is always live on entry.
   VersionStack.push_back(MSSA->getLiveOnEntryDef());
 
   unsigned long StackEpoch = 1;
   unsigned long PopEpoch = 1;
-  while (!DomTreeWorklist.empty()) {
-    const auto *DomNode = DomTreeWorklist.back().Node;
-    const auto DomIter = DomTreeWorklist.back().Iter;
-    BasicBlock *BB = DomNode->getBlock();
-    optimizeUsesInBlock(BB, StackEpoch, PopEpoch, VersionStack, LocStackInfo);
-    if (DomIter == DomNode->end()) {
-      // Hit the end, pop the worklist
-      DomTreeWorklist.pop_back();
-      continue;
-    }
-    // Move the iterator to the next child for the next time we get to process
-    // children
-    ++DomTreeWorklist.back().Iter;
-
-    // Now visit the next child
-    DomTreeWorklist.push_back({*DomIter, (*DomIter)->begin()});
-  }
+  for (const auto *DomNode : depth_first(DT->getRootNode()))
+    optimizeUsesInBlock(DomNode->getBlock(), StackEpoch, PopEpoch, VersionStack,
+                        LocStackInfo);
 }
 
 void MemorySSA::buildMemorySSA() {
