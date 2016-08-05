@@ -99,6 +99,8 @@ static void applyBranch20T(uint8_t *Off, int32_t V) {
 }
 
 static void applyBranch24T(uint8_t *Off, int32_t V) {
+  if (!isInt<25>(V))
+    fatal("relocation out of range");
   uint32_t S = V < 0 ? 1 : 0;
   uint32_t J1 = ((~V >> 23) & 1) ^ S;
   uint32_t J2 = ((~V >> 22) & 1) ^ S;
