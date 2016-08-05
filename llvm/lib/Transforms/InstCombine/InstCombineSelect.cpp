@@ -919,7 +919,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   Type *SelType = SI.getType();
 
   if (Value *V =
-          SimplifySelectInst(CondVal, TrueVal, FalseVal, DL, TLI, DT, AC))
+          SimplifySelectInst(CondVal, TrueVal, FalseVal, DL, &TLI, &DT, &AC))
     return replaceInstUsesWith(SI, V);
 
   if (SelType->getScalarType()->isIntegerTy(1) &&
