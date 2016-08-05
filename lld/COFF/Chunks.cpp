@@ -103,7 +103,8 @@ static void applyBranch24T(uint8_t *Off, int32_t V) {
   uint32_t J1 = ((~V >> 23) & 1) ^ S;
   uint32_t J2 = ((~V >> 22) & 1) ^ S;
   or16(Off, (S << 10) | ((V >> 12) & 0x3ff));
-  or16(Off + 2, (J1 << 13) | (J2 << 11) | ((V >> 1) & 0x7ff));
+  // Clear out the J1 and J2 bits which may be set.
+  write16le(Off + 2, (read16le(Off + 2) & 0xd000) | (J1 << 13) | (J2 << 11) | ((V >> 1) & 0x7ff));
 }
 
 void SectionChunk::applyRelARM(uint8_t *Off, uint16_t Type, Defined *Sym,
