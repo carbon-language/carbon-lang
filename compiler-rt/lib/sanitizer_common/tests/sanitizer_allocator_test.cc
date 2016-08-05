@@ -159,6 +159,9 @@ void TestSizeClassAllocator() {
 }
 
 #if SANITIZER_CAN_USE_ALLOCATOR64
+// These tests can fail on Windows if memory is somewhat full and lit happens
+// to run them all at the same time. FIXME: Make them not flaky and reenable.
+#if !SANITIZER_WINDOWS
 TEST(SanitizerCommon, SizeClassAllocator64) {
   TestSizeClassAllocator<Allocator64>();
 }
@@ -170,6 +173,7 @@ TEST(SanitizerCommon, SizeClassAllocator64Dynamic) {
 TEST(SanitizerCommon, SizeClassAllocator64Compact) {
   TestSizeClassAllocator<Allocator64Compact>();
 }
+#endif
 #endif
 
 TEST(SanitizerCommon, SizeClassAllocator32Compact) {
@@ -248,6 +252,9 @@ void SizeClassAllocatorGetBlockBeginStress() {
 }
 
 #if SANITIZER_CAN_USE_ALLOCATOR64
+// These tests can fail on Windows if memory is somewhat full and lit happens
+// to run them all at the same time. FIXME: Make them not flaky and reenable.
+#if !SANITIZER_WINDOWS
 TEST(SanitizerCommon, SizeClassAllocator64GetBlockBegin) {
   SizeClassAllocatorGetBlockBeginStress<Allocator64>();
 }
@@ -260,6 +267,7 @@ TEST(SanitizerCommon, SizeClassAllocator64CompactGetBlockBegin) {
 TEST(SanitizerCommon, SizeClassAllocator32CompactGetBlockBegin) {
   SizeClassAllocatorGetBlockBeginStress<Allocator32Compact>();
 }
+#endif
 #endif  // SANITIZER_CAN_USE_ALLOCATOR64
 
 struct TestMapUnmapCallback {
@@ -554,6 +562,9 @@ void TestSizeClassAllocatorLocalCache() {
 }
 
 #if SANITIZER_CAN_USE_ALLOCATOR64
+// These tests can fail on Windows if memory is somewhat full and lit happens
+// to run them all at the same time. FIXME: Make them not flaky and reenable.
+#if !SANITIZER_WINDOWS
 TEST(SanitizerCommon, SizeClassAllocator64LocalCache) {
   TestSizeClassAllocatorLocalCache<
       SizeClassAllocatorLocalCache<Allocator64> >();
@@ -568,6 +579,7 @@ TEST(SanitizerCommon, SizeClassAllocator64CompactLocalCache) {
   TestSizeClassAllocatorLocalCache<
       SizeClassAllocatorLocalCache<Allocator64Compact> >();
 }
+#endif
 #endif
 
 TEST(SanitizerCommon, SizeClassAllocator32CompactLocalCache) {
