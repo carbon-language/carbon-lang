@@ -213,11 +213,11 @@ template <class ELFT> void LinkerScript<ELFT>::filter() {
     if (Cmd->Constraint == ConstraintKind::NoConstraint)
       continue;
 
+    bool RO = (Cmd->Constraint == ConstraintKind::ReadOnly);
+    bool RW = (Cmd->Constraint == ConstraintKind::ReadWrite);
+
     removeElementsIf(*OutputSections, [&](OutputSectionBase<ELFT> *S) {
       bool Writable = (S->getFlags() & SHF_WRITE);
-      bool RO = (Cmd->Constraint == ConstraintKind::ReadOnly);
-      bool RW = (Cmd->Constraint == ConstraintKind::ReadWrite);
-
       return S->getName() == Cmd->Name &&
              ((RO && Writable) || (RW && !Writable));
     });
