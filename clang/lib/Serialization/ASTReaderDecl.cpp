@@ -436,8 +436,9 @@ public:
 };
 } // end anonymous namespace
 
-template<typename DeclT>
-llvm::iterator_range<MergedRedeclIterator<DeclT>> merged_redecls(DeclT *D) {
+template <typename DeclT>
+static llvm::iterator_range<MergedRedeclIterator<DeclT>>
+merged_redecls(DeclT *D) {
   return llvm::make_range(MergedRedeclIterator<DeclT>(D),
                           MergedRedeclIterator<DeclT>());
 }
