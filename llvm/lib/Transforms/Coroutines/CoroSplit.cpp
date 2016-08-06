@@ -31,8 +31,10 @@ using namespace llvm;
 // split.
 static void prepareForSplit(Function &F, CallGraph &CG) {
   Module &M = *F.getParent();
+#ifndef NDEBUG
   Function *DevirtFn = M.getFunction(CORO_DEVIRT_TRIGGER_FN);
   assert(DevirtFn && "coro.devirt.trigger function not found");
+#endif
 
   F.addFnAttr(CORO_PRESPLIT_ATTR, PREPARED_FOR_SPLIT);
 
