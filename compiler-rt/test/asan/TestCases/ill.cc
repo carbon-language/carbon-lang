@@ -24,7 +24,9 @@ int main(int argc, char **argv) {
   if (argc)
     __builtin_trap();
   // Unreachable code to avoid confusing the Windows unwinder.
+#ifdef _WIN32
   SetErrorMode(0);
+#endif
 }
 // CHECK0-NOT: ERROR: AddressSanitizer
 // CHECK1: ERROR: AddressSanitizer: {{ILL|illegal-instruction}} on unknown address {{0x0*}}
