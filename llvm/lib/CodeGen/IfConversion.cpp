@@ -203,7 +203,10 @@ namespace {
                        BranchProbability Prediction) const;
     bool ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
                       unsigned &Dups1, unsigned &Dups2) const;
-    void ScanInstructions(BBInfo &BBI);
+    void AnalyzeBranches(BBInfo &BBI);
+    void ScanInstructions(BBInfo &BBI,
+                          MachineBasicBlock::iterator &Begin,
+                          MachineBasicBlock::iterator &End) const;
     void AnalyzeBlock(MachineBasicBlock *MBB,
                       std::vector<std::unique_ptr<IfcvtToken>> &Tokens);
     bool FeasibilityAnalysis(BBInfo &BBI, SmallVectorImpl<MachineOperand> &Cond,
@@ -685,17 +688,12 @@ bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
   return true;
 }
 
-/// ScanInstructions - Scan all the instructions in the block to determine if
-/// the block is predicable. In most cases, that means all the instructions
-/// in the block are isPredicable(). Also checks if the block contains any
-/// instruction which can clobber a predicate (e.g. condition code register).
-/// If so, the block is not predicable unless it's the last instruction.
-void IfConverter::ScanInstructions(BBInfo &BBI) {
+/// AnalyzeBranches - Look at the branches at the end of a block to determine if
+/// the block is predicable.
+void IfConverter::AnalyzeBranches(BBInfo &BBI) {
   if (BBI.IsDone)
     return;
 
-  bool AlreadyPredicated = !BBI.Predicate.empty();
-  // First analyze the end of BB branches.
   BBI.TrueBB = BBI.FalseBB = nullptr;
   BBI.BrCond.clear();
   BBI.IsBrAnalyzable =
@@ -710,16 +708,29 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     if (!BBI.FalseBB) {
       // Malformed bcc? True and false blocks are the same?
       BBI.IsUnpredicable = true;
-      return;
     }
   }
+}
 
-  // Then scan all the instructions.
+/// ScanInstructions - Scan all the instructions in the block to determine if
+/// the block is predicable. In most cases, that means all the instructions
+/// in the block are isPredicable(). Also checks if the block contains any
+/// instruction which can clobber a predicate (e.g. condition code register).
+/// If so, the block is not predicable unless it's the last instruction.
+void IfConverter::ScanInstructions(BBInfo &BBI,
+                                   MachineBasicBlock::iterator &Begin,
+                                   MachineBasicBlock::iterator &End) const {
+  if (BBI.IsDone || BBI.IsUnpredicable)
+    return;
+
+  bool AlreadyPredicated = !BBI.Predicate.empty();
+
   BBI.NonPredSize = 0;
   BBI.ExtraCost = 0;
   BBI.ExtraCost2 = 0;
   BBI.ClobbersPred = false;
-  for (auto &MI : *BBI.BB) {
+  for (; Begin != End; ++Begin) {
+    auto &MI = *Begin;
     if (MI.isDebugValue())
       continue;
 
@@ -869,7 +880,10 @@ void IfConverter::AnalyzeBlock(
       BBI.BB = BB;
       BBI.IsBeingAnalyzed = true;
 
-      ScanInstructions(BBI);
+      AnalyzeBranches(BBI);
+      MachineBasicBlock::iterator Begin = BBI.BB->begin();
+      MachineBasicBlock::iterator End = BBI.BB->end();
+      ScanInstructions(BBI, Begin, End);
 
       // Unanalyzable or ends with fallthrough or unconditional branch, or if is
       // not considered for ifcvt anymore.
