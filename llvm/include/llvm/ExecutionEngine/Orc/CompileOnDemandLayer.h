@@ -281,19 +281,11 @@ private:
     // Create stub functions.
     const DataLayout &DL = SrcM.getDataLayout();
     {
-      LMResources.StubsMgr = CreateIndirectStubsManager();
-
       typename IndirectStubsMgrT::StubInitsMap StubInits;
       for (auto &F : SrcM) {
         // Skip declarations.
         if (F.isDeclaration())
           continue;
-
-        // Skip weak functions for which we already have definitions.
-        auto MangledName = mangle(F.getName(), DL);
-        if (F.hasWeakLinkage() || F.hasLinkOnceLinkage())
-          if (auto Sym = LD.findSymbol(MangledName, false))
-            continue;
 
         // Record all functions defined by this module.
         if (CloneStubsIntoPartitions)
@@ -303,7 +295,7 @@ private:
         // and set the compile action to compile the partition containing the
         // function.
         auto CCInfo = CompileCallbackMgr.getCompileCallback();
-        StubInits[MangledName] =
+        StubInits[mangle(F.getName(), DL)] =
           std::make_pair(CCInfo.getAddress(),
                          JITSymbolFlags::fromGlobalValue(F));
         CCInfo.setCompileAction([this, &LD, LMH, &F]() {
@@ -311,6 +303,7 @@ private:
         });
       }
 
+      LMResources.StubsMgr = CreateIndirectStubsManager();
       auto EC = LMResources.StubsMgr->createStubs(StubInits);
       (void)EC;
       // FIXME: This should be propagated back to the user. Stub creation may
@@ -390,7 +383,8 @@ private:
     // Build a resolver for the globals module and add it to the base layer.
     auto GVsResolver = createLambdaResolver(
         [&LD, LMH](const std::string &Name) {
-          if (auto Sym = LD.findSymbol(Name, false))
+          auto &LMResources = LD.getLogicalModuleResources(LMH);
+          if (auto Sym = LMResources.StubsMgr->findStub(Name, false))
             return Sym;
           auto &LDResolver = LD.getDylibResources().ExternalSymbolResolver;
           return LDResolver->findSymbolInLogicalDylib(Name);

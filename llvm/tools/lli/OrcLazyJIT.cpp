@@ -144,7 +144,8 @@ int llvm::runOrcLazyJIT(std::vector<std::unique_ptr<Module>> Ms, int ArgC,
                OrcInlineStubs);
 
   // Add the module, look up main and run it.
-  J.addModuleSet(std::move(Ms));
+  for (auto &M : Ms)
+    J.addModule(std::move(M));
   auto MainSym = J.findSymbol("main");
 
   if (!MainSym) {
