@@ -3709,6 +3709,22 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
     return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
                                                    OpIdx1, OpIdx2);
   }
+  case X86::MOVHLPSrr:
+  case X86::UNPCKHPDrr: {
+    if (!Subtarget.hasSSE2())
+      return nullptr;
+
+    unsigned Opc = MI.getOpcode();
+    switch (Opc) {
+      default: llvm_unreachable("Unreachable!");
+      case X86::MOVHLPSrr: Opc = X86::UNPCKHPDrr; break;
+      case X86::UNPCKHPDrr: Opc = X86::MOVHLPSrr; break;
+    }
+    auto &WorkingMI = cloneIfNew(MI);
+    WorkingMI.setDesc(get(Opc));
+    return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
+                                                   OpIdx1, OpIdx2);
+  }
   case X86::CMOVB16rr:  case X86::CMOVB32rr:  case X86::CMOVB64rr:
   case X86::CMOVAE16rr: case X86::CMOVAE32rr: case X86::CMOVAE64rr:
   case X86::CMOVE16rr:  case X86::CMOVE32rr:  case X86::CMOVE64rr:
