@@ -129,8 +129,9 @@ class CoverageController {
       C->PcBufferPos = NewPcBufferPos;
     }
 
-    if (NewPcBufferPos >= PcBufferLen) {
-      Printf("ERROR: PC buffer overflow.\n");
+    if (PcBufferLen && NewPcBufferPos >= PcBufferLen) {
+      Printf("ERROR: PC buffer overflow\n");
+      _Exit(1);
     }
 
     return Res;
