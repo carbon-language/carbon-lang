@@ -564,6 +564,18 @@ static inline bool skipDebugInstructionsBackward(
   return It == Begin;
 }
 
+/// Count duplicated instructions and move the iterators to show where they
+/// are.
+/// @param TIB True Iterator Begin
+/// @param FIB False Iterator Begin
+/// These two iterators initially point to the first instruction of the two
+/// blocks, and finally point to the first non-shared instruction.
+/// @param TIE True Iterator End
+/// @param FIE False Iterator End
+/// These two iterators initially point to End() for the two blocks() and
+/// finally point to the first shared instruction in the tail.
+/// Upon return [TIB, TIE), and [FIB, FIE) mark the un-duplicated portions of
+/// two blocks.
 static void countDuplicatedInstructions(
     MachineBasicBlock::iterator &TIB,
     MachineBasicBlock::iterator &FIB,
