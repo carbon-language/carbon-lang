@@ -1161,7 +1161,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
 SBError
 SBThread::StepUsingScriptedThreadPlan (const char *script_class_name)
 {
-    StepUsingScriptedThreadPlan(script_class_name, true);
+    return StepUsingScriptedThreadPlan(script_class_name, true);
 }
 
 SBError
