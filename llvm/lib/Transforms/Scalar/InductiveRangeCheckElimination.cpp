@@ -66,6 +66,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/SimplifyIndVar.h"
+#include "llvm/Transforms/Utils/LoopSimplify.h"
 #include "llvm/Transforms/Utils/UnrollLoop.h"
 
 using namespace llvm;
@@ -1278,6 +1279,7 @@ bool LoopConstrainer::run() {
 
   DT.recalculate(F);
   formLCSSARecursively(OriginalLoop, DT, &LI, &SE);
+  simplifyLoop(&OriginalLoop, &DT, &LI, &SE, nullptr, true);
 
   return true;
 }
