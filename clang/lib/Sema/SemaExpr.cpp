@@ -136,7 +136,7 @@ AvailabilityResult Sema::ShouldDiagnoseAvailabilityOfDecl(
     }
 
   switch (Result) {
-  case AR_Available:
+  default:
     return Result;
 
   case AR_Unavailable:
