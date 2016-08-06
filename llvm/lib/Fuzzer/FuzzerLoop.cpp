@@ -123,15 +123,17 @@ class CoverageController {
       C->PcMapBits = NewPcMapBits;
     }
 
-    uint64_t NewPcBufferPos = EF->__sanitizer_get_coverage_pc_buffer_pos();
-    if (NewPcBufferPos > C->PcBufferPos) {
-      Res = true;
-      C->PcBufferPos = NewPcBufferPos;
-    }
+    if (EF->__sanitizer_get_coverage_pc_buffer_pos) {
+      uint64_t NewPcBufferPos = EF->__sanitizer_get_coverage_pc_buffer_pos();
+      if (NewPcBufferPos > C->PcBufferPos) {
+        Res = true;
+        C->PcBufferPos = NewPcBufferPos;
+      }
 
-    if (PcBufferLen && NewPcBufferPos >= PcBufferLen) {
-      Printf("ERROR: PC buffer overflow\n");
-      _Exit(1);
+      if (PcBufferLen && NewPcBufferPos >= PcBufferLen) {
+        Printf("ERROR: PC buffer overflow\n");
+        _Exit(1);
+      }
     }
 
     return Res;
