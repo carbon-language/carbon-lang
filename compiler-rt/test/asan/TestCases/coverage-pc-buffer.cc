@@ -1,6 +1,6 @@
 // Test __sanitizer_coverage_pc_buffer().
 
-// RUN: %clangxx_asan -fsanitize-coverage=edge -std=c++11 %s -O3 -o %t && %run %t
+// RUN: %clangxx_asan -fsanitize-coverage=edge %stdcxx11 %s -O3 -o %t && %run %t
 
 // UNSUPPORTED: android
 
