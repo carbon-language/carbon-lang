@@ -1389,7 +1389,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
     {
         if (log)
             log->Printf ("No dynamic classes found in gdb_objc_realized_classes.");
-        return DescriptorMapUpdateResult::Fail();
+        return DescriptorMapUpdateResult::Success(0);
     }
     
     // Make some types for our arguments
