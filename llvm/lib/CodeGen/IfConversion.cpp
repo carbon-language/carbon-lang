@@ -598,7 +598,7 @@ static inline bool skipDebugInstructionsForward(
 
 /// Decrement It until it points to a non-debug instruction or to Begin.
 /// @param It Iterator to decrement.
-/// @param End Iterator that points to beginning. Will be compared to It
+/// @param Begin Iterator that points to beginning. Will be compared to It
 /// @returns true if It == Begin, false otherwise.
 static inline bool skipDebugInstructionsBackward(
     MachineBasicBlock::iterator &It,
