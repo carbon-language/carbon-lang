@@ -540,6 +540,30 @@ bool IfConverter::ValidTriangle(BBInfo &TrueBBI, BBInfo &FalseBBI,
   return TExit && TExit == FalseBBI.BB;
 }
 
+/// Increment It until it points to a non-debug instruction or to End.
+/// @param It Iterator to increment
+/// @param End Iterator that points to end. Will be compared to It
+/// @returns true if It == End, false otherwise.
+static inline bool skipDebugInstructionsForward(
+    MachineBasicBlock::iterator &It,
+    MachineBasicBlock::iterator &End) {
+  while (It != End && It->isDebugValue())
+    It++;
+  return It == End;
+}
+
+/// Decrement It until it points to a non-debug instruction or to Begin.
+/// @param It Iterator to decrement.
+/// @param End Iterator that points to beginning. Will be compared to It
+/// @returns true if It == Begin, false otherwise.
+static inline bool skipDebugInstructionsBackward(
+    MachineBasicBlock::iterator &It,
+    MachineBasicBlock::iterator &Begin) {
+  while (It != Begin && It->isDebugValue())
+    It--;
+  return It == Begin;
+}
+
 static void countDuplicatedInstructions(
     MachineBasicBlock::iterator &TIB,
     MachineBasicBlock::iterator &FIB,
@@ -551,18 +575,10 @@ static void countDuplicatedInstructions(
 
   while (TIB != TIE && FIB != FIE) {
     // Skip dbg_value instructions. These do not count.
-    if (TIB->isDebugValue()) {
-      while (TIB != TIE && TIB->isDebugValue())
-        ++TIB;
-      if (TIB == TIE)
-        break;
-    }
-    if (FIB->isDebugValue()) {
-      while (FIB != FIE && FIB->isDebugValue())
-        ++FIB;
-      if (FIB == FIE)
-        break;
-    }
+    if(skipDebugInstructionsForward(TIB, TIE))
+      break;
+    if(skipDebugInstructionsForward(FIB, FIE))
+      break;
     if (!TIB->isIdenticalTo(*FIB))
       break;
     ++Dups1;
@@ -602,18 +618,10 @@ static void countDuplicatedInstructions(
   // Count duplicate instructions at the ends of the blocks.
   while (TIE != TIB && FIE != FIB) {
     // Skip dbg_value instructions. These do not count.
-    if (TIE->isDebugValue()) {
-      while (TIE != TIB && TIE->isDebugValue())
-        --TIE;
-      if (TIE == TIB)
-        break;
-    }
-    if (FIE->isDebugValue()) {
-      while (FIE != FIB && FIE->isDebugValue())
-        --FIE;
-      if (FIE == FIB)
-        break;
-    }
+    if (skipDebugInstructionsBackward(TIE, TIB))
+      break;
+    if (skipDebugInstructionsBackward(FIE, FIB))
+      break;
     if (!TIE->isIdenticalTo(*FIE))
       break;
     // If we are trying to make sure the conditional branches are the same, we
