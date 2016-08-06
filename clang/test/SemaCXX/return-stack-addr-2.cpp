@@ -65,20 +65,17 @@ const int *int6() {
 
 const int *int7(int x) {
   const int &x2 = x;  // expected-note{{binding reference variable 'x2' here}}
-  const int &x3 = x2;
   return &x2;  //  expected-warning{{address of stack memory associated with local variable 'x' returned}}
 }
 
 const int *int8(const int &x = 5) {
   const int &x2 = x;
-  const int &x3 = x2;
   return &x2;
 }
 
 const int *int9() {
   const int &x = 5;  // expected-note{{binding reference variable 'x' here}}
   const int &x2 = x;  // expected-note{{binding reference variable 'x2' here}}
-  const int &x3 = x2;
   return &x2;  // expected-warning{{returning address of local temporary object}}
 }
 }
