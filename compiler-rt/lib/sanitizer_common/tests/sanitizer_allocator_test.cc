@@ -239,7 +239,7 @@ void SizeClassAllocatorGetBlockBeginStress() {
   memset(&cache, 0, sizeof(cache));
   cache.Init(0);
 
-  uptr max_size_class = Allocator::kNumClasses - 1;
+  uptr max_size_class = Allocator::SizeClassMapT::kLargestClassID;
   uptr size = Allocator::SizeClassMapT::Size(max_size_class);
   u64 G8 = 1ULL << 33;
   // Make sure we correctly compute GetBlockBegin() w/o overflow.
