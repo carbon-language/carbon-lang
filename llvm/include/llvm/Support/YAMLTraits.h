@@ -1388,6 +1388,11 @@ template <typename T> struct SequenceTraitsImpl {
 
 /// Utility for declaring that a std::vector of a particular type
 /// should be considered a YAML flow sequence.
+/// We need to do a partial specialization on the vector version, not a full.
+/// If this is a full specialization, the compiler is a bit too "smart" and
+/// decides to warn on -Wunused-const-variable.  This workaround can be
+/// removed and we can do a full specialization on std::vector<T> once
+/// PR28878 is fixed.
 #define LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(_type)                               \
   namespace llvm {                                                             \
   namespace yaml {                                                             \
@@ -1396,9 +1401,9 @@ template <typename T> struct SequenceTraitsImpl {
       : public SequenceTraitsImpl<SmallVector<_type, N>> {                     \
     static const bool flow = true;                                             \
   };                                                                           \
-  template <>                                                                  \
-  struct SequenceTraits<std::vector<_type>>                                    \
-      : public SequenceTraitsImpl<std::vector<_type>> {                        \
+  template <typename Allocator>                                                \
+  struct SequenceTraits<std::vector<_type, Allocator>>                         \
+      : public SequenceTraitsImpl<std::vector<_type, Allocator>> {             \
     static const bool flow = true;                                             \
   };                                                                           \
   }                                                                            \
