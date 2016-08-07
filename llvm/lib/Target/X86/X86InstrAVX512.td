@@ -3305,6 +3305,10 @@ let Predicates = [HasAVX512] in {
     def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
                                  (v2i64 (scalar_to_vector GR64:$src)),(iPTR 0)))),
               (SUBREG_TO_REG (i64 0), (VMOV64toPQIZrr GR64:$src), sub_xmm)>;
+
+    def : Pat<(v8i64 (X86vzmovl (insert_subvector undef,
+                                 (v2i64 (scalar_to_vector GR64:$src)),(iPTR 0)))),
+              (SUBREG_TO_REG (i64 0), (VMOV64toPQIZrr GR64:$src), sub_xmm)>;
   }
   // AVX 128-bit movd/movq instruction write zeros in the high 128-bit part.
   let AddedComplexity = 20 in {
@@ -3328,6 +3332,10 @@ let Predicates = [HasAVX512] in {
   // Use regular 128-bit instructions to match 256-bit scalar_to_vec+zext.
   def : Pat<(v8i32 (X86vzmovl (insert_subvector undef,
                                (v4i32 (scalar_to_vector GR32:$src)),(iPTR 0)))),
+            (SUBREG_TO_REG (i32 0), (VMOVDI2PDIZrr GR32:$src), sub_xmm)>;
+
+  def : Pat<(v16i32 (X86vzmovl (insert_subvector undef,
+                                (v4i32 (scalar_to_vector GR32:$src)),(iPTR 0)))),
             (SUBREG_TO_REG (i32 0), (VMOVDI2PDIZrr GR32:$src), sub_xmm)>;
 
   // Use regular 128-bit instructions to match 512-bit scalar_to_vec+zext.
