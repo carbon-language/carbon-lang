@@ -12281,6 +12281,15 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget &Subtarget,
         return DAG.getVectorShuffle(VT, DL, V1, V2, NewMask);
       }
 
+  // Ensure that undefined mask elements only use SM_SentinelUndef.
+  if (llvm::any_of(Mask, [](int M) { return M < SM_SentinelUndef; })) {
+    SmallVector<int, 8> NewMask(Mask.begin(), Mask.end());
+    for (int &M : NewMask)
+      if (M < SM_SentinelUndef)
+        M = SM_SentinelUndef;
+    return DAG.getVectorShuffle(VT, DL, V1, V2, NewMask);
+  }
+
   // We actually see shuffles that are entirely re-arrangements of a set of
   // zero inputs. This mostly happens while decomposing complex shuffles into
   // simple ones. Directly lower these as a buildvector of zeros.
