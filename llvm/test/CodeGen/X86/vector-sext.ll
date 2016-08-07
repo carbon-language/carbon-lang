@@ -5,6 +5,7 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx | FileCheck %s --check-prefix=AVX --check-prefix=AVX1
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2 | FileCheck %s --check-prefix=AVX --check-prefix=AVX2
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512f | FileCheck %s --check-prefix=AVX --check-prefix=AVX512 --check-prefix=AVX512F
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512f,+avx512bw | FileCheck %s --check-prefix=AVX --check-prefix=AVX512 --check-prefix=AVX512BW
 ;
 ; Just one 32-bit run to make sure we do reasonable things there.
 ; RUN: llc < %s -mtriple=i686-unknown-unknown -mattr=+sse4.1 | FileCheck %s --check-prefix=X32-SSE41
@@ -162,13 +163,18 @@ define <32 x i16> @sext_32i8_to_32i16(<32 x i8> %A) nounwind uwtable readnone ss
 ; AVX2-NEXT:    vmovdqa %ymm2, %ymm0
 ; AVX2-NEXT:    retq
 ;
-; AVX512-LABEL: sext_32i8_to_32i16:
-; AVX512:       # BB#0: # %entry
-; AVX512-NEXT:    vpmovsxbw %xmm0, %ymm2
-; AVX512-NEXT:    vextracti128 $1, %ymm0, %xmm0
-; AVX512-NEXT:    vpmovsxbw %xmm0, %ymm1
-; AVX512-NEXT:    vmovdqa64 %zmm2, %zmm0
-; AVX512-NEXT:    retq
+; AVX512F-LABEL: sext_32i8_to_32i16:
+; AVX512F:       # BB#0: # %entry
+; AVX512F-NEXT:    vpmovsxbw %xmm0, %ymm2
+; AVX512F-NEXT:    vextracti128 $1, %ymm0, %xmm0
+; AVX512F-NEXT:    vpmovsxbw %xmm0, %ymm1
+; AVX512F-NEXT:    vmovdqa64 %zmm2, %zmm0
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: sext_32i8_to_32i16:
+; AVX512BW:       # BB#0: # %entry
+; AVX512BW-NEXT:    vpmovsxbw %ymm0, %zmm0
+; AVX512BW-NEXT:    retq
 ;
 ; X32-SSE41-LABEL: sext_32i8_to_32i16:
 ; X32-SSE41:       # BB#0: # %entry
@@ -1241,14 +1247,23 @@ define <2 x i64> @load_sext_2i1_to_2i64(<2 x i1> *%ptr) {
 ; AVX2-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; AVX2-NEXT:    retq
 ;
-; AVX512-LABEL: load_sext_2i1_to_2i64:
-; AVX512:       # BB#0: # %entry
-; AVX512-NEXT:    movzbl (%rdi), %eax
-; AVX512-NEXT:    kmovw %eax, %k1
-; AVX512-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
-; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<kill>
-; AVX512-NEXT:    retq
+; AVX512F-LABEL: load_sext_2i1_to_2i64:
+; AVX512F:       # BB#0: # %entry
+; AVX512F-NEXT:    movzbl (%rdi), %eax
+; AVX512F-NEXT:    kmovw %eax, %k1
+; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
+; AVX512F-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512F-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<kill>
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: load_sext_2i1_to_2i64:
+; AVX512BW:       # BB#0: # %entry
+; AVX512BW-NEXT:    movzbl (%rdi), %eax
+; AVX512BW-NEXT:    kmovd %eax, %k1
+; AVX512BW-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
+; AVX512BW-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<kill>
+; AVX512BW-NEXT:    retq
 ;
 ; X32-SSE41-LABEL: load_sext_2i1_to_2i64:
 ; X32-SSE41:       # BB#0: # %entry
@@ -1423,15 +1438,25 @@ define <4 x i32> @load_sext_4i1_to_4i32(<4 x i1> *%ptr) {
 ; AVX2-NEXT:    vpinsrd $3, %eax, %xmm0, %xmm0
 ; AVX2-NEXT:    retq
 ;
-; AVX512-LABEL: load_sext_4i1_to_4i32:
-; AVX512:       # BB#0: # %entry
-; AVX512-NEXT:    movzbl (%rdi), %eax
-; AVX512-NEXT:    kmovw %eax, %k1
-; AVX512-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
-; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
-; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
-; AVX512-NEXT:    retq
+; AVX512F-LABEL: load_sext_4i1_to_4i32:
+; AVX512F:       # BB#0: # %entry
+; AVX512F-NEXT:    movzbl (%rdi), %eax
+; AVX512F-NEXT:    kmovw %eax, %k1
+; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
+; AVX512F-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512F-NEXT:    vpmovqd %zmm0, %ymm0
+; AVX512F-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: load_sext_4i1_to_4i32:
+; AVX512BW:       # BB#0: # %entry
+; AVX512BW-NEXT:    movzbl (%rdi), %eax
+; AVX512BW-NEXT:    kmovd %eax, %k1
+; AVX512BW-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
+; AVX512BW-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    vpmovqd %zmm0, %ymm0
+; AVX512BW-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
+; AVX512BW-NEXT:    retq
 ;
 ; X32-SSE41-LABEL: load_sext_4i1_to_4i32:
 ; X32-SSE41:       # BB#0: # %entry
@@ -1620,14 +1645,23 @@ define <4 x i64> @load_sext_4i1_to_4i64(<4 x i1> *%ptr) {
 ; AVX2-NEXT:    vinserti128 $1, %xmm0, %ymm1, %ymm0
 ; AVX2-NEXT:    retq
 ;
-; AVX512-LABEL: load_sext_4i1_to_4i64:
-; AVX512:       # BB#0: # %entry
-; AVX512-NEXT:    movzbl (%rdi), %eax
-; AVX512-NEXT:    kmovw %eax, %k1
-; AVX512-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
-; AVX512-NEXT:    # kill: %YMM0<def> %YMM0<kill> %ZMM0<kill>
-; AVX512-NEXT:    retq
+; AVX512F-LABEL: load_sext_4i1_to_4i64:
+; AVX512F:       # BB#0: # %entry
+; AVX512F-NEXT:    movzbl (%rdi), %eax
+; AVX512F-NEXT:    kmovw %eax, %k1
+; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
+; AVX512F-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512F-NEXT:    # kill: %YMM0<def> %YMM0<kill> %ZMM0<kill>
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: load_sext_4i1_to_4i64:
+; AVX512BW:       # BB#0: # %entry
+; AVX512BW-NEXT:    movzbl (%rdi), %eax
+; AVX512BW-NEXT:    kmovd %eax, %k1
+; AVX512BW-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
+; AVX512BW-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    # kill: %YMM0<def> %YMM0<kill> %ZMM0<kill>
+; AVX512BW-NEXT:    retq
 ;
 ; X32-SSE41-LABEL: load_sext_4i1_to_4i64:
 ; X32-SSE41:       # BB#0: # %entry
@@ -1914,14 +1948,23 @@ define <8 x i16> @load_sext_8i1_to_8i16(<8 x i1> *%ptr) {
 ; AVX2-NEXT:    vpinsrw $7, %eax, %xmm0, %xmm0
 ; AVX2-NEXT:    retq
 ;
-; AVX512-LABEL: load_sext_8i1_to_8i16:
-; AVX512:       # BB#0: # %entry
-; AVX512-NEXT:    movzbl (%rdi), %eax
-; AVX512-NEXT:    kmovw %eax, %k1
-; AVX512-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
-; AVX512-NEXT:    vpmovqw %zmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX512F-LABEL: load_sext_8i1_to_8i16:
+; AVX512F:       # BB#0: # %entry
+; AVX512F-NEXT:    movzbl (%rdi), %eax
+; AVX512F-NEXT:    kmovw %eax, %k1
+; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
+; AVX512F-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512F-NEXT:    vpmovqw %zmm0, %xmm0
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: load_sext_8i1_to_8i16:
+; AVX512BW:       # BB#0: # %entry
+; AVX512BW-NEXT:    movzbl (%rdi), %eax
+; AVX512BW-NEXT:    kmovd %eax, %k1
+; AVX512BW-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
+; AVX512BW-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    vpmovqw %zmm0, %xmm0
+; AVX512BW-NEXT:    retq
 ;
 ; X32-SSE41-LABEL: load_sext_8i1_to_8i16:
 ; X32-SSE41:       # BB#0: # %entry
@@ -2308,14 +2351,23 @@ define <8 x i32> @load_sext_8i1_to_8i32(<8 x i1> *%ptr) {
 ; AVX2-NEXT:    vinserti128 $1, %xmm0, %ymm1, %ymm0
 ; AVX2-NEXT:    retq
 ;
-; AVX512-LABEL: load_sext_8i1_to_8i32:
-; AVX512:       # BB#0: # %entry
-; AVX512-NEXT:    movzbl (%rdi), %eax
-; AVX512-NEXT:    kmovw %eax, %k1
-; AVX512-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
-; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
-; AVX512-NEXT:    retq
+; AVX512F-LABEL: load_sext_8i1_to_8i32:
+; AVX512F:       # BB#0: # %entry
+; AVX512F-NEXT:    movzbl (%rdi), %eax
+; AVX512F-NEXT:    kmovw %eax, %k1
+; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
+; AVX512F-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512F-NEXT:    vpmovqd %zmm0, %ymm0
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: load_sext_8i1_to_8i32:
+; AVX512BW:       # BB#0: # %entry
+; AVX512BW-NEXT:    movzbl (%rdi), %eax
+; AVX512BW-NEXT:    kmovd %eax, %k1
+; AVX512BW-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
+; AVX512BW-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    vpmovqd %zmm0, %ymm0
+; AVX512BW-NEXT:    retq
 ;
 ; X32-SSE41-LABEL: load_sext_8i1_to_8i32:
 ; X32-SSE41:       # BB#0: # %entry
