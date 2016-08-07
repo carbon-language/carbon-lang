@@ -3645,6 +3645,26 @@ static Value *SimplifyGEPInst(Type *SrcTy, ArrayRef<Value *> Ops,
     }
   }
 
+  // gep (gep V, C), (sub 0, V) -> C
+  if (Q.DL.getTypeAllocSize(LastType) == 1 &&
+      all_of(Ops.slice(1).drop_back(1),
+             [](Value *Idx) { return match(Idx, m_Zero()); })) {
+    unsigned PtrWidth =
+        Q.DL.getPointerSizeInBits(Ops[0]->getType()->getPointerAddressSpace());
+    if (Q.DL.getTypeSizeInBits(Ops.back()->getType()) == PtrWidth) {
+      APInt BasePtrOffset(PtrWidth, 0);
+      Value *StrippedBasePtr =
+          Ops[0]->stripAndAccumulateInBoundsConstantOffsets(Q.DL,
+                                                            BasePtrOffset);
+
+      if (match(Ops.back(),
+                m_Sub(m_Zero(), m_PtrToInt(m_Specific(StrippedBasePtr))))) {
+        auto *CI = ConstantInt::get(GEPTy->getContext(), BasePtrOffset);
+        return ConstantExpr::getIntToPtr(CI, GEPTy);
+      }
+    }
+  }
+
   // Check to see if this is constant foldable.
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     if (!isa<Constant>(Ops[i]))
