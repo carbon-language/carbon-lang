@@ -271,7 +271,7 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
       OutputLineTable.addLineEntry(MCLineEntry{nullptr, Loc},
                                    FunctionSection);
     } else {
-      DEBUG(errs() << "BOLT-DEBUG: Function " << Function.getName()
+      DEBUG(errs() << "BOLT-DEBUG: Function " << Function
                    << " has no associated line number information.\n");
     }
   }

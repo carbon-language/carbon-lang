@@ -143,7 +143,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
                            bool PrintInstructions) const {
   StringRef SectionName;
   Section.getName(SectionName);
-  OS << "Binary Function \"" << getName() << "\" " << Annotation << " {";
+  OS << "Binary Function \"" << *this << "\" " << Annotation << " {";
   if (Names.size() > 1) {
     OS << "\n  Other names : ";
     auto Sep = "";
@@ -323,7 +323,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   if (FrameInstructions.empty())
     OS << "    <empty>\n";
 
-  OS << "End of Function \"" << getName() << "\"\n\n";
+  OS << "End of Function \"" << *this << "\"\n\n";
 }
 
 bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
@@ -340,30 +340,30 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   Labels[0] = Ctx->createTempSymbol("BB0", false);
 
   auto handleRIPOperand =
-      [&](MCInst &Instruction, uint64_t Address, uint64_t Size) -> bool {
-        uint64_t TargetAddress{0};
-        MCSymbol *TargetSymbol{nullptr};
-        if (!BC.MIA->evaluateRIPOperand(Instruction, Address, Size,
-                                        TargetAddress)) {
-          DEBUG(dbgs() << "BOLT: rip-relative operand can't be evaluated:\n";
-                BC.InstPrinter->printInst(&Instruction, dbgs(), "", *BC.STI);
-                dbgs() << '\n';
-                Instruction.dump_pretty(dbgs(), BC.InstPrinter.get());
-                dbgs() << '\n';);
-          return false;
-        }
-        // FIXME: check that the address is in data, not in code.
-        if (TargetAddress == 0) {
-          errs() << "BOLT-WARNING: rip-relative operand is zero in function "
-                 << getName() << ". Ignoring function.\n";
-          return false;
-        }
-        TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
-        BC.MIA->replaceRIPOperandDisp(
-            Instruction, MCOperand::createExpr(MCSymbolRefExpr::create(
-                             TargetSymbol, MCSymbolRefExpr::VK_None, *BC.Ctx)));
-        return true;
-      };
+      [&](MCInst &Instruction, uint64_t Address, uint64_t Size) {
+    uint64_t TargetAddress{0};
+    MCSymbol *TargetSymbol{nullptr};
+    if (!BC.MIA->evaluateRIPOperand(Instruction, Address, Size,
+                                    TargetAddress)) {
+      DEBUG(dbgs() << "BOLT: rip-relative operand can't be evaluated:\n";
+            BC.InstPrinter->printInst(&Instruction, dbgs(), "", *BC.STI);
+            dbgs() << '\n';
+            Instruction.dump_pretty(dbgs(), BC.InstPrinter.get());
+            dbgs() << '\n';);
+      return false;
+    }
+    // FIXME: check that the address is in data, not in code.
+    if (TargetAddress == 0) {
+      errs() << "BOLT-WARNING: rip-relative operand is zero in function "
+             << *this << ". Ignoring function.\n";
+      return false;
+    }
+    TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
+    BC.MIA->replaceRIPOperandDisp(
+        Instruction, MCOperand::createExpr(MCSymbolRefExpr::create(
+                         TargetSymbol, MCSymbolRefExpr::VK_None, *BC.Ctx)));
+    return true;
+  };
 
   bool IsSimple = true;
   for (uint64_t Offset = 0; IsSimple && (Offset < getSize()); ) {
@@ -381,7 +381,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       errs() << "BOLT-WARNING: unable to disassemble instruction at offset 0x"
              << Twine::utohexstr(Offset) << " (address 0x"
              << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
-             << getName() << '\n';
+             << *this << '\n';
       IsSimple = false;
       break;
     }
@@ -408,12 +408,12 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         if (IsCall && containsAddress(InstructionTarget)) {
           if (InstructionTarget == getAddress()) {
             // Recursive call.
-            TargetSymbol = Ctx->getOrCreateSymbol(getName());
+            TargetSymbol = getSymbol();
           } else {
             // Possibly an old-style PIC code
             errs() << "BOLT: internal call detected at 0x"
                    << Twine::utohexstr(AbsoluteInstrAddr)
-                   << " in function " << getName() << ". Skipping.\n";
+                   << " in function " << *this << ". Skipping.\n";
             IsSimple = false;
           }
         }
@@ -448,12 +448,13 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               if (!MIA->convertJmpToTailCall(Instruction)) {
                 assert(IsCondBranch && "unknown tail call instruction");
                 errs() << "BOLT-WARNING: conditional tail call detected in "
-                       << "function " << getName() << " at 0x"
+                       << "function " << *this << " at 0x"
                        << Twine::utohexstr(AbsoluteInstrAddr) << ".\n";
               }
               // TODO: A better way to do this would be using annotations for
               // MCInst objects.
-              TailCallOffsets.emplace(std::make_pair(Offset, InstructionTarget));
+              TailCallOffsets.emplace(std::make_pair(Offset,
+                                                     InstructionTarget));
               IsCall = true;
             }
 
@@ -464,7 +465,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               // from the libraries. In reality more often than not it is
               // unreachable code, but we don't know it and have to emit calls
               // to 0 which make LLVM JIT unhappy.
-              errs() << "BOLT-WARNING: Function " << getName()
+              errs() << "BOLT-WARNING: Function " << *this
                      << " has a call to address zero. Ignoring function.\n";
               IsSimple = false;
             }
@@ -491,7 +492,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         if (MIA->isIndirectBranch(Instruction)) {
           DEBUG(dbgs() << "BOLT-WARNING: indirect branch detected at 0x"
                  << Twine::utohexstr(AbsoluteInstrAddr)
-                 << ". Skipping function " << getName() << ".\n");
+                 << ". Skipping function " << *this << ".\n");
           IsSimple = false;
         }
         // Indirect call. We only need to fix it if the operand is RIP-relative
@@ -499,7 +500,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
             errs() << "BOLT-WARNING: cannot handle RIP operand at 0x"
                    << Twine::utohexstr(AbsoluteInstrAddr)
-                   << ". Skipping function " << getName() << ".\n";
+                   << ". Skipping function " << *this << ".\n";
             IsSimple = false;
           }
         }
@@ -509,7 +510,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
           errs() << "BOLT-WARNING: cannot handle RIP operand at 0x"
                  << Twine::utohexstr(AbsoluteInstrAddr)
-                 << ". Skipping function " << getName() << ".\n";
+                 << ". Skipping function " << *this << ".\n";
           IsSimple = false;
         }
       }
@@ -552,7 +553,7 @@ void BinaryFunction::addLandingPads(const unsigned StartIndex,
                                     const unsigned NumBlocks) {
   for (auto *BB : BasicBlocks) {
     if (LandingPads.find(BB->getLabel()) != LandingPads.end()) {
-      MCSymbol *LP = BB->getLabel();
+      const MCSymbol *LP = BB->getLabel();
       for (unsigned I : LPToBBIndex[LP]) {
         assert(I < BasicBlocks.size());
         BinaryBasicBlock *ThrowBB = BasicBlocks[I];
@@ -595,7 +596,7 @@ bool BinaryFunction::buildCFG() {
 
   auto BranchDataOrErr = BC.DR.getFuncBranchData(getNames());
   if (!BranchDataOrErr) {
-    DEBUG(dbgs() << "no branch data found for \"" << getName() << "\"\n");
+    DEBUG(dbgs() << "no branch data found for \"" << *this << "\"\n");
   } else {
     ExecutionCount = BranchDataOrErr->ExecutionCount;
   }
@@ -1000,7 +1001,7 @@ void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
            << format("%.1f%%", ProfileMatchRatio * 100.0f) << " ("
            << (LocalProfileBranches.size() - OrphanBranches.size()) << '/'
            << LocalProfileBranches.size() << ") for function "
-           << getName() << '\n';
+           << *this << '\n';
     DEBUG(
       for (auto &OBranch : OrphanBranches)
         errs() << "\t0x" << Twine::utohexstr(OBranch.first) << " -> 0x"
@@ -1270,7 +1271,7 @@ void BinaryFunction::annotateCFIState() {
 bool BinaryFunction::fixCFIState() {
   auto Sep = "";
   DEBUG(dbgs() << "Trying to fix CFI states for each BB after reordering.\n");
-  DEBUG(dbgs() << "This is the list of CFI states for each BB of " << getName()
+  DEBUG(dbgs() << "This is the list of CFI states for each BB of " << *this
                << ": ");
 
   auto replayCFIInstrs =
@@ -1301,7 +1302,7 @@ bool BinaryFunction::fixCFIState() {
         if (NestedLevel != 0) {
           errs() << "BOLT-WARNING: CFI rewriter detected nested CFI state while"
                  << " replaying CFI instructions for BB " << InBB->getName()
-                 << " in function " << getName() << '\n';
+                 << " in function " << *this << '\n';
           return false;
         }
 
@@ -1379,7 +1380,7 @@ bool BinaryFunction::fixCFIState() {
       if (StackOffset != 0) {
         errs() << " BOLT-WARNING: not possible to remember/recover state"
                << " without corrupting CFI state stack in function "
-               << getName() << "\n";
+               << *this << "\n";
         return false;
       }
     } else if (BBCFIState[BBIndex] > State) {
@@ -1416,11 +1417,11 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool MinBranchClusters,
   }
   else if (BasicBlocksLayout.size() <= FUNC_SIZE_THRESHOLD) {
     // Work on optimal solution if problem is small enough
-    DEBUG(dbgs() << "finding optimal block layout for " << getName() << "\n");
+    DEBUG(dbgs() << "finding optimal block layout for " << *this << "\n");
     Algo.reset(new OptimalReorderAlgorithm());
   }
   else {
-    DEBUG(dbgs() << "running block layout heuristics on " << getName() << "\n");
+    DEBUG(dbgs() << "running block layout heuristics on " << *this << "\n");
 
     std::unique_ptr<ClusterAlgorithm> CAlgo;
     if (MinBranchClusters)
@@ -1482,7 +1483,7 @@ std::string constructFilename(std::string Filename,
 }
 
 void BinaryFunction::dumpGraph(raw_ostream& OS) const {
-  OS << "strict digraph \"" << getName() << "\" {\n";
+  OS << "strict digraph \"" << *this << "\" {\n";
   for (auto *BB : BasicBlocks) {
     for (auto *Succ : BB->successors()) {
       OS << "\"" << BB->getName() << "\" -> "
@@ -1511,7 +1512,7 @@ void BinaryFunction::viewGraph() const {
 }
 
 void BinaryFunction::dumpGraphForPass(std::string Annotation) const {
-  auto Filename = constructFilename(getName(), Annotation, ".dot");
+  auto Filename = constructFilename(getPrintName(), Annotation, ".dot");
   dbgs() << "BOLT-DEBUG: Dumping CFG to " << Filename << "\n";
   dumpGraphToFile(Filename);
 }
@@ -1607,7 +1608,7 @@ void BinaryFunction::fixBranches() {
       // invert this conditional branch logic so we can make this a fallthrough.
       if (TBB == FT && !HotColdBorder) {
         if (OldFT == nullptr) {
-          errs() << "BOLT-ERROR: malformed CFG for function " << getName()
+          errs() << "BOLT-ERROR: malformed CFG for function " << *this
                  << " in basic block " << BB->getName() << '\n';
         }
         assert(OldFT != nullptr && "malformed CFG");
@@ -2136,8 +2137,8 @@ bool BinaryFunction::isIdenticalWith(const BinaryFunction &BF) const {
   }
 
   if (PseudosDiffer) {
-    errs() << "BOLT-WARNING: functions " << getName() << " and ";
-    errs() << BF.getName() << " are identical, but have different";
+    errs() << "BOLT-WARNING: functions " << *this << " and ";
+    errs() << BF << " are identical, but have different";
     errs() << " pseudo instruction sequences.\n";
   }
 
@@ -2308,7 +2309,7 @@ void BinaryFunction::calculateLoopInfo() {
 }
 
 void BinaryFunction::printLoopInfo(raw_ostream &OS) const {
-  OS << "Loop Info for Function \"" << getName() << "\"";
+  OS << "Loop Info for Function \"" << *this << "\"";
   if (hasValidProfile()) {
     OS << " (count: " << getExecutionCount() << ")";
   }

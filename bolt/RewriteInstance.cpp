@@ -605,7 +605,7 @@ void RewriteInstance::run() {
       auto FunctionIt = BinaryFunctions.find(Address);
       assert(FunctionIt != BinaryFunctions.end() &&
              "Invalid large function address.");
-      errs() << "BOLT-WARNING: Function " << FunctionIt->second.getName()
+      errs() << "BOLT-WARNING: Function " << FunctionIt->second
              << " is larger than its orginal size: emitting again marking it "
              << "as not simple.\n";
       FunctionIt->second.setSimple(false);
@@ -787,7 +787,7 @@ void RewriteInstance::discoverFileObjects() {
       if (SymbolSize != BFI->second.getSize()) {
         errs() << "BOLT-WARNING: size mismatch for duplicate entries "
                << UniqueName << ':' << SymbolSize << " and "
-               << BFI->second.getName() << ':' << BFI->second.getSize() << '\n';
+               << BFI->second << ':' << BFI->second.getSize() << '\n';
       }
       BFI->second.addAlternativeName(UniqueName);
     } else {
@@ -809,16 +809,6 @@ void RewriteInstance::discoverFileObjects() {
               "profiled binary was not. If you know what you are doing and "
               "wish to proceed, use -allow-stripped option.\n";
     exit(1);
-  }
-
-  // Register the final names of functions with multiple names with BinaryContext
-  // data structures.
-  for (auto &BFI : BinaryFunctions) {
-    uint64_t Address = BFI.first;
-    const BinaryFunction &BF = BFI.second;
-    auto AI = BC->GlobalSymbols.find(BF.getName());
-    if (AI == BC->GlobalSymbols.end())
-      BC->registerNameAtAddress(BF.getName(), Address);
   }
 }
 
@@ -889,7 +879,7 @@ void RewriteInstance::disassembleFunctions() {
 
     if (!opts::shouldProcess(Function)) {
       DEBUG(dbgs() << "BOLT: skipping processing function "
-                   << Function.getName() << " per user request.\n");
+                   << Function << " per user request.\n");
       continue;
     }
 
@@ -901,7 +891,7 @@ void RewriteInstance::disassembleFunctions() {
     if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
       // When could it happen?
       errs() << "BOLT: corresponding section is non-executable or empty "
-             << "for function " << Function.getName();
+             << "for function " << Function;
       continue;
     }
 
@@ -920,7 +910,7 @@ void RewriteInstance::disassembleFunctions() {
         uint64_t SectionEnd = Function.getSection().getAddress() +
                               Function.getSection().getSize();
         if (SectionEnd > SymRefI->first) {
-          errs() << "BOLT-WARNING: symbol after " << Function.getName()
+          errs() << "BOLT-WARNING: symbol after " << Function
                  << " should not be in the same section.\n";
           MaxSize = 0;
         } else {
@@ -930,7 +920,7 @@ void RewriteInstance::disassembleFunctions() {
 
       if (MaxSize < Function.getSize()) {
         errs() << "BOLT-WARNING: symbol seen in the middle of the function "
-               << Function.getName() << ". Skipping.\n";
+               << Function << ". Skipping.\n";
         Function.setSimple(false);
         continue;
       }
@@ -969,7 +959,7 @@ void RewriteInstance::disassembleFunctions() {
     if (EHFrame->ParseError.empty()) {
       if (!CFIRdWrt->fillCFIInfoFor(Function)) {
         errs() << "BOLT-WARNING: unable to fill CFI for function "
-               << Function.getName() << '\n';
+               << Function << '\n';
         Function.setSimple(false);
         continue;
       }
@@ -1010,7 +1000,7 @@ void RewriteInstance::disassembleFunctions() {
     uint64_t Offset = Addr - I->first;
     if (Offset == 0 || Offset >= Func.getSize())
       continue;
-    errs() << "BOLT-WARNING: Function " << Func.getName()
+    errs() << "BOLT-WARNING: Function " << Func
            << " has internal BBs that are target of a branch located in "
               "another function. We will not process this function.\n";
     Func.setSimple(false);
@@ -1056,7 +1046,7 @@ void RewriteInstance::disassembleFunctions() {
     );
     auto SFI = ProfiledFunctions.begin();
     for (int i = 0; i < 100 && SFI != ProfiledFunctions.end(); ++SFI, ++i) {
-      errs() << "  " << (*SFI)->getName() << " : "
+      errs() << "  " << *SFI << " : "
              << (*SFI)->getExecutionCount() << '\n';
     }
   }
@@ -1147,17 +1137,12 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
 
   Streamer.EmitCodeAlignment(Function.getAlignment());
 
-  if (!EmitColdPart) {
-    MCSymbol *FunctionSymbol = BC.Ctx->getOrCreateSymbol(Function.getName());
-    Streamer.EmitSymbolAttribute(FunctionSymbol, MCSA_ELF_TypeFunction);
-    Streamer.EmitLabel(FunctionSymbol);
-    Function.setOutputSymbol(FunctionSymbol);
-  } else {
-    MCSymbol *FunctionSymbol =
-      BC.Ctx->getOrCreateSymbol(Twine(Function.getName()).concat(".cold"));
-    Streamer.EmitSymbolAttribute(FunctionSymbol, MCSA_ELF_TypeFunction);
-    Streamer.EmitLabel(FunctionSymbol);
-    Function.cold().setOutputSymbol(FunctionSymbol);
+  // Emit all names the function is known under.
+  for (const auto &Name : Function.getNames()) {
+    Twine EmitName = EmitColdPart ? Twine(Name).concat(".cold") : Name;
+    auto *EmitSymbol = BC.Ctx->getOrCreateSymbol(EmitName);
+    Streamer.EmitSymbolAttribute(EmitSymbol, MCSA_ELF_TypeFunction);
+    Streamer.EmitLabel(EmitSymbol);
   }
 
   // Emit CFI start
@@ -1348,7 +1333,7 @@ void RewriteInstance::emitFunctions() {
       continue;
 
     DEBUG(dbgs() << "BOLT: generating code for function \""
-                 << Function.getName() << "\" : "
+                 << Function << "\" : "
                  << Function.getFunctionNumber() << '\n');
 
     emitFunction(*Streamer, Function, *BC.get(), /*EmitColdPart=*/false);
@@ -1431,7 +1416,7 @@ void RewriteInstance::emitFunctions() {
         FailedAddresses.emplace_back(Function.getAddress());
       }
     } else {
-      errs() << "BOLT: cannot remap function " << Function.getName() << "\n";
+      errs() << "BOLT: cannot remap function " << Function << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
     }
 
@@ -1458,7 +1443,7 @@ void RewriteInstance::emitFunctions() {
 
       NextAvailableAddress += Function.cold().getImageSize();
     } else {
-      errs() << "BOLT: cannot remap function " << Function.getName() << "\n";
+      errs() << "BOLT: cannot remap function " << Function << "\n";
       FailedAddresses.emplace_back(Function.getAddress());
     }
   }
@@ -1914,14 +1899,14 @@ void RewriteInstance::rewriteFile() {
              << Twine::utohexstr(Function.getImageSize())
              << ") is larger than maximum allowed size (0x"
              << Twine::utohexstr(Function.getMaxSize())
-             << ") for function " << Function.getName() << '\n';
+             << ") for function " << Function << '\n';
       FailedAddresses.emplace_back(Function.getAddress());
       continue;
     }
 
     OverwrittenScore += Function.getFunctionScore();
     // Overwrite function in the output file.
-    outs() << "BOLT: rewriting function \"" << Function.getName() << "\"\n";
+    outs() << "BOLT: rewriting function \"" << Function << "\"\n";
     Out->os().pwrite(reinterpret_cast<char *>(Function.getImageAddress()),
                      Function.getImageSize(), Function.getFileOffset());
 
@@ -1943,8 +1928,7 @@ void RewriteInstance::rewriteFile() {
     }
 
     // Write cold part
-    outs() << "BOLT: rewriting function \"" << Function.getName()
-           << "\" (cold part)\n";
+    outs() << "BOLT: rewriting function \"" << Function << "\" (cold part)\n";
     Out->os().pwrite(reinterpret_cast<char*>(Function.cold().getImageAddress()),
                      Function.cold().getImageSize(),
                      Function.cold().getFileOffset());

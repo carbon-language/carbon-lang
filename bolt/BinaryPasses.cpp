@@ -73,24 +73,24 @@ void OptimizeBodylessFunctions::analyze(
 
   auto &BB = *BF.begin();
   const auto &FirstInst = *BB.begin();
-
   if (!BC.MIA->isTailCall(FirstInst))
     return;
-
   auto &Op1 = FirstInst.getOperand(0);
   if (!Op1.isExpr())
     return;
+  auto Expr = dyn_cast<MCSymbolRefExpr>(Op1.getExpr());
+  if (!Expr)
+    return;
+  auto AddressIt = BC.GlobalSymbols.find(Expr->getSymbol().getName());
+  if (AddressIt == BC.GlobalSymbols.end())
+    return;
+  auto CalleeIt = BFs.find(AddressIt->second);
+  if (CalleeIt == BFs.end())
+    return;
 
-  if (auto Expr = dyn_cast<MCSymbolRefExpr>(Op1.getExpr())) {
-    auto AddressIt = BC.GlobalSymbols.find(Expr->getSymbol().getName());
-    if (AddressIt != BC.GlobalSymbols.end()) {
-      auto CalleeIt = BFs.find(AddressIt->second);
-      if (CalleeIt != BFs.end()) {
-        assert(Expr->getSymbol().getName() == CalleeIt->second.getName());
-        EquivalentCallTarget[BF.getName()] = &CalleeIt->second;
-      }
-    }
-  }
+  assert(&Expr->getSymbol() == CalleeIt->second.getSymbol());
+
+  EquivalentCallTarget[BF.getSymbol()->getName()] = &CalleeIt->second;
 }
 
 void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
@@ -99,31 +99,30 @@ void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
     for (auto InstIt = (*BBIt).begin(), InstEnd = (*BBIt).end();
         InstIt != InstEnd; ++InstIt) {
       auto &Inst = *InstIt;
-      if (BC.MIA->isCall(Inst)) {
-        auto &Op1 = Inst.getOperand(0);
-        if (Op1.isExpr()) {
-          if (auto Expr = dyn_cast<MCSymbolRefExpr>(Op1.getExpr())) {
-            auto OriginalTarget = Expr->getSymbol().getName();
-            auto Target = OriginalTarget;
-            // Iteratively update target since we could have f1() calling f2()
-            // calling f3() calling f4() and we want to output f1() directly
-            // calling f4().
-            while (EquivalentCallTarget.count(Target)) {
-              Target = EquivalentCallTarget.find(Target)->second->getName();
-            }
-            if (Target != OriginalTarget) {
-              DEBUG(errs() << "BOLT-DEBUG: Optimizing " << BF.getName()
-                           << ": replacing call to "
-                           << OriginalTarget
-                           << " by call to " << Target << "\n");
-              Inst.clear();
-              Inst.addOperand(MCOperand::createExpr(
-                    MCSymbolRefExpr::create(
-                      BC.Ctx->getOrCreateSymbol(Target), *BC.Ctx)));
-            }
-          }
-        }
+      if (!BC.MIA->isCall(Inst))
+        continue;
+      auto &Op1 = Inst.getOperand(0);
+      if (!Op1.isExpr())
+        continue;
+      auto Expr = dyn_cast<MCSymbolRefExpr>(Op1.getExpr());
+      if (!Expr)
+        continue;
+      auto *OriginalTarget = &Expr->getSymbol();
+      auto *Target = OriginalTarget;
+      // Iteratively update target since we could have f1() calling f2()
+      // calling f3() calling f4() and we want to output f1() directly
+      // calling f4().
+      while (EquivalentCallTarget.count(Target->getName())) {
+        Target =
+          EquivalentCallTarget.find(Target->getName())->second->getSymbol();
       }
+      if (Target == OriginalTarget)
+        continue;
+      DEBUG(errs() << "BOLT-DEBUG: Optimizing " << (*BBIt).getName()
+                   << " in " << BF
+                   << ": replacing call to " << OriginalTarget->getName()
+                   << " by call to " << Target->getName() << "\n");
+      BC.MIA->replaceCallTargetOperand(Inst, Target, BC.Ctx.get());
     }
   }
 }
@@ -164,7 +163,7 @@ void InlineSmallFunctions::findInliningCandidates(
         BB.size() <= kMaxInstructions &&
         BC.MIA->isReturn(LastInstruction) &&
         !BC.MIA->isTailCall(LastInstruction)) {
-      InliningCandidates.insert(Function.getName());
+      InliningCandidates.insert(Function.getSymbol()->getName());
     }
   }
 
@@ -186,7 +185,7 @@ void InlineSmallFunctions::findInliningCandidatesAggressive(
     const auto &Function = BFIt.second;
     if (!Function.isSimple() ||
         !opts::shouldProcess(Function) ||
-        OverwrittenFunctions.count(Function.getName()) ||
+        OverwrittenFunctions.count(Function.getSymbol()->getName()) ||
         Function.hasEHRanges())
       continue;
     uint64_t FunctionSize = 0;
@@ -206,7 +205,7 @@ void InlineSmallFunctions::findInliningCandidatesAggressive(
       }
     }
     if (!FoundCFI)
-      InliningCandidates.insert(Function.getName());
+      InliningCandidates.insert(Function.getSymbol()->getName());
   }
 
   DEBUG(errs() << "BOLT-DEBUG: " << InliningCandidates.size()
@@ -573,7 +572,7 @@ bool InlineSmallFunctions::inlineCallsInFunction(
         if (FunctionIt != FunctionByName.end()) {
           auto &TargetFunction = *FunctionIt->second;
           bool CallToInlineableFunction =
-            InliningCandidates.count(TargetFunction.getName());
+            InliningCandidates.count(TargetFunction.getSymbol()->getName());
 
           totalInlineableCalls +=
             CallToInlineableFunction * BB->getExecutionCount();
@@ -585,8 +584,8 @@ bool InlineSmallFunctions::inlineCallsInFunction(
             inlineCall(BC, *BB, &Inst, *TargetFunction.begin());
             DidInlining = true;
             DEBUG(errs() << "BOLT-DEBUG: Inlining call to "
-                         << TargetFunction.getName() << " in "
-                         << Function.getName() << "\n");
+                         << TargetFunction << " in "
+                         << Function << "\n");
             InstIt = NextInstIt;
             ExtraSize += TargetFunction.getSize();
             inlinedDynamicCalls += BB->getExecutionCount();
@@ -642,7 +641,7 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
         if (FunctionIt != FunctionByName.end()) {
           auto &TargetFunction = *FunctionIt->second;
           bool CallToInlineableFunction =
-            InliningCandidates.count(TargetFunction.getName());
+            InliningCandidates.count(TargetFunction.getSymbol()->getName());
 
           totalInlineableCalls +=
             CallToInlineableFunction * BB->getExecutionCount();
@@ -656,8 +655,8 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
               inlineCall(BC, Function, BB, InstIndex, TargetFunction);
             DidInlining = true;
             DEBUG(errs() << "BOLT-DEBUG: Inlining call to "
-                         << TargetFunction.getName() << " in "
-                         << Function.getName() << "\n");
+                         << TargetFunction << " in "
+                         << Function << "\n");
             InstIndex = NextBB == BB ? NextInstIndex : BB->size();
             InstIt = NextBB == BB ? BB->begin() + NextInstIndex : BB->end();
             ExtraSize += TargetFunction.getSize();
@@ -680,7 +679,7 @@ void InlineSmallFunctions::runOnFunctions(
     std::map<uint64_t, BinaryFunction> &BFs,
     std::set<uint64_t> &) {
   for (auto &It : BFs) {
-    FunctionByName[It.second.getName()] = &It.second;
+    FunctionByName[It.second.getSymbol()->getName()] = &It.second;
   }
 
   findInliningCandidates(BC, BFs);
@@ -749,8 +748,7 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
     auto Count = Function.eraseDeadBBs(Reachable);
     if (Count) {
       DEBUG(dbgs() << "BOLT: Removed " << Count
-            << " dead basic block(s) in function "
-            << Function.getName() << '\n');
+            << " dead basic block(s) in function " << Function << '\n');
     }
 
     if (opts::PrintAll || opts::PrintUCE)
@@ -818,7 +816,7 @@ void FixupFunctions::runOnFunctions(
     // Fix the CFI state.
     if (!Function.fixCFIState()) {
       errs() << "BOLT-WARNING: unable to fix CFI state for function "
-             << Function.getName() << ". Skipping.\n";
+             << Function << ". Skipping.\n";
       Function.setSimple(false);
       continue;
     }
@@ -882,7 +880,8 @@ bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
 
           // Lookup the address for the current function and
           // the tail call target.
-          auto const FnAddress = BC.GlobalSymbols.find(BF.getName());
+          auto const FnAddress =
+            BC.GlobalSymbols.find(BF.getSymbol()->getName());
           auto const TailAddress = BC.GlobalSymbols.find(TailTarget.getName());
           if (FnAddress == BC.GlobalSymbols.end() ||
               TailAddress == BC.GlobalSymbols.end()) {
@@ -908,7 +907,7 @@ bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
             // if there are no other users.
             BB->removeSuccessor(CondTargetBB);
             DEBUG(dbgs() << "patched " << (isForward ? "(fwd)" : "(back)")
-                  << " tail call in " << BF.getName() << ".\n";);
+                  << " tail call in " << BF << ".\n";);
           }
         }
       }
@@ -918,7 +917,7 @@ bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   DEBUG(dbgs() << "BOLT: patched " << NumLocalPatchedTailCalls
         << " tail calls (" << NumOrigForwardBranches << " forward)"
         << " from a total of " << NumLocalTailCalls
-        << " in function " << BF.getName() << "\n";);
+        << " in function " << BF << "\n";);
 
   return NumLocalPatchedTailCalls > 0;
 }
@@ -1016,7 +1015,7 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
 
         // Look up the symbol address in the global symbols map of the binary
         // context object.
-        auto GI = BC.GlobalSymbols.find(DisplSymbol.getName().str());
+        auto GI = BC.GlobalSymbols.find(DisplSymbol.getName());
         if (GI == BC.GlobalSymbols.end())
           continue;
         TargetAddress = GI->second;
@@ -1179,12 +1178,10 @@ void IdenticalCodeFolding::foldFunction(
     MCInst &CallInst = CallBB->getInstructionAtIndex(CS.InstrIndex);
 
     // Replace call target with BFToReplaceWith.
-    MCOperand CallTargetOp =
-      MCOperand::createExpr(
-        MCSymbolRefExpr::create(
-          SymbolToReplaceWith, MCSymbolRefExpr::VK_None, *BC.Ctx));
-    assert(BC.MIA->replaceCallTargetOperand(CallInst, CallTargetOp) &&
-           "unexpected call target prevented the replacement");
+    auto Success = BC.MIA->replaceCallTargetOperand(CallInst,
+                                                    SymbolToReplaceWith,
+                                                    BC.Ctx.get());
+    assert(Success && "unexpected call target prevented the replacement");
 
     // Add this call site to the callers of BFToReplaceWith.
     BFToReplaceWithCallers.emplace_back(CS);

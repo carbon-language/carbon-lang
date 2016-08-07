@@ -30,7 +30,7 @@ void BasicBlockOffsetRanges::addAddressRange(BinaryFunction &Function,
       BeginAddress - Function.getAddress());
   if (!FirstBB) {
     errs() << "BOLT-WARNING: no basic blocks in function "
-           << Function.getName() << " intersect with debug range [0x"
+           << Function << " intersect with debug range [0x"
            << Twine::utohexstr(BeginAddress) << ", 0x"
            << Twine::utohexstr(EndAddress) << ")\n";
     return;

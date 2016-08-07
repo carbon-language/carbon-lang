@@ -48,7 +48,7 @@ class BinaryBasicBlock {
   BinaryFunction *Function;
 
   /// Label associated with the end of the block in the output binary.
-  MCSymbol *EndLabel{nullptr};
+  const MCSymbol *EndLabel{nullptr};
 
   /// [Begin, End) address range for this block in the output binary.
   std::pair<uint64_t, uint64_t> OutputAddressRange{0, 0};
@@ -279,7 +279,12 @@ public:
   }
 
   /// Return symbol marking the start of this basic block.
-  MCSymbol *getLabel() const {
+  MCSymbol *getLabel() {
+    return Label;
+  }
+
+  /// Return symbol marking the start of this basic block (const version).
+  const MCSymbol *getLabel() const {
     return Label;
   }
 
@@ -447,12 +452,12 @@ public:
   }
 
   /// Sets the symbol pointing to the end of the BB in the output binary.
-  void setEndLabel(MCSymbol *Symbol) {
+  void setEndLabel(const MCSymbol *Symbol) {
     EndLabel = Symbol;
   }
 
   /// Gets the symbol pointing to the end of the BB in the output binary.
-  MCSymbol *getEndLabel() const {
+  const MCSymbol *getEndLabel() const {
     return EndLabel;
   }
 

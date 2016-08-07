@@ -139,7 +139,7 @@ private:
   /// Alignment requirements for the function.
   uint64_t Alignment{1};
 
-  MCSymbol *PersonalityFunction{nullptr};
+  const MCSymbol *PersonalityFunction{nullptr};
   uint8_t PersonalityEncoding{dwarf::DW_EH_PE_sdata4 | dwarf::DW_EH_PE_pcrel};
 
   BinaryContext &BC;
@@ -183,7 +183,7 @@ private:
   uint64_t LSDAAddress{0};
 
   /// Landing pads for the function.
-  std::set<MCSymbol *> LandingPads;
+  std::set<const MCSymbol *> LandingPads;
 
   /// Associated DIEs in the .debug_info section with their respective CUs.
   /// There can be multiple because of identical code folding.
@@ -340,7 +340,7 @@ private:
   std::vector<uint32_t> BBCFIState;
 
   /// Symbol in the output.
-  const MCSymbol *OutputSymbol;
+  MCSymbol *OutputSymbol;
 
   /// Symbol at the end of the function.
   MCSymbol *FunctionEndLabel{nullptr};
@@ -457,7 +457,9 @@ public:
       Names({Name}), Symbol(Symbol), Section(Section), Address(Address),
       IdenticalFunctionAddress(Address), Size(Size), BC(BC), IsSimple(IsSimple),
       CodeSectionName(".text." + Name), FunctionNumber(++Count)
-  {}
+  {
+    OutputSymbol = BC.Ctx->getOrCreateSymbol(Name);
+  }
 
   /// Modify code layout making necessary adjustments to instructions at the
   /// end of basic blocks.
@@ -531,7 +533,7 @@ public:
   ///
   /// We pick the last name from the list to match the name of the function
   /// in profile data for easier manual analysis.
-  std::string getName() const {
+  std::string getPrintName() const {
     return Names.size() == 1 ?
               Names.back() :
               (Names.back() + "(*" + std::to_string(Names.size()) + ")");
@@ -580,8 +582,15 @@ public:
     return MaxSize;
   }
 
-  /// Return MC symbol associtated with the function in the output object.
-  const MCSymbol *getOutputSymbol() const {
+  /// Return MC symbol associtated with the function.
+  /// All references to the function should use this symbol.
+  MCSymbol *getSymbol() {
+    return OutputSymbol;
+  }
+
+  /// Return MC symbol associtated with the function (const version).
+  /// All references to the function should use this symbol.
+  const MCSymbol *getSymbol() const {
     return OutputSymbol;
   }
 
@@ -620,7 +629,7 @@ public:
     return UsesGnuArgsSize;
   }
 
-  MCSymbol *getPersonalityFunction() const {
+  const MCSymbol *getPersonalityFunction() const {
     return PersonalityFunction;
   }
 
@@ -818,11 +827,6 @@ public:
 
   BinaryFunction &setMaxSize(uint64_t Size) {
     MaxSize = Size;
-    return *this;
-  }
-
-  BinaryFunction &setOutputSymbol(const MCSymbol *Symbol) {
-    OutputSymbol = Symbol;
     return *this;
   }
 
@@ -1080,19 +1084,16 @@ public:
     uint64_t ImageAddress{0};
     uint64_t ImageSize{0};
     uint64_t FileOffset{0};
-    const MCSymbol *OutputSymbol{nullptr};
   public:
     uint64_t getAddress() const { return Address; }
     uint64_t getImageAddress() const { return ImageAddress; }
     uint64_t getImageSize() const { return ImageSize; }
     uint64_t getFileOffset() const { return FileOffset; }
-    const MCSymbol *getOutputSymbol() const { return OutputSymbol; }
 
     void setAddress(uint64_t VAddress) { Address = VAddress; }
     void setImageAddress(uint64_t Address) { ImageAddress = Address; }
     void setImageSize(uint64_t Size) { ImageSize = Size; }
     void setFileOffset(uint64_t Offset) { FileOffset = Offset; }
-    void setOutputSymbol(const MCSymbol *Symbol) { OutputSymbol = Symbol; }
   };
 
   /// Cold fragment of the function.
@@ -1102,6 +1103,12 @@ public:
 
   const FragmentInfo &cold() const { return ColdFragment; }
 };
+
+inline raw_ostream &operator<<(raw_ostream &OS,
+                               const BinaryFunction &Function) {
+  OS << Function.getPrintName();
+  return OS;
+}
 
 inline raw_ostream &operator<<(raw_ostream &OS,
                                const BinaryFunction::State State) {

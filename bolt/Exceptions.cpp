@@ -122,7 +122,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
 
   if (opts::PrintExceptions) {
     errs() << "[LSDA at 0x" << Twine::utohexstr(getLSDAAddress())
-           << " for function " << getName() << "]:\n";
+           << " for function " << *this << "]:\n";
     errs() << "LPStart Encoding = " << (unsigned)LPStartEncoding << '\n';
     errs() << "LPStart = 0x" << Twine::utohexstr(LPStart) << '\n';
     errs() << "TType Encoding = " << (unsigned)TTypeEncoding << '\n';
@@ -173,7 +173,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
       if (Instructions.find(LandingPad) == Instructions.end()) {
         errs() << "BOLT-WARNING: landing pad " << Twine::utohexstr(LandingPad)
                << " not pointing to an instruction in function "
-               << getName() << " - ignoring.\n";
+               << *this << " - ignoring.\n";
       } else {
         auto Label = Labels.find(LandingPad);
         if (Label != Labels.end()) {
@@ -331,7 +331,7 @@ void BinaryFunction::updateEHRanges() {
         continue;
 
       // Same symbol is used for the beginning and the end of the range.
-      MCSymbol *EHSymbol{nullptr};
+      const MCSymbol *EHSymbol{nullptr};
       if (BB->isCold()) {
         // If we see a label in the cold block, it means we have to close
         // the range using function end symbol.
@@ -458,13 +458,13 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
     assert(BeginLabel && "start EH label expected");
     assert(EndLabel && "end EH label expected");
 
-    Streamer->emitAbsoluteSymbolDiff(BeginLabel, getOutputSymbol(), 4);
+    Streamer->emitAbsoluteSymbolDiff(BeginLabel, getSymbol(), 4);
     Streamer->emitAbsoluteSymbolDiff(EndLabel, BeginLabel, 4);
 
     if (!CallSite.LP) {
       Streamer->EmitIntValue(0, 4);
     } else {
-      Streamer->emitAbsoluteSymbolDiff(CallSite.LP, getOutputSymbol(), 4);
+      Streamer->emitAbsoluteSymbolDiff(CallSite.LP, getSymbol(), 4);
     }
 
     Streamer->EmitULEB128IntValue(CallSite.Action);
@@ -495,7 +495,7 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
   const FDE &CurFDE = *I->second;
   if (Function.getSize() != CurFDE.getAddressRange()) {
     errs() << "BOLT-WARNING: CFI information size mismatch for function \""
-           << Function.getName() << "\""
+           << Function << "\""
            << format(": Function size is %dB, CFI covers "
                      "%dB\n",
                      Function.getSize(), CurFDE.getAddressRange());
