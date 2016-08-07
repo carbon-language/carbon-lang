@@ -993,16 +993,20 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
     Ret = optimizeUnaryDoubleFP(CI, B, true);
 
   Value *Op1 = CI->getArgOperand(0), *Op2 = CI->getArgOperand(1);
+
+  // pow(1.0, x) -> 1.0
+  if (match(Op1, m_SpecificFP(1.0)))
+    return Op1;
+  // pow(2.0, x) -> llvm.exp2(x)
+  if (match(Op1, m_SpecificFP(2.0))) {
+    Value *Exp2 = Intrinsic::getDeclaration(CI->getModule(), Intrinsic::exp2,
+                                            CI->getType());
+    return B.CreateCall(Exp2, Op2, "exp2");
+  }
+
+  // There's no llvm.exp10 intrinsic yet, but, maybe, some day there will
+  // be one.
   if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
-    // pow(1.0, x) -> 1.0
-    if (Op1C->isExactlyValue(1.0))
-      return Op1C;
-    // pow(2.0, x) -> exp2(x)
-    if (Op1C->isExactlyValue(2.0) &&
-        hasUnaryFloatFn(TLI, Op1->getType(), LibFunc::exp2, LibFunc::exp2f,
-                        LibFunc::exp2l))
-      return emitUnaryFloatFnCall(Op2, TLI->getName(LibFunc::exp2), B,
-                                  Callee->getAttributes());
     // pow(10.0, x) -> exp10(x)
     if (Op1C->isExactlyValue(10.0) &&
         hasUnaryFloatFn(TLI, Op1->getType(), LibFunc::exp10, LibFunc::exp10f,
