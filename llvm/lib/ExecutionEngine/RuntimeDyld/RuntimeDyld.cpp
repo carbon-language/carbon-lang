@@ -630,7 +630,6 @@ Error RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
       Addr += AlignOffset;
       Offset += AlignOffset;
     }
-    uint32_t Flags = Sym.getFlags();
     JITSymbolFlags JITSymFlags = JITSymbolFlags::fromObjectSymbol(Sym);
     DEBUG(dbgs() << "Allocating common symbol " << Name << " address "
                  << format("%p", Addr) << "\n");
