@@ -23,10 +23,6 @@
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Analysis/VectorUtils.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 
 namespace llvm {
 
@@ -209,20 +205,6 @@ public:
   }
 
   void getUnrollingPreferences(Loop *, TTI::UnrollingPreferences &) {}
-
-  void emitPatchableOp(StringRef, MachineBasicBlock &MBB,
-                       MachineBasicBlock::iterator &MBBI) const {
-    auto *TII = MBB.getParent()->getSubtarget().getInstrInfo();
-    auto MIB = BuildMI(MBB, MBBI, MBBI->getDebugLoc(),
-                       TII->get(TargetOpcode::PATCHABLE_OP))
-                   .addImm(2)
-                   .addImm(MBBI->getOpcode());
-
-    for (auto &MO : MBBI->operands())
-      MIB.addOperand(MO);
-
-    MBBI->eraseFromParent();
-  }
 
   bool isLegalAddImmediate(int64_t Imm) { return false; }
 

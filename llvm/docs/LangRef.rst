@@ -1448,7 +1448,7 @@ example:
     generated for this function needs to follow certain conventions that
     make it possible for a runtime function to patch over it later.
     The exact effect of this attribute depends on its string value,
-    for which there currently are two legal possiblities:
+    for which there currently is one legal possibility:
 
      * ``"prologue-short-redirect"`` - This style of patchable
        function is intended to support patching a function prologue to
@@ -1464,24 +1464,6 @@ example:
 
        ``"prologue-short-redirect"`` is currently only supported on
        x86-64.
-     * ``"ms-hotpatch"`` - This style of patchable function is similar to
-       ``"prologue-short-redirect"``, but it also imposes several additional
-       guarantees to support the style of hotpatching used on Windows.  On
-       32-bit x86, the first instruction will be a ``mov %edi, %edi``
-       instruction; this is frequently used as a magic value indicating a
-       hotpatchable function.  On other architectures, however, the first
-       instruction can be anything allowed in a Windows-style prologue;
-       this is because all functions on the non-i386 architectures Windows
-       supports are assumed to be hotpatchable.  Additionally, when not
-       targeting a Visual C++-style toolchain, patch space will be provided
-       prior to the function's entry point of an architecturally specific
-       size.  These sizes are compatible with GCC: on 32-bit x86, the patch
-       space is 64 bytes long; on x86-64, it is 128 bytes long.  The patch
-       space is not provided for MSVC toolchains because the
-       `/FUNCTIONPADMIN <https://msdn.microsoft.com/en-us/library/ms173524.aspx>`_
-       option, which provides this space, is expected to be used there.
-
-       ``"ms-hotpatch"`` is currently only supported on x86 and x86-64.
 
     This attribute by itself does not imply restrictions on
     inter-procedural optimizations.  All of the semantic effects the

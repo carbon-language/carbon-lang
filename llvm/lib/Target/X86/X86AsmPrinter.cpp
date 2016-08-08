@@ -76,31 +76,6 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-void X86AsmPrinter::EmitConstantPool() {
-  if (MF) {
-    // If an MS hotpatch function, we need to ensure 64 (32-bit) or 128 (64-bit)
-    // bytes of padding precede the label.  This is the scratch space used
-    // by the hotpatching mechanism to insert the patch code.  The movl %edi,
-    // %edi instruction emitted as the very first instruction of a hotpatch
-    // function is usually overwritten with a short jump instruction when the
-    // patch is installed, so it will jump directly into this space.  (But
-    // don't add the space when targeting MSVC.  There, the /FUNCTIONPADMIN
-    // option to link.exe is expected to be used.)
-    const Function *Fn = MF->getFunction();
-    if (!Subtarget->isTargetKnownWindowsMSVC() &&
-        Fn->hasFnAttribute("patchable-function") &&
-        Fn->getFnAttribute("patchable-function").getValueAsString() ==
-            "ms-hotpatch") {
-      // Emit INT3 instructions instead of NOPs. If a patch runs off the end,
-      // best to let the patcher know with a crash/debug break than to silently
-      // continue, only to run into the jump back into the patch.
-      OutStreamer->emitFill(Subtarget->is64Bit() ? 128 : 64, 0xcc);
-    }
-  }
-
-  AsmPrinter::EmitConstantPool();
-}
-
 /// printSymbolOperand - Print a raw symbol reference operand.  This handles
 /// jump tables, constant pools, global address and external symbols, all of
 /// which print to a label with various suffixes for relocation types etc.

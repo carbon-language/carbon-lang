@@ -50,13 +50,6 @@ public:
       : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
         TLI(std::move(Arg.TLI)) {}
 
-  /// \name Generic TTI Implementations
-  /// @{
-  void emitPatchableOp(StringRef PatchType, MachineBasicBlock &MBB,
-                       MachineBasicBlock::iterator &MBBI) const;
-
-  /// @}
-
   /// \name Scalar TTI Implementations
   /// @{
   TTI::PopcntSupportKind getPopcntSupport(unsigned TyWidth);

@@ -1681,18 +1681,3 @@ bool X86TTIImpl::areInlineCompatible(const Function *Caller,
   // correct.
   return (CallerBits & CalleeBits) == CalleeBits;
 }
-
-void X86TTIImpl::emitPatchableOp(StringRef PatchType,
-                                 MachineBasicBlock &MBB,
-                                 MachineBasicBlock::iterator &MBBI) const {
-  if (PatchType != "ms-hotpatch" || !ST->is32Bit()) {
-    BaseT::emitPatchableOp(PatchType, MBB, MBBI);
-    return;
-  }
-
-  auto &TII = *MBB.getParent()->getSubtarget().getInstrInfo();
-  BuildMI(MBB, MBBI, MBBI->getDebugLoc(),
-          TII.get(X86::MOV32rr_REV), X86::EDI)
-      .addReg(X86::EDI)
-      .setMIFlag(MachineInstr::FrameSetup);
-}
