@@ -1213,6 +1213,8 @@ GPUNodeBuilder::createKernelFunctionDecl(ppcg_kernel *Kernel,
   for (long i = 0; i < NumVars; i++) {
     isl_id *Id = isl_space_get_dim_id(Kernel->space, isl_dim_param, i);
     Arg->setName(isl_id_get_name(Id));
+    Value *Val = IDToValue[Id];
+    ValueMap[Val] = &*Arg;
     IDToValue[Id] = &*Arg;
     KernelIDs.insert(std::unique_ptr<isl_id, IslIdDeleter>(Id));
     Arg++;
