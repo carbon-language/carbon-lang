@@ -106,6 +106,12 @@ void TargetTransformInfo::getUnrollingPreferences(
   return TTIImpl->getUnrollingPreferences(L, UP);
 }
 
+void TargetTransformInfo::emitPatchableOp(
+    StringRef PatchType, MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator &MBBI) const {
+  return TTIImpl->emitPatchableOp(PatchType, MBB, MBBI);
+}
+
 bool TargetTransformInfo::isLegalAddImmediate(int64_t Imm) const {
   return TTIImpl->isLegalAddImmediate(Imm);
 }

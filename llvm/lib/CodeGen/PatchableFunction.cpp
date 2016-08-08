@@ -13,12 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Target/TargetFrameLowering.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
 
@@ -29,8 +28,9 @@ struct PatchableFunction : public MachineFunctionPass {
     initializePatchableFunctionPass(*PassRegistry::getPassRegistry());
   }
 
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
   bool runOnMachineFunction(MachineFunction &F) override;
-   MachineFunctionProperties getRequiredProperties() const override {
+  MachineFunctionProperties getRequiredProperties() const override {
     return MachineFunctionProperties().set(
         MachineFunctionProperties::Property::AllVRegsAllocated);
   }
@@ -53,31 +53,29 @@ static bool doesNotGeneratecode(const MachineInstr &MI) {
   }
 }
 
+void PatchableFunction::getAnalysisUsage(AnalysisUsage &AU) const {
+  MachineFunctionPass::getAnalysisUsage(AU);
+  AU.addRequired<TargetTransformInfoWrapperPass>();
+}
+
 bool PatchableFunction::runOnMachineFunction(MachineFunction &MF) {
   if (!MF.getFunction()->hasFnAttribute("patchable-function"))
     return false;
 
-#ifndef NDEBUG
   Attribute PatchAttr = MF.getFunction()->getFnAttribute("patchable-function");
   StringRef PatchType = PatchAttr.getValueAsString();
-  assert(PatchType == "prologue-short-redirect" && "Only possibility today!");
-#endif
+  assert((PatchType == "prologue-short-redirect" ||
+          PatchType == "ms-hotpatch") && "Only possibilities today!");
 
   auto &FirstMBB = *MF.begin();
   MachineBasicBlock::iterator FirstActualI = FirstMBB.begin();
   for (; doesNotGeneratecode(*FirstActualI); ++FirstActualI)
     assert(FirstActualI != FirstMBB.end());
 
-  auto *TII = MF.getSubtarget().getInstrInfo();
-  auto MIB = BuildMI(FirstMBB, FirstActualI, FirstActualI->getDebugLoc(),
-                     TII->get(TargetOpcode::PATCHABLE_OP))
-                 .addImm(2)
-                 .addImm(FirstActualI->getOpcode());
+  const TargetTransformInfo &TTI =
+      getAnalysis<TargetTransformInfoWrapperPass>().getTTI(*MF.getFunction());
+  TTI.emitPatchableOp(PatchType, FirstMBB, FirstActualI);
 
-  for (auto &MO : FirstActualI->operands())
-    MIB.addOperand(MO);
-
-  FirstActualI->eraseFromParent();
   MF.ensureAlignment(4);
   return true;
 }

@@ -2576,10 +2576,13 @@ SDValue X86TargetLowering::LowerFormalArguments(
   X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
   const TargetFrameLowering &TFI = *Subtarget.getFrameLowering();
 
-  const Function *Fn = MF.getFunction();
-  if (Fn->hasExternalLinkage() &&
-      Subtarget.isTargetCygMing() &&
-      Fn->getName() == "main")
+  const Function* Fn = MF.getFunction();
+  if ((Fn->hasExternalLinkage() &&
+       Subtarget.isTargetCygMing() &&
+       Fn->getName() == "main") ||
+      (!Subtarget.is64Bit() && Fn->hasFnAttribute("patchable-function") &&
+       Fn->getFnAttribute("patchable-function").getValueAsString() ==
+           "ms-hotpatch"))
     FuncInfo->setForceFramePointer(true);
 
   MachineFrameInfo &MFI = MF.getFrameInfo();

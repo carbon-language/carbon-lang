@@ -23,6 +23,8 @@
 #define LLVM_ANALYSIS_TARGETTRANSFORMINFO_H
 
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Operator.h"
@@ -294,6 +296,18 @@ public:
   /// transformation. The caller will initialize UP with the current
   /// target-independent defaults.
   void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const;
+
+  /// \brief Emit a patchable operation in the given basic block at the
+  /// given insertion point.
+  ///
+  /// Most of the time, this will be a straight-up \c TargetOpcode::PATCHABLE_OP
+  /// instruction, which will be lowered by the target to a no-op that can
+  /// be safely replaced with a short jump. However, some targets under certain
+  /// conditions can have peculiar requirements for this instruction; these
+  /// targets can provide their own implementation of this to emit the correct
+  /// instruction.
+  void emitPatchableOp(StringRef PatchType, MachineBasicBlock &MBB,
+                       MachineBasicBlock::iterator &MBBI) const;
 
   /// @}
 
@@ -647,6 +661,9 @@ public:
   virtual bool isSourceOfDivergence(const Value *V) = 0;
   virtual bool isLoweredToCall(const Function *F) = 0;
   virtual void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) = 0;
+  virtual void emitPatchableOp(StringRef Kind,
+                               MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator &MBBI) const = 0;
   virtual bool isLegalAddImmediate(int64_t Imm) = 0;
   virtual bool isLegalICmpImmediate(int64_t Imm) = 0;
   virtual bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV,
@@ -791,6 +808,10 @@ public:
   }
   void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) override {
     return Impl.getUnrollingPreferences(L, UP);
+  }
+  void emitPatchableOp(StringRef Kind, MachineBasicBlock &MBB,
+                       MachineBasicBlock::iterator &MBBI) const override {
+    return Impl.emitPatchableOp(Kind, MBB, MBBI);
   }
   bool isLegalAddImmediate(int64_t Imm) override {
     return Impl.isLegalAddImmediate(Imm);

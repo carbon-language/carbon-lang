@@ -928,6 +928,10 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   bool NeedsWinCFI = IsWin64Prologue && Fn->needsUnwindTableEntry();
   bool NeedsDwarfCFI =
       !IsWin64Prologue && (MMI.hasDebugInfo() || Fn->needsUnwindTableEntry());
+  bool IsMSHotpatch =
+      Fn->hasFnAttribute("patchable-function") &&
+      Fn->getFnAttribute("patchable-function").getValueAsString() ==
+          "ms-hotpatch";
   unsigned FramePtr = TRI->getFrameRegister(MF);
   const unsigned MachineFramePtr =
       STI.isTarget64BitILP32()
@@ -1069,7 +1073,9 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
     if (!IsWin64Prologue && !IsFunclet) {
       // Update EBP with the new base value.
       BuildMI(MBB, MBBI, DL,
-              TII.get(Uses64BitFramePtr ? X86::MOV64rr : X86::MOV32rr),
+              TII.get(IsMSHotpatch ?
+                      (Uses64BitFramePtr ? X86::MOV64rr_REV : X86::MOV32rr_REV):
+                      (Uses64BitFramePtr ? X86::MOV64rr : X86::MOV32rr)),
               FramePtr)
           .addReg(StackPtr)
           .setMIFlag(MachineInstr::FrameSetup);
