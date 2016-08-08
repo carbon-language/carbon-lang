@@ -73,7 +73,6 @@ public:
   ///
   /// @return A value evaluating to true/false if execution is save/unsafe.
   Value *buildRTC(PollyIRBuilder &Builder, IslExprBuilder &ExprBuilder) {
-    Builder.SetInsertPoint(Builder.GetInsertBlock()->getTerminator());
     Value *RTC = ExprBuilder.create(AI->getRunCondition());
     if (!RTC->getType()->isIntegerTy(1))
       RTC = Builder.CreateIsNotNull(RTC);
