@@ -2078,24 +2078,24 @@ bool MemorySSAPrinterLegacyPass::runOnFunction(Function &F) {
 
 char MemorySSAAnalysis::PassID;
 
-std::unique_ptr<MemorySSA>
+MemorySSAAnalysis::Result
 MemorySSAAnalysis::run(Function &F, AnalysisManager<Function> &AM) {
   auto &DT = AM.getResult<DominatorTreeAnalysis>(F);
   auto &AA = AM.getResult<AAManager>(F);
-  return make_unique<MemorySSA>(F, &AA, &DT);
+  return MemorySSAAnalysis::Result(make_unique<MemorySSA>(F, &AA, &DT));
 }
 
 PreservedAnalyses MemorySSAPrinterPass::run(Function &F,
                                             FunctionAnalysisManager &AM) {
   OS << "MemorySSA for function: " << F.getName() << "\n";
-  AM.getResult<MemorySSAAnalysis>(F)->print(OS);
+  AM.getResult<MemorySSAAnalysis>(F).getMSSA().print(OS);
 
   return PreservedAnalyses::all();
 }
 
 PreservedAnalyses MemorySSAVerifierPass::run(Function &F,
                                              FunctionAnalysisManager &AM) {
-  AM.getResult<MemorySSAAnalysis>(F)->verifyMemorySSA();
+  AM.getResult<MemorySSAAnalysis>(F).getMSSA().verifyMemorySSA();
 
   return PreservedAnalyses::all();
 }

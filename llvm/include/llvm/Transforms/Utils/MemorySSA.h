@@ -675,7 +675,14 @@ class MemorySSAAnalysis : public AnalysisInfoMixin<MemorySSAAnalysis> {
   static char PassID;
 
 public:
-  typedef std::unique_ptr<MemorySSA> Result;
+  // Wrap MemorySSA result to ensure address stability of internal MemorySSA
+  // pointers after construction.  Use a wrapper class instead of plain
+  // unique_ptr<MemorySSA> to avoid build breakage on MSVC.
+  struct Result {
+    Result(std::unique_ptr<MemorySSA> &&MSSA) : MSSA(std::move(MSSA)) {}
+    MemorySSA &getMSSA() { return *MSSA.get(); }
+    std::unique_ptr<MemorySSA> MSSA;
+  };
 
   Result run(Function &F, AnalysisManager<Function> &AM);
 };
