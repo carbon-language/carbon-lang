@@ -2961,10 +2961,8 @@ bool InstCombiner::run() {
 
         eraseInstFromFunction(*I);
       } else {
-#ifndef NDEBUG
         DEBUG(dbgs() << "IC: Mod = " << OrigI << '\n'
                      << "    New = " << *I << '\n');
-#endif
 
         // If the instruction was modified, it's possible that it is now dead.
         // if so, remove it.
