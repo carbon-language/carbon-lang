@@ -1208,14 +1208,15 @@ bool getValueFromCondition(Value *Val, Value *Cond, LVILatticeVal &Result,
     if (CI && (LHS == Val || Offset)) {
       // Calculate the range of values that are allowed by the comparison
       ConstantRange CmpRange(CI->getValue());
+
+      // If we're interested in the false dest, invert the condition
+      CmpInst::Predicate Pred =
+          isTrueDest ? Predicate : CmpInst::getInversePredicate(Predicate);
       ConstantRange TrueValues =
-          ConstantRange::makeAllowedICmpRegion(Predicate, CmpRange);
+          ConstantRange::makeAllowedICmpRegion(Pred, CmpRange);
 
       if (Offset) // Apply the offset from above.
         TrueValues = TrueValues.subtract(Offset->getValue());
-
-      // If we're interested in the false dest, invert the condition.
-      if (!isTrueDest) TrueValues = TrueValues.inverse();
 
       Result = LVILatticeVal::getRange(std::move(TrueValues));
       return true;
