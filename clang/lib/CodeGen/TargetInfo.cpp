@@ -1779,10 +1779,6 @@ void X86_32TargetCodeGenInfo::setTargetAttributes(const Decl *D,
       llvm::Function *Fn = cast<llvm::Function>(GV);
       Fn->setCallingConv(llvm::CallingConv::X86_INTR);
     }
-    if (FD->hasAttr<MSHookPrologueAttr>()) {
-      llvm::Function *Fn = cast<llvm::Function>(GV);
-      Fn->addFnAttr("patchable-function", "ms-hotpatch");
-    }
   }
 }
 
@@ -2112,10 +2108,6 @@ public:
       if (FD->hasAttr<AnyX86InterruptAttr>()) {
         llvm::Function *Fn = cast<llvm::Function>(GV);
         Fn->setCallingConv(llvm::CallingConv::X86_INTR);
-      }
-      if (FD->hasAttr<MSHookPrologueAttr>()) {
-        llvm::Function *Fn = cast<llvm::Function>(GV);
-        Fn->addFnAttr("patchable-function", "ms-hotpatch");
       }
     }
   }

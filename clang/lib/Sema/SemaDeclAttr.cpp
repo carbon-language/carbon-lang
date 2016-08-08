@@ -1664,6 +1664,15 @@ static void handleCommonAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     D->addAttr(CA);
 }
 
+static void handleNakedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (checkAttrMutualExclusion<DisableTailCallsAttr>(S, D, Attr.getRange(),
+                                                     Attr.getName()))
+    return;
+
+  D->addAttr(::new (S.Context) NakedAttr(Attr.getRange(), S.Context,
+                                         Attr.getAttributeSpellingListIndex()));
+}
+
 static void handleNoReturnAttr(Sema &S, Decl *D, const AttributeList &attr) {
   if (hasDeclarator(D)) return;
 
@@ -3664,9 +3673,7 @@ OptimizeNoneAttr *Sema::mergeOptimizeNoneAttr(Decl *D, SourceRange Range,
 static void handleAlwaysInlineAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   if (checkAttrMutualExclusion<NotTailCalledAttr>(S, D, Attr.getRange(),
-                                                  Attr.getName()) ||
-      checkAttrMutualExclusion<MSHookPrologueAttr>(S, D, Attr.getRange(),
-                                                   Attr.getName()))
+                                                  Attr.getName()))
     return;
 
   if (AlwaysInlineAttr *Inline = S.mergeAlwaysInlineAttr(
@@ -5545,8 +5552,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleHotAttr(S, D, Attr);
     break;
   case AttributeList::AT_Naked:
-    handleSimpleAttributeWithExclusions<NakedAttr, DisableTailCallsAttr,
-                                        MSHookPrologueAttr>(S, D, Attr);
+    handleNakedAttr(S, D, Attr);
     break;
   case AttributeList::AT_NoReturn:
     handleNoReturnAttr(S, D, Attr);
@@ -5774,9 +5780,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_LayoutVersion:
     handleLayoutVersion(S, D, Attr);
-  case AttributeList::AT_MSHookPrologue:
-    handleSimpleAttributeWithExclusions<MSHookPrologueAttr, NakedAttr,
-      AlwaysInlineAttr>(S, D, Attr);
     break;
   case AttributeList::AT_MSNoVTable:
     handleSimpleAttribute<MSNoVTableAttr>(S, D, Attr);
