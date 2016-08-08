@@ -1233,7 +1233,7 @@ Value *IslNodeBuilder::generateSCEV(const SCEV *Expr) {
   /// We also do not need to update the Builder here, as new instructions are
   /// always inserted _before_ the given InsertLocation. As a result, the
   /// insert location remains valid.
-  assert(Builder.GetInsertBlock()->end() != Builder.getInsertPoint() &&
+  assert(Builder.GetInsertBlock()->end() != Builder.GetInsertPoint() &&
          "Insert location points after last valid instruction");
   Instruction *InsertLocation = &*Builder.GetInsertPoint();
   return expandCodeFor(S, SE, DL, "polly", Expr, Expr->getType(),
