@@ -1274,6 +1274,8 @@ ReversePostOrderFunctionAttrsPass::run(Module &M, AnalysisManager<Module> &AM) {
 
   // CallGraphAnalysis holds AssertingVH and must be invalidated eagerly so
   // that other passes don't delete stuff from under it.
+  // FIXME: We need to invalidate this to avoid PR28400. Is there a better
+  // solution?
   AM.invalidate<CallGraphAnalysis>(M);
 
   if (!Changed)
