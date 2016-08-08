@@ -56,6 +56,15 @@ int main()
 {
   __esan::HashTable<int, int> IntTable;
   assert(IntTable.size() == 0);
+
+  // Test iteration on an empty table.
+  int Count = 0;
+  for (auto Iter = IntTable.begin(); Iter != IntTable.end();
+       ++Iter, ++Count) {
+    // Empty.
+  }
+  assert(Count == 0);
+
   bool Added = IntTable.add(4, 42);
   assert(Added);
   assert(!IntTable.add(4, 42));
@@ -63,9 +72,21 @@ int main()
   int Value;
   bool Found = IntTable.lookup(4, Value);
   assert(Found && Value == 42);
+
+  // Test iterator.
+  IntTable.lock();
+  for (auto Iter = IntTable.begin(); Iter != IntTable.end();
+       ++Iter, ++Count) {
+    assert((*Iter).Key == 4);
+    assert((*Iter).Data == 42);
+  }
+  IntTable.unlock();
+  assert(Count == 1);
+  assert(Count == IntTable.size());
   assert(!IntTable.remove(5));
   assert(IntTable.remove(4));
 
+  // Test a more complex payload.
   __esan::HashTable<int, MyDataPayload> DataTable(4);
   MyDataPayload NewData(new MyData("mystring"));
   Added = DataTable.add(4, NewData);
@@ -86,6 +107,30 @@ int main()
     Found = DataTable.lookup(i+1, FoundData);
     assert(Found && strcmp(FoundData.Data->Buf, "delete-at-end") == 0);
   }
+  DataTable.lock();
+  Count = 0;
+  for (auto Iter = DataTable.begin(); Iter != DataTable.end();
+       ++Iter, ++Count) {
+    int Key = (*Iter).Key;
+    FoundData = (*Iter).Data;
+    assert(Key >= 1 && Key <= 4);
+    assert(strcmp(FoundData.Data->Buf, "delete-at-end") == 0);
+  }
+  DataTable.unlock();
+  assert(Count == 4);
+  assert(Count == DataTable.size());
+
+  // Ensure the iterator supports a range-based for loop.
+  DataTable.lock();
+  Count = 0;
+  for (auto Pair : DataTable) {
+    assert(Pair.Key >= 1 && Pair.Key <= 4);
+    assert(strcmp(Pair.Data.Data->Buf, "delete-at-end") == 0);
+    ++Count;
+  }
+  DataTable.unlock();
+  assert(Count == 4);
+  assert(Count == DataTable.size());
 
   // Test payload freeing via smart pointer wrapper.
   __esan::HashTable<MyDataPayload, MyDataPayload, true> DataKeyTable;

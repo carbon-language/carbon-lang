@@ -66,18 +66,57 @@ public:
   // If the table is internally-synchronized, this lock must not be held
   // while a hashtable function is called as it will deadlock: the lock
   // is not recursive.  This is meant for use with externally-synchronized
-  // tables.
+  // tables or with an iterator.
   void lock();
   void unlock();
 
 private:
-  void resize();
-
   struct HashEntry {
     KeyTy Key;
     DataTy Payload;
     HashEntry *Next;
   };
+
+public:
+  struct HashPair {
+    HashPair(KeyTy Key, DataTy Data) : Key(Key), Data(Data) {}
+    KeyTy Key;
+    DataTy Data;
+  };
+
+  // This iterator does not perform any synchronization.
+  // It expects the caller to lock the table across the whole iteration.
+  // Calling HashTable functions while using the iterator is not supported.
+  // The iterator returns copies of the keys and data.
+  class iterator {
+  public:
+    iterator(
+        HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy> *Table);
+    iterator(const iterator &Src) = default;
+    iterator &operator=(const iterator &Src) = default;
+    HashPair operator*();
+    iterator &operator++();
+    iterator &operator++(int);
+    bool operator==(const iterator &Cmp) const;
+    bool operator!=(const iterator &Cmp) const;
+
+  private:
+    iterator(
+        HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy> *Table,
+        int Idx);
+    friend HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy>;
+    HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy> *Table;
+    int Idx;
+    HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy>::HashEntry
+        *Entry;
+  };
+
+  // No erase or insert iterator supported
+  iterator begin();
+  iterator end();
+
+private:
+  void resize();
 
   HashEntry **Table;
   u32 Capacity;
@@ -245,6 +284,98 @@ template <typename KeyTy, typename DataTy, bool ExternalLock,
           typename HashFuncTy, typename EqualFuncTy>
 void HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy>::unlock() {
   Mutex.Unlock();
+}
+
+//===----------------------------------------------------------------------===//
+// Iterator implementation
+//===----------------------------------------------------------------------===//
+
+template <typename KeyTy, typename DataTy, bool ExternalLock,
+          typename HashFuncTy, typename EqualFuncTy>
+HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy>::iterator::
+    iterator(
+        HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy> *Table)
+    : Table(Table), Idx(-1), Entry(nullptr) {
+  operator++();
+}
+
+template <typename KeyTy, typename DataTy, bool ExternalLock,
+          typename HashFuncTy, typename EqualFuncTy>
+HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy>::iterator::
+    iterator(
+        HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy> *Table,
+        int Idx)
+    : Table(Table), Idx(Idx), Entry(nullptr) {
+  CHECK(Idx >= (int)Table->Capacity); // Only used to create end().
+}
+
+template <typename KeyTy, typename DataTy, bool ExternalLock,
+          typename HashFuncTy, typename EqualFuncTy>
+typename HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy,
+                   EqualFuncTy>::HashPair
+    HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy>::iterator::
+    operator*() {
+  CHECK(Idx >= 0 && Idx < (int)Table->Capacity);
+  CHECK(Entry != nullptr);
+  return HashPair(Entry->Key, Entry->Payload);
+}
+
+template <typename KeyTy, typename DataTy, bool ExternalLock,
+          typename HashFuncTy, typename EqualFuncTy>
+typename HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy,
+                   EqualFuncTy>::iterator &
+    HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy>::iterator::
+    operator++() {
+  if (Entry != nullptr)
+    Entry = Entry->Next;
+  while (Entry == nullptr) {
+    ++Idx;
+    if (Idx >= (int)Table->Capacity)
+      break; // At end().
+    Entry = Table->Table[Idx];
+  }
+  return *this;
+}
+
+template <typename KeyTy, typename DataTy, bool ExternalLock,
+          typename HashFuncTy, typename EqualFuncTy>
+typename HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy,
+                   EqualFuncTy>::iterator &
+    HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy>::iterator::
+    operator++(int) {
+  iterator Temp(*this);
+  operator++();
+  return Temp;
+}
+
+template <typename KeyTy, typename DataTy, bool ExternalLock,
+          typename HashFuncTy, typename EqualFuncTy>
+bool HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy>::iterator::
+operator==(const iterator &Cmp) const {
+  return Cmp.Table == Table && Cmp.Idx == Idx && Cmp.Entry == Entry;
+}
+
+template <typename KeyTy, typename DataTy, bool ExternalLock,
+          typename HashFuncTy, typename EqualFuncTy>
+bool HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy>::iterator::
+operator!=(const iterator &Cmp) const {
+  return Cmp.Table != Table || Cmp.Idx != Idx || Cmp.Entry != Entry;
+}
+
+template <typename KeyTy, typename DataTy, bool ExternalLock,
+          typename HashFuncTy, typename EqualFuncTy>
+typename HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy,
+                   EqualFuncTy>::iterator
+HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy>::begin() {
+  return iterator(this);
+}
+
+template <typename KeyTy, typename DataTy, bool ExternalLock,
+          typename HashFuncTy, typename EqualFuncTy>
+typename HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy,
+                   EqualFuncTy>::iterator
+HashTable<KeyTy, DataTy, ExternalLock, HashFuncTy, EqualFuncTy>::end() {
+  return iterator(this, Capacity);
 }
 
 } // namespace __esan
