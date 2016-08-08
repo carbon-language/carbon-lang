@@ -716,9 +716,8 @@ COFFObjectFile::COFFObjectFile(MemoryBufferRef Object, std::error_code &EC)
     }
     if ((EC = getObject(DataDirectory, Data, DataDirAddr, DataDirSize)))
       return;
+    CurPtr += COFFHeader->SizeOfOptionalHeader;
   }
-
-  CurPtr += COFFHeader->SizeOfOptionalHeader;
 
   if ((EC = getObject(SectionTable, Data, base() + CurPtr,
                       (uint64_t)getNumberOfSections() * sizeof(coff_section))))
