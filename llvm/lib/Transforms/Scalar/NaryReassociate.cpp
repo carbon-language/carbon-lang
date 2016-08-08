@@ -157,6 +157,7 @@ PreservedAnalyses NaryReassociatePass::run(Function &F,
   auto *TTI = &AM.getResult<TargetIRAnalysis>(F);
 
   bool Changed = runImpl(F, AC, DT, SE, TLI, TTI);
+  AM.invalidate<ScalarEvolutionAnalysis>(F);
   if (!Changed)
     return PreservedAnalyses::all();
 

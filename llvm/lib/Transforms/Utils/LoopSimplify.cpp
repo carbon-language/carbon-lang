@@ -869,6 +869,8 @@ PreservedAnalyses LoopSimplifyPass::run(Function &F,
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
     Changed |= simplifyLoop(*I, DT, LI, SE, AC, true /* PreserveLCSSA */);
 
+  AM.invalidate<ScalarEvolutionAnalysis>(F);
+
   if (!Changed)
     return PreservedAnalyses::all();
   PreservedAnalyses PA;
