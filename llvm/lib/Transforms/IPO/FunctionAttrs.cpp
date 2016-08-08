@@ -1271,6 +1271,11 @@ ReversePostOrderFunctionAttrsPass::run(Module &M, AnalysisManager<Module> &AM) {
   auto &CG = AM.getResult<CallGraphAnalysis>(M);
 
   bool Changed = deduceFunctionAttributeInRPO(M, CG);
+
+  // CallGraphAnalysis holds AssertingVH and must be invalidated eagerly so
+  // that other passes don't delete stuff from under it.
+  AM.invalidate<CallGraphAnalysis>(M);
+
   if (!Changed)
     return PreservedAnalyses::all();
   PreservedAnalyses PA;
