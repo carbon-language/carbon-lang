@@ -1183,30 +1183,33 @@ bool getValueFromCondition(Value *Val, Value *Cond, LVILatticeVal &Result,
   if (!ICI)
     return false;
 
-  if (isa<Constant>(ICI->getOperand(1))) {
-    if (ICI->isEquality() && ICI->getOperand(0) == Val) {
+  Value *LHS = ICI->getOperand(0);
+  Value *RHS = ICI->getOperand(1);
+  CmpInst::Predicate Predicate = ICI->getPredicate();
+
+  if (isa<Constant>(RHS)) {
+    if (ICI->isEquality() && LHS == Val) {
       // We know that V has the RHS constant if this is a true SETEQ or
       // false SETNE.
-      if (isTrueDest == (ICI->getPredicate() == ICmpInst::ICMP_EQ))
-        Result = LVILatticeVal::get(cast<Constant>(ICI->getOperand(1)));
+      if (isTrueDest == (Predicate == ICmpInst::ICMP_EQ))
+        Result = LVILatticeVal::get(cast<Constant>(RHS));
       else
-        Result = LVILatticeVal::getNot(cast<Constant>(ICI->getOperand(1)));
+        Result = LVILatticeVal::getNot(cast<Constant>(RHS));
       return true;
     }
 
     // Recognize the range checking idiom that InstCombine produces.
     // (X-C1) u< C2 --> [C1, C1+C2)
     ConstantInt *NegOffset = nullptr;
-    if (ICI->getPredicate() == ICmpInst::ICMP_ULT)
-      match(ICI->getOperand(0), m_Add(m_Specific(Val),
-                                      m_ConstantInt(NegOffset)));
+    if (Predicate == ICmpInst::ICMP_ULT)
+      match(LHS, m_Add(m_Specific(Val), m_ConstantInt(NegOffset)));
 
-    ConstantInt *CI = dyn_cast<ConstantInt>(ICI->getOperand(1));
-    if (CI && (ICI->getOperand(0) == Val || NegOffset)) {
+    ConstantInt *CI = dyn_cast<ConstantInt>(RHS);
+    if (CI && (LHS == Val || NegOffset)) {
       // Calculate the range of values that are allowed by the comparison
       ConstantRange CmpRange(CI->getValue());
       ConstantRange TrueValues =
-          ConstantRange::makeAllowedICmpRegion(ICI->getPredicate(), CmpRange);
+          ConstantRange::makeAllowedICmpRegion(Predicate, CmpRange);
 
       if (NegOffset) // Apply the offset from above.
         TrueValues = TrueValues.subtract(NegOffset->getValue());
