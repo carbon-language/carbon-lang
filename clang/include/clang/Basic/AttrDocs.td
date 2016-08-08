@@ -548,6 +548,22 @@ Query for this feature with ``__has_attribute(objc_method_family)``.
   }];
 }
 
+def MSHookPrologueDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+The ``ms_hook_prologue`` attribute marks a function as "hotpatchable" according
+to conventions used on Windows. Specifically, enough space will be ensured
+in the prologue for a short jump, and an architecturally dependently sized
+patch space will be reserved prior to the entry point. See the documentation
+for the `/HOTPATCH`_ switch on MSDN.
+
+This attribute cannot be used in conjunction with the ``naked``,
+``always_inline``, or ``__forceinline`` attributes.
+
+.. _`/HOTPATCH`: https://msdn.microsoft.com/en-us/library/ms173507.aspx
+  }];
+}
+
 def NoDebugDocs : Documentation {
   let Category = DocCatVariable;
   let Content = [{

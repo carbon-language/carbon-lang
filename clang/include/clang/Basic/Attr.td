@@ -257,6 +257,7 @@ def TargetMips : TargetArch<["mips", "mipsel"]>;
 def TargetMSP430 : TargetArch<["msp430"]>;
 def TargetX86 : TargetArch<["x86"]>;
 def TargetAnyX86 : TargetArch<["x86", "x86_64"]>;
+def TargetWindowsArches : TargetArch<["x86", "x86_64", "arm", "thumb"]>;
 def TargetWindows : TargetArch<["x86", "x86_64", "arm", "thumb"]> {
   let OSes = ["Win32"];
 }
@@ -2068,6 +2069,12 @@ def TypeTagForDatatype : InheritableAttr {
 }
 
 // Microsoft-related attributes
+
+def MSHookPrologue : InheritableAttr, TargetSpecificAttr<TargetWindowsArches> {
+  let Spellings = [GCC<"ms_hook_prologue">];
+  let Subjects = SubjectList<[Function]>;
+  let Documentation = [MSHookPrologueDocs];
+}
 
 def MSNoVTable : InheritableAttr, TargetSpecificAttr<TargetMicrosoftCXXABI> {
   let Spellings = [Declspec<"novtable">];

@@ -108,11 +108,18 @@ void f20(void) {
   _setjmp(0);
 }
 
+// CHECK-LABEL: define void @f21
+// CHECK: [[HOTPATCH:#[0-9]+]]
+// CHECK: {
+void __attribute__((ms_hook_prologue)) f21(void) {
+}
+
 // CHECK: attributes [[NUW]] = { nounwind optsize{{.*}} }
 // CHECK: attributes [[AI]] = { alwaysinline nounwind optsize{{.*}} }
 // CHECK: attributes [[NUW_OS_RN]] = { nounwind optsize readnone{{.*}} }
 // CHECK: attributes [[ALIGN]] = { nounwind optsize alignstack=16{{.*}} }
 // CHECK: attributes [[RT]] = { nounwind optsize returns_twice{{.*}} }
+// CHECK: attributes [[HOTPATCH]] = { nounwind optsize{{.*}}"patchable-function"="ms-hotpatch"{{.*}} }
 // CHECK: attributes [[NR]] = { noreturn optsize }
 // CHECK: attributes [[NUW_RN]] = { nounwind optsize readnone }
 // CHECK: attributes [[RT_CALL]] = { optsize returns_twice }
