@@ -49,7 +49,6 @@ MipsMCAsmInfo::MipsMCAsmInfo(const Triple &TheTriple) {
   SupportsDebugInformation = true;
   ExceptionsType = ExceptionHandling::DwarfCFI;
   DwarfRegNumForCFI = true;
-  HasMipsExpressions = true;
 
   // Enable IAS by default for O32.
   if (TheTriple.getArch() == Triple::mips ||

@@ -363,10 +363,6 @@ protected:
   // X86_64 ELF.
   bool RelaxELFRelocations = true;
 
-  // If true, then the lexer and expression parser will support %neg(),
-  // %hi(), and similar unary operators.
-  bool HasMipsExpressions = false;
-
 public:
   explicit MCAsmInfo();
   virtual ~MCAsmInfo();
@@ -586,7 +582,6 @@ public:
 
   bool canRelaxRelocations() const { return RelaxELFRelocations; }
   void setRelaxELFRelocations(bool V) { RelaxELFRelocations = V; }
-  bool hasMipsExpressions() const { return HasMipsExpressions; }
 };
 }
 
