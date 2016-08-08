@@ -14,7 +14,6 @@
 #include <string>
 #include <errno.h>
 
-#define _isatty			isatty
 #define SYS_tgkill		__NR_tgkill
 
 namespace std
