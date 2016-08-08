@@ -494,7 +494,6 @@ class MemorySSAWalker;
 class MemorySSA {
 public:
   MemorySSA(Function &, AliasAnalysis *, DominatorTree *);
-  MemorySSA(MemorySSA &&);
   ~MemorySSA();
 
   MemorySSAWalker *getWalker();
@@ -676,9 +675,9 @@ class MemorySSAAnalysis : public AnalysisInfoMixin<MemorySSAAnalysis> {
   static char PassID;
 
 public:
-  typedef MemorySSA Result;
+  typedef std::unique_ptr<MemorySSA> Result;
 
-  MemorySSA run(Function &F, AnalysisManager<Function> &AM);
+  Result run(Function &F, AnalysisManager<Function> &AM);
 };
 
 /// \brief Printer pass for \c MemorySSA.
@@ -785,6 +784,8 @@ public:
   /// invalidation.  This will be called by MemorySSA at appropriate times for
   /// the walker it uses or returns.
   virtual void invalidateInfo(MemoryAccess *) {}
+
+  virtual void verify(const MemorySSA *MSSA) { assert(MSSA == this->MSSA); }
 
 protected:
   friend class MemorySSA; // For updating MSSA pointer in MemorySSA move
