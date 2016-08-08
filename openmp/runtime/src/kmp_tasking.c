@@ -622,6 +622,7 @@ __kmp_task_finish( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t *resumed_tas
 {
     kmp_taskdata_t * taskdata = KMP_TASK_TO_TASKDATA(task);
     kmp_info_t * thread = __kmp_threads[ gtid ];
+    kmp_task_team_t * task_team = thread->th.th_task_team; // might be NULL for serial teams...
     kmp_int32 children = 0;
 
 #if OMPT_SUPPORT
@@ -678,6 +679,12 @@ __kmp_task_finish( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t *resumed_tas
 #if OMP_40_ENABLED
         if ( taskdata->td_taskgroup )
             KMP_TEST_THEN_DEC32( (kmp_int32 *)(& taskdata->td_taskgroup->count) );
+#if OMP_45_ENABLED
+    }
+    // if we found proxy tasks there could exist a dependency chain
+    // with the proxy task as origin
+    if ( !( taskdata -> td_flags.team_serial || taskdata -> td_flags.tasking_ser ) || (task_team && task_team->tt.tt_found_proxy_tasks) ) {
+#endif
         __kmp_release_deps(gtid,taskdata);
 #endif
     }
@@ -715,7 +722,11 @@ __kmp_task_finish( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t *resumed_tas
         if (resumed_task == NULL) {
             resumed_task = taskdata->td_parent;  // In a serialized task, the resumed task is the parent
         }
-        else {
+        else
+#if OMP_45_ENABLED
+             if ( !(task_team && task_team->tt.tt_found_proxy_tasks) )
+#endif
+        {
             // verify resumed task passed in points to parent
             KMP_DEBUG_ASSERT( resumed_task == taskdata->td_parent );
         }
