@@ -1222,7 +1222,20 @@ void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
 }
 
 Value *IslNodeBuilder::generateSCEV(const SCEV *Expr) {
-  Instruction *InsertLocation = &*--(Builder.GetInsertBlock()->end());
+  /// We pass the insert location of our Builder, as Polly ensures during IR
+  /// generation that there is always a valid CFG into which instructions are
+  /// inserted. As a result, the insertpoint is known to be always followed by a
+  /// terminator instruction. This means the insert point may be specified by a
+  /// terminator instruction, but it can never point to an ->end() iterator
+  /// which does not have a corresponding instruction. Hence, dereferencing
+  /// the insertpoint to obtain an instruction is known to be save.
+  ///
+  /// We also do not need to update the Builder here, as new instructions are
+  /// always inserted _before_ the given InsertLocation. As a result, the
+  /// insert location remains valid.
+  assert(Builder.GetInsertBlock()->end() != Builder.getInsertPoint() &&
+         "Insert location points after last valid instruction");
+  Instruction *InsertLocation = &*Builder.GetInsertPoint();
   return expandCodeFor(S, SE, DL, "polly", Expr, Expr->getType(),
                        InsertLocation, &ValueMap);
 }
