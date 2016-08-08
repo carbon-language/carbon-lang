@@ -14,8 +14,6 @@
 #include <string>
 #include <errno.h>
 
-#define SYS_tgkill		__NR_tgkill
-
 namespace std
 {
 	template <typename T>
