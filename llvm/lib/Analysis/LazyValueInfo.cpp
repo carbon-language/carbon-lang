@@ -1199,20 +1199,20 @@ bool getValueFromCondition(Value *Val, Value *Cond, LVILatticeVal &Result,
     }
 
     // Recognize the range checking idiom that InstCombine produces.
-    // (X-C1) u< C2 --> [C1, C1+C2)
-    ConstantInt *NegOffset = nullptr;
+    // (X+C1) u< C2 --> [-C1, C2-C1)
+    ConstantInt *Offset = nullptr;
     if (Predicate == ICmpInst::ICMP_ULT)
-      match(LHS, m_Add(m_Specific(Val), m_ConstantInt(NegOffset)));
+      match(LHS, m_Add(m_Specific(Val), m_ConstantInt(Offset)));
 
     ConstantInt *CI = dyn_cast<ConstantInt>(RHS);
-    if (CI && (LHS == Val || NegOffset)) {
+    if (CI && (LHS == Val || Offset)) {
       // Calculate the range of values that are allowed by the comparison
       ConstantRange CmpRange(CI->getValue());
       ConstantRange TrueValues =
           ConstantRange::makeAllowedICmpRegion(Predicate, CmpRange);
 
-      if (NegOffset) // Apply the offset from above.
-        TrueValues = TrueValues.subtract(NegOffset->getValue());
+      if (Offset) // Apply the offset from above.
+        TrueValues = TrueValues.subtract(Offset->getValue());
 
       // If we're interested in the false dest, invert the condition.
       if (!isTrueDest) TrueValues = TrueValues.inverse();
