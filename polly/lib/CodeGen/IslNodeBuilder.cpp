@@ -1239,3 +1239,20 @@ Value *IslNodeBuilder::generateSCEV(const SCEV *Expr) {
   return expandCodeFor(S, SE, DL, "polly", Expr, Expr->getType(),
                        InsertLocation, &ValueMap);
 }
+
+/// The AST expression we generate to perform the run-time check assumes
+/// computations on integer types of infinite size. As we only use 64-bit
+/// arithmetic we check for overflows, in case of which we set the result
+/// of this run-time check to false to be cosnservatively correct,
+Value *IslNodeBuilder::createRTC(isl_ast_expr *Condition) {
+  auto ExprBuilder = getExprBuilder();
+  ExprBuilder.setTrackOverflow(true);
+  Value *RTC = ExprBuilder.create(Condition);
+  if (!RTC->getType()->isIntegerTy(1))
+    RTC = Builder.CreateIsNotNull(RTC);
+  Value *OverflowHappened =
+      Builder.CreateNot(ExprBuilder.getOverflowState(), "polly.rtc.overflown");
+  RTC = Builder.CreateAnd(RTC, OverflowHappened, "polly.rtc.result");
+  ExprBuilder.setTrackOverflow(false);
+  return RTC;
+}
