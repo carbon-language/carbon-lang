@@ -12,6 +12,18 @@ define i1 @test0(i32 %A) {
   ret i1 %C
 }
 
+; FIXME: Vectors should fold too.
+define <2 x i1> @test0vec(<2 x i32> %A) {
+; CHECK-LABEL: @test0vec(
+; CHECK-NEXT:    [[B:%.*]] = xor <2 x i32> %A, <i32 -2147483648, i32 -2147483648>
+; CHECK-NEXT:    [[C:%.*]] = icmp sgt <2 x i32> [[B]], <i32 -1, i32 -1>
+; CHECK-NEXT:    ret <2 x i1> [[C]]
+;
+  %B = xor <2 x i32> %A, <i32 -2147483648, i32 -2147483648>
+  %C = icmp sgt <2 x i32> %B, <i32 -1, i32 -1>
+  ret <2 x i1> %C
+}
+
 define i1 @test1(i32 %A) {
 ; CHECK-LABEL: @test1(
 ; CHECK-NEXT:    [[C:%.*]] = icmp slt i32 %A, 0
