@@ -1,9 +1,12 @@
 ; RUN: lli -jit-kind=mcjit -extra-module %p/Inputs/weak-function-2.ll %s
+; REQUIRES: not_COFF
 ;
 ; Check that functions in two different modules agree on the address of weak
 ; function 'baz'
+; Testing on COFF platforms is disabled as COFF has no representation of 'weak'
+; linkage.
 
-define linkonce_odr i32 @baz() {
+define weak i32 @baz() {
 entry:
   ret i32 0
 }

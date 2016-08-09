@@ -1,4 +1,4 @@
-define linkonce_odr i32 @baz() #0 {
+define weak i32 @baz() #0 {
 entry:
   ret i32 0
 }
