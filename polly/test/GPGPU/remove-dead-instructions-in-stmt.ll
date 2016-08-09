@@ -2,6 +2,8 @@
 ; RUN: -disable-output < %s | \
 ; RUN: FileCheck %s -check-prefix=KERNEL-IR
 
+; REQUIRES: pollyacc
+
 ; Ensure that no dead instructions are emitted between the store and the
 ; branch instruction of the ScopStmt. At some point, our dead-code-elimination
 ; did not remove code that was inserted to compute the old (unused) branch
