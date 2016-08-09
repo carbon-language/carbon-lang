@@ -49,15 +49,15 @@ class SizeClassAllocator32 {
       for (uptr i = 0; i < count; i++)
         batch_[i] = batch[i];
     }
-    void *Get(uptr idx) {
-      CHECK_LT(idx, count_);
-      return batch_[idx];
-    }
     uptr Count() const { return count_; }
     void Clear() { count_ = 0; }
     void Add(void *ptr) {
       batch_[count_++] = ptr;
       CHECK_LE(count_, kMaxNumCached);
+    }
+    void CopyToArray(void *to_batch[]) {
+      for (uptr i = 0, n = Count(); i < n; i++)
+        to_batch[i] = batch_[i];
     }
     TransferBatch *next;
 

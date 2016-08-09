@@ -140,8 +140,7 @@ struct SizeClassAllocatorLocalCache {
     PerClass *c = &per_class_[class_id];
     TransferBatch *b = allocator->AllocateBatch(&stats_, this, class_id);
     CHECK_GT(b->Count(), 0);
-    for (uptr i = 0; i < b->Count(); i++)
-      c->batch[i] = b->Get(i);
+    b->CopyToArray(c->batch);
     c->count = b->Count();
     DestroyBatch(class_id, allocator, b);
   }
