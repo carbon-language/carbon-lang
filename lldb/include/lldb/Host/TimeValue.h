@@ -12,11 +12,7 @@
 
 // C Includes
 #include <stdint.h>
-#ifndef _MSC_VER
-#include <sys/time.h>
-
-
-#endif
+#include "lldb/Host/PosixApi.h"
 
 // C++ Includes
 // Other libraries and framework includes
