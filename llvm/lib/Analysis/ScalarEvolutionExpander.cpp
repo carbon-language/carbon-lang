@@ -1892,8 +1892,18 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
   return NumElim;
 }
 
-Value *SCEVExpander::findExistingExpansion(const SCEV *S,
-                                           const Instruction *At, Loop *L) {
+Value *SCEVExpander::getExactExistingExpansion(const SCEV *S,
+                                               const Instruction *At, Loop *L) {
+  Optional<ScalarEvolution::ValueOffsetPair> VO =
+      getRelatedExistingExpansion(S, At, L);
+  if (VO && VO.getValue().second == nullptr)
+    return VO.getValue().first;
+  return nullptr;
+}
+
+Optional<ScalarEvolution::ValueOffsetPair>
+SCEVExpander::getRelatedExistingExpansion(const SCEV *S, const Instruction *At,
+                                          Loop *L) {
   using namespace llvm::PatternMatch;
 
   SmallVector<BasicBlock *, 4> ExitingBlocks;
@@ -1911,22 +1921,23 @@ Value *SCEVExpander::findExistingExpansion(const SCEV *S,
       continue;
 
     if (SE.getSCEV(LHS) == S && SE.DT.dominates(LHS, At))
-      return LHS;
+      return ScalarEvolution::ValueOffsetPair(LHS, nullptr);
 
     if (SE.getSCEV(RHS) == S && SE.DT.dominates(RHS, At))
-      return RHS;
+      return ScalarEvolution::ValueOffsetPair(RHS, nullptr);
   }
 
   // Use expand's logic which is used for reusing a previous Value in
   // ExprValueMap.
-  if (Value *Val = FindValueInExprValueMap(S, At).first)
-    return Val;
+  ScalarEvolution::ValueOffsetPair VO = FindValueInExprValueMap(S, At);
+  if (VO.first)
+    return VO;
 
   // There is potential to make this significantly smarter, but this simple
   // heuristic already gets some interesting cases.
 
   // Can not find suitable value.
-  return nullptr;
+  return None;
 }
 
 bool SCEVExpander::isHighCostExpansionHelper(
@@ -1935,7 +1946,7 @@ bool SCEVExpander::isHighCostExpansionHelper(
 
   // If we can find an existing value for this scev avaliable at the point "At"
   // then consider the expression cheap.
-  if (At && findExistingExpansion(S, At, L) != nullptr)
+  if (At && getRelatedExistingExpansion(S, At, L))
     return false;
 
   // Zero/One operand expressions
@@ -1983,7 +1994,7 @@ bool SCEVExpander::isHighCostExpansionHelper(
     // involving division. This is just a simple search heuristic.
     if (!At)
       At = &ExitingBB->back();
-    if (!findExistingExpansion(
+    if (!getRelatedExistingExpansion(
             SE.getAddExpr(S, SE.getConstant(S->getType(), 1)), At, L))
       return true;
   }
