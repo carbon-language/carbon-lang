@@ -722,14 +722,14 @@ void GPUNodeBuilder::createDataTransfer(__isl_take isl_ast_node *TransferStmt,
   auto ScopArray = (ScopArrayInfo *)(Array->user);
 
   Value *Size = getArraySize(Array);
-  Value *HostPtr = ScopArray->getBasePtr();
-
   Value *DevPtr = DeviceAllocations[ScopArray];
 
-  if (gpu_array_is_scalar(Array)) {
-    HostPtr = Builder.CreateAlloca(ScopArray->getElementType());
-    Builder.CreateStore(ScopArray->getBasePtr(), HostPtr);
-  }
+  Value *HostPtr;
+
+  if (gpu_array_is_scalar(Array))
+    HostPtr = BlockGen.getOrCreateAlloca(ScopArray);
+  else
+    HostPtr = ScopArray->getBasePtr();
 
   HostPtr = Builder.CreatePointerCast(HostPtr, Builder.getInt8PtrTy());
 
@@ -1074,6 +1074,10 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
   Instruction &HostInsertPoint = *Builder.GetInsertPoint();
   IslExprBuilder::IDToValueTy HostIDs = IDToValue;
   ValueMapT HostValueMap = ValueMap;
+  BlockGenerator::ScalarAllocaMapTy HostScalarMap = ScalarMap;
+  BlockGenerator::ScalarAllocaMapTy HostPHIOpMap = PHIOpMap;
+  ScalarMap.clear();
+  PHIOpMap.clear();
 
   SetVector<const Loop *> Loops;
 
@@ -1102,9 +1106,9 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
   Builder.SetInsertPoint(&HostInsertPoint);
   IDToValue = HostIDs;
 
-  ValueMap = HostValueMap;
-  ScalarMap.clear();
-  PHIOpMap.clear();
+  ValueMap = std::move(HostValueMap);
+  ScalarMap = std::move(HostScalarMap);
+  PHIOpMap = std::move(HostPHIOpMap);
   EscapeMap.clear();
   IDToSAI.clear();
   Annotator.resetAlternativeAliasBases();
@@ -1283,7 +1287,7 @@ void GPUNodeBuilder::prepareKernelArguments(ppcg_kernel *Kernel, Function *FN) {
       continue;
     }
 
-    Value *Alloca = BlockGen.getOrCreateScalarAlloca(SAI->getBasePtr());
+    Value *Alloca = BlockGen.getOrCreateAlloca(SAI);
     Value *ArgPtr = &*Arg;
     Type *TypePtr = SAI->getElementType()->getPointerTo();
     Value *TypedArgPtr = Builder.CreatePointerCast(ArgPtr, TypePtr);
