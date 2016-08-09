@@ -1197,30 +1197,44 @@ bool getValueFromCondition(Value *Val, Value *Cond, LVILatticeVal &Result,
         Result = LVILatticeVal::getNot(cast<Constant>(RHS));
       return true;
     }
+  }
 
-    // Recognize the range checking idiom that InstCombine produces.
-    // (X+C1) u< C2 --> [-C1, C2-C1)
-    ConstantInt *Offset = nullptr;
-    if (Predicate == ICmpInst::ICMP_ULT)
-      match(LHS, m_Add(m_Specific(Val), m_ConstantInt(Offset)));
+  // Use ConstantRange::makeAllowedICmpRegion in order to determine the possible
+  // range of Val guaranteed by the condition. Recognize comparisons in the from
+  // of:
+  //  icmp <pred> Val, ...
+  //  icmp ult (add Val, Offset), ...
+  // The latter is the range checking idiom that InstCombine produces. Subtract
+  // the offset from the allowed range for RHS in this case.
 
-    ConstantInt *CI = dyn_cast<ConstantInt>(RHS);
-    if (CI && (LHS == Val || Offset)) {
-      // Calculate the range of values that are allowed by the comparison
-      ConstantRange CmpRange(CI->getValue());
+  // Val or (add Val, Offset) can be on either hand of the comparison
+  if (LHS != Val && !match(LHS, m_Add(m_Specific(Val), m_ConstantInt()))) {
+    std::swap(LHS, RHS);
+    Predicate = CmpInst::getSwappedPredicate(Predicate);
+  }
 
-      // If we're interested in the false dest, invert the condition
-      CmpInst::Predicate Pred =
-          isTrueDest ? Predicate : CmpInst::getInversePredicate(Predicate);
-      ConstantRange TrueValues =
-          ConstantRange::makeAllowedICmpRegion(Pred, CmpRange);
+  ConstantInt *Offset = nullptr;
+  if (Predicate == ICmpInst::ICMP_ULT)
+    match(LHS, m_Add(m_Specific(Val), m_ConstantInt(Offset)));
 
-      if (Offset) // Apply the offset from above.
-        TrueValues = TrueValues.subtract(Offset->getValue());
+  if (LHS == Val || Offset) {
+    // Calculate the range of values that are allowed by the comparison
+    ConstantRange RHSRange(RHS->getType()->getIntegerBitWidth(),
+                           /*isFullSet=*/true);
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS))
+      RHSRange = ConstantRange(CI->getValue());
 
-      Result = LVILatticeVal::getRange(std::move(TrueValues));
-      return true;
-    }
+    // If we're interested in the false dest, invert the condition
+    CmpInst::Predicate Pred =
+            isTrueDest ? Predicate : CmpInst::getInversePredicate(Predicate);
+    ConstantRange TrueValues =
+            ConstantRange::makeAllowedICmpRegion(Pred, RHSRange);
+
+    if (Offset) // Apply the offset from above.
+      TrueValues = TrueValues.subtract(Offset->getValue());
+
+    Result = LVILatticeVal::getRange(std::move(TrueValues));
+    return true;
   }
 
   return false;
