@@ -5282,6 +5282,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.getLastArg(options::OPT_cl_denorms_are_zero)) {
     CmdArgs.push_back("-cl-denorms-are-zero");
   }
+  if (Args.getLastArg(options::OPT_cl_fp32_correctly_rounded_divide_sqrt)) {
+    CmdArgs.push_back("-cl-fp32-correctly-rounded-divide-sqrt");
+  }
 
   // Forward -f options with positive and negative forms; we translate
   // these by hand.
