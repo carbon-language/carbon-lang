@@ -2031,7 +2031,7 @@ INITIALIZE_PASS_END(LoopAccessLegacyAnalysis, LAA_NAME, laa_name, false, true)
 char LoopAccessAnalysis::PassID;
 
 LoopAccessInfo LoopAccessAnalysis::run(Loop &L, AnalysisManager<Loop> &AM) {
-  const AnalysisManager<Function> &FAM =
+  const FunctionAnalysisManager &FAM =
       AM.getResult<FunctionAnalysisManagerLoopProxy>(L).getManager();
   Function &F = *L.getHeader()->getParent();
   auto *SE = FAM.getCachedResult<ScalarEvolutionAnalysis>(F);

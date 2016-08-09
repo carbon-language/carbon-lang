@@ -43,7 +43,7 @@ PrintFunctionPass::PrintFunctionPass(raw_ostream &OS, const std::string &Banner)
     : OS(OS), Banner(Banner) {}
 
 PreservedAnalyses PrintFunctionPass::run(Function &F,
-                                         AnalysisManager<Function> &) {
+                                         FunctionAnalysisManager &) {
   if (isFunctionInPrintList(F.getName()))
     OS << Banner << static_cast<Value &>(F);
   return PreservedAnalyses::all();

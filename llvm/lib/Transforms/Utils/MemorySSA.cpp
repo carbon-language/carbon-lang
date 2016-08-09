@@ -2079,7 +2079,7 @@ bool MemorySSAPrinterLegacyPass::runOnFunction(Function &F) {
 char MemorySSAAnalysis::PassID;
 
 MemorySSAAnalysis::Result
-MemorySSAAnalysis::run(Function &F, AnalysisManager<Function> &AM) {
+MemorySSAAnalysis::run(Function &F, FunctionAnalysisManager &AM) {
   auto &DT = AM.getResult<DominatorTreeAnalysis>(F);
   auto &AA = AM.getResult<AAManager>(F);
   return MemorySSAAnalysis::Result(make_unique<MemorySSA>(F, &AA, &DT));

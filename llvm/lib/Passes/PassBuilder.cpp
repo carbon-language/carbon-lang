@@ -176,7 +176,7 @@ public:
 
 /// \brief No-op function pass which does nothing.
 struct NoOpFunctionPass {
-  PreservedAnalyses run(Function &F, AnalysisManager<Function> &) {
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &) {
     return PreservedAnalyses::all();
   }
   static StringRef name() { return "NoOpFunctionPass"; }
@@ -189,7 +189,7 @@ class NoOpFunctionAnalysis : public AnalysisInfoMixin<NoOpFunctionAnalysis> {
 
 public:
   struct Result {};
-  Result run(Function &, AnalysisManager<Function> &) { return Result(); }
+  Result run(Function &, FunctionAnalysisManager &) { return Result(); }
   static StringRef name() { return "NoOpFunctionAnalysis"; }
 };
 
