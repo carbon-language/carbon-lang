@@ -453,12 +453,17 @@ void AnnotateIgnoreWritesEnd(const char *file, int line);
 #define LLVM_DUMP_METHOD LLVM_ATTRIBUTE_NOINLINE
 #endif
 
+/// \macro LLVM_PRETTY_FUNCTION
 /// \brief Gets a user-friendly looking function signature for the current scope
-/// using the best available method on each platform.
-#if defined(LLVM_ON_WIN32)
+/// using the best available method on each platform.  The exact format of the
+/// resulting string is implementation specific and non-portable, so this should
+/// only be used, for example, for logging or diagnostics.
+#if defined(_MSC_VER)
 #define LLVM_PRETTY_FUNCTION __FUNCSIG__
-#else
+#elif defined(__GNUC__) || defined(__clang__)
 #define LLVM_PRETTY_FUNCTION __PRETTY_FUNCTION__
+#else 
+#define LLVM_PRETTY_FUNCTION __func__
 #endif
 
 /// \macro LLVM_THREAD_LOCAL
