@@ -195,7 +195,7 @@ public:
 
 /// \brief No-op loop pass which does nothing.
 struct NoOpLoopPass {
-  PreservedAnalyses run(Loop &L, AnalysisManager<Loop> &) {
+  PreservedAnalyses run(Loop &L, LoopAnalysisManager &) {
     return PreservedAnalyses::all();
   }
   static StringRef name() { return "NoOpLoopPass"; }
@@ -208,7 +208,7 @@ class NoOpLoopAnalysis : public AnalysisInfoMixin<NoOpLoopAnalysis> {
 
 public:
   struct Result {};
-  Result run(Loop &, AnalysisManager<Loop> &) { return Result(); }
+  Result run(Loop &, LoopAnalysisManager &) { return Result(); }
   static StringRef name() { return "NoOpLoopAnalysis"; }
 };
 
