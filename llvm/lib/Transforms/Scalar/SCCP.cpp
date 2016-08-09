@@ -1941,7 +1941,7 @@ static bool runIPSCCP(Module &M, const DataLayout &DL,
   return MadeChanges;
 }
 
-PreservedAnalyses IPSCCPPass::run(Module &M, AnalysisManager<Module> &AM) {
+PreservedAnalyses IPSCCPPass::run(Module &M, ModuleAnalysisManager &AM) {
   const DataLayout &DL = M.getDataLayout();
   auto &TLI = AM.getResult<TargetLibraryAnalysis>(M);
   if (!runIPSCCP(M, DL, &TLI))

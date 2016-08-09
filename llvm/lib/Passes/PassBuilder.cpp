@@ -135,7 +135,7 @@ namespace {
 
 /// \brief No-op module pass which does nothing.
 struct NoOpModulePass {
-  PreservedAnalyses run(Module &M, AnalysisManager<Module> &) {
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
     return PreservedAnalyses::all();
   }
   static StringRef name() { return "NoOpModulePass"; }
@@ -148,7 +148,7 @@ class NoOpModuleAnalysis : public AnalysisInfoMixin<NoOpModuleAnalysis> {
 
 public:
   struct Result {};
-  Result run(Module &, AnalysisManager<Module> &) { return Result(); }
+  Result run(Module &, ModuleAnalysisManager &) { return Result(); }
   static StringRef name() { return "NoOpModuleAnalysis"; }
 };
 

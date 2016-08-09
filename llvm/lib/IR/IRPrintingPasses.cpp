@@ -26,7 +26,7 @@ PrintModulePass::PrintModulePass(raw_ostream &OS, const std::string &Banner,
     : OS(OS), Banner(Banner),
       ShouldPreserveUseListOrder(ShouldPreserveUseListOrder) {}
 
-PreservedAnalyses PrintModulePass::run(Module &M, AnalysisManager<Module> &) {
+PreservedAnalyses PrintModulePass::run(Module &M, ModuleAnalysisManager &) {
   OS << Banner;
   if (llvm::isFunctionInPrintList("*"))
     M.print(OS, nullptr, ShouldPreserveUseListOrder);
