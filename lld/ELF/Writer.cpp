@@ -664,11 +664,6 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // Create output sections for input object file sections.
   std::vector<OutputSectionBase<ELFT> *> RegularSections = OutputSections;
 
-  // If we have a .opd section (used under PPC64 for function descriptors),
-  // store a pointer to it here so that we can use it later when processing
-  // relocations.
-  Out<ELFT>::Opd = Factory.lookup(".opd", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC);
-
   Out<ELFT>::Dynamic->PreInitArraySec = Factory.lookup(
       ".preinit_array", SHT_PREINIT_ARRAY, SHF_WRITE | SHF_ALLOC);
   Out<ELFT>::Dynamic->InitArraySec =
@@ -1248,11 +1243,12 @@ template <class ELFT> void Writer<ELFT>::openFile() {
 template <class ELFT> void Writer<ELFT>::writeSections() {
   uint8_t *Buf = Buffer->getBufferStart();
 
-  // PPC64 needs to process relocations in the .opd section before processing
-  // relocations in code-containing sections.
-  if (OutputSectionBase<ELFT> *Sec = Out<ELFT>::Opd) {
-    Out<ELFT>::OpdBuf = Buf + Sec->getFileOff();
-    Sec->writeTo(Buf + Sec->getFileOff());
+  // PPC64 needs to process relocations in the .opd section
+  // before processing relocations in code-containing sections.
+  Out<ELFT>::Opd = Factory.lookup(".opd", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC);
+  if (Out<ELFT>::Opd) {
+    Out<ELFT>::OpdBuf = Buf + Out<ELFT>::Opd->getFileOff();
+    Out<ELFT>::Opd->writeTo(Buf + Out<ELFT>::Opd->getFileOff());
   }
 
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
