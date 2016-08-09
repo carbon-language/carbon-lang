@@ -662,9 +662,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::finalizeSections() {
-  // Create output sections for input object file sections.
-  std::vector<OutputSectionBase<ELFT> *> RegularSections = OutputSections;
-
   Out<ELFT>::Dynamic->PreInitArraySec = findSection(".preinit_array");
   Out<ELFT>::Dynamic->InitArraySec = findSection(".init_array");
   Out<ELFT>::Dynamic->FiniArraySec = findSection(".fini_array");
@@ -680,7 +677,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // addresses of each section by section name. Add such symbols.
   if (!Config->Relocatable) {
     addStartEndSymbols();
-    for (OutputSectionBase<ELFT> *Sec : RegularSections)
+    for (OutputSectionBase<ELFT> *Sec : OutputSections)
       addStartStopSymbols(Sec);
   }
 
