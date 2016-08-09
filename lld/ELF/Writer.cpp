@@ -77,6 +77,7 @@ private:
   void addRelIpltSymbols();
   void addStartEndSymbols();
   void addStartStopSymbols(OutputSectionBase<ELFT> *Sec);
+  OutputSectionBase<ELFT> *findSection(StringRef Name);
 
   SymbolTable<ELFT> &Symtab;
   std::vector<Phdr> Phdrs;
@@ -664,18 +665,15 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // Create output sections for input object file sections.
   std::vector<OutputSectionBase<ELFT> *> RegularSections = OutputSections;
 
-  Out<ELFT>::Dynamic->PreInitArraySec = Factory.lookup(
-      ".preinit_array", SHT_PREINIT_ARRAY, SHF_WRITE | SHF_ALLOC);
-  Out<ELFT>::Dynamic->InitArraySec =
-      Factory.lookup(".init_array", SHT_INIT_ARRAY, SHF_WRITE | SHF_ALLOC);
-  Out<ELFT>::Dynamic->FiniArraySec =
-      Factory.lookup(".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC);
+  Out<ELFT>::Dynamic->PreInitArraySec = findSection(".preinit_array");
+  Out<ELFT>::Dynamic->InitArraySec = findSection(".init_array");
+  Out<ELFT>::Dynamic->FiniArraySec = findSection(".fini_array");
 
   // Sort section contents for __attribute__((init_priority(N)).
   sortInitFini(Out<ELFT>::Dynamic->InitArraySec);
   sortInitFini(Out<ELFT>::Dynamic->FiniArraySec);
-  sortCtorsDtors(Factory.lookup(".ctors", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC));
-  sortCtorsDtors(Factory.lookup(".dtors", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC));
+  sortCtorsDtors(findSection(".ctors"));
+  sortCtorsDtors(findSection(".dtors"));
 
   // The linker needs to define SECNAME_start, SECNAME_end and SECNAME_stop
   // symbols for sections, so that the runtime can get the start and end
@@ -903,6 +901,14 @@ void Writer<ELFT>::addStartStopSymbols(OutputSectionBase<ELFT> *Sec) {
   if (SymbolBody *B = Symtab.find(Stop))
     if (B->isUndefined())
       Symtab.addSynthetic(Stop, Sec, DefinedSynthetic<ELFT>::SectionEnd);
+}
+
+template <class ELFT>
+OutputSectionBase<ELFT> *Writer<ELFT>::findSection(StringRef Name) {
+  for (OutputSectionBase<ELFT> *Sec : OutputSections)
+    if (Sec->getName() == Name)
+      return Sec;
+  return nullptr;
 }
 
 template <class ELFT> static bool needsPtLoad(OutputSectionBase<ELFT> *Sec) {
@@ -1245,7 +1251,7 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
 
   // PPC64 needs to process relocations in the .opd section
   // before processing relocations in code-containing sections.
-  Out<ELFT>::Opd = Factory.lookup(".opd", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC);
+  Out<ELFT>::Opd = findSection(".opd");
   if (Out<ELFT>::Opd) {
     Out<ELFT>::OpdBuf = Buf + Out<ELFT>::Opd->getFileOff();
     Out<ELFT>::Opd->writeTo(Buf + Out<ELFT>::Opd->getFileOff());
