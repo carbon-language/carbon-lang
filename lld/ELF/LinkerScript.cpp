@@ -913,7 +913,6 @@ static uint64_t getSectionSize(StringRef Name) {
   default:
     llvm_unreachable("unsupported target");
   }
-  return 0;
 }
 
 SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
