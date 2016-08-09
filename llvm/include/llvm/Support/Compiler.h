@@ -405,12 +405,16 @@
 // Thread Sanitizer is a tool that finds races in code.
 // See http://code.google.com/p/data-race-test/wiki/DynamicAnnotations .
 // tsan detects these exact functions by name.
+#ifdef __cplusplus
 extern "C" {
+#endif
 void AnnotateHappensAfter(const char *file, int line, const volatile void *cv);
 void AnnotateHappensBefore(const char *file, int line, const volatile void *cv);
 void AnnotateIgnoreWritesBegin(const char *file, int line);
 void AnnotateIgnoreWritesEnd(const char *file, int line);
+#ifdef __cplusplus
 }
+#endif
 
 // This marker is used to define a happens-before arc. The race detector will
 // infer an arc from the begin to the end when they share the same pointer
