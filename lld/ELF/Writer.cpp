@@ -838,10 +838,8 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
 
   // We always need to add rel[a].plt to output if it has entries.
   // Even during static linking it can contain R_[*]_IRELATIVE relocations.
-  if (Out<ELFT>::RelaPlt && Out<ELFT>::RelaPlt->hasRelocs()) {
+  if (Out<ELFT>::RelaPlt && Out<ELFT>::RelaPlt->hasRelocs())
     Add(Out<ELFT>::RelaPlt);
-    Out<ELFT>::RelaPlt->Static = !isOutputDynamic<ELFT>();
-  }
 
   if (needsGot())
     Add(Out<ELFT>::Got);

@@ -328,8 +328,6 @@ public:
   void writeTo(uint8_t *Buf) override;
   bool hasRelocs() const { return !Relocs.empty(); }
 
-  bool Static = false;
-
 private:
   bool Sort;
   std::vector<DynamicReloc<ELFT>> Relocs;
