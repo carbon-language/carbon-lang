@@ -453,6 +453,14 @@ void AnnotateIgnoreWritesEnd(const char *file, int line);
 #define LLVM_DUMP_METHOD LLVM_ATTRIBUTE_NOINLINE
 #endif
 
+/// \brief Gets a user-friendly looking function signature for the current scope
+/// using the best available method on each platform.
+#if defined(LLVM_ON_WIN32)
+#define LLVM_PRETTY_FUNCTION __FUNCSIG__
+#else
+#define LLVM_PRETTY_FUNCTION __PRETTY_FUNCTION__
+#endif
+
 /// \macro LLVM_THREAD_LOCAL
 /// \brief A thread-local storage specifier which can be used with globals,
 /// extern globals, and static globals.
