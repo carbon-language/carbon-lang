@@ -26721,6 +26721,65 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// If a vector select has an operand that is -1 or 0, simplify the select to a
+/// bitwise logic operation.
+static SDValue combineVSelectWithAllOnesOrZeros(SDNode *N, SelectionDAG &DAG) {
+  SDValue Cond = N->getOperand(0);
+  SDValue LHS = N->getOperand(1);
+  SDValue RHS = N->getOperand(2);
+  EVT VT = LHS.getValueType();
+  EVT CondVT = Cond.getValueType();
+  SDLoc DL(N);
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+
+  // Condition value type must match vselect operand type.
+  if (N->getOpcode() != ISD::VSELECT || CondVT != VT)
+    return SDValue();
+
+  assert(Cond.getValueType().isVector() &&
+         "Vector select expects a vector selector!");
+
+  bool TValIsAllOnes = ISD::isBuildVectorAllOnes(LHS.getNode());
+  bool FValIsAllZeros = ISD::isBuildVectorAllZeros(RHS.getNode());
+
+  // Try to invert the condition if true value is not all 1s and false value is
+  // not all 0s.
+  if (!TValIsAllOnes && !FValIsAllZeros &&
+      // Check if the selector will be produced by CMPP*/PCMP*.
+      Cond.getOpcode() == ISD::SETCC &&
+      // Check if SETCC has already been promoted.
+      TLI.getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), VT) ==
+          CondVT) {
+    bool TValIsAllZeros = ISD::isBuildVectorAllZeros(LHS.getNode());
+    bool FValIsAllOnes = ISD::isBuildVectorAllOnes(RHS.getNode());
+
+    if (TValIsAllZeros || FValIsAllOnes) {
+      SDValue CC = Cond.getOperand(2);
+      ISD::CondCode NewCC =
+          ISD::getSetCCInverse(cast<CondCodeSDNode>(CC)->get(),
+                               Cond.getOperand(0).getValueType().isInteger());
+      Cond = DAG.getSetCC(DL, CondVT, Cond.getOperand(0), Cond.getOperand(1),
+                          NewCC);
+      std::swap(LHS, RHS);
+      TValIsAllOnes = FValIsAllOnes;
+      FValIsAllZeros = TValIsAllZeros;
+    }
+  }
+
+  if (!TValIsAllOnes && !FValIsAllZeros)
+    return SDValue();
+
+  SDValue Ret;
+  if (TValIsAllOnes && FValIsAllZeros)
+    Ret = Cond;
+  else if (TValIsAllOnes)
+    Ret = DAG.getNode(ISD::OR, DL, CondVT, Cond, DAG.getBitcast(CondVT, RHS));
+  else if (FValIsAllZeros)
+    Ret = DAG.getNode(ISD::AND, DL, CondVT, Cond, DAG.getBitcast(CondVT, LHS));
+
+  return DAG.getBitcast(VT, Ret);
+}
+
 /// Do target-specific dag combines on SELECT and VSELECT nodes.
 static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
                              TargetLowering::DAGCombinerInfo &DCI,
@@ -27086,53 +27145,8 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
     }
   }
 
-  // Simplify vector selection if condition value type matches vselect
-  // operand type
-  if (N->getOpcode() == ISD::VSELECT && CondVT == VT) {
-    assert(Cond.getValueType().isVector() &&
-           "vector select expects a vector selector!");
-
-    bool TValIsAllOnes = ISD::isBuildVectorAllOnes(LHS.getNode());
-    bool FValIsAllZeros = ISD::isBuildVectorAllZeros(RHS.getNode());
-
-    // Try invert the condition if true value is not all 1s and false value
-    // is not all 0s.
-    if (!TValIsAllOnes && !FValIsAllZeros &&
-        // Check if the selector will be produced by CMPP*/PCMP*
-        Cond.getOpcode() == ISD::SETCC &&
-        // Check if SETCC has already been promoted
-        TLI.getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), VT) ==
-            CondVT) {
-      bool TValIsAllZeros = ISD::isBuildVectorAllZeros(LHS.getNode());
-      bool FValIsAllOnes = ISD::isBuildVectorAllOnes(RHS.getNode());
-
-      if (TValIsAllZeros || FValIsAllOnes) {
-        SDValue CC = Cond.getOperand(2);
-        ISD::CondCode NewCC =
-          ISD::getSetCCInverse(cast<CondCodeSDNode>(CC)->get(),
-                               Cond.getOperand(0).getValueType().isInteger());
-        Cond = DAG.getSetCC(DL, CondVT, Cond.getOperand(0), Cond.getOperand(1), NewCC);
-        std::swap(LHS, RHS);
-        TValIsAllOnes = FValIsAllOnes;
-        FValIsAllZeros = TValIsAllZeros;
-      }
-    }
-
-    if (TValIsAllOnes || FValIsAllZeros) {
-      SDValue Ret;
-
-      if (TValIsAllOnes && FValIsAllZeros)
-        Ret = Cond;
-      else if (TValIsAllOnes)
-        Ret =
-            DAG.getNode(ISD::OR, DL, CondVT, Cond, DAG.getBitcast(CondVT, RHS));
-      else if (FValIsAllZeros)
-        Ret = DAG.getNode(ISD::AND, DL, CondVT, Cond,
-                          DAG.getBitcast(CondVT, LHS));
-
-      return DAG.getBitcast(VT, Ret);
-    }
-  }
+  if (SDValue V = combineVSelectWithAllOnesOrZeros(N, DAG))
+    return V;
 
   // If this is a *dynamic* select (non-constant condition) and we can match
   // this node with one of the variable blend instructions, restructure the
