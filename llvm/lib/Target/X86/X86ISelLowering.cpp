@@ -3844,6 +3844,7 @@ static bool isTargetShuffleVariableMask(unsigned Opcode) {
   default: return false;
   case X86ISD::PSHUFB:
   case X86ISD::VPERMILPV:
+  case X86ISD::VPPERM:
     return true;
   }
 }
@@ -25319,6 +25320,44 @@ static bool combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
     SDValue PSHUFBMaskOp = DAG.getBuildVector(ByteVT, DL, PSHUFBMask);
     DCI.AddToWorklist(PSHUFBMaskOp.getNode());
     Res = DAG.getNode(X86ISD::PSHUFB, DL, ByteVT, Res, PSHUFBMaskOp);
+    DCI.AddToWorklist(Res.getNode());
+    DCI.CombineTo(Root.getNode(), DAG.getBitcast(RootVT, Res),
+                  /*AddTo*/ true);
+    return true;
+  }
+
+  // With XOP, if we have a 128-bit binary input shuffle we can always combine
+  // to VPPERM. We match the depth requirement of PSHUFB - VPPERM is never
+  // slower than PSHUFB on targets that support both.
+  if ((Depth >= 3 || HasVariableMask) && RootVT.is128BitVector() &&
+      Subtarget.hasXOP()) {
+    // VPPERM Mask Operation
+    // Bits[4:0] - Byte Index (0 - 31)
+    // Bits[7:5] - Permute Operation (0 - Source byte, 4 - ZERO)
+    SmallVector<SDValue, 16> VPPERMMask;
+    int NumBytes = 16;
+    int Ratio = NumBytes / NumMaskElts;
+    for (int i = 0; i < NumBytes; ++i) {
+      int M = Mask[i / Ratio];
+      if (M == SM_SentinelUndef) {
+        VPPERMMask.push_back(DAG.getUNDEF(MVT::i8));
+        continue;
+      }
+      if (M == SM_SentinelZero) {
+        VPPERMMask.push_back(DAG.getConstant(128, DL, MVT::i8));
+        continue;
+      }
+      M = Ratio * M + i % Ratio;
+      VPPERMMask.push_back(DAG.getConstant(M, DL, MVT::i8));
+    }
+    MVT ByteVT = MVT::v16i8;
+    V1 = DAG.getBitcast(ByteVT, V1);
+    DCI.AddToWorklist(V1.getNode());
+    V2 = DAG.getBitcast(ByteVT, V2);
+    DCI.AddToWorklist(V2.getNode());
+    SDValue VPPERMMaskOp = DAG.getBuildVector(ByteVT, DL, VPPERMMask);
+    DCI.AddToWorklist(VPPERMMaskOp.getNode());
+    Res = DAG.getNode(X86ISD::VPPERM, DL, ByteVT, V1, V2, VPPERMMaskOp);
     DCI.AddToWorklist(Res.getNode());
     DCI.CombineTo(Root.getNode(), DAG.getBitcast(RootVT, Res),
                   /*AddTo*/ true);
