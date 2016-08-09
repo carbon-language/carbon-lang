@@ -395,7 +395,7 @@ template <class ELFT> unsigned RelocationSection<ELFT>::getRelocOffset() {
 }
 
 template <class ELFT> void RelocationSection<ELFT>::finalize() {
-  this->Header.sh_link = isOutputDynamic<ELFT>()
+  this->Header.sh_link = Out<ELFT>::DynSymTab
                              ? Out<ELFT>::DynSymTab->SectionIndex
                              : Out<ELFT>::SymTab->SectionIndex;
   this->Header.sh_size = Relocs.size() * this->Header.sh_entsize;
