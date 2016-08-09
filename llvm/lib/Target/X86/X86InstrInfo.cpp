@@ -2909,7 +2909,8 @@ inline static bool isTruncatedShiftCountForLEA(unsigned ShAmt) {
 bool X86InstrInfo::classifyLEAReg(MachineInstr &MI, const MachineOperand &Src,
                                   unsigned Opc, bool AllowSP, unsigned &NewSrc,
                                   bool &isKill, bool &isUndef,
-                                  MachineOperand &ImplicitOp) const {
+                                  MachineOperand &ImplicitOp,
+                                  LiveVariables *LV) const {
   MachineFunction &MF = *MI.getParent()->getParent();
   const TargetRegisterClass *RC;
   if (AllowSP) {
@@ -2947,13 +2948,17 @@ bool X86InstrInfo::classifyLEAReg(MachineInstr &MI, const MachineOperand &Src,
     // Virtual register of the wrong class, we have to create a temporary 64-bit
     // vreg to feed into the LEA.
     NewSrc = MF.getRegInfo().createVirtualRegister(RC);
-    BuildMI(*MI.getParent(), MI, MI.getDebugLoc(), get(TargetOpcode::COPY))
+    MachineInstr *Copy = BuildMI(*MI.getParent(), MI, MI.getDebugLoc(),
+                                 get(TargetOpcode::COPY))
         .addReg(NewSrc, RegState::Define | RegState::Undef, X86::sub_32bit)
         .addOperand(Src);
 
     // Which is obviously going to be dead after we're done with it.
     isKill = true;
     isUndef = false;
+
+    if (LV)
+      LV->replaceKillInstruction(SrcReg, MI, *Copy);
   }
 
   // We've set all the parameters without issue.
@@ -3132,7 +3137,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     unsigned SrcReg;
     MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
     if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ false,
-                        SrcReg, isKill, isUndef, ImplicitOp))
+                        SrcReg, isKill, isUndef, ImplicitOp, LV))
       return nullptr;
 
     MachineInstrBuilder MIB =
@@ -3175,7 +3180,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     unsigned SrcReg;
     MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
     if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ false,
-                        SrcReg, isKill, isUndef, ImplicitOp))
+                        SrcReg, isKill, isUndef, ImplicitOp, LV))
       return nullptr;
 
     MachineInstrBuilder MIB =
@@ -3209,7 +3214,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     unsigned SrcReg;
     MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
     if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ false,
-                        SrcReg, isKill, isUndef, ImplicitOp))
+                        SrcReg, isKill, isUndef, ImplicitOp, LV))
       return nullptr;
 
     MachineInstrBuilder MIB = BuildMI(MF, MI.getDebugLoc(), get(Opc))
@@ -3248,7 +3253,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     unsigned SrcReg;
     MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
     if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ true,
-                        SrcReg, isKill, isUndef, ImplicitOp))
+                        SrcReg, isKill, isUndef, ImplicitOp, LV))
       return nullptr;
 
     const MachineOperand &Src2 = MI.getOperand(2);
@@ -3256,7 +3261,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     unsigned SrcReg2;
     MachineOperand ImplicitOp2 = MachineOperand::CreateReg(0, false);
     if (!classifyLEAReg(MI, Src2, Opc, /*AllowSP=*/ false,
-                        SrcReg2, isKill2, isUndef2, ImplicitOp2))
+                        SrcReg2, isKill2, isUndef2, ImplicitOp2, LV))
       return nullptr;
 
     MachineInstrBuilder MIB =
@@ -3319,7 +3324,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     unsigned SrcReg;
     MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
     if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ true,
-                        SrcReg, isKill, isUndef, ImplicitOp))
+                        SrcReg, isKill, isUndef, ImplicitOp, LV))
       return nullptr;
 
     MachineInstrBuilder MIB = BuildMI(MF, MI.getDebugLoc(), get(Opc))
