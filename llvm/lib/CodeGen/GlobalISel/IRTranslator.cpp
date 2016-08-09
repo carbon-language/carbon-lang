@@ -318,12 +318,14 @@ bool IRTranslator::translate(const Instruction &Inst) {
 }
 
 bool IRTranslator::translate(const Constant &C, unsigned Reg) {
-  if (auto CI = dyn_cast<ConstantInt>(&C)) {
+  if (auto CI = dyn_cast<ConstantInt>(&C))
     EntryBuilder.buildConstant(LLT{*CI->getType()}, Reg, CI->getZExtValue());
-    return true;
-  }
+  else if (isa<UndefValue>(C))
+    EntryBuilder.buildInstr(TargetOpcode::IMPLICIT_DEF).addDef(Reg);
+  else
+    llvm_unreachable("unhandled constant kind");
 
-  llvm_unreachable("unhandled constant kind");
+  return true;
 }
 
 

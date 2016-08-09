@@ -363,3 +363,10 @@ define i32 @constant_int_start() {
   %res = add i32 2, 42
   ret i32 %res
 }
+
+; CHECK-LABEL: name: test_undef
+; CHECK: [[UNDEF:%[0-9]+]](32) = IMPLICIT_DEF
+; CHECK: %w0 = COPY [[UNDEF]]
+define i32 @test_undef() {
+  ret i32 undef
+}
