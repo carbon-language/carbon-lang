@@ -35,6 +35,7 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include "isl/union_map.h"
 
@@ -436,6 +437,11 @@ private:
 };
 
 void GPUNodeBuilder::initializeAfterRTH() {
+  BasicBlock *NewBB = SplitBlock(Builder.GetInsertBlock(),
+                                 &*Builder.GetInsertPoint(), &DT, &LI);
+  NewBB->setName("polly.acc.initialize");
+  Builder.SetInsertPoint(&NewBB->front());
+
   GPUContext = createCallInitContext();
   allocateDeviceArrays();
 }
