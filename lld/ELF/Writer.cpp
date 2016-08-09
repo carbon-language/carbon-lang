@@ -211,6 +211,10 @@ template <class ELFT> void elf::writeResult() {
   Out<ELFT>::ElfHeader = &ElfHeader;
   Out<ELFT>::ProgramHeaders = &ProgramHeaders;
 
+  Out<ELFT>::PreinitArray = nullptr;
+  Out<ELFT>::InitArray = nullptr;
+  Out<ELFT>::FiniArray = nullptr;
+
   Writer<ELFT>().run();
 }
 
@@ -658,13 +662,13 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::finalizeSections() {
-  Out<ELFT>::Dynamic->PreInitArraySec = findSection(".preinit_array");
-  Out<ELFT>::Dynamic->InitArraySec = findSection(".init_array");
-  Out<ELFT>::Dynamic->FiniArraySec = findSection(".fini_array");
+  Out<ELFT>::PreinitArray = findSection(".preinit_array");
+  Out<ELFT>::InitArray = findSection(".init_array");
+  Out<ELFT>::FiniArray = findSection(".fini_array");
 
   // Sort section contents for __attribute__((init_priority(N)).
-  sortInitFini(Out<ELFT>::Dynamic->InitArraySec);
-  sortInitFini(Out<ELFT>::Dynamic->FiniArraySec);
+  sortInitFini(Out<ELFT>::InitArray);
+  sortInitFini(Out<ELFT>::FiniArray);
   sortCtorsDtors(findSection(".ctors"));
   sortCtorsDtors(findSection(".dtors"));
 
@@ -867,11 +871,9 @@ template <class ELFT> void Writer<ELFT>::addStartEndSymbols() {
   };
 
   Define("__preinit_array_start", "__preinit_array_end",
-         Out<ELFT>::Dynamic->PreInitArraySec);
-  Define("__init_array_start", "__init_array_end",
-         Out<ELFT>::Dynamic->InitArraySec);
-  Define("__fini_array_start", "__fini_array_end",
-         Out<ELFT>::Dynamic->FiniArraySec);
+         Out<ELFT>::PreinitArray);
+  Define("__init_array_start", "__init_array_end", Out<ELFT>::InitArray);
+  Define("__fini_array_start", "__fini_array_end", Out<ELFT>::FiniArray);
 }
 
 // If a section name is valid as a C identifier (which is rare because of

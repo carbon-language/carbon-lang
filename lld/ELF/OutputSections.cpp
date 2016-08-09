@@ -678,17 +678,17 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   if (Out<ELFT>::HashTab)
     Add({DT_HASH, Out<ELFT>::HashTab});
 
-  if (PreInitArraySec) {
-    Add({DT_PREINIT_ARRAY, PreInitArraySec});
-    Add({DT_PREINIT_ARRAYSZ, PreInitArraySec->getSize()});
+  if (Out<ELFT>::PreinitArray) {
+    Add({DT_PREINIT_ARRAY, Out<ELFT>::PreinitArray});
+    Add({DT_PREINIT_ARRAYSZ, Out<ELFT>::PreinitArray->getSize()});
   }
-  if (InitArraySec) {
-    Add({DT_INIT_ARRAY, InitArraySec});
-    Add({DT_INIT_ARRAYSZ, (uintX_t)InitArraySec->getSize()});
+  if (Out<ELFT>::InitArray) {
+    Add({DT_INIT_ARRAY, Out<ELFT>::InitArray});
+    Add({DT_INIT_ARRAYSZ, (uintX_t)Out<ELFT>::InitArray->getSize()});
   }
-  if (FiniArraySec) {
-    Add({DT_FINI_ARRAY, FiniArraySec});
-    Add({DT_FINI_ARRAYSZ, (uintX_t)FiniArraySec->getSize()});
+  if (Out<ELFT>::FiniArray) {
+    Add({DT_FINI_ARRAY, Out<ELFT>::FiniArray});
+    Add({DT_FINI_ARRAYSZ, (uintX_t)Out<ELFT>::FiniArray->getSize()});
   }
 
   if (SymbolBody *B = Symtab<ELFT>::X->find(Config->Init))
