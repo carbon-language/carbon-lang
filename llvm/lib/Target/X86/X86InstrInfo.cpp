@@ -7579,39 +7579,18 @@ static const uint16_t ReplaceableInstrsAVX512DQMasked[][4] = {
 // FIXME: Some shuffle and unpack instructions have equivalents in different
 // domains, but they require a bit more work than just switching opcodes.
 
-static const uint16_t *lookup(unsigned opcode, unsigned domain) {
-  for (const uint16_t (&Row)[3] : ReplaceableInstrs)
+static const uint16_t *lookup(unsigned opcode, unsigned domain,
+                              ArrayRef<uint16_t[3]> Table) {
+  for (const uint16_t (&Row)[3] : Table)
     if (Row[domain-1] == opcode)
       return Row;
   return nullptr;
 }
 
-static const uint16_t *lookupAVX2(unsigned opcode, unsigned domain) {
-  for (const uint16_t (&Row)[3] : ReplaceableInstrsAVX2)
-    if (Row[domain-1] == opcode)
-      return Row;
-  return nullptr;
-}
-
-static const uint16_t *lookupAVX512(unsigned opcode, unsigned domain) {
+static const uint16_t *lookupAVX512(unsigned opcode, unsigned domain,
+                                    ArrayRef<uint16_t[4]> Table) {
   // If this is the integer domain make sure to check both integer columns.
-  for (const uint16_t (&Row)[4] : ReplaceableInstrsAVX512)
-    if (Row[domain-1] == opcode || (domain == 3 && Row[3] == opcode))
-      return Row;
-  return nullptr;
-}
-
-static const uint16_t *lookupAVX512DQ(unsigned opcode, unsigned domain) {
-  // If this is the integer domain make sure to check both integer columns.
-  for (const uint16_t (&Row)[4] : ReplaceableInstrsAVX512DQ)
-    if (Row[domain-1] == opcode || (domain == 3 && Row[3] == opcode))
-      return Row;
-  return nullptr;
-}
-
-static const uint16_t *lookupAVX512DQMasked(unsigned opcode, unsigned domain) {
-  // If this is the integer domain make sure to check both integer columns.
-  for (const uint16_t (&Row)[4] : ReplaceableInstrsAVX512DQMasked)
+  for (const uint16_t (&Row)[4] : Table)
     if (Row[domain-1] == opcode || (domain == 3 && Row[3] == opcode))
       return Row;
   return nullptr;
@@ -7623,15 +7602,16 @@ X86InstrInfo::getExecutionDomain(const MachineInstr &MI) const {
   unsigned opcode = MI.getOpcode();
   uint16_t validDomains = 0;
   if (domain) {
-    if (lookup(MI.getOpcode(), domain)) {
+    if (lookup(MI.getOpcode(), domain, ReplaceableInstrs)) {
       validDomains = 0xe;
-    } else if (lookupAVX2(opcode, domain)) {
+    } else if (lookup(opcode, domain, ReplaceableInstrsAVX2)) {
       validDomains = Subtarget.hasAVX2() ? 0xe : 0x6;
-    } else if (lookupAVX512(opcode, domain)) {
+    } else if (lookupAVX512(opcode, domain, ReplaceableInstrsAVX512)) {
       validDomains = 0xe;
-    } else if (lookupAVX512DQ(opcode, domain)) {
+    } else if (lookupAVX512(opcode, domain, ReplaceableInstrsAVX512DQ)) {
       validDomains = Subtarget.hasDQI() ? 0xe : 0x8;
-    } else if (const uint16_t *table = lookupAVX512DQMasked(opcode, domain)) {
+    } else if (const uint16_t *table = lookupAVX512(opcode, domain,
+                                             ReplaceableInstrsAVX512DQMasked)) {
       if (domain == 1 || (domain == 3 && table[3] == opcode))
         validDomains = Subtarget.hasDQI() ? 0xa : 0x8;
       else
@@ -7645,22 +7625,22 @@ void X86InstrInfo::setExecutionDomain(MachineInstr &MI, unsigned Domain) const {
   assert(Domain>0 && Domain<4 && "Invalid execution domain");
   uint16_t dom = (MI.getDesc().TSFlags >> X86II::SSEDomainShift) & 3;
   assert(dom && "Not an SSE instruction");
-  const uint16_t *table = lookup(MI.getOpcode(), dom);
+  const uint16_t *table = lookup(MI.getOpcode(), dom, ReplaceableInstrs);
   if (!table) { // try the other table
     assert((Subtarget.hasAVX2() || Domain < 3) &&
            "256-bit vector operations only available in AVX2");
-    table = lookupAVX2(MI.getOpcode(), dom);
+    table = lookup(MI.getOpcode(), dom, ReplaceableInstrsAVX2);
   }
   if (!table) { // try the AVX512 table
     assert(Subtarget.hasAVX512() && "Requires AVX-512");
-    table = lookupAVX512(MI.getOpcode(), dom);
+    table = lookupAVX512(MI.getOpcode(), dom, ReplaceableInstrsAVX512);
     // Don't change integer Q instructions to D instructions.
     if (table && Domain == 3 && table[3] == MI.getOpcode())
       Domain = 4;
   }
   if (!table) { // try the AVX512DQ table
     assert((Subtarget.hasDQI() || Domain >= 3) && "Requires AVX-512DQ");
-    table = lookupAVX512DQ(MI.getOpcode(), dom);
+    table = lookupAVX512(MI.getOpcode(), dom, ReplaceableInstrsAVX512DQ);
     // Don't change integer Q instructions to D instructions and
     // use D intructions if we started with a PS instruction.
     if (table && Domain == 3 && (dom == 1 || table[3] == MI.getOpcode()))
@@ -7668,7 +7648,7 @@ void X86InstrInfo::setExecutionDomain(MachineInstr &MI, unsigned Domain) const {
   }
   if (!table) { // try the AVX512DQMasked table
     assert((Subtarget.hasDQI() || Domain >= 3) && "Requires AVX-512DQ");
-    table = lookupAVX512DQMasked(MI.getOpcode(), dom);
+    table = lookupAVX512(MI.getOpcode(), dom, ReplaceableInstrsAVX512DQMasked);
     if (table && Domain == 3 && (dom == 1 || table[3] == MI.getOpcode()))
       Domain = 4;
   }
