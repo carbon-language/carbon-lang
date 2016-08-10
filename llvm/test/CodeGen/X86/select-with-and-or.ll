@@ -90,8 +90,7 @@ define <2 x double> @test1f(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
 ; CHECK-LABEL: test1f:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    vcmpltpd %xmm0, %xmm1, %xmm0
-; CHECK-NEXT:    vxorpd %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vblendvpd %xmm0, %xmm2, %xmm1, %xmm0
+; CHECK-NEXT:    vandpd %xmm2, %xmm0, %xmm0
 ; CHECK-NEXT:    retq
 ;
   %f = fcmp ogt <2 x double> %a, %b
@@ -103,8 +102,7 @@ define <2 x double> @test2f(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
 ; CHECK-LABEL: test2f:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    vcmplepd %xmm0, %xmm1, %xmm0
-; CHECK-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vblendvpd %xmm0, %xmm1, %xmm2, %xmm0
+; CHECK-NEXT:    vorpd %xmm2, %xmm0, %xmm0
 ; CHECK-NEXT:    retq
 ;
   %f = fcmp oge <2 x double> %a, %b
@@ -115,9 +113,8 @@ define <2 x double> @test2f(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
 define <2 x double> @test3f(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
 ; CHECK-LABEL: test3f:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vcmpltpd %xmm1, %xmm0, %xmm0
-; CHECK-NEXT:    vxorpd %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vblendvpd %xmm0, %xmm1, %xmm2, %xmm0
+; CHECK-NEXT:    vcmpnltpd %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vandpd %xmm2, %xmm0, %xmm0
 ; CHECK-NEXT:    retq
 ;
   %f = fcmp olt <2 x double> %a, %b
@@ -128,9 +125,8 @@ define <2 x double> @test3f(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
 define <2 x double> @test4f(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
 ; CHECK-LABEL: test4f:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vcmplepd %xmm1, %xmm0, %xmm0
-; CHECK-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vblendvpd %xmm0, %xmm2, %xmm1, %xmm0
+; CHECK-NEXT:    vcmpnlepd %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vorpd %xmm2, %xmm0, %xmm0
 ; CHECK-NEXT:    retq
 ;
   %f = fcmp ole <2 x double> %a, %b
@@ -142,9 +138,6 @@ define <2 x double> @test5f(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
 ; CHECK-LABEL: test5f:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    vcmpnlepd %xmm1, %xmm0, %xmm0
-; CHECK-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vxorpd %xmm2, %xmm2, %xmm2
-; CHECK-NEXT:    vblendvpd %xmm0, %xmm1, %xmm2, %xmm0
 ; CHECK-NEXT:    retq
 ;
   %f = fcmp ugt <2 x double> %a, %b
@@ -155,10 +148,7 @@ define <2 x double> @test5f(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
 define <2 x double> @test6f(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
 ; CHECK-LABEL: test6f:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vcmpnltpd %xmm0, %xmm1, %xmm0
-; CHECK-NEXT:    vxorpd %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vpcmpeqd %xmm2, %xmm2, %xmm2
-; CHECK-NEXT:    vblendvpd %xmm0, %xmm1, %xmm2, %xmm0
+; CHECK-NEXT:    vcmpltpd %xmm0, %xmm1, %xmm0
 ; CHECK-NEXT:    retq
 ;
   %f = fcmp ule <2 x double> %a, %b
@@ -170,8 +160,7 @@ define <2 x double> @test7f(<2 x double> %a, <2 x double> %b, <2 x double>* %p) 
 ; CHECK-LABEL: test7f:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    vcmpeqpd %xmm1, %xmm0, %xmm0
-; CHECK-NEXT:    vxorpd %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vblendvpd %xmm0, (%rdi), %xmm1, %xmm0
+; CHECK-NEXT:    vandpd (%rdi), %xmm0, %xmm0
 ; CHECK-NEXT:    retq
 ;
   %f = fcmp oeq <2 x double> %a, %b
