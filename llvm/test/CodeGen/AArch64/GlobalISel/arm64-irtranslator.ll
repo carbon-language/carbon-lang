@@ -389,3 +389,11 @@ define i32 @constant_int_start() {
 define i32 @test_undef() {
   ret i32 undef
 }
+
+; CHECK-LABEL: name: test_constant_inttoptr
+; CHECK: [[ONE:%[0-9]+]](64) = G_CONSTANT s64 1
+; CHECK: [[PTR:%[0-9]+]](64) = G_INTTOPTR { p0, s64 } [[ONE]]
+; CHECK: %x0 = COPY [[PTR]]
+define i8* @test_constant_inttoptr() {
+  ret i8* inttoptr(i64 1 to i8*)
+}
