@@ -187,12 +187,25 @@ bool IRTranslator::translateCast(unsigned Opcode, const CastInst &CI) {
 
 bool IRTranslator::translateCall(const CallInst &CI) {
   auto TII = MIRBuilder.getMF().getTarget().getIntrinsicInfo();
-  const Function &F = *CI.getCalledFunction();
-  Intrinsic::ID ID = F.getIntrinsicID();
-  if (TII && ID == Intrinsic::not_intrinsic)
-    ID = static_cast<Intrinsic::ID>(TII->getIntrinsicID(&F));
+  const Function *F = CI.getCalledFunction();
 
-  assert(ID != Intrinsic::not_intrinsic && "FIXME: support real calls");
+  if (!F || !F->isIntrinsic()) {
+    // FIXME: handle multiple return values.
+    unsigned Res = CI.getType()->isVoidTy() ? 0 : getOrCreateVReg(CI);
+    SmallVector<unsigned, 8> Args;
+    for (auto &Arg: CI.arg_operands())
+      Args.push_back(getOrCreateVReg(*Arg));
+
+    return CLI->lowerCall(MIRBuilder, CI,
+                          F ? 0 : getOrCreateVReg(*CI.getCalledValue()), Res,
+                          Args);
+  }
+
+  Intrinsic::ID ID = F->getIntrinsicID();
+  if (TII && ID == Intrinsic::not_intrinsic)
+    ID = static_cast<Intrinsic::ID>(TII->getIntrinsicID(F));
+
+  assert(ID != Intrinsic::not_intrinsic && "unknown intrinsic");
 
   // Need types (starting with return) & args.
   SmallVector<LLT, 4> Tys;
