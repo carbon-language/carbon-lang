@@ -35,7 +35,7 @@ public:
     TimeValue();
     TimeValue(const TimeValue& rhs);
     TimeValue(const struct timespec& ts);
-    explicit TimeValue(uint32_t seconds, uint32_t nanos = 0);
+    explicit TimeValue(uint32_t seconds, uint64_t nanos = 0);
     ~TimeValue();
 
     //------------------------------------------------------------------
