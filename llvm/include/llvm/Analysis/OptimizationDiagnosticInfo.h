@@ -29,6 +29,12 @@ class Pass;
 class Twine;
 class Value;
 
+/// The optimization diagnostic interface.
+///
+/// It allows reporting when optimizations are performed and when they are not
+/// along with the reasons for it.  Hotness information of the corresponding
+/// code region can be included in the remark if DiagnosticHotnessRequested is
+/// enabled in the LLVM context.
 class OptimizationRemarkEmitter {
 public:
   OptimizationRemarkEmitter(Function *F, BlockFrequencyInfo *BFI)
