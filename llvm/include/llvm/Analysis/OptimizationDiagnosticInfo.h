@@ -16,11 +16,11 @@
 #define LLVM_IR_OPTIMIZATIONDIAGNOSTICINFO_H
 
 #include "llvm/ADT/Optional.h"
+#include "llvm/Analysis/BlockFrequencyInfo.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
-class BlockFrequencyInfo;
 class DebugLoc;
 class Function;
 class LLVMContext;
@@ -33,6 +33,19 @@ class OptimizationRemarkEmitter {
 public:
   OptimizationRemarkEmitter(Function *F, BlockFrequencyInfo *BFI)
       : F(F), BFI(BFI) {}
+
+  /// \brief This variant can be used to generate ORE on demand (without the
+  /// analysis pass).
+  ///
+  /// Note that this ctor has a very different cost depending on whether
+  /// F->getContext().getDiagnosticHotnessRequested() is on or not.  If it's off
+  /// the operation is free.
+  ///
+  /// Whereas if DiagnosticHotnessRequested is on, it is fairly expensive
+  /// operation since BFI and all its required analyses are computed.  This is
+  /// for example useful for CGSCC passes that can't use function analyses
+  /// passes in the old PM.
+  OptimizationRemarkEmitter(Function *F);
 
   OptimizationRemarkEmitter(OptimizationRemarkEmitter &&Arg)
       : F(Arg.F), BFI(Arg.BFI) {}
@@ -148,6 +161,9 @@ private:
   Function *F;
 
   BlockFrequencyInfo *BFI;
+
+  /// If we generate BFI on demand, we need to free it when ORE is freed.
+  std::unique_ptr<BlockFrequencyInfo> OwnedBFI;
 
   Optional<uint64_t> computeHotness(const Value *V);
 
