@@ -24975,6 +24975,7 @@ static bool matchUnaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
 // TODO: Investigate sharing more of this with shuffle lowering.
 static bool matchBinaryVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
                                      SDValue &V1, SDValue &V2,
+                                     const X86Subtarget &Subtarget,
                                      unsigned &Shuffle, MVT &ShuffleVT) {
   bool FloatDomain = MaskVT.isFloatingPoint();
 
@@ -24990,6 +24991,23 @@ static bool matchBinaryVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
       Shuffle = X86ISD::MOVHLPS;
       ShuffleVT = MVT::v4f32;
       return true;
+    }
+    if (isTargetShuffleEquivalent(Mask, {0, 3}) && FloatDomain) {
+      // On SSE41 targets use BLENDPD (its commutable).
+      if (Subtarget.hasSSE2() && !Subtarget.hasSSE41()) {
+        std::swap(V1, V2);
+        Shuffle = X86ISD::MOVSD;
+        ShuffleVT = MVT::v2f64;
+        return true;
+      }
+    }
+    if (isTargetShuffleEquivalent(Mask, {4, 1, 2, 3}) && FloatDomain) {
+      // On SSE41 targets use BLENDPS (its commutable).
+      if (!Subtarget.hasSSE41()) {
+        Shuffle = X86ISD::MOVSS;
+        ShuffleVT = MVT::v4f32;
+        return true;
+      }
     }
     if (isTargetShuffleEquivalent(Mask, {0, 0, 1, 1}) && FloatDomain) {
       V2 = V1;
@@ -25209,8 +25227,8 @@ static bool combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
       return true;
     }
 
-    if (matchUnaryPermuteVectorShuffle(MaskVT, Mask, Subtarget, Shuffle, ShuffleVT,
-                                       PermuteImm)) {
+    if (matchUnaryPermuteVectorShuffle(MaskVT, Mask, Subtarget, Shuffle,
+                                       ShuffleVT, PermuteImm)) {
       if (Depth == 1 && Root.getOpcode() == Shuffle)
         return false; // Nothing to do!
       Res = DAG.getBitcast(ShuffleVT, V1);
@@ -25224,7 +25242,8 @@ static bool combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
     }
   }
 
-  if (matchBinaryVectorShuffle(MaskVT, Mask, V1, V2, Shuffle, ShuffleVT)) {
+  if (matchBinaryVectorShuffle(MaskVT, Mask, V1, V2, Subtarget, Shuffle,
+                               ShuffleVT)) {
     if (Depth == 1 && Root.getOpcode() == Shuffle)
       return false; // Nothing to do!
     V1 = DAG.getBitcast(ShuffleVT, V1);
