@@ -6,8 +6,8 @@ readability-else-after-return
 `LLVM Coding Standards <http://llvm.org/docs/CodingStandards.html>`_ advises to
 reduce indentation where possible and where it makes understanding code easier.
 Early exit is one of the suggested enforcements of that. Please do not use
-`else` or `else if` after something that interrupts control flow - like
-`return`, `break`, `continue`, `throw`.
+``else`` or ``else if`` after something that interrupts control flow - like
+``return``, ``break``, ``continue``, ``throw``.
 
 The following piece of code illustrates how the check works. This piece of code:
 
@@ -60,5 +60,5 @@ Would be transformed into:
     }
 
 
-This checks helps to enforce this `Coding Standars recommendation
+This checks helps to enforce this `Coding Standards recommendation
 <http://llvm.org/docs/CodingStandards.html#don-t-use-else-after-a-return>`_.
