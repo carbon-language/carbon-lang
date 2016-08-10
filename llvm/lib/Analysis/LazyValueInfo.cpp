@@ -1167,14 +1167,8 @@ bool LazyValueInfoCache::solveBlockValueBinaryOp(LVILatticeVal &BBLV,
   return true;
 }
 
-LVILatticeVal getValueFromCondition(Value *Val, Value *Cond, bool isTrueDest) {
-  assert(Cond && "precondition");
-
-  // For now we only support ICmpInst conditions
-  ICmpInst *ICI = dyn_cast<ICmpInst>(Cond);
-  if (!ICI)
-    return LVILatticeVal::getOverdefined();
-
+static LVILatticeVal getValueFromICmpCondition(Value *Val, ICmpInst *ICI,
+                                               bool isTrueDest) {
   Value *LHS = ICI->getOperand(0);
   Value *RHS = ICI->getOperand(1);
   CmpInst::Predicate Predicate = ICI->getPredicate();
@@ -1231,6 +1225,46 @@ LVILatticeVal getValueFromCondition(Value *Val, Value *Cond, bool isTrueDest) {
   }
 
   return LVILatticeVal::getOverdefined();
+}
+
+static LVILatticeVal
+getValueFromCondition(Value *Val, Value *Cond, bool isTrueDest,
+                      DenseMap<Value*, LVILatticeVal> &Visited);
+
+static LVILatticeVal
+getValueFromConditionImpl(Value *Val, Value *Cond, bool isTrueDest,
+                          DenseMap<Value*, LVILatticeVal> &Visited) {
+  if (ICmpInst *ICI = dyn_cast<ICmpInst>(Cond))
+    return getValueFromICmpCondition(Val, ICI, isTrueDest);
+
+  // Handle conditions in the form of (cond1 && cond2), we know that on the
+  // true dest path both of the conditions hold.
+  if (!isTrueDest)
+    return LVILatticeVal::getOverdefined();
+
+  BinaryOperator *BO = dyn_cast<BinaryOperator>(Cond);
+  if (!BO || BO->getOpcode() != BinaryOperator::And)
+    return LVILatticeVal::getOverdefined();
+
+  auto RHS = getValueFromCondition(Val, BO->getOperand(0), isTrueDest, Visited);
+  auto LHS = getValueFromCondition(Val, BO->getOperand(1), isTrueDest, Visited);
+  return intersect(RHS, LHS);
+}
+
+static LVILatticeVal
+getValueFromCondition(Value *Val, Value *Cond, bool isTrueDest,
+                      DenseMap<Value*, LVILatticeVal> &Visited) {
+  auto I = Visited.find(Cond);
+  if (I != Visited.end())
+    return I->second;
+  return Visited[Cond] = getValueFromConditionImpl(Val, Cond, isTrueDest,
+                                                   Visited);
+}
+
+LVILatticeVal getValueFromCondition(Value *Val, Value *Cond, bool isTrueDest) {
+  assert(Cond && "precondition");
+  DenseMap<Value*, LVILatticeVal> Visited;
+  return getValueFromCondition(Val, Cond, isTrueDest, Visited);
 }
 
 /// \brief Compute the value of Val on the edge BBFrom -> BBTo. Returns false if

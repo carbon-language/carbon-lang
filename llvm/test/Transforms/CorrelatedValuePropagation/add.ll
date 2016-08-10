@@ -99,3 +99,97 @@ bb:
   %add = add i32 %a, ptrtoint (i32* @b to i32)
   ret void
 }
+
+; Check that we can gather information for conditions is the form of
+;   and ( i s< 100, Unknown )
+; CHECK-LABEL: @test7(
+define void @test7(i32 %a, i1 %flag) {
+entry:
+  %cmp.1 = icmp slt i32 %a, 100
+  %cmp = and i1 %cmp.1, %flag
+  br i1 %cmp, label %bb, label %exit
+
+bb:
+; CHECK: %add = add nsw i32 %a, 1
+  %add = add i32 %a, 1
+  br label %exit
+
+exit:
+  ret void
+}
+
+; Check that we can gather information for conditions is the form of
+;   and ( i s< 100, i s> 0 )
+; CHECK-LABEL: @test8(
+define void @test8(i32 %a) {
+entry:
+  %cmp.1 = icmp slt i32 %a, 100
+  %cmp.2 = icmp sgt i32 %a, 0
+  %cmp = and i1 %cmp.1, %cmp.2
+  br i1 %cmp, label %bb, label %exit
+
+bb:
+; CHECK: %add = add nuw nsw i32 %a, 1
+  %add = add i32 %a, 1
+  br label %exit
+
+exit:
+  ret void
+}
+
+; Check that for conditions is the form of cond1 && cond2 we don't mistakenly
+; assume that !cond1 && !cond2 holds down to false path.
+; CHECK-LABEL: @test8_neg(
+define void @test8_neg(i32 %a) {
+entry:
+  %cmp.1 = icmp sge i32 %a, 100
+  %cmp.2 = icmp sle i32 %a, 0
+  %cmp = and i1 %cmp.1, %cmp.2
+  br i1 %cmp, label %exit, label %bb
+
+bb:
+; CHECK: %add = add i32 %a, 1
+  %add = add i32 %a, 1
+  br label %exit
+
+exit:
+  ret void
+}
+
+; Check that we can gather information for conditions is the form of
+;   and ( i s< 100, and (i s> 0, Unknown )
+; CHECK-LABEL: @test9(
+define void @test9(i32 %a, i1 %flag) {
+entry:
+  %cmp.1 = icmp slt i32 %a, 100
+  %cmp.2 = icmp sgt i32 %a, 0
+  %cmp.3 = and i1 %cmp.2, %flag
+  %cmp = and i1 %cmp.1, %cmp.3
+  br i1 %cmp, label %bb, label %exit
+
+bb:
+; CHECK: %add = add nuw nsw i32 %a, 1
+  %add = add i32 %a, 1
+  br label %exit
+
+exit:
+  ret void
+}
+
+; Check that we can gather information for conditions is the form of
+;   and ( i s< Unknown, ... )
+; CHECK-LABEL: @test10(
+define void @test10(i32 %a, i32 %b, i1 %flag) {
+entry:
+  %cmp.1 = icmp slt i32 %a, %b
+  %cmp = and i1 %cmp.1, %flag
+  br i1 %cmp, label %bb, label %exit
+
+bb:
+; CHECK: %add = add nsw i32 %a, 1
+  %add = add i32 %a, 1
+  br label %exit
+
+exit:
+  ret void
+}
