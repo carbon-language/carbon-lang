@@ -166,8 +166,11 @@ bool IRTranslator::translateStore(const StoreInst &SI) {
 
 bool IRTranslator::translateBitCast(const CastInst &CI) {
   if (LLT{*CI.getDestTy()} == LLT{*CI.getSrcTy()}) {
-    MIRBuilder.buildCopy(getOrCreateVReg(CI),
-                         getOrCreateVReg(*CI.getOperand(0)));
+    unsigned &Reg = ValToVReg[&CI];
+    if (Reg)
+      MIRBuilder.buildCopy(Reg, getOrCreateVReg(*CI.getOperand(0)));
+    else
+      Reg = getOrCreateVReg(*CI.getOperand(0));
     return true;
   }
   return translateCast(TargetOpcode::G_BITCAST, CI);
