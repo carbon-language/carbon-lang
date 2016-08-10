@@ -1537,11 +1537,14 @@ ConstantRange LazyValueInfo::getConstantRange(Value *V, BasicBlock *BB,
   const DataLayout &DL = BB->getModule()->getDataLayout();
   LVILatticeVal Result =
       getCache(PImpl, AC, &DL, DT).getValueInBlock(V, BB, CxtI);
-  assert(!Result.isConstant());
   if (Result.isUndefined())
     return ConstantRange(Width, /*isFullSet=*/false);
   if (Result.isConstantRange())
     return Result.getConstantRange();
+  // We represent ConstantInt constants as constant ranges but other kinds
+  // of integer constants, i.e. ConstantExpr will be tagged as constants
+  assert(!(Result.isConstant() && isa<ConstantInt>(Result.getConstant())) &&
+         "ConstantInt value must be represented as constantrange");
   return ConstantRange(Width, /*isFullSet=*/true);
 }
 
