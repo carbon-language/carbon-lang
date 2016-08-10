@@ -4204,12 +4204,12 @@ bool X86TargetLowering::hasAndNotCompare(SDValue Y) const {
 
 /// Val is either less than zero (undef) or equal to the specified value.
 static bool isUndefOrEqual(int Val, int CmpVal) {
-  return (Val < 0 || Val == CmpVal);
+  return ((Val == SM_SentinelUndef) || (Val == CmpVal));
 }
 
 /// Val is either the undef or zero sentinel value.
 static bool isUndefOrZero(int Val) {
-  return (Val == SM_SentinelUndef || Val == SM_SentinelZero);
+  return ((Val == SM_SentinelUndef) || (Val == SM_SentinelZero));
 }
 
 /// Return true if every element in Mask, beginning
@@ -4224,7 +4224,7 @@ static bool isUndefInRange(ArrayRef<int> Mask, unsigned Pos, unsigned Size) {
 /// Return true if Val is undef or if its value falls within the
 /// specified range (L, H].
 static bool isUndefOrInRange(int Val, int Low, int Hi) {
-  return (Val < 0) || (Val >= Low && Val < Hi);
+  return (Val == SM_SentinelUndef) || (Val >= Low && Val < Hi);
 }
 
 /// Return true if every element in Mask is undef or if its value
