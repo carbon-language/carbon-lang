@@ -118,7 +118,7 @@ private:
   bool translateStore(const StoreInst &SI);
 
   /// Translate call instruction.
-  /// \pre \p Inst is a branch instruction.
+  /// \pre \p Inst is a call instruction.
   bool translateCall(const CallInst &Inst);
 
   /// Translate one of LLVM's cast instructions into MachineInstrs, with the
