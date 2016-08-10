@@ -1777,9 +1777,9 @@ let hasSideEffects = 1 in {
 // replaced with exec mask operations.
 def SI_MASK_BRANCH : PseudoInstSI <
   (outs), (ins brtarget:$target, SReg_64:$dst)> {
-  let isBranch = 1;
+  let isBranch = 0;
   let isTerminator = 1;
-  let isBarrier = 1;
+  let isBarrier = 0;
   let SALU = 1;
 }
 
