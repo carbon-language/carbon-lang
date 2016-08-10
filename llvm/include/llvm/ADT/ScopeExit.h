@@ -23,7 +23,7 @@
 namespace llvm {
 namespace detail {
 
-template <typename Callable> class LLVM_ATTRIBUTE_UNUSED_RESULT scope_exit {
+template <typename Callable> class scope_exit {
   Callable ExitFunction;
 
 public:
@@ -44,7 +44,7 @@ public:
 // Interface is specified by p0052r2.
 template <typename Callable>
 detail::scope_exit<typename std::decay<Callable>::type>
-make_scope_exit(Callable &&F) {
+    LLVM_ATTRIBUTE_UNUSED_RESULT make_scope_exit(Callable &&F) {
   return detail::scope_exit<typename std::decay<Callable>::type>(
       std::forward<Callable>(F));
 }
