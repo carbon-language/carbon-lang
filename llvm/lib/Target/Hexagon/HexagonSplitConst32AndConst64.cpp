@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // When the compiler is invoked with no small data, for instance, with the -G0
-// command line option, then all CONST32_* opcodes should be broken down into
+// command line option, then all CONST* opcodes should be broken down into
 // appropriate LO and HI instructions. This splitting is done by this pass.
 // The only reason this is not done in the DAG lowering itself is that there
 // is no simple way of getting the register allocator to allot the same hard
@@ -88,8 +88,7 @@ bool HexagonSplitConst32AndConst64::runOnMachineFunction(MachineFunction &Fn) {
     while (MII != MIE) {
       MachineInstr &MI = *MII;
       int Opc = MI.getOpcode();
-      if (Opc == Hexagon::CONST32_Int_Real &&
-          MI.getOperand(1).isBlockAddress()) {
+      if (Opc == Hexagon::CONST32 && MI.getOperand(1).isBlockAddress()) {
         int DestReg = MI.getOperand(0).getReg();
         MachineOperand &Symbol = MI.getOperand(1);
 
@@ -103,40 +102,21 @@ bool HexagonSplitConst32AndConst64::runOnMachineFunction(MachineFunction &Fn) {
         continue;
       }
 
-      else if (Opc == Hexagon::CONST32_Int_Real ||
-               Opc == Hexagon::CONST32_Float_Real) {
+      else if (Opc == Hexagon::CONST32) {
         int DestReg = MI.getOperand(0).getReg();
 
         // We have to convert an FP immediate into its corresponding integer
         // representation
-        int64_t ImmValue;
-        if (Opc == Hexagon::CONST32_Float_Real) {
-          APFloat Val = MI.getOperand(1).getFPImm()->getValueAPF();
-          ImmValue = *Val.bitcastToAPInt().getRawData();
-        }
-        else
-          ImmValue = MI.getOperand(1).getImm();
-
+        int64_t ImmValue = MI.getOperand(1).getImm();
         BuildMI(*MBB, MII, MI.getDebugLoc(), TII->get(Hexagon::A2_tfrsi),
                 DestReg)
             .addImm(ImmValue);
         MII = MBB->erase(&MI);
         continue;
       }
-      else if (Opc == Hexagon::CONST64_Int_Real ||
-               Opc == Hexagon::CONST64_Float_Real) {
+      else if (Opc == Hexagon::CONST64) {
         int DestReg = MI.getOperand(0).getReg();
-
-        // We have to convert an FP immediate into its corresponding integer
-        // representation
-        int64_t ImmValue;
-        if (Opc == Hexagon::CONST64_Float_Real) {
-          APFloat Val = MI.getOperand(1).getFPImm()->getValueAPF();
-          ImmValue = *Val.bitcastToAPInt().getRawData();
-        }
-        else
-          ImmValue = MI.getOperand(1).getImm();
-
+        int64_t ImmValue = MI.getOperand(1).getImm();
         unsigned DestLo = TRI->getSubReg(DestReg, Hexagon::subreg_loreg);
         unsigned DestHi = TRI->getSubReg(DestReg, Hexagon::subreg_hireg);
 
