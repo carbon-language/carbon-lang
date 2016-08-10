@@ -134,13 +134,13 @@ let isCommutable = 1 in {
 
 def F2_sfsub : T_MInstFloat < "sfsub", 0b000, 0b001>;
 
-def: Pat<(f32 (fadd F32:$src1, F32:$src2)),
+def: Pat<(fadd F32:$src1, F32:$src2),
          (F2_sfadd F32:$src1, F32:$src2)>;
 
-def: Pat<(f32 (fsub F32:$src1, F32:$src2)),
+def: Pat<(fsub F32:$src1, F32:$src2),
          (F2_sfsub F32:$src1, F32:$src2)>;
 
-def: Pat<(f32 (fmul F32:$src1, F32:$src2)),
+def: Pat<(fmul F32:$src1, F32:$src2),
          (F2_sfmpy F32:$src1, F32:$src2)>;
 
 let Itinerary = M_tc_3x_SLOT23 in {
@@ -149,21 +149,21 @@ let Itinerary = M_tc_3x_SLOT23 in {
 }
 
 let AddedComplexity = 100, Predicates = [HasV5T] in {
-  def: Pat<(f32 (select (i1 (setolt F32:$src1, F32:$src2)),
-                        F32:$src1, F32:$src2)),
-           (F2_sfmin F32:$src1, F32:$src2)>;
+  class SfSel12<PatFrag Cmp, InstHexagon MI>
+    : Pat<(select (i1 (Cmp F32:$Rs, F32:$Rt)), F32:$Rs, F32:$Rt),
+          (MI F32:$Rs, F32:$Rt)>;
+  class SfSel21<PatFrag Cmp, InstHexagon MI>
+    : Pat<(select (i1 (Cmp F32:$Rs, F32:$Rt)), F32:$Rt, F32:$Rs),
+          (MI F32:$Rs, F32:$Rt)>;
 
-  def: Pat<(f32 (select (i1 (setogt F32:$src1, F32:$src2)),
-                        F32:$src2, F32:$src1)),
-           (F2_sfmin F32:$src1, F32:$src2)>;
-
-  def: Pat<(f32 (select (i1 (setogt F32:$src1, F32:$src2)),
-                        F32:$src1, F32:$src2)),
-           (F2_sfmax F32:$src1, F32:$src2)>;
-
-  def: Pat<(f32 (select (i1 (setolt F32:$src1, F32:$src2)),
-                        F32:$src2, F32:$src1)),
-           (F2_sfmax F32:$src1, F32:$src2)>;
+  def: SfSel12<setolt, F2_sfmin>;
+  def: SfSel12<setole, F2_sfmin>;
+  def: SfSel12<setogt, F2_sfmax>;
+  def: SfSel12<setoge, F2_sfmax>;
+  def: SfSel21<setolt, F2_sfmax>;
+  def: SfSel21<setole, F2_sfmax>;
+  def: SfSel21<setogt, F2_sfmin>;
+  def: SfSel21<setoge, F2_sfmin>;
 }
 
 def F2_sffixupn : T_MInstFloat < "sffixupn", 0b110, 0b000>;
