@@ -45,19 +45,19 @@ int main() {
 }
 
 // Test 1.
-// RUN: clang-rename -offset=30 -new-name=Bar %s -- | sed 's,//.*,,' | FileCheck %s
+// RUN: clang-rename -offset=30 -new-name=Bar %s -- -frtti | sed 's,//.*,,' | FileCheck %s
 // Test 2.
-// RUN: clang-rename -offset=155 -new-name=Bar %s -- | sed 's,//.*,,' | FileCheck %s
+// RUN: clang-rename -offset=155 -new-name=Bar %s -- -frtti | sed 's,//.*,,' | FileCheck %s
 // Test 3.
-// RUN: clang-rename -offset=1133 -new-name=Bar %s -- | sed 's,//.*,,' | FileCheck %s
+// RUN: clang-rename -offset=1133 -new-name=Bar %s -- -frtti | sed 's,//.*,,' | FileCheck %s
 // Test 4.
-// RUN: clang-rename -offset=1266 -new-name=Bar %s -- | sed 's,//.*,,' | FileCheck %s
+// RUN: clang-rename -offset=1266 -new-name=Bar %s -- -frtti | sed 's,//.*,,' | FileCheck %s
 // Test 5.
-// RUN: clang-rename -offset=1402 -new-name=Bar %s -- | sed 's,//.*,,' | FileCheck %s
+// RUN: clang-rename -offset=1402 -new-name=Bar %s -- -frtti | sed 's,//.*,,' | FileCheck %s
 // Test 6.
-// RUN: clang-rename -offset=1533 -new-name=Bar %s -- | sed 's,//.*,,' | FileCheck %s
+// RUN: clang-rename -offset=1533 -new-name=Bar %s -- -frtti | sed 's,//.*,,' | FileCheck %s
 // Test 7.
-// RUN: clang-rename -offset=1665 -new-name=Bar %s -- | sed 's,//.*,,' | FileCheck %s
+// RUN: clang-rename -offset=1665 -new-name=Bar %s -- -frtti | sed 's,//.*,,' | FileCheck %s
 
 // To find offsets after modifying the file, use:
 //   grep -Ubo 'Foo.*' <file>
