@@ -60,5 +60,5 @@ Would be transformed into:
     }
 
 
-This checks helps to enforce this `Coding Standards recommendation
+This check helps to enforce this `LLVM Coding Standards recommendation
 <http://llvm.org/docs/CodingStandards.html#don-t-use-else-after-a-return>`_.
