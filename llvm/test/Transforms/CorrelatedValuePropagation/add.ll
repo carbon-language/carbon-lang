@@ -89,3 +89,13 @@ bb:
 exit:
   ret void
 }
+
+; Check for a corner case where an integer value is represented with a constant
+; LVILatticeValue instead of constantrange. Check that we don't fail with an
+; assertion in this case.
+@b = global i32 0, align 4
+define void @test6(i32 %a) {
+bb:
+  %add = add i32 %a, ptrtoint (i32* @b to i32)
+  ret void
+}
