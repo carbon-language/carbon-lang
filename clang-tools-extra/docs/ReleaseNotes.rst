@@ -54,7 +54,7 @@ The improvements are...
 Improvements to clang-rename
 ----------------------------
 
-The improvements are...
+- Emacs integration was added.
 
 Improvements to clang-tidy
 --------------------------
