@@ -4799,13 +4799,12 @@ def LO_GOTREL : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$global),
                "$dst.l = #LO($global@GOTREL)",
                []>;
 
-let isReMaterializable = 1, isMoveImm = 1 in
-def CONST32 : CONSTLDInst<(outs IntRegs:$Rd), (ins i32imm:$v),
-              "$Rd = CONST32(#$v)", [(set I32:$Rd, imm:$v)]>;
-
-let isReMaterializable = 1, isMoveImm = 1 in
-def CONST64 : CONSTLDInst<(outs DoubleRegs:$Rd), (ins i64imm:$v),
-              "$Rd = CONST64(#$v)", [(set I64:$Rd, imm:$v)]>;
+let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in {
+  def CONST32 : CONSTLDInst<(outs IntRegs:$Rd), (ins i32imm:$v),
+                "$Rd = CONST32(#$v)", [(set I32:$Rd, imm:$v)]>;
+  def CONST64 : CONSTLDInst<(outs DoubleRegs:$Rd), (ins i64imm:$v),
+                "$Rd = CONST64(#$v)", [(set I64:$Rd, imm:$v)]>;
+}
 
 // Map TLS addressses to A2_tfrsi.
 def: Pat<(HexagonCONST32 tglobaltlsaddr:$addr), (A2_tfrsi s16Ext:$addr)>;
