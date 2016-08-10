@@ -5127,18 +5127,6 @@ def ALLOCA: ALU32Inst<(outs IntRegs:$Rd),
 let isCodeGenOnly = 1, isPseudo = 1, Uses = [R30], hasSideEffects = 0 in
 def ALIGNA : ALU32Inst<(outs IntRegs:$Rd), (ins u32Imm:$A), "", []>;
 
-def SDTHexagonARGEXTEND : SDTypeProfile<1, 1, [SDTCisVT<0, i32>]>;
-def Hexagon_ARGEXTEND : SDNode<"HexagonISD::ARGEXTEND", SDTHexagonARGEXTEND>;
-let isCodeGenOnly = 1 in
-def ARGEXTEND : ALU32_rr <(outs IntRegs:$dst), (ins IntRegs:$src1),
-                "$dst = $src1",
-                [(set (i32 IntRegs:$dst),
-                      (Hexagon_ARGEXTEND (i32 IntRegs:$src1)))]>;
-
-let AddedComplexity = 100 in
-def: Pat<(i32 (sext_inreg (Hexagon_ARGEXTEND (i32 IntRegs:$src1)), i16)),
-         (i32 IntRegs:$src1)>;
-
 def HexagonJT:     SDNode<"HexagonISD::JT", SDTIntUnaryOp>;
 def HexagonCP:     SDNode<"HexagonISD::CP", SDTIntUnaryOp>;
 

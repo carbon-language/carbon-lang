@@ -67,17 +67,6 @@ def C4_fastcorner9_not : T_LOGICAL_2OP<"!fastcorner9", 0b000, 0, 0>,
   let Inst{20,13,7,4} = 0b1111;
 }
 
-def SDTHexagonFCONST32 : SDTypeProfile<1, 1, [SDTCisVT<0, f32>,
-                                              SDTCisPtrTy<1>]>;
-def HexagonFCONST32 : SDNode<"HexagonISD::FCONST32", SDTHexagonFCONST32>;
-
-let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
-def FCONST32_nsdata : LDInst<(outs IntRegs:$dst), (ins globaladdress:$global),
-                             "$dst = CONST32(#$global)",
-                             [(set F32:$dst,
-                              (HexagonFCONST32 tglobaladdr:$global))]>,
-                             Requires<[HasV5T]>;
-
 let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST64_Float_Real : LDInst<(outs DoubleRegs:$dst), (ins f64imm:$src1),
                                 "$dst = CONST64(#$src1)",
