@@ -12334,6 +12334,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
         Diag(MemExpr->getMemberLoc(), diag::err_ref_bad_target)
             << IdentifyCUDATarget(Method) << Method->getIdentifier()
             << IdentifyCUDATarget(Caller);
+        Diag(Method->getLocation(), diag::note_previous_decl) << Method;
         return ExprError();
       }
     }
