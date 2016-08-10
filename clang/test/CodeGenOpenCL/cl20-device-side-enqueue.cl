@@ -5,7 +5,7 @@ typedef void (^bl_t)(local void *);
 const bl_t block_G = (bl_t) ^ (local void *a) {};
 
 kernel void device_side_enqueue(global int *a, global int *b, int i) {
-  // CHECK: %deafault_queue = alloca %opencl.queue_t*
+  // CHECK: %default_queue = alloca %opencl.queue_t*
   queue_t default_queue;
   // CHECK: %flags = alloca i32
   unsigned flags = 0;
