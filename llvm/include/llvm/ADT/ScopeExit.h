@@ -30,8 +30,7 @@ public:
   template <typename Fp>
   explicit scope_exit(Fp &&F) : ExitFunction(std::forward<Fp>(F)) {}
 
-  scope_exit(const scope_exit &) = default;
-  scope_exit(scope_exit &&) = default;
+  scope_exit(scope_exit &&Rhs) : ExitFunction(std::move(Rhs.ExitFunction)) {}
 
   ~scope_exit() { ExitFunction(); }
 };
