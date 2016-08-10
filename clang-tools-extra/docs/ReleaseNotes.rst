@@ -72,9 +72,8 @@ Improvements to clang-tidy
 - New `performance-inefficient-string-concatenation
   <http://clang.llvm.org/extra/clang-tidy/checks/performance-inefficient-string-concatenation.html>`_ check
 
-  This check warns about the performance overhead arising from concatenating
-  strings using the ``operator+``, instead of ``operator+=``.
-
+  Warns about the performance overhead arising from concatenating strings using
+  the ``operator+``, instead of ``operator+=``.
 
 Improvements to include-fixer
 -----------------------------
