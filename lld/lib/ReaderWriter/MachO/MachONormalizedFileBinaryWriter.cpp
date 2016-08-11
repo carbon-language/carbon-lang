@@ -1243,22 +1243,25 @@ void MachOFileLayout::buildBindInfo() {
 
 void MachOFileLayout::buildLazyBindInfo() {
   for (const BindLocation& entry : _file.lazyBindingInfo) {
-    _lazyBindingInfo.append_byte(BIND_OPCODE_SET_TYPE_IMM | entry.kind);
     _lazyBindingInfo.append_byte(BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB
                             | entry.segIndex);
-    _lazyBindingInfo.append_uleb128Fixed(entry.segOffset, 5);
-    if (entry.ordinal > 0)
-      _lazyBindingInfo.append_byte(BIND_OPCODE_SET_DYLIB_ORDINAL_IMM |
-                                   (entry.ordinal & 0xF));
-    else
+    _lazyBindingInfo.append_uleb128(entry.segOffset);
+    if (entry.ordinal <= 0)
       _lazyBindingInfo.append_byte(BIND_OPCODE_SET_DYLIB_SPECIAL_IMM |
-                                   (entry.ordinal & 0xF));
+                                   (entry.ordinal & BIND_IMMEDIATE_MASK));
+    else if (entry.ordinal <= BIND_IMMEDIATE_MASK)
+      _lazyBindingInfo.append_byte(BIND_OPCODE_SET_DYLIB_ORDINAL_IMM |
+                                   entry.ordinal);
+    else {
+      _lazyBindingInfo.append_byte(BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB);
+      _lazyBindingInfo.append_uleb128(entry.ordinal);
+    }
+    // FIXME: We need to | the opcode here with flags.
     _lazyBindingInfo.append_byte(BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM);
     _lazyBindingInfo.append_string(entry.symbolName);
     _lazyBindingInfo.append_byte(BIND_OPCODE_DO_BIND);
     _lazyBindingInfo.append_byte(BIND_OPCODE_DONE);
   }
-  _lazyBindingInfo.append_byte(BIND_OPCODE_DONE);
   _lazyBindingInfo.align(_is64 ? 8 : 4);
 }
 

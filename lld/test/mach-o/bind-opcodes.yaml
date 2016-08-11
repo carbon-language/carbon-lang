@@ -121,9 +121,6 @@ undefined-symbols:
 # CHECK:       Symbol:          ''
 
 # CHECK:   LazyBindOpcodes: 
-# CHECK:     - Opcode:          BIND_OPCODE_SET_TYPE_IMM
-# CHECK:       Imm:             1
-# CHECK:       Symbol:          ''
 # CHECK:     - Opcode:          BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB
 # CHECK:       Imm:             2
 # CHECK:       ULEBExtraData:   
@@ -136,15 +133,6 @@ undefined-symbols:
 # CHECK:       Imm:             0
 # CHECK:       Symbol:          _fprintf
 # CHECK:     - Opcode:          BIND_OPCODE_DO_BIND
-# CHECK:       Imm:             0
-# CHECK:       Symbol:          ''
-# CHECK:     - Opcode:          BIND_OPCODE_DONE
-# CHECK:       Imm:             0
-# CHECK:       Symbol:          ''
-# CHECK:     - Opcode:          BIND_OPCODE_DONE
-# CHECK:       Imm:             0
-# CHECK:       Symbol:          ''
-# CHECK:     - Opcode:          BIND_OPCODE_DONE
 # CHECK:       Imm:             0
 # CHECK:       Symbol:          ''
 # CHECK:     - Opcode:          BIND_OPCODE_DONE
