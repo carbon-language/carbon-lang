@@ -2972,6 +2972,12 @@ bool HexagonInstrInfo::canExecuteInBundle(const MachineInstr &First,
 }
 
 
+bool HexagonInstrInfo::doesNotReturn(const MachineInstr &CallMI) const {
+  unsigned Opc = CallMI.getOpcode();
+  return Opc == Hexagon::CALLv3nr || Opc == Hexagon::CALLRv3nr;
+}
+
+
 bool HexagonInstrInfo::hasEHLabel(const MachineBasicBlock *B) const {
   for (auto &I : *B)
     if (I.isEHLabel())
