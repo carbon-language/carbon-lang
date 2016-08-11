@@ -176,6 +176,14 @@ private:
   }
   bool translateUnreachable(const User &U) { return true; }
 
+  bool translateSExt(const User &U) {
+    return translateCast(TargetOpcode::G_SEXT, U);
+  }
+
+  bool translateZExt(const User &U) {
+    return translateCast(TargetOpcode::G_ZEXT, U);
+  }
+
   /// Translate return (ret) instruction.
   /// The target needs to implement CallLowering::lowerReturn for
   /// this to succeed.
@@ -207,8 +215,6 @@ private:
   bool translateFence(const User &U) { return false; }
   bool translateAtomicCmpXchg(const User &U) { return false; }
   bool translateAtomicRMW(const User &U) { return false; }
-  bool translateSExt(const User &U) { return false; }
-  bool translateZExt(const User &U) { return false; }
   bool translateFPToUI(const User &U) { return false; }
   bool translateFPToSI(const User &U) { return false; }
   bool translateUIToFP(const User &U) { return false; }

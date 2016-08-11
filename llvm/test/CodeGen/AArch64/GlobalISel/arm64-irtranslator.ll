@@ -406,3 +406,21 @@ define i8* @test_constant_inttoptr() {
 define i64 @test_reused_constant() {
   ret i64 1
 }
+
+; CHECK-LABEL: name: test_sext
+; CHECK: [[IN:%[0-9]+]](32) = COPY %w0
+; CHECK: [[RES:%[0-9]+]](64) = G_SEXT { s64, s32 } [[IN]]
+; CHECK: %x0 = COPY [[RES]]
+define i64 @test_sext(i32 %in) {
+  %res = sext i32 %in to i64
+  ret i64 %res
+}
+
+; CHECK-LABEL: name: test_zext
+; CHECK: [[IN:%[0-9]+]](32) = COPY %w0
+; CHECK: [[RES:%[0-9]+]](64) = G_ZEXT { s64, s32 } [[IN]]
+; CHECK: %x0 = COPY [[RES]]
+define i64 @test_zext(i32 %in) {
+  %res = zext i32 %in to i64
+  ret i64 %res
+}
