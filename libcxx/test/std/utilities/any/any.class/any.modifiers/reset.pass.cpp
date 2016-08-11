@@ -7,34 +7,34 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: c++98, c++03, c++11
+// UNSUPPORTED: c++98, c++03, c++11, c++14
 
-// <experimental/any>
+// <any>
 
-// any::clear() noexcept
+// any::reset() noexcept
 
-#include <experimental/any>
+#include <any>
 #include <cassert>
 
-#include "experimental_any_helpers.h"
+#include "any_helpers.h"
 
 int main()
 {
-    using std::experimental::any;
-    using std::experimental::any_cast;
+    using std::any;
+    using std::any_cast;
     // empty
     {
         any a;
 
         // noexcept check
         static_assert(
-            noexcept(a.clear())
-          , "any.clear() must be noexcept"
+            noexcept(a.reset())
+          , "any.reset() must be noexcept"
           );
 
         assertEmpty(a);
 
-        a.clear();
+        a.reset();
 
         assertEmpty(a);
     }
@@ -44,7 +44,7 @@ int main()
         assert(small::count == 1);
         assertContains<small>(a, 1);
 
-        a.clear();
+        a.reset();
 
         assertEmpty<small>(a);
         assert(small::count == 0);
@@ -55,7 +55,7 @@ int main()
         assert(large::count == 1);
         assertContains<large>(a);
 
-        a.clear();
+        a.reset();
 
         assertEmpty<large>(a);
         assert(large::count == 0);

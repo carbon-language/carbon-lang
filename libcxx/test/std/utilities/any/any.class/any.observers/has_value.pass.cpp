@@ -7,58 +7,58 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: c++98, c++03, c++11
+// UNSUPPORTED: c++98, c++03, c++11, c++14
 
-// <experimental/any>
+// <any>
 
-// any::empty() noexcept
+// any::has_value() noexcept
 
-#include <experimental/any>
+#include <any>
 #include <cassert>
 
-#include "experimental_any_helpers.h"
+#include "any_helpers.h"
 
 int main()
 {
-    using std::experimental::any;
+    using std::any;
     // noexcept test
     {
         any a;
-        static_assert(noexcept(a.empty()), "any::empty() must be noexcept");
+        static_assert(noexcept(a.has_value()), "any::has_value() must be noexcept");
     }
     // empty
     {
         any a;
-        assert(a.empty());
+        assert(!a.has_value());
 
-        a.clear();
-        assert(a.empty());
+        a.reset();
+        assert(!a.has_value());
 
         a = 42;
-        assert(!a.empty());
+        assert(a.has_value());
     }
     // small object
     {
         small const s(1);
         any a(s);
-        assert(!a.empty());
+        assert(a.has_value());
 
-        a.clear();
-        assert(a.empty());
+        a.reset();
+        assert(!a.has_value());
 
         a = s;
-        assert(!a.empty());
+        assert(a.has_value());
     }
     // large object
     {
         large const l(1);
         any a(l);
-        assert(!a.empty());
+        assert(a.has_value());
 
-        a.clear();
-        assert(a.empty());
+        a.reset();
+        assert(!a.has_value());
 
         a = l;
-        assert(!a.empty());
+        assert(a.has_value());
     }
 }

@@ -7,22 +7,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: c++98, c++03, c++11
+// UNSUPPORTED: c++98, c++03, c++11, c++14
 
-// <experimental/any>
+// <any>
 
 // any& operator=(any &&);
 
 // Test move assignment.
 
-#include <experimental/any>
+#include <any>
 #include <cassert>
 
-#include "experimental_any_helpers.h"
+#include "any_helpers.h"
 #include "test_macros.h"
 
-using std::experimental::any;
-using std::experimental::any_cast;
+using std::any;
+using std::any_cast;
 
 template <class LHS, class RHS>
 void test_move_assign() {

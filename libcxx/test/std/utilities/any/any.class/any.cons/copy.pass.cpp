@@ -7,21 +7,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: c++98, c++03, c++11
+// UNSUPPORTED: c++98, c++03, c++11, c++14
 
-// <experimental/any>
+// <any>
 
 // any(any const &);
 
-#include <experimental/any>
+#include <any>
 #include <cassert>
 
-#include "experimental_any_helpers.h"
+#include "any_helpers.h"
 #include "count_new.hpp"
 #include "test_macros.h"
 
-using std::experimental::any;
-using std::experimental::any_cast;
+using std::any;
+using std::any_cast;
 
 template <class Type>
 void test_copy_throws() {
@@ -84,7 +84,7 @@ void test_copy()
         assertContains<Type>(a2, 999);
 
         // clear a and check that a2 is unchanged
-        a.clear();
+        a.reset();
         assertEmpty(a);
         assertContains<Type>(a2, 999);
     }

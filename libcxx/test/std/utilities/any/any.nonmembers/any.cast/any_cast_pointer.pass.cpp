@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: c++98, c++03, c++11
+// UNSUPPORTED: c++98, c++03, c++11, c++14
 
-// <experimental/any>
+// <any>
 
 // template <class ValueType>
 // ValueType const* any_cast(any const *) noexcept;
@@ -17,14 +17,14 @@
 // template <class ValueType>
 // ValueType * any_cast(any *) noexcept;
 
-#include <experimental/any>
+#include <any>
 #include <type_traits>
 #include <cassert>
 
-#include "experimental_any_helpers.h"
+#include "any_helpers.h"
 
-using std::experimental::any;
-using std::experimental::any_cast;
+using std::any;
+using std::any_cast;
 
 // Test that the operators are properly noexcept.
 void test_cast_is_noexcept() {
@@ -71,7 +71,7 @@ void test_cast_empty() {
     // Create as non-empty, then make empty and run test.
     {
         any a(42);
-        a.clear();
+        a.reset();
         assert(nullptr == any_cast<int>(&a));
         assert(nullptr == any_cast<int const>(&a));
 
@@ -136,6 +136,17 @@ void test_cast() {
     assert(Type::count == 0);
 }
 
+void test_cast_non_copyable_type()
+{
+    // Even though 'any' never stores non-copyable types
+    // we still need to support any_cast<NoCopy>(ptr)
+    struct NoCopy { NoCopy(NoCopy const&) = delete; };
+    std::any a(42);
+    std::any const& ca = a;
+    assert(std::any_cast<NoCopy>(&a) == nullptr);
+    assert(std::any_cast<NoCopy>(&ca) == nullptr);
+}
+
 int main() {
     test_cast_is_noexcept();
     test_cast_return_type();
@@ -143,4 +154,5 @@ int main() {
     test_cast_empty();
     test_cast<small>();
     test_cast<large>();
+    test_cast_non_copyable_type();
 }

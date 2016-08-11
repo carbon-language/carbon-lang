@@ -9,12 +9,12 @@
 
 // UNSUPPORTED: c++98, c++03, c++11
 
-// <experimental/any>
+// <any>
 
 // Check that the size and alignment of any are what we expect.
 
-#include <experimental/any>
-#include "experimental_any_helpers.h"
+#include <any>
+#include "any_helpers.h"
 
 constexpr std::size_t BufferSize = (sizeof(void*) * 3);
 constexpr std::size_t BufferAlignment = alignof(void*);
@@ -57,8 +57,8 @@ struct alignas(DoubleBufferAlignment) OverSizeAndAlignedType {
 
 int main()
 {
-    using std::experimental::any;
-    using std::experimental::__any_imp::_IsSmallObject;
+    using std::any;
+    using std::__any_imp::_IsSmallObject;
     static_assert(_IsSmallObject<small>::value, "");
     static_assert(_IsSmallObject<void*>::value, "");
     static_assert(!_IsSmallObject<SmallThrowsDtor>::value, "");

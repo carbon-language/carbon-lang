@@ -7,23 +7,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: c++98, c++03, c++11
+// UNSUPPORTED: c++98, c++03, c++11, c++14
 
-// <experimental/any>
+// <any>
 
 // any& operator=(any const &);
 
 // Test value copy and move assignment.
 
-#include <experimental/any>
+#include <any>
 #include <cassert>
 
-#include "experimental_any_helpers.h"
+#include "any_helpers.h"
 #include "count_new.hpp"
 #include "test_macros.h"
 
-using std::experimental::any;
-using std::experimental::any_cast;
+using std::any;
+using std::any_cast;
 
 template <class LHS, class RHS>
 void test_assign_value() {
@@ -164,6 +164,33 @@ void test_assign_throws() {
 #endif
 }
 
+
+// Test that any& operator=(ValueType&&) is *never* selected for:
+// * std::in_place type.
+// * Non-copyable types
+void test_sfinae_constraints() {
+    {
+        using Tag = std::in_place_type_t<int>;
+        using RawTag = std::remove_reference_t<Tag>;
+        static_assert(!std::is_assignable<std::any, RawTag&&>::value, "");
+    }
+    {
+        struct Dummy { Dummy() = delete; };
+        using T = std::in_place_type_t<Dummy>;
+        static_assert(!std::is_assignable<std::any, T>::value, "");
+    }
+    {
+        // Test that the ValueType&& constructor SFINAE's away when the
+        // argument is non-copyable
+        struct NoCopy {
+          NoCopy() = default;
+          NoCopy(NoCopy const&) = delete;
+          NoCopy(NoCopy&&) = default;
+        };
+        static_assert(!std::is_assignable<std::any, NoCopy>::value, "");
+    }
+}
+
 int main() {
     test_assign_value<small1, small2>();
     test_assign_value<large1, large2>();
@@ -174,4 +201,5 @@ int main() {
     test_assign_throws<small_throws_on_copy>();
     test_assign_throws<large_throws_on_copy>();
     test_assign_throws<throws_on_move, /* Move = */ true>();
+    test_sfinae_constraints();
 }

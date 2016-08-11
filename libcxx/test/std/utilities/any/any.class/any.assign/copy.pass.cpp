@@ -7,23 +7,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: c++98, c++03, c++11
+// UNSUPPORTED: c++98, c++03, c++11, c++14
 
-// <experimental/any>
+// <any>
 
 // any& operator=(any const &);
 
 // Test copy assignment
 
-#include <experimental/any>
+#include <any>
 #include <cassert>
 
-#include "experimental_any_helpers.h"
+#include "any_helpers.h"
 #include "count_new.hpp"
 #include "test_macros.h"
 
-using std::experimental::any;
-using std::experimental::any_cast;
+using std::any;
+using std::any_cast;
 
 template <class LHS, class RHS>
 void test_copy_assign() {
