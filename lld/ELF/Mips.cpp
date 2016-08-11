@@ -174,10 +174,10 @@ static bool isArchMatched(uint32_t New, uint32_t Res) {
   return false;
 }
 
-static StringRef getArchName(uint32_t Flags) {
+static StringRef getMachName(uint32_t Flags) {
   switch (Flags & EF_MIPS_MACH) {
   case EF_MIPS_MACH_NONE:
-    break;
+    return "";
   case EF_MIPS_MACH_3900:
     return "r3900";
   case EF_MIPS_MACH_4010:
@@ -217,6 +217,13 @@ static StringRef getArchName(uint32_t Flags) {
   default:
     return "unknown machine";
   }
+}
+
+static StringRef getArchName(uint32_t Flags) {
+  StringRef S = getMachName(Flags);
+  if (!S.empty())
+    return S;
+
   switch (Flags & EF_MIPS_ARCH) {
   case EF_MIPS_ARCH_1:
     return "mips1";
