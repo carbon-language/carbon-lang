@@ -1665,10 +1665,6 @@ SIScheduleDAGMI::SIScheduleDAGMI(MachineSchedContext *C) :
 SIScheduleDAGMI::~SIScheduleDAGMI() {
 }
 
-ScheduleDAGInstrs *llvm::createSIMachineScheduler(MachineSchedContext *C) {
-  return new SIScheduleDAGMI(C);
-}
-
 // Code adapted from scheduleDAG.cpp
 // Does a topological sort over the SUs.
 // Both TopDown and BottomUp
