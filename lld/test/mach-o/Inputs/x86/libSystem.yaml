@@ -3,10 +3,11 @@
 # and therefore will need a dylib definition of dyld_stub_binder.
 #
 
-shared-library-atoms:
-    - name:              dyld_stub_binder
-      load-name:         /usr/lib/libSystem.B.dylib
-      type:              code
-      size:              0
+--- !mach-o
+arch:            x86
+file-type:       MH_DYLIB
+install-name:    /usr/lib/libSystem.B.dylib
+exports:
+  - name:            dyld_stub_binder
 
 ...
