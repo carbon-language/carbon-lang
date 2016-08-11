@@ -147,7 +147,7 @@ namespace {
 // keep symbol definitions in output sections. Because output sections
 // can contain only input sections, we wrap symbol definitions
 // with dummy input sections. This class serves that purpose.
-template <class ELFT> class LayoutInputSection : public InputSection<ELFT> {
+template <class ELFT> class LayoutInputSection : public InputSectionBase<ELFT> {
 public:
   LayoutInputSection(SymbolAssignment *Cmd);
   static bool classof(const InputSectionBase<ELFT> *S);
@@ -194,9 +194,10 @@ template <class T> static T *zero(T *Val) {
 
 template <class ELFT>
 LayoutInputSection<ELFT>::LayoutInputSection(SymbolAssignment *Cmd)
-    : InputSection<ELFT>(nullptr, zero(&Hdr)), Cmd(Cmd) {
+    : InputSectionBase<ELFT>(nullptr, zero(&Hdr),
+                             InputSectionBase<ELFT>::Layout),
+      Cmd(Cmd) {
   this->Live = true;
-  this->SectionKind = InputSectionBase<ELFT>::Layout;
   Hdr.sh_type = SHT_NOBITS;
 }
 
