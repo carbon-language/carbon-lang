@@ -63,8 +63,8 @@ global-symbols:
 # CHECK-BINARY-READ-NEXT: cmdsize 56
 # CHECK-BINARY-READ-NEXT:  name /usr/lib/libSystem.B.dylib (offset 24)
 # CHECK-BINARY-READ-NEXT:  time stamp 2
-# CHECK-BINARY-READ-NEXT:  current version 0.16.0
-# CHECK-BINARY-READ-NEXT:  compatibility version 0.16.0
+# CHECK-BINARY-READ-NEXT:  current version 1.0.0
+# CHECK-BINARY-READ-NEXT:  compatibility version 1.0.0
 
 # CHECK-BINARY-READ: cmd LC_LOAD_DYLIB
 # CHECK-BINARY-READ-NEXT: cmdsize 40

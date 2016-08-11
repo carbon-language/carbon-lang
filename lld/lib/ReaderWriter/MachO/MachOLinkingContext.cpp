@@ -734,7 +734,7 @@ uint32_t MachOLinkingContext::dylibCurrentVersion(StringRef installName) const {
   if (pos != _pathToDylibMap.end())
     return pos->second->currentVersion();
   else
-    return 0x1000; // 1.0
+    return 0x10000; // 1.0
 }
 
 uint32_t MachOLinkingContext::dylibCompatVersion(StringRef installName) const {
@@ -742,7 +742,7 @@ uint32_t MachOLinkingContext::dylibCompatVersion(StringRef installName) const {
   if (pos != _pathToDylibMap.end())
     return pos->second->compatVersion();
   else
-    return 0x1000; // 1.0
+    return 0x10000; // 1.0
 }
 
 void MachOLinkingContext::createImplicitFiles(
