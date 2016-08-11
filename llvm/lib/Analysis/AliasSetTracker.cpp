@@ -468,8 +468,9 @@ void AliasSetTracker::copyValue(Value *From, Value *To) {
   AliasSet::PointerRec &Entry = getEntryFor(To);
   if (Entry.hasAliasSet()) return;    // Already in the tracker!
 
-  // Add it to the alias set it aliases...
+  // getEntryFor above may invalidate iterator \c I, so reinitialize it.
   I = PointerMap.find_as(From);
+  // Add it to the alias set it aliases...
   AliasSet *AS = I->second->getAliasSet(*this);
   AS->addPointer(*this, Entry, I->second->getSize(),
                  I->second->getAAInfo(),
