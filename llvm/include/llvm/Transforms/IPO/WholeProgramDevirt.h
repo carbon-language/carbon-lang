@@ -134,6 +134,9 @@ struct VirtualCallTarget {
   // Whether the target is big endian.
   bool IsBigEndian;
 
+  // Whether at least one call site to the target was devirtualized.
+  bool WasDevirt;
+
   // The minimum byte offset before the address point. This covers the bytes in
   // the vtable object before the address point (e.g. RTTI, access-to-top,
   // vtables for other base classes) and is equal to the offset from the start
