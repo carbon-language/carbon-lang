@@ -458,3 +458,10 @@ define i32 @test_ashr(i32 %arg1, i32 %arg2) {
   %res = ashr i32 %arg1, %arg2
   ret i32 %res
 }
+
+; CHECK-LABEL: name: test_constant_null
+; CHECK: [[NULL:%[0-9]+]](64) = G_CONSTANT p0 0
+; CHECK: %x0 = COPY [[NULL]]
+define i8* @test_constant_null() {
+  ret i8* null
+}

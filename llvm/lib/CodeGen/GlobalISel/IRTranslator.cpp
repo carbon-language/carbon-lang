@@ -296,6 +296,10 @@ bool IRTranslator::translate(const Constant &C, unsigned Reg) {
     EntryBuilder.buildConstant(LLT{*CI->getType()}, Reg, CI->getZExtValue());
   else if (isa<UndefValue>(C))
     EntryBuilder.buildInstr(TargetOpcode::IMPLICIT_DEF).addDef(Reg);
+  else if (isa<ConstantPointerNull>(C))
+    EntryBuilder.buildInstr(TargetOpcode::G_CONSTANT, LLT{*C.getType()})
+        .addDef(Reg)
+        .addImm(0);
   else if (auto CE = dyn_cast<ConstantExpr>(&C)) {
     switch(CE->getOpcode()) {
 #define HANDLE_INST(NUM, OPCODE, CLASS)                         \
