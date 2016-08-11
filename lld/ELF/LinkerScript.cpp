@@ -366,7 +366,7 @@ template <class ELFT> void assignOffsets(OutputSectionBase<ELFT> *Sec) {
       I->OutSecOff = Off;
       Off += I->getSize();
     }
-    // Update section size inside for-loop, so that SIZEOF 
+    // Update section size inside for-loop, so that SIZEOF
     // works correctly in the case below:
     // .foo { *(.aaa) a = SIZEOF(.foo); *(.bbb) }
     Sec->setSize(Off);
