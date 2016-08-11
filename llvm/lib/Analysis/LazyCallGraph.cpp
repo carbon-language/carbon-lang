@@ -1207,8 +1207,7 @@ LazyCallGraph::RefSCC::removeInternalRefEdge(Node &SourceN, Node &TargetN) {
   if (!Result.empty())
     assert(!IsLeaf && "This SCC cannot be a leaf as we have split out new "
                       "SCCs by removing this edge.");
-  if (!std::any_of(G->LeafRefSCCs.begin(), G->LeafRefSCCs.end(),
-                   [&](RefSCC *C) { return C == this; }))
+  if (none_of(G->LeafRefSCCs, [&](RefSCC *C) { return C == this; }))
     assert(!IsLeaf && "This SCC cannot be a leaf as it already had child "
                       "SCCs before we removed this edge.");
 #endif

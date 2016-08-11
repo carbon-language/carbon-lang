@@ -2268,8 +2268,7 @@ static bool shouldRewriteStatepointsIn(Function &F) {
 
 void RewriteStatepointsForGC::stripNonValidAttributes(Module &M) {
 #ifndef NDEBUG
-  assert(std::any_of(M.begin(), M.end(), shouldRewriteStatepointsIn) &&
-         "precondition!");
+  assert(any_of(M, shouldRewriteStatepointsIn) && "precondition!");
 #endif
 
   for (Function &F : M)

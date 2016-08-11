@@ -843,8 +843,7 @@ private:
 
         for (auto *Phi : UsePhis) {
           auto In = Phi->incoming_values();
-          if (std::all_of(In.begin(), In.end(),
-                          [&](Use &U){return U == NewMemAcc;})) {
+          if (all_of(In, [&](Use &U) { return U == NewMemAcc; })) {
             Phi->replaceAllUsesWith(NewMemAcc);
             MSSA->removeMemoryAccess(Phi);
           }

@@ -229,7 +229,7 @@ blockDominatesAnExit(BasicBlock *BB,
                      DominatorTree &DT,
                      const SmallVectorImpl<BasicBlock *> &ExitBlocks) {
   DomTreeNode *DomNode = DT.getNode(BB);
-  return llvm::any_of(ExitBlocks, [&](BasicBlock * EB) {
+  return any_of(ExitBlocks, [&](BasicBlock *EB) {
     return DT.dominates(DomNode, DT.getNode(EB));
   });
 }

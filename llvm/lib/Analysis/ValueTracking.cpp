@@ -406,7 +406,7 @@ static bool isEphemeralValueOf(Instruction *I, const Value *E) {
   // The instruction defining an assumption's condition itself is always
   // considered ephemeral to that assumption (even if it has other
   // non-ephemeral users). See r246696's test case for an example.
-  if (std::find(I->op_begin(), I->op_end(), E) != I->op_end())
+  if (is_contained(I->operands(), E))
     return true;
 
   while (!WorkSet.empty()) {
@@ -415,8 +415,7 @@ static bool isEphemeralValueOf(Instruction *I, const Value *E) {
       continue;
 
     // If all uses of this value are ephemeral, then so is this value.
-    if (std::all_of(V->user_begin(), V->user_end(),
-                    [&](const User *U) { return EphValues.count(U); })) {
+    if (all_of(V->users(), [&](const User *U) { return EphValues.count(U); })) {
       if (V == E)
         return true;
 

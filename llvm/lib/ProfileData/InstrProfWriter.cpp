@@ -208,8 +208,7 @@ bool InstrProfWriter::shouldEncodeData(const ProfilingData &PD) {
     return true;
   for (const auto &Func : PD) {
     const InstrProfRecord &IPR = Func.second;
-    if (std::any_of(IPR.Counts.begin(), IPR.Counts.end(),
-                    [](uint64_t Count) { return Count > 0; }))
+    if (any_of(IPR.Counts, [](uint64_t Count) { return Count > 0; }))
       return true;
   }
   return false;
