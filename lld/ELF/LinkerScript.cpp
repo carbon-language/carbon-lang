@@ -137,6 +137,16 @@ LinkerScript<ELFT>::getInputSections(const InputSectionDescription *I) {
 }
 
 namespace {
+
+// You can define new symbols using linker scripts. For example,
+// ".text { abc.o(.text); foo = .; def.o(.text); }" defines symbol
+// foo just after abc.o's text section contents. This class is to
+// handle such symbol definitions.
+//
+// In order to handle scripts like the above one, we want to
+// keep symbol definitions in output sections. Because output sections
+// can contain only input sections, we wrap symbol definitions
+// with dummy input sections. This class serves that purpose.
 template <class ELFT> class LayoutInputSection : public InputSection<ELFT> {
 public:
   LayoutInputSection(SymbolAssignment *Cmd);
@@ -174,7 +184,8 @@ private:
 template <class ELFT>
 std::vector<std::unique_ptr<LayoutInputSection<ELFT>>>
     OutputSectionBuilder<ELFT>::OwningSections;
-}
+
+} // anonymous namespace
 
 template <class T> static T *zero(T *Val) {
   memset(Val, 0, sizeof(*Val));
