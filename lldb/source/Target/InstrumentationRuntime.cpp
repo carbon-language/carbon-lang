@@ -40,17 +40,6 @@ InstrumentationRuntime::ModulesDidLoad(lldb_private::ModuleList &module_list, ll
     }
 }
 
-void
-InstrumentationRuntime::ModulesDidLoad(lldb_private::ModuleList &module_list)
-{
-}
-
-bool
-InstrumentationRuntime::IsActive()
-{
-    return false;
-}
-
 lldb::ThreadCollectionSP
 InstrumentationRuntime::GetBacktracesFromExtendedStopInfo(StructuredData::ObjectSP info)
 {

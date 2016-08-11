@@ -17,7 +17,6 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/InstrumentationRuntime.h"
-#include "lldb/Target/Process.h"
 #include "lldb/Core/StructuredData.h"
 
 namespace lldb_private {
@@ -60,26 +59,11 @@ public:
     void
     ModulesDidLoad(lldb_private::ModuleList &module_list) override;
     
-    bool
-    IsActive() override;
-    
     lldb::ThreadCollectionSP
     GetBacktracesFromExtendedStopInfo(StructuredData::ObjectSP info) override;
     
 private:
-    ThreadSanitizerRuntime(const lldb::ProcessSP &process_sp);
-    
-    lldb::ProcessSP
-    GetProcessSP ()
-    {
-        return m_process_wp.lock();
-    }
-
-    lldb::ModuleSP
-    GetRuntimeModuleSP ()
-    {
-        return m_runtime_module_wp.lock();
-    }
+    ThreadSanitizerRuntime(const lldb::ProcessSP &process_sp) : lldb_private::InstrumentationRuntime(process_sp) {}
 
     void
     Activate();
@@ -107,11 +91,6 @@ private:
     
     lldb::addr_t
     GetFirstNonInternalFramePc(StructuredData::ObjectSP trace);
-    
-    bool m_is_active;
-    lldb::ModuleWP m_runtime_module_wp;
-    lldb::ProcessWP m_process_wp;
-    lldb::user_id_t m_breakpoint_id;
 };
     
 } // namespace lldb_private
