@@ -1454,6 +1454,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v64i8, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v32i16, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v64i8, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v32i1,  Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v64i1, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v32i16, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v64i8, Custom);
     setOperationAction(ISD::SELECT,             MVT::v32i1, Custom);
@@ -1539,29 +1541,24 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     addRegisterClass(MVT::v4i1,   &X86::VK4RegClass);
     addRegisterClass(MVT::v2i1,   &X86::VK2RegClass);
 
-    setOperationAction(ISD::ADD,                MVT::v2i1, Expand);
-    setOperationAction(ISD::ADD,                MVT::v4i1, Expand);
-    setOperationAction(ISD::SUB,                MVT::v2i1, Expand);
-    setOperationAction(ISD::SUB,                MVT::v4i1, Expand);
-    setOperationAction(ISD::MUL,                MVT::v2i1, Expand);
-    setOperationAction(ISD::MUL,                MVT::v4i1, Expand);
+    for (auto VT : { MVT::v2i1, MVT::v4i1 }) {
+      setOperationAction(ISD::ADD,                VT, Expand);
+      setOperationAction(ISD::SUB,                VT, Expand);
+      setOperationAction(ISD::MUL,                VT, Expand);
+      setOperationAction(ISD::VSELECT,            VT, Expand);
 
-    setOperationAction(ISD::TRUNCATE,           MVT::v2i1, Custom);
-    setOperationAction(ISD::TRUNCATE,           MVT::v4i1, Custom);
-    setOperationAction(ISD::SETCC,              MVT::v4i1, Custom);
-    setOperationAction(ISD::SETCC,              MVT::v2i1, Custom);
-    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4i1, Custom);
+      setOperationAction(ISD::TRUNCATE,           VT, Custom);
+      setOperationAction(ISD::SETCC,              VT, Custom);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
+      setOperationAction(ISD::SELECT,             VT, Custom);
+      setOperationAction(ISD::BUILD_VECTOR,       VT, Custom);
+      setOperationAction(ISD::VECTOR_SHUFFLE,     VT, Custom);
+    }
+
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8i1, Custom);
+    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4i1, Custom);
     setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v8i1, Custom);
     setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v4i1, Custom);
-    setOperationAction(ISD::SELECT,             MVT::v4i1, Custom);
-    setOperationAction(ISD::SELECT,             MVT::v2i1, Custom);
-    setOperationAction(ISD::BUILD_VECTOR,       MVT::v4i1, Custom);
-    setOperationAction(ISD::BUILD_VECTOR,       MVT::v2i1, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2i1, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4i1, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v2i1, Expand);
-    setOperationAction(ISD::VSELECT,            MVT::v4i1, Expand);
 
     for (auto VT : { MVT::v4i32, MVT::v8i32 }) {
       setOperationAction(ISD::AND, VT, Legal);
@@ -12483,7 +12480,8 @@ X86TargetLowering::ExtractBitFromMaskVector(SDValue Op, SelectionDAG &DAG) const
   }
 
   unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
-  if (!Subtarget.hasDQI() && (VecVT.getVectorNumElements() <= 8)) {
+  if ((!Subtarget.hasDQI() && (VecVT.getVectorNumElements() == 8)) ||
+      (VecVT.getVectorNumElements() < 8)) {
     // Use kshiftlw/rw instruction.
     VecVT = MVT::v16i1;
     Vec = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, VecVT,
@@ -12492,8 +12490,9 @@ X86TargetLowering::ExtractBitFromMaskVector(SDValue Op, SelectionDAG &DAG) const
                       DAG.getIntPtrConstant(0, dl));
   }
   unsigned MaxSift = VecVT.getVectorNumElements() - 1;
-  Vec = DAG.getNode(X86ISD::VSHLI, dl, VecVT, Vec,
-                    DAG.getConstant(MaxSift - IdxVal, dl, MVT::i8));
+  if (MaxSift - IdxVal)
+    Vec = DAG.getNode(X86ISD::VSHLI, dl, VecVT, Vec,
+                      DAG.getConstant(MaxSift - IdxVal, dl, MVT::i8));
   Vec = DAG.getNode(X86ISD::VSRLI, dl, VecVT, Vec,
                     DAG.getConstant(MaxSift, dl, MVT::i8));
   return DAG.getNode(X86ISD::VEXTRACT, dl, MVT::i1, Vec,

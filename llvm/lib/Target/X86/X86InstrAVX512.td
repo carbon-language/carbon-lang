@@ -2229,18 +2229,12 @@ def : Pat<(store (i1 -1), addr:$dst), (MOV8mi addr:$dst, (i8 1))>;
 def : Pat<(store (i1  1), addr:$dst), (MOV8mi addr:$dst, (i8 1))>;
 def : Pat<(store (i1  0), addr:$dst), (MOV8mi addr:$dst, (i8 0))>;
 
-let Predicates = [HasAVX512] in {
-  def : Pat<(i1 (X86Vextract VK16:$src, (iPTR 0))),
-            (COPY_TO_REGCLASS VK16:$src, VK1)>;
-  def : Pat<(i1 (X86Vextract VK8:$src, (iPTR 0))),
-            (COPY_TO_REGCLASS VK8:$src, VK1)>;
-}
-let Predicates = [HasBWI] in {
-  def : Pat<(i1 (X86Vextract VK32:$src, (iPTR 0))),
-            (COPY_TO_REGCLASS VK32:$src, VK1)>;
-  def : Pat<(i1 (X86Vextract VK64:$src, (iPTR 0))),
-            (COPY_TO_REGCLASS VK64:$src, VK1)>;
-}
+def : Pat<(i1 (X86Vextract VK64:$src, (iPTR 0))), (COPY_TO_REGCLASS VK64:$src, VK1)>;
+def : Pat<(i1 (X86Vextract VK32:$src, (iPTR 0))), (COPY_TO_REGCLASS VK32:$src, VK1)>;
+def : Pat<(i1 (X86Vextract VK16:$src, (iPTR 0))), (COPY_TO_REGCLASS VK16:$src, VK1)>;
+def : Pat<(i1 (X86Vextract VK8:$src,  (iPTR 0))), (COPY_TO_REGCLASS VK8:$src,  VK1)>;
+def : Pat<(i1 (X86Vextract VK4:$src,  (iPTR 0))), (COPY_TO_REGCLASS VK4:$src,  VK1)>;
+def : Pat<(i1 (X86Vextract VK2:$src,  (iPTR 0))), (COPY_TO_REGCLASS VK2:$src,  VK1)>;
 
 // Mask unary operation
 // - KNOT
