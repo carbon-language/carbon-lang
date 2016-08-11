@@ -2620,10 +2620,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   auto *Callee = dyn_cast<Function>(CS.getCalledValue()->stripPointerCasts());
   if (!Callee)
     return false;
-  // The prototype of thunks are a lie, don't try to directly call such
-  // functions.
+
+  // The prototype of a thunk is a lie. Don't directly call such a function.
   if (Callee->hasFnAttribute("thunk"))
     return false;
+
   Instruction *Caller = CS.getInstruction();
   const AttributeSet &CallerPAL = CS.getAttributes();
 
