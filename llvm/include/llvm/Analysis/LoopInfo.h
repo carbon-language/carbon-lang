@@ -762,6 +762,7 @@ public:
 // Allow clients to walk the list of nested loops...
 template <> struct GraphTraits<const Loop*> {
   typedef const Loop NodeType;
+  typedef const Loop *NodeRef;
   typedef LoopInfo::iterator ChildIteratorType;
 
   static NodeType *getEntryNode(const Loop *L) { return L; }
@@ -775,6 +776,7 @@ template <> struct GraphTraits<const Loop*> {
 
 template <> struct GraphTraits<Loop*> {
   typedef Loop NodeType;
+  typedef Loop *NodeRef;
   typedef LoopInfo::iterator ChildIteratorType;
 
   static NodeType *getEntryNode(Loop *L) { return L; }
