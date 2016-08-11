@@ -424,3 +424,37 @@ define i64 @test_zext(i32 %in) {
   %res = zext i32 %in to i64
   ret i64 %res
 }
+
+; CHECK-LABEL: name: test_shl
+; CHECK: [[ARG1:%[0-9]+]](32) = COPY %w0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](32) = COPY %w1
+; CHECK-NEXT: [[RES:%[0-9]+]](32) = G_SHL s32 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %w0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %w0
+define i32 @test_shl(i32 %arg1, i32 %arg2) {
+  %res = shl i32 %arg1, %arg2
+  ret i32 %res
+}
+
+
+; CHECK-LABEL: name: test_lshr
+; CHECK: [[ARG1:%[0-9]+]](32) = COPY %w0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](32) = COPY %w1
+; CHECK-NEXT: [[RES:%[0-9]+]](32) = G_LSHR s32 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %w0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %w0
+define i32 @test_lshr(i32 %arg1, i32 %arg2) {
+  %res = lshr i32 %arg1, %arg2
+  ret i32 %res
+}
+
+; CHECK-LABEL: name: test_ashr
+; CHECK: [[ARG1:%[0-9]+]](32) = COPY %w0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](32) = COPY %w1
+; CHECK-NEXT: [[RES:%[0-9]+]](32) = G_ASHR s32 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %w0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %w0
+define i32 @test_ashr(i32 %arg1, i32 %arg2) {
+  %res = ashr i32 %arg1, %arg2
+  ret i32 %res
+}

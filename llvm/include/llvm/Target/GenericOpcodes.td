@@ -139,6 +139,27 @@ def G_XOR : Instruction {
   let isCommutable = 1;
 }
 
+// Generic left-shift.
+def G_SHL : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+}
+
+// Generic logical right-shift.
+def G_LSHR : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+}
+
+// Generic arithmetic right-shift.
+def G_ASHR : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+}
+
 //------------------------------------------------------------------------------
 // Memory ops
 //------------------------------------------------------------------------------
