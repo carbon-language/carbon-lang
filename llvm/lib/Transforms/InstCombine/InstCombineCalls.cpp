@@ -2617,8 +2617,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
 /// If the callee is a constexpr cast of a function, attempt to move the cast to
 /// the arguments of the call/invoke.
 bool InstCombiner::transformConstExprCastCall(CallSite CS) {
-  Function *Callee =
-    dyn_cast<Function>(CS.getCalledValue()->stripPointerCasts());
+  auto *Callee = dyn_cast<Function>(CS.getCalledValue()->stripPointerCasts());
   if (!Callee)
     return false;
   // The prototype of thunks are a lie, don't try to directly call such
