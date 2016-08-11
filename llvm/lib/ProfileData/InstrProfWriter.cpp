@@ -13,10 +13,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ProfileData/InstrProfWriter.h"
-#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/IR/ProfileSummary.h"
+#include "llvm/ProfileData/ProfileCommon.h"
 #include "llvm/Support/EndianStream.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/OnDiskHashTable.h"
+#include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <string>
 #include <tuple>
+#include <utility>
+#include <vector>
 
 using namespace llvm;
 
@@ -29,6 +37,7 @@ struct PatchItem {
 };
 
 namespace llvm {
+
 // A wrapper class to abstract writer stream with support of bytes
 // back patching.
 class ProfOStream {
@@ -40,6 +49,7 @@ public:
 
   uint64_t tell() { return OS.tell(); }
   void write(uint64_t V) { LE.write<uint64_t>(V); }
+
   // \c patch can only be called when all data is written and flushed.
   // For raw_string_ostream, the patch is done on the target string
   // directly and it won't be reflected in the stream's internal buffer.
@@ -65,6 +75,7 @@ public:
       }
     }
   }
+
   // If \c OS is an instance of \c raw_fd_ostream, this field will be
   // true. Otherwise, \c OS will be an raw_string_ostream.
   bool IsFDOStream;
@@ -139,7 +150,8 @@ public:
     }
   }
 };
-}
+
+} // end namespace llvm
 
 InstrProfWriter::InstrProfWriter(bool Sparse)
     : Sparse(Sparse), FunctionData(), ProfileKind(PF_Unknown),
@@ -152,6 +164,7 @@ void InstrProfWriter::setValueProfDataEndianness(
     support::endianness Endianness) {
   InfoObj->ValueProfDataEndianness = Endianness;
 }
+
 void InstrProfWriter::setOutputSparse(bool Sparse) {
   this->Sparse = Sparse;
 }
@@ -269,7 +282,7 @@ void InstrProfWriter::writeImpl(ProfOStream &OS) {
   // structure to be serialized out (to disk or buffer).
   std::unique_ptr<ProfileSummary> PS = ISB.getSummary();
   setSummary(TheSummary.get(), *PS);
-  InfoObj->SummaryBuilder = 0;
+  InfoObj->SummaryBuilder = nullptr;
 
   // Now do the final patch:
   PatchItem PatchItems[] = {

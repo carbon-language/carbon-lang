@@ -29,25 +29,43 @@
 
 #include "llvm/Transforms/IPO/WholeProgramDevirt.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/TypeMetadataUtils.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/IR/DebugLoc.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalAlias.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/PassRegistry.h"
+#include "llvm/PassSupport.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/Evaluator.h"
-#include "llvm/Transforms/Utils/Local.h"
-
+#include <algorithm>
+#include <cstddef>
+#include <map>
 #include <set>
+#include <string>
 
 using namespace llvm;
 using namespace wholeprogramdevirt;
@@ -179,7 +197,7 @@ struct VTableSlot {
   uint64_t ByteOffset;
 };
 
-}
+} // end anonymous namespace
 
 namespace llvm {
 
@@ -202,7 +220,7 @@ template <> struct DenseMapInfo<VTableSlot> {
   }
 };
 
-}
+} // end namespace llvm
 
 namespace {
 
@@ -292,10 +310,12 @@ struct DevirtModule {
 
 struct WholeProgramDevirt : public ModulePass {
   static char ID;
+
   WholeProgramDevirt() : ModulePass(ID) {
     initializeWholeProgramDevirtPass(*PassRegistry::getPassRegistry());
   }
-  bool runOnModule(Module &M) {
+
+  bool runOnModule(Module &M) override {
     if (skipModule(M))
       return false;
 
@@ -303,7 +323,7 @@ struct WholeProgramDevirt : public ModulePass {
   }
 };
 
-} // anonymous namespace
+} // end anonymous namespace
 
 INITIALIZE_PASS(WholeProgramDevirt, "wholeprogramdevirt",
                 "Whole program devirtualization", false, false)
@@ -462,7 +482,7 @@ bool DevirtModule::tryUniqueRetValOpt(
     MutableArrayRef<VirtualCallSite> CallSites) {
   // IsOne controls whether we look for a 0 or a 1.
   auto tryUniqueRetValOptFor = [&](bool IsOne) {
-    const TypeMemberInfo *UniqueMember = 0;
+    const TypeMemberInfo *UniqueMember = nullptr;
     for (const VirtualCallTarget &Target : TargetsForSlot) {
       if (Target.RetVal == (IsOne ? 1 : 0)) {
         if (UniqueMember)
