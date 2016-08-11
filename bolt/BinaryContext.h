@@ -39,6 +39,7 @@
 #include <set>
 #include <string>
 #include <system_error>
+#include <unordered_map>
 #include <vector>
 
 namespace llvm {
@@ -64,6 +65,9 @@ public:
 
   /// [address] -> [name1], [name2], ...
   std::multimap<uint64_t, std::string> GlobalAddresses;
+
+  /// [MCSymbol] -> [BinaryFunction]
+  std::unordered_map<const MCSymbol *, const BinaryFunction *> SymbolToFunctionMap;
 
   /// Map virtual address to a section.
   std::map<uint64_t, SectionRef> AllocatableSections;
@@ -171,6 +175,11 @@ public:
 
     // Add to the reverse map. There could multiple names at the same address.
     GlobalAddresses.emplace(std::make_pair(Address, Name));
+  }
+
+  const BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) const {
+    auto BFI = SymbolToFunctionMap.find(Symbol);
+    return BFI == SymbolToFunctionMap.end() ? nullptr : BFI->second;
   }
 
   /// Populate some internal data structures with debug info.

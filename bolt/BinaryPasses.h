@@ -19,6 +19,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 
 namespace llvm {
 namespace bolt {
@@ -38,7 +39,8 @@ class OptimizeBodylessFunctions : public BinaryFunctionPass {
 private:
   /// EquivalentCallTarget[F] = G ==> function F is simply a tail call to G,
   /// thus calls to F can be optimized to calls to G.
-  std::map<std::string, const BinaryFunction *> EquivalentCallTarget;
+  std::unordered_map<const MCSymbol *, const BinaryFunction *>
+    EquivalentCallTarget;
 
   void analyze(BinaryFunction &BF,
                BinaryContext &BC,
@@ -58,9 +60,7 @@ public:
 /// correctness and we may break exception handling because of this.
 class InlineSmallFunctions : public BinaryFunctionPass {
 private:
-  std::set<std::string> InliningCandidates;
-  /// Maps function name to BinaryFunction.
-  std::map<std::string, const BinaryFunction *> FunctionByName;
+  std::set<const BinaryFunction *> InliningCandidates;
 
   /// Maximum number of instructions in an inlined function.
   static const unsigned kMaxInstructions = 8;
@@ -226,7 +226,7 @@ class IdenticalCodeFolding : public BinaryFunctionPass {
     CallSite(BinaryFunction *Caller, unsigned BlockIndex, unsigned InstrIndex) :
       Caller(Caller), BlockIndex(BlockIndex), InstrIndex(InstrIndex) { }
   };
-  using CallerMap = std::map<BinaryFunction *, std::vector<CallSite>>;
+  using CallerMap = std::map<const BinaryFunction *, std::vector<CallSite>>;
   CallerMap Callers;
 
   /// Replaces all calls to BFTOFold with calls to BFToReplaceWith and merges

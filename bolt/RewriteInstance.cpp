@@ -342,9 +342,11 @@ ExecutableFileMemoryManager::~ExecutableFileMemoryManager() {
   }
 }
 
+namespace {
+
 /// Create BinaryContext for a given architecture \p ArchName and
 /// triple \p TripleName.
-static std::unique_ptr<BinaryContext> CreateBinaryContext(
+std::unique_ptr<BinaryContext> createBinaryContext(
     std::string ArchName,
     std::string TripleName,
     const DataReader &DR,
@@ -451,10 +453,12 @@ static std::unique_ptr<BinaryContext> CreateBinaryContext(
   return BC;
 }
 
+} // namespace
+
 RewriteInstance::RewriteInstance(ELFObjectFileBase *File,
                                  const DataReader &DR)
     : InputFile(File),
-      BC(CreateBinaryContext("x86-64", "x86_64-unknown-linux", DR,
+      BC(createBinaryContext("x86-64", "x86_64-unknown-linux", DR,
          std::unique_ptr<DWARFContext>(new DWARFContextInMemory(*InputFile)))) {
 }
 
@@ -464,7 +468,7 @@ void RewriteInstance::reset() {
   BinaryFunctions.clear();
   FileSymRefs.clear();
   auto &DR = BC->DR;
-  BC = CreateBinaryContext("x86-64", "x86_64-unknown-linux", DR,
+  BC = createBinaryContext("x86-64", "x86_64-unknown-linux", DR,
            std::unique_ptr<DWARFContext>(new DWARFContextInMemory(*InputFile)));
   CFIRdWrt.reset(nullptr);
   SectionMM.reset(nullptr);
@@ -780,26 +784,24 @@ void RewriteInstance::discoverFileObjects() {
       }
     }
 
+    BinaryFunction *BF{nullptr};
     auto BFI = BinaryFunctions.find(Address);
     if (BFI != BinaryFunctions.end()) {
+      BF = &BFI->second;
       // Duplicate function name. Make sure everything matches before we add
       // an alternative name.
-      if (SymbolSize != BFI->second.getSize()) {
+      if (SymbolSize != BF->getSize()) {
         errs() << "BOLT-WARNING: size mismatch for duplicate entries "
                << UniqueName << ':' << SymbolSize << " and "
-               << BFI->second << ':' << BFI->second.getSize() << '\n';
+               << *BF << ':' << BF->getSize() << '\n';
       }
-      BFI->second.addAlternativeName(UniqueName);
+      BF->addAlternativeName(UniqueName);
     } else {
-      // Create the function and add it to the map.
-      auto Result = BinaryFunctions.emplace(
-          Address,
-          BinaryFunction(UniqueName, Symbol, *Section, Address, SymbolSize,
-                         *BC, IsSimple));
-      BFI = Result.first;
+      BF = createBinaryFunction(UniqueName, *Section, Address, SymbolSize,
+                                IsSimple);
     }
     if (!AlternativeName.empty())
-      BFI->second.addAlternativeName(AlternativeName);
+      BF->addAlternativeName(AlternativeName);
   }
 
   if (!SeenFileName && BC->DR.hasLocalsWithFileName() && !opts::AllowStripped) {
@@ -810,6 +812,17 @@ void RewriteInstance::discoverFileObjects() {
               "wish to proceed, use -allow-stripped option.\n";
     exit(1);
   }
+}
+
+BinaryFunction *RewriteInstance::createBinaryFunction(
+    const std::string &Name, SectionRef Section, uint64_t Address,
+    uint64_t Size, bool IsSimple) {
+  auto Result = BinaryFunctions.emplace(
+      Address, BinaryFunction(Name, Section, Address, Size, *BC, IsSimple));
+  assert(Result.second == true && "unexpected duplicate function");
+  auto *BF = &Result.first->second;
+  BC->SymbolToFunctionMap[BF->getSymbol()] = BF;
+  return BF;
 }
 
 void RewriteInstance::readSpecialSections() {

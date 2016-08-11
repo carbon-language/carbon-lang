@@ -119,6 +119,8 @@ private:
 class AddressRangesOwner {
 public:
   virtual void setAddressRangesOffset(uint32_t Offset) = 0;
+
+  virtual ~AddressRangesOwner() {}
 };
 
 /// Represents DWARF entities that have generic address ranges, maintaining

@@ -107,9 +107,6 @@ private:
   /// A list of function names.
   std::vector<std::string> Names;
 
-  /// Symbol associated with this function in the input.
-  SymbolRef Symbol;
-
   /// Containing section
   SectionRef Section;
 
@@ -278,7 +275,8 @@ private:
   /// construction. Map from tail call terminated basic block to a struct with
   /// information about the tail call.
   struct TailCallInfo {
-    uint32_t Offset;            // offset of the tail call from the function start
+    uint32_t Offset;            // offset of the tail call from the function
+                                // start
     uint32_t Index;             // index of the tail call in the basic block
     uint64_t TargetAddress;     // address of the callee
     uint64_t Count{0};          // taken count from profile data
@@ -366,7 +364,23 @@ private:
     Itr itr;
   };
 
+  BinaryFunction& operator=(const BinaryFunction &) = delete;
+  BinaryFunction(const BinaryFunction &) = delete;
+
+  friend class RewriteInstance;
+
+  /// Creation should be handled by RewriteInstance::createBinaryFunction().
+  BinaryFunction(const std::string &Name, SectionRef Section, uint64_t Address,
+                 uint64_t Size, BinaryContext &BC, bool IsSimple) :
+      Names({Name}), Section(Section), Address(Address),
+      IdenticalFunctionAddress(Address), Size(Size), BC(BC), IsSimple(IsSimple),
+      CodeSectionName(".text." + Name), FunctionNumber(++Count) {
+    OutputSymbol = BC.Ctx->getOrCreateSymbol(Name);
+  }
+
 public:
+
+  BinaryFunction(BinaryFunction &&) = default;
 
   typedef Iterator<BasicBlockListType::iterator, BinaryBasicBlock> iterator;
   typedef Iterator<BasicBlockListType::const_iterator,
@@ -444,21 +458,6 @@ public:
   }
   inline iterator_range<const_cfi_iterator> cie() const {
     return iterator_range<const_cfi_iterator>(cie_begin(), cie_end());
-  }
-
-  BinaryFunction& operator=(const BinaryFunction &) = delete;
-  BinaryFunction(const BinaryFunction &) = delete;
-
-  BinaryFunction(BinaryFunction &&) = default;
-
-  BinaryFunction(const std::string &Name, SymbolRef Symbol, SectionRef Section,
-                 uint64_t Address, uint64_t Size, BinaryContext &BC,
-                 bool IsSimple = true) :
-      Names({Name}), Symbol(Symbol), Section(Section), Address(Address),
-      IdenticalFunctionAddress(Address), Size(Size), BC(BC), IsSimple(IsSimple),
-      CodeSectionName(".text." + Name), FunctionNumber(++Count)
-  {
-    OutputSymbol = BC.Ctx->getOrCreateSymbol(Name);
   }
 
   /// Modify code layout making necessary adjustments to instructions at the

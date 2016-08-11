@@ -81,16 +81,11 @@ void OptimizeBodylessFunctions::analyze(
   auto Expr = dyn_cast<MCSymbolRefExpr>(Op1.getExpr());
   if (!Expr)
     return;
-  auto AddressIt = BC.GlobalSymbols.find(Expr->getSymbol().getName());
-  if (AddressIt == BC.GlobalSymbols.end())
-    return;
-  auto CalleeIt = BFs.find(AddressIt->second);
-  if (CalleeIt == BFs.end())
+  const auto *Function = BC.getFunctionForSymbol(&Expr->getSymbol());
+  if (!Function)
     return;
 
-  assert(&Expr->getSymbol() == CalleeIt->second.getSymbol());
-
-  EquivalentCallTarget[BF.getSymbol()->getName()] = &CalleeIt->second;
+  EquivalentCallTarget[BF.getSymbol()] = Function;
 }
 
 void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
@@ -112,9 +107,8 @@ void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
       // Iteratively update target since we could have f1() calling f2()
       // calling f3() calling f4() and we want to output f1() directly
       // calling f4().
-      while (EquivalentCallTarget.count(Target->getName())) {
-        Target =
-          EquivalentCallTarget.find(Target->getName())->second->getSymbol();
+      while (EquivalentCallTarget.count(Target)) {
+        Target = EquivalentCallTarget.find(Target)->second->getSymbol();
       }
       if (Target == OriginalTarget)
         continue;
@@ -163,7 +157,7 @@ void InlineSmallFunctions::findInliningCandidates(
         BB.size() <= kMaxInstructions &&
         BC.MIA->isReturn(LastInstruction) &&
         !BC.MIA->isTailCall(LastInstruction)) {
-      InliningCandidates.insert(Function.getSymbol()->getName());
+      InliningCandidates.insert(&Function);
     }
   }
 
@@ -205,7 +199,7 @@ void InlineSmallFunctions::findInliningCandidatesAggressive(
       }
     }
     if (!FoundCFI)
-      InliningCandidates.insert(Function.getSymbol()->getName());
+      InliningCandidates.insert(&Function);
   }
 
   DEBUG(errs() << "BOLT-DEBUG: " << InliningCandidates.size()
@@ -568,26 +562,26 @@ bool InlineSmallFunctions::inlineCallsInFunction(
         auto Target = dyn_cast<MCSymbolRefExpr>(
             Inst.getOperand(0).getExpr());
         assert(Target && "Not MCSymbolRefExpr");
-        auto FunctionIt = FunctionByName.find(Target->getSymbol().getName());
-        if (FunctionIt != FunctionByName.end()) {
-          auto &TargetFunction = *FunctionIt->second;
+        const auto *TargetFunction =
+          BC.getFunctionForSymbol(&Target->getSymbol());
+        if (TargetFunction) {
           bool CallToInlineableFunction =
-            InliningCandidates.count(TargetFunction.getSymbol()->getName());
+            InliningCandidates.count(TargetFunction);
 
           totalInlineableCalls +=
             CallToInlineableFunction * BB->getExecutionCount();
 
           if (CallToInlineableFunction &&
-              TargetFunction.getSize() + ExtraSize
+              TargetFunction->getSize() + ExtraSize
               + Function.estimateHotSize() < Function.getMaxSize()) {
             auto NextInstIt = std::next(InstIt);
-            inlineCall(BC, *BB, &Inst, *TargetFunction.begin());
+            inlineCall(BC, *BB, &Inst, *TargetFunction->begin());
             DidInlining = true;
             DEBUG(errs() << "BOLT-DEBUG: Inlining call to "
-                         << TargetFunction << " in "
+                         << *TargetFunction << " in "
                          << Function << "\n");
             InstIt = NextInstIt;
-            ExtraSize += TargetFunction.getSize();
+            ExtraSize += TargetFunction->getSize();
             inlinedDynamicCalls += BB->getExecutionCount();
             continue;
           }
@@ -637,29 +631,29 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
         auto Target = dyn_cast<MCSymbolRefExpr>(
             Inst.getOperand(0).getExpr());
         assert(Target && "Not MCSymbolRefExpr");
-        auto FunctionIt = FunctionByName.find(Target->getSymbol().getName());
-        if (FunctionIt != FunctionByName.end()) {
-          auto &TargetFunction = *FunctionIt->second;
+        const auto *TargetFunction =
+          BC.getFunctionForSymbol(&Target->getSymbol());
+        if (TargetFunction) {
           bool CallToInlineableFunction =
-            InliningCandidates.count(TargetFunction.getSymbol()->getName());
+            InliningCandidates.count(TargetFunction);
 
           totalInlineableCalls +=
             CallToInlineableFunction * BB->getExecutionCount();
 
           if (CallToInlineableFunction &&
-              TargetFunction.getSize() + ExtraSize
+              TargetFunction->getSize() + ExtraSize
               + Function.estimateHotSize() < Function.getMaxSize()) {
             unsigned NextInstIndex = 0;
             BinaryBasicBlock *NextBB = nullptr;
             std::tie(NextBB, NextInstIndex) =
-              inlineCall(BC, Function, BB, InstIndex, TargetFunction);
+              inlineCall(BC, Function, BB, InstIndex, *TargetFunction);
             DidInlining = true;
             DEBUG(errs() << "BOLT-DEBUG: Inlining call to "
-                         << TargetFunction << " in "
+                         << *TargetFunction << " in "
                          << Function << "\n");
             InstIndex = NextBB == BB ? NextInstIndex : BB->size();
             InstIt = NextBB == BB ? BB->begin() + NextInstIndex : BB->end();
-            ExtraSize += TargetFunction.getSize();
+            ExtraSize += TargetFunction->getSize();
             inlinedDynamicCalls += BB->getExecutionCount();
             continue;
           }
@@ -678,10 +672,6 @@ void InlineSmallFunctions::runOnFunctions(
     BinaryContext &BC,
     std::map<uint64_t, BinaryFunction> &BFs,
     std::set<uint64_t> &) {
-  for (auto &It : BFs) {
-    FunctionByName[It.second.getSymbol()->getName()] = &It.second;
-  }
-
   findInliningCandidates(BC, BFs);
 
   std::vector<BinaryFunction *> ConsideredFunctions;
@@ -878,26 +868,21 @@ bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
             cast<MCSymbolRefExpr>(Instr.getOperand(0).getExpr());
           auto const &TailTarget = TailTargetSymExpr->getSymbol();
 
-          // Lookup the address for the current function and
-          // the tail call target.
-          auto const FnAddress =
-            BC.GlobalSymbols.find(BF.getSymbol()->getName());
+          // Lookup the address for the tail call target.
           auto const TailAddress = BC.GlobalSymbols.find(TailTarget.getName());
-          if (FnAddress == BC.GlobalSymbols.end() ||
-              TailAddress == BC.GlobalSymbols.end()) {
+          if (TailAddress == BC.GlobalSymbols.end())
             continue;
-          }
 
           // Check to make sure we would be doing a forward jump.
           // This assumes the address range of the current BB and the
           // tail call target address don't overlap.
-          if (FnAddress->second < TailAddress->second) {
+          if (BF.getAddress() < TailAddress->second) {
             ++NumTailCallsPatched;
             ++NumLocalPatchedTailCalls;
 
             // Is the original jump forward or backward?
             const bool isForward =
-              TailAddress->second > FnAddress->second + BB->getOffset();
+              TailAddress->second > BF.getAddress() + BB->getOffset();
 
             if (isForward) ++NumOrigForwardBranches;
 
@@ -1118,25 +1103,19 @@ void IdenticalCodeFolding::discoverCallers(
         }
 
         // Find the target function for this call.
-        const MCExpr *TargetExpr = TargetOp.getExpr();
+        const auto *TargetExpr = TargetOp.getExpr();
         assert(TargetExpr->getKind() == MCExpr::SymbolRef);
-        const MCSymbol &TargetSymbol =
+        const auto &TargetSymbol =
           dyn_cast<MCSymbolRefExpr>(TargetExpr)->getSymbol();
-        auto AI = BC.GlobalSymbols.find(TargetSymbol.getName());
-        assert(AI != BC.GlobalSymbols.end());
-        uint64_t TargetAddress = AI->second;
-        auto FI = BFs.find(TargetAddress);
-        if (FI == BFs.end()) {
+        const auto *Function = BC.getFunctionForSymbol(&TargetSymbol);
+        if (!Function) {
           // Call to a function without a BinaryFunction object.
           ++InstrIndex;
           continue;
         }
-        BinaryFunction *Callee = &FI->second;
-
         // Insert a tuple in the Callers map.
-        Callers[Callee].emplace_back(
+        Callers[Function].emplace_back(
           CallSite(&Caller, BlockIndex, InstrIndex));
-
         ++InstrIndex;
       }
     }

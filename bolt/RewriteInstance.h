@@ -332,6 +332,12 @@ private:
   /// Total hotness score according to profiling data for this binary.
   uint64_t TotalScore{0};
 
+  /// Construct BinaryFunction object and add it to internal maps.
+  BinaryFunction *createBinaryFunction(const std::string &Name,
+                                       object::SectionRef Section,
+                                       uint64_t Address,
+                                       uint64_t Size,
+                                       bool IsSimple);
 };
 
 } // namespace bolt
