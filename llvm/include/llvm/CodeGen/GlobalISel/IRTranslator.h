@@ -252,7 +252,7 @@ private:
   // at the proper place. E.g., Entry block or dominator block
   // of each constant depending on how fancy we want to be.
   // * Clear the different maps.
-  void finalize();
+  void finalizeFunction();
 
   /// Get the VReg that represents \p Val.
   /// If such VReg does not exist, it is created.

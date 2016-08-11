@@ -397,3 +397,12 @@ define i32 @test_undef() {
 define i8* @test_constant_inttoptr() {
   ret i8* inttoptr(i64 1 to i8*)
 }
+
+  ; This failed purely because the Constant -> VReg map was kept across
+  ; functions, so reuse the "i64 1" from above.
+; CHECK-LABEL: name: test_reused_constant
+; CHECK: [[ONE:%[0-9]+]](64) = G_CONSTANT s64 1
+; CHECK: %x0 = COPY [[ONE]]
+define i64 @test_reused_constant() {
+  ret i64 1
+}

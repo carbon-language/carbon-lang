@@ -311,7 +311,9 @@ bool IRTranslator::translate(const Constant &C, unsigned Reg) {
 }
 
 
-void IRTranslator::finalize() {
+void IRTranslator::finalizeFunction() {
+  finishPendingPhis();
+
   // Release the memory used by the different maps we
   // needed during the translation.
   ValToVReg.clear();
@@ -362,7 +364,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  finishPendingPhis();
+  finalizeFunction();
 
   // Now that the MachineFrameInfo has been configured, no further changes to
   // the reserved registers are possible.
