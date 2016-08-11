@@ -46,7 +46,7 @@ Error Config::addSaveTemps(std::string OutputFileName,
   auto setHook = [&](std::string PathSuffix, ModuleHookFn &Hook) {
     // Keep track of the hook provided by the linker, which also needs to run.
     ModuleHookFn LinkerHook = Hook;
-    Hook = [=](size_t Task, Module &M) {
+    Hook = [=](unsigned Task, Module &M) {
       // If the linker's hook returned false, we need to pass that result
       // through.
       if (LinkerHook && !LinkerHook(Task, M))
@@ -115,7 +115,8 @@ createTargetMachine(Config &C, StringRef TheTriple, const Target *TheTarget) {
       C.CodeModel, C.CGOptLevel));
 }
 
-bool opt(Config &C, TargetMachine *TM, size_t Task, Module &M, bool IsThinLto) {
+bool opt(Config &C, TargetMachine *TM, unsigned Task, Module &M,
+         bool IsThinLto) {
   M.setDataLayout(TM->createDataLayout());
 
   legacy::PassManager passes;
@@ -143,7 +144,7 @@ bool opt(Config &C, TargetMachine *TM, size_t Task, Module &M, bool IsThinLto) {
   return true;
 }
 
-void codegen(Config &C, TargetMachine *TM, AddStreamFn AddStream, size_t Task,
+void codegen(Config &C, TargetMachine *TM, AddStreamFn AddStream, unsigned Task,
              Module &M) {
   if (C.PreCodeGenModuleHook && !C.PreCodeGenModuleHook(Task, M))
     return;
@@ -234,8 +235,8 @@ Error lto::backend(Config &C, AddStreamFn AddStream,
   return Error();
 }
 
-Error lto::thinBackend(Config &C, size_t Task, AddStreamFn AddStream, Module &M,
-                       ModuleSummaryIndex &CombinedIndex,
+Error lto::thinBackend(Config &C, unsigned Task, AddStreamFn AddStream,
+                       Module &M, ModuleSummaryIndex &CombinedIndex,
                        const FunctionImporter::ImportMapTy &ImportList,
                        const GVSummaryMapTy &DefinedGlobals,
                        MapVector<StringRef, MemoryBufferRef> &ModuleMap) {

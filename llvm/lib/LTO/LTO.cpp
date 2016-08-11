@@ -185,7 +185,7 @@ LTO::LTO(Config Conf, ThinBackend Backend,
 void LTO::addSymbolToGlobalRes(IRObjectFile *Obj,
                                SmallPtrSet<GlobalValue *, 8> &Used,
                                const InputFile::Symbol &Sym,
-                               SymbolResolution Res, size_t Partition) {
+                               SymbolResolution Res, unsigned Partition) {
   GlobalValue *GV = Obj->getSymbolGV(Sym.I->getRawDataRefImpl());
 
   auto &GlobalRes = GlobalResolutions[Sym.getName()];
@@ -345,7 +345,7 @@ Error LTO::addThinLTO(std::unique_ptr<InputFile> Input,
   return Error();
 }
 
-size_t LTO::getMaxTasks() const {
+unsigned LTO::getMaxTasks() const {
   CalledGetMaxTasks = true;
   return RegularLTO.ParallelCodeGenParallelismLevel + ThinLTO.ModuleMap.size();
 }
@@ -408,7 +408,7 @@ public:
         ModuleToDefinedGVSummaries(ModuleToDefinedGVSummaries) {}
 
   virtual ~ThinBackendProc() {}
-  virtual Error start(size_t Task, MemoryBufferRef MBRef,
+  virtual Error start(unsigned Task, MemoryBufferRef MBRef,
                       StringMap<FunctionImporter::ImportMapTy> &ImportLists,
                       MapVector<StringRef, MemoryBufferRef> &ModuleMap) = 0;
   virtual Error wait() = 0;
@@ -430,7 +430,7 @@ public:
         BackendThreadPool(ThinLTOParallelismLevel) {}
 
   Error
-  runThinLTOBackendThread(AddStreamFn AddStream, size_t Task,
+  runThinLTOBackendThread(AddStreamFn AddStream, unsigned Task,
                           MemoryBufferRef MBRef,
                           ModuleSummaryIndex &CombinedIndex,
                           const FunctionImporter::ImportMapTy &ImportList,
@@ -446,7 +446,7 @@ public:
                        ImportList, DefinedGlobals, ModuleMap);
   }
 
-  Error start(size_t Task, MemoryBufferRef MBRef,
+  Error start(unsigned Task, MemoryBufferRef MBRef,
               StringMap<FunctionImporter::ImportMapTy> &ImportLists,
               MapVector<StringRef, MemoryBufferRef> &ModuleMap) override {
     StringRef ModulePath = MBRef.getBufferIdentifier();
@@ -529,7 +529,7 @@ public:
     return NewPath.str();
   }
 
-  Error start(size_t Task, MemoryBufferRef MBRef,
+  Error start(unsigned Task, MemoryBufferRef MBRef,
               StringMap<FunctionImporter::ImportMapTy> &ImportLists,
               MapVector<StringRef, MemoryBufferRef> &ModuleMap) override {
     StringRef ModulePath = MBRef.getBufferIdentifier();
@@ -629,8 +629,8 @@ Error LTO::runThinLTO(AddStreamFn AddStream) {
   // ParallelCodeGenParallelismLevel, as tasks 0 through
   // ParallelCodeGenParallelismLevel-1 are reserved for parallel code generation
   // partitions.
-  size_t Task = RegularLTO.ParallelCodeGenParallelismLevel;
-  size_t Partition = 1;
+  unsigned Task = RegularLTO.ParallelCodeGenParallelismLevel;
+  unsigned Partition = 1;
 
   for (auto &Mod : ThinLTO.ModuleMap) {
     if (Error E = BackendProc->start(Task, Mod.second, ImportLists,

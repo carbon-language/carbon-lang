@@ -84,7 +84,7 @@ struct Config {
   ///
   /// Note that in out-of-process backend scenarios, none of the hooks will be
   /// called for ThinLTO tasks.
-  typedef std::function<bool(size_t Task, Module &)> ModuleHookFn;
+  typedef std::function<bool(unsigned Task, Module &)> ModuleHookFn;
 
   /// This module hook is called after linking (regular LTO) or loading
   /// (ThinLTO) the module, before modifying it.
@@ -191,7 +191,7 @@ struct Config {
 /// return a output stream to write the native object to.
 ///
 /// Stream callbacks must be thread safe.
-typedef std::function<std::unique_ptr<raw_pwrite_stream>(size_t Task)>
+typedef std::function<std::unique_ptr<raw_pwrite_stream>(unsigned Task)>
     AddStreamFn;
 
 /// A derived class of LLVMContext that initializes itself according to a given

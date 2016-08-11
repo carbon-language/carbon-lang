@@ -39,12 +39,11 @@ Error backend(Config &C, AddStreamFn AddStream,
               std::unique_ptr<Module> M);
 
 /// Runs a ThinLTO backend.
-Error thinBackend(Config &C, size_t Task, AddStreamFn AddStream, Module &M,
+Error thinBackend(Config &C, unsigned Task, AddStreamFn AddStream, Module &M,
                   ModuleSummaryIndex &CombinedIndex,
                   const FunctionImporter::ImportMapTy &ImportList,
                   const GVSummaryMapTy &DefinedGlobals,
                   MapVector<StringRef, MemoryBufferRef> &ModuleMap);
-
 }
 }
 

@@ -291,7 +291,7 @@ public:
   /// Returns an upper bound on the number of tasks that the client may expect.
   /// This may only be called after all IR object files have been added. For a
   /// full description of tasks see LTOBackend.h.
-  size_t getMaxTasks() const;
+  unsigned getMaxTasks() const;
 
   /// Runs the LTO pipeline. This function calls the supplied AddStream function
   /// to add native object files to the link.
@@ -343,16 +343,16 @@ private:
     /// that we use partition 0 for all parallel LTO code generation partitions.
     /// Any partitioning of the combined LTO object is done internally by the
     /// LTO backend.
-    size_t Partition = Unknown;
+    unsigned Partition = Unknown;
 
     /// Special partition numbers.
     enum {
       /// A partition number has not yet been assigned to this global.
-      Unknown = -1ull,
+      Unknown = -1u,
 
       /// This global is either used by more than one partition or has an
       /// external reference, and therefore cannot be internalized.
-      External = -2ull,
+      External = -2u,
     };
   };
 
@@ -364,7 +364,7 @@ private:
   void addSymbolToGlobalRes(object::IRObjectFile *Obj,
                             SmallPtrSet<GlobalValue *, 8> &Used,
                             const InputFile::Symbol &Sym, SymbolResolution Res,
-                            size_t Partition);
+                            unsigned Partition);
 
   Error addRegularLTO(std::unique_ptr<InputFile> Input,
                       ArrayRef<SymbolResolution> Res);
