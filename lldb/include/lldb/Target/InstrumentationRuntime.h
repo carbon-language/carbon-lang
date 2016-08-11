@@ -87,6 +87,19 @@ protected:
         m_is_active = IsActive;
     }
 
+    /// Return a regular expression which can be used to identify a valid version of the runtime library.
+    virtual const RegularExpression &
+    GetPatternForRuntimeLibrary() = 0;
+
+    /// Check whether \p module_sp corresponds to a valid runtime library.
+    virtual bool
+    CheckIfRuntimeIsValid(const lldb::ModuleSP module_sp) = 0;
+
+    /// Register a breakpoint in the runtime library and perform any other necessary initialization. The runtime library
+    /// is guaranteed to be loaded.
+    virtual void
+    Activate() = 0;
+
 public:
     
     static void
@@ -94,8 +107,8 @@ public:
 
     /// Look for the instrumentation runtime in \p module_list. Register and activate the runtime if this hasn't already
     /// been done.
-    virtual void
-    ModulesDidLoad(lldb_private::ModuleList &module_list) = 0;
+    void
+    ModulesDidLoad(lldb_private::ModuleList &module_list);
 
     bool
     IsActive() const

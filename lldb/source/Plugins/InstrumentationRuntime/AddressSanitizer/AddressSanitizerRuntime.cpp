@@ -12,7 +12,6 @@
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"
-#include "lldb/Core/ModuleList.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Core/PluginManager.h"
@@ -68,46 +67,21 @@ AddressSanitizerRuntime::~AddressSanitizerRuntime()
     Deactivate();
 }
 
-bool ModuleContainsASanRuntime(Module * module)
+const RegularExpression &
+AddressSanitizerRuntime::GetPatternForRuntimeLibrary()
 {
-    const Symbol* symbol = module->FindFirstSymbolWithNameAndType(
-            ConstString("__asan_get_alloc_stack"),
-            lldb::eSymbolTypeAny);
-
-    return symbol != nullptr;
+    // FIXME: This shouldn't include the "dylib" suffix.
+    static RegularExpression regex("libclang_rt.asan_(.*)_dynamic\\.dylib");
+    return regex;
 }
 
-void
-AddressSanitizerRuntime::ModulesDidLoad(lldb_private::ModuleList &module_list)
+bool
+AddressSanitizerRuntime::CheckIfRuntimeIsValid(const lldb::ModuleSP module_sp)
 {
-    if (IsActive())
-        return;
-    
-    if (GetRuntimeModuleSP()) {
-        Activate();
-        return;
-    }
+    const Symbol *symbol =
+        module_sp->FindFirstSymbolWithNameAndType(ConstString("__asan_get_alloc_stack"), lldb::eSymbolTypeAny);
 
-    std::lock_guard<std::recursive_mutex> guard(module_list.GetMutex());
-    const size_t num_modules = module_list.GetSize();
-    for (size_t i = 0; i < num_modules; ++i)
-    {
-        Module *module_pointer = module_list.GetModulePointerAtIndexUnlocked(i);
-        const FileSpec & file_spec = module_pointer->GetFileSpec();
-        if (! file_spec)
-            continue;
-        
-        static RegularExpression g_asan_runtime_regex("libclang_rt.asan_(.*)_dynamic\\.dylib");
-        if (g_asan_runtime_regex.Execute (file_spec.GetFilename().GetCString()) || module_pointer->IsExecutable())
-        {
-            if (ModuleContainsASanRuntime(module_pointer))
-            {
-                SetRuntimeModuleSP(module_pointer->shared_from_this());
-                Activate();
-                return;
-            }
-        }
-    }
+    return symbol != nullptr;
 }
 
 #define RETRIEVE_REPORT_DATA_FUNCTION_TIMEOUT_USEC 2*1000*1000

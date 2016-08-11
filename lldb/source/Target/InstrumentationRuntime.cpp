@@ -13,7 +13,10 @@
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleList.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Target/InstrumentationRuntime.h"
 
 using namespace lldb;
@@ -38,6 +41,38 @@ InstrumentationRuntime::ModulesDidLoad(lldb_private::ModuleList &module_list, ll
             runtimes[type] = create_callback(process->shared_from_this());
         }
     }
+}
+
+void
+InstrumentationRuntime::ModulesDidLoad(lldb_private::ModuleList &module_list)
+{
+    if (IsActive())
+        return;
+
+    if (GetRuntimeModuleSP())
+    {
+        Activate();
+        return;
+    }
+
+    module_list.ForEach([this](const lldb::ModuleSP module_sp) -> bool {
+        const FileSpec &file_spec = module_sp->GetFileSpec();
+        if (!file_spec)
+            return true; // Keep iterating.
+
+        const RegularExpression &runtime_regex = GetPatternForRuntimeLibrary();
+        if (runtime_regex.Execute(file_spec.GetFilename().GetCString()) || module_sp->IsExecutable())
+        {
+            if (CheckIfRuntimeIsValid(module_sp))
+            {
+                SetRuntimeModuleSP(module_sp);
+                Activate();
+                return false; // Stop iterating, we're done.
+            }
+        }
+
+        return true;
+    });
 }
 
 lldb::ThreadCollectionSP

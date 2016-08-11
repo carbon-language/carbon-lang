@@ -56,17 +56,20 @@ public:
         return 1;
     }
     
-    void
-    ModulesDidLoad(lldb_private::ModuleList &module_list) override;
-    
     lldb::ThreadCollectionSP
     GetBacktracesFromExtendedStopInfo(StructuredData::ObjectSP info) override;
     
 private:
     ThreadSanitizerRuntime(const lldb::ProcessSP &process_sp) : lldb_private::InstrumentationRuntime(process_sp) {}
 
+    const RegularExpression &
+    GetPatternForRuntimeLibrary() override;
+
+    bool
+    CheckIfRuntimeIsValid(const lldb::ModuleSP module_sp) override;
+
     void
-    Activate();
+    Activate() override;
     
     void
     Deactivate();

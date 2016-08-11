@@ -12,7 +12,6 @@
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"
-#include "lldb/Core/ModuleList.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Core/PluginManager.h"
@@ -71,46 +70,6 @@ ThreadSanitizerRuntime::GetTypeStatic()
 ThreadSanitizerRuntime::~ThreadSanitizerRuntime()
 {
     Deactivate();
-}
-
-static bool
-ModuleContainsTSanRuntime(ModuleSP module_sp)
-{
-    static ConstString g_tsan_get_current_report("__tsan_get_current_report");
-    const Symbol* symbol = module_sp->FindFirstSymbolWithNameAndType(g_tsan_get_current_report, lldb::eSymbolTypeAny);
-    return symbol != nullptr;
-}
-
-void
-ThreadSanitizerRuntime::ModulesDidLoad(lldb_private::ModuleList &module_list)
-{
-    if (IsActive())
-        return;
-    
-    if (GetRuntimeModuleSP()) {
-        Activate();
-        return;
-    }
-    
-    module_list.ForEach ([this](const lldb::ModuleSP module_sp) -> bool
-    {
-        const FileSpec & file_spec = module_sp->GetFileSpec();
-        if (! file_spec)
-            return true; // Keep iterating through modules
-        
-        llvm::StringRef module_basename(file_spec.GetFilename().GetStringRef());
-        if (module_sp->IsExecutable() || module_basename.startswith("libclang_rt.tsan_"))
-        {
-            if (ModuleContainsTSanRuntime(module_sp))
-            {
-                SetRuntimeModuleSP(module_sp);
-                Activate();
-                return false; // Stop iterating
-            }
-        }
-
-        return true; // Keep iterating through modules
-    });
 }
 
 #define RETRIEVE_REPORT_DATA_FUNCTION_TIMEOUT_USEC 2*1000*1000
@@ -713,6 +672,20 @@ ThreadSanitizerRuntime::NotifyBreakpointHit(void *baton, StoppointCallbackContex
         return false;   // Let target run
 }
 
+const RegularExpression &
+ThreadSanitizerRuntime::GetPatternForRuntimeLibrary() {
+  static RegularExpression regex("libclang_rt.tsan_");
+  return regex;
+}
+
+bool
+ThreadSanitizerRuntime::CheckIfRuntimeIsValid(const lldb::ModuleSP module_sp)
+{
+    static ConstString g_tsan_get_current_report("__tsan_get_current_report");
+    const Symbol *symbol = module_sp->FindFirstSymbolWithNameAndType(g_tsan_get_current_report, lldb::eSymbolTypeAny);
+    return symbol != nullptr;
+}
+
 void
 ThreadSanitizerRuntime::Activate()
 {
@@ -768,7 +741,6 @@ ThreadSanitizerRuntime::Deactivate()
     }
     SetActive(false);
 }
-
 static std::string
 GenerateThreadName(const std::string &path, StructuredData::Object *o, StructuredData::ObjectSP main_info) {
     std::string result = "additional information";
