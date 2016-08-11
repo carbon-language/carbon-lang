@@ -3,7 +3,6 @@
 # and therefore will need a dylib definition of dyld_stub_binder.
 #
 
----
 shared-library-atoms:
     - name:              dyld_stub_binder
       load-name:         /usr/lib/libSystem.B.dylib
