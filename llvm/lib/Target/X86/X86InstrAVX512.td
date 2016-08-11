@@ -77,15 +77,15 @@ class X86VectorVTInfo<int numelts, ValueType eltvt, RegisterClass rc,
                                   !if (!eq (TypeVariantName, "i"),
                                        !if (!eq (Size, 128), "v2i64",
                                        !if (!eq (Size, 256), "v4i64",
-                                            VTName)), VTName));
+                                       !if (!eq (Size, 512), "v8i64",
+                                            VTName))), VTName));
 
   PatFrag AlignedLdFrag = !cast<PatFrag>("alignedload" #
-                          !if (!eq (TypeVariantName, "i"),
-                                !if (!eq (Size, 128), "v2i64",
-                                !if (!eq (Size, 256), "v4i64",
-                                !if (!eq (Size, 512),
-                                    !if (!eq (EltSize, 64), "v8i64", "v16i32"),
-                                    VTName))), VTName));
+                                         !if (!eq (TypeVariantName, "i"),
+                                               !if (!eq (Size, 128), "v2i64",
+                                               !if (!eq (Size, 256), "v4i64",
+                                               !if (!eq (Size, 512), "v8i64",
+                                                   VTName))), VTName));
 
   PatFrag ScalarLdFrag = !cast<PatFrag>("load" # EltVT);
 
@@ -3443,11 +3443,11 @@ let Predicates = [HasAVX512], AddedComplexity = 400 in {
             (VMOVNTDQAZrm addr:$src)>;
   def : Pat<(v8i64 (alignednontemporalload addr:$src)),
             (VMOVNTDQAZrm addr:$src)>;
-  def : Pat<(v16i32 (alignednontemporalload addr:$src)),
+  def : Pat<(v16i32 (bitconvert (v8i64 (alignednontemporalload addr:$src)))),
             (VMOVNTDQAZrm addr:$src)>;
-  def : Pat<(v32i16 (alignednontemporalload addr:$src)),
+  def : Pat<(v32i16 (bitconvert (v8i64 (alignednontemporalload addr:$src)))),
             (VMOVNTDQAZrm addr:$src)>;
-  def : Pat<(v64i8 (alignednontemporalload addr:$src)),
+  def : Pat<(v64i8 (bitconvert (v8i64 (alignednontemporalload addr:$src)))),
             (VMOVNTDQAZrm addr:$src)>;
 }
 
