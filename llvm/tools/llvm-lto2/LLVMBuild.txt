@@ -1,4 +1,4 @@
-;===- ./lib/LTO/LLVMBuild.txt ----------------------------------*- Conf -*--===;
+;===- ./tools/llvm-lto2/LLVMBuild.txt --------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -16,22 +16,7 @@
 ;===------------------------------------------------------------------------===;
 
 [component_0]
-type = Library
-name = LTO
-parent = Libraries
-required_libraries =
- Analysis
- BitReader
- BitWriter
- CodeGen
- Core
- IPO
- InstCombine
- Linker
- MC
- ObjCARC
- Object
- Scalar
- Support
- Target
- TransformUtils
+type = Tool
+name = llvm-lto2
+parent = Tools
+required_libraries = LTO Object all-targets
