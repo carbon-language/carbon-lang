@@ -963,7 +963,8 @@ uint16_t Util::descBits(const DefinedAtom* atom) {
     desc |= REFERENCED_DYNAMICALLY;
   if (_archHandler.isThumbFunction(*atom))
     desc |= N_ARM_THUMB_DEF;
-  if (atom->deadStrip() == DefinedAtom::deadStripNever) {
+  if (atom->deadStrip() == DefinedAtom::deadStripNever &&
+      _ctx.outputMachOType() == llvm::MachO::MH_OBJECT) {
     if ((atom->contentType() != DefinedAtom::typeInitializerPtr)
      && (atom->contentType() != DefinedAtom::typeTerminatorPtr))
     desc |= N_NO_DEAD_STRIP;
