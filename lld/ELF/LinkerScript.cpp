@@ -44,33 +44,29 @@ using namespace lld::elf;
 ScriptConfiguration *elf::ScriptConfig;
 
 template <class ELFT>
-static Symbol *addSymbolToSymtabAux(StringRef Name, uint8_t StOther) {
-  return Symtab<ELFT>::X->addRegular(Name, STB_GLOBAL, StOther);
+static void addRegular(SymbolAssignment *Cmd) {
+  Symbol *Sym = Symtab<ELFT>::X->addRegular(Cmd->Name, STB_GLOBAL, STV_DEFAULT);
+  Sym->Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
+  Cmd->Sym = Sym->body();
 }
 
 template <class ELFT>
-static Symbol *addSymbolToSymtabAux(StringRef Name, typename ELFT::uint Value,
-                                    OutputSectionBase<ELFT> *Section) {
-  return Symtab<ELFT>::X->addSynthetic(Name, Section, Value);
+static void addSynthetic(SymbolAssignment *Cmd,
+                         OutputSectionBase<ELFT> *Section) {
+  Symbol *Sym = Symtab<ELFT>::X->addSynthetic(Cmd->Name, Section, 0);
+  Sym->Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
+  Cmd->Sym = Sym->body();
 }
 
-template <class ELFT, class... ArgsT>
-static bool addSymbolToSymtab(SymbolAssignment &Cmd, ArgsT... Args) {
-  if (Cmd.Name == ".")
+// If a symbol was in PROVIDE(), we need to define it only when
+// it is an undefined symbol.
+template <class ELFT> static bool shouldDefine(SymbolAssignment *Cmd) {
+  if (Cmd->Name == ".")
     return false;
-
-  // If a symbol was in PROVIDE(), define it only when it is an
-  // undefined symbol.
-  SymbolBody *B = Symtab<ELFT>::X->find(Cmd.Name);
-  if (Cmd.Provide && !(B && B->isUndefined()))
-    return false;
-
-  Symbol *Sym =
-      addSymbolToSymtabAux<ELFT>(Cmd.Name, std::forward<ArgsT>(Args)...);
-
-  Sym->Visibility = Cmd.Hidden ? STV_HIDDEN : STV_DEFAULT;
-  Cmd.Sym = Sym->body();
-  return true;
+  if (!Cmd->Provide)
+    return true;
+  SymbolBody *B = Symtab<ELFT>::X->find(Cmd->Name);
+  return B && B->isUndefined();
 }
 
 bool SymbolAssignment::classof(const BaseCommand *C) {
@@ -218,14 +214,19 @@ void OutputSectionBuilder<ELFT>::addSection(StringRef OutputName,
 }
 
 template <class ELFT> void OutputSectionBuilder<ELFT>::flushSymbols() {
-  for (std::unique_ptr<LayoutInputSection<ELFT>> &I : PendingSymbols)
-    if (I->Cmd->Name == "." || addSymbolToSymtab<ELFT>(*I->Cmd, 0, Current)) {
-      // Only regular output sections are supported.
-      if (dyn_cast_or_null<OutputSection<ELFT>>(Current)) {
+  // Only regular output sections are supported.
+  if (dyn_cast_or_null<OutputSection<ELFT>>(Current)) {
+    for (std::unique_ptr<LayoutInputSection<ELFT>> &I : PendingSymbols) {
+      if (I->Cmd->Name == ".") {
+        Current->addSection(I.get());
+        OwningSections.push_back(std::move(I));
+      } else if (shouldDefine<ELFT>(I->Cmd)) {
+        addSynthetic<ELFT>(I->Cmd, Current);
         Current->addSection(I.get());
         OwningSections.push_back(std::move(I));
       }
     }
+  }
 
   PendingSymbols.clear();
 }
@@ -301,7 +302,8 @@ void LinkerScript<ELFT>::createSections(
 
       Builder.flushSection();
     } else if (auto *Cmd2 = dyn_cast<SymbolAssignment>(Base1.get())) {
-      addSymbolToSymtab<ELFT>(*Cmd2, STV_DEFAULT);
+      if (shouldDefine<ELFT>(Cmd2))
+        addRegular<ELFT>(Cmd2);
     }
 
   // Add all other input sections, which are not listed in script.
