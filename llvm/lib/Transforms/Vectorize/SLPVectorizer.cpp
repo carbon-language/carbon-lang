@@ -82,8 +82,9 @@ static cl::opt<int> MinVectorRegSizeOption(
     "slp-min-reg-size", cl::init(128), cl::Hidden,
     cl::desc("Attempt to vectorize for this register size in bits"));
 
-// FIXME: Set this via cl::opt to allow overriding.
-static const unsigned RecursionMaxDepth = 12;
+static cl::opt<unsigned> RecursionMaxDepth(
+    "slp-recursion-max-depth", cl::init(12), cl::Hidden,
+    cl::desc("Limit the recursion depth when building a vectorizable tree"));
 
 // Limit the number of alias checks. The limit is chosen so that
 // it has no negative effect on the llvm benchmarks.
