@@ -398,7 +398,7 @@ void llvm::computeKnownBitsFromRangeMetadata(const MDNode &Ranges,
   }
 }
 
-static bool isEphemeralValueOf(Instruction *I, const Value *E) {
+static bool isEphemeralValueOf(const Instruction *I, const Value *E) {
   SmallVector<const Value *, 16> WorkSet(1, I);
   SmallPtrSet<const Value *, 32> Visited;
   SmallPtrSet<const Value *, 16> EphValues;
@@ -455,9 +455,9 @@ static bool isAssumeLikeIntrinsic(const Instruction *I) {
   return false;
 }
 
-static bool isValidAssumeForContext(Value *V, const Instruction *CxtI,
-                                    const DominatorTree *DT) {
-  Instruction *Inv = cast<Instruction>(V);
+bool llvm::isValidAssumeForContext(const Instruction *Inv,
+                                   const Instruction *CxtI,
+                                   const DominatorTree *DT) {
 
   // There are two restrictions on the use of an assume:
   //  1. The assume must dominate the context (or the control flow must
@@ -491,7 +491,7 @@ static bool isValidAssumeForContext(Value *V, const Instruction *CxtI,
   } else if (Inv->getParent() == CxtI->getParent()) {
     // Search forward from the assume until we reach the context (or the end
     // of the block); the common case is that the assume will come first.
-    for (BasicBlock::iterator I = std::next(BasicBlock::iterator(Inv)),
+    for (auto I = std::next(BasicBlock::const_iterator(Inv)),
          IE = Inv->getParent()->end(); I != IE; ++I)
       if (&*I == CxtI)
         return true;
@@ -507,12 +507,6 @@ static bool isValidAssumeForContext(Value *V, const Instruction *CxtI,
   }
 
   return false;
-}
-
-bool llvm::isValidAssumeForContext(const Instruction *I,
-                                   const Instruction *CxtI,
-                                   const DominatorTree *DT) {
-  return ::isValidAssumeForContext(const_cast<Instruction *>(I), CxtI, DT);
 }
 
 static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
