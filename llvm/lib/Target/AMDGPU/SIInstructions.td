@@ -1615,6 +1615,11 @@ defm V_SAD_U16 : VOP3Inst <vop3<0x15c, 0x1db>, "v_sad_u16",
 defm V_SAD_U32 : VOP3Inst <vop3<0x15d, 0x1dc>, "v_sad_u32",
   VOP_I32_I32_I32_I32
 >;
+
+defm V_CVT_PK_U8_F32 : VOP3Inst<vop3<0x15e, 0x1dd>, "v_cvt_pk_u8_f32",
+  VOP_I32_F32_I32_I32, int_amdgcn_cvt_pk_u8_f32
+>;
+
 //def V_CVT_PK_U8_F32 : VOP3_U8 <0x0000015e, "v_cvt_pk_u8_f32", []>;
 defm V_DIV_FIXUP_F32 : VOP3Inst <
   vop3<0x15f, 0x1de>, "v_div_fixup_f32", VOP_F32_F32_F32_F32, AMDGPUdiv_fixup

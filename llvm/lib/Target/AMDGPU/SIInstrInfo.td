@@ -1655,6 +1655,7 @@ def VOP_MAC : VOPProfile <[f32, f32, f32, f32]> {
 def VOP_F64_F64_F64_F64 : VOPProfile <[f64, f64, f64, f64]>;
 def VOP_I32_I32_I32_I32 : VOPProfile <[i32, i32, i32, i32]>;
 def VOP_I64_I32_I32_I64 : VOPProfile <[i64, i32, i32, i64]>;
+def VOP_I32_F32_I32_I32 : VOPProfile <[i32, f32, i32, i32]>;
 
 // This class is used only with VOPC instructions. Use $sdst for out operand
 class SIInstAlias <string asm, Instruction inst, VOPProfile p> :
