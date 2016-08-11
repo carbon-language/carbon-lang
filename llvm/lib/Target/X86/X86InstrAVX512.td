@@ -2793,6 +2793,28 @@ def : Pat<(v16i32 (vselect (xor VK16:$mask, (v16i1 immAllOnesV)),
                            (v16i32 VR512:$src))),
                   (VMOVDQA32Zrrkz VK16WM:$mask, VR512:$src)>;
 
+let Predicates = [HasVLX, NoBWI] in {
+  // 128-bit load/store without BWI.
+  def : Pat<(alignedstore (v8i16 VR128:$src), addr:$dst),
+            (VMOVDQA32Z128mr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v16i8 VR128:$src), addr:$dst),
+            (VMOVDQA32Z128mr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v8i16 VR128:$src), addr:$dst),
+            (VMOVDQU32Z128mr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v16i8 VR128:$src), addr:$dst),
+            (VMOVDQU32Z128mr addr:$dst, VR128:$src)>;
+
+  // 256-bit load/store without BWI.
+  def : Pat<(alignedstore256 (v16i16 VR256:$src), addr:$dst),
+            (VMOVDQA32Z256mr addr:$dst, VR256:$src)>;
+  def : Pat<(alignedstore256 (v32i8 VR256:$src), addr:$dst),
+            (VMOVDQA32Z256mr addr:$dst, VR256:$src)>;
+  def : Pat<(store (v16i16 VR256:$src), addr:$dst),
+            (VMOVDQU32Z256mr addr:$dst, VR256:$src)>;
+  def : Pat<(store (v32i8 VR256:$src), addr:$dst),
+            (VMOVDQU32Z256mr addr:$dst, VR256:$src)>;
+}
+
 let Predicates = [HasVLX] in {
   // Special patterns for storing subvector extracts of lower 128-bits of 256.
   // Its cheaper to just use VMOVAPS/VMOVUPS instead of VEXTRACTF128mr
