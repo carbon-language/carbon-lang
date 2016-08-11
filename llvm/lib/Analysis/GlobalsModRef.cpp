@@ -521,7 +521,7 @@ void GlobalsAAResult::AnalyzeCallGraph(CallGraph &CG, Module &M) {
             // Can't say anything about it.  However, if it is inside our SCC,
             // then nothing needs to be done.
             CallGraphNode *CalleeNode = CG[Callee];
-            if (std::find(SCC.begin(), SCC.end(), CalleeNode) == SCC.end())
+            if (!is_contained(SCC, CalleeNode))
               KnowNothing = true;
           }
         } else {

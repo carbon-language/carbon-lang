@@ -907,8 +907,7 @@ void LazyCallGraph::RefSCC::removeOutgoingEdge(Node &SourceN, Node &TargetN) {
   RefSCC &TargetRC = *G->lookupRefSCC(TargetN);
   assert(&TargetRC != this && "The target must not be a member of this RefSCC");
 
-  assert(std::find(G->LeafRefSCCs.begin(), G->LeafRefSCCs.end(), this) ==
-             G->LeafRefSCCs.end() &&
+  assert(!is_contained(G->LeafRefSCCs, this) &&
          "Cannot have a leaf RefSCC source.");
 
   // First remove it from the node.

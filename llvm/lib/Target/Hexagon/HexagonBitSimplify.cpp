@@ -2665,7 +2665,7 @@ bool HexagonLoopRescheduling::processLoop(LoopCand &C) {
           if (UseI->getOperand(Idx+1).getMBB() != C.LB)
             BadUse = true;
         } else {
-          auto F = std::find(ShufIns.begin(), ShufIns.end(), UseI);
+          auto F = find(ShufIns, UseI);
           if (F == ShufIns.end())
             BadUse = true;
         }

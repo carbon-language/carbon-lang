@@ -1819,8 +1819,7 @@ static unsigned getConverterOperandID(const std::string &Name,
                                       bool &IsNew) {
   IsNew = Table.insert(Name);
 
-  unsigned ID = IsNew ? Table.size() - 1 :
-    std::find(Table.begin(), Table.end(), Name) - Table.begin();
+  unsigned ID = IsNew ? Table.size() - 1 : find(Table, Name) - Table.begin();
 
   assert(ID < Table.size());
 

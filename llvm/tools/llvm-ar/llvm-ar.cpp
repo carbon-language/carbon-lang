@@ -429,7 +429,7 @@ static void performReadOperation(ArchiveOperation Operation,
       StringRef Name = NameOrErr.get();
 
       if (Filter) {
-        auto I = std::find(Members.begin(), Members.end(), Name);
+        auto I = find(Members, Name);
         if (I == Members.end())
           continue;
         Members.erase(I);

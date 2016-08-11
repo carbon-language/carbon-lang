@@ -83,7 +83,7 @@ static void dropRegDescribedVar(RegDescribedVarsMap &RegVars, unsigned RegNo,
   const auto &I = RegVars.find(RegNo);
   assert(RegNo != 0U && I != RegVars.end());
   auto &VarSet = I->second;
-  const auto &VarPos = std::find(VarSet.begin(), VarSet.end(), Var);
+  const auto &VarPos = find(VarSet, Var);
   assert(VarPos != VarSet.end());
   VarSet.erase(VarPos);
   // Don't keep empty sets in a map to keep it as small as possible.
@@ -96,7 +96,7 @@ static void addRegDescribedVar(RegDescribedVarsMap &RegVars, unsigned RegNo,
                                InlinedVariable Var) {
   assert(RegNo != 0U);
   auto &VarSet = RegVars[RegNo];
-  assert(std::find(VarSet.begin(), VarSet.end(), Var) == VarSet.end());
+  assert(!is_contained(VarSet, Var));
   VarSet.push_back(Var);
 }
 
