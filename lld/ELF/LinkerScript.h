@@ -146,7 +146,6 @@ public:
   bool shouldKeep(InputSectionBase<ELFT> *S);
   void assignAddresses();
   int compareSections(StringRef A, StringRef B);
-  void addScriptedSymbols();
   bool hasPhdrsCommands();
   uintX_t getOutputSectionSize(StringRef Name);
   uintX_t getSizeOfHeaders();
@@ -154,9 +153,6 @@ public:
   std::vector<OutputSectionBase<ELFT> *> *OutputSections;
 
 private:
-  std::vector<std::pair<StringRef, const InputSectionDescription *>>
-  getSectionMap();
-
   std::vector<InputSectionBase<ELFT> *>
   getInputSections(const InputSectionDescription *);
 
