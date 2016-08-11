@@ -7523,11 +7523,13 @@ void cloudabi::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   // CloudABI only supports static linkage.
   CmdArgs.push_back("-Bstatic");
-
-  // CloudABI uses Position Independent Executables exclusively.
-  CmdArgs.push_back("-pie");
   CmdArgs.push_back("--no-dynamic-linker");
-  CmdArgs.push_back("-zrelro");
+
+  // Provide PIE linker flags in case PIE is default for the architecture.
+  if (ToolChain.isPIEDefault()) {
+    CmdArgs.push_back("-pie");
+    CmdArgs.push_back("-zrelro");
+  }
 
   CmdArgs.push_back("--eh-frame-hdr");
   CmdArgs.push_back("--gc-sections");
