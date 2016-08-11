@@ -2344,6 +2344,18 @@ DecompositionDecl *DecompositionDecl::CreateDeserialized(ASTContext &C,
   return Result;
 }
 
+void DecompositionDecl::printName(llvm::raw_ostream &os) const {
+  os << '[';
+  bool Comma = false;
+  for (auto *B : bindings()) {
+    if (Comma)
+      os << ", ";
+    B->printName(os);
+    Comma = true;
+  }
+  os << ']';
+}
+
 MSPropertyDecl *MSPropertyDecl::Create(ASTContext &C, DeclContext *DC,
                                        SourceLocation L, DeclarationName N,
                                        QualType T, TypeSourceInfo *TInfo,
