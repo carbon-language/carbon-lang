@@ -65,4 +65,3 @@ struct ProgramStateTrait<mpi::RequestMap>
 } // end of namespace: ento
 } // end of namespace: clang
 #endif
-
