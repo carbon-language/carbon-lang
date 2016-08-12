@@ -215,14 +215,20 @@ void LinkerScript<ELFT>::discard(OutputSectionCommand &Cmd) {
   }
 }
 
+static bool checkConstraint(uint64_t Flags, ConstraintKind Kind) {
+  bool RO = (Kind == ConstraintKind::ReadOnly);
+  bool RW = (Kind == ConstraintKind::ReadWrite);
+  bool Writable = Flags & SHF_WRITE;
+  return !((RO && Writable) || (RW && !Writable));
+}
+
 template <class ELFT>
 static bool matchConstraints(ArrayRef<InputSectionBase<ELFT> *> Sections,
                              ConstraintKind Kind) {
-  bool RO = (Kind == ConstraintKind::ReadOnly);
-  bool RW = (Kind == ConstraintKind::ReadWrite);
-  return !llvm::any_of(Sections, [=](InputSectionBase<ELFT> *Sec) {
-    bool Writable = Sec->getSectionHdr()->sh_flags & SHF_WRITE;
-    return (RO && Writable) || (RW && !Writable);
+  if (Kind == ConstraintKind::NoConstraint)
+    return true;
+  return llvm::all_of(Sections, [=](InputSectionBase<ELFT> *Sec) {
+    return checkConstraint(Sec->getSectionHdr()->sh_flags, Kind);
   });
 }
 
@@ -330,6 +336,19 @@ template <class ELFT> void assignOffsets(OutputSectionBase<ELFT> *Sec) {
   }
 }
 
+template <class ELFT>
+static OutputSectionBase<ELFT> *
+findSection(OutputSectionCommand &Cmd,
+            ArrayRef<OutputSectionBase<ELFT> *> Sections) {
+  for (OutputSectionBase<ELFT> *Sec : Sections) {
+    if (Sec->getName() != Cmd.Name)
+      continue;
+    if (checkConstraint(Sec->getFlags(), Cmd.Constraint))
+      return Sec;
+  }
+  return nullptr;
+}
+
 template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
   // Orphan sections are sections present in the input files which
   // are not explicitly placed into the output file by the linker script.
@@ -363,12 +382,9 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
     }
 
     auto *Cmd = cast<OutputSectionCommand>(Base.get());
-    auto I = llvm::find_if(*OutputSections, [&](OutputSectionBase<ELFT> *S) {
-      return S->getName() == Cmd->Name;
-    });
-    if (I == OutputSections->end())
+    OutputSectionBase<ELFT> *Sec = findSection<ELFT>(*Cmd, *OutputSections);
+    if (!Sec)
       continue;
-    OutputSectionBase<ELFT> *Sec = *I;
 
     if (Cmd->AddrExpr)
       Dot = Cmd->AddrExpr(Dot);
