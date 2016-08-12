@@ -1211,6 +1211,9 @@ static LVILatticeVal getValueFromICmpCondition(Value *Val, ICmpInst *ICI,
                            /*isFullSet=*/true);
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS))
       RHSRange = ConstantRange(CI->getValue());
+    else if (Instruction *I = dyn_cast<Instruction>(RHS))
+      if (auto *Ranges = I->getMetadata(LLVMContext::MD_range))
+        RHSRange = getConstantRangeFromMetadata(*Ranges);
 
     // If we're interested in the false dest, invert the condition
     CmpInst::Predicate Pred =

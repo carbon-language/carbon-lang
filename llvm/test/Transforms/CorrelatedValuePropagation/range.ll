@@ -445,3 +445,20 @@ then:
 else:
   ret i1 false
 }
+
+@limit = external global i32
+define i1 @test15(i32 %a) {
+; CHECK-LABEL: @test15(
+; CHECK: then:
+; CHECK-NEXT: ret i1 false
+  %limit = load i32, i32* @limit, !range !{i32 0, i32 256}
+  %cmp = icmp ult i32 %a, %limit
+  br i1 %cmp, label %then, label %else
+
+then:
+  %result = icmp eq i32 %a, 255
+  ret i1 %result
+
+else:
+  ret i1 false
+}
