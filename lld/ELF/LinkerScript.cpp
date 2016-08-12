@@ -167,7 +167,6 @@ public:
   }
   void flushSymbols();
   void flushSection();
-  void finalize();
 
 private:
   OutputSectionFactory<ELFT> &Factory;
@@ -234,16 +233,6 @@ template <class ELFT> void OutputSectionBuilder<ELFT>::flushSymbols() {
 template <class ELFT> void OutputSectionBuilder<ELFT>::flushSection() {
   flushSymbols();
   Current = nullptr;
-}
-
-template <class ELFT> void OutputSectionBuilder<ELFT>::finalize() {
-  // Assign offsets to all sections which don't contain symbols
-  for (OutputSectionBase<ELFT> *S : *OutputSections)
-    if (llvm::find_if(OwningSections,
-                      [&](std::unique_ptr<LayoutInputSection<ELFT>> &L) {
-                        return L->OutSec == S;
-                      }) == OwningSections.end())
-      S->assignOffsets();
 }
 
 template <class ELFT>
@@ -325,7 +314,6 @@ void LinkerScript<ELFT>::createSections(
   // Remove from the output all the sections which did not meet
   // the optional constraints.
   filter();
-  Builder.finalize();
 }
 
 template <class R, class T>
@@ -357,11 +345,11 @@ template <class ELFT> void LinkerScript<ELFT>::filter() {
 }
 
 template <class ELFT> void assignOffsets(OutputSectionBase<ELFT> *Sec) {
-  // Non-zero size means we have assigned offsets earlier in
-  // OutputSectionBuilder<ELFT>::finalize
   auto *OutSec = dyn_cast<OutputSection<ELFT>>(Sec);
-  if (Sec->getSize() || !OutSec)
+  if (!OutSec) {
+    Sec->assignOffsets();
     return;
+  }
 
   typedef typename ELFT::uint uintX_t;
   uintX_t Off = 0;
@@ -448,6 +436,7 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
         Dot += Sec->getSize();
         continue;
       }
+      Sec->assignOffsets();
     }
   }
 
