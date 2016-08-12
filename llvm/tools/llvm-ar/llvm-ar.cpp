@@ -498,10 +498,9 @@ static InsertAction computeInsertAction(ArchiveOperation Operation,
   if (Operation == QuickAppend || Members.empty())
     return IA_AddOldMember;
 
-  auto MI =
-      std::find_if(Members.begin(), Members.end(), [Name](StringRef Path) {
-        return Name == sys::path::filename(Path);
-      });
+  auto MI = find_if(Members, [Name](StringRef Path) {
+    return Name == sys::path::filename(Path);
+  });
 
   if (MI == Members.end())
     return IA_AddOldMember;

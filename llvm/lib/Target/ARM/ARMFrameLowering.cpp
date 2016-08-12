@@ -196,8 +196,7 @@ struct StackAdjustingInsts {
   }
 
   void addExtraBytes(const MachineBasicBlock::iterator I, unsigned ExtraBytes) {
-    auto Info = std::find_if(Insts.begin(), Insts.end(),
-                             [&](InstInfo &Info) { return Info.I == I; });
+    auto Info = find_if(Insts, [&](InstInfo &Info) { return Info.I == I; });
     assert(Info != Insts.end() && "invalid sp adjusting instruction");
     Info->SPAdjust += ExtraBytes;
   }

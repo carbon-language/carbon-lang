@@ -8406,9 +8406,9 @@ static SDValue lowerVectorShuffleAsElementInsertion(
   MVT ExtVT = VT;
   MVT EltVT = VT.getVectorElementType();
 
-  int V2Index = std::find_if(Mask.begin(), Mask.end(),
-                             [&Mask](int M) { return M >= (int)Mask.size(); }) -
-                Mask.begin();
+  int V2Index =
+      find_if(Mask, [&Mask](int M) { return M >= (int)Mask.size(); }) -
+      Mask.begin();
   bool IsV1Zeroable = true;
   for (int i = 0, Size = Mask.size(); i < Size; ++i)
     if (i != V2Index && !Zeroable[i]) {
@@ -9141,9 +9141,7 @@ static SDValue lowerVectorShuffleWithSHUFPS(const SDLoc &DL, MVT VT,
   int NumV2Elements = count_if(Mask, [](int M) { return M >= 4; });
 
   if (NumV2Elements == 1) {
-    int V2Index =
-        std::find_if(Mask.begin(), Mask.end(), [](int M) { return M >= 4; }) -
-        Mask.begin();
+    int V2Index = find_if(Mask, [](int M) { return M >= 4; }) - Mask.begin();
 
     // Compute the index adjacent to V2Index and in the same half by toggling
     // the low bit.

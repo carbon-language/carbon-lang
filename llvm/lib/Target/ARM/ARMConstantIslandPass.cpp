@@ -2056,9 +2056,8 @@ bool ARMConstantIslands::optimizeThumb2JumpTables() {
         // record the TBB or TBH use.
         int CPEntryIdx = JumpTableEntryIndices[JTI];
         auto &CPEs = CPEntries[CPEntryIdx];
-        auto Entry = std::find_if(CPEs.begin(), CPEs.end(), [&](CPEntry &E) {
-          return E.CPEMI == User.CPEMI;
-        });
+        auto Entry =
+            find_if(CPEs, [&](CPEntry &E) { return E.CPEMI == User.CPEMI; });
         ++Entry->RefCount;
         CPUsers.emplace_back(CPUser(NewJTMI, User.CPEMI, 4, false, false));
       }

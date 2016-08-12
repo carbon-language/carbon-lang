@@ -1570,11 +1570,9 @@ void CodeGenSchedModels::checkCompleteness() {
         continue;
 
       const RecVec &InstRWs = SC.InstRWs;
-      auto I = std::find_if(InstRWs.begin(), InstRWs.end(),
-                            [&ProcModel] (const Record *R) {
-                              return R->getValueAsDef("SchedModel") ==
-                                     ProcModel.ModelDef;
-                            });
+      auto I = find_if(InstRWs, [&ProcModel](const Record *R) {
+        return R->getValueAsDef("SchedModel") == ProcModel.ModelDef;
+      });
       if (I == InstRWs.end()) {
         PrintError("'" + ProcModel.ModelName + "' lacks information for '" +
                    Inst->TheDef->getName() + "'");
