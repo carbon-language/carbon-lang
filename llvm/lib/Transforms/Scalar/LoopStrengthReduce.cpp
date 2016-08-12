@@ -2799,8 +2799,7 @@ void LSRInstance::FinalizeChain(IVChain &Chain) {
 
   for (const IVInc &Inc : Chain) {
     DEBUG(dbgs() << "        Inc: " << Inc.UserInst << "\n");
-    auto UseI = std::find(Inc.UserInst->op_begin(), Inc.UserInst->op_end(),
-                          Inc.IVOperand);
+    auto UseI = find(Inc.UserInst->operands(), Inc.IVOperand);
     assert(UseI != Inc.UserInst->op_end() && "cannot find IV operand");
     IVIncSet.insert(UseI);
   }
@@ -2933,8 +2932,8 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
   for (const IVStrideUse &U : IU) {
     Instruction *UserInst = U.getUser();
     // Skip IV users that are part of profitable IV Chains.
-    User::op_iterator UseI = std::find(UserInst->op_begin(), UserInst->op_end(),
-                                       U.getOperandValToReplace());
+    User::op_iterator UseI =
+        find(UserInst->operands(), U.getOperandValToReplace());
     assert(UseI != UserInst->op_end() && "cannot find IV operand");
     if (IVIncSet.count(UseI))
       continue;

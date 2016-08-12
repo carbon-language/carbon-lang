@@ -1583,8 +1583,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
     //   Prob(BBI.BB, CvtBBI->BB) * Prob(CvtBBI->BB, CvtBBI->FalseBB)
     auto NewTrueBB = getNextBlock(BBI.BB);
     auto NewNext = BBNext + BBCvt * CvtNext;
-    auto NewTrueBBIter =
-        std::find(BBI.BB->succ_begin(), BBI.BB->succ_end(), NewTrueBB);
+    auto NewTrueBBIter = find(BBI.BB->successors(), NewTrueBB);
     if (NewTrueBBIter != BBI.BB->succ_end())
       BBI.BB->setSuccProbability(NewTrueBBIter, NewNext);
 
@@ -2114,9 +2113,8 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI, bool AddEdges) {
     // Set the edge probability from ToBBI.BB to FromBBI.BB to zero to avoid the
     // edge probability being merged to other edges when this edge is removed
     // later.
-    ToBBI.BB->setSuccProbability(
-        std::find(ToBBI.BB->succ_begin(), ToBBI.BB->succ_end(), FromBBI.BB),
-        BranchProbability::getZero());
+    ToBBI.BB->setSuccProbability(find(ToBBI.BB->successors(), FromBBI.BB),
+                                 BranchProbability::getZero());
   }
 
   for (unsigned i = 0, e = FromSuccs.size(); i != e; ++i) {
@@ -2169,7 +2167,7 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI, bool AddEdges) {
       //
       if (ToBBI.BB->isSuccessor(Succ))
         ToBBI.BB->setSuccProbability(
-            std::find(ToBBI.BB->succ_begin(), ToBBI.BB->succ_end(), Succ),
+            find(ToBBI.BB->successors(), Succ),
             MBPI->getEdgeProbability(ToBBI.BB, Succ) + NewProb);
       else
         ToBBI.BB->addSuccessor(Succ, NewProb);

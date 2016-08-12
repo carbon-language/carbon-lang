@@ -9731,9 +9731,8 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
     // by inputs being moved and *staying* in that half.
     if (IncomingInputs.size() == 1) {
       if (isWordClobbered(SourceHalfMask, IncomingInputs[0] - SourceOffset)) {
-        int InputFixed = std::find(std::begin(SourceHalfMask),
-                                   std::end(SourceHalfMask), -1) -
-                         std::begin(SourceHalfMask) + SourceOffset;
+        int InputFixed = find(SourceHalfMask, -1) - std::begin(SourceHalfMask) +
+                         SourceOffset;
         SourceHalfMask[InputFixed - SourceOffset] =
             IncomingInputs[0] - SourceOffset;
         std::replace(HalfMask.begin(), HalfMask.end(), IncomingInputs[0],
