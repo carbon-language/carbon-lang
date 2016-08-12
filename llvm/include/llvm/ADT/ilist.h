@@ -390,8 +390,12 @@ template<typename NodeTy> struct simplify_type<const ilist_iterator<NodeTy> > {
 ///
 template <typename NodeTy, typename Traits = ilist_traits<NodeTy>>
 class iplist : public Traits, ilist_node_access {
+#if !defined(_MSC_VER)
+  // FIXME: This fails in MSVC, but it's worth keeping around to help
+  // non-Windows users root out bugs in their ilist_traits.
   static_assert(!ilist_detail::HasGetNext<Traits, NodeTy>::value,
                 "ilist next and prev links are not customizable!");
+#endif
 
   mutable NodeTy *Head;
 
