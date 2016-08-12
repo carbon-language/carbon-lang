@@ -5886,7 +5886,9 @@ static const InitializedEntity *getEntityForTemporaryLifetimeExtension(
     return Entity;
 
   case InitializedEntity::EK_Binding:
-    return getEntityForTemporaryLifetimeExtension(Entity->getParent(), nullptr);
+    // Per [dcl.decomp]p3, the binding is treated as a variable of reference
+    // type.
+    return Entity;
 
   case InitializedEntity::EK_Parameter:
   case InitializedEntity::EK_Parameter_CF_Audited:

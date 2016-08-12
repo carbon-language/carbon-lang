@@ -9720,8 +9720,8 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
 
   // Perform the initialization.
   ParenListExpr *CXXDirectInit = dyn_cast<ParenListExpr>(Init);
-  InitializedEntity Entity = InitializedEntity::InitializeVariable(VDecl);
   if (!VDecl->isInvalidDecl()) {
+    InitializedEntity Entity = InitializedEntity::InitializeVariable(VDecl);
     InitializationKind Kind =
         DirectInit
             ? CXXDirectInit
@@ -9972,7 +9972,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     VDecl->setInitStyle(VarDecl::ListInit);
   }
 
-  CheckCompleteVariableDeclaration(VDecl, Entity);
+  CheckCompleteVariableDeclaration(VDecl);
 }
 
 /// ActOnInitializerError - Given that there was an error parsing an
@@ -10257,7 +10257,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
       Var->setInitStyle(VarDecl::CallInit);
     }
 
-    CheckCompleteVariableDeclaration(Var, Entity);
+    CheckCompleteVariableDeclaration(Var);
   }
 }
 
@@ -10334,8 +10334,7 @@ Sema::ActOnCXXForRangeIdentifier(Scope *S, SourceLocation IdentLoc,
                        AttrEnd.isValid() ? AttrEnd : IdentLoc);
 }
 
-void Sema::CheckCompleteVariableDeclaration(VarDecl *var,
-                                            InitializedEntity &Entity) {
+void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
   if (var->isInvalidDecl()) return;
 
   if (getLangOpts().OpenCL) {
@@ -10445,7 +10444,7 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var,
   if (!getLangOpts().CPlusPlus) return;
 
   if (auto *DD = dyn_cast<DecompositionDecl>(var))
-    CheckCompleteDecompositionDeclaration(DD, Entity);
+    CheckCompleteDecompositionDeclaration(DD);
 
   QualType type = var->getType();
   if (type->isDependentType()) return;

@@ -184,9 +184,8 @@ private:
       ManglingNumber(0), VariableOrMember(Member) { }
   
   /// \brief Create the initialization entity for a binding.
-  InitializedEntity(BindingDecl *Binding, QualType Type,
-                    const InitializedEntity &Parent)
-    : Kind(EK_Binding), Parent(&Parent), Type(Type),
+  InitializedEntity(BindingDecl *Binding, QualType Type)
+    : Kind(EK_Binding), Parent(nullptr), Type(Type),
       ManglingNumber(0), VariableOrMember(Binding) {}
 
   /// \brief Create the initialization entity for an array element.
@@ -324,10 +323,9 @@ public:
   }
 
   /// \brief Create the initialization entity for a structured binding.
-  static InitializedEntity InitializeBinding(const InitializedEntity &Parent,
-                                             BindingDecl *Binding,
+  static InitializedEntity InitializeBinding(BindingDecl *Binding,
                                              QualType Type) {
-    return InitializedEntity(Binding, Type, Parent);
+    return InitializedEntity(Binding, Type);
   }
 
   /// \brief Create the initialization entity for a lambda capture.

@@ -1728,9 +1728,8 @@ public:
   // Returns true if the variable declaration is a redeclaration
   bool CheckVariableDeclaration(VarDecl *NewVD, LookupResult &Previous);
   void CheckVariableDeclarationType(VarDecl *NewVD);
-  void CheckCompleteVariableDeclaration(VarDecl *VD, InitializedEntity &Entity);
-  void CheckCompleteDecompositionDeclaration(DecompositionDecl *DD,
-                                             InitializedEntity &Entity);
+  void CheckCompleteVariableDeclaration(VarDecl *VD);
+  void CheckCompleteDecompositionDeclaration(DecompositionDecl *DD);
   void MaybeSuggestAddingStaticToDecl(const FunctionDecl *D);
 
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,

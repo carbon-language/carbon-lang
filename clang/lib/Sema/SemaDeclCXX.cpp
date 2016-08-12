@@ -1065,10 +1065,10 @@ struct BindingDiagnosticTrap {
 };
 }
 
-static bool
-checkTupleLikeDecomposition(Sema &S, ArrayRef<BindingDecl *> Bindings,
-                            ValueDecl *Src, InitializedEntity &ParentEntity,
-                            QualType DecompType, llvm::APSInt TupleSize) {
+static bool checkTupleLikeDecomposition(Sema &S,
+                                        ArrayRef<BindingDecl *> Bindings,
+                                        ValueDecl *Src, QualType DecompType,
+                                        llvm::APSInt TupleSize) {
   if ((int64_t)Bindings.size() != TupleSize) {
     S.Diag(Src->getLocation(), diag::err_decomp_decl_wrong_number_bindings)
         << DecompType << (unsigned)Bindings.size() << TupleSize.toString(10)
@@ -1152,8 +1152,7 @@ checkTupleLikeDecomposition(Sema &S, ArrayRef<BindingDecl *> Bindings,
     if (RefType.isNull())
       return true;
 
-    InitializedEntity Entity =
-        InitializedEntity::InitializeBinding(ParentEntity, B, RefType);
+    InitializedEntity Entity = InitializedEntity::InitializeBinding(B, RefType);
     InitializationKind Kind = InitializationKind::CreateCopy(Loc, Loc);
     InitializationSequence Seq(S, Entity, Kind, Init);
     E = Seq.Perform(S, Entity, Kind, Init);
@@ -1341,8 +1340,7 @@ static bool checkMemberDecomposition(Sema &S, ArrayRef<BindingDecl*> Bindings,
   return false;
 }
 
-void Sema::CheckCompleteDecompositionDeclaration(DecompositionDecl *DD,
-                                                 InitializedEntity &Entity) {
+void Sema::CheckCompleteDecompositionDeclaration(DecompositionDecl *DD) {
   QualType DecompType = DD->getType();
 
   // If the type of the decomposition is dependent, then so is the type of
@@ -1386,8 +1384,7 @@ void Sema::CheckCompleteDecompositionDeclaration(DecompositionDecl *DD,
     return;
 
   case IsTupleLike::TupleLike:
-    if (checkTupleLikeDecomposition(*this, Bindings, DD, Entity, DecompType,
-                                    TupleSize))
+    if (checkTupleLikeDecomposition(*this, Bindings, DD, DecompType, TupleSize))
       DD->setInvalidDecl();
     return;
 

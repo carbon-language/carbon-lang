@@ -811,8 +811,7 @@ void Sema::ActOnEndOfTranslationUnit() {
       VD->setInvalidDecl();
 
     // No initialization is performed for a tentative definition.
-    InitializedEntity Entity = InitializedEntity::InitializeVariable(VD);
-    CheckCompleteVariableDeclaration(VD, Entity);
+    CheckCompleteVariableDeclaration(VD);
 
     // Notify the consumer that we've completed a tentative definition.
     if (!VD->isInvalidDecl())
