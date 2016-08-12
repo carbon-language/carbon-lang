@@ -186,7 +186,7 @@ public:
   template <typename UnaryPredicate>
   bool remove_if(UnaryPredicate P) {
     typename vector_type::iterator I =
-        remove_if(vector_, TestAndEraseFromSet<UnaryPredicate>(P, set_));
+        llvm::remove_if(vector_, TestAndEraseFromSet<UnaryPredicate>(P, set_));
     if (I == vector_.end())
       return false;
     vector_.erase(I, vector_.end());

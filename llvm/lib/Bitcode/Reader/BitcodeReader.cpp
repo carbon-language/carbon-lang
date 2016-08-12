@@ -2858,7 +2858,7 @@ std::error_code BitcodeReader::resolveGlobalAndIndirectSymbolInits() {
 
 static APInt readWideAPInt(ArrayRef<uint64_t> Vals, unsigned TypeBits) {
   SmallVector<uint64_t, 8> Words(Vals.size());
-  std::transform(Vals.begin(), Vals.end(), Words.begin(),
+  transform(Vals, Words.begin(),
                  BitcodeReader::decodeSignRotatedValue);
 
   return APInt(TypeBits, Words);
