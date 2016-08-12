@@ -96,14 +96,13 @@ template <class TraitsT, class NodeT> struct HasGetNext {
   typedef char No[2];
   template <size_t N> struct SFINAE {};
 
-  template <class U, class V>
+  template <class U>
   static Yes &hasGetNext(
       SFINAE<sizeof(static_cast<NodeT *>(make<U>().getNext(&make<NodeT>())))>
           * = 0);
-  template <class U, class V> static No &hasGetNext(...);
+  template <class U> static No &hasGetNext(...);
 
-  static const bool value =
-      sizeof(hasGetNext<TraitsT, NodeT>(nullptr)) == sizeof(Yes);
+  static const bool value = sizeof(hasGetNext<TraitsT>(nullptr)) == sizeof(Yes);
 };
 
 } // end namespace ilist_detail
