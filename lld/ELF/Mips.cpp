@@ -18,6 +18,7 @@
 
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/MipsABIFlags.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -288,6 +289,57 @@ template <class ELFT> uint32_t elf::getMipsEFlags() {
 
   checkFlags(V);
   return getMiscFlags(V) | getPicFlags(V) | getArchFlags(V);
+}
+
+static int compareMipsFpAbi(uint8_t FpA, uint8_t FpB) {
+  if (FpA == FpB)
+    return 0;
+  if (FpB == Mips::Val_GNU_MIPS_ABI_FP_ANY)
+    return 1;
+  if (FpB == Mips::Val_GNU_MIPS_ABI_FP_64A &&
+      FpA == Mips::Val_GNU_MIPS_ABI_FP_64)
+    return 1;
+  if (FpB != Mips::Val_GNU_MIPS_ABI_FP_XX)
+    return -1;
+  if (FpA == Mips::Val_GNU_MIPS_ABI_FP_DOUBLE ||
+      FpA == Mips::Val_GNU_MIPS_ABI_FP_64 ||
+      FpA == Mips::Val_GNU_MIPS_ABI_FP_64A)
+    return 1;
+  return -1;
+}
+
+static StringRef getMipsFpAbiName(uint8_t FpAbi) {
+  switch (FpAbi) {
+  case Mips::Val_GNU_MIPS_ABI_FP_ANY:
+    return "any";
+  case Mips::Val_GNU_MIPS_ABI_FP_DOUBLE:
+    return "-mdouble-float";
+  case Mips::Val_GNU_MIPS_ABI_FP_SINGLE:
+    return "-msingle-float";
+  case Mips::Val_GNU_MIPS_ABI_FP_SOFT:
+    return "-msoft-float";
+  case Mips::Val_GNU_MIPS_ABI_FP_OLD_64:
+    return "-mips32r2 -mfp64 (old)";
+  case Mips::Val_GNU_MIPS_ABI_FP_XX:
+    return "-mfpxx";
+  case Mips::Val_GNU_MIPS_ABI_FP_64:
+    return "-mgp32 -mfp64";
+  case Mips::Val_GNU_MIPS_ABI_FP_64A:
+    return "-mgp32 -mfp64 -mno-odd-spreg";
+  default:
+    return "unknown";
+  }
+}
+
+uint8_t elf::getMipsFpAbiFlag(uint8_t OldFlag, uint8_t NewFlag,
+                              StringRef FileName) {
+  if (compareMipsFpAbi(NewFlag, OldFlag) >= 0)
+    return NewFlag;
+  if (compareMipsFpAbi(OldFlag, NewFlag) < 0)
+    error("target floating point ABI '" + getMipsFpAbiName(OldFlag) +
+          "' is incompatible with '" + getMipsFpAbiName(NewFlag) + "': " +
+          FileName);
+  return OldFlag;
 }
 
 template uint32_t elf::getMipsEFlags<ELF32LE>();
