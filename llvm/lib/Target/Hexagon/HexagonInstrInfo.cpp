@@ -253,12 +253,10 @@ unsigned HexagonInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
   case Hexagon::LDriw_mod:
   case Hexagon::LDriq_pred_V6:
   case Hexagon::LDriq_pred_vec_V6:
-  case Hexagon::LDriv_pseudo_V6:
-  case Hexagon::LDrivv_pseudo_V6:
+  case Hexagon::PS_vloadrw_ai:
   case Hexagon::LDriq_pred_V6_128B:
   case Hexagon::LDriq_pred_vec_V6_128B:
-  case Hexagon::LDriv_pseudo_V6_128B:
-  case Hexagon::LDrivv_pseudo_V6_128B: {
+  case Hexagon::PS_vloadrw_ai_128B: {
     const MachineOperand OpFI = MI.getOperand(1);
     if (!OpFI.isFI())
       return 0;
@@ -318,12 +316,10 @@ unsigned HexagonInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   case Hexagon::STriw_mod:
   case Hexagon::STriq_pred_V6:
   case Hexagon::STriq_pred_vec_V6:
-  case Hexagon::STriv_pseudo_V6:
-  case Hexagon::STrivv_pseudo_V6:
+  case Hexagon::PS_vstorerw_ai:
   case Hexagon::STriq_pred_V6_128B:
   case Hexagon::STriq_pred_vec_V6_128B:
-  case Hexagon::STriv_pseudo_V6_128B:
-  case Hexagon::STrivv_pseudo_V6_128B: {
+  case Hexagon::PS_vstorerw_ai_128B: {
     const MachineOperand &OpFI = MI.getOperand(0);
     if (!OpFI.isFI())
       return 0;
@@ -904,23 +900,27 @@ void HexagonInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       .addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else if (Hexagon::VectorRegs128BRegClass.hasSubClassEq(RC)) {
-    DEBUG(dbgs() << "++Generating 128B vector spill");
-    BuildMI(MBB, I, DL, get(Hexagon::STriv_pseudo_V6_128B))
+    unsigned Opc = Align < 128 ? Hexagon::V6_vS32Ub_ai_128B
+                               : Hexagon::V6_vS32b_ai_128B;
+    BuildMI(MBB, I, DL, get(Opc))
       .addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else if (Hexagon::VectorRegsRegClass.hasSubClassEq(RC)) {
-    DEBUG(dbgs() << "++Generating vector spill");
-    BuildMI(MBB, I, DL, get(Hexagon::STriv_pseudo_V6))
+    unsigned Opc = Align < 64 ? Hexagon::V6_vS32Ub_ai
+                              : Hexagon::V6_vS32b_ai;
+    BuildMI(MBB, I, DL, get(Opc))
       .addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else if (Hexagon::VecDblRegsRegClass.hasSubClassEq(RC)) {
-    DEBUG(dbgs() << "++Generating double vector spill");
-    BuildMI(MBB, I, DL, get(Hexagon::STrivv_pseudo_V6))
+    unsigned Opc = Align < 64 ? Hexagon::PS_vstorerwu_ai
+                              : Hexagon::PS_vstorerw_ai;
+    BuildMI(MBB, I, DL, get(Opc))
       .addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else if (Hexagon::VecDblRegs128BRegClass.hasSubClassEq(RC)) {
-    DEBUG(dbgs() << "++Generating 128B double vector spill");
-    BuildMI(MBB, I, DL, get(Hexagon::STrivv_pseudo_V6_128B))
+    unsigned Opc = Align < 128 ? Hexagon::PS_vstorerwu_ai_128B
+                               : Hexagon::PS_vstorerw_ai_128B;
+    BuildMI(MBB, I, DL, get(Opc))
       .addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else {
@@ -960,20 +960,24 @@ void HexagonInstrInfo::loadRegFromStackSlot(
     BuildMI(MBB, I, DL, get(Hexagon::LDriq_pred_V6), DestReg)
       .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (Hexagon::VecDblRegs128BRegClass.hasSubClassEq(RC)) {
-    DEBUG(dbgs() << "++Generating 128B double vector restore");
-    BuildMI(MBB, I, DL, get(Hexagon::LDrivv_pseudo_V6_128B), DestReg)
+    unsigned Opc = Align < 128 ? Hexagon::PS_vloadrwu_ai_128B
+                               : Hexagon::PS_vloadrw_ai_128B;
+    BuildMI(MBB, I, DL, get(Opc), DestReg)
       .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (Hexagon::VectorRegs128BRegClass.hasSubClassEq(RC)) {
-    DEBUG(dbgs() << "++Generating 128B vector restore");
-    BuildMI(MBB, I, DL, get(Hexagon::LDriv_pseudo_V6_128B), DestReg)
+    unsigned Opc = Align < 128 ? Hexagon::V6_vL32Ub_ai_128B
+                               : Hexagon::V6_vL32b_ai_128B;
+    BuildMI(MBB, I, DL, get(Opc), DestReg)
       .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (Hexagon::VectorRegsRegClass.hasSubClassEq(RC)) {
-    DEBUG(dbgs() << "++Generating vector restore");
-    BuildMI(MBB, I, DL, get(Hexagon::LDriv_pseudo_V6), DestReg)
+    unsigned Opc = Align < 64 ? Hexagon::V6_vL32Ub_ai
+                              : Hexagon::V6_vL32b_ai;
+    BuildMI(MBB, I, DL, get(Opc), DestReg)
       .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (Hexagon::VecDblRegsRegClass.hasSubClassEq(RC)) {
-    DEBUG(dbgs() << "++Generating double vector restore");
-    BuildMI(MBB, I, DL, get(Hexagon::LDrivv_pseudo_V6), DestReg)
+    unsigned Opc = Align < 64 ? Hexagon::PS_vloadrwu_ai
+                              : Hexagon::PS_vloadrw_ai;
+    BuildMI(MBB, I, DL, get(Opc), DestReg)
       .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else {
     llvm_unreachable("Can't store this register to stack slot");
@@ -994,7 +998,6 @@ bool HexagonInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   DebugLoc DL = MI.getDebugLoc();
   unsigned Opc = MI.getOpcode();
   const unsigned VecOffset = 1;
-  bool Is128B = false;
 
   switch (Opc) {
     case TargetOpcode::COPY: {
@@ -1043,23 +1046,34 @@ bool HexagonInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
       MRI.clearKillFlags(SrcSubHi);
       return true;
     }
-    case Hexagon::STrivv_indexed_128B:
-      Is128B = true;
-    case Hexagon::STrivv_indexed: {
+    case Hexagon::PS_vstorerw_ai:
+    case Hexagon::PS_vstorerwu_ai:
+    case Hexagon::PS_vstorerw_ai_128B:
+    case Hexagon::PS_vstorerwu_ai_128B: {
+      bool Is128B = (Opc == Hexagon::PS_vstorerw_ai_128B ||
+                     Opc == Hexagon::PS_vstorerwu_ai_128B);
+      bool Aligned = (Opc == Hexagon::PS_vstorerw_ai ||
+                      Opc == Hexagon::PS_vstorerw_ai_128B);
       unsigned SrcReg = MI.getOperand(2).getReg();
       unsigned SrcSubHi = HRI.getSubReg(SrcReg, Hexagon::subreg_hireg);
       unsigned SrcSubLo = HRI.getSubReg(SrcReg, Hexagon::subreg_loreg);
-      unsigned NewOpcd = Is128B ? Hexagon::V6_vS32b_ai_128B
-                                : Hexagon::V6_vS32b_ai;
+      unsigned NewOpc;
+      if (Aligned)
+        NewOpc = Is128B ? Hexagon::V6_vS32b_ai_128B
+                        : Hexagon::V6_vS32b_ai;
+      else
+        NewOpc = Is128B ? Hexagon::V6_vS32Ub_ai_128B
+                        : Hexagon::V6_vS32Ub_ai;
+
       unsigned Offset = Is128B ? VecOffset << 7 : VecOffset << 6;
       MachineInstr *MI1New =
-          BuildMI(MBB, MI, DL, get(NewOpcd))
+          BuildMI(MBB, MI, DL, get(NewOpc))
               .addOperand(MI.getOperand(0))
               .addImm(MI.getOperand(1).getImm())
               .addReg(SrcSubLo)
               .setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       MI1New->getOperand(0).setIsKill(false);
-      BuildMI(MBB, MI, DL, get(NewOpcd))
+      BuildMI(MBB, MI, DL, get(NewOpc))
           .addOperand(MI.getOperand(0))
           // The Vectors are indexed in multiples of vector size.
           .addImm(MI.getOperand(1).getImm() + Offset)
@@ -1068,54 +1082,35 @@ bool HexagonInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
       MBB.erase(MI);
       return true;
     }
-    case Hexagon::LDrivv_pseudo_V6_128B:
-    case Hexagon::LDrivv_indexed_128B:
-      Is128B = true;
-    case Hexagon::LDrivv_pseudo_V6:
-    case Hexagon::LDrivv_indexed: {
-      unsigned NewOpcd = Is128B ? Hexagon::V6_vL32b_ai_128B
-                                : Hexagon::V6_vL32b_ai;
+    case Hexagon::PS_vloadrw_ai:
+    case Hexagon::PS_vloadrwu_ai:
+    case Hexagon::PS_vloadrw_ai_128B:
+    case Hexagon::PS_vloadrwu_ai_128B: {
+      bool Is128B = (Opc == Hexagon::PS_vloadrw_ai_128B ||
+                     Opc == Hexagon::PS_vloadrwu_ai_128B);
+      bool Aligned = (Opc == Hexagon::PS_vloadrw_ai ||
+                      Opc == Hexagon::PS_vloadrw_ai_128B);
+      unsigned NewOpc;
+      if (Aligned)
+        NewOpc = Is128B ? Hexagon::V6_vL32b_ai_128B
+                        : Hexagon::V6_vL32b_ai;
+      else
+        NewOpc = Is128B ? Hexagon::V6_vL32Ub_ai_128B
+                        : Hexagon::V6_vL32Ub_ai;
+
       unsigned DstReg = MI.getOperand(0).getReg();
       unsigned Offset = Is128B ? VecOffset << 7 : VecOffset << 6;
       MachineInstr *MI1New =
-          BuildMI(MBB, MI, DL, get(NewOpcd),
+          BuildMI(MBB, MI, DL, get(NewOpc),
                   HRI.getSubReg(DstReg, Hexagon::subreg_loreg))
               .addOperand(MI.getOperand(1))
               .addImm(MI.getOperand(2).getImm());
       MI1New->getOperand(1).setIsKill(false);
-      BuildMI(MBB, MI, DL, get(NewOpcd),
+      BuildMI(MBB, MI, DL, get(NewOpc),
               HRI.getSubReg(DstReg, Hexagon::subreg_hireg))
           .addOperand(MI.getOperand(1))
           // The Vectors are indexed in multiples of vector size.
           .addImm(MI.getOperand(2).getImm() + Offset)
-          .setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
-      MBB.erase(MI);
-      return true;
-    }
-    case Hexagon::LDriv_pseudo_V6_128B:
-      Is128B = true;
-    case Hexagon::LDriv_pseudo_V6: {
-      unsigned DstReg = MI.getOperand(0).getReg();
-      unsigned NewOpc = Is128B ? Hexagon::V6_vL32b_ai_128B
-                               : Hexagon::V6_vL32b_ai;
-      int32_t Off = MI.getOperand(2).getImm();
-      BuildMI(MBB, MI, DL, get(NewOpc), DstReg)
-          .addOperand(MI.getOperand(1))
-          .addImm(Off)
-          .setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
-      MBB.erase(MI);
-      return true;
-    }
-    case Hexagon::STriv_pseudo_V6_128B:
-      Is128B = true;
-    case Hexagon::STriv_pseudo_V6: {
-      unsigned NewOpc = Is128B ? Hexagon::V6_vS32b_ai_128B
-                               : Hexagon::V6_vS32b_ai;
-      int32_t Off = MI.getOperand(1).getImm();
-      BuildMI(MBB, MI, DL, get(NewOpc))
-          .addOperand(MI.getOperand(0))
-          .addImm(Off)
-          .addOperand(MI.getOperand(2))
           .setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       MBB.erase(MI);
       return true;
@@ -2667,14 +2662,10 @@ bool HexagonInstrInfo::isValidOffset(unsigned Opcode, int Offset,
   switch (Opcode) {
   case Hexagon::STriq_pred_V6:
   case Hexagon::STriq_pred_vec_V6:
-  case Hexagon::STriv_pseudo_V6:
-  case Hexagon::STrivv_pseudo_V6:
+  case Hexagon::PS_vstorerw_ai:
   case Hexagon::LDriq_pred_V6:
   case Hexagon::LDriq_pred_vec_V6:
-  case Hexagon::LDriv_pseudo_V6:
-  case Hexagon::LDrivv_pseudo_V6:
-  case Hexagon::LDrivv_indexed:
-  case Hexagon::STrivv_indexed:
+  case Hexagon::PS_vloadrw_ai:
   case Hexagon::V6_vL32b_ai:
   case Hexagon::V6_vS32b_ai:
   case Hexagon::V6_vL32Ub_ai:
@@ -2684,14 +2675,10 @@ bool HexagonInstrInfo::isValidOffset(unsigned Opcode, int Offset,
 
   case Hexagon::STriq_pred_V6_128B:
   case Hexagon::STriq_pred_vec_V6_128B:
-  case Hexagon::STriv_pseudo_V6_128B:
-  case Hexagon::STrivv_pseudo_V6_128B:
+  case Hexagon::PS_vstorerw_ai_128B:
   case Hexagon::LDriq_pred_V6_128B:
   case Hexagon::LDriq_pred_vec_V6_128B:
-  case Hexagon::LDriv_pseudo_V6_128B:
-  case Hexagon::LDrivv_pseudo_V6_128B:
-  case Hexagon::LDrivv_indexed_128B:
-  case Hexagon::STrivv_indexed_128B:
+  case Hexagon::PS_vloadrw_ai_128B:
   case Hexagon::V6_vL32b_ai_128B:
   case Hexagon::V6_vS32b_ai_128B:
   case Hexagon::V6_vL32Ub_ai_128B:
