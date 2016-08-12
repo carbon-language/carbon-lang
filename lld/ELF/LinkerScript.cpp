@@ -386,13 +386,12 @@ template <class ELFT> void assignOffsets(OutputSectionBase<ELFT> *Sec) {
 }
 
 template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
-  ArrayRef<OutputSectionBase<ELFT> *> Sections = *OutputSections;
   // Orphan sections are sections present in the input files which
   // are not explicitly placed into the output file by the linker script.
   // We place orphan sections at end of file.
   // Other linkers places them using some heuristics as described in
   // https://sourceware.org/binutils/docs/ld/Orphan-Sections.html#Orphan-Sections.
-  for (OutputSectionBase<ELFT> *Sec : Sections) {
+  for (OutputSectionBase<ELFT> *Sec : *OutputSections) {
     StringRef Name = Sec->getName();
     if (getSectionIndex(Name) == INT_MAX)
       Opt.Commands.push_back(llvm::make_unique<OutputSectionCommand>(Name));
@@ -422,7 +421,7 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
     // one section with such name, if the alignment, flags or type
     // attribute differs.
     auto *Cmd = cast<OutputSectionCommand>(Base.get());
-    for (OutputSectionBase<ELFT> *Sec : Sections) {
+    for (OutputSectionBase<ELFT> *Sec : *OutputSections) {
       if (Sec->getName() != Cmd->Name)
         continue;
 
