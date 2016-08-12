@@ -15,8 +15,8 @@
 #ifndef LLDB_DISABLE_POSIX
 #include <netinet/in.h>
 #include <sys/mman.h>       // for mmap
-#endif
 #include <sys/socket.h>
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
