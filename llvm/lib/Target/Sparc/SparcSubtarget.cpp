@@ -49,6 +49,9 @@ SparcSubtarget &SparcSubtarget::initializeSubtargetDependencies(StringRef CPU,
   FixAllFDIVSQRT = false;
   InsertNOPLoad = false;
   InsertNOPsLoadStore = false;
+  FillDataCache = false;
+  RestoreExecAddress = false;
+
 
   // Determine default and user specified characteristics
   std::string CPUName = CPU;
