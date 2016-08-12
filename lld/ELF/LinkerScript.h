@@ -151,7 +151,7 @@ public:
   int compareSections(StringRef A, StringRef B);
   bool hasPhdrsCommands();
   uintX_t getOutputSectionSize(StringRef Name);
-  uintX_t getSizeOfHeaders();
+  uintX_t getHeaderSize();
 
   std::vector<OutputSectionBase<ELFT> *> *OutputSections;
 

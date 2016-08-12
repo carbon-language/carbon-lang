@@ -362,7 +362,7 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
   }
 
   // Assign addresses as instructed by linker script SECTIONS sub-commands.
-  Dot = getSizeOfHeaders();
+  Dot = getHeaderSize();
   uintX_t MinVA = std::numeric_limits<uintX_t>::max();
   uintX_t ThreadBssOffset = 0;
 
@@ -536,7 +536,7 @@ typename ELFT::uint LinkerScript<ELFT>::getOutputSectionSize(StringRef Name) {
 }
 
 template <class ELFT>
-typename ELFT::uint LinkerScript<ELFT>::getSizeOfHeaders() {
+typename ELFT::uint LinkerScript<ELFT>::getHeaderSize() {
   return Out<ELFT>::ElfHeader->getSize() + Out<ELFT>::ProgramHeaders->getSize();
 }
 
@@ -1036,16 +1036,16 @@ static uint64_t getSectionSize(StringRef Name) {
   }
 }
 
-static uint64_t getSizeOfHeaders() {
+static uint64_t getHeaderSize() {
   switch (Config->EKind) {
   case ELF32LEKind:
-    return Script<ELF32LE>::X->getSizeOfHeaders();
+    return Script<ELF32LE>::X->getHeaderSize();
   case ELF32BEKind:
-    return Script<ELF32BE>::X->getSizeOfHeaders();
+    return Script<ELF32BE>::X->getHeaderSize();
   case ELF64LEKind:
-    return Script<ELF64LE>::X->getSizeOfHeaders();
+    return Script<ELF64LE>::X->getHeaderSize();
   case ELF64BEKind:
-    return Script<ELF64BE>::X->getSizeOfHeaders();
+    return Script<ELF64BE>::X->getHeaderSize();
   default:
     llvm_unreachable("unsupported target");
   }
@@ -1200,7 +1200,7 @@ Expr ScriptParser::readPrimary() {
     return [=](uint64_t Dot) { return getSectionSize(Name); };
   }
   if (Tok == "SIZEOF_HEADERS")
-    return [=](uint64_t Dot) { return getSizeOfHeaders(); };
+    return [=](uint64_t Dot) { return getHeaderSize(); };
 
   // Parse a symbol name or a number literal.
   uint64_t V = 0;
