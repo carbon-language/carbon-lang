@@ -1744,44 +1744,10 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB,
   //        ldp x0, x1, [x2]
   for (MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
        MBBI != E;) {
-    MachineInstr &MI = *MBBI;
-    switch (MI.getOpcode()) {
-    default:
-      // Just move on to the next instruction.
+    if (TII->isPairableLdStInst(*MBBI) && tryToPairLdStInst(MBBI))
+      Modified = true;
+    else
       ++MBBI;
-      break;
-    // Scaled instructions.
-    case AArch64::STRSui:
-    case AArch64::STRDui:
-    case AArch64::STRQui:
-    case AArch64::STRXui:
-    case AArch64::STRWui:
-    case AArch64::LDRSui:
-    case AArch64::LDRDui:
-    case AArch64::LDRQui:
-    case AArch64::LDRXui:
-    case AArch64::LDRWui:
-    case AArch64::LDRSWui:
-    // Unscaled instructions.
-    case AArch64::STURSi:
-    case AArch64::STURDi:
-    case AArch64::STURQi:
-    case AArch64::STURWi:
-    case AArch64::STURXi:
-    case AArch64::LDURSi:
-    case AArch64::LDURDi:
-    case AArch64::LDURQi:
-    case AArch64::LDURWi:
-    case AArch64::LDURXi:
-    case AArch64::LDURSWi: {
-      if (tryToPairLdStInst(MBBI)) {
-        Modified = true;
-        break;
-      }
-      ++MBBI;
-      break;
-    }
-    }
   }
   // 4) Find base register updates that can be merged into the load or store
   //    as a base-reg writeback.
