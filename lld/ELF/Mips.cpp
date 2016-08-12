@@ -252,6 +252,12 @@ static StringRef getArchName(uint32_t Flags) {
   }
 }
 
+// There are (arguably too) many MIPS ISAs out there. Some are compatible
+// with each other and some are not. This function checks if all input
+// files are compatible with each other, and if so, returns the "lowest"
+// ISA flag. For example, if one object is in EF_MIPS_ARCH_3 and the
+// other is in EF_MIPS_ARCH_2, it'll return EF_MIPS_ARCH_2 because it's
+// older than EF_MIPS_ARCH_3.
 static uint32_t getArchFlags(ArrayRef<FileFlags> Files) {
   uint32_t Ret = Files[0].Flags & (EF_MIPS_ARCH | EF_MIPS_MACH);
 
