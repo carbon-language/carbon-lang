@@ -6107,12 +6107,9 @@ NamedDecl *Sema::ActOnVariableDeclarator(
       NewVD = cast<VarDecl>(Res.get());
       AddToScope = false;
     } else if (D.isDecompositionDeclarator()) {
-      auto *NewDD = DecompositionDecl::Create(Context, DC, D.getLocStart(),
-                                              D.getIdentifierLoc(), R, TInfo,
-                                              SC, Bindings);
-      for (auto *B : Bindings)
-        B->setDecompositionDecl(NewDD);
-      NewVD = NewDD;
+      NewVD = DecompositionDecl::Create(Context, DC, D.getLocStart(),
+                                        D.getIdentifierLoc(), R, TInfo, SC,
+                                        Bindings);
     } else
       NewVD = VarDecl::Create(Context, DC, D.getLocStart(),
                               D.getIdentifierLoc(), II, R, TInfo, SC);

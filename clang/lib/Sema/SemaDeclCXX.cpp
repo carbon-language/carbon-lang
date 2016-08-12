@@ -791,7 +791,7 @@ Sema::ActOnDecompositionDeclarator(Scope *S, Declarator &D,
       Diag(Old->getLocation(), diag::note_previous_definition);
     }
 
-    auto *BD = BindingDecl::Create(Context, DC, nullptr, B.NameLoc, B.Name);
+    auto *BD = BindingDecl::Create(Context, DC, B.NameLoc, B.Name);
     PushOnScopeChains(BD, S, true);
     Bindings.push_back(BD);
     ParsingInitForAutoVars.insert(BD);
