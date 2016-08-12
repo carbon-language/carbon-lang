@@ -405,8 +405,8 @@ def err_decomp_decl_non_public_base : Error<
 def err_decomp_decl_non_public_member : Error<
   "cannot decompose non-public member %0 of %1">;
 def err_decomp_decl_anon_union_member : Error<
-  "cannot decompose class type %1 because it has an anonymous "
-  "%select{struct|union} member">;
+  "cannot decompose class type %0 because it has an anonymous "
+  "%select{struct|union}1 member">;
 def err_decomp_decl_std_tuple_element_not_specialized : Error<
   "cannot decompose this type; 'std::tuple_element<%0>::type' "
   "does not name a type">;
