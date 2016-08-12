@@ -998,9 +998,7 @@ public:
   ///
   /// Erases all attachments matching the \c shouldRemove predicate.
   template <class PredTy> void remove_if(PredTy shouldRemove) {
-    Attachments.erase(
-        std::remove_if(Attachments.begin(), Attachments.end(), shouldRemove),
-        Attachments.end());
+    Attachments.erase(remove_if(Attachments, shouldRemove), Attachments.end());
   }
 };
 

@@ -790,10 +790,10 @@ MachineBasicBlock *MachineBlockPlacement::selectBestCandidateBlock(
   // worklist of already placed entries.
   // FIXME: If this shows up on profiles, it could be folded (at the cost of
   // some code complexity) into the loop below.
-  WorkList.erase(std::remove_if(WorkList.begin(), WorkList.end(),
-                                [&](MachineBasicBlock *BB) {
-                                  return BlockToChain.lookup(BB) == &Chain;
-                                }),
+  WorkList.erase(remove_if(WorkList,
+                           [&](MachineBasicBlock *BB) {
+                             return BlockToChain.lookup(BB) == &Chain;
+                           }),
                  WorkList.end());
 
   if (WorkList.empty())

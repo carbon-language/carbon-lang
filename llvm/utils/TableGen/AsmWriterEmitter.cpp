@@ -450,10 +450,8 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   }
 
   // Okay, delete instructions with no operand info left.
-  auto I = std::remove_if(Instructions.begin(), Instructions.end(),
-                          [](AsmWriterInst &Inst) {
-                            return Inst.Operands.empty();
-                          });
+  auto I = remove_if(Instructions,
+                     [](AsmWriterInst &Inst) { return Inst.Operands.empty(); });
   Instructions.erase(I, Instructions.end());
 
 
