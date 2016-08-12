@@ -1297,10 +1297,10 @@ bool HexagonInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
       MBB.erase(MI);
       return true;
     }
-    case Hexagon::TCRETURNi:
+    case Hexagon::PS_tailcall_i:
       MI.setDesc(get(Hexagon::J2_jump));
       return true;
-    case Hexagon::TCRETURNr:
+    case Hexagon::PS_tailcall_r:
       MI.setDesc(get(Hexagon::J2_jumpr));
       return true;
   }
@@ -2175,7 +2175,7 @@ bool HexagonInstrInfo::isJumpWithinBranchRange(const MachineInstr &MI,
     return false;
   case Hexagon::J2_jump: // bits<24> dst; // r22:2
   case Hexagon::J2_call:
-  case Hexagon::CALLv3nr:
+  case Hexagon::PS_call_nr:
     return isInt<24>(offset);
   case Hexagon::J2_jumpt: //bits<17> dst; // r15:2
   case Hexagon::J2_jumpf:
@@ -2973,7 +2973,7 @@ bool HexagonInstrInfo::canExecuteInBundle(const MachineInstr &First,
 
 bool HexagonInstrInfo::doesNotReturn(const MachineInstr &CallMI) const {
   unsigned Opc = CallMI.getOpcode();
-  return Opc == Hexagon::CALLv3nr || Opc == Hexagon::CALLRv3nr;
+  return Opc == Hexagon::PS_call_nr || Opc == Hexagon::PS_callr_nr;
 }
 
 
@@ -3714,19 +3714,19 @@ HexagonII::SubInstructionGroup HexagonInstrInfo::getDuplexCandidateGroup(
   case Hexagon::L2_deallocframe:
     return HexagonII::HSIG_L2;
   case Hexagon::EH_RETURN_JMPR:
-  case Hexagon::JMPret :
+  case Hexagon::PS_jmpret:
     // jumpr r31
     // Actual form JMPR %PC<imp-def>, %R31<imp-use>, %R0<imp-use,internal>.
     DstReg = MI.getOperand(0).getReg();
     if (Hexagon::IntRegsRegClass.contains(DstReg) && (Hexagon::R31 == DstReg))
       return HexagonII::HSIG_L2;
     break;
-  case Hexagon::JMPrett:
-  case Hexagon::JMPretf:
-  case Hexagon::JMPrettnewpt:
-  case Hexagon::JMPretfnewpt :
-  case Hexagon::JMPrettnew :
-  case Hexagon::JMPretfnew :
+  case Hexagon::PS_jmprett:
+  case Hexagon::PS_jmpretf:
+  case Hexagon::PS_jmprettnewpt:
+  case Hexagon::PS_jmpretfnewpt:
+  case Hexagon::PS_jmprettnew:
+  case Hexagon::PS_jmpretfnew:
     DstReg = MI.getOperand(1).getReg();
     SrcReg = MI.getOperand(0).getReg();
     // [if ([!]p0[.new])] jumpr r31

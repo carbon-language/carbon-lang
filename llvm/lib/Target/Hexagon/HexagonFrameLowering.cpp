@@ -291,7 +291,7 @@ namespace {
   bool hasTailCall(const MachineBasicBlock &MBB) {
     MachineBasicBlock::const_iterator I = MBB.getLastNonDebugInstr();
     unsigned RetOpc = I->getOpcode();
-    return RetOpc == Hexagon::TCRETURNi || RetOpc == Hexagon::TCRETURNr;
+    return RetOpc == Hexagon::PS_tailcall_i || RetOpc == Hexagon::PS_tailcall_r;
   }
 
   /// Returns true if MBB contains an instruction that returns.
@@ -584,7 +584,7 @@ void HexagonFrameLowering::insertPrologueInBlock(MachineBasicBlock &MBB,
   // registers inline (i.e. did not use a spill function), then call
   // the stack checker directly.
   if (EnableStackOVFSanitizer && !PrologueStubs)
-    BuildMI(MBB, InsertPt, dl, HII.get(Hexagon::CALLstk))
+    BuildMI(MBB, InsertPt, dl, HII.get(Hexagon::PS_call_stk))
            .addExternalSymbol("__runtime_stack_check");
 }
 
@@ -646,16 +646,16 @@ void HexagonFrameLowering::insertEpilogueInBlock(MachineBasicBlock &MBB) const {
         COpc == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4_PIC ||
         COpc == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4_EXT ||
         COpc == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4_EXT_PIC ||
-        COpc == Hexagon::CALLv3nr || COpc == Hexagon::CALLRv3nr)
+        COpc == Hexagon::PS_call_nr || COpc == Hexagon::PS_callr_nr)
       NeedsDeallocframe = false;
   }
 
   if (!NeedsDeallocframe)
     return;
-  // If the returning instruction is JMPret, replace it with dealloc_return,
+  // If the returning instruction is PS_jmpret, replace it with dealloc_return,
   // otherwise just add deallocframe. The function could be returning via a
   // tail call.
-  if (RetOpc != Hexagon::JMPret || DisableDeallocRet) {
+  if (RetOpc != Hexagon::PS_jmpret || DisableDeallocRet) {
     BuildMI(MBB, InsertPt, DL, HII.get(Hexagon::L2_deallocframe));
     return;
   }
