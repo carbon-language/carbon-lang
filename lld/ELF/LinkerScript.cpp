@@ -269,42 +269,51 @@ getComparator(SortKind K) {
 }
 
 template <class ELFT>
+void LinkerScript<ELFT>::discard(OutputSectionCommand &Cmd) {
+  for (const std::unique_ptr<BaseCommand> &Base : Cmd.Commands) {
+    if (auto *Cmd = dyn_cast<InputSectionDescription>(Base.get())) {
+      for (InputSectionBase<ELFT> *S : getInputSections(Cmd)) {
+        S->Live = false;
+        reportDiscarded(S);
+      }
+    }
+  }
+}
+
+template <class ELFT>
 void LinkerScript<ELFT>::createSections(
     OutputSectionFactory<ELFT> &Factory) {
   OutputSectionBuilder<ELFT> Builder(Factory, OutputSections);
 
-  auto Add = [&](StringRef OutputName, const InputSectionDescription *Cmd) {
-    std::vector<InputSectionBase<ELFT> *> Sections = getInputSections(Cmd);
-    if (OutputName == "/DISCARD/") {
-      for (InputSectionBase<ELFT> *S : Sections) {
-        S->Live = false;
-        reportDiscarded(S);
-      }
-      return;
-    }
-    if (Cmd->SortInner)
-      std::stable_sort(Sections.begin(), Sections.end(),
-                       getComparator<ELFT>(Cmd->SortInner));
-    if (Cmd->SortOuter)
-      std::stable_sort(Sections.begin(), Sections.end(),
-                       getComparator<ELFT>(Cmd->SortOuter));
-    for (InputSectionBase<ELFT> *S : Sections)
-      Builder.addSection(OutputName, S);
-  };
-
-  for (const std::unique_ptr<BaseCommand> &Base1 : Opt.Commands)
+  for (const std::unique_ptr<BaseCommand> &Base1 : Opt.Commands) {
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base1.get())) {
-      for (const std::unique_ptr<BaseCommand> &Base2 : Cmd->Commands)
-        if (auto *Assignment = dyn_cast<SymbolAssignment>(Base2.get()))
-          Builder.addSymbol(Assignment);
-        else
-          Add(Cmd->Name, cast<InputSectionDescription>(Base2.get()));
+      if (Cmd->Name == "/DISCARD/") {
+        discard(*Cmd);
+        continue;
+      }
+      for (const std::unique_ptr<BaseCommand> &Base2 : Cmd->Commands) {
+        if (auto *Cmd2 = dyn_cast<SymbolAssignment>(Base2.get())) {
+          Builder.addSymbol(Cmd2);
+          continue;
+        }
+        auto *Cmd2 = cast<InputSectionDescription>(Base2.get());
+        std::vector<InputSectionBase<ELFT> *> Sections = getInputSections(Cmd2);
+        if (Cmd2->SortInner)
+          std::stable_sort(Sections.begin(), Sections.end(),
+                           getComparator<ELFT>(Cmd2->SortInner));
+        if (Cmd2->SortOuter)
+          std::stable_sort(Sections.begin(), Sections.end(),
+                           getComparator<ELFT>(Cmd2->SortOuter));
+        for (InputSectionBase<ELFT> *S : Sections)
+          Builder.addSection(Cmd->Name, S);
+      }
 
       Builder.flushSection();
     } else if (auto *Cmd2 = dyn_cast<SymbolAssignment>(Base1.get())) {
       if (shouldDefine<ELFT>(Cmd2))
         addRegular<ELFT>(Cmd2);
     }
+  }
 
   // Add all other input sections, which are not listed in script.
   for (const std::unique_ptr<ObjectFile<ELFT>> &F :

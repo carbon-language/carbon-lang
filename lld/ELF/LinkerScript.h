@@ -156,6 +156,8 @@ private:
   std::vector<InputSectionBase<ELFT> *>
   getInputSections(const InputSectionDescription *);
 
+  void discard(OutputSectionCommand &Cmd);
+
   // "ScriptConfig" is a bit too long, so define a short name for it.
   ScriptConfiguration &Opt = *ScriptConfig;
 
