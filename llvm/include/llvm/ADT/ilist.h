@@ -109,10 +109,11 @@ template <typename NodeTy> class ilist_half_node;
 template <typename NodeTy> class ilist_node;
 
 /// Traits with an embedded ilist_node as a sentinel.
-///
-/// FIXME: The downcast in createSentinel() is UB.
 template <typename NodeTy> struct ilist_embedded_sentinel_traits {
   /// Get hold of the node that marks the end of the list.
+  ///
+  /// FIXME: This downcast is UB.  See llvm.org/PR26753.
+  LLVM_NO_SANITIZE("object-size")
   NodeTy *createSentinel() const {
     // Since i(p)lists always publicly derive from their corresponding traits,
     // placing a data member in this class will augment the i(p)list.  But since
@@ -134,10 +135,11 @@ private:
 };
 
 /// Trait with an embedded ilist_half_node as a sentinel.
-///
-/// FIXME: The downcast in createSentinel() is UB.
 template <typename NodeTy> struct ilist_half_embedded_sentinel_traits {
   /// Get hold of the node that marks the end of the list.
+  ///
+  /// FIXME: This downcast is UB.  See llvm.org/PR26753.
+  LLVM_NO_SANITIZE("object-size")
   NodeTy *createSentinel() const {
     // See comment in ilist_embedded_sentinel_traits::createSentinel().
     return static_cast<NodeTy *>(&Sentinel);
@@ -150,6 +152,20 @@ template <typename NodeTy> struct ilist_half_embedded_sentinel_traits {
 
 private:
   mutable ilist_half_node<NodeTy> Sentinel;
+};
+
+/// Traits with an embedded full node as a sentinel.
+template <typename NodeTy> struct ilist_full_embedded_sentinel_traits {
+  /// Get hold of the node that marks the end of the list.
+  NodeTy *createSentinel() const { return &Sentinel; }
+  static void destroySentinel(NodeTy *) {}
+
+  NodeTy *provideInitialHead() const { return createSentinel(); }
+  NodeTy *ensureHead(NodeTy *) const { return createSentinel(); }
+  static void noteHead(NodeTy *, NodeTy *) {}
+
+private:
+  mutable NodeTy Sentinel;
 };
 
 /// ilist_node_traits - A fragment for template traits for intrusive list
