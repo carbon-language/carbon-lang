@@ -89,6 +89,9 @@ template <class ELFT> static bool isDiscarded(InputSectionBase<ELFT> *S) {
   return !S || !S->Live;
 }
 
+template <class ELFT> LinkerScript<ELFT>::LinkerScript() {}
+template <class ELFT> LinkerScript<ELFT>::~LinkerScript() {}
+
 template <class ELFT>
 bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
   for (StringRef Pat : Opt.KeptSections)
@@ -132,8 +135,6 @@ LinkerScript<ELFT>::getInputSections(const InputSectionDescription *I) {
   return Ret;
 }
 
-namespace {
-
 // You can define new symbols using linker scripts. For example,
 // ".text { abc.o(.text); foo = .; def.o(.text); }" defines symbol
 // foo just after abc.o's text section contents. This class is to
@@ -143,9 +144,10 @@ namespace {
 // keep symbol definitions in output sections. Because output sections
 // can contain only input sections, we wrap symbol definitions
 // with dummy input sections. This class serves that purpose.
-template <class ELFT> class LayoutInputSection : public InputSectionBase<ELFT> {
+template <class ELFT>
+class elf::LayoutInputSection : public InputSectionBase<ELFT> {
 public:
-  LayoutInputSection(SymbolAssignment *Cmd);
+  explicit LayoutInputSection(SymbolAssignment *Cmd);
   static bool classof(const InputSectionBase<ELFT> *S);
   SymbolAssignment *Cmd;
 
@@ -155,6 +157,7 @@ private:
 
 // Helper class, which builds output section list, also
 // creating symbol sections, when needed
+namespace {
 template <class ELFT> class OutputSectionBuilder {
 public:
   OutputSectionBuilder(OutputSectionFactory<ELFT> &F,
@@ -162,9 +165,7 @@ public:
       : Factory(F), OutputSections(Out) {}
 
   void addSection(StringRef OutputName, InputSectionBase<ELFT> *I);
-  void addSymbol(SymbolAssignment *Cmd) {
-    PendingSymbols.emplace_back(new LayoutInputSection<ELFT>(Cmd));
-  }
+  void addSymbol(LayoutInputSection<ELFT> *S) { PendingSymbols.push_back(S); }
   void flushSymbols();
   void flushSection();
 
@@ -172,14 +173,8 @@ private:
   OutputSectionFactory<ELFT> &Factory;
   std::vector<OutputSectionBase<ELFT> *> *OutputSections;
   OutputSectionBase<ELFT> *Current = nullptr;
-  std::vector<std::unique_ptr<LayoutInputSection<ELFT>>> PendingSymbols;
-  static std::vector<std::unique_ptr<LayoutInputSection<ELFT>>> OwningSections;
+  std::vector<LayoutInputSection<ELFT> *> PendingSymbols;
 };
-
-template <class ELFT>
-std::vector<std::unique_ptr<LayoutInputSection<ELFT>>>
-    OutputSectionBuilder<ELFT>::OwningSections;
-
 } // anonymous namespace
 
 template <class T> static T *zero(T *Val) {
@@ -215,14 +210,12 @@ void OutputSectionBuilder<ELFT>::addSection(StringRef OutputName,
 template <class ELFT> void OutputSectionBuilder<ELFT>::flushSymbols() {
   // Only regular output sections are supported.
   if (dyn_cast_or_null<OutputSection<ELFT>>(Current)) {
-    for (std::unique_ptr<LayoutInputSection<ELFT>> &I : PendingSymbols) {
+    for (LayoutInputSection<ELFT> *I : PendingSymbols) {
       if (I->Cmd->Name == ".") {
-        Current->addSection(I.get());
-        OwningSections.push_back(std::move(I));
+        Current->addSection(I);
       } else if (shouldDefine<ELFT>(I->Cmd)) {
         addSynthetic<ELFT>(I->Cmd, Current);
-        Current->addSection(I.get());
-        OwningSections.push_back(std::move(I));
+        Current->addSection(I);
       }
     }
   }
@@ -282,7 +275,8 @@ void LinkerScript<ELFT>::createSections(
       }
       for (const std::unique_ptr<BaseCommand> &Base2 : Cmd->Commands) {
         if (auto *Cmd2 = dyn_cast<SymbolAssignment>(Base2.get())) {
-          Builder.addSymbol(Cmd2);
+          Builder.addSymbol(new (LAlloc.Allocate())
+                                LayoutInputSection<ELFT>(Cmd2));
           continue;
         }
         auto *Cmd2 = cast<InputSectionDescription>(Base2.get());
