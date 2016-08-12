@@ -155,27 +155,14 @@ private:
   typename ELFT::Shdr Hdr;
 };
 
-// Helper class, which builds output section list, also
-// creating symbol sections, when needed
-namespace {
-template <class ELFT> class OutputSectionBuilder {
-public:
-  OutputSectionBuilder(OutputSectionFactory<ELFT> &F,
-                       std::vector<OutputSectionBase<ELFT> *> *Out)
-      : Factory(F), OutputSections(Out) {}
-
-  void addSection(StringRef OutputName, InputSectionBase<ELFT> *I);
-  void addSymbol(LayoutInputSection<ELFT> *S) { PendingSymbols.push_back(S); }
-  void flushSymbols();
-  void flushSection();
-
-private:
-  OutputSectionFactory<ELFT> &Factory;
-  std::vector<OutputSectionBase<ELFT> *> *OutputSections;
-  OutputSectionBase<ELFT> *Current = nullptr;
-  std::vector<LayoutInputSection<ELFT> *> PendingSymbols;
-};
-} // anonymous namespace
+template <class ELFT>
+static InputSectionBase<ELFT> *
+getNonLayoutSection(std::vector<InputSectionBase<ELFT> *> &Vec) {
+  for (InputSectionBase<ELFT> *S : Vec)
+    if (!isa<LayoutInputSection<ELFT>>(S))
+      return S;
+  return nullptr;
+}
 
 template <class T> static T *zero(T *Val) {
   memset(Val, 0, sizeof(*Val));
@@ -194,38 +181,6 @@ LayoutInputSection<ELFT>::LayoutInputSection(SymbolAssignment *Cmd)
 template <class ELFT>
 bool LayoutInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
   return S->SectionKind == InputSectionBase<ELFT>::Layout;
-}
-
-template <class ELFT>
-void OutputSectionBuilder<ELFT>::addSection(StringRef OutputName,
-                                            InputSectionBase<ELFT> *C) {
-  bool IsNew;
-  std::tie(Current, IsNew) = Factory.create(C, OutputName);
-  if (IsNew)
-    OutputSections->push_back(Current);
-  flushSymbols();
-  Current->addSection(C);
-}
-
-template <class ELFT> void OutputSectionBuilder<ELFT>::flushSymbols() {
-  // Only regular output sections are supported.
-  if (dyn_cast_or_null<OutputSection<ELFT>>(Current)) {
-    for (LayoutInputSection<ELFT> *I : PendingSymbols) {
-      if (I->Cmd->Name == ".") {
-        Current->addSection(I);
-      } else if (shouldDefine<ELFT>(I->Cmd)) {
-        addSynthetic<ELFT>(I->Cmd, Current);
-        Current->addSection(I);
-      }
-    }
-  }
-
-  PendingSymbols.clear();
-}
-
-template <class ELFT> void OutputSectionBuilder<ELFT>::flushSection() {
-  flushSymbols();
-  Current = nullptr;
 }
 
 template <class ELFT>
@@ -263,47 +218,76 @@ void LinkerScript<ELFT>::discard(OutputSectionCommand &Cmd) {
 }
 
 template <class ELFT>
-void LinkerScript<ELFT>::createSections(
-    OutputSectionFactory<ELFT> &Factory) {
-  OutputSectionBuilder<ELFT> Builder(Factory, OutputSections);
+std::vector<InputSectionBase<ELFT> *>
+LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &Cmd) {
+  std::vector<InputSectionBase<ELFT> *> Ret;
 
+  for (const std::unique_ptr<BaseCommand> &Base : Cmd.Commands) {
+    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get())) {
+      Ret.push_back(new (LAlloc.Allocate()) LayoutInputSection<ELFT>(Cmd));
+      continue;
+    }
+
+    auto *Cmd = cast<InputSectionDescription>(Base.get());
+    std::vector<InputSectionBase<ELFT> *> V = getInputSections(Cmd);
+    if (Cmd->SortInner)
+      std::stable_sort(V.begin(), V.end(), getComparator<ELFT>(Cmd->SortInner));
+    if (Cmd->SortOuter)
+      std::stable_sort(V.begin(), V.end(), getComparator<ELFT>(Cmd->SortOuter));
+    Ret.insert(Ret.end(), V.begin(), V.end());
+  }
+  return Ret;
+}
+
+template <class ELFT>
+void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
   for (const std::unique_ptr<BaseCommand> &Base1 : Opt.Commands) {
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base1.get())) {
       if (Cmd->Name == "/DISCARD/") {
         discard(*Cmd);
         continue;
       }
-      for (const std::unique_ptr<BaseCommand> &Base2 : Cmd->Commands) {
-        if (auto *Cmd2 = dyn_cast<SymbolAssignment>(Base2.get())) {
-          Builder.addSymbol(new (LAlloc.Allocate())
-                                LayoutInputSection<ELFT>(Cmd2));
-          continue;
-        }
-        auto *Cmd2 = cast<InputSectionDescription>(Base2.get());
-        std::vector<InputSectionBase<ELFT> *> Sections = getInputSections(Cmd2);
-        if (Cmd2->SortInner)
-          std::stable_sort(Sections.begin(), Sections.end(),
-                           getComparator<ELFT>(Cmd2->SortInner));
-        if (Cmd2->SortOuter)
-          std::stable_sort(Sections.begin(), Sections.end(),
-                           getComparator<ELFT>(Cmd2->SortOuter));
-        for (InputSectionBase<ELFT> *S : Sections)
-          Builder.addSection(Cmd->Name, S);
-      }
 
-      Builder.flushSection();
+      std::vector<InputSectionBase<ELFT> *> V = createInputSectionList(*Cmd);
+      InputSectionBase<ELFT> *Head = getNonLayoutSection<ELFT>(V);
+      if (!Head)
+        continue;
+
+      OutputSectionBase<ELFT> *OutSec;
+      bool IsNew;
+      std::tie(OutSec, IsNew) = Factory.create(Head, Cmd->Name);
+      if (IsNew)
+        OutputSections->push_back(OutSec);
+
+      for (InputSectionBase<ELFT> *Sec : V) {
+        if (auto *L = dyn_cast<LayoutInputSection<ELFT>>(Sec)) {
+          if (shouldDefine<ELFT>(L->Cmd))
+            addSynthetic<ELFT>(L->Cmd, OutSec);
+          else if (L->Cmd->Name != ".")
+            continue;
+        }
+        OutSec->addSection(Sec);
+      }
     } else if (auto *Cmd2 = dyn_cast<SymbolAssignment>(Base1.get())) {
       if (shouldDefine<ELFT>(Cmd2))
         addRegular<ELFT>(Cmd2);
     }
   }
 
-  // Add all other input sections, which are not listed in script.
+  // Add orphan sections.
   for (const std::unique_ptr<ObjectFile<ELFT>> &F :
-       Symtab<ELFT>::X->getObjectFiles())
-    for (InputSectionBase<ELFT> *S : F->getSections())
-      if (!isDiscarded(S) && !S->OutSec)
-        Builder.addSection(getOutputSectionName(S), S);
+       Symtab<ELFT>::X->getObjectFiles()) {
+    for (InputSectionBase<ELFT> *S : F->getSections()) {
+      if (!isDiscarded(S) && !S->OutSec) {
+        OutputSectionBase<ELFT> *OutSec;
+        bool IsNew;
+        std::tie(OutSec, IsNew) = Factory.create(S, getOutputSectionName(S));
+        if (IsNew)
+          OutputSections->push_back(OutSec);
+        OutSec->addSection(S);
+      }
+    }
+  }
 
   // Remove from the output all the sections which did not meet
   // the optional constraints.
