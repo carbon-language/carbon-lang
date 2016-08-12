@@ -43,6 +43,7 @@
 #include <cassert>
 #include <cstddef>
 #include <iterator>
+#include <type_traits>
 
 namespace llvm {
 
@@ -210,6 +211,9 @@ public:
   typedef typename super::pointer pointer;
   typedef typename super::reference reference;
 
+  typedef typename std::add_const<value_type>::type *const_pointer;
+  typedef typename std::add_const<value_type>::type &const_reference;
+
   typedef typename ilist_detail::ConstCorrectNodeType<NodeTy>::type node_type;
   typedef node_type *node_pointer;
   typedef node_type &node_reference;
@@ -229,7 +233,10 @@ public:
   // This is templated so that we can allow constructing a const iterator from
   // a nonconst iterator...
   template <class node_ty>
-  ilist_iterator(const ilist_iterator<node_ty> &RHS)
+  ilist_iterator(
+      const ilist_iterator<node_ty> &RHS,
+      typename std::enable_if<std::is_convertible<node_ty *, NodeTy *>::value,
+                              void *>::type = nullptr)
       : NodePtr(RHS.getNodePtrUnchecked()) {}
 
   // This is templated so that we can allow assigning to a const iterator from
@@ -243,16 +250,15 @@ public:
   void reset(pointer NP) { NodePtr = NP; }
 
   // Accessors...
-  explicit operator pointer() const { return NodePtr; }
   reference operator*() const { return *NodePtr; }
   pointer operator->() const { return &operator*(); }
 
   // Comparison operators
-  template <class Y> bool operator==(const ilist_iterator<Y> &RHS) const {
-    return NodePtr == RHS.getNodePtrUnchecked();
+  friend bool operator==(const ilist_iterator &LHS, const ilist_iterator &RHS) {
+    return LHS.NodePtr == RHS.NodePtr;
   }
-  template <class Y> bool operator!=(const ilist_iterator<Y> &RHS) const {
-    return NodePtr != RHS.getNodePtrUnchecked();
+  friend bool operator!=(const ilist_iterator &LHS, const ilist_iterator &RHS) {
+    return LHS.NodePtr != RHS.NodePtr;
   }
 
   // Increment and decrement operators...
