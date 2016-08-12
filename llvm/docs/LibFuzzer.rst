@@ -270,7 +270,7 @@ The most important command line options are:
   the same path for several parallel processes.
 ``-print_final_stats``
   If 1, print statistics at exit.  Defaults to 0.
-``-detect-leaks``
+``-detect_leaks``
   If 1 (default) and if LeakSanitizer is enabled
   try to detect memory leaks during fuzzing (i.e. not only at shut down).
 ``-close_fd_mask``
