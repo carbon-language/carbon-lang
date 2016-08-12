@@ -167,8 +167,6 @@ private:
   // "ScriptConfig" is a bit too long, so define a short name for it.
   ScriptConfiguration &Opt = *ScriptConfig;
 
-  void filter();
-
   int getSectionIndex(StringRef Name);
   std::vector<size_t> getPhdrIndices(StringRef SectionName);
   size_t getPhdrIndex(StringRef PhdrName);

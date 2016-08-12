@@ -216,20 +216,33 @@ void LinkerScript<ELFT>::discard(OutputSectionCommand &Cmd) {
 }
 
 template <class ELFT>
+static bool matchConstraints(ArrayRef<InputSectionBase<ELFT> *> Sections,
+                             ConstraintKind Kind) {
+  bool RO = (Kind == ConstraintKind::ReadOnly);
+  bool RW = (Kind == ConstraintKind::ReadWrite);
+  return !llvm::any_of(Sections, [=](InputSectionBase<ELFT> *Sec) {
+    bool Writable = Sec->getSectionHdr()->sh_flags & SHF_WRITE;
+    return (RO && Writable) || (RW && !Writable);
+  });
+}
+
+template <class ELFT>
 std::vector<InputSectionBase<ELFT> *>
-LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &Cmd) {
+LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &OutCmd) {
   std::vector<InputSectionBase<ELFT> *> Ret;
 
-  for (const std::unique_ptr<BaseCommand> &Base : Cmd.Commands) {
-    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get())) {
-      if (shouldDefine<ELFT>(Cmd))
-        addSynthetic<ELFT>(Cmd);
-      Ret.push_back(new (LAlloc.Allocate()) LayoutInputSection<ELFT>(Cmd));
+  for (const std::unique_ptr<BaseCommand> &Base : OutCmd.Commands) {
+    if (auto *OutCmd = dyn_cast<SymbolAssignment>(Base.get())) {
+      if (shouldDefine<ELFT>(OutCmd))
+        addSynthetic<ELFT>(OutCmd);
+      Ret.push_back(new (LAlloc.Allocate()) LayoutInputSection<ELFT>(OutCmd));
       continue;
     }
 
     auto *Cmd = cast<InputSectionDescription>(Base.get());
     std::vector<InputSectionBase<ELFT> *> V = getInputSections(Cmd);
+    if (!matchConstraints<ELFT>(V, OutCmd.Constraint))
+      continue;
     if (Cmd->SortInner)
       std::stable_sort(V.begin(), V.end(), getComparator<ELFT>(Cmd->SortInner));
     if (Cmd->SortOuter)
@@ -282,38 +295,6 @@ void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
         OutputSections->push_back(OutSec);
       OutSec->addSection(S);
     }
-  }
-
-  // Remove from the output all the sections which did not meet
-  // the optional constraints.
-  filter();
-}
-
-template <class R, class T>
-static inline void removeElementsIf(R &Range, const T &Pred) {
-  Range.erase(std::remove_if(Range.begin(), Range.end(), Pred), Range.end());
-}
-
-// Process ONLY_IF_RO and ONLY_IF_RW.
-template <class ELFT> void LinkerScript<ELFT>::filter() {
-  // In this loop, we remove output sections if they don't satisfy
-  // requested properties.
-  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
-    auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
-    if (!Cmd || Cmd->Name == "/DISCARD/")
-      continue;
-
-    if (Cmd->Constraint == ConstraintKind::NoConstraint)
-      continue;
-
-    bool RO = (Cmd->Constraint == ConstraintKind::ReadOnly);
-    bool RW = (Cmd->Constraint == ConstraintKind::ReadWrite);
-
-    removeElementsIf(*OutputSections, [&](OutputSectionBase<ELFT> *S) {
-      bool Writable = (S->getFlags() & SHF_WRITE);
-      return S->getName() == Cmd->Name &&
-             ((RO && Writable) || (RW && !Writable));
-    });
   }
 }
 
