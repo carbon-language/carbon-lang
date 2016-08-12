@@ -129,7 +129,7 @@ LinkerScript<ELFT>::getInputSections(const InputSectionDescription *I) {
           Ret.push_back(S);
   }
 
-  if ((llvm::find(Patterns, "COMMON") != Patterns.end()))
+  if (llvm::find(Patterns, "COMMON") != Patterns.end())
     Ret.push_back(CommonInputSection<ELFT>::X);
 
   return Ret;
