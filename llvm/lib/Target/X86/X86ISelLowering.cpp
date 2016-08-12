@@ -4257,6 +4257,16 @@ static bool isSequentialOrUndefOrZeroInRange(ArrayRef<int> Mask, unsigned Pos,
   return true;
 }
 
+/// Return true if every element in Mask, beginning
+/// from position Pos and ending in Pos+Size is undef or is zero.
+static bool isUndefOrZeroInRange(ArrayRef<int> Mask, unsigned Pos,
+                                 unsigned Size) {
+  for (unsigned i = Pos, e = Pos + Size; i != e; ++i)
+    if (!isUndefOrZero(Mask[i]))
+      return false;
+  return true;
+}
+
 /// Return true if the specified EXTRACT_SUBVECTOR operand specifies a vector
 /// extract that is suitable for instruction that extract 128 or 256 bit vectors
 static bool isVEXTRACTIndex(SDNode *N, unsigned vecWidth) {
@@ -24849,6 +24859,57 @@ static bool matchUnaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
                                            const X86Subtarget &Subtarget,
                                            unsigned &Shuffle, MVT &ShuffleVT,
                                            unsigned &PermuteImm) {
+  unsigned NumMaskElts = Mask.size();
+  unsigned NumLanes = MaskVT.getSizeInBits() / 128;
+  unsigned NumEltsPerLane = NumMaskElts / NumLanes;
+  bool FloatDomain = MaskVT.isFloatingPoint();
+
+  // Attempt to match against PSLLDQ/PSRLDQ byte shifts.
+  // TODO: Share common code with lowerVectorShuffleAsShift?
+  //
+  // PSLLDQ : (little-endian) left byte shift
+  // [ zz,  0,  1,  2,  3,  4,  5,  6]
+  // [ zz, zz, -1, -1,  2,  3,  4, -1]
+  // [ zz, zz, zz, zz, zz, zz, -1,  1]
+  // PSRLDQ : (little-endian) right byte shift
+  // [  5, 6,  7, zz, zz, zz, zz, zz]
+  // [ -1, 5,  6,  7, zz, zz, zz, zz]
+  // [  1, 2, -1, -1, -1, -1, zz, zz]
+  if (!FloatDomain && ((MaskVT.is128BitVector() && Subtarget.hasSSE2()) ||
+                       (MaskVT.is256BitVector() && Subtarget.hasAVX2()))) {
+    for (unsigned Shift = 1; Shift != NumEltsPerLane; ++Shift) {
+      bool IsVSHLDQ = true;
+      bool IsVSRLDQ = true;
+
+      for (unsigned Lane = 0; Lane != NumLanes; ++Lane) {
+        unsigned Base = Lane * NumEltsPerLane;
+        unsigned Ofs = NumEltsPerLane - Shift;
+
+        IsVSHLDQ &= isUndefOrZeroInRange(Mask, Base, Shift);
+        IsVSHLDQ &= isSequentialOrUndefInRange(Mask, Base + Shift, Ofs, Base);
+
+        IsVSRLDQ &= isUndefOrZeroInRange(Mask, Base + Ofs, Shift);
+        IsVSRLDQ &= isSequentialOrUndefInRange(Mask, Base, Ofs, Base + Shift);
+
+        if (!IsVSHLDQ && !IsVSRLDQ)
+          break;
+      }
+
+      if (IsVSHLDQ) {
+        Shuffle = X86ISD::VSHLDQ;
+        ShuffleVT = MVT::getVectorVT(MVT::i8, NumLanes * 16);
+        PermuteImm = Shift * (MaskVT.getScalarSizeInBits() / 8);
+        return true;
+      }
+      if (IsVSRLDQ) {
+        Shuffle = X86ISD::VSRLDQ;
+        ShuffleVT = MVT::getVectorVT(MVT::i8, NumLanes * 16);
+        PermuteImm = Shift * (MaskVT.getScalarSizeInBits() / 8);
+        return true;
+      }
+    }
+  }
+
   // Ensure we don't contain any zero elements.
   for (int M : Mask) {
     if (M == SM_SentinelZero)
@@ -24902,7 +24963,6 @@ static bool matchUnaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
 
   // AVX introduced the VPERMILPD/VPERMILPS float permutes, before then we
   // had to use 2-input SHUFPD/SHUFPS shuffles (not handled here).
-  bool FloatDomain = MaskVT.isFloatingPoint();
   if (FloatDomain && !Subtarget.hasAVX())
     return false;
 
