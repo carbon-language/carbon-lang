@@ -4914,6 +4914,9 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
     assert(VT.getScalarType() == MVT::i8 && "Byte vector expected");
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodePALIGNRMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    IsUnary = IsFakeUnary = N->getOperand(0) == N->getOperand(1);
+    Ops.push_back(N->getOperand(1));
+    Ops.push_back(N->getOperand(0));
     break;
   case X86ISD::VSHLDQ:
     assert(VT.getScalarType() == MVT::i8 && "Byte vector expected");
