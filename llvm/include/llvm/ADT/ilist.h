@@ -11,27 +11,15 @@
 // (i.e. each node of the list must contain a next and previous field for the
 // list.
 //
-// The ilist_traits trait class is used to gain access to the next and previous
-// fields of the node type that the list is instantiated with.  If it is not
-// specialized, the list defaults to using the getPrev(), getNext() method calls
-// to get the next and previous pointers.
-//
-// The ilist class itself, should be a plug in replacement for list, assuming
-// that the nodes contain next/prev pointers.  This list replacement does not
-// provide a constant time size() method, so be careful to use empty() when you
-// really want to know if it's empty.
+// The ilist class itself should be a plug in replacement for list.  This list
+// replacement does not provide a constant time size() method, so be careful to
+// use empty() when you really want to know if it's empty.
 //
 // The ilist class is implemented by allocating a 'tail' node when the list is
 // created (using ilist_traits<>::createSentinel()).  This tail node is
 // absolutely required because the user must be able to compute end()-1. Because
 // of this, users of the direct next/prev links will see an extra link on the
 // end of the list, which should be ignored.
-//
-// Requirements for a user of this list:
-//
-//   1. The user must provide {g|s}et{Next|Prev} methods, or specialize
-//      ilist_traits to provide an alternate way of getting and setting next and
-//      prev links.
 //
 //===----------------------------------------------------------------------===//
 
