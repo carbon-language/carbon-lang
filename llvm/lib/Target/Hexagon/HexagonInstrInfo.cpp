@@ -1447,16 +1447,15 @@ bool HexagonInstrInfo::isSchedulingBoundary(const MachineInstr &MI,
 
   // Throwing call is a boundary.
   if (MI.isCall()) {
+    // Don't mess around with no return calls.
+    if (doesNotReturn(MI))
+      return true;
     // If any of the block's successors is a landing pad, this could be a
     // throwing call.
     for (auto I : MBB->successors())
       if (I->isEHPad())
         return true;
   }
-
-  // Don't mess around with no return calls.
-  if (MI.getOpcode() == Hexagon::CALLv3nr)
-    return true;
 
   // Terminators and labels can't be scheduled around.
   if (MI.getDesc().isTerminator() || MI.isPosition())
