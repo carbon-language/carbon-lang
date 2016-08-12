@@ -362,39 +362,39 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
       continue;
     }
 
-    // Find all the sections with required name. There can be more than
-    // one section with such name, if the alignment, flags or type
-    // attribute differs.
     auto *Cmd = cast<OutputSectionCommand>(Base.get());
-    for (OutputSectionBase<ELFT> *Sec : *OutputSections) {
-      if (Sec->getName() != Cmd->Name)
-        continue;
+    auto I = llvm::find_if(*OutputSections, [&](OutputSectionBase<ELFT> *S) {
+      return S->getName() == Cmd->Name;
+    });
+    if (I == OutputSections->end())
+      continue;
+    OutputSectionBase<ELFT> *Sec = *I;
 
-      if (Cmd->AddrExpr)
-        Dot = Cmd->AddrExpr(Dot);
+    if (Cmd->AddrExpr)
+      Dot = Cmd->AddrExpr(Dot);
 
-      if (Cmd->AlignExpr)
-        Sec->updateAlignment(Cmd->AlignExpr(Dot));
+    if (Cmd->AlignExpr)
+      Sec->updateAlignment(Cmd->AlignExpr(Dot));
 
-      if ((Sec->getFlags() & SHF_TLS) && Sec->getType() == SHT_NOBITS) {
-        uintX_t TVA = Dot + ThreadBssOffset;
-        TVA = alignTo(TVA, Sec->getAlignment());
-        Sec->setVA(TVA);
-        assignOffsets(Sec);
-        ThreadBssOffset = TVA - Dot + Sec->getSize();
-        continue;
-      }
-
-      if (Sec->getFlags() & SHF_ALLOC) {
-        Dot = alignTo(Dot, Sec->getAlignment());
-        Sec->setVA(Dot);
-        assignOffsets(Sec);
-        MinVA = std::min(MinVA, Dot);
-        Dot += Sec->getSize();
-        continue;
-      }
-      Sec->assignOffsets();
+    if ((Sec->getFlags() & SHF_TLS) && Sec->getType() == SHT_NOBITS) {
+      uintX_t TVA = Dot + ThreadBssOffset;
+      TVA = alignTo(TVA, Sec->getAlignment());
+      Sec->setVA(TVA);
+      assignOffsets(Sec);
+      ThreadBssOffset = TVA - Dot + Sec->getSize();
+      continue;
     }
+
+    if (!(Sec->getFlags() & SHF_ALLOC)) {
+      Sec->assignOffsets();
+      continue;
+    }
+
+    Dot = alignTo(Dot, Sec->getAlignment());
+    Sec->setVA(Dot);
+    assignOffsets(Sec);
+    MinVA = std::min(MinVA, Dot);
+    Dot += Sec->getSize();
   }
 
   // ELF and Program headers need to be right before the first section in
