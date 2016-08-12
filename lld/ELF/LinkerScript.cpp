@@ -242,6 +242,12 @@ LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &Cmd) {
 template <class ELFT>
 void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
   for (const std::unique_ptr<BaseCommand> &Base1 : Opt.Commands) {
+    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base1.get())) {
+      if (shouldDefine<ELFT>(Cmd))
+        addRegular<ELFT>(Cmd);
+      continue;
+    }
+
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base1.get())) {
       if (Cmd->Name == "/DISCARD/") {
         discard(*Cmd);
@@ -260,9 +266,6 @@ void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
         OutputSections->push_back(OutSec);
       for (InputSectionBase<ELFT> *Sec : V)
         OutSec->addSection(Sec);
-    } else if (auto *Cmd2 = dyn_cast<SymbolAssignment>(Base1.get())) {
-      if (shouldDefine<ELFT>(Cmd2))
-        addRegular<ELFT>(Cmd2);
     }
   }
 
@@ -270,14 +273,14 @@ void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
   for (const std::unique_ptr<ObjectFile<ELFT>> &F :
        Symtab<ELFT>::X->getObjectFiles()) {
     for (InputSectionBase<ELFT> *S : F->getSections()) {
-      if (!isDiscarded(S) && !S->OutSec) {
-        OutputSectionBase<ELFT> *OutSec;
-        bool IsNew;
-        std::tie(OutSec, IsNew) = Factory.create(S, getOutputSectionName(S));
-        if (IsNew)
-          OutputSections->push_back(OutSec);
-        OutSec->addSection(S);
-      }
+      if (isDiscarded(S) || S->OutSec)
+        continue;
+      OutputSectionBase<ELFT> *OutSec;
+      bool IsNew;
+      std::tie(OutSec, IsNew) = Factory.create(S, getOutputSectionName(S));
+      if (IsNew)
+        OutputSections->push_back(OutSec);
+      OutSec->addSection(S);
     }
   }
 
