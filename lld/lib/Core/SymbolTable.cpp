@@ -223,13 +223,9 @@ bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l,
                                            const DefinedAtom * const r) {
   if (l == r)
     return true;
-  if (l == getEmptyKey())
+  if (l == getEmptyKey() || r == getEmptyKey())
     return false;
-  if (r == getEmptyKey())
-    return false;
-  if (l == getTombstoneKey())
-    return false;
-  if (r == getTombstoneKey())
+  if (l == getTombstoneKey() || r == getTombstoneKey())
     return false;
   if (l->contentType() != r->contentType())
     return false;
