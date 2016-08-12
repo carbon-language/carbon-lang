@@ -50,10 +50,8 @@ static void addRegular(SymbolAssignment *Cmd) {
   Cmd->Sym = Sym->body();
 }
 
-template <class ELFT>
-static void addSynthetic(SymbolAssignment *Cmd,
-                         OutputSectionBase<ELFT> *Section) {
-  Symbol *Sym = Symtab<ELFT>::X->addSynthetic(Cmd->Name, Section, 0);
+template <class ELFT> static void addSynthetic(SymbolAssignment *Cmd) {
+  Symbol *Sym = Symtab<ELFT>::X->addSynthetic(Cmd->Name, nullptr, 0);
   Sym->Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
   Cmd->Sym = Sym->body();
 }
@@ -224,6 +222,8 @@ LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &Cmd) {
 
   for (const std::unique_ptr<BaseCommand> &Base : Cmd.Commands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get())) {
+      if (shouldDefine<ELFT>(Cmd))
+        addSynthetic<ELFT>(Cmd);
       Ret.push_back(new (LAlloc.Allocate()) LayoutInputSection<ELFT>(Cmd));
       continue;
     }
@@ -258,16 +258,8 @@ void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
       std::tie(OutSec, IsNew) = Factory.create(Head, Cmd->Name);
       if (IsNew)
         OutputSections->push_back(OutSec);
-
-      for (InputSectionBase<ELFT> *Sec : V) {
-        if (auto *L = dyn_cast<LayoutInputSection<ELFT>>(Sec)) {
-          if (shouldDefine<ELFT>(L->Cmd))
-            addSynthetic<ELFT>(L->Cmd, OutSec);
-          else if (L->Cmd->Name != ".")
-            continue;
-        }
+      for (InputSectionBase<ELFT> *Sec : V)
         OutSec->addSection(Sec);
-      }
     } else if (auto *Cmd2 = dyn_cast<SymbolAssignment>(Base1.get())) {
       if (shouldDefine<ELFT>(Cmd2))
         addRegular<ELFT>(Cmd2);
@@ -335,10 +327,13 @@ template <class ELFT> void assignOffsets(OutputSectionBase<ELFT> *Sec) {
   for (InputSection<ELFT> *I : OutSec->Sections) {
     if (auto *L = dyn_cast<LayoutInputSection<ELFT>>(I)) {
       uintX_t Value = L->Cmd->Expression(Sec->getVA() + Off) - Sec->getVA();
-      if (L->Cmd->Name == ".")
+      if (L->Cmd->Name == ".") {
         Off = Value;
-      else
-        cast<DefinedSynthetic<ELFT>>(L->Cmd->Sym)->Value = Value;
+      } else {
+        auto *Sym = cast<DefinedSynthetic<ELFT>>(L->Cmd->Sym);
+        Sym->Section = OutSec;
+        Sym->Value = Value;
+      }
     } else {
       Off = alignTo(Off, I->Alignment);
       I->OutSecOff = Off;
