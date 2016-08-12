@@ -57,4 +57,3 @@ DARWIN: 0x1000018e0
 DARWIN: 0x100001906
 DARWIN: 0x1000019dc
 DARWIN: 0x100001a28
->>>>>>> [sancov] MachO indirect symbols support.
