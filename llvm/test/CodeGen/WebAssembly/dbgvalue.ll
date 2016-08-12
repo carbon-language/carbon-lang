@@ -1,4 +1,6 @@
 ; RUN: llc < %s -O0 -verify-machineinstrs -mtriple=wasm32-unknown-unknown | FileCheck %s
+; REQUIRES: disabled
+
 ; CHECK: BB#0
 ; CHECK: #DEBUG_VALUE: usage:self <- %vreg4
 ; CHECK: BB#1
