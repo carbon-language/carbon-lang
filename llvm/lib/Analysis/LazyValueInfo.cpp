@@ -1191,7 +1191,7 @@ static LVILatticeVal getValueFromICmpCondition(Value *Val, ICmpInst *ICI,
   // range of Val guaranteed by the condition. Recognize comparisons in the from
   // of:
   //  icmp <pred> Val, ...
-  //  icmp ult (add Val, Offset), ...
+  //  icmp <pred> (add Val, Offset), ...
   // The latter is the range checking idiom that InstCombine produces. Subtract
   // the offset from the allowed range for RHS in this case.
 
@@ -1202,7 +1202,7 @@ static LVILatticeVal getValueFromICmpCondition(Value *Val, ICmpInst *ICI,
   }
 
   ConstantInt *Offset = nullptr;
-  if (Predicate == ICmpInst::ICMP_ULT)
+  if (LHS != Val)
     match(LHS, m_Add(m_Specific(Val), m_ConstantInt(Offset)));
 
   if (LHS == Val || Offset) {
