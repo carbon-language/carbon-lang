@@ -185,7 +185,7 @@ void wholeprogramdevirt::setAfterReturnValues(
 
 VirtualCallTarget::VirtualCallTarget(Function *Fn, const TypeMemberInfo *TM)
     : Fn(Fn), TM(TM),
-      IsBigEndian(Fn->getParent()->getDataLayout().isBigEndian()) {}
+      IsBigEndian(Fn->getParent()->getDataLayout().isBigEndian()), WasDevirt(false) {}
 
 namespace {
 
