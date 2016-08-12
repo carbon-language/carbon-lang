@@ -22,6 +22,7 @@ using namespace llvm;
 
 #define DEBUG_TYPE "coro-elide"
 
+namespace {
 // Created on demand if CoroElide pass has work to do.
 struct Lowerer : coro::LowererBase {
   SmallVector<CoroIdInst *, 4> CoroIds;
@@ -36,6 +37,7 @@ struct Lowerer : coro::LowererBase {
   void elideHeapAllocations(Function *F, Type *FrameTy, AAResults &AA);
   bool processCoroId(CoroIdInst *, AAResults &AA);
 };
+} // end anonymous namespace
 
 // Go through the list of coro.subfn.addr intrinsics and replace them with the
 // provided constant.
