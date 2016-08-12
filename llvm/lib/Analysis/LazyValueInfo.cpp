@@ -1260,8 +1260,10 @@ getValueFromCondition(Value *Val, Value *Cond, bool isTrueDest,
   auto I = Visited.find(Cond);
   if (I != Visited.end())
     return I->second;
-  return Visited[Cond] = getValueFromConditionImpl(Val, Cond, isTrueDest,
-                                                   Visited);
+
+  auto Result = getValueFromConditionImpl(Val, Cond, isTrueDest, Visited);
+  Visited[Cond] = Result;
+  return Result;
 }
 
 LVILatticeVal getValueFromCondition(Value *Val, Value *Cond, bool isTrueDest) {
