@@ -118,7 +118,7 @@ struct VirtualCallTarget {
 
   // For testing only.
   VirtualCallTarget(const TypeMemberInfo *TM, bool IsBigEndian)
-      : Fn(nullptr), TM(TM), IsBigEndian(IsBigEndian) {}
+      : Fn(nullptr), TM(TM), IsBigEndian(IsBigEndian), WasDevirt(false) {}
 
   // The function stored in the vtable.
   Function *Fn;
