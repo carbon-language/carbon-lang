@@ -252,12 +252,15 @@ static StringRef getArchName(uint32_t Flags) {
   }
 }
 
-// There are (arguably too) many MIPS ISAs out there. Some are compatible
-// with each other and some are not. This function checks if all input
-// files are compatible with each other, and if so, returns the "lowest"
-// ISA flag. For example, if one object is in EF_MIPS_ARCH_3 and the
-// other is in EF_MIPS_ARCH_2, it'll return EF_MIPS_ARCH_2 because it's
-// older than EF_MIPS_ARCH_3.
+// There are (arguably too) many MIPS ISAs out there. Their relationships
+// can be represented as a forest. If all input files have ISAs which
+// reachable by repeated proceeding from the single child to the parent,
+// these input files are compatible. In that case we need to return "highest"
+// ISA. If there are incompatible input files, we show an error.
+// For example, mips1 is a "parent" of mips2 and such files are compatible.
+// Output file gets EF_MIPS_ARCH_2 flag. From the other side mips3 and mips32
+// are incompatible because nor mips3 is a parent for misp32, nor mips32
+// is a parent for mips3.
 static uint32_t getArchFlags(ArrayRef<FileFlags> Files) {
   uint32_t Ret = Files[0].Flags & (EF_MIPS_ARCH | EF_MIPS_MACH);
 
