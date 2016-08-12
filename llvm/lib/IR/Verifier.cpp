@@ -3835,8 +3835,8 @@ void Verifier::visitIntrinsicCallSite(Intrinsic::ID ID, CallSite CS) {
   switch (ID) {
   default:
     break;
-  case Intrinsic::coro_begin: {
-    auto *InfoArg = CS.getArgOperand(3)->stripPointerCasts();
+  case Intrinsic::coro_id: {
+    auto *InfoArg = CS.getArgOperand(2)->stripPointerCasts();
     if (isa<ConstantPointerNull>(InfoArg))
       break;
     auto *GV = dyn_cast<GlobalVariable>(InfoArg);
