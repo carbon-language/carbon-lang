@@ -30475,19 +30475,32 @@ static SDValue combineSignExtendInReg(SDNode *N, SelectionDAG &DAG,
 }
 
 /// sext(add_nsw(x, C)) --> add(sext(x), C_sext)
-/// Promoting a sign extension ahead of an 'add nsw' exposes opportunities
-/// to combine math ops, use an LEA, or use a complex addressing mode. This can
-/// eliminate extend, add, and shift instructions.
-static SDValue promoteSextBeforeAddNSW(SDNode *Sext, SelectionDAG &DAG,
-                                       const X86Subtarget &Subtarget) {
+/// zext(add_nuw(x, C)) --> add(zext(x), C_zext)
+/// Promoting a sign/zero extension ahead of a no overflow 'add' exposes
+/// opportunities to combine math ops, use an LEA, or use a complex addressing
+/// mode. This can eliminate extend, add, and shift instructions.
+static SDValue promoteExtBeforeAdd(SDNode *Ext, SelectionDAG &DAG,
+                                   const X86Subtarget &Subtarget) {
+  if (Ext->getOpcode() != ISD::SIGN_EXTEND &&
+      Ext->getOpcode() != ISD::ZERO_EXTEND)
+    return SDValue();
+
   // TODO: This should be valid for other integer types.
-  EVT VT = Sext->getValueType(0);
+  EVT VT = Ext->getValueType(0);
   if (VT != MVT::i64)
     return SDValue();
 
-  // We need an 'add nsw' feeding into the 'sext'.
-  SDValue Add = Sext->getOperand(0);
-  if (Add.getOpcode() != ISD::ADD || !Add->getFlags()->hasNoSignedWrap())
+  SDValue Add = Ext->getOperand(0);
+  if (Add.getOpcode() != ISD::ADD)
+    return SDValue();
+
+  bool Sext = Ext->getOpcode() == ISD::SIGN_EXTEND;
+  bool NSW = Add->getFlags()->hasNoSignedWrap();
+  bool NUW = Add->getFlags()->hasNoUnsignedWrap();
+
+  // We need an 'add nsw' feeding into the 'sext' or 'add nuw' feeding
+  // into the 'zext'
+  if ((Sext && !NSW) || (!Sext && !NUW))
     return SDValue();
 
   // Having a constant operand to the 'add' ensures that we are not increasing
@@ -30503,7 +30516,7 @@ static SDValue promoteSextBeforeAddNSW(SDNode *Sext, SelectionDAG &DAG,
   // of single 'add' instructions, but the cost model for selecting an LEA
   // currently has a high threshold.
   bool HasLEAPotential = false;
-  for (auto *User : Sext->uses()) {
+  for (auto *User : Ext->uses()) {
     if (User->getOpcode() == ISD::ADD || User->getOpcode() == ISD::SHL) {
       HasLEAPotential = true;
       break;
@@ -30512,17 +30525,18 @@ static SDValue promoteSextBeforeAddNSW(SDNode *Sext, SelectionDAG &DAG,
   if (!HasLEAPotential)
     return SDValue();
 
-  // Everything looks good, so pull the 'sext' ahead of the 'add'.
-  int64_t AddConstant = AddOp1->getSExtValue();
+  // Everything looks good, so pull the '{s|z}ext' ahead of the 'add'.
+  int64_t AddConstant = Sext ? AddOp1->getSExtValue() : AddOp1->getZExtValue();
   SDValue AddOp0 = Add.getOperand(0);
-  SDValue NewSext = DAG.getNode(ISD::SIGN_EXTEND, SDLoc(Sext), VT, AddOp0);
+  SDValue NewExt = DAG.getNode(Ext->getOpcode(), SDLoc(Ext), VT, AddOp0);
   SDValue NewConstant = DAG.getConstant(AddConstant, SDLoc(Add), VT);
 
   // The wider add is guaranteed to not wrap because both operands are
   // sign-extended.
   SDNodeFlags Flags;
-  Flags.setNoSignedWrap(true);
-  return DAG.getNode(ISD::ADD, SDLoc(Add), VT, NewSext, NewConstant, &Flags);
+  Flags.setNoSignedWrap(NSW);
+  Flags.setNoUnsignedWrap(NUW);
+  return DAG.getNode(ISD::ADD, SDLoc(Add), VT, NewExt, NewConstant, &Flags);
 }
 
 /// (i8,i32 {s/z}ext ({s/u}divrem (i8 x, i8 y)) ->
@@ -30681,7 +30695,7 @@ static SDValue combineSext(SDNode *N, SelectionDAG &DAG,
     if (SDValue R = WidenMaskArithmetic(N, DAG, DCI, Subtarget))
       return R;
 
-  if (SDValue NewAdd = promoteSextBeforeAddNSW(N, DAG, Subtarget))
+  if (SDValue NewAdd = promoteExtBeforeAdd(N, DAG, Subtarget))
     return NewAdd;
 
   return SDValue();
@@ -30772,6 +30786,9 @@ static SDValue combineZext(SDNode *N, SelectionDAG &DAG,
 
   if (SDValue DivRem8 = getDivRem8(N, DAG))
     return DivRem8;
+
+  if (SDValue NewAdd = promoteExtBeforeAdd(N, DAG, Subtarget))
+    return NewAdd;
 
   return SDValue();
 }
