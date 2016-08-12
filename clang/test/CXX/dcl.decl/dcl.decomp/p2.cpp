@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -std=c++1z -verify %s
 
 int array() {
-  int arr[3] = {};
+  static int arr[3] = {};
   // FIXME: We are supposed to create an array object here and perform elementwise initialization.
   auto [a, b, c] = arr; // expected-error {{cannot decompose non-class, non-array}}
 
@@ -11,8 +11,9 @@ int array() {
   auto &[r0, r1, r2] = arr;
   const auto &[cr0, cr1, cr2] = arr;
 
-  //static_assert(&arr[0] == &r0);
-  //static_assert(&arr[0] == &cr0);
+  static_assert(&arr[0] == &r0);
+  static_assert(&arr[0] == &cr0);
+
   using T = int;
   using T = decltype(r0);
   using U = const int;

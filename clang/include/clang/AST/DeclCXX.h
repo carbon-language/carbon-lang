@@ -3385,19 +3385,27 @@ public:
 class BindingDecl : public ValueDecl {
   void anchor() override;
 
+  DecompositionDecl *Decomp;
+
   /// The binding represented by this declaration. References to this
   /// declaration are effectively equivalent to this expression (except
   /// that it is only evaluated once at the point of declaration of the
   /// binding).
   Expr *Binding;
 
-  BindingDecl(DeclContext *DC, SourceLocation IdLoc, IdentifierInfo *Id)
-      : ValueDecl(Decl::Binding, DC, IdLoc, Id, QualType()), Binding(nullptr) {}
+  BindingDecl(DeclContext *DC, DecompositionDecl *Decomp, SourceLocation IdLoc,
+              IdentifierInfo *Id)
+      : ValueDecl(Decl::Binding, DC, IdLoc, Id, QualType()), Decomp(Decomp),
+        Binding(nullptr) {}
 
 public:
   static BindingDecl *Create(ASTContext &C, DeclContext *DC,
-                             SourceLocation IdLoc, IdentifierInfo *Id);
+                             DecompositionDecl *Decomp, SourceLocation IdLoc,
+                             IdentifierInfo *Id);
   static BindingDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+
+  void setDecompositionDecl(DecompositionDecl *DD) { Decomp = DD; }
+  DecompositionDecl *getDecompositionDecl() const { return Decomp; }
 
   /// Get the expression to which this declaration is bound. This may be null
   /// in two different cases: while parsing the initializer for the

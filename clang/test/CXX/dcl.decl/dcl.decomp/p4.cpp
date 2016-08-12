@@ -163,6 +163,14 @@ namespace Bitfield {
   }
 }
 
+namespace Constexpr {
+  struct Q { int a, b; constexpr Q() : a(1), b(2) {} };
+  constexpr Q q;
+  auto &[qa, qb] = q;
+  static_assert(&qa == &q.a && &qb == &q.b);
+  static_assert(qa == 1 && qb == 2);
+}
+
 namespace std_example {
   struct S { int x1 : 2; volatile double y1; };
   S f();

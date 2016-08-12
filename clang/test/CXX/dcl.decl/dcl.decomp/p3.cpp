@@ -201,3 +201,32 @@ void test_value_category() {
   { auto [a] = wrap<const int, void, float&>(); } // ok, const int &a can bind to float
   { auto [a] = wrap<int, void, float>(); } // ok, int &&a can bind to float
 }
+
+namespace constant {
+  struct Q {};
+  template<int N> constexpr int get(Q &&) { return N * N; }
+}
+template<> struct std::tuple_size<constant::Q> { static const int value = 3; };
+template<int N> struct std::tuple_element<N, constant::Q> { typedef int type; };
+namespace constant {
+  Q q;
+  // This creates and lifetime-extends a temporary to hold the result of each get() call.
+  auto [a, b, c] = q;    // expected-note {{temporary}}
+  static_assert(a == 0); // expected-error {{constant expression}} expected-note {{temporary}}
+
+  constexpr bool f() {
+    auto [a, b, c] = q;
+    return a == 0 && b == 1 && c == 4;
+  }
+  static_assert(f());
+
+  constexpr int g() {
+    int *p = nullptr;
+    {
+      auto [a, b, c] = q;
+      p = &c;
+    }
+    return *p; // expected-note {{read of object outside its lifetime}}
+  }
+  static_assert(g() == 4); // expected-error {{constant}} expected-note {{in call to 'g()'}}
+}

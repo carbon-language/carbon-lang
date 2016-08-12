@@ -6,9 +6,13 @@ void use_from_own_init() {
 
 // As a Clang extension, _Complex can be decomposed.
 float decompose_complex(_Complex float cf) {
+  static _Complex float scf;
+  auto &[sre, sim] = scf;
+  // ok, this is references initialized by constant expressions all the way down
+  static_assert(&sre == &__real scf);
+  static_assert(&sim == &__imag scf);
+
   auto [re, im] = cf;
-  //static_assert(&re == &__real cf);
-  //static_assert(&im == &__imag cf);
   return re*re + im*im;
 }
 
@@ -20,8 +24,20 @@ float decompose_vector(vf3 v) {
   return x + y + z;
 }
 
+struct S { int a, b; };
+constexpr int f(S s) {
+  auto &[a, b] = s;
+  return a * 10 + b;
+}
+static_assert(f({1, 2}) == 12);
+
+constexpr bool g(S &&s) { 
+  auto &[a, b] = s;
+  return &a == &s.a && &b == &s.b && &a != &b;
+}
+static_assert(g({1, 2}));
+
 // FIXME: by-value array copies
 // FIXME: template instantiation
 // FIXME: ast file support
 // FIXME: code generation
-// FIXME: constant expression evaluation

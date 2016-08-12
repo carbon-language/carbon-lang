@@ -2309,12 +2309,13 @@ StaticAssertDecl *StaticAssertDecl::CreateDeserialized(ASTContext &C,
 void BindingDecl::anchor() {}
 
 BindingDecl *BindingDecl::Create(ASTContext &C, DeclContext *DC,
+                                 DecompositionDecl *Decomp,
                                  SourceLocation IdLoc, IdentifierInfo *Id) {
-  return new (C, DC) BindingDecl(DC, IdLoc, Id);
+  return new (C, DC) BindingDecl(DC, Decomp, IdLoc, Id);
 }
 
 BindingDecl *BindingDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
-  return new (C, ID) BindingDecl(nullptr, SourceLocation(), nullptr);
+  return new (C, ID) BindingDecl(nullptr, nullptr, SourceLocation(), nullptr);
 }
 
 void DecompositionDecl::anchor() {}

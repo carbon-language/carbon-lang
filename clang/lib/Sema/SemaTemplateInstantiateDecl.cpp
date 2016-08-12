@@ -599,7 +599,13 @@ TemplateDeclInstantiator::VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitBindingDecl(BindingDecl *D) {
-  return BindingDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+  auto *NewDD =
+      dyn_cast_or_null<DecompositionDecl>(SemaRef.FindInstantiatedDecl(
+          D->getLocation(), D->getDecompositionDecl(), TemplateArgs));
+  if (!NewDD)
+    return nullptr;
+
+  return BindingDecl::Create(SemaRef.Context, Owner, NewDD, D->getLocation(),
                              D->getIdentifier());
 }
 
