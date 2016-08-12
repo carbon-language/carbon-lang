@@ -261,12 +261,6 @@ const Atom *SymbolTable::findByName(StringRef sym) {
   return pos->second;
 }
 
-bool SymbolTable::isDefined(StringRef sym) {
-  if (const Atom *atom = findByName(sym))
-    return !isa<UndefinedAtom>(atom);
-  return false;
-}
-
 const Atom *SymbolTable::replacement(const Atom *atom) {
   // Find the replacement for a given atom. Atoms in _replacedAtoms
   // may be chained, so find the last one.
