@@ -2334,8 +2334,9 @@ DecompositionDecl *DecompositionDecl::CreateDeserialized(ASTContext &C,
                                                          unsigned ID,
                                                          unsigned NumBindings) {
   size_t Extra = additionalSizeToAlloc<BindingDecl *>(NumBindings);
-  auto *Result = new (C, ID, Extra) DecompositionDecl(
-      C, nullptr, SourceLocation(), SourceLocation(), QualType(), nullptr, StorageClass(), None);
+  auto *Result = new (C, ID, Extra)
+      DecompositionDecl(C, nullptr, SourceLocation(), SourceLocation(),
+                        QualType(), nullptr, StorageClass(), None);
   // Set up and clean out the bindings array.
   Result->NumBindings = NumBindings;
   auto *Trail = Result->getTrailingObjects<BindingDecl *>();

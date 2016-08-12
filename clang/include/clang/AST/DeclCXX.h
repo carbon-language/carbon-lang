@@ -3414,6 +3414,8 @@ public:
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == Decl::Binding; }
+
+  friend class ASTDeclReader;
 };
 
 /// A decomposition declaration. For instance, given:
@@ -3463,6 +3465,7 @@ public:
   static bool classofKind(Kind K) { return K == Decomposition; }
 
   friend TrailingObjects;
+  friend class ASTDeclReader;
 };
 
 /// An instance of this class represents the declaration of a property

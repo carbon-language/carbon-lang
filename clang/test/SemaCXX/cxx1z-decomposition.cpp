@@ -38,5 +38,4 @@ constexpr bool g(S &&s) {
 static_assert(g({1, 2}));
 
 // FIXME: by-value array copies
-// FIXME: ast file support
 // FIXME: code generation
