@@ -67,6 +67,15 @@ class ModuleSummaryIndexAnalysis
 public:
   typedef const ModuleSummaryIndex &Result;
 
+  // FIXME: Remove these once MSVC can synthesize them.
+  ModuleSummaryIndexAnalysis() {}
+  ModuleSummaryIndexAnalysis(ModuleSummaryIndexAnalysis &&Arg)
+      : IndexBuilder(std::move(Arg.IndexBuilder)) {}
+  ModuleSummaryIndexAnalysis &operator=(ModuleSummaryIndexAnalysis &&RHS) {
+    IndexBuilder = std::move(RHS.IndexBuilder);
+    return *this;
+  }
+
   const ModuleSummaryIndex &run(Module &M, ModuleAnalysisManager &AM);
 };
 
