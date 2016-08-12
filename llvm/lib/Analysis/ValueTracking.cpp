@@ -468,45 +468,39 @@ bool llvm::isValidAssumeForContext(const Instruction *Inv,
   //     the assume).
 
   if (DT) {
-    if (DT->dominates(Inv, CxtI)) {
+    if (DT->dominates(Inv, CxtI))
       return true;
-    } else if (Inv->getParent() == CxtI->getParent()) {
-      // The context comes first, but they're both in the same block. Make sure
-      // there is nothing in between that might interrupt the control flow.
-      for (BasicBlock::const_iterator I =
-             std::next(BasicBlock::const_iterator(CxtI)),
-                                      IE(Inv); I != IE; ++I)
-        if (!isSafeToSpeculativelyExecute(&*I) && !isAssumeLikeIntrinsic(&*I))
-          return false;
-
-      return !isEphemeralValueOf(Inv, CxtI);
-    }
-
-    return false;
+  } else if (Inv->getParent() == CxtI->getParent()->getSinglePredecessor()) {
+    // We don't have a DT, but this trivially dominates.
+    return true;
   }
 
-  // When we don't have a DT, we do a limited search...
-  if (Inv->getParent() == CxtI->getParent()->getSinglePredecessor()) {
-    return true;
-  } else if (Inv->getParent() == CxtI->getParent()) {
+  // With or without a DT, the only remaining case we will check is if the
+  // instructions are in the same BB.  Give up if that is not the case.
+  if (Inv->getParent() != CxtI->getParent())
+    return false;
+
+  // If we have a dom tree, then we now know that the assume doens't dominate
+  // the other instruction.  If we don't have a dom tree then we can check if
+  // the assume is first in the BB.
+  if (!DT) {
     // Search forward from the assume until we reach the context (or the end
     // of the block); the common case is that the assume will come first.
     for (auto I = std::next(BasicBlock::const_iterator(Inv)),
          IE = Inv->getParent()->end(); I != IE; ++I)
       if (&*I == CxtI)
         return true;
-
-    // The context must come first...
-    for (BasicBlock::const_iterator I =
-           std::next(BasicBlock::const_iterator(CxtI)),
-                                    IE(Inv); I != IE; ++I)
-      if (!isSafeToSpeculativelyExecute(&*I) && !isAssumeLikeIntrinsic(&*I))
-        return false;
-
-    return !isEphemeralValueOf(Inv, CxtI);
   }
 
-  return false;
+  // The context comes first, but they're both in the same block. Make sure
+  // there is nothing in between that might interrupt the control flow.
+  for (BasicBlock::const_iterator I =
+         std::next(BasicBlock::const_iterator(CxtI)), IE(Inv);
+       I != IE; ++I)
+    if (!isSafeToSpeculativelyExecute(&*I) && !isAssumeLikeIntrinsic(&*I))
+      return false;
+
+  return !isEphemeralValueOf(Inv, CxtI);
 }
 
 static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
