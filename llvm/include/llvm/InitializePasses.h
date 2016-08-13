@@ -180,7 +180,7 @@ void initializeLoaderPassPass(PassRegistry&);
 void initializeLoadStoreVectorizerPass(PassRegistry&);
 void initializeLocalStackSlotPassPass(PassRegistry&);
 void initializeLoopAccessLegacyAnalysisPass(PassRegistry&);
-void initializeLoopDataPrefetchPass(PassRegistry&);
+void initializeLoopDataPrefetchLegacyPassPass(PassRegistry &);
 void initializeLoopDeletionLegacyPassPass(PassRegistry&);
 void initializeLoopDistributeLegacyPass(PassRegistry&);
 void initializeLoopExtractorPass(PassRegistry&);
