@@ -20,7 +20,7 @@ define void @general_affine_expressions(i32 *%arr, i32 *%a_len_ptr, i32 %n,
   %abc.high = icmp slt i32 %array.idx, %len
   %abc.low = icmp sge i32 %array.idx, 0
   %abc = and i1 %abc.low, %abc.high
-  br i1 %abc, label %in.bounds, label %out.of.bounds
+  br i1 %abc, label %in.bounds, label %out.of.bounds, !prof !1
 
  in.bounds:
   %addr = getelementptr i32, i32* %arr, i32 %array.idx
