@@ -925,13 +925,11 @@ void LoopConstrainer::cloneLoop(LoopConstrainer::ClonedLoop &Result,
     // to be edited to reflect that.  No phi nodes need to be introduced because
     // the loop is in LCSSA.
 
-    for (auto SBBI = succ_begin(OriginalBB), SBBE = succ_end(OriginalBB);
-         SBBI != SBBE; ++SBBI) {
-
-      if (OriginalLoop.contains(*SBBI))
+    for (auto *SBB : successors(OriginalBB)) {
+      if (OriginalLoop.contains(SBB))
         continue; // not an exit block
 
-      for (Instruction &I : **SBBI) {
+      for (Instruction &I : *SBB) {
         if (!isa<PHINode>(&I))
           break;
 
