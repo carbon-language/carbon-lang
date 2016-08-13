@@ -430,17 +430,17 @@ void AMDGPUCFGStructurizer::reversePredicateSetter(
       continue;
     if (I->getOpcode() == AMDGPU::PRED_X) {
       switch (I->getOperand(2).getImm()) {
-      case OPCODE_IS_ZERO_INT:
-        I->getOperand(2).setImm(OPCODE_IS_NOT_ZERO_INT);
+      case AMDGPU::PRED_SETE_INT:
+        I->getOperand(2).setImm(AMDGPU::PRED_SETNE_INT);
         return;
-      case OPCODE_IS_NOT_ZERO_INT:
-        I->getOperand(2).setImm(OPCODE_IS_ZERO_INT);
+      case AMDGPU::PRED_SETNE_INT:
+        I->getOperand(2).setImm(AMDGPU::PRED_SETE_INT);
         return;
-      case OPCODE_IS_ZERO:
-        I->getOperand(2).setImm(OPCODE_IS_NOT_ZERO);
+      case AMDGPU::PRED_SETE:
+        I->getOperand(2).setImm(AMDGPU::PRED_SETNE);
         return;
-      case OPCODE_IS_NOT_ZERO:
-        I->getOperand(2).setImm(OPCODE_IS_ZERO);
+      case AMDGPU::PRED_SETNE:
+        I->getOperand(2).setImm(AMDGPU::PRED_SETE);
         return;
       default:
         llvm_unreachable("PRED_X Opcode invalid!");
