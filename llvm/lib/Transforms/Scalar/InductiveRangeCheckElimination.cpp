@@ -622,9 +622,12 @@ static bool CanBeSMin(ScalarEvolution &SE, const SCEV *S) {
 Optional<LoopStructure>
 LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BPI,
                                   Loop &L, const char *&FailureReason) {
-  assert(L.isLoopSimplifyForm() && "should follow from addRequired<>");
+  if (!L.isLoopSimplifyForm())
+    return None;
 
   BasicBlock *Latch = L.getLoopLatch();
+  assert(Latch && "Simplified loops only have one latch!");
+
   if (!L.isLoopExiting(Latch)) {
     FailureReason = "no loop latch";
     return None;
