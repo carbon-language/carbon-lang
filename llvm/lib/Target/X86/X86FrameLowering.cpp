@@ -156,8 +156,10 @@ static unsigned findDeadCallerSavedReg(MachineBasicBlock &MBB,
 
   const TargetRegisterClass &AvailableRegs = *TRI->getGPRsForTailCall(*MF);
 
-  unsigned Opc = MBBI->getOpcode();
-  switch (Opc) {
+  if (MBBI == MBB.end())
+    return 0;
+
+  switch (MBBI->getOpcode()) {
   default: return 0;
   case TargetOpcode::PATCHABLE_RET:
   case X86::RET:

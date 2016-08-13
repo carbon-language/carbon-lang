@@ -220,7 +220,8 @@ protected:
   bool needMigrateBlock(MachineBasicBlock *MBB) const;
 
   // Utility Functions
-  void reversePredicateSetter(MachineBasicBlock::iterator I);
+  void reversePredicateSetter(MachineBasicBlock::iterator I,
+                              MachineBasicBlock &MBB);
   /// Compute the reversed DFS post order of Blocks
   void orderBlocks(MachineFunction *MF);
 
@@ -422,9 +423,11 @@ bool AMDGPUCFGStructurizer::needMigrateBlock(MachineBasicBlock *MBB) const {
 }
 
 void AMDGPUCFGStructurizer::reversePredicateSetter(
-    MachineBasicBlock::iterator I) {
+    MachineBasicBlock::iterator I, MachineBasicBlock &MBB) {
   assert(I.isValid() && "Expected valid iterator");
   for (;; --I) {
+    if (I == MBB.end())
+      continue;
     if (I->getOpcode() == AMDGPU::PRED_X) {
       switch (I->getOperand(2).getImm()) {
       case OPCODE_IS_ZERO_INT:
@@ -991,7 +994,7 @@ int AMDGPUCFGStructurizer::ifPatternMatch(MachineBasicBlock *MBB) {
     // Triangle pattern, true is empty
     // We reverse the predicate to make a triangle, empty false pattern;
     std::swap(TrueMBB, FalseMBB);
-    reversePredicateSetter(MBB->end());
+    reversePredicateSetter(MBB->end(), *MBB);
     LandBlk = FalseMBB;
     FalseMBB = nullptr;
   } else if (FalseMBB->succ_size() == 1
@@ -1501,7 +1504,7 @@ void AMDGPUCFGStructurizer::mergeLoopbreakBlock(MachineBasicBlock *ExitingMBB,
   MachineBasicBlock *TrueBranch = getTrueBranch(BranchMI);
   MachineBasicBlock::iterator I = BranchMI;
   if (TrueBranch != LandMBB)
-    reversePredicateSetter(I);
+    reversePredicateSetter(I, *I->getParent());
   insertCondBranchBefore(ExitingMBB, I, AMDGPU::IF_PREDICATE_SET, AMDGPU::PREDICATE_BIT, DL);
   insertInstrBefore(I, AMDGPU::BREAK);
   insertInstrBefore(I, AMDGPU::ENDIF);
