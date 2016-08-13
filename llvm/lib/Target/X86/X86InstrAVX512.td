@@ -5027,13 +5027,13 @@ multiclass avx512_fma3p_132_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
   defm r: AVX512_maskable_3src<opc, MRMSrcReg, _, (outs _.RC:$dst),
           (ins _.RC:$src2, _.RC:$src3),
           OpcodeStr, "$src3, $src2", "$src2, $src3",
-          (_.VT (OpNode _.RC:$src1, _.RC:$src3, _.RC:$src2))>,
+          (_.VT (OpNode _.RC:$src1, _.RC:$src3, _.RC:$src2)), 1, 1>,
          AVX512FMA3Base;
 
   defm m: AVX512_maskable_3src<opc, MRMSrcMem, _, (outs _.RC:$dst),
           (ins _.RC:$src2, _.MemOp:$src3),
           OpcodeStr, "$src3, $src2", "$src2, $src3",
-          (_.VT (OpNode _.RC:$src1, (_.LdFrag addr:$src3), _.RC:$src2))>,
+          (_.VT (OpNode _.RC:$src1, (_.LdFrag addr:$src3), _.RC:$src2)), 1, 0>,
          AVX512FMA3Base;
 
   defm mb: AVX512_maskable_3src<opc, MRMSrcMem, _, (outs _.RC:$dst),
@@ -5042,7 +5042,7 @@ multiclass avx512_fma3p_132_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
          "$src2, ${src3}"##_.BroadcastStr,
          (_.VT (OpNode _.RC:$src1,
                       (_.VT (X86VBroadcast(_.ScalarLdFrag addr:$src3))),
-                      _.RC:$src2))>, AVX512FMA3Base, EVEX_B;
+                      _.RC:$src2)), 1, 0>, AVX512FMA3Base, EVEX_B;
   }
 
   // Additional patterns for folding broadcast nodes in other orders.
