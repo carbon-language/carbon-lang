@@ -3171,8 +3171,16 @@ let Predicates = [HasAVX512] in {
   def : Pat<(v8i32 (X86vzmovl (v8i32 VR256X:$src))),
             (SUBREG_TO_REG (i32 0),
              (VMOVSSZrr (v4i32 (V_SET0)),
-                       (EXTRACT_SUBREG (v8i32 VR256X:$src), sub_xmm)), sub_xmm)>;
+              (EXTRACT_SUBREG (v8i32 VR256X:$src), sub_xmm)), sub_xmm)>;
   }
+  def : Pat<(v16f32 (X86vzmovl (v16f32 VR512:$src))),
+            (SUBREG_TO_REG (i32 0),
+             (VMOVSSZrr (v4f32 (V_SET0)),
+              (EXTRACT_SUBREG (v16f32 VR512:$src), sub_xmm)), sub_xmm)>;
+  def : Pat<(v16i32 (X86vzmovl (v16i32 VR512:$src))),
+            (SUBREG_TO_REG (i32 0),
+             (VMOVSSZrr (v4i32 (V_SET0)),
+              (EXTRACT_SUBREG (v16i32 VR512:$src), sub_xmm)), sub_xmm)>;
 
   let AddedComplexity = 20 in {
   // MOVSSrm zeros the high parts of the register; represent this
@@ -3242,10 +3250,17 @@ let Predicates = [HasAVX512] in {
             (SUBREG_TO_REG (i32 0),
              (VMOVSDZrr (v2f64 (V_SET0)),
                        (EXTRACT_SUBREG (v4f64 VR256X:$src), sub_xmm)), sub_xmm)>;
+  def : Pat<(v8f64 (X86vzmovl (v8f64 VR512:$src))),
+            (SUBREG_TO_REG (i32 0),
+             (VMOVSDZrr (v2f64 (V_SET0)),
+                       (EXTRACT_SUBREG (v8f64 VR512:$src), sub_xmm)), sub_xmm)>;
 
   def : Pat<(v4i64 (X86vzmovl (v4i64 VR256X:$src))),
             (SUBREG_TO_REG (i32 0), (VMOVSDZrr (v2i64 (V_SET0)),
                        (EXTRACT_SUBREG (v4i64 VR256X:$src), sub_xmm)), sub_xmm)>;
+  def : Pat<(v8i64 (X86vzmovl (v8i64 VR512:$src))),
+            (SUBREG_TO_REG (i32 0), (VMOVSDZrr (v2i64 (V_SET0)),
+                       (EXTRACT_SUBREG (v8i64 VR512:$src), sub_xmm)), sub_xmm)>;
 
   // Extract and store.
   def : Pat<(store (f32 (extractelt (v4f32 VR128X:$src), (iPTR 0))),
