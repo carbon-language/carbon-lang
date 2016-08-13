@@ -3634,15 +3634,6 @@ std::error_code BitcodeReader::parseModule(uint64_t ResumeBit,
           return EC;
         break;
       case bitc::FUNCTION_BLOCK_ID:
-        // If this is the first function body we've seen, reverse the
-        // FunctionsWithBodies list.
-        if (!SeenFirstFunctionBody) {
-          std::reverse(FunctionsWithBodies.begin(), FunctionsWithBodies.end());
-          if (std::error_code EC = globalCleanup())
-            return EC;
-          SeenFirstFunctionBody = true;
-        }
-
         if (VSTOffset > 0) {
           // If we have a VST forward declaration record, make sure we
           // parse the VST now if we haven't already. It is needed to
@@ -3667,6 +3658,15 @@ std::error_code BitcodeReader::parseModule(uint64_t ResumeBit,
               return error("Invalid record");
             continue;
           }
+        }
+
+        // If this is the first function body we've seen, reverse the
+        // FunctionsWithBodies list.
+        if (!SeenFirstFunctionBody) {
+          std::reverse(FunctionsWithBodies.begin(), FunctionsWithBodies.end());
+          if (std::error_code EC = globalCleanup())
+            return EC;
+          SeenFirstFunctionBody = true;
         }
 
         // Support older bitcode files that did not have the function
