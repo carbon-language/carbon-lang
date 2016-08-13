@@ -516,12 +516,11 @@ Vectorizer::getVectorizablePrefix(ArrayRef<Instruction *> Chain) {
   // ChainInstrs[0, ChainInstrIdx).  This is the largest vectorizable prefix of
   // Chain.  (Recall that Chain is in address order, but ChainInstrs is in BB
   // order.)
-  auto VectorizableChainInstrs =
-      makeArrayRef(ChainInstrs.data(), ChainInstrIdx);
-  unsigned ChainIdx, ChainLen;
-  for (ChainIdx = 0, ChainLen = Chain.size(); ChainIdx < ChainLen; ++ChainIdx) {
-    Instruction *I = Chain[ChainIdx];
-    if (!is_contained(VectorizableChainInstrs, I))
+  SmallPtrSet<Instruction *, 8> VectorizableChainInstrs(
+      ChainInstrs.begin(), ChainInstrs.begin() + ChainInstrIdx);
+  unsigned ChainIdx = 0;
+  for (unsigned ChainLen = Chain.size(); ChainIdx < ChainLen; ++ChainIdx) {
+    if (!VectorizableChainInstrs.count(Chain[ChainIdx]))
       break;
   }
   return Chain.slice(0, ChainIdx);
