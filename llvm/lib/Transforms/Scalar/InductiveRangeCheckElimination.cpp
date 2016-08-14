@@ -79,6 +79,8 @@ static cl::opt<int> MaxExitProbReciprocal("irce-max-exit-prob-reciprocal",
 static cl::opt<bool> SkipProfitabilityChecks("irce-skip-profitability-checks",
                                              cl::Hidden, cl::init(false));
 
+static const char *ClonedLoopTag = "irce.loop.clone";
+
 #define DEBUG_TYPE "irce"
 
 namespace {
@@ -630,6 +632,11 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
   BasicBlock *Latch = L.getLoopLatch();
   assert(Latch && "Simplified loops only have one latch!");
 
+  if (Latch->getTerminator()->getMetadata(ClonedLoopTag)) {
+    FailureReason = "loop has already been cloned";
+    return None;
+  }
+
   if (!L.isLoopExiting(Latch)) {
     FailureReason = "no loop latch";
     return None;
@@ -912,6 +919,11 @@ void LoopConstrainer::cloneLoop(LoopConstrainer::ClonedLoop &Result,
       return V;
     return static_cast<Value *>(It->second);
   };
+
+  auto *ClonedLatch =
+      cast<BasicBlock>(GetClonedValue(OriginalLoop.getLoopLatch()));
+  ClonedLatch->getTerminator()->setMetadata(ClonedLoopTag,
+                                            MDNode::get(Ctx, {}));
 
   Result.Structure = MainLoopStructure.map(GetClonedValue);
   Result.Structure.Tag = Tag;
