@@ -1348,6 +1348,21 @@ define i1 @icmp_add_and_shr_ne_0(i32 %X) {
   ret i1 %tobool
 }
 
+; FIXME: Vectors should fold the same way.
+define <2 x i1> @icmp_add_and_shr_ne_0_vec(<2 x i32> %X) {
+; CHECK-LABEL: @icmp_add_and_shr_ne_0_vec(
+; CHECK-NEXT:    [[SHR:%.*]] = lshr <2 x i32> %X, <i32 4, i32 4>
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[SHR]], <i32 15, i32 15>
+; CHECK-NEXT:    [[TOBOOL:%.*]] = icmp ne <2 x i32> [[AND]], <i32 14, i32 14>
+; CHECK-NEXT:    ret <2 x i1> [[TOBOOL]]
+;
+  %shr = lshr <2 x i32> %X, <i32 4, i32 4>
+  %and = and <2 x i32> %shr, <i32 15, i32 15>
+  %add = add <2 x i32> %and, <i32 -14, i32 -14>
+  %tobool = icmp ne <2 x i32> %add, zeroinitializer
+  ret <2 x i1> %tobool
+}
+
 ; PR16244
 define i1 @test71(i8* %x) {
 ; CHECK-LABEL: @test71(
@@ -1732,6 +1747,22 @@ define i1 @icmp_and_or_lshr(i32 %x, i32 %y) {
   ret i1 %ret
 }
 
+; FIXME: Vectors should fold the same way.
+define <2 x i1> @icmp_and_or_lshr_vec(<2 x i32> %x, <2 x i32> %y) {
+; CHECK-LABEL: @icmp_and_or_lshr_vec(
+; CHECK-NEXT:    [[SHF:%.*]] = lshr <2 x i32> %x, %y
+; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[SHF]], %x
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[OR]], <i32 1, i32 1>
+; CHECK-NEXT:    [[RET:%.*]] = icmp ne <2 x i32> [[AND]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[RET]]
+;
+  %shf = lshr <2 x i32> %x, %y
+  %or = or <2 x i32> %shf, %x
+  %and = and <2 x i32> %or, <i32 1, i32 1>
+  %ret = icmp ne <2 x i32> %and, zeroinitializer
+  ret <2 x i1> %ret
+}
+
 define i1 @icmp_and_or_lshr_cst(i32 %x) {
 ; CHECK-LABEL: @icmp_and_or_lshr_cst(
 ; CHECK-NEXT:    [[AND1:%.*]] = and i32 %x, 3
@@ -1743,6 +1774,22 @@ define i1 @icmp_and_or_lshr_cst(i32 %x) {
   %and = and i32 %or, 1
   %ret = icmp ne i32 %and, 0
   ret i1 %ret
+}
+
+; FIXME: Vectors should fold the same way.
+define <2 x i1> @icmp_and_or_lshr_cst_vec(<2 x i32> %x) {
+; CHECK-LABEL: @icmp_and_or_lshr_cst_vec(
+; CHECK-NEXT:    [[SHF:%.*]] = lshr <2 x i32> %x, <i32 1, i32 1>
+; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[SHF]], %x
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[OR]], <i32 1, i32 1>
+; CHECK-NEXT:    [[RET:%.*]] = icmp ne <2 x i32> [[AND]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[RET]]
+;
+  %shf = lshr <2 x i32> %x, <i32 1, i32 1>
+  %or = or <2 x i32> %shf, %x
+  %and = and <2 x i32> %or, <i32 1, i32 1>
+  %ret = icmp ne <2 x i32> %and, zeroinitializer
+  ret <2 x i1> %ret
 }
 
 define i1 @shl_ap1_zero_ap2_non_zero_2(i32 %a) {
