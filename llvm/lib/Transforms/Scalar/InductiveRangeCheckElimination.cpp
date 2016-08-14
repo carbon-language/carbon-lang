@@ -573,10 +573,10 @@ class LoopConstrainer {
   ScalarEvolution &SE;
   DominatorTree &DT;
   LPPassManager &LPM;
+  LoopInfo &LI;
 
   // Information about the original loop we started out with.
   Loop &OriginalLoop;
-  LoopInfo &LI;
   const SCEV *LatchTakenCount;
   BasicBlock *OriginalPreheader;
 
@@ -596,7 +596,7 @@ public:
                   const LoopStructure &LS, ScalarEvolution &SE,
                   DominatorTree &DT, InductiveRangeCheck::Range R)
       : F(*L.getHeader()->getParent()), Ctx(L.getHeader()->getContext()),
-        SE(SE), DT(DT), LPM(LPM), OriginalLoop(L), LI(LI),
+        SE(SE), DT(DT), LPM(LPM), LI(LI), OriginalLoop(L),
         LatchTakenCount(nullptr), OriginalPreheader(nullptr),
         MainLoopPreheader(nullptr), Range(R), MainLoopStructure(LS) {}
 
