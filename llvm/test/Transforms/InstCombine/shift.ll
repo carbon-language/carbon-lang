@@ -321,6 +321,17 @@ define i1 @test17(i32 %A) {
   ret i1 %C
 }
 
+; FIXME: Vectors should fold the same way.
+define <2 x i1> @test17vec(<2 x i32> %A) {
+; CHECK-LABEL: @test17vec(
+; CHECK-NEXT:    [[B:%.*]] = lshr <2 x i32> %A, <i32 3, i32 3>
+; CHECK-NEXT:    [[C:%.*]] = icmp eq <2 x i32> [[B]], <i32 1234, i32 1234>
+; CHECK-NEXT:    ret <2 x i1> [[C]]
+;
+  %B = lshr <2 x i32> %A, <i32 3, i32 3>
+  %C = icmp eq <2 x i32> %B, <i32 1234, i32 1234>
+  ret <2 x i1> %C
+}
 
 define i1 @test18(i8 %A) {
 ; CHECK-LABEL: @test18(
@@ -343,6 +354,17 @@ define i1 @test19(i32 %A) {
   ret i1 %C
 }
 
+; FIXME: Vectors should fold the same way.
+define <2 x i1> @test19vec(<2 x i32> %A) {
+; CHECK-LABEL: @test19vec(
+; CHECK-NEXT:    [[B:%.*]] = ashr <2 x i32> %A, <i32 2, i32 2>
+; CHECK-NEXT:    [[C:%.*]] = icmp eq <2 x i32> [[B]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[C]]
+;
+  %B = ashr <2 x i32> %A, <i32 2, i32 2>
+  %C = icmp eq <2 x i32> %B, zeroinitializer
+  ret <2 x i1> %C
+}
 
 ;; X >u ~4
 define i1 @test19a(i32 %A) {
