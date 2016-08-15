@@ -3,7 +3,8 @@
 ; Check that when variables are allocated on the stack we generate debug locations
 ; for the stack location directly instead of generating a register+offset indirection.
 
-; RUN: %llc_dwarf -O2 -filetype=obj -disable-post-ra < %s | llvm-dwarfdump - | FileCheck %s
+; RUN: %llc_dwarf -O2 -filetype=obj -disable-post-ra -mtriple=x86_64-unknown-linux-gnu < %s \
+; RUN: | llvm-dwarfdump - | FileCheck %s
 ;
 ; int data = 17;
 ; int sum  = 0;
