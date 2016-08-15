@@ -319,8 +319,10 @@ template <class ELFT> void assignOffsets(OutputSectionBase<ELFT> *Sec) {
       uintX_t Value = L->Cmd->Expression(Sec->getVA() + Off) - Sec->getVA();
       if (L->Cmd->Name == ".") {
         Off = Value;
-      } else {
-        auto *Sym = cast<DefinedSynthetic<ELFT>>(L->Cmd->Sym);
+      } else if (auto *Sym =
+                     cast_or_null<DefinedSynthetic<ELFT>>(L->Cmd->Sym)) {
+        // shouldDefine could have returned false, so we need to check Sym,
+        // for non-null value.
         Sym->Section = OutSec;
         Sym->Value = Value;
       }
