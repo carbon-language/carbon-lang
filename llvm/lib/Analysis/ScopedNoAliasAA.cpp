@@ -127,9 +127,8 @@ ModRefInfo ScopedNoAliasAAResult::getModRefInfo(ImmutableCallSite CS1,
   return AAResultBase::getModRefInfo(CS1, CS2);
 }
 
-void ScopedNoAliasAAResult::collectMDInDomain(
-    const MDNode *List, const MDNode *Domain,
-    SmallPtrSetImpl<const MDNode *> &Nodes) const {
+static void collectMDInDomain(const MDNode *List, const MDNode *Domain,
+                              SmallPtrSetImpl<const MDNode *> &Nodes) {
   for (const MDOperand &MDOp : List->operands())
     if (const MDNode *MD = dyn_cast<MDNode>(MDOp))
       if (AliasScopeNode(MD).getDomain() == Domain)
