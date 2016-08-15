@@ -496,26 +496,14 @@ define i1 @test27(i32 %x) nounwind {
   ret i1 %z
 }
 
-define i8 @test28(i8 %x) {
+define i1 @test28(i8 %x) {
 ; CHECK-LABEL: @test28(
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[COND1:%.*]] = icmp slt i8 %x, 0
-; CHECK-NEXT:    br i1 [[COND1]], label %bb1, label %bb2
-; CHECK:       bb1:
-; CHECK-NEXT:    ret i8 0
-; CHECK:       bb2:
-; CHECK-NEXT:    ret i8 1
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i8 %x, 0
+; CHECK-NEXT:    ret i1 [[CMP]]
 ;
-entry:
-  %tmp1 = lshr i8 %x, 7
-  %cond1 = icmp ne i8 %tmp1, 0
-  br i1 %cond1, label %bb1, label %bb2
-
-bb1:
-  ret i8 0
-
-bb2:
-  ret i8 1
+  %shr = lshr i8 %x, 7
+  %cmp = icmp ne i8 %shr, 0
+  ret i1 %cmp
 }
 
 define i8 @test28a(i8 %x, i8 %y) {
