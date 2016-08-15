@@ -205,6 +205,7 @@ define i1 @test16(i84 %X) {
   ret i1 %cmp
 }
 
+; FIXME: Vectors should fold too.
 define <2 x i1> @test16vec(<2 x i84> %X) {
 ; CHECK-LABEL: @test16vec(
 ; CHECK-NEXT:    [[SHR1:%.*]] = lshr <2 x i84> %X, <i84 4, i84 4>
@@ -229,6 +230,18 @@ define i1 @test17(i106 %A) {
   ret i1 %C
 }
 
+; FIXME: Vectors should fold too.
+define <2 x i1> @test17vec(<2 x i106> %A) {
+; CHECK-LABEL: @test17vec(
+; CHECK-NEXT:    [[B:%.*]] = lshr <2 x i106> %A, <i106 3, i106 3>
+; CHECK-NEXT:    [[C:%.*]] = icmp eq <2 x i106> [[B]], <i106 1234, i106 1234>
+; CHECK-NEXT:    ret <2 x i1> [[C]]
+;
+  %B = lshr <2 x i106> %A, <i106 3, i106 3>
+  %C = icmp eq <2 x i106> %B, <i106 1234, i106 1234>
+  ret <2 x i1> %C
+}
+
 define i1 @test18(i11 %A) {
 ; CHECK-LABEL: @test18(
 ; CHECK-NEXT:    ret i1 false
@@ -248,6 +261,18 @@ define i1 @test19(i37 %A) {
   ret i1 %C
 }
 
+; FIXME: Vectors should fold too.
+define <2 x i1> @test19vec(<2 x i37> %A) {
+; CHECK-LABEL: @test19vec(
+; CHECK-NEXT:    [[B:%.*]] = ashr <2 x i37> %A, <i37 2, i37 2>
+; CHECK-NEXT:    [[C:%.*]] = icmp eq <2 x i37> [[B]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[C]]
+;
+  %B = ashr <2 x i37> %A, <i37 2, i37 2>
+  %C = icmp eq <2 x i37> %B, zeroinitializer
+  ret <2 x i1> %C
+}
+
 define i1 @test19a(i39 %A) {
 ; CHECK-LABEL: @test19a(
 ; CHECK-NEXT:    [[C:%.*]] = icmp ugt i39 %A, -5
@@ -256,6 +281,18 @@ define i1 @test19a(i39 %A) {
   %B = ashr i39 %A, 2
   %C = icmp eq i39 %B, -1
   ret i1 %C
+}
+
+; FIXME: Vectors should fold too.
+define <2 x i1> @test19a_vec(<2 x i39> %A) {
+; CHECK-LABEL: @test19a_vec(
+; CHECK-NEXT:    [[B:%.*]] = ashr <2 x i39> %A, <i39 2, i39 2>
+; CHECK-NEXT:    [[C:%.*]] = icmp eq <2 x i39> [[B]], <i39 -1, i39 -1>
+; CHECK-NEXT:    ret <2 x i1> [[C]]
+;
+  %B = ashr <2 x i39> %A, <i39 2, i39 2>
+  %C = icmp eq <2 x i39> %B, <i39 -1, i39 -1>
+  ret <2 x i1> %C
 }
 
 define i1 @test20(i13 %A) {
