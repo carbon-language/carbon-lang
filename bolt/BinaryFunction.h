@@ -99,6 +99,8 @@ public:
   // solution to the layout problem instead of seeking the optimal one.
   static constexpr uint64_t FUNC_SIZE_THRESHOLD = 10;
 
+  using BasicBlockOrderType = std::vector<BinaryBasicBlock *>;
+
 private:
 
   /// Current state of the function.
@@ -327,7 +329,6 @@ private:
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
   // the terminating instructions need to be modified.
   using BasicBlockListType = std::vector<BinaryBasicBlock*>;
-  using BasicBlockOrderType = std::vector<BinaryBasicBlock*>;
   BasicBlockListType BasicBlocks;
   BasicBlockOrderType BasicBlocksLayout;
 

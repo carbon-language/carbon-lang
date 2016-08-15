@@ -90,7 +90,7 @@ void GreedyClusterAlgorithm::EdgeTy::print(raw_ostream &OS) const {
 }
 
 size_t GreedyClusterAlgorithm::EdgeHash::operator()(const EdgeTy &E) const {
-  HashPair<BinaryBasicBlock *, BinaryBasicBlock *> Hasher;
+  HashPair<const BinaryBasicBlock *, const BinaryBasicBlock *> Hasher;
   return Hasher(std::make_pair(E.Src, E.Dst));
 }
 
@@ -99,7 +99,8 @@ bool GreedyClusterAlgorithm::EdgeEqual::operator()(
   return A.Src == B.Src && A.Dst == B.Dst;
 }
 
-void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF) {
+void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF,
+                                                bool ComputeEdges) {
   reset();
 
   // Greedy heuristic implementation for the TSP, applied to BB layout. Try to
@@ -111,7 +112,8 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF) {
   std::vector<EdgeTy> Queue;
 
   // Initialize inter-cluster weights.
-  ClusterEdges.resize(BF.layout_size());
+  if (ComputeEdges)
+    ClusterEdges.resize(BF.layout_size());
 
   // Initialize clusters and edge queue.
   for (auto BB : BF.layout()) {
@@ -138,8 +140,8 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF) {
     auto E = Queue.back();
     Queue.pop_back();
 
-    BinaryBasicBlock *SrcBB = E.Src;
-    BinaryBasicBlock *DstBB = E.Dst;
+    const auto *SrcBB = E.Src;
+    const auto *DstBB = E.Dst;
 
     DEBUG(dbgs() << "Popped edge ";
           E.print(dbgs());
@@ -157,7 +159,8 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF) {
     // Case 2: If they are already allocated at the same cluster, just increase
     // the weight of this cluster
     if (I == J) {
-      ClusterEdges[I][I] += E.Count;
+      if (ComputeEdges)
+        ClusterEdges[I][I] += E.Count;
       DEBUG(dbgs() << "\tIgnored (src, dst belong to the same cluster)\n");
       continue;
     }
@@ -171,24 +174,27 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF) {
         BBToClusterMap[BB] = I;
       ClusterA.insert(ClusterA.end(), ClusterB.begin(), ClusterB.end());
       ClusterB.clear();
-      // Increase the intra-cluster edge count of cluster A with the count of
-      // this edge as well as with the total count of previously visited edges
-      // from cluster B cluster A.
-      ClusterEdges[I][I] += E.Count;
-      ClusterEdges[I][I] += ClusterEdges[J][I];
-      // Iterate through all inter-cluster edges and transfer edges targeting
-      // cluster B to cluster A.
-      for (uint32_t K = 0, E = ClusterEdges.size(); K != E; ++K)
-        ClusterEdges[K][I] += ClusterEdges[K][J];
-      DEBUG(dbgs() << "\tMerged clusters of src, dst\n");
+      if (ComputeEdges) {
+        // Increase the intra-cluster edge count of cluster A with the count of
+        // this edge as well as with the total count of previously visited edges
+        // from cluster B cluster A.
+        ClusterEdges[I][I] += E.Count;
+        ClusterEdges[I][I] += ClusterEdges[J][I];
+        // Iterate through all inter-cluster edges and transfer edges targeting
+        // cluster B to cluster A.
+        for (uint32_t K = 0, E = ClusterEdges.size(); K != E; ++K)
+          ClusterEdges[K][I] += ClusterEdges[K][J];
+      }
       // Adjust the weights of the remaining edges and re-sort the queue.
       adjustQueue(Queue, BF);
+      DEBUG(dbgs() << "\tMerged clusters of src, dst\n");
     } else {
       // Case 4: Both SrcBB and DstBB are allocated in positions we cannot
       // merge them. Add the count of this edge to the inter-cluster edge count
       // between clusters A and B to help us decide ordering between these
       // clusters.
-      ClusterEdges[I][J] += E.Count;
+      if (ComputeEdges)
+        ClusterEdges[I][J] += E.Count;
       DEBUG(dbgs() << "\tIgnored (src, dst belong to incompatible clusters)\n");
     }
   }
@@ -308,8 +314,8 @@ void MinBranchGreedyClusterAlgorithm::adjustQueue(
   // source and destination in the same cluster.
   std::vector<EdgeTy> NewQueue;
   for (const EdgeTy &E : Queue) {
-    BinaryBasicBlock *SrcBB = E.Src;
-    BinaryBasicBlock *DstBB = E.Dst;
+    const auto *SrcBB = E.Src;
+    const auto *DstBB = E.Dst;
 
     // Case 1: SrcBB and DstBB are the same or DstBB is the entry block. Ignore
     // this edge.
@@ -330,19 +336,20 @@ void MinBranchGreedyClusterAlgorithm::adjustQueue(
     // destination, so that this edge has no effect on them any more, and ignore
     // this edge. Also increase the intra- (or inter-) cluster edge count.
     if (I == J || !areClustersCompatible(ClusterA, ClusterB, E)) {
-      ClusterEdges[I][J] += E.Count;
+      if (!ClusterEdges.empty())
+        ClusterEdges[I][J] += E.Count;
       DEBUG(dbgs() << "\tAdjustment: Ignored edge ";
             E.print(dbgs());
             dbgs() << " (src, dst belong to same cluster or incompatible "
                       "clusters)\n");
-      for (BinaryBasicBlock *SuccBB : SrcBB->successors()) {
+      for (const auto *SuccBB : SrcBB->successors()) {
         if (SuccBB == DstBB)
           continue;
         auto WI = Weight.find(EdgeTy(SrcBB, SuccBB, 0));
         assert(WI != Weight.end() && "CFG edge not found in Weight map");
         WI->second += (int64_t)E.Count;
       }
-      for (BinaryBasicBlock *PredBB : DstBB->predecessors()) {
+      for (const auto *PredBB : DstBB->predecessors()) {
         if (PredBB == SrcBB)
           continue;
         auto WI = Weight.find(EdgeTy(PredBB, DstBB, 0));
@@ -375,7 +382,7 @@ void MinBranchGreedyClusterAlgorithm::reset() {
 void OptimalReorderAlgorithm::reorderBasicBlocks(
       const BinaryFunction &BF, BasicBlockOrder &Order) const {
   std::vector<std::vector<uint64_t>> Weight;
-  std::unordered_map<BinaryBasicBlock *, int> BBToIndex;
+  std::unordered_map<const BinaryBasicBlock *, int> BBToIndex;
   std::vector<BinaryBasicBlock *> IndexToBB;
 
   unsigned N = BF.layout_size();
@@ -491,13 +498,13 @@ void OptimizeBranchReorderAlgorithm::reorderBasicBlocks(
     return;
 
   // Cluster basic blocks.
-  CAlgo->clusterBasicBlocks(BF);
-  std::vector<ClusterAlgorithm::ClusterTy> &Clusters = CAlgo->Clusters;;
+  CAlgo->clusterBasicBlocks(BF, /* ComputeEdges = */true);
+  std::vector<ClusterAlgorithm::ClusterTy> &Clusters = CAlgo->Clusters;
   auto &ClusterEdges = CAlgo->ClusterEdges;
 
   // Compute clusters' average frequencies.
   CAlgo->computeClusterAverageFrequency();
-  std::vector<double> &AvgFreq = CAlgo->AvgFreq;;
+  std::vector<double> &AvgFreq = CAlgo->AvgFreq;
 
   if (opts::PrintClusters)
     CAlgo->printClusters();
@@ -595,11 +602,11 @@ void OptimizeCacheReorderAlgorithm::reorderBasicBlocks(
 
   // Cluster basic blocks.
   CAlgo->clusterBasicBlocks(BF);
-  std::vector<ClusterAlgorithm::ClusterTy> &Clusters = CAlgo->Clusters;;
+  std::vector<ClusterAlgorithm::ClusterTy> &Clusters = CAlgo->Clusters;
 
   // Compute clusters' average frequencies.
   CAlgo->computeClusterAverageFrequency();
-  std::vector<double> &AvgFreq = CAlgo->AvgFreq;;
+  std::vector<double> &AvgFreq = CAlgo->AvgFreq;
 
   if (opts::PrintClusters)
     CAlgo->printClusters();

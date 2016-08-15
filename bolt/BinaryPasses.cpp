@@ -760,10 +760,9 @@ void EliminateUnreachableBlocks::runOnFunctions(
 }
 
 void ReorderBasicBlocks::runOnFunctions(
-  BinaryContext &BC,
-  std::map<uint64_t, BinaryFunction> &BFs,
-  std::set<uint64_t> &LargeFunctions
-) {
+    BinaryContext &BC,
+    std::map<uint64_t, BinaryFunction> &BFs,
+    std::set<uint64_t> &LargeFunctions) {
   for (auto &It : BFs) {
     auto &Function = It.second;
 

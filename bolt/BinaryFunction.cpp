@@ -1407,7 +1407,7 @@ bool BinaryFunction::fixCFIState() {
 }
 
 void BinaryFunction::modifyLayout(LayoutType Type, bool MinBranchClusters,
-                                 bool Split) {
+                                  bool Split) {
   if (BasicBlocksLayout.empty() || Type == LT_NONE)
     return;
 

@@ -14,6 +14,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_REORDER_ALGORITHM_H
 #define LLVM_TOOLS_LLVM_BOLT_REORDER_ALGORITHM_H
 
+#include "BinaryFunction.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <unordered_map>
 #include <memory>
@@ -36,16 +37,17 @@ class BinaryFunction;
 /// into clusters using execution profile data and various heuristics.
 class ClusterAlgorithm {
 public:
-  typedef std::vector<BinaryBasicBlock *> ClusterTy;
+  using ClusterTy = std::vector<BinaryBasicBlock *>;
   std::vector<ClusterTy> Clusters;
   std::vector<std::unordered_map<uint32_t, uint64_t>> ClusterEdges;
   std::vector<double> AvgFreq;
 
-  /// Group the basic blocks the given function into clusters stored in the
+  /// Group the basic blocks in the given function into clusters stored in the
   /// Clusters vector. Also encode relative weights between two clusters in
-  /// the ClusterEdges vector. This vector is indexed by the clusters indices
-  /// in the Clusters vector.
-  virtual void clusterBasicBlocks(const BinaryFunction &BF) =0;
+  /// the ClusterEdges vector if requested. This vector is indexed by
+  /// the clusters indices in the Clusters vector.
+  virtual void clusterBasicBlocks(const BinaryFunction &BF,
+                                  bool ComputeEdges = false) = 0;
 
   /// Compute for each cluster its averagae execution frequency, that is
   /// the sum of average frequencies of its blocks (execution count / # instrs).
@@ -58,7 +60,7 @@ public:
 
   void printClusters() const;
 
-  virtual ~ClusterAlgorithm() { }
+  virtual ~ClusterAlgorithm() {}
 };
 
 
@@ -69,12 +71,13 @@ protected:
   // Represents an edge between two basic blocks, with source, destination, and
   // profile count.
   struct EdgeTy {
-    BinaryBasicBlock *Src;
-    BinaryBasicBlock *Dst;
+    const BinaryBasicBlock *Src;
+    const BinaryBasicBlock *Dst;
     uint64_t Count;
 
-    EdgeTy(BinaryBasicBlock *Src, BinaryBasicBlock *Dst, uint64_t Count) :
-      Src(Src), Dst(Dst), Count(Count) { }
+    EdgeTy(const BinaryBasicBlock *Src, const BinaryBasicBlock *Dst,
+           uint64_t Count) :
+      Src(Src), Dst(Dst), Count(Count) {}
 
     void print(raw_ostream &OS) const;
   };
@@ -90,18 +93,20 @@ protected:
   // Virtual methods that allow custom specialization of the heuristic used by
   // the algorithm to select edges.
   virtual void initQueue(
-      std::vector<EdgeTy> &Queue, const BinaryFunction &BF) =0;
+      std::vector<EdgeTy> &Queue, const BinaryFunction &BF) = 0;
   virtual void adjustQueue(
-      std::vector<EdgeTy> &Queue, const BinaryFunction &BF) =0;
+      std::vector<EdgeTy> &Queue, const BinaryFunction &BF) = 0;
   virtual bool areClustersCompatible(
-      const ClusterTy &Front, const ClusterTy &Back, const EdgeTy &E) const =0;
+      const ClusterTy &Front, const ClusterTy &Back, const EdgeTy &E) const = 0;
 
   // Map from basic block to owning cluster index.
-  using BBToClusterMapTy = std::unordered_map<BinaryBasicBlock *, unsigned>;
+  using BBToClusterMapTy = std::unordered_map<const BinaryBasicBlock *,
+                                              unsigned>;
   BBToClusterMapTy BBToClusterMap;
 
 public:
-  void clusterBasicBlocks(const BinaryFunction &BF) override;
+  void clusterBasicBlocks(const BinaryFunction &BF,
+                          bool ComputeEdges = false) override;
   void reset() override;
 };
 
@@ -172,12 +177,12 @@ public:
   explicit ReorderAlgorithm(std::unique_ptr<ClusterAlgorithm> CAlgo) :
     CAlgo(std::move(CAlgo)) { }
 
-  typedef std::vector<BinaryBasicBlock *>  BasicBlockOrder;
+  using BasicBlockOrder = BinaryFunction::BasicBlockOrderType;
 
   /// Reorder the basic blocks of the given function and store the new order in
   /// the new Clusters vector.
   virtual void reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const =0;
+      const BinaryFunction &BF, BasicBlockOrder &Order) const = 0;
 
   void setClusterAlgorithm(ClusterAlgorithm *CAlgo) {
     this->CAlgo.reset(CAlgo);
