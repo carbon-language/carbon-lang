@@ -154,7 +154,7 @@ bool ScopedNoAliasAAResult::mayAliasInScopes(const MDNode *Scopes,
     SmallPtrSet<const MDNode *, 16> NANodes, ScopeNodes;
     collectMDInDomain(NoAlias, Domain, NANodes);
     collectMDInDomain(Scopes, Domain, ScopeNodes);
-    if (!ScopeNodes.size())
+    if (ScopeNodes.empty())
       continue;
 
     // To not alias, all of the nodes in ScopeNodes must be in NANodes.
