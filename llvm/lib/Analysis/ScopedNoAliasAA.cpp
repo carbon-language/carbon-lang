@@ -151,11 +151,13 @@ bool ScopedNoAliasAAResult::mayAliasInScopes(const MDNode *Scopes,
   // We alias unless, for some domain, the set of noalias scopes in that domain
   // is a superset of the set of alias scopes in that domain.
   for (const MDNode *Domain : Domains) {
-    SmallPtrSet<const MDNode *, 16> NANodes, ScopeNodes;
-    collectMDInDomain(NoAlias, Domain, NANodes);
+    SmallPtrSet<const MDNode *, 16> ScopeNodes;
     collectMDInDomain(Scopes, Domain, ScopeNodes);
     if (ScopeNodes.empty())
       continue;
+
+    SmallPtrSet<const MDNode *, 16> NANodes;
+    collectMDInDomain(NoAlias, Domain, NANodes);
 
     // To not alias, all of the nodes in ScopeNodes must be in NANodes.
     bool FoundAll = true;
