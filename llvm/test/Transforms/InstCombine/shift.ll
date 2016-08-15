@@ -506,6 +506,18 @@ define i1 @test28(i8 %x) {
   ret i1 %cmp
 }
 
+; FIXME: Vectors should fold the same way.
+define <2 x i1> @test28vec(<2 x i8> %x) {
+; CHECK-LABEL: @test28vec(
+; CHECK-NEXT:    [[SHR:%.*]] = lshr <2 x i8> %x, <i8 7, i8 7>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ne <2 x i8> [[SHR]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %shr = lshr <2 x i8> %x, <i8 7, i8 7>
+  %cmp = icmp ne <2 x i8> %shr, zeroinitializer
+  ret <2 x i1> %cmp
+}
+
 define i8 @test28a(i8 %x, i8 %y) {
 ; CHECK-LABEL: @test28a(
 ; CHECK-NEXT:  entry:
