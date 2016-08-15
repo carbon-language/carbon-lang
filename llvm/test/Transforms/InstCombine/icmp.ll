@@ -282,6 +282,18 @@ define i1 @test23(i32 %x) {
   ret i1 %i4
 }
 
+; FIXME: Vectors should fold too.
+define <2 x i1> @test23vec(<2 x i32> %x) {
+; CHECK-LABEL: @test23vec(
+; CHECK-NEXT:    [[I3:%.*]] = sdiv <2 x i32> %x, <i32 -1328634635, i32 -1328634635>
+; CHECK-NEXT:    [[I4:%.*]] = icmp eq <2 x i32> [[I3]], <i32 -1, i32 -1>
+; CHECK-NEXT:    ret <2 x i1> [[I4]]
+;
+  %i3 = sdiv <2 x i32> %x, <i32 -1328634635, i32 -1328634635>
+  %i4 = icmp eq <2 x i32> %i3, <i32 -1, i32 -1>
+  ret <2 x i1> %i4
+}
+
 @X = global [1000 x i32] zeroinitializer
 
 ; PR8882
