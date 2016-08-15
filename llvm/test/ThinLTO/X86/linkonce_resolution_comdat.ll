@@ -3,7 +3,7 @@
 ; verification error.
 ; RUN: opt -module-summary %s -o %t1.bc
 ; RUN: opt -module-summary %p/Inputs/linkonce_resolution_comdat.ll -o %t2.bc
-; RUN: llvm-lto -thinlto-action=run %t1.bc %t2.bc -exported-symbol=f -exported-symbol=g -disable-inlining
+; RUN: llvm-lto -thinlto-action=run %t1.bc %t2.bc -exported-symbol=f -exported-symbol=g
 
 ; RUN: llvm-nm -o - < %t1.bc.thinlto.o | FileCheck %s --check-prefix=NM1
 ; NM1: W f
