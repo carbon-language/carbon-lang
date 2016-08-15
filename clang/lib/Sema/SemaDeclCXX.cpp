@@ -1160,6 +1160,7 @@ static bool checkTupleLikeDecomposition(Sema &S,
     RefVD->setImplicit();
     if (Src->isInlineSpecified())
       RefVD->setInlineSpecified();
+    RefVD->getLexicalDeclContext()->addHiddenDecl(RefVD);
 
     InitializedEntity Entity = InitializedEntity::InitializeBinding(RefVD);
     InitializationKind Kind = InitializationKind::CreateCopy(Loc, Loc);
@@ -1167,10 +1168,11 @@ static bool checkTupleLikeDecomposition(Sema &S,
     E = Seq.Perform(S, Entity, Kind, Init);
     if (E.isInvalid())
       return true;
+    E = S.ActOnFinishFullExpr(E.get(), Loc);
+    if (E.isInvalid())
+      return true;
     RefVD->setInit(E.get());
     RefVD->checkInitIsICE();
-
-    RefVD->getLexicalDeclContext()->addHiddenDecl(RefVD);
 
     E = S.BuildDeclarationNameExpr(CXXScopeSpec(),
                                    DeclarationNameInfo(B->getDeclName(), Loc),
