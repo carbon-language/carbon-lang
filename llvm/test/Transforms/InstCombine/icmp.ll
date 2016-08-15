@@ -1559,15 +1559,16 @@ define i1 @icmp_add_ult_2(i32 %X) {
   ret i1 %cmp
 }
 
-define i1 @icmp_add_X_-14_ult_2(i32 %X) {
-; CHECK-LABEL: @icmp_add_X_-14_ult_2(
-; CHECK-NEXT:    [[TMP1:%.*]] = and i32 %X, -2
-; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[TMP1]], 14
-; CHECK-NEXT:    ret i1 [[CMP]]
+; FIXME: Vectors should fold too.
+define <2 x i1> @icmp_add_X_-14_ult_2_vec(<2 x i32> %X) {
+; CHECK-LABEL: @icmp_add_X_-14_ult_2_vec(
+; CHECK-NEXT:    [[ADD:%.*]] = add <2 x i32> %X, <i32 -14, i32 -14>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult <2 x i32> [[ADD]], <i32 2, i32 2>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
-  %add = add i32 %X, -14
-  %cmp = icmp ult i32 %add, 2
-  ret i1 %cmp
+  %add = add <2 x i32> %X, <i32 -14, i32 -14>
+  %cmp = icmp ult <2 x i32> %add, <i32 2, i32 2>
+  ret <2 x i1> %cmp
 }
 
 define i1 @icmp_sub_3_X_ult_2(i32 %X) {
@@ -1602,6 +1603,18 @@ define i1 @icmp_add_X_-14_uge_2(i32 %X) {
   %add = add i32 %X, -14
   %cmp = icmp uge i32 %add, 2
   ret i1 %cmp
+}
+
+; FIXME: Vectors should fold too.
+define <2 x i1> @icmp_add_X_-14_uge_2_vec(<2 x i32> %X) {
+; CHECK-LABEL: @icmp_add_X_-14_uge_2_vec(
+; CHECK-NEXT:    [[ADD:%.*]] = add <2 x i32> %X, <i32 -14, i32 -14>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt <2 x i32> [[ADD]], <i32 1, i32 1>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %add = add <2 x i32> %X, <i32 -14, i32 -14>
+  %cmp = icmp uge <2 x i32> %add, <i32 2, i32 2>
+  ret <2 x i1> %cmp
 }
 
 define i1 @icmp_sub_3_X_uge_2(i32 %X) {
