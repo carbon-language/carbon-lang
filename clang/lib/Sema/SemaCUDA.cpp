@@ -480,3 +480,33 @@ void Sema::maybeAddCUDAHostDeviceAttrs(Scope *S, FunctionDecl *NewD,
   NewD->addAttr(CUDAHostAttr::CreateImplicit(Context));
   NewD->addAttr(CUDADeviceAttr::CreateImplicit(Context));
 }
+
+bool Sema::CheckCUDACall(SourceLocation Loc, FunctionDecl *Callee) {
+  assert(getLangOpts().CUDA &&
+         "Should only be called during CUDA compilation.");
+  assert(Callee && "Callee may not be null.");
+  FunctionDecl *Caller = dyn_cast<FunctionDecl>(CurContext);
+  if (!Caller)
+    return true;
+
+  Sema::CUDAFunctionPreference Pref = IdentifyCUDAPreference(Caller, Callee);
+  if (Pref == Sema::CFP_Never) {
+    Diag(Loc, diag::err_ref_bad_target) << IdentifyCUDATarget(Callee) << Callee
+                                        << IdentifyCUDATarget(Caller);
+    Diag(Callee->getLocation(), diag::note_previous_decl) << Callee;
+    return false;
+  }
+  if (Pref == Sema::CFP_WrongSide) {
+    // We have to do this odd dance to create our PartialDiagnostic because we
+    // want its storage to be allocated with operator new, not in an arena.
+    PartialDiagnostic PD{PartialDiagnostic::NullDiagnostic()};
+    PD.Reset(diag::err_ref_bad_target);
+    PD << IdentifyCUDATarget(Callee) << Callee << IdentifyCUDATarget(Caller);
+    Caller->addDeferredDiag({Loc, std::move(PD)});
+    Diag(Callee->getLocation(), diag::note_previous_decl) << Callee;
+    // This is not immediately an error, so return true.  The deferred errors
+    // will be emitted if and when Caller is codegen'ed.
+    return true;
+  }
+  return true;
+}
