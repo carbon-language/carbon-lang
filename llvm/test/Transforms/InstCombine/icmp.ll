@@ -476,6 +476,17 @@ define i1 @test39(i32 %X, i32 %Y) {
   ret i1 %B
 }
 
+define <2 x i1> @test39vec(<2 x i32> %X, <2 x i32> %Y) {
+; CHECK-LABEL: @test39vec(
+; CHECK-NEXT:    [[A:%.*]] = ashr exact <2 x i32> %X, %Y
+; CHECK-NEXT:    [[B:%.*]] = icmp eq <2 x i32> [[A]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[B]]
+;
+  %A = ashr exact <2 x i32> %X, %Y
+  %B = icmp eq <2 x i32> %A, zeroinitializer
+  ret <2 x i1> %B
+}
+
 define i1 @test40(i32 %X, i32 %Y) {
 ; CHECK-LABEL: @test40(
 ; CHECK-NEXT:    [[B:%.*]] = icmp ne i32 %X, 0
@@ -484,6 +495,17 @@ define i1 @test40(i32 %X, i32 %Y) {
   %A = lshr exact i32 %X, %Y
   %B = icmp ne i32 %A, 0
   ret i1 %B
+}
+
+define <2 x i1> @test40vec(<2 x i32> %X, <2 x i32> %Y) {
+; CHECK-LABEL: @test40vec(
+; CHECK-NEXT:    [[A:%.*]] = lshr exact <2 x i32> %X, %Y
+; CHECK-NEXT:    [[B:%.*]] = icmp ne <2 x i32> [[A]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[B]]
+;
+  %A = lshr exact <2 x i32> %X, %Y
+  %B = icmp ne <2 x i32> %A, zeroinitializer
+  ret <2 x i1> %B
 }
 
 ; PR9343 #3
