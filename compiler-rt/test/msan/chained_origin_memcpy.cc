@@ -14,7 +14,7 @@
 // RUN: %clangxx_msan -mllvm -msan-instrumentation-with-call-threshold=0 -fsanitize-memory-track-origins=2 -DOFFSET=10 -O3 %s -o %t && \
 // RUN:     not %run %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-Z2 < %t.out
-
+// XFAIL: target-is-mips64el
 
 #include <stdio.h>
 #include <string.h>
