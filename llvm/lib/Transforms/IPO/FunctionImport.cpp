@@ -493,6 +493,15 @@ void llvm::thinLTOResolveWeakForLinkerModule(
     DEBUG(dbgs() << "ODR fixing up linkage for `" << GV.getName() << "` from "
                  << GV.getLinkage() << " to " << NewLinkage << "\n");
     GV.setLinkage(NewLinkage);
+    // Remove functions converted to available_externally from comdats,
+    // as this is a declaration for the linker, and will be dropped eventually.
+    // It is illegal for comdats to contain declarations.
+    auto *GO = dyn_cast_or_null<GlobalObject>(&GV);
+    if (GO && GO->isDeclarationForLinker() && GO->hasComdat()) {
+      assert(GO->hasAvailableExternallyLinkage() &&
+             "Expected comdat on definition (possibly available external)");
+      GO->setComdat(nullptr);
+    }
   };
 
   // Process functions and global now
