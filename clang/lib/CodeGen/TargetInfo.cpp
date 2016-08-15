@@ -2589,6 +2589,10 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
       uint64_t Offset = OffsetBase + Layout.getFieldOffset(idx);
       bool BitField = i->isBitField();
 
+      // Ignore padding bit-fields.
+      if (BitField && i->isUnnamedBitfield())
+        continue;
+
       // AMD64-ABI 3.2.3p2: Rule 1. If the size of an object is larger than
       // four eightbytes, or it contains unaligned fields, it has class MEMORY.
       //
@@ -2621,10 +2625,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
       // structure to be passed in memory even if unaligned, and
       // therefore they can straddle an eightbyte.
       if (BitField) {
-        // Ignore padding bit-fields.
-        if (i->isUnnamedBitfield())
-          continue;
-
+        assert(!i->isUnnamedBitfield());
         uint64_t Offset = OffsetBase + Layout.getFieldOffset(idx);
         uint64_t Size = i->getBitWidthValue(getContext());
 

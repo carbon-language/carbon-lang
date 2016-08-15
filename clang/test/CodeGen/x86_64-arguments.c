@@ -536,3 +536,12 @@ void f64() {
   f64_helper(x64, x64, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0i);
   f64_helper(x64, x64, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0i);
 }
+
+struct t65 {
+  __m256 m;
+  int : 0;
+};
+// SSE-LABEL: @f65(%struct.t65* byval align 32 %{{[^,)]+}})
+// AVX: @f65(<8 x float> %{{[^,)]+}})
+void f65(struct t65 a0) {
+}
