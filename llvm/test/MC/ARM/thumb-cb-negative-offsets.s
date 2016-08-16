@@ -16,4 +16,16 @@ label0:
 
   .space 1000
 label1:
-  .word 4
+  nop
+
+@ CHECK: out of range pc-relative fixup value
+  cbz r0, label2
+  .space 130
+label2:
+  nop
+
+@ CHECK-NOT: label3
+  cbnz r0, label3
+  .space 128
+label3:
+  nop
