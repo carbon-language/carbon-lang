@@ -14,9 +14,9 @@
 
 #include <cassert>
 
-#include "streamexecutor/Interfaces.h"
 #include "streamexecutor/Kernel.h"
 #include "streamexecutor/KernelSpec.h"
+#include "streamexecutor/PlatformInterfaces.h"
 #include "streamexecutor/StreamExecutor.h"
 
 #include "llvm/ADT/STLExtras.h"
@@ -42,7 +42,8 @@ namespace se = ::streamexecutor;
 class MockStreamExecutor : public se::StreamExecutor {
 public:
   MockStreamExecutor()
-      : Unique(llvm::make_unique<se::KernelInterface>()), Raw(Unique.get()) {}
+      : se::StreamExecutor(nullptr),
+        Unique(llvm::make_unique<se::KernelInterface>()), Raw(Unique.get()) {}
 
   // Moves the unique pointer into the returned se::Expected instance.
   //

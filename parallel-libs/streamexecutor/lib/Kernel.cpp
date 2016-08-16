@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "streamexecutor/Kernel.h"
-#include "streamexecutor/Interfaces.h"
+#include "streamexecutor/PlatformInterfaces.h"
 #include "streamexecutor/StreamExecutor.h"
 
 #include "llvm/DebugInfo/Symbolize/Symbolize.h"

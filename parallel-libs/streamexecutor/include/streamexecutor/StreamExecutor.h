@@ -16,14 +16,20 @@
 #ifndef STREAMEXECUTOR_STREAMEXECUTOR_H
 #define STREAMEXECUTOR_STREAMEXECUTOR_H
 
+#include "streamexecutor/KernelSpec.h"
 #include "streamexecutor/Utils/Error.h"
 
 namespace streamexecutor {
 
 class KernelInterface;
+class PlatformStreamExecutor;
+class Stream;
 
 class StreamExecutor {
 public:
+  explicit StreamExecutor(PlatformStreamExecutor *PlatformExecutor);
+  virtual ~StreamExecutor();
+
   /// Gets the kernel implementation for the underlying platform.
   virtual Expected<std::unique_ptr<KernelInterface>>
   getKernelImplementation(const MultiKernelLoaderSpec &Spec) {
@@ -31,7 +37,10 @@ public:
     return nullptr;
   }
 
-  // TODO(jhen): Add other methods.
+  Expected<std::unique_ptr<Stream>> createStream();
+
+private:
+  PlatformStreamExecutor *PlatformExecutor;
 };
 
 } // namespace streamexecutor
