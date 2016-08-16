@@ -133,6 +133,24 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
     return true;
   }
 
+  case TargetOpcode::G_FRAME_INDEX: {
+    // allocas and G_FRAME_INDEX are only supported in addrspace(0).
+    if (I.getType() != LLT::pointer(0)) {
+      DEBUG(dbgs() << "G_FRAME_INDEX pointer has type: " << I.getType()
+                   << ", expected: " << LLT::pointer(0) << '\n');
+      return false;
+    }
+
+    I.setDesc(TII.get(AArch64::ADDXri));
+    I.removeTypes();
+
+    // MOs for a #0 shifted immediate.
+    I.addOperand(MachineOperand::CreateImm(0));
+    I.addOperand(MachineOperand::CreateImm(0));
+
+    return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
+  }
+
   case TargetOpcode::G_LOAD:
   case TargetOpcode::G_STORE: {
     LLT MemTy = I.getType(0);

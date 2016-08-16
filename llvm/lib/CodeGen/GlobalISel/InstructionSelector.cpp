@@ -32,8 +32,8 @@ bool InstructionSelector::constrainSelectedInstRegOperands(
   for (unsigned OpI = 0, OpE = I.getNumExplicitOperands(); OpI != OpE; ++OpI) {
     MachineOperand &MO = I.getOperand(OpI);
 
-    // There's nothing to be done on immediates.
-    if (MO.isImm())
+    // There's nothing to be done on immediates and frame indexes.
+    if (MO.isImm() || MO.isFI())
       continue;
 
     DEBUG(dbgs() << "Converting operand: " << MO << '\n');

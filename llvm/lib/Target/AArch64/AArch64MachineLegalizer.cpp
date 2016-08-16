@@ -49,5 +49,7 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
 
   setAction(G_BR, LLT::unsized(), Legal);
 
+  setAction(G_FRAME_INDEX, LLT::pointer(0), Legal);
+
   computeTables();
 }
