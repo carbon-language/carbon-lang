@@ -578,7 +578,7 @@ void ThinLTOCodeGenerator::gatherImportedSummariesForModule(
                            ExportLists);
 
   llvm::gatherImportedSummariesForModule(ModulePath, ModuleToDefinedGVSummaries,
-                                         ImportLists,
+                                         ImportLists[ModulePath],
                                          ModuleToSummariesForIndex);
 }
 
@@ -601,7 +601,7 @@ void ThinLTOCodeGenerator::emitImports(StringRef ModulePath,
                            ExportLists);
 
   std::error_code EC;
-  if ((EC = EmitImportsFiles(ModulePath, OutputName, ImportLists)))
+  if ((EC = EmitImportsFiles(ModulePath, OutputName, ImportLists[ModulePath])))
     report_fatal_error(Twine("Failed to open ") + OutputName +
                        " to save imports lists\n");
 }

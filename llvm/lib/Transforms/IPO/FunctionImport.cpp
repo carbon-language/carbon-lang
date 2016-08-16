@@ -440,40 +440,35 @@ void llvm::ComputeCrossModuleImportForModule(
 void llvm::gatherImportedSummariesForModule(
     StringRef ModulePath,
     const StringMap<GVSummaryMapTy> &ModuleToDefinedGVSummaries,
-    const StringMap<FunctionImporter::ImportMapTy> &ImportLists,
+    const FunctionImporter::ImportMapTy &ImportList,
     std::map<std::string, GVSummaryMapTy> &ModuleToSummariesForIndex) {
   // Include all summaries from the importing module.
   ModuleToSummariesForIndex[ModulePath] =
       ModuleToDefinedGVSummaries.lookup(ModulePath);
-  auto ModuleImports = ImportLists.find(ModulePath);
-  if (ModuleImports != ImportLists.end()) {
-    // Include summaries for imports.
-    for (auto &ILI : ModuleImports->second) {
-      auto &SummariesForIndex = ModuleToSummariesForIndex[ILI.first()];
-      const auto &DefinedGVSummaries =
-          ModuleToDefinedGVSummaries.lookup(ILI.first());
-      for (auto &GI : ILI.second) {
-        const auto &DS = DefinedGVSummaries.find(GI.first);
-        assert(DS != DefinedGVSummaries.end() &&
-               "Expected a defined summary for imported global value");
-        SummariesForIndex[GI.first] = DS->second;
-      }
+  // Include summaries for imports.
+  for (auto &ILI : ImportListForModule) {
+    auto &SummariesForIndex = ModuleToSummariesForIndex[ILI.first()];
+    const auto &DefinedGVSummaries =
+        ModuleToDefinedGVSummaries.lookup(ILI.first());
+    for (auto &GI : ILI.second) {
+      const auto &DS = DefinedGVSummaries.find(GI.first);
+      assert(DS != DefinedGVSummaries.end() &&
+             "Expected a defined summary for imported global value");
+      SummariesForIndex[GI.first] = DS->second;
     }
   }
 }
 
 /// Emit the files \p ModulePath will import from into \p OutputFilename.
-std::error_code llvm::EmitImportsFiles(
-    StringRef ModulePath, StringRef OutputFilename,
-    const StringMap<FunctionImporter::ImportMapTy> &ImportLists) {
-  auto ModuleImports = ImportLists.find(ModulePath);
+std::error_code
+llvm::EmitImportsFiles(StringRef ModulePath, StringRef OutputFilename,
+                       const FunctionImporter::ImportMapTy &ModuleImports) {
   std::error_code EC;
   raw_fd_ostream ImportsOS(OutputFilename, EC, sys::fs::OpenFlags::F_None);
   if (EC)
     return EC;
-  if (ModuleImports != ImportLists.end())
-    for (auto &ILI : ModuleImports->second)
-      ImportsOS << ILI.first() << "\n";
+  for (auto &ILI : ModuleImports)
+    ImportsOS << ILI.first() << "\n";
   return std::error_code();
 }
 
