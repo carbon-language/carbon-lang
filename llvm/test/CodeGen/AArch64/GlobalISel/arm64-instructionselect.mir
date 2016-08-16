@@ -51,19 +51,23 @@ regBankSelected: true
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
 # CHECK-NEXT:  - { id: 1, class: gpr32 }
+# CHECK-NEXT:  - { id: 2, class: gpr32 }
 registers:
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
 
 # CHECK:  body:
 # CHECK:    %0 = COPY %w0
-# CHECK:    %1 = ADDWrr %0, %0
+# CHECK:    %1 = COPY %w1
+# CHECK:    %2 = ADDWrr %0, %1
 body:             |
   bb.0:
-    liveins: %w0
+    liveins: %w0, %w1
 
     %0(32) = COPY %w0
-    %1(32) = G_ADD s32 %0, %0
+    %1(32) = COPY %w1
+    %2(32) = G_ADD s32 %0, %1
 ...
 
 ---
@@ -77,19 +81,23 @@ regBankSelected: true
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
 # CHECK-NEXT:  - { id: 1, class: gpr64 }
+# CHECK-NEXT:  - { id: 2, class: gpr64 }
 registers:
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
 
 # CHECK:  body:
 # CHECK:    %0 = COPY %x0
-# CHECK:    %1 = ADDXrr %0, %0
+# CHECK:    %1 = COPY %x1
+# CHECK:    %2 = ADDXrr %0, %1
 body:             |
   bb.0:
-    liveins: %x0
+    liveins: %x0, %x1
 
     %0(64) = COPY %x0
-    %1(64) = G_ADD s64 %0, %0
+    %1(64) = COPY %x1
+    %2(64) = G_ADD s64 %0, %1
 ...
 
 ---
@@ -103,19 +111,23 @@ regBankSelected: true
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
 # CHECK-NEXT:  - { id: 1, class: gpr32 }
+# CHECK-NEXT:  - { id: 2, class: gpr32 }
 registers:
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
 
 # CHECK:  body:
 # CHECK:    %0 = COPY %w0
-# CHECK:    %1 = SUBWrr %0, %0
+# CHECK:    %1 = COPY %w1
+# CHECK:    %2 = SUBWrr %0, %1
 body:             |
   bb.0:
-    liveins: %w0
+    liveins: %w0, %w1
 
     %0(32) = COPY %w0
-    %1(32) = G_SUB s32 %0, %0
+    %1(32) = COPY %w1
+    %2(32) = G_SUB s32 %0, %1
 ...
 
 ---
@@ -129,19 +141,23 @@ regBankSelected: true
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
 # CHECK-NEXT:  - { id: 1, class: gpr64 }
+# CHECK-NEXT:  - { id: 2, class: gpr64 }
 registers:
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
 
 # CHECK:  body:
 # CHECK:    %0 = COPY %x0
-# CHECK:    %1 = SUBXrr %0, %0
+# CHECK:    %1 = COPY %x1
+# CHECK:    %2 = SUBXrr %0, %1
 body:             |
   bb.0:
-    liveins: %x0
+    liveins: %x0, %x1
 
     %0(64) = COPY %x0
-    %1(64) = G_SUB s64 %0, %0
+    %1(64) = COPY %x1
+    %2(64) = G_SUB s64 %0, %1
 ...
 
 ---
@@ -155,19 +171,23 @@ regBankSelected: true
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
 # CHECK-NEXT:  - { id: 1, class: gpr32 }
+# CHECK-NEXT:  - { id: 2, class: gpr32 }
 registers:
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
 
 # CHECK:  body:
 # CHECK:    %0 = COPY %w0
-# CHECK:    %1 = ORRWrr %0, %0
+# CHECK:    %1 = COPY %w1
+# CHECK:    %2 = ORRWrr %0, %1
 body:             |
   bb.0:
-    liveins: %w0
+    liveins: %w0, %w1
 
     %0(32) = COPY %w0
-    %1(32) = G_OR s32 %0, %0
+    %1(32) = COPY %w1
+    %2(32) = G_OR s32 %0, %1
 ...
 
 ---
@@ -181,19 +201,23 @@ regBankSelected: true
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
 # CHECK-NEXT:  - { id: 1, class: gpr64 }
+# CHECK-NEXT:  - { id: 2, class: gpr64 }
 registers:
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
 
 # CHECK:  body:
 # CHECK:    %0 = COPY %x0
-# CHECK:    %1 = ORRXrr %0, %0
+# CHECK:    %1 = COPY %x1
+# CHECK:    %2 = ORRXrr %0, %1
 body:             |
   bb.0:
-    liveins: %x0
+    liveins: %x0, %x1
 
     %0(64) = COPY %x0
-    %1(64) = G_OR s64 %0, %0
+    %1(64) = COPY %x1
+    %2(64) = G_OR s64 %0, %1
 ...
 
 ---
@@ -207,19 +231,23 @@ regBankSelected: true
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
 # CHECK-NEXT:  - { id: 1, class: gpr32 }
+# CHECK-NEXT:  - { id: 2, class: gpr32 }
 registers:
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
 
 # CHECK:  body:
 # CHECK:    %0 = COPY %w0
-# CHECK:    %1 = EORWrr %0, %0
+# CHECK:    %1 = COPY %w1
+# CHECK:    %2 = EORWrr %0, %1
 body:             |
   bb.0:
-    liveins: %w0
+    liveins: %w0, %w1
 
     %0(32) = COPY %w0
-    %1(32) = G_XOR s32 %0, %0
+    %1(32) = COPY %w1
+    %2(32) = G_XOR s32 %0, %1
 ...
 
 ---
@@ -233,19 +261,23 @@ regBankSelected: true
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
 # CHECK-NEXT:  - { id: 1, class: gpr64 }
+# CHECK-NEXT:  - { id: 2, class: gpr64 }
 registers:
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
 
 # CHECK:  body:
 # CHECK:    %0 = COPY %x0
-# CHECK:    %1 = EORXrr %0, %0
+# CHECK:    %1 = COPY %x1
+# CHECK:    %2 = EORXrr %0, %1
 body:             |
   bb.0:
-    liveins: %x0
+    liveins: %x0, %x1
 
     %0(64) = COPY %x0
-    %1(64) = G_XOR s64 %0, %0
+    %1(64) = COPY %x1
+    %2(64) = G_XOR s64 %0, %1
 ...
 
 ---
@@ -259,19 +291,23 @@ regBankSelected: true
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr32 }
 # CHECK-NEXT:  - { id: 1, class: gpr32 }
+# CHECK-NEXT:  - { id: 2, class: gpr32 }
 registers:
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
 
 # CHECK:  body:
 # CHECK:    %0 = COPY %w0
-# CHECK:    %1 = ANDWrr %0, %0
+# CHECK:    %1 = COPY %w1
+# CHECK:    %2 = ANDWrr %0, %1
 body:             |
   bb.0:
-    liveins: %w0
+    liveins: %w0, %w1
 
     %0(32) = COPY %w0
-    %1(32) = G_AND s32 %0, %0
+    %1(32) = COPY %w1
+    %2(32) = G_AND s32 %0, %1
 ...
 
 ---
@@ -285,19 +321,23 @@ regBankSelected: true
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64 }
 # CHECK-NEXT:  - { id: 1, class: gpr64 }
+# CHECK-NEXT:  - { id: 2, class: gpr64 }
 registers:
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
 
 # CHECK:  body:
 # CHECK:    %0 = COPY %x0
-# CHECK:    %1 = ANDXrr %0, %0
+# CHECK:    %1 = COPY %x1
+# CHECK:    %2 = ANDXrr %0, %1
 body:             |
   bb.0:
-    liveins: %x0
+    liveins: %x0, %x1
 
     %0(64) = COPY %x0
-    %1(64) = G_AND s64 %0, %0
+    %1(64) = COPY %x1
+    %2(64) = G_AND s64 %0, %1
 ...
 
 ---
