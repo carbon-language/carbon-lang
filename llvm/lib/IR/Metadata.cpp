@@ -875,14 +875,13 @@ MDNode *MDNode::intersect(MDNode *A, MDNode *B) {
   if (!A || !B)
     return nullptr;
 
-  SmallVector<Metadata *, 4> MDs;
-  for (Metadata *MD : A->operands())
-    if (is_contained(B->operands(), MD))
-      MDs.push_back(MD);
+  SmallSetVector<Metadata *, 4> MDs(A->op_begin(), A->op_end());
+  SmallPtrSet<Metadata *, 4> BSet(B->op_begin(), B->op_end());
+  MDs.remove_if([&](Metadata *MD) { return !is_contained(BSet, MD); });
 
   // FIXME: This preserves long-standing behaviour, but is it really the right
   // behaviour?  Or was that an unintended side-effect of node uniquing?
-  return getOrSelfReference(A->getContext(), MDs);
+  return getOrSelfReference(A->getContext(), MDs.getArrayRef());
 }
 
 MDNode *MDNode::getMostGenericAliasScope(MDNode *A, MDNode *B) {
