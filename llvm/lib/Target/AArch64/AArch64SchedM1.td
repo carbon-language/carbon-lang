@@ -32,6 +32,7 @@ def ExynosM1Model : SchedMachineModel {
 
 def M1UnitA  : ProcResource<2>; // Simple integer
 def M1UnitC  : ProcResource<1>; // Simple and complex integer
+def M1UnitD  : ProcResource<1>; // Integer division (inside C, serialized)
 def M1UnitB  : ProcResource<2>; // Branch
 def M1UnitL  : ProcResource<1>; // Load
 def M1UnitS  : ProcResource<1>; // Store
@@ -41,7 +42,7 @@ def M1PipeF1 : ProcResource<1>; // FP #1
 let Super = M1PipeF0 in {
   def M1UnitFMAC   : ProcResource<1>; // FP multiplication
   def M1UnitFCVT   : ProcResource<1>; // FP conversion
-  def M1UnitNAL0   : ProcResource<1>; // Simple vector.
+  def M1UnitNAL0   : ProcResource<1>; // Simple vector
   def M1UnitNMISC  : ProcResource<1>; // Miscellanea
   def M1UnitNCRYPT : ProcResource<1>; // Cryptographic
 }
@@ -50,15 +51,15 @@ let Super = M1PipeF1 in {
   def M1UnitFADD : ProcResource<1>; // Simple FP
   let BufferSize = 1 in
   def M1UnitFVAR : ProcResource<1>; // FP division & square root (serialized)
-  def M1UnitNAL1 : ProcResource<1>; // Simple vector.
+  def M1UnitNAL1 : ProcResource<1>; // Simple vector
   def M1UnitFST  : ProcResource<1>; // FP store
 }
 
 let SchedModel = ExynosM1Model in {
   def M1UnitALU  : ProcResGroup<[M1UnitA,
-                                 M1UnitC]>;    // All simple integer.
+                                 M1UnitC]>;    // All integer
   def M1UnitNALU : ProcResGroup<[M1UnitNAL0,
-                                 M1UnitNAL1]>; // All simple vector.
+                                 M1UnitNAL1]>; // All simple vector
 }
 
 let SchedModel = ExynosM1Model in {
@@ -83,9 +84,12 @@ def : WriteRes<WriteIS,    [M1UnitALU]> { let Latency = 1; }
 def : WriteRes<WriteImm, [M1UnitALU]> { let Latency = 1; }
 
 // Divide and multiply instructions.
-// TODO: Division blocks the divider inside C.
-def : WriteRes<WriteID32, [M1UnitC]> { let Latency = 13; }
-def : WriteRes<WriteID64, [M1UnitC]> { let Latency = 21; }
+def : WriteRes<WriteID32, [M1UnitC,
+                           M1UnitD]> { let Latency = 13;
+                                       let ResourceCycles = [1, 13]; }
+def : WriteRes<WriteID64, [M1UnitC,
+                           M1UnitD]> { let Latency = 21;
+                                       let ResourceCycles = [1, 21]; }
 // TODO: Long multiplication take 5 cycles and also the ALU.
 // TODO: Multiplication with accumulation can be advanced.
 def : WriteRes<WriteIM32, [M1UnitC]> { let Latency = 3; }
