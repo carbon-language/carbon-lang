@@ -406,6 +406,7 @@ ParseLangArgs (LangOptions &Opts, InputKind IK, const char* triple)
             case IK_None:
             case IK_AST:
             case IK_LLVM_IR:
+            case IK_RenderScript:
                 assert (!"Invalid input kind!");
             case IK_OpenCL:
                 LangStd = LangStandard::lang_opencl;
