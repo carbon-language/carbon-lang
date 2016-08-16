@@ -2263,3 +2263,25 @@ def V6_vhistq
 def V6_vhist
   : CVI_HIST_Resource1 <(outs), (ins),
     "vhist" >, V6_vhist_enc;
+
+
+let isPseudo = 1, isCodeGenOnly = 1, hasSideEffects = 0 in {
+  def V6_vd0: CVI_VA_Resource<(outs VectorRegs:$dst), (ins), "$dst = #0", []>;
+  def V6_vd0_128B: CVI_VA_Resource<(outs VectorRegs128B:$dst), (ins),
+      "$dst = #0", []>;
+
+  def V6_vassignp: CVI_VA_Resource<(outs VecDblRegs:$dst),
+      (ins VecDblRegs:$src), "", []>;
+  def V6_vassignp_128B : CVI_VA_Resource<(outs VecDblRegs128B:$dst),
+      (ins VecDblRegs128B:$src), "", []>;
+
+  def V6_lo: CVI_VA_Resource<(outs VectorRegs:$dst), (ins VecDblRegs:$src1),
+      "", []>;
+  def V6_lo_128B: CVI_VA_Resource<(outs VectorRegs128B:$dst),
+      (ins VecDblRegs128B:$src1), "", []>;
+
+  def V6_hi: CVI_VA_Resource<(outs VectorRegs:$dst), (ins VecDblRegs:$src1),
+      "", []>;
+  def V6_hi_128B: CVI_VA_Resource<(outs VectorRegs128B:$dst),
+      (ins VecDblRegs128B:$src1), "", []>;
+}

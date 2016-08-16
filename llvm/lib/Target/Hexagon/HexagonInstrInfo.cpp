@@ -1013,17 +1013,19 @@ bool HexagonInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
           .addImm(-MI.getOperand(1).getImm());
       MBB.erase(MI);
       return true;
-    case Hexagon::HEXAGON_V6_vassignp_128B:
-    case Hexagon::HEXAGON_V6_vassignp: {
+    case Hexagon::V6_vassignp_128B:
+    case Hexagon::V6_vassignp: {
       unsigned SrcReg = MI.getOperand(1).getReg();
       unsigned DstReg = MI.getOperand(0).getReg();
-      if (SrcReg != DstReg)
-        copyPhysReg(MBB, MI, DL, DstReg, SrcReg, MI.getOperand(1).isKill());
+      unsigned Kill = getKillRegState(MI.getOperand(1).isKill());
+      BuildMI(MBB, MI, DL, get(Hexagon::V6_vcombine), DstReg)
+        .addReg(HRI.getSubReg(SrcReg, Hexagon::subreg_hireg), Kill)
+        .addReg(HRI.getSubReg(SrcReg, Hexagon::subreg_loreg), Kill);
       MBB.erase(MI);
       return true;
     }
-    case Hexagon::HEXAGON_V6_lo_128B:
-    case Hexagon::HEXAGON_V6_lo: {
+    case Hexagon::V6_lo_128B:
+    case Hexagon::V6_lo: {
       unsigned SrcReg = MI.getOperand(1).getReg();
       unsigned DstReg = MI.getOperand(0).getReg();
       unsigned SrcSubLo = HRI.getSubReg(SrcReg, Hexagon::subreg_loreg);
@@ -1032,8 +1034,8 @@ bool HexagonInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
       MRI.clearKillFlags(SrcSubLo);
       return true;
     }
-    case Hexagon::HEXAGON_V6_hi_128B:
-    case Hexagon::HEXAGON_V6_hi: {
+    case Hexagon::V6_hi_128B:
+    case Hexagon::V6_hi: {
       unsigned SrcReg = MI.getOperand(1).getReg();
       unsigned DstReg = MI.getOperand(0).getReg();
       unsigned SrcSubHi = HRI.getSubReg(SrcReg, Hexagon::subreg_hireg);
