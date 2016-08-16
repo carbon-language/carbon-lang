@@ -2167,35 +2167,35 @@ Instruction *InstCombiner::foldICmpDivConstant(ICmpInst &ICI, Instruction *LHSI,
   return nullptr;
 }
 
-Instruction *InstCombiner::foldICmpSubConstant(ICmpInst &ICI, Instruction *LHSI,
-                                               const APInt *RHSV) {
+/// Fold icmp (sub X, Y), C.
+Instruction *InstCombiner::foldICmpSubConstant(ICmpInst &Cmp, Instruction *Sub,
+                                               const APInt *C) {
   // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(ICI.getOperand(1));
+  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
   if (!RHS)
     return nullptr;
 
-  ConstantInt *LHSC = dyn_cast<ConstantInt>(LHSI->getOperand(0));
-  if (!LHSC)
+  ConstantInt *SubC = dyn_cast<ConstantInt>(Sub->getOperand(0));
+  if (!SubC)
     return nullptr;
 
-  const APInt &LHSV = LHSC->getValue();
+  const APInt &C2 = SubC->getValue();
 
-  // C1-X <u C2 -> (X|(C2-1)) == C1
-  //   iff C1 & (C2-1) == C2-1
+  // C-X <u C2 -> (X|(C2-1)) == C
+  //   iff C & (C2-1) == C2-1
   //       C2 is a power of 2
-  if (ICI.getPredicate() == ICmpInst::ICMP_ULT && LHSI->hasOneUse() &&
-      RHSV->isPowerOf2() && (LHSV & (*RHSV - 1)) == (*RHSV - 1))
+  if (Cmp.getPredicate() == ICmpInst::ICMP_ULT && Sub->hasOneUse() &&
+      C->isPowerOf2() && (C2 & (*C - 1)) == (*C - 1))
     return new ICmpInst(ICmpInst::ICMP_EQ,
-                        Builder->CreateOr(LHSI->getOperand(1), *RHSV - 1),
-                        LHSC);
+                        Builder->CreateOr(Sub->getOperand(1), *C - 1), SubC);
 
-  // C1-X >u C2 -> (X|C2) != C1
-  //   iff C1 & C2 == C2
+  // C-X >u C2 -> (X|C2) != C
+  //   iff C & C2 == C2
   //       C2+1 is a power of 2
-  if (ICI.getPredicate() == ICmpInst::ICMP_UGT && LHSI->hasOneUse() &&
-      (*RHSV + 1).isPowerOf2() && (LHSV & *RHSV) == *RHSV)
+  if (Cmp.getPredicate() == ICmpInst::ICMP_UGT && Sub->hasOneUse() &&
+      (*C + 1).isPowerOf2() && (C2 & *C) == *C)
     return new ICmpInst(ICmpInst::ICMP_NE,
-                        Builder->CreateOr(LHSI->getOperand(1), *RHSV), LHSC);
+                        Builder->CreateOr(Sub->getOperand(1), *C), SubC);
 
   return nullptr;
 }
