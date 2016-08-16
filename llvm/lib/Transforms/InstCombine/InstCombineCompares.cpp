@@ -2170,32 +2170,27 @@ Instruction *InstCombiner::foldICmpDivConstant(ICmpInst &ICI, Instruction *LHSI,
 /// Fold icmp (sub X, Y), C.
 Instruction *InstCombiner::foldICmpSubConstant(ICmpInst &Cmp, Instruction *Sub,
                                                const APInt *C) {
-  // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
-  if (!RHS)
+  const APInt *C2;
+  if (!match(Sub->getOperand(0), m_APInt(C2)) || !Sub->hasOneUse())
     return nullptr;
-
-  ConstantInt *SubC = dyn_cast<ConstantInt>(Sub->getOperand(0));
-  if (!SubC)
-    return nullptr;
-
-  const APInt &C2 = SubC->getValue();
 
   // C-X <u C2 -> (X|(C2-1)) == C
   //   iff C & (C2-1) == C2-1
   //       C2 is a power of 2
-  if (Cmp.getPredicate() == ICmpInst::ICMP_ULT && Sub->hasOneUse() &&
-      C->isPowerOf2() && (C2 & (*C - 1)) == (*C - 1))
+  if (Cmp.getPredicate() == ICmpInst::ICMP_ULT && C->isPowerOf2() &&
+      (*C2 & (*C - 1)) == (*C - 1))
     return new ICmpInst(ICmpInst::ICMP_EQ,
-                        Builder->CreateOr(Sub->getOperand(1), *C - 1), SubC);
+                        Builder->CreateOr(Sub->getOperand(1), *C - 1),
+                        Sub->getOperand(0));
 
   // C-X >u C2 -> (X|C2) != C
   //   iff C & C2 == C2
   //       C2+1 is a power of 2
-  if (Cmp.getPredicate() == ICmpInst::ICMP_UGT && Sub->hasOneUse() &&
-      (*C + 1).isPowerOf2() && (C2 & *C) == *C)
+  if (Cmp.getPredicate() == ICmpInst::ICMP_UGT && (*C + 1).isPowerOf2() &&
+      (*C2 & *C) == *C)
     return new ICmpInst(ICmpInst::ICMP_NE,
-                        Builder->CreateOr(Sub->getOperand(1), *C), SubC);
+                        Builder->CreateOr(Sub->getOperand(1), *C),
+                        Sub->getOperand(0));
 
   return nullptr;
 }
