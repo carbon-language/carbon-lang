@@ -270,7 +270,7 @@ static void computeImportForFunction(
     const FunctionSummary &Summary, const ModuleSummaryIndex &Index,
     unsigned Threshold, const GVSummaryMapTy &DefinedGVSummaries,
     SmallVectorImpl<EdgeInfo> &Worklist,
-    FunctionImporter::ImportMapTy &ImportsForModule,
+    FunctionImporter::ImportMapTy &ImportList,
     StringMap<FunctionImporter::ExportSetTy> *ExportLists = nullptr) {
   for (auto &Edge : Summary.calls()) {
     auto GUID = Edge.first.getGUID();
@@ -301,7 +301,7 @@ static void computeImportForFunction(
            "selectCallee() didn't honor the threshold");
 
     auto ExportModulePath = ResolvedCalleeSummary->modulePath();
-    auto &ProcessedThreshold = ImportsForModule[ExportModulePath][GUID];
+    auto &ProcessedThreshold = ImportList[ExportModulePath][GUID];
     /// Since the traversal of the call graph is DFS, we can revisit a function
     /// a second time with a higher threshold. In this case, it is added back to
     /// the worklist with the new threshold.
@@ -339,7 +339,7 @@ static void computeImportForFunction(
 /// another module (that may require promotion).
 static void ComputeImportForModule(
     const GVSummaryMapTy &DefinedGVSummaries, const ModuleSummaryIndex &Index,
-    FunctionImporter::ImportMapTy &ImportsForModule,
+    FunctionImporter::ImportMapTy &ImportList,
     StringMap<FunctionImporter::ExportSetTy> *ExportLists = nullptr) {
   // Worklist contains the list of function imported in this module, for which
   // we will analyse the callees and may import further down the callgraph.
@@ -357,7 +357,7 @@ static void ComputeImportForModule(
       continue;
     DEBUG(dbgs() << "Initalize import for " << GVSummary.first << "\n");
     computeImportForFunction(*FuncSummary, Index, ImportInstrLimit,
-                             DefinedGVSummaries, Worklist, ImportsForModule,
+                             DefinedGVSummaries, Worklist, ImportList,
                              ExportLists);
   }
 
@@ -371,7 +371,7 @@ static void ComputeImportForModule(
     Threshold = Threshold * ImportInstrFactor;
 
     computeImportForFunction(*Summary, Index, Threshold, DefinedGVSummaries,
-                             Worklist, ImportsForModule, ExportLists);
+                             Worklist, ImportList, ExportLists);
   }
 }
 
@@ -385,10 +385,10 @@ void llvm::ComputeCrossModuleImport(
     StringMap<FunctionImporter::ExportSetTy> &ExportLists) {
   // For each module that has function defined, compute the import/export lists.
   for (auto &DefinedGVSummaries : ModuleToDefinedGVSummaries) {
-    auto &ImportsForModule = ImportLists[DefinedGVSummaries.first()];
+    auto &ImportList = ImportLists[DefinedGVSummaries.first()];
     DEBUG(dbgs() << "Computing import for Module '"
                  << DefinedGVSummaries.first() << "'\n");
-    ComputeImportForModule(DefinedGVSummaries.second, Index, ImportsForModule,
+    ComputeImportForModule(DefinedGVSummaries.second, Index, ImportList,
                            &ExportLists);
   }
 
