@@ -2195,58 +2195,55 @@ Instruction *InstCombiner::foldICmpSubConstant(ICmpInst &Cmp, Instruction *Sub,
   return nullptr;
 }
 
-Instruction *InstCombiner::foldICmpAddConstant(ICmpInst &ICI, Instruction *LHSI,
-                                               const APInt *RHSV) {
+/// Fold icmp (add X, Y), C.
+Instruction *InstCombiner::foldICmpAddConstant(ICmpInst &Cmp, Instruction *Add,
+                                               const APInt *C) {
   // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(ICI.getOperand(1));
+  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
   if (!RHS)
     return nullptr;
 
-  // Fold: icmp pred (add X, C1), C2
-  if (!ICI.isEquality()) {
-    ConstantInt *LHSC = dyn_cast<ConstantInt>(LHSI->getOperand(1));
-    if (!LHSC)
-      return nullptr;
+  if (Cmp.isEquality())
+    return nullptr;
 
-    const APInt &LHSV = LHSC->getValue();
-    ConstantRange CR =
-        ICI.makeConstantRange(ICI.getPredicate(), *RHSV).subtract(LHSV);
+  // Fold: icmp pred (add X, C2), C
+  Value *X = Add->getOperand(0);
+  ConstantInt *AddC = dyn_cast<ConstantInt>(Add->getOperand(1));
+  if (!AddC)
+    return nullptr;
 
-    if (ICI.isSigned()) {
-      if (CR.getLower().isSignBit()) {
-        return new ICmpInst(ICmpInst::ICMP_SLT, LHSI->getOperand(0),
-                            Builder->getInt(CR.getUpper()));
-      } else if (CR.getUpper().isSignBit()) {
-        return new ICmpInst(ICmpInst::ICMP_SGE, LHSI->getOperand(0),
-                            Builder->getInt(CR.getLower()));
-      }
-    } else {
-      if (CR.getLower().isMinValue()) {
-        return new ICmpInst(ICmpInst::ICMP_ULT, LHSI->getOperand(0),
-                            Builder->getInt(CR.getUpper()));
-      } else if (CR.getUpper().isMinValue()) {
-        return new ICmpInst(ICmpInst::ICMP_UGE, LHSI->getOperand(0),
-                            Builder->getInt(CR.getLower()));
-      }
-    }
+  const APInt &C2 = AddC->getValue();
+  ConstantRange CR = Cmp.makeConstantRange(Cmp.getPredicate(), *C).subtract(C2);
+  const APInt &Upper = CR.getUpper();
+  const APInt &Lower = CR.getLower();
+  if (Cmp.isSigned()) {
+    if (Lower.isSignBit())
+      return new ICmpInst(ICmpInst::ICMP_SLT, X, Builder->getInt(Upper));
+    if (Upper.isSignBit())
+      return new ICmpInst(ICmpInst::ICMP_SGE, X, Builder->getInt(Lower));
+  } else {
+    if (Lower.isMinValue())
+      return new ICmpInst(ICmpInst::ICMP_ULT, X, Builder->getInt(Upper));
+    if (Upper.isMinValue())
+      return new ICmpInst(ICmpInst::ICMP_UGE, X, Builder->getInt(Lower));
+  }
 
-    // X-C1 <u C2 -> (X & -C2) == C1
-    //   iff C1 & (C2-1) == 0
+  if (Add->hasOneUse()) {
+    // X+C <u C2 -> (X & -C2) == C
+    //   iff C & (C2-1) == 0
     //       C2 is a power of 2
-    if (ICI.getPredicate() == ICmpInst::ICMP_ULT && LHSI->hasOneUse() &&
-        RHSV->isPowerOf2() && (LHSV & (*RHSV - 1)) == 0)
-      return new ICmpInst(ICmpInst::ICMP_EQ,
-                          Builder->CreateAnd(LHSI->getOperand(0), -(*RHSV)),
-                          ConstantExpr::getNeg(LHSC));
+    if (Cmp.getPredicate() == ICmpInst::ICMP_ULT && C->isPowerOf2() &&
+        (C2 & (*C - 1)) == 0)
+      return new ICmpInst(ICmpInst::ICMP_EQ, Builder->CreateAnd(X, -(*C)),
+                          ConstantExpr::getNeg(AddC));
 
-    // X-C1 >u C2 -> (X & ~C2) != C1
-    //   iff C1 & C2 == 0
+    // X+C >u C2 -> (X & ~C2) != C
+    //   iff C & C2 == 0
     //       C2+1 is a power of 2
-    if (ICI.getPredicate() == ICmpInst::ICMP_UGT && LHSI->hasOneUse() &&
-        (*RHSV + 1).isPowerOf2() && (LHSV & *RHSV) == 0)
-      return new ICmpInst(ICmpInst::ICMP_NE,
-                          Builder->CreateAnd(LHSI->getOperand(0), ~(*RHSV)),
-                          ConstantExpr::getNeg(LHSC));
+    if (Cmp.getPredicate() == ICmpInst::ICMP_UGT && (*C + 1).isPowerOf2() &&
+        (C2 & *C) == 0)
+      return new ICmpInst(ICmpInst::ICMP_NE, Builder->CreateAnd(X, ~(*C)),
+                          ConstantExpr::getNeg(AddC));
   }
   return nullptr;
 }
