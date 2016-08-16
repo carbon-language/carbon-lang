@@ -24884,11 +24884,11 @@ static bool matchUnaryVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
   bool FloatDomain = MaskVT.isFloatingPoint() ||
                      (!Subtarget.hasAVX2() && MaskVT.is256BitVector());
 
-  // Match a 128-bit integer vector against a VZEXT_MOVL (MOVQ) instruction.
-  if (!FloatDomain && MaskVT.is128BitVector() &&
+  // Match a 128-bit vector against a VZEXT_MOVL instruction.
+  if (MaskVT.is128BitVector() && Subtarget.hasSSE2() &&
       isTargetShuffleEquivalent(Mask, {0, SM_SentinelZero})) {
     Shuffle = X86ISD::VZEXT_MOVL;
-    ShuffleVT = MVT::v2i64;
+    ShuffleVT = MaskVT;
     return true;
   }
 
