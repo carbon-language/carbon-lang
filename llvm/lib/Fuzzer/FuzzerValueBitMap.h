@@ -32,7 +32,7 @@ struct ValueBitMap {
     Map[WordIdx] |= 1UL << BitIdx;
   }
 
-  // Merges 'Other' into 'this', clear Other,
+  // Merges 'Other' into 'this', clears 'Other',
   // returns the number of set bits in 'this'.
   size_t MergeFrom(ValueBitMap &Other) {
     uintptr_t Res = 0;
@@ -43,7 +43,8 @@ struct ValueBitMap {
         Map[i] = (M |= O);
         Other.Map[i] = 0;
       }
-      Res += __builtin_popcountl(M);
+      if (M)
+        Res += __builtin_popcountl(M);
     }
     return Res;
   }

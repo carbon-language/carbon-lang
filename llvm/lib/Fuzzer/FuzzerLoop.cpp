@@ -122,6 +122,12 @@ class CoverageController {
       C->PCMapBits = NewPCMapBits;
     }
 
+    size_t NewVPMapBits = VPMapMergeFromCurrent(C->VPMap);
+    if (NewVPMapBits > C->VPMapBits) {
+      Res = true;
+      C->VPMapBits = NewVPMapBits;
+    }
+
     if (EF->__sanitizer_get_coverage_pc_buffer_pos) {
       uint64_t NewPcBufferPos = EF->__sanitizer_get_coverage_pc_buffer_pos();
       if (NewPcBufferPos > C->PcBufferPos) {
@@ -307,6 +313,8 @@ void Fuzzer::PrintStats(const char *Where, const char *End) {
     Printf(" cov: %zd", MaxCoverage.BlockCoverage);
   if (MaxCoverage.PCMapBits)
     Printf(" path: %zd", MaxCoverage.PCMapBits);
+  if (MaxCoverage.VPMapBits)
+    Printf(" vp: %zd", MaxCoverage.VPMapBits);
   if (auto TB = MaxCoverage.CounterBitmapBits)
     Printf(" bits: %zd", TB);
   if (MaxCoverage.CallerCalleeCoverage)
@@ -520,8 +528,9 @@ std::string Fuzzer::Coverage::DebugString() const {
       std::string("Coverage{") + "BlockCoverage=" +
       std::to_string(BlockCoverage) + " CallerCalleeCoverage=" +
       std::to_string(CallerCalleeCoverage) + " CounterBitmapBits=" +
-      std::to_string(CounterBitmapBits) + " PcMapBits=" +
-      std::to_string(PCMapBits) + "}";
+      std::to_string(CounterBitmapBits) + " PCMapBits=" +
+      std::to_string(PCMapBits) + " VPMapBits " +
+      std::to_string(VPMapBits) + "}";
   return Result;
 }
 

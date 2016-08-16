@@ -134,6 +134,10 @@ void SleepSeconds(int Seconds);
 // See FuzzerTracePC.cpp
 size_t PCMapMergeFromCurrent(ValueBitMap &M);
 
+// See FuzzerTraceState.cpp
+void EnableValueProfile();
+size_t VPMapMergeFromCurrent(ValueBitMap &M);
+
 class Random {
  public:
   Random(unsigned int seed) : R(seed) {}
@@ -356,6 +360,8 @@ public:
       CounterBitmap.clear();
       PCMap.Reset();
       PCMapBits = 0;
+      VPMap.Reset();
+      VPMapBits = 0;
       PcBufferPos = 0;
     }
 
@@ -369,6 +375,8 @@ public:
     std::vector<uint8_t> CounterBitmap;
     ValueBitMap PCMap;
     size_t PCMapBits;
+    ValueBitMap VPMap;
+    size_t VPMapBits;
   };
 
   Fuzzer(UserCallback CB, MutationDispatcher &MD, FuzzingOptions Options);
