@@ -446,7 +446,7 @@ void llvm::gatherImportedSummariesForModule(
   ModuleToSummariesForIndex[ModulePath] =
       ModuleToDefinedGVSummaries.lookup(ModulePath);
   // Include summaries for imports.
-  for (auto &ILI : ImportListForModule) {
+  for (auto &ILI : ImportList) {
     auto &SummariesForIndex = ModuleToSummariesForIndex[ILI.first()];
     const auto &DefinedGVSummaries =
         ModuleToDefinedGVSummaries.lookup(ILI.first());
