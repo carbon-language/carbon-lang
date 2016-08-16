@@ -42,6 +42,10 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
       setAction(BinOp, Ty, WidenScalar);
   }
 
+  for (auto BinOp : {G_SHL, G_LSHR, G_ASHR})
+    for (auto Ty : {s32, s64})
+      setAction(BinOp, Ty, Legal);
+
   for (auto MemOp : {G_LOAD, G_STORE})
     for (auto Ty : {s32, s64})
       setAction(MemOp, Ty, Legal);

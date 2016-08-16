@@ -22,6 +22,15 @@
   define void @and_s32_gpr() { ret void }
   define void @and_s64_gpr() { ret void }
 
+  define void @shl_s32_gpr() { ret void }
+  define void @shl_s64_gpr() { ret void }
+
+  define void @lshr_s32_gpr() { ret void }
+  define void @lshr_s64_gpr() { ret void }
+
+  define void @ashr_s32_gpr() { ret void }
+  define void @ashr_s64_gpr() { ret void }
+
   define void @unconditional_br() { ret void }
 
   define void @load_s64_gpr(i64* %addr) { ret void }
@@ -338,6 +347,186 @@ body:             |
     %0(64) = COPY %x0
     %1(64) = COPY %x1
     %2(64) = G_AND s64 %0, %1
+...
+
+---
+# Same as add_s32_gpr, for G_SHL operations.
+# CHECK-LABEL: name: shl_s32_gpr
+name:            shl_s32_gpr
+isSSA:           true
+legalized:       true
+regBankSelected: true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr32 }
+# CHECK-NEXT:  - { id: 1, class: gpr32 }
+# CHECK-NEXT:  - { id: 2, class: gpr32 }
+registers:
+  - { id: 0, class: gpr }
+  - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
+
+# CHECK:  body:
+# CHECK:    %0 = COPY %w0
+# CHECK:    %1 = COPY %w1
+# CHECK:    %2 = LSLVWr %0, %1
+body:             |
+  bb.0:
+    liveins: %w0, %w1
+
+    %0(32) = COPY %w0
+    %1(32) = COPY %w1
+    %2(32) = G_SHL s32 %0, %1
+...
+
+---
+# Same as add_s64_gpr, for G_SHL operations.
+# CHECK-LABEL: name: shl_s64_gpr
+name:            shl_s64_gpr
+isSSA:           true
+legalized:       true
+regBankSelected: true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr64 }
+# CHECK-NEXT:  - { id: 1, class: gpr64 }
+# CHECK-NEXT:  - { id: 2, class: gpr64 }
+registers:
+  - { id: 0, class: gpr }
+  - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
+
+# CHECK:  body:
+# CHECK:    %0 = COPY %x0
+# CHECK:    %1 = COPY %x1
+# CHECK:    %2 = LSLVXr %0, %1
+body:             |
+  bb.0:
+    liveins: %x0, %x1
+
+    %0(64) = COPY %x0
+    %1(64) = COPY %x1
+    %2(64) = G_SHL s64 %0, %1
+...
+
+---
+# Same as add_s32_gpr, for G_LSHR operations.
+# CHECK-LABEL: name: lshr_s32_gpr
+name:            lshr_s32_gpr
+isSSA:           true
+legalized:       true
+regBankSelected: true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr32 }
+# CHECK-NEXT:  - { id: 1, class: gpr32 }
+# CHECK-NEXT:  - { id: 2, class: gpr32 }
+registers:
+  - { id: 0, class: gpr }
+  - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
+
+# CHECK:  body:
+# CHECK:    %0 = COPY %w0
+# CHECK:    %1 = COPY %w1
+# CHECK:    %2 = LSRVWr %0, %1
+body:             |
+  bb.0:
+    liveins: %w0, %w1
+
+    %0(32) = COPY %w0
+    %1(32) = COPY %w1
+    %2(32) = G_LSHR s32 %0, %1
+...
+
+---
+# Same as add_s64_gpr, for G_LSHR operations.
+# CHECK-LABEL: name: lshr_s64_gpr
+name:            lshr_s64_gpr
+isSSA:           true
+legalized:       true
+regBankSelected: true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr64 }
+# CHECK-NEXT:  - { id: 1, class: gpr64 }
+# CHECK-NEXT:  - { id: 2, class: gpr64 }
+registers:
+  - { id: 0, class: gpr }
+  - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
+
+# CHECK:  body:
+# CHECK:    %0 = COPY %x0
+# CHECK:    %1 = COPY %x1
+# CHECK:    %2 = LSRVXr %0, %1
+body:             |
+  bb.0:
+    liveins: %x0, %x1
+
+    %0(64) = COPY %x0
+    %1(64) = COPY %x1
+    %2(64) = G_LSHR s64 %0, %1
+...
+
+---
+# Same as add_s32_gpr, for G_ASHR operations.
+# CHECK-LABEL: name: ashr_s32_gpr
+name:            ashr_s32_gpr
+isSSA:           true
+legalized:       true
+regBankSelected: true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr32 }
+# CHECK-NEXT:  - { id: 1, class: gpr32 }
+# CHECK-NEXT:  - { id: 2, class: gpr32 }
+registers:
+  - { id: 0, class: gpr }
+  - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
+
+# CHECK:  body:
+# CHECK:    %0 = COPY %w0
+# CHECK:    %1 = COPY %w1
+# CHECK:    %2 = ASRVWr %0, %1
+body:             |
+  bb.0:
+    liveins: %w0, %w1
+
+    %0(32) = COPY %w0
+    %1(32) = COPY %w1
+    %2(32) = G_ASHR s32 %0, %1
+...
+
+---
+# Same as add_s64_gpr, for G_ASHR operations.
+# CHECK-LABEL: name: ashr_s64_gpr
+name:            ashr_s64_gpr
+isSSA:           true
+legalized:       true
+regBankSelected: true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr64 }
+# CHECK-NEXT:  - { id: 1, class: gpr64 }
+# CHECK-NEXT:  - { id: 2, class: gpr64 }
+registers:
+  - { id: 0, class: gpr }
+  - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
+
+# CHECK:  body:
+# CHECK:    %0 = COPY %x0
+# CHECK:    %1 = COPY %x1
+# CHECK:    %2 = ASRVXr %0, %1
+body:             |
+  bb.0:
+    liveins: %x0, %x1
+
+    %0(64) = COPY %x0
+    %1(64) = COPY %x1
+    %2(64) = G_ASHR s64 %0, %1
 ...
 
 ---

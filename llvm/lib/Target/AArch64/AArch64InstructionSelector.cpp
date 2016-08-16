@@ -60,6 +60,12 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
         return AArch64::ADDWrr;
       case TargetOpcode::G_SUB:
         return AArch64::SUBWrr;
+      case TargetOpcode::G_SHL:
+        return AArch64::LSLVWr;
+      case TargetOpcode::G_LSHR:
+        return AArch64::LSRVWr;
+      case TargetOpcode::G_ASHR:
+        return AArch64::ASRVWr;
       default:
         return GenericOpc;
       }
@@ -75,6 +81,12 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
         return AArch64::ADDXrr;
       case TargetOpcode::G_SUB:
         return AArch64::SUBXrr;
+      case TargetOpcode::G_SHL:
+        return AArch64::LSLVXr;
+      case TargetOpcode::G_LSHR:
+        return AArch64::LSRVXr;
+      case TargetOpcode::G_ASHR:
+        return AArch64::ASRVXr;
       default:
         return GenericOpc;
       }
@@ -190,6 +202,9 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
   case TargetOpcode::G_OR:
   case TargetOpcode::G_XOR:
   case TargetOpcode::G_AND:
+  case TargetOpcode::G_SHL:
+  case TargetOpcode::G_LSHR:
+  case TargetOpcode::G_ASHR:
   case TargetOpcode::G_ADD:
   case TargetOpcode::G_SUB: {
     DEBUG(dbgs() << "AArch64: Selecting: binop\n");
