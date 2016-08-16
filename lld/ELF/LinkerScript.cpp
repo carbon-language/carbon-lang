@@ -602,7 +602,7 @@ private:
   InputSectionDescription *readInputSectionRules();
   unsigned readPhdrType();
   SortKind readSortKind();
-  SymbolAssignment *readProvide(bool Hidden);
+  SymbolAssignment *readProvideHidden(bool Provide, bool Hidden);
   SymbolAssignment *readProvideOrAssignment(StringRef Tok);
   Expr readAlign();
   void readSort();
@@ -969,10 +969,10 @@ std::vector<uint8_t> ScriptParser::readOutputSectionFiller() {
   return { uint8_t(V >> 24), uint8_t(V >> 16), uint8_t(V >> 8), uint8_t(V) };
 }
 
-SymbolAssignment *ScriptParser::readProvide(bool Hidden) {
+SymbolAssignment *ScriptParser::readProvideHidden(bool Provide, bool Hidden) {
   expect("(");
   SymbolAssignment *Cmd = readAssignment(next());
-  Cmd->Provide = true;
+  Cmd->Provide = Provide;
   Cmd->Hidden = Hidden;
   expect(")");
   expect(";");
@@ -985,9 +985,11 @@ SymbolAssignment *ScriptParser::readProvideOrAssignment(StringRef Tok) {
     Cmd = readAssignment(Tok);
     expect(";");
   } else if (Tok == "PROVIDE") {
-    Cmd = readProvide(false);
+    Cmd = readProvideHidden(true, false);
+  } else if (Tok == "HIDDEN") {
+    Cmd = readProvideHidden(false, true);
   } else if (Tok == "PROVIDE_HIDDEN") {
-    Cmd = readProvide(true);
+    Cmd = readProvideHidden(true, true);
   }
   return Cmd;
 }
