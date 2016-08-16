@@ -16,6 +16,7 @@
 #include "MetadataImpl.h"
 #include "SymbolTableListTraitsImpl.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/IR/ConstantRange.h"
@@ -862,14 +863,12 @@ MDNode *MDNode::concatenate(MDNode *A, MDNode *B) {
   if (!B)
     return A;
 
-  SmallVector<Metadata *, 4> MDs;
-  MDs.reserve(A->getNumOperands() + B->getNumOperands());
-  MDs.append(A->op_begin(), A->op_end());
-  MDs.append(B->op_begin(), B->op_end());
+  SmallSetVector<Metadata *, 4> MDs(A->op_begin(), A->op_end());
+  MDs.insert(B->op_begin(), B->op_end());
 
   // FIXME: This preserves long-standing behaviour, but is it really the right
   // behaviour?  Or was that an unintended side-effect of node uniquing?
-  return getOrSelfReference(A->getContext(), MDs);
+  return getOrSelfReference(A->getContext(), MDs.getArrayRef());
 }
 
 MDNode *MDNode::intersect(MDNode *A, MDNode *B) {
@@ -890,14 +889,7 @@ MDNode *MDNode::getMostGenericAliasScope(MDNode *A, MDNode *B) {
   if (!A || !B)
     return nullptr;
 
-  SmallVector<Metadata *, 4> MDs(B->op_begin(), B->op_end());
-  for (Metadata *MD : A->operands())
-    if (!is_contained(B->operands(), MD))
-      MDs.push_back(MD);
-
-  // FIXME: This preserves long-standing behaviour, but is it really the right
-  // behaviour?  Or was that an unintended side-effect of node uniquing?
-  return getOrSelfReference(A->getContext(), MDs);
+  return concatenate(A, B);
 }
 
 MDNode *MDNode::getMostGenericFPMath(MDNode *A, MDNode *B) {
