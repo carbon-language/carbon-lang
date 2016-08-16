@@ -12,17 +12,17 @@
 /// A Stream instance represents a queue of sequential, host-asynchronous work
 /// to be performed on a device.
 ///
-/// To enqueue work on a device, first create a StreamExecutor instance for a
-/// given device and then use that StreamExecutor to create a Stream instance.
+/// To enqueue work on a device, first create a Executor instance for a
+/// given device and then use that Executor to create a Stream instance.
 /// The Stream instance will perform its work on the device managed by the
-/// StreamExecutor that created it.
+/// Executor that created it.
 ///
 /// The various "then" methods of the Stream object, such as thenMemcpyH2D and
 /// thenLaunch, may be used to enqueue work on the Stream, and the
 /// blockHostUntilDone() method may be used to block the host code until the
 /// Stream has completed all its work.
 ///
-/// Multiple Stream instances can be created for the same StreamExecutor. This
+/// Multiple Stream instances can be created for the same Executor. This
 /// allows several independent streams of computation to be performed
 /// simultaneously on a single device.
 ///
@@ -94,8 +94,8 @@ public:
                      const ParameterTs &... Arguments) {
     auto ArgumentArray =
         make_kernel_argument_pack<ParameterTs...>(Arguments...);
-    setError(PlatformExecutor->launch(ThePlatformStream.get(), BlockSize,
-                                      GridSize, Kernel, ArgumentArray));
+    setError(PExecutor->launch(ThePlatformStream.get(), BlockSize, GridSize,
+                               Kernel, ArgumentArray));
     return *this;
   }
 
@@ -103,8 +103,8 @@ public:
   /// device source to a host destination.
   ///
   /// HostDst must be a pointer to host memory allocated by
-  /// StreamExecutor::allocateHostMemory or otherwise allocated and then
-  /// registered with StreamExecutor::registerHostMemory.
+  /// Executor::allocateHostMemory or otherwise allocated and then
+  /// registered with Executor::registerHostMemory.
   template <typename T>
   Stream &thenMemcpyD2H(const GlobalDeviceMemory<T> &DeviceSrc,
                         llvm::MutableArrayRef<T> HostDst, size_t ElementCount) {
@@ -116,9 +116,8 @@ public:
       setError("copying too many elements, " + llvm::Twine(ElementCount) +
                ", to host array of size " + llvm::Twine(HostDst.size()));
     else
-      setError(PlatformExecutor->memcpyD2H(ThePlatformStream.get(), DeviceSrc,
-                                           HostDst.data(),
-                                           ElementCount * sizeof(T)));
+      setError(PExecutor->memcpyD2H(ThePlatformStream.get(), DeviceSrc,
+                                    HostDst.data(), ElementCount * sizeof(T)));
     return *this;
   }
 
@@ -134,8 +133,8 @@ public:
   /// source to a device destination.
   ///
   /// HostSrc must be a pointer to host memory allocated by
-  /// StreamExecutor::allocateHostMemory or otherwise allocated and then
-  /// registered with StreamExecutor::registerHostMemory.
+  /// Executor::allocateHostMemory or otherwise allocated and then
+  /// registered with Executor::registerHostMemory.
   template <typename T>
   Stream &thenMemcpyH2D(llvm::ArrayRef<T> HostSrc,
                         GlobalDeviceMemory<T> *DeviceDst, size_t ElementCount) {
@@ -147,9 +146,8 @@ public:
                ", to device memory array of size " +
                llvm::Twine(DeviceDst->getElementCount()));
     else
-      setError(PlatformExecutor->memcpyH2D(ThePlatformStream.get(),
-                                           HostSrc.data(), DeviceDst,
-                                           ElementCount * sizeof(T)));
+      setError(PExecutor->memcpyH2D(ThePlatformStream.get(), HostSrc.data(),
+                                    DeviceDst, ElementCount * sizeof(T)));
     return *this;
   }
 
@@ -175,9 +173,8 @@ public:
                ", to device memory array of size " +
                llvm::Twine(DeviceDst->getElementCount()));
     else
-      setError(PlatformExecutor->memcpyD2D(ThePlatformStream.get(), DeviceSrc,
-                                           DeviceDst,
-                                           ElementCount * sizeof(T)));
+      setError(PExecutor->memcpyD2D(ThePlatformStream.get(), DeviceSrc,
+                                    DeviceDst, ElementCount * sizeof(T)));
     return *this;
   }
 
@@ -194,7 +191,7 @@ public:
   ///
   /// Returns true if there are no errors on the stream.
   bool blockHostUntilDone() {
-    Error E = PlatformExecutor->blockHostUntilDone(ThePlatformStream.get());
+    Error E = PExecutor->blockHostUntilDone(ThePlatformStream.get());
     bool returnValue = static_cast<bool>(E);
     setError(std::move(E));
     return returnValue;
@@ -221,8 +218,8 @@ private:
       ErrorMessage = Message.str();
   }
 
-  /// The PlatformStreamExecutor that supports the operations of this stream.
-  PlatformStreamExecutor *PlatformExecutor;
+  /// The PlatformExecutor that supports the operations of this stream.
+  PlatformExecutor *PExecutor;
 
   /// The platform-specific stream handle for this instance.
   std::unique_ptr<PlatformStreamHandle> ThePlatformStream;

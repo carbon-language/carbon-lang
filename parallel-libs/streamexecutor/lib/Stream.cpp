@@ -17,8 +17,8 @@
 namespace streamexecutor {
 
 Stream::Stream(std::unique_ptr<PlatformStreamHandle> PStream)
-    : PlatformExecutor(PStream->getExecutor()),
-      ThePlatformStream(std::move(PStream)) {}
+    : PExecutor(PStream->getExecutor()), ThePlatformStream(std::move(PStream)) {
+}
 
 Stream::~Stream() = default;
 

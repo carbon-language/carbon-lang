@@ -6,12 +6,12 @@ add_library(
 add_library(
     streamexecutor
     $<TARGET_OBJECTS:utils>
+    Executor.cpp
     Kernel.cpp
     KernelSpec.cpp
     PackedKernelArgumentArray.cpp
     PlatformInterfaces.cpp
-    Stream.cpp
-    StreamExecutor.cpp)
+    Stream.cpp)
 target_link_libraries(streamexecutor ${llvm_libs})
 
 if(STREAM_EXECUTOR_UNIT_TESTS)

@@ -18,6 +18,6 @@ namespace streamexecutor {
 
 PlatformStreamHandle::~PlatformStreamHandle() = default;
 
-PlatformStreamExecutor::~PlatformStreamExecutor() = default;
+PlatformExecutor::~PlatformExecutor() = default;
 
 } // namespace streamexecutor

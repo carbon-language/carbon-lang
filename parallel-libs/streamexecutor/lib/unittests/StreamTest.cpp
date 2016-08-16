@@ -14,11 +14,11 @@
 
 #include <cstring>
 
+#include "streamexecutor/Executor.h"
 #include "streamexecutor/Kernel.h"
 #include "streamexecutor/KernelSpec.h"
 #include "streamexecutor/PlatformInterfaces.h"
 #include "streamexecutor/Stream.h"
-#include "streamexecutor/StreamExecutor.h"
 
 #include "gtest/gtest.h"
 
@@ -26,14 +26,14 @@ namespace {
 
 namespace se = ::streamexecutor;
 
-/// Mock PlatformStreamExecutor that performs asynchronous memcpy operations by
+/// Mock PlatformExecutor that performs asynchronous memcpy operations by
 /// ignoring the stream argument and calling std::memcpy on device memory
 /// handles.
-class MockPlatformStreamExecutor : public se::PlatformStreamExecutor {
+class MockPlatformExecutor : public se::PlatformExecutor {
 public:
-  ~MockPlatformStreamExecutor() override {}
+  ~MockPlatformExecutor() override {}
 
-  std::string getName() const override { return "MockPlatformStreamExecutor"; }
+  std::string getName() const override { return "MockPlatformExecutor"; }
 
   se::Expected<std::unique_ptr<se::PlatformStreamHandle>>
   createStream() override {
@@ -70,8 +70,7 @@ public:
   StreamTest()
       : DeviceA(se::GlobalDeviceMemory<int>::makeFromElementCount(HostA, 10)),
         DeviceB(se::GlobalDeviceMemory<int>::makeFromElementCount(HostB, 10)),
-        Stream(llvm::make_unique<se::PlatformStreamHandle>(&PlatformExecutor)) {
-  }
+        Stream(llvm::make_unique<se::PlatformStreamHandle>(&PExecutor)) {}
 
 protected:
   // Device memory is backed by host arrays.
@@ -83,7 +82,7 @@ protected:
   // Host memory to be used as actual host memory.
   int Host[10];
 
-  MockPlatformStreamExecutor PlatformExecutor;
+  MockPlatformExecutor PExecutor;
   se::Stream Stream;
 };
 

@@ -1,4 +1,4 @@
-//===-- StreamExecutor.cpp - StreamExecutor implementation ----------------===//
+//===-- Executor.cpp - Executor implementation ----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,11 +8,11 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// Implementation of StreamExecutor class internals.
+/// Implementation of Executor class internals.
 ///
 //===----------------------------------------------------------------------===//
 
-#include "streamexecutor/StreamExecutor.h"
+#include "streamexecutor/Executor.h"
 
 #include <cassert>
 
@@ -23,18 +23,17 @@
 
 namespace streamexecutor {
 
-StreamExecutor::StreamExecutor(PlatformStreamExecutor *PlatformExecutor)
-    : PlatformExecutor(PlatformExecutor) {}
+Executor::Executor(PlatformExecutor *PExecutor) : PExecutor(PExecutor) {}
 
-StreamExecutor::~StreamExecutor() = default;
+Executor::~Executor() = default;
 
-Expected<std::unique_ptr<Stream>> StreamExecutor::createStream() {
+Expected<std::unique_ptr<Stream>> Executor::createStream() {
   Expected<std::unique_ptr<PlatformStreamHandle>> MaybePlatformStream =
-      PlatformExecutor->createStream();
+      PExecutor->createStream();
   if (!MaybePlatformStream) {
     return MaybePlatformStream.takeError();
   }
-  assert((*MaybePlatformStream)->getExecutor() == PlatformExecutor &&
+  assert((*MaybePlatformStream)->getExecutor() == PExecutor &&
          "an executor created a stream with a different stored executor");
   return llvm::make_unique<Stream>(std::move(*MaybePlatformStream));
 }
