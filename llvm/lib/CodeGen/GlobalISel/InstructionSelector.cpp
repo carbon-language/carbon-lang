@@ -39,6 +39,10 @@ bool InstructionSelector::constrainSelectedInstRegOperands(
     DEBUG(dbgs() << "Converting operand: " << MO << '\n');
     assert(MO.isReg() && "Unsupported non-reg operand");
 
+    // Physical registers don't need to be constrained.
+    if (TRI.isPhysicalRegister(MO.getReg()))
+      continue;
+
     const TargetRegisterClass *RC = TII.getRegClass(I.getDesc(), OpI, &TRI, MF);
     assert(RC && "Selected inst should have regclass operand");
 
