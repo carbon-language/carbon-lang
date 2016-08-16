@@ -6,10 +6,18 @@
 #include "Inputs/cuda.h"
 
 __device__ void device_fn() {}
+// expected-note@-1 {{'device_fn' declared here}}
+// expected-note@-2 {{'device_fn' declared here}}
+// expected-note@-3 {{'device_fn' declared here}}
+// expected-note@-4 {{'device_fn' declared here}}
+// expected-note@-5 {{'device_fn' declared here}}
 
 struct S {
   __device__ S() {}
+  // expected-note@-1 {{'S' declared here}}
+  // expected-note@-2 {{'S' declared here}}
   __device__ ~S() { device_fn(); }
+  // expected-note@-1 {{'~S' declared here}}
   int x;
 };
 
@@ -24,6 +32,7 @@ struct T {
   __host__ __device__ void hd3();
 
   __device__ void d() {}
+  // expected-note@-1 {{'d' declared here}}
 };
 
 __host__ __device__ void T::hd3() {

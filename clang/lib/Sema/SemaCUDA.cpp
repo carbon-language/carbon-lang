@@ -499,11 +499,16 @@ bool Sema::CheckCUDACall(SourceLocation Loc, FunctionDecl *Callee) {
   if (Pref == Sema::CFP_WrongSide) {
     // We have to do this odd dance to create our PartialDiagnostic because we
     // want its storage to be allocated with operator new, not in an arena.
-    PartialDiagnostic PD{PartialDiagnostic::NullDiagnostic()};
-    PD.Reset(diag::err_ref_bad_target);
-    PD << IdentifyCUDATarget(Callee) << Callee << IdentifyCUDATarget(Caller);
-    Caller->addDeferredDiag({Loc, std::move(PD)});
-    Diag(Callee->getLocation(), diag::note_previous_decl) << Callee;
+    PartialDiagnostic ErrPD{PartialDiagnostic::NullDiagnostic()};
+    ErrPD.Reset(diag::err_ref_bad_target);
+    ErrPD << IdentifyCUDATarget(Callee) << Callee << IdentifyCUDATarget(Caller);
+    Caller->addDeferredDiag({Loc, std::move(ErrPD)});
+
+    PartialDiagnostic NotePD{PartialDiagnostic::NullDiagnostic()};
+    NotePD.Reset(diag::note_previous_decl);
+    NotePD << Callee;
+    Caller->addDeferredDiag({Callee->getLocation(), std::move(NotePD)});
+
     // This is not immediately an error, so return true.  The deferred errors
     // will be emitted if and when Caller is codegen'ed.
     return true;

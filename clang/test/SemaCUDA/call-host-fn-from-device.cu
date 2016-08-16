@@ -6,10 +6,19 @@
 #include "Inputs/cuda.h"
 
 extern "C" void host_fn() {}
+// expected-note@-1 {{'host_fn' declared here}}
+// expected-note@-2 {{'host_fn' declared here}}
+// expected-note@-3 {{'host_fn' declared here}}
+// expected-note@-4 {{'host_fn' declared here}}
+// expected-note@-5 {{'host_fn' declared here}}
+// expected-note@-6 {{'host_fn' declared here}}
 
 struct S {
   S() {}
+  // expected-note@-1 {{'S' declared here}}
+  // expected-note@-2 {{'S' declared here}}
   ~S() { host_fn(); }
+  // expected-note@-1 {{'~S' declared here}}
   int x;
 };
 
@@ -24,6 +33,7 @@ struct T {
   __host__ __device__ void hd3();
 
   void h() {}
+  // expected-note@-1 {{'h' declared here}}
 };
 
 __host__ __device__ void T::hd3() {
