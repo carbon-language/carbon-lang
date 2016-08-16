@@ -934,54 +934,27 @@ defm : LDrivv_pats <v16i64, v32i64>;
 // Store vector predicate pseudo.
 let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 13,
     isCodeGenOnly = 1, isPseudo = 1, mayStore = 1, hasSideEffects = 0 in {
-def STriq_pred_V6 : STInst<(outs),
-            (ins IntRegs:$base, s32Imm:$offset, VecPredRegs:$src1),
-            ".error \"should not emit\" ",
-            []>,
-            Requires<[HasV60T,UseHVXSgl]>;
-
-def STriq_pred_vec_V6 : STInst<(outs),
-            (ins IntRegs:$base, s32Imm:$offset, VectorRegs:$src1),
-            ".error \"should not emit\" ",
-            []>,
-            Requires<[HasV60T,UseHVXSgl]>;
-
-def STriq_pred_V6_128B : STInst<(outs),
-            (ins IntRegs:$base, s32Imm:$offset, VecPredRegs128B:$src1),
-            ".error \"should not emit\" ",
-            []>,
-            Requires<[HasV60T,UseHVXDbl]>;
-
-def STriq_pred_vec_V6_128B : STInst<(outs),
-            (ins IntRegs:$base, s32Imm:$offset, VectorRegs128B:$src1),
-            ".error \"should not emit\" ",
-            []>,
-            Requires<[HasV60T,UseHVXDbl]>;
+  def PS_vstorerq_ai : STInst<(outs),
+              (ins IntRegs:$base, s32Imm:$offset, VecPredRegs:$src1),
+              ".error \"should not emit\"", []>,
+              Requires<[HasV60T,UseHVXSgl]>;
+  def PS_vstorerq_ai_128B : STInst<(outs),
+              (ins IntRegs:$base, s32Imm:$offset, VecPredRegs128B:$src1),
+              ".error \"should not emit\"", []>,
+              Requires<[HasV60T,UseHVXDbl]>;
 }
 
 // Load vector predicate pseudo.
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 13,
     opExtentAlign = 2, isCodeGenOnly = 1, isPseudo = 1, hasSideEffects = 0 in {
-def LDriq_pred_V6 : LDInst<(outs VecPredRegs:$dst),
-            (ins IntRegs:$base, s32Imm:$offset),
-            ".error \"should not emit\" ",
-            []>,
-            Requires<[HasV60T,UseHVXSgl]>;
-def LDriq_pred_vec_V6 : LDInst<(outs VectorRegs:$dst),
-            (ins IntRegs:$base, s32Imm:$offset),
-            ".error \"should not emit\" ",
-            []>,
-            Requires<[HasV60T,UseHVXSgl]>;
-def LDriq_pred_V6_128B : LDInst<(outs VecPredRegs128B:$dst),
-            (ins IntRegs:$base, s32Imm:$offset),
-            ".error \"should not emit\" ",
-            []>,
-            Requires<[HasV60T,UseHVXDbl]>;
-def LDriq_pred_vec_V6_128B : LDInst<(outs VectorRegs128B:$dst),
-            (ins IntRegs:$base, s32Imm:$offset),
-            ".error \"should not emit\" ",
-            []>,
-            Requires<[HasV60T,UseHVXDbl]>;
+  def PS_vloadrq_ai : LDInst<(outs VecPredRegs:$dst),
+              (ins IntRegs:$base, s32Imm:$offset),
+              ".error \"should not emit\"", []>,
+              Requires<[HasV60T,UseHVXSgl]>;
+  def PS_vloadrq_ai_128B : LDInst<(outs VecPredRegs128B:$dst),
+              (ins IntRegs:$base, s32Imm:$offset),
+              ".error \"should not emit\"", []>,
+              Requires<[HasV60T,UseHVXDbl]>;
 }
 
 class VSELInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],

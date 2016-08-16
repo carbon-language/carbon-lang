@@ -1819,12 +1819,12 @@ bool HexagonFrameLowering::expandSpillMacros(MachineFunction &MF,
         case Hexagon::LDriw_mod:
           Changed |= expandLoadInt(B, I, MRI, HII, NewRegs);
           break;
-        case Hexagon::STriq_pred_V6:
-        case Hexagon::STriq_pred_V6_128B:
+        case Hexagon::PS_vstorerq_ai:
+        case Hexagon::PS_vstorerq_ai_128B:
           Changed |= expandStoreVecPred(B, I, MRI, HII, NewRegs);
           break;
-        case Hexagon::LDriq_pred_V6:
-        case Hexagon::LDriq_pred_V6_128B:
+        case Hexagon::PS_vloadrq_ai:
+        case Hexagon::PS_vloadrq_ai_128B:
           Changed |= expandLoadVecPred(B, I, MRI, HII, NewRegs);
           break;
         case Hexagon::PS_vloadrw_ai:
