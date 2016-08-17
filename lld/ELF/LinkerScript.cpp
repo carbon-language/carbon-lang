@@ -621,7 +621,7 @@ private:
   SortKind readSortKind();
   SymbolAssignment *readProvideHidden(bool Provide, bool Hidden);
   SymbolAssignment *readProvideOrAssignment(StringRef Tok);
-  void readAt(OutputSectionCommand *Cmd);
+  Expr readAt();
   Expr readAlign();
   void readSort();
   Expr readAssert();
@@ -927,10 +927,11 @@ Expr ScriptParser::readAssert() {
   };
 }
 
-void ScriptParser::readAt(OutputSectionCommand *Cmd) {
+Expr ScriptParser::readAt() {
   expect("(");
-  Cmd->LmaExpr = readExpr();
+  Expr E = readExpr();
   expect(")");
+  return E;
 }
 
 OutputSectionCommand *
@@ -945,7 +946,7 @@ ScriptParser::readOutputSectionDescription(StringRef OutSec) {
   expect(":");
 
   if (skip("AT"))
-    readAt(Cmd);
+    Cmd->LmaExpr = readAt();
 
   if (skip("ALIGN"))
     Cmd->AlignExpr = readAlign();
