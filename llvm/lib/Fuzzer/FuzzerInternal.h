@@ -120,6 +120,7 @@ size_t GetPeakRSSMb();
 static const int kSHA1NumBytes = 20;
 // Computes SHA1 hash of 'Len' bytes in 'Data', writes kSHA1NumBytes to 'Out'.
 void ComputeSHA1(const uint8_t *Data, size_t Len, uint8_t *Out);
+std::string Sha1ToString(uint8_t Sha1[kSHA1NumBytes]);
 
 // Changes U to contain only ASCII (isprint+isspace) characters.
 // Returns true iff U has been changed.
@@ -482,6 +483,7 @@ private:
   void LazyAllocateCurrentUnitData();
   uint8_t *CurrentUnitData = nullptr;
   std::atomic<size_t> CurrentUnitSize;
+  uint8_t BaseSha1[kSHA1NumBytes];  // Checksum of the base unit.
 
   size_t TotalNumberOfRuns = 0;
   size_t NumberOfNewUnitsAdded = 0;
