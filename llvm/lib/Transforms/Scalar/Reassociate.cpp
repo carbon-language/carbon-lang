@@ -842,13 +842,6 @@ static Value *NegateValue(Value *V, Instruction *BI,
     if (TheNeg->getParent()->getParent() != BI->getParent()->getParent())
       continue;
 
-    // Don't move the negate if it's in the block we're currently optimizing as
-    // this may invalidate our iterator.
-    // FIXME: We should find a more robust solution as we're missing local CSE
-    // opportunities because of this constraint.
-    if (TheNeg->getParent() == BI->getParent())
-      continue;
-
     BasicBlock::iterator InsertPt;
     if (Instruction *InstInput = dyn_cast<Instruction>(V)) {
       if (InvokeInst *II = dyn_cast<InvokeInst>(InstInput)) {
@@ -1870,8 +1863,6 @@ void ReassociatePass::RecursivelyEraseDeadInsts(
 /// Zap the given instruction, adding interesting operands to the work list.
 void ReassociatePass::EraseInst(Instruction *I) {
   assert(isInstructionTriviallyDead(I) && "Trivially dead instructions only!");
-  DEBUG(dbgs() << "Erasing dead inst: "; I->dump());
-
   SmallVector<Value*, 8> Ops(I->op_begin(), I->op_end());
   // Erase the dead instruction.
   ValueRankMap.erase(I);
