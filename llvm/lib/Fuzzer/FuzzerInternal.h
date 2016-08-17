@@ -290,6 +290,8 @@ public:
 
   /// Tries to find an ASCII integer in Data, changes it to another ASCII int.
   size_t Mutate_ChangeASCIIInteger(uint8_t *Data, size_t Size, size_t MaxSize);
+  /// Change a 1-, 2-, 4-, or 8-byte integer in interesting ways.
+  size_t Mutate_ChangeBinaryInteger(uint8_t *Data, size_t Size, size_t MaxSize);
 
   /// CrossOver Data with some other element of the corpus.
   size_t Mutate_CrossOver(uint8_t *Data, size_t Size, size_t MaxSize);
