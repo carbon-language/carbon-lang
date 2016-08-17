@@ -504,7 +504,7 @@ ArrayRef<uint8_t> LinkerScript<ELFT>::getFiller(StringRef Name) {
   return {};
 }
 
-template <class ELFT> typename Expr LinkerScript<ELFT>::getLma(StringRef Name) {
+template <class ELFT> Expr LinkerScript<ELFT>::getLma(StringRef Name) {
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
       if (Cmd->LmaExpr && Cmd->Name == Name)
