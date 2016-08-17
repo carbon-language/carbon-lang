@@ -129,7 +129,8 @@ size_t MutationDispatcher::Mutate_InsertRepeatedBytes(uint8_t *Data,
   size_t Idx = Rand(Size + 1);
   // Insert new values at Data[Idx].
   memmove(Data + Idx + N, Data + Idx, Size - Idx);
-  uint8_t Byte = RandCh(Rand);
+  // Give preference to 0x00 and 0xff.
+  uint8_t Byte = Rand.RandBool() ? Rand(256) : (Rand.RandBool() ? 0 : 255);
   for (size_t i = 0; i < N; i++)
     Data[Idx + i] = Byte;
   return Size + N;
