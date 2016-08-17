@@ -190,4 +190,21 @@ TEST(ilistTest, privateNode) {
   L2.remove(&N);
 }
 
+struct GetNext {
+  Node *getNext(Node *);
+};
+TEST(ilistTest, HasGetNextTrait) {
+  EXPECT_TRUE((ilist_detail::HasGetNext<GetNext, Node>::value));
+  EXPECT_TRUE((ilist_detail::HasObsoleteCustomization<GetNext, Node>::value));
+}
+
+struct CreateSentinel {
+  Node *createSentinel();
+};
+TEST(ilistTest, HasCreateSentinel) {
+  EXPECT_TRUE((ilist_detail::HasCreateSentinel<CreateSentinel>::value));
+  EXPECT_TRUE(
+      (ilist_detail::HasObsoleteCustomization<CreateSentinel, Node>::value));
+}
+
 } // end namespace
