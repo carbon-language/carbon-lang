@@ -14,7 +14,6 @@
 #endif
 
 #include "GDBRemoteTestUtils.h"
-#include "gtest/gtest.h"
 
 #include "lldb/Host/common/TCPSocket.h"
 #include "lldb/Host/posix/ConnectionFileDescriptorPosix.h"
