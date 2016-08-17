@@ -307,6 +307,21 @@ define i1 @test27(i32* %A, i32* %B) {
   ret i1 %E
 }
 
+define <2 x i1> @test27vec(<2 x i32*> %A, <2 x i32*> %B) {
+; CHECK-LABEL: @test27vec(
+; CHECK-NEXT:    [[C1:%.*]] = ptrtoint <2 x i32*> %A to <2 x i32>
+; CHECK-NEXT:    [[C2:%.*]] = ptrtoint <2 x i32*> %B to <2 x i32>
+; CHECK-NEXT:    [[D:%.*]] = or <2 x i32> [[C1]], [[C2]]
+; CHECK-NEXT:    [[E:%.*]] = icmp eq <2 x i32> [[D]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[E]]
+;
+  %C1 = ptrtoint <2 x i32*> %A to <2 x i32>
+  %C2 = ptrtoint <2 x i32*> %B to <2 x i32>
+  %D = or <2 x i32> %C1, %C2
+  %E = icmp eq <2 x i32> %D, zeroinitializer
+  ret <2 x i1> %E
+}
+
 ; PR5634
 define i1 @test28(i32 %A, i32 %B) {
 ; CHECK-LABEL: @test28(
@@ -333,6 +348,21 @@ define i1 @test29(i32* %A, i32* %B) {
   %D = or i32 %C1, %C2
   %E = icmp ne i32 %D, 0
   ret i1 %E
+}
+
+define <2 x i1> @test29vec(<2 x i32*> %A, <2 x i32*> %B) {
+; CHECK-LABEL: @test29vec(
+; CHECK-NEXT:    [[C1:%.*]] = ptrtoint <2 x i32*> %A to <2 x i32>
+; CHECK-NEXT:    [[C2:%.*]] = ptrtoint <2 x i32*> %B to <2 x i32>
+; CHECK-NEXT:    [[D:%.*]] = or <2 x i32> [[C1]], [[C2]]
+; CHECK-NEXT:    [[E:%.*]] = icmp ne <2 x i32> [[D]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[E]]
+;
+  %C1 = ptrtoint <2 x i32*> %A to <2 x i32>
+  %C2 = ptrtoint <2 x i32*> %B to <2 x i32>
+  %D = or <2 x i32> %C1, %C2
+  %E = icmp ne <2 x i32> %D, zeroinitializer
+  ret <2 x i1> %E
 }
 
 ; PR4216
