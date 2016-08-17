@@ -116,8 +116,6 @@ static void PrintLegend(InternalScopedString *str) {
                   kAsanStackMidRedzoneMagic);
   PrintShadowByte(str, "  Stack right redzone:     ",
                   kAsanStackRightRedzoneMagic);
-  PrintShadowByte(str, "  Stack partial redzone:   ",
-                  kAsanStackPartialRedzoneMagic);
   PrintShadowByte(str, "  Stack after return:      ",
                   kAsanStackAfterReturnMagic);
   PrintShadowByte(str, "  Stack use after scope:   ",
@@ -728,7 +726,6 @@ void ReportGenericError(uptr pc, uptr bp, uptr sp, uptr addr, bool is_write,
         break;
       case kAsanStackMidRedzoneMagic:
       case kAsanStackRightRedzoneMagic:
-      case kAsanStackPartialRedzoneMagic:
         bug_descr = "stack-buffer-overflow";
         bug_type_score = 25;
         far_from_bounds = AdjacentShadowValuesAreFullyPoisoned(shadow_addr);
