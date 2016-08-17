@@ -324,6 +324,54 @@ TEST(FuzzerMutate, ShuffleBytes2) {
   TestShuffleBytes(&MutationDispatcher::Mutate, 1 << 20);
 }
 
+void TestCopyPart(Mutator M, int NumIter) {
+  std::unique_ptr<ExternalFunctions> t(new ExternalFunctions());
+  fuzzer::EF = t.get();
+  Random Rand(0);
+  MutationDispatcher MD(Rand, {});
+  int FoundMask = 0;
+  uint8_t CH0[7] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x00, 0x11};
+  uint8_t CH1[7] = {0x55, 0x66, 0x22, 0x33, 0x44, 0x55, 0x66};
+  uint8_t CH2[7] = {0x00, 0x55, 0x66, 0x33, 0x44, 0x55, 0x66};
+  uint8_t CH3[7] = {0x00, 0x11, 0x22, 0x00, 0x11, 0x22, 0x66};
+  uint8_t CH4[7] = {0x00, 0x11, 0x11, 0x22, 0x33, 0x55, 0x66};
+
+  for (int i = 0; i < NumIter; i++) {
+    uint8_t T[7] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+    size_t NewSize = (MD.*M)(T, 7, 7);
+    if (NewSize == 7 && !memcmp(CH0, T, 7)) FoundMask |= 1 << 0;
+    if (NewSize == 7 && !memcmp(CH1, T, 7)) FoundMask |= 1 << 1;
+    if (NewSize == 7 && !memcmp(CH2, T, 7)) FoundMask |= 1 << 2;
+    if (NewSize == 7 && !memcmp(CH3, T, 7)) FoundMask |= 1 << 3;
+    if (NewSize == 7 && !memcmp(CH4, T, 7)) FoundMask |= 1 << 4;
+  }
+
+  uint8_t CH5[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x00, 0x11, 0x22};
+  uint8_t CH6[8] = {0x22, 0x33, 0x44, 0x00, 0x11, 0x22, 0x33, 0x44};
+  uint8_t CH7[8] = {0x00, 0x11, 0x22, 0x00, 0x11, 0x22, 0x33, 0x44};
+  uint8_t CH8[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x22, 0x33, 0x44};
+  uint8_t CH9[8] = {0x00, 0x11, 0x22, 0x22, 0x33, 0x44, 0x33, 0x44};
+
+  for (int i = 0; i < NumIter; i++) {
+    uint8_t T[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+    size_t NewSize = (MD.*M)(T, 5, 8);
+    if (NewSize == 8 && !memcmp(CH5, T, 8)) FoundMask |= 1 << 5;
+    if (NewSize == 8 && !memcmp(CH6, T, 8)) FoundMask |= 1 << 6;
+    if (NewSize == 8 && !memcmp(CH7, T, 8)) FoundMask |= 1 << 7;
+    if (NewSize == 8 && !memcmp(CH8, T, 8)) FoundMask |= 1 << 8;
+    if (NewSize == 8 && !memcmp(CH9, T, 8)) FoundMask |= 1 << 9;
+  }
+
+  EXPECT_EQ(FoundMask, 1023);
+}
+
+TEST(FuzzerMutate, CopyPart1) {
+  TestCopyPart(&MutationDispatcher::Mutate_CopyPart, 1 << 10);
+}
+TEST(FuzzerMutate, CopyPart2) {
+  TestCopyPart(&MutationDispatcher::Mutate, 1 << 13);
+}
+
 void TestAddWordFromDictionary(Mutator M, int NumIter) {
   std::unique_ptr<ExternalFunctions> t(new ExternalFunctions());
   fuzzer::EF = t.get();

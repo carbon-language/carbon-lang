@@ -272,6 +272,8 @@ public:
   size_t Mutate_ChangeByte(uint8_t *Data, size_t Size, size_t MaxSize);
   /// Mutates data by chanding one bit.
   size_t Mutate_ChangeBit(uint8_t *Data, size_t Size, size_t MaxSize);
+  /// Mutates data by copying/inserting a part of data into a different place.
+  size_t Mutate_CopyPart(uint8_t *Data, size_t Size, size_t MaxSize);
 
   /// Mutates data by adding a word from the manual dictionary.
   size_t Mutate_AddWordFromManualDictionary(uint8_t *Data, size_t Size,
@@ -323,6 +325,11 @@ private:
                                size_t MaxSize);
   size_t MutateImpl(uint8_t *Data, size_t Size, size_t MaxSize,
                     const std::vector<Mutator> &Mutators);
+
+  size_t InsertPartOf(const uint8_t *From, size_t FromSize, uint8_t *To,
+                      size_t ToSize, size_t MaxToSize);
+  size_t CopyPartOf(const uint8_t *From, size_t FromSize, uint8_t *To,
+                    size_t ToSize);
 
   Random &Rand;
   const FuzzingOptions Options;
