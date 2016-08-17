@@ -1879,40 +1879,38 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI, Instruction *LHSI,
   return nullptr;
 }
 
-Instruction *InstCombiner::foldICmpOrConstant(ICmpInst &ICI, Instruction *LHSI,
-                                              const APInt *RHSV) {
+/// Fold icmp (or X, Y), C.
+Instruction *InstCombiner::foldICmpOrConstant(ICmpInst &Cmp, Instruction *Or,
+                                              const APInt *C) {
   // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(ICI.getOperand(1));
+  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
   if (!RHS)
     return nullptr;
 
-  if (RHS->isOne()) {
+  ICmpInst::Predicate Pred = Cmp.getPredicate();
+  if (*C == 1) {
     // icmp slt signum(V) 1 --> icmp slt V, 1
     Value *V = nullptr;
-    if (ICI.getPredicate() == ICmpInst::ICMP_SLT &&
-        match(LHSI, m_Signum(m_Value(V))))
+    if (Pred == ICmpInst::ICMP_SLT && match(Or, m_Signum(m_Value(V))))
       return new ICmpInst(ICmpInst::ICMP_SLT, V,
                           ConstantInt::get(V->getType(), 1));
   }
 
-  if (!ICI.isEquality() || !RHS->isNullValue() || !LHSI->hasOneUse())
+  if (!Cmp.isEquality() || *C != 0 || !Or->hasOneUse())
     return nullptr;
 
   Value *P, *Q;
-  if (match(LHSI, m_Or(m_PtrToInt(m_Value(P)), m_PtrToInt(m_Value(Q))))) {
+  if (match(Or, m_Or(m_PtrToInt(m_Value(P)), m_PtrToInt(m_Value(Q))))) {
     // Simplify icmp eq (or (ptrtoint P), (ptrtoint Q)), 0
     // -> and (icmp eq P, null), (icmp eq Q, null).
-    Value *ICIP = Builder->CreateICmp(ICI.getPredicate(), P,
-                                      Constant::getNullValue(P->getType()));
-    Value *ICIQ = Builder->CreateICmp(ICI.getPredicate(), Q,
-                                      Constant::getNullValue(Q->getType()));
-    Instruction *Op;
-    if (ICI.getPredicate() == ICmpInst::ICMP_EQ)
-      Op = BinaryOperator::CreateAnd(ICIP, ICIQ);
-    else
-      Op = BinaryOperator::CreateOr(ICIP, ICIQ);
-    return Op;
+    Constant *NullVal = ConstantInt::getNullValue(P->getType());
+    Value *CmpP = Builder->CreateICmp(Pred, P, NullVal);
+    Value *CmpQ = Builder->CreateICmp(Pred, Q, NullVal);
+    auto LogicOpc = Pred == ICmpInst::Predicate::ICMP_EQ ? Instruction::And
+                                                         : Instruction::Or;
+    return BinaryOperator::Create(LogicOpc, CmpP, CmpQ);
   }
+
   return nullptr;
 }
 
