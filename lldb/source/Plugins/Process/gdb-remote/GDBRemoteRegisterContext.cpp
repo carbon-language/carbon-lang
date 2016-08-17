@@ -325,26 +325,13 @@ GDBRemoteRegisterContext::SetPrimordialRegister(const RegisterInfo *reg_info,
     StreamString packet;
     StringExtractorGDBRemote response;
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
-    packet.Printf ("P%x=", reg_info->kinds[eRegisterKindProcessPlugin]);
-    packet.PutBytesAsRawHex8 (m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size),
-                              reg_info->byte_size,
-                              endian::InlHostByteOrder(),
-                              endian::InlHostByteOrder());
-
-    if (gdb_comm.GetThreadSuffixSupported())
-        packet.Printf (";thread:%4.4" PRIx64 ";", m_thread.GetProtocolID());
-
     // Invalidate just this register
     SetRegisterIsValid(reg, false);
-    if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),
-                                              packet.GetString().size(),
-                                              response,
-                                              false) == GDBRemoteCommunication::PacketResult::Success)
-    {
-        if (response.IsOKResponse())
-            return true;
-    }
-    return false;
+
+    return gdb_comm.WriteRegister(
+        m_thread.GetProtocolID(), reg_info->kinds[eRegisterKindProcessPlugin],
+        llvm::StringRef(reinterpret_cast<const char *>(m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size)),
+                        reg_info->byte_size));
 }
 
 void
