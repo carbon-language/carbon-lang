@@ -513,7 +513,7 @@ bool TailDuplicator::shouldTailDuplicate(const MachineFunction &MF,
   unsigned MaxDuplicateCount;
   if (TailDuplicateSize.getNumOccurrences() == 0 &&
       // FIXME: Use Function::optForSize().
-      MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize))
+      MF.getFunction()->optForSize())
     MaxDuplicateCount = 1;
   else
     MaxDuplicateCount = TailDuplicateSize;
