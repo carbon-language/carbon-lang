@@ -4288,7 +4288,7 @@ const SCEV *ScalarEvolution::createNodeForSelectOrPHI(Instruction *I,
   case ICmpInst::ICMP_SLT:
   case ICmpInst::ICMP_SLE:
     std::swap(LHS, RHS);
-  // fall through
+    LLVM_FALLTHROUGH;
   case ICmpInst::ICMP_SGT:
   case ICmpInst::ICMP_SGE:
     // a >s b ? a+x : b+x  ->  smax(a, b)+x
@@ -4311,7 +4311,7 @@ const SCEV *ScalarEvolution::createNodeForSelectOrPHI(Instruction *I,
   case ICmpInst::ICMP_ULT:
   case ICmpInst::ICMP_ULE:
     std::swap(LHS, RHS);
-  // fall through
+    LLVM_FALLTHROUGH;
   case ICmpInst::ICMP_UGT:
   case ICmpInst::ICMP_UGE:
     // a >u b ? a+x : b+x  ->  umax(a, b)+x
@@ -8502,7 +8502,7 @@ static bool IsKnownPredicateViaMinOrMax(ScalarEvolution &SE,
 
   case ICmpInst::ICMP_SGE:
     std::swap(LHS, RHS);
-    // fall through
+    LLVM_FALLTHROUGH;
   case ICmpInst::ICMP_SLE:
     return
       // min(A, ...) <= A
@@ -8512,7 +8512,7 @@ static bool IsKnownPredicateViaMinOrMax(ScalarEvolution &SE,
 
   case ICmpInst::ICMP_UGE:
     std::swap(LHS, RHS);
-    // fall through
+    LLVM_FALLTHROUGH;
   case ICmpInst::ICMP_ULE:
     return
       // min(A, ...) <= A
@@ -9858,8 +9858,10 @@ ScalarEvolution::computeBlockDisposition(const SCEV *S, const BasicBlock *BB) {
     const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(S);
     if (!DT.dominates(AR->getLoop()->getHeader(), BB))
       return DoesNotDominateBlock;
+
+    // Fall through into SCEVNAryExpr handling.
+    LLVM_FALLTHROUGH;
   }
-  // FALL THROUGH into SCEVNAryExpr handling.
   case scAddExpr:
   case scMulExpr:
   case scUMaxExpr:
