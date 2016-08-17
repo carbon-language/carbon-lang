@@ -1882,11 +1882,6 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI, Instruction *LHSI,
 /// Fold icmp (or X, Y), C.
 Instruction *InstCombiner::foldICmpOrConstant(ICmpInst &Cmp, Instruction *Or,
                                               const APInt *C) {
-  // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
-  if (!RHS)
-    return nullptr;
-
   ICmpInst::Predicate Pred = Cmp.getPredicate();
   if (*C == 1) {
     // icmp slt signum(V) 1 --> icmp slt V, 1
