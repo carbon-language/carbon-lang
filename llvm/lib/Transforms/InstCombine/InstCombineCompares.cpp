@@ -1577,21 +1577,21 @@ Instruction *InstCombiner::foldICmpXorConstant(ICmpInst &Cmp, Instruction *Xor,
   if (!RHS)
     return nullptr;
 
-  auto *XorCst = dyn_cast<ConstantInt>(Xor->getOperand(1));
-  if (!XorCst)
+  const APInt *XorC;
+  if (!match(Xor->getOperand(1), m_APInt(XorC)))
     return nullptr;
 
   // If this is a comparison that tests the signbit (X < 0) or (x > -1),
   // fold the xor.
+  Value *X = Xor->getOperand(0);
   ICmpInst::Predicate Pred = Cmp.getPredicate();
   if ((Pred == ICmpInst::ICMP_SLT && *C == 0) ||
       (Pred == ICmpInst::ICMP_SGT && C->isAllOnesValue())) {
-    Value *CompareVal = Xor->getOperand(0);
 
     // If the sign bit of the XorCst is not set, there is no change to
     // the operation, just stop using the Xor.
-    if (!XorCst->isNegative()) {
-      Cmp.setOperand(0, CompareVal);
+    if (!XorC->isNegative()) {
+      Cmp.setOperand(0, X);
       Worklist.Add(Xor);
       return &Cmp;
     }
@@ -1603,43 +1603,37 @@ Instruction *InstCombiner::foldICmpXorConstant(ICmpInst &Cmp, Instruction *Xor,
     isTrueIfPositive ^= true;
 
     if (isTrueIfPositive)
-      return new ICmpInst(ICmpInst::ICMP_SGT, CompareVal, SubOne(RHS));
+      return new ICmpInst(ICmpInst::ICMP_SGT, X, SubOne(RHS));
     else
-      return new ICmpInst(ICmpInst::ICMP_SLT, CompareVal, AddOne(RHS));
+      return new ICmpInst(ICmpInst::ICMP_SLT, X, AddOne(RHS));
   }
 
   if (Xor->hasOneUse()) {
-    // (icmp u/s (xor A SignBit), C) -> (icmp s/u A, (xor C SignBit))
-    if (!Cmp.isEquality() && XorCst->getValue().isSignBit()) {
-      const APInt &SignBit = XorCst->getValue();
-      ICmpInst::Predicate Pred = Cmp.isSigned() ? Cmp.getUnsignedPredicate()
-                                                : Cmp.getSignedPredicate();
-      return new ICmpInst(Pred, Xor->getOperand(0),
-                          Builder->getInt(*C ^ SignBit));
+    // (icmp u/s (xor X SignBit), C) -> (icmp s/u X, (xor C SignBit))
+    if (!Cmp.isEquality() && XorC->isSignBit()) {
+      Pred = Cmp.isSigned() ? Cmp.getUnsignedPredicate()
+                            : Cmp.getSignedPredicate();
+      return new ICmpInst(Pred, X, Builder->getInt(*C ^ *XorC));
     }
 
-    // (icmp u/s (xor A ~SignBit), C) -> (icmp s/u (xor C ~SignBit), A)
-    if (!Cmp.isEquality() && XorCst->isMaxValue(true)) {
-      const APInt &NotSignBit = XorCst->getValue();
-      ICmpInst::Predicate Pred = Cmp.isSigned() ? Cmp.getUnsignedPredicate()
-                                                : Cmp.getSignedPredicate();
+    // (icmp u/s (xor X ~SignBit), C) -> (icmp s/u X, (xor C ~SignBit))
+    if (!Cmp.isEquality() && XorC->isMaxSignedValue()) {
+      Pred = Cmp.isSigned() ? Cmp.getUnsignedPredicate()
+                            : Cmp.getSignedPredicate();
       Pred = Cmp.getSwappedPredicate(Pred);
-      return new ICmpInst(Pred, Xor->getOperand(0),
-                          Builder->getInt(*C ^ NotSignBit));
+      return new ICmpInst(Pred, X, Builder->getInt(*C ^ *XorC));
     }
   }
 
   // (icmp ugt (xor X, C), ~C) -> (icmp ult X, C)
   //   iff -C is a power of 2
-  if (Pred == ICmpInst::ICMP_UGT && XorCst->getValue() == ~(*C) &&
-      (*C + 1).isPowerOf2())
-    return new ICmpInst(ICmpInst::ICMP_ULT, Xor->getOperand(0), XorCst);
+  if (Pred == ICmpInst::ICMP_UGT && *XorC == ~(*C) && (*C + 1).isPowerOf2())
+    return new ICmpInst(ICmpInst::ICMP_ULT, X, Xor->getOperand(1));
 
   // (icmp ult (xor X, C), -C) -> (icmp uge X, C)
   //   iff -C is a power of 2
-  if (Pred == ICmpInst::ICMP_ULT && XorCst->getValue() == -(*C) &&
-      C->isPowerOf2())
-    return new ICmpInst(ICmpInst::ICMP_UGE, Xor->getOperand(0), XorCst);
+  if (Pred == ICmpInst::ICMP_ULT && *XorC == -(*C) && C->isPowerOf2())
+    return new ICmpInst(ICmpInst::ICMP_UGE, X, Xor->getOperand(1));
 
   return nullptr;
 }
