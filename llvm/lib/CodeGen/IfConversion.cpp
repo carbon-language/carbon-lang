@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "BranchFolding.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
@@ -550,16 +551,32 @@ static inline bool skipDebugInstructionsForward(
   return It == End;
 }
 
-/// Decrement \p It until it points to a non-debug instruction or to \p Begin.
+/// Shrink the provided inclusive range by one instruction.
+/// If the range was one instruction (\p It == \p Begin), It is not modified,
+/// but \p Empty is set to true.
+static inline void shrinkInclusiveRange(
+    MachineBasicBlock::iterator &Begin,
+    MachineBasicBlock::iterator &It,
+    bool &Empty) {
+  if (It == Begin)
+    Empty = true;
+  else
+    It--;
+}
+
+/// Decrement \p It until it points to a non-debug instruction or the range is
+/// empty.
 /// @param It Iterator to decrement.
 /// @param Begin Iterator that points to beginning. Will be compared to It
-/// @returns true if It == Begin, false otherwise.
+/// @param Empty Set to true if the resulting range is Empty
+/// @returns the value of Empty as a convenience.
 static inline bool skipDebugInstructionsBackward(
+    MachineBasicBlock::iterator &Begin,
     MachineBasicBlock::iterator &It,
-    MachineBasicBlock::iterator &Begin) {
-  while (It != Begin && It->isDebugValue())
-    It--;
-  return It == Begin;
+    bool &Empty) {
+  while (!Empty && It->isDebugValue())
+    shrinkInclusiveRange(Begin, It, Empty);
+  return Empty;
 }
 
 /// Count duplicated instructions and move the iterators to show where they
@@ -596,41 +613,58 @@ static void countDuplicatedInstructions(
     ++FIB;
   }
 
-  // Now, in preparation for counting duplicate instructions at the ends of the
-  // blocks, move the end iterators up past any branch instructions.
   // If both blocks are returning don't skip the branches, since they will
   // likely be both identical return instructions. In such cases the return
   // can be left unpredicated.
   // Check for already containing all of the block.
   if (TIB == TIE || FIB == FIE)
     return;
+  // Now, in preparation for counting duplicate instructions at the ends of the
+  // blocks, move the end iterators up past any branch instructions.
   --TIE;
   --FIE;
+
+  // After this point TIB and TIE define an inclusive range, which means that
+  // TIB == TIE is true when there is one more instruction to consider, not at
+  // the end. Because we may not be able to go before TIB, we need a flag to
+  // indicate a completely empty range.
+  bool TEmpty = false, FEmpty = false;
+
+  // Upon exit TIE and FIE will both point at the last non-shared instruction.
+  // They need to be moved forward to point past the last non-shared
+  // instruction if the range they delimit is non-empty.
+  auto IncrementEndIteratorsOnExit = make_scope_exit([&]() {
+    if (!TEmpty)
+      ++TIE;
+    if (!FEmpty)
+      ++FIE;
+  });
+
   if (!TBB.succ_empty() || !FBB.succ_empty()) {
     if (SkipConditionalBranches) {
-      while (TIE != TIB && TIE->isBranch())
-        --TIE;
-      while (FIE != FIB && FIE->isBranch())
-        --FIE;
+      while (!TEmpty && TIE->isBranch())
+        shrinkInclusiveRange(TIB, TIE, TEmpty);
+      while (!FEmpty && FIE->isBranch())
+        shrinkInclusiveRange(FIB, FIE, FEmpty);
     } else {
-      while (TIE != TIB && TIE->isUnconditionalBranch())
-        --TIE;
-      while (FIE != FIB && FIE->isUnconditionalBranch())
-        --FIE;
+      while (!TEmpty && TIE->isUnconditionalBranch())
+        shrinkInclusiveRange(TIB, TIE, TEmpty);
+      while (!FEmpty && FIE->isUnconditionalBranch())
+        shrinkInclusiveRange(FIB, FIE, FEmpty);
     }
   }
 
   // If Dups1 includes all of a block, then don't count duplicate
   // instructions at the end of the blocks.
-  if (TIB == TIE || FIB == FIE)
+  if (TEmpty || FEmpty)
     return;
 
   // Count duplicate instructions at the ends of the blocks.
-  while (TIE != TIB && FIE != FIB) {
+  while (!TEmpty && !FEmpty) {
     // Skip dbg_value instructions. These do not count.
-    if (skipDebugInstructionsBackward(TIE, TIB))
+    if (skipDebugInstructionsBackward(TIB, TIE, TEmpty))
       break;
-    if (skipDebugInstructionsBackward(FIE, FIB))
+    if (skipDebugInstructionsBackward(FIB, FIE, FEmpty))
       break;
     if (!TIE->isIdenticalTo(*FIE))
       break;
@@ -638,8 +672,8 @@ static void countDuplicatedInstructions(
     // still don't want to count them.
     if (SkipConditionalBranches || !TIE->isBranch())
       ++Dups2;
-    --TIE;
-    --FIE;
+    shrinkInclusiveRange(TIB, TIE, TEmpty);
+    shrinkInclusiveRange(FIB, FIE, FEmpty);
   }
 }
 
