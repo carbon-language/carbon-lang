@@ -1572,18 +1572,14 @@ Instruction *InstCombiner::foldICmpTruncConstant(ICmpInst &ICI,
 /// Fold icmp (xor X, Y), C.
 Instruction *InstCombiner::foldICmpXorConstant(ICmpInst &Cmp, Instruction *Xor,
                                                const APInt *C) {
-  // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
-  if (!RHS)
-    return nullptr;
-
+  Value *X = Xor->getOperand(0);
+  Value *Y = Xor->getOperand(1);
   const APInt *XorC;
-  if (!match(Xor->getOperand(1), m_APInt(XorC)))
+  if (!match(Y, m_APInt(XorC)))
     return nullptr;
 
   // If this is a comparison that tests the signbit (X < 0) or (x > -1),
   // fold the xor.
-  Value *X = Xor->getOperand(0);
   ICmpInst::Predicate Pred = Cmp.getPredicate();
   if ((Pred == ICmpInst::ICMP_SLT && *C == 0) ||
       (Pred == ICmpInst::ICMP_SGT && C->isAllOnesValue())) {
@@ -1602,10 +1598,11 @@ Instruction *InstCombiner::foldICmpXorConstant(ICmpInst &Cmp, Instruction *Xor,
     // If so, the new one isn't.
     isTrueIfPositive ^= true;
 
+    Constant *CmpConstant = cast<Constant>(Cmp.getOperand(1));
     if (isTrueIfPositive)
-      return new ICmpInst(ICmpInst::ICMP_SGT, X, SubOne(RHS));
+      return new ICmpInst(ICmpInst::ICMP_SGT, X, SubOne(CmpConstant));
     else
-      return new ICmpInst(ICmpInst::ICMP_SLT, X, AddOne(RHS));
+      return new ICmpInst(ICmpInst::ICMP_SLT, X, AddOne(CmpConstant));
   }
 
   if (Xor->hasOneUse()) {
@@ -1613,7 +1610,7 @@ Instruction *InstCombiner::foldICmpXorConstant(ICmpInst &Cmp, Instruction *Xor,
     if (!Cmp.isEquality() && XorC->isSignBit()) {
       Pred = Cmp.isSigned() ? Cmp.getUnsignedPredicate()
                             : Cmp.getSignedPredicate();
-      return new ICmpInst(Pred, X, Builder->getInt(*C ^ *XorC));
+      return new ICmpInst(Pred, X, ConstantInt::get(X->getType(), *C ^ *XorC));
     }
 
     // (icmp u/s (xor X ~SignBit), C) -> (icmp s/u X, (xor C ~SignBit))
@@ -1621,19 +1618,19 @@ Instruction *InstCombiner::foldICmpXorConstant(ICmpInst &Cmp, Instruction *Xor,
       Pred = Cmp.isSigned() ? Cmp.getUnsignedPredicate()
                             : Cmp.getSignedPredicate();
       Pred = Cmp.getSwappedPredicate(Pred);
-      return new ICmpInst(Pred, X, Builder->getInt(*C ^ *XorC));
+      return new ICmpInst(Pred, X, ConstantInt::get(X->getType(), *C ^ *XorC));
     }
   }
 
   // (icmp ugt (xor X, C), ~C) -> (icmp ult X, C)
   //   iff -C is a power of 2
   if (Pred == ICmpInst::ICMP_UGT && *XorC == ~(*C) && (*C + 1).isPowerOf2())
-    return new ICmpInst(ICmpInst::ICMP_ULT, X, Xor->getOperand(1));
+    return new ICmpInst(ICmpInst::ICMP_ULT, X, Y);
 
   // (icmp ult (xor X, C), -C) -> (icmp uge X, C)
   //   iff -C is a power of 2
   if (Pred == ICmpInst::ICMP_ULT && *XorC == -(*C) && C->isPowerOf2())
-    return new ICmpInst(ICmpInst::ICMP_UGE, X, Xor->getOperand(1));
+    return new ICmpInst(ICmpInst::ICMP_UGE, X, Y);
 
   return nullptr;
 }
