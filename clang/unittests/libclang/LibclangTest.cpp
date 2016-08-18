@@ -439,23 +439,23 @@ TEST_F(LibclangParseTest, AllSkippedRanges) {
                                        nullptr, 0, TUFlags);
 
   CXSourceRangeList *Ranges = clang_getAllSkippedRanges(ClangTU);
-  EXPECT_EQ(2u, Ranges->count);
+  EXPECT_EQ(2U, Ranges->count);
   
   CXSourceLocation cxl;
   unsigned line;
   cxl = clang_getRangeStart(Ranges->ranges[0]);
   clang_getSpellingLocation(cxl, nullptr, &line, nullptr, nullptr);
-  EXPECT_EQ(1, line);
+  EXPECT_EQ(1U, line);
   cxl = clang_getRangeEnd(Ranges->ranges[0]);
   clang_getSpellingLocation(cxl, nullptr, &line, nullptr, nullptr);
-  EXPECT_EQ(3, line);
+  EXPECT_EQ(3U, line);
 
   cxl = clang_getRangeStart(Ranges->ranges[1]);
   clang_getSpellingLocation(cxl, nullptr, &line, nullptr, nullptr);
-  EXPECT_EQ(2, line);
+  EXPECT_EQ(2U, line);
   cxl = clang_getRangeEnd(Ranges->ranges[1]);
   clang_getSpellingLocation(cxl, nullptr, &line, nullptr, nullptr);
-  EXPECT_EQ(4, line);
+  EXPECT_EQ(4U, line);
 
   clang_disposeSourceRangeList(Ranges);
 }
