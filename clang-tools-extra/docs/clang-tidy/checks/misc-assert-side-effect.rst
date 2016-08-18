@@ -11,8 +11,12 @@ builds.
 
 There are two options:
 
-  - :option:`AssertMacros`: A comma-separated list of the names of assert macros
-    to be checked.
-  - :option:`CheckFunctionCalls`: Whether to treat non-const member and
-    non-member functions as they produce side effects. Disabled by default
-    because it can increase the number of false positive warnings.
+.. option:: AssertMacros
+
+   A comma-separated list of the names of assert macros to be checked.
+
+.. option:: CheckFunctionCalls
+
+   Whether to treat non-const member and non-member functions as they produce
+   side effects. Disabled by default because it can increase the number of false
+   positive warnings.
