@@ -83,37 +83,34 @@ template <class T> T &make();
 
 /// Type trait to check for a traits class that has a getNext member (as a
 /// canary for any of the ilist_nextprev_traits API).
-template <class TraitsT, class NodeT> class HasGetNext {
+template <class TraitsT, class NodeT> struct HasGetNext {
   typedef char Yes[1];
   typedef char No[2];
   template <size_t N> struct SFINAE {};
 
   template <class U>
-  static Yes &test(U *I, decltype(I->getNext(&make<NodeT>())) * = 0);
-  template <class> static No &test(...);
+  static Yes &hasGetNext(
+      SFINAE<sizeof(static_cast<NodeT *>(make<U>().getNext(&make<NodeT>())))>
+          * = 0);
+  template <class U> static No &hasGetNext(...);
 
-public:
-  static const bool value = sizeof(test<TraitsT>(nullptr)) == sizeof(Yes);
+  static const bool value = sizeof(hasGetNext<TraitsT>(nullptr)) == sizeof(Yes);
 };
 
 /// Type trait to check for a traits class that has a createSentinel member (as
 /// a canary for any of the ilist_sentinel_traits API).
-template <class TraitsT> class HasCreateSentinel {
+template <class TraitsT> struct HasCreateSentinel {
   typedef char Yes[1];
   typedef char No[2];
   template <size_t N> struct SFINAE {};
 
   template <class U>
-  static Yes &test(U *I, decltype(I->createSentinel()) * = 0);
-  template <class U> static No &test(...);
+  static Yes &
+  hasCreateSentinel(SFINAE<sizeof(make<U>().createSentinel())> * = 0);
+  template <class U> static No &hasCreateSentinel(...);
 
-public:
-  static const bool value = sizeof(test<TraitsT>(nullptr)) == sizeof(Yes);
-};
-
-template <class TraitsT, class NodeT> struct HasObsoleteCustomization {
   static const bool value =
-      HasGetNext<TraitsT, NodeT>::value || HasCreateSentinel<TraitsT>::value;
+      sizeof(hasCreateSentinel<TraitsT>(nullptr)) == sizeof(Yes);
 };
 
 } // end namespace ilist_detail
@@ -290,8 +287,14 @@ template <typename NodeTy, typename Traits = ilist_traits<NodeTy>>
 class iplist : public Traits, ilist_node_access {
   // TODO: Drop these assertions anytime after 4.0 is branched (keep them for
   // one release to help out-of-tree code update).
-  static_assert(!ilist_detail::HasObsoleteCustomization<Traits, NodeTy>::value,
-                "ilist customization points have changed!");
+#if !defined(_MSC_VER)
+  // FIXME: This fails in MSVC, but it's worth keeping around to help
+  // non-Windows users root out bugs in their ilist_traits.
+  static_assert(!ilist_detail::HasGetNext<Traits, NodeTy>::value,
+                "ilist next and prev links are not customizable!");
+  static_assert(!ilist_detail::HasCreateSentinel<Traits>::value,
+                "ilist sentinel is not customizable!");
+#endif
 
   ilist_sentinel<NodeTy> Sentinel;
 
