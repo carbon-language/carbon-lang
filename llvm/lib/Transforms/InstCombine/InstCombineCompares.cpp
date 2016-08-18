@@ -1538,14 +1538,9 @@ Instruction *InstCombiner::foldICmpCstShlConst(ICmpInst &I, Value *Op, Value *A,
 Instruction *InstCombiner::foldICmpTruncConstant(ICmpInst &Cmp,
                                                  Instruction *Trunc,
                                                  const APInt *C) {
-  // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
-  if (!RHS)
-    return nullptr;
-
   ICmpInst::Predicate Pred = Cmp.getPredicate();
   Value *X = Trunc->getOperand(0);
-  if (RHS->isOne() && C->getBitWidth() > 1) {
+  if (*C == 1 && C->getBitWidth() > 1) {
     // icmp slt trunc(signum(V)) 1 --> icmp slt V, 1
     Value *V = nullptr;
     if (Pred == ICmpInst::ICMP_SLT && match(X, m_Signum(m_Value(V))))
@@ -1556,8 +1551,8 @@ Instruction *InstCombiner::foldICmpTruncConstant(ICmpInst &Cmp,
   if (Cmp.isEquality() && Trunc->hasOneUse()) {
     // Simplify icmp eq (trunc x to i8), 42 -> icmp eq x, 42|highbits if all
     // of the high bits truncated out of x are known.
-    unsigned DstBits = Trunc->getType()->getPrimitiveSizeInBits(),
-             SrcBits = X->getType()->getPrimitiveSizeInBits();
+    unsigned DstBits = Trunc->getType()->getScalarSizeInBits(),
+             SrcBits = X->getType()->getScalarSizeInBits();
     APInt KnownZero(SrcBits, 0), KnownOne(SrcBits, 0);
     computeKnownBits(X, KnownZero, KnownOne, 0, &Cmp);
 
@@ -1566,7 +1561,7 @@ Instruction *InstCombiner::foldICmpTruncConstant(ICmpInst &Cmp,
       // Pull in the high bits from known-ones set.
       APInt NewRHS = C->zext(SrcBits);
       NewRHS |= KnownOne & APInt::getHighBitsSet(SrcBits, SrcBits - DstBits);
-      return new ICmpInst(Pred, X, Builder->getInt(NewRHS));
+      return new ICmpInst(Pred, X, ConstantInt::get(X->getType(), NewRHS));
     }
   }
 
