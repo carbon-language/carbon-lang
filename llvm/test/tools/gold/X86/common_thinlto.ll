@@ -14,7 +14,7 @@
 ; bar should still exist (if we had internalized P it would look dead).
 ; OPT: @bar
 
-; RUN: llvm-nm %t3.o | FileCheck %s --check-prefix=NM
+; RUN: llvm-nm %t3 | FileCheck %s --check-prefix=NM
 ; NM: bar
 
 source_filename = "common1.c"
