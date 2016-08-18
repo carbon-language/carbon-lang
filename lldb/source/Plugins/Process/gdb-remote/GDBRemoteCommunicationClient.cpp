@@ -2998,22 +2998,10 @@ GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thr
 lldb::addr_t
 GDBRemoteCommunicationClient::GetShlibInfoAddr()
 {
-    Lock lock(*this, false);
-    if (lock)
-    {
-        StringExtractorGDBRemote response;
-        if (SendPacketAndWaitForResponse("qShlibInfoAddr", ::strlen ("qShlibInfoAddr"), response, false) == PacketResult::Success)
-        {
-            if (response.IsNormalResponse())
-                return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
-        }
-    }
-    else if (Log *log = ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(GDBR_LOG_PROCESS | GDBR_LOG_PACKETS))
-    {
-        log->Printf("GDBRemoteCommunicationClient::%s: Didn't get sequence mutex for qShlibInfoAddr packet.",
-                    __FUNCTION__);
-    }
-    return LLDB_INVALID_ADDRESS;
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse("qShlibInfoAddr", response, false) != PacketResult::Success || !response.IsNormalResponse())
+        return LLDB_INVALID_ADDRESS;
+    return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
 }
 
 lldb_private::Error
