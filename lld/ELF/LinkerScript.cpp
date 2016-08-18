@@ -655,6 +655,8 @@ void ScriptParser::run() {
     StringRef Tok = next();
     if (Handler Fn = Cmd.lookup(Tok))
       (this->*Fn)();
+    else if (SymbolAssignment *Cmd = readProvideOrAssignment(Tok))
+      Opt.Commands.emplace_back(Cmd);
     else
       setError("unknown directive: " + Tok);
   }
