@@ -265,8 +265,8 @@ RTDyldMemoryManager::getSymbolAddressInProcess(const std::string &Name) {
   const char *NameStr = Name.c_str();
 
   // DynamicLibrary::SearchForAddresOfSymbol expects an unmangled 'C' symbol
-  // name so ff we're on Darwin, strip the leading '_' off.
-#ifdef __APPLE__
+  // name so if we're on Darwin or 32-bit Windows, strip the leading '_' off.
+#if defined(__APPLE__) || (defined(_WIN32) && !defined(_WIN64))
   if (NameStr[0] == '_')
     ++NameStr;
 #endif

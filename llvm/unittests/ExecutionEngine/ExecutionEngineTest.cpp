@@ -139,8 +139,8 @@ TEST_F(ExecutionEngineTest, LookupWithMangledAndDemangledSymbol) {
   // RTDyldMemoryManager::getSymbolAddressInProcess expects a mangled symbol,
   // but DynamicLibrary is a wrapper for dlsym, which expects the unmangled C
   // symbol name. This test verifies that getSymbolAddressInProcess strips the
-  // leading '_' on Darwin, but not on other platforms.
-#ifdef __APPLE__
+  // leading '_' on Darwin and 32-bit Windows, but not on other platforms.
+#if defined(__APPLE__) || (defined(_WIN32) && !defined(_WIN64))
   EXPECT_EQ(reinterpret_cast<uint64_t>(&x),
             RTDyldMemoryManager::getSymbolAddressInProcess("_x"));
 #else
