@@ -57,9 +57,8 @@ After:
     v.emplace_back("abc");
 
 
-In some cases the transformation would be valid, but the code
-wouldn't be exception safe.
-In this case the calls of ``push_back`` won't be replaced.
+In some cases the transformation would be valid, but the code wouldn't be
+exception safe. In this case the calls of ``push_back`` won't be replaced.
 
 .. code-block:: c++
 
@@ -73,7 +72,7 @@ pointer if ``emplace_back`` would throw exception before emplacement (e.g. not
 enough memory to add new element).
 
 For more info read item 42 - "Consider emplacement instead of insertion." of
-Scott Meyers Effective Modern C++.
+Scott Meyers "Effective Modern C++".
 
 The default smart pointers that are considered are ``std::unique_ptr``,
 ``std::shared_ptr``, ``std::auto_ptr``.  To specify other smart pointers or
