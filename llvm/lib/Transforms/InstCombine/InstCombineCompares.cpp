@@ -1534,39 +1534,42 @@ Instruction *InstCombiner::foldICmpCstShlConst(ICmpInst &I, Value *Op, Value *A,
   return getConstant(false);
 }
 
-Instruction *InstCombiner::foldICmpTruncConstant(ICmpInst &ICI,
-                                                 Instruction *LHSI,
-                                                 const APInt *RHSV) {
+/// Fold icmp (trunc X, Y), C.
+Instruction *InstCombiner::foldICmpTruncConstant(ICmpInst &Cmp,
+                                                 Instruction *Trunc,
+                                                 const APInt *C) {
   // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(ICI.getOperand(1));
+  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
   if (!RHS)
     return nullptr;
 
-  if (RHS->isOne() && RHSV->getBitWidth() > 1) {
+  ICmpInst::Predicate Pred = Cmp.getPredicate();
+  Value *X = Trunc->getOperand(0);
+  if (RHS->isOne() && C->getBitWidth() > 1) {
     // icmp slt trunc(signum(V)) 1 --> icmp slt V, 1
     Value *V = nullptr;
-    if (ICI.getPredicate() == ICmpInst::ICMP_SLT &&
-        match(LHSI->getOperand(0), m_Signum(m_Value(V))))
+    if (Pred == ICmpInst::ICMP_SLT && match(X, m_Signum(m_Value(V))))
       return new ICmpInst(ICmpInst::ICMP_SLT, V,
                           ConstantInt::get(V->getType(), 1));
   }
-  if (ICI.isEquality() && LHSI->hasOneUse()) {
+
+  if (Cmp.isEquality() && Trunc->hasOneUse()) {
     // Simplify icmp eq (trunc x to i8), 42 -> icmp eq x, 42|highbits if all
     // of the high bits truncated out of x are known.
-    unsigned DstBits = LHSI->getType()->getPrimitiveSizeInBits(),
-             SrcBits = LHSI->getOperand(0)->getType()->getPrimitiveSizeInBits();
+    unsigned DstBits = Trunc->getType()->getPrimitiveSizeInBits(),
+             SrcBits = X->getType()->getPrimitiveSizeInBits();
     APInt KnownZero(SrcBits, 0), KnownOne(SrcBits, 0);
-    computeKnownBits(LHSI->getOperand(0), KnownZero, KnownOne, 0, &ICI);
+    computeKnownBits(X, KnownZero, KnownOne, 0, &Cmp);
 
     // If all the high bits are known, we can do this xform.
     if ((KnownZero | KnownOne).countLeadingOnes() >= SrcBits - DstBits) {
       // Pull in the high bits from known-ones set.
-      APInt NewRHS = RHS->getValue().zext(SrcBits);
+      APInt NewRHS = C->zext(SrcBits);
       NewRHS |= KnownOne & APInt::getHighBitsSet(SrcBits, SrcBits - DstBits);
-      return new ICmpInst(ICI.getPredicate(), LHSI->getOperand(0),
-                          Builder->getInt(NewRHS));
+      return new ICmpInst(Pred, X, Builder->getInt(NewRHS));
     }
   }
+
   return nullptr;
 }
 
