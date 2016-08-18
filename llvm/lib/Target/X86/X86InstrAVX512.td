@@ -285,7 +285,7 @@ multiclass AVX512_maskable_scalar<bits<8> O, Format F, X86VectorVTInfo _,
 multiclass AVX512_maskable_3src<bits<8> O, Format F, X86VectorVTInfo _,
                                 dag Outs, dag NonTiedIns, string OpcodeStr,
                                 string AttSrcAsm, string IntelSrcAsm,
-                                dag RHS, bit IsCommutable = 0, 
+                                dag RHS, bit IsCommutable = 0,
                                 bit IsKCommutable = 0> :
    AVX512_maskable_common<O, F, _, Outs,
                           !con((ins _.RC:$src1), NonTiedIns),
@@ -1292,7 +1292,7 @@ multiclass avx512_blendmask<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
              (ins _.KRCWM:$mask, _.RC:$src1, _.RC:$src2),
              !strconcat(OpcodeStr,
              "\t{$src2, $src1, ${dst} {${mask}}|${dst} {${mask}}, $src1, $src2}"),
-             [(set _.RC:$dst, (vselect _.KRCWM:$mask, 
+             [(set _.RC:$dst, (vselect _.KRCWM:$mask,
                                 (_.VT _.RC:$src2),
                                 (_.VT _.RC:$src1)))]>, EVEX_4V, EVEX_K;
   let hasSideEffects = 0 in
@@ -2562,14 +2562,14 @@ def : Pat<(v32i1 (extract_subvector (v64i1 VK64:$src), (iPTR 32))),
 // Patterns for kmask shift
 multiclass mask_shift_lowering<RegisterClass RC, ValueType VT> {
   def : Pat<(VT (X86vshli RC:$src, (i8 imm:$imm))),
-            (VT (COPY_TO_REGCLASS                
+            (VT (COPY_TO_REGCLASS
                    (KSHIFTLWri (COPY_TO_REGCLASS RC:$src, VK16),
-                               (I8Imm $imm)), 
+                               (I8Imm $imm)),
                    RC))>;
   def : Pat<(VT (X86vsrli RC:$src, (i8 imm:$imm))),
-            (VT (COPY_TO_REGCLASS                
+            (VT (COPY_TO_REGCLASS
                    (KSHIFTRWri (COPY_TO_REGCLASS RC:$src, VK16),
-                               (I8Imm $imm)), 
+                               (I8Imm $imm)),
                    RC))>;
 }
 
@@ -5461,14 +5461,14 @@ let Predicates = [HasAVX512] in {
               !strconcat(asm,"\t{$src, $dst|$dst, $src}"),
               [(set _DstRC.RC:$dst, (OpNode (_SrcRC.ScalarLdFrag addr:$src)))]>,
               EVEX;
-              
+
   def : InstAlias<asm # aliasStr # "\t{$src, $dst|$dst, $src}",
           (!cast<Instruction>(NAME # "rr") _DstRC.RC:$dst, _SrcRC.FRC:$src), 0>;
   def : InstAlias<asm # aliasStr # "\t\t{{sae}, $src, $dst|$dst, $src, {sae}}",
           (!cast<Instruction>(NAME # "rb") _DstRC.RC:$dst, _SrcRC.FRC:$src), 0>;
   def : InstAlias<asm # aliasStr # "\t{$src, $dst|$dst, $src}",
-          (!cast<Instruction>(NAME # "rm") _DstRC.RC:$dst, 
-                                          _SrcRC.ScalarMemOp:$src), 0>;  
+          (!cast<Instruction>(NAME # "rm") _DstRC.RC:$dst,
+                                          _SrcRC.ScalarMemOp:$src), 0>;
 
   let isCodeGenOnly = 1 in {
     def rr_Int : AVX512<opc, MRMSrcReg, (outs _DstRC.RC:$dst), (ins _SrcRC.RC:$src),
