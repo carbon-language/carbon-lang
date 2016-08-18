@@ -3582,9 +3582,22 @@ GDBRemoteCommunicationClient::RestoreRegisterState (lldb::tid_t tid, uint32_t sa
 }
 
 bool
-GDBRemoteCommunicationClient::GetModuleInfo (const FileSpec& module_file_spec,
-                                             const lldb_private::ArchSpec& arch_spec,
-                                             ModuleSpec &module_spec)
+GDBRemoteCommunicationClient::SyncThreadState(lldb::tid_t tid)
+{
+    if (!GetSyncThreadStateSupported())
+        return false;
+
+    StreamString packet;
+    StringExtractorGDBRemote response;
+    packet.Printf("QSyncThreadState:%4.4" PRIx64 ";", tid);
+    return SendPacketAndWaitForResponse(packet.GetString(), response, false) ==
+               GDBRemoteCommunication::PacketResult::Success &&
+           response.IsOKResponse();
+}
+
+bool
+GDBRemoteCommunicationClient::GetModuleInfo(const FileSpec &module_file_spec, const lldb_private::ArchSpec &arch_spec,
+                                            ModuleSpec &module_spec)
 {
     if (!m_supports_qModuleInfo)
         return false;

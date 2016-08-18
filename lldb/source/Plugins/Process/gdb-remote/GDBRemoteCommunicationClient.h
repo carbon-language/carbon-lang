@@ -509,6 +509,9 @@ public:
     bool
     RestoreRegisterState (lldb::tid_t tid, uint32_t save_id);
 
+    bool
+    SyncThreadState(lldb::tid_t tid);
+
     const char *
     GetGDBServerProgramName();
     
