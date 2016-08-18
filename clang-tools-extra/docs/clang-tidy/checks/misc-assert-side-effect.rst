@@ -9,7 +9,8 @@ The condition of ``assert()`` is evaluated only in debug builds so a
 condition with side effect can cause different behavior in debug / release
 builds.
 
-There are two options:
+Options
+-------
 
 .. option:: AssertMacros
 
