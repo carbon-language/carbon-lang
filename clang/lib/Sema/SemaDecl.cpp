@@ -15178,7 +15178,7 @@ void Sema::diagnoseMisplacedModuleImport(Module *M, SourceLocation ImportLoc) {
   return checkModuleImportContext(*this, M, ImportLoc, CurContext);
 }
 
-DeclResult Sema::ActOnModuleImport(SourceLocation AtLoc,
+DeclResult Sema::ActOnModuleImport(SourceLocation StartLoc,
                                    SourceLocation ImportLoc,
                                    ModuleIdPath Path) {
   Module *Mod =
@@ -15213,8 +15213,7 @@ DeclResult Sema::ActOnModuleImport(SourceLocation AtLoc,
   }
 
   TranslationUnitDecl *TU = getASTContext().getTranslationUnitDecl();
-  ImportDecl *Import = ImportDecl::Create(Context, TU,
-                                          AtLoc.isValid()? AtLoc : ImportLoc,
+  ImportDecl *Import = ImportDecl::Create(Context, TU, StartLoc,
                                           Mod, IdentifierLocs);
   if (!ModuleScopes.empty())
     Context.addModuleInitializer(ModuleScopes.back().Module, Import);

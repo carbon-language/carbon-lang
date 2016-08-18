@@ -553,6 +553,10 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
     HandlePragmaUnused();
     return false;
 
+  case tok::kw_import:
+    Result = ParseModuleImport(SourceLocation());
+    return false;
+
   case tok::annot_module_include:
     Actions.ActOnModuleInclude(Tok.getLocation(),
                                reinterpret_cast<Module *>(
@@ -1996,15 +2000,29 @@ void Parser::ParseMicrosoftIfExistsExternalDeclaration() {
   Braces.consumeClose();
 }
 
+/// Parse a module import declaration. This is essentially the same for
+/// Objective-C and the C++ Modules TS, except for the leading '@' (in ObjC)
+/// and the trailing optional attributes (in C++).
+/// 
+/// [ObjC]  @import declaration:
+///           '@' 'import' (identifier '.')* ';'
+/// [ModTS] module-import-declaration:
+///           'module' module-name attribute-specifier-seq[opt] ';'
+///         module-name:
+///           module-name-qualifier[opt] identifier
+///         module-name-qualifier:
+///           module-name-qualifier[opt] identifier '.'
 Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
-  assert(Tok.isObjCAtKeyword(tok::objc_import) && 
+  assert((AtLoc.isInvalid() ? Tok.is(tok::kw_import)
+                            : Tok.isObjCAtKeyword(tok::objc_import)) &&
          "Improper start to module import");
   SourceLocation ImportLoc = ConsumeToken();
+  SourceLocation StartLoc = AtLoc.isInvalid() ? ImportLoc : AtLoc;
   
   SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> Path;
   
   // Parse the module path.
-  do {
+  while (true) {
     if (!Tok.is(tok::identifier)) {
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteModuleImport(ImportLoc, Path);
@@ -2020,14 +2038,17 @@ Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
     // Record this part of the module path.
     Path.push_back(std::make_pair(Tok.getIdentifierInfo(), Tok.getLocation()));
     ConsumeToken();
-    
-    if (Tok.is(tok::period)) {
-      ConsumeToken();
-      continue;
-    }
-    
-    break;
-  } while (true);
+
+    if (Tok.isNot(tok::period))
+      break;
+
+    ConsumeToken();
+  }
+
+  ParsedAttributesWithRange Attrs(AttrFactory);
+  MaybeParseCXX11Attributes(Attrs);
+  // We don't support any module import attributes yet.
+  ProhibitCXX11Attributes(Attrs, diag::err_attribute_not_import_attr);
 
   if (PP.hadModuleLoaderFatalFailure()) {
     // With a fatal failure in the module loader, we abort parsing.
@@ -2035,7 +2056,7 @@ Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
     return nullptr;
   }
 
-  DeclResult Import = Actions.ActOnModuleImport(AtLoc, ImportLoc, Path);
+  DeclResult Import = Actions.ActOnModuleImport(StartLoc, ImportLoc, Path);
   ExpectAndConsumeSemi(diag::err_module_expected_semi);
   if (Import.isInvalid())
     return nullptr;
