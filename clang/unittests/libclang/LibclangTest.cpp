@@ -397,9 +397,9 @@ public:
       llvm::sys::path::append(Path, Filename);
       Filename = Path.str();
     }
-    auto it = UnsavedFileContents.emplace(
+    auto it = UnsavedFileContents.insert(std::make_pair(
         fixed_addr_string(new std::string(Filename)),
-        fixed_addr_string(new std::string(Contents)));
+        fixed_addr_string(new std::string(Contents))));
     UnsavedFiles.push_back({
         it.first->first->c_str(),   // filename
         it.first->second->c_str(),  // contents
