@@ -4995,8 +4995,8 @@ SDValue SystemZTargetLowering::combineJOIN_DWORDS(
 
 SDValue SystemZTargetLowering::combineFP_ROUND(
     SDNode *N, DAGCombinerInfo &DCI) const {
-  // (fround (extract_vector_elt X 0))
-  // (fround (extract_vector_elt X 1)) ->
+  // (fpround (extract_vector_elt X 0))
+  // (fpround (extract_vector_elt X 1)) ->
   // (extract_vector_elt (VROUND X) 0)
   // (extract_vector_elt (VROUND X) 1)
   //

@@ -1107,10 +1107,10 @@ defm V_CVT_FLR_I32_F32 : VOP1Inst <vop1<0xd>, "v_cvt_flr_i32_f32",
   VOP_I32_F32, cvt_flr_i32_f32>;
 defm V_CVT_OFF_F32_I4 : VOP1Inst  <vop1<0x0e>, "v_cvt_off_f32_i4", VOP_F32_I32>;
 defm V_CVT_F32_F64 : VOP1Inst <vop1<0xf>, "v_cvt_f32_f64",
-  VOP_F32_F64, fround
+  VOP_F32_F64, fpround
 >;
 defm V_CVT_F64_F32 : VOP1Inst <vop1<0x10>, "v_cvt_f64_f32",
-  VOP_F64_F32, fextend
+  VOP_F64_F32, fpextend
 >;
 defm V_CVT_F32_UBYTE0 : VOP1Inst <vop1<0x11>, "v_cvt_f32_ubyte0",
   VOP_F32_I32, AMDGPUcvt_f32_ubyte0
