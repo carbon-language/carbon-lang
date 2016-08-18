@@ -53,16 +53,16 @@ concrete operation. As such, ``BasicBlock``\ s are mapped to ``MemoryPhi``\ s
 inside ``MemorySSA``, whereas ``Instruction``\ s are mapped to ``MemoryUse``\ s
 and ``MemoryDef``\ s.
 
-Note also that in SSA, Phi nodes merge must-reach definitions (that
-is, definite new versions of variables).  In MemorySSA, PHI nodes merge
-may-reach definitions (that is, until disambiguated, the versions that
-reach a phi node may or may not clobber a given variable)
+Note also that in SSA, Phi nodes merge must-reach definitions (that is,
+definitions that *must* be new versions of variables). In MemorySSA, PHI nodes
+merge may-reach definitions (that is, until disambiguated, the versions that
+reach a phi node may or may not clobber a given variable).
 
 ``MemoryUse``\ s are operations which use but don't modify memory. An example of
 a ``MemoryUse`` is a ``load``, or a ``readonly`` function call.
 
 ``MemoryDef``\ s are operations which may either modify memory, or which
-otherwise clobber memory in unquantifiable ways. Examples of ``MemoryDef``\ s
+introduce some kind of ordering constraints. Examples of ``MemoryDef``\ s
 include ``store``\ s, function calls, ``load``\ s with ``acquire`` (or higher)
 ordering, volatile operations, memory fences, etc.
 
