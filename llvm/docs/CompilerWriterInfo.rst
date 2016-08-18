@@ -31,6 +31,12 @@ Itanium (ia64)
 
 * `Itanium documentation <http://developer.intel.com/design/itanium2/documentation.htm>`_
 
+Lanai
+-----
+
+* `Lanai Instruction Set Architecture <http://g.co/lanai/isa>`_
+
+
 MIPS
 ----
 
