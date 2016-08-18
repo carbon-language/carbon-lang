@@ -2532,9 +2532,8 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
   }
 
   // Delete all the unnecessary instructions, from latest to earliest.
-  for (SmallVectorImpl<llvm::Instruction*>::iterator
-         i = insnsToKill.begin(), e = insnsToKill.end(); i != e; ++i)
-    (*i)->eraseFromParent();
+  for (auto *I : insnsToKill)
+    I->eraseFromParent();
 
   // Do the fused retain/autorelease if we were asked to.
   if (doRetainAutorelease)
