@@ -284,7 +284,8 @@ void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
       if (IsNew)
         OutputSections->push_back(OutSec);
       for (InputSectionBase<ELFT> *Sec : V)
-        OutSec->addSection(Sec);
+        if (!Sec->OutSec)
+          OutSec->addSection(Sec);
     }
   }
 
