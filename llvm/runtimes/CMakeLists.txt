@@ -73,6 +73,12 @@ else() # if this is included from LLVM's CMake
     string(REPLACE "-" "_" canon_name ${projName})
     string(TOUPPER ${canon_name} canon_name)
     list(APPEND prefixes ${canon_name})
+
+    string(FIND ${projName} "lib" LIB_IDX)
+    if(LIB_IDX EQUAL 0)
+      string(SUBSTRING ${projName} 3 -1 projName)
+    endif()
+    list(APPEND runtime_names ${projName})
   endforeach()
 
   if(runtimes)
@@ -85,6 +91,7 @@ else() # if this is included from LLVM's CMake
                              # Builtins were built separately above
                              CMAKE_ARGS -DCOMPILER_RT_BUILD_BUILTINS=Off
                              PASSTHROUGH_PREFIXES ${prefixes}
+                             EXTRA_TARGETS ${runtime_names}
                              USE_TOOLCHAIN)
   endif()
 endif()
