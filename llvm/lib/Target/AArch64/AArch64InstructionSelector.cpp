@@ -146,6 +146,35 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
         return GenericOpc;
       }
     }
+  case AArch64::FPRRegBankID:
+    switch (OpSize) {
+    case 32:
+      switch (GenericOpc) {
+      case TargetOpcode::G_FADD:
+        return AArch64::FADDSrr;
+      case TargetOpcode::G_FSUB:
+        return AArch64::FSUBSrr;
+      case TargetOpcode::G_FMUL:
+        return AArch64::FMULSrr;
+      case TargetOpcode::G_FDIV:
+        return AArch64::FDIVSrr;
+      default:
+        return GenericOpc;
+      }
+    case 64:
+      switch (GenericOpc) {
+      case TargetOpcode::G_FADD:
+        return AArch64::FADDDrr;
+      case TargetOpcode::G_FSUB:
+        return AArch64::FSUBDrr;
+      case TargetOpcode::G_FMUL:
+        return AArch64::FMULDrr;
+      case TargetOpcode::G_FDIV:
+        return AArch64::FDIVDrr;
+      default:
+        return GenericOpc;
+      }
+    }
   };
   return GenericOpc;
 }
@@ -290,6 +319,11 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
     // operands to use appropriate classes.
     return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
   }
+
+  case TargetOpcode::G_FADD:
+  case TargetOpcode::G_FSUB:
+  case TargetOpcode::G_FMUL:
+  case TargetOpcode::G_FDIV:
 
   case TargetOpcode::G_OR:
   case TargetOpcode::G_XOR:
