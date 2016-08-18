@@ -48,6 +48,10 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
     # The subdirectories need to treat this as standalone builds
     set(${canon_name}_STANDALONE_BUILD On)
 
+    # Setting a variable to let sub-projects detect which other projects
+    # will be included under here.
+    set(HAVE_${canon_name} On)
+
     add_subdirectory(${projName})
   endforeach()
 
