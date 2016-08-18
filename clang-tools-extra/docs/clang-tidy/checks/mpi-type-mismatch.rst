@@ -10,7 +10,7 @@ datatypes and null pointer constants are skipped, in the course of verification.
 
 Example:
 
-.. code:: c++
+.. code-block:: c++
 
   // In this case, the buffer type matches MPI datatype.
   char buf;
