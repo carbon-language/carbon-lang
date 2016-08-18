@@ -154,19 +154,20 @@ static bool isSignBitCheck(ICmpInst::Predicate Pred, ConstantInt *RHS,
 /// Returns true if the exploded icmp can be expressed as a signed comparison
 /// to zero and updates the predicate accordingly.
 /// The signedness of the comparison is preserved.
-static bool isSignTest(ICmpInst::Predicate &Pred, const ConstantInt *RHS) {
+/// TODO: Refactor with decomposeBitTestICmp()?
+static bool isSignTest(ICmpInst::Predicate &Pred, const APInt &C) {
   if (!ICmpInst::isSigned(Pred))
     return false;
 
-  if (RHS->isZero())
+  if (C == 0)
     return ICmpInst::isRelational(Pred);
 
-  if (RHS->isOne()) {
+  if (C == 1) {
     if (Pred == ICmpInst::ICMP_SLT) {
       Pred = ICmpInst::ICMP_SLE;
       return true;
     }
-  } else if (RHS->isAllOnesValue()) {
+  } else if (C.isAllOnesValue()) {
     if (Pred == ICmpInst::ICMP_SGT) {
       Pred = ICmpInst::ICMP_SGE;
       return true;
@@ -1919,7 +1920,7 @@ Instruction *InstCombiner::foldICmpMulConstant(ICmpInst &ICI, Instruction *LHSI,
   // If this is a signed comparison to 0 and the mul is sign preserving,
   // use the mul LHS operand instead.
   ICmpInst::Predicate pred = ICI.getPredicate();
-  if (isSignTest(pred, RHS) && !Val->isZero() &&
+  if (isSignTest(pred, *RHSV) && !Val->isZero() &&
       cast<BinaryOperator>(LHSI)->hasNoSignedWrap())
     return new ICmpInst(Val->isNegative() ?
                         ICmpInst::getSwappedPredicate(pred) : pred,
@@ -2045,7 +2046,7 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &ICI, Instruction *LHSI,
   // If this is a signed comparison to 0 and the shift is sign preserving,
   // use the shift LHS operand instead.
   ICmpInst::Predicate pred = ICI.getPredicate();
-  if (isSignTest(pred, RHS) && cast<BinaryOperator>(LHSI)->hasNoSignedWrap())
+  if (isSignTest(pred, *RHSV) && cast<BinaryOperator>(LHSI)->hasNoSignedWrap())
     return new ICmpInst(pred, LHSI->getOperand(0),
                         Constant::getNullValue(RHS->getType()));
 
