@@ -113,6 +113,10 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
         return AArch64::LSRVWr;
       case TargetOpcode::G_ASHR:
         return AArch64::ASRVWr;
+      case TargetOpcode::G_SDIV:
+        return AArch64::SDIVWr;
+      case TargetOpcode::G_UDIV:
+        return AArch64::UDIVWr;
       default:
         return GenericOpc;
       }
@@ -134,6 +138,10 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
         return AArch64::LSRVXr;
       case TargetOpcode::G_ASHR:
         return AArch64::ASRVXr;
+      case TargetOpcode::G_SDIV:
+        return AArch64::SDIVXr;
+      case TargetOpcode::G_UDIV:
+        return AArch64::UDIVXr;
       default:
         return GenericOpc;
       }
@@ -289,6 +297,8 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
   case TargetOpcode::G_SHL:
   case TargetOpcode::G_LSHR:
   case TargetOpcode::G_ASHR:
+  case TargetOpcode::G_SDIV:
+  case TargetOpcode::G_UDIV:
   case TargetOpcode::G_ADD:
   case TargetOpcode::G_SUB: {
     // Reject the various things we don't support yet.
