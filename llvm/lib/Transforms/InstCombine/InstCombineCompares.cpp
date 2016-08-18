@@ -2105,24 +2105,26 @@ Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &ICI, Instruction *LHSI,
 Instruction *InstCombiner::foldICmpUDivConstant(ICmpInst &Cmp,
                                                 Instruction *UDiv,
                                                 const APInt *C) {
-  // FIXME: This check restricts all folds under here to scalar types.
-  if (ConstantInt *DivLHS = dyn_cast<ConstantInt>(UDiv->getOperand(0))) {
-    Value *X = UDiv->getOperand(1);
-    const APInt &C2 = DivLHS->getValue();
-    assert(C2 != 0 && "udiv 0, X should have been simplified already.");
-    // (icmp ugt (udiv C2, X), C1) -> (icmp ule X, C2/(C1+1))
-    if (Cmp.getPredicate() == ICmpInst::ICMP_UGT) {
-      assert(!C->isMaxValue() &&
-             "icmp ugt X, UINT_MAX should have been simplified already.");
-      return new ICmpInst(ICmpInst::ICMP_ULE, X,
-                          ConstantInt::get(X->getType(), C2.udiv(*C + 1)));
-    }
-    // (icmp ult (udiv C2, X), C1) -> (icmp ugt X, C2/C1)
-    if (Cmp.getPredicate() == ICmpInst::ICMP_ULT) {
-      assert(C != 0 && "icmp ult X, 0 should have been simplified already.");
-      return new ICmpInst(ICmpInst::ICMP_UGT, X,
-                          ConstantInt::get(X->getType(), C2.udiv(*C)));
-    }
+  const APInt *C2;
+  if (!match(UDiv->getOperand(0), m_APInt(C2)))
+    return nullptr;
+
+  assert(C2 != 0 && "udiv 0, X should have been simplified already.");
+
+  // (icmp ugt (udiv C2, Y), C) -> (icmp ule Y, C2/(C+1))
+  Value *Y = UDiv->getOperand(1);
+  if (Cmp.getPredicate() == ICmpInst::ICMP_UGT) {
+    assert(!C->isMaxValue() &&
+           "icmp ugt X, UINT_MAX should have been simplified already.");
+    return new ICmpInst(ICmpInst::ICMP_ULE, Y,
+                        ConstantInt::get(Y->getType(), C2->udiv(*C + 1)));
+  }
+
+  // (icmp ult (udiv C2, Y), C) -> (icmp ugt Y, C2/C)
+  if (Cmp.getPredicate() == ICmpInst::ICMP_ULT) {
+    assert(C != 0 && "icmp ult X, 0 should have been simplified already.");
+    return new ICmpInst(ICmpInst::ICMP_UGT, Y,
+                        ConstantInt::get(Y->getType(), C2->udiv(*C)));
   }
 
   return nullptr;
