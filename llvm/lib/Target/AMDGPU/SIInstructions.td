@@ -1732,7 +1732,7 @@ defm V_MSAD_U8 : VOP3Inst <vop3<0x171, 0x1e4>, "v_msad_u8",
   VOP_I32_I32_I32_I32, int_amdgcn_msad_u8>;
 
 defm V_MQSAD_PK_U16_U8 : VOP3Inst <vop3<0x173, 0x1e6>, "v_mqsad_pk_u16_u8",
-  VOP_I32_I32_I32_I32, int_amdgcn_mqsad_pk_u16_u8>;
+  VOP_I64_I64_I32_I64, int_amdgcn_mqsad_pk_u16_u8>;
 
 //def V_MQSAD_U8 : VOP3_U8 <0x00000173, "v_mqsad_u8", []>;
 

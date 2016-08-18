@@ -530,11 +530,11 @@ def int_amdgcn_sad_u16 :
 
 def int_amdgcn_qsad_pk_u16_u8 :
   GCCBuiltin<"__builtin_amdgcn_qsad_pk_u16_u8">,
-  Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_i32_ty, llvm_i64_ty], [IntrNoMem]>;
 
 def int_amdgcn_mqsad_pk_u16_u8 :
   GCCBuiltin<"__builtin_amdgcn_mqsad_pk_u16_u8">,
-  Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_i32_ty, llvm_i64_ty], [IntrNoMem]>;
 
 def int_amdgcn_mqsad_u32_u8 :
   GCCBuiltin<"__builtin_amdgcn_mqsad_u32_u8">,
