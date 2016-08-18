@@ -541,3 +541,58 @@ define void @int_comparison(i32 %a, i32 %b, i1* %addr) {
   store i1 %res, i1* %addr
   ret void
 }
+
+; CHECK-LABEL: name: test_fadd
+; CHECK: [[ARG1:%[0-9]+]](32) = COPY %s0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](32) = COPY %s1
+; CHECK-NEXT: [[RES:%[0-9]+]](32) = G_FADD s32 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %s0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %s0
+define float @test_fadd(float %arg1, float %arg2) {
+  %res = fadd float %arg1, %arg2
+  ret float %res
+}
+
+; CHECK-LABEL: name: test_fsub
+; CHECK: [[ARG1:%[0-9]+]](32) = COPY %s0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](32) = COPY %s1
+; CHECK-NEXT: [[RES:%[0-9]+]](32) = G_FSUB s32 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %s0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %s0
+define float @test_fsub(float %arg1, float %arg2) {
+  %res = fsub float %arg1, %arg2
+  ret float %res
+}
+
+; CHECK-LABEL: name: test_fmul
+; CHECK: [[ARG1:%[0-9]+]](32) = COPY %s0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](32) = COPY %s1
+; CHECK-NEXT: [[RES:%[0-9]+]](32) = G_FMUL s32 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %s0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %s0
+define float @test_fmul(float %arg1, float %arg2) {
+  %res = fmul float %arg1, %arg2
+  ret float %res
+}
+
+; CHECK-LABEL: name: test_fdiv
+; CHECK: [[ARG1:%[0-9]+]](32) = COPY %s0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](32) = COPY %s1
+; CHECK-NEXT: [[RES:%[0-9]+]](32) = G_FDIV s32 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %s0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %s0
+define float @test_fdiv(float %arg1, float %arg2) {
+  %res = fdiv float %arg1, %arg2
+  ret float %res
+}
+
+; CHECK-LABEL: name: test_frem
+; CHECK: [[ARG1:%[0-9]+]](32) = COPY %s0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](32) = COPY %s1
+; CHECK-NEXT: [[RES:%[0-9]+]](32) = G_FREM s32 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %s0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %s0
+define float @test_frem(float %arg1, float %arg2) {
+  %res = frem float %arg1, %arg2
+  ret float %res
+}

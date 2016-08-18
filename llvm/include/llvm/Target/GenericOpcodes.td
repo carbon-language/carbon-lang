@@ -200,6 +200,48 @@ def G_ICMP : Instruction {
 }
 
 //------------------------------------------------------------------------------
+// Floating Point Binary ops.
+//------------------------------------------------------------------------------
+
+// Generic FP addition.
+def G_FADD : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+  let isCommutable = 1;
+}
+
+// Generic FP subtraction.
+def G_FSUB : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+  let isCommutable = 0;
+}
+
+// Generic FP multiplication.
+def G_FMUL : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+  let isCommutable = 1;
+}
+
+// Generic FP division.
+def G_FDIV : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+}
+
+// Generic FP remainder.
+def G_FREM : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+}
+
+//------------------------------------------------------------------------------
 // Memory ops
 //------------------------------------------------------------------------------
 
