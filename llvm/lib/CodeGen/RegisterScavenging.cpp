@@ -32,11 +32,7 @@ using namespace llvm;
 #define DEBUG_TYPE "reg-scavenging"
 
 void RegScavenger::setRegUsed(unsigned Reg, LaneBitmask LaneMask) {
-  for (MCRegUnitMaskIterator RUI(Reg, TRI); RUI.isValid(); ++RUI) {
-    LaneBitmask UnitMask = (*RUI).second;
-    if (UnitMask == 0 || (LaneMask & UnitMask) != 0)
-      RegUnitsAvailable.reset((*RUI).first);
-  }
+  LiveUnits.addRegMasked(Reg, LaneMask);
 }
 
 void RegScavenger::init(MachineBasicBlock &MBB) {
@@ -44,6 +40,7 @@ void RegScavenger::init(MachineBasicBlock &MBB) {
   TII = MF.getSubtarget().getInstrInfo();
   TRI = MF.getSubtarget().getRegisterInfo();
   MRI = &MF.getRegInfo();
+  LiveUnits.init(*TRI);
 
   assert((NumRegUnits == 0 || NumRegUnits == TRI->getNumRegUnits()) &&
          "Target changed?");
@@ -56,7 +53,6 @@ void RegScavenger::init(MachineBasicBlock &MBB) {
   // Self-initialize.
   if (!this->MBB) {
     NumRegUnits = TRI->getNumRegUnits();
-    RegUnitsAvailable.resize(NumRegUnits);
     KillRegUnits.resize(NumRegUnits);
     DefRegUnits.resize(NumRegUnits);
     TmpRegUnits.resize(NumRegUnits);
@@ -69,32 +65,17 @@ void RegScavenger::init(MachineBasicBlock &MBB) {
     I->Restore = nullptr;
   }
 
-  // All register units start out unused.
-  RegUnitsAvailable.set();
-
-  // Pristine CSRs are not available.
-  BitVector PR = MF.getFrameInfo().getPristineRegs(MF);
-  for (int I = PR.find_first(); I>0; I = PR.find_next(I))
-    setRegUsed(I);
-
   Tracking = false;
-}
-
-void RegScavenger::setLiveInsUsed(const MachineBasicBlock &MBB) {
-  for (const auto &LI : MBB.liveins())
-    setRegUsed(LI.PhysReg, LI.LaneMask);
 }
 
 void RegScavenger::enterBasicBlock(MachineBasicBlock &MBB) {
   init(MBB);
-  setLiveInsUsed(MBB);
+  LiveUnits.addLiveIns(MBB);
 }
 
 void RegScavenger::enterBasicBlockEnd(MachineBasicBlock &MBB) {
   init(MBB);
-  // Merge live-ins of successors to get live-outs.
-  for (const MachineBasicBlock *Succ : MBB.successors())
-    setLiveInsUsed(*Succ);
+  LiveUnits.addLiveOuts(MBB);
 
   // Move internal iterator at the last instruction of the block.
   if (MBB.begin() != MBB.end()) {
@@ -268,36 +249,7 @@ void RegScavenger::backward() {
   assert(Tracking && "Must be tracking to determine kills and defs");
 
   const MachineInstr &MI = *MBBI;
-  // Defined or clobbered registers are available now.
-  for (const MachineOperand &MO : MI.operands()) {
-    if (MO.isRegMask()) {
-      for (unsigned RU = 0, RUEnd = TRI->getNumRegUnits(); RU != RUEnd;
-           ++RU) {
-        for (MCRegUnitRootIterator RURI(RU, TRI); RURI.isValid(); ++RURI) {
-          if (MO.clobbersPhysReg(*RURI)) {
-            RegUnitsAvailable.set(RU);
-            break;
-          }
-        }
-      }
-    } else if (MO.isReg() && MO.isDef()) {
-      unsigned Reg = MO.getReg();
-      if (!Reg || TargetRegisterInfo::isVirtualRegister(Reg) ||
-          isReserved(Reg))
-        continue;
-      addRegUnits(RegUnitsAvailable, Reg);
-    }
-  }
-  // Mark read registers as unavailable.
-  for (const MachineOperand &MO : MI.uses()) {
-    if (MO.isReg() && MO.readsReg()) {
-      unsigned Reg = MO.getReg();
-      if (!Reg || TargetRegisterInfo::isVirtualRegister(Reg) ||
-          isReserved(Reg))
-        continue;
-      removeRegUnits(RegUnitsAvailable, Reg);
-    }
-  }
+  LiveUnits.stepBackward(MI);
 
   // Expire scavenge spill frameindex uses.
   for (ScavengedInfo &I : Scavenged) {
@@ -315,12 +267,9 @@ void RegScavenger::backward() {
 }
 
 bool RegScavenger::isRegUsed(unsigned Reg, bool includeReserved) const {
-  if (includeReserved && isReserved(Reg))
-    return true;
-  for (MCRegUnitIterator RUI(Reg, TRI); RUI.isValid(); ++RUI)
-    if (!RegUnitsAvailable.test(*RUI))
-      return true;
-  return false;
+  if (isReserved(Reg))
+    return includeReserved;
+  return !LiveUnits.available(Reg);
 }
 
 unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RC) const {
@@ -621,7 +570,7 @@ unsigned RegScavenger::scavengeRegisterBackwards(const TargetRegisterClass &RC,
     MachineBasicBlock::iterator SpillBefore = P.second;
     ScavengedInfo &Scavenged = spill(Reg, RC, SPAdj, SpillBefore, ReloadBefore);
     Scavenged.Restore = &*std::prev(SpillBefore);
-    addRegUnits(RegUnitsAvailable, Reg);
+    LiveUnits.removeReg(Reg);
     DEBUG(dbgs() << "Scavenged register with spill: " << PrintReg(Reg, TRI)
           << " until " << *SpillBefore);
   } else {
