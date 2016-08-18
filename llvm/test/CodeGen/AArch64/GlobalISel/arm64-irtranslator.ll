@@ -459,6 +459,50 @@ define i32 @test_ashr(i32 %arg1, i32 %arg2) {
   ret i32 %res
 }
 
+; CHECK-LABEL: name: test_sdiv
+; CHECK: [[ARG1:%[0-9]+]](32) = COPY %w0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](32) = COPY %w1
+; CHECK-NEXT: [[RES:%[0-9]+]](32) = G_SDIV s32 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %w0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %w0
+define i32 @test_sdiv(i32 %arg1, i32 %arg2) {
+  %res = sdiv i32 %arg1, %arg2
+  ret i32 %res
+}
+
+; CHECK-LABEL: name: test_udiv
+; CHECK: [[ARG1:%[0-9]+]](32) = COPY %w0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](32) = COPY %w1
+; CHECK-NEXT: [[RES:%[0-9]+]](32) = G_UDIV s32 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %w0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %w0
+define i32 @test_udiv(i32 %arg1, i32 %arg2) {
+  %res = udiv i32 %arg1, %arg2
+  ret i32 %res
+}
+
+; CHECK-LABEL: name: test_srem
+; CHECK: [[ARG1:%[0-9]+]](32) = COPY %w0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](32) = COPY %w1
+; CHECK-NEXT: [[RES:%[0-9]+]](32) = G_SREM s32 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %w0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %w0
+define i32 @test_srem(i32 %arg1, i32 %arg2) {
+  %res = srem i32 %arg1, %arg2
+  ret i32 %res
+}
+
+; CHECK-LABEL: name: test_urem
+; CHECK: [[ARG1:%[0-9]+]](32) = COPY %w0
+; CHECK-NEXT: [[ARG2:%[0-9]+]](32) = COPY %w1
+; CHECK-NEXT: [[RES:%[0-9]+]](32) = G_UREM s32 [[ARG1]], [[ARG2]]
+; CHECK-NEXT: %w0 = COPY [[RES]]
+; CHECK-NEXT: RET_ReallyLR implicit %w0
+define i32 @test_urem(i32 %arg1, i32 %arg2) {
+  %res = urem i32 %arg1, %arg2
+  ret i32 %res
+}
+
 ; CHECK-LABEL: name: test_constant_null
 ; CHECK: [[NULL:%[0-9]+]](64) = G_CONSTANT p0 0
 ; CHECK: %x0 = COPY [[NULL]]

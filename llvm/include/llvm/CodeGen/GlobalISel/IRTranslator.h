@@ -171,6 +171,20 @@ private:
   bool translateXor(const User &U) {
     return translateBinaryOp(TargetOpcode::G_XOR, U);
   }
+
+  bool translateUDiv(const User &U) {
+    return translateBinaryOp(TargetOpcode::G_UDIV, U);
+  }
+  bool translateSDiv(const User &U) {
+    return translateBinaryOp(TargetOpcode::G_SDIV, U);
+  }
+  bool translateURem(const User &U) {
+    return translateBinaryOp(TargetOpcode::G_UREM, U);
+  }
+  bool translateSRem(const User &U) {
+    return translateBinaryOp(TargetOpcode::G_SREM, U);
+  }
+
   bool translateAlloca(const User &U) {
     return translateStaticAlloca(cast<AllocaInst>(U));
   }
@@ -215,11 +229,7 @@ private:
   bool translateFAdd(const User &U) { return false; }
   bool translateFSub(const User &U) { return false; }
   bool translateFMul(const User &U) { return false; }
-  bool translateUDiv(const User &U) { return false; }
-  bool translateSDiv(const User &U) { return false; }
   bool translateFDiv(const User &U) { return false; }
-  bool translateURem(const User &U) { return false; }
-  bool translateSRem(const User &U) { return false; }
   bool translateFRem(const User &U) { return false; }
   bool translateGetElementPtr(const User &U) { return false; }
   bool translateFence(const User &U) { return false; }

@@ -173,6 +173,18 @@ HANDLE_TARGET_OPCODE(G_SUB)
 // Generic multiply instruction.
 HANDLE_TARGET_OPCODE(G_MUL)
 
+// Generic signed division instruction.
+HANDLE_TARGET_OPCODE(G_SDIV)
+
+// Generic unsigned division instruction.
+HANDLE_TARGET_OPCODE(G_UDIV)
+
+// Generic signed remainder instruction.
+HANDLE_TARGET_OPCODE(G_SREM)
+
+// Generic unsigned remainder instruction.
+HANDLE_TARGET_OPCODE(G_UREM)
+
 /// Generic bitwise and instruction.
 HANDLE_TARGET_OPCODE(G_AND)
 
