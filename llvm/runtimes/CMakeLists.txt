@@ -81,7 +81,7 @@ else() # if this is included from LLVM's CMake
     # together in a single CMake invocaiton.
     llvm_ExternalProject_Add(runtimes
                              ${CMAKE_CURRENT_SOURCE_DIR}
-                             DEPENDS ${deps} llvm-config
+                             DEPENDS ${deps}
                              # Builtins were built separately above
                              CMAKE_ARGS -DCOMPILER_RT_BUILD_BUILTINS=Off
                              PASSTHROUGH_PREFIXES ${prefixes}
