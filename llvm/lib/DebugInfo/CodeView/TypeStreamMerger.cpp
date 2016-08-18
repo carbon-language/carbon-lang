@@ -88,7 +88,7 @@ private:
     CVTypeVisitor Visitor(Deserializer);
 
     if (auto EC = Visitor.visitFieldListMemberStream(Record.Data))
-      return std::move(EC);
+      return EC;
     return Error::success();
   }
 
