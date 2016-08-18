@@ -306,9 +306,8 @@ void TargetInfo::adjust(const LangOptions &Opts) {
     }
     LongDoubleWidth = LongDoubleAlign = 128;
 
-    unsigned MaxPointerWidth = getMaxPointerWidth();
-    assert(MaxPointerWidth == 32 || MaxPointerWidth == 64);
-    bool Is32BitArch = MaxPointerWidth == 32;
+    assert(PointerWidth == 32 || PointerWidth == 64);
+    bool Is32BitArch = PointerWidth == 32;
     SizeType = Is32BitArch ? UnsignedInt : UnsignedLong;
     PtrDiffType = Is32BitArch ? SignedInt : SignedLong;
     IntPtrType = Is32BitArch ? SignedInt : SignedLong;
