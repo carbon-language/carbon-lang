@@ -301,10 +301,6 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::OMPTeamsDistributeDirectiveClass:
     EmitOMPTeamsDistributeDirective(cast<OMPTeamsDistributeDirective>(*S));
     break;
-  case Stmt::OMPTeamsDistributeSimdDirectiveClass:
-    EmitOMPTeamsDistributeSimdDirective(
-        cast<OMPTeamsDistributeSimdDirective>(*S));
-    break;
   }
 }
 
