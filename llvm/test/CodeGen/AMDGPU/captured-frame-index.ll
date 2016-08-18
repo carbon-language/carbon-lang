@@ -140,8 +140,8 @@ define void @stored_fi_to_global_2_small_objects(float* addrspace(1)* %ptr) #0 {
 }
 
 ; GCN-LABEL: {{^}}stored_fi_to_global_huge_frame_offset:
-; GCN: s_add_i32 [[BASE_1_OFF_0:s[0-9]+]], 0, 0x3ffc
-; GCN: v_mov_b32_e32 [[BASE_0:v[0-9]+]], 0{{$}}
+; GCN-DAG: s_add_i32 [[BASE_1_OFF_0:s[0-9]+]], 0, 0x3ffc
+; GCN-DAG: v_mov_b32_e32 [[BASE_0:v[0-9]+]], 0{{$}}
 ; GCN: buffer_store_dword [[BASE_0]], v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, s{{[0-9]+}} offen
 
 ; GCN: v_mov_b32_e32 [[V_BASE_1_OFF_0:v[0-9]+]], [[BASE_1_OFF_0]]
