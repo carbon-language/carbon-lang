@@ -457,6 +457,16 @@ def int_amdgcn_s_sleep :
   Intrinsic<[], [llvm_i32_ty], []> {
 }
 
+def int_amdgcn_s_incperflevel :
+  GCCBuiltin<"__builtin_amdgcn_s_incperflevel">,
+  Intrinsic<[], [llvm_i32_ty], []> {
+}
+
+def int_amdgcn_s_decperflevel :
+  GCCBuiltin<"__builtin_amdgcn_s_decperflevel">,
+  Intrinsic<[], [llvm_i32_ty], []> {
+}
+
 def int_amdgcn_s_getreg :
   GCCBuiltin<"__builtin_amdgcn_s_getreg">,
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrReadMem]>;

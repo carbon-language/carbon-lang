@@ -515,8 +515,18 @@ def S_TRAP : SOPP <0x00000012, (ins i16imm:$simm16), "s_trap $simm16">;
 def S_ICACHE_INV : SOPP <0x00000013, (ins), "s_icache_inv"> {
 	let simm16 = 0;
 }
-def S_INCPERFLEVEL : SOPP <0x00000014, (ins i16imm:$simm16), "s_incperflevel $simm16">;
-def S_DECPERFLEVEL : SOPP <0x00000015, (ins i16imm:$simm16), "s_decperflevel $simm16">;
+def S_INCPERFLEVEL : SOPP <0x00000014, (ins i32imm:$simm16), "s_incperflevel $simm16", 
+  [(int_amdgcn_s_incperflevel SIMM16bit:$simm16)]> {
+  let hasSideEffects = 1;
+  let mayLoad = 1;
+  let mayStore = 1;
+}
+def S_DECPERFLEVEL : SOPP <0x00000015, (ins i32imm:$simm16), "s_decperflevel $simm16",
+  [(int_amdgcn_s_decperflevel SIMM16bit:$simm16)]> {
+  let hasSideEffects = 1;
+  let mayLoad = 1;
+  let mayStore = 1;
+}
 def S_TTRACEDATA : SOPP <0x00000016, (ins), "s_ttracedata"> {
   let simm16 = 0;
 }
