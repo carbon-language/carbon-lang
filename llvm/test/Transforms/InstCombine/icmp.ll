@@ -1305,11 +1305,9 @@ define i1 @icmp_mul_nsw_neg1(i32 %x) {
   ret i1 %cmp
 }
 
-; FIXME: Vectors should fold the same way.
 define <2 x i1> @icmp_mul_nsw_neg1_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @icmp_mul_nsw_neg1_vec(
-; CHECK-NEXT:    [[MUL:%.*]] = mul nsw <2 x i32> %x, <i32 -12, i32 -12>
-; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt <2 x i32> [[MUL]], zeroinitializer
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt <2 x i32> %x, zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %mul = mul nsw <2 x i32> %x, <i32 -12, i32 -12>

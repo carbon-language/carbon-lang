@@ -1906,26 +1906,22 @@ Instruction *InstCombiner::foldICmpOrConstant(ICmpInst &Cmp, Instruction *Or,
   return nullptr;
 }
 
-Instruction *InstCombiner::foldICmpMulConstant(ICmpInst &ICI, Instruction *LHSI,
-                                               const APInt *RHSV) {
-  // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(ICI.getOperand(1));
-  if (!RHS)
+/// Fold icmp (mul X, Y), C.
+Instruction *InstCombiner::foldICmpMulConstant(ICmpInst &Cmp, Instruction *Mul,
+                                               const APInt *C) {
+  const APInt *MulC;
+  if (!match(Mul->getOperand(1), m_APInt(MulC)))
     return nullptr;
 
-  ConstantInt *Val = dyn_cast<ConstantInt>(LHSI->getOperand(1));
-  if (!Val)
-    return nullptr;
-
-  // If this is a signed comparison to 0 and the mul is sign preserving,
-  // use the mul LHS operand instead.
-  ICmpInst::Predicate pred = ICI.getPredicate();
-  if (isSignTest(pred, *RHSV) && !Val->isZero() &&
-      cast<BinaryOperator>(LHSI)->hasNoSignedWrap())
-    return new ICmpInst(Val->isNegative() ?
-                        ICmpInst::getSwappedPredicate(pred) : pred,
-                        LHSI->getOperand(0),
-                        Constant::getNullValue(RHS->getType()));
+  // If this is a test of the sign bit and the multiply is sign-preserving with
+  // a constant operand, use the multiply LHS operand instead.
+  ICmpInst::Predicate Pred = Cmp.getPredicate();
+  if (isSignTest(Pred, *C) && cast<BinaryOperator>(Mul)->hasNoSignedWrap()) {
+    if (MulC->isNegative())
+      Pred = ICmpInst::getSwappedPredicate(Pred);
+    return new ICmpInst(Pred, Mul->getOperand(0),
+                        Constant::getNullValue(Mul->getType()));
+  }
 
   return nullptr;
 }
