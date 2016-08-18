@@ -2101,31 +2101,27 @@ Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &ICI, Instruction *LHSI,
   return nullptr;
 }
 
-Instruction *InstCombiner::foldICmpUDivConstant(ICmpInst &ICI,
-                                                Instruction *LHSI,
-                                                const APInt *RHSV) {
+/// Fold icmp (udiv X, Y), C.
+Instruction *InstCombiner::foldICmpUDivConstant(ICmpInst &Cmp,
+                                                Instruction *UDiv,
+                                                const APInt *C) {
   // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(ICI.getOperand(1));
-  if (!RHS)
-    return nullptr;
-
-  if (ConstantInt *DivLHS = dyn_cast<ConstantInt>(LHSI->getOperand(0))) {
-    Value *X = LHSI->getOperand(1);
-    const APInt &C1 = RHS->getValue();
+  if (ConstantInt *DivLHS = dyn_cast<ConstantInt>(UDiv->getOperand(0))) {
+    Value *X = UDiv->getOperand(1);
     const APInt &C2 = DivLHS->getValue();
     assert(C2 != 0 && "udiv 0, X should have been simplified already.");
     // (icmp ugt (udiv C2, X), C1) -> (icmp ule X, C2/(C1+1))
-    if (ICI.getPredicate() == ICmpInst::ICMP_UGT) {
-      assert(!C1.isMaxValue() &&
+    if (Cmp.getPredicate() == ICmpInst::ICMP_UGT) {
+      assert(!C->isMaxValue() &&
              "icmp ugt X, UINT_MAX should have been simplified already.");
       return new ICmpInst(ICmpInst::ICMP_ULE, X,
-                          ConstantInt::get(X->getType(), C2.udiv(C1 + 1)));
+                          ConstantInt::get(X->getType(), C2.udiv(*C + 1)));
     }
     // (icmp ult (udiv C2, X), C1) -> (icmp ugt X, C2/C1)
-    if (ICI.getPredicate() == ICmpInst::ICMP_ULT) {
-      assert(C1 != 0 && "icmp ult X, 0 should have been simplified already.");
+    if (Cmp.getPredicate() == ICmpInst::ICMP_ULT) {
+      assert(C != 0 && "icmp ult X, 0 should have been simplified already.");
       return new ICmpInst(ICmpInst::ICMP_UGT, X,
-                          ConstantInt::get(X->getType(), C2.udiv(C1)));
+                          ConstantInt::get(X->getType(), C2.udiv(*C)));
     }
   }
 
