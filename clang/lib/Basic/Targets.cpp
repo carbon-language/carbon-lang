@@ -806,7 +806,7 @@ public:
     this->SizeType = TargetInfo::UnsignedInt;
     this->PtrDiffType = TargetInfo::SignedInt;
     this->IntPtrType = TargetInfo::SignedInt;
-    // RegParmMax is inherited from the underlying architecture
+    // RegParmMax is inherited from the underlying architecture.
     this->LongDoubleFormat = &llvm::APFloat::IEEEdouble;
     if (Triple.getArch() == llvm::Triple::arm) {
       // Handled in ARM's setABI().
