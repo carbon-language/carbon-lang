@@ -141,33 +141,48 @@ MachineInstrBuilder MachineIRBuilder::buildAnyExtend(LLT Ty, unsigned Res,
   return buildInstr(TargetOpcode::G_ANYEXTEND, Ty).addDef(Res).addUse(Op);
 }
 
-MachineInstrBuilder
-MachineIRBuilder::buildExtract(LLT Ty, ArrayRef<unsigned> Results, unsigned Src,
-                               ArrayRef<uint64_t> Indexes) {
-  assert(Results.size() == Indexes.size() && "inconsistent number of regs");
+MachineInstrBuilder MachineIRBuilder::buildExtract(ArrayRef<LLT> ResTys,
+                                                   ArrayRef<unsigned> Results,
+                                                   ArrayRef<uint64_t> Indices,
+                                                   LLT SrcTy, unsigned Src) {
+  assert(ResTys.size() == Results.size() && Results.size() == Indices.size() &&
+         "inconsistent number of regs");
+  assert(!Results.empty() && "invalid trivial extract");
 
-  MachineInstrBuilder MIB = buildInstr(TargetOpcode::G_EXTRACT, Ty);
+  auto MIB = BuildMI(getMF(), DL, getTII().get(TargetOpcode::G_EXTRACT));
+  for (unsigned i = 0; i < ResTys.size(); ++i)
+    MIB->setType(LLT::scalar(ResTys[i].getSizeInBits()), i);
+  MIB->setType(LLT::scalar(SrcTy.getSizeInBits()), ResTys.size());
+
   for (auto Res : Results)
     MIB.addDef(Res);
 
   MIB.addUse(Src);
 
-  for (auto Idx : Indexes)
+  for (auto Idx : Indices)
     MIB.addImm(Idx);
+
+  getMBB().insert(getInsertPt(), MIB);
+
   return MIB;
 }
 
 MachineInstrBuilder
-MachineIRBuilder::buildSequence(LLT Ty, unsigned Res,
+MachineIRBuilder::buildSequence(LLT ResTy, unsigned Res,
+                                ArrayRef<LLT> OpTys,
                                 ArrayRef<unsigned> Ops,
-                                ArrayRef<unsigned> Indexes) {
-  assert(Ops.size() == Indexes.size() && "incompatible args");
+                                ArrayRef<unsigned> Indices) {
+  assert(OpTys.size() == Ops.size() && Ops.size() == Indices.size() &&
+         "incompatible args");
+  assert(!Ops.empty() && "invalid trivial sequence");
 
-  MachineInstrBuilder MIB = buildInstr(TargetOpcode::G_SEQUENCE, Ty);
+  MachineInstrBuilder MIB =
+      buildInstr(TargetOpcode::G_SEQUENCE, LLT::scalar(ResTy.getSizeInBits()));
   MIB.addDef(Res);
   for (unsigned i = 0; i < Ops.size(); ++i) {
     MIB.addUse(Ops[i]);
-    MIB.addImm(Indexes[i]);
+    MIB.addImm(Indices[i]);
+    MIB->setType(LLT::scalar(OpTys[i].getSizeInBits()), MIB->getNumTypes());
   }
   return MIB;
 }

@@ -52,11 +52,14 @@ void MachineLegalizeHelper::extractParts(unsigned Reg, LLT Ty, int NumParts,
                                          SmallVectorImpl<unsigned> &VRegs) {
   unsigned Size = Ty.getSizeInBits();
   SmallVector<uint64_t, 4> Indexes;
+  SmallVector<LLT, 4> ResTys;
   for (int i = 0; i < NumParts; ++i) {
     VRegs.push_back(MRI.createGenericVirtualRegister(Size));
     Indexes.push_back(i * Size);
+    ResTys.push_back(Ty);
   }
-  MIRBuilder.buildExtract(Ty, VRegs, Reg, Indexes);
+  MIRBuilder.buildExtract(ResTys, VRegs, Indexes,
+                          LLT::scalar(Ty.getSizeInBits() * NumParts), Reg);
 }
 
 MachineLegalizeHelper::LegalizeResult
@@ -78,6 +81,7 @@ MachineLegalizeHelper::narrowScalar(MachineInstr &MI, LLT NarrowTy) {
     unsigned CarryIn = MRI.createGenericVirtualRegister(1);
     MIRBuilder.buildConstant(LLT::scalar(1), CarryIn, 0);
 
+    SmallVector<LLT, 2> DstTys;
     for (int i = 0; i < NumParts; ++i) {
       unsigned DstReg = MRI.createGenericVirtualRegister(NarrowSize);
       unsigned CarryOut = MRI.createGenericVirtualRegister(1);
@@ -85,12 +89,13 @@ MachineLegalizeHelper::narrowScalar(MachineInstr &MI, LLT NarrowTy) {
       MIRBuilder.buildUAdde(NarrowTy, DstReg, CarryOut, Src1Regs[i],
                             Src2Regs[i], CarryIn);
 
+      DstTys.push_back(NarrowTy);
       DstRegs.push_back(DstReg);
       Indexes.push_back(i * NarrowSize);
       CarryIn = CarryOut;
     }
-    MIRBuilder.buildSequence(MI.getType(), MI.getOperand(0).getReg(), DstRegs,
-                             Indexes);
+    MIRBuilder.buildSequence(MI.getType(), MI.getOperand(0).getReg(), DstTys,
+                             DstRegs, Indexes);
     MI.eraseFromParent();
     return Legalized;
   }
@@ -146,15 +151,17 @@ MachineLegalizeHelper::fewerElementsVector(MachineInstr &MI, LLT NarrowTy) {
     extractParts(MI.getOperand(1).getReg(), NarrowTy, NumParts, Src1Regs);
     extractParts(MI.getOperand(2).getReg(), NarrowTy, NumParts, Src2Regs);
 
+    SmallVector<LLT, 2> DstTys;
     for (int i = 0; i < NumParts; ++i) {
       unsigned DstReg = MRI.createGenericVirtualRegister(NarrowSize);
       MIRBuilder.buildAdd(NarrowTy, DstReg, Src1Regs[i], Src2Regs[i]);
+      DstTys.push_back(NarrowTy);
       DstRegs.push_back(DstReg);
       Indexes.push_back(i * NarrowSize);
     }
 
-    MIRBuilder.buildSequence(MI.getType(), MI.getOperand(0).getReg(), DstRegs,
-                             Indexes);
+    MIRBuilder.buildSequence(MI.getType(), MI.getOperand(0).getReg(), DstTys,
+                             DstRegs, Indexes);
     MI.eraseFromParent();
     return Legalized;
   }

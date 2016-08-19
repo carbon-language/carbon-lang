@@ -602,7 +602,7 @@ define float @test_frem(float %arg1, float %arg2) {
 ; CHECK: [[RHS:%[0-9]+]](32) = COPY %w1
 ; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x2
 ; CHECK: [[VAL:%[0-9]+]](32), [[OVERFLOW:%[0-9]+]](1) = G_SADDO { s32, s1 } [[LHS]], [[RHS]]
-; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE s64 [[VAL]], 0, [[OVERFLOW]], 32
+; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE { s64, s32, s1 } [[VAL]], 0, [[OVERFLOW]], 32
 ; CHECK: G_STORE { s64, p0 } [[RES]], [[ADDR]]
 declare { i32, i1 } @llvm.sadd.with.overflow.i32(i32, i32)
 define void @test_sadd_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
@@ -617,7 +617,7 @@ define void @test_sadd_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
 ; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x2
 ; CHECK: [[ZERO:%[0-9]+]](1) = G_CONSTANT s1 0
 ; CHECK: [[VAL:%[0-9]+]](32), [[OVERFLOW:%[0-9]+]](1) = G_UADDE { s32, s1 } [[LHS]], [[RHS]], [[ZERO]]
-; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE s64 [[VAL]], 0, [[OVERFLOW]], 32
+; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE { s64, s32, s1 } [[VAL]], 0, [[OVERFLOW]], 32
 ; CHECK: G_STORE { s64, p0 } [[RES]], [[ADDR]]
 declare { i32, i1 } @llvm.uadd.with.overflow.i32(i32, i32)
 define void @test_uadd_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
@@ -631,7 +631,7 @@ define void @test_uadd_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
 ; CHECK: [[RHS:%[0-9]+]](32) = COPY %w1
 ; CHECK: [[SUBR:%[0-9]+]](64) = COPY %x2
 ; CHECK: [[VAL:%[0-9]+]](32), [[OVERFLOW:%[0-9]+]](1) = G_SSUBO { s32, s1 } [[LHS]], [[RHS]]
-; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE s64 [[VAL]], 0, [[OVERFLOW]], 32
+; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE { s64, s32, s1 } [[VAL]], 0, [[OVERFLOW]], 32
 ; CHECK: G_STORE { s64, p0 } [[RES]], [[SUBR]]
 declare { i32, i1 } @llvm.ssub.with.overflow.i32(i32, i32)
 define void @test_ssub_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %subr) {
@@ -646,7 +646,7 @@ define void @test_ssub_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %subr) {
 ; CHECK: [[SUBR:%[0-9]+]](64) = COPY %x2
 ; CHECK: [[ZERO:%[0-9]+]](1) = G_CONSTANT s1 0
 ; CHECK: [[VAL:%[0-9]+]](32), [[OVERFLOW:%[0-9]+]](1) = G_USUBE { s32, s1 } [[LHS]], [[RHS]], [[ZERO]]
-; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE s64 [[VAL]], 0, [[OVERFLOW]], 32
+; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE { s64, s32, s1 } [[VAL]], 0, [[OVERFLOW]], 32
 ; CHECK: G_STORE { s64, p0 } [[RES]], [[SUBR]]
 declare { i32, i1 } @llvm.usub.with.overflow.i32(i32, i32)
 define void @test_usub_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %subr) {
@@ -660,7 +660,7 @@ define void @test_usub_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %subr) {
 ; CHECK: [[RHS:%[0-9]+]](32) = COPY %w1
 ; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x2
 ; CHECK: [[VAL:%[0-9]+]](32), [[OVERFLOW:%[0-9]+]](1) = G_SMULO { s32, s1 } [[LHS]], [[RHS]]
-; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE s64 [[VAL]], 0, [[OVERFLOW]], 32
+; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE { s64, s32, s1 } [[VAL]], 0, [[OVERFLOW]], 32
 ; CHECK: G_STORE { s64, p0 } [[RES]], [[ADDR]]
 declare { i32, i1 } @llvm.smul.with.overflow.i32(i32, i32)
 define void @test_smul_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
@@ -674,7 +674,7 @@ define void @test_smul_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
 ; CHECK: [[RHS:%[0-9]+]](32) = COPY %w1
 ; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x2
 ; CHECK: [[VAL:%[0-9]+]](32), [[OVERFLOW:%[0-9]+]](1) = G_UMULO { s32, s1 } [[LHS]], [[RHS]]
-; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE s64 [[VAL]], 0, [[OVERFLOW]], 32
+; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE { s64, s32, s1 } [[VAL]], 0, [[OVERFLOW]], 32
 ; CHECK: G_STORE { s64, p0 } [[RES]], [[ADDR]]
 declare { i32, i1 } @llvm.umul.with.overflow.i32(i32, i32)
 define void @test_umul_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
@@ -685,7 +685,7 @@ define void @test_umul_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
 
 ; CHECK-LABEL: name: test_extractvalue
 ; CHECK: [[STRUCT:%[0-9]+]](128) = G_LOAD { s128, p0 }
-; CHECK: [[RES:%[0-9]+]](32) = G_EXTRACT s32 [[STRUCT]], 64
+; CHECK: [[RES:%[0-9]+]](32) = G_EXTRACT { s32, s128 } [[STRUCT]], 64
 ; CHECK: %w0 = COPY [[RES]]
 %struct.nested = type {i8, { i8, i32 }, i32}
 define i32 @test_extractvalue(%struct.nested* %addr) {
@@ -696,7 +696,7 @@ define i32 @test_extractvalue(%struct.nested* %addr) {
 
 ; CHECK-LABEL: name: test_extractvalue_agg
 ; CHECK: [[STRUCT:%[0-9]+]](128) = G_LOAD { s128, p0 }
-; CHECK: [[RES:%[0-9]+]](64) = G_EXTRACT s64 [[STRUCT]], 32
+; CHECK: [[RES:%[0-9]+]](64) = G_EXTRACT { s64, s128 } [[STRUCT]], 32
 ; CHECK: G_STORE { s64, p0 } [[RES]]
 define void @test_extractvalue_agg(%struct.nested* %addr, {i8, i32}* %addr2) {
   %struct = load %struct.nested, %struct.nested* %addr

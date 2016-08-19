@@ -216,48 +216,56 @@ public:
   MachineInstrBuilder buildStore(LLT VTy, LLT PTy, unsigned Val, unsigned Addr,
                                  MachineMemOperand &MMO);
 
-  /// Build and insert `Res0<def>, ... = G_EXTRACT Ty Src, Idx0, ...`.
+  /// Build and insert `Res0<def>, ... = G_EXTRACT { ResTys, SrcTy } Src, Idx0,
+  /// ...`.
   ///
-  /// If \p Ty has size N bits, G_EXTRACT sets \p Res[0] to bits `[Idxs[0],
+  /// If \p SrcTy has size N bits, G_EXTRACT sets \p Res[0] to bits `[Idxs[0],
   /// Idxs[0] + N)` of \p Src and similarly for subsequent bit-indexes.
   ///
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildExtract(LLT Ty, ArrayRef<unsigned> Results,
-                                   unsigned Src, ArrayRef<uint64_t> Indexes);
+  MachineInstrBuilder buildExtract(ArrayRef<LLT> ResTys,
+                                   ArrayRef<unsigned> Results,
+                                   ArrayRef<uint64_t> Indices, LLT SrcTy,
+                                   unsigned Src);
 
-  /// Build and insert \p Res<def> = G_SEQUENCE \p Ty \p Op0, \p Idx0...
+  /// Build and insert \p Res<def> = G_SEQUENCE \p { \pResTy, \p Op0Ty, ... }
+  /// \p Op0, \p Idx0...
   ///
   /// G_SEQUENCE inserts each element of Ops into an IMPLICIT_DEF register,
-  /// where each entry starts at the bit-index specified by \p Indexes.
+  /// where each entry starts at the bit-index specified by \p Indices.
   ///
   /// \pre setBasicBlock or setMI must have been called.
   /// \pre The final element of the sequence must not extend past the end of the
   ///      destination register.
   /// \pre The bits defined by each Op (derived from index and scalar size) must
   ///      not overlap.
+  /// \pre Each source operand must have a
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildSequence(LLT Ty, unsigned Res,
+  MachineInstrBuilder buildSequence(LLT ResTy, unsigned Res,
+                                    ArrayRef<LLT> OpTys,
                                     ArrayRef<unsigned> Ops,
-                                    ArrayRef<unsigned> Indexes);
+                                    ArrayRef<unsigned> Indices);
 
-  void addUsesWithIndexes(MachineInstrBuilder MIB) {}
+  void addUsesWithIndices(MachineInstrBuilder MIB) {}
 
   template <typename... ArgTys>
-  void addUsesWithIndexes(MachineInstrBuilder MIB, unsigned Reg,
+  void addUsesWithIndices(MachineInstrBuilder MIB, LLT Ty, unsigned Reg,
                           unsigned BitIndex, ArgTys... Args) {
     MIB.addUse(Reg).addImm(BitIndex);
-    addUsesWithIndexes(MIB, Args...);
+    MIB->setType(Ty, MIB->getNumTypes());
+
+    addUsesWithIndices(MIB, Args...);
   }
 
   template <typename... ArgTys>
-  MachineInstrBuilder buildSequence(LLT Ty, unsigned Res, unsigned Op,
+  MachineInstrBuilder buildSequence(LLT Ty, unsigned Res, LLT OpTy, unsigned Op,
                                     unsigned Index, ArgTys... Args) {
     MachineInstrBuilder MIB =
         buildInstr(TargetOpcode::G_SEQUENCE, Ty).addDef(Res);
-    addUsesWithIndexes(MIB, Op, Index, Args...);
+    addUsesWithIndices(MIB, OpTy, Op, Index, Args...);
     return MIB;
   }
 

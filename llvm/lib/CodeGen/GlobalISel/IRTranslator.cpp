@@ -197,8 +197,8 @@ bool IRTranslator::translateExtractValue(const User &U) {
   uint64_t Offset = 8 * DL->getIndexedOffsetInType(Src->getType(), Indices);
 
   unsigned Res = getOrCreateVReg(EVI);
-  MIRBuilder.buildExtract(LLT{*EVI.getType(), DL}, Res, getOrCreateVReg(*Src),
-                          Offset);
+  MIRBuilder.buildExtract(LLT{*EVI.getType(), DL}, Res, Offset,
+                          LLT{*Src->getType(), DL}, getOrCreateVReg(*Src));
 
   return true;
 }
@@ -255,8 +255,8 @@ bool IRTranslator::translateKnownIntrinsic(const CallInst &CI,
     MIB.addUse(Zero);
   }
 
-  MIRBuilder.buildSequence(LLT{*CI.getType(), DL}, getOrCreateVReg(CI), Res, 0,
-                           Overflow, Width);
+  MIRBuilder.buildSequence(LLT{*CI.getType(), DL}, getOrCreateVReg(CI), Ty, Res,
+                           0, s1, Overflow, Width);
   return true;
 }
 
