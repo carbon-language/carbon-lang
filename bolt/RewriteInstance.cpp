@@ -1983,8 +1983,10 @@ void RewriteInstance::rewriteFile() {
     auto &EHFrameSecInfo = SMII->second;
     outs() << "BOLT: writing a new .eh_frame_hdr\n";
     if (FrameHdrAlign > 1) {
-      NextAvailableAddress =
-        RoundUpToAlignment(NextAvailableAddress, FrameHdrAlign);
+      auto PaddingSize = OffsetToAlignment(NextAvailableAddress, FrameHdrAlign);
+      for (unsigned I = 0; I < PaddingSize; ++I)
+        Out->os().write((unsigned char)0);
+      NextAvailableAddress += PaddingSize;
     }
 
     SectionInfo EHFrameHdrSecInfo;
