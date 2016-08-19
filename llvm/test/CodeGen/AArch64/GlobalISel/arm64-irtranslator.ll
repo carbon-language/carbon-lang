@@ -704,3 +704,28 @@ define void @test_extractvalue_agg(%struct.nested* %addr, {i8, i32}* %addr2) {
   store {i8, i32} %res, {i8, i32}* %addr2
   ret void
 }
+
+; CHECK-LABEL: name: test_insertvalue
+; CHECK: [[VAL:%[0-9]+]](32) = COPY %w1
+; CHECK: [[STRUCT:%[0-9]+]](128) = G_LOAD { s128, p0 }
+; CHECK: [[NEWSTRUCT:%[0-9]+]](128) = G_INSERT { s128, s32 } [[STRUCT]], [[VAL]], 64
+; CHECK: G_STORE { s128, p0 } [[NEWSTRUCT]],
+define void @test_insertvalue(%struct.nested* %addr, i32 %val) {
+  %struct = load %struct.nested, %struct.nested* %addr
+  %newstruct = insertvalue %struct.nested %struct, i32 %val, 1, 1
+  store %struct.nested %newstruct, %struct.nested* %addr
+  ret void
+}
+
+; CHECK-LABEL: name: test_insertvalue_agg
+; CHECK: [[SMALLSTRUCT:%[0-9]+]](64) = G_LOAD { s64, p0 }
+; CHECK: [[STRUCT:%[0-9]+]](128) = G_LOAD { s128, p0 }
+; CHECK: [[RES:%[0-9]+]](128) = G_INSERT { s128, s64 } [[STRUCT]], [[SMALLSTRUCT]], 32
+; CHECK: G_STORE { s128, p0 } [[RES]]
+define void @test_insertvalue_agg(%struct.nested* %addr, {i8, i32}* %addr2) {
+  %smallstruct = load {i8, i32}, {i8, i32}* %addr2
+  %struct = load %struct.nested, %struct.nested* %addr
+  %res = insertvalue %struct.nested %struct, {i8, i32} %smallstruct, 1
+  store %struct.nested %res, %struct.nested* %addr
+  ret void
+}

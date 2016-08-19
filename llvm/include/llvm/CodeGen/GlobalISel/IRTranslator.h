@@ -151,6 +151,8 @@ private:
 
   bool translateExtractValue(const User &U);
 
+  bool translateInsertValue(const User &U);
+
   /// Translate return (ret) instruction.
   /// The target needs to implement CallLowering::lowerReturn for
   /// this to succeed.
@@ -268,7 +270,6 @@ private:
   bool translateExtractElement(const User &U) { return false; }
   bool translateInsertElement(const User &U) { return false; }
   bool translateShuffleVector(const User &U) { return false; }
-  bool translateInsertValue(const User &U) { return false; }
   bool translateLandingPad(const User &U) { return false; }
 
   /// @}

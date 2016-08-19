@@ -199,6 +199,10 @@ HANDLE_TARGET_OPCODE(G_FRAME_INDEX)
 /// (typically a sub-register COPY after instruction selection).
 HANDLE_TARGET_OPCODE(G_EXTRACT)
 
+/// Generic instruction to insert blocks of bits from the registers given into
+/// the source.
+HANDLE_TARGET_OPCODE(G_INSERT)
+
 /// Generic instruction to paste a variable number of components together into a
 /// larger register.
 HANDLE_TARGET_OPCODE(G_SEQUENCE)

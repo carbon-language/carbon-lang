@@ -269,6 +269,15 @@ public:
     return MIB;
   }
 
+  template <typename... ArgTys>
+  MachineInstrBuilder buildInsert(LLT Ty, unsigned Res, unsigned Src, LLT OpTy,
+                                  unsigned Op, unsigned Index, ArgTys... Args) {
+    MachineInstrBuilder MIB =
+        buildInstr(TargetOpcode::G_INSERT, Ty).addDef(Res).addUse(Src);
+    addUsesWithIndices(MIB, OpTy, Op, Index, Args...);
+    return MIB;
+  }
+
   /// Build and insert either a G_INTRINSIC (if \p HasSideEffects is false) or
   /// G_INTRINSIC_W_SIDE_EFFECTS instruction. Its first operand will be the
   /// result register definition unless \p Reg is NoReg (== 0). The second
