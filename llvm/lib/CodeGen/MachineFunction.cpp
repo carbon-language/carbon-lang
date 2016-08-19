@@ -64,6 +64,7 @@ static const char *getPropertyName(MachineFunctionProperties::Property Prop) {
   case P::Selected: return "Selected";
   case P::TracksLiveness: return "TracksLiveness";
   }
+  llvm_unreachable("Invalid machine function property");
 }
 
 void MachineFunctionProperties::print(raw_ostream &OS) const {
