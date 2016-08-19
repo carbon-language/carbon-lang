@@ -821,7 +821,7 @@ void PGOUseFunc::populateCounters() {
 }
 
 static void setProfMetadata(Module *M, TerminatorInst *TI,
-                            ArrayRef<unsigned> EdgeCounts, uint64_t MaxCount) {
+                            ArrayRef<uint64_t> EdgeCounts, uint64_t MaxCount) {
   MDBuilder MDB(M->getContext());
   assert(MaxCount > 0 && "Bad max count");
   uint64_t Scale = calculateCountScale(MaxCount);
@@ -851,7 +851,7 @@ void PGOUseFunc::setBranchWeights() {
     // We have a non-zero Branch BB.
     const UseBBInfo &BBCountInfo = getBBInfo(&BB);
     unsigned Size = BBCountInfo.OutEdges.size();
-    SmallVector<unsigned, 2> EdgeCounts(Size, 0);
+    SmallVector<uint64_t, 2> EdgeCounts(Size, 0);
     uint64_t MaxCount = 0;
     for (unsigned s = 0; s < Size; s++) {
       const PGOUseEdge *E = BBCountInfo.OutEdges[s];
