@@ -460,7 +460,7 @@ struct GraphTraits<CallGraph *> : public GraphTraits<CallGraphNode *> {
   }
   typedef std::pair<const Function *const, std::unique_ptr<CallGraphNode>>
       PairTy;
-  typedef std::pointer_to_unary_function<const PairTy &, CallGraphNode &>
+  typedef std::pointer_to_unary_function<const PairTy &, CallGraphNode *>
       DerefFun;
 
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
@@ -472,7 +472,7 @@ struct GraphTraits<CallGraph *> : public GraphTraits<CallGraphNode *> {
     return map_iterator(CG->end(), DerefFun(CGdereference));
   }
 
-  static CallGraphNode &CGdereference(const PairTy &P) { return *P.second; }
+  static CallGraphNode *CGdereference(const PairTy &P) { return P.second.get(); }
 };
 
 template <>
@@ -483,7 +483,7 @@ struct GraphTraits<const CallGraph *> : public GraphTraits<
   }
   typedef std::pair<const Function *const, std::unique_ptr<CallGraphNode>>
       PairTy;
-  typedef std::pointer_to_unary_function<const PairTy &, const CallGraphNode &>
+  typedef std::pointer_to_unary_function<const PairTy &, const CallGraphNode *>
       DerefFun;
 
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
@@ -495,8 +495,8 @@ struct GraphTraits<const CallGraph *> : public GraphTraits<
     return map_iterator(CG->end(), DerefFun(CGdereference));
   }
 
-  static const CallGraphNode &CGdereference(const PairTy &P) {
-    return *P.second;
+  static const CallGraphNode *CGdereference(const PairTy &P) {
+    return P.second.get();
   }
 };
 

@@ -1152,7 +1152,7 @@ bool SeparateConstOffsetFromGEP::reuniteExts(Function &F) {
   DominatingExprs.clear();
   for (auto Node = GraphTraits<DominatorTree *>::nodes_begin(DT);
        Node != GraphTraits<DominatorTree *>::nodes_end(DT); ++Node) {
-    BasicBlock *BB = Node->getBlock();
+    BasicBlock *BB = (*Node)->getBlock();
     for (auto I = BB->begin(); I != BB->end(); ) {
       Instruction *Cur = &*I++;
       Changed |= reuniteExts(Cur);

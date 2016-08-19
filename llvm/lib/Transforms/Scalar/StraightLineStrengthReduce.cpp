@@ -676,7 +676,7 @@ bool StraightLineStrengthReduce::runOnFunction(Function &F) {
   // all bases of a candidate are in Candidates when we process it.
   for (auto node = GraphTraits<DominatorTree *>::nodes_begin(DT);
        node != GraphTraits<DominatorTree *>::nodes_end(DT); ++node) {
-    for (auto &I : *node->getBlock())
+    for (auto &I : *(*node)->getBlock())
       allocateCandidatesAndFindBasis(&I);
   }
 

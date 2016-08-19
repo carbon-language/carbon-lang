@@ -625,9 +625,13 @@ template <> struct GraphTraits<MachineFunction*> :
   }
 
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
-  typedef MachineFunction::iterator nodes_iterator;
-  static nodes_iterator nodes_begin(MachineFunction *F) { return F->begin(); }
-  static nodes_iterator nodes_end  (MachineFunction *F) { return F->end(); }
+  typedef pointer_iterator<MachineFunction::iterator> nodes_iterator;
+  static nodes_iterator nodes_begin(MachineFunction *F) {
+    return nodes_iterator(F->begin());
+  }
+  static nodes_iterator nodes_end(MachineFunction *F) {
+    return nodes_iterator(F->end());
+  }
   static unsigned       size       (MachineFunction *F) { return F->size(); }
 };
 template <> struct GraphTraits<const MachineFunction*> :
@@ -637,12 +641,12 @@ template <> struct GraphTraits<const MachineFunction*> :
   }
 
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
-  typedef MachineFunction::const_iterator nodes_iterator;
+  typedef pointer_iterator<MachineFunction::const_iterator> nodes_iterator;
   static nodes_iterator nodes_begin(const MachineFunction *F) {
-    return F->begin();
+    return nodes_iterator(F->begin());
   }
   static nodes_iterator nodes_end  (const MachineFunction *F) {
-    return F->end();
+    return nodes_iterator(F->end());
   }
   static unsigned       size       (const MachineFunction *F)  {
     return F->size();
