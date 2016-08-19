@@ -157,8 +157,10 @@ def: T_cmp32_rr_pat<A4_rcmpeq,  CmpInReg<seteq>, i32>;
 def: T_cmp32_rr_pat<A4_rcmpneq, CmpInReg<setne>, i32>;
 
 def: T_cmp32_rr_pat<C4_cmpneq,  setne,  i1>;
+def: T_cmp32_rr_pat<C4_cmplte,  setle,  i1>;
 def: T_cmp32_rr_pat<C4_cmplteu, setule, i1>;
 
+def: T_cmp32_rr_pat<C4_cmplte,  RevCmp<setge>,  i1>;
 def: T_cmp32_rr_pat<C4_cmplteu, RevCmp<setuge>, i1>;
 
 class T_CMP_rrbh<string mnemonic, bits<3> MinOp, bit IsComm>
