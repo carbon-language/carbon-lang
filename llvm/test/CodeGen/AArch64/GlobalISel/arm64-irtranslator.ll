@@ -793,3 +793,19 @@ define void @test_constant_float(float* %addr) {
   store float 1.5, float* %addr
   ret void
 }
+
+; CHECK-LABEL: name: float_comparison
+; CHECK: [[LHSADDR:%[0-9]+]](64) = COPY %x0
+; CHECK: [[RHSADDR:%[0-9]+]](64) = COPY %x1
+; CHECK: [[BOOLADDR:%[0-9]+]](64) = COPY %x2
+; CHECK: [[LHS:%[0-9]+]](32) = G_LOAD { s32, p0 } [[LHSADDR]]
+; CHECK: [[RHS:%[0-9]+]](32) = G_LOAD { s32, p0 } [[RHSADDR]]
+; CHECK: [[TST:%[0-9]+]](1) = G_FCMP { s1, s32 } floatpred(oge), [[LHS]], [[RHS]]
+; CHECK: G_STORE { s1, p0 } [[TST]], [[BOOLADDR]]
+define void @float_comparison(float* %a.addr, float* %b.addr, i1* %bool.addr) {
+  %a = load float, float* %a.addr
+  %b = load float, float* %b.addr
+  %res = fcmp oge float %a, %b
+  store i1 %res, i1* %bool.addr
+  ret void
+}

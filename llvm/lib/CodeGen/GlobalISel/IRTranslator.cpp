@@ -100,17 +100,24 @@ bool IRTranslator::translateBinaryOp(unsigned Opcode, const User &U) {
   return true;
 }
 
-bool IRTranslator::translateICmp(const User &U) {
-  const CmpInst &CI = cast<CmpInst>(U);
-  unsigned Op0 = getOrCreateVReg(*CI.getOperand(0));
-  unsigned Op1 = getOrCreateVReg(*CI.getOperand(1));
-  unsigned Res = getOrCreateVReg(CI);
-  CmpInst::Predicate Pred = CI.getPredicate();
+bool IRTranslator::translateCompare(const User &U) {
+  const CmpInst *CI = dyn_cast<CmpInst>(&U);
+  unsigned Op0 = getOrCreateVReg(*U.getOperand(0));
+  unsigned Op1 = getOrCreateVReg(*U.getOperand(1));
+  unsigned Res = getOrCreateVReg(U);
+  CmpInst::Predicate Pred =
+      CI ? CI->getPredicate() : static_cast<CmpInst::Predicate>(
+                                    cast<ConstantExpr>(U).getPredicate());
 
-  assert(isa<ICmpInst>(CI) && "only integer comparisons supported now");
-  assert(CmpInst::isIntPredicate(Pred) && "only int comparisons supported now");
-  MIRBuilder.buildICmp({LLT{*CI.getType()}, LLT{*CI.getOperand(0)->getType()}},
-                       Pred, Res, Op0, Op1);
+  if (CmpInst::isIntPredicate(Pred))
+    MIRBuilder.buildICmp(
+        {LLT{*U.getType()}, LLT{*U.getOperand(0)->getType()}}, Pred, Res, Op0,
+        Op1);
+  else
+    MIRBuilder.buildFCmp(
+        {LLT{*U.getType()}, LLT{*U.getOperand(0)->getType()}}, Pred, Res, Op0,
+        Op1);
+
   return true;
 }
 

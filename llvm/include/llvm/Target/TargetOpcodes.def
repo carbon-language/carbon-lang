@@ -265,6 +265,9 @@ HANDLE_TARGET_OPCODE(G_ASHR)
 /// Generic integer-base comparison, also applicable to vectors of integers.
 HANDLE_TARGET_OPCODE(G_ICMP)
 
+/// Generic floating-point comparison, also applicable to vectors.
+HANDLE_TARGET_OPCODE(G_FCMP)
+
 /// Generic select.
 HANDLE_TARGET_OPCODE(G_SELECT)
 

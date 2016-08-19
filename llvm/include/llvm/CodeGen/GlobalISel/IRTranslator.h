@@ -134,8 +134,19 @@ private:
   /// Translate a phi instruction.
   bool translatePHI(const User &U);
 
+  /// Translate a comparison (icmp or fcmp) instruction or constant.
+  bool translateCompare(const User &U);
+
   /// Translate an integer compare instruction (or constant).
-  bool translateICmp(const User &U);
+  bool translateICmp(const User &U) {
+    return translateCompare(U);
+  }
+
+  /// Translate a floating-point compare instruction (or constant).
+  bool translateFCmp(const User &U) {
+    return translateCompare(U);
+  }
+
 
   /// Add remaining operands onto phis we've translated. Executed after all
   /// MachineBasicBlocks for the function have been created.
@@ -273,7 +284,6 @@ private:
   bool translateAddrSpaceCast(const User &U) { return false; }
   bool translateCleanupPad(const User &U) { return false; }
   bool translateCatchPad(const User &U) { return false; }
-  bool translateFCmp(const User &U) { return false; }
   bool translateUserOp1(const User &U) { return false; }
   bool translateUserOp2(const User &U) { return false; }
   bool translateVAArg(const User &U) { return false; }

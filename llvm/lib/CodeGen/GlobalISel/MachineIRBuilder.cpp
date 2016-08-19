@@ -222,6 +222,17 @@ MachineInstrBuilder MachineIRBuilder::buildICmp(ArrayRef<LLT> Tys,
       .addUse(Op1);
 }
 
+MachineInstrBuilder MachineIRBuilder::buildFCmp(ArrayRef<LLT> Tys,
+                                                CmpInst::Predicate Pred,
+                                                unsigned Res, unsigned Op0,
+                                                unsigned Op1) {
+  return buildInstr(TargetOpcode::G_FCMP, Tys)
+      .addDef(Res)
+      .addPredicate(Pred)
+      .addUse(Op0)
+      .addUse(Op1);
+}
+
 MachineInstrBuilder MachineIRBuilder::buildSelect(LLT Ty, unsigned Res,
                                                   unsigned Tst,
                                                   unsigned Op0, unsigned Op1) {

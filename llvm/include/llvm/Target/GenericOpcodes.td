@@ -190,8 +190,15 @@ def G_ASHR : Instruction {
   let hasSideEffects = 0;
 }
 
-// Generic bitwise or.
+// Generic integer comparison.
 def G_ICMP : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$tst, unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+}
+
+// Generic floating-point comparison.
+def G_FCMP : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins unknown:$tst, unknown:$src1, unknown:$src2);
   let hasSideEffects = 0;
