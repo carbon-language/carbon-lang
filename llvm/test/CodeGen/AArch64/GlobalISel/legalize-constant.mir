@@ -53,7 +53,10 @@ body: |
     ; CHECK-LABEL: name: test_fconstant
     ; CHECK: %0(32) = G_FCONSTANT s32  float 1.000000e+00
     ; CHECK: %1(64) = G_FCONSTANT s64  double 2.000000e+00
+    ; CHECK: [[TMP:%[0-9]+]](32) = G_FCONSTANT s32 half 0xH0000
+    ; CHECK; %2(16) = G_FPTRUNC s16 [[TMP]]
 
     %0(32) = G_FCONSTANT s32 float 1.0
     %1(64) = G_FCONSTANT s64 double 2.0
+    %2(16) = G_FCONSTANT s16 half 0.0
 ...

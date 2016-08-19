@@ -211,6 +211,11 @@ MachineInstrBuilder MachineIRBuilder::buildTrunc(LLT Ty, unsigned Res,
   return buildInstr(TargetOpcode::G_TRUNC, Ty).addDef(Res).addUse(Op);
 }
 
+MachineInstrBuilder MachineIRBuilder::buildFPTrunc(LLT Ty, unsigned Res,
+                                           unsigned Op) {
+  return buildInstr(TargetOpcode::G_FPTRUNC, Ty).addDef(Res).addUse(Op);
+}
+
 MachineInstrBuilder MachineIRBuilder::buildICmp(ArrayRef<LLT> Tys,
                                                 CmpInst::Predicate Pred,
                                                 unsigned Res, unsigned Op0,

@@ -63,6 +63,7 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
   for (auto Ty : {s1, s8, s16})
     setAction(TargetOpcode::G_CONSTANT, Ty, WidenScalar);
 
+  setAction(TargetOpcode::G_FCONSTANT, s16, WidenScalar);
 
   setAction(G_BR, LLT::unsized(), Legal);
 

@@ -141,6 +141,14 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, LLT WideTy) {
     MI.eraseFromParent();
     return Legalized;
   }
+  case TargetOpcode::G_FCONSTANT: {
+    MIRBuilder.setInstr(MI);
+    unsigned DstExt = MRI.createGenericVirtualRegister(WideSize);
+    MIRBuilder.buildFConstant(WideTy, DstExt, *MI.getOperand(1).getFPImm());
+    MIRBuilder.buildFPTrunc(MI.getType(), MI.getOperand(0).getReg(), DstExt);
+    MI.eraseFromParent();
+    return Legalized;
+  }
   }
 }
 

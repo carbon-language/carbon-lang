@@ -302,6 +302,15 @@ public:
   MachineInstrBuilder buildIntrinsic(ArrayRef<LLT> Tys, Intrinsic::ID ID,
                                      unsigned Res, bool HasSideEffects);
 
+  /// Build and insert \p Res<def> = G_FPTRUNC \p Ty \p Op
+  ///
+  /// G_FPTRUNC converts a floating-point value into one with a smaller type.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return The newly created instruction.
+  MachineInstrBuilder buildFPTrunc(LLT Ty, unsigned Res, unsigned Op);
+
   /// Build and insert \p Res<def> = G_TRUNC \p Ty \p Op
   ///
   /// G_TRUNC extracts the low bits of a type. For a vector type each element is
