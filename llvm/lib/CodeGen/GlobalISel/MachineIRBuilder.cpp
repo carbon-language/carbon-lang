@@ -143,7 +143,7 @@ MachineInstrBuilder MachineIRBuilder::buildAnyExtend(LLT Ty, unsigned Res,
 
 MachineInstrBuilder
 MachineIRBuilder::buildExtract(LLT Ty, ArrayRef<unsigned> Results, unsigned Src,
-                               ArrayRef<unsigned> Indexes) {
+                               ArrayRef<uint64_t> Indexes) {
   assert(Results.size() == Indexes.size() && "inconsistent number of regs");
 
   MachineInstrBuilder MIB = buildInstr(TargetOpcode::G_EXTRACT, Ty);

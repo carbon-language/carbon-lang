@@ -682,3 +682,14 @@ define void @test_umul_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
   store { i32, i1 } %res, { i32, i1 }* %addr
   ret void
 }
+
+; CHECK-LABEL: name: test_extractvalue
+; CHECK: [[STRUCT:%[0-9]+]](128) = G_LOAD { s128, p0 }
+; CHECK: [[RES:%[0-9]+]](32) = G_EXTRACT s32 [[STRUCT]], 64
+; CHECK: %w0 = COPY [[RES]]
+%struct.nested = type {i8, { i8, i32 }, i32}
+define i32 @test_extractvalue(%struct.nested* %addr) {
+  %struct = load %struct.nested, %struct.nested* %addr
+  %res = extractvalue %struct.nested %struct, 1, 1
+  ret i32 %res
+}

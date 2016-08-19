@@ -182,6 +182,27 @@ bool IRTranslator::translateStore(const User &U) {
   return true;
 }
 
+bool IRTranslator::translateExtractValue(const User &U) {
+  const ExtractValueInst &EVI = cast<ExtractValueInst>(U);
+  const Value *Src = EVI.getAggregateOperand();
+  Type *Int32Ty = Type::getInt32Ty(EVI.getContext());
+  SmallVector<Value *, 1> Indices;
+
+  // getIndexedOffsetInType is designed for GEPs, so the first index is the
+  // usual array element rather than looking into the actual aggregate.
+  Indices.push_back(ConstantInt::get(Int32Ty, 0));
+  for (auto Idx : EVI.indices())
+    Indices.push_back(ConstantInt::get(Int32Ty, Idx));
+
+  uint64_t Offset = 8 * DL->getIndexedOffsetInType(Src->getType(), Indices);
+
+  unsigned Res = getOrCreateVReg(EVI);
+  MIRBuilder.buildExtract(LLT{*EVI.getType()}, Res, getOrCreateVReg(*Src),
+                          Offset);
+
+  return true;
+}
+
 bool IRTranslator::translateBitCast(const User &U) {
   if (LLT{*U.getOperand(0)->getType()} == LLT{*U.getType()}) {
     unsigned &Reg = ValToVReg[&U];

@@ -225,7 +225,7 @@ public:
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildExtract(LLT Ty, ArrayRef<unsigned> Results,
-                                   unsigned Src, ArrayRef<unsigned> Indexes);
+                                   unsigned Src, ArrayRef<uint64_t> Indexes);
 
   /// Build and insert \p Res<def> = G_SEQUENCE \p Ty \p Op0, \p Idx0...
   ///

@@ -51,7 +51,7 @@ MachineLegalizeHelper::LegalizeResult MachineLegalizeHelper::legalizeInstr(
 void MachineLegalizeHelper::extractParts(unsigned Reg, LLT Ty, int NumParts,
                                          SmallVectorImpl<unsigned> &VRegs) {
   unsigned Size = Ty.getSizeInBits();
-  SmallVector<unsigned, 4> Indexes;
+  SmallVector<uint64_t, 4> Indexes;
   for (int i = 0; i < NumParts; ++i) {
     VRegs.push_back(MRI.createGenericVirtualRegister(Size));
     Indexes.push_back(i * Size);
