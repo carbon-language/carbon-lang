@@ -2987,9 +2987,10 @@ HexagonTargetLowering::getRegForInlineAsmConstraint(
        switch (VT.SimpleTy) {
        default:
          llvm_unreachable("getRegForInlineAsmConstraint Unhandled data type");
-       case MVT::i32:
-       case MVT::i16:
+       case MVT::i1:
        case MVT::i8:
+       case MVT::i16:
+       case MVT::i32:
        case MVT::f32:
          return std::make_pair(0U, &Hexagon::IntRegsRegClass);
        case MVT::i64:
