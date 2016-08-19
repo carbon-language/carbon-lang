@@ -85,8 +85,6 @@ void MachineFunctionProperties::print(raw_ostream &ROS, bool OnlySet) const {
       case Property::Selected:
         ROS << (HasProperty ? "" : "not ") << "selected";
         break;
-      default:
-        break;
     }
   }
 #endif

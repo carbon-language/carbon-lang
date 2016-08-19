@@ -127,7 +127,7 @@ public:
     Legalized,
     RegBankSelected,
     Selected,
-    LastProperty,
+    LastProperty = Selected,
   };
 
   bool hasProperty(Property P) const {
@@ -161,7 +161,7 @@ public:
 
 private:
   BitVector Properties =
-      BitVector(static_cast<unsigned>(Property::LastProperty));
+      BitVector(static_cast<unsigned>(Property::LastProperty)+1);
 };
 
 class MachineFunction {
