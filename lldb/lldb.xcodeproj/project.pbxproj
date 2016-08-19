@@ -77,6 +77,7 @@
 		2370A3861D66C594000E7BE6 /* GDBRemoteClientBaseTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2370A37D1D66C587000E7BE6 /* GDBRemoteClientBaseTest.cpp */; };
 		2370A3871D66C594000E7BE6 /* GDBRemoteCommunicationClientTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2370A37E1D66C587000E7BE6 /* GDBRemoteCommunicationClientTest.cpp */; };
 		2370A3881D66C594000E7BE6 /* GDBRemoteTestUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2370A37F1D66C587000E7BE6 /* GDBRemoteTestUtils.cpp */; };
+		2370A3891D66C7E9000E7BE6 /* StringExtractor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2660D9F611922A1300958FBD /* StringExtractor.cpp */; };
 		2374D7461D4BAA1D005C9575 /* CMakeLists.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2374D7431D4BAA1D005C9575 /* CMakeLists.txt */; };
 		2374D7521D4BB299005C9575 /* GDBRemoteClientBase.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2374D74F1D4BB299005C9575 /* GDBRemoteClientBase.h */; };
 		2374D7531D4BB2FF005C9575 /* GDBRemoteClientBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2374D74E1D4BB299005C9575 /* GDBRemoteClientBase.cpp */; };
@@ -95,6 +96,7 @@
 		239504E31BDD454B00963CEA /* StringExtractorTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2321F9441BDD346100BA9A93 /* StringExtractorTest.cpp */; };
 		239504E41BDD454B00963CEA /* TaskPoolTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2321F9451BDD346100BA9A93 /* TaskPoolTest.cpp */; };
 		239504E51BDD454B00963CEA /* UriParserTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2321F9461BDD346100BA9A93 /* UriParserTest.cpp */; };
+		23CB14E41D66CA2200EDDDE1 /* libxml2.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 23CB14E31D66CA2200EDDDE1 /* libxml2.2.dylib */; };
 		23D065881D4A7BDA0008EDE6 /* CMakeLists.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = 23D065811D4A7BDA0008EDE6 /* CMakeLists.txt */; };
 		23D0658A1D4A7BDA0008EDE6 /* RenderScriptExpressionOpts.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 23D065831D4A7BDA0008EDE6 /* RenderScriptExpressionOpts.h */; };
 		23D0658C1D4A7BDA0008EDE6 /* RenderScriptRuntime.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 23D065851D4A7BDA0008EDE6 /* RenderScriptRuntime.h */; };
@@ -1270,6 +1272,7 @@
 		23AB0530199FF639003B8084 /* ProcessFreeBSD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProcessFreeBSD.h; sourceTree = "<group>"; };
 		23AB0531199FF639003B8084 /* ProcessMonitor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessMonitor.cpp; sourceTree = "<group>"; };
 		23AB0532199FF639003B8084 /* ProcessMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProcessMonitor.h; sourceTree = "<group>"; };
+		23CB14E31D66CA2200EDDDE1 /* libxml2.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.2.dylib; path = usr/lib/libxml2.2.dylib; sourceTree = SDKROOT; };
 		23D065811D4A7BDA0008EDE6 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		23D065821D4A7BDA0008EDE6 /* RenderScriptExpressionOpts.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RenderScriptExpressionOpts.cpp; sourceTree = "<group>"; };
 		23D065831D4A7BDA0008EDE6 /* RenderScriptExpressionOpts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RenderScriptExpressionOpts.h; sourceTree = "<group>"; };
@@ -3002,6 +3005,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				23CB14E41D66CA2200EDDDE1 /* libxml2.2.dylib in Frameworks */,
 				2326CF4F1BDD687800A5CEAC /* libpanel.dylib in Frameworks */,
 				2326CF4D1BDD684B00A5CEAC /* libedit.dylib in Frameworks */,
 				2326CF4B1BDD681800A5CEAC /* libz.dylib in Frameworks */,
@@ -3104,6 +3108,7 @@
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 				2321F9331BDD326500BA9A93 /* unittests */,
 				236102941CF389BE00B8E0B9 /* cmake */,
+				23CB14E21D66CA2200EDDDE1 /* Frameworks */,
 			);
 			name = lldb;
 			sourceTree = "<group>";
@@ -3338,6 +3343,14 @@
 				23AB0531199FF639003B8084 /* ProcessMonitor.cpp */,
 			);
 			path = FreeBSD;
+			sourceTree = "<group>";
+		};
+		23CB14E21D66CA2200EDDDE1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				23CB14E31D66CA2200EDDDE1 /* libxml2.2.dylib */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		260C897110F57C5600BB2B04 /* Plugins */ = {
@@ -6648,6 +6661,7 @@
 				2370A3861D66C594000E7BE6 /* GDBRemoteClientBaseTest.cpp in Sources */,
 				239504DF1BDD453200963CEA /* SocketTest.cpp in Sources */,
 				239504E11BDD453E00963CEA /* TestArgs.cpp in Sources */,
+				2370A3891D66C7E9000E7BE6 /* StringExtractor.cpp in Sources */,
 				2370A3871D66C594000E7BE6 /* GDBRemoteCommunicationClientTest.cpp in Sources */,
 				239504E21BDD454500963CEA /* PythonDataObjectsTests.cpp in Sources */,
 				239504E01BDD453200963CEA /* SymbolsTest.cpp in Sources */,
@@ -7877,10 +7891,12 @@
 				LLDB_GTESTS_CFLAGS = "-I $(LLVM_SOURCE_DIR)/utils/unittest/googletest/include -I $(LLVM_SOURCE_DIR)/include -I $(LLVM_BUILD_DIR)/x86_64/include -I include -I source -I $(PYTHON_FRAMEWORK_PATH)/Headers";
 				LLDB_GTESTS_LDFLAGS = "$(LLVM_BUILD_DIR)/x86_64/lib/libgtest.a -L $(PYTHON_FRAMEWORK_PATH)/Versions/$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)/lib -l python$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)";
 				OTHER_CFLAGS = (
+					"-fno-rtti",
 					"-Wparentheses",
 					"$(LLDB_ZLIB_CFLAGS)",
 					"$(LLDB_COMPRESSION_CFLAGS)",
 					"$(LLDB_GTESTS_CFLAGS)",
+					"-DGTEST_HAS_RTTI=0",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -7913,10 +7929,12 @@
 				LLDB_GTESTS_CFLAGS = "-I $(LLVM_SOURCE_DIR)/utils/unittest/googletest/include -I $(LLVM_SOURCE_DIR)/include -I $(LLVM_BUILD_DIR)/x86_64/include -I include -I source -I $(PYTHON_FRAMEWORK_PATH)/Headers";
 				LLDB_GTESTS_LDFLAGS = "$(LLVM_BUILD_DIR)/x86_64/lib/libgtest.a -L $(PYTHON_FRAMEWORK_PATH)/Versions/$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)/lib -l python$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)";
 				OTHER_CFLAGS = (
+					"-fno-rtti",
 					"-Wparentheses",
 					"$(LLDB_ZLIB_CFLAGS)",
 					"$(LLDB_COMPRESSION_CFLAGS)",
 					"$(LLDB_GTESTS_CFLAGS)",
+					"-DGTEST_HAS_RTTI=0",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -7949,10 +7967,12 @@
 				LLDB_GTESTS_CFLAGS = "-I $(LLVM_SOURCE_DIR)/utils/unittest/googletest/include -I $(LLVM_SOURCE_DIR)/include -I $(LLVM_BUILD_DIR)/x86_64/include -I include -I source -I $(PYTHON_FRAMEWORK_PATH)/Headers";
 				LLDB_GTESTS_LDFLAGS = "$(LLVM_BUILD_DIR)/x86_64/lib/libgtest.a -L $(PYTHON_FRAMEWORK_PATH)/Versions/$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)/lib -l python$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)";
 				OTHER_CFLAGS = (
+					"-fno-rtti",
 					"-Wparentheses",
 					"$(LLDB_ZLIB_CFLAGS)",
 					"$(LLDB_COMPRESSION_CFLAGS)",
 					"$(LLDB_GTESTS_CFLAGS)",
+					"-DGTEST_HAS_RTTI=0",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -7985,10 +8005,12 @@
 				LLDB_GTESTS_CFLAGS = "-I $(LLVM_SOURCE_DIR)/utils/unittest/googletest/include -I $(LLVM_SOURCE_DIR)/include -I $(LLVM_BUILD_DIR)/x86_64/include -I include -I source -I $(PYTHON_FRAMEWORK_PATH)/Headers";
 				LLDB_GTESTS_LDFLAGS = "$(LLVM_BUILD_DIR)/x86_64/lib/libgtest.a -L $(PYTHON_FRAMEWORK_PATH)/Versions/$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)/lib -l python$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)";
 				OTHER_CFLAGS = (
+					"-fno-rtti",
 					"-Wparentheses",
 					"$(LLDB_ZLIB_CFLAGS)",
 					"$(LLDB_COMPRESSION_CFLAGS)",
 					"$(LLDB_GTESTS_CFLAGS)",
+					"-DGTEST_HAS_RTTI=0",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
