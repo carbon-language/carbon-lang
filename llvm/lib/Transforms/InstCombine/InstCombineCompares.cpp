@@ -1988,14 +1988,15 @@ static Instruction *foldICmpShlOne(ICmpInst &Cmp, Instruction *Shl,
 
 Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &ICI, Instruction *LHSI,
                                                const APInt *RHSV) {
+  // FIXME: This should use m_APInt to allow splat vectors.
+  ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1));
+  if (!ShAmt)
+    return foldICmpShlOne(ICI, LHSI, RHSV);
+
   // FIXME: This check restricts all folds under here to scalar types.
   ConstantInt *RHS = dyn_cast<ConstantInt>(ICI.getOperand(1));
   if (!RHS)
     return nullptr;
-
-  ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1));
-  if (!ShAmt)
-    return foldICmpShlOne(ICI, LHSI, RHSV);
 
   // Check that the shift amount is in range.  If not, don't perform
   // undefined shifts.  When the shift is visited it will be
