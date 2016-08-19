@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.4.3)
 
-include(cmake/LLDBDependencies.cmake)
 include(cmake/modules/LLDBStandalone.cmake)
 include(cmake/modules/LLDBConfig.cmake)
 include(cmake/modules/AddLLDB.cmake)
