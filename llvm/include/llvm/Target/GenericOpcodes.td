@@ -315,8 +315,9 @@ def G_EXTRACT : Instruction {
   let hasSideEffects = 0;
 }
 
-// Combine a sequence of generic vregs into a single larger value (starting at
-// bit 0).
+// Insert a sequence of smaller registers into a larger one at the specified
+// indices (interleaved with the values in the operand list "op0, bit0, op1,
+// bit1, ...")).
 def G_INSERT : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins unknown:$src, variable_ops);
