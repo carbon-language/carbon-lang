@@ -163,10 +163,6 @@ HANDLE_TARGET_OPCODE(PATCHABLE_RET)
 HANDLE_TARGET_OPCODE(G_ADD)
 HANDLE_TARGET_OPCODE_MARKER(PRE_ISEL_GENERIC_OPCODE_START, G_ADD)
 
-/// Generic ADD instruction, consuming the normal operands plus a carry flag,
-/// and similarly producing the result and a carry flag.
-HANDLE_TARGET_OPCODE(G_ADDE)
-
 /// Generic SUB instruction. This is an integer sub.
 HANDLE_TARGET_OPCODE(G_SUB)
 
@@ -262,6 +258,30 @@ HANDLE_TARGET_OPCODE(G_ASHR)
 /// Generic integer-base comparison, also applicable to vectors of integers.
 HANDLE_TARGET_OPCODE(G_ICMP)
 
+/// Generic unsigned add instruction, consuming the normal operands plus a carry
+/// flag, and similarly producing the result and a carry flag.
+HANDLE_TARGET_OPCODE(G_UADDE)
+
+/// Generic unsigned subtract instruction, consuming the normal operands plus a
+/// carry flag, and similarly producing the result and a carry flag.
+HANDLE_TARGET_OPCODE(G_USUBE)
+
+/// Generic signed add instruction, producing the result and a signed overflow
+/// flag.
+HANDLE_TARGET_OPCODE(G_SADDO)
+
+/// Generic signed subtract instruction, producing the result and a signed
+/// overflow flag.
+HANDLE_TARGET_OPCODE(G_SSUBO)
+
+/// Generic unsigned multiply instruction, producing the result and a signed
+/// overflow flag.
+HANDLE_TARGET_OPCODE(G_UMULO)
+
+/// Generic signed multiply instruction, producing the result and a signed
+/// overflow flag.
+HANDLE_TARGET_OPCODE(G_SMULO)
+
 /// Generic FP addition.
 HANDLE_TARGET_OPCODE(G_FADD)
 
@@ -276,6 +296,7 @@ HANDLE_TARGET_OPCODE(G_FDIV)
 
 /// Generic FP remainder.
 HANDLE_TARGET_OPCODE(G_FREM)
+
 
 /// Generic BRANCH instruction. This is an unconditional branch.
 HANDLE_TARGET_OPCODE(G_BR)

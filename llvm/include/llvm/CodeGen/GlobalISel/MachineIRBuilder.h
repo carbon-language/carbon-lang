@@ -131,18 +131,18 @@ public:
   MachineInstrBuilder buildAdd(LLT Ty, unsigned Res, unsigned Op0,
                                 unsigned Op1);
 
-  /// Build and insert \p Res<def>, \p CarryOut = G_ADDE \p Ty \p Op0, \p Op1,
+  /// Build and insert \p Res<def>, \p CarryOut = G_UADDE \p Ty \p Op0, \p Op1,
   /// \p CarryIn
   ///
-  /// G_ADDE sets \p Res to \p Op0 + \p Op1 + \p CarryIn (truncated to the bit
-  /// width) and sets \p CarryOut to 1 if the result overflowed in 2s-complement
+  /// G_UADDE sets \p Res to \p Op0 + \p Op1 + \p CarryIn (truncated to the bit
+  /// width) and sets \p CarryOut to 1 if the result overflowed in unsigned
   /// arithmetic.
   ///
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildAdde(LLT Ty, unsigned Res, unsigned CarryOut,
-                                unsigned Op0, unsigned Op1, unsigned CarryIn);
+  MachineInstrBuilder buildUAdde(LLT Ty, unsigned Res, unsigned CarryOut,
+                                 unsigned Op0, unsigned Op1, unsigned CarryIn);
 
   /// Build and insert \p Res<def> = G_ANYEXTEND \p Ty \p Op0
   ///
@@ -227,17 +227,39 @@ public:
   MachineInstrBuilder buildExtract(LLT Ty, ArrayRef<unsigned> Results,
                                    unsigned Src, ArrayRef<unsigned> Indexes);
 
-  /// Build and insert \p Res<def> = G_SEQUENCE \p Ty \p Ops[0], ...
+  /// Build and insert \p Res<def> = G_SEQUENCE \p Ty \p Op0, \p Idx0...
   ///
-  /// G_SEQUENCE concatenates each element in Ops into a single register, where
-  /// Ops[0] starts at bit 0 of \p Res.
+  /// G_SEQUENCE inserts each element of Ops into an IMPLICIT_DEF register,
+  /// where each entry starts at the bit-index specified by \p Indexes.
   ///
   /// \pre setBasicBlock or setMI must have been called.
-  /// \pre The sum of the input sizes must equal the result's size.
+  /// \pre The final element of the sequence must not extend past the end of the
+  ///      destination register.
+  /// \pre The bits defined by each Op (derived from index and scalar size) must
+  ///      not overlap.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildSequence(LLT Ty, unsigned Res,
-                                    ArrayRef<unsigned> Ops);
+                                    ArrayRef<unsigned> Ops,
+                                    ArrayRef<unsigned> Indexes);
+
+  void addUsesWithIndexes(MachineInstrBuilder MIB) {}
+
+  template <typename... ArgTys>
+  void addUsesWithIndexes(MachineInstrBuilder MIB, unsigned Reg,
+                          unsigned BitIndex, ArgTys... Args) {
+    MIB.addUse(Reg).addImm(BitIndex);
+    addUsesWithIndexes(MIB, Args...);
+  }
+
+  template <typename... ArgTys>
+  MachineInstrBuilder buildSequence(LLT Ty, unsigned Res, unsigned Op,
+                                    unsigned Index, ArgTys... Args) {
+    MachineInstrBuilder MIB =
+        buildInstr(TargetOpcode::G_SEQUENCE, Ty).addDef(Res);
+    addUsesWithIndexes(MIB, Op, Index, Args...);
+    return MIB;
+  }
 
   /// Build and insert either a G_INTRINSIC (if \p HasSideEffects is false) or
   /// G_INTRINSIC_W_SIDE_EFFECTS instruction. Its first operand will be the

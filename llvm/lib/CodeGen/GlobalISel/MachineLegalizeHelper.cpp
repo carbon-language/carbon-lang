@@ -71,7 +71,7 @@ MachineLegalizeHelper::narrowScalar(MachineInstr &MI, LLT NarrowTy) {
 
     MIRBuilder.setInstr(MI);
 
-    SmallVector<unsigned, 2> Src1Regs, Src2Regs, DstRegs;
+    SmallVector<unsigned, 2> Src1Regs, Src2Regs, DstRegs, Indexes;
     extractParts(MI.getOperand(1).getReg(), NarrowTy, NumParts, Src1Regs);
     extractParts(MI.getOperand(2).getReg(), NarrowTy, NumParts, Src2Regs);
 
@@ -82,13 +82,15 @@ MachineLegalizeHelper::narrowScalar(MachineInstr &MI, LLT NarrowTy) {
       unsigned DstReg = MRI.createGenericVirtualRegister(NarrowSize);
       unsigned CarryOut = MRI.createGenericVirtualRegister(1);
 
-      MIRBuilder.buildAdde(NarrowTy, DstReg, CarryOut, Src1Regs[i], Src2Regs[i],
-                           CarryIn);
+      MIRBuilder.buildUAdde(NarrowTy, DstReg, CarryOut, Src1Regs[i],
+                            Src2Regs[i], CarryIn);
 
       DstRegs.push_back(DstReg);
+      Indexes.push_back(i * NarrowSize);
       CarryIn = CarryOut;
     }
-    MIRBuilder.buildSequence(MI.getType(), MI.getOperand(0).getReg(), DstRegs);
+    MIRBuilder.buildSequence(MI.getType(), MI.getOperand(0).getReg(), DstRegs,
+                             Indexes);
     MI.eraseFromParent();
     return Legalized;
   }
@@ -140,7 +142,7 @@ MachineLegalizeHelper::fewerElementsVector(MachineInstr &MI, LLT NarrowTy) {
 
     MIRBuilder.setInstr(MI);
 
-    SmallVector<unsigned, 2> Src1Regs, Src2Regs, DstRegs;
+    SmallVector<unsigned, 2> Src1Regs, Src2Regs, DstRegs, Indexes;
     extractParts(MI.getOperand(1).getReg(), NarrowTy, NumParts, Src1Regs);
     extractParts(MI.getOperand(2).getReg(), NarrowTy, NumParts, Src2Regs);
 
@@ -148,9 +150,11 @@ MachineLegalizeHelper::fewerElementsVector(MachineInstr &MI, LLT NarrowTy) {
       unsigned DstReg = MRI.createGenericVirtualRegister(NarrowSize);
       MIRBuilder.buildAdd(NarrowTy, DstReg, Src1Regs[i], Src2Regs[i]);
       DstRegs.push_back(DstReg);
+      Indexes.push_back(i * NarrowSize);
     }
 
-    MIRBuilder.buildSequence(MI.getType(), MI.getOperand(0).getReg(), DstRegs);
+    MIRBuilder.buildSequence(MI.getType(), MI.getOperand(0).getReg(), DstRegs,
+                             Indexes);
     MI.eraseFromParent();
     return Legalized;
   }

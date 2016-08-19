@@ -139,14 +139,6 @@ def G_UREM : Instruction {
   let isCommutable = 0;
 }
 
-// Generic addition consuming and producing a carry flag.
-def G_ADDE : Instruction {
-  let OutOperandList = (outs unknown:$dst, unknown:$carry_out);
-  let InOperandList = (ins unknown:$src1, unknown:$src2, unknown:$carry_in);
-  let hasSideEffects = 0;
-  let isCommutable = 1;
-}
-
 // Generic bitwise and.
 def G_AND : Instruction {
   let OutOperandList = (outs unknown:$dst);
@@ -197,6 +189,55 @@ def G_ICMP : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins unknown:$tst, unknown:$src1, unknown:$src2);
   let hasSideEffects = 0;
+}
+
+//------------------------------------------------------------------------------
+// Overflow ops
+//------------------------------------------------------------------------------
+
+// Generic unsigned addition consuming and producing a carry flag.
+def G_UADDE : Instruction {
+  let OutOperandList = (outs unknown:$dst, unknown:$carry_out);
+  let InOperandList = (ins unknown:$src1, unknown:$src2, unknown:$carry_in);
+  let hasSideEffects = 0;
+}
+
+// Generic signed addition producing a carry flag.
+def G_SADDO : Instruction {
+  let OutOperandList = (outs unknown:$dst, unknown:$carry_out);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+  let isCommutable = 1;
+}
+
+// Generic unsigned subtraction consuming and producing a carry flag.
+def G_USUBE : Instruction {
+  let OutOperandList = (outs unknown:$dst, unknown:$carry_out);
+  let InOperandList = (ins unknown:$src1, unknown:$src2, unknown:$carry_in);
+  let hasSideEffects = 0;
+}
+
+// Generic unsigned subtraction producing a carry flag.
+def G_SSUBO : Instruction {
+  let OutOperandList = (outs unknown:$dst, unknown:$carry_out);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+}
+
+// Generic unsigned multiplication producing a carry flag.
+def G_UMULO : Instruction {
+  let OutOperandList = (outs unknown:$dst, unknown:$carry_out);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+  let isCommutable = 1;
+}
+
+// Generic signed multiplication producing a carry flag.
+def G_SMULO : Instruction {
+  let OutOperandList = (outs unknown:$dst, unknown:$carry_out);
+  let InOperandList = (ins unknown:$src1, unknown:$src2);
+  let hasSideEffects = 0;
+  let isCommutable = 1;
 }
 
 //------------------------------------------------------------------------------

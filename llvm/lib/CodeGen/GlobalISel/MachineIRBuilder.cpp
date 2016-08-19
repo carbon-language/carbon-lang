@@ -124,11 +124,11 @@ MachineInstrBuilder MachineIRBuilder::buildStore(LLT VTy, LLT PTy,
       .addMemOperand(&MMO);
 }
 
-MachineInstrBuilder MachineIRBuilder::buildAdde(LLT Ty, unsigned Res,
-                                                unsigned CarryOut, unsigned Op0,
-                                                unsigned Op1,
-                                                unsigned CarryIn) {
-  return buildInstr(TargetOpcode::G_ADDE, Ty)
+MachineInstrBuilder MachineIRBuilder::buildUAdde(LLT Ty, unsigned Res,
+                                                 unsigned CarryOut,
+                                                 unsigned Op0, unsigned Op1,
+                                                 unsigned CarryIn) {
+  return buildInstr(TargetOpcode::G_UADDE, Ty)
       .addDef(Res)
       .addDef(CarryOut)
       .addUse(Op0)
@@ -157,12 +157,18 @@ MachineIRBuilder::buildExtract(LLT Ty, ArrayRef<unsigned> Results, unsigned Src,
   return MIB;
 }
 
-MachineInstrBuilder MachineIRBuilder::buildSequence(LLT Ty, unsigned Res,
-                                              ArrayRef<unsigned> Ops) {
+MachineInstrBuilder
+MachineIRBuilder::buildSequence(LLT Ty, unsigned Res,
+                                ArrayRef<unsigned> Ops,
+                                ArrayRef<unsigned> Indexes) {
+  assert(Ops.size() == Indexes.size() && "incompatible args");
+
   MachineInstrBuilder MIB = buildInstr(TargetOpcode::G_SEQUENCE, Ty);
   MIB.addDef(Res);
-  for (auto Op : Ops)
-    MIB.addUse(Op);
+  for (unsigned i = 0; i < Ops.size(); ++i) {
+    MIB.addUse(Ops[i]);
+    MIB.addImm(Indexes[i]);
+  }
   return MIB;
 }
 

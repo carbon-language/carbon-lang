@@ -204,6 +204,41 @@ bool IRTranslator::translateCast(unsigned Opcode, const User &U) {
   return true;
 }
 
+bool IRTranslator::translateKnownIntrinsic(const CallInst &CI,
+                                           Intrinsic::ID ID) {
+  unsigned Op = 0;
+  switch (ID) {
+  default: return false;
+  case Intrinsic::uadd_with_overflow: Op = TargetOpcode::G_UADDE; break;
+  case Intrinsic::sadd_with_overflow: Op = TargetOpcode::G_SADDO; break;
+  case Intrinsic::usub_with_overflow: Op = TargetOpcode::G_USUBE; break;
+  case Intrinsic::ssub_with_overflow: Op = TargetOpcode::G_SSUBO; break;
+  case Intrinsic::umul_with_overflow: Op = TargetOpcode::G_UMULO; break;
+  case Intrinsic::smul_with_overflow: Op = TargetOpcode::G_SMULO; break;
+  }
+
+  LLT Ty{*CI.getOperand(0)->getType()};
+  LLT s1 = LLT::scalar(1);
+  unsigned Width = Ty.getSizeInBits();
+  unsigned Res = MRI->createGenericVirtualRegister(Width);
+  unsigned Overflow = MRI->createGenericVirtualRegister(1);
+  auto MIB = MIRBuilder.buildInstr(Op, {Ty, s1})
+                 .addDef(Res)
+                 .addDef(Overflow)
+                 .addUse(getOrCreateVReg(*CI.getOperand(0)))
+                 .addUse(getOrCreateVReg(*CI.getOperand(1)));
+
+  if (Op == TargetOpcode::G_UADDE || Op == TargetOpcode::G_USUBE) {
+    unsigned Zero = MRI->createGenericVirtualRegister(1);
+    EntryBuilder.buildConstant(s1, Zero, 0);
+    MIB.addUse(Zero);
+  }
+
+  MIRBuilder.buildSequence(LLT{*CI.getType(), DL}, getOrCreateVReg(CI), Res, 0,
+                           Overflow, Width);
+  return true;
+}
+
 bool IRTranslator::translateCall(const User &U) {
   const CallInst &CI = cast<CallInst>(U);
   auto TII = MIRBuilder.getMF().getTarget().getIntrinsicInfo();
@@ -226,6 +261,9 @@ bool IRTranslator::translateCall(const User &U) {
     ID = static_cast<Intrinsic::ID>(TII->getIntrinsicID(F));
 
   assert(ID != Intrinsic::not_intrinsic && "unknown intrinsic");
+
+  if (translateKnownIntrinsic(CI, ID))
+    return true;
 
   // Need types (starting with return) & args.
   SmallVector<LLT, 4> Tys;

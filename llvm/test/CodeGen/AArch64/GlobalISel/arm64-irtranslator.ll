@@ -596,3 +596,89 @@ define float @test_frem(float %arg1, float %arg2) {
   %res = frem float %arg1, %arg2
   ret float %res
 }
+
+; CHECK-LABEL: name: test_sadd_overflow
+; CHECK: [[LHS:%[0-9]+]](32) = COPY %w0
+; CHECK: [[RHS:%[0-9]+]](32) = COPY %w1
+; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x2
+; CHECK: [[VAL:%[0-9]+]](32), [[OVERFLOW:%[0-9]+]](1) = G_SADDO { s32, s1 } [[LHS]], [[RHS]]
+; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE s64 [[VAL]], 0, [[OVERFLOW]], 32
+; CHECK: G_STORE { s64, p0 } [[RES]], [[ADDR]]
+declare { i32, i1 } @llvm.sadd.with.overflow.i32(i32, i32)
+define void @test_sadd_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
+  %res = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 %lhs, i32 %rhs)
+  store { i32, i1 } %res, { i32, i1 }* %addr
+  ret void
+}
+
+; CHECK-LABEL: name: test_uadd_overflow
+; CHECK: [[LHS:%[0-9]+]](32) = COPY %w0
+; CHECK: [[RHS:%[0-9]+]](32) = COPY %w1
+; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x2
+; CHECK: [[ZERO:%[0-9]+]](1) = G_CONSTANT s1 0
+; CHECK: [[VAL:%[0-9]+]](32), [[OVERFLOW:%[0-9]+]](1) = G_UADDE { s32, s1 } [[LHS]], [[RHS]], [[ZERO]]
+; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE s64 [[VAL]], 0, [[OVERFLOW]], 32
+; CHECK: G_STORE { s64, p0 } [[RES]], [[ADDR]]
+declare { i32, i1 } @llvm.uadd.with.overflow.i32(i32, i32)
+define void @test_uadd_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
+  %res = call { i32, i1 } @llvm.uadd.with.overflow.i32(i32 %lhs, i32 %rhs)
+  store { i32, i1 } %res, { i32, i1 }* %addr
+  ret void
+}
+
+; CHECK-LABEL: name: test_ssub_overflow
+; CHECK: [[LHS:%[0-9]+]](32) = COPY %w0
+; CHECK: [[RHS:%[0-9]+]](32) = COPY %w1
+; CHECK: [[SUBR:%[0-9]+]](64) = COPY %x2
+; CHECK: [[VAL:%[0-9]+]](32), [[OVERFLOW:%[0-9]+]](1) = G_SSUBO { s32, s1 } [[LHS]], [[RHS]]
+; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE s64 [[VAL]], 0, [[OVERFLOW]], 32
+; CHECK: G_STORE { s64, p0 } [[RES]], [[SUBR]]
+declare { i32, i1 } @llvm.ssub.with.overflow.i32(i32, i32)
+define void @test_ssub_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %subr) {
+  %res = call { i32, i1 } @llvm.ssub.with.overflow.i32(i32 %lhs, i32 %rhs)
+  store { i32, i1 } %res, { i32, i1 }* %subr
+  ret void
+}
+
+; CHECK-LABEL: name: test_usub_overflow
+; CHECK: [[LHS:%[0-9]+]](32) = COPY %w0
+; CHECK: [[RHS:%[0-9]+]](32) = COPY %w1
+; CHECK: [[SUBR:%[0-9]+]](64) = COPY %x2
+; CHECK: [[ZERO:%[0-9]+]](1) = G_CONSTANT s1 0
+; CHECK: [[VAL:%[0-9]+]](32), [[OVERFLOW:%[0-9]+]](1) = G_USUBE { s32, s1 } [[LHS]], [[RHS]], [[ZERO]]
+; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE s64 [[VAL]], 0, [[OVERFLOW]], 32
+; CHECK: G_STORE { s64, p0 } [[RES]], [[SUBR]]
+declare { i32, i1 } @llvm.usub.with.overflow.i32(i32, i32)
+define void @test_usub_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %subr) {
+  %res = call { i32, i1 } @llvm.usub.with.overflow.i32(i32 %lhs, i32 %rhs)
+  store { i32, i1 } %res, { i32, i1 }* %subr
+  ret void
+}
+
+; CHECK-LABEL: name: test_smul_overflow
+; CHECK: [[LHS:%[0-9]+]](32) = COPY %w0
+; CHECK: [[RHS:%[0-9]+]](32) = COPY %w1
+; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x2
+; CHECK: [[VAL:%[0-9]+]](32), [[OVERFLOW:%[0-9]+]](1) = G_SMULO { s32, s1 } [[LHS]], [[RHS]]
+; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE s64 [[VAL]], 0, [[OVERFLOW]], 32
+; CHECK: G_STORE { s64, p0 } [[RES]], [[ADDR]]
+declare { i32, i1 } @llvm.smul.with.overflow.i32(i32, i32)
+define void @test_smul_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
+  %res = call { i32, i1 } @llvm.smul.with.overflow.i32(i32 %lhs, i32 %rhs)
+  store { i32, i1 } %res, { i32, i1 }* %addr
+  ret void
+}
+
+; CHECK-LABEL: name: test_umul_overflow
+; CHECK: [[LHS:%[0-9]+]](32) = COPY %w0
+; CHECK: [[RHS:%[0-9]+]](32) = COPY %w1
+; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x2
+; CHECK: [[VAL:%[0-9]+]](32), [[OVERFLOW:%[0-9]+]](1) = G_UMULO { s32, s1 } [[LHS]], [[RHS]]
+; CHECK: [[RES:%[0-9]+]](64) = G_SEQUENCE s64 [[VAL]], 0, [[OVERFLOW]], 32
+; CHECK: G_STORE { s64, p0 } [[RES]], [[ADDR]]
+declare { i32, i1 } @llvm.umul.with.overflow.i32(i32, i32)
+define void @test_umul_overflow(i32 %lhs, i32 %rhs, { i32, i1 }* %addr) {
+  %res = call { i32, i1 } @llvm.umul.with.overflow.i32(i32 %lhs, i32 %rhs)
+  store { i32, i1 } %res, { i32, i1 }* %addr
+  ret void
+}

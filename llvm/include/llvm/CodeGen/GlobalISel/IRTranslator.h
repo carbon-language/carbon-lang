@@ -117,6 +117,8 @@ private:
   /// Translate an LLVM store instruction into generic IR.
   bool translateStore(const User &U);
 
+  bool translateKnownIntrinsic(const CallInst &CI, Intrinsic::ID ID);
+
   /// Translate call instruction.
   /// \pre \p U is a call instruction.
   bool translateCall(const User &U);
