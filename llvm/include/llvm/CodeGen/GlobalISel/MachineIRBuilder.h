@@ -301,13 +301,21 @@ public:
   /// \return The newly created instruction.
   MachineInstrBuilder buildTrunc(LLT Ty, unsigned Res, unsigned Op);
 
-  /// Build and insert either a G_ICMP
+  /// Build and insert a G_ICMP
   ///
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildICmp(ArrayRef<LLT> Tys, CmpInst::Predicate Pred,
                                 unsigned Res, unsigned Op0, unsigned Op1);
+
+  /// Build and insert a \p Res = G_SELECT { \p Ty, s1 } \p Tst, \p Op0, \p Op1
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildSelect(LLT Ty, unsigned Res, unsigned Tst,
+                                  unsigned Op0, unsigned Op1);
 };
 
 } // End namespace llvm.

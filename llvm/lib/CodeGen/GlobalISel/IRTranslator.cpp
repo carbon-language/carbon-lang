@@ -236,6 +236,13 @@ bool IRTranslator::translateInsertValue(const User &U) {
   return true;
 }
 
+bool IRTranslator::translateSelect(const User &U) {
+  MIRBuilder.buildSelect(
+      LLT{*U.getType()}, getOrCreateVReg(U), getOrCreateVReg(*U.getOperand(0)),
+      getOrCreateVReg(*U.getOperand(1)), getOrCreateVReg(*U.getOperand(2)));
+  return true;
+}
+
 bool IRTranslator::translateBitCast(const User &U) {
   if (LLT{*U.getOperand(0)->getType()} == LLT{*U.getType()}) {
     unsigned &Reg = ValToVReg[&U];

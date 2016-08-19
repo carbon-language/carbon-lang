@@ -729,3 +729,14 @@ define void @test_insertvalue_agg(%struct.nested* %addr, {i8, i32}* %addr2) {
   store %struct.nested %res, %struct.nested* %addr
   ret void
 }
+
+; CHECK-LABEL: name: test_select
+; CHECK: [[TST:%[0-9]+]](1) = COPY %w0
+; CHECK: [[LHS:%[0-9]+]](32) = COPY %w1
+; CHECK: [[RHS:%[0-9]+]](32) = COPY %w2
+; CHECK: [[RES:%[0-9]+]](32) = G_SELECT { s32, s1 } [[TST]], [[LHS]], [[RHS]]
+; CHECK: %w0 = COPY [[RES]]
+define i32 @test_select(i1 %tst, i32 %lhs, i32 %rhs) {
+  %res = select i1 %tst, i32 %lhs, i32 %rhs
+  ret i32 %res
+}

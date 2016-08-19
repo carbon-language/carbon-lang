@@ -216,3 +216,13 @@ MachineInstrBuilder MachineIRBuilder::buildICmp(ArrayRef<LLT> Tys,
       .addUse(Op0)
       .addUse(Op1);
 }
+
+MachineInstrBuilder MachineIRBuilder::buildSelect(LLT Ty, unsigned Res,
+                                                  unsigned Tst,
+                                                  unsigned Op0, unsigned Op1) {
+  return buildInstr(TargetOpcode::G_SELECT, {Ty, LLT::scalar(1)})
+      .addDef(Res)
+      .addUse(Tst)
+      .addUse(Op0)
+      .addUse(Op1);
+}

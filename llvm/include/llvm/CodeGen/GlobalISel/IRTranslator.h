@@ -153,6 +153,8 @@ private:
 
   bool translateInsertValue(const User &U);
 
+  bool translateSelect(const User &U);
+
   /// Translate return (ret) instruction.
   /// The target needs to implement CallLowering::lowerReturn for
   /// this to succeed.
@@ -263,7 +265,6 @@ private:
   bool translateCleanupPad(const User &U) { return false; }
   bool translateCatchPad(const User &U) { return false; }
   bool translateFCmp(const User &U) { return false; }
-  bool translateSelect(const User &U) { return false; }
   bool translateUserOp1(const User &U) { return false; }
   bool translateUserOp2(const User &U) { return false; }
   bool translateVAArg(const User &U) { return false; }

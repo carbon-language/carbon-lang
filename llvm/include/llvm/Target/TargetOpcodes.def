@@ -262,6 +262,9 @@ HANDLE_TARGET_OPCODE(G_ASHR)
 /// Generic integer-base comparison, also applicable to vectors of integers.
 HANDLE_TARGET_OPCODE(G_ICMP)
 
+/// Generic select.
+HANDLE_TARGET_OPCODE(G_SELECT)
+
 /// Generic unsigned add instruction, consuming the normal operands plus a carry
 /// flag, and similarly producing the result and a carry flag.
 HANDLE_TARGET_OPCODE(G_UADDE)
