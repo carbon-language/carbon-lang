@@ -183,49 +183,58 @@ bool IRTranslator::translateStore(const User &U) {
 }
 
 bool IRTranslator::translateExtractValue(const User &U) {
-  const ExtractValueInst &EVI = cast<ExtractValueInst>(U);
-  const Value *Src = EVI.getAggregateOperand();
-  Type *Int32Ty = Type::getInt32Ty(EVI.getContext());
+  const Value *Src = U.getOperand(0);
+  Type *Int32Ty = Type::getInt32Ty(U.getContext());
   SmallVector<Value *, 1> Indices;
 
   // getIndexedOffsetInType is designed for GEPs, so the first index is the
   // usual array element rather than looking into the actual aggregate.
   Indices.push_back(ConstantInt::get(Int32Ty, 0));
-  for (auto Idx : EVI.indices())
-    Indices.push_back(ConstantInt::get(Int32Ty, Idx));
+
+  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(&U)) {
+    for (auto Idx : EVI->indices())
+      Indices.push_back(ConstantInt::get(Int32Ty, Idx));
+  } else {
+    for (unsigned i = 1; i < U.getNumOperands(); ++i)
+      Indices.push_back(U.getOperand(i));
+  }
 
   uint64_t Offset = 8 * DL->getIndexedOffsetInType(Src->getType(), Indices);
 
-  unsigned Res = getOrCreateVReg(EVI);
-  MIRBuilder.buildExtract(LLT{*EVI.getType(), DL}, Res, Offset,
+  unsigned Res = getOrCreateVReg(U);
+  MIRBuilder.buildExtract(LLT{*U.getType(), DL}, Res, Offset,
                           LLT{*Src->getType(), DL}, getOrCreateVReg(*Src));
 
   return true;
 }
 
 bool IRTranslator::translateInsertValue(const User &U) {
-  const InsertValueInst &IVI = cast<InsertValueInst>(U);
-  const Value *Src = IVI.getAggregateOperand();
-  Type *Int32Ty = Type::getInt32Ty(IVI.getContext());
+  const Value *Src = U.getOperand(0);
+  Type *Int32Ty = Type::getInt32Ty(U.getContext());
   SmallVector<Value *, 1> Indices;
 
   // getIndexedOffsetInType is designed for GEPs, so the first index is the
   // usual array element rather than looking into the actual aggregate.
   Indices.push_back(ConstantInt::get(Int32Ty, 0));
-  for (auto Idx : IVI.indices())
-    Indices.push_back(ConstantInt::get(Int32Ty, Idx));
+
+  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(&U)) {
+    for (auto Idx : IVI->indices())
+      Indices.push_back(ConstantInt::get(Int32Ty, Idx));
+  } else {
+    for (unsigned i = 2; i < U.getNumOperands(); ++i)
+      Indices.push_back(U.getOperand(i));
+  }
 
   uint64_t Offset = 8 * DL->getIndexedOffsetInType(Src->getType(), Indices);
 
-  unsigned Res = getOrCreateVReg(IVI);
-  const Value &Inserted = *IVI.getInsertedValueOperand();
-  MIRBuilder.buildInsert(
-      LLT{*IVI.getType(), DL}, Res, getOrCreateVReg(*IVI.getAggregateOperand()),
-      LLT{*Inserted.getType(), DL}, getOrCreateVReg(Inserted), Offset);
+  unsigned Res = getOrCreateVReg(U);
+  const Value &Inserted = *U.getOperand(1);
+  MIRBuilder.buildInsert(LLT{*U.getType(), DL}, Res, getOrCreateVReg(*Src),
+                         LLT{*Inserted.getType(), DL},
+                         getOrCreateVReg(Inserted), Offset);
 
   return true;
 }
-
 
 bool IRTranslator::translateBitCast(const User &U) {
   if (LLT{*U.getOperand(0)->getType()} == LLT{*U.getType()}) {
