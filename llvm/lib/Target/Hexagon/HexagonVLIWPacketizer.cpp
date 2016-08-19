@@ -283,11 +283,18 @@ bool HexagonPacketizerList::isCallDependent(const MachineInstr &MI,
 
   // Assumes that the first operand of the CALLr is the function address.
   if (HII->isIndirectCall(MI) && (DepType == SDep::Data)) {
-    MachineOperand MO = MI.getOperand(0);
+    const MachineOperand MO = MI.getOperand(0);
     if (MO.isReg() && MO.isUse() && (MO.getReg() == DepReg))
       return true;
   }
 
+  if (HII->isJumpR(MI)) {
+    const MachineOperand &MO = HII->isPredicated(MI) ? MI.getOperand(1)
+                                                     : MI.getOperand(0);
+    assert(MO.isReg() && MO.isUse());
+    if (MO.getReg() == DepReg)
+      return true;
+  }
   return false;
 }
 
@@ -1293,12 +1300,6 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
     // dealloc return unless we have dependencies on the explicit uses
     // of the registers used by jumpr (like r31) or dealloc return
     // (like r29 or r30).
-    //
-    // TODO: Currently, jumpr is handling only return of r31. So, the
-    // following logic (specificaly isCallDependent) is working fine.
-    // We need to enable jumpr for register other than r31 and then,
-    // we need to rework the last part, where it handles indirect call
-    // of that (isCallDependent) function. Bug 6216 is opened for this.
     unsigned DepReg = 0;
     const TargetRegisterClass *RC = nullptr;
     if (DepType == SDep::Data) {
