@@ -3143,9 +3143,15 @@ bool HexagonTargetLowering::IsEligibleForTailCallOptimization(
     return false;
   }
 
-  // Do not optimize if the calling conventions do not match.
-  if (!CCMatch)
-    return false;
+  // Do not optimize if the calling conventions do not match and the conventions
+  // used are not C or Fast.
+  if (!CCMatch) {
+    bool R = (CallerCC == CallingConv::C || CallerCC == CallingConv::Fast);
+    bool E = (CalleeCC == CallingConv::C || CalleeCC == CallingConv::Fast);
+    // If R & E, then ok.
+    if (!R || !E)
+      return false;
+  }
 
   // Do not tail call optimize vararg calls.
   if (isVarArg)
