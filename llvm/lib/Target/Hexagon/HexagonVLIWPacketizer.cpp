@@ -1031,6 +1031,24 @@ static bool cannotCoexistAsymm(const MachineInstr &MI, const MachineInstr &MJ,
     return MJ.isInlineAsm() || MJ.isBranch() || MJ.isBarrier() ||
            MJ.isCall() || MJ.isTerminator();
 
+  switch (MI.getOpcode()) {
+  case (Hexagon::S2_storew_locked):
+  case (Hexagon::S4_stored_locked):
+  case (Hexagon::L2_loadw_locked):
+  case (Hexagon::L4_loadd_locked):
+  case (Hexagon::Y4_l2fetch): {
+    // These instructions can only be grouped with ALU32 or non-floating-point
+    // XTYPE instructions.  Since there is no convenient way of identifying fp
+    // XTYPE instructions, only allow grouping with ALU32 for now.
+    unsigned TJ = HII.getType(MJ);
+    if (TJ != HexagonII::TypeALU32)
+      return true;
+    break;
+  }
+  default:
+    break;
+  }
+
   // "False" really means that the quick check failed to determine if
   // I and J cannot coexist.
   return false;
