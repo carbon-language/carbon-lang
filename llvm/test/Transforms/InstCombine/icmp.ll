@@ -2581,3 +2581,22 @@ define i1 @PR27792_2(i128 %a) {
   ret i1 %b
 }
 
+define i1 @ugtMaxSignedVal(i8 %a) {
+; CHECK-LABEL: @ugtMaxSignedVal(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i8 %a, 0
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %cmp = icmp ugt i8 %a, 127
+  ret i1 %cmp
+}
+
+define i1 @ugtKnownBits(i8 %a) {
+; CHECK-LABEL: @ugtKnownBits(
+; CHECK-NEXT:    [[B:%.*]] = and i8 %a, 17
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i8 [[B]], 17
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %b = and i8 %a, 17
+  %cmp = icmp ugt i8 %b, 16
+  ret i1 %cmp
+}
