@@ -264,6 +264,18 @@ def G_SMULO : Instruction {
 // Floating Point Unary Ops.
 //------------------------------------------------------------------------------
 
+def G_FPEXT : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src);
+  let hasSideEffects = 0;
+}
+
+def G_FPTRUNC : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src);
+  let hasSideEffects = 0;
+}
+
 def G_FPTOSI : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins unknown:$src);

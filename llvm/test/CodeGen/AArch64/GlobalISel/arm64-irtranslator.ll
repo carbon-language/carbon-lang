@@ -785,6 +785,24 @@ define void @test_uitofp(double* %addr, i32 %in) {
   ret void
 }
 
+; CHECK-LABEL: name: test_fpext
+; CHECK: [[IN:%[0-9]+]](32) = COPY %s0
+; CHECK: [[RES:%[0-9]+]](64) = G_FPEXT { s64, s32 } [[IN]]
+; CHECK: %d0 = COPY [[RES]]
+define double @test_fpext(float %in) {
+  %res = fpext float %in to double
+  ret double %res
+}
+
+; CHECK-LABEL: name: test_fptrunc
+; CHECK: [[IN:%[0-9]+]](64) = COPY %d0
+; CHECK: [[RES:%[0-9]+]](32) = G_FPTRUNC { s32, s64 } [[IN]]
+; CHECK: %s0 = COPY [[RES]]
+define float @test_fptrunc(double %in) {
+  %res = fptrunc double %in to float
+  ret float %res
+}
+
 ; CHECK-LABEL: name: test_constant_float
 ; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x0
 ; CHECK: [[TMP:%[0-9]+]](32) = G_FCONSTANT s32 float 1.500000e+00
