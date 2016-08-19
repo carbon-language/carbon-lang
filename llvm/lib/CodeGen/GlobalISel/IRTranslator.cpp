@@ -197,7 +197,7 @@ bool IRTranslator::translateExtractValue(const User &U) {
   uint64_t Offset = 8 * DL->getIndexedOffsetInType(Src->getType(), Indices);
 
   unsigned Res = getOrCreateVReg(EVI);
-  MIRBuilder.buildExtract(LLT{*EVI.getType()}, Res, getOrCreateVReg(*Src),
+  MIRBuilder.buildExtract(LLT{*EVI.getType(), DL}, Res, getOrCreateVReg(*Src),
                           Offset);
 
   return true;

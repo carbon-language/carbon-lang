@@ -693,3 +693,14 @@ define i32 @test_extractvalue(%struct.nested* %addr) {
   %res = extractvalue %struct.nested %struct, 1, 1
   ret i32 %res
 }
+
+; CHECK-LABEL: name: test_extractvalue_agg
+; CHECK: [[STRUCT:%[0-9]+]](128) = G_LOAD { s128, p0 }
+; CHECK: [[RES:%[0-9]+]](64) = G_EXTRACT s64 [[STRUCT]], 32
+; CHECK: G_STORE { s64, p0 } [[RES]]
+define void @test_extractvalue_agg(%struct.nested* %addr, {i8, i32}* %addr2) {
+  %struct = load %struct.nested, %struct.nested* %addr
+  %res = extractvalue %struct.nested %struct, 1
+  store {i8, i32} %res, {i8, i32}* %addr2
+  ret void
+}
