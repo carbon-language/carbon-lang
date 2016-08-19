@@ -408,6 +408,8 @@ bool IRTranslator::translate(const Instruction &Inst) {
 bool IRTranslator::translate(const Constant &C, unsigned Reg) {
   if (auto CI = dyn_cast<ConstantInt>(&C))
     EntryBuilder.buildConstant(LLT{*CI->getType()}, Reg, CI->getZExtValue());
+  else if (auto CF = dyn_cast<ConstantFP>(&C))
+    EntryBuilder.buildFConstant(LLT{*CF->getType()}, Reg, *CF);
   else if (isa<UndefValue>(C))
     EntryBuilder.buildInstr(TargetOpcode::IMPLICIT_DEF).addDef(Reg);
   else if (isa<ConstantPointerNull>(C))

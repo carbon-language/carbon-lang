@@ -185,6 +185,17 @@ public:
   /// \return The newly created instruction.
   MachineInstrBuilder buildConstant(LLT Ty, unsigned Res, int64_t Val);
 
+  /// Build and insert \p Res = G_FCONSTANT \p Ty \p Val
+  ///
+  /// G_FCONSTANT is a floating-point constant with the specified size and
+  /// value.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return The newly created instruction.
+  MachineInstrBuilder buildFConstant(LLT Ty, unsigned Res,
+                                     const ConstantFP &Val);
+
   /// Build and insert \p Res<def> = COPY Op
   ///
   /// Register-to-register COPY sets \p Res to \p Op.

@@ -100,6 +100,11 @@ MachineInstrBuilder MachineIRBuilder::buildConstant(LLT Ty, unsigned Res,
   return buildInstr(TargetOpcode::G_CONSTANT, Ty).addDef(Res).addImm(Val);
 }
 
+MachineInstrBuilder MachineIRBuilder::buildFConstant(LLT Ty, unsigned Res,
+                                                    const ConstantFP &Val) {
+  return buildInstr(TargetOpcode::G_FCONSTANT, Ty).addDef(Res).addFPImm(&Val);
+}
+
 MachineInstrBuilder MachineIRBuilder::buildBrCond(LLT Ty, unsigned Tst,
                                                   MachineBasicBlock &Dest) {
   return buildInstr(TargetOpcode::G_BRCOND, Ty).addUse(Tst).addMBB(&Dest);

@@ -244,6 +244,9 @@ HANDLE_TARGET_OPCODE(G_TRUNC)
 /// Generic integer constant.
 HANDLE_TARGET_OPCODE(G_CONSTANT)
 
+/// Generic floating constant.
+HANDLE_TARGET_OPCODE(G_FCONSTANT)
+
 // Generic sign extend
 HANDLE_TARGET_OPCODE(G_SEXT)
 

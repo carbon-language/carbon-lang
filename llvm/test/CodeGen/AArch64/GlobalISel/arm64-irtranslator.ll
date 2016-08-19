@@ -784,3 +784,12 @@ define void @test_uitofp(double* %addr, i32 %in) {
   store double %fp, double* %addr
   ret void
 }
+
+; CHECK-LABEL: name: test_constant_float
+; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x0
+; CHECK: [[TMP:%[0-9]+]](32) = G_FCONSTANT s32 float 1.500000e+00
+; CHECK: G_STORE { s32, p0 } [[TMP]], [[ADDR]]
+define void @test_constant_float(float* %addr) {
+  store float 1.5, float* %addr
+  ret void
+}

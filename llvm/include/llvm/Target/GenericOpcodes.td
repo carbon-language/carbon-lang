@@ -79,6 +79,12 @@ def G_CONSTANT : Instruction {
   let hasSideEffects = 0;
 }
 
+def G_FCONSTANT : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$imm);
+  let hasSideEffects = 0;
+}
+
 //------------------------------------------------------------------------------
 // Binary ops.
 //------------------------------------------------------------------------------
