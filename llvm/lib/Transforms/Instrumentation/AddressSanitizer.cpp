@@ -2079,10 +2079,7 @@ void FunctionStackPoisoner::poisonStack() {
   for (AllocaInst *AI : AllocaVec) {
     ASanStackVariableDescription D = {AI->getName().data(),
                                       ASan.getAllocaSizeInBytes(*AI),
-                                      0,
-                                      AI->getAlignment(),
-                                      AI,
-                                      0};
+                                      AI->getAlignment(), AI, 0};
     SVD.push_back(D);
   }
   // Minimal header size (left redzone) is 4 pointers,
