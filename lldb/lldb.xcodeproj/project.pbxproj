@@ -74,6 +74,9 @@
 		233B007F1960CB280090E598 /* ProcessLaunchInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B007E1960CB280090E598 /* ProcessLaunchInfo.cpp */; };
 		236124A41986B4E2004EFC37 /* IOObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 236124A21986B4E2004EFC37 /* IOObject.cpp */; };
 		236124A51986B4E2004EFC37 /* Socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 236124A31986B4E2004EFC37 /* Socket.cpp */; };
+		2370A3861D66C594000E7BE6 /* GDBRemoteClientBaseTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2370A37D1D66C587000E7BE6 /* GDBRemoteClientBaseTest.cpp */; };
+		2370A3871D66C594000E7BE6 /* GDBRemoteCommunicationClientTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2370A37E1D66C587000E7BE6 /* GDBRemoteCommunicationClientTest.cpp */; };
+		2370A3881D66C594000E7BE6 /* GDBRemoteTestUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2370A37F1D66C587000E7BE6 /* GDBRemoteTestUtils.cpp */; };
 		2374D7461D4BAA1D005C9575 /* CMakeLists.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2374D7431D4BAA1D005C9575 /* CMakeLists.txt */; };
 		2374D7521D4BB299005C9575 /* GDBRemoteClientBase.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2374D74F1D4BB299005C9575 /* GDBRemoteClientBase.h */; };
 		2374D7531D4BB2FF005C9575 /* GDBRemoteClientBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2374D74E1D4BB299005C9575 /* GDBRemoteClientBase.cpp */; };
@@ -1241,6 +1244,12 @@
 		236124A31986B4E2004EFC37 /* Socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Socket.cpp; sourceTree = "<group>"; };
 		236124A61986B50E004EFC37 /* IOObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = IOObject.h; path = include/lldb/Host/IOObject.h; sourceTree = "<group>"; };
 		236124A71986B50E004EFC37 /* Socket.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Socket.h; path = include/lldb/Host/Socket.h; sourceTree = "<group>"; };
+		2370A37A1D66C57B000E7BE6 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		2370A37C1D66C587000E7BE6 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		2370A37D1D66C587000E7BE6 /* GDBRemoteClientBaseTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GDBRemoteClientBaseTest.cpp; sourceTree = "<group>"; };
+		2370A37E1D66C587000E7BE6 /* GDBRemoteCommunicationClientTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GDBRemoteCommunicationClientTest.cpp; sourceTree = "<group>"; };
+		2370A37F1D66C587000E7BE6 /* GDBRemoteTestUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GDBRemoteTestUtils.cpp; sourceTree = "<group>"; };
+		2370A3801D66C587000E7BE6 /* GDBRemoteTestUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GDBRemoteTestUtils.h; sourceTree = "<group>"; };
 		2374D7431D4BAA1D005C9575 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		2374D74E1D4BB299005C9575 /* GDBRemoteClientBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GDBRemoteClientBase.cpp; sourceTree = "<group>"; };
 		2374D74F1D4BB299005C9575 /* GDBRemoteClientBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GDBRemoteClientBase.h; sourceTree = "<group>"; };
@@ -3153,12 +3162,13 @@
 		2321F9331BDD326500BA9A93 /* unittests */ = {
 			isa = PBXGroup;
 			children = (
+				2370A3781D66C549000E7BE6 /* Process */,
 				239504C61BDD3FF300963CEA /* CMakeLists.txt */,
 				239504C21BDD3FD600963CEA /* gtest_common.h */,
-				2321F9371BDD32ED00BA9A93 /* Host */,
-				2321F93C1BDD339A00BA9A93 /* Interpreter */,
 				2326CF501BDD68CA00A5CEAC /* Editline */,
 				AEC6FF9D1BE97035007882C1 /* Expression */,
+				2321F9371BDD32ED00BA9A93 /* Host */,
+				2321F93C1BDD339A00BA9A93 /* Interpreter */,
 				2321F93F1BDD33D800BA9A93 /* ScriptInterpreter */,
 				2321F9421BDD343A00BA9A93 /* Utility */,
 			);
@@ -3265,6 +3275,27 @@
 				2361029E1CF38A3500B8E0B9 /* Android.cmake */,
 			);
 			path = platforms;
+			sourceTree = "<group>";
+		};
+		2370A3781D66C549000E7BE6 /* Process */ = {
+			isa = PBXGroup;
+			children = (
+				2370A37A1D66C57B000E7BE6 /* CMakeLists.txt */,
+				2370A3791D66C569000E7BE6 /* gdb-remote */,
+			);
+			path = Process;
+			sourceTree = "<group>";
+		};
+		2370A3791D66C569000E7BE6 /* gdb-remote */ = {
+			isa = PBXGroup;
+			children = (
+				2370A37C1D66C587000E7BE6 /* CMakeLists.txt */,
+				2370A37D1D66C587000E7BE6 /* GDBRemoteClientBaseTest.cpp */,
+				2370A37E1D66C587000E7BE6 /* GDBRemoteCommunicationClientTest.cpp */,
+				2370A37F1D66C587000E7BE6 /* GDBRemoteTestUtils.cpp */,
+				2370A3801D66C587000E7BE6 /* GDBRemoteTestUtils.h */,
+			);
+			path = "gdb-remote";
 			sourceTree = "<group>";
 		};
 		238F2BA41D2C858F001FF92A /* StructuredData */ = {
@@ -6614,13 +6645,16 @@
 				239504E51BDD454B00963CEA /* UriParserTest.cpp in Sources */,
 				AF45E1FE1BF57C8D000563EB /* PythonTestSuite.cpp in Sources */,
 				3FA093151BF65D3A0037DD08 /* PythonExceptionStateTests.cpp in Sources */,
+				2370A3861D66C594000E7BE6 /* GDBRemoteClientBaseTest.cpp in Sources */,
 				239504DF1BDD453200963CEA /* SocketTest.cpp in Sources */,
 				239504E11BDD453E00963CEA /* TestArgs.cpp in Sources */,
+				2370A3871D66C594000E7BE6 /* GDBRemoteCommunicationClientTest.cpp in Sources */,
 				239504E21BDD454500963CEA /* PythonDataObjectsTests.cpp in Sources */,
 				239504E01BDD453200963CEA /* SymbolsTest.cpp in Sources */,
 				239504E31BDD454B00963CEA /* StringExtractorTest.cpp in Sources */,
 				239504E41BDD454B00963CEA /* TaskPoolTest.cpp in Sources */,
 				239504DE1BDD453200963CEA /* SocketAddressTest.cpp in Sources */,
+				2370A3881D66C594000E7BE6 /* GDBRemoteTestUtils.cpp in Sources */,
 				2326CF521BDD693B00A5CEAC /* EditlineTest.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
