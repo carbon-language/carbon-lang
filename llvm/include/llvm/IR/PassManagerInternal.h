@@ -94,19 +94,28 @@ template <typename IRUnitT> struct AnalysisResultConcept {
 /// \brief SFINAE metafunction for computing whether \c ResultT provides an
 /// \c invalidate member function.
 template <typename IRUnitT, typename ResultT> class ResultHasInvalidateMethod {
-  typedef char SmallType;
-  struct BigType {
+  typedef char EnabledType;
+  struct DisabledType {
     char a, b;
   };
 
-  template <typename T, bool (T::*)(IRUnitT &, const PreservedAnalyses &)>
-  struct Checker;
+  // First we define an overload that can only be taken if there is no
+  // invalidate member. We do this by taking the address of an invalidate
+  // member in an adjacent base class of a derived class. This would be
+  // ambiguous if there were an invalidate member in the result type.
+  template <typename T, typename U> static DisabledType NonceFunction(T U::*);
+  struct CheckerBase { int invalidate; };
+  template <typename T> struct Checker : CheckerBase, T {};
+  template <typename T>
+  static decltype(NonceFunction(&Checker<T>::invalidate)) check(rank<1>);
 
-  template <typename T> static SmallType f(Checker<T, &T::invalidate> *);
-  template <typename T> static BigType f(...);
+  // Now we have the fallback that will only be reached when there is an
+  // invalidate member, and enables the trait.
+  template <typename T>
+  static EnabledType check(rank<0>);
 
 public:
-  enum { Value = sizeof(f<ResultT>(nullptr)) == sizeof(SmallType) };
+  enum { Value = sizeof(check<ResultT>(rank<1>())) == sizeof(EnabledType) };
 };
 
 /// \brief Wrapper to model the analysis result concept.

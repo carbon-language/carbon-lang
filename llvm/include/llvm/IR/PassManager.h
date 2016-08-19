@@ -802,7 +802,7 @@ public:
     const AnalysisManagerT &getManager() const { return *AM; }
 
     /// \brief Handle invalidation by ignoring it, this pass is immutable.
-    bool invalidate(IRUnitT &) { return false; }
+    bool invalidate(IRUnitT &, const PreservedAnalyses &) { return false; }
 
   private:
     const AnalysisManagerT *AM;
