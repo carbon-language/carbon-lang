@@ -2006,13 +2006,15 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
   if (ShAmt->uge(TypeBits))
     return nullptr;
 
+  ICmpInst::Predicate Pred = Cmp.getPredicate();
+  Value *X = Shl->getOperand(0);
   if (Cmp.isEquality()) {
     // If we are comparing against bits always shifted out, the comparison
     // cannot succeed.
     Constant *Comp =
         ConstantExpr::getShl(ConstantExpr::getLShr(RHS, ShAmt), ShAmt);
     if (Comp != RHS) { // Comparing against a bit that we know is zero.
-      bool IsICMP_NE = Cmp.getPredicate() == ICmpInst::ICMP_NE;
+      bool IsICMP_NE = Pred == ICmpInst::ICMP_NE;
       Constant *Cst = Builder->getInt1(IsICMP_NE);
       return replaceInstUsesWith(Cmp, Cst);
     }
@@ -2020,14 +2022,12 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
     // If the shift is NUW, then it is just shifting out zeros, no need for an
     // AND.
     if (cast<BinaryOperator>(Shl)->hasNoUnsignedWrap())
-      return new ICmpInst(Cmp.getPredicate(), Shl->getOperand(0),
-                          ConstantExpr::getLShr(RHS, ShAmt));
+      return new ICmpInst(Pred, X, ConstantExpr::getLShr(RHS, ShAmt));
 
     // If the shift is NSW and we compare to 0, then it is just shifting out
     // sign bits, no need for an AND either.
     if (cast<BinaryOperator>(Shl)->hasNoSignedWrap() && *C == 0)
-      return new ICmpInst(Cmp.getPredicate(), Shl->getOperand(0),
-                          ConstantExpr::getLShr(RHS, ShAmt));
+      return new ICmpInst(Pred, X, ConstantExpr::getLShr(RHS, ShAmt));
 
     if (Shl->hasOneUse()) {
       // Otherwise strength reduce the shift into an and.
@@ -2035,30 +2035,25 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
       Constant *Mask =
           Builder->getInt(APInt::getLowBitsSet(TypeBits, TypeBits - ShAmtVal));
 
-      Value *And = Builder->CreateAnd(Shl->getOperand(0), Mask,
-                                      Shl->getName() + ".mask");
-      return new ICmpInst(Cmp.getPredicate(), And,
-                          ConstantExpr::getLShr(RHS, ShAmt));
+      Value *And = Builder->CreateAnd(X, Mask, Shl->getName() + ".mask");
+      return new ICmpInst(Pred, And, ConstantExpr::getLShr(RHS, ShAmt));
     }
   }
 
   // If this is a signed comparison to 0 and the shift is sign preserving,
-  // use the shift LHS operand instead.
-  ICmpInst::Predicate Pred = Cmp.getPredicate();
-  if (isSignTest(Pred, *C) && cast<BinaryOperator>(Shl)->hasNoSignedWrap())
-    return new ICmpInst(Pred, Shl->getOperand(0),
-                        Constant::getNullValue(RHS->getType()));
+  // use the shift LHS operand instead; isSignTest may change 'Pred', so only
+  // do that if we're sure to not continue on in this function.
+  if (cast<BinaryOperator>(Shl)->hasNoSignedWrap() && isSignTest(Pred, *C))
+    return new ICmpInst(Pred, X, Constant::getNullValue(RHS->getType()));
 
   // Otherwise, if this is a comparison of the sign bit, simplify to and/test.
   bool TrueIfSigned = false;
-  if (Shl->hasOneUse() &&
-      isSignBitCheck(Cmp.getPredicate(), RHS, TrueIfSigned)) {
+  if (Shl->hasOneUse() && isSignBitCheck(Pred, RHS, TrueIfSigned)) {
     // (X << 31) <s 0  --> (X&1) != 0
     Constant *Mask = ConstantInt::get(
-        Shl->getOperand(0)->getType(),
+        X->getType(),
         APInt::getOneBitSet(TypeBits, TypeBits - ShAmt->getZExtValue() - 1));
-    Value *And = Builder->CreateAnd(Shl->getOperand(0), Mask,
-                                    Shl->getName() + ".mask");
+    Value *And = Builder->CreateAnd(X, Mask, Shl->getName() + ".mask");
     return new ICmpInst(TrueIfSigned ? ICmpInst::ICMP_NE : ICmpInst::ICMP_EQ,
                         And, Constant::getNullValue(And->getType()));
   }
@@ -2074,8 +2069,7 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
     Type *NTy = IntegerType::get(Cmp.getContext(), TypeBits - Amt);
     Constant *NCI = ConstantExpr::getTrunc(
         ConstantExpr::getAShr(RHS, ConstantInt::get(RHS->getType(), Amt)), NTy);
-    return new ICmpInst(Cmp.getPredicate(),
-                        Builder->CreateTrunc(Shl->getOperand(0), NTy), NCI);
+    return new ICmpInst(Pred, Builder->CreateTrunc(X, NTy), NCI);
   }
 
   return nullptr;
