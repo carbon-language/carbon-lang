@@ -101,6 +101,13 @@ set_target_properties(tsan PROPERTIES FOLDER "Compiler-RT Misc")
 
 if(APPLE)
   set(TSAN_ASM_SOURCES rtl/tsan_rtl_amd64.S)
+  # Xcode will try to compile this file as C ('clang -x c'), and that will fail.
+  if (${CMAKE_GENERATOR} STREQUAL "Xcode")
+    enable_language(ASM)
+  else()
+    # Pass ASM file directly to the C++ compiler.
+    set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES LANGUAGE C)
+  endif()
   add_compiler_rt_runtime(clang_rt.tsan
     SHARED
     OS ${TSAN_SUPPORTED_OS}
@@ -131,6 +138,9 @@ else()
   foreach(arch ${TSAN_SUPPORTED_ARCH})
     if(arch STREQUAL "x86_64")
       set(TSAN_ASM_SOURCES rtl/tsan_rtl_amd64.S)
+      # Pass ASM file directly to the C++ compiler.
+      set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
+        LANGUAGE C)
       # Sanity check for Go runtime.
       set(BUILDGO_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/go/buildgo.sh)
       add_custom_target(GotsanRuntimeCheck
@@ -142,10 +152,19 @@ else()
         VERBATIM)
     elseif(arch STREQUAL "aarch64")
       set(TSAN_ASM_SOURCES rtl/tsan_rtl_aarch64.S)
+      # Pass ASM file directly to the C++ compiler.
+      set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
+        LANGUAGE C)
    elseif(arch MATCHES "powerpc64|powerpc64le")
      set(TSAN_ASM_SOURCES rtl/tsan_rtl_ppc64.S)
+     # Pass ASM file directly to the C++ compiler.
+     set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
+       LANGUAGE C)
     elseif(arch MATCHES "mips64|mips64le")
      set(TSAN_ASM_SOURCES rtl/tsan_rtl_mips64.S)
+     # Pass ASM file directly to the C++ compiler.
+     set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
+       LANGUAGE C)
     else()
       set(TSAN_ASM_SOURCES)
     endif()
