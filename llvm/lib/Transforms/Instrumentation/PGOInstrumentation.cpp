@@ -820,11 +820,25 @@ void PGOUseFunc::populateCounters() {
   DEBUG(FuncInfo.dumpInfo("after reading profile."));
 }
 
+static void setProfMetadata(Module *M, TerminatorInst *TI,
+                            ArrayRef<unsigned> EdgeCounts, uint64_t MaxCount) {
+  MDBuilder MDB(M->getContext());
+  assert(MaxCount > 0 && "Bad max count");
+  uint64_t Scale = calculateCountScale(MaxCount);
+  SmallVector<unsigned, 4> Weights;
+  for (const auto &ECI : EdgeCounts)
+    Weights.push_back(scaleBranchCount(ECI, Scale));
+
+  DEBUG(dbgs() << "Weight is: ";
+        for (const auto &W : Weights) { dbgs() << W << " "; } 
+        dbgs() << "\n";);
+  TI->setMetadata(llvm::LLVMContext::MD_prof, MDB.createBranchWeights(Weights));
+}
+
 // Assign the scaled count values to the BB with multiple out edges.
 void PGOUseFunc::setBranchWeights() {
   // Generate MD_prof metadata for every branch instruction.
   DEBUG(dbgs() << "\nSetting branch weights.\n");
-  MDBuilder MDB(M->getContext());
   for (auto &BB : F) {
     TerminatorInst *TI = BB.getTerminator();
     if (TI->getNumSuccessors() < 2)
@@ -851,17 +865,7 @@ void PGOUseFunc::setBranchWeights() {
         MaxCount = EdgeCount;
       EdgeCounts[SuccNum] = EdgeCount;
     }
-    assert(MaxCount > 0 && "Bad max count");
-    uint64_t Scale = calculateCountScale(MaxCount);
-    SmallVector<unsigned, 4> Weights;
-    for (const auto &ECI : EdgeCounts)
-      Weights.push_back(scaleBranchCount(ECI, Scale));
-
-    TI->setMetadata(llvm::LLVMContext::MD_prof,
-                    MDB.createBranchWeights(Weights));
-    DEBUG(dbgs() << "Weight is: ";
-          for (const auto &W : Weights) { dbgs() << W << " "; }
-          dbgs() << "\n";);
+    setProfMetadata(M, TI, EdgeCounts, MaxCount);
   }
 }
 
