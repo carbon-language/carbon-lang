@@ -15,7 +15,7 @@ define i32 @add(i32 %arg) {
   %A = add <4 x i32> undef, undef
   ; SSSE3: cost of 2 {{.*}} %B = add
   ; SSE42: cost of 2 {{.*}} %B = add
-  ; AVX: cost of 4 {{.*}} %B = add  
+  ; AVX: cost of 4 {{.*}} %B = add
   ; AVX2: cost of 1 {{.*}} %B = add
   %B = add <8 x i32> undef, undef
   ; SSSE3: cost of 1 {{.*}} %C = add
@@ -75,7 +75,7 @@ define void @mul() {
   ; SSE42: cost of 1 {{.*}} %A1 = mul
   ; AVX: cost of 1 {{.*}} %A1 = mul
   ; AVX2: cost of 1 {{.*}} %A1 = mul
-  %A1 = mul <4 x i32> undef, undef  
+  %A1 = mul <4 x i32> undef, undef
   ; SSSE3: cost of 9 {{.*}} %A2 = mul
   ; SSE42: cost of 9 {{.*}} %A2 = mul
   ; AVX: cost of 9 {{.*}} %A2 = mul
@@ -101,6 +101,36 @@ define i32 @fmul(i32 %arg) {
   ; AVX: cost of 2 {{.*}} %B = fmul
   ; AVX2: cost of 2 {{.*}} %B = fmul
   %B = fmul <8 x float> undef, undef
+  ret i32 undef
+}
+
+; CHECK-LABEL: 'fdiv'
+define i32 @fdiv(i32 %arg) {
+  ; SSSE3: cost of 2 {{.*}} %A = fdiv
+  ; SSE42: cost of 2 {{.*}} %A = fdiv
+  ; AVX: cost of 2 {{.*}} %A = fdiv
+  ; AVX2: cost of 2 {{.*}} %A = fdiv
+  %A = fdiv <4 x float> undef, undef
+  ; SSSE3: cost of 4 {{.*}} %B = fdiv
+  ; SSE42: cost of 4 {{.*}} %B = fdiv
+  ; AVX: cost of 2 {{.*}} %B = fdiv
+  ; AVX2: cost of 2 {{.*}} %B = fdiv
+  %B = fdiv <8 x float> undef, undef
+  ret i32 undef
+}
+
+; CHECK-LABEL: 'frem'
+define i32 @frem(i32 %arg) {
+  ; SSSE3: cost of 14 {{.*}} %A = frem
+  ; SSE42: cost of 14 {{.*}} %A = frem
+  ; AVX: cost of 14 {{.*}} %A = frem
+  ; AVX2: cost of 14 {{.*}} %A = frem
+  %A = frem <4 x float> undef, undef
+  ; SSSE3: cost of 28 {{.*}} %B = frem
+  ; SSE42: cost of 28 {{.*}} %B = frem
+  ; AVX: cost of 30 {{.*}} %B = frem
+  ; AVX2: cost of 30 {{.*}} %B = frem
+  %B = frem <8 x float> undef, undef
   ret i32 undef
 }
 
