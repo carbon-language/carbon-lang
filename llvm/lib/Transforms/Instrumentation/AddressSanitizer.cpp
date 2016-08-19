@@ -2237,10 +2237,8 @@ void FunctionStackPoisoner::poisonStack() {
       IRBuilder<> IRBPoison(ThenTerm);
       if (StackMallocIdx <= 4) {
         int ClassSize = kMinStackMallocSize << StackMallocIdx;
-        if ((int)ShadowBytesAfterReturn.size() != ClassSize) {
-          ShadowBytesAfterReturn.resize(ClassSize,
-                                        kAsanStackUseAfterReturnMagic);
-        }
+        ShadowBytesAfterReturn.resize(ClassSize >> Mapping.Scale,
+                                      kAsanStackUseAfterReturnMagic);
         poisonRedZones(ShadowBytesAfterReturn, IRBPoison, ShadowBase, true);
         Value *SavedFlagPtrPtr = IRBPoison.CreateAdd(
             FakeStack,

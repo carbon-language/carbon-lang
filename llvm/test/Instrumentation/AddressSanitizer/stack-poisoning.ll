@@ -44,6 +44,7 @@ entry:
   ; CHECK-UAR: store i64 -723401728380766731
   ; CHECK-UAR: store i64 -723401728380766731
   ; CHECK-UAR: store i64 -723401728380766731
+  ; CHECK-UAR-NOT: store i64
   ; CHECK-UAR: store i8 0
   ; CHECK-UAR-NOT: store
   ; CHECK-UAR: label
