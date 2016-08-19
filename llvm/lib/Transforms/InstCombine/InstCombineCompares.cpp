@@ -2009,16 +2009,6 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
   ICmpInst::Predicate Pred = Cmp.getPredicate();
   Value *X = Shl->getOperand(0);
   if (Cmp.isEquality()) {
-    // If we are comparing against bits always shifted out, the comparison
-    // cannot succeed.
-    Constant *Comp =
-        ConstantExpr::getShl(ConstantExpr::getLShr(RHS, ShAmt), ShAmt);
-    if (Comp != RHS) { // Comparing against a bit that we know is zero.
-      bool IsICMP_NE = Pred == ICmpInst::ICMP_NE;
-      Constant *Cst = Builder->getInt1(IsICMP_NE);
-      return replaceInstUsesWith(Cmp, Cst);
-    }
-
     // If the shift is NUW, then it is just shifting out zeros, no need for an
     // AND.
     if (cast<BinaryOperator>(Shl)->hasNoUnsignedWrap())
