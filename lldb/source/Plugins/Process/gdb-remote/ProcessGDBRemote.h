@@ -261,10 +261,6 @@ public:
     StructuredData::ObjectSP
     GetLoadedDynamicLibrariesInfos (lldb::addr_t image_list_address, lldb::addr_t image_count) override;
 
-    Error
-    ConfigureStructuredData(const ConstString &type_name,
-                            const StructuredData::ObjectSP &config_sp) override;
-
     StructuredData::ObjectSP
     GetLoadedDynamicLibrariesInfos () override;
 
@@ -510,9 +506,6 @@ private:
     HandleAsyncMisc(llvm::StringRef data) override;
     void
     HandleStopReply() override;
-    bool
-    HandleAsyncStructuredData(const StructuredData::ObjectSP
-                              &object_sp) override;
 
     DISALLOW_COPY_AND_ASSIGN (ProcessGDBRemote);
 };

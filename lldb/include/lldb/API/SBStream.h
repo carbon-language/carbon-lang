@@ -83,7 +83,6 @@ protected:
     friend class SBProcess;
     friend class SBSection;
     friend class SBSourceManager;
-    friend class SBStructuredData;
     friend class SBSymbol;
     friend class SBSymbolContext;
     friend class SBSymbolContextList;

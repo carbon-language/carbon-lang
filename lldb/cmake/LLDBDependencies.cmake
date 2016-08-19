@@ -47,7 +47,6 @@ set( LLDB_USED_LIBS
   lldbPluginObjectContainerMachOArchive
   lldbPluginObjectContainerBSDArchive
   lldbPluginPlatformMacOSX
-  lldbPluginStructuredDataDarwinLog
   lldbPluginDynamicLoaderMacOSXDYLD
   lldbPluginUnwindAssemblyInstEmulation
   lldbPluginUnwindAssemblyX86

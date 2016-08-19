@@ -47,7 +47,6 @@ add_lldb_library(liblldb SHARED
   SBSourceManager.cpp
   SBStream.cpp
   SBStringList.cpp
-  SBStructuredData.cpp
   SBSymbol.cpp
   SBSymbolContext.cpp
   SBSymbolContextList.cpp

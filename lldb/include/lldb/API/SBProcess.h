@@ -32,8 +32,7 @@ public:
         eBroadcastBitInterrupt      = (1 << 1),
         eBroadcastBitSTDOUT         = (1 << 2),
         eBroadcastBitSTDERR         = (1 << 3),
-        eBroadcastBitProfileData    = (1 << 4),
-        eBroadcastBitStructuredData = (1 << 5)
+        eBroadcastBitProfileData    = (1 << 4)
     };
 
     SBProcess ();
@@ -279,15 +278,9 @@ public:
 
     static bool
     GetInterruptedFromEvent (const lldb::SBEvent &event);
-
-    static lldb::SBStructuredData
-    GetStructuredDataFromEvent (const lldb::SBEvent &event);
-
+    
     static bool
     EventIsProcessEvent (const lldb::SBEvent &event);
-
-    static bool
-    EventIsStructuredDataEvent (const lldb::SBEvent &event);
 
     lldb::SBBroadcaster
     GetBroadcaster () const;

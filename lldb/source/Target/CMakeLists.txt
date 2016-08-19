@@ -30,7 +30,6 @@ add_lldb_library(lldbTarget
   StackFrameList.cpp
   StackID.cpp
   StopInfo.cpp
-  StructuredDataPlugin.cpp
   SystemRuntime.cpp
   Target.cpp
   TargetList.cpp
@@ -41,7 +40,6 @@ add_lldb_library(lldbTarget
   ThreadPlanBase.cpp
   ThreadPlanCallFunction.cpp
   ThreadPlanCallFunctionUsingABI.cpp
-  ThreadPlanCallOnFunctionExit.cpp
   ThreadPlanCallUserExpression.cpp
   ThreadPlanPython.cpp
   ThreadPlanRunToAddress.cpp

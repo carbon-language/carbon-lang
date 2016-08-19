@@ -272,10 +272,11 @@ private:
 ///         //----------------------------------------------------------
 ///         enum
 ///         {
-///             eBroadcastBitOne   = (1 << 0),
-///             eBroadcastBitTwo   = (1 << 1),
-///             eBroadcastBitThree = (1 << 2),
-///             ...
+///             eBroadcastBitStateChanged   = (1 << 0),
+///             eBroadcastBitInterrupt      = (1 << 1),
+///             eBroadcastBitSTDOUT         = (1 << 2),
+///             eBroadcastBitSTDERR         = (1 << 3),
+///             eBroadcastBitProfileData    = (1 << 4)
 ///         };
 ///     \endcode
 //----------------------------------------------------------------------
