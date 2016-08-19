@@ -1987,78 +1987,78 @@ static Instruction *foldICmpShlOne(ICmpInst &Cmp, Instruction *Shl,
   return nullptr;
 }
 
-Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &ICI, Instruction *LHSI,
-                                               const APInt *RHSV) {
+/// Fold icmp (shl X, Y), C.
+Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
+                                               const APInt *C) {
   // FIXME: This should use m_APInt to allow splat vectors.
-  ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1));
+  ConstantInt *ShAmt = dyn_cast<ConstantInt>(Shl->getOperand(1));
   if (!ShAmt)
-    return foldICmpShlOne(ICI, LHSI, RHSV);
+    return foldICmpShlOne(Cmp, Shl, C);
 
   // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(ICI.getOperand(1));
+  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
   if (!RHS)
     return nullptr;
 
-  // Check that the shift amount is in range.  If not, don't perform
-  // undefined shifts.  When the shift is visited it will be
-  // simplified.
-  unsigned TypeBits = RHSV->getBitWidth();
+  // Check that the shift amount is in range. If not, don't perform undefined
+  // shifts. When the shift is visited it will be simplified.
+  unsigned TypeBits = C->getBitWidth();
   if (ShAmt->uge(TypeBits))
     return nullptr;
 
-  if (ICI.isEquality()) {
-    // If we are comparing against bits always shifted out, the
-    // comparison cannot succeed.
+  if (Cmp.isEquality()) {
+    // If we are comparing against bits always shifted out, the comparison
+    // cannot succeed.
     Constant *Comp =
         ConstantExpr::getShl(ConstantExpr::getLShr(RHS, ShAmt), ShAmt);
     if (Comp != RHS) { // Comparing against a bit that we know is zero.
-      bool IsICMP_NE = ICI.getPredicate() == ICmpInst::ICMP_NE;
+      bool IsICMP_NE = Cmp.getPredicate() == ICmpInst::ICMP_NE;
       Constant *Cst = Builder->getInt1(IsICMP_NE);
-      return replaceInstUsesWith(ICI, Cst);
+      return replaceInstUsesWith(Cmp, Cst);
     }
 
     // If the shift is NUW, then it is just shifting out zeros, no need for an
     // AND.
-    if (cast<BinaryOperator>(LHSI)->hasNoUnsignedWrap())
-      return new ICmpInst(ICI.getPredicate(), LHSI->getOperand(0),
+    if (cast<BinaryOperator>(Shl)->hasNoUnsignedWrap())
+      return new ICmpInst(Cmp.getPredicate(), Shl->getOperand(0),
                           ConstantExpr::getLShr(RHS, ShAmt));
 
     // If the shift is NSW and we compare to 0, then it is just shifting out
     // sign bits, no need for an AND either.
-    if (cast<BinaryOperator>(LHSI)->hasNoSignedWrap() && *RHSV == 0)
-      return new ICmpInst(ICI.getPredicate(), LHSI->getOperand(0),
+    if (cast<BinaryOperator>(Shl)->hasNoSignedWrap() && *C == 0)
+      return new ICmpInst(Cmp.getPredicate(), Shl->getOperand(0),
                           ConstantExpr::getLShr(RHS, ShAmt));
 
-    if (LHSI->hasOneUse()) {
+    if (Shl->hasOneUse()) {
       // Otherwise strength reduce the shift into an and.
       uint32_t ShAmtVal = (uint32_t)ShAmt->getLimitedValue(TypeBits);
       Constant *Mask =
           Builder->getInt(APInt::getLowBitsSet(TypeBits, TypeBits - ShAmtVal));
 
-      Value *And = Builder->CreateAnd(LHSI->getOperand(0), Mask,
-                                      LHSI->getName() + ".mask");
-      return new ICmpInst(ICI.getPredicate(), And,
+      Value *And = Builder->CreateAnd(Shl->getOperand(0), Mask,
+                                      Shl->getName() + ".mask");
+      return new ICmpInst(Cmp.getPredicate(), And,
                           ConstantExpr::getLShr(RHS, ShAmt));
     }
   }
 
   // If this is a signed comparison to 0 and the shift is sign preserving,
   // use the shift LHS operand instead.
-  ICmpInst::Predicate pred = ICI.getPredicate();
-  if (isSignTest(pred, *RHSV) && cast<BinaryOperator>(LHSI)->hasNoSignedWrap())
-    return new ICmpInst(pred, LHSI->getOperand(0),
+  ICmpInst::Predicate Pred = Cmp.getPredicate();
+  if (isSignTest(Pred, *C) && cast<BinaryOperator>(Shl)->hasNoSignedWrap())
+    return new ICmpInst(Pred, Shl->getOperand(0),
                         Constant::getNullValue(RHS->getType()));
 
   // Otherwise, if this is a comparison of the sign bit, simplify to and/test.
   bool TrueIfSigned = false;
-  if (LHSI->hasOneUse() &&
-      isSignBitCheck(ICI.getPredicate(), RHS, TrueIfSigned)) {
+  if (Shl->hasOneUse() &&
+      isSignBitCheck(Cmp.getPredicate(), RHS, TrueIfSigned)) {
     // (X << 31) <s 0  --> (X&1) != 0
     Constant *Mask = ConstantInt::get(
-        LHSI->getOperand(0)->getType(),
+        Shl->getOperand(0)->getType(),
         APInt::getOneBitSet(TypeBits, TypeBits - ShAmt->getZExtValue() - 1));
-    Value *And = Builder->CreateAnd(LHSI->getOperand(0), Mask,
-                                    LHSI->getName() + ".mask");
+    Value *And = Builder->CreateAnd(Shl->getOperand(0), Mask,
+                                    Shl->getName() + ".mask");
     return new ICmpInst(TrueIfSigned ? ICmpInst::ICMP_NE : ICmpInst::ICMP_EQ,
                         And, Constant::getNullValue(And->getType()));
   }
@@ -2070,12 +2070,12 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &ICI, Instruction *LHSI,
   // free on the target. It has the additional benefit of comparing to a
   // smaller constant, which will be target friendly.
   unsigned Amt = ShAmt->getLimitedValue(TypeBits - 1);
-  if (LHSI->hasOneUse() && Amt != 0 && RHSV->countTrailingZeros() >= Amt) {
-    Type *NTy = IntegerType::get(ICI.getContext(), TypeBits - Amt);
+  if (Shl->hasOneUse() && Amt != 0 && C->countTrailingZeros() >= Amt) {
+    Type *NTy = IntegerType::get(Cmp.getContext(), TypeBits - Amt);
     Constant *NCI = ConstantExpr::getTrunc(
         ConstantExpr::getAShr(RHS, ConstantInt::get(RHS->getType(), Amt)), NTy);
-    return new ICmpInst(ICI.getPredicate(),
-                        Builder->CreateTrunc(LHSI->getOperand(0), NTy), NCI);
+    return new ICmpInst(Cmp.getPredicate(),
+                        Builder->CreateTrunc(Shl->getOperand(0), NTy), NCI);
   }
 
   return nullptr;
