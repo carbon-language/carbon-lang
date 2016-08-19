@@ -49,6 +49,88 @@ define i32 @add(i32 %arg) {
   ret i32 undef
 }
 
+; CHECK-LABEL: 'sub'
+define i32 @sub(i32 %arg) {
+  ; SSSE3: cost of 1 {{.*}} %A = sub
+  ; SSE42: cost of 1 {{.*}} %A = sub
+  ; AVX: cost of 1 {{.*}} %A = sub
+  ; AVX2: cost of 1 {{.*}} %A = sub
+  ; AVX512: cost of 1 {{.*}} %A = sub
+  %A = sub <4 x i32> undef, undef
+  ; SSSE3: cost of 2 {{.*}} %B = sub
+  ; SSE42: cost of 2 {{.*}} %B = sub
+  ; AVX: cost of 4 {{.*}} %B = sub
+  ; AVX2: cost of 1 {{.*}} %B = sub
+  ; AVX512: cost of 1 {{.*}} %B = sub
+  %B = sub <8 x i32> undef, undef
+  ; SSSE3: cost of 1 {{.*}} %C = sub
+  ; SSE42: cost of 1 {{.*}} %C = sub
+  ; AVX: cost of 1 {{.*}} %C = sub
+  ; AVX2: cost of 1 {{.*}} %C = sub
+  ; AVX512: cost of 1 {{.*}} %C = sub
+  %C = sub <2 x i64> undef, undef
+  ; SSSE3: cost of 2 {{.*}} %D = sub
+  ; SSE42: cost of 2 {{.*}} %D = sub
+  ; AVX: cost of 4 {{.*}} %D = sub
+  ; AVX2: cost of 1 {{.*}} %D = sub
+  ; AVX512: cost of 1 {{.*}} %D = sub
+  %D = sub <4 x i64> undef, undef
+  ; SSSE3: cost of 4 {{.*}} %E = sub
+  ; SSE42: cost of 4 {{.*}} %E = sub
+  ; AVX: cost of 8 {{.*}} %E = sub
+  ; AVX2: cost of 2 {{.*}} %E = sub
+  ; AVX512: cost of 1 {{.*}} %E = sub
+  %E = sub <8 x i64> undef, undef
+  ; SSSE3: cost of 4 {{.*}} %F = sub
+  ; SSE42: cost of 4 {{.*}} %F = sub
+  ; AVX: cost of 8 {{.*}} %F = sub
+  ; AVX2: cost of 2 {{.*}} %F = sub
+  ; AVX512: cost of 1 {{.*}} %F = sub
+  %F = sub <16 x i32> undef, undef
+  ret i32 undef
+}
+
+; CHECK-LABEL: 'or'
+define i32 @or(i32 %arg) {
+  ; SSSE3: cost of 1 {{.*}} %A = or
+  ; SSE42: cost of 1 {{.*}} %A = or
+  ; AVX: cost of 1 {{.*}} %A = or
+  ; AVX2: cost of 1 {{.*}} %A = or
+  ; AVX512: cost of 1 {{.*}} %A = or
+  %A = or <4 x i32> undef, undef
+  ; SSSE3: cost of 2 {{.*}} %B = or
+  ; SSE42: cost of 2 {{.*}} %B = or
+  ; AVX: cost of 1 {{.*}} %B = or
+  ; AVX2: cost of 1 {{.*}} %B = or
+  ; AVX512: cost of 1 {{.*}} %B = or
+  %B = or <8 x i32> undef, undef
+  ; SSSE3: cost of 1 {{.*}} %C = or
+  ; SSE42: cost of 1 {{.*}} %C = or
+  ; AVX: cost of 1 {{.*}} %C = or
+  ; AVX2: cost of 1 {{.*}} %C = or
+  ; AVX512: cost of 1 {{.*}} %C = or
+  %C = or <2 x i64> undef, undef
+  ; SSSE3: cost of 2 {{.*}} %D = or
+  ; SSE42: cost of 2 {{.*}} %D = or
+  ; AVX: cost of 1 {{.*}} %D = or
+  ; AVX2: cost of 1 {{.*}} %D = or
+  ; AVX512: cost of 1 {{.*}} %D = or
+  %D = or <4 x i64> undef, undef
+  ; SSSE3: cost of 4 {{.*}} %E = or
+  ; SSE42: cost of 4 {{.*}} %E = or
+  ; AVX: cost of 2 {{.*}} %E = or
+  ; AVX2: cost of 2 {{.*}} %E = or
+  ; AVX512: cost of 1 {{.*}} %E = or
+  %E = or <8 x i64> undef, undef
+  ; SSSE3: cost of 4 {{.*}} %F = or
+  ; SSE42: cost of 4 {{.*}} %F = or
+  ; AVX: cost of 2 {{.*}} %F = or
+  ; AVX2: cost of 2 {{.*}} %F = or
+  ; AVX512: cost of 1 {{.*}} %F = or
+  %F = or <16 x i32> undef, undef
+  ret i32 undef
+}
+
 ; CHECK-LABEL: 'xor'
 define i32 @xor(i32 %arg) {
   ; SSSE3: cost of 1 {{.*}} %A = xor
@@ -90,6 +172,47 @@ define i32 @xor(i32 %arg) {
   ret i32 undef
 }
 
+; CHECK-LABEL: 'and'
+define i32 @and(i32 %arg) {
+  ; SSSE3: cost of 1 {{.*}} %A = and
+  ; SSE42: cost of 1 {{.*}} %A = and
+  ; AVX: cost of 1 {{.*}} %A = and
+  ; AVX2: cost of 1 {{.*}} %A = and
+  ; AVX512: cost of 1 {{.*}} %A = and
+  %A = and <4 x i32> undef, undef
+  ; SSSE3: cost of 2 {{.*}} %B = and
+  ; SSE42: cost of 2 {{.*}} %B = and
+  ; AVX: cost of 1 {{.*}} %B = and
+  ; AVX2: cost of 1 {{.*}} %B = and
+  ; AVX512: cost of 1 {{.*}} %B = and
+  %B = and <8 x i32> undef, undef
+  ; SSSE3: cost of 1 {{.*}} %C = and
+  ; SSE42: cost of 1 {{.*}} %C = and
+  ; AVX: cost of 1 {{.*}} %C = and
+  ; AVX2: cost of 1 {{.*}} %C = and
+  ; AVX512: cost of 1 {{.*}} %C = and
+  %C = and <2 x i64> undef, undef
+  ; SSSE3: cost of 2 {{.*}} %D = and
+  ; SSE42: cost of 2 {{.*}} %D = and
+  ; AVX: cost of 1 {{.*}} %D = and
+  ; AVX2: cost of 1 {{.*}} %D = and
+  ; AVX512: cost of 1 {{.*}} %D = and
+  %D = and <4 x i64> undef, undef
+  ; SSSE3: cost of 4 {{.*}} %E = and
+  ; SSE42: cost of 4 {{.*}} %E = and
+  ; AVX: cost of 2 {{.*}} %E = and
+  ; AVX2: cost of 2 {{.*}} %E = and
+  ; AVX512: cost of 1 {{.*}} %E = and
+  %E = and <8 x i64> undef, undef
+  ; SSSE3: cost of 4 {{.*}} %F = and
+  ; SSE42: cost of 4 {{.*}} %F = and
+  ; AVX: cost of 2 {{.*}} %F = and
+  ; AVX2: cost of 2 {{.*}} %F = and
+  ; AVX512: cost of 1 {{.*}} %F = and
+  %F = and <16 x i32> undef, undef
+  ret i32 undef
+}
+
 ; CHECK-LABEL: 'mul'
 define void @mul() {
   ; A <2 x i32> gets expanded to a <2 x i64> vector.
@@ -119,7 +242,111 @@ define void @mul() {
   ; AVX2: cost of 9 {{.*}} %A3 = mul
   ; AVX512: cost of 9 {{.*}} %A3 = mul
   %A3 = mul <4 x i64> undef, undef
+  ; SSSE3: cost of 12 {{.*}} %A4 = mul
+  ; SSE42: cost of 2 {{.*}} %A4 = mul
+  ; AVX: cost of 4 {{.*}} %A4 = mul
+  ; AVX2: cost of 1 {{.*}} %A4 = mul
+  ; AVX512: cost of 1 {{.*}} %A4 = mul
+  %A4 = mul <8 x i32> undef, undef
+  ; SSSE3: cost of 24 {{.*}} %A5 = mul
+  ; SSE42: cost of 4 {{.*}} %A5 = mul
+  ; AVX: cost of 8 {{.*}} %A5 = mul
+  ; AVX2: cost of 2 {{.*}} %A5 = mul
+  ; AVX512: cost of 1 {{.*}} %A5 = mul
+  %A5 = mul <16 x i32> undef, undef
+  ; SSSE3: cost of 36 {{.*}} %A6 = mul
+  ; SSE42: cost of 36 {{.*}} %A6 = mul
+  ; AVX: cost of 36 {{.*}} %A6 = mul
+  ; AVX2: cost of 18 {{.*}} %A6 = mul
+  ; AVX512: cost of 2 {{.*}} %A6 = mul
+  %A6 = mul <8 x i64> undef, undef
   ret void
+}
+
+; CHECK-LABEL: 'fadd'
+define i32 @fadd(i32 %arg) {
+  ; SSSE3: cost of 2 {{.*}} %A = fadd
+  ; SSE42: cost of 2 {{.*}} %A = fadd
+  ; AVX: cost of 2 {{.*}} %A = fadd
+  ; AVX2: cost of 2 {{.*}} %A = fadd
+  ; AVX512: cost of 2 {{.*}} %A = fadd
+  %A = fadd <4 x float> undef, undef
+  ; SSSE3: cost of 4 {{.*}} %B = fadd
+  ; SSE42: cost of 4 {{.*}} %B = fadd
+  ; AVX: cost of 2 {{.*}} %B = fadd
+  ; AVX2: cost of 2 {{.*}} %B = fadd
+  ; AVX512: cost of 2 {{.*}} %B = fadd
+  %B = fadd <8 x float> undef, undef
+  ; SSSE3: cost of 8 {{.*}} %C = fadd
+  ; SSE42: cost of 8 {{.*}} %C = fadd
+  ; AVX: cost of 4 {{.*}} %C = fadd
+  ; AVX2: cost of 4 {{.*}} %C = fadd
+  ; AVX512: cost of 2 {{.*}} %C = fadd
+  %C = fadd <16 x float> undef, undef
+
+  ; SSSE3: cost of 2 {{.*}} %D = fadd
+  ; SSE42: cost of 2 {{.*}} %D = fadd
+  ; AVX: cost of 2 {{.*}} %D = fadd
+  ; AVX2: cost of 2 {{.*}} %D = fadd
+  ; AVX512: cost of 2 {{.*}} %D = fadd
+  %D = fadd <2 x double> undef, undef
+  ; SSSE3: cost of 4 {{.*}} %E = fadd
+  ; SSE42: cost of 4 {{.*}} %E = fadd
+  ; AVX: cost of 2 {{.*}} %E = fadd
+  ; AVX2: cost of 2 {{.*}} %E = fadd
+  ; AVX512: cost of 2 {{.*}} %E = fadd
+  %E = fadd <4 x double> undef, undef
+  ; SSSE3: cost of 8 {{.*}} %F = fadd
+  ; SSE42: cost of 8 {{.*}} %F = fadd
+  ; AVX: cost of 4 {{.*}} %F = fadd
+  ; AVX2: cost of 4 {{.*}} %F = fadd
+  ; AVX512: cost of 2 {{.*}} %F = fadd
+  %F = fadd <8 x double> undef, undef
+
+  ret i32 undef
+}
+
+; CHECK-LABEL: 'fsub'
+define i32 @fsub(i32 %arg) {
+  ; SSSE3: cost of 2 {{.*}} %A = fsub
+  ; SSE42: cost of 2 {{.*}} %A = fsub
+  ; AVX: cost of 2 {{.*}} %A = fsub
+  ; AVX2: cost of 2 {{.*}} %A = fsub
+  ; AVX512: cost of 2 {{.*}} %A = fsub
+  %A = fsub <4 x float> undef, undef
+  ; SSSE3: cost of 4 {{.*}} %B = fsub
+  ; SSE42: cost of 4 {{.*}} %B = fsub
+  ; AVX: cost of 2 {{.*}} %B = fsub
+  ; AVX2: cost of 2 {{.*}} %B = fsub
+  ; AVX512: cost of 2 {{.*}} %B = fsub
+  %B = fsub <8 x float> undef, undef
+  ; SSSE3: cost of 8 {{.*}} %C = fsub
+  ; SSE42: cost of 8 {{.*}} %C = fsub
+  ; AVX: cost of 4 {{.*}} %C = fsub
+  ; AVX2: cost of 4 {{.*}} %C = fsub
+  ; AVX512: cost of 2 {{.*}} %C = fsub
+  %C = fsub <16 x float> undef, undef
+
+  ; SSSE3: cost of 2 {{.*}} %D = fsub
+  ; SSE42: cost of 2 {{.*}} %D = fsub
+  ; AVX: cost of 2 {{.*}} %D = fsub
+  ; AVX2: cost of 2 {{.*}} %D = fsub
+  ; AVX512: cost of 2 {{.*}} %D = fsub
+  %D = fsub <2 x double> undef, undef
+  ; SSSE3: cost of 4 {{.*}} %E = fsub
+  ; SSE42: cost of 4 {{.*}} %E = fsub
+  ; AVX: cost of 2 {{.*}} %E = fsub
+  ; AVX2: cost of 2 {{.*}} %E = fsub
+  ; AVX512: cost of 2 {{.*}} %E = fsub
+  %E = fsub <4 x double> undef, undef
+  ; SSSE3: cost of 8 {{.*}} %F = fsub
+  ; SSE42: cost of 8 {{.*}} %F = fsub
+  ; AVX: cost of 4 {{.*}} %F = fsub
+  ; AVX2: cost of 4 {{.*}} %F = fsub
+  ; AVX512: cost of 2 {{.*}} %F = fsub
+  %F = fsub <8 x double> undef, undef
+
+  ret i32 undef
 }
 
 ; CHECK-LABEL: 'fmul'
