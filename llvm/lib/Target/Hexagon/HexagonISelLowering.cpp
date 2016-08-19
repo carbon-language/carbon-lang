@@ -2958,20 +2958,6 @@ HexagonTargetLowering::getPICJumpTableRelocBase(SDValue Table,
   return DAG.getNode(HexagonISD::AT_PCREL, SDLoc(Table), VT, T);
 }
 
-MachineBasicBlock *HexagonTargetLowering::EmitInstrWithCustomInserter(
-    MachineInstr &MI, MachineBasicBlock *BB) const {
-  switch (MI.getOpcode()) {
-  case Hexagon::PS_alloca: {
-    MachineFunction *MF = BB->getParent();
-    auto *FuncInfo = MF->getInfo<HexagonMachineFunctionInfo>();
-    FuncInfo->addAllocaAdjustInst(&MI);
-    return BB;
-  }
-  default:
-    llvm_unreachable("Unexpected instr type to insert");
-  } // switch
-}
-
 //===----------------------------------------------------------------------===//
 // Inline Assembly Support
 //===----------------------------------------------------------------------===//
