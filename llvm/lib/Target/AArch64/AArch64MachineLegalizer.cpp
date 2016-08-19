@@ -26,6 +26,7 @@ using namespace llvm;
 
 AArch64MachineLegalizer::AArch64MachineLegalizer() {
   using namespace TargetOpcode;
+  const LLT s1 = LLT::scalar(1);
   const LLT s8 = LLT::scalar(8);
   const LLT s16 = LLT::scalar(16);
   const LLT s32 = LLT::scalar(32);
@@ -53,6 +54,14 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
   for (auto MemOp : {G_LOAD, G_STORE})
     for (auto Ty : {s32, s64})
       setAction(MemOp, Ty, Legal);
+
+  for (auto Ty : {s32, s64}) {
+    setAction(TargetOpcode::G_CONSTANT, Ty, Legal);
+    setAction(TargetOpcode::G_FCONSTANT, Ty, Legal);
+  }
+
+  for (auto Ty : {s1, s8, s16})
+    setAction(TargetOpcode::G_CONSTANT, Ty, WidenScalar);
 
 
   setAction(G_BR, LLT::unsized(), Legal);
