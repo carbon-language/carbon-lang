@@ -278,6 +278,9 @@ public:
   ///
   void Initialize();
 
+  /// Parse the first top-level declaration in a translation unit.
+  bool ParseFirstTopLevelDecl(DeclGroupPtrTy &Result);
+
   /// ParseTopLevelDecl - Parse one top-level declaration. Returns true if
   /// the EOF was encountered.
   bool ParseTopLevelDecl(DeclGroupPtrTy &Result);
@@ -2656,6 +2659,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // Modules
+  DeclGroupPtrTy ParseModuleDecl();
   DeclGroupPtrTy ParseModuleImport(SourceLocation AtLoc);
   bool parseMisplacedModuleImport();
   bool tryParseMisplacedModuleImport() {
@@ -2665,6 +2669,11 @@ private:
       return parseMisplacedModuleImport();
     return false;
   }
+
+  bool ParseModuleName(
+      SourceLocation UseLoc,
+      SmallVectorImpl<std::pair<IdentifierInfo *, SourceLocation>> &Path,
+      bool IsImport);
 
   //===--------------------------------------------------------------------===//
   // C++11/G++: Type Traits [Type-Traits.html in the GCC manual]

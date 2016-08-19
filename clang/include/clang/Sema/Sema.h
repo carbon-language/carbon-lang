@@ -1859,6 +1859,17 @@ public:
                               AttributeList *AttrList,
                               SourceLocation SemiLoc);
 
+  enum class ModuleDeclKind {
+    Module,         ///< 'module X;'
+    Partition,      ///< 'module partition X;'
+    Implementation, ///< 'module implementation X;'
+  };
+
+  /// The parser has processed a module-declaration that begins the definition
+  /// of a module interface or implementation.
+  DeclGroupPtrTy ActOnModuleDecl(SourceLocation ModuleLoc, ModuleDeclKind MDK,
+                                 ModuleIdPath Path);
+
   /// \brief The parser has processed a module import declaration.
   ///
   /// \param AtLoc The location of the '@' symbol, if any.

@@ -15178,6 +15178,56 @@ void Sema::diagnoseMisplacedModuleImport(Module *M, SourceLocation ImportLoc) {
   return checkModuleImportContext(*this, M, ImportLoc, CurContext);
 }
 
+Sema::DeclGroupPtrTy Sema::ActOnModuleDecl(SourceLocation ModuleLoc,
+                                           ModuleDeclKind MDK,
+                                           ModuleIdPath Path) {
+  // We should see 'module implementation' if and only if we are not compiling
+  // a module interface.
+  if (getLangOpts().CompilingModule ==
+      (MDK == ModuleDeclKind::Implementation)) {
+    Diag(ModuleLoc, diag::err_module_interface_implementation_mismatch)
+      << (unsigned)MDK;
+    return nullptr;
+  }
+
+  // FIXME: Create a ModuleDecl and return it.
+  // FIXME: Teach the lexer to handle this declaration too.
+
+  switch (MDK) {
+  case ModuleDeclKind::Module:
+    // FIXME: Check we're not in a submodule.
+    // FIXME: Set CurrentModule and create a corresponding Module object.
+    return nullptr;
+
+  case ModuleDeclKind::Partition:
+    // FIXME: Check we are in a submodule of the named module.
+    return nullptr;
+
+  case ModuleDeclKind::Implementation:
+    DeclResult Import = ActOnModuleImport(ModuleLoc, ModuleLoc, Path);
+    if (Import.isInvalid())
+      return nullptr;
+    ImportDecl *ID = cast<ImportDecl>(Import.get());
+
+    // The current module is whatever we just loaded.
+    //
+    // FIXME: We should probably do this from the lexer rather than waiting
+    // until now, in case we look ahead across something where the current
+    // module matters (eg a #include).
+    auto Name = ID->getImportedModule()->getTopLevelModuleName();
+    if (!getLangOpts().CurrentModule.empty() &&
+        getLangOpts().CurrentModule != Name) {
+      Diag(Path.front().second, diag::err_current_module_name_mismatch)
+          << SourceRange(Path.front().second, Path.back().second)
+          << getLangOpts().CurrentModule;
+    }
+    const_cast<LangOptions&>(getLangOpts()).CurrentModule = Name;
+    return ConvertDeclToDeclGroup(ID);
+  }
+
+  llvm_unreachable("unexpected module decl kind");
+}
+
 DeclResult Sema::ActOnModuleImport(SourceLocation StartLoc,
                                    SourceLocation ImportLoc,
                                    ModuleIdPath Path) {
@@ -15194,7 +15244,10 @@ DeclResult Sema::ActOnModuleImport(SourceLocation StartLoc,
   // FIXME: we should support importing a submodule within a different submodule
   // of the same top-level module. Until we do, make it an error rather than
   // silently ignoring the import.
-  if (Mod->getTopLevelModuleName() == getLangOpts().CurrentModule)
+  // Import-from-implementation is valid in the Modules TS. FIXME: Should we
+  // warn on a redundant import of the current module?
+  if (Mod->getTopLevelModuleName() == getLangOpts().CurrentModule &&
+      (getLangOpts().CompilingModule || !getLangOpts().ModulesTS))
     Diag(ImportLoc, getLangOpts().CompilingModule
                         ? diag::err_module_self_import
                         : diag::err_module_import_in_implementation)
