@@ -3736,7 +3736,7 @@ HexagonII::SubInstructionGroup HexagonInstrInfo::getDuplexCandidateGroup(
         (Hexagon::P0 == SrcReg)) &&
         (Hexagon::IntRegsRegClass.contains(DstReg) && (Hexagon::R31 == DstReg)))
       return HexagonII::HSIG_L2;
-     break;
+    break;
   case Hexagon::L4_return_t :
   case Hexagon::L4_return_f :
   case Hexagon::L4_return_tnew_pnt :
@@ -4104,8 +4104,8 @@ bool HexagonInstrInfo::getPredReg(ArrayRef<MachineOperand> Cond,
     return false;
   assert(Cond.size() == 2);
   if (isNewValueJump(Cond[0].getImm()) || Cond[1].isMBB()) {
-     DEBUG(dbgs() << "No predregs for new-value jumps/endloop");
-     return false;
+    DEBUG(dbgs() << "No predregs for new-value jumps/endloop");
+    return false;
   }
   PredReg = Cond[1].getReg();
   PredRegPos = 1;
