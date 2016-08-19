@@ -2590,6 +2590,11 @@ define i1 @ugtMaxSignedVal(i8 %a) {
   ret i1 %cmp
 }
 
+define <2 x i1> @ugtMaxSignedValVec(<2 x i8> %a) {
+  %cmp = icmp ugt <2 x i8> %a, <i8 127, i8 127>
+  ret <2 x i1> %cmp
+}
+
 define i1 @ugtKnownBits(i8 %a) {
 ; CHECK-LABEL: @ugtKnownBits(
 ; CHECK-NEXT:    [[B:%.*]] = and i8 %a, 17
@@ -2600,3 +2605,15 @@ define i1 @ugtKnownBits(i8 %a) {
   %cmp = icmp ugt i8 %b, 16
   ret i1 %cmp
 }
+
+define <2 x i1> @ugtKnownBitsVec(<2 x i8> %a) {
+; CHECK-LABEL: @ugtKnownBitsVec(
+; CHECK-NEXT:    [[B:%.*]] = and <2 x i8> %a, <i8 17, i8 17>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt <2 x i8> [[B]], <i8 16, i8 16>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %b = and <2 x i8> %a, <i8 17, i8 17>
+  %cmp = icmp ugt <2 x i8> %b, <i8 16, i8 16>
+  ret <2 x i1> %cmp
+}
+
