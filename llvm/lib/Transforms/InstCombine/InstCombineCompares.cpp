@@ -1990,20 +1990,14 @@ static Instruction *foldICmpShlOne(ICmpInst &Cmp, Instruction *Shl,
 /// Fold icmp (shl X, Y), C.
 Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
                                                const APInt *C) {
-  // FIXME: This should use m_APInt to allow splat vectors.
-  ConstantInt *ShAmt = dyn_cast<ConstantInt>(Shl->getOperand(1));
-  if (!ShAmt)
+  const APInt *ShiftAmt;
+  if (!match(Shl->getOperand(1), m_APInt(ShiftAmt)))
     return foldICmpShlOne(Cmp, Shl, C);
-
-  // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
-  if (!RHS)
-    return nullptr;
 
   // Check that the shift amount is in range. If not, don't perform undefined
   // shifts. When the shift is visited it will be simplified.
   unsigned TypeBits = C->getBitWidth();
-  if (ShAmt->uge(TypeBits))
+  if (ShiftAmt->uge(TypeBits))
     return nullptr;
 
   ICmpInst::Predicate Pred = Cmp.getPredicate();
@@ -2011,24 +2005,29 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
   if (Cmp.isEquality()) {
     // If the shift is NUW, then it is just shifting out zeros, no need for an
     // AND.
+    Constant *LShrC = ConstantInt::get(Shl->getType(), C->lshr(*ShiftAmt));
     if (cast<BinaryOperator>(Shl)->hasNoUnsignedWrap())
-      return new ICmpInst(Pred, X, ConstantExpr::getLShr(RHS, ShAmt));
+      return new ICmpInst(Pred, X, LShrC);
 
     // If the shift is NSW and we compare to 0, then it is just shifting out
     // sign bits, no need for an AND either.
     if (cast<BinaryOperator>(Shl)->hasNoSignedWrap() && *C == 0)
-      return new ICmpInst(Pred, X, ConstantExpr::getLShr(RHS, ShAmt));
+      return new ICmpInst(Pred, X, LShrC);
 
     if (Shl->hasOneUse()) {
       // Otherwise strength reduce the shift into an and.
-      uint32_t ShAmtVal = (uint32_t)ShAmt->getLimitedValue(TypeBits);
-      Constant *Mask =
-          Builder->getInt(APInt::getLowBitsSet(TypeBits, TypeBits - ShAmtVal));
+      Constant *Mask = ConstantInt::get(Shl->getType(),
+          APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt->getZExtValue()));
 
       Value *And = Builder->CreateAnd(X, Mask, Shl->getName() + ".mask");
-      return new ICmpInst(Pred, And, ConstantExpr::getLShr(RHS, ShAmt));
+      return new ICmpInst(Pred, And, LShrC);
     }
   }
+
+  // FIXME: This check restricts all folds under here to scalar types.
+  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
+  if (!RHS)
+    return nullptr;
 
   // If this is a signed comparison to 0 and the shift is sign preserving,
   // use the shift LHS operand instead; isSignTest may change 'Pred', so only
@@ -2042,7 +2041,7 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
     // (X << 31) <s 0  --> (X&1) != 0
     Constant *Mask = ConstantInt::get(
         X->getType(),
-        APInt::getOneBitSet(TypeBits, TypeBits - ShAmt->getZExtValue() - 1));
+        APInt::getOneBitSet(TypeBits, TypeBits - ShiftAmt->getZExtValue() - 1));
     Value *And = Builder->CreateAnd(X, Mask, Shl->getName() + ".mask");
     return new ICmpInst(TrueIfSigned ? ICmpInst::ICMP_NE : ICmpInst::ICMP_EQ,
                         And, Constant::getNullValue(And->getType()));
@@ -2054,7 +2053,7 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
   // This enables to get rid of the shift in favor of a trunc which can be
   // free on the target. It has the additional benefit of comparing to a
   // smaller constant, which will be target friendly.
-  unsigned Amt = ShAmt->getLimitedValue(TypeBits - 1);
+  unsigned Amt = ShiftAmt->getLimitedValue(TypeBits - 1);
   if (Shl->hasOneUse() && Amt != 0 && C->countTrailingZeros() >= Amt) {
     Type *NTy = IntegerType::get(Cmp.getContext(), TypeBits - Amt);
     Constant *NCI = ConstantExpr::getTrunc(
