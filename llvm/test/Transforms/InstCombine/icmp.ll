@@ -1672,7 +1672,7 @@ define i1 @icmp_shl_1_V_uge_2147483648(i32 %V) {
 define <2 x i1> @icmp_shl_1_V_uge_2147483648_vec(<2 x i32> %V) {
 ; CHECK-LABEL: @icmp_shl_1_V_uge_2147483648_vec(
 ; CHECK-NEXT:    [[SHL:%.*]] = shl <2 x i32> <i32 1, i32 1>, %V
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt <2 x i32> [[SHL]], <i32 2147483647, i32 2147483647>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt <2 x i32> [[SHL]], zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %shl = shl <2 x i32> <i32 1, i32 1>, %V
@@ -2591,6 +2591,10 @@ define i1 @ugtMaxSignedVal(i8 %a) {
 }
 
 define <2 x i1> @ugtMaxSignedValVec(<2 x i8> %a) {
+; CHECK-LABEL: @ugtMaxSignedValVec(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt <2 x i8> %a, zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
   %cmp = icmp ugt <2 x i8> %a, <i8 127, i8 127>
   ret <2 x i1> %cmp
 }
@@ -2609,7 +2613,7 @@ define i1 @ugtKnownBits(i8 %a) {
 define <2 x i1> @ugtKnownBitsVec(<2 x i8> %a) {
 ; CHECK-LABEL: @ugtKnownBitsVec(
 ; CHECK-NEXT:    [[B:%.*]] = and <2 x i8> %a, <i8 17, i8 17>
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt <2 x i8> [[B]], <i8 16, i8 16>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i8> [[B]], <i8 17, i8 17>
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %b = and <2 x i8> %a, <i8 17, i8 17>
