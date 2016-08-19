@@ -51,8 +51,8 @@ static void addRegular(SymbolAssignment *Cmd) {
 }
 
 template <class ELFT> static void addSynthetic(SymbolAssignment *Cmd) {
-  Symbol *Sym = Symtab<ELFT>::X->addSynthetic(Cmd->Name, nullptr, 0);
-  Sym->Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
+  Symbol *Sym = Symtab<ELFT>::X->addSynthetic(
+      Cmd->Name, nullptr, 0, Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT);
   Cmd->Sym = Sym->body();
 }
 
