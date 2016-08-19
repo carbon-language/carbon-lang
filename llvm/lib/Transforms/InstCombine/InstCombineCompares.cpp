@@ -1893,9 +1893,10 @@ Instruction *InstCombiner::foldICmpOrConstant(ICmpInst &Cmp, Instruction *Or,
   if (match(Or, m_Or(m_PtrToInt(m_Value(P)), m_PtrToInt(m_Value(Q))))) {
     // Simplify icmp eq (or (ptrtoint P), (ptrtoint Q)), 0
     // -> and (icmp eq P, null), (icmp eq Q, null).
-    Constant *NullVal = ConstantInt::getNullValue(P->getType());
-    Value *CmpP = Builder->CreateICmp(Pred, P, NullVal);
-    Value *CmpQ = Builder->CreateICmp(Pred, Q, NullVal);
+    Value *CmpP =
+        Builder->CreateICmp(Pred, P, ConstantInt::getNullValue(P->getType()));
+    Value *CmpQ =
+        Builder->CreateICmp(Pred, Q, ConstantInt::getNullValue(Q->getType()));
     auto LogicOpc = Pred == ICmpInst::Predicate::ICMP_EQ ? Instruction::And
                                                          : Instruction::Or;
     return BinaryOperator::Create(LogicOpc, CmpP, CmpQ);

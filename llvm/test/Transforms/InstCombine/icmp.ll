@@ -2605,3 +2605,16 @@ define <2 x i1> @ugtKnownBitsVec(<2 x i8> %a) {
   ret <2 x i1> %cmp
 }
 
+define i1 @or_ptrtoint_mismatch(i8* %p, i32* %q) {
+; CHECK-LABEL: define i1 @or_ptrtoint_mismatch(i8* %p, i32* %q)
+; CHECK: [[pc:%.*]] = icmp eq i8* %p, null
+; CHECK: [[qc:%.*]] = icmp eq i32* %q, null
+; CHECK: [[b:%.*]] = and i1 [[pc]], [[qc]]
+; CHECK: ret i1 [[b]]
+
+  %pp = ptrtoint i8* %p to i64
+  %qq = ptrtoint i32* %q to i64
+  %o = or i64 %pp, %qq
+  %b = icmp eq i64 %o, 0
+  ret i1 %b
+}
