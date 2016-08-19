@@ -99,6 +99,15 @@ template <typename IRUnitT, typename ResultT> class ResultHasInvalidateMethod {
     char a, b;
   };
 
+  // Purely to help out MSVC which fails to disable the below specialization,
+  // explicitly enable using the result type's invalidate routine if we can
+  // successfully call that routine.
+  template <typename T> struct Nonce { typedef EnabledType Type; };
+  template <typename T>
+  static typename Nonce<decltype(std::declval<T>().invalidate(
+      std::declval<IRUnitT &>(), std::declval<PreservedAnalyses>()))>::Type
+      check(rank<2>);
+
   // First we define an overload that can only be taken if there is no
   // invalidate member. We do this by taking the address of an invalidate
   // member in an adjacent base class of a derived class. This would be
@@ -115,7 +124,7 @@ template <typename IRUnitT, typename ResultT> class ResultHasInvalidateMethod {
   static EnabledType check(rank<0>);
 
 public:
-  enum { Value = sizeof(check<ResultT>(rank<1>())) == sizeof(EnabledType) };
+  enum { Value = sizeof(check<ResultT>(rank<2>())) == sizeof(EnabledType) };
 };
 
 /// \brief Wrapper to model the analysis result concept.
