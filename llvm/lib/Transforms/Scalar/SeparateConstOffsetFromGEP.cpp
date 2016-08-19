@@ -1150,9 +1150,13 @@ bool SeparateConstOffsetFromGEP::reuniteExts(Instruction *I) {
 bool SeparateConstOffsetFromGEP::reuniteExts(Function &F) {
   bool Changed = false;
   DominatingExprs.clear();
-  for (const auto Node : depth_first(DT))
-    for (auto &I : *(Node->getBlock()))
-      Changed |= reuniteExts(&I);
+  for (const auto Node : depth_first(DT)) {
+    BasicBlock *BB = Node->getBlock();
+    for (auto I = BB->begin(); I != BB->end(); ) {
+      Instruction *Cur = &*I++;
+      Changed |= reuniteExts(Cur);
+    }
+  }
   return Changed;
 }
 
