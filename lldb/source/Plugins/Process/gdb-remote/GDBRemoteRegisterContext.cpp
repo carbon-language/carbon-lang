@@ -383,7 +383,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const RegisterInfo *reg_info, Data
 
                     // Set all registers in one packet
                     if (gdb_comm.WriteAllRegisters(m_thread.GetProtocolID(),
-                                                   {m_reg_data.GetDataStart(), m_reg_data.GetByteSize()}))
+                                                   {m_reg_data.GetDataStart(), size_t(m_reg_data.GetByteSize())}))
 
                     {
                         SetAllRegisterValid (false);
@@ -586,7 +586,8 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
         // The data_sp contains the G response packet.
         if (use_g_packet)
         {
-            if (gdb_comm.WriteAllRegisters(m_thread.GetProtocolID(), {data_sp->GetBytes(), data_sp->GetByteSize()}))
+            if (gdb_comm.WriteAllRegisters(m_thread.GetProtocolID(),
+                                           {data_sp->GetBytes(), size_t(data_sp->GetByteSize())}))
                 return true;
 
             uint32_t num_restored = 0;
