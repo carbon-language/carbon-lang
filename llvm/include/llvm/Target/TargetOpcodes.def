@@ -304,6 +304,17 @@ HANDLE_TARGET_OPCODE(G_FDIV)
 /// Generic FP remainder.
 HANDLE_TARGET_OPCODE(G_FREM)
 
+/// Generic float to signed-int conversion
+HANDLE_TARGET_OPCODE(G_FPTOSI)
+
+/// Generic float to unsigned-int conversion
+HANDLE_TARGET_OPCODE(G_FPTOUI)
+
+/// Generic signed-int to float conversion
+HANDLE_TARGET_OPCODE(G_SITOFP)
+
+/// Generic unsigned-int to float conversion
+HANDLE_TARGET_OPCODE(G_UITOFP)
 
 /// Generic BRANCH instruction. This is an unconditional branch.
 HANDLE_TARGET_OPCODE(G_BR)

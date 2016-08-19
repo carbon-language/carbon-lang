@@ -205,6 +205,19 @@ private:
   bool translateTrunc(const User &U) {
     return translateCast(TargetOpcode::G_TRUNC, U);
   }
+  bool translateFPToUI(const User &U) {
+    return translateCast(TargetOpcode::G_FPTOUI, U);
+  }
+  bool translateFPToSI(const User &U) {
+    return translateCast(TargetOpcode::G_FPTOSI, U);
+  }
+  bool translateUIToFP(const User &U) {
+    return translateCast(TargetOpcode::G_UITOFP, U);
+  }
+  bool translateSIToFP(const User &U) {
+    return translateCast(TargetOpcode::G_SITOFP, U);
+  }
+
   bool translateUnreachable(const User &U) { return true; }
 
   bool translateSExt(const User &U) {
@@ -255,10 +268,6 @@ private:
   bool translateFence(const User &U) { return false; }
   bool translateAtomicCmpXchg(const User &U) { return false; }
   bool translateAtomicRMW(const User &U) { return false; }
-  bool translateFPToUI(const User &U) { return false; }
-  bool translateFPToSI(const User &U) { return false; }
-  bool translateUIToFP(const User &U) { return false; }
-  bool translateSIToFP(const User &U) { return false; }
   bool translateFPTrunc(const User &U) { return false; }
   bool translateFPExt(const User &U) { return false; }
   bool translateAddrSpaceCast(const User &U) { return false; }

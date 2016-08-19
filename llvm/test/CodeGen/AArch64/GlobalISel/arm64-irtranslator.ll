@@ -740,3 +740,47 @@ define i32 @test_select(i1 %tst, i32 %lhs, i32 %rhs) {
   %res = select i1 %tst, i32 %lhs, i32 %rhs
   ret i32 %res
 }
+
+; CHECK-LABEL: name: test_fptosi
+; CHECK: [[FPADDR:%[0-9]+]](64) = COPY %x0
+; CHECK: [[FP:%[0-9]+]](32) = G_LOAD { s32, p0 } [[FPADDR]]
+; CHECK: [[RES:%[0-9]+]](64) = G_FPTOSI { s64, s32 } [[FP]]
+; CHECK: %x0 = COPY [[RES]]
+define i64 @test_fptosi(float* %fp.addr) {
+  %fp = load float, float* %fp.addr
+  %res = fptosi float %fp to i64
+  ret i64 %res
+}
+
+; CHECK-LABEL: name: test_fptoui
+; CHECK: [[FPADDR:%[0-9]+]](64) = COPY %x0
+; CHECK: [[FP:%[0-9]+]](32) = G_LOAD { s32, p0 } [[FPADDR]]
+; CHECK: [[RES:%[0-9]+]](64) = G_FPTOUI { s64, s32 } [[FP]]
+; CHECK: %x0 = COPY [[RES]]
+define i64 @test_fptoui(float* %fp.addr) {
+  %fp = load float, float* %fp.addr
+  %res = fptoui float %fp to i64
+  ret i64 %res
+}
+
+; CHECK-LABEL: name: test_sitofp
+; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x0
+; CHECK: [[IN:%[0-9]+]](32) = COPY %w1
+; CHECK: [[FP:%[0-9]+]](64) = G_SITOFP { s64, s32 } [[IN]]
+; CHECK: G_STORE { s64, p0 } [[FP]], [[ADDR]]
+define void @test_sitofp(double* %addr, i32 %in) {
+  %fp = sitofp i32 %in to double
+  store double %fp, double* %addr
+  ret void
+}
+
+; CHECK-LABEL: name: test_uitofp
+; CHECK: [[ADDR:%[0-9]+]](64) = COPY %x0
+; CHECK: [[IN:%[0-9]+]](32) = COPY %w1
+; CHECK: [[FP:%[0-9]+]](64) = G_UITOFP { s64, s32 } [[IN]]
+; CHECK: G_STORE { s64, p0 } [[FP]], [[ADDR]]
+define void @test_uitofp(double* %addr, i32 %in) {
+  %fp = uitofp i32 %in to double
+  store double %fp, double* %addr
+  ret void
+}

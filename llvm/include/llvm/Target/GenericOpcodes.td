@@ -248,6 +248,34 @@ def G_SMULO : Instruction {
 }
 
 //------------------------------------------------------------------------------
+// Floating Point Unary Ops.
+//------------------------------------------------------------------------------
+
+def G_FPTOSI : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src);
+  let hasSideEffects = 0;
+}
+
+def G_FPTOUI : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src);
+  let hasSideEffects = 0;
+}
+
+def G_SITOFP : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src);
+  let hasSideEffects = 0;
+}
+
+def G_UITOFP : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src);
+  let hasSideEffects = 0;
+}
+
+//------------------------------------------------------------------------------
 // Floating Point Binary ops.
 //------------------------------------------------------------------------------
 
