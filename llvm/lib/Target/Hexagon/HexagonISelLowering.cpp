@@ -2040,6 +2040,9 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FSUB, MVT::f64, Expand);
     setOperationAction(ISD::FMUL, MVT::f64, Expand);
 
+    setOperationAction(ISD::FMINNUM, MVT::f32, Legal);
+    setOperationAction(ISD::FMAXNUM, MVT::f32, Legal);
+
     setOperationAction(ISD::FP_TO_UINT, MVT::i1,  Promote);
     setOperationAction(ISD::FP_TO_UINT, MVT::i8,  Promote);
     setOperationAction(ISD::FP_TO_UINT, MVT::i16, Promote);
@@ -2285,6 +2288,10 @@ bool HexagonTargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
   if (!VT1.isSimple() || !VT2.isSimple())
     return false;
   return (VT1.getSimpleVT() == MVT::i64) && (VT2.getSimpleVT() == MVT::i32);
+}
+
+bool HexagonTargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
+  return isOperationLegalOrCustom(ISD::FMA, VT);
 }
 
 // Should we expand the build vector with shuffles?
