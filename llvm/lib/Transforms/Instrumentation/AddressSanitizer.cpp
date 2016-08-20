@@ -798,12 +798,10 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
   /// Finds alloca where the value comes from.
   AllocaInst *findAllocaForValue(Value *V);
-  void poisonRedZones(ArrayRef<uint8_t> ShadowBytes, IRBuilder<> &IRB,
-                      Value *ShadowBase, bool DoPoison);
+  void poisonStackFrame(ArrayRef<uint8_t> ShadowBytes, IRBuilder<> &IRB,
+                        Value *ShadowBase, bool DoPoison);
   void poisonAlloca(Value *V, uint64_t Size, IRBuilder<> &IRB, bool DoPoison);
 
-  void SetShadowToStackAfterReturnInlined(IRBuilder<> &IRB, Value *ShadowBase,
-                                          int Size);
   Value *createAllocaForLayout(IRBuilder<> &IRB, const ASanStackFrameLayout &L,
                                bool Dynamic);
   PHINode *createPHI(IRBuilder<> &IRB, Value *Cond, Value *ValueIfTrue,
@@ -1933,30 +1931,62 @@ void FunctionStackPoisoner::initializeCallbacks(Module &M) {
           kAsanAllocasUnpoison, IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
 }
 
-void FunctionStackPoisoner::poisonRedZones(ArrayRef<uint8_t> ShadowBytes,
-                                           IRBuilder<> &IRB, Value *ShadowBase,
-                                           bool DoPoison) {
-  size_t n = ShadowBytes.size();
-  size_t i = 0;
-  // We need to (un)poison n bytes of stack shadow. Poison as many as we can
-  // using 64-bit stores (if we are on 64-bit arch), then poison the rest
-  // with 32-bit stores, then with 16-byte stores, then with 8-byte stores.
-  for (size_t LargeStoreSizeInBytes = ASan.LongSize / 8;
-       LargeStoreSizeInBytes != 0; LargeStoreSizeInBytes /= 2) {
-    for (; i + LargeStoreSizeInBytes - 1 < n; i += LargeStoreSizeInBytes) {
-      uint64_t Val = 0;
-      for (size_t j = 0; j < LargeStoreSizeInBytes; j++) {
-        if (F.getParent()->getDataLayout().isLittleEndian())
+// If DoPoison is true function copies ShadowBytes into shadow memory.
+// If DoPoison is false function sets 0s into shadow memory.
+// Function assumes that if ShadowBytes[i] is 0, then corresponding shadow
+// memory is constant for duration of the function and it contains 0s. So we
+// will try to minimize writes into corresponding addresses of the real shadow
+// memory.
+void FunctionStackPoisoner::poisonStackFrame(ArrayRef<uint8_t> ShadowBytes,
+                                             IRBuilder<> &IRB,
+                                             Value *ShadowBase, bool DoPoison) {
+  const size_t End = ShadowBytes.size();
+
+  const size_t LargestStoreSizeInBytes =
+      std::min<size_t>(sizeof(uint64_t), ASan.LongSize / 8);
+
+  const bool IsLittleEndian = F.getParent()->getDataLayout().isLittleEndian();
+
+  // Poison given range in shadow using larges store size with out leading and
+  // trailing zeros. Zeros never change, so they need neither poisoning nor
+  // up-poisoning, but we don't mind if some of them get into a middle of a
+  // store.
+  for (size_t i = 0; i < End;) {
+    if (!ShadowBytes[i]) {
+      ++i;
+      continue;
+    }
+
+    size_t StoreSizeInBytes = LargestStoreSizeInBytes;
+    // Fit store size into the range.
+    while (StoreSizeInBytes > End - i)
+      StoreSizeInBytes /= 2;
+
+    // Minimize store size by trimming trailing zeros.
+    for (size_t j = StoreSizeInBytes - 1; j && !ShadowBytes[i + j]; --j) {
+      while (j <= StoreSizeInBytes / 2)
+        StoreSizeInBytes /= 2;
+    }
+
+    uint64_t Val = 0;
+    if (DoPoison) {
+      for (size_t j = 0; j < StoreSizeInBytes; j++) {
+        if (IsLittleEndian)
           Val |= (uint64_t)ShadowBytes[i + j] << (8 * j);
         else
           Val = (Val << 8) | ShadowBytes[i + j];
       }
-      if (!Val) continue;
-      Value *Ptr = IRB.CreateAdd(ShadowBase, ConstantInt::get(IntptrTy, i));
-      Type *StoreTy = Type::getIntNTy(*C, LargeStoreSizeInBytes * 8);
-      Value *Poison = ConstantInt::get(StoreTy, DoPoison ? Val : 0);
-      IRB.CreateStore(Poison, IRB.CreateIntToPtr(Ptr, StoreTy->getPointerTo()));
+      assert(Val); // Impossible because ShadowBytes[i] != 0
+    } else {
+      Val = 0;
     }
+
+    Value *Ptr = IRB.CreateAdd(ShadowBase, ConstantInt::get(IntptrTy, i));
+    Value *Poison = IRB.getIntN(StoreSizeInBytes * 8, Val);
+    IRB.CreateStore(Poison,
+                    IRB.CreateIntToPtr(Ptr, Poison->getType()->getPointerTo()));
+
+    i += StoreSizeInBytes;
   }
 }
 
@@ -1968,26 +1998,6 @@ static int StackMallocSizeClass(uint64_t LocalStackSize) {
   for (int i = 0;; i++, MaxSize *= 2)
     if (LocalStackSize <= MaxSize) return i;
   llvm_unreachable("impossible LocalStackSize");
-}
-
-// Set Size bytes starting from ShadowBase to kAsanStackAfterReturnMagic.
-// We can not use MemSet intrinsic because it may end up calling the actual
-// memset. Size is a multiple of 8.
-// Currently this generates 8-byte stores on x86_64; it may be better to
-// generate wider stores.
-void FunctionStackPoisoner::SetShadowToStackAfterReturnInlined(
-    IRBuilder<> &IRB, Value *ShadowBase, int Size) {
-  assert(!(Size % 8));
-
-  // kAsanStackAfterReturnMagic is 0xf5.
-  const uint64_t kAsanStackAfterReturnMagic64 = 0xf5f5f5f5f5f5f5f5ULL;
-
-  for (int i = 0; i < Size; i += 8) {
-    Value *p = IRB.CreateAdd(ShadowBase, ConstantInt::get(IntptrTy, i));
-    IRB.CreateStore(
-        ConstantInt::get(IRB.getInt64Ty(), kAsanStackAfterReturnMagic64),
-        IRB.CreateIntToPtr(p, IRB.getInt64Ty()->getPointerTo()));
-  }
 }
 
 PHINode *FunctionStackPoisoner::createPHI(IRBuilder<> &IRB, Value *Cond,
@@ -2206,18 +2216,20 @@ void FunctionStackPoisoner::processStaticAllocas() {
 
   // Poison the stack redzones at the entry.
   Value *ShadowBase = ASan.memToShadow(LocalStackBase, IRB);
-  poisonRedZones(L.ShadowBytes, IRB, ShadowBase, true);
+  poisonStackFrame(L.ShadowBytes, IRB, ShadowBase, true);
 
   auto UnpoisonStack = [&](IRBuilder<> &IRB) {
     // Do this always as poisonAlloca can be disabled with
     // detect_stack_use_after_scope=0.
-    poisonRedZones(L.ShadowBytes, IRB, ShadowBase, false);
+    poisonStackFrame(L.ShadowBytes, IRB, ShadowBase, false);
     if (!StaticAllocaPoisonCallVec.empty()) {
       // If we poisoned some allocas in llvm.lifetime analysis,
       // unpoison whole stack frame now.
       poisonAlloca(LocalStackBase, LocalStackSize, IRB, false);
     }
   };
+
+  SmallVector<uint8_t, 64> ShadowBytesAfterReturn;
 
   // (Un)poison the stack before all ret instructions.
   for (auto Ret : RetVec) {
@@ -2245,8 +2257,9 @@ void FunctionStackPoisoner::processStaticAllocas() {
       IRBuilder<> IRBPoison(ThenTerm);
       if (StackMallocIdx <= 4) {
         int ClassSize = kMinStackMallocSize << StackMallocIdx;
-        SetShadowToStackAfterReturnInlined(IRBPoison, ShadowBase,
-                                           ClassSize >> Mapping.Scale);
+        ShadowBytesAfterReturn.resize(ClassSize >> Mapping.Scale,
+                                      kAsanStackUseAfterReturnMagic);
+        poisonStackFrame(ShadowBytesAfterReturn, IRBPoison, ShadowBase, true);
         Value *SavedFlagPtrPtr = IRBPoison.CreateAdd(
             FakeStack,
             ConstantInt::get(IntptrTy, ClassSize - ASan.LongSize / 8));
