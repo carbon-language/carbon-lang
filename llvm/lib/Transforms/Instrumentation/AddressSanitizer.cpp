@@ -54,6 +54,8 @@
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include <algorithm>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <system_error>
 
@@ -111,6 +113,7 @@ static const char *const kAsanStackFreeNameTemplate = "__asan_stack_free_";
 static const char *const kAsanGenPrefix = "__asan_gen_";
 static const char *const kODRGenPrefix = "__odr_asan_gen_";
 static const char *const kSanCovGenPrefix = "__sancov_gen_";
+static const char *const kAsanSetShadowPrefix = "__asan_set_shadow_";
 static const char *const kAsanPoisonStackMemoryName =
     "__asan_poison_stack_memory";
 static const char *const kAsanUnpoisonStackMemoryName =
@@ -170,6 +173,10 @@ static cl::opt<bool> ClUseAfterReturn("asan-use-after-return",
 static cl::opt<bool> ClUseAfterScope("asan-use-after-scope",
                                      cl::desc("Check stack-use-after-scope"),
                                      cl::Hidden, cl::init(false));
+static cl::opt<bool> ClExperimentalPoisoning(
+    "asan-experimental-poisoning",
+    cl::desc("Enable experimental red zones and scope poisoning"), cl::Hidden,
+    cl::init(false));
 // This flag may need to be replaced with -f[no]asan-globals.
 static cl::opt<bool> ClGlobals("asan-globals",
                                cl::desc("Handle global objects"), cl::Hidden,
@@ -613,6 +620,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
   Function *AsanStackMallocFunc[kMaxAsanStackMallocSizeClass + 1],
       *AsanStackFreeFunc[kMaxAsanStackMallocSizeClass + 1];
+  Function *AsanSetShadowFunc[0x100] = {};
   Function *AsanPoisonStackMemoryFunc, *AsanUnpoisonStackMemoryFunc;
   Function *AsanAllocaPoisonFunc, *AsanAllocasUnpoisonFunc;
 
@@ -1922,6 +1930,17 @@ void FunctionStackPoisoner::initializeCallbacks(Module &M) {
     AsanUnpoisonStackMemoryFunc = checkSanitizerInterfaceFunction(
         M.getOrInsertFunction(kAsanUnpoisonStackMemoryName, IRB.getVoidTy(),
                               IntptrTy, IntptrTy, nullptr));
+  }
+
+  if (ClExperimentalPoisoning) {
+    for (size_t Val : {0x00, 0xf1, 0xf2, 0xf3, 0xf5, 0xf8}) {
+      std::ostringstream Name;
+      Name << kAsanSetShadowPrefix;
+      Name << std::setw(2) << std::setfill('0') << std::hex << Val;
+      AsanSetShadowFunc[Val] =
+          checkSanitizerInterfaceFunction(M.getOrInsertFunction(
+              Name.str(), IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
+    }
   }
 
   AsanAllocaPoisonFunc = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
