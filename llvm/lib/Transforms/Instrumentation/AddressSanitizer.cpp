@@ -196,9 +196,10 @@ static cl::opt<std::string> ClMemoryAccessCallbackPrefix(
     "asan-memory-access-callback-prefix",
     cl::desc("Prefix for memory access callbacks"), cl::Hidden,
     cl::init("__asan_"));
-static cl::opt<bool> ClInstrumentAllocas("asan-instrument-allocas",
-                                         cl::desc("instrument dynamic allocas"),
-                                         cl::Hidden, cl::init(true));
+static cl::opt<bool>
+    ClInstrumentDynamicAllocas("asan-instrument-dynamic-allocas",
+                               cl::desc("instrument dynamic allocas"),
+                               cl::Hidden, cl::init(true));
 static cl::opt<bool> ClSkipPromotableAllocas(
     "asan-skip-promotable-allocas",
     cl::desc("Do not instrument promotable allocas"), cl::Hidden,
@@ -622,7 +623,8 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
     uint64_t Size;
     bool DoPoison;
   };
-  SmallVector<AllocaPoisonCall, 8> AllocaPoisonCallVec;
+  SmallVector<AllocaPoisonCall, 8> DynamicAllocaPoisonCallVec;
+  SmallVector<AllocaPoisonCall, 8> StaticAllocaPoisonCallVec;
 
   SmallVector<AllocaInst *, 1> DynamicAllocaVec;
   SmallVector<IntrinsicInst *, 1> StackRestoreVec;
@@ -657,7 +659,8 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
     initializeCallbacks(*F.getParent());
 
-    poisonStack();
+    processDynamicAllocas();
+    processStaticAllocas();
 
     if (ClDebugStack) {
       DEBUG(dbgs() << F);
@@ -668,7 +671,8 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   // Finds all Alloca instructions and puts
   // poisoned red zones around all of them.
   // Then unpoison everything back before the function returns.
-  void poisonStack();
+  void processStaticAllocas();
+  void processDynamicAllocas();
 
   void createDynamicAllocasInitStorage();
 
@@ -767,7 +771,10 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
       return;
     bool DoPoison = (ID == Intrinsic::lifetime_end);
     AllocaPoisonCall APC = {&II, AI, SizeValue, DoPoison};
-    AllocaPoisonCallVec.push_back(APC);
+    if (AI->isStaticAlloca())
+      StaticAllocaPoisonCallVec.push_back(APC);
+    else if (ClInstrumentDynamicAllocas)
+      DynamicAllocaPoisonCallVec.push_back(APC);
   }
 
   void visitCallSite(CallSite CS) {
@@ -2021,36 +2028,38 @@ void FunctionStackPoisoner::createDynamicAllocasInitStorage() {
   DynamicAllocaLayout->setAlignment(32);
 }
 
-void FunctionStackPoisoner::poisonStack() {
-  assert(AllocaVec.size() > 0 || DynamicAllocaVec.size() > 0);
+void FunctionStackPoisoner::processDynamicAllocas() {
+  if (!ClInstrumentDynamicAllocas || DynamicAllocaVec.empty()) {
+    assert(DynamicAllocaPoisonCallVec.empty());
+    return;
+  }
 
-  // Insert poison calls for lifetime intrinsics for alloca.
-  bool HavePoisonedStaticAllocas = false;
-  for (const auto &APC : AllocaPoisonCallVec) {
+  // Insert poison calls for lifetime intrinsics for dynamic allocas.
+  for (const auto &APC : DynamicAllocaPoisonCallVec) {
     assert(APC.InsBefore);
     assert(APC.AI);
     assert(ASan.isInterestingAlloca(*APC.AI));
-    bool IsDynamicAlloca = !(*APC.AI).isStaticAlloca();
-    if (!ClInstrumentAllocas && IsDynamicAlloca)
-      continue;
+    assert(!APC.AI->isStaticAlloca());
 
     IRBuilder<> IRB(APC.InsBefore);
     poisonAlloca(APC.AI, APC.Size, IRB, APC.DoPoison);
     // Dynamic allocas will be unpoisoned unconditionally below in
     // unpoisonDynamicAllocas.
     // Flag that we need unpoison static allocas.
-    HavePoisonedStaticAllocas |= (APC.DoPoison && !IsDynamicAlloca);
   }
 
-  if (ClInstrumentAllocas && DynamicAllocaVec.size() > 0) {
-    // Handle dynamic allocas.
-    createDynamicAllocasInitStorage();
-    for (auto &AI : DynamicAllocaVec) handleDynamicAllocaCall(AI);
+  // Handle dynamic allocas.
+  createDynamicAllocasInitStorage();
+  for (auto &AI : DynamicAllocaVec)
+    handleDynamicAllocaCall(AI);
+  unpoisonDynamicAllocas();
+}
 
-    unpoisonDynamicAllocas();
+void FunctionStackPoisoner::processStaticAllocas() {
+  if (AllocaVec.empty()) {
+    assert(StaticAllocaPoisonCallVec.empty());
+    return;
   }
-
-  if (AllocaVec.empty()) return;
 
   int StackMallocIdx = -1;
   DebugLoc EntryDebugLocation;
@@ -2073,6 +2082,17 @@ void FunctionStackPoisoner::poisonStack() {
 
   // If we have a call to llvm.localescape, keep it in the entry block.
   if (LocalEscapeCall) LocalEscapeCall->moveBefore(InsBefore);
+
+  // Insert poison calls for lifetime intrinsics for static allocas.
+  for (const auto &APC : StaticAllocaPoisonCallVec) {
+    assert(APC.InsBefore);
+    assert(APC.AI);
+    assert(ASan.isInterestingAlloca(*APC.AI));
+    assert(APC.AI->isStaticAlloca());
+
+    IRBuilder<> IRB(APC.InsBefore);
+    poisonAlloca(APC.AI, APC.Size, IRB, APC.DoPoison);
+  }
 
   SmallVector<ASanStackVariableDescription, 16> SVD;
   SVD.reserve(AllocaVec.size());
@@ -2192,7 +2212,7 @@ void FunctionStackPoisoner::poisonStack() {
     // Do this always as poisonAlloca can be disabled with
     // detect_stack_use_after_scope=0.
     poisonRedZones(L.ShadowBytes, IRB, ShadowBase, false);
-    if (HavePoisonedStaticAllocas) {
+    if (!StaticAllocaPoisonCallVec.empty()) {
       // If we poisoned some allocas in llvm.lifetime analysis,
       // unpoison whole stack frame now.
       poisonAlloca(LocalStackBase, LocalStackSize, IRB, false);
