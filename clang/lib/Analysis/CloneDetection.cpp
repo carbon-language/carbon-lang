@@ -295,7 +295,7 @@ public:
   /// \brief Collects data of the given Stmt.
   /// \param S The given statement.
   /// \param Context The ASTContext of S.
-  /// \param D The data sink to which all data is forwarded.
+  /// \param DataConsumer The data sink to which all data is forwarded.
   StmtDataCollector(const Stmt *S, ASTContext &Context, T &DataConsumer)
       : Context(Context), DataConsumer(DataConsumer) {
     this->Visit(S);
@@ -695,7 +695,7 @@ static bool areSequencesClones(const StmtSequence &LHS,
 /// \param Group A group of presumed clones. The clones are allowed to have a
 ///              different variable pattern and may not be actual clones of each
 ///              other.
-/// \param CheckVariablePatterns If true, every clone in a group that was added
+/// \param CheckVariablePattern If true, every clone in a group that was added
 ///              to the output follows the same variable pattern as the other
 ///              clones in its group.
 static void createCloneGroups(std::vector<CloneDetector::CloneGroup> &Result,
