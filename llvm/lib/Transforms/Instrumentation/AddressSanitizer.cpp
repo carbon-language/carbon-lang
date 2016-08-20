@@ -167,6 +167,11 @@ static cl::opt<int> ClMaxInsnsToInstrumentPerBB(
 // This flag may need to be replaced with -f[no]asan-stack.
 static cl::opt<bool> ClStack("asan-stack", cl::desc("Handle stack memory"),
                              cl::Hidden, cl::init(true));
+static cl::opt<uint32_t> ClMaxInlinePoisoningSize(
+    "asan-max-inline-poisoning-size",
+    cl::desc(
+        "Inline shadow poisoning for blocks up to the given size in bytes."),
+    cl::Hidden, cl::init(64));
 static cl::opt<bool> ClUseAfterReturn("asan-use-after-return",
                                       cl::desc("Check stack-use-after-return"),
                                       cl::Hidden, cl::init(true));
@@ -806,6 +811,9 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
   /// Finds alloca where the value comes from.
   AllocaInst *findAllocaForValue(Value *V);
+  void poisonStackFrameInline(ArrayRef<uint8_t> ShadowBytes, size_t Begin,
+                              size_t End, IRBuilder<> &IRB, Value *ShadowBase,
+                              bool DoPoison);
   void poisonStackFrame(ArrayRef<uint8_t> ShadowBytes, IRBuilder<> &IRB,
                         Value *ShadowBase, bool DoPoison);
   void poisonAlloca(Value *V, uint64_t Size, IRBuilder<> &IRB, bool DoPoison);
@@ -1956,10 +1964,11 @@ void FunctionStackPoisoner::initializeCallbacks(Module &M) {
 // memory is constant for duration of the function and it contains 0s. So we
 // will try to minimize writes into corresponding addresses of the real shadow
 // memory.
-void FunctionStackPoisoner::poisonStackFrame(ArrayRef<uint8_t> ShadowBytes,
-                                             IRBuilder<> &IRB,
-                                             Value *ShadowBase, bool DoPoison) {
-  const size_t End = ShadowBytes.size();
+void FunctionStackPoisoner::poisonStackFrameInline(
+    ArrayRef<uint8_t> ShadowBytes, size_t Begin, size_t End, IRBuilder<> &IRB,
+    Value *ShadowBase, bool DoPoison) {
+  if (Begin >= End)
+    return;
 
   const size_t LargestStoreSizeInBytes =
       std::min<size_t>(sizeof(uint64_t), ASan.LongSize / 8);
@@ -1970,7 +1979,7 @@ void FunctionStackPoisoner::poisonStackFrame(ArrayRef<uint8_t> ShadowBytes,
   // trailing zeros. Zeros never change, so they need neither poisoning nor
   // up-poisoning, but we don't mind if some of them get into a middle of a
   // store.
-  for (size_t i = 0; i < End;) {
+  for (size_t i = Begin; i < End;) {
     if (!ShadowBytes[i]) {
       ++i;
       continue;
@@ -2007,6 +2016,40 @@ void FunctionStackPoisoner::poisonStackFrame(ArrayRef<uint8_t> ShadowBytes,
 
     i += StoreSizeInBytes;
   }
+}
+
+void FunctionStackPoisoner::poisonStackFrame(ArrayRef<uint8_t> ShadowBytes,
+                                             IRBuilder<> &IRB,
+                                             Value *ShadowBase, bool DoPoison) {
+  auto ValueToWrite = [&](size_t i) {
+    if (DoPoison)
+      return ShadowBytes[i];
+    return static_cast<uint8_t>(0);
+  };
+
+  const size_t End = ShadowBytes.size();
+  size_t Done = 0;
+  for (size_t i = 0, j = 1; i < End; i = j++) {
+    if (!ShadowBytes[i])
+      continue;
+    uint8_t Val = ValueToWrite(i);
+    if (!AsanSetShadowFunc[Val])
+      continue;
+
+    // Skip same values.
+    for (; j < End && ShadowBytes[j] && Val == ValueToWrite(j); ++j) {
+    }
+
+    if (j - i >= ClMaxInlinePoisoningSize) {
+      poisonStackFrameInline(ShadowBytes, Done, i, IRB, ShadowBase, DoPoison);
+      IRB.CreateCall(AsanSetShadowFunc[Val],
+                     {IRB.CreateAdd(ShadowBase, ConstantInt::get(IntptrTy, i)),
+                      ConstantInt::get(IntptrTy, j - i)});
+      Done = j;
+    }
+  }
+
+  poisonStackFrameInline(ShadowBytes, Done, End, IRB, ShadowBase, DoPoison);
 }
 
 // Fake stack allocator (asan_fake_stack.h) has 11 size classes
