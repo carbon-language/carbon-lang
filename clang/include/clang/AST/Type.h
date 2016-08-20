@@ -4782,7 +4782,7 @@ public:
 /// this should get its own sugar class to better represent the source.
 class ObjCObjectType : public Type,
                        public ObjCProtocolQualifiers<ObjCObjectType> {
-  friend class ObjCProtocolQualifiers;
+  template <class T> friend class ObjCProtocolQualifiers;
   // ObjCObjectType.NumTypeArgs - the number of type arguments stored
   // after the ObjCObjectPointerType node.
   // ObjCObjectType.NumProtocols - the number of protocols stored
