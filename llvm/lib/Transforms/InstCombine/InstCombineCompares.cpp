@@ -2030,15 +2030,10 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
   if (cast<BinaryOperator>(Shl)->hasNoSignedWrap() && isSignTest(Pred, *C))
     return new ICmpInst(Pred, X, Constant::getNullValue(X->getType()));
 
-  // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
-  if (!RHS)
-    return nullptr;
-
   // Otherwise, if this is a comparison of the sign bit, simplify to and/test.
   bool TrueIfSigned = false;
   if (Shl->hasOneUse() && isSignBitCheck(Pred, *C, TrueIfSigned)) {
-    // (X << 31) <s 0  --> (X&1) != 0
+    // (X << 31) <s 0  --> (X & 1) != 0
     Constant *Mask = ConstantInt::get(
         X->getType(),
         APInt::getOneBitSet(TypeBits, TypeBits - ShiftAmt->getZExtValue() - 1));
@@ -2046,6 +2041,11 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
     return new ICmpInst(TrueIfSigned ? ICmpInst::ICMP_NE : ICmpInst::ICMP_EQ,
                         And, Constant::getNullValue(And->getType()));
   }
+
+  // FIXME: This check restricts all folds under here to scalar types.
+  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
+  if (!RHS)
+    return nullptr;
 
   // Transform (icmp pred iM (shl iM %v, N), CI)
   // -> (icmp pred i(M-N) (trunc %v iM to i(M-N)), (trunc (CI>>N))
