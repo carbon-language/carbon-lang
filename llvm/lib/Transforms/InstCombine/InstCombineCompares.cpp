@@ -126,26 +126,26 @@ static bool isBranchOnSignBitCheck(ICmpInst &I, bool isSignBit) {
 /// Given an exploded icmp instruction, return true if the comparison only
 /// checks the sign bit. If it only checks the sign bit, set TrueIfSigned if the
 /// result of the comparison is true when the input value is signed.
-static bool isSignBitCheck(ICmpInst::Predicate Pred, ConstantInt *RHS,
+static bool isSignBitCheck(ICmpInst::Predicate Pred, const APInt &RHS,
                            bool &TrueIfSigned) {
   switch (Pred) {
   case ICmpInst::ICMP_SLT:   // True if LHS s< 0
     TrueIfSigned = true;
-    return RHS->isZero();
+    return RHS == 0;
   case ICmpInst::ICMP_SLE:   // True if LHS s<= RHS and RHS == -1
     TrueIfSigned = true;
-    return RHS->isAllOnesValue();
+    return RHS.isAllOnesValue();
   case ICmpInst::ICMP_SGT:   // True if LHS s> -1
     TrueIfSigned = false;
-    return RHS->isAllOnesValue();
+    return RHS.isAllOnesValue();
   case ICmpInst::ICMP_UGT:
     // True if LHS u> RHS and RHS == high-bit-mask - 1
     TrueIfSigned = true;
-    return RHS->isMaxValue(true);
+    return RHS.isMaxSignedValue();
   case ICmpInst::ICMP_UGE:
     // True if LHS u>= RHS and RHS == high-bit-mask (2^7, 2^15, 2^31, etc)
     TrueIfSigned = true;
-    return RHS->getValue().isSignBit();
+    return RHS.isSignBit();
   default:
     return false;
   }
@@ -2037,7 +2037,7 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
 
   // Otherwise, if this is a comparison of the sign bit, simplify to and/test.
   bool TrueIfSigned = false;
-  if (Shl->hasOneUse() && isSignBitCheck(Pred, RHS, TrueIfSigned)) {
+  if (Shl->hasOneUse() && isSignBitCheck(Pred, *C, TrueIfSigned)) {
     // (X << 31) <s 0  --> (X&1) != 0
     Constant *Mask = ConstantInt::get(
         X->getType(),
@@ -3416,7 +3416,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     // If this comparison is a normal comparison, it demands all
     // bits, if it is a sign bit comparison, it only demands the sign bit.
     bool UnusedBit;
-    isSignBit = isSignBitCheck(I.getPredicate(), CI, UnusedBit);
+    isSignBit = isSignBitCheck(I.getPredicate(), CI->getValue(), UnusedBit);
 
     // Canonicalize icmp instructions based on dominating conditions.
     BasicBlock *Parent = I.getParent();
