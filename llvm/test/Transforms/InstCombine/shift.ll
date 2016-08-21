@@ -605,7 +605,6 @@ define i1 @test33(i32 %X) {
   ret i1 %tmp2
 }
 
-; FIXME: Vectors should fold the same way.
 define <2 x i1> @test33vec(<2 x i32> %X) {
 ; CHECK-LABEL: @test33vec(
 ; CHECK-NEXT:    [[TMP1_MASK:%.*]] = and <2 x i32> %X, <i32 16777216, i32 16777216>
