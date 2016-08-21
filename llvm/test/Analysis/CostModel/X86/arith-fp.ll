@@ -1,7 +1,7 @@
 ; RUN: opt < %s  -cost-model -analyze -mtriple=x86_64-apple-macosx10.8.0 -mattr=+ssse3 | FileCheck %s --check-prefix=CHECK --check-prefix=SSSE3
 ; RUN: opt < %s  -cost-model -analyze -mtriple=x86_64-apple-macosx10.8.0 -mattr=+sse4.2 | FileCheck %s --check-prefix=CHECK --check-prefix=SSE42
-; RUN: opt < %s  -cost-model -analyze -mtriple=x86_64-apple-macosx10.8.0 -mattr=+avx | FileCheck %s --check-prefix=CHECK --check-prefix=AVX
-; RUN: opt < %s  -cost-model -analyze -mtriple=x86_64-apple-macosx10.8.0 -mattr=+avx2 | FileCheck %s --check-prefix=CHECK --check-prefix=AVX2
+; RUN: opt < %s  -cost-model -analyze -mtriple=x86_64-apple-macosx10.8.0 -mattr=+avx,+fma | FileCheck %s --check-prefix=CHECK --check-prefix=AVX
+; RUN: opt < %s  -cost-model -analyze -mtriple=x86_64-apple-macosx10.8.0 -mattr=+avx2,+fma | FileCheck %s --check-prefix=CHECK --check-prefix=AVX2
 ; RUN: opt < %s  -cost-model -analyze -mtriple=x86_64-apple-macosx10.8.0 -mattr=+avx512f | FileCheck %s --check-prefix=CHECK --check-prefix=AVX512 --check-prefix=AVX512F
 ; RUN: opt < %s  -cost-model -analyze -mtriple=x86_64-apple-macosx10.8.0 -mattr=+avx512f,+avx512bw | FileCheck %s --check-prefix=CHECK --check-prefix=AVX512 --check-prefix=AVX512BW
 
@@ -222,3 +222,105 @@ define i32 @frem(i32 %arg) {
 
   ret i32 undef
 }
+
+; CHECK-LABEL: 'fsqrt'
+define i32 @fsqrt(i32 %arg) {
+  ; SSSE3: cost of 1 {{.*}} %A = call <4 x float> @llvm.sqrt.v4f32
+  ; SSE42: cost of 1 {{.*}} %A = call <4 x float> @llvm.sqrt.v4f32
+  ; AVX: cost of 1 {{.*}} %A = call <4 x float> @llvm.sqrt.v4f32
+  ; AVX2: cost of 1 {{.*}} %A = call <4 x float> @llvm.sqrt.v4f32
+  ; AVX512: cost of 1 {{.*}} %A = call <4 x float> @llvm.sqrt.v4f32
+  %A = call <4 x float> @llvm.sqrt.v4f32(<4 x float> undef)
+  ; SSSE3: cost of 4 {{.*}} %B = call <8 x float> @llvm.sqrt.v8f32
+  ; SSE42: cost of 4 {{.*}} %B = call <8 x float> @llvm.sqrt.v8f32
+  ; AVX: cost of 1 {{.*}} %B = call <8 x float> @llvm.sqrt.v8f32
+  ; AVX2: cost of 1 {{.*}} %B = call <8 x float> @llvm.sqrt.v8f32
+  ; AVX512: cost of 1 {{.*}} %B = call <8 x float> @llvm.sqrt.v8f32
+  %B = call <8 x float> @llvm.sqrt.v8f32(<8 x float> undef)
+  ; SSSE3: cost of 8 {{.*}} %C = call <16 x float> @llvm.sqrt.v16f32
+  ; SSE42: cost of 8 {{.*}} %C = call <16 x float> @llvm.sqrt.v16f32
+  ; AVX: cost of 4 {{.*}} %C = call <16 x float> @llvm.sqrt.v16f32
+  ; AVX2: cost of 4 {{.*}} %C = call <16 x float> @llvm.sqrt.v16f32
+  ; AVX512: cost of 1 {{.*}} %C = call <16 x float> @llvm.sqrt.v16f32
+  %C = call <16 x float> @llvm.sqrt.v16f32(<16 x float> undef)
+
+  ; SSSE3: cost of 1 {{.*}} %D = call <2 x double> @llvm.sqrt.v2f64
+  ; SSE42: cost of 1 {{.*}} %D = call <2 x double> @llvm.sqrt.v2f64
+  ; AVX: cost of 1 {{.*}} %D = call <2 x double> @llvm.sqrt.v2f64
+  ; AVX2: cost of 1 {{.*}} %D = call <2 x double> @llvm.sqrt.v2f64
+  ; AVX512: cost of 1 {{.*}} %D = call <2 x double> @llvm.sqrt.v2f64
+  %D = call <2 x double> @llvm.sqrt.v2f64(<2 x double> undef)
+  ; SSSE3: cost of 4 {{.*}} %E = call <4 x double> @llvm.sqrt.v4f64
+  ; SSE42: cost of 4 {{.*}} %E = call <4 x double> @llvm.sqrt.v4f64
+  ; AVX: cost of 1 {{.*}} %E = call <4 x double> @llvm.sqrt.v4f64
+  ; AVX2: cost of 1 {{.*}} %E = call <4 x double> @llvm.sqrt.v4f64
+  ; AVX512: cost of 1 {{.*}} %E = call <4 x double> @llvm.sqrt.v4f64
+  %E = call <4 x double> @llvm.sqrt.v4f64(<4 x double> undef)
+  ; SSSE3: cost of 8 {{.*}} %F = call <8 x double> @llvm.sqrt.v8f64
+  ; SSE42: cost of 8 {{.*}} %F = call <8 x double> @llvm.sqrt.v8f64
+  ; AVX: cost of 4 {{.*}} %F = call <8 x double> @llvm.sqrt.v8f64
+  ; AVX2: cost of 4 {{.*}} %F = call <8 x double> @llvm.sqrt.v8f64
+  ; AVX512: cost of 1 {{.*}} %F = call <8 x double> @llvm.sqrt.v8f64
+  %F = call <8 x double> @llvm.sqrt.v8f64(<8 x double> undef)
+
+  ret i32 undef
+}
+
+; CHECK-LABEL: 'fma'
+define i32 @fma(i32 %arg) {
+  ; SSSE3: cost of 52 {{.*}} %A = call <4 x float> @llvm.fma.v4f32
+  ; SSE42: cost of 52 {{.*}} %A = call <4 x float> @llvm.fma.v4f32
+  ; AVX: cost of 1 {{.*}} %A = call <4 x float> @llvm.fma.v4f32
+  ; AVX2: cost of 1 {{.*}} %A = call <4 x float> @llvm.fma.v4f32
+  ; AVX512: cost of 1 {{.*}} %A = call <4 x float> @llvm.fma.v4f32
+  %A = call <4 x float> @llvm.fma.v4f32(<4 x float> undef, <4 x float> undef, <4 x float> undef)
+  ; SSSE3: cost of 104 {{.*}} %B = call <8 x float> @llvm.fma.v8f32
+  ; SSE42: cost of 104 {{.*}} %B = call <8 x float> @llvm.fma.v8f32
+  ; AVX: cost of 1 {{.*}} %B = call <8 x float> @llvm.fma.v8f32
+  ; AVX2: cost of 1 {{.*}} %B = call <8 x float> @llvm.fma.v8f32
+  ; AVX512: cost of 1 {{.*}} %B = call <8 x float> @llvm.fma.v8f32
+  %B = call <8 x float> @llvm.fma.v8f32(<8 x float> undef, <8 x float> undef, <8 x float> undef)
+  ; SSSE3: cost of 208 {{.*}} %C = call <16 x float> @llvm.fma.v16f32
+  ; SSE42: cost of 208 {{.*}} %C = call <16 x float> @llvm.fma.v16f32
+  ; AVX: cost of 4 {{.*}} %C = call <16 x float> @llvm.fma.v16f32
+  ; AVX2: cost of 4 {{.*}} %C = call <16 x float> @llvm.fma.v16f32
+  ; AVX512: cost of 1 {{.*}} %C = call <16 x float> @llvm.fma.v16f32
+  %C = call <16 x float> @llvm.fma.v16f32(<16 x float> undef, <16 x float> undef, <16 x float> undef)
+
+  ; SSSE3: cost of 24 {{.*}} %D = call <2 x double> @llvm.fma.v2f64
+  ; SSE42: cost of 24 {{.*}} %D = call <2 x double> @llvm.fma.v2f64
+  ; AVX: cost of 1 {{.*}} %D = call <2 x double> @llvm.fma.v2f64
+  ; AVX2: cost of 1 {{.*}} %D = call <2 x double> @llvm.fma.v2f64
+  ; AVX512: cost of 1 {{.*}} %D = call <2 x double> @llvm.fma.v2f64
+  %D = call <2 x double> @llvm.fma.v2f64(<2 x double> undef, <2 x double> undef, <2 x double> undef)
+  ; SSSE3: cost of 48 {{.*}} %E = call <4 x double> @llvm.fma.v4f64
+  ; SSE42: cost of 48 {{.*}} %E = call <4 x double> @llvm.fma.v4f64
+  ; AVX: cost of 1 {{.*}} %E = call <4 x double> @llvm.fma.v4f64
+  ; AVX2: cost of 1 {{.*}} %E = call <4 x double> @llvm.fma.v4f64
+  ; AVX512: cost of 1 {{.*}} %E = call <4 x double> @llvm.fma.v4f64
+  %E = call <4 x double> @llvm.fma.v4f64(<4 x double> undef, <4 x double> undef, <4 x double> undef)
+  ; SSSE3: cost of 96 {{.*}} %F = call <8 x double> @llvm.fma.v8f64
+  ; SSE42: cost of 96 {{.*}} %F = call <8 x double> @llvm.fma.v8f64
+  ; AVX: cost of 4 {{.*}} %F = call <8 x double> @llvm.fma.v8f64
+  ; AVX2: cost of 4 {{.*}} %F = call <8 x double> @llvm.fma.v8f64
+  ; AVX512: cost of 1 {{.*}} %F = call <8 x double> @llvm.fma.v8f64
+  %F = call <8 x double> @llvm.fma.v8f64(<8 x double> undef, <8 x double> undef, <8 x double> undef)
+
+  ret i32 undef
+}
+
+declare <4 x float> @llvm.sqrt.v4f32(<4 x float>)
+declare <8 x float> @llvm.sqrt.v8f32(<8 x float>)
+declare <16 x float> @llvm.sqrt.v16f32(<16 x float>)
+
+declare <2 x double> @llvm.sqrt.v2f64(<2 x double>)
+declare <4 x double> @llvm.sqrt.v4f64(<4 x double>)
+declare <8 x double> @llvm.sqrt.v8f64(<8 x double>)
+
+declare <4 x float> @llvm.fma.v4f32(<4 x float>, <4 x float>, <4 x float>)
+declare <8 x float> @llvm.fma.v8f32(<8 x float>, <8 x float>, <8 x float>)
+declare <16 x float> @llvm.fma.v16f32(<16 x float>, <16 x float>, <16 x float>)
+
+declare <2 x double> @llvm.fma.v2f64(<2 x double>, <2 x double>, <2 x double>)
+declare <4 x double> @llvm.fma.v4f64(<4 x double>, <4 x double>, <4 x double>)
+declare <8 x double> @llvm.fma.v8f64(<8 x double>, <8 x double>, <8 x double>)
