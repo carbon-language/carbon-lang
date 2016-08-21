@@ -2024,16 +2024,16 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
     }
   }
 
-  // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
-  if (!RHS)
-    return nullptr;
-
   // If this is a signed comparison to 0 and the shift is sign preserving,
   // use the shift LHS operand instead; isSignTest may change 'Pred', so only
   // do that if we're sure to not continue on in this function.
   if (cast<BinaryOperator>(Shl)->hasNoSignedWrap() && isSignTest(Pred, *C))
-    return new ICmpInst(Pred, X, Constant::getNullValue(RHS->getType()));
+    return new ICmpInst(Pred, X, Constant::getNullValue(X->getType()));
+
+  // FIXME: This check restricts all folds under here to scalar types.
+  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
+  if (!RHS)
+    return nullptr;
 
   // Otherwise, if this is a comparison of the sign bit, simplify to and/test.
   bool TrueIfSigned = false;
