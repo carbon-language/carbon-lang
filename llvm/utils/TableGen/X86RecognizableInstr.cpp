@@ -138,19 +138,6 @@ namespace X86Local {
 
 using namespace X86Disassembler;
 
-/// isRegFormat - Indicates whether a particular form requires the Mod field of
-///   the ModR/M byte to be 0b11.
-///
-/// @param form - The form of the instruction.
-/// @return     - true if the form implies that Mod must be 0b11, false
-///               otherwise.
-static bool isRegFormat(uint8_t form) {
-  return (form == X86Local::MRMDestReg ||
-          form == X86Local::MRMSrcReg  ||
-          form == X86Local::MRMXr ||
-          (form >= X86Local::MRM0r && form <= X86Local::MRM7r));
-}
-
 /// byteFromBitsInit - Extracts a value at most 8 bits in width from a BitsInit.
 ///   Useful for switch statements and the like.
 ///
@@ -853,10 +840,15 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     case X86Local::RawFrmImm16:
       filter = new DumbFilter();
       break;
-    case X86Local::MRMDestReg: case X86Local::MRMDestMem:
-    case X86Local::MRMSrcReg:  case X86Local::MRMSrcMem:
-    case X86Local::MRMXr:      case X86Local::MRMXm:
-      filter = new ModFilter(isRegFormat(Form));
+    case X86Local::MRMDestReg:
+    case X86Local::MRMSrcReg:
+    case X86Local::MRMXr:
+      filter = new ModFilter(true);
+      break;
+    case X86Local::MRMDestMem:
+    case X86Local::MRMSrcMem:
+    case X86Local::MRMXm:
+      filter = new ModFilter(false);
       break;
     case X86Local::MRM0r:      case X86Local::MRM1r:
     case X86Local::MRM2r:      case X86Local::MRM3r:
