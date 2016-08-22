@@ -53,6 +53,12 @@ DotToolTipCode("dot-tooltip-code",
 
 } // namespace opts
 
+// Temporary constant.
+//
+// TODO: move to architecture-specific file together with the code that is
+// using it.
+constexpr unsigned NoRegister = 0;
+
 namespace {
 
 /// Gets debug line information for the instruction located at the given
@@ -345,12 +351,27 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   // basic block.
   Labels[0] = Ctx->createTempSymbol("BB0", false);
 
+  auto getOrCreateLocalLabel = [&](uint64_t Address) {
+    MCSymbol *Result;
+    // Check if there's already a registered label.
+    auto Offset = Address - getAddress();
+    assert(Offset < getSize() && "address outside of function bounds");
+    auto LI = Labels.find(Offset);
+    if (LI == Labels.end()) {
+      Result = Ctx->createTempSymbol();
+      Labels[Offset] = Result;
+    } else {
+      Result = LI->second;
+    }
+    return Result;
+  };
+
   auto handleRIPOperand =
       [&](MCInst &Instruction, uint64_t Address, uint64_t Size) {
     uint64_t TargetAddress{0};
     MCSymbol *TargetSymbol{nullptr};
-    if (!BC.MIA->evaluateRIPOperand(Instruction, Address, Size,
-                                    TargetAddress)) {
+    if (!BC.MIA->evaluateRIPOperandTarget(Instruction, Address, Size,
+                                          TargetAddress)) {
       DEBUG(dbgs() << "BOLT: rip-relative operand can't be evaluated:\n";
             BC.InstPrinter->printInst(&Instruction, dbgs(), "", *BC.STI);
             dbgs() << '\n';
@@ -358,17 +379,127 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             dbgs() << '\n';);
       return false;
     }
-    // FIXME: check that the address is in data, not in code.
     if (TargetAddress == 0) {
       errs() << "BOLT-WARNING: rip-relative operand is zero in function "
              << *this << ". Ignoring function.\n";
       return false;
     }
-    TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
+
+    // Note that the address does not necessarily have to reside inside
+    // a section, it could be an absolute address too.
+    auto Section = BC.getSectionForAddress(TargetAddress);
+    if (Section && Section->isText()) {
+      if (containsAddress(TargetAddress)) {
+        TargetSymbol = getOrCreateLocalLabel(TargetAddress);
+      } else {
+        BC.InterproceduralReferences.insert(TargetAddress);
+      }
+    }
+    if (!TargetSymbol)
+      TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
     BC.MIA->replaceRIPOperandDisp(
         Instruction, MCOperand::createExpr(MCSymbolRefExpr::create(
                          TargetSymbol, MCSymbolRefExpr::VK_None, *BC.Ctx)));
     return true;
+  };
+
+  enum class IndirectBranchType : char {
+    UNKNOWN = 0,            /// Unable to determine type.
+    POSSIBLE_TAIL_CALL,     /// Possibly a tail call.
+    POSSIBLE_SWITCH_TABLE,  /// Possibly a switch/jump table
+    POSSIBLE_GOTO           /// Possibly a gcc's computed goto.
+  };
+
+  auto analyzeIndirectBranch =
+      [&](MCInst &Instruction, unsigned Size, uint64_t Offset) {
+    // Try to find a (base) memory location from where the address for
+    // the indirect branch is loaded. For X86-64 the memory will be specified
+    // in the following format:
+    //
+    //   {%rip}/{%basereg} + Imm + IndexReg * Scale
+    //
+    // We are interested in the cases where Scale == sizeof(uintptr_t) and
+    // the contents of the memory are presumably a function array.
+    const auto *MemLocInstr = &Instruction;
+    if (Instruction.getNumOperands() == 1) {
+      // If the indirect jump is on register - try to detect if the
+      // register value is loaded from a memory location.
+      assert(Instruction.getOperand(0).isReg() && "register operand expected");
+      const auto JmpRegNum = Instruction.getOperand(0).getReg();
+      // Check if one of the previous instructions defines the jump-on register.
+      // We will check that this instruction belongs to the same basic block
+      // in postProcessIndirectBranches().
+      for (auto PrevII = Instructions.rbegin(); PrevII != Instructions.rend();
+           ++PrevII) {
+        const auto &PrevInstr = PrevII->second;
+        const auto &PrevInstrDesc = BC.MII->get(PrevInstr.getOpcode());
+        if (!PrevInstrDesc.hasDefOfPhysReg(PrevInstr, JmpRegNum, *BC.MRI))
+          continue;
+        if (!MIA->isMoveMem2Reg(PrevInstr))
+          return IndirectBranchType::UNKNOWN;
+        MemLocInstr = &PrevInstr;
+        break;
+      }
+      if (MemLocInstr == &Instruction) {
+        // No definition seen for the register in this function so far. Could be
+        // an input parameter - which means it is an external code reference.
+        // It also could be that the definition happens to be in the code that
+        // we haven't processed yet. Since we have to be conservative, return
+        // as UNKNOWN case.
+        return IndirectBranchType::UNKNOWN;
+      }
+    }
+
+    const auto RIPRegister = BC.MRI->getProgramCounter();
+
+    // Analyze contents of the memory if possible.
+    unsigned  BaseRegNum;
+    int64_t   ScaleValue;
+    unsigned  IndexRegNum;
+    int64_t   DispValue;
+    unsigned  SegRegNum;
+    if (!MIA->evaluateX86MemoryOperand(*MemLocInstr, BaseRegNum,
+                                       ScaleValue, IndexRegNum,
+                                       DispValue, SegRegNum))
+      return IndirectBranchType::UNKNOWN;
+
+    if ((BaseRegNum != bolt::NoRegister && BaseRegNum != RIPRegister) ||
+        SegRegNum != bolt::NoRegister ||
+        ScaleValue != BC.AsmInfo->getPointerSize())
+      return IndirectBranchType::UNKNOWN;
+
+    auto ArrayStart = DispValue;
+    if (BaseRegNum == RIPRegister)
+      ArrayStart += getAddress() + Offset + Size;
+
+    auto SectionOrError = BC.getSectionForAddress(ArrayStart);
+    if (!SectionOrError) {
+      // No section - possibly an absolute address. Since we don't allow
+      // internal function addresses to escape the function scope - we
+      // consider it a tail call.
+      errs() << "BOLT-WARNING: no section for address 0x"
+             << Twine::utohexstr(ArrayStart) << " referenced from function "
+             << *this << '\n';
+      return IndirectBranchType::POSSIBLE_TAIL_CALL;
+    }
+    auto &Section = *SectionOrError;
+    if (Section.isVirtual()) {
+      // The contents are filled at runtime.
+      return IndirectBranchType::POSSIBLE_TAIL_CALL;
+    }
+    // Extract the value at the start of the array.
+    StringRef SectionContents;
+    Section.getContents(SectionContents);
+    DataExtractor DE(SectionContents,
+                     BC.AsmInfo->isLittleEndian(),
+                     BC.AsmInfo->getPointerSize());
+    auto ValueOffset = static_cast<uint32_t>(ArrayStart - Section.getAddress());
+    auto Value = DE.getAddress(&ValueOffset);
+    if (containsAddress(Value) && Value != getAddress())
+      return IndirectBranchType::POSSIBLE_SWITCH_TABLE;
+
+    BC.InterproceduralReferences.insert(Value);
+    return IndirectBranchType::POSSIBLE_TAIL_CALL;
   };
 
   bool IsSimple = true;
@@ -396,11 +527,11 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     MIA->shortenInstruction(Instruction);
 
     if (MIA->isBranch(Instruction) || MIA->isCall(Instruction)) {
-      uint64_t InstructionTarget = 0;
+      uint64_t TargetAddress = 0;
       if (MIA->evaluateBranch(Instruction,
                               AbsoluteInstrAddr,
                               Size,
-                              InstructionTarget)) {
+                              TargetAddress)) {
         // Check if the target is within the same function. Otherwise it's
         // a call, possibly a tail call.
         //
@@ -409,10 +540,9 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         bool IsCall = MIA->isCall(Instruction);
         bool IsCondBranch = MIA->isConditionalBranch(Instruction);
         MCSymbol *TargetSymbol{nullptr};
-        uint64_t TargetOffset{0};
 
-        if (IsCall && containsAddress(InstructionTarget)) {
-          if (InstructionTarget == getAddress()) {
+        if (IsCall && containsAddress(TargetAddress)) {
+          if (TargetAddress == getAddress()) {
             // Recursive call.
             TargetSymbol = getSymbol();
           } else {
@@ -426,21 +556,14 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
 
         if (!TargetSymbol) {
           // Create either local label or external symbol.
-          if (containsAddress(InstructionTarget)) {
-            // Check if there's already a registered label.
-            TargetOffset = InstructionTarget - getAddress();
-            auto LI = Labels.find(TargetOffset);
-            if (LI == Labels.end()) {
-              TargetSymbol = Ctx->createTempSymbol();
-              Labels[TargetOffset] = TargetSymbol;
-            } else {
-              TargetSymbol = LI->second;
-            }
+          if (containsAddress(TargetAddress)) {
+            TargetSymbol = getOrCreateLocalLabel(TargetAddress);
           } else {
-            BC.InterproceduralBranchTargets.insert(InstructionTarget);
+            BC.InterproceduralReferences.insert(TargetAddress);
             if (!IsCall && Size == 2) {
               errs() << "BOLT-WARNING: relaxed tail call detected at 0x"
                      << Twine::utohexstr(AbsoluteInstrAddr)
+                     << " in function " << *this
                      << ". Code size will be increased.\n";
             }
 
@@ -460,13 +583,13 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               // TODO: A better way to do this would be using annotations for
               // MCInst objects.
               TailCallOffsets.emplace(std::make_pair(Offset,
-                                                     InstructionTarget));
+                                                     TargetAddress));
               IsCall = true;
             }
 
-            TargetSymbol = BC.getOrCreateGlobalSymbol(InstructionTarget,
+            TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress,
                                                       "FUNCat");
-            if (InstructionTarget == 0) {
+            if (TargetAddress == 0) {
               // We actually see calls to address 0 because of the weak symbols
               // from the libraries. In reality more often than not it is
               // unreachable code, but we don't know it and have to emit calls
@@ -486,23 +609,34 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                                       *Ctx)));
         if (!IsCall) {
           // Add taken branch info.
-          TakenBranches.push_back({Offset, TargetOffset});
+          TakenBranches.push_back({Offset, TargetAddress - getAddress()});
         }
         if (IsCondBranch) {
           // Add fallthrough branch info.
           FTBranches.push_back({Offset, Offset + Size});
         }
       } else {
-        // Should be an indirect call or an indirect branch. Bail out on the
-        // latter case.
+        // Could not evaluate branch. Should be an indirect call or an
+        // indirect branch. Bail out on the latter case.
         if (MIA->isIndirectBranch(Instruction)) {
-          DEBUG(dbgs() << "BOLT-WARNING: indirect branch detected at 0x"
-                 << Twine::utohexstr(AbsoluteInstrAddr)
-                 << ". Skipping function " << *this << ".\n");
-          IsSimple = false;
+          auto Result = analyzeIndirectBranch(Instruction, Size, Offset);
+          switch (Result) {
+          default:
+            llvm_unreachable("unexpected result");
+          case IndirectBranchType::POSSIBLE_TAIL_CALL:
+            MIA->convertJmpToTailCall(Instruction);
+            break;
+          case IndirectBranchType::POSSIBLE_SWITCH_TABLE:
+            IsSimple = false;
+            break;
+          case IndirectBranchType::UNKNOWN:
+            // Keep processing. We'll do more checks and fixes in
+            // postProcessIndirectBranches().
+            break;
+          };
         }
         // Indirect call. We only need to fix it if the operand is RIP-relative
-        if (MIA->hasRIPOperand(Instruction)) {
+        if (IsSimple && MIA->hasRIPOperand(Instruction)) {
           if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
             errs() << "BOLT-WARNING: cannot handle RIP operand at 0x"
                    << Twine::utohexstr(AbsoluteInstrAddr)
@@ -539,6 +673,83 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   // Update state.
   updateState(State::Disassembled);
 
+  return true;
+}
+
+bool BinaryFunction::postProcessIndirectBranches() {
+  for (auto *BB : layout()) {
+    for (auto &Instr : *BB) {
+      if (!BC.MIA->isIndirectBranch(Instr))
+        continue;
+
+      // If there's an indirect branch in a single-block function -
+      // it must be a tail call.
+      if (layout_size() == 1) {
+        BC.MIA->convertJmpToTailCall(Instr);
+        return true;
+      }
+
+      // Validate the tail call assumptions.
+      if (BC.MIA->isTailCall(Instr)) {
+        unsigned  BaseRegNum;
+        int64_t   ScaleValue;
+        unsigned  IndexRegNum;
+        int64_t   DispValue;
+        unsigned  SegRegNum;
+        if (BC.MIA->evaluateX86MemoryOperand(Instr, BaseRegNum,
+                                             ScaleValue, IndexRegNum,
+                                             DispValue, SegRegNum)) {
+          // We have validated the memory contents addressed by the
+          // jump instruction already.
+          continue;
+        }
+        // This is jump on register. Just make sure the register is defined
+        // in the containing basic block. Other assumptions were checked
+        // earlier.
+        assert(Instr.getOperand(0).isReg() && "register operand expected");
+        const auto JmpRegNum = Instr.getOperand(0).getReg();
+        bool IsJmpRegSetInBB = false;
+        for (const auto &OtherInstr : *BB) {
+          const auto &OtherInstrDesc = BC.MII->get(OtherInstr.getOpcode());
+          if (OtherInstrDesc.hasDefOfPhysReg(OtherInstr, JmpRegNum, *BC.MRI)) {
+            IsJmpRegSetInBB = true;
+            break;
+          }
+        }
+        if (IsJmpRegSetInBB)
+          continue;
+        DEBUG(dbgs() << "BOLT-INFO: rejected potential indirect tail call in "
+                     << "function " << *this << " because the jump-on register "
+                     << "was not defined in basic block "
+                     << BB->getName() << ":\n";
+              BC.printInstructions(dbgs(), BB->begin(), BB->end(),
+                                   BB->getOffset(), this);
+        );
+        return false;
+      }
+
+      // If this block contains an epilogue code and has an indirect branch,
+      // then most likely it's a tail call. Otherwise, we cannot tell for sure
+      // what it is and conservatively reject the function's CFG.
+      bool IsEpilogue = false;
+      for (const auto &Instr : *BB) {
+        if (BC.MIA->isLeave(Instr) || BC.MIA->isPop(Instr)) {
+          IsEpilogue = true;
+          break;
+        }
+      }
+      if (!IsEpilogue) {
+        DEBUG(dbgs() << "BOLT-INFO: rejected potential indirect tail call in "
+                     << "function " << *this << " in basic block "
+                     << BB->getName() << ":\n";
+              BC.printInstructions(dbgs(), BB->begin(), BB->end(),
+                                   BB->getOffset(), this);
+        );
+        return false;
+      }
+      BC.MIA->convertJmpToTailCall(Instr);
+    }
+  }
   return true;
 }
 
@@ -891,6 +1102,10 @@ bool BinaryFunction::buildCFG() {
   for (auto BB : BasicBlocks) {
     BasicBlocksLayout.emplace_back(BB);
   }
+
+  // Make any necessary adjustments for indirect branches.
+  if (!postProcessIndirectBranches())
+    setSimple(false);
 
   // Fix the possibly corrupted CFI state. CFI state may have been corrupted
   // because of the CFG modifications while removing conditional tail calls.

@@ -63,15 +63,9 @@ void BinaryContext::printGlobalSymbols(raw_ostream& OS) const {
   }
 }
 
-} // namespace bolt
-} // namespace llvm
-
 namespace {
 
-using namespace llvm;
-using namespace bolt;
-
-/// Returns the binary function that contains a given address in the input
+/// Returns a binary function that contains a given address in the input
 /// binary, or nullptr if none does.
 BinaryFunction *getBinaryFunctionContainingAddress(
     uint64_t Address,
@@ -157,9 +151,6 @@ void findSubprograms(DWARFCompileUnit *Unit,
 }
 
 } // namespace
-
-namespace llvm {
-namespace bolt {
 
 void BinaryContext::preprocessDebugInfo(
     std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
@@ -282,10 +273,11 @@ void BinaryContext::printInstruction(raw_ostream &OS,
     return;
   }
   OS << format("    %08" PRIx64 ": ", Offset);
-  if (Function && MIA->isCFI(Instruction)) {
+  if (MIA->isCFI(Instruction)) {
     uint32_t Offset = Instruction.getOperand(0).getImm();
     OS << "\t!CFI\t$" << Offset << "\t; ";
-    printCFI(OS, Function->getCFIFor(Instruction)->getOperation());
+    if (Function)
+      printCFI(OS, Function->getCFIFor(Instruction)->getOperation());
     OS << "\n";
     return;
   }

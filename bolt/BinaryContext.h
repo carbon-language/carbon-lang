@@ -72,8 +72,10 @@ public:
   /// Map virtual address to a section.
   std::map<uint64_t, SectionRef> AllocatableSections;
 
-  /// Set of addresses we cannot relocate because we have a direct branch to it.
-  std::set<uint64_t> InterproceduralBranchTargets;
+  /// Set of addresses in the code that are not a function start, and are
+  /// referenced from outside of containing function. E.g. this could happen
+  /// when a function has more than a single entry point.
+  std::set<uint64_t> InterproceduralReferences;
 
   /// List of DWARF location lists in .debug_loc.
   std::vector<LocationList> LocationLists;

@@ -968,6 +968,21 @@ public:
   /// State::CFG. Returns false if CFG cannot be built.
   bool buildCFG();
 
+  /// Verify that any assumptions we've made about indirect branches were
+  /// correct and also make any necessary changes to unknown indirect branches.
+  ///
+  /// Catch-22: we need to know indirect branch targets to build CFG, and
+  /// in order to determine the value for indirect branches we need to know CFG.
+  ///
+  /// As such, the process of decoding indirect branches is broken into 2 steps:
+  /// first we make our best guess about a branch without knowing the CFG,
+  /// and later after we have the CFG for the function, we verify our earlier
+  /// assumptions and also do our best at processing unknown indirect branches.
+  ///
+  /// Return true upon successful processing, or false if the control flow
+  /// cannot be statically evaluated for any given indirect branch.
+  bool postProcessIndirectBranches();
+
   /// Check how closely the profile data matches the function and set
   /// ProfileMatchRatio to reflect the accuracy.
   void evaluateProfileData(const FuncBranchData &BranchData);

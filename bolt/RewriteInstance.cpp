@@ -850,7 +850,9 @@ void RewriteInstance::readSpecialSections() {
       DebugLocSize = Section.getSize();
     }
 
-    if (Section.isText() || Section.isData() || Section.isBSS()) {
+    // Ignore zero-size allocatable sections as they present no interest to us.
+    if ((Section.isText() || Section.isData() || Section.isBSS()) &&
+        Section.getSize() > 0) {
       BC->AllocatableSections.emplace(std::make_pair(Section.getAddress(),
                                                      Section));
     }
@@ -1002,22 +1004,16 @@ void RewriteInstance::disassembleFunctions() {
   } // Iterate over all functions
 
   // Mark all functions with internal addresses serving as interprocedural
-  // branch targets as not simple --  pretty rare but can happen in code
-  // written in assembly.
+  // reference as not simple.
   // TODO: #9301815
-  for (auto Addr : BC->InterproceduralBranchTargets) {
-    // Check if this address is internal to some function we are reordering
-    auto I = BinaryFunctions.upper_bound(Addr);
-    if (I == BinaryFunctions.begin())
-      continue;
-    BinaryFunction &Func = (--I)->second;
-    uint64_t Offset = Addr - I->first;
-    if (Offset == 0 || Offset >= Func.getSize())
-      continue;
-    errs() << "BOLT-WARNING: Function " << Func
-           << " has internal BBs that are target of a branch located in "
-              "another function. We will not process this function.\n";
-    Func.setSimple(false);
+  for (auto Addr : BC->InterproceduralReferences) {
+    auto *ContainingFunction = getBinaryFunctionContainingAddress(Addr);
+    if (ContainingFunction && ContainingFunction->getAddress() != Addr) {
+      errs() << "BOLT-WARNING: Function " << ContainingFunction
+             << " has internal BBs that are target of a reference located in "
+                "another function. Skipping the function.\n";
+      ContainingFunction->setSimple(false);
+    }
   }
 
   uint64_t NumSimpleFunctions{0};
@@ -2034,4 +2030,15 @@ bool RewriteInstance::shouldOverwriteSection(StringRef SectionName) {
   }
 
   return false;
+}
+
+BinaryFunction *
+RewriteInstance::getBinaryFunctionContainingAddress(uint64_t Address) {
+  auto FI = BinaryFunctions.upper_bound(Address);
+  if (FI == BinaryFunctions.begin())
+    return nullptr;
+  --FI;
+  if (FI->first + FI->second.getSize() <= Address)
+    return nullptr;
+  return &FI->second;
 }

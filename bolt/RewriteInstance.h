@@ -249,6 +249,10 @@ private:
     return Address - NewTextSegmentAddress + NewTextSegmentOffset;
   }
 
+  /// Return BinaryFunction containing the given \p Address or nullptr if
+  /// no registered function has it.
+  BinaryFunction *getBinaryFunctionContainingAddress(uint64_t Address) ;
+
   /// Return true if we should overwrite contents of the section instead
   /// of appending contents to it.
   bool shouldOverwriteSection(StringRef SectionName);

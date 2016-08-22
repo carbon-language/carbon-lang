@@ -1003,7 +1003,7 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
         if (GI == BC.GlobalSymbols.end())
           continue;
         TargetAddress = GI->second;
-      } else if (!MIA->evaluateMemOperand(Inst, TargetAddress)) {
+      } else if (!MIA->evaluateMemOperandTarget(Inst, TargetAddress)) {
         continue;
       }
 

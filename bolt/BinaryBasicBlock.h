@@ -34,13 +34,13 @@ class BinaryContext;
 /// The intention is to keep the structure similar to MachineBasicBlock as
 /// we might switch to it at some point.
 class BinaryBasicBlock {
- public:
+public:
   struct BinaryBranchInfo {
     uint64_t Count;
     uint64_t MispredictedCount; /// number of branches mispredicted
   };
 
- private:
+private:
   /// Label associated with the block.
   MCSymbol *Label{nullptr};
 
