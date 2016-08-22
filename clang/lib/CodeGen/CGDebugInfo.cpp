@@ -2122,6 +2122,11 @@ llvm::DIType *CGDebugInfo::CreateType(const ArrayType *Ty, llvm::DIFile *Unit) {
     int64_t Count = -1; // Count == -1 is an unbounded array.
     if (const auto *CAT = dyn_cast<ConstantArrayType>(Ty))
       Count = CAT->getSize().getZExtValue();
+    else if (const auto *VAT = dyn_cast<VariableArrayType>(Ty)) {
+      llvm::APSInt V;
+      if (VAT->getSizeExpr()->EvaluateAsInt(V, CGM.getContext()))
+        Count = V.getExtValue();
+    }
 
     // FIXME: Verify this is right for VLAs.
     Subscripts.push_back(DBuilder.getOrCreateSubrange(0, Count));
