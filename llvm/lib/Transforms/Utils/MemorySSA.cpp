@@ -1459,6 +1459,27 @@ void MemorySSA::OptimizeUses::optimizeUses() {
                         LocStackInfo);
 }
 
+void MemorySSA::placePHINodes(
+    const SmallPtrSetImpl<BasicBlock *> &DefiningBlocks,
+    const SmallPtrSetImpl<BasicBlock *> &LiveInBlocks) {
+  // Determine where our MemoryPhi's should go
+  ForwardIDFCalculator IDFs(*DT);
+  IDFs.setDefiningBlocks(DefiningBlocks);
+  IDFs.setLiveInBlocks(LiveInBlocks);
+  SmallVector<BasicBlock *, 32> IDFBlocks;
+  IDFs.calculate(IDFBlocks);
+
+  // Now place MemoryPhi nodes.
+  for (auto &BB : IDFBlocks) {
+    // Insert phi node
+    AccessList *Accesses = getOrCreateAccessList(BB);
+    MemoryPhi *Phi = new MemoryPhi(BB->getContext(), BB, NextID++);
+    ValueToMemoryAccess[BB] = Phi;
+    // Phi's always are placed at the front of the block.
+    Accesses->push_front(Phi);
+  }
+}
+
 void MemorySSA::buildMemorySSA() {
   // We create an access to represent "live on entry", for things like
   // arguments or users of globals, where the memory they use is defined before
@@ -1528,23 +1549,7 @@ void MemorySSA::buildMemorySSA() {
     // live into it to.
     LiveInBlockWorklist.append(pred_begin(BB), pred_end(BB));
   }
-
-  // Determine where our MemoryPhi's should go
-  ForwardIDFCalculator IDFs(*DT);
-  IDFs.setDefiningBlocks(DefiningBlocks);
-  IDFs.setLiveInBlocks(LiveInBlocks);
-  SmallVector<BasicBlock *, 32> IDFBlocks;
-  IDFs.calculate(IDFBlocks);
-
-  // Now place MemoryPhi nodes.
-  for (auto &BB : IDFBlocks) {
-    // Insert phi node
-    AccessList *Accesses = getOrCreateAccessList(BB);
-    MemoryPhi *Phi = new MemoryPhi(BB->getContext(), BB, NextID++);
-    ValueToMemoryAccess[BB] = Phi;
-    // Phi's always are placed at the front of the block.
-    Accesses->push_front(Phi);
-  }
+  placePHINodes(DefiningBlocks, LiveInBlocks);
 
   // Now do regular SSA renaming on the MemoryDef/MemoryUse. Visited will get
   // filled in with all blocks.
