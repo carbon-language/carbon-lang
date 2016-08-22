@@ -876,29 +876,25 @@ inline const_memoryaccess_def_iterator MemoryAccess::defs_end() const {
 /// \brief GraphTraits for a MemoryAccess, which walks defs in the normal case,
 /// and uses in the inverse case.
 template <> struct GraphTraits<MemoryAccess *> {
-  using NodeType = MemoryAccess;
+  using NodeRef = MemoryAccess *;
   using ChildIteratorType = memoryaccess_def_iterator;
 
-  static NodeType *getEntryNode(NodeType *N) { return N; }
-  static inline ChildIteratorType child_begin(NodeType *N) {
+  static NodeRef getEntryNode(NodeRef N) { return N; }
+  static inline ChildIteratorType child_begin(NodeRef N) {
     return N->defs_begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) {
-    return N->defs_end();
-  }
+  static inline ChildIteratorType child_end(NodeRef N) { return N->defs_end(); }
 };
 
 template <> struct GraphTraits<Inverse<MemoryAccess *>> {
-  using NodeType = MemoryAccess;
+  using NodeRef = MemoryAccess *;
   using ChildIteratorType = MemoryAccess::iterator;
 
-  static NodeType *getEntryNode(NodeType *N) { return N; }
-  static inline ChildIteratorType child_begin(NodeType *N) {
+  static NodeRef getEntryNode(NodeRef N) { return N; }
+  static inline ChildIteratorType child_begin(NodeRef N) {
     return N->user_begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) {
-    return N->user_end();
-  }
+  static inline ChildIteratorType child_end(NodeRef N) { return N->user_end(); }
 };
 
 /// \brief Provide an iterator that walks defs, giving both the memory access,

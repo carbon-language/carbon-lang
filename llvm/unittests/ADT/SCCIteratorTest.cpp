@@ -229,15 +229,16 @@ public:
 
 template <unsigned N>
 struct GraphTraits<Graph<N> > {
-  typedef typename Graph<N>::NodeType NodeType;
   typedef typename Graph<N>::NodeType *NodeRef;
   typedef typename Graph<N>::ChildIterator ChildIteratorType;
 
- static inline NodeType *getEntryNode(const Graph<N> &G) { return G.AccessNode(0); }
- static inline ChildIteratorType child_begin(NodeType *Node) {
-   return Graph<N>::child_begin(Node);
+  static inline NodeRef getEntryNode(const Graph<N> &G) {
+    return G.AccessNode(0);
+  }
+  static inline ChildIteratorType child_begin(NodeRef Node) {
+    return Graph<N>::child_begin(Node);
  }
- static inline ChildIteratorType child_end(NodeType *Node) {
+ static inline ChildIteratorType child_end(NodeRef Node) {
    return Graph<N>::child_end(Node);
  }
 };
