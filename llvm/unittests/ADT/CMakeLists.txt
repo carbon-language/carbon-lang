@@ -13,6 +13,7 @@ set(ADTSources
   DeltaAlgorithmTest.cpp
   DenseMapTest.cpp
   DenseSetTest.cpp
+  DepthFirstIteratorTest.cpp
   FoldingSet.cpp
   FunctionRefTest.cpp
   HashingTest.cpp
