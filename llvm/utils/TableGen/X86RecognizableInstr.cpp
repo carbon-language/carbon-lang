@@ -841,7 +841,16 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     }
 
     switch (Form) {
-    default:
+    default: llvm_unreachable("Invalid form!");
+    case X86Local::Pseudo: llvm_unreachable("Pseudo should not be emitted!");
+    case X86Local::RawFrm:
+    case X86Local::AddRegFrm:
+    case X86Local::RawFrmMemOffs:
+    case X86Local::RawFrmSrc:
+    case X86Local::RawFrmDst:
+    case X86Local::RawFrmDstSrc:
+    case X86Local::RawFrmImm8:
+    case X86Local::RawFrmImm16:
       filter = new DumbFilter();
       break;
     case X86Local::MRMDestReg: case X86Local::MRMDestMem:
