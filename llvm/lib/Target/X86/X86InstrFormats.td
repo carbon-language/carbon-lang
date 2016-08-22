@@ -320,16 +320,15 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{41}    = hasVEX_4VOp3;
   let TSFlags{42}    = hasVEX_i8ImmReg;
   let TSFlags{43}    = hasVEX_L;
-  let TSFlags{44}    = ignoresVEX_L;
-  let TSFlags{45}    = hasEVEX_K;
-  let TSFlags{46}    = hasEVEX_Z;
-  let TSFlags{47}    = hasEVEX_L2;
-  let TSFlags{48}    = hasEVEX_B;
+  let TSFlags{44}    = hasEVEX_K;
+  let TSFlags{45}    = hasEVEX_Z;
+  let TSFlags{46}    = hasEVEX_L2;
+  let TSFlags{47}    = hasEVEX_B;
   // If we run out of TSFlags bits, it's possible to encode this in 3 bits.
-  let TSFlags{55-49} = CD8_Scale;
-  let TSFlags{56}    = has3DNow0F0FOpcode;
-  let TSFlags{57}    = hasMemOp4Prefix;
-  let TSFlags{58}    = hasEVEX_RC;
+  let TSFlags{54-48} = CD8_Scale;
+  let TSFlags{55}    = has3DNow0F0FOpcode;
+  let TSFlags{56}    = hasMemOp4Prefix;
+  let TSFlags{57}    = hasEVEX_RC;
 }
 
 class PseudoI<dag oops, dag iops, list<dag> pattern>

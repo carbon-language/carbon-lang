@@ -506,21 +506,8 @@ namespace X86II {
     VEX_LShift = VEX_I8IMMShift + 1,
     VEX_L       = 1ULL << VEX_LShift,
 
-    // VEX_LIG - Specifies that this instruction ignores the L-bit in the VEX
-    // prefix. Usually used for scalar instructions. Needed by disassembler.
-    VEX_LIGShift = VEX_LShift + 1,
-    VEX_LIG     = 1ULL << VEX_LIGShift,
-
-    // TODO: we should combine VEX_L and VEX_LIG together to form a 2-bit field
-    // with following encoding:
-    // - 00 V128
-    // - 01 V256
-    // - 10 V512
-    // - 11 LIG (but, in insn encoding, leave VEX.L and EVEX.L in zeros.
-    // this will save 1 tsflag bit
-
     // EVEX_K - Set if this instruction requires masking
-    EVEX_KShift = VEX_LIGShift + 1,
+    EVEX_KShift = VEX_LShift + 1,
     EVEX_K      = 1ULL << EVEX_KShift,
 
     // EVEX_Z - Set if this instruction has EVEX.Z field set.
