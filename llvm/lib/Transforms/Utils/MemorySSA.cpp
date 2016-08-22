@@ -1123,21 +1123,13 @@ MemoryAccess *MemorySSA::renameBlock(BasicBlock *BB,
   if (It != PerBlockAccesses.end()) {
     AccessList *Accesses = It->second.get();
     for (MemoryAccess &L : *Accesses) {
-      switch (L.getValueID()) {
-      case Value::MemoryUseVal:
-        cast<MemoryUse>(&L)->setDefiningAccess(IncomingVal);
-        break;
-      case Value::MemoryDefVal:
-        // We can't legally optimize defs, because we only allow single
-        // memory phis/uses on operations, and if we optimize these, we can
-        // end up with multiple reaching defs. Uses do not have this
-        // problem, since they do not produce a value
-        cast<MemoryDef>(&L)->setDefiningAccess(IncomingVal);
+      if (MemoryUseOrDef *MUD = dyn_cast<MemoryUseOrDef>(&L)) {
+        if (MUD->getDefiningAccess() == nullptr)
+          MUD->setDefiningAccess(IncomingVal);
+        if (isa<MemoryDef>(&L))
+          IncomingVal = &L;
+      } else {
         IncomingVal = &L;
-        break;
-      case Value::MemoryPhiVal:
-        IncomingVal = &L;
-        break;
       }
     }
   }
