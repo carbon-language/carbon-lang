@@ -235,7 +235,7 @@ static Error parseSegmentLoadCommand(
     if (S.nsects > std::numeric_limits<uint32_t>::max() / SectionSize ||
         S.nsects * SectionSize > Load.C.cmdsize - SegmentLoadSize)
       return malformedError("load command " + Twine(LoadCommandIndex) +
-                            " inconsistent cmdsize in " + CmdName + 
+                            " inconsistent cmdsize in " + CmdName +
                             " for the number of sections");
     for (unsigned J = 0; J < S.nsects; ++J) {
       const char *Sec = getSectionPtr(Obj, Load, J);
@@ -309,7 +309,7 @@ static Error parseSegmentLoadCommand(
     }
     if (S.fileoff > FileSize)
       return malformedError("load command " + Twine(LoadCommandIndex) +
-                            " fileoff field in " + CmdName + 
+                            " fileoff field in " + CmdName +
                             " extends past the end of the file");
     uint64_t BigSize = S.fileoff;
     BigSize += S.filesize;
