@@ -23,96 +23,96 @@
 using namespace llvm;
 
 #define MRM_MAPPING     \
-  MAP(C0, 32)           \
-  MAP(C1, 33)           \
-  MAP(C2, 34)           \
-  MAP(C3, 35)           \
-  MAP(C4, 36)           \
-  MAP(C5, 37)           \
-  MAP(C6, 38)           \
-  MAP(C7, 39)           \
-  MAP(C8, 40)           \
-  MAP(C9, 41)           \
-  MAP(CA, 42)           \
-  MAP(CB, 43)           \
-  MAP(CC, 44)           \
-  MAP(CD, 45)           \
-  MAP(CE, 46)           \
-  MAP(CF, 47)           \
-  MAP(D0, 48)           \
-  MAP(D1, 49)           \
-  MAP(D2, 50)           \
-  MAP(D3, 51)           \
-  MAP(D4, 52)           \
-  MAP(D5, 53)           \
-  MAP(D6, 54)           \
-  MAP(D7, 55)           \
-  MAP(D8, 56)           \
-  MAP(D9, 57)           \
-  MAP(DA, 58)           \
-  MAP(DB, 59)           \
-  MAP(DC, 60)           \
-  MAP(DD, 61)           \
-  MAP(DE, 62)           \
-  MAP(DF, 63)           \
-  MAP(E0, 64)           \
-  MAP(E1, 65)           \
-  MAP(E2, 66)           \
-  MAP(E3, 67)           \
-  MAP(E4, 68)           \
-  MAP(E5, 69)           \
-  MAP(E6, 70)           \
-  MAP(E7, 71)           \
-  MAP(E8, 72)           \
-  MAP(E9, 73)           \
-  MAP(EA, 74)           \
-  MAP(EB, 75)           \
-  MAP(EC, 76)           \
-  MAP(ED, 77)           \
-  MAP(EE, 78)           \
-  MAP(EF, 79)           \
-  MAP(F0, 80)           \
-  MAP(F1, 81)           \
-  MAP(F2, 82)           \
-  MAP(F3, 83)           \
-  MAP(F4, 84)           \
-  MAP(F5, 85)           \
-  MAP(F6, 86)           \
-  MAP(F7, 87)           \
-  MAP(F8, 88)           \
-  MAP(F9, 89)           \
-  MAP(FA, 90)           \
-  MAP(FB, 91)           \
-  MAP(FC, 92)           \
-  MAP(FD, 93)           \
-  MAP(FE, 94)           \
-  MAP(FF, 95)
+  MAP(C0, 64)           \
+  MAP(C1, 65)           \
+  MAP(C2, 66)           \
+  MAP(C3, 67)           \
+  MAP(C4, 68)           \
+  MAP(C5, 69)           \
+  MAP(C6, 70)           \
+  MAP(C7, 71)           \
+  MAP(C8, 72)           \
+  MAP(C9, 73)           \
+  MAP(CA, 74)           \
+  MAP(CB, 75)           \
+  MAP(CC, 76)           \
+  MAP(CD, 77)           \
+  MAP(CE, 78)           \
+  MAP(CF, 79)           \
+  MAP(D0, 80)           \
+  MAP(D1, 81)           \
+  MAP(D2, 82)           \
+  MAP(D3, 83)           \
+  MAP(D4, 84)           \
+  MAP(D5, 85)           \
+  MAP(D6, 86)           \
+  MAP(D7, 87)           \
+  MAP(D8, 88)           \
+  MAP(D9, 89)           \
+  MAP(DA, 90)           \
+  MAP(DB, 91)           \
+  MAP(DC, 92)           \
+  MAP(DD, 93)           \
+  MAP(DE, 94)           \
+  MAP(DF, 95)           \
+  MAP(E0, 96)           \
+  MAP(E1, 97)           \
+  MAP(E2, 98)           \
+  MAP(E3, 99)           \
+  MAP(E4, 100)          \
+  MAP(E5, 101)          \
+  MAP(E6, 102)          \
+  MAP(E7, 103)          \
+  MAP(E8, 104)          \
+  MAP(E9, 105)          \
+  MAP(EA, 106)          \
+  MAP(EB, 107)          \
+  MAP(EC, 108)          \
+  MAP(ED, 109)          \
+  MAP(EE, 110)          \
+  MAP(EF, 111)          \
+  MAP(F0, 112)          \
+  MAP(F1, 113)          \
+  MAP(F2, 114)          \
+  MAP(F3, 115)          \
+  MAP(F4, 116)          \
+  MAP(F5, 117)          \
+  MAP(F6, 118)          \
+  MAP(F7, 119)          \
+  MAP(F8, 120)          \
+  MAP(F9, 121)          \
+  MAP(FA, 122)          \
+  MAP(FB, 123)          \
+  MAP(FC, 124)          \
+  MAP(FD, 125)          \
+  MAP(FE, 126)          \
+  MAP(FF, 127)
 
 // A clone of X86 since we can't depend on something that is generated.
 namespace X86Local {
   enum {
-    Pseudo      = 0,
-    RawFrm      = 1,
-    AddRegFrm   = 2,
-    MRMDestReg  = 3,
-    MRMDestMem  = 4,
-    MRMSrcReg   = 5,
-    MRMSrcMem   = 6,
-    RawFrmMemOffs = 7,
-    RawFrmSrc   = 8,
-    RawFrmDst   = 9,
-    RawFrmDstSrc = 10,
-    RawFrmImm8  = 11,
-    RawFrmImm16 = 12,
-    MRMXr = 14, MRMXm = 15,
-    MRM0r = 16, MRM1r = 17, MRM2r = 18, MRM3r = 19,
-    MRM4r = 20, MRM5r = 21, MRM6r = 22, MRM7r = 23,
-    MRM0m = 24, MRM1m = 25, MRM2m = 26, MRM3m = 27,
-    MRM4m = 28, MRM5m = 29, MRM6m = 30, MRM7m = 31,
+    Pseudo        = 0,
+    RawFrm        = 1,
+    AddRegFrm     = 2,
+    RawFrmMemOffs = 3,
+    RawFrmSrc     = 4,
+    RawFrmDst     = 5,
+    RawFrmDstSrc  = 6,
+    RawFrmImm8    = 7,
+    RawFrmImm16   = 8,
+    MRMDestMem = 32,
+    MRMSrcMem  = 33,
+    MRMXm = 39,
+    MRM0m = 40, MRM1m = 41, MRM2m = 42, MRM3m = 43,
+    MRM4m = 44, MRM5m = 45, MRM6m = 46, MRM7m = 47,
+    MRMDestReg = 48,
+    MRMSrcReg  = 49,
+    MRMXr = 55,
+    MRM0r = 56, MRM1r = 57, MRM2r = 58, MRM3r = 59,
+    MRM4r = 60, MRM5r = 61, MRM6r = 62, MRM7r = 63,
 #define MAP(from, to) MRM_##from = to,
     MRM_MAPPING
 #undef MAP
-    lastMRM
   };
 
   enum {

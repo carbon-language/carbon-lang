@@ -234,88 +234,94 @@ namespace X86II {
     /// their one register operand added to their opcode.
     AddRegFrm      = 2,
 
-    /// MRMDestReg - This form is used for instructions that use the Mod/RM byte
-    /// to specify a destination, which in this case is a register.
-    ///
-    MRMDestReg     = 3,
-
-    /// MRMDestMem - This form is used for instructions that use the Mod/RM byte
-    /// to specify a destination, which in this case is memory.
-    ///
-    MRMDestMem     = 4,
-
-    /// MRMSrcReg - This form is used for instructions that use the Mod/RM byte
-    /// to specify a source, which in this case is a register.
-    ///
-    MRMSrcReg      = 5,
-
-    /// MRMSrcMem - This form is used for instructions that use the Mod/RM byte
-    /// to specify a source, which in this case is memory.
-    ///
-    MRMSrcMem      = 6,
-
     /// RawFrmMemOffs - This form is for instructions that store an absolute
     /// memory offset as an immediate with a possible segment override.
-    RawFrmMemOffs  = 7,
+    RawFrmMemOffs  = 3,
 
     /// RawFrmSrc - This form is for instructions that use the source index
     /// register SI/ESI/RSI with a possible segment override.
-    RawFrmSrc      = 8,
+    RawFrmSrc      = 4,
 
     /// RawFrmDst - This form is for instructions that use the destination index
     /// register DI/EDI/ESI.
-    RawFrmDst      = 9,
+    RawFrmDst      = 5,
 
     /// RawFrmSrc - This form is for instructions that use the source index
     /// register SI/ESI/ERI with a possible segment override, and also the
     /// destination index register DI/ESI/RDI.
-    RawFrmDstSrc   = 10,
+    RawFrmDstSrc   = 6,
 
     /// RawFrmImm8 - This is used for the ENTER instruction, which has two
     /// immediates, the first of which is a 16-bit immediate (specified by
     /// the imm encoding) and the second is a 8-bit fixed value.
-    RawFrmImm8 = 11,
+    RawFrmImm8 = 7,
 
     /// RawFrmImm16 - This is used for CALL FAR instructions, which have two
     /// immediates, the first of which is a 16 or 32-bit immediate (specified by
     /// the imm encoding) and the second is a 16-bit fixed value.  In the AMD
     /// manual, this operand is described as pntr16:32 and pntr16:16
-    RawFrmImm16 = 12,
-
-    /// MRMX[rm] - The forms are used to represent instructions that use a
-    /// Mod/RM byte, and don't use the middle field for anything.
-    MRMXr = 14, MRMXm = 15,
+    RawFrmImm16 = 8,
 
     /// MRM[0-7][rm] - These forms are used to represent instructions that use
     /// a Mod/RM byte, and use the middle field to hold extended opcode
     /// information.  In the intel manual these are represented as /0, /1, ...
     ///
 
-    // First, instructions that operate on a register r/m operand...
-    MRM0r = 16,  MRM1r = 17,  MRM2r = 18,  MRM3r = 19, // Format /0 /1 /2 /3
-    MRM4r = 20,  MRM5r = 21,  MRM6r = 22,  MRM7r = 23, // Format /4 /5 /6 /7
+    /// MRMDestMem - This form is used for instructions that use the Mod/RM byte
+    /// to specify a destination, which in this case is memory.
+    ///
+    MRMDestMem     = 32,
+
+    /// MRMSrcMem - This form is used for instructions that use the Mod/RM byte
+    /// to specify a source, which in this case is memory.
+    ///
+    MRMSrcMem      = 33,
+
+    /// MRMXm - This form is used for instructions that use the Mod/RM byte
+    /// to specify a memory source, but doesn't use the middle field.
+    ///
+    MRMXm = 39, // Instruction that uses Mod/RM but not the middle field.
 
     // Next, instructions that operate on a memory r/m operand...
-    MRM0m = 24,  MRM1m = 25,  MRM2m = 26,  MRM3m = 27, // Format /0 /1 /2 /3
-    MRM4m = 28,  MRM5m = 29,  MRM6m = 30,  MRM7m = 31, // Format /4 /5 /6 /7
+    MRM0m = 40,  MRM1m = 41,  MRM2m = 42,  MRM3m = 43, // Format /0 /1 /2 /3
+    MRM4m = 44,  MRM5m = 45,  MRM6m = 46,  MRM7m = 47, // Format /4 /5 /6 /7
 
-    //// MRM_XX - A mod/rm byte of exactly 0xXX.
-    MRM_C0 = 32, MRM_C1 = 33, MRM_C2 = 34, MRM_C3 = 35,
-    MRM_C4 = 36, MRM_C5 = 37, MRM_C6 = 38, MRM_C7 = 39,
-    MRM_C8 = 40, MRM_C9 = 41, MRM_CA = 42, MRM_CB = 43,
-    MRM_CC = 44, MRM_CD = 45, MRM_CE = 46, MRM_CF = 47,
-    MRM_D0 = 48, MRM_D1 = 49, MRM_D2 = 50, MRM_D3 = 51,
-    MRM_D4 = 52, MRM_D5 = 53, MRM_D6 = 54, MRM_D7 = 55,
-    MRM_D8 = 56, MRM_D9 = 57, MRM_DA = 58, MRM_DB = 59,
-    MRM_DC = 60, MRM_DD = 61, MRM_DE = 62, MRM_DF = 63,
-    MRM_E0 = 64, MRM_E1 = 65, MRM_E2 = 66, MRM_E3 = 67,
-    MRM_E4 = 68, MRM_E5 = 69, MRM_E6 = 70, MRM_E7 = 71,
-    MRM_E8 = 72, MRM_E9 = 73, MRM_EA = 74, MRM_EB = 75,
-    MRM_EC = 76, MRM_ED = 77, MRM_EE = 78, MRM_EF = 79,
-    MRM_F0 = 80, MRM_F1 = 81, MRM_F2 = 82, MRM_F3 = 83,
-    MRM_F4 = 84, MRM_F5 = 85, MRM_F6 = 86, MRM_F7 = 87,
-    MRM_F8 = 88, MRM_F9 = 89, MRM_FA = 90, MRM_FB = 91,
-    MRM_FC = 92, MRM_FD = 93, MRM_FE = 94, MRM_FF = 95,
+    /// MRMDestReg - This form is used for instructions that use the Mod/RM byte
+    /// to specify a destination, which in this case is a register.
+    ///
+    MRMDestReg     = 48,
+
+    /// MRMSrcReg - This form is used for instructions that use the Mod/RM byte
+    /// to specify a source, which in this case is a register.
+    ///
+    MRMSrcReg      = 49,
+
+    /// MRMXr - This form is used for instructions that use the Mod/RM byte
+    /// to specify a register source, but doesn't use the middle field.
+    ///
+    MRMXr = 55, // Instruction that uses Mod/RM but not the middle field.
+
+    // Instructions that operate on a register r/m operand...
+    MRM0r = 56,  MRM1r = 57,  MRM2r = 58,  MRM3r = 59, // Format /0 /1 /2 /3
+    MRM4r = 60,  MRM5r = 61,  MRM6r = 62,  MRM7r = 63, // Format /4 /5 /6 /7
+
+    /// MRM_XX - A mod/rm byte of exactly 0xXX.
+    MRM_C0 = 64,  MRM_C1 = 65,  MRM_C2 = 66,  MRM_C3 = 67,
+    MRM_C4 = 68,  MRM_C5 = 69,  MRM_C6 = 70,  MRM_C7 = 71,
+    MRM_C8 = 72,  MRM_C9 = 73,  MRM_CA = 74,  MRM_CB = 75,
+    MRM_CC = 76,  MRM_CD = 77,  MRM_CE = 78,  MRM_CF = 79,
+    MRM_D0 = 80,  MRM_D1 = 81,  MRM_D2 = 82,  MRM_D3 = 83,
+    MRM_D4 = 84,  MRM_D5 = 85,  MRM_D6 = 86,  MRM_D7 = 87,
+    MRM_D8 = 88,  MRM_D9 = 89,  MRM_DA = 90,  MRM_DB = 91,
+    MRM_DC = 92,  MRM_DD = 93,  MRM_DE = 94,  MRM_DF = 95,
+    MRM_E0 = 96,  MRM_E1 = 97,  MRM_E2 = 98,  MRM_E3 = 99,
+    MRM_E4 = 100, MRM_E5 = 101, MRM_E6 = 102, MRM_E7 = 103,
+    MRM_E8 = 104, MRM_E9 = 105, MRM_EA = 106, MRM_EB = 107,
+    MRM_EC = 108, MRM_ED = 109, MRM_EE = 110, MRM_EF = 111,
+    MRM_F0 = 112, MRM_F1 = 113, MRM_F2 = 114, MRM_F3 = 115,
+    MRM_F4 = 116, MRM_F5 = 117, MRM_F6 = 118, MRM_F7 = 119,
+    MRM_F8 = 120, MRM_F9 = 121, MRM_FA = 122, MRM_FB = 123,
+    MRM_FC = 124, MRM_FD = 125, MRM_FE = 126, MRM_FF = 127,
 
     FormMask       = 127,
 
@@ -651,8 +657,6 @@ namespace X86II {
     case X86II::Pseudo:
     case X86II::RawFrm:
     case X86II::AddRegFrm:
-    case X86II::MRMDestReg:
-    case X86II::MRMSrcReg:
     case X86II::RawFrmImm8:
     case X86II::RawFrmImm16:
     case X86II::RawFrmMemOffs:
@@ -666,6 +670,8 @@ namespace X86II {
       // Start from 1, skip any registers encoded in VEX_VVVV or I8IMM, or a
       // mask register.
       return 1 + HasVEX_4V + HasMemOp4 + HasEVEX_K;
+    case X86II::MRMDestReg:
+    case X86II::MRMSrcReg:
     case X86II::MRMXr:
     case X86II::MRM0r: case X86II::MRM1r:
     case X86II::MRM2r: case X86II::MRM3r:
