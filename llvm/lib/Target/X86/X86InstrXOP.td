@@ -85,12 +85,12 @@ let ExeDomain = SSEPackedDouble in {
 
 multiclass xop3op<bits<8> opc, string OpcodeStr, SDNode OpNode,
                   ValueType vt128> {
-  def rr : IXOP<opc, MRMSrcReg, (outs VR128:$dst),
+  def rr : IXOP<opc, MRMSrcReg4VOp3, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
            [(set VR128:$dst,
               (vt128 (OpNode (vt128 VR128:$src1), (vt128 VR128:$src2))))]>,
-           XOP_4VOp3, Sched<[WriteVarVecShift]>;
+           XOP, Sched<[WriteVarVecShift]>;
   def rm : IXOP<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, i128mem:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -98,13 +98,13 @@ multiclass xop3op<bits<8> opc, string OpcodeStr, SDNode OpNode,
               (vt128 (OpNode (vt128 VR128:$src1),
                              (vt128 (bitconvert (loadv2i64 addr:$src2))))))]>,
            XOP_4V, VEX_W, Sched<[WriteVarVecShift, ReadAfterLd]>;
-  def mr : IXOP<opc, MRMSrcMem, (outs VR128:$dst),
+  def mr : IXOP<opc, MRMSrcMem4VOp3, (outs VR128:$dst),
            (ins i128mem:$src1, VR128:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
            [(set VR128:$dst,
               (vt128 (OpNode (vt128 (bitconvert (loadv2i64 addr:$src1))),
                              (vt128 VR128:$src2))))]>,
-             XOP_4VOp3, Sched<[WriteVarVecShift, ReadAfterLd]>;
+             XOP, Sched<[WriteVarVecShift, ReadAfterLd]>;
 }
 
 let ExeDomain = SSEPackedInt in {

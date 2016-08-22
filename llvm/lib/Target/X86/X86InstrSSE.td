@@ -8696,16 +8696,16 @@ let Predicates = [HasAVX2, NoVLX] in {
 // VGATHER - GATHER Operations
 multiclass avx2_gather<bits<8> opc, string OpcodeStr, RegisterClass RC256,
                        X86MemOperand memop128, X86MemOperand memop256> {
-  def rm  : AVX28I<opc, MRMSrcMem, (outs VR128:$dst, VR128:$mask_wb),
+  def rm  : AVX28I<opc, MRMSrcMem4VOp3, (outs VR128:$dst, VR128:$mask_wb),
             (ins VR128:$src1, memop128:$src2, VR128:$mask),
             !strconcat(OpcodeStr,
               "\t{$mask, $src2, $dst|$dst, $src2, $mask}"),
-            []>, VEX_4VOp3;
-  def Yrm : AVX28I<opc, MRMSrcMem, (outs RC256:$dst, RC256:$mask_wb),
+            []>, VEX;
+  def Yrm : AVX28I<opc, MRMSrcMem4VOp3, (outs RC256:$dst, RC256:$mask_wb),
             (ins RC256:$src1, memop256:$src2, RC256:$mask),
             !strconcat(OpcodeStr,
               "\t{$mask, $src2, $dst|$dst, $src2, $mask}"),
-            []>, VEX_4VOp3, VEX_L;
+            []>, VEX, VEX_L;
 }
 
 let mayLoad = 1, hasSideEffects = 0, Constraints

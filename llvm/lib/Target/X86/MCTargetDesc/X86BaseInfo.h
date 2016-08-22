@@ -277,10 +277,15 @@ namespace X86II {
     ///
     MRMSrcMem      = 33,
 
+    /// MRMSrcMem4VOp3 - This form is used for instructions that encode
+    /// operand 3 with VEX.VVVV and load from memory.
+    ///
+    MRMSrcMem4VOp3 = 34,
+
     /// MRMSrcMemOp4 - This form is used for instructions that use the Mod/RM
     /// byte to specify the fourth source, which in this case is memory.
     ///
-    MRMSrcMemOp4   = 34,
+    MRMSrcMemOp4   = 35,
 
     /// MRMXm - This form is used for instructions that use the Mod/RM byte
     /// to specify a memory source, but doesn't use the middle field.
@@ -301,10 +306,15 @@ namespace X86II {
     ///
     MRMSrcReg      = 49,
 
+    /// MRMSrcReg4VOp3 - This form is used for instructions that encode
+    /// operand 3 with VEX.VVVV and do not load from memory.
+    ///
+    MRMSrcReg4VOp3 = 50,
+
     /// MRMSrcRegOp4 - This form is used for instructions that use the Mod/RM
     /// byte to specify the fourth source, which in this case is a register.
     ///
-    MRMSrcRegOp4   = 50,
+    MRMSrcRegOp4   = 51,
 
     /// MRMXr - This form is used for instructions that use the Mod/RM byte
     /// to specify a register source, but doesn't use the middle field.
@@ -505,16 +515,11 @@ namespace X86II {
     VEX_4VShift = VEX_WShift + 1,
     VEX_4V      = 1ULL << VEX_4VShift,
 
-    /// VEX_4VOp3 - Similar to VEX_4V, but used on instructions that encode
-    /// operand 3 with VEX.vvvv.
-    VEX_4VOp3Shift = VEX_4VShift + 1,
-    VEX_4VOp3   = 1ULL << VEX_4VOp3Shift,
-
     /// VEX_L - Stands for a bit in the VEX opcode prefix meaning the current
     /// instruction uses 256-bit wide registers. This is usually auto detected
     /// if a VR256 register is used, but some AVX instructions also have this
     /// field marked when using a f256 memory references.
-    VEX_LShift = VEX_4VOp3Shift + 1,
+    VEX_LShift = VEX_4VShift + 1,
     VEX_L       = 1ULL << VEX_LShift,
 
     // EVEX_K - Set if this instruction requires masking
@@ -674,11 +679,15 @@ namespace X86II {
       // Start from 1, skip any registers encoded in VEX_VVVV or I8IMM, or a
       // mask register.
       return 1 + HasVEX_4V + HasEVEX_K;
+    case X86II::MRMSrcMem4VOp3:
+      // Skip registers encoded in reg.
+      return 1 + HasEVEX_K;
     case X86II::MRMSrcMemOp4:
       // Skip registers encoded in reg, VEX_VVVV, and I8IMM.
       return 3;
     case X86II::MRMDestReg:
     case X86II::MRMSrcReg:
+    case X86II::MRMSrcReg4VOp3:
     case X86II::MRMSrcRegOp4:
     case X86II::MRMXr:
     case X86II::MRM0r: case X86II::MRM1r:
