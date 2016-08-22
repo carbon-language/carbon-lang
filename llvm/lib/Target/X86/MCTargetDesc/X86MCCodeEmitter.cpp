@@ -603,7 +603,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   bool HasEVEX_K = TSFlags & X86II::EVEX_K;
   bool HasVEX_4V = TSFlags & X86II::VEX_4V;
   bool HasVEX_4VOp3 = TSFlags & X86II::VEX_4VOp3;
-  bool HasMemOp4 = TSFlags & X86II::MemOp4;
   bool HasEVEX_RC = TSFlags & X86II::EVEX_RC;
 
   // VEX_R: opcode externsion equivalent to REX.R in
@@ -749,7 +748,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     //
     //  FMA4:
     //  dst(ModR/M.reg), src1(VEX_4V), src2(ModR/M), src3(Imm[7:4])
-    //  dst(ModR/M.reg), src1(VEX_4V), src2(Imm[7:4]), src3(ModR/M),
     unsigned RegEnc = getX86RegEncoding(MI, CurOp++);
     VEX_R = ~(RegEnc >> 3) & 1;
     EVEX_R2 = ~(RegEnc >> 4) & 1;
@@ -777,6 +775,20 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       //   it skips TIED_TO operands if exist, then increments past src1.
       // CurOp + X86::AddrNumOperands will point to src3.
       VEX_4V = ~getX86RegEncoding(MI, CurOp + X86::AddrNumOperands) & 0xf;
+    break;
+  }
+  case X86II::MRMSrcMemOp4: {
+    //  dst(ModR/M.reg), src1(VEX_4V), src2(Imm[7:4]), src3(ModR/M),
+    unsigned RegEnc = getX86RegEncoding(MI, CurOp++);
+    VEX_R = ~(RegEnc >> 3) & 1;
+
+    unsigned VRegEnc = getX86RegEncoding(MI, CurOp++);
+    VEX_4V = ~VRegEnc & 0xf;
+
+    unsigned BaseRegEnc = getX86RegEncoding(MI, MemOperand + X86::AddrBaseReg);
+    VEX_B = ~(BaseRegEnc >> 3) & 1;
+    unsigned IndexRegEnc = getX86RegEncoding(MI, MemOperand+X86::AddrIndexReg);
+    VEX_X = ~(IndexRegEnc >> 3) & 1;
     break;
   }
   case X86II::MRM0m: case X86II::MRM1m:
@@ -808,7 +820,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     //  dst(ModR/M), src1(ModR/M), imm8
     //
     //  FMA4:
-    //  dst(ModR/M.reg), src1(VEX_4V), src2(ModR/M), src3(Imm[7:4])
     //  dst(ModR/M.reg), src1(VEX_4V), src2(Imm[7:4]), src3(ModR/M),
     unsigned RegEnc = getX86RegEncoding(MI, CurOp++);
     VEX_R = ~(RegEnc >> 3) & 1;
@@ -823,9 +834,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       EVEX_V2 = ~(VRegEnc >> 4) & 1;
     }
 
-    if (HasMemOp4) // Skip second register source (encoded in Imm[7:4])
-      CurOp++;
-
     RegEnc = getX86RegEncoding(MI, CurOp++);
     VEX_B = ~(RegEnc >> 3) & 1;
     VEX_X = ~(RegEnc >> 4) & 1;
@@ -839,6 +847,22 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       }
       EncodeRC = true;
     }
+    break;
+  }
+  case X86II::MRMSrcRegOp4: {
+    //  dst(ModR/M.reg), src1(VEX_4V), src2(Imm[7:4]), src3(ModR/M),
+    unsigned RegEnc = getX86RegEncoding(MI, CurOp++);
+    VEX_R = ~(RegEnc >> 3) & 1;
+
+    unsigned VRegEnc = getX86RegEncoding(MI, CurOp++);
+    VEX_4V = ~VRegEnc & 0xf;
+
+    // Skip second register source (encoded in Imm[7:4])
+    ++CurOp;
+
+    RegEnc = getX86RegEncoding(MI, CurOp++);
+    VEX_B = ~(RegEnc >> 3) & 1;
+    VEX_X = ~(RegEnc >> 4) & 1;
     break;
   }
   case X86II::MRMDestReg: {
@@ -1134,9 +1158,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
   // It uses the VEX.VVVV field?
   bool HasVEX_4V = TSFlags & X86II::VEX_4V;
   bool HasVEX_4VOp3 = TSFlags & X86II::VEX_4VOp3;
-  bool HasMemOp4 = TSFlags & X86II::MemOp4;
   bool HasVEX_I8Reg = (TSFlags & X86II::ImmMask) == X86II::Imm8Reg;
-  assert((!HasMemOp4 || HasVEX_I8Reg) && "MemOp4 should imply VEX_I8Reg");
 
   // It uses the EVEX.aaa field?
   bool HasEVEX_K = TSFlags & X86II::EVEX_K;
@@ -1312,19 +1334,32 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
       ++SrcRegNum;
 
-    if (HasMemOp4) // Capture 2nd src (which is encoded in Imm[7:4])
-      I8RegNum = getX86RegEncoding(MI, SrcRegNum++);
-
     EmitRegModRMByte(MI.getOperand(SrcRegNum),
                      GetX86RegNum(MI.getOperand(CurOp)), CurByte, OS);
     CurOp = SrcRegNum + 1;
     if (HasVEX_4VOp3)
       ++CurOp;
-    if (!HasMemOp4 && HasVEX_I8Reg)
+    if (HasVEX_I8Reg)
       I8RegNum = getX86RegEncoding(MI, CurOp++);
     // do not count the rounding control operand
     if (HasEVEX_RC)
       --NumOps;
+    break;
+  }
+  case X86II::MRMSrcRegOp4: {
+    EmitByte(BaseOpcode, CurByte, OS);
+    unsigned SrcRegNum = CurOp + 1;
+
+    // Skip 1st src (which is encoded in VEX_VVVV)
+    ++SrcRegNum;
+
+    // Capture 2nd src (which is encoded in Imm[7:4])
+    assert(HasVEX_I8Reg && "MRMSrcRegOp4 should imply VEX_I8Reg");
+    I8RegNum = getX86RegEncoding(MI, SrcRegNum++);
+
+    EmitRegModRMByte(MI.getOperand(SrcRegNum),
+                     GetX86RegNum(MI.getOperand(CurOp)), CurByte, OS);
+    CurOp = SrcRegNum + 1;
     break;
   }
   case X86II::MRMSrcMem: {
@@ -1336,9 +1371,6 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (HasVEX_4V)
       ++FirstMemOp;  // Skip the register source (which is encoded in VEX_VVVV).
 
-    if (HasMemOp4) // Capture second register source (encoded in Imm[7:4])
-      I8RegNum = getX86RegEncoding(MI, FirstMemOp++);
-
     EmitByte(BaseOpcode, CurByte, OS);
 
     emitMemModRMByte(MI, FirstMemOp, GetX86RegNum(MI.getOperand(CurOp)),
@@ -1346,8 +1378,24 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     CurOp = FirstMemOp + X86::AddrNumOperands;
     if (HasVEX_4VOp3)
       ++CurOp;
-    if (!HasMemOp4 && HasVEX_I8Reg)
+    if (HasVEX_I8Reg)
       I8RegNum = getX86RegEncoding(MI, CurOp++);
+    break;
+  }
+  case X86II::MRMSrcMemOp4: {
+    unsigned FirstMemOp = CurOp+1;
+
+    ++FirstMemOp;  // Skip the register source (which is encoded in VEX_VVVV).
+
+    // Capture second register source (encoded in Imm[7:4])
+    assert(HasVEX_I8Reg && "MRMSrcRegOp4 should imply VEX_I8Reg");
+    I8RegNum = getX86RegEncoding(MI, FirstMemOp++);
+
+    EmitByte(BaseOpcode, CurByte, OS);
+
+    emitMemModRMByte(MI, FirstMemOp, GetX86RegNum(MI.getOperand(CurOp)),
+                     TSFlags, Rex, CurByte, OS, Fixups, STI);
+    CurOp = FirstMemOp + X86::AddrNumOperands;
     break;
   }
 

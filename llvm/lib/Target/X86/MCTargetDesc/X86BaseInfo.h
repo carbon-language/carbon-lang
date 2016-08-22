@@ -277,6 +277,11 @@ namespace X86II {
     ///
     MRMSrcMem      = 33,
 
+    /// MRMSrcMemOp4 - This form is used for instructions that use the Mod/RM
+    /// byte to specify the fourth source, which in this case is memory.
+    ///
+    MRMSrcMemOp4   = 34,
+
     /// MRMXm - This form is used for instructions that use the Mod/RM byte
     /// to specify a memory source, but doesn't use the middle field.
     ///
@@ -295,6 +300,11 @@ namespace X86II {
     /// to specify a source, which in this case is a register.
     ///
     MRMSrcReg      = 49,
+
+    /// MRMSrcRegOp4 - This form is used for instructions that use the Mod/RM
+    /// byte to specify the fourth source, which in this case is a register.
+    ///
+    MRMSrcRegOp4   = 50,
 
     /// MRMXr - This form is used for instructions that use the Mod/RM byte
     /// to specify a register source, but doesn't use the middle field.
@@ -536,13 +546,8 @@ namespace X86II {
     Has3DNow0F0FOpcodeShift = CD8_Scale_Shift + 7,
     Has3DNow0F0FOpcode = 1ULL << Has3DNow0F0FOpcodeShift,
 
-    /// MemOp4 - Used to indicate swapping of operand 3 and 4 to be encoded in
-    /// ModRM or I8IMM. This is used for FMA4 and XOP instructions.
-    MemOp4Shift = Has3DNow0F0FOpcodeShift + 1,
-    MemOp4 = 1ULL << MemOp4Shift,
-
     /// Explicitly specified rounding control
-    EVEX_RCShift = MemOp4Shift + 1,
+    EVEX_RCShift = Has3DNow0F0FOpcodeShift + 1,
     EVEX_RC = 1ULL << EVEX_RCShift
   };
 
@@ -649,7 +654,6 @@ namespace X86II {
   ///
   inline int getMemoryOperandNo(uint64_t TSFlags) {
     bool HasVEX_4V = TSFlags & X86II::VEX_4V;
-    bool HasMemOp4 = TSFlags & X86II::MemOp4;
     bool HasEVEX_K = TSFlags & X86II::EVEX_K;
 
     switch (TSFlags & X86II::FormMask) {
@@ -669,9 +673,13 @@ namespace X86II {
     case X86II::MRMSrcMem:
       // Start from 1, skip any registers encoded in VEX_VVVV or I8IMM, or a
       // mask register.
-      return 1 + HasVEX_4V + HasMemOp4 + HasEVEX_K;
+      return 1 + HasVEX_4V + HasEVEX_K;
+    case X86II::MRMSrcMemOp4:
+      // Skip registers encoded in reg, VEX_VVVV, and I8IMM.
+      return 3;
     case X86II::MRMDestReg:
     case X86II::MRMSrcReg:
+    case X86II::MRMSrcRegOp4:
     case X86II::MRMXr:
     case X86II::MRM0r: case X86II::MRM1r:
     case X86II::MRM2r: case X86II::MRM3r:

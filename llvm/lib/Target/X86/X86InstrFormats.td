@@ -27,14 +27,16 @@ def RawFrmDst     : Format<5>;
 def RawFrmDstSrc  : Format<6>;
 def RawFrmImm8    : Format<7>;
 def RawFrmImm16   : Format<8>;
-def MRMDestMem : Format<32>;
-def MRMSrcMem  : Format<33>;
+def MRMDestMem   : Format<32>;
+def MRMSrcMem    : Format<33>;
+def MRMSrcMemOp4 : Format<34>;
 def MRMXm  : Format<39>;
 def MRM0m  : Format<40>;  def MRM1m  : Format<41>;  def MRM2m  : Format<42>;
 def MRM3m  : Format<43>;  def MRM4m  : Format<44>;  def MRM5m  : Format<45>;
 def MRM6m  : Format<46>;  def MRM7m  : Format<47>;
-def MRMDestReg : Format<48>;
-def MRMSrcReg  : Format<49>;
+def MRMDestReg   : Format<48>;
+def MRMSrcReg    : Format<49>;
+def MRMSrcRegOp4 : Format<50>;
 def MRMXr  : Format<55>;
 def MRM0r  : Format<56>;  def MRM1r  : Format<57>;  def MRM2r  : Format<58>;
 def MRM3r  : Format<59>;  def MRM4r  : Format<60>;  def MRM5r  : Format<61>;
@@ -218,7 +220,6 @@ class EVEX_CD8<int esize, CD8VForm form> {
 }
 
 class Has3DNow0F0FOpcode  { bit has3DNow0F0FOpcode = 1; }
-class MemOp4 { bit hasMemOp4Prefix = 1; }
 class XOP { Encoding OpEnc = EncXOP; }
 class XOP_4V : XOP { bit hasVEX_4V = 1; }
 class XOP_4VOp3 : XOP { bit hasVEX_4VOp3 = 1; }
@@ -284,7 +285,6 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   // assigning to bits<7>.
   int CD8_EltSize = 0;      // Compressed disp8 form - element-size in bytes.
   bit has3DNow0F0FOpcode =0;// Wacky 3dNow! encoding?
-  bit hasMemOp4Prefix = 0;  // Same bit as VEX_W, but used for swapping operands
   bit hasEVEX_RC = 0;       // Explicitly specified rounding control in FP instruction.
 
   bits<2> EVEX_LL;
@@ -330,8 +330,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   // If we run out of TSFlags bits, it's possible to encode this in 3 bits.
   let TSFlags{53-47} = CD8_Scale;
   let TSFlags{54}    = has3DNow0F0FOpcode;
-  let TSFlags{55}    = hasMemOp4Prefix;
-  let TSFlags{56}    = hasEVEX_RC;
+  let TSFlags{55}    = hasEVEX_RC;
 }
 
 class PseudoI<dag oops, dag iops, list<dag> pattern>

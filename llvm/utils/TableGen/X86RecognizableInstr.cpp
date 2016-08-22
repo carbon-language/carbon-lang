@@ -100,13 +100,15 @@ namespace X86Local {
     RawFrmDstSrc  = 6,
     RawFrmImm8    = 7,
     RawFrmImm16   = 8,
-    MRMDestMem = 32,
-    MRMSrcMem  = 33,
+    MRMDestMem   = 32,
+    MRMSrcMem    = 33,
+    MRMSrcMemOp4 = 34,
     MRMXm = 39,
     MRM0m = 40, MRM1m = 41, MRM2m = 42, MRM3m = 43,
     MRM4m = 44, MRM5m = 45, MRM6m = 46, MRM7m = 47,
-    MRMDestReg = 48,
-    MRMSrcReg  = 49,
+    MRMDestReg   = 48,
+    MRMSrcReg    = 49,
+    MRMSrcRegOp4 = 50,
     MRMXr = 55,
     MRM0r = 56, MRM1r = 57, MRM2r = 58, MRM3r = 59,
     MRM4r = 60, MRM5r = 61, MRM6r = 62, MRM7r = 63,
@@ -201,7 +203,6 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   HasVEX_4V        = Rec->getValueAsBit("hasVEX_4V");
   HasVEX_4VOp3     = Rec->getValueAsBit("hasVEX_4VOp3");
   HasVEX_WPrefix   = Rec->getValueAsBit("hasVEX_WPrefix");
-  HasMemOp4Prefix  = Rec->getValueAsBit("hasMemOp4Prefix");
   IgnoresVEX_L     = Rec->getValueAsBit("ignoresVEX_L");
   HasEVEX_L2Prefix = Rec->getValueAsBit("hasEVEX_L2");
   HasEVEX_K        = Rec->getValueAsBit("hasEVEX_K");
@@ -653,17 +654,22 @@ void RecognizableInstr::emitInstructionSpecifier() {
       // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPERAND(vvvvRegister)
 
-    if (HasMemOp4Prefix)
-      HANDLE_OPERAND(immediate)
-
     HANDLE_OPERAND(rmRegister)
 
     if (HasVEX_4VOp3)
       HANDLE_OPERAND(vvvvRegister)
 
-    if (!HasMemOp4Prefix)
-      HANDLE_OPTIONAL(immediate)
+    HANDLE_OPTIONAL(immediate)
     HANDLE_OPTIONAL(immediate) // above might be a register in 7:4
+    HANDLE_OPTIONAL(immediate)
+    break;
+  case X86Local::MRMSrcRegOp4:
+    assert(numPhysicalOperands >= 4 && numPhysicalOperands <= 5 &&
+           "Unexpected number of operands for MRMSrcRegOp4Frm");
+    HANDLE_OPERAND(roRegister)
+    HANDLE_OPERAND(vvvvRegister)
+    HANDLE_OPERAND(immediate) // Register in imm[7:4]
+    HANDLE_OPERAND(rmRegister)
     HANDLE_OPTIONAL(immediate)
     break;
   case X86Local::MRMSrcMem:
@@ -686,17 +692,22 @@ void RecognizableInstr::emitInstructionSpecifier() {
       // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPERAND(vvvvRegister)
 
-    if (HasMemOp4Prefix)
-      HANDLE_OPERAND(immediate)
-
     HANDLE_OPERAND(memory)
 
     if (HasVEX_4VOp3)
       HANDLE_OPERAND(vvvvRegister)
 
-    if (!HasMemOp4Prefix)
-      HANDLE_OPTIONAL(immediate)
+    HANDLE_OPTIONAL(immediate)
     HANDLE_OPTIONAL(immediate) // above might be a register in 7:4
+    break;
+  case X86Local::MRMSrcMemOp4:
+    assert(numPhysicalOperands >= 4 && numPhysicalOperands <= 5 &&
+           "Unexpected number of operands for MRMSrcMemOp4Frm");
+    HANDLE_OPERAND(roRegister)
+    HANDLE_OPERAND(vvvvRegister)
+    HANDLE_OPERAND(immediate) // Register in imm[7:4]
+    HANDLE_OPERAND(memory)
+    HANDLE_OPTIONAL(immediate)
     break;
   case X86Local::MRMXr:
   case X86Local::MRM0r:
@@ -842,11 +853,13 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
       break;
     case X86Local::MRMDestReg:
     case X86Local::MRMSrcReg:
+    case X86Local::MRMSrcRegOp4:
     case X86Local::MRMXr:
       filter = new ModFilter(true);
       break;
     case X86Local::MRMDestMem:
     case X86Local::MRMSrcMem:
+    case X86Local::MRMSrcMemOp4:
     case X86Local::MRMXm:
       filter = new ModFilter(false);
       break;
