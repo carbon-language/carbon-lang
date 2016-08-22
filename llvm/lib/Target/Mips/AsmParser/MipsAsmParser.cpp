@@ -1652,6 +1652,45 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
                             1LL << (inMicroMipsMode() ? 1 : 2)))
         return Error(IDLoc, "branch to misaligned address");
       break;
+    case Mips::BGEC:    case Mips::BGEC_MMR6:
+    case Mips::BLTC:    case Mips::BLTC_MMR6:
+    case Mips::BGEUC:   case Mips::BGEUC_MMR6:
+    case Mips::BLTUC:   case Mips::BLTUC_MMR6:
+    case Mips::BEQC:    case Mips::BEQC_MMR6:
+    case Mips::BNEC:    case Mips::BNEC_MMR6:
+      assert(MCID.getNumOperands() == 3 && "unexpected number of operands");
+      Offset = Inst.getOperand(2);
+      if (!Offset.isImm())
+        break; // We'll deal with this situation later on when applying fixups.
+      if (!isIntN(18, Offset.getImm()))
+        return Error(IDLoc, "branch target out of range");
+      if (OffsetToAlignment(Offset.getImm(), 1LL << 2))
+        return Error(IDLoc, "branch to misaligned address");
+      break;
+    case Mips::BLEZC:   case Mips::BLEZC_MMR6:
+    case Mips::BGEZC:   case Mips::BGEZC_MMR6:
+    case Mips::BGTZC:   case Mips::BGTZC_MMR6:
+    case Mips::BLTZC:   case Mips::BLTZC_MMR6:
+      assert(MCID.getNumOperands() == 2 && "unexpected number of operands");
+      Offset = Inst.getOperand(1);
+      if (!Offset.isImm())
+        break; // We'll deal with this situation later on when applying fixups.
+      if (!isIntN(18, Offset.getImm()))
+        return Error(IDLoc, "branch target out of range");
+      if (OffsetToAlignment(Offset.getImm(), 1LL << 2))
+        return Error(IDLoc, "branch to misaligned address");
+      break;
+    case Mips::BEQZC:   case Mips::BEQZC_MMR6:
+    case Mips::BNEZC:   case Mips::BNEZC_MMR6:
+      assert(MCID.getNumOperands() == 2 && "unexpected number of operands");
+      Offset = Inst.getOperand(1);
+      if (!Offset.isImm())
+        break; // We'll deal with this situation later on when applying fixups.
+      if (!isIntN(23, Offset.getImm()))
+        return Error(IDLoc, "branch target out of range");
+      if (OffsetToAlignment(Offset.getImm(), 1LL << 2))
+        return Error(IDLoc, "branch to misaligned address");
+      break;
     case Mips::BEQZ16_MM:
     case Mips::BEQZC16_MMR6:
     case Mips::BNEZ16_MM:
@@ -3808,12 +3847,12 @@ unsigned MipsAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
   // The compact branches that branch iff the signed addition of two registers
   // would overflow must have rs >= rt. That can be handled like beqc/bnec with
   // operand swapping. They do not have restriction of using the zero register.
-  case Mips::BLEZC:
-  case Mips::BGEZC:
-  case Mips::BGTZC:
-  case Mips::BLTZC:
-  case Mips::BEQZC:
-  case Mips::BNEZC:
+  case Mips::BLEZC:   case Mips::BLEZC_MMR6:
+  case Mips::BGEZC:   case Mips::BGEZC_MMR6:
+  case Mips::BGTZC:   case Mips::BGTZC_MMR6:
+  case Mips::BLTZC:   case Mips::BLTZC_MMR6:
+  case Mips::BEQZC:   case Mips::BEQZC_MMR6:
+  case Mips::BNEZC:   case Mips::BNEZC_MMR6:
   case Mips::BLEZC64:
   case Mips::BGEZC64:
   case Mips::BGTZC64:
@@ -3824,12 +3863,12 @@ unsigned MipsAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
         Inst.getOperand(0).getReg() == Mips::ZERO_64)
       return Match_RequiresNoZeroRegister;
     return Match_Success;
-  case Mips::BGEC:
-  case Mips::BLTC:
-  case Mips::BGEUC:
-  case Mips::BLTUC:
-  case Mips::BEQC:
-  case Mips::BNEC:
+  case Mips::BGEC:    case Mips::BGEC_MMR6:
+  case Mips::BLTC:    case Mips::BLTC_MMR6:
+  case Mips::BGEUC:   case Mips::BGEUC_MMR6:
+  case Mips::BLTUC:   case Mips::BLTUC_MMR6:
+  case Mips::BEQC:    case Mips::BEQC_MMR6:
+  case Mips::BNEC:    case Mips::BNEC_MMR6:
   case Mips::BGEC64:
   case Mips::BLTC64:
   case Mips::BGEUC64:
