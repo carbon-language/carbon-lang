@@ -490,9 +490,6 @@ class ClobberWalker {
     // First. Also note that First and Last are inclusive.
     MemoryAccess *First;
     MemoryAccess *Last;
-    // N.B. Blocker is currently basically unused. The goal is to use it to make
-    // cache invalidation better, but we're not there yet.
-    MemoryAccess *Blocker;
     Optional<ListIndex> Previous;
 
     DefPath(const MemoryLocation &Loc, MemoryAccess *First, MemoryAccess *Last,
@@ -834,8 +831,7 @@ class ClobberWalker {
 
       // FIXME: This is broken, because the Blocker may be reported to be
       // liveOnEntry, and we'll happily wait for that to disappear (read: never)
-      // For the moment, this is fine, since we do basically nothing with
-      // blocker info.
+      // For the moment, this is fine, since we do nothing with blocker info.
       if (Optional<TerminatedPath> Blocker = getBlockingAccess(
               Target, PausedSearches, NewPaused, TerminatedPaths)) {
         // Cache our work on the blocking node, since we know that's correct.
@@ -850,7 +846,6 @@ class ClobberWalker {
 
         DefPath &CurNode = *Iter;
         assert(CurNode.Last == Current);
-        CurNode.Blocker = Blocker->Clobber;
 
         // Two things:
         // A. We can't reliably cache all of NewPaused back. Consider a case
