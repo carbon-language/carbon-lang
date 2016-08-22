@@ -18,6 +18,9 @@ set(ADTSources
   FunctionRefTest.cpp
   HashingTest.cpp
   ilistTest.cpp
+  IListBaseTest.cpp
+  IListNodeBaseTest.cpp
+  IListSentinelTest.cpp
   ImmutableMapTest.cpp
   ImmutableSetTest.cpp
   IntEqClassesTest.cpp
