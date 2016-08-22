@@ -2061,25 +2061,24 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp, Instruction *Shl,
   return nullptr;
 }
 
+/// Fold icmp ({al}shr X, Y), C.
 Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &ICI, Instruction *LHSI,
                                                const APInt *RHSV) {
+  // An exact shr only shifts out zero bits, so:
+  // icmp eq/ne (shr X, Y), 0 --> icmp eq/ne X, 0
+  CmpInst::Predicate Pred = ICI.getPredicate();
+  BinaryOperator *BO = cast<BinaryOperator>(LHSI);
+  if (ICI.isEquality() && BO->isExact() && BO->hasOneUse() && *RHSV == 0)
+    return new ICmpInst(Pred, BO->getOperand(0), ICI.getOperand(1));
+
   // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(ICI.getOperand(1));
-  if (!RHS)
+  // Handle equality comparisons of shift-by-constant.
+  ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1));
+  if (!ShAmt)
     return nullptr;
 
-  // Handle equality comparisons of shift-by-constant.
-  BinaryOperator *BO = cast<BinaryOperator>(LHSI);
-  if (ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
-    if (Instruction *Res = foldICmpShrConstConst(ICI, BO, ShAmt))
-      return Res;
-  }
-
-  // Handle exact shr's.
-  if (ICI.isEquality() && BO->isExact() && BO->hasOneUse()) {
-    if (RHSV->isMinValue())
-      return new ICmpInst(ICI.getPredicate(), BO->getOperand(0), RHS);
-  }
+  if (Instruction *Res = foldICmpShrConstConst(ICI, BO, ShAmt))
+    return Res;
 
   return nullptr;
 }
