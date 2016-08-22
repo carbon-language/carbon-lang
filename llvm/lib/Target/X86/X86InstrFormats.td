@@ -65,12 +65,13 @@ class ImmType<bits<4> val> {
 def NoImm      : ImmType<0>;
 def Imm8       : ImmType<1>;
 def Imm8PCRel  : ImmType<2>;
-def Imm16      : ImmType<3>;
-def Imm16PCRel : ImmType<4>;
-def Imm32      : ImmType<5>;
-def Imm32PCRel : ImmType<6>;
-def Imm32S     : ImmType<7>;
-def Imm64      : ImmType<8>;
+def Imm8Reg    : ImmType<3>; // Register encoded in [7:4].
+def Imm16      : ImmType<4>;
+def Imm16PCRel : ImmType<5>;
+def Imm32      : ImmType<6>;
+def Imm32PCRel : ImmType<7>;
+def Imm32S     : ImmType<8>;
+def Imm64      : ImmType<9>;
 
 // FPFormat - This specifies what form this FP instruction has.  This is used by
 // the Floating-Point stackifier pass.
@@ -191,7 +192,6 @@ class VEX    { Encoding OpEnc = EncVEX; }
 class VEX_W  { bit hasVEX_WPrefix = 1; }
 class VEX_4V : VEX { bit hasVEX_4V = 1; }
 class VEX_4VOp3 : VEX { bit hasVEX_4VOp3 = 1; }
-class VEX_I8IMM { bit hasVEX_i8ImmReg = 1; }
 class VEX_L  { bit hasVEX_L = 1; }
 class VEX_LIG { bit ignoresVEX_L = 1; }
 class EVEX : VEX { Encoding OpEnc = EncEVEX; }
@@ -267,8 +267,6 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasVEX_4V = 0;        // Does this inst require the VEX.VVVV field?
   bit hasVEX_4VOp3 = 0;     // Does this inst require the VEX.VVVV field to
                             // encode the third operand?
-  bit hasVEX_i8ImmReg = 0;  // Does this inst require the last source register
-                            // to be encoded in a immediate field?
   bit hasVEX_L = 0;         // Does this inst use large (256-bit) registers?
   bit ignoresVEX_L = 0;     // Does this instruction ignore the L-bit
   bit hasEVEX_K = 0;        // Does this inst require masking?
@@ -318,17 +316,16 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{39}    = hasVEX_WPrefix;
   let TSFlags{40}    = hasVEX_4V;
   let TSFlags{41}    = hasVEX_4VOp3;
-  let TSFlags{42}    = hasVEX_i8ImmReg;
-  let TSFlags{43}    = hasVEX_L;
-  let TSFlags{44}    = hasEVEX_K;
-  let TSFlags{45}    = hasEVEX_Z;
-  let TSFlags{46}    = hasEVEX_L2;
-  let TSFlags{47}    = hasEVEX_B;
+  let TSFlags{42}    = hasVEX_L;
+  let TSFlags{43}    = hasEVEX_K;
+  let TSFlags{44}    = hasEVEX_Z;
+  let TSFlags{45}    = hasEVEX_L2;
+  let TSFlags{46}    = hasEVEX_B;
   // If we run out of TSFlags bits, it's possible to encode this in 3 bits.
-  let TSFlags{54-48} = CD8_Scale;
-  let TSFlags{55}    = has3DNow0F0FOpcode;
-  let TSFlags{56}    = hasMemOp4Prefix;
-  let TSFlags{57}    = hasEVEX_RC;
+  let TSFlags{53-47} = CD8_Scale;
+  let TSFlags{54}    = has3DNow0F0FOpcode;
+  let TSFlags{55}    = hasMemOp4Prefix;
+  let TSFlags{56}    = hasEVEX_RC;
 }
 
 class PseudoI<dag oops, dag iops, list<dag> pattern>
@@ -347,6 +344,13 @@ class Ii8 <bits<8> o, Format f, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary,
            Domain d = GenericDomain>
   : X86Inst<o, f, Imm8, outs, ins, asm, itin, d> {
+  let Pattern = pattern;
+  let CodeSize = 3;
+}
+class Ii8Reg<bits<8> o, Format f, dag outs, dag ins, string asm,
+             list<dag> pattern, InstrItinClass itin = NoItinerary,
+             Domain d = GenericDomain>
+  : X86Inst<o, f, Imm8Reg, outs, ins, asm, itin, d> {
   let Pattern = pattern;
   let CodeSize = 3;
 }
@@ -848,8 +852,8 @@ class FMA3<bits<8> o, Format F, dag outs, dag ins, string asm,
 // FMA4 Instruction Templates
 class FMA4<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag>pattern, InstrItinClass itin = NoItinerary>
-      : Ii8<o, F, outs, ins, asm, pattern, itin>, TAPD,
-        VEX_4V, VEX_I8IMM, FMASC, Requires<[HasFMA4]>;
+      : Ii8Reg<o, F, outs, ins, asm, pattern, itin>, TAPD,
+        VEX_4V, FMASC, Requires<[HasFMA4]>;
 
 // XOP 2, 3 and 4 Operand Instruction Template
 class IXOP<bits<8> o, Format F, dag outs, dag ins, string asm,
@@ -857,17 +861,22 @@ class IXOP<bits<8> o, Format F, dag outs, dag ins, string asm,
       : I<o, F, outs, ins, asm, pattern, itin, SSEPackedDouble>,
          XOP9, Requires<[HasXOP]>;
 
-// XOP 2, 3 and 4 Operand Instruction Templates with imm byte
+// XOP 2 and 3 Operand Instruction Templates with imm byte
 class IXOPi8<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedDouble>,
+         XOP8, Requires<[HasXOP]>;
+// XOP 4 Operand Instruction Templates with imm byte
+class IXOPi8Reg<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : Ii8Reg<o, F, outs, ins, asm, pattern, itin, SSEPackedDouble>,
          XOP8, Requires<[HasXOP]>;
 
 //  XOP 5 operand instruction (VEX encoding!)
 class IXOP5<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag>pattern, InstrItinClass itin = NoItinerary>
-      : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TAPD,
-        VEX_4V, VEX_I8IMM, Requires<[HasXOP]>;
+      : Ii8Reg<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TAPD,
+        VEX_4V, Requires<[HasXOP]>;
 
 // X86-64 Instruction templates...
 //

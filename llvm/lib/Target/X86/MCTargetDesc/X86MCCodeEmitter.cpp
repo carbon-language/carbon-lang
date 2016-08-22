@@ -745,11 +745,11 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     //  src1(ModR/M), MemAddr
     //  src1(ModR/M), src2(VEX_4V), MemAddr
     //  src1(ModR/M), MemAddr, imm8
-    //  src1(ModR/M), MemAddr, src2(VEX_I8IMM)
+    //  src1(ModR/M), MemAddr, src2(Imm[7:4])
     //
     //  FMA4:
-    //  dst(ModR/M.reg), src1(VEX_4V), src2(ModR/M), src3(VEX_I8IMM)
-    //  dst(ModR/M.reg), src1(VEX_4V), src2(VEX_I8IMM), src3(ModR/M),
+    //  dst(ModR/M.reg), src1(VEX_4V), src2(ModR/M), src3(Imm[7:4])
+    //  dst(ModR/M.reg), src1(VEX_4V), src2(Imm[7:4]), src3(ModR/M),
     unsigned RegEnc = getX86RegEncoding(MI, CurOp++);
     VEX_R = ~(RegEnc >> 3) & 1;
     EVEX_R2 = ~(RegEnc >> 4) & 1;
@@ -803,13 +803,13 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   }
   case X86II::MRMSrcReg: {
     // MRMSrcReg instructions forms:
-    //  dst(ModR/M), src1(VEX_4V), src2(ModR/M), src3(VEX_I8IMM)
+    //  dst(ModR/M), src1(VEX_4V), src2(ModR/M), src3(Imm[7:4])
     //  dst(ModR/M), src1(ModR/M)
     //  dst(ModR/M), src1(ModR/M), imm8
     //
     //  FMA4:
-    //  dst(ModR/M.reg), src1(VEX_4V), src2(ModR/M), src3(VEX_I8IMM)
-    //  dst(ModR/M.reg), src1(VEX_4V), src2(VEX_I8IMM), src3(ModR/M),
+    //  dst(ModR/M.reg), src1(VEX_4V), src2(ModR/M), src3(Imm[7:4])
+    //  dst(ModR/M.reg), src1(VEX_4V), src2(Imm[7:4]), src3(ModR/M),
     unsigned RegEnc = getX86RegEncoding(MI, CurOp++);
     VEX_R = ~(RegEnc >> 3) & 1;
     EVEX_R2 = ~(RegEnc >> 4) & 1;
@@ -823,7 +823,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       EVEX_V2 = ~(VRegEnc >> 4) & 1;
     }
 
-    if (HasMemOp4) // Skip second register source (encoded in I8IMM)
+    if (HasMemOp4) // Skip second register source (encoded in Imm[7:4])
       CurOp++;
 
     RegEnc = getX86RegEncoding(MI, CurOp++);
@@ -1135,8 +1135,8 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
   bool HasVEX_4V = TSFlags & X86II::VEX_4V;
   bool HasVEX_4VOp3 = TSFlags & X86II::VEX_4VOp3;
   bool HasMemOp4 = TSFlags & X86II::MemOp4;
-  bool HasVEX_I8IMM = TSFlags & X86II::VEX_I8IMM;
-  assert((!HasMemOp4 || HasVEX_I8IMM) && "MemOp4 should imply VEX_I8IMM");
+  bool HasVEX_I8Reg = (TSFlags & X86II::ImmMask) == X86II::Imm8Reg;
+  assert((!HasMemOp4 || HasVEX_I8Reg) && "MemOp4 should imply VEX_I8Reg");
 
   // It uses the EVEX.aaa field?
   bool HasEVEX_K = TSFlags & X86II::EVEX_K;
@@ -1312,7 +1312,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
       ++SrcRegNum;
 
-    if (HasMemOp4) // Capture 2nd src (which is encoded in I8IMM)
+    if (HasMemOp4) // Capture 2nd src (which is encoded in Imm[7:4])
       I8RegNum = getX86RegEncoding(MI, SrcRegNum++);
 
     EmitRegModRMByte(MI.getOperand(SrcRegNum),
@@ -1320,7 +1320,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     CurOp = SrcRegNum + 1;
     if (HasVEX_4VOp3)
       ++CurOp;
-    if (!HasMemOp4 && HasVEX_I8IMM)
+    if (!HasMemOp4 && HasVEX_I8Reg)
       I8RegNum = getX86RegEncoding(MI, CurOp++);
     // do not count the rounding control operand
     if (HasEVEX_RC)
@@ -1336,7 +1336,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (HasVEX_4V)
       ++FirstMemOp;  // Skip the register source (which is encoded in VEX_VVVV).
 
-    if (HasMemOp4) // Capture second register source (encoded in I8IMM)
+    if (HasMemOp4) // Capture second register source (encoded in Imm[7:4])
       I8RegNum = getX86RegEncoding(MI, FirstMemOp++);
 
     EmitByte(BaseOpcode, CurByte, OS);
@@ -1346,7 +1346,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     CurOp = FirstMemOp + X86::AddrNumOperands;
     if (HasVEX_4VOp3)
       ++CurOp;
-    if (!HasMemOp4 && HasVEX_I8IMM)
+    if (!HasMemOp4 && HasVEX_I8Reg)
       I8RegNum = getX86RegEncoding(MI, CurOp++);
     break;
   }
@@ -1410,7 +1410,7 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     break;
   }
 
-  if (HasVEX_I8IMM) {
+  if (HasVEX_I8Reg) {
     // The last source register of a 4 operand instruction in AVX is encoded
     // in bits[7:4] of a immediate byte.
     assert(I8RegNum < 16 && "Register encoding out of range");
