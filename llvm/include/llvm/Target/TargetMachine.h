@@ -314,11 +314,8 @@ public:
                          bool DisableVerify = true) override;
 
   /// Add MachineModuleInfo pass to pass manager.
-  MachineModuleInfo &addMachineModuleInfo(PassManagerBase &PM) const;
-
-  /// Add MachineFunctionAnalysis pass to pass manager.
-  void addMachineFunctionAnalysis(PassManagerBase &PM,
-      MachineFunctionInitializer *MFInitializer) const;
+  MachineModuleInfo &addMachineModuleInfo(PassManagerBase &PM,
+      MachineFunctionInitializer *MFI = nullptr) const;
 };
 
 } // End llvm namespace
