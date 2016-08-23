@@ -72,5 +72,8 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
 
   setAction(G_FRAME_INDEX, LLT::pointer(0), Legal);
 
+  setAction(G_PTRTOINT, s64, Legal);
+  setAction(G_INTTOPTR, LLT::pointer(0), Legal);
+
   computeTables();
 }
