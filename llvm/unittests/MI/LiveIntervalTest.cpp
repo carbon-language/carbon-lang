@@ -70,8 +70,7 @@ std::unique_ptr<Module> parseMIR(LLVMContext &Context,
     return nullptr;
 
   const LLVMTargetMachine &LLVMTM = static_cast<const LLVMTargetMachine&>(TM);
-  LLVMTM.addMachineModuleInfo(PM);
-  LLVMTM.addMachineFunctionAnalysis(PM, MIR.get());
+  LLVMTM.addMachineModuleInfo(PM, MIR.get());
 
   return M;
 }
