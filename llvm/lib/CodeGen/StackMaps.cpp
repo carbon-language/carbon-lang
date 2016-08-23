@@ -35,6 +35,12 @@ static cl::opt<int> StackMapVersion(
 
 const char *StackMaps::WSMP = "Stack Maps: ";
 
+StackMapOpers::StackMapOpers(const MachineInstr *MI) 
+  : MI(MI) {
+  assert(getVarIdx() <= MI->getNumOperands() &&
+         "invalid stackmap definition");
+}
+
 PatchPointOpers::PatchPointOpers(const MachineInstr *MI)
     : MI(MI), HasDef(MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
                      !MI->getOperand(0).isImplicit()),
@@ -343,8 +349,9 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
 void StackMaps::recordStackMap(const MachineInstr &MI) {
   assert(MI.getOpcode() == TargetOpcode::STACKMAP && "expected stackmap");
 
-  int64_t ID = MI.getOperand(0).getImm();
-  recordStackMapOpers(MI, ID, std::next(MI.operands_begin(), 2),
+  StackMapOpers opers(&MI);
+  const int64_t ID = MI.getOperand(PatchPointOpers::IDPos).getImm();
+  recordStackMapOpers(MI, ID, std::next(MI.operands_begin(), opers.getVarIdx()),
                       MI.operands_end());
 }
 
@@ -352,7 +359,7 @@ void StackMaps::recordPatchPoint(const MachineInstr &MI) {
   assert(MI.getOpcode() == TargetOpcode::PATCHPOINT && "expected patchpoint");
 
   PatchPointOpers opers(&MI);
-  int64_t ID = opers.getMetaOper(PatchPointOpers::IDPos).getImm();
+  const int64_t ID = opers.getMetaOper(PatchPointOpers::IDPos).getImm();
 
   auto MOI = std::next(MI.operands_begin(), opers.getStackMapStartIdx());
   recordStackMapOpers(MI, ID, MOI, MI.operands_end(),

@@ -22,6 +22,29 @@ class AsmPrinter;
 class MCExpr;
 class MCStreamer;
 
+/// \brief MI-level stackmap operands.
+///
+/// MI slackmap operations take the form:
+/// <id>, <numBytes>, live args...
+class StackMapOpers {
+public:
+  /// Enumerate the meta operands.
+  enum { IDPos, NBytesPos };
+
+private:
+  const MachineInstr *MI;
+
+public:
+  explicit StackMapOpers(const MachineInstr *MI);
+
+  /// Get the operand index of the variable list of non-argument operands.
+  /// These hold the "live state".
+  unsigned getVarIdx() const {
+    // Skip ID, nShadowBytes.
+    return 2;
+  }
+};
+
 /// \brief MI-level patchpoint operands.
 ///
 /// MI patchpoint operations take the form:
