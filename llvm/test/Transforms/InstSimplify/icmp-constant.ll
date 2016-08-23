@@ -13,8 +13,7 @@ define i1 @tautological_ule(i8 %x) {
 
 define <2 x i1> @tautological_ule_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @tautological_ule_vec(
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ule <2 x i8> %x, <i8 -1, i8 -1>
-; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+; CHECK-NEXT:    ret <2 x i1> <i1 true, i1 true>
 ;
   %cmp = icmp ule <2 x i8> %x, <i8 255, i8 255>
   ret <2 x i1> %cmp
@@ -30,8 +29,7 @@ define i1 @tautological_ugt(i8 %x) {
 
 define <2 x i1> @tautological_ugt_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @tautological_ugt_vec(
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt <2 x i8> %x, <i8 -1, i8 -1>
-; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+; CHECK-NEXT:    ret <2 x i1> zeroinitializer
 ;
   %cmp = icmp ugt <2 x i8> %x, <i8 255, i8 255>
   ret <2 x i1> %cmp

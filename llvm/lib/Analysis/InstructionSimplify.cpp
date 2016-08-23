@@ -2154,17 +2154,21 @@ computePointerICmp(const DataLayout &DL, const TargetLibraryInfo *TLI,
 
 static Value *simplifyICmpWithConstant(CmpInst::Predicate Pred, Value *LHS,
                                        Value *RHS) {
-  // FIXME: Use m_APInt here and below to allow splat vector folds.
-  ConstantInt *CI = dyn_cast<ConstantInt>(RHS);
-  if (!CI)
+  const APInt *C;
+  if (!match(RHS, m_APInt(C)))
     return nullptr;
 
   // Rule out tautological comparisons (eg., ult 0 or uge 0).
-  ConstantRange RHS_CR = ICmpInst::makeConstantRange(Pred, CI->getValue());
+  ConstantRange RHS_CR = ICmpInst::makeConstantRange(Pred, *C);
   if (RHS_CR.isEmptySet())
-    return ConstantInt::getFalse(CI->getContext());
+    return ConstantInt::getFalse(GetCompareTy(RHS));
   if (RHS_CR.isFullSet())
-    return ConstantInt::getTrue(CI->getContext());
+    return ConstantInt::getTrue(GetCompareTy(RHS));
+
+  // FIXME: Use m_APInt below here to allow splat vector folds.
+  ConstantInt *CI = dyn_cast<ConstantInt>(RHS);
+  if (!CI)
+    return nullptr;
 
   // Many binary operators with constant RHS have easy to compute constant
   // range.  Use them to check whether the comparison is a tautology.
