@@ -1391,24 +1391,10 @@ Instruction *InstCombiner::foldICmpShrConstConst(ICmpInst &ICI,
     return Res;
   }
 
-  // If we are comparing against bits always shifted out, the
-  // comparison cannot succeed.
-  APInt Comp = CmpRHSV << ShAmtVal;
-  ConstantInt *ShiftedCmpRHS = Builder->getInt(Comp);
-  if (Shr->getOpcode() == Instruction::LShr)
-    Comp = Comp.lshr(ShAmtVal);
-  else
-    Comp = Comp.ashr(ShAmtVal);
-
-  if (Comp != CmpRHSV) { // Comparing against a bit that we know is zero.
-    bool IsICMP_NE = ICI.getPredicate() == ICmpInst::ICMP_NE;
-    Constant *Cst = Builder->getInt1(IsICMP_NE);
-    return replaceInstUsesWith(ICI, Cst);
-  }
-
-  // Otherwise, check to see if the bits shifted out are known to be zero.
-  // If so, we can compare against the unshifted value:
+  // Check if the bits shifted out are known to be zero. If so, we can compare
+  // against the unshifted value:
   //  (X & 4) >> 1 == 2  --> (X & 4) == 4.
+  ConstantInt *ShiftedCmpRHS = Builder->getInt(CmpRHSV << ShAmtVal);
   if (Shr->hasOneUse() && Shr->isExact())
     return new ICmpInst(ICI.getPredicate(), Shr->getOperand(0), ShiftedCmpRHS);
 
