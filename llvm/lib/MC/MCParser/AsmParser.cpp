@@ -426,6 +426,7 @@ private:
     DK_SET, DK_EQU, DK_EQUIV, DK_ASCII, DK_ASCIZ, DK_STRING, DK_BYTE, DK_SHORT,
     DK_RELOC,
     DK_VALUE, DK_2BYTE, DK_LONG, DK_INT, DK_4BYTE, DK_QUAD, DK_8BYTE, DK_OCTA,
+    DK_DC, DK_DC_A, DK_DC_B, DK_DC_D, DK_DC_L, DK_DC_S, DK_DC_W, DK_DC_X,
     DK_SINGLE, DK_FLOAT, DK_DOUBLE, DK_ALIGN, DK_ALIGN32, DK_BALIGN, DK_BALIGNW,
     DK_BALIGNL, DK_P2ALIGN, DK_P2ALIGNW, DK_P2ALIGNL, DK_ORG, DK_FILL, DK_ENDR,
     DK_BUNDLE_ALIGN_MODE, DK_BUNDLE_LOCK, DK_BUNDLE_UNLOCK,
@@ -1905,6 +1906,23 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
       return parseDirectiveWarning(IDLoc);
     case DK_RELOC:
       return parseDirectiveReloc(IDLoc);
+    case DK_DC:
+      return parseDirectiveValue(2);
+    case DK_DC_A:
+      return parseDirectiveValue(getContext().getAsmInfo()->getPointerSize());
+    case DK_DC_B:
+      return parseDirectiveValue(1);
+    case DK_DC_D:
+      return parseDirectiveRealValue(APFloat::IEEEdouble);
+    case DK_DC_L:
+      return parseDirectiveValue(4);
+    case DK_DC_S:
+      return parseDirectiveRealValue(APFloat::IEEEsingle);
+    case DK_DC_W:
+      return parseDirectiveValue(2);
+    case DK_DC_X:
+      return TokError(Twine(IDVal) +
+                      " not currently supported for this target");
     }
 
     return Error(IDLoc, "unknown directive");
@@ -4763,6 +4781,14 @@ void AsmParser::initializeDirectiveKindMap() {
   DirectiveKindMap[".error"] = DK_ERROR;
   DirectiveKindMap[".warning"] = DK_WARNING;
   DirectiveKindMap[".reloc"] = DK_RELOC;
+  DirectiveKindMap[".dc"] = DK_DC;
+  DirectiveKindMap[".dc.a"] = DK_DC_A;
+  DirectiveKindMap[".dc.b"] = DK_DC_B;
+  DirectiveKindMap[".dc.d"] = DK_DC_D;
+  DirectiveKindMap[".dc.l"] = DK_DC_L;
+  DirectiveKindMap[".dc.s"] = DK_DC_S;
+  DirectiveKindMap[".dc.w"] = DK_DC_W;
+  DirectiveKindMap[".dc.x"] = DK_DC_X;
 }
 
 MCAsmMacro *AsmParser::parseMacroLikeBody(SMLoc DirectiveLoc) {
