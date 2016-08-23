@@ -111,9 +111,9 @@ MachineLegalizer::getAction(const MachineInstr &MI) const {
   for (unsigned i = 0; i < MI.getNumTypes(); ++i) {
     auto Action = getAction({MI.getOpcode(), i, MI.getType(i)});
     if (Action.first != Legal)
-      return {Action.first, i, Action.second};
+      return std::make_tuple(Action.first, i, Action.second);
   }
-  return {Legal, 0, LLT{}};
+  return std::make_tuple(Legal, 0, LLT{});
 }
 
 bool MachineLegalizer::isLegal(const MachineInstr &MI) const {
