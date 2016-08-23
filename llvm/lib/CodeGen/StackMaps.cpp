@@ -43,8 +43,7 @@ StackMapOpers::StackMapOpers(const MachineInstr *MI)
 
 PatchPointOpers::PatchPointOpers(const MachineInstr *MI)
     : MI(MI), HasDef(MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
-                     !MI->getOperand(0).isImplicit()),
-      IsAnyReg(getCallingConv() == CallingConv::AnyReg) {
+                     !MI->getOperand(0).isImplicit()) {
 #ifndef NDEBUG
   unsigned CheckStartIdx = 0, e = MI->getNumOperands();
   while (CheckStartIdx < e && MI->getOperand(CheckStartIdx).isReg() &&

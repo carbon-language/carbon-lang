@@ -75,7 +75,6 @@ public:
 private:
   const MachineInstr *MI;
   bool HasDef;
-  bool IsAnyReg;
 
   unsigned getMetaIdx(unsigned Pos = 0) const {
     assert(Pos < MetaEnd && "Meta operand index out of range.");
@@ -89,7 +88,7 @@ private:
 public:
   explicit PatchPointOpers(const MachineInstr *MI);
 
-  bool isAnyReg() const { return IsAnyReg; }
+  bool isAnyReg() const { return (getCallingConv() == CallingConv::AnyReg); }
   bool hasDef() const { return HasDef; }
 
   /// Return the ID for the given patchpoint.
@@ -126,7 +125,7 @@ public:
   /// Get the index at which stack map locations will be recorded.
   /// Arguments are not recorded unless the anyregcc convention is used.
   unsigned getStackMapStartIdx() const {
-    if (IsAnyReg)
+    if (isAnyReg())
       return getArgIdx();
     return getVarIdx();
   }
