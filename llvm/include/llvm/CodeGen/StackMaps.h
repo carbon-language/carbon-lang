@@ -31,8 +31,19 @@ public:
   /// Enumerate the meta operands.
   enum { IDPos, NBytesPos };
 
+private:
+  const MachineInstr* MI;
+
 public:
   explicit StackMapOpers(const MachineInstr *MI);
+
+  /// Return the ID for the given stackmap
+  uint64_t getID() const { return MI->getOperand(IDPos).getImm(); }
+
+  /// Return the number of patchable bytes the given stackmap should emit.
+  uint32_t getNumPatchBytes() const {
+    return MI->getOperand(NBytesPos).getImm();
+  }
 
   /// Get the operand index of the variable list of non-argument operands.
   /// These hold the "live state".
@@ -66,28 +77,50 @@ private:
   bool HasDef;
   bool IsAnyReg;
 
+  unsigned getMetaIdx(unsigned Pos = 0) const {
+    assert(Pos < MetaEnd && "Meta operand index out of range.");
+    return (HasDef ? 1 : 0) + Pos;
+  }
+
+  const MachineOperand &getMetaOper(unsigned Pos) const {
+    return MI->getOperand(getMetaIdx(Pos));
+  }
+
 public:
   explicit PatchPointOpers(const MachineInstr *MI);
 
   bool isAnyReg() const { return IsAnyReg; }
   bool hasDef() const { return HasDef; }
 
-  unsigned getMetaIdx(unsigned Pos = 0) const {
-    assert(Pos < MetaEnd && "Meta operand index out of range.");
-    return (HasDef ? 1 : 0) + Pos;
+  /// Return the ID for the given patchpoint.
+  uint64_t getID() const { return getMetaOper(IDPos).getImm(); }
+
+  /// Return the number of patchable bytes the given patchpoint should emit.
+  uint32_t getNumPatchBytes() const {
+    return getMetaOper(NBytesPos).getImm();
   }
 
-  const MachineOperand &getMetaOper(unsigned Pos) {
-    return MI->getOperand(getMetaIdx(Pos));
+  /// Returns the target of the underlying call.
+  const MachineOperand &getCallTarget() const {
+    return getMetaOper(TargetPos);
+  }
+
+  /// Returns the calling convention
+  CallingConv::ID getCallingConv() const {
+    return getMetaOper(CCPos).getImm();
   }
 
   unsigned getArgIdx() const { return getMetaIdx() + MetaEnd; }
 
+  /// Return the number of call arguments
+  uint32_t getNumCallArgs() const {
+    return MI->getOperand(getMetaIdx(NArgPos)).getImm();
+  }
+
   /// Get the operand index of the variable list of non-argument operands.
   /// These hold the "live state".
   unsigned getVarIdx() const {
-    return getMetaIdx() + MetaEnd +
-           MI->getOperand(getMetaIdx(NArgPos)).getImm();
+    return getMetaIdx() + MetaEnd + getNumCallArgs();
   }
 
   /// Get the index at which stack map locations will be recorded.
