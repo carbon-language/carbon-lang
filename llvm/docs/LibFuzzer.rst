@@ -927,7 +927,7 @@ Trophies
 .. _MemorySanitizer: http://clang.llvm.org/docs/MemorySanitizer.html
 .. _UndefinedBehaviorSanitizer: http://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 .. _`coverage counters`: http://clang.llvm.org/docs/SanitizerCoverage.html#coverage-counters
-.. _`value profile`: http://clang.llvm.org/docs/SanitizerCoverage.html#value-profile
+.. _`value profile`: #value-profile
 .. _`caller-callee pairs`: http://clang.llvm.org/docs/SanitizerCoverage.html#caller-callee-coverage
 .. _BoringSSL: https://boringssl.googlesource.com/boringssl/
 .. _`fuzz various parts of LLVM itself`: `Fuzzing components of LLVM`_
