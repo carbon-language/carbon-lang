@@ -30,7 +30,7 @@ body: |
     %1(64) = G_PTRTOINT { s64, p0 } %0
     %2(64) = G_INTTOPTR { p0, s64 } %1
 
-    ; CHECK: [[TST32:%[0-9]+]](32) = G_ANYEXTEND s32 %3
+    ; CHECK: [[TST32:%[0-9]+]](32) = G_ANYEXT { s32, s1 } %3
     ; CHECK: G_BRCOND s32 [[TST32]], %bb.1.next
     %3(1) = G_TRUNC { s1, s64 } %0
     G_BRCOND s1 %3, %bb.1.next

@@ -107,6 +107,7 @@ MachineLegalizeHelper::narrowScalar(MachineInstr &MI, unsigned TypeIdx,
 MachineLegalizeHelper::LegalizeResult
 MachineLegalizeHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx,
                                    LLT WideTy) {
+  LLT Ty = MI.getType();
   unsigned WideSize = WideTy.getSizeInBits();
   MIRBuilder.setInstr(MI);
 
@@ -124,34 +125,34 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx,
     // original type.
     unsigned Src1Ext = MRI.createGenericVirtualRegister(WideSize);
     unsigned Src2Ext = MRI.createGenericVirtualRegister(WideSize);
-    MIRBuilder.buildAnyExtend(WideTy, Src1Ext, MI.getOperand(1).getReg());
-    MIRBuilder.buildAnyExtend(WideTy, Src2Ext, MI.getOperand(2).getReg());
+    MIRBuilder.buildAnyExt({WideTy, Ty}, Src1Ext, MI.getOperand(1).getReg());
+    MIRBuilder.buildAnyExt({WideTy, Ty}, Src2Ext, MI.getOperand(2).getReg());
 
     unsigned DstExt = MRI.createGenericVirtualRegister(WideSize);
     MIRBuilder.buildInstr(MI.getOpcode(), WideTy)
       .addDef(DstExt).addUse(Src1Ext).addUse(Src2Ext);
 
-    MIRBuilder.buildTrunc(MI.getType(), MI.getOperand(0).getReg(), DstExt);
+    MIRBuilder.buildTrunc({Ty, WideTy}, MI.getOperand(0).getReg(), DstExt);
     MI.eraseFromParent();
     return Legalized;
   }
   case TargetOpcode::G_LOAD: {
-    assert(alignTo(MI.getType().getSizeInBits(), 8) == WideSize &&
+    assert(alignTo(Ty.getSizeInBits(), 8) == WideSize &&
            "illegal to increase number of bytes loaded");
 
     unsigned DstExt = MRI.createGenericVirtualRegister(WideSize);
     MIRBuilder.buildLoad(WideTy, MI.getType(1), DstExt,
                          MI.getOperand(1).getReg(), **MI.memoperands_begin());
-    MIRBuilder.buildTrunc(MI.getType(), MI.getOperand(0).getReg(), DstExt);
+    MIRBuilder.buildTrunc({Ty, WideTy}, MI.getOperand(0).getReg(), DstExt);
     MI.eraseFromParent();
     return Legalized;
   }
   case TargetOpcode::G_STORE: {
-    assert(alignTo(MI.getType().getSizeInBits(), 8) == WideSize &&
+    assert(alignTo(Ty.getSizeInBits(), 8) == WideSize &&
            "illegal to increase number of bytes modified by a store");
 
     unsigned SrcExt = MRI.createGenericVirtualRegister(WideSize);
-    MIRBuilder.buildAnyExtend(WideTy, SrcExt, MI.getOperand(0).getReg());
+    MIRBuilder.buildAnyExt({WideTy, Ty}, SrcExt, MI.getOperand(0).getReg());
     MIRBuilder.buildStore(WideTy, MI.getType(1), SrcExt,
                           MI.getOperand(1).getReg(), **MI.memoperands_begin());
     MI.eraseFromParent();
@@ -160,20 +161,20 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx,
   case TargetOpcode::G_CONSTANT: {
     unsigned DstExt = MRI.createGenericVirtualRegister(WideSize);
     MIRBuilder.buildConstant(WideTy, DstExt, MI.getOperand(1).getImm());
-    MIRBuilder.buildTrunc(MI.getType(), MI.getOperand(0).getReg(), DstExt);
+    MIRBuilder.buildTrunc({Ty, WideTy}, MI.getOperand(0).getReg(), DstExt);
     MI.eraseFromParent();
     return Legalized;
   }
   case TargetOpcode::G_FCONSTANT: {
     unsigned DstExt = MRI.createGenericVirtualRegister(WideSize);
     MIRBuilder.buildFConstant(WideTy, DstExt, *MI.getOperand(1).getFPImm());
-    MIRBuilder.buildFPTrunc(MI.getType(), MI.getOperand(0).getReg(), DstExt);
+    MIRBuilder.buildFPTrunc({Ty, WideTy}, MI.getOperand(0).getReg(), DstExt);
     MI.eraseFromParent();
     return Legalized;
   }
   case TargetOpcode::G_BRCOND: {
     unsigned TstExt = MRI.createGenericVirtualRegister(WideSize);
-    MIRBuilder.buildAnyExtend(WideTy, TstExt, MI.getOperand(0).getReg());
+    MIRBuilder.buildAnyExt({WideTy, Ty}, TstExt, MI.getOperand(0).getReg());
     MIRBuilder.buildBrCond(WideTy, TstExt, *MI.getOperand(1).getMBB());
     MI.eraseFromParent();
     return Legalized;
@@ -185,7 +186,7 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx,
           {WideTy, MI.getType(1)},
           static_cast<CmpInst::Predicate>(MI.getOperand(1).getPredicate()),
           TstExt, MI.getOperand(2).getReg(), MI.getOperand(3).getReg());
-      MIRBuilder.buildTrunc(MI.getType(), MI.getOperand(0).getReg(), TstExt);
+      MIRBuilder.buildTrunc({Ty, WideTy}, MI.getOperand(0).getReg(), TstExt);
       MI.eraseFromParent();
       return Legalized;
     } else {
