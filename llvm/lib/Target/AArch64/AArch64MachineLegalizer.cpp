@@ -62,6 +62,7 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
     setAction({MemOp, 1, p0}, Legal);
   }
 
+  // Constants
   for (auto Ty : {s32, s64}) {
     setAction({TargetOpcode::G_CONSTANT, Ty}, Legal);
     setAction({TargetOpcode::G_FCONSTANT, Ty}, Legal);
@@ -72,8 +73,13 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
 
   setAction({TargetOpcode::G_FCONSTANT, s16}, WidenScalar);
 
+  // Control-flow
   setAction({G_BR, LLT::unsized()}, Legal);
+  setAction({G_BRCOND, s32}, Legal);
+  for (auto Ty : {s1, s8, s16})
+    setAction({G_BRCOND, Ty}, WidenScalar);
 
+  // Pointer-handling
   setAction({G_FRAME_INDEX, p0}, Legal);
 
   setAction({G_PTRTOINT, 0, s64}, Legal);

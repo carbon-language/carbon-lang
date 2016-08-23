@@ -6,6 +6,8 @@
   define void @test_simple() {
   entry:
     ret void
+  next:
+    ret void
   }
 ...
 
@@ -16,6 +18,7 @@ registers:
   - { id: 0, class: _ }
   - { id: 1, class: _ }
   - { id: 2, class: _ }
+  - { id: 3, class: _ }
 body: |
   bb.0.entry:
     liveins: %x0, %x1, %x2, %x3
@@ -26,4 +29,11 @@ body: |
     ; CHECK: %2(64) = G_INTTOPTR { p0, s64 } %1
     %1(64) = G_PTRTOINT { s64, p0 } %0
     %2(64) = G_INTTOPTR { p0, s64 } %1
+
+    ; CHECK: [[TST32:%[0-9]+]](32) = G_ANYEXTEND s32 %3
+    ; CHECK: G_BRCOND s32 [[TST32]], %bb.1.next
+    %3(1) = G_TRUNC { s1, s64 } %0
+    G_BRCOND s1 %3, %bb.1.next
+
+  bb.1.next:
 ...

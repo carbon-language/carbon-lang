@@ -30,7 +30,12 @@ MachineLegalizer::MachineLegalizer() : TablesInitialized(false) {
   DefaultActions[TargetOpcode::G_ANYEXTEND] = Legal;
   DefaultActions[TargetOpcode::G_TRUNC] = Legal;
 
+  DefaultActions[TargetOpcode::G_INTRINSIC] = Legal;
+  DefaultActions[TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS] = Legal;
+
   DefaultActions[TargetOpcode::G_ADD] = NarrowScalar;
+
+  DefaultActions[TargetOpcode::G_BRCOND] = WidenScalar;
 }
 
 void MachineLegalizer::computeTables() {

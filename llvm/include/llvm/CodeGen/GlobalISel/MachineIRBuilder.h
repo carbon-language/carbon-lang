@@ -169,7 +169,8 @@ public:
   ///
   /// G_BRCOND is a conditional branch to \p Dest. At the beginning of
   /// legalization, \p Ty will be a single bit (s1). Targets with interesting
-  /// flags registers may change this.
+  /// flags registers may change this. For a wider type, whether the branch is
+  /// taken must only depend on bit 0 (for now).
   ///
   /// \pre setBasicBlock or setMI must have been called.
   ///

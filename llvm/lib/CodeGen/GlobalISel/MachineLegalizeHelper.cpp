@@ -173,6 +173,13 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx,
     MI.eraseFromParent();
     return Legalized;
   }
+  case TargetOpcode::G_BRCOND: {
+    unsigned TstExt = MRI.createGenericVirtualRegister(WideSize);
+    MIRBuilder.buildAnyExtend(WideTy, TstExt, MI.getOperand(0).getReg());
+    MIRBuilder.buildBrCond(WideTy, TstExt, *MI.getOperand(1).getMBB());
+    MI.eraseFromParent();
+    return Legalized;
+  }
   }
 }
 
