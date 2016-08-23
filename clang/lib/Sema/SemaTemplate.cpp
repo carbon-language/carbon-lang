@@ -487,6 +487,8 @@ bool Sema::DiagnoseUninstantiableTemplate(SourceLocation PointOfInstantiation,
   QualType InstantiationTy;
   if (TagDecl *TD = dyn_cast<TagDecl>(Instantiation))
     InstantiationTy = Context.getTypeDeclType(TD);
+  else
+    InstantiationTy = cast<FunctionDecl>(Instantiation)->getType();
   if (!Complain || (PatternDef && PatternDef->isInvalidDecl())) {
     // Say nothing
   } else if (PatternDef) {
@@ -498,30 +500,15 @@ bool Sema::DiagnoseUninstantiableTemplate(SourceLocation PointOfInstantiation,
     // we're lexically inside it.
     Instantiation->setInvalidDecl();
   } else if (InstantiatedFromMember) {
-    if (isa<FunctionDecl>(Instantiation)) {
-      Diag(PointOfInstantiation,
-           diag::err_explicit_instantiation_undefined_member)
-        << 1 << Instantiation->getDeclName() << Instantiation->getDeclContext();
-    } else {
-      Diag(PointOfInstantiation,
-           diag::err_implicit_instantiate_member_undefined)
-        << InstantiationTy;
-    }
-    Diag(Pattern->getLocation(), isa<FunctionDecl>(Instantiation)
-                                     ? diag::note_explicit_instantiation_here
-                                     : diag::note_member_declared_at);
+    Diag(PointOfInstantiation,
+         diag::err_implicit_instantiate_member_undefined)
+      << InstantiationTy;
+    Diag(Pattern->getLocation(), diag::note_member_declared_at);
   } else {
-    if (isa<FunctionDecl>(Instantiation))
-      Diag(PointOfInstantiation,
-           diag::err_explicit_instantiation_undefined_func_template)
-        << Pattern;
-    else
-      Diag(PointOfInstantiation, diag::err_template_instantiate_undefined)
-        << (TSK != TSK_ImplicitInstantiation)
-        << InstantiationTy;
-    Diag(Pattern->getLocation(), isa<FunctionDecl>(Instantiation)
-                                     ? diag::note_explicit_instantiation_here
-                                     : diag::note_template_decl_here);
+    Diag(PointOfInstantiation, diag::err_template_instantiate_undefined)
+      << (TSK != TSK_ImplicitInstantiation)
+      << InstantiationTy;
+    Diag(Pattern->getLocation(), diag::note_template_decl_here);
   }
 
   // In general, Instantiation isn't marked invalid to get more than one
