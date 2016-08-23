@@ -433,7 +433,6 @@ else ()
     if(NOT COMPILER_RT_DEBUG)
       append_list_if(COMPILER_RT_HAS_OMIT_FRAME_POINTER_FLAG -fomit-frame-pointer BUILTIN_CFLAGS)
     endif()
-    append_list_if(COMPILER_RT_HAS_FREESTANDING_FLAG -ffreestanding BUILTIN_CFLAGS)
   endif()
 
   foreach (arch ${BUILTIN_SUPPORTED_ARCH})
