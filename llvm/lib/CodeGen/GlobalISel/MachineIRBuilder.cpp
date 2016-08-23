@@ -264,6 +264,7 @@ MachineInstrBuilder MachineIRBuilder::buildSelect(LLT Ty, unsigned Res,
 }
 
 void MachineIRBuilder::validateTruncExt(ArrayRef<LLT> Tys, bool IsExtend) {
+#ifndef NDEBUG
   assert(Tys.size() == 2 && "cast should have a source and a dest type");
   LLT DstTy{Tys[0]}, SrcTy{Tys[1]};
 
@@ -280,4 +281,5 @@ void MachineIRBuilder::validateTruncExt(ArrayRef<LLT> Tys, bool IsExtend) {
   else
     assert(DstTy.getSizeInBits() < SrcTy.getSizeInBits() &&
            "invalid widening trunc");
+#endif
 }
