@@ -105,6 +105,8 @@ MachineLegalizeHelper::narrowScalar(MachineInstr &MI, LLT NarrowTy) {
 MachineLegalizeHelper::LegalizeResult
 MachineLegalizeHelper::widenScalar(MachineInstr &MI, LLT WideTy) {
   unsigned WideSize = WideTy.getSizeInBits();
+  MIRBuilder.setInstr(MI);
+
   switch (MI.getOpcode()) {
   default:
     return UnableToLegalize;
@@ -117,9 +119,6 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, LLT WideTy) {
     // Perform operation at larger width (any extension is fine here, high bits
     // don't affect the result) and then truncate the result back to the
     // original type.
-
-    MIRBuilder.setInstr(MI);
-
     unsigned Src1Ext = MRI.createGenericVirtualRegister(WideSize);
     unsigned Src2Ext = MRI.createGenericVirtualRegister(WideSize);
     MIRBuilder.buildAnyExtend(WideTy, Src1Ext, MI.getOperand(1).getReg());
@@ -133,8 +132,29 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, LLT WideTy) {
     MI.eraseFromParent();
     return Legalized;
   }
+  case TargetOpcode::G_LOAD: {
+    assert(alignTo(MI.getType().getSizeInBits(), 8) == WideSize &&
+           "illegal to increase number of bytes loaded");
+
+    unsigned DstExt = MRI.createGenericVirtualRegister(WideSize);
+    MIRBuilder.buildLoad(WideTy, MI.getType(1), DstExt,
+                         MI.getOperand(1).getReg(), **MI.memoperands_begin());
+    MIRBuilder.buildTrunc(MI.getType(), MI.getOperand(0).getReg(), DstExt);
+    MI.eraseFromParent();
+    return Legalized;
+  }
+  case TargetOpcode::G_STORE: {
+    assert(alignTo(MI.getType().getSizeInBits(), 8) == WideSize &&
+           "illegal to increase number of bytes modified by a store");
+
+    unsigned SrcExt = MRI.createGenericVirtualRegister(WideSize);
+    MIRBuilder.buildAnyExtend(WideTy, SrcExt, MI.getOperand(0).getReg());
+    MIRBuilder.buildStore(WideTy, MI.getType(1), SrcExt,
+                          MI.getOperand(1).getReg(), **MI.memoperands_begin());
+    MI.eraseFromParent();
+    return Legalized;
+  }
   case TargetOpcode::G_CONSTANT: {
-    MIRBuilder.setInstr(MI);
     unsigned DstExt = MRI.createGenericVirtualRegister(WideSize);
     MIRBuilder.buildConstant(WideTy, DstExt, MI.getOperand(1).getImm());
     MIRBuilder.buildTrunc(MI.getType(), MI.getOperand(0).getReg(), DstExt);
@@ -142,7 +162,6 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, LLT WideTy) {
     return Legalized;
   }
   case TargetOpcode::G_FCONSTANT: {
-    MIRBuilder.setInstr(MI);
     unsigned DstExt = MRI.createGenericVirtualRegister(WideSize);
     MIRBuilder.buildFConstant(WideTy, DstExt, *MI.getOperand(1).getFPImm());
     MIRBuilder.buildFPTrunc(MI.getType(), MI.getOperand(0).getReg(), DstExt);
