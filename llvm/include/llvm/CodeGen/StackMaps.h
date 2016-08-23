@@ -31,9 +31,6 @@ public:
   /// Enumerate the meta operands.
   enum { IDPos, NBytesPos };
 
-private:
-  const MachineInstr *MI;
-
 public:
   explicit StackMapOpers(const MachineInstr *MI);
 

@@ -35,8 +35,7 @@ static cl::opt<int> StackMapVersion(
 
 const char *StackMaps::WSMP = "Stack Maps: ";
 
-StackMapOpers::StackMapOpers(const MachineInstr *MI) 
-  : MI(MI) {
+StackMapOpers::StackMapOpers(const MachineInstr *MI) {
   assert(getVarIdx() <= MI->getNumOperands() &&
          "invalid stackmap definition");
 }
