@@ -34,15 +34,15 @@ MachineLegalizeHelper::MachineLegalizeHelper(MachineFunction &MF)
 MachineLegalizeHelper::LegalizeResult MachineLegalizeHelper::legalizeInstr(
     MachineInstr &MI, const MachineLegalizer &Legalizer) {
   auto Action = Legalizer.getAction(MI);
-  switch (Action.first) {
+  switch (std::get<0>(Action)) {
   case MachineLegalizer::Legal:
     return AlreadyLegal;
   case MachineLegalizer::NarrowScalar:
-    return narrowScalar(MI, Action.second);
+    return narrowScalar(MI, std::get<1>(Action), std::get<2>(Action));
   case MachineLegalizer::WidenScalar:
-    return widenScalar(MI, Action.second);
+    return widenScalar(MI, std::get<1>(Action), std::get<2>(Action));
   case MachineLegalizer::FewerElements:
-    return fewerElementsVector(MI, Action.second);
+    return fewerElementsVector(MI, std::get<1>(Action), std::get<2>(Action));
   default:
     return UnableToLegalize;
   }
@@ -63,7 +63,9 @@ void MachineLegalizeHelper::extractParts(unsigned Reg, LLT Ty, int NumParts,
 }
 
 MachineLegalizeHelper::LegalizeResult
-MachineLegalizeHelper::narrowScalar(MachineInstr &MI, LLT NarrowTy) {
+MachineLegalizeHelper::narrowScalar(MachineInstr &MI, unsigned TypeIdx,
+                                    LLT NarrowTy) {
+  assert(TypeIdx == 0 && "don't know how to handle secondary types yet");
   switch (MI.getOpcode()) {
   default:
     return UnableToLegalize;
@@ -103,7 +105,10 @@ MachineLegalizeHelper::narrowScalar(MachineInstr &MI, LLT NarrowTy) {
 }
 
 MachineLegalizeHelper::LegalizeResult
-MachineLegalizeHelper::widenScalar(MachineInstr &MI, LLT WideTy) {
+MachineLegalizeHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx,
+                                   LLT WideTy) {
+  assert(TypeIdx == 0 && "don't know how to handle secondary types yet");
+
   unsigned WideSize = WideTy.getSizeInBits();
   MIRBuilder.setInstr(MI);
 
@@ -172,7 +177,9 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, LLT WideTy) {
 }
 
 MachineLegalizeHelper::LegalizeResult
-MachineLegalizeHelper::fewerElementsVector(MachineInstr &MI, LLT NarrowTy) {
+MachineLegalizeHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
+                                           LLT NarrowTy) {
+  assert(TypeIdx == 0 && "don't know how to handle secondary types yet");
   switch (MI.getOpcode()) {
   default:
     return UnableToLegalize;
