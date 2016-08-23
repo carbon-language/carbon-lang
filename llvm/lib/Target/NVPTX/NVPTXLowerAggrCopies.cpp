@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "NVPTXLowerAggrCopies.h"
+#include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/StackProtector.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -40,6 +41,7 @@ struct NVPTXLowerAggrCopies : public FunctionPass {
   NVPTXLowerAggrCopies() : FunctionPass(ID) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addPreserved<MachineFunctionAnalysis>();
     AU.addPreserved<StackProtector>();
   }
 

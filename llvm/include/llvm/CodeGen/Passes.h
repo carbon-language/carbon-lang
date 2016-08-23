@@ -377,9 +377,6 @@ namespace llvm {
 
   /// This pass performs software pipelining on machine instructions.
   extern char &MachinePipelinerID;
-
-  /// This pass frees the memory occupied by the MachineFunction.
-  FunctionPass *createFreeMachineFunctionPass();
 } // End llvm namespace
 
 /// Target machine pass initializer for passes with dependencies. Use with

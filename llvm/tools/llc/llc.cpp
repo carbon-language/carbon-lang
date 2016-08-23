@@ -450,7 +450,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
       LLVMTargetMachine &LLVMTM = static_cast<LLVMTargetMachine&>(*Target);
       TargetPassConfig &TPC = *LLVMTM.createPassConfig(PM);
       PM.add(&TPC);
-      LLVMTM.addMachineModuleInfo(PM, MIR.get());
+      LLVMTM.addMachineModuleInfo(PM);
+      LLVMTM.addMachineFunctionAnalysis(PM, MIR.get());
       TPC.printAndVerify("");
 
       for (const std::string &RunPassName : *RunPassNames) {
