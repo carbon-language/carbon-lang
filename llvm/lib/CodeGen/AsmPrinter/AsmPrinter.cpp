@@ -2571,14 +2571,7 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
   return true;
 }
 
-bool AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  SetupMachineFunction(MF);
-  EmitFunctionBody();
 
-  MachineModuleInfo &MMI = getAnalysis<MachineModuleInfo>();
-  MMI.deleteMachineFunction(MF);
-  return false;
-}
 
 GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy &S) {
   if (!S.usesMetadata())

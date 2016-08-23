@@ -204,7 +204,11 @@ public:
   bool doFinalization(Module &M) override;
 
   /// Emit the specified function out to the OutStreamer.
-  bool runOnMachineFunction(MachineFunction &MF) override;
+  bool runOnMachineFunction(MachineFunction &MF) override {
+    SetupMachineFunction(MF);
+    EmitFunctionBody();
+    return false;
+  }
 
   //===------------------------------------------------------------------===//
   // Coarse grained IR lowering routines.
