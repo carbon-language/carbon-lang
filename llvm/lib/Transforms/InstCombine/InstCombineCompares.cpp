@@ -1983,9 +1983,10 @@ Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &Cmp,
                                                const APInt *C) {
   // An exact shr only shifts out zero bits, so:
   // icmp eq/ne (shr X, Y), 0 --> icmp eq/ne X, 0
+  Value *X = Shr->getOperand(0);
   CmpInst::Predicate Pred = Cmp.getPredicate();
   if (Cmp.isEquality() && Shr->isExact() && Shr->hasOneUse() && *C == 0)
-    return new ICmpInst(Pred, Shr->getOperand(0), Cmp.getOperand(1));
+    return new ICmpInst(Pred, X, Cmp.getOperand(1));
 
   // FIXME: This check restricts all folds under here to scalar types.
   // Handle equality comparisons of shift-by-constant.
@@ -2001,17 +2002,17 @@ Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &Cmp,
   if (ShAmtVal >= TypeBits || ShAmtVal == 0)
     return nullptr;
 
+  bool IsAShr = Shr->getOpcode() == Instruction::AShr;
   if (!Cmp.isEquality()) {
     // If we have an unsigned comparison and an ashr, we can't simplify this.
     // Similarly for signed comparisons with lshr.
-    if (Cmp.isSigned() != (Shr->getOpcode() == Instruction::AShr))
+    if (Cmp.isSigned() != IsAShr)
       return nullptr;
 
     // Otherwise, all lshr and most exact ashr's are equivalent to a udiv/sdiv
     // by a power of 2.  Since we already have logic to simplify these,
     // transform to div and then simplify the resultant comparison.
-    if (Shr->getOpcode() == Instruction::AShr &&
-        (!Shr->isExact() || ShAmtVal == TypeBits - 1))
+    if (IsAShr && (!Shr->isExact() || ShAmtVal == TypeBits - 1))
       return nullptr;
 
     // Revisit the shift (to delete it).
@@ -2020,11 +2021,8 @@ Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &Cmp,
     Constant *DivCst = ConstantInt::get(
         Shr->getType(), APInt::getOneBitSet(TypeBits, ShAmtVal));
 
-    Value *Tmp = Shr->getOpcode() == Instruction::AShr
-                     ? Builder->CreateSDiv(Shr->getOperand(0), DivCst, "",
-                                           Shr->isExact())
-                     : Builder->CreateUDiv(Shr->getOperand(0), DivCst, "",
-                                           Shr->isExact());
+    Value *Tmp = IsAShr ? Builder->CreateSDiv(X, DivCst, "", Shr->isExact())
+                        : Builder->CreateUDiv(X, DivCst, "", Shr->isExact());
 
     Cmp.setOperand(0, Tmp);
 
@@ -2048,15 +2046,14 @@ Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &Cmp,
   //  (X & 4) >> 1 == 2  --> (X & 4) == 4.
   ConstantInt *ShiftedCmpRHS = Builder->getInt(*C << ShAmtVal);
   if (Shr->hasOneUse() && Shr->isExact())
-    return new ICmpInst(Pred, Shr->getOperand(0), ShiftedCmpRHS);
+    return new ICmpInst(Pred, X, ShiftedCmpRHS);
 
   if (Shr->hasOneUse()) {
     // Otherwise strength reduce the shift into an and.
     APInt Val(APInt::getHighBitsSet(TypeBits, TypeBits - ShAmtVal));
     Constant *Mask = Builder->getInt(Val);
 
-    Value *And =
-        Builder->CreateAnd(Shr->getOperand(0), Mask, Shr->getName() + ".mask");
+    Value *And = Builder->CreateAnd(X, Mask, Shr->getName() + ".mask");
     return new ICmpInst(Pred, And, ShiftedCmpRHS);
   }
 
