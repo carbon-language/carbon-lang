@@ -858,6 +858,10 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
         << MI->getNumOperands() << " given.\n";
   }
 
+  if (MI->isPHI() && MF->getProperties().hasProperty(
+          MachineFunctionProperties::Property::NoPHIs))
+    report("Found PHI instruction with NoPHIs property set", MI);
+
   // Check the tied operands.
   if (MI->isInlineAsm())
     verifyInlineAsm(MI);

@@ -160,6 +160,8 @@ private:
   ///
   /// Return null if the name isn't a register bank.
   const RegisterBank *getRegBank(const MachineFunction &MF, StringRef Name);
+
+  void computeFunctionProperties(MachineFunction &MF);
 };
 
 } // end namespace llvm
@@ -279,6 +281,19 @@ void MIRParserImpl::createDummyFunction(StringRef Name, Module &M) {
   new UnreachableInst(Context, BB);
 }
 
+static bool hasPHI(const MachineFunction &MF) {
+  for (const MachineBasicBlock &MBB : MF)
+    for (const MachineInstr &MI : MBB)
+      if (MI.isPHI())
+        return true;
+  return false;
+}
+
+void MIRParserImpl::computeFunctionProperties(MachineFunction &MF) {
+  if (!hasPHI(MF))
+    MF.getProperties().set(MachineFunctionProperties::Property::NoPHIs);
+}
+
 bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   auto It = Functions.find(MF.getName());
   if (It == Functions.end())
@@ -353,6 +368,9 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   PFS.SM = &SM;
 
   inferRegisterInfo(PFS, YamlMF);
+
+  computeFunctionProperties(MF);
+
   // FIXME: This is a temporary workaround until the reserved registers can be
   // serialized.
   MF.getRegInfo().freezeReservedRegs(MF);
