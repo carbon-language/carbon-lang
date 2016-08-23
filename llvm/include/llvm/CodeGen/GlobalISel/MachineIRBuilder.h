@@ -156,6 +156,28 @@ public:
   /// \return The newly created instruction.
   MachineInstrBuilder buildAnyExtend(LLT Ty, unsigned Res, unsigned Op);
 
+  /// Build and insert \p Res<def> = G_SEXT \p { DstTy, SrcTy }\p Op
+  ///
+  /// G_SEXT produces a register of the specified width, with bits 0 to
+  /// sizeof(\p Ty) * 8 set to \p Op. The remaining bits are duplicated from the
+  /// high bit of \p Op (i.e. 2s-complement sign extended).
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return The newly created instruction.
+  MachineInstrBuilder buildSExt(ArrayRef<LLT> Tys, unsigned Res, unsigned Op);
+
+  /// Build and insert \p Res<def> = G_ZEXT \p { DstTy, SrcTy } \p Op
+  ///
+  /// G_ZEXT produces a register of the specified width, with bits 0 to
+  /// sizeof(\p Ty) * 8 set to \p Op. The remaining bits are 0. For a vector
+  /// register, each element is extended individually.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return The newly created instruction.
+  MachineInstrBuilder buildZExt(ArrayRef<LLT> Tys, unsigned Res, unsigned Op);
+
   /// Build and insert G_BR unsized \p Dest
   ///
   /// G_BR is an unconditional branch to \p Dest.

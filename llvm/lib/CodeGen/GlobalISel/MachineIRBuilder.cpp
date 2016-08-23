@@ -146,6 +146,16 @@ MachineInstrBuilder MachineIRBuilder::buildAnyExtend(LLT Ty, unsigned Res,
   return buildInstr(TargetOpcode::G_ANYEXTEND, Ty).addDef(Res).addUse(Op);
 }
 
+MachineInstrBuilder MachineIRBuilder::buildSExt(ArrayRef<LLT> Tys, unsigned Res,
+                                                unsigned Op) {
+  return buildInstr(TargetOpcode::G_SEXT, Tys).addDef(Res).addUse(Op);
+}
+
+MachineInstrBuilder MachineIRBuilder::buildZExt(ArrayRef<LLT> Tys, unsigned Res,
+                                                unsigned Op) {
+  return buildInstr(TargetOpcode::G_ZEXT, Tys).addDef(Res).addUse(Op);
+}
+
 MachineInstrBuilder MachineIRBuilder::buildExtract(ArrayRef<LLT> ResTys,
                                                    ArrayRef<unsigned> Results,
                                                    ArrayRef<uint64_t> Indices,

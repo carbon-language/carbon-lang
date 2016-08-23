@@ -73,6 +73,19 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
 
   setAction({TargetOpcode::G_FCONSTANT, s16}, WidenScalar);
 
+  // Comparisons: we produce a result in s32 with undefined high-bits for
+  // now. Values being compared can be 32 or 64-bits.
+  for (auto CmpOp : { G_ICMP }) {
+    setAction({CmpOp, 0, s32}, Legal);
+    setAction({CmpOp, 1, s32}, Legal);
+    setAction({CmpOp, 1, s64}, Legal);
+
+    for (auto Ty : {s1, s8, s16}) {
+      setAction({CmpOp, 0, Ty}, WidenScalar);
+      setAction({CmpOp, 1, Ty}, WidenScalar);
+    }
+  }
+
   // Control-flow
   setAction({G_BR, LLT::unsized()}, Legal);
   setAction({G_BRCOND, s32}, Legal);
