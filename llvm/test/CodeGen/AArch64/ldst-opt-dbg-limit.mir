@@ -31,7 +31,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: true
 tracksRegLiveness: false
-tracksSubRegLiveness: false
 liveins:         
   - { reg: '%x0' }
   - { reg: '%w1' }
@@ -88,7 +87,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: true
 tracksRegLiveness: false
-tracksSubRegLiveness: false
 liveins:         
   - { reg: '%x0' }
   - { reg: '%w1' }

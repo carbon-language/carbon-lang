@@ -178,7 +178,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
-tracksSubRegLiveness: false
 registers:       
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
@@ -225,7 +224,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
-tracksSubRegLiveness: false
 registers:       
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
@@ -270,7 +268,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
-tracksSubRegLiveness: false
 registers:       
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
@@ -319,7 +316,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
-tracksSubRegLiveness: false
 registers:       
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
@@ -368,7 +364,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
-tracksSubRegLiveness: false
 registers:       
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
@@ -417,7 +412,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
-tracksSubRegLiveness: false
 registers:       
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
@@ -466,7 +460,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
-tracksSubRegLiveness: false
 registers:       
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
@@ -515,7 +508,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
-tracksSubRegLiveness: false
 registers:       
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
@@ -628,7 +620,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
-tracksSubRegLiveness: false
 registers:       
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }

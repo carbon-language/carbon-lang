@@ -35,7 +35,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
-tracksSubRegLiveness: false
 registers:
   - { id: 0, class: g8rc }
   - { id: 1, class: g8rc }

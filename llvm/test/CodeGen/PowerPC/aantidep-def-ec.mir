@@ -47,7 +47,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    true
 allVRegsAllocated: true
 tracksRegLiveness: true
-tracksSubRegLiveness: false
 liveins:         
   - { reg: '%x3' }
   - { reg: '%x4' }

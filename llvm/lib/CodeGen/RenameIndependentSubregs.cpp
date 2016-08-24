@@ -363,14 +363,14 @@ void RenameIndependentSubregs::computeMainRangesFixFlags(
 
 bool RenameIndependentSubregs::runOnMachineFunction(MachineFunction &MF) {
   // Skip renaming if liveness of subregister is not tracked.
-  if (!MF.getSubtarget().enableSubRegLiveness())
+  MRI = &MF.getRegInfo();
+  if (!MRI->subRegLivenessEnabled())
     return false;
 
   DEBUG(dbgs() << "Renaming independent subregister live ranges in "
         << MF.getName() << '\n');
 
   LIS = &getAnalysis<LiveIntervals>();
-  MRI = &MF.getRegInfo();
   TII = MF.getSubtarget().getInstrInfo();
 
   // Iterate over all vregs. Note that we query getNumVirtRegs() the newly

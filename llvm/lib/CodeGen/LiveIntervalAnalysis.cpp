@@ -58,10 +58,6 @@ static cl::opt<bool> EnablePrecomputePhysRegs(
 static bool EnablePrecomputePhysRegs = false;
 #endif // NDEBUG
 
-static cl::opt<bool> EnableSubRegLiveness(
-  "enable-subreg-liveness", cl::Hidden, cl::init(true),
-  cl::desc("Enable subregister liveness tracking."));
-
 namespace llvm {
 cl::opt<bool> UseSegmentSetForPhysRegs(
     "use-segment-set-for-physregs", cl::Hidden, cl::init(true),
@@ -118,9 +114,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
   Indexes = &getAnalysis<SlotIndexes>();
   DomTree = &getAnalysis<MachineDominatorTree>();
-
-  if (EnableSubRegLiveness && MF->getSubtarget().enableSubRegLiveness())
-    MRI->enableSubRegLiveness(true);
 
   if (!LRCalc)
     LRCalc = new LiveRangeCalc();

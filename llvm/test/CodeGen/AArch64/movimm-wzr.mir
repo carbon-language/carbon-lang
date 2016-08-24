@@ -18,7 +18,6 @@ exposesReturnsTwice: false
 hasInlineAsm:    false
 allVRegsAllocated: true
 tracksRegLiveness: false
-tracksSubRegLiveness: false
 frameInfo:
   isFrameAddressTaken: false
   isReturnAddressTaken: false

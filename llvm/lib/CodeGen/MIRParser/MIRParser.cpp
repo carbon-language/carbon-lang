@@ -401,7 +401,6 @@ bool MIRParserImpl::initializeRegisterInfo(PerFunctionMIParsingState &PFS,
   assert(RegInfo.tracksLiveness());
   if (!YamlMF.TracksRegLiveness)
     RegInfo.invalidateLiveness();
-  RegInfo.enableSubRegLiveness(YamlMF.TracksSubRegLiveness);
 
   SMDiagnostic Error;
   // Parse the virtual register information.
