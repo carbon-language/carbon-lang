@@ -1,26 +1,5 @@
 include(CheckLibraryExists)
 include(CheckCXXCompilerFlag)
-
-check_library_exists(c fopen "" LIBCXX_HAS_C_LIB)
-check_library_exists(gcc_s __gcc_personality_v0 "" LIBCXX_HAS_GCC_S_LIB)
-
-# libc++ is built with -nodefaultlibs, so we want all our checks to also
-# use this option, otherwise we may end up with an inconsistency between
-# the flags we think we require during configuration (if the checks are
-# performed without -nodefaultlibs) and the flags that are actually
-# required during compilation (which has the -nodefaultlibs). libc is
-# required for the link to go through.
-check_cxx_compiler_flag(-nodefaultlibs LIBCXX_SUPPORTS_NODEFAULTLIBS_FLAG)
-if (LIBCXX_SUPPORTS_NODEFAULTLIBS_FLAG)
-  list(APPEND CMAKE_REQUIRED_LIBRARIES -nodefaultlibs)
-  if (LIBCXX_HAS_C_LIB)
-    list(APPEND CMAKE_REQUIRED_LIBRARIES c)
-  endif ()
-  if (LIBCXX_HAS_GCC_S_LIB)
-    list(APPEND CMAKE_REQUIRED_LIBRARIES gcc_s)
-  endif ()
-endif ()
-
 include(CheckLibcxxAtomic)
 
 # Check compiler flags
@@ -35,5 +14,7 @@ check_cxx_compiler_flag(/GR-                    LIBCXX_HAS_NO_GR_FLAG)
 
 # Check libraries
 check_library_exists(pthread pthread_create "" LIBCXX_HAS_PTHREAD_LIB)
+check_library_exists(c fopen "" LIBCXX_HAS_C_LIB)
 check_library_exists(m ccos "" LIBCXX_HAS_M_LIB)
 check_library_exists(rt clock_gettime "" LIBCXX_HAS_RT_LIB)
+check_library_exists(gcc_s __gcc_personality_v0 "" LIBCXX_HAS_GCC_S_LIB)
