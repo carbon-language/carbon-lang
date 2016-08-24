@@ -1540,16 +1540,18 @@ bool BinaryFunction::fixCFIState() {
       };
 
   uint32_t State = 0;
-  BinaryBasicBlock *EntryBB = *BasicBlocksLayout.begin();
+  auto *FDEStartBB = BasicBlocksLayout[0];
   for (uint32_t I = 0, E = BasicBlocksLayout.size(); I != E; ++I) {
-    BinaryBasicBlock *BB = BasicBlocksLayout[I];
+    auto *BB = BasicBlocksLayout[I];
     uint32_t BBIndex = getIndex(BB);
 
     // Hot-cold border: check if this is the first BB to be allocated in a cold
-    // region (a different function). If yes, we need to reset the CFI state.
-    if (I != 0 &&
-        BB->IsCold != BasicBlocksLayout[I - 1]->IsCold)
+    // region (a different FDE). If yes, we need to reset the CFI state and
+    // the FDEStartBB that is used to insert remember_state CFIs (t12863876).
+    if (I != 0 && BB->IsCold != BasicBlocksLayout[I - 1]->IsCold) {
       State = 0;
+      FDEStartBB = BB;
+    }
 
     // We need to recover the correct state if it doesn't match expected
     // state at BB entry point.
@@ -1561,10 +1563,10 @@ bool BinaryFunction::fixCFIState() {
       // reach the desired state.
       uint32_t OldState = BBCFIState[BBIndex];
       // Remember state at function entry point (our reference state).
-      BinaryBasicBlock::const_iterator InsertIt = EntryBB->begin();
-      while (InsertIt != EntryBB->end() && BC.MIA->isCFI(*InsertIt))
+      BinaryBasicBlock::const_iterator InsertIt = FDEStartBB->begin();
+      while (InsertIt != FDEStartBB->end() && BC.MIA->isCFI(*InsertIt))
         ++InsertIt;
-      addCFIPseudo(EntryBB, InsertIt, FrameInstructions.size());
+      addCFIPseudo(FDEStartBB, InsertIt, FrameInstructions.size());
       FrameInstructions.emplace_back(
           MCCFIInstruction::createRememberState(nullptr));
       // Restore state
