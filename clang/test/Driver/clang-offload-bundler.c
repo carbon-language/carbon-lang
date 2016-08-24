@@ -1,3 +1,6 @@
+// REQUIRES: x86-registered-target
+// REQUIRES: powerpc-registered-target
+
 //
 // Generate all the types of files we can bundle.
 //
