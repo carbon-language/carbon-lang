@@ -9,7 +9,8 @@ define i16 @test1(float %f) nounwind {
 ; X32-NEXT:    xorps %xmm1, %xmm1
 ; X32-NEXT:    subss LCPI0_0, %xmm0
 ; X32-NEXT:    mulss LCPI0_1, %xmm0
-; X32-NEXT:    minss LCPI0_2, %xmm0
+; X32-NEXT:    movss {{.*#+}} xmm2 = mem[0],zero,zero,zero
+; X32-NEXT:    minss %xmm2, %xmm0
 ; X32-NEXT:    maxss %xmm1, %xmm0
 ; X32-NEXT:    cvttss2si %xmm0, %eax
 ; X32-NEXT:    ## kill: %AX<def> %AX<kill> %EAX<kill>
@@ -21,7 +22,8 @@ define i16 @test1(float %f) nounwind {
 ; X64-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
 ; X64-NEXT:    subss {{.*}}(%rip), %xmm0
 ; X64-NEXT:    mulss {{.*}}(%rip), %xmm0
-; X64-NEXT:    minss {{.*}}(%rip), %xmm0
+; X64-NEXT:    movss {{.*#+}} xmm2 = mem[0],zero,zero,zero
+; X64-NEXT:    minss %xmm2, %xmm0
 ; X64-NEXT:    maxss %xmm1, %xmm0
 ; X64-NEXT:    cvttss2si %xmm0, %eax
 ; X64-NEXT:    ## kill: %AX<def> %AX<kill> %EAX<kill>
