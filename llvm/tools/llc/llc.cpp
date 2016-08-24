@@ -450,7 +450,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
       LLVMTargetMachine &LLVMTM = static_cast<LLVMTargetMachine&>(*Target);
       TargetPassConfig &TPC = *LLVMTM.createPassConfig(PM);
       PM.add(&TPC);
-      LLVMTM.addMachineModuleInfo(PM);
+      PM.add(new MachineModuleInfo(&LLVMTM));
       LLVMTM.addMachineFunctionAnalysis(PM, MIR.get());
       TPC.printAndVerify("");
 

@@ -23,12 +23,14 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 using namespace llvm::dwarf;
 
 // Handle the Pass registration stuff necessary to use DataLayout's.
-INITIALIZE_PASS(MachineModuleInfo, "machinemoduleinfo",
-                "Machine Module Information", false, false)
+INITIALIZE_TM_PASS(MachineModuleInfo, "machinemoduleinfo",
+                   "Machine Module Information", false, false)
 char MachineModuleInfo::ID = 0;
 
 // Out of line virtual method.
@@ -186,18 +188,10 @@ void MMIAddrLabelMapCallbackPtr::allUsesReplacedWith(Value *V2) {
 
 //===----------------------------------------------------------------------===//
 
-MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI,
-                                     const MCRegisterInfo &MRI,
-                                     const MCObjectFileInfo *MOFI)
-  : ImmutablePass(ID), Context(&MAI, &MRI, MOFI, nullptr, false) {
+MachineModuleInfo::MachineModuleInfo(const TargetMachine *TM)
+  : ImmutablePass(ID), Context(TM->getMCAsmInfo(), TM->getMCRegisterInfo(),
+                               TM->getObjFileLowering(), nullptr, false) {
   initializeMachineModuleInfoPass(*PassRegistry::getPassRegistry());
-}
-
-MachineModuleInfo::MachineModuleInfo()
-  : ImmutablePass(ID), Context(nullptr, nullptr, nullptr) {
-  llvm_unreachable("This MachineModuleInfo constructor should never be called, "
-                   "MMI should always be explicitly constructed by "
-                   "LLVMTargetMachine");
 }
 
 MachineModuleInfo::~MachineModuleInfo() {

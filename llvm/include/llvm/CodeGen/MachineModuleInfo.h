@@ -200,10 +200,8 @@ public:
   typedef SmallVector<VariableDbgInfo, 4> VariableDbgInfoMapTy;
   VariableDbgInfoMapTy VariableDbgInfos;
 
-  MachineModuleInfo();  // DUMMY CONSTRUCTOR, DO NOT CALL.
   // Real constructor.
-  MachineModuleInfo(const MCAsmInfo &MAI, const MCRegisterInfo &MRI,
-                    const MCObjectFileInfo *MOFI);
+  explicit MachineModuleInfo(const TargetMachine *TM = nullptr);
   ~MachineModuleInfo() override;
 
   // Initialization and Finalization

@@ -102,15 +102,6 @@ TargetIRAnalysis LLVMTargetMachine::getTargetIRAnalysis() {
   });
 }
 
-MachineModuleInfo &
-LLVMTargetMachine::addMachineModuleInfo(PassManagerBase &PM) const {
-  MachineModuleInfo *MMI = new MachineModuleInfo(*getMCAsmInfo(),
-                                                 *getMCRegisterInfo(),
-                                                 getObjFileLowering());
-  PM.add(MMI);
-  return *MMI;
-}
-
 void LLVMTargetMachine::addMachineFunctionAnalysis(PassManagerBase &PM,
     MachineFunctionInitializer *MFInitializer) const {
   PM.add(new MachineFunctionAnalysis(*this, MFInitializer));
@@ -150,7 +141,8 @@ addPassesToGenerateCode(LLVMTargetMachine *TM, PassManagerBase &PM,
 
   PassConfig->addISelPrepare();
 
-  MachineModuleInfo &MMI = TM->addMachineModuleInfo(PM);
+  MachineModuleInfo *MMI = new MachineModuleInfo(TM);
+  PM.add(MMI);
   TM->addMachineFunctionAnalysis(PM, MFInitializer);
 
   // Enable FastISel with -fast, but allow that to be overridden.
@@ -189,7 +181,7 @@ addPassesToGenerateCode(LLVMTargetMachine *TM, PassManagerBase &PM,
 
   PassConfig->setInitialized();
 
-  return &MMI.getContext();
+  return &MMI->getContext();
 }
 
 bool LLVMTargetMachine::addPassesToEmitFile(
