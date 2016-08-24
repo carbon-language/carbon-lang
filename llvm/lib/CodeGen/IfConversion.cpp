@@ -59,6 +59,8 @@ static cl::opt<bool> DisableTriangleFR("disable-ifcvt-triangle-false-rev",
                                        cl::init(false), cl::Hidden);
 static cl::opt<bool> DisableDiamond("disable-ifcvt-diamond",
                                     cl::init(false), cl::Hidden);
+static cl::opt<bool> DisableForkedDiamond("disable-ifcvt-forked-diamond",
+                                        cl::init(false), cl::Hidden);
 static cl::opt<bool> IfCvtBranchFold("ifcvt-branch-fold",
                                      cl::init(true), cl::Hidden);
 
@@ -69,6 +71,7 @@ STATISTIC(NumTriangleRev,  "Number of triangle (R) if-conversions performed");
 STATISTIC(NumTriangleFalse,"Number of triangle (F) if-conversions performed");
 STATISTIC(NumTriangleFRev, "Number of triangle (F/R) if-conversions performed");
 STATISTIC(NumDiamonds,     "Number of diamond if-conversions performed");
+STATISTIC(NumForkedDiamonds, "Number of forked-diamond if-conversions performed");
 STATISTIC(NumIfConvBBs,    "Number of if-converted blocks");
 STATISTIC(NumDupBBs,       "Number of duplicated blocks");
 STATISTIC(NumUnpred,       "Number of true blocks of diamonds unpredicated");
@@ -83,7 +86,9 @@ namespace {
       ICTriangleRev,   // Same as ICTriangle, but true path rev condition.
       ICTriangleFalse, // Same as ICTriangle, but on the false path.
       ICTriangle,      // BB is entry of a triangle sub-CFG.
-      ICDiamond        // BB is entry of a diamond sub-CFG.
+      ICDiamond,       // BB is entry of a diamond sub-CFG.
+      ICForkedDiamond  // BB is entry of an almost diamond sub-CFG, with a
+                       // common tail that can be shared.
     };
 
     /// One per MachineBasicBlock, this is used to cache the result
@@ -115,6 +120,7 @@ namespace {
       bool IsAnalyzed      : 1;
       bool IsEnqueued      : 1;
       bool IsBrAnalyzable  : 1;
+      bool IsBrReversible  : 1;
       bool HasFallThrough  : 1;
       bool IsUnpredicable  : 1;
       bool CannotBeCopied  : 1;
@@ -129,9 +135,10 @@ namespace {
       SmallVector<MachineOperand, 4> Predicate;
       BBInfo() : IsDone(false), IsBeingAnalyzed(false),
                  IsAnalyzed(false), IsEnqueued(false), IsBrAnalyzable(false),
-                 HasFallThrough(false), IsUnpredicable(false),
-                 CannotBeCopied(false), ClobbersPred(false), NonPredSize(0),
-                 ExtraCost(0), ExtraCost2(0), BB(nullptr), TrueBB(nullptr),
+                 IsBrReversible(false), HasFallThrough(false),
+                 IsUnpredicable(false), CannotBeCopied(false),
+                 ClobbersPred(false), NonPredSize(0), ExtraCost(0),
+                 ExtraCost2(0), BB(nullptr), TrueBB(nullptr),
                  FalseBB(nullptr) {}
     };
 
@@ -215,6 +222,9 @@ namespace {
     bool ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
                       unsigned &Dups1, unsigned &Dups2,
                       BBInfo &TrueBBICalc, BBInfo &FalseBBICalc) const;
+    bool ValidForkedDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
+                            unsigned &Dups1, unsigned &Dups2,
+                            BBInfo &TrueBBICalc, BBInfo &FalseBBICalc) const;
     void AnalyzeBranches(BBInfo &BBI);
     void ScanInstructions(BBInfo &BBI,
                           MachineBasicBlock::iterator &Begin,
@@ -235,9 +245,17 @@ namespace {
     void RemoveExtraEdges(BBInfo &BBI);
     bool IfConvertSimple(BBInfo &BBI, IfcvtKind Kind);
     bool IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind);
+    bool IfConvertDiamondCommon(BBInfo &BBI, BBInfo &TrueBBI, BBInfo &FalseBBI,
+                                unsigned NumDups1, unsigned NumDups2,
+                                bool TClobbersPred, bool FClobbersPred,
+                                bool RemoveTrueBranch, bool RemoveFalseBranch,
+                                bool MergeAddEdges);
     bool IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
                           unsigned NumDups1, unsigned NumDups2,
                           bool TClobbers, bool FClobbers);
+    bool IfConvertForkedDiamond(BBInfo &BBI, IfcvtKind Kind,
+                              unsigned NumDups1, unsigned NumDups2,
+                              bool TClobbers, bool FClobbers);
     void PredicateBlock(BBInfo &BBI,
                         MachineBasicBlock::iterator E,
                         SmallVectorImpl<MachineOperand> &Cond,
@@ -429,6 +447,19 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
                                   Token->FClobbersPred);
         DEBUG(dbgs() << (RetVal ? "succeeded!" : "failed!") << "\n");
         if (RetVal) ++NumDiamonds;
+        break;
+      }
+      case ICForkedDiamond: {
+        if (DisableForkedDiamond) break;
+        DEBUG(dbgs() << "Ifcvt (Forked Diamond): BB#"
+                     << BBI.BB->getNumber() << " (T:"
+                     << BBI.TrueBB->getNumber() << ",F:"
+                     << BBI.FalseBB->getNumber() << ") ");
+        RetVal = IfConvertForkedDiamond(BBI, Kind, NumDups, NumDups2,
+                                      Token->TClobbersPred,
+                                      Token->FClobbersPred);
+        DEBUG(dbgs() << (RetVal ? "succeeded!" : "failed!") << "\n");
+        if (RetVal) ++NumForkedDiamonds;
         break;
       }
       }
@@ -646,9 +677,6 @@ bool IfConverter::CountDuplicatedInstructions(
     ++FIB;
   }
 
-  // If both blocks are returning don't skip the branches, since they will
-  // likely be both identical return instructions. In such cases the return
-  // can be left unpredicated.
   // Check for already containing all of the block.
   if (TIB == TIE || FIB == FIE)
     return true;
@@ -732,6 +760,97 @@ bool IfConverter::RescanInstructions(
   return true;
 }
 
+/// ValidForkedDiamond - Returns true if the 'true' and 'false' blocks (along
+/// with their common predecessor) form a diamond if a common tail block is
+/// extracted.
+/// While not strictly a diamond, this pattern would form a diamond if
+/// tail-merging had merged the shared tails.
+///           EBB
+///         _/   \_
+///         |     |
+///        TBB   FBB
+///        /  \ /   \
+///  FalseBB TrueBB FalseBB
+/// Currently only handles analyzable branches.
+/// Specifically excludes actual diamonds to avoid overlap.
+bool IfConverter::ValidForkedDiamond(
+    BBInfo &TrueBBI, BBInfo &FalseBBI,
+    unsigned &Dups1, unsigned &Dups2,
+    BBInfo &TrueBBICalc, BBInfo &FalseBBICalc) const {
+  Dups1 = Dups2 = 0;
+  if (TrueBBI.IsBeingAnalyzed || TrueBBI.IsDone ||
+      FalseBBI.IsBeingAnalyzed || FalseBBI.IsDone)
+    return false;
+
+  if (!TrueBBI.IsBrAnalyzable || !FalseBBI.IsBrAnalyzable)
+    return false;
+  // Don't IfConvert blocks that can't be folded into their predecessor.
+  if  (TrueBBI.BB->pred_size() > 1 || FalseBBI.BB->pred_size() > 1)
+    return false;
+
+  // This function is specifically looking for conditional tails, as
+  // unconditional tails are already handled by the standard diamond case.
+  if (TrueBBI.BrCond.size() == 0 ||
+      FalseBBI.BrCond.size() == 0)
+    return false;
+
+  MachineBasicBlock *TT = TrueBBI.TrueBB;
+  MachineBasicBlock *TF = TrueBBI.FalseBB;
+  MachineBasicBlock *FT = FalseBBI.TrueBB;
+  MachineBasicBlock *FF = FalseBBI.FalseBB;
+
+  if (!TT)
+    TT = getNextBlock(*TrueBBI.BB);
+  if (!TF)
+    TF = getNextBlock(*TrueBBI.BB);
+  if (!FT)
+    FT = getNextBlock(*FalseBBI.BB);
+  if (!FF)
+    FF = getNextBlock(*FalseBBI.BB);
+
+  if (!TT || !TF)
+    return false;
+
+  // Check successors. If they don't match, bail.
+  if (!((TT == FT && TF == FF) || (TF == FT && TT == FF)))
+    return false;
+
+  bool FalseReversed = false;
+  if (TF == FT && TT == FF) {
+    // If the branches are opposing, but we can't reverse, don't do it.
+    if (!FalseBBI.IsBrReversible)
+      return false;
+    FalseReversed = true;
+    ReverseBranchCondition(FalseBBI);
+  }
+  auto UnReverseOnExit = make_scope_exit([&]() {
+    if (FalseReversed)
+      ReverseBranchCondition(FalseBBI);
+  });
+
+  // Count duplicate instructions at the beginning of the true and false blocks.
+  MachineBasicBlock::iterator TIB = TrueBBI.BB->begin();
+  MachineBasicBlock::iterator FIB = FalseBBI.BB->begin();
+  MachineBasicBlock::iterator TIE = TrueBBI.BB->end();
+  MachineBasicBlock::iterator FIE = FalseBBI.BB->end();
+  if(!CountDuplicatedInstructions(TIB, FIB, TIE, FIE, Dups1, Dups2,
+                                  *TrueBBI.BB, *FalseBBI.BB,
+                                  /* SkipUnconditionalBranches */ true))
+    return false;
+
+  TrueBBICalc.BB = TrueBBI.BB;
+  FalseBBICalc.BB = FalseBBI.BB;
+  if (!RescanInstructions(TIB, FIB, TIE, FIE, TrueBBICalc, FalseBBICalc))
+    return false;
+
+  // The size is used to decide whether to if-convert, and the shared portions
+  // are subtracted off. Because of the subtraction, we just use the size that
+  // was calculated by the original ScanInstructions, as it is correct.
+  TrueBBICalc.NonPredSize = TrueBBI.NonPredSize;
+  FalseBBICalc.NonPredSize = FalseBBI.NonPredSize;
+  return true;
+}
+
 /// ValidDiamond - Returns true if the 'true' and 'false' blocks (along
 /// with their common predecessor) forms a valid diamond shape for ifcvt.
 bool IfConverter::ValidDiamond(
@@ -798,6 +917,9 @@ void IfConverter::AnalyzeBranches(BBInfo &BBI) {
   BBI.BrCond.clear();
   BBI.IsBrAnalyzable =
       !TII->analyzeBranch(*BBI.BB, BBI.TrueBB, BBI.FalseBB, BBI.BrCond);
+  SmallVector<MachineOperand, 4> RevCond(BBI.BrCond.begin(), BBI.BrCond.end());
+  BBI.IsBrReversible = (RevCond.size() == 0) ||
+      !TII->ReverseBranchCondition(RevCond);
   BBI.HasFallThrough = BBI.IsBrAnalyzable && BBI.FalseBB == nullptr;
 
   if (BBI.BrCond.size()) {
@@ -1056,34 +1178,56 @@ void IfConverter::AnalyzeBlock(
 
     if (CanRevCond) {
       BBInfo TrueBBICalc, FalseBBICalc;
+      auto feasibleDiamond = [&]() {
+        bool MeetsSize = MeetIfcvtSizeLimit(
+            *TrueBBI.BB, (TrueBBICalc.NonPredSize - (Dups + Dups2) +
+                          TrueBBICalc.ExtraCost), TrueBBICalc.ExtraCost2,
+            *FalseBBI.BB, (FalseBBICalc.NonPredSize - (Dups + Dups2) +
+                           FalseBBICalc.ExtraCost), FalseBBICalc.ExtraCost2,
+            Prediction);
+        bool TrueFeasible = FeasibilityAnalysis(TrueBBI, BBI.BrCond,
+                                                /* IsTriangle */ false, /* RevCond */ false,
+                                                /* hasCommonTail */ true);
+        bool FalseFeasible = FeasibilityAnalysis(FalseBBI, RevCond,
+                                                 /* IsTriangle */ false, /* RevCond */ false,
+                                                 /* hasCommonTail */ true);
+        return MeetsSize && TrueFeasible && FalseFeasible;
+      };
+
       if (ValidDiamond(TrueBBI, FalseBBI, Dups, Dups2,
-                       TrueBBICalc, FalseBBICalc) &&
-        MeetIfcvtSizeLimit(*TrueBBI.BB, (TrueBBI.NonPredSize - (Dups + Dups2) +
-                                         TrueBBICalc.ExtraCost),
-                           TrueBBICalc.ExtraCost2,
-                           *FalseBBI.BB, (FalseBBI.NonPredSize - (Dups + Dups2) +
-                                          FalseBBICalc.ExtraCost),
-                           FalseBBICalc.ExtraCost2,
-                           Prediction) &&
-        FeasibilityAnalysis(TrueBBI, BBI.BrCond,
-                            /* IsTriangle */ false, /* RevCond */ false,
-                            /* hasCommonTail */ true) &&
-        FeasibilityAnalysis(FalseBBI, RevCond,
-                            /* IsTriangle */ false, /* RevCond */ false,
-                            /* hasCommonTail */ true)) {
-        // Diamond:
-        //   EBB
-        //   / \_
-        //  |   |
-        // TBB FBB
-        //   \ /
-        //  TailBB
-        // Note TailBB can be empty.
-        Tokens.push_back(llvm::make_unique<IfcvtToken>(
-                BBI, ICDiamond, TNeedSub | FNeedSub, Dups, Dups2,
-                (bool) TrueBBICalc.ClobbersPred,
-                (bool) FalseBBICalc.ClobbersPred));
-        Enqueued = true;
+                       TrueBBICalc, FalseBBICalc)) {
+        if (feasibleDiamond()) {
+          // Diamond:
+          //   EBB
+          //   / \_
+          //  |   |
+          // TBB FBB
+          //   \ /
+          //  TailBB
+          // Note TailBB can be empty.
+          Tokens.push_back(llvm::make_unique<IfcvtToken>(
+              BBI, ICDiamond, TNeedSub | FNeedSub, Dups, Dups2,
+              (bool) TrueBBICalc.ClobbersPred, (bool) FalseBBICalc.ClobbersPred));
+          Enqueued = true;
+        }
+      } else if (ValidForkedDiamond(TrueBBI, FalseBBI, Dups, Dups2,
+                                    TrueBBICalc, FalseBBICalc)) {
+        if (feasibleDiamond()) {
+          // ForkedDiamond:
+          // if TBB and FBB have a common tail that includes their conditional
+          // branch instructions, then we can If Convert this pattern.
+          //          EBB
+          //         _/ \_
+          //         |   |
+          //        TBB  FBB
+          //        / \ /   \
+          //  FalseBB TrueBB FalseBB
+          //
+          Tokens.push_back(llvm::make_unique<IfcvtToken>(
+              BBI, ICForkedDiamond, TNeedSub | FNeedSub, Dups, Dups2,
+              (bool) TrueBBICalc.ClobbersPred, (bool) FalseBBICalc.ClobbersPred));
+          Enqueued = true;
+        }
       }
     }
 
@@ -1528,32 +1672,28 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
   return true;
 }
 
-/// If convert a diamond sub-CFG.
-/// \p BBI is the head of the diamond
-/// \p NumDups1 - number of shared instructions at the beginning of TrueBBI and
-///               FalseBBI
-/// \p NumDups2 - number of shared instructions at the end of TrueBBI and
-///               FalseBBI
-/// \p TClobbersPred - True if the true block clobbers the predicate in the
-///                    non-shared portion.
-/// \p TClobbersPred - True if the false block clobbers the predicate in the
-///                    non-shared portion.
-bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
-                                   unsigned NumDups1, unsigned NumDups2,
-                                   bool TClobbersPred, bool FClobbersPred) {
-  BBInfo &TrueBBI  = BBAnalysis[BBI.TrueBB->getNumber()];
-  BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
-  MachineBasicBlock *TailBB = TrueBBI.TrueBB;
-  // True block must fall through or end with an unanalyzable terminator.
-  if (!TailBB) {
-    if (blockAlwaysFallThrough(TrueBBI))
-      TailBB = FalseBBI.TrueBB;
-    assert((TailBB || !TrueBBI.IsBrAnalyzable) && "Unexpected!");
-  }
+/// Common code shared between diamond conversions.
+/// \p BBI, \p TrueBBI, and \p FalseBBI form the diamond shape.
+/// \p NumDups1 - number of shared instructions at the beginning of \p TrueBBI
+///               and FalseBBI
+/// \p NumDups2 - number of shared instructions at the end of \p TrueBBI
+///               and \p FalseBBI
+/// \p RemoveTrueBranch - Remove the branch of the true block before predicating
+///                       Only false for unanalyzable fallthrough cases.
+/// \p RemoveFalseBranch - Remove the branch of the false block before
+///                        predicating Only false for unanalyzable fallthrough
+///                        cases.
+/// \p MergeAddEdges - Add successor edges when merging blocks. Only false for
+///                    unanalyzable fallthrough
+bool IfConverter::IfConvertDiamondCommon(
+    BBInfo &BBI, BBInfo &TrueBBI, BBInfo &FalseBBI,
+    unsigned NumDups1, unsigned NumDups2,
+    bool TClobbersPred, bool FClobbersPred,
+    bool RemoveTrueBranch, bool RemoveFalseBranch,
+    bool MergeAddEdges) {
 
   if (TrueBBI.IsDone || FalseBBI.IsDone ||
-      TrueBBI.BB->pred_size() > 1 ||
-      FalseBBI.BB->pred_size() > 1) {
+      TrueBBI.BB->pred_size() > 1 || FalseBBI.BB->pred_size() > 1) {
     // Something has changed. It's no longer safe to predicate these blocks.
     BBI.IsAnalyzed = false;
     TrueBBI.IsAnalyzed = false;
@@ -1587,6 +1727,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   if (DoSwap) {
     std::swap(BBI1, BBI2);
     std::swap(Cond1, Cond2);
+    std::swap(RemoveTrueBranch, RemoveFalseBranch);
   }
 
   // Remove the conditional branch from entry to the blocks.
@@ -1639,12 +1780,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   BBI.BB->splice(BBI.BB->end(), &MBB1, MBB1.begin(), DI1);
   MBB2.erase(MBB2.begin(), DI2);
 
-  // Remove branch from the 'true' block, unless it was not analyzable.
-  // Non-analyzable branches need to be preserved, since in such cases,
-  // the CFG structure is not an actual diamond (the join block may not
-  // be present).
-  if (BBI1->IsBrAnalyzable)
-    BBI1->NonPredSize -= TII->RemoveBranch(MBB1);
+  if (RemoveTrueBranch)
+    BBI1->NonPredSize -= TII->RemoveBranch(*BBI1->BB);
   // Remove duplicated instructions.
   DI1 = MBB1.end();
   for (unsigned i = 0; i != NumDups2; ) {
@@ -1662,11 +1799,11 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // must be removed.
   RemoveKills(MBB1.begin(), MBB1.end(), DontKill, *TRI);
 
-  // Remove 'false' block branch (unless it was not analyzable), and find
-  // the last instruction to predicate.
-  if (BBI2->IsBrAnalyzable)
-    BBI2->NonPredSize -= TII->RemoveBranch(MBB2);
-  DI2 = MBB2.end();
+  // Remove 'false' block branch, and find the last instruction to predicate.
+  // Save the debug location.
+  if (RemoveFalseBranch)
+    BBI2->NonPredSize -= TII->RemoveBranch(*BBI2->BB);
+  DI2 = BBI2->BB->end();
   while (NumDups2 != 0) {
     // NumDups2 only counted non-dbg_value instructions, so this won't
     // run off the head of the list.
@@ -1738,8 +1875,74 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   PredicateBlock(*BBI2, DI2, *Cond2);
 
   // Merge the true block into the entry of the diamond.
-  MergeBlocks(BBI, *BBI1, TailBB == nullptr);
-  MergeBlocks(BBI, *BBI2, TailBB == nullptr);
+  MergeBlocks(BBI, *BBI1, MergeAddEdges);
+  MergeBlocks(BBI, *BBI2, MergeAddEdges);
+  return true;
+}
+
+/// If convert an almost-diamond sub-CFG where the true
+/// and false blocks share a common tail.
+bool IfConverter::IfConvertForkedDiamond(
+    BBInfo &BBI, IfcvtKind Kind,
+    unsigned NumDups1, unsigned NumDups2,
+    bool TClobbersPred, bool FClobbersPred) {
+  BBInfo &TrueBBI  = BBAnalysis[BBI.TrueBB->getNumber()];
+  BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
+
+  // Save the debug location for later.
+  DebugLoc dl;
+  MachineBasicBlock::iterator TIE = TrueBBI.BB->getFirstTerminator();
+  if (TIE != TrueBBI.BB->end())
+    dl = TIE->getDebugLoc();
+  // Removing branches from both blocks is safe, because we have already
+  // determined that both blocks have the same branch instructions. The branch
+  // will be added back at the end, unpredicated.
+  if (!IfConvertDiamondCommon(
+      BBI, TrueBBI, FalseBBI,
+      NumDups1, NumDups2,
+      TClobbersPred, FClobbersPred,
+      /* RemoveTrueBranch */ true, /* RemoveFalseBranch */ true,
+      /* MergeAddEdges */ true))
+    return false;
+
+  // Add back the branch.
+  // Debug location saved above when removing the branch from BBI2
+  TII->InsertBranch(*BBI.BB, TrueBBI.TrueBB, TrueBBI.FalseBB,
+                    TrueBBI.BrCond, dl);
+
+  RemoveExtraEdges(BBI);
+
+  // Update block info.
+  BBI.IsDone = TrueBBI.IsDone = FalseBBI.IsDone = true;
+  InvalidatePreds(*BBI.BB);
+
+  // FIXME: Must maintain LiveIns.
+  return true;
+}
+
+/// If convert a diamond sub-CFG.
+bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
+                                   unsigned NumDups1, unsigned NumDups2,
+                                   bool TClobbersPred, bool FClobbersPred) {
+  BBInfo &TrueBBI  = BBAnalysis[BBI.TrueBB->getNumber()];
+  BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
+  MachineBasicBlock *TailBB = TrueBBI.TrueBB;
+
+  // True block must fall through or end with an unanalyzable terminator.
+  if (!TailBB) {
+    if (blockAlwaysFallThrough(TrueBBI))
+      TailBB = FalseBBI.TrueBB;
+    assert((TailBB || !TrueBBI.IsBrAnalyzable) && "Unexpected!");
+  }
+
+  if (!IfConvertDiamondCommon(
+      BBI, TrueBBI, FalseBBI,
+      NumDups1, NumDups2,
+      TrueBBI.ClobbersPred, FalseBBI.ClobbersPred,
+      /* RemoveTrueBranch */ TrueBBI.IsBrAnalyzable,
+      /* RemoveFalseBranch */ FalseBBI.IsBrAnalyzable,
+      /* MergeAddEdges */ TailBB == nullptr))
+    return false;
 
   // If the if-converted block falls through or unconditionally branches into
   // the tail block, and the tail block does not have other predecessors, then
@@ -1762,7 +1965,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
       CanMergeTail = false;
     else if (NumPreds == 1 && CanMergeTail) {
       MachineBasicBlock::pred_iterator PI = TailBB->pred_begin();
-      if (*PI != &MBB1 && *PI != &MBB2)
+      if (*PI != TrueBBI.BB && *PI != FalseBBI.BB)
         CanMergeTail = false;
     }
     if (CanMergeTail) {
@@ -1778,8 +1981,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // RemoveExtraEdges won't work if the block has an unanalyzable branch,
   // which can happen here if TailBB is unanalyzable and is merged, so
   // explicitly remove BBI1 and BBI2 as successors.
-  BBI.BB->removeSuccessor(&MBB1);
-  BBI.BB->removeSuccessor(&MBB2, true);
+  BBI.BB->removeSuccessor(TrueBBI.BB);
+  BBI.BB->removeSuccessor(FalseBBI.BB, /* NormalizeSuccessProbs */ true);
   RemoveExtraEdges(BBI);
 
   // Update block info.
