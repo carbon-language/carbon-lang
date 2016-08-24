@@ -175,7 +175,6 @@
 name:            test0a
 alignment:       2
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
 registers:       
@@ -221,7 +220,6 @@ body:             |
 name:            test0b
 alignment:       2
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
 registers:       
@@ -265,7 +263,6 @@ body:             |
 name:            test1a
 alignment:       2
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
 registers:       
@@ -313,7 +310,6 @@ body:             |
 name:            test1b
 alignment:       2
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
 registers:       
@@ -361,7 +357,6 @@ body:             |
 name:            test2a
 alignment:       2
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
 registers:       
@@ -409,7 +404,6 @@ body:             |
 name:            test2b
 alignment:       2
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
 registers:       
@@ -457,7 +451,6 @@ body:             |
 name:            test3
 alignment:       2
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
 registers:       
@@ -505,7 +498,6 @@ body:             |
 name:            test4
 alignment:       2
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
 registers:       
@@ -617,7 +609,6 @@ body:             |
 name:            testBB
 alignment:       2
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
 registers:       

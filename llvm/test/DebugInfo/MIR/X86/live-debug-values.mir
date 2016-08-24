@@ -159,7 +159,6 @@
 name:            main
 alignment:       4
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: true
 tracksRegLiveness: true
 liveins:         

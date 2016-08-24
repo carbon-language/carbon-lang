@@ -28,7 +28,6 @@
 name:            promote-load-from-store
 alignment:       2
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: true
 tracksRegLiveness: false
 liveins:         
@@ -84,7 +83,6 @@ body:             |
 name:            store-pair
 alignment:       2
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: true
 tracksRegLiveness: false
 liveins:         

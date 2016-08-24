@@ -32,7 +32,6 @@
 name:            fn1
 alignment:       2
 exposesReturnsTwice: false
-hasInlineAsm:    false
 allVRegsAllocated: false
 tracksRegLiveness: true
 registers:
