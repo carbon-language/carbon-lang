@@ -2041,6 +2041,13 @@ Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &Cmp,
     return Res;
   }
 
+  // If the comparison constant changes with the shift, the comparison cannot
+  // succeed (bits of the comparison constant cannot match the shifted value).
+  // This should be known by InstSimplify and already be folded to true/false.
+  assert(((IsAShr && C->shl(ShAmtVal).ashr(ShAmtVal) == *C) ||
+          (!IsAShr && C->shl(ShAmtVal).lshr(ShAmtVal) == *C)) &&
+         "Expected icmp+shr simplify did not occur.");
+
   // Check if the bits shifted out are known to be zero. If so, we can compare
   // against the unshifted value:
   //  (X & 4) >> 1 == 2  --> (X & 4) == 4.
