@@ -99,15 +99,21 @@ public:
     return *this;
   }
 
-  /// Enqueues on this stream a command to copy a slice of an array of elements
-  /// of type T from device to host memory.
+  /// \name Device memory copying functions
   ///
-  /// Sets an error if ElementCount is too large for the source or the
-  /// destination.
+  /// These methods enqueue a device memory copy operation on the stream and
+  /// return without waiting for the operation to complete.
   ///
-  /// If the Src memory was not created by allocateHostMemory or registered with
-  /// registerHostMemory, then the copy operation may cause the host and device
-  /// to block until the copy operation is completed.
+  /// Any host memory used as a source or destination for one of these
+  /// operations must be allocated with Executor::allocateHostMemory or
+  /// registered with Executor::registerHostMemory. Otherwise, the enqueuing
+  /// operation may block until the copy operation is fully complete.
+  ///
+  /// The arguments and bounds checking for these methods match the API of the
+  /// \ref ExecutorHostSyncCopyGroup
+  /// "host-synchronous device memory copying functions" of Executor.
+  ///@{
+
   template <typename T>
   Stream &thenCopyD2H(GlobalDeviceMemorySlice<T> Src,
                       llvm::MutableArrayRef<T> Dst, size_t ElementCount) {
@@ -125,11 +131,6 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyD2H(GlobalDeviceMemorySlice<T>,
-  /// llvm::MutableArrayRef<T>, size_t) but does not take an element count
-  /// argument because it copies the entire source array.
-  ///
-  /// Sets an error if the Src and Dst sizes do not match.
   template <typename T>
   Stream &thenCopyD2H(GlobalDeviceMemorySlice<T> Src,
                       llvm::MutableArrayRef<T> Dst) {
@@ -143,11 +144,6 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyD2H(GlobalDeviceMemorySlice<T>,
-  /// llvm::MutableArrayRef<T>, size_t) but copies to a pointer rather than an
-  /// llvm::MutableArrayRef.
-  ///
-  /// Sets an error if ElementCount is too large for the source slice.
   template <typename T>
   Stream &thenCopyD2H(GlobalDeviceMemorySlice<T> Src, T *Dst,
                       size_t ElementCount) {
@@ -155,9 +151,6 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyD2H(GlobalDeviceMemorySlice<T>,
-  /// llvm::MutableArrayRef<T>, size_t) but the source is a GlobalDeviceMemory
-  /// rather than a GlobalDeviceMemorySlice.
   template <typename T>
   Stream &thenCopyD2H(GlobalDeviceMemory<T> Src, llvm::MutableArrayRef<T> Dst,
                       size_t ElementCount) {
@@ -165,26 +158,18 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyD2H(GlobalDeviceMemorySlice<T>,
-  /// llvm::MutableArrayRef<T>) but the source is a GlobalDeviceMemory rather
-  /// than a GlobalDeviceMemorySlice.
   template <typename T>
   Stream &thenCopyD2H(GlobalDeviceMemory<T> Src, llvm::MutableArrayRef<T> Dst) {
     thenCopyD2H(Src.asSlice(), Dst);
     return *this;
   }
 
-  /// Similar to thenCopyD2H(GlobalDeviceMemorySlice<T>, T*, size_t) but the
-  /// source is a GlobalDeviceMemory rather than a GlobalDeviceMemorySlice.
   template <typename T>
   Stream &thenCopyD2H(GlobalDeviceMemory<T> Src, T *Dst, size_t ElementCount) {
     thenCopyD2H(Src.asSlice(), Dst, ElementCount);
     return *this;
   }
 
-  /// Similar to thenCopyD2H(GlobalDeviceMemorySlice<T>,
-  /// llvm::MutableArrayRef<T>, size_t) but copies from host to device memory
-  /// rather than device to host memory.
   template <typename T>
   Stream &thenCopyH2D(llvm::ArrayRef<T> Src, GlobalDeviceMemorySlice<T> Dst,
                       size_t ElementCount) {
@@ -203,11 +188,6 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyH2D(llvm::ArrayRef<T>, GlobalDeviceMemorySlice<T>,
-  /// size_t) but does not take an element count argument because it copies the
-  /// entire source array.
-  ///
-  /// Sets an error if the Src and Dst sizes do not match.
   template <typename T>
   Stream &thenCopyH2D(llvm::ArrayRef<T> Src, GlobalDeviceMemorySlice<T> Dst) {
     if (Src.size() != Dst.getElementCount())
@@ -220,10 +200,6 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyH2D(llvm::ArrayRef<T>, GlobalDeviceMemorySlice<T>,
-  /// size_t) but copies from a pointer rather than an llvm::ArrayRef.
-  ///
-  /// Sets an error if ElementCount is too large for the destination.
   template <typename T>
   Stream &thenCopyH2D(T *Src, GlobalDeviceMemorySlice<T> Dst,
                       size_t ElementCount) {
@@ -231,9 +207,6 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyH2D(llvm::ArrayRef<T>, GlobalDeviceMemorySlice<T>,
-  /// size_t) but the destination is a GlobalDeviceMemory rather than a
-  /// GlobalDeviceMemorySlice.
   template <typename T>
   Stream &thenCopyH2D(llvm::ArrayRef<T> Src, GlobalDeviceMemory<T> Dst,
                       size_t ElementCount) {
@@ -241,26 +214,18 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyH2D(llvm::ArrayRef<T>, GlobalDeviceMemorySlice<T>) but
-  /// the destination is a GlobalDeviceMemory rather than a
-  /// GlobalDeviceMemorySlice.
   template <typename T>
   Stream &thenCopyH2D(llvm::ArrayRef<T> Src, GlobalDeviceMemory<T> Dst) {
     thenCopyH2D(Src, Dst.asSlice());
     return *this;
   }
 
-  /// Similar to thenCopyH2D(T*, GlobalDeviceMemorySlice<T>, size_t) but the
-  /// destination is a GlobalDeviceMemory rather than a GlobalDeviceMemorySlice.
   template <typename T>
   Stream &thenCopyH2D(T *Src, GlobalDeviceMemory<T> Dst, size_t ElementCount) {
     thenCopyH2D(Src, Dst.asSlice(), ElementCount);
     return *this;
   }
 
-  /// Similar to thenCopyD2H(GlobalDeviceMemorySlice<T>,
-  /// llvm::MutableArrayRef<T>, size_t) but copies from one location in device
-  /// memory to another rather than from device to host memory.
   template <typename T>
   Stream &thenCopyD2D(GlobalDeviceMemorySlice<T> Src,
                       GlobalDeviceMemorySlice<T> Dst, size_t ElementCount) {
@@ -280,11 +245,6 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>, size_t) but does not take an element count
-  /// argument because it copies the entire source array.
-  ///
-  /// Sets an error if the Src and Dst sizes do not match.
   template <typename T>
   Stream &thenCopyD2D(GlobalDeviceMemorySlice<T> Src,
                       GlobalDeviceMemorySlice<T> Dst) {
@@ -298,9 +258,6 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>, size_t) but the source is a
-  /// GlobalDeviceMemory<T> rather than a GlobalDeviceMemorySlice<T>.
   template <typename T>
   Stream &thenCopyD2D(GlobalDeviceMemory<T> Src, GlobalDeviceMemorySlice<T> Dst,
                       size_t ElementCount) {
@@ -308,9 +265,6 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>) but the source is a GlobalDeviceMemory<T>
-  /// rather than a GlobalDeviceMemorySlice<T>.
   template <typename T>
   Stream &thenCopyD2D(GlobalDeviceMemory<T> Src,
                       GlobalDeviceMemorySlice<T> Dst) {
@@ -318,9 +272,6 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>, size_t) but the destination is a
-  /// GlobalDeviceMemory<T> rather than a GlobalDeviceMemorySlice<T>.
   template <typename T>
   Stream &thenCopyD2D(GlobalDeviceMemorySlice<T> Src, GlobalDeviceMemory<T> Dst,
                       size_t ElementCount) {
@@ -328,9 +279,6 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>) but the destination is a GlobalDeviceMemory<T>
-  /// rather than a GlobalDeviceMemorySlice<T>.
   template <typename T>
   Stream &thenCopyD2D(GlobalDeviceMemorySlice<T> Src,
                       GlobalDeviceMemory<T> Dst) {
@@ -338,9 +286,6 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>, size_t) but the source and destination are
-  /// GlobalDeviceMemory<T> rather than a GlobalDeviceMemorySlice<T>.
   template <typename T>
   Stream &thenCopyD2D(GlobalDeviceMemory<T> Src, GlobalDeviceMemory<T> Dst,
                       size_t ElementCount) {
@@ -348,14 +293,13 @@ public:
     return *this;
   }
 
-  /// Similar to thenCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>) but the source and destination are
-  /// GlobalDeviceMemory<T> rather than a GlobalDeviceMemorySlice<T>.
   template <typename T>
   Stream &thenCopyD2D(GlobalDeviceMemory<T> Src, GlobalDeviceMemory<T> Dst) {
     thenCopyD2D(Src.asSlice(), Dst.asSlice());
     return *this;
   }
+
+  ///@} End device memory copying functions
 
 private:
   /// Sets the error state from an Error object.

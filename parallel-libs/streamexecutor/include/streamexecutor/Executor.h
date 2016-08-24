@@ -77,16 +77,34 @@ public:
     return PExecutor->unregisterHostMemory(Memory);
   }
 
-  /// Host-synchronously copies a slice of an array of elements of type T from
-  /// host to device memory.
+  /// \anchor ExecutorHostSyncCopyGroup
+  /// \name Host-synchronous device memory copying functions
   ///
-  /// Returns an error if ElementCount is too large for the source slice or the
-  /// destination.
+  /// These methods block the calling host thread while copying data to or from
+  /// device memory. On the device side, these methods do not block any ongoing
+  /// device calls.
   ///
-  /// The calling host thread is blocked until the copy completes. Can be used
-  /// with any host memory, the host memory does not have to be allocated with
-  /// allocateHostMemory or registered with registerHostMemory. Does not block
-  /// any ongoing device calls.
+  /// There are no restrictions on the host memory that is used as a source or
+  /// destination in these copy methods, so there is no need to allocate that
+  /// host memory using allocateHostMemory or register it with
+  /// registerHostMemory.
+  ///
+  /// Each of these methods has a single template parameter, T, that specifies
+  /// the type of data being copied. The ElementCount arguments specify the
+  /// number of objects of type T to be copied.
+  ///
+  /// For ease of use, each of the methods is overloaded to take either a
+  /// GlobalDeviceMemorySlice or a GlobalDeviceMemory argument in the device
+  /// memory argument slots, and the GlobalDeviceMemory arguments are just
+  /// converted to GlobalDeviceMemorySlice arguments internally by using
+  /// GlobalDeviceMemory::asSlice.
+  ///
+  /// These methods perform bounds checking to make sure that the ElementCount
+  /// is not too large for the source or destination. For methods that do not
+  /// take an ElementCount argument, an error is returned if the source size
+  /// does not exactly match the destination size.
+  ///@{
+
   template <typename T>
   Error synchronousCopyD2H(GlobalDeviceMemorySlice<T> Src,
                            llvm::MutableArrayRef<T> Dst, size_t ElementCount) {
@@ -104,11 +122,6 @@ public:
         ElementCount * sizeof(T));
   }
 
-  /// Similar to synchronousCopyD2H(GlobalDeviceMemorySlice<T>,
-  /// llvm::MutableArrayRef<T>, size_t) but does not take an element count
-  /// argument because it copies the entire source array.
-  ///
-  /// Returns an error if the Src and Dst sizes do not match.
   template <typename T>
   Error synchronousCopyD2H(GlobalDeviceMemorySlice<T> Src,
                            llvm::MutableArrayRef<T> Dst) {
@@ -120,11 +133,6 @@ public:
     return synchronousCopyD2H(Src, Dst, Src.getElementCount());
   }
 
-  /// Similar to synchronousCopyD2H(GlobalDeviceMemorySlice<T>,
-  /// llvm::MutableArrayRef<T>, size_t) but copies to a pointer rather than an
-  /// llvm::MutableArrayRef.
-  ///
-  /// Returns an error if ElementCount is too large for the source slice.
   template <typename T>
   Error synchronousCopyD2H(GlobalDeviceMemorySlice<T> Src, T *Dst,
                            size_t ElementCount) {
@@ -132,42 +140,24 @@ public:
                               ElementCount);
   }
 
-  /// Similar to synchronousCopyD2H(GlobalDeviceMemorySlice<T>,
-  /// llvm::MutableArrayRef<T>, size_t) but the source is a GlobalDeviceMemory
-  /// rather than a GlobalDeviceMemorySlice.
   template <typename T>
   Error synchronousCopyD2H(GlobalDeviceMemory<T> Src,
                            llvm::MutableArrayRef<T> Dst, size_t ElementCount) {
     return synchronousCopyD2H(Src.asSlice(), Dst, ElementCount);
   }
 
-  /// Similar to  synchronousCopyD2H(GlobalDeviceMemorySlice<T>,
-  /// llvm::MutableArrayRef<T>) but the source is a GlobalDeviceMemory rather
-  /// than a GlobalDeviceMemorySlice.
   template <typename T>
   Error synchronousCopyD2H(GlobalDeviceMemory<T> Src,
                            llvm::MutableArrayRef<T> Dst) {
     return synchronousCopyD2H(Src.asSlice(), Dst);
   }
 
-  /// Similar to synchronousCopyD2H(GlobalDeviceMemorySlice<T>, T*, size_t) but
-  /// the source is a GlobalDeviceMemory rather than a GlobalDeviceMemorySlice.
   template <typename T>
   Error synchronousCopyD2H(GlobalDeviceMemory<T> Src, T *Dst,
                            size_t ElementCount) {
     return synchronousCopyD2H(Src.asSlice(), Dst, ElementCount);
   }
 
-  /// Host-synchronously copies a slice of an array of elements of type T from
-  /// device to host memory.
-  ///
-  /// Returns an error if ElementCount is too large for the source or the
-  /// destination.
-  ///
-  /// The calling host thread is blocked until the copy completes. Can be used
-  /// with any host memory, the host memory does not have to be allocated with
-  /// allocateHostMemory or registered with registerHostMemory. Does not block
-  /// any ongoing device calls.
   template <typename T>
   Error synchronousCopyH2D(llvm::ArrayRef<T> Src,
                            GlobalDeviceMemorySlice<T> Dst,
@@ -186,11 +176,6 @@ public:
                                          ElementCount * sizeof(T));
   }
 
-  /// Similar to synchronousCopyH2D(llvm::ArrayRef<T>,
-  /// GlobalDeviceMemorySlice<T>, size_t) but does not take an element count
-  /// argument because it copies the entire source array.
-  ///
-  /// Returns an error if the Src and Dst sizes do not match.
   template <typename T>
   Error synchronousCopyH2D(llvm::ArrayRef<T> Src,
                            GlobalDeviceMemorySlice<T> Dst) {
@@ -203,11 +188,6 @@ public:
     return synchronousCopyH2D(Src, Dst, Dst.getElementCount());
   }
 
-  /// Similar to synchronousCopyH2D(llvm::ArrayRef<T>,
-  /// GlobalDeviceMemorySlice<T>, size_t) but copies from a pointer rather than
-  /// an llvm::ArrayRef.
-  ///
-  /// Returns an error if ElementCount is too large for the destination.
   template <typename T>
   Error synchronousCopyH2D(T *Src, GlobalDeviceMemorySlice<T> Dst,
                            size_t ElementCount) {
@@ -215,42 +195,23 @@ public:
                               ElementCount);
   }
 
-  /// Similar to synchronousCopyH2D(llvm::ArrayRef<T>,
-  /// GlobalDeviceMemorySlice<T>, size_t) but the destination is a
-  /// GlobalDeviceMemory rather than a GlobalDeviceMemorySlice.
   template <typename T>
   Error synchronousCopyH2D(llvm::ArrayRef<T> Src, GlobalDeviceMemory<T> Dst,
                            size_t ElementCount) {
     return synchronousCopyH2D(Src, Dst.asSlice(), ElementCount);
   }
 
-  /// Similar to synchronousCopyH2D(llvm::ArrayRef<T>,
-  /// GlobalDeviceMemorySlice<T>) but the destination is a GlobalDeviceMemory
-  /// rather than a GlobalDeviceMemorySlice.
   template <typename T>
   Error synchronousCopyH2D(llvm::ArrayRef<T> Src, GlobalDeviceMemory<T> Dst) {
     return synchronousCopyH2D(Src, Dst.asSlice());
   }
 
-  /// Similar to synchronousCopyH2D(T*, GlobalDeviceMemorySlice<T>, size_t) but
-  /// the destination is a GlobalDeviceMemory rather than a
-  /// GlobalDeviceMemorySlice.
   template <typename T>
   Error synchronousCopyH2D(T *Src, GlobalDeviceMemory<T> Dst,
                            size_t ElementCount) {
     return synchronousCopyH2D(Src, Dst.asSlice(), ElementCount);
   }
 
-  /// Host-synchronously copies a slice of an array of elements of type T from
-  /// one location in device memory to another.
-  ///
-  /// Returns an error if ElementCount is too large for the source slice or the
-  /// destination.
-  ///
-  /// The calling host thread is blocked until the copy completes. Can be used
-  /// with any host memory, the host memory does not have to be allocated with
-  /// allocateHostMemory or registered with registerHostMemory. Does not block
-  /// any ongoing device calls.
   template <typename T>
   Error synchronousCopyD2D(GlobalDeviceMemorySlice<T> Src,
                            GlobalDeviceMemorySlice<T> Dst,
@@ -271,11 +232,6 @@ public:
         ElementCount * sizeof(T));
   }
 
-  /// Similar to synchronousCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>, size_t) but does not take an element count
-  /// argument because it copies the entire source array.
-  ///
-  /// Returns an error if the Src and Dst sizes do not match.
   template <typename T>
   Error synchronousCopyD2D(GlobalDeviceMemorySlice<T> Src,
                            GlobalDeviceMemorySlice<T> Dst) {
@@ -288,9 +244,6 @@ public:
     return synchronousCopyD2D(Src, Dst, Src.getElementCount());
   }
 
-  /// Similar to synchronousCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>, size_t) but the source is a
-  /// GlobalDeviceMemory<T> rather than a GlobalDeviceMemorySlice<T>.
   template <typename T>
   Error synchronousCopyD2D(GlobalDeviceMemory<T> Src,
                            GlobalDeviceMemorySlice<T> Dst,
@@ -298,50 +251,37 @@ public:
     return synchronousCopyD2D(Src.asSlice(), Dst, ElementCount);
   }
 
-  /// Similar to synchronousCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>) but the source is a GlobalDeviceMemory<T>
-  /// rather than a GlobalDeviceMemorySlice<T>.
   template <typename T>
   Error synchronousCopyD2D(GlobalDeviceMemory<T> Src,
                            GlobalDeviceMemorySlice<T> Dst) {
     return synchronousCopyD2D(Src.asSlice(), Dst);
   }
 
-  /// Similar to synchronousCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>, size_t) but the destination is a
-  /// GlobalDeviceMemory<T> rather than a GlobalDeviceMemorySlice<T>.
   template <typename T>
   Error synchronousCopyD2D(GlobalDeviceMemorySlice<T> Src,
                            GlobalDeviceMemory<T> Dst, size_t ElementCount) {
     return synchronousCopyD2D(Src, Dst.asSlice(), ElementCount);
   }
 
-  /// Similar to synchronousCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>) but the destination is a GlobalDeviceMemory<T>
-  /// rather than a GlobalDeviceMemorySlice<T>.
   template <typename T>
   Error synchronousCopyD2D(GlobalDeviceMemorySlice<T> Src,
                            GlobalDeviceMemory<T> Dst) {
     return synchronousCopyD2D(Src, Dst.asSlice());
   }
 
-  /// Similar to synchronousCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>, size_t) but the source and destination are
-  /// GlobalDeviceMemory<T> rather than a GlobalDeviceMemorySlice<T>.
   template <typename T>
   Error synchronousCopyD2D(GlobalDeviceMemory<T> Src, GlobalDeviceMemory<T> Dst,
                            size_t ElementCount) {
     return synchronousCopyD2D(Src.asSlice(), Dst.asSlice(), ElementCount);
   }
 
-  /// Similar to synchronousCopyD2D(GlobalDeviceMemorySlice<T>,
-  /// GlobalDeviceMemorySlice<T>) but the source and destination are
-  /// GlobalDeviceMemory<T> rather than a GlobalDeviceMemorySlice<T>.
   template <typename T>
   Error synchronousCopyD2D(GlobalDeviceMemory<T> Src,
                            GlobalDeviceMemory<T> Dst) {
     return synchronousCopyD2D(Src.asSlice(), Dst.asSlice());
   }
+
+  ///@} End host-synchronous device memory copying functions
 
 private:
   PlatformExecutor *PExecutor;
