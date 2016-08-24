@@ -41,7 +41,11 @@ public:
   /// Allocates an array of ElementCount entries of type T in device memory.
   template <typename T>
   Expected<GlobalDeviceMemory<T>> allocateDeviceMemory(size_t ElementCount) {
-    return PExecutor->allocateDeviceMemory(ElementCount * sizeof(T));
+    Expected<GlobalDeviceMemoryBase> MaybeBase =
+        PExecutor->allocateDeviceMemory(ElementCount * sizeof(T));
+    if (!MaybeBase)
+      return MaybeBase.takeError();
+    return GlobalDeviceMemory<T>(*MaybeBase);
   }
 
   /// Frees memory previously allocated with allocateDeviceMemory.
@@ -54,7 +58,11 @@ public:
   /// Host memory allocated by this function can be used for asynchronous memory
   /// copies on streams. See Stream::thenCopyD2H and Stream::thenCopyH2D.
   template <typename T> Expected<T *> allocateHostMemory(size_t ElementCount) {
-    return PExecutor->allocateHostMemory(ElementCount * sizeof(T));
+    Expected<void *> MaybeMemory =
+        PExecutor->allocateHostMemory(ElementCount * sizeof(T));
+    if (!MaybeMemory)
+      return MaybeMemory.takeError();
+    return static_cast<T *>(*MaybeMemory);
   }
 
   /// Frees memory previously allocated with allocateHostMemory.

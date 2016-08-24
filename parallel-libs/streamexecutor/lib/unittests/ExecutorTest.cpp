@@ -54,6 +54,14 @@ public:
     return se::Error::success();
   }
 
+  se::Error registerHostMemory(void *, size_t) override {
+    return se::Error::success();
+  }
+
+  se::Error unregisterHostMemory(void *) override {
+    return se::Error::success();
+  }
+
   se::Error synchronousCopyD2H(const se::GlobalDeviceMemoryBase &DeviceSrc,
                                size_t SrcByteOffset, void *HostDst,
                                size_t DstByteOffset,
@@ -130,6 +138,25 @@ public:
 
 using llvm::ArrayRef;
 using llvm::MutableArrayRef;
+
+TEST_F(ExecutorTest, AllocateAndFreeDeviceMemory) {
+  se::Expected<se::GlobalDeviceMemory<int>> MaybeMemory =
+      Executor.allocateDeviceMemory<int>(10);
+  EXPECT_TRUE(static_cast<bool>(MaybeMemory));
+  EXPECT_NO_ERROR(Executor.freeDeviceMemory(*MaybeMemory));
+}
+
+TEST_F(ExecutorTest, AllocateAndFreeHostMemory) {
+  se::Expected<int *> MaybeMemory = Executor.allocateHostMemory<int>(10);
+  EXPECT_TRUE(static_cast<bool>(MaybeMemory));
+  EXPECT_NO_ERROR(Executor.freeHostMemory(*MaybeMemory));
+}
+
+TEST_F(ExecutorTest, RegisterAndUnregisterHostMemory) {
+  std::vector<int> Data(10);
+  EXPECT_NO_ERROR(Executor.registerHostMemory(Data.data(), 10));
+  EXPECT_NO_ERROR(Executor.unregisterHostMemory(Data.data()));
+}
 
 // D2H tests
 
