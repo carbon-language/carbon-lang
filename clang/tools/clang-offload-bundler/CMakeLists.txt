@@ -1,4 +1,4 @@
-set(LLVM_LINK_COMPONENTS support)
+set(LLVM_LINK_COMPONENTS BitWriter Core Object Support)
 
 add_clang_executable(clang-offload-bundler
   ClangOffloadBundler.cpp
@@ -6,8 +6,6 @@ add_clang_executable(clang-offload-bundler
 
 set(CLANG_OFFLOAD_BUNDLER_LIB_DEPS
   clangBasic
-  LLVMBitWriter
-  LLVMObject
   )
   
 add_dependencies(clang clang-offload-bundler)
