@@ -1066,9 +1066,9 @@ let Uses = [EXEC] in {
 def V_READFIRSTLANE_B32 : VOP1 <
   0x00000002,
   (outs SReg_32:$vdst),
-  (ins VS_32:$src0),
+  (ins VGPR_32:$src0),
   "v_readfirstlane_b32 $vdst, $src0",
-  []
+  [(set i32:$vdst, (int_amdgcn_readfirstlane i32:$src0))]
 > {
   let isConvergent = 1;
 }
@@ -1447,8 +1447,9 @@ defm V_READLANE_B32 : VOP2SI_3VI_m <
   vop3 <0x001, 0x289>,
   "v_readlane_b32",
   (outs SReg_32:$vdst),
-  (ins VS_32:$src0, SCSrc_32:$src1),
-  "v_readlane_b32 $vdst, $src0, $src1"
+  (ins VGPR_32:$src0, SCSrc_32:$src1),
+  "v_readlane_b32 $vdst, $src0, $src1",
+  [(set i32:$vdst, (int_amdgcn_readlane i32:$src0, i32:$src1))]
 >;
 
 defm V_WRITELANE_B32 : VOP2SI_3VI_m <
