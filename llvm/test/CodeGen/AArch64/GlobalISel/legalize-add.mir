@@ -19,7 +19,6 @@
 
 ---
 name:            test_scalar_add_big
-isSSA:           true
 registers:
   - { id: 0, class: _ }
   - { id: 1, class: _ }
@@ -43,7 +42,6 @@ body: |
 
 ---
 name:            test_scalar_add_small
-isSSA:           true
 registers:
   - { id: 0, class: _ }
   - { id: 1, class: _ }
@@ -65,7 +63,6 @@ body: |
 
 ---
 name:            test_vector_add
-isSSA:           true
 registers:
   - { id: 0, class: _ }
   - { id: 1, class: _ }

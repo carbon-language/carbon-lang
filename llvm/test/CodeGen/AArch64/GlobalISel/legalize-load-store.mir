@@ -15,7 +15,6 @@
 
 ---
 name:            test_load
-isSSA:           true
 registers:
   - { id: 0, class: _ }
   - { id: 1, class: _ }
@@ -48,7 +47,6 @@ body: |
 
 ---
 name:            test_store
-isSSA:           true
 registers:
   - { id: 0, class: _ }
   - { id: 1, class: _ }

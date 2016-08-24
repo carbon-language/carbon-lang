@@ -15,7 +15,6 @@
 
 ---
 name:            test_constant
-isSSA:           true
 registers:
   - { id: 0, class: _ }
   - { id: 1, class: _ }
@@ -43,7 +42,6 @@ body: |
 
 ---
 name:            test_fconstant
-isSSA:           true
 registers:
   - { id: 0, class: _ }
   - { id: 1, class: _ }

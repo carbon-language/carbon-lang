@@ -289,9 +289,25 @@ static bool hasPHI(const MachineFunction &MF) {
   return false;
 }
 
+static bool isSSA(const MachineFunction &MF) {
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  for (unsigned I = 0, E = MRI.getNumVirtRegs(); I != E; ++I) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(I);
+    if (!MRI.hasOneDef(Reg) && !MRI.def_empty(Reg))
+      return false;
+  }
+  return true;
+}
+
 void MIRParserImpl::computeFunctionProperties(MachineFunction &MF) {
+  MachineFunctionProperties &Properties = MF.getProperties();
   if (!hasPHI(MF))
-    MF.getProperties().set(MachineFunctionProperties::Property::NoPHIs);
+    Properties.set(MachineFunctionProperties::Property::NoPHIs);
+
+  if (isSSA(MF))
+    Properties.set(MachineFunctionProperties::Property::IsSSA);
+  else
+    Properties.clear(MachineFunctionProperties::Property::IsSSA);
 }
 
 bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
@@ -382,9 +398,6 @@ bool MIRParserImpl::initializeRegisterInfo(PerFunctionMIParsingState &PFS,
     const yaml::MachineFunction &YamlMF) {
   MachineFunction &MF = PFS.MF;
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
-  assert(RegInfo.isSSA());
-  if (!YamlMF.IsSSA)
-    RegInfo.leaveSSA();
   assert(RegInfo.tracksLiveness());
   if (!YamlMF.TracksRegLiveness)
     RegInfo.invalidateLiveness();
