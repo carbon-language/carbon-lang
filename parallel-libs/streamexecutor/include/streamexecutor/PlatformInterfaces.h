@@ -31,7 +31,7 @@
 
 namespace streamexecutor {
 
-class PlatformExecutor;
+class PlatformDevice;
 
 /// Methods supported by device kernel function objects on all platforms.
 class KernelInterface {
@@ -41,15 +41,14 @@ class KernelInterface {
 /// Platform-specific stream handle.
 class PlatformStreamHandle {
 public:
-  explicit PlatformStreamHandle(PlatformExecutor *PExecutor)
-      : PExecutor(PExecutor) {}
+  explicit PlatformStreamHandle(PlatformDevice *PDevice) : PDevice(PDevice) {}
 
   virtual ~PlatformStreamHandle();
 
-  PlatformExecutor *getExecutor() { return PExecutor; }
+  PlatformDevice *getDevice() { return PDevice; }
 
 private:
-  PlatformExecutor *PExecutor;
+  PlatformDevice *PDevice;
 };
 
 /// Raw executor methods that must be implemented by each platform.
@@ -57,11 +56,11 @@ private:
 /// This class defines the platform interface that supports executing work on a
 /// device.
 ///
-/// The public Executor and Stream classes have the type-safe versions of the
+/// The public Device and Stream classes have the type-safe versions of the
 /// functions in this interface.
-class PlatformExecutor {
+class PlatformDevice {
 public:
-  virtual ~PlatformExecutor();
+  virtual ~PlatformDevice();
 
   virtual std::string getName() const = 0;
 

@@ -1,4 +1,4 @@
-//===-- Executor.h - The Executor class -------------------------*- C++ -*-===//
+//===-- Device.h - The Device class -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,12 +8,12 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// The Executor class which represents a single device of a specific platform.
+/// The Device class which represents a single device of a specific platform.
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef STREAMEXECUTOR_EXECUTOR_H
-#define STREAMEXECUTOR_EXECUTOR_H
+#ifndef STREAMEXECUTOR_DEVICE_H
+#define STREAMEXECUTOR_DEVICE_H
 
 #include "streamexecutor/KernelSpec.h"
 #include "streamexecutor/PlatformInterfaces.h"
@@ -24,10 +24,10 @@ namespace streamexecutor {
 class KernelInterface;
 class Stream;
 
-class Executor {
+class Device {
 public:
-  explicit Executor(PlatformExecutor *PExecutor);
-  virtual ~Executor();
+  explicit Device(PlatformDevice *PDevice);
+  virtual ~Device();
 
   /// Gets the kernel implementation for the underlying platform.
   virtual Expected<std::unique_ptr<KernelInterface>>
@@ -42,7 +42,7 @@ public:
   template <typename T>
   Expected<GlobalDeviceMemory<T>> allocateDeviceMemory(size_t ElementCount) {
     Expected<GlobalDeviceMemoryBase> MaybeBase =
-        PExecutor->allocateDeviceMemory(ElementCount * sizeof(T));
+        PDevice->allocateDeviceMemory(ElementCount * sizeof(T));
     if (!MaybeBase)
       return MaybeBase.takeError();
     return GlobalDeviceMemory<T>(*MaybeBase);
@@ -50,7 +50,7 @@ public:
 
   /// Frees memory previously allocated with allocateDeviceMemory.
   template <typename T> Error freeDeviceMemory(GlobalDeviceMemory<T> Memory) {
-    return PExecutor->freeDeviceMemory(Memory);
+    return PDevice->freeDeviceMemory(Memory);
   }
 
   /// Allocates an array of ElementCount entries of type T in host memory.
@@ -59,7 +59,7 @@ public:
   /// copies on streams. See Stream::thenCopyD2H and Stream::thenCopyH2D.
   template <typename T> Expected<T *> allocateHostMemory(size_t ElementCount) {
     Expected<void *> MaybeMemory =
-        PExecutor->allocateHostMemory(ElementCount * sizeof(T));
+        PDevice->allocateHostMemory(ElementCount * sizeof(T));
     if (!MaybeMemory)
       return MaybeMemory.takeError();
     return static_cast<T *>(*MaybeMemory);
@@ -67,7 +67,7 @@ public:
 
   /// Frees memory previously allocated with allocateHostMemory.
   template <typename T> Error freeHostMemory(T *Memory) {
-    return PExecutor->freeHostMemory(Memory);
+    return PDevice->freeHostMemory(Memory);
   }
 
   /// Registers a previously allocated host array of type T for asynchronous
@@ -77,15 +77,15 @@ public:
   /// memory copies on streams. See Stream::thenCopyD2H and Stream::thenCopyH2D.
   template <typename T>
   Error registerHostMemory(T *Memory, size_t ElementCount) {
-    return PExecutor->registerHostMemory(Memory, ElementCount * sizeof(T));
+    return PDevice->registerHostMemory(Memory, ElementCount * sizeof(T));
   }
 
   /// Unregisters host memory previously registered by registerHostMemory.
   template <typename T> Error unregisterHostMemory(T *Memory) {
-    return PExecutor->unregisterHostMemory(Memory);
+    return PDevice->unregisterHostMemory(Memory);
   }
 
-  /// \anchor ExecutorHostSyncCopyGroup
+  /// \anchor DeviceHostSyncCopyGroup
   /// \name Host-synchronous device memory copying functions
   ///
   /// These methods block the calling host thread while copying data to or from
@@ -125,9 +125,9 @@ public:
       return make_error(
           "copying too many elements, " + llvm::Twine(ElementCount) +
           ", to a host array of element count " + llvm::Twine(Dst.size()));
-    return PExecutor->synchronousCopyD2H(
-        Src.getBaseMemory(), Src.getElementOffset() * sizeof(T), Dst.data(), 0,
-        ElementCount * sizeof(T));
+    return PDevice->synchronousCopyD2H(Src.getBaseMemory(),
+                                       Src.getElementOffset() * sizeof(T),
+                                       Dst.data(), 0, ElementCount * sizeof(T));
   }
 
   template <typename T>
@@ -179,9 +179,9 @@ public:
                         llvm::Twine(ElementCount) +
                         ", to a device array of element count " +
                         llvm::Twine(Dst.getElementCount()));
-    return PExecutor->synchronousCopyH2D(Src.data(), 0, Dst.getBaseMemory(),
-                                         Dst.getElementOffset() * sizeof(T),
-                                         ElementCount * sizeof(T));
+    return PDevice->synchronousCopyH2D(Src.data(), 0, Dst.getBaseMemory(),
+                                       Dst.getElementOffset() * sizeof(T),
+                                       ElementCount * sizeof(T));
   }
 
   template <typename T>
@@ -234,7 +234,7 @@ public:
                         llvm::Twine(ElementCount) +
                         ", to a device array of element count " +
                         llvm::Twine(Dst.getElementCount()));
-    return PExecutor->synchronousCopyD2D(
+    return PDevice->synchronousCopyD2D(
         Src.getBaseMemory(), Src.getElementOffset() * sizeof(T),
         Dst.getBaseMemory(), Dst.getElementOffset() * sizeof(T),
         ElementCount * sizeof(T));
@@ -292,9 +292,9 @@ public:
   ///@} End host-synchronous device memory copying functions
 
 private:
-  PlatformExecutor *PExecutor;
+  PlatformDevice *PDevice;
 };
 
 } // namespace streamexecutor
 
-#endif // STREAMEXECUTOR_EXECUTOR_H
+#endif // STREAMEXECUTOR_DEVICE_H
