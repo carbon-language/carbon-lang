@@ -15,7 +15,6 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
-#include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
@@ -102,11 +101,6 @@ TargetIRAnalysis LLVMTargetMachine::getTargetIRAnalysis() {
   });
 }
 
-void LLVMTargetMachine::addMachineFunctionAnalysis(PassManagerBase &PM,
-    MachineFunctionInitializer *MFInitializer) const {
-  PM.add(new MachineFunctionAnalysis(*this, MFInitializer));
-}
-
 /// addPassesToX helper drives creation and initialization of TargetPassConfig.
 static MCContext *
 addPassesToGenerateCode(LLVMTargetMachine *TM, PassManagerBase &PM,
@@ -142,8 +136,8 @@ addPassesToGenerateCode(LLVMTargetMachine *TM, PassManagerBase &PM,
   PassConfig->addISelPrepare();
 
   MachineModuleInfo *MMI = new MachineModuleInfo(TM);
+  MMI->setMachineFunctionInitializer(MFInitializer);
   PM.add(MMI);
-  TM->addMachineFunctionAnalysis(PM, MFInitializer);
 
   // Enable FastISel with -fast, but allow that to be overridden.
   TM->setO0WantsFastISel(EnableFastISelOption != cl::BOU_FALSE);
@@ -265,6 +259,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(
     return true;
 
   PM.add(Printer);
+  PM.add(createFreeMachineFunctionPass());
 
   return false;
 }
@@ -311,6 +306,7 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM, MCContext *&Ctx,
     return true;
 
   PM.add(Printer);
+  PM.add(createFreeMachineFunctionPass());
 
   return false; // success!
 }

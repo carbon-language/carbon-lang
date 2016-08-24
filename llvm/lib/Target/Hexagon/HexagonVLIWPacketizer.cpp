@@ -22,7 +22,6 @@
 #include "HexagonVLIWPacketizer.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
-#include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
