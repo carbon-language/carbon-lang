@@ -293,7 +293,7 @@ class SizeClassAllocator64 {
   // Call mmap for metadata memory with at least this size.
   static const uptr kMetaMapSize = 1 << 16;
   // Call mmap for free array memory with at least this size.
-  static const uptr kFreeArrayMapSize = 1 << 12;
+  static const uptr kFreeArrayMapSize = 1 << 16;
 
   struct RegionInfo {
     BlockingMutex mutex;
