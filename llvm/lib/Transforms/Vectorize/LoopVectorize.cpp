@@ -386,8 +386,9 @@ protected:
   /// See PR14725.
   void fixLCSSAPHIs();
 
-  /// Predicate conditional stores on their respective conditions.
-  void predicateStores();
+  /// Predicate conditional instructions that require predication on their
+  /// respective conditions.
+  void predicateInstructions();
  
   /// Shrinks vector element sizes based on information in "MinBWs".
   void truncateToMinimalBitwidths();
@@ -414,11 +415,11 @@ protected:
   void updateAnalysis();
 
   /// This instruction is un-vectorizable. Implement it as a sequence
-  /// of scalars. If \p IfPredicateStore is true we need to 'hide' each
+  /// of scalars. If \p IfPredicateInstr is true we need to 'hide' each
   /// scalarized instruction behind an if block predicated on the control
   /// dependence of the instruction.
   virtual void scalarizeInstruction(Instruction *Instr,
-                                    bool IfPredicateStore = false);
+                                    bool IfPredicateInstr = false);
 
   /// Vectorize Load and Store instructions,
   virtual void vectorizeMemoryInstruction(Instruction *Instr);
@@ -624,7 +625,7 @@ protected:
 
   /// Store instructions that should be predicated, as a pair
   ///   <StoreInst, Predicate>
-  SmallVector<std::pair<StoreInst *, Value *>, 4> PredicatedStores;
+  SmallVector<std::pair<Instruction *, Value *>, 4> PredicatedInstructions;
   EdgeMaskCache MaskCache;
   /// Trip count of the original loop.
   Value *TripCount;
@@ -654,7 +655,7 @@ public:
 
 private:
   void scalarizeInstruction(Instruction *Instr,
-                            bool IfPredicateStore = false) override;
+                            bool IfPredicateInstr = false) override;
   void vectorizeMemoryInstruction(Instruction *Instr) override;
   Value *getBroadcastInstrs(Value *V) override;
   Value *getStepVector(Value *Val, int StartIdx, Value *Step,
@@ -2767,8 +2768,11 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
 }
 
 void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
-                                               bool IfPredicateStore) {
+                                               bool IfPredicateInstr) {
   assert(!Instr->getType()->isAggregateType() && "Can't handle vectors");
+  DEBUG(dbgs() << "LV: Scalarizing"
+               << (IfPredicateInstr ? " and predicating:" : ":") << *Instr
+               << '\n');
   // Holds vector parameters or scalars, in case of uniform vals.
   SmallVector<VectorParts, 4> Params;
 
@@ -2812,7 +2816,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
   VectorParts &VecResults = WidenMap.splat(Instr, UndefVec);
 
   VectorParts Cond;
-  if (IfPredicateStore) {
+  if (IfPredicateInstr) {
     assert(Instr->getParent()->getSinglePredecessor() &&
            "Only support single predecessor blocks");
     Cond = createEdgeMask(Instr->getParent()->getSinglePredecessor(),
@@ -2826,7 +2830,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
 
       // Start if-block.
       Value *Cmp = nullptr;
-      if (IfPredicateStore) {
+      if (IfPredicateInstr) {
         Cmp = Builder.CreateExtractElement(Cond[Part], Builder.getInt32(Width));
         Cmp = Builder.CreateICmp(ICmpInst::ICMP_EQ, Cmp,
                                  ConstantInt::get(Cmp->getType(), 1));
@@ -2865,9 +2869,8 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
         VecResults[Part] = Builder.CreateInsertElement(VecResults[Part], Cloned,
                                                        Builder.getInt32(Width));
       // End if-block.
-      if (IfPredicateStore)
-        PredicatedStores.push_back(
-            std::make_pair(cast<StoreInst>(Cloned), Cmp));
+      if (IfPredicateInstr)
+        PredicatedInstructions.push_back(std::make_pair(Cloned, Cmp));
     }
   }
 }
@@ -3398,9 +3401,13 @@ static Value *addFastMathFlag(Value *V) {
   return V;
 }
 
-/// Estimate the overhead of scalarizing a value. Insert and Extract are set if
-/// the result needs to be inserted and/or extracted from vectors.
+/// \brief Estimate the overhead of scalarizing a value based on its type.
+/// Insert and Extract are set if the result needs to be inserted and/or
+/// extracted from vectors.
+/// If the instruction is also to be predicated, add the cost of a PHI
+/// node to the insertion cost.
 static unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract,
+                                         bool Predicated,
                                          const TargetTransformInfo &TTI) {
   if (Ty->isVoidTy())
     return 0;
@@ -3409,13 +3416,56 @@ static unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract,
   unsigned Cost = 0;
 
   for (unsigned I = 0, E = Ty->getVectorNumElements(); I < E; ++I) {
-    if (Insert)
-      Cost += TTI.getVectorInstrCost(Instruction::InsertElement, Ty, I);
     if (Extract)
       Cost += TTI.getVectorInstrCost(Instruction::ExtractElement, Ty, I);
+    if (Insert) {
+      Cost += TTI.getVectorInstrCost(Instruction::InsertElement, Ty, I);
+      if (Predicated)
+        Cost += TTI.getCFInstrCost(Instruction::PHI);
+    }
   }
 
+  // We assume that if-converted blocks have a 50% chance of being executed.
+  // Predicated scalarized instructions are avoided due to the CF that bypasses
+  // turned off lanes. The extracts and inserts will be sinked/hoisted to the
+  // predicated basic-block and are subjected to the same assumption.
+  if (Predicated)
+    Cost /= 2;
+
   return Cost;
+}
+
+/// \brief Estimate the overhead of scalarizing an Instruction based on the
+/// types of its operands and return value.
+static unsigned getScalarizationOverhead(SmallVectorImpl<Type *> &OpTys,
+                                         Type *RetTy, bool Predicated,
+                                         const TargetTransformInfo &TTI) {
+  unsigned ScalarizationCost =
+      getScalarizationOverhead(RetTy, true, false, Predicated, TTI);
+
+  for (Type *Ty : OpTys)
+    ScalarizationCost +=
+        getScalarizationOverhead(Ty, false, true, Predicated, TTI);
+
+  return ScalarizationCost;
+}
+
+/// \brief Estimate the overhead of scalarizing an instruction. This is a
+/// convenience wrapper for the type-based getScalarizationOverhead API.
+static unsigned getScalarizationOverhead(Instruction *I, unsigned VF,
+                                         bool Predicated,
+                                         const TargetTransformInfo &TTI) {
+  if (VF == 1)
+    return 0;
+
+  Type *RetTy = ToVectorTy(I->getType(), VF);
+
+  SmallVector<Type *, 4> OpTys;
+  unsigned OperandsNum = I->getNumOperands();
+  for (unsigned OpInd = 0; OpInd < OperandsNum; ++OpInd)
+    OpTys.push_back(ToVectorTy(I->getOperand(OpInd)->getType(), VF));
+
+  return getScalarizationOverhead(OpTys, RetTy, Predicated, TTI);
 }
 
 // Estimate cost of a call instruction CI if it were vectorized with factor VF.
@@ -3448,10 +3498,7 @@ static unsigned getVectorCallCost(CallInst *CI, unsigned VF,
 
   // Compute costs of unpacking argument values for the scalar calls and
   // packing the return values to a vector.
-  unsigned ScalarizationCost =
-      getScalarizationOverhead(RetTy, true, false, TTI);
-  for (Type *Ty : Tys)
-    ScalarizationCost += getScalarizationOverhead(Ty, false, true, TTI);
+  unsigned ScalarizationCost = getScalarizationOverhead(Tys, RetTy, false, TTI);
 
   unsigned Cost = ScalarCallCost * VF + ScalarizationCost;
 
@@ -3871,7 +3918,7 @@ void InnerLoopVectorizer::vectorizeLoop() {
   // Make sure DomTree is updated.
   updateAnalysis();
 
-  predicateStores();
+  predicateInstructions();
 
   // Remove redundant induction instructions.
   cse(LoopVectorBody);
@@ -4038,17 +4085,128 @@ void InnerLoopVectorizer::fixLCSSAPHIs() {
                             LoopMiddleBlock);
   }
 }
- 
-void InnerLoopVectorizer::predicateStores() {
-  for (auto KV : PredicatedStores) {
+
+void InnerLoopVectorizer::predicateInstructions() {
+
+  // For each instruction I marked for predication on value C, split I into its
+  // own basic block to form an if-then construct over C.
+  // Since I may be fed by extractelement and/or be feeding an insertelement
+  // generated during scalarization we try to move such instructions into the
+  // predicated basic block as well. For the insertelement this also means that
+  // the PHI will be created for the resulting vector rather than for the
+  // scalar instruction.
+  // So for some predicated instruction, e.g. the conditional sdiv in:
+  //
+  // for.body:
+  //  ...
+  //  %add = add nsw i32 %mul, %0
+  //  %cmp5 = icmp sgt i32 %2, 7
+  //  br i1 %cmp5, label %if.then, label %if.end
+  //
+  // if.then:
+  //  %div = sdiv i32 %0, %1
+  //  br label %if.end
+  //
+  // if.end:
+  //  %x.0 = phi i32 [ %div, %if.then ], [ %add, %for.body ]
+  //
+  // the sdiv at this point is scalarized and if-converted using a select.
+  // The inactive elements in the vector are not used, but the predicated
+  // instruction is still executed for all vector elements, essentially:
+  //
+  // vector.body:
+  //  ...
+  //  %17 = add nsw <2 x i32> %16, %wide.load
+  //  %29 = extractelement <2 x i32> %wide.load, i32 0
+  //  %30 = extractelement <2 x i32> %wide.load51, i32 0
+  //  %31 = sdiv i32 %29, %30
+  //  %32 = insertelement <2 x i32> undef, i32 %31, i32 0
+  //  %35 = extractelement <2 x i32> %wide.load, i32 1
+  //  %36 = extractelement <2 x i32> %wide.load51, i32 1
+  //  %37 = sdiv i32 %35, %36
+  //  %38 = insertelement <2 x i32> %32, i32 %37, i32 1
+  //  %predphi = select <2 x i1> %26, <2 x i32> %38, <2 x i32> %17
+  //
+  // Predication will now re-introduce the original control flow to avoid false
+  // side-effects by the sdiv instructions on the inactive elements, yielding
+  // (after cleanup):
+  //
+  // vector.body:
+  //  ...
+  //  %5 = add nsw <2 x i32> %4, %wide.load
+  //  %8 = icmp sgt <2 x i32> %wide.load52, <i32 7, i32 7>
+  //  %9 = extractelement <2 x i1> %8, i32 0
+  //  br i1 %9, label %pred.sdiv.if, label %pred.sdiv.continue
+  //
+  // pred.sdiv.if:
+  //  %10 = extractelement <2 x i32> %wide.load, i32 0
+  //  %11 = extractelement <2 x i32> %wide.load51, i32 0
+  //  %12 = sdiv i32 %10, %11
+  //  %13 = insertelement <2 x i32> undef, i32 %12, i32 0
+  //  br label %pred.sdiv.continue
+  //
+  // pred.sdiv.continue:
+  //  %14 = phi <2 x i32> [ undef, %vector.body ], [ %13, %pred.sdiv.if ]
+  //  %15 = extractelement <2 x i1> %8, i32 1
+  //  br i1 %15, label %pred.sdiv.if54, label %pred.sdiv.continue55
+  //
+  // pred.sdiv.if54:
+  //  %16 = extractelement <2 x i32> %wide.load, i32 1
+  //  %17 = extractelement <2 x i32> %wide.load51, i32 1
+  //  %18 = sdiv i32 %16, %17
+  //  %19 = insertelement <2 x i32> %14, i32 %18, i32 1
+  //  br label %pred.sdiv.continue55
+  //
+  // pred.sdiv.continue55:
+  //  %20 = phi <2 x i32> [ %14, %pred.sdiv.continue ], [ %19, %pred.sdiv.if54 ]
+  //  %predphi = select <2 x i1> %8, <2 x i32> %20, <2 x i32> %5
+
+  for (auto KV : PredicatedInstructions) {
     BasicBlock::iterator I(KV.first);
-    auto *BB = SplitBlock(I->getParent(), &*std::next(I), DT, LI);
+    BasicBlock *Head = I->getParent();
+    auto *BB = SplitBlock(Head, &*std::next(I), DT, LI);
     auto *T = SplitBlockAndInsertIfThen(KV.second, &*I, /*Unreachable=*/false,
                                         /*BranchWeights=*/nullptr, DT, LI);
     I->moveBefore(T);
-    I->getParent()->setName("pred.store.if");
-    BB->setName("pred.store.continue");
+    // Try to move any extractelement we may have created for the predicated
+    // instruction into the Then block.
+    for (Use &Op : I->operands()) {
+      auto *OpInst = dyn_cast<ExtractElementInst>(&*Op);
+      if (OpInst && OpInst->hasOneUse()) // TODO: more accurately - hasOneUser()
+        OpInst->moveBefore(&*I);
+    }
+
+    I->getParent()->setName(Twine("pred.") + I->getOpcodeName() + ".if");
+    BB->setName(Twine("pred.") + I->getOpcodeName() + ".continue");
+
+    // If the instruction is non-void create a Phi node at reconvergence point.
+    if (!I->getType()->isVoidTy()) {
+      Value *IncomingTrue = nullptr;
+      Value *IncomingFalse = nullptr;
+
+      if (I->hasOneUse() && isa<InsertElementInst>(*I->user_begin())) {
+        // If the predicated instruction is feeding an insert-element, move it
+        // into the Then block; Phi node will be created for the vector.
+        InsertElementInst *IEI = cast<InsertElementInst>(*I->user_begin());
+        IEI->moveBefore(T);
+        IncomingTrue = IEI; // the new vector with the inserted element.
+        IncomingFalse = IEI->getOperand(0); // the unmodified vector
+      } else {
+        // Phi node will be created for the scalar predicated instruction.
+        IncomingTrue = &*I;
+        IncomingFalse = UndefValue::get(I->getType());
+      }
+
+      BasicBlock *PostDom = I->getParent()->getSingleSuccessor();
+      assert(PostDom && "Then block has multiple successors");
+      PHINode *Phi =
+          PHINode::Create(IncomingTrue->getType(), 2, "", &PostDom->front());
+      IncomingTrue->replaceAllUsesWith(Phi);
+      Phi->addIncoming(IncomingFalse, Head);
+      Phi->addIncoming(IncomingTrue, I->getParent());
+    }
   }
+
   DEBUG(DT->verifyDomTree());
 }
 
@@ -4235,6 +4393,24 @@ void InnerLoopVectorizer::widenPHIInstruction(
   }
 }
 
+/// A helper function for checking whether an integer division-related
+/// instruction may divide by zero (in which case it must be predicated if
+/// executed conditionally in the scalar code).
+/// TODO: It may be worthwhile to generalize and check isKnownNonZero().
+/// Non-zero divisors that are non compile-time constants will not be
+/// converted into multiplication, so we will still end up scalarizing
+/// the division, but can do so w/o predication.
+static bool mayDivideByZero(Instruction &I) {
+  assert((I.getOpcode() == Instruction::UDiv ||
+          I.getOpcode() == Instruction::SDiv ||
+          I.getOpcode() == Instruction::URem ||
+          I.getOpcode() == Instruction::SRem) &&
+         "Unexpected instruction");
+  Value *Divisor = I.getOperand(1);
+  auto *CInt = dyn_cast<ConstantInt>(Divisor);
+  return !CInt || CInt->isZero();
+}
+
 void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
   // For each instruction in the old loop.
   for (Instruction &I : *BB) {
@@ -4251,17 +4427,23 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
       continue;
     } // End of PHI.
 
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+    case Instruction::SRem:
+    case Instruction::URem:
+      // Scalarize with predication if this instruction may divide by zero and
+      // block execution is conditional, otherwise fallthrough.
+      if (mayDivideByZero(I) && Legal->blockNeedsPredication(I.getParent())) {
+        scalarizeInstruction(&I, true);
+        continue;
+      }
     case Instruction::Add:
     case Instruction::FAdd:
     case Instruction::Sub:
     case Instruction::FSub:
     case Instruction::Mul:
     case Instruction::FMul:
-    case Instruction::UDiv:
-    case Instruction::SDiv:
     case Instruction::FDiv:
-    case Instruction::URem:
-    case Instruction::SRem:
     case Instruction::FRem:
     case Instruction::Shl:
     case Instruction::LShr:
@@ -5155,17 +5337,6 @@ bool LoopVectorizationLegality::blockCanBePredicated(
     }
     if (I.mayThrow())
       return false;
-
-    // The instructions below can trap.
-    switch (I.getOpcode()) {
-    default:
-      continue;
-    case Instruction::UDiv:
-    case Instruction::SDiv:
-    case Instruction::URem:
-    case Instruction::SRem:
-      return false;
-    }
   }
 
   return true;
@@ -6082,17 +6253,24 @@ unsigned LoopVectorizationCostModel::getInstructionCost(Instruction *I,
     // TODO: IF-converted IFs become selects.
     return 0;
   }
+  case Instruction::UDiv:
+  case Instruction::SDiv:
+  case Instruction::URem:
+  case Instruction::SRem:
+    // We assume that if-converted blocks have a 50% chance of being executed.
+    // Predicated scalarized instructions are avoided due to the CF that
+    // bypasses turned off lanes. If we are not predicating, fallthrough.
+    if (VF > 1 && mayDivideByZero(*I) &&
+        Legal->blockNeedsPredication(I->getParent()))
+      return VF * TTI.getArithmeticInstrCost(I->getOpcode(), RetTy) / 2 +
+             getScalarizationOverhead(I, VF, true, TTI);
   case Instruction::Add:
   case Instruction::FAdd:
   case Instruction::Sub:
   case Instruction::FSub:
   case Instruction::Mul:
   case Instruction::FMul:
-  case Instruction::UDiv:
-  case Instruction::SDiv:
   case Instruction::FDiv:
-  case Instruction::URem:
-  case Instruction::SRem:
   case Instruction::FRem:
   case Instruction::Shl:
   case Instruction::LShr:
@@ -6328,28 +6506,11 @@ unsigned LoopVectorizationCostModel::getInstructionCost(Instruction *I,
       return std::min(CallCost, getVectorIntrinsicCost(CI, VF, TTI, TLI));
     return CallCost;
   }
-  default: {
-    // We are scalarizing the instruction. Return the cost of the scalar
-    // instruction, plus the cost of insert and extract into vector
-    // elements, times the vector width.
-    unsigned Cost = 0;
-
-    if (!RetTy->isVoidTy() && VF != 1) {
-      unsigned InsCost =
-          TTI.getVectorInstrCost(Instruction::InsertElement, VectorTy);
-      unsigned ExtCost =
-          TTI.getVectorInstrCost(Instruction::ExtractElement, VectorTy);
-
-      // The cost of inserting the results plus extracting each one of the
-      // operands.
-      Cost += VF * (InsCost + ExtCost * I->getNumOperands());
-    }
-
+  default:
     // The cost of executing VF copies of the scalar instruction. This opcode
     // is unknown. Assume that it is the same as 'mul'.
-    Cost += VF * TTI.getArithmeticInstrCost(Instruction::Mul, VectorTy);
-    return Cost;
-  }
+    return VF * TTI.getArithmeticInstrCost(Instruction::Mul, VectorTy) +
+           getScalarizationOverhead(I, VF, false, TTI);
   } // end of switch.
 }
 
@@ -6407,7 +6568,7 @@ void LoopVectorizationCostModel::collectValuesToIgnore() {
 }
 
 void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
-                                             bool IfPredicateStore) {
+                                             bool IfPredicateInstr) {
   assert(!Instr->getType()->isAggregateType() && "Can't handle vectors");
   // Holds vector parameters or scalars, in case of uniform vals.
   SmallVector<VectorParts, 4> Params;
@@ -6450,7 +6611,7 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
   VectorParts &VecResults = WidenMap.splat(Instr, UndefVec);
 
   VectorParts Cond;
-  if (IfPredicateStore) {
+  if (IfPredicateInstr) {
     assert(Instr->getParent()->getSinglePredecessor() &&
            "Only support single predecessor blocks");
     Cond = createEdgeMask(Instr->getParent()->getSinglePredecessor(),
@@ -6463,7 +6624,7 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
 
     // Start an "if (pred) a[i] = ..." block.
     Value *Cmp = nullptr;
-    if (IfPredicateStore) {
+    if (IfPredicateInstr) {
       if (Cond[Part]->getType()->isVectorTy())
         Cond[Part] =
             Builder.CreateExtractElement(Cond[Part], Builder.getInt32(0));
@@ -6494,16 +6655,16 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
       VecResults[Part] = Cloned;
 
     // End if-block.
-    if (IfPredicateStore)
-      PredicatedStores.push_back(std::make_pair(cast<StoreInst>(Cloned), Cmp));
+    if (IfPredicateInstr)
+      PredicatedInstructions.push_back(std::make_pair(Cloned, Cmp));
   }
 }
 
 void InnerLoopUnroller::vectorizeMemoryInstruction(Instruction *Instr) {
   auto *SI = dyn_cast<StoreInst>(Instr);
-  bool IfPredicateStore = (SI && Legal->blockNeedsPredication(SI->getParent()));
+  bool IfPredicateInstr = (SI && Legal->blockNeedsPredication(SI->getParent()));
 
-  return scalarizeInstruction(Instr, IfPredicateStore);
+  return scalarizeInstruction(Instr, IfPredicateInstr);
 }
 
 Value *InnerLoopUnroller::reverseVector(Value *Vec) { return Vec; }
