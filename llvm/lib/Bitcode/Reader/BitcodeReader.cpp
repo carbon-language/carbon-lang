@@ -2452,7 +2452,7 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       break;
     }
     case bitc::METADATA_COMPILE_UNIT: {
-      if (Record.size() < 14 || Record.size() > 16)
+      if (Record.size() < 14 || Record.size() > 17)
         return error("Invalid record");
 
       // Ignore Record[0], which indicates whether this compile unit is
@@ -2464,7 +2464,8 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
           Record[8], getMDOrNull(Record[9]), getMDOrNull(Record[10]),
           getMDOrNull(Record[12]), getMDOrNull(Record[13]),
           Record.size() <= 15 ? nullptr : getMDOrNull(Record[15]),
-          Record.size() <= 14 ? 0 : Record[14]);
+          Record.size() <= 14 ? 0 : Record[14],
+          Record.size() <= 16 ? true : Record[16]);
 
       MetadataList.assignValue(CU, NextMetadataNo++);
 

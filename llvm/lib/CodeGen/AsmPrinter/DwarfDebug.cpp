@@ -352,7 +352,8 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
 template <typename Func> static void forBothCUs(DwarfCompileUnit &CU, Func F) {
   F(CU);
   if (auto *SkelCU = CU.getSkeleton())
-    F(*SkelCU);
+    if (CU.getCUNode()->getSplitDebugInlining())
+      F(*SkelCU);
 }
 
 void DwarfDebug::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
@@ -1155,7 +1156,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 
   TheCU.constructSubprogramScopeDIE(FnScope);
   if (auto *SkelCU = TheCU.getSkeleton())
-    if (!LScopes.getAbstractScopesList().empty())
+    if (!LScopes.getAbstractScopesList().empty() &&
+        TheCU.getCUNode()->getSplitDebugInlining())
       SkelCU->constructSubprogramScopeDIE(FnScope);
 
   // Clear debug info
