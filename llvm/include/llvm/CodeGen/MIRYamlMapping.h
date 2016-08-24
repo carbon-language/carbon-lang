@@ -381,7 +381,6 @@ struct MachineFunction {
   StringRef Name;
   unsigned Alignment = 0;
   bool ExposesReturnsTwice = false;
-  bool HasInlineAsm = false;
   // MachineFunctionProperties
   bool AllVRegsAllocated = false;
   // GISel MachineFunctionProperties.
@@ -408,7 +407,6 @@ template <> struct MappingTraits<MachineFunction> {
     YamlIO.mapRequired("name", MF.Name);
     YamlIO.mapOptional("alignment", MF.Alignment);
     YamlIO.mapOptional("exposesReturnsTwice", MF.ExposesReturnsTwice);
-    YamlIO.mapOptional("hasInlineAsm", MF.HasInlineAsm);
     YamlIO.mapOptional("allVRegsAllocated", MF.AllVRegsAllocated);
     YamlIO.mapOptional("legalized", MF.Legalized);
     YamlIO.mapOptional("regBankSelected", MF.RegBankSelected);
