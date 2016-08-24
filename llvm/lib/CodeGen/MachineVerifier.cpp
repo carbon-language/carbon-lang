@@ -1813,18 +1813,25 @@ void MachineVerifier::verifyLiveRangeSegment(const LiveRange &LR,
     bool hasRead = false;
     bool hasSubRegDef = false;
     bool hasDeadDef = false;
+    LaneBitmask RLM = MRI->getMaxLaneMaskForVReg(Reg);
     for (ConstMIBundleOperands MOI(*MI); MOI.isValid(); ++MOI) {
       if (!MOI->isReg() || MOI->getReg() != Reg)
         continue;
-      if (LaneMask != 0 &&
-          (LaneMask & TRI->getSubRegIndexLaneMask(MOI->getSubReg())) == 0)
-        continue;
+      unsigned Sub = MOI->getSubReg();
+      LaneBitmask SLM = Sub != 0 ? TRI->getSubRegIndexLaneMask(Sub) : RLM;
       if (MOI->isDef()) {
-        if (MOI->getSubReg() != 0)
+        if (Sub != 0) {
           hasSubRegDef = true;
+          // An operand vreg0:sub0<def> reads vreg0:sub1..n. Invert the lane
+          // mask for subregister defs. Read-undef defs will be handled by
+          // readsReg below.
+          SLM = ~SLM & RLM;
+        }
         if (MOI->isDead())
           hasDeadDef = true;
       }
+      if (LaneMask != 0 && !(LaneMask & SLM))
+        continue;
       if (MOI->readsReg())
         hasRead = true;
     }

@@ -459,9 +459,15 @@ void HexagonExpandCondsets::updateDeadsInRange(unsigned Reg, LaneBitmask LM,
     if (HII->isPredicated(*DefI))
       PredDefs.push_back(Seg.start);
   }
+
+  SmallVector<SlotIndex,8> Undefs;
+  LiveInterval &LI = LIS->getInterval(Reg);
+  LI.computeSubRangeUndefs(Undefs, LM, *MRI, *LIS->getSlotIndexes());
+
   for (auto &SI : PredDefs) {
     MachineBasicBlock *BB = LIS->getMBBFromIndex(SI);
-    if (Range.extendInBlock(LIS->getMBBStartIdx(BB), SI))
+    auto P = Range.extendInBlock(Undefs, LIS->getMBBStartIdx(BB), SI);
+    if (P.first != nullptr || P.second)
       SI = SlotIndex();
   }
 

@@ -353,6 +353,11 @@ void RenameIndependentSubregs::computeMainRangesFixFlags(
     if (I == 0)
       LI.clear();
     LIS->constructMainRangeFromSubranges(LI);
+    // A def of a subregister may be a use of other register lanes. Replacing
+    // such a def with a def of a different register will eliminate the use,
+    // and may cause the recorded live range to be larger than the actual
+    // liveness in the program IR.
+    LIS->shrinkToUses(&LI);
   }
 }
 
