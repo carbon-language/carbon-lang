@@ -127,7 +127,7 @@ static void RegisterHandler(int Signal) {
 static stack_t OldAltStack;
 
 static void CreateSigAltStack() {
-  const size_t AltStackSize = MINSIGSTKSZ + 8192;
+  const size_t AltStackSize = MINSIGSTKSZ + 64 * 1024;
 
   // If we're executing on the alternate stack, or we already have an alternate
   // signal stack that we're happy with, there's nothing for us to do. Don't
