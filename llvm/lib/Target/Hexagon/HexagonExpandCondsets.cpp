@@ -224,6 +224,10 @@ namespace {
 
 char HexagonExpandCondsets::ID = 0;
 
+namespace llvm {
+  char &HexagonExpandCondsetsID = HexagonExpandCondsets::ID;
+}
+
 INITIALIZE_PASS_BEGIN(HexagonExpandCondsets, "expand-condsets",
   "Hexagon Expand Condsets", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
