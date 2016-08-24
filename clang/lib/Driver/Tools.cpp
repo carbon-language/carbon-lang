@@ -4697,6 +4697,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-generate-type-units");
   }
 
+  if (!Args.hasFlag(options::OPT_fsplit_dwarf_inlining,
+                    options::OPT_fno_split_dwarf_inlining, true))
+    CmdArgs.push_back("-fno-split-dwarf-inlining");
+
   // CloudABI and WebAssembly use -ffunction-sections and -fdata-sections by
   // default.
   bool UseSeparateSections = Triple.getOS() == llvm::Triple::CloudABI ||
