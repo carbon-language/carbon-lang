@@ -574,7 +574,7 @@ static void AddValueForStrcmp(void *caller_pc, const char *s1, const char *s2,
   VP.AddValue((PC & 4095) | (LastSameByte << 12));
 }
 
-__attribute__((target("popcnt")))
+ATTRIBUTE_TARGET_POPCNT
 static void AddValueForCmp(void *PCptr, uint64_t Arg1, uint64_t Arg2) {
   if (Arg1 == Arg2)
     return;
