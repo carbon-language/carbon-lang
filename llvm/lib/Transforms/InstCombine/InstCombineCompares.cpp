@@ -1988,17 +1988,14 @@ Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &Cmp,
   if (Cmp.isEquality() && Shr->isExact() && Shr->hasOneUse() && *C == 0)
     return new ICmpInst(Pred, X, Cmp.getOperand(1));
 
-  // FIXME: This check restricts all folds under here to scalar types.
-  // Handle equality comparisons of shift-by-constant.
-  ConstantInt *ShAmt = dyn_cast<ConstantInt>(Shr->getOperand(1));
-  if (!ShAmt)
+  const APInt *ShiftAmt;
+  if (!match(Shr->getOperand(1), m_APInt(ShiftAmt)))
     return nullptr;
 
-  // Check that the shift amount is in range.  If not, don't perform
-  // undefined shifts.  When the shift is visited it will be
-  // simplified.
-  uint32_t TypeBits = C->getBitWidth();
-  uint32_t ShAmtVal = (uint32_t)ShAmt->getLimitedValue(TypeBits);
+  // Check that the shift amount is in range. If not, don't perform undefined
+  // shifts. When the shift is visited it will be simplified.
+  unsigned TypeBits = C->getBitWidth();
+  unsigned ShAmtVal = ShiftAmt->getLimitedValue(TypeBits);
   if (ShAmtVal >= TypeBits || ShAmtVal == 0)
     return nullptr;
 
@@ -2013,6 +2010,11 @@ Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &Cmp,
     // by a power of 2.  Since we already have logic to simplify these,
     // transform to div and then simplify the resultant comparison.
     if (IsAShr && (!Shr->isExact() || ShAmtVal == TypeBits - 1))
+      return nullptr;
+
+    // FIXME: This check restricts this fold to scalar types.
+    ConstantInt *ShAmt = dyn_cast<ConstantInt>(Shr->getOperand(1));
+    if (!ShAmt)
       return nullptr;
 
     // Revisit the shift (to delete it).
@@ -2041,6 +2043,8 @@ Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &Cmp,
     return Res;
   }
 
+  // Handle equality comparisons of shift-by-constant.
+
   // If the comparison constant changes with the shift, the comparison cannot
   // succeed (bits of the comparison constant cannot match the shifted value).
   // This should be known by InstSimplify and already be folded to true/false.
@@ -2051,15 +2055,14 @@ Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &Cmp,
   // Check if the bits shifted out are known to be zero. If so, we can compare
   // against the unshifted value:
   //  (X & 4) >> 1 == 2  --> (X & 4) == 4.
-  ConstantInt *ShiftedCmpRHS = Builder->getInt(*C << ShAmtVal);
-  if (Shr->hasOneUse() && Shr->isExact())
-    return new ICmpInst(Pred, X, ShiftedCmpRHS);
-
+  Constant *ShiftedCmpRHS = ConstantInt::get(Shr->getType(), *C << ShAmtVal);
   if (Shr->hasOneUse()) {
-    // Otherwise strength reduce the shift into an and.
-    APInt Val(APInt::getHighBitsSet(TypeBits, TypeBits - ShAmtVal));
-    Constant *Mask = Builder->getInt(Val);
+    if (Shr->isExact())
+      return new ICmpInst(Pred, X, ShiftedCmpRHS);
 
+    // Otherwise strength reduce the shift into an 'and'.
+    APInt Val(APInt::getHighBitsSet(TypeBits, TypeBits - ShAmtVal));
+    Constant *Mask = ConstantInt::get(Shr->getType(), Val);
     Value *And = Builder->CreateAnd(X, Mask, Shr->getName() + ".mask");
     return new ICmpInst(Pred, And, ShiftedCmpRHS);
   }
