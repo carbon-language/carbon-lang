@@ -6,6 +6,7 @@
 // RUN: %clang -O0 -target powerpc64le-ibm-linux-gnu %s -S -emit-llvm -o %t.ll
 // RUN: %clang -O0 -target powerpc64le-ibm-linux-gnu %s -c -emit-llvm -o %t.bc
 // RUN: %clang -O0 -target powerpc64le-ibm-linux-gnu %s -S -o %t.s
+// RUN: %clang -O0 -target powerpc64le-ibm-linux-gnu %s -c -o %t.o
 // RUN: %clang -O0 -target powerpc64le-ibm-linux-gnu %s -emit-ast -o %t.ast
 
 //
@@ -212,6 +213,40 @@
 // RUN: diff %t.empty %t.res.tgt2
 // RUN: clang-offload-bundler -type=bc -targets=openmp-powerpc64le-ibm-linux-gnu,host-powerpc64le-ibm-linux-gnu,openmp-x86_64-pc-linux-gnu -outputs=%t.res.tgt1,%t.res.bc,%t.res.tgt2 -inputs=%t.bc -unbundle
 // RUN: diff %t.bc %t.res.bc
+// RUN: diff %t.empty %t.res.tgt1
+// RUN: diff %t.empty %t.res.tgt2
+
+//
+// Check object bundle/unbundle. The content should be bundled into an ELF
+// section (we are using a PowerPC little-endian host which uses ELF). We
+// have an already bundled file to check the unbundle and do a dry run on the
+// bundling as it cannot be tested in all host platforms that will run these
+// tests.
+//
+
+// RUN: clang-offload-bundler -type=o -targets=host-powerpc64le-ibm-linux-gnu,openmp-powerpc64le-ibm-linux-gnu,openmp-x86_64-pc-linux-gnu -inputs=%t.o,%t.tgt1,%t.tgt2 -outputs=%t.bundle3.o -### -dump-temporary-files 2>&1 \
+// RUN: | FileCheck %s --check-prefix CK-OBJ-CMD
+// CK-OBJ-CMD: private constant [1 x i8] zeroinitializer, section "__CLANG_OFFLOAD_BUNDLE__host-powerpc64le-ibm-linux-gnu"
+// CK-OBJ-CMD: private constant [25 x i8] c"Content of device file 1\0A", section "__CLANG_OFFLOAD_BUNDLE__openmp-powerpc64le-ibm-linux-gnu"
+// CK-OBJ-CMD: private constant [25 x i8] c"Content of device file 2\0A", section "__CLANG_OFFLOAD_BUNDLE__openmp-x86_64-pc-linux-gnu"
+// CK-OBJ-CMD: clang" "-r" "-target" "powerpc64le-ibm-linux-gnu" "-o" "{{.+}}.o" "{{.+}}.o" "{{.+}}.bc" "-nostdlib"
+
+// RUN: clang-offload-bundler -type=o -targets=host-powerpc64le-ibm-linux-gnu,openmp-powerpc64le-ibm-linux-gnu,openmp-x86_64-pc-linux-gnu -outputs=%t.res.o,%t.res.tgt1,%t.res.tgt2 -inputs=%s.o -unbundle
+// RUN: diff %s.o %t.res.o
+// RUN: diff %t.tgt1 %t.res.tgt1
+// RUN: diff %t.tgt2 %t.res.tgt2
+// RUN: clang-offload-bundler -type=o -targets=openmp-powerpc64le-ibm-linux-gnu,host-powerpc64le-ibm-linux-gnu,openmp-x86_64-pc-linux-gnu -outputs=%t.res.tgt1,%t.res.o,%t.res.tgt2 -inputs=%s.o -unbundle
+// RUN: diff %s.o %t.res.o
+// RUN: diff %t.tgt1 %t.res.tgt1
+// RUN: diff %t.tgt2 %t.res.tgt2
+
+// Check if we can unbundle a file with no magic strings.
+// RUN: clang-offload-bundler -type=o -targets=host-powerpc64le-ibm-linux-gnu,openmp-powerpc64le-ibm-linux-gnu,openmp-x86_64-pc-linux-gnu -outputs=%t.res.o,%t.res.tgt1,%t.res.tgt2 -inputs=%t.o -unbundle
+// RUN: diff %t.o %t.res.o
+// RUN: diff %t.empty %t.res.tgt1
+// RUN: diff %t.empty %t.res.tgt2
+// RUN: clang-offload-bundler -type=o -targets=openmp-powerpc64le-ibm-linux-gnu,host-powerpc64le-ibm-linux-gnu,openmp-x86_64-pc-linux-gnu -outputs=%t.res.tgt1,%t.res.o,%t.res.tgt2 -inputs=%t.o -unbundle
+// RUN: diff %t.o %t.res.o
 // RUN: diff %t.empty %t.res.tgt1
 // RUN: diff %t.empty %t.res.tgt2
 
