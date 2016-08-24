@@ -57,6 +57,8 @@
 // (OMIT_LEAF check line is above)
 // RUN: %clang -### -target x86_64-scei-ps4 -S %s 2>&1 | \
 // RUN:   FileCheck --check-prefix=OMIT_LEAF %s
+// RUN: %clang -### -target x86_64-scei-ps4 -S -O2 %s 2>&1 | \
+// RUN:   FileCheck --check-prefix=OMIT_LEAF %s
 
 void f0() {}
 void f1() { f0(); }
