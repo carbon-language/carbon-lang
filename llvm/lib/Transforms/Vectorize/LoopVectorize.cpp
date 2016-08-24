@@ -324,8 +324,9 @@ public:
       : OrigLoop(OrigLoop), PSE(PSE), LI(LI), DT(DT), TLI(TLI), TTI(TTI),
         AC(AC), ORE(ORE), VF(VecWidth), UF(UnrollFactor),
         Builder(PSE.getSE()->getContext()), Induction(nullptr),
-        OldInduction(nullptr), WidenMap(UnrollFactor), TripCount(nullptr),
-        VectorTripCount(nullptr), Legal(nullptr), AddedSafetyChecks(false) {}
+        OldInduction(nullptr), VectorLoopValueMap(UnrollFactor, VecWidth),
+        TripCount(nullptr), VectorTripCount(nullptr), Legal(nullptr),
+        AddedSafetyChecks(false) {}
 
   // Perform the actual loop widening (vectorization).
   // MinimumBitWidths maps scalar integer values to the smallest bitwidth they
@@ -352,10 +353,17 @@ public:
 protected:
   /// A small list of PHINodes.
   typedef SmallVector<PHINode *, 4> PhiVector;
-  /// When we unroll loops we have multiple vector values for each scalar.
-  /// This data structure holds the unrolled and vectorized values that
-  /// originated from one scalar instruction.
+
+  /// A type for vectorized values in the new loop. Each value from the
+  /// original loop, when vectorized, is represented by UF vector values in the
+  /// new unrolled loop, where UF is the unroll factor.
   typedef SmallVector<Value *, 2> VectorParts;
+
+  /// A type for scalarized values in the new loop. Each value from the
+  /// original loop, when scalarized, is represented by UF x VF scalar values
+  /// in the new unrolled loop, where UF is the unroll factor and VF is the
+  /// vectorization factor.
+  typedef SmallVector<SmallVector<Value *, 4>, 2> ScalarParts;
 
   // When we if-convert we need to create edge masks. We have to cache values
   // so that we don't end up with exponential recursion/IR.
@@ -461,12 +469,21 @@ protected:
   /// Returns true if we should generate a scalar version of \p IV.
   bool needsScalarInduction(Instruction *IV) const;
 
-  /// When we go over instructions in the basic block we rely on previous
-  /// values within the current basic block or on loop invariant values.
-  /// When we widen (vectorize) values we place them in the map. If the values
-  /// are not within the map, they have to be loop invariant, so we simply
-  /// broadcast them into a vector.
-  VectorParts &getVectorValue(Value *V);
+  /// Return a constant reference to the VectorParts corresponding to \p V from
+  /// the original loop. If the value has already been vectorized, the
+  /// corresponding vector entry in VectorLoopValueMap is returned. If,
+  /// however, the value has a scalar entry in VectorLoopValueMap, we construct
+  /// new vector values on-demand by inserting the scalar values into vectors
+  /// with an insertelement sequence. If the value has been neither vectorized
+  /// nor scalarized, it must be loop invariant, so we simply broadcast the
+  /// value into vectors.
+  const VectorParts &getVectorValue(Value *V);
+
+  /// Return a value in the new loop corresponding to \p V from the original
+  /// loop at unroll index \p Part and vector index \p Lane. If the value has
+  /// been vectorized but not scalarized, the necessary extractelement
+  /// instruction will be generated.
+  Value *getScalarValue(Value *V, unsigned Part, unsigned Lane);
 
   /// Try to vectorize the interleaved access group that \p Instr belongs to.
   void vectorizeInterleaveGroup(Instruction *Instr);
@@ -509,44 +526,112 @@ protected:
   /// vector of instructions.
   void addMetadata(ArrayRef<Value *> To, Instruction *From);
 
-  /// This is a helper class that holds the vectorizer state. It maps scalar
-  /// instructions to vector instructions. When the code is 'unrolled' then
-  /// then a single scalar value is mapped to multiple vector parts. The parts
-  /// are stored in the VectorPart type.
+  /// This is a helper class for maintaining vectorization state. It's used for
+  /// mapping values from the original loop to their corresponding values in
+  /// the new loop. Two mappings are maintained: one for vectorized values and
+  /// one for scalarized values. Vectorized values are represented with UF
+  /// vector values in the new loop, and scalarized values are represented with
+  /// UF x VF scalar values in the new loop. UF and VF are the unroll and
+  /// vectorization factors, respectively.
+  ///
+  /// Entries can be added to either map with initVector and initScalar, which
+  /// initialize and return a constant reference to the new entry. If a
+  /// non-constant reference to a vector entry is required, getVector can be
+  /// used to retrieve a mutable entry. We currently directly modify the mapped
+  /// values during "fix-up" operations that occur once the first phase of
+  /// widening is complete. These operations include type truncation and the
+  /// second phase of recurrence widening.
+  ///
+  /// Otherwise, entries from either map should be accessed using the
+  /// getVectorValue or getScalarValue functions from InnerLoopVectorizer.
+  /// getVectorValue and getScalarValue coordinate to generate a vector or
+  /// scalar value on-demand if one is not yet available. When vectorizing a
+  /// loop, we visit the definition of an instruction before its uses. When
+  /// visiting the definition, we either vectorize or scalarize the
+  /// instruction, creating an entry for it in the corresponding map. (In some
+  /// cases, such as induction variables, we will create both vector and scalar
+  /// entries.) Then, as we encounter uses of the definition, we derive values
+  /// for each scalar or vector use unless such a value is already available.
+  /// For example, if we scalarize a definition and one of its uses is vector,
+  /// we build the required vector on-demand with an insertelement sequence
+  /// when visiting the use. Otherwise, if the use is scalar, we can use the
+  /// existing scalar definition.
   struct ValueMap {
-    /// C'tor.  UnrollFactor controls the number of vectors ('parts') that
-    /// are mapped.
-    ValueMap(unsigned UnrollFactor) : UF(UnrollFactor) {}
 
-    /// \return True if 'Key' is saved in the Value Map.
-    bool has(Value *Key) const { return MapStorage.count(Key); }
-
-    /// Initializes a new entry in the map. Sets all of the vector parts to the
-    /// save value in 'Val'.
-    /// \return A reference to a vector with splat values.
-    VectorParts &splat(Value *Key, Value *Val) {
-      VectorParts &Entry = MapStorage[Key];
-      Entry.assign(UF, Val);
-      return Entry;
+    /// Construct an empty map with the given unroll and vectorization factors.
+    ValueMap(unsigned UnrollFactor, unsigned VecWidth)
+        : UF(UnrollFactor), VF(VecWidth) {
+      // The unroll and vectorization factors are only used in asserts builds
+      // to verify map entries are sized appropriately.
+      (void)UF;
+      (void)VF;
     }
 
-    ///\return A reference to the value that is stored at 'Key'.
-    VectorParts &get(Value *Key) {
-      VectorParts &Entry = MapStorage[Key];
-      if (Entry.empty())
-        Entry.resize(UF);
-      assert(Entry.size() == UF);
-      return Entry;
+    /// \return True if the map has a vector entry for \p Key.
+    bool hasVector(Value *Key) const { return VectorMapStorage.count(Key); }
+
+    /// \return True if the map has a scalar entry for \p Key.
+    bool hasScalar(Value *Key) const { return ScalarMapStorage.count(Key); }
+
+    /// \brief Map \p Key to the given VectorParts \p Entry, and return a
+    /// constant reference to the new vector map entry. The given key should
+    /// not already be in the map, and the given VectorParts should be
+    /// correctly sized for the current unroll factor.
+    const VectorParts &initVector(Value *Key, const VectorParts &Entry) {
+      assert(!hasVector(Key) && "Vector entry already initialized");
+      assert(Entry.size() == UF && "VectorParts has wrong dimensions");
+      VectorMapStorage[Key] = Entry;
+      return VectorMapStorage[Key];
     }
+
+    /// \brief Map \p Key to the given ScalarParts \p Entry, and return a
+    /// constant reference to the new scalar map entry. The given key should
+    /// not already be in the map, and the given ScalarParts should be
+    /// correctly sized for the current unroll and vectorization factors.
+    const ScalarParts &initScalar(Value *Key, const ScalarParts &Entry) {
+      assert(!hasScalar(Key) && "Scalar entry already initialized");
+      assert(Entry.size() == UF &&
+             all_of(make_range(Entry.begin(), Entry.end()),
+                    [&](const SmallVectorImpl<Value *> &Values) -> bool {
+                      return Values.size() == VF;
+                    }) &&
+             "ScalarParts has wrong dimensions");
+      ScalarMapStorage[Key] = Entry;
+      return ScalarMapStorage[Key];
+    }
+
+    /// \return A reference to the vector map entry corresponding to \p Key.
+    /// The key should already be in the map. This function should only be used
+    /// when it's necessary to update values that have already been vectorized.
+    /// This is the case for "fix-up" operations including type truncation and
+    /// the second phase of recurrence vectorization. If a non-const reference
+    /// isn't required, getVectorValue should be used instead.
+    VectorParts &getVector(Value *Key) {
+      assert(hasVector(Key) && "Vector entry not initialized");
+      return VectorMapStorage.find(Key)->second;
+    }
+
+    /// Retrieve an entry from the vector or scalar maps. The preferred way to
+    /// access an existing mapped entry is with getVectorValue or
+    /// getScalarValue from InnerLoopVectorizer. Until those functions can be
+    /// moved inside ValueMap, we have to declare them as friends.
+    friend const VectorParts &InnerLoopVectorizer::getVectorValue(Value *V);
+    friend Value *InnerLoopVectorizer::getScalarValue(Value *V, unsigned Part,
+                                                      unsigned Lane);
 
   private:
-    /// The unroll factor. Each entry in the map stores this number of vector
-    /// elements.
+    /// The unroll factor. Each entry in the vector map contains UF vector
+    /// values.
     unsigned UF;
 
-    /// Map storage. We use std::map and not DenseMap because insertions to a
-    /// dense map invalidates its iterators.
-    std::map<Value *, VectorParts> MapStorage;
+    /// The vectorization factor. Each entry in the scalar map contains UF x VF
+    /// scalar values.
+    unsigned VF;
+
+    /// The vector and scalar map storage. We use std::map and not DenseMap
+    /// because insertions to DenseMap invalidate its iterators.
+    std::map<Value *, VectorParts> VectorMapStorage;
+    std::map<Value *, ScalarParts> ScalarMapStorage;
   };
 
   /// The original loop.
@@ -610,18 +695,12 @@ protected:
   PHINode *Induction;
   /// The induction variable of the old basic block.
   PHINode *OldInduction;
-  /// Maps scalars to widened vectors.
-  ValueMap WidenMap;
 
-  /// A map of induction variables from the original loop to their
-  /// corresponding VF * UF scalarized values in the vectorized loop. The
-  /// purpose of ScalarIVMap is similar to that of WidenMap. Whereas WidenMap
-  /// maps original loop values to their vector versions in the new loop,
-  /// ScalarIVMap maps induction variables from the original loop that are not
-  /// vectorized to their scalar equivalents in the vector loop. Maintaining a
-  /// separate map for scalarized induction variables allows us to avoid
-  /// unnecessary scalar-to-vector-to-scalar conversions.
-  DenseMap<Value *, SmallVector<Value *, 8>> ScalarIVMap;
+  /// Maps values from the original loop to their corresponding values in the
+  /// vectorized loop. A key value can map to either vector values, scalar
+  /// values or both kinds of values, depending on whether the key was
+  /// vectorized and scalarized.
+  ValueMap VectorLoopValueMap;
 
   /// Store instructions that should be predicated, as a pair
   ///   <StoreInst, Predicate>
@@ -2165,14 +2244,18 @@ void InnerLoopVectorizer::buildScalarSteps(Value *ScalarIV, Value *Step,
   assert(ScalarIVTy->isIntegerTy() && ScalarIVTy == Step->getType() &&
          "Val and Step should have the same integer type");
 
-  // Compute the scalar steps and save the results in ScalarIVMap.
-  for (unsigned Part = 0; Part < UF; ++Part)
-    for (unsigned I = 0; I < VF; ++I) {
-      auto *StartIdx = ConstantInt::get(ScalarIVTy, VF * Part + I);
+  // Compute the scalar steps and save the results in VectorLoopValueMap.
+  ScalarParts Entry(UF);
+  for (unsigned Part = 0; Part < UF; ++Part) {
+    Entry[Part].resize(VF);
+    for (unsigned Lane = 0; Lane < VF; ++Lane) {
+      auto *StartIdx = ConstantInt::get(ScalarIVTy, VF * Part + Lane);
       auto *Mul = Builder.CreateMul(StartIdx, Step);
       auto *Add = Builder.CreateAdd(ScalarIV, Mul);
-      ScalarIVMap[EntryVal].push_back(Add);
+      Entry[Part][Lane] = Add;
     }
+  }
+  VectorLoopValueMap.initScalar(EntryVal, Entry);
 }
 
 int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
@@ -2264,23 +2347,83 @@ bool LoopVectorizationLegality::isUniform(Value *V) {
   return LAI->isUniform(V);
 }
 
-InnerLoopVectorizer::VectorParts &
+const InnerLoopVectorizer::VectorParts &
 InnerLoopVectorizer::getVectorValue(Value *V) {
   assert(V != Induction && "The new induction variable should not be used.");
   assert(!V->getType()->isVectorTy() && "Can't widen a vector");
+  assert(!V->getType()->isVoidTy() && "Type does not produce a value");
 
   // If we have a stride that is replaced by one, do it here.
   if (Legal->hasStride(V))
     V = ConstantInt::get(V->getType(), 1);
 
   // If we have this scalar in the map, return it.
-  if (WidenMap.has(V))
-    return WidenMap.get(V);
+  if (VectorLoopValueMap.hasVector(V))
+    return VectorLoopValueMap.VectorMapStorage[V];
+
+  // If the value has not been vectorized, check if it has been scalarized
+  // instead. If it has been scalarized, and we actually need the value in
+  // vector form, we will construct the vector values on demand.
+  if (VectorLoopValueMap.hasScalar(V)) {
+
+    // Initialize a new vector map entry.
+    VectorParts Entry(UF);
+
+    // If we aren't vectorizing, we can just copy the scalar map values over to
+    // the vector map.
+    if (VF == 1) {
+      for (unsigned Part = 0; Part < UF; ++Part)
+        Entry[Part] = getScalarValue(V, Part, 0);
+      return VectorLoopValueMap.initVector(V, Entry);
+    }
+
+    // However, if we are vectorizing, we need to construct the vector values
+    // using insertelement instructions. Since the resulting vectors are stored
+    // in VectorLoopValueMap, we will only generate the insertelements once.
+    for (unsigned Part = 0; Part < UF; ++Part) {
+      Value *Insert = UndefValue::get(VectorType::get(V->getType(), VF));
+      for (unsigned Width = 0; Width < VF; ++Width)
+        Insert = Builder.CreateInsertElement(
+            Insert, getScalarValue(V, Part, Width), Builder.getInt32(Width));
+      Entry[Part] = Insert;
+    }
+    return VectorLoopValueMap.initVector(V, Entry);
+  }
 
   // If this scalar is unknown, assume that it is a constant or that it is
   // loop invariant. Broadcast V and save the value for future uses.
   Value *B = getBroadcastInstrs(V);
-  return WidenMap.splat(V, B);
+  return VectorLoopValueMap.initVector(V, VectorParts(UF, B));
+}
+
+Value *InnerLoopVectorizer::getScalarValue(Value *V, unsigned Part,
+                                           unsigned Lane) {
+
+  // If the value is not an instruction contained in the loop, it should
+  // already be scalar.
+  if (OrigLoop->isLoopInvariant(V))
+    return V;
+
+  // If the value from the original loop has not been vectorized, it is
+  // represented by UF x VF scalar values in the new loop. Return the requested
+  // scalar value.
+  if (VectorLoopValueMap.hasScalar(V))
+    return VectorLoopValueMap.ScalarMapStorage[V][Part][Lane];
+
+  // If the value has not been scalarized, get its entry in VectorLoopValueMap
+  // for the given unroll part. If this entry is not a vector type (i.e., the
+  // vectorization factor is one), there is no need to generate an
+  // extractelement instruction.
+  auto *U = getVectorValue(V)[Part];
+  if (!U->getType()->isVectorTy()) {
+    assert(VF == 1 && "Value not scalarized has non-vector type");
+    return U;
+  }
+
+  // Otherwise, the value from the original loop has been vectorized and is
+  // represented by UF vector values. Extract and return the requested scalar
+  // value from the appropriate vector lane.
+  return Builder.CreateExtractElement(U, Builder.getInt32(Lane));
 }
 
 Value *InnerLoopVectorizer::reverseVector(Value *Vec) {
@@ -2438,15 +2581,10 @@ void InnerLoopVectorizer::vectorizeInterleaveGroup(Instruction *Instr) {
 
   // Prepare for the new pointers.
   setDebugLocFromInst(Builder, Ptr);
-  VectorParts &PtrParts = getVectorValue(Ptr);
   SmallVector<Value *, 2> NewPtrs;
   unsigned Index = Group->getIndex(Instr);
   for (unsigned Part = 0; Part < UF; Part++) {
-    // Extract the pointer for current instruction from the pointer vector. A
-    // reverse access uses the pointer in the last lane.
-    Value *NewPtr = Builder.CreateExtractElement(
-        PtrParts[Part],
-        Group->isReverse() ? Builder.getInt32(VF - 1) : Builder.getInt32(0));
+    Value *NewPtr = getScalarValue(Ptr, Part, Group->isReverse() ? VF - 1 : 0);
 
     // Notice current instruction could be any index. Need to adjust the address
     // to the member of index 0.
@@ -2470,20 +2608,30 @@ void InnerLoopVectorizer::vectorizeInterleaveGroup(Instruction *Instr) {
 
   // Vectorize the interleaved load group.
   if (LI) {
+
+    // For each unroll part, create a wide load for the group.
+    SmallVector<Value *, 2> NewLoads;
     for (unsigned Part = 0; Part < UF; Part++) {
-      Instruction *NewLoadInstr = Builder.CreateAlignedLoad(
+      auto *NewLoad = Builder.CreateAlignedLoad(
           NewPtrs[Part], Group->getAlignment(), "wide.vec");
+      addMetadata(NewLoad, Instr);
+      NewLoads.push_back(NewLoad);
+    }
 
-      for (unsigned i = 0; i < InterleaveFactor; i++) {
-        Instruction *Member = Group->getMember(i);
+    // For each member in the group, shuffle out the appropriate data from the
+    // wide loads.
+    for (unsigned I = 0; I < InterleaveFactor; ++I) {
+      Instruction *Member = Group->getMember(I);
 
-        // Skip the gaps in the group.
-        if (!Member)
-          continue;
+      // Skip the gaps in the group.
+      if (!Member)
+        continue;
 
-        Constant *StrideMask = getStridedMask(Builder, i, InterleaveFactor, VF);
+      VectorParts Entry(UF);
+      Constant *StrideMask = getStridedMask(Builder, I, InterleaveFactor, VF);
+      for (unsigned Part = 0; Part < UF; Part++) {
         Value *StridedVec = Builder.CreateShuffleVector(
-            NewLoadInstr, UndefVec, StrideMask, "strided.vec");
+            NewLoads[Part], UndefVec, StrideMask, "strided.vec");
 
         // If this member has different type, cast the result type.
         if (Member->getType() != ScalarTy) {
@@ -2491,12 +2639,10 @@ void InnerLoopVectorizer::vectorizeInterleaveGroup(Instruction *Instr) {
           StridedVec = Builder.CreateBitOrPointerCast(StridedVec, OtherVTy);
         }
 
-        VectorParts &Entry = WidenMap.get(Member);
         Entry[Part] =
             Group->isReverse() ? reverseVector(StridedVec) : StridedVec;
       }
-
-      addMetadata(NewLoadInstr, Instr);
+      VectorLoopValueMap.initVector(Member, Entry);
     }
     return;
   }
@@ -2585,8 +2731,6 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
   if (!ConsecutiveStride && !CreateGatherScatter)
     return scalarizeInstruction(Instr);
 
-  Constant *Zero = Builder.getInt32(0);
-  VectorParts &Entry = WidenMap.get(Instr);
   VectorParts VectorGep;
 
   // Handle consecutive loads/stores.
@@ -2594,9 +2738,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
   if (ConsecutiveStride) {
     if (Gep && Legal->isInductionVariable(Gep->getPointerOperand())) {
       setDebugLocFromInst(Builder, Gep);
-      Value *PtrOperand = Gep->getPointerOperand();
-      Value *FirstBasePtr = getVectorValue(PtrOperand)[0];
-      FirstBasePtr = Builder.CreateExtractElement(FirstBasePtr, Zero);
+      auto *FirstBasePtr = getScalarValue(Gep->getPointerOperand(), 0, 0);
 
       // Create the new GEP with the new induction variable.
       GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
@@ -2627,16 +2769,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
                                                OrigLoop)) &&
                  "Must be last index or loop invariant");
 
-          VectorParts &GEPParts = getVectorValue(GepOperand);
-
-          // If GepOperand is an induction variable, and there's a scalarized
-          // version of it available, use it. Otherwise, we will need to create
-          // an extractelement instruction.
-          Value *Index = ScalarIVMap.count(GepOperand)
-                             ? ScalarIVMap[GepOperand][0]
-                             : Builder.CreateExtractElement(GEPParts[0], Zero);
-
-          Gep2->setOperand(i, Index);
+          Gep2->setOperand(i, getScalarValue(GepOperand, 0, 0));
           Gep2->setName("gep.indvar.idx");
         }
       }
@@ -2645,8 +2778,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
       // Use the induction element ptr.
       assert(isa<PHINode>(Ptr) && "Invalid induction ptr");
       setDebugLocFromInst(Builder, Ptr);
-      VectorParts &PtrVal = getVectorValue(Ptr);
-      Ptr = Builder.CreateExtractElement(PtrVal[0], Zero);
+      Ptr = getScalarValue(Ptr, 0, 0);
     }
   } else {
     // At this point we should vector version of GEP for Gather or Scatter
@@ -2733,6 +2865,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
   // Handle loads.
   assert(LI && "Must have a load instruction");
   setDebugLocFromInst(Builder, LI);
+  VectorParts Entry(UF);
   for (unsigned Part = 0; Part < UF; ++Part) {
     Instruction *NewLI;
     if (CreateGatherScatter) {
@@ -2765,6 +2898,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
     }
     addMetadata(NewLI, LI);
   }
+  VectorLoopValueMap.initVector(Instr, Entry);
 }
 
 void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
@@ -2778,42 +2912,11 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
 
   setDebugLocFromInst(Builder, Instr);
 
-  // Find all of the vectorized parameters.
-  for (Value *SrcOp : Instr->operands()) {
-    // If we are accessing the old induction variable, use the new one.
-    if (SrcOp == OldInduction) {
-      Params.push_back(getVectorValue(SrcOp));
-      continue;
-    }
-
-    // Try using previously calculated values.
-    auto *SrcInst = dyn_cast<Instruction>(SrcOp);
-
-    // If the src is an instruction that appeared earlier in the basic block,
-    // then it should already be vectorized.
-    if (SrcInst && OrigLoop->contains(SrcInst)) {
-      assert(WidenMap.has(SrcInst) && "Source operand is unavailable");
-      // The parameter is a vector value from earlier.
-      Params.push_back(WidenMap.get(SrcInst));
-    } else {
-      // The parameter is a scalar from outside the loop. Maybe even a constant.
-      VectorParts Scalars;
-      Scalars.append(UF, SrcOp);
-      Params.push_back(Scalars);
-    }
-  }
-
-  assert(Params.size() == Instr->getNumOperands() &&
-         "Invalid number of operands");
-
   // Does this instruction return a value ?
   bool IsVoidRetTy = Instr->getType()->isVoidTy();
 
-  Value *UndefVec =
-      IsVoidRetTy ? nullptr
-                  : UndefValue::get(VectorType::get(Instr->getType(), VF));
-  // Create a new entry in the WidenMap and initialize it to Undef or Null.
-  VectorParts &VecResults = WidenMap.splat(Instr, UndefVec);
+  // Initialize a new scalar map entry.
+  ScalarParts Entry(UF);
 
   VectorParts Cond;
   if (IfPredicateInstr) {
@@ -2825,6 +2928,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
 
   // For each vector unroll 'part':
   for (unsigned Part = 0; Part < UF; ++Part) {
+    Entry[Part].resize(VF);
     // For each scalar that we create:
     for (unsigned Width = 0; Width < VF; ++Width) {
 
@@ -2839,18 +2943,11 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
       Instruction *Cloned = Instr->clone();
       if (!IsVoidRetTy)
         Cloned->setName(Instr->getName() + ".cloned");
-      // Replace the operands of the cloned instructions with extracted scalars.
-      for (unsigned op = 0, e = Instr->getNumOperands(); op != e; ++op) {
 
-        // If the operand is an induction variable, and there's a scalarized
-        // version of it available, use it. Otherwise, we will need to create
-        // an extractelement instruction if vectorizing.
-        auto *NewOp = Params[op][Part];
-        auto *ScalarOp = Instr->getOperand(op);
-        if (ScalarIVMap.count(ScalarOp))
-          NewOp = ScalarIVMap[ScalarOp][VF * Part + Width];
-        else if (NewOp->getType()->isVectorTy())
-          NewOp = Builder.CreateExtractElement(NewOp, Builder.getInt32(Width));
+      // Replace the operands of the cloned instructions with their scalar
+      // equivalents in the new loop.
+      for (unsigned op = 0, e = Instr->getNumOperands(); op != e; ++op) {
+        auto *NewOp = getScalarValue(Instr->getOperand(op), Part, Width);
         Cloned->setOperand(op, NewOp);
       }
       addNewMetadata(Cloned, Instr);
@@ -2858,21 +2955,20 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
       // Place the cloned scalar in the new loop.
       Builder.Insert(Cloned);
 
+      // Add the cloned scalar to the scalar map entry.
+      Entry[Part][Width] = Cloned;
+
       // If we just cloned a new assumption, add it the assumption cache.
       if (auto *II = dyn_cast<IntrinsicInst>(Cloned))
         if (II->getIntrinsicID() == Intrinsic::assume)
           AC->registerAssumption(II);
 
-      // If the original scalar returns a value we need to place it in a vector
-      // so that future users will be able to use it.
-      if (!IsVoidRetTy)
-        VecResults[Part] = Builder.CreateInsertElement(VecResults[Part], Cloned,
-                                                       Builder.getInt32(Width));
       // End if-block.
       if (IfPredicateInstr)
         PredicatedInstructions.push_back(std::make_pair(Cloned, Cmp));
     }
   }
+  VectorLoopValueMap.initScalar(Instr, Entry);
 }
 
 PHINode *InnerLoopVectorizer::createInductionVariable(Loop *L, Value *Start,
@@ -3556,7 +3652,7 @@ void InnerLoopVectorizer::truncateToMinimalBitwidths() {
   //
   SmallPtrSet<Value *, 4> Erased;
   for (const auto &KV : *MinBWs) {
-    VectorParts &Parts = WidenMap.get(KV.first);
+    VectorParts &Parts = VectorLoopValueMap.getVector(KV.first);
     for (Value *&I : Parts) {
       if (Erased.count(I) || I->use_empty() || !isa<Instruction>(I))
         continue;
@@ -3648,7 +3744,7 @@ void InnerLoopVectorizer::truncateToMinimalBitwidths() {
 
   // We'll have created a bunch of ZExts that are now parentless. Clean up.
   for (const auto &KV : *MinBWs) {
-    VectorParts &Parts = WidenMap.get(KV.first);
+    VectorParts &Parts = VectorLoopValueMap.getVector(KV.first);
     for (Value *&I : Parts) {
       ZExtInst *Inst = dyn_cast<ZExtInst>(I);
       if (Inst && Inst->use_empty()) {
@@ -3726,7 +3822,7 @@ void InnerLoopVectorizer::vectorizeLoop() {
     Builder.SetInsertPoint(LoopBypassBlocks[1]->getTerminator());
 
     // This is the vector-clone of the value that leaves the loop.
-    VectorParts &VectorExit = getVectorValue(LoopExitInst);
+    const VectorParts &VectorExit = getVectorValue(LoopExitInst);
     Type *VecTy = VectorExit[0]->getType();
 
     // Find the reduction identity variable. Zero for addition, or, xor,
@@ -3765,10 +3861,10 @@ void InnerLoopVectorizer::vectorizeLoop() {
 
     // Reductions do not have to start at zero. They can start with
     // any loop invariant values.
-    VectorParts &VecRdxPhi = WidenMap.get(Phi);
+    const VectorParts &VecRdxPhi = getVectorValue(Phi);
     BasicBlock *Latch = OrigLoop->getLoopLatch();
     Value *LoopVal = Phi->getIncomingValueForBlock(Latch);
-    VectorParts &Val = getVectorValue(LoopVal);
+    const VectorParts &Val = getVectorValue(LoopVal);
     for (unsigned part = 0; part < UF; ++part) {
       // Make sure to add the reduction stat value only to the
       // first unroll part.
@@ -3785,7 +3881,7 @@ void InnerLoopVectorizer::vectorizeLoop() {
     // instructions.
     Builder.SetInsertPoint(&*LoopMiddleBlock->getFirstInsertionPt());
 
-    VectorParts RdxParts = getVectorValue(LoopExitInst);
+    VectorParts &RdxParts = VectorLoopValueMap.getVector(LoopExitInst);
     setDebugLocFromInst(Builder, LoopExitInst);
 
     // If the vector reduction can be performed in a smaller type, we truncate
@@ -3994,7 +4090,7 @@ void InnerLoopVectorizer::fixFirstOrderRecurrence(PHINode *Phi) {
 
   // We constructed a temporary phi node in the first phase of vectorization.
   // This phi node will eventually be deleted.
-  auto &PhiParts = getVectorValue(Phi);
+  VectorParts &PhiParts = VectorLoopValueMap.getVector(Phi);
   Builder.SetInsertPoint(cast<Instruction>(PhiParts[0]));
 
   // Create a phi node for the new recurrence. The current value will either be
@@ -4304,7 +4400,7 @@ void InnerLoopVectorizer::widenPHIInstruction(
     for (unsigned In = 0; In < NumIncoming; In++) {
       VectorParts Cond =
           createEdgeMask(P->getIncomingBlock(In), P->getParent());
-      VectorParts &In0 = getVectorValue(P->getIncomingValue(In));
+      const VectorParts &In0 = getVectorValue(P->getIncomingValue(In));
 
       for (unsigned part = 0; part < UF; ++part) {
         // We might have single edge PHIs (blocks) - use an identity
@@ -4414,8 +4510,6 @@ static bool mayDivideByZero(Instruction &I) {
 void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
   // For each instruction in the old loop.
   for (Instruction &I : *BB) {
-    VectorParts &Entry = WidenMap.get(&I);
-
     switch (I.getOpcode()) {
     case Instruction::Br:
       // Nothing to do for PHIs and BR, since we already took care of the
@@ -4423,7 +4517,9 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
       continue;
     case Instruction::PHI: {
       // Vectorize PHINodes.
+      VectorParts Entry(UF);
       widenPHIInstruction(&I, Entry, UF, VF, PV);
+      VectorLoopValueMap.initVector(&I, Entry);
       continue;
     } // End of PHI.
 
@@ -4454,10 +4550,11 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
       // Just widen binops.
       auto *BinOp = cast<BinaryOperator>(&I);
       setDebugLocFromInst(Builder, BinOp);
-      VectorParts &A = getVectorValue(BinOp->getOperand(0));
-      VectorParts &B = getVectorValue(BinOp->getOperand(1));
+      const VectorParts &A = getVectorValue(BinOp->getOperand(0));
+      const VectorParts &B = getVectorValue(BinOp->getOperand(1));
 
       // Use this vector value for all users of the original instruction.
+      VectorParts Entry(UF);
       for (unsigned Part = 0; Part < UF; ++Part) {
         Value *V = Builder.CreateBinOp(BinOp->getOpcode(), A[Part], B[Part]);
 
@@ -4467,6 +4564,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
         Entry[Part] = V;
       }
 
+      VectorLoopValueMap.initVector(&I, Entry);
       addMetadata(Entry, BinOp);
       break;
     }
@@ -4483,20 +4581,19 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
       // loop. This means that we can't just use the original 'cond' value.
       // We have to take the 'vectorized' value and pick the first lane.
       // Instcombine will make this a no-op.
-      VectorParts &Cond = getVectorValue(I.getOperand(0));
-      VectorParts &Op0 = getVectorValue(I.getOperand(1));
-      VectorParts &Op1 = getVectorValue(I.getOperand(2));
+      const VectorParts &Cond = getVectorValue(I.getOperand(0));
+      const VectorParts &Op0 = getVectorValue(I.getOperand(1));
+      const VectorParts &Op1 = getVectorValue(I.getOperand(2));
 
-      Value *ScalarCond =
-          (VF == 1)
-              ? Cond[0]
-              : Builder.CreateExtractElement(Cond[0], Builder.getInt32(0));
+      auto *ScalarCond = getScalarValue(I.getOperand(0), 0, 0);
 
+      VectorParts Entry(UF);
       for (unsigned Part = 0; Part < UF; ++Part) {
         Entry[Part] = Builder.CreateSelect(
             InvariantCond ? ScalarCond : Cond[Part], Op0[Part], Op1[Part]);
       }
 
+      VectorLoopValueMap.initVector(&I, Entry);
       addMetadata(Entry, &I);
       break;
     }
@@ -4507,8 +4604,9 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
       bool FCmp = (I.getOpcode() == Instruction::FCmp);
       auto *Cmp = dyn_cast<CmpInst>(&I);
       setDebugLocFromInst(Builder, Cmp);
-      VectorParts &A = getVectorValue(Cmp->getOperand(0));
-      VectorParts &B = getVectorValue(Cmp->getOperand(1));
+      const VectorParts &A = getVectorValue(Cmp->getOperand(0));
+      const VectorParts &B = getVectorValue(Cmp->getOperand(1));
+      VectorParts Entry(UF);
       for (unsigned Part = 0; Part < UF; ++Part) {
         Value *C = nullptr;
         if (FCmp) {
@@ -4520,6 +4618,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
         Entry[Part] = C;
       }
 
+      VectorLoopValueMap.initVector(&I, Entry);
       addMetadata(Entry, &I);
       break;
     }
@@ -4542,6 +4641,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
     case Instruction::BitCast: {
       auto *CI = dyn_cast<CastInst>(&I);
       setDebugLocFromInst(Builder, CI);
+      VectorParts Entry(UF);
 
       // Optimize the special case where the source is a constant integer
       // induction variable. Notice that we can only optimize the 'trunc' case
@@ -4551,6 +4651,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
       if (isa<TruncInst>(CI) && CI->getOperand(0) == OldInduction &&
           ID.getConstIntStepValue()) {
         widenIntInduction(OldInduction, Entry, cast<TruncInst>(CI));
+        VectorLoopValueMap.initVector(&I, Entry);
         addMetadata(Entry, &I);
         break;
       }
@@ -4559,9 +4660,10 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
       Type *DestTy =
           (VF == 1) ? CI->getType() : VectorType::get(CI->getType(), VF);
 
-      VectorParts &A = getVectorValue(CI->getOperand(0));
+      const VectorParts &A = getVectorValue(CI->getOperand(0));
       for (unsigned Part = 0; Part < UF; ++Part)
         Entry[Part] = Builder.CreateCast(CI->getOpcode(), A[Part], DestTy);
+      VectorLoopValueMap.initVector(&I, Entry);
       addMetadata(Entry, &I);
       break;
     }
@@ -4600,6 +4702,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
         break;
       }
 
+      VectorParts Entry(UF);
       for (unsigned Part = 0; Part < UF; ++Part) {
         SmallVector<Value *, 4> Args;
         for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i) {
@@ -4607,7 +4710,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
           // Some intrinsics have a scalar argument - don't replace it with a
           // vector.
           if (!UseVectorIntrinsic || !hasVectorInstrinsicScalarOpd(ID, i)) {
-            VectorParts &VectorArg = getVectorValue(CI->getArgOperand(i));
+            const VectorParts &VectorArg = getVectorValue(CI->getArgOperand(i));
             Arg = VectorArg[Part];
           }
           Args.push_back(Arg);
@@ -4645,6 +4748,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
         Entry[Part] = V;
       }
 
+      VectorLoopValueMap.initVector(&I, Entry);
       addMetadata(Entry, &I);
       break;
     }
@@ -6575,40 +6679,11 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
 
   setDebugLocFromInst(Builder, Instr);
 
-  // Find all of the vectorized parameters.
-  for (Value *SrcOp : Instr->operands()) {
-    // If we are accessing the old induction variable, use the new one.
-    if (SrcOp == OldInduction) {
-      Params.push_back(getVectorValue(SrcOp));
-      continue;
-    }
-
-    // Try using previously calculated values.
-    Instruction *SrcInst = dyn_cast<Instruction>(SrcOp);
-
-    // If the src is an instruction that appeared earlier in the basic block
-    // then it should already be vectorized.
-    if (SrcInst && OrigLoop->contains(SrcInst)) {
-      assert(WidenMap.has(SrcInst) && "Source operand is unavailable");
-      // The parameter is a vector value from earlier.
-      Params.push_back(WidenMap.get(SrcInst));
-    } else {
-      // The parameter is a scalar from outside the loop. Maybe even a constant.
-      VectorParts Scalars;
-      Scalars.append(UF, SrcOp);
-      Params.push_back(Scalars);
-    }
-  }
-
-  assert(Params.size() == Instr->getNumOperands() &&
-         "Invalid number of operands");
-
   // Does this instruction return a value ?
   bool IsVoidRetTy = Instr->getType()->isVoidTy();
 
-  Value *UndefVec = IsVoidRetTy ? nullptr : UndefValue::get(Instr->getType());
-  // Create a new entry in the WidenMap and initialize it to Undef or Null.
-  VectorParts &VecResults = WidenMap.splat(Instr, UndefVec);
+  // Initialize a new scalar map entry.
+  ScalarParts Entry(UF);
 
   VectorParts Cond;
   if (IfPredicateInstr) {
@@ -6620,6 +6695,7 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
 
   // For each vector unroll 'part':
   for (unsigned Part = 0; Part < UF; ++Part) {
+    Entry[Part].resize(1);
     // For each scalar that we create:
 
     // Start an "if (pred) a[i] = ..." block.
@@ -6635,29 +6711,30 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
     Instruction *Cloned = Instr->clone();
     if (!IsVoidRetTy)
       Cloned->setName(Instr->getName() + ".cloned");
-    // Replace the operands of the cloned instructions with extracted scalars.
+
+    // Replace the operands of the cloned instructions with their scalar
+    // equivalents in the new loop.
     for (unsigned op = 0, e = Instr->getNumOperands(); op != e; ++op) {
-      Value *Op = Params[op][Part];
-      Cloned->setOperand(op, Op);
+      auto *NewOp = getScalarValue(Instr->getOperand(op), Part, 0);
+      Cloned->setOperand(op, NewOp);
     }
 
     // Place the cloned scalar in the new loop.
     Builder.Insert(Cloned);
+
+    // Add the cloned scalar to the scalar map entry.
+    Entry[Part][0] = Cloned;
 
     // If we just cloned a new assumption, add it the assumption cache.
     if (auto *II = dyn_cast<IntrinsicInst>(Cloned))
       if (II->getIntrinsicID() == Intrinsic::assume)
         AC->registerAssumption(II);
 
-    // If the original scalar returns a value we need to place it in a vector
-    // so that future users will be able to use it.
-    if (!IsVoidRetTy)
-      VecResults[Part] = Cloned;
-
     // End if-block.
     if (IfPredicateInstr)
       PredicatedInstructions.push_back(std::make_pair(Cloned, Cmp));
   }
+  VectorLoopValueMap.initScalar(Instr, Entry);
 }
 
 void InnerLoopUnroller::vectorizeMemoryInstruction(Instruction *Instr) {

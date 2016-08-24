@@ -11,6 +11,10 @@ entry:
   br label %for.body
 
 ; VEC-LABEL: test
+; VEC:   %[[v0:.+]] = add i64 %index, 0
+; VEC:   %[[v1:.+]] = add i64 %index, 1
+; VEC:   %[[v2:.+]] = getelementptr inbounds i32, i32* %f, i64 %[[v0]]
+; VEC:   %[[v4:.+]] = getelementptr inbounds i32, i32* %f, i64 %[[v1]]
 ; VEC:   %[[v8:.+]] = icmp sgt <2 x i32> %{{.*}}, <i32 100, i32 100>
 ; VEC:   %[[v9:.+]] = add nsw <2 x i32> %{{.*}}, <i32 20, i32 20>
 ; VEC:   %[[v10:.+]] = and <2 x i1> %[[v8]], <i1 true, i1 true>
@@ -20,8 +24,7 @@ entry:
 ;
 ; VEC: [[cond]]:
 ; VEC:   %[[v13:.+]] = extractelement <2 x i32> %[[v9]], i32 0
-; VEC:   %[[v14:.+]] = extractelement <2 x i32*> %{{.*}}, i32 0
-; VEC:   store i32 %[[v13]], i32* %[[v14]], align 4
+; VEC:   store i32 %[[v13]], i32* %[[v2]], align 4
 ; VEC:   br label %[[else:.+]]
 ;
 ; VEC: [[else]]:
@@ -31,8 +34,7 @@ entry:
 ;
 ; VEC: [[cond2]]:
 ; VEC:   %[[v17:.+]] = extractelement <2 x i32> %[[v9]], i32 1
-; VEC:   %[[v18:.+]] = extractelement <2 x i32*> %{{.+}} i32 1
-; VEC:   store i32 %[[v17]], i32* %[[v18]], align 4
+; VEC:   store i32 %[[v17]], i32* %[[v4]], align 4
 ; VEC:   br label %[[else2:.+]]
 ;
 ; VEC: [[else2]]:

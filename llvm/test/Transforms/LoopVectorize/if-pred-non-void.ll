@@ -115,15 +115,6 @@ if.end:                                           ; preds = %if.then, %for.body
   br i1 %exitcond, label %for.cond.cleanup, label %for.body
 }
 
-; Future-use test for predication under smarter scalar-scalar: this test will
-; fail when the vectorizer starts feeding scalarized values directly to their
-; scalar users, i.e. w/o generating redundant insertelement/extractelement
-; instructions. This case is already supported by the predication code (which
-; should generate a phi for the scalar predicated value rather than for the
-; insertelement), but cannot be tested yet.
-; If you got this test to fail, kindly fix the test by using the alternative
-; FFU sequence. This will make the test check how we handle this case from
-; now on.
 define void @test_scalar2scalar(i32* nocapture %asd, i32* nocapture %bsd) {
 entry:
   br label %for.body
@@ -136,18 +127,9 @@ for.cond.cleanup:                                 ; preds = %if.end
 ; CHECK:   br i1 %{{.*}}, label %[[THEN:[a-zA-Z0-9.]+]], label %[[FI:[a-zA-Z0-9.]+]]
 ; CHECK: [[THEN]]:
 ; CHECK:   %[[PD:[a-zA-Z0-9]+]] = sdiv i32 %{{.*}}, %{{.*}}
-; CHECK:   %[[PDV:[a-zA-Z0-9]+]] = insertelement <2 x i32> undef, i32 %[[PD]], i32 0
 ; CHECK:   br label %[[FI]]
 ; CHECK: [[FI]]:
-; CHECK:   %[[PH:[a-zA-Z0-9]+]] = phi <2 x i32> [ undef, %vector.body ], [ %[[PDV]], %[[THEN]] ]
-; FFU-LABEL: test_scalar2scalar
-; FFU:   vector.body:
-; FFU:     br i1 %{{.*}}, label %[[THEN:[a-zA-Z0-9.]+]], label %[[FI:[a-zA-Z0-9.]+]]
-; FFU:   [[THEN]]:
-; FFU:     %[[PD:[a-zA-Z0-9]+]] = sdiv i32 %{{.*}}, %{{.*}}
-; FFU:     br label %[[FI]]
-; FFU:   [[FI]]:
-; FFU:     %{{.*}} = phi i32 [ undef, %vector.body ], [ %[[PD]], %[[THEN]] ]
+; CHECK:   %{{.*}} = phi i32 [ undef, %vector.body ], [ %[[PD]], %[[THEN]] ]
 
 for.body:                                         ; preds = %if.end, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %if.end ]
