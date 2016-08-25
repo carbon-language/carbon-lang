@@ -1,3 +1,4 @@
+; REQUIRES: asserts
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios -arm-atomic-cfg-tidy=0 -stats 2>&1 | FileCheck %s
 
 ; If ARMBaseInstrInfo::AnalyzeBlocks returns the wrong value, which was possible
