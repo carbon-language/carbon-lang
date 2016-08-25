@@ -159,7 +159,6 @@
 name:            main
 alignment:       4
 exposesReturnsTwice: false
-allVRegsAllocated: true
 tracksRegLiveness: true
 liveins:         
   - { reg: '%edi' }

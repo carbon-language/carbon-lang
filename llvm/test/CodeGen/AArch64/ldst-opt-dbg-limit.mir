@@ -28,7 +28,6 @@
 name:            promote-load-from-store
 alignment:       2
 exposesReturnsTwice: false
-allVRegsAllocated: true
 tracksRegLiveness: false
 liveins:         
   - { reg: '%x0' }
@@ -83,7 +82,6 @@ body:             |
 name:            store-pair
 alignment:       2
 exposesReturnsTwice: false
-allVRegsAllocated: true
 tracksRegLiveness: false
 liveins:         
   - { reg: '%x0' }

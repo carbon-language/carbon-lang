@@ -85,7 +85,6 @@
 name:            imp_null_check_with_bitwise_op_0
 # CHECK-LABEL: name:            imp_null_check_with_bitwise_op_0
 alignment:       4
-allVRegsAllocated: true
 tracksRegLiveness: true
 liveins:
   - { reg: '%rdi' }
@@ -128,7 +127,6 @@ body:             |
 ---
 name:            imp_null_check_with_bitwise_op_1
 alignment:       4
-allVRegsAllocated: true
 tracksRegLiveness: true
 liveins:
   - { reg: '%rdi' }
@@ -176,7 +174,6 @@ body:             |
 name:            imp_null_check_with_bitwise_op_2
 # CHECK-LABEL: name:            imp_null_check_with_bitwise_op_2
 alignment:       4
-allVRegsAllocated: true
 tracksRegLiveness: true
 liveins:
   - { reg: '%rdi' }
@@ -220,7 +217,6 @@ body:             |
 name:            imp_null_check_with_bitwise_op_3
 # CHECK-LABEL: name:            imp_null_check_with_bitwise_op_3
 alignment:       4
-allVRegsAllocated: true
 tracksRegLiveness: true
 liveins:
   - { reg: '%rdi' }

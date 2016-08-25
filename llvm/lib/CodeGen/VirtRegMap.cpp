@@ -177,7 +177,7 @@ public:
   bool runOnMachineFunction(MachineFunction&) override;
   MachineFunctionProperties getSetProperties() const override {
     return MachineFunctionProperties().set(
-        MachineFunctionProperties::Property::AllVRegsAllocated);
+        MachineFunctionProperties::Property::NoVRegs);
   }
 };
 } // end anonymous namespace

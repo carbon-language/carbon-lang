@@ -312,6 +312,10 @@ void MIRParserImpl::computeFunctionProperties(MachineFunction &MF) {
     Properties.set(MachineFunctionProperties::Property::IsSSA);
   else
     Properties.clear(MachineFunctionProperties::Property::IsSSA);
+
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  if (MRI.getNumVirtRegs() == 0)
+    Properties.set(MachineFunctionProperties::Property::NoVRegs);
 }
 
 bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
@@ -324,8 +328,6 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   if (YamlMF.Alignment)
     MF.setAlignment(YamlMF.Alignment);
   MF.setExposesReturnsTwice(YamlMF.ExposesReturnsTwice);
-  if (YamlMF.AllVRegsAllocated)
-    MF.getProperties().set(MachineFunctionProperties::Property::AllVRegsAllocated);
 
   if (YamlMF.Legalized)
     MF.getProperties().set(MachineFunctionProperties::Property::Legalized);

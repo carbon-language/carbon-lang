@@ -44,7 +44,6 @@
 name:            mm_update_next_owner
 alignment:       4
 exposesReturnsTwice: false
-allVRegsAllocated: true
 tracksRegLiveness: true
 liveins:         
   - { reg: '%x3' }
