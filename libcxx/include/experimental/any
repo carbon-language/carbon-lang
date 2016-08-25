@@ -98,7 +98,7 @@ public:
 #if _LIBCPP_STD_VER > 11                                            // C++ > 11
 
 _LIBCPP_NORETURN inline _LIBCPP_ALWAYS_INLINE
-inline void __throw_bad_any_cast()
+void __throw_bad_any_cast()
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     throw bad_any_cast();
