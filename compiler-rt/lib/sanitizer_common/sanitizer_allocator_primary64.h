@@ -17,6 +17,7 @@
 template<class SizeClassAllocator> struct SizeClassAllocator64LocalCache;
 
 // SizeClassAllocator64 -- allocator for 64-bit address space.
+// The template parameter Params is a class containing the actual parameters.
 //
 // Space: a portion of address space of kSpaceSize bytes starting at SpaceBeg.
 // If kSpaceBeg is ~0 then SpaceBeg is chosen dynamically my mmap.
@@ -35,14 +36,17 @@ template<class SizeClassAllocator> struct SizeClassAllocator64LocalCache;
 //
 // A Region looks like this:
 // UserChunk1 ... UserChunkN <gap> MetaChunkN ... MetaChunk1 FreeArray
-template <const uptr kSpaceBeg, const uptr kSpaceSize,
-          const uptr kMetadataSize, class SizeClassMap,
-          class MapUnmapCallback = NoOpMapUnmapCallback>
+
+template <class Params>
 class SizeClassAllocator64 {
  public:
-  typedef SizeClassAllocator64<kSpaceBeg, kSpaceSize, kMetadataSize,
-                               SizeClassMap, MapUnmapCallback>
-      ThisT;
+  static const uptr kSpaceBeg = Params::kSpaceBeg;
+  static const uptr kSpaceSize = Params::kSpaceSize;
+  static const uptr kMetadataSize = Params::kMetadataSize;
+  typedef typename Params::SizeClassMap SizeClassMap;
+  typedef typename Params::MapUnmapCallback MapUnmapCallback;
+
+  typedef SizeClassAllocator64<Params> ThisT;
   typedef SizeClassAllocator64LocalCache<ThisT> AllocatorCache;
 
   // When we know the size class (the region base) we can represent a pointer
