@@ -1108,8 +1108,10 @@ bool MemCpyOptPass::processMemSetMemCpyDependence(MemCpyInst *MemCpy,
 /// The \p MemCpy must have a Constant length.
 bool MemCpyOptPass::performMemCpyToMemSetOptzn(MemCpyInst *MemCpy,
                                                MemSetInst *MemSet) {
+  AliasAnalysis &AA = LookupAliasAnalysis();
+
   // This only makes sense on memcpy(..., memset(...), ...).
-  if (MemSet->getRawDest() != MemCpy->getRawSource())
+  if (!AA.isMustAlias(MemSet->getRawDest(), MemCpy->getRawSource()))
     return false;
 
   ConstantInt *CopySize = cast<ConstantInt>(MemCpy->getLength());
