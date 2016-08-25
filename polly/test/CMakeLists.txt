@@ -37,6 +37,21 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
       set(POLLY_TEST_EXTRA_ARGS ${POLLY_TEST_EXTRA_ARGS} "--vg")
     endif ()
 
+    # Parameters required for lit.site.cfg.in
+    set(LLVM_SOURCE_DIR ${LLVM_SOURCE_ROOT})
+    if (CMAKE_CFG_INTDIR STREQUAL ".")
+      set(LLVM_BUILD_MODE ".")
+    else ()
+      set(LLVM_BUILD_MODE "%(build_mode)s")
+    endif ()
+    set(ENABLE_SHARED "1")
+    set(SHLIBDIR "${LLVM_BINARY_DIR}/bin")
+    set(LINK_POLLY_INTO_TOOLS "OFF")
+
+    configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+      ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
+
     foreach(testdir ${POLLY_TEST_DIRECTORIES})
       add_custom_target(polly-test-${testdir}
         COMMAND ${LLVM_LIT}
@@ -70,6 +85,10 @@ else (NOT DEFINED LLVM_MAIN_SRC_DIR)
   set(LLVM_LIBS_DIR "${LLVM_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX}")
   set(POLLY_LIB_DIR "${LLVM_LIBS_DIR}")
 
+  configure_lit_site_cfg(
+    ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+    ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
+
   add_lit_testsuite(check-polly "Running polly regression tests"
     ${CMAKE_CURRENT_BINARY_DIR}
     PARAMS polly_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
@@ -90,10 +109,6 @@ else (NOT DEFINED LLVM_MAIN_SRC_DIR)
   endif ()
 
 endif (NOT DEFINED LLVM_MAIN_SRC_DIR)
-
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
-  ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/update_check.py
