@@ -26,6 +26,7 @@ void MachineIRBuilder::setMF(MachineFunction &MF) {
   this->TII = MF.getSubtarget().getInstrInfo();
   this->DL = DebugLoc();
   this->MI = nullptr;
+  this->InsertedInstr = nullptr;
 }
 
 void MachineIRBuilder::setMBB(MachineBasicBlock &MBB, bool Beginning) {
@@ -53,6 +54,15 @@ MachineBasicBlock::iterator MachineIRBuilder::getInsertPt() {
   return Before ? getMBB().begin() : getMBB().end();
 }
 
+void MachineIRBuilder::recordInsertions(
+    std::function<void(MachineInstr *)> Inserted) {
+  InsertedInstr = Inserted;
+}
+
+void MachineIRBuilder::stopRecordingInsertions() {
+  InsertedInstr = nullptr;
+}
+
 //------------------------------------------------------------------------------
 // Build instruction variants.
 //------------------------------------------------------------------------------
@@ -69,6 +79,8 @@ MachineInstrBuilder MachineIRBuilder::buildInstr(unsigned Opcode,
     assert(!isPreISelGenericOpcode(Opcode) &&
            "Generic instruction must have a type");
   getMBB().insert(getInsertPt(), MIB);
+  if (InsertedInstr)
+    InsertedInstr(MIB);
   return MIB;
 }
 
@@ -181,6 +193,8 @@ MachineInstrBuilder MachineIRBuilder::buildExtract(ArrayRef<LLT> ResTys,
     MIB.addImm(Idx);
 
   getMBB().insert(getInsertPt(), MIB);
+  if (InsertedInstr)
+    InsertedInstr(MIB);
 
   return MIB;
 }

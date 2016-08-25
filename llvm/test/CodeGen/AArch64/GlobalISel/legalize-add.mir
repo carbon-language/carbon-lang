@@ -29,7 +29,8 @@ body: |
     ; CHECK-LABEL: name: test_scalar_add_big
     ; CHECK-DAG: [[LHS_LO:%.*]](64), [[LHS_HI:%.*]](64) = G_EXTRACT { s64, s64, s128 } %0, 0, 64
     ; CHECK-DAG: [[RHS_LO:%.*]](64), [[RHS_HI:%.*]](64) = G_EXTRACT { s64, s64, s128 } %1, 0, 64
-    ; CHECK-DAG: [[CARRY0:%.*]](1) = G_CONSTANT s1 0
+    ; CHECK-DAG: [[CARRY0_32:%.*]](32) = G_CONSTANT s32 0
+    ; CHECK-DAG: [[CARRY0:%[0-9]+]](1) = G_TRUNC { s1, s32 } [[CARRY0_32]]
     ; CHECK: [[RES_LO:%.*]](64), [[CARRY:%.*]](1) = G_UADDE s64 [[LHS_LO]], [[RHS_LO]], [[CARRY0]]
     ; CHECK: [[RES_HI:%.*]](64), {{%.*}}(1) = G_UADDE s64 [[LHS_HI]], [[RHS_HI]], [[CARRY]]
     ; CHECK: %2(128) = G_SEQUENCE { s128, s64, s64 } [[RES_LO]], 0, [[RES_HI]], 64

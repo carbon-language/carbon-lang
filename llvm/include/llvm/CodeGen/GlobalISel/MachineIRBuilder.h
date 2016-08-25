@@ -21,6 +21,8 @@
 #include "llvm/CodeGen/LowLevelType.h"
 #include "llvm/IR/DebugLoc.h"
 
+#include <queue>
+
 namespace llvm {
 
 // Forward declarations.
@@ -46,6 +48,8 @@ class MachineIRBuilder {
   MachineInstr *MI;
   bool Before;
   /// @}
+
+  std::function<void(MachineInstr *)> InsertedInstr;
 
   const TargetInstrInfo &getTII() {
     assert(TII && "TargetInstrInfo is not set");
@@ -84,6 +88,13 @@ public:
   /// (\p Before = false) \p MI.
   /// \pre MI must be in getMF().
   void setInstr(MachineInstr &MI, bool Before = true);
+  /// @}
+
+  /// Control where instructions we create are recorded (typically for
+  /// visiting again later during legalization).
+  /// @{
+  void recordInsertions(std::function<void(MachineInstr *)> InsertedInstr);
+  void stopRecordingInsertions();
   /// @}
 
   /// Set the debug location to \p DL for all the next build instructions.
