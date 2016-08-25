@@ -170,7 +170,7 @@ if( HAVE_SETJMP_H )
   check_symbol_exists(siglongjmp setjmp.h HAVE_SIGLONGJMP)
   check_symbol_exists(sigsetjmp setjmp.h HAVE_SIGSETJMP)
 endif()
-// AddressSanitizer conflicts with lib/Support/Unix/Signals.inc
+# AddressSanitizer conflicts with lib/Support/Unix/Signals.inc
 if( HAVE_SIGNAL_H AND NOT LLVM_USE_SANITIZER MATCHES ".*Address.*")
   check_symbol_exists(sigaltstack signal.h HAVE_SIGALTSTACK)
 endif()
