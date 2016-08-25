@@ -38,6 +38,7 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
     set(${return_var} ${system_libs} PARENT_SCOPE)
   endfunction(get_system_libs)
 
+  # Determine where LLVM stores its libraries.
   execute_process(COMMAND "${LLVM_INSTALL_ROOT}/bin/llvm-config" --libdir
                   OUTPUT_VARIABLE LLVM_LIBRARY_DIR
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
