@@ -925,7 +925,7 @@ public:
   PrecompilePreambleConsumer(ASTUnit &Unit, PrecompilePreambleAction *Action,
                              const Preprocessor &PP, StringRef isysroot,
                              std::unique_ptr<raw_ostream> Out)
-      : PCHGenerator(PP, "", nullptr, isysroot, std::make_shared<PCHBuffer>(),
+      : PCHGenerator(PP, "", isysroot, std::make_shared<PCHBuffer>(),
                      ArrayRef<llvm::IntrusiveRefCntPtr<ModuleFileExtension>>(),
                      /*AllowASTWithErrors=*/true),
         Unit(Unit), Hash(Unit.getCurrentTopLevelHashValue()), Action(Action),
