@@ -362,11 +362,11 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
         basic_string_view substr(size_type __pos = 0, size_type __n = npos) const
         {
 //             if (__pos > size())
-//                 throw out_of_range("string_view::substr");
+//                 __throw_out_of_range("string_view::substr");
 //             size_type __rlen = _VSTD::min( __n, size() - __pos );
 //             return basic_string_view(data() + __pos, __rlen);
             return __pos > size()
-                ? (__libcpp_throw((out_of_range("string_view::substr"))), basic_string_view())
+                ? (__throw_out_of_range("string_view::substr"), basic_string_view())
                 : basic_string_view(data() + __pos, _VSTD::min(__n, size() - __pos));
         }
 
