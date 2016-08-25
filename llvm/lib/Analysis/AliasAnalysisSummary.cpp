@@ -15,9 +15,8 @@ const unsigned AttrFirstArgIndex = 4;
 const unsigned AttrLastArgIndex = NumAliasAttrs;
 const unsigned AttrMaxNumArgs = AttrLastArgIndex - AttrFirstArgIndex;
 
-// NOTE: These aren't AliasAttrs because bitsets don't have a constexpr
-// ctor for some versions of MSVC that we support. We could maybe refactor,
-// but...
+// It would be *slightly* prettier if we changed these to AliasAttrs, but it
+// seems that both GCC and MSVC emit dynamic initializers for const bitsets.
 using AliasAttr = unsigned;
 const AliasAttr AttrNone = 0;
 const AliasAttr AttrEscaped = 1 << AttrEscapedIndex;
