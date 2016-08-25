@@ -1,6 +1,7 @@
 ; RUN: opt -memcpyopt -instcombine -S %s | FileCheck %s
 %Foo = type { [2048 x i64] }
 
+; Make sure that all mempcy calls are converted to memset calls, or removed.
 ; CHECK-LABEL: @baz(
 ; CHECK-NOT: call void @llvm.memcpy
 define void @baz() unnamed_addr #0 {

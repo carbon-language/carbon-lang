@@ -1110,7 +1110,8 @@ bool MemCpyOptPass::performMemCpyToMemSetOptzn(MemCpyInst *MemCpy,
                                                MemSetInst *MemSet) {
   AliasAnalysis &AA = LookupAliasAnalysis();
 
-  // This only makes sense on memcpy(..., memset(...), ...).
+  // Make sure that memcpy(..., memset(...), ...), that is we are memsetting and
+  // memcpying from the same address. Otherwise it is hard to reason about.
   if (!AA.isMustAlias(MemSet->getRawDest(), MemCpy->getRawSource()))
     return false;
 
