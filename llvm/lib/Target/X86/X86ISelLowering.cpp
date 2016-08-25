@@ -22170,9 +22170,9 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     auto InVTSize = InVT.getSizeInBits();
     const unsigned RegSize =
         (InVTSize > 128) ? ((InVTSize > 256) ? 512 : 256) : 128;
-    assert((!Subtarget.hasAVX512() || RegSize < 512) &&
-           "512-bit vector requires AVX512");
-    assert((!Subtarget.hasAVX2() || RegSize < 256) &&
+    assert((Subtarget.hasBWI() || RegSize < 512) &&
+           "512-bit vector requires AVX512BW");
+    assert((Subtarget.hasAVX2() || RegSize < 256) &&
            "256-bit vector requires AVX2");
 
     auto ElemVT = InVT.getVectorElementType();
@@ -29233,7 +29233,7 @@ static SDValue detectAVGPattern(SDValue In, EVT VT, SelectionDAG &DAG,
 
   if (!Subtarget.hasSSE2())
     return SDValue();
-  if (Subtarget.hasAVX512()) {
+  if (Subtarget.hasBWI()) {
     if (VT.getSizeInBits() > 512)
       return SDValue();
   } else if (Subtarget.hasAVX2()) {
