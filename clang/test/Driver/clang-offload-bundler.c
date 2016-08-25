@@ -232,7 +232,7 @@
 // CK-OBJ-CMD: private constant [1 x i8] zeroinitializer, section "__CLANG_OFFLOAD_BUNDLE__host-powerpc64le-ibm-linux-gnu"
 // CK-OBJ-CMD: private constant [25 x i8] c"Content of device file 1{{.+}}", section "__CLANG_OFFLOAD_BUNDLE__openmp-powerpc64le-ibm-linux-gnu"
 // CK-OBJ-CMD: private constant [25 x i8] c"Content of device file 2{{.+}}", section "__CLANG_OFFLOAD_BUNDLE__openmp-x86_64-pc-linux-gnu"
-// CK-OBJ-CMD: clang" "-r" "-target" "powerpc64le-ibm-linux-gnu" "-o" "{{.+}}.o" "{{.+}}.o" "{{.+}}.bc" "-nostdlib"
+// CK-OBJ-CMD: clang{{(.exe)?}}" "-r" "-target" "powerpc64le-ibm-linux-gnu" "-o" "{{.+}}.o" "{{.+}}.o" "{{.+}}.bc" "-nostdlib"
 
 // RUN: clang-offload-bundler -type=o -targets=host-powerpc64le-ibm-linux-gnu,openmp-powerpc64le-ibm-linux-gnu,openmp-x86_64-pc-linux-gnu -outputs=%t.res.o,%t.res.tgt1,%t.res.tgt2 -inputs=%s.o -unbundle
 // RUN: diff %s.o %t.res.o
