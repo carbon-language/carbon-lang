@@ -17,7 +17,7 @@ macro(add_polly_library name)
     set(libkind MODULE)
   elseif (ARG_FORCE_STATIC)
     if (SHARED_LIBRARY OR BUILD_SHARED_LIBS)
-      message(STATUS "${name} is being built as static library it compiled with -fvisibility=hidden; "
+      message(STATUS "${name} is being built as static library because it is compiled with -fvisibility=hidden; "
                      "Its symbols are not visible from outside a shared library")
     endif ()
     set(libkind STATIC)
