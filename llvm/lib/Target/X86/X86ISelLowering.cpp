@@ -25235,8 +25235,7 @@ static bool matchBinaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
   }
 
   // Attempt to combine to INSERTPS.
-  if (Subtarget.hasSSE41() && NumMaskElts == 4 &&
-      (MaskVT == MVT::v2f64 || MaskVT == MVT::v4f32)) {
+  if (Subtarget.hasSSE41() && MaskVT == MVT::v4f32) {
     SmallBitVector Zeroable(4, false);
     for (unsigned i = 0; i != NumMaskElts; ++i)
       if (Mask[i] < 0)
