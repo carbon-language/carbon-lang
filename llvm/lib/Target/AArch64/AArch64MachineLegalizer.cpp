@@ -86,6 +86,19 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
     }
   }
 
+  // Extensions
+  for (auto Ty : { s1, s8, s16, s32, s64 }) {
+    setAction({G_ZEXT, Ty}, Legal);
+    setAction({G_SEXT, Ty}, Legal);
+    setAction({G_ANYEXT, Ty}, Legal);
+  }
+
+  for (auto Ty : { s1, s8, s16, s32 }) {
+    setAction({G_ZEXT, 1, Ty}, Legal);
+    setAction({G_SEXT, 1, Ty}, Legal);
+    setAction({G_ANYEXT, 1, Ty}, Legal);
+  }
+
   // Control-flow
   setAction({G_BR, LLT::unsized()}, Legal);
   setAction({G_BRCOND, s32}, Legal);
