@@ -144,7 +144,7 @@ public:
   MachineInstrBuilder buildAdd(LLT Ty, unsigned Res, unsigned Op0,
                                 unsigned Op1);
 
-  /// Build and insert \p Res<def>, \p CarryOut = G_UADDE \p Ty \p Op0, \p Op1,
+  /// Build and insert \p Res<def>, \p CarryOut = G_UADDE \p Tys \p Op0, \p Op1,
   /// \p CarryIn
   ///
   /// G_UADDE sets \p Res to \p Op0 + \p Op1 + \p CarryIn (truncated to the bit
@@ -154,8 +154,9 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildUAdde(LLT Ty, unsigned Res, unsigned CarryOut,
-                                 unsigned Op0, unsigned Op1, unsigned CarryIn);
+  MachineInstrBuilder buildUAdde(ArrayRef<LLT> Tys, unsigned Res,
+                                 unsigned CarryOut, unsigned Op0, unsigned Op1,
+                                 unsigned CarryIn);
 
   /// Build and insert \p Res<def> = G_ANYEXT \p { DstTy, SrcTy } \p Op0
   ///

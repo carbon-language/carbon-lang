@@ -141,11 +141,10 @@ MachineInstrBuilder MachineIRBuilder::buildStore(LLT VTy, LLT PTy,
       .addMemOperand(&MMO);
 }
 
-MachineInstrBuilder MachineIRBuilder::buildUAdde(LLT Ty, unsigned Res,
-                                                 unsigned CarryOut,
-                                                 unsigned Op0, unsigned Op1,
-                                                 unsigned CarryIn) {
-  return buildInstr(TargetOpcode::G_UADDE, Ty)
+MachineInstrBuilder
+MachineIRBuilder::buildUAdde(ArrayRef<LLT> Tys, unsigned Res, unsigned CarryOut,
+                             unsigned Op0, unsigned Op1, unsigned CarryIn) {
+  return buildInstr(TargetOpcode::G_UADDE, Tys)
       .addDef(Res)
       .addDef(CarryOut)
       .addUse(Op0)
