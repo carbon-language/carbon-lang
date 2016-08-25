@@ -21,22 +21,10 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
   include_directories(${LLVM_INSTALL_ROOT}/include/)
 
   # Get the system librarys that will link into LLVM.
-  function(get_system_libs return_var)
-    # Returns in `return_var' a list of system libraries used by LLVM.
-    if( NOT MSVC )
-      if( MINGW )
-        set(system_libs ${system_libs} imagehlp psapi)
-      elseif( CMAKE_HOST_UNIX )
-        if( HAVE_LIBDL )
-          set(system_libs ${system_libs} ${CMAKE_DL_LIBS})
-        endif()
-        if( LLVM_ENABLE_THREADS AND HAVE_LIBPTHREAD )
-          set(system_libs ${system_libs} pthread)
-        endif()
-      endif( MINGW )
-    endif( NOT MSVC )
-    set(${return_var} ${system_libs} PARENT_SCOPE)
-  endfunction(get_system_libs)
+  execute_process(COMMAND "${LLVM_INSTALL_ROOT}/bin/llvm-config" --system-libs
+                  OUTPUT_VARIABLE LLVM_SYSTEM_LIBS
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  message(STATUS "System libs required by LLVM: ${LLVM_SYSTEM_LIBS}")
 
   # Determine where LLVM stores its libraries.
   execute_process(COMMAND "${LLVM_INSTALL_ROOT}/bin/llvm-config" --libdir
@@ -100,9 +88,7 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
   if(EXISTS ${UNITTEST_DIR}/googletest/include/gtest/gtest.h)
     add_library(gtest ${UNITTEST_DIR}/googletest/src/gtest-all.cc)
     target_include_directories(gtest PUBLIC "${UNITTEST_DIR}/googletest/include" PRIVATE "${UNITTEST_DIR}/googletest")
-    if( NOT MSVC )
-      target_link_libraries(gtest pthread tinfo dl)
-    endif ()
+    target_link_libraries(gtest ${LLVM_SYSTEM_LIBS})
 
     add_library(gtest_main ${UNITTEST_DIR}/UnitTestMain/TestMain.cpp)
     target_link_libraries(gtest_main gtest)
