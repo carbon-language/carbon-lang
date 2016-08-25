@@ -56,12 +56,14 @@ static cl::opt<unsigned> TailDupLimit("tail-dup-limit", cl::init(~0U),
 
 namespace llvm {
 
-void TailDuplicator::initMF(MachineFunction &MF, const MachineModuleInfo *MMIin,
+void TailDuplicator::initMF(MachineFunction &MFin,
+                            const MachineModuleInfo *MMIin,
                             const MachineBranchProbabilityInfo *MBPIin,
                             unsigned TailDupSizeIn) {
-  TII = MF.getSubtarget().getInstrInfo();
-  TRI = MF.getSubtarget().getRegisterInfo();
-  MRI = &MF.getRegInfo();
+  MF = &MFin;
+  TII = MF->getSubtarget().getInstrInfo();
+  TRI = MF->getSubtarget().getRegisterInfo();
+  MRI = &MF->getRegInfo();
   MMI = MMIin;
   MBPI = MBPIin;
   TailDupSize = TailDupSizeIn;
@@ -118,7 +120,7 @@ static void VerifyPHIs(MachineFunction &MF, bool CheckExtra) {
 }
 
 /// Tail duplicate the block and cleanup.
-bool TailDuplicator::tailDuplicateAndUpdate(MachineFunction &MF, bool IsSimple,
+bool TailDuplicator::tailDuplicateAndUpdate(bool IsSimple,
                                             MachineBasicBlock *MBB) {
   // Save the successors list.
   SmallSetVector<MachineBasicBlock *, 8> Succs(MBB->succ_begin(),
@@ -126,13 +128,13 @@ bool TailDuplicator::tailDuplicateAndUpdate(MachineFunction &MF, bool IsSimple,
 
   SmallVector<MachineBasicBlock *, 8> TDBBs;
   SmallVector<MachineInstr *, 16> Copies;
-  if (!tailDuplicate(MF, IsSimple, MBB, TDBBs, Copies))
+  if (!tailDuplicate(IsSimple, MBB, TDBBs, Copies))
     return false;
 
   ++NumTails;
 
   SmallVector<MachineInstr *, 8> NewPHIs;
-  MachineSSAUpdater SSAUpdate(MF, &NewPHIs);
+  MachineSSAUpdater SSAUpdate(*MF, &NewPHIs);
 
   // TailBB's immediate successors are now successors of those predecessors
   // which duplicated TailBB. Add the predecessors as sources to the PHI
@@ -221,15 +223,15 @@ bool TailDuplicator::tailDuplicateAndUpdate(MachineFunction &MF, bool IsSimple,
 /// Look for small blocks that are unconditionally branched to and do not fall
 /// through. Tail-duplicate their instructions into their predecessors to
 /// eliminate (dynamic) branches.
-bool TailDuplicator::tailDuplicateBlocks(MachineFunction &MF) {
+bool TailDuplicator::tailDuplicateBlocks() {
   bool MadeChange = false;
 
   if (PreRegAlloc && TailDupVerify) {
     DEBUG(dbgs() << "\n*** Before tail-duplicating\n");
-    VerifyPHIs(MF, true);
+    VerifyPHIs(*MF, true);
   }
 
-  for (MachineFunction::iterator I = ++MF.begin(), E = MF.end(); I != E;) {
+  for (MachineFunction::iterator I = ++MF->begin(), E = MF->end(); I != E;) {
     MachineBasicBlock *MBB = &*I++;
 
     if (NumTails == TailDupLimit)
@@ -237,14 +239,14 @@ bool TailDuplicator::tailDuplicateBlocks(MachineFunction &MF) {
 
     bool IsSimple = isSimpleBB(MBB);
 
-    if (!shouldTailDuplicate(MF, IsSimple, *MBB))
+    if (!shouldTailDuplicate(IsSimple, *MBB))
       continue;
 
-    MadeChange |= tailDuplicateAndUpdate(MF, IsSimple, MBB);
+    MadeChange |= tailDuplicateAndUpdate(IsSimple, MBB);
   }
 
   if (PreRegAlloc && TailDupVerify)
-    VerifyPHIs(MF, false);
+    VerifyPHIs(*MF, false);
 
   return MadeChange;
 }
@@ -333,10 +335,9 @@ void TailDuplicator::processPHI(
 /// the source operands due to earlier PHI translation.
 void TailDuplicator::duplicateInstruction(
     MachineInstr *MI, MachineBasicBlock *TailBB, MachineBasicBlock *PredBB,
-    MachineFunction &MF,
     DenseMap<unsigned, RegSubRegPair> &LocalVRMap,
     const DenseSet<unsigned> &UsedByPhi) {
-  MachineInstr *NewMI = TII->duplicate(*MI, MF);
+  MachineInstr *NewMI = TII->duplicate(*MI, *MF);
   if (PreRegAlloc) {
     for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = NewMI->getOperand(i);
@@ -498,8 +499,7 @@ void TailDuplicator::updateSuccessorsPHIs(
 }
 
 /// Determine if it is profitable to duplicate this block.
-bool TailDuplicator::shouldTailDuplicate(const MachineFunction &MF,
-                                         bool IsSimple,
+bool TailDuplicator::shouldTailDuplicate(bool IsSimple,
                                          MachineBasicBlock &TailBB) {
   // Only duplicate blocks that end with unconditional branches.
   if (TailBB.canFallThrough())
@@ -515,7 +515,7 @@ bool TailDuplicator::shouldTailDuplicate(const MachineFunction &MF,
   unsigned MaxDuplicateCount;
   if (TailDupSize == 0 &&
       TailDuplicateSize.getNumOccurrences() == 0 &&
-      MF.getFunction()->optForSize())
+      MF->getFunction()->optForSize())
     MaxDuplicateCount = 1;
   else if (TailDupSize == 0)
     MaxDuplicateCount = TailDuplicateSize;
@@ -737,8 +737,7 @@ bool TailDuplicator::canTailDuplicate(MachineBasicBlock *TailBB,
 
 /// If it is profitable, duplicate TailBB's contents in each
 /// of its predecessors.
-bool TailDuplicator::tailDuplicate(MachineFunction &MF, bool IsSimple,
-                                   MachineBasicBlock *TailBB,
+bool TailDuplicator::tailDuplicate(bool IsSimple, MachineBasicBlock *TailBB,
                                    SmallVectorImpl<MachineBasicBlock *> &TDBBs,
                                    SmallVectorImpl<MachineInstr *> &Copies) {
   DEBUG(dbgs() << "\n*** Tail-duplicating BB#" << TailBB->getNumber() << '\n');
@@ -790,7 +789,7 @@ bool TailDuplicator::tailDuplicate(MachineFunction &MF, bool IsSimple,
       } else {
         // Replace def of virtual registers with new registers, and update
         // uses with PHI source register or the new registers.
-        duplicateInstruction(MI, TailBB, PredBB, MF, LocalVRMap, UsedByPhi);
+        duplicateInstruction(MI, TailBB, PredBB, LocalVRMap, UsedByPhi);
       }
     }
     appendCopies(PredBB, CopyInfos, Copies);
@@ -847,7 +846,7 @@ bool TailDuplicator::tailDuplicate(MachineFunction &MF, bool IsSimple,
         // uses with PHI source register or the new registers.
         MachineInstr *MI = &*I++;
         assert(!MI->isBundle() && "Not expecting bundles before regalloc!");
-        duplicateInstruction(MI, TailBB, PrevBB, MF, LocalVRMap, UsedByPhi);
+        duplicateInstruction(MI, TailBB, PrevBB, LocalVRMap, UsedByPhi);
         MI->eraseFromParent();
       }
       appendCopies(PrevBB, CopyInfos, Copies);
