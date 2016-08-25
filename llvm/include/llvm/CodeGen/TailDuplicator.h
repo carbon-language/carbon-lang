@@ -49,7 +49,7 @@ class TailDuplicator {
 public:
   /// Prepare to run on a specific machine function.
   /// @param TailDupSize - Maxmimum size of blocks to tail-duplicate.
-  void initMF(MachineFunction &MF, const MachineModuleInfo *MMI,
+  void initMF(MachineFunction &MF,
               const MachineBranchProbabilityInfo *MBPI,
               unsigned TailDupSize = 0);
   bool tailDuplicateBlocks();

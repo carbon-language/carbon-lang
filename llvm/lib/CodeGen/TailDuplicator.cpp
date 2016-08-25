@@ -57,14 +57,13 @@ static cl::opt<unsigned> TailDupLimit("tail-dup-limit", cl::init(~0U),
 namespace llvm {
 
 void TailDuplicator::initMF(MachineFunction &MFin,
-                            const MachineModuleInfo *MMIin,
                             const MachineBranchProbabilityInfo *MBPIin,
                             unsigned TailDupSizeIn) {
   MF = &MFin;
   TII = MF->getSubtarget().getInstrInfo();
   TRI = MF->getSubtarget().getRegisterInfo();
   MRI = &MF->getRegInfo();
-  MMI = MMIin;
+  MMI = &MF->getMMI();
   MBPI = MBPIin;
   TailDupSize = TailDupSizeIn;
 
