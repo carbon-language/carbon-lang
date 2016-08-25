@@ -1754,8 +1754,8 @@ public:
     _LIBCPP_INLINE_VISIBILITY pointer allocate(size_type __n, allocator<void>::const_pointer = 0)
         {
         if (__n > max_size())
-            __libcpp_throw(length_error("allocator<T>::allocate(size_t n)"
-                                      " 'n' exceeds maximum supported size"));
+            __throw_length_error("allocator<T>::allocate(size_t n)"
+                                 " 'n' exceeds maximum supported size");
         return static_cast<pointer>(_VSTD::__allocate(__n * sizeof(_Tp)));
         }
     _LIBCPP_INLINE_VISIBILITY void deallocate(pointer __p, size_type) _NOEXCEPT
@@ -1850,8 +1850,8 @@ public:
     _LIBCPP_INLINE_VISIBILITY pointer allocate(size_type __n, allocator<void>::const_pointer = 0)
     {
         if (__n > max_size())
-            __libcpp_throw(length_error("allocator<const T>::allocate(size_t n)"
-                                      " 'n' exceeds maximum supported size"));
+            __throw_length_error("allocator<const T>::allocate(size_t n)"
+                                 " 'n' exceeds maximum supported size");
         return static_cast<pointer>(_VSTD::__allocate(__n * sizeof(_Tp)));
     }
     _LIBCPP_INLINE_VISIBILITY void deallocate(pointer __p, size_type) _NOEXCEPT
