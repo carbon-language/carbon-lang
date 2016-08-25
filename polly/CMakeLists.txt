@@ -88,9 +88,33 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
     endif()
   endif()
 
+  # Sources available, too?
+  execute_process(COMMAND "${LLVM_INSTALL_ROOT}/bin/llvm-config" --src-root
+                  OUTPUT_VARIABLE MAIN_SRC_DIR
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  set(LLVM_SOURCE_ROOT ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
+
+  # Enable unit tests if available.
+  set(UNITTEST_DIR ${LLVM_SOURCE_ROOT}/utils/unittest)
+  if(EXISTS ${UNITTEST_DIR}/googletest/include/gtest/gtest.h)
+    add_library(gtest ${UNITTEST_DIR}/googletest/src/gtest-all.cc)
+    target_include_directories(gtest PUBLIC "${UNITTEST_DIR}/googletest/include" PRIVATE "${UNITTEST_DIR}/googletest")
+    if( NOT MSVC )
+      target_link_libraries(gtest pthread tinfo dl)
+    endif ()
+
+    add_library(gtest_main ${UNITTEST_DIR}/UnitTestMain/TestMain.cpp)
+    target_link_libraries(gtest_main gtest)
+
+    set(POLLY_GTEST_AVAIL 1)
+  endif()
+
   # Make sure the isl c files are built as fPIC
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-endif(NOT DEFINED LLVM_MAIN_SRC_DIR)
+else ()
+  set(LLVM_SOURCE_ROOT "${LLVM_MAIN_SRC_DIR}")
+  set(POLLY_GTEST_AVAIL 1)
+endif ()
 
 set(POLLY_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(POLLY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
@@ -169,6 +193,9 @@ add_definitions( -D_GNU_SOURCE )
 add_subdirectory(docs)
 add_subdirectory(lib)
 add_subdirectory(test)
+if (POLLY_GTEST_AVAIL)
+  add_subdirectory(unittests)
+endif ()
 add_subdirectory(tools)
 # TODO: docs.
 
@@ -177,7 +204,7 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/include/polly/Config/config.h.cmake
                 ${POLLY_BINARY_DIR}/include/polly/Config/config.h )
 
 # Add target to check formatting of polly files
-file( GLOB_RECURSE files *.h lib/*.cpp lib/*.c tools/*.cpp tools/*.c tools/*.h)
+file( GLOB_RECURSE files *.h lib/*.cpp lib/*.c tools/*.cpp tools/*.c tools/*.h unittests/*.cpp)
 file( GLOB_RECURSE jsonfiles lib/JSON/*.h lib/JSON/*.cpp)
 file( GLOB_RECURSE external lib/External/*.h lib/External/*.c)
 list( REMOVE_ITEM files ${jsonfiles} ${external})
