@@ -15,7 +15,7 @@
 ; CHECK:        double E[*][270336][200000]; // Element size 8
 ; CHECK:        i64 F[*][270336]; // Element size 8
 ;
-; CHECK:New access function '{ Stmt_bb12[i0, i1, i2] -> E[0, i2, i0] }'detected in JSCOP file
+; CHECK:New access function '{ Stmt_bb12[i0, i1, i2] -> E[0, i2, i0] }' detected in JSCOP file
 ;
 ; CODEGEN:define internal void @create_arrays(i32 %arg, i32 %arg1, i32 %arg2, double %arg3, double %beta, [1056 x double]* %A, [1024 x double]* %B, [1056 x double]* %arg7) #0 {
 ; CODEGEN:bb:
