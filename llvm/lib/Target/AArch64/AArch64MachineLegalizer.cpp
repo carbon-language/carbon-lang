@@ -141,6 +141,12 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
   for (auto Ty : {s1, s8, s16})
     setAction({G_BRCOND, Ty}, WidenScalar);
 
+  // Select
+  for (auto Ty : {s1, s8, s16, s32, s64})
+    setAction({G_SELECT, Ty}, Legal);
+
+  setAction({G_SELECT, 1, s1}, Legal);
+
   // Pointer-handling
   setAction({G_FRAME_INDEX, p0}, Legal);
 
