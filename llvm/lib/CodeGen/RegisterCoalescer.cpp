@@ -2840,7 +2840,7 @@ bool RegisterCoalescer::joinVirtRegs(CoalescerPair &CP) {
     // Recompute the parts of the live range we had to remove because of
     // CR_Replace conflicts.
     DEBUG({
-      dbgs() << "\t\trestoring liveness to " << EndPoints.size() << " points: "
+      dbgs() << "\t\trestoring liveness to " << EndPoints.size() << " points: ";
       for (unsigned i = 0, n = EndPoints.size(); i != n; ++i) {
         dbgs() << EndPoints[i];
         if (i != n-1)
