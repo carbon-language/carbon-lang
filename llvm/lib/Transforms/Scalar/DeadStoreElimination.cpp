@@ -1050,6 +1050,13 @@ static bool eliminateDeadStores(BasicBlock &BB, AliasAnalysis *AA,
     if (!Loc.Ptr)
       continue;
 
+    // Loop until we find a store we can eliminate or a load that
+    // invalidates the analysis. Without an upper bound on the number of
+    // instructions examined, this analysis can become very time-consuming.
+    // However, the potential gain diminishes as we process more instructions
+    // without eliminating any of them. Therefore, we limit the number of
+    // instructions we look at.
+    auto Limit = MD->getDefaultBlockScanLimit();
     while (InstDep.isDef() || InstDep.isClobber()) {
       // Get the memory clobbered by the instruction we depend on.  MemDep will
       // skip any instructions that 'Loc' clearly doesn't interact with.  If we
@@ -1138,8 +1145,9 @@ static bool eliminateDeadStores(BasicBlock &BB, AliasAnalysis *AA,
       if (AA->getModRefInfo(DepWrite, Loc) & MRI_Ref)
         break;
 
-      InstDep = MD->getPointerDependencyFrom(Loc, false,
-                                             DepWrite->getIterator(), &BB);
+      InstDep = MD->getPointerDependencyFrom(Loc, /*isLoad=*/ false,
+                                             DepWrite->getIterator(), &BB,
+                                             /*QueryInst=*/ nullptr, &Limit);
     }
   }
 
