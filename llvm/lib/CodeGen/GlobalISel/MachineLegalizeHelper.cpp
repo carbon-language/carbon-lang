@@ -42,6 +42,8 @@ MachineLegalizeHelper::legalizeInstrStep(MachineInstr &MI,
     return narrowScalar(MI, std::get<1>(Action), std::get<2>(Action));
   case MachineLegalizer::WidenScalar:
     return widenScalar(MI, std::get<1>(Action), std::get<2>(Action));
+  case MachineLegalizer::Lower:
+    return lower(MI, std::get<1>(Action), std::get<2>(Action));
   case MachineLegalizer::FewerElements:
     return fewerElementsVector(MI, std::get<1>(Action), std::get<2>(Action));
   default:
@@ -264,6 +266,33 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx,
       MI.eraseFromParent();
       return Legalized;
     }
+  }
+  }
+}
+
+MachineLegalizeHelper::LegalizeResult
+MachineLegalizeHelper::lower(MachineInstr &MI, unsigned TypeIdx, LLT Ty) {
+  using namespace TargetOpcode;
+  unsigned Size = Ty.getSizeInBits();
+  MIRBuilder.setInstr(MI);
+
+  switch(MI.getOpcode()) {
+  default:
+    return UnableToLegalize;
+  case TargetOpcode::G_SREM:
+  case TargetOpcode::G_UREM: {
+    unsigned QuotReg = MRI.createGenericVirtualRegister(Size);
+    MIRBuilder.buildInstr(MI.getOpcode() == G_SREM ? G_SDIV : G_UDIV, Ty)
+        .addDef(QuotReg)
+        .addUse(MI.getOperand(1).getReg())
+        .addUse(MI.getOperand(2).getReg());
+
+    unsigned ProdReg = MRI.createGenericVirtualRegister(Size);
+    MIRBuilder.buildMul(Ty, ProdReg, QuotReg, MI.getOperand(2).getReg());
+    MIRBuilder.buildSub(Ty, MI.getOperand(0).getReg(),
+                        MI.getOperand(1).getReg(), ProdReg);
+    MI.eraseFromParent();
+    return Legalized;
   }
   }
 }

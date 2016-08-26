@@ -51,6 +51,10 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
       setAction({BinOp, Ty}, WidenScalar);
   }
 
+  for (auto BinOp : { G_SREM, G_UREM })
+    for (auto Ty : { s1, s8, s16, s32, s64 })
+      setAction({BinOp, Ty}, Lower);
+
   for (auto Op : { G_UADDE, G_USUBE, G_SADDO, G_SSUBO, G_SMULO, G_UMULO }) {
     for (auto Ty : { s32, s64 })
       setAction({Op, Ty}, Legal);
