@@ -64,6 +64,7 @@ struct MsanMapUnmapCallback {
     static const uptr kMetadataSize = sizeof(Metadata);
     typedef DefaultSizeClassMap SizeClassMap;
     typedef MsanMapUnmapCallback MapUnmapCallback;
+    static const uptr kFlags = 0;
   };
 
   typedef SizeClassAllocator64<AP64> PrimaryAllocator;

@@ -50,6 +50,7 @@ struct AP64 {  // Allocator64 parameters. Deliberately using a short name.
   static const uptr kMetadataSize = sizeof(ChunkMetadata);
   typedef DefaultSizeClassMap SizeClassMap;
   typedef NoOpMapUnmapCallback MapUnmapCallback;
+  static const uptr kFlags = 0;
 };
 
 typedef SizeClassAllocator64<AP64> PrimaryAllocator;

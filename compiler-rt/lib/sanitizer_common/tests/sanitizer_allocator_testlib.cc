@@ -43,6 +43,8 @@ struct __AP64 {
   static const uptr kMetadataSize = 0;
   typedef CompactSizeClassMap SizeClassMap;
   typedef NoOpMapUnmapCallback MapUnmapCallback;
+  static const uptr kFlags =
+      SizeClassAllocator64FlagMasks::kRandomShuffleChunks;
 };
 
 namespace {

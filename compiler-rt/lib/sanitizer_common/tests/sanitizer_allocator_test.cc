@@ -48,6 +48,7 @@ struct AP64 {  // Allocator Params. Short name for shorter demangled names..
   static const uptr kMetadataSize = 16;
   typedef DefaultSizeClassMap SizeClassMap;
   typedef NoOpMapUnmapCallback MapUnmapCallback;
+  static const uptr kFlags = 0;
 };
 
 struct AP64Dyn {
@@ -56,6 +57,7 @@ struct AP64Dyn {
   static const uptr kMetadataSize = 16;
   typedef DefaultSizeClassMap SizeClassMap;
   typedef NoOpMapUnmapCallback MapUnmapCallback;
+  static const uptr kFlags = 0;
 };
 
 struct AP64Compact {
@@ -64,6 +66,7 @@ struct AP64Compact {
   static const uptr kMetadataSize = 16;
   typedef DefaultSizeClassMap SizeClassMap;
   typedef NoOpMapUnmapCallback MapUnmapCallback;
+  static const uptr kFlags = 0;
 };
 
 typedef SizeClassAllocator64<AP64> Allocator64;
@@ -315,6 +318,7 @@ struct AP64WithCallback {
     static const uptr kMetadataSize = 16;
     typedef DefaultSizeClassMap SizeClassMap;
     typedef TestMapUnmapCallback MapUnmapCallback;
+    static const uptr kFlags = 0;
 };
 
 TEST(SanitizerCommon, SizeClassAllocator64MapUnmapCallback) {
@@ -879,6 +883,7 @@ struct AP64_SpecialSizeClassMap {
   static const uptr kMetadataSize = 0;
   typedef SpecialSizeClassMap SizeClassMap;
   typedef NoOpMapUnmapCallback MapUnmapCallback;
+  static const uptr kFlags = 0;
 };
 
 // Regression test for out-of-memory condition in PopulateFreeList().

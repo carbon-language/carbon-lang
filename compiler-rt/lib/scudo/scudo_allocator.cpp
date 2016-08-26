@@ -38,6 +38,8 @@ struct AP {
   static const uptr kMetadataSize = 0;
   typedef DefaultSizeClassMap SizeClassMap;
   typedef NoOpMapUnmapCallback MapUnmapCallback;
+  static const uptr kFlags =
+      SizeClassAllocator64FlagMasks::kRandomShuffleChunks;
 };
 
 typedef SizeClassAllocator64<AP> PrimaryAllocator;
