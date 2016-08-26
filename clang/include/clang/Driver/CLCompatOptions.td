@@ -304,6 +304,7 @@ def _SLASH_openmp_ : CLIgnoredFlag<"openmp-">;
 def _SLASH_RTC : CLIgnoredJoined<"RTC">;
 def _SLASH_sdl : CLIgnoredFlag<"sdl">;
 def _SLASH_sdl_ : CLIgnoredFlag<"sdl-">;
+def _SLASH_utf8 : CLIgnoredFlag<"utf-8">;
 def _SLASH_w : CLIgnoredJoined<"w">;
 def _SLASH_Zc_auto : CLIgnoredFlag<"Zc:auto">;
 def _SLASH_Zc_forScope : CLIgnoredFlag<"Zc:forScope">;

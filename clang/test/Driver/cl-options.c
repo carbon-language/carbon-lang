@@ -307,6 +307,7 @@
 // RUN:    /sdl \
 // RUN:    /sdl- \
 // RUN:    /source-charset:utf-8 \
+// RUN:    /utf-8 \
 // RUN:    /vmg \
 // RUN:    /volatile:iso \
 // RUN:    /w12345 \
