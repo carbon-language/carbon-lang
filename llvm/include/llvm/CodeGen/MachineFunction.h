@@ -132,7 +132,7 @@ public:
     Properties.set(static_cast<unsigned>(P));
     return *this;
   }
-  MachineFunctionProperties &clear(Property P) {
+  MachineFunctionProperties &reset(Property P) {
     Properties.reset(static_cast<unsigned>(P));
     return *this;
   }
@@ -140,7 +140,7 @@ public:
     Properties |= MFP.Properties;
     return *this;
   }
-  MachineFunctionProperties &clear(const MachineFunctionProperties &MFP) {
+  MachineFunctionProperties &reset(const MachineFunctionProperties &MFP) {
     Properties.reset(MFP.Properties);
     return *this;
   }
