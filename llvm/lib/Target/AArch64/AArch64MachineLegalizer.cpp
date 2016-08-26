@@ -36,16 +36,20 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
   const LLT v4s32 = LLT::vector(4, 32);
   const LLT v2s64 = LLT::vector(2, 64);
 
-  for (auto BinOp : {G_ADD, G_SUB, G_MUL, G_AND, G_OR, G_XOR}) {
+  for (auto BinOp : {G_ADD, G_SUB, G_MUL, G_AND, G_OR, G_XOR, G_SHL}) {
     // These operations naturally get the right answer when used on
     // GPR32, even if the actual type is narrower.
     for (auto Ty : {s1, s8, s16, s32, s64, v2s32, v4s32, v2s64})
       setAction({BinOp, Ty}, Legal);
   }
 
-  for (auto BinOp : {G_SHL, G_LSHR, G_ASHR, G_SDIV, G_UDIV})
+  for (auto BinOp : {G_LSHR, G_ASHR, G_SDIV, G_UDIV}) {
     for (auto Ty : {s32, s64})
       setAction({BinOp, Ty}, Legal);
+
+    for (auto Ty : {s1, s8, s16})
+      setAction({BinOp, Ty}, WidenScalar);
+  }
 
   for (auto Op : { G_UADDE, G_USUBE, G_SADDO, G_SSUBO, G_SMULO, G_UMULO }) {
     for (auto Ty : { s32, s64 })

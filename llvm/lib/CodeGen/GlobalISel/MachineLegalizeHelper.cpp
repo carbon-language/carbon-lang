@@ -161,6 +161,33 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx,
     MI.eraseFromParent();
     return Legalized;
   }
+  case TargetOpcode::G_SDIV:
+  case TargetOpcode::G_UDIV: {
+    unsigned ExtOp = MI.getOpcode() == TargetOpcode::G_SDIV
+                          ? TargetOpcode::G_SEXT
+                          : TargetOpcode::G_ZEXT;
+
+    unsigned LHSExt = MRI.createGenericVirtualRegister(WideSize);
+    MIRBuilder.buildInstr(ExtOp, {WideTy, MI.getType()})
+        .addDef(LHSExt)
+        .addUse(MI.getOperand(1).getReg());
+
+    unsigned RHSExt = MRI.createGenericVirtualRegister(WideSize);
+    MIRBuilder.buildInstr(ExtOp, {WideTy, MI.getType()})
+        .addDef(RHSExt)
+        .addUse(MI.getOperand(2).getReg());
+
+    unsigned ResExt = MRI.createGenericVirtualRegister(WideSize);
+    MIRBuilder.buildInstr(MI.getOpcode(), WideTy)
+        .addDef(ResExt)
+        .addUse(LHSExt)
+        .addUse(RHSExt);
+
+    MIRBuilder.buildTrunc({MI.getType(), WideTy}, MI.getOperand(0).getReg(),
+                          ResExt);
+    MI.eraseFromParent();
+    return Legalized;
+  }
   case TargetOpcode::G_LOAD: {
     assert(alignTo(Ty.getSizeInBits(), 8) == WideSize &&
            "illegal to increase number of bytes loaded");
