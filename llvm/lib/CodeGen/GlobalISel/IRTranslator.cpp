@@ -30,7 +30,7 @@
 using namespace llvm;
 
 char IRTranslator::ID = 0;
-INITIALIZE_PASS(IRTranslator, "irtranslator", "IRTranslator LLVM IR -> MI",
+INITIALIZE_PASS(IRTranslator, DEBUG_TYPE, "IRTranslator LLVM IR -> MI",
                 false, false)
 
 IRTranslator::IRTranslator() : MachineFunctionPass(ID), MRI(nullptr) {
