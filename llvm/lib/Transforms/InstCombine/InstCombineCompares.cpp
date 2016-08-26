@@ -1389,48 +1389,49 @@ Instruction *InstCombiner::foldICmpXorConstant(ICmpInst &Cmp,
   return nullptr;
 }
 
-Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI,
-                                               BinaryOperator *LHSI,
-                                               const APInt *RHSV) {
+/// Fold icmp (and X, Y), C.
+Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &Cmp,
+                                               BinaryOperator *And,
+                                               const APInt *C) {
   // FIXME: This check restricts all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(ICI.getOperand(1));
+  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
   if (!RHS)
     return nullptr;
 
-  if (LHSI->hasOneUse() && isa<ConstantInt>(LHSI->getOperand(1)) &&
-      LHSI->getOperand(0)->hasOneUse()) {
-    ConstantInt *AndCst = cast<ConstantInt>(LHSI->getOperand(1));
+  if (And->hasOneUse() && isa<ConstantInt>(And->getOperand(1)) &&
+      And->getOperand(0)->hasOneUse()) {
+    ConstantInt *AndCst = cast<ConstantInt>(And->getOperand(1));
 
     // If the LHS is an AND of a truncating cast, we can widen the
     // and/compare to be the input width without changing the value
     // produced, eliminating a cast.
-    if (TruncInst *Cast = dyn_cast<TruncInst>(LHSI->getOperand(0))) {
+    if (TruncInst *Cast = dyn_cast<TruncInst>(And->getOperand(0))) {
       // We can do this transformation if either the AND constant does not
       // have its sign bit set or if it is an equality comparison.
       // Extending a relational comparison when we're checking the sign
       // bit would not work.
-      if (ICI.isEquality() ||
-          (!AndCst->isNegative() && RHSV->isNonNegative())) {
+      if (Cmp.isEquality() ||
+          (!AndCst->isNegative() && C->isNonNegative())) {
         Value *NewAnd =
             Builder->CreateAnd(Cast->getOperand(0),
                                ConstantExpr::getZExt(AndCst, Cast->getSrcTy()));
-        NewAnd->takeName(LHSI);
-        return new ICmpInst(ICI.getPredicate(), NewAnd,
+        NewAnd->takeName(And);
+        return new ICmpInst(Cmp.getPredicate(), NewAnd,
                             ConstantExpr::getZExt(RHS, Cast->getSrcTy()));
       }
     }
 
     // If the LHS is an AND of a zext, and we have an equality compare, we can
     // shrink the and/compare to the smaller type, eliminating the cast.
-    if (ZExtInst *Cast = dyn_cast<ZExtInst>(LHSI->getOperand(0))) {
+    if (ZExtInst *Cast = dyn_cast<ZExtInst>(And->getOperand(0))) {
       IntegerType *Ty = cast<IntegerType>(Cast->getSrcTy());
       // Make sure we don't compare the upper bits, SimplifyDemandedBits
       // should fold the icmp to true/false in that case.
-      if (ICI.isEquality() && RHSV->getActiveBits() <= Ty->getBitWidth()) {
+      if (Cmp.isEquality() && C->getActiveBits() <= Ty->getBitWidth()) {
         Value *NewAnd = Builder->CreateAnd(Cast->getOperand(0),
                                            ConstantExpr::getTrunc(AndCst, Ty));
-        NewAnd->takeName(LHSI);
-        return new ICmpInst(ICI.getPredicate(), NewAnd,
+        NewAnd->takeName(And);
+        return new ICmpInst(Cmp.getPredicate(), NewAnd,
                             ConstantExpr::getTrunc(RHS, Ty));
       }
     }
@@ -1439,7 +1440,7 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI,
     // could exist), turn it into (X & (C2 << C1)) != (C3 << C1).  This
     // happens a LOT in code produced by the C front-end, for bitfield
     // access.
-    BinaryOperator *Shift = dyn_cast<BinaryOperator>(LHSI->getOperand(0));
+    BinaryOperator *Shift = dyn_cast<BinaryOperator>(And->getOperand(0));
     if (Shift && !Shift->isShift())
       Shift = nullptr;
 
@@ -1462,7 +1463,7 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI,
         // comparison value are not negative. These constraints may not be
         // obvious, but we can prove that they are correct using an SMT
         // solver.
-        if (!ICI.isSigned() || (!AndCst->isNegative() && !RHS->isNegative()))
+        if (!Cmp.isSigned() || (!AndCst->isNegative() && !RHS->isNegative()))
           CanFold = true;
       } else if (ShiftOpcode == Instruction::LShr) {
         // For a logical right shift, we can fold if the comparison is not
@@ -1470,7 +1471,7 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI,
         // value and the shifted comparison value are not negative.
         // These constraints may not be obvious, but we can prove that they
         // are correct using an SMT solver.
-        if (!ICI.isSigned())
+        if (!Cmp.isSigned())
           CanFold = true;
         else {
           ConstantInt *ShiftedAndCst =
@@ -1496,21 +1497,21 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI,
           // If we shifted bits out, the fold is not going to work out.
           // As a special case, check to see if this means that the
           // result is always true or false now.
-          if (ICI.getPredicate() == ICmpInst::ICMP_EQ)
-            return replaceInstUsesWith(ICI, Builder->getFalse());
-          if (ICI.getPredicate() == ICmpInst::ICMP_NE)
-            return replaceInstUsesWith(ICI, Builder->getTrue());
+          if (Cmp.getPredicate() == ICmpInst::ICMP_EQ)
+            return replaceInstUsesWith(Cmp, Builder->getFalse());
+          if (Cmp.getPredicate() == ICmpInst::ICMP_NE)
+            return replaceInstUsesWith(Cmp, Builder->getTrue());
         } else {
-          ICI.setOperand(1, NewCst);
+          Cmp.setOperand(1, NewCst);
           Constant *NewAndCst;
           if (ShiftOpcode == Instruction::Shl)
             NewAndCst = ConstantExpr::getLShr(AndCst, ShAmt);
           else
             NewAndCst = ConstantExpr::getShl(AndCst, ShAmt);
-          LHSI->setOperand(1, NewAndCst);
-          LHSI->setOperand(0, Shift->getOperand(0));
+          And->setOperand(1, NewAndCst);
+          And->setOperand(0, Shift->getOperand(0));
           Worklist.Add(Shift); // Shift is dead.
-          return &ICI;
+          return &Cmp;
         }
       }
     }
@@ -1518,7 +1519,7 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI,
     // Turn ((X >> Y) & C) == 0  into  (X & (C << Y)) == 0.  The later is
     // preferable because it allows the C<<Y expression to be hoisted out
     // of a loop if Y is invariant and X is not.
-    if (Shift && Shift->hasOneUse() && *RHSV == 0 && ICI.isEquality() &&
+    if (Shift && Shift->hasOneUse() && *C == 0 && Cmp.isEquality() &&
         !Shift->isArithmeticShift() && !isa<Constant>(Shift->getOperand(0))) {
       // Compute C << Y.
       Value *NS;
@@ -1531,10 +1532,10 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI,
 
       // Compute X & (C << Y).
       Value *NewAnd =
-          Builder->CreateAnd(Shift->getOperand(0), NS, LHSI->getName());
+          Builder->CreateAnd(Shift->getOperand(0), NS, And->getName());
 
-      ICI.setOperand(0, NewAnd);
-      return &ICI;
+      Cmp.setOperand(0, NewAnd);
+      return &Cmp;
     }
 
     // (icmp pred (and (or (lshr X, Y), X), 1), 0) -->
@@ -1543,14 +1544,14 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI,
     // iff pred isn't signed
     {
       Value *X, *Y, *LShr;
-      if (!ICI.isSigned() && *RHSV == 0) {
-        if (match(LHSI->getOperand(1), m_One())) {
-          Constant *One = cast<Constant>(LHSI->getOperand(1));
-          Value *Or = LHSI->getOperand(0);
+      if (!Cmp.isSigned() && *C == 0) {
+        if (match(And->getOperand(1), m_One())) {
+          Constant *One = cast<Constant>(And->getOperand(1));
+          Value *Or = And->getOperand(0);
           if (match(Or, m_Or(m_Value(LShr), m_Value(X))) &&
               match(LShr, m_LShr(m_Specific(X), m_Value(Y)))) {
             unsigned UsesRemoved = 0;
-            if (LHSI->hasOneUse())
+            if (And->hasOneUse())
               ++UsesRemoved;
             if (Or->hasOneUse())
               ++UsesRemoved;
@@ -1570,9 +1571,9 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI,
                                           One, Or->getName());
             }
             if (NewOr) {
-              Value *NewAnd = Builder->CreateAnd(X, NewOr, LHSI->getName());
-              ICI.setOperand(0, NewAnd);
-              return &ICI;
+              Value *NewAnd = Builder->CreateAnd(X, NewOr, And->getName());
+              Cmp.setOperand(0, NewAnd);
+              return &Cmp;
             }
           }
         }
@@ -1581,23 +1582,23 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI,
 
     // Replace ((X & AndCst) > RHSV) with ((X & AndCst) != 0), if any
     // bit set in (X & AndCst) will produce a result greater than RHSV.
-    if (ICI.getPredicate() == ICmpInst::ICMP_UGT) {
+    if (Cmp.getPredicate() == ICmpInst::ICMP_UGT) {
       unsigned NTZ = AndCst->getValue().countTrailingZeros();
       if ((NTZ < AndCst->getBitWidth()) &&
-          APInt::getOneBitSet(AndCst->getBitWidth(), NTZ).ugt(*RHSV))
-        return new ICmpInst(ICmpInst::ICMP_NE, LHSI,
+          APInt::getOneBitSet(AndCst->getBitWidth(), NTZ).ugt(*C))
+        return new ICmpInst(ICmpInst::ICMP_NE, And,
                             Constant::getNullValue(RHS->getType()));
     }
   }
 
   // Try to optimize things like "A[i]&42 == 0" to index computations.
-  if (LoadInst *LI = dyn_cast<LoadInst>(LHSI->getOperand(0))) {
+  if (LoadInst *LI = dyn_cast<LoadInst>(And->getOperand(0))) {
     if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(LI->getOperand(0)))
       if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0)))
         if (GV->isConstant() && GV->hasDefinitiveInitializer() &&
-            !LI->isVolatile() && isa<ConstantInt>(LHSI->getOperand(1))) {
-          ConstantInt *C = cast<ConstantInt>(LHSI->getOperand(1));
-          if (Instruction *Res = foldCmpLoadFromIndexedGlobal(GEP, GV, ICI, C))
+            !LI->isVolatile() && isa<ConstantInt>(And->getOperand(1))) {
+          ConstantInt *C = cast<ConstantInt>(And->getOperand(1));
+          if (Instruction *Res = foldCmpLoadFromIndexedGlobal(GEP, GV, Cmp, C))
             return Res;
         }
   }
@@ -1605,22 +1606,22 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &ICI,
   // X & -C == -C -> X >  u ~C
   // X & -C != -C -> X <= u ~C
   //   iff C is a power of 2
-  if (ICI.isEquality() && RHS == LHSI->getOperand(1) && (-(*RHSV)).isPowerOf2())
-    return new ICmpInst(ICI.getPredicate() == ICmpInst::ICMP_EQ
+  if (Cmp.isEquality() && RHS == And->getOperand(1) && (-(*C)).isPowerOf2())
+    return new ICmpInst(Cmp.getPredicate() == ICmpInst::ICMP_EQ
                             ? ICmpInst::ICMP_UGT
                             : ICmpInst::ICMP_ULE,
-                        LHSI->getOperand(0), SubOne(RHS));
+                        And->getOperand(0), SubOne(RHS));
 
   // (icmp eq (and %A, C), 0) -> (icmp sgt (trunc %A), -1)
   //   iff C is a power of 2
-  if (ICI.isEquality() && LHSI->hasOneUse() && match(RHS, m_Zero())) {
-    if (auto *CI = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
+  if (Cmp.isEquality() && And->hasOneUse() && match(RHS, m_Zero())) {
+    if (auto *CI = dyn_cast<ConstantInt>(And->getOperand(1))) {
       const APInt &AI = CI->getValue();
       int32_t ExactLogBase2 = AI.exactLogBase2();
       if (ExactLogBase2 != -1 && DL.isLegalInteger(ExactLogBase2 + 1)) {
-        Type *NTy = IntegerType::get(ICI.getContext(), ExactLogBase2 + 1);
-        Value *Trunc = Builder->CreateTrunc(LHSI->getOperand(0), NTy);
-        return new ICmpInst(ICI.getPredicate() == ICmpInst::ICMP_EQ
+        Type *NTy = IntegerType::get(Cmp.getContext(), ExactLogBase2 + 1);
+        Value *Trunc = Builder->CreateTrunc(And->getOperand(0), NTy);
+        return new ICmpInst(Cmp.getPredicate() == ICmpInst::ICMP_EQ
                                 ? ICmpInst::ICMP_SGE
                                 : ICmpInst::ICMP_SLT,
                             Trunc, Constant::getNullValue(NTy));
