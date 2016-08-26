@@ -185,7 +185,9 @@ TEST(Isl, IslValToAPInt) {
   }
 
   {
-    auto *IslLargeNum = isl_val_int_from_ui(IslCtx, (1ull << 60) - 1);
+    auto *IslLargeNum = isl_val_int_from_ui(IslCtx, 60);
+    IslLargeNum = isl_val_2exp(IslLargeNum);
+    IslLargeNum = isl_val_sub_ui(IslLargeNum, 1);
     auto APLargeNum = APIntFromVal(IslLargeNum);
     EXPECT_EQ((1ull << 60) - 1, APLargeNum);
     EXPECT_EQ(61u, APLargeNum.getBitWidth());
