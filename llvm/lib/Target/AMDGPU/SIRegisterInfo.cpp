@@ -108,7 +108,7 @@ SIRegisterInfo::SIRegisterInfo() : AMDGPURegisterInfo(),
   for (unsigned i = 0, e = getNumRegUnits(); i != e; ++i) {
     const int *PSets = getRegUnitPressureSets(i);
     for (unsigned j = 0; PSets[j] != -1; ++j) {
-      PressureSetRegUnits[PSets[j]]++;
+      ++PressureSetRegUnits[PSets[j]];
     }
   }
 
