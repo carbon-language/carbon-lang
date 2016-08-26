@@ -136,6 +136,11 @@ public:
     Properties.reset(static_cast<unsigned>(P));
     return *this;
   }
+  /// Reset all the properties.
+  MachineFunctionProperties &reset() {
+    Properties.reset();
+    return *this;
+  }
   MachineFunctionProperties &set(const MachineFunctionProperties &MFP) {
     Properties |= MFP.Properties;
     return *this;
