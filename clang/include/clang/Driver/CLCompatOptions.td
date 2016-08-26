@@ -128,6 +128,10 @@ def _SLASH_std : CLCompileJoined<"std:">,
   HelpText<"Language standard to compile for">;
 def _SLASH_U : CLJoinedOrSeparate<"U">, HelpText<"Undefine macro">,
   MetaVarName<"<macro>">, Alias<U>;
+def _SLASH_validate_charset : CLFlag<"validate-charset">,
+  Alias<W_Joined>, AliasArgs<["invalid-source-encoding"]>;
+def _SLASH_validate_charset_ : CLFlag<"validate-charset-">,
+  Alias<W_Joined>, AliasArgs<["no-invalid-source-encoding"]>;
 def _SLASH_W0 : CLFlag<"W0">, HelpText<"Disable all warnings">, Alias<w>;
 def _SLASH_W1 : CLFlag<"W1">, HelpText<"Enable -Wall">, Alias<Wall>;
 def _SLASH_W2 : CLFlag<"W2">, HelpText<"Enable -Wall">, Alias<Wall>;
