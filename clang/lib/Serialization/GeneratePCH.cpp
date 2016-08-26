@@ -46,10 +46,13 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
     return;
 
   Module *Module = nullptr;
-  if (PP.getLangOpts().CompilingModule) {
+  if (PP.getLangOpts().isCompilingModule()) {
     Module = PP.getHeaderSearchInfo().lookupModule(
         PP.getLangOpts().CurrentModule, /*AllowSearch*/ false);
-    assert(Module && "emitting module but current module doesn't exist");
+    if (!Module) {
+      assert(hasErrors && "emitting module but current module doesn't exist");
+      return;
+    }
   }
 
   // Emit the PCH file to the Buffer.
