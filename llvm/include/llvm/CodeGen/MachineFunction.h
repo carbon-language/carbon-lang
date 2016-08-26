@@ -238,10 +238,27 @@ class MachineFunction {
 
   MachineFunction(const MachineFunction &) = delete;
   void operator=(const MachineFunction&) = delete;
+
+  /// Clear all the members of this MachineFunction, but the ones used
+  /// to initialize again the MachineFunction.
+  /// More specifically, this deallocates all the dynamically allocated
+  /// objects and get rid of all the XXXInfo data structure, but keep
+  /// unchanged the references to Fn, Target, MMI, and FunctionNumber.
+  void clear();
+  /// Allocate and initialize the different members.
+  /// In particular, the XXXInfo data structure.
+  /// \pre Fn, Target, MMI, and FunctionNumber are properly set.
+  void init();
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM,
                   unsigned FunctionNum, MachineModuleInfo &MMI);
   ~MachineFunction();
+
+  /// Reset the instance as if it was just created.
+  void reset() {
+    clear();
+    init();
+  }
 
   MachineModuleInfo &getMMI() const { return MMI; }
   MCContext &getContext() const { return Ctx; }
