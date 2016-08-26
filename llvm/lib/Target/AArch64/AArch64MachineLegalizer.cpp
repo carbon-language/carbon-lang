@@ -120,6 +120,20 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
   for (auto Ty : { s8, s16, s32, s64 })
     setAction({G_TRUNC, 1, Ty}, Legal);
 
+  // Conversions
+  for (auto Ty : { s1, s8, s16, s32, s64 }) {
+    setAction({G_FPTOSI, 0, Ty}, Legal);
+    setAction({G_FPTOUI, 0, Ty}, Legal);
+    setAction({G_SITOFP, 1, Ty}, Legal);
+    setAction({G_UITOFP, 1, Ty}, Legal);
+  }
+
+  for (auto Ty : { s32, s64 }) {
+    setAction({G_FPTOSI, 1, Ty}, Legal);
+    setAction({G_FPTOUI, 1, Ty}, Legal);
+    setAction({G_SITOFP, 0, Ty}, Legal);
+    setAction({G_UITOFP, 0, Ty}, Legal);
+  }
 
   // Control-flow
   setAction({G_BR, LLT::unsized()}, Legal);
