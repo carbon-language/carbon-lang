@@ -509,7 +509,6 @@ static bool isPossibleSelfRead(Instruction *Inst,
   return true;
 }
 
-
 /// Returns true if the memory which is accessed by the second instruction is not
 /// modified between the first and the second instruction.
 /// Precondition: Second instruction must be dominated by the first
