@@ -153,6 +153,9 @@ else() # if this is included from LLVM's CMake
 
     if(LLVM_INCLUDE_TESTS)
       set(test_targets runtimes-test-depends check-runtimes)
+      foreach(component ${SUB_COMPONENTS})
+        list(APPEND SUB_COMPONENT_CHECK_TARGETS check-${component})
+      endforeach()
     endif()
 
     # Create a runtimes target that uses this file as its top-level CMake file.
@@ -168,6 +171,7 @@ else() # if this is included from LLVM's CMake
                              EXTRA_TARGETS ${extra_targets}
                                             ${test_targets}
                                             ${SUB_COMPONENTS}
+                                            ${SUB_COMPONENT_CHECK_TARGETS}
                                             ${SUB_INSTALL_TARGETS}
                              USE_TOOLCHAIN)
     if(LLVM_INCLUDE_TESTS)
