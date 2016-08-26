@@ -114,6 +114,9 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
     setAction({G_ANYEXT, 1, Ty}, Legal);
   }
 
+  setAction({G_FPEXT, s64}, Legal);
+  setAction({G_FPEXT, 1, s32}, Legal);
+
   // Truncations
   for (auto Ty : { s16, s32 })
     setAction({G_FPTRUNC, Ty}, Legal);
