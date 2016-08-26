@@ -1389,10 +1389,10 @@ Instruction *InstCombiner::foldICmpXorConstant(ICmpInst &Cmp,
   return nullptr;
 }
 
-/// Fold icmp (and X, Y), C.
-Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &Cmp,
-                                               BinaryOperator *And,
-                                               const APInt *C) {
+/// Fold icmp (and X, C2), C.
+Instruction *InstCombiner::foldICmpAndConstConst(ICmpInst &Cmp,
+                                                 BinaryOperator *And,
+                                                 const APInt *C) {
   // FIXME: This check restricts all folds under here to scalar types.
   ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
   if (!RHS)
@@ -1410,8 +1410,7 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &Cmp,
       // have its sign bit set or if it is an equality comparison.
       // Extending a relational comparison when we're checking the sign
       // bit would not work.
-      if (Cmp.isEquality() ||
-          (!AndCst->isNegative() && C->isNonNegative())) {
+      if (Cmp.isEquality() || (!AndCst->isNegative() && C->isNonNegative())) {
         Value *NewAnd =
             Builder->CreateAnd(Cast->getOperand(0),
                                ConstantExpr::getZExt(AndCst, Cast->getSrcTy()));
@@ -1590,6 +1589,20 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &Cmp,
                             Constant::getNullValue(RHS->getType()));
     }
   }
+  return nullptr;
+}
+
+/// Fold icmp (and X, Y), C.
+Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &Cmp,
+                                               BinaryOperator *And,
+                                               const APInt *C) {
+  if (Instruction *I = foldICmpAndConstConst(Cmp, And, C))
+    return I;
+
+  // FIXME: This check restricts all folds under here to scalar types.
+  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
+  if (!RHS)
+    return nullptr;
 
   // Try to optimize things like "A[i]&42 == 0" to index computations.
   if (LoadInst *LI = dyn_cast<LoadInst>(And->getOperand(0))) {
