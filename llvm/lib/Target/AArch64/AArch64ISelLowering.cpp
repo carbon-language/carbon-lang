@@ -4036,6 +4036,22 @@ SDValue AArch64TargetLowering::LowerSELECT_CC(ISD::CondCode CC, SDValue LHS,
       }
     }
 
+    // Avoid materializing a constant when possible by reusing a known value in
+    // a register.  However, don't perform this optimization if the known value
+    // is one, zero or negative one.  We can always materialize these values
+    // using CSINC, CSEL and CSINV with wzr/xzr as the FVal, respectively.
+    ConstantSDNode *RHSVal = dyn_cast<ConstantSDNode>(RHS);
+    if (Opcode == AArch64ISD::CSEL && RHSVal && !RHSVal->isOne() &&
+        !RHSVal->isNullValue() && !RHSVal->isAllOnesValue()) {
+      AArch64CC::CondCode AArch64CC = changeIntCCToAArch64CC(CC);
+      // Transform "a == C ? C : x" to "a == C ? a : x" and "a != C ? x : C" to
+      // "a != C ? x : a" to avoid materializing C.
+      if (CTVal && CTVal == RHSVal && AArch64CC == AArch64CC::EQ)
+        TVal = LHS;
+      else if (CFVal && CFVal == RHSVal && AArch64CC == AArch64CC::NE)
+        FVal = LHS;
+    }
+
     SDValue CCVal;
     SDValue Cmp = getAArch64Cmp(LHS, RHS, CC, CCVal, DAG, dl);
 
