@@ -1389,206 +1389,200 @@ Instruction *InstCombiner::foldICmpXorConstant(ICmpInst &Cmp,
   return nullptr;
 }
 
-/// Fold icmp (and X, C2), C.
+/// Fold icmp (and X, C2), C1.
 Instruction *InstCombiner::foldICmpAndConstConst(ICmpInst &Cmp,
                                                  BinaryOperator *And,
-                                                 const APInt *C) {
+                                                 const APInt *C1) {
   // FIXME: This check restricts all folds under here to scalar types.
   ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
   if (!RHS)
     return nullptr;
 
-  if (And->hasOneUse() && isa<ConstantInt>(And->getOperand(1)) &&
-      And->getOperand(0)->hasOneUse()) {
-    ConstantInt *AndCst = cast<ConstantInt>(And->getOperand(1));
+  auto *C2 = dyn_cast<ConstantInt>(And->getOperand(1));
+  if (!C2)
+    return nullptr;
 
-    // If the LHS is an AND of a truncating cast, we can widen the
-    // and/compare to be the input width without changing the value
-    // produced, eliminating a cast.
-    if (TruncInst *Cast = dyn_cast<TruncInst>(And->getOperand(0))) {
-      // We can do this transformation if either the AND constant does not
-      // have its sign bit set or if it is an equality comparison.
-      // Extending a relational comparison when we're checking the sign
-      // bit would not work.
-      if (Cmp.isEquality() || (!AndCst->isNegative() && C->isNonNegative())) {
-        Value *NewAnd =
-            Builder->CreateAnd(Cast->getOperand(0),
-                               ConstantExpr::getZExt(AndCst, Cast->getSrcTy()));
-        NewAnd->takeName(And);
-        return new ICmpInst(Cmp.getPredicate(), NewAnd,
-                            ConstantExpr::getZExt(RHS, Cast->getSrcTy()));
-      }
+  if (!And->hasOneUse() || !And->getOperand(0)->hasOneUse())
+    return nullptr;
+
+  // If the LHS is an AND of a truncating cast, we can widen the and/compare to
+  // be the input width without changing the value produced, eliminating a cast.
+  if (TruncInst *Cast = dyn_cast<TruncInst>(And->getOperand(0))) {
+    // We can do this transformation if either the AND constant does not have
+    // its sign bit set or if it is an equality comparison. Extending a
+    // relational comparison when we're checking the sign bit would not work.
+    if (Cmp.isEquality() || (!C2->isNegative() && C1->isNonNegative())) {
+      Value *NewAnd = Builder->CreateAnd(
+          Cast->getOperand(0), ConstantExpr::getZExt(C2, Cast->getSrcTy()));
+      NewAnd->takeName(And);
+      return new ICmpInst(Cmp.getPredicate(), NewAnd,
+                          ConstantExpr::getZExt(RHS, Cast->getSrcTy()));
     }
+  }
 
-    // If the LHS is an AND of a zext, and we have an equality compare, we can
-    // shrink the and/compare to the smaller type, eliminating the cast.
-    if (ZExtInst *Cast = dyn_cast<ZExtInst>(And->getOperand(0))) {
-      IntegerType *Ty = cast<IntegerType>(Cast->getSrcTy());
-      // Make sure we don't compare the upper bits, SimplifyDemandedBits
-      // should fold the icmp to true/false in that case.
-      if (Cmp.isEquality() && C->getActiveBits() <= Ty->getBitWidth()) {
-        Value *NewAnd = Builder->CreateAnd(Cast->getOperand(0),
-                                           ConstantExpr::getTrunc(AndCst, Ty));
-        NewAnd->takeName(And);
-        return new ICmpInst(Cmp.getPredicate(), NewAnd,
-                            ConstantExpr::getTrunc(RHS, Ty));
-      }
+  // If the LHS is an AND of a zext, and we have an equality compare, we can
+  // shrink the and/compare to the smaller type, eliminating the cast.
+  if (ZExtInst *Cast = dyn_cast<ZExtInst>(And->getOperand(0))) {
+    IntegerType *Ty = cast<IntegerType>(Cast->getSrcTy());
+    // Make sure we don't compare the upper bits, SimplifyDemandedBits
+    // should fold the icmp to true/false in that case.
+    if (Cmp.isEquality() && C1->getActiveBits() <= Ty->getBitWidth()) {
+      Value *NewAnd = Builder->CreateAnd(Cast->getOperand(0),
+                                         ConstantExpr::getTrunc(C2, Ty));
+      NewAnd->takeName(And);
+      return new ICmpInst(Cmp.getPredicate(), NewAnd,
+                          ConstantExpr::getTrunc(RHS, Ty));
     }
+  }
 
-    // If this is: (X >> C1) & C2 != C3 (where any shift and any compare
-    // could exist), turn it into (X & (C2 << C1)) != (C3 << C1).  This
-    // happens a LOT in code produced by the C front-end, for bitfield
-    // access.
-    BinaryOperator *Shift = dyn_cast<BinaryOperator>(And->getOperand(0));
-    if (Shift && !Shift->isShift())
-      Shift = nullptr;
+  // If this is: (X >> C3) & C2 != C1 (where any shift and any compare could
+  // exist), turn it into (X & (C2 << C3)) != (C1 << C3). This happens a LOT in
+  // code produced by the clang front-end, for bitfield access.
+  BinaryOperator *Shift = dyn_cast<BinaryOperator>(And->getOperand(0));
+  if (Shift && !Shift->isShift())
+    Shift = nullptr;
 
-    ConstantInt *ShAmt;
-    ShAmt = Shift ? dyn_cast<ConstantInt>(Shift->getOperand(1)) : nullptr;
+  ConstantInt *ShAmt;
+  ShAmt = Shift ? dyn_cast<ConstantInt>(Shift->getOperand(1)) : nullptr;
 
-    // This seemingly simple opportunity to fold away a shift turns out to
-    // be rather complicated. See PR17827
-    // ( http://llvm.org/bugs/show_bug.cgi?id=17827 ) for details.
-    if (ShAmt) {
-      bool CanFold = false;
-      unsigned ShiftOpcode = Shift->getOpcode();
-      if (ShiftOpcode == Instruction::AShr) {
-        // There may be some constraints that make this possible,
-        // but nothing simple has been discovered yet.
-        CanFold = false;
-      } else if (ShiftOpcode == Instruction::Shl) {
-        // For a left shift, we can fold if the comparison is not signed.
-        // We can also fold a signed comparison if the mask value and
-        // comparison value are not negative. These constraints may not be
-        // obvious, but we can prove that they are correct using an SMT
-        // solver.
-        if (!Cmp.isSigned() || (!AndCst->isNegative() && !RHS->isNegative()))
+  // This seemingly simple opportunity to fold away a shift turns out to be
+  // rather complicated. See PR17827 for details.
+  if (ShAmt) {
+    bool CanFold = false;
+    unsigned ShiftOpcode = Shift->getOpcode();
+    if (ShiftOpcode == Instruction::AShr) {
+      // There may be some constraints that make this possible, but nothing
+      // simple has been discovered yet.
+      CanFold = false;
+    } else if (ShiftOpcode == Instruction::Shl) {
+      // For a left shift, we can fold if the comparison is not signed. We can
+      // also fold a signed comparison if the mask value and comparison value
+      // are not negative. These constraints may not be obvious, but we can
+      // prove that they are correct using an SMT solver.
+      if (!Cmp.isSigned() || (!C2->isNegative() && !RHS->isNegative()))
+        CanFold = true;
+    } else if (ShiftOpcode == Instruction::LShr) {
+      // For a logical right shift, we can fold if the comparison is not signed.
+      // We can also fold a signed comparison if the shifted mask value and the
+      // shifted comparison value are not negative. These constraints may not be
+      // obvious, but we can prove that they are correct using an SMT solver.
+      if (!Cmp.isSigned())
+        CanFold = true;
+      else {
+        ConstantInt *ShiftedAndCst =
+            cast<ConstantInt>(ConstantExpr::getShl(C2, ShAmt));
+        ConstantInt *ShiftedRHSCst =
+            cast<ConstantInt>(ConstantExpr::getShl(RHS, ShAmt));
+
+        if (!ShiftedAndCst->isNegative() && !ShiftedRHSCst->isNegative())
           CanFold = true;
-      } else if (ShiftOpcode == Instruction::LShr) {
-        // For a logical right shift, we can fold if the comparison is not
-        // signed. We can also fold a signed comparison if the shifted mask
-        // value and the shifted comparison value are not negative.
-        // These constraints may not be obvious, but we can prove that they
-        // are correct using an SMT solver.
-        if (!Cmp.isSigned())
-          CanFold = true;
-        else {
-          ConstantInt *ShiftedAndCst =
-              cast<ConstantInt>(ConstantExpr::getShl(AndCst, ShAmt));
-          ConstantInt *ShiftedRHSCst =
-              cast<ConstantInt>(ConstantExpr::getShl(RHS, ShAmt));
-
-          if (!ShiftedAndCst->isNegative() && !ShiftedRHSCst->isNegative())
-            CanFold = true;
-        }
-      }
-
-      if (CanFold) {
-        Constant *NewCst;
-        if (ShiftOpcode == Instruction::Shl)
-          NewCst = ConstantExpr::getLShr(RHS, ShAmt);
-        else
-          NewCst = ConstantExpr::getShl(RHS, ShAmt);
-
-        // Check to see if we are shifting out any of the bits being
-        // compared.
-        if (ConstantExpr::get(ShiftOpcode, NewCst, ShAmt) != RHS) {
-          // If we shifted bits out, the fold is not going to work out.
-          // As a special case, check to see if this means that the
-          // result is always true or false now.
-          if (Cmp.getPredicate() == ICmpInst::ICMP_EQ)
-            return replaceInstUsesWith(Cmp, Builder->getFalse());
-          if (Cmp.getPredicate() == ICmpInst::ICMP_NE)
-            return replaceInstUsesWith(Cmp, Builder->getTrue());
-        } else {
-          Cmp.setOperand(1, NewCst);
-          Constant *NewAndCst;
-          if (ShiftOpcode == Instruction::Shl)
-            NewAndCst = ConstantExpr::getLShr(AndCst, ShAmt);
-          else
-            NewAndCst = ConstantExpr::getShl(AndCst, ShAmt);
-          And->setOperand(1, NewAndCst);
-          And->setOperand(0, Shift->getOperand(0));
-          Worklist.Add(Shift); // Shift is dead.
-          return &Cmp;
-        }
       }
     }
 
-    // Turn ((X >> Y) & C) == 0  into  (X & (C << Y)) == 0.  The later is
-    // preferable because it allows the C<<Y expression to be hoisted out
-    // of a loop if Y is invariant and X is not.
-    if (Shift && Shift->hasOneUse() && *C == 0 && Cmp.isEquality() &&
-        !Shift->isArithmeticShift() && !isa<Constant>(Shift->getOperand(0))) {
-      // Compute C << Y.
-      Value *NS;
-      if (Shift->getOpcode() == Instruction::LShr) {
-        NS = Builder->CreateShl(AndCst, Shift->getOperand(1));
+    if (CanFold) {
+      Constant *NewCst;
+      if (ShiftOpcode == Instruction::Shl)
+        NewCst = ConstantExpr::getLShr(RHS, ShAmt);
+      else
+        NewCst = ConstantExpr::getShl(RHS, ShAmt);
+
+      // Check to see if we are shifting out any of the bits being compared.
+      if (ConstantExpr::get(ShiftOpcode, NewCst, ShAmt) != RHS) {
+        // If we shifted bits out, the fold is not going to work out. As a
+        // special case, check to see if this means that the result is always
+        // true or false now.
+        if (Cmp.getPredicate() == ICmpInst::ICMP_EQ)
+          return replaceInstUsesWith(Cmp, Builder->getFalse());
+        if (Cmp.getPredicate() == ICmpInst::ICMP_NE)
+          return replaceInstUsesWith(Cmp, Builder->getTrue());
       } else {
-        // Insert a logical shift.
-        NS = Builder->CreateLShr(AndCst, Shift->getOperand(1));
+        Cmp.setOperand(1, NewCst);
+        Constant *NewAndCst;
+        if (ShiftOpcode == Instruction::Shl)
+          NewAndCst = ConstantExpr::getLShr(C2, ShAmt);
+        else
+          NewAndCst = ConstantExpr::getShl(C2, ShAmt);
+        And->setOperand(1, NewAndCst);
+        And->setOperand(0, Shift->getOperand(0));
+        Worklist.Add(Shift); // Shift is dead.
+        return &Cmp;
       }
+    }
+  }
 
-      // Compute X & (C << Y).
-      Value *NewAnd =
-          Builder->CreateAnd(Shift->getOperand(0), NS, And->getName());
-
-      Cmp.setOperand(0, NewAnd);
-      return &Cmp;
+  // Turn ((X >> Y) & C2) == 0  into  (X & (C2 << Y)) == 0.  The latter is
+  // preferable because it allows the C2 << Y expression to be hoisted out of a
+  // loop if Y is invariant and X is not.
+  if (Shift && Shift->hasOneUse() && *C1 == 0 && Cmp.isEquality() &&
+      !Shift->isArithmeticShift() && !isa<Constant>(Shift->getOperand(0))) {
+    // Compute C2 << Y.
+    Value *NS;
+    if (Shift->getOpcode() == Instruction::LShr) {
+      NS = Builder->CreateShl(C2, Shift->getOperand(1));
+    } else {
+      // Insert a logical shift.
+      NS = Builder->CreateLShr(C2, Shift->getOperand(1));
     }
 
-    // (icmp pred (and (or (lshr X, Y), X), 1), 0) -->
-    //    (icmp pred (and X, (or (shl 1, Y), 1), 0))
-    //
-    // iff pred isn't signed
-    {
-      Value *X, *Y, *LShr;
-      if (!Cmp.isSigned() && *C == 0) {
-        if (match(And->getOperand(1), m_One())) {
-          Constant *One = cast<Constant>(And->getOperand(1));
-          Value *Or = And->getOperand(0);
-          if (match(Or, m_Or(m_Value(LShr), m_Value(X))) &&
-              match(LShr, m_LShr(m_Specific(X), m_Value(Y)))) {
-            unsigned UsesRemoved = 0;
-            if (And->hasOneUse())
-              ++UsesRemoved;
-            if (Or->hasOneUse())
-              ++UsesRemoved;
-            if (LShr->hasOneUse())
-              ++UsesRemoved;
-            Value *NewOr = nullptr;
-            // Compute X & ((1 << Y) | 1)
-            if (auto *C = dyn_cast<Constant>(Y)) {
-              if (UsesRemoved >= 1)
-                NewOr =
-                    ConstantExpr::getOr(ConstantExpr::getNUWShl(One, C), One);
-            } else {
-              if (UsesRemoved >= 3)
-                NewOr = Builder->CreateOr(Builder->CreateShl(One, Y,
-                                                             LShr->getName(),
-                                                             /*HasNUW=*/true),
-                                          One, Or->getName());
-            }
-            if (NewOr) {
-              Value *NewAnd = Builder->CreateAnd(X, NewOr, And->getName());
-              Cmp.setOperand(0, NewAnd);
-              return &Cmp;
-            }
+    // Compute X & (C2 << Y).
+    Value *NewAnd =
+        Builder->CreateAnd(Shift->getOperand(0), NS, And->getName());
+
+    Cmp.setOperand(0, NewAnd);
+    return &Cmp;
+  }
+
+  // (icmp pred (and (or (lshr A, B), A), 1), 0) -->
+  //    (icmp pred (and A, (or (shl 1, B), 1), 0))
+  //
+  // iff pred isn't signed
+  {
+    Value *A, *B, *LShr;
+    if (!Cmp.isSigned() && *C1 == 0) {
+      if (match(And->getOperand(1), m_One())) {
+        Constant *One = cast<Constant>(And->getOperand(1));
+        Value *Or = And->getOperand(0);
+        if (match(Or, m_Or(m_Value(LShr), m_Value(A))) &&
+            match(LShr, m_LShr(m_Specific(A), m_Value(B)))) {
+          unsigned UsesRemoved = 0;
+          if (And->hasOneUse())
+            ++UsesRemoved;
+          if (Or->hasOneUse())
+            ++UsesRemoved;
+          if (LShr->hasOneUse())
+            ++UsesRemoved;
+          Value *NewOr = nullptr;
+          // Compute A & ((1 << B) | 1)
+          if (auto *C = dyn_cast<Constant>(B)) {
+            if (UsesRemoved >= 1)
+              NewOr = ConstantExpr::getOr(ConstantExpr::getNUWShl(One, C), One);
+          } else {
+            if (UsesRemoved >= 3)
+              NewOr =
+                  Builder->CreateOr(Builder->CreateShl(One, B, LShr->getName(),
+                                                       /*HasNUW=*/true),
+                                    One, Or->getName());
+          }
+          if (NewOr) {
+            Value *NewAnd = Builder->CreateAnd(A, NewOr, And->getName());
+            Cmp.setOperand(0, NewAnd);
+            return &Cmp;
           }
         }
       }
     }
-
-    // Replace ((X & AndCst) > RHSV) with ((X & AndCst) != 0), if any
-    // bit set in (X & AndCst) will produce a result greater than RHSV.
-    if (Cmp.getPredicate() == ICmpInst::ICMP_UGT) {
-      unsigned NTZ = AndCst->getValue().countTrailingZeros();
-      if ((NTZ < AndCst->getBitWidth()) &&
-          APInt::getOneBitSet(AndCst->getBitWidth(), NTZ).ugt(*C))
-        return new ICmpInst(ICmpInst::ICMP_NE, And,
-                            Constant::getNullValue(RHS->getType()));
-    }
   }
+
+  // Replace ((X & C2) > C1) with ((X & C2) != 0), if any bit set in (X & C2)
+  // will produce a result greater than C1.
+  if (Cmp.getPredicate() == ICmpInst::ICMP_UGT) {
+    unsigned NTZ = C2->getValue().countTrailingZeros();
+    if ((NTZ < C2->getBitWidth()) &&
+        APInt::getOneBitSet(C2->getBitWidth(), NTZ).ugt(*C1))
+      return new ICmpInst(ICmpInst::ICMP_NE, And,
+                          Constant::getNullValue(RHS->getType()));
+  }
+
   return nullptr;
 }
 
