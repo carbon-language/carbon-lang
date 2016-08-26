@@ -234,38 +234,28 @@ MachineLegalizeHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx,
     return Legalized;
   }
   case TargetOpcode::G_ICMP: {
-    if (TypeIdx == 0) {
-      unsigned TstExt = MRI.createGenericVirtualRegister(WideSize);
-      MIRBuilder.buildICmp(
-          {WideTy, MI.getType(1)},
-          static_cast<CmpInst::Predicate>(MI.getOperand(1).getPredicate()),
-          TstExt, MI.getOperand(2).getReg(), MI.getOperand(3).getReg());
-      MIRBuilder.buildTrunc({Ty, WideTy}, MI.getOperand(0).getReg(), TstExt);
-      MI.eraseFromParent();
-      return Legalized;
+    assert(TypeIdx == 1 && "unable to legalize predicate");
+    bool IsSigned = CmpInst::isSigned(
+        static_cast<CmpInst::Predicate>(MI.getOperand(1).getPredicate()));
+    unsigned Op0Ext = MRI.createGenericVirtualRegister(WideSize);
+    unsigned Op1Ext = MRI.createGenericVirtualRegister(WideSize);
+    if (IsSigned) {
+      MIRBuilder.buildSExt({WideTy, MI.getType(1)}, Op0Ext,
+                           MI.getOperand(2).getReg());
+      MIRBuilder.buildSExt({WideTy, MI.getType(1)}, Op1Ext,
+                           MI.getOperand(3).getReg());
     } else {
-      bool IsSigned = CmpInst::isSigned(
-          static_cast<CmpInst::Predicate>(MI.getOperand(1).getPredicate()));
-      unsigned Op0Ext = MRI.createGenericVirtualRegister(WideSize);
-      unsigned Op1Ext = MRI.createGenericVirtualRegister(WideSize);
-      if (IsSigned) {
-        MIRBuilder.buildSExt({WideTy, MI.getType(1)}, Op0Ext,
-                             MI.getOperand(2).getReg());
-        MIRBuilder.buildSExt({WideTy, MI.getType(1)}, Op1Ext,
-                             MI.getOperand(3).getReg());
-      } else {
-        MIRBuilder.buildZExt({WideTy, MI.getType(1)}, Op0Ext,
-                             MI.getOperand(2).getReg());
-        MIRBuilder.buildZExt({WideTy, MI.getType(1)}, Op1Ext,
-                             MI.getOperand(3).getReg());
-      }
-      MIRBuilder.buildICmp(
-          {MI.getType(0), WideTy},
-          static_cast<CmpInst::Predicate>(MI.getOperand(1).getPredicate()),
-          MI.getOperand(0).getReg(), Op0Ext, Op1Ext);
-      MI.eraseFromParent();
-      return Legalized;
+      MIRBuilder.buildZExt({WideTy, MI.getType(1)}, Op0Ext,
+                           MI.getOperand(2).getReg());
+      MIRBuilder.buildZExt({WideTy, MI.getType(1)}, Op1Ext,
+                           MI.getOperand(3).getReg());
     }
+    MIRBuilder.buildICmp(
+        {MI.getType(0), WideTy},
+        static_cast<CmpInst::Predicate>(MI.getOperand(1).getPredicate()),
+        MI.getOperand(0).getReg(), Op0Ext, Op1Ext);
+    MI.eraseFromParent();
+    return Legalized;
   }
   }
 }
