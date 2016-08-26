@@ -86,7 +86,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
       DEPENDS ${RUNTIMES_LIT_DEPENDS}
       ARGS ${RUNTIMES_LIT_EXTRA_ARGS}
       )
-    add_custom_target(test-depends-runtimes DEPENDS ${RUNTIMES_LIT_DEPENDS})
+    add_custom_target(runtimes-test-depends DEPENDS ${RUNTIMES_LIT_DEPENDS})
   endif()
 
   get_property(SUB_COMPONENTS GLOBAL PROPERTY SUB_COMPONENTS)
@@ -151,6 +151,10 @@ else() # if this is included from LLVM's CMake
         check-${runtime_name})
     endforeach()
 
+    if(LLVM_INCLUDE_TESTS)
+      set(test_targets runtimes-test-depends check-runtimes)
+    endif()
+
     # Create a runtimes target that uses this file as its top-level CMake file.
     # The runtimes target is a configuration of all the runtime libraries
     # together in a single CMake invocaiton.
@@ -159,14 +163,15 @@ else() # if this is included from LLVM's CMake
                              DEPENDS ${deps}
                              # Builtins were built separately above
                              CMAKE_ARGS -DCOMPILER_RT_BUILD_BUILTINS=Off
+                                        -DLLVM_INCLUDE_TESTS=${LLVM_INCLUDE_TESTS}
                              PASSTHROUGH_PREFIXES ${prefixes}
                              EXTRA_TARGETS ${extra_targets}
-                                            test-depends-runtimes
-                                            check-runtimes
+                                            ${test_targets}
                                             ${SUB_COMPONENTS}
                                             ${SUB_INSTALL_TARGETS}
                              USE_TOOLCHAIN)
-    set_property(GLOBAL APPEND PROPERTY LLVM_LIT_DEPENDS test-depends-runtimes)
-
+    if(LLVM_INCLUDE_TESTS)
+      set_property(GLOBAL APPEND PROPERTY LLVM_LIT_DEPENDS runtimes-test-depends)
+    endif()
   endif()
 endif()
