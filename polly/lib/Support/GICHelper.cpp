@@ -21,6 +21,8 @@
 #include "isl/union_set.h"
 #include "isl/val.h"
 
+#include <climits>
+
 using namespace llvm;
 
 __isl_give isl_val *polly::isl_valFromAPInt(isl_ctx *Ctx, const APInt Int,
@@ -47,18 +49,29 @@ __isl_give isl_val *polly::isl_valFromAPInt(isl_ctx *Ctx, const APInt Int,
 APInt polly::APIntFromVal(__isl_take isl_val *Val) {
   uint64_t *Data;
   int NumChunks;
+  const static int ChunkSize = sizeof(uint64_t);
 
-  NumChunks = isl_val_n_abs_num_chunks(Val, sizeof(uint64_t));
+  assert(isl_val_is_int(Val) && "Only integers can be converted to APInt");
 
-  Data = (uint64_t *)malloc(NumChunks * sizeof(uint64_t));
-  isl_val_get_abs_num_chunks(Val, sizeof(uint64_t), Data);
-  APInt A(8 * sizeof(uint64_t) * NumChunks, NumChunks, Data);
+  NumChunks = isl_val_n_abs_num_chunks(Val, ChunkSize);
+  Data = (uint64_t *)malloc(NumChunks * ChunkSize);
+  isl_val_get_abs_num_chunks(Val, ChunkSize, Data);
+  int NumBits = CHAR_BIT * ChunkSize * NumChunks;
+  APInt A(NumBits, NumChunks, Data);
 
+  // As isl provides only an interface to obtain data that describes the
+  // absolute value of an isl_val, A at this point always contains a positive
+  // number. In case Val was originally negative, we expand the size of A by
+  // one and negate the value (in two's complement representation). As a result,
+  // the new value in A corresponds now with Val.
   if (isl_val_is_neg(Val)) {
     A = A.zext(A.getBitWidth() + 1);
     A = -A;
   }
 
+  // isl may represent small numbers with more than the minimal number of bits.
+  // We truncate the APInt to the minimal number of bits needed to represent the
+  // signed value it contains, to ensure that the bitwidth is always minimal.
   if (A.getMinSignedBits() < A.getBitWidth())
     A = A.trunc(A.getMinSignedBits());
 

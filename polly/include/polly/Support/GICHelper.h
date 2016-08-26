@@ -39,6 +39,34 @@ class Value;
 namespace polly {
 __isl_give isl_val *isl_valFromAPInt(isl_ctx *Ctx, const llvm::APInt Int,
                                      bool IsSigned);
+
+/// @brief Translate isl_val to llvm::APInt.
+///
+/// This function can only be called on isl_val values which are integers.
+/// Calling this function with a non-integral rational, NaN or infinity value
+/// is not allowed.
+///
+/// As the input isl_val may be negative, the APInt that this function returns
+/// must always be interpreted as signed two's complement value. The bitwidth of
+/// the generated APInt is always the minimal bitwidth necessary to model the
+/// provided integer when interpreting the bitpattern as signed value.
+///
+/// Some example conversions are:
+///
+///   Input      Bits    Signed  Bitwidth
+///       0 ->      0         0         1
+///      -1 ->      1        -1         1
+///       1 ->     01         1         2
+///      -2 ->     10        -2         2
+///       2 ->    010         2         3
+///      -3 ->    101        -3         3
+///       3 ->    011         3         3
+///      -4 ->    100        -4         3
+///       4 ->   0100         4         4
+///
+/// @param Val The isl val to translate.
+///
+/// @return The APInt value corresponding to @p Val.
 llvm::APInt APIntFromVal(__isl_take isl_val *Val);
 
 /// @brief Get c++ string from Isl objects.
