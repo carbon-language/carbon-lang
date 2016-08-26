@@ -37,6 +37,36 @@ class Value;
 } // namespace llvm
 
 namespace polly {
+
+/// @brief Translate an llvm::APInt to an isl_val.
+///
+/// Translate the bitsequence without sign information as provided by APInt into
+/// a signed isl_val type. Depending on the value of @p IsSigned @p Int is
+/// interpreted as unsigned value or as signed value in two's complement
+/// representation.
+///
+/// Input IsSigned                 Output
+///
+///     0        0           ->    0
+///     1        0           ->    1
+///    00        0           ->    0
+///    01        0           ->    1
+///    10        0           ->    2
+///    11        0           ->    3
+///
+///     0        1           ->    0
+///     1        1           ->   -1
+///    00        1           ->    0
+///    01        1           ->    1
+///    10        1           ->   -2
+///    11        1           ->   -1
+///
+/// @param Ctx      The isl_ctx to create the isl_val in.
+/// @param Int      The integer value to translate.
+/// @param IsSigned If the APInt should be interpreted as signed or unsigned
+///                 value.
+///
+/// @return The isl_val corresponding to @p Int.
 __isl_give isl_val *isl_valFromAPInt(isl_ctx *Ctx, const llvm::APInt Int,
                                      bool IsSigned);
 

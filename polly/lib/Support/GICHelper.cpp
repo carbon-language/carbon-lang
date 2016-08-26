@@ -30,8 +30,19 @@ __isl_give isl_val *polly::isl_valFromAPInt(isl_ctx *Ctx, const APInt Int,
   APInt Abs;
   isl_val *v;
 
+  // As isl is interpreting the input always as unsigned value, we need some
+  // additional pre and post processing to import signed values. The approach
+  // we take is to first obtain the absolute value of Int and then negate the
+  // value after it has been imported to isl.
+  //
+  // It should be noted that the smallest integer value represented in two's
+  // complement with a certain amount of bits does not have a corresponding
+  // positive representation in two's complement representation with the same
+  // number of bits. E.g. 110 (-2) does not have a corresponding value for (2).
+  // To ensure that there is always a corresponding value available we first
+  // sign-extend the input by one bit and only then take the absolute value.
   if (IsSigned)
-    Abs = Int.abs();
+    Abs = Int.sext(Int.getBitWidth() + 1).abs();
   else
     Abs = Int;
 
