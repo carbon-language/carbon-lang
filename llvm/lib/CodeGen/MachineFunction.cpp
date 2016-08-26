@@ -57,6 +57,7 @@ void MachineFunctionInitializer::anchor() {}
 static const char *getPropertyName(MachineFunctionProperties::Property Prop) {
   typedef MachineFunctionProperties::Property P;
   switch(Prop) {
+  case P::FailedISel: return "FailedISel";
   case P::IsSSA: return "IsSSA";
   case P::Legalized: return "Legalized";
   case P::NoPHIs: return "NoPHIs";

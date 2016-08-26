@@ -119,6 +119,7 @@ public:
     NoPHIs,
     TracksLiveness,
     NoVRegs,
+    FailedISel,
     Legalized,
     RegBankSelected,
     Selected,
