@@ -1781,6 +1781,7 @@ def V_CNDMASK_B64_PSEUDO : VOP3Common <(outs VReg_64:$vdst),
   (ins VSrc_64:$src0, VSrc_64:$src1, SSrc_64:$src2), "", []> {
   let isPseudo = 1;
   let isCodeGenOnly = 1;
+  let usesCustomInserter = 1;
 }
 
 // 64-bit vector move instruction.  This is mainly used by the SIFoldOperands
