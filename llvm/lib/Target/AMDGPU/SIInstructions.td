@@ -1803,7 +1803,7 @@ let hasSideEffects = 1 in {
 // Dummy terminator instruction to use after control flow instructions
 // replaced with exec mask operations.
 def SI_MASK_BRANCH : PseudoInstSI <
-  (outs), (ins brtarget:$target, SReg_64:$dst)> {
+  (outs), (ins brtarget:$target)> {
   let isBranch = 0;
   let isTerminator = 1;
   let isBarrier = 0;
