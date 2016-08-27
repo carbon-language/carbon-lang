@@ -2325,6 +2325,7 @@ multiclass sse12_cmp_scalar<RegisterClass RC, X86MemOperand x86memop,
                             Operand CC, SDNode OpNode, ValueType VT,
                             PatFrag ld_frag, string asm, string asm_alt,
                             OpndItins itins, ImmLeaf immLeaf> {
+  let isCommutable = 1 in
   def rr : SIi8<0xC2, MRMSrcReg,
                 (outs RC:$dst), (ins RC:$src1, RC:$src2, CC:$cc), asm,
                 [(set RC:$dst, (OpNode (VT RC:$src1), RC:$src2, immLeaf:$cc))],

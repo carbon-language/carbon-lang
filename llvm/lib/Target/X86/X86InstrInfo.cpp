@@ -3389,8 +3389,12 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
     return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
                                                    OpIdx1, OpIdx2);
   }
+  case X86::CMPSDrr:
+  case X86::CMPSSrr:
   case X86::CMPPDrri:
   case X86::CMPPSrri:
+  case X86::VCMPSDrr:
+  case X86::VCMPSSrr:
   case X86::VCMPPDrri:
   case X86::VCMPPSrri:
   case X86::VCMPPDYrri:
@@ -3637,8 +3641,12 @@ bool X86InstrInfo::findCommutedOpIndices(MachineInstr &MI, unsigned &SrcOpIdx1,
     return false;
 
   switch (MI.getOpcode()) {
+  case X86::CMPSDrr:
+  case X86::CMPSSrr:
   case X86::CMPPDrri:
   case X86::CMPPSrri:
+  case X86::VCMPSDrr:
+  case X86::VCMPSSrr:
   case X86::VCMPPDrri:
   case X86::VCMPPSrri:
   case X86::VCMPPDYrri:
