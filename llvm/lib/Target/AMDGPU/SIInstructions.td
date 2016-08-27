@@ -430,7 +430,7 @@ def S_ENDPGM : SOPP <0x00000001, (ins), "s_endpgm",
   let hasSideEffects = 1;
 }
 
-let isBranch = 1 in {
+let isBranch = 1, SchedRW = [WriteBranch] in {
 def S_BRANCH : SOPP <
   0x00000002, (ins sopp_brtarget:$simm16), "s_branch $simm16",
   [(br bb:$simm16)]> {
