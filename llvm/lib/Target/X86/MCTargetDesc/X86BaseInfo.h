@@ -730,12 +730,9 @@ namespace X86II {
   /// isX86_64ExtendedReg - Is the MachineOperand a x86-64 extended (r8 or
   /// higher) register?  e.g. r8, xmm8, xmm13, etc.
   inline bool isX86_64ExtendedReg(unsigned RegNo) {
-    if ((RegNo >= X86::XMM8 && RegNo <= X86::XMM15) ||
-        (RegNo >= X86::XMM24 && RegNo <= X86::XMM31) ||
-        (RegNo >= X86::YMM8 && RegNo <= X86::YMM15) ||
-        (RegNo >= X86::YMM24 && RegNo <= X86::YMM31) ||
-        (RegNo >= X86::ZMM8 && RegNo <= X86::ZMM15) ||
-        (RegNo >= X86::ZMM24 && RegNo <= X86::ZMM31))
+    if ((RegNo >= X86::XMM8 && RegNo <= X86::XMM31) ||
+        (RegNo >= X86::YMM8 && RegNo <= X86::YMM31) ||
+        (RegNo >= X86::ZMM8 && RegNo <= X86::ZMM31))
       return true;
 
     switch (RegNo) {
