@@ -14,9 +14,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/GlobalISel/MachineLegalizePass.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/GlobalISel/MachineLegalizeHelper.h"
 #include "llvm/CodeGen/GlobalISel/MachineLegalizer.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 
@@ -25,12 +26,21 @@
 using namespace llvm;
 
 char MachineLegalizePass::ID = 0;
-INITIALIZE_PASS(MachineLegalizePass, DEBUG_TYPE,
-                "Legalize the Machine IR a function's Machine IR", false,
-                false)
+INITIALIZE_PASS_BEGIN(MachineLegalizePass, DEBUG_TYPE,
+                      "Legalize the Machine IR a function's Machine IR", false,
+                      false)
+INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
+INITIALIZE_PASS_END(MachineLegalizePass, DEBUG_TYPE,
+                    "Legalize the Machine IR a function's Machine IR", false,
+                    false)
 
 MachineLegalizePass::MachineLegalizePass() : MachineFunctionPass(ID) {
   initializeMachineLegalizePassPass(*PassRegistry::getPassRegistry());
+}
+
+void MachineLegalizePass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<TargetPassConfig>();
+  MachineFunctionPass::getAnalysisUsage(AU);
 }
 
 void MachineLegalizePass::init(MachineFunction &MF) {
@@ -43,6 +53,7 @@ bool MachineLegalizePass::runOnMachineFunction(MachineFunction &MF) {
     return false;
   DEBUG(dbgs() << "Legalize Machine IR for: " << MF.getName() << '\n');
   init(MF);
+  const TargetPassConfig &TPC = getAnalysis<TargetPassConfig>();
   const MachineLegalizer &Legalizer = *MF.getSubtarget().getMachineLegalizer();
   MachineLegalizeHelper Helper(MF);
 
@@ -69,6 +80,11 @@ bool MachineLegalizePass::runOnMachineFunction(MachineFunction &MF) {
       // Error out if we couldn't legalize this instruction. We may want to fall
       // back to DAG ISel instead in the future.
       if (Res == MachineLegalizeHelper::UnableToLegalize) {
+        if (!TPC.isGlobalISelAbortEnabled()) {
+          MF.getProperties().set(
+              MachineFunctionProperties::Property::FailedISel);
+          return false;
+        }
         std::string Msg;
         raw_string_ostream OS(Msg);
         OS << "unable to legalize instruction: ";
