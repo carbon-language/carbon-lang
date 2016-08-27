@@ -1017,11 +1017,10 @@ uint8_t X86MCCodeEmitter::DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
     unsigned Reg = MO.getReg();
     if (Reg == X86::AH || Reg == X86::BH || Reg == X86::CH || Reg == X86::DH)
       UsesHighByteReg = true;
-    if (!X86II::isX86_64NonExtLowByteReg(Reg)) continue;
-    // FIXME: The caller of DetermineREXPrefix slaps this prefix onto anything
-    // that returns non-zero.
-    REX |= 0x40; // REX fixed encoding prefix
-    break;
+    if (X86II::isX86_64NonExtLowByteReg(Reg))
+      // FIXME: The caller of DetermineREXPrefix slaps this prefix onto anything
+      // that returns non-zero.
+      REX |= 0x40; // REX fixed encoding prefix
   }
 
   switch (TSFlags & X86II::FormMask) {
