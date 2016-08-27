@@ -5,7 +5,7 @@
 // RUN: %env_asan_opts=allocator_release_to_os=1 %run %t 2>&1 | FileCheck %s --check-prefix=RELEASE
 // RUN: %env_asan_opts=allocator_release_to_os=0 %run %t 2>&1 | FileCheck %s --check-prefix=NO_RELEASE
 //
-// REQUIRES: asan-64-bits
+// REQUIRES: x86_64-target-arch
 #include <stdio.h>
 #include <algorithm>
 #include <stdint.h>
