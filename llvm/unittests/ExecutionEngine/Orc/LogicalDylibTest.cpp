@@ -21,9 +21,9 @@ TEST(LogicalDylibTest, getLogicalModuleResourcesForSymbol) {
 
   std::map<int, std::set<std::string>> ModuleSymbols;
 
-  ModuleSymbols[0] = { "foo", "dummy" };
-  ModuleSymbols[1] = { "bar" };
-  ModuleSymbols[2] = { "baz", "dummy" };
+  ModuleSymbols[0] = std::set<std::string>({ "foo", "dummy" });
+  ModuleSymbols[1] = std::set<std::string>({ "bar" });
+  ModuleSymbols[2] = std::set<std::string>({ "baz", "dummy" });
 
   auto MockBaseLayer = createMockBaseLayer<int>(
       DoNothingAndReturn<int>(0),
