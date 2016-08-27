@@ -37,6 +37,10 @@ void MachineLegalizePass::init(MachineFunction &MF) {
 }
 
 bool MachineLegalizePass::runOnMachineFunction(MachineFunction &MF) {
+  // If the ISel pipeline failed, do not bother running that pass.
+  if (MF.getProperties().hasProperty(
+          MachineFunctionProperties::Property::FailedISel))
+    return false;
   DEBUG(dbgs() << "Legalize Machine IR for: " << MF.getName() << '\n');
   init(MF);
   const MachineLegalizer &Legalizer = *MF.getSubtarget().getMachineLegalizer();

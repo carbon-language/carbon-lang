@@ -43,6 +43,11 @@ static void reportSelectionError(const MachineInstr &MI, const Twine &Message) {
 }
 
 bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
+  // If the ISel pipeline failed, do not bother running that pass.
+  if (MF.getProperties().hasProperty(
+          MachineFunctionProperties::Property::FailedISel))
+    return false;
+
   DEBUG(dbgs() << "Selecting function: " << MF.getName() << '\n');
 
   const InstructionSelector *ISel = MF.getSubtarget().getInstructionSelector();

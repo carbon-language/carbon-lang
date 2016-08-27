@@ -537,6 +537,11 @@ void RegBankSelect::assignInstr(MachineInstr &MI) {
 }
 
 bool RegBankSelect::runOnMachineFunction(MachineFunction &MF) {
+  // If the ISel pipeline failed, do not bother running that pass.
+  if (MF.getProperties().hasProperty(
+          MachineFunctionProperties::Property::FailedISel))
+    return false;
+
   DEBUG(dbgs() << "Assign register banks for: " << MF.getName() << '\n');
   const Function *F = MF.getFunction();
   Mode SaveOptMode = OptMode;
