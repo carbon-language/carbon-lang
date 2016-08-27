@@ -3398,7 +3398,15 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
   case X86::VCMPPDrri:
   case X86::VCMPPSrri:
   case X86::VCMPPDYrri:
-  case X86::VCMPPSYrri: {
+  case X86::VCMPPSYrri:
+  case X86::VCMPSDZrr:
+  case X86::VCMPSSZrr:
+  case X86::VCMPPDZrri:
+  case X86::VCMPPSZrri:
+  case X86::VCMPPDZ128rri:
+  case X86::VCMPPSZ128rri:
+  case X86::VCMPPDZ256rri:
+  case X86::VCMPPSZ256rri: {
     // Float comparison can be safely commuted for
     // Ordered/Unordered/Equal/NotEqual tests
     unsigned Imm = MI.getOperand(3).getImm() & 0x7;
@@ -3650,7 +3658,15 @@ bool X86InstrInfo::findCommutedOpIndices(MachineInstr &MI, unsigned &SrcOpIdx1,
   case X86::VCMPPDrri:
   case X86::VCMPPSrri:
   case X86::VCMPPDYrri:
-  case X86::VCMPPSYrri: {
+  case X86::VCMPPSYrri:
+  case X86::VCMPSDZrr:
+  case X86::VCMPSSZrr:
+  case X86::VCMPPDZrri:
+  case X86::VCMPPSZrri:
+  case X86::VCMPPDZ128rri:
+  case X86::VCMPPSZ128rri:
+  case X86::VCMPPDZ256rri:
+  case X86::VCMPPSZ256rri: {
     // Float comparison can be safely commuted for
     // Ordered/Unordered/Equal/NotEqual tests
     unsigned Imm = MI.getOperand(3).getImm() & 0x7;
