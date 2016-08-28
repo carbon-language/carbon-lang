@@ -7824,6 +7824,36 @@ multiclass avx512_unary_rm_vl_all<bits<8> opc_b, bits<8> opc_w,
 
 defm VPABS : avx512_unary_rm_vl_all<0x1C, 0x1D, 0x1E, 0x1F, "vpabs", X86Abs>;
 
+let Predicates = [HasBWI, HasVLX] in {
+  def : Pat<(xor
+            (bc_v2i64 (v16i1sextv16i8)),
+            (bc_v2i64 (add (v16i8 VR128:$src), (v16i1sextv16i8)))),
+            (VPABSBZ128rr VR128:$src)>;
+  def : Pat<(xor
+            (bc_v2i64 (v8i1sextv8i16)),
+            (bc_v2i64 (add (v8i16 VR128:$src), (v8i1sextv8i16)))),
+            (VPABSWZ128rr VR128:$src)>;
+  def : Pat<(xor
+            (bc_v4i64 (v32i1sextv32i8)),
+            (bc_v4i64 (add (v32i8 VR256:$src), (v32i1sextv32i8)))),
+            (VPABSBZ256rr VR256:$src)>;
+  def : Pat<(xor
+            (bc_v4i64 (v16i1sextv16i16)),
+            (bc_v4i64 (add (v16i16 VR256:$src), (v16i1sextv16i16)))),
+            (VPABSWZ256rr VR256:$src)>;
+}
+let Predicates = [HasAVX512, HasVLX] in {
+  def : Pat<(xor
+            (bc_v2i64 (v4i1sextv4i32)),
+            (bc_v2i64 (add (v4i32 VR128:$src), (v4i1sextv4i32)))),
+            (VPABSDZ128rr VR128:$src)>;
+  def : Pat<(xor
+            (bc_v4i64 (v8i1sextv8i32)),
+            (bc_v4i64 (add (v8i32 VR256:$src), (v8i1sextv8i32)))),
+            (VPABSDZ256rr VR256:$src)>;
+}
+
+let Predicates = [HasAVX512] in {
 def : Pat<(xor
           (bc_v8i64 (v16i1sextv16i32)),
           (bc_v8i64 (add (v16i32 VR512:$src), (v16i1sextv16i32)))),
@@ -7832,6 +7862,7 @@ def : Pat<(xor
           (bc_v8i64 (v8i1sextv8i64)),
           (bc_v8i64 (add (v8i64 VR512:$src), (v8i1sextv8i64)))),
           (VPABSQZrr VR512:$src)>;
+}
 
 multiclass avx512_ctlz<bits<8> opc, string OpcodeStr, Predicate prd>{
 
