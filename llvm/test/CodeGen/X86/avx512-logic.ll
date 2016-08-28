@@ -430,12 +430,17 @@ define <8 x double> @masked_xor_v8f64(<8 x double> %a, <8 x double> %b, <8 x dou
 }
 
 define <8 x i64> @test_mm512_mask_and_epi32(<8 x i64> %__src, i16 zeroext %__k, <8 x i64> %__a, <8 x i64> %__b) {
-; ALL-LABEL: test_mm512_mask_and_epi32:
-; ALL:       ## BB#0: ## %entry
-; ALL-NEXT:    vpandq %zmm2, %zmm1, %zmm1
-; ALL-NEXT:    kmovw %edi, %k1
-; ALL-NEXT:    vpblendmd %zmm1, %zmm0, %zmm0 {%k1}
-; ALL-NEXT:    retq
+; KNL-LABEL: test_mm512_mask_and_epi32:
+; KNL:       ## BB#0: ## %entry
+; KNL-NEXT:    kmovw %edi, %k1
+; KNL-NEXT:    vpandd %zmm2, %zmm1, %zmm0 {%k1}
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_mm512_mask_and_epi32:
+; SKX:       ## BB#0: ## %entry
+; SKX-NEXT:    kmovw %edi, %k1
+; SKX-NEXT:    vandps %zmm2, %zmm1, %zmm0 {%k1}
+; SKX-NEXT:    retq
 entry:
   %and1.i.i = and <8 x i64> %__a, %__b
   %0 = bitcast <8 x i64> %and1.i.i to <16 x i32>
@@ -447,12 +452,17 @@ entry:
 }
 
 define <8 x i64> @test_mm512_mask_or_epi32(<8 x i64> %__src, i16 zeroext %__k, <8 x i64> %__a, <8 x i64> %__b) {
-; ALL-LABEL: test_mm512_mask_or_epi32:
-; ALL:       ## BB#0: ## %entry
-; ALL-NEXT:    vporq %zmm2, %zmm1, %zmm1
-; ALL-NEXT:    kmovw %edi, %k1
-; ALL-NEXT:    vpblendmd %zmm1, %zmm0, %zmm0 {%k1}
-; ALL-NEXT:    retq
+; KNL-LABEL: test_mm512_mask_or_epi32:
+; KNL:       ## BB#0: ## %entry
+; KNL-NEXT:    kmovw %edi, %k1
+; KNL-NEXT:    vpord %zmm2, %zmm1, %zmm0 {%k1}
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_mm512_mask_or_epi32:
+; SKX:       ## BB#0: ## %entry
+; SKX-NEXT:    kmovw %edi, %k1
+; SKX-NEXT:    vorps %zmm2, %zmm1, %zmm0 {%k1}
+; SKX-NEXT:    retq
 entry:
   %or1.i.i = or <8 x i64> %__a, %__b
   %0 = bitcast <8 x i64> %or1.i.i to <16 x i32>
@@ -464,12 +474,17 @@ entry:
 }
 
 define <8 x i64> @test_mm512_mask_xor_epi32(<8 x i64> %__src, i16 zeroext %__k, <8 x i64> %__a, <8 x i64> %__b) {
-; ALL-LABEL: test_mm512_mask_xor_epi32:
-; ALL:       ## BB#0: ## %entry
-; ALL-NEXT:    vpxorq %zmm2, %zmm1, %zmm1
-; ALL-NEXT:    kmovw %edi, %k1
-; ALL-NEXT:    vpblendmd %zmm1, %zmm0, %zmm0 {%k1}
-; ALL-NEXT:    retq
+; KNL-LABEL: test_mm512_mask_xor_epi32:
+; KNL:       ## BB#0: ## %entry
+; KNL-NEXT:    kmovw %edi, %k1
+; KNL-NEXT:    vpxord %zmm2, %zmm1, %zmm0 {%k1}
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_mm512_mask_xor_epi32:
+; SKX:       ## BB#0: ## %entry
+; SKX-NEXT:    kmovw %edi, %k1
+; SKX-NEXT:    vxorps %zmm2, %zmm1, %zmm0 {%k1}
+; SKX-NEXT:    retq
 entry:
   %xor1.i.i = xor <8 x i64> %__a, %__b
   %0 = bitcast <8 x i64> %xor1.i.i to <16 x i32>
