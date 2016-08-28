@@ -55,7 +55,7 @@ endif()
 append_if(libraries LIBCXXABI_HAS_C_LIB c)
 
 if (LIBCXXABI_USE_LLVM_UNWINDER)
-  if (NOT LIBCXXABI_BUILT_STANDALONE)
+  if (NOT LIBCXXABI_STANDALONE_BUILD)
     if (LIBUNWIND_ENABLE_SHARED)
       list(APPEND libraries unwind_shared)
     else()
