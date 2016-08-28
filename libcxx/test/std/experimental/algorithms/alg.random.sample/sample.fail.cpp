@@ -32,5 +32,8 @@ template <class PopulationIterator, class SampleIterator> void test() {
 }
 
 int main() {
+  // expected-error@experimental/algorithm:* {{static_assert failed "SampleIterator must meet the requirements of RandomAccessIterator"}}
+  // expected-error@experimental/algorithm:* 2 {{does not provide a subscript operator}}
+  // expected-error@experimental/algorithm:* {{invalid operands}}
   test<input_iterator<int *>, output_iterator<int *> >();
 }
