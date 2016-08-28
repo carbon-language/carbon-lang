@@ -428,3 +428,54 @@ define <8 x double> @masked_xor_v8f64(<8 x double> %a, <8 x double> %b, <8 x dou
   %add = fadd <8 x double> %c, %cast
   ret <8 x double> %add
 }
+
+define <8 x i64> @test_mm512_mask_and_epi32(<8 x i64> %__src, i16 zeroext %__k, <8 x i64> %__a, <8 x i64> %__b) {
+; ALL-LABEL: test_mm512_mask_and_epi32:
+; ALL:       ## BB#0: ## %entry
+; ALL-NEXT:    vpandq %zmm2, %zmm1, %zmm1
+; ALL-NEXT:    kmovw %edi, %k1
+; ALL-NEXT:    vpblendmd %zmm1, %zmm0, %zmm0 {%k1}
+; ALL-NEXT:    retq
+entry:
+  %and1.i.i = and <8 x i64> %__a, %__b
+  %0 = bitcast <8 x i64> %and1.i.i to <16 x i32>
+  %1 = bitcast <8 x i64> %__src to <16 x i32>
+  %2 = bitcast i16 %__k to <16 x i1>
+  %3 = select <16 x i1> %2, <16 x i32> %0, <16 x i32> %1
+  %4 = bitcast <16 x i32> %3 to <8 x i64>
+  ret <8 x i64> %4
+}
+
+define <8 x i64> @test_mm512_mask_or_epi32(<8 x i64> %__src, i16 zeroext %__k, <8 x i64> %__a, <8 x i64> %__b) {
+; ALL-LABEL: test_mm512_mask_or_epi32:
+; ALL:       ## BB#0: ## %entry
+; ALL-NEXT:    vporq %zmm2, %zmm1, %zmm1
+; ALL-NEXT:    kmovw %edi, %k1
+; ALL-NEXT:    vpblendmd %zmm1, %zmm0, %zmm0 {%k1}
+; ALL-NEXT:    retq
+entry:
+  %or1.i.i = or <8 x i64> %__a, %__b
+  %0 = bitcast <8 x i64> %or1.i.i to <16 x i32>
+  %1 = bitcast <8 x i64> %__src to <16 x i32>
+  %2 = bitcast i16 %__k to <16 x i1>
+  %3 = select <16 x i1> %2, <16 x i32> %0, <16 x i32> %1
+  %4 = bitcast <16 x i32> %3 to <8 x i64>
+  ret <8 x i64> %4
+}
+
+define <8 x i64> @test_mm512_mask_xor_epi32(<8 x i64> %__src, i16 zeroext %__k, <8 x i64> %__a, <8 x i64> %__b) {
+; ALL-LABEL: test_mm512_mask_xor_epi32:
+; ALL:       ## BB#0: ## %entry
+; ALL-NEXT:    vpxorq %zmm2, %zmm1, %zmm1
+; ALL-NEXT:    kmovw %edi, %k1
+; ALL-NEXT:    vpblendmd %zmm1, %zmm0, %zmm0 {%k1}
+; ALL-NEXT:    retq
+entry:
+  %xor1.i.i = xor <8 x i64> %__a, %__b
+  %0 = bitcast <8 x i64> %xor1.i.i to <16 x i32>
+  %1 = bitcast <8 x i64> %__src to <16 x i32>
+  %2 = bitcast i16 %__k to <16 x i1>
+  %3 = select <16 x i1> %2, <16 x i32> %0, <16 x i32> %1
+  %4 = bitcast <16 x i32> %3 to <8 x i64>
+  ret <8 x i64> %4
+}
