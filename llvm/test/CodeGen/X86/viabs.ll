@@ -637,11 +637,7 @@ define <64 x i8> @test14(<64 x i8> %a) nounwind {
 ;
 ; AVX512BW-LABEL: test14:
 ; AVX512BW:       # BB#0:
-; AVX512BW-NEXT:    vpxord %zmm1, %zmm1, %zmm1
-; AVX512BW-NEXT:    vpcmpgtb %zmm0, %zmm1, %k0
-; AVX512BW-NEXT:    vpmovm2b %k0, %zmm1
-; AVX512BW-NEXT:    vpaddb %zmm1, %zmm0, %zmm0
-; AVX512BW-NEXT:    vpxorq %zmm1, %zmm0, %zmm0
+; AVX512BW-NEXT:    vpabsb %zmm0, %zmm0
 ; AVX512BW-NEXT:    retq
   %tmp1neg = sub <64 x i8> zeroinitializer, %a
   %b = icmp slt <64 x i8> %a, zeroinitializer
@@ -712,9 +708,7 @@ define <32 x i16> @test15(<32 x i16> %a) nounwind {
 ;
 ; AVX512BW-LABEL: test15:
 ; AVX512BW:       # BB#0:
-; AVX512BW-NEXT:    vpsraw $15, %zmm0, %zmm1
-; AVX512BW-NEXT:    vpaddw %zmm1, %zmm0, %zmm0
-; AVX512BW-NEXT:    vpxorq %zmm1, %zmm0, %zmm0
+; AVX512BW-NEXT:    vpabsw %zmm0, %zmm0
 ; AVX512BW-NEXT:    retq
   %tmp1neg = sub <32 x i16> zeroinitializer, %a
   %b = icmp sgt <32 x i16> %a, zeroinitializer

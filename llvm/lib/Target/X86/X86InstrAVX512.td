@@ -7235,8 +7235,14 @@ defm VSCATTERPF1QPD: avx512_gather_scatter_prefetch<0xC7, MRM6m, "vscatterpf1qpd
                      VK8WM, vz512mem>, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
 
 // Helper fragments to match sext vXi1 to vXiY.
-def v16i1sextv16i32  : PatLeaf<(v16i32 (X86vsrai VR512:$src, (i8 31)))>;
-def v8i1sextv8i64  : PatLeaf<(v8i64 (X86vsrai VR512:$src, (i8 63)))>;
+def v64i1sextv64i8 : PatLeaf<(v64i8
+                              (X86vsext
+                               (v64i1 (X86pcmpgtm
+                                (bc_v64i8 (v16i32 immAllZerosV)),
+                                VR512:$src))))>;
+def v32i1sextv32i16 : PatLeaf<(v32i16 (X86vsrai VR512:$src, (i8 15)))>;
+def v16i1sextv16i32 : PatLeaf<(v16i32 (X86vsrai VR512:$src, (i8 31)))>;
+def v8i1sextv8i64   : PatLeaf<(v8i64 (X86vsrai VR512:$src, (i8 63)))>;
 
 multiclass cvt_by_vec_width<bits<8> opc, X86VectorVTInfo Vec, string OpcodeStr > {
 def rr : AVX512XS8I<opc, MRMSrcReg, (outs Vec.RC:$dst), (ins Vec.KRC:$src),
@@ -7862,6 +7868,16 @@ def : Pat<(xor
           (bc_v8i64 (v8i1sextv8i64)),
           (bc_v8i64 (add (v8i64 VR512:$src), (v8i1sextv8i64)))),
           (VPABSQZrr VR512:$src)>;
+}
+let Predicates = [HasBWI] in {
+def : Pat<(xor
+          (bc_v8i64 (v64i1sextv64i8)),
+          (bc_v8i64 (add (v64i8 VR512:$src), (v64i1sextv64i8)))),
+          (VPABSBZrr VR512:$src)>;
+def : Pat<(xor
+          (bc_v8i64 (v32i1sextv32i16)),
+          (bc_v8i64 (add (v32i16 VR512:$src), (v32i1sextv32i16)))),
+          (VPABSWZrr VR512:$src)>;
 }
 
 multiclass avx512_ctlz<bits<8> opc, string OpcodeStr, Predicate prd>{
