@@ -17,7 +17,6 @@
 #include <map>
 #include <vector>
 
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/Orc/OrcError.h"
 
@@ -61,6 +60,7 @@ public:
 // partially specialized.
 class RPCBase {
 protected:
+
   // RPC Function description type.
   //
   // This class provides the information and operations needed to support the
@@ -69,10 +69,7 @@ protected:
   // betwen the two. Both specializations have the same interface:
   //
   // Id - The function's unique identifier.
-  // OptionalReturn - The return type for asyncronous calls.
-  // ErrorReturn - The return type for synchronous calls.
-  // optionalToErrorReturn - Conversion from a valid OptionalReturn to an
-  //                         ErrorReturn.
+  // ErrorReturn - The return type for blocking calls.
   // readResult - Deserialize a result from a channel.
   // abandon - Abandon a promised (asynchronous) result.
   // respond - Retun a result on the channel.
@@ -91,32 +88,25 @@ protected:
 
     static const FunctionIdT Id = FuncId;
 
-    typedef Optional<RetT> OptionalReturn;
-
     typedef Expected<RetT> ErrorReturn;
 
-    static ErrorReturn optionalToErrorReturn(OptionalReturn &&V) {
-      assert(V && "Return value not available");
-      return std::move(*V);
-    }
-
     template <typename ChannelT>
-    static Error readResult(ChannelT &C, std::promise<OptionalReturn> &P) {
+    static Error readResult(ChannelT &C, std::promise<ErrorReturn> &P) {
       RetT Val;
       auto Err = deserialize(C, Val);
       auto Err2 = endReceiveMessage(C);
       Err = joinErrors(std::move(Err), std::move(Err2));
-
-      if (Err) {
-        P.set_value(OptionalReturn());
+      if (Err)
         return Err;
-      }
+
       P.set_value(std::move(Val));
       return Error::success();
     }
 
-    static void abandon(std::promise<OptionalReturn> &P) {
-      P.set_value(OptionalReturn());
+    static void abandon(std::promise<ErrorReturn> &P) {
+      P.set_value(
+        make_error<StringError>("RPC function call failed to return",
+                                inconvertibleErrorCode()));
     }
 
     template <typename ChannelT, typename SequenceNumberT>
@@ -148,22 +138,20 @@ protected:
 
     static const FunctionIdT Id = FuncId;
 
-    typedef bool OptionalReturn;
     typedef Error ErrorReturn;
 
-    static ErrorReturn optionalToErrorReturn(OptionalReturn &&V) {
-      assert(V && "Return value not available");
-      return Error::success();
-    }
-
     template <typename ChannelT>
-    static Error readResult(ChannelT &C, std::promise<OptionalReturn> &P) {
+    static Error readResult(ChannelT &C, std::promise<ErrorReturn> &P) {
       // Void functions don't have anything to deserialize, so we're good.
-      P.set_value(true);
+      P.set_value(Error::success());
       return endReceiveMessage(C);
     }
 
-    static void abandon(std::promise<OptionalReturn> &P) { P.set_value(false); }
+    static void abandon(std::promise<ErrorReturn> &P) {
+      P.set_value(
+        make_error<StringError>("RPC function call failed to return",
+                                inconvertibleErrorCode()));
+    }
 
     template <typename ChannelT, typename SequenceNumberT>
     static Error respond(ChannelT &C, SequenceNumberT SeqNo,
@@ -380,17 +368,17 @@ public:
 
   /// Return type for asynchronous call primitives.
   template <typename Func>
-  using AsyncCallResult = std::future<typename Func::OptionalReturn>;
+  using AsyncCallResult = std::future<typename Func::ErrorReturn>;
 
   /// Return type for asynchronous call-with-seq primitives.
   template <typename Func>
   using AsyncCallWithSeqResult =
-      std::pair<std::future<typename Func::OptionalReturn>, SequenceNumberT>;
+      std::pair<AsyncCallResult<Func>, SequenceNumberT>;
 
   /// Serialize Args... to channel C, but do not call C.send().
   ///
   /// Returns an error (on serialization failure) or a pair of:
-  /// (1) A future Optional<T> (or future<bool> for void functions), and
+  /// (1) A future Expected<T> (or future<bool> for void functions), and
   /// (2) A sequence number.
   ///
   /// This utility function is primarily used for single-threaded mode support,
@@ -401,7 +389,7 @@ public:
   Expected<AsyncCallWithSeqResult<Func>>
   appendCallAsyncWithSeq(ChannelT &C, const ArgTs &... Args) {
     auto SeqNo = SequenceNumberMgr.getSequenceNumber();
-    std::promise<typename Func::OptionalReturn> Promise;
+    std::promise<typename Func::ErrorReturn> Promise;
     auto Result = Promise.get_future();
     OutstandingResults[SeqNo] =
         createOutstandingResult<Func>(std::move(Promise));
@@ -431,7 +419,7 @@ public:
 
   /// Serialize Args... to channel C, but do not call send.
   /// Returns an error if serialization fails, otherwise returns a
-  /// std::future<Optional<T>> (or a future<bool> for void functions).
+  /// std::future<Expected<T>> (or a future<bool> for void functions).
   template <typename Func, typename... ArgTs>
   Expected<AsyncCallResult<Func>> appendCallAsync(ChannelT &C,
                                                   const ArgTs &... Args) {
@@ -460,7 +448,7 @@ public:
       auto &ResultAndSeqNo = *ResultAndSeqNoOrErr;
       if (auto Err = waitForResult(C, ResultAndSeqNo.second, HandleOther))
         return std::move(Err);
-      return Func::optionalToErrorReturn(ResultAndSeqNo.first.get());
+      return ResultAndSeqNo.first.get();
     } else
       return ResultAndSeqNoOrErr.takeError();
   }
@@ -656,7 +644,7 @@ private:
   class OutstandingResultImpl : public OutstandingResult {
   private:
   public:
-    OutstandingResultImpl(std::promise<typename Func::OptionalReturn> &&P)
+    OutstandingResultImpl(std::promise<typename Func::ErrorReturn> &&P)
         : P(std::move(P)) {}
 
     Error readResult(ChannelT &C) override { return Func::readResult(C, P); }
@@ -664,13 +652,13 @@ private:
     void abandon() override { Func::abandon(P); }
 
   private:
-    std::promise<typename Func::OptionalReturn> P;
+    std::promise<typename Func::ErrorReturn> P;
   };
 
   // Create an outstanding result for the given function.
   template <typename Func>
   std::unique_ptr<OutstandingResult>
-  createOutstandingResult(std::promise<typename Func::OptionalReturn> &&P) {
+  createOutstandingResult(std::promise<typename Func::ErrorReturn> &&P) {
     return llvm::make_unique<OutstandingResultImpl<Func>>(std::move(P));
   }
 
