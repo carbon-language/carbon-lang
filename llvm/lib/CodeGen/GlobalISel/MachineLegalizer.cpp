@@ -127,6 +127,7 @@ LLT MachineLegalizer::findLegalType(const InstrAspect &Aspect,
     llvm_unreachable("Cannot find legal type");
   case Legal:
   case Lower:
+  case Libcall:
     return Aspect.Type;
   case NarrowScalar: {
     return findLegalType(Aspect,

@@ -131,7 +131,7 @@ bool AArch64CallLowering::lowerFormalArguments(
 }
 
 bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
-                                    MachineOperand &Callee,
+                                    const MachineOperand &Callee,
                                     ArrayRef<MVT> ResTys,
                                     ArrayRef<unsigned> ResRegs,
                                     ArrayRef<MVT> ArgTys,
