@@ -1,4 +1,4 @@
-; First example from Doc/Coroutines.rst (one block loop)
+; Third example from Doc/Coroutines.rst (two suspend points)
 ; RUN: opt < %s -O2 -enable-coroutines -S | FileCheck %s
 
 define i8* @f(i32 %n) {
@@ -9,11 +9,17 @@ entry:
   %hdl = call noalias i8* @llvm.coro.begin(token %id, i8* %alloc)
   br label %loop
 loop:
-  %n.val = phi i32 [ %n, %entry ], [ %inc, %loop ]
-  %inc = add nsw i32 %n.val, 1
-  call void @print(i32 %n.val)
+  %n.val = phi i32 [ %n, %entry ], [ %inc, %loop.resume ]
+  call void @print(i32 %n.val) #4
   %0 = call i8 @llvm.coro.suspend(token none, i1 false)
-  switch i8 %0, label %suspend [i8 0, label %loop
+  switch i8 %0, label %suspend [i8 0, label %loop.resume
+                                i8 1, label %cleanup]
+loop.resume:
+  %inc = add nsw i32 %n.val, 1
+  %sub = xor i32 %n.val, -1
+  call void @print(i32 %sub)
+  %1 = call i8 @llvm.coro.suspend(token none, i1 false)
+  switch i8 %1, label %suspend [i8 0, label %loop
                                 i8 1, label %cleanup]
 cleanup:
   %mem = call i8* @llvm.coro.free(token %id, i8* %hdl)
@@ -24,7 +30,7 @@ suspend:
   ret i8* %hdl
 }
 
-; CHECK-LABEL: @main(
+; CHECK-LABEL: @main
 define i32 @main() {
 entry:
   %hdl = call i8* @f(i32 4)
@@ -32,10 +38,9 @@ entry:
   call void @llvm.coro.resume(i8* %hdl)
   call void @llvm.coro.destroy(i8* %hdl)
   ret i32 0
-; CHECK-NEXT: entry:
 ; CHECK:      call void @print(i32 4)
-; CHECK:      call void @print(i32 5)
-; CHECK:      call void @print(i32 6)
+; CHECK-NEXT: call void @print(i32 -5)
+; CHECK-NEXT: call void @print(i32 5)
 ; CHECK:      ret i32 0
 }
 
@@ -44,6 +49,7 @@ declare void @free(i8*)
 declare void @print(i32)
 
 declare token @llvm.coro.id(i32, i8*, i8*, i8*)
+declare i1 @llvm.coro.alloc(token)
 declare i32 @llvm.coro.size.i32()
 declare i8* @llvm.coro.begin(token, i8*)
 declare i8 @llvm.coro.suspend(token, i1)
