@@ -8513,6 +8513,7 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr &MI,
   // registers without caring whether they're 32 or 64, but here we're
   // doing actual arithmetic on the addresses.
   bool is64bit = Subtarget.isPPC64();
+  bool isLittleEndian = Subtarget.isLittleEndian();
   unsigned ZeroReg = is64bit ? PPC::ZERO8 : PPC::ZERO;
 
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
@@ -8542,7 +8543,8 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr &MI,
                                           : &PPC::GPRCRegClass;
   unsigned PtrReg = RegInfo.createVirtualRegister(RC);
   unsigned Shift1Reg = RegInfo.createVirtualRegister(RC);
-  unsigned ShiftReg = RegInfo.createVirtualRegister(RC);
+  unsigned ShiftReg =
+    isLittleEndian ? Shift1Reg : RegInfo.createVirtualRegister(RC);
   unsigned Incr2Reg = RegInfo.createVirtualRegister(RC);
   unsigned MaskReg = RegInfo.createVirtualRegister(RC);
   unsigned Mask2Reg = RegInfo.createVirtualRegister(RC);
@@ -8587,8 +8589,9 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr &MI,
   }
   BuildMI(BB, dl, TII->get(PPC::RLWINM), Shift1Reg).addReg(Ptr1Reg)
       .addImm(3).addImm(27).addImm(is8bit ? 28 : 27);
-  BuildMI(BB, dl, TII->get(is64bit ? PPC::XORI8 : PPC::XORI), ShiftReg)
-      .addReg(Shift1Reg).addImm(is8bit ? 24 : 16);
+  if (!isLittleEndian)
+    BuildMI(BB, dl, TII->get(is64bit ? PPC::XORI8 : PPC::XORI), ShiftReg)
+        .addReg(Shift1Reg).addImm(is8bit ? 24 : 16);
   if (is64bit)
     BuildMI(BB, dl, TII->get(PPC::RLDICR), PtrReg)
       .addReg(Ptr1Reg).addImm(0).addImm(61);
@@ -9293,6 +9296,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
     // since we're actually doing arithmetic on them.  Other registers
     // can be 32-bit.
     bool is64bit = Subtarget.isPPC64();
+    bool isLittleEndian = Subtarget.isLittleEndian();
     bool is8bit = MI.getOpcode() == PPC::ATOMIC_CMP_SWAP_I8;
 
     unsigned dest = MI.getOperand(0).getReg();
@@ -9319,7 +9323,8 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                                             : &PPC::GPRCRegClass;
     unsigned PtrReg = RegInfo.createVirtualRegister(RC);
     unsigned Shift1Reg = RegInfo.createVirtualRegister(RC);
-    unsigned ShiftReg = RegInfo.createVirtualRegister(RC);
+    unsigned ShiftReg =
+      isLittleEndian ? Shift1Reg : RegInfo.createVirtualRegister(RC);
     unsigned NewVal2Reg = RegInfo.createVirtualRegister(RC);
     unsigned NewVal3Reg = RegInfo.createVirtualRegister(RC);
     unsigned OldVal2Reg = RegInfo.createVirtualRegister(RC);
@@ -9374,8 +9379,9 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
     }
     BuildMI(BB, dl, TII->get(PPC::RLWINM), Shift1Reg).addReg(Ptr1Reg)
         .addImm(3).addImm(27).addImm(is8bit ? 28 : 27);
-    BuildMI(BB, dl, TII->get(is64bit ? PPC::XORI8 : PPC::XORI), ShiftReg)
-        .addReg(Shift1Reg).addImm(is8bit ? 24 : 16);
+    if (!isLittleEndian)
+      BuildMI(BB, dl, TII->get(is64bit ? PPC::XORI8 : PPC::XORI), ShiftReg)
+          .addReg(Shift1Reg).addImm(is8bit ? 24 : 16);
     if (is64bit)
       BuildMI(BB, dl, TII->get(PPC::RLDICR), PtrReg)
         .addReg(Ptr1Reg).addImm(0).addImm(61);
