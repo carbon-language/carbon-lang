@@ -32,7 +32,7 @@ template <class T, size_t N> struct Ptr<T[N]> {
   T *t;
 };
 
-template <class T> void test() {
+template <class T> __attribute__((noinline)) void test() {
   Ptr<T> ptr;
   {
     T x;
