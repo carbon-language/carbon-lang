@@ -58,21 +58,23 @@ MachineLegalizeHelper::legalizeInstrStep(MachineInstr &MI,
 MachineLegalizeHelper::LegalizeResult
 MachineLegalizeHelper::legalizeInstr(MachineInstr &MI,
                                      const MachineLegalizer &Legalizer) {
-  std::queue<MachineInstr *> WorkList;
-  MIRBuilder.recordInsertions([&](MachineInstr *MI) { WorkList.push(MI); });
-  WorkList.push(&MI);
+  SmallVector<MachineInstr *, 4> WorkList;
+  MIRBuilder.recordInsertions(
+      [&](MachineInstr *MI) { WorkList.push_back(MI); });
+  WorkList.push_back(&MI);
 
   bool Changed = false;
   LegalizeResult Res;
+  unsigned Idx = 0;
   do {
-    Res = legalizeInstrStep(*WorkList.front(), Legalizer);
+    Res = legalizeInstrStep(*WorkList[Idx], Legalizer);
     if (Res == UnableToLegalize) {
       MIRBuilder.stopRecordingInsertions();
       return UnableToLegalize;
     }
     Changed |= Res == Legalized;
-    WorkList.pop();
-  } while (!WorkList.empty());
+    ++Idx;
+  } while (Idx < WorkList.size());
 
   MIRBuilder.stopRecordingInsertions();
 
