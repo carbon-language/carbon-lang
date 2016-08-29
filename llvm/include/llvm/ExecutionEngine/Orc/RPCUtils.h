@@ -378,7 +378,7 @@ public:
   /// Serialize Args... to channel C, but do not call C.send().
   ///
   /// Returns an error (on serialization failure) or a pair of:
-  /// (1) A future Expected<T> (or future<bool> for void functions), and
+  /// (1) A future Expected<T> (or future<Error> for void functions), and
   /// (2) A sequence number.
   ///
   /// This utility function is primarily used for single-threaded mode support,
@@ -419,7 +419,7 @@ public:
 
   /// Serialize Args... to channel C, but do not call send.
   /// Returns an error if serialization fails, otherwise returns a
-  /// std::future<Expected<T>> (or a future<bool> for void functions).
+  /// std::future<Expected<T>> (or a future<Error> for void functions).
   template <typename Func, typename... ArgTs>
   Expected<AsyncCallResult<Func>> appendCallAsync(ChannelT &C,
                                                   const ArgTs &... Args) {
