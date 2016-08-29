@@ -355,11 +355,11 @@ void Writer::createMiscChunks() {
 
   // Create Debug Information Chunks
   if (Config->Debug) {
-    DebugDirectory = make_unique<DebugDirectoryChunk>(DebugRecords);
+    DebugDirectory = llvm::make_unique<DebugDirectoryChunk>(DebugRecords);
 
     // TODO(compnerd) create a coffgrp entry if DebugType::CV is not enabled
     if (Config->DebugTypes & static_cast<unsigned>(coff::DebugType::CV))
-      DebugRecords.push_back(make_unique<CVDebugRecordChunk>());
+      DebugRecords.push_back(llvm::make_unique<CVDebugRecordChunk>());
 
     RData->addChunk(DebugDirectory.get());
     for (const std::unique_ptr<Chunk> &C : DebugRecords)
