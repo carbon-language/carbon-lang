@@ -2180,8 +2180,10 @@ void FunctionStackPoisoner::processStaticAllocas() {
   // Minimal header size (left redzone) is 4 pointers,
   // i.e. 32 bytes on 64-bit platforms and 16 bytes in 32-bit platforms.
   size_t MinHeaderSize = ASan.LongSize / 2;
-  ASanStackFrameLayout L;
-  ComputeASanStackFrameLayout(SVD, 1ULL << Mapping.Scale, MinHeaderSize, &L);
+  const ASanStackFrameLayout &L =
+      ComputeASanStackFrameLayout(SVD, 1ULL << Mapping.Scale, MinHeaderSize);
+  const SmallVector<uint8_t, 64> &ShadowBytes =
+      GetShadowBytesAfterScope(SVD, L);
   DEBUG(dbgs() << L.DescriptionString << " --- " << L.FrameSize << "\n");
   uint64_t LocalStackSize = L.FrameSize;
   bool DoStackMalloc = ClUseAfterReturn && !ASan.CompileKernel &&
@@ -2278,12 +2280,12 @@ void FunctionStackPoisoner::processStaticAllocas() {
 
   // Poison the stack redzones at the entry.
   Value *ShadowBase = ASan.memToShadow(LocalStackBase, IRB);
-  poisonStackFrame(L.ShadowBytes, IRB, ShadowBase, true);
+  poisonStackFrame(ShadowBytes, IRB, ShadowBase, true);
 
   auto UnpoisonStack = [&](IRBuilder<> &IRB) {
     // Do this always as poisonAlloca can be disabled with
     // detect_stack_use_after_scope=0.
-    poisonStackFrame(L.ShadowBytes, IRB, ShadowBase, false);
+    poisonStackFrame(ShadowBytes, IRB, ShadowBase, false);
     if (!StaticAllocaPoisonCallVec.empty()) {
       // If we poisoned some allocas in llvm.lifetime analysis,
       // unpoison whole stack frame now.
