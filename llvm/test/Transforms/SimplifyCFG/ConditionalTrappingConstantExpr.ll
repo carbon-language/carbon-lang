@@ -48,16 +48,13 @@ bb7:
   ret i32 927
 }
 
-; FIXME: FP ops don't trap by default, so this is safe to hoist.
+; FP ops don't trap by default, so this is safe to hoist.
 
 define i32 @tarp(i1 %c) {
 ; CHECK-LABEL: @tarp(
-; CHECK-NEXT:    br i1 %c, label %bb8, label %bb9
-; CHECK:       bb8:
+; CHECK-NEXT:  bb9:
 ; CHECK-NEXT:    [[DOT:%.*]] = select i1 fcmp oeq (float fdiv (float 3.000000e+00, float sitofp (i32 ptrtoint (i32* @G to i32) to float)), float 1.000000e+00), i32 42, i32 927
-; CHECK-NEXT:    br label %bb9
-; CHECK:       bb9:
-; CHECK-NEXT:    [[MERGE:%.*]] = phi i32 [ 42, %0 ], [ [[DOT]], %bb8 ]
+; CHECK-NEXT:    [[MERGE:%.*]] = select i1 %c, i32 [[DOT]], i32 42
 ; CHECK-NEXT:    ret i32 [[MERGE]]
 ;
   br i1 %c, label %bb8, label %bb9
