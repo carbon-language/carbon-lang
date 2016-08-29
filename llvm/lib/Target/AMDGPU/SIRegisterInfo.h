@@ -23,7 +23,7 @@ namespace llvm {
 class SISubtarget;
 class MachineRegisterInfo;
 
-struct SIRegisterInfo final : public AMDGPURegisterInfo {
+class SIRegisterInfo final : public AMDGPURegisterInfo {
 private:
   unsigned SGPRSetID;
   unsigned VGPRSetID;
