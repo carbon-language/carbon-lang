@@ -439,7 +439,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o -shared 2>&1 \
 // RUN:     -target arm-linux-androideabi -fsanitize=safe-stack \
 // RUN:     --sysroot=%S/Inputs/basic_android_tree \
-// RUN:   | FileCheck --check-prefix=CHECK-SAFESTACK-ANDROID-ARM %s
+// RUN:   | FileCheck --check-prefix=CHECK-SAFESTACK-SHARED-ANDROID-ARM %s
 //
 // CHECK-SAFESTACK-SHARED-ANDROID-ARM: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-SAFESTACK-SHARED-ANDROID-ARM-NOT: libclang_rt.safestack
