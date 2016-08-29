@@ -167,7 +167,7 @@
 // RUN:            -fmodule-file=%t/nonexistent.pcm \
 // RUN:            %s 2>&1 | FileCheck --check-prefix=CHECK-NO-FILE %s
 //
-// CHECK-NO-FILE: fatal error: module file '{{.*}}nonexistent.pcm' not found
+// CHECK-NO-FILE: fatal error: module file '{{.*}}nonexistent.pcm' not found: module file not found
 
 // RUN: mv %t/a.pcm %t/a-tmp.pcm
 // RUN: not %clang_cc1 -x c++ -std=c++11 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -Rmodule-build -fno-modules-error-recovery \
