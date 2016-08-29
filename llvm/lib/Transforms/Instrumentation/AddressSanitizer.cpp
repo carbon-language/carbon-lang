@@ -182,7 +182,7 @@ static cl::opt<bool> ClUseAfterScope("asan-use-after-scope",
 static cl::opt<bool> ClExperimentalPoisoning(
     "asan-experimental-poisoning",
     cl::desc("Enable experimental red zones and scope poisoning"), cl::Hidden,
-    cl::init(false));
+    cl::init(true));
 // This flag may need to be replaced with -f[no]asan-globals.
 static cl::opt<bool> ClGlobals("asan-globals",
                                cl::desc("Handle global objects"), cl::Hidden,
