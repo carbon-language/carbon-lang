@@ -17,9 +17,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/GlobalISel/MachineLegalizer.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/CodeGen/GlobalISel/MachineLegalizer.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Target/TargetOpcodes.h"
 using namespace llvm;
@@ -39,14 +39,18 @@ MachineLegalizer::MachineLegalizer() : TablesInitialized(false) {
 }
 
 void MachineLegalizer::computeTables() {
-  for (auto &Op : Actions) {
-    LLT Ty = Op.first.Type;
-    if (!Ty.isVector())
-      continue;
+  for (unsigned Opcode = 0; Opcode <= LastOp - FirstOp; ++Opcode) {
+    for (unsigned Idx = 0; Idx != Actions[Opcode].size(); ++Idx) {
+      for (auto &Action : Actions[Opcode][Idx]) {
+        LLT Ty = Action.first;
+        if (!Ty.isVector())
+          continue;
 
-    auto &Entry = MaxLegalVectorElts[std::make_pair(Op.first.Opcode,
-                                                    Ty.getElementType())];
-    Entry = std::max(Entry, Ty.getNumElements());
+        auto &Entry = MaxLegalVectorElts[std::make_pair(Opcode + FirstOp,
+                                                        Ty.getElementType())];
+        Entry = std::max(Entry, Ty.getNumElements());
+      }
+    }
   }
 
   TablesInitialized = true;
@@ -68,9 +72,9 @@ MachineLegalizer::getAction(const InstrAspect &Aspect) const {
       Aspect.Opcode == TargetOpcode::G_EXTRACT)
     return std::make_pair(Legal, Aspect.Type);
 
-  auto ActionIt = Actions.find(Aspect);
-  if (ActionIt != Actions.end())
-    return findLegalAction(Aspect, ActionIt->second);
+  LegalizeAction Action = findInActions(Aspect);
+  if (Action != NotFound)
+    return findLegalAction(Aspect, Action);
 
   unsigned Opcode = Aspect.Opcode;
   LLT Ty = Aspect.Type;
