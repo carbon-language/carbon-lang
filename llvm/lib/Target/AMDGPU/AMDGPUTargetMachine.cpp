@@ -497,6 +497,7 @@ void GCNPassConfig::addMachineSSAOptimization() {
   // XXX - Can we get away without running DeadMachineInstructionElim again?
   addPass(&SIFoldOperandsID);
   addPass(&DeadMachineInstructionElimID);
+  addPass(&SILoadStoreOptimizerID);
 }
 
 void GCNPassConfig::addIRPasses() {
@@ -533,17 +534,6 @@ bool GCNPassConfig::addGlobalInstructionSelect() {
 #endif
 
 void GCNPassConfig::addPreRegAlloc() {
-  if (getOptLevel() > CodeGenOpt::None) {
-    // Don't do this with no optimizations since it throws away debug info by
-    // merging nonadjacent loads.
-
-    // This should be run after scheduling, but before register allocation. It
-    // also need extra copies to the address operand to be eliminated.
-
-    // FIXME: Move pre-RA and remove extra reg coalescer run.
-    insertPass(&MachineSchedulerID, &SILoadStoreOptimizerID);
-    insertPass(&MachineSchedulerID, &RegisterCoalescerID);
-  }
 
   addPass(createSIShrinkInstructionsPass());
   addPass(createSIWholeQuadModePass());

@@ -156,7 +156,8 @@ define void @reorder_global_load_local_store_global_load(i32 addrspace(1)* %out,
 
 ; FUNC-LABEL: @reorder_local_offsets
 ; CI: ds_read2_b32 {{v\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}} offset0:100 offset1:102
-; CI: ds_write_b32 {{v[0-9]+}}, {{v[0-9]+}} offset:400
+; CI: ds_write2_b32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}} offset0:3 offset1:100
+; CI: ds_read_b32 {{v[0-9]+}}, {{v[0-9]+}} offset:12
 ; CI: ds_write_b32 {{v[0-9]+}}, {{v[0-9]+}} offset:408
 ; CI: buffer_store_dword
 ; CI: s_endpgm
