@@ -322,10 +322,19 @@ add_compile_flags_if_supported(-nostdinc++)
 # Warning flags ===============================================================
 add_definitions(-D_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 add_compile_flags_if_supported(
-    -Wall -W -Wwrite-strings
-    -Wno-unused-parameter -Wno-long-long -Wno-user-defined-literals
-    -Wno-covered-switch-default
+    -Wall -Wextra -W -Wwrite-strings
+    -Wno-unused-parameter -Wno-long-long
     -Werror=return-type)
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    add_compile_flags_if_supported(
+        -Wno-user-defined-literals
+        -Wno-covered-switch-default)
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+    add_compile_flags_if_supported(
+        -Wno-attributes # FIXME: Fix -Wattribute warnings.
+        -Wno-literal-suffix
+        -Wno-c++14-compat)
+endif()
 if (LIBCXX_ENABLE_WERROR)
   add_compile_flags_if_supported(-Werror)
   add_compile_flags_if_supported(-WX)
