@@ -103,7 +103,7 @@ TEST_F(DummyRPC, TestAsyncVoidBool) {
 
   // Verify that the function returned ok.
   auto Err = ResOrErr->first.get();
-  EXPECT_TRUE(!!Err) << "Remote void function failed to execute.";
+  EXPECT_FALSE(!!Err) << "Remote void function failed to execute.";
 }
 
 TEST_F(DummyRPC, TestAsyncIntInt) {
@@ -180,7 +180,7 @@ TEST_F(DummyRPC, TestSerialization) {
 
   // Verify that the function returned ok.
   auto Err = ResOrErr->first.get();
-  EXPECT_TRUE(!!Err) << "Remote void function failed to execute.";
+  EXPECT_FALSE(!!Err) << "Remote void function failed to execute.";
 }
 
 // Test the synchronous call API.
