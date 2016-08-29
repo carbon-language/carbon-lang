@@ -40,7 +40,7 @@ check_cxx_compiler_flag(/GR-                  LIBCXXABI_HAS_NO_GR_FLAG)
 check_cxx_compiler_flag(-std=c++11            LIBCXXABI_HAS_STD_CXX11)
 
 if(LIBCXXABI_HAS_STD_CXX11)
-  list(APPEND CMAKE_CXX_FLAGS -std=c++11)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
 # Check libraries
