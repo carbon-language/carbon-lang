@@ -102,10 +102,9 @@ ComputeASanStackFrameLayout(SmallVectorImpl<ASanStackVariableDescription> &Vars,
 SmallVector<uint8_t, 64>
 GetShadowBytes(const SmallVectorImpl<ASanStackVariableDescription> &Vars,
                const ASanStackFrameLayout &Layout) {
+  assert(Vars.size() > 0);
   SmallVector<uint8_t, 64> SB;
   SB.clear();
-  const size_t NumVars = Vars.size();
-  assert(NumVars > 0);
   const size_t Granularity = Layout.Granularity;
   SB.resize(Vars[0].Offset / Granularity, kAsanStackLeftRedzoneMagic);
   for (const auto &Var : Vars) {
