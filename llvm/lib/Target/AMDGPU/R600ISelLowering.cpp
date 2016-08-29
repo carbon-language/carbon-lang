@@ -1116,9 +1116,6 @@ SDValue R600TargetLowering::lowerPrivateTruncStore(StoreSDNode *Store,
 }
 
 SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
-  if (SDValue Result = AMDGPUTargetLowering::MergeVectorStore(Op, DAG))
-    return Result;
-
   StoreSDNode *StoreNode = cast<StoreSDNode>(Op);
   unsigned AS = StoreNode->getAddressSpace();
   SDValue Value = StoreNode->getValue();
