@@ -11,12 +11,6 @@
 
 @x = common global i32 0, align 4
 
-; ToT gold (as of 03/2016) honors --start-lib/--end-lib, drops %t2.o and ends up
+; v1.12 gold honors --start-lib/--end-lib, drops %t2.o and ends up
 ; with (i32 align 4) symbol.
-; Older gold does not drop %t2.o and ends up with (i32 align 8) symbol. This is
-; incorrect behavior, but this test does not verify this in order to support
-; both old and new gold.
-
-; Check that the common symbol is not dropped completely, which was a regression
-; in r262676.
-; CHECK: @x = common global i32 0, align
+; CHECK: @x = common global i32 0, align 4
