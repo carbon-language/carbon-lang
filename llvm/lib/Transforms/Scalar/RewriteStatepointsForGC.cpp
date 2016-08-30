@@ -1805,7 +1805,8 @@ static bool findRematerializableChainToBasePointer(
   // conflict, and hence an additional phi with the same incoming values get
   // generated. We need to identify the BaseValue (.base version of phi) and
   // CurrentValue (the phi node itself) as the same, so that we can
-  // rematerialize the gep and casts below.
+  // rematerialize the gep and casts below. This is a workaround for the
+  // deficieny in the findBasePointer algorithm.
   if (PHINode *CurrentPhi = dyn_cast<PHINode>(CurrentValue))
     if (PHINode *BasePhi = dyn_cast<PHINode>(BaseValue)) {
       auto PhiNum = CurrentPhi->getNumIncomingValues();
