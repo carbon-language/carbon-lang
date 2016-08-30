@@ -243,7 +243,7 @@ TEST_F (StringExtractorTest, GetHexBytes)
     StringExtractor ex(kHexEncodedBytes);
 
     uint8_t dst[kValidHexPairs];
-    ASSERT_EQ(kValidHexPairs, ex.GetHexBytes (dst, kValidHexPairs, 0xde));
+    ASSERT_EQ(kValidHexPairs, ex.GetHexBytes (dst, 0xde));
     EXPECT_EQ(0xab,dst[0]);
     EXPECT_EQ(0xcd,dst[1]);
     EXPECT_EQ(0xef,dst[2]);
@@ -267,7 +267,7 @@ TEST_F (StringExtractorTest, GetHexBytes_Underflow)
     StringExtractor ex(kHexEncodedBytes);
 
     uint8_t dst[12];
-    ASSERT_EQ(kValidHexPairs, ex.GetHexBytes (dst, sizeof(dst), 0xde));
+    ASSERT_EQ(kValidHexPairs, ex.GetHexBytes (dst, 0xde));
     EXPECT_EQ(0xab,dst[0]);
     EXPECT_EQ(0xcd,dst[1]);
     EXPECT_EQ(0xef,dst[2]);
@@ -297,7 +297,7 @@ TEST_F (StringExtractorTest, GetHexBytes_Partial)
 
     uint8_t dst[12];
     memset(dst, 0xab, sizeof(dst));
-    ASSERT_EQ(kReadBytes, ex.GetHexBytes (dst, kReadBytes, 0xde));
+    ASSERT_EQ(kReadBytes, ex.GetHexBytes (llvm::MutableArrayRef<uint8_t>(dst, kReadBytes), 0xde));
     EXPECT_EQ(0xab,dst[0]);
     EXPECT_EQ(0xcd,dst[1]);
     EXPECT_EQ(0xef,dst[2]);
@@ -326,7 +326,7 @@ TEST_F (StringExtractorTest, GetHexBytesAvail)
     StringExtractor ex(kHexEncodedBytes);
 
     uint8_t dst[kValidHexPairs];
-    ASSERT_EQ(kValidHexPairs, ex.GetHexBytesAvail (dst, kValidHexPairs));
+    ASSERT_EQ(kValidHexPairs, ex.GetHexBytesAvail (dst));
     EXPECT_EQ(0xab,dst[0]);
     EXPECT_EQ(0xcd,dst[1]);
     EXPECT_EQ(0xef,dst[2]);
@@ -351,7 +351,7 @@ TEST_F (StringExtractorTest, GetHexBytesAvail_Underflow)
 
     uint8_t dst[12];
     memset(dst, 0xef, sizeof(dst));
-    ASSERT_EQ(kValidHexPairs, ex.GetHexBytesAvail (dst, sizeof(dst)));
+    ASSERT_EQ(kValidHexPairs, ex.GetHexBytesAvail (dst));
     EXPECT_EQ(0xab,dst[0]);
     EXPECT_EQ(0xcd,dst[1]);
     EXPECT_EQ(0xef,dst[2]);
@@ -381,7 +381,7 @@ TEST_F (StringExtractorTest, GetHexBytesAvail_Partial)
 
     uint8_t dst[12];
     memset(dst, 0xab, sizeof(dst));
-    ASSERT_EQ(kReadBytes, ex.GetHexBytesAvail (dst, kReadBytes));
+    ASSERT_EQ(kReadBytes, ex.GetHexBytesAvail (llvm::MutableArrayRef<uint8_t>(dst, kReadBytes)));
     EXPECT_EQ(0xab,dst[0]);
     EXPECT_EQ(0xcd,dst[1]);
     EXPECT_EQ(0xef,dst[2]);

@@ -3480,7 +3480,7 @@ GDBRemoteCommunicationClient::ReadRegister(lldb::tid_t tid, uint32_t reg)
         return nullptr;
 
     DataBufferSP buffer_sp(new DataBufferHeap(response.GetStringRef().size() / 2, 0));
-    response.GetHexBytes(buffer_sp->GetBytes(), buffer_sp->GetByteSize(), '\xcc');
+    response.GetHexBytes(buffer_sp->GetData(), '\xcc');
     return buffer_sp;
 }
 
@@ -3495,7 +3495,7 @@ GDBRemoteCommunicationClient::ReadAllRegisters(lldb::tid_t tid)
         return nullptr;
 
     DataBufferSP buffer_sp(new DataBufferHeap(response.GetStringRef().size() / 2, 0));
-    response.GetHexBytes(buffer_sp->GetBytes(), buffer_sp->GetByteSize(), '\xcc');
+    response.GetHexBytes(buffer_sp->GetData(), '\xcc');
     return buffer_sp;
 }
 

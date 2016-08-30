@@ -17,6 +17,7 @@
 
 // Other libraries and framework includes
 // Project includes
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 
 class StringExtractor
@@ -141,10 +142,10 @@ public:
     GetHexMaxU64 (bool little_endian, uint64_t fail_value);
 
     size_t
-    GetHexBytes (void *dst, size_t dst_len, uint8_t fail_fill_value);
+    GetHexBytes (llvm::MutableArrayRef<uint8_t> dest, uint8_t fail_fill_value);
 
     size_t
-    GetHexBytesAvail (void *dst, size_t dst_len);
+    GetHexBytesAvail (llvm::MutableArrayRef<uint8_t> dest);
 
     uint64_t
     GetHexWithFixedSize (uint32_t byte_size, bool little_endian, uint64_t fail_value);

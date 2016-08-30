@@ -357,21 +357,20 @@ StringExtractor::GetHexMaxU64 (bool little_endian, uint64_t fail_value)
 }
 
 size_t
-StringExtractor::GetHexBytes (void *dst_void, size_t dst_len, uint8_t fail_fill_value)
+StringExtractor::GetHexBytes (llvm::MutableArrayRef<uint8_t> dest, uint8_t fail_fill_value)
 {
-    uint8_t *dst = (uint8_t*)dst_void;
     size_t bytes_extracted = 0;
-    while (bytes_extracted < dst_len && GetBytesLeft ())
+    while (!dest.empty() && GetBytesLeft() > 0)
     {
-        dst[bytes_extracted] = GetHexU8 (fail_fill_value);
-        if (IsGood())
-            ++bytes_extracted;
-        else
+        dest[0] = GetHexU8 (fail_fill_value);
+        if (!IsGood())
             break;
+        ++bytes_extracted;
+        dest = dest.drop_front();
     }
 
-    for (size_t i = bytes_extracted; i < dst_len; ++i)
-        dst[i] = fail_fill_value;
+    if (!dest.empty())
+        ::memset(dest.data(), fail_fill_value, dest.size());
 
     return bytes_extracted;
 }
@@ -383,18 +382,17 @@ StringExtractor::GetHexBytes (void *dst_void, size_t dst_len, uint8_t fail_fill_
 // Returns the number of bytes successfully decoded
 //----------------------------------------------------------------------
 size_t
-StringExtractor::GetHexBytesAvail (void *dst_void, size_t dst_len)
+StringExtractor::GetHexBytesAvail (llvm::MutableArrayRef<uint8_t> dest)
 {
-    uint8_t *dst = (uint8_t*)dst_void;
     size_t bytes_extracted = 0;
-    while (bytes_extracted < dst_len)
+    while (!dest.empty())
     {
         int decode = DecodeHexU8();
         if (decode == -1)
-        {
             break;
-        }
-        dst[bytes_extracted++] = (uint8_t)decode;
+        dest[0] = (uint8_t)decode;
+        dest = dest.drop_front();
+        ++bytes_extracted;
     }
     return bytes_extracted;
 }
