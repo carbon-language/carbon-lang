@@ -3986,8 +3986,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
     if (JA.getType() == types::TY_Nothing)
       CmdArgs.push_back("-fsyntax-only");
-    else if (JA.getType() == types::TY_ModuleFile)
-      CmdArgs.push_back("-emit-module-interface");
     else if (UsePCH)
       CmdArgs.push_back("-emit-pch");
     else
@@ -5398,26 +5396,20 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -fmodules enables the use of precompiled modules (off by default).
   // Users can pass -fno-cxx-modules to turn off modules support for
   // C++/Objective-C++ programs.
-  bool HaveClangModules = false;
+  bool HaveModules = false;
   if (Args.hasFlag(options::OPT_fmodules, options::OPT_fno_modules, false)) {
     bool AllowedInCXX = Args.hasFlag(options::OPT_fcxx_modules,
                                      options::OPT_fno_cxx_modules, true);
     if (AllowedInCXX || !types::isCXX(InputType)) {
       CmdArgs.push_back("-fmodules");
-      HaveClangModules = true;
+      HaveModules = true;
     }
   }
 
-  bool HaveAnyModules = HaveClangModules;
-  if (Args.hasArg(options::OPT_fmodules_ts)) {
-    CmdArgs.push_back("-fmodules-ts");
-    HaveAnyModules = true;
-  }
-
   // -fmodule-maps enables implicit reading of module map files. By default,
-  // this is enabled if we are using Clang's flavor of precompiled modules.
+  // this is enabled if we are using precompiled modules.
   if (Args.hasFlag(options::OPT_fimplicit_module_maps,
-                   options::OPT_fno_implicit_module_maps, HaveClangModules)) {
+                   options::OPT_fno_implicit_module_maps, HaveModules)) {
     CmdArgs.push_back("-fimplicit-module-maps");
   }
 
@@ -5437,10 +5429,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fno-implicit-modules turns off implicitly compiling modules on demand.
   if (!Args.hasFlag(options::OPT_fimplicit_modules,
-                    options::OPT_fno_implicit_modules, HaveClangModules)) {
-    if (HaveAnyModules)
-      CmdArgs.push_back("-fno-implicit-modules");
-  } else if (HaveAnyModules) {
+                    options::OPT_fno_implicit_modules)) {
+    CmdArgs.push_back("-fno-implicit-modules");
+  } else if (HaveModules) {
     // -fmodule-cache-path specifies where our implicitly-built module files
     // should be written.
     SmallString<128> Path;
@@ -5464,7 +5455,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(Path));
   }
 
-  if (HaveAnyModules) {
+  if (HaveModules) {
     // -fprebuilt-module-path specifies where to load the prebuilt module files.
     for (const Arg *A : Args.filtered(options::OPT_fprebuilt_module_path))
       CmdArgs.push_back(Args.MakeArgString(
@@ -5480,14 +5471,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_fmodule_map_file);
 
   // -fmodule-file can be used to specify files containing precompiled modules.
-  if (HaveAnyModules)
+  if (HaveModules)
     Args.AddAllArgs(CmdArgs, options::OPT_fmodule_file);
   else
     Args.ClaimAllArgs(options::OPT_fmodule_file);
 
   // When building modules and generating crashdumps, we need to dump a module
   // dependency VFS alongside the output.
-  if (HaveClangModules && C.isForDiagnostics()) {
+  if (HaveModules && C.isForDiagnostics()) {
     SmallString<128> VFSDir(Output.getFilename());
     llvm::sys::path::replace_extension(VFSDir, ".cache");
     // Add the cache directory as a temp so the crash diagnostics pick it up.
@@ -5498,7 +5489,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(VFSDir));
   }
 
-  if (HaveClangModules)
+  if (HaveModules)
     Args.AddLastArg(CmdArgs, options::OPT_fmodules_user_build_path);
 
   // Pass through all -fmodules-ignore-macro arguments.
@@ -6039,7 +6030,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // nice to enable this when doing a crashdump for modules as well.
   if (Args.hasFlag(options::OPT_frewrite_includes,
                    options::OPT_fno_rewrite_includes, false) ||
-      (C.isForDiagnostics() && !HaveAnyModules))
+      (C.isForDiagnostics() && !HaveModules))
     CmdArgs.push_back("-frewrite-includes");
 
   // Only allow -traditional or -traditional-cpp outside in preprocessing modes.
