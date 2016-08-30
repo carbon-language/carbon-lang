@@ -43,6 +43,13 @@ public:
     const StringExtractor&
     operator=(const StringExtractor& rhs);
 
+    void
+    Reset(llvm::StringRef str)
+    {
+        m_packet = str;
+        m_index = 0;
+    }
+
     // Returns true if the file position is still valid for the data
     // contained in this string extractor object.
     bool

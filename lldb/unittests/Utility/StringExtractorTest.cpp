@@ -260,6 +260,64 @@ TEST_F (StringExtractorTest, GetHexBytes)
     ASSERT_EQ('x', *ex.Peek());
 }
 
+TEST_F(StringExtractorTest, GetHexBytes_FullString)
+{
+    const char kHexEncodedBytes[] = "abcdef0123456789";
+    const size_t kValidHexPairs = 8;
+    StringExtractor ex(kHexEncodedBytes);
+
+    uint8_t dst[kValidHexPairs];
+    ASSERT_EQ(kValidHexPairs, ex.GetHexBytes(dst, 0xde));
+    EXPECT_EQ(0xab, dst[0]);
+    EXPECT_EQ(0xcd, dst[1]);
+    EXPECT_EQ(0xef, dst[2]);
+    EXPECT_EQ(0x01, dst[3]);
+    EXPECT_EQ(0x23, dst[4]);
+    EXPECT_EQ(0x45, dst[5]);
+    EXPECT_EQ(0x67, dst[6]);
+    EXPECT_EQ(0x89, dst[7]);
+}
+
+TEST_F(StringExtractorTest, GetHexBytes_OddPair)
+{
+    const char kHexEncodedBytes[] = "abcdef012345678w";
+    const size_t kValidHexPairs = 7;
+    StringExtractor ex(kHexEncodedBytes);
+
+    uint8_t dst[8];
+    ASSERT_EQ(kValidHexPairs, ex.GetHexBytes(dst, 0xde));
+    EXPECT_EQ(0xab, dst[0]);
+    EXPECT_EQ(0xcd, dst[1]);
+    EXPECT_EQ(0xef, dst[2]);
+    EXPECT_EQ(0x01, dst[3]);
+    EXPECT_EQ(0x23, dst[4]);
+    EXPECT_EQ(0x45, dst[5]);
+    EXPECT_EQ(0x67, dst[6]);
+
+    // This one should be invalid
+    EXPECT_EQ(0xde, dst[7]);
+}
+
+
+TEST_F(StringExtractorTest, GetHexBytes_OddPair2)
+{
+    const char kHexEncodedBytes[] = "abcdef012345678";
+    const size_t kValidHexPairs = 7;
+    StringExtractor ex(kHexEncodedBytes);
+
+    uint8_t dst[8];
+    ASSERT_EQ(kValidHexPairs, ex.GetHexBytes(dst, 0xde));
+    EXPECT_EQ(0xab, dst[0]);
+    EXPECT_EQ(0xcd, dst[1]);
+    EXPECT_EQ(0xef, dst[2]);
+    EXPECT_EQ(0x01, dst[3]);
+    EXPECT_EQ(0x23, dst[4]);
+    EXPECT_EQ(0x45, dst[5]);
+    EXPECT_EQ(0x67, dst[6]);
+
+    EXPECT_EQ(0xde, dst[7]);
+}
+
 TEST_F (StringExtractorTest, GetHexBytes_Underflow)
 {
     const char kHexEncodedBytes[] = "abcdef0123456789xyzw";
@@ -341,6 +399,59 @@ TEST_F (StringExtractorTest, GetHexBytesAvail)
     ASSERT_EQ(false, ex.Empty());
     ASSERT_EQ(4u, ex.GetBytesLeft());
     ASSERT_EQ('x', *ex.Peek());
+}
+
+TEST_F(StringExtractorTest, GetHexBytesAvail_FullString)
+{
+    const char kHexEncodedBytes[] = "abcdef0123456789";
+    const size_t kValidHexPairs = 8;
+    StringExtractor ex(kHexEncodedBytes);
+
+    uint8_t dst[kValidHexPairs];
+    ASSERT_EQ(kValidHexPairs, ex.GetHexBytesAvail(dst));
+    EXPECT_EQ(0xab, dst[0]);
+    EXPECT_EQ(0xcd, dst[1]);
+    EXPECT_EQ(0xef, dst[2]);
+    EXPECT_EQ(0x01, dst[3]);
+    EXPECT_EQ(0x23, dst[4]);
+    EXPECT_EQ(0x45, dst[5]);
+    EXPECT_EQ(0x67, dst[6]);
+    EXPECT_EQ(0x89, dst[7]);
+}
+
+TEST_F(StringExtractorTest, GetHexBytesAvail_OddPair)
+{
+    const char kHexEncodedBytes[] = "abcdef012345678w";
+    const size_t kValidHexPairs = 7;
+    StringExtractor ex(kHexEncodedBytes);
+
+    uint8_t dst[8];
+    ASSERT_EQ(kValidHexPairs, ex.GetHexBytesAvail(dst));
+    EXPECT_EQ(0xab, dst[0]);
+    EXPECT_EQ(0xcd, dst[1]);
+    EXPECT_EQ(0xef, dst[2]);
+    EXPECT_EQ(0x01, dst[3]);
+    EXPECT_EQ(0x23, dst[4]);
+    EXPECT_EQ(0x45, dst[5]);
+    EXPECT_EQ(0x67, dst[6]);
+}
+
+
+TEST_F(StringExtractorTest, GetHexBytesAvail_OddPair2)
+{
+    const char kHexEncodedBytes[] = "abcdef012345678";
+    const size_t kValidHexPairs = 7;
+    StringExtractor ex(kHexEncodedBytes);
+
+    uint8_t dst[8];
+    ASSERT_EQ(kValidHexPairs, ex.GetHexBytesAvail(dst));
+    EXPECT_EQ(0xab, dst[0]);
+    EXPECT_EQ(0xcd, dst[1]);
+    EXPECT_EQ(0xef, dst[2]);
+    EXPECT_EQ(0x01, dst[3]);
+    EXPECT_EQ(0x23, dst[4]);
+    EXPECT_EQ(0x45, dst[5]);
+    EXPECT_EQ(0x67, dst[6]);
 }
 
 TEST_F (StringExtractorTest, GetHexBytesAvail_Underflow)
@@ -456,4 +567,58 @@ TEST_F(StringExtractorTest, GetNameColonValueNoColon)
     llvm::StringRef value;
     EXPECT_FALSE(ex.GetNameColonValue(name, value));
     EXPECT_EQ(0, ex.GetBytesLeft());
+}
+
+TEST_F(StringExtractorTest, GetU32LittleEndian)
+{
+    StringExtractor ex("ABCD");
+    EXPECT_EQ(0xCDAB, ex.GetHexMaxU32(true, 0));
+
+    ex.Reset("89ABCDEF");
+    EXPECT_EQ(0xEFCDAB89, ex.GetHexMaxU32(true, 0));
+
+    ex.Reset("123456789ABCDEF");
+    EXPECT_EQ(0, ex.GetHexMaxU32(true, 0));
+}
+
+TEST_F(StringExtractorTest, GetU32BigEndian)
+{
+    StringExtractor ex("ABCD");
+    EXPECT_EQ(0xABCD, ex.GetHexMaxU32(false, 0));
+
+    ex.Reset("89ABCDEF");
+    EXPECT_EQ(0x89ABCDEF, ex.GetHexMaxU32(false, 0));
+
+    ex.Reset("123456789ABCDEF");
+    EXPECT_EQ(0, ex.GetHexMaxU32(false, 0));
+}
+
+TEST_F(StringExtractorTest, GetU64LittleEndian)
+{
+    StringExtractor ex("ABCD");
+    EXPECT_EQ(0xCDAB, ex.GetHexMaxU64(true, 0));
+
+    ex.Reset("89ABCDEF");
+    EXPECT_EQ(0xEFCDAB89, ex.GetHexMaxU64(true, 0));
+
+    ex.Reset("123456789ABCDEF0");
+    EXPECT_EQ(0xF0DEBC9A78563412ULL, ex.GetHexMaxU64(true, 0));
+
+    ex.Reset("123456789ABCDEF000");
+    EXPECT_EQ(0, ex.GetHexMaxU64(true, 0));
+}
+
+TEST_F(StringExtractorTest, GetU64BigEndian)
+{
+    StringExtractor ex("ABCD");
+    EXPECT_EQ(0xABCDULL, ex.GetHexMaxU64(false, 0));
+
+    ex.Reset("89ABCDEF");
+    EXPECT_EQ(0x89ABCDEFULL, ex.GetHexMaxU64(false, 0));
+
+    ex.Reset("123456789ABCDEF0");
+    EXPECT_EQ(0x123456789ABCDEF0ULL, ex.GetHexMaxU64(false, 0));
+
+    ex.Reset("123456789ABCDEF000");
+    EXPECT_EQ(0, ex.GetHexMaxU64(false, 0));
 }
