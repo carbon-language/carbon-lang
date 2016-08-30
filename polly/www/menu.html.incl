@@ -45,6 +45,12 @@ Optimizations</span></h2>
     </a>
     <a href="http://repo.or.cz/w/polly-mirror.git">Browse (GitWeb)</a>
   </div>
+
+  <div class="submenu">
+    <label>External Resources</label>
+    <a href="https://www.pollylabs.org">Polly Labs</a>
+    <a href="https://www.polyhedral.info">polyhedral.info</a>
+  </div>
 </div>
 
 <script>
