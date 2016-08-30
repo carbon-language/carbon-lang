@@ -848,6 +848,7 @@ Args::StringToBoolean (const char *s, bool fail_value, bool *success_ptr)
 bool
 Args::StringToBoolean(llvm::StringRef ref, bool fail_value, bool *success_ptr)
 {
+    ref = ref.trim();
     if (ref.equals_lower("false") ||
         ref.equals_lower("off") ||
         ref.equals_lower("no") ||
@@ -1125,14 +1126,14 @@ Args::StringToGenericRegister(llvm::StringRef s)
                           .Case("fp", LLDB_REGNUM_GENERIC_FP)
                           .Cases("ra", "lr", LLDB_REGNUM_GENERIC_RA)
                           .Case("flags", LLDB_REGNUM_GENERIC_FLAGS)
-                          .Case("arg1\0", LLDB_REGNUM_GENERIC_ARG1)
-                          .Case("arg2\0", LLDB_REGNUM_GENERIC_ARG2)
-                          .Case("arg3\0", LLDB_REGNUM_GENERIC_ARG3)
-                          .Case("arg4\0", LLDB_REGNUM_GENERIC_ARG4)
-                          .Case("arg5\0", LLDB_REGNUM_GENERIC_ARG5)
-                          .Case("arg6\0", LLDB_REGNUM_GENERIC_ARG6)
-                          .Case("arg7\0", LLDB_REGNUM_GENERIC_ARG7)
-                          .Case("arg8\0", LLDB_REGNUM_GENERIC_ARG8)
+                          .Case("arg1", LLDB_REGNUM_GENERIC_ARG1)
+                          .Case("arg2", LLDB_REGNUM_GENERIC_ARG2)
+                          .Case("arg3", LLDB_REGNUM_GENERIC_ARG3)
+                          .Case("arg4", LLDB_REGNUM_GENERIC_ARG4)
+                          .Case("arg5", LLDB_REGNUM_GENERIC_ARG5)
+                          .Case("arg6", LLDB_REGNUM_GENERIC_ARG6)
+                          .Case("arg7", LLDB_REGNUM_GENERIC_ARG7)
+                          .Case("arg8", LLDB_REGNUM_GENERIC_ARG8)
                           .Default(LLDB_INVALID_REGNUM);
     return result;
 }

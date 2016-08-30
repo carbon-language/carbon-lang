@@ -1814,7 +1814,10 @@ GDBRemoteCommunicationClient::GetWatchpointSupportInfo (uint32_t &num)
             while (response.GetNameColonValue(name, value))
             {
                 if (name.equals("num"))
+                {
                     value.getAsInteger(0, m_num_supported_hardware_watchpoints);
+                    num = m_num_supported_hardware_watchpoints;
+                }
             }
         }
         else
