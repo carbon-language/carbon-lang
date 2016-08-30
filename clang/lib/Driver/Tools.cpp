@@ -2484,32 +2484,16 @@ static void getAArch64TargetFeatures(const Driver &D, const ArgList &Args,
 
 static void getHexagonTargetFeatures(const ArgList &Args,
                                      std::vector<const char *> &Features) {
-  bool HasHVX = false, HasHVXD = false, UseLongCalls = false;
+  handleTargetFeaturesGroup(Args, Features,
+                            options::OPT_m_hexagon_Features_Group);
 
-  // FIXME: This should be able to use handleTargetFeaturesGroup except it is
-  // doing dependent option handling here rather than in initFeatureMap or a
-  // similar handler.
-  for (auto &A : Args) {
-    auto &Opt = A->getOption();
-    if (Opt.matches(options::OPT_mhexagon_hvx))
-      HasHVX = true;
-    else if (Opt.matches(options::OPT_mno_hexagon_hvx))
-      HasHVXD = HasHVX = false;
-    else if (Opt.matches(options::OPT_mhexagon_hvx_double))
-      HasHVXD = HasHVX = true;
-    else if (Opt.matches(options::OPT_mno_hexagon_hvx_double))
-      HasHVXD = false;
-    else if (Opt.matches(options::OPT_mlong_calls))
+  bool UseLongCalls = false;
+  if (Arg *A = Args.getLastArg(options::OPT_mlong_calls,
+                               options::OPT_mno_long_calls)) {
+    if (A->getOption().matches(options::OPT_mlong_calls))
       UseLongCalls = true;
-    else if (Opt.matches(options::OPT_mno_long_calls))
-      UseLongCalls = false;
-    else
-      continue;
-    A->claim();
   }
 
-  Features.push_back(HasHVX  ? "+hvx" : "-hvx");
-  Features.push_back(HasHVXD ? "+hvx-double" : "-hvx-double");
   Features.push_back(UseLongCalls ? "+long-calls" : "-long-calls");
 }
 
