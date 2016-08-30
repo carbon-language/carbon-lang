@@ -533,6 +533,16 @@ template <class ELFT> bool LinkerScript<ELFT>::hasPhdrsCommands() {
 }
 
 template <class ELFT>
+typename ELFT::uint
+LinkerScript<ELFT>::getOutputSectionAddress(StringRef Name) {
+  for (OutputSectionBase<ELFT> *Sec : *OutputSections)
+    if (Sec->getName() == Name)
+      return Sec->getVA();
+  error("undefined section " + Name);
+  return 0;
+}
+
+template <class ELFT>
 typename ELFT::uint LinkerScript<ELFT>::getOutputSectionSize(StringRef Name) {
   for (OutputSectionBase<ELFT> *Sec : *OutputSections)
     if (Sec->getName() == Name)
@@ -1044,6 +1054,21 @@ static uint64_t getSectionSize(StringRef Name) {
   }
 }
 
+static uint64_t getSectionAddress(StringRef Name) {
+  switch (Config->EKind) {
+  case ELF32LEKind:
+    return Script<ELF32LE>::X->getOutputSectionAddress(Name);
+  case ELF32BEKind:
+    return Script<ELF32BE>::X->getOutputSectionAddress(Name);
+  case ELF64LEKind:
+    return Script<ELF64LE>::X->getOutputSectionAddress(Name);
+  case ELF64BEKind:
+    return Script<ELF64BE>::X->getOutputSectionAddress(Name);
+  default:
+    llvm_unreachable("unsupported target");
+  }
+}
+
 static uint64_t getHeaderSize() {
   switch (Config->EKind) {
   case ELF32LEKind:
@@ -1154,6 +1179,12 @@ Expr ScriptParser::readPrimary() {
 
   // Built-in functions are parsed here.
   // https://sourceware.org/binutils/docs/ld/Builtin-Functions.html.
+  if (Tok == "ADDR") {
+    expect("(");
+    StringRef Name = next();
+    expect(")");
+    return [=](uint64_t Dot) { return getSectionAddress(Name); };
+  }
   if (Tok == "ASSERT")
     return readAssert();
   if (Tok == "ALIGN") {
