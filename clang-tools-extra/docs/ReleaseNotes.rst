@@ -72,8 +72,8 @@ Improvements to clang-tidy
 - New `misc-move-forwarding-reference
   <http://clang.llvm.org/extra/clang-tidy/checks/misc-move-forwarding-reference.html>`_ check
 
-  Warns when `std::move` is applied to a forwarding reference instead of
-  `std::forward`.
+  Warns when ``std::move`` is applied to a forwarding reference instead of
+  ``std::forward``.
 
 - New `mpi-buffer-deref
   <http://clang.llvm.org/extra/clang-tidy/checks/mpi-buffer-deref.html>`_ check
