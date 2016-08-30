@@ -1,3 +1,6 @@
+// RUN: rm -rf %t
+// RUN: mkdir %t
+//
 // Note: %s and %S must be preceded by --, otherwise it may be interpreted as a
 // command-line option, e.g. on Mac where %s is commonly under /Users.
 
@@ -5,41 +8,41 @@
 // a few things for .c inputs.
 
 // /Yc with a .c file should build a c pch file.
-// RUN: %clang_cl -Werror /Ycpchfile.h /FIpchfile.h /c -### -- %s 2>&1 \
+// RUN: %clang_cl -Werror /Yc%S/Inputs/pchfile.h /FI%S/Inputs/pchfile.h /c /Fo%t/pchfile.obj /Fp%t/pchfile.pch -v -- %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-YC %s
 // CHECK-YC: cc1
-// CHECK-YC: -emit-pch
-// CHECK-YC: -o
-// CHECK-YC: pchfile.pch
-// CHECK-YC: -x
-// CHECK-YC: "c"
+// CHECK-YC-SAME: -emit-pch
+// CHECK-YC-SAME: -o
+// CHECK-YC-SAME: pchfile.pch
+// CHECK-YC-SAME: -x
+// CHECK-YC-SAME: c-header
 
 // But not if /TP changes the input language to C++.
-// RUN: %clang_cl /TP -Werror /Ycpchfile.h /FIpchfile.h /c -### -- %s 2>&1 \
+// RUN: %clang_cl /TP -Werror /Yc%S/Inputs/pchfile.h /FI%S/Inputs/pchfile.h /c /Fo%t/pchfile.obj /Fp%t/pchfile.pch -v -- %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-YCTP %s
 // CHECK-YCTP: cc1
-// CHECK-YCTP: -emit-pch
-// CHECK-YCTP: -o
-// CHECK-YCTP: pchfile.pch
-// CHECK-YCTP: -x
-// CHECK-YCTP: "c++"
+// CHECK-YCTP-SAME: -emit-pch
+// CHECK-YCTP-SAME: -o
+// CHECK-YCTP-SAME: pchfile.pch
+// CHECK-YCTP-SAME: -x
+// CHECK-YCTP-SAME: c++-header
 
 // Except if a later /TC changes it back.
-// RUN: %clang_cl -Werror /Ycpchfile.h /FIpchfile.h /c -### -- %s 2>&1 \
+// RUN: %clang_cl -Werror /Yc%S/Inputs/pchfile.h /FI%S/Inputs/pchfile.h /c /Fo%t/pchfile.obj /Fp%t/pchfile.pch -v -- %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-YCTPTC %s
 // CHECK-YCTPTC: cc1
-// CHECK-YCTPTC: -emit-pch
-// CHECK-YCTPTC: -o
-// CHECK-YCTPTC: pchfile.pch
-// CHECK-YCTPTC: -x
-// CHECK-YCTPTC: "c"
+// CHECK-YCTPTC-SAME: -emit-pch
+// CHECK-YCTPTC-SAME: -o
+// CHECK-YCTPTC-SAME: pchfile.pch
+// CHECK-YCTPTC-SAME: -x
+// CHECK-YCTPTC-SAME: c-header
 
 // Also check lower-case /Tp flag.
-// RUN: %clang_cl -Werror /Tp%s /Ycpchfile.h /FIpchfile.h /c -### 2>&1 \
+// RUN: %clang_cl -Werror /Tp%s /Yc%S/Inputs/pchfile.h /FI%S/Inputs/pchfile.h /c /Fo%t/pchfile.obj /Fp%t/pchfile.pch -v 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-YCTp %s
 // CHECK-YCTp: cc1
-// CHECK-YCTp: -emit-pch
-// CHECK-YCTp: -o
-// CHECK-YCTp: pchfile.pch
-// CHECK-YCTp: -x
-// CHECK-YCTp: "c++"
+// CHECK-YCTp-SAME: -emit-pch
+// CHECK-YCTp-SAME: -o
+// CHECK-YCTp-SAME: pchfile.pch
+// CHECK-YCTp-SAME: -x
+// CHECK-YCTp-SAME: c++-header
