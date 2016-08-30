@@ -83,7 +83,7 @@
     fflush(stderr);                                                            \
     abort();                                                                   \
   } while (0)
-#define _LIBUNWIND_LOG(msg, ...) fprintf(stderr, "libunwind: " msg, __VA_ARGS__)
+#define _LIBUNWIND_LOG(msg, ...) fprintf(stderr, "libunwind: " msg "\n", __VA_ARGS__)
 
 // Macros that define away in non-Debug builds
 #ifdef NDEBUG
