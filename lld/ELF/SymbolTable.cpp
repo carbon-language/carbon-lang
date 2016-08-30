@@ -676,16 +676,17 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
   // Handle wildcards.
   for (size_t I = Config->VersionDefinitions.size() - 1; I != (size_t)-1; --I) {
     VersionDefinition &V = Config->VersionDefinitions[I];
-    for (SymbolVersion &Sym : V.Globals)
-      if (hasWildcard(Sym.Name)) {
-        std::vector<SymbolBody *> All =
-            Sym.IsExternCpp ? findAllDemangled(Demangled, Sym.Name)
-                            : findAll(Sym.Name);
+    for (SymbolVersion &Sym : V.Globals) {
+      if (!hasWildcard(Sym.Name))
+        continue;
+      std::vector<SymbolBody *> All =
+          Sym.IsExternCpp ? findAllDemangled(Demangled, Sym.Name)
+                          : findAll(Sym.Name);
 
-        for (SymbolBody *B : All)
-          if (B->symbol()->VersionId == Config->DefaultSymbolVersion)
-            B->symbol()->VersionId = V.Id;
-      }
+      for (SymbolBody *B : All)
+        if (B->symbol()->VersionId == Config->DefaultSymbolVersion)
+          B->symbol()->VersionId = V.Id;
+    }
   }
 }
 
