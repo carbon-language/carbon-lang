@@ -40,10 +40,8 @@ Optimizations</span></h2>
   <div class="submenu">
     <label>The Code</label>
     <a href="/get_started.html">Get and Install</a>
-    <a href="http://llvm.org/viewvc/llvm-project/polly/trunk/">
-      Browse (ViewVC)
     </a>
-    <a href="http://repo.or.cz/w/polly-mirror.git">Browse (GitWeb)</a>
+    <a href="https://github.com/llvm-mirror/polly">Source @ GitHub</a>
   </div>
 
   <div class="submenu">
