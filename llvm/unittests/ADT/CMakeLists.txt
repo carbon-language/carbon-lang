@@ -19,6 +19,7 @@ set(ADTSources
   HashingTest.cpp
   ilistTestTemp.cpp
   IListBaseTest.cpp
+  IListIteratorTest.cpp
   IListNodeBaseTest.cpp
   IListSentinelTest.cpp
   ImmutableMapTest.cpp
