@@ -13,7 +13,7 @@ from lldbsuite.test.decorators import *
 from lldbsuite.test.lldbtest import *
 from lldbsuite.test import lldbutil
 
-class PrintArrayTestCase(TestBase):
+class PyObjectSynthProviderTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
