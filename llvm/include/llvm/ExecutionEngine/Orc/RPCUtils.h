@@ -536,13 +536,13 @@ public:
   /// handling responses and incoming calls.
   template <typename Func, typename... ArgTs>
   typename Func::ErrorReturn callB(ChannelT &C, const ArgTs &... Args) {
-    if (auto FutureResOrErr = callNBWithSeq(C, Args...)) {
+    if (auto FutureResOrErr = callNBWithSeq<Func>(C, Args...)) {
       if (auto Err = C.send()) {
         abandonOutstandingResults();
-        Func::consumeAbandoned(*FutureResOrErr);
+        Func::consumeAbandoned(FutureResOrErr->first);
         return std::move(Err);
       }
-      return FutureResOrErr->get();
+      return FutureResOrErr->first.get();
     } else
       return FutureResOrErr.takeError();
   }
