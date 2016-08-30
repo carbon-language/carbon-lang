@@ -177,6 +177,10 @@ phases::ID Driver::getFinalPhase(const DerivedArgList &DAL,
       (PhaseArg = DAL.getLastArg(options::OPT__SLASH_P))) {
     FinalPhase = phases::Preprocess;
 
+    // --precompile only runs up to precompilation.
+  } else if ((PhaseArg = DAL.getLastArg(options::OPT__precompile))) {
+    FinalPhase = phases::Precompile;
+
     // -{fsyntax-only,-analyze,emit-ast} only run up to the compiler.
   } else if ((PhaseArg = DAL.getLastArg(options::OPT_fsyntax_only)) ||
              (PhaseArg = DAL.getLastArg(options::OPT_module_file_info)) ||
@@ -1814,9 +1818,9 @@ Action *Driver::ConstructPhaseAction(Compilation &C, const ArgList &Args,
     return C.MakeAction<PreprocessJobAction>(Input, OutputTy);
   }
   case phases::Precompile: {
-    assert(onlyPrecompileType(Input->getType()) &&
-           "asked to precompile non-precompilable type");
-    types::ID OutputTy = types::TY_PCH;
+    types::ID OutputTy = getPrecompiledType(Input->getType());
+    assert(OutputTy != types::TY_INVALID &&
+           "Cannot precompile this input type!");
     if (Args.hasArg(options::OPT_fsyntax_only)) {
       // Syntax checks should not emit a PCH file
       OutputTy = types::TY_Nothing;
