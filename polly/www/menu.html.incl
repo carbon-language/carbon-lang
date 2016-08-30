@@ -11,9 +11,9 @@ Optimizations</span></h2>
   <a href="http://llvm.org">llvm.org</a>
   <div class="submenu">
     <label>Information</label>
+    <a href="/index.html">Overview and News</a>
     <a href="/get_started.html">Get and Install</a>
     </a>
-    <a href="/index.html">About Polly</a>
     <a href="/docs">Documentation</a>
     <a href="/performance.html">Performance</a>
     <a href="/publications.html">Publications</a>
