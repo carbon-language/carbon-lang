@@ -705,9 +705,6 @@ std::string ELFDumper<ELFT>::getFullSymbolName(const Elf_Sym *Symbol,
 
   bool IsDefault;
   StringRef Version = getSymbolVersion(StrTable, &*Symbol, IsDefault);
-  // Unversioned symbol must not have any suffix @
-  if (!IsDefault && Version == "")
-    return FullSymbolName;
   FullSymbolName += (IsDefault ? "@@" : "@");
   FullSymbolName += Version;
   return FullSymbolName;
