@@ -646,7 +646,7 @@ public:
 #endif // NDEBUG
   {
     new (getErrorStorage()) Error();
-    !!*getErrorStorage();
+    (void)!!*getErrorStorage();
   }
 #endif // _MSC_VER
 
