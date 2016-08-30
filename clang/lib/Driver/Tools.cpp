@@ -4369,6 +4369,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (ReciprocalMath)
     CmdArgs.push_back("-freciprocal-math");
 
+  if (!TrappingMath) 
+    CmdArgs.push_back("-fno-trapping-math");
+
+  if (Args.hasArg(options::OPT_fdenormal_fp_math_EQ))
+    Args.AddLastArg(CmdArgs, options::OPT_fdenormal_fp_math_EQ);
+
   // Validate and pass through -fp-contract option.
   if (Arg *A = Args.getLastArg(options::OPT_ffast_math, FastMathAliasOption,
                                options::OPT_fno_fast_math,
