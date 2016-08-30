@@ -16,6 +16,7 @@
 #include <tuple>
 // Other libraries and framework includes
 // Project includes
+#include "llvm/Support/Endian.h"
 
 static inline int
 xdigit_to_sint (char ch)
@@ -229,131 +230,60 @@ StringExtractor::GetS64 (int64_t fail_value, int base)
     return fail_value;
 }
 
-
 uint32_t
 StringExtractor::GetHexMaxU32 (bool little_endian, uint32_t fail_value)
 {
-    uint32_t result = 0;
-    uint32_t nibble_count = 0;
-
     SkipSpaces();
+
+    // Allocate enough space for 2 uint32's.  In big endian, if the user writes
+    // "AB" then this should be treated as 0xAB, not 0xAB000000.  In order to
+    // do this, we decode into the second half of the array, and then shift the
+    // starting point of the big endian translation left by however many bytes
+    // of a uint32 were missing from the input.  We're essentially padding left
+    // with 0's.
+    uint8_t bytes[2 * sizeof(uint32_t) - 1] = {0};
+    auto byte_array = llvm::MutableArrayRef<uint8_t>(bytes);
+    auto decode_loc = byte_array.drop_front(sizeof(uint32_t) - 1);
+    uint32_t bytes_decoded = GetHexBytesAvail(decode_loc);
+    if (bytes_decoded == sizeof(uint32_t) && ::isxdigit(PeekChar()))
+        return fail();
+
+    using namespace llvm::support;
     if (little_endian)
-    {
-        uint32_t shift_amount = 0;
-        while (m_index < m_packet.size() && ::isxdigit (m_packet[m_index]))
-        {
-            // Make sure we don't exceed the size of a uint32_t...
-            if (nibble_count >= (sizeof(uint32_t) * 2))
-            {
-                m_index = UINT64_MAX;
-                return fail_value;
-            }
-
-            uint8_t nibble_lo;
-            uint8_t nibble_hi = xdigit_to_sint (m_packet[m_index]);
-            ++m_index;
-            if (m_index < m_packet.size() && ::isxdigit (m_packet[m_index]))
-            {
-                nibble_lo = xdigit_to_sint (m_packet[m_index]);
-                ++m_index;
-                result |= ((uint32_t)nibble_hi << (shift_amount + 4));
-                result |= ((uint32_t)nibble_lo << shift_amount);
-                nibble_count += 2;
-                shift_amount += 8;
-            }
-            else
-            {
-                result |= ((uint32_t)nibble_hi << shift_amount);
-                nibble_count += 1;
-                shift_amount += 4;
-            }
-
-        }
-    }
+        return endian::read<uint32_t, endianness::little>(decode_loc.data());
     else
     {
-        while (m_index < m_packet.size() && ::isxdigit (m_packet[m_index]))
-        {
-            // Make sure we don't exceed the size of a uint32_t...
-            if (nibble_count >= (sizeof(uint32_t) * 2))
-            {
-                m_index = UINT64_MAX;
-                return fail_value;
-            }
-
-            uint8_t nibble = xdigit_to_sint (m_packet[m_index]);
-            // Big Endian
-            result <<= 4;
-            result |= nibble;
-
-            ++m_index;
-            ++nibble_count;
-        }
+        decode_loc = byte_array.drop_front(bytes_decoded - 1).take_front(sizeof(uint32_t));
+        return endian::read<uint32_t, endianness::big>(decode_loc.data());
     }
-    return result;
 }
 
 uint64_t
 StringExtractor::GetHexMaxU64 (bool little_endian, uint64_t fail_value)
 {
-    uint64_t result = 0;
-    uint32_t nibble_count = 0;
-
     SkipSpaces();
+
+    // Allocate enough space for 2 uint32's.  In big endian, if the user writes
+    // "AB" then this should be treated as 0xAB, not 0xAB000000.  In order to
+    // do this, we decode into the second half of the array, and then shift the
+    // starting point of the big endian translation left by however many bytes
+    // of a uint32 were missing from the input.  We're essentially padding left
+    // with 0's.
+    uint8_t bytes[2 * sizeof(uint64_t) - 1] = {0};
+    auto byte_array = llvm::MutableArrayRef<uint8_t>(bytes);
+    auto decode_loc = byte_array.drop_front(sizeof(uint64_t) - 1);
+    uint32_t bytes_decoded = GetHexBytesAvail(decode_loc);
+    if (bytes_decoded == sizeof(uint64_t) && ::isxdigit(PeekChar()))
+        return fail();
+
+    using namespace llvm::support;
     if (little_endian)
-    {
-        uint32_t shift_amount = 0;
-        while (m_index < m_packet.size() && ::isxdigit (m_packet[m_index]))
-        {
-            // Make sure we don't exceed the size of a uint64_t...
-            if (nibble_count >= (sizeof(uint64_t) * 2))
-            {
-                m_index = UINT64_MAX;
-                return fail_value;
-            }
-
-            uint8_t nibble_lo;
-            uint8_t nibble_hi = xdigit_to_sint (m_packet[m_index]);
-            ++m_index;
-            if (m_index < m_packet.size() && ::isxdigit (m_packet[m_index]))
-            {
-                nibble_lo = xdigit_to_sint (m_packet[m_index]);
-                ++m_index;
-                result |= ((uint64_t)nibble_hi << (shift_amount + 4));
-                result |= ((uint64_t)nibble_lo << shift_amount);
-                nibble_count += 2;
-                shift_amount += 8;
-            }
-            else
-            {
-                result |= ((uint64_t)nibble_hi << shift_amount);
-                nibble_count += 1;
-                shift_amount += 4;
-            }
-
-        }
-    }
+        return endian::read<uint64_t, endianness::little>(decode_loc.data());
     else
     {
-        while (m_index < m_packet.size() && ::isxdigit (m_packet[m_index]))
-        {
-            // Make sure we don't exceed the size of a uint64_t...
-            if (nibble_count >= (sizeof(uint64_t) * 2))
-            {
-                m_index = UINT64_MAX;
-                return fail_value;
-            }
-
-            uint8_t nibble = xdigit_to_sint (m_packet[m_index]);
-            // Big Endian
-            result <<= 4;
-            result |= nibble;
-
-            ++m_index;
-            ++nibble_count;
-        }
+        decode_loc = byte_array.drop_front(bytes_decoded - 1).take_front(sizeof(uint64_t));
+        return endian::read<uint64_t, endianness::big>(decode_loc.data());
     }
-    return result;
 }
 
 size_t
