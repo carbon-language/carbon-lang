@@ -272,6 +272,12 @@ def fsanitize_coverage_trace_bb
 def fsanitize_coverage_trace_cmp
     : Flag<["-"], "fsanitize-coverage-trace-cmp">,
       HelpText<"Enable cmp instruction tracing in sanitizer coverage">;
+def fsanitize_coverage_trace_div
+    : Flag<["-"], "fsanitize-coverage-trace-div">,
+      HelpText<"Enable div instruction tracing in sanitizer coverage">;
+def fsanitize_coverage_trace_gep
+    : Flag<["-"], "fsanitize-coverage-trace-gep">,
+      HelpText<"Enable gep instruction tracing in sanitizer coverage">;
 def fsanitize_coverage_8bit_counters
     : Flag<["-"], "fsanitize-coverage-8bit-counters">,
       HelpText<"Enable frequency counters in sanitizer coverage">;
