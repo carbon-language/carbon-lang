@@ -8,12 +8,11 @@ Optimizations</span></h2>
 
 </div>
 <div id="menu">
-  <div class="submenu">
-    <label>LLVM</label>
-    <a href="http://llvm.org">llvm.org</a>
-  </div>
+  <a href="http://llvm.org">llvm.org</a>
   <div class="submenu">
     <label>Information</label>
+    <a href="/get_started.html">Get and Install</a>
+    </a>
     <a href="/index.html">About Polly</a>
     <a href="/docs">Documentation</a>
     <a href="/performance.html">Performance</a>
@@ -35,12 +34,6 @@ Optimizations</span></h2>
     <a href="http://buildd-clang.debian.net/coverage/">Code Coverage</a>
     <a href="http://buildd-clang.debian.net/scan-build/">Static analysis</a>
     <a href="/doxygen/">Doxygen</a>
-  </div>
-
-  <div class="submenu">
-    <label>The Code</label>
-    <a href="/get_started.html">Get and Install</a>
-    </a>
     <a href="https://github.com/llvm-mirror/polly">Source @ GitHub</a>
   </div>
 
