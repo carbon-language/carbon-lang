@@ -83,7 +83,7 @@ TEST_F(DummyRPC, TestAsyncVoidBool) {
   QueueChannel C2(Q2, Q1);
 
   // Make an async call.
-  auto ResOrErr = callAsyncWithSeq<VoidBool>(C1, true);
+  auto ResOrErr = callNBWithSeq<VoidBool>(C1, true);
   EXPECT_TRUE(!!ResOrErr) << "Simple call over queue failed";
 
   {
@@ -112,7 +112,7 @@ TEST_F(DummyRPC, TestAsyncIntInt) {
   QueueChannel C2(Q2, Q1);
 
   // Make an async call.
-  auto ResOrErr = callAsyncWithSeq<IntInt>(C1, 21);
+  auto ResOrErr = callNBWithSeq<IntInt>(C1, 21);
   EXPECT_TRUE(!!ResOrErr) << "Simple call over queue failed";
 
   {
@@ -143,7 +143,7 @@ TEST_F(DummyRPC, TestSerialization) {
 
   // Make a call to Proc1.
   std::vector<int> v({42, 7});
-  auto ResOrErr = callAsyncWithSeq<AllTheTypes>(
+  auto ResOrErr = callNBWithSeq<AllTheTypes>(
       C1, -101, 250, -10000, 10000, -1000000000, 1000000000, -10000000000,
       10000000000, true, "foo", v);
   EXPECT_TRUE(!!ResOrErr) << "Big (serialization test) call over queue failed";
