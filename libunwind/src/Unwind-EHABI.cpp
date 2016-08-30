@@ -549,7 +549,7 @@ static _Unwind_Reason_Code unwind_phase2(unw_context_t *uc, unw_cursor_t *cursor
 
   // Walk each frame until we reach where search phase said to stop.
   while (true) {
-    // Ask libuwind to get next frame (skip over first which is
+    // Ask libunwind to get next frame (skip over first which is
     // _Unwind_RaiseException or _Unwind_Resume).
     //
     // Resume only ever makes sense for 1 frame.

@@ -6,7 +6,7 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //
-// C++ interface to lower levels of libuwind
+// C++ interface to lower levels of libunwind
 //===----------------------------------------------------------------------===//
 
 #ifndef __UNWINDCURSOR_HPP__

@@ -123,7 +123,7 @@ _Unwind_Backtrace(_Unwind_Trace_Fn callback, void *ref) {
     _Unwind_Reason_Code result;
 
 #if !_LIBUNWIND_ARM_EHABI
-    // ask libuwind to get next frame (skip over first frame which is
+    // ask libunwind to get next frame (skip over first frame which is
     // _Unwind_Backtrace())
     if (unw_step(&cursor) <= 0) {
       _LIBUNWIND_TRACE_UNWINDING(" _backtrace: ended because cursor reached "

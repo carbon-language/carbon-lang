@@ -39,7 +39,7 @@ unwind_phase1(unw_context_t *uc, unw_cursor_t *cursor, _Unwind_Exception *except
   // Walk each frame looking for a place to stop.
   bool handlerNotFound = true;
   while (handlerNotFound) {
-    // Ask libuwind to get next frame (skip over first which is
+    // Ask libunwind to get next frame (skip over first which is
     // _Unwind_RaiseException).
     int stepResult = unw_step(cursor);
     if (stepResult == 0) {
@@ -135,7 +135,7 @@ unwind_phase2(unw_context_t *uc, unw_cursor_t *cursor, _Unwind_Exception *except
   // Walk each frame until we reach where search phase said to stop.
   while (true) {
 
-    // Ask libuwind to get next frame (skip over first which is
+    // Ask libunwind to get next frame (skip over first which is
     // _Unwind_RaiseException).
     int stepResult = unw_step(cursor);
     if (stepResult == 0) {
