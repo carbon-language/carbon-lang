@@ -3240,7 +3240,7 @@ void GNUStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
 
   auto process = [&](const typename ELFFile<ELFT>::Elf_Off Offset,
                      const typename ELFFile<ELFT>::Elf_Addr Size) {
-    using Word = typename ELFFile<ELFT>::Elf_Word;
+    typedef typename ELFFile<ELFT>::Elf_Word Word;
 
     if (Size <= 0)
       return;
