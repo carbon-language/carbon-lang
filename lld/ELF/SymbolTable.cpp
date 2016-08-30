@@ -613,6 +613,14 @@ static bool hasExternCpp() {
   return false;
 }
 
+static SymbolBody *findDemangled(const std::map<std::string, SymbolBody *> &D,
+                                 StringRef Name) {
+  auto I = D.find(Name);
+  if (I != D.end())
+    return I->second;
+  return nullptr;
+}
+
 // This function processes the --version-script option by marking all global
 // symbols with the VersionScriptGlobal flag, which acts as a filter on the
 // dynamic symbol table.
@@ -647,8 +655,9 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
     for (SymbolVersion Sym : V.Globals) {
       if (hasWildcard(Sym.Name))
         continue;
-      SymbolBody *B = Sym.IsExternCpp ? Demangled[Sym.Name] : find(Sym.Name);
-      setVersionId(B, V.Name, Sym.Name, V.Id);
+      StringRef N = Sym.Name;
+      SymbolBody *B = Sym.IsExternCpp ? findDemangled(Demangled, N) : find(N);
+      setVersionId(B, V.Name, N, V.Id);
     }
   }
 
