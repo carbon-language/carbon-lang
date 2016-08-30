@@ -6109,6 +6109,7 @@ class HexagonTargetInfo : public TargetInfo {
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
   std::string CPU;
   bool HasHVX, HasHVXDouble;
+  bool UseLongCalls;
 
 public:
   HexagonTargetInfo(const llvm::Triple &Triple, const TargetOptions &)
@@ -6133,6 +6134,7 @@ public:
     UseBitFieldTypeAlignment = true;
     ZeroLengthBitfieldBoundary = 32;
     HasHVX = HasHVXDouble = false;
+    UseLongCalls = false;
   }
 
   ArrayRef<Builtin::Info> getTargetBuiltins() const override {
@@ -6167,6 +6169,7 @@ public:
       .Case("hexagon", true)
       .Case("hvx", HasHVX)
       .Case("hvx-double", HasHVXDouble)
+      .Case("long-calls", UseLongCalls)
       .Default(false);
   }
 
@@ -6256,6 +6259,9 @@ bool HexagonTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasHVX = HasHVXDouble = true;
     else if (F == "-hvx-double")
       HasHVXDouble = false;
+
+    if (F == "+long-calls")
+      UseLongCalls = true;
   }
   return true;
 }
@@ -6266,10 +6272,10 @@ bool HexagonTargetInfo::initFeatureMap(llvm::StringMap<bool> &Features,
   // Default for v60: -hvx, -hvx-double.
   Features["hvx"] = false;
   Features["hvx-double"] = false;
+  Features["long-calls"] = false;
 
   return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
 }
-
 
 const char *const HexagonTargetInfo::GCCRegNames[] = {
   "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",

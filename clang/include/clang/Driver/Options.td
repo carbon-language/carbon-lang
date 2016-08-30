@@ -1388,6 +1388,10 @@ def malign_functions_EQ : Joined<["-"], "malign-functions=">, Group<clang_ignore
 def malign_loops_EQ : Joined<["-"], "malign-loops=">, Group<clang_ignored_m_Group>;
 def malign_jumps_EQ : Joined<["-"], "malign-jumps=">, Group<clang_ignored_m_Group>;
 def mfancy_math_387 : Flag<["-"], "mfancy-math-387">, Group<clang_ignored_m_Group>;
+def mlong_calls : Flag<["-"], "mlong-calls">, Group<m_Group>,
+  HelpText<"Generate branches with extended addressability, usually via indirect jumps.">;
+def mno_long_calls : Flag<["-"], "mno-long-calls">, Group<m_Group>,
+  HelpText<"Restore the default behaviour of not generating long calls">;
 def mtvos_version_min_EQ : Joined<["-"], "mtvos-version-min=">, Group<m_Group>;
 def mappletvos_version_min_EQ : Joined<["-"], "mappletvos-version-min=">, Alias<mtvos_version_min_EQ>;
 def mtvos_simulator_version_min_EQ : Joined<["-"], "mtvos-simulator-version-min=">, Alias<mtvos_version_min_EQ>;
@@ -1532,10 +1536,6 @@ def mcrc : Flag<["-"], "mcrc">, Group<m_arm_Features_Group>,
   HelpText<"Allow use of CRC instructions (ARM only)">;
 def mnocrc : Flag<["-"], "mnocrc">, Group<m_arm_Features_Group>,
   HelpText<"Disallow use of CRC instructions (ARM only)">;
-def mlong_calls : Flag<["-"], "mlong-calls">, Group<m_arm_Features_Group>,
-  HelpText<"Generate an indirect jump to enable jumps further than 64M">;
-def mno_long_calls : Flag<["-"], "mno-long-calls">, Group<m_arm_Features_Group>,
-  HelpText<"Restore the default behaviour of not generating long calls">;
 
 def mgeneral_regs_only : Flag<["-"], "mgeneral-regs-only">, Group<m_aarch64_Features_Group>,
   HelpText<"Generate code which only uses the general purpose registers (AArch64 only)">;
