@@ -82,10 +82,6 @@ if( NOT CLANG_BUILT_STANDALONE )
   endif()
 endif()
 
-if(APPLE)
-  list(APPEND CLANG_TEST_DEPS LTO)
-endif()
-
 add_custom_target(clang-test-depends DEPENDS ${CLANG_TEST_DEPS})
 set_target_properties(clang-test-depends PROPERTIES FOLDER "Clang tests")
 
