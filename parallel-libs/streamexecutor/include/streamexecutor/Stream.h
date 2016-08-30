@@ -86,15 +86,15 @@ public:
   /// These arguments can be device memory types like GlobalDeviceMemory<T> and
   /// SharedDeviceMemory<T>, or they can be primitive types such as int. The
   /// allowable argument types are determined by the template parameters to the
-  /// TypedKernel argument.
+  /// Kernel argument.
   template <typename... ParameterTs>
   Stream &thenLaunch(BlockDimensions BlockSize, GridDimensions GridSize,
-                     const TypedKernel<ParameterTs...> &Kernel,
+                     const Kernel<ParameterTs...> &K,
                      const ParameterTs &... Arguments) {
     auto ArgumentArray =
         make_kernel_argument_pack<ParameterTs...>(Arguments...);
     setError(PDevice->launch(ThePlatformStream.get(), BlockSize, GridSize,
-                             Kernel, ArgumentArray));
+                             K.getPlatformHandle(), ArgumentArray));
     return *this;
   }
 
