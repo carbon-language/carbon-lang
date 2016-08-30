@@ -244,10 +244,9 @@ bool ToolInvocation::run() {
   const char *const BinaryName = Argv[0];
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   unsigned MissingArgIndex, MissingArgCount;
-  llvm::opt::InputArgList ParsedArgs =
-      driver::createDriverOptTable()->ParseArgs(
-          ArrayRef<const char *>(Argv).slice(1), MissingArgIndex,
-          MissingArgCount);
+  std::unique_ptr<llvm::opt::OptTable> Opts(driver::createDriverOptTable());
+  llvm::opt::InputArgList ParsedArgs = Opts->ParseArgs(
+      ArrayRef<const char *>(Argv).slice(1), MissingArgIndex, MissingArgCount);
   ParseDiagnosticArgs(*DiagOpts, ParsedArgs);
   TextDiagnosticPrinter DiagnosticPrinter(
       llvm::errs(), &*DiagOpts);
