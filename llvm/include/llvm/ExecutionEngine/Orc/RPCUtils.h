@@ -17,6 +17,7 @@
 #include <map>
 #include <vector>
 
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/Orc/OrcError.h"
 
@@ -60,7 +61,6 @@ public:
 // partially specialized.
 class RPCBase {
 protected:
-
   // RPC Function description type.
   //
   // This class provides the information and operations needed to support the
@@ -69,9 +69,12 @@ protected:
   // betwen the two. Both specializations have the same interface:
   //
   // Id - The function's unique identifier.
-  // ErrorReturn - The return type for blocking calls.
+  // OptionalReturn - The return type for asyncronous calls.
+  // ErrorReturn - The return type for synchronous calls.
+  // optionalToErrorReturn - Conversion from a valid OptionalReturn to an
+  //                         ErrorReturn.
   // readResult - Deserialize a result from a channel.
-  // abandon - Abandon a promised result.
+  // abandon - Abandon a promised (asynchronous) result.
   // respond - Retun a result on the channel.
   template <typename FunctionIdT, FunctionIdT FuncId, typename FnT>
   class FunctionHelper {};
@@ -88,29 +91,32 @@ protected:
 
     static const FunctionIdT Id = FuncId;
 
+    typedef Optional<RetT> OptionalReturn;
+
     typedef Expected<RetT> ErrorReturn;
 
+    static ErrorReturn optionalToErrorReturn(OptionalReturn &&V) {
+      assert(V && "Return value not available");
+      return std::move(*V);
+    }
+
     template <typename ChannelT>
-    static Error readResult(ChannelT &C, std::promise<ErrorReturn> &P) {
+    static Error readResult(ChannelT &C, std::promise<OptionalReturn> &P) {
       RetT Val;
       auto Err = deserialize(C, Val);
       auto Err2 = endReceiveMessage(C);
       Err = joinErrors(std::move(Err), std::move(Err2));
-      if (Err)
-        return Err;
 
+      if (Err) {
+        P.set_value(OptionalReturn());
+        return Err;
+      }
       P.set_value(std::move(Val));
       return Error::success();
     }
 
-    static void abandon(std::promise<ErrorReturn> &P) {
-      P.set_value(
-        make_error<StringError>("RPC function call failed to return",
-                                inconvertibleErrorCode()));
-    }
-
-    static void consumeAbandoned(std::future<ErrorReturn> &P) {
-      consumeError(P.get().takeError());
+    static void abandon(std::promise<OptionalReturn> &P) {
+      P.set_value(OptionalReturn());
     }
 
     template <typename ChannelT, typename SequenceNumberT>
@@ -142,24 +148,22 @@ protected:
 
     static const FunctionIdT Id = FuncId;
 
+    typedef bool OptionalReturn;
     typedef Error ErrorReturn;
 
+    static ErrorReturn optionalToErrorReturn(OptionalReturn &&V) {
+      assert(V && "Return value not available");
+      return Error::success();
+    }
+
     template <typename ChannelT>
-    static Error readResult(ChannelT &C, std::promise<ErrorReturn> &P) {
+    static Error readResult(ChannelT &C, std::promise<OptionalReturn> &P) {
       // Void functions don't have anything to deserialize, so we're good.
-      P.set_value(Error::success());
+      P.set_value(true);
       return endReceiveMessage(C);
     }
 
-    static void abandon(std::promise<ErrorReturn> &P) {
-      P.set_value(
-        make_error<StringError>("RPC function call failed to return",
-                                inconvertibleErrorCode()));
-    }
-
-    static void consumeAbandoned(std::future<ErrorReturn> &P) {
-      consumeError(P.get());
-    }
+    static void abandon(std::promise<OptionalReturn> &P) { P.set_value(false); }
 
     template <typename ChannelT, typename SequenceNumberT>
     static Error respond(ChannelT &C, SequenceNumberT SeqNo,
@@ -374,27 +378,30 @@ public:
   template <FunctionIdT FuncId, typename FnT>
   using Function = FunctionHelper<FunctionIdT, FuncId, FnT>;
 
-  /// Return type for non-blocking call primitives.
+  /// Return type for asynchronous call primitives.
   template <typename Func>
-  using NonBlockingCallResult = std::future<typename Func::ErrorReturn>;
+  using AsyncCallResult = std::future<typename Func::OptionalReturn>;
 
-  /// Return type for non-blocking call-with-seq primitives.
+  /// Return type for asynchronous call-with-seq primitives.
   template <typename Func>
-  using NonBlockingCallWithSeqResult =
-      std::pair<NonBlockingCallResult<Func>, SequenceNumberT>;
+  using AsyncCallWithSeqResult =
+      std::pair<std::future<typename Func::OptionalReturn>, SequenceNumberT>;
 
-  /// Call Func on Channel C. Does not block, does not call send. Returns a pair
-  /// of a future result and the sequence number assigned to the result.
+  /// Serialize Args... to channel C, but do not call C.send().
+  ///
+  /// Returns an error (on serialization failure) or a pair of:
+  /// (1) A future Optional<T> (or future<bool> for void functions), and
+  /// (2) A sequence number.
   ///
   /// This utility function is primarily used for single-threaded mode support,
   /// where the sequence number can be used to wait for the corresponding
-  /// result. In multi-threaded mode the appendCallNB method, which does not
+  /// result. In multi-threaded mode the appendCallAsync method, which does not
   /// return the sequence numeber, should be preferred.
   template <typename Func, typename... ArgTs>
-  Expected<NonBlockingCallWithSeqResult<Func>>
-  appendCallNBWithSeq(ChannelT &C, const ArgTs &... Args) {
+  Expected<AsyncCallWithSeqResult<Func>>
+  appendCallAsyncWithSeq(ChannelT &C, const ArgTs &... Args) {
     auto SeqNo = SequenceNumberMgr.getSequenceNumber();
-    std::promise<typename Func::ErrorReturn> Promise;
+    std::promise<typename Func::OptionalReturn> Promise;
     auto Result = Promise.get_future();
     OutstandingResults[SeqNo] =
         createOutstandingResult<Func>(std::move(Promise));
@@ -402,23 +409,21 @@ public:
     if (auto Err = CallHelper<ChannelT, SequenceNumberT, Func>::call(C, SeqNo,
                                                                      Args...)) {
       abandonOutstandingResults();
-      Func::consumeAbandoned(Result);
       return std::move(Err);
     } else
-      return NonBlockingCallWithSeqResult<Func>(std::move(Result), SeqNo);
+      return AsyncCallWithSeqResult<Func>(std::move(Result), SeqNo);
   }
 
-  /// The same as appendCallNBWithSeq, except that it calls C.send() to
+  /// The same as appendCallAsyncWithSeq, except that it calls C.send() to
   /// flush the channel after serializing the call.
   template <typename Func, typename... ArgTs>
-  Expected<NonBlockingCallWithSeqResult<Func>>
-  callNBWithSeq(ChannelT &C, const ArgTs &... Args) {
-    auto Result = appendCallNBWithSeq<Func>(C, Args...);
+  Expected<AsyncCallWithSeqResult<Func>>
+  callAsyncWithSeq(ChannelT &C, const ArgTs &... Args) {
+    auto Result = appendCallAsyncWithSeq<Func>(C, Args...);
     if (!Result)
       return Result;
     if (auto Err = C.send()) {
       abandonOutstandingResults();
-      Func::consumeAbandoned(Result->first);
       return std::move(Err);
     }
     return Result;
@@ -426,66 +431,41 @@ public:
 
   /// Serialize Args... to channel C, but do not call send.
   /// Returns an error if serialization fails, otherwise returns a
-  /// std::future<Expected<T>> (or a future<Error> for void functions).
+  /// std::future<Optional<T>> (or a future<bool> for void functions).
   template <typename Func, typename... ArgTs>
-  Expected<NonBlockingCallResult<Func>> appendCallNB(ChannelT &C,
-                                                     const ArgTs &... Args) {
-    auto FutureResAndSeqOrErr = appendCallNBWithSeq<Func>(C, Args...);
-    if (FutureResAndSeqOrErr)
-      return std::move(FutureResAndSeqOrErr->first);
-    return FutureResAndSeqOrErr.getError();
+  Expected<AsyncCallResult<Func>> appendCallAsync(ChannelT &C,
+                                                  const ArgTs &... Args) {
+    auto ResAndSeqOrErr = appendCallAsyncWithSeq<Func>(C, Args...);
+    if (ResAndSeqOrErr)
+      return std::move(ResAndSeqOrErr->first);
+    return ResAndSeqOrErr.getError();
   }
 
-  /// The same as appendCallNB, except that it calls C.send to flush the
+  /// The same as appendCallAsync, except that it calls C.send to flush the
   /// channel after serializing the call.
   template <typename Func, typename... ArgTs>
-  Expected<NonBlockingCallResult<Func>> callNB(ChannelT &C,
-                                               const ArgTs &... Args) {
-    auto FutureResAndSeqOrErr = callNBWithSeq<Func>(C, Args...);
-    if (FutureResAndSeqOrErr)
-      return std::move(FutureResAndSeqOrErr->first);
-    return FutureResAndSeqOrErr.getError();
+  Expected<AsyncCallResult<Func>> callAsync(ChannelT &C,
+                                            const ArgTs &... Args) {
+    auto ResAndSeqOrErr = callAsyncWithSeq<Func>(C, Args...);
+    if (ResAndSeqOrErr)
+      return std::move(ResAndSeqOrErr->first);
+    return ResAndSeqOrErr.getError();
   }
 
-  /// Call Func on Channel C. Blocks waiting for a result. Returns an Error
-  /// for void functions or an Expected<T> for functions returning a T.
-  ///
-  /// This function is for use in threaded code where another thread is
-  /// handling responses and incoming calls.
-  template <typename Func, typename... ArgTs>
-  typename Func::ErrorReturn callB(ChannelT &C, const ArgTs &... Args) {
-    if (auto FutureResOrErr = callNBWithSeq(C, Args...)) {
-      if (auto Err = C.send()) {
-        abandonOutstandingResults();
-        Func::consumeAbandoned(*FutureResOrErr);
-        return std::move(Err);
-      }
-      return FutureResOrErr->get();
-    } else
-      return FutureResOrErr.takeError();
-  }
-
-  /// Call Func on Channel C. Block waiting for a result. While blocked, run
-  /// HandleOther to handle incoming calls (Response calls will be handled
-  /// implicitly before calling HandleOther). Returns an Error for void
-  /// functions or an Expected<T> for functions returning a T.
-  ///
-  /// This function is for use in single threaded mode when the calling thread
-  /// must act as both sender and receiver.
+  /// This can be used in single-threaded mode.
   template <typename Func, typename HandleFtor, typename... ArgTs>
   typename Func::ErrorReturn
   callSTHandling(ChannelT &C, HandleFtor &HandleOther, const ArgTs &... Args) {
-    if (auto ResultAndSeqNoOrErr = callNBWithSeq<Func>(C, Args...)) {
+    if (auto ResultAndSeqNoOrErr = callAsyncWithSeq<Func>(C, Args...)) {
       auto &ResultAndSeqNo = *ResultAndSeqNoOrErr;
       if (auto Err = waitForResult(C, ResultAndSeqNo.second, HandleOther))
         return std::move(Err);
-      return ResultAndSeqNo.first.get();
+      return Func::optionalToErrorReturn(ResultAndSeqNo.first.get());
     } else
       return ResultAndSeqNoOrErr.takeError();
   }
 
-  /// Call Func on Channel C. Block waiting for a result. Returns an Error for
-  /// void functions or an Expected<T> for functions returning a T.
+  // This can be used in single-threaded mode.
   template <typename Func, typename... ArgTs>
   typename Func::ErrorReturn callST(ChannelT &C, const ArgTs &... Args) {
     return callSTHandling<Func>(C, handleNone, Args...);
@@ -676,7 +656,7 @@ private:
   class OutstandingResultImpl : public OutstandingResult {
   private:
   public:
-    OutstandingResultImpl(std::promise<typename Func::ErrorReturn> &&P)
+    OutstandingResultImpl(std::promise<typename Func::OptionalReturn> &&P)
         : P(std::move(P)) {}
 
     Error readResult(ChannelT &C) override { return Func::readResult(C, P); }
@@ -684,13 +664,13 @@ private:
     void abandon() override { Func::abandon(P); }
 
   private:
-    std::promise<typename Func::ErrorReturn> P;
+    std::promise<typename Func::OptionalReturn> P;
   };
 
   // Create an outstanding result for the given function.
   template <typename Func>
   std::unique_ptr<OutstandingResult>
-  createOutstandingResult(std::promise<typename Func::ErrorReturn> &&P) {
+  createOutstandingResult(std::promise<typename Func::OptionalReturn> &&P) {
     return llvm::make_unique<OutstandingResultImpl<Func>>(std::move(P));
   }
 
