@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=ppc64 | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-BE
-; RUN: llc < %s -march=ppc64le | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-LE
+; RUN: llc < %s -march=ppc64le -mtriple=powerpc64le-unknown-linux-gnu | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-LE
 ; RUN: llc < %s -march=ppc64 -mcpu=pwr7 | FileCheck %s
 ; RUN: llc < %s -march=ppc64 -mcpu=pwr8 | FileCheck %s -check-prefix=CHECK-P8U
 
