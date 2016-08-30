@@ -39,6 +39,7 @@ using namespace llvm;
 namespace opts {
 
 extern cl::opt<unsigned> Verbosity;
+extern cl::opt<bool> PrintDynoStats;
 
 static cl::opt<bool>
 AgressiveSplitting("split-all-cold",
@@ -51,6 +52,12 @@ DotToolTipCode("dot-tooltip-code",
                cl::ZeroOrMore,
                cl::Hidden);
 
+static cl::opt<uint32_t>
+DynoStatsScale("dyno-stats-scale",
+               cl::desc("scale to be applied while reporting dyno stats"),
+               cl::Optional,
+               cl::init(1));
+
 } // namespace opts
 
 namespace llvm {
@@ -61,6 +68,8 @@ namespace bolt {
 // TODO: move to architecture-specific file together with the code that is
 // using it.
 constexpr unsigned NoRegister = 0;
+
+constexpr const char *DynoStats::Desc[];
 
 namespace {
 
@@ -198,6 +207,11 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   }
   if (IdenticalFunctionAddress != Address)
     OS << "\n  Id Fun Addr : 0x" << Twine::utohexstr(IdenticalFunctionAddress);
+
+  if (opts::PrintDynoStats && !BasicBlocksLayout.empty()) {
+    DynoStats dynoStats = getDynoStats();
+    OS << dynoStats;
+  }
 
   OS << "\n}\n";
 
@@ -2006,7 +2020,7 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
           // Delete DW_CFA_GNU_args_size instructions and only regenerate
           // during the final code emission. The information is embedded
           // inside call instructions.
-          II = BB->Instructions.erase(II);
+          II = BB->erasePseudoInstruction(II);
         } else {
           ++II;
         }
@@ -2573,6 +2587,125 @@ void BinaryFunction::printLoopInfo(raw_ostream &OS) const {
   OS << "Total number of loops: "<< BLI->TotalLoops << "\n";
   OS << "Number of outer loops: " << BLI->OuterLoops << "\n";
   OS << "Maximum nested loop depth: " << BLI->MaximumDepth << "\n\n";
+}
+
+DynoStats BinaryFunction::getDynoStats() const {
+  DynoStats Stats;
+
+  // Return empty-stats about the function we don't completely understand.
+  if (!isSimple())
+    return Stats;
+
+  // Basic block indices in the new layout for quick branch direction lookup.
+  std::unordered_map<const BinaryBasicBlock *, unsigned>
+    BBToIndexMap(layout_size());
+  unsigned Index = 0;
+  for (const auto &BB : layout()) {
+    BBToIndexMap[BB] = ++Index;
+  }
+  auto isForwardBranch = [&](const BinaryBasicBlock *From,
+                             const BinaryBasicBlock *To) {
+    return BBToIndexMap[To] > BBToIndexMap[From];
+  };
+
+  for (const auto &BB : layout()) {
+    // The basic block execution count equals to the sum of incoming branch
+    // frequencies. This may deviate from the sum of outgoing branches of the
+    // basic block especially since the block may contain a function that
+    // does not return or a function that throws an exception.
+    uint64_t BBExecutionCount = 0;
+    for (const auto &BI : BB->BranchInfo)
+      if (BI.Count != BinaryBasicBlock::COUNT_NO_PROFILE)
+        BBExecutionCount += BI.Count;
+
+    // Ignore blocks that were not executed.
+    if (BBExecutionCount == 0)
+      continue;
+
+    // Count the number of calls by iterating through all instructions.
+    for (const auto &Instr : *BB) {
+      if (BC.MIA->isCall(Instr)) {
+        Stats[DynoStats::FUNCTION_CALLS] += BBExecutionCount;
+        if (BC.MIA->getMemoryOperandNo(Instr) != -1) {
+          Stats[DynoStats::INDIRECT_CALLS] += BBExecutionCount;
+        }
+      }
+    }
+
+    Stats[DynoStats::INSTRUCTIONS] += BB->getNumNonPseudos() * BBExecutionCount;
+
+    // Update stats for branches.
+    const MCSymbol *TBB = nullptr;
+    const MCSymbol *FBB = nullptr;
+    MCInst *CondBranch = nullptr;
+    MCInst *UncondBranch = nullptr;
+    if (!BC.MIA->analyzeBranch(BB->Instructions, TBB, FBB, CondBranch,
+                               UncondBranch)) {
+      continue;
+    }
+
+    if (!CondBranch && !UncondBranch) {
+      continue;
+    }
+
+    // Simple unconditional branch.
+    if (!CondBranch) {
+      Stats[DynoStats::UNCOND_BRANCHES] += BBExecutionCount;
+      continue;
+    }
+
+    // Conditional branch that could be followed by an unconditional branch.
+    uint64_t TakenCount = BB->getBranchInfo(true).Count;
+    if (TakenCount == COUNT_NO_PROFILE)
+      TakenCount = 0;
+    uint64_t NonTakenCount = BB->getBranchInfo(false).Count;
+    if (NonTakenCount == COUNT_NO_PROFILE)
+      NonTakenCount = 0;
+
+    assert(TakenCount + NonTakenCount == BBExecutionCount &&
+           "internal calculation error");
+
+    if (isForwardBranch(BB, BB->getConditionalSuccessor(true))) {
+      Stats[DynoStats::FORWARD_COND_BRANCHES] += BBExecutionCount;
+      Stats[DynoStats::FORWARD_COND_BRANCHES_TAKEN] += TakenCount;
+    } else {
+      Stats[DynoStats::BACKWARD_COND_BRANCHES] += BBExecutionCount;
+      Stats[DynoStats::BACKWARD_COND_BRANCHES_TAKEN] += TakenCount;
+    }
+
+    if (UncondBranch) {
+      Stats[DynoStats::UNCOND_BRANCHES] += NonTakenCount;
+    }
+  }
+
+  return Stats;
+}
+
+void DynoStats::print(raw_ostream &OS, const DynoStats *Other) const {
+  auto printStatWithDelta = [&](const std::string &Name, uint64_t Stat,
+                                uint64_t OtherStat) {
+    OS << format("%'20lld : ", Stat * opts::DynoStatsScale) << Name;
+    if (Other) {
+       OS << format(" (%+.1f%%)",
+                    ( (float) Stat - (float) OtherStat ) * 100.0 /
+                      (float) (OtherStat + 1) );
+    }
+    OS << '\n';
+  };
+
+  for (auto Stat = DynoStats::FIRST_DYNO_STAT + 1;
+       Stat < DynoStats::LAST_DYNO_STAT;
+       ++Stat) {
+    printStatWithDelta(Desc[Stat], Stats[Stat], Other ? (*Other)[Stat] : 0);
+  }
+}
+
+void DynoStats::operator+=(const DynoStats &Other) {
+  for (auto Stat = DynoStats::FIRST_DYNO_STAT + 1;
+       Stat < DynoStats::LAST_DYNO_STAT;
+       ++Stat) {
+    Stats[Stat] += Other[Stat];
+  }
 }
 
 } // namespace bolt

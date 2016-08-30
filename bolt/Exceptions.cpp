@@ -345,7 +345,7 @@ void BinaryFunction::updateEHRanges() {
         EHSymbol = BC.Ctx->createTempSymbol("EH", true);
         MCInst EHLabel;
         BC.MIA->createEHLabel(EHLabel, EHSymbol, BC.Ctx.get());
-        II = BB->Instructions.insert(II, EHLabel);
+        II = BB->insertPseudoInstr(II, EHLabel);
         ++II;
       }
 

@@ -31,12 +31,12 @@ PrintReordered("print-reordered",
                cl::ZeroOrMore,
                cl::Hidden);
 
-cl::opt<bool>
+static cl::opt<bool>
 PrintAfterBranchFixup("print-after-branch-fixup",
                       cl::desc("print function after fixing local branches"),
                       cl::Hidden);
 
-cl::opt<bool>
+static cl::opt<bool>
 PrintAfterFixup("print-after-fixup",
                 cl::desc("print function after fixup"),
                 cl::Hidden);

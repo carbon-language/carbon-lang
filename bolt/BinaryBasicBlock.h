@@ -296,7 +296,7 @@ public:
 
   /// If the basic block ends with a conditional branch (possibly followed by
   /// an unconditional branch) and thus has 2 successors, return a successor
-  /// corresponding to a jump conditon which could be true or false.
+  /// corresponding to a jump condition which could be true or false.
   /// Return nullptr if the basic block does not have a conditional jump.
   const BinaryBasicBlock *getConditionalSuccessor(bool Condition) const {
     if (succ_size() != 2)
@@ -304,8 +304,14 @@ public:
     return Successors[Condition == true ? 0 : 1];
   }
 
+  const BinaryBranchInfo &getBranchInfo(bool Condition) const {
+    assert(BranchInfo.size() == 2 &&
+           "could only be called for blocks with 2 successors");
+    return BranchInfo[Condition == true ? 0 : 1];
+  };
+
   /// If the basic block ends with a conditional branch (possibly followed by
-  /// an unconditonal branch) and thus has 2 successor, revese the order of
+  /// an unconditional branch) and thus has 2 successor, reverse the order of
   /// its successors in CFG, update branch info, and return true. If the basic
   /// block does not have 2 successors return false.
   bool swapConditionalSuccessors();
@@ -346,12 +352,19 @@ public:
   }
 
   /// Add instruction before Pos in this basic block.
-  const_iterator insertPseudoInstr(const_iterator Pos, MCInst &Instr) {
+  template <typename Itr>
+  Itr insertPseudoInstr(Itr Pos, MCInst &Instr) {
     ++NumPseudos;
     return Instructions.emplace(Pos, Instr);
   }
 
-  uint32_t getNumPseudos() const { return NumPseudos; }
+  /// Return the number of pseudo instructions in the basic block.
+  uint32_t getNumPseudos() const;
+
+  /// Return the number of emitted instructions for this basic block.
+  uint32_t getNumNonPseudos() const {
+    return size() - getNumPseudos();
+  }
 
   /// Set minimum alignment for the basic block.
   void setAlignment(uint64_t Align) {
@@ -433,6 +446,13 @@ public:
     return CanOutline;
   }
 
+  /// Erase pseudo instruction at a given iterator.
+  iterator erasePseudoInstruction(iterator II) {
+    --NumPseudos;
+    return Instructions.erase(II);
+  }
+
+  /// Erase given (non-pseudo) instruction if found.
   bool eraseInstruction(MCInst *Inst) {
     return replaceInstruction(Inst, std::vector<MCInst>());
   }

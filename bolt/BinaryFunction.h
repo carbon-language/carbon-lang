@@ -52,6 +52,88 @@ namespace bolt {
 using DWARFUnitLineTable = std::pair<DWARFCompileUnit *,
                                      const DWARFDebugLine::LineTable *>;
 
+/// Class encapsulating runtime statistics about an execution unit.
+class DynoStats {
+
+#define DYNO_STATS\
+  D(FIRST_DYNO_STAT,              "<reserved>", Fn)\
+  D(FORWARD_COND_BRANCHES,        "executed forward branches", Fn)\
+  D(FORWARD_COND_BRANCHES_TAKEN,  "taken forward branches", Fn)\
+  D(BACKWARD_COND_BRANCHES,       "executed backward branches", Fn)\
+  D(BACKWARD_COND_BRANCHES_TAKEN, "taken backward branches", Fn)\
+  D(UNCOND_BRANCHES,              "executed unconditional branches", Fn)\
+  D(FUNCTION_CALLS,               "all function calls", Fn)\
+  D(INDIRECT_CALLS,               "indirect calls", Fn)\
+  D(INSTRUCTIONS,                 "executed instructions", Fn)\
+  D(ALL_BRANCHES,                 "total branches",\
+      Fadd(ALL_CONDITIONAL, UNCOND_BRANCHES))\
+  D(ALL_TAKEN,                    "taken branches",\
+      Fadd(TAKEN_CONDITIONAL, UNCOND_BRANCHES))\
+  D(NONTAKEN_CONDITIONAL,         "non-taken conditional branches",\
+      Fsub(ALL_CONDITIONAL, TAKEN_CONDITIONAL))\
+  D(TAKEN_CONDITIONAL,            "taken conditional branches",\
+      Fadd(FORWARD_COND_BRANCHES_TAKEN, BACKWARD_COND_BRANCHES_TAKEN))\
+  D(ALL_CONDITIONAL,              "all conditional branches",\
+      Fadd(FORWARD_COND_BRANCHES, BACKWARD_COND_BRANCHES))\
+  D(LAST_DYNO_STAT,               "<reserved>", Fn)
+
+public:
+#define D(name, ...) name,
+  enum : uint8_t { DYNO_STATS };
+#undef D
+
+
+private:
+  uint64_t Stats[LAST_DYNO_STAT];
+
+#define D(name, desc, ...) desc,
+  static constexpr const char *Desc[] = { DYNO_STATS };
+#undef D
+
+public:
+  DynoStats() {
+    for (auto Stat = FIRST_DYNO_STAT + 0; Stat < LAST_DYNO_STAT; ++Stat)
+      Stats[Stat] = 0;
+  }
+
+  uint64_t &operator[](size_t I) {
+    assert(I > FIRST_DYNO_STAT && I < LAST_DYNO_STAT &&
+           "index out of bounds");
+    return Stats[I];
+  }
+
+  uint64_t operator[](size_t I) const {
+    switch (I) {
+#define D(name, desc, func) \
+    case name: \
+      return func;
+#define Fn Stats[I]
+#define Fadd(a, b) operator[](a) + operator[](b)
+#define Fsub(a, b) operator[](a) - operator[](b)
+#define F(a) operator[](a)
+#define Radd(a, b) (a + b)
+#define Rsub(a, b) (a - b)
+    DYNO_STATS
+#undef Fn
+#undef D
+    default:
+      llvm_unreachable("index out of bounds");
+    }
+    return 0;
+  }
+
+  void print(raw_ostream &OS, const DynoStats *Other = nullptr) const;
+
+  void operator+=(const DynoStats &Other);
+};
+
+inline raw_ostream &operator<<(raw_ostream &OS, const DynoStats &Stats) {
+  Stats.print(OS, nullptr);
+  return OS;
+}
+
+DynoStats operator+(const DynoStats &A, const DynoStats &B);
+
 /// BinaryFunction is a representation of machine-level function.
 //
 /// We use the term "Binary" as "Machine" was already taken.
@@ -460,7 +542,7 @@ public:
   /// end of basic blocks.
   void modifyLayout(LayoutType Type, bool MinBranchClusters, bool Split);
 
-  /// Find the loops in the CFG of the function and store infromation about
+  /// Find the loops in the CFG of the function and store information about
   /// them.
   void calculateLoopInfo();
 
@@ -469,7 +551,7 @@ public:
     return BLI != nullptr;
   }
 
-  /// Print loop inforamtion about the function.
+  /// Print loop information about the function.
   void printLoopInfo(raw_ostream &OS) const;
 
   /// View CFG in graphviz program
@@ -490,6 +572,13 @@ public:
   const BinaryContext &getBinaryContext() const {
     return BC;
   }
+
+  /// Return dynostats for the function.
+  ///
+  /// The function relies on branch instructions being in-sync with CFG for
+  /// branch instructions stats. Thus it is better to call it after
+  /// fixBranches().
+  DynoStats getDynoStats() const;
 
   /// Get basic block index assuming it belongs to this function.
   unsigned getIndex(const BinaryBasicBlock *BB) const {

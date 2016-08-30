@@ -114,6 +114,25 @@ void BinaryBasicBlock::addBranchInstruction(const BinaryBasicBlock *Successor) {
   Instructions.emplace_back(std::move(NewInst));
 }
 
+uint32_t BinaryBasicBlock::getNumPseudos() const {
+#ifndef NDEBUG
+  auto &BC = Function->getBinaryContext();
+  uint32_t N = 0;
+  for (auto &Instr : Instructions) {
+    if (BC.MII->get(Instr.getOpcode()).isPseudo())
+      ++N;
+  }
+  if (N != NumPseudos) {
+    errs() << "BOLT-ERROR: instructions for basic block " << getName()
+           << " in function " << *Function << ": calculated pseudos "
+           << N << ", set pseudos " << NumPseudos << ", size " << size()
+           << '\n';
+    llvm_unreachable("pseudos mismatch");
+  }
+#endif
+  return NumPseudos;
+}
+
 void BinaryBasicBlock::dump(BinaryContext& BC) const {
   if (Label) outs() << Label->getName() << ":\n";
   BC.printInstructions(outs(), Instructions.begin(), Instructions.end(), Offset);

@@ -90,6 +90,10 @@ BreakFunctionNames("break-funcs",
                    cl::value_desc("func1,func2,func3,..."),
                    cl::Hidden);
 
+cl::opt<bool>
+PrintDynoStats("dyno-stats",
+               cl::desc("print execution info based on profile"));
+
 static cl::list<std::string>
 FunctionNames("funcs",
               cl::CommaSeparated,
@@ -1073,9 +1077,21 @@ void RewriteInstance::disassembleFunctions() {
 }
 
 void RewriteInstance::runOptimizationPasses() {
-  // Run optimization passes.
-  //
+  DynoStats dynoStatsBefore;
+  if (opts::PrintDynoStats) {
+    dynoStatsBefore = getDynoStats();
+    outs() << "BOLT-INFO: program-wide dynostats before running "
+              "optimizations:\n\n" << dynoStatsBefore << '\n';
+  }
+
   BinaryFunctionPassManager::runAllPasses(*BC, BinaryFunctions, LargeFunctions);
+
+  if (opts::PrintDynoStats) {
+    auto dynoStatsAfter = getDynoStats();
+    outs() << "BOLT-INFO: program-wide dynostats after optimizaions:\n\n";
+    dynoStatsAfter.print(outs(), &dynoStatsBefore);
+    outs() << '\n';
+  }
 }
 
 namespace {

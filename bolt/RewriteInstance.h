@@ -14,6 +14,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
 #define LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
 
+#include "BinaryFunction.h"
 #include "DebugData.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
@@ -31,7 +32,6 @@ class tool_output_file;
 namespace bolt {
 
 class BinaryContext;
-class BinaryFunction;
 class CFIReaderWriter;
 class DataReader;
 
@@ -342,6 +342,19 @@ private:
                                        uint64_t Address,
                                        uint64_t Size,
                                        bool IsSimple);
+
+  /// Return program-wide dynostats.
+  DynoStats getDynoStats() const {
+    DynoStats dynoStats;
+    for (auto &BFI : BinaryFunctions) {
+      auto &BF = BFI.second;
+      if (BF.isSimple()) {
+        dynoStats += BF.getDynoStats();
+      }
+    }
+    return dynoStats;
+  }
+
 };
 
 } // namespace bolt
