@@ -604,9 +604,9 @@ private:
   OutputSectionCommand *readOutputSectionDescription(StringRef OutSec);
   std::vector<uint8_t> readOutputSectionFiller();
   std::vector<StringRef> readOutputSectionPhdrs();
-  InputSectionDescription *readInputSectionDescription();
+  InputSectionDescription *readInputSectionDescription(StringRef Tok);
   std::vector<StringRef> readInputFilePatterns();
-  InputSectionDescription *readInputSectionRules();
+  InputSectionDescription *readInputSectionRules(StringRef FilePattern);
   unsigned readPhdrType();
   SortKind readSortKind();
   SymbolAssignment *readProvideHidden(bool Provide, bool Hidden);
@@ -845,9 +845,10 @@ SortKind ScriptParser::readSortKind() {
   return SortNone;
 }
 
-InputSectionDescription *ScriptParser::readInputSectionRules() {
+InputSectionDescription *
+ScriptParser::readInputSectionRules(StringRef FilePattern) {
   auto *Cmd = new InputSectionDescription;
-  Cmd->FilePattern = next();
+  Cmd->FilePattern = FilePattern;
   expect("(");
 
   // Read EXCLUDE_FILE().
@@ -877,19 +878,21 @@ InputSectionDescription *ScriptParser::readInputSectionRules() {
   return Cmd;
 }
 
-InputSectionDescription *ScriptParser::readInputSectionDescription() {
+InputSectionDescription *
+ScriptParser::readInputSectionDescription(StringRef Tok) {
   // Input section wildcard can be surrounded by KEEP.
   // https://sourceware.org/binutils/docs/ld/Input-Section-Keep.html#Input-Section-Keep
-  if (skip("KEEP")) {
+  if (Tok == "KEEP") {
     expect("(");
-    InputSectionDescription *Cmd = readInputSectionRules();
+    StringRef FilePattern = next();
+    InputSectionDescription *Cmd = readInputSectionRules(FilePattern);
     expect(")");
     Opt.KeptSections.insert(Opt.KeptSections.end(),
                             Cmd->SectionPatterns.begin(),
                             Cmd->SectionPatterns.end());
     return Cmd;
   }
-  return readInputSectionRules();
+  return readInputSectionRules(Tok);
 }
 
 void ScriptParser::readSort() {
@@ -938,16 +941,13 @@ ScriptParser::readOutputSectionDescription(StringRef OutSec) {
   expect("{");
 
   while (!Error && !skip("}")) {
-    if (peek().startswith("*") || peek() == "KEEP") {
-      Cmd->Commands.emplace_back(readInputSectionDescription());
-      continue;
-    }
-
     StringRef Tok = next();
     if (SymbolAssignment *Assignment = readProvideOrAssignment(Tok))
       Cmd->Commands.emplace_back(Assignment);
     else if (Tok == "SORT")
       readSort();
+    else if (peek() == "(")
+      Cmd->Commands.emplace_back(readInputSectionDescription(Tok));
     else
       setError("unknown command " + Tok);
   }
