@@ -337,6 +337,11 @@ namespace llvm {
     /// Complexity: O(size() + Chars.size())
     size_t find_last_not_of(StringRef Chars, size_t From = npos) const;
 
+    /// Return true if the given string is a substring of *this, and false
+    /// otherwise.
+    LLVM_ATTRIBUTE_ALWAYS_INLINE
+    bool contains(StringRef Other) const { return find(Other) != npos; }
+
     /// @}
     /// @name Helpful Algorithms
     /// @{
