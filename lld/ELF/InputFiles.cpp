@@ -635,8 +635,7 @@ Symbol *BitcodeFile::createSymbol(const DenseSet<const Comdat *> &KeptComdats,
   StringRef NameRef = Saver.save(StringRef(Name));
 
   uint32_t Flags = Sym.getFlags();
-  bool IsWeak = Flags & BasicSymbolRef::SF_Weak;
-  uint32_t Binding = IsWeak ? STB_WEAK : STB_GLOBAL;
+  uint32_t Binding = (Flags & BasicSymbolRef::SF_Weak) ? STB_WEAK : STB_GLOBAL;
 
   uint8_t Type = STT_NOTYPE;
   bool CanOmitFromDynSym = false;
@@ -681,7 +680,7 @@ Symbol *BitcodeFile::createSymbol(const DenseSet<const Comdat *> &KeptComdats,
                                       Binding, Visibility, STT_OBJECT,
                                       HasUnnamedAddr, this);
   }
-  return Symtab<ELFT>::X->addBitcode(NameRef, IsWeak, Visibility, Type,
+  return Symtab<ELFT>::X->addBitcode(NameRef, Binding, Visibility, Type,
                                      CanOmitFromDynSym, HasUnnamedAddr, this);
 }
 

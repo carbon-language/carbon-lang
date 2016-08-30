@@ -460,7 +460,7 @@ void SymbolTable<ELFT>::addShared(SharedFile<ELFT> *F, StringRef Name,
 }
 
 template <class ELFT>
-Symbol *SymbolTable<ELFT>::addBitcode(StringRef Name, bool IsWeak,
+Symbol *SymbolTable<ELFT>::addBitcode(StringRef Name, uint8_t Binding,
                                       uint8_t StOther, uint8_t Type,
                                       bool CanOmitFromDynSym,
                                       bool HasUnnamedAddr, BitcodeFile *F) {
@@ -469,8 +469,7 @@ Symbol *SymbolTable<ELFT>::addBitcode(StringRef Name, bool IsWeak,
   std::tie(S, WasInserted) =
       insert(Name, Type, StOther & 3, CanOmitFromDynSym, HasUnnamedAddr,
              /*IsUsedInRegularObj*/ false, F);
-  int Cmp = compareDefinedNonCommon<ELFT>(S, WasInserted,
-                                          IsWeak ? STB_WEAK : STB_GLOBAL);
+  int Cmp = compareDefinedNonCommon<ELFT>(S, WasInserted, Binding);
   if (Cmp > 0)
     replaceBody<DefinedBitcode>(S, Name, StOther, Type, F);
   else if (Cmp == 0)

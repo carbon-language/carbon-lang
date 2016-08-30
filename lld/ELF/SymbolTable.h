@@ -72,8 +72,8 @@ public:
 
   void addLazyArchive(ArchiveFile *F, const llvm::object::Archive::Symbol S);
   void addLazyObject(StringRef Name, LazyObjectFile &Obj);
-  Symbol *addBitcode(StringRef Name, bool IsWeak, uint8_t StOther, uint8_t Type,
-                     bool CanOmitFromDynSym, bool HasUnnamedAddr,
+  Symbol *addBitcode(StringRef Name, uint8_t Binding, uint8_t StOther,
+                     uint8_t Type, bool CanOmitFromDynSym, bool HasUnnamedAddr,
                      BitcodeFile *File);
 
   Symbol *addCommon(StringRef N, uint64_t Size, uint64_t Alignment,
