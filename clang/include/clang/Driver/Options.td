@@ -1598,6 +1598,10 @@ def mfloat128: Flag<["-"], "mfloat128">,
     Group<m_ppc_Features_Group>;
 def mno_float128 : Flag<["-"], "mno-float128">,
     Group<m_ppc_Features_Group>;
+def mlongcall: Flag<["-"], "mlongcall">,
+    Group<m_ppc_Features_Group>;
+def mno_longcall : Flag<["-"], "mno-longcall">,
+    Group<m_ppc_Features_Group>;
 
 def faltivec : Flag<["-"], "faltivec">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable AltiVec vector initializer syntax">;
