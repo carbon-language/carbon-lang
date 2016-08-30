@@ -629,6 +629,27 @@ private:
   typedef const typename std::remove_reference<T>::type *const_pointer;
 
 public:
+
+#ifdef _MSC_VER
+  // WARNING: This constructor should *never* be called in user code.
+  // It is provided under MSVC only so that Expected can be used
+  // with MSVC's <future> header, which requires types to be default
+  // constructible.
+  //
+  // FIXME; Kill this as soon as MSVC's <future> implementation no longer
+  // requires types to be default constructible.
+  Expected()
+      : HasError(true)
+#ifndef NDEBUG
+        ,
+        Checked(true)
+#endif // NDEBUG
+  {
+    new (getErrorStorage()) Error();
+    !!*getErrorStorage();
+  }
+#endif // _MSC_VER
+
   /// Create an Expected<T> error value from the given Error.
   Expected(Error Err)
       : HasError(true)
