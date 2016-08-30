@@ -33,13 +33,16 @@ body: |
   bb.0.entry:
     liveins: %x0, %x1, %x2, %x3
     ; CHECK-LABEL: name: test_scalar_add_big
-    ; CHECK-DAG: [[LHS_LO:%.*]](64), [[LHS_HI:%.*]](64) = G_EXTRACT { s64, s64, s128 } %4, 0, 64
-    ; CHECK-DAG: [[RHS_LO:%.*]](64), [[RHS_HI:%.*]](64) = G_EXTRACT { s64, s64, s128 } %5, 0, 64
+    ; CHECK-NOT: G_EXTRACT
+    ; CHECK-NOT: G_SEQUENCE
     ; CHECK-DAG: [[CARRY0_32:%.*]](32) = G_CONSTANT s32 0
     ; CHECK-DAG: [[CARRY0:%[0-9]+]](1) = G_TRUNC { s1, s32 } [[CARRY0_32]]
-    ; CHECK: [[RES_LO:%.*]](64), [[CARRY:%.*]](1) = G_UADDE s64 [[LHS_LO]], [[RHS_LO]], [[CARRY0]]
-    ; CHECK: [[RES_HI:%.*]](64), {{%.*}}(1) = G_UADDE s64 [[LHS_HI]], [[RHS_HI]], [[CARRY]]
-    ; CHECK: %6(128) = G_SEQUENCE { s128, s64, s64 } [[RES_LO]], 0, [[RES_HI]], 64
+    ; CHECK: [[RES_LO:%.*]](64), [[CARRY:%.*]](1) = G_UADDE s64 %0, %2, [[CARRY0]]
+    ; CHECK: [[RES_HI:%.*]](64), {{%.*}}(1) = G_UADDE s64 %1, %3, [[CARRY]]
+    ; CHECK-NOT: G_EXTRACT
+    ; CHECK-NOT: G_SEQUENCE
+    ; CHECK: %x0 = COPY [[RES_LO]]
+    ; CHECK: %x1 = COPY [[RES_HI]]
 
     %0(64) = COPY %x0
     %1(64) = COPY %x1
@@ -93,11 +96,14 @@ body: |
   bb.0.entry:
     liveins: %q0, %q1, %q2, %q3
     ; CHECK-LABEL: name: test_vector_add
-    ; CHECK-DAG: [[LHS_LO:%.*]](128), [[LHS_HI:%.*]](128) = G_EXTRACT { s128, s128, s256 } %4, 0, 128
-    ; CHECK-DAG: [[RHS_LO:%.*]](128), [[RHS_HI:%.*]](128) = G_EXTRACT { s128, s128, s256 } %5, 0, 128
-    ; CHECK: [[RES_LO:%.*]](128) = G_ADD <2 x s64> [[LHS_LO]], [[RHS_LO]]
-    ; CHECK: [[RES_HI:%.*]](128) = G_ADD <2 x s64> [[LHS_HI]], [[RHS_HI]]
-    ; CHECK: %6(256) = G_SEQUENCE { s256, s128, s128 } [[RES_LO]], 0, [[RES_HI]], 128
+    ; CHECK-NOT: G_EXTRACT
+    ; CHECK-NOT: G_SEQUENCE
+    ; CHECK: [[RES_LO:%.*]](128) = G_ADD <2 x s64> %0, %2
+    ; CHECK: [[RES_HI:%.*]](128) = G_ADD <2 x s64> %1, %3
+    ; CHECK-NOT: G_EXTRACT
+    ; CHECK-NOT: G_SEQUENCE
+    ; CHECK: %q0 = COPY [[RES_LO]]
+    ; CHECK: %q1 = COPY [[RES_HI]]
 
     %0(128) = COPY %q0
     %1(128) = COPY %q1
