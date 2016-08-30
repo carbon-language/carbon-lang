@@ -621,6 +621,18 @@ static SymbolBody *findDemangled(const std::map<std::string, SymbolBody *> &D,
   return nullptr;
 }
 
+static std::vector<SymbolBody *>
+findAllDemangled(const std::map<std::string, SymbolBody *> &D,
+                 StringRef Pattern) {
+  std::vector<SymbolBody *> Res;
+  for (auto &P : D) {
+    SymbolBody *Body = P.second;
+    if (!Body->isUndefined() && globMatch(Pattern, P.first))
+      Res.push_back(Body);
+  }
+  return Res;
+}
+
 // This function processes the --version-script option by marking all global
 // symbols with the VersionScriptGlobal flag, which acts as a filter on the
 // dynamic symbol table.
@@ -665,10 +677,15 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
   for (size_t I = Config->VersionDefinitions.size() - 1; I != (size_t)-1; --I) {
     VersionDefinition &V = Config->VersionDefinitions[I];
     for (SymbolVersion &Sym : V.Globals)
-      if (hasWildcard(Sym.Name))
-        for (SymbolBody *B : findAll(Sym.Name))
+      if (hasWildcard(Sym.Name)) {
+        std::vector<SymbolBody *> All =
+            Sym.IsExternCpp ? findAllDemangled(Demangled, Sym.Name)
+                            : findAll(Sym.Name);
+
+        for (SymbolBody *B : All)
           if (B->symbol()->VersionId == Config->DefaultSymbolVersion)
             B->symbol()->VersionId = V.Id;
+      }
   }
 }
 
