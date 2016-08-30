@@ -1971,15 +1971,6 @@ Instruction *InstCombiner::foldICmpUDivConstant(ICmpInst &Cmp,
 Instruction *InstCombiner::foldICmpDivConstant(ICmpInst &Cmp,
                                                BinaryOperator *Div,
                                                const APInt *C) {
-  // FIXME: These checks restrict all folds under here to scalar types.
-  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
-  if (!RHS)
-    return nullptr;
-
-  ConstantInt *DivRHS = dyn_cast<ConstantInt>(Div->getOperand(1));
-  if (!DivRHS)
-    return nullptr;
-  
   // Fold: icmp pred ([us]div X, C2), C -> range test
   // Fold this div into the comparison, producing a range check.
   // Determine, based on the divide type, what the range is being
@@ -2002,16 +1993,22 @@ Instruction *InstCombiner::foldICmpDivConstant(ICmpInst &Cmp,
   if (!Cmp.isEquality() && DivIsSigned != Cmp.isSigned())
     return nullptr;
 
-  // FIXME: These 3 checks can be asserts.
-  if (*C2 == 0)
-    return nullptr; // The ProdOV computation fails on divide by zero.
-  if (DivIsSigned && C2->isAllOnesValue())
-    return nullptr; // The overflow computation also screws up here
-  if (*C2 == 1) {
-    // This eliminates some funny cases with INT_MIN.
-    Cmp.setOperand(0, Div->getOperand(0));   // X/1 == X.
-    return &Cmp;
-  }
+  // These constant divides should already be folded in InstSimplify.
+  assert(*C2 != 0 && "The ProdOV computation fails on divide by zero.");
+  assert(*C2 != 1 && "Funny cases with INT_MIN will fail.");
+
+  // This constant divide should already be folded in InstCombine.
+  assert(!(DivIsSigned && C2->isAllOnesValue()) &&
+         "The overflow computation will fail.");
+
+  // FIXME: These checks restrict all folds under here to scalar types.
+  ConstantInt *RHS = dyn_cast<ConstantInt>(Cmp.getOperand(1));
+  if (!RHS)
+    return nullptr;
+
+  ConstantInt *DivRHS = dyn_cast<ConstantInt>(Div->getOperand(1));
+  if (!DivRHS)
+    return nullptr;
 
   // Compute Prod = CI * DivRHS. We are essentially solving an equation
   // of form X/C2=C. We solve for X by multiplying C2 (DivRHS) and
