@@ -932,8 +932,7 @@ bool BinaryFunction::buildCFG() {
     // Add associated CFI instrs. We always add the CFI instruction that is
     // located immediately after this instruction, since the next CFI
     // instruction reflects the change in state caused by this instruction.
-    auto NextInstr = I;
-    ++NextInstr;
+    auto NextInstr = std::next(I);
     uint64_t CFIOffset;
     if (NextInstr != E)
       CFIOffset = NextInstr->first;
@@ -1375,7 +1374,7 @@ void BinaryFunction::removeConditionalTailCalls() {
     std::tie(LP, Action) = BC.MIA->getEHInfo(CondTailCallInst);
     assert(!LP && "found tail call with associated landing pad");
 
-    // Create the uncoditional tail call instruction.
+    // Create the unconditional tail call instruction.
     const MCSymbol &TailCallTargetLabel =
       cast<MCSymbolRefExpr>(
         CondTailCallInst.getOperand(0).getExpr())->getSymbol();
@@ -1386,21 +1385,22 @@ void BinaryFunction::removeConditionalTailCalls() {
     // direction of the jump when it is taken. We want to preserve this
     // direction.
     BinaryBasicBlock *TailCallBB = nullptr;
-    if (getAddress() > TCInfo.TargetAddress) {
+    MCSymbol *TCLabel = BC.Ctx->createTempSymbol("TC", true);
+    if (getAddress() >= TCInfo.TargetAddress) {
       // Backward jump: We will reverse the condition of the tail call, change
       // its target to the following (currently fall-through) block, and insert
-      // a new block between them that will contain the uncoditional tail call.
+      // a new block between them that will contain the unconditional tail call.
 
       // Reverse the condition of the tail call and update its target.
       unsigned InsertIdx = getIndex(BB) + 1;
-      assert(InsertIdx < size() && "no fall-through for condtional tail call");
+      assert(InsertIdx < size() && "no fall-through for conditional tail call");
       BinaryBasicBlock *NextBB = getBasicBlockAtIndex(InsertIdx);
+
       BC.MIA->reverseBranchCondition(
           CondTailCallInst, NextBB->getLabel(), BC.Ctx.get());
 
       // Create a basic block containing the unconditional tail call instruction
       // and place it between BB and NextBB.
-      MCSymbol *TCLabel = BC.Ctx->createTempSymbol("TC", true);
       std::vector<std::unique_ptr<BinaryBasicBlock>> TailCallBBs;
       TailCallBBs.emplace_back(createBasicBlock(NextBB->getOffset(), TCLabel));
       TailCallBBs[0]->addInstruction(TailCallInst);
@@ -1411,15 +1411,14 @@ void BinaryFunction::removeConditionalTailCalls() {
       BBCFIState.insert(BBCFIState.begin() + InsertIdx, TCInfo.CFIStateBefore);
     } else {
       // Forward jump: we will create a new basic block at the end of the
-      // function containing the uncoditional tail call and change the target of
-      // the conditional tail call to this basic block.
+      // function containing the unconditional tail call and change the target
+      // of the conditional tail call to this basic block.
 
       // Create a basic block containing the unconditional tail call
       // instruction and place it at the end of the function.
       const BinaryBasicBlock *LastBB = BasicBlocks.back();
       uint64_t NewBlockOffset =
         LastBB->Offset + BC.computeCodeSize(LastBB->begin(), LastBB->end());
-      MCSymbol *TCLabel = BC.Ctx->createTempSymbol("TC", true);
       TailCallBB = addBasicBlock(NewBlockOffset, TCLabel);
       TailCallBB->addInstruction(TailCallInst);
 
@@ -1434,9 +1433,11 @@ void BinaryFunction::removeConditionalTailCalls() {
       BC.MIA->replaceBranchTarget(CondTailCallInst, TCLabel, BC.Ctx.get());
     }
 
-    // Add the CFG edge from BB to TailCallBB and the corresponding profile
-    // info.
+    // Add CFG edge with profile info from BB to TailCallBB info and swap
+    // edges if the TailCallBB corresponds to the taken branch.
     BB->addSuccessor(TailCallBB, TCInfo.Count, TCInfo.Mispreds);
+    if (getAddress() < TCInfo.TargetAddress)
+      BB->swapConditionalSuccessors();
 
     // Add execution count for the block.
     if (hasValidProfile())
@@ -1698,7 +1699,6 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool MinBranchClusters,
 
   if (Split)
     splitFunction();
-  fixBranches();
 }
 
 namespace {
@@ -1856,168 +1856,57 @@ void BinaryFunction::dumpGraphToFile(std::string Filename) const {
   dumpGraph(of);
 }
 
-const BinaryBasicBlock *
-BinaryFunction::getOriginalLayoutSuccessor(const BinaryBasicBlock *BB) const {
-  // This is commented out because it makes BOLT run too slowly.
-  //assert(std::is_sorted(begin(), end()));
-  auto I = std::upper_bound(begin(), end(), *BB);
-  assert(I != begin() && "first basic block not at offset 0");
-
-  if (I == end())
-    return nullptr;
-  return &*I;
-}
-
 void BinaryFunction::fixBranches() {
   auto &MIA = BC.MIA;
+  auto *Ctx = BC.Ctx.get();
 
   for (unsigned I = 0, E = BasicBlocksLayout.size(); I != E; ++I) {
     BinaryBasicBlock *BB = BasicBlocksLayout[I];
-
     const MCSymbol *TBB = nullptr;
     const MCSymbol *FBB = nullptr;
     MCInst *CondBranch = nullptr;
     MCInst *UncondBranch = nullptr;
     if (!MIA->analyzeBranch(BB->Instructions, TBB, FBB, CondBranch,
-                            UncondBranch)) {
+                            UncondBranch))
       continue;
-    }
 
-    // Check if the original fall-through for this block has been moved
-    const MCSymbol *FT = nullptr;
-    bool HotColdBorder = false;
-    if (I + 1 != BasicBlocksLayout.size()) {
-      FT = BasicBlocksLayout[I + 1]->getLabel();
-      if (BB->IsCold != BasicBlocksLayout[I + 1]->IsCold)
-        HotColdBorder = true;
-    }
-    const BinaryBasicBlock *OldFTBB = getOriginalLayoutSuccessor(BB);
-    const MCSymbol *OldFT = OldFTBB ? OldFTBB->getLabel() : nullptr;
-
-    // Case 1: There are no branches in this basic block and it just falls
-    // through
-    if (CondBranch == nullptr && UncondBranch == nullptr) {
-      // Case 1a: Last instruction, excluding pseudos, is a return, so it does
-      // *not* fall through to the next block.
-      if (!BB->empty()) {
-        auto LastInstIter = --BB->end();
-        while (BC.MII->get(LastInstIter->getOpcode()).isPseudo() &&
-               LastInstIter != BB->begin())
-          --LastInstIter;
-        if (MIA->isReturn(*LastInstIter))
-          continue;
-      }
-      // Case 1b: Layout has changed and the fallthrough is not the same (or the
-      // fallthrough got moved to a cold region). Need to add a new
-      // unconditional branch to jump to the old fallthrough.
-      if ((FT != OldFT || HotColdBorder) && OldFT != nullptr) {
-        MCInst NewInst;
-        if (!MIA->createUncondBranch(NewInst, OldFT, BC.Ctx.get()))
-          llvm_unreachable("Target does not support creating new branches");
-        BB->Instructions.emplace_back(std::move(NewInst));
-      }
-      // Case 1c: Layout hasn't changed, nothing to do.
-      continue;
-    }
-
-    // Case 2: There is a single jump, unconditional, in this basic block
-    if (CondBranch == nullptr) {
-      // Case 2a: It jumps to the new fall-through, so we can delete it
-      if (TBB == FT && !HotColdBorder) {
-        BB->eraseInstruction(UncondBranch);
-      }
-      // Case 2b: If 2a doesn't happen, there is nothing we can do
-      continue;
-    }
-
-    // Case 3: There is a single jump, conditional, in this basic block
-    if (UncondBranch == nullptr) {
-      // Case 3a: If the taken branch goes to the next block in the new layout,
-      // invert this conditional branch logic so we can make this a fallthrough.
-      if (TBB == FT && !HotColdBorder) {
-        if (OldFT == nullptr) {
-          errs() << "BOLT-ERROR: malformed CFG for function " << *this
-                 << " in basic block " << BB->getName() << '\n';
-        }
-        assert(OldFT != nullptr && "malformed CFG");
-        if (!MIA->reverseBranchCondition(*CondBranch, OldFT, BC.Ctx.get()))
-          llvm_unreachable("Target does not support reversing branches");
-        continue;
-      }
-      // Case 3b: Need to add a new unconditional branch because layout
-      // has changed
-      if ((FT != OldFT || HotColdBorder) && OldFT != nullptr) {
-        MCInst NewInst;
-        if (!MIA->createUncondBranch(NewInst, OldFT, BC.Ctx.get()))
-          llvm_unreachable("Target does not support creating new branches");
-        BB->Instructions.emplace_back(std::move(NewInst));
-        continue;
-      }
-      // Case 3c: Old fall-through is the same as the new one, no need to change
-      continue;
-    }
-
-    // Case 4: There are two jumps in this basic block, one conditional followed
-    // by another unconditional.
-    // Case 4a: If the unconditional jump target is the new fall through,
-    // delete it.
-    if (FBB == FT && !HotColdBorder) {
+    // We will create unconditional branch with correct destination if needed.
+    if (UncondBranch)
       BB->eraseInstruction(UncondBranch);
-      continue;
-    }
-    // Case 4b: If the taken branch goes to the next block in the new layout,
-    // invert this conditional branch logic so we can make this a fallthrough.
-    // Now we don't need the unconditional jump anymore, so we also delete it.
-    if (TBB == FT && !HotColdBorder) {
-      if (!MIA->reverseBranchCondition(*CondBranch, FBB, BC.Ctx.get()))
-        llvm_unreachable("Target does not support reversing branches");
-      BB->eraseInstruction(UncondBranch);
-      continue;
-    }
-    // Case 4c: Nothing interesting happening.
-  }
-}
 
-void BinaryFunction::fixFallthroughBranch(BinaryBasicBlock *Block) {
-  // No successors, must be a return or similar.
-  if (Block->succ_size() == 0) return;
+    // Basic block that follows the current one in the final layout.
+    const BinaryBasicBlock *NextBB = nullptr;
+    if (I + 1 != E && BB->IsCold == BasicBlocksLayout[I + 1]->IsCold)
+      NextBB = BasicBlocksLayout[I + 1];
 
-  const MCSymbol *TBB = nullptr;
-  const MCSymbol *FBB = nullptr;
-  MCInst *CondBranch = nullptr;
-  MCInst *UncondBranch = nullptr;
-
-  if (!BC.MIA->analyzeBranch(Block->Instructions, TBB, FBB, CondBranch,
-                             UncondBranch)) {
-    assert(0);
-    return;
-  }
-
-  if (!UncondBranch) {
-    const BinaryBasicBlock* FallThroughBB = nullptr;
-    if (CondBranch) {
-      assert(TBB);
-      // Find the first successor that is not a target of the conditional
-      // branch.
-      for (auto *Succ : Block->successors()) {
-        if (Succ->getLabel() != TBB) {
-          FallThroughBB = Succ;
-          break;
-        }
+    if (BB->succ_size() == 1) {
+      // __builtin_unreachable() could create a conditional branch that
+      // falls-through into the next function - hence the block will have only
+      // one valid successor. Since behaviour is undefined - we replace 
+      // the conditional branch with an unconditional if required.
+      if (CondBranch)
+        BB->eraseInstruction(CondBranch);
+      if (BB->getSuccessor() == NextBB)
+        continue;
+      BB->addBranchInstruction(BB->getSuccessor());
+    } else if (BB->succ_size() == 2) {
+      assert(CondBranch && "conditional branch expected");
+      const auto *TSuccessor = BB->getConditionalSuccessor(true);
+      const auto *FSuccessor = BB->getConditionalSuccessor(false);
+      if (NextBB && NextBB == TSuccessor) {
+        std::swap(TSuccessor, FSuccessor);
+        MIA->reverseBranchCondition(*CondBranch, TSuccessor->getLabel(), Ctx);
+        BB->swapConditionalSuccessors();
+      } else {
+        MIA->replaceBranchTarget(*CondBranch, TSuccessor->getLabel(), Ctx);
       }
-    } else {
-      // pick first successor as fallthrough.
-      FallThroughBB = *Block->succ_begin();
+      if (!NextBB || (NextBB != TSuccessor && NextBB != FSuccessor)) {
+        BB->addBranchInstruction(FSuccessor);
+      }
     }
-
-    assert(FallThroughBB);
-
-    const auto FallThroughLabel = FallThroughBB->getLabel();
-    MCInst NewInst;
-    if (!BC.MIA->createUncondBranch(NewInst, FallThroughLabel, BC.Ctx.get())) {
-      llvm_unreachable("Target does not support creating new branches");
-    }
-    Block->addInstruction(NewInst);
+    // Cases where the number of successors is 0 (block ends with a
+    // terminator) or more than 2 (switch table) don't require branch
+    // instruction adjustments.
   }
 }
 

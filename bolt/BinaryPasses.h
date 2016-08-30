@@ -141,6 +141,14 @@ class ReorderBasicBlocks : public BinaryFunctionPass {
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
+/// Sync local branches with CFG.
+class FixupBranches : public BinaryFunctionPass {
+ public:
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
 /// Fix the CFI state and exception handling information after all other
 /// passes have completed.
 class FixupFunctions : public BinaryFunctionPass {

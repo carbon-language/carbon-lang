@@ -31,11 +31,15 @@ PrintReordered("print-reordered",
                cl::ZeroOrMore,
                cl::Hidden);
 
-static cl::opt<bool>
-PrintEHRanges("print-eh-ranges",
-              cl::desc("print function with updated exception ranges"),
-              cl::ZeroOrMore,
-              cl::Hidden);
+cl::opt<bool>
+PrintAfterBranchFixup("print-after-branch-fixup",
+                      cl::desc("print function after fixing local branches"),
+                      cl::Hidden);
+
+cl::opt<bool>
+PrintAfterFixup("print-after-fixup",
+                cl::desc("print function after fixup"),
+                cl::Hidden);
 
 static cl::opt<bool>
 PrintUCE("print-uce",
@@ -463,10 +467,7 @@ InlineSmallFunctions::inlineCall(
         } else {
           InlinedInstanceBB->addSuccessor(InlinedInstance.back().get());
         }
-        MCInst ExitBranchInst;
-        const MCSymbol *ExitLabel = InlinedInstance.back().get()->getLabel();
-        BC.MIA->createUncondBranch(ExitBranchInst, ExitLabel, BC.Ctx.get());
-        InlinedInstanceBB->addInstruction(std::move(ExitBranchInst));
+        InlinedInstanceBB->addBranchInstruction(InlinedInstance.back().get());
       } else if (InlinedInstanceBBIndex > 0 || !CanMergeFirstInlinedBlock) {
         assert(CallInstIndex == CallerBB->size() - 1);
         assert(CallerBB->succ_size() <= 1);
@@ -478,10 +479,7 @@ InlineSmallFunctions::inlineCall(
           } else {
             InlinedInstanceBB->addSuccessor(*CallerBB->succ_begin());
           }
-          MCInst ExitBranchInst;
-          const MCSymbol *ExitLabel = (*CallerBB->succ_begin())->getLabel();
-          BC.MIA->createUncondBranch(ExitBranchInst, ExitLabel, BC.Ctx.get());
-          InlinedInstanceBB->addInstruction(std::move(ExitBranchInst));
+          InlinedInstanceBB->addBranchInstruction(*CallerBB->succ_begin());
         }
       }
     }
@@ -882,6 +880,25 @@ void ReorderBasicBlocks::runOnFunctions(
   }
 }
 
+void FixupBranches::runOnFunctions(
+  BinaryContext &BC,
+  std::map<uint64_t, BinaryFunction> &BFs,
+  std::set<uint64_t> &) {
+  for (auto &It : BFs) {
+    auto &Function = It.second;
+
+    if (!Function.isSimple() || !opts::shouldProcess(Function))
+      continue;
+
+    Function.fixBranches();
+
+    if (opts::PrintAll || opts::PrintAfterBranchFixup)
+      Function.print(errs(), "after branch fixup", true);
+    if (opts::DumpDotAll)
+      Function.dumpGraphForPass("after-branch-fixup");
+  }
+}
+
 void FixupFunctions::runOnFunctions(
   BinaryContext &BC,
   std::map<uint64_t, BinaryFunction> &BFs,
@@ -908,10 +925,10 @@ void FixupFunctions::runOnFunctions(
 
     // Update exception handling information.
     Function.updateEHRanges();
-    if (opts::PrintAll || opts::PrintEHRanges)
-      Function.print(outs(), "after updating EH ranges", true);
+    if (opts::PrintAll || opts::PrintAfterFixup)
+      Function.print(errs(), "after fixup", true);
     if (opts::DumpDotAll)
-      Function.dumpGraphForPass("update-EH-ranges");
+      Function.dumpGraphForPass("after-fixup");
   }
 }
 

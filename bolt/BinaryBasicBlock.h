@@ -288,9 +288,31 @@ public:
     return Label;
   }
 
-  /// Get successor with given label. Returns nullptr if no such
-  /// successor is found.
-  BinaryBasicBlock *getSuccessor(const MCSymbol *Label) const;
+  /// Get successor with given \p Label if \p Label != nullptr.
+  /// Returns nullptr if no such successor is found.
+  /// If the \p Label == nullptr and the block has only one successor then
+  /// return the successor.
+  BinaryBasicBlock *getSuccessor(const MCSymbol *Label = nullptr) const;
+
+  /// If the basic block ends with a conditional branch (possibly followed by
+  /// an unconditional branch) and thus has 2 successors, return a successor
+  /// corresponding to a jump conditon which could be true or false.
+  /// Return nullptr if the basic block does not have a conditional jump.
+  const BinaryBasicBlock *getConditionalSuccessor(bool Condition) const {
+    if (succ_size() != 2)
+      return nullptr;
+    return Successors[Condition == true ? 0 : 1];
+  }
+
+  /// If the basic block ends with a conditional branch (possibly followed by
+  /// an unconditonal branch) and thus has 2 successor, revese the order of
+  /// its successors in CFG, update branch info, and return true. If the basic
+  /// block does not have 2 successors return false.
+  bool swapConditionalSuccessors();
+
+  /// Add an instruction with unconditional control transfer to \p Successor
+  /// basic block to the end of this basic block.
+  void addBranchInstruction(const BinaryBasicBlock *Successor);
 
   /// Get landing pad with given label. Returns nullptr if no such
   /// landing pad is found.

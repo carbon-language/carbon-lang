@@ -11,6 +11,7 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
+#include "BinaryFunction.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -30,6 +31,9 @@ bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS) {
 }
 
 BinaryBasicBlock *BinaryBasicBlock::getSuccessor(const MCSymbol *Label) const {
+  if (!Label && succ_size() == 1)
+    return *succ_begin();
+
   for (BinaryBasicBlock *BB : successors()) {
     if (BB->getLabel() == Label)
       return BB;
@@ -92,6 +96,22 @@ bool BinaryBasicBlock::analyzeBranch(const MCInstrAnalysis &MIA,
                                      MCInst *&CondBranch,
                                      MCInst *&UncondBranch) {
   return MIA.analyzeBranch(Instructions, TBB, FBB, CondBranch, UncondBranch);
+}
+
+bool BinaryBasicBlock::swapConditionalSuccessors() {
+  if (succ_size() != 2)
+    return false;
+
+  std::swap(Successors[0], Successors[1]);
+  std::swap(BranchInfo[0], BranchInfo[1]);
+  return true;
+}
+
+void BinaryBasicBlock::addBranchInstruction(const BinaryBasicBlock *Successor) {
+  auto &BC = Function->getBinaryContext();
+  MCInst NewInst;
+  BC.MIA->createUncondBranch(NewInst, Successor->getLabel(), BC.Ctx.get());
+  Instructions.emplace_back(std::move(NewInst));
 }
 
 void BinaryBasicBlock::dump(BinaryContext& BC) const {

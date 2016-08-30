@@ -88,11 +88,19 @@ void BinaryFunctionPassManager::runAllPasses(
     std::move(llvm::make_unique<EliminateUnreachableBlocks>(Manager.NagUser)),
     opts::EliminateUnreachable);
 
+  Manager.registerPass(llvm::make_unique<OptimizeBodylessFunctions>(),
+                       opts::OptimizeBodylessFunctions);
+
   Manager.registerPass(llvm::make_unique<SimplifyRODataLoads>(),
                        opts::SimplifyRODataLoads);
 
   Manager.registerPass(std::move(llvm::make_unique<ReorderBasicBlocks>()));
 
+  // This pass syncs local branches with CFG. If any of the following
+  // passes breakes the sync - they need to re-run the pass.
+  Manager.registerPass(std::move(llvm::make_unique<FixupBranches>()));
+
+  // This pass should be run after FixupBranches.
   Manager.registerPass(llvm::make_unique<SimplifyConditionalTailCalls>(),
                        opts::SimplifyConditionalTailCalls);
 
@@ -101,9 +109,6 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(
     std::move(llvm::make_unique<EliminateUnreachableBlocks>(Manager.NagUser)),
     opts::EliminateUnreachable);
-
-  Manager.registerPass(llvm::make_unique<OptimizeBodylessFunctions>(),
-                       opts::OptimizeBodylessFunctions);
 
   Manager.registerPass(std::move(llvm::make_unique<FixupFunctions>()));
 

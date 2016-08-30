@@ -245,11 +245,6 @@ private:
   void recomputeLandingPads(const unsigned StartIndex,
                             const unsigned NumBlocks);
 
-  /// Return basic block that originally was laid out immediately following
-  /// the given /p BB basic block.
-  const BinaryBasicBlock *
-  getOriginalLayoutSuccessor(const BinaryBasicBlock *BB) const;
-
   using BranchListType = std::vector<std::pair<uint32_t, uint32_t>>;
   BranchListType TakenBranches; /// All local taken branches.
   BranchListType FTBranches;    /// All fall-through branches.
@@ -490,6 +485,11 @@ public:
   /// from the function name and Annotation strings.  Useful for dumping the
   /// CFG after an optimization pass.
   void dumpGraphForPass(std::string Annotation = "") const;
+
+  /// Return BinaryContext for the function.
+  const BinaryContext &getBinaryContext() const {
+    return BC;
+  }
 
   /// Get basic block index assuming it belongs to this function.
   unsigned getIndex(const BinaryBasicBlock *BB) const {
@@ -1019,14 +1019,22 @@ public:
   /// (call instructions with non-empty landing pad).
   void propagateGnuArgsSizeInfo();
 
-  /// Traverse the CFG checking branches, inverting their condition, removing or
-  /// adding jumps based on a new layout order.
+  /// Adjust branch instructions to match the CFG.
+  ///
+  /// As it comes to internal branches, the CFG represents "the ultimate source
+  /// of truth". Transformations on functions and blocks have to update the CFG
+  /// and fixBranches() would make sure the correct branch instructions are
+  /// inserted at the end of basic blocks.
+  ///
+  /// We do require a conditional branch at the end of the basic block if
+  /// the block has 2 successors as CFG currently lacks the conditional
+  /// code support (it will probably stay that way). We only use this
+  /// branch instruction for its conditional code, the destination is
+  /// determined by CFG - first successor representing true/taken branch,
+  /// while the second successor - false/fall-through branch.
+  ///
+  /// When we reverse the branch condition, the CFG is updated accordingly.
   void fixBranches();
-
-  /// If needed, add an unconditional jmp to the original fallthrough of
-  /// Block.  This is used by the indirect call promotion optimization
-  /// since it inserts new BBs after the merge block.
-  void fixFallthroughBranch(BinaryBasicBlock *Block);
 
   /// Split function in two: a part with warm or hot BBs and a part with never
   /// executed BBs. The cold part is moved to a new BinaryFunction.
