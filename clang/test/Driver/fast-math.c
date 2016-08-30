@@ -232,13 +232,6 @@
 // CHECK-NO-UNSAFE-MATH-NOT: "-menable-unsafe-fp-math"
 // CHECK-NO-UNSAFE-MATH: "-o"
 //
-// RUN: %clang -### -fexceptions-fp-math -fno-exceptions-fp-math -c %s 2>&1 \
-// RUN:   | FileCheck --check-prefix=CHECK-NO-FP-EXCEPTIONS %s
-// RUN: %clang -### -fno-exceptions-fp-math -fexceptions-fp-math -c %s 2>&1 \
-// RUN:   | FileCheck --check-prefix=CHECK-FP-EXCEPTIONS %s
-// CHECK-NO-FP-EXCEPTIONS: "-fno-exceptions-fp-math"
-// CHECK-FP-EXCEPTIONS-NOT: "-fno-exceptions-fp-math"
-//
 // RUN: %clang -### -fdenormal-fp-math=ieee -c %s 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-FP-DENORMAL-IEEE %s
 // RUN: %clang -### -fdenormal-fp-math=preserve-sign -c %s 2>&1 \
