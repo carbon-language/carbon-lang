@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s misc-move-forwarding-reference %t -- -- -std=c++14
+// RUN: %check_clang_tidy %s misc-move-forwarding-reference %t -- -- -std=c++14 -fno-delayed-template-parsing
 
 namespace std {
 template <typename> struct remove_reference;
