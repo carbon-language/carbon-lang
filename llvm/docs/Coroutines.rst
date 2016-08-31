@@ -812,7 +812,7 @@ pointer that was returned by prior `coro.begin` call.
 Example (custom deallocation function):
 """""""""""""""""""""""""""""""""""""""
 
-.. code-block:: llvm
+.. code-block:: text
 
   cleanup:
     %mem = call i8* @llvm.coro.free(token %id, i8* %frame)
@@ -827,7 +827,7 @@ Example (custom deallocation function):
 Example (standard deallocation functions):
 """"""""""""""""""""""""""""""""""""""""""
 
-.. code-block:: llvm
+.. code-block:: text
 
   cleanup:
     %mem = call i8* @llvm.coro.free(token %id, i8* %frame)
