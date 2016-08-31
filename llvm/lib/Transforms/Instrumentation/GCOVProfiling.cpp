@@ -428,7 +428,7 @@ std::string GCOVProfiler::mangleName(const DICompileUnit *CU,
       bool ThreeElement = N->getNumOperands() == 3;
       if (!ThreeElement && N->getNumOperands() != 2)
         continue;
-      if (N->getOperand(ThreeElement ? 2 : 1) != CU)
+      if (dyn_cast<MDNode>(N->getOperand(ThreeElement ? 2 : 1)) != CU)
         continue;
 
       if (ThreeElement) {
