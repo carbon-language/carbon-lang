@@ -560,6 +560,29 @@ if.end:
 ; CHECK: store
 ; CHECK: store
 
+define zeroext i1 @test19(i1 zeroext %flag, i32* %i4, i32* %m, i32* %n) {
+entry:
+  br i1 %flag, label %if.then, label %if.else
+
+if.then:
+  %tmp1 = load i32, i32* %i4
+  %tmp2 = add i32 %tmp1, -1
+  store i32 %tmp2, i32* %i4
+  br label %if.end
+
+if.else:
+  %tmp3 = load i32, i32* %m
+  %tmp4 = load i32, i32* %n
+  %tmp5 = add i32 %tmp3, %tmp4
+  store i32 %tmp5, i32* %i4
+  br label %if.end
+
+if.end:
+  ret i1 true
+}
+
+; No checks for test19 - just ensure it doesn't crash!
+
 ; CHECK: !0 = !{!1, !1, i64 0}
 ; CHECK: !1 = !{!"float", !2}
 ; CHECK: !2 = !{!"an example type tree"}
