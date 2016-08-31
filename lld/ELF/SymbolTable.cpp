@@ -471,7 +471,7 @@ Symbol *SymbolTable<ELFT>::addBitcode(StringRef Name, uint8_t Binding,
              /*IsUsedInRegularObj*/ false, F);
   int Cmp = compareDefinedNonCommon<ELFT>(S, WasInserted, Binding);
   if (Cmp > 0)
-    replaceBody<DefinedBitcode>(S, Name, StOther, Type, F);
+    replaceBody<DefinedRegular<ELFT>>(S, Name, StOther, Type, F);
   else if (Cmp == 0)
     reportDuplicate(S->body(), F);
   return S;

@@ -81,8 +81,6 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body,
   case SymbolBody::LazyObjectKind:
     assert(Body.symbol()->IsUsedInRegularObj && "lazy symbol reached writer");
     return 0;
-  case SymbolBody::DefinedBitcodeKind:
-    llvm_unreachable("should have been replaced");
   }
   llvm_unreachable("invalid symbol kind");
 }
@@ -191,16 +189,6 @@ Defined::Defined(Kind K, StringRef Name, uint8_t StOther, uint8_t Type)
 
 Defined::Defined(Kind K, uint32_t NameOffset, uint8_t StOther, uint8_t Type)
     : SymbolBody(K, NameOffset, StOther, Type) {}
-
-DefinedBitcode::DefinedBitcode(StringRef Name, uint8_t StOther, uint8_t Type,
-                               BitcodeFile *F)
-    : Defined(DefinedBitcodeKind, Name, StOther, Type) {
-  this->File = F;
-}
-
-bool DefinedBitcode::classof(const SymbolBody *S) {
-  return S->kind() == DefinedBitcodeKind;
-}
 
 Undefined::Undefined(StringRef Name, uint8_t StOther, uint8_t Type,
                      InputFile *File)

@@ -201,8 +201,10 @@ void BitcodeCompiler::add(BitcodeFile &F) {
       handleUndefinedAsmRefs(Sym, GV, AsmUndefinedRefs);
       continue;
     }
-    auto *B = dyn_cast<DefinedBitcode>(S->body());
-    if (!B || B->file() != &F)
+    SymbolBody *B = S->body();
+    if (B->kind() != SymbolBody::DefinedRegularKind)
+      continue;
+    if (B->File != &F)
       continue;
 
     // We collect the set of symbols we want to internalize here
