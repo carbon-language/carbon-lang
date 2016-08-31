@@ -202,8 +202,6 @@ void BitcodeCompiler::add(BitcodeFile &F) {
       continue;
     }
     SymbolBody *B = S->body();
-    if (B->kind() != SymbolBody::DefinedRegularKind)
-      continue;
     if (B->File != &F)
       continue;
 
@@ -221,7 +219,12 @@ void BitcodeCompiler::add(BitcodeFile &F) {
     // needs to be able to replace the original definition without conflicting.
     // In the latter case, we need to allow the combined LTO object to provide a
     // definition with the same name, for example when doing parallel codegen.
-    undefine(S);
+    if (auto *C = dyn_cast<DefinedCommon>(B)) {
+      if (auto *GO = dyn_cast<GlobalObject>(GV))
+        GO->setAlignment(C->Alignment);
+    } else {
+      undefine(S);
+    }
 
     if (!GV)
       // Module asm symbol.

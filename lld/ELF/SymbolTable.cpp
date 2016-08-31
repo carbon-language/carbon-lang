@@ -351,7 +351,7 @@ Symbol *SymbolTable<ELFT>::addCommon(StringRef N, uint64_t Size,
   bool WasInserted;
   std::tie(S, WasInserted) =
       insert(N, Type, StOther & 3, /*CanOmitFromDynSym*/ false, HasUnnamedAddr,
-             /*IsUsedInRegularObj*/ true, File);
+             !isa<BitcodeFile>(File), File);
   int Cmp = compareDefined(S, WasInserted, Binding);
   if (Cmp > 0) {
     S->Binding = Binding;
@@ -368,8 +368,9 @@ Symbol *SymbolTable<ELFT>::addCommon(StringRef N, uint64_t Size,
     if (Config->WarnCommon)
       warning("multiple common of " + S->body()->getName());
 
-    C->Size = std::max(C->Size, Size);
-    C->Alignment = std::max(C->Alignment, Alignment);
+    Alignment = C->Alignment = std::max(C->Alignment, Alignment);
+    if (Size > C->Size)
+      replaceBody<DefinedCommon>(S, N, Size, Alignment, StOther, Type, File);
   }
   return S;
 }
