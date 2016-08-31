@@ -259,6 +259,16 @@ LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &OutCmd) {
 }
 
 template <class ELFT>
+void LinkerScript<ELFT>::createAssignments() {
+  for (const std::unique_ptr<SymbolAssignment> &Cmd : Opt.Assignments) {
+    if (shouldDefine<ELFT>(Cmd.get()))
+      addRegular<ELFT>(Cmd.get());
+    if (Cmd->Sym)
+      cast<DefinedRegular<ELFT>>(Cmd->Sym)->Value = Cmd->Expression(0);
+  }
+}
+
+template <class ELFT>
 void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
   for (const std::unique_ptr<BaseCommand> &Base1 : Opt.Commands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base1.get())) {
@@ -714,12 +724,16 @@ void ScriptParser::readVersionScript() {
 void ScriptParser::readLinkerScript() {
   while (!atEOF()) {
     StringRef Tok = next();
-    if (Handler Fn = Cmd.lookup(Tok))
+    if (Handler Fn = Cmd.lookup(Tok)) {
       (this->*Fn)();
-    else if (SymbolAssignment *Cmd = readProvideOrAssignment(Tok))
-      Opt.Commands.emplace_back(Cmd);
-    else
+    } else if (SymbolAssignment *Cmd = readProvideOrAssignment(Tok)) {
+      if (Opt.HasContents)
+        Opt.Commands.emplace_back(Cmd);
+      else
+        Opt.Assignments.emplace_back(Cmd);
+    } else {
       setError("unknown directive: " + Tok);
+    }
   }
 }
 

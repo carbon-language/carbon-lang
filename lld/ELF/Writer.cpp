@@ -249,6 +249,8 @@ template <class ELFT> void Writer<ELFT>::run() {
   CommonInputSection<ELFT> Common(getCommonSymbols<ELFT>());
   CommonInputSection<ELFT>::X = &Common;
 
+  Script<ELFT>::X->createAssignments();
+
   Script<ELFT>::X->OutputSections = &OutputSections;
   if (ScriptConfig->HasContents)
     Script<ELFT>::X->createSections(Factory);
