@@ -1,4 +1,5 @@
 ; RUN: opt -S -early-cse < %s | FileCheck %s
+; RUN: opt -S -basicaa -early-cse-memssa < %s | FileCheck %s
 
 declare void @clobber_and_use(i32)
 
