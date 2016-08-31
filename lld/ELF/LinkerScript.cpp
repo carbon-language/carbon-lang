@@ -625,7 +625,8 @@ class elf::ScriptParser : public ScriptParserBase {
 public:
   ScriptParser(StringRef S, bool B) : ScriptParserBase(S), IsUnderSysroot(B) {}
 
-  void run();
+  void readLinkerScript();
+  void readVersionScript();
 
 private:
   void addFile(StringRef Path);
@@ -663,6 +664,12 @@ private:
   Expr readTernary(Expr Cond);
   Expr readParenExpr();
 
+  // For parsing version script.
+  void readExtern(std::vector<SymbolVersion> *Globals);
+  void readVersion(StringRef VerStr);
+  void readGlobal(StringRef VerStr);
+  void readLocal();
+
   const static StringMap<Handler> Cmd;
   ScriptConfiguration &Opt = *ScriptConfig;
   StringSaver Saver = {ScriptConfig->Alloc};
@@ -683,7 +690,28 @@ const StringMap<elf::ScriptParser::Handler> elf::ScriptParser::Cmd = {
     {"SECTIONS", &ScriptParser::readSections},
     {";", &ScriptParser::readNothing}};
 
-void ScriptParser::run() {
+void ScriptParser::readVersionScript() {
+  StringRef Msg = "anonymous version definition is used in "
+                  "combination with other version definitions";
+  if (skip("{")) {
+    readVersion("");
+    if (!atEOF())
+      setError(Msg);
+    return;
+  }
+
+  while (!atEOF() && !Error) {
+    StringRef VerStr = next();
+    if (VerStr == "{") {
+      setError(Msg);
+      return;
+    }
+    expect("{");
+    readVersion(VerStr);
+  }
+}
+
+void ScriptParser::readLinkerScript() {
   while (!atEOF()) {
     StringRef Tok = next();
     if (Handler Fn = Cmd.lookup(Tok))
@@ -1335,6 +1363,68 @@ unsigned ScriptParser::readPhdrType() {
   return Ret;
 }
 
+void ScriptParser::readVersion(StringRef VerStr) {
+  // Identifiers start at 2 because 0 and 1 are reserved
+  // for VER_NDX_LOCAL and VER_NDX_GLOBAL constants.
+  size_t VersionId = Config->VersionDefinitions.size() + 2;
+  Config->VersionDefinitions.push_back({VerStr, VersionId});
+
+  if (skip("global:") || peek() != "local:")
+    readGlobal(VerStr);
+  if (skip("local:"))
+    readLocal();
+  expect("}");
+
+  // Each version may have a parent version. For example, "Ver2" defined as
+  // "Ver2 { global: foo; local: *; } Ver1;" has "Ver1" as a parent. This
+  // version hierarchy is, probably against your instinct, purely for human; the
+  // runtime doesn't care about them at all. In LLD, we simply skip the token.
+  if (!VerStr.empty() && peek() != ";")
+    next();
+  expect(";");
+}
+
+void ScriptParser::readLocal() {
+  Config->DefaultSymbolVersion = VER_NDX_LOCAL;
+  expect("*");
+  expect(";");
+}
+
+void ScriptParser::readExtern(std::vector<SymbolVersion> *Globals) {
+  expect("C++");
+  expect("{");
+
+  for (;;) {
+    if (peek() == "}" || Error)
+      break;
+    Globals->push_back({next(), true});
+    expect(";");
+  }
+
+  expect("}");
+  expect(";");
+}
+
+void ScriptParser::readGlobal(StringRef VerStr) {
+  std::vector<SymbolVersion> *Globals;
+  if (VerStr.empty())
+    Globals = &Config->VersionScriptGlobals;
+  else
+    Globals = &Config->VersionDefinitions.back().Globals;
+
+  for (;;) {
+    if (skip("extern"))
+      readExtern(Globals);
+
+    StringRef Cur = peek();
+    if (Cur == "}" || Cur == "local:" || Error)
+      return;
+    next();
+    Globals->push_back({Cur, false});
+    expect(";");
+  }
+}
+
 static bool isUnderSysroot(StringRef Path) {
   if (Config->Sysroot == "")
     return false;
@@ -1344,10 +1434,13 @@ static bool isUnderSysroot(StringRef Path) {
   return false;
 }
 
-// Entry point.
 void elf::readLinkerScript(MemoryBufferRef MB) {
   StringRef Path = MB.getBufferIdentifier();
-  ScriptParser(MB.getBuffer(), isUnderSysroot(Path)).run();
+  ScriptParser(MB.getBuffer(), isUnderSysroot(Path)).readLinkerScript();
+}
+
+void elf::readVersionScript(MemoryBufferRef MB) {
+  ScriptParser(MB.getBuffer(), false).readVersionScript();
 }
 
 template class elf::LinkerScript<ELF32LE>;
