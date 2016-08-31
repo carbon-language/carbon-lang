@@ -97,6 +97,14 @@ Improvements to clang-tidy
   Flags function parameters of a pointer type that could be changed to point to
   a constant type instead.
 
+Fixed bugs:
+- `modernize-make-unique
+  <http://clang.llvm.org/extra/clang-tidy/checks/modernize-make-unique.html>`_
+  and `modernize-make-shared
+  <http://clang.llvm.org/extra/clang-tidy/checks/modernize-make-shared.html>`_
+  Calling ``make_{unique|shared}`` from within a member function of a type
+  with a private or protected constructor would be ill-formed.
+
 Improvements to include-fixer
 -----------------------------
 
