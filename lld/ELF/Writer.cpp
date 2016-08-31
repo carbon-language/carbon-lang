@@ -176,7 +176,7 @@ template <class ELFT> void elf::writeResult() {
   StringRef S = Config->Rela ? ".rela.plt" : ".rel.plt";
   GotPlt.reset(new GotPltSection<ELFT>);
   RelaPlt.reset(new RelocationSection<ELFT>(S, false /*Sort*/));
-  if (!Config->StripAll) {
+  if (Config->Strip != StripPolicy::All) {
     StrTab.reset(new StringTableSection<ELFT>(".strtab", false));
     SymTabSec.reset(new SymbolTableSection<ELFT>(*StrTab));
   }
