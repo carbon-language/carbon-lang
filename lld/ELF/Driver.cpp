@@ -344,6 +344,13 @@ static bool isOutputFormatBinary(opt::InputArgList &Args) {
   return false;
 }
 
+static bool getArg(opt::InputArgList &Args, unsigned K1, unsigned K2,
+                   bool Default) {
+  if (auto *Arg = Args.getLastArg(K1, K2))
+    return Arg->getOption().getID() == K1;
+  return Default;
+}
+
 static DiscardPolicy getDiscardOption(opt::InputArgList &Args) {
   auto *Arg =
       Args.getLastArg(OPT_discard_all, OPT_discard_locals, OPT_discard_none);
@@ -361,7 +368,6 @@ static DiscardPolicy getDiscardOption(opt::InputArgList &Args) {
     llvm_unreachable("unknown discard option");
   }
 }
-
 
 static StripPolicy getStripOption(opt::InputArgList &Args) {
   if (auto *Arg = Args.getLastArg(OPT_strip_all, OPT_strip_debug)) {
@@ -393,7 +399,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->AllowMultipleDefinition = Args.hasArg(OPT_allow_multiple_definition);
   Config->Bsymbolic = Args.hasArg(OPT_Bsymbolic);
   Config->BsymbolicFunctions = Args.hasArg(OPT_Bsymbolic_functions);
-  Config->Demangle = !Args.hasArg(OPT_no_demangle);
+  Config->Demangle = getArg(Args, OPT_demangle, OPT_no_demangle, true);
   Config->DisableVerify = Args.hasArg(OPT_disable_verify);
   Config->Discard = getDiscardOption(Args);
   Config->EhFrameHdr = Args.hasArg(OPT_eh_frame_hdr);
@@ -409,7 +415,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->Relocatable = Args.hasArg(OPT_relocatable);
   Config->SaveTemps = Args.hasArg(OPT_save_temps);
   Config->Shared = Args.hasArg(OPT_shared);
-  Config->Target1Rel = Args.hasArg(OPT_target1_rel);
+  Config->Target1Rel = getArg(Args, OPT_target1_rel, OPT_target1_abs, false);
   Config->Threads = Args.hasArg(OPT_threads);
   Config->Trace = Args.hasArg(OPT_trace);
   Config->Verbose = Args.hasArg(OPT_verbose);
