@@ -236,7 +236,8 @@ template <class ELFT>
 std::pair<Symbol *, bool>
 SymbolTable<ELFT>::insert(StringRef &Name, uint8_t Type, uint8_t Visibility,
                           bool CanOmitFromDynSym, bool HasUnnamedAddr,
-                          bool IsUsedInRegularObj, InputFile *File) {
+                          InputFile *File) {
+  bool IsUsedInRegularObj = !File || File->kind() == InputFile::ObjectKind;
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Name);
@@ -283,8 +284,7 @@ Symbol *SymbolTable<ELFT>::addUndefined(StringRef Name, uint8_t Binding,
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) =
-      insert(Name, Type, StOther & 3, CanOmitFromDynSym, HasUnnamedAddr,
-             /*IsUsedInRegularObj*/ !File || !isa<BitcodeFile>(File), File);
+      insert(Name, Type, StOther & 3, CanOmitFromDynSym, HasUnnamedAddr, File);
   if (WasInserted) {
     S->Binding = Binding;
     replaceBody<Undefined>(S, Name, StOther, Type, File);
@@ -349,9 +349,8 @@ Symbol *SymbolTable<ELFT>::addCommon(StringRef N, uint64_t Size,
                                      bool HasUnnamedAddr, InputFile *File) {
   Symbol *S;
   bool WasInserted;
-  std::tie(S, WasInserted) =
-      insert(N, Type, StOther & 3, /*CanOmitFromDynSym*/ false, HasUnnamedAddr,
-             !isa<BitcodeFile>(File), File);
+  std::tie(S, WasInserted) = insert(
+      N, Type, StOther & 3, /*CanOmitFromDynSym*/ false, HasUnnamedAddr, File);
   int Cmp = compareDefined(S, WasInserted, Binding);
   if (Cmp > 0) {
     S->Binding = Binding;
@@ -390,10 +389,10 @@ Symbol *SymbolTable<ELFT>::addRegular(StringRef Name, const Elf_Sym &Sym,
                                       InputSectionBase<ELFT> *Section) {
   Symbol *S;
   bool WasInserted;
-  std::tie(S, WasInserted) = insert(
-      Name, Sym.getType(), Sym.getVisibility(),
-      /*CanOmitFromDynSym*/ false, /*HasUnnamedAddr*/ false,
-      /*IsUsedInRegularObj*/ true, Section ? Section->getFile() : nullptr);
+  std::tie(S, WasInserted) =
+      insert(Name, Sym.getType(), Sym.getVisibility(),
+             /*CanOmitFromDynSym*/ false, /*HasUnnamedAddr*/ false,
+             Section ? Section->getFile() : nullptr);
   int Cmp = compareDefinedNonCommon(S, WasInserted, Sym.getBinding());
   if (Cmp > 0)
     replaceBody<DefinedRegular<ELFT>>(S, Name, Sym, Section);
@@ -409,7 +408,7 @@ Symbol *SymbolTable<ELFT>::addRegular(StringRef Name, uint8_t Binding,
   bool WasInserted;
   std::tie(S, WasInserted) =
       insert(Name, STT_NOTYPE, StOther & 3, /*CanOmitFromDynSym*/ false,
-             /*HasUnnamedAddr*/ false, /*IsUsedInRegularObj*/ true, nullptr);
+             /*HasUnnamedAddr*/ false, nullptr);
   int Cmp = compareDefinedNonCommon(S, WasInserted, Binding);
   if (Cmp > 0)
     replaceBody<DefinedRegular<ELFT>>(S, Name, StOther);
@@ -426,8 +425,7 @@ Symbol *SymbolTable<ELFT>::addSynthetic(StringRef N,
   bool WasInserted;
   std::tie(S, WasInserted) = insert(N, STT_NOTYPE, /*Visibility*/ StOther & 0x3,
                                     /*CanOmitFromDynSym*/ false,
-                                    /*HasUnnamedAddr*/ false,
-                                    /*IsUsedInRegularObj*/ true, nullptr);
+                                    /*HasUnnamedAddr*/ false, nullptr);
   int Cmp = compareDefinedNonCommon(S, WasInserted, STB_GLOBAL);
   if (Cmp > 0)
     replaceBody<DefinedSynthetic<ELFT>>(S, N, Value, Section);
@@ -447,7 +445,7 @@ void SymbolTable<ELFT>::addShared(SharedFile<ELFT> *F, StringRef Name,
   bool WasInserted;
   std::tie(S, WasInserted) =
       insert(Name, Sym.getType(), STV_DEFAULT, /*CanOmitFromDynSym*/ true,
-             /*HasUnnamedAddr*/ false, /*IsUsedInRegularObj*/ false, F);
+             /*HasUnnamedAddr*/ false, F);
   // Make sure we preempt DSO symbols with default visibility.
   if (Sym.getVisibility() == STV_DEFAULT)
     S->ExportDynamic = true;
@@ -466,8 +464,7 @@ Symbol *SymbolTable<ELFT>::addBitcode(StringRef Name, uint8_t Binding,
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) =
-      insert(Name, Type, StOther & 3, CanOmitFromDynSym, HasUnnamedAddr,
-             /*IsUsedInRegularObj*/ false, F);
+      insert(Name, Type, StOther & 3, CanOmitFromDynSym, HasUnnamedAddr, F);
   int Cmp = compareDefinedNonCommon(S, WasInserted, Binding);
   if (Cmp > 0)
     replaceBody<DefinedRegular<ELFT>>(S, Name, StOther, Type, F);
