@@ -653,6 +653,8 @@ private:
   void readPhdrs();
   void readSearchDir();
   void readSections();
+  void readVersion();
+  void readVersionScriptCommand();
 
   SymbolAssignment *readAssignment(StringRef Name);
   OutputSectionCommand *readOutputSectionDescription(StringRef OutSec);
@@ -676,7 +678,7 @@ private:
 
   // For parsing version script.
   void readExtern(std::vector<SymbolVersion> *Globals);
-  void readVersion(StringRef VerStr);
+  void readVersionDeclaration(StringRef VerStr);
   void readGlobal(StringRef VerStr);
   void readLocal();
 
@@ -698,27 +700,37 @@ const StringMap<elf::ScriptParser::Handler> elf::ScriptParser::Cmd = {
     {"PHDRS", &ScriptParser::readPhdrs},
     {"SEARCH_DIR", &ScriptParser::readSearchDir},
     {"SECTIONS", &ScriptParser::readSections},
+    {"VERSION", &ScriptParser::readVersion},
     {";", &ScriptParser::readNothing}};
 
 void ScriptParser::readVersionScript() {
-  StringRef Msg = "anonymous version definition is used in "
-                  "combination with other version definitions";
+  readVersionScriptCommand();
+  if (!atEOF())
+    setError("EOF expected, but got " + next());
+}
+
+void ScriptParser::readVersionScriptCommand() {
   if (skip("{")) {
-    readVersion("");
-    if (!atEOF())
-      setError(Msg);
+    readVersionDeclaration("");
     return;
   }
 
-  while (!atEOF() && !Error) {
+  while (!atEOF() && !Error && peek() != "}") {
     StringRef VerStr = next();
     if (VerStr == "{") {
-      setError(Msg);
+      setError("anonymous version definition is used in "
+               "combination with other version definitions");
       return;
     }
     expect("{");
-    readVersion(VerStr);
+    readVersionDeclaration(VerStr);
   }
+}
+
+void ScriptParser::readVersion() {
+  expect("{");
+  readVersionScriptCommand();
+  expect("}");
 }
 
 void ScriptParser::readLinkerScript() {
@@ -1377,7 +1389,7 @@ unsigned ScriptParser::readPhdrType() {
   return Ret;
 }
 
-void ScriptParser::readVersion(StringRef VerStr) {
+void ScriptParser::readVersionDeclaration(StringRef VerStr) {
   // Identifiers start at 2 because 0 and 1 are reserved
   // for VER_NDX_LOCAL and VER_NDX_GLOBAL constants.
   size_t VersionId = Config->VersionDefinitions.size() + 2;
