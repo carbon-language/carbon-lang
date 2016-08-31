@@ -1942,8 +1942,6 @@ void MipsTargetInfo<ELFT>::writeGotPlt(uint8_t *Buf, const SymbolBody &) const {
   write32<ELFT::TargetEndianness>(Buf, Out<ELFT>::Plt->getVA());
 }
 
-static uint16_t mipsHigh(uint64_t V) { return (V + 0x8000) >> 16; }
-
 template <endianness E, uint8_t BSIZE, uint8_t SHIFT>
 static int64_t getPcRelocAddend(const uint8_t *Loc) {
   uint32_t Instr = read32<E>(Loc);
@@ -1964,7 +1962,8 @@ static void applyMipsPcReloc(uint8_t *Loc, uint32_t Type, uint64_t V) {
 template <endianness E>
 static void writeMipsHi16(uint8_t *Loc, uint64_t V) {
   uint32_t Instr = read32<E>(Loc);
-  write32<E>(Loc, (Instr & 0xffff0000) | mipsHigh(V));
+  uint16_t Res = ((V + 0x8000) >> 16) & 0xffff;
+  write32<E>(Loc, (Instr & 0xffff0000) | Res);
 }
 
 template <endianness E>
