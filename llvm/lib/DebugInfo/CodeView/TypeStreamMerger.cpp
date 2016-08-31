@@ -15,6 +15,7 @@
 #include "llvm/DebugInfo/CodeView/TypeDeserializer.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
+#include "llvm/DebugInfo/CodeView/TypeVisitorCallbackPipeline.h"
 #include "llvm/DebugInfo/CodeView/TypeVisitorCallbacks.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ScopedPrinter.h"
@@ -84,8 +85,13 @@ private:
 
   Error visitKnownRecordImpl(FieldListRecord &Record) {
     // Don't do anything, this will get written in the call to visitTypeEnd().
-    TypeDeserializer Deserializer(*this);
-    CVTypeVisitor Visitor(Deserializer);
+    TypeVisitorCallbackPipeline Pipeline;
+    TypeDeserializer Deserializer;
+
+    Pipeline.addCallbackToPipeline(Deserializer);
+    Pipeline.addCallbackToPipeline(*this);
+
+    CVTypeVisitor Visitor(Pipeline);
 
     if (auto EC = Visitor.visitFieldListMemberStream(Record.Data))
       return EC;
@@ -160,8 +166,13 @@ Error TypeStreamMerger::visitUnknownType(const CVRecord<TypeLeafKind> &Rec) {
 
 bool TypeStreamMerger::mergeStream(const CVTypeArray &Types) {
   assert(IndexMap.empty());
-  TypeDeserializer Deserializer(*this);
-  CVTypeVisitor Visitor(Deserializer);
+  TypeVisitorCallbackPipeline Pipeline;
+
+  TypeDeserializer Deserializer;
+  Pipeline.addCallbackToPipeline(Deserializer);
+  Pipeline.addCallbackToPipeline(*this);
+
+  CVTypeVisitor Visitor(Pipeline);
 
   if (auto EC = Visitor.visitTypeStream(Types)) {
     consumeError(std::move(EC));

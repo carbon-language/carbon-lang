@@ -13,6 +13,7 @@
 #include "llvm/DebugInfo/CodeView/EnumTables.h"
 #include "llvm/DebugInfo/CodeView/TypeDeserializer.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
+#include "llvm/DebugInfo/CodeView/TypeVisitorCallbackPipeline.h"
 
 using namespace llvm;
 using namespace llvm::codeview;
@@ -240,10 +241,14 @@ template <> struct ScalarTraits<APSInt> {
 
 void MappingTraits<CVType>::mapping(IO &IO, CVType &Record) {
   if (IO.outputting()) {
+    codeview::TypeDeserializer Deserializer;
     codeview::yaml::YamlTypeDumperCallbacks Callbacks(IO);
-    codeview::TypeDeserializer Deserializer(Callbacks);
 
-    codeview::CVTypeVisitor Visitor(Deserializer);
+    codeview::TypeVisitorCallbackPipeline Pipeline;
+    Pipeline.addCallbackToPipeline(Deserializer);
+    Pipeline.addCallbackToPipeline(Callbacks);
+
+    codeview::CVTypeVisitor Visitor(Pipeline);
     consumeError(Visitor.visitTypeRecord(Record));
   }
 }
@@ -252,8 +257,13 @@ void MappingTraits<FieldListRecord>::mapping(IO &IO,
                                              FieldListRecord &FieldList) {
   if (IO.outputting()) {
     codeview::yaml::YamlTypeDumperCallbacks Callbacks(IO);
-    codeview::TypeDeserializer Deserializer(Callbacks);
-    codeview::CVTypeVisitor Visitor(Deserializer);
+    codeview::TypeDeserializer Deserializer;
+
+    codeview::TypeVisitorCallbackPipeline Pipeline;
+    Pipeline.addCallbackToPipeline(Deserializer);
+    Pipeline.addCallbackToPipeline(Callbacks);
+
+    codeview::CVTypeVisitor Visitor(Pipeline);
     consumeError(Visitor.visitFieldListMemberStream(FieldList.Data));
   }
 }
