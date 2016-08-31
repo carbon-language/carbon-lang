@@ -222,16 +222,14 @@ entry:
 define <4 x double> @test_mm256_mask_andnot_pd(<4 x double> %__W, i8 zeroext %__U, <4 x double> %__A, <4 x double> %__B) {
 ; KNL-LABEL: test_mm256_mask_andnot_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandnq %ymm2, %ymm1, %ymm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmpd %ymm1, %ymm0, %ymm0 {%k1}
+; KNL-NEXT:    vpandnq %ymm2, %ymm1, %ymm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_mask_andnot_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandnpd %ymm2, %ymm1, %ymm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmpd %ymm1, %ymm0, %ymm0 {%k1}
+; SKX-NEXT:    vandnpd %ymm2, %ymm1, %ymm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x double> %__A to <4 x i64>
@@ -248,16 +246,14 @@ entry:
 define <4 x double> @test_mm256_maskz_andnot_pd(i8 zeroext %__U, <4 x double> %__A, <4 x double> %__B) {
 ; KNL-LABEL: test_mm256_maskz_andnot_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandnq %ymm1, %ymm0, %ymm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; KNL-NEXT:    vpandnq %ymm1, %ymm0, %ymm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_maskz_andnot_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandnpd %ymm1, %ymm0, %ymm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; SKX-NEXT:    vandnpd %ymm1, %ymm0, %ymm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x double> %__A to <4 x i64>
@@ -274,16 +270,14 @@ entry:
 define <2 x double> @test_mm_mask_andnot_pd(<2 x double> %__W, i8 zeroext %__U, <2 x double> %__A, <2 x double> %__B) {
 ; KNL-LABEL: test_mm_mask_andnot_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandnq %xmm2, %xmm1, %xmm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmpd %xmm1, %xmm0, %xmm0 {%k1}
+; KNL-NEXT:    vpandnq %xmm2, %xmm1, %xmm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_mask_andnot_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandnpd %xmm2, %xmm1, %xmm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmpd %xmm1, %xmm0, %xmm0 {%k1}
+; SKX-NEXT:    vandnpd %xmm2, %xmm1, %xmm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <2 x double> %__A to <2 x i64>
@@ -300,16 +294,14 @@ entry:
 define <2 x double> @test_mm_maskz_andnot_pd(i8 zeroext %__U, <2 x double> %__A, <2 x double> %__B) {
 ; KNL-LABEL: test_mm_maskz_andnot_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandnq %xmm1, %xmm0, %xmm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; KNL-NEXT:    vpandnq %xmm1, %xmm0, %xmm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_maskz_andnot_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandnpd %xmm1, %xmm0, %xmm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; SKX-NEXT:    vandnpd %xmm1, %xmm0, %xmm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <2 x double> %__A to <2 x i64>
@@ -326,16 +318,14 @@ entry:
 define <8 x float> @test_mm256_mask_andnot_ps(<8 x float> %__W, i8 zeroext %__U, <8 x float> %__A, <8 x float> %__B) {
 ; KNL-LABEL: test_mm256_mask_andnot_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandnq %ymm2, %ymm1, %ymm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmps %ymm1, %ymm0, %ymm0 {%k1}
+; KNL-NEXT:    vpandnd %ymm2, %ymm1, %ymm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_mask_andnot_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandnps %ymm2, %ymm1, %ymm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmps %ymm1, %ymm0, %ymm0 {%k1}
+; SKX-NEXT:    vandnps %ymm2, %ymm1, %ymm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <8 x float> %__A to <8 x i32>
@@ -351,16 +341,14 @@ entry:
 define <8 x float> @test_mm256_maskz_andnot_ps(i8 zeroext %__U, <8 x float> %__A, <8 x float> %__B) {
 ; KNL-LABEL: test_mm256_maskz_andnot_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandnq %ymm1, %ymm0, %ymm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; KNL-NEXT:    vpandnd %ymm1, %ymm0, %ymm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_maskz_andnot_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandnps %ymm1, %ymm0, %ymm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; SKX-NEXT:    vandnps %ymm1, %ymm0, %ymm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <8 x float> %__A to <8 x i32>
@@ -376,16 +364,14 @@ entry:
 define <4 x float> @test_mm_mask_andnot_ps(<4 x float> %__W, i8 zeroext %__U, <4 x float> %__A, <4 x float> %__B) {
 ; KNL-LABEL: test_mm_mask_andnot_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandnq %xmm2, %xmm1, %xmm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmps %xmm1, %xmm0, %xmm0 {%k1}
+; KNL-NEXT:    vpandnd %xmm2, %xmm1, %xmm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_mask_andnot_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandnps %xmm2, %xmm1, %xmm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmps %xmm1, %xmm0, %xmm0 {%k1}
+; SKX-NEXT:    vandnps %xmm2, %xmm1, %xmm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x float> %__A to <4 x i32>
@@ -402,16 +388,14 @@ entry:
 define <4 x float> @test_mm_maskz_andnot_ps(i8 zeroext %__U, <4 x float> %__A, <4 x float> %__B) {
 ; KNL-LABEL: test_mm_maskz_andnot_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandnq %xmm1, %xmm0, %xmm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; KNL-NEXT:    vpandnd %xmm1, %xmm0, %xmm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_maskz_andnot_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandnps %xmm1, %xmm0, %xmm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; SKX-NEXT:    vandnps %xmm1, %xmm0, %xmm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x float> %__A to <4 x i32>
@@ -428,16 +412,14 @@ entry:
 define <4 x double> @test_mm256_mask_and_pd(<4 x double> %__W, i8 zeroext %__U, <4 x double> %__A, <4 x double> %__B) {
 ; KNL-LABEL: test_mm256_mask_and_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandq %ymm1, %ymm2, %ymm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmpd %ymm1, %ymm0, %ymm0 {%k1}
+; KNL-NEXT:    vpandq %ymm1, %ymm2, %ymm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_mask_and_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandpd %ymm1, %ymm2, %ymm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmpd %ymm1, %ymm0, %ymm0 {%k1}
+; SKX-NEXT:    vandpd %ymm1, %ymm2, %ymm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x double> %__A to <4 x i64>
@@ -453,16 +435,14 @@ entry:
 define <4 x double> @test_mm256_maskz_and_pd(i8 zeroext %__U, <4 x double> %__A, <4 x double> %__B) {
 ; KNL-LABEL: test_mm256_maskz_and_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandq %ymm0, %ymm1, %ymm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; KNL-NEXT:    vpandq %ymm0, %ymm1, %ymm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_maskz_and_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandpd %ymm0, %ymm1, %ymm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; SKX-NEXT:    vandpd %ymm0, %ymm1, %ymm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x double> %__A to <4 x i64>
@@ -478,16 +458,14 @@ entry:
 define <2 x double> @test_mm_mask_and_pd(<2 x double> %__W, i8 zeroext %__U, <2 x double> %__A, <2 x double> %__B) {
 ; KNL-LABEL: test_mm_mask_and_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandq %xmm1, %xmm2, %xmm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmpd %xmm1, %xmm0, %xmm0 {%k1}
+; KNL-NEXT:    vpandq %xmm1, %xmm2, %xmm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_mask_and_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandpd %xmm1, %xmm2, %xmm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmpd %xmm1, %xmm0, %xmm0 {%k1}
+; SKX-NEXT:    vandpd %xmm1, %xmm2, %xmm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <2 x double> %__A to <2 x i64>
@@ -503,16 +481,14 @@ entry:
 define <2 x double> @test_mm_maskz_and_pd(i8 zeroext %__U, <2 x double> %__A, <2 x double> %__B) {
 ; KNL-LABEL: test_mm_maskz_and_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandq %xmm0, %xmm1, %xmm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; KNL-NEXT:    vpandq %xmm0, %xmm1, %xmm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_maskz_and_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandpd %xmm0, %xmm1, %xmm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; SKX-NEXT:    vandpd %xmm0, %xmm1, %xmm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <2 x double> %__A to <2 x i64>
@@ -528,16 +504,14 @@ entry:
 define <8 x float> @test_mm256_mask_and_ps(<8 x float> %__W, i8 zeroext %__U, <8 x float> %__A, <8 x float> %__B) {
 ; KNL-LABEL: test_mm256_mask_and_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandq %ymm1, %ymm2, %ymm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmps %ymm1, %ymm0, %ymm0 {%k1}
+; KNL-NEXT:    vpandd %ymm1, %ymm2, %ymm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_mask_and_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandps %ymm1, %ymm2, %ymm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmps %ymm1, %ymm0, %ymm0 {%k1}
+; SKX-NEXT:    vandps %ymm1, %ymm2, %ymm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <8 x float> %__A to <8 x i32>
@@ -552,16 +526,14 @@ entry:
 define <8 x float> @test_mm256_maskz_and_ps(i8 zeroext %__U, <8 x float> %__A, <8 x float> %__B) {
 ; KNL-LABEL: test_mm256_maskz_and_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandq %ymm0, %ymm1, %ymm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; KNL-NEXT:    vpandd %ymm0, %ymm1, %ymm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_maskz_and_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandps %ymm0, %ymm1, %ymm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; SKX-NEXT:    vandps %ymm0, %ymm1, %ymm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <8 x float> %__A to <8 x i32>
@@ -576,16 +548,14 @@ entry:
 define <4 x float> @test_mm_mask_and_ps(<4 x float> %__W, i8 zeroext %__U, <4 x float> %__A, <4 x float> %__B) {
 ; KNL-LABEL: test_mm_mask_and_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandq %xmm1, %xmm2, %xmm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmps %xmm1, %xmm0, %xmm0 {%k1}
+; KNL-NEXT:    vpandd %xmm1, %xmm2, %xmm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_mask_and_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandps %xmm1, %xmm2, %xmm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmps %xmm1, %xmm0, %xmm0 {%k1}
+; SKX-NEXT:    vandps %xmm1, %xmm2, %xmm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x float> %__A to <4 x i32>
@@ -601,16 +571,14 @@ entry:
 define <4 x float> @test_mm_maskz_and_ps(i8 zeroext %__U, <4 x float> %__A, <4 x float> %__B) {
 ; KNL-LABEL: test_mm_maskz_and_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpandq %xmm0, %xmm1, %xmm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; KNL-NEXT:    vpandd %xmm0, %xmm1, %xmm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_maskz_and_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vandps %xmm0, %xmm1, %xmm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; SKX-NEXT:    vandps %xmm0, %xmm1, %xmm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x float> %__A to <4 x i32>
@@ -626,16 +594,14 @@ entry:
 define <4 x double> @test_mm256_mask_xor_pd(<4 x double> %__W, i8 zeroext %__U, <4 x double> %__A, <4 x double> %__B) {
 ; KNL-LABEL: test_mm256_mask_xor_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpxorq %ymm2, %ymm1, %ymm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmpd %ymm1, %ymm0, %ymm0 {%k1}
+; KNL-NEXT:    vpxorq %ymm2, %ymm1, %ymm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_mask_xor_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vxorpd %ymm2, %ymm1, %ymm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmpd %ymm1, %ymm0, %ymm0 {%k1}
+; SKX-NEXT:    vxorpd %ymm2, %ymm1, %ymm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x double> %__A to <4 x i64>
@@ -651,16 +617,14 @@ entry:
 define <4 x double> @test_mm256_maskz_xor_pd(i8 zeroext %__U, <4 x double> %__A, <4 x double> %__B) {
 ; KNL-LABEL: test_mm256_maskz_xor_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpxorq %ymm1, %ymm0, %ymm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; KNL-NEXT:    vpxorq %ymm1, %ymm0, %ymm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_maskz_xor_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vxorpd %ymm1, %ymm0, %ymm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; SKX-NEXT:    vxorpd %ymm1, %ymm0, %ymm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x double> %__A to <4 x i64>
@@ -676,16 +640,14 @@ entry:
 define <2 x double> @test_mm_mask_xor_pd(<2 x double> %__W, i8 zeroext %__U, <2 x double> %__A, <2 x double> %__B) {
 ; KNL-LABEL: test_mm_mask_xor_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpxorq %xmm2, %xmm1, %xmm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmpd %xmm1, %xmm0, %xmm0 {%k1}
+; KNL-NEXT:    vpxorq %xmm2, %xmm1, %xmm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_mask_xor_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vxorpd %xmm2, %xmm1, %xmm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmpd %xmm1, %xmm0, %xmm0 {%k1}
+; SKX-NEXT:    vxorpd %xmm2, %xmm1, %xmm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <2 x double> %__A to <2 x i64>
@@ -701,16 +663,14 @@ entry:
 define <2 x double> @test_mm_maskz_xor_pd(i8 zeroext %__U, <2 x double> %__A, <2 x double> %__B) {
 ; KNL-LABEL: test_mm_maskz_xor_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpxorq %xmm1, %xmm0, %xmm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; KNL-NEXT:    vpxorq %xmm1, %xmm0, %xmm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_maskz_xor_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vxorpd %xmm1, %xmm0, %xmm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; SKX-NEXT:    vxorpd %xmm1, %xmm0, %xmm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <2 x double> %__A to <2 x i64>
@@ -726,16 +686,14 @@ entry:
 define <8 x float> @test_mm256_mask_xor_ps(<8 x float> %__W, i8 zeroext %__U, <8 x float> %__A, <8 x float> %__B) {
 ; KNL-LABEL: test_mm256_mask_xor_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpxorq %ymm2, %ymm1, %ymm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmps %ymm1, %ymm0, %ymm0 {%k1}
+; KNL-NEXT:    vpxord %ymm2, %ymm1, %ymm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_mask_xor_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vxorps %ymm2, %ymm1, %ymm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmps %ymm1, %ymm0, %ymm0 {%k1}
+; SKX-NEXT:    vxorps %ymm2, %ymm1, %ymm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <8 x float> %__A to <8 x i32>
@@ -750,16 +708,14 @@ entry:
 define <8 x float> @test_mm256_maskz_xor_ps(i8 zeroext %__U, <8 x float> %__A, <8 x float> %__B) {
 ; KNL-LABEL: test_mm256_maskz_xor_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpxorq %ymm1, %ymm0, %ymm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; KNL-NEXT:    vpxord %ymm1, %ymm0, %ymm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_maskz_xor_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vxorps %ymm1, %ymm0, %ymm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; SKX-NEXT:    vxorps %ymm1, %ymm0, %ymm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <8 x float> %__A to <8 x i32>
@@ -774,16 +730,14 @@ entry:
 define <4 x float> @test_mm_mask_xor_ps(<4 x float> %__W, i8 zeroext %__U, <4 x float> %__A, <4 x float> %__B) {
 ; KNL-LABEL: test_mm_mask_xor_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpxorq %xmm2, %xmm1, %xmm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmps %xmm1, %xmm0, %xmm0 {%k1}
+; KNL-NEXT:    vpxord %xmm2, %xmm1, %xmm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_mask_xor_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vxorps %xmm2, %xmm1, %xmm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmps %xmm1, %xmm0, %xmm0 {%k1}
+; SKX-NEXT:    vxorps %xmm2, %xmm1, %xmm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x float> %__A to <4 x i32>
@@ -799,16 +753,14 @@ entry:
 define <4 x float> @test_mm_maskz_xor_ps(i8 zeroext %__U, <4 x float> %__A, <4 x float> %__B) {
 ; KNL-LABEL: test_mm_maskz_xor_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vpxorq %xmm1, %xmm0, %xmm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; KNL-NEXT:    vpxord %xmm1, %xmm0, %xmm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_maskz_xor_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vxorps %xmm1, %xmm0, %xmm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; SKX-NEXT:    vxorps %xmm1, %xmm0, %xmm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x float> %__A to <4 x i32>
@@ -824,16 +776,14 @@ entry:
 define <4 x double> @test_mm256_mask_or_pd(<4 x double> %__W, i8 zeroext %__U, <4 x double> %__A, <4 x double> %__B) {
 ; KNL-LABEL: test_mm256_mask_or_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vporq %ymm1, %ymm2, %ymm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmpd %ymm1, %ymm0, %ymm0 {%k1}
+; KNL-NEXT:    vporq %ymm1, %ymm2, %ymm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_mask_or_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vorpd %ymm1, %ymm2, %ymm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmpd %ymm1, %ymm0, %ymm0 {%k1}
+; SKX-NEXT:    vorpd %ymm1, %ymm2, %ymm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x double> %__A to <4 x i64>
@@ -849,16 +799,14 @@ entry:
 define <4 x double> @test_mm256_maskz_or_pd(i8 zeroext %__U, <4 x double> %__A, <4 x double> %__B) {
 ; KNL-LABEL: test_mm256_maskz_or_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vporq %ymm0, %ymm1, %ymm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; KNL-NEXT:    vporq %ymm0, %ymm1, %ymm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_maskz_or_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vorpd %ymm0, %ymm1, %ymm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; SKX-NEXT:    vorpd %ymm0, %ymm1, %ymm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x double> %__A to <4 x i64>
@@ -874,16 +822,14 @@ entry:
 define <2 x double> @test_mm_mask_or_pd(<2 x double> %__W, i8 zeroext %__U, <2 x double> %__A, <2 x double> %__B) {
 ; KNL-LABEL: test_mm_mask_or_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vporq %xmm1, %xmm2, %xmm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmpd %xmm1, %xmm0, %xmm0 {%k1}
+; KNL-NEXT:    vporq %xmm1, %xmm2, %xmm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_mask_or_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vorpd %xmm1, %xmm2, %xmm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmpd %xmm1, %xmm0, %xmm0 {%k1}
+; SKX-NEXT:    vorpd %xmm1, %xmm2, %xmm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <2 x double> %__A to <2 x i64>
@@ -899,16 +845,14 @@ entry:
 define <2 x double> @test_mm_maskz_or_pd(i8 zeroext %__U, <2 x double> %__A, <2 x double> %__B) {
 ; KNL-LABEL: test_mm_maskz_or_pd:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vporq %xmm0, %xmm1, %xmm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; KNL-NEXT:    vporq %xmm0, %xmm1, %xmm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_maskz_or_pd:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vorpd %xmm0, %xmm1, %xmm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; SKX-NEXT:    vorpd %xmm0, %xmm1, %xmm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <2 x double> %__A to <2 x i64>
@@ -924,16 +868,14 @@ entry:
 define <8 x float> @test_mm256_mask_or_ps(<8 x float> %__W, i8 zeroext %__U, <8 x float> %__A, <8 x float> %__B) {
 ; KNL-LABEL: test_mm256_mask_or_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vporq %ymm1, %ymm2, %ymm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmps %ymm1, %ymm0, %ymm0 {%k1}
+; KNL-NEXT:    vpord %ymm1, %ymm2, %ymm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_mask_or_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vorps %ymm1, %ymm2, %ymm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmps %ymm1, %ymm0, %ymm0 {%k1}
+; SKX-NEXT:    vorps %ymm1, %ymm2, %ymm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <8 x float> %__A to <8 x i32>
@@ -948,16 +890,14 @@ entry:
 define <8 x float> @test_mm256_maskz_or_ps(i8 zeroext %__U, <8 x float> %__A, <8 x float> %__B) {
 ; KNL-LABEL: test_mm256_maskz_or_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vporq %ymm0, %ymm1, %ymm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; KNL-NEXT:    vpord %ymm0, %ymm1, %ymm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm256_maskz_or_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vorps %ymm0, %ymm1, %ymm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; SKX-NEXT:    vorps %ymm0, %ymm1, %ymm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <8 x float> %__A to <8 x i32>
@@ -972,16 +912,14 @@ entry:
 define <4 x float> @test_mm_mask_or_ps(<4 x float> %__W, i8 zeroext %__U, <4 x float> %__A, <4 x float> %__B) {
 ; KNL-LABEL: test_mm_mask_or_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vporq %xmm1, %xmm2, %xmm1
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vblendmps %xmm1, %xmm0, %xmm0 {%k1}
+; KNL-NEXT:    vpord %xmm1, %xmm2, %xmm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_mask_or_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vorps %xmm1, %xmm2, %xmm1
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vblendmps %xmm1, %xmm0, %xmm0 {%k1}
+; SKX-NEXT:    vorps %xmm1, %xmm2, %xmm0 {%k1}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x float> %__A to <4 x i32>
@@ -997,16 +935,14 @@ entry:
 define <4 x float> @test_mm_maskz_or_ps(i8 zeroext %__U, <4 x float> %__A, <4 x float> %__B) {
 ; KNL-LABEL: test_mm_maskz_or_ps:
 ; KNL:       ## BB#0: ## %entry
-; KNL-NEXT:    vporq %xmm0, %xmm1, %xmm0
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; KNL-NEXT:    vpord %xmm0, %xmm1, %xmm0 {%k1} {z}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test_mm_maskz_or_ps:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vorps %xmm0, %xmm1, %xmm0
 ; SKX-NEXT:    kmovb %edi, %k1
-; SKX-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; SKX-NEXT:    vorps %xmm0, %xmm1, %xmm0 {%k1} {z}
 ; SKX-NEXT:    retq
 entry:
   %0 = bitcast <4 x float> %__A to <4 x i32>
