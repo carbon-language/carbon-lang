@@ -40,12 +40,16 @@ public:
     return Error::success();
   }
 
-  virtual Error visitTypeBegin(const CVRecord<TypeLeafKind> &Record) override {
+  virtual Expected<TypeLeafKind>
+  visitTypeBegin(const CVRecord<TypeLeafKind> &Record) override {
+    TypeLeafKind Kind = Record.Type;
     for (auto Visitor : Pipeline) {
-      if (auto EC = Visitor->visitTypeBegin(Record))
-        return EC;
+      if (auto ExpectedKind = Visitor->visitTypeBegin(Record))
+        Kind = *ExpectedKind;
+      else
+        return ExpectedKind.takeError();
     }
-    return Error::success();
+    return Kind;
   }
   virtual Error visitTypeEnd(const CVRecord<TypeLeafKind> &Record) override {
     for (auto Visitor : Pipeline) {

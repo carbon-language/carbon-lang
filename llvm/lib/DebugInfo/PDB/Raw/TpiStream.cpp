@@ -121,10 +121,11 @@ public:
     return verify(Rec);
   }
 
-  Error visitTypeBegin(const CVRecord<TypeLeafKind> &Rec) override {
+  Expected<TypeLeafKind>
+  visitTypeBegin(const CVRecord<TypeLeafKind> &Rec) override {
     ++Index;
     RawRecord = &Rec;
-    return Error::success();
+    return Rec.Type;
   }
 
 private:

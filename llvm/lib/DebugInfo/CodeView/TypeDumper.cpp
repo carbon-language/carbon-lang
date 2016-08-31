@@ -203,7 +203,8 @@ static StringRef getLeafTypeName(TypeLeafKind LT) {
   return "UnknownLeaf";
 }
 
-Error CVTypeDumper::visitTypeBegin(const CVRecord<TypeLeafKind> &Record) {
+Expected<TypeLeafKind>
+CVTypeDumper::visitTypeBegin(const CVRecord<TypeLeafKind> &Record) {
   // Reset Name to the empty string. If the visitor sets it, we know it.
   Name = "";
 
@@ -223,7 +224,7 @@ Error CVTypeDumper::visitTypeBegin(const CVRecord<TypeLeafKind> &Record) {
     assert(!IsInFieldList);
     IsInFieldList = true;
   }
-  return Error::success();
+  return Record.Type;
 }
 
 Error CVTypeDumper::visitTypeEnd(const CVRecord<TypeLeafKind> &Record) {

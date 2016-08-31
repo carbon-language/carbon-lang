@@ -70,7 +70,8 @@ public:
 
   Error visitUnknownType(const CVRecord<TypeLeafKind> &Record) override;
 
-  Error visitTypeBegin(const CVRecord<TypeLeafKind> &Record) override;
+  Expected<TypeLeafKind>
+  visitTypeBegin(const CVRecord<TypeLeafKind> &Record) override;
   Error visitTypeEnd(const CVRecord<TypeLeafKind> &Record) override;
 
   bool mergeStream(const CVTypeArray &Types);
@@ -123,13 +124,14 @@ private:
 
 } // end anonymous namespace
 
-Error TypeStreamMerger::visitTypeBegin(const CVRecord<TypeLeafKind> &Rec) {
+Expected<TypeLeafKind>
+TypeStreamMerger::visitTypeBegin(const CVRecord<TypeLeafKind> &Rec) {
   if (Rec.Type == TypeLeafKind::LF_FIELDLIST) {
     assert(!IsInFieldList);
     IsInFieldList = true;
   } else
     BeginIndexMapSize = IndexMap.size();
-  return Error::success();
+  return Rec.Type;
 }
 
 Error TypeStreamMerger::visitTypeEnd(const CVRecord<TypeLeafKind> &Rec) {

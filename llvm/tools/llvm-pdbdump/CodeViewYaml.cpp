@@ -508,9 +508,13 @@ void ScalarEnumerationTraits<TypeLeafKind>::enumeration(IO &io,
 }
 }
 
-Error llvm::codeview::yaml::YamlTypeDumperCallbacks::visitTypeBegin(
+Expected<TypeLeafKind>
+llvm::codeview::yaml::YamlTypeDumperCallbacks::visitTypeBegin(
     const CVRecord<TypeLeafKind> &CVR) {
+  // When we're outputting, `CVR.Type` already has the right value in it.  But
+  // when we're inputting, we need to read the value.  Since `CVR.Type` is const
+  // we do it into a temp variable.
   TypeLeafKind K = CVR.Type;
   YamlIO.mapRequired("Kind", K);
-  return Error::success();
+  return K;
 }
