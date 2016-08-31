@@ -1444,7 +1444,7 @@ static bool canSinkInstructions(
 // Assuming canSinkLastInstruction(Blocks) has returned true, sink the last
 // instruction of every block in Blocks to their common successor, commoning
 // into one instruction.
-static bool sinkLastInstruction(ArrayRef<BasicBlock*> Blocks) {
+static void sinkLastInstruction(ArrayRef<BasicBlock*> Blocks) {
   auto *BBEnd = Blocks[0]->getTerminator()->getSuccessor(0);
 
   // canSinkLastInstruction returning true guarantees that every block has at
@@ -1453,22 +1453,9 @@ static bool sinkLastInstruction(ArrayRef<BasicBlock*> Blocks) {
   for (auto *BB : Blocks)
     Insts.push_back(BB->getTerminator()->getPrevNode());
 
-  // The only checking we need to do now is that all users of all instructions
-  // are the same PHI node. canSinkLastInstruction should have checked this but
-  // it is slightly over-aggressive - it gets confused by commutative instructions
-  // so double-check it here.
+  // We don't need to do any checking here; canSinkLastInstruction should have
+  // done it all for us.
   Instruction *I0 = Insts.front();
-  if (!isa<StoreInst>(I0)) {
-    auto *PNUse = dyn_cast<PHINode>(*I0->user_begin());
-    if (!all_of(Insts, [&PNUse](const Instruction *I) -> bool {
-          auto *U = cast<Instruction>(*I->user_begin());
-          return U == PNUse || U->getParent() == I->getParent();
-        }))
-      return false;
-  }
-  
-  // We don't need to do any more checking here; canSinkLastInstruction should
-  // have done it all for us.
   SmallVector<Value*, 4> NewOperands;
   for (unsigned O = 0, E = I0->getNumOperands(); O != E; ++O) {
     // This check is different to that in canSinkLastInstruction. There, we
@@ -1520,8 +1507,6 @@ static bool sinkLastInstruction(ArrayRef<BasicBlock*> Blocks) {
   for (auto *I : Insts)
     if (I != I0)
       I->eraseFromParent();
-
-  return true;
 }
 
 namespace {
@@ -1654,7 +1639,7 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
   LockstepReverseIterator LRI(UnconditionalPreds);
   while (LRI.isValid() &&
          canSinkInstructions(*LRI, PHIOperands)) {
-    DEBUG(dbgs() << "SINK: instruction can be sunk: " << *(*LRI)[0] << "\n");
+    DEBUG(dbgs() << "SINK: instruction can be sunk: " << (*LRI)[0] << "\n");
     InstructionsToSink.insert((*LRI).begin(), (*LRI).end());
     ++ScanIdx;
     --LRI;
@@ -1713,8 +1698,7 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
       break;
     }
     
-    if (!sinkLastInstruction(UnconditionalPreds))
-      return Changed;
+    sinkLastInstruction(UnconditionalPreds);
     NumSinkCommons++;
     Changed = true;
   }
