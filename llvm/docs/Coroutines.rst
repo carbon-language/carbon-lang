@@ -242,7 +242,7 @@ In the cleanup block, we will make freeing the coroutine frame conditional on
 `coro.free`_ intrinsic. If allocation is elided, `coro.free`_ returns `null`
 thus skipping the deallocation code:
 
-.. code-block:: llvm
+.. code-block:: text
 
   cleanup:
     %mem = call i8* @llvm.coro.free(token %id, i8* %hdl)
