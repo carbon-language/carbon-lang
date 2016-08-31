@@ -78,7 +78,16 @@ public:
       return make_error(*ErrorMessage);
     else
       return Error::success();
-  };
+  }
+
+  // Blocks the calling host thread until all work enqueued on this Stream
+  // completes.
+  //
+  // Returns the result of getStatus() after the Stream work completes.
+  Error blockHostUntilDone() {
+    setError(PDevice->blockHostUntilDone(ThePlatformStream.get()));
+    return getStatus();
+  }
 
   /// Entrains onto the stream of operations a kernel launch with the given
   /// arguments.
