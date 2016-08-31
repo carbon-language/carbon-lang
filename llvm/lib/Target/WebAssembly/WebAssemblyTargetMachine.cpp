@@ -165,7 +165,14 @@ void WebAssemblyPassConfig::addIRPasses() {
   if (getOptLevel() != CodeGenOpt::None)
     addPass(createWebAssemblyOptimizeReturned());
 
-  // Handle exceptions.
+  // If exception handling is not enabled, we lower invokes into calls and
+  // simplify CFG to delete unreachable landingpad blocks.
+  if (!EnableEmException) {
+    addPass(createLowerInvokePass());
+    addPass(createCFGSimplificationPass());
+  }
+
+  // Handle exceptions and setjmp/longjmp if enabled.
   if (EnableEmException || EnableEmSjLj)
     addPass(createWebAssemblyLowerEmscriptenEHSjLj(EnableEmException,
                                                    EnableEmSjLj));
