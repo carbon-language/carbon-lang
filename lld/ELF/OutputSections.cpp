@@ -1373,7 +1373,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
   // All symbols with STB_LOCAL binding precede the weak and global symbols.
   // .dynsym only contains global symbols.
-  if (!Config->DiscardAll && !StrTabSec.isDynamic())
+  if (Config->Discard != DiscardPolicy::All && !StrTabSec.isDynamic())
     writeLocalSymbols(Buf);
 
   writeGlobalSymbols(Buf);

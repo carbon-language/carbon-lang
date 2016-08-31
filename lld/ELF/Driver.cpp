@@ -344,6 +344,25 @@ static bool isOutputFormatBinary(opt::InputArgList &Args) {
   return false;
 }
 
+static DiscardPolicy getDiscardOption(opt::InputArgList &Args) {
+  auto *Arg =
+      Args.getLastArg(OPT_discard_all, OPT_discard_locals, OPT_discard_none);
+  if (!Arg)
+    return DiscardPolicy::Default;
+
+  switch (Arg->getOption().getID()) {
+  case OPT_discard_all:
+    return DiscardPolicy::All;
+  case OPT_discard_locals:
+    return DiscardPolicy::Locals;
+  case OPT_discard_none:
+    return DiscardPolicy::None;
+  default:
+    llvm_unreachable("unknown discard option");
+  }
+}
+
+
 static StripPolicy getStripOption(opt::InputArgList &Args) {
   if (auto *Arg = Args.getLastArg(OPT_strip_all, OPT_strip_debug)) {
     if (Arg->getOption().getID() == OPT_strip_all)
@@ -376,9 +395,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->BsymbolicFunctions = Args.hasArg(OPT_Bsymbolic_functions);
   Config->Demangle = !Args.hasArg(OPT_no_demangle);
   Config->DisableVerify = Args.hasArg(OPT_disable_verify);
-  Config->DiscardAll = Args.hasArg(OPT_discard_all);
-  Config->DiscardLocals = Args.hasArg(OPT_discard_locals);
-  Config->DiscardNone = Args.hasArg(OPT_discard_none);
+  Config->Discard = getDiscardOption(Args);
   Config->EhFrameHdr = Args.hasArg(OPT_eh_frame_hdr);
   Config->EnableNewDtags = !Args.hasArg(OPT_disable_new_dtags);
   Config->ExportDynamic = Args.hasArg(OPT_export_dynamic);
