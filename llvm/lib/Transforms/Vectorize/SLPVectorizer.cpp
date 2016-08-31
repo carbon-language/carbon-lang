@@ -3855,8 +3855,6 @@ bool SLPVectorizerPass::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
   if (VL.size() < 2)
     return false;
 
-  DEBUG(dbgs() << "SLP: Vectorizing a list of length = " << VL.size() << ".\n");
-
   // Check that all of the parts are scalar instructions of the same type.
   Instruction *I0 = dyn_cast<Instruction>(VL[0]);
   if (!I0)
@@ -3877,6 +3875,8 @@ bool SLPVectorizerPass::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
     if (!Inst || Inst->getOpcode() != Opcode0)
       return false;
   }
+
+  DEBUG(dbgs() << "SLP: Vectorizing a list of length = " << VL.size() << ".\n");
 
   bool Changed = false;
 
