@@ -66,7 +66,7 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body,
   case SymbolBody::DefinedCommonKind:
     return CommonInputSection<ELFT>::X->OutSec->getVA() +
            CommonInputSection<ELFT>::X->OutSecOff +
-           cast<DefinedCommon<ELFT>>(Body).Offset;
+           cast<DefinedCommon>(Body).Offset;
   case SymbolBody::SharedKind: {
     auto &SS = cast<SharedSymbol<ELFT>>(Body);
     if (!SS.NeedsCopyOrPltAddr)
@@ -175,7 +175,7 @@ template <class ELFT> typename ELFT::uint SymbolBody::getThunkVA() const {
 }
 
 template <class ELFT> typename ELFT::uint SymbolBody::getSize() const {
-  if (const auto *C = dyn_cast<DefinedCommon<ELFT>>(this))
+  if (const auto *C = dyn_cast<DefinedCommon>(this))
     return C->Size;
   if (const auto *DR = dyn_cast<DefinedRegular<ELFT>>(this))
     return DR->Size;
@@ -208,10 +208,8 @@ DefinedSynthetic<ELFT>::DefinedSynthetic(StringRef N, uintX_t Value,
     : Defined(SymbolBody::DefinedSyntheticKind, N, STV_HIDDEN, 0 /* Type */),
       Value(Value), Section(Section) {}
 
-template <class ELFT>
-DefinedCommon<ELFT>::DefinedCommon(StringRef N, uint64_t Size,
-                                   uint64_t Alignment, uint8_t StOther,
-                                   uint8_t Type, InputFile *File)
+DefinedCommon::DefinedCommon(StringRef N, uint64_t Size, uint64_t Alignment,
+                             uint8_t StOther, uint8_t Type, InputFile *File)
     : Defined(SymbolBody::DefinedCommonKind, N, StOther, Type),
       Alignment(Alignment), Size(Size) {
   this->File = File;
@@ -321,8 +319,3 @@ template class elf::DefinedSynthetic<ELF32LE>;
 template class elf::DefinedSynthetic<ELF32BE>;
 template class elf::DefinedSynthetic<ELF64LE>;
 template class elf::DefinedSynthetic<ELF64BE>;
-
-template class elf::DefinedCommon<ELF32LE>;
-template class elf::DefinedCommon<ELF32BE>;
-template class elf::DefinedCommon<ELF64LE>;
-template class elf::DefinedCommon<ELF64BE>;

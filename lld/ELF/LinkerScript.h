@@ -20,12 +20,12 @@
 
 namespace lld {
 namespace elf {
+class DefinedCommon;
 class ScriptParser;
 class SymbolBody;
 template <class ELFT> class InputSectionBase;
 template <class ELFT> class OutputSectionBase;
 template <class ELFT> class OutputSectionFactory;
-template <class ELFT> class DefinedCommon;
 template <class ELFT> class LayoutInputSection;
 
 typedef std::function<uint64_t(uint64_t)> Expr;

@@ -158,7 +158,7 @@ public:
   static bool classof(const SymbolBody *S) { return S->isDefined(); }
 };
 
-template <class ELFT> class DefinedCommon : public Defined {
+class DefinedCommon : public Defined {
 public:
   DefinedCommon(StringRef N, uint64_t Size, uint64_t Alignment, uint8_t StOther,
                 uint8_t Type, InputFile *File);
@@ -436,11 +436,10 @@ struct Symbol {
   // large and aligned enough to store any derived class of SymbolBody. We
   // assume that the size and alignment of ELF64LE symbols is sufficient for any
   // ELFT, and we verify this with the static_asserts in replaceBody.
-  llvm::AlignedCharArrayUnion<DefinedCommon<llvm::object::ELF64LE>,
-                              DefinedRegular<llvm::object::ELF64LE>,
-                              DefinedSynthetic<llvm::object::ELF64LE>,
-                              Undefined, SharedSymbol<llvm::object::ELF64LE>,
-                              LazyArchive, LazyObject>
+  llvm::AlignedCharArrayUnion<
+      DefinedCommon, DefinedRegular<llvm::object::ELF64LE>,
+      DefinedSynthetic<llvm::object::ELF64LE>, Undefined,
+      SharedSymbol<llvm::object::ELF64LE>, LazyArchive, LazyObject>
       Body;
 
   SymbolBody *body() { return reinterpret_cast<SymbolBody *>(Body.buffer); }
