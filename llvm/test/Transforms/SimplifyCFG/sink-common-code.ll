@@ -367,66 +367,6 @@ declare i32 @bar(i32)
 ; CHECK: %[[x:.*]] = select i1 %flag
 ; CHECK: call i32 @bar(i32 %[[x]])
 
-; The load should be commoned.
-define i32 @test14(i1 zeroext %flag, i32 %w, i32 %x, i32 %y, %struct.anon* %s) {
-entry:
-  br i1 %flag, label %if.then, label %if.else
-
-if.then:
-  %dummy = add i32 %x, 1
-  %gepa = getelementptr inbounds %struct.anon, %struct.anon* %s, i32 0, i32 1
-  %sv1 = load i32, i32* %gepa
-  %cmp1 = icmp eq i32 %sv1, 56
-  br label %if.end
-
-if.else:
-  %dummy2 = add i32 %x, 4
-  %gepb = getelementptr inbounds %struct.anon, %struct.anon* %s, i32 0, i32 1
-  %sv2 = load i32, i32* %gepb
-  %cmp2 = icmp eq i32 %sv2, 57
-  br label %if.end
-
-if.end:
-  %p = phi i1 [ %cmp1, %if.then ], [ %cmp2, %if.else ]
-  ret i32 1
-}
-
-; CHECK-LABEL: test14
-; CHECK: getelementptr
-; CHECK: load
-; CHECK-NOT: load
-
-; The load should be commoned.
-define i32 @test15(i1 zeroext %flag, i32 %w, i32 %x, i32 %y, %struct.anon* %s) {
-entry:
-  br i1 %flag, label %if.then, label %if.else
-
-if.then:
-  %dummy = add i32 %x, 1
-  %gepa = getelementptr inbounds %struct.anon, %struct.anon* %s, i32 0, i32 0
-  %sv1 = load i32, i32* %gepa
-  %ext1 = zext i32 %sv1 to i64
-  %cmp1 = icmp eq i64 %ext1, 56
-  br label %if.end
-
-if.else:
-  %dummy2 = add i32 %x, 4
-  %gepb = getelementptr inbounds %struct.anon, %struct.anon* %s, i32 0, i32 1
-  %sv2 = load i32, i32* %gepb
-  %ext2 = zext i32 %sv2 to i64
-  %cmp2 = icmp eq i64 %ext2, 57
-  br label %if.end
-
-if.end:
-  %p = phi i1 [ %cmp1, %if.then ], [ %cmp2, %if.else ]
-  ret i32 1
-}
-
-; CHECK-LABEL: test15
-; CHECK: getelementptr
-; CHECK: load
-; CHECK-NOT: load
-
 ; CHECK: !0 = !{!1, !1, i64 0}
 ; CHECK: !1 = !{!"float", !2}
 ; CHECK: !2 = !{!"an example type tree"}
