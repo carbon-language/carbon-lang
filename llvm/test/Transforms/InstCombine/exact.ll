@@ -159,8 +159,8 @@ define i1 @udiv_icmp1(i64 %X) {
 
 define <2 x i1> @udiv_icmp1_vec(<2 x i64> %X) {
 ; CHECK-LABEL: @udiv_icmp1_vec(
-; CHECK-NEXT:    [[B:%.*]] = icmp ugt <2 x i64> %X, <i64 4, i64 4>
-; CHECK-NEXT:    ret <2 x i1> [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ne <2 x i64> %X, zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[TMP1]]
 ;
   %A = udiv exact <2 x i64> %X, <i64 5, i64 5>
   %B = icmp ne <2 x i64> %A, zeroinitializer
@@ -177,10 +177,11 @@ define i1 @udiv_icmp2(i64 %X) {
   ret i1 %B
 }
 
+; FIXME: missing vector fold for ult 1 -> eq 0
 define <2 x i1> @udiv_icmp2_vec(<2 x i64> %X) {
 ; CHECK-LABEL: @udiv_icmp2_vec(
-; CHECK-NEXT:    [[B:%.*]] = icmp ult <2 x i64> %X, <i64 5, i64 5>
-; CHECK-NEXT:    ret <2 x i1> [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult <2 x i64> %X, <i64 1, i64 1>
+; CHECK-NEXT:    ret <2 x i1> [[TMP1]]
 ;
   %A = udiv exact <2 x i64> %X, <i64 5, i64 5>
   %B = icmp eq <2 x i64> %A, zeroinitializer
@@ -197,12 +198,11 @@ define i1 @sdiv_icmp1(i64 %X) {
   ret i1 %B
 }
 
-; FIXME: Vectors should fold too.
+; FIXME: missing vector fold for ult 1 -> eq 0
 define <2 x i1> @sdiv_icmp1_vec(<2 x i64> %X) {
 ; CHECK-LABEL: @sdiv_icmp1_vec(
-; CHECK-NEXT:    [[A:%.*]] = sdiv exact <2 x i64> %X, <i64 5, i64 5>
-; CHECK-NEXT:    [[B:%.*]] = icmp eq <2 x i64> [[A]], zeroinitializer
-; CHECK-NEXT:    ret <2 x i1> [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult <2 x i64> %X, <i64 1, i64 1>
+; CHECK-NEXT:    ret <2 x i1> [[TMP1]]
 ;
   %A = sdiv exact <2 x i64> %X, <i64 5, i64 5>
   %B = icmp eq <2 x i64> %A, zeroinitializer
@@ -219,12 +219,10 @@ define i1 @sdiv_icmp2(i64 %X) {
   ret i1 %B
 }
 
-; FIXME: Vectors should fold too.
 define <2 x i1> @sdiv_icmp2_vec(<2 x i64> %X) {
 ; CHECK-LABEL: @sdiv_icmp2_vec(
-; CHECK-NEXT:    [[A:%.*]] = sdiv exact <2 x i64> %X, <i64 5, i64 5>
-; CHECK-NEXT:    [[B:%.*]] = icmp eq <2 x i64> [[A]], <i64 1, i64 1>
-; CHECK-NEXT:    ret <2 x i1> [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq <2 x i64> %X, <i64 5, i64 5>
+; CHECK-NEXT:    ret <2 x i1> [[TMP1]]
 ;
   %A = sdiv exact <2 x i64> %X, <i64 5, i64 5>
   %B = icmp eq <2 x i64> %A, <i64 1, i64 1>
@@ -241,12 +239,10 @@ define i1 @sdiv_icmp3(i64 %X) {
   ret i1 %B
 }
 
-; FIXME: Vectors should fold too.
 define <2 x i1> @sdiv_icmp3_vec(<2 x i64> %X) {
 ; CHECK-LABEL: @sdiv_icmp3_vec(
-; CHECK-NEXT:    [[A:%.*]] = sdiv exact <2 x i64> %X, <i64 5, i64 5>
-; CHECK-NEXT:    [[B:%.*]] = icmp eq <2 x i64> [[A]], <i64 -1, i64 -1>
-; CHECK-NEXT:    ret <2 x i1> [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq <2 x i64> %X, <i64 -5, i64 -5>
+; CHECK-NEXT:    ret <2 x i1> [[TMP1]]
 ;
   %A = sdiv exact <2 x i64> %X, <i64 5, i64 5>
   %B = icmp eq <2 x i64> %A, <i64 -1, i64 -1>
@@ -263,12 +259,11 @@ define i1 @sdiv_icmp4(i64 %X) {
   ret i1 %B
 }
 
-; FIXME: Vectors should fold too.
+; FIXME: missing vector fold for ult 1 -> eq 0
 define <2 x i1> @sdiv_icmp4_vec(<2 x i64> %X) {
 ; CHECK-LABEL: @sdiv_icmp4_vec(
-; CHECK-NEXT:    [[A:%.*]] = sdiv exact <2 x i64> %X, <i64 -5, i64 -5>
-; CHECK-NEXT:    [[B:%.*]] = icmp eq <2 x i64> [[A]], zeroinitializer
-; CHECK-NEXT:    ret <2 x i1> [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult <2 x i64> %X, <i64 1, i64 1>
+; CHECK-NEXT:    ret <2 x i1> [[TMP1]]
 ;
   %A = sdiv exact <2 x i64> %X, <i64 -5, i64 -5>
   %B = icmp eq <2 x i64> %A, zeroinitializer
@@ -285,12 +280,10 @@ define i1 @sdiv_icmp5(i64 %X) {
   ret i1 %B
 }
 
-; FIXME: Vectors should fold too.
 define <2 x i1> @sdiv_icmp5_vec(<2 x i64> %X) {
 ; CHECK-LABEL: @sdiv_icmp5_vec(
-; CHECK-NEXT:    [[A:%.*]] = sdiv exact <2 x i64> %X, <i64 -5, i64 -5>
-; CHECK-NEXT:    [[B:%.*]] = icmp eq <2 x i64> [[A]], <i64 1, i64 1>
-; CHECK-NEXT:    ret <2 x i1> [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq <2 x i64> %X, <i64 -5, i64 -5>
+; CHECK-NEXT:    ret <2 x i1> [[TMP1]]
 ;
   %A = sdiv exact <2 x i64> %X, <i64 -5, i64 -5>
   %B = icmp eq <2 x i64> %A, <i64 1, i64 1>
@@ -307,12 +300,10 @@ define i1 @sdiv_icmp6(i64 %X) {
   ret i1 %B
 }
 
-; FIXME: Vectors should fold too.
 define <2 x i1> @sdiv_icmp6_vec(<2 x i64> %X) {
 ; CHECK-LABEL: @sdiv_icmp6_vec(
-; CHECK-NEXT:    [[A:%.*]] = sdiv exact <2 x i64> %X, <i64 -5, i64 -5>
-; CHECK-NEXT:    [[B:%.*]] = icmp eq <2 x i64> [[A]], <i64 -1, i64 -1>
-; CHECK-NEXT:    ret <2 x i1> [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq <2 x i64> %X, <i64 5, i64 5>
+; CHECK-NEXT:    ret <2 x i1> [[TMP1]]
 ;
   %A = sdiv exact <2 x i64> %X, <i64 -5, i64 -5>
   %B = icmp eq <2 x i64> %A, <i64 -1, i64 -1>
