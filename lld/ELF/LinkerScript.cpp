@@ -310,10 +310,43 @@ void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
   }
 }
 
-template <class ELFT> void assignOffsets(OutputSectionBase<ELFT> *Sec) {
+// Linker script may define start and end symbols for special section types,
+// like .got, .eh_frame_hdr, .eh_frame and others. Those sections are not a list
+// of regular input input sections, therefore our way of defining symbols for
+// regular sections will not work. The approach we use for special section types
+// is not perfect - it handles only start and end symbols.
+template <class ELFT>
+void addStartEndSymbols(OutputSectionCommand *Cmd,
+                        OutputSectionBase<ELFT> *Sec) {
+  bool Start = true;
+  BaseCommand *PrevCmd = nullptr;
+
+  for (std::unique_ptr<BaseCommand> &Base : Cmd->Commands) {
+    if (auto *AssignCmd = dyn_cast<SymbolAssignment>(Base.get())) {
+      if (auto *Sym = cast_or_null<DefinedSynthetic<ELFT>>(AssignCmd->Sym)) {
+        Sym->Section = Sec;
+        Sym->Value =
+            AssignCmd->Expression(Sec->getVA() + (Start ? 0 : Sec->getSize())) -
+            Sec->getVA();
+      }
+    } else {
+      if (!Start && isa<SymbolAssignment>(PrevCmd))
+        error("section '" + Sec->getName() +
+              "' supports only start and end symbols");
+      Start = false;
+    }
+    PrevCmd = Base.get();
+  }
+}
+
+template <class ELFT>
+void assignOffsets(OutputSectionCommand *Cmd, OutputSectionBase<ELFT> *Sec) {
   auto *OutSec = dyn_cast<OutputSection<ELFT>>(Sec);
   if (!OutSec) {
     Sec->assignOffsets();
+    // This section is not regular output section. However linker script may
+    // have defined start/end symbols for it. This case is handled below.
+    addStartEndSymbols(Cmd, Sec);
     return;
   }
 
@@ -404,19 +437,19 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
       uintX_t TVA = Dot + ThreadBssOffset;
       TVA = alignTo(TVA, Sec->getAlignment());
       Sec->setVA(TVA);
-      assignOffsets(Sec);
+      assignOffsets(Cmd, Sec);
       ThreadBssOffset = TVA - Dot + Sec->getSize();
       continue;
     }
 
     if (!(Sec->getFlags() & SHF_ALLOC)) {
-      Sec->assignOffsets();
+      assignOffsets(Cmd, Sec);
       continue;
     }
 
     Dot = alignTo(Dot, Sec->getAlignment());
     Sec->setVA(Dot);
-    assignOffsets(Sec);
+    assignOffsets(Cmd, Sec);
     MinVA = std::min(MinVA, Dot);
     Dot += Sec->getSize();
   }
