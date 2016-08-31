@@ -65,7 +65,7 @@ void SIFrameLowering::emitFlatScratchInit(const SIInstrInfo *TII,
 
   // Copy the size in bytes.
   unsigned FlatScrInitHi = TRI->getSubReg(FlatScratchInitReg, AMDGPU::sub1);
-  BuildMI(MBB, I, DL, TII->get(AMDGPU::S_MOV_B32), AMDGPU::FLAT_SCR_LO)
+  BuildMI(MBB, I, DL, TII->get(AMDGPU::COPY), AMDGPU::FLAT_SCR_LO)
     .addReg(FlatScrInitHi, RegState::Kill);
 
   unsigned FlatScrInitLo = TRI->getSubReg(FlatScratchInitReg, AMDGPU::sub0);
@@ -252,7 +252,6 @@ void SIFrameLowering::emitPrologue(MachineFunction &MF,
     OtherBB.addLiveIn(ScratchWaveOffsetReg);
   }
 
-  const MCInstrDesc &SMovB32 = TII->get(AMDGPU::S_MOV_B32);
   DebugLoc DL;
   MachineBasicBlock::iterator I = MBB.begin();
 
@@ -260,7 +259,7 @@ void SIFrameLowering::emitPrologue(MachineFunction &MF,
     // Make sure we emit the copy for the offset first. We may have chosen to
     // copy the buffer resource into a register that aliases the input offset
     // register.
-    BuildMI(MBB, I, DL, SMovB32, ScratchWaveOffsetReg)
+    BuildMI(MBB, I, DL, TII->get(AMDGPU::COPY), ScratchWaveOffsetReg)
       .addReg(PreloadedScratchWaveOffsetReg, RegState::Kill);
   }
 
@@ -270,19 +269,11 @@ void SIFrameLowering::emitPrologue(MachineFunction &MF,
       !TRI->isSubRegisterEq(PreloadedPrivateBufferReg, ScratchRsrcReg) &&
       !TRI->isSubRegisterEq(PreloadedPrivateBufferReg, ScratchWaveOffsetReg));
 
-    unsigned Rsrc01 = TRI->getSubReg(ScratchRsrcReg, AMDGPU::sub0_sub1);
-    unsigned Rsrc23 = TRI->getSubReg(ScratchRsrcReg, AMDGPU::sub2_sub3);
-
-    unsigned Lo = TRI->getSubReg(PreloadedPrivateBufferReg, AMDGPU::sub0_sub1);
-    unsigned Hi = TRI->getSubReg(PreloadedPrivateBufferReg, AMDGPU::sub2_sub3);
-
-    const MCInstrDesc &SMovB64 = TII->get(AMDGPU::S_MOV_B64);
-
-    BuildMI(MBB, I, DL, SMovB64, Rsrc01)
-      .addReg(Lo, RegState::Kill);
-    BuildMI(MBB, I, DL, SMovB64, Rsrc23)
-      .addReg(Hi, RegState::Kill);
+    BuildMI(MBB, I, DL, TII->get(AMDGPU::COPY), ScratchRsrcReg)
+      .addReg(PreloadedPrivateBufferReg, RegState::Kill);
   } else {
+    const MCInstrDesc &SMovB32 = TII->get(AMDGPU::S_MOV_B32);
+
     unsigned Rsrc0 = TRI->getSubReg(ScratchRsrcReg, AMDGPU::sub0);
     unsigned Rsrc1 = TRI->getSubReg(ScratchRsrcReg, AMDGPU::sub1);
     unsigned Rsrc2 = TRI->getSubReg(ScratchRsrcReg, AMDGPU::sub2);
