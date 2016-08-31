@@ -1257,7 +1257,8 @@ GDBRemoteCommunicationServerLLGS::Handle_c (StringExtractorGDBRemote &packet)
     if (has_continue_address)
     {
         if (log)
-            log->Printf ("GDBRemoteCommunicationServerLLGS::%s not implemented for c{address} variant [%s remains]", __FUNCTION__, packet.Peek ());
+            log->Printf("GDBRemoteCommunicationServerLLGS::%s not implemented for c{address} variant [%s remains]",
+                        __FUNCTION__, packet.Peek().str().c_str());
         return SendUnimplementedResponse (packet.GetStringRef().c_str());
     }
 
