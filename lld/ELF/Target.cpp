@@ -1967,6 +1967,20 @@ static void writeMipsHi16(uint8_t *Loc, uint64_t V) {
 }
 
 template <endianness E>
+static void writeMipsHigher(uint8_t *Loc, uint64_t V) {
+  uint32_t Instr = read32<E>(Loc);
+  uint16_t Res = ((V + 0x80008000) >> 32) & 0xffff;
+  write32<E>(Loc, (Instr & 0xffff0000) | Res);
+}
+
+template <endianness E>
+static void writeMipsHighest(uint8_t *Loc, uint64_t V) {
+  uint32_t Instr = read32<E>(Loc);
+  uint16_t Res = ((V + 0x800080008000) >> 48) & 0xffff;
+  write32<E>(Loc, (Instr & 0xffff0000) | Res);
+}
+
+template <endianness E>
 static void writeMipsLo16(uint8_t *Loc, uint64_t V) {
   uint32_t Instr = read32<E>(Loc);
   write32<E>(Loc, (Instr & 0xffff0000) | (V & 0xffff));
@@ -2149,6 +2163,12 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_MIPS_TLS_DTPREL_HI16:
   case R_MIPS_TLS_TPREL_HI16:
     writeMipsHi16<E>(Loc, Val);
+    break;
+  case R_MIPS_HIGHER:
+    writeMipsHigher<E>(Loc, Val);
+    break;
+  case R_MIPS_HIGHEST:
+    writeMipsHighest<E>(Loc, Val);
     break;
   case R_MIPS_JALR:
     // Ignore this optimization relocation for now
