@@ -12,8 +12,7 @@
 // /Yc with a .c file should build a c pch file.
 // RUN: %clang_cl -Werror /Yc%S/Inputs/pchfile.h /FI%S/Inputs/pchfile.h /c /Fo%t/pchfile.obj /Fp%t/pchfile.pch -v -- %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-YC %s
-// CHECK-YC: cc1
-// CHECK-YC-SAME: -emit-pch
+// CHECK-YC: cc1{{.* .*}}-emit-pch
 // CHECK-YC-SAME: -o
 // CHECK-YC-SAME: pchfile.pch
 // CHECK-YC-SAME: -x
@@ -22,8 +21,7 @@
 // But not if /TP changes the input language to C++.
 // RUN: %clang_cl /TP -Werror /Yc%S/Inputs/pchfile.h /FI%S/Inputs/pchfile.h /c /Fo%t/pchfile.obj /Fp%t/pchfile.pch -v -- %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-YCTP %s
-// CHECK-YCTP: cc1
-// CHECK-YCTP-SAME: -emit-pch
+// CHECK-YCTP: cc1{{.* .*}}-emit-pch
 // CHECK-YCTP-SAME: -o
 // CHECK-YCTP-SAME: pchfile.pch
 // CHECK-YCTP-SAME: -x
@@ -32,8 +30,7 @@
 // Except if a later /TC changes it back.
 // RUN: %clang_cl -Werror /Yc%S/Inputs/pchfile.h /FI%S/Inputs/pchfile.h /c /Fo%t/pchfile.obj /Fp%t/pchfile.pch -v -- %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-YCTPTC %s
-// CHECK-YCTPTC: cc1
-// CHECK-YCTPTC-SAME: -emit-pch
+// CHECK-YCTPTC: cc1{{.* .*}}-emit-pch
 // CHECK-YCTPTC-SAME: -o
 // CHECK-YCTPTC-SAME: pchfile.pch
 // CHECK-YCTPTC-SAME: -x
@@ -42,8 +39,7 @@
 // Also check lower-case /Tp flag.
 // RUN: %clang_cl -Werror /Tp%s /Yc%S/Inputs/pchfile.h /FI%S/Inputs/pchfile.h /c /Fo%t/pchfile.obj /Fp%t/pchfile.pch -v 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-YCTp %s
-// CHECK-YCTp: cc1
-// CHECK-YCTp-SAME: -emit-pch
+// CHECK-YCTp: cc1{{.* .*}}-emit-pch
 // CHECK-YCTp-SAME: -o
 // CHECK-YCTp-SAME: pchfile.pch
 // CHECK-YCTp-SAME: -x
