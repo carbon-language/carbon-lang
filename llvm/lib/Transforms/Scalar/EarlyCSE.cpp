@@ -644,13 +644,13 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       // generation or the load is known to be from an invariant location,
       // replace this instruction.
       //
-      // A dominating invariant load implies that the location loaded from is
-      // unchanging beginning at the point of the invariant load, so the load
-      // we're CSE'ing _away_ does not need to be invariant, only the available
-      // load we're CSE'ing _to_ does.
+      // If either the dominating load or the current load are invariant, then
+      // we can assume the current load loads the same value as the dominating
+      // load.
       LoadValue InVal = AvailableLoads.lookup(MemInst.getPointerOperand());
       if (InVal.DefInst != nullptr &&
-          (InVal.Generation == CurrentGeneration || InVal.IsInvariant) &&
+          (InVal.Generation == CurrentGeneration ||
+           InVal.IsInvariant || MemInst.isInvariantLoad()) &&
           InVal.MatchingId == MemInst.getMatchingId() &&
           // We don't yet handle removing loads with ordering of any kind.
           !MemInst.isVolatile() && MemInst.isUnordered() &&
