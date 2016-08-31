@@ -1687,7 +1687,7 @@ ParseMemoryRegionInfoFromProcMapsLine (const std::string &maps_line, MemoryRegio
     line_extractor.GetU64(0, 10);          // Read the inode number
 
     line_extractor.SkipSpaces();
-    const char* name = line_extractor.Peek();
+    const char* name = line_extractor.PeekChar();
     if (name)
         memory_region_info.SetName(name);
 
