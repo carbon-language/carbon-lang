@@ -1876,11 +1876,6 @@ Instruction *InstCombiner::foldICmpShrConstant(ICmpInst &Cmp,
     if (IsAShr && (!Shr->isExact() || ShAmtVal == TypeBits - 1))
       return nullptr;
 
-    // FIXME: This check restricts this fold to scalar types.
-    ConstantInt *ShAmt = dyn_cast<ConstantInt>(Shr->getOperand(1));
-    if (!ShAmt)
-      return nullptr;
-
     // Revisit the shift (to delete it).
     Worklist.Add(Shr);
 

@@ -120,11 +120,9 @@ define i1 @ashr_icmp2(i64 %X) {
   ret i1 %Z
 }
 
-; FIXME: Vectors should fold the same way.
 define <2 x i1> @ashr_icmp2_vec(<2 x i64> %X) {
 ; CHECK-LABEL: @ashr_icmp2_vec(
-; CHECK-NEXT:    [[Y:%.*]] = ashr exact <2 x i64> %X, <i64 2, i64 2>
-; CHECK-NEXT:    [[Z:%.*]] = icmp slt <2 x i64> [[Y]], <i64 4, i64 4>
+; CHECK-NEXT:    [[Z:%.*]] = icmp slt <2 x i64> %X, <i64 16, i64 16>
 ; CHECK-NEXT:    ret <2 x i1> [[Z]]
 ;
   %Y = ashr exact <2 x i64> %X, <i64 2, i64 2>
