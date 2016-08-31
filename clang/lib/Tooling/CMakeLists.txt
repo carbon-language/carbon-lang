@@ -1,4 +1,7 @@
-set(LLVM_LINK_COMPONENTS support)
+set(LLVM_LINK_COMPONENTS
+  Option
+  Support
+  )
 
 add_subdirectory(Core)
 
