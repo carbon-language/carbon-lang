@@ -1620,7 +1620,7 @@ ParseMemoryRegionInfoFromProcMapsLine (const std::string &maps_line, MemoryRegio
 {
     memory_region_info.Clear();
 
-    StringExtractor line_extractor (maps_line);
+    StringExtractor line_extractor (maps_line.c_str ());
 
     // Format: {address_start_hex}-{address_end_hex} perms offset  dev   inode   pathname
     // perms: rwxp   (letter is present if set, '-' if not, final character is p=private, s=shared).
@@ -1687,7 +1687,9 @@ ParseMemoryRegionInfoFromProcMapsLine (const std::string &maps_line, MemoryRegio
     line_extractor.GetU64(0, 10);          // Read the inode number
 
     line_extractor.SkipSpaces();
-    memory_region_info.SetName(line_extractor.Peek().str().c_str());
+    const char* name = line_extractor.Peek();
+    if (name)
+        memory_region_info.SetName(name);
 
     return Error ();
 }
