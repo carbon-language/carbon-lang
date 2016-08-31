@@ -1306,8 +1306,13 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
   }
 
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
-    if (Sec != Out<ELFT>::Opd)
+    if (Sec != Out<ELFT>::Opd && Sec != Out<ELFT>::EhFrameHdr)
       Sec->writeTo(Buf + Sec->getFileOff());
+
+  // The .eh_frame_hdr depends on .eh_frame section contents, therefore
+  // it should be written after .eh_frame is written.
+  if (!Out<ELFT>::EhFrame->empty() && Out<ELFT>::EhFrameHdr)
+    Out<ELFT>::EhFrameHdr->writeTo(Buf + Out<ELFT>::EhFrameHdr->getFileOff());
 }
 
 template <class ELFT> void Writer<ELFT>::writeBuildId() {
