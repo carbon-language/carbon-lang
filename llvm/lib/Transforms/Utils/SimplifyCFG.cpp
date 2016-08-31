@@ -174,8 +174,7 @@ public:
 
 /// Return true if it is safe to merge these two
 /// terminator instructions together.
-static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2,
-                                   std::vector<BasicBlock*> *FailBlocks = nullptr) {
+static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
   if (SI1 == SI2)
     return false; // Can't merge with self!
 
@@ -184,22 +183,18 @@ static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2,
   // conflicting incoming values from the two switch blocks.
   BasicBlock *SI1BB = SI1->getParent();
   BasicBlock *SI2BB = SI2->getParent();
-
   SmallPtrSet<BasicBlock *, 16> SI1Succs(succ_begin(SI1BB), succ_end(SI1BB));
-  bool Fail = false;
+
   for (BasicBlock *Succ : successors(SI2BB))
     if (SI1Succs.count(Succ))
       for (BasicBlock::iterator BBI = Succ->begin(); isa<PHINode>(BBI); ++BBI) {
         PHINode *PN = cast<PHINode>(BBI);
         if (PN->getIncomingValueForBlock(SI1BB) !=
-            PN->getIncomingValueForBlock(SI2BB)) {
-          if (FailBlocks)
-            FailBlocks->push_back(Succ);
-          Fail = true;
-        }
+            PN->getIncomingValueForBlock(SI2BB))
+          return false;
       }
 
-  return !Fail;
+  return true;
 }
 
 /// Return true if it is safe and profitable to merge these two terminator
@@ -959,16 +954,7 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
     TerminatorInst *PTI = Pred->getTerminator();
     Value *PCV = isValueEqualityComparison(PTI); // PredCondVal
 
-    if (PCV == CV && TI != PTI) {
-      std::vector<BasicBlock*> FailBlocks;
-      if (!SafeToMergeTerminators(TI, PTI, &FailBlocks)) {
-        for (auto *Succ : FailBlocks) {
-          std::vector<BasicBlock*> Blocks = { TI->getParent() };
-          if (!SplitBlockPredecessors(Succ, Blocks, ".fold.split"))
-            return false;
-        }
-      }
-
+    if (PCV == CV && SafeToMergeTerminators(TI, PTI)) {
       // Figure out which 'cases' to copy from SI to PSI.
       std::vector<ValueEqualityComparisonCase> BBCases;
       BasicBlock *BBDefault = GetValueEqualityComparisonCases(TI, BBCases);
