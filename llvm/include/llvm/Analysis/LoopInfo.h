@@ -635,7 +635,7 @@ public:
   // Debugging
   void print(raw_ostream &OS) const;
 
-  void verify() const;
+  void verify(const DominatorTreeBase<BlockT> &DomTree) const;
 };
 
 // Implementation in LoopInfoImpl.h
