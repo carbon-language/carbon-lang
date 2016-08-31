@@ -1457,6 +1457,7 @@ void AArch64TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
 }
 
 AMDGPUTargetInfo::AMDGPUTargetInfo() {
+  RelativeRel = R_AMDGPU_REL64;
   GotRel = R_AMDGPU_ABS64;
   GotEntrySize = 8;
 }
