@@ -8327,14 +8327,14 @@ void SelectionDAGBuilder::updateDAGForMaybeTailCall(SDValue MaybeTC) {
 }
 
 bool SelectionDAGBuilder::isDense(const CaseClusterVector &Clusters,
-                                  unsigned *TotalCases, unsigned First,
-                                  unsigned Last,
-                                  unsigned Density) {
+                                  const SmallVectorImpl<unsigned> &TotalCases,
+                                  unsigned First, unsigned Last,
+                                  unsigned Density) const {
   assert(Last >= First);
   assert(TotalCases[Last] >= TotalCases[First]);
 
-  APInt LowCase = Clusters[First].Low->getValue();
-  APInt HighCase = Clusters[Last].High->getValue();
+  const APInt &LowCase = Clusters[First].Low->getValue();
+  const APInt &HighCase = Clusters[Last].High->getValue();
   assert(LowCase.getBitWidth() == HighCase.getBitWidth());
 
   // FIXME: A range of consecutive cases has 100% density, but only requires one
@@ -8363,7 +8363,7 @@ static inline bool areJTsAllowed(const TargetLowering &TLI,
          TLI.isOperationLegalOrCustom(ISD::BRIND, MVT::Other);
 }
 
-bool SelectionDAGBuilder::buildJumpTable(CaseClusterVector &Clusters,
+bool SelectionDAGBuilder::buildJumpTable(const CaseClusterVector &Clusters,
                                          unsigned First, unsigned Last,
                                          const SwitchInst *SI,
                                          MachineBasicBlock *DefaultMBB,
@@ -8382,12 +8382,12 @@ bool SelectionDAGBuilder::buildJumpTable(CaseClusterVector &Clusters,
   for (unsigned I = First; I <= Last; ++I) {
     assert(Clusters[I].Kind == CC_Range);
     Prob += Clusters[I].Prob;
-    APInt Low = Clusters[I].Low->getValue();
-    APInt High = Clusters[I].High->getValue();
+    const APInt &Low = Clusters[I].Low->getValue();
+    const APInt &High = Clusters[I].High->getValue();
     NumCmps += (Low == High) ? 1 : 2;
     if (I != First) {
       // Fill the gap between this and the previous cluster.
-      APInt PreviousHigh = Clusters[I - 1].High->getValue();
+      const APInt &PreviousHigh = Clusters[I - 1].High->getValue();
       assert(PreviousHigh.slt(Low));
       uint64_t Gap = (Low - PreviousHigh).getLimitedValue() - 1;
       for (uint64_t J = 0; J < Gap; J++)
@@ -8462,8 +8462,8 @@ void SelectionDAGBuilder::findJumpTables(CaseClusterVector &Clusters,
   SmallVector<unsigned, 8> TotalCases(N);
 
   for (unsigned i = 0; i < N; ++i) {
-    APInt Hi = Clusters[i].High->getValue();
-    APInt Lo = Clusters[i].Low->getValue();
+    const APInt &Hi = Clusters[i].High->getValue();
+    const APInt &Lo = Clusters[i].Low->getValue();
     TotalCases[i] = (Hi - Lo).getLimitedValue() + 1;
     if (i != 0)
       TotalCases[i] += TotalCases[i - 1];
@@ -8473,7 +8473,7 @@ void SelectionDAGBuilder::findJumpTables(CaseClusterVector &Clusters,
   if (DefaultMBB->getParent()->getFunction()->optForSize())
     MinDensity = OptsizeJumpTableDensity;
   if (N >= MinJumpTableSize
-      && isDense(Clusters, &TotalCases[0], 0, N - 1, MinDensity)) {
+      && isDense(Clusters, TotalCases, 0, N - 1, MinDensity)) {
     // Cheap case: the whole range might be suitable for jump table.
     CaseCluster JTCluster;
     if (buildJumpTable(Clusters, 0, N - 1, SI, DefaultMBB, JTCluster)) {
@@ -8518,7 +8518,7 @@ void SelectionDAGBuilder::findJumpTables(CaseClusterVector &Clusters,
     // Search for a solution that results in fewer partitions.
     for (int64_t j = N - 1; j > i; j--) {
       // Try building a partition from Clusters[i..j].
-      if (isDense(Clusters, &TotalCases[0], i, j, MinDensity)) {
+      if (isDense(Clusters, TotalCases, i, j, MinDensity)) {
         unsigned NumPartitions = 1 + (j == N - 1 ? 0 : MinPartitions[j + 1]);
         bool IsTable = j - i + 1 >= MinJumpTableSize;
         unsigned Tables = IsTable + (j == N - 1 ? 0 : NumTables[j + 1]);
