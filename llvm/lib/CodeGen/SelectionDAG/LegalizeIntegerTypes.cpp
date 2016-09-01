@@ -2865,16 +2865,16 @@ void DAGTypeLegalizer::IntegerExpandSetCCOperands(SDValue &NewLHS,
 
   ConstantSDNode *LoCmpC = dyn_cast<ConstantSDNode>(LoCmp.getNode());
   ConstantSDNode *HiCmpC = dyn_cast<ConstantSDNode>(HiCmp.getNode());
-  if ((LoCmpC && LoCmpC->isNullValue()) ||
-      (HiCmpC && HiCmpC->isNullValue() &&
-       (CCCode == ISD::SETLE || CCCode == ISD::SETGE || CCCode == ISD::SETUGE ||
-        CCCode == ISD::SETULE)) ||
-      (HiCmpC && HiCmpC->getAPIntValue() == 1 &&
-       (CCCode == ISD::SETLT || CCCode == ISD::SETGT || CCCode == ISD::SETUGT ||
-        CCCode == ISD::SETULT))) {
-    // low part is known false, returns high part.
+
+  bool EqAllowed = (CCCode == ISD::SETLE || CCCode == ISD::SETGE ||
+                    CCCode == ISD::SETUGE || CCCode == ISD::SETULE);
+
+  if ((EqAllowed && (HiCmpC && HiCmpC->isNullValue())) ||
+      (!EqAllowed && ((HiCmpC && (HiCmpC->getAPIntValue() == 1)) ||
+                      (LoCmpC && LoCmpC->isNullValue())))) {
     // For LE / GE, if high part is known false, ignore the low part.
-    // For LT / GT, if high part is known true, ignore the low part.
+    // For LT / GT: if low part is known false, return the high part.
+    //              if high part is known true, ignore the low part.
     NewLHS = HiCmp;
     NewRHS = SDValue();
     return;
