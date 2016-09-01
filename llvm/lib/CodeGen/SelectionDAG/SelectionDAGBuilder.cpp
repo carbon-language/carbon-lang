@@ -3013,47 +3013,54 @@ void SelectionDAGBuilder::visitShuffleVector(const User &I) {
   }
 
   // Normalize the shuffle vector since mask and vector length don't match.
-  if (SrcNumElts < MaskNumElts && MaskNumElts % SrcNumElts == 0) {
-    // Mask is longer than the source vectors and is a multiple of the source
-    // vectors.  We can use concatenate vector to make the mask and vectors
-    // lengths match.
+  if (SrcNumElts < MaskNumElts) {
+    // Mask is longer than the source vectors. We can use concatenate vector to
+    // make the mask and vectors lengths match.
 
-    unsigned NumConcat = MaskNumElts / SrcNumElts;
-
-    // Check if the shuffle is some kind of concatenation of the input vectors.
-    bool IsConcat = true;
-    SmallVector<int, 8> ConcatSrcs(NumConcat, -1);
-    for (unsigned i = 0; i != MaskNumElts; ++i) {
-      int Idx = Mask[i];
-      if (Idx < 0)
-        continue;
-      // Ensure the indices in each SrcVT sized piece are sequential and that
-      // the same source is used for the whole piece.
-      if ((Idx % SrcNumElts != (i % SrcNumElts)) ||
-          (ConcatSrcs[i / SrcNumElts] >= 0 &&
-           ConcatSrcs[i / SrcNumElts] != (int)(Idx / SrcNumElts))) {
-        IsConcat = false;
-        break;
+    if (MaskNumElts % SrcNumElts == 0) {
+      // Mask length is a multiple of the source vector length.
+      // Check if the shuffle is some kind of concatenation of the input
+      // vectors.
+      unsigned NumConcat = MaskNumElts / SrcNumElts;
+      bool IsConcat = true;
+      SmallVector<int, 8> ConcatSrcs(NumConcat, -1);
+      for (unsigned i = 0; i != MaskNumElts; ++i) {
+        int Idx = Mask[i];
+        if (Idx < 0)
+          continue;
+        // Ensure the indices in each SrcVT sized piece are sequential and that
+        // the same source is used for the whole piece.
+        if ((Idx % SrcNumElts != (i % SrcNumElts)) ||
+            (ConcatSrcs[i / SrcNumElts] >= 0 &&
+             ConcatSrcs[i / SrcNumElts] != (int)(Idx / SrcNumElts))) {
+          IsConcat = false;
+          break;
+        }
+        // Remember which source this index came from.
+        ConcatSrcs[i / SrcNumElts] = Idx / SrcNumElts;
       }
-      // Remember which source this index came from.
-      ConcatSrcs[i / SrcNumElts] = Idx / SrcNumElts;
+
+      // The shuffle is concatenating multiple vectors together. Just emit
+      // a CONCAT_VECTORS operation.
+      if (IsConcat) {
+        SmallVector<SDValue, 8> ConcatOps;
+        for (auto Src : ConcatSrcs) {
+          if (Src < 0)
+            ConcatOps.push_back(DAG.getUNDEF(SrcVT));
+          else if (Src == 0)
+            ConcatOps.push_back(Src1);
+          else
+            ConcatOps.push_back(Src2);
+        }
+        setValue(&I, DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, ConcatOps));
+        return;
+      }
     }
 
-    // The shuffle is concatenating multiple vectors together. Just emit
-    // a CONCAT_VECTORS operation.
-    if (IsConcat) {
-      SmallVector<SDValue, 8> ConcatOps;
-      for (auto Src : ConcatSrcs) {
-        if (Src < 0)
-          ConcatOps.push_back(DAG.getUNDEF(SrcVT));
-        else if (Src == 0)
-          ConcatOps.push_back(Src1);
-        else
-          ConcatOps.push_back(Src2);
-      }
-      setValue(&I, DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, ConcatOps));
-      return;
-    }
+    unsigned PaddedMaskNumElts = alignTo(MaskNumElts, SrcNumElts);
+    unsigned NumConcat = PaddedMaskNumElts / SrcNumElts;
+    EVT PaddedVT = EVT::getVectorVT(*DAG.getContext(), VT.getScalarType(),
+                                    PaddedMaskNumElts);
 
     // Pad both vectors with undefs to make them the same length as the mask.
     SDValue UndefVal = DAG.getUNDEF(SrcVT);
@@ -3063,21 +3070,32 @@ void SelectionDAGBuilder::visitShuffleVector(const User &I) {
     MOps1[0] = Src1;
     MOps2[0] = Src2;
 
-    Src1 = Src1.isUndef() ? DAG.getUNDEF(VT)
-                          : DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, MOps1);
-    Src2 = Src2.isUndef() ? DAG.getUNDEF(VT)
-                          : DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, MOps2);
+    Src1 = Src1.isUndef()
+               ? DAG.getUNDEF(PaddedVT)
+               : DAG.getNode(ISD::CONCAT_VECTORS, DL, PaddedVT, MOps1);
+    Src2 = Src2.isUndef()
+               ? DAG.getUNDEF(PaddedVT)
+               : DAG.getNode(ISD::CONCAT_VECTORS, DL, PaddedVT, MOps2);
 
     // Readjust mask for new input vector length.
-    SmallVector<int, 8> MappedOps;
+    SmallVector<int, 8> MappedOps(PaddedMaskNumElts, -1);
     for (unsigned i = 0; i != MaskNumElts; ++i) {
       int Idx = Mask[i];
       if (Idx >= (int)SrcNumElts)
-        Idx -= SrcNumElts - MaskNumElts;
-      MappedOps.push_back(Idx);
+        Idx -= SrcNumElts - PaddedMaskNumElts;
+      MappedOps[i] = Idx;
     }
 
-    setValue(&I, DAG.getVectorShuffle(VT, DL, Src1, Src2, MappedOps));
+    SDValue Result = DAG.getVectorShuffle(PaddedVT, DL, Src1, Src2, MappedOps);
+
+    // If the concatenated vector was padded, extract a subvector with the
+    // correct number of elements.
+    if (MaskNumElts != PaddedMaskNumElts)
+      Result = DAG.getNode(
+          ISD::EXTRACT_SUBVECTOR, DL, VT, Result,
+          DAG.getConstant(0, DL, TLI.getVectorIdxTy(DAG.getDataLayout())));
+
+    setValue(&I, Result);
     return;
   }
 
