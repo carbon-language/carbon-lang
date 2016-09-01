@@ -499,7 +499,7 @@ MemoryAccess::~MemoryAccess() {
   isl_map_free(NewAccessRelation);
 }
 
-const ScopArrayInfo *MemoryAccess::getScopArrayInfo() const {
+const ScopArrayInfo *MemoryAccess::getOriginalScopArrayInfo() const {
   isl_id *ArrayId = getArrayId();
   void *User = isl_id_get_user(ArrayId);
   const ScopArrayInfo *SAI = static_cast<ScopArrayInfo *>(User);
@@ -507,8 +507,22 @@ const ScopArrayInfo *MemoryAccess::getScopArrayInfo() const {
   return SAI;
 }
 
-__isl_give isl_id *MemoryAccess::getArrayId() const {
+const ScopArrayInfo *MemoryAccess::getLatestScopArrayInfo() const {
+  isl_id *ArrayId = getLatestArrayId();
+  void *User = isl_id_get_user(ArrayId);
+  const ScopArrayInfo *SAI = static_cast<ScopArrayInfo *>(User);
+  isl_id_free(ArrayId);
+  return SAI;
+}
+
+__isl_give isl_id *MemoryAccess::getOriginalArrayId() const {
   return isl_map_get_tuple_id(AccessRelation, isl_dim_out);
+}
+
+__isl_give isl_id *MemoryAccess::getLatestArrayId() const {
+  if (!hasNewAccessRelation())
+    return getOriginalArrayId();
+  return isl_map_get_tuple_id(NewAccessRelation, isl_dim_out);
 }
 
 __isl_give isl_map *MemoryAccess::getAddressFunction() const {
