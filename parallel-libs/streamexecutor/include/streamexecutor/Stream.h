@@ -61,19 +61,22 @@ class Stream {
 public:
   explicit Stream(std::unique_ptr<PlatformStreamHandle> PStream);
 
+  Stream(Stream &&Other) = default;
+  Stream &operator=(Stream &&Other) = default;
+
   ~Stream();
 
   /// Returns whether any error has occurred while entraining work on this
   /// stream.
   bool isOK() const {
-    llvm::sys::ScopedReader ReaderLock(ErrorMessageMutex);
+    llvm::sys::ScopedReader ReaderLock(*ErrorMessageMutex);
     return !ErrorMessage;
   }
 
   /// Returns the status created by the first error that occurred while
   /// entraining work on this stream.
   Error getStatus() const {
-    llvm::sys::ScopedReader ReaderLock(ErrorMessageMutex);
+    llvm::sys::ScopedReader ReaderLock(*ErrorMessageMutex);
     if (ErrorMessage)
       return make_error(*ErrorMessage);
     else
@@ -315,7 +318,7 @@ private:
   /// Does not overwrite the error if it is already set.
   void setError(Error &&E) {
     if (E) {
-      llvm::sys::ScopedWriter WriterLock(ErrorMessageMutex);
+      llvm::sys::ScopedWriter WriterLock(*ErrorMessageMutex);
       if (!ErrorMessage)
         ErrorMessage = consumeAndGetMessage(std::move(E));
     }
@@ -325,7 +328,7 @@ private:
   ///
   /// Does not overwrite the error if it is already set.
   void setError(llvm::Twine Message) {
-    llvm::sys::ScopedWriter WriterLock(ErrorMessageMutex);
+    llvm::sys::ScopedWriter WriterLock(*ErrorMessageMutex);
     if (!ErrorMessage)
       ErrorMessage = Message.str();
   }
@@ -337,9 +340,7 @@ private:
   std::unique_ptr<PlatformStreamHandle> ThePlatformStream;
 
   /// Mutex that guards the error state flags.
-  ///
-  /// Mutable so that it can be obtained via const reader lock.
-  mutable llvm::sys::RWMutex ErrorMessageMutex;
+  std::unique_ptr<llvm::sys::RWMutex> ErrorMessageMutex;
 
   /// First error message for an operation in this stream or empty if there have
   /// been no errors.

@@ -50,7 +50,8 @@ public:
                                       std::move(*MaybeKernelHandle));
   }
 
-  Expected<std::unique_ptr<Stream>> createStream();
+  /// Creates a stream object for this device.
+  Expected<Stream> createStream();
 
   /// Allocates an array of ElementCount entries of type T in device memory.
   template <typename T>
