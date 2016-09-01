@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "SimpleHostPlatformDevice.h"
 #include "streamexecutor/Device.h"
 #include "streamexecutor/PlatformInterfaces.h"
 
@@ -23,79 +24,6 @@
 namespace {
 
 namespace se = ::streamexecutor;
-
-class MockPlatformDevice : public se::PlatformDevice {
-public:
-  ~MockPlatformDevice() override {}
-
-  std::string getName() const override { return "MockPlatformDevice"; }
-
-  se::Expected<std::unique_ptr<se::PlatformStreamHandle>>
-  createStream() override {
-    return se::make_error("not implemented");
-  }
-
-  se::Expected<se::GlobalDeviceMemoryBase>
-  allocateDeviceMemory(size_t ByteCount) override {
-    return se::GlobalDeviceMemoryBase(std::malloc(ByteCount));
-  }
-
-  se::Error freeDeviceMemory(se::GlobalDeviceMemoryBase Memory) override {
-    std::free(const_cast<void *>(Memory.getHandle()));
-    return se::Error::success();
-  }
-
-  se::Expected<void *> allocateHostMemory(size_t ByteCount) override {
-    return std::malloc(ByteCount);
-  }
-
-  se::Error freeHostMemory(void *Memory) override {
-    std::free(Memory);
-    return se::Error::success();
-  }
-
-  se::Error registerHostMemory(void *, size_t) override {
-    return se::Error::success();
-  }
-
-  se::Error unregisterHostMemory(void *) override {
-    return se::Error::success();
-  }
-
-  se::Error synchronousCopyD2H(const se::GlobalDeviceMemoryBase &DeviceSrc,
-                               size_t SrcByteOffset, void *HostDst,
-                               size_t DstByteOffset,
-                               size_t ByteCount) override {
-    std::memcpy(static_cast<char *>(HostDst) + DstByteOffset,
-                static_cast<const char *>(DeviceSrc.getHandle()) +
-                    SrcByteOffset,
-                ByteCount);
-    return se::Error::success();
-  }
-
-  se::Error synchronousCopyH2D(const void *HostSrc, size_t SrcByteOffset,
-                               se::GlobalDeviceMemoryBase DeviceDst,
-                               size_t DstByteOffset,
-                               size_t ByteCount) override {
-    std::memcpy(static_cast<char *>(const_cast<void *>(DeviceDst.getHandle())) +
-                    DstByteOffset,
-                static_cast<const char *>(HostSrc) + SrcByteOffset, ByteCount);
-    return se::Error::success();
-  }
-
-  se::Error synchronousCopyD2D(se::GlobalDeviceMemoryBase DeviceDst,
-                               size_t DstByteOffset,
-                               const se::GlobalDeviceMemoryBase &DeviceSrc,
-                               size_t SrcByteOffset,
-                               size_t ByteCount) override {
-    std::memcpy(static_cast<char *>(const_cast<void *>(DeviceDst.getHandle())) +
-                    DstByteOffset,
-                static_cast<const char *>(DeviceSrc.getHandle()) +
-                    SrcByteOffset,
-                ByteCount);
-    return se::Error::success();
-  }
-};
 
 /// Test fixture to hold objects used by tests.
 class DeviceTest : public ::testing::Test {
@@ -124,7 +52,7 @@ public:
   int Host5[5];
   int Host7[7];
 
-  MockPlatformDevice PDevice;
+  SimpleHostPlatformDevice PDevice;
   se::Device Device;
 };
 

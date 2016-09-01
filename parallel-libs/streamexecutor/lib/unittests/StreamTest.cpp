@@ -14,6 +14,7 @@
 
 #include <cstring>
 
+#include "SimpleHostPlatformDevice.h"
 #include "streamexecutor/Device.h"
 #include "streamexecutor/Kernel.h"
 #include "streamexecutor/KernelSpec.h"
@@ -25,52 +26,6 @@
 namespace {
 
 namespace se = ::streamexecutor;
-
-/// Mock PlatformDevice that performs asynchronous memcpy operations by
-/// ignoring the stream argument and calling std::memcpy on device memory
-/// handles.
-class MockPlatformDevice : public se::PlatformDevice {
-public:
-  ~MockPlatformDevice() override {}
-
-  std::string getName() const override { return "MockPlatformDevice"; }
-
-  se::Expected<std::unique_ptr<se::PlatformStreamHandle>>
-  createStream() override {
-    return nullptr;
-  }
-
-  se::Error copyD2H(se::PlatformStreamHandle *S,
-                    const se::GlobalDeviceMemoryBase &DeviceSrc,
-                    size_t SrcByteOffset, void *HostDst, size_t DstByteOffset,
-                    size_t ByteCount) override {
-    std::memcpy(HostDst, static_cast<const char *>(DeviceSrc.getHandle()) +
-                             SrcByteOffset,
-                ByteCount);
-    return se::Error::success();
-  }
-
-  se::Error copyH2D(se::PlatformStreamHandle *S, const void *HostSrc,
-                    size_t SrcByteOffset, se::GlobalDeviceMemoryBase DeviceDst,
-                    size_t DstByteOffset, size_t ByteCount) override {
-    std::memcpy(static_cast<char *>(const_cast<void *>(DeviceDst.getHandle())) +
-                    DstByteOffset,
-                HostSrc, ByteCount);
-    return se::Error::success();
-  }
-
-  se::Error copyD2D(se::PlatformStreamHandle *S,
-                    const se::GlobalDeviceMemoryBase &DeviceSrc,
-                    size_t SrcByteOffset, se::GlobalDeviceMemoryBase DeviceDst,
-                    size_t DstByteOffset, size_t ByteCount) override {
-    std::memcpy(static_cast<char *>(const_cast<void *>(DeviceDst.getHandle())) +
-                    DstByteOffset,
-                static_cast<const char *>(DeviceSrc.getHandle()) +
-                    SrcByteOffset,
-                ByteCount);
-    return se::Error::success();
-  }
-};
 
 /// Test fixture to hold objects used by tests.
 class StreamTest : public ::testing::Test {
@@ -100,7 +55,7 @@ protected:
   int Host5[5];
   int Host7[7];
 
-  MockPlatformDevice PDevice;
+  SimpleHostPlatformDevice PDevice;
   se::Stream Stream;
 };
 
