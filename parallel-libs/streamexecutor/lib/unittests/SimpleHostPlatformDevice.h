@@ -22,12 +22,16 @@
 
 #include "streamexecutor/PlatformInterfaces.h"
 
+namespace streamexecutor {
+namespace test {
+
 /// A streamexecutor::PlatformDevice that simply forwards all operations to the
 /// host platform.
 ///
 /// The allocate and copy methods are simple wrappers for std::malloc and
 /// std::memcpy.
 class SimpleHostPlatformDevice : public streamexecutor::PlatformDevice {
+public:
   std::string getName() const override { return "SimpleHostPlatformDevice"; }
 
   streamexecutor::Expected<
@@ -130,6 +134,17 @@ class SimpleHostPlatformDevice : public streamexecutor::PlatformDevice {
                 ByteCount);
     return streamexecutor::Error::success();
   }
+
+  /// Gets the value at the given index from a GlobalDeviceMemory<T> instance
+  /// created by this class.
+  template <typename T>
+  static T getDeviceValue(const streamexecutor::GlobalDeviceMemory<T> &Memory,
+                          size_t Index) {
+    return static_cast<const T *>(Memory.getHandle())[Index];
+  }
 };
+
+} // namespace test
+} // namespace streamexecutor
 
 #endif // STREAMEXECUTOR_LIB_UNITTESTS_SIMPLEHOSTPLATFORMDEVICE_H
