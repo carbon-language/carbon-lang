@@ -1097,7 +1097,7 @@ protected:
       m_base_addr(base),
       m_is_valid(true)
       {
-          lldbassert(process_sp);
+          lldbassert(process_sp.get() != nullptr);
       }
       
       bool
