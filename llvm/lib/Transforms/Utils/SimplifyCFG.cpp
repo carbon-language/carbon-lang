@@ -176,7 +176,7 @@ public:
 /// terminator instructions together.
 static bool
 SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2,
-                       SmallPtrSetImpl<BasicBlock *> *FailBlocks = nullptr) {
+                       SmallSetVector<BasicBlock *, 4> *FailBlocks = nullptr) {
   if (SI1 == SI2)
     return false; // Can't merge with self!
 
@@ -961,7 +961,7 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
     Value *PCV = isValueEqualityComparison(PTI); // PredCondVal
 
     if (PCV == CV && TI != PTI) {
-      SmallPtrSet<BasicBlock*, 4> FailBlocks;
+      SmallSetVector<BasicBlock*, 4> FailBlocks;
       if (!SafeToMergeTerminators(TI, PTI, &FailBlocks)) {
         for (auto *Succ : FailBlocks) {
           std::vector<BasicBlock*> Blocks = { TI->getParent() };
