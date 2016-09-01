@@ -4453,33 +4453,20 @@ void InnerLoopVectorizer::widenPHIInstruction(Instruction *PN, unsigned UF,
     // This is the normalized GEP that starts counting at zero.
     Value *PtrInd = Induction;
     PtrInd = Builder.CreateSExtOrTrunc(PtrInd, II.getStep()->getType());
-    // This is the vector of results. Notice that we don't generate
-    // vector geps because scalar geps result in better code.
-    VectorParts Entry(UF);
-    for (unsigned part = 0; part < UF; ++part) {
-      if (VF == 1) {
-        int EltIndex = part;
-        Constant *Idx = ConstantInt::get(PtrInd->getType(), EltIndex);
+    // These are the scalar results. Notice that we don't generate vector GEPs
+    // because scalar GEPs result in better code.
+    ScalarParts Entry(UF);
+    for (unsigned Part = 0; Part < UF; ++Part) {
+      Entry[Part].resize(VF);
+      for (unsigned Lane = 0; Lane < VF; ++Lane) {
+        Constant *Idx = ConstantInt::get(PtrInd->getType(), Lane + Part * VF);
         Value *GlobalIdx = Builder.CreateAdd(PtrInd, Idx);
         Value *SclrGep = II.transform(Builder, GlobalIdx, PSE.getSE(), DL);
         SclrGep->setName("next.gep");
-        Entry[part] = SclrGep;
-        continue;
+        Entry[Part][Lane] = SclrGep;
       }
-
-      Value *VecVal = UndefValue::get(VectorType::get(P->getType(), VF));
-      for (unsigned int i = 0; i < VF; ++i) {
-        int EltIndex = i + part * VF;
-        Constant *Idx = ConstantInt::get(PtrInd->getType(), EltIndex);
-        Value *GlobalIdx = Builder.CreateAdd(PtrInd, Idx);
-        Value *SclrGep = II.transform(Builder, GlobalIdx, PSE.getSE(), DL);
-        SclrGep->setName("next.gep");
-        VecVal = Builder.CreateInsertElement(VecVal, SclrGep,
-                                             Builder.getInt32(i), "insert.gep");
-      }
-      Entry[part] = VecVal;
     }
-    VectorLoopValueMap.initVector(P, Entry);
+    VectorLoopValueMap.initScalar(P, Entry);
     return;
   }
   case InductionDescriptor::IK_FpInduction: {
