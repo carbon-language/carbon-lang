@@ -67,10 +67,10 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   # The intent is that this doesn't necessarily mean the LLVM is installed (it
   # could be a build directory), but it means we need to treat the LLVM
   # directory as read-only.
-  set(LIBCXX_USING_INSTLLED_LLVM 1)
+  set(LIBCXX_USING_INSTALLED_LLVM 1)
 endif()
 
-if (LIBCXX_USING_INSTLLED_LLVM OR LIBCXX_STANDALONE_BUILD)
+if (LIBCXX_USING_INSTALLED_LLVM OR LIBCXX_STANDALONE_BUILD)
   set(LIBCXX_STANDALONE_BUILD 1)
   message(STATUS "Configuring for standalone build.")
 
