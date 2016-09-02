@@ -190,20 +190,21 @@ TEST_F(SortImportsTestJS, SideEffectImports) {
 }
 
 TEST_F(SortImportsTestJS, AffectedRange) {
-  // Sort excluding a suffix.
-  verifySort("import {sym} from 'b';\n"
+  // Affected range inside of import statements.
+  verifySort("import {sym} from 'a';\n"
+             "import {sym} from 'b';\n"
              "import {sym} from 'c';\n"
-             "import {sym} from 'a';\n"
+             "\n"
              "let x = 1;",
              "import {sym} from 'c';\n"
              "import {sym} from 'b';\n"
              "import {sym} from 'a';\n"
              "let x = 1;",
              0, 30);
-  // Sort excluding a prefix.
+  // Affected range outside of import statements.
   verifySort("import {sym} from 'c';\n"
-             "import {sym} from 'a';\n"
              "import {sym} from 'b';\n"
+             "import {sym} from 'a';\n"
              "\n"
              "let x = 1;",
              "import {sym} from 'c';\n"
@@ -211,19 +212,7 @@ TEST_F(SortImportsTestJS, AffectedRange) {
              "import {sym} from 'a';\n"
              "\n"
              "let x = 1;",
-             30, 0);
-  // Sort a range within imports.
-  verifySort("import {sym} from 'c';\n"
-             "import {sym} from 'a';\n"
-             "import {sym} from 'b';\n"
-             "import {sym} from 'c';\n"
-             "let x = 1;",
-             "import {sym} from 'c';\n"
-             "import {sym} from 'b';\n"
-             "import {sym} from 'a';\n"
-             "import {sym} from 'c';\n"
-             "let x = 1;",
-             24, 30);
+             70, 1);
 }
 
 TEST_F(SortImportsTestJS, SortingCanShrink) {

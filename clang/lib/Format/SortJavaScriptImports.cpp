@@ -284,14 +284,8 @@ private:
     SourceLocation Start;
     bool FoundLines = false;
     AnnotatedLine *FirstNonImportLine = nullptr;
+    bool AnyImportAffected = false;
     for (auto Line : AnnotatedLines) {
-      if (!Line->Affected) {
-        // Only sort the first contiguous block of affected lines.
-        if (FoundLines)
-          break;
-        else
-          continue;
-      }
       Current = Line->First;
       LineEnd = Line->Last;
       skipComments();
@@ -309,6 +303,7 @@ private:
         FirstNonImportLine = Line;
         break;
       }
+      AnyImportAffected = AnyImportAffected || Line->Affected;
       Reference.Range.setEnd(LineEnd->Tok.getEndLoc());
       DEBUG({
         llvm::dbgs() << "JsModuleReference: {"
@@ -325,6 +320,9 @@ private:
       References.push_back(Reference);
       Start = SourceLocation();
     }
+    // Sort imports if any import line was affected.
+    if (!AnyImportAffected)
+      References.clear();
     return std::make_pair(References, FirstNonImportLine);
   }
 
