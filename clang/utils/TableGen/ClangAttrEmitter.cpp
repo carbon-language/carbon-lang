@@ -2790,10 +2790,8 @@ static std::string GenerateLangOptRequirements(const Record &R,
   std::string FnName = "check", Test;
   for (auto I = LangOpts.begin(), E = LangOpts.end(); I != E; ++I) {
     std::string Part = (*I)->getValueAsString("Name");
-    if ((*I)->getValueAsBit("Negated")) {
-      FnName += "Not";
+    if ((*I)->getValueAsBit("Negated"))
       Test += "!";
-    }
     Test += "S.LangOpts." + Part;
     if (I + 1 != E)
       Test += " || ";
