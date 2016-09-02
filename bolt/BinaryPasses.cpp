@@ -15,50 +15,94 @@
 
 #define DEBUG_TYPE "bolt"
 
+using namespace llvm;
+
 namespace opts {
 
-extern llvm::cl::opt<unsigned> Verbosity;
-extern llvm::cl::opt<bool> PrintAll;
-extern llvm::cl::opt<bool> DumpDotAll;
-extern llvm::cl::opt<bool> PrintReordered;
-extern llvm::cl::opt<bool> PrintEHRanges;
-extern llvm::cl::opt<bool> PrintUCE;
-extern llvm::cl::opt<bool> PrintPeepholes;
-extern llvm::cl::opt<bool> PrintSimplifyROLoads;
-extern llvm::cl::opt<bool> PrintICF;
-extern llvm::cl::opt<llvm::bolt::BinaryFunction::SplittingType> SplitFunctions;
-extern bool shouldProcess(const llvm::bolt::BinaryFunction &Function);
+extern cl::opt<unsigned> Verbosity;
+extern cl::opt<bool> PrintAll;
+extern cl::opt<bool> DumpDotAll;
+extern cl::opt<llvm::bolt::BinaryFunction::SplittingType> SplitFunctions;
+extern bool shouldProcess(const bolt::BinaryFunction &Function);
 
-static llvm::cl::opt<llvm::bolt::BinaryFunction::LayoutType>
+static cl::opt<bool>
+PrintReordered("print-reordered",
+               cl::desc("print functions after layout optimization"),
+               cl::Hidden);
+
+static cl::opt<bool>
+PrintEHRanges("print-eh-ranges",
+              cl::desc("print function with updated exception ranges"),
+              cl::Hidden);
+
+static cl::opt<bool>
+PrintUCE("print-uce",
+         cl::desc("print functions after unreachable code elimination"),
+         cl::Hidden);
+
+static cl::opt<bool>
+PrintPeepholes("print-peepholes",
+               cl::desc("print functions after peephole optimization"),
+               cl::Hidden);
+
+static cl::opt<bool>
+PrintSimplifyROLoads("print-simplify-rodata-loads",
+                     cl::desc("print functions after simplification of RO data"
+                              " loads"),
+                     cl::Hidden);
+
+static cl::opt<bool>
+PrintICF("print-icf",
+         cl::desc("print functions after ICF optimization"),
+         cl::Hidden);
+
+static cl::opt<bool>
+PrintInline("print-inline",
+            cl::desc("print functions after inlining optimization"),
+            cl::Hidden);
+
+static cl::list<std::string>
+ForceInlineFunctions("force-inline",
+                     cl::CommaSeparated,
+                     cl::desc("list of functions to always consider "
+                              "for inlining"),
+                     cl::value_desc("func1,func2,func3,..."));
+
+static cl::opt<bool>
+AggressiveInlining("aggressive-inlining",
+                   cl::desc("perform aggressive inlining"),
+                   cl::Hidden);
+
+static cl::opt<bolt::BinaryFunction::LayoutType>
 ReorderBlocks(
     "reorder-blocks",
-    llvm::cl::desc("change layout of basic blocks in a function"),
-    llvm::cl::init(llvm::bolt::BinaryFunction::LT_NONE),
-    llvm::cl::values(clEnumValN(llvm::bolt::BinaryFunction::LT_NONE,
-                                "none",
-                                "do not reorder basic blocks"),
-                     clEnumValN(llvm::bolt::BinaryFunction::LT_REVERSE,
-                                "reverse",
-                                "layout blocks in reverse order"),
-                     clEnumValN(llvm::bolt::BinaryFunction::LT_OPTIMIZE,
-                                "normal",
-                                "perform optimal layout based on profile"),
-                     clEnumValN(llvm::bolt::BinaryFunction::LT_OPTIMIZE_BRANCH,
-                                "branch-predictor",
-                                "perform optimal layout prioritizing branch "
-                                "predictions"),
-                     clEnumValN(llvm::bolt::BinaryFunction::LT_OPTIMIZE_CACHE,
-                                "cache",
-                                "perform optimal layout prioritizing I-cache "
-                                "behavior"),
-                     clEnumValEnd));
+    cl::desc("change layout of basic blocks in a function"),
+    cl::init(bolt::BinaryFunction::LT_NONE),
+    cl::values(clEnumValN(bolt::BinaryFunction::LT_NONE,
+                          "none",
+                          "do not reorder basic blocks"),
+               clEnumValN(bolt::BinaryFunction::LT_REVERSE,
+                          "reverse",
+                          "layout blocks in reverse order"),
+               clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE,
+                          "normal",
+                          "perform optimal layout based on profile"),
+               clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE_BRANCH,
+                          "branch-predictor",
+                          "perform optimal layout prioritizing branch "
+                          "predictions"),
+               clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE_CACHE,
+                          "cache",
+                          "perform optimal layout prioritizing I-cache "
+                          "behavior"),
+               clEnumValEnd));
 
-static llvm::cl::opt<bool>
+static cl::opt<bool>
 MinBranchClusters(
     "min-branch-clusters",
-    llvm::cl::desc("use a modified clustering algorithm geared towards "
-                   "minimizing branches"),
-    llvm::cl::Hidden);
+    cl::desc("use a modified clustering algorithm geared towards "
+             "minimizing branches"),
+    cl::Hidden);
 
 } // namespace opts
 
@@ -152,10 +196,8 @@ void InlineSmallFunctions::findInliningCandidates(
     auto &BB = *Function.begin();
     const auto &LastInstruction = *BB.rbegin();
     // Check if the function is small enough and doesn't do a tail call.
-    // The size we use includes pseudo-instructions but here they shouldn't
-    // matter. So some opportunities may be missed because of this.
     if (BB.size() > 0 &&
-        BB.size() <= kMaxInstructions &&
+        (BB.size() - BB.getNumPseudos()) <= kMaxInstructions &&
         BC.MIA->isReturn(LastInstruction) &&
         !BC.MIA->isTailCall(LastInstruction)) {
       InliningCandidates.insert(&Function);
@@ -351,8 +393,11 @@ InlineSmallFunctions::inlineCall(
         const MCSymbol *OldFTLabel = nullptr;
         MCInst *CondBranch = nullptr;
         MCInst *UncondBranch = nullptr;
-        assert(BC.MIA->analyzeBranch(Instruction, OldTargetLabel, OldFTLabel,
-                                     CondBranch, UncondBranch));
+        const bool Result = BC.MIA->analyzeBranch(Instruction, OldTargetLabel,
+                                                  OldFTLabel, CondBranch,
+                                                  UncondBranch);
+        assert(Result &&
+               "analyzeBranch failed on instruction guaranteed to be a branch");
         assert(OldTargetLabel);
         const MCSymbol *NewTargetLabel = nullptr;
         for (const auto SuccBB : InlinedFunctionBB->successors()) {
@@ -543,7 +588,7 @@ bool InlineSmallFunctions::inlineCallsInFunction(
     for (auto InstIt = BB->begin(), End = BB->end(); InstIt != End; ++InstIt) {
       auto &Inst = *InstIt;
       if (BC.MIA->isCall(Inst)) {
-        totalDynamicCalls += BB->getExecutionCount();
+        TotalDynamicCalls += BB->getExecutionCount();
       }
     }
   }
@@ -569,12 +614,12 @@ bool InlineSmallFunctions::inlineCallsInFunction(
           bool CallToInlineableFunction =
             InliningCandidates.count(TargetFunction);
 
-          totalInlineableCalls +=
+          TotalInlineableCalls +=
             CallToInlineableFunction * BB->getExecutionCount();
 
           if (CallToInlineableFunction &&
               TargetFunction->getSize() + ExtraSize
-              + Function.estimateHotSize() < Function.getMaxSize()) {
+                + Function.estimateHotSize() < Function.getMaxSize()) {
             auto NextInstIt = std::next(InstIt);
             inlineCall(BC, *BB, &Inst, *TargetFunction->begin());
             DidInlining = true;
@@ -583,7 +628,7 @@ bool InlineSmallFunctions::inlineCallsInFunction(
                          << Function << "\n");
             InstIt = NextInstIt;
             ExtraSize += TargetFunction->getSize();
-            inlinedDynamicCalls += BB->getExecutionCount();
+            InlinedDynamicCalls += BB->getExecutionCount();
             continue;
           }
         }
@@ -611,7 +656,7 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
     for (auto InstIt = BB->begin(), End = BB->end(); InstIt != End; ++InstIt) {
       auto &Inst = *InstIt;
       if (BC.MIA->isCall(Inst)) {
-        totalDynamicCalls += BB->getExecutionCount();
+        TotalDynamicCalls += BB->getExecutionCount();
       }
     }
   }
@@ -638,7 +683,7 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
           bool CallToInlineableFunction =
             InliningCandidates.count(TargetFunction);
 
-          totalInlineableCalls +=
+          TotalInlineableCalls +=
             CallToInlineableFunction * BB->getExecutionCount();
 
           if (CallToInlineableFunction &&
@@ -655,7 +700,7 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
             InstIndex = NextBB == BB ? NextInstIndex : BB->size();
             InstIt = NextBB == BB ? BB->begin() + NextInstIndex : BB->end();
             ExtraSize += TargetFunction->getSize();
-            inlinedDynamicCalls += BB->getExecutionCount();
+            InlinedDynamicCalls += BB->getExecutionCount();
             continue;
           }
         }
@@ -669,20 +714,35 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
   return DidInlining;
 }
 
+bool InlineSmallFunctions::mustConsider(const BinaryFunction &BF) {
+  for (auto &Name : opts::ForceInlineFunctions) {
+    if (BF.hasName(Name))
+      return true;
+  }
+  return false;
+}
+
 void InlineSmallFunctions::runOnFunctions(
     BinaryContext &BC,
     std::map<uint64_t, BinaryFunction> &BFs,
     std::set<uint64_t> &) {
-  findInliningCandidates(BC, BFs);
+
+  if (opts::AggressiveInlining)
+    findInliningCandidatesAggressive(BC, BFs);
+  else
+    findInliningCandidates(BC, BFs);
 
   std::vector<BinaryFunction *> ConsideredFunctions;
+  std::vector<bool> Modified;
   for (auto &It : BFs) {
     auto &Function = It.second;
     if (!Function.isSimple() || !opts::shouldProcess(Function))
       continue;
-    if (Function.getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE)
+    if (Function.getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE &&
+        !mustConsider(Function))
       continue;
     ConsideredFunctions.push_back(&Function);
+    Modified.push_back(false);
   }
   std::sort(ConsideredFunctions.begin(), ConsideredFunctions.end(),
             [](BinaryFunction *A, BinaryFunction *B) {
@@ -692,14 +752,34 @@ void InlineSmallFunctions::runOnFunctions(
   for (unsigned i = 0; i < ConsideredFunctions.size() &&
                        ModifiedFunctions <= kMaxFunctions; ++i) {
     auto &Function = *ConsideredFunctions[i];
-    if (inlineCallsInFunction(BC, Function))
+
+    const bool DidInline = opts::AggressiveInlining
+      ? inlineCallsInFunctionAggressive(BC, Function)
+      : inlineCallsInFunction(BC, Function);
+
+    if (DidInline) {
+      Modified[i] = true;
       ++ModifiedFunctions;
+    }
   }
 
-  DEBUG(dbgs() << "BOLT-DEBUG: Inlined " << inlinedDynamicCalls << " of "
-               << totalDynamicCalls << " function calls in the profile.\n");
-  DEBUG(dbgs() << "BOLT-DEBUG: Inlined calls represent "
-               << (100.0 * inlinedDynamicCalls / totalInlineableCalls)
+  if (opts::PrintAll || opts::PrintInline || opts::DumpDotAll) {
+    for (unsigned i = 0; i < ConsideredFunctions.size(); ++i) {
+      if (Modified[i]) {
+        const auto *Function = ConsideredFunctions[i];
+        if (opts::PrintAll || opts::PrintInline)
+          Function->print(errs(), "after inlining", true);
+
+        if (opts::DumpDotAll)
+          Function->dumpGraphForPass("inlining");
+      }
+    }
+  }
+
+  DEBUG(dbgs() << "BOLT-INFO: Inlined " << InlinedDynamicCalls << " of "
+               << TotalDynamicCalls << " function calls in the profile.\n"
+               << "BOLT-INFO: Inlined calls represent "
+               << format("%.1f", 100.0 * InlinedDynamicCalls / TotalInlineableCalls)
                << "% of all inlineable calls in the profile.\n");
 }
 

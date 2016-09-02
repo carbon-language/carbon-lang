@@ -72,9 +72,11 @@ private:
   static const unsigned kMaxFunctions = 30000;
 
   /// Statistics collected for debugging.
-  uint64_t totalDynamicCalls = 0;
-  uint64_t inlinedDynamicCalls = 0;
-  uint64_t totalInlineableCalls = 0;
+  uint64_t TotalDynamicCalls = 0;
+  uint64_t InlinedDynamicCalls = 0;
+  uint64_t TotalInlineableCalls = 0;
+
+  static bool mustConsider(const BinaryFunction &BF);
 
   void findInliningCandidates(BinaryContext &BC,
                               const std::map<uint64_t, BinaryFunction> &BFs);

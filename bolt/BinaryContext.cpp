@@ -152,6 +152,22 @@ void findSubprograms(DWARFCompileUnit *Unit,
 
 } // namespace
 
+unsigned BinaryContext::addDebugFilenameToUnit(const uint32_t DestCUID,
+                                               const uint32_t SrcCUID,
+                                               unsigned FileIndex) {
+  auto SrcUnit = DwCtx->getCompileUnitForOffset(SrcCUID);
+  auto LineTable = DwCtx->getLineTableForUnit(SrcUnit);
+  const auto &FileNames = LineTable->Prologue.FileNames;
+  // Dir indexes start at 1, as DWARF file numbers, and a dir index 0
+  // means empty dir.
+  assert(FileIndex > 0 && FileIndex <= FileNames.size() &&
+         "FileIndex out of range for the compilation unit.");
+  const char *Dir = FileNames[FileIndex - 1].DirIdx ?
+    LineTable->Prologue.IncludeDirectories[FileNames[FileIndex - 1].DirIdx - 1] :
+    "";
+  return Ctx->getDwarfFile(Dir, FileNames[FileIndex - 1].Name, 0, DestCUID);
+}
+
 void BinaryContext::preprocessDebugInfo(
     std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
   // Populate MCContext with DWARF files.
@@ -165,7 +181,7 @@ void BinaryContext::preprocessDebugInfo(
       const char *Dir = FileNames[I].DirIdx ?
           LineTable->Prologue.IncludeDirectories[FileNames[I].DirIdx - 1] :
           "";
-      Ctx->getDwarfFile(Dir, FileNames[I].Name, I + 1, CUID);
+      Ctx->getDwarfFile(Dir, FileNames[I].Name, 0, CUID);
     }
   }
 

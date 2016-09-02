@@ -193,6 +193,11 @@ public:
   void preprocessFunctionDebugInfo(
       std::map<uint64_t, BinaryFunction> &BinaryFunctions);
 
+  /// Add a filename entry from SrcCUID to DestCUID.
+  unsigned addDebugFilenameToUnit(const uint32_t DestCUID,
+                                  const uint32_t SrcCUID,
+                                  unsigned FileIndex);
+
   /// Compute the native code size for a range of instructions.
   /// Note: this can be imprecise wrt the final binary since happening prior to
   /// relaxation, as well as wrt the original binary because of opcode

@@ -172,40 +172,9 @@ static cl::opt<bool>
 PrintLoopInfo("print-loops", cl::desc("print loop related information"),
               cl::Hidden);
 
-cl::opt<bool>
-PrintUCE("print-uce",
-         cl::desc("print functions after unreachable code elimination"),
-         cl::Hidden);
-
-cl::opt<bool>
-PrintPeepholes("print-peepholes",
-               cl::desc("print functions after peephole optimization"),
-               cl::Hidden);
-
 static cl::opt<bool>
 PrintDisasm("print-disasm", cl::desc("print function after disassembly"),
             cl::Hidden);
-
-cl::opt<bool>
-PrintEHRanges("print-eh-ranges",
-              cl::desc("print function with updated exception ranges"),
-              cl::Hidden);
-
-cl::opt<bool>
-PrintSimplifyROLoads("print-simplify-rodata-loads",
-                     cl::desc("print functions after simplification of RO data"
-                              " loads"),
-                     cl::Hidden);
-
-cl::opt<bool>
-PrintReordered("print-reordered",
-               cl::desc("print functions after layout optimization"),
-               cl::Hidden);
-
-cl::opt<bool>
-PrintICF("print-icf",
-         cl::desc("print functions after ICF optimization"),
-         cl::Hidden);
 
 static cl::opt<bool>
 KeepTmp("keep-tmp",
@@ -1234,6 +1203,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
   }
 
   // Emit code.
+  auto ULT = Function.getDWARFUnitLineTable();
   int64_t CurrentGnuArgsSize = 0;
   for (auto BB : Function.layout()) {
     if (EmitColdPart != BB->isCold())
@@ -1264,28 +1234,46 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
         auto RowReference = DebugLineTableRowRef::fromSMLoc(Instr.getLoc());
         if (RowReference != DebugLineTableRowRef::NULL_ROW &&
             Instr.getLoc().getPointer() != LastLocSeen.getPointer()) {
-          auto ULT = Function.getDWARFUnitLineTable();
           auto Unit = ULT.first;
           auto OriginalLineTable = ULT.second;
+          const auto OrigUnitID = Unit->getOffset();
+          unsigned NewFilenum = 0;
+
+          // If the CU id from the current instruction location does not
+          // match the CU id from the current function, it means that we
+          // have come across some inlined code.  We must look up the CU
+          // for the instruction's original function and get the line table
+          // from that.  We also update the current CU debug info with the
+          // filename of the inlined function.
+          if (RowReference.DwCompileUnitIndex != OrigUnitID) {
+            Unit =
+              BC.DwCtx->getCompileUnitForOffset(RowReference.DwCompileUnitIndex);
+            OriginalLineTable = BC.DwCtx->getLineTableForUnit(Unit);
+            const auto Filenum =
+              OriginalLineTable->Rows[RowReference.RowIndex - 1].File;
+            NewFilenum =
+              BC.addDebugFilenameToUnit(OrigUnitID,
+                                        RowReference.DwCompileUnitIndex,
+                                        Filenum);
+          }
 
           assert(Unit && OriginalLineTable &&
                  "Invalid CU offset set in instruction debug info.");
-          assert(RowReference.DwCompileUnitIndex == Unit->getOffset() &&
-                 "DWARF compile unit mismatch");
 
           const auto &OriginalRow =
-              OriginalLineTable->Rows[RowReference.RowIndex - 1];
+            OriginalLineTable->Rows[RowReference.RowIndex - 1];
+
           BC.Ctx->setCurrentDwarfLoc(
-              OriginalRow.File,
-              OriginalRow.Line,
-              OriginalRow.Column,
-              (DWARF2_FLAG_IS_STMT * OriginalRow.IsStmt) |
-              (DWARF2_FLAG_BASIC_BLOCK * OriginalRow.BasicBlock) |
-              (DWARF2_FLAG_PROLOGUE_END * OriginalRow.PrologueEnd) |
-              (DWARF2_FLAG_EPILOGUE_BEGIN * OriginalRow.EpilogueBegin),
-              OriginalRow.Isa,
-              OriginalRow.Discriminator);
-          BC.Ctx->setDwarfCompileUnitID(Unit->getOffset());
+            NewFilenum == 0 ? OriginalRow.File : NewFilenum,
+            OriginalRow.Line,
+            OriginalRow.Column,
+            (DWARF2_FLAG_IS_STMT * OriginalRow.IsStmt) |
+            (DWARF2_FLAG_BASIC_BLOCK * OriginalRow.BasicBlock) |
+            (DWARF2_FLAG_PROLOGUE_END * OriginalRow.PrologueEnd) |
+            (DWARF2_FLAG_EPILOGUE_BEGIN * OriginalRow.EpilogueBegin),
+            OriginalRow.Isa,
+            OriginalRow.Discriminator);
+          BC.Ctx->setDwarfCompileUnitID(OrigUnitID);
           LastLocSeen = Instr.getLoc();
         }
       }

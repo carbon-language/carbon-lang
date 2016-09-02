@@ -1080,11 +1080,13 @@ public:
   /// This is a very rough estimate, as with C++ exceptions there are
   /// blocks we don't move, and it makes no attempt at estimating the size
   /// of the added/removed branch instructions.
+  /// Note that this size is optimistic and the actual size may increase
+  /// after relaxation.
   size_t estimateHotSize() const {
     size_t Estimate = 0;
     for (const auto *BB : BasicBlocksLayout) {
       if (BB->ExecutionCount != 0) {
-        Estimate += getBasicBlockOriginalSize(BB);
+        Estimate += BC.computeCodeSize(BB->begin(), BB->end());
       }
     }
     return Estimate;
