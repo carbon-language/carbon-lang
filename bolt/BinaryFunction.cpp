@@ -34,11 +34,11 @@
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
-
-namespace llvm {
-namespace bolt {
+using namespace llvm;
 
 namespace opts {
+
+extern cl::opt<unsigned> Verbosity;
 
 static cl::opt<bool>
 AgressiveSplitting("split-all-cold",
@@ -52,6 +52,9 @@ DotToolTipCode("dot-tooltip-code",
                cl::Hidden);
 
 } // namespace opts
+
+namespace llvm {
+namespace bolt {
 
 // Temporary constant.
 //
@@ -380,8 +383,10 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       return false;
     }
     if (TargetAddress == 0) {
-      errs() << "BOLT-WARNING: rip-relative operand is zero in function "
-             << *this << ". Ignoring function.\n";
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: rip-relative operand is zero in function "
+               << *this << ". Ignoring function.\n";
+      }
       return false;
     }
 
@@ -477,9 +482,11 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       // No section - possibly an absolute address. Since we don't allow
       // internal function addresses to escape the function scope - we
       // consider it a tail call.
-      errs() << "BOLT-WARNING: no section for address 0x"
-             << Twine::utohexstr(ArrayStart) << " referenced from function "
-             << *this << '\n';
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: no section for address 0x"
+               << Twine::utohexstr(ArrayStart) << " referenced from function "
+               << *this << '\n';
+      }
       return IndirectBranchType::POSSIBLE_TAIL_CALL;
     }
     auto &Section = *SectionOrError;
@@ -515,10 +522,12 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                                    nulls(),
                                    nulls())) {
       // Ignore this function. Skip to the next one.
-      errs() << "BOLT-WARNING: unable to disassemble instruction at offset 0x"
-             << Twine::utohexstr(Offset) << " (address 0x"
-             << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
-             << *this << '\n';
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: unable to disassemble instruction at offset 0x"
+               << Twine::utohexstr(Offset) << " (address 0x"
+               << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
+               << *this << '\n';
+      }
       IsSimple = false;
       break;
     }
@@ -547,9 +556,11 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             TargetSymbol = getSymbol();
           } else {
             // Possibly an old-style PIC code
-            errs() << "BOLT: internal call detected at 0x"
-                   << Twine::utohexstr(AbsoluteInstrAddr)
-                   << " in function " << *this << ". Skipping.\n";
+            if (opts::Verbosity >= 1) {
+              errs() << "BOLT-WARNING: internal call detected at 0x"
+                     << Twine::utohexstr(AbsoluteInstrAddr)
+                     << " in function " << *this << ". Skipping.\n";
+            }
             IsSimple = false;
           }
         }
@@ -560,7 +571,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             TargetSymbol = getOrCreateLocalLabel(TargetAddress);
           } else {
             BC.InterproceduralReferences.insert(TargetAddress);
-            if (!IsCall && Size == 2) {
+            if (opts::Verbosity >= 2 && !IsCall && Size == 2) {
               errs() << "BOLT-WARNING: relaxed tail call detected at 0x"
                      << Twine::utohexstr(AbsoluteInstrAddr)
                      << " in function " << *this
@@ -574,7 +585,8 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             // Assign proper opcode for tail calls, so that they could be
             // treated as calls.
             if (!IsCall) {
-              if (!MIA->convertJmpToTailCall(Instruction)) {
+              if (opts::Verbosity >= 2 &&
+                  !MIA->convertJmpToTailCall(Instruction)) {
                 assert(IsCondBranch && "unknown tail call instruction");
                 errs() << "BOLT-WARNING: conditional tail call detected in "
                        << "function " << *this << " at 0x"
@@ -594,8 +606,10 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               // from the libraries. In reality more often than not it is
               // unreachable code, but we don't know it and have to emit calls
               // to 0 which make LLVM JIT unhappy.
-              errs() << "BOLT-WARNING: Function " << *this
-                     << " has a call to address zero. Ignoring function.\n";
+              if (opts::Verbosity >= 1) {
+                errs() << "BOLT-WARNING: Function " << *this
+                       << " has a call to address zero. Ignoring function.\n";
+              }
               IsSimple = false;
             }
           }
@@ -638,9 +652,11 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // Indirect call. We only need to fix it if the operand is RIP-relative
         if (IsSimple && MIA->hasRIPOperand(Instruction)) {
           if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
-            errs() << "BOLT-WARNING: cannot handle RIP operand at 0x"
-                   << Twine::utohexstr(AbsoluteInstrAddr)
-                   << ". Skipping function " << *this << ".\n";
+            if (opts::Verbosity >= 1) {
+              errs() << "BOLT-WARNING: cannot handle RIP operand at 0x"
+                     << Twine::utohexstr(AbsoluteInstrAddr)
+                     << ". Skipping function " << *this << ".\n";
+            }
             IsSimple = false;
           }
         }
@@ -648,9 +664,11 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     } else {
       if (MIA->hasRIPOperand(Instruction)) {
         if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
-          errs() << "BOLT-WARNING: cannot handle RIP operand at 0x"
-                 << Twine::utohexstr(AbsoluteInstrAddr)
-                 << ". Skipping function " << *this << ".\n";
+          if (opts::Verbosity >= 1) {
+            errs() << "BOLT-WARNING: cannot handle RIP operand at 0x"
+                   << Twine::utohexstr(AbsoluteInstrAddr)
+                   << ". Skipping function " << *this << ".\n";
+          }
           IsSimple = false;
         }
       }
@@ -1217,7 +1235,7 @@ void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
     (float) (LocalProfileBranches.size() - OrphanBranches.size()) /
     (float) LocalProfileBranches.size();
 
-  if (!OrphanBranches.empty()) {
+  if (opts::Verbosity >= 2 && !OrphanBranches.empty()) {
     errs() << "BOLT-WARNING: profile branches match only "
            << format("%.1f%%", ProfileMatchRatio * 100.0f) << " ("
            << (LocalProfileBranches.size() - OrphanBranches.size()) << '/'
@@ -1317,8 +1335,8 @@ void BinaryFunction::inferFallThroughCounts() {
       Inferred = BBExecCount - TotalReportedJumps;
 
     DEBUG({
-      if (BBExecCount < TotalReportedJumps)
-        dbgs()
+      if (opts::Verbosity >= 1 && BBExecCount < TotalReportedJumps)
+        errs()
             << "BOLT-WARNING: Fall-through inference is slightly inconsistent. "
                "exec frequency is less than the outgoing edges frequency ("
             << BBExecCount << " < " << ReportedBranches
@@ -1521,9 +1539,11 @@ bool BinaryFunction::fixCFIState() {
         // without using the state stack. Not sure if it is worth the effort
         // because this happens rarely.
         if (NestedLevel != 0) {
-          errs() << "BOLT-WARNING: CFI rewriter detected nested CFI state while"
-                 << " replaying CFI instructions for BB " << InBB->getName()
-                 << " in function " << *this << '\n';
+          if (opts::Verbosity >= 1) {
+            errs() << "BOLT-WARNING: CFI rewriter detected nested CFI state while"
+                   << " replaying CFI instructions for BB " << InBB->getName()
+                   << " in function " << *this << '\n';
+          }
           return false;
         }
 
@@ -1601,9 +1621,11 @@ bool BinaryFunction::fixCFIState() {
       }
 
       if (StackOffset != 0) {
-        errs() << " BOLT-WARNING: not possible to remember/recover state"
-               << " without corrupting CFI state stack in function "
-               << *this << "\n";
+        if (opts::Verbosity >= 1) {
+          errs() << " BOLT-WARNING: not possible to remember/recover state"
+                 << " without corrupting CFI state stack in function "
+                 << *this << "\n";
+        }
         return false;
       }
     } else if (BBCFIState[BBIndex] > State) {
@@ -1694,8 +1716,10 @@ std::string constructFilename(std::string Filename,
   }
   if (Filename.size() + Annotation.size() + Suffix.size() > MAX_PATH) {
     assert(Suffix.size() + Annotation.size() <= MAX_PATH);
-    dbgs() << "BOLT-WARNING: Filename \"" << Filename << Annotation << Suffix
-           << "\" exceeds the " << MAX_PATH << " size limit, truncating.\n";
+    if (opts::Verbosity >= 1) {
+      errs() << "BOLT-WARNING: Filename \"" << Filename << Annotation << Suffix
+             << "\" exceeds the " << MAX_PATH << " size limit, truncating.\n";
+    }
     Filename.resize(MAX_PATH - (Suffix.size() + Annotation.size()));
   }
   Filename += Annotation;
@@ -1799,24 +1823,23 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
 void BinaryFunction::viewGraph() const {
   SmallString<MAX_PATH> Filename;
   if (auto EC = sys::fs::createTemporaryFile("bolt-cfg", "dot", Filename)) {
-    dbgs() << "BOLT-WARNING: " << EC.message() << ", unable to create "
+    errs() << "BOLT-ERROR: " << EC.message() << ", unable to create "
            << " bolt-cfg-XXXXX.dot temporary file.\n";
     return;
   }
   dumpGraphToFile(Filename.str());
   if (DisplayGraph(Filename)) {
-    dbgs() << "BOLT-WARNING: Can't display " << Filename
-           << " with graphviz.\n";
+    errs() << "BOLT-ERROR: Can't display " << Filename << " with graphviz.\n";
   }
   if (auto EC = sys::fs::remove(Filename)) {
-    dbgs() << "BOLT-WARNING: " << EC.message() << ", failed to remove "
-           << Filename.str() << "\n";
+    errs() << "BOLT-WARNING: " << EC.message() << ", failed to remove "
+           << Filename << "\n";
   }
 }
 
 void BinaryFunction::dumpGraphForPass(std::string Annotation) const {
   auto Filename = constructFilename(getPrintName(), Annotation, ".dot");
-  dbgs() << "BOLT-DEBUG: Dumping CFG to " << Filename << "\n";
+  outs() << "BOLT-DEBUG: Dumping CFG to " << Filename << "\n";
   dumpGraphToFile(Filename);
 }
 
@@ -1824,8 +1847,10 @@ void BinaryFunction::dumpGraphToFile(std::string Filename) const {
   std::error_code EC;
   raw_fd_ostream of(Filename, EC, sys::fs::F_None);
   if (EC) {
-    dbgs() << "BOLT-WARNING: " << EC.message() << ", unable to open "
-           << Filename << " for output.\n";
+    if (opts::Verbosity >= 1) {
+      errs() << "BOLT-WARNING: " << EC.message() << ", unable to open "
+             << Filename << " for output.\n";
+    }
     return;
   }
   dumpGraph(of);
@@ -2439,10 +2464,10 @@ bool BinaryFunction::isIdenticalWith(const BinaryFunction &BF) const {
     ++BBI;
   }
 
-  if (PseudosDiffer) {
-    errs() << "BOLT-WARNING: functions " << *this << " and ";
-    errs() << BF << " are identical, but have different";
-    errs() << " pseudo instruction sequences.\n";
+  if (opts::Verbosity >= 1 && PseudosDiffer) {
+    errs() << "BOLT-WARNING: functions " << *this << " and "
+           << BF << " are identical, but have different"
+           << " pseudo instruction sequences.\n";
   }
 
   return true;

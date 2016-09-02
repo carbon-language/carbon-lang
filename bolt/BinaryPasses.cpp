@@ -17,6 +17,7 @@
 
 namespace opts {
 
+extern llvm::cl::opt<unsigned> Verbosity;
 extern llvm::cl::opt<bool> PrintAll;
 extern llvm::cl::opt<bool> DumpDotAll;
 extern llvm::cl::opt<bool> PrintReordered;
@@ -112,7 +113,7 @@ void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
       }
       if (Target == OriginalTarget)
         continue;
-      DEBUG(errs() << "BOLT-DEBUG: Optimizing " << (*BBIt).getName()
+      DEBUG(dbgs() << "BOLT-DEBUG: Optimizing " << (*BBIt).getName()
                    << " in " << BF
                    << ": replacing call to " << OriginalTarget->getName()
                    << " by call to " << Target->getName() << "\n");
@@ -161,7 +162,7 @@ void InlineSmallFunctions::findInliningCandidates(
     }
   }
 
-  DEBUG(errs() << "BOLT-DEBUG: " << InliningCandidates.size()
+  DEBUG(dbgs() << "BOLT-DEBUG: " << InliningCandidates.size()
                << " inlineable functions.\n");
 }
 
@@ -202,7 +203,7 @@ void InlineSmallFunctions::findInliningCandidatesAggressive(
       InliningCandidates.insert(&Function);
   }
 
-  DEBUG(errs() << "BOLT-DEBUG: " << InliningCandidates.size()
+  DEBUG(dbgs() << "BOLT-DEBUG: " << InliningCandidates.size()
                << " inlineable functions.\n");
 }
 
@@ -577,7 +578,7 @@ bool InlineSmallFunctions::inlineCallsInFunction(
             auto NextInstIt = std::next(InstIt);
             inlineCall(BC, *BB, &Inst, *TargetFunction->begin());
             DidInlining = true;
-            DEBUG(errs() << "BOLT-DEBUG: Inlining call to "
+            DEBUG(dbgs() << "BOLT-DEBUG: Inlining call to "
                          << *TargetFunction << " in "
                          << Function << "\n");
             InstIt = NextInstIt;
@@ -648,7 +649,7 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
             std::tie(NextBB, NextInstIndex) =
               inlineCall(BC, Function, BB, InstIndex, *TargetFunction);
             DidInlining = true;
-            DEBUG(errs() << "BOLT-DEBUG: Inlining call to "
+            DEBUG(dbgs() << "BOLT-DEBUG: Inlining call to "
                          << *TargetFunction << " in "
                          << Function << "\n");
             InstIndex = NextBB == BB ? NextInstIndex : BB->size();
@@ -695,9 +696,9 @@ void InlineSmallFunctions::runOnFunctions(
       ++ModifiedFunctions;
   }
 
-  DEBUG(errs() << "BOLT-DEBUG: Inlined " << inlinedDynamicCalls << " of "
+  DEBUG(dbgs() << "BOLT-DEBUG: Inlined " << inlinedDynamicCalls << " of "
                << totalDynamicCalls << " function calls in the profile.\n");
-  DEBUG(errs() << "BOLT-DEBUG: Inlined calls represent "
+  DEBUG(dbgs() << "BOLT-DEBUG: Inlined calls represent "
                << (100.0 * inlinedDynamicCalls / totalInlineableCalls)
                << "% of all inlineable calls in the profile.\n");
 }
@@ -710,9 +711,11 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
   //        in the graph.
   if (Function.layout_size() > 0) {
     if (NagUser) {
-      outs()
-        << "BOLT-WARNING: Using -eliminate-unreachable is experimental and "
-        "unsafe for exceptions\n";
+      if (opts::Verbosity >= 1) {
+        errs()
+          << "BOLT-WARNING: Using -eliminate-unreachable is experimental and "
+          "unsafe for exceptions\n";
+      }
       NagUser = false;
     }
 
@@ -742,7 +745,7 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
     }
 
     if (opts::PrintAll || opts::PrintUCE)
-      Function.print(errs(), "after unreachable code elimination", true);
+      Function.print(outs(), "after unreachable code elimination", true);
 
     if (opts::DumpDotAll)
       Function.dumpGraphForPass("unreachable-code");
@@ -781,7 +784,7 @@ void ReorderBasicBlocks::runOnFunctions(
       Function.modifyLayout(opts::ReorderBlocks, opts::MinBranchClusters,
                             ShouldSplit);
       if (opts::PrintAll || opts::PrintReordered)
-        Function.print(errs(), "after reordering blocks", true);
+        Function.print(outs(), "after reordering blocks", true);
       if (opts::DumpDotAll)
         Function.dumpGraphForPass("reordering");
     }
@@ -804,8 +807,10 @@ void FixupFunctions::runOnFunctions(
 
     // Fix the CFI state.
     if (!Function.fixCFIState()) {
-      errs() << "BOLT-WARNING: unable to fix CFI state for function "
-             << Function << ". Skipping.\n";
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: unable to fix CFI state for function "
+               << Function << ". Skipping.\n";
+      }
       Function.setSimple(false);
       continue;
     }
@@ -813,7 +818,7 @@ void FixupFunctions::runOnFunctions(
     // Update exception handling information.
     Function.updateEHRanges();
     if (opts::PrintAll || opts::PrintEHRanges)
-      Function.print(errs(), "after updating EH ranges", true);
+      Function.print(outs(), "after updating EH ranges", true);
     if (opts::DumpDotAll)
       Function.dumpGraphForPass("update-EH-ranges");
   }
@@ -920,7 +925,7 @@ void SimplifyConditionalTailCalls::runOnFunctions(
     // Fix tail calls to reduce branch mispredictions.
     if (fixTailCalls(BC, Function)) {
       if (opts::PrintAll || opts::PrintReordered) {
-        Function.print(errs(), "after tail call patching", true);
+        Function.print(outs(), "after tail call patching", true);
       }
       if (opts::DumpDotAll) {
         Function.dumpGraphForPass("tail-call-patching");
@@ -928,7 +933,7 @@ void SimplifyConditionalTailCalls::runOnFunctions(
     }
   }
 
-  outs() << "BOLT: patched " << NumTailCallsPatched
+  outs() << "BOLT-INFO: patched " << NumTailCallsPatched
          << " tail calls (" << NumOrigForwardBranches << " forward)"
          << " from a total of " << NumTailCallCandidates << "\n";
 }
@@ -951,7 +956,7 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
       shortenInstructions(BC, Function);
 
       if (opts::PrintAll || opts::PrintPeepholes) {
-        Function.print(errs(), "after peepholes", true);
+        Function.print(outs(), "after peepholes", true);
       }
 
       if (opts::DumpDotAll) {
@@ -1058,7 +1063,7 @@ void SimplifyRODataLoads::runOnFunctions(
 
     if (simplifyRODataLoads(BC, Function)) {
       if (opts::PrintAll || opts::PrintSimplifyROLoads) {
-        Function.print(errs(),
+        Function.print(outs(),
                        "after simplifying read-only section loads",
                        true);
       }
@@ -1068,11 +1073,11 @@ void SimplifyRODataLoads::runOnFunctions(
     }
   }
 
-  outs() << "BOLT: simplified " << NumLoadsSimplified << " out of ";
-  outs() << NumLoadsFound << " loads from a statically computed address.\n";
-  outs() << "BOLT: dynamic loads simplified: " << NumDynamicLoadsSimplified;
-  outs() << "\n";
-  outs() << "BOLT: dynamic loads found: " << NumDynamicLoadsFound << "\n";
+  outs() << "BOLT-INFO: simplified " << NumLoadsSimplified << " out of "
+         << NumLoadsFound << " loads from a statically computed address.\n"
+         << "BOLT-INFO: dynamic loads simplified: " << NumDynamicLoadsSimplified
+         << "\n"
+         << "BOLT-INFO: dynamic loads found: " << NumDynamicLoadsFound << "\n";
 }
 
 void IdenticalCodeFolding::discoverCallers(
@@ -1221,7 +1226,9 @@ void IdenticalCodeFolding::runOnFunctions(
     Buckets.clear();
     Mod.clear();
 
-    errs() << "BOLT-INFO: icf pass " << Iter << "...\n";
+    if (opts::Verbosity >= 1) {
+      outs() << "BOLT-INFO: icf pass " << Iter << "...\n";
+    }
 
     uint64_t NumIdenticalFunctions = 0;
 
@@ -1267,28 +1274,30 @@ void IdenticalCodeFolding::runOnFunctions(
       }
     }
 
-    errs() << "BOLT-INFO: found " << NumIdenticalFunctions;
-    errs() << " identical functions.\n";
-    errs() << "BOLT-INFO: modified " << Mod.size() << " functions.\n";
+    if (opts::Verbosity >= 1) {
+      outs() << "BOLT-INFO: found " << NumIdenticalFunctions
+             << " identical functions.\n"
+             << "BOLT-INFO: modified " << Mod.size() << " functions.\n";
+    }
 
     NumIdenticalFunctionsFound += NumIdenticalFunctions;
 
     ++Iter;
   } while (!Mod.empty());
 
-  outs() << "BOLT: ICF pass found " << NumIdenticalFunctionsFound;
-  outs() << " functions identical to some other function.\n";
-  outs() << "BOLT: ICF pass folded references to " << NumFunctionsFolded;
-  outs() << " functions.\n";
-  outs() << "BOLT: ICF pass folded " << NumDynamicCallsFolded << " dynamic";
-  outs() << " function calls.\n";
-  outs() << "BOLT: Removing all identical functions could save ";
-  outs() << format("%.2lf", (double) BytesSavedEstimate / 1024);
-  outs() << " KB of code space.\n";
+  outs() << "BOLT-INFO: ICF pass found " << NumIdenticalFunctionsFound
+         << " functions identical to some other function.\n"
+         << "BOLT-INFO: ICF pass folded references to " << NumFunctionsFolded
+         << " functions.\n"
+         << "BOLT-INFO: ICF pass folded " << NumDynamicCallsFolded << " dynamic"
+         << " function calls.\n"
+         << "BOLT-INFO: Removing all identical functions could save "
+         << format("%.2lf", (double) BytesSavedEstimate / 1024)
+         << " KB of code space.\n";
 
   if (opts::PrintAll || opts::PrintICF) {
     for (auto &I : BFs) {
-      I.second.print(errs(), "after identical code folding", true);
+      I.second.print(outs(), "after identical code folding", true);
     }
   }
 }

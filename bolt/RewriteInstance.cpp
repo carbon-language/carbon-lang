@@ -66,6 +66,22 @@ namespace opts {
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("<output file>"), cl::Required);
 
+// The default verbosity level (0) is pretty terse, level 1 is fairly
+// verbose and usually prints some informational message for every
+// function processed.  Level 2 is for the noisiest of messages and
+// often prints a message per basic block.
+// Error messages should never be suppressed by the verbosity level.
+// Only warnings and info messages should be affected.
+//
+// The rational behind stream usage is as follows:
+// outs() for info and debugging controlled by command line flags.
+// errs() for errors and warnings.
+// dbgs() for output within DEBUG().
+cl::opt<unsigned>
+Verbosity("v",
+          cl::desc("set verbosity level for diagnostic output"),
+          cl::init(0));
+
 static cl::list<std::string>
 BreakFunctionNames("break-funcs",
                    cl::CommaSeparated,
@@ -360,14 +376,14 @@ std::unique_ptr<BinaryContext> createBinaryContext(
                                                          *TheTriple,
                                                          Error);
   if (!TheTarget) {
-    errs() << "BOLT: " << Error;
+    errs() << "BOLT-ERROR: " << Error;
     return nullptr;
   }
 
   std::unique_ptr<const MCRegisterInfo> MRI(
       TheTarget->createMCRegInfo(TripleName));
   if (!MRI) {
-    errs() << "error: no register info for target " << TripleName << "\n";
+    errs() << "BOLT-ERROR: no register info for target " << TripleName << "\n";
     return nullptr;
   }
 
@@ -375,20 +391,20 @@ std::unique_ptr<BinaryContext> createBinaryContext(
   std::unique_ptr<const MCAsmInfo> AsmInfo(
       TheTarget->createMCAsmInfo(*MRI, TripleName));
   if (!AsmInfo) {
-    errs() << "error: no assembly info for target " << TripleName << "\n";
+    errs() << "BOLT-ERROR: no assembly info for target " << TripleName << "\n";
     return nullptr;
   }
 
   std::unique_ptr<const MCSubtargetInfo> STI(
       TheTarget->createMCSubtargetInfo(TripleName, "", ""));
   if (!STI) {
-    errs() << "error: no subtarget info for target " << TripleName << "\n";
+    errs() << "BOLT-ERROR: no subtarget info for target " << TripleName << "\n";
     return nullptr;
   }
 
   std::unique_ptr<const MCInstrInfo> MII(TheTarget->createMCInstrInfo());
   if (!MII) {
-    errs() << "error: no instruction info for target " << TripleName << "\n";
+    errs() << "BOLT-ERROR: no instruction info for target " << TripleName << "\n";
     return nullptr;
   }
 
@@ -403,14 +419,14 @@ std::unique_ptr<BinaryContext> createBinaryContext(
     TheTarget->createMCDisassembler(*STI, *Ctx));
 
   if (!DisAsm) {
-    errs() << "error: no disassembler for target " << TripleName << "\n";
+    errs() << "BOLT-ERROR: no disassembler for target " << TripleName << "\n";
     return nullptr;
   }
 
   std::unique_ptr<const MCInstrAnalysis> MIA(
       TheTarget->createMCInstrAnalysis(MII.get()));
   if (!MIA) {
-    errs() << "error: failed to create instruction analysis for target"
+    errs() << "BOLT-ERROR: failed to create instruction analysis for target"
            << TripleName << "\n";
     return nullptr;
   }
@@ -420,7 +436,7 @@ std::unique_ptr<BinaryContext> createBinaryContext(
       TheTarget->createMCInstPrinter(Triple(TripleName), AsmPrinterVariant,
                                      *AsmInfo, *MII, *MRI));
   if (!InstructionPrinter) {
-    errs() << "error: no instruction printer for target " << TripleName
+    errs() << "BOLT-ERROR: no instruction printer for target " << TripleName
            << '\n';
     return nullptr;
   }
@@ -507,7 +523,7 @@ void RewriteInstance::discoverStorage() {
   assert(NextAvailableAddress && NextAvailableOffset &&
          "no PT_LOAD pheader seen");
 
-  errs() << "BOLT-INFO: first alloc address is 0x"
+  outs() << "BOLT-INFO: first alloc address is 0x"
          << Twine::utohexstr(FirstAllocAddress) << '\n';
 
   FirstNonAllocatableOffset = NextAvailableOffset;
@@ -534,7 +550,7 @@ void RewriteInstance::discoverStorage() {
     assert(NextAvailableOffset == NextAvailableAddress - FirstAllocAddress &&
            "PHDR table address calculation error");
 
-    errs() << "BOLT-INFO: creating new program header table at address 0x"
+    outs() << "BOLT-INFO: creating new program header table at address 0x"
            << Twine::utohexstr(NextAvailableAddress) << ", offset 0x"
            << Twine::utohexstr(NextAvailableOffset) << '\n';
 
@@ -559,7 +575,7 @@ void RewriteInstance::discoverStorage() {
 
 void RewriteInstance::run() {
   if (!BC) {
-    errs() << "failed to create a binary context\n";
+    errs() << "BOLT-ERROR: failed to create a binary context\n";
     return;
   }
 
@@ -610,9 +626,11 @@ void RewriteInstance::run() {
       auto FunctionIt = BinaryFunctions.find(Address);
       assert(FunctionIt != BinaryFunctions.end() &&
              "Invalid large function address.");
-      errs() << "BOLT-WARNING: Function " << FunctionIt->second
-             << " is larger than its orginal size: emitting again marking it "
-             << "as not simple.\n";
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: Function " << FunctionIt->second
+               << " is larger than its orginal size: emitting again marking it "
+               << "as not simple.\n";
+      }
       FunctionIt->second.setSimple(false);
     }
 
@@ -664,7 +682,7 @@ void RewriteInstance::discoverFileObjects() {
     check_error(AddressOrErr.getError(), "cannot get symbol address");
     uint64_t Address = *AddressOrErr;
     if (Address == 0) {
-      if (Symbol.getType() == SymbolRef::ST_Function)
+      if (opts::Verbosity >= 1 && Symbol.getType() == SymbolRef::ST_Function)
         errs() << "BOLT-WARNING: function with 0 address seen\n";
       continue;
     }
@@ -764,7 +782,8 @@ void RewriteInstance::discoverFileObjects() {
           auto &PrevFDE = *FDEI->second;
           auto PrevStart = PrevFDE.getInitialLocation();
           auto PrevLength = PrevFDE.getAddressRange();
-          if (Address > PrevStart && Address < PrevStart + PrevLength) {
+          if (opts::Verbosity >= 1 &&
+              Address > PrevStart && Address < PrevStart + PrevLength) {
             errs() << "BOLT-WARNING: function " << UniqueName
                    << " is in conflict with FDE ["
                    << Twine::utohexstr(PrevStart) << ", "
@@ -775,9 +794,11 @@ void RewriteInstance::discoverFileObjects() {
         }
       } else if (FDE.getAddressRange() != SymbolSize) {
         // Function addresses match but sizes differ.
-        errs() << "BOLT-WARNING: sizes differ for function " << UniqueName
-               << ". FDE : " << FDE.getAddressRange()
-               << "; symbol table : " << SymbolSize << ". Skipping.\n";
+        if (opts::Verbosity >= 1) {
+          errs() << "BOLT-WARNING: sizes differ for function " << UniqueName
+                 << ". FDE : " << FDE.getAddressRange()
+                 << "; symbol table : " << SymbolSize << ". Skipping.\n";
+        }
 
         // Create maximum size non-simple function.
         IsSimple = false;
@@ -791,7 +812,7 @@ void RewriteInstance::discoverFileObjects() {
       BF = &BFI->second;
       // Duplicate function name. Make sure everything matches before we add
       // an alternative name.
-      if (SymbolSize != BF->getSize()) {
+      if (opts::Verbosity >= 1 && SymbolSize != BF->getSize()) {
         errs() << "BOLT-WARNING: size mismatch for duplicate entries "
                << UniqueName << ':' << SymbolSize << " and "
                << *BF << ':' << BF->getSize() << '\n';
@@ -906,8 +927,10 @@ void RewriteInstance::disassembleFunctions() {
           "wrong section for function");
     if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
       // When could it happen?
-      errs() << "BOLT: corresponding section is non-executable or empty "
-             << "for function " << Function;
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: corresponding section is non-executable or empty "
+               << "for function " << Function;
+      }
       continue;
     }
 
@@ -926,8 +949,10 @@ void RewriteInstance::disassembleFunctions() {
         uint64_t SectionEnd = Function.getSection().getAddress() +
                               Function.getSection().getSize();
         if (SectionEnd > SymRefI->first) {
-          errs() << "BOLT-WARNING: symbol after " << Function
-                 << " should not be in the same section.\n";
+          if (opts::Verbosity >= 1) {
+            errs() << "BOLT-WARNING: symbol after " << Function
+                   << " should not be in the same section.\n";
+          }
           MaxSize = 0;
         } else {
           MaxSize = SectionEnd - Function.getAddress();
@@ -935,8 +960,10 @@ void RewriteInstance::disassembleFunctions() {
       }
 
       if (MaxSize < Function.getSize()) {
-        errs() << "BOLT-WARNING: symbol seen in the middle of the function "
-               << Function << ". Skipping.\n";
+        if (opts::Verbosity >= 1) {
+          errs() << "BOLT-WARNING: symbol seen in the middle of the function "
+                 << Function << ". Skipping.\n";
+        }
         Function.setSimple(false);
         continue;
       }
@@ -966,7 +993,7 @@ void RewriteInstance::disassembleFunctions() {
       continue;
 
     if (opts::PrintAll || opts::PrintDisasm)
-      Function.print(errs(), "after disassembly", true);
+      Function.print(outs(), "after disassembly", true);
 
     if (!Function.isSimple())
       continue;
@@ -974,8 +1001,10 @@ void RewriteInstance::disassembleFunctions() {
     // Fill in CFI information for this function
     if (EHFrame->ParseError.empty()) {
       if (!CFIRdWrt->fillCFIInfoFor(Function)) {
-        errs() << "BOLT-WARNING: unable to fill CFI for function "
-               << Function << '\n';
+        if (opts::Verbosity >= 1) {
+          errs() << "BOLT-WARNING: unable to fill CFI for function "
+                 << Function << '\n';
+        }
         Function.setSimple(false);
         continue;
       }
@@ -989,14 +1018,14 @@ void RewriteInstance::disassembleFunctions() {
       continue;
 
     if (opts::PrintAll || opts::PrintCFG)
-      Function.print(errs(), "after building cfg", true);
+      Function.print(outs(), "after building cfg", true);
 
     if (opts::DumpDotAll)
       Function.dumpGraphForPass("build-cfg");
 
     if (opts::PrintLoopInfo) {
       Function.calculateLoopInfo();
-      Function.printLoopInfo(errs());
+      Function.printLoopInfo(outs());
     }
 
     TotalScore += Function.getFunctionScore();
@@ -1009,9 +1038,11 @@ void RewriteInstance::disassembleFunctions() {
   for (auto Addr : BC->InterproceduralReferences) {
     auto *ContainingFunction = getBinaryFunctionContainingAddress(Addr);
     if (ContainingFunction && ContainingFunction->getAddress() != Addr) {
-      errs() << "BOLT-WARNING: Function " << ContainingFunction
-             << " has internal BBs that are target of a reference located in "
-                "another function. Skipping the function.\n";
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: Function " << ContainingFunction
+               << " has internal BBs that are target of a reference located in "
+               << "another function. Skipping the function.\n";
+      }
       ContainingFunction->setSimple(false);
     }
   }
@@ -1032,7 +1063,7 @@ void RewriteInstance::disassembleFunctions() {
       ++NumStaleProfileFunctions;
   }
 
-  errs() << "BOLT-INFO: "
+  outs() << "BOLT-INFO: "
          << ProfiledFunctions.size() + NumStaleProfileFunctions
          << " functions out of " << NumSimpleFunctions << " simple functions ("
          << format("%.1f",
@@ -1040,7 +1071,7 @@ void RewriteInstance::disassembleFunctions() {
                    (float) NumSimpleFunctions * 100.0f)
          << "%) have non-empty execution profile.\n";
   if (NumStaleProfileFunctions) {
-    errs() << "BOLT-INFO: " << NumStaleProfileFunctions
+    outs() << "BOLT-INFO: " << NumStaleProfileFunctions
            << format(" (%.1f%) ", NumStaleProfileFunctions /
                                   (float) NumSimpleFunctions * 100.0f)
            << " function" << (NumStaleProfileFunctions == 1 ? "" : "s")
@@ -1048,16 +1079,18 @@ void RewriteInstance::disassembleFunctions() {
   }
 
   if (ProfiledFunctions.size() > 10) {
-    errs() << "BOLT-INFO: top called functions are:\n";
-    std::sort(ProfiledFunctions.begin(), ProfiledFunctions.end(),
-              [](BinaryFunction *A, BinaryFunction *B) {
-                return B->getExecutionCount() < A->getExecutionCount();
-              }
-    );
-    auto SFI = ProfiledFunctions.begin();
-    for (int i = 0; i < 100 && SFI != ProfiledFunctions.end(); ++SFI, ++i) {
-      errs() << "  " << *SFI << " : "
-             << (*SFI)->getExecutionCount() << '\n';
+    if (opts::Verbosity >= 1) {
+      outs() << "BOLT-INFO: top called functions are:\n";
+      std::sort(ProfiledFunctions.begin(), ProfiledFunctions.end(),
+                [](BinaryFunction *A, BinaryFunction *B) {
+                  return B->getExecutionCount() < A->getExecutionCount();
+                }
+                );
+      auto SFI = ProfiledFunctions.begin();
+      for (int i = 0; i < 100 && SFI != ProfiledFunctions.end(); ++SFI, ++i) {
+        outs() << "  " << **SFI << " : "
+               << (*SFI)->getExecutionCount() << '\n';
+      }
     }
   }
 }
@@ -1426,7 +1459,9 @@ void RewriteInstance::emitFunctions() {
         FailedAddresses.emplace_back(Function.getAddress());
       }
     } else {
-      errs() << "BOLT: cannot remap function " << Function << "\n";
+      if (opts::Verbosity >= 2) {
+        errs() << "BOLT-WARNING: cannot remap function " << Function << "\n";
+      }
       FailedAddresses.emplace_back(Function.getAddress());
     }
 
@@ -1453,7 +1488,9 @@ void RewriteInstance::emitFunctions() {
 
       NextAvailableAddress += Function.cold().getImageSize();
     } else {
-      errs() << "BOLT: cannot remap function " << Function << "\n";
+      if (opts::Verbosity >= 2) {
+        errs() << "BOLT-WARNING: cannot remap function " << Function << "\n";
+      }
       FailedAddresses.emplace_back(Function.getAddress());
     }
   }
@@ -1494,7 +1531,9 @@ void RewriteInstance::emitFunctions() {
 
       NextAvailableAddress += SI.Size;
     } else {
-      errs() << "BOLT: cannot remap " << SectionName << '\n';
+      if (opts::Verbosity >= 2) {
+        errs() << "BOLT-WARNING: cannot remap " << SectionName << '\n';
+      }
     }
   }
 
@@ -1794,8 +1833,9 @@ void RewriteInstance::patchELFSectionHeaderTable() {
     // Ignore function sections.
     if (SI.IsCode && SMII.first != ".bolt.text")
       continue;
-    errs() << "BOLT-INFO: writing section header for "
-           << SMII.first << '\n';
+    if (opts::Verbosity >= 1) {
+      outs() << "BOLT-INFO: writing section header for " << SMII.first << '\n';
+    }
     Elf_Shdr NewSection;
     NewSection.sh_name = SI.ShName;
     NewSection.sh_type = ELF::SHT_PROGBITS;
@@ -1905,18 +1945,22 @@ void RewriteInstance::rewriteFile() {
       continue;
 
     if (Function.getImageSize() > Function.getMaxSize()) {
-      errs() << "BOLT-WARNING: new function size (0x"
-             << Twine::utohexstr(Function.getImageSize())
-             << ") is larger than maximum allowed size (0x"
-             << Twine::utohexstr(Function.getMaxSize())
-             << ") for function " << Function << '\n';
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: new function size (0x"
+               << Twine::utohexstr(Function.getImageSize())
+               << ") is larger than maximum allowed size (0x"
+               << Twine::utohexstr(Function.getMaxSize())
+               << ") for function " << Function << '\n';
+      }
       FailedAddresses.emplace_back(Function.getAddress());
       continue;
     }
 
     OverwrittenScore += Function.getFunctionScore();
     // Overwrite function in the output file.
-    outs() << "BOLT: rewriting function \"" << Function << "\"\n";
+    if (opts::Verbosity >= 2) {
+      outs() << "BOLT: rewriting function \"" << Function << "\"\n";
+    }
     Out->os().pwrite(reinterpret_cast<char *>(Function.getImageAddress()),
                      Function.getImageSize(), Function.getFileOffset());
 
@@ -1938,7 +1982,9 @@ void RewriteInstance::rewriteFile() {
     }
 
     // Write cold part
-    outs() << "BOLT: rewriting function \"" << Function << "\" (cold part)\n";
+    if (opts::Verbosity >= 2) {
+      outs() << "BOLT: rewriting function \"" << Function << "\" (cold part)\n";
+    }
     Out->os().pwrite(reinterpret_cast<char*>(Function.cold().getImageAddress()),
                      Function.cold().getImageSize(),
                      Function.cold().getFileOffset());
@@ -1967,7 +2013,9 @@ void RewriteInstance::rewriteFile() {
     SectionInfo &SI = SMII.second;
     if (SI.IsCode)
       continue;
-    outs() << "BOLT: writing new section " << SMII.first << '\n';
+    if (opts::Verbosity >= 1) {
+      outs() << "BOLT: writing new section " << SMII.first << '\n';
+    }
     Out->os().pwrite(reinterpret_cast<const char *>(SI.AllocAddress),
                      SI.Size,
                      SI.FileOffset);
@@ -1977,7 +2025,9 @@ void RewriteInstance::rewriteFile() {
   auto SMII = SectionMM->SectionMapInfo.find(".eh_frame");
   if (SMII != SectionMM->SectionMapInfo.end()) {
     auto &EHFrameSecInfo = SMII->second;
-    outs() << "BOLT: writing a new .eh_frame_hdr\n";
+    if (opts::Verbosity >= 1) {
+      outs() << "BOLT: writing a new .eh_frame_hdr\n";
+    }
     if (FrameHdrAlign > 1) {
       auto PaddingSize = OffsetToAlignment(NextAvailableAddress, FrameHdrAlign);
       for (unsigned I = 0; I < PaddingSize; ++I)

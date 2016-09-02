@@ -14,8 +14,13 @@
 #include "BinaryFunction.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/Support/CommandLine.h"
 #include <algorithm>
 #include <cassert>
+
+namespace opts {
+extern llvm::cl::opt<unsigned> Verbosity;
+}
 
 namespace llvm {
 namespace bolt {
@@ -29,10 +34,12 @@ void BasicBlockOffsetRanges::addAddressRange(BinaryFunction &Function,
   auto FirstBB = Function.getBasicBlockContainingOffset(
       BeginAddress - Function.getAddress());
   if (!FirstBB) {
-    errs() << "BOLT-WARNING: no basic blocks in function "
-           << Function << " intersect with debug range [0x"
-           << Twine::utohexstr(BeginAddress) << ", 0x"
-           << Twine::utohexstr(EndAddress) << ")\n";
+    if (opts::Verbosity >= 2) {
+      errs() << "BOLT-WARNING: no basic blocks in function "
+             << Function << " intersect with debug range [0x"
+             << Twine::utohexstr(BeginAddress) << ", 0x"
+             << Twine::utohexstr(EndAddress) << ")\n";
+    }
     return;
   }
 

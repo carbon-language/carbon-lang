@@ -32,17 +32,19 @@
 
 using namespace llvm::dwarf;
 
-namespace llvm {
-namespace bolt {
-
 namespace opts {
 
-static cl::opt<bool>
+extern llvm::cl::opt<unsigned> Verbosity;
+
+static llvm::cl::opt<bool>
 PrintExceptions("print-exceptions",
-                cl::desc("print exception handling data"),
-                cl::Hidden);
+                llvm::cl::desc("print exception handling data"),
+                llvm::cl::Hidden);
 
 } // namespace opts
+
+namespace llvm {
+namespace bolt {
 
 // Read and dump the .gcc_exception_table section entry.
 //
@@ -121,12 +123,12 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   }
 
   if (opts::PrintExceptions) {
-    errs() << "[LSDA at 0x" << Twine::utohexstr(getLSDAAddress())
+    outs() << "[LSDA at 0x" << Twine::utohexstr(getLSDAAddress())
            << " for function " << *this << "]:\n";
-    errs() << "LPStart Encoding = " << (unsigned)LPStartEncoding << '\n';
-    errs() << "LPStart = 0x" << Twine::utohexstr(LPStart) << '\n';
-    errs() << "TType Encoding = " << (unsigned)TTypeEncoding << '\n';
-    errs() << "TType End = " << TTypeEnd << '\n';
+    outs() << "LPStart Encoding = " << (unsigned)LPStartEncoding << '\n';
+    outs() << "LPStart = 0x" << Twine::utohexstr(LPStart) << '\n';
+    outs() << "TType Encoding = " << (unsigned)TTypeEncoding << '\n';
+    outs() << "TType End = " << TTypeEnd << '\n';
   }
 
   // Table to store list of indices in type table. Entries are uleb128 values.
@@ -147,9 +149,9 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   const uint8_t *ActionTableStart = CallSiteTableEnd;
 
   if (opts::PrintExceptions) {
-    errs() << "CallSite Encoding = " << (unsigned)CallSiteEncoding << '\n';
-    errs() << "CallSite table length = " << CallSiteTableLength << '\n';
-    errs() << '\n';
+    outs() << "CallSite Encoding = " << (unsigned)CallSiteEncoding << '\n';
+    outs() << "CallSite table length = " << CallSiteTableLength << '\n';
+    outs() << '\n';
   }
 
   HasEHRanges = CallSitePtr < CallSiteTableEnd;
@@ -161,7 +163,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     uintptr_t ActionEntry = readULEB128(CallSitePtr);
 
     if (opts::PrintExceptions) {
-      errs() << "Call Site: [0x" << Twine::utohexstr(RangeBase + Start)
+      outs() << "Call Site: [0x" << Twine::utohexstr(RangeBase + Start)
              << ", 0x" << Twine::utohexstr(RangeBase + Start + Length)
              << "); landing pad: 0x" << Twine::utohexstr(LPStart + LandingPad)
              << "; action entry: 0x" << Twine::utohexstr(ActionEntry) << "\n";
@@ -171,9 +173,11 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     MCSymbol *LPSymbol{nullptr};
     if (LandingPad) {
       if (Instructions.find(LandingPad) == Instructions.end()) {
-        errs() << "BOLT-WARNING: landing pad " << Twine::utohexstr(LandingPad)
-               << " not pointing to an instruction in function "
-               << *this << " - ignoring.\n";
+        if (opts::Verbosity >= 1) {
+          errs() << "BOLT-WARNING: landing pad " << Twine::utohexstr(LandingPad)
+                 << " not pointing to an instruction in function "
+                 << *this << " - ignoring.\n";
+        }
       } else {
         auto Label = Labels.find(LandingPad);
         if (Label != Labels.end()) {
@@ -222,7 +226,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
         }
       };
       if (opts::PrintExceptions)
-        errs() << "    actions: ";
+        outs() << "    actions: ";
       const uint8_t *ActionPtr = ActionTableStart + ActionEntry - 1;
       long long ActionType;
       long long ActionNext;
@@ -232,19 +236,19 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
         auto Self = ActionPtr;
         ActionNext = readSLEB128(ActionPtr);
         if (opts::PrintExceptions)
-          errs() << Sep << "(" << ActionType << ", " << ActionNext << ") ";
+          outs() << Sep << "(" << ActionType << ", " << ActionNext << ") ";
         if (ActionType == 0) {
           if (opts::PrintExceptions)
-            errs() << "cleanup";
+            outs() << "cleanup";
         } else if (ActionType > 0) {
           // It's an index into a type table.
           if (opts::PrintExceptions) {
-            errs() << "catch type ";
-            printType(ActionType, errs());
+            outs() << "catch type ";
+            printType(ActionType, outs());
           }
         } else { // ActionType < 0
           if (opts::PrintExceptions)
-            errs() << "filter exception types ";
+            outs() << "filter exception types ";
           auto TSep = "";
           // ActionType is a negative *byte* offset into *uleb128-encoded* table
           // of indices with base 1.
@@ -253,8 +257,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
           auto TypeIndexTablePtr = TypeIndexTableStart - ActionType - 1;
           while (auto Index = readULEB128(TypeIndexTablePtr)) {
             if (opts::PrintExceptions) {
-              errs() << TSep;
-              printType(Index, errs());
+              outs() << TSep;
+              printType(Index, outs());
               TSep = ", ";
             }
           }
@@ -268,11 +272,11 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
         ActionPtr = Self + ActionNext;
       } while (ActionNext);
       if (opts::PrintExceptions)
-        errs() << '\n';
+        outs() << '\n';
     }
   }
   if (opts::PrintExceptions)
-    errs() << '\n';
+    outs() << '\n';
 
   assert(TypeIndexTableStart + MaxTypeIndexTableOffset <=
          LSDASectionData.data() + LSDASectionData.size() &&
@@ -494,11 +498,13 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
 
   const FDE &CurFDE = *I->second;
   if (Function.getSize() != CurFDE.getAddressRange()) {
-    errs() << "BOLT-WARNING: CFI information size mismatch for function \""
-           << Function << "\""
-           << format(": Function size is %dB, CFI covers "
-                     "%dB\n",
-                     Function.getSize(), CurFDE.getAddressRange());
+    if (opts::Verbosity >= 1) {
+      errs() << "BOLT-WARNING: CFI information size mismatch for function \""
+             << Function << "\""
+             << format(": Function size is %dB, CFI covers "
+                       "%dB\n",
+                       Function.getSize(), CurFDE.getAddressRange());
+    }
     return false;
   }
 
@@ -609,24 +615,34 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
           break;
         case DW_CFA_val_offset_sf:
         case DW_CFA_val_offset:
-          errs() << "BOLT-WARNING: DWARF val_offset() unimplemented\n";
+          if (opts::Verbosity >= 1) {
+            errs() << "BOLT-WARNING: DWARF val_offset() unimplemented\n";
+          }
           return false;
         case DW_CFA_expression:
         case DW_CFA_def_cfa_expression:
         case DW_CFA_val_expression:
-          errs() << "BOLT-WARNING: DWARF CFA expressions unimplemented\n";
+          if (opts::Verbosity >= 1) {
+            errs() << "BOLT-WARNING: DWARF CFA expressions unimplemented\n";
+          }
           return false;
         case DW_CFA_MIPS_advance_loc8:
-          errs() << "BOLT-WARNING: DW_CFA_MIPS_advance_loc unimplemented\n";
+          if (opts::Verbosity >= 1) {
+            errs() << "BOLT-WARNING: DW_CFA_MIPS_advance_loc unimplemented\n";
+          }
           return false;
         case DW_CFA_GNU_window_save:
         case DW_CFA_lo_user:
         case DW_CFA_hi_user:
-          errs() <<
-            "BOLT-WARNING: DW_CFA_GNU_* and DW_CFA_*_user unimplemented\n";
+          if (opts::Verbosity >= 1) {
+            errs() <<
+              "BOLT-WARNING: DW_CFA_GNU_* and DW_CFA_*_user unimplemented\n";
+          }
           return false;
         default:
-          errs() << "BOLT-WARNING: Unrecognized CFI instruction\n";
+          if (opts::Verbosity >= 1) {
+            errs() << "BOLT-WARNING: Unrecognized CFI instruction\n";
+          }
           return false;
         }
 

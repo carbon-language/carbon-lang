@@ -95,17 +95,17 @@ bool BinaryBasicBlock::analyzeBranch(const MCInstrAnalysis &MIA,
 }
 
 void BinaryBasicBlock::dump(BinaryContext& BC) const {
-  if (Label) dbgs() << Label->getName() << ":\n";
-  BC.printInstructions(dbgs(), Instructions.begin(), Instructions.end(), Offset);
-  dbgs() << "preds:";
+  if (Label) outs() << Label->getName() << ":\n";
+  BC.printInstructions(outs(), Instructions.begin(), Instructions.end(), Offset);
+  outs() << "preds:";
   for (auto itr = pred_begin(); itr != pred_end(); ++itr) {
-    dbgs() << " " << (*itr)->getName();
+    outs() << " " << (*itr)->getName();
   }
-  dbgs() << "\nsuccs:";
+  outs() << "\nsuccs:";
   for (auto itr = succ_begin(); itr != succ_end(); ++itr) {
-    dbgs() << " " << (*itr)->getName();
+    outs() << " " << (*itr)->getName();
   }
-  dbgs() << "\n";
+  outs() << "\n";
 }
 
 } // namespace bolt

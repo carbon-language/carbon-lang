@@ -27,6 +27,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Errc.h"
@@ -41,6 +42,10 @@
 using namespace llvm;
 using namespace object;
 using namespace bolt;
+
+namespace opts {
+extern cl::opt<unsigned> Verbosity;
+}
 
 void RewriteInstance::updateDebugInfo() {
   SectionPatchers[".debug_abbrev"] = llvm::make_unique<DebugAbbrevPatcher>();
@@ -123,7 +128,7 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
     return;
   }
 
-  if (DebugRangesOffset == -1U) {
+  if (opts::Verbosity >= 2 && DebugRangesOffset == -1U) {
     errs() << "BOLT-WARNING: using invalid DW_AT_range for DIE at offset 0x"
            << Twine::utohexstr(DIE->getOffset()) << '\n';
   }
@@ -137,9 +142,11 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
 
   const auto *AbbreviationDecl = DIE->getAbbreviationDeclarationPtr();
   if (!AbbreviationDecl) {
-    errs() << "BOLT-WARNING: object's DIE doesn't have an abbreviation: "
-           << "skipping update. DIE at offset 0x"
-           << Twine::utohexstr(DIE->getOffset()) << '\n';
+    if (opts::Verbosity >= 1) {
+      errs() << "BOLT-WARNING: object's DIE doesn't have an abbreviation: "
+             << "skipping update. DIE at offset 0x"
+             << Twine::utohexstr(DIE->getOffset()) << '\n';
+    }
     return;
   }
 
@@ -176,14 +183,19 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
           (HighPCFormValue.getForm() != dwarf::DW_FORM_addr &&
            HighPCFormValue.getForm() != dwarf::DW_FORM_data8 &&
            HighPCFormValue.getForm() != dwarf::DW_FORM_data4)) {
-        errs() << "BOLT-WARNING: unexpected form value. Cannot update DIE "
-                  "at offset 0x" << Twine::utohexstr(DIE->getOffset()) << '\n';
+        if (opts::Verbosity >= 1) {
+          errs() << "BOLT-WARNING: unexpected form value. Cannot update DIE "
+                 << "at offset 0x" << Twine::utohexstr(DIE->getOffset())
+                 << "\n";
+        }
         return;
       }
       if (LowPCOffset == -1U || (LowPCOffset + 8 != HighPCOffset)) {
-        errs() << "BOLT-WARNING: high_pc expected immediately after low_pc. "
-                  "Cannot update DIE at offset 0x"
-               << Twine::utohexstr(DIE->getOffset()) << '\n';
+        if (opts::Verbosity >= 1) {
+          errs() << "BOLT-WARNING: high_pc expected immediately after low_pc. "
+                 << "Cannot update DIE at offset 0x"
+                 << Twine::utohexstr(DIE->getOffset()) << '\n';
+        }
         return;
       }
 
@@ -213,8 +225,10 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
       ProducerString.back() = '\0';
       DebugInfoPatcher->addBinaryPatch(LowPCOffset + 4, ProducerString);
     } else {
-      errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"
-             << Twine::utohexstr(DIE->getOffset()) << '\n';
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"
+               << Twine::utohexstr(DIE->getOffset()) << '\n';
+      }
     }
   }
 }
@@ -271,7 +285,7 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
       OutputLineTable.addLineEntry(MCLineEntry{nullptr, Loc},
                                    FunctionSection);
     } else {
-      DEBUG(errs() << "BOLT-DEBUG: Function " << Function
+      DEBUG(dbgs() << "BOLT-DEBUG: Function " << Function
                    << " has no associated line number information.\n");
     }
   }
