@@ -1448,9 +1448,6 @@ def RFEBB : XLForm_S<19, 146, (outs), (ins u1imm:$imm), "rfebb $imm",
 def DCBA   : DCB_Form<758, 0, (outs), (ins memrr:$dst), "dcba $dst",
                       IIC_LdStDCBF, [(int_ppc_dcba xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
-def DCBF   : DCB_Form<86, 0, (outs), (ins memrr:$dst), "dcbf $dst",
-                      IIC_LdStDCBF, [(int_ppc_dcbf xoaddr:$dst)]>,
-                      PPC970_DGroup_Single;
 def DCBI   : DCB_Form<470, 0, (outs), (ins memrr:$dst), "dcbi $dst",
                       IIC_LdStDCBF, [(int_ppc_dcbi xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
@@ -1462,6 +1459,10 @@ def DCBZ   : DCB_Form<1014, 0, (outs), (ins memrr:$dst), "dcbz $dst",
                       PPC970_DGroup_Single;
 def DCBZL  : DCB_Form<1014, 1, (outs), (ins memrr:$dst), "dcbzl $dst",
                       IIC_LdStDCBF, [(int_ppc_dcbzl xoaddr:$dst)]>,
+                      PPC970_DGroup_Single;
+
+def DCBF   : DCB_Form_hint<86, (outs), (ins u5imm:$TH, memrr:$dst),
+                      "dcbf $dst, $TH", IIC_LdStDCBF, []>,
                       PPC970_DGroup_Single;
 
 let hasSideEffects = 0, mayLoad = 1, mayStore = 1 in {
@@ -1480,6 +1481,8 @@ def : Pat<(int_ppc_dcbt xoaddr:$dst),
           (DCBT 0, xoaddr:$dst)>;
 def : Pat<(int_ppc_dcbtst xoaddr:$dst),
           (DCBTST 0, xoaddr:$dst)>;
+def : Pat<(int_ppc_dcbf xoaddr:$dst),
+          (DCBF 0, xoaddr:$dst)>;
 
 def : Pat<(prefetch xoaddr:$dst, (i32 0), imm, (i32 1)),
           (DCBT 0, xoaddr:$dst)>;   // data prefetch for loads
@@ -3819,6 +3822,10 @@ def DCBTT  : PPCAsmPseudo<"dcbtt $dst", (ins memrr:$dst)>;
 def DCBTSTCT : PPCAsmPseudo<"dcbtstct $dst, $TH", (ins memrr:$dst, u5imm:$TH)>;
 def DCBTSTDS : PPCAsmPseudo<"dcbtstds $dst, $TH", (ins memrr:$dst, u5imm:$TH)>;
 def DCBTSTT  : PPCAsmPseudo<"dcbtstt $dst", (ins memrr:$dst)>;
+
+def DCBFx  : PPCAsmPseudo<"dcbf $dst", (ins memrr:$dst)>;
+def DCBFL  : PPCAsmPseudo<"dcbfl $dst", (ins memrr:$dst)>;
+def DCBFLP : PPCAsmPseudo<"dcbflp $dst", (ins memrr:$dst)>;
 
 def : InstAlias<"crset $bx", (CREQV crbitrc:$bx, crbitrc:$bx, crbitrc:$bx)>;
 def : InstAlias<"crclr $bx", (CRXOR crbitrc:$bx, crbitrc:$bx, crbitrc:$bx)>;
