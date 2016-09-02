@@ -127,7 +127,7 @@ public:
   tooling::Replacements
   analyze(TokenAnnotator &Annotator,
           SmallVectorImpl<AnnotatedLine *> &AnnotatedLines,
-          FormatTokenLexer &Tokens, tooling::Replacements &) override {
+          FormatTokenLexer &Tokens) override {
     tooling::Replacements Result;
     AffectedRangeMgr.computeAffectedLines(AnnotatedLines.begin(),
                                           AnnotatedLines.end());
@@ -282,7 +282,6 @@ private:
                         SmallVectorImpl<AnnotatedLine *> &AnnotatedLines) {
     SmallVector<JsModuleReference, 16> References;
     SourceLocation Start;
-    bool FoundLines = false;
     AnnotatedLine *FirstNonImportLine = nullptr;
     bool AnyImportAffected = false;
     for (auto Line : AnnotatedLines) {
@@ -296,7 +295,6 @@ private:
         Start = Line->First->Tok.getLocation();
       if (!Current)
         continue; // Only comments on this line.
-      FoundLines = true;
       JsModuleReference Reference;
       Reference.Range.setBegin(Start);
       if (!parseModuleReference(Keywords, Reference)) {
