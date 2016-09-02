@@ -208,12 +208,13 @@ entry:
 
 ; CHECK-LABEL: test_d2:
 ; CHECK: addis [[REGSTRUCT:[0-9]+]], 2, d2v@toc@ha
+; CHECK: addi [[BASEV:[0-9]+]], [[REGSTRUCT]], d2v@toc@l
 ; CHECK-DAG: ld [[REG0_0:[0-9]+]], d2v@toc@l([[REGSTRUCT]])
-; CHECK-DAG: ld [[REG1_0:[0-9]+]], d2v@toc@l+8([[REGSTRUCT]])
+; CHECK-DAG: ld [[REG1_0:[0-9]+]], 8([[BASEV]])
 ; CHECK-DAG: addi [[REG0_1:[0-9]+]], [[REG0_0]], 1
 ; CHECK-DAG: addi [[REG1_1:[0-9]+]], [[REG1_0]], 2
 ; CHECK-DAG: std [[REG0_1]], d2v@toc@l([[REGSTRUCT]])
-; CHECK-DAG: std [[REG1_1]], d2v@toc@l+8([[REGSTRUCT]])
+; CHECK-DAG: std [[REG1_1]], 8([[BASEV]])
 
 define void @test_d2() nounwind {
 entry:
@@ -229,7 +230,8 @@ entry:
 ; register 3 is the return value, so it should be chosen
 ; CHECK-LABEL: test_singleuse:
 ; CHECK: addis 3, 2, d2v@toc@ha
-; CHECK: ld 3, d2v@toc@l+8(3)
+; CHECK: addi 3, 3, d2v@toc@l
+; CHECK: ld 3, 8(3)
 define i64 @test_singleuse() nounwind {
 entry:
   %0 = load i64, i64* getelementptr inbounds (%struct.d2, %struct.d2* @d2v, i32 0, i32 1), align 8
