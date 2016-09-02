@@ -414,8 +414,8 @@ the boolean conversion operator):
 
   // Safe to continue: Err was checked.
 
-In contrast, the following code will always cause an abort, regardless of the
-return value of ``foo``:
+In contrast, the following code will always cause an abort, even if ``canFail``
+returns a success value:
 
 .. code-block:: c++
 
