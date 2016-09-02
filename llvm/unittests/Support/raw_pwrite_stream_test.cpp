@@ -44,7 +44,7 @@ TEST(raw_pwrite_ostreamTest, TestSVector) {
 #endif
 }
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define setenv(name, var, ignore) _putenv_s(name, var)
 #endif
 
