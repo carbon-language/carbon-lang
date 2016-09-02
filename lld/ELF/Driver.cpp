@@ -356,17 +356,11 @@ static DiscardPolicy getDiscardOption(opt::InputArgList &Args) {
       Args.getLastArg(OPT_discard_all, OPT_discard_locals, OPT_discard_none);
   if (!Arg)
     return DiscardPolicy::Default;
-
-  switch (Arg->getOption().getID()) {
-  case OPT_discard_all:
+  if (Arg->getOption().getID() == OPT_discard_all)
     return DiscardPolicy::All;
-  case OPT_discard_locals:
+  if (Arg->getOption().getID() == OPT_discard_locals)
     return DiscardPolicy::Locals;
-  case OPT_discard_none:
-    return DiscardPolicy::None;
-  default:
-    llvm_unreachable("unknown discard option");
-  }
+  return DiscardPolicy::None;
 }
 
 static StripPolicy getStripOption(opt::InputArgList &Args) {
