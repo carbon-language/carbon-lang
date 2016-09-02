@@ -4141,7 +4141,7 @@ __kmp_aux_affinity_initialize(void)
         KMP_ASSERT2(0, "Unexpected affinity setting");
     }
 
-    __kmp_free(osId2Mask);
+    KMP_CPU_FREE_ARRAY(osId2Mask, maxIndex+1);
     machine_hierarchy.init(address2os, __kmp_avail_proc);
 }
 #undef KMP_EXIT_AFF_NONE
