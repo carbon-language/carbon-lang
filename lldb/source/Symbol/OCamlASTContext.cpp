@@ -128,8 +128,7 @@ namespace
 
 OCamlASTContext::OCamlASTContext()
     : TypeSystem(eKindOCaml),
-      m_pointer_byte_size(0),
-      m_int_byte_size(0)
+      m_pointer_byte_size(0)
 {
 }
 
