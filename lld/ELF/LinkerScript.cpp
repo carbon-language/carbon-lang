@@ -1232,6 +1232,10 @@ uint64_t static getConstant(StringRef S) {
   return 0;
 }
 
+// Parses Tok as an integer. Returns true if successful.
+// It recognizes hexadecimal (prefixed with "0x" or suffixed with "H")
+// and decimal numbers. Decimal numbers may have "K" (kilo) or
+// "M" (mega) prefixes.
 static bool readInteger(StringRef Tok, uint64_t &Result) {
   if (Tok.startswith_lower("0x"))
     return !Tok.substr(2).getAsInteger(16, Result);
