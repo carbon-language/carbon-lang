@@ -328,10 +328,10 @@ static UnresolvedPolicy getUnresolvedSymbolOption(opt::InputArgList &Args) {
     if (S == "ignore-all" || S == "ignore-in-object-files")
       return UnresolvedPolicy::Ignore;
     if (S == "ignore-in-shared-libs" || S == "report-all")
-      return UnresolvedPolicy::Error;
+      return UnresolvedPolicy::ReportError;
     error("unknown --unresolved-symbols value: " + S);
   }
-  return UnresolvedPolicy::Error;
+  return UnresolvedPolicy::ReportError;
 }
 
 static bool isOutputFormatBinary(opt::InputArgList &Args) {
