@@ -870,7 +870,8 @@ void ScriptParser::readPhdrs() {
 
 void ScriptParser::readSearchDir() {
   expect("(");
-  Config->SearchPaths.push_back(next());
+  if (!Config->Nostdlib)
+    Config->SearchPaths.push_back(next());
   expect(")");
 }
 

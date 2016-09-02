@@ -98,6 +98,7 @@ struct Configuration {
   bool Mips64EL = false;
   bool NoGnuUnique;
   bool NoUndefinedVersion;
+  bool Nostdlib;
   bool OFormatBinary;
   bool Pic;
   bool Pie;
