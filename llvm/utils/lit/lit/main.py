@@ -155,7 +155,8 @@ def main(builtinParameters = {}):
     try:
         main_with_tmp(builtinParameters)
     finally:
-        shutil.rmtree(lit_tmp)
+        if lit_tmp:
+            shutil.rmtree(lit_tmp)
 
 def main_with_tmp(builtinParameters):
     global options
