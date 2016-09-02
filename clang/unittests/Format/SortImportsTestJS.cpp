@@ -70,6 +70,26 @@ TEST_F(SortImportsTestJS, BasicSorting) {
              "let x = 1;");
 }
 
+TEST_F(SortImportsTestJS, DefaultBinding) {
+  verifySort("import A from 'a';\n"
+             "import B from 'b';\n"
+             "\n"
+             "let x = 1;",
+             "import B from 'b';\n"
+             "import A from 'a';\n"
+             "let x = 1;");
+}
+
+TEST_F(SortImportsTestJS, DefaultAndNamedBinding) {
+  verifySort("import A, {a} from 'a';\n"
+             "import B, {b} from 'b';\n"
+             "\n"
+             "let x = 1;",
+             "import B, {b} from 'b';\n"
+             "import A, {a} from 'a';\n"
+             "let x = 1;");
+}
+
 TEST_F(SortImportsTestJS, WrappedImportStatements) {
   verifySort("import {sym1, sym2} from 'a';\n"
              "import {sym} from 'b';\n"

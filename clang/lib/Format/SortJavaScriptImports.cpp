@@ -346,7 +346,6 @@ private:
 
     if (!parseModuleBindings(Keywords, Reference))
       return false;
-    nextToken();
 
     if (Current->is(Keywords.kw_from)) {
       // imports have a 'from' clause, exports might not.
@@ -389,19 +388,28 @@ private:
     if (Current->isNot(tok::identifier))
       return false;
     Reference.Prefix = Current->TokenText;
+    nextToken();
     return true;
   }
 
   bool parseNamedBindings(const AdditionalKeywords &Keywords,
                           JsModuleReference &Reference) {
+    if (Current->is(tok::identifier)) {
+      nextToken();
+      if (Current->is(Keywords.kw_from))
+        return true;
+      if (Current->isNot(tok::comma))
+        return false;
+      nextToken(); // eat comma.
+    }
     if (Current->isNot(tok::l_brace))
       return false;
 
     // {sym as alias, sym2 as ...} from '...';
-    nextToken();
-    while (true) {
+    while (Current->isNot(tok::r_brace)) {
+      nextToken();
       if (Current->is(tok::r_brace))
-        return true;
+        break;
       if (Current->isNot(tok::identifier))
         return false;
 
@@ -422,12 +430,11 @@ private:
       Symbol.Range.setEnd(Current->Tok.getLocation());
       Reference.Symbols.push_back(Symbol);
 
-      if (Current->is(tok::r_brace))
-        return true;
-      if (Current->isNot(tok::comma))
+      if (!Current->isOneOf(tok::r_brace, tok::comma))
         return false;
-      nextToken();
     }
+    nextToken(); // consume r_brace
+    return true;
   }
 };
 
