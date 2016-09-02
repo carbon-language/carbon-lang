@@ -408,13 +408,16 @@ bool ModuleManager::lookupModuleFile(StringRef FileName,
                                      off_t ExpectedSize,
                                      time_t ExpectedModTime,
                                      const FileEntry *&File) {
+  if (FileName == "-") {
+    File = nullptr;
+    return false;
+  }
+
   // Open the file immediately to ensure there is no race between stat'ing and
   // opening the file.
   File = FileMgr.getFile(FileName, /*openFile=*/true, /*cacheFailure=*/false);
-
-  if (!File && FileName != "-") {
+  if (!File)
     return false;
-  }
 
   if ((ExpectedSize && ExpectedSize != File->getSize()) ||
       (ExpectedModTime && ExpectedModTime != File->getModificationTime()))
