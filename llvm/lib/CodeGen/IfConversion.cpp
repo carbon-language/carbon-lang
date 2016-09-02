@@ -1982,7 +1982,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   if (!IfConvertDiamondCommon(
       BBI, TrueBBI, FalseBBI,
       NumDups1, NumDups2,
-      TrueBBI.ClobbersPred, FalseBBI.ClobbersPred,
+      TClobbersPred, FClobbersPred,
       /* RemoveBranch */ TrueBBI.IsBrAnalyzable,
       /* MergeAddEdges */ TailBB == nullptr))
     return false;
