@@ -488,6 +488,8 @@ TEST_F(FileSystemTest, Unique) {
      fs::createUniqueDirectory("dir2", Dir2));
   ASSERT_NO_ERROR(fs::getUniqueID(Dir2.c_str(), F2));
   ASSERT_NE(F1, F2);
+  ASSERT_NO_ERROR(fs::remove(Dir1));
+  ASSERT_NO_ERROR(fs::remove(Dir2));
   ASSERT_NO_ERROR(fs::remove(TempPath2));
   ASSERT_NO_ERROR(fs::remove(TempPath));
 }
