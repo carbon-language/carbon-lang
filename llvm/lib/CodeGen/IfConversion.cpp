@@ -1753,10 +1753,11 @@ bool IfConverter::IfConvertDiamondCommon(
   bool DoSwap = false;
   if (TClobbersPred && !FClobbersPred)
     DoSwap = true;
-  else if (TClobbersPred == FClobbersPred) {
+  else if (!TClobbersPred && !FClobbersPred) {
     if (TrueBBI.NonPredSize > FalseBBI.NonPredSize)
       DoSwap = true;
-  }
+  } else if (TClobbersPred && FClobbersPred)
+    llvm_unreachable("Predicate info cannot be clobbered by both sides.");
   if (DoSwap) {
     std::swap(BBI1, BBI2);
     std::swap(Cond1, Cond2);
