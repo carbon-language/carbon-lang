@@ -31,9 +31,6 @@ public:
   virtual ~Device();
 
   /// Creates a kernel object for this device.
-  ///
-  /// See \ref CompilerGeneratedKernelExample "Kernel.h" for an example of how
-  /// this method is used.
   template <typename KernelT>
   Expected<typename std::enable_if<std::is_base_of<KernelBase, KernelT>::value,
                                    KernelT>::type>
