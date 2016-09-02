@@ -133,9 +133,5 @@ int main() {
   for (size_t I = 0; I < ArraySize; ++I) {
     assert(HostX[I] == ExpectedX[I]);
   }
-
-  // Free device memory.
-  se::dieIfError(Device->freeDeviceMemory(X));
-  se::dieIfError(Device->freeDeviceMemory(Y));
   /// [Example saxpy host main]
 }
