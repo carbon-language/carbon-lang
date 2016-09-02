@@ -161,19 +161,19 @@ public:
   }
 
   template <typename T>
-  Error synchronousCopyD2H(GlobalDeviceMemory<T> Src,
+  Error synchronousCopyD2H(const GlobalDeviceMemory<T> &Src,
                            llvm::MutableArrayRef<T> Dst, size_t ElementCount) {
     return synchronousCopyD2H(Src.asSlice(), Dst, ElementCount);
   }
 
   template <typename T>
-  Error synchronousCopyD2H(GlobalDeviceMemory<T> Src,
+  Error synchronousCopyD2H(const GlobalDeviceMemory<T> &Src,
                            llvm::MutableArrayRef<T> Dst) {
     return synchronousCopyD2H(Src.asSlice(), Dst);
   }
 
   template <typename T>
-  Error synchronousCopyD2H(GlobalDeviceMemory<T> Src, T *Dst,
+  Error synchronousCopyD2H(const GlobalDeviceMemory<T> &Src, T *Dst,
                            size_t ElementCount) {
     return synchronousCopyD2H(Src.asSlice(), Dst, ElementCount);
   }
@@ -216,18 +216,18 @@ public:
   }
 
   template <typename T>
-  Error synchronousCopyH2D(llvm::ArrayRef<T> Src, GlobalDeviceMemory<T> Dst,
+  Error synchronousCopyH2D(llvm::ArrayRef<T> Src, GlobalDeviceMemory<T> &Dst,
                            size_t ElementCount) {
     return synchronousCopyH2D(Src, Dst.asSlice(), ElementCount);
   }
 
   template <typename T>
-  Error synchronousCopyH2D(llvm::ArrayRef<T> Src, GlobalDeviceMemory<T> Dst) {
+  Error synchronousCopyH2D(llvm::ArrayRef<T> Src, GlobalDeviceMemory<T> &Dst) {
     return synchronousCopyH2D(Src, Dst.asSlice());
   }
 
   template <typename T>
-  Error synchronousCopyH2D(T *Src, GlobalDeviceMemory<T> Dst,
+  Error synchronousCopyH2D(T *Src, GlobalDeviceMemory<T> &Dst,
                            size_t ElementCount) {
     return synchronousCopyH2D(Src, Dst.asSlice(), ElementCount);
   }
@@ -265,39 +265,39 @@ public:
   }
 
   template <typename T>
-  Error synchronousCopyD2D(GlobalDeviceMemory<T> Src,
+  Error synchronousCopyD2D(const GlobalDeviceMemory<T> &Src,
                            GlobalDeviceMemorySlice<T> Dst,
                            size_t ElementCount) {
     return synchronousCopyD2D(Src.asSlice(), Dst, ElementCount);
   }
 
   template <typename T>
-  Error synchronousCopyD2D(GlobalDeviceMemory<T> Src,
+  Error synchronousCopyD2D(const GlobalDeviceMemory<T> &Src,
                            GlobalDeviceMemorySlice<T> Dst) {
     return synchronousCopyD2D(Src.asSlice(), Dst);
   }
 
   template <typename T>
   Error synchronousCopyD2D(GlobalDeviceMemorySlice<T> Src,
-                           GlobalDeviceMemory<T> Dst, size_t ElementCount) {
+                           GlobalDeviceMemory<T> &Dst, size_t ElementCount) {
     return synchronousCopyD2D(Src, Dst.asSlice(), ElementCount);
   }
 
   template <typename T>
   Error synchronousCopyD2D(GlobalDeviceMemorySlice<T> Src,
-                           GlobalDeviceMemory<T> Dst) {
+                           GlobalDeviceMemory<T> &Dst) {
     return synchronousCopyD2D(Src, Dst.asSlice());
   }
 
   template <typename T>
-  Error synchronousCopyD2D(GlobalDeviceMemory<T> Src, GlobalDeviceMemory<T> Dst,
-                           size_t ElementCount) {
+  Error synchronousCopyD2D(const GlobalDeviceMemory<T> &Src,
+                           GlobalDeviceMemory<T> &Dst, size_t ElementCount) {
     return synchronousCopyD2D(Src.asSlice(), Dst.asSlice(), ElementCount);
   }
 
   template <typename T>
-  Error synchronousCopyD2D(GlobalDeviceMemory<T> Src,
-                           GlobalDeviceMemory<T> Dst) {
+  Error synchronousCopyD2D(const GlobalDeviceMemory<T> &Src,
+                           GlobalDeviceMemory<T> &Dst) {
     return synchronousCopyD2D(Src.asSlice(), Dst.asSlice());
   }
 
