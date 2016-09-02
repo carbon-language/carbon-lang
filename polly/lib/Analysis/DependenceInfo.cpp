@@ -173,7 +173,7 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
         *Write = isl_union_map_add_map(*Write, accdom);
     }
 
-    if (Level == Dependences::AL_Statement)
+    if (!ReductionBaseValues.empty() && Level == Dependences::AL_Statement)
       *StmtSchedule = isl_union_map_add_map(*StmtSchedule, Stmt.getSchedule());
   }
 
