@@ -594,10 +594,30 @@ define <8 x i64> @addq_broadcast(<8 x i64> %a) nounwind {
 }
 
 define <8 x i64> @orq_broadcast(<8 x i64> %a) nounwind {
-; CHECK-LABEL: orq_broadcast:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vporq {{.*}}(%rip){1to8}, %zmm0, %zmm0
-; CHECK-NEXT:    retq
+; AVX512F-LABEL: orq_broadcast:
+; AVX512F:       ## BB#0:
+; AVX512F-NEXT:    vporq {{.*}}(%rip){1to8}, %zmm0, %zmm0
+; AVX512F-NEXT:    retq
+;
+; AVX512VL-LABEL: orq_broadcast:
+; AVX512VL:       ## BB#0:
+; AVX512VL-NEXT:    vporq {{.*}}(%rip){1to8}, %zmm0, %zmm0
+; AVX512VL-NEXT:    retq
+;
+; AVX512BW-LABEL: orq_broadcast:
+; AVX512BW:       ## BB#0:
+; AVX512BW-NEXT:    vporq {{.*}}(%rip){1to8}, %zmm0, %zmm0
+; AVX512BW-NEXT:    retq
+;
+; AVX512DQ-LABEL: orq_broadcast:
+; AVX512DQ:       ## BB#0:
+; AVX512DQ-NEXT:    vorpd {{.*}}(%rip){1to8}, %zmm0, %zmm0
+; AVX512DQ-NEXT:    retq
+;
+; SKX-LABEL: orq_broadcast:
+; SKX:       ## BB#0:
+; SKX-NEXT:    vorpd {{.*}}(%rip){1to8}, %zmm0, %zmm0
+; SKX-NEXT:    retq
   %b = or <8 x i64> %a, <i64 2, i64 2, i64 2, i64 2, i64 2, i64 2, i64 2, i64 2>
   ret <8 x i64> %b
 }
@@ -634,10 +654,30 @@ entry:
 }
 
 define <8 x i64> @andqbrst(<8 x i64> %p1, i64* %ap) {
-; CHECK-LABEL: andqbrst:
-; CHECK:       ## BB#0: ## %entry
-; CHECK-NEXT:    vpandq (%rdi){1to8}, %zmm0, %zmm0
-; CHECK-NEXT:    retq
+; AVX512F-LABEL: andqbrst:
+; AVX512F:       ## BB#0: ## %entry
+; AVX512F-NEXT:    vpandq (%rdi){1to8}, %zmm0, %zmm0
+; AVX512F-NEXT:    retq
+;
+; AVX512VL-LABEL: andqbrst:
+; AVX512VL:       ## BB#0: ## %entry
+; AVX512VL-NEXT:    vpandq (%rdi){1to8}, %zmm0, %zmm0
+; AVX512VL-NEXT:    retq
+;
+; AVX512BW-LABEL: andqbrst:
+; AVX512BW:       ## BB#0: ## %entry
+; AVX512BW-NEXT:    vpandq (%rdi){1to8}, %zmm0, %zmm0
+; AVX512BW-NEXT:    retq
+;
+; AVX512DQ-LABEL: andqbrst:
+; AVX512DQ:       ## BB#0: ## %entry
+; AVX512DQ-NEXT:    vandpd (%rdi){1to8}, %zmm0, %zmm0
+; AVX512DQ-NEXT:    retq
+;
+; SKX-LABEL: andqbrst:
+; SKX:       ## BB#0: ## %entry
+; SKX-NEXT:    vandpd (%rdi){1to8}, %zmm0, %zmm0
+; SKX-NEXT:    retq
 entry:
   %a = load i64, i64* %ap, align 8
   %b = insertelement <8 x i64> undef, i64 %a, i32 0
