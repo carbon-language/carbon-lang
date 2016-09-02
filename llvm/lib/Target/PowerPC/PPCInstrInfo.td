@@ -3697,6 +3697,9 @@ def SLBMTE : XForm_26<31, 402, (outs), (ins gprc:$RS, gprc:$RB),
 def SLBMFEE : XForm_26<31, 915, (outs gprc:$RT), (ins gprc:$RB),
                        "slbmfee $RT, $RB", IIC_SprSLBMFEE, []>;
 
+def SLBMFEV : XLForm_1_gen<31, 851, (outs gprc:$RT), (ins gprc:$RB),
+                       "slbmfev $RT, $RB", IIC_SprSLBMFEV, []>;
+
 def SLBIA : XForm_0<31, 498, (outs), (ins), "slbia", IIC_SprSLBIA, []>;
 
 def TLBIA : XForm_0<31, 370, (outs), (ins),
@@ -3758,6 +3761,9 @@ def MFDCR : XFXForm_1<31, 323, (outs gprc:$RT), (ins i32imm:$SPR),
                       "mfdcr $RT, $SPR", IIC_SprMFSPR>, Requires<[IsPPC4xx]>;
 def MTDCR : XFXForm_1<31, 451, (outs), (ins gprc:$RT, i32imm:$SPR),
                       "mtdcr $SPR, $RT", IIC_SprMTSPR>, Requires<[IsPPC4xx]>;
+
+def HRFID : XLForm_1_np<19, 274, (outs), (ins), "hrfid", IIC_BrB, []>;
+def NAP   : XLForm_1_np<19, 434, (outs), (ins), "nap", IIC_BrB, []>;
 
 def ATTN : XForm_attn<0, 256, (outs), (ins), "attn", IIC_BrB>;
 
