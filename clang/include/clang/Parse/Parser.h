@@ -2212,6 +2212,7 @@ private:
     if (getLangOpts().MicrosoftExt && Tok.is(tok::l_square))
       ParseMicrosoftAttributes(attrs, endLoc);
   }
+  void ParseMicrosoftUuidAttributeArgs(ParsedAttributes &Attrs);
   void ParseMicrosoftAttributes(ParsedAttributes &attrs,
                                 SourceLocation *endLoc = nullptr);
   void MaybeParseMicrosoftDeclSpecs(ParsedAttributes &Attrs,
