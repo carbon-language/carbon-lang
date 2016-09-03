@@ -820,41 +820,35 @@ _mm_maskz_mul_epu32 (__mmask8 __M, __m128i __X, __m128i __Y)
 }
 
 static __inline__ __m256i __DEFAULT_FN_ATTRS
-_mm256_maskz_mullo_epi32 (__mmask8 __M, __m256i __A, __m256i __B)
+_mm256_maskz_mullo_epi32(__mmask8 __M, __m256i __A, __m256i __B)
 {
-  return (__m256i) __builtin_ia32_pmulld256_mask ((__v8si) __A,
-              (__v8si) __B,
-              (__v8si)
-              _mm256_setzero_si256 (),
-              __M);
+  return (__m256i)__builtin_ia32_selectd_256((__mmask8)__M,
+                                             (__v8si)_mm256_mullo_epi32(__A, __B),
+                                             (__v8si)_mm256_setzero_si256());
 }
 
 static __inline__ __m256i __DEFAULT_FN_ATTRS
-_mm256_mask_mullo_epi32 (__m256i __W, __mmask8 __M, __m256i __A,
-       __m256i __B)
+_mm256_mask_mullo_epi32(__m256i __W, __mmask8 __M, __m256i __A, __m256i __B)
 {
-  return (__m256i) __builtin_ia32_pmulld256_mask ((__v8si) __A,
-              (__v8si) __B,
-              (__v8si) __W, __M);
+  return (__m256i)__builtin_ia32_selectd_256((__mmask8)__M,
+                                             (__v8si)_mm256_mullo_epi32(__A, __B),
+                                             (__v8si)__W);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
-_mm_maskz_mullo_epi32 (__mmask8 __M, __m128i __A, __m128i __B)
+_mm_maskz_mullo_epi32(__mmask8 __M, __m128i __A, __m128i __B)
 {
-  return (__m128i) __builtin_ia32_pmulld128_mask ((__v4si) __A,
-              (__v4si) __B,
-              (__v4si)
-              _mm_setzero_si128 (),
-              __M);
+  return (__m128i)__builtin_ia32_selectd_128((__mmask8)__M,
+                                             (__v4si)_mm_mullo_epi32(__A, __B),
+                                             (__v4si)_mm_setzero_si128());
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
-_mm_mask_mullo_epi32 (__m128i __W, __mmask16 __M, __m128i __A,
-          __m128i __B)
+_mm_mask_mullo_epi32(__m128i __W, __mmask8 __M, __m128i __A, __m128i __B)
 {
-  return (__m128i) __builtin_ia32_pmulld128_mask ((__v4si) __A,
-              (__v4si) __B,
-              (__v4si) __W, __M);
+  return (__m128i)__builtin_ia32_selectd_128((__mmask8)__M,
+                                             (__v4si)_mm_mullo_epi32(__A, __B),
+                                             (__v4si)__W);
 }
 
 static __inline__ __m256i __DEFAULT_FN_ATTRS

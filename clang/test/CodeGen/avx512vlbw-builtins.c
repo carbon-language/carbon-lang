@@ -848,25 +848,29 @@ __m128i test_mm_maskz_sub_epi16 (__mmask8 __U, __m128i __A, __m128i __B) {
 
 __m256i test_mm256_mask_mullo_epi16 (__m256i __W, __mmask16 __U, __m256i __A, __m256i __B) {
   //CHECK-LABEL: @test_mm256_mask_mullo_epi16
-  //CHECK: @llvm.x86.avx512.mask.pmull.w.256
+  //CHECK: mul <16 x i16> %{{.*}}, %{{.*}}
+  //CHECK: select <16 x i1> %{{.*}}, <16 x i16> %{{.*}}, <16 x i16> %{{.*}}
   return _mm256_mask_mullo_epi16(__W, __U , __A, __B);
 }
 
 __m256i test_mm256_maskz_mullo_epi16 (__mmask16 __U, __m256i __A, __m256i __B) {
   //CHECK-LABEL: @test_mm256_maskz_mullo_epi16
-  //CHECK: @llvm.x86.avx512.mask.pmull.w.256
+  //CHECK: mul <16 x i16> %{{.*}}, %{{.*}}
+  //CHECK: select <16 x i1> %{{.*}}, <16 x i16> %{{.*}}, <16 x i16> %{{.*}}
   return _mm256_maskz_mullo_epi16(__U , __A, __B);
 }
 
 __m128i test_mm_mask_mullo_epi16 (__m128i __W, __mmask8 __U, __m128i __A, __m128i __B) {
   //CHECK-LABEL: @test_mm_mask_mullo_epi16
-  //CHECK: @llvm.x86.avx512.mask.pmull.w.128
+  //CHECK: mul <8 x i16> %{{.*}}, %{{.*}}
+  //CHECK: select <8 x i1> %{{.*}}, <8 x i16> %{{.*}}, <8 x i16> %{{.*}}
   return _mm_mask_mullo_epi16(__W, __U , __A, __B);
 }
 
 __m128i test_mm_maskz_mullo_epi16 (__mmask8 __U, __m128i __A, __m128i __B) {
   //CHECK-LABEL: @test_mm_maskz_mullo_epi16
-  //CHECK: @llvm.x86.avx512.mask.pmull.w.128
+  //CHECK: mul <8 x i16> %{{.*}}, %{{.*}}
+  //CHECK: select <8 x i1> %{{.*}}, <8 x i16> %{{.*}}, <8 x i16> %{{.*}}
   return _mm_maskz_mullo_epi16(__U , __A, __B);
 }
 

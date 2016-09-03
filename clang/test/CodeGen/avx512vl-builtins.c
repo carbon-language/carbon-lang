@@ -781,27 +781,31 @@ __m128i test_mm_maskz_mul_epu32 (__mmask8 __M, __m128i __X, __m128i __Y) {
 
 __m128i test_mm_maskz_mullo_epi32 (__mmask8 __M, __m128i __A, __m128i __B) {
   //CHECK-LABEL: @test_mm_maskz_mullo_epi32
-  //CHECK: @llvm.x86.avx512.mask.pmull.d.128
+  //CHECK: mul <4 x i32> %{{.*}}, %{{.*}}
+  //CHECK: select <4 x i1> %{{.*}}, <4 x i32> %{{.*}}, <4 x i32> %{{.*}}
   return _mm_maskz_mullo_epi32(__M, __A, __B);
 }
 
 __m128i test_mm_mask_mullo_epi32 (__m128i __W, __mmask8 __M, __m128i __A,
           __m128i __B) {
   //CHECK-LABEL: @test_mm_mask_mullo_epi32
-  //CHECK: @llvm.x86.avx512.mask.pmull.d.128
+  //CHECK: mul <4 x i32> %{{.*}}, %{{.*}}
+  //CHECK: select <4 x i1> %{{.*}}, <4 x i32> %{{.*}}, <4 x i32> %{{.*}}
   return _mm_mask_mullo_epi32(__W, __M, __A, __B);
 }
 
 __m256i test_mm256_maskz_mullo_epi32 (__mmask8 __M, __m256i __A, __m256i __B) {
   //CHECK-LABEL: @test_mm256_maskz_mullo_epi32
-  //CHECK: @llvm.x86.avx512.mask.pmull.d.256
+  //CHECK: mul <8 x i32> %{{.*}}, %{{.*}}
+  //CHECK: select <8 x i1> %{{.*}}, <8 x i32> %{{.*}}, <8 x i32> %{{.*}}
   return _mm256_maskz_mullo_epi32(__M, __A, __B);
 }
 
 __m256i test_mm256_mask_mullo_epi32 (__m256i __W, __mmask8 __M, __m256i __A,
        __m256i __B) {
   //CHECK-LABEL: @test_mm256_mask_mullo_epi32
-  //CHECK: @llvm.x86.avx512.mask.pmull.d.256
+  //CHECK: mul <8 x i32> %{{.*}}, %{{.*}}
+  //CHECK: select <8 x i1> %{{.*}}, <8 x i32> %{{.*}}, <8 x i32> %{{.*}}
   return _mm256_mask_mullo_epi32(__W, __M, __A, __B);
 }
 
