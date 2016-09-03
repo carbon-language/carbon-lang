@@ -1739,7 +1739,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       TParams =
         MultiTemplateParamsArg(&(*TemplateParams)[0], TemplateParams->size());
 
-    handleDeclspecAlignBeforeClassKey(attrs, DS, TUK);
+    stripTypeAttributesOffDeclSpec(attrs, DS, TUK);
 
     // Declaration or definition of a class type
     TagOrTempResult = Actions.ActOnTag(getCurScope(), TagType, TUK, StartLoc,
