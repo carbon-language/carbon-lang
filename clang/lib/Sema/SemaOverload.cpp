@@ -1790,10 +1790,10 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
                                          /*Diagnose=*/false,
                                          /*DiagnoseCFAudited=*/false,
                                          /*ConvertRHS=*/false);
-  ImplicitConversionKind ImplicitConv;
+  ImplicitConversionKind SecondConv;
   switch (Conv) {
   case Sema::Compatible:
-    ImplicitConv = ICK_C_Only_Conversion;
+    SecondConv = ICK_C_Only_Conversion;
     break;
   // For our purposes, discarding qualifiers is just as bad as using an
   // incompatible pointer. Note that an IncompatiblePointer conversion can drop
@@ -1801,18 +1801,24 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
   case Sema::CompatiblePointerDiscardsQualifiers:
   case Sema::IncompatiblePointer:
   case Sema::IncompatiblePointerSign:
-    ImplicitConv = ICK_Incompatible_Pointer_Conversion;
+    SecondConv = ICK_Incompatible_Pointer_Conversion;
     break;
   default:
     return false;
   }
 
-  SCS.setAllToTypes(ToType);
-  // We need to set all three because we want this conversion to rank terribly,
-  // and we don't know what conversions it may overlap with.
-  SCS.First = ImplicitConv;
-  SCS.Second = ImplicitConv;
-  SCS.Third = ImplicitConv;
+  // First can only be an lvalue conversion, so we pretend that this was the
+  // second conversion. First should already be valid from earlier in the
+  // function.
+  SCS.Second = SecondConv;
+  SCS.setToType(1, ToType);
+
+  // Third is Identity, because Second should rank us worse than any other
+  // conversion. This could also be ICK_Qualification, but it's simpler to just
+  // lump everything in with the second conversion, and we don't gain anything
+  // from making this ICK_Qualification.
+  SCS.Third = ICK_Identity;
+  SCS.setToType(2, ToType);
   return true;
 }
 
