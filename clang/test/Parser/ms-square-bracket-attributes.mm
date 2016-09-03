@@ -41,6 +41,8 @@ namespace {
 [uuid("{000000A0-0000-0000-C000-000000000049}", "1")] struct S {};
 // expected-error@+1 {{expected '('}}
 [uuid{"000000A0-0000-0000-C000-000000000049"}] struct T {};
+// expected-error@+1 {{expected ')'}} expected-note@+1 {{to match this '('}}
+[uuid("000000A0-0000-0000-C000-000000000049"}] struct U {};
 
 
 // In addition to uuids in string literals, cl also allows uuids that are not
