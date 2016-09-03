@@ -308,6 +308,15 @@ public:
     return Successors[Condition == true ? 0 : 1];
   }
 
+  /// Find the fallthrough successor for a block, or nullptr if there is
+  /// none.
+  const BinaryBasicBlock* getFallthrough() const {
+    if (succ_size() == 2)
+      return getConditionalSuccessor(false);
+    else
+      return getSuccessor();
+  }
+
   const BinaryBranchInfo &getBranchInfo(bool Condition) const {
     assert(BranchInfo.size() == 2 &&
            "could only be called for blocks with 2 successors");
@@ -324,6 +333,10 @@ public:
   /// basic block to the end of this basic block.
   void addBranchInstruction(const BinaryBasicBlock *Successor);
 
+  /// Add an instruction with tail call control transfer to \p Target
+  /// to the end of this basic block.
+  void addTailCallInstruction(const MCSymbol *Target);
+
   /// Get landing pad with given label. Returns nullptr if no such
   /// landing pad is found.
   BinaryBasicBlock *getLandingPad(const MCSymbol *Label) const;
@@ -332,8 +345,6 @@ public:
   StringRef getName() const {
     return Label->getName();
   }
-
-  MCInst *findFirstNonPseudoInstruction();
 
   /// Add instruction at the end of this basic block.
   /// Returns the index of the instruction in the Instructions vector of the BB.
@@ -371,6 +382,14 @@ public:
   uint32_t getNumNonPseudos() const {
     return size() - getNumPseudos();
   }
+
+  /// Return a pointer to the first non-pseudo instruction in this basic
+  /// block.  Returns nullptr if none exists.
+  MCInst *findFirstNonPseudoInstruction();
+
+  /// Return a pointer to the last non-pseudo instruction in this basic
+  /// block.  Returns nullptr if none exists.
+  MCInst *findLastNonPseudoInstruction();
 
   /// Set minimum alignment for the basic block.
   void setAlignment(uint64_t Align) {
@@ -419,6 +438,13 @@ public:
     }
   }
 
+  /// Replace Succ with NewSucc.  This routine is helpful for preserving
+  /// the order of conditional successors when editing the CFG.
+  void replaceSuccessor(BinaryBasicBlock *Succ,
+                        BinaryBasicBlock *NewSucc,
+                        uint64_t Count = 0,
+                        uint64_t MispredictedCount = 0);
+
   /// Adds block to landing pad list.
   void addLandingPad(BinaryBasicBlock *LPBlock);
 
@@ -432,6 +458,12 @@ public:
     while (Begin != End) {
       removeSuccessor(*Begin++);
     }
+  }
+
+  /// Test if BB is a successor of this block.
+  bool isSuccessor(const BinaryBasicBlock *BB) const {
+    auto Itr = std::find(Successors.begin(), Successors.end(), BB);
+    return Itr != Successors.end();
   }
 
   /// Return the information about the number of times this basic block was

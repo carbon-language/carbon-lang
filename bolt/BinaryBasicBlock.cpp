@@ -39,6 +39,15 @@ MCInst *BinaryBasicBlock::findFirstNonPseudoInstruction() {
   return nullptr;
 }
 
+MCInst *BinaryBasicBlock::findLastNonPseudoInstruction() {
+  auto &BC = Function->getBinaryContext();
+  for (auto Itr = Instructions.rbegin(); Itr != Instructions.rend(); ++Itr) {
+    if (!BC.MII->get(Itr->getOpcode()).isPseudo())
+      return &*Itr;
+  }
+  return nullptr;
+}
+
 BinaryBasicBlock *BinaryBasicBlock::getSuccessor(const MCSymbol *Label) const {
   if (!Label && succ_size() == 1)
     return *succ_begin();
@@ -66,6 +75,24 @@ void BinaryBasicBlock::addSuccessor(BinaryBasicBlock *Succ,
   Successors.push_back(Succ);
   BranchInfo.push_back({Count, MispredictedCount});
   Succ->Predecessors.push_back(this);
+}
+
+void BinaryBasicBlock::replaceSuccessor(BinaryBasicBlock *Succ,
+                                        BinaryBasicBlock *NewSucc,
+                                        uint64_t Count,
+                                        uint64_t MispredictedCount) {
+  auto I = succ_begin();
+  auto BI = BranchInfo.begin();
+  for (; I != succ_end(); ++I) {
+    assert(BI != BranchInfo.end() && "missing BranchInfo entry");
+    if (*I == Succ)
+      break;
+    ++BI;
+  }
+  assert(I != succ_end() && "no such successor!");
+
+  *I = NewSucc;
+  *BI = BinaryBranchInfo{Count, MispredictedCount};
 }
 
 void BinaryBasicBlock::removeSuccessor(BinaryBasicBlock *Succ) {
@@ -117,9 +144,17 @@ bool BinaryBasicBlock::swapConditionalSuccessors() {
 }
 
 void BinaryBasicBlock::addBranchInstruction(const BinaryBasicBlock *Successor) {
+  assert(isSuccessor(Successor));
   auto &BC = Function->getBinaryContext();
   MCInst NewInst;
   BC.MIA->createUncondBranch(NewInst, Successor->getLabel(), BC.Ctx.get());
+  Instructions.emplace_back(std::move(NewInst));
+}
+
+void BinaryBasicBlock::addTailCallInstruction(const MCSymbol *Target) {
+  auto &BC = Function->getBinaryContext();
+  MCInst NewInst;
+  BC.MIA->createTailCall(NewInst, Target, BC.Ctx.get());
   Instructions.emplace_back(std::move(NewInst));
 }
 

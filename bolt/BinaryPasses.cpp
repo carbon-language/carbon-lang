@@ -956,6 +956,81 @@ void Peepholes::shortenInstructions(BinaryContext &BC,
   }
 }
 
+// This peephole fixes jump instructions that jump to another basic
+// block with a single jump instruction, e.g.
+//
+// B0: ...
+//     jmp  B1   (or jcc B1)
+//
+// B1: jmp  B2
+//
+// ->
+//
+// B0: ...
+//     jmp  B2   (or jcc B2)
+//
+void Peepholes::fixDoubleJumps(BinaryContext &BC,
+                               BinaryFunction &Function) {
+  for (auto &BB : Function) {
+    auto checkAndPatch = [&](BinaryBasicBlock *Pred,
+                             BinaryBasicBlock *Succ,
+                             const MCSymbol *SuccSym) {
+      // Ignore infinite loop jumps or fallthrough tail jumps.
+      if (Pred == Succ || Succ == &BB)
+        return;
+
+      if (Succ) {
+        Pred->replaceSuccessor(&BB, Succ, BinaryBasicBlock::COUNT_NO_PROFILE);
+      } else {
+        // Succ will be null in the tail call case.  In this case we
+        // need to explicitly add a tail call instruction.
+        auto *Branch = Pred->findLastNonPseudoInstruction();
+        if (Branch && BC.MIA->isUnconditionalBranch(*Branch)) {
+          Pred->removeSuccessor(&BB);
+          Pred->eraseInstruction(Branch);
+          Pred->addTailCallInstruction(SuccSym);
+        } else {
+          return;
+        }
+      }
+
+      ++NumDoubleJumps;
+      DEBUG(dbgs() << "Removed double jump in " << Function << " from "
+                   << Pred->getName() << " -> " << BB.getName() << " to "
+                   << Pred->getName() << " -> " << SuccSym->getName()
+                   << (!Succ ? " (tail)\n" : "\n"));
+    };
+
+    if (BB.getNumNonPseudos() != 1 || BB.isLandingPad())
+      continue;
+      
+    auto *Inst = BB.findFirstNonPseudoInstruction();
+    const bool IsTailCall = BC.MIA->isTailCall(*Inst);
+
+    if (!BC.MIA->isUnconditionalBranch(*Inst) && !IsTailCall)
+      continue;
+
+    const auto *SuccSym = BC.MIA->getTargetSymbol(*Inst);
+    auto *Succ = BB.getSuccessor(SuccSym);
+
+    if ((!Succ || &BB == Succ) && !IsTailCall)
+      continue;
+
+    std::vector<BinaryBasicBlock *> Preds{BB.pred_begin(), BB.pred_end()};
+
+    for (auto *Pred : Preds) {
+      if (Pred->isLandingPad())
+        continue;
+
+      if (Pred->getSuccessor() == &BB ||
+          (Pred->getConditionalSuccessor(true) == &BB && !IsTailCall) ||
+          Pred->getConditionalSuccessor(false) == &BB) {
+        checkAndPatch(Pred, Succ, SuccSym);
+      }
+    }
+  }
+}
+
 void Peepholes::runOnFunctions(BinaryContext &BC,
                                std::map<uint64_t, BinaryFunction> &BFs,
                                std::set<uint64_t> &LargeFunctions) {
@@ -963,8 +1038,10 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
     auto &Function = It.second;
     if (shouldOptimize(Function)) {
       shortenInstructions(BC, Function);
+      fixDoubleJumps(BC, Function);
     }
   }
+  outs() << "BOLT-INFO: " << NumDoubleJumps << " double jumps patched.\n";
 }
 
 bool SimplifyRODataLoads::simplifyRODataLoads(

@@ -256,7 +256,9 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
 
 /// Perform simple peephole optimizations.
 class Peepholes : public BinaryFunctionPass {
+  uint64_t NumDoubleJumps{0};
   void shortenInstructions(BinaryContext &BC, BinaryFunction &Function);
+  void fixDoubleJumps(BinaryContext &BC, BinaryFunction &Function);
  public:
   explicit Peepholes(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }

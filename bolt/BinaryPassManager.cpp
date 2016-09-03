@@ -207,6 +207,10 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes),
                        opts::Peepholes);
 
+  Manager.registerPass(
+    llvm::make_unique<EliminateUnreachableBlocks>(PrintUCE, Manager.NagUser),
+    opts::EliminateUnreachable);
+
   // This pass syncs local branches with CFG. If any of the following
   // passes breaks the sync - they either need to re-run the pass or
   // fix branches consistency internally.
