@@ -217,7 +217,6 @@ void Parser::ParseInnerNamespace(std::vector<SourceLocation> &IdentLoc,
            Tok.isNot(tok::eof)) {
       ParsedAttributesWithRange attrs(AttrFactory);
       MaybeParseCXX11Attributes(attrs);
-      MaybeParseMicrosoftAttributes(attrs);
       ParseExternalDeclaration(attrs);
     }
 
@@ -310,7 +309,6 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
 
   ParsedAttributesWithRange attrs(AttrFactory);
   MaybeParseCXX11Attributes(attrs);
-  MaybeParseMicrosoftAttributes(attrs);
 
   if (Tok.isNot(tok::l_brace)) {
     // Reset the source range in DS, as the leading "extern"
@@ -361,7 +359,6 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
     default:
       ParsedAttributesWithRange attrs(AttrFactory);
       MaybeParseCXX11Attributes(attrs);
-      MaybeParseMicrosoftAttributes(attrs);
       ParseExternalDeclaration(attrs);
       continue;
     }

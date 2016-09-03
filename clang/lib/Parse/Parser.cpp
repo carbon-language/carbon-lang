@@ -624,7 +624,6 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
 
   ParsedAttributesWithRange attrs(AttrFactory);
   MaybeParseCXX11Attributes(attrs);
-  MaybeParseMicrosoftAttributes(attrs);
 
   Result = ParseExternalDeclaration(attrs);
   return false;
@@ -911,6 +910,7 @@ Parser::DeclGroupPtrTy
 Parser::ParseDeclOrFunctionDefInternal(ParsedAttributesWithRange &attrs,
                                        ParsingDeclSpec &DS,
                                        AccessSpecifier AS) {
+  MaybeParseMicrosoftAttributes(DS.getAttributes());
   // Parse the common declaration-specifiers piece.
   ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS, DSC_top_level);
 
@@ -2026,7 +2026,6 @@ void Parser::ParseMicrosoftIfExistsExternalDeclaration() {
   while (Tok.isNot(tok::r_brace) && !isEofOrEom()) {
     ParsedAttributesWithRange attrs(AttrFactory);
     MaybeParseCXX11Attributes(attrs);
-    MaybeParseMicrosoftAttributes(attrs);
     DeclGroupPtrTy Result = ParseExternalDeclaration(attrs);
     if (Result && !getCurScope()->getParent())
       Actions.getASTConsumer().HandleTopLevelDecl(Result.get());
