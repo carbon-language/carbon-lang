@@ -56,7 +56,7 @@ extern "C" {
 #define ATOMIC_VAR_INIT(value) (value)
 #define atomic_init __c11_atomic_init
 
-/* 7.17.3 Order and consistency */.
+/* 7.17.3 Order and consistency */
 
 typedef enum memory_order {
   memory_order_relaxed = __ATOMIC_RELAXED,
