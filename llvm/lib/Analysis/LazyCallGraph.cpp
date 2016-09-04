@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LazyCallGraph.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/InstVisitor.h"
@@ -389,8 +390,14 @@ updatePostorderSequenceForEdgeInsertion(
 SmallVector<LazyCallGraph::SCC *, 1>
 LazyCallGraph::RefSCC::switchInternalEdgeToCall(Node &SourceN, Node &TargetN) {
   assert(!SourceN[TargetN].isCall() && "Must start with a ref edge!");
-
   SmallVector<SCC *, 1> DeletedSCCs;
+
+#ifndef NDEBUG
+  // In a debug build, verify the RefSCC is valid to start with and when this
+  // routine finishes.
+  verify();
+  auto VerifyOnExit = make_scope_exit([&]() { verify(); });
+#endif
 
   SCC &SourceSCC = *G->lookupSCC(SourceN);
   SCC &TargetSCC = *G->lookupSCC(TargetN);
@@ -399,10 +406,6 @@ LazyCallGraph::RefSCC::switchInternalEdgeToCall(Node &SourceN, Node &TargetN) {
   // we've just added more connectivity.
   if (&SourceSCC == &TargetSCC) {
     SourceN.setEdgeKind(TargetN.getFunction(), Edge::Call);
-#ifndef NDEBUG
-    // Check that the RefSCC is still valid.
-    verify();
-#endif
     return DeletedSCCs;
   }
 
@@ -416,10 +419,6 @@ LazyCallGraph::RefSCC::switchInternalEdgeToCall(Node &SourceN, Node &TargetN) {
   int TargetIdx = SCCIndices[&TargetSCC];
   if (TargetIdx < SourceIdx) {
     SourceN.setEdgeKind(TargetN.getFunction(), Edge::Call);
-#ifndef NDEBUG
-    // Check that the RefSCC is still valid.
-    verify();
-#endif
     return DeletedSCCs;
   }
 
@@ -495,9 +494,6 @@ LazyCallGraph::RefSCC::switchInternalEdgeToCall(Node &SourceN, Node &TargetN) {
   if (MergeRange.begin() == MergeRange.end()) {
     // Now that the SCC structure is finalized, flip the kind to call.
     SourceN.setEdgeKind(TargetN.getFunction(), Edge::Call);
-#ifndef NDEBUG
-    verify();
-#endif
     return DeletedSCCs;
   }
 
@@ -534,16 +530,20 @@ LazyCallGraph::RefSCC::switchInternalEdgeToCall(Node &SourceN, Node &TargetN) {
   // Now that the SCC structure is finalized, flip the kind to call.
   SourceN.setEdgeKind(TargetN.getFunction(), Edge::Call);
 
-#ifndef NDEBUG
-  // And we're done! Verify in debug builds that the RefSCC is coherent.
-  verify();
-#endif
+  // And we're done!
   return DeletedSCCs;
 }
 
 iterator_range<LazyCallGraph::RefSCC::iterator>
 LazyCallGraph::RefSCC::switchInternalEdgeToRef(Node &SourceN, Node &TargetN) {
   assert(SourceN[TargetN].isCall() && "Must start with a call edge!");
+
+#ifndef NDEBUG
+  // In a debug build, verify the RefSCC is valid to start with and when this
+  // routine finishes.
+  verify();
+  auto VerifyOnExit = make_scope_exit([&]() { verify(); });
+#endif
 
   SCC &SourceSCC = *G->lookupSCC(SourceN);
   SCC &TargetSCC = *G->lookupSCC(TargetN);
@@ -558,13 +558,8 @@ LazyCallGraph::RefSCC::switchInternalEdgeToRef(Node &SourceN, Node &TargetN) {
 
   // If this call edge is just connecting two separate SCCs within this RefSCC,
   // there is nothing to do.
-  if (&SourceSCC != &TargetSCC) {
-#ifndef NDEBUG
-    // Check that the RefSCC is still valid.
-    verify();
-#endif
+  if (&SourceSCC != &TargetSCC)
     return make_range(SCCs.end(), SCCs.end());
-  }
 
   // Otherwise we are removing a call edge from a single SCC. This may break
   // the cycle. In order to compute the new set of SCCs, we need to do a small
@@ -725,11 +720,6 @@ LazyCallGraph::RefSCC::switchInternalEdgeToRef(Node &SourceN, Node &TargetN) {
   for (int Idx = OldIdx, Size = SCCs.size(); Idx < Size; ++Idx)
     SCCIndices[SCCs[Idx]] = Idx;
 
-#ifndef NDEBUG
-  // We're done. Check the validity on our way out.
-  verify();
-#endif
-
   return make_range(SCCs.begin() + OldIdx,
                     SCCs.begin() + OldIdx + NewSCCs.size());
 }
@@ -812,6 +802,13 @@ void LazyCallGraph::RefSCC::insertOutgoingEdge(Node &SourceN, Node &TargetN,
 SmallVector<LazyCallGraph::RefSCC *, 1>
 LazyCallGraph::RefSCC::insertIncomingRefEdge(Node &SourceN, Node &TargetN) {
   assert(G->lookupRefSCC(TargetN) == this && "Target must be in this SCC.");
+
+#ifndef NDEBUG
+  // In a debug build, verify the RefSCC is valid to start with and when this
+  // routine finishes.
+  verify();
+  auto VerifyOnExit = make_scope_exit([&]() { verify(); });
+#endif
 
   // We store the RefSCCs found to be connected in postorder so that we can use
   // that when merging. We also return this to the caller to allow them to
@@ -953,11 +950,6 @@ LazyCallGraph::RefSCC::insertIncomingRefEdge(Node &SourceN, Node &TargetN) {
   // connect the nodes to form the new edge.
   SourceN.insertEdgeInternal(TargetN, Edge::Ref);
 
-#ifndef NDEBUG
-  // Check that the RefSCC is still valid.
-  verify();
-#endif
-
   // We return the list of SCCs which were merged so that callers can
   // invalidate any data they have associated with those SCCs. Note that these
   // SCCs are no longer in an interesting state (they are totally empty) but
@@ -974,6 +966,13 @@ void LazyCallGraph::RefSCC::removeOutgoingEdge(Node &SourceN, Node &TargetN) {
 
   assert(!is_contained(G->LeafRefSCCs, this) &&
          "Cannot have a leaf RefSCC source.");
+
+#ifndef NDEBUG
+  // In a debug build, verify the RefSCC is valid to start with and when this
+  // routine finishes.
+  verify();
+  auto VerifyOnExit = make_scope_exit([&]() { verify(); });
+#endif
 
   // First remove it from the node.
   SourceN.removeEdgeInternal(TargetN.getFunction());
@@ -1025,6 +1024,13 @@ SmallVector<LazyCallGraph::RefSCC *, 1>
 LazyCallGraph::RefSCC::removeInternalRefEdge(Node &SourceN, Node &TargetN) {
   assert(!SourceN[TargetN].isCall() &&
          "Cannot remove a call edge, it must first be made a ref edge");
+
+#ifndef NDEBUG
+  // In a debug build, verify the RefSCC is valid to start with and when this
+  // routine finishes.
+  verify();
+  auto VerifyOnExit = make_scope_exit([&]() { verify(); });
+#endif
 
   // First remove the actual edge.
   SourceN.removeEdgeInternal(TargetN.getFunction());
