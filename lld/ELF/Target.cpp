@@ -2124,10 +2124,10 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
   // Thread pointer and DRP offsets from the start of TLS data area.
   // https://www.linux-mips.org/wiki/NPTL
   if (Type == R_MIPS_TLS_DTPREL_HI16 || Type == R_MIPS_TLS_DTPREL_LO16 ||
-      Type == R_MIPS_TLS_DTPREL32)
+      Type == R_MIPS_TLS_DTPREL32 || Type == R_MIPS_TLS_DTPREL64)
     Val -= 0x8000;
   else if (Type == R_MIPS_TLS_TPREL_HI16 || Type == R_MIPS_TLS_TPREL_LO16 ||
-           Type == R_MIPS_TLS_TPREL32)
+           Type == R_MIPS_TLS_TPREL32 || Type == R_MIPS_TLS_TPREL64)
     Val -= 0x7000;
   if (ELFT::Is64Bits)
     std::tie(Type, Val) = calculateMips64RelChain(Type, Val);
@@ -2139,6 +2139,8 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
     write32<E>(Loc, Val);
     break;
   case R_MIPS_64:
+  case R_MIPS_TLS_DTPREL64:
+  case R_MIPS_TLS_TPREL64:
     write64<E>(Loc, Val);
     break;
   case R_MIPS_26:
