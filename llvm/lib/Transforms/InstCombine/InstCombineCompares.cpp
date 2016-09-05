@@ -1976,13 +1976,12 @@ Instruction *InstCombiner::foldICmpDivConstant(ICmpInst &Cmp,
   if (!Cmp.isEquality() && DivIsSigned != Cmp.isSigned())
     return nullptr;
 
-  // These constant divides should already be folded in InstSimplify.
-  assert(*C2 != 0 && "The ProdOV computation fails on divide by zero.");
-  assert(*C2 != 1 && "Funny cases with INT_MIN will fail.");
-
-  // This constant divide should already be folded in InstCombine.
-  assert(!(DivIsSigned && C2->isAllOnesValue()) &&
-         "The overflow computation will fail.");
+  // The ProdOV computation fails on divide by 0 and divide by -1. Cases with
+  // INT_MIN will also fail if the divisor is 1. Although folds of all these
+  // division-by-constant cases should be present, we can not assert that they
+  // have happened before we reach this icmp instruction.
+  if (*C2 == 0 || *C2 == 1 || (DivIsSigned && C2->isAllOnesValue()))
+    return nullptr;
 
   // TODO: We could do all of the computations below using APInt.
   Constant *CmpRHS = cast<Constant>(Cmp.getOperand(1));
