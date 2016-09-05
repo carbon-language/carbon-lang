@@ -13,10 +13,20 @@ define <16 x i8> @test_v16i8(<16 x i8>* %V) {
 ; SSE-NEXT:    movdqa (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v16i8:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v16i8:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqa (%rdi), %xmm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v16i8:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqa (%rdi), %xmm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v16i8:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqa64 (%rdi), %xmm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <16 x i8>, <16 x i8>* %V, align 16
   ret <16 x i8> %0
@@ -28,10 +38,20 @@ define <8 x i16> @test_v8i16(<8 x i16>* %V) {
 ; SSE-NEXT:    movdqa (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v8i16:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v8i16:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqa (%rdi), %xmm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v8i16:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqa (%rdi), %xmm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v8i16:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqa64 (%rdi), %xmm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <8 x i16>, <8 x i16>* %V, align 16
   ret <8 x i16> %0
@@ -43,10 +63,20 @@ define <4 x i32> @test_v4i32(<4 x i32>* %V) {
 ; SSE-NEXT:    movdqa (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v4i32:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v4i32:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqa (%rdi), %xmm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v4i32:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqa (%rdi), %xmm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v4i32:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqa64 (%rdi), %xmm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <4 x i32>, <4 x i32>* %V, align 16
   ret <4 x i32> %0
@@ -58,10 +88,20 @@ define <2 x i64> @test_v2i64(<2 x i64>* %V) {
 ; SSE-NEXT:    movdqa (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v2i64:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v2i64:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqa (%rdi), %xmm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v2i64:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqa (%rdi), %xmm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v2i64:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqa64 (%rdi), %xmm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <2 x i64>, <2 x i64>* %V, align 16
   ret <2 x i64> %0
@@ -73,10 +113,20 @@ define <16 x i8> @test_v16i8_unaligned(<16 x i8>* %V) {
 ; SSE-NEXT:    movdqu (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v16i8_unaligned:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqu (%rdi), %xmm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v16i8_unaligned:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqu (%rdi), %xmm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v16i8_unaligned:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqu (%rdi), %xmm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v16i8_unaligned:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqu64 (%rdi), %xmm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <16 x i8>, <16 x i8>* %V, align 4
   ret <16 x i8> %0
@@ -88,10 +138,20 @@ define <8 x i16> @test_v8i16_unaligned(<8 x i16>* %V) {
 ; SSE-NEXT:    movdqu (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v8i16_unaligned:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqu (%rdi), %xmm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v8i16_unaligned:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqu (%rdi), %xmm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v8i16_unaligned:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqu (%rdi), %xmm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v8i16_unaligned:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqu64 (%rdi), %xmm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <8 x i16>, <8 x i16>* %V, align 4
   ret <8 x i16> %0
@@ -103,10 +163,20 @@ define <4 x i32> @test_v4i32_unaligned(<4 x i32>* %V) {
 ; SSE-NEXT:    movdqu (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v4i32_unaligned:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqu (%rdi), %xmm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v4i32_unaligned:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqu (%rdi), %xmm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v4i32_unaligned:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqu (%rdi), %xmm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v4i32_unaligned:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqu64 (%rdi), %xmm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <4 x i32>, <4 x i32>* %V, align 4
   ret <4 x i32> %0
@@ -118,10 +188,20 @@ define <2 x i64> @test_v2i64_unaligned(<2 x i64>* %V) {
 ; SSE-NEXT:    movdqu (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v2i64_unaligned:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqu (%rdi), %xmm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v2i64_unaligned:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqu (%rdi), %xmm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v2i64_unaligned:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqu (%rdi), %xmm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v2i64_unaligned:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqu64 (%rdi), %xmm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <2 x i64>, <2 x i64>* %V, align 4
   ret <2 x i64> %0
@@ -193,10 +273,20 @@ define <16 x i8> @test_v16i8_abi_alignment(<16 x i8>* %V) {
 ; SSE-NEXT:    movdqa (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v16i8_abi_alignment:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v16i8_abi_alignment:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqa (%rdi), %xmm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v16i8_abi_alignment:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqa (%rdi), %xmm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v16i8_abi_alignment:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqa64 (%rdi), %xmm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <16 x i8>, <16 x i8>* %V
   ret <16 x i8> %0
@@ -208,10 +298,20 @@ define <8 x i16> @test_v8i16_abi_alignment(<8 x i16>* %V) {
 ; SSE-NEXT:    movdqa (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v8i16_abi_alignment:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v8i16_abi_alignment:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqa (%rdi), %xmm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v8i16_abi_alignment:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqa (%rdi), %xmm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v8i16_abi_alignment:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqa64 (%rdi), %xmm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <8 x i16>, <8 x i16>* %V
   ret <8 x i16> %0
@@ -223,10 +323,20 @@ define <4 x i32> @test_v4i32_abi_alignment(<4 x i32>* %V) {
 ; SSE-NEXT:    movdqa (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v4i32_abi_alignment:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v4i32_abi_alignment:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqa (%rdi), %xmm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v4i32_abi_alignment:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqa (%rdi), %xmm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v4i32_abi_alignment:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqa64 (%rdi), %xmm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <4 x i32>, <4 x i32>* %V
   ret <4 x i32> %0
@@ -238,10 +348,20 @@ define <2 x i64> @test_v2i64_abi_alignment(<2 x i64>* %V) {
 ; SSE-NEXT:    movdqa (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v2i64_abi_alignment:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v2i64_abi_alignment:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqa (%rdi), %xmm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v2i64_abi_alignment:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqa (%rdi), %xmm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v2i64_abi_alignment:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqa64 (%rdi), %xmm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <2 x i64>, <2 x i64>* %V
   ret <2 x i64> %0
@@ -284,10 +404,20 @@ define <32 x i8> @test_v32i8(<32 x i8>* %V) {
 ; SSE-NEXT:    movaps 16(%rdi), %xmm1
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v32i8:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa (%rdi), %ymm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v32i8:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqa (%rdi), %ymm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v32i8:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqa (%rdi), %ymm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v32i8:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqa64 (%rdi), %ymm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <32 x i8>, <32 x i8>* %V, align 32
   ret <32 x i8> %0
@@ -300,10 +430,20 @@ define <16 x i16> @test_v16i16(<16 x i16>* %V) {
 ; SSE-NEXT:    movaps 16(%rdi), %xmm1
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v16i16:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa (%rdi), %ymm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v16i16:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqa (%rdi), %ymm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v16i16:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqa (%rdi), %ymm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v16i16:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqa64 (%rdi), %ymm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <16 x i16>, <16 x i16>* %V, align 32
   ret <16 x i16> %0
@@ -316,10 +456,20 @@ define <8 x i32> @test_v8i32(<8 x i32>* %V) {
 ; SSE-NEXT:    movaps 16(%rdi), %xmm1
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v8i32:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqu (%rdi), %ymm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v8i32:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqu (%rdi), %ymm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v8i32:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqu (%rdi), %ymm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v8i32:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqu64 (%rdi), %ymm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <8 x i32>, <8 x i32>* %V, align 16
   ret <8 x i32> %0
@@ -332,10 +482,20 @@ define <4 x i64> @test_v4i64(<4 x i64>* %V) {
 ; SSE-NEXT:    movaps 16(%rdi), %xmm1
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v4i64:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa (%rdi), %ymm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v4i64:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqa (%rdi), %ymm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v4i64:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqa (%rdi), %ymm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v4i64:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqa64 (%rdi), %ymm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <4 x i64>, <4 x i64>* %V, align 32
   ret <4 x i64> %0
@@ -348,10 +508,20 @@ define <32 x i8> @test_v32i8_unaligned(<32 x i8>* %V) {
 ; SSE-NEXT:    movups 16(%rdi), %xmm1
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v32i8_unaligned:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqu (%rdi), %ymm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v32i8_unaligned:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqu (%rdi), %ymm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v32i8_unaligned:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqu (%rdi), %ymm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v32i8_unaligned:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqu64 (%rdi), %ymm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <32 x i8>, <32 x i8>* %V, align 4
   ret <32 x i8> %0
@@ -364,10 +534,20 @@ define <16 x i16> @test_v16i16_unaligned(<16 x i16>* %V) {
 ; SSE-NEXT:    movups 16(%rdi), %xmm1
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v16i16_unaligned:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqu (%rdi), %ymm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v16i16_unaligned:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqu (%rdi), %ymm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v16i16_unaligned:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqu (%rdi), %ymm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v16i16_unaligned:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqu64 (%rdi), %ymm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <16 x i16>, <16 x i16>* %V, align 4
   ret <16 x i16> %0
@@ -380,10 +560,20 @@ define <8 x i32> @test_v8i32_unaligned(<8 x i32>* %V) {
 ; SSE-NEXT:    movups 16(%rdi), %xmm1
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v8i32_unaligned:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqu (%rdi), %ymm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v8i32_unaligned:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqu (%rdi), %ymm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v8i32_unaligned:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqu (%rdi), %ymm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v8i32_unaligned:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqu64 (%rdi), %ymm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <8 x i32>, <8 x i32>* %V, align 4
   ret <8 x i32> %0
@@ -396,10 +586,20 @@ define <4 x i64> @test_v4i64_unaligned(<4 x i64>* %V) {
 ; SSE-NEXT:    movups 16(%rdi), %xmm1
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: test_v4i64_unaligned:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqu (%rdi), %ymm0
-; AVX-NEXT:    retq
+; AVXONLY-LABEL: test_v4i64_unaligned:
+; AVXONLY:       # BB#0: # %entry
+; AVXONLY-NEXT:    vmovdqu (%rdi), %ymm0
+; AVXONLY-NEXT:    retq
+;
+; KNL-LABEL: test_v4i64_unaligned:
+; KNL:       # BB#0: # %entry
+; KNL-NEXT:    vmovdqu (%rdi), %ymm0
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_v4i64_unaligned:
+; SKX:       # BB#0: # %entry
+; SKX-NEXT:    vmovdqu64 (%rdi), %ymm0
+; SKX-NEXT:    retq
 entry:
   %0 = load <4 x i64>, <4 x i64>* %V, align 4
   ret <4 x i64> %0
