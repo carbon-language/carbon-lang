@@ -418,7 +418,7 @@ define <4 x i1> @test11(<4 x i1>%a, <4 x i1>%b, i32 %a1, i32 %b1) {
 ; KNL-NEXT:    cmpl %esi, %edi
 ; KNL-NEXT:    jg LBB20_2
 ; KNL-NEXT:  ## BB#1:
-; KNL-NEXT:    vmovaps %zmm1, %zmm0
+; KNL-NEXT:    vmovaps %xmm1, %xmm0
 ; KNL-NEXT:  LBB20_2:
 ; KNL-NEXT:    retq
 ;
