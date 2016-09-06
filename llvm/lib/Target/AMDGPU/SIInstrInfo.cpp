@@ -728,7 +728,7 @@ unsigned SIInstrInfo::calculateLDSSpillAddress(
   const SISubtarget &ST = MF->getSubtarget<SISubtarget>();
   const SIRegisterInfo *TRI = ST.getRegisterInfo();
   DebugLoc DL = MBB.findDebugLoc(MI);
-  unsigned WorkGroupSize = MFI->getMaximumWorkGroupSize(*MF);
+  unsigned WorkGroupSize = MFI->getMaxFlatWorkGroupSize();
   unsigned WavefrontSize = ST.getWavefrontSize();
 
   unsigned TIDReg = MFI->getTIDReg();
