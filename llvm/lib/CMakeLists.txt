@@ -1,6 +1,6 @@
-# `Support' and `TableGen' libraries are added on the top-level CMakeLists.txt
+# `Demangle', `Support' and `TableGen' libraries are added on the top-level
+# CMakeLists.txt
 
-add_subdirectory(Demangle)
 add_subdirectory(IR)
 add_subdirectory(IRReader)
 add_subdirectory(CodeGen)
