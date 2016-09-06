@@ -64,9 +64,16 @@ let SchedModel = ExynosM1Model in {
 //===----------------------------------------------------------------------===//
 // Coarse scheduling model for the Exynos-M1.
 
-def M1WriteLDIdxA : SchedWriteRes<[M1UnitL]>   { let Latency = 5; }
-def M1WriteLDIdxB : SchedWriteRes<[M1UnitL,
-                                   M1UnitALU]> { let Latency = 5; }
+def M1WriteA1 : SchedWriteRes<[M1UnitALU]> { let Latency = 1; }
+
+def M1WriteL5 : SchedWriteRes<[M1UnitL]>   { let Latency = 5; }
+def M1WriteLA : SchedWriteVariant<[SchedVar<ScaledIdxPred, [M1WriteL5,
+                                                            M1WriteA1]>,
+                                   SchedVar<NoSchedPred,   [M1WriteL5]>]>;
+
+def M1ReadAdrBase : SchedReadVariant<[SchedVar<ScaledIdxPred, [ReadDefault]>,
+                                      SchedVar<NoSchedPred,   [ReadDefault]>]>;
+def : SchedAlias<ReadAdrBase, M1ReadAdrBase>;
 
 // Branch instructions.
 // NOTE: Unconditional direct branches actually take neither cycles nor units.
@@ -106,14 +113,7 @@ def : WriteRes<WriteAdr, []> { let Latency = 0; }
 // Load instructions.
 def : WriteRes<WriteLD,    [M1UnitL]>   { let Latency = 4; }
 def : WriteRes<WriteLDHi,  [M1UnitALU]> { let Latency = 4; }
-def M1WriteLDIdx : SchedWriteVariant<[
-  SchedVar<ScaledIdxPred, [M1WriteLDIdxB]>,
-  SchedVar<NoSchedPred,   [M1WriteLDIdxA]>]>;
-def : SchedAlias<WriteLDIdx, M1WriteLDIdx>;
-def M1ReadAdrBase : SchedReadVariant<[
-  SchedVar<ScaledIdxPred, [ReadDefault]>,
-  SchedVar<NoSchedPred,   [ReadDefault]>]>;
-def : SchedAlias<ReadAdrBase, M1ReadAdrBase>;
+def : SchedAlias<WriteLDIdx, M1WriteLA>;
 
 // Store instructions.
 def : WriteRes<WriteST,    [M1UnitS]> { let Latency = 1; }
