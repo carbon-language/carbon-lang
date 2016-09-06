@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Demangle/Demangle.h"
-#include "llvm/Support/Compiler.h"
 
 // This file exports a single function: llvm::itanium_demangle.
 // It also has no dependencies on the rest of llvm. It is implemented this way
@@ -4210,134 +4209,7 @@ static void demangle(const char *first, const char *last, C &db, int &status) {
 }
 
 namespace {
-template <std::size_t N> class arena {
-  static const std::size_t alignment = 16;
-  LLVM_ALIGNAS(16) char buf_[N];
-  char *ptr_;
-
-  std::size_t align_up(std::size_t n) LLVM_NOEXCEPT {
-    return (n + (alignment - 1)) & ~(alignment - 1);
-  }
-
-  bool pointer_in_buffer(char *p) LLVM_NOEXCEPT {
-    return buf_ <= p && p <= buf_ + N;
-  }
-
-public:
-  arena() LLVM_NOEXCEPT : ptr_(buf_) {}
-  ~arena() { ptr_ = nullptr; }
-  arena(const arena &) = delete;
-  arena &operator=(const arena &) = delete;
-
-  char *allocate(std::size_t n);
-  void deallocate(char *p, std::size_t n) LLVM_NOEXCEPT;
-
-  static LLVM_CONSTEXPR std::size_t size() { return N; }
-  std::size_t used() const { return static_cast<std::size_t>(ptr_ - buf_); }
-  void reset() { ptr_ = buf_; }
-};
-
-template <std::size_t N> char *arena<N>::allocate(std::size_t n) {
-  n = align_up(n);
-  if (static_cast<std::size_t>(buf_ + N - ptr_) >= n) {
-    char *r = ptr_;
-    ptr_ += n;
-    return r;
-  }
-  return static_cast<char *>(std::malloc(n));
-}
-
-template <std::size_t N>
-void arena<N>::deallocate(char *p, std::size_t n) LLVM_NOEXCEPT {
-  if (pointer_in_buffer(p)) {
-    n = align_up(n);
-    if (p + n == ptr_)
-      ptr_ = p;
-  } else
-    std::free(p);
-}
-
-template <class T, std::size_t N> class short_alloc {
-  arena<N> &a_;
-
-public:
-  typedef T value_type;
-
-public:
-  template <class _Up> struct rebind { typedef short_alloc<_Up, N> other; };
-
-  short_alloc(arena<N> &a) LLVM_NOEXCEPT : a_(a) {}
-  template <class U>
-  short_alloc(const short_alloc<U, N> &a) LLVM_NOEXCEPT : a_(a.a_) {}
-  short_alloc(const short_alloc &) = default;
-  short_alloc &operator=(const short_alloc &) = delete;
-
-  T *allocate(std::size_t n) {
-    return reinterpret_cast<T *>(a_.allocate(n * sizeof(T)));
-  }
-  void deallocate(T *p, std::size_t n) LLVM_NOEXCEPT {
-    a_.deallocate(reinterpret_cast<char *>(p), n * sizeof(T));
-  }
-
-  template <class T1, std::size_t N1, class U, std::size_t M>
-  friend bool operator==(const short_alloc<T1, N1> &x,
-                         const short_alloc<U, M> &y) LLVM_NOEXCEPT;
-
-  template <class U, std::size_t M> friend class short_alloc;
-};
-
-template <class T, std::size_t N, class U, std::size_t M>
-inline bool operator==(const short_alloc<T, N> &x,
-                       const short_alloc<U, M> &y) LLVM_NOEXCEPT {
-  return N == M && &x.a_ == &y.a_;
-}
-
-template <class T, std::size_t N, class U, std::size_t M>
-inline bool operator!=(const short_alloc<T, N> &x,
-                       const short_alloc<U, M> &y) LLVM_NOEXCEPT {
-  return !(x == y);
-}
-
-template <class T> class malloc_alloc {
-public:
-  typedef T value_type;
-  typedef T &reference;
-  typedef const T &const_reference;
-  typedef T *pointer;
-  typedef const T *const_pointer;
-  typedef std::size_t size_type;
-  typedef std::ptrdiff_t difference_type;
-
-  malloc_alloc() = default;
-  template <class U> malloc_alloc(const malloc_alloc<U> &) LLVM_NOEXCEPT {}
-
-  T *allocate(std::size_t n) {
-    return static_cast<T *>(std::malloc(n * sizeof(T)));
-  }
-  void deallocate(T *p, std::size_t) LLVM_NOEXCEPT { std::free(p); }
-
-  template <class U> struct rebind { using other = malloc_alloc<U>; };
-  template <class U, class... Args> void construct(U *p, Args &&... args) {
-    ::new ((void *)p) U(std::forward<Args>(args)...);
-  }
-  void destroy(T *p) { p->~T(); }
-};
-
-template <class T, class U>
-inline bool operator==(const malloc_alloc<T> &,
-                       const malloc_alloc<U> &) LLVM_NOEXCEPT {
-  return true;
-}
-
-template <class T, class U>
-inline bool operator!=(const malloc_alloc<T> &x,
-                       const malloc_alloc<U> &y) LLVM_NOEXCEPT {
-  return !(x == y);
-}
-
-const size_t bs = 4 * 1024;
-template <class T> using Alloc = short_alloc<T, bs>;
-template <class T> using Vector = std::vector<T, Alloc<T>>;
+template <class T> using Vector = std::vector<T>;
 
 template <class StrT> struct string_pair {
   StrT first;
@@ -4354,7 +4226,7 @@ template <class StrT> struct string_pair {
 };
 
 struct Db {
-  typedef std::basic_string<char, std::char_traits<char>, malloc_alloc<char>>
+  typedef std::basic_string<char, std::char_traits<char>>
       String;
   typedef Vector<string_pair<String>> sub_type;
   typedef Vector<sub_type> template_param_type;
@@ -4369,9 +4241,7 @@ struct Db {
   bool fix_forward_references;
   bool try_to_parse_template_args;
 
-  template <size_t N>
-  Db(arena<N> &ar)
-      : names(ar), subs(0, names, ar), template_param(0, subs, ar) {}
+  Db() : subs(0, names), template_param(0, subs) {}
 };
 }
 
@@ -4383,14 +4253,13 @@ char *llvm::itaniumDemangle(const char *mangled_name, char *buf, size_t *n,
     return nullptr;
   }
   size_t internal_size = buf != nullptr ? *n : 0;
-  arena<bs> a;
-  Db db(a);
+  Db db;
   db.cv = 0;
   db.ref = 0;
   db.encoding_depth = 0;
   db.parsed_ctor_dtor_cv = false;
   db.tag_templates = true;
-  db.template_param.emplace_back(a);
+  db.template_param.emplace_back();
   db.fix_forward_references = false;
   db.try_to_parse_template_args = true;
   int internal_status = success;
