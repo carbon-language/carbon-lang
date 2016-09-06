@@ -197,5 +197,11 @@ int main(int argc, char **argv) {
   sys::Process::PreventCoreFiles();
 #endif
 
-  return D.run();
+  std::string Error;
+  bool Failure = D.run(Error);
+  if (!Error.empty()) {
+    errs() << Error;
+    return 1;
+  }
+  return Failure;
 }

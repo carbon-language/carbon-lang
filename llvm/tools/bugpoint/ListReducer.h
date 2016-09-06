@@ -15,6 +15,7 @@
 #ifndef LLVM_TOOLS_BUGPOINT_LISTREDUCER_H
 #define LLVM_TOOLS_BUGPOINT_LISTREDUCER_H
 
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstdlib>
@@ -38,16 +39,16 @@ template <typename ElTy> struct ListReducer {
   /// test desired.  The testcase is only required to test to see if the Kept
   /// list still satisfies the property, but if it is going to check the prefix
   /// anyway, it can.
-  virtual TestResult doTest(std::vector<ElTy> &Prefix,
-                            std::vector<ElTy> &Kept) = 0;
+  virtual TestResult doTest(std::vector<ElTy> &Prefix, std::vector<ElTy> &Kept,
+                            std::string &Error) = 0;
 
   /// This function attempts to reduce the length of the specified list while
   /// still maintaining the "test" property.  This is the core of the "work"
   /// that bugpoint does.
-  bool reduceList(std::vector<ElTy> &TheList) {
+  bool reduceList(std::vector<ElTy> &TheList, std::string &Error) {
     std::vector<ElTy> empty;
     std::srand(0x6e5ea738); // Seed the random number generator
-    switch (doTest(TheList, empty)) {
+    switch (doTest(TheList, empty, Error)) {
     case KeepPrefix:
       if (TheList.size() == 1) // we are done, it's the base case and it fails
         return true;
@@ -63,6 +64,7 @@ template <typename ElTy> struct ListReducer {
       return false; // there is no failure with the full set of passes/funcs!
 
     case InternalError:
+      assert(!Error.empty());
       return true;
     }
 
@@ -95,7 +97,7 @@ template <typename ElTy> struct ListReducer {
         std::random_shuffle(ShuffledList.begin(), ShuffledList.end());
         errs() << "\n\n*** Testing shuffled set...\n\n";
         // Check that random shuffle doesn't loose the bug
-        if (doTest(ShuffledList, empty) == KeepPrefix) {
+        if (doTest(ShuffledList, empty, Error) == KeepPrefix) {
           // If the bug is still here, use the shuffled list.
           TheList.swap(ShuffledList);
           MidTop = TheList.size();
@@ -114,7 +116,7 @@ template <typename ElTy> struct ListReducer {
       std::vector<ElTy> Prefix(TheList.begin(), TheList.begin() + Mid);
       std::vector<ElTy> Suffix(TheList.begin() + Mid, TheList.end());
 
-      switch (doTest(Prefix, Suffix)) {
+      switch (doTest(Prefix, Suffix, Error)) {
       case KeepSuffix:
         // The property still holds.  We can just drop the prefix elements, and
         // shorten the list to the "kept" elements.
@@ -139,8 +141,9 @@ template <typename ElTy> struct ListReducer {
         NumOfIterationsWithoutProgress++;
         break;
       case InternalError:
-        return true;
+        return true; // Error was set by doTest.
       }
+      assert(Error.empty() && "doTest did not return InternalError for error");
     }
 
     // Probability of backjumping from the trimming loop back to the binary
@@ -176,18 +179,14 @@ template <typename ElTy> struct ListReducer {
           std::vector<ElTy> TestList(TheList);
           TestList.erase(TestList.begin() + i);
 
-          switch (doTest(EmptyList, TestList)) {
-          case KeepSuffix:
+          if (doTest(EmptyList, TestList, Error) == KeepSuffix) {
             // We can trim down the list!
             TheList.swap(TestList);
             --i; // Don't skip an element of the list
             Changed = true;
-            break;
-          case InternalError:
-            return true;
-          default:
-            break;
           }
+          if (!Error.empty())
+            return true;
         }
         if (TrimIterations >= MaxTrimIterationsWithoutBackJump)
           break;

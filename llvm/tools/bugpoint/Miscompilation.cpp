@@ -46,14 +46,13 @@ static llvm::cl::opt<bool> DisableBlockExtraction(
 
 class ReduceMiscompilingPasses : public ListReducer<std::string> {
   BugDriver &BD;
-  std::string &Error;
 
 public:
-  ReduceMiscompilingPasses(BugDriver &bd, std::string &Error)
-      : BD(bd), Error(Error) {}
+  ReduceMiscompilingPasses(BugDriver &bd) : BD(bd) {}
 
   TestResult doTest(std::vector<std::string> &Prefix,
-                    std::vector<std::string> &Suffix) override;
+                    std::vector<std::string> &Suffix,
+                    std::string &Error) override;
 };
 } // end anonymous namespace
 
@@ -62,7 +61,8 @@ public:
 ///
 ReduceMiscompilingPasses::TestResult
 ReduceMiscompilingPasses::doTest(std::vector<std::string> &Prefix,
-                                 std::vector<std::string> &Suffix) {
+                                 std::vector<std::string> &Suffix,
+                                 std::string &Error) {
   // First, run the program with just the Suffix passes.  If it is still broken
   // with JUST the kept passes, discard the prefix passes.
   outs() << "Checking to see if '" << getPassesString(Suffix)
@@ -181,26 +181,25 @@ class ReduceMiscompilingFunctions : public ListReducer<Function *> {
   BugDriver &BD;
   bool (*TestFn)(BugDriver &, std::unique_ptr<Module>, std::unique_ptr<Module>,
                  std::string &);
-  std::string &Error;
 
 public:
   ReduceMiscompilingFunctions(BugDriver &bd,
                               bool (*F)(BugDriver &, std::unique_ptr<Module>,
-                                        std::unique_ptr<Module>, std::string &),
-                              std::string &Error)
-      : BD(bd), TestFn(F), Error(Error) {}
+                                        std::unique_ptr<Module>, std::string &))
+      : BD(bd), TestFn(F) {}
 
   TestResult doTest(std::vector<Function *> &Prefix,
-                    std::vector<Function *> &Suffix) override {
+                    std::vector<Function *> &Suffix,
+                    std::string &Error) override {
     if (!Suffix.empty()) {
-      bool Ret = TestFuncs(Suffix);
+      bool Ret = TestFuncs(Suffix, Error);
       if (!Error.empty())
         return InternalError;
       if (Ret)
         return KeepSuffix;
     }
     if (!Prefix.empty()) {
-      bool Ret = TestFuncs(Prefix);
+      bool Ret = TestFuncs(Prefix, Error);
       if (!Error.empty())
         return InternalError;
       if (Ret)
@@ -209,7 +208,7 @@ public:
     return NoFailure;
   }
 
-  bool TestFuncs(const std::vector<Function *> &Prefix);
+  bool TestFuncs(const std::vector<Function *> &Prefix, std::string &Error);
 };
 } // end anonymous namespace
 
@@ -239,7 +238,7 @@ static std::unique_ptr<Module> testMergedProgram(const BugDriver &BD,
 /// accordingly. Each group of functions becomes a separate Module.
 ///
 bool ReduceMiscompilingFunctions::TestFuncs(
-    const std::vector<Function *> &Funcs) {
+    const std::vector<Function *> &Funcs, std::string &Error) {
   // Test to see if the function is misoptimized if we ONLY run it on the
   // functions listed in Funcs.
   outs() << "Checking to see if the program is misoptimized when "
@@ -445,27 +444,26 @@ class ReduceMiscompiledBlocks : public ListReducer<BasicBlock *> {
   bool (*TestFn)(BugDriver &, std::unique_ptr<Module>, std::unique_ptr<Module>,
                  std::string &);
   std::vector<Function *> FunctionsBeingTested;
-  std::string &Error;
 
 public:
   ReduceMiscompiledBlocks(BugDriver &bd,
                           bool (*F)(BugDriver &, std::unique_ptr<Module>,
                                     std::unique_ptr<Module>, std::string &),
-                          const std::vector<Function *> &Fns,
-                          std::string &Error)
-      : BD(bd), TestFn(F), FunctionsBeingTested(Fns), Error(Error) {}
+                          const std::vector<Function *> &Fns)
+      : BD(bd), TestFn(F), FunctionsBeingTested(Fns) {}
 
   TestResult doTest(std::vector<BasicBlock *> &Prefix,
-                    std::vector<BasicBlock *> &Suffix) override {
+                    std::vector<BasicBlock *> &Suffix,
+                    std::string &Error) override {
     if (!Suffix.empty()) {
-      bool Ret = TestFuncs(Suffix);
+      bool Ret = TestFuncs(Suffix, Error);
       if (!Error.empty())
         return InternalError;
       if (Ret)
         return KeepSuffix;
     }
     if (!Prefix.empty()) {
-      bool Ret = TestFuncs(Prefix);
+      bool Ret = TestFuncs(Prefix, Error);
       if (!Error.empty())
         return InternalError;
       if (Ret)
@@ -474,14 +472,15 @@ public:
     return NoFailure;
   }
 
-  bool TestFuncs(const std::vector<BasicBlock *> &BBs);
+  bool TestFuncs(const std::vector<BasicBlock *> &BBs, std::string &Error);
 };
 } // end anonymous namespace
 
 /// TestFuncs - Extract all blocks for the miscompiled functions except for the
 /// specified blocks.  If the problem still exists, return true.
 ///
-bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock *> &BBs) {
+bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock *> &BBs,
+                                        std::string &Error) {
   // Test to see if the function is misoptimized if we ONLY run it on the
   // functions listed in Funcs.
   outs() << "Checking to see if the program is misoptimized when all ";
@@ -551,15 +550,15 @@ static bool ExtractBlocks(BugDriver &BD,
   unsigned OldSize = Blocks.size();
 
   // Check to see if all blocks are extractible first.
-  bool Ret = ReduceMiscompiledBlocks(BD, TestFn, MiscompiledFunctions, Error)
-                 .TestFuncs(std::vector<BasicBlock *>());
+  bool Ret = ReduceMiscompiledBlocks(BD, TestFn, MiscompiledFunctions)
+                 .TestFuncs(std::vector<BasicBlock *>(), Error);
   if (!Error.empty())
     return false;
   if (Ret) {
     Blocks.clear();
   } else {
-    ReduceMiscompiledBlocks(BD, TestFn, MiscompiledFunctions, Error)
-        .reduceList(Blocks);
+    ReduceMiscompiledBlocks(BD, TestFn, MiscompiledFunctions)
+        .reduceList(Blocks, Error);
     if (!Error.empty())
       return false;
     if (Blocks.size() == OldSize)
@@ -629,8 +628,8 @@ DebugAMiscompilation(BugDriver &BD,
 
   // Do the reduction...
   if (!BugpointIsInterrupted)
-    ReduceMiscompilingFunctions(BD, TestFn, Error)
-        .reduceList(MiscompiledFunctions);
+    ReduceMiscompilingFunctions(BD, TestFn)
+        .reduceList(MiscompiledFunctions, Error);
   if (!Error.empty()) {
     errs() << "\n***Cannot reduce functions: ";
     return MiscompiledFunctions;
@@ -655,8 +654,8 @@ DebugAMiscompilation(BugDriver &BD,
 
       // Do the reduction...
       if (!BugpointIsInterrupted)
-        ReduceMiscompilingFunctions(BD, TestFn, Error)
-            .reduceList(MiscompiledFunctions);
+        ReduceMiscompilingFunctions(BD, TestFn)
+            .reduceList(MiscompiledFunctions, Error);
       if (!Error.empty())
         return MiscompiledFunctions;
 
@@ -678,8 +677,8 @@ DebugAMiscompilation(BugDriver &BD,
       DisambiguateGlobalSymbols(BD.getProgram());
 
       // Do the reduction...
-      ReduceMiscompilingFunctions(BD, TestFn, Error)
-          .reduceList(MiscompiledFunctions);
+      ReduceMiscompilingFunctions(BD, TestFn)
+          .reduceList(MiscompiledFunctions, Error);
       if (!Error.empty())
         return MiscompiledFunctions;
 
@@ -733,7 +732,7 @@ static bool TestOptimizer(BugDriver &BD, std::unique_ptr<Module> Test,
 void BugDriver::debugMiscompilation(std::string *Error) {
   // Make sure something was miscompiled...
   if (!BugpointIsInterrupted)
-    if (!ReduceMiscompilingPasses(*this, *Error).reduceList(PassesToRun)) {
+    if (!ReduceMiscompilingPasses(*this).reduceList(PassesToRun, *Error)) {
       if (Error->empty())
         errs() << "*** Optimized program matches reference output!  No problem"
                << " detected...\nbugpoint can't help you with your problem!\n";
