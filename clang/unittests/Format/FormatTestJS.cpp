@@ -1236,6 +1236,7 @@ TEST_F(FormatTestJS, CastSyntax) {
   verifyFormat("x = x as [a, b];");
   verifyFormat("x = x as {a: string};");
   verifyFormat("x = x as (string);");
+  verifyFormat("x = x! as (string);");
 }
 
 TEST_F(FormatTestJS, TypeArguments) {

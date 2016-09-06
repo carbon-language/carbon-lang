@@ -2158,6 +2158,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
                                                 tok::r_square, tok::r_brace) ||
                                    Left.Tok.isLiteral()))
       return false;
+    if (Left.is(tok::exclaim) && Right.is(Keywords.kw_as))
+      return true; // "x! as string"
   } else if (Style.Language == FormatStyle::LK_Java) {
     if (Left.is(tok::r_square) && Right.is(tok::l_brace))
       return true;
