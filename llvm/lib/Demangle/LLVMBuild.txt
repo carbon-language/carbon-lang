@@ -1,4 +1,4 @@
-;===- ./tools/llvm-objdump/LLVMBuild.txt -----------------------*- Conf -*--===;
+;===- ./lib/Support/LLVMBuild.txt ------------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -16,7 +16,6 @@
 ;===------------------------------------------------------------------------===;
 
 [component_0]
-type = Tool
-name = llvm-objdump
-parent = Tools
-required_libraries = DebugInfoDWARF MC MCDisassembler MCParser Object all-targets Demangle
+type = Library
+name = Demangle
+parent = Libraries
