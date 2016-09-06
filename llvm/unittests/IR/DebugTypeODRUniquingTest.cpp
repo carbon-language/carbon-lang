@@ -44,16 +44,15 @@ TEST(DebugTypeODRUniquingTest, getODRType) {
 
   // Check that we get it back, even if we change a field.
   EXPECT_EQ(&CT, DICompositeType::getODRTypeIfExists(Context, UUID));
-  EXPECT_EQ(
-      &CT, DICompositeType::getODRType(Context, UUID, dwarf::DW_TAG_class_type,
-                                       nullptr, nullptr, 0, nullptr, nullptr, 0,
-                                       0, 0, DINode::FlagZero, nullptr, 0,
-                                       nullptr, nullptr));
   EXPECT_EQ(&CT, DICompositeType::getODRType(
-                     Context, UUID, dwarf::DW_TAG_class_type,
-                     MDString::get(Context, "name"), nullptr, 0, nullptr,
-                     nullptr, 0, 0, 0, DINode::FlagZero, nullptr, 0,
+                     Context, UUID, dwarf::DW_TAG_class_type, nullptr, nullptr,
+                     0, nullptr, nullptr, 0, 0, 0, DINode::FlagZero, nullptr, 0,
                      nullptr, nullptr));
+  EXPECT_EQ(&CT,
+            DICompositeType::getODRType(
+                Context, UUID, dwarf::DW_TAG_class_type,
+                MDString::get(Context, "name"), nullptr, 0, nullptr, nullptr, 0,
+                0, 0, DINode::FlagZero, nullptr, 0, nullptr, nullptr));
 
   // Check that it's discarded with the type map.
   Context.disableDebugTypeODRUniquing();
@@ -84,8 +83,9 @@ TEST(DebugTypeODRUniquingTest, buildODRType) {
 
   // Update with a definition.  This time we should see a change.
   EXPECT_EQ(&CT, DICompositeType::buildODRType(
-      Context, UUID, dwarf::DW_TAG_structure_type, nullptr, nullptr, 0, nullptr,
-      nullptr, 0, 0, 0, DINode::FlagZero, nullptr, 0, nullptr, nullptr));
+                     Context, UUID, dwarf::DW_TAG_structure_type, nullptr,
+                     nullptr, 0, nullptr, nullptr, 0, 0, 0, DINode::FlagZero,
+                     nullptr, 0, nullptr, nullptr));
   EXPECT_EQ(dwarf::DW_TAG_structure_type, CT.getTag());
 
   // Further updates should be ignored.
@@ -94,8 +94,9 @@ TEST(DebugTypeODRUniquingTest, buildODRType) {
       nullptr, 0, 0, 0, DINode::FlagFwdDecl, nullptr, 0, nullptr, nullptr));
   EXPECT_EQ(dwarf::DW_TAG_structure_type, CT.getTag());
   EXPECT_EQ(&CT, DICompositeType::buildODRType(
-      Context, UUID, dwarf::DW_TAG_class_type, nullptr, nullptr, 0, nullptr,
-      nullptr, 0, 0, 0, DINode::FlagZero, nullptr, 0, nullptr, nullptr));
+                     Context, UUID, dwarf::DW_TAG_class_type, nullptr, nullptr,
+                     0, nullptr, nullptr, 0, 0, 0, DINode::FlagZero, nullptr, 0,
+                     nullptr, nullptr));
   EXPECT_EQ(dwarf::DW_TAG_structure_type, CT.getTag());
 }
 

@@ -76,12 +76,11 @@ LLVMMetadataRef LLVMDIBuilderCreateFunction(
     LLVMMetadataRef CompositeType, int IsLocalToUnit, int IsDefinition,
     unsigned ScopeLine, unsigned Flags, int IsOptimized) {
   DIBuilder *D = unwrap(Dref);
-  return wrap(D->createFunction(unwrap<DIScope>(Scope), Name, LinkageName,
-                                File ? unwrap<DIFile>(File) : nullptr, Line,
-                                unwrap<DISubroutineType>(CompositeType),
-                                IsLocalToUnit, IsDefinition, ScopeLine,
-                                static_cast<DINode::DIFlags>(Flags),
-                                IsOptimized));
+  return wrap(D->createFunction(
+      unwrap<DIScope>(Scope), Name, LinkageName,
+      File ? unwrap<DIFile>(File) : nullptr, Line,
+      unwrap<DISubroutineType>(CompositeType), IsLocalToUnit, IsDefinition,
+      ScopeLine, static_cast<DINode::DIFlags>(Flags), IsOptimized));
 }
 
 LLVMMetadataRef
@@ -90,10 +89,9 @@ LLVMDIBuilderCreateAutoVariable(LLVMDIBuilderRef Dref, LLVMMetadataRef Scope,
                                 unsigned Line, LLVMMetadataRef Ty,
                                 int AlwaysPreserve, unsigned Flags) {
   DIBuilder *D = unwrap(Dref);
-  return wrap(D->createAutoVariable(unwrap<DIScope>(Scope), Name,
-                                    unwrap<DIFile>(File), Line,
-                                    unwrap<DIType>(Ty), AlwaysPreserve,
-                                    static_cast<DINode::DIFlags>(Flags)));
+  return wrap(D->createAutoVariable(
+      unwrap<DIScope>(Scope), Name, unwrap<DIFile>(File), Line,
+      unwrap<DIType>(Ty), AlwaysPreserve, static_cast<DINode::DIFlags>(Flags)));
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateParameterVariable(

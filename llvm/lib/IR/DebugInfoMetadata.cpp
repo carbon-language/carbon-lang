@@ -83,7 +83,7 @@ const char *DINode::getFlagString(DIFlags Flag) {
 }
 
 DINode::DIFlags DINode::splitFlags(DIFlags Flags,
-                            SmallVectorImpl<DIFlags> &SplitFlags) {
+                                   SmallVectorImpl<DIFlags> &SplitFlags) {
   // Accessibility and member pointer flags need to be specially handled, since
   // they're packed together.
   if (DIFlags A = Flags & FlagAccessibility) {
@@ -333,9 +333,8 @@ DICompositeType *DICompositeType::getODRTypeIfExists(LLVMContext &Context,
   return Context.pImpl->DITypeMap->lookup(&Identifier);
 }
 
-DISubroutineType *DISubroutineType::getImpl(LLVMContext &Context,
-                                            DIFlags Flags, uint8_t CC,
-                                            Metadata *TypeArray,
+DISubroutineType *DISubroutineType::getImpl(LLVMContext &Context, DIFlags Flags,
+                                            uint8_t CC, Metadata *TypeArray,
                                             StorageType Storage,
                                             bool ShouldCreate) {
   DEFINE_GETIMPL_LOOKUP(DISubroutineType, (Flags, CC, TypeArray));

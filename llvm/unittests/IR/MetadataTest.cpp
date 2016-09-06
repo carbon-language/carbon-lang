@@ -80,13 +80,13 @@ protected:
 
   MDTuple *getTuple() { return MDTuple::getDistinct(Context, None); }
   DISubroutineType *getSubroutineType() {
-    return DISubroutineType::getDistinct(Context, DINode::FlagZero,
-                                         0, getNode(nullptr));
+    return DISubroutineType::getDistinct(Context, DINode::FlagZero, 0,
+                                         getNode(nullptr));
   }
   DISubprogram *getSubprogram() {
     return DISubprogram::getDistinct(Context, nullptr, "", "", nullptr, 0,
-                                     nullptr, false, false, 0, nullptr,
-                                     0, 0, 0, DINode::FlagZero, false, nullptr);
+                                     nullptr, false, false, 0, nullptr, 0, 0, 0,
+                                     DINode::FlagZero, false, nullptr);
   }
   DIFile *getFile() {
     return DIFile::getDistinct(Context, "file.c", "/path/to/dir");
@@ -101,10 +101,9 @@ protected:
     return DIBasicType::get(Context, dwarf::DW_TAG_unspecified_type, Name);
   }
   DIType *getDerivedType() {
-    return DIDerivedType::getDistinct(Context, dwarf::DW_TAG_pointer_type, "",
-                                      nullptr, 0, nullptr,
-                                      getBasicType("basictype"),
-                                      1, 2, 0, DINode::FlagZero);
+    return DIDerivedType::getDistinct(
+        Context, dwarf::DW_TAG_pointer_type, "", nullptr, 0, nullptr,
+        getBasicType("basictype"), 1, 2, 0, DINode::FlagZero);
   }
   Constant *getConstant() {
     return ConstantInt::get(Type::getInt32Ty(Context), Counter++);
@@ -1030,16 +1029,16 @@ TEST_F(DITypeTest, setFlags) {
   Metadata *TypesOps[] = {nullptr};
   Metadata *Types = MDTuple::get(Context, TypesOps);
 
-  DIType *D = DISubroutineType::getDistinct(Context, DINode::FlagZero,
-                                            0, Types);
+  DIType *D =
+      DISubroutineType::getDistinct(Context, DINode::FlagZero, 0, Types);
   EXPECT_EQ(DINode::FlagZero, D->getFlags());
   D->setFlags(DINode::FlagRValueReference);
   EXPECT_EQ(DINode::FlagRValueReference, D->getFlags());
   D->setFlags(DINode::FlagZero);
   EXPECT_EQ(DINode::FlagZero, D->getFlags());
 
-  TempDIType T = DISubroutineType::getTemporary(Context, DINode::FlagZero,
-                                                0, Types);
+  TempDIType T =
+      DISubroutineType::getTemporary(Context, DINode::FlagZero, 0, Types);
   EXPECT_EQ(DINode::FlagZero, T->getFlags());
   T->setFlags(DINode::FlagRValueReference);
   EXPECT_EQ(DINode::FlagRValueReference, T->getFlags());
@@ -1057,9 +1056,9 @@ TEST_F(DIDerivedTypeTest, get) {
   DINode::DIFlags Flags5 = static_cast<DINode::DIFlags>(5);
   DINode::DIFlags Flags4 = static_cast<DINode::DIFlags>(4);
 
-  auto *N = DIDerivedType::get(Context, dwarf::DW_TAG_pointer_type, "something",
-                               File, 1, Scope, BaseType, 2, 3, 4,
-                               Flags5, ExtraData);
+  auto *N =
+      DIDerivedType::get(Context, dwarf::DW_TAG_pointer_type, "something", File,
+                         1, Scope, BaseType, 2, 3, 4, Flags5, ExtraData);
   EXPECT_EQ(dwarf::DW_TAG_pointer_type, N->getTag());
   EXPECT_EQ("something", N->getName());
   EXPECT_EQ(File, N->getFile());
@@ -1079,8 +1078,8 @@ TEST_F(DIDerivedTypeTest, get) {
                                   "something", File, 1, Scope, BaseType, 2, 3,
                                   4, Flags5, ExtraData));
   EXPECT_NE(N, DIDerivedType::get(Context, dwarf::DW_TAG_pointer_type, "else",
-                                  File, 1, Scope, BaseType, 2, 3, 4,
-                                  Flags5, ExtraData));
+                                  File, 1, Scope, BaseType, 2, 3, 4, Flags5,
+                                  ExtraData));
   EXPECT_NE(N, DIDerivedType::get(Context, dwarf::DW_TAG_pointer_type,
                                   "something", getFile(), 1, Scope, BaseType, 2,
                                   3, 4, Flags5, ExtraData));
@@ -1120,9 +1119,9 @@ TEST_F(DIDerivedTypeTest, getWithLargeValues) {
   MDTuple *ExtraData = getTuple();
   DINode::DIFlags Flags = static_cast<DINode::DIFlags>(5);
 
-  auto *N = DIDerivedType::get(Context, dwarf::DW_TAG_pointer_type, "something",
-                               File, 1, Scope, BaseType, UINT64_MAX,
-                               UINT64_MAX - 1, UINT64_MAX - 2, Flags, ExtraData);
+  auto *N = DIDerivedType::get(
+      Context, dwarf::DW_TAG_pointer_type, "something", File, 1, Scope,
+      BaseType, UINT64_MAX, UINT64_MAX - 1, UINT64_MAX - 2, Flags, ExtraData);
   EXPECT_EQ(UINT64_MAX, N->getSizeInBits());
   EXPECT_EQ(UINT64_MAX - 1, N->getAlignInBits());
   EXPECT_EQ(UINT64_MAX - 2, N->getOffsetInBits());

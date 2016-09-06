@@ -2416,12 +2416,12 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       IsDistinct = Record[0];
       DINode::DIFlags Flags = static_cast<DINode::DIFlags>(Record[10]);
       MetadataList.assignValue(
-          GET_OR_DISTINCT(
-              DIDerivedType,
-              (Context, Record[1], getMDString(Record[2]),
-               getMDOrNull(Record[3]), Record[4], getDITypeRefOrNull(Record[5]),
-               getDITypeRefOrNull(Record[6]), Record[7], Record[8], Record[9],
-               Flags, getDITypeRefOrNull(Record[11]))),
+          GET_OR_DISTINCT(DIDerivedType,
+                          (Context, Record[1], getMDString(Record[2]),
+                           getMDOrNull(Record[3]), Record[4],
+                           getDITypeRefOrNull(Record[5]),
+                           getDITypeRefOrNull(Record[6]), Record[7], Record[8],
+                           Record[9], Flags, getDITypeRefOrNull(Record[11]))),
           NextMetadataNo++);
       break;
     }
@@ -2553,22 +2553,21 @@ std::error_code BitcodeReader::parseMetadata(bool ModuleLevel) {
       bool HasThisAdj = Record.size() >= 20;
       DISubprogram *SP = GET_OR_DISTINCT(
           DISubprogram, (Context,
-                         getDITypeRefOrNull(Record[1]),    // scope
-                         getMDString(Record[2]),           // name
-                         getMDString(Record[3]),           // linkageName
-                         getMDOrNull(Record[4]),           // file
-                         Record[5],                        // line
-                         getMDOrNull(Record[6]),           // type
-                         Record[7],                        // isLocal
-                         Record[8],                        // isDefinition
-                         Record[9],                        // scopeLine
-                         getDITypeRefOrNull(Record[10]),   // containingType
-                         Record[11],                       // virtuality
-                         Record[12],                       // virtualIndex
-                         HasThisAdj ? Record[19] : 0,      // thisAdjustment
-                         static_cast<DINode::DIFlags>(
-                         Record[13]                        // flags
-                         ),
+                         getDITypeRefOrNull(Record[1]),  // scope
+                         getMDString(Record[2]),         // name
+                         getMDString(Record[3]),         // linkageName
+                         getMDOrNull(Record[4]),         // file
+                         Record[5],                      // line
+                         getMDOrNull(Record[6]),         // type
+                         Record[7],                      // isLocal
+                         Record[8],                      // isDefinition
+                         Record[9],                      // scopeLine
+                         getDITypeRefOrNull(Record[10]), // containingType
+                         Record[11],                     // virtuality
+                         Record[12],                     // virtualIndex
+                         HasThisAdj ? Record[19] : 0,    // thisAdjustment
+                         static_cast<DINode::DIFlags>(Record[13] // flags
+                                                      ),
                          Record[14],                       // isOptimized
                          HasUnit ? CUorFn : nullptr,       // unit
                          getMDOrNull(Record[15 + Offset]), // templateParams

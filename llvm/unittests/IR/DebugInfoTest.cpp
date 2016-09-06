@@ -71,9 +71,11 @@ TEST(DINodeTest, splitFlags) {
   CHECK_SPLIT(DINode::FlagProtected, {DINode::FlagProtected}, DINode::FlagZero);
   CHECK_SPLIT(DINode::FlagPrivate, {DINode::FlagPrivate}, DINode::FlagZero);
   CHECK_SPLIT(DINode::FlagVector, {DINode::FlagVector}, DINode::FlagZero);
-  CHECK_SPLIT(DINode::FlagRValueReference, {DINode::FlagRValueReference}, DINode::FlagZero);
+  CHECK_SPLIT(DINode::FlagRValueReference, {DINode::FlagRValueReference},
+              DINode::FlagZero);
   DINode::DIFlags Flags[] = {DINode::FlagFwdDecl, DINode::FlagVector};
-  CHECK_SPLIT(DINode::FlagFwdDecl | DINode::FlagVector, Flags, DINode::FlagZero);
+  CHECK_SPLIT(DINode::FlagFwdDecl | DINode::FlagVector, Flags,
+              DINode::FlagZero);
   CHECK_SPLIT(DINode::FlagZero, {}, DINode::FlagZero);
 #undef CHECK_SPLIT
 }

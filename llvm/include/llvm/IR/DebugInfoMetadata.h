@@ -14,9 +14,9 @@
 #ifndef LLVM_IR_DEBUGINFOMETADATA_H
 #define LLVM_IR_DEBUGINFOMETADATA_H
 
+#include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/Dwarf.h"
-#include "llvm/ADT/BitmaskEnum.h"
 
 // Helper macros for defining get() overrides.
 #define DEFINE_MDNODE_GET_UNPACK_IMPL(...) __VA_ARGS__
@@ -190,7 +190,7 @@ public:
   /// Split \c Flags into \c SplitFlags, a vector of its components.  Returns
   /// any remaining (unrecognized) bits.
   static DIFlags splitFlags(DIFlags Flags,
-                             SmallVectorImpl<DIFlags> &SplitFlags);
+                            SmallVectorImpl<DIFlags> &SplitFlags);
 
   static bool classof(const Metadata *MD) {
     switch (MD->getMetadataID()) {
@@ -714,8 +714,8 @@ public:
   DEFINE_MDNODE_GET(DIDerivedType,
                     (unsigned Tag, StringRef Name, DIFile *File, unsigned Line,
                      DIScopeRef Scope, DITypeRef BaseType, uint64_t SizeInBits,
-                     uint64_t AlignInBits, uint64_t OffsetInBits,
-                     DIFlags Flags, Metadata *ExtraData = nullptr),
+                     uint64_t AlignInBits, uint64_t OffsetInBits, DIFlags Flags,
+                     Metadata *ExtraData = nullptr),
                     (Tag, Name, File, Line, Scope, BaseType, SizeInBits,
                      AlignInBits, OffsetInBits, Flags, ExtraData))
 
@@ -825,8 +825,8 @@ public:
   DEFINE_MDNODE_GET(DICompositeType,
                     (unsigned Tag, StringRef Name, DIFile *File, unsigned Line,
                      DIScopeRef Scope, DITypeRef BaseType, uint64_t SizeInBits,
-                     uint64_t AlignInBits, uint64_t OffsetInBits,
-                     DIFlags Flags, DINodeArray Elements, unsigned RuntimeLang,
+                     uint64_t AlignInBits, uint64_t OffsetInBits, DIFlags Flags,
+                     DINodeArray Elements, unsigned RuntimeLang,
                      DITypeRef VTableHolder,
                      DITemplateParameterArray TemplateParams = nullptr,
                      StringRef Identifier = ""),
@@ -1421,24 +1421,18 @@ public:
   ///
   /// Return true if this subprogram is a C++11 reference-qualified non-static
   /// member function (void foo() &).
-  bool isLValueReference() const {
-    return getFlags() & FlagLValueReference;
-  }
+  bool isLValueReference() const { return getFlags() & FlagLValueReference; }
 
   /// \brief Check if this is rvalue-reference-qualified.
   ///
   /// Return true if this subprogram is a C++11 rvalue-reference-qualified
   /// non-static member function (void foo() &&).
-  bool isRValueReference() const {
-    return getFlags() & FlagRValueReference;
-  }
+  bool isRValueReference() const { return getFlags() & FlagRValueReference; }
 
   /// \brief Check if this is marked as noreturn.
   ///
   /// Return true if this subprogram is C++11 noreturn or C11 _Noreturn
-  bool isNoReturn() const {
-    return getFlags() & FlagNoReturn;
-  }
+  bool isNoReturn() const { return getFlags() & FlagNoReturn; }
 
   DIScopeRef getScope() const { return DIScopeRef(getRawScope()); }
 
@@ -1991,11 +1985,13 @@ class DILocalVariable : public DIVariable {
 public:
   DEFINE_MDNODE_GET(DILocalVariable,
                     (DILocalScope * Scope, StringRef Name, DIFile *File,
-                     unsigned Line, DITypeRef Type, unsigned Arg, DIFlags Flags),
+                     unsigned Line, DITypeRef Type, unsigned Arg,
+                     DIFlags Flags),
                     (Scope, Name, File, Line, Type, Arg, Flags))
   DEFINE_MDNODE_GET(DILocalVariable,
                     (Metadata * Scope, MDString *Name, Metadata *File,
-                     unsigned Line, Metadata *Type, unsigned Arg, DIFlags Flags),
+                     unsigned Line, Metadata *Type, unsigned Arg,
+                     DIFlags Flags),
                     (Scope, Name, File, Line, Type, Arg, Flags))
 
   TempDILocalVariable clone() const { return cloneImpl(); }
