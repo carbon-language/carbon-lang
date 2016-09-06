@@ -71,6 +71,12 @@ def M1WriteLA : SchedWriteVariant<[SchedVar<ScaledIdxPred, [M1WriteL5,
                                                             M1WriteA1]>,
                                    SchedVar<NoSchedPred,   [M1WriteL5]>]>;
 
+def M1WriteS1 : SchedWriteRes<[M1UnitS]> { let Latency = 1; }
+def M1WriteS2 : SchedWriteRes<[M1UnitS]> { let Latency = 2; }
+def M1WriteSA : SchedWriteVariant<[SchedVar<ScaledIdxPred, [M1WriteS2,
+                                                            M1WriteA1]>,
+                                   SchedVar<NoSchedPred,   [M1WriteS1]>]>;
+
 def M1ReadAdrBase : SchedReadVariant<[SchedVar<ScaledIdxPred, [ReadDefault]>,
                                       SchedVar<NoSchedPred,   [ReadDefault]>]>;
 def : SchedAlias<ReadAdrBase, M1ReadAdrBase>;
@@ -117,10 +123,9 @@ def : SchedAlias<WriteLDIdx, M1WriteLA>;
 
 // Store instructions.
 def : WriteRes<WriteST,    [M1UnitS]> { let Latency = 1; }
-// TODO: Extended address requires also the ALU.
-def : WriteRes<WriteSTIdx, [M1UnitS]> { let Latency = 1; }
 def : WriteRes<WriteSTP,   [M1UnitS]> { let Latency = 1; }
 def : WriteRes<WriteSTX,   [M1UnitS]> { let Latency = 1; }
+def : SchedAlias<WriteSTIdx, M1WriteSA>;
 
 // FP data instructions.
 def : WriteRes<WriteF,    [M1UnitFADD]>  { let Latency = 3; }
