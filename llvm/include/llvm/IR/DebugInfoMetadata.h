@@ -14,7 +14,6 @@
 #ifndef LLVM_IR_DEBUGINFOMETADATA_H
 #define LLVM_IR_DEBUGINFOMETADATA_H
 
-#include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/Dwarf.h"
 
@@ -172,26 +171,23 @@ public:
   ///
   /// The three accessibility flags are mutually exclusive and rolled together
   /// in the first two bits.
-  enum DIFlags : uint32_t {
+  enum DIFlags {
 #define HANDLE_DI_FLAG(ID, NAME) Flag##NAME = ID,
-#define DI_FLAG_LARGEST_NEEDED
 #include "llvm/IR/DebugInfoFlags.def"
     FlagAccessibility = FlagPrivate | FlagProtected | FlagPublic,
     FlagPtrToMemberRep = FlagSingleInheritance | FlagMultipleInheritance |
                          FlagVirtualInheritance,
-    LLVM_MARK_AS_BITMASK_ENUM(FlagLargest)
   };
 
-  static DIFlags getFlag(StringRef Flag);
-  static const char *getFlagString(DIFlags Flag);
-  // static const char *getFlagString(DIFlagsUnderlying Flag);
+  static unsigned getFlag(StringRef Flag);
+  static const char *getFlagString(unsigned Flag);
 
   /// \brief Split up a flags bitfield.
   ///
   /// Split \c Flags into \c SplitFlags, a vector of its components.  Returns
   /// any remaining (unrecognized) bits.
-  static DIFlags splitFlags(DIFlags Flags,
-                            SmallVectorImpl<DIFlags> &SplitFlags);
+  static unsigned splitFlags(unsigned Flags,
+                             SmallVectorImpl<unsigned> &SplitFlags);
 
   static bool classof(const Metadata *MD) {
     switch (MD->getMetadataID()) {
@@ -512,7 +508,7 @@ StringRef DIScope::getDirectory() const {
 /// TODO: Split up flags.
 class DIType : public DIScope {
   unsigned Line;
-  DIFlags Flags;
+  unsigned Flags;
   uint64_t SizeInBits;
   uint64_t AlignInBits;
   uint64_t OffsetInBits;
@@ -520,14 +516,14 @@ class DIType : public DIScope {
 protected:
   DIType(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
          unsigned Line, uint64_t SizeInBits, uint64_t AlignInBits,
-         uint64_t OffsetInBits, DIFlags Flags, ArrayRef<Metadata *> Ops)
+         uint64_t OffsetInBits, unsigned Flags, ArrayRef<Metadata *> Ops)
       : DIScope(C, ID, Storage, Tag, Ops) {
     init(Line, SizeInBits, AlignInBits, OffsetInBits, Flags);
   }
   ~DIType() = default;
 
   void init(unsigned Line, uint64_t SizeInBits, uint64_t AlignInBits,
-            uint64_t OffsetInBits, DIFlags Flags) {
+            uint64_t OffsetInBits, unsigned Flags) {
     this->Line = Line;
     this->Flags = Flags;
     this->SizeInBits = SizeInBits;
@@ -537,7 +533,7 @@ protected:
 
   /// Change fields in place.
   void mutate(unsigned Tag, unsigned Line, uint64_t SizeInBits,
-              uint64_t AlignInBits, uint64_t OffsetInBits, DIFlags Flags) {
+              uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags) {
     assert(isDistinct() && "Only distinct nodes can mutate");
     setTag(Tag);
     init(Line, SizeInBits, AlignInBits, OffsetInBits, Flags);
@@ -552,7 +548,7 @@ public:
   uint64_t getSizeInBits() const { return SizeInBits; }
   uint64_t getAlignInBits() const { return AlignInBits; }
   uint64_t getOffsetInBits() const { return OffsetInBits; }
-  DIFlags getFlags() const { return Flags; }
+  unsigned getFlags() const { return Flags; }
 
   DIScopeRef getScope() const { return DIScopeRef(getRawScope()); }
   StringRef getName() const { return getStringOperand(2); }
@@ -561,7 +557,7 @@ public:
   Metadata *getRawScope() const { return getOperand(1); }
   MDString *getRawName() const { return getOperandAs<MDString>(2); }
 
-  void setFlags(DIFlags NewFlags) {
+  void setFlags(unsigned NewFlags) {
     assert(!isUniqued() && "Cannot set flags on uniqued nodes");
     Flags = NewFlags;
   }
@@ -618,7 +614,7 @@ class DIBasicType : public DIType {
               uint64_t SizeInBits, uint64_t AlignInBits, unsigned Encoding,
               ArrayRef<Metadata *> Ops)
       : DIType(C, DIBasicTypeKind, Storage, Tag, 0, SizeInBits, AlignInBits, 0,
-               FlagZero, Ops),
+               0, Ops),
         Encoding(Encoding) {}
   ~DIBasicType() = default;
 
@@ -672,7 +668,7 @@ class DIDerivedType : public DIType {
 
   DIDerivedType(LLVMContext &C, StorageType Storage, unsigned Tag,
                 unsigned Line, uint64_t SizeInBits, uint64_t AlignInBits,
-                uint64_t OffsetInBits, DIFlags Flags, ArrayRef<Metadata *> Ops)
+                uint64_t OffsetInBits, unsigned Flags, ArrayRef<Metadata *> Ops)
       : DIType(C, DIDerivedTypeKind, Storage, Tag, Line, SizeInBits,
                AlignInBits, OffsetInBits, Flags, Ops) {}
   ~DIDerivedType() = default;
@@ -681,7 +677,7 @@ class DIDerivedType : public DIType {
                                 StringRef Name, DIFile *File, unsigned Line,
                                 DIScopeRef Scope, DITypeRef BaseType,
                                 uint64_t SizeInBits, uint64_t AlignInBits,
-                                uint64_t OffsetInBits, DIFlags Flags,
+                                uint64_t OffsetInBits, unsigned Flags,
                                 Metadata *ExtraData, StorageType Storage,
                                 bool ShouldCreate = true) {
     return getImpl(Context, Tag, getCanonicalMDString(Context, Name), File,
@@ -692,7 +688,7 @@ class DIDerivedType : public DIType {
                                 MDString *Name, Metadata *File, unsigned Line,
                                 Metadata *Scope, Metadata *BaseType,
                                 uint64_t SizeInBits, uint64_t AlignInBits,
-                                uint64_t OffsetInBits, DIFlags Flags,
+                                uint64_t OffsetInBits, unsigned Flags,
                                 Metadata *ExtraData, StorageType Storage,
                                 bool ShouldCreate = true);
 
@@ -708,15 +704,15 @@ public:
                     (unsigned Tag, MDString *Name, Metadata *File,
                      unsigned Line, Metadata *Scope, Metadata *BaseType,
                      uint64_t SizeInBits, uint64_t AlignInBits,
-                     uint64_t OffsetInBits, DIFlags Flags,
+                     uint64_t OffsetInBits, unsigned Flags,
                      Metadata *ExtraData = nullptr),
                     (Tag, Name, File, Line, Scope, BaseType, SizeInBits,
                      AlignInBits, OffsetInBits, Flags, ExtraData))
   DEFINE_MDNODE_GET(DIDerivedType,
                     (unsigned Tag, StringRef Name, DIFile *File, unsigned Line,
                      DIScopeRef Scope, DITypeRef BaseType, uint64_t SizeInBits,
-                     uint64_t AlignInBits, uint64_t OffsetInBits, DIFlags Flags,
-                     Metadata *ExtraData = nullptr),
+                     uint64_t AlignInBits, uint64_t OffsetInBits,
+                     unsigned Flags, Metadata *ExtraData = nullptr),
                     (Tag, Name, File, Line, Scope, BaseType, SizeInBits,
                      AlignInBits, OffsetInBits, Flags, ExtraData))
 
@@ -776,7 +772,7 @@ class DICompositeType : public DIType {
 
   DICompositeType(LLVMContext &C, StorageType Storage, unsigned Tag,
                   unsigned Line, unsigned RuntimeLang, uint64_t SizeInBits,
-                  uint64_t AlignInBits, uint64_t OffsetInBits, DIFlags Flags,
+                  uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
                   ArrayRef<Metadata *> Ops)
       : DIType(C, DICompositeTypeKind, Storage, Tag, Line, SizeInBits,
                AlignInBits, OffsetInBits, Flags, Ops),
@@ -786,7 +782,7 @@ class DICompositeType : public DIType {
   /// Change fields in place.
   void mutate(unsigned Tag, unsigned Line, unsigned RuntimeLang,
               uint64_t SizeInBits, uint64_t AlignInBits, uint64_t OffsetInBits,
-              DIFlags Flags) {
+              unsigned Flags) {
     assert(isDistinct() && "Only distinct nodes can mutate");
     assert(getRawIdentifier() && "Only ODR-uniqued nodes should mutate");
     this->RuntimeLang = RuntimeLang;
@@ -797,7 +793,7 @@ class DICompositeType : public DIType {
   getImpl(LLVMContext &Context, unsigned Tag, StringRef Name, Metadata *File,
           unsigned Line, DIScopeRef Scope, DITypeRef BaseType,
           uint64_t SizeInBits, uint64_t AlignInBits, uint64_t OffsetInBits,
-          DIFlags Flags, DINodeArray Elements, unsigned RuntimeLang,
+          uint64_t Flags, DINodeArray Elements, unsigned RuntimeLang,
           DITypeRef VTableHolder, DITemplateParameterArray TemplateParams,
           StringRef Identifier, StorageType Storage, bool ShouldCreate = true) {
     return getImpl(
@@ -810,7 +806,7 @@ class DICompositeType : public DIType {
   getImpl(LLVMContext &Context, unsigned Tag, MDString *Name, Metadata *File,
           unsigned Line, Metadata *Scope, Metadata *BaseType,
           uint64_t SizeInBits, uint64_t AlignInBits, uint64_t OffsetInBits,
-          DIFlags Flags, Metadata *Elements, unsigned RuntimeLang,
+          unsigned Flags, Metadata *Elements, unsigned RuntimeLang,
           Metadata *VTableHolder, Metadata *TemplateParams,
           MDString *Identifier, StorageType Storage, bool ShouldCreate = true);
 
@@ -826,8 +822,8 @@ public:
   DEFINE_MDNODE_GET(DICompositeType,
                     (unsigned Tag, StringRef Name, DIFile *File, unsigned Line,
                      DIScopeRef Scope, DITypeRef BaseType, uint64_t SizeInBits,
-                     uint64_t AlignInBits, uint64_t OffsetInBits, DIFlags Flags,
-                     DINodeArray Elements, unsigned RuntimeLang,
+                     uint64_t AlignInBits, uint64_t OffsetInBits,
+                     unsigned Flags, DINodeArray Elements, unsigned RuntimeLang,
                      DITypeRef VTableHolder,
                      DITemplateParameterArray TemplateParams = nullptr,
                      StringRef Identifier = ""),
@@ -838,7 +834,7 @@ public:
                     (unsigned Tag, MDString *Name, Metadata *File,
                      unsigned Line, Metadata *Scope, Metadata *BaseType,
                      uint64_t SizeInBits, uint64_t AlignInBits,
-                     uint64_t OffsetInBits, DIFlags Flags, Metadata *Elements,
+                     uint64_t OffsetInBits, unsigned Flags, Metadata *Elements,
                      unsigned RuntimeLang, Metadata *VTableHolder,
                      Metadata *TemplateParams = nullptr,
                      MDString *Identifier = nullptr),
@@ -859,7 +855,7 @@ public:
   getODRType(LLVMContext &Context, MDString &Identifier, unsigned Tag,
              MDString *Name, Metadata *File, unsigned Line, Metadata *Scope,
              Metadata *BaseType, uint64_t SizeInBits, uint64_t AlignInBits,
-             uint64_t OffsetInBits, DIFlags Flags, Metadata *Elements,
+             uint64_t OffsetInBits, unsigned Flags, Metadata *Elements,
              unsigned RuntimeLang, Metadata *VTableHolder,
              Metadata *TemplateParams);
   static DICompositeType *getODRTypeIfExists(LLVMContext &Context,
@@ -878,7 +874,7 @@ public:
   buildODRType(LLVMContext &Context, MDString &Identifier, unsigned Tag,
                MDString *Name, Metadata *File, unsigned Line, Metadata *Scope,
                Metadata *BaseType, uint64_t SizeInBits, uint64_t AlignInBits,
-               uint64_t OffsetInBits, DIFlags Flags, Metadata *Elements,
+               uint64_t OffsetInBits, unsigned Flags, Metadata *Elements,
                unsigned RuntimeLang, Metadata *VTableHolder,
                Metadata *TemplateParams);
 
@@ -937,20 +933,20 @@ class DISubroutineType : public DIType {
   /// type dwarf::CallingConvention.
   uint8_t CC;
 
-  DISubroutineType(LLVMContext &C, StorageType Storage, DIFlags Flags,
+  DISubroutineType(LLVMContext &C, StorageType Storage, unsigned Flags,
                    uint8_t CC, ArrayRef<Metadata *> Ops)
       : DIType(C, DISubroutineTypeKind, Storage, dwarf::DW_TAG_subroutine_type,
                0, 0, 0, 0, Flags, Ops),
         CC(CC) {}
   ~DISubroutineType() = default;
 
-  static DISubroutineType *getImpl(LLVMContext &Context, DIFlags Flags,
+  static DISubroutineType *getImpl(LLVMContext &Context, unsigned Flags,
                                    uint8_t CC, DITypeRefArray TypeArray,
                                    StorageType Storage,
                                    bool ShouldCreate = true) {
     return getImpl(Context, Flags, CC, TypeArray.get(), Storage, ShouldCreate);
   }
-  static DISubroutineType *getImpl(LLVMContext &Context, DIFlags Flags,
+  static DISubroutineType *getImpl(LLVMContext &Context, unsigned Flags,
                                    uint8_t CC, Metadata *TypeArray,
                                    StorageType Storage,
                                    bool ShouldCreate = true);
@@ -961,10 +957,10 @@ class DISubroutineType : public DIType {
 
 public:
   DEFINE_MDNODE_GET(DISubroutineType,
-                    (DIFlags Flags, uint8_t CC, DITypeRefArray TypeArray),
+                    (unsigned Flags, uint8_t CC, DITypeRefArray TypeArray),
                     (Flags, CC, TypeArray))
   DEFINE_MDNODE_GET(DISubroutineType,
-                    (DIFlags Flags, uint8_t CC, Metadata *TypeArray),
+                    (unsigned Flags, uint8_t CC, Metadata *TypeArray),
                     (Flags, CC, TypeArray))
 
   TempDISubroutineType clone() const { return cloneImpl(); }
@@ -1303,6 +1299,8 @@ class DISubprogram : public DILocalScope {
   // in 2 bits (none/pure/pure_virtual).
   unsigned Virtuality : 2;
 
+  unsigned Flags : 27;
+
   // These are boolean flags so one bit is enough.
   // MSVC starts a new container field every time the base
   // type changes so we can't use 'bool' to ensure these bits
@@ -1311,22 +1309,19 @@ class DISubprogram : public DILocalScope {
   unsigned IsDefinition : 1;
   unsigned IsOptimized : 1;
 
-  unsigned Padding : 3;
-
-  DIFlags Flags;
-
   DISubprogram(LLVMContext &C, StorageType Storage, unsigned Line,
                unsigned ScopeLine, unsigned Virtuality, unsigned VirtualIndex,
-               int ThisAdjustment, DIFlags Flags, bool IsLocalToUnit,
+               int ThisAdjustment, unsigned Flags, bool IsLocalToUnit,
                bool IsDefinition, bool IsOptimized, ArrayRef<Metadata *> Ops)
       : DILocalScope(C, DISubprogramKind, Storage, dwarf::DW_TAG_subprogram,
                      Ops),
         Line(Line), ScopeLine(ScopeLine), VirtualIndex(VirtualIndex),
-        ThisAdjustment(ThisAdjustment), Virtuality(Virtuality),
+        ThisAdjustment(ThisAdjustment), Virtuality(Virtuality), Flags(Flags),
         IsLocalToUnit(IsLocalToUnit), IsDefinition(IsDefinition),
-        IsOptimized(IsOptimized), Flags(Flags) {
+        IsOptimized(IsOptimized) {
     static_assert(dwarf::DW_VIRTUALITY_max < 4, "Virtuality out of range");
     assert(Virtuality < 4 && "Virtuality out of range");
+    assert((Flags < (1 << 27)) && "Flags out of range");
   }
   ~DISubprogram() = default;
 
@@ -1335,7 +1330,7 @@ class DISubprogram : public DILocalScope {
           StringRef LinkageName, DIFile *File, unsigned Line,
           DISubroutineType *Type, bool IsLocalToUnit, bool IsDefinition,
           unsigned ScopeLine, DITypeRef ContainingType, unsigned Virtuality,
-          unsigned VirtualIndex, int ThisAdjustment, DIFlags Flags,
+          unsigned VirtualIndex, int ThisAdjustment, unsigned Flags,
           bool IsOptimized, DICompileUnit *Unit,
           DITemplateParameterArray TemplateParams, DISubprogram *Declaration,
           DILocalVariableArray Variables, StorageType Storage,
@@ -1352,7 +1347,7 @@ class DISubprogram : public DILocalScope {
           MDString *LinkageName, Metadata *File, unsigned Line, Metadata *Type,
           bool IsLocalToUnit, bool IsDefinition, unsigned ScopeLine,
           Metadata *ContainingType, unsigned Virtuality, unsigned VirtualIndex,
-          int ThisAdjustment, DIFlags Flags, bool IsOptimized, Metadata *Unit,
+          int ThisAdjustment, unsigned Flags, bool IsOptimized, Metadata *Unit,
           Metadata *TemplateParams, Metadata *Declaration, Metadata *Variables,
           StorageType Storage, bool ShouldCreate = true);
 
@@ -1371,7 +1366,7 @@ public:
                      DIFile *File, unsigned Line, DISubroutineType *Type,
                      bool IsLocalToUnit, bool IsDefinition, unsigned ScopeLine,
                      DITypeRef ContainingType, unsigned Virtuality,
-                     unsigned VirtualIndex, int ThisAdjustment, DIFlags Flags,
+                     unsigned VirtualIndex, int ThisAdjustment, unsigned Flags,
                      bool IsOptimized, DICompileUnit *Unit,
                      DITemplateParameterArray TemplateParams = nullptr,
                      DISubprogram *Declaration = nullptr,
@@ -1385,7 +1380,7 @@ public:
       (Metadata * Scope, MDString *Name, MDString *LinkageName, Metadata *File,
        unsigned Line, Metadata *Type, bool IsLocalToUnit, bool IsDefinition,
        unsigned ScopeLine, Metadata *ContainingType, unsigned Virtuality,
-       unsigned VirtualIndex, int ThisAdjustment, DIFlags Flags,
+       unsigned VirtualIndex, int ThisAdjustment, unsigned Flags,
        bool IsOptimized, Metadata *Unit, Metadata *TemplateParams = nullptr,
        Metadata *Declaration = nullptr, Metadata *Variables = nullptr),
       (Scope, Name, LinkageName, File, Line, Type, IsLocalToUnit, IsDefinition,
@@ -1400,12 +1395,12 @@ public:
   unsigned getVirtualIndex() const { return VirtualIndex; }
   int getThisAdjustment() const { return ThisAdjustment; }
   unsigned getScopeLine() const { return ScopeLine; }
-  DIFlags getFlags() const { return Flags; }
+  unsigned getFlags() const { return Flags; }
   bool isLocalToUnit() const { return IsLocalToUnit; }
   bool isDefinition() const { return IsDefinition; }
   bool isOptimized() const { return IsOptimized; }
 
-  bool isArtificial() const { return getFlags() & FlagArtificial; }
+  unsigned isArtificial() const { return getFlags() & FlagArtificial; }
   bool isPrivate() const {
     return (getFlags() & FlagAccessibility) == FlagPrivate;
   }
@@ -1422,18 +1417,24 @@ public:
   ///
   /// Return true if this subprogram is a C++11 reference-qualified non-static
   /// member function (void foo() &).
-  bool isLValueReference() const { return getFlags() & FlagLValueReference; }
+  unsigned isLValueReference() const {
+    return getFlags() & FlagLValueReference;
+  }
 
   /// \brief Check if this is rvalue-reference-qualified.
   ///
   /// Return true if this subprogram is a C++11 rvalue-reference-qualified
   /// non-static member function (void foo() &&).
-  bool isRValueReference() const { return getFlags() & FlagRValueReference; }
+  unsigned isRValueReference() const {
+    return getFlags() & FlagRValueReference;
+  }
 
   /// \brief Check if this is marked as noreturn.
   ///
   /// Return true if this subprogram is C++11 noreturn or C11 _Noreturn
-  bool isNoReturn() const { return getFlags() & FlagNoReturn; }
+  unsigned isNoReturn() const {
+    return getFlags() & FlagNoReturn;
+  }
 
   DIScopeRef getScope() const { return DIScopeRef(getRawScope()); }
 
@@ -1954,19 +1955,20 @@ class DILocalVariable : public DIVariable {
   friend class MDNode;
 
   unsigned Arg : 16;
-  DIFlags Flags;
+  unsigned Flags : 16;
 
   DILocalVariable(LLVMContext &C, StorageType Storage, unsigned Line,
-                  unsigned Arg, DIFlags Flags, ArrayRef<Metadata *> Ops)
+                  unsigned Arg, unsigned Flags, ArrayRef<Metadata *> Ops)
       : DIVariable(C, DILocalVariableKind, Storage, Line, Ops), Arg(Arg),
         Flags(Flags) {
+    assert(Flags < (1 << 16) && "DILocalVariable: Flags out of range");
     assert(Arg < (1 << 16) && "DILocalVariable: Arg out of range");
   }
   ~DILocalVariable() = default;
 
   static DILocalVariable *getImpl(LLVMContext &Context, DIScope *Scope,
                                   StringRef Name, DIFile *File, unsigned Line,
-                                  DITypeRef Type, unsigned Arg, DIFlags Flags,
+                                  DITypeRef Type, unsigned Arg, unsigned Flags,
                                   StorageType Storage,
                                   bool ShouldCreate = true) {
     return getImpl(Context, Scope, getCanonicalMDString(Context, Name), File,
@@ -1974,7 +1976,7 @@ class DILocalVariable : public DIVariable {
   }
   static DILocalVariable *getImpl(LLVMContext &Context, Metadata *Scope,
                                   MDString *Name, Metadata *File, unsigned Line,
-                                  Metadata *Type, unsigned Arg, DIFlags Flags,
+                                  Metadata *Type, unsigned Arg, unsigned Flags,
                                   StorageType Storage,
                                   bool ShouldCreate = true);
 
@@ -1987,12 +1989,12 @@ public:
   DEFINE_MDNODE_GET(DILocalVariable,
                     (DILocalScope * Scope, StringRef Name, DIFile *File,
                      unsigned Line, DITypeRef Type, unsigned Arg,
-                     DIFlags Flags),
+                     unsigned Flags),
                     (Scope, Name, File, Line, Type, Arg, Flags))
   DEFINE_MDNODE_GET(DILocalVariable,
                     (Metadata * Scope, MDString *Name, Metadata *File,
                      unsigned Line, Metadata *Type, unsigned Arg,
-                     DIFlags Flags),
+                     unsigned Flags),
                     (Scope, Name, File, Line, Type, Arg, Flags))
 
   TempDILocalVariable clone() const { return cloneImpl(); }
@@ -2006,7 +2008,7 @@ public:
 
   bool isParameter() const { return Arg; }
   unsigned getArg() const { return Arg; }
-  DIFlags getFlags() const { return Flags; }
+  unsigned getFlags() const { return Flags; }
 
   bool isArtificial() const { return getFlags() & FlagArtificial; }
   bool isObjectPointer() const { return getFlags() & FlagObjectPointer; }

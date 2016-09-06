@@ -235,9 +235,8 @@ protected:
         DBuilder.createCompileUnit(dwarf::DW_LANG_C99, "filename.c",
                                    "/file/dir", "CloneFunc", false, "", 0);
 
-    auto *Subprogram =
-        DBuilder.createFunction(CU, "f", "f", File, 4, FuncType, true, true, 3,
-                                DINode::FlagZero, false);
+    auto *Subprogram = DBuilder.createFunction(
+        CU, "f", "f", File, 4, FuncType, true, true, 3, 0, false);
     OldFunc->setSubprogram(Subprogram);
 
     // Function body
@@ -422,9 +421,8 @@ protected:
         DBuilder.createCompileUnit(dwarf::DW_LANG_C99, "filename.c",
                                    "/file/dir", "CloneModule", false, "", 0);
     // Function DI
-    auto *Subprogram =
-        DBuilder.createFunction(CU, "f", "f", File, 4, DFuncType, true, true, 3,
-                                DINode::FlagZero, false);
+    auto *Subprogram = DBuilder.createFunction(CU, "f", "f", File, 4, DFuncType,
+                                               true, true, 3, 0, false);
     F->setSubprogram(Subprogram);
 
     auto *Entry = BasicBlock::Create(C, "", F);
