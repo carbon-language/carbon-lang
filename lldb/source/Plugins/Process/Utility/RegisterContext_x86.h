@@ -13,6 +13,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "llvm/Support/Compiler.h"
+
 //---------------------------------------------------------------------------
 // i386 ehframe, dwarf regnums
 //---------------------------------------------------------------------------
@@ -285,14 +287,17 @@ struct YMM {
   YMMReg ymm[16]; // assembled from ymmh and xmm registers
 };
 
+LLVM_PACKED_START
 struct XSAVE_HDR {
   uint64_t xstate_bv; // OS enabled xstate mask to determine the extended states
                       // supported by the processor
   uint64_t reserved1[2];
   uint64_t reserved2[5];
-} __attribute__((packed));
+};
+LLVM_PACKED_END
 
 // x86 extensions to FXSAVE (i.e. for AVX processors)
+LLVM_PACKED_START
 struct XSAVE {
   FXSAVE i387;      // floating point registers typical in i387_fxsave_struct
   XSAVE_HDR header; // The xsave_hdr_struct can be used to determine if the
@@ -300,7 +305,8 @@ struct XSAVE {
   YMMHReg ymmh[16]; // High 16 bytes of each of 16 YMM registers (the low bytes
                     // are in FXSAVE.xmm for compatibility with SSE)
                     // Slot any extensions to the register file here
-} __attribute__((packed, aligned(64)));
+} LLVM_ALIGNAS(64);
+LLVM_PACKED_END
 
 // Floating-point registers
 struct FPR {
