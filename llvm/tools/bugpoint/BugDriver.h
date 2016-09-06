@@ -85,7 +85,7 @@ public:
   /// variables are set up from command line arguments. The \p as_child argument
   /// indicates whether the driver is to run in parent mode or child mode.
   ///
-  bool run(std::string &ErrMsg);
+  bool run();
 
   /// debugOptimizerCrash - This method is called when some optimizer pass
   /// crashes on input.  It attempts to prune down the testcase to something
@@ -96,7 +96,7 @@ public:
   /// debugCodeGeneratorCrash - This method is called when the code generator
   /// crashes on an input.  It attempts to reduce the input as much as possible
   /// while still causing the code generator to crash.
-  bool debugCodeGeneratorCrash(std::string &Error);
+  bool debugCodeGeneratorCrash();
 
   /// debugMiscompilation - This method is used when the passes selected are not
   /// crashing, but the generated output is semantically different from the
@@ -266,8 +266,7 @@ public:
   /// If the passes did not compile correctly, output the command required to
   /// recreate the failure. This returns true if a compiler error is found.
   ///
-  bool runManyPasses(const std::vector<std::string> &AllPasses,
-                     std::string &ErrMsg);
+  bool runManyPasses(const std::vector<std::string> &AllPasses);
 
   /// writeProgramToFile - This writes the current "Program" to the named
   /// bitcode file.  If an error occurs, true is returned.

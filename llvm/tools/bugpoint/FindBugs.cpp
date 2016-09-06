@@ -30,8 +30,7 @@ using namespace llvm;
 /// If the passes did not compile correctly, output the command required to
 /// recreate the failure. This returns true if a compiler error is found.
 ///
-bool BugDriver::runManyPasses(const std::vector<std::string> &AllPasses,
-                              std::string &ErrMsg) {
+bool BugDriver::runManyPasses(const std::vector<std::string> &AllPasses) {
   setPassesToRun(AllPasses);
   outs() << "Starting bug finding procedure...\n\n";
 
@@ -82,7 +81,7 @@ bool BugDriver::runManyPasses(const std::vector<std::string> &AllPasses,
     if (!Error.empty()) {
       outs() << "\n*** compileProgram threw an exception: ";
       outs() << Error;
-      return debugCodeGeneratorCrash(ErrMsg);
+      return debugCodeGeneratorCrash();
     }
     outs() << '\n';
 
@@ -100,7 +99,7 @@ bool BugDriver::runManyPasses(const std::vector<std::string> &AllPasses,
     }
     if (!Error.empty()) {
       errs() << Error;
-      debugCodeGeneratorCrash(ErrMsg);
+      debugCodeGeneratorCrash();
       return true;
     }
     outs() << "\n*** diff'd output matches!\n";

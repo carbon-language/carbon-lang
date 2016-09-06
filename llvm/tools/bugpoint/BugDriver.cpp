@@ -146,11 +146,11 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
 /// run - The top level method that is invoked after all of the instance
 /// variables are set up from command line arguments.
 ///
-bool BugDriver::run(std::string &ErrMsg) {
+bool BugDriver::run() {
   if (run_find_bugs) {
     // Rearrange the passes and apply them to the program. Repeat this process
     // until the user kills the program or we find a bug.
-    return runManyPasses(PassesToRun, ErrMsg);
+    return runManyPasses(PassesToRun);
   }
 
   // If we're not running as a child, the first thing that we must do is
@@ -176,7 +176,7 @@ bool BugDriver::run(std::string &ErrMsg) {
   compileProgram(Program, &Error);
   if (!Error.empty()) {
     outs() << Error;
-    return debugCodeGeneratorCrash(ErrMsg);
+    return debugCodeGeneratorCrash();
   }
   outs() << '\n';
 
@@ -188,7 +188,7 @@ bool BugDriver::run(std::string &ErrMsg) {
   if (ReferenceOutputFile.empty()) {
     outs() << "Generating reference output from raw program: ";
     if (!createReferenceFile(Program)) {
-      return debugCodeGeneratorCrash(ErrMsg);
+      return debugCodeGeneratorCrash();
     }
     CreatedOutput = true;
   }
@@ -205,14 +205,14 @@ bool BugDriver::run(std::string &ErrMsg) {
   bool Diff = diffProgram(Program, "", "", false, &Error);
   if (!Error.empty()) {
     errs() << Error;
-    return debugCodeGeneratorCrash(ErrMsg);
+    return debugCodeGeneratorCrash();
   }
   if (!Diff) {
     outs() << "\n*** Output matches: Debugging miscompilation!\n";
     debugMiscompilation(&Error);
     if (!Error.empty()) {
       errs() << Error;
-      return debugCodeGeneratorCrash(ErrMsg);
+      return debugCodeGeneratorCrash();
     }
     return false;
   }
@@ -222,7 +222,7 @@ bool BugDriver::run(std::string &ErrMsg) {
   bool Failure = debugCodeGenerator(&Error);
   if (!Error.empty()) {
     errs() << Error;
-    return debugCodeGeneratorCrash(ErrMsg);
+    return debugCodeGeneratorCrash();
   }
   return Failure;
 }
