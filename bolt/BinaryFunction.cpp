@@ -585,8 +585,8 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             // Assign proper opcode for tail calls, so that they could be
             // treated as calls.
             if (!IsCall) {
-              if (opts::Verbosity >= 2 &&
-                  !MIA->convertJmpToTailCall(Instruction)) {
+              if (!MIA->convertJmpToTailCall(Instruction) &&
+                  opts::Verbosity >= 2) {
                 assert(IsCondBranch && "unknown tail call instruction");
                 errs() << "BOLT-WARNING: conditional tail call detected in "
                        << "function " << *this << " at 0x"
