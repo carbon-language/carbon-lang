@@ -2030,9 +2030,8 @@ define <4 x float>@test_int_x86_avx512_mask_vpermi2var_ps_128_cast(<4 x float> %
 ; CHECK-LABEL: test_int_x86_avx512_mask_vpermi2var_ps_128_cast:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
-; CHECK-NEXT:    vmovdqa64 %xmm1, %xmm3 ## encoding: [0x62,0xf1,0xfd,0x08,0x6f,0xd9]
-; CHECK-NEXT:    vpermi2ps %xmm2, %xmm0, %xmm3 ## encoding: [0x62,0xf2,0x7d,0x08,0x77,0xda]
-; CHECK-NEXT:    vblendmps %xmm3, %xmm1, %xmm0 {%k1} ## encoding: [0x62,0xf2,0x75,0x09,0x65,0xc3]
+; CHECK-NEXT:    vpermi2ps %xmm2, %xmm0, %xmm1 {%k1} ## encoding: [0x62,0xf2,0x7d,0x09,0x77,0xca]
+; CHECK-NEXT:    vmovdqa64 %xmm1, %xmm0 ## encoding: [0x62,0xf1,0xfd,0x08,0x6f,0xc1]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
   %x1cast = bitcast <2 x i64> %x1 to <4 x i32>
   %res = call <4 x float> @llvm.x86.avx512.mask.vpermi2var.ps.128(<4 x float> %x0, <4 x i32> %x1cast, <4 x float> %x2, i8 %x3)
