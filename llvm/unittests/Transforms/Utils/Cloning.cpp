@@ -236,7 +236,7 @@ protected:
                                    "/file/dir", "CloneFunc", false, "", 0);
 
     auto *Subprogram = DBuilder.createFunction(
-        CU, "f", "f", File, 4, FuncType, true, true, 3, 0, false);
+        CU, "f", "f", File, 4, FuncType, true, true, 3, DINode::FlagZero, false);
     OldFunc->setSubprogram(Subprogram);
 
     // Function body
@@ -422,7 +422,8 @@ protected:
                                    "/file/dir", "CloneModule", false, "", 0);
     // Function DI
     auto *Subprogram = DBuilder.createFunction(CU, "f", "f", File, 4, DFuncType,
-                                               true, true, 3, 0, false);
+                                               true, true, 3, DINode::FlagZero,
+                                               false);
     F->setSubprogram(Subprogram);
 
     auto *Entry = BasicBlock::Create(C, "", F);
