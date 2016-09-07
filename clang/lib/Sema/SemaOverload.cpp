@@ -5164,12 +5164,18 @@ static ExprResult CheckConvertedConstantExpression(Sema &S, Expr *From,
   //  implicitly converted to type T, where the converted
   //  expression is a constant expression and the implicit conversion
   //  sequence contains only [... list of conversions ...].
+  // C++1z [stmt.if]p2:
+  //  If the if statement is of the form if constexpr, the value of the
+  //  condition shall be a contextually converted constant expression of type
+  //  bool.
   ImplicitConversionSequence ICS =
-    TryCopyInitialization(S, From, T,
-                          /*SuppressUserConversions=*/false,
-                          /*InOverloadResolution=*/false,
-                          /*AllowObjcWritebackConversion=*/false,
-                          /*AllowExplicit=*/false);
+      CCE == Sema::CCEK_ConstexprIf
+          ? TryContextuallyConvertToBool(S, From)
+          : TryCopyInitialization(S, From, T,
+                                  /*SuppressUserConversions=*/false,
+                                  /*InOverloadResolution=*/false,
+                                  /*AllowObjcWritebackConversion=*/false,
+                                  /*AllowExplicit=*/false);
   StandardConversionSequence *SCS = nullptr;
   switch (ICS.getKind()) {
   case ImplicitConversionSequence::StandardConversion:
