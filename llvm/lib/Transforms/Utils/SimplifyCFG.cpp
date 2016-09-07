@@ -1403,7 +1403,9 @@ static bool canSinkInstructions(
     auto *PNUse = dyn_cast<PHINode>(*I0->user_begin());
     if (!all_of(Insts, [&PNUse](const Instruction *I) -> bool {
           auto *U = cast<Instruction>(*I->user_begin());
-          return U == PNUse || U->getParent() == I->getParent();
+          return (PNUse &&
+                  PNUse->getIncomingValueForBlock(I->getParent()) == I) ||
+                 U->getParent() == I->getParent();
         }))
       return false;
   }
