@@ -1048,7 +1048,7 @@ void AMDGPUAsmPrinter::emitRuntimeMetadata(const Function &F) {
                                     RuntimeMD::KernelArg::HiddenGlobalOffsetY);
     emitRuntimeMetadataForKernelArg(DL, *OutStreamer, Int64T,
                                     RuntimeMD::KernelArg::HiddenGlobalOffsetZ);
-    if (auto MD = F.getParent()->getNamedMetadata("llvm.printf.fmts")) {
+    if (F.getParent()->getNamedMetadata("llvm.printf.fmts")) {
       auto Int8PtrT = Type::getInt8PtrTy(F.getContext(),
           RuntimeMD::KernelArg::Global);
       emitRuntimeMetadataForKernelArg(DL, *OutStreamer, Int8PtrT,
