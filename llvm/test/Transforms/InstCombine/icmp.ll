@@ -1521,12 +1521,10 @@ define i1 @icmp_add_and_shr_ne_0(i32 %X) {
   ret i1 %tobool
 }
 
-; FIXME: Vectors should fold the same way.
 define <2 x i1> @icmp_add_and_shr_ne_0_vec(<2 x i32> %X) {
 ; CHECK-LABEL: @icmp_add_and_shr_ne_0_vec(
-; CHECK-NEXT:    [[SHR:%.*]] = lshr <2 x i32> %X, <i32 4, i32 4>
-; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[SHR]], <i32 15, i32 15>
-; CHECK-NEXT:    [[TOBOOL:%.*]] = icmp ne <2 x i32> [[AND]], <i32 14, i32 14>
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> %X, <i32 240, i32 240>
+; CHECK-NEXT:    [[TOBOOL:%.*]] = icmp ne <2 x i32> [[AND]], <i32 224, i32 224>
 ; CHECK-NEXT:    ret <2 x i1> [[TOBOOL]]
 ;
   %shr = lshr <2 x i32> %X, <i32 4, i32 4>
