@@ -1342,6 +1342,14 @@ TEST_F(FormatTestJS, RequoteAndIndent) {
                "    'double quoted string that needs wrapping');",
                "let x = someVeryLongFunctionThatGoesOnAndOn("
                "\"double quoted string that needs wrapping\");");
+
+  verifyFormat("let x =\n"
+               "    'foo\\'oo';\n"
+               "let x =\n"
+               "    'foo\\'oo';",
+               "let x=\"foo'oo\";\n"
+               "let x=\"foo'oo\";",
+               getGoogleJSStyleWithColumns(15));
 }
 
 TEST_F(FormatTestJS, RequoteStringsDouble) {
