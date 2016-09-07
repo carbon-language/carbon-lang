@@ -158,67 +158,60 @@ detect NVCC specifically by looking for ``__NVCC__``.
 Optimizations
 =============
 
-CPU and GPU have different design philosophies and architectures. For example, a
-typical CPU has branch prediction, out-of-order execution, and is superscalar,
-whereas a typical GPU has none of these. Due to such differences, an
-optimization pipeline well-tuned for CPUs may be not suitable for GPUs.
+Modern CPUs and GPUs are architecturally quite different, so code that's fast
+on a CPU isn't necessarily fast on a GPU.  We've made a number of changes to
+LLVM to make it generate good GPU code.  Among these changes are:
 
-LLVM performs several general and CUDA-specific optimizations for GPUs. The
-list below shows some of the more important optimizations for GPUs. Most of
-them have been upstreamed to ``lib/Transforms/Scalar`` and
-``lib/Target/NVPTX``. A few of them have not been upstreamed due to lack of a
-customizable target-independent optimization pipeline.
+* `Straight-line scalar optimizations <https://goo.gl/4Rb9As>`_ -- These
+  reduce redundancy within straight-line code.
 
-* **Straight-line scalar optimizations**. These optimizations reduce redundancy
-  in straight-line code. Details can be found in the `design document for
-  straight-line scalar optimizations <https://goo.gl/4Rb9As>`_.
+* `Aggressive speculative execution
+  <http://llvm.org/docs/doxygen/html/SpeculativeExecution_8cpp_source.html>`_
+  -- This is mainly for promoting straight-line scalar optimizations, which are
+  most effective on code along dominator paths.
 
-* **Inferring memory spaces**. `This optimization
-  <https://github.com/llvm-mirror/llvm/blob/master/lib/Target/NVPTX/NVPTXInferAddressSpaces.cpp>`_
-  infers the memory space of an address so that the backend can emit faster
-  special loads and stores from it.
+* `Memory space inference
+  <http://llvm.org/doxygen/NVPTXInferAddressSpaces_8cpp_source.html>`_ --
+  In PTX, we can operate on pointers that are in a paricular "address space"
+  (global, shared, constant, or local), or we can operate on pointers in the
+  "generic" address space, which can point to anything.  Operations in a
+  non-generic address space are faster, but pointers in CUDA are not explicitly
+  annotated with their address space, so it's up to LLVM to infer it where
+  possible.
 
-* **Aggressive loop unrooling and function inlining**. Loop unrolling and
+* `Bypassing 64-bit divides
+  <http://llvm.org/docs/doxygen/html/BypassSlowDivision_8cpp_source.html>`_ --
+  This was an existing optimization that we enabled for the PTX backend.
+
+  64-bit integer divides are much slower than 32-bit ones on NVIDIA GPUs.
+  Many of the 64-bit divides in our benchmarks have a divisor and dividend
+  which fit in 32-bits at runtime. This optimization provides a fast path for
+  this common case.
+
+* Aggressive loop unrooling and function inlining -- Loop unrolling and
   function inlining need to be more aggressive for GPUs than for CPUs because
-  control flow transfer in GPU is more expensive. They also promote other
-  optimizations such as constant propagation and SROA which sometimes speed up
-  code by over 10x. An empirical inline threshold for GPUs is 1100. This
-  configuration has yet to be upstreamed with a target-specific optimization
-  pipeline. LLVM also provides `loop unrolling pragmas
+  control flow transfer in GPU is more expensive. More aggressive unrolling and
+  inlining also promote other optimizations, such as constant propagation and
+  SROA, which sometimes speed up code by over 10x.
+
+  (Programmers can force unrolling and inline using clang's `loop unrolling pragmas
   <http://clang.llvm.org/docs/AttributeReference.html#pragma-unroll-pragma-nounroll>`_
-  and ``__attribute__((always_inline))`` for programmers to force unrolling and
-  inling.
-
-* **Aggressive speculative execution**. `This transformation
-  <http://llvm.org/docs/doxygen/html/SpeculativeExecution_8cpp_source.html>`_ is
-  mainly for promoting straight-line scalar optimizations which are most
-  effective on code along dominator paths.
-
-* **Memory-space alias analysis**. `This alias analysis
-  <http://reviews.llvm.org/D12414>`_ infers that two pointers in different
-  special memory spaces do not alias. It has yet to be integrated to the new
-  alias analysis infrastructure; the new infrastructure does not run
-  target-specific alias analysis.
-
-* **Bypassing 64-bit divides**. `An existing optimization
-  <http://llvm.org/docs/doxygen/html/BypassSlowDivision_8cpp_source.html>`_
-  enabled in the NVPTX backend. 64-bit integer divides are much slower than
-  32-bit ones on NVIDIA GPUs due to lack of a divide unit. Many of the 64-bit
-  divides in our benchmarks have a divisor and dividend which fit in 32-bits at
-  runtime. This optimization provides a fast path for this common case.
+  and ``__attribute__((always_inline))``.)
 
 Publication
 ===========
 
+The team at Google published a paper in CGO 2016 detailing the optimizations
+they'd made to clang/LLVM.  Note that "gpucc" is no longer a meaningful name:
+The relevant tools are now just vanilla clang/LLVM.
+
 | `gpucc: An Open-Source GPGPU Compiler <http://dl.acm.org/citation.cfm?id=2854041>`_
 | Jingyue Wu, Artem Belevich, Eli Bendersky, Mark Heffernan, Chris Leary, Jacques Pienaar, Bjarke Roune, Rob Springer, Xuetian Weng, Robert Hundt
 | *Proceedings of the 2016 International Symposium on Code Generation and Optimization (CGO 2016)*
-| `Slides for the CGO talk <http://wujingyue.com/docs/gpucc-talk.pdf>`_
-
-Tutorial
-========
-
-`CGO 2016 gpucc tutorial <http://wujingyue.com/docs/gpucc-tutorial.pdf>`_
+|
+| `Slides from the CGO talk <http://wujingyue.com/docs/gpucc-talk.pdf>`_
+|
+| `Tutorial given at CGO <http://wujingyue.com/docs/gpucc-tutorial.pdf>`_
 
 Obtaining Help
 ==============
