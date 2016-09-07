@@ -1,5 +1,5 @@
 ===================================
-Compiling CUDA C/C++ with LLVM
+Compiling CUDA with LLVM
 ===================================
 
 .. contents::
@@ -9,7 +9,7 @@ Introduction
 ============
 
 This document contains the user guides and the internals of compiling CUDA
-C/C++ with LLVM. It is aimed at both users who want to compile CUDA with LLVM
+code with LLVM. It is aimed at both users who want to compile CUDA with LLVM
 and developers who want to improve LLVM for GPUs. This document assumes a basic
 familiarity with CUDA. Information about CUDA programming can be found in the
 `CUDA programming guide
@@ -49,8 +49,8 @@ up LLVM.
      $ cmake [options] ..
      $ make
 
-How to Compile CUDA C/C++ with LLVM
-===================================
+How to Compile CUDA Code with LLVM
+==================================
 
 We assume you have installed the CUDA driver and runtime. Consult the `NVIDIA
 CUDA installation guide
