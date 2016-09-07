@@ -1230,7 +1230,7 @@ static bool HoistThenElseCodeToIf(BranchInst *BI,
     BIParent->getInstList().splice(BI->getIterator(), BB1->getInstList(), I1);
     if (!I2->use_empty())
       I2->replaceAllUsesWith(I1);
-    I1->intersectOptionalDataWith(I2);
+    I1->andIRFlags(I2);
     unsigned KnownIDs[] = {LLVMContext::MD_tbaa,
                            LLVMContext::MD_range,
                            LLVMContext::MD_fpmath,
