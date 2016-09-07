@@ -119,6 +119,13 @@ your GPU <https://developer.nvidia.com/cuda-gpus>`_. For example, if you want
 to run your program on a GPU with compute capability of 3.5, you should specify
 ``--cuda-gpu-arch=sm_35``.
 
+Note: You cannot pass ``compute_XX`` as an argument to ``--cuda-gpu-arch``;
+only ``sm_XX`` is currently supported.  However, clang always includes PTX in
+its binaries, so e.g. a binary compiled with ``--cuda-gpu-arch=sm_30`` would be
+forwards-compatible with e.g. ``sm_35`` GPUs.
+
+You can pass ``--cuda-gpu-arch`` multiple times to compile for multiple archs.
+
 Detecting clang vs NVCC
 =======================
 
