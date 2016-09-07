@@ -50,7 +50,7 @@ namespace LLVM.ClangTidy
                 foreach (var Check in Checks_)
                 {
                     if (Names.Contains(Check.Name))
-                        throw new ArgumentException(String.Format("Check {0} exists more than once!", Check.Name));
+                        continue;
                     Names.Add(Check.Name);
                 }
             }

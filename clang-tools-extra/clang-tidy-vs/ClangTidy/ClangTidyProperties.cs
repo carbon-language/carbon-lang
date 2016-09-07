@@ -40,7 +40,6 @@ namespace LLVM.ClangTidy
         static ClangTidyProperties()
         {
             RootProperties_ = new ClangTidyProperties(null);
-            PropertyDescriptor D;
         }
 
         public static ClangTidyProperties RootProperties

@@ -42,13 +42,6 @@ namespace LLVM.ClangTidy
         /// </summary>
         List<KeyValuePair<string, ClangTidyProperties>> PropertyChain_ = null;
 
-        /// <summary>
-        /// A tree representing all the checks that the extension knows about, used
-        /// when serializing a file to intelligently determine when to use wildcard
-        /// include / exclude rules.
-        /// </summary>
-        CheckTree Checks_;
-
         public ClangTidyPropertyGrid()
         {
             InitializeComponent();
