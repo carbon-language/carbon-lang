@@ -122,11 +122,11 @@ static bool populateDependencyMatrix(CharMatrix &DepMatrix, unsigned Level,
         if (D->isFlow()) {
           // TODO: Handle Flow dependence.Check if it is sufficient to populate
           // the Dependence Matrix with the direction reversed.
-          DEBUG(dbgs() << "Flow dependence not handled");
+          DEBUG(dbgs() << "Flow dependence not handled\n");
           return false;
         }
         if (D->isAnti()) {
-          DEBUG(dbgs() << "Found Anti dependence \n");
+          DEBUG(dbgs() << "Found Anti dependence\n");
           unsigned Levels = D->getLevels();
           char Direction;
           for (unsigned II = 1; II <= Levels; ++II) {
@@ -278,7 +278,9 @@ static bool isLegalToInterChangeLoops(CharMatrix &DepMatrix,
 
 static void populateWorklist(Loop &L, SmallVector<LoopVector, 8> &V) {
 
-  DEBUG(dbgs() << "Calling populateWorklist called\n");
+  DEBUG(dbgs() << "Calling populateWorklist on Func: "
+               << L.getHeader()->getParent()->getName() << " Loop: %"
+               << L.getHeader()->getName() << '\n');
   LoopVector LoopList;
   Loop *CurrentLoop = &L;
   const std::vector<Loop *> *Vec = &CurrentLoop->getSubLoops();
@@ -296,6 +298,7 @@ static void populateWorklist(Loop &L, SmallVector<LoopVector, 8> &V) {
   }
   LoopList.push_back(CurrentLoop);
   V.push_back(std::move(LoopList));
+  DEBUG(dbgs() << "Worklist size = " << V.size() << "\n");
 }
 
 static PHINode *getInductionVariable(Loop *L, ScalarEvolution *SE) {
@@ -461,7 +464,6 @@ struct LoopInterchange : public FunctionPass {
     for (Loop *L : *LI)
       populateWorklist(*L, Worklist);
 
-    DEBUG(dbgs() << "Worklist size = " << Worklist.size() << "\n");
     bool Changed = true;
     while (!Worklist.empty()) {
       LoopVector LoopList = Worklist.pop_back_val();
