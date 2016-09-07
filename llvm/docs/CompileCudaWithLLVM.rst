@@ -81,6 +81,11 @@ brackets as described below:
 
   You can pass ``--cuda-gpu-arch`` multiple times to compile for multiple archs.
 
+The `-L` and `-l` flags only need to be passed when linking.  When compiling,
+you may also need to pass ``--cuda-path=/path/to/cuda`` if you didn't install
+the CUDA SDK into ``/usr/local/cuda``, ``/usr/local/cuda-7.0``, or
+``/usr/local/cuda-7.5``.
+
 Flags that control numerical code
 ---------------------------------
 
