@@ -75,11 +75,11 @@ void bar() {
   ovl_bar(ucharbuf);
 }
 
-// CHECK-LABEL: define void @baz
 void ovl_baz(int *, int) __attribute__((overloadable));
 void ovl_baz(unsigned int *, unsigned int) __attribute__((overloadable));
 void ovl_baz2(int, int *) __attribute__((overloadable));
 void ovl_baz2(unsigned int, unsigned int *) __attribute__((overloadable));
+// CHECK-LABEL: define void @baz
 void baz() {
   unsigned int j;
   // Initial rules for incompatible pointer conversions made this overload
