@@ -43,8 +43,12 @@ Invoking clang for CUDA compilation works similarly to compiling regular C++.
 You just need to be aware of a few additional flags.
 
 You can use `this <https://gist.github.com/855e277884eb6b388cd2f00d956c2fd4>`_
-program as a toy example.  Save it as ``axpy.cu``.  To build and run, run the
-following commands:
+program as a toy example.  Save it as ``axpy.cu``.  (Clang detects that you're
+compiling CUDA code by noticing that your filename ends with ``.cu``.
+Alternatively, you can pass ``-x cuda``.)
+
+To build and run, run the following commands, filling in the parts in angle
+brackets as described below:
 
 .. code-block:: console
 
@@ -57,20 +61,17 @@ following commands:
   y[2] = 6
   y[3] = 8
 
-* clang detects that you're compiling CUDA by noticing that your source file ends
-  with ``.cu``.  (Alternatively, you can pass ``-x cuda``.)
+* ``<CUDA install path>`` -- the directory where you installed CUDA SDK.
+  Typically, ``/usr/local/cuda``.
 
-* ``<CUDA install path>`` is the root directory where you installed CUDA SDK,
-  typically ``/usr/local/cuda``.
+  Pass e.g. ``-L/usr/local/cuda/lib64`` if compiling in 64-bit mode; otherwise,
+  pass e.g. ``-L/usr/local/cuda/lib``.  (In CUDA, the device code and host code
+  always have the same pointer widths, so if you're compiling 64-bit code for
+  the host, you're also compiling 64-bit code for the device.)
 
-  Pass e.g. ``/usr/local/cuda/lib64`` if compiling in 64-bit mode; otherwise,
-  pass ``/usr/local/cuda/lib``.  (In CUDA, the device code and host code always
-  have the same pointer widths, so if you're compiling 64-bit code for the
-  host, you're also compiling 64-bit code for the device.)
-
-* ``<GPU arch>`` is `the compute capability of your GPU
-  <https://developer.nvidia.com/cuda-gpus>`_. For example, if you want to run
-  your program on a GPU with compute capability of 3.5, you should specify
+* ``<GPU arch>`` -- the `compute capability
+  <https://developer.nvidia.com/cuda-gpus>`_ of your GPU. For example, if you
+  want to run your program on a GPU with compute capability of 3.5, specify
   ``--cuda-gpu-arch=sm_35``.
 
   Note: You cannot pass ``compute_XX`` as an argument to ``--cuda-gpu-arch``;
@@ -78,8 +79,7 @@ following commands:
   its binaries, so e.g. a binary compiled with ``--cuda-gpu-arch=sm_30`` would be
   forwards-compatible with e.g. ``sm_35`` GPUs.
 
-  You can pass ``--cuda-gpu-arch`` multiple times to compile for multiple
-  archs.
+  You can pass ``--cuda-gpu-arch`` multiple times to compile for multiple archs.
 
 Flags that control numerical code
 ---------------------------------
