@@ -111,14 +111,14 @@ static bool populateDependencyMatrix(CharMatrix &DepMatrix, unsigned Level,
     for (J = I, JE = MemInstr.end(); J != JE; ++J) {
       std::vector<char> Dep;
       Instruction *Src = dyn_cast<Instruction>(*I);
-      Instruction *Des = dyn_cast<Instruction>(*J);
-      if (Src == Des)
+      Instruction *Dst = dyn_cast<Instruction>(*J);
+      if (Src == Dst)
         continue;
-      if (isa<LoadInst>(Src) && isa<LoadInst>(Des))
+      if (isa<LoadInst>(Src) && isa<LoadInst>(Dst))
         continue;
-      if (auto D = DI->depends(Src, Des, true)) {
-        DEBUG(dbgs() << "Found Dependency between Src=" << Src << " Des=" << Des
-                     << "\n");
+      if (auto D = DI->depends(Src, Dst, true)) {
+        DEBUG(dbgs() << "Found Dependency between Src and Dst\n"
+                     << " Src:" << *Src << "\n Dst:" << *Dst << '\n');
         if (D->isFlow()) {
           // TODO: Handle Flow dependence.Check if it is sufficient to populate
           // the Dependence Matrix with the direction reversed.
