@@ -42,7 +42,7 @@ Invoking clang
 Invoking clang for CUDA compilation works similarly to compiling regular C++.
 You just need to be aware of a few additional flags.
 
-You can use `this <https://gist.github.com/855e277884eb6b388cd2f00d956c2fd4>_`
+You can use `this <https://gist.github.com/855e277884eb6b388cd2f00d956c2fd4>`_
 program as a toy example.  Save it as ``axpy.cu``.  To build and run, run the
 following commands:
 
