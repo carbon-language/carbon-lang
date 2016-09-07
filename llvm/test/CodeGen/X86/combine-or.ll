@@ -462,7 +462,7 @@ define <4 x i32> @or_zext_v4i16(<4 x i16> %a0) {
 ; CHECK-NEXT:    por {{.*}}(%rip), %xmm0
 ; CHECK-NEXT:    retq
   %1 = zext <4 x i16> %a0 to <4 x i32>
-  %2 = or <4 x i32> %1, <i32 65536, i32 65536, i32 65536, i32 65536>
+  %2 = or <4 x i32> %1, <i32 65535, i32 65535, i32 65535, i32 65535>
   ret <4 x i32> %2
 }
 
