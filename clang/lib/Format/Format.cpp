@@ -610,7 +610,7 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
   } else if (Language == FormatStyle::LK_JavaScript) {
     GoogleStyle.AlignAfterOpenBracket = FormatStyle::BAS_AlwaysBreak;
     GoogleStyle.AlignOperands = false;
-    GoogleStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Inline;
+    GoogleStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Empty;
     GoogleStyle.AlwaysBreakBeforeMultilineStrings = false;
     GoogleStyle.BreakBeforeTernaryOperators = false;
     GoogleStyle.CommentPragmas = "@(export|requirecss|return|see|visibility) ";
