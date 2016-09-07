@@ -1338,6 +1338,10 @@ HoistTerminator:
 // FIXME: This should be promoted to Instruction.
 static bool canReplaceOperandWithVariable(const Instruction *I,
                                           unsigned OpIdx) {
+  // We can't have a PHI with a metadata type.
+  if (I->getOperand(OpIdx)->getType()->isMetadataTy())
+    return false;
+
   // Early exit.
   if (!isa<Constant>(I->getOperand(OpIdx)))
     return true;
