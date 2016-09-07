@@ -80,7 +80,8 @@ OutputFilename("o", cl::desc("<output file>"), cl::Required);
 cl::opt<unsigned>
 Verbosity("v",
           cl::desc("set verbosity level for diagnostic output"),
-          cl::init(0));
+          cl::init(0),
+          cl::ZeroOrMore);
 
 static cl::list<std::string>
 BreakFunctionNames("break-funcs",
@@ -112,7 +113,7 @@ SkipFunctionNamesFile("skip-funcs-file",
 static cl::opt<unsigned>
 MaxFunctions("max-funcs",
              cl::desc("maximum # of functions to overwrite"),
-             cl::Optional);
+             cl::ZeroOrMore);
 
 cl::opt<BinaryFunction::SplittingType>
 SplitFunctions("split-functions",
@@ -127,53 +128,60 @@ SplitFunctions("split-functions",
                           clEnumValN(BinaryFunction::ST_ALL, "3",
                                      "split all functions"),
                           clEnumValEnd),
-               cl::Optional);
+               cl::ZeroOrMore);
 
 static cl::opt<bool>
 UpdateDebugSections("update-debug-sections",
                     cl::desc("update DWARF debug sections of the executable"),
-                    cl::Optional);
+                    cl::ZeroOrMore);
 
 static cl::opt<bool>
 FixDebugInfoLargeFunctions("fix-debuginfo-large-functions",
                            cl::init(true),
                            cl::desc("do another pass if we encounter large "
                                     "functions, to correct their debug info."),
-                           cl::Optional,
+                           cl::ZeroOrMore,
                            cl::ReallyHidden);
 
 static cl::opt<bool>
 AlignBlocks("align-blocks",
             cl::desc("try to align BBs inserting nops"),
-            cl::Optional);
+            cl::ZeroOrMore);
 
 static cl::opt<bool>
 UseGnuStack("use-gnu-stack",
-            cl::desc("use GNU_STACK program header for new segment"));
+            cl::desc("use GNU_STACK program header for new segment"),
+            cl::ZeroOrMore);
 
 static cl::opt<bool>
 DumpEHFrame("dump-eh-frame", cl::desc("dump parsed .eh_frame (debugging)"),
+            cl::ZeroOrMore,
             cl::Hidden);
 
 cl::opt<bool>
 PrintAll("print-all", cl::desc("print functions after each stage"),
+         cl::ZeroOrMore,
          cl::Hidden);
 
 cl::opt<bool>
 DumpDotAll("dump-dot-all",
            cl::desc("dump function CFGs to graphviz format after each stage"),
+           cl::ZeroOrMore,
            cl::Hidden);
 
 static cl::opt<bool>
 PrintCFG("print-cfg", cl::desc("print functions after CFG construction"),
+         cl::ZeroOrMore,
          cl::Hidden);
 
 static cl::opt<bool>
 PrintLoopInfo("print-loops", cl::desc("print loop related information"),
+              cl::ZeroOrMore,
               cl::Hidden);
 
 static cl::opt<bool>
 PrintDisasm("print-disasm", cl::desc("print function after disassembly"),
+            cl::ZeroOrMore,
             cl::Hidden);
 
 static cl::opt<bool>

@@ -27,7 +27,7 @@ using namespace bolt;
 namespace opts {
 
 static cl::opt<bool>
-PrintClusters("print-clusters", cl::desc("print clusters"), cl::Optional);
+PrintClusters("print-clusters", cl::desc("print clusters"), cl::ZeroOrMore);
 
 } // namespace opts
 

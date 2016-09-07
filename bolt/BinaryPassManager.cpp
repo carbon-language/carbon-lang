@@ -16,30 +16,30 @@ namespace opts {
 static llvm::cl::opt<bool>
 EliminateUnreachable("eliminate-unreachable",
                      llvm::cl::desc("eliminate unreachable code"),
-                     llvm::cl::Optional);
+                     llvm::cl::ZeroOrMore);
 
 static llvm::cl::opt<bool>
 OptimizeBodylessFunctions(
     "optimize-bodyless-functions",
     llvm::cl::desc("optimize functions that just do a tail call"),
-    llvm::cl::Optional);
+    llvm::cl::ZeroOrMore);
 
 static llvm::cl::opt<bool>
 InlineSmallFunctions(
     "inline-small-functions",
     llvm::cl::desc("inline functions with a single basic block"),
-    llvm::cl::Optional);
+    llvm::cl::ZeroOrMore);
 
 static llvm::cl::opt<bool>
 SimplifyConditionalTailCalls("simplify-conditional-tail-calls",
                              llvm::cl::desc("simplify conditional tail calls "
                                             "by removing unnecessary jumps"),
-                             llvm::cl::Optional);
+                             llvm::cl::ZeroOrMore);
 
 static llvm::cl::opt<bool>
 Peepholes("peepholes",
           llvm::cl::desc("run peephole optimizations"),
-          llvm::cl::Optional);
+          llvm::cl::ZeroOrMore);
 
 static llvm::cl::opt<bool>
 SimplifyRODataLoads("simplify-rodata-loads",
@@ -47,13 +47,13 @@ SimplifyRODataLoads("simplify-rodata-loads",
                                    "replacing the memory operand with the "
                                    "constant found in the corresponding "
                                    "section"),
-                    llvm::cl::Optional);
+                    llvm::cl::ZeroOrMore);
 
 static llvm::cl::opt<bool>
 IdenticalCodeFolding(
     "icf",
     llvm::cl::desc("fold functions with identical code"),
-    llvm::cl::Optional);
+    llvm::cl::ZeroOrMore);
 
 } // namespace opts
 

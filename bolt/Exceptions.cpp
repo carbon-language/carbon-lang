@@ -39,6 +39,7 @@ extern llvm::cl::opt<unsigned> Verbosity;
 static llvm::cl::opt<bool>
 PrintExceptions("print-exceptions",
                 llvm::cl::desc("print exception handling data"),
+                llvm::cl::ZeroOrMore,
                 llvm::cl::Hidden);
 
 } // namespace opts

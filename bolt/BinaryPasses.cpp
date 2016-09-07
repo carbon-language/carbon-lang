@@ -28,37 +28,44 @@ extern bool shouldProcess(const bolt::BinaryFunction &Function);
 static cl::opt<bool>
 PrintReordered("print-reordered",
                cl::desc("print functions after layout optimization"),
+               cl::ZeroOrMore,
                cl::Hidden);
 
 static cl::opt<bool>
 PrintEHRanges("print-eh-ranges",
               cl::desc("print function with updated exception ranges"),
+              cl::ZeroOrMore,
               cl::Hidden);
 
 static cl::opt<bool>
 PrintUCE("print-uce",
          cl::desc("print functions after unreachable code elimination"),
+         cl::ZeroOrMore,
          cl::Hidden);
 
 static cl::opt<bool>
 PrintPeepholes("print-peepholes",
                cl::desc("print functions after peephole optimization"),
+               cl::ZeroOrMore,
                cl::Hidden);
 
 static cl::opt<bool>
 PrintSimplifyROLoads("print-simplify-rodata-loads",
                      cl::desc("print functions after simplification of RO data"
                               " loads"),
+                     cl::ZeroOrMore,
                      cl::Hidden);
 
 static cl::opt<bool>
 PrintICF("print-icf",
          cl::desc("print functions after ICF optimization"),
+         cl::ZeroOrMore,
          cl::Hidden);
 
 static cl::opt<bool>
 PrintInline("print-inline",
             cl::desc("print functions after inlining optimization"),
+            cl::ZeroOrMore,
             cl::Hidden);
 
 static cl::list<std::string>
@@ -66,11 +73,13 @@ ForceInlineFunctions("force-inline",
                      cl::CommaSeparated,
                      cl::desc("list of functions to always consider "
                               "for inlining"),
-                     cl::value_desc("func1,func2,func3,..."));
+                     cl::value_desc("func1,func2,func3,..."),
+                     cl::Hidden);
 
 static cl::opt<bool>
 AggressiveInlining("aggressive-inlining",
                    cl::desc("perform aggressive inlining"),
+                   cl::ZeroOrMore,
                    cl::Hidden);
 
 static cl::opt<bolt::BinaryFunction::LayoutType>
@@ -95,13 +104,15 @@ ReorderBlocks(
                           "cache",
                           "perform optimal layout prioritizing I-cache "
                           "behavior"),
-               clEnumValEnd));
+               clEnumValEnd),
+    cl::ZeroOrMore);
 
 static cl::opt<bool>
 MinBranchClusters(
     "min-branch-clusters",
     cl::desc("use a modified clustering algorithm geared towards "
              "minimizing branches"),
+    cl::ZeroOrMore,
     cl::Hidden);
 
 } // namespace opts

@@ -43,12 +43,12 @@ extern cl::opt<unsigned> Verbosity;
 static cl::opt<bool>
 AgressiveSplitting("split-all-cold",
                    cl::desc("outline as many cold basic blocks as possible"),
-                   cl::Optional);
+                   cl::ZeroOrMore);
 
 static cl::opt<bool>
 DotToolTipCode("dot-tooltip-code",
                cl::desc("add basic block instructions as tool tips on nodes"),
-               cl::Optional,
+               cl::ZeroOrMore,
                cl::Hidden);
 
 } // namespace opts
