@@ -47,12 +47,11 @@
 
 #if SANITIZER_ANDROID
 #include <android/api-level.h>
+#include <syslog.h>
 #endif
 
 #if SANITIZER_ANDROID && __ANDROID_API__ < 21
 #include <android/log.h>
-#else
-#include <syslog.h>
 #endif
 
 #if !SANITIZER_ANDROID
@@ -521,6 +520,7 @@ uptr GetRSS() {
 static atomic_uint8_t android_log_initialized;
 
 void AndroidLogInit() {
+  openlog(GetProcessName(), 0, LOG_USER);
   atomic_store(&android_log_initialized, 1, memory_order_release);
 }
 
