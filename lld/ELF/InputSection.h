@@ -102,7 +102,7 @@ public:
   void uncompress();
 
   void relocate(uint8_t *Buf, uint8_t *BufEnd);
-  std::vector<Relocation<ELFT>> Relocations;
+  std::vector<Relocation> Relocations;
 };
 
 template <class ELFT> InputSectionBase<ELFT> InputSectionBase<ELFT>::Discarded;
