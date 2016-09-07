@@ -34,6 +34,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <sys/resource.h>
+#include <syslog.h>
 
 #if SANITIZER_FREEBSD
 #include <pthread_np.h>
@@ -47,7 +48,6 @@
 
 #if SANITIZER_ANDROID
 #include <android/api-level.h>
-#include <syslog.h>
 #endif
 
 #if SANITIZER_ANDROID && __ANDROID_API__ < 21
