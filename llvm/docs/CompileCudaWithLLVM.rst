@@ -1,6 +1,6 @@
-===================================
+=========================
 Compiling CUDA with clang
-===================================
+=========================
 
 .. contents::
    :local:
@@ -36,58 +36,20 @@ by many Linux package managers; you probably need to install nvidia's package.
 You will need CUDA 7.0 or 7.5 to compile with clang.  CUDA 8 support is in the
 works.
 
-Building AXPY
--------------
+Invoking clang
+--------------
 
-Suppose you want to compile and run the following CUDA program (``axpy.cu``),
-which multiplies a ``float`` array by a ``float`` scalar.
+Invoking clang for CUDA compilation works similarly to compiling regular C++.
+You just need to be aware of a few additional flags.
 
-.. code-block:: c++
-
-  #include <iostream>
-
-  __global__ void axpy(float a, float* x, float* y) {
-    y[threadIdx.x] = a * x[threadIdx.x];
-  }
-
-  int main(int argc, char* argv[]) {
-    const int kDataLen = 4;
-
-    float a = 2.0f;
-    float host_x[kDataLen] = {1.0f, 2.0f, 3.0f, 4.0f};
-    float host_y[kDataLen];
-
-    // Copy input data to device.
-    float* device_x;
-    float* device_y;
-    cudaMalloc(&device_x, kDataLen * sizeof(float));
-    cudaMalloc(&device_y, kDataLen * sizeof(float));
-    cudaMemcpy(device_x, host_x, kDataLen * sizeof(float),
-               cudaMemcpyHostToDevice);
-
-    // Launch the kernel.
-    axpy<<<1, kDataLen>>>(a, device_x, device_y);
-
-    // Copy output data to host.
-    cudaDeviceSynchronize();
-    cudaMemcpy(host_y, device_y, kDataLen * sizeof(float),
-               cudaMemcpyDeviceToHost);
-
-    // Print the results.
-    for (int i = 0; i < kDataLen; ++i) {
-      std::cout << "y[" << i << "] = " << host_y[i] << "\n";
-    }
-
-    cudaDeviceReset();
-    return 0;
-  }
-
-The command line for compilation is similar to what you would use for C++.
+You can use `this <https://gist.github.com/855e277884eb6b388cd2f00d956c2fd4>_`
+program as a toy example.  Save it as ``axpy.cu``.  To build and run, run the
+following commands:
 
 .. code-block:: console
 
-  $ clang++ axpy.cu -o axpy --cuda-gpu-arch=<GPU arch>  \
-      -L<CUDA install path>/<lib64 or lib>              \
+  $ clang++ axpy.cu -o axpy --cuda-gpu-arch=<GPU arch> \
+      -L<CUDA install path>/<lib64 or lib>             \
       -lcudart_static -ldl -lrt -pthread
   $ ./axpy
   y[0] = 2
@@ -95,50 +57,32 @@ The command line for compilation is similar to what you would use for C++.
   y[2] = 6
   y[3] = 8
 
-``<CUDA install path>`` is the root directory where you installed CUDA SDK,
-typically ``/usr/local/cuda``. ``<GPU arch>`` is `the compute capability of
-your GPU <https://developer.nvidia.com/cuda-gpus>`_. For example, if you want
-to run your program on a GPU with compute capability of 3.5, you should specify
-``--cuda-gpu-arch=sm_35``.
+* clang detects that you're compiling CUDA by noticing that your source file ends
+  with ``.cu``.  (Alternatively, you can pass ``-x cuda``.)
 
-Note: You cannot pass ``compute_XX`` as an argument to ``--cuda-gpu-arch``;
-only ``sm_XX`` is currently supported.  However, clang always includes PTX in
-its binaries, so e.g. a binary compiled with ``--cuda-gpu-arch=sm_30`` would be
-forwards-compatible with e.g. ``sm_35`` GPUs.
+* ``<CUDA install path>`` is the root directory where you installed CUDA SDK,
+  typically ``/usr/local/cuda``.
 
-You can pass ``--cuda-gpu-arch`` multiple times to compile for multiple archs.
+  Pass e.g. ``/usr/local/cuda/lib64`` if compiling in 64-bit mode; otherwise,
+  pass ``/usr/local/cuda/lib``.  (In CUDA, the device code and host code always
+  have the same pointer widths, so if you're compiling 64-bit code for the
+  host, you're also compiling 64-bit code for the device.)
 
-Detecting clang vs NVCC
-=======================
+* ``<GPU arch>`` is `the compute capability of your GPU
+  <https://developer.nvidia.com/cuda-gpus>`_. For example, if you want to run
+  your program on a GPU with compute capability of 3.5, you should specify
+  ``--cuda-gpu-arch=sm_35``.
 
-Although clang's CUDA implementation is largely compatible with NVCC's, you may
-still want to detect when you're compiling CUDA code specifically with clang.
+  Note: You cannot pass ``compute_XX`` as an argument to ``--cuda-gpu-arch``;
+  only ``sm_XX`` is currently supported.  However, clang always includes PTX in
+  its binaries, so e.g. a binary compiled with ``--cuda-gpu-arch=sm_30`` would be
+  forwards-compatible with e.g. ``sm_35`` GPUs.
 
-This is tricky, because NVCC may invoke clang as part of its own compilation
-process!  For example, NVCC uses the host compiler's preprocessor when
-compiling for device code, and that host compiler may in fact be clang.
-
-When clang is actually compiling CUDA code -- rather than being used as a
-subtool of NVCC's -- it defines the ``__CUDA__`` macro.  ``__CUDA_ARCH__`` is
-defined only in device mode (but will be defined if NVCC is using clang as a
-preprocessor).  So you can use the following incantations to detect clang CUDA
-compilation, in host and device modes:
-
-.. code-block:: c++
-
-  #if defined(__clang__) && defined(__CUDA__) && !defined(__CUDA_ARCH__)
-    // clang compiling CUDA code, host mode.
-  #endif
-
-  #if defined(__clang__) && defined(__CUDA__) && defined(__CUDA_ARCH__)
-    // clang compiling CUDA code, device mode.
-  #endif
-
-Both clang and nvcc define ``__CUDACC__`` during CUDA compilation.  You can
-detect NVCC specifically by looking for ``__NVCC__``.
+  You can pass ``--cuda-gpu-arch`` multiple times to compile for multiple
+  archs.
 
 Flags that control numerical code
-=================================
+---------------------------------
 
 If you're using GPUs, you probably care about making numerical code run fast.
 GPU hardware allows for more control over numerical operations than most CPUs,
@@ -176,6 +120,35 @@ Flags you may wish to tweak include:
   instruction.
 
   This is implied by ``-ffast-math``.
+
+Detecting clang vs NVCC from code
+=================================
+
+Although clang's CUDA implementation is largely compatible with NVCC's, you may
+still want to detect when you're compiling CUDA code specifically with clang.
+
+This is tricky, because NVCC may invoke clang as part of its own compilation
+process!  For example, NVCC uses the host compiler's preprocessor when
+compiling for device code, and that host compiler may in fact be clang.
+
+When clang is actually compiling CUDA code -- rather than being used as a
+subtool of NVCC's -- it defines the ``__CUDA__`` macro.  ``__CUDA_ARCH__`` is
+defined only in device mode (but will be defined if NVCC is using clang as a
+preprocessor).  So you can use the following incantations to detect clang CUDA
+compilation, in host and device modes:
+
+.. code-block:: c++
+
+  #if defined(__clang__) && defined(__CUDA__) && !defined(__CUDA_ARCH__)
+    // clang compiling CUDA code, host mode.
+  #endif
+
+  #if defined(__clang__) && defined(__CUDA__) && defined(__CUDA_ARCH__)
+    // clang compiling CUDA code, device mode.
+  #endif
+
+Both clang and nvcc define ``__CUDACC__`` during CUDA compilation.  You can
+detect NVCC specifically by looking for ``__NVCC__``.
 
 Optimizations
 =============
