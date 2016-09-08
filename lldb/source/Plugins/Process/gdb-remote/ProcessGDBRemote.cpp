@@ -4020,6 +4020,14 @@ bool ProcessGDBRemote::GetModuleSpec(const FileSpec &module_file_spec,
                                      ModuleSpec &module_spec) {
   Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
 
+  const ModuleCacheKey key(module_file_spec.GetPath(),
+                           arch.GetTriple().getTriple());
+  auto cached = m_cached_module_specs.find(key);
+  if (cached != m_cached_module_specs.end()) {
+    module_spec = cached->second;
+    return bool(module_spec);
+  }
+
   if (!m_gdb_comm.GetModuleInfo(module_file_spec, arch, module_spec)) {
     if (log)
       log->Printf("ProcessGDBRemote::%s - failed to get module info for %s:%s",
@@ -4037,7 +4045,21 @@ bool ProcessGDBRemote::GetModuleSpec(const FileSpec &module_file_spec,
                 stream.GetString().c_str());
   }
 
+  m_cached_module_specs[key] = module_spec;
   return true;
+}
+
+void ProcessGDBRemote::PrefetchModuleSpecs(
+    llvm::ArrayRef<FileSpec> module_file_specs, const llvm::Triple &triple) {
+  auto module_specs = m_gdb_comm.GetModulesInfo(module_file_specs, triple);
+  if (module_specs) {
+    for (const FileSpec &spec : module_file_specs)
+      m_cached_module_specs[{spec.GetPath(), triple.getTriple()}] =
+          ModuleSpec();
+    for (const ModuleSpec &spec : *module_specs)
+      m_cached_module_specs[{spec.GetFileSpec().GetPath(),
+                             triple.getTriple()}] = spec;
+  }
 }
 
 bool ProcessGDBRemote::GetHostOSVersion(uint32_t &major, uint32_t &minor,
