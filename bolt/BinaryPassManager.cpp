@@ -94,25 +94,28 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(llvm::make_unique<SimplifyRODataLoads>(),
                        opts::SimplifyRODataLoads);
 
-  Manager.registerPass(std::move(llvm::make_unique<ReorderBasicBlocks>()));
-
-  // This pass syncs local branches with CFG. If any of the following
-  // passes breakes the sync - they need to re-run the pass.
-  Manager.registerPass(std::move(llvm::make_unique<FixupBranches>()));
-
-  // This pass should be run after FixupBranches.
-  Manager.registerPass(llvm::make_unique<SimplifyConditionalTailCalls>(),
-                       opts::SimplifyConditionalTailCalls);
-
-  // The tail call fixup pass may introduce unreachable code.  Add another
-  // instance of EliminateUnreachableBlocks here to catch it.
   Manager.registerPass(
     std::move(llvm::make_unique<EliminateUnreachableBlocks>(Manager.NagUser)),
     opts::EliminateUnreachable);
 
-  Manager.registerPass(std::move(llvm::make_unique<FixupFunctions>()));
+  Manager.registerPass(std::move(llvm::make_unique<ReorderBasicBlocks>()));
 
   Manager.registerPass(llvm::make_unique<Peepholes>(), opts::Peepholes);
+
+  // This pass syncs local branches with CFG. If any of the following
+  // passes breaks the sync - they either need to re-run the pass or
+  // fix branches consistency internally.
+  Manager.registerPass(std::move(llvm::make_unique<FixupBranches>()));
+
+  // This pass introduces conditional jumps into external functions.
+  // Between extending CFG to support this and isolating this pass we chose
+  // the latter. Thus this pass will do unreachable code elimination
+  // if necessary and wouldn't rely on UCE for this.
+  // More generally this pass should be the last optimization pass.
+  Manager.registerPass(llvm::make_unique<SimplifyConditionalTailCalls>(),
+                       opts::SimplifyConditionalTailCalls);
+
+  Manager.registerPass(std::move(llvm::make_unique<FixupFunctions>()));
 
   Manager.runPasses();
 }

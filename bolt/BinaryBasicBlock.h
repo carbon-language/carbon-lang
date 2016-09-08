@@ -62,6 +62,9 @@ private:
   /// Index to BasicBlocks vector in BinaryFunction.
   unsigned Index{~0u};
 
+  /// Index in the current layout.
+  unsigned LayoutIndex{~0u};
+
   /// Number of pseudo instructions in this block.
   uint32_t NumPseudos{0};
 
@@ -207,6 +210,7 @@ public:
     return (unsigned)Throwers.size();
   }
   bool                  throw_empty() const { return Throwers.empty(); }
+  bool                 isLandingPad() const { return !Throwers.empty(); }
 
   lp_iterator        lp_begin()       { return LandingPads.begin();   }
   const_lp_iterator  lp_begin() const { return LandingPads.begin();   }
@@ -329,6 +333,8 @@ public:
     return Label->getName();
   }
 
+  MCInst *findFirstNonPseudoInstruction();
+
   /// Add instruction at the end of this basic block.
   /// Returns the index of the instruction in the Instructions vector of the BB.
   uint32_t addInstruction(MCInst &&Inst) {
@@ -379,6 +385,13 @@ public:
   /// Return offset of the basic block from the function start.
   uint64_t getOffset() const {
     return Offset;
+  }
+
+  /// Return index in the current layout. The user is responsible for
+  /// making sure the indices are up to date,
+  /// e.g. by calling BinaryFunction::updateLayoutIndices();
+  unsigned getLayoutIndex() const {
+    return LayoutIndex;
   }
 
   /// Adds block to successor list, and also updates predecessor list for
@@ -548,6 +561,11 @@ private:
   /// Set offset of the basic block from the function start.
   void setOffset(uint64_t NewOffset) {
     Offset = NewOffset;
+  }
+
+  /// Set layout index. To be used by BinaryFunction.
+  void setLayoutIndex(unsigned Index) {
+    LayoutIndex = Index;
   }
 };
 

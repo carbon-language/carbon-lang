@@ -128,20 +128,18 @@ void OptimizeBodylessFunctions::analyze(
     BinaryFunction &BF,
     BinaryContext &BC,
     std::map<uint64_t, BinaryFunction> &BFs) {
-  if (BF.size() != 1 || (*BF.begin()).size() == 0)
+  if (BF.size() != 1 || BF.front().getNumNonPseudos() != 1)
     return;
 
-  auto &BB = *BF.begin();
-  const auto &FirstInst = *BB.begin();
-  if (!BC.MIA->isTailCall(FirstInst))
+  const auto *FirstInstr = BF.front().findFirstNonPseudoInstruction();
+  if (!FirstInstr)
     return;
-  auto &Op1 = FirstInst.getOperand(0);
-  if (!Op1.isExpr())
+  if (!BC.MIA->isTailCall(*FirstInstr))
     return;
-  auto Expr = dyn_cast<MCSymbolRefExpr>(Op1.getExpr());
-  if (!Expr)
+  const auto *TargetSymbol = BC.MIA->getTargetSymbol(*FirstInstr);
+  if (!TargetSymbol)
     return;
-  const auto *Function = BC.getFunctionForSymbol(&Expr->getSymbol());
+  const auto *Function = BC.getFunctionForSymbol(TargetSymbol);
   if (!Function)
     return;
 
@@ -156,14 +154,10 @@ void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
       auto &Inst = *InstIt;
       if (!BC.MIA->isCall(Inst))
         continue;
-      auto &Op1 = Inst.getOperand(0);
-      if (!Op1.isExpr())
+      const auto *OriginalTarget = BC.MIA->getTargetSymbol(Inst);
+      if (!OriginalTarget)
         continue;
-      auto Expr = dyn_cast<MCSymbolRefExpr>(Op1.getExpr());
-      if (!Expr)
-        continue;
-      auto *OriginalTarget = &Expr->getSymbol();
-      auto *Target = OriginalTarget;
+      const auto *Target = OriginalTarget;
       // Iteratively update target since we could have f1() calling f2()
       // calling f3() calling f4() and we want to output f1() directly
       // calling f4().
@@ -614,11 +608,9 @@ bool InlineSmallFunctions::inlineCallsInFunction(
           !BC.MIA->isTailCall(Inst) &&
           Inst.size() == 1 &&
           Inst.getOperand(0).isExpr()) {
-        auto Target = dyn_cast<MCSymbolRefExpr>(
-            Inst.getOperand(0).getExpr());
-        assert(Target && "Not MCSymbolRefExpr");
-        const auto *TargetFunction =
-          BC.getFunctionForSymbol(&Target->getSymbol());
+        const auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);
+        assert(TargetSymbol && "target symbol expected for direct call");
+        const auto *TargetFunction = BC.getFunctionForSymbol(TargetSymbol);
         if (TargetFunction) {
           bool CallToInlineableFunction =
             InliningCandidates.count(TargetFunction);
@@ -683,11 +675,9 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
           Inst.size() == 1 &&
           Inst.getOperand(0).isExpr()) {
         assert(!BC.MIA->isInvoke(Inst));
-        auto Target = dyn_cast<MCSymbolRefExpr>(
-            Inst.getOperand(0).getExpr());
-        assert(Target && "Not MCSymbolRefExpr");
-        const auto *TargetFunction =
-          BC.getFunctionForSymbol(&Target->getSymbol());
+        const auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);
+        assert(TargetSymbol && "target symbol expected for direct call");
+        const auto *TargetFunction = BC.getFunctionForSymbol(TargetSymbol);
         if (TargetFunction) {
           bool CallToInlineableFunction =
             InliningCandidates.count(TargetFunction);
@@ -934,89 +924,86 @@ void FixupFunctions::runOnFunctions(
 
 bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
                                                 BinaryFunction &BF) {
-  if (BF.layout_size() == 0)
+  if (BF.layout_size() < 2)
     return false;
 
+  // Need updated indices to correctly detect branch' direction.
+  BF.updateLayoutIndices();
+
   auto &MIA = BC.MIA;
-  uint64_t NumLocalTailCalls = 0;
-  uint64_t NumLocalPatchedTailCalls = 0;
+  uint64_t NumLocalCTCCandidates = 0;
+  uint64_t NumLocalCTCs = 0;
+  std::map<BinaryBasicBlock *, bool> ToPreserve;
+  for (auto *BB : BF.layout()) {
+    ToPreserve[BB] = true;
 
-  for (auto* BB : BF.layout()) {
-    const MCSymbol *TBB = nullptr;
-    const MCSymbol *FBB = nullptr;
-    MCInst *CondBranch = nullptr;
-    MCInst *UncondBranch = nullptr;
-
-    // Determine the control flow at the end of each basic block
-    if (!BB->analyzeBranch(*MIA, TBB, FBB, CondBranch, UncondBranch)) {
+    // Locate BB with a single direct tail-call instruction.
+    if (BB->getNumNonPseudos() != 1)
       continue;
+
+    auto *Instr = BB->findFirstNonPseudoInstruction();
+    if (!MIA->isTailCall(*Instr))
+      continue;
+    auto *CalleeSymbol = MIA->getTargetSymbol(*Instr);
+    if (!CalleeSymbol)
+      continue;
+
+    // Detect direction of the possible conditional tail call.
+    // XXX: Once we start reordering functions this has to change.
+    bool IsForwardCTC;
+    const auto *CalleeBF = BC.getFunctionForSymbol(CalleeSymbol);
+    if (CalleeBF) {
+      IsForwardCTC = CalleeBF->getAddress() > BF.getAddress();
+    } else {
+      // Absolute symbol.
+      auto const CalleeSI = BC.GlobalSymbols.find(CalleeSymbol->getName());
+      assert(CalleeSI != BC.GlobalSymbols.end() && "unregistered symbol found");
+      IsForwardCTC = CalleeSI->second > BF.getAddress();
     }
 
-    // TODO: do we need to test for other branch patterns?
+    // Iterate through all predecessors.
+    for (auto *PredBB : BB->predecessors()) {
+      if (PredBB->getConditionalSuccessor(true) != BB)
+        continue;
 
-    // For this particular case, the first basic block ends with
-    // a conditional branch and has two successors, one fall-through
-    // and one for when the condition is true.
-    // The target of the conditional is a basic block with a single
-    // unconditional branch (i.e. tail call) to another function.
-    // We don't care about the contents of the fall-through block.
-    // Note: this code makes the assumption that the fall-through
-    // block is the last successor.
-    if (CondBranch && !UncondBranch && BB->succ_size() == 2) {
-      // Find conditional branch target assuming the fall-through is
-      // always the last successor.
-      auto *CondTargetBB = *BB->succ_begin();
+      ++NumLocalCTCCandidates;
 
-      // Does the BB contain a single instruction?
-      if (CondTargetBB->size() - CondTargetBB->getNumPseudos() == 1) {
-        // Check to see if the sole instruction is a tail call.
-        auto const &Instr = *CondTargetBB->begin();
+      // We don't want to reverse direction of the branch in new order
+      // without further profile analysis.
+      if (isForwardBranch(PredBB, BB) != IsForwardCTC)
+        continue;
 
-        if (MIA->isTailCall(Instr)) {
-          ++NumTailCallCandidates;
-          ++NumLocalTailCalls;
+      // Change destination of the unconditional branch.
+      const MCSymbol *TBB = nullptr;
+      const MCSymbol *FBB = nullptr;
+      MCInst *CondBranch = nullptr;
+      MCInst *UncondBranch = nullptr;
+      auto Result =
+        PredBB->analyzeBranch(*MIA, TBB, FBB, CondBranch, UncondBranch);
+      assert(Result && "internal error analyzing conditional branch");
+      assert(CondBranch && "conditional branch expected");
 
-          auto const &TailTargetSymExpr =
-            cast<MCSymbolRefExpr>(Instr.getOperand(0).getExpr());
-          auto const &TailTarget = TailTargetSymExpr->getSymbol();
-
-          // Lookup the address for the tail call target.
-          auto const TailAddress = BC.GlobalSymbols.find(TailTarget.getName());
-          if (TailAddress == BC.GlobalSymbols.end())
-            continue;
-
-          // Check to make sure we would be doing a forward jump.
-          // This assumes the address range of the current BB and the
-          // tail call target address don't overlap.
-          if (BF.getAddress() < TailAddress->second) {
-            ++NumTailCallsPatched;
-            ++NumLocalPatchedTailCalls;
-
-            // Is the original jump forward or backward?
-            const bool isForward =
-              TailAddress->second > BF.getAddress() + BB->getOffset();
-
-            if (isForward) ++NumOrigForwardBranches;
-
-            // Patch the new target address into the conditional branch.
-            CondBranch->getOperand(0).setExpr(TailTargetSymExpr);
-            // Remove the unused successor which may be eliminated later
-            // if there are no other users.
-            BB->removeSuccessor(CondTargetBB);
-            DEBUG(dbgs() << "patched " << (isForward ? "(fwd)" : "(back)")
-                  << " tail call in " << BF << ".\n";);
-          }
-        }
-      }
+      MIA->replaceBranchTarget(*CondBranch, CalleeSymbol, BC.Ctx.get());
+      PredBB->removeSuccessor(BB);
+      ++NumLocalCTCs;
     }
+
+    // Remove the block from CFG if all predecessors were removed.
+    if (BB->pred_size() == 0 && !BB->isLandingPad())
+      ToPreserve[BB] = false;
   }
 
-  DEBUG(dbgs() << "BOLT: patched " << NumLocalPatchedTailCalls
-        << " tail calls (" << NumOrigForwardBranches << " forward)"
-        << " from a total of " << NumLocalTailCalls
-        << " in function " << BF << "\n";);
+  // Clean-up unreachable tail-call blocks.
+  BF.eraseDeadBBs(ToPreserve);
 
-  return NumLocalPatchedTailCalls > 0;
+  DEBUG(dbgs() << "BOLT: created " << NumLocalCTCs
+          << " conditional tail calls from a total of " << NumLocalCTCCandidates
+          << " candidates in function " << BF << "\n";);
+
+  NumTailCallsPatched += NumLocalCTCs;
+  NumTailCallCandidates += NumLocalCTCCandidates;
+
+  return NumLocalCTCs > 0;
 }
 
 void SimplifyConditionalTailCalls::runOnFunctions(
@@ -1206,20 +1193,14 @@ void IdenticalCodeFolding::discoverCallers(
           continue;
         }
 
-        const MCOperand &TargetOp = Inst.getOperand(0);
-        if (!TargetOp.isExpr()) {
-          // This is an inderect call, we cannot record
-          // a target.
+        const auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);
+        if (!TargetSymbol) {
+          // This is an indirect call, we cannot record a target.
           ++InstrIndex;
           continue;
         }
 
-        // Find the target function for this call.
-        const auto *TargetExpr = TargetOp.getExpr();
-        assert(TargetExpr->getKind() == MCExpr::SymbolRef);
-        const auto &TargetSymbol =
-          dyn_cast<MCSymbolRefExpr>(TargetExpr)->getSymbol();
-        const auto *Function = BC.getFunctionForSymbol(&TargetSymbol);
+        const auto *Function = BC.getFunctionForSymbol(TargetSymbol);
         if (!Function) {
           // Call to a function without a BinaryFunction object.
           ++InstrIndex;

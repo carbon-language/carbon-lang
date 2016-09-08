@@ -147,6 +147,8 @@ unsigned BinaryFunction::eraseDeadBBs(
     std::map<BinaryBasicBlock *, bool> &ToPreserve) {
   BasicBlockOrderType NewLayout;
   unsigned Count = 0;
+  assert(ToPreserve[BasicBlocksLayout.front()] == true &&
+         "unable to remove an entry basic block");
   for (auto I = BasicBlocksLayout.begin(), E = BasicBlocksLayout.end(); I != E;
        ++I) {
     if (ToPreserve[*I])
@@ -1389,11 +1391,10 @@ void BinaryFunction::removeConditionalTailCalls() {
     assert(!LP && "found tail call with associated landing pad");
 
     // Create the unconditional tail call instruction.
-    const MCSymbol &TailCallTargetLabel =
-      cast<MCSymbolRefExpr>(
-        CondTailCallInst.getOperand(0).getExpr())->getSymbol();
+    const auto *TailCallTargetLabel = BC.MIA->getTargetSymbol(CondTailCallInst);
+    assert(TailCallTargetLabel && "symbol expected for direct tail call");
     MCInst TailCallInst;
-    BC.MIA->createTailCall(TailCallInst, &TailCallTargetLabel, BC.Ctx.get());
+    BC.MIA->createTailCall(TailCallInst, TailCallTargetLabel, BC.Ctx.get());
 
     // The way we will remove this conditional tail call depends on the
     // direction of the jump when it is taken. We want to preserve this
@@ -2596,17 +2597,9 @@ DynoStats BinaryFunction::getDynoStats() const {
   if (!isSimple())
     return Stats;
 
-  // Basic block indices in the new layout for quick branch direction lookup.
-  std::unordered_map<const BinaryBasicBlock *, unsigned>
-    BBToIndexMap(layout_size());
-  unsigned Index = 0;
-  for (const auto &BB : layout()) {
-    BBToIndexMap[BB] = ++Index;
-  }
-  auto isForwardBranch = [&](const BinaryBasicBlock *From,
-                             const BinaryBasicBlock *To) {
-    return BBToIndexMap[To] > BBToIndexMap[From];
-  };
+  // Update enumeration of basic blocks for correct detection of branch'
+  // direction.
+  updateLayoutIndices();
 
   for (const auto &BB : layout()) {
     // The basic block execution count equals to the sum of incoming branch

@@ -830,6 +830,14 @@ public:
   /// computed from scratch using modifyLayout.
   void updateLayout(LayoutType Type, bool MinBranchClusters, bool Split);
 
+  /// Make sure basic blocks' indices match the current layout.
+  void updateLayoutIndices() const {
+    unsigned Index = 0;
+    for (auto *BB : layout()) {
+      BB->setLayoutIndex(Index++);
+    }
+  }
+
   /// Dump function information to debug output. If \p PrintInstructions
   /// is true - include instruction disassembly.
   void dump(std::string Annotation = "", bool PrintInstructions = true) const;
@@ -1217,6 +1225,16 @@ public:
 
   const FragmentInfo &cold() const { return ColdFragment; }
 };
+
+/// Determine direction of the branch based on the current layout.
+/// Callee is responsible of updating basic block indices prior to using
+/// this function (e.g. by calling BinaryFunction::updateLayoutIndices()).
+inline bool isForwardBranch(const BinaryBasicBlock *From,
+                            const BinaryBasicBlock *To) {
+  assert(From->getFunction() == To->getFunction() &&
+         "basic blocks should be in the same function");
+  return To->getLayoutIndex() > From->getLayoutIndex();
+}
 
 inline raw_ostream &operator<<(raw_ostream &OS,
                                const BinaryFunction &Function) {

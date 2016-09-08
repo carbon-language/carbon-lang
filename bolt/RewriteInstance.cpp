@@ -1243,10 +1243,9 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
     for (const auto &Instr : *BB) {
       // Handle pseudo instructions.
       if (BC.MIA->isEHLabel(Instr)) {
-        assert(Instr.getNumOperands() == 1 && Instr.getOperand(0).isExpr() &&
+        const auto *Label = BC.MIA->getTargetSymbol(Instr);
+        assert(Instr.getNumOperands() == 1 && Label &&
                "bad EH_LABEL instruction");
-        auto Label = &(cast<MCSymbolRefExpr>(Instr.getOperand(0).getExpr())
-                           ->getSymbol());
         Streamer.EmitLabel(const_cast<MCSymbol *>(Label));
         continue;
       }
@@ -1952,10 +1951,6 @@ void RewriteInstance::rewriteFile() {
     if (Function.getImageAddress() == 0 || Function.getImageSize() == 0)
       continue;
 
-    if (Function.isSplit() && (Function.cold().getImageAddress() == 0 ||
-                               Function.cold().getImageSize() == 0))
-      continue;
-
     if (Function.getImageSize() > Function.getMaxSize()) {
       if (opts::Verbosity >= 1) {
         errs() << "BOLT-WARNING: new function size (0x"
@@ -1967,6 +1962,10 @@ void RewriteInstance::rewriteFile() {
       FailedAddresses.emplace_back(Function.getAddress());
       continue;
     }
+
+    if (Function.isSplit() && (Function.cold().getImageAddress() == 0 ||
+                               Function.cold().getImageSize() == 0))
+      continue;
 
     OverwrittenScore += Function.getFunctionScore();
     // Overwrite function in the output file.

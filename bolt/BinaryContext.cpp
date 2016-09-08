@@ -282,10 +282,7 @@ void BinaryContext::printInstruction(raw_ostream &OS,
                                      const BinaryFunction* Function,
                                      bool printMCInst) const {
   if (MIA->isEHLabel(Instruction)) {
-    OS << "  EH_LABEL: "
-       << cast<MCSymbolRefExpr>(Instruction.getOperand(0).getExpr())->
-      getSymbol()
-       << '\n';
+    OS << "  EH_LABEL: " << *MIA->getTargetSymbol(Instruction) << '\n';
     return;
   }
   OS << format("    %08" PRIx64 ": ", Offset);

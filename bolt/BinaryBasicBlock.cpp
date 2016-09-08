@@ -30,6 +30,15 @@ bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS) {
   return LHS.Offset < RHS.Offset;
 }
 
+MCInst *BinaryBasicBlock::findFirstNonPseudoInstruction() {
+  auto &BC = Function->getBinaryContext();
+  for (auto &Inst : Instructions) {
+    if (!BC.MII->get(Inst.getOpcode()).isPseudo())
+      return &Inst;
+  }
+  return nullptr;
+}
+
 BinaryBasicBlock *BinaryBasicBlock::getSuccessor(const MCSymbol *Label) const {
   if (!Label && succ_size() == 1)
     return *succ_begin();
