@@ -45,12 +45,19 @@ public:
   InputSectionData(Kind SectionKind, bool Compressed, bool Live)
       : SectionKind(SectionKind), Live(Live), Compressed(Compressed) {}
 
-  Kind SectionKind;
-  uint32_t Alignment;
-  // Used for garbage collection.
-  bool Live;
+private:
+  unsigned SectionKind : 3;
 
-  bool Compressed;
+public:
+  Kind kind() const { return (Kind)SectionKind; }
+
+  // Used for garbage collection.
+  unsigned Live : 1;
+
+  unsigned Compressed : 1;
+
+  uint32_t Alignment;
+
   // If a section is compressed, this vector has uncompressed section data.
   SmallVector<char, 0> Uncompressed;
 

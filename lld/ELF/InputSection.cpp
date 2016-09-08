@@ -65,7 +65,7 @@ template <class SectionT> static std::string getName(SectionT *Sec) {
 
 template <class ELFT>
 typename ELFT::uint InputSectionBase<ELFT>::getOffset(uintX_t Offset) const {
-  switch (SectionKind) {
+  switch (kind()) {
   case Regular:
     return cast<InputSection<ELFT>>(this)->OutSecOff + Offset;
   case EHFrame:
@@ -126,7 +126,7 @@ InputSection<ELFT>::InputSection(elf::ObjectFile<ELFT> *F,
 
 template <class ELFT>
 bool InputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
-  return S->SectionKind == Base::Regular;
+  return S->kind() == Base::Regular;
 }
 
 template <class ELFT>
@@ -446,7 +446,7 @@ EhInputSection<ELFT>::EhInputSection(elf::ObjectFile<ELFT> *F,
 
 template <class ELFT>
 bool EhInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
-  return S->SectionKind == InputSectionBase<ELFT>::EHFrame;
+  return S->kind() == InputSectionBase<ELFT>::EHFrame;
 }
 
 // Returns the index of the first relocation that points to a region between
@@ -570,7 +570,7 @@ template <class ELFT> void MergeInputSection<ELFT>::splitIntoPieces() {
 
 template <class ELFT>
 bool MergeInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
-  return S->SectionKind == InputSectionBase<ELFT>::Merge;
+  return S->kind() == InputSectionBase<ELFT>::Merge;
 }
 
 // Do binary search to get a section piece at a given input offset.
@@ -647,7 +647,7 @@ MipsReginfoInputSection<ELFT>::MipsReginfoInputSection(elf::ObjectFile<ELFT> *F,
 
 template <class ELFT>
 bool MipsReginfoInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
-  return S->SectionKind == InputSectionBase<ELFT>::MipsReginfo;
+  return S->kind() == InputSectionBase<ELFT>::MipsReginfo;
 }
 
 template <class ELFT>
@@ -672,7 +672,7 @@ MipsOptionsInputSection<ELFT>::MipsOptionsInputSection(elf::ObjectFile<ELFT> *F,
 
 template <class ELFT>
 bool MipsOptionsInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
-  return S->SectionKind == InputSectionBase<ELFT>::MipsOptions;
+  return S->kind() == InputSectionBase<ELFT>::MipsOptions;
 }
 
 template <class ELFT>
@@ -690,7 +690,7 @@ MipsAbiFlagsInputSection<ELFT>::MipsAbiFlagsInputSection(
 
 template <class ELFT>
 bool MipsAbiFlagsInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
-  return S->SectionKind == InputSectionBase<ELFT>::MipsAbiFlags;
+  return S->kind() == InputSectionBase<ELFT>::MipsAbiFlags;
 }
 
 template <class ELFT>

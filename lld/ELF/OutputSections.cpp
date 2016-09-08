@@ -1836,7 +1836,7 @@ OutputSectionFactory<ELFT>::create(InputSectionBase<ELFT> *C,
   if (Sec)
     return {Sec, false};
 
-  switch (C->SectionKind) {
+  switch (C->kind()) {
   case InputSectionBase<ELFT>::Regular:
     Sec = new OutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
     break;
