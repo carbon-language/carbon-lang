@@ -44,8 +44,7 @@ using namespace lld::elf;
 LinkerScriptBase *elf::ScriptBase;
 ScriptConfiguration *elf::ScriptConfig;
 
-template <class ELFT>
-static void addRegular(SymbolAssignment *Cmd) {
+template <class ELFT> static void addRegular(SymbolAssignment *Cmd) {
   Symbol *Sym = Symtab<ELFT>::X->addRegular(Cmd->Name, STB_GLOBAL, STV_DEFAULT);
   Sym->Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
   Cmd->Sym = Sym->body();
@@ -214,8 +213,7 @@ LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &OutCmd) {
   return Ret;
 }
 
-template <class ELFT>
-void LinkerScript<ELFT>::createAssignments() {
+template <class ELFT> void LinkerScript<ELFT>::createAssignments() {
   for (const std::unique_ptr<SymbolAssignment> &Cmd : Opt.Assignments) {
     if (shouldDefine<ELFT>(Cmd.get()))
       addRegular<ELFT>(Cmd.get());
@@ -842,7 +840,7 @@ void ScriptParser::readOutputFormat() {
   next();
   StringRef Tok = next();
   if (Tok == ")")
-   return;
+    return;
   if (Tok != ",") {
     setError("unexpected token: " + Tok);
     return;
@@ -1354,18 +1352,18 @@ std::vector<StringRef> ScriptParser::readOutputSectionPhdrs() {
 unsigned ScriptParser::readPhdrType() {
   StringRef Tok = next();
   unsigned Ret = StringSwitch<unsigned>(Tok)
-      .Case("PT_NULL", PT_NULL)
-      .Case("PT_LOAD", PT_LOAD)
-      .Case("PT_DYNAMIC", PT_DYNAMIC)
-      .Case("PT_INTERP", PT_INTERP)
-      .Case("PT_NOTE", PT_NOTE)
-      .Case("PT_SHLIB", PT_SHLIB)
-      .Case("PT_PHDR", PT_PHDR)
-      .Case("PT_TLS", PT_TLS)
-      .Case("PT_GNU_EH_FRAME", PT_GNU_EH_FRAME)
-      .Case("PT_GNU_STACK", PT_GNU_STACK)
-      .Case("PT_GNU_RELRO", PT_GNU_RELRO)
-      .Default(-1);
+                     .Case("PT_NULL", PT_NULL)
+                     .Case("PT_LOAD", PT_LOAD)
+                     .Case("PT_DYNAMIC", PT_DYNAMIC)
+                     .Case("PT_INTERP", PT_INTERP)
+                     .Case("PT_NOTE", PT_NOTE)
+                     .Case("PT_SHLIB", PT_SHLIB)
+                     .Case("PT_PHDR", PT_PHDR)
+                     .Case("PT_TLS", PT_TLS)
+                     .Case("PT_GNU_EH_FRAME", PT_GNU_EH_FRAME)
+                     .Case("PT_GNU_STACK", PT_GNU_STACK)
+                     .Case("PT_GNU_RELRO", PT_GNU_RELRO)
+                     .Default(-1);
 
   if (Ret == (unsigned)-1) {
     setError("invalid program header type: " + Tok);
