@@ -910,6 +910,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
 
   auto &Ctx = BC.Ctx;
   auto &MIA = BC.MIA;
+  auto BranchDataOrErr = BC.DR.getFuncBranchData(getNames());
 
   DWARFUnitLineTable ULT = getDWARFUnitLineTable();
 
@@ -1122,12 +1123,6 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           }
         }
 
-        Instruction.clear();
-        Instruction.addOperand(
-            MCOperand::createExpr(
-              MCSymbolRefExpr::create(TargetSymbol,
-                                      MCSymbolRefExpr::VK_None,
-                                      *Ctx)));
         if (!IsCall) {
           // Add taken branch info.
           TakenBranches.emplace_back(Offset, TargetAddress - getAddress());
@@ -1135,6 +1130,21 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         if (IsCondBranch) {
           // Add fallthrough branch info.
           FTBranches.emplace_back(Offset, Offset + Size);
+        }
+
+        const bool isIndirect =
+          ((IsCall || !IsCondBranch) && MIA->isIndirectBranch(Instruction));
+
+        Instruction.clear();
+        Instruction.addOperand(
+            MCOperand::createExpr(
+              MCSymbolRefExpr::create(TargetSymbol,
+                                      MCSymbolRefExpr::VK_None,
+                                      *Ctx)));
+
+        if (isIndirect && BranchDataOrErr) {
+          MIA->addAnnotation(Ctx.get(), Instruction, "IndirectBranchData",
+                             Offset);
         }
       } else {
         // Could not evaluate branch. Should be an indirect call or an
@@ -1145,7 +1155,14 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           default:
             llvm_unreachable("unexpected result");
           case IndirectBranchType::POSSIBLE_TAIL_CALL:
-            MIA->convertJmpToTailCall(Instruction);
+            {
+              auto Result = MIA->convertJmpToTailCall(Instruction);
+              assert(Result);
+              if (BranchDataOrErr) {
+                MIA->addAnnotation(Ctx.get(), Instruction, "IndirectBranchData",
+                                   Offset);
+              }
+            }
             break;
           case IndirectBranchType::POSSIBLE_JUMP_TABLE:
           case IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE:
@@ -1155,8 +1172,19 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           case IndirectBranchType::UNKNOWN:
             // Keep processing. We'll do more checks and fixes in
             // postProcessIndirectBranches().
+            if (BranchDataOrErr) {
+              MIA->addAnnotation(Ctx.get(),
+                                 Instruction,
+                                 "MaybeIndirectBranchData",
+                                 Offset);
+            }
             break;
           };
+        } else if (MIA->isCall(Instruction)) {
+          if (BranchDataOrErr) {
+            MIA->addAnnotation(Ctx.get(), Instruction, "IndirectBranchData",
+                               Offset);
+          }
         }
         // Indirect call. We only need to fix it if the operand is RIP-relative
         if (IsSimple && MIA->hasRIPOperand(Instruction)) {
@@ -1248,6 +1276,8 @@ void BinaryFunction::postProcessJumpTables() {
 }
 
 bool BinaryFunction::postProcessIndirectBranches() {
+  auto BranchDataOrErr = BC.DR.getFuncBranchData(getNames());
+
   for (auto *BB : layout()) {
     for (auto &Instr : *BB) {
       if (!BC.MIA->isIndirectBranch(Instr))
@@ -1257,6 +1287,15 @@ bool BinaryFunction::postProcessIndirectBranches() {
       // it must be a tail call.
       if (layout_size() == 1) {
         BC.MIA->convertJmpToTailCall(Instr);
+
+        if (BC.MIA->hasAnnotation(Instr, "MaybeIndirectBranchData")) {
+          auto Offset =
+            BC.MIA->getAnnotationAs<uint64_t>(Instr, "MaybeIndirectBranchData");
+          BC.MIA->addAnnotation(BC.Ctx.get(),
+                                Instr,
+                                "IndirectBranchData",
+                                Offset);
+        }
         return true;
       }
 
@@ -1336,6 +1375,15 @@ bool BinaryFunction::postProcessIndirectBranches() {
         return false;
       }
       BC.MIA->convertJmpToTailCall(Instr);
+
+      if (BranchDataOrErr) {
+        auto Offset =
+          BC.MIA->getAnnotationAs<uint64_t>(Instr, "MaybeIndirectBranchData");
+        BC.MIA->addAnnotation(BC.Ctx.get(),
+                              Instr,
+                              "IndirectBranchData",
+                              Offset);
+      }
     }
   }
   return true;
@@ -2097,8 +2145,8 @@ void BinaryFunction::removeConditionalTailCalls() {
       // We have to add 1 byte as there's potentially an existing branch past
       // the end of the code as a result of __builtin_unreachable().
       const BinaryBasicBlock *LastBB = BasicBlocks.back();
-      uint64_t NewBlockOffset = LastBB->getOffset() +
-                         BC.computeCodeSize(LastBB->begin(), LastBB->end()) + 1;
+      uint64_t NewBlockOffset =
+        LastBB->getOffset() + BC.computeCodeSize(LastBB->begin(), LastBB->end()) + 1;
       TailCallBB = addBasicBlock(NewBlockOffset, TCLabel);
       TailCallBB->addInstruction(TailCallInst);
 
@@ -2184,6 +2232,7 @@ BinaryFunction::annotateCFIState(const MCInst *Stop) {
       } else if (CFI->getOperation() != MCCFIInstruction::OpGnuArgsSize) {
         State = HighestState;
       }
+      assert(State <= FrameInstructions.size());
       ++Idx;
       if (&Instr == Stop) {
         CFIState.emplace_back(State);
@@ -2315,9 +2364,9 @@ bool BinaryFunction::fixCFIState() {
 
       if (StackOffset != 0) {
         if (opts::Verbosity >= 1) {
-          errs() << " BOLT-WARNING: not possible to remember/recover state"
+          errs() << "BOLT-WARNING: not possible to remember/recover state"
                  << " without corrupting CFI state stack in function "
-                 << *this << "\n";
+                 << *this << " @ " << BB->getName() << "\n";
         }
         return false;
       }
@@ -2616,12 +2665,18 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
                                BasicBlocksLayout.end(),
                                BB);
     unsigned Layout = LayoutPos - BasicBlocksLayout.begin();
-    OS << format("\"%s\" [label=\"%s\\n(O:%lu,I:%u,L%u)\"]\n",
+    const char* ColdStr = BB->isCold() ? " (cold)" : "";
+    OS << format("\"%s\" [label=\"%s%s\\n(C:%lu,O:%lu,I:%u,L:%u:CFI:%u)\"]\n",
                  BB->getName().data(),
                  BB->getName().data(),
+                 ColdStr,
+                 (BB->ExecutionCount != BinaryBasicBlock::COUNT_NO_PROFILE
+                  ? BB->ExecutionCount
+                  : 0),
                  BB->getOffset(),
                  getIndex(BB),
-                 Layout);
+                 Layout,
+                 BBCFIState[getIndex(BB)]);
     OS << format("\"%s\" [shape=box]\n", BB->getName().data());
     if (opts::DotToolTipCode) {
       std::string Str;
@@ -2673,7 +2728,7 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
 
       if (BB->getExecutionCount() != COUNT_NO_PROFILE &&
           BI->MispredictedCount != BinaryBasicBlock::COUNT_INFERRED) {
-        OS << "\\n(M:" << BI->MispredictedCount << ",C:" << BI->Count << ")";
+        OS << "\\n(C:" << BI->Count << ",M:" << BI->MispredictedCount << ")";
       } else if (ExecutionCount != COUNT_NO_PROFILE &&
                  BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE) {
         OS << "\\n(IC:" << BI->Count << ")";
@@ -2727,6 +2782,41 @@ void BinaryFunction::dumpGraphToFile(std::string Filename) const {
   dumpGraph(of);
 }
 
+bool BinaryFunction::validateCFG() {
+  bool Valid = true;
+  for (auto *BB : BasicBlocks) {
+    Valid &= BB->validateSuccessorInvariants();
+    if (!Valid) {
+      errs() << "BOLT-WARNING: CFG invalid @ " << BB->getName() << "\n";
+    }
+  }
+
+  if (!Valid)
+    return Valid;
+
+  for (auto *BB : BasicBlocks) {
+    std::set<BinaryBasicBlock *> Seen;
+    for (auto *LPBlock : BB->LandingPads) {
+      Valid &= Seen.count(LPBlock) == 0;
+      if (!Valid) {
+        errs() << "Duplicate LP seen " << LPBlock->getName() << "\n";
+        break;
+      }
+      Seen.insert(LPBlock);
+      auto count = LPBlock->Throwers.count(BB);
+      Valid &= (count == 1);
+      if (!Valid) {
+        errs() << "Inconsistent landing pad detected " << LPBlock->getName()
+               << " is in LandingPads but not in " << BB->getName()
+               << "->Throwers\n";
+        break;
+      }
+    }
+  }
+
+  return Valid;
+}
+
 void BinaryFunction::fixBranches() {
   auto &MIA = BC.MIA;
   auto *Ctx = BC.Ctx.get();
@@ -2778,6 +2868,7 @@ void BinaryFunction::fixBranches() {
     // terminator) or more than 2 (switch table) don't require branch
     // instruction adjustments.
   }
+  assert(validateCFG());
 }
 
 void BinaryFunction::splitFunction() {
@@ -3257,6 +3348,7 @@ void BinaryFunction::updateLayout(BinaryBasicBlock* Start,
   auto Begin = &BasicBlocks[getIndex(Start) + 1];
   auto End = &BasicBlocks[getIndex(Start) + NumNewBlocks + 1];
   BasicBlocksLayout.insert(Pos + 1, Begin, End);
+  updateLayoutIndices();
 }
 
 void BinaryFunction::updateLayout(LayoutType Type,
@@ -3265,6 +3357,7 @@ void BinaryFunction::updateLayout(LayoutType Type,
   // Recompute layout with original parameters.
   BasicBlocksLayout = BasicBlocks;
   modifyLayout(Type, MinBranchClusters, Split);
+  updateLayoutIndices();
 }
 
 bool BinaryFunction::isSymbolValidInScope(const SymbolRef &Symbol,

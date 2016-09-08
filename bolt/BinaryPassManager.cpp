@@ -17,9 +17,9 @@ using namespace llvm;
 
 namespace opts {
 
-extern llvm::cl::opt<bool> PrintAll;
-extern llvm::cl::opt<bool> DumpDotAll;
-extern llvm::cl::opt<bool> DynoStatsAll;
+extern cl::opt<bool> PrintAll;
+extern cl::opt<bool> DumpDotAll;
+extern cl::opt<bool> DynoStatsAll;
 
 llvm::cl::opt<bool> TimeOpts("time-opts",
                              cl::desc("print time spent in each optimization"),
@@ -36,6 +36,11 @@ OptimizeBodylessFunctions(
     "optimize-bodyless-functions",
     cl::desc("optimize functions that just do a tail call"),
     cl::ZeroOrMore);
+
+static cl::opt<bool>
+IndirectCallPromotion("indirect-call-promotion",
+                      cl::desc("indirect call promotion"),
+                      cl::ZeroOrMore);
 
 static cl::opt<bool>
 InlineSmallFunctions(
@@ -119,6 +124,12 @@ PrintICF("print-icf",
          cl::Hidden);
 
 static cl::opt<bool>
+PrintICP("print-icp",
+         cl::desc("print functions after indirect call promotion"),
+         cl::ZeroOrMore,
+         cl::Hidden);
+  
+static cl::opt<bool>
 PrintInline("print-inline",
             cl::desc("print functions after inlining optimization"),
             cl::ZeroOrMore,
@@ -197,13 +208,19 @@ void BinaryFunctionPassManager::runAllPasses(
 ) {
   BinaryFunctionPassManager Manager(BC, Functions, LargeFunctions);
 
-  // Here we manage dependencies/order manually, since passes are ran in the
+  // Here we manage dependencies/order manually, since passes are run in the
   // order they're registered.
 
   // Run this pass first to use stats for the original functions.
   Manager.registerPass(llvm::make_unique<PrintSortedBy>(NeverPrint));
 
   Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF));
+
+  Manager.registerPass(llvm::make_unique<IndirectCallPromotion>(PrintICP),
+                       opts::IndirectCallPromotion);
+
+  Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes),
+                       opts::Peepholes);
 
   Manager.registerPass(llvm::make_unique<InlineSmallFunctions>(PrintInline),
                        opts::InlineSmallFunctions);

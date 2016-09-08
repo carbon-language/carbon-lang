@@ -376,6 +376,7 @@ public:
   /// Add instruction at the end of this basic block.
   /// Returns the index of the instruction in the Instructions vector of the BB.
   uint32_t addInstruction(MCInst &&Inst) {
+    adjustNumPseudos(Inst, 1);
     Instructions.emplace_back(Inst);
     return Instructions.size() - 1;
   }
@@ -383,6 +384,7 @@ public:
   /// Add instruction at the end of this basic block.
   /// Returns the index of the instruction in the Instructions vector of the BB.
   uint32_t addInstruction(const MCInst &Inst) {
+    adjustNumPseudos(Inst, 1);
     Instructions.push_back(Inst);
     return Instructions.size() - 1;
   }
@@ -435,6 +437,10 @@ public:
                     uint64_t Count = 0,
                     uint64_t MispredictedCount = 0);
 
+  void addSuccessor(BinaryBasicBlock *Succ, const BinaryBranchInfo &BI) {
+    addSuccessor(Succ, BI.Count, BI.MispredictedCount);
+  }
+
   /// Add a range of successors.
   template <typename Itr>
   void addSuccessors(Itr Begin, Itr End) {
@@ -448,8 +454,7 @@ public:
   void addSuccessors(Itr Begin, Itr End, BrItr BrBegin, BrItr BrEnd) {
     assert(std::distance(Begin, End) == std::distance(BrBegin, BrEnd));
     while (Begin != End) {
-      const auto BrInfo = *BrBegin++;
-      addSuccessor(*Begin++, BrInfo.Count, BrInfo.MispredictedCount);
+      addSuccessor(*Begin++, *BrBegin++);
     }
   }
 
@@ -551,20 +556,22 @@ public:
   /// Replace an instruction with a sequence of instructions. Returns true
   /// if the instruction to be replaced was found and replaced.
   template <typename Itr>
-  bool replaceInstruction(MCInst *Inst, Itr Begin, Itr End) {
+  bool replaceInstruction(const MCInst *Inst, Itr Begin, Itr End) {
     auto I = Instructions.end();
     auto B = Instructions.begin();
     while (I > B) {
       --I;
       if (&*I == Inst) {
+        adjustNumPseudos(*Inst, -1);
         Instructions.insert(Instructions.erase(I), Begin, End);
+        adjustNumPseudos(Begin, End, 1);
         return true;
       }
     }
     return false;
   }
 
-  bool replaceInstruction(MCInst *Inst,
+  bool replaceInstruction(const MCInst *Inst,
                           const std::vector<MCInst> &Replacement) {
     return replaceInstruction(Inst, Replacement.begin(), Replacement.end());
   }
@@ -580,7 +587,8 @@ public:
       Instructions.pop_back();
     }
     std::reverse(SplitInst.begin(), SplitInst.end());
-
+    NumPseudos = 0;
+    adjustNumPseudos(Instructions.begin(), Instructions.end(), 1);
     return SplitInst;
   }
 
@@ -626,7 +634,18 @@ public:
   /// A simple dump function for debugging.
   void dump() const;
 
+  /// Validate successor invariants for this BB.
+  bool validateSuccessorInvariants();
+
 private:
+  void adjustNumPseudos(const MCInst &Inst, int Sign);
+
+  template <typename Itr>
+  void adjustNumPseudos(Itr Begin, Itr End, int Sign) {
+    while (Begin != End) {
+      adjustNumPseudos(*Begin++, Sign);
+    }
+  }
 
   /// Adds predecessor to the BB. Most likely you don't need to call this.
   void addPredecessor(BinaryBasicBlock *Pred);

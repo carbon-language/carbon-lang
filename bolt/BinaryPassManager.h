@@ -60,7 +60,7 @@ private:
   /// Runs all enabled implemented passes on all functions.
   static void runAllPasses(BinaryContext &BC,
                            std::map<uint64_t, BinaryFunction> &Functions,
-                           std::set<uint64_t> &largeFunctions);
+                           std::set<uint64_t> &LargeFunctions);
 
 };
 

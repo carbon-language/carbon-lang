@@ -395,6 +395,154 @@ class PrintSortedBy : public BinaryFunctionPass {
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
+/// Optimize indirect calls.
+/// The indirect call promotion pass visits each indirect call and
+/// examines the BranchData for each. If the most frequent targets
+/// from that callsite exceed the specified threshold (default 90%),
+/// the call is promoted. Otherwise, it is ignored. By default,
+/// only one target is considered at each callsite.
+/// 
+/// When an candidate callsite is processed, we modify the callsite
+/// to test for the most common call targets before calling through
+/// the original generic call mechanism.
+/// 
+/// The CFG and layout are modified by ICP.
+/// 
+/// A few new command line options have been added:
+///   -indirect-call-promotion
+///   -indirect-call-promotion-threshold=<percentage>
+///   -indirect-call-promotion-mispredict-threshold=<percentage>
+///   -indirect-call-promotion-topn=<int>
+///
+/// The threshold is the minimum frequency of a call target needed
+/// before ICP is triggered.
+///
+/// The mispredict threshold is used to disable the optimization at
+/// any callsite where the branch predictor does a good enough job
+/// that ICP wouldn't help regardless of the frequency of the most
+/// common target.
+/// 
+/// The topn option controls the number of targets to consider for
+/// each callsite, e.g. ICP is triggered if topn=2 and the total
+/// frequency of the top two call targets exceeds the threshold.
+///
+/// The minimize code size option controls whether or not the hot
+/// calls are to registers (callq %r10) or to function addresses
+/// (callq $foo).
+///
+/// Example of ICP:
+/// 
+/// C++ code:
+/// 
+///   int B_count = 0;
+///   int C_count = 0;
+/// 
+///   struct A { virtual void foo() = 0; }
+///   struct B : public A { virtual void foo() { ++B_count; }; };
+///   struct C : public A { virtual void foo() { ++C_count; }; };
+/// 
+///   A* a = ...
+///   a->foo();
+///   ...
+/// 
+/// original assembly:
+/// 
+///   B0: 49 8b 07             mov    (%r15),%rax
+///       4c 89 ff             mov    %r15,%rdi
+///       ff 10                callq  *(%rax)
+///       41 83 e6 01          and    $0x1,%r14d
+///       4d 89 e6             mov    %r12,%r14
+///       4c 0f 44 f5          cmove  %rbp,%r14
+///       4c 89 f7             mov    %r14,%rdi
+///       ...
+/// 
+/// after ICP:
+/// 
+///   B0: 49 8b 07             mov    (%r15),%rax
+///       4c 89 ff             mov    %r15,%rdi
+///       48 81 38 e0 0b 40 00 cmpq   $B::foo,(%rax)
+///       75 29                jne    B3
+///   B1: e8 45 03 00 00       callq  $B::foo
+///   B2: 41 83 e6 01          and    $0x1,%r14d
+///       4d 89 e6             mov    %r12,%r14
+///       4c 0f 44 f5          cmove  %rbp,%r14
+///       4c 89 f7             mov    %r14,%rdi
+///       ...
+/// 
+///   B3: ff 10                callq  *(%rax)
+///       eb d6                jmp    B2
+///
+class IndirectCallPromotion : public BinaryFunctionPass {
+  using BasicBlocksVector = std::vector<std::unique_ptr<BinaryBasicBlock>>;
+  std::unordered_set<const BinaryFunction *> Modified;
+  // Total number of calls from all callsites.
+  uint64_t TotalCalls{0};
+
+  // Total number of indirect calls from all callsites.
+  // (a fraction of TotalCalls)
+  uint64_t TotalIndirectCalls{0};
+
+  // Total number of callsites that use indirect calls.
+  // (the total number of callsites is not recorded)
+  uint64_t TotalIndirectCallsites{0};
+
+  // Total number of indirect callsites that are optimized by ICP.
+  // (a fraction of TotalIndirectCallsites)
+  uint64_t TotalOptimizedIndirectCallsites{0};
+
+  // Total number of indirect calls that are optimized by ICP.
+  // (a fraction of TotalCalls)
+  uint64_t TotalNumFrequentCalls{0};
+
+  std::vector<BranchInfo> getCallTargets(BinaryContext &BC,
+                                         const FuncBranchData &BranchData,
+                                         const MCInst &Inst) const;
+
+  size_t canPromoteCallsite(const BinaryBasicBlock *BB,
+                            const MCInst &Inst,
+                            const std::vector<BranchInfo> &Targets,
+                            uint64_t NumCalls);
+
+  void printCallsiteInfo(const BinaryBasicBlock *BB,
+                         const MCInst &Inst,
+                         const std::vector<BranchInfo> &Targets,
+                         const size_t N,
+                         uint64_t NumCalls) const;
+
+  std::vector<std::pair<MCSymbol *, uint64_t>>
+  findCallTargetSymbols(BinaryContext &BC,
+                        const std::vector<BranchInfo> &Targets,
+                        const size_t N) const;
+
+  std::vector<std::unique_ptr<BinaryBasicBlock>>
+  rewriteCall(BinaryContext &BC,
+              BinaryFunction &Function,
+              BinaryBasicBlock *IndCallBlock,
+              const MCInst &CallInst,
+              MCInstrAnalysis::ICPdata &&ICPcode) const;
+
+  BinaryBasicBlock *fixCFG(BinaryContext &BC,
+                           BinaryFunction &Function,
+                           BinaryBasicBlock *IndCallBlock,
+                           const bool IsTailCall,
+                           BasicBlocksVector &&NewBBs,
+                           const std::vector<BranchInfo> &Targets) const;
+
+ public:
+  explicit IndirectCallPromotion(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+
+  const char *getName() const {
+    return "indirect-call-promotion";
+  }
+  bool shouldPrint(const BinaryFunction &BF) const override {
+    return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
+  }
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
 } // namespace bolt
 } // namespace llvm
 

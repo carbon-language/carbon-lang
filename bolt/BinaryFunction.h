@@ -80,7 +80,7 @@ class DynoStats {
       Fadd(FORWARD_COND_BRANCHES_TAKEN, BACKWARD_COND_BRANCHES_TAKEN))\
   D(ALL_CONDITIONAL,              "all conditional branches",\
       Fadd(FORWARD_COND_BRANCHES, BACKWARD_COND_BRANCHES))\
-  D(LAST_DYNO_STAT,               "<reserved>", Fn)
+  D(LAST_DYNO_STAT,               "<reserved>", 0)
 
 public:
 #define D(name, ...) name,
@@ -839,6 +839,9 @@ public:
     return BC;
   }
 
+  /// Attempt to validate CFG invariants.
+  bool validateCFG();
+
   /// Return dynostats for the function.
   ///
   /// The function relies on branch instructions being in-sync with CFG for
@@ -1161,9 +1164,8 @@ public:
 
   /// Insert the BBs contained in NewBBs into the basic blocks for this
   /// function. Update the associated state of all blocks as needed, i.e.
-  /// BB offsets, BB indices, and optionally CFI state. The new BBs are
-  /// inserted after Start. This operation could affect fallthrough branches
-  /// for Start.
+  /// BB offsets and BB indices. The new BBs are inserted after Start.
+  /// This operation could affect fallthrough branches for Start.
   ///
   void insertBasicBlocks(
     BinaryBasicBlock *Start,

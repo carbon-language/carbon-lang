@@ -29,6 +29,12 @@ bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS) {
   return LHS.Index < RHS.Index;
 }
 
+void BinaryBasicBlock::adjustNumPseudos(const MCInst &Inst, int Sign) {
+  auto &BC = Function->getBinaryContext();
+  if (BC.MII->get(Inst.getOpcode()).isPseudo())
+    NumPseudos += Sign;
+}
+
 MCInst *BinaryBasicBlock::getFirstNonPseudo() {
   auto &BC = Function->getBinaryContext();
   for (auto &Inst : Instructions) {
@@ -47,6 +53,34 @@ MCInst *BinaryBasicBlock::getLastNonPseudo() {
   return nullptr;
 }
 
+bool BinaryBasicBlock::validateSuccessorInvariants() {
+  const MCSymbol *TBB = nullptr;
+  const MCSymbol *FBB = nullptr;
+  MCInst *CondBranch = nullptr;
+  MCInst *UncondBranch = nullptr;
+
+  assert(getNumPseudos() == getNumPseudos());
+
+  if (analyzeBranch(TBB, FBB, CondBranch, UncondBranch)) {
+    switch (Successors.size()) {
+    case 0:
+      return !CondBranch && !UncondBranch;
+    case 1:
+      return !CondBranch;
+    case 2:
+      if (CondBranch) {
+        return (TBB == getConditionalSuccessor(true)->getLabel() &&
+                ((!UncondBranch && !FBB) ||
+                 (UncondBranch && FBB == getConditionalSuccessor(false)->getLabel())));
+      }
+      return true;
+    default:
+      return true;
+    }
+  }
+  return true;
+}
+  
 BinaryBasicBlock *BinaryBasicBlock::getSuccessor(const MCSymbol *Label) const {
   if (!Label && succ_size() == 1)
     return *succ_begin();
@@ -121,14 +155,16 @@ void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred) {
 }
 
 void BinaryBasicBlock::addLandingPad(BinaryBasicBlock *LPBlock) {
-  LandingPads.push_back(LPBlock);
+  if (std::find(LandingPads.begin(), LandingPads.end(), LPBlock) == LandingPads.end()) {
+    LandingPads.push_back(LPBlock);
+  }
   LPBlock->Throwers.insert(this);
 }
 
 void BinaryBasicBlock::clearLandingPads() {
   for (auto *LPBlock : LandingPads) {
     auto count = LPBlock->Throwers.erase(this);
-    assert(count == 1);
+    assert(count == 1 && "Possible duplicate entry in LandingPads");
   }
   LandingPads.clear();
 }

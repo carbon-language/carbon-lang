@@ -126,6 +126,14 @@ DynoStatsAll("dyno-stats-all", cl::desc("print dyno stats after each stage"),
              cl::ZeroOrMore,
              cl::Hidden);
 
+static cl::opt<unsigned>
+TopCalledLimit("top-called-limit",
+               cl::desc("maximum number of functions to print in top called "
+                        "functions section"),
+               cl::init(100),
+               cl::ZeroOrMore,
+               cl::Hidden);
+               
 cl::opt<bool>
 HotText("hot-text",
         cl::desc("hot text symbols support"),
@@ -724,11 +732,9 @@ void RewriteInstance::run() {
       auto FunctionIt = BinaryFunctions.find(Address);
       assert(FunctionIt != BinaryFunctions.end() &&
              "Invalid large function address.");
-      if (opts::Verbosity >= 1) {
-        errs() << "BOLT-WARNING: Function " << FunctionIt->second
-               << " is larger than its orginal size: emitting again marking it "
-               << "as not simple.\n";
-      }
+      errs() << "BOLT-WARNING: Function " << FunctionIt->second
+             << " is larger than its orginal size: emitting again marking it "
+             << "as not simple.\n";
       FunctionIt->second.setSimple(false);
     }
 
@@ -1694,7 +1700,8 @@ void RewriteInstance::disassembleFunctions() {
                 }
                 );
       auto SFI = ProfiledFunctions.begin();
-      for (int i = 0; i < 100 && SFI != ProfiledFunctions.end(); ++SFI, ++i) {
+      auto SFIend = ProfiledFunctions.end();
+      for (auto i = 0u; i < opts::TopCalledLimit && SFI != SFIend; ++SFI, ++i) {
         outs() << "  " << **SFI << " : "
                << (*SFI)->getExecutionCount() << '\n';
       }

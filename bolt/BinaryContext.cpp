@@ -370,6 +370,14 @@ void BinaryContext::printInstruction(raw_ostream &OS,
     }
   }
 
+  MIA->forEachAnnotation(
+    Instruction,
+    [&OS](const MCAnnotation *Annotation) {
+      OS << " # " << Annotation->getName() << ": ";
+      Annotation->print(OS);
+    }
+  );
+
   const DWARFDebugLine::LineTable *LineTable =
     Function && opts::PrintDebugInfo ? Function->getDWARFUnitLineTable().second
                                      : nullptr;

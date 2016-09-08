@@ -122,6 +122,10 @@ struct FuncBranchData {
   /// returned. If the offset corresponds to an indirect call the behavior is
   /// undefined.
   ErrorOr<const BranchInfo &> getDirectCallBranch(uint64_t From) const;
+
+  /// Find all the branches originating at From.
+  iterator_range<ContainerTy::const_iterator> getBranchRange(
+    uint64_t From) const;
 };
 
 //===----------------------------------------------------------------------===//
