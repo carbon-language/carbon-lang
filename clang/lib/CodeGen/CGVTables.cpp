@@ -529,9 +529,6 @@ llvm::Constant *CodeGenVTables::CreateVTableComponent(
   };
 
   switch (Component.getKind()) {
-  default:
-    llvm_unreachable("Unexpected vtable component kind");
-
   case VTableComponent::CK_VCallOffset:
     return OffsetConstant(Component.getVCallOffset());
 
@@ -619,6 +616,8 @@ llvm::Constant *CodeGenVTables::CreateVTableComponent(
   case VTableComponent::CK_UnusedFunctionPointer:
     return llvm::ConstantExpr::getNullValue(CGM.Int8PtrTy);
   }
+
+  llvm_unreachable("Unexpected vtable component kind");
 }
 
 llvm::Constant *
