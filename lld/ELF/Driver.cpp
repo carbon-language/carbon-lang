@@ -54,7 +54,8 @@ bool elf::link(ArrayRef<const char *> Args, raw_ostream &Error) {
 }
 
 // Parses a linker -m option.
-static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
+static std::pair<ELFKind, uint16_t> parseEmulation(StringRef Emul) {
+  StringRef S = Emul;
   if (S.endswith("_fbsd"))
     S = S.drop_back(5);
 
@@ -78,9 +79,9 @@ static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
 
   if (Ret.first == ELFNoneKind) {
     if (S == "i386pe" || S == "i386pep" || S == "thumb2pe")
-      error("Windows targets are not supported on the ELF frontend: " + S);
+      error("Windows targets are not supported on the ELF frontend: " + Emul);
     else
-      error("unknown emulation: " + S);
+      error("unknown emulation: " + Emul);
   }
   return Ret;
 }
