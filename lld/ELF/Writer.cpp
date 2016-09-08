@@ -1186,9 +1186,7 @@ template <class ELFT> void Writer<ELFT>::setPhdrs() {
 template <class ELFT> static typename ELFT::uint getEntryAddr() {
   if (Symbol *S = Config->EntrySym)
     return S->body()->getVA<ELFT>();
-  if (Config->EntryAddr != uint64_t(-1))
-    return Config->EntryAddr;
-  return 0;
+  return Config->EntryAddr;
 }
 
 template <class ELFT> static uint8_t getELFEncoding() {
