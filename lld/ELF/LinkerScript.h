@@ -125,6 +125,7 @@ struct PhdrsCommand {
 
 class LinkerScriptBase {
 public:
+  virtual ~LinkerScriptBase() = default;
   virtual uint64_t getOutputSectionAddress(StringRef Name) = 0;
   virtual uint64_t getOutputSectionSize(StringRef Name) = 0;
   virtual uint64_t getOutputSectionAlign(StringRef Name) = 0;
