@@ -99,7 +99,7 @@ static inline std::string stringFromIslObjInternal(__isl_keep ISLTy *isl_obj,
     return "null";
   isl_ctx *ctx = ctx_getter_fn(isl_obj);
   isl_printer *p = isl_printer_to_str(ctx);
-  printer_fn(p, isl_obj);
+  p = printer_fn(p, isl_obj);
   char *char_str = isl_printer_get_str(p);
   std::string string;
   if (char_str)
