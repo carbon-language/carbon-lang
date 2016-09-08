@@ -572,6 +572,15 @@ uint64_t LinkerScript<ELFT>::getOutputSectionSize(StringRef Name) {
   return 0;
 }
 
+template <class ELFT>
+uint64_t LinkerScript<ELFT>::getOutputSectionAlign(StringRef Name) {
+  for (OutputSectionBase<ELFT> *Sec : *OutputSections)
+    if (Sec->getName() == Name)
+      return Sec->getAlignment();
+  error("undefined section " + Name);
+  return 0;
+}
+
 template <class ELFT> uint64_t LinkerScript<ELFT>::getHeaderSize() {
   return Out<ELFT>::ElfHeader->getSize() + Out<ELFT>::ProgramHeaders->getSize();
 }
@@ -1305,6 +1314,13 @@ Expr ScriptParser::readPrimary() {
     StringRef Name = next();
     expect(")");
     return [=](uint64_t Dot) { return ScriptBase->getOutputSectionSize(Name); };
+  }
+  if (Tok == "ALIGNOF") {
+    expect("(");
+    StringRef Name = next();
+    expect(")");
+    return
+        [=](uint64_t Dot) { return ScriptBase->getOutputSectionAlign(Name); };
   }
   if (Tok == "SIZEOF_HEADERS")
     return [=](uint64_t Dot) { return ScriptBase->getHeaderSize(); };
