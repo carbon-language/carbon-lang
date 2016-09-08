@@ -909,7 +909,7 @@ __isl_give isl_pw_aff *MemoryAccess::getPwAff(const SCEV *E) {
 //   set[i0, i1, ..., iX] -> set[o0, o1, ..., oX]
 //     : i0 = o0, i1 = o1, ..., i(X-1) = o(X-1), iX < oX
 //
-static isl_map *getEqualAndLarger(isl_space *setDomain) {
+static isl_map *getEqualAndLarger(__isl_take isl_space *setDomain) {
   isl_space *Space = isl_space_map_from_set(setDomain);
   isl_map *Map = isl_map_universe(Space);
   unsigned lastDimension = isl_map_dim(Map, isl_dim_in) - 1;
