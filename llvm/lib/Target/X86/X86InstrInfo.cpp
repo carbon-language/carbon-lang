@@ -8286,7 +8286,6 @@ bool X86InstrInfo::isTailCall(const MachineInstr &Inst) const {
     case X86::TAILJMPd64:
     case X86::TAILJMPm64:
     case X86::TAILJMPr64:
-    case X86::TAILJMPd64_REX:
     case X86::TAILJMPm64_REX:
     case X86::TAILJMPr64_REX:
       return true;
