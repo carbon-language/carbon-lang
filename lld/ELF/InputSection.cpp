@@ -30,8 +30,9 @@ using namespace lld::elf;
 
 template <class ELFT>
 InputSectionBase<ELFT>::InputSectionBase(elf::ObjectFile<ELFT> *File,
-                                         const Elf_Shdr *Hdr, Kind SectionKind)
-    : InputSectionData(SectionKind, Hdr->sh_flags & SHF_COMPRESSED,
+                                         const Elf_Shdr *Hdr, StringRef Name,
+                                         Kind SectionKind)
+    : InputSectionData(SectionKind, Name, Hdr->sh_flags & SHF_COMPRESSED,
                        !Config->GcSections),
       Header(Hdr), File(File), Repl(this) {
   // The ELF spec states that a value of 0 means the section has
@@ -46,10 +47,6 @@ template <class ELFT> size_t InputSectionBase<ELFT>::getSize() const {
   return Header->sh_size;
 }
 
-template <class ELFT> StringRef InputSectionBase<ELFT>::getSectionName() const {
-  return check(File->getObj().getSectionName(this->Header));
-}
-
 template <class ELFT>
 ArrayRef<uint8_t> InputSectionBase<ELFT>::getSectionData() const {
   if (Compressed)
@@ -60,7 +57,7 @@ ArrayRef<uint8_t> InputSectionBase<ELFT>::getSectionData() const {
 
 // Returns a string for an error message.
 template <class SectionT> static std::string getName(SectionT *Sec) {
-  return (Sec->getFile()->getName() + "(" + Sec->getSectionName() + ")").str();
+  return (Sec->getFile()->getName() + "(" + Sec->Name + ")").str();
 }
 
 template <class ELFT>
@@ -84,7 +81,7 @@ typename ELFT::uint InputSectionBase<ELFT>::getOffset(uintX_t Offset) const {
     // corresponding input section. Redirect it to the produced output section.
     if (Offset != 0)
       fatal(getName(this) + ": unsupported reference to the middle of '" +
-            getSectionName() + "' section");
+            Name + "' section");
     return this->OutSec->getVA();
   }
   llvm_unreachable("invalid section kind");
@@ -121,8 +118,8 @@ InputSectionBase<ELFT>::getOffset(const DefinedRegular<ELFT> &Sym) const {
 
 template <class ELFT>
 InputSection<ELFT>::InputSection(elf::ObjectFile<ELFT> *F,
-                                 const Elf_Shdr *Header)
-    : InputSectionBase<ELFT>(F, Header, Base::Regular) {}
+                                 const Elf_Shdr *Header, StringRef Name)
+    : InputSectionBase<ELFT>(F, Header, Name, Base::Regular) {}
 
 template <class ELFT>
 bool InputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
@@ -436,8 +433,8 @@ void InputSection<ELFT>::replace(InputSection<ELFT> *Other) {
 
 template <class ELFT>
 EhInputSection<ELFT>::EhInputSection(elf::ObjectFile<ELFT> *F,
-                                     const Elf_Shdr *Header)
-    : InputSectionBase<ELFT>(F, Header, InputSectionBase<ELFT>::EHFrame) {
+                                     const Elf_Shdr *Header, StringRef Name)
+    : InputSectionBase<ELFT>(F, Header, Name, InputSectionBase<ELFT>::EHFrame) {
   // Mark .eh_frame sections as live by default because there are
   // usually no relocations that point to .eh_frames. Otherwise,
   // the garbage collector would drop all .eh_frame sections.
@@ -552,8 +549,9 @@ MergeInputSection<ELFT>::splitNonStrings(ArrayRef<uint8_t> Data,
 
 template <class ELFT>
 MergeInputSection<ELFT>::MergeInputSection(elf::ObjectFile<ELFT> *F,
-                                           const Elf_Shdr *Header)
-    : InputSectionBase<ELFT>(F, Header, InputSectionBase<ELFT>::Merge) {}
+                                           const Elf_Shdr *Header,
+                                           StringRef Name)
+    : InputSectionBase<ELFT>(F, Header, Name, InputSectionBase<ELFT>::Merge) {}
 
 template <class ELFT> void MergeInputSection<ELFT>::splitIntoPieces() {
   ArrayRef<uint8_t> Data = this->getSectionData();
@@ -634,8 +632,10 @@ template <class ELFT> void  MergeInputSection<ELFT>::finalizePieces() {
 
 template <class ELFT>
 MipsReginfoInputSection<ELFT>::MipsReginfoInputSection(elf::ObjectFile<ELFT> *F,
-                                                       const Elf_Shdr *Hdr)
-    : InputSectionBase<ELFT>(F, Hdr, InputSectionBase<ELFT>::MipsReginfo) {
+                                                       const Elf_Shdr *Hdr,
+                                                       StringRef Name)
+    : InputSectionBase<ELFT>(F, Hdr, Name,
+                             InputSectionBase<ELFT>::MipsReginfo) {
   // Initialize this->Reginfo.
   ArrayRef<uint8_t> D = this->getSectionData();
   if (D.size() != sizeof(Elf_Mips_RegInfo<ELFT>)) {
@@ -652,8 +652,10 @@ bool MipsReginfoInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
 
 template <class ELFT>
 MipsOptionsInputSection<ELFT>::MipsOptionsInputSection(elf::ObjectFile<ELFT> *F,
-                                                       const Elf_Shdr *Hdr)
-    : InputSectionBase<ELFT>(F, Hdr, InputSectionBase<ELFT>::MipsOptions) {
+                                                       const Elf_Shdr *Hdr,
+                                                       StringRef Name)
+    : InputSectionBase<ELFT>(F, Hdr, Name,
+                             InputSectionBase<ELFT>::MipsOptions) {
   // Find ODK_REGINFO option in the section's content.
   ArrayRef<uint8_t> D = this->getSectionData();
   while (!D.empty()) {
@@ -677,8 +679,9 @@ bool MipsOptionsInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
 
 template <class ELFT>
 MipsAbiFlagsInputSection<ELFT>::MipsAbiFlagsInputSection(
-    elf::ObjectFile<ELFT> *F, const Elf_Shdr *Hdr)
-    : InputSectionBase<ELFT>(F, Hdr, InputSectionBase<ELFT>::MipsAbiFlags) {
+    elf::ObjectFile<ELFT> *F, const Elf_Shdr *Hdr, StringRef Name)
+    : InputSectionBase<ELFT>(F, Hdr, Name,
+                             InputSectionBase<ELFT>::MipsAbiFlags) {
   // Initialize this->Flags.
   ArrayRef<uint8_t> D = this->getSectionData();
   if (D.size() != sizeof(Elf_Mips_ABIFlags<ELFT>)) {
@@ -695,7 +698,7 @@ bool MipsAbiFlagsInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
 
 template <class ELFT>
 CommonInputSection<ELFT>::CommonInputSection(std::vector<DefinedCommon *> Syms)
-    : InputSection<ELFT>(nullptr, &Hdr) {
+    : InputSection<ELFT>(nullptr, &Hdr, "") {
   Hdr.sh_size = 0;
   Hdr.sh_type = SHT_NOBITS;
   Hdr.sh_flags = SHF_ALLOC | SHF_WRITE;

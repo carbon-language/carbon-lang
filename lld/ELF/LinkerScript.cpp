@@ -99,7 +99,7 @@ template <class ELFT> LinkerScript<ELFT>::~LinkerScript() {}
 template <class ELFT>
 bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
   for (Regex *Re : Opt.KeptSections)
-    if (Re->match(S->getSectionName()))
+    if (Re->match(S->Name))
       return true;
   return false;
 }
@@ -121,7 +121,7 @@ LinkerScript<ELFT>::getInputSections(const InputSectionDescription *I) {
     if (fileMatches(I, sys::path::filename(F->getName())))
       for (InputSectionBase<ELFT> *S : F->getSections())
         if (!isDiscarded(S) && !S->OutSec &&
-            const_cast<Regex &>(Re).match(S->getSectionName()))
+            const_cast<Regex &>(Re).match(S->Name))
           Ret.push_back(S);
   }
 
@@ -132,7 +132,7 @@ LinkerScript<ELFT>::getInputSections(const InputSectionDescription *I) {
 
 template <class ELFT>
 static bool compareName(InputSectionBase<ELFT> *A, InputSectionBase<ELFT> *B) {
-  return A->getSectionName() < B->getSectionName();
+  return A->Name < B->Name;
 }
 
 template <class ELFT>

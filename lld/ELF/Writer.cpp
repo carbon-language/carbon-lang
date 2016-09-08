@@ -89,7 +89,7 @@ private:
 
 template <class ELFT>
 StringRef elf::getOutputSectionName(InputSectionBase<ELFT> *S) {
-  StringRef Name = S->getSectionName();
+  StringRef Name = S->Name;
   for (StringRef V : {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.",
                       ".init_array.", ".fini_array.", ".ctors.", ".dtors.",
                       ".tbss.", ".gcc_except_table.", ".tdata.", ".ARM.exidx."})
@@ -101,8 +101,8 @@ StringRef elf::getOutputSectionName(InputSectionBase<ELFT> *S) {
 template <class ELFT> void elf::reportDiscarded(InputSectionBase<ELFT> *IS) {
   if (!Config->PrintGcSections || !IS || IS->Live)
     return;
-  errs() << "removing unused section from '" << IS->getSectionName()
-         << "' in file '" << IS->getFile()->getName() << "'\n";
+  errs() << "removing unused section from '" << IS->Name << "' in file '"
+         << IS->getFile()->getName() << "'\n";
 }
 
 template <class ELFT> static bool needsInterpSection() {

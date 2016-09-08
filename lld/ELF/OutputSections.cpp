@@ -931,7 +931,7 @@ template <class ELFT> void OutputSection<ELFT>::sortInitFini() {
 
   std::vector<Pair> V;
   for (InputSection<ELFT> *S : Sections)
-    V.push_back({getPriority(S->getSectionName()), S});
+    V.push_back({getPriority(S->Name), S});
   std::stable_sort(V.begin(), V.end(), Comp);
   Sections.clear();
   for (Pair &P : V)
@@ -980,8 +980,8 @@ static bool compCtors(const InputSection<ELFT> *A,
   bool EndB = isCrtend(B->getFile()->getName());
   if (EndA != EndB)
     return EndB;
-  StringRef X = A->getSectionName();
-  StringRef Y = B->getSectionName();
+  StringRef X = A->Name;
+  StringRef Y = B->Name;
   assert(X.startswith(".ctors") || X.startswith(".dtors"));
   assert(Y.startswith(".ctors") || Y.startswith(".dtors"));
   X = X.substr(6);
@@ -1032,7 +1032,7 @@ CieRecord *EhOutputSection<ELFT>::addCie(EhSectionPiece &Piece,
                                          ArrayRef<RelTy> Rels) {
   const endianness E = ELFT::TargetEndianness;
   if (read32<E>(Piece.data().data() + 4) != 0)
-    fatal("CIE expected at beginning of .eh_frame: " + Sec->getSectionName());
+    fatal("CIE expected at beginning of .eh_frame: " + Sec->Name);
 
   SymbolBody *Personality = nullptr;
   unsigned FirstRelI = Piece.FirstRelocation;
