@@ -97,8 +97,8 @@ void XRayInstrumentation::prependRetWithPatchableExit(MachineFunction &MF,
     for (auto &T : MBB.terminators()) {
       if (T.isReturn()) {
         // Prepend the return instruction with PATCHABLE_FUNCTION_EXIT
-        auto MIB = BuildMI(MBB, T, T.getDebugLoc(),
-          TII->get(TargetOpcode::PATCHABLE_FUNCTION_EXIT));
+        BuildMI(MBB, T, T.getDebugLoc(),
+                TII->get(TargetOpcode::PATCHABLE_FUNCTION_EXIT));
       }
     }
   }
