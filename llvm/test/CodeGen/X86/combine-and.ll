@@ -186,8 +186,7 @@ define <4 x i32> @test17(<4 x i32> %A, <4 x i32> %B) {
 define <2 x i64> @and_or_v2i64(<2 x i64> %a0) {
 ; CHECK-LABEL: and_or_v2i64:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    orps {{.*}}(%rip), %xmm0
-; CHECK-NEXT:    andps {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    movaps {{.*#+}} xmm0 = [8,8]
 ; CHECK-NEXT:    retq
   %1 = or <2 x i64> %a0, <i64 255, i64 255>
   %2 = and <2 x i64> %1, <i64 8, i64 8>
@@ -197,8 +196,7 @@ define <2 x i64> @and_or_v2i64(<2 x i64> %a0) {
 define <4 x i32> @and_or_v4i32(<4 x i32> %a0) {
 ; CHECK-LABEL: and_or_v4i32:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    orps {{.*}}(%rip), %xmm0
-; CHECK-NEXT:    andps {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    movaps {{.*#+}} xmm0 = [3,3,3,3]
 ; CHECK-NEXT:    retq
   %1 = or <4 x i32> %a0, <i32 15, i32 15, i32 15, i32 15>
   %2 = and <4 x i32> %1, <i32 3, i32 3, i32 3, i32 3>
