@@ -1990,11 +1990,10 @@ MachineOperand SIInstrInfo::buildExtractSubRegOrImm(
   unsigned SubIdx,
   const TargetRegisterClass *SubRC) const {
   if (Op.isImm()) {
-    // XXX - Is there a better way to do this?
     if (SubIdx == AMDGPU::sub0)
-      return MachineOperand::CreateImm(Op.getImm() & 0xFFFFFFFF);
+      return MachineOperand::CreateImm(static_cast<int32_t>(Op.getImm()));
     if (SubIdx == AMDGPU::sub1)
-      return MachineOperand::CreateImm(Op.getImm() >> 32);
+      return MachineOperand::CreateImm(static_cast<int32_t>(Op.getImm() >> 32));
 
     llvm_unreachable("Unhandled register index for immediate");
   }
