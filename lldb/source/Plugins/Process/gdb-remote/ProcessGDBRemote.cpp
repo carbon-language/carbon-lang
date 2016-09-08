@@ -4055,11 +4055,11 @@ void ProcessGDBRemote::PrefetchModuleSpecs(
   auto module_specs = m_gdb_comm.GetModulesInfo(module_file_specs, triple);
   if (module_specs) {
     for (const FileSpec &spec : module_file_specs)
-      m_cached_module_specs[{spec.GetPath(), triple.getTriple()}] =
-          ModuleSpec();
+      m_cached_module_specs[ModuleCacheKey(spec.GetPath(),
+                                           triple.getTriple())] = ModuleSpec();
     for (const ModuleSpec &spec : *module_specs)
-      m_cached_module_specs[{spec.GetFileSpec().GetPath(),
-                             triple.getTriple()}] = spec;
+      m_cached_module_specs[ModuleCacheKey(spec.GetFileSpec().GetPath(),
+                                           triple.getTriple())] = spec;
   }
 }
 
