@@ -41,6 +41,7 @@ using namespace llvm::object;
 using namespace lld;
 using namespace lld::elf;
 
+LinkerScriptBase *elf::ScriptBase;
 ScriptConfiguration *elf::ScriptConfig;
 
 template <class ELFT>
@@ -556,8 +557,7 @@ template <class ELFT> bool LinkerScript<ELFT>::hasPhdrsCommands() {
 }
 
 template <class ELFT>
-typename ELFT::uint
-LinkerScript<ELFT>::getOutputSectionAddress(StringRef Name) {
+uint64_t LinkerScript<ELFT>::getOutputSectionAddress(StringRef Name) {
   for (OutputSectionBase<ELFT> *Sec : *OutputSections)
     if (Sec->getName() == Name)
       return Sec->getVA();
@@ -566,7 +566,7 @@ LinkerScript<ELFT>::getOutputSectionAddress(StringRef Name) {
 }
 
 template <class ELFT>
-typename ELFT::uint LinkerScript<ELFT>::getOutputSectionSize(StringRef Name) {
+uint64_t LinkerScript<ELFT>::getOutputSectionSize(StringRef Name) {
   for (OutputSectionBase<ELFT> *Sec : *OutputSections)
     if (Sec->getName() == Name)
       return Sec->getSize();
@@ -574,9 +574,15 @@ typename ELFT::uint LinkerScript<ELFT>::getOutputSectionSize(StringRef Name) {
   return 0;
 }
 
-template <class ELFT>
-typename ELFT::uint LinkerScript<ELFT>::getHeaderSize() {
+template <class ELFT> uint64_t LinkerScript<ELFT>::getHeaderSize() {
   return Out<ELFT>::ElfHeader->getSize() + Out<ELFT>::ProgramHeaders->getSize();
+}
+
+template <class ELFT> uint64_t LinkerScript<ELFT>::getSymbolValue(StringRef S) {
+  if (SymbolBody *B = Symtab<ELFT>::X->find(S))
+    return B->getVA<ELFT>();
+  error("symbol not found: " + S);
+  return 0;
 }
 
 // Returns indices of ELF headers containing specific section, identified
@@ -1099,74 +1105,7 @@ SymbolAssignment *ScriptParser::readProvideOrAssignment(StringRef Tok,
 static uint64_t getSymbolValue(StringRef S, uint64_t Dot) {
   if (S == ".")
     return Dot;
-
-  switch (Config->EKind) {
-  case ELF32LEKind:
-    if (SymbolBody *B = Symtab<ELF32LE>::X->find(S))
-      return B->getVA<ELF32LE>();
-    break;
-  case ELF32BEKind:
-    if (SymbolBody *B = Symtab<ELF32BE>::X->find(S))
-      return B->getVA<ELF32BE>();
-    break;
-  case ELF64LEKind:
-    if (SymbolBody *B = Symtab<ELF64LE>::X->find(S))
-      return B->getVA<ELF64LE>();
-    break;
-  case ELF64BEKind:
-    if (SymbolBody *B = Symtab<ELF64BE>::X->find(S))
-      return B->getVA<ELF64BE>();
-    break;
-  default:
-    llvm_unreachable("unsupported target");
-  }
-  error("symbol not found: " + S);
-  return 0;
-}
-
-static uint64_t getSectionSize(StringRef Name) {
-  switch (Config->EKind) {
-  case ELF32LEKind:
-    return Script<ELF32LE>::X->getOutputSectionSize(Name);
-  case ELF32BEKind:
-    return Script<ELF32BE>::X->getOutputSectionSize(Name);
-  case ELF64LEKind:
-    return Script<ELF64LE>::X->getOutputSectionSize(Name);
-  case ELF64BEKind:
-    return Script<ELF64BE>::X->getOutputSectionSize(Name);
-  default:
-    llvm_unreachable("unsupported target");
-  }
-}
-
-static uint64_t getSectionAddress(StringRef Name) {
-  switch (Config->EKind) {
-  case ELF32LEKind:
-    return Script<ELF32LE>::X->getOutputSectionAddress(Name);
-  case ELF32BEKind:
-    return Script<ELF32BE>::X->getOutputSectionAddress(Name);
-  case ELF64LEKind:
-    return Script<ELF64LE>::X->getOutputSectionAddress(Name);
-  case ELF64BEKind:
-    return Script<ELF64BE>::X->getOutputSectionAddress(Name);
-  default:
-    llvm_unreachable("unsupported target");
-  }
-}
-
-static uint64_t getHeaderSize() {
-  switch (Config->EKind) {
-  case ELF32LEKind:
-    return Script<ELF32LE>::X->getHeaderSize();
-  case ELF32BEKind:
-    return Script<ELF32BE>::X->getHeaderSize();
-  case ELF64LEKind:
-    return Script<ELF64LE>::X->getHeaderSize();
-  case ELF64BEKind:
-    return Script<ELF64BE>::X->getHeaderSize();
-  default:
-    llvm_unreachable("unsupported target");
-  }
+  return ScriptBase->getSymbolValue(S);
 }
 
 SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
@@ -1314,7 +1253,8 @@ Expr ScriptParser::readPrimary() {
     expect("(");
     StringRef Name = next();
     expect(")");
-    return [=](uint64_t Dot) { return getSectionAddress(Name); };
+    return
+        [=](uint64_t Dot) { return ScriptBase->getOutputSectionAddress(Name); };
   }
   if (Tok == "ASSERT")
     return readAssert();
@@ -1366,10 +1306,10 @@ Expr ScriptParser::readPrimary() {
     expect("(");
     StringRef Name = next();
     expect(")");
-    return [=](uint64_t Dot) { return getSectionSize(Name); };
+    return [=](uint64_t Dot) { return ScriptBase->getOutputSectionSize(Name); };
   }
   if (Tok == "SIZEOF_HEADERS")
-    return [=](uint64_t Dot) { return getHeaderSize(); };
+    return [=](uint64_t Dot) { return ScriptBase->getHeaderSize(); };
 
   // Tok is a literal number.
   uint64_t V;

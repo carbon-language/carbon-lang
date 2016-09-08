@@ -569,7 +569,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   std::unique_ptr<TargetInfo> TI(createTarget());
   Target = TI.get();
   LinkerScript<ELFT> LS;
-  Script<ELFT>::X = &LS;
+  ScriptBase = Script<ELFT>::X = &LS;
 
   Config->Rela = ELFT::Is64Bits || Config->EMachine == EM_X86_64;
   Config->Mips64EL =
