@@ -22,6 +22,7 @@ extern llvm::cl::opt<bool> DynoStatsAll;
 static cl::opt<bool>
 EliminateUnreachable("eliminate-unreachable",
                      cl::desc("eliminate unreachable code"),
+                     cl::init(true),
                      cl::ZeroOrMore);
 
 static cl::opt<bool>
@@ -140,8 +141,6 @@ cl::opt<bool> BinaryFunctionPassManager::AlwaysOn(
   cl::init(true),
   cl::ReallyHidden);
 
-bool BinaryFunctionPassManager::NagUser = false;
-
 void BinaryFunctionPassManager::runPasses() {
   for (const auto &OptPassPair : Passes) {
     if (!OptPassPair.first)
@@ -197,10 +196,6 @@ void BinaryFunctionPassManager::runAllPasses(
                        opts::InlineSmallFunctions);
 
   Manager.registerPass(
-    llvm::make_unique<EliminateUnreachableBlocks>(PrintUCE, Manager.NagUser),
-    opts::EliminateUnreachable);
-
-  Manager.registerPass(
     llvm::make_unique<OptimizeBodylessFunctions>(PrintOptimizeBodyless),
     opts::OptimizeBodylessFunctions);
 
@@ -208,17 +203,13 @@ void BinaryFunctionPassManager::runAllPasses(
     llvm::make_unique<SimplifyRODataLoads>(PrintSimplifyROLoads),
     opts::SimplifyRODataLoads);
 
-  Manager.registerPass(
-    llvm::make_unique<EliminateUnreachableBlocks>(PrintUCE, Manager.NagUser),
-    opts::EliminateUnreachable);
-
   Manager.registerPass(llvm::make_unique<ReorderBasicBlocks>(PrintReordered));
 
   Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes),
                        opts::Peepholes);
 
   Manager.registerPass(
-    llvm::make_unique<EliminateUnreachableBlocks>(PrintUCE, Manager.NagUser),
+    llvm::make_unique<EliminateUnreachableBlocks>(PrintUCE),
     opts::EliminateUnreachable);
 
   // This pass syncs local branches with CFG. If any of the following

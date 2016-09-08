@@ -16,7 +16,6 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCInstPrinter.h"
 #include <limits>
 #include <string>
 
@@ -27,7 +26,7 @@ namespace llvm {
 namespace bolt {
 
 bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS) {
-  return LHS.Offset < RHS.Offset;
+  return LHS.Index < RHS.Index;
 }
 
 MCInst *BinaryBasicBlock::getFirstNonPseudo() {
@@ -185,7 +184,8 @@ uint32_t BinaryBasicBlock::getNumPseudos() const {
   return NumPseudos;
 }
 
-void BinaryBasicBlock::dump(BinaryContext& BC) const {
+void BinaryBasicBlock::dump() const {
+  auto &BC = Function->getBinaryContext();
   if (Label) outs() << Label->getName() << ":\n";
   BC.printInstructions(outs(), Instructions.begin(), Instructions.end(), Offset);
   outs() << "preds:";

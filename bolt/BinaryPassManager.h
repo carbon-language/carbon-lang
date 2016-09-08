@@ -29,7 +29,6 @@ namespace bolt {
 class BinaryFunctionPassManager {
 private:
   static cl::opt<bool> AlwaysOn;
-  static bool NagUser;
   BinaryContext &BC;
   std::map<uint64_t, BinaryFunction> &BFs;
   std::set<uint64_t> &LargeFunctions;

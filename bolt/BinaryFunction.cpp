@@ -161,17 +161,22 @@ BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
   if (Offset > Size)
     return nullptr;
 
-  if (BasicBlocks.empty())
+  if (BasicBlockOffsets.empty())
     return nullptr;
 
-  // This is commented out because it makes BOLT too slow.
-  // assert(std::is_sorted(begin(), end()));
-  auto I = std::upper_bound(begin(),
-                            end(),
-                            BinaryBasicBlock(Offset));
-  assert(I != begin() && "first basic block not at offset 0");
-
-  return &*--I;
+  /*
+   * This is commented out because it makes BOLT too slow.
+   * assert(std::is_sorted(BasicBlockOffsets.begin(),
+   *                       BasicBlockOffsets.end(),
+   *                       CompareBasicBlockOffsets())));
+   */
+  auto I = std::upper_bound(BasicBlockOffsets.begin(),
+                            BasicBlockOffsets.end(),
+                            BasicBlockOffset(Offset, nullptr),
+                            CompareBasicBlockOffsets());
+  assert(I != BasicBlockOffsets.begin() && "first basic block not at offset 0");
+  --I;
+  return I->second;
 }
 
 size_t
@@ -184,21 +189,78 @@ BinaryFunction::getBasicBlockOriginalSize(const BinaryBasicBlock *BB) const {
   }
 }
 
-unsigned BinaryFunction::eraseDeadBBs(
-    std::map<BinaryBasicBlock *, bool> &ToPreserve) {
+void BinaryFunction::markUnreachable() {
+  std::stack<BinaryBasicBlock *> Stack;
+  BinaryBasicBlock *Entry = *layout_begin();
+
+  for (auto *BB : layout()) {
+    BB->markValid(false);
+  }
+
+  Stack.push(Entry);
+  Entry->markValid(true);
+
+  // Treat landing pads as roots.
+  for (auto *BB : BasicBlocks) {
+    if (BB->isLandingPad()) {
+      Stack.push(BB);
+      BB->markValid(true);
+    }
+  }
+
+  // Determine reachable BBs from the entry point
+  while (!Stack.empty()) {
+    auto BB = Stack.top();
+    Stack.pop();
+    for (auto Succ : BB->successors()) {
+      if (Succ->isValid())
+        continue;
+      Succ->markValid(true);
+      Stack.push(Succ);
+    }
+  }
+}
+
+// Any unnecessary fallthrough jumps revealed after calling eraseInvalidBBs
+// will be cleaned up by fixBranches().
+std::pair<unsigned, uint64_t> BinaryFunction::eraseInvalidBBs() {
   BasicBlockOrderType NewLayout;
   unsigned Count = 0;
-  assert(ToPreserve[BasicBlocksLayout.front()] == true &&
+  uint64_t Bytes = 0;
+  assert(BasicBlocksLayout.front()->isValid() &&
          "unable to remove an entry basic block");
   for (auto I = BasicBlocksLayout.begin(), E = BasicBlocksLayout.end(); I != E;
        ++I) {
-    if (ToPreserve[*I])
+    if ((*I)->isValid()) {
       NewLayout.push_back(*I);
-    else
+    } else {
       ++Count;
+      Bytes += BC.computeCodeSize((*I)->begin(), (*I)->end());
+    }
   }
   BasicBlocksLayout = std::move(NewLayout);
-  return Count;
+
+  BasicBlockListType NewBasicBlocks;
+  for (auto I = BasicBlocks.begin(), E = BasicBlocks.end(); I != E; ++I) {
+    if ((*I)->isValid()) {
+      NewBasicBlocks.push_back(*I);
+    } else {
+      DeletedBasicBlocks.push_back(*I);
+    }
+  }
+  BasicBlocks = std::move(NewBasicBlocks);
+
+  assert(BasicBlocks.size() == BasicBlocksLayout.size());
+
+  // Update CFG state if needed
+  if (Count > 0) {
+    updateBBIndices(0);
+    recomputeLandingPads(0, BasicBlocks.size());
+    BBCFIState = annotateCFIState();
+    fixCFIState();
+  }
+
+  return std::make_pair(Count, Bytes);
 }
 
 void BinaryFunction::dump(std::string Annotation,
@@ -1124,9 +1186,9 @@ bool BinaryFunction::buildCFG() {
   for (auto &Branch : TakenBranches) {
     DEBUG(dbgs() << "registering branch [0x" << Twine::utohexstr(Branch.first)
                  << "] -> [0x" << Twine::utohexstr(Branch.second) << "]\n");
-    BinaryBasicBlock *FromBB = getBasicBlockContainingOffset(Branch.first);
+    auto *FromBB = getBasicBlockContainingOffset(Branch.first);
     assert(FromBB && "cannot find BB containing FROM branch");
-    BinaryBasicBlock *ToBB = getBasicBlockAtOffset(Branch.second);
+    auto *ToBB = getBasicBlockAtOffset(Branch.second);
     assert(ToBB && "cannot find BB containing TO branch");
 
     if (BranchDataOrErr.getError()) {
@@ -1175,7 +1237,7 @@ bool BinaryFunction::buildCFG() {
     DEBUG(dbgs() << "registering fallthrough [0x"
                  << Twine::utohexstr(Branch.first) << "] -> [0x"
                  << Twine::utohexstr(Branch.second) << "]\n");
-    BinaryBasicBlock *FromBB = getBasicBlockContainingOffset(Branch.first);
+    auto *FromBB = getBasicBlockContainingOffset(Branch.first);
     assert(FromBB && "cannot find BB containing FROM branch");
     // Try to find the destination basic block. If the jump instruction was
     // followed by a no-op then the destination offset recorded in FTBranches
@@ -1183,7 +1245,7 @@ bool BinaryFunction::buildCFG() {
     // after the no-op due to ingoring no-ops when creating basic blocks.
     // So we have to skip any no-ops when trying to find the destination
     // basic block.
-    BinaryBasicBlock *ToBB = getBasicBlockAtOffset(Branch.second);
+    auto *ToBB = getBasicBlockAtOffset(Branch.second);
     if (ToBB == nullptr) {
       auto I = Instructions.find(Branch.second), E = Instructions.end();
       while (ToBB == nullptr && I != E && MIA->isNoop(I->second)) {
@@ -1290,7 +1352,7 @@ bool BinaryFunction::buildCFG() {
     inferFallThroughCounts();
 
   // Update CFI information for each BB
-  annotateCFIState();
+  BBCFIState = annotateCFIState();
 
   // Convert conditional tail call branches to conditional branches that jump
   // to a tail call.
@@ -1587,7 +1649,9 @@ void BinaryFunction::removeConditionalTailCalls() {
       std::vector<std::unique_ptr<BinaryBasicBlock>> TailCallBBs;
       TailCallBBs.emplace_back(createBasicBlock(NextBB->getOffset(), TCLabel));
       TailCallBBs[0]->addInstruction(TailCallInst);
-      insertBasicBlocks(BB, std::move(TailCallBBs), /* UpdateCFIState */ false);
+      insertBasicBlocks(BB, std::move(TailCallBBs),
+                        /* UpdateLayout */ false,
+                        /* UpdateCFIState */ false);
       TailCallBB = BasicBlocks[InsertIdx];
 
       // Add the correct CFI state for the new block.
@@ -1646,17 +1710,19 @@ uint64_t BinaryFunction::getFunctionScore() {
   return FunctionScore;
 }
 
-void BinaryFunction::annotateCFIState() {
+BinaryFunction::CFIStateVector
+BinaryFunction::annotateCFIState(const MCInst *Stop) {
   assert(!BasicBlocks.empty() && "basic block list should not be empty");
 
   uint32_t State = 0;
   uint32_t HighestState = 0;
   std::stack<uint32_t> StateStack;
+  CFIStateVector CFIState;
 
   for (auto CI = BasicBlocks.begin(), CE = BasicBlocks.end(); CI != CE; ++CI) {
     BinaryBasicBlock *CurBB = *CI;
     // Annotate this BB entry
-    BBCFIState.emplace_back(State);
+    CFIState.emplace_back(State);
 
     // While building the CFG, we want to save the CFI state before a tail call
     // instruction, so that we can correctly remove condtional tail calls
@@ -1671,6 +1737,10 @@ void BinaryFunction::annotateCFIState() {
         if (SaveState && Idx == TCI->second.Index)
           TCI->second.CFIStateBefore = State;
         ++Idx;
+        if (&Instr == Stop) {
+          CFIState.emplace_back(State);
+          return CFIState;
+        }
         continue;
       }
       ++HighestState;
@@ -1684,13 +1754,19 @@ void BinaryFunction::annotateCFIState() {
         State = HighestState;
       }
       ++Idx;
+      if (&Instr == Stop) {
+        CFIState.emplace_back(State);
+        return CFIState;
+      }
     }
   }
 
   // Store the state after the last BB
-  BBCFIState.emplace_back(State);
+  CFIState.emplace_back(State);
 
   assert(StateStack.empty() && "Corrupt CFI stack");
+
+  return CFIState;
 }
 
 bool BinaryFunction::fixCFIState() {
@@ -2593,7 +2669,8 @@ std::size_t BinaryFunction::hash() const {
 void BinaryFunction::insertBasicBlocks(
   BinaryBasicBlock *Start,
   std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
-  bool UpdateCFIState) {
+  const bool UpdateLayout,
+  const bool UpdateCFIState) {
   const auto StartIndex = getIndex(Start);
   const auto NumNewBlocks = NewBBs.size();
 
@@ -2607,28 +2684,40 @@ void BinaryFunction::insertBasicBlocks(
     BasicBlocks[I++] = BB.release();
   }
 
-  // Recompute indices and offsets for all basic blocks after Start.
-  uint64_t Offset = Start->getOffset();
-  for (auto I = StartIndex; I < BasicBlocks.size(); ++I) {
-    auto *BB = BasicBlocks[I];
-    BB->setOffset(Offset);
-    Offset += BC.computeCodeSize(BB->begin(), BB->end());
-    BB->setIndex(I);
-  }
-
-  if (UpdateCFIState) {
-    // Recompute CFI state for all BBs.
-    BBCFIState.clear();
-    annotateCFIState();
-  }
+  updateBBIndices(StartIndex);
 
   recomputeLandingPads(StartIndex, NumNewBlocks + 1);
 
   // Make sure the basic blocks are sorted properly.
   assert(std::is_sorted(begin(), end()));
+
+  if (UpdateLayout) {
+    updateLayout(Start, NumNewBlocks);
+  }
+
+  if (UpdateCFIState) {
+    updateCFIState(Start, NumNewBlocks);
+  }
 }
 
-// TODO: Which of these methods is better?
+void BinaryFunction::updateBBIndices(const unsigned StartIndex) {
+  for (auto I = StartIndex; I < BasicBlocks.size(); ++I) {
+    BasicBlocks[I]->Index = I;
+  }
+}
+
+void BinaryFunction::updateCFIState(BinaryBasicBlock *Start,
+                                    const unsigned NumNewBlocks) {
+  assert(TailCallTerminatedBlocks.empty());
+  auto PartialCFIState = annotateCFIState(&(*Start->rbegin()));
+  const auto StartIndex = getIndex(Start);
+  BBCFIState.insert(BBCFIState.begin() + StartIndex + 1,
+                    NumNewBlocks,
+                    PartialCFIState.back());
+  assert(BBCFIState.size() == BasicBlocks.size() + 1);
+  fixCFIState();
+}
+
 void BinaryFunction::updateLayout(BinaryBasicBlock* Start,
                                   const unsigned NumNewBlocks) {
   // Insert new blocks in the layout immediately after Start.
@@ -2649,6 +2738,9 @@ void BinaryFunction::updateLayout(LayoutType Type,
 
 BinaryFunction::~BinaryFunction() {
   for (auto BB : BasicBlocks) {
+    delete BB;
+  }
+  for (auto BB : DeletedBasicBlocks) {
     delete BB;
   }
 }

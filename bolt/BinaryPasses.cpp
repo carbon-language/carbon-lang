@@ -780,42 +780,18 @@ void InlineSmallFunctions::runOnFunctions(
 }
 
 void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
-  // FIXME: this wouldn't work with C++ exceptions until we implement
-  //        support for those as there will be "invisible" edges
-  //        in the graph.
   if (Function.layout_size() > 0) {
-    if (NagUser) {
-      if (opts::Verbosity >= 1) {
-        errs()
-          << "BOLT-WARNING: Using -eliminate-unreachable is experimental and "
-          "unsafe for exceptions\n";
-      }
-      NagUser = false;
-    }
-
-    if (Function.hasEHRanges()) return;
-
-    std::stack<BinaryBasicBlock*> Stack;
-    std::map<BinaryBasicBlock *, bool> Reachable;
-    BinaryBasicBlock *Entry = *Function.layout_begin();
-    Stack.push(Entry);
-    Reachable[Entry] = true;
-    // Determine reachable BBs from the entry point
-    while (!Stack.empty()) {
-      auto BB = Stack.top();
-      Stack.pop();
-      for (auto Succ : BB->successors()) {
-        if (Reachable[Succ])
-          continue;
-        Reachable[Succ] = true;
-        Stack.push(Succ);
-      }
-    }
-
-    auto Count = Function.eraseDeadBBs(Reachable);
+    unsigned Count;
+    uint64_t Bytes;
+    Function.markUnreachable();
+    std::tie(Count, Bytes) = Function.eraseInvalidBBs();
+    DeletedBlocks += Count;
+    DeletedBytes += Bytes;
     if (Count) {
-      DEBUG(dbgs() << "BOLT: Removed " << Count
-            << " dead basic block(s) in function " << Function << '\n');
+      Modified.insert(&Function);
+      DEBUG(dbgs() << "BOLT-INFO: Removed " << Count
+                   << " dead basic block(s) accounting for " << Bytes
+                   << " bytes in function " << Function << '\n');
     }
   }
 }
@@ -831,6 +807,8 @@ void EliminateUnreachableBlocks::runOnFunctions(
       runOnFunction(Function);
     }
   }
+  outs() << "BOLT-INFO: UCE removed " << DeletedBlocks << " blocks and "
+         << DeletedBytes << " bytes of code.\n";
 }
 
 bool ReorderBasicBlocks::shouldPrint(const BinaryFunction &BF) const {
@@ -909,10 +887,8 @@ bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   auto &MIA = BC.MIA;
   uint64_t NumLocalCTCCandidates = 0;
   uint64_t NumLocalCTCs = 0;
-  std::map<BinaryBasicBlock *, bool> ToPreserve;
-  for (auto *BB : BF.layout()) {
-    ToPreserve[BB] = true;
 
+  for (auto *BB : BF.layout()) {
     // Locate BB with a single direct tail-call instruction.
     if (BB->getNumNonPseudos() != 1)
       continue;
@@ -964,12 +940,11 @@ bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
     }
 
     // Remove the block from CFG if all predecessors were removed.
-    if (BB->pred_size() == 0 && !BB->isLandingPad())
-      ToPreserve[BB] = false;
+    BB->markValid(BB->pred_size() != 0 || BB->isLandingPad());
   }
 
   // Clean-up unreachable tail-call blocks.
-  BF.eraseDeadBBs(ToPreserve);
+  BF.eraseInvalidBBs();
 
   DEBUG(dbgs() << "BOLT: created " << NumLocalCTCs
           << " conditional tail calls from a total of " << NumLocalCTCCandidates
@@ -1067,7 +1042,7 @@ void Peepholes::fixDoubleJumps(BinaryContext &BC,
       continue;
 
     const auto *SuccSym = BC.MIA->getTargetSymbol(*Inst);
-    auto *Succ = BB.getSuccessor(SuccSym);
+    auto *Succ = BB.getSuccessor();
 
     if ((!Succ || &BB == Succ) && !IsTailCall)
       continue;

@@ -57,6 +57,7 @@ void BasicBlockOffsetRanges::addAddressRange(BinaryFunction &Function,
       std::min(BBAddress + Function.getBasicBlockOriginalSize(&BB),
                EndAddress);
 
+    assert(BB.isValid() && "Attempting to record debug info for a deleted BB.");
     AddressRanges.emplace_back(
         BBAddressRange{
             &BB,
@@ -70,6 +71,8 @@ std::vector<BasicBlockOffsetRanges::AbsoluteRange>
 BasicBlockOffsetRanges::getAbsoluteAddressRanges() const {
   std::vector<AbsoluteRange> AbsoluteRanges;
   for (const auto &BBAddressRange : AddressRanges) {
+    if (!BBAddressRange.BasicBlock->isValid())
+      continue;
     auto BBOutputAddressRange =
         BBAddressRange.BasicBlock->getOutputAddressRange();
     uint64_t NewRangeBegin = BBOutputAddressRange.first +

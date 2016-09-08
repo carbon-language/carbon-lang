@@ -14,11 +14,12 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_BASIC_BLOCK_H
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_BASIC_BLOCK_H
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
 #include <utility>
@@ -28,7 +29,6 @@ namespace llvm {
 namespace bolt {
 
 class BinaryFunction;
-class BinaryContext;
 
 /// The intention is to keep the structure similar to MachineBasicBlock as
 /// we might switch to it at some point.
@@ -73,11 +73,13 @@ private:
   /// Number of times this basic block was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
 
+  static constexpr unsigned InvalidIndex = ~0u;
+
   /// Index to BasicBlocks vector in BinaryFunction.
-  unsigned Index{~0u};
+  unsigned Index{InvalidIndex};
 
   /// Index in the current layout.
-  unsigned LayoutIndex{~0u};
+  unsigned LayoutIndex{InvalidIndex};
 
   /// Number of pseudo instructions in this block.
   uint32_t NumPseudos{0};
@@ -89,6 +91,10 @@ private:
   /// Indicates if the block could be outlined.
   bool CanOutline{true};
 
+  /// Flag to indicate whether this block is valid or not.  Invalid
+  /// blocks may contain out of date or incorrect information.
+  bool IsValid{true};
+
 private:
   BinaryBasicBlock() = delete;
 
@@ -96,10 +102,9 @@ private:
       BinaryFunction *Function,
       MCSymbol *Label,
       uint64_t Offset = std::numeric_limits<uint64_t>::max())
-    : Function(Function), Label(Label), Offset(Offset) {}
-
-  explicit BinaryBasicBlock(uint64_t Offset)
-    : Offset(Offset) {}
+    : Function(Function), Label(Label), Offset(Offset) {
+    assert(Function && "Function must be non-null");
+  }
 
   // Exclusively managed by BinaryFunction.
   friend class BinaryFunction;
@@ -464,6 +469,14 @@ public:
     ExecutionCount = Count;
   }
 
+  bool isValid() const {
+    return IsValid;
+  }
+
+  void markValid(const bool Valid) {
+    IsValid = Valid;
+  }
+  
   bool isCold() const {
     return IsCold;
   }
@@ -571,7 +584,7 @@ public:
   }
 
   /// A simple dump function for debugging.
-  void dump(BinaryContext &BC) const;
+  void dump() const;
 
 private:
 
@@ -597,6 +610,7 @@ private:
 
   /// Get the index of this basic block.
   unsigned getIndex() const {
+    assert(isValid());
     return Index;
   }
 
@@ -609,6 +623,7 @@ private:
   /// making sure the indices are up to date,
   /// e.g. by calling BinaryFunction::updateLayoutIndices();
   unsigned getLayoutIndex() const {
+    assert(isValid());
     return LayoutIndex;
   }
 
@@ -619,7 +634,6 @@ private:
 };
 
 bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS);
-
 
 } // namespace bolt
 

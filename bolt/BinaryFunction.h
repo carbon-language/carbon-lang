@@ -320,6 +320,9 @@ private:
     return *this;
   }
 
+  /// Update the indices of all the basic blocks starting at StartIndex.
+  void updateBBIndices(const unsigned StartIndex);
+
   /// Helper function that compares an instruction of this function to the
   /// given instruction of the given function. The functions should have
   /// identical CFG.
@@ -510,15 +513,29 @@ private:
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
   // the terminating instructions need to be modified.
-  using BasicBlockListType = std::vector<BinaryBasicBlock*>;
+  using BasicBlockListType = std::vector<BinaryBasicBlock *>;
   BasicBlockListType BasicBlocks;
+  BasicBlockListType DeletedBasicBlocks;
   BasicBlockOrderType BasicBlocksLayout;
+
+  /// BasicBlockOffsets are used during CFG construction to map from code
+  /// offsets to BinaryBasicBlocks.  Any modifications made to the CFG
+  /// after initial construction are not reflected in this data structure.
+  using BasicBlockOffset = std::pair<uint64_t, BinaryBasicBlock *>;
+  struct CompareBasicBlockOffsets {
+    bool operator()(const BasicBlockOffset &A,
+                    const BasicBlockOffset &B) const {
+      return A.first < B.first;
+    }
+  };
+  std::vector<BasicBlockOffset> BasicBlockOffsets;
 
   // At each basic block entry we attach a CFI state to detect if reordering
   // corrupts the CFI state for a block. The CFI state is simply the index in
   // FrameInstructions for the CFI responsible for creating this state.
   // This vector is indexed by BB index.
-  std::vector<uint32_t> BBCFIState;
+  using CFIStateVector = std::vector<uint32_t>;
+  CFIStateVector BBCFIState;
 
   /// Symbol in the output.
   MCSymbol *OutputSymbol;
@@ -882,14 +899,26 @@ public:
     auto BB = BasicBlocks.back();
     BB->setIndex(BasicBlocks.size() - 1);
 
-    assert(CurrentState == State::CFG || std::is_sorted(begin(), end()));
+    if (CurrentState == State::Disassembled) {
+      BasicBlockOffsets.emplace_back(std::make_pair(Offset, BB));
+    }
+
+    assert(CurrentState == State::CFG ||
+           (std::is_sorted(BasicBlockOffsets.begin(),
+                           BasicBlockOffsets.end(),
+                           CompareBasicBlockOffsets()) &&
+            std::is_sorted(begin(), end())));
 
     return BB;
   }
 
+  /// Mark all blocks that are unreachable from a root (entry point
+  /// or landing pad) as invalid.
+  void markUnreachable();
+
   /// Rebuilds BBs layout, ignoring dead BBs. Returns the number of removed
-  /// BBs.
-  unsigned eraseDeadBBs(std::map<BinaryBasicBlock *, bool> &ToPreserve);
+  /// BBs and the removed number of bytes of code.
+  std::pair<unsigned, uint64_t> eraseInvalidBBs();
 
   /// Get the relative order between two basic blocks in the original
   /// layout.  The result is > 0 if B occurs before A and < 0 if B
@@ -916,7 +945,8 @@ public:
   void insertBasicBlocks(
     BinaryBasicBlock *Start,
     std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
-    bool UpdateCFIState = true);
+    const bool UpdateLayout = true,
+    const bool UpdateCFIState = true);
 
   /// Update the basic block layout for this function.  The BBs from
   /// [Start->Index, Start->Index + NumNewBlocks) are inserted into the
@@ -934,6 +964,10 @@ public:
       BB->setLayoutIndex(Index++);
     }
   }
+
+  /// Recompute the CFI state for NumNewBlocks following Start after inserting
+  /// new blocks into the CFG.  This must be called after updateLayout.
+  void updateCFIState(BinaryBasicBlock *Start, const unsigned NumNewBlocks);
 
   /// Determine direction of the branch based on the current layout.
   /// Callee is responsible of updating basic block indices prior to using
@@ -1218,7 +1252,9 @@ public:
   /// fix this.
   /// The CFI state is simply the index in FrameInstructions for the
   /// MCCFIInstruction object responsible for this state.
-  void annotateCFIState();
+  /// If Stop is not null, the annotation will exit early once the scan finishes
+  /// with the Stop instruction.
+  CFIStateVector annotateCFIState(const MCInst *Stop = nullptr);
 
   /// After reordering, this function checks the state of CFI and fixes it if it
   /// is corrupted. If it is unable to fix it, it returns false.

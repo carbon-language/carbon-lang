@@ -160,14 +160,19 @@ public:
 /// Detect and eliminate unreachable basic blocks. We could have those
 /// filled with nops and they are used for alignment.
 class EliminateUnreachableBlocks : public BinaryFunctionPass {
-  bool& NagUser;
+  std::unordered_set<const BinaryFunction *> Modified;
+  unsigned DeletedBlocks{0};
+  uint64_t DeletedBytes{0};
   void runOnFunction(BinaryFunction& Function);
  public:
-  EliminateUnreachableBlocks(const cl::opt<bool> &PrintPass, bool &NagUser)
-    : BinaryFunctionPass(PrintPass), NagUser(NagUser) { }
+  EliminateUnreachableBlocks(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
 
   const char *getName() const override {
     return "eliminate-unreachable";
+  }
+  bool shouldPrint(const BinaryFunction &BF) const override {
+    return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
   }
   void runOnFunctions(BinaryContext&,
                       std::map<uint64_t, BinaryFunction> &BFs,
