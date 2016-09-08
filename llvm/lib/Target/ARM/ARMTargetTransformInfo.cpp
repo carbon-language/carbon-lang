@@ -41,7 +41,7 @@ int ARMTTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
   // Thumb1.
   if (SImmVal >= 0 && SImmVal < 256)
     return 1;
-  if ((~ZImmVal < 256) || ARM_AM::isThumbImmShiftedVal(ZImmVal))
+  if ((~SImmVal < 256) || ARM_AM::isThumbImmShiftedVal(ZImmVal))
     return 2;
   // Load from constantpool.
   return 3;
