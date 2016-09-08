@@ -103,7 +103,7 @@ ARMSubtarget::ARMSubtarget(const Triple &TT, const std::string &CPU,
 
 bool ARMSubtarget::isXRaySupported() const {
   // We don't currently suppport Thumb, but Windows requires Thumb.
-  return hasV6Ops() && !isTargetWindows();
+  return hasV6Ops() && hasARMOps() && !isTargetWindows();
 }
 
 void ARMSubtarget::initializeEnvironment() {
