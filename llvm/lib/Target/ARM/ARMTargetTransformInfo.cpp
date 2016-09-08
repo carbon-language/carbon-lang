@@ -69,6 +69,10 @@ int ARMTTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
       Idx == 1)
     return 0;
 
+  if (Opcode == Instruction::And)
+      // Conversion to BIC is free, and means we can use ~Imm instead.
+      return std::min(getIntImmCost(Imm, Ty), getIntImmCost(~Imm, Ty));
+
   return getIntImmCost(Imm, Ty);
 }
 

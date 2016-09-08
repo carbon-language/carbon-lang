@@ -19,3 +19,21 @@ true:
 ret:
   ret void
 }
+
+; CHECK: Function: h
+; CHECK-NOT: Collect constant i32 -193 from
+define void @h(i1 %cond, i32 %p, i32 %q) {
+entry:
+  %a = and i32 %p, 4294967103
+  call void @g(i32 %a)
+  br i1 %cond, label %true, label %ret
+
+true:
+  %b = and i32 %q, 4294967103
+  call void @g(i32 %b)
+  br label %ret
+
+ret:
+  ret void
+}
+
