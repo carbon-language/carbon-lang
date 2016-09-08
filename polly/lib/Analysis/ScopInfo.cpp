@@ -1536,10 +1536,12 @@ void ScopStmt::checkForReductions() {
           isl_map_intersect_domain(MA->getAccessRelation(), getDomain());
       isl_set *Accs = isl_map_range(AccRel);
 
-      if (isl_set_has_equal_space(AllAccs, Accs) || isl_set_free(Accs)) {
+      if (isl_set_has_equal_space(AllAccs, Accs)) {
         isl_set *OverlapAccs = isl_set_intersect(Accs, isl_set_copy(AllAccs));
         Valid = Valid && isl_set_is_empty(OverlapAccs);
         isl_set_free(OverlapAccs);
+      } else {
+        isl_set_free(Accs);
       }
     }
 
