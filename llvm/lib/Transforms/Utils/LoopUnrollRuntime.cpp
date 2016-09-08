@@ -291,15 +291,10 @@ static void CloneLoopBlocks(Loop *L, Value *NewIter,
   Function *F = Header->getParent();
   LoopBlocksDFS::RPOIterator BlockBegin = LoopBlocks.beginRPO();
   LoopBlocksDFS::RPOIterator BlockEnd = LoopBlocks.endRPO();
-  Loop *NewLoop = nullptr;
   Loop *ParentLoop = L->getParentLoop();
-  if (CreateRemainderLoop) {
-    NewLoop = new Loop();
-    if (ParentLoop)
-      ParentLoop->addChildLoop(NewLoop);
-    else
-      LI->addTopLevelLoop(NewLoop);
-  }
+
+  // The map from original loops to their cloned copies.
+  SmallDenseMap<const Loop *, Loop *, 4> NewLoops;
 
   // For each block in the original loop, create a new copy,
   // and update the value map with the newly created values.
@@ -307,10 +302,57 @@ static void CloneLoopBlocks(Loop *L, Value *NewIter,
     BasicBlock *NewBB = CloneBasicBlock(*BB, VMap, "." + suffix, F);
     NewBlocks.push_back(NewBB);
 
+    // Figure out which loop NewBB is in.
+    auto findClonedLoop = [&](const Loop *OldLoop) {
+      Loop *&NewLoop = NewLoops[OldLoop];
+      // If we've encountered this loop before, return it right away.
+      if (NewLoop)
+        return NewLoop;
+
+      // If BB is from L, and we're not creating a remainder, the loop for
+      // NewBB will be ParentLoop, which might be null. Update NewLoops map and
+      // return ParentLoop.
+      if (OldLoop == L && !CreateRemainderLoop)
+        return (NewLoop = ParentLoop);
+
+      // Now we know that there should be a cloned counterpart for OldLoop, but
+      // we haven't seen it yet. Note that OldLoop might be L if we're
+      // generating a remainder loop, or it can be an inner loop of L - in this
+      // case we'll recreate the loop structure of L in its clone.
+
+      // This is a first block belonging to OldLoop encountered in our RPO
+      // traversal.
+      assert(*BB == OldLoop->getHeader() && "Header should be first in RPO");
+
+      NewLoop = new Loop;
+      Loop *OldLoopParent = OldLoop->getParentLoop();
+      // If OldLoop has a parent loop, we have two options:
+      //   1. ParentLoop is the parent of L. It won't be cloned, and it will
+      //      be a parent for NewLoop too.
+      //   2. ParentLoop is not a parent of L. In this case, it should be one
+      //      of the cloned loops and we should be able to find it in our map.
+      //
+      // If OldLoop doesn't have a parent, then NewLoop should be yet another
+      // top-level loop.
+      if (OldLoopParent) {
+        Loop *NewLoopParent = ParentLoop == OldLoopParent
+                                  ? ParentLoop
+                                  : NewLoops.lookup(OldLoopParent);
+        assert(NewLoopParent && "Expected parent loop before sub-loop in RPO");
+        NewLoopParent->addChildLoop(NewLoop);
+      } else
+        LI->addTopLevelLoop(NewLoop);
+      return NewLoop;
+    };
+
+    Loop *NewLoop = findClonedLoop(LI->getLoopFor(*BB));
+
+    assert(NewLoop ||
+           (!CreateRemainderLoop && !ParentLoop) &&
+               "NewLoop can only be null if we are cloning top-level loop "
+               "without creating a remainder loop.");
     if (NewLoop)
       NewLoop->addBasicBlockToLoop(NewBB, *LI);
-    else if (ParentLoop)
-      ParentLoop->addBasicBlockToLoop(NewBB, *LI);
 
     VMap[*BB] = NewBB;
     if (Header == *BB) {
@@ -369,7 +411,8 @@ static void CloneLoopBlocks(Loop *L, Value *NewIter,
         NewPHI->setIncomingValue(idx, V);
     }
   }
-  if (NewLoop) {
+  if (CreateRemainderLoop) {
+    Loop *NewLoop = NewLoops[L];
     // Add unroll disable metadata to disable future unrolling for this loop.
     SmallVector<Metadata *, 4> MDs;
     // Reserve first location for self reference to the LoopID metadata node.
