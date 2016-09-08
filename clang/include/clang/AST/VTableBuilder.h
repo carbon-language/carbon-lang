@@ -243,11 +243,11 @@ public:
   ~VTableLayout();
 
   ArrayRef<VTableComponent> vtable_components() const {
-    return {VTableComponents.get(), NumVTableComponents};
+    return {VTableComponents.get(), size_t(NumVTableComponents)};
   }
 
   ArrayRef<VTableThunkTy> vtable_thunks() const {
-    return {VTableThunks.get(), NumVTableThunks};
+    return {VTableThunks.get(), size_t(NumVTableThunks)};
   }
 
   uint64_t getAddressPoint(BaseSubobject Base) const {
