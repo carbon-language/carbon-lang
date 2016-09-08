@@ -14,10 +14,14 @@ class TestGdbRemoteModuleInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     def module_info(self):
         procs = self.prep_debug_monitor_and_inferior()
+        self.add_process_info_collection_packets()
+        context = self.expect_gdbremote_sequence()
+        info = self.parse_process_info_response(context)
+
         self.test_sequence.add_log_lines([
             'read packet: $jModulesInfo:[{"file":"%s","triple":"%s"}]]#00' % (
                 lldbutil.append_to_process_working_directory("a.out"),
-                self.dbg.GetSelectedPlatform().GetTriple()),
+                info["triple"].decode('hex')),
             {"direction": "send",
              "regex": r'^\$\[{(.*)}\]\]#[0-9A-Fa-f]{2}',
              "capture": {1: "spec"}},
