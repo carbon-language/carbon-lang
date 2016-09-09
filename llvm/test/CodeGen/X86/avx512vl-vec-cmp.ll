@@ -132,8 +132,7 @@ define <8 x i32> @test256_8(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %y.ptr) noun
 define <8 x i32> @test256_8b(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %y.ptr) nounwind {
 ; CHECK-LABEL: test256_8b:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovdqu32 (%rdi), %ymm2
-; CHECK-NEXT:    vpcmpnltud %ymm0, %ymm2, %k1
+; CHECK-NEXT:    vpcmpleud (%rdi), %ymm0, %k1
 ; CHECK-NEXT:    vpblendmd %ymm0, %ymm1, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %y = load <8 x i32>, <8 x i32>* %y.ptr, align 4
@@ -277,8 +276,7 @@ define <8 x i32> @test256_17(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %yp) nounwi
 define <8 x i32> @test256_18(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %yp) nounwind {
 ; CHECK-LABEL: test256_18:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovdqu32 (%rdi), %ymm2
-; CHECK-NEXT:    vpcmpneqd %ymm0, %ymm2, %k1
+; CHECK-NEXT:    vpcmpneqd (%rdi), %ymm0, %k1
 ; CHECK-NEXT:    vpblendmd %ymm0, %ymm1, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %y = load <8 x i32>, <8 x i32>* %yp, align 4
@@ -302,8 +300,7 @@ define <8 x i32> @test256_19(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %yp) nounwi
 define <8 x i32> @test256_20(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %yp) nounwind {
 ; CHECK-LABEL: test256_20:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovdqu32 (%rdi), %ymm2
-; CHECK-NEXT:    vpcmpnltud %ymm0, %ymm2, %k1
+; CHECK-NEXT:    vpcmpleud (%rdi), %ymm0, %k1
 ; CHECK-NEXT:    vpblendmd %ymm0, %ymm1, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %y = load <8 x i32>, <8 x i32>* %yp, align 4
@@ -443,8 +440,7 @@ define <4 x i32> @test128_8(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %y.ptr) noun
 define <4 x i32> @test128_8b(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %y.ptr) nounwind {
 ; CHECK-LABEL: test128_8b:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovdqu32 (%rdi), %xmm2
-; CHECK-NEXT:    vpcmpnltud %xmm0, %xmm2, %k1
+; CHECK-NEXT:    vpcmpleud (%rdi), %xmm0, %k1
 ; CHECK-NEXT:    vpblendmd %xmm0, %xmm1, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %y = load <4 x i32>, <4 x i32>* %y.ptr, align 4
@@ -588,8 +584,7 @@ define <4 x i32> @test128_17(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %y.ptr) nou
 define <4 x i32> @test128_18(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %y.ptr) nounwind {
 ; CHECK-LABEL: test128_18:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovdqu32 (%rdi), %xmm2
-; CHECK-NEXT:    vpcmpneqd %xmm0, %xmm2, %k1
+; CHECK-NEXT:    vpcmpneqd (%rdi), %xmm0, %k1
 ; CHECK-NEXT:    vpblendmd %xmm0, %xmm1, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %y = load <4 x i32>, <4 x i32>* %y.ptr, align 4
@@ -613,8 +608,7 @@ define <4 x i32> @test128_19(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %y.ptr) nou
 define <4 x i32> @test128_20(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %y.ptr) nounwind {
 ; CHECK-LABEL: test128_20:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovdqu32 (%rdi), %xmm2
-; CHECK-NEXT:    vpcmpnltud %xmm0, %xmm2, %k1
+; CHECK-NEXT:    vpcmpleud (%rdi), %xmm0, %k1
 ; CHECK-NEXT:    vpblendmd %xmm0, %xmm1, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %y = load <4 x i32>, <4 x i32>* %y.ptr, align 4
