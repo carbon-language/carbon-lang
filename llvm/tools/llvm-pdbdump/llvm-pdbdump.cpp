@@ -62,6 +62,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/Regex.h"
 #include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
@@ -173,6 +174,16 @@ cl::opt<bool> DumpPageStats(
     "page-stats",
     cl::desc("dump allocation stats of the pages in the MSF file"),
     cl::cat(MsfOptions), cl::sub(RawSubcommand));
+cl::opt<std::string>
+    DumpBlockRangeOpt("block-data", cl::value_desc("start[-end]"),
+                      cl::desc("Dump binary data from specified range."),
+                      cl::cat(MsfOptions), cl::sub(RawSubcommand));
+llvm::Optional<BlockRange> DumpBlockRange;
+
+cl::list<uint32_t>
+    DumpStreamData("stream-data", cl::CommaSeparated, cl::ZeroOrMore,
+                   cl::desc("Dump binary data from specified streams."),
+                   cl::cat(MsfOptions), cl::sub(RawSubcommand));
 
 // TYPE OPTIONS
 cl::opt<bool>
@@ -224,14 +235,6 @@ cl::opt<bool> DumpSectionHeaders("section-headers",
                                  cl::cat(MiscOptions), cl::sub(RawSubcommand));
 cl::opt<bool> DumpFpo("fpo", cl::desc("dump FPO records"), cl::cat(MiscOptions),
                       cl::sub(RawSubcommand));
-
-cl::opt<std::string> DumpStreamDataIdx("stream", cl::desc("dump stream data"),
-                                       cl::cat(MiscOptions),
-                                       cl::sub(RawSubcommand));
-cl::opt<std::string> DumpStreamDataName("stream-name",
-                                        cl::desc("dump stream data"),
-                                        cl::cat(MiscOptions),
-                                        cl::sub(RawSubcommand));
 
 cl::opt<bool> RawAll("all", cl::desc("Implies most other options."),
                      cl::cat(MiscOptions), cl::sub(RawSubcommand));
@@ -549,6 +552,22 @@ int main(int argc_, const char *argv_[]) {
   llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   cl::ParseCommandLineOptions(argv.size(), argv.data(), "LLVM PDB Dumper\n");
+  if (!opts::raw::DumpBlockRangeOpt.empty()) {
+    llvm::Regex R("^([0-9]+)(-([0-9]+))?$");
+    llvm::SmallVector<llvm::StringRef, 2> Matches;
+    if (!R.match(opts::raw::DumpBlockRangeOpt, &Matches)) {
+      errs() << "Argument '" << opts::raw::DumpBlockRangeOpt
+             << "' invalid format.\n";
+      errs().flush();
+      exit(1);
+    }
+    opts::raw::DumpBlockRange.emplace();
+    Matches[1].getAsInteger(10, opts::raw::DumpBlockRange->Min);
+    if (!Matches[3].empty()) {
+      opts::raw::DumpBlockRange->Max.emplace();
+      Matches[3].getAsInteger(10, *opts::raw::DumpBlockRange->Max);
+    }
+  }
 
   if (opts::RawSubcommand && opts::raw::RawAll) {
     opts::raw::DumpHeaders = true;
@@ -589,12 +608,10 @@ int main(int argc_, const char *argv_[]) {
     }
 
     // When adding filters for excluded compilands and types, we need to
-    // remember
-    // that these are regexes.  So special characters such as * and \ need to be
-    // escaped in the regex.  In the case of a literal \, this means it needs to
-    // be escaped again in the C++.  So matching a single \ in the input
-    // requires
-    // 4 \es in the C++.
+    // remember that these are regexes.  So special characters such as * and \
+    // need to be escaped in the regex.  In the case of a literal \, this means
+    // it needs to be escaped again in the C++.  So matching a single \ in the
+    // input requires 4 \es in the C++.
     if (opts::pretty::ExcludeCompilerGenerated) {
       opts::pretty::ExcludeTypes.push_back("__vc_attributes");
       opts::pretty::ExcludeCompilands.push_back("\\* Linker \\*");

@@ -28,10 +28,10 @@ private:
   Error dumpFileHeaders();
   Error dumpStreamSummary();
   Error dumpFreePageMap();
+  Error dumpBlockRanges();
+  Error dumpStreamBytes();
   Error dumpStreamBlocks();
-  Error dumpStreamData();
   Error dumpInfoStream();
-  Error dumpNamedStream();
   Error dumpTpiStream(uint32_t StreamIdx);
   Error dumpDbiStream();
   Error dumpSectionContribs();
