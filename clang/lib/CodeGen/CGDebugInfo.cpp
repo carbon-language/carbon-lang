@@ -1648,9 +1648,13 @@ void CGDebugInfo::completeRequiredType(const RecordDecl *RD) {
   if (DebugKind <= codegenoptions::DebugLineTablesOnly)
     return;
 
-  if (const auto *CXXDecl = dyn_cast<CXXRecordDecl>(RD))
-    if (CXXDecl->isDynamicClass())
-      return;
+  // If this is a dynamic class and we're emitting limited debug info, wait
+  // until the vtable is emitted to complete the class debug info.
+  if (DebugKind <= codegenoptions::LimitedDebugInfo) {
+    if (const auto *CXXDecl = dyn_cast<CXXRecordDecl>(RD))
+      if (CXXDecl->isDynamicClass())
+        return;
+  }
 
   if (DebugTypeExtRefs && RD->isFromASTFile())
     return;
