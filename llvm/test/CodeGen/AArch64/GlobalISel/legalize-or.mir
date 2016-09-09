@@ -24,8 +24,8 @@ body: |
     ; CHECK-LABEL: name: test_scalar_or_small
     ; CHECK: %4(s8) = G_OR %2, %3
 
-    %0(s64) = G_TYPE %x0
-    %1(s64) = G_TYPE %x1
+    %0(s64) = COPY %x0
+    %1(s64) = COPY %x1
     %2(s8) = G_TRUNC %0
     %3(s8) = G_TRUNC %1
     %4(s8) = G_OR %2, %3

@@ -85,12 +85,6 @@ def G_FCONSTANT : Instruction {
   let hasSideEffects = 0;
 }
 
-def G_TYPE : Instruction {
-  let OutOperandList = (outs type0:$dst);
-  let InOperandList = (ins unknown:$imm);
-  let hasSideEffects = 0;
-}
-
 //------------------------------------------------------------------------------
 // Binary ops.
 //------------------------------------------------------------------------------
@@ -413,13 +407,6 @@ def G_INTRINSIC_W_SIDE_EFFECTS : Instruction {
   let hasSideEffects = 1;
   let mayLoad = 1;
   let mayStore = 1;
-}
-
-// PHI node bearing an LLT.
-def G_PHI : Instruction {
-  let OutOperandList = (outs type0:$dst);
-  let InOperandList = (ins variable_ops);
-  let hasSideEffects = 0;
 }
 
 //------------------------------------------------------------------------------

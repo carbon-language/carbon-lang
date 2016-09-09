@@ -230,16 +230,6 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
     return true;
   }
 
-  case TargetOpcode::G_TYPE: {
-    I.setDesc(TII.get(TargetOpcode::COPY));
-    return true;
-  }
-
-   case TargetOpcode::G_PHI: {
-     I.setDesc(TII.get(TargetOpcode::PHI));
-     return true;
-   }
-
   case TargetOpcode::G_FRAME_INDEX: {
     // allocas and G_FRAME_INDEX are only supported in addrspace(0).
     if (Ty != LLT::pointer(0)) {
