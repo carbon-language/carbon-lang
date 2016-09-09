@@ -412,6 +412,8 @@ defm SCSrc : RegInlineOperand<"SReg", "SCSrc"> ;
 
 defm VSrc : RegImmOperand<"VS", "VSrc">;
 
+def VSrc_128 : RegisterOperand<VReg_128>;
+
 //===----------------------------------------------------------------------===//
 //  VSrc_* Operands with an VGPR
 //===----------------------------------------------------------------------===//

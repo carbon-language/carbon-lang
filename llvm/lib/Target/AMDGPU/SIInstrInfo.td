@@ -624,9 +624,10 @@ class getNumSrcArgs<ValueType Src0, ValueType Src1, ValueType Src2> {
 // instructions for the given VT.
 class getVALUDstForVT<ValueType VT> {
   RegisterOperand ret = !if(!eq(VT.Size, 32), VOPDstOperand<VGPR_32>,
-                          !if(!eq(VT.Size, 64), VOPDstOperand<VReg_64>,
-                            !if(!eq(VT.Size, 16), VOPDstOperand<VGPR_32>,
-                            VOPDstOperand<SReg_64>))); // else VT == i1
+                          !if(!eq(VT.Size, 128), VOPDstOperand<VReg_128>,
+                            !if(!eq(VT.Size, 64), VOPDstOperand<VReg_64>,
+                              !if(!eq(VT.Size, 16), VOPDstOperand<VGPR_32>,
+                              VOPDstOperand<SReg_64>)))); // else VT == i1
 }
 
 // Returns the register class to use for source 0 of VOP[12C]
@@ -636,14 +637,15 @@ class getVOPSrc0ForVT<ValueType VT> {
              !if(!eq(VT.Value, f32.Value), 1,
              !if(!eq(VT.Value, f64.Value), 1,
              0)));
-  RegisterOperand ret = !if(isFP, 
+  RegisterOperand ret = !if(isFP,
                             !if(!eq(VT.Size, 64), VSrc_f64, VSrc_f32),
                             !if(!eq(VT.Size, 64), VSrc_b64, VSrc_b32));
 }
 
 // Returns the vreg register class to use for source operand given VT
 class getVregSrcForVT<ValueType VT> {
-  RegisterClass ret = !if(!eq(VT.Size, 64), VReg_64, VGPR_32);
+  RegisterClass ret = !if(!eq(VT.Size, 128), VReg_128,
+                        !if(!eq(VT.Size, 64), VReg_64, VGPR_32));
 }
 
 
@@ -655,6 +657,8 @@ class getVOP3SrcForVT<ValueType VT> {
              !if(!eq(VT.Value, f64.Value), 1,
              0)));
   RegisterOperand ret =
+  !if(!eq(VT.Size, 128),
+      VSrc_128,
     !if(!eq(VT.Size, 64),
         !if(isFP,
             VCSrc_f64,
@@ -665,7 +669,8 @@ class getVOP3SrcForVT<ValueType VT> {
                 VCSrc_f32,
                 VCSrc_b32)
          )
-      );
+	   )
+     );
 }
 
 // Returns 1 if the source arguments have modifiers, 0 if they do not.
@@ -779,7 +784,7 @@ class getInsSDWA <RegisterClass Src0RC, RegisterClass Src1RC, int NumSrcArgs,
                // VOP1 without input operands (V_NOP)
                (ins),
             !if(!eq(NumSrcArgs, 1),
-                !if(HasFloatModifiers, 
+                !if(HasFloatModifiers,
                     // VOP1_SDWA with float modifiers
                     (ins Src0Mod:$src0_fmodifiers, Src0RC:$src0,
                          clampmod:$clamp, dst_sel:$dst_sel, dst_unused:$dst_unused,
@@ -800,7 +805,7 @@ class getInsSDWA <RegisterClass Src0RC, RegisterClass Src1RC, int NumSrcArgs,
                            Src1Mod:$src1_fmodifiers, Src1RC:$src1,
                            clampmod:$clamp, dst_sel:$dst_sel, dst_unused:$dst_unused,
                            src0_sel:$src0_sel, src1_sel:$src1_sel)),
-              
+
                   !if(!eq(DstVT.Size, 1),
                       // VOPC_SDWA with int modifiers
                       (ins Src0Mod:$src0_imodifiers, Src0RC:$src0,
@@ -1163,6 +1168,7 @@ def VOP_I32_I32_I32_I32 : VOPProfile <[i32, i32, i32, i32]>;
 def VOP_I64_I32_I32_I64 : VOPProfile <[i64, i32, i32, i64]>;
 def VOP_I32_F32_I32_I32 : VOPProfile <[i32, f32, i32, i32]>;
 def VOP_I64_I64_I32_I64 : VOPProfile <[i64, i64, i32, i64]>;
+def VOP_V4I32_I64_I32_V4I32 : VOPProfile <[v4i32, i64, i32, v4i32]>;
 
 // This class is used only with VOPC instructions. Use $sdst for out operand
 class SIInstAlias <string asm, Instruction inst, VOPProfile p,
