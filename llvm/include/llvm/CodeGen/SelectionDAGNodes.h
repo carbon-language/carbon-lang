@@ -472,20 +472,15 @@ protected:
     StoreSDNodeBitfields StoreSDNodeBits;
   };
 
-  // RawSDNodeBits must cover the entirety of the union.  This means that all
-  // of the union's members must have size <= RawSDNodeBits.
-  static_assert(sizeof(SDNodeBits) <= sizeof(RawSDNodeBits),
-                "SDNodeBits too wide");
-  static_assert(sizeof(ConstantSDNodeBits) <= sizeof(RawSDNodeBits),
-                "ConstantSDNodeBits too wide");
-  static_assert(sizeof(MemSDNodeBits) <= sizeof(RawSDNodeBits),
-                "MemSDNodeBits too wide");
-  static_assert(sizeof(LSBaseSDNodeBits) <= sizeof(RawSDNodeBits),
-                "LSBaseSDNodeBits too wide");
-  static_assert(sizeof(LoadSDNodeBits) <= sizeof(RawSDNodeBits),
-                "LoadSDNodeBits too wide");
-  static_assert(sizeof(StoreSDNodeBits) <= sizeof(RawSDNodeBits),
-                "StoreSDNodeBits too wide");
+  // RawSDNodeBits must cover the entirety of the union.  This means that all of
+  // the union's members must have size <= RawSDNodeBits.  We write the RHS as
+  // "2" instead of sizeof(RawSDNodeBits) because MSVC can't handle the latter.
+  static_assert(sizeof(SDNodeBitfields) <= 2, "field too wide");
+  static_assert(sizeof(ConstantSDNodeBitfields) <= 2, "field too wide");
+  static_assert(sizeof(MemSDNodeBitfields) <= 2, "field too wide");
+  static_assert(sizeof(LSBaseSDNodeBitfields) <= 2, "field too wide");
+  static_assert(sizeof(LoadSDNodeBitfields) <= 2, "field too wide");
+  static_assert(sizeof(StoreSDNodeBitfields) <= 2, "field too wide");
 
 private:
   /// Unique id per SDNode in the DAG.
