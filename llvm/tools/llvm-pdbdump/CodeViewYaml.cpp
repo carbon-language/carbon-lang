@@ -40,14 +40,14 @@ public:
 #define TYPE_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #define MEMBER_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #define MEMBER_RECORD(EnumName, EnumVal, Name)                                 \
-  Error visitKnownRecord(const CVType &CVT, Name##Record &Record) override {   \
+  Error visitKnownRecord(CVType &CVT, Name##Record &Record) override {         \
     visitKnownRecordImpl(CVT);                                                 \
     return Error::success();                                                   \
   }
 #include "llvm/DebugInfo/CodeView/TypeRecords.def"
 
 private:
-  void visitKnownRecordImpl(const CVType &CVT) {
+  void visitKnownRecordImpl(CVType &CVT) {
     llvm::pdb::yaml::PdbTpiRecord R;
     R.Record = CVT;
     Records.push_back(std::move(R));
@@ -524,19 +524,14 @@ void ScalarEnumerationTraits<TypeLeafKind>::enumeration(IO &io,
 }
 }
 
-Expected<TypeLeafKind>
-llvm::codeview::yaml::YamlTypeDumperCallbacks::visitTypeBegin(
-    const CVRecord<TypeLeafKind> &CVR) {
-  // When we're outputting, `CVR.Type` already has the right value in it.  But
-  // when we're inputting, we need to read the value.  Since `CVR.Type` is const
-  // we do it into a temp variable.
-  TypeLeafKind K = CVR.Type;
-  YamlIO.mapRequired("Kind", K);
-  return K;
+Error llvm::codeview::yaml::YamlTypeDumperCallbacks::visitTypeBegin(
+    CVRecord<TypeLeafKind> &CVR) {
+  YamlIO.mapRequired("Kind", CVR.Type);
+  return Error::success();
 }
 
 void llvm::codeview::yaml::YamlTypeDumperCallbacks::visitKnownRecordImpl(
-    const char *Name, const CVType &CVR, FieldListRecord &FieldList) {
+    const char *Name, CVType &CVR, FieldListRecord &FieldList) {
   std::vector<llvm::pdb::yaml::PdbTpiRecord> FieldListRecords;
   if (YamlIO.outputting()) {
     // If we are outputting, then `FieldList.Data` contains a huge chunk of data

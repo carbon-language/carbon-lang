@@ -29,12 +29,11 @@ public:
                           llvm::pdb::yaml::SerializationContext &Context)
       : YamlIO(IO), Context(Context) {}
 
-  virtual Expected<TypeLeafKind>
-  visitTypeBegin(const CVRecord<TypeLeafKind> &Record) override;
+  virtual Error visitTypeBegin(CVRecord<TypeLeafKind> &Record) override;
 
 #define TYPE_RECORD(EnumName, EnumVal, Name)                                   \
-  Error visitKnownRecord(const CVRecord<TypeLeafKind> &CVR,                    \
-                         Name##Record &Record) override {                      \
+  Error visitKnownRecord(CVRecord<TypeLeafKind> &CVR, Name##Record &Record)    \
+      override {                                                               \
     visitKnownRecordImpl(#Name, CVR, Record);                                  \
     return Error::success();                                                   \
   }
@@ -46,11 +45,11 @@ public:
 
 private:
   template <typename T>
-  void visitKnownRecordImpl(const char *Name, const CVType &Type, T &Record) {
+  void visitKnownRecordImpl(const char *Name, CVType &Type, T &Record) {
     YamlIO.mapRequired(Name, Record);
   }
 
-  void visitKnownRecordImpl(const char *Name, const CVType &CVR,
+  void visitKnownRecordImpl(const char *Name, CVType &CVR,
                             FieldListRecord &FieldList);
 
   llvm::yaml::IO &YamlIO;

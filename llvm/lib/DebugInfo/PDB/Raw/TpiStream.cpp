@@ -69,34 +69,33 @@ public:
                   uint32_t NumHashBuckets)
       : HashValues(HashValues), NumHashBuckets(NumHashBuckets) {}
 
-  Error visitKnownRecord(const CVRecord<TypeLeafKind> &CVR,
+  Error visitKnownRecord(CVRecord<TypeLeafKind> &CVR,
                          UdtSourceLineRecord &Rec) override {
     return verifySourceLine(Rec);
   }
 
-  Error visitKnownRecord(const CVRecord<TypeLeafKind> &CVR,
+  Error visitKnownRecord(CVRecord<TypeLeafKind> &CVR,
                          UdtModSourceLineRecord &Rec) override {
     return verifySourceLine(Rec);
   }
 
-  Error visitKnownRecord(const CVRecord<TypeLeafKind> &CVR,
+  Error visitKnownRecord(CVRecord<TypeLeafKind> &CVR,
                          ClassRecord &Rec) override {
     return verify(Rec);
   }
-  Error visitKnownRecord(const CVRecord<TypeLeafKind> &CVR,
+  Error visitKnownRecord(CVRecord<TypeLeafKind> &CVR,
                          EnumRecord &Rec) override {
     return verify(Rec);
   }
-  Error visitKnownRecord(const CVRecord<TypeLeafKind> &CVR,
+  Error visitKnownRecord(CVRecord<TypeLeafKind> &CVR,
                          UnionRecord &Rec) override {
     return verify(Rec);
   }
 
-  Expected<TypeLeafKind>
-  visitTypeBegin(const CVRecord<TypeLeafKind> &Rec) override {
+  Error visitTypeBegin(CVRecord<TypeLeafKind> &Rec) override {
     ++Index;
     RawRecord = Rec;
-    return Rec.Type;
+    return Error::success();
   }
 
 private:

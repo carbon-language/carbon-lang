@@ -15,6 +15,7 @@
 #include "llvm/DebugInfo/CodeView/TypeVisitorCallbacks.h"
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Error.h"
 
 namespace llvm {
 namespace codeview {
@@ -26,27 +27,35 @@ public:
       : FieldListBuilder(FieldListBuilder), TypeTableBuilder(TypeTableBuilder) {
   }
 
-  virtual Expected<TypeLeafKind> visitTypeBegin(const CVType &Record) override {
+  virtual Error visitTypeBegin(CVType &Record) override {
     if (Record.Type == TypeLeafKind::LF_FIELDLIST)
       FieldListBuilder.reset();
-    return Record.Type;
+    return Error::success();
   }
 
-  virtual Error visitTypeEnd(const CVRecord<TypeLeafKind> &Record) override {
+  virtual Error visitTypeEnd(CVType &Record) override {
+    // Since this visitor's purpose is to serialize the record, fill out the
+    // fields of `Record` with the bytes of the record.
     if (Record.Type == TypeLeafKind::LF_FIELDLIST)
       TypeTableBuilder.writeFieldList(FieldListBuilder);
+
+    StringRef S = TypeTableBuilder.getRecords().back();
+    ArrayRef<uint8_t> Data(S.bytes_begin(), S.bytes_end());
+    Record.RawData = Data;
+    Record.Data = Record.RawData.drop_front(sizeof(RecordPrefix));
+    Record.Length = Data.size() - sizeof(ulittle16_t);
     return Error::success();
   }
 
 #define TYPE_RECORD(EnumName, EnumVal, Name)                                   \
-  virtual Error visitKnownRecord(const CVRecord<TypeLeafKind> &CVR,            \
+  virtual Error visitKnownRecord(CVRecord<TypeLeafKind> &CVR,                  \
                                  Name##Record &Record) override {              \
     visitKnownRecordImpl(Record);                                              \
     return Error::success();                                                   \
   }
 #define TYPE_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #define MEMBER_RECORD(EnumName, EnumVal, Name)                                 \
-  virtual Error visitKnownRecord(const CVRecord<TypeLeafKind> &CVR,            \
+  virtual Error visitKnownRecord(CVRecord<TypeLeafKind> &CVR,                  \
                                  Name##Record &Record) override {              \
     visitMemberRecordImpl(Record);                                             \
     return Error::success();                                                   \

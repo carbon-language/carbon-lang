@@ -263,7 +263,9 @@ TypeIndex TypeTableBuilder::writeRecord(TypeRecordBuilder &Builder) {
 }
 
 TypeIndex TypeTableBuilder::writeFieldList(FieldListRecordBuilder &FieldList) {
-  return FieldList.writeListRecord(*this);
+  TypeIndex I = FieldList.writeListRecord(*this);
+  RecordKinds.push_back(TypeRecordKind::FieldList);
+  return I;
 }
 
 TypeIndex

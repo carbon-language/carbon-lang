@@ -230,19 +230,4 @@ void MappingContextTraits<PdbTpiRecord, pdb::yaml::SerializationContext>::
 
   codeview::CVTypeVisitor Visitor(Pipeline);
   consumeError(Visitor.visitTypeRecord(Obj.Record));
-
-  if (!IO.outputting()) {
-    // For Yaml to PDB, we need to update the input Object with the bytes for
-    // this record.
-    ArrayRef<StringRef> Records = Context.TypeTableBuilder.getRecords();
-    ArrayRef<codeview::TypeRecordKind> Kinds =
-        Context.TypeTableBuilder.getRecordKinds();
-
-    StringRef ThisRecord = Records.back();
-    Obj.Record.Type = static_cast<codeview::TypeLeafKind>(Kinds.back());
-    Obj.Record.Data =
-        ArrayRef<uint8_t>(ThisRecord.bytes_begin(), ThisRecord.bytes_end());
-    Obj.Record.RawData = Obj.Record.Data;
-    Obj.Record.Length = ThisRecord.size();
-  }
 }
