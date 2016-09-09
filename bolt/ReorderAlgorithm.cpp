@@ -56,9 +56,8 @@ void ClusterAlgorithm::computeClusterAverageFrequency() {
   for (uint32_t I = 0, E = Clusters.size(); I < E; ++I) {
     double Freq = 0.0;
     for (auto BB : Clusters[I]) {
-      if (!BB->empty() && BB->size() != BB->getNumPseudos())
-        Freq += ((double) BB->getExecutionCount()) /
-                (BB->size() - BB->getNumPseudos());
+      if (BB->getNumNonPseudos() > 0)
+        Freq += ((double) BB->getExecutionCount()) / BB->getNumNonPseudos();
     }
     AvgFreq[I] = Freq;
   }

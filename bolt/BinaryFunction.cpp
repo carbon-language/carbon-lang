@@ -1469,7 +1469,7 @@ uint64_t BinaryFunction::getFunctionScore() {
     uint64_t BBExecCount = BB->getExecutionCount();
     if (BBExecCount == BinaryBasicBlock::COUNT_NO_PROFILE)
       continue;
-    BBExecCount *= (BB->Instructions.size() - BB->getNumPseudos());
+    BBExecCount *= BB->getNumNonPseudos();
     TotalScore += BBExecCount;
   }
   FunctionScore = TotalScore;

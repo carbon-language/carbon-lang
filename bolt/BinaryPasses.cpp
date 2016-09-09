@@ -163,7 +163,7 @@ void InlineSmallFunctions::findInliningCandidates(
     const auto &LastInstruction = *BB.rbegin();
     // Check if the function is small enough and doesn't do a tail call.
     if (BB.size() > 0 &&
-        (BB.size() - BB.getNumPseudos()) <= kMaxInstructions &&
+        BB.getNumNonPseudos() <= kMaxInstructions &&
         BC.MIA->isReturn(LastInstruction) &&
         !BC.MIA->isTailCall(LastInstruction)) {
       InliningCandidates.insert(&Function);
