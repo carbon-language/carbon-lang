@@ -16,18 +16,40 @@
 
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
+#include "llvm/Support/CommandLine.h"
 #include <map>
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace llvm {
 namespace bolt {
 
 /// An optimization/analysis pass that runs on functions.
 class BinaryFunctionPass {
+  const cl::opt<bool> &PrintPass;
+protected:
+  explicit BinaryFunctionPass(const cl::opt<bool> &PrintPass)
+    : PrintPass(PrintPass) { }
+
+  /// Control whether a specific function should be skipped during
+  /// optimization.
+  bool shouldOptimize(const BinaryFunction &BF) const;
 public:
   virtual ~BinaryFunctionPass() = default;
+
+  /// The name of this pass
+  virtual const char *getName() const = 0;
+
+  /// Control whether debug info is printed after this pass is completed.
+  bool printPass() const { return PrintPass; }
+
+  /// Control whether debug info is printed for an individual function after
+  /// this pass is completed (printPass() must have returned true).
+  virtual bool shouldPrint(const BinaryFunction &BF) const;
+
+  /// Execute this pass on the given functions.
   virtual void runOnFunctions(BinaryContext &BC,
                               std::map<uint64_t, BinaryFunction> &BFs,
                               std::set<uint64_t> &LargeFunctions) = 0;
@@ -50,6 +72,11 @@ private:
                      BinaryContext &BC);
 
 public:
+  explicit OptimizeBodylessFunctions(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+  const char *getName() const override {
+    return "optimize-bodyless";
+  }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,
                       std::set<uint64_t> &LargeFunctions) override;
@@ -75,6 +102,7 @@ private:
   uint64_t TotalDynamicCalls = 0;
   uint64_t InlinedDynamicCalls = 0;
   uint64_t TotalInlineableCalls = 0;
+  std::unordered_set<const BinaryFunction *> Modified;
 
   static bool mustConsider(const BinaryFunction &BF);
 
@@ -115,6 +143,15 @@ private:
              const BinaryFunction &InlinedFunction);
 
 public:
+  explicit InlineSmallFunctions(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+
+  const char *getName() const override {
+    return "inlining";
+  }
+  bool shouldPrint(const BinaryFunction &BF) const override {
+    return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
+  }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,
                       std::set<uint64_t> &LargeFunctions) override;
@@ -126,8 +163,12 @@ class EliminateUnreachableBlocks : public BinaryFunctionPass {
   bool& NagUser;
   void runOnFunction(BinaryFunction& Function);
  public:
-  explicit EliminateUnreachableBlocks(bool &nagUser) : NagUser(nagUser) { }
+  EliminateUnreachableBlocks(const cl::opt<bool> &PrintPass, bool &NagUser)
+    : BinaryFunctionPass(PrintPass), NagUser(NagUser) { }
 
+  const char *getName() const override {
+    return "eliminate-unreachable";
+  }
   void runOnFunctions(BinaryContext&,
                       std::map<uint64_t, BinaryFunction> &BFs,
                       std::set<uint64_t> &LargeFunctions) override;
@@ -136,6 +177,13 @@ class EliminateUnreachableBlocks : public BinaryFunctionPass {
 // Reorder the basic blocks for each function based on hotness.
 class ReorderBasicBlocks : public BinaryFunctionPass {
  public:
+  explicit ReorderBasicBlocks(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+
+  const char *getName() const override {
+    return "reordering";
+  }
+  bool shouldPrint(const BinaryFunction &BF) const override;
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,
                       std::set<uint64_t> &LargeFunctions) override;
@@ -144,6 +192,12 @@ class ReorderBasicBlocks : public BinaryFunctionPass {
 /// Sync local branches with CFG.
 class FixupBranches : public BinaryFunctionPass {
  public:
+  explicit FixupBranches(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+
+  const char *getName() const override {
+    return "fix-branches";
+  }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,
                       std::set<uint64_t> &LargeFunctions) override;
@@ -153,6 +207,12 @@ class FixupBranches : public BinaryFunctionPass {
 /// passes have completed.
 class FixupFunctions : public BinaryFunctionPass {
  public:
+  explicit FixupFunctions(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+
+  const char *getName() const override {
+    return "fixup-functions";
+  }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,
                       std::set<uint64_t> &LargeFunctions) override;
@@ -176,9 +236,19 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
   uint64_t NumTailCallCandidates{0};
   uint64_t NumTailCallsPatched{0};
   uint64_t NumOrigForwardBranches{0};
+  std::unordered_set<const BinaryFunction *> Modified;
 
   bool fixTailCalls(BinaryContext &BC, BinaryFunction &BF);
  public:
+  explicit SimplifyConditionalTailCalls(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+
+  const char *getName() const override {
+    return "simplify-conditional-tail-calls";
+  }
+  bool shouldPrint(const BinaryFunction &BF) const override {
+    return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
+  }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,
                       std::set<uint64_t> &LargeFunctions) override;
@@ -188,6 +258,12 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
 class Peepholes : public BinaryFunctionPass {
   void shortenInstructions(BinaryContext &BC, BinaryFunction &Function);
  public:
+  explicit Peepholes(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+
+  const char *getName() const override {
+    return "peepholes";
+  }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,
                       std::set<uint64_t> &LargeFunctions) override;
@@ -209,10 +285,20 @@ class SimplifyRODataLoads : public BinaryFunctionPass {
   uint64_t NumDynamicLoadsSimplified{0};
   uint64_t NumLoadsFound{0};
   uint64_t NumDynamicLoadsFound{0};
+  std::unordered_set<const BinaryFunction *> Modified;
 
   bool simplifyRODataLoads(BinaryContext &BC, BinaryFunction &BF);
 
 public:
+  explicit SimplifyRODataLoads(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+
+  const char *getName() const override {
+    return "simplify-read-only-loads";
+  }
+  bool shouldPrint(const BinaryFunction &BF) const override {
+    return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
+  }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,
                       std::set<uint64_t> &LargeFunctions) override;
@@ -254,6 +340,12 @@ class IdenticalCodeFolding : public BinaryFunctionPass {
                        std::map<uint64_t, BinaryFunction> &BFs);
 
  public:
+  explicit IdenticalCodeFolding(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+
+  const char *getName() const override {
+    return "identical-code-folding";
+  }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,
                       std::set<uint64_t> &LargeFunctions) override;

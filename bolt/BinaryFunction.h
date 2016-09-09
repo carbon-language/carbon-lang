@@ -135,7 +135,7 @@ inline raw_ostream &operator<<(raw_ostream &OS, const DynoStats &Stats) {
 DynoStats operator+(const DynoStats &A, const DynoStats &B);
 
 /// BinaryFunction is a representation of machine-level function.
-//
+///
 /// We use the term "Binary" as "Machine" was already taken.
 class BinaryFunction : public AddressRangesOwner {
 public:
@@ -1225,6 +1225,44 @@ public:
 
   const FragmentInfo &cold() const { return ColdFragment; }
 };
+
+/// Return program-wide dynostats.
+template <typename FuncsType>
+inline DynoStats getDynoStats(const FuncsType &Funcs) {
+  DynoStats dynoStats;
+  for (auto &BFI : Funcs) {
+    auto &BF = BFI.second;
+    if (BF.isSimple()) {
+      dynoStats += BF.getDynoStats();
+    }
+  }
+  return dynoStats;
+}
+
+/// Call a function with optional before and after dynostats printing.
+template <typename FnType, typename FuncsType>
+inline void
+callWithDynoStats(FnType &&Func,
+                  const FuncsType &Funcs,
+                  StringRef Phase,
+                  const bool Flag) {
+  DynoStats dynoStatsBefore;
+  if (Flag) {
+    dynoStatsBefore = getDynoStats(Funcs);
+    outs() << "BOLT-INFO: program-wide dynostats before running "
+           << Phase << ":\n\n" << dynoStatsBefore << '\n';
+  }
+
+  Func();
+
+  if (Flag) {
+    auto dynoStatsAfter = getDynoStats(Funcs);
+    outs() << "BOLT-INFO: program-wide dynostats after running "
+           << Phase << ":\n\n" << dynoStatsBefore << '\n';
+    dynoStatsAfter.print(outs(), &dynoStatsBefore);
+    outs() << '\n';
+  }
+}
 
 /// Determine direction of the branch based on the current layout.
 /// Callee is responsible of updating basic block indices prior to using

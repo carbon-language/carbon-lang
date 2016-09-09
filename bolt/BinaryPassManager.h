@@ -55,13 +55,7 @@ private:
   }
 
   /// Run all registered passes in the order they were added.
-  void runPasses() {
-    for (const auto &OptPassPair : Passes) {
-      if (OptPassPair.first) {
-        OptPassPair.second->runOnFunctions(BC, BFs, LargeFunctions);
-      }
-    }
-  }
+  void runPasses();
 
   /// Runs all enabled implemented passes on all functions.
   static void runAllPasses(BinaryContext &BC,

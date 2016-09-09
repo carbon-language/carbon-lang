@@ -94,6 +94,11 @@ cl::opt<bool>
 PrintDynoStats("dyno-stats",
                cl::desc("print execution info based on profile"));
 
+cl::opt<bool>
+DynoStatsAll("dyno-stats-all", cl::desc("print dyno stats after each stage"),
+             cl::ZeroOrMore,
+             cl::Hidden);
+
 static cl::list<std::string>
 FunctionNames("funcs",
               cl::CommaSeparated,
@@ -1077,21 +1082,15 @@ void RewriteInstance::disassembleFunctions() {
 }
 
 void RewriteInstance::runOptimizationPasses() {
-  DynoStats dynoStatsBefore;
-  if (opts::PrintDynoStats) {
-    dynoStatsBefore = getDynoStats();
-    outs() << "BOLT-INFO: program-wide dynostats before running "
-              "optimizations:\n\n" << dynoStatsBefore << '\n';
-  }
-
-  BinaryFunctionPassManager::runAllPasses(*BC, BinaryFunctions, LargeFunctions);
-
-  if (opts::PrintDynoStats) {
-    auto dynoStatsAfter = getDynoStats();
-    outs() << "BOLT-INFO: program-wide dynostats after optimizaions:\n\n";
-    dynoStatsAfter.print(outs(), &dynoStatsBefore);
-    outs() << '\n';
-  }
+  callWithDynoStats(
+    [this] {
+      BinaryFunctionPassManager::runAllPasses(*BC,
+                                              BinaryFunctions,
+                                              LargeFunctions);
+    },
+    BinaryFunctions,
+    "optimizations",
+    opts::PrintDynoStats || opts::DynoStatsAll);
 }
 
 namespace {

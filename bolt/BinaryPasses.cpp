@@ -20,57 +20,8 @@ using namespace llvm;
 namespace opts {
 
 extern cl::opt<unsigned> Verbosity;
-extern cl::opt<bool> PrintAll;
-extern cl::opt<bool> DumpDotAll;
 extern cl::opt<llvm::bolt::BinaryFunction::SplittingType> SplitFunctions;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
-
-static cl::opt<bool>
-PrintReordered("print-reordered",
-               cl::desc("print functions after layout optimization"),
-               cl::ZeroOrMore,
-               cl::Hidden);
-
-static cl::opt<bool>
-PrintAfterBranchFixup("print-after-branch-fixup",
-                      cl::desc("print function after fixing local branches"),
-                      cl::Hidden);
-
-static cl::opt<bool>
-PrintAfterFixup("print-after-fixup",
-                cl::desc("print function after fixup"),
-                cl::Hidden);
-
-static cl::opt<bool>
-PrintUCE("print-uce",
-         cl::desc("print functions after unreachable code elimination"),
-         cl::ZeroOrMore,
-         cl::Hidden);
-
-static cl::opt<bool>
-PrintPeepholes("print-peepholes",
-               cl::desc("print functions after peephole optimization"),
-               cl::ZeroOrMore,
-               cl::Hidden);
-
-static cl::opt<bool>
-PrintSimplifyROLoads("print-simplify-rodata-loads",
-                     cl::desc("print functions after simplification of RO data"
-                              " loads"),
-                     cl::ZeroOrMore,
-                     cl::Hidden);
-
-static cl::opt<bool>
-PrintICF("print-icf",
-         cl::desc("print functions after ICF optimization"),
-         cl::ZeroOrMore,
-         cl::Hidden);
-
-static cl::opt<bool>
-PrintInline("print-inline",
-            cl::desc("print functions after inlining optimization"),
-            cl::ZeroOrMore,
-            cl::Hidden);
 
 static cl::list<std::string>
 ForceInlineFunctions("force-inline",
@@ -123,6 +74,14 @@ MinBranchClusters(
 
 namespace llvm {
 namespace bolt {
+
+bool BinaryFunctionPass::shouldOptimize(const BinaryFunction &BF) const {
+  return BF.isSimple() && opts::shouldProcess(BF);
+}
+
+bool BinaryFunctionPass::shouldPrint(const BinaryFunction &BF) const {
+  return BF.isSimple() && opts::shouldProcess(BF);
+}
 
 void OptimizeBodylessFunctions::analyze(
     BinaryFunction &BF,
@@ -181,13 +140,13 @@ void OptimizeBodylessFunctions::runOnFunctions(
     std::set<uint64_t> &) {
   for (auto &It : BFs) {
     auto &Function = It.second;
-    if (Function.isSimple() && opts::shouldProcess(Function)) {
+    if (shouldOptimize(Function)) {
       analyze(Function, BC, BFs);
     }
   }
   for (auto &It : BFs) {
     auto &Function = It.second;
-    if (Function.isSimple() && opts::shouldProcess(Function)) {
+    if (shouldOptimize(Function)) {
       optimizeCalls(Function, BC);
     }
   }
@@ -198,9 +157,7 @@ void InlineSmallFunctions::findInliningCandidates(
     const std::map<uint64_t, BinaryFunction> &BFs) {
   for (const auto &BFIt : BFs) {
     const auto &Function = BFIt.second;
-    if (!Function.isSimple() ||
-        !opts::shouldProcess(Function) ||
-        Function.size() != 1)
+    if (!shouldOptimize(Function) || Function.size() != 1)
       continue;
     auto &BB = *Function.begin();
     const auto &LastInstruction = *BB.rbegin();
@@ -229,8 +186,7 @@ void InlineSmallFunctions::findInliningCandidatesAggressive(
   };
   for (const auto &BFIt : BFs) {
     const auto &Function = BFIt.second;
-    if (!Function.isSimple() ||
-        !opts::shouldProcess(Function) ||
+    if (!shouldOptimize(Function) ||
         OverwrittenFunctions.count(Function.getSymbol()->getName()) ||
         Function.hasEHRanges())
       continue;
@@ -732,16 +688,13 @@ void InlineSmallFunctions::runOnFunctions(
     findInliningCandidates(BC, BFs);
 
   std::vector<BinaryFunction *> ConsideredFunctions;
-  std::vector<bool> Modified;
   for (auto &It : BFs) {
     auto &Function = It.second;
-    if (!Function.isSimple() || !opts::shouldProcess(Function))
-      continue;
-    if (Function.getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE &&
-        !mustConsider(Function))
+    if (!shouldOptimize(Function) ||
+        (Function.getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE &&
+         !mustConsider(Function)))
       continue;
     ConsideredFunctions.push_back(&Function);
-    Modified.push_back(false);
   }
   std::sort(ConsideredFunctions.begin(), ConsideredFunctions.end(),
             [](BinaryFunction *A, BinaryFunction *B) {
@@ -757,21 +710,8 @@ void InlineSmallFunctions::runOnFunctions(
       : inlineCallsInFunction(BC, Function);
 
     if (DidInline) {
-      Modified[i] = true;
+      Modified.insert(&Function);
       ++ModifiedFunctions;
-    }
-  }
-
-  if (opts::PrintAll || opts::PrintInline || opts::DumpDotAll) {
-    for (unsigned i = 0; i < ConsideredFunctions.size(); ++i) {
-      if (Modified[i]) {
-        const auto *Function = ConsideredFunctions[i];
-        if (opts::PrintAll || opts::PrintInline)
-          Function->print(errs(), "after inlining", true);
-
-        if (opts::DumpDotAll)
-          Function->dumpGraphForPass("inlining");
-      }
     }
   }
 
@@ -783,8 +723,6 @@ void InlineSmallFunctions::runOnFunctions(
 }
 
 void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
-  if (!Function.isSimple() || !opts::shouldProcess(Function)) return;
-
   // FIXME: this wouldn't work with C++ exceptions until we implement
   //        support for those as there will be "invisible" edges
   //        in the graph.
@@ -822,12 +760,6 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
       DEBUG(dbgs() << "BOLT: Removed " << Count
             << " dead basic block(s) in function " << Function << '\n');
     }
-
-    if (opts::PrintAll || opts::PrintUCE)
-      Function.print(outs(), "after unreachable code elimination", true);
-
-    if (opts::DumpDotAll)
-      Function.dumpGraphForPass("unreachable-code");
   }
 }
 
@@ -837,8 +769,16 @@ void EliminateUnreachableBlocks::runOnFunctions(
   std::set<uint64_t> &
 ) {
   for (auto &It : BFs) {
-    runOnFunction(It.second);
+    auto &Function = It.second;
+    if (shouldOptimize(Function)) {
+      runOnFunction(Function);
+    }
   }
+}
+
+bool ReorderBasicBlocks::shouldPrint(const BinaryFunction &BF) const {
+  return (BinaryFunctionPass::shouldPrint(BF) &&
+          opts::ReorderBlocks != BinaryFunction::LT_NONE);
 }
 
 void ReorderBasicBlocks::runOnFunctions(
@@ -848,10 +788,7 @@ void ReorderBasicBlocks::runOnFunctions(
   for (auto &It : BFs) {
     auto &Function = It.second;
 
-    if (!Function.isSimple())
-      continue;
-
-    if (!opts::shouldProcess(Function))
+    if (!shouldOptimize(Function))
       continue;
 
     if (opts::ReorderBlocks != BinaryFunction::LT_NONE) {
@@ -862,10 +799,6 @@ void ReorderBasicBlocks::runOnFunctions(
         (LargeFunctions.find(It.first) != LargeFunctions.end());
       Function.modifyLayout(opts::ReorderBlocks, opts::MinBranchClusters,
                             ShouldSplit);
-      if (opts::PrintAll || opts::PrintReordered)
-        Function.print(outs(), "after reordering blocks", true);
-      if (opts::DumpDotAll)
-        Function.dumpGraphForPass("reordering");
     }
   }
 }
@@ -876,16 +809,9 @@ void FixupBranches::runOnFunctions(
   std::set<uint64_t> &) {
   for (auto &It : BFs) {
     auto &Function = It.second;
-
-    if (!Function.isSimple() || !opts::shouldProcess(Function))
-      continue;
-
-    Function.fixBranches();
-
-    if (opts::PrintAll || opts::PrintAfterBranchFixup)
-      Function.print(errs(), "after branch fixup", true);
-    if (opts::DumpDotAll)
-      Function.dumpGraphForPass("after-branch-fixup");
+    if (shouldOptimize(Function)) {
+      Function.fixBranches();
+    }
   }
 }
 
@@ -897,10 +823,7 @@ void FixupFunctions::runOnFunctions(
   for (auto &It : BFs) {
     auto &Function = It.second;
 
-    if (!Function.isSimple())
-      continue;
-
-    if (!opts::shouldProcess(Function))
+    if (!shouldOptimize(Function))
       continue;
 
     // Fix the CFI state.
@@ -915,10 +838,6 @@ void FixupFunctions::runOnFunctions(
 
     // Update exception handling information.
     Function.updateEHRanges();
-    if (opts::PrintAll || opts::PrintAfterFixup)
-      Function.print(errs(), "after fixup", true);
-    if (opts::DumpDotAll)
-      Function.dumpGraphForPass("after-fixup");
   }
 }
 
@@ -1014,17 +933,12 @@ void SimplifyConditionalTailCalls::runOnFunctions(
   for (auto &It : BFs) {
     auto &Function = It.second;
 
-    if (!Function.isSimple())
+    if (!shouldOptimize(Function))
       continue;
 
     // Fix tail calls to reduce branch mispredictions.
     if (fixTailCalls(BC, Function)) {
-      if (opts::PrintAll || opts::PrintReordered) {
-        Function.print(outs(), "after tail call patching", true);
-      }
-      if (opts::DumpDotAll) {
-        Function.dumpGraphForPass("tail-call-patching");
-      }
+      Modified.insert(&Function);
     }
   }
 
@@ -1047,16 +961,8 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
                                std::set<uint64_t> &LargeFunctions) {
   for (auto &It : BFs) {
     auto &Function = It.second;
-    if (Function.isSimple() && opts::shouldProcess(Function)) {
+    if (shouldOptimize(Function)) {
       shortenInstructions(BC, Function);
-
-      if (opts::PrintAll || opts::PrintPeepholes) {
-        Function.print(outs(), "after peepholes", true);
-      }
-
-      if (opts::DumpDotAll) {
-        Function.dumpGraphForPass("peepholes");
-      }
     }
   }
 }
@@ -1149,22 +1055,10 @@ void SimplifyRODataLoads::runOnFunctions(
   std::map<uint64_t, BinaryFunction> &BFs,
   std::set<uint64_t> &
 ) {
-
   for (auto &It : BFs) {
     auto &Function = It.second;
-
-    if (!Function.isSimple())
-      continue;
-
-    if (simplifyRODataLoads(BC, Function)) {
-      if (opts::PrintAll || opts::PrintSimplifyROLoads) {
-        Function.print(outs(),
-                       "after simplifying read-only section loads",
-                       true);
-      }
-      if (opts::DumpDotAll) {
-        Function.dumpGraphForPass("simplify-rodata-loads");
-      }
+    if (shouldOptimize(Function) && simplifyRODataLoads(BC, Function)) {
+      Modified.insert(&Function);
     }
   }
 
@@ -1180,7 +1074,7 @@ void IdenticalCodeFolding::discoverCallers(
   for (auto &I : BFs) {
     BinaryFunction &Caller = I.second;
 
-    if (!Caller.isSimple())
+    if (!shouldOptimize(Caller))
       continue;
 
     for (BinaryBasicBlock &BB : Caller) {
@@ -1281,7 +1175,6 @@ void IdenticalCodeFolding::runOnFunctions(
   std::map<uint64_t, BinaryFunction> &BFs,
   std::set<uint64_t> &
 ) {
-
   discoverCallers(BC, BFs);
 
   // This hash table is used to identify identical functions. It maps
@@ -1304,9 +1197,9 @@ void IdenticalCodeFolding::runOnFunctions(
   // to each other. Initialized with all simple functions.
   std::vector<BinaryFunction *> Cands;
   for (auto &I : BFs) {
-    BinaryFunction *BF = &I.second;
-    if (BF->isSimple())
-      Cands.emplace_back(BF);
+    auto &BF = I.second;
+    if (shouldOptimize(BF))
+      Cands.emplace_back(&BF);
   }
 
   // We repeat the icf pass until no new modifications happen.
@@ -1383,12 +1276,6 @@ void IdenticalCodeFolding::runOnFunctions(
          << "BOLT-INFO: Removing all identical functions could save "
          << format("%.2lf", (double) BytesSavedEstimate / 1024)
          << " KB of code space.\n";
-
-  if (opts::PrintAll || opts::PrintICF) {
-    for (auto &I : BFs) {
-      I.second.print(outs(), "after identical code folding", true);
-    }
-  }
 }
 
 } // namespace bolt

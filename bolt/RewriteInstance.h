@@ -342,19 +342,6 @@ private:
                                        uint64_t Address,
                                        uint64_t Size,
                                        bool IsSimple);
-
-  /// Return program-wide dynostats.
-  DynoStats getDynoStats() const {
-    DynoStats dynoStats;
-    for (auto &BFI : BinaryFunctions) {
-      auto &BF = BFI.second;
-      if (BF.isSimple()) {
-        dynoStats += BF.getDynoStats();
-      }
-    }
-    return dynoStats;
-  }
-
 };
 
 } // namespace bolt
