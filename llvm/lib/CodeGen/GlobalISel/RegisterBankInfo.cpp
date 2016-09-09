@@ -367,7 +367,8 @@ unsigned RegisterBankInfo::getSizeInBits(unsigned Reg,
     // get the size of that register class.
     RC = TRI.getMinimalPhysRegClass(Reg);
   } else {
-    unsigned RegSize = MRI.getSize(Reg);
+    LLT Ty = MRI.getType(Reg);
+    unsigned RegSize = Ty.isSized() ? Ty.getSizeInBits() : 0;
     // If Reg is not a generic register, query the register class to
     // get its size.
     if (RegSize)
@@ -566,7 +567,7 @@ void RegisterBankInfo::OperandsMapper::createVRegs(unsigned OpIdx) {
   for (unsigned &NewVReg : NewVRegsForOpIdx) {
     assert(PartMap != PartMapList.end() && "Out-of-bound access");
     assert(NewVReg == 0 && "Register has already been created");
-    NewVReg = MRI.createGenericVirtualRegister(PartMap->Length);
+    NewVReg = MRI.createGenericVirtualRegister(LLT::scalar(PartMap->Length));
     MRI.setRegBank(NewVReg, *PartMap->RegBank);
     ++PartMap;
   }

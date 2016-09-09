@@ -39,6 +39,8 @@ class MachineIRBuilder {
   MachineFunction *MF;
   /// Information used to access the description of the opcodes.
   const TargetInstrInfo *TII;
+  /// Information used to verify types are consistent.
+  const MachineRegisterInfo *MRI;
   /// Debug location to be set to any instruction we create.
   DebugLoc DL;
 
@@ -56,7 +58,7 @@ class MachineIRBuilder {
     return *TII;
   }
 
-  void validateTruncExt(ArrayRef<LLT> Tys, bool IsExtend);
+  void validateTruncExt(unsigned Dst, unsigned Src, bool IsExtend);
 
 public:
   /// Getter for the function we currently build.
@@ -111,17 +113,7 @@ public:
   /// \pre Ty == LLT{} or isPreISelGenericOpcode(Opcode)
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildInstr(unsigned Opcode, ArrayRef<LLT> Tys);
-
-  /// Build and insert <empty> = \p Opcode <empty>.
-  ///
-  /// \pre setBasicBlock or setMI must have been called.
-  /// \pre not isPreISelGenericOpcode(\p Opcode)
-  ///
-  /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildInstr(unsigned Opcode) {
-    return buildInstr(Opcode, ArrayRef<LLT>());
-  }
+  MachineInstrBuilder buildInstr(unsigned Opcode);
 
   /// Build and insert \p Res<def> = G_FRAME_INDEX \p Ty \p Idx
   ///
@@ -131,7 +123,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildFrameIndex(LLT Ty, unsigned Res, int Idx);
+  MachineInstrBuilder buildFrameIndex(unsigned Res, int Idx);
 
   /// Build and insert \p Res<def> = G_ADD \p Ty \p Op0, \p Op1
   ///
@@ -141,8 +133,8 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildAdd(LLT Ty, unsigned Res, unsigned Op0,
-                                unsigned Op1);
+  MachineInstrBuilder buildAdd(unsigned Res, unsigned Op0,
+                               unsigned Op1);
 
   /// Build and insert \p Res<def> = G_SUB \p Ty \p Op0, \p Op1
   ///
@@ -152,7 +144,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildSub(LLT Ty, unsigned Res, unsigned Op0,
+  MachineInstrBuilder buildSub(unsigned Res, unsigned Op0,
                                unsigned Op1);
 
   /// Build and insert \p Res<def> = G_MUL \p Ty \p Op0, \p Op1
@@ -163,7 +155,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildMul(LLT Ty, unsigned Res, unsigned Op0,
+  MachineInstrBuilder buildMul(unsigned Res, unsigned Op0,
                                unsigned Op1);
 
   /// Build and insert \p Res<def>, \p CarryOut = G_UADDE \p Tys \p Op0, \p Op1,
@@ -176,9 +168,8 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildUAdde(ArrayRef<LLT> Tys, unsigned Res,
-                                 unsigned CarryOut, unsigned Op0, unsigned Op1,
-                                 unsigned CarryIn);
+  MachineInstrBuilder buildUAdde(unsigned Res, unsigned CarryOut, unsigned Op0,
+                                 unsigned Op1, unsigned CarryIn);
 
   /// Build and insert \p Res<def> = G_TYPE \p Ty \p Op.
   ///
@@ -190,7 +181,7 @@ public:
   ///      register).
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildType(LLT Ty, unsigned Res, unsigned Op);
+  MachineInstrBuilder buildType(unsigned Res, unsigned Op);
 
   /// Build and insert \p Res<def> = G_ANYEXT \p { DstTy, SrcTy } \p Op0
   ///
@@ -202,7 +193,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildAnyExt(ArrayRef<LLT> Tys, unsigned Res, unsigned Op);
+  MachineInstrBuilder buildAnyExt(unsigned Res, unsigned Op);
 
   /// Build and insert \p Res<def> = G_SEXT \p { DstTy, SrcTy }\p Op
   ///
@@ -213,7 +204,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildSExt(ArrayRef<LLT> Tys, unsigned Res, unsigned Op);
+  MachineInstrBuilder buildSExt(unsigned Res, unsigned Op);
 
   /// Build and insert \p Res<def> = G_ZEXT \p { DstTy, SrcTy } \p Op
   ///
@@ -224,7 +215,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildZExt(ArrayRef<LLT> Tys, unsigned Res, unsigned Op);
+  MachineInstrBuilder buildZExt(unsigned Res, unsigned Op);
 
   /// Build and insert G_BR unsized \p Dest
   ///
@@ -245,7 +236,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildBrCond(LLT Ty, unsigned Tst, MachineBasicBlock &BB);
+  MachineInstrBuilder buildBrCond(unsigned Tst, MachineBasicBlock &BB);
 
   /// Build and insert \p Res = G_CONSTANT \p Ty \p Val
   ///
@@ -254,7 +245,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildConstant(LLT Ty, unsigned Res, int64_t Val);
+  MachineInstrBuilder buildConstant(unsigned Res, int64_t Val);
 
   /// Build and insert \p Res = G_FCONSTANT \p Ty \p Val
   ///
@@ -264,8 +255,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildFConstant(LLT Ty, unsigned Res,
-                                     const ConstantFP &Val);
+  MachineInstrBuilder buildFConstant(unsigned Res, const ConstantFP &Val);
 
   /// Build and insert \p Res<def> = COPY Op
   ///
@@ -284,7 +274,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildLoad(LLT VTy, LLT PTy, unsigned Res, unsigned Addr,
+  MachineInstrBuilder buildLoad(unsigned Res, unsigned Addr,
                                 MachineMemOperand &MMO);
 
   /// Build and insert `G_STORE { VTy, PTy } Val, Addr, MMO`.
@@ -295,7 +285,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildStore(LLT VTy, LLT PTy, unsigned Val, unsigned Addr,
+  MachineInstrBuilder buildStore(unsigned Val, unsigned Addr,
                                  MachineMemOperand &MMO);
 
   /// Build and insert `Res0<def>, ... = G_EXTRACT { ResTys, SrcTy } Src, Idx0,
@@ -308,10 +298,8 @@ public:
   /// \pre \p Indices must be in ascending order of bit position.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildExtract(ArrayRef<LLT> ResTys,
-                                   ArrayRef<unsigned> Results,
-                                   ArrayRef<uint64_t> Indices, LLT SrcTy,
-                                   unsigned Src);
+  MachineInstrBuilder buildExtract(ArrayRef<unsigned> Results,
+                                   ArrayRef<uint64_t> Indices, unsigned Src);
 
   /// Build and insert \p Res<def> = G_SEQUENCE \p { \pResTy, \p Op0Ty, ... }
   /// \p Op0, \p Idx0...
@@ -327,37 +315,34 @@ public:
   /// \pre \p Indices must be in ascending order of bit position.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildSequence(LLT ResTy, unsigned Res,
-                                    ArrayRef<LLT> OpTys,
+  MachineInstrBuilder buildSequence(unsigned Res,
                                     ArrayRef<unsigned> Ops,
                                     ArrayRef<unsigned> Indices);
 
   void addUsesWithIndices(MachineInstrBuilder MIB) {}
 
   template <typename... ArgTys>
-  void addUsesWithIndices(MachineInstrBuilder MIB, LLT Ty, unsigned Reg,
+  void addUsesWithIndices(MachineInstrBuilder MIB, unsigned Reg,
                           unsigned BitIndex, ArgTys... Args) {
     MIB.addUse(Reg).addImm(BitIndex);
-    MIB->setType(Ty, MIB->getNumTypes());
-
     addUsesWithIndices(MIB, Args...);
   }
 
   template <typename... ArgTys>
-  MachineInstrBuilder buildSequence(LLT Ty, unsigned Res, LLT OpTy, unsigned Op,
+  MachineInstrBuilder buildSequence(unsigned Res, unsigned Op,
                                     unsigned Index, ArgTys... Args) {
     MachineInstrBuilder MIB =
-        buildInstr(TargetOpcode::G_SEQUENCE, Ty).addDef(Res);
-    addUsesWithIndices(MIB, OpTy, Op, Index, Args...);
+        buildInstr(TargetOpcode::G_SEQUENCE).addDef(Res);
+    addUsesWithIndices(MIB, Op, Index, Args...);
     return MIB;
   }
 
   template <typename... ArgTys>
-  MachineInstrBuilder buildInsert(LLT Ty, unsigned Res, unsigned Src, LLT OpTy,
+  MachineInstrBuilder buildInsert(unsigned Res, unsigned Src,
                                   unsigned Op, unsigned Index, ArgTys... Args) {
     MachineInstrBuilder MIB =
-        buildInstr(TargetOpcode::G_INSERT, Ty).addDef(Res).addUse(Src);
-    addUsesWithIndices(MIB, OpTy, Op, Index, Args...);
+        buildInstr(TargetOpcode::G_INSERT).addDef(Res).addUse(Src);
+    addUsesWithIndices(MIB, Op, Index, Args...);
     return MIB;
   }
 
@@ -371,8 +356,8 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildIntrinsic(ArrayRef<LLT> Tys, Intrinsic::ID ID,
-                                     unsigned Res, bool HasSideEffects);
+  MachineInstrBuilder buildIntrinsic(Intrinsic::ID ID, unsigned Res,
+                                     bool HasSideEffects);
 
   /// Build and insert \p Res<def> = G_FPTRUNC \p { DstTy, SrcTy } \p Op
   ///
@@ -381,7 +366,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildFPTrunc(ArrayRef<LLT> Ty, unsigned Res, unsigned Op);
+  MachineInstrBuilder buildFPTrunc(unsigned Res, unsigned Op);
 
   /// Build and insert \p Res<def> = G_TRUNC \p { DstTy, SrcTy } \p Op
   ///
@@ -391,14 +376,14 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildTrunc(ArrayRef<LLT> Tys, unsigned Res, unsigned Op);
+  MachineInstrBuilder buildTrunc(unsigned Res, unsigned Op);
 
   /// Build and insert a G_ICMP
   ///
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildICmp(ArrayRef<LLT> Tys, CmpInst::Predicate Pred,
+  MachineInstrBuilder buildICmp(CmpInst::Predicate Pred,
                                 unsigned Res, unsigned Op0, unsigned Op1);
 
   /// Build and insert a G_FCMP
@@ -406,7 +391,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildFCmp(ArrayRef<LLT> Tys, CmpInst::Predicate Pred,
+  MachineInstrBuilder buildFCmp(CmpInst::Predicate Pred,
                                 unsigned Res, unsigned Op0, unsigned Op1);
 
   /// Build and insert a \p Res = G_SELECT { \p Ty, s1 } \p Tst, \p Op0, \p Op1
@@ -414,7 +399,7 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildSelect(LLT Ty, unsigned Res, unsigned Tst,
+  MachineInstrBuilder buildSelect(unsigned Res, unsigned Tst,
                                   unsigned Op0, unsigned Op1);
 };
 
