@@ -157,9 +157,9 @@ Error LLVMOutputStyle::dumpFileHeaders() {
   return Error::success();
 }
 
-Error LLVMOutputStyle::dumpStreamSummary() {
-  if (!opts::raw::DumpStreamSummary)
-    return Error::success();
+void LLVMOutputStyle::discoverStreamPurposes() {
+  if (!StreamPurposes.empty())
+    return;
 
   // It's OK if we fail to load some of these streams, we still attempt to print
   // what we can.
@@ -168,7 +168,6 @@ Error LLVMOutputStyle::dumpStreamSummary() {
   auto Ipi = File.getPDBIpiStream();
   auto Info = File.getPDBInfoStream();
 
-  ListScope L(P, "Streams");
   uint32_t StreamCount = File.getNumStreams();
   std::unordered_map<uint16_t, const ModuleInfoEx *> ModStreams;
   std::unordered_map<uint16_t, std::string> NamedStreams;
@@ -185,9 +184,8 @@ Error LLVMOutputStyle::dumpStreamSummary() {
     }
   }
 
+  StreamPurposes.resize(StreamCount);
   for (uint16_t StreamIdx = 0; StreamIdx < StreamCount; ++StreamIdx) {
-    std::string Label("Stream ");
-    Label += to_string(StreamIdx);
     std::string Value;
     if (StreamIdx == OldMSFDirectory)
       Value = "Old MSF Directory";
@@ -258,11 +256,7 @@ Error LLVMOutputStyle::dumpStreamSummary() {
         Value = "???";
       }
     }
-    Value = "[" + Value + "]";
-    Value =
-        Value + " (" + to_string(File.getStreamByteSize(StreamIdx)) + " bytes)";
-
-    P.printString(Label, Value);
+    StreamPurposes[StreamIdx] = Value;
   }
 
   // Consume errors from missing streams.
@@ -274,6 +268,27 @@ Error LLVMOutputStyle::dumpStreamSummary() {
     consumeError(Ipi.takeError());
   if (!Info)
     consumeError(Info.takeError());
+}
+
+Error LLVMOutputStyle::dumpStreamSummary() {
+  if (!opts::raw::DumpStreamSummary)
+    return Error::success();
+
+  discoverStreamPurposes();
+
+  uint32_t StreamCount = File.getNumStreams();
+
+  ListScope L(P, "Streams");
+  for (uint16_t StreamIdx = 0; StreamIdx < StreamCount; ++StreamIdx) {
+    std::string Label("Stream ");
+    Label += to_string(StreamIdx);
+
+    std::string Value = "[" + StreamPurposes[StreamIdx] + "] (";
+    Value += to_string(File.getStreamByteSize(StreamIdx));
+    Value += " bytes)";
+
+    P.printString(Label, Value);
+  }
 
   P.flush();
   return Error::success();
@@ -377,6 +392,8 @@ Error LLVMOutputStyle::dumpStreamBytes() {
   if (opts::raw::DumpStreamData.empty())
     return Error::success();
 
+  discoverStreamPurposes();
+
   DictScope D(P, "Stream Data");
   for (uint32_t SI : opts::raw::DumpStreamData) {
     if (SI >= File.getNumStreams())
@@ -386,15 +403,19 @@ Error LLVMOutputStyle::dumpStreamBytes() {
                                                     File.getMsfBuffer(), SI);
     if (!S)
       continue;
+    DictScope DD(P, "Stream");
+
+    P.printNumber("Index", SI);
+    P.printString("Type", StreamPurposes[SI]);
+    P.printNumber("Size", S->getLength());
+    auto Blocks = File.getMsfLayout().StreamMap[SI];
+    P.printList("Blocks", Blocks);
+
     StreamReader R(*S);
     ArrayRef<uint8_t> StreamData;
     if (auto EC = R.readBytes(StreamData, S->getLength()))
       return EC;
-    std::string Label;
-    llvm::raw_string_ostream Stream(Label);
-    Stream << "Stream " << SI;
-    Stream.flush();
-    P.printBinaryBlock(Label, StreamData);
+    P.printBinaryBlock("Data", StreamData);
   }
   return Error::success();
 }
