@@ -78,6 +78,7 @@ MachineInstrBuilder MachineIRBuilder::buildInstr(unsigned Opcode) {
 }
 
 MachineInstrBuilder MachineIRBuilder::buildFrameIndex(unsigned Res, int Idx) {
+  assert(MRI->getType(Res).isPointer() && "invalid operand type");
   return buildInstr(TargetOpcode::G_FRAME_INDEX)
       .addDef(Res)
       .addFrameIndex(Idx);
@@ -85,6 +86,11 @@ MachineInstrBuilder MachineIRBuilder::buildFrameIndex(unsigned Res, int Idx) {
 
 MachineInstrBuilder MachineIRBuilder::buildAdd(unsigned Res, unsigned Op0,
                                                unsigned Op1) {
+  assert((MRI->getType(Res).isScalar() || MRI->getType(Res).isVector()) &&
+         "invalid operand type");
+  assert(MRI->getType(Res) == MRI->getType(Op0) &&
+         MRI->getType(Res) == MRI->getType(Op1) && "type mismatch");
+
   return buildInstr(TargetOpcode::G_ADD)
       .addDef(Res)
       .addUse(Op0)
@@ -93,6 +99,11 @@ MachineInstrBuilder MachineIRBuilder::buildAdd(unsigned Res, unsigned Op0,
 
 MachineInstrBuilder MachineIRBuilder::buildSub(unsigned Res, unsigned Op0,
                                                unsigned Op1) {
+  assert((MRI->getType(Res).isScalar() || MRI->getType(Res).isVector()) &&
+         "invalid operand type");
+  assert(MRI->getType(Res) == MRI->getType(Op0) &&
+         MRI->getType(Res) == MRI->getType(Op1) && "type mismatch");
+
   return buildInstr(TargetOpcode::G_SUB)
       .addDef(Res)
       .addUse(Op0)
@@ -101,6 +112,11 @@ MachineInstrBuilder MachineIRBuilder::buildSub(unsigned Res, unsigned Op0,
 
 MachineInstrBuilder MachineIRBuilder::buildMul(unsigned Res, unsigned Op0,
                                                unsigned Op1) {
+  assert((MRI->getType(Res).isScalar() || MRI->getType(Res).isVector()) &&
+         "invalid operand type");
+  assert(MRI->getType(Res) == MRI->getType(Op0) &&
+         MRI->getType(Res) == MRI->getType(Op1) && "type mismatch");
+
   return buildInstr(TargetOpcode::G_MUL)
       .addDef(Res)
       .addUse(Op0)
@@ -116,21 +132,30 @@ MachineInstrBuilder MachineIRBuilder::buildCopy(unsigned Res, unsigned Op) {
 }
 
 MachineInstrBuilder MachineIRBuilder::buildConstant(unsigned Res, int64_t Val) {
+  assert(MRI->getType(Res).isScalar() && "invalid operand type");
+
   return buildInstr(TargetOpcode::G_CONSTANT).addDef(Res).addImm(Val);
 }
 
 MachineInstrBuilder MachineIRBuilder::buildFConstant(unsigned Res,
                                                      const ConstantFP &Val) {
+  assert(MRI->getType(Res).isScalar() && "invalid operand type");
+
   return buildInstr(TargetOpcode::G_FCONSTANT).addDef(Res).addFPImm(&Val);
 }
 
 MachineInstrBuilder MachineIRBuilder::buildBrCond(unsigned Tst,
                                                   MachineBasicBlock &Dest) {
+  assert(MRI->getType(Tst).isScalar() && "invalid operand type");
+
   return buildInstr(TargetOpcode::G_BRCOND).addUse(Tst).addMBB(&Dest);
 }
 
 MachineInstrBuilder MachineIRBuilder::buildLoad(unsigned Res, unsigned Addr,
                                                 MachineMemOperand &MMO) {
+  assert(MRI->getType(Res).isValid() && "invalid operand type");
+  assert(MRI->getType(Addr).isPointer() && "invalid operand type");
+
   return buildInstr(TargetOpcode::G_LOAD)
       .addDef(Res)
       .addUse(Addr)
@@ -139,6 +164,9 @@ MachineInstrBuilder MachineIRBuilder::buildLoad(unsigned Res, unsigned Addr,
 
 MachineInstrBuilder MachineIRBuilder::buildStore(unsigned Val, unsigned Addr,
                                                  MachineMemOperand &MMO) {
+  assert(MRI->getType(Val).isValid() && "invalid operand type");
+  assert(MRI->getType(Addr).isPointer() && "invalid operand type");
+
   return buildInstr(TargetOpcode::G_STORE)
       .addUse(Val)
       .addUse(Addr)
@@ -149,16 +177,18 @@ MachineInstrBuilder MachineIRBuilder::buildUAdde(unsigned Res,
                                                  unsigned CarryOut,
                                                  unsigned Op0, unsigned Op1,
                                                  unsigned CarryIn) {
+  assert(MRI->getType(Res).isScalar() && "invalid operand type");
+  assert(MRI->getType(Res) == MRI->getType(Op0) &&
+         MRI->getType(Res) == MRI->getType(Op1) && "type mismatch");
+  assert(MRI->getType(CarryOut).isScalar() && "invalid operand type");
+  assert(MRI->getType(CarryOut) == MRI->getType(CarryIn) && "type mismatch");
+
   return buildInstr(TargetOpcode::G_UADDE)
       .addDef(Res)
       .addDef(CarryOut)
       .addUse(Op0)
       .addUse(Op1)
       .addUse(CarryIn);
-}
-
-MachineInstrBuilder MachineIRBuilder::buildType(unsigned Res, unsigned Op) {
-  return buildInstr(TargetOpcode::G_TYPE).addDef(Res).addUse(Op);
 }
 
 MachineInstrBuilder MachineIRBuilder::buildAnyExt(unsigned Res, unsigned Op) {
@@ -179,10 +209,16 @@ MachineInstrBuilder MachineIRBuilder::buildZExt(unsigned Res, unsigned Op) {
 MachineInstrBuilder MachineIRBuilder::buildExtract(ArrayRef<unsigned> Results,
                                                    ArrayRef<uint64_t> Indices,
                                                    unsigned Src) {
+#ifndef NDEBUG
   assert(Results.size() == Indices.size() && "inconsistent number of regs");
   assert(!Results.empty() && "invalid trivial extract");
   assert(std::is_sorted(Indices.begin(), Indices.end()) &&
          "extract offsets must be in ascending order");
+
+  assert(MRI->getType(Src).isValid() && "invalid operand type");
+  for (auto Res : Results)
+    assert(MRI->getType(Res).isValid() && "invalid operand type");
+#endif
 
   auto MIB = BuildMI(getMF(), DL, getTII().get(TargetOpcode::G_EXTRACT));
   for (auto Res : Results)
@@ -204,10 +240,16 @@ MachineInstrBuilder
 MachineIRBuilder::buildSequence(unsigned Res,
                                 ArrayRef<unsigned> Ops,
                                 ArrayRef<unsigned> Indices) {
+#ifndef NDEBUG
   assert(Ops.size() == Indices.size() && "incompatible args");
   assert(!Ops.empty() && "invalid trivial sequence");
   assert(std::is_sorted(Indices.begin(), Indices.end()) &&
          "sequence offsets must be in ascending order");
+
+  assert(MRI->getType(Res).isValid() && "invalid operand type");
+  for (auto Op : Ops)
+    assert(MRI->getType(Op).isValid() && "invalid operand type");
+#endif
 
   MachineInstrBuilder MIB = buildInstr(TargetOpcode::G_SEQUENCE);
   MIB.addDef(Res);
@@ -243,6 +285,20 @@ MachineInstrBuilder MachineIRBuilder::buildFPTrunc(unsigned Res, unsigned Op) {
 MachineInstrBuilder MachineIRBuilder::buildICmp(CmpInst::Predicate Pred,
                                                 unsigned Res, unsigned Op0,
                                                 unsigned Op1) {
+#ifndef NDEBUG
+  assert((MRI->getType(Op0).isScalar() || MRI->getType(Op0).isVector()) &&
+         "invalid operand type");
+  assert(MRI->getType(Op0) == MRI->getType(Op0) && "type mismatch");
+  assert(CmpInst::isIntPredicate(Pred) && "invalid predicate");
+  if (MRI->getType(Op0).isScalar())
+    assert(MRI->getType(Res).isScalar() && "type mismatch");
+  else
+    assert(MRI->getType(Res).isVector() &&
+           MRI->getType(Res).getNumElements() ==
+               MRI->getType(Op0).getNumElements() &&
+           "type mismatch");
+#endif
+
   return buildInstr(TargetOpcode::G_ICMP)
       .addDef(Res)
       .addPredicate(Pred)
@@ -253,6 +309,20 @@ MachineInstrBuilder MachineIRBuilder::buildICmp(CmpInst::Predicate Pred,
 MachineInstrBuilder MachineIRBuilder::buildFCmp(CmpInst::Predicate Pred,
                                                 unsigned Res, unsigned Op0,
                                                 unsigned Op1) {
+#ifndef NDEBUG
+  assert((MRI->getType(Op0).isScalar() || MRI->getType(Op0).isVector()) &&
+         "invalid operand type");
+  assert(MRI->getType(Op0) == MRI->getType(Op1) && "type mismatch");
+  assert(CmpInst::isFPPredicate(Pred) && "invalid predicate");
+  if (MRI->getType(Op0).isScalar())
+    assert(MRI->getType(Res).isScalar() && "type mismatch");
+  else
+    assert(MRI->getType(Res).isVector() &&
+           MRI->getType(Res).getNumElements() ==
+               MRI->getType(Op0).getNumElements() &&
+           "type mismatch");
+#endif
+
   return buildInstr(TargetOpcode::G_FCMP)
       .addDef(Res)
       .addPredicate(Pred)
@@ -262,6 +332,20 @@ MachineInstrBuilder MachineIRBuilder::buildFCmp(CmpInst::Predicate Pred,
 
 MachineInstrBuilder MachineIRBuilder::buildSelect(unsigned Res, unsigned Tst,
                                                   unsigned Op0, unsigned Op1) {
+#ifndef NDEBUG
+  assert((MRI->getType(Res).isScalar() || MRI->getType(Res).isVector()) &&
+         "invalid operand type");
+  assert(MRI->getType(Res) == MRI->getType(Op0) &&
+         MRI->getType(Res) == MRI->getType(Op1) && "type mismatch");
+  if (MRI->getType(Res).isScalar())
+    assert(MRI->getType(Tst).isScalar() && "type mismatch");
+  else
+    assert(MRI->getType(Tst).isVector() &&
+           MRI->getType(Tst).getNumElements() ==
+               MRI->getType(Op0).getNumElements() &&
+           "type mismatch");
+#endif
+
   return buildInstr(TargetOpcode::G_SELECT)
       .addDef(Res)
       .addUse(Tst)
