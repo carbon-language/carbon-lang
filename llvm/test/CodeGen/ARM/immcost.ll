@@ -71,3 +71,20 @@ true:
 ret:
   ret void
 }
+
+; CHECK: Function: test_add_neg
+; CHECK-NOT: Collect constant i32 -5
+define void @test_add_neg(i1 %cond, i32 %arg, i32 %arg2) {
+entry:
+  %a = add i32 %arg, -5
+  call void @g(i32 %a)
+  br i1 %cond, label %true, label %ret
+
+true:
+  %b = add i32 %arg2, -5
+  call void @g(i32 %b)
+  br label %ret
+
+ret:
+  ret void
+}

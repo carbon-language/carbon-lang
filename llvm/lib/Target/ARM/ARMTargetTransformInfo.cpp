@@ -73,6 +73,10 @@ int ARMTTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
       // Conversion to BIC is free, and means we can use ~Imm instead.
       return std::min(getIntImmCost(Imm, Ty), getIntImmCost(~Imm, Ty));
 
+  if (Opcode == Instruction::Add)
+    // Conversion to SUB is free, and means we can use -Imm instead.
+    return std::min(getIntImmCost(Imm, Ty), getIntImmCost(-Imm, Ty));
+
   if (Opcode == Instruction::ICmp && Imm.isNegative() &&
       Ty->getIntegerBitWidth() == 32) {
     int64_t NegImm = -Imm.getSExtValue();
