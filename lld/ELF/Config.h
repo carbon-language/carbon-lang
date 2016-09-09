@@ -45,7 +45,6 @@ enum class UnresolvedPolicy { NoUndef, ReportError, Warn, Ignore };
 struct SymbolVersion {
   llvm::StringRef Name;
   bool IsExternCpp;
-  bool HasWildcards;
 };
 
 // This struct contains symbols version definition that
