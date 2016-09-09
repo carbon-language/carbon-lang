@@ -50,6 +50,8 @@
 #include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Raw/RawError.h"
 #include "llvm/DebugInfo/PDB/Raw/RawSession.h"
+#include "llvm/DebugInfo/PDB/Raw/TpiStream.h"
+#include "llvm/DebugInfo/PDB/Raw/TpiStreamBuilder.h"
 #include "llvm/Support/COM.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -306,7 +308,7 @@ static void yamlToPdb(StringRef Path) {
   std::unique_ptr<MemoryBuffer> &Buffer = ErrorOrBuffer.get();
 
   llvm::yaml::Input In(Buffer->getBuffer());
-  pdb::yaml::PdbObject YamlObj;
+  pdb::yaml::PdbObject YamlObj(Allocator);
   In >> YamlObj;
   if (!YamlObj.Headers.hasValue())
     ExitOnErr(make_error<GenericError>(generic_error_code::unspecified,
@@ -380,6 +382,13 @@ static void yamlToPdb(StringRef Path) {
       for (auto S : MI.SourceFiles)
         ExitOnErr(DbiBuilder.addModuleSourceFile(MI.Mod, S));
     }
+  }
+
+  if (YamlObj.TpiStream.hasValue()) {
+    auto &TpiBuilder = Builder.getTpiBuilder();
+    TpiBuilder.setVersionHeader(YamlObj.TpiStream->Version);
+    for (const auto &R : YamlObj.TpiStream->Records)
+      TpiBuilder.addTypeRecord(R.Record);
   }
 
   ExitOnErr(Builder.commit(*FileByteStream));

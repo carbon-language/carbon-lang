@@ -81,14 +81,17 @@ Error CVTypeVisitor::visitTypeRecord(const CVRecord<TypeLeafKind> &Record) {
   else
     return ExpectedKind.takeError();
 
+  CVType RecordCopy = Record;
+  RecordCopy.Type = Kind;
+
   switch (Kind) {
   default:
-    if (auto EC = Callbacks.visitUnknownType(Record))
+    if (auto EC = Callbacks.visitUnknownType(RecordCopy))
       return EC;
     break;
 #define TYPE_RECORD(EnumName, EnumVal, Name)                                   \
   case EnumName: {                                                             \
-    if (auto EC = visitKnownRecord<Name##Record>(Record, Callbacks))           \
+    if (auto EC = visitKnownRecord<Name##Record>(RecordCopy, Callbacks))       \
       return EC;                                                               \
     break;                                                                     \
   }
@@ -101,7 +104,7 @@ Error CVTypeVisitor::visitTypeRecord(const CVRecord<TypeLeafKind> &Record) {
 #include "llvm/DebugInfo/CodeView/TypeRecords.def"
   }
 
-  if (auto EC = Callbacks.visitTypeEnd(Record))
+  if (auto EC = Callbacks.visitTypeEnd(RecordCopy))
     return EC;
 
   return Error::success();
