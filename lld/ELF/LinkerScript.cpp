@@ -780,18 +780,12 @@ void ScriptParser::addFile(StringRef S) {
   }
 }
 
-static StringRef unquote(StringRef S) {
-  if (!S.startswith("\""))
-    return S;
-  return S.substr(1, S.size() - 2);
-}
-
 void ScriptParser::readAsNeeded() {
   expect("(");
   bool Orig = Config->AsNeeded;
   Config->AsNeeded = true;
   while (!Error && !skip(")"))
-    addFile(unquote(next()));
+    addFile(next());
   Config->AsNeeded = Orig;
 }
 
@@ -817,13 +811,13 @@ void ScriptParser::readGroup() {
     if (Tok == "AS_NEEDED")
       readAsNeeded();
     else
-      addFile(unquote(Tok));
+      addFile(Tok);
   }
 }
 
 void ScriptParser::readInclude() {
   StringRef Tok = next();
-  auto MBOrErr = MemoryBuffer::getFile(unquote(Tok));
+  auto MBOrErr = MemoryBuffer::getFile(Tok);
   if (!MBOrErr) {
     setError("cannot open " + Tok);
     return;
@@ -839,7 +833,7 @@ void ScriptParser::readOutput() {
   expect("(");
   StringRef Tok = next();
   if (Config->OutputFile.empty())
-    Config->OutputFile = unquote(Tok);
+    Config->OutputFile = Tok;
   expect(")");
 }
 
@@ -1010,7 +1004,7 @@ Expr ScriptParser::readAssert() {
   expect("(");
   Expr E = readExpr();
   expect(",");
-  StringRef Msg = unquote(next());
+  StringRef Msg = next();
   expect(")");
   return [=](uint64_t Dot) {
     uint64_t V = E(Dot);
@@ -1427,14 +1421,13 @@ void ScriptParser::readLocal() {
 }
 
 void ScriptParser::readExtern(std::vector<SymbolVersion> *Globals) {
-  expect("\"C++\"");
+  expect("C++");
   expect("{");
 
   for (;;) {
     if (peek() == "}" || Error)
       break;
-    bool HasWildcard = !peek().startswith("\"") && hasWildcard(peek());
-    Globals->push_back({unquote(next()), true, HasWildcard});
+    Globals->push_back({next(), true});
     expect(";");
   }
 
@@ -1457,7 +1450,7 @@ void ScriptParser::readGlobal(StringRef VerStr) {
     if (Cur == "}" || Cur == "local:" || Error)
       return;
     next();
-    Globals->push_back({unquote(Cur), false, hasWildcard(Cur)});
+    Globals->push_back({Cur, false});
     expect(";");
   }
 }
