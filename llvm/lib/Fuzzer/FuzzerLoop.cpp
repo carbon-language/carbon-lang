@@ -57,12 +57,6 @@ void Fuzzer::ResetEdgeCoverage() {
   EF->__sanitizer_reset_coverage();
 }
 
-void Fuzzer::ResetCounters() {
-  if (Options.UseCounters) {
-    EF->__sanitizer_update_counter_bitset_and_clear_counters(0);
-  }
-}
-
 void Fuzzer::PrepareCounters(Fuzzer::Coverage *C) {
   if (Options.UseCounters) {
     size_t NumCounters = EF->__sanitizer_get_number_of_counters();
@@ -432,8 +426,6 @@ bool Fuzzer::UpdateMaxCoverage() {
 bool Fuzzer::RunOne(const uint8_t *Data, size_t Size) {
   TotalNumberOfRuns++;
 
-  // TODO(aizatsky): this Reset call seems to be not needed.
-  ResetCounters();
   ExecuteCallback(Data, Size);
   bool Res = UpdateMaxCoverage();
 

@@ -486,7 +486,6 @@ private:
   void DeathCallback();
 
   void ResetEdgeCoverage();
-  void ResetCounters();
   void PrepareCounters(Fuzzer::Coverage *C);
   bool RecordMaxCoverage(Fuzzer::Coverage *C);
 
