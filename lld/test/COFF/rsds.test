@@ -18,7 +18,7 @@
 # CHECK:     PointerToRawData:
 # CHECK:     PDBInfo {
 # CHECK:       PDBSignature: 0x53445352
-# CHECK:       PDBGUID: (A9 01 F6 CD 45 C8 41 9F CC BC 17 55 E3 64 DF A2)
+# CHECK:       PDBGUID:
 # CHECK:       PDBAge: 1
 # CHECK:       PDBFileName: {{$}}
 # CHECK:     }
@@ -37,7 +37,7 @@
 # CHECK-PDB:     PointerToRawData:
 # CHECK-PDB:     PDBInfo {
 # CHECK-PDB:       PDBSignature: 0x53445352
-# CHECK-PDB:       PDBGUID: (9F 9F CC 10 A5 F3 90 C4 E2 48 F9 58 82 16 B3 20)
+# CHECK-PDB:       PDBGUID:
 # CHECK-PDB:       PDBAge: 1
 # CHECK-PDB:       PDBFileName: {{.*}}.pdb
 # CHECK-PDB:     }
