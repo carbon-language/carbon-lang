@@ -2159,8 +2159,9 @@ Instruction *InstCombiner::foldICmpAddConstant(ICmpInst &Cmp,
   return nullptr;
 }
 
-/// Try to fold integer comparisons with a constant operand: icmp Pred X, C.
-Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &Cmp) {
+/// Try to fold integer comparisons with a constant operand: icmp Pred X, C
+/// where X is some kind of instruction.
+Instruction *InstCombiner::foldICmpInstWithConstant(ICmpInst &Cmp) {
   const APInt *C;
   if (!match(Cmp.getOperand(1), m_APInt(C)))
     return nullptr;
@@ -2212,6 +2213,9 @@ Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &Cmp) {
     default:
       break;
     }
+    // TODO: These folds could be refactored to be part of the above calls.
+    if (Instruction *I = foldICmpBinOpEqualityWithConstant(Cmp, BO, C))
+      return I;
   }
 
   Instruction *LHSI;
@@ -2220,18 +2224,19 @@ Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &Cmp) {
     if (Instruction *I = foldICmpTruncConstant(Cmp, LHSI, C))
       return I;
 
+  if (Instruction *I = foldICmpIntrinsicWithConstant(Cmp, C))
+    return I;
+
   return nullptr;
 }
 
 /// Simplify icmp_eq and icmp_ne instructions with binary operator LHS and
-/// integer constant RHS.
-Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
-  BinaryOperator *BO;
-  const APInt *RHSV;
+/// integer scalar or splat vector constant RHS.
+Instruction *InstCombiner::foldICmpBinOpEqualityWithConstant(
+    ICmpInst &ICI, BinaryOperator *BO, const APInt *RHSV) {
   // FIXME: Some of these folds could work with arbitrary constants, but this
   // match is limited to scalars and vector splat constants.
-  if (!ICI.isEquality() || !match(ICI.getOperand(0), m_BinOp(BO)) ||
-      !match(ICI.getOperand(1), m_APInt(RHSV)))
+  if (!ICI.isEquality())
     return nullptr;
 
   Constant *RHS = cast<Constant>(ICI.getOperand(1));
@@ -2367,10 +2372,10 @@ Instruction *InstCombiner::foldICmpEqualityWithConstant(ICmpInst &ICI) {
   return nullptr;
 }
 
-Instruction *InstCombiner::foldICmpIntrinsicWithConstant(ICmpInst &ICI) {
+Instruction *InstCombiner::foldICmpIntrinsicWithConstant(ICmpInst &ICI,
+                                                         const APInt *Op1C) {
   IntrinsicInst *II = dyn_cast<IntrinsicInst>(ICI.getOperand(0));
-  const APInt *Op1C;
-  if (!II || !ICI.isEquality() || !match(ICI.getOperand(1), m_APInt(Op1C)))
+  if (!II || !ICI.isEquality())
     return nullptr;
 
   // Handle icmp {eq|ne} <intrinsic>, intcst.
@@ -3665,16 +3670,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           (SI->getOperand(2) == Op0 && SI->getOperand(1) == Op1))
         return nullptr;
 
-  // See if we are doing a comparison between a constant and an instruction that
-  // can be folded into the comparison.
-
-  if (Instruction *Res = foldICmpWithConstant(I))
-    return Res;
-
-  if (Instruction *Res = foldICmpEqualityWithConstant(I))
-    return Res;
-
-  if (Instruction *Res = foldICmpIntrinsicWithConstant(I))
+  if (Instruction *Res = foldICmpInstWithConstant(I))
     return Res;
 
   // Handle icmp with constant (but not simple integer constant) RHS
