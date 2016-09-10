@@ -1337,17 +1337,17 @@ def SI_INDIRECT_DST_V16 : SI_INDIRECT_DST<VReg_512>;
 } // End Uses = [EXEC], Defs = [M0, EXEC]
 
 multiclass SI_SPILL_SGPR <RegisterClass sgpr_class> {
-  let UseNamedOperandTable = 1, Uses = [EXEC] in {
+  let UseNamedOperandTable = 1, SGPRSpill = 1, Uses = [EXEC] in {
     def _SAVE : PseudoInstSI <
       (outs),
-      (ins sgpr_class:$src, i32imm:$frame_idx)> {
+      (ins sgpr_class:$data, i32imm:$addr)> {
       let mayStore = 1;
       let mayLoad = 0;
     }
 
     def _RESTORE : PseudoInstSI <
-      (outs sgpr_class:$dst),
-      (ins i32imm:$frame_idx)> {
+      (outs sgpr_class:$data),
+      (ins i32imm:$addr)> {
       let mayStore = 0;
       let mayLoad = 1;
     }
@@ -1369,7 +1369,7 @@ multiclass SI_SPILL_VGPR <RegisterClass vgpr_class> {
        SchedRW = [WriteVMEM] in {
     def _SAVE : VPseudoInstSI <
       (outs),
-      (ins vgpr_class:$src, i32imm:$frame_idx, SReg_128:$scratch_rsrc,
+      (ins vgpr_class:$vdata, i32imm:$vaddr, SReg_128:$scratch_rsrc,
            SReg_32:$scratch_offset, i32imm:$offset)> {
       let mayStore = 1;
       let mayLoad = 0;
@@ -1378,8 +1378,8 @@ multiclass SI_SPILL_VGPR <RegisterClass vgpr_class> {
     }
 
     def _RESTORE : VPseudoInstSI <
-      (outs vgpr_class:$dst),
-      (ins i32imm:$frame_idx, SReg_128:$scratch_rsrc, SReg_32:$scratch_offset,
+      (outs vgpr_class:$vdata),
+      (ins i32imm:$vaddr, SReg_128:$scratch_rsrc, SReg_32:$scratch_offset,
            i32imm:$offset)> {
       let mayStore = 0;
       let mayLoad = 1;
