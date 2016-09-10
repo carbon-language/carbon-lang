@@ -1365,7 +1365,8 @@ defm SI_SPILL_S256 : SI_SPILL_SGPR <SReg_256>;
 defm SI_SPILL_S512 : SI_SPILL_SGPR <SReg_512>;
 
 multiclass SI_SPILL_VGPR <RegisterClass vgpr_class> {
-  let UseNamedOperandTable = 1, VGPRSpill = 1 in {
+  let UseNamedOperandTable = 1, VGPRSpill = 1,
+       SchedRW = [WriteVMEM] in {
     def _SAVE : VPseudoInstSI <
       (outs),
       (ins vgpr_class:$src, i32imm:$frame_idx, SReg_128:$scratch_rsrc,
@@ -1386,7 +1387,7 @@ multiclass SI_SPILL_VGPR <RegisterClass vgpr_class> {
       // (2 * 4) + (8 * num_subregs) bytes maximum
       let Size = !add(!shl(!srl(vgpr_class.Size, 5), 3), 8);
     }
-  } // End UseNamedOperandTable = 1, VGPRSpill = 1
+  } // End UseNamedOperandTable = 1, VGPRSpill = 1, SchedRW = [WriteVMEM]
 }
 
 defm SI_SPILL_V32  : SI_SPILL_VGPR <VGPR_32>;
