@@ -1691,7 +1691,8 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool MinBranchClusters,
   if (Type == LT_REVERSE) {
     Algo.reset(new ReverseReorderAlgorithm());
   }
-  else if (BasicBlocksLayout.size() <= FUNC_SIZE_THRESHOLD) {
+  else if (BasicBlocksLayout.size() <= FUNC_SIZE_THRESHOLD &&
+           Type != LT_OPTIMIZE_SHUFFLE) {
     // Work on optimal solution if problem is small enough
     DEBUG(dbgs() << "finding optimal block layout for " << *this << "\n");
     Algo.reset(new OptimalReorderAlgorithm());
@@ -1716,6 +1717,10 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool MinBranchClusters,
 
     case LT_OPTIMIZE_CACHE:
       Algo.reset(new OptimizeCacheReorderAlgorithm(std::move(CAlgo)));
+      break;
+
+    case LT_OPTIMIZE_SHUFFLE:
+      Algo.reset(new RandomClusterReorderAlgorithm(std::move(CAlgo)));
       break;
 
     default:

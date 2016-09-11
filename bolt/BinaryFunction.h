@@ -173,6 +173,8 @@ public:
     /// LT_OPTIMIZE_CACHE piggybacks on the idea from Ispike paper (CGO '04)
     /// that suggests putting frequently executed chains first in the layout.
     LT_OPTIMIZE_CACHE,
+    /// Create clusters and use random order for them.
+    LT_OPTIMIZE_SHUFFLE,
   };
 
   static constexpr uint64_t COUNT_NO_PROFILE =

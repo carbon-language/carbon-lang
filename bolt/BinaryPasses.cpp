@@ -59,6 +59,9 @@ ReorderBlocks(
                           "cache",
                           "perform optimal layout prioritizing I-cache "
                           "behavior"),
+               clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE_SHUFFLE,
+                          "cluster-shuffle",
+                          "perform random layout of clusters"),
                clEnumValEnd),
     cl::ZeroOrMore);
 

@@ -29,6 +29,12 @@ namespace opts {
 static cl::opt<bool>
 PrintClusters("print-clusters", cl::desc("print clusters"), cl::ZeroOrMore);
 
+static cl::opt<uint32_t>
+RandomSeed("bolt-seed",
+           cl::desc("seed for randomization"),
+           cl::init(42),
+           cl::ZeroOrMore);
+
 } // namespace opts
 
 namespace {
@@ -617,12 +623,12 @@ void OptimizeCacheReorderAlgorithm::reorderBasicBlocks(
   for (uint32_t I = 0, E = Clusters.size(); I < E; ++I)
     if (!Clusters[I].empty())
       ClusterOrder.push_back(I);
-  auto Beg = ClusterOrder.begin();
   // Don't reorder the first cluster, which contains the function entry point
-  ++Beg;
-  std::stable_sort(Beg, ClusterOrder.end(), [&AvgFreq](uint32_t A, uint32_t B) {
-    return AvgFreq[A] > AvgFreq[B];
-  });
+  std::stable_sort(std::next(ClusterOrder.begin()),
+                   ClusterOrder.end(),
+                   [&AvgFreq](uint32_t A, uint32_t B) {
+                     return AvgFreq[A] > AvgFreq[B];
+                   });
 
   if (opts::PrintClusters) {
     errs() << "New cluster order: ";
@@ -653,3 +659,42 @@ void ReverseReorderAlgorithm::reorderBasicBlocks(
 }
 
 
+void RandomClusterReorderAlgorithm::reorderBasicBlocks(
+      const BinaryFunction &BF, BasicBlockOrder &Order) const {
+  if (BF.layout_empty())
+    return;
+
+  // Cluster basic blocks.
+  CAlgo->clusterBasicBlocks(BF);
+  std::vector<ClusterAlgorithm::ClusterTy> &Clusters = CAlgo->Clusters;
+
+  if (opts::PrintClusters)
+    CAlgo->printClusters();
+
+  // Cluster layout order
+  std::vector<uint32_t> ClusterOrder;
+
+  // Order clusters based on average instruction execution frequency
+  for (uint32_t I = 0, E = Clusters.size(); I < E; ++I)
+    if (!Clusters[I].empty())
+      ClusterOrder.push_back(I);
+
+  std::srand(opts::RandomSeed);
+  std::random_shuffle(std::next(ClusterOrder.begin()), ClusterOrder.end());
+
+  if (opts::PrintClusters) {
+    errs() << "New cluster order: ";
+    auto Sep = "";
+    for (auto O : ClusterOrder) {
+      errs() << Sep << O;
+      Sep = ", ";
+    }
+    errs() << '\n';
+  }
+
+  // Arrange basic blocks according to cluster order.
+  for (uint32_t ClusterIndex : ClusterOrder) {
+    ClusterAlgorithm::ClusterTy &Cluster = Clusters[ClusterIndex];
+    Order.insert(Order.end(),  Cluster.begin(), Cluster.end());
+  }
+}

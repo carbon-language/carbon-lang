@@ -63,7 +63,6 @@ public:
   virtual ~ClusterAlgorithm() {}
 };
 
-
 /// Base class for a greedy clustering algorithm that selects edges in order
 /// based on some heuristic and uses them to join basic blocks into clusters.
 class GreedyClusterAlgorithm : public ClusterAlgorithm {
@@ -252,6 +251,16 @@ public:
       const BinaryFunction &BF, BasicBlockOrder &Order) const override;
 };
 
+/// Create clusters as usual and place them in random order.
+class RandomClusterReorderAlgorithm : public ReorderAlgorithm {
+public:
+  explicit RandomClusterReorderAlgorithm(
+      std::unique_ptr<ClusterAlgorithm> CAlgo) :
+    ReorderAlgorithm(std::move(CAlgo)) { }
+
+  void reorderBasicBlocks(
+      const BinaryFunction &BF, BasicBlockOrder &Order) const override;
+};
 
 } // namespace bolt
 } // namespace llvm
