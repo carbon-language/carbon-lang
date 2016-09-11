@@ -2,6 +2,8 @@
 ; RUN: -disable-output < %s | \
 ; RUN: FileCheck -check-prefix=CODE %s
 
+; REQUIRES: pollyacc
+
 ; CODE: Code
 ; CODE-NEXT: ====
 ; CODE-NEXT: # host
