@@ -5621,7 +5621,9 @@ static bool expandMOV32r1(MachineInstrBuilder &MIB, const TargetInstrInfo &TII,
   return true;
 }
 
-bool X86InstrInfo::ExpandMOVImmSExti8(MachineInstrBuilder &MIB) const {
+static bool ExpandMOVImmSExti8(MachineInstrBuilder &MIB,
+                               const TargetInstrInfo &TII,
+                               const X86Subtarget &Subtarget) {
   MachineBasicBlock &MBB = *MIB->getParent();
   DebugLoc DL = MIB->getDebugLoc();
   int64_t Imm = MIB->getOperand(1).getImm();
@@ -5638,23 +5640,23 @@ bool X86InstrInfo::ExpandMOVImmSExti8(MachineInstrBuilder &MIB) const {
     X86MachineFunctionInfo *X86FI =
         MBB.getParent()->getInfo<X86MachineFunctionInfo>();
     if (X86FI->getUsesRedZone()) {
-      MIB->setDesc(get(MIB->getOpcode() == X86::MOV32ImmSExti8 ? X86::MOV32ri
-                                                               : X86::MOV64ri));
+      MIB->setDesc(TII.get(MIB->getOpcode() ==
+                           X86::MOV32ImmSExti8 ? X86::MOV32ri : X86::MOV64ri));
       return true;
     }
 
     // 64-bit mode doesn't have 32-bit push/pop, so use 64-bit operations and
     // widen the register if necessary.
     StackAdjustment = 8;
-    BuildMI(MBB, I, DL, get(X86::PUSH64i8)).addImm(Imm);
-    MIB->setDesc(get(X86::POP64r));
+    BuildMI(MBB, I, DL, TII.get(X86::PUSH64i8)).addImm(Imm);
+    MIB->setDesc(TII.get(X86::POP64r));
     MIB->getOperand(0)
         .setReg(getX86SubSuperRegister(MIB->getOperand(0).getReg(), 64));
   } else {
     assert(MIB->getOpcode() == X86::MOV32ImmSExti8);
     StackAdjustment = 4;
-    BuildMI(MBB, I, DL, get(X86::PUSH32i8)).addImm(Imm);
-    MIB->setDesc(get(X86::POP32r));
+    BuildMI(MBB, I, DL, TII.get(X86::PUSH32i8)).addImm(Imm);
+    MIB->setDesc(TII.get(X86::POP32r));
   }
 
   // Build CFI if necessary.
@@ -5711,7 +5713,7 @@ bool X86InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     return expandMOV32r1(MIB, *this, /*MinusOne=*/ true);
   case X86::MOV32ImmSExti8:
   case X86::MOV64ImmSExti8:
-    return ExpandMOVImmSExti8(MIB);
+    return ExpandMOVImmSExti8(MIB, *this, Subtarget);
   case X86::SETB_C8r:
     return Expand2AddrUndef(MIB, get(X86::SBB8rr));
   case X86::SETB_C16r:
