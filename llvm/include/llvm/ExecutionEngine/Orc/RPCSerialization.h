@@ -19,8 +19,63 @@ namespace llvm {
 namespace orc {
 namespace remote {
 
+/// The SerializationTraits<ChannelT, T> class describes how to serialize and
+/// deserialize an instance of type T to/from an abstract channel of type
+/// ChannelT. It also provides a representation of the type's name via the
+/// getName method.
+///
+/// Specializations of this class should provide the following functions:
+///
+///   @code{.cpp}
+///
+///   static const char* getName();
+///   static Error serialize(ChannelT&, const T&);
+///   static Error deserialize(ChannelT&, T&);
+///
+///   @endcode
+///
+/// The third argument of SerializationTraits is intended to support SFINAE.
+/// E.g.:
+///
+///   @code{.cpp}
+///
+///   class MyVirtualChannel { ... };
+///
+///   template <DerivedChannelT>
+///   class SerializationTraits<DerivedChannelT, bool,
+///         typename std::enable_if<
+///           std::is_base_of<VirtChannel, DerivedChannel>::value
+///         >::type> {
+///   public:
+///     static const char* getName() { ... };
+///   }
+///
+///   @endcode
 template <typename ChannelT, typename T, typename = void>
 class SerializationTraits {};
+
+/// TypeNameSequence is a utility for rendering sequences of types to a string
+/// by rendering each type, separated by ", ".
+template <typename ChannelT, typename... ArgTs>
+class TypeNameSequence {};
+
+/// Render a TypeNameSequence of a single type to an ostream.
+template <typename OStream, typename ChannelT, typename ArgT>
+OStream& operator<<(OStream &OS, const TypeNameSequence<ChannelT, ArgT> &V) {
+  OS << SerializationTraits<ChannelT, ArgT>::getName();
+  return OS;
+}
+
+/// Render a TypeNameSequence of more than one type to an ostream.
+template <typename OStream, typename ChannelT, typename ArgT1,
+          typename ArgT2, typename... ArgTs>
+OStream&
+operator<<(OStream &OS,
+           const TypeNameSequence<ChannelT, ArgT1, ArgT2, ArgTs...> &V) {
+  OS << SerializationTraits<ChannelT, ArgT1>::getName() << ", "
+     << TypeNameSequence<ChannelT, ArgT2, ArgTs...>();
+  return OS;
+}
 
 /// RPC channel serialization for a variadic list of arguments.
 template <typename ChannelT, typename T, typename... Ts>
@@ -46,26 +101,7 @@ Error deserializeSeq(ChannelT &C, T &Arg, Ts &... Args) {
 template <typename ChannelT>
 Error deserializeSeq(ChannelT &C) { return Error::success(); }
 
-template <typename ChannelT, typename... ArgTs>
-class TypeNameSequence {};
-
-template <typename OStream, typename ChannelT, typename ArgT>
-OStream& operator<<(OStream &OS, const TypeNameSequence<ChannelT, ArgT> &V) {
-  OS << SerializationTraits<ChannelT, ArgT>::getName();
-  return OS;
-}
-
-template <typename OStream, typename ChannelT, typename ArgT1,
-          typename ArgT2, typename... ArgTs>
-OStream&
-operator<<(OStream &OS,
-           const TypeNameSequence<ChannelT, ArgT1, ArgT2, ArgTs...> &V) {
-  OS << SerializationTraits<ChannelT, ArgT1>::getName() << ", "
-     << TypeNameSequence<ChannelT, ArgT2, ArgTs...>();
-  return OS;
-}
-
-/// Serialization for pairs.
+/// SerializationTraits default specialization for std::pair.
 template <typename ChannelT, typename T1, typename T2>
 class SerializationTraits<ChannelT, std::pair<T1, T2>> {
 public:
@@ -98,7 +134,7 @@ std::mutex SerializationTraits<ChannelT, std::pair<T1, T2>>::NameMutex;
 template <typename ChannelT, typename T1, typename T2>
 std::string SerializationTraits<ChannelT, std::pair<T1, T2>>::Name;
 
-/// Serialization for tuples.
+/// SerializationTraits default specialization for std::tuple.
 template <typename ChannelT, typename... ArgTs>
 class SerializationTraits<ChannelT, std::tuple<ArgTs...>> {
 public:
@@ -150,6 +186,7 @@ std::mutex SerializationTraits<ChannelT, std::tuple<ArgTs...>>::NameMutex;
 template <typename ChannelT, typename... ArgTs>
 std::string SerializationTraits<ChannelT, std::tuple<ArgTs...>>::Name;
 
+/// SerializationTraits default specialization for std::vector.
 template <typename ChannelT, typename T>
 class SerializationTraits<ChannelT, std::vector<T>> {
 public:
