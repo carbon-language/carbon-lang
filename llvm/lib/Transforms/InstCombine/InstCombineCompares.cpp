@@ -3140,6 +3140,7 @@ bool InstCombiner::replacedSelectWithOperand(SelectInst *SI,
 Instruction *InstCombiner::foldICmpUsingKnownBits(ICmpInst &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
   Type *Ty = Op0->getType();
+  ICmpInst::Predicate Pred = I.getPredicate();
 
   // Get scalar or pointer size.
   unsigned BitWidth = Ty->isIntOrIntVectorTy()
@@ -3154,7 +3155,7 @@ Instruction *InstCombiner::foldICmpUsingKnownBits(ICmpInst &I) {
   bool IsSignBit = false;
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
     bool UnusedBit;
-    IsSignBit = isSignBitCheck(I.getPredicate(), CI->getValue(), UnusedBit);
+    IsSignBit = isSignBitCheck(Pred, CI->getValue(), UnusedBit);
   }
 
   APInt Op0KnownZero(BitWidth, 0), Op0KnownOne(BitWidth, 0);
@@ -3187,27 +3188,25 @@ Instruction *InstCombiner::foldICmpUsingKnownBits(ICmpInst &I) {
   }
 
   // If Min and Max are known to be the same, then SimplifyDemandedBits
-  // figured out that the LHS is a constant.  Just constant fold this now so
-  // that code below can assume that Min != Max.
+  // figured out that the LHS is a constant. Constant fold this now, so that
+  // code below can assume that Min != Max.
   if (!isa<Constant>(Op0) && Op0Min == Op0Max)
-    return new ICmpInst(I.getPredicate(),
-                        ConstantInt::get(Op0->getType(), Op0Min), Op1);
+    return new ICmpInst(Pred, ConstantInt::get(Op0->getType(), Op0Min), Op1);
   if (!isa<Constant>(Op1) && Op1Min == Op1Max)
-    return new ICmpInst(I.getPredicate(), Op0,
-                        ConstantInt::get(Op1->getType(), Op1Min));
+    return new ICmpInst(Pred, Op0, ConstantInt::get(Op1->getType(), Op1Min));
 
   // Based on the range information we know about the LHS, see if we can
   // simplify this comparison.  For example, (x&4) < 8 is always true.
-  switch (I.getPredicate()) {
+  switch (Pred) {
   default:
     llvm_unreachable("Unknown icmp opcode!");
   case ICmpInst::ICMP_EQ: {
     if (Op0Max.ult(Op1Min) || Op0Min.ugt(Op1Max))
       return replaceInstUsesWith(I, ConstantInt::getFalse(I.getType()));
 
-    // If all bits are known zero except for one, then we know at most one
-    // bit is set.   If the comparison is against zero, then this is a check
-    // to see if *that* bit is set.
+    // If all bits are known zero except for one, then we know at most one bit
+    // is set. If the comparison is against zero, then this is a check to see if
+    // *that* bit is set.
     APInt Op0KnownZeroInverted = ~Op0KnownZero;
     if (~Op1KnownZero == 0) {
       // If the LHS is an AND with the same constant, look through it.
@@ -3249,9 +3248,9 @@ Instruction *InstCombiner::foldICmpUsingKnownBits(ICmpInst &I) {
     if (Op0Max.ult(Op1Min) || Op0Min.ugt(Op1Max))
       return replaceInstUsesWith(I, ConstantInt::getTrue(I.getType()));
 
-    // If all bits are known zero except for one, then we know at most one
-    // bit is set.   If the comparison is against zero, then this is a check
-    // to see if *that* bit is set.
+    // If all bits are known zero except for one, then we know at most one bit
+    // is set. If the comparison is against zero, then this is a check to see if
+    // *that* bit is set.
     APInt Op0KnownZeroInverted = ~Op0KnownZero;
     if (~Op1KnownZero == 0) {
       // If the LHS is an AND with the same constant, look through it.
