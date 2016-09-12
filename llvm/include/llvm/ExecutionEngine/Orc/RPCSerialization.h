@@ -12,6 +12,7 @@
 
 #include "OrcError.h"
 #include <sstream>
+#include <thread>
 
 namespace llvm {
 namespace orc {
