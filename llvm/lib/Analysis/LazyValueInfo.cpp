@@ -386,7 +386,6 @@ namespace {
   /// This is the cache kept by LazyValueInfo which
   /// maintains information about queries across the clients' queries.
   class LazyValueInfoCache {
-  protected:
     /// This is all of the cached block information for exactly one Value*.
     /// The entries are sorted by the BasicBlock* of the
     /// entries, allowing us to do a lookup with a binary search.
@@ -412,6 +411,7 @@ namespace {
     /// don't spend time removing unused blocks from our caches.
     DenseSet<AssertingVH<BasicBlock> > SeenBlocks;
 
+  public:
     void insertResult(Value *Val, BasicBlock *BB, const LVILatticeVal &Result) {
       SeenBlocks.insert(BB);
 
@@ -439,7 +439,7 @@ namespace {
       return ODI->second.count(V);
     }
 
-    bool hasCachedValueInfo(Value *V, BasicBlock *BB) {
+    bool hasCachedValueInfo(Value *V, BasicBlock *BB) const {
       if (isOverdefined(V, BB))
         return true;
 
@@ -450,7 +450,7 @@ namespace {
       return I->second->BlockVals.count(BB);
     }
 
-    LVILatticeVal getCachedValueInfo(Value *V, BasicBlock *BB) {
+    LVILatticeVal getCachedValueInfo(Value *V, BasicBlock *BB) const {
       if (isOverdefined(V, BB))
         return LVILatticeVal::getOverdefined();
 
@@ -463,7 +463,6 @@ namespace {
       return BBI->second;
     }
 
-  public:
     /// clear - Empty the cache.
     void clear() {
       SeenBlocks.clear();
@@ -477,6 +476,11 @@ namespace {
     /// This is part of the update interface to inform the cache
     /// that a block has been deleted.
     void eraseBlock(BasicBlock *BB);
+
+    /// Updates the cache to remove any influence an overdefined value in
+    /// OldSucc might have (unless also overdefined in NewSucc).  This just
+    /// flushes elements from the cache and does not add any.
+    void threadEdgeImpl(BasicBlock *OldSucc,BasicBlock *NewSucc);
 
     friend struct LVIValueHandle;
   };
@@ -518,11 +522,70 @@ void LazyValueInfoCache::eraseBlock(BasicBlock *BB) {
     I.second->BlockVals.erase(BB);
 }
 
+void LazyValueInfoCache::threadEdgeImpl(BasicBlock *OldSucc,
+                                        BasicBlock *NewSucc) {
+  // When an edge in the graph has been threaded, values that we could not
+  // determine a value for before (i.e. were marked overdefined) may be
+  // possible to solve now. We do NOT try to proactively update these values.
+  // Instead, we clear their entries from the cache, and allow lazy updating to
+  // recompute them when needed.
+
+  // The updating process is fairly simple: we need to drop cached info
+  // for all values that were marked overdefined in OldSucc, and for those same
+  // values in any successor of OldSucc (except NewSucc) in which they were
+  // also marked overdefined.
+  std::vector<BasicBlock*> worklist;
+  worklist.push_back(OldSucc);
+
+  auto I = OverDefinedCache.find(OldSucc);
+  if (I == OverDefinedCache.end())
+    return; // Nothing to process here.
+  SmallVector<Value *, 4> ValsToClear(I->second.begin(), I->second.end());
+
+  // Use a worklist to perform a depth-first search of OldSucc's successors.
+  // NOTE: We do not need a visited list since any blocks we have already
+  // visited will have had their overdefined markers cleared already, and we
+  // thus won't loop to their successors.
+  while (!worklist.empty()) {
+    BasicBlock *ToUpdate = worklist.back();
+    worklist.pop_back();
+
+    // Skip blocks only accessible through NewSucc.
+    if (ToUpdate == NewSucc) continue;
+
+    bool changed = false;
+    for (Value *V : ValsToClear) {
+      // If a value was marked overdefined in OldSucc, and is here too...
+      auto OI = OverDefinedCache.find(ToUpdate);
+      if (OI == OverDefinedCache.end())
+        continue;
+      SmallPtrSetImpl<Value *> &ValueSet = OI->second;
+      if (!ValueSet.count(V))
+        continue;
+
+      ValueSet.erase(V);
+      if (ValueSet.empty())
+        OverDefinedCache.erase(OI);
+
+      // If we removed anything, then we potentially need to update
+      // blocks successors too.
+      changed = true;
+    }
+
+    if (!changed) continue;
+
+    worklist.insert(worklist.end(), succ_begin(ToUpdate), succ_end(ToUpdate));
+  }
+}
+
 namespace {
   // The actual implementation of the lazy analysis and update.  Note that the
   // inheritance from LazyValueInfoCache is intended to be temporary while
   // splitting the code and then transitioning to a has-a relationship.
-  class LazyValueInfoImpl : public LazyValueInfoCache {
+  class LazyValueInfoImpl {
+
+    /// Cached results from previous queries
+    LazyValueInfoCache TheCache;
 
     /// This stack holds the state of the value solver during a query.
     /// It basically emulates the callstack of the naive
@@ -587,6 +650,17 @@ namespace {
     LVILatticeVal getValueOnEdge(Value *V, BasicBlock *FromBB,BasicBlock *ToBB,
                                  Instruction *CxtI = nullptr);
 
+    /// Complete flush all previously computed values
+    void clear() {
+      TheCache.clear();
+    }
+
+    /// This is part of the update interface to inform the cache
+    /// that a block has been deleted.
+    void eraseBlock(BasicBlock *BB) {
+      TheCache.eraseBlock(BB);
+    }
+
     /// This is the update interface to inform the cache that an edge from
     /// PredBB to OldSucc has been threaded to be from PredBB to NewSucc.
     void threadEdge(BasicBlock *PredBB,BasicBlock *OldSucc,BasicBlock *NewSucc);
@@ -605,11 +679,11 @@ void LazyValueInfoImpl::solve() {
     if (solveBlockValue(e.second, e.first)) {
       // The work item was completely processed.
       assert(BlockValueStack.top() == e && "Nothing should have been pushed!");
-      assert(hasCachedValueInfo(e.second, e.first) &&
+      assert(TheCache.hasCachedValueInfo(e.second, e.first) &&
              "Result should be in cache!");
 
       DEBUG(dbgs() << "POP " << *e.second << " in " << e.first->getName()
-                   << " = " << getCachedValueInfo(e.second, e.first) << "\n");
+                   << " = " << TheCache.getCachedValueInfo(e.second, e.first) << "\n");
 
       BlockValueStack.pop();
       BlockValueSet.erase(e);
@@ -625,7 +699,7 @@ bool LazyValueInfoImpl::hasBlockValue(Value *Val, BasicBlock *BB) {
   if (isa<Constant>(Val))
     return true;
 
-  return hasCachedValueInfo(Val, BB);
+  return TheCache.hasCachedValueInfo(Val, BB);
 }
 
 LVILatticeVal LazyValueInfoImpl::getBlockValue(Value *Val, BasicBlock *BB) {
@@ -633,8 +707,7 @@ LVILatticeVal LazyValueInfoImpl::getBlockValue(Value *Val, BasicBlock *BB) {
   if (Constant *VC = dyn_cast<Constant>(Val))
     return LVILatticeVal::get(VC);
 
-  SeenBlocks.insert(BB);
-  return getCachedValueInfo(Val, BB);
+  return TheCache.getCachedValueInfo(Val, BB);
 }
 
 static LVILatticeVal getFromRangeMetadata(Instruction *BBI) {
@@ -657,10 +730,10 @@ bool LazyValueInfoImpl::solveBlockValue(Value *Val, BasicBlock *BB) {
   if (isa<Constant>(Val))
     return true;
 
-  if (hasCachedValueInfo(Val, BB)) {
+  if (TheCache.hasCachedValueInfo(Val, BB)) {
     // If we have a cached value, use that.
     DEBUG(dbgs() << "  reuse BB '" << BB->getName()
-                 << "' val=" << getCachedValueInfo(Val, BB) << '\n');
+                 << "' val=" << TheCache.getCachedValueInfo(Val, BB) << '\n');
 
     // Since we're reusing a cached value, we don't need to update the
     // OverDefinedCache. The cache will have been properly updated whenever the
@@ -676,21 +749,21 @@ bool LazyValueInfoImpl::solveBlockValue(Value *Val, BasicBlock *BB) {
   if (!BBI || BBI->getParent() != BB) {
     if (!solveBlockValueNonLocal(Res, Val, BB))
       return false;
-   insertResult(Val, BB, Res);
+   TheCache.insertResult(Val, BB, Res);
    return true;
   }
 
   if (PHINode *PN = dyn_cast<PHINode>(BBI)) {
     if (!solveBlockValuePHINode(Res, PN, BB))
       return false;
-    insertResult(Val, BB, Res);
+    TheCache.insertResult(Val, BB, Res);
     return true;
   }
 
   if (auto *SI = dyn_cast<SelectInst>(BBI)) {
     if (!solveBlockValueSelect(Res, SI, BB))
       return false;
-    insertResult(Val, BB, Res);
+    TheCache.insertResult(Val, BB, Res);
     return true;
   }
 
@@ -706,21 +779,21 @@ bool LazyValueInfoImpl::solveBlockValue(Value *Val, BasicBlock *BB) {
   PointerType *PT = dyn_cast<PointerType>(BBI->getType());
   if (PT && isKnownNonNull(BBI)) {
     Res = LVILatticeVal::getNot(ConstantPointerNull::get(PT));
-    insertResult(Val, BB, Res);
+    TheCache.insertResult(Val, BB, Res);
     return true;
   }
   if (BBI->getType()->isIntegerTy()) {
     if (isa<CastInst>(BBI)) {
       if (!solveBlockValueCast(Res, BBI, BB))
         return false;
-      insertResult(Val, BB, Res);
+      TheCache.insertResult(Val, BB, Res);
       return true;
     }
     BinaryOperator *BO = dyn_cast<BinaryOperator>(BBI);
     if (BO && isa<ConstantInt>(BO->getOperand(1))) {
       if (!solveBlockValueBinaryOp(Res, BBI, BB))
         return false;
-      insertResult(Val, BB, Res);
+      TheCache.insertResult(Val, BB, Res);
       return true;
     }
   }
@@ -728,7 +801,7 @@ bool LazyValueInfoImpl::solveBlockValue(Value *Val, BasicBlock *BB) {
   DEBUG(dbgs() << " compute BB '" << BB->getName()
                  << "' - unknown inst def found.\n");
   Res = getFromRangeMetadata(BBI);
-  insertResult(Val, BB, Res);
+  TheCache.insertResult(Val, BB, Res);
   return true;
 }
 
@@ -1465,59 +1538,8 @@ getValueOnEdge(Value *V, BasicBlock *FromBB, BasicBlock *ToBB,
 }
 
 void LazyValueInfoImpl::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
-                                    BasicBlock *NewSucc) {
-  // When an edge in the graph has been threaded, values that we could not
-  // determine a value for before (i.e. were marked overdefined) may be
-  // possible to solve now. We do NOT try to proactively update these values.
-  // Instead, we clear their entries from the cache, and allow lazy updating to
-  // recompute them when needed.
-
-  // The updating process is fairly simple: we need to drop cached info
-  // for all values that were marked overdefined in OldSucc, and for those same
-  // values in any successor of OldSucc (except NewSucc) in which they were
-  // also marked overdefined.
-  std::vector<BasicBlock*> worklist;
-  worklist.push_back(OldSucc);
-
-  auto I = OverDefinedCache.find(OldSucc);
-  if (I == OverDefinedCache.end())
-    return; // Nothing to process here.
-  SmallVector<Value *, 4> ValsToClear(I->second.begin(), I->second.end());
-
-  // Use a worklist to perform a depth-first search of OldSucc's successors.
-  // NOTE: We do not need a visited list since any blocks we have already
-  // visited will have had their overdefined markers cleared already, and we
-  // thus won't loop to their successors.
-  while (!worklist.empty()) {
-    BasicBlock *ToUpdate = worklist.back();
-    worklist.pop_back();
-
-    // Skip blocks only accessible through NewSucc.
-    if (ToUpdate == NewSucc) continue;
-
-    bool changed = false;
-    for (Value *V : ValsToClear) {
-      // If a value was marked overdefined in OldSucc, and is here too...
-      auto OI = OverDefinedCache.find(ToUpdate);
-      if (OI == OverDefinedCache.end())
-        continue;
-      SmallPtrSetImpl<Value *> &ValueSet = OI->second;
-      if (!ValueSet.count(V))
-        continue;
-
-      ValueSet.erase(V);
-      if (ValueSet.empty())
-        OverDefinedCache.erase(OI);
-
-      // If we removed anything, then we potentially need to update
-      // blocks successors too.
-      changed = true;
-    }
-
-    if (!changed) continue;
-
-    worklist.insert(worklist.end(), succ_begin(ToUpdate), succ_end(ToUpdate));
-  }
+                                   BasicBlock *NewSucc) {
+  TheCache.threadEdgeImpl(OldSucc, NewSucc);
 }
 
 //===----------------------------------------------------------------------===//
