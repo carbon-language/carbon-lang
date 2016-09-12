@@ -66,7 +66,7 @@ body:             |
     TCRETURNdi64 @f1, 0, csr_64, implicit %rsp, implicit %rdi, implicit %rsi
 
   ; CHECK: bb.2:
-  ; CHECK-NEXT: liveins: %rax, %rsi, %rdi, %rsi
+  ; CHECK-NEXT: liveins: %rax, %rdi, %rsi
   ; CHECK-NEXT: {{^  $}}
   ; CHECK-NEXT: TCRETURNdi64 @f2, 0, csr_64, implicit %rsp, implicit %rdi, implicit %rsi
 
