@@ -472,6 +472,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     }
 
     const auto RIPRegister = BC.MRI->getProgramCounter();
+    auto PtrSize = BC.AsmInfo->getPointerSize();
 
     // Analyze contents of the memory if possible.
     unsigned  BaseRegNum;
@@ -485,8 +486,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       return IndirectBranchType::UNKNOWN;
 
     if ((BaseRegNum != bolt::NoRegister && BaseRegNum != RIPRegister) ||
-        SegRegNum != bolt::NoRegister ||
-        ScaleValue != BC.AsmInfo->getPointerSize())
+        SegRegNum != bolt::NoRegister || ScaleValue != PtrSize)
       return IndirectBranchType::UNKNOWN;
 
     auto ArrayStart = DispValue;
@@ -513,20 +513,35 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     // Extract the value at the start of the array.
     StringRef SectionContents;
     Section.getContents(SectionContents);
-    DataExtractor DE(SectionContents,
-                     BC.AsmInfo->isLittleEndian(),
-                     BC.AsmInfo->getPointerSize());
+    DataExtractor DE(SectionContents, BC.AsmInfo->isLittleEndian(), PtrSize);
     auto ValueOffset = static_cast<uint32_t>(ArrayStart - Section.getAddress());
-    auto Value = DE.getAddress(&ValueOffset);
-    if (containsAddress(Value) && Value != getAddress())
-      return IndirectBranchType::POSSIBLE_SWITCH_TABLE;
-
+    uint64_t Value = 0;
+    while (ValueOffset <= Section.getSize() - PtrSize) {
+      DEBUG(dbgs() << "BOLT-DEBUG: indirect jmp at 0x"
+                   << Twine::utohexstr(getAddress() + Offset)
+                   << " is referencing address 0x"
+                   << Twine::utohexstr(Section.getAddress() + ValueOffset));
+      // Extract the value and increment the offset.
+      Value = DE.getAddress(&ValueOffset);
+      DEBUG(dbgs() << ", which contains value "
+                   << Twine::utohexstr(Value) << '\n');
+      if (containsAddress(Value) && Value != getAddress()) {
+        return IndirectBranchType::POSSIBLE_SWITCH_TABLE;
+      }
+      // Potentially a switch table can contain  __builtin_unreachable() entry
+      // pointing just right after the function. In this case we have to check
+      // another entry. Otherwise the entry is outside of this function scope
+      // and it's not a switch table.
+      if (Value != getAddress() + getSize()) {
+        break;
+      }
+    }
     BC.InterproceduralReferences.insert(Value);
     return IndirectBranchType::POSSIBLE_TAIL_CALL;
   };
 
   bool IsSimple = true;
-  for (uint64_t Offset = 0; IsSimple && (Offset < getSize()); ) {
+  for (uint64_t Offset = 0; Offset < getSize(); ) {
     MCInst Instruction;
     uint64_t Size;
     uint64_t AbsoluteInstrAddr = getAddress() + Offset;
