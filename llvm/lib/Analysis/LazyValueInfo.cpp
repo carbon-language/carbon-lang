@@ -471,9 +471,54 @@ namespace {
       OverDefinedCache.clear();
     }
 
+    /// Inform the cache that a given value has been deleted.
+    void eraseValue(Value *V);
+
+    /// This is part of the update interface to inform the cache
+    /// that a block has been deleted.
+    void eraseBlock(BasicBlock *BB);
+
     friend struct LVIValueHandle;
   };
+}
 
+void LazyValueInfoCache::eraseValue(Value *V) {
+  SmallVector<AssertingVH<BasicBlock>, 4> ToErase;
+  for (auto &I : OverDefinedCache) {
+    SmallPtrSetImpl<Value *> &ValueSet = I.second;
+    if (ValueSet.count(V))
+      ValueSet.erase(V);
+    if (ValueSet.empty())
+      ToErase.push_back(I.first);
+  }
+  for (auto &BB : ToErase)
+    OverDefinedCache.erase(BB);
+
+  ValueCache.erase(V);
+}
+
+void LVIValueHandle::deleted() {
+  // This erasure deallocates *this, so it MUST happen after we're done
+  // using any and all members of *this.
+  Parent->eraseValue(*this);
+}
+
+void LazyValueInfoCache::eraseBlock(BasicBlock *BB) {
+  // Shortcut if we have never seen this block.
+  DenseSet<AssertingVH<BasicBlock> >::iterator I = SeenBlocks.find(BB);
+  if (I == SeenBlocks.end())
+    return;
+  SeenBlocks.erase(I);
+
+  auto ODI = OverDefinedCache.find(BB);
+  if (ODI != OverDefinedCache.end())
+    OverDefinedCache.erase(ODI);
+
+  for (auto &I : ValueCache)
+    I.second->BlockVals.erase(BB);
+}
+
+namespace {
   // The actual implementation of the lazy analysis and update.  Note that the
   // inheritance from LazyValueInfoCache is intended to be temporary while
   // splitting the code and then transitioning to a has-a relationship.
@@ -546,47 +591,11 @@ namespace {
     /// PredBB to OldSucc has been threaded to be from PredBB to NewSucc.
     void threadEdge(BasicBlock *PredBB,BasicBlock *OldSucc,BasicBlock *NewSucc);
 
-    /// This is part of the update interface to inform the cache
-    /// that a block has been deleted.
-    void eraseBlock(BasicBlock *BB);
-
     LazyValueInfoImpl(AssumptionCache *AC, const DataLayout &DL,
                        DominatorTree *DT = nullptr)
         : AC(AC), DL(DL), DT(DT) {}
   };
 } // end anonymous namespace
-
-void LVIValueHandle::deleted() {
-  SmallVector<AssertingVH<BasicBlock>, 4> ToErase;
-  for (auto &I : Parent->OverDefinedCache) {
-    SmallPtrSetImpl<Value *> &ValueSet = I.second;
-    if (ValueSet.count(getValPtr()))
-      ValueSet.erase(getValPtr());
-    if (ValueSet.empty())
-      ToErase.push_back(I.first);
-  }
-  for (auto &BB : ToErase)
-    Parent->OverDefinedCache.erase(BB);
-
-  // This erasure deallocates *this, so it MUST happen after we're done
-  // using any and all members of *this.
-  Parent->ValueCache.erase(*this);
-}
-
-void LazyValueInfoImpl::eraseBlock(BasicBlock *BB) {
-  // Shortcut if we have never seen this block.
-  DenseSet<AssertingVH<BasicBlock> >::iterator I = SeenBlocks.find(BB);
-  if (I == SeenBlocks.end())
-    return;
-  SeenBlocks.erase(I);
-
-  auto ODI = OverDefinedCache.find(BB);
-  if (ODI != OverDefinedCache.end())
-    OverDefinedCache.erase(ODI);
-
-  for (auto &I : ValueCache)
-    I.second->BlockVals.erase(BB);
-}
 
 void LazyValueInfoImpl::solve() {
   while (!BlockValueStack.empty()) {
