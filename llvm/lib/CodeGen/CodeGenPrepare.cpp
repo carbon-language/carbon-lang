@@ -4589,7 +4589,7 @@ static Value *getTrueOrFalseValue(
 
   for (SelectInst *DefSI = SI; DefSI != nullptr && Selects.count(DefSI);
        DefSI = dyn_cast<SelectInst>(V)) {
-    assert(DefSI.getCondition() == SI->getCondition() &&
+    assert(DefSI->getCondition() == SI->getCondition() &&
            "The condition of DefSI does not match with SI");
     V = (isTrue ? DefSI->getTrueValue() : DefSI->getFalseValue());
   }
