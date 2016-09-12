@@ -929,6 +929,8 @@ struct DiagText {
   std::vector<std::unique_ptr<Piece>> Pieces;
 
   DiagText();
+  DiagText(DiagText &&O) : Pieces(std::move(O.Pieces)) {}
+
   DiagText(StringRef Text);
   DiagText(StringRef Kind, StringRef Text);
 
