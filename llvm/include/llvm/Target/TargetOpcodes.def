@@ -333,6 +333,9 @@ HANDLE_TARGET_OPCODE(G_SITOFP)
 /// Generic unsigned-int to float conversion
 HANDLE_TARGET_OPCODE(G_UITOFP)
 
+/// Generic unsigned-int to float conversion
+HANDLE_TARGET_OPCODE(G_GEP)
+
 /// Generic BRANCH instruction. This is an unconditional branch.
 HANDLE_TARGET_OPCODE(G_BR)
 

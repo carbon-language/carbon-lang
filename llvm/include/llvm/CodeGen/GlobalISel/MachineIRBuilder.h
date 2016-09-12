@@ -161,6 +161,20 @@ public:
   MachineInstrBuilder buildMul(unsigned Res, unsigned Op0,
                                unsigned Op1);
 
+  /// Build and insert \p Res<def> = G_GEP \p Op0, \p Op1
+  ///
+  /// G_GEP adds \p Op1 bytes to the pointer specified by \p Op0,
+  /// storing the resulting pointer in \p Res.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  /// \pre \p Res and \p Op0 must be generic virtual registers with pointer
+  ///      type.
+  /// \pre \p Op1 must be a generic virtual register with scalar type.
+  ///
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildGEP(unsigned Res, unsigned Op0,
+                               unsigned Op1);
+
   /// Build and insert \p Res<def>, \p CarryOut<def> = G_UADDE \p Op0,
   /// \p Op1, \p CarryIn
   ///
@@ -220,6 +234,16 @@ public:
   ///
   /// \return The newly created instruction.
   MachineInstrBuilder buildZExt(unsigned Res, unsigned Op);
+
+  /// Build and insert \p Res<def> = G_SEXT \p Op, \p Res = G_TRUNC \p Op, or
+  /// \p Res = COPY \p Op depending on the differing sizes of \p Res and \p Op.
+  ///  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  /// \pre \p Res must be a generic virtual register with scalar or vector type.
+  /// \pre \p Op must be a generic virtual register with scalar or vector type.
+  ///
+  /// \return The newly created instruction.
+  MachineInstrBuilder buildSExtOrTrunc(unsigned Res, unsigned Op);
 
   /// Build and insert G_BR \p Dest
   ///
