@@ -926,16 +926,18 @@ struct DiagText {
     void print(std::vector<std::string> &RST) override;
   };
 
-  std::vector<std::unique_ptr<Piece>> Pieces;
+  // FIXME: This should be a unique_ptr, but I can't figure out how to get MSVC
+  // to not issue errors on that.
+  std::vector<std::shared_ptr<Piece>> Pieces;
 
   DiagText();
-  DiagText(DiagText &&O) : Pieces(std::move(O.Pieces)) {}
+  DiagText(DiagText &&O) LLVM_NOEXCEPT : Pieces(std::move(O.Pieces)) {}
 
   DiagText(StringRef Text);
   DiagText(StringRef Kind, StringRef Text);
 
   template<typename P> void add(P Piece) {
-    Pieces.push_back(llvm::make_unique<P>(std::move(Piece)));
+    Pieces.push_back(std::make_shared<P>(std::move(Piece)));
   }
   void print(std::vector<std::string> &RST);
 };
@@ -1032,7 +1034,7 @@ DiagText::DiagText(StringRef Kind, StringRef Text) : DiagText(parseDiagText(Text
   Prefix.Role = Kind;
   Prefix.Text = Kind;
   Prefix.Text += ": ";
-  Pieces.insert(Pieces.begin(), llvm::make_unique<TextPiece>(std::move(Prefix)));
+  Pieces.insert(Pieces.begin(), std::make_shared<TextPiece>(std::move(Prefix)));
 }
 
 void escapeRST(StringRef Str, std::string &Out) {
