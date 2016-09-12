@@ -56,20 +56,19 @@ class SerializationTraits {};
 
 /// TypeNameSequence is a utility for rendering sequences of types to a string
 /// by rendering each type, separated by ", ".
-template <typename ChannelT, typename... ArgTs>
-class TypeNameSequence {};
+template <typename ChannelT, typename... ArgTs> class TypeNameSequence {};
 
 /// Render a TypeNameSequence of a single type to an ostream.
 template <typename OStream, typename ChannelT, typename ArgT>
-OStream& operator<<(OStream &OS, const TypeNameSequence<ChannelT, ArgT> &V) {
+OStream &operator<<(OStream &OS, const TypeNameSequence<ChannelT, ArgT> &V) {
   OS << SerializationTraits<ChannelT, ArgT>::getName();
   return OS;
 }
 
 /// Render a TypeNameSequence of more than one type to an ostream.
-template <typename OStream, typename ChannelT, typename ArgT1,
-          typename ArgT2, typename... ArgTs>
-OStream&
+template <typename OStream, typename ChannelT, typename ArgT1, typename ArgT2,
+          typename... ArgTs>
+OStream &
 operator<<(OStream &OS,
            const TypeNameSequence<ChannelT, ArgT1, ArgT2, ArgTs...> &V) {
   OS << SerializationTraits<ChannelT, ArgT1>::getName() << ", "
@@ -86,8 +85,9 @@ Error serializeSeq(ChannelT &C, const T &Arg, const Ts &... Args) {
 }
 
 /// RPC channel serialization for an (empty) variadic list of arguments.
-template <typename ChannelT>
-Error serializeSeq(ChannelT &C) { return Error::success(); }
+template <typename ChannelT> Error serializeSeq(ChannelT &C) {
+  return Error::success();
+}
 
 /// RPC channel deserialization for a variadic list of arguments.
 template <typename ChannelT, typename T, typename... Ts>
@@ -98,20 +98,20 @@ Error deserializeSeq(ChannelT &C, T &Arg, Ts &... Args) {
 }
 
 /// RPC channel serialization for an (empty) variadic list of arguments.
-template <typename ChannelT>
-Error deserializeSeq(ChannelT &C) { return Error::success(); }
+template <typename ChannelT> Error deserializeSeq(ChannelT &C) {
+  return Error::success();
+}
 
 /// SerializationTraits default specialization for std::pair.
 template <typename ChannelT, typename T1, typename T2>
 class SerializationTraits<ChannelT, std::pair<T1, T2>> {
 public:
-  static const char* getName() {
+  static const char *getName() {
     std::lock_guard<std::mutex> Lock(NameMutex);
     if (Name.empty())
       Name = (std::ostringstream()
-               << "std::pair<"
-               << TypeNameSequence<ChannelT, T1, T2>()
-               << ">").str();
+              << "std::pair<" << TypeNameSequence<ChannelT, T1, T2>() << ">")
+                 .str();
 
     return Name.data();
   }
@@ -123,6 +123,7 @@ public:
   static Error deserialize(ChannelT &C, std::pair<T1, T2> &V) {
     return deserializeSeq(C, V.first, V.second);
   }
+
 private:
   static std::mutex NameMutex;
   static std::string Name;
@@ -138,14 +139,12 @@ std::string SerializationTraits<ChannelT, std::pair<T1, T2>>::Name;
 template <typename ChannelT, typename... ArgTs>
 class SerializationTraits<ChannelT, std::tuple<ArgTs...>> {
 public:
-
-  static const char* getName() {
+  static const char *getName() {
     std::lock_guard<std::mutex> Lock(NameMutex);
     if (Name.empty())
       Name = (std::ostringstream()
-               << "std::tuple<"
-               << TypeNameSequence<ChannelT, ArgTs...>()
-               << ">").str();
+              << "std::tuple<" << TypeNameSequence<ChannelT, ArgTs...>() << ">")
+                 .str();
 
     return Name.data();
   }
@@ -161,7 +160,6 @@ public:
   }
 
 private:
-
   // Serialization helper for std::tuple.
   template <size_t... Is>
   static Error serializeTupleHelper(ChannelT &C, const std::tuple<ArgTs...> &V,
@@ -190,19 +188,18 @@ std::string SerializationTraits<ChannelT, std::tuple<ArgTs...>>::Name;
 template <typename ChannelT, typename T>
 class SerializationTraits<ChannelT, std::vector<T>> {
 public:
-
-  static const char* getName() {
+  static const char *getName() {
     std::lock_guard<std::mutex> Lock(NameMutex);
     if (Name.empty())
-      Name = (std::ostringstream()
-                << "std::vector<" << TypeNameSequence<ChannelT, T>()
-                << ">").str();
+      Name = (std::ostringstream() << "std::vector<"
+                                   << TypeNameSequence<ChannelT, T>() << ">")
+                 .str();
     return Name.data();
   }
 
   static Error serialize(ChannelT &C, const std::vector<T> &V) {
-    if (auto Err = SerializationTraits<ChannelT, uint64_t>::
-                     serialize(C, static_cast<uint64_t>(V.size())))
+    if (auto Err = SerializationTraits<ChannelT, uint64_t>::serialize(
+            C, static_cast<uint64_t>(V.size())))
       return Err;
 
     for (const auto &E : V)
@@ -214,8 +211,8 @@ public:
 
   static Error deserialize(ChannelT &C, std::vector<T> &V) {
     uint64_t Count = 0;
-    if (auto Err = SerializationTraits<ChannelT, uint64_t>::
-                     deserialize(C, Count))
+    if (auto Err =
+            SerializationTraits<ChannelT, uint64_t>::deserialize(C, Count))
       return Err;
 
     V.resize(Count);
