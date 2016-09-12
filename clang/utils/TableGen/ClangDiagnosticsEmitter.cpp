@@ -928,7 +928,7 @@ struct DiagText {
 
   std::vector<std::unique_ptr<Piece>> Pieces;
 
-  DiagText() {}
+  DiagText();
   DiagText(StringRef Text);
   DiagText(StringRef Kind, StringRef Text);
 
@@ -1020,6 +1020,8 @@ DiagText parseDiagText(StringRef &Text, bool Nested = false) {
   }
   return Parsed;
 }
+
+DiagText::DiagText() {}
 
 DiagText::DiagText(StringRef Text) : DiagText(parseDiagText(Text, false)) {}
 
