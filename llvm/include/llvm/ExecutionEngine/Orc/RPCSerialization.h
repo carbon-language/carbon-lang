@@ -11,6 +11,7 @@
 #define LLVM_EXECUTIONENGINE_ORC_RPCSERIALIZATION_H
 
 #include "OrcError.h"
+#include <mutex>
 #include <sstream>
 #include <thread>
 
