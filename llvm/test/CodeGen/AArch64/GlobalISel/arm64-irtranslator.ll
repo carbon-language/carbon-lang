@@ -827,3 +827,31 @@ define void @float_comparison(float* %a.addr, float* %b.addr, i1* %bool.addr) {
   store i1 %res, i1* %bool.addr
   ret void
 }
+
+@var = global i32 0
+
+define i32* @test_global() {
+; CHECK-LABEL: name: test_global
+; CHECK: [[TMP:%[0-9]+]](p0) = G_GLOBAL_VALUE @var{{$}}
+; CHECK: %x0 = COPY [[TMP]](p0)
+
+  ret i32* @var
+}
+
+@var1 = addrspace(42) global i32 0
+define i32 addrspace(42)* @test_global_addrspace() {
+; CHECK-LABEL: name: test_global
+; CHECK: [[TMP:%[0-9]+]](p42) = G_GLOBAL_VALUE @var1{{$}}
+; CHECK: %x0 = COPY [[TMP]](p42)
+
+  ret i32 addrspace(42)* @var1
+}
+
+
+define void()* @test_global_func() {
+; CHECK-LABEL: name: test_global_func
+; CHECK: [[TMP:%[0-9]+]](p0) = G_GLOBAL_VALUE @allocai64{{$}}
+; CHECK: %x0 = COPY [[TMP]](p0)
+
+  ret void()* @allocai64
+}

@@ -122,6 +122,18 @@ public:
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildFrameIndex(unsigned Res, int Idx);
 
+  /// Build and insert \p Res<def> = G_GLOBAL_VALUE \p GV
+  ///
+  /// G_GLOBAL_VALUE materializes the address of the specified global
+  /// into \p Res.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  /// \pre \p Res must be a generic virtual register with pointer type
+  ///      in the same address space as \p GV.
+  ///
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildGlobalValue(unsigned Res, const GlobalValue *GV);
+
   /// Build and insert \p Res<def> = G_ADD \p Op0, \p Op1
   ///
   /// G_ADD sets \p Res to the sum of integer parameters \p Op0 and \p Op1,

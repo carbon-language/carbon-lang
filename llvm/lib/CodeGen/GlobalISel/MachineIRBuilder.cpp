@@ -84,6 +84,18 @@ MachineInstrBuilder MachineIRBuilder::buildFrameIndex(unsigned Res, int Idx) {
       .addFrameIndex(Idx);
 }
 
+MachineInstrBuilder MachineIRBuilder::buildGlobalValue(unsigned Res,
+                                                       const GlobalValue *GV) {
+  assert(MRI->getType(Res).isPointer() && "invalid operand type");
+  assert(MRI->getType(Res).getAddressSpace() ==
+             GV->getType()->getAddressSpace() &&
+         "address space mismatch");
+
+  return buildInstr(TargetOpcode::G_GLOBAL_VALUE)
+      .addDef(Res)
+      .addGlobalAddress(GV);
+}
+
 MachineInstrBuilder MachineIRBuilder::buildAdd(unsigned Res, unsigned Op0,
                                                unsigned Op1) {
   assert((MRI->getType(Res).isScalar() || MRI->getType(Res).isVector()) &&

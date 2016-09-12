@@ -55,6 +55,12 @@ def G_FRAME_INDEX : Instruction {
   let hasSideEffects = 0;
 }
 
+def G_GLOBAL_VALUE : Instruction {
+  let OutOperandList = (outs type0:$dst);
+  let InOperandList = (ins unknown:$src);
+  let hasSideEffects = 0;
+}
+
 def G_INTTOPTR : Instruction {
   let OutOperandList = (outs type0:$dst);
   let InOperandList = (ins type1:$src);

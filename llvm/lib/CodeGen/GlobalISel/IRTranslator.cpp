@@ -508,6 +508,8 @@ bool IRTranslator::translate(const Constant &C, unsigned Reg) {
     EntryBuilder.buildInstr(TargetOpcode::G_CONSTANT)
         .addDef(Reg)
         .addImm(0);
+  else if (auto GV = dyn_cast<GlobalValue>(&C))
+    EntryBuilder.buildGlobalValue(Reg, GV);
   else if (auto CE = dyn_cast<ConstantExpr>(&C)) {
     switch(CE->getOpcode()) {
 #define HANDLE_INST(NUM, OPCODE, CLASS)                         \
