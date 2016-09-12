@@ -339,16 +339,14 @@ class ARMAsmParser : public MCTargetAsmParser {
     return;
   }
 
-  void Note(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges = None) {
-    return getParser().Note(L, Msg, Ranges);
+  void Note(SMLoc L, const Twine &Msg, SMRange Range = None) {
+    return getParser().Note(L, Msg, Range);
   }
-  bool Warning(SMLoc L, const Twine &Msg,
-               ArrayRef<SMRange> Ranges = None) {
-    return getParser().Warning(L, Msg, Ranges);
+  bool Warning(SMLoc L, const Twine &Msg, SMRange Range = None) {
+    return getParser().Warning(L, Msg, Range);
   }
-  bool Error(SMLoc L, const Twine &Msg,
-             ArrayRef<SMRange> Ranges = None) {
-    return getParser().Error(L, Msg, Ranges);
+  bool Error(SMLoc L, const Twine &Msg, SMRange Range = None) {
+    return getParser().Error(L, Msg, Range);
   }
 
   bool validatetLDMRegList(const MCInst &Inst, const OperandVector &Operands,
@@ -6008,7 +6006,6 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
   // In Thumb1, only the branch (B) instruction can be predicated.
   if (isThumbOne() && PredicationCode != ARMCC::AL && Mnemonic != "b") {
-    Parser.eatToEndOfStatement();
     return Error(NameLoc, "conditional execution not supported in Thumb1");
   }
 
@@ -6022,14 +6019,12 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   if (Mnemonic == "it") {
     SMLoc Loc = SMLoc::getFromPointer(NameLoc.getPointer() + 2);
     if (ITMask.size() > 3) {
-      Parser.eatToEndOfStatement();
       return Error(Loc, "too many conditions on IT instruction");
     }
     unsigned Mask = 8;
     for (unsigned i = ITMask.size(); i != 0; --i) {
       char pos = ITMask[i - 1];
       if (pos != 't' && pos != 'e') {
-        Parser.eatToEndOfStatement();
         return Error(Loc, "illegal IT block condition mask '" + ITMask + "'");
       }
       Mask >>= 1;
@@ -6055,14 +6050,12 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   // If we had a carry-set on an instruction that can't do that, issue an
   // error.
   if (!CanAcceptCarrySet && CarrySetting) {
-    Parser.eatToEndOfStatement();
     return Error(NameLoc, "instruction '" + Mnemonic +
                  "' can not set flags, but 's' suffix specified");
   }
   // If we had a predication code on an instruction that can't do that, issue an
   // error.
   if (!CanAcceptPredicationCode && PredicationCode != ARMCC::AL) {
-    Parser.eatToEndOfStatement();
     return Error(NameLoc, "instruction '" + Mnemonic +
                  "' is not predicable, but condition code specified");
   }
@@ -6106,7 +6099,6 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     // For for ARM mode generate an error if the .n qualifier is used.
     if (ExtraToken == ".n" && !isThumb()) {
       SMLoc Loc = SMLoc::getFromPointer(NameLoc.getPointer() + Start);
-      Parser.eatToEndOfStatement();
       return Error(Loc, "instruction with .n (narrow) qualifier not allowed in "
                    "arm mode");
     }
@@ -6124,7 +6116,6 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
     if (parseOperand(Operands, Mnemonic)) {
-      Parser.eatToEndOfStatement();
       return true;
     }
 
@@ -6133,16 +6124,13 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
       // Parse and remember the operand.
       if (parseOperand(Operands, Mnemonic)) {
-        Parser.eatToEndOfStatement();
         return true;
       }
     }
   }
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    SMLoc Loc = getLexer().getLoc();
-    Parser.eatToEndOfStatement();
-    return Error(Loc, "unexpected token in argument list");
+    return TokError("unexpected token in argument list");
   }
 
   Parser.Lex(); // Consume the EndOfStatement
@@ -9331,7 +9319,6 @@ bool ARMAsmParser::parseLiteralValues(unsigned Size, SMLoc L) {
     for (;;) {
       const MCExpr *Value;
       if (getParser().parseExpression(Value)) {
-        Parser.eatToEndOfStatement();
         return false;
       }
 
@@ -9434,7 +9421,6 @@ bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     Error(Parser.getTok().getLoc(), "unexpected token in directive");
-    Parser.eatToEndOfStatement();
     return false;
   }
 
@@ -9527,14 +9513,12 @@ bool ARMAsmParser::parseDirectiveReq(StringRef Name, SMLoc L) {
   unsigned Reg;
   SMLoc SRegLoc, ERegLoc;
   if (ParseRegister(Reg, SRegLoc, ERegLoc)) {
-    Parser.eatToEndOfStatement();
     Error(SRegLoc, "register name expected");
     return false;
   }
 
   // Shouldn't be anything else.
   if (Parser.getTok().isNot(AsmToken::EndOfStatement)) {
-    Parser.eatToEndOfStatement();
     Error(Parser.getTok().getLoc(), "unexpected input in .req directive.");
     return false;
   }
@@ -9554,7 +9538,6 @@ bool ARMAsmParser::parseDirectiveReq(StringRef Name, SMLoc L) {
 bool ARMAsmParser::parseDirectiveUnreq(SMLoc L) {
   MCAsmParser &Parser = getParser();
   if (Parser.getTok().isNot(AsmToken::Identifier)) {
-    Parser.eatToEndOfStatement();
     Error(L, "unexpected input in .unreq directive.");
     return false;
   }
@@ -9624,7 +9607,6 @@ bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
     Tag = ARMBuildAttrs::AttrTypeFromString(Name);
     if (Tag == -1) {
       Error(TagLoc, "attribute name not recognised: " + Name);
-      Parser.eatToEndOfStatement();
       return false;
     }
     Parser.Lex();
@@ -9633,14 +9615,12 @@ bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
 
     TagLoc = Parser.getTok().getLoc();
     if (Parser.parseExpression(AttrExpr)) {
-      Parser.eatToEndOfStatement();
       return false;
     }
 
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(AttrExpr);
     if (!CE) {
       Error(TagLoc, "expected numeric constant");
-      Parser.eatToEndOfStatement();
       return false;
     }
 
@@ -9649,7 +9629,6 @@ bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
 
   if (Parser.getTok().isNot(AsmToken::Comma)) {
     Error(Parser.getTok().getLoc(), "comma expected");
-    Parser.eatToEndOfStatement();
     return false;
   }
   Parser.Lex(); // skip comma
@@ -9676,14 +9655,12 @@ bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
     const MCExpr *ValueExpr;
     SMLoc ValueExprLoc = Parser.getTok().getLoc();
     if (Parser.parseExpression(ValueExpr)) {
-      Parser.eatToEndOfStatement();
       return false;
     }
 
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(ValueExpr);
     if (!CE) {
       Error(ValueExprLoc, "expected numeric constant");
-      Parser.eatToEndOfStatement();
       return false;
     }
 
@@ -9695,7 +9672,6 @@ bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
       IsStringValue = false;
     if (Parser.getTok().isNot(AsmToken::Comma)) {
       Error(Parser.getTok().getLoc(), "comma expected");
-      Parser.eatToEndOfStatement();
       return false;
     } else {
        Parser.Lex();
@@ -9705,7 +9681,6 @@ bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
   if (IsStringValue) {
     if (Parser.getTok().isNot(AsmToken::String)) {
       Error(Parser.getTok().getLoc(), "bad string constant");
-      Parser.eatToEndOfStatement();
       return false;
     }
 
@@ -9849,7 +9824,6 @@ bool ARMAsmParser::parseDirectivePersonality(SMLoc L) {
     return false;
   }
   if (HasExistingPersonality) {
-    Parser.eatToEndOfStatement();
     Error(L, "multiple personality directives");
     UC.emitPersonalityLocNotes();
     return false;
@@ -9857,7 +9831,6 @@ bool ARMAsmParser::parseDirectivePersonality(SMLoc L) {
 
   // Parse the name of the personality routine
   if (Parser.getTok().isNot(AsmToken::Identifier)) {
-    Parser.eatToEndOfStatement();
     Error(L, "unexpected input in .personality directive.");
     return false;
   }
@@ -10057,14 +10030,12 @@ bool ARMAsmParser::parseDirectiveInst(SMLoc Loc, char Suffix) {
       Width = 4;
       break;
     default:
-      Parser.eatToEndOfStatement();
       Error(Loc, "cannot determine Thumb instruction size, "
                  "use inst.n/inst.w instead");
       return false;
     }
   } else {
     if (Suffix) {
-      Parser.eatToEndOfStatement();
       Error(Loc, "width suffixes are invalid in ARM mode");
       return false;
     }
@@ -10072,7 +10043,6 @@ bool ARMAsmParser::parseDirectiveInst(SMLoc Loc, char Suffix) {
   }
 
   if (getLexer().is(AsmToken::EndOfStatement)) {
-    Parser.eatToEndOfStatement();
     Error(Loc, "expected expression following directive");
     return false;
   }
@@ -10164,24 +10134,20 @@ bool ARMAsmParser::parseDirectivePersonalityIndex(SMLoc L) {
   UC.recordPersonalityIndex(L);
 
   if (!UC.hasFnStart()) {
-    Parser.eatToEndOfStatement();
     Error(L, ".fnstart must precede .personalityindex directive");
     return false;
   }
   if (UC.cantUnwind()) {
-    Parser.eatToEndOfStatement();
     Error(L, ".personalityindex cannot be used with .cantunwind");
     UC.emitCantUnwindLocNotes();
     return false;
   }
   if (UC.hasHandlerData()) {
-    Parser.eatToEndOfStatement();
     Error(L, ".personalityindex must precede .handlerdata directive");
     UC.emitHandlerDataLocNotes();
     return false;
   }
   if (HasExistingPersonality) {
-    Parser.eatToEndOfStatement();
     Error(L, "multiple personality directives");
     UC.emitPersonalityLocNotes();
     return false;
@@ -10190,19 +10156,16 @@ bool ARMAsmParser::parseDirectivePersonalityIndex(SMLoc L) {
   const MCExpr *IndexExpression;
   SMLoc IndexLoc = Parser.getTok().getLoc();
   if (Parser.parseExpression(IndexExpression)) {
-    Parser.eatToEndOfStatement();
     return false;
   }
 
   const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(IndexExpression);
   if (!CE) {
-    Parser.eatToEndOfStatement();
     Error(IndexLoc, "index must be a constant number");
     return false;
   }
   if (CE->getValue() < 0 ||
       CE->getValue() >= ARM::EHABI::NUM_PERSONALITY_INDEX) {
-    Parser.eatToEndOfStatement();
     Error(IndexLoc, "personality routine index should be in range [0-3]");
     return false;
   }
@@ -10216,7 +10179,6 @@ bool ARMAsmParser::parseDirectivePersonalityIndex(SMLoc L) {
 bool ARMAsmParser::parseDirectiveUnwindRaw(SMLoc L) {
   MCAsmParser &Parser = getParser();
   if (!UC.hasFnStart()) {
-    Parser.eatToEndOfStatement();
     Error(L, ".fnstart must precede .unwind_raw directives");
     return false;
   }
@@ -10228,14 +10190,12 @@ bool ARMAsmParser::parseDirectiveUnwindRaw(SMLoc L) {
   if (getLexer().is(AsmToken::EndOfStatement) ||
       getParser().parseExpression(OffsetExpr)) {
     Error(OffsetLoc, "expected expression");
-    Parser.eatToEndOfStatement();
     return false;
   }
 
   const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(OffsetExpr);
   if (!CE) {
     Error(OffsetLoc, "offset must be a constant");
-    Parser.eatToEndOfStatement();
     return false;
   }
 
@@ -10243,7 +10203,6 @@ bool ARMAsmParser::parseDirectiveUnwindRaw(SMLoc L) {
 
   if (getLexer().isNot(AsmToken::Comma)) {
     Error(getLexer().getLoc(), "expected comma");
-    Parser.eatToEndOfStatement();
     return false;
   }
   Parser.Lex();
@@ -10255,21 +10214,18 @@ bool ARMAsmParser::parseDirectiveUnwindRaw(SMLoc L) {
     SMLoc OpcodeLoc = getLexer().getLoc();
     if (getLexer().is(AsmToken::EndOfStatement) || Parser.parseExpression(OE)) {
       Error(OpcodeLoc, "expected opcode expression");
-      Parser.eatToEndOfStatement();
       return false;
     }
 
     const MCConstantExpr *OC = dyn_cast<MCConstantExpr>(OE);
     if (!OC) {
       Error(OpcodeLoc, "opcode value must be a constant");
-      Parser.eatToEndOfStatement();
       return false;
     }
 
     const int64_t Opcode = OC->getValue();
     if (Opcode & ~0xff) {
       Error(OpcodeLoc, "invalid opcode");
-      Parser.eatToEndOfStatement();
       return false;
     }
 
@@ -10280,7 +10236,6 @@ bool ARMAsmParser::parseDirectiveUnwindRaw(SMLoc L) {
 
     if (getLexer().isNot(AsmToken::Comma)) {
       Error(getLexer().getLoc(), "unexpected token in directive");
-      Parser.eatToEndOfStatement();
       return false;
     }
 
@@ -10300,7 +10255,6 @@ bool ARMAsmParser::parseDirectiveTLSDescSeq(SMLoc L) {
 
   if (getLexer().isNot(AsmToken::Identifier)) {
     TokError("expected variable after '.tlsdescseq' directive");
-    Parser.eatToEndOfStatement();
     return false;
   }
 
@@ -10311,7 +10265,6 @@ bool ARMAsmParser::parseDirectiveTLSDescSeq(SMLoc L) {
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     Error(Parser.getTok().getLoc(), "unexpected token");
-    Parser.eatToEndOfStatement();
     return false;
   }
 
@@ -10324,12 +10277,10 @@ bool ARMAsmParser::parseDirectiveTLSDescSeq(SMLoc L) {
 bool ARMAsmParser::parseDirectiveMovSP(SMLoc L) {
   MCAsmParser &Parser = getParser();
   if (!UC.hasFnStart()) {
-    Parser.eatToEndOfStatement();
     Error(L, ".fnstart must precede .movsp directives");
     return false;
   }
   if (UC.getFPReg() != ARM::SP) {
-    Parser.eatToEndOfStatement();
     Error(L, "unexpected .movsp directive");
     return false;
   }
@@ -10337,13 +10288,11 @@ bool ARMAsmParser::parseDirectiveMovSP(SMLoc L) {
   SMLoc SPRegLoc = Parser.getTok().getLoc();
   int SPReg = tryParseRegister();
   if (SPReg == -1) {
-    Parser.eatToEndOfStatement();
     Error(SPRegLoc, "register expected");
     return false;
   }
 
   if (SPReg == ARM::SP || SPReg == ARM::PC) {
-    Parser.eatToEndOfStatement();
     Error(SPRegLoc, "sp and pc are not permitted in .movsp directive");
     return false;
   }
@@ -10354,7 +10303,6 @@ bool ARMAsmParser::parseDirectiveMovSP(SMLoc L) {
 
     if (Parser.getTok().isNot(AsmToken::Hash)) {
       Error(Parser.getTok().getLoc(), "expected #constant");
-      Parser.eatToEndOfStatement();
       return false;
     }
     Parser.Lex();
@@ -10362,14 +10310,12 @@ bool ARMAsmParser::parseDirectiveMovSP(SMLoc L) {
     const MCExpr *OffsetExpr;
     SMLoc OffsetLoc = Parser.getTok().getLoc();
     if (Parser.parseExpression(OffsetExpr)) {
-      Parser.eatToEndOfStatement();
       Error(OffsetLoc, "malformed offset expression");
       return false;
     }
 
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(OffsetExpr);
     if (!CE) {
-      Parser.eatToEndOfStatement();
       Error(OffsetLoc, "offset must be an immediate constant");
       return false;
     }
@@ -10389,7 +10335,6 @@ bool ARMAsmParser::parseDirectiveObjectArch(SMLoc L) {
   MCAsmParser &Parser = getParser();
   if (getLexer().isNot(AsmToken::Identifier)) {
     Error(getLexer().getLoc(), "unexpected token");
-    Parser.eatToEndOfStatement();
     return false;
   }
 
@@ -10401,7 +10346,6 @@ bool ARMAsmParser::parseDirectiveObjectArch(SMLoc L) {
 
   if (ID == ARM::AK_INVALID) {
     Error(ArchLoc, "unknown architecture '" + Arch + "'");
-    Parser.eatToEndOfStatement();
     return false;
   }
 
@@ -10409,7 +10353,6 @@ bool ARMAsmParser::parseDirectiveObjectArch(SMLoc L) {
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     Error(getLexer().getLoc(), "unexpected token");
-    Parser.eatToEndOfStatement();
   }
 
   return false;
@@ -10442,13 +10385,11 @@ bool ARMAsmParser::parseDirectiveThumbSet(SMLoc L) {
   StringRef Name;
   if (Parser.parseIdentifier(Name)) {
     TokError("expected identifier after '.thumb_set'");
-    Parser.eatToEndOfStatement();
     return false;
   }
 
   if (getLexer().isNot(AsmToken::Comma)) {
     TokError("expected comma after name '" + Name + "'");
-    Parser.eatToEndOfStatement();
     return false;
   }
   Lex();
@@ -10512,7 +10453,6 @@ bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
 
   if (getLexer().isNot(AsmToken::Identifier)) {
     Error(getLexer().getLoc(), "expected architecture extension name");
-    Parser.eatToEndOfStatement();
     return false;
   }
 
@@ -10558,7 +10498,6 @@ bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
   }
 
   Error(ExtLoc, "unknown architectural extension: " + Name);
-  Parser.eatToEndOfStatement();
   return false;
 }
 
