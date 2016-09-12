@@ -911,6 +911,7 @@ namespace {
 struct DiagText {
   struct Piece {
     virtual void print(std::vector<std::string> &RST) = 0;
+    virtual ~Piece() {}
   };
   struct TextPiece : Piece {
     StringRef Role;
