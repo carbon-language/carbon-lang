@@ -1262,7 +1262,12 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_shnum = OutputSections.size() + 1;
   EHdr->e_shstrndx = Out<ELFT>::ShStrTab->SectionIndex;
 
-  if (Config->EMachine == EM_MIPS)
+  if (Config->EMachine == EM_ARM)
+    // We don't currently use any features incompatible with EF_ARM_EABI_VER5,
+    // but we don't have any firm guarantees of conformance. Linux AArch64
+    // kernels (as of 2016) require an EABI version to be set.
+    EHdr->e_flags = EF_ARM_EABI_VER5;
+  else if (Config->EMachine == EM_MIPS)
     EHdr->e_flags = getMipsEFlags<ELFT>();
 
   if (!Config->Relocatable) {
