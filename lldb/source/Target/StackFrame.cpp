@@ -1489,21 +1489,19 @@ lldb::ValueObjectSP DoGuessValueAt(StackFrame &frame, ConstString reg,
 
   // First, check the variable list to see if anything is at the specified
   // location.
+
+  Instruction::Operand op =
+      offset ? Instruction::Operand::BuildDereference(
+                   Instruction::Operand::BuildSum(
+                       Instruction::Operand::BuildRegister(reg),
+                       Instruction::Operand::BuildImmediate(offset)))
+             : Instruction::Operand::BuildDereference(
+                   Instruction::Operand::BuildRegister(reg));
+
   for (size_t vi = 0, ve = variables.GetSize(); vi != ve; ++vi) {
     VariableSP var_sp = variables.GetVariableAtIndex(vi);
-    DWARFExpression &dwarf_expression = var_sp->LocationExpression();
-
-    const RegisterInfo *expression_reg;
-    int64_t expression_offset;
-    ExecutionContext exe_ctx;
-
-    if (dwarf_expression.IsDereferenceOfRegister(frame, expression_reg,
-                                                 expression_offset)) {
-      if ((reg == ConstString(expression_reg->name) ||
-           reg == ConstString(expression_reg->alt_name)) &&
-          expression_offset == offset) {
-        return frame.GetValueObjectForFrameVariable(var_sp, eNoDynamicValues);
-      }
+    if (var_sp->LocationExpression().MatchesOperand(frame, op)) {
+      return frame.GetValueObjectForFrameVariable(var_sp, eNoDynamicValues);
     }
   }
 
