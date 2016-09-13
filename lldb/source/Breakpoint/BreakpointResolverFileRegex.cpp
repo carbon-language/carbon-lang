@@ -37,7 +37,8 @@ BreakpointResolverFileRegex::BreakpointResolverFileRegex(
 BreakpointResolverFileRegex::~BreakpointResolverFileRegex() {}
 
 BreakpointResolver *BreakpointResolverFileRegex::CreateFromStructuredData(
-    Breakpoint *bkpt, StructuredData::Dictionary &options_dict, Error &error) {
+    Breakpoint *bkpt, const StructuredData::Dictionary &options_dict,
+    Error &error) {
   bool success;
 
   std::string regex_string;

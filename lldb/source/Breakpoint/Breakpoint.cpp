@@ -148,8 +148,8 @@ lldb::BreakpointSP Breakpoint::CreateFromStructuredData(
     filter_sp.reset(
         new SearchFilterForUnconstrainedSearches(target.shared_from_this()));
   else {
-    filter_sp.reset(SearchFilter::CreateFromStructuredData(target, *filter_dict,
-                                                           create_error));
+    filter_sp = SearchFilter::CreateFromStructuredData(target, *filter_dict,
+                                                       create_error);
     if (create_error.Fail()) {
       error.SetErrorStringWithFormat(
           "Error creating breakpoint filter from data: %s.",
@@ -158,13 +158,13 @@ lldb::BreakpointSP Breakpoint::CreateFromStructuredData(
     }
   }
 
-  BreakpointOptions *options = nullptr;
+  std::unique_ptr<BreakpointOptions> options_up;
   StructuredData::Dictionary *options_dict;
   success = breakpoint_dict->GetValueForKeyAsDictionary(
       BreakpointOptions::GetSerializationKey(), options_dict);
   if (success) {
-    options = BreakpointOptions::CreateFromStructuredData(*options_dict,
-                                                          create_error);
+    options_up = BreakpointOptions::CreateFromStructuredData(*options_dict,
+                                                             create_error);
     if (create_error.Fail()) {
       error.SetErrorStringWithFormat(
           "Error creating breakpoint options from data: %s.",
@@ -174,8 +174,8 @@ lldb::BreakpointSP Breakpoint::CreateFromStructuredData(
   }
   result_sp =
       target.CreateBreakpoint(filter_sp, resolver_sp, false, false, true);
-  if (result_sp && options) {
-    result_sp->m_options_up.reset(options);
+  if (result_sp && options_up) {
+    result_sp->m_options_up = std::move(options_up);
   }
   return result_sp;
 }

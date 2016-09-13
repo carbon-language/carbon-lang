@@ -42,8 +42,8 @@ public:
 
     StructuredData::ObjectSP SerializeToStructuredData();
 
-    static CommandData *
-    CreateFromStructuredData(StructuredData::Dictionary &options_dict,
+    static std::unique_ptr<CommandData>
+    CreateFromStructuredData(const StructuredData::Dictionary &options_dict,
                              Error &error);
 
     StringList user_source;
@@ -111,8 +111,9 @@ public:
 
   virtual ~BreakpointOptions();
 
-  static BreakpointOptions *
-  CreateFromStructuredData(StructuredData::Dictionary &data_dict, Error &error);
+  static std::unique_ptr<BreakpointOptions>
+  CreateFromStructuredData(const StructuredData::Dictionary &data_dict,
+                           Error &error);
 
   virtual StructuredData::ObjectSP SerializeToStructuredData();
 

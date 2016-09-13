@@ -36,8 +36,10 @@ public:
 
   ~BreakpointResolverAddress() override;
 
-  static BreakpointResolver *CreateFromStructuredData(
-      Breakpoint *bkpt, StructuredData::Dictionary &options_dict, Error &error);
+  static BreakpointResolver *
+  CreateFromStructuredData(Breakpoint *bkpt,
+                           const StructuredData::Dictionary &options_dict,
+                           Error &error);
 
   StructuredData::ObjectSP SerializeToStructuredData() override;
 

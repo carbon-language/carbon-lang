@@ -216,9 +216,10 @@ public:
 
   lldb::SearchFilterSP CopyForBreakpoint(Breakpoint &breakpoint);
 
-  static SearchFilter *
+  static lldb::SearchFilterSP
   CreateFromStructuredData(Target &target,
-                           StructuredData::Dictionary &data_dict, Error &error);
+                           const StructuredData::Dictionary &data_dict,
+                           Error &error);
 
   virtual StructuredData::ObjectSP SerializeToStructuredData() {
     return StructuredData::ObjectSP();
@@ -316,9 +317,10 @@ public:
 
   bool ModulePasses(const lldb::ModuleSP &module_sp) override;
 
-  static SearchFilter *
+  static lldb::SearchFilterSP
   CreateFromStructuredData(Target &target,
-                           StructuredData::Dictionary &data_dict, Error &error);
+                           const StructuredData::Dictionary &data_dict,
+                           Error &error);
 
   StructuredData::ObjectSP SerializeToStructuredData() override;
 
@@ -369,9 +371,10 @@ public:
 
   void Search(Searcher &searcher) override;
 
-  static SearchFilter *
+  static lldb::SearchFilterSP
   CreateFromStructuredData(Target &target,
-                           StructuredData::Dictionary &data_dict, Error &error);
+                           const StructuredData::Dictionary &data_dict,
+                           Error &error);
 
   StructuredData::ObjectSP SerializeToStructuredData() override;
 
@@ -425,9 +428,10 @@ public:
 
   void Search(Searcher &searcher) override;
 
-  static SearchFilter *
+  static lldb::SearchFilterSP
   CreateFromStructuredData(Target &target,
-                           StructuredData::Dictionary &data_dict, Error &error);
+                           const StructuredData::Dictionary &data_dict,
+                           Error &error);
 
   StructuredData::ObjectSP SerializeToStructuredData() override;
 
@@ -477,9 +481,10 @@ public:
 
   void Search(Searcher &searcher) override;
 
-  static SearchFilter *
+  static lldb::SearchFilterSP
   CreateFromStructuredData(Target &target,
-                           StructuredData::Dictionary &data_dict, Error &error);
+                           const StructuredData::Dictionary &data_dict,
+                           Error &error);
 
   StructuredData::ObjectSP SerializeToStructuredData() override;
 

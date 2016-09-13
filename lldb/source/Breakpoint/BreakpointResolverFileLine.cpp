@@ -37,7 +37,8 @@ BreakpointResolverFileLine::BreakpointResolverFileLine(
 BreakpointResolverFileLine::~BreakpointResolverFileLine() {}
 
 BreakpointResolver *BreakpointResolverFileLine::CreateFromStructuredData(
-    Breakpoint *bkpt, StructuredData::Dictionary &options_dict, Error &error) {
+    Breakpoint *bkpt, const StructuredData::Dictionary &options_dict,
+    Error &error) {
   std::string filename;
   uint32_t line_no;
   bool check_inlines;

@@ -91,7 +91,8 @@ BreakpointResolverName::BreakpointResolverName(
       m_language(rhs.m_language), m_skip_prologue(rhs.m_skip_prologue) {}
 
 BreakpointResolver *BreakpointResolverName::CreateFromStructuredData(
-    Breakpoint *bkpt, StructuredData::Dictionary &options_dict, Error &error) {
+    Breakpoint *bkpt, const StructuredData::Dictionary &options_dict,
+    Error &error) {
   LanguageType language = eLanguageTypeUnknown;
   std::string language_name;
   bool success = options_dict.GetValueForKeyAsString(
