@@ -599,6 +599,9 @@ static void setVersionId(SymbolBody *Body, StringRef VersionName,
   Sym->VersionId = Version;
 }
 
+// Returns a map from demangled symbols to symbol objects.
+// The relationship is 1:N instead of 1:1 because with the symbol
+// versioning, more than one symbol may have the same name.
 template <class ELFT>
 std::map<std::string, std::vector<SymbolBody *>>
 SymbolTable<ELFT>::getDemangledSyms() {
