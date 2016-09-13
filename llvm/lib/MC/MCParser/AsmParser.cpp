@@ -178,6 +178,9 @@ private:
   /// \brief Keeps track of how many .macro's have been instantiated.
   unsigned NumOfMacroInstantiations;
 
+  /// Flag tracking whether any errors have been encountered.
+  unsigned HadError : 1;
+
   /// The values from the last parsed cpp hash file line comment if any.
   struct CppHashInfoTy {
     StringRef Filename;
@@ -244,9 +247,12 @@ public:
     AssemblerDialect = i;
   }
 
-  void Note(SMLoc L, const Twine &Msg, SMRange Range = None) override;
-  bool Warning(SMLoc L, const Twine &Msg, SMRange Range = None) override;
-  bool printError(SMLoc L, const Twine &Msg, SMRange Range = None) override;
+  void Note(SMLoc L, const Twine &Msg,
+            ArrayRef<SMRange> Ranges = None) override;
+  bool Warning(SMLoc L, const Twine &Msg,
+               ArrayRef<SMRange> Ranges = None) override;
+  bool Error(SMLoc L, const Twine &Msg,
+             ArrayRef<SMRange> Ranges = None) override;
 
   const AsmToken &Lex() override;
 
@@ -331,8 +337,7 @@ private:
 
   void printMacroInstantiations();
   void printMessage(SMLoc Loc, SourceMgr::DiagKind Kind, const Twine &Msg,
-                    SMRange Range = None) const {
-    ArrayRef<SMRange> Ranges(Range);
+                    ArrayRef<SMRange> Ranges = None) const {
     SrcMgr.PrintMessage(Loc, Kind, Msg, Ranges);
   }
   static void DiagHandler(const SMDiagnostic &Diag, void *Context);
@@ -560,9 +565,8 @@ AsmParser::AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
                      const MCAsmInfo &MAI)
     : Lexer(MAI), Ctx(Ctx), Out(Out), MAI(MAI), SrcMgr(SM),
       PlatformParser(nullptr), CurBuffer(SM.getMainFileID()),
-      MacrosEnabledFlag(true), CppHashInfo(), AssemblerDialect(~0U),
-      IsDarwin(false), ParsingInlineAsm(false) {
-  HadError = false;
+      MacrosEnabledFlag(true), HadError(false), CppHashInfo(),
+      AssemblerDialect(~0U), IsDarwin(false), ParsingInlineAsm(false) {
   // Save the old handler.
   SavedDiagHandler = SrcMgr.getDiagHandler();
   SavedDiagContext = SrcMgr.getDiagContext();
@@ -605,25 +609,24 @@ void AsmParser::printMacroInstantiations() {
                  "while in macro instantiation");
 }
 
-void AsmParser::Note(SMLoc L, const Twine &Msg, SMRange Range) {
-  printPendingErrors();
-  printMessage(L, SourceMgr::DK_Note, Msg, Range);
+void AsmParser::Note(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges) {
+  printMessage(L, SourceMgr::DK_Note, Msg, Ranges);
   printMacroInstantiations();
 }
 
-bool AsmParser::Warning(SMLoc L, const Twine &Msg, SMRange Range) {
+bool AsmParser::Warning(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges) {
   if(getTargetParser().getTargetOptions().MCNoWarn)
     return false;
   if (getTargetParser().getTargetOptions().MCFatalWarnings)
-    return Error(L, Msg, Range);
-  printMessage(L, SourceMgr::DK_Warning, Msg, Range);
+    return Error(L, Msg, Ranges);
+  printMessage(L, SourceMgr::DK_Warning, Msg, Ranges);
   printMacroInstantiations();
   return false;
 }
 
-bool AsmParser::printError(SMLoc L, const Twine &Msg, SMRange Range) {
+bool AsmParser::Error(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges) {
   HadError = true;
-  printMessage(L, SourceMgr::DK_Error, Msg, Range);
+  printMessage(L, SourceMgr::DK_Error, Msg, Ranges);
   printMacroInstantiations();
   return true;
 }
@@ -728,38 +731,32 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
     if (!parseStatement(Info, nullptr))
       continue;
 
-    // If we have a Lexer Error we are on an Error Token. Load in Lexer Error
-    // for printing ErrMsg via Lex() only if no (presumably better) parser error
-    // exists.
-    if (!hasPendingError() && Lexer.getTok().is(AsmToken::Error)) {
+    // If we've failed, but on a Error Token, but did not consume it in
+    // favor of a better message, emit it now.
+    if (Lexer.getTok().is(AsmToken::Error)) {
       Lex();
     }
 
-    // parseStatement returned true so may need to emit an error.
-    printPendingErrors();
-
-    // Skipping to the next line if needed.
-    if (!getLexer().isAtStartOfStatement())
-      eatToEndOfStatement();
+    // We had an error, validate that one was emitted and recover by skipping to
+    // the next line.
+    assert(HadError && "Parse statement returned an error, but none emitted!");
+    eatToEndOfStatement();
   }
-
-  // All errors should have been emitted.
-  assert(!hasPendingError() && "unexpected error from parseStatement");
 
   getTargetParser().flushPendingInstructions(getStreamer());
 
   if (TheCondState.TheCond != StartingCondState.TheCond ||
       TheCondState.Ignore != StartingCondState.Ignore)
-    printError(getTok().getLoc(), "unmatched .ifs or .elses");
+    return TokError("unmatched .ifs or .elses");
+
   // Check to see there are no empty DwarfFile slots.
   const auto &LineTables = getContext().getMCDwarfLineTables();
   if (!LineTables.empty()) {
     unsigned Index = 0;
     for (const auto &File : LineTables.begin()->second.getMCDwarfFiles()) {
       if (File.Name.empty() && Index != 0)
-        printError(getTok().getLoc(), "unassigned file number: " +
-                                          Twine(Index) +
-                                          " for .file directives");
+        TokError("unassigned file number: " + Twine(Index) +
+                 " for .file directives");
       ++Index;
     }
   }
@@ -779,8 +776,9 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
           // FIXME: We would really like to refer back to where the symbol was
           // first referenced for a source location. We need to add something
           // to track that. Currently, we just point to the end of the file.
-          printError(getTok().getLoc(), "assembler local symbol '" +
-                                            Sym->getName() + "' not defined");
+          HadError |=
+              Error(getTok().getLoc(), "assembler local symbol '" +
+                                           Sym->getName() + "' not defined");
       }
     }
 
@@ -791,7 +789,7 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
         // Reset the state of any "# line file" directives we've seen to the
         // context as it was at the diagnostic site.
         CppHashInfo = std::get<1>(LocSym);
-        printError(std::get<0>(LocSym), "directional label undefined");
+        HadError |= Error(std::get<0>(LocSym), "directional label undefined");
       }
     }
   }
@@ -806,8 +804,7 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
 
 void AsmParser::checkForValidSection() {
   if (!ParsingInlineAsm && !getStreamer().getCurrentSection().first) {
-    printError(getTok().getLoc(),
-               "expected section directive before assembly directive");
+    TokError("expected section directive before assembly directive");
     Out.InitSections(false);
   }
 }
@@ -1438,7 +1435,6 @@ bool AsmParser::parseBinOpRHS(unsigned Precedence, const MCExpr *&Res,
 ///   ::= Label* Identifier OperandList* EndOfStatement
 bool AsmParser::parseStatement(ParseStatementInfo &Info,
                                MCAsmParserSemaCallback *SI) {
-  assert(!hasPendingError() && "parseStatement started with pending error");
   // Eat initial spaces and comments
   while (Lexer.is(AsmToken::Space))
     Lex();
@@ -1471,19 +1467,15 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
   if (Lexer.is(AsmToken::Integer)) {
     LocalLabelVal = getTok().getIntVal();
     if (LocalLabelVal < 0) {
-      if (!TheCondState.Ignore) {
-        Lex(); // always eat a token
-        return Error(IDLoc, "unexpected token at start of statement");
-      }
+      if (!TheCondState.Ignore)
+        return TokError("unexpected token at start of statement");
       IDVal = "";
     } else {
       IDVal = getTok().getString();
       Lex(); // Consume the integer token to be used as an identifier token.
       if (Lexer.getKind() != AsmToken::Colon) {
-        if (!TheCondState.Ignore) {
-          Lex(); // always eat a token
-          return Error(IDLoc, "unexpected token at start of statement");
-        }
+        if (!TheCondState.Ignore)
+          return TokError("unexpected token at start of statement");
       }
     }
   } else if (Lexer.is(AsmToken::Dot)) {
@@ -1500,10 +1492,8 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
     Lex();
     IDVal = "}";
   } else if (parseIdentifier(IDVal)) {
-    if (!TheCondState.Ignore) {
-      Lex(); // always eat a token
-      return Error(IDLoc, "unexpected token at start of statement");
-    }
+    if (!TheCondState.Ignore)
+      return TokError("unexpected token at start of statement");
     IDVal = "";
   }
 
@@ -1665,20 +1655,9 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
 
     getTargetParser().flushPendingInstructions(getStreamer());
 
-    SMLoc StartTokLoc = getTok().getLoc();
-    bool TPDirectiveReturn = getTargetParser().ParseDirective(ID);
-
-    if (hasPendingError())
-      return true;
-    // Currently the return value should be true if we are
-    // uninterested but as this is at odds with the standard parsing
-    // convention (return true = error) we have instances of a parsed
-    // directive that fails returning true as an error. Catch these
-    // cases as best as possible errors here.
-    if (TPDirectiveReturn && StartTokLoc != getTok().getLoc())
-      return true;
-    // Return if we did some parsing or believe we succeeded.
-    if (!TPDirectiveReturn || StartTokLoc != getTok().getLoc())
+    // First query the target-specific parser. It will return 'true' if it
+    // isn't interested in this directive.
+    if (!getTargetParser().ParseDirective(ID))
       return false;
 
     // Next, check the extension directive map to see if any extension has
@@ -1933,9 +1912,9 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
   // Canonicalize the opcode to lower case.
   std::string OpcodeStr = IDVal.lower();
   ParseInstructionInfo IInfo(Info.AsmRewrites);
-  bool ParseHadError = getTargetParser().ParseInstruction(IInfo, OpcodeStr, ID,
-                                                          Info.ParsedOperands);
-  Info.ParseError = ParseHadError;
+  bool HadError = getTargetParser().ParseInstruction(IInfo, OpcodeStr, ID,
+                                                     Info.ParsedOperands);
+  Info.ParseError = HadError;
 
   // Dump the parsed representation, if requested.
   if (getShowParsedOperands()) {
@@ -1952,13 +1931,9 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
     printMessage(IDLoc, SourceMgr::DK_Note, OS.str());
   }
 
-  // Fail even if ParseInstruction erroneously returns false.
-  if (hasPendingError() || ParseHadError)
-    return true;
-
   // If we are generating dwarf for the current section then generate a .loc
   // directive for the instruction.
-  if (!ParseHadError && getContext().getGenDwarfForAssembly() &&
+  if (!HadError && getContext().getGenDwarfForAssembly() &&
       getContext().getGenDwarfSectionSyms().count(
           getStreamer().getCurrentSection().first)) {
     unsigned Line;
@@ -2000,13 +1975,15 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
   }
 
   // If parsing succeeded, match the instruction.
-  if (!ParseHadError) {
+  if (!HadError) {
     uint64_t ErrorInfo;
-    if (getTargetParser().MatchAndEmitInstruction(IDLoc, Info.Opcode,
-                                                  Info.ParsedOperands, Out,
-                                                  ErrorInfo, ParsingInlineAsm))
-      return true;
+    getTargetParser().MatchAndEmitInstruction(IDLoc, Info.Opcode,
+                                              Info.ParsedOperands, Out,
+                                              ErrorInfo, ParsingInlineAsm);
   }
+
+  // Don't skip the rest of the line, the instruction parser is responsible for
+  // that.
   return false;
 }
 
@@ -2042,7 +2019,6 @@ bool AsmParser::parseCppHashLineFilenameComment(SMLoc L) {
          "Lexing Cpp line comment: Expected String");
   StringRef Filename = getTok().getString();
   Lex();
-
   // Get rid of the enclosing quotes.
   Filename = Filename.substr(1, Filename.size() - 2);
 
@@ -2377,19 +2353,27 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
     MCAsmMacroParameter FA;
 
     if (Lexer.is(AsmToken::Identifier) && Lexer.peekTok().is(AsmToken::Equal)) {
-      if (parseIdentifier(FA.Name))
-        return Error(IDLoc, "invalid argument identifier for formal argument");
+      if (parseIdentifier(FA.Name)) {
+        Error(IDLoc, "invalid argument identifier for formal argument");
+        eatToEndOfStatement();
+        return true;
+      }
 
-      if (Lexer.isNot(AsmToken::Equal))
-        return TokError("expected '=' after formal parameter identifier");
-
+      if (Lexer.isNot(AsmToken::Equal)) {
+        TokError("expected '=' after formal parameter identifier");
+        eatToEndOfStatement();
+        return true;
+      }
       Lex();
 
       NamedParametersFound = true;
     }
 
-    if (NamedParametersFound && FA.Name.empty())
-      return Error(IDLoc, "cannot mix positional and keyword arguments");
+    if (NamedParametersFound && FA.Name.empty()) {
+      Error(IDLoc, "cannot mix positional and keyword arguments");
+      eatToEndOfStatement();
+      return true;
+    }
 
     bool Vararg = HasVararg && Parameter == (NParameters - 1);
     if (parseMacroArgument(FA.Value, Vararg))
@@ -2404,8 +2388,10 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
 
       if (FAI >= NParameters) {
         assert(M && "expected macro to be defined");
-        return Error(IDLoc, "parameter named '" + FA.Name +
-                                "' does not exist for macro '" + M->Name + "'");
+        Error(IDLoc,
+              "parameter named '" + FA.Name + "' does not exist for macro '" +
+              M->Name + "'");
+        return true;
       }
       PI = FAI;
     }
@@ -3006,14 +2992,11 @@ bool AsmParser::parseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
   if (!HasFillExpr)
     FillExpr = 0;
 
-  // Always emit an alignment here even if we thrown an error.
-  bool ReturnVal = false;
-
   // Compute alignment in bytes.
   if (IsPow2) {
     // FIXME: Diagnose overflow.
     if (Alignment >= 32) {
-      ReturnVal |= Error(AlignmentLoc, "invalid alignment value");
+      Error(AlignmentLoc, "invalid alignment value");
       Alignment = 31;
     }
 
@@ -3025,14 +3008,13 @@ bool AsmParser::parseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
     if (Alignment == 0)
       Alignment = 1;
     if (!isPowerOf2_64(Alignment))
-      ReturnVal |= Error(AlignmentLoc, "alignment must be a power of 2");
+      Error(AlignmentLoc, "alignment must be a power of 2");
   }
 
   // Diagnose non-sensical max bytes to align.
   if (MaxBytesLoc.isValid()) {
     if (MaxBytesToFill < 1) {
-      ReturnVal |= Error(MaxBytesLoc,
-                         "alignment directive can never be satisfied in this "
+      Error(MaxBytesLoc, "alignment directive can never be satisfied in this "
                          "many bytes, ignoring maximum bytes expression");
       MaxBytesToFill = 0;
     }
@@ -3058,7 +3040,7 @@ bool AsmParser::parseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
                                        MaxBytesToFill);
   }
 
-  return ReturnVal;
+  return false;
 }
 
 /// parseDirectiveFile
@@ -3112,7 +3094,7 @@ bool AsmParser::parseDirectiveFile(SMLoc DirectiveLoc) {
       getContext().setGenDwarfForAssembly(false);
     else if (getStreamer().EmitDwarfFileDirective(FileNumber, Directory, Filename) ==
         0)
-      return Error(FileNumberLoc, "file number already allocated");
+      Error(FileNumberLoc, "file number already allocated");
   }
 
   return false;
@@ -3364,7 +3346,7 @@ bool AsmParser::parseDirectiveCVInlineSiteId() {
 
   if (!getStreamer().EmitCVInlineSiteIdDirective(FunctionId, IAFunc, IAFile,
                                                  IALine, IACol, FunctionIdLoc))
-    return Error(FunctionIdLoc, "function id already allocated");
+    Error(FunctionIdLoc, "function id already allocated");
 
   return false;
 }
@@ -4358,9 +4340,9 @@ bool AsmParser::parseDirectiveAbort() {
     return true;
 
   if (Str.empty())
-    return Error(Loc, ".abort detected. Assembly stopping.");
+    Error(Loc, ".abort detected. Assembly stopping.");
   else
-    return Error(Loc, ".abort '" + Str + "' detected. Assembly stopping.");
+    Error(Loc, ".abort '" + Str + "' detected. Assembly stopping.");
   // FIXME: Actually abort assembly here.
 
   return false;
@@ -4505,8 +4487,11 @@ bool AsmParser::parseDirectiveIfc(SMLoc DirectiveLoc, bool ExpectEqual) {
 bool AsmParser::parseDirectiveIfeqs(SMLoc DirectiveLoc, bool ExpectEqual) {
   if (Lexer.isNot(AsmToken::String)) {
     if (ExpectEqual)
-      return TokError("expected string parameter for '.ifeqs' directive");
-    return TokError("expected string parameter for '.ifnes' directive");
+      TokError("expected string parameter for '.ifeqs' directive");
+    else
+      TokError("expected string parameter for '.ifnes' directive");
+    eatToEndOfStatement();
+    return true;
   }
 
   StringRef String1 = getTok().getStringContents();
@@ -4514,17 +4499,22 @@ bool AsmParser::parseDirectiveIfeqs(SMLoc DirectiveLoc, bool ExpectEqual) {
 
   if (Lexer.isNot(AsmToken::Comma)) {
     if (ExpectEqual)
-      return TokError(
-          "expected comma after first string for '.ifeqs' directive");
-    return TokError("expected comma after first string for '.ifnes' directive");
+      TokError("expected comma after first string for '.ifeqs' directive");
+    else
+      TokError("expected comma after first string for '.ifnes' directive");
+    eatToEndOfStatement();
+    return true;
   }
 
   Lex();
 
   if (Lexer.isNot(AsmToken::String)) {
     if (ExpectEqual)
-      return TokError("expected string parameter for '.ifeqs' directive");
-    return TokError("expected string parameter for '.ifnes' directive");
+      TokError("expected string parameter for '.ifeqs' directive");
+    else
+      TokError("expected string parameter for '.ifnes' directive");
+    eatToEndOfStatement();
+    return true;
   }
 
   StringRef String2 = getTok().getStringContents();
@@ -4569,8 +4559,8 @@ bool AsmParser::parseDirectiveIfdef(SMLoc DirectiveLoc, bool expect_defined) {
 bool AsmParser::parseDirectiveElseIf(SMLoc DirectiveLoc) {
   if (TheCondState.TheCond != AsmCond::IfCond &&
       TheCondState.TheCond != AsmCond::ElseIfCond)
-    return Error(DirectiveLoc, "Encountered a .elseif that doesn't follow an"
-                               " .if or  an .elseif");
+    Error(DirectiveLoc, "Encountered a .elseif that doesn't follow a .if or "
+                        " an .elseif");
   TheCondState.TheCond = AsmCond::ElseIfCond;
 
   bool LastIgnoreState = false;
@@ -4604,8 +4594,8 @@ bool AsmParser::parseDirectiveElse(SMLoc DirectiveLoc) {
 
   if (TheCondState.TheCond != AsmCond::IfCond &&
       TheCondState.TheCond != AsmCond::ElseIfCond)
-    return Error(DirectiveLoc, "Encountered a .else that doesn't follow "
-                               " an .if or an .elseif");
+    Error(DirectiveLoc, "Encountered a .else that doesn't follow a .if or an "
+                        ".elseif");
   TheCondState.TheCond = AsmCond::ElseCond;
   bool LastIgnoreState = false;
   if (!TheCondStack.empty())
@@ -4647,14 +4637,18 @@ bool AsmParser::parseDirectiveError(SMLoc L, bool WithMessage) {
 
   StringRef Message = ".error directive invoked in source file";
   if (Lexer.isNot(AsmToken::EndOfStatement)) {
-    if (Lexer.isNot(AsmToken::String))
-      return TokError(".error argument must be a string");
+    if (Lexer.isNot(AsmToken::String)) {
+      TokError(".error argument must be a string");
+      eatToEndOfStatement();
+      return true;
+    }
 
     Message = getTok().getStringContents();
     Lex();
   }
 
-  return Error(L, Message);
+  Error(L, Message);
+  return true;
 }
 
 /// parseDirectiveWarning
@@ -4669,14 +4663,18 @@ bool AsmParser::parseDirectiveWarning(SMLoc L) {
 
   StringRef Message = ".warning directive invoked in source file";
   if (Lexer.isNot(AsmToken::EndOfStatement)) {
-    if (Lexer.isNot(AsmToken::String))
-      return TokError(".warning argument must be a string");
+    if (Lexer.isNot(AsmToken::String)) {
+      TokError(".warning argument must be a string");
+      eatToEndOfStatement();
+      return true;
+    }
 
     Message = getTok().getStringContents();
     Lex();
   }
 
-  return Warning(L, Message);
+  Warning(L, Message);
+  return false;
 }
 
 /// parseDirectiveEndIf
@@ -4687,8 +4685,8 @@ bool AsmParser::parseDirectiveEndIf(SMLoc DirectiveLoc) {
     return true;
 
   if ((TheCondState.TheCond == AsmCond::NoCond) || TheCondStack.empty())
-    return Error(DirectiveLoc, "Encountered a .endif that doesn't follow "
-                               "an .if or .else");
+    Error(DirectiveLoc, "Encountered a .endif that doesn't follow a .if or "
+                        ".else");
   if (!TheCondStack.empty()) {
     TheCondState = TheCondStack.back();
     TheCondStack.pop_back();
@@ -4840,7 +4838,7 @@ MCAsmMacro *AsmParser::parseMacroLikeBody(SMLoc DirectiveLoc) {
   while (true) {
     // Check whether we have reached the end of the file.
     if (getLexer().is(AsmToken::Eof)) {
-      printError(DirectiveLoc, "no matching '.endr' in definition");
+      Error(DirectiveLoc, "no matching '.endr' in definition");
       return nullptr;
     }
 
@@ -4857,8 +4855,7 @@ MCAsmMacro *AsmParser::parseMacroLikeBody(SMLoc DirectiveLoc) {
         EndToken = getTok();
         Lex();
         if (Lexer.isNot(AsmToken::EndOfStatement)) {
-          printError(getTok().getLoc(),
-                     "unexpected token in '.endr' directive");
+          TokError("unexpected token in '.endr' directive");
           return nullptr;
         }
         break;
@@ -4908,6 +4905,7 @@ bool AsmParser::parseDirectiveRept(SMLoc DirectiveLoc, StringRef Dir) {
 
   int64_t Count;
   if (!CountExpr->evaluateAsAbsolute(Count)) {
+    eatToEndOfStatement();
     return Error(CountLoc, "unexpected token in '" + Dir + "' directive");
   }
 
@@ -5110,16 +5108,11 @@ bool AsmParser::parseMSInlineAsm(
       continue;
 
     ParseStatementInfo Info(&AsmStrRewrites);
-    bool StatementErr = parseStatement(Info, &SI);
-
-    if (StatementErr || Info.ParseError) {
-      // Emit pending errors if any exist.
-      printPendingErrors();
+    if (parseStatement(Info, &SI))
       return true;
-    }
 
-    // No pending error should exist here.
-    assert(!hasPendingError() && "unexpected error from parseStatement");
+    if (Info.ParseError)
+      return true;
 
     if (Info.Opcode == ~0U)
       continue;
@@ -5346,6 +5339,7 @@ bool parseAssignmentExpression(StringRef Name, bool allow_redef,
 
   if (Parser.parseExpression(Value)) {
     Parser.TokError("missing expression");
+    Parser.eatToEndOfStatement();
     return true;
   }
 
