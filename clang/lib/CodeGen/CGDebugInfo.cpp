@@ -1644,27 +1644,6 @@ void CGDebugInfo::completeType(const RecordDecl *RD) {
     completeRequiredType(RD);
 }
 
-void CGDebugInfo::completeRequiredType(const RecordDecl *RD) {
-  if (DebugKind <= codegenoptions::DebugLineTablesOnly)
-    return;
-
-  // If this is a dynamic class and we're emitting limited debug info, wait
-  // until the vtable is emitted to complete the class debug info.
-  if (DebugKind <= codegenoptions::LimitedDebugInfo) {
-    if (const auto *CXXDecl = dyn_cast<CXXRecordDecl>(RD))
-      if (CXXDecl->isDynamicClass())
-        return;
-  }
-
-  if (DebugTypeExtRefs && RD->isFromASTFile())
-    return;
-
-  QualType Ty = CGM.getContext().getRecordType(RD);
-  llvm::DIType *T = getTypeOrNull(Ty);
-  if (T && T->isForwardDecl())
-    completeClassData(RD);
-}
-
 void CGDebugInfo::completeClassData(const RecordDecl *RD) {
   if (DebugKind <= codegenoptions::DebugLineTablesOnly)
     return;
@@ -1761,6 +1740,16 @@ static bool shouldOmitDefinition(codegenoptions::DebugInfoKind DebugKind,
     return true;
 
   return false;
+}
+
+void CGDebugInfo::completeRequiredType(const RecordDecl *RD) {
+  if (shouldOmitDefinition(DebugKind, DebugTypeExtRefs, RD, CGM.getLangOpts()))
+    return;
+
+  QualType Ty = CGM.getContext().getRecordType(RD);
+  llvm::DIType *T = getTypeOrNull(Ty);
+  if (T && T->isForwardDecl())
+    completeClassData(RD);
 }
 
 llvm::DIType *CGDebugInfo::CreateType(const RecordType *Ty) {
