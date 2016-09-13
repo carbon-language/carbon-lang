@@ -254,9 +254,8 @@ static bool validDepInterchange(CharMatrix &DepMatrix, unsigned Row,
 
 // Checks if it is legal to interchange 2 loops.
 // [Theorem] A permutation of the loops in a perfect nest is legal if and only
-// if
-// the direction matrix, after the same permutation is applied to its columns,
-// has no ">" direction as the leftmost non-"=" direction in any row.
+// if the direction matrix, after the same permutation is applied to its
+// columns, has no ">" direction as the leftmost non-"=" direction in any row.
 static bool isLegalToInterChangeLoops(CharMatrix &DepMatrix,
                                       unsigned InnerLoopId,
                                       unsigned OuterLoopId) {
@@ -268,8 +267,7 @@ static bool isLegalToInterChangeLoops(CharMatrix &DepMatrix,
     char OuterDep = DepMatrix[Row][OuterLoopId];
     if (InnerDep == '*' || OuterDep == '*')
       return false;
-    else if (!validDepInterchange(DepMatrix, Row, OuterLoopId, InnerDep,
-                                  OuterDep))
+    if (!validDepInterchange(DepMatrix, Row, OuterLoopId, InnerDep, OuterDep))
       return false;
   }
   return true;
