@@ -476,4 +476,27 @@ TEST(CommandLineTest, RemoveFromAllSubCommands) {
   EXPECT_FALSE(cl::ParseCommandLineOptions(3, args2, nullptr, true));
 }
 
+TEST(CommandLineTest, GetRegisteredSubcommands) {
+  cl::ResetCommandLineParser();
+
+  StackSubCommand SC1("sc1", "First Subcommand");
+  StackSubCommand SC2("sc2", "Second subcommand");
+
+  const char *args0[] = {"prog", "sc1"};
+  const char *args1[] = {"prog", "sc2"};
+
+  EXPECT_TRUE(cl::ParseCommandLineOptions(2, args0, nullptr, true));
+  for (auto *S : cl::getRegisteredSubcommands()) {
+    if (*S)
+      EXPECT_STREQ("sc1", S->getName());
+  }
+
+  cl::ResetAllOptionOccurrences();
+  EXPECT_TRUE(cl::ParseCommandLineOptions(2, args1, nullptr, true));
+  for (auto *S : cl::getRegisteredSubcommands()) {
+    if (*S)
+      EXPECT_STREQ("sc2", S->getName());
+  }
+}
+
 }  // anonymous namespace
