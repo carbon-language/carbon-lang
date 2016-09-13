@@ -33,8 +33,8 @@ using SaxpyKernel =
 // Wrapper function converts argument addresses to arguments.
 void SaxpyWrapper(const void *const *ArgumentAddresses) {
   Saxpy(*static_cast<const float *>(ArgumentAddresses[0]),
-        static_cast<float *>(const_cast<void *>(ArgumentAddresses[1])),
-        static_cast<float *>(const_cast<void *>(ArgumentAddresses[2])),
+        *static_cast<float **>(const_cast<void *>(ArgumentAddresses[1])),
+        *static_cast<float **>(const_cast<void *>(ArgumentAddresses[2])),
         *static_cast<const size_t *>(ArgumentAddresses[3]));
 }
 
