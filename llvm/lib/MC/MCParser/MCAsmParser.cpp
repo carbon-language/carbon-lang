@@ -18,7 +18,8 @@
 using namespace llvm;
 
 MCAsmParser::MCAsmParser()
-    : TargetParser(nullptr), ShowParsedOperands(0), HadError(false), PendingErrors() {}
+    : TargetParser(nullptr), ShowParsedOperands(0), HadError(false),
+      PendingErrors() {}
 
 MCAsmParser::~MCAsmParser() {
 }
