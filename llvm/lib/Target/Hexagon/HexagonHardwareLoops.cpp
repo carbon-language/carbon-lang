@@ -411,8 +411,10 @@ bool HexagonHardwareLoops::findInductionRegister(MachineLoop *L,
 
       unsigned PhiOpReg = Phi->getOperand(i).getReg();
       MachineInstr *DI = MRI->getVRegDef(PhiOpReg);
+      unsigned UpdOpc = DI->getOpcode();
+      bool isAdd = (UpdOpc == Hexagon::A2_addi || UpdOpc == Hexagon::A2_addp);
 
-      if (DI->getDesc().isAdd()) {
+      if (isAdd) {
         // If the register operand to the add is the PHI we're looking at, this
         // meets the induction pattern.
         unsigned IndReg = DI->getOperand(1).getReg();
@@ -1590,8 +1592,10 @@ bool HexagonHardwareLoops::fixupInductionVariable(MachineLoop *L) {
 
       unsigned PhiReg = Phi->getOperand(i).getReg();
       MachineInstr *DI = MRI->getVRegDef(PhiReg);
+      unsigned UpdOpc = DI->getOpcode();
+      bool isAdd = (UpdOpc == Hexagon::A2_addi || UpdOpc == Hexagon::A2_addp);
 
-      if (DI->getDesc().isAdd()) {
+      if (isAdd) {
         // If the register operand to the add/sub is the PHI we are looking
         // at, this meets the induction pattern.
         unsigned IndReg = DI->getOperand(1).getReg();
