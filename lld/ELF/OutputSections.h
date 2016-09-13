@@ -805,8 +805,6 @@ public:
                                                     StringRef OutsecName);
 
 private:
-  Key createKey(InputSectionBase<ELFT> *C, StringRef OutsecName);
-
   llvm::SmallDenseMap<Key, OutputSectionBase<ELFT> *> Map;
 };
 
