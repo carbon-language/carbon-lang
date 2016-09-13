@@ -643,30 +643,35 @@ findAllDemangled(const std::map<std::string, std::vector<SymbolBody *>> &D,
   return Res;
 }
 
+// If there's only one anonymous version definition in a version
+// script file, the script does not actullay define any symbol version,
+// but just specifies symbols visibilities. We assume that the script was
+// in the form of { global: foo; bar; local *; }. So, local is default.
+// In this function, we make specified symbols global.
+template <class ELFT> void SymbolTable<ELFT>::handleAnonymousVersion() {
+  std::vector<StringRef> Patterns;
+  for (SymbolVersion &Sym : Config->VersionScriptGlobals) {
+    if (hasWildcard(Sym.Name)) {
+      Patterns.push_back(Sym.Name);
+      continue;
+    }
+    if (SymbolBody *B = find(Sym.Name))
+      B->symbol()->VersionId = VER_NDX_GLOBAL;
+  }
+  if (Patterns.empty())
+    return;
+  Regex Re = compileGlobPatterns(Patterns);
+  std::vector<SymbolBody *> Syms = findAll(Re);
+  for (SymbolBody *B : Syms)
+    B->symbol()->VersionId = VER_NDX_GLOBAL;
+}
+
 // This function processes version scripts by updating VersionId
 // member of symbols.
 template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
-  // If there's only one anonymous version definition in a version
-  // script file, the script does not actullay define any symbol version,
-  // but just specifies symbols visibilities. We assume that the script was
-  // in the form of { global: foo; bar; local *; }. So, local is default.
-  // Here, we make specified symbols global.
+  // Handle edge cases first.
   if (!Config->VersionScriptGlobals.empty()) {
-    std::vector<StringRef> Globs;
-    for (SymbolVersion &Sym : Config->VersionScriptGlobals) {
-      if (hasWildcard(Sym.Name)) {
-        Globs.push_back(Sym.Name);
-        continue;
-      }
-      if (SymbolBody *B = find(Sym.Name))
-        B->symbol()->VersionId = VER_NDX_GLOBAL;
-    }
-    if (Globs.empty())
-      return;
-    Regex Re = compileGlobPatterns(Globs);
-    std::vector<SymbolBody *> Syms = findAll(Re);
-    for (SymbolBody *B : Syms)
-      B->symbol()->VersionId = VER_NDX_GLOBAL;
+    handleAnonymousVersion();
     return;
   }
 

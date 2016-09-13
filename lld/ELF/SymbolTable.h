@@ -102,6 +102,7 @@ private:
   void reportDuplicate(SymbolBody *Existing, InputFile *NewFile);
 
   std::map<std::string, std::vector<SymbolBody *>> getDemangledSyms();
+  void handleAnonymousVersion();
 
   struct SymIndex {
     SymIndex(int Idx, bool Traced) : Idx(Idx), Traced(Traced) {}
