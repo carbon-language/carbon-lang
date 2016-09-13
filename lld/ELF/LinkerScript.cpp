@@ -411,9 +411,6 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
       if (Cmd->AddrExpr)
         Dot = Cmd->AddrExpr(Dot);
 
-      if (Cmd->AlignExpr)
-        Sec->updateAlignment(Cmd->AlignExpr(Dot));
-
       if ((Sec->getFlags() & SHF_TLS) && Sec->getType() == SHT_NOBITS) {
         uintX_t TVA = Dot + ThreadBssOffset;
         TVA = alignTo(TVA, Sec->getAlignment());
