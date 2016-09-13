@@ -182,8 +182,8 @@ static bool populateDependencyMatrix(CharMatrix &DepMatrix, unsigned Level,
 
 // A loop is moved from index 'from' to an index 'to'. Update the Dependence
 // matrix by exchanging the two columns.
-static void interChangeDepedencies(CharMatrix &DepMatrix, unsigned FromIndx,
-                                   unsigned ToIndx) {
+static void interChangeDependencies(CharMatrix &DepMatrix, unsigned FromIndx,
+                                    unsigned ToIndx) {
   unsigned numRows = DepMatrix.size();
   for (unsigned i = 0; i < numRows; ++i) {
     char TmpVal = DepMatrix[i][ToIndx];
@@ -557,7 +557,7 @@ struct LoopInterchange : public FunctionPass {
       std::swap(LoopList[i - 1], LoopList[i]);
 
       // Update the DependencyMatrix
-      interChangeDepedencies(DependencyMatrix, i, i - 1);
+      interChangeDependencies(DependencyMatrix, i, i - 1);
       DT->recalculate(F);
 #ifdef DUMP_DEP_MATRICIES
       DEBUG(dbgs() << "Dependence after inter change \n");
