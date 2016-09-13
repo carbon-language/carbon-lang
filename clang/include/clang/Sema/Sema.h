@@ -7534,6 +7534,14 @@ public:
                ArrayRef<SourceLocation> ProtocolLocs,
                SourceLocation ProtocolRAngleLoc);
 
+  /// Build an Objective-C type parameter type.
+  QualType BuildObjCTypeParamType(const ObjCTypeParamDecl *Decl,
+                                  SourceLocation ProtocolLAngleLoc,
+                                  ArrayRef<ObjCProtocolDecl *> Protocols,
+                                  ArrayRef<SourceLocation> ProtocolLocs,
+                                  SourceLocation ProtocolRAngleLoc,
+                                  bool FailOnError = false);
+
   /// Build an Objective-C object pointer type.
   QualType BuildObjCObjectType(QualType BaseType,
                                SourceLocation Loc,
