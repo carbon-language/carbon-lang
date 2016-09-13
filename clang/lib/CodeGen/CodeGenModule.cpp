@@ -1693,6 +1693,8 @@ namespace {
       : public RecursiveASTVisitor<DLLImportFunctionVisitor> {
     bool SafeToInline = true;
 
+    bool shouldVisitImplicitCode() const { return true; }
+
     bool VisitVarDecl(VarDecl *VD) {
       // A thread-local variable cannot be imported.
       SafeToInline = !VD->getTLSKind();
@@ -1706,6 +1708,10 @@ namespace {
         SafeToInline = VD->hasAttr<DLLImportAttr>();
       else if (VarDecl *V = dyn_cast<VarDecl>(VD))
         SafeToInline = !V->hasGlobalStorage() || V->hasAttr<DLLImportAttr>();
+      return SafeToInline;
+    }
+    bool VisitCXXConstructExpr(CXXConstructExpr *E) {
+      SafeToInline = E->getConstructor()->hasAttr<DLLImportAttr>();
       return SafeToInline;
     }
     bool VisitCXXDeleteExpr(CXXDeleteExpr *E) {
