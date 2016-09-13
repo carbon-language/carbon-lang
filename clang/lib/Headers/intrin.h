@@ -546,6 +546,63 @@ _interlockedbittestandset64(__int64 volatile *_BitBase, __int64 _BitPos) {
       __atomic_fetch_or(_BitBase, 1ll << _BitPos, __ATOMIC_SEQ_CST);
   return (_PrevVal >> _BitPos) & 1;
 }
+/*----------------------------------------------------------------------------*\
+|* Interlocked Exchange Add
+\*----------------------------------------------------------------------------*/
+static __inline__ __int64 __DEFAULT_FN_ATTRS
+_InterlockedExchangeAdd64(__int64 volatile *_Addend, __int64 _Value) {
+	return __atomic_fetch_add(_Addend, _Value, __ATOMIC_SEQ_CST);
+}
+/*----------------------------------------------------------------------------*\
+|* Interlocked Exchange Sub
+\*----------------------------------------------------------------------------*/
+static __inline__ __int64 __DEFAULT_FN_ATTRS
+_InterlockedExchangeSub64(__int64 volatile *_Subend, __int64 _Value) {
+	return __atomic_fetch_sub(_Subend, _Value, __ATOMIC_SEQ_CST);
+}
+/*----------------------------------------------------------------------------*\
+|* Interlocked Increment
+\*----------------------------------------------------------------------------*/
+static __inline__ __int64 __DEFAULT_FN_ATTRS
+_InterlockedIncrement64(__int64 volatile *_Value) {
+	return __atomic_add_fetch(_Value, 1, __ATOMIC_SEQ_CST);
+}
+/*----------------------------------------------------------------------------*\
+|* Interlocked Decrement
+\*----------------------------------------------------------------------------*/
+static __inline__ __int64 __DEFAULT_FN_ATTRS
+_InterlockedDecrement64(__int64 volatile *_Value) {
+	return __atomic_sub_fetch(_Value, 1, __ATOMIC_SEQ_CST);
+}
+/*----------------------------------------------------------------------------*\
+|* Interlocked And
+\*----------------------------------------------------------------------------*/
+static __inline__ __int64 __DEFAULT_FN_ATTRS
+_InterlockedAnd64(__int64 volatile *_Value, __int64 _Mask) {
+	return __atomic_fetch_and(_Value, _Mask, __ATOMIC_SEQ_CST);
+}
+/*----------------------------------------------------------------------------*\
+|* Interlocked Or
+\*----------------------------------------------------------------------------*/
+static __inline__ __int64 __DEFAULT_FN_ATTRS
+_InterlockedOr64(__int64 volatile *_Value, __int64 _Mask) {
+	return __atomic_fetch_or(_Value, _Mask, __ATOMIC_SEQ_CST);
+}
+/*----------------------------------------------------------------------------*\
+|* Interlocked Xor
+\*----------------------------------------------------------------------------*/
+static __inline__ __int64 __DEFAULT_FN_ATTRS
+_InterlockedXor64(__int64 volatile *_Value, __int64 _Mask) {
+	return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_SEQ_CST);
+}
+/*----------------------------------------------------------------------------*\
+|* Interlocked Exchange
+\*----------------------------------------------------------------------------*/
+static __inline__ __int64 __DEFAULT_FN_ATTRS
+_InterlockedExchange64(__int64 volatile *_Target, __int64 _Value) {
+	__atomic_exchange(_Target, &_Value, &_Value, __ATOMIC_SEQ_CST);
+	return _Value;
+}
 #endif
 /*----------------------------------------------------------------------------*\
 |* Barriers

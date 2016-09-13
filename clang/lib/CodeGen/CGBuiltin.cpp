@@ -1963,7 +1963,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI_InterlockedExchange8:
   case Builtin::BI_InterlockedExchange16:
   case Builtin::BI_InterlockedExchange:
-  case Builtin::BI_InterlockedExchange64:
   case Builtin::BI_InterlockedExchangePointer:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Xchg, E);
   case Builtin::BI_InterlockedCompareExchangePointer: {
@@ -2007,8 +2006,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       return RValue::get(Builder.CreateExtractValue(CXI, 0));
   }
   case Builtin::BI_InterlockedIncrement16:
-  case Builtin::BI_InterlockedIncrement:
-  case Builtin::BI_InterlockedIncrement64: {
+  case Builtin::BI_InterlockedIncrement: {
     llvm::Type *IntTy = ConvertType(E->getType());
     AtomicRMWInst *RMWI = Builder.CreateAtomicRMW(
       AtomicRMWInst::Add,
@@ -2018,8 +2016,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateAdd(RMWI, ConstantInt::get(IntTy, 1)));
   }
   case Builtin::BI_InterlockedDecrement16:
-  case Builtin::BI_InterlockedDecrement:
-  case Builtin::BI_InterlockedDecrement64: {
+  case Builtin::BI_InterlockedDecrement: {
     llvm::Type *IntTy = ConvertType(E->getType());
     AtomicRMWInst *RMWI = Builder.CreateAtomicRMW(
       AtomicRMWInst::Sub,
@@ -2031,27 +2028,22 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI_InterlockedAnd8:
   case Builtin::BI_InterlockedAnd16:
   case Builtin::BI_InterlockedAnd:
-  case Builtin::BI_InterlockedAnd64:
     return EmitBinaryAtomic(*this, AtomicRMWInst::And, E);
   case Builtin::BI_InterlockedExchangeAdd8:
   case Builtin::BI_InterlockedExchangeAdd16:
   case Builtin::BI_InterlockedExchangeAdd:
-  case Builtin::BI_InterlockedExchangeAdd64:
     return EmitBinaryAtomic(*this, AtomicRMWInst::Add, E);
   case Builtin::BI_InterlockedExchangeSub8:
   case Builtin::BI_InterlockedExchangeSub16:
   case Builtin::BI_InterlockedExchangeSub:
-  case Builtin::BI_InterlockedExchangeSub64:
     return EmitBinaryAtomic(*this, AtomicRMWInst::Sub, E);
   case Builtin::BI_InterlockedOr8:
   case Builtin::BI_InterlockedOr16:
   case Builtin::BI_InterlockedOr:
-  case Builtin::BI_InterlockedOr64:
     return EmitBinaryAtomic(*this, AtomicRMWInst::Or, E);
   case Builtin::BI_InterlockedXor8:
   case Builtin::BI_InterlockedXor16:
   case Builtin::BI_InterlockedXor:
-  case Builtin::BI_InterlockedXor64:
     return EmitBinaryAtomic(*this, AtomicRMWInst::Xor, E);
   case Builtin::BI__readfsdword: {
     llvm::Type *IntTy = ConvertType(E->getType());
