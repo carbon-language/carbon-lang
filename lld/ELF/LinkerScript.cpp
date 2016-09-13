@@ -216,6 +216,15 @@ template <class ELFT> void LinkerScript<ELFT>::createAssignments() {
 
 template <class ELFT>
 void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
+  auto AddSec = [&](InputSectionBase<ELFT> *Sec, StringRef Name) {
+    OutputSectionBase<ELFT> *OutSec;
+    bool IsNew;
+    std::tie(OutSec, IsNew) = Factory.create(Sec, Name);
+    if (IsNew)
+      OutputSections->push_back(OutSec);
+    return OutSec;
+  };
+
   for (const std::unique_ptr<BaseCommand> &Base1 : Opt.Commands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base1.get())) {
       if (shouldDefine<ELFT>(Cmd))
@@ -235,12 +244,7 @@ void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
         continue;
 
       for (InputSectionBase<ELFT> *Sec : V) {
-        OutputSectionBase<ELFT> *OutSec;
-        bool IsNew;
-        std::tie(OutSec, IsNew) = Factory.create(Sec, Cmd->Name);
-        if (IsNew)
-          OutputSections->push_back(OutSec);
-
+        OutputSectionBase<ELFT> *OutSec = AddSec(Sec, Cmd->Name);
         uint32_t Subalign = Cmd->SubalignExpr ? Cmd->SubalignExpr(0) : 0;
 
         if (Subalign)
@@ -256,11 +260,7 @@ void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
     for (InputSectionBase<ELFT> *S : F->getSections()) {
       if (isDiscarded(S) || S->OutSec)
         continue;
-      OutputSectionBase<ELFT> *OutSec;
-      bool IsNew;
-      std::tie(OutSec, IsNew) = Factory.create(S, getOutputSectionName(S));
-      if (IsNew)
-        OutputSections->push_back(OutSec);
+      OutputSectionBase<ELFT> *OutSec = AddSec(S, getOutputSectionName(S));
       OutSec->addSection(S);
     }
   }
