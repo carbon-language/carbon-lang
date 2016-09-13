@@ -179,7 +179,6 @@ namespace clang {
           Ctx.getDiagnosticHandler();
       void *OldDiagnosticContext = Ctx.getDiagnosticContext();
       Ctx.setDiagnosticHandler(DiagnosticHandler, this);
-      Ctx.setDiagnosticHotnessRequested(CodeGenOpts.DiagnosticsWithHotness);
 
       // Link LinkModule into this module if present, preserving its validity.
       for (auto &I : LinkModules) {
@@ -512,16 +511,9 @@ void BackendConsumer::EmitOptimizationMessage(
   FullSourceLoc Loc = getBestLocationFromDebugLoc(D, BadDebugInfo, Filename,
       Line, Column);
 
-  std::string Msg;
-  raw_string_ostream MsgStream(Msg);
-  MsgStream << D.getMsg().str();
-
-  if (D.getHotness())
-    MsgStream << " (hotness: " << *D.getHotness() << ")";
-
   Diags.Report(Loc, DiagID)
       << AddFlagValue(D.getPassName() ? D.getPassName() : "")
-      << MsgStream.str();
+      << D.getMsg().str();
 
   if (BadDebugInfo)
     // If we were not able to translate the file:line:col information
