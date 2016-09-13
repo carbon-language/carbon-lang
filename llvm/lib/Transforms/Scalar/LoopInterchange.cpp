@@ -75,12 +75,6 @@ static bool populateDependencyMatrix(CharMatrix &DepMatrix, unsigned Level,
   typedef SmallVector<Value *, 16> ValueVector;
   ValueVector MemInstr;
 
-  if (Level > MaxLoopNestDepth) {
-    DEBUG(dbgs() << "Cannot handle loops of depth greater than "
-                 << MaxLoopNestDepth << "\n");
-    return false;
-  }
-
   // For each block.
   for (Loop::block_iterator BB = L->block_begin(), BE = L->block_end();
        BB != BE; ++BB) {
@@ -497,21 +491,26 @@ struct LoopInterchange : public FunctionPass {
   bool processLoopList(LoopVector LoopList, Function &F) {
 
     bool Changed = false;
-    CharMatrix DependencyMatrix;
-    if (LoopList.size() < 2) {
+    unsigned LoopNestDepth = LoopList.size();
+    if (LoopNestDepth < 2) {
       DEBUG(dbgs() << "Loop doesn't contain minimum nesting level.\n");
+      return false;
+    }
+    if (LoopNestDepth > MaxLoopNestDepth) {
+      DEBUG(dbgs() << "Cannot handle loops of depth greater than "
+                   << MaxLoopNestDepth << "\n");
       return false;
     }
     if (!isComputableLoopNest(LoopList)) {
       DEBUG(dbgs() << "Not valid loop candidate for interchange\n");
       return false;
     }
+
+    DEBUG(dbgs() << "Processing LoopList of size = " << LoopNestDepth << "\n");
+
+    CharMatrix DependencyMatrix;
     Loop *OuterMostLoop = *(LoopList.begin());
-
-    DEBUG(dbgs() << "Processing LoopList of size = " << LoopList.size()
-                 << "\n");
-
-    if (!populateDependencyMatrix(DependencyMatrix, LoopList.size(),
+    if (!populateDependencyMatrix(DependencyMatrix, LoopNestDepth,
                                   OuterMostLoop, DI)) {
       DEBUG(dbgs() << "Populating Dependency matrix failed\n");
       return false;
