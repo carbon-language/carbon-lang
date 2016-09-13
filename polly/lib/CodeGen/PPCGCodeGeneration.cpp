@@ -834,7 +834,7 @@ void GPUNodeBuilder::createScopStmt(isl_ast_expr *Expr,
   if (Stmt->isBlockStmt())
     BlockGen.copyStmt(*Stmt, LTS, Indexes);
   else
-    assert(0 && "Region statement not supported\n");
+    RegionGen.copyStmt(*Stmt, LTS, Indexes);
 }
 
 void GPUNodeBuilder::createKernelSync() {
