@@ -309,12 +309,6 @@ public:
     RegisteredSubCommands.erase(sub);
   }
 
-  iterator_range<typename SmallPtrSet<SubCommand *, 4>::iterator>
-  getRegisteredSubcommands() {
-    return make_range(RegisteredSubCommands.begin(),
-                      RegisteredSubCommands.end());
-  }
-
   void reset() {
     ActiveSubCommand = nullptr;
     ProgramName.clear();
@@ -2109,11 +2103,6 @@ StringMap<Option *> &cl::getRegisteredOptions(SubCommand &Sub) {
   (void)Subs;
   assert(is_contained(Subs, &Sub));
   return Sub.OptionsMap;
-}
-
-iterator_range<typename SmallPtrSet<SubCommand *, 4>::iterator>
-cl::getRegisteredSubcommands() {
-  return GlobalParser->getRegisteredSubcommands();
 }
 
 void cl::HideUnrelatedOptions(cl::OptionCategory &Category, SubCommand &Sub) {
