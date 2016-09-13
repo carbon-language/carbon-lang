@@ -713,6 +713,8 @@ Value *GPUNodeBuilder::getArraySize(gpu_array_info *Array) {
     }
 
     Value *NumElements = ExprBuilder.create(Res);
+    if (NumElements->getType() != ArraySize->getType())
+      NumElements = Builder.CreateSExt(NumElements, ArraySize->getType());
     ArraySize = Builder.CreateMul(ArraySize, NumElements);
   }
   isl_ast_build_free(Build);
