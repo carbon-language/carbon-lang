@@ -84,7 +84,7 @@ class SparcAsmParser : public MCTargetAsmParser {
     return getSTI().getTargetTriple().getArch() == Triple::sparcv9;
   }
 
-  bool expandSET(MCInst &Inst, SMLoc IDLoc,
+  void expandSET(MCInst &Inst, SMLoc IDLoc,
                  SmallVectorImpl<MCInst> &Instructions);
 
 public:
@@ -466,7 +466,7 @@ public:
 
 } // end namespace
 
-bool SparcAsmParser::expandSET(MCInst &Inst, SMLoc IDLoc,
+void SparcAsmParser::expandSET(MCInst &Inst, SMLoc IDLoc,
                                SmallVectorImpl<MCInst> &Instructions) {
   MCOperand MCRegOp = Inst.getOperand(0);
   MCOperand MCValOp = Inst.getOperand(1);
@@ -479,8 +479,8 @@ bool SparcAsmParser::expandSET(MCInst &Inst, SMLoc IDLoc,
 
   // Allow either a signed or unsigned 32-bit immediate.
   if (RawImmValue < -2147483648LL || RawImmValue > 4294967295LL) {
-    return Error(IDLoc,
-                 "set: argument must be between -2147483648 and 4294967295");
+    Error(IDLoc, "set: argument must be between -2147483648 and 4294967295");
+    return;
   }
 
   // If the value was expressed as a large unsigned number, that's ok.
@@ -537,7 +537,6 @@ bool SparcAsmParser::expandSET(MCInst &Inst, SMLoc IDLoc,
     TmpInst.addOperand(MCOperand::createExpr(Expr));
     Instructions.push_back(TmpInst);
   }
-  return false;
 }
 
 bool SparcAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
@@ -557,8 +556,7 @@ bool SparcAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       Instructions.push_back(Inst);
       break;
     case SP::SET:
-      if (expandSET(Inst, IDLoc, Instructions))
-        return true;
+      expandSET(Inst, IDLoc, Instructions);
       break;
     }
 
@@ -628,11 +626,13 @@ bool SparcAsmParser::ParseInstruction(ParseInstructionInfo &Info,
     if (getLexer().is(AsmToken::Comma)) {
       if (parseBranchModifiers(Operands) != MatchOperand_Success) {
         SMLoc Loc = getLexer().getLoc();
+        Parser.eatToEndOfStatement();
         return Error(Loc, "unexpected token");
       }
     }
     if (parseOperand(Operands, Name) != MatchOperand_Success) {
       SMLoc Loc = getLexer().getLoc();
+      Parser.eatToEndOfStatement();
       return Error(Loc, "unexpected token");
     }
 
@@ -645,12 +645,14 @@ bool SparcAsmParser::ParseInstruction(ParseInstructionInfo &Info,
       // Parse and remember the operand.
       if (parseOperand(Operands, Name) != MatchOperand_Success) {
         SMLoc Loc = getLexer().getLoc();
+        Parser.eatToEndOfStatement();
         return Error(Loc, "unexpected token");
       }
     }
   }
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     SMLoc Loc = getLexer().getLoc();
+    Parser.eatToEndOfStatement();
     return Error(Loc, "unexpected token");
   }
   Parser.Lex(); // Consume the EndOfStatement.

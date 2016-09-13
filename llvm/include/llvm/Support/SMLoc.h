@@ -15,7 +15,6 @@
 #ifndef LLVM_SUPPORT_SMLOC_H
 #define LLVM_SUPPORT_SMLOC_H
 
-#include "llvm/ADT/None.h"
 #include <cassert>
 
 namespace llvm {
@@ -51,7 +50,6 @@ public:
   SMLoc Start, End;
 
   SMRange() {}
-  SMRange(NoneType) : Start(), End() {}
   SMRange(SMLoc St, SMLoc En) : Start(St), End(En) {
     assert(Start.isValid() == End.isValid() &&
            "Start and end should either both be valid or both be invalid!");
