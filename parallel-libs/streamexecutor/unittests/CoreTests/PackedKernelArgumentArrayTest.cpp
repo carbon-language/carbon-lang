@@ -16,7 +16,7 @@
 #include "streamexecutor/DeviceMemory.h"
 #include "streamexecutor/PackedKernelArgumentArray.h"
 #include "streamexecutor/PlatformDevice.h"
-#include "streamexecutor/unittests/CoreTests/SimpleHostPlatformDevice.h"
+#include "streamexecutor/platforms/host/HostPlatformDevice.h"
 
 #include "llvm/ADT/Twine.h"
 
@@ -41,7 +41,7 @@ public:
         TypedShared(
             se::SharedDeviceMemory<int>::makeFromElementCount(ElementCount)) {}
 
-  se::test::SimpleHostPlatformDevice PDevice;
+  se::host::HostPlatformDevice PDevice;
   se::Device Device;
   int Value;
   void *Handle;
