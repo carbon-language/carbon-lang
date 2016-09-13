@@ -87,18 +87,17 @@ static bool populateDependencyMatrix(CharMatrix &DepMatrix, unsigned Level,
     // Scan the BB and collect legal loads and stores.
     for (BasicBlock::iterator I = (*BB)->begin(), E = (*BB)->end(); I != E;
          ++I) {
-      Instruction *Ins = dyn_cast<Instruction>(I);
-      if (!Ins)
+      if (!isa<Instruction>(I))
         return false;
-      LoadInst *Ld = dyn_cast<LoadInst>(I);
-      StoreInst *St = dyn_cast<StoreInst>(I);
-      if (!St && !Ld)
-        continue;
-      if (Ld && !Ld->isSimple())
-        return false;
-      if (St && !St->isSimple())
-        return false;
-      MemInstr.push_back(&*I);
+      if (LoadInst *Ld = dyn_cast<LoadInst>(I)) {
+        if (!Ld->isSimple())
+          return false;
+        MemInstr.push_back(&*I);
+      } else if (StoreInst *St = dyn_cast<StoreInst>(I)) {
+        if (!St->isSimple())
+          return false;
+        MemInstr.push_back(&*I);
+      }
     }
   }
 
@@ -110,8 +109,8 @@ static bool populateDependencyMatrix(CharMatrix &DepMatrix, unsigned Level,
   for (I = MemInstr.begin(), IE = MemInstr.end(); I != IE; ++I) {
     for (J = I, JE = MemInstr.end(); J != JE; ++J) {
       std::vector<char> Dep;
-      Instruction *Src = dyn_cast<Instruction>(*I);
-      Instruction *Dst = dyn_cast<Instruction>(*J);
+      Instruction *Src = cast<Instruction>(*I);
+      Instruction *Dst = cast<Instruction>(*J);
       if (Src == Dst)
         continue;
       if (isa<LoadInst>(Src) && isa<LoadInst>(Dst))
