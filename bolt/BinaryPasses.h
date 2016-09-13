@@ -257,8 +257,20 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
 /// Perform simple peephole optimizations.
 class Peepholes : public BinaryFunctionPass {
   uint64_t NumDoubleJumps{0};
+  uint64_t TailCallTraps{0};
+
+  /// Attempt to use the minimum operand width for arithmetic, branch and
+  /// move instructions.
   void shortenInstructions(BinaryContext &BC, BinaryFunction &Function);
+
+  /// Replace double jumps with a jump directly to the target, i.e.
+  /// jmp/jcc L1; L1: jmp L2 -> jmp/jcc L2.
   void fixDoubleJumps(BinaryContext &BC, BinaryFunction &Function);
+
+  /// Add trap instructions immediately after indirect tail calls to prevent
+  /// the processor from decoding instructions immediate following the
+  /// tailcall.
+  void addTailcallTraps(BinaryContext &BC, BinaryFunction &Function);
  public:
   explicit Peepholes(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }

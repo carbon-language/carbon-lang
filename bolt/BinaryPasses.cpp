@@ -1087,6 +1087,20 @@ void Peepholes::fixDoubleJumps(BinaryContext &BC,
   }
 }
 
+void Peepholes::addTailcallTraps(BinaryContext &BC,
+                                 BinaryFunction &Function) {
+  for (auto &BB : Function) {
+    auto *Inst = BB.findLastNonPseudoInstruction();
+    if (Inst && BC.MIA->isTailCall(*Inst) && BC.MIA->isIndirectBranch(*Inst)) {
+      MCInst Trap;
+      if (BC.MIA->createTrap(Trap)) {
+        BB.addInstruction(Trap);
+        ++TailCallTraps;
+      }
+    }
+  }
+}
+
 void Peepholes::runOnFunctions(BinaryContext &BC,
                                std::map<uint64_t, BinaryFunction> &BFs,
                                std::set<uint64_t> &LargeFunctions) {
@@ -1095,9 +1109,11 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
     if (shouldOptimize(Function)) {
       shortenInstructions(BC, Function);
       fixDoubleJumps(BC, Function);
+      addTailcallTraps(BC, Function);
     }
   }
   outs() << "BOLT-INFO: " << NumDoubleJumps << " double jumps patched.\n";
+  outs() << "BOLT-INFO: " << TailCallTraps << " tail call traps inserted.\n";
 }
 
 bool SimplifyRODataLoads::simplifyRODataLoads(
