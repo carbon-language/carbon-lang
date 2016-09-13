@@ -4545,8 +4545,8 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
       N0.getOperand(0).getOpcode() == ISD::SRL) {
     SDValue N0Op0 = N0.getOperand(0);
     if (ConstantSDNode *N0Op0C1 = isConstOrConstSplat(N0Op0.getOperand(1))) {
-      uint64_t c1 = N0Op0C1->getZExtValue();
-      if (c1 < VT.getScalarSizeInBits()) {
+      if (N0Op0C1->getAPIntValue().ult(VT.getScalarSizeInBits())) {
+        uint64_t c1 = N0Op0C1->getZExtValue();
         uint64_t c2 = N1C->getZExtValue();
         if (c1 == c2) {
           SDValue NewOp0 = N0.getOperand(0);
