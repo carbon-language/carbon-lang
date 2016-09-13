@@ -1740,8 +1740,17 @@ CodeGenModule::isTriviallyRecursive(const FunctionDecl *FD) {
   return Walker.Result;
 }
 
-bool
-CodeGenModule::shouldEmitFunction(GlobalDecl GD) {
+// Check if T is a class type with a destructor that's not dllimport.
+static bool HasNonDllImportDtor(QualType T) {
+  if (const RecordType *RT = dyn_cast<RecordType>(T))
+    if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
+      if (RD->getDestructor() && !RD->getDestructor()->hasAttr<DLLImportAttr>())
+        return true;
+
+  return false;
+}
+
+bool CodeGenModule::shouldEmitFunction(GlobalDecl GD) {
   if (getFunctionLinkage(GD) != llvm::Function::AvailableExternallyLinkage)
     return true;
   const auto *F = cast<FunctionDecl>(GD.getDecl());
@@ -1754,6 +1763,18 @@ CodeGenModule::shouldEmitFunction(GlobalDecl GD) {
     Visitor.TraverseFunctionDecl(const_cast<FunctionDecl*>(F));
     if (!Visitor.SafeToInline)
       return false;
+
+    if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(F)) {
+      // Implicit destructor invocations aren't captured in the AST, so the
+      // check above can't see them. Check for them manually here.
+      for (const Decl *Member : Dtor->getParent()->decls())
+        if (isa<FieldDecl>(Member))
+          if (HasNonDllImportDtor(cast<FieldDecl>(Member)->getType()))
+            return false;
+      for (const CXXBaseSpecifier &B : Dtor->getParent()->bases())
+        if (HasNonDllImportDtor(B.getType()))
+          return false;
+    }
   }
 
   // PR9614. Avoid cases where the source code is lying to us. An available
