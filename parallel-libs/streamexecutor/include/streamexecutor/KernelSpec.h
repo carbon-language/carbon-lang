@@ -65,11 +65,13 @@
 #define STREAMEXECUTOR_KERNELSPEC_H
 
 #include <cassert>
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace streamexecutor {
@@ -199,6 +201,9 @@ private:
 /// than doing it by hand.
 class MultiKernelLoaderSpec {
 public:
+  /// Type of functions used as host platform kernels.
+  using HostFunctionTy = std::function<void(const void **)>;
+
   std::string getKernelName() const {
     if (TheKernelName)
       return *TheKernelName;
@@ -215,6 +220,7 @@ public:
   bool hasOpenCLTextInMemory() const {
     return TheOpenCLTextInMemorySpec != nullptr;
   }
+  bool hasHostFunction() const { return HostFunction != nullptr; }
 
   // Accessors for platform variant kernel load specifications.
   //
@@ -231,6 +237,11 @@ public:
   const OpenCLTextInMemorySpec &getOpenCLTextInMemory() const {
     assert(hasOpenCLTextInMemory() && "getting spec that is not present");
     return *TheOpenCLTextInMemorySpec;
+  }
+
+  const HostFunctionTy &getHostFunction() const {
+    assert(hasHostFunction() && "getting spec that is not present");
+    return *HostFunction;
   }
 
   // Builder-pattern-like methods for use in initializing a
@@ -256,6 +267,12 @@ public:
   MultiKernelLoaderSpec &addOpenCLTextInMemory(llvm::StringRef KernelName,
                                                const char *OpenCLText);
 
+  MultiKernelLoaderSpec &addHostFunction(llvm::StringRef KernelName,
+                                         HostFunctionTy Function) {
+    HostFunction = llvm::make_unique<HostFunctionTy>(std::move(Function));
+    return *this;
+  }
+
 private:
   void setKernelName(llvm::StringRef KernelName);
 
@@ -263,6 +280,7 @@ private:
   std::unique_ptr<CUDAPTXInMemorySpec> TheCUDAPTXInMemorySpec;
   std::unique_ptr<CUDAFatbinInMemorySpec> TheCUDAFatbinInMemorySpec;
   std::unique_ptr<OpenCLTextInMemorySpec> TheOpenCLTextInMemorySpec;
+  std::unique_ptr<HostFunctionTy> HostFunction;
 };
 
 } // namespace streamexecutor
