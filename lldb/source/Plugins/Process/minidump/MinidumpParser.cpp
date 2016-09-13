@@ -141,8 +141,6 @@ ArchSpec MinidumpParser::GetArchitecture() {
   default:
     triple.setArch(llvm::Triple::ArchType::UnknownArch);
     break;
-  default:
-    break;
   }
 
   const MinidumpOSPlatform os = static_cast<const MinidumpOSPlatform>(
