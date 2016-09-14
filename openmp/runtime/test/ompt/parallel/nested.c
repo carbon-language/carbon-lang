@@ -64,12 +64,20 @@ int main()
   // THREADS: {{^}}[[MASTER_ID]]: level 2: parallel_id=0, task_id=[[PARENT_TASK_ID]], exit_frame=[[NULL]], reenter_frame=[[MAIN_REENTER]]
   // THREADS: {{^}}[[MASTER_ID]]: __builtin_frame_address(0)=[[NESTED_REENTER:0x[0-f]+]]
   // THREADS-NOT: {{^}}[[MASTER_ID]]: ompt_event_implicit_task_end
+  // explicit barrier
   // THREADS: {{^}}[[MASTER_ID]]: ompt_event_barrier_begin: parallel_id=[[NESTED_PARALLEL_ID]], task_id=[[NESTED_IMPLICIT_TASK_ID]]
+  // THREADS: {{^}}[[MASTER_ID]]: level 0: parallel_id=[[NESTED_PARALLEL_ID]], task_id=[[NESTED_IMPLICIT_TASK_ID]], exit_frame=[[NESTED_EXIT]], reenter_frame=[[NESTED_REENTER]]
+  // THREADS: {{^}}[[MASTER_ID]]: ompt_event_barrier_end: parallel_id=[[NESTED_PARALLEL_ID]], task_id=[[NESTED_IMPLICIT_TASK_ID]]
+  // implicit barrier
+  // THREADS: {{^}}[[MASTER_ID]]: ompt_event_barrier_begin: parallel_id=[[NESTED_PARALLEL_ID]], task_id=[[NESTED_IMPLICIT_TASK_ID]]
+  // THREADS: {{^}}[[MASTER_ID]]: level 0: parallel_id=[[NESTED_PARALLEL_ID]], task_id=[[NESTED_IMPLICIT_TASK_ID]], exit_frame=[[NULL]], reenter_frame=[[NULL]]
   // THREADS: {{^}}[[MASTER_ID]]: ompt_event_barrier_end: parallel_id=[[NESTED_PARALLEL_ID]], task_id=[[NESTED_IMPLICIT_TASK_ID]]
   // THREADS: {{^}}[[MASTER_ID]]: ompt_event_implicit_task_end: parallel_id=[[NESTED_PARALLEL_ID]], task_id=[[NESTED_IMPLICIT_TASK_ID]]
   // THREADS: {{^}}[[MASTER_ID]]: ompt_event_parallel_end: parallel_id=[[NESTED_PARALLEL_ID]], task_id=[[IMPLICIT_TASK_ID]], invoker=[[PARALLEL_INVOKER]]
   // THREADS-NOT: {{^}}[[MASTER_ID]]: ompt_event_implicit_task_end
+  // implicit barrier
   // THREADS: {{^}}[[MASTER_ID]]: ompt_event_barrier_begin: parallel_id=[[PARALLEL_ID]], task_id=[[IMPLICIT_TASK_ID]]
+  // THREADS: {{^}}[[MASTER_ID]]: level 0: parallel_id=[[PARALLEL_ID]], task_id=[[IMPLICIT_TASK_ID]], exit_frame=[[NULL]], reenter_frame=[[NULL]]
   // THREADS: {{^}}[[MASTER_ID]]: ompt_event_barrier_end: parallel_id=[[PARALLEL_ID]], task_id=[[IMPLICIT_TASK_ID]]
   // THREADS: {{^}}[[MASTER_ID]]: ompt_event_implicit_task_end: parallel_id=[[PARALLEL_ID]], task_id=[[IMPLICIT_TASK_ID]]
 

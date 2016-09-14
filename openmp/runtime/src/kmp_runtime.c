@@ -1548,6 +1548,7 @@ __kmp_fork_call(
             }
 
 #if OMPT_SUPPORT
+            *exit_runtime_p = NULL;
             if (ompt_enabled) {
 #if OMPT_TRACE
                 lw_taskteam.ompt_task_info.frame.exit_runtime_frame = NULL;
@@ -1745,6 +1746,7 @@ __kmp_fork_call(
                 }
 
 #if OMPT_SUPPORT
+                *exit_runtime_p = NULL;
                 if (ompt_enabled) {
                     lw_taskteam.ompt_task_info.frame.exit_runtime_frame = NULL;
 
@@ -1851,6 +1853,7 @@ __kmp_fork_call(
                 }
 
 #if OMPT_SUPPORT
+                *exit_runtime_p = NULL;
                 if (ompt_enabled) {
 #if OMPT_TRACE
                     lw_taskteam.ompt_task_info.frame.exit_runtime_frame = NULL;
@@ -6838,6 +6841,9 @@ __kmp_invoke_task_func( int gtid )
                                      , exit_runtime_p
 #endif
                                      );
+#if OMPT_SUPPORT
+        *exit_runtime_p = NULL;
+#endif
     }
 
 #if USE_ITT_BUILD
