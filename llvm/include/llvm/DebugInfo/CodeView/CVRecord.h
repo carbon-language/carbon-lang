@@ -11,6 +11,7 @@
 #define LLVM_DEBUGINFO_CODEVIEW_RECORDITERATOR_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/DebugInfo/CodeView/CodeViewError.h"
 #include "llvm/DebugInfo/CodeView/RecordSerialization.h"
@@ -26,6 +27,7 @@ template <typename Kind> struct CVRecord {
   Kind Type;
   ArrayRef<uint8_t> Data;
   ArrayRef<uint8_t> RawData;
+  Optional<uint32_t> Hash;
 };
 }
 namespace msf {
