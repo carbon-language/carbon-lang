@@ -31234,6 +31234,23 @@ static SDValue combineSIntToFP(SDNode *N, SelectionDAG &DAG,
     return DAG.getNode(ISD::SINT_TO_FP, dl, VT, P);
   }
 
+  // Without AVX512DQ we only support i64 to float scalar conversion. For both
+  // vectors and scalars, see if we know that the upper bits are all the sign
+  // bit, in which case we can truncate the input to i32 and convert from that.
+  if (InVT.getScalarSizeInBits() > 32 && !Subtarget.hasDQI()) {
+    unsigned BitWidth = InVT.getScalarSizeInBits();
+    unsigned NumSignBits = DAG.ComputeNumSignBits(Op0);
+    if (NumSignBits >= (BitWidth - 31)) {
+      EVT TruncVT = EVT::getIntegerVT(*DAG.getContext(), 32);
+      if (InVT.isVector())
+        TruncVT = EVT::getVectorVT(*DAG.getContext(), TruncVT,
+                                   InVT.getVectorNumElements());
+      SDLoc dl(N);
+      SDValue Trunc = DAG.getNode(ISD::TRUNCATE, dl, TruncVT, Op0);
+      return DAG.getNode(ISD::SINT_TO_FP, dl, VT, Trunc);
+    }
+  }
+
   // Transform (SINT_TO_FP (i64 ...)) into an x87 operation if we have
   // a 32-bit target where SSE doesn't support i64->FP operations.
   if (!Subtarget.useSoftFloat() && Op0.getOpcode() == ISD::LOAD) {
