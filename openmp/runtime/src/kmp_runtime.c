@@ -1550,7 +1550,7 @@ __kmp_fork_call(
 #if OMPT_SUPPORT
             if (ompt_enabled) {
 #if OMPT_TRACE
-                lw_taskteam.ompt_task_info.frame.exit_runtime_frame = 0;
+                lw_taskteam.ompt_task_info.frame.exit_runtime_frame = NULL;
 
                 if (ompt_callbacks.ompt_callback(ompt_event_implicit_task_end)) {
                     ompt_callbacks.ompt_callback(ompt_event_implicit_task_end)(
@@ -1746,7 +1746,7 @@ __kmp_fork_call(
 
 #if OMPT_SUPPORT
                 if (ompt_enabled) {
-                    lw_taskteam.ompt_task_info.frame.exit_runtime_frame = 0;
+                    lw_taskteam.ompt_task_info.frame.exit_runtime_frame = NULL;
 
 #if OMPT_TRACE
                     if (ompt_callbacks.ompt_callback(ompt_event_implicit_task_end)) {
@@ -1853,7 +1853,7 @@ __kmp_fork_call(
 #if OMPT_SUPPORT
                 if (ompt_enabled) {
 #if OMPT_TRACE
-                    lw_taskteam.ompt_task_info.frame.exit_runtime_frame = 0;
+                    lw_taskteam.ompt_task_info.frame.exit_runtime_frame = NULL;
 
                     if (ompt_callbacks.ompt_callback(ompt_event_implicit_task_end)) {
                         ompt_callbacks.ompt_callback(ompt_event_implicit_task_end)(
@@ -1885,7 +1885,7 @@ __kmp_fork_call(
                 unwrapped_task, ompt_parallel_id);
 
             lwt->ompt_task_info.task_id = __ompt_task_id_new(gtid);
-            lwt->ompt_task_info.frame.exit_runtime_frame = 0;
+            lwt->ompt_task_info.frame.exit_runtime_frame = NULL;
             __ompt_lw_taskteam_link(lwt, master_th);
 #endif
 
@@ -2434,7 +2434,7 @@ __kmp_join_call(ident_t *loc, int gtid
              ompt_callbacks.ompt_callback(ompt_event_implicit_task_end)(
                parallel_id, task_info->task_id);
         }
-        task_info->frame.exit_runtime_frame = 0;
+        task_info->frame.exit_runtime_frame = NULL;
         task_info->task_id = 0;
     }
 #endif
@@ -5503,7 +5503,7 @@ __kmp_launch_thread( kmp_info_t *this_thr )
 #if OMPT_SUPPORT
                 if (ompt_enabled) {
                     /* no frame set while outside task */
-                    task_info->frame.exit_runtime_frame = 0;
+                    task_info->frame.exit_runtime_frame = NULL;
 
                     this_thr->th.ompt_thread_info.state = ompt_state_overhead;
                 }
@@ -5522,7 +5522,7 @@ __kmp_launch_thread( kmp_info_t *this_thr )
                     ompt_callbacks.ompt_callback(ompt_event_implicit_task_end)(
                         my_parallel_id, task_info->task_id);
                 }
-                task_info->frame.exit_runtime_frame = 0;
+                task_info->frame.exit_runtime_frame = NULL;
                 task_info->task_id = 0;
             }
 #endif

@@ -306,7 +306,7 @@ __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
     kmp_team_t *parent_team = master_th->th.th_team;
     if (ompt_enabled) {
        parent_team->t.t_implicit_task_taskdata[tid].
-           ompt_task_info.frame.reenter_runtime_frame = __builtin_frame_address(0);
+           ompt_task_info.frame.reenter_runtime_frame = __builtin_frame_address(1);
     }
 #endif
 
@@ -341,7 +341,7 @@ __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
 #if OMPT_SUPPORT
     if (ompt_enabled) {
         parent_team->t.t_implicit_task_taskdata[tid].
-            ompt_task_info.frame.reenter_runtime_frame = 0;
+            ompt_task_info.frame.reenter_runtime_frame = NULL;
     }
 #endif
   }
@@ -396,7 +396,7 @@ __kmpc_fork_teams(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
     int tid = __kmp_tid_from_gtid( gtid );
     if (ompt_enabled) {
         parent_team->t.t_implicit_task_taskdata[tid].
-           ompt_task_info.frame.reenter_runtime_frame = __builtin_frame_address(0);
+           ompt_task_info.frame.reenter_runtime_frame = __builtin_frame_address(1);
     }
 #endif
 
@@ -678,6 +678,14 @@ __kmpc_barrier(ident_t *loc, kmp_int32 global_tid)
         __kmp_check_barrier( global_tid, ct_barrier, loc );
     }
 
+#if OMPT_SUPPORT && OMPT_TRACE
+    ompt_frame_t * ompt_frame;
+    if (ompt_enabled ) {
+        ompt_frame = &( __kmp_threads[ global_tid ] -> th.th_team -> 
+          t.t_implicit_task_taskdata[__kmp_tid_from_gtid(global_tid)].ompt_task_info.frame);
+        ompt_frame->reenter_runtime_frame = __builtin_frame_address(1);
+    }
+#endif
     __kmp_threads[ global_tid ]->th.th_ident = loc;
     // TODO: explicit barrier_wait_id:
     //   this function is called when 'barrier' directive is present or
@@ -687,6 +695,11 @@ __kmpc_barrier(ident_t *loc, kmp_int32 global_tid)
     // 4) no sync is required
 
     __kmp_barrier( bs_plain_barrier, global_tid, FALSE, 0, NULL, NULL );
+#if OMPT_SUPPORT && OMPT_TRACE
+    if (ompt_enabled ) {
+        ompt_frame->reenter_runtime_frame = NULL;
+    }
+#endif
 }
 
 /* The BARRIER for a MASTER section is always explicit   */

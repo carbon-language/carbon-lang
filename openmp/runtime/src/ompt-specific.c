@@ -257,8 +257,8 @@ __ompt_lw_taskteam_init(ompt_lw_taskteam_t *lwt, kmp_info_t *thr,
     lwt->ompt_team_info.parallel_id = ompt_pid;
     lwt->ompt_team_info.microtask = microtask;
     lwt->ompt_task_info.task_id = 0;
-    lwt->ompt_task_info.frame.reenter_runtime_frame = 0;
-    lwt->ompt_task_info.frame.exit_runtime_frame = 0;
+    lwt->ompt_task_info.frame.reenter_runtime_frame = NULL;
+    lwt->ompt_task_info.frame.exit_runtime_frame = NULL;
     lwt->ompt_task_info.function = NULL;
     lwt->parent = 0;
 }
