@@ -1500,9 +1500,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::UMIN,               MVT::v32i16, Legal);
 
     setTruncStoreAction(MVT::v32i16,  MVT::v32i8, Legal);
-    setTruncStoreAction(MVT::v16i16,  MVT::v16i8, Legal);
-    if (Subtarget.hasVLX())
+    if (Subtarget.hasVLX()) {
+      setTruncStoreAction(MVT::v16i16,  MVT::v16i8, Legal);
       setTruncStoreAction(MVT::v8i16,   MVT::v8i8,  Legal);
+    }
 
     LegalizeAction Action = Subtarget.hasVLX() ? Legal : Custom;
     for (auto VT : { MVT::v32i8, MVT::v16i8, MVT::v16i16, MVT::v8i16 }) {
