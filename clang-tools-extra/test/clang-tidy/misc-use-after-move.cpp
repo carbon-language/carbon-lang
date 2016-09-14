@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s misc-use-after-move %t
+// RUN: %check_clang_tidy %s misc-use-after-move %t -- -- -std=c++11 -fno-delayed-template-parsing
 
 typedef decltype(nullptr) nullptr_t;
 
