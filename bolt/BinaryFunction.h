@@ -285,6 +285,22 @@ private:
   /// the output binary.
   uint32_t AddressRangesOffset{-1U};
 
+  /// Get basic block index assuming it belongs to this function.
+  unsigned getIndex(const BinaryBasicBlock *BB) const {
+    assert(BB->getIndex() < BasicBlocks.size());
+    return BB->getIndex();
+  }
+
+  /// Return basic block that originally contained offset \p Offset
+  /// from the function start.
+  BinaryBasicBlock *getBasicBlockContainingOffset(uint64_t Offset);
+
+  /// Return basic block that started at offset \p Offset.
+  BinaryBasicBlock *getBasicBlockAtOffset(uint64_t Offset) {
+    BinaryBasicBlock *BB = getBasicBlockContainingOffset(Offset);
+    return BB && BB->getOffset() == Offset ? BB : nullptr;
+  }
+
   /// Release memory taken by the list.
   template<typename T> BinaryFunction &clearList(T& List) {
     T TempList;
@@ -597,22 +613,6 @@ public:
   /// fixBranches().
   DynoStats getDynoStats() const;
 
-  /// Get basic block index assuming it belongs to this function.
-  unsigned getIndex(const BinaryBasicBlock *BB) const {
-    assert(BB->getIndex() < BasicBlocks.size());
-    return BB->getIndex();
-  }
-
-  /// Returns the n-th basic block in this function in its original layout, or
-  /// nullptr if n >= size().
-  const BinaryBasicBlock *getBasicBlockAtIndex(unsigned Index) const {
-    return BasicBlocks.at(Index);
-  }
-
-  BinaryBasicBlock *getBasicBlockAtIndex(unsigned Index) {
-    return BasicBlocks.at(Index);
-  }
-
   /// Returns the basic block after the given basic block in the layout or
   /// nullptr the last basic block is given.
   const BinaryBasicBlock *getBasicBlockAfter(const BinaryBasicBlock *BB) const {
@@ -671,6 +671,11 @@ public:
   /// Return original address of the function (or offset from base for PIC).
   uint64_t getAddress() const {
     return Address;
+  }
+
+  /// Get the original address for the given basic block within this function.
+  uint64_t getBasicBlockOriginalAddress(const BinaryBasicBlock *BB) const {
+    return Address + BB->getOffset();
   }
 
   /// Return offset of the function body in the binary file.
@@ -814,18 +819,21 @@ public:
   /// BBs.
   unsigned eraseDeadBBs(std::map<BinaryBasicBlock *, bool> &ToPreserve);
 
-  /// Return basic block that started at offset \p Offset.
-  BinaryBasicBlock *getBasicBlockAtOffset(uint64_t Offset) {
-    BinaryBasicBlock *BB = getBasicBlockContainingOffset(Offset);
-    if (BB && BB->getOffset() == Offset)
-      return BB;
-
-    return nullptr;
+  /// Get the relative order between two basic blocks in the original
+  /// layout.  The result is > 0 if B occurs before A and < 0 if B
+  /// occurs after A.  If A and B are the same block, the result is 0.
+  signed getOriginalLayoutRelativeOrder(const BinaryBasicBlock *A,
+                                        const BinaryBasicBlock *B) const {
+    return getIndex(A) - getIndex(B);
   }
 
-  /// Return basic block that originally contained offset \p Offset
-  /// from the function start.
-  BinaryBasicBlock *getBasicBlockContainingOffset(uint64_t Offset);
+  /// Return basic block range that originally contained offset \p Offset
+  /// from the function start to the function end.
+  iterator_range<iterator> getBasicBlockRangeFromOffsetToEnd(uint64_t Offset) {
+    auto *BB = getBasicBlockContainingOffset(Offset);
+    return BB ? iterator_range<iterator>(BasicBlocks.begin() + getIndex(BB), end())
+      : iterator_range<iterator>(end(), end());
+  }
 
   /// Insert the BBs contained in NewBBs into the basic blocks for this
   /// function. Update the associated state of all blocks as needed, i.e.
@@ -853,6 +861,16 @@ public:
     for (auto *BB : layout()) {
       BB->setLayoutIndex(Index++);
     }
+  }
+
+  /// Determine direction of the branch based on the current layout.
+  /// Callee is responsible of updating basic block indices prior to using
+  /// this function (e.g. by calling BinaryFunction::updateLayoutIndices()).
+  static bool isForwardBranch(const BinaryBasicBlock *From,
+                       const BinaryBasicBlock *To) {
+    assert(From->getFunction() == To->getFunction() &&
+           "basic blocks should be in the same function");
+    return To->getLayoutIndex() > From->getLayoutIndex();
   }
 
   /// Dump function information to debug output. If \p PrintInstructions
@@ -1287,16 +1305,6 @@ callWithDynoStats(FnType &&Func,
     dynoStatsAfter.print(outs(), &dynoStatsBefore);
     outs() << '\n';
   }
-}
-
-/// Determine direction of the branch based on the current layout.
-/// Callee is responsible of updating basic block indices prior to using
-/// this function (e.g. by calling BinaryFunction::updateLayoutIndices()).
-inline bool isForwardBranch(const BinaryBasicBlock *From,
-                            const BinaryBasicBlock *To) {
-  assert(From->getFunction() == To->getFunction() &&
-         "basic blocks should be in the same function");
-  return To->getLayoutIndex() > From->getLayoutIndex();
 }
 
 inline raw_ostream &operator<<(raw_ostream &OS,

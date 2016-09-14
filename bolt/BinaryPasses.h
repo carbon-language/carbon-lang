@@ -318,11 +318,13 @@ class IdenticalCodeFolding : public BinaryFunctionPass {
   /// Map from a binary function to its callers.
   struct CallSite {
     BinaryFunction *Caller;
-    unsigned BlockIndex;
+    BinaryBasicBlock *Block;
     unsigned InstrIndex;
 
-    CallSite(BinaryFunction *Caller, unsigned BlockIndex, unsigned InstrIndex) :
-      Caller(Caller), BlockIndex(BlockIndex), InstrIndex(InstrIndex) { }
+    CallSite(BinaryFunction *Caller,
+             BinaryBasicBlock *Block,
+             unsigned InstrIndex) :
+      Caller(Caller), Block(Block), InstrIndex(InstrIndex) { }
   };
   using CallerMap = std::map<const BinaryFunction *, std::vector<CallSite>>;
   CallerMap Callers;
@@ -364,6 +366,9 @@ class PrintSortedBy : public BinaryFunctionPass {
 
   const char *getName() const override {
     return "print-sorted-by";
+  }
+  bool shouldPrint(const BinaryFunction &) const override {
+    return false;
   }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,

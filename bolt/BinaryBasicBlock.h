@@ -398,18 +398,6 @@ public:
     return Alignment;
   }
 
-  /// Return offset of the basic block from the function start.
-  uint64_t getOffset() const {
-    return Offset;
-  }
-
-  /// Return index in the current layout. The user is responsible for
-  /// making sure the indices are up to date,
-  /// e.g. by calling BinaryFunction::updateLayoutIndices();
-  unsigned getLayoutIndex() const {
-    return LayoutIndex;
-  }
-
   /// Adds block to successor list, and also updates predecessor list for
   /// successor block.
   /// Set branch info for this path.
@@ -597,6 +585,11 @@ private:
   /// Remove landing pads of this basic block.
   void clearLandingPads();
 
+  /// Return offset of the basic block from the function start.
+  uint64_t getOffset() const {
+    return Offset;
+  }
+
   /// Set offset of the basic block from the function start.
   void setOffset(uint64_t NewOffset) {
     Offset = NewOffset;
@@ -610,6 +603,13 @@ private:
   /// Set the index of this basic block.
   void setIndex(unsigned I) {
     Index = I;
+  }
+
+  /// Return index in the current layout. The user is responsible for
+  /// making sure the indices are up to date,
+  /// e.g. by calling BinaryFunction::updateLayoutIndices();
+  unsigned getLayoutIndex() const {
+    return LayoutIndex;
   }
 
   /// Set layout index. To be used by BinaryFunction.

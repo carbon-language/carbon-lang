@@ -31,9 +31,10 @@ void BasicBlockOffsetRanges::addAddressRange(BinaryFunction &Function,
                                              uint64_t BeginAddress,
                                              uint64_t EndAddress,
                                              const BinaryData *Data) {
-  auto FirstBB = Function.getBasicBlockContainingOffset(
-      BeginAddress - Function.getAddress());
-  if (!FirstBB) {
+  auto BBRange = Function.getBasicBlockRangeFromOffsetToEnd(
+    BeginAddress - Function.getAddress());
+
+  if (BBRange.begin() == BBRange.end()) {
     if (opts::Verbosity >= 2) {
       errs() << "BOLT-WARNING: no basic blocks in function "
              << Function << " intersect with debug range [0x"
@@ -43,23 +44,22 @@ void BasicBlockOffsetRanges::addAddressRange(BinaryFunction &Function,
     return;
   }
 
-  for (auto I = Function.getIndex(FirstBB), S = Function.size(); I != S; ++I) {
-    auto BB = Function.getBasicBlockAtIndex(I);
-    uint64_t BBAddress = Function.getAddress() + BB->getOffset();
+  for (auto &BB : BBRange) {
+    uint64_t BBAddress = Function.getBasicBlockOriginalAddress(&BB);
     // Note the special handling for [a, a) address range.
     if (BBAddress >= EndAddress && BeginAddress != EndAddress)
       break;
 
     uint64_t InternalAddressRangeBegin = std::max(BBAddress, BeginAddress);
-    assert(BB->getFunction() == &Function &&
+    assert(BB.getFunction() == &Function &&
            "Mismatching functions.\n");
     uint64_t InternalAddressRangeEnd =
-      std::min(BBAddress + Function.getBasicBlockOriginalSize(BB),
+      std::min(BBAddress + Function.getBasicBlockOriginalSize(&BB),
                EndAddress);
 
     AddressRanges.emplace_back(
         BBAddressRange{
-            BB,
+            &BB,
             static_cast<uint16_t>(InternalAddressRangeBegin - BBAddress),
             static_cast<uint16_t>(InternalAddressRangeEnd - BBAddress),
             Data});

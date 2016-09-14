@@ -1472,7 +1472,7 @@ void BinaryFunction::removeConditionalTailCalls() {
       // Reverse the condition of the tail call and update its target.
       unsigned InsertIdx = getIndex(BB) + 1;
       assert(InsertIdx < size() && "no fall-through for conditional tail call");
-      BinaryBasicBlock *NextBB = getBasicBlockAtIndex(InsertIdx);
+      BinaryBasicBlock *NextBB = BasicBlocks[InsertIdx];
 
       BC.MIA->reverseBranchCondition(
           CondTailCallInst, NextBB->getLabel(), BC.Ctx.get());
@@ -1483,7 +1483,7 @@ void BinaryFunction::removeConditionalTailCalls() {
       TailCallBBs.emplace_back(createBasicBlock(NextBB->getOffset(), TCLabel));
       TailCallBBs[0]->addInstruction(TailCallInst);
       insertBasicBlocks(BB, std::move(TailCallBBs), /* UpdateCFIState */ false);
-      TailCallBB = getBasicBlockAtIndex(InsertIdx);
+      TailCallBB = BasicBlocks[InsertIdx];
 
       // Add the correct CFI state for the new block.
       BBCFIState.insert(BBCFIState.begin() + InsertIdx, TCInfo.CFIStateBefore);
@@ -1857,6 +1857,8 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
                    Code.c_str());
     }
 
+    // analyzeBranch is just used to get the names of the branch
+    // opcodes.
     const MCSymbol *TBB = nullptr;
     const MCSymbol *FBB = nullptr;
     MCInst *CondBranch = nullptr;
@@ -1866,17 +1868,27 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
                                            CondBranch,
                                            UncondBranch);
 
+    const auto *LastInstr = BB->findLastNonPseudoInstruction();
+    const bool IsJumpTable = LastInstr && BC.MIA->getJumpTableIndex(*LastInstr) > 0;
+    
     auto BI = BB->branch_info_begin();
     for (auto *Succ : BB->successors()) {
       std::string Branch;
       if (Success) {
-        if (CondBranch && Succ->getLabel() == TBB) {
-          Branch = BC.InstPrinter->getOpcodeName(CondBranch->getOpcode());
-        } else if(UncondBranch && Succ->getLabel() == TBB) {
-          Branch = BC.InstPrinter->getOpcodeName(UncondBranch->getOpcode());
+        if (Succ == BB->getConditionalSuccessor(true)) {
+          Branch = CondBranch
+            ? BC.InstPrinter->getOpcodeName(CondBranch->getOpcode())
+            : "TB";
+        } else if (Succ == BB->getConditionalSuccessor(false)) {
+          Branch = UncondBranch
+            ? BC.InstPrinter->getOpcodeName(UncondBranch->getOpcode())
+            : "FB";
         } else {
           Branch = "FT";
         }
+      }
+      if (IsJumpTable) {
+        Branch = "JT";
       }
       OS << format("\"%s\" -> \"%s\" [label=\"%s",
                    BB->getName().data(),

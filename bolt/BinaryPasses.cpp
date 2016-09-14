@@ -363,33 +363,31 @@ InlineSmallFunctions::inlineCall(
   // keep a mapping from basic block index to the corresponding block in the
   // inlined instance.
   std::vector<std::unique_ptr<BinaryBasicBlock>> InlinedInstance;
-  std::vector<BinaryBasicBlock *>
-    BBIndexToInlinedInstanceBB(InlinedFunction.size(), nullptr);
+  std::unordered_map<const BinaryBasicBlock *, BinaryBasicBlock *> InlinedBBMap;
+
   for (const auto InlinedFunctionBB : InlinedFunction.layout()) {
     InlinedInstance.emplace_back(CallerFunction.createBasicBlock(0));
-    BBIndexToInlinedInstanceBB[InlinedFunction.getIndex(InlinedFunctionBB)] =
-      InlinedInstance.back().get();
-    if (InlinedFunction.hasValidProfile())
-      InlinedInstance.back()->setExecutionCount(
-          InlinedFunctionBB->getExecutionCount());
+    InlinedBBMap[InlinedFunctionBB] = InlinedInstance.back().get();
+    if (InlinedFunction.hasValidProfile()) {
+      const auto Count = InlinedFunctionBB->getExecutionCount();
+      InlinedInstance.back()->setExecutionCount(Count);
+    }
   }
   if (ShouldSplitCallerBB) {
     // Add one extra block at the inlined instance for the removed part of the
     // caller block.
     InlinedInstance.emplace_back(CallerFunction.createBasicBlock(0));
-    BBIndexToInlinedInstanceBB.push_back(InlinedInstance.back().get());
-    if (CallerFunction.hasValidProfile())
-      InlinedInstance.back()->setExecutionCount(CallerBB->getExecutionCount());
+    if (CallerFunction.hasValidProfile()) {
+      const auto Count = CallerBB->getExecutionCount();
+      InlinedInstance.back()->setExecutionCount(Count);
+    }
   }
 
   // Copy instructions to the basic blocks of the inlined instance.
-  unsigned InlinedInstanceBBIndex = 0;
+  bool First = true;
   for (const auto InlinedFunctionBB : InlinedFunction.layout()) {
     // Get the corresponding block of the inlined instance.
-    auto *InlinedInstanceBB = InlinedInstance[InlinedInstanceBBIndex].get();
-    assert(InlinedInstanceBB ==
-           BBIndexToInlinedInstanceBB[InlinedFunction.getIndex(InlinedFunctionBB)]);
-
+    auto *InlinedInstanceBB = InlinedBBMap.at(InlinedFunctionBB);
     bool IsExitingBlock = false;
 
     // Copy instructions into the inlined instance.
@@ -427,9 +425,7 @@ InlineSmallFunctions::inlineCall(
         const MCSymbol *NewTargetLabel = nullptr;
         for (const auto SuccBB : InlinedFunctionBB->successors()) {
           if (SuccBB->getLabel() == OldTargetLabel) {
-            const auto InlinedInstanceSuccBB =
-              BBIndexToInlinedInstanceBB[InlinedFunction.getIndex(SuccBB)];
-            NewTargetLabel = InlinedInstanceSuccBB->getLabel();
+            NewTargetLabel = InlinedBBMap.at(SuccBB)->getLabel();
             break;
           }
         }
@@ -447,14 +443,15 @@ InlineSmallFunctions::inlineCall(
     // Add CFG edges to the basic blocks of the inlined instance.
     std::vector<BinaryBasicBlock *>
       Successors(InlinedFunctionBB->succ_size(), nullptr);
+
     std::transform(
         InlinedFunctionBB->succ_begin(),
         InlinedFunctionBB->succ_end(),
         Successors.begin(),
-        [&InlinedFunction, &BBIndexToInlinedInstanceBB]
-        (const BinaryBasicBlock *BB) {
-          return BBIndexToInlinedInstanceBB[InlinedFunction.getIndex(BB)];
+        [&InlinedBBMap](const BinaryBasicBlock *BB) {
+          return InlinedBBMap.at(BB);
         });
+
     if (InlinedFunction.hasValidProfile()) {
       InlinedInstanceBB->addSuccessors(
           Successors.begin(),
@@ -478,7 +475,7 @@ InlineSmallFunctions::inlineCall(
           InlinedInstanceBB->addSuccessor(InlinedInstance.back().get());
         }
         InlinedInstanceBB->addBranchInstruction(InlinedInstance.back().get());
-      } else if (InlinedInstanceBBIndex > 0 || !CanMergeFirstInlinedBlock) {
+      } else if (!First || !CanMergeFirstInlinedBlock) {
         assert(CallInstIndex == CallerBB->size() - 1);
         assert(CallerBB->succ_size() <= 1);
         if (CallerBB->succ_size() == 1) {
@@ -494,7 +491,7 @@ InlineSmallFunctions::inlineCall(
       }
     }
 
-    ++InlinedInstanceBBIndex;
+    First = false;
   }
 
   if (ShouldSplitCallerBB) {
@@ -949,7 +946,7 @@ bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
 
       // We don't want to reverse direction of the branch in new order
       // without further profile analysis.
-      if (isForwardBranch(PredBB, BB) != IsForwardCTC)
+      if (BF.isForwardBranch(PredBB, BB) != IsForwardCTC)
         continue;
 
       // Change destination of the unconditional branch.
@@ -1212,7 +1209,6 @@ void IdenticalCodeFolding::discoverCallers(
       continue;
 
     for (BinaryBasicBlock &BB : Caller) {
-      unsigned BlockIndex = Caller.getIndex(&BB);
       unsigned InstrIndex = 0;
 
       for (MCInst &Inst : BB) {
@@ -1235,8 +1231,7 @@ void IdenticalCodeFolding::discoverCallers(
           continue;
         }
         // Insert a tuple in the Callers map.
-        Callers[Function].emplace_back(
-          CallSite(&Caller, BlockIndex, InstrIndex));
+        Callers[Function].emplace_back(CallSite(&Caller, &BB, InstrIndex));
         ++InstrIndex;
       }
     }
@@ -1274,7 +1269,7 @@ void IdenticalCodeFolding::foldFunction(
   for (const CallSite &CS : BFToFoldCallers) {
     // Get call instruction.
     BinaryFunction *Caller = CS.Caller;
-    BinaryBasicBlock *CallBB = Caller->getBasicBlockAtIndex(CS.BlockIndex);
+    BinaryBasicBlock *CallBB = CS.Block;
     MCInst &CallInst = CallBB->getInstructionAtIndex(CS.InstrIndex);
 
     // Replace call target with BFToReplaceWith.

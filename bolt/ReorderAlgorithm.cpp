@@ -218,11 +218,10 @@ void PHGreedyClusterAlgorithm::initQueue(
     // source/destination. This helps to keep original block order for blocks
     // when optimal order cannot be deducted from a profile.
     if (A.Count == B.Count) {
-      uint32_t ASrcBBIndex = BF.getIndex(A.Src);
-      uint32_t BSrcBBIndex = BF.getIndex(B.Src);
-      if (ASrcBBIndex != BSrcBBIndex)
-        return ASrcBBIndex > BSrcBBIndex;
-      return BF.getIndex(A.Dst) > BF.getIndex(B.Dst);
+      const auto SrcOrder = BF.getOriginalLayoutRelativeOrder(A.Src, B.Src);
+      return (SrcOrder != 0)
+        ? SrcOrder > 0
+        : BF.getOriginalLayoutRelativeOrder(A.Dst, B.Dst) > 0;
     }
     return A.Count < B.Count;
   };
@@ -306,11 +305,10 @@ void MinBranchGreedyClusterAlgorithm::adjustQueue(
     // source/destination. This helps to keep original block order for blocks
     // when optimal order cannot be deduced from a profile.
     if (Weight[A] == Weight[B]) {
-      uint32_t ASrcBBIndex = BF.getIndex(A.Src);
-      uint32_t BSrcBBIndex = BF.getIndex(B.Src);
-      if (ASrcBBIndex != BSrcBBIndex)
-        return ASrcBBIndex > BSrcBBIndex;
-      return BF.getIndex(A.Dst) > BF.getIndex(B.Dst);
+      const auto SrcOrder = BF.getOriginalLayoutRelativeOrder(A.Src, B.Src);
+      return (SrcOrder != 0)
+        ? SrcOrder > 0
+        : BF.getOriginalLayoutRelativeOrder(A.Dst, B.Dst) > 0;
     }
     return Weight[A] < Weight[B];
   };
