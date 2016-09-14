@@ -283,7 +283,8 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
                                                     IsReadOnly);
   }
 
-  DEBUG(dbgs() << "BOLT: allocating " << (IsCode ? "code" : "data")
+  DEBUG(dbgs() << "BOLT: allocating "
+               << (IsCode ? "code" : (IsReadOnly ? "read-only data" : "data"))
                << " section : " << SectionName
                << " with size " << Size << ", alignment " << Alignment
                << " at 0x" << ret << "\n");
@@ -1025,7 +1026,7 @@ void RewriteInstance::disassembleFunctions() {
     auto *ContainingFunction = getBinaryFunctionContainingAddress(Addr);
     if (ContainingFunction && ContainingFunction->getAddress() != Addr) {
       if (opts::Verbosity >= 1) {
-        errs() << "BOLT-WARNING: Function " << ContainingFunction
+        errs() << "BOLT-WARNING: Function " << *ContainingFunction
                << " has internal BBs that are target of a reference located in "
                << "another function. Skipping the function.\n";
       }
@@ -1325,8 +1326,10 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
     Streamer.EmitLabel(Function.getFunctionEndLabel());
 
   // Emit LSDA before anything else?
-  if (!EmitColdPart)
+  if (!EmitColdPart) {
     Function.emitLSDA(&Streamer);
+    Function.emitJumpTables(&Streamer);
+  }
 
   // TODO: is there any use in emiting end of function?
   //       Perhaps once we have a support for C++ exceptions.
@@ -1521,7 +1524,8 @@ void RewriteInstance::emitFunctions() {
   // Map special sections to their addresses in the output image.
   //
   // TODO: perhaps we should process all the allocated sections here?
-  std::vector<std::string> Sections = { ".eh_frame", ".gcc_except_table" };
+  std::vector<std::string> Sections = { ".eh_frame", ".gcc_except_table",
+                                        ".rodata" };
   for (auto &SectionName : Sections) {
     auto SMII = EFMM->SectionMapInfo.find(SectionName);
     if (SMII != EFMM->SectionMapInfo.end()) {

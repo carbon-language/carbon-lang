@@ -1068,17 +1068,15 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
       uint64_t TargetAddress;
 
       if (MIA->hasRIPOperand(Inst)) {
-        // Try to find the symbol that corresponds to the rip-relative operand.
-        MCOperand DisplOp;
-        if (!MIA->getRIPOperandDisp(Inst, DisplOp))
-          continue;
-
-        assert(DisplOp.isExpr() &&
-              "found rip-relative with non-symbolic displacement");
+        // Try to find the symbol that corresponds to the RIP-relative operand.
+        auto DispOpI = MIA->getMemOperandDisp(Inst);
+        assert(DispOpI != Inst.end() && "expected RIP-relative displacement");
+        assert(DispOpI->isExpr() &&
+              "found RIP-relative with non-symbolic displacement");
 
         // Get displacement symbol.
         const MCSymbolRefExpr *DisplExpr;
-        if (!(DisplExpr = dyn_cast<MCSymbolRefExpr>(DisplOp.getExpr())))
+        if (!(DisplExpr = dyn_cast<MCSymbolRefExpr>(DispOpI->getExpr())))
           continue;
         const MCSymbol &DisplSymbol = DisplExpr->getSymbol();
 
@@ -1092,7 +1090,7 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
         continue;
       }
 
-      // Get the contents of the section containing the target addresss of the
+      // Get the contents of the section containing the target address of the
       // memory operand. We are only interested in read-only sections.
       ErrorOr<SectionRef> DataSectionOrErr =
         BC.getSectionForAddress(TargetAddress);

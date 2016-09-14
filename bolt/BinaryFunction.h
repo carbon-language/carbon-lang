@@ -404,6 +404,13 @@ private:
   /// function and that apply before the entry basic block).
   CFIInstrMapType CIEFrameInstructions;
 
+  /// Representation of a jump table.
+  struct JumpTable {
+    MCSymbol *StartLabel;
+    std::vector<MCSymbol *> Entries;
+  };
+  std::vector<JumpTable> JumpTables;
+
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
   // the terminating instructions need to be modified.
@@ -673,19 +680,19 @@ public:
     return MaxSize;
   }
 
-  /// Return MC symbol associtated with the function.
+  /// Return MC symbol associated with the function.
   /// All references to the function should use this symbol.
   MCSymbol *getSymbol() {
     return OutputSymbol;
   }
 
-  /// Return MC symbol associtated with the function (const version).
+  /// Return MC symbol associated with the function (const version).
   /// All references to the function should use this symbol.
   const MCSymbol *getSymbol() const {
     return OutputSymbol;
   }
 
-  /// Return MC symbol associtated with the end of the function.
+  /// Return MC symbol associated with the end of the function.
   MCSymbol *getFunctionEndLabel() {
     assert(BC.Ctx && "cannot be called with empty context");
     if (!FunctionEndLabel) {
@@ -782,8 +789,8 @@ public:
   /// Returns NULL if basic block already exists at the \p Offset.
   BinaryBasicBlock *addBasicBlock(uint64_t Offset, MCSymbol *Label,
                                   bool DeriveAlignment = false) {
-    assert(CurrentState == State::CFG ||
-           (!getBasicBlockAtOffset(Offset) && "basic block already exists"));
+    assert((CurrentState == State::CFG || !getBasicBlockAtOffset(Offset)) &&
+           "basic block already exists in pre-CFG state");
     auto BBPtr = createBasicBlock(Offset, Label, DeriveAlignment);
     BasicBlocks.emplace_back(BBPtr.release());
 
@@ -1147,6 +1154,9 @@ public:
 
   /// Emit exception handling ranges for the function.
   void emitLSDA(MCStreamer *Streamer);
+
+  /// Emit jump tables for the function.
+  void emitJumpTables(MCStreamer *Streamer);
 
   /// Merge profile data of this function into those of the given
   /// function. The functions should have been proven identical with

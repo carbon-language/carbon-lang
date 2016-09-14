@@ -313,6 +313,12 @@ void BinaryContext::printInstruction(raw_ostream &OS,
         OS << "; GNU_args_size = " << GnuArgsSize;
     }
   }
+  if (MIA->isIndirectBranch(Instruction)) {
+    auto JTIndex = MIA->getJumpTableIndex(Instruction);
+    if (JTIndex != -1LL) {
+      OS << " # JUMPTABLE " << JTIndex;
+    }
+  }
 
   const DWARFDebugLine::LineTable *LineTable =
     Function && opts::PrintDebugInfo ? Function->getDWARFUnitLineTable().second

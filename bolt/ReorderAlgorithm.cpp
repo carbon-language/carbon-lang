@@ -277,7 +277,7 @@ int64_t MinBranchGreedyClusterAlgorithm::calculateWeight(
         break;
       ++BI;
     }
-    assert(BI != PredBB->branch_info_end() && "invalied control flow graph");
+    assert(BI != PredBB->branch_info_end() && "invalid control flow graph");
     assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
            "attempted reordering blocks of function with no profile data");
     assert(BI->Count <= std::numeric_limits<int64_t>::max() &&
@@ -304,7 +304,7 @@ void MinBranchGreedyClusterAlgorithm::adjustQueue(
   auto Comp = [&] (const EdgeTy &A, const EdgeTy &B) {
     // With equal weights, prioritize branches with lower index
     // source/destination. This helps to keep original block order for blocks
-    // when optimal order cannot be deducted from a profile.
+    // when optimal order cannot be deduced from a profile.
     if (Weight[A] == Weight[B]) {
       uint32_t ASrcBBIndex = BF.getIndex(A.Src);
       uint32_t BSrcBBIndex = BF.getIndex(B.Src);
