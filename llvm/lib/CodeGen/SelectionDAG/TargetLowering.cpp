@@ -432,7 +432,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
                                           TargetLoweringOpt &TLO,
                                           unsigned Depth) const {
   unsigned BitWidth = DemandedMask.getBitWidth();
-  assert(Op.getValueType().getScalarType().getSizeInBits() == BitWidth &&
+  assert(Op.getValueType().getScalarSizeInBits() == BitWidth &&
          "Mask size mismatches value type size!");
   APInt NewMask = DemandedMask;
   SDLoc dl(Op);
@@ -850,7 +850,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       // demand the input sign bit.
       APInt HighBits = APInt::getHighBitsSet(BitWidth, ShAmt);
       if (HighBits.intersects(NewMask))
-        InDemandedMask |= APInt::getSignBit(VT.getScalarType().getSizeInBits());
+        InDemandedMask |= APInt::getSignBit(VT.getScalarSizeInBits());
 
       if (SimplifyDemandedBits(Op.getOperand(0), InDemandedMask,
                                KnownZero, KnownOne, TLO, Depth+1))
@@ -893,9 +893,9 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     APInt MsbMask = APInt::getHighBitsSet(BitWidth, 1);
     // If we only care about the highest bit, don't bother shifting right.
     if (MsbMask == NewMask) {
-      unsigned ShAmt = ExVT.getScalarType().getSizeInBits();
+      unsigned ShAmt = ExVT.getScalarSizeInBits();
       SDValue InOp = Op.getOperand(0);
-      unsigned VTBits = Op->getValueType(0).getScalarType().getSizeInBits();
+      unsigned VTBits = Op->getValueType(0).getScalarSizeInBits();
       bool AlreadySignExtended =
         TLO.DAG.ComputeNumSignBits(InOp) >= VTBits-ShAmt+1;
       // However if the input is already sign extended we expect the sign
@@ -919,17 +919,17 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // present in the input.
     APInt NewBits =
       APInt::getHighBitsSet(BitWidth,
-                            BitWidth - ExVT.getScalarType().getSizeInBits());
+                            BitWidth - ExVT.getScalarSizeInBits());
 
     // If none of the extended bits are demanded, eliminate the sextinreg.
     if ((NewBits & NewMask) == 0)
       return TLO.CombineTo(Op, Op.getOperand(0));
 
     APInt InSignBit =
-      APInt::getSignBit(ExVT.getScalarType().getSizeInBits()).zext(BitWidth);
+      APInt::getSignBit(ExVT.getScalarSizeInBits()).zext(BitWidth);
     APInt InputDemandedBits =
       APInt::getLowBitsSet(BitWidth,
-                           ExVT.getScalarType().getSizeInBits()) &
+                           ExVT.getScalarSizeInBits()) &
       NewMask;
 
     // Since the sign extended bits are demanded, we know that the sign
@@ -985,7 +985,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
   }
   case ISD::ZERO_EXTEND: {
     unsigned OperandBitWidth =
-      Op.getOperand(0).getValueType().getScalarType().getSizeInBits();
+      Op.getOperand(0).getValueType().getScalarSizeInBits();
     APInt InMask = NewMask.trunc(OperandBitWidth);
 
     // If none of the top bits are demanded, convert this into an any_extend.
@@ -1007,7 +1007,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
   }
   case ISD::SIGN_EXTEND: {
     EVT InVT = Op.getOperand(0).getValueType();
-    unsigned InBits = InVT.getScalarType().getSizeInBits();
+    unsigned InBits = InVT.getScalarSizeInBits();
     APInt InMask    = APInt::getLowBitsSet(BitWidth, InBits);
     APInt InSignBit = APInt::getBitsSet(BitWidth, InBits - 1, InBits);
     APInt NewBits   = ~InMask & NewMask;
@@ -1048,7 +1048,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
   }
   case ISD::ANY_EXTEND: {
     unsigned OperandBitWidth =
-      Op.getOperand(0).getValueType().getScalarType().getSizeInBits();
+      Op.getOperand(0).getValueType().getScalarSizeInBits();
     APInt InMask = NewMask.trunc(OperandBitWidth);
     if (SimplifyDemandedBits(Op.getOperand(0), InMask,
                              KnownZero, KnownOne, TLO, Depth+1))
@@ -1062,7 +1062,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // Simplify the input, using demanded bit information, and compute the known
     // zero/one bits live out.
     unsigned OperandBitWidth =
-      Op.getOperand(0).getValueType().getScalarType().getSizeInBits();
+      Op.getOperand(0).getValueType().getScalarSizeInBits();
     APInt TruncMask = NewMask.zext(OperandBitWidth);
     if (SimplifyDemandedBits(Op.getOperand(0), TruncMask,
                              KnownZero, KnownOne, TLO, Depth+1))

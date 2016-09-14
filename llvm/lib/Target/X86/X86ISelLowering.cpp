@@ -28786,7 +28786,7 @@ static SDValue combinePCMPAnd1(SDNode *N, SelectionDAG &DAG) {
   // masked compare nodes, so they should not make it here.
   EVT VT0 = Op0.getValueType();
   EVT VT1 = Op1.getValueType();
-  unsigned EltBitWidth = VT0.getScalarType().getSizeInBits();
+  unsigned EltBitWidth = VT0.getScalarSizeInBits();
   if (VT0 != VT1 || EltBitWidth == 8)
     return SDValue();
 

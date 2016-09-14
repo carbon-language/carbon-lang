@@ -11026,7 +11026,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
                 Add->getOperand(1),
                 APInt::getAllOnesValue(Bits /* alignment */)
                     .zext(
-                        Add.getValueType().getScalarType().getSizeInBits()))) {
+                        Add.getValueType().getScalarSizeInBits()))) {
           SDNode *BasePtr = Add->getOperand(0).getNode();
           for (SDNode::use_iterator UI = BasePtr->use_begin(),
                                     UE = BasePtr->use_end();

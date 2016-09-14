@@ -1518,8 +1518,8 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
   SDValue Amt = N->getOperand(1);
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
   EVT ShTy = Amt.getValueType();
-  unsigned ShBits = ShTy.getScalarType().getSizeInBits();
-  unsigned NVTBits = NVT.getScalarType().getSizeInBits();
+  unsigned ShBits = ShTy.getScalarSizeInBits();
+  unsigned NVTBits = NVT.getScalarSizeInBits();
   assert(isPowerOf2_32(NVTBits) &&
          "Expanded integer type size not a power of two!");
   SDLoc dl(N);
@@ -2364,8 +2364,8 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
     // the new SHL_PARTS operation would need further legalization.
     SDValue ShiftOp = N->getOperand(1);
     EVT ShiftTy = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
-    assert(ShiftTy.getScalarType().getSizeInBits() >=
-           Log2_32_Ceil(VT.getScalarType().getSizeInBits()) &&
+    assert(ShiftTy.getScalarSizeInBits() >=
+           Log2_32_Ceil(VT.getScalarSizeInBits()) &&
            "ShiftAmountTy is too small to cover the range of this type!");
     if (ShiftOp.getValueType() != ShiftTy)
       ShiftOp = DAG.getZExtOrTrunc(ShiftOp, dl, ShiftTy);

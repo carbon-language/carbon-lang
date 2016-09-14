@@ -757,7 +757,7 @@ void AArch64TargetLowering::computeKnownBitsForTargetNode(
     case Intrinsic::aarch64_ldxr: {
       unsigned BitWidth = KnownOne.getBitWidth();
       EVT VT = cast<MemIntrinsicSDNode>(Op)->getMemoryVT();
-      unsigned MemBits = VT.getScalarType().getSizeInBits();
+      unsigned MemBits = VT.getScalarSizeInBits();
       KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - MemBits);
       return;
     }

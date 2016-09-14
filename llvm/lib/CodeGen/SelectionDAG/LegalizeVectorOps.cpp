@@ -770,8 +770,8 @@ SDValue VectorLegalizer::ExpandSEXTINREG(SDValue Op) {
   SDLoc DL(Op);
   EVT OrigTy = cast<VTSDNode>(Op->getOperand(1))->getVT();
 
-  unsigned BW = VT.getScalarType().getSizeInBits();
-  unsigned OrigBW = OrigTy.getScalarType().getSizeInBits();
+  unsigned BW = VT.getScalarSizeInBits();
+  unsigned OrigBW = OrigTy.getScalarSizeInBits();
   SDValue ShiftSz = DAG.getConstant(BW - OrigBW, DL, VT);
 
   Op = Op.getOperand(0);
@@ -961,7 +961,7 @@ SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
   Op2 = DAG.getNode(ISD::BITCAST, DL, VT, Op2);
 
   SDValue AllOnes = DAG.getConstant(
-    APInt::getAllOnesValue(VT.getScalarType().getSizeInBits()), DL, VT);
+    APInt::getAllOnesValue(VT.getScalarSizeInBits()), DL, VT);
   SDValue NotMask = DAG.getNode(ISD::XOR, DL, VT, Mask, AllOnes);
 
   Op1 = DAG.getNode(ISD::AND, DL, VT, Op1, Mask);
