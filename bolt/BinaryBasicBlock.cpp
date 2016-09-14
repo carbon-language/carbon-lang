@@ -126,12 +126,20 @@ void BinaryBasicBlock::addLandingPad(BinaryBasicBlock *LPBlock) {
   LPBlock->Throwers.insert(this);
 }
 
-bool BinaryBasicBlock::analyzeBranch(const MCInstrAnalysis &MIA,
-                                     const MCSymbol *&TBB,
+void BinaryBasicBlock::clearLandingPads() {
+  for (auto *LPBlock : LandingPads) {
+    auto count = LPBlock->Throwers.erase(this);
+    assert(count == 1);
+  }
+  LandingPads.clear();
+}
+
+bool BinaryBasicBlock::analyzeBranch(const MCSymbol *&TBB,
                                      const MCSymbol *&FBB,
                                      MCInst *&CondBranch,
                                      MCInst *&UncondBranch) {
-  return MIA.analyzeBranch(Instructions, TBB, FBB, CondBranch, UncondBranch);
+  auto &MIA = Function->getBinaryContext().MIA;
+  return MIA->analyzeBranch(Instructions, TBB, FBB, CondBranch, UncondBranch);
 }
 
 bool BinaryBasicBlock::swapConditionalSuccessors() {

@@ -240,14 +240,14 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   for (uint32_t I = 0, E = BasicBlocksLayout.size(); I != E; ++I) {
     auto BB = BasicBlocksLayout[I];
     if (I != 0 &&
-        BB->IsCold != BasicBlocksLayout[I - 1]->IsCold)
+        BB->isCold() != BasicBlocksLayout[I - 1]->isCold())
       OS << "-------   HOT-COLD SPLIT POINT   -------\n\n";
 
     OS << BB->getName() << " ("
-       << BB->Instructions.size() << " instructions, align : "
+       << BB->size() << " instructions, align : "
        << BB->getAlignment() << ")\n";
 
-    if (LandingPads.find(BB->getLabel()) != LandingPads.end()) {
+    if (BB->isLandingPad()) {
       OS << "  Landing Pad\n";
     }
 
@@ -258,19 +258,19 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     if (!BBCFIState.empty()) {
       OS << "  CFI State : " << BBCFIState[getIndex(BB)] << '\n';
     }
-    if (!BB->Predecessors.empty()) {
+    if (!BB->pred_empty()) {
       OS << "  Predecessors: ";
       auto Sep = "";
-      for (auto Pred : BB->Predecessors) {
+      for (auto Pred : BB->predecessors()) {
         OS << Sep << Pred->getName();
         Sep = ", ";
       }
       OS << '\n';
     }
-    if (!BB->Throwers.empty()) {
+    if (!BB->throw_empty()) {
       OS << "  Throwers: ";
       auto Sep = "";
-      for (auto Throw : BB->Throwers) {
+      for (auto Throw : BB->throwers()) {
         OS << Sep << Throw->getName();
         Sep = ", ";
       }
@@ -282,12 +282,12 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     // Note: offsets are imprecise since this is happening prior to relaxation.
     Offset = BC.printInstructions(OS, BB->begin(), BB->end(), Offset, this);
 
-    if (!BB->Successors.empty()) {
+    if (!BB->succ_empty()) {
       OS << "  Successors: ";
-      auto BI = BB->BranchInfo.begin();
+      auto BI = BB->branch_info_begin();
       auto Sep = "";
-      for (auto Succ : BB->Successors) {
-        assert(BI != BB->BranchInfo.end() && "missing BranchInfo entry");
+      for (auto Succ : BB->successors()) {
+        assert(BI != BB->branch_info_end() && "missing BranchInfo entry");
         OS << Sep << Succ->getName();
         if (ExecutionCount != COUNT_NO_PROFILE &&
             BI->MispredictedCount != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
@@ -303,13 +303,13 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       OS << '\n';
     }
 
-    if (!BB->LandingPads.empty()) {
+    if (!BB->lp_empty()) {
       OS << "  Landing Pads: ";
       auto Sep = "";
-      for (auto LP : BB->LandingPads) {
+      for (auto LP : BB->landing_pads()) {
         OS << Sep << LP->getName();
         if (ExecutionCount != COUNT_NO_PROFILE) {
-          OS << " (count: " << LP->ExecutionCount << ")";
+          OS << " (count: " << LP->getExecutionCount() << ")";
         }
         Sep = ", ";
       }
@@ -806,12 +806,7 @@ void BinaryFunction::clearLandingPads(const unsigned StartIndex,
                                       const unsigned NumBlocks) {
   // remove all landing pads/throws for the given collection of blocks
   for (auto I = StartIndex; I < StartIndex + NumBlocks; ++I) {
-    auto *BB = BasicBlocks[I];
-    for (auto *LPBlock : BB->LandingPads) {
-      auto count = LPBlock->Throwers.erase(BB);
-      assert(count == 1);
-    }
-    BB->LandingPads.clear();
+    BasicBlocks[I]->clearLandingPads();
   }
 }
 
@@ -839,14 +834,14 @@ void BinaryFunction::recomputeLandingPads(const unsigned StartIndex,
 
   for (auto I = StartIndex; I < StartIndex + NumBlocks; ++I) {
     auto *BB = BasicBlocks[I];
-    for (auto &Instr : BB->Instructions) {
+    for (auto &Instr : BB->instructions()) {
       // Store info about associated landing pad.
       if (BC.MIA->isInvoke(Instr)) {
         const MCSymbol *LP;
         uint64_t Action;
         std::tie(LP, Action) = BC.MIA->getEHInfo(Instr);
         if (LP) {
-          LPToBBIndex[LP].push_back(BB->Index);
+          LPToBBIndex[LP].push_back(getIndex(BB));
         }
       }
     }
@@ -1288,14 +1283,14 @@ void BinaryFunction::inferFallThroughCounts() {
   // Compute preliminary execution time for each basic block
   for (auto CurBB : BasicBlocks) {
     if (CurBB == *BasicBlocks.begin()) {
-      CurBB->ExecutionCount = ExecutionCount;
+      CurBB->setExecutionCount(ExecutionCount);
       continue;
     }
     CurBB->ExecutionCount = 0;
   }
 
   for (auto CurBB : BasicBlocks) {
-    auto SuccCount = CurBB->BranchInfo.begin();
+    auto SuccCount = CurBB->branch_info_begin();
     for (auto Succ : CurBB->successors()) {
       // Do not update execution count of the entry block (when we have tail
       // calls). We already accounted for those when computing the func count.
@@ -1304,7 +1299,7 @@ void BinaryFunction::inferFallThroughCounts() {
         continue;
       }
       if (SuccCount->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
-        Succ->ExecutionCount += SuccCount->Count;
+        Succ->setExecutionCount(Succ->getExecutionCount() + SuccCount->Count);
       ++SuccCount;
     }
   }
@@ -1315,7 +1310,7 @@ void BinaryFunction::inferFallThroughCounts() {
     for (const auto &I : BranchData.EntryData) {
       BinaryBasicBlock *BB = getBasicBlockAtOffset(I.To.Offset);
       if (BB && LandingPads.find(BB->getLabel()) != LandingPads.end()) {
-        BB->ExecutionCount += I.Branches;
+        BB->setExecutionCount(BB->getExecutionCount() + I.Branches);
       }
     }
   }
@@ -1333,7 +1328,7 @@ void BinaryFunction::inferFallThroughCounts() {
     // Calculate frequency of outgoing branches from this node according to
     // LBR data
     uint64_t ReportedBranches = 0;
-    for (auto &SuccCount : CurBB->BranchInfo) {
+    for (auto &SuccCount : CurBB->branch_info()) {
       if (SuccCount.Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
         ReportedBranches += SuccCount.Count;
     }
@@ -1351,8 +1346,8 @@ void BinaryFunction::inferFallThroughCounts() {
     // for a landing pad to be associated with more than one basic blocks,
     // we may overestimate the frequency of throws for such blocks.
     uint64_t ReportedThrows = 0;
-    for (BinaryBasicBlock *LP: CurBB->LandingPads) {
-      ReportedThrows += LP->ExecutionCount;
+    for (BinaryBasicBlock *LP: CurBB->landing_pads()) {
+      ReportedThrows += LP->getExecutionCount();
     }
 
     uint64_t TotalReportedJumps =
@@ -1375,11 +1370,11 @@ void BinaryFunction::inferFallThroughCounts() {
     });
 
     // If there is a FT, the last successor will be it.
-    auto &SuccCount = CurBB->BranchInfo.back();
-    auto &Succ = CurBB->Successors.back();
+    auto &SuccCount = *CurBB->branch_info_rbegin();
+    auto &Succ = *CurBB->succ_rbegin();
     if (SuccCount.Count == BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
       SuccCount.Count = Inferred;
-      Succ->ExecutionCount += Inferred;
+      Succ->setExecutionCount(Succ->getExecutionCount() + Inferred);
     }
 
   } // end for (CurBB : BasicBlocks)
@@ -1448,7 +1443,7 @@ void BinaryFunction::removeConditionalTailCalls() {
       // instruction and place it at the end of the function.
       const BinaryBasicBlock *LastBB = BasicBlocks.back();
       uint64_t NewBlockOffset =
-        LastBB->Offset + BC.computeCodeSize(LastBB->begin(), LastBB->end());
+        LastBB->getOffset() + BC.computeCodeSize(LastBB->begin(), LastBB->end());
       TailCallBB = addBasicBlock(NewBlockOffset, TCLabel);
       TailCallBB->addInstruction(TailCallInst);
 
@@ -1471,7 +1466,7 @@ void BinaryFunction::removeConditionalTailCalls() {
 
     // Add execution count for the block.
     if (hasValidProfile())
-      TailCallBB->ExecutionCount = TCInfo.Count;
+      TailCallBB->setExecutionCount(TCInfo.Count);
   }
 }
 
@@ -1599,7 +1594,7 @@ bool BinaryFunction::fixCFIState() {
     // Hot-cold border: check if this is the first BB to be allocated in a cold
     // region (a different FDE). If yes, we need to reset the CFI state and
     // the FDEStartBB that is used to insert remember_state CFIs (t12863876).
-    if (I != 0 && BB->IsCold != BasicBlocksLayout[I - 1]->IsCold) {
+    if (I != 0 && BB->isCold() != BasicBlocksLayout[I - 1]->isCold()) {
       State = 0;
       FDEStartBB = BB;
     }
@@ -1794,7 +1789,7 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
                  BB->getName().data(),
                  BB->getName().data(),
                  BB->getOffset(),
-                 BB->Index,
+                 getIndex(BB),
                  Layout);
     OS << format("\"%s\" [shape=box]\n", BB->getName().data());
     if (opts::DotToolTipCode) {
@@ -1811,13 +1806,12 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
     const MCSymbol *FBB = nullptr;
     MCInst *CondBranch = nullptr;
     MCInst *UncondBranch = nullptr;
-    const bool Success = BC.MIA->analyzeBranch(BB->Instructions,
-                                               TBB,
-                                               FBB,
-                                               CondBranch,
-                                               UncondBranch);
+    const bool Success = BB->analyzeBranch(TBB,
+                                           FBB,
+                                           CondBranch,
+                                           UncondBranch);
 
-    unsigned Idx = 0;
+    auto BI = BB->branch_info_begin();
     for (auto *Succ : BB->successors()) {
       std::string Branch;
       if (Success) {
@@ -1834,19 +1828,18 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
                    Succ->getName().data(),
                    Branch.c_str());
 
-      const auto &BI = BB->BranchInfo[Idx];
-      if (BB->ExecutionCount != COUNT_NO_PROFILE &&
-          BI.MispredictedCount != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
-        OS << "\\n(M:" << BI.MispredictedCount << ",C:" << BI.Count << ")";
+      if (BB->getExecutionCount() != COUNT_NO_PROFILE &&
+          BI->MispredictedCount != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+        OS << "\\n(M:" << BI->MispredictedCount << ",C:" << BI->Count << ")";
       } else if (ExecutionCount != COUNT_NO_PROFILE &&
-                 BI.Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
-        OS << "\\n(IC:" << BI.Count << ")";
+                 BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+        OS << "\\n(IC:" << BI->Count << ")";
       }
       OS << "\"]\n";
 
-      ++Idx;
+      ++BI;
     }
-    for (auto *LP : BB->LandingPads) {
+    for (auto *LP : BB->landing_pads()) {
       OS << format("\"%s\" -> \"%s\" [constraint=false style=dashed]\n",
                    BB->getName().data(),
                    LP->getName().data());
@@ -1901,8 +1894,7 @@ void BinaryFunction::fixBranches() {
     const MCSymbol *FBB = nullptr;
     MCInst *CondBranch = nullptr;
     MCInst *UncondBranch = nullptr;
-    if (!MIA->analyzeBranch(BB->Instructions, TBB, FBB, CondBranch,
-                            UncondBranch))
+    if (!BB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch))
       continue;
 
     // We will create unconditional branch with correct destination if needed.
@@ -1911,7 +1903,7 @@ void BinaryFunction::fixBranches() {
 
     // Basic block that follows the current one in the final layout.
     const BinaryBasicBlock *NextBB = nullptr;
-    if (I + 1 != E && BB->IsCold == BasicBlocksLayout[I + 1]->IsCold)
+    if (I + 1 != E && BB->isCold() == BasicBlocksLayout[I + 1]->isCold())
       NextBB = BasicBlocksLayout[I + 1];
 
     if (BB->succ_size() == 1) {
@@ -1961,19 +1953,19 @@ void BinaryFunction::splitFunction() {
   assert(BasicBlocksLayout.size() > 0);
 
   // Never outline the first basic block.
-  BasicBlocks.front()->CanOutline = false;
+  BasicBlocks.front()->setCanOutline(false);
   for (auto BB : BasicBlocks) {
-    if (!BB->CanOutline)
+    if (!BB->canOutline())
       continue;
     if (BB->getExecutionCount() != 0) {
-      BB->CanOutline = false;
+      BB->setCanOutline(false);
       continue;
     }
     if (hasEHRanges()) {
       // We cannot move landing pads (or rather entry points for landing
       // pads).
-      if (LandingPads.find(BB->getLabel()) != LandingPads.end()) {
-        BB->CanOutline = false;
+      if (BB->isLandingPad()) {
+        BB->setCanOutline(false);
         continue;
       }
       // We cannot move a block that can throw since exception-handling
@@ -1982,7 +1974,7 @@ void BinaryFunction::splitFunction() {
       // decrease the size of the function.
       for (auto &Instr : *BB) {
         if (BC.MIA->isInvoke(Instr)) {
-          BB->CanOutline = false;
+          BB->setCanOutline(false);
           break;
         }
       }
@@ -2000,7 +1992,7 @@ void BinaryFunction::splitFunction() {
     // We cannot move beginning of landing pads, but we can move 0-count blocks
     // comprising landing pads to the end and thus facilitating splitting.
     auto FirstLP = BasicBlocksLayout.begin();
-    while (LandingPads.find((*FirstLP)->getLabel()) != LandingPads.end())
+    while ((*FirstLP)->isLandingPad())
       ++FirstLP;
 
     std::stable_sort(FirstLP, BasicBlocksLayout.end(),
@@ -2015,7 +2007,7 @@ void BinaryFunction::splitFunction() {
     BinaryBasicBlock *BB = *I;
     if (!BB->canOutline())
       break;
-    BB->IsCold = true;
+    BB->setIsCold(true);
     IsSplit = true;
   }
 }
@@ -2085,13 +2077,13 @@ void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {
         OldExecCount == BinaryBasicBlock::COUNT_NO_PROFILE ?
           MyBBExecutionCount :
           MyBBExecutionCount + OldExecCount;
-      BBMerge->ExecutionCount = NewExecCount;
+      BBMerge->setExecutionCount(NewExecCount);
     }
 
     // Update BF's edge count for successors of this basic block.
     auto BBMergeSI = BBMerge->succ_begin();
-    auto BII = BB->BranchInfo.begin();
-    auto BIMergeI = BBMerge->BranchInfo.begin();
+    auto BII = BB->branch_info_begin();
+    auto BIMergeI = BBMerge->branch_info_begin();
     for (BinaryBasicBlock *BBSucc : BB->successors()) {
       BinaryBasicBlock *BBMergeSucc = *BBMergeSI;
       assert(getIndex(BBSucc) == BF.getIndex(BBMergeSucc));
@@ -2449,7 +2441,7 @@ void BinaryFunction::insertBasicBlocks(
     auto *BB = BasicBlocks[I];
     BB->setOffset(Offset);
     Offset += BC.computeCodeSize(BB->begin(), BB->end());
-    BB->Index = I;
+    BB->setIndex(I);
   }
 
   if (UpdateCFIState) {
@@ -2470,8 +2462,8 @@ void BinaryFunction::updateLayout(BinaryBasicBlock* Start,
   // Insert new blocks in the layout immediately after Start.
   auto Pos = std::find(layout_begin(), layout_end(), Start);
   assert(Pos != layout_end());
-  auto Begin = &BasicBlocks[Start->Index + 1];
-  auto End = &BasicBlocks[Start->Index + NumNewBlocks + 1];
+  auto Begin = &BasicBlocks[getIndex(Start) + 1];
+  auto End = &BasicBlocks[getIndex(Start) + NumNewBlocks + 1];
   BasicBlocksLayout.insert(Pos + 1, Begin, End);
 }
 
@@ -2527,7 +2519,7 @@ void BinaryFunction::calculateLoopInfo() {
     L->getLoopLatches(Latches);
 
     for (BinaryBasicBlock *Latch : Latches) {
-      auto BI = Latch->BranchInfo.begin();
+      auto BI = Latch->branch_info_begin();
       for (BinaryBasicBlock *Succ : Latch->successors()) {
         if (Succ == L->getHeader()) {
           assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
@@ -2547,7 +2539,7 @@ void BinaryFunction::calculateLoopInfo() {
     for (BinaryLoop::Edge &Exit : ExitEdges) {
       const BinaryBasicBlock *Exiting = Exit.first;
       const BinaryBasicBlock *ExitTarget = Exit.second;
-      auto BI = Exiting->BranchInfo.begin();
+      auto BI = Exiting->branch_info_begin();
       for (BinaryBasicBlock *Succ : Exiting->successors()) {
         if (Succ == ExitTarget) {
           assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
@@ -2627,7 +2619,7 @@ DynoStats BinaryFunction::getDynoStats() const {
     // basic block especially since the block may contain a function that
     // does not return or a function that throws an exception.
     uint64_t BBExecutionCount = 0;
-    for (const auto &BI : BB->BranchInfo)
+    for (const auto &BI : BB->branch_info())
       if (BI.Count != BinaryBasicBlock::COUNT_NO_PROFILE)
         BBExecutionCount += BI.Count;
 
@@ -2652,8 +2644,7 @@ DynoStats BinaryFunction::getDynoStats() const {
     const MCSymbol *FBB = nullptr;
     MCInst *CondBranch = nullptr;
     MCInst *UncondBranch = nullptr;
-    if (!BC.MIA->analyzeBranch(BB->Instructions, TBB, FBB, CondBranch,
-                               UncondBranch)) {
+    if (!BB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch)) {
       continue;
     }
 

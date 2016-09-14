@@ -584,8 +584,8 @@ public:
 
   /// Get basic block index assuming it belongs to this function.
   unsigned getIndex(const BinaryBasicBlock *BB) const {
-    assert(BB->Index < BasicBlocks.size());
-    return BB->Index;
+    assert(BB->getIndex() < BasicBlocks.size());
+    return BB->getIndex();
   }
 
   /// Returns the n-th basic block in this function in its original layout, or
@@ -764,7 +764,7 @@ public:
       Label = BC.Ctx->createTempSymbol("BB", true);
     }
     auto BB = std::unique_ptr<BinaryBasicBlock>(
-      new BinaryBasicBlock(Label, this, Offset));
+      new BinaryBasicBlock(this, Label, Offset));
 
     if (DeriveAlignment) {
       uint64_t DerivedAlignment = Offset & (1 + ~Offset);
@@ -788,7 +788,7 @@ public:
     BasicBlocks.emplace_back(BBPtr.release());
 
     auto BB = BasicBlocks.back();
-    BB->Index = BasicBlocks.size() - 1;
+    BB->setIndex(BasicBlocks.size() - 1);
 
     assert(CurrentState == State::CFG || std::is_sorted(begin(), end()));
 
@@ -802,7 +802,7 @@ public:
   /// Return basic block that started at offset \p Offset.
   BinaryBasicBlock *getBasicBlockAtOffset(uint64_t Offset) {
     BinaryBasicBlock *BB = getBasicBlockContainingOffset(Offset);
-    if (BB && BB->Offset == Offset)
+    if (BB && BB->getOffset() == Offset)
       return BB;
 
     return nullptr;
@@ -1192,7 +1192,7 @@ public:
   size_t estimateHotSize() const {
     size_t Estimate = 0;
     for (const auto *BB : BasicBlocksLayout) {
-      if (BB->ExecutionCount != 0) {
+      if (BB->getExecutionCount() != 0) {
         Estimate += BC.computeCodeSize(BB->begin(), BB->end());
       }
     }

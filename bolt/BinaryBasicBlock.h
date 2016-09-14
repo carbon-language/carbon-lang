@@ -25,7 +25,6 @@
 #include <set>
 
 namespace llvm {
-class MCInstrAnalysis;
 namespace bolt {
 
 class BinaryFunction;
@@ -41,11 +40,23 @@ public:
   };
 
 private:
-  /// Label associated with the block.
-  MCSymbol *Label{nullptr};
+  /// Vector of all instructions in the block.
+  std::vector<MCInst> Instructions;
+
+  /// CFG information.
+  std::vector<BinaryBasicBlock *> Predecessors;
+  std::vector<BinaryBasicBlock *> Successors;
+  std::set<BinaryBasicBlock *> Throwers;
+  std::set<BinaryBasicBlock *> LandingPads;
+
+  /// Each successor has a corresponding BranchInfo entry in the list.
+  std::vector<BinaryBranchInfo> BranchInfo;
 
   /// Function that owns this basic block.
   BinaryFunction *Function;
+
+  /// Label associated with the block.
+  MCSymbol *Label{nullptr};
 
   /// Label associated with the end of the block in the output binary.
   const MCSymbol *EndLabel{nullptr};
@@ -59,6 +70,9 @@ private:
   /// Alignment requirements for the block.
   uint64_t Alignment{1};
 
+  /// Number of times this basic block was executed.
+  uint64_t ExecutionCount{COUNT_NO_PROFILE};
+
   /// Index to BasicBlocks vector in BinaryFunction.
   unsigned Index{~0u};
 
@@ -68,9 +82,6 @@ private:
   /// Number of pseudo instructions in this block.
   uint32_t NumPseudos{0};
 
-  /// Number of times this basic block was executed.
-  uint64_t ExecutionCount{COUNT_NO_PROFILE};
-
   /// In cases where the parent function has been split, IsCold == true means
   /// this BB will be allocated outside its parent function.
   bool IsCold{false};
@@ -78,25 +89,14 @@ private:
   /// Indicates if the block could be outlined.
   bool CanOutline{true};
 
-  /// Vector of all instructions in the block.
-  std::vector<MCInst> Instructions;
-
-  /// CFG information.
-  std::vector<BinaryBasicBlock *> Predecessors;
-  std::vector<BinaryBasicBlock *> Successors;
-  std::set<BinaryBasicBlock *> Throwers;
-  std::set<BinaryBasicBlock *> LandingPads;
-
-  /// Each successor has a corresponding BranchInfo entry in the list.
-  std::vector<BinaryBranchInfo> BranchInfo;
-
-  BinaryBasicBlock() {}
+private:
+  BinaryBasicBlock() = delete;
 
   explicit BinaryBasicBlock(
-      MCSymbol *Label,
       BinaryFunction *Function,
+      MCSymbol *Label,
       uint64_t Offset = std::numeric_limits<uint64_t>::max())
-    : Label(Label), Function(Function), Offset(Offset) {}
+    : Function(Function), Label(Label), Offset(Offset) {}
 
   explicit BinaryBasicBlock(uint64_t Offset)
     : Offset(Offset) {}
@@ -113,10 +113,10 @@ public:
       std::numeric_limits<uint64_t>::max();
 
   // Instructions iterators.
-  typedef std::vector<MCInst>::iterator                                iterator;
-  typedef std::vector<MCInst>::const_iterator                    const_iterator;
-  typedef std::reverse_iterator<const_iterator>          const_reverse_iterator;
-  typedef std::reverse_iterator<iterator>                      reverse_iterator;
+  using iterator       = std::vector<MCInst>::iterator;
+  using const_iterator = std::vector<MCInst>::const_iterator;
+  using reverse_iterator       = std::reverse_iterator<iterator>;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
   bool         empty()            const { return Instructions.empty(); }
   unsigned     size()     const { return (unsigned)Instructions.size(); }
@@ -135,30 +135,19 @@ public:
   const_reverse_iterator rend  () const { return Instructions.rend();   }
 
   // CFG iterators.
-  typedef std::vector<BinaryBasicBlock *>::iterator       pred_iterator;
-  typedef std::vector<BinaryBasicBlock *>::const_iterator const_pred_iterator;
-  typedef std::vector<BinaryBasicBlock *>::iterator       succ_iterator;
-  typedef std::vector<BinaryBasicBlock *>::const_iterator const_succ_iterator;
-  typedef std::set<BinaryBasicBlock *>::iterator          throw_iterator;
-  typedef std::set<BinaryBasicBlock *>::const_iterator    const_throw_iterator;
-  typedef std::set<BinaryBasicBlock *>::iterator          lp_iterator;
-  typedef std::set<BinaryBasicBlock *>::const_iterator    const_lp_iterator;
-  typedef std::vector<BinaryBasicBlock *>::reverse_iterator
-                                                         pred_reverse_iterator;
-  typedef std::vector<BinaryBasicBlock *>::const_reverse_iterator
-                                                   const_pred_reverse_iterator;
-  typedef std::vector<BinaryBasicBlock *>::reverse_iterator
-                                                         succ_reverse_iterator;
-  typedef std::vector<BinaryBasicBlock *>::const_reverse_iterator
-                                                   const_succ_reverse_iterator;
-  typedef std::set<BinaryBasicBlock *>::reverse_iterator
-                                                         throw_reverse_iterator;
-  typedef std::set<BinaryBasicBlock *>::const_reverse_iterator
-                                                   const_throw_reverse_iterator;
-  typedef std::set<BinaryBasicBlock *>::reverse_iterator
-                                                         lp_reverse_iterator;
-  typedef std::set<BinaryBasicBlock *>::const_reverse_iterator
-                                                   const_lp_reverse_iterator;
+  using pred_iterator        = std::vector<BinaryBasicBlock *>::iterator;
+  using const_pred_iterator  = std::vector<BinaryBasicBlock *>::const_iterator;
+  using succ_iterator        = std::vector<BinaryBasicBlock *>::iterator;
+  using const_succ_iterator  = std::vector<BinaryBasicBlock *>::const_iterator;
+  using throw_iterator       = decltype(Throwers)::iterator;
+  using const_throw_iterator = decltype(Throwers)::const_iterator;
+  using lp_iterator          = decltype(LandingPads)::iterator;
+  using const_lp_iterator    = decltype(LandingPads)::const_iterator;
+
+  using pred_reverse_iterator = std::reverse_iterator<pred_iterator>;
+  using const_pred_reverse_iterator = std::reverse_iterator<const_pred_iterator>;
+  using succ_reverse_iterator = std::reverse_iterator<succ_iterator>;
+  using const_succ_reverse_iterator = std::reverse_iterator<const_succ_iterator>;
 
   pred_iterator        pred_begin()       { return Predecessors.begin(); }
   const_pred_iterator  pred_begin() const { return Predecessors.begin(); }
@@ -198,14 +187,6 @@ public:
   const_throw_iterator  throw_begin() const { return Throwers.begin(); }
   throw_iterator        throw_end()         { return Throwers.end();   }
   const_throw_iterator  throw_end()   const { return Throwers.end();   }
-  throw_reverse_iterator        throw_rbegin()
-                                            { return Throwers.rbegin();}
-  const_throw_reverse_iterator  throw_rbegin() const
-                                            { return Throwers.rbegin();}
-  throw_reverse_iterator        throw_rend()
-                                            { return Throwers.rend();  }
-  const_throw_reverse_iterator  throw_rend()   const
-                                            { return Throwers.rend();  }
   unsigned              throw_size()  const {
     return (unsigned)Throwers.size();
   }
@@ -216,19 +197,17 @@ public:
   const_lp_iterator  lp_begin() const { return LandingPads.begin();   }
   lp_iterator        lp_end()         { return LandingPads.end();     }
   const_lp_iterator  lp_end()   const { return LandingPads.end();     }
-  lp_reverse_iterator        lp_rbegin()
-                                      { return LandingPads.rbegin();  }
-  const_lp_reverse_iterator  lp_rbegin() const
-                                      { return LandingPads.rbegin();  }
-  lp_reverse_iterator        lp_rend()
-                                      { return LandingPads.rend();    }
-  const_lp_reverse_iterator  lp_rend()   const
-                                      { return LandingPads.rend();    }
   unsigned           lp_size()  const {
     return (unsigned)LandingPads.size();
   }
   bool               lp_empty() const { return LandingPads.empty();   }
 
+  inline iterator_range<iterator> instructions() {
+    return iterator_range<iterator>(begin(), end());
+  }
+  inline iterator_range<const_iterator> instructions() const {
+    return iterator_range<const_iterator>(begin(), end());
+  }
   inline iterator_range<pred_iterator> predecessors() {
     return iterator_range<pred_iterator>(pred_begin(), pred_end());
   }
@@ -255,22 +234,40 @@ public:
   }
 
   // BranchInfo iterators.
-  typedef std::vector<BinaryBranchInfo>::const_iterator
-                                                     const_branch_info_iterator;
+  using branch_info_iterator = std::vector<BinaryBranchInfo>::iterator;
+  using const_branch_info_iterator =
+                       std::vector<BinaryBranchInfo>::const_iterator;
+  using branch_info_reverse_iterator =
+                       std::reverse_iterator<branch_info_iterator>;
+  using const_branch_info_reverse_iterator =
+                       std::reverse_iterator<const_branch_info_iterator>;
 
-  const_branch_info_iterator  branch_info_begin() const
-                                                  { return BranchInfo.begin(); }
-  const_branch_info_iterator  branch_info_end()   const
-                                                  { return BranchInfo.end();   }
+  branch_info_iterator         branch_info_begin() { return BranchInfo.begin(); }
+  branch_info_iterator         branch_info_end()   { return BranchInfo.end();   }
+  const_branch_info_iterator   branch_info_begin() const
+                                                   { return BranchInfo.begin(); }
+  const_branch_info_iterator   branch_info_end()   const
+                                                   { return BranchInfo.end();   }
+  branch_info_reverse_iterator branch_info_rbegin()
+                                                   { return BranchInfo.rbegin(); }
+  branch_info_reverse_iterator branch_info_rend()
+                                                   { return BranchInfo.rend();   }
+  const_branch_info_reverse_iterator branch_info_rbegin() const
+                                                   { return BranchInfo.rbegin(); }
+  const_branch_info_reverse_iterator branch_info_rend()   const
+                                                   { return BranchInfo.rend();   }
   unsigned                    branch_info_size()  const {
     return (unsigned)BranchInfo.size();
   }
-  bool                        branch_info_empty() const
-                                                  { return BranchInfo.empty(); }
+  bool branch_info_empty() const { return BranchInfo.empty(); }
 
+  inline iterator_range<branch_info_iterator> branch_info() {
+    return iterator_range<branch_info_iterator>(
+        BranchInfo.begin(), BranchInfo.end());
+  }
   inline iterator_range<const_branch_info_iterator> branch_info() const {
     return iterator_range<const_branch_info_iterator>(
-        branch_info_begin(), branch_info_end());
+        BranchInfo.begin(), BranchInfo.end());
   }
 
   /// Get instruction at given index.
@@ -483,12 +480,20 @@ public:
     return IsCold;
   }
 
+  void setIsCold(const bool Flag) {
+    IsCold = Flag;
+  }
+
   /// Return true if the block can be outlined. At the moment we disallow
   /// outlining of blocks that can potentially throw exceptions or are
   /// the beginning of a landing pad. The entry basic block also can
   /// never be outlined.
   bool canOutline() const {
     return CanOutline;
+  }
+
+  void setCanOutline(const bool Flag) {
+    CanOutline = Flag;
   }
 
   /// Erase pseudo instruction at a given iterator.
@@ -564,8 +569,7 @@ public:
 
   /// Analyze and interpret the terminators of this basic block. TBB must be
   /// initialized with the original fall-through for this BB.
-  bool analyzeBranch(const MCInstrAnalysis &MIA,
-                     const MCSymbol *&TBB,
+  bool analyzeBranch(const MCSymbol *&TBB,
                      const MCSymbol *&FBB,
                      MCInst *&CondBranch,
                      MCInst *&UncondBranch);
@@ -587,12 +591,25 @@ private:
   void addPredecessor(BinaryBasicBlock *Pred);
 
   /// Remove predecessor of the basic block. Don't use directly, instead
-  /// use removeSuccessor() funciton.
+  /// use removeSuccessor() function.
   void removePredecessor(BinaryBasicBlock *Pred);
+
+  /// Remove landing pads of this basic block.
+  void clearLandingPads();
 
   /// Set offset of the basic block from the function start.
   void setOffset(uint64_t NewOffset) {
     Offset = NewOffset;
+  }
+
+  /// Get the index of this basic block.
+  unsigned getIndex() const {
+    return Index;
+  }
+
+  /// Set the index of this basic block.
+  void setIndex(unsigned I) {
+    Index = I;
   }
 
   /// Set layout index. To be used by BinaryFunction.
@@ -609,8 +626,8 @@ bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS);
 
 // GraphTraits specializations for basic block graphs (CFGs)
 template <> struct GraphTraits<bolt::BinaryBasicBlock *> {
-  typedef bolt::BinaryBasicBlock NodeType;
-  typedef bolt::BinaryBasicBlock::succ_iterator ChildIteratorType;
+  using NodeType = bolt::BinaryBasicBlock;
+  using ChildIteratorType = bolt::BinaryBasicBlock::succ_iterator;
 
   static NodeType *getEntryNode(bolt::BinaryBasicBlock *BB) { return BB; }
   static inline ChildIteratorType child_begin(NodeType *N) {
@@ -622,8 +639,8 @@ template <> struct GraphTraits<bolt::BinaryBasicBlock *> {
 };
 
 template <> struct GraphTraits<const bolt::BinaryBasicBlock *> {
-  typedef const bolt::BinaryBasicBlock NodeType;
-  typedef bolt::BinaryBasicBlock::const_succ_iterator ChildIteratorType;
+  using NodeType = const bolt::BinaryBasicBlock;
+  using ChildIteratorType = bolt::BinaryBasicBlock::const_succ_iterator;
 
   static NodeType *getEntryNode(const bolt::BinaryBasicBlock *BB) {
     return BB;
@@ -637,8 +654,8 @@ template <> struct GraphTraits<const bolt::BinaryBasicBlock *> {
 };
 
 template <> struct GraphTraits<Inverse<bolt::BinaryBasicBlock *>> {
-  typedef bolt::BinaryBasicBlock NodeType;
-  typedef bolt::BinaryBasicBlock::pred_iterator ChildIteratorType;
+  using NodeType = bolt::BinaryBasicBlock;
+  using ChildIteratorType = bolt::BinaryBasicBlock::pred_iterator;
   static NodeType *getEntryNode(Inverse<bolt::BinaryBasicBlock *> G) {
     return G.Graph;
   }
@@ -651,8 +668,8 @@ template <> struct GraphTraits<Inverse<bolt::BinaryBasicBlock *>> {
 };
 
 template <> struct GraphTraits<Inverse<const bolt::BinaryBasicBlock *>> {
-  typedef const bolt::BinaryBasicBlock NodeType;
-  typedef bolt::BinaryBasicBlock::const_pred_iterator ChildIteratorType;
+  using NodeType = const bolt::BinaryBasicBlock;
+  using ChildIteratorType = bolt::BinaryBasicBlock::const_pred_iterator;
   static NodeType *getEntryNode(Inverse<const bolt::BinaryBasicBlock *> G) {
     return G.Graph;
   }
@@ -663,7 +680,6 @@ template <> struct GraphTraits<Inverse<const bolt::BinaryBasicBlock *>> {
     return N->pred_end();
   }
 };
-
 
 } // namespace llvm
 

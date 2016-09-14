@@ -900,8 +900,7 @@ bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       const MCSymbol *FBB = nullptr;
       MCInst *CondBranch = nullptr;
       MCInst *UncondBranch = nullptr;
-      auto Result =
-        PredBB->analyzeBranch(*MIA, TBB, FBB, CondBranch, UncondBranch);
+      auto Result = PredBB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
       assert(Result && "internal error analyzing conditional branch");
       assert(CondBranch && "conditional branch expected");
 
