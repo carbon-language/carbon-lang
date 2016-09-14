@@ -40,7 +40,7 @@ def GlobalDocumentation {
     .warning {
       font-family: monospace;
       font-weight: bold;
-      color: #c70;
+      color: #80a;
     }
     .remark {
       font-family: monospace;
