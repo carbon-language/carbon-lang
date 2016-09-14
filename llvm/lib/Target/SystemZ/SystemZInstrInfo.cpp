@@ -363,7 +363,10 @@ bool SystemZInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
   return false;
 }
 
-unsigned SystemZInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+unsigned SystemZInstrInfo::RemoveBranch(MachineBasicBlock &MBB,
+                                        int *BytesRemoved) const {
+  assert(!BytesRemoved && "code size not handled");
+
   // Most of the code and comments here are boilerplate.
   MachineBasicBlock::iterator I = MBB.end();
   unsigned Count = 0;
@@ -396,7 +399,8 @@ unsigned SystemZInstrInfo::InsertBranch(MachineBasicBlock &MBB,
                                         MachineBasicBlock *TBB,
                                         MachineBasicBlock *FBB,
                                         ArrayRef<MachineOperand> Cond,
-                                        const DebugLoc &DL) const {
+                                        const DebugLoc &DL,
+                                        int *BytesAdded) const {
   // In this function we output 32-bit branches, which should always
   // have enough range.  They can be shortened and relaxed by later code
   // in the pipeline, if desired.
@@ -405,6 +409,7 @@ unsigned SystemZInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) &&
          "SystemZ branch conditions have one component!");
+  assert(!BytesAdded && "code size not handled");
 
   if (Cond.empty()) {
     // Unconditional branch?

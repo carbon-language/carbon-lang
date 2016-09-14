@@ -377,7 +377,10 @@ unsigned AVRInstrInfo::InsertBranch(MachineBasicBlock &MBB,
                                     MachineBasicBlock *TBB,
                                     MachineBasicBlock *FBB,
                                     ArrayRef<MachineOperand> Cond,
-                                    const DebugLoc &DL) const {
+                                    const DebugLoc &DL,
+                                    int *BytesAdded) const {
+  assert(!BytesAdded && "code size not handled");
+
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 1 || Cond.size() == 0) &&
@@ -404,7 +407,10 @@ unsigned AVRInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   return Count;
 }
 
-unsigned AVRInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+unsigned AVRInstrInfo::RemoveBranch(MachineBasicBlock &MBB,
+                                    int *BytesRemoved) const {
+  assert(!BytesRemoved && "code size not handled");
+
   MachineBasicBlock::iterator I = MBB.end();
   unsigned Count = 0;
 

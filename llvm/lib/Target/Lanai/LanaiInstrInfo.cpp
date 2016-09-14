@@ -662,9 +662,11 @@ unsigned LanaiInstrInfo::InsertBranch(MachineBasicBlock &MBB,
                                       MachineBasicBlock *TrueBlock,
                                       MachineBasicBlock *FalseBlock,
                                       ArrayRef<MachineOperand> Condition,
-                                      const DebugLoc &DL) const {
+                                      const DebugLoc &DL,
+                                      int *BytesAdded) const {
   // Shouldn't be a fall through.
   assert(TrueBlock && "InsertBranch must not be told to insert a fallthrough");
+  assert(!BytesAdded && "code size not handled");
 
   // If condition is empty then an unconditional branch is being inserted.
   if (Condition.empty()) {
@@ -688,7 +690,10 @@ unsigned LanaiInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   return 2;
 }
 
-unsigned LanaiInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+unsigned LanaiInstrInfo::RemoveBranch(MachineBasicBlock &MBB,
+                                      int *BytesRemoved) const {
+  assert(!BytesRemoved && "code size not handled");
+
   MachineBasicBlock::iterator Instruction = MBB.end();
   unsigned Count = 0;
 

@@ -169,9 +169,11 @@ public:
 
   unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                         MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
-                        const DebugLoc &DL) const override;
+                        const DebugLoc &DL,
+                        int *BytesAdded = nullptr) const override;
 
-  unsigned RemoveBranch(MachineBasicBlock &MBB) const override;
+  unsigned RemoveBranch(MachineBasicBlock &MBB,
+                        int *BytesRemvoed = nullptr) const override;
 
   bool isPredicated(const MachineInstr &MI) const override;
 

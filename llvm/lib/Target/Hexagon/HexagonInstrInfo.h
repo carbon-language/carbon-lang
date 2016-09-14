@@ -87,7 +87,8 @@ public:
   /// Remove the branching code at the end of the specific MBB.
   /// This is only invoked in cases where AnalyzeBranch returns success. It
   /// returns the number of instructions that were removed.
-  unsigned RemoveBranch(MachineBasicBlock &MBB) const override;
+  unsigned RemoveBranch(MachineBasicBlock &MBB,
+                        int *BytesRemoved = nullptr) const override;
 
   /// Insert branch code into the end of the specified MachineBasicBlock.
   /// The operands to this method are the same as those
@@ -101,7 +102,8 @@ public:
   /// merging needs to be disabled.
   unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                         MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
-                        const DebugLoc &DL) const override;
+                        const DebugLoc &DL,
+                        int *BytesAdded = nullptr) const override;
 
   /// Analyze the loop code, return true if it cannot be understood. Upon
   /// success, this function returns false and returns information about the

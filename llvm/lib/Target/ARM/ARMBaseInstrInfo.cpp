@@ -382,7 +382,10 @@ bool ARMBaseInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
 }
 
 
-unsigned ARMBaseInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+unsigned ARMBaseInstrInfo::RemoveBranch(MachineBasicBlock &MBB,
+                                        int *BytesRemoved) const {
+  assert(!BytesRemoved && "code size not handled");
+
   MachineBasicBlock::iterator I = MBB.getLastNonDebugInstr();
   if (I == MBB.end())
     return 0;
@@ -410,7 +413,9 @@ unsigned ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB,
                                         MachineBasicBlock *TBB,
                                         MachineBasicBlock *FBB,
                                         ArrayRef<MachineOperand> Cond,
-                                        const DebugLoc &DL) const {
+                                        const DebugLoc &DL,
+                                        int *BytesAdded) const {
+  assert(!BytesAdded && "code size not handled");
   ARMFunctionInfo *AFI = MBB.getParent()->getInfo<ARMFunctionInfo>();
   int BOpc   = !AFI->isThumbFunction()
     ? ARM::B : (AFI->isThumb2Function() ? ARM::t2B : ARM::tB);

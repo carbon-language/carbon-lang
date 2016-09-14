@@ -537,7 +537,10 @@ bool HexagonInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
 }
 
 
-unsigned HexagonInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+unsigned HexagonInstrInfo::RemoveBranch(MachineBasicBlock &MBB,
+                                        int *BytesRemoved) const {
+  assert(!BytesRemoved && "code size not handled");
+
   DEBUG(dbgs() << "\nRemoving branches out of BB#" << MBB.getNumber());
   MachineBasicBlock::iterator I = MBB.end();
   unsigned Count = 0;
@@ -561,11 +564,13 @@ unsigned HexagonInstrInfo::InsertBranch(MachineBasicBlock &MBB,
                                         MachineBasicBlock *TBB,
                                         MachineBasicBlock *FBB,
                                         ArrayRef<MachineOperand> Cond,
-                                        const DebugLoc &DL) const {
+                                        const DebugLoc &DL,
+                                        int *BytesAdded) const {
   unsigned BOpc   = Hexagon::J2_jump;
   unsigned BccOpc = Hexagon::J2_jumpt;
   assert(validateBranchCond(Cond) && "Invalid branching condition");
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert(!BytesAdded && "code size not handled");
 
   // Check if ReverseBranchCondition has asked to reverse this branch
   // If we want to reverse the branch an odd number of times, we want
