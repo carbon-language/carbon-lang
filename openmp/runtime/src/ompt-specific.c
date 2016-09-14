@@ -60,7 +60,12 @@ __ompt_get_teaminfo(int depth, int *size)
 
             // next heavyweight team (if any) after
             // lightweight teams are exhausted
-            if (!lwt && team) team=team->t.t_parent;
+            if (!lwt && team) {
+                team=team->t.t_parent;
+                if (team) {
+                    lwt = LWT_FROM_TEAM(team);
+                }
+            }
 
             depth--;
         }
