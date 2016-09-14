@@ -1248,11 +1248,20 @@ void EmitClangDiagDocs(RecordKeeper &Records, raw_ostream &OS) {
 
   // Compute the set of diagnostics that are in -Wpedantic.
   {
-    RecordSet DiagsInPedantic;
-    RecordSet GroupsInPedantic;
+    RecordSet DiagsInPedanticSet;
+    RecordSet GroupsInPedanticSet;
     InferPedantic inferPedantic(DGParentMap, Diags, DiagGroups, DiagsInGroup);
-    inferPedantic.compute(&DiagsInPedantic, &GroupsInPedantic);
+    inferPedantic.compute(&DiagsInPedanticSet, &GroupsInPedanticSet);
     auto &PedDiags = DiagsInGroup["pedantic"];
+    // Put the diagnostics into a deterministic order.
+    RecordVec DiagsInPedantic(DiagsInPedanticSet.begin(),
+                              DiagsInPedanticSet.end());
+    RecordVec GroupsInPedantic(GroupsInPedanticSet.begin(),
+                               GroupsInPedanticSet.end());
+    std::sort(DiagsInPedantic.begin(), DiagsInPedantic.end(),
+              beforeThanCompare);
+    std::sort(GroupsInPedantic.begin(), GroupsInPedantic.end(),
+              beforeThanCompare);
     PedDiags.DiagsInGroup.insert(PedDiags.DiagsInGroup.end(),
                                  DiagsInPedantic.begin(),
                                  DiagsInPedantic.end());
