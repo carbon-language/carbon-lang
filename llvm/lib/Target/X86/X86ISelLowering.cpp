@@ -14197,7 +14197,7 @@ static  SDValue LowerZERO_EXTEND_AVX512(SDValue Op,
   SDValue In = Op->getOperand(0);
   MVT InVT = In.getSimpleValueType();
   SDLoc DL(Op);
-  unsigned int NumElts = VT.getVectorNumElements();
+  unsigned NumElts = VT.getVectorNumElements();
   if (NumElts != 8 && NumElts != 16 && !Subtarget.hasBWI())
     return SDValue();
 
@@ -15924,8 +15924,8 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
-  bool isFP = Op1.getSimpleValueType().isFloatingPoint();
-  unsigned X86CC = TranslateX86CC(CC, dl, isFP, Op0, Op1, DAG);
+  bool IsFP = Op1.getSimpleValueType().isFloatingPoint();
+  unsigned X86CC = TranslateX86CC(CC, dl, IsFP, Op0, Op1, DAG);
   if (X86CC == X86::COND_INVALID)
     return SDValue();
 
@@ -15954,7 +15954,7 @@ SDValue X86TargetLowering::LowerSETCCE(SDValue Op, SelectionDAG &DAG) const {
   SDValue SetCC = DAG.getNode(X86ISD::SETCC, DL, MVT::i8,
                               DAG.getConstant(CC, DL, MVT::i8), Cmp.getValue(1));
   if (Op.getSimpleValueType() == MVT::i1)
-      return DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, SetCC);
+    return DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, SetCC);
   return SetCC;
 }
 
@@ -15965,17 +15965,10 @@ static bool isX86LogicalCmp(SDValue Op) {
       Opc == X86ISD::SAHF)
     return true;
   if (Op.getResNo() == 1 &&
-      (Opc == X86ISD::ADD ||
-       Opc == X86ISD::SUB ||
-       Opc == X86ISD::ADC ||
-       Opc == X86ISD::SBB ||
-       Opc == X86ISD::SMUL ||
-       Opc == X86ISD::UMUL ||
-       Opc == X86ISD::INC ||
-       Opc == X86ISD::DEC ||
-       Opc == X86ISD::OR ||
-       Opc == X86ISD::XOR ||
-       Opc == X86ISD::AND))
+      (Opc == X86ISD::ADD || Opc == X86ISD::SUB || Opc == X86ISD::ADC ||
+       Opc == X86ISD::SBB || Opc == X86ISD::SMUL || Opc == X86ISD::UMUL ||
+       Opc == X86ISD::INC || Opc == X86ISD::DEC || Opc == X86ISD::OR ||
+       Opc == X86ISD::XOR || Opc == X86ISD::AND))
     return true;
 
   if (Op.getResNo() == 2 && Opc == X86ISD::UMUL)
@@ -15995,7 +15988,7 @@ static bool isTruncWithZeroHighBitsInput(SDValue V, SelectionDAG &DAG) {
 }
 
 SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
-  bool addTest = true;
+  bool AddTest = true;
   SDValue Cond  = Op.getOperand(0);
   SDValue Op1 = Op.getOperand(1);
   SDValue Op2 = Op.getOperand(2);
@@ -16175,7 +16168,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
     if ((isX86LogicalCmp(Cmp) && !IllegalFPCMov) ||
         Opc == X86ISD::BT) { // FIXME
       Cond = Cmp;
-      addTest = false;
+      AddTest = false;
     }
   } else if (CondOpcode == ISD::USUBO || CondOpcode == ISD::SSUBO ||
              CondOpcode == ISD::UADDO || CondOpcode == ISD::SADDO ||
@@ -16209,10 +16202,10 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
       Cond = X86Op.getValue(1);
 
     CC = DAG.getConstant(X86Cond, DL, MVT::i8);
-    addTest = false;
+    AddTest = false;
   }
 
-  if (addTest) {
+  if (AddTest) {
     // Look past the truncate if the high bits are known zero.
     if (isTruncWithZeroHighBitsInput(Cond, DAG))
       Cond = Cond.getOperand(0);
@@ -16223,12 +16216,12 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
       if (SDValue NewSetCC = LowerToBT(Cond, ISD::SETNE, DL, DAG)) {
         CC = NewSetCC.getOperand(0);
         Cond = NewSetCC.getOperand(1);
-        addTest = false;
+        AddTest = false;
       }
     }
   }
 
-  if (addTest) {
+  if (AddTest) {
     CC = DAG.getConstant(X86::COND_NE, DL, MVT::i8);
     Cond = EmitTest(Cond, X86::COND_NE, DL, DAG);
   }
@@ -16300,7 +16293,7 @@ static SDValue LowerSIGN_EXTEND_AVX512(SDValue Op,
         VTElt.getSizeInBits() >= 32))))
     return DAG.getNode(X86ISD::VSEXT, dl, VT, In);
 
-  unsigned int NumElts = VT.getVectorNumElements();
+  unsigned NumElts = VT.getVectorNumElements();
 
   if (NumElts != 8 && NumElts != 16 && !Subtarget.hasBWI())
     return SDValue();
@@ -16313,11 +16306,10 @@ static SDValue LowerSIGN_EXTEND_AVX512(SDValue Op,
 
   assert (InVT.getVectorElementType() == MVT::i1 && "Unexpected vector type");
   MVT ExtVT = NumElts == 8 ? MVT::v8i64 : MVT::v16i32;
-  SDValue NegOne =
-   DAG.getConstant(APInt::getAllOnesValue(ExtVT.getScalarSizeInBits()), dl,
-                   ExtVT);
-  SDValue Zero =
-   DAG.getConstant(APInt::getNullValue(ExtVT.getScalarSizeInBits()), dl, ExtVT);
+  SDValue NegOne = DAG.getConstant(
+      APInt::getAllOnesValue(ExtVT.getScalarSizeInBits()), dl, ExtVT);
+  SDValue Zero = DAG.getConstant(
+      APInt::getNullValue(ExtVT.getScalarSizeInBits()), dl, ExtVT);
 
   SDValue V = DAG.getNode(ISD::VSELECT, dl, ExtVT, In, NegOne, Zero);
   if (VT.is512BitVector())
@@ -16434,7 +16426,7 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget &Subtarget,
   SDValue OpHi = DAG.getVectorShuffle(InVT, dl, In, Undef, ShufMask2);
 
   MVT HalfVT = MVT::getVectorVT(VT.getVectorElementType(),
-                                VT.getVectorNumElements()/2);
+                                VT.getVectorNumElements() / 2);
 
   OpLo = DAG.getNode(X86ISD::VSEXT, dl, HalfVT, OpLo);
   OpHi = DAG.getNode(X86ISD::VSEXT, dl, HalfVT, OpHi);
