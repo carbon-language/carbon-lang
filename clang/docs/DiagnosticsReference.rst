@@ -14,10 +14,11 @@
     }
     table.docutils td {
       border: none;
-      padding: 0;
+      padding: 0 0 0 0.2em;
       vertical-align: middle;
       white-space: nowrap;
       width: 1px;
+      font-family: monospace;
     }
     table.docutils tr + tr {
       border-top: 0.2em solid #aaa;
@@ -43,7 +44,8 @@
     }
     </style>
 
-.. FIXME: Format this as .diagtext. rST appears to not support this. :(
+.. FIXME: rST doesn't support formatting this, so we format all <td> elements
+          as monospace font face instead.
 .. |nbsp| unicode:: 0xA0
    :trim:
 
