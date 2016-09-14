@@ -301,12 +301,20 @@ __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
     va_start(   ap, microtask );
 
 #if OMPT_SUPPORT
-    int tid = __kmp_tid_from_gtid( gtid );
-    kmp_info_t *master_th = __kmp_threads[ gtid ];
-    kmp_team_t *parent_team = master_th->th.th_team;
+    ompt_frame_t* ompt_frame;
     if (ompt_enabled) {
-       parent_team->t.t_implicit_task_taskdata[tid].
-           ompt_task_info.frame.reenter_runtime_frame = __builtin_frame_address(1);
+       kmp_info_t *master_th = __kmp_threads[ gtid ];
+       kmp_team_t *parent_team = master_th->th.th_team;
+       ompt_lw_taskteam_t *lwt = parent_team->t.ompt_serialized_team_info;
+       if (lwt)
+         ompt_frame = &(lwt->ompt_task_info.frame);
+       else
+       {
+         int tid = __kmp_tid_from_gtid( gtid );
+         ompt_frame = &(parent_team->t.t_implicit_task_taskdata[tid].
+         ompt_task_info.frame);
+       }
+       ompt_frame->reenter_runtime_frame = __builtin_frame_address(1);
     }
 #endif
 
@@ -340,8 +348,7 @@ __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
 
 #if OMPT_SUPPORT
     if (ompt_enabled) {
-        parent_team->t.t_implicit_task_taskdata[tid].
-            ompt_task_info.frame.reenter_runtime_frame = NULL;
+       ompt_frame->reenter_runtime_frame = NULL;
     }
 #endif
   }
