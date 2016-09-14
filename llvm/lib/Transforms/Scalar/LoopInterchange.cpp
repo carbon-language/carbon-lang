@@ -516,7 +516,7 @@ struct LoopInterchange : public FunctionPass {
       return false;
     }
 #ifdef DUMP_DEP_MATRICIES
-    DEBUG(dbgs() << "Dependence before inter change \n");
+    DEBUG(dbgs() << "Dependence before interchange\n");
     printDepMatrix(DependencyMatrix);
 #endif
 
@@ -557,7 +557,7 @@ struct LoopInterchange : public FunctionPass {
       interChangeDependencies(DependencyMatrix, i, i - 1);
       DT->recalculate(F);
 #ifdef DUMP_DEP_MATRICIES
-      DEBUG(dbgs() << "Dependence after inter change \n");
+      DEBUG(dbgs() << "Dependence after interchange\n");
       printDepMatrix(DependencyMatrix);
 #endif
       Changed |= Interchanged;
@@ -850,8 +850,8 @@ bool LoopInterchangeLegality::canInterchangeLoops(unsigned InnerLoopId,
 
   if (!isLegalToInterChangeLoops(DepMatrix, InnerLoopId, OuterLoopId)) {
     DEBUG(dbgs() << "Failed interchange InnerLoopId = " << InnerLoopId
-                 << "and OuterLoopId = " << OuterLoopId
-                 << "due to dependence\n");
+                 << " and OuterLoopId = " << OuterLoopId
+                 << " due to dependence\n");
     return false;
   }
 
