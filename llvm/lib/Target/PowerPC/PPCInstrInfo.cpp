@@ -637,14 +637,14 @@ unsigned PPCInstrInfo::RemoveBranch(MachineBasicBlock &MBB,
   return 2;
 }
 
-unsigned PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB,
+unsigned PPCInstrInfo::insertBranch(MachineBasicBlock &MBB,
                                     MachineBasicBlock *TBB,
                                     MachineBasicBlock *FBB,
                                     ArrayRef<MachineOperand> Cond,
                                     const DebugLoc &DL,
                                     int *BytesAdded) const {
   // Shouldn't be a fall through.
-  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert(TBB && "insertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) &&
          "PPC branch conditions have two components!");
   assert(!BytesAdded && "code size not handled");

@@ -130,7 +130,7 @@ bool BPFInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
   return false;
 }
 
-unsigned BPFInstrInfo::InsertBranch(MachineBasicBlock &MBB,
+unsigned BPFInstrInfo::insertBranch(MachineBasicBlock &MBB,
                                     MachineBasicBlock *TBB,
                                     MachineBasicBlock *FBB,
                                     ArrayRef<MachineOperand> Cond,
@@ -139,7 +139,7 @@ unsigned BPFInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   assert(!BytesAdded && "code size not handled");
 
   // Shouldn't be a fall through.
-  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert(TBB && "insertBranch must not be told to insert a fallthrough");
 
   if (Cond.empty()) {
     // Unconditional branch

@@ -1125,7 +1125,7 @@ unsigned SIInstrInfo::RemoveBranch(MachineBasicBlock &MBB,
   return Count;
 }
 
-unsigned SIInstrInfo::InsertBranch(MachineBasicBlock &MBB,
+unsigned SIInstrInfo::insertBranch(MachineBasicBlock &MBB,
                                    MachineBasicBlock *TBB,
                                    MachineBasicBlock *FBB,
                                    ArrayRef<MachineOperand> Cond,

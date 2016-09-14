@@ -731,13 +731,13 @@ MachineBasicBlock::iterator FindLastAluClause(MachineBasicBlock &MBB) {
   return MBB.end();
 }
 
-unsigned R600InstrInfo::InsertBranch(MachineBasicBlock &MBB,
+unsigned R600InstrInfo::insertBranch(MachineBasicBlock &MBB,
                                      MachineBasicBlock *TBB,
                                      MachineBasicBlock *FBB,
                                      ArrayRef<MachineOperand> Cond,
                                      const DebugLoc &DL,
                                      int *BytesAdded) const {
-  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert(TBB && "insertBranch must not be told to insert a fallthrough");
   assert(!BytesAdded && "code size not handled");
 
   if (!FBB) {

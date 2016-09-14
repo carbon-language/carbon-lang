@@ -143,7 +143,7 @@ bool NVPTXInstrInfo::CanTailMerge(const MachineInstr *MI) const {
 ///    operands can be passed to other TargetInstrInfo methods to create new
 ///    branches.
 ///
-/// Note that RemoveBranch and InsertBranch must be implemented to support
+/// Note that RemoveBranch and insertBranch must be implemented to support
 /// cases where this method returns success.
 ///
 bool NVPTXInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
@@ -231,7 +231,7 @@ unsigned NVPTXInstrInfo::RemoveBranch(MachineBasicBlock &MBB,
   return 2;
 }
 
-unsigned NVPTXInstrInfo::InsertBranch(MachineBasicBlock &MBB,
+unsigned NVPTXInstrInfo::insertBranch(MachineBasicBlock &MBB,
                                       MachineBasicBlock *TBB,
                                       MachineBasicBlock *FBB,
                                       ArrayRef<MachineOperand> Cond,
@@ -240,7 +240,7 @@ unsigned NVPTXInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   assert(!BytesAdded && "code size not handled");
 
   // Shouldn't be a fall through.
-  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert(TBB && "insertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 1 || Cond.size() == 0) &&
          "NVPTX branch conditions have two components!");
 

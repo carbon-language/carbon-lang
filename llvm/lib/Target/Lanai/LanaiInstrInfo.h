@@ -133,7 +133,7 @@ public:
   bool ReverseBranchCondition(
       SmallVectorImpl<MachineOperand> &Condition) const override;
 
-  unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TrueBlock,
+  unsigned insertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TrueBlock,
                         MachineBasicBlock *FalseBlock,
                         ArrayRef<MachineOperand> Condition,
                         const DebugLoc &DL,

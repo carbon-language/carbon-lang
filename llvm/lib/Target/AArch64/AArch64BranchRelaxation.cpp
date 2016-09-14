@@ -303,7 +303,7 @@ bool AArch64BranchRelaxation::fixupConditionalBranch(MachineInstr &MI) {
     TII->ReverseBranchCondition(Cond);
     int OldSize = 0, NewSize = 0;
     TII->RemoveBranch(*MBB, &OldSize);
-    TII->InsertBranch(*MBB, FBB, TBB, Cond, DL, &NewSize);
+    TII->insertBranch(*MBB, FBB, TBB, Cond, DL, &NewSize);
 
     BlockInfo[MBB->getNumber()].Size += (NewSize - OldSize);
     return true;
@@ -345,7 +345,7 @@ bool AArch64BranchRelaxation::fixupConditionalBranch(MachineInstr &MI) {
   MBBSize -= RemovedSize;
 
   int AddedSize = 0;
-  TII->InsertBranch(*MBB, &NextBB, TBB, Cond, DL, &AddedSize);
+  TII->insertBranch(*MBB, &NextBB, TBB, Cond, DL, &AddedSize);
   MBBSize += AddedSize;
 
   // Finally, keep the block offsets up to date.

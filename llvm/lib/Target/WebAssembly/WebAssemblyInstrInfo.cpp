@@ -164,7 +164,7 @@ unsigned WebAssemblyInstrInfo::RemoveBranch(MachineBasicBlock &MBB,
   return Count;
 }
 
-unsigned WebAssemblyInstrInfo::InsertBranch(MachineBasicBlock &MBB,
+unsigned WebAssemblyInstrInfo::insertBranch(MachineBasicBlock &MBB,
                                             MachineBasicBlock *TBB,
                                             MachineBasicBlock *FBB,
                                             ArrayRef<MachineOperand> Cond,

@@ -395,7 +395,7 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   return false;
 }
 
-unsigned SystemZInstrInfo::InsertBranch(MachineBasicBlock &MBB,
+unsigned SystemZInstrInfo::insertBranch(MachineBasicBlock &MBB,
                                         MachineBasicBlock *TBB,
                                         MachineBasicBlock *FBB,
                                         ArrayRef<MachineOperand> Cond,
@@ -406,7 +406,7 @@ unsigned SystemZInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   // in the pipeline, if desired.
 
   // Shouldn't be a fall through.
-  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert(TBB && "insertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) &&
          "SystemZ branch conditions have one component!");
   assert(!BytesAdded && "code size not handled");

@@ -263,14 +263,14 @@ bool MSP430InstrInfo::analyzeBranch(MachineBasicBlock &MBB,
   return false;
 }
 
-unsigned MSP430InstrInfo::InsertBranch(MachineBasicBlock &MBB,
+unsigned MSP430InstrInfo::insertBranch(MachineBasicBlock &MBB,
                                        MachineBasicBlock *TBB,
                                        MachineBasicBlock *FBB,
                                        ArrayRef<MachineOperand> Cond,
                                        const DebugLoc &DL,
                                        int *BytesAdded) const {
   // Shouldn't be a fall through.
-  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert(TBB && "insertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 1 || Cond.size() == 0) &&
          "MSP430 branch conditions have one component!");
   assert(!BytesAdded && "code size not handled");

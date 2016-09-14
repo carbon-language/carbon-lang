@@ -184,7 +184,7 @@ static inline XCore::CondCode GetOppositeBranchCondition(XCore::CondCode CC)
 ///    operands can be passed to other TargetInstrInfo methods to create new
 ///    branches.
 ///
-/// Note that RemoveBranch and InsertBranch must be implemented to support
+/// Note that RemoveBranch and insertBranch must be implemented to support
 /// cases where this method returns success.
 ///
 bool XCoreInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
@@ -269,14 +269,14 @@ bool XCoreInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
   return true;
 }
 
-unsigned XCoreInstrInfo::InsertBranch(MachineBasicBlock &MBB,
+unsigned XCoreInstrInfo::insertBranch(MachineBasicBlock &MBB,
                                       MachineBasicBlock *TBB,
                                       MachineBasicBlock *FBB,
                                       ArrayRef<MachineOperand> Cond,
                                       const DebugLoc &DL,
                                       int *BytesAdded) const {
   // Shouldn't be a fall through.
-  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert(TBB && "insertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) &&
          "Unexpected number of components!");
   assert(!BytesAdded && "code size not handled");

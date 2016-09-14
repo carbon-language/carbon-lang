@@ -560,7 +560,7 @@ unsigned HexagonInstrInfo::RemoveBranch(MachineBasicBlock &MBB,
   return Count;
 }
 
-unsigned HexagonInstrInfo::InsertBranch(MachineBasicBlock &MBB,
+unsigned HexagonInstrInfo::insertBranch(MachineBasicBlock &MBB,
                                         MachineBasicBlock *TBB,
                                         MachineBasicBlock *FBB,
                                         ArrayRef<MachineOperand> Cond,
@@ -569,7 +569,7 @@ unsigned HexagonInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   unsigned BOpc   = Hexagon::J2_jump;
   unsigned BccOpc = Hexagon::J2_jumpt;
   assert(validateBranchCond(Cond) && "Invalid branching condition");
-  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert(TBB && "insertBranch must not be told to insert a fallthrough");
   assert(!BytesAdded && "code size not handled");
 
   // Check if ReverseBranchCondition has asked to reverse this branch
@@ -592,7 +592,7 @@ unsigned HexagonInstrInfo::InsertBranch(MachineBasicBlock &MBB,
           MachineFunction::iterator(NewTBB) == ++MBB.getIterator()) {
         ReverseBranchCondition(Cond);
         RemoveBranch(MBB);
-        return InsertBranch(MBB, TBB, nullptr, Cond, DL);
+        return insertBranch(MBB, TBB, nullptr, Cond, DL);
       }
       BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB);
     } else if (isEndLoopN(Cond[0].getImm())) {

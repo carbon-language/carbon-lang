@@ -409,7 +409,7 @@ unsigned ARMBaseInstrInfo::RemoveBranch(MachineBasicBlock &MBB,
   return 2;
 }
 
-unsigned ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB,
+unsigned ARMBaseInstrInfo::insertBranch(MachineBasicBlock &MBB,
                                         MachineBasicBlock *TBB,
                                         MachineBasicBlock *FBB,
                                         ArrayRef<MachineOperand> Cond,
@@ -424,7 +424,7 @@ unsigned ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   bool isThumb = AFI->isThumbFunction() || AFI->isThumb2Function();
 
   // Shouldn't be a fall through.
-  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert(TBB && "insertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) &&
          "ARM branch conditions have two components!");
 

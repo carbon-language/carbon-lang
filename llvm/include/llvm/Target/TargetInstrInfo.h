@@ -462,7 +462,7 @@ public:
   ///    condition.  These operands can be passed to other TargetInstrInfo
   ///    methods to create new branches.
   ///
-  /// Note that RemoveBranch and InsertBranch must be implemented to support
+  /// Note that RemoveBranch and insertBranch must be implemented to support
   /// cases where this method returns success.
   ///
   /// If AllowModify is true, then this routine is allowed to modify the basic
@@ -545,19 +545,19 @@ public:
   ///
   /// The CFG information in MBB.Predecessors and MBB.Successors must be valid
   /// before calling this function.
-  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+  virtual unsigned insertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                                 ArrayRef<MachineOperand> Cond,
                                 const DebugLoc &DL,
                                 int *BytesAdded = nullptr) const {
-    llvm_unreachable("Target didn't implement TargetInstrInfo::InsertBranch!");
+    llvm_unreachable("Target didn't implement TargetInstrInfo::insertBranch!");
   }
 
   unsigned insertUnconditionalBranch(MachineBasicBlock &MBB,
                                      MachineBasicBlock *DestBB,
                                      const DebugLoc &DL,
                                      int *BytesAdded = nullptr) const {
-    return InsertBranch(MBB, DestBB, nullptr,
+    return insertBranch(MBB, DestBB, nullptr,
                         ArrayRef<MachineOperand>(), DL, BytesAdded);
   }
 

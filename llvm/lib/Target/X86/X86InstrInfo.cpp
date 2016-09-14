@@ -4464,14 +4464,14 @@ unsigned X86InstrInfo::RemoveBranch(MachineBasicBlock &MBB,
   return Count;
 }
 
-unsigned X86InstrInfo::InsertBranch(MachineBasicBlock &MBB,
+unsigned X86InstrInfo::insertBranch(MachineBasicBlock &MBB,
                                     MachineBasicBlock *TBB,
                                     MachineBasicBlock *FBB,
                                     ArrayRef<MachineOperand> Cond,
                                     const DebugLoc &DL,
                                     int *BytesAdded) const {
   // Shouldn't be a fall through.
-  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert(TBB && "insertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 1 || Cond.size() == 0) &&
          "X86 branch conditions have one component!");
   assert(!BytesAdded && "code size not handled");
