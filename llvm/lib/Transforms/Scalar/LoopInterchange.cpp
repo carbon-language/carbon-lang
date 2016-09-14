@@ -948,9 +948,9 @@ int LoopInterchangeProfitability::getInstrOrderCost() {
   return GoodOrder - BadOrder;
 }
 
-static bool isProfitabileForVectorization(unsigned InnerLoopId,
-                                          unsigned OuterLoopId,
-                                          CharMatrix &DepMatrix) {
+static bool isProfitableForVectorization(unsigned InnerLoopId,
+                                         unsigned OuterLoopId,
+                                         CharMatrix &DepMatrix) {
   // TODO: Improve this heuristic to catch more cases.
   // If the inner loop is loop independent or doesn't carry any dependency it is
   // profitable to move this to outer position.
@@ -987,7 +987,7 @@ bool LoopInterchangeProfitability::isProfitable(unsigned InnerLoopId,
   // It is not profitable as per current cache profitability model. But check if
   // we can move this loop outside to improve parallelism.
   bool ImprovesPar =
-      isProfitabileForVectorization(InnerLoopId, OuterLoopId, DepMatrix);
+      isProfitableForVectorization(InnerLoopId, OuterLoopId, DepMatrix);
   return ImprovesPar;
 }
 
