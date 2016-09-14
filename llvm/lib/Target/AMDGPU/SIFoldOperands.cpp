@@ -48,24 +48,36 @@ public:
 
 struct FoldCandidate {
   MachineInstr *UseMI;
-  unsigned UseOpNo;
-  MachineOperand *OpToFold;
-  uint64_t ImmToFold;
+  union {
+    MachineOperand *OpToFold;
+    uint64_t ImmToFold;
+    int FrameIndexToFold;
+  };
+  unsigned char UseOpNo;
+  MachineOperand::MachineOperandType Kind;
 
   FoldCandidate(MachineInstr *MI, unsigned OpNo, MachineOperand *FoldOp) :
-                UseMI(MI), UseOpNo(OpNo) {
-
+    UseMI(MI), OpToFold(nullptr), UseOpNo(OpNo), Kind(FoldOp->getType()) {
     if (FoldOp->isImm()) {
-      OpToFold = nullptr;
       ImmToFold = FoldOp->getImm();
+    } else if (FoldOp->isFI()) {
+      FrameIndexToFold = FoldOp->getIndex();
     } else {
       assert(FoldOp->isReg());
       OpToFold = FoldOp;
     }
   }
 
+  bool isFI() const {
+    return Kind == MachineOperand::MO_FrameIndex;
+  }
+
   bool isImm() const {
-    return !OpToFold;
+    return Kind == MachineOperand::MO_Immediate;
+  }
+
+  bool isReg() const {
+    return Kind == MachineOperand::MO_Register;
   }
 };
 
@@ -104,6 +116,11 @@ static bool updateOperand(FoldCandidate &Fold,
 
   if (Fold.isImm()) {
     Old.ChangeToImmediate(Fold.ImmToFold);
+    return true;
+  }
+
+  if (Fold.isFI()) {
+    Old.ChangeToFrameIndex(Fold.FrameIndexToFold);
     return true;
   }
 
@@ -448,7 +465,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
 
       unsigned OpSize = TII->getOpSize(MI, 1);
       MachineOperand &OpToFold = MI.getOperand(1);
-      bool FoldingImm = OpToFold.isImm();
+      bool FoldingImm = OpToFold.isImm() || OpToFold.isFI();
 
       // FIXME: We could also be folding things like FrameIndexes and
       // TargetIndexes.
@@ -500,7 +517,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
       for (FoldCandidate &Fold : FoldList) {
         if (updateOperand(Fold, TRI)) {
           // Clear kill flags.
-          if (!Fold.isImm()) {
+          if (Fold.isReg()) {
             assert(Fold.OpToFold && Fold.OpToFold->isReg());
             // FIXME: Probably shouldn't bother trying to fold if not an
             // SGPR. PeepholeOptimizer can eliminate redundant VGPR->VGPR
