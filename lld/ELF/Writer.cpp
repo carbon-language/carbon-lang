@@ -370,8 +370,7 @@ template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
 template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
   if (!Out<ELFT>::SymTab)
     return;
-  for (const std::unique_ptr<elf::ObjectFile<ELFT>> &F :
-       Symtab<ELFT>::X->getObjectFiles()) {
+  for (elf::ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles()) {
     const char *StrTab = F->getStringTable().data();
     for (SymbolBody *B : F->getLocalSymbols()) {
       auto *DR = dyn_cast<DefinedRegular<ELFT>>(B);
@@ -651,8 +650,7 @@ template <class ELFT>
 void Writer<ELFT>::forEachRelSec(
     std::function<void(InputSectionBase<ELFT> &, const typename ELFT::Shdr &)>
         Fn) {
-  for (const std::unique_ptr<elf::ObjectFile<ELFT>> &F :
-       Symtab<ELFT>::X->getObjectFiles()) {
+  for (elf::ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles()) {
     for (InputSectionBase<ELFT> *C : F->getSections()) {
       if (isDiscarded(C))
         continue;
@@ -676,8 +674,7 @@ void Writer<ELFT>::forEachRelSec(
 }
 
 template <class ELFT> void Writer<ELFT>::createSections() {
-  for (const std::unique_ptr<elf::ObjectFile<ELFT>> &F :
-       Symtab<ELFT>::X->getObjectFiles()) {
+  for (elf::ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles()) {
     for (InputSectionBase<ELFT> *C : F->getSections()) {
       if (isDiscarded(C)) {
         reportDiscarded(C);
