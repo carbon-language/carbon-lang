@@ -951,7 +951,7 @@ SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
   // If the mask and the type are different sizes, unroll the vector op. This
   // can occur when getSetCCResultType returns something that is different in
   // size from the operand types. For example, v4i8 = select v4i32, v4i8, v4i8.
-  if (VT.getSizeInBits() != Op1.getValueType().getSizeInBits())
+  if (VT.getSizeInBits() != Op1.getValueSizeInBits())
     return DAG.UnrollVectorOp(Op.getNode());
 
   // Bitcast the operands to be the same type as the mask.

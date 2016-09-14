@@ -3715,7 +3715,7 @@ SDValue AArch64TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
         // Don't combine AND since emitComparison converts the AND to an ANDS
         // (a.k.a. TST) and the test in the test bit and branch instruction
         // becomes redundant.  This would also increase register pressure.
-        uint64_t Mask = LHS.getValueType().getSizeInBits() - 1;
+        uint64_t Mask = LHS.getValueSizeInBits() - 1;
         return DAG.getNode(AArch64ISD::TBNZ, dl, MVT::Other, Chain, LHS,
                            DAG.getConstant(Mask, dl, MVT::i64), Dest);
       }
@@ -3725,7 +3725,7 @@ SDValue AArch64TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
       // Don't combine AND since emitComparison converts the AND to an ANDS
       // (a.k.a. TST) and the test in the test bit and branch instruction
       // becomes redundant.  This would also increase register pressure.
-      uint64_t Mask = LHS.getValueType().getSizeInBits() - 1;
+      uint64_t Mask = LHS.getValueSizeInBits() - 1;
       return DAG.getNode(AArch64ISD::TBZ, dl, MVT::Other, Chain, LHS,
                          DAG.getConstant(Mask, dl, MVT::i64), Dest);
     }
@@ -5412,7 +5412,7 @@ static SDValue tryFormConcatFromShuffle(SDValue Op, SelectionDAG &DAG) {
       VT.getVectorElementType() != V1.getValueType().getVectorElementType())
     return SDValue();
 
-  bool SplitV0 = V0.getValueType().getSizeInBits() == 128;
+  bool SplitV0 = V0.getValueSizeInBits() == 128;
 
   if (!isConcatMask(Mask, VT, SplitV0))
     return SDValue();
@@ -5423,7 +5423,7 @@ static SDValue tryFormConcatFromShuffle(SDValue Op, SelectionDAG &DAG) {
     V0 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, CastVT, V0,
                      DAG.getConstant(0, DL, MVT::i64));
   }
-  if (V1.getValueType().getSizeInBits() == 128) {
+  if (V1.getValueSizeInBits() == 128) {
     V1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, CastVT, V1,
                      DAG.getConstant(0, DL, MVT::i64));
   }
@@ -5554,7 +5554,7 @@ static SDValue GenerateTBL(SDValue Op, ArrayRef<int> ShuffleMask,
 
   MVT IndexVT = MVT::v8i8;
   unsigned IndexLen = 8;
-  if (Op.getValueType().getSizeInBits() == 128) {
+  if (Op.getValueSizeInBits() == 128) {
     IndexVT = MVT::v16i8;
     IndexLen = 16;
   }
@@ -6382,7 +6382,7 @@ FailedModImm:
       // DUPLANE works on 128-bit vectors, widen it if necessary.
       SDValue Lane = Value.getOperand(1);
       Value = Value.getOperand(0);
-      if (Value.getValueType().getSizeInBits() == 64)
+      if (Value.getValueSizeInBits() == 64)
         Value = WidenVector(Value, DAG);
 
       unsigned Opcode = getDUPLANEOp(VT.getVectorElementType());
@@ -6559,7 +6559,7 @@ SDValue AArch64TargetLowering::LowerEXTRACT_SUBVECTOR(SDValue Op,
     return SDValue();
   unsigned Val = Cst->getZExtValue();
 
-  unsigned Size = Op.getValueType().getSizeInBits();
+  unsigned Size = Op.getValueSizeInBits();
 
   // This will get lowered to an appropriate EXTRACT_SUBREG in ISel.
   if (Val == 0)
@@ -7686,7 +7686,7 @@ static SDValue performIntToFpCombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   // Only optimize when the source and destination types have the same width.
-  if (VT.getSizeInBits() != N->getOperand(0).getValueType().getSizeInBits())
+  if (VT.getSizeInBits() != N->getOperand(0).getValueSizeInBits())
     return SDValue();
 
   // If the result of an integer load is only used by an integer-to-float
@@ -8189,7 +8189,7 @@ static SDValue tryCombineFixedPointConvert(SDNode *N,
     // The vector width should be 128 bits by the time we get here, even
     // if it started as 64 bits (the extract_vector handling will have
     // done so).
-    assert(Vec.getValueType().getSizeInBits() == 128 &&
+    assert(Vec.getValueSizeInBits() == 128 &&
            "unexpected vector size on extract_vector_elt!");
     if (Vec.getValueType() == MVT::v4i32)
       VecResTy = MVT::v4f32;

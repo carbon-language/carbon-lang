@@ -349,7 +349,7 @@ bool AArch64DAGToDAGISel::SelectShiftedRegister(SDValue N, bool AllowROR,
     return false;
 
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-    unsigned BitSize = N.getValueType().getSizeInBits();
+    unsigned BitSize = N.getValueSizeInBits();
     unsigned Val = RHS->getZExtValue() & (BitSize - 1);
     unsigned ShVal = AArch64_AM::getShifterImm(ShType, Val);
 

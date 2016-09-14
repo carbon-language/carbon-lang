@@ -1022,7 +1022,7 @@ SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, const SDLoc &DL, EVT VT) {
 SDValue SelectionDAG::getAnyExtendVectorInReg(SDValue Op, const SDLoc &DL,
                                               EVT VT) {
   assert(VT.isVector() && "This DAG node is restricted to vector types.");
-  assert(VT.getSizeInBits() == Op.getValueType().getSizeInBits() &&
+  assert(VT.getSizeInBits() == Op.getValueSizeInBits() &&
          "The sizes of the input and result must match in order to perform the "
          "extend in-register.");
   assert(VT.getVectorNumElements() < Op.getValueType().getVectorNumElements() &&
@@ -1033,7 +1033,7 @@ SDValue SelectionDAG::getAnyExtendVectorInReg(SDValue Op, const SDLoc &DL,
 SDValue SelectionDAG::getSignExtendVectorInReg(SDValue Op, const SDLoc &DL,
                                                EVT VT) {
   assert(VT.isVector() && "This DAG node is restricted to vector types.");
-  assert(VT.getSizeInBits() == Op.getValueType().getSizeInBits() &&
+  assert(VT.getSizeInBits() == Op.getValueSizeInBits() &&
          "The sizes of the input and result must match in order to perform the "
          "extend in-register.");
   assert(VT.getVectorNumElements() < Op.getValueType().getVectorNumElements() &&
@@ -1044,7 +1044,7 @@ SDValue SelectionDAG::getSignExtendVectorInReg(SDValue Op, const SDLoc &DL,
 SDValue SelectionDAG::getZeroExtendVectorInReg(SDValue Op, const SDLoc &DL,
                                                EVT VT) {
   assert(VT.isVector() && "This DAG node is restricted to vector types.");
-  assert(VT.getSizeInBits() == Op.getValueType().getSizeInBits() &&
+  assert(VT.getSizeInBits() == Op.getValueSizeInBits() &&
          "The sizes of the input and result must match in order to perform the "
          "extend in-register.");
   assert(VT.getVectorNumElements() < Op.getValueType().getVectorNumElements() &&
@@ -2441,7 +2441,7 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
     const unsigned Index =
       cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
-    const unsigned BitWidth = Op.getValueType().getSizeInBits();
+    const unsigned BitWidth = Op.getValueSizeInBits();
 
     // Remove low part of known bits mask
     KnownZero = KnownZero.getHiBits(KnownZero.getBitWidth() - Index * BitWidth);
@@ -2707,9 +2707,8 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const {
     break;
   case ISD::EXTRACT_ELEMENT: {
     const int KnownSign = ComputeNumSignBits(Op.getOperand(0), Depth+1);
-    const int BitWidth = Op.getValueType().getSizeInBits();
-    const int Items =
-      Op.getOperand(0).getValueType().getSizeInBits() / BitWidth;
+    const int BitWidth = Op.getValueSizeInBits();
+    const int Items = Op.getOperand(0).getValueSizeInBits() / BitWidth;
 
     // Get reverse index (starting from 1), Op1 value indexes elements from
     // little end. Sign starts at big end.
@@ -3162,8 +3161,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
     break;
   case ISD::BITCAST:
     // Basic sanity checking.
-    assert(VT.getSizeInBits() == Operand.getValueType().getSizeInBits()
-           && "Cannot BITCAST between types of different sizes!");
+    assert(VT.getSizeInBits() == Operand.getValueSizeInBits() &&
+           "Cannot BITCAST between types of different sizes!");
     if (VT == Operand.getValueType()) return Operand;  // noop conversion.
     if (OpOpcode == ISD::BITCAST)  // bitconv(bitconv(x)) -> bitconv(x)
       return getNode(ISD::BITCAST, DL, VT, Operand.getOperand(0));
@@ -3577,8 +3576,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
     // amounts.  This catches things like trying to shift an i1024 value by an
     // i8, which is easy to fall into in generic code that uses
     // TLI.getShiftAmount().
-    assert(N2.getValueType().getSizeInBits() >=
-                   Log2_32_Ceil(N1.getValueType().getSizeInBits()) &&
+    assert(N2.getValueSizeInBits() >= Log2_32_Ceil(N1.getValueSizeInBits()) &&
            "Invalid use of small shift amount with oversized value!");
 
     // Always fold shifts of i1 values so the code generator doesn't need to

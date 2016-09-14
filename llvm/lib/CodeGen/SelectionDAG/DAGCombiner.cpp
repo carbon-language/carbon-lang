@@ -2487,8 +2487,7 @@ SDValue DAGCombiner::visitMULHS(SDNode *N) {
   if (isOneConstant(N1)) {
     SDLoc DL(N);
     return DAG.getNode(ISD::SRA, DL, N0.getValueType(), N0,
-                       DAG.getConstant(N0.getValueType().getSizeInBits() - 1,
-                                       DL,
+                       DAG.getConstant(N0.getValueSizeInBits() - 1, DL,
                                        getShiftAmountTy(N0.getValueType())));
   }
   // fold (mulhs x, undef) -> 0
@@ -6616,8 +6615,8 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
       SDValue InnerZExt = N0.getOperand(0);
       // If the original shl may be shifting out bits, do not perform this
       // transformation.
-      unsigned KnownZeroBits = InnerZExt.getValueType().getSizeInBits() -
-        InnerZExt.getOperand(0).getValueType().getSizeInBits();
+      unsigned KnownZeroBits = InnerZExt.getValueSizeInBits() -
+        InnerZExt.getOperand(0).getValueSizeInBits();
       if (ShAmtVal > KnownZeroBits)
         return SDValue();
     }
@@ -6878,7 +6877,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
       if ((ShAmt & (EVTBits-1)) == 0) {
         N0 = N0.getOperand(0);
         // Is the load width a multiple of size of VT?
-        if ((N0.getValueType().getSizeInBits() & (EVTBits-1)) != 0)
+        if ((N0.getValueSizeInBits() & (EVTBits-1)) != 0)
           return SDValue();
       }
 
@@ -7587,7 +7586,7 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
   if (N0.getOpcode() == ISD::FCOPYSIGN && N0.getNode()->hasOneUse() &&
       isa<ConstantFPSDNode>(N0.getOperand(0)) &&
       VT.isInteger() && !VT.isVector()) {
-    unsigned OrigXWidth = N0.getOperand(1).getValueType().getSizeInBits();
+    unsigned OrigXWidth = N0.getOperand(1).getValueSizeInBits();
     EVT IntXVT = EVT::getIntegerVT(*DAG.getContext(), OrigXWidth);
     if (isTypeLegal(IntXVT)) {
       SDValue X = DAG.getBitcast(IntXVT, N0.getOperand(1));
@@ -12292,7 +12291,7 @@ SDValue DAGCombiner::splitMergedValStore(StoreSDNode *ST) {
     return SDValue();
 
   // Match shift amount to HalfValBitSize.
-  unsigned HalfValBitSize = Val.getValueType().getSizeInBits() / 2;
+  unsigned HalfValBitSize = Val.getValueSizeInBits() / 2;
   ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op1.getOperand(1));
   if (!ShAmt || ShAmt->getAPIntValue() != HalfValBitSize)
     return SDValue();
@@ -12301,10 +12300,10 @@ SDValue DAGCombiner::splitMergedValStore(StoreSDNode *ST) {
   // to i64.
   if (Lo.getOpcode() != ISD::ZERO_EXTEND || !Lo.hasOneUse() ||
       !Lo.getOperand(0).getValueType().isScalarInteger() ||
-      Lo.getOperand(0).getValueType().getSizeInBits() > HalfValBitSize ||
+      Lo.getOperand(0).getValueSizeInBits() > HalfValBitSize ||
       Hi.getOpcode() != ISD::ZERO_EXTEND || !Hi.hasOneUse() ||
       !Hi.getOperand(0).getValueType().isScalarInteger() ||
-      Hi.getOperand(0).getValueType().getSizeInBits() > HalfValBitSize)
+      Hi.getOperand(0).getValueSizeInBits() > HalfValBitSize)
     return SDValue();
 
   if (!TLI.isMultiStoresCheaperThanBitsMerge(Lo.getOperand(0),

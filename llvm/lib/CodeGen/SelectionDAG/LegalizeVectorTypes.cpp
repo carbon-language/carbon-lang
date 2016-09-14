@@ -882,7 +882,7 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_SUBVECTOR(SDNode *N, SDValue &Lo,
       DAG.getLoad(Lo.getValueType(), dl, Store, StackPtr, MachinePointerInfo());
 
   // Increment the pointer to the other part.
-  unsigned IncrementSize = Lo.getValueType().getSizeInBits() / 8;
+  unsigned IncrementSize = Lo.getValueSizeInBits() / 8;
   StackPtr =
       DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(), StackPtr,
                   DAG.getConstant(IncrementSize, dl, StackPtr.getValueType()));
@@ -1014,7 +1014,7 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
       DAG.getLoad(Lo.getValueType(), dl, Store, StackPtr, MachinePointerInfo());
 
   // Increment the pointer to the other part.
-  unsigned IncrementSize = Lo.getValueType().getSizeInBits() / 8;
+  unsigned IncrementSize = Lo.getValueSizeInBits() / 8;
   StackPtr = DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(), StackPtr,
                          DAG.getConstant(IncrementSize, dl,
                                          StackPtr.getValueType()));
