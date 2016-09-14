@@ -346,11 +346,6 @@ __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
 
     va_end( ap );
 
-#if OMPT_SUPPORT
-    if (ompt_enabled) {
-       ompt_frame->reenter_runtime_frame = NULL;
-    }
-#endif
   }
 }
 
@@ -433,13 +428,6 @@ __kmpc_fork_teams(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
         , fork_context_intel
 #endif
     );
-
-#if OMPT_SUPPORT
-    if (ompt_enabled) {
-        parent_team->t.t_implicit_task_taskdata[tid].
-           ompt_task_info.frame.reenter_runtime_frame = NULL;
-    }
-#endif
 
     this_thr->th.th_teams_microtask = NULL;
     this_thr->th.th_teams_level = 0;
@@ -688,9 +676,9 @@ __kmpc_barrier(ident_t *loc, kmp_int32 global_tid)
 #if OMPT_SUPPORT && OMPT_TRACE
     ompt_frame_t * ompt_frame;
     if (ompt_enabled ) {
-        ompt_frame = &( __kmp_threads[ global_tid ] -> th.th_team -> 
-          t.t_implicit_task_taskdata[__kmp_tid_from_gtid(global_tid)].ompt_task_info.frame);
-        ompt_frame->reenter_runtime_frame = __builtin_frame_address(1);
+        ompt_frame = __ompt_get_task_frame_internal(0);
+        if ( ompt_frame->reenter_runtime_frame == NULL )
+            ompt_frame->reenter_runtime_frame = __builtin_frame_address(1);
     }
 #endif
     __kmp_threads[ global_tid ]->th.th_ident = loc;

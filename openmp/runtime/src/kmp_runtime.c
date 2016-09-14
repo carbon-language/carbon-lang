@@ -2231,12 +2231,13 @@ __kmp_join_ompt(
     ompt_parallel_id_t parallel_id,
     fork_context_e fork_context)
 {
+    ompt_task_info_t *task_info = __ompt_get_taskinfo(0);
     if (ompt_callbacks.ompt_callback(ompt_event_parallel_end)) {
-        ompt_task_info_t *task_info = __ompt_get_taskinfo(0);
         ompt_callbacks.ompt_callback(ompt_event_parallel_end)(
             parallel_id, task_info->task_id, OMPT_INVOKER(fork_context));
     }
 
+    task_info->frame.reenter_runtime_frame = NULL;
     __kmp_join_restore_state(thread,team);
 }
 #endif
