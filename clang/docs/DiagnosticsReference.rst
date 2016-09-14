@@ -312,7 +312,7 @@ This diagnostic is enabled by default.
 -----
 This diagnostic is enabled by default.
 
-Controls `-Warc-unsafe-retained-assign`_, `-Warc-retain-cycles`_, `-Warc-non-pod-memaccess`_.
+Controls `-Warc-non-pod-memaccess`_, `-Warc-retain-cycles`_, `-Warc-unsafe-retained-assign`_.
 
 
 -Warc-bridge-casts-disallowed-in-nonarc
@@ -538,7 +538,7 @@ This diagnostic is enabled by default.
 
 -Watomic-properties
 -------------------
-Controls `-Wimplicit-atomic-properties`_, `-Wcustom-atomic-properties`_.
+Controls `-Wcustom-atomic-properties`_, `-Wimplicit-atomic-properties`_.
 
 
 -Watomic-property-with-user-defined-accessor
@@ -571,7 +571,7 @@ This diagnostic is enabled by default.
 ------------
 This diagnostic is enabled by default.
 
-Controls `-Wunknown-attributes`_, `-Wignored-attributes`_.
+Controls `-Wignored-attributes`_, `-Wunknown-attributes`_.
 
 
 -Wauto-disable-vptr-sanitizer
@@ -918,7 +918,7 @@ Synonym for `-Wc++11-narrowing`_.
 --------------
 Some of the diagnostics controlled by this flag are enabled by default.
 
-Also controls `-Wc++11-narrowing`_, `-Wc++11-compat-reserved-user-defined-literal`_, `-Wc++11-compat-deprecated-writable-strings`_, `-Wc++98-c++11-compat`_, `-Wc++98-c++11-c++14-compat`_.
+Also controls `-Wc++11-compat-deprecated-writable-strings`_, `-Wc++11-compat-reserved-user-defined-literal`_, `-Wc++11-narrowing`_, `-Wc++98-c++11-c++14-compat`_, `-Wc++98-c++11-compat`_.
 
 **Diagnostic text:**
 
@@ -984,7 +984,7 @@ This diagnostic is enabled by default.
 
 -Wc++11-compat-pedantic
 -----------------------
-Controls `-Wc++98-c++11-compat-pedantic`_, `-Wc++98-c++11-c++14-compat-pedantic`_.
+Controls `-Wc++98-c++11-c++14-compat-pedantic`_, `-Wc++98-c++11-compat-pedantic`_.
 
 
 -Wc++11-compat-reserved-user-defined-literal
@@ -1304,7 +1304,7 @@ Synonym for `-Wc++14-extensions`_.
 --------------
 This diagnostic is enabled by default.
 
-Controls `-Wdeprecated-register`_, `-Wdeprecated-increment-bool`_.
+Controls `-Wdeprecated-increment-bool`_, `-Wdeprecated-register`_.
 
 
 -Wc++1z-extensions
@@ -1504,7 +1504,7 @@ Also controls `-Wc++98-c++11-compat`_.
 
 -Wc++98-compat
 --------------
-Also controls `-Wc++98-compat-local-type-template-args`_, `-Wc++98-compat-unnamed-type-template-args`_, `-Wc++98-c++11-compat`_, `-Wc++98-c++11-c++14-compat`_.
+Also controls `-Wc++98-c++11-c++14-compat`_, `-Wc++98-c++11-compat`_, `-Wc++98-compat-local-type-template-args`_, `-Wc++98-compat-unnamed-type-template-args`_.
 
 **Diagnostic text:**
 
@@ -1845,7 +1845,7 @@ Also controls `-Wc++98-compat-local-type-template-args`_, `-Wc++98-compat-unname
 
 -Wc++98-compat-pedantic
 -----------------------
-Also controls `-Wc++98-compat`_, `-Wc++98-compat-bind-to-temporary-copy`_, `-Wc++98-c++11-compat-pedantic`_, `-Wc++98-c++11-c++14-compat-pedantic`_.
+Also controls `-Wc++98-c++11-c++14-compat-pedantic`_, `-Wc++98-c++11-compat-pedantic`_, `-Wc++98-compat`_, `-Wc++98-compat-bind-to-temporary-copy`_.
 
 **Diagnostic text:**
 
@@ -2307,7 +2307,7 @@ This diagnostic is enabled by default.
 ------------
 Some of the diagnostics controlled by this flag are enabled by default.
 
-Also controls `-Wbool-conversion`_, `-Wconstant-conversion`_, `-Wenum-conversion`_, `-Wfloat-conversion`_, `-Wshorten-64-to-32`_, `-Wint-conversion`_, `-Wliteral-conversion`_, `-Wnon-literal-null-conversion`_, `-Wnull-conversion`_, `-Wobjc-literal-conversion`_, `-Wsign-conversion`_, `-Wstring-conversion`_.
+Also controls `-Wbool-conversion`_, `-Wconstant-conversion`_, `-Wenum-conversion`_, `-Wfloat-conversion`_, `-Wint-conversion`_, `-Wliteral-conversion`_, `-Wnon-literal-null-conversion`_, `-Wnull-conversion`_, `-Wobjc-literal-conversion`_, `-Wshorten-64-to-32`_, `-Wsign-conversion`_, `-Wstring-conversion`_.
 
 **Diagnostic text:**
 
@@ -2822,7 +2822,7 @@ This diagnostic is enabled by default.
 
 -Wdocumentation
 ---------------
-Also controls `-Wdocumentation-html`_, `-Wdocumentation-deprecated-sync`_.
+Also controls `-Wdocumentation-deprecated-sync`_, `-Wdocumentation-html`_.
 
 **Diagnostic text:**
 
@@ -3326,7 +3326,7 @@ This diagnostic is enabled by default.
 -------
 Some of the diagnostics controlled by this flag are enabled by default.
 
-Controls `-Wmissing-field-initializers`_, `-Wignored-qualifiers`_, `-Winitializer-overrides`_, `-Wsemicolon-before-method-body`_, `-Wmissing-method-return-type`_, `-Wsign-compare`_, `-Wunused-parameter`_.
+Controls `-Wignored-qualifiers`_, `-Winitializer-overrides`_, `-Wmissing-field-initializers`_, `-Wmissing-method-return-type`_, `-Wsemicolon-before-method-body`_, `-Wsign-compare`_, `-Wunused-parameter`_.
 
 
 -Wextra-qualification
@@ -3492,7 +3492,7 @@ Also controls `-Wfloat-overflow-conversion`_, `-Wfloat-zero-conversion`_.
 --------
 This diagnostic is enabled by default.
 
-Also controls `-Wformat-extra-args`_, `-Wformat-zero-length`_, `-Wnonnull`_, `-Wformat-security`_, `-Wformat-y2k`_, `-Wformat-invalid-specifier`_.
+Also controls `-Wformat-extra-args`_, `-Wformat-invalid-specifier`_, `-Wformat-security`_, `-Wformat-y2k`_, `-Wformat-zero-length`_, `-Wnonnull`_.
 
 **Diagnostic text:**
 
@@ -3800,7 +3800,7 @@ Some of the diagnostics controlled by this flag are enabled by default.
 -----
 Some of the diagnostics controlled by this flag are enabled by default.
 
-Controls `-Wgnu-alignof-expression`_, `-Wgnu-anonymous-struct`_, `-Wgnu-auto-type`_, `-Wgnu-binary-literal`_, `-Wgnu-case-range`_, `-Wgnu-complex-integer`_, `-Wgnu-compound-literal-initializer`_, `-Wgnu-conditional-omitted-operand`_, `-Wgnu-designator`_, `-Wgnu-empty-initializer`_, `-Wgnu-empty-struct`_, `-Wvla-extension`_, `-Wgnu-flexible-array-initializer`_, `-Wgnu-flexible-array-union-member`_, `-Wgnu-folding-constant`_, `-Wgnu-imaginary-constant`_, `-Wgnu-include-next`_, `-Wgnu-label-as-value`_, `-Wredeclared-class-member`_, `-Wgnu-redeclared-enum`_, `-Wgnu-statement-expression`_, `-Wgnu-static-float-init`_, `-Wgnu-string-literal-operator-template`_, `-Wgnu-union-cast`_, `-Wgnu-variable-sized-type-not-at-end`_, `-Wzero-length-array`_, `-Wgnu-zero-line-directive`_, `-Wgnu-zero-variadic-macro-arguments`_.
+Controls `-Wgnu-alignof-expression`_, `-Wgnu-anonymous-struct`_, `-Wgnu-auto-type`_, `-Wgnu-binary-literal`_, `-Wgnu-case-range`_, `-Wgnu-complex-integer`_, `-Wgnu-compound-literal-initializer`_, `-Wgnu-conditional-omitted-operand`_, `-Wgnu-designator`_, `-Wgnu-empty-initializer`_, `-Wgnu-empty-struct`_, `-Wgnu-flexible-array-initializer`_, `-Wgnu-flexible-array-union-member`_, `-Wgnu-folding-constant`_, `-Wgnu-imaginary-constant`_, `-Wgnu-include-next`_, `-Wgnu-label-as-value`_, `-Wgnu-redeclared-enum`_, `-Wgnu-statement-expression`_, `-Wgnu-static-float-init`_, `-Wgnu-string-literal-operator-template`_, `-Wgnu-union-cast`_, `-Wgnu-variable-sized-type-not-at-end`_, `-Wgnu-zero-line-directive`_, `-Wgnu-zero-variadic-macro-arguments`_, `-Wredeclared-class-member`_, `-Wvla-extension`_, `-Wzero-length-array`_.
 
 
 -Wgnu-alignof-expression
@@ -4943,7 +4943,7 @@ This diagnostic is an error by default, but the flag ``-Wno-incompatible-ms-stru
 ----------------------------
 This diagnostic is enabled by default.
 
-Also controls `-Wincompatible-pointer-types-discards-qualifiers`_, `-Wincompatible-function-pointer-types`_.
+Also controls `-Wincompatible-function-pointer-types`_, `-Wincompatible-pointer-types-discards-qualifiers`_.
 
 **Diagnostic text:**
 
@@ -5662,7 +5662,7 @@ This diagnostic is enabled by default.
 -----------
 Some of the diagnostics controlled by this flag are enabled by default.
 
-Controls `-Wmicrosoft-charize`_, `-Wmicrosoft-include`_, `-Wmicrosoft-cpp-macro`_, `-Wmicrosoft-fixed-enum`_, `-Wmicrosoft-sealed`_, `-Wmicrosoft-unqualified-friend`_, `-Wmicrosoft-exception-spec`_, `-Wmicrosoft-using-decl`_, `-Wmicrosoft-mutable-reference`_, `-Wmicrosoft-pure-definition`_, `-Wmicrosoft-union-member-reference`_, `-Wmicrosoft-explicit-constructor-call`_, `-Wmicrosoft-enum-value`_, `-Wmicrosoft-default-arg-redefinition`_, `-Wmicrosoft-template`_, `-Wmicrosoft-redeclare-static`_, `-Wmicrosoft-enum-forward-reference`_, `-Wmicrosoft-goto`_, `-Wmicrosoft-flexible-array`_, `-Wmicrosoft-extra-qualification`_, `-Wmicrosoft-cast`_, `-Wmicrosoft-const-init`_, `-Wmicrosoft-void-pseudo-dtor`_, `-Wmicrosoft-anon-tag`_, `-Wmicrosoft-comment-paste`_, `-Wmicrosoft-end-of-file`_, `-Winconsistent-dllimport`_.
+Controls `-Winconsistent-dllimport`_, `-Wmicrosoft-anon-tag`_, `-Wmicrosoft-cast`_, `-Wmicrosoft-charize`_, `-Wmicrosoft-comment-paste`_, `-Wmicrosoft-const-init`_, `-Wmicrosoft-cpp-macro`_, `-Wmicrosoft-default-arg-redefinition`_, `-Wmicrosoft-end-of-file`_, `-Wmicrosoft-enum-forward-reference`_, `-Wmicrosoft-enum-value`_, `-Wmicrosoft-exception-spec`_, `-Wmicrosoft-explicit-constructor-call`_, `-Wmicrosoft-extra-qualification`_, `-Wmicrosoft-fixed-enum`_, `-Wmicrosoft-flexible-array`_, `-Wmicrosoft-goto`_, `-Wmicrosoft-include`_, `-Wmicrosoft-mutable-reference`_, `-Wmicrosoft-pure-definition`_, `-Wmicrosoft-redeclare-static`_, `-Wmicrosoft-sealed`_, `-Wmicrosoft-template`_, `-Wmicrosoft-union-member-reference`_, `-Wmicrosoft-unqualified-friend`_, `-Wmicrosoft-using-decl`_, `-Wmicrosoft-void-pseudo-dtor`_.
 
 
 -Wmicrosoft-anon-tag
@@ -6338,7 +6338,7 @@ This diagnostic is an error by default, but the flag ``-Wno-modules-import-neste
 ------
 Some of the diagnostics controlled by this flag are enabled by default.
 
-Controls `-Wchar-subscripts`_, `-Wcomment`_, `-Wdelete-non-virtual-dtor`_, `-Wfor-loop-analysis`_, `-Wformat`_, `-Wimplicit`_, `-Winfinite-recursion`_, `-Wmismatched-tags`_, `-Wmissing-braces`_, `-Wmove`_, `-Wmultichar`_, `-Wreorder`_, `-Wreturn-type`_, `-Wself-assign`_, `-Wself-move`_, `-Wsizeof-array-argument`_, `-Wsizeof-array-decay`_, `-Wstring-plus-int`_, `-Wtrigraphs`_, `-Wuninitialized`_, `-Wunknown-pragmas`_, `-Wunused`_, `-Wvolatile-register-var`_, `-Wobjc-missing-super-calls`_, `-Wobjc-designated-initializers`_, `-Woverloaded-virtual`_, `-Wprivate-extern`_, `-Wcast-of-sel-type`_, `-Wextern-c-compat`_.
+Controls `-Wcast-of-sel-type`_, `-Wchar-subscripts`_, `-Wcomment`_, `-Wdelete-non-virtual-dtor`_, `-Wextern-c-compat`_, `-Wfor-loop-analysis`_, `-Wformat`_, `-Wimplicit`_, `-Winfinite-recursion`_, `-Wmismatched-tags`_, `-Wmissing-braces`_, `-Wmove`_, `-Wmultichar`_, `-Wobjc-designated-initializers`_, `-Wobjc-missing-super-calls`_, `-Woverloaded-virtual`_, `-Wprivate-extern`_, `-Wreorder`_, `-Wreturn-type`_, `-Wself-assign`_, `-Wself-move`_, `-Wsizeof-array-argument`_, `-Wsizeof-array-decay`_, `-Wstring-plus-int`_, `-Wtrigraphs`_, `-Wuninitialized`_, `-Wunknown-pragmas`_, `-Wunused`_, `-Wvolatile-register-var`_.
 
 
 -Wmove
@@ -6427,7 +6427,7 @@ This diagnostic is enabled by default.
 ---------
 Some of the diagnostics controlled by this flag are enabled by default.
 
-Controls `-Wsign-compare`_, `-Wconversion`_, `-Wliteral-range`_.
+Controls `-Wconversion`_, `-Wliteral-range`_, `-Wsign-compare`_.
 
 
 -Wnon-literal-null-conversion
@@ -7370,7 +7370,7 @@ This diagnostic is enabled by default.
 -------------
 This diagnostic is enabled by default.
 
-Also controls `-Wlogical-op-parentheses`_, `-Wlogical-not-parentheses`_, `-Wbitwise-op-parentheses`_, `-Wshift-op-parentheses`_, `-Woverloaded-shift-op-parentheses`_, `-Wparentheses-equality`_, `-Wdangling-else`_.
+Also controls `-Wbitwise-op-parentheses`_, `-Wdangling-else`_, `-Wlogical-not-parentheses`_, `-Wlogical-op-parentheses`_, `-Woverloaded-shift-op-parentheses`_, `-Wparentheses-equality`_, `-Wshift-op-parentheses`_.
 
 **Diagnostic text:**
 
@@ -7458,7 +7458,7 @@ This diagnostic is enabled by default.
 
 -Wpedantic
 ----------
-Also controls `-Wretained-language-linkage`_, `-Wcomplex-component-init`_, `-Wextended-offsetof`_, `-Wnested-anon-types`_, `-Wdeclaration-after-statement`_, `-Wempty-translation-unit`_, `-Wnullability-extension`_, `-Wdollar-in-identifier-extension`_, `-Wlanguage-extension-token`_, `-Wimport-preprocessor-directive-pedantic`_, `-Wembedded-directive`_, `-Wgnu-anonymous-struct`_, `-Wgnu-auto-type`_, `-Wc++14-binary-literal`_, `-Wgnu-binary-literal`_, `-Wgnu-compound-literal-initializer`_, `-Wgnu-case-range`_, `-Wgnu-complex-integer`_, `-Wgnu-conditional-omitted-operand`_, `-Wgnu-empty-initializer`_, `-Wgnu-empty-struct`_, `-Wc++11-extra-semi`_, `-Wgnu-flexible-array-initializer`_, `-Wgnu-flexible-array-union-member`_, `-Wgnu-folding-constant`_, `-Wflexible-array-extensions`_, `-Wfour-char-constants`_, `-Wgnu-imaginary-constant`_, `-Wgnu-include-next`_, `-Wgnu-label-as-value`_, `-Wc++11-long-long`_, `-Wlong-long`_, `-Woverlength-strings`_, `-Wgnu-redeclared-enum`_, `-Wgnu-statement-expression`_, `-Wgnu-union-cast`_, `-Wkeyword-macro`_, `-Wvariadic-macros`_, `-Wvla-extension`_, `-Wzero-length-array`_, `-Wgnu-zero-line-directive`_, `-Wgnu-zero-variadic-macro-arguments`_, `-Wformat-pedantic`_, `-Wc11-extensions`_, `-Wmicrosoft-charize`_, `-Wmicrosoft-cpp-macro`_, `-Wmicrosoft-fixed-enum`_, `-Wmicrosoft-redeclare-static`_, `-Wmicrosoft-enum-forward-reference`_, `-Wmicrosoft-flexible-array`_, `-Wmicrosoft-comment-paste`_, `-Wmicrosoft-end-of-file`_.
+Also controls `-Wc++11-extra-semi`_, `-Wc++11-long-long`_, `-Wc++14-binary-literal`_, `-Wc11-extensions`_, `-Wcomplex-component-init`_, `-Wdeclaration-after-statement`_, `-Wdollar-in-identifier-extension`_, `-Wembedded-directive`_, `-Wempty-translation-unit`_, `-Wextended-offsetof`_, `-Wflexible-array-extensions`_, `-Wformat-pedantic`_, `-Wfour-char-constants`_, `-Wgnu-anonymous-struct`_, `-Wgnu-auto-type`_, `-Wgnu-binary-literal`_, `-Wgnu-case-range`_, `-Wgnu-complex-integer`_, `-Wgnu-compound-literal-initializer`_, `-Wgnu-conditional-omitted-operand`_, `-Wgnu-empty-initializer`_, `-Wgnu-empty-struct`_, `-Wgnu-flexible-array-initializer`_, `-Wgnu-flexible-array-union-member`_, `-Wgnu-folding-constant`_, `-Wgnu-imaginary-constant`_, `-Wgnu-include-next`_, `-Wgnu-label-as-value`_, `-Wgnu-redeclared-enum`_, `-Wgnu-statement-expression`_, `-Wgnu-union-cast`_, `-Wgnu-zero-line-directive`_, `-Wgnu-zero-variadic-macro-arguments`_, `-Wimport-preprocessor-directive-pedantic`_, `-Wkeyword-macro`_, `-Wlanguage-extension-token`_, `-Wlong-long`_, `-Wmicrosoft-charize`_, `-Wmicrosoft-comment-paste`_, `-Wmicrosoft-cpp-macro`_, `-Wmicrosoft-end-of-file`_, `-Wmicrosoft-enum-forward-reference`_, `-Wmicrosoft-fixed-enum`_, `-Wmicrosoft-flexible-array`_, `-Wmicrosoft-redeclare-static`_, `-Wnested-anon-types`_, `-Wnullability-extension`_, `-Woverlength-strings`_, `-Wretained-language-linkage`_, `-Wvariadic-macros`_, `-Wvla-extension`_, `-Wzero-length-array`_.
 
 **Diagnostic text:**
 
@@ -7992,7 +7992,7 @@ This diagnostic is enabled by default.
 ---------
 Some of the diagnostics controlled by this flag are enabled by default.
 
-Also controls `-Wunknown-pragmas`_, `-Wignored-pragmas`_.
+Also controls `-Wignored-pragmas`_, `-Wunknown-pragmas`_.
 
 **Diagnostic text:**
 
@@ -9145,7 +9145,7 @@ This diagnostic flag exists for GCC compatibility, and has no effect in Clang.
 ----------------------
 Some of the diagnostics controlled by this flag are enabled by default.
 
-Also controls `-Wtautological-constant-out-of-range-compare`_, `-Wtautological-pointer-compare`_, `-Wtautological-overlap-compare`_, `-Wtautological-undefined-compare`_.
+Also controls `-Wtautological-constant-out-of-range-compare`_, `-Wtautological-overlap-compare`_, `-Wtautological-pointer-compare`_, `-Wtautological-undefined-compare`_.
 
 **Diagnostic text:**
 
@@ -9277,7 +9277,7 @@ This diagnostic is enabled by default.
 
 -Wthread-safety
 ---------------
-Controls `-Wthread-safety-attributes`_, `-Wthread-safety-analysis`_, `-Wthread-safety-precise`_, `-Wthread-safety-reference`_.
+Controls `-Wthread-safety-analysis`_, `-Wthread-safety-attributes`_, `-Wthread-safety-precise`_, `-Wthread-safety-reference`_.
 
 
 -Wthread-safety-analysis
@@ -10115,7 +10115,7 @@ This diagnostic is enabled by default.
 --------
 Some of the diagnostics controlled by this flag are enabled by default.
 
-Controls `-Wunused-argument`_, `-Wunused-function`_, `-Wunused-label`_, `-Wunused-private-field`_, `-Wunused-local-typedef`_, `-Wunused-value`_, `-Wunused-variable`_, `-Wunused-property-ivar`_.
+Controls `-Wunused-argument`_, `-Wunused-function`_, `-Wunused-label`_, `-Wunused-local-typedef`_, `-Wunused-private-field`_, `-Wunused-property-ivar`_, `-Wunused-value`_, `-Wunused-variable`_.
 
 
 -Wunused-argument
@@ -10315,7 +10315,7 @@ This diagnostic is enabled by default.
 --------------
 This diagnostic is enabled by default.
 
-Also controls `-Wunused-comparison`_, `-Wunused-result`_, `-Wunevaluated-expression`_.
+Also controls `-Wunevaluated-expression`_, `-Wunused-comparison`_, `-Wunused-result`_.
 
 **Diagnostic text:**
 
