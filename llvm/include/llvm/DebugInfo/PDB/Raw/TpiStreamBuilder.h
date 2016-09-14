@@ -32,11 +32,9 @@ class ReadableStreamRef;
 class WritableStream;
 
 template <> struct SequencedItemTraits<llvm::codeview::CVType> {
-  static size_t length(const codeview::CVType &Item) {
-    return Item.RawData.size();
-  }
+  static size_t length(const codeview::CVType &Item) { return Item.length(); }
   static ArrayRef<uint8_t> bytes(const codeview::CVType &Item) {
-    return Item.RawData;
+    return Item.data();
   }
 };
 }

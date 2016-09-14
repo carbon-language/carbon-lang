@@ -58,15 +58,15 @@ void TpiHashUpdater::visitKnownRecordImpl(CVType &CVR,
 }
 
 void TpiHashUpdater::visitKnownRecordImpl(CVType &CVR, ClassRecord &Rec) {
-  CVR.Hash = getTpiHash(Rec, CVR.RawData);
+  CVR.Hash = getTpiHash(Rec, CVR.data());
 }
 
 void TpiHashUpdater::visitKnownRecordImpl(CVType &CVR, EnumRecord &Rec) {
-  CVR.Hash = getTpiHash(Rec, CVR.RawData);
+  CVR.Hash = getTpiHash(Rec, CVR.data());
 }
 
 void TpiHashUpdater::visitKnownRecordImpl(CVType &CVR, UnionRecord &Rec) {
-  CVR.Hash = getTpiHash(Rec, CVR.RawData);
+  CVR.Hash = getTpiHash(Rec, CVR.data());
 }
 
 Error TpiHashVerifier::visitKnownRecord(CVType &CVR, UdtSourceLineRecord &Rec) {
@@ -79,17 +79,17 @@ Error TpiHashVerifier::visitKnownRecord(CVType &CVR,
 }
 
 Error TpiHashVerifier::visitKnownRecord(CVType &CVR, ClassRecord &Rec) {
-  if (getTpiHash(Rec, CVR.RawData) % NumHashBuckets != HashValues[Index])
+  if (getTpiHash(Rec, CVR.data()) % NumHashBuckets != HashValues[Index])
     return errorInvalidHash();
   return Error::success();
 }
 Error TpiHashVerifier::visitKnownRecord(CVType &CVR, EnumRecord &Rec) {
-  if (getTpiHash(Rec, CVR.RawData) % NumHashBuckets != HashValues[Index])
+  if (getTpiHash(Rec, CVR.data()) % NumHashBuckets != HashValues[Index])
     return errorInvalidHash();
   return Error::success();
 }
 Error TpiHashVerifier::visitKnownRecord(CVType &CVR, UnionRecord &Rec) {
-  if (getTpiHash(Rec, CVR.RawData) % NumHashBuckets != HashValues[Index])
+  if (getTpiHash(Rec, CVR.data()) % NumHashBuckets != HashValues[Index])
     return errorInvalidHash();
   return Error::success();
 }

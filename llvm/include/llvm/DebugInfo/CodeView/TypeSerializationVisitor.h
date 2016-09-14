@@ -51,7 +51,8 @@ public:
   }
 #define TYPE_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
 #define MEMBER_RECORD(EnumName, EnumVal, Name)                                 \
-  virtual Error visitKnownRecord(CVType &CVR, Name##Record &Record) override { \
+  virtual Error visitKnownMember(CVMemberRecord &CVR, Name##Record &Record)    \
+      override {                                                               \
     visitMemberRecordImpl(Record);                                             \
     return Error::success();                                                   \
   }
@@ -61,10 +62,7 @@ public:
 private:
   void updateCVRecord(CVType &Record) {
     StringRef S = TypeTableBuilder.getRecords().back();
-    ArrayRef<uint8_t> Data(S.bytes_begin(), S.bytes_end());
-    Record.RawData = Data;
-    Record.Data = Record.RawData.drop_front(sizeof(RecordPrefix));
-    Record.Length = Data.size() - sizeof(ulittle16_t);
+    Record.RecordData = ArrayRef<uint8_t>(S.bytes_begin(), S.bytes_end());
   }
   template <typename RecordKind>
   void visitKnownRecordImpl(CVType &CVR, RecordKind &Record) {
