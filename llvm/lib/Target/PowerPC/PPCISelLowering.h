@@ -474,7 +474,7 @@ namespace llvm {
     /// then the VPERM for the shuffle. All in all a very slow sequence.
     TargetLoweringBase::LegalizeTypeAction getPreferredVectorAction(EVT VT)
       const override {
-      if (VT.getVectorElementType().getSizeInBits() % 8 == 0)
+      if (VT.getScalarSizeInBits() % 8 == 0)
         return TypeWidenVector;
       return TargetLoweringBase::getPreferredVectorAction(VT);
     }

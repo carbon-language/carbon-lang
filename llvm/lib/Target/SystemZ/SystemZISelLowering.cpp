@@ -3102,7 +3102,7 @@ SDValue SystemZTargetLowering::lowerCTPOP(SDValue Op,
   if (VT.isVector()) {
     Op = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Op);
     Op = DAG.getNode(SystemZISD::POPCNT, DL, MVT::v16i8, Op);
-    switch (VT.getVectorElementType().getSizeInBits()) {
+    switch (VT.getScalarSizeInBits()) {
     case 8:
       break;
     case 16: {
@@ -4377,7 +4377,7 @@ SDValue SystemZTargetLowering::lowerINSERT_VECTOR_ELT(SDValue Op,
   }
 
   // Otherwise bitcast to the equivalent integer form and insert via a GPR.
-  MVT IntVT = MVT::getIntegerVT(VT.getVectorElementType().getSizeInBits());
+  MVT IntVT = MVT::getIntegerVT(VT.getScalarSizeInBits());
   MVT IntVecVT = MVT::getVectorVT(IntVT, VT.getVectorNumElements());
   SDValue Res = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, IntVecVT,
                             DAG.getNode(ISD::BITCAST, DL, IntVecVT, Op0),
@@ -4417,8 +4417,8 @@ SystemZTargetLowering::lowerExtendVectorInreg(SDValue Op, SelectionDAG &DAG,
   SDValue PackedOp = Op.getOperand(0);
   EVT OutVT = Op.getValueType();
   EVT InVT = PackedOp.getValueType();
-  unsigned ToBits = OutVT.getVectorElementType().getSizeInBits();
-  unsigned FromBits = InVT.getVectorElementType().getSizeInBits();
+  unsigned ToBits = OutVT.getScalarSizeInBits();
+  unsigned FromBits = InVT.getScalarSizeInBits();
   do {
     FromBits *= 2;
     EVT OutVT = MVT::getVectorVT(MVT::getIntegerVT(FromBits),
@@ -4435,7 +4435,7 @@ SDValue SystemZTargetLowering::lowerShift(SDValue Op, SelectionDAG &DAG,
   SDValue Op1 = Op.getOperand(1);
   SDLoc DL(Op);
   EVT VT = Op.getValueType();
-  unsigned ElemBitSize = VT.getVectorElementType().getSizeInBits();
+  unsigned ElemBitSize = VT.getScalarSizeInBits();
 
   // See whether the shift vector is a splat represented as BUILD_VECTOR.
   if (auto *BVN = dyn_cast<BuildVectorSDNode>(Op1)) {
@@ -4709,7 +4709,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
 // Return true if VT is a vector whose elements are a whole number of bytes
 // in width.
 static bool canTreatAsByteVector(EVT VT) {
-  return VT.isVector() && VT.getVectorElementType().getSizeInBits() % 8 == 0;
+  return VT.isVector() && VT.getScalarSizeInBits() % 8 == 0;
 }
 
 // Try to simplify an EXTRACT_VECTOR_ELT from a vector of type VecVT

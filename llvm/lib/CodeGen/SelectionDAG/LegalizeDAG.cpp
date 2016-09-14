@@ -1216,8 +1216,7 @@ SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
   }
 
   // Add the offset to the index.
-  unsigned EltSize =
-      Vec.getValueType().getVectorElementType().getSizeInBits()/8;
+  unsigned EltSize = Vec.getValueType().getScalarSizeInBits() / 8;
   Idx = DAG.getNode(ISD::MUL, dl, Idx.getValueType(), Idx,
                     DAG.getConstant(EltSize, SDLoc(Vec), Idx.getValueType()));
 
@@ -1268,8 +1267,7 @@ SDValue SelectionDAGLegalize::ExpandInsertToVectorThroughStack(SDValue Op) {
   // Then store the inserted part.
 
   // Add the offset to the index.
-  unsigned EltSize =
-      Vec.getValueType().getVectorElementType().getSizeInBits()/8;
+  unsigned EltSize = Vec.getValueType().getScalarSizeInBits() / 8;
 
   Idx = DAG.getNode(ISD::MUL, dl, Idx.getValueType(), Idx,
                     DAG.getConstant(EltSize, SDLoc(Vec), Idx.getValueType()));

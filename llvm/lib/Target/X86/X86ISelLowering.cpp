@@ -4277,7 +4277,7 @@ static bool isVEXTRACTIndex(SDNode *N, unsigned vecWidth) {
     cast<ConstantSDNode>(N->getOperand(1).getNode())->getZExtValue();
 
   MVT VT = N->getSimpleValueType(0);
-  unsigned ElSize = VT.getVectorElementType().getSizeInBits();
+  unsigned ElSize = VT.getScalarSizeInBits();
   bool Result = (Index * ElSize) % vecWidth == 0;
 
   return Result;
@@ -4295,7 +4295,7 @@ static bool isVINSERTIndex(SDNode *N, unsigned vecWidth) {
     cast<ConstantSDNode>(N->getOperand(2).getNode())->getZExtValue();
 
   MVT VT = N->getSimpleValueType(0);
-  unsigned ElSize = VT.getVectorElementType().getSizeInBits();
+  unsigned ElSize = VT.getScalarSizeInBits();
   bool Result = (Index * ElSize) % vecWidth == 0;
 
   return Result;
@@ -12561,10 +12561,10 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
   if (!isa<ConstantSDNode>(Idx)) {
     if (VecVT.is512BitVector() ||
         (VecVT.is256BitVector() && Subtarget.hasInt256() &&
-         VecVT.getVectorElementType().getSizeInBits() == 32)) {
+         VecVT.getScalarSizeInBits() == 32)) {
 
       MVT MaskEltVT =
-        MVT::getIntegerVT(VecVT.getVectorElementType().getSizeInBits());
+        MVT::getIntegerVT(VecVT.getScalarSizeInBits());
       MVT MaskVT = MVT::getVectorVT(MaskEltVT, VecVT.getSizeInBits() /
                                     MaskEltVT.getSizeInBits());
 
@@ -15673,7 +15673,7 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
     // In this case use SSE compare
     bool UseAVX512Inst =
       (OpVT.is512BitVector() ||
-       OpVT.getVectorElementType().getSizeInBits() >= 32 ||
+       OpVT.getScalarSizeInBits() >= 32 ||
        (Subtarget.hasBWI() && Subtarget.hasVLX()));
 
     if (UseAVX512Inst)
@@ -16389,7 +16389,7 @@ static SDValue LowerSIGN_EXTEND_VECTOR_INREG(SDValue Op,
   SDValue SignExt = Curr;
   if (CurrVT != InVT) {
     unsigned SignExtShift =
-        CurrVT.getVectorElementType().getSizeInBits() - InSVT.getSizeInBits();
+        CurrVT.getScalarSizeInBits() - InSVT.getSizeInBits();
     SignExt = DAG.getNode(X86ISD::VSRAI, dl, CurrVT, Curr,
                           DAG.getConstant(SignExtShift, dl, MVT::i8));
   }
@@ -28383,7 +28383,7 @@ static SDValue performShiftToAllZeros(SDNode *N, SelectionDAG &DAG,
     if (auto *AmtSplat = AmtBV->getConstantSplatNode()) {
       const APInt &ShiftAmt = AmtSplat->getAPIntValue();
       unsigned MaxAmount =
-        VT.getSimpleVT().getVectorElementType().getSizeInBits();
+        VT.getSimpleVT().getScalarSizeInBits();
 
       // SSE2/AVX2 logical shifts always return a vector of 0s
       // if the shift amount is bigger than or equal to
@@ -28902,7 +28902,7 @@ static SDValue combineLogicBlendIntoPBLENDV(SDNode *N, SelectionDAG &DAG,
   // Validate that the Mask operand is a vector sra node.
   // FIXME: what to do for bytes, since there is a psignb/pblendvb, but
   // there is no psrai.b
-  unsigned EltBits = MaskVT.getVectorElementType().getSizeInBits();
+  unsigned EltBits = MaskVT.getScalarSizeInBits();
   unsigned SraAmt = ~0;
   if (Mask.getOpcode() == ISD::SRA) {
     if (auto *AmtBV = dyn_cast<BuildVectorSDNode>(Mask.getOperand(1)))
@@ -29552,8 +29552,8 @@ static SDValue combineMaskedLoad(SDNode *N, SelectionDAG &DAG,
   SDLoc dl(Mld);
 
   assert(LdVT != VT && "Cannot extend to the same type");
-  unsigned ToSz = VT.getVectorElementType().getSizeInBits();
-  unsigned FromSz = LdVT.getVectorElementType().getSizeInBits();
+  unsigned ToSz = VT.getScalarSizeInBits();
+  unsigned FromSz = LdVT.getScalarSizeInBits();
   // From/To sizes and ElemCount must be pow of two.
   assert (isPowerOf2_32(NumElems * FromSz * ToSz) &&
     "Unexpected size for extending masked load");
@@ -29658,8 +29658,8 @@ static SDValue combineMaskedStore(SDNode *N, SelectionDAG &DAG,
   SDLoc dl(Mst);
 
   assert(StVT != VT && "Cannot truncate to the same type");
-  unsigned FromSz = VT.getVectorElementType().getSizeInBits();
-  unsigned ToSz = StVT.getVectorElementType().getSizeInBits();
+  unsigned FromSz = VT.getScalarSizeInBits();
+  unsigned ToSz = StVT.getScalarSizeInBits();
 
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
@@ -29787,8 +29787,8 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
     const TargetLowering &TLI = DAG.getTargetLoweringInfo();
     unsigned NumElems = VT.getVectorNumElements();
     assert(StVT != VT && "Cannot truncate to the same type");
-    unsigned FromSz = VT.getVectorElementType().getSizeInBits();
-    unsigned ToSz = StVT.getVectorElementType().getSizeInBits();
+    unsigned FromSz = VT.getScalarSizeInBits();
+    unsigned ToSz = StVT.getScalarSizeInBits();
 
     // The truncating store is legal in some cases. For example
     // vpmovqb, vpmovqw, vpmovqd, vpmovdb, vpmovdw

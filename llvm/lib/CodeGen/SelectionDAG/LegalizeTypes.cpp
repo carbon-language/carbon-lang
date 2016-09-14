@@ -795,7 +795,7 @@ void DAGTypeLegalizer::SetScalarizedVector(SDValue Op, SDValue Result) {
   // the vector element type. For example BUILD_VECTOR of type <1 x i1> with
   // a constant i8 operand.
   assert(Result.getValueSizeInBits() >=
-         Op.getValueType().getVectorElementType().getSizeInBits() &&
+             Op.getValueType().getScalarSizeInBits() &&
          "Invalid type for scalarized vector");
   AnalyzeNewValue(Result);
 
@@ -913,7 +913,7 @@ SDValue DAGTypeLegalizer::BitConvertToInteger(SDValue Op) {
 /// Convert to a vector of integers of the same size.
 SDValue DAGTypeLegalizer::BitConvertVectorToIntegerVector(SDValue Op) {
   assert(Op.getValueType().isVector() && "Only applies to vectors!");
-  unsigned EltWidth = Op.getValueType().getVectorElementType().getSizeInBits();
+  unsigned EltWidth = Op.getValueType().getScalarSizeInBits();
   EVT EltNVT = EVT::getIntegerVT(*DAG.getContext(), EltWidth);
   unsigned NumElts = Op.getValueType().getVectorNumElements();
   return DAG.getNode(ISD::BITCAST, SDLoc(Op),

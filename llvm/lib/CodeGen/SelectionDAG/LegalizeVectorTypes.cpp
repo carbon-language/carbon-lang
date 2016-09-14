@@ -1282,7 +1282,7 @@ void DAGTypeLegalizer::SplitVecRes_ExtendOp(SDNode *N, SDValue &Lo,
     LLVMContext &Ctx = *DAG.getContext();
     EVT NewSrcVT = EVT::getVectorVT(
         Ctx, EVT::getIntegerVT(
-                 Ctx, SrcVT.getVectorElementType().getSizeInBits() * 2),
+                 Ctx, SrcVT.getScalarSizeInBits() * 2),
         NumElements);
     EVT SplitSrcVT =
         EVT::getVectorVT(Ctx, SrcVT.getVectorElementType(), NumElements / 2);
@@ -1940,8 +1940,8 @@ SDValue DAGTypeLegalizer::SplitVecOp_TruncateHelper(SDNode *N) {
   // if we're trying to split it at all. assert() that's true, just in case.
   assert(!(NumElements & 1) && "Splitting vector, but not in half!");
 
-  unsigned InElementSize = InVT.getVectorElementType().getSizeInBits();
-  unsigned OutElementSize = OutVT.getVectorElementType().getSizeInBits();
+  unsigned InElementSize = InVT.getScalarSizeInBits();
+  unsigned OutElementSize = OutVT.getScalarSizeInBits();
 
   // If the input elements are only 1/2 the width of the result elements,
   // just use the normal splitting. Our trick only work if there's room

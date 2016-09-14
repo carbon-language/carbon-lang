@@ -2389,7 +2389,7 @@ HexagonTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG)
   if (UseHVX) {
     ArrayRef<int> Mask = SVN->getMask();
     size_t MaskLen = Mask.size();
-    int ElemSizeInBits = VT.getVectorElementType().getSizeInBits();
+    int ElemSizeInBits = VT.getScalarSizeInBits();
     if ((Subtarget.useHVXSglOps() && (ElemSizeInBits * MaskLen) == 64 * 8) ||
         (Subtarget.useHVXDblOps() && (ElemSizeInBits * MaskLen) == 128 * 8)) {
       // Return 1 for odd and 2 of even

@@ -134,7 +134,7 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
   // we care if the resultant vector is all ones, not whether the individual
   // constants are.
   SDValue NotZero = N->getOperand(i);
-  unsigned EltSize = N->getValueType(0).getVectorElementType().getSizeInBits();
+  unsigned EltSize = N->getValueType(0).getScalarSizeInBits();
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(NotZero)) {
     if (CN->getAPIntValue().countTrailingOnes() < EltSize)
       return false;
@@ -173,7 +173,7 @@ bool ISD::isBuildVectorAllZeros(const SDNode *N) {
     // We only want to check enough bits to cover the vector elements, because
     // we care if the resultant vector is all zeros, not whether the individual
     // constants are.
-    unsigned EltSize = N->getValueType(0).getVectorElementType().getSizeInBits();
+    unsigned EltSize = N->getValueType(0).getScalarSizeInBits();
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op)) {
       if (CN->getAPIntValue().countTrailingZeros() < EltSize)
         return false;
@@ -7125,7 +7125,7 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
   // false.
   unsigned int nOps = getNumOperands();
   assert(nOps > 0 && "isConstantSplat has 0-size build vector");
-  unsigned EltBitSize = VT.getVectorElementType().getSizeInBits();
+  unsigned EltBitSize = VT.getScalarSizeInBits();
 
   for (unsigned j = 0; j < nOps; ++j) {
     unsigned i = isBigEndian ? nOps-1-j : j;

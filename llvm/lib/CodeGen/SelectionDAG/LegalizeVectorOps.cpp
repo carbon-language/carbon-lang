@@ -817,8 +817,8 @@ SDValue VectorLegalizer::ExpandSIGN_EXTEND_VECTOR_INREG(SDValue Op) {
   // Now we need sign extend. Do this by shifting the elements. Even if these
   // aren't legal operations, they have a better chance of being legalized
   // without full scalarization than the sign extension does.
-  unsigned EltWidth = VT.getVectorElementType().getSizeInBits();
-  unsigned SrcEltWidth = SrcVT.getVectorElementType().getSizeInBits();
+  unsigned EltWidth = VT.getScalarSizeInBits();
+  unsigned SrcEltWidth = SrcVT.getScalarSizeInBits();
   SDValue ShiftAmount = DAG.getConstant(EltWidth - SrcEltWidth, DL, VT);
   return DAG.getNode(ISD::SRA, DL, VT,
                      DAG.getNode(ISD::SHL, DL, VT, Op, ShiftAmount),

@@ -1309,7 +1309,7 @@ void SystemZDAGToDAGISel::Select(SDNode *Node) {
 
   case ISD::INSERT_VECTOR_ELT: {
     EVT VT = Node->getValueType(0);
-    unsigned ElemBitSize = VT.getVectorElementType().getSizeInBits();
+    unsigned ElemBitSize = VT.getScalarSizeInBits();
     if (ElemBitSize == 32) {
       if (tryGather(Node, SystemZ::VGEF))
         return;

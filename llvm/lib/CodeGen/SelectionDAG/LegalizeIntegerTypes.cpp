@@ -1054,7 +1054,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BUILD_VECTOR(SDNode *N) {
   // vector element type.  Check that any extra bits introduced will be
   // truncated away.
   assert(N->getOperand(0).getValueSizeInBits() >=
-         N->getValueType(0).getVectorElementType().getSizeInBits() &&
+         N->getValueType(0).getScalarSizeInBits() &&
          "Type of inserted value narrower than vector element type!");
 
   SmallVector<SDValue, 16> NewOps;
@@ -1084,7 +1084,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_INSERT_VECTOR_ELT(SDNode *N,
 
     // Check that any extra bits introduced will be truncated away.
     assert(N->getOperand(1).getValueSizeInBits() >=
-           N->getValueType(0).getVectorElementType().getSizeInBits() &&
+           N->getValueType(0).getScalarSizeInBits() &&
            "Type of inserted value narrower than vector element type!");
     return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0),
                                   GetPromotedInteger(N->getOperand(1)),
