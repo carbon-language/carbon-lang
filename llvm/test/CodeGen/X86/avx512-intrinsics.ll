@@ -2968,16 +2968,6 @@ define <2 x double> @test_max_sd(<2 x double> %a0, <2 x double> %a1) {
   ret <2 x double> %res
 }
 
-define <2 x double> @test_x86_avx512_cvtsi2sd32(<2 x double> %a, i32 %b) {
-; CHECK-LABEL: test_x86_avx512_cvtsi2sd32:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vcvtsi2sdl %edi, {rz-sae}, %xmm0, %xmm0
-; CHECK-NEXT:    retq
-  %res = call <2 x double> @llvm.x86.avx512.cvtsi2sd32(<2 x double> %a, i32 %b, i32 3) ; <<<2 x double>> [#uses=1]
-  ret <2 x double> %res
-}
-declare <2 x double> @llvm.x86.avx512.cvtsi2sd32(<2 x double>, i32, i32) nounwind readnone
-
 define <2 x double> @test_x86_avx512_cvtsi2sd64(<2 x double> %a, i64 %b) {
 ; CHECK-LABEL: test_x86_avx512_cvtsi2sd64:
 ; CHECK:       ## BB#0:
