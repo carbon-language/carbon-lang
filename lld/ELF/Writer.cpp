@@ -150,8 +150,8 @@ template <class ELFT> void elf::writeResult() {
   if (needsInterpSection<ELFT>())
     Interp.reset(new InterpSection<ELFT>);
 
-  if (Config->BuildId == BuildIdKind::Fnv1)
-    BuildId.reset(new BuildIdFnv1<ELFT>);
+  if (Config->BuildId == BuildIdKind::Fast)
+    BuildId.reset(new BuildIdFastHash<ELFT>);
   else if (Config->BuildId == BuildIdKind::Md5)
     BuildId.reset(new BuildIdMd5<ELFT>);
   else if (Config->BuildId == BuildIdKind::Sha1)

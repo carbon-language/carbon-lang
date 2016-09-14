@@ -472,7 +472,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
 
   // Parse --build-id or --build-id=<style>.
   if (Args.hasArg(OPT_build_id))
-    Config->BuildId = BuildIdKind::Fnv1;
+    Config->BuildId = BuildIdKind::Fast;
   if (auto *Arg = Args.getLastArg(OPT_build_id_eq)) {
     StringRef S = Arg->getValue();
     if (S == "md5") {
