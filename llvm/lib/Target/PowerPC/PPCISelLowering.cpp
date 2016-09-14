@@ -11022,11 +11022,9 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         int Bits = IID == Intrinsic::ppc_qpx_qvlpcld ?
                    5 /* 32 byte alignment */ : 4 /* 16 byte alignment */;
 
-        if (DAG.MaskedValueIsZero(
-                Add->getOperand(1),
-                APInt::getAllOnesValue(Bits /* alignment */)
-                    .zext(
-                        Add.getValueType().getScalarSizeInBits()))) {
+        if (DAG.MaskedValueIsZero(Add->getOperand(1),
+                                  APInt::getAllOnesValue(Bits /* alignment */)
+                                      .zext(Add.getScalarValueSizeInBits()))) {
           SDNode *BasePtr = Add->getOperand(0).getNode();
           for (SDNode::use_iterator UI = BasePtr->use_begin(),
                                     UE = BasePtr->use_end();

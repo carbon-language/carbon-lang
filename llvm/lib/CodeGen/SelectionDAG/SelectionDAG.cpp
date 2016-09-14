@@ -1012,7 +1012,7 @@ SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, const SDLoc &DL, EVT VT) {
          "getZeroExtendInReg should use the vector element type instead of "
          "the vector type!");
   if (Op.getValueType() == VT) return Op;
-  unsigned BitWidth = Op.getValueType().getScalarSizeInBits();
+  unsigned BitWidth = Op.getScalarValueSizeInBits();
   APInt Imm = APInt::getLowBitsSet(BitWidth,
                                    VT.getSizeInBits());
   return getNode(ISD::AND, DL, Op.getValueType(), Op,
@@ -1984,7 +1984,7 @@ bool SelectionDAG::SignBitIsZero(SDValue Op, unsigned Depth) const {
   if (Op.getValueType().isVector())
     return false;
 
-  unsigned BitWidth = Op.getValueType().getScalarSizeInBits();
+  unsigned BitWidth = Op.getScalarValueSizeInBits();
   return MaskedValueIsZero(Op, APInt::getSignBit(BitWidth), Depth);
 }
 
@@ -2002,7 +2002,7 @@ bool SelectionDAG::MaskedValueIsZero(SDValue Op, const APInt &Mask,
 /// them in the KnownZero/KnownOne bitsets.
 void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
                                     APInt &KnownOne, unsigned Depth) const {
-  unsigned BitWidth = Op.getValueType().getScalarSizeInBits();
+  unsigned BitWidth = Op.getScalarValueSizeInBits();
 
   KnownZero = KnownOne = APInt(BitWidth, 0);   // Don't know anything.
   if (Depth == 6)
@@ -2549,14 +2549,12 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const {
   }
 
   case ISD::SIGN_EXTEND:
-    Tmp =
-        VTBits-Op.getOperand(0).getValueType().getScalarSizeInBits();
+    Tmp = VTBits - Op.getOperand(0).getScalarValueSizeInBits();
     return ComputeNumSignBits(Op.getOperand(0), Depth+1) + Tmp;
 
   case ISD::SIGN_EXTEND_INREG:
     // Max of the input and what this extends.
-    Tmp =
-      cast<VTSDNode>(Op.getOperand(1))->getVT().getScalarSizeInBits();
+    Tmp = cast<VTSDNode>(Op.getOperand(1))->getVT().getScalarSizeInBits();
     Tmp = VTBits-Tmp+1;
 
     Tmp2 = ComputeNumSignBits(Op.getOperand(0), Depth+1);

@@ -1931,7 +1931,7 @@ static void getUsefulBits(SDValue Op, APInt &UsefulBits, unsigned Depth) {
     return;
   // Initialize UsefulBits
   if (!Depth) {
-    unsigned Bitwidth = Op.getValueType().getScalarSizeInBits();
+    unsigned Bitwidth = Op.getScalarValueSizeInBits();
     // At the beginning, assume every produced bits is useful
     UsefulBits = APInt(Bitwidth, 0);
     UsefulBits.flipAllBits();

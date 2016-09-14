@@ -432,7 +432,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
                                           TargetLoweringOpt &TLO,
                                           unsigned Depth) const {
   unsigned BitWidth = DemandedMask.getBitWidth();
-  assert(Op.getValueType().getScalarSizeInBits() == BitWidth &&
+  assert(Op.getScalarValueSizeInBits() == BitWidth &&
          "Mask size mismatches value type size!");
   APInt NewMask = DemandedMask;
   SDLoc dl(Op);
@@ -984,8 +984,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     break;
   }
   case ISD::ZERO_EXTEND: {
-    unsigned OperandBitWidth =
-      Op.getOperand(0).getValueType().getScalarSizeInBits();
+    unsigned OperandBitWidth = Op.getOperand(0).getScalarValueSizeInBits();
     APInt InMask = NewMask.trunc(OperandBitWidth);
 
     // If none of the top bits are demanded, convert this into an any_extend.
@@ -1047,8 +1046,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     break;
   }
   case ISD::ANY_EXTEND: {
-    unsigned OperandBitWidth =
-      Op.getOperand(0).getValueType().getScalarSizeInBits();
+    unsigned OperandBitWidth = Op.getOperand(0).getScalarValueSizeInBits();
     APInt InMask = NewMask.trunc(OperandBitWidth);
     if (SimplifyDemandedBits(Op.getOperand(0), InMask,
                              KnownZero, KnownOne, TLO, Depth+1))
@@ -1061,8 +1059,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
   case ISD::TRUNCATE: {
     // Simplify the input, using demanded bit information, and compute the known
     // zero/one bits live out.
-    unsigned OperandBitWidth =
-      Op.getOperand(0).getValueType().getScalarSizeInBits();
+    unsigned OperandBitWidth = Op.getOperand(0).getScalarValueSizeInBits();
     APInt TruncMask = NewMask.zext(OperandBitWidth);
     if (SimplifyDemandedBits(Op.getOperand(0), TruncMask,
                              KnownZero, KnownOne, TLO, Depth+1))

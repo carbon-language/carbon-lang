@@ -24782,7 +24782,7 @@ unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
   unsigned Depth) const {
   // SETCC_CARRY sets the dest to ~0 for true or 0 for false.
   if (Op.getOpcode() == X86ISD::SETCC_CARRY)
-    return Op.getValueType().getScalarSizeInBits();
+    return Op.getScalarValueSizeInBits();
 
   // Fallback case.
   return 1;
@@ -27421,7 +27421,7 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
   if (N->getOpcode() == ISD::VSELECT && DCI.isBeforeLegalizeOps() &&
       !DCI.isBeforeLegalize() &&
       !ISD::isBuildVectorOfConstantSDNodes(Cond.getNode())) {
-    unsigned BitWidth = Cond.getValueType().getScalarSizeInBits();
+    unsigned BitWidth = Cond.getScalarValueSizeInBits();
 
     // Don't optimize vector selects that map to mask-registers.
     if (BitWidth == 1)
@@ -28682,7 +28682,7 @@ static SDValue combineVectorZext(SDNode *N, SelectionDAG &DAG,
                                 SplatBitSize, HasAnyUndefs))
     return SDValue();
 
-  unsigned ResSize = N1.getValueType().getScalarSizeInBits();
+  unsigned ResSize = N1.getScalarValueSizeInBits();
   // Make sure the splat matches the mask we expect
   if (SplatBitSize > ResSize ||
       (SplatValue + 1).exactLogBase2() != (int)SrcSize)
@@ -30356,7 +30356,7 @@ static SDValue isFNEG(SDNode *N) {
 
   SDValue Op0 = peekThroughBitcasts(Op.getOperand(0));
 
-  unsigned EltBits = Op1.getValueType().getScalarSizeInBits();
+  unsigned EltBits = Op1.getScalarValueSizeInBits();
   auto isSignBitValue = [&](const ConstantFP *C) {
     return C->getValueAPF().bitcastToAPInt() == APInt::getSignBit(EltBits);
   };

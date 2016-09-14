@@ -181,7 +181,7 @@ namespace {
     /// if things it uses can be simplified by bit propagation.
     /// If so, return true.
     bool SimplifyDemandedBits(SDValue Op) {
-      unsigned BitWidth = Op.getValueType().getScalarSizeInBits();
+      unsigned BitWidth = Op.getScalarValueSizeInBits();
       APInt Demanded = APInt::getAllOnesValue(BitWidth);
       return SimplifyDemandedBits(Op, Demanded);
     }
@@ -3080,16 +3080,12 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     // fold (and x, 0) -> 0, vector edition
     if (ISD::isBuildVectorAllZeros(N0.getNode()))
       // do not return N0, because undef node may exist in N0
-      return DAG.getConstant(
-          APInt::getNullValue(
-              N0.getValueType().getScalarSizeInBits()),
-          SDLoc(N), N0.getValueType());
+      return DAG.getConstant(APInt::getNullValue(N0.getScalarValueSizeInBits()),
+                             SDLoc(N), N0.getValueType());
     if (ISD::isBuildVectorAllZeros(N1.getNode()))
       // do not return N1, because undef node may exist in N1
-      return DAG.getConstant(
-          APInt::getNullValue(
-              N1.getValueType().getScalarSizeInBits()),
-          SDLoc(N), N1.getValueType());
+      return DAG.getConstant(APInt::getNullValue(N1.getScalarValueSizeInBits()),
+                             SDLoc(N), N1.getValueType());
 
     // fold (and x, -1) -> x, vector edition
     if (ISD::isBuildVectorAllOnes(N0.getNode()))
@@ -3327,7 +3323,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     EVT MemVT = LN0->getMemoryVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
-    unsigned BitWidth = N1.getValueType().getScalarSizeInBits();
+    unsigned BitWidth = N1.getScalarValueSizeInBits();
     if (DAG.MaskedValueIsZero(N1, APInt::getHighBitsSet(BitWidth,
                            BitWidth - MemVT.getScalarSizeInBits())) &&
         ((!LegalOperations && !LN0->isVolatile()) ||
@@ -3347,7 +3343,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     EVT MemVT = LN0->getMemoryVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
-    unsigned BitWidth = N1.getValueType().getScalarSizeInBits();
+    unsigned BitWidth = N1.getScalarValueSizeInBits();
     if (DAG.MaskedValueIsZero(N1, APInt::getHighBitsSet(BitWidth,
                            BitWidth - MemVT.getScalarSizeInBits())) &&
         ((!LegalOperations && !LN0->isVolatile()) ||
@@ -3751,15 +3747,13 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
     if (ISD::isBuildVectorAllOnes(N0.getNode()))
       // do not return N0, because undef node may exist in N0
       return DAG.getConstant(
-          APInt::getAllOnesValue(
-              N0.getValueType().getScalarSizeInBits()),
-          SDLoc(N), N0.getValueType());
+          APInt::getAllOnesValue(N0.getScalarValueSizeInBits()), SDLoc(N),
+          N0.getValueType());
     if (ISD::isBuildVectorAllOnes(N1.getNode()))
       // do not return N1, because undef node may exist in N1
       return DAG.getConstant(
-          APInt::getAllOnesValue(
-              N1.getValueType().getScalarSizeInBits()),
-          SDLoc(N), N1.getValueType());
+          APInt::getAllOnesValue(N1.getScalarValueSizeInBits()), SDLoc(N),
+          N1.getValueType());
 
     // fold (or (shuf A, V_0, MA), (shuf B, V_0, MB)) -> (shuf A, B, Mask)
     // Do this only if the resulting shuffle is legal.
@@ -6102,8 +6096,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     // See if the value being truncated is already sign extended.  If so, just
     // eliminate the trunc/sext pair.
     SDValue Op = N0.getOperand(0);
-    unsigned OpBits   = Op.getValueType().getScalarSizeInBits();
-    unsigned MidBits  = N0.getValueType().getScalarSizeInBits();
+    unsigned OpBits   = Op.getScalarValueSizeInBits();
+    unsigned MidBits  = N0.getScalarValueSizeInBits();
     unsigned DestBits = VT.getScalarSizeInBits();
     unsigned NumSignBits = DAG.ComputeNumSignBits(Op);
 
@@ -6265,7 +6259,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     // sext(setcc x, y, cc) -> (select (setcc x, y, cc), T, 0)
     // Here, T can be 1 or -1, depending on the type of the setcc and
     // getBooleanContents().
-    unsigned SetCCWidth = N0.getValueType().getScalarSizeInBits();
+    unsigned SetCCWidth = N0.getScalarValueSizeInBits();
 
     SDLoc DL(N);
     // To determine the "true" side of the select, we need to know the high bit
@@ -7041,7 +7035,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   // if x is small enough.
   if (N0.getOpcode() == ISD::SIGN_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND) {
     SDValue N00 = N0.getOperand(0);
-    if (N00.getValueType().getScalarSizeInBits() <= EVTBits &&
+    if (N00.getScalarValueSizeInBits() <= EVTBits &&
         (!LegalOperations || TLI.isOperationLegal(ISD::SIGN_EXTEND, VT)))
       return DAG.getNode(ISD::SIGN_EXTEND, SDLoc(N), VT, N00, N1);
   }
@@ -9391,7 +9385,7 @@ SDValue DAGCombiner::visitFNEG(SDNode *N) {
       if (N0.getValueType().isVector()) {
         // For a vector, get a mask such as 0x80... per scalar element
         // and splat it.
-        SignMask = APInt::getSignBit(N0.getValueType().getScalarSizeInBits());
+        SignMask = APInt::getSignBit(N0.getScalarValueSizeInBits());
         SignMask = APInt::getSplat(IntVT.getSizeInBits(), SignMask);
       } else {
         // For a scalar, just generate 0x80...
@@ -9496,7 +9490,7 @@ SDValue DAGCombiner::visitFABS(SDNode *N) {
       if (N0.getValueType().isVector()) {
         // For a vector, get a mask such as 0x7f... per scalar element
         // and splat it.
-        SignMask = ~APInt::getSignBit(N0.getValueType().getScalarSizeInBits());
+        SignMask = ~APInt::getSignBit(N0.getScalarValueSizeInBits());
         SignMask = APInt::getSplat(IntVT.getSizeInBits(), SignMask);
       } else {
         // For a scalar, just generate 0x7f...
@@ -12159,11 +12153,9 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     // See if we can simplify the input to this truncstore with knowledge that
     // only the low bits are being used.  For example:
     // "truncstore (or (shl x, 8), y), i8"  -> "truncstore y, i8"
-    SDValue Shorter =
-      GetDemandedBits(Value,
-                      APInt::getLowBitsSet(
-                        Value.getValueType().getScalarSizeInBits(),
-                        ST->getMemoryVT().getScalarSizeInBits()));
+    SDValue Shorter = GetDemandedBits(
+        Value, APInt::getLowBitsSet(Value.getScalarValueSizeInBits(),
+                                    ST->getMemoryVT().getScalarSizeInBits()));
     AddToWorklist(Value.getNode());
     if (Shorter.getNode())
       return DAG.getTruncStore(Chain, SDLoc(N), Shorter,
@@ -12171,10 +12163,10 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
 
     // Otherwise, see if we can simplify the operation with
     // SimplifyDemandedBits, which only works if the value has a single use.
-    if (SimplifyDemandedBits(Value,
-                        APInt::getLowBitsSet(
-                          Value.getValueType().getScalarSizeInBits(),
-                          ST->getMemoryVT().getScalarSizeInBits())))
+    if (SimplifyDemandedBits(
+            Value,
+            APInt::getLowBitsSet(Value.getScalarValueSizeInBits(),
+                                 ST->getMemoryVT().getScalarSizeInBits())))
       return SDValue(N, 0);
   }
 
