@@ -1608,10 +1608,9 @@ lldb::ValueObjectSP DoGuessValueAt(StackFrame &frame, ConstString reg,
     }
 
     Instruction::Operand *origin_operand = nullptr;
-    std::function<bool(const Instruction::Operand &)> clobbered_reg_matcher =
-        [reg_info](const Instruction::Operand &op) {
-          return MatchRegOp(*reg_info)(op) && op.m_clobbered;
-        };
+    auto clobbered_reg_matcher = [reg_info](const Instruction::Operand &op) {
+      return MatchRegOp(*reg_info)(op) && op.m_clobbered;
+    };
 
     if (clobbered_reg_matcher(operands[0])) {
       origin_operand = &operands[1];
