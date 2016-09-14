@@ -44,6 +44,10 @@ using namespace llvm;
 
 #define DEBUG_TYPE "loop-interchange"
 
+static cl::opt<int> LoopInterchangeCostThreshold(
+    "loop-interchange-threshold", cl::init(0), cl::Hidden,
+    cl::desc("Interchange if you gain more than this number"));
+
 namespace {
 
 typedef SmallVector<Loop *, 8> LoopVector;
@@ -975,10 +979,9 @@ bool LoopInterchangeProfitability::isProfitable(unsigned InnerLoopId,
   // This is rough cost estimation algorithm. It counts the good and bad order
   // of induction variables in the instruction and allows reordering if number
   // of bad orders is more than good.
-  int Cost = 0;
-  Cost += getInstrOrderCost();
+  int Cost = getInstrOrderCost();
   DEBUG(dbgs() << "Cost = " << Cost << "\n");
-  if (Cost < 0)
+  if (Cost < -LoopInterchangeCostThreshold)
     return true;
 
   // It is not profitable as per current cache profitability model. But check if
