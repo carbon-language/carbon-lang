@@ -1181,12 +1181,6 @@ Instruction *InstCombiner::foldICmpCstShrConst(ICmpInst &I, Value *Op, Value *A,
                                              ConstantInt *CI2) {
   assert(I.isEquality() && "Cannot fold icmp gt/lt");
 
-  auto getConstant = [&I, this](bool IsTrue) {
-    if (I.getPredicate() == I.ICMP_NE)
-      IsTrue = !IsTrue;
-    return replaceInstUsesWith(I, ConstantInt::get(I.getType(), IsTrue));
-  };
-
   auto getICmp = [&I](CmpInst::Predicate Pred, Value *LHS, Value *RHS) {
     if (I.getPredicate() == I.ICMP_NE)
       Pred = CmpInst::getInversePredicate(Pred);
@@ -1234,8 +1228,11 @@ Instruction *InstCombiner::foldICmpCstShrConst(ICmpInst &I, Value *Op, Value *A,
       return getICmp(I.ICMP_EQ, A, ConstantInt::get(A->getType(), Shift));
     }
   }
+
   // Shifting const2 will never be equal to const1.
-  return getConstant(false);
+  // FIXME: This should always be handled by InstSimplify?
+  auto *TorF = ConstantInt::get(I.getType(), I.getPredicate() == I.ICMP_NE);
+  return replaceInstUsesWith(I, TorF);
 }
 
 /// Handle "(icmp eq/ne (shl const2, A), const1)" ->
@@ -1244,12 +1241,6 @@ Instruction *InstCombiner::foldICmpCstShlConst(ICmpInst &I, Value *Op, Value *A,
                                                ConstantInt *CI1,
                                                ConstantInt *CI2) {
   assert(I.isEquality() && "Cannot fold icmp gt/lt");
-
-  auto getConstant = [&I, this](bool IsTrue) {
-    if (I.getPredicate() == I.ICMP_NE)
-      IsTrue = !IsTrue;
-    return replaceInstUsesWith(I, ConstantInt::get(I.getType(), IsTrue));
-  };
 
   auto getICmp = [&I](CmpInst::Predicate Pred, Value *LHS, Value *RHS) {
     if (I.getPredicate() == I.ICMP_NE)
@@ -1280,7 +1271,9 @@ Instruction *InstCombiner::foldICmpCstShlConst(ICmpInst &I, Value *Op, Value *A,
     return getICmp(I.ICMP_EQ, A, ConstantInt::get(A->getType(), Shift));
 
   // Shifting const2 will never be equal to const1.
-  return getConstant(false);
+  // FIXME: This should always be handled by InstSimplify?
+  auto *TorF = ConstantInt::get(I.getType(), I.getPredicate() == I.ICMP_NE);
+  return replaceInstUsesWith(I, TorF);
 }
 
 /// The caller has matched a pattern of the form:
