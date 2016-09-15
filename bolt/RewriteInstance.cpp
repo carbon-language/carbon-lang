@@ -743,11 +743,6 @@ void RewriteInstance::discoverFileObjects() {
 
     // TODO: populate address map with PLT entries for better readability.
 
-    // Ignore function with 0 size for now (possibly coming from assembly).
-    auto SymbolSize = ELFSymbolRef(Symbol).getSize();
-    if (SymbolSize == 0)
-      continue;
-
     ErrorOr<section_iterator> SectionOrErr = Symbol.getSection();
     check_error(SectionOrErr.getError(), "cannot get symbol section");
     section_iterator Section = *SectionOrErr;
@@ -755,6 +750,8 @@ void RewriteInstance::discoverFileObjects() {
       // Could be an absolute symbol. Could record for pretty printing.
       continue;
     }
+
+    auto SymbolSize = ELFSymbolRef(Symbol).getSize();
 
     // Checkout for conflicts with function data from FDEs.
     bool IsSimple = true;
@@ -769,26 +766,33 @@ void RewriteInstance::discoverFileObjects() {
           auto &PrevFDE = *FDEI->second;
           auto PrevStart = PrevFDE.getInitialLocation();
           auto PrevLength = PrevFDE.getAddressRange();
-          if (opts::Verbosity >= 1 &&
-              Address > PrevStart && Address < PrevStart + PrevLength) {
-            errs() << "BOLT-WARNING: function " << UniqueName
-                   << " is in conflict with FDE ["
-                   << Twine::utohexstr(PrevStart) << ", "
-                   << Twine::utohexstr(PrevStart + PrevLength)
-                   << "). Skipping.\n";
+          if (Address > PrevStart && Address < PrevStart + PrevLength) {
+            if (opts::Verbosity >= 1) {
+              errs() << "BOLT-WARNING: function " << UniqueName
+                     << " is in conflict with FDE ["
+                     << Twine::utohexstr(PrevStart) << ", "
+                     << Twine::utohexstr(PrevStart + PrevLength)
+                     << "). Skipping.\n";
+            }
             IsSimple = false;
           }
         }
       } else if (FDE.getAddressRange() != SymbolSize) {
-        // Function addresses match but sizes differ.
-        if (opts::Verbosity >= 1) {
-          errs() << "BOLT-WARNING: sizes differ for function " << UniqueName
-                 << ". FDE : " << FDE.getAddressRange()
-                 << "; symbol table : " << SymbolSize << ". Skipping.\n";
-        }
+        if (SymbolSize) {
+          // Function addresses match but sizes differ.
+          if (opts::Verbosity >= 1) {
+            errs() << "BOLT-WARNING: sizes differ for function " << UniqueName
+                   << ". FDE : " << FDE.getAddressRange()
+                   << "; symbol table : " << SymbolSize << ". Skipping.\n";
+          }
 
-        // Create maximum size non-simple function.
-        IsSimple = false;
+          // Create maximum size non-simple function.
+          IsSimple = false;
+        }
+        if (opts::Verbosity >= 1) {
+          outs() << "BOLT-INFO: adjusting size of function " << UniqueName
+                 << " using FDE data.\n";
+        }
         SymbolSize = std::max(SymbolSize, FDE.getAddressRange());
       }
     }
@@ -799,10 +803,16 @@ void RewriteInstance::discoverFileObjects() {
       BF = &BFI->second;
       // Duplicate function name. Make sure everything matches before we add
       // an alternative name.
-      if (opts::Verbosity >= 1 && SymbolSize != BF->getSize()) {
-        errs() << "BOLT-WARNING: size mismatch for duplicate entries "
-               << UniqueName << ':' << SymbolSize << " and "
-               << *BF << ':' << BF->getSize() << '\n';
+      if (SymbolSize != BF->getSize()) {
+        if (opts::Verbosity >= 1) {
+          if (SymbolSize && BF->getSize()) {
+            errs() << "BOLT-WARNING: size mismatch for duplicate entries "
+                   << *BF << " and " << UniqueName << '\n';
+          }
+          outs() << "BOLT-INFO: adjusting size of function " << *BF
+                 << " old " << BF->getSize() << " new " << SymbolSize << "\n";
+        }
+        BF->setSize(std::max(SymbolSize, BF->getSize()));
       }
       BF->addAlternativeName(UniqueName);
     } else {
@@ -915,8 +925,8 @@ void RewriteInstance::disassembleFunctions() {
     if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
       // When could it happen?
       if (opts::Verbosity >= 1) {
-        errs() << "BOLT-WARNING: corresponding section is non-executable or empty "
-               << "for function " << Function;
+        errs() << "BOLT-WARNING: corresponding section is non-executable or "
+               << "empty for function " << Function << '\n';
       }
       continue;
     }
@@ -955,6 +965,21 @@ void RewriteInstance::disassembleFunctions() {
         continue;
       }
       Function.setMaxSize(MaxSize);
+      if (!Function.getSize() && Function.getMaxSize()) {
+        // Some assembly functions have their size set to 0, use the max
+        // size as their real size.
+        if (opts::Verbosity >= 1) {
+          outs() << "BOLT-INFO: setting size of function " << Function
+                 << " to " << Function.getMaxSize() << " (was 0)\n";
+        }
+        Function.setSize(Function.getMaxSize());
+      }
+    }
+
+    // Treat zero-sized functions as non-simple ones.
+    if (Function.getSize() == 0) {
+      Function.setSimple(false);
+      continue;
     }
 
     StringRef SectionContents;

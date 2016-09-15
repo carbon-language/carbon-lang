@@ -578,7 +578,6 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     return IndirectBranchType::POSSIBLE_TAIL_CALL;
   };
 
-  bool IsSimple = true;
   for (uint64_t Offset = 0; Offset < getSize(); ) {
     MCInst Instruction;
     uint64_t Size;
@@ -753,8 +752,6 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
 
     Offset += Size;
   }
-
-  setSimple(IsSimple);
 
   // TODO: clear memory if not simple function?
 
@@ -2686,11 +2683,11 @@ DynoStats BinaryFunction::getDynoStats() const {
 
     // Count the number of calls by iterating through all instructions.
     for (const auto &Instr : *BB) {
-      if (BC.MIA->isCall(Instr)) {
-        Stats[DynoStats::FUNCTION_CALLS] += BBExecutionCount;
-        if (BC.MIA->getMemoryOperandNo(Instr) != -1) {
-          Stats[DynoStats::INDIRECT_CALLS] += BBExecutionCount;
-        }
+      if (!BC.MIA->isCall(Instr))
+        continue;
+      Stats[DynoStats::FUNCTION_CALLS] += BBExecutionCount;
+      if (BC.MIA->getMemoryOperandNo(Instr) != -1) {
+        Stats[DynoStats::INDIRECT_CALLS] += BBExecutionCount;
       }
     }
 

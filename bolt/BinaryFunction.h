@@ -932,6 +932,11 @@ public:
     return *this;
   }
 
+  BinaryFunction &setSize(uint64_t S) {
+    Size = S;
+    return *this;
+  }
+
   BinaryFunction &setMaxSize(uint64_t Size) {
     MaxSize = Size;
     return *this;
