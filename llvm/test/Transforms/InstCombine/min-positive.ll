@@ -19,11 +19,7 @@ define i1 @smin(i32 %other) {
 
 define <2 x i1> @smin_vec(<2 x i32> %x, <2 x i32> %other) {
 ; CHECK-LABEL: @smin_vec(
-; CHECK-NEXT:    [[NOTNEG:%.*]] = and <2 x i32> %x, <i32 7, i32 7>
-; CHECK-NEXT:    [[POSITIVE:%.*]] = or <2 x i32> [[NOTNEG]], <i32 1, i32 1>
-; CHECK-NEXT:    [[CMP:%.*]] = icmp slt <2 x i32> [[POSITIVE]], %other
-; CHECK-NEXT:    [[SEL:%.*]] = select <2 x i1> [[CMP]], <2 x i32> [[POSITIVE]], <2 x i32> %other
-; CHECK-NEXT:    [[TEST:%.*]] = icmp sgt <2 x i32> [[SEL]], zeroinitializer
+; CHECK-NEXT:    [[TEST:%.*]] = icmp sgt <2 x i32> %other, zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[TEST]]
 ;
   %notneg = and <2 x i32> %x, <i32 7, i32 7>
@@ -48,16 +44,12 @@ define i1 @smin_commute(i32 %other) {
 
 define <2 x i1> @smin_commute_vec(<2 x i32> %x, <2 x i32> %other) {
 ; CHECK-LABEL: @smin_commute_vec(
-; CHECK-NEXT:    [[NOTNEG:%.*]] = and <2 x i32> %x, <i32 7, i32 7>
-; CHECK-NEXT:    [[POSITIVE:%.*]] = or <2 x i32> [[NOTNEG]], <i32 1, i32 1>
-; CHECK-NEXT:    [[CMP:%.*]] = icmp slt <2 x i32> [[POSITIVE]], %other
-; CHECK-NEXT:    [[SEL:%.*]] = select <2 x i1> [[CMP]], <2 x i32> %other, <2 x i32> [[POSITIVE]]
-; CHECK-NEXT:    [[TEST:%.*]] = icmp sgt <2 x i32> [[SEL]], zeroinitializer
+; CHECK-NEXT:    [[TEST:%.*]] = icmp sgt <2 x i32> %other, zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[TEST]]
 ;
   %notneg = and <2 x i32> %x, <i32 7, i32 7>
   %positive = or <2 x i32> %notneg, <i32 1, i32 1>
-  %cmp = icmp slt <2 x i32> %positive, %other
+  %cmp = icmp slt <2 x i32> %other, %positive
   %sel = select <2 x i1> %cmp, <2 x i32> %other, <2 x i32> %positive
   %test = icmp sgt <2 x i32> %sel, zeroinitializer
   ret <2 x i1> %test

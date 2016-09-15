@@ -1376,11 +1376,10 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
 // Fold icmp Pred X, C.
 Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &Cmp) {
   CmpInst::Predicate Pred = Cmp.getPredicate();
-  Value *X = Cmp.getOperand(0), *C = Cmp.getOperand(1);
+  Value *X = Cmp.getOperand(0);
 
-  // FIXME: Use m_APInt to allow folds for splat constants.
-  ConstantInt *CI = dyn_cast<ConstantInt>(C);
-  if (!CI)
+  const APInt *C;
+  if (!match(Cmp.getOperand(1), m_APInt(C)))
     return nullptr;
 
   Value *A = nullptr, *B = nullptr;
@@ -1400,21 +1399,26 @@ Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &Cmp) {
     ConstantInt *CI2; // I = icmp ugt (add (add A, B), CI2), CI
     if (Pred == ICmpInst::ICMP_UGT &&
         match(X, m_Add(m_Add(m_Value(A), m_Value(B)), m_ConstantInt(CI2))))
-      if (Instruction *Res = ProcessUGT_ADDCST_ADD(Cmp, A, B, CI2, CI, *this))
+      if (Instruction *Res = ProcessUGT_ADDCST_ADD(
+              Cmp, A, B, CI2, cast<ConstantInt>(Cmp.getOperand(1)), *this))
         return Res;
   }
 
   // (icmp sgt smin(PosA, B) 0) -> (icmp sgt B 0)
-  if (CI->isZero() && Pred == ICmpInst::ICMP_SGT)
-    if (auto *SI = dyn_cast<SelectInst>(X)) {
-      SelectPatternResult SPR = matchSelectPattern(SI, A, B);
-      if (SPR.Flavor == SPF_SMIN) {
-        if (isKnownPositive(A, DL))
-          return new ICmpInst(Pred, B, CI);
-        if (isKnownPositive(B, DL))
-          return new ICmpInst(Pred, A, CI);
-      }
+  if (*C == 0 && Pred == ICmpInst::ICMP_SGT) {
+    SelectPatternResult SPR = matchSelectPattern(X, A, B);
+    if (SPR.Flavor == SPF_SMIN) {
+      if (isKnownPositive(A, DL))
+        return new ICmpInst(Pred, B, Cmp.getOperand(1));
+      if (isKnownPositive(B, DL))
+        return new ICmpInst(Pred, A, Cmp.getOperand(1));
     }
+  }
+
+  // FIXME: Use m_APInt to allow folds for splat constants.
+  ConstantInt *CI = dyn_cast<ConstantInt>(Cmp.getOperand(1));
+  if (!CI)
+    return nullptr;
 
   // The following transforms are only worth it if the only user of the subtract
   // is the icmp.
