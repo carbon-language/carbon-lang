@@ -7,8 +7,3 @@ PCS:NEW_PC: {{0x[a-f0-9]+}}
 PCS:NEW
 PCS:BINGO
 
-RUN:     LLVMFuzzer-CounterTest-TracePC -use_counters=0 -print_pcs=1 -runs=1000 2>&1 | FileCheck %s --check-prefix=C_PCS
-RUN: not LLVMFuzzer-CounterTest-TracePC -use_counters=1 -print_pcs=1            2>&1 | FileCheck %s --check-prefix=C_PCS
-
-C_PCS: NEW_PC: {{.*}} in LLVMFuzzerTestOneInput {{.*}}CounterTest.cpp:11
-C_PCS: NEW_PC: {{.*}} in LLVMFuzzerTestOneInput {{.*}}CounterTest.cpp:12
