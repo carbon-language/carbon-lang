@@ -64,6 +64,7 @@ class DynoStats {
   D(UNCOND_BRANCHES,              "executed unconditional branches", Fn)\
   D(FUNCTION_CALLS,               "all function calls", Fn)\
   D(INDIRECT_CALLS,               "indirect calls", Fn)\
+  D(PLT_CALLS,                    "PLT calls", Fn)\
   D(INSTRUCTIONS,                 "executed instructions", Fn)\
   D(JUMP_TABLE_BRANCHES,          "taken jump table branches", Fn)\
   D(ALL_BRANCHES,                 "total branches",\

@@ -2688,6 +2688,20 @@ DynoStats BinaryFunction::getDynoStats() const {
       Stats[DynoStats::FUNCTION_CALLS] += BBExecutionCount;
       if (BC.MIA->getMemoryOperandNo(Instr) != -1) {
         Stats[DynoStats::INDIRECT_CALLS] += BBExecutionCount;
+      } else if (const auto *CallSymbol = BC.MIA->getTargetSymbol(Instr)) {
+        if (BC.getFunctionForSymbol(CallSymbol))
+          continue;
+        auto GSI = BC.GlobalSymbols.find(CallSymbol->getName());
+        if (GSI == BC.GlobalSymbols.end())
+          continue;
+        auto Section = BC.getSectionForAddress(GSI->second);
+        if (!Section)
+          continue;
+        StringRef SectionName;
+        Section->getName(SectionName);
+        if (SectionName == ".plt") {
+          Stats[DynoStats::PLT_CALLS] += BBExecutionCount;
+        }
       }
     }
 
