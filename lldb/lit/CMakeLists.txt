@@ -27,9 +27,14 @@ set(LLDB_TEST_DEPS
   FileCheck
   LLDBUnitTests
   lldb
-  lldb-server
   not
   )
+  
+# lldb-server is not built on every platform.
+if (TARGET lldb-server)
+  list(APPEND LLDB_TEST_DEPS lldb-server)
+endif()
+  
 if(APPLE)
   list(APPEND LLDB_TEST_DEPS debugserver)
 endif()
