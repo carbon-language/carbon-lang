@@ -3216,9 +3216,9 @@ Instruction *InstCombiner::foldICmpUsingKnownBits(ICmpInst &I) {
     if (~Op1KnownZero == 0) {
       // If the LHS is an AND with the same constant, look through it.
       Value *LHS = nullptr;
-      ConstantInt *LHSC = nullptr;
-      if (!match(Op0, m_And(m_Value(LHS), m_ConstantInt(LHSC))) ||
-          LHSC->getValue() != Op0KnownZeroInverted)
+      const APInt *LHSC;
+      if (!match(Op0, m_And(m_Value(LHS), m_APInt(LHSC))) ||
+          *LHSC != Op0KnownZeroInverted)
         LHS = Op0;
 
       Value *X;
