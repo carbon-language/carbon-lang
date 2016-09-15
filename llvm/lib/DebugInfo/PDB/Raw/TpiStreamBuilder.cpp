@@ -15,8 +15,9 @@ using namespace llvm::msf;
 using namespace llvm::pdb;
 using namespace llvm::support;
 
-TpiStreamBuilder::TpiStreamBuilder(MSFBuilder &Msf)
-    : Msf(Msf), Allocator(Msf.getAllocator()), Header(nullptr) {}
+TpiStreamBuilder::TpiStreamBuilder(MSFBuilder &Msf, uint32_t StreamIdx)
+    : Msf(Msf), Allocator(Msf.getAllocator()), Header(nullptr), Idx(StreamIdx) {
+}
 
 TpiStreamBuilder::~TpiStreamBuilder() {}
 
@@ -75,7 +76,7 @@ uint32_t TpiStreamBuilder::calculateHashBufferSize() const {
 
 Error TpiStreamBuilder::finalizeMsfLayout() {
   uint32_t Length = calculateSerializedLength();
-  if (auto EC = Msf.setStreamSize(StreamTPI, Length))
+  if (auto EC = Msf.setStreamSize(Idx, Length))
     return EC;
 
   uint32_t HashBufferSize = calculateHashBufferSize();
@@ -106,8 +107,8 @@ TpiStreamBuilder::build(PDBFile &File, const msf::WritableStream &Buffer) {
   if (auto EC = finalize())
     return std::move(EC);
 
-  auto StreamData = MappedBlockStream::createIndexedStream(File.getMsfLayout(),
-                                                           Buffer, StreamTPI);
+  auto StreamData =
+      MappedBlockStream::createIndexedStream(File.getMsfLayout(), Buffer, Idx);
   auto Tpi = llvm::make_unique<TpiStream>(File, std::move(StreamData));
   Tpi->Header = Header;
   Tpi->TypeRecords = VarStreamArray<codeview::CVType>(TypeRecordStream);
@@ -126,7 +127,7 @@ Error TpiStreamBuilder::commit(const msf::MSFLayout &Layout,
     return EC;
 
   auto InfoS =
-      WritableMappedBlockStream::createIndexedStream(Layout, Buffer, StreamTPI);
+      WritableMappedBlockStream::createIndexedStream(Layout, Buffer, Idx);
 
   StreamWriter Writer(*InfoS);
   if (auto EC = Writer.writeObject(*Header))
