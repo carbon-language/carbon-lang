@@ -1420,30 +1420,6 @@ Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &Cmp) {
   if (!CI)
     return nullptr;
 
-  // The following transforms are only worth it if the only user of the subtract
-  // is the icmp.
-  if (X->hasOneUse()) {
-    // (icmp sgt (sub nsw A B), -1) -> (icmp sge A, B)
-    if (Pred == ICmpInst::ICMP_SGT && CI->isAllOnesValue() &&
-        match(X, m_NSWSub(m_Value(A), m_Value(B))))
-      return new ICmpInst(ICmpInst::ICMP_SGE, A, B);
-
-    // (icmp sgt (sub nsw A B), 0) -> (icmp sgt A, B)
-    if (Pred == ICmpInst::ICMP_SGT && CI->isZero() &&
-        match(X, m_NSWSub(m_Value(A), m_Value(B))))
-      return new ICmpInst(ICmpInst::ICMP_SGT, A, B);
-
-    // (icmp slt (sub nsw A B), 0) -> (icmp slt A, B)
-    if (Pred == ICmpInst::ICMP_SLT && CI->isZero() &&
-        match(X, m_NSWSub(m_Value(A), m_Value(B))))
-      return new ICmpInst(ICmpInst::ICMP_SLT, A, B);
-
-    // (icmp slt (sub nsw A B), 1) -> (icmp sle A, B)
-    if (Pred == ICmpInst::ICMP_SLT && CI->isOne() &&
-        match(X, m_NSWSub(m_Value(A), m_Value(B))))
-      return new ICmpInst(ICmpInst::ICMP_SLE, A, B);
-  }
-
   if (Cmp.isEquality()) {
     ConstantInt *CI2;
     if (match(X, m_AShr(m_ConstantInt(CI2), m_Value(A))) ||
@@ -2306,27 +2282,46 @@ Instruction *InstCombiner::foldICmpDivConstant(ICmpInst &Cmp,
 Instruction *InstCombiner::foldICmpSubConstant(ICmpInst &Cmp,
                                                BinaryOperator *Sub,
                                                const APInt *C) {
-  const APInt *C2;
-  if (!match(Sub->getOperand(0), m_APInt(C2)) || !Sub->hasOneUse())
+  Value *X = Sub->getOperand(0), *Y = Sub->getOperand(1);
+  ICmpInst::Predicate Pred = Cmp.getPredicate();
+
+  // The following transforms are only worth it if the only user of the subtract
+  // is the icmp.
+  if (!Sub->hasOneUse())
     return nullptr;
 
-  // C-X <u C2 -> (X|(C2-1)) == C
-  //   iff C & (C2-1) == C2-1
-  //       C2 is a power of 2
-  if (Cmp.getPredicate() == ICmpInst::ICMP_ULT && C->isPowerOf2() &&
-      (*C2 & (*C - 1)) == (*C - 1))
-    return new ICmpInst(ICmpInst::ICMP_EQ,
-                        Builder->CreateOr(Sub->getOperand(1), *C - 1),
-                        Sub->getOperand(0));
+  if (Sub->hasNoSignedWrap()) {
+    // (icmp sgt (sub nsw X, Y), -1) -> (icmp sge X, Y)
+    if (Pred == ICmpInst::ICMP_SGT && C->isAllOnesValue())
+      return new ICmpInst(ICmpInst::ICMP_SGE, X, Y);
 
-  // C-X >u C2 -> (X|C2) != C
-  //   iff C & C2 == C2
-  //       C2+1 is a power of 2
-  if (Cmp.getPredicate() == ICmpInst::ICMP_UGT && (*C + 1).isPowerOf2() &&
-      (*C2 & *C) == *C)
-    return new ICmpInst(ICmpInst::ICMP_NE,
-                        Builder->CreateOr(Sub->getOperand(1), *C),
-                        Sub->getOperand(0));
+    // (icmp sgt (sub nsw X, Y), 0) -> (icmp sgt X, Y)
+    if (Pred == ICmpInst::ICMP_SGT && *C == 0)
+      return new ICmpInst(ICmpInst::ICMP_SGT, X, Y);
+
+    // (icmp slt (sub nsw X, Y), 0) -> (icmp slt X, Y)
+    if (Pred == ICmpInst::ICMP_SLT && *C == 0)
+      return new ICmpInst(ICmpInst::ICMP_SLT, X, Y);
+
+    // (icmp slt (sub nsw X, Y), 1) -> (icmp sle X, Y)
+    if (Pred == ICmpInst::ICMP_SLT && *C == 1)
+      return new ICmpInst(ICmpInst::ICMP_SLE, X, Y);
+  }
+
+  const APInt *C2;
+  if (!match(X, m_APInt(C2)))
+    return nullptr;
+
+  // C2 - Y <u C -> (Y | (C - 1)) == C2
+  //   iff (C2 & (C - 1)) == C - 1 and C is a power of 2
+  if (Pred == ICmpInst::ICMP_ULT && C->isPowerOf2() &&
+      (*C2 & (*C - 1)) == (*C - 1))
+    return new ICmpInst(ICmpInst::ICMP_EQ, Builder->CreateOr(Y, *C - 1), X);
+
+  // C2 - Y >u C -> (Y | C) != C2
+  //   iff C2 & C == C and C + 1 is a power of 2
+  if (Pred == ICmpInst::ICMP_UGT && (*C + 1).isPowerOf2() && (*C2 & *C) == *C)
+    return new ICmpInst(ICmpInst::ICMP_NE, Builder->CreateOr(Y, *C), X);
 
   return nullptr;
 }

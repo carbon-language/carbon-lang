@@ -2315,8 +2315,7 @@ define i1 @f1(i64 %a, i64 %b) {
 
 define <2 x i1> @f1_vec(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK-LABEL: @f1_vec(
-; CHECK-NEXT:    [[T:%.*]] = sub nsw <2 x i64> %a, %b
-; CHECK-NEXT:    [[V:%.*]] = icmp sgt <2 x i64> [[T]], <i64 -1, i64 -1>
+; CHECK-NEXT:    [[V:%.*]] = icmp sge <2 x i64> %a, %b
 ; CHECK-NEXT:    ret <2 x i1> [[V]]
 ;
   %t = sub nsw <2 x i64> %a, %b
@@ -2336,8 +2335,7 @@ define i1 @f2(i64 %a, i64 %b) {
 
 define <2 x i1> @f2_vec(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK-LABEL: @f2_vec(
-; CHECK-NEXT:    [[T:%.*]] = sub nsw <2 x i64> %a, %b
-; CHECK-NEXT:    [[V:%.*]] = icmp sgt <2 x i64> [[T]], zeroinitializer
+; CHECK-NEXT:    [[V:%.*]] = icmp sgt <2 x i64> %a, %b
 ; CHECK-NEXT:    ret <2 x i1> [[V]]
 ;
   %t = sub nsw <2 x i64> %a, %b
@@ -2357,8 +2355,7 @@ define i1 @f3(i64 %a, i64 %b) {
 
 define <2 x i1> @f3_vec(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK-LABEL: @f3_vec(
-; CHECK-NEXT:    [[T:%.*]] = sub nsw <2 x i64> %a, %b
-; CHECK-NEXT:    [[V:%.*]] = icmp slt <2 x i64> [[T]], zeroinitializer
+; CHECK-NEXT:    [[V:%.*]] = icmp slt <2 x i64> %a, %b
 ; CHECK-NEXT:    ret <2 x i1> [[V]]
 ;
   %t = sub nsw <2 x i64> %a, %b
@@ -2378,8 +2375,7 @@ define i1 @f4(i64 %a, i64 %b) {
 
 define <2 x i1> @f4_vec(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK-LABEL: @f4_vec(
-; CHECK-NEXT:    [[T:%.*]] = sub nsw <2 x i64> %a, %b
-; CHECK-NEXT:    [[V:%.*]] = icmp slt <2 x i64> [[T]], <i64 1, i64 1>
+; CHECK-NEXT:    [[V:%.*]] = icmp sle <2 x i64> %a, %b
 ; CHECK-NEXT:    ret <2 x i1> [[V]]
 ;
   %t = sub nsw <2 x i64> %a, %b
