@@ -69,6 +69,7 @@
 #include <clc/math/hypot.h>
 #include <clc/math/ilogb.h>
 #include <clc/math/ldexp.h>
+#include <clc/math/lgamma.h>
 #include <clc/math/lgamma_r.h>
 #include <clc/math/log.h>
 #include <clc/math/log10.h>
