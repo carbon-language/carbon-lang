@@ -1364,7 +1364,7 @@ void BinaryFunction::inferFallThroughCounts() {
     // Calculate frequency of outgoing branches from this node according to
     // LBR data
     uint64_t ReportedBranches = 0;
-    for (auto &SuccCount : CurBB->branch_info()) {
+    for (const auto &SuccCount : CurBB->branch_info()) {
       if (SuccCount.Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
         ReportedBranches += SuccCount.Count;
     }
@@ -2680,8 +2680,8 @@ DynoStats BinaryFunction::getDynoStats() const {
       if (BI.Count != BinaryBasicBlock::COUNT_NO_PROFILE)
         BBExecutionCount += BI.Count;
 
-    // Ignore blocks that were not executed.
-    if (BBExecutionCount == 0)
+    // Ignore empty blocks and blocks that were not executed.
+    if (BB->getNumNonPseudos() == 0 || BBExecutionCount == 0)
       continue;
 
     // Count the number of calls by iterating through all instructions.
@@ -2695,6 +2695,22 @@ DynoStats BinaryFunction::getDynoStats() const {
     }
 
     Stats[DynoStats::INSTRUCTIONS] += BB->getNumNonPseudos() * BBExecutionCount;
+
+    // Jump tables.
+    const auto *LastInstr = BB->findLastNonPseudoInstruction();
+    if (BC.MIA->getJumpTableIndex(*LastInstr) > 0) {
+      Stats[DynoStats::JUMP_TABLE_BRANCHES] += BBExecutionCount;
+      DEBUG(
+        static uint64_t MostFrequentJT;
+        if (BBExecutionCount > MostFrequentJT) {
+          MostFrequentJT = BBExecutionCount;
+          dbgs() << "BOLT-INFO: most frequently executed jump table is in "
+                 << "function " << *this << " in basic block " << BB->getName()
+                 << " executed totally " << BBExecutionCount << " times.\n";
+        }
+      );
+      continue;
+    }
 
     // Update stats for branches.
     const MCSymbol *TBB = nullptr;
