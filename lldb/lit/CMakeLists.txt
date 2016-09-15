@@ -25,12 +25,14 @@ configure_lit_site_cfg(
 
 set(LLDB_TEST_DEPS
   FileCheck
-  debugserver
   LLDBUnitTests
   lldb
   lldb-server
   not
   )
+if(APPLE)
+  list(APPEND LLDB_TEST_DEPS debugserver)
+endif()
 
 if(LLDB_TEST_CLANG)
   if(LLDB_TEST_C_COMPILER OR LLDB_TEST_CXX_COMPILER)
