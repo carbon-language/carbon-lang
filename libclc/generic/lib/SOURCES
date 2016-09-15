@@ -97,6 +97,7 @@ math/hypot.cl
 math/ilogb.cl
 math/clc_ldexp.cl
 math/ldexp.cl
+math/lgamma_r.cl
 math/log.cl
 math/log10.cl
 math/log1p.cl
