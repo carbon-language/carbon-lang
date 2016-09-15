@@ -1374,128 +1374,131 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
 }
 
 // Fold icmp Pred X, C.
-Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &I) {
-  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
-    Value *A = nullptr, *B = nullptr;
+Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &Cmp) {
+  CmpInst::Predicate Pred = Cmp.getPredicate();
+  Value *X = Cmp.getOperand(0), *C = Cmp.getOperand(1);
 
-    // Match the following pattern, which is a common idiom when writing
-    // overflow-safe integer arithmetic function.  The source performs an
-    // addition in wider type, and explicitly checks for overflow using
-    // comparisons against INT_MIN and INT_MAX.  Simplify this by using the
-    // sadd_with_overflow intrinsic.
-    //
-    // TODO: This could probably be generalized to handle other overflow-safe
-    // operations if we worked out the formulas to compute the appropriate
-    // magic constants.
-    //
-    // sum = a + b
-    // if (sum+128 >u 255)  ...  -> llvm.sadd.with.overflow.i8
-    {
-      ConstantInt *CI2; // I = icmp ugt (add (add A, B), CI2), CI
-      if (I.getPredicate() == ICmpInst::ICMP_UGT &&
-          match(Op0, m_Add(m_Add(m_Value(A), m_Value(B)), m_ConstantInt(CI2))))
-        if (Instruction *Res = ProcessUGT_ADDCST_ADD(I, A, B, CI2, CI, *this))
-          return Res;
-    }
+  // FIXME: Use m_APInt to allow folds for splat constants.
+  ConstantInt *CI = dyn_cast<ConstantInt>(C);
+  if (!CI)
+    return nullptr;
 
-    // (icmp sgt smin(PosA, B) 0) -> (icmp sgt B 0)
-    if (CI->isZero() && I.getPredicate() == ICmpInst::ICMP_SGT)
-      if (auto *SI = dyn_cast<SelectInst>(Op0)) {
-        SelectPatternResult SPR = matchSelectPattern(SI, A, B);
-        if (SPR.Flavor == SPF_SMIN) {
-          if (isKnownPositive(A, DL))
-            return new ICmpInst(I.getPredicate(), B, CI);
-          if (isKnownPositive(B, DL))
-            return new ICmpInst(I.getPredicate(), A, CI);
-        }
-      }
+  Value *A = nullptr, *B = nullptr;
 
-    // The following transforms are only 'worth it' if the only user of the
-    // subtraction is the icmp.
-    if (Op0->hasOneUse()) {
-      // (icmp ne/eq (sub A B) 0) -> (icmp ne/eq A, B)
-      if (I.isEquality() && CI->isZero() &&
-          match(Op0, m_Sub(m_Value(A), m_Value(B))))
-        return new ICmpInst(I.getPredicate(), A, B);
+  // Match the following pattern, which is a common idiom when writing
+  // overflow-safe integer arithmetic functions. The source performs an addition
+  // in wider type and explicitly checks for overflow using comparisons against
+  // INT_MIN and INT_MAX. Simplify by using the sadd_with_overflow intrinsic.
+  //
+  // TODO: This could probably be generalized to handle other overflow-safe
+  // operations if we worked out the formulas to compute the appropriate magic
+  // constants.
+  //
+  // sum = a + b
+  // if (sum+128 >u 255)  ...  -> llvm.sadd.with.overflow.i8
+  {
+    ConstantInt *CI2; // I = icmp ugt (add (add A, B), CI2), CI
+    if (Pred == ICmpInst::ICMP_UGT &&
+        match(X, m_Add(m_Add(m_Value(A), m_Value(B)), m_ConstantInt(CI2))))
+      if (Instruction *Res = ProcessUGT_ADDCST_ADD(Cmp, A, B, CI2, CI, *this))
+        return Res;
+  }
 
-      // (icmp sgt (sub nsw A B), -1) -> (icmp sge A, B)
-      if (I.getPredicate() == ICmpInst::ICMP_SGT && CI->isAllOnesValue() &&
-          match(Op0, m_NSWSub(m_Value(A), m_Value(B))))
-        return new ICmpInst(ICmpInst::ICMP_SGE, A, B);
-
-      // (icmp sgt (sub nsw A B), 0) -> (icmp sgt A, B)
-      if (I.getPredicate() == ICmpInst::ICMP_SGT && CI->isZero() &&
-          match(Op0, m_NSWSub(m_Value(A), m_Value(B))))
-        return new ICmpInst(ICmpInst::ICMP_SGT, A, B);
-
-      // (icmp slt (sub nsw A B), 0) -> (icmp slt A, B)
-      if (I.getPredicate() == ICmpInst::ICMP_SLT && CI->isZero() &&
-          match(Op0, m_NSWSub(m_Value(A), m_Value(B))))
-        return new ICmpInst(ICmpInst::ICMP_SLT, A, B);
-
-      // (icmp slt (sub nsw A B), 1) -> (icmp sle A, B)
-      if (I.getPredicate() == ICmpInst::ICMP_SLT && CI->isOne() &&
-          match(Op0, m_NSWSub(m_Value(A), m_Value(B))))
-        return new ICmpInst(ICmpInst::ICMP_SLE, A, B);
-    }
-
-    if (I.isEquality()) {
-      ConstantInt *CI2;
-      if (match(Op0, m_AShr(m_ConstantInt(CI2), m_Value(A))) ||
-          match(Op0, m_LShr(m_ConstantInt(CI2), m_Value(A)))) {
-        // (icmp eq/ne (ashr/lshr const2, A), const1)
-        if (Instruction *Inst = foldICmpCstShrConst(I, Op0, A, CI, CI2))
-          return Inst;
-      }
-      if (match(Op0, m_Shl(m_ConstantInt(CI2), m_Value(A)))) {
-        // (icmp eq/ne (shl const2, A), const1)
-        if (Instruction *Inst = foldICmpCstShlConst(I, Op0, A, CI, CI2))
-          return Inst;
+  // (icmp sgt smin(PosA, B) 0) -> (icmp sgt B 0)
+  if (CI->isZero() && Pred == ICmpInst::ICMP_SGT)
+    if (auto *SI = dyn_cast<SelectInst>(X)) {
+      SelectPatternResult SPR = matchSelectPattern(SI, A, B);
+      if (SPR.Flavor == SPF_SMIN) {
+        if (isKnownPositive(A, DL))
+          return new ICmpInst(Pred, B, CI);
+        if (isKnownPositive(B, DL))
+          return new ICmpInst(Pred, A, CI);
       }
     }
 
-    // Canonicalize icmp instructions based on dominating conditions.
-    BasicBlock *Parent = I.getParent();
-    BasicBlock *Dom = Parent->getSinglePredecessor();
-    auto *BI = Dom ? dyn_cast<BranchInst>(Dom->getTerminator()) : nullptr;
-    ICmpInst::Predicate Pred;
-    BasicBlock *TrueBB, *FalseBB;
+  // The following transforms are only worth it if the only user of the subtract
+  // is the icmp.
+  if (X->hasOneUse()) {
+    // (icmp ne/eq (sub A B) 0) -> (icmp ne/eq A, B)
+    if (Cmp.isEquality() && CI->isZero() &&
+        match(X, m_Sub(m_Value(A), m_Value(B))))
+      return new ICmpInst(Pred, A, B);
+
+    // (icmp sgt (sub nsw A B), -1) -> (icmp sge A, B)
+    if (Pred == ICmpInst::ICMP_SGT && CI->isAllOnesValue() &&
+        match(X, m_NSWSub(m_Value(A), m_Value(B))))
+      return new ICmpInst(ICmpInst::ICMP_SGE, A, B);
+
+    // (icmp sgt (sub nsw A B), 0) -> (icmp sgt A, B)
+    if (Pred == ICmpInst::ICMP_SGT && CI->isZero() &&
+        match(X, m_NSWSub(m_Value(A), m_Value(B))))
+      return new ICmpInst(ICmpInst::ICMP_SGT, A, B);
+
+    // (icmp slt (sub nsw A B), 0) -> (icmp slt A, B)
+    if (Pred == ICmpInst::ICMP_SLT && CI->isZero() &&
+        match(X, m_NSWSub(m_Value(A), m_Value(B))))
+      return new ICmpInst(ICmpInst::ICMP_SLT, A, B);
+
+    // (icmp slt (sub nsw A B), 1) -> (icmp sle A, B)
+    if (Pred == ICmpInst::ICMP_SLT && CI->isOne() &&
+        match(X, m_NSWSub(m_Value(A), m_Value(B))))
+      return new ICmpInst(ICmpInst::ICMP_SLE, A, B);
+  }
+
+  if (Cmp.isEquality()) {
     ConstantInt *CI2;
-    if (BI && match(BI, m_Br(m_ICmp(Pred, m_Specific(Op0), m_ConstantInt(CI2)),
-                             TrueBB, FalseBB)) &&
-        TrueBB != FalseBB) {
-      ConstantRange CR = ConstantRange::makeAllowedICmpRegion(I.getPredicate(),
-                                                              CI->getValue());
-      ConstantRange DominatingCR =
-          (Parent == TrueBB)
-              ? ConstantRange::makeExactICmpRegion(Pred, CI2->getValue())
-              : ConstantRange::makeExactICmpRegion(
-                    CmpInst::getInversePredicate(Pred), CI2->getValue());
-      ConstantRange Intersection = DominatingCR.intersectWith(CR);
-      ConstantRange Difference = DominatingCR.difference(CR);
-      if (Intersection.isEmptySet())
-        return replaceInstUsesWith(I, Builder->getFalse());
-      if (Difference.isEmptySet())
-        return replaceInstUsesWith(I, Builder->getTrue());
+    if (match(X, m_AShr(m_ConstantInt(CI2), m_Value(A))) ||
+        match(X, m_LShr(m_ConstantInt(CI2), m_Value(A)))) {
+      // (icmp eq/ne (ashr/lshr const2, A), const1)
+      if (Instruction *Inst = foldICmpCstShrConst(Cmp, X, A, CI, CI2))
+        return Inst;
+    }
+    if (match(X, m_Shl(m_ConstantInt(CI2), m_Value(A)))) {
+      // (icmp eq/ne (shl const2, A), const1)
+      if (Instruction *Inst = foldICmpCstShlConst(Cmp, X, A, CI, CI2))
+        return Inst;
+    }
+  }
 
-      // If this is a normal comparison, it demands all bits. If it is a sign
-      // bit comparison, it only demands the sign bit.
-      bool UnusedBit;
-      bool IsSignBit =
-          isSignBitCheck(I.getPredicate(), CI->getValue(), UnusedBit);
+  // Canonicalize icmp instructions based on dominating conditions.
+  BasicBlock *Parent = Cmp.getParent();
+  BasicBlock *Dom = Parent->getSinglePredecessor();
+  auto *BI = Dom ? dyn_cast<BranchInst>(Dom->getTerminator()) : nullptr;
+  ICmpInst::Predicate Pred2;
+  BasicBlock *TrueBB, *FalseBB;
+  ConstantInt *CI2;
+  if (BI && match(BI, m_Br(m_ICmp(Pred2, m_Specific(X), m_ConstantInt(CI2)),
+                           TrueBB, FalseBB)) &&
+      TrueBB != FalseBB) {
+    ConstantRange CR =
+        ConstantRange::makeAllowedICmpRegion(Pred, CI->getValue());
+    ConstantRange DominatingCR =
+        (Parent == TrueBB)
+            ? ConstantRange::makeExactICmpRegion(Pred2, CI2->getValue())
+            : ConstantRange::makeExactICmpRegion(
+                  CmpInst::getInversePredicate(Pred2), CI2->getValue());
+    ConstantRange Intersection = DominatingCR.intersectWith(CR);
+    ConstantRange Difference = DominatingCR.difference(CR);
+    if (Intersection.isEmptySet())
+      return replaceInstUsesWith(Cmp, Builder->getFalse());
+    if (Difference.isEmptySet())
+      return replaceInstUsesWith(Cmp, Builder->getTrue());
 
-      // Canonicalizing a sign bit comparison that gets used in a branch,
-      // pessimizes codegen by generating branch on zero instruction instead
-      // of a test and branch. So we avoid canonicalizing in such situations
-      // because test and branch instruction has better branch displacement
-      // than compare and branch instruction.
-      if (!isBranchOnSignBitCheck(I, IsSignBit) && !I.isEquality()) {
-        if (auto *AI = Intersection.getSingleElement())
-          return new ICmpInst(ICmpInst::ICMP_EQ, Op0, Builder->getInt(*AI));
-        if (auto *AD = Difference.getSingleElement())
-          return new ICmpInst(ICmpInst::ICMP_NE, Op0, Builder->getInt(*AD));
-      }
+    // If this is a normal comparison, it demands all bits. If it is a sign
+    // bit comparison, it only demands the sign bit.
+    bool UnusedBit;
+    bool IsSignBit = isSignBitCheck(Pred, CI->getValue(), UnusedBit);
+
+    // Canonicalizing a sign bit comparison that gets used in a branch,
+    // pessimizes codegen by generating branch on zero instruction instead
+    // of a test and branch. So we avoid canonicalizing in such situations
+    // because test and branch instruction has better branch displacement
+    // than compare and branch instruction.
+    if (!isBranchOnSignBitCheck(Cmp, IsSignBit) && !Cmp.isEquality()) {
+      if (auto *AI = Intersection.getSingleElement())
+        return new ICmpInst(ICmpInst::ICMP_EQ, X, Builder->getInt(*AI));
+      if (auto *AD = Difference.getSingleElement())
+        return new ICmpInst(ICmpInst::ICMP_NE, X, Builder->getInt(*AD));
     }
   }
 
