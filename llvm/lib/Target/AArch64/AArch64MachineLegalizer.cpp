@@ -95,6 +95,7 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
   setAction({G_ICMP, s1}, Legal);
   setAction({G_ICMP, 1, s32}, Legal);
   setAction({G_ICMP, 1, s64}, Legal);
+  setAction({G_ICMP, 1, p0}, Legal);
 
   for (auto Ty : {s1, s8, s16}) {
     setAction({G_ICMP, 1, Ty}, WidenScalar);
