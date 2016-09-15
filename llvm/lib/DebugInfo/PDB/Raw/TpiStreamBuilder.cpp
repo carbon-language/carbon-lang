@@ -64,8 +64,7 @@ Error TpiStreamBuilder::finalize() {
 }
 
 uint32_t TpiStreamBuilder::calculateSerializedLength() const {
-  return sizeof(TpiStreamHeader) + TypeRecordStream.getLength() +
-         calculateHashBufferSize();
+  return sizeof(TpiStreamHeader) + TypeRecordStream.getLength();
 }
 
 uint32_t TpiStreamBuilder::calculateHashBufferSize() const {
