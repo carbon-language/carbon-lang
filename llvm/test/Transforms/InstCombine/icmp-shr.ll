@@ -13,6 +13,16 @@ define i1 @lshr_eq_msb_low_last_zero(i8 %a) {
   ret i1 %cmp
 }
 
+define <2 x i1> @lshr_eq_msb_low_last_zero_vec(<2 x i8> %a) {
+; CHECK-LABEL: @lshr_eq_msb_low_last_zero_vec(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt <2 x i8> %a, <i8 6, i8 6>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %shr = lshr <2 x i8> <i8 127, i8 127>, %a
+  %cmp = icmp eq <2 x i8> %shr, zeroinitializer
+  ret <2 x i1> %cmp
+}
+
 define i1 @ashr_eq_msb_low_second_zero(i8 %a) {
 ; CHECK-LABEL: @ashr_eq_msb_low_second_zero(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt i8 %a, 6
