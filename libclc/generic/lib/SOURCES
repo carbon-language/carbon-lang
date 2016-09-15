@@ -119,6 +119,7 @@ math/clc_sqrt.cl
 math/sqrt.cl
 math/tan.cl
 math/tanh.cl
+math/tgamma.cl
 relational/all.cl
 relational/any.cl
 relational/bitselect.cl
