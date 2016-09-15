@@ -1423,11 +1423,6 @@ Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &Cmp) {
   // The following transforms are only worth it if the only user of the subtract
   // is the icmp.
   if (X->hasOneUse()) {
-    // (icmp ne/eq (sub A B) 0) -> (icmp ne/eq A, B)
-    if (Cmp.isEquality() && CI->isZero() &&
-        match(X, m_Sub(m_Value(A), m_Value(B))))
-      return new ICmpInst(Pred, A, B);
-
     // (icmp sgt (sub nsw A B), -1) -> (icmp sge A, B)
     if (Pred == ICmpInst::ICMP_SGT && CI->isAllOnesValue() &&
         match(X, m_NSWSub(m_Value(A), m_Value(B))))
@@ -2522,11 +2517,11 @@ Instruction *InstCombiner::foldICmpBinOpEqualityWithConstant(ICmpInst &Cmp,
     if (BO->hasOneUse()) {
       const APInt *BOC;
       if (match(BOp0, m_APInt(BOC))) {
-        // Replace ((sub A, B) != C) with (B != A-C) if A & C are constants.
+        // Replace ((sub BOC, B) != C) with (B != BOC-C).
         Constant *SubC = ConstantExpr::getSub(cast<Constant>(BOp0), RHS);
         return new ICmpInst(Pred, BOp1, SubC);
       } else if (*C == 0) {
-        // Replace ((sub A, B) != 0) with (A != B)
+        // Replace ((sub A, B) != 0) with (A != B).
         return new ICmpInst(Pred, BOp0, BOp1);
       }
     }
