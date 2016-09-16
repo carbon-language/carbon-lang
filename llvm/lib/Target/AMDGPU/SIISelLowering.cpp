@@ -685,9 +685,6 @@ SDValue SITargetLowering::LowerFormalArguments(
   }
 
   if (!AMDGPU::isShader(CallConv)) {
-    getOriginalFunctionArgs(DAG, DAG.getMachineFunction().getFunction(), Ins,
-                            Splits);
-
     assert(Info->hasWorkGroupIDX() && Info->hasWorkItemIDX());
   } else {
     assert(!Info->hasPrivateSegmentBuffer() && !Info->hasDispatchPtr() &&
@@ -735,7 +732,10 @@ SDValue SITargetLowering::LowerFormalArguments(
     CCInfo.AllocateReg(FlatScratchInitReg);
   }
 
-  AnalyzeFormalArguments(CCInfo, Splits);
+  if (!AMDGPU::isShader(CallConv))
+    analyzeFormalArgumentsCompute(CCInfo, Ins);
+  else
+    AnalyzeFormalArguments(CCInfo, Splits);
 
   SmallVector<SDValue, 16> Chains;
 
@@ -752,7 +752,7 @@ SDValue SITargetLowering::LowerFormalArguments(
 
     if (VA.isMemLoc()) {
       VT = Ins[i].VT;
-      EVT MemVT = Splits[i].VT;
+      EVT MemVT = VA.getLocVT();
       const unsigned Offset = Subtarget->getExplicitKernelArgOffset() +
                               VA.getLocMemOffset();
       // The first 36 bytes of the input buffer contains information about
