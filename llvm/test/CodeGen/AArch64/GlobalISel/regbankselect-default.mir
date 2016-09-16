@@ -35,6 +35,9 @@
   define void @test_constant_s32() { ret void }
   define void @test_constant_p0() { ret void }
 
+  define void @test_icmp_s32() { ret void }
+  define void @test_icmp_p0() { ret void }
+
   define void @test_frame_index_p0() {
     %ptr0 = alloca i64
     ret void
@@ -491,6 +494,44 @@ body: |
   bb.0:
     ; CHECK:      %0(p0) = G_CONSTANT 0
     %0(p0) = G_CONSTANT 0
+...
+
+---
+# CHECK-LABEL: name: test_icmp_s32
+name:            test_icmp_s32
+legalized:       true
+# CHECK: registers:
+# CHECK:   - { id: 0, class: gpr }
+# CHECK:   - { id: 1, class: gpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+body: |
+  bb.0:
+    liveins: %w0
+    ; CHECK:      %0(s32) = COPY %w0
+    ; CHECK:      %1(s1) = G_ICMP intpred(ne), %0(s32), %0
+    %0(s32) = COPY %w0
+    %1(s1) = G_ICMP intpred(ne), %0, %0
+...
+
+---
+# CHECK-LABEL: name: test_icmp_p0
+name:            test_icmp_p0
+legalized:       true
+# CHECK: registers:
+# CHECK:   - { id: 0, class: gpr }
+# CHECK:   - { id: 1, class: gpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+body: |
+  bb.0:
+    liveins: %x0
+    ; CHECK:      %0(p0) = COPY %x0
+    ; CHECK:      %1(s1) = G_ICMP intpred(ne), %0(p0), %0
+    %0(p0) = COPY %x0
+    %1(s1) = G_ICMP intpred(ne), %0, %0
 ...
 
 ---
