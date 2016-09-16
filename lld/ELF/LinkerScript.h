@@ -186,8 +186,7 @@ public:
   std::vector<OutputSectionBase<ELFT> *> *OutputSections;
 
 private:
-  void computeInputSections(InputSectionDescription *,
-                            ConstraintKind Constraint);
+  void computeInputSections(InputSectionDescription *);
 
   void addSection(OutputSectionFactory<ELFT> &Factory,
                   InputSectionBase<ELFT> *Sec, StringRef Name);

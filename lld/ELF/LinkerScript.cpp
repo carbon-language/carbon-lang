@@ -152,7 +152,7 @@ static bool checkConstraint(uint64_t Flags, ConstraintKind Kind) {
 }
 
 template <class ELFT>
-static bool matchConstraints(ArrayRef<InputSectionData *> Sections,
+static bool matchConstraints(ArrayRef<InputSectionBase<ELFT> *> Sections,
                              ConstraintKind Kind) {
   if (Kind == ConstraintKind::NoConstraint)
     return true;
@@ -164,8 +164,7 @@ static bool matchConstraints(ArrayRef<InputSectionData *> Sections,
 
 // Compute and remember which sections the InputSectionDescription matches.
 template <class ELFT>
-void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I,
-                                              ConstraintKind Constraint) {
+void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
   for (const std::pair<llvm::Regex, llvm::Regex> &V : I->SectionsVec) {
     for (ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles()) {
       if (fileMatches(I->FileRe, V.first, sys::path::filename(F->getName()))) {
@@ -178,11 +177,6 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I,
           I->Sections.push_back(CommonInputSection<ELFT>::X);
       }
     }
-  }
-
-  if (!matchConstraints<ELFT>(I->Sections, Constraint)) {
-    I->Sections.clear();
-    return;
   }
 
   if (I->SortInner != SortSectionPolicy::None)
@@ -221,10 +215,17 @@ LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &OutCmd) {
     }
 
     auto *Cmd = cast<InputSectionDescription>(Base.get());
-    computeInputSections(Cmd, OutCmd.Constraint);
+    computeInputSections(Cmd);
     for (InputSectionData *S : Cmd->Sections)
       Ret.push_back(static_cast<InputSectionBase<ELFT> *>(S));
   }
+
+  if (!matchConstraints<ELFT>(Ret, OutCmd.Constraint)) {
+    for (InputSectionBase<ELFT> *S : Ret)
+      S->OutSec = nullptr;
+    Ret.clear();
+  }
+
   return Ret;
 }
 
