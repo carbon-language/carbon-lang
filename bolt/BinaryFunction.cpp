@@ -36,16 +36,33 @@
 #define DEBUG_TYPE "bolt"
 
 using namespace llvm;
+using namespace bolt;
 
 namespace opts {
 
 extern cl::opt<unsigned> Verbosity;
 extern cl::opt<bool> PrintDynoStats;
 
-static cl::opt<bool>
+static cl::opt<BinaryFunction::JumpTableSupportLevel>
 JumpTables("jump-tables",
-           cl::desc("enable jump table support (experimental)"),
+           cl::desc("jump tables support"),
+           cl::init(BinaryFunction::JTS_NONE),
+           cl::values(clEnumValN(BinaryFunction::JTS_NONE, "0",
+                                 "do not optimize functions with jump tables"),
+                      clEnumValN(BinaryFunction::JTS_BASIC, "1",
+                                 "optimize functions with jump tables"),
+                      clEnumValN(BinaryFunction::JTS_SPLIT, "2",
+                                 "split jump tables into hot and cold"),
+                      clEnumValN(BinaryFunction::JTS_AGGRESSIVE, "3",
+                                 "aggressively split jump tables (unsafe)"),
+                      clEnumValEnd),
            cl::ZeroOrMore);
+
+static cl::opt<bool>
+PrintJumpTables("print-jump-tables",
+                cl::desc("print jump tables"),
+                cl::ZeroOrMore,
+                cl::Hidden);
 
 static cl::opt<bool>
 AgressiveSplitting("split-all-cold",
@@ -235,6 +252,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     OS << "\n  Id Fun Addr : 0x" << Twine::utohexstr(IdenticalFunctionAddress);
 
   if (opts::PrintDynoStats && !BasicBlocksLayout.empty()) {
+    OS << '\n';
     DynoStats dynoStats = getDynoStats();
     OS << dynoStats;
   }
@@ -357,14 +375,9 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     OS << '\n';
   }
 
-  for(unsigned Index = 0; Index < JumpTables.size(); ++Index) {
-    const auto &JumpTable = JumpTables[Index];
-    OS << "Jump Table #" << (Index + 1) << '\n';
-    for (unsigned EIndex = 0; EIndex < JumpTable.Entries.size(); ++EIndex) {
-      const auto *Entry = JumpTable.Entries[EIndex];
-      OS << "  entry " << EIndex << ": " << Entry->getName() << '\n';
-    }
-    OS << '\n';
+  // Print all jump tables.
+  for (auto &JTI : JumpTables) {
+    JTI.second.print(OS);
   }
 
   OS << "DWARF CFI Instructions:\n";
@@ -373,7 +386,8 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     for (auto &Elmt : OffsetToCFI) {
       OS << format("    %08x:\t", Elmt.first);
       assert(Elmt.second < FrameInstructions.size() && "Incorrect CFI offset");
-      BinaryContext::printCFI(OS, FrameInstructions[Elmt.second].getOperation());
+      BinaryContext::printCFI(OS,
+                              FrameInstructions[Elmt.second].getOperation());
       OS << "\n";
     }
   } else {
@@ -523,9 +537,29 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         SegRegNum != bolt::NoRegister || ScaleValue != PtrSize)
       return IndirectBranchType::UNKNOWN;
 
-    auto ArrayStart = DispValue;
+    auto ArrayStart = static_cast<uint64_t>(DispValue);
     if (BaseRegNum == RIPRegister)
       ArrayStart += getAddress() + Offset + Size;
+
+    // Check if there's already a jump table registered at this address.
+    if (auto *JT = getJumpTableContainingAddress(ArrayStart)) {
+      auto JTOffset = ArrayStart - JT->Address;
+      // Get or create a label.
+      auto LI = JT->Labels.find(JTOffset);
+      if (LI == JT->Labels.end()) {
+        auto *JTStartLabel = BC.Ctx->createTempSymbol("JUMP_TABLE", true);
+        auto Result = JT->Labels.emplace(JTOffset, JTStartLabel);
+        assert(Result.second && "error adding jump table label");
+        LI = Result.first;
+      }
+
+      BC.MIA->replaceMemOperandDisp(*MemLocInstr, LI->second, BC.Ctx.get());
+      BC.MIA->setJumpTable(Instruction, ArrayStart);
+
+      JTSites.emplace_back(Offset, ArrayStart);
+
+      return IndirectBranchType::POSSIBLE_JUMP_TABLE;
+    }
 
     auto SectionOrError = BC.getSectionForAddress(ArrayStart);
     if (!SectionOrError) {
@@ -552,6 +586,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     uint64_t Value = 0;
     auto Result = IndirectBranchType::UNKNOWN;
     std::vector<MCSymbol *> JTLabelCandidates;
+    std::vector<uint64_t> JTOffsetCandidates;
     while (ValueOffset <= Section.getSize() - PtrSize) {
       DEBUG(dbgs() << "BOLT-DEBUG: indirect jmp at 0x"
                    << Twine::utohexstr(getAddress() + Offset)
@@ -565,7 +600,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // Is it possible to have a jump table with function start as an entry?
         auto *JTEntry = getOrCreateLocalLabel(Value);
         JTLabelCandidates.push_back(JTEntry);
-        TakenBranches.emplace_back(Offset, Value - getAddress());
+        JTOffsetCandidates.push_back(Value - getAddress());
         Result = IndirectBranchType::POSSIBLE_JUMP_TABLE;
         continue;
       }
@@ -577,19 +612,26 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         break;
       }
       JTLabelCandidates.push_back(getFunctionEndLabel());
+      JTOffsetCandidates.push_back(Value - getAddress());
     }
     if (Result == IndirectBranchType::POSSIBLE_JUMP_TABLE) {
       assert(JTLabelCandidates.size() > 2 &&
              "expected more than 2 jump table entries");
       auto *JTStartLabel = BC.Ctx->createTempSymbol("JUMP_TABLE", true);
-      JumpTables.emplace_back(JumpTable{JTStartLabel,
-                              std::move(JTLabelCandidates)});
-      BC.MIA->replaceMemOperandDisp(*MemLocInstr, JTStartLabel, BC.Ctx.get());
-      BC.MIA->setJumpTableIndex(Instruction, JumpTables.size());
       DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
                    << JTStartLabel->getName()
                    << " in function " << *this << " with "
                    << JTLabelCandidates.size() << " entries.\n");
+      JumpTables.emplace(ArrayStart, JumpTable{ArrayStart,
+                                               PtrSize,
+                                               std::move(JTLabelCandidates),
+                                               std::move(JTOffsetCandidates),
+                                               {{0, JTStartLabel}}});
+      BC.MIA->replaceMemOperandDisp(*MemLocInstr, JTStartLabel, BC.Ctx.get());
+      BC.MIA->setJumpTable(Instruction, ArrayStart);
+
+      JTSites.emplace_back(Offset, ArrayStart);
+
       return Result;
     }
     BC.InterproceduralReferences.insert(Value);
@@ -727,7 +769,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             MIA->convertJmpToTailCall(Instruction);
             break;
           case IndirectBranchType::POSSIBLE_JUMP_TABLE:
-            if (!opts::JumpTables)
+            if (opts::JumpTables == JTS_NONE)
               IsSimple = false;
             break;
           case IndirectBranchType::UNKNOWN:
@@ -771,6 +813,40 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     Offset += Size;
   }
 
+  // Update TakenBranches from JumpTables.
+  //
+  // We want to do it after initial processing since we don't know jump tables
+  // boundaries until we process them all.
+  for (auto &JTSite : JTSites) {
+    auto JTSiteOffset = JTSite.first;
+    auto JTAddress = JTSite.second;
+    auto *JT = getJumpTableContainingAddress(JTAddress);
+    assert(JT && "cannot find jump table for address");
+    uint32_t EI = (JTAddress - JT->Address) / JT->EntrySize;
+    while (EI < JT->Entries.size()) {
+      auto TargetOffset = JT->OffsetEntries[EI];
+      if (TargetOffset < getSize())
+        TakenBranches.emplace_back(JTSiteOffset, TargetOffset);
+      ++EI;
+      // A label at the next entry means the end of this jump table.
+      if (JT->Labels.count(EI * JT->EntrySize))
+        break;
+    }
+  }
+
+  // Free memory used by jump table offsets.
+  for (auto &JTI : JumpTables) {
+    auto &JT = JTI.second;
+    clearList(JT.OffsetEntries);
+  }
+
+  // Remove duplicates branches. We can get a bunch of them from jump tables.
+  // Without doing jump table value profiling we don't have use for extra
+  // (duplicate) branches.
+  std::sort(TakenBranches.begin(), TakenBranches.end());
+  auto NewEnd = std::unique(TakenBranches.begin(), TakenBranches.end());
+  TakenBranches.erase(NewEnd, TakenBranches.end());
+
   // TODO: clear memory if not simple function?
 
   // Update state.
@@ -793,7 +869,7 @@ bool BinaryFunction::postProcessIndirectBranches() {
       }
 
       // Validate the tail call assumptions.
-      if (BC.MIA->isTailCall(Instr) || (BC.MIA->getJumpTableIndex(Instr) > 0)) {
+      if (BC.MIA->isTailCall(Instr) || BC.MIA->getJumpTable(Instr)) {
         if (BC.MIA->getMemoryOperandNo(Instr) != -1) {
           // We have validated memory contents addressed by the jump
           // instruction already.
@@ -1063,6 +1139,34 @@ bool BinaryFunction::buildCFG() {
       } else {
         const BranchInfo &BInfo = BranchInfoOrErr.get();
         FromBB->addSuccessor(ToBB, BInfo.Branches, BInfo.Mispreds);
+        // Populate profile counts for the jump table.
+        auto *LastInstr = FromBB->getLastNonPseudo();
+        if (!LastInstr)
+          continue;
+        auto JTAddress = BC.MIA->getJumpTable(*LastInstr);
+        if (!JTAddress)
+          continue;
+        auto *JT = getJumpTableContainingAddress(JTAddress);
+        if (!JT)
+          continue;
+        JT->Count += BInfo.Branches;
+        if (opts::JumpTables < JTS_AGGRESSIVE)
+          continue;
+        if (JT->Counts.empty())
+          JT->Counts.resize(JT->Entries.size());
+        auto EI = JT->Entries.begin();
+        auto Delta = (JTAddress - JT->Address) / JT->EntrySize;
+        EI += Delta;
+        while (EI != JT->Entries.end()) {
+          if (ToBB->getLabel() == *EI) {
+            JT->Counts[Delta] += BInfo.Branches;
+          }
+          ++Delta;
+          ++EI;
+          // A label marks the start of another jump table.
+          if (JT->Labels.count(Delta * JT->EntrySize))
+            break;
+        }
       }
     }
   }
@@ -1311,7 +1415,7 @@ void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
     (float) (LocalProfileBranches.size() - OrphanBranches.size()) /
     (float) LocalProfileBranches.size();
 
-  if (opts::Verbosity >= 2 && !OrphanBranches.empty()) {
+  if (opts::Verbosity >= 1 && !OrphanBranches.empty()) {
     errs() << "BOLT-WARNING: profile branches match only "
            << format("%.1f%%", ProfileMatchRatio * 100.0f) << " ("
            << (LocalProfileBranches.size() - OrphanBranches.size()) << '/'
@@ -1322,6 +1426,7 @@ void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
         errs() << "\t0x" << Twine::utohexstr(OBranch.first) << " -> 0x"
                << Twine::utohexstr(OBranch.second) << " (0x"
                << Twine::utohexstr(OBranch.first + getAddress()) << " -> 0x"
+               << Twine::utohexstr(OBranch.second + getAddress()) << ")\n";
     );
   }
 }
@@ -1868,8 +1973,8 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
                                            CondBranch,
                                            UncondBranch);
 
-    const auto *LastInstr = BB->findLastNonPseudoInstruction();
-    const bool IsJumpTable = LastInstr && BC.MIA->getJumpTableIndex(*LastInstr) > 0;
+    const auto *LastInstr = BB->getLastNonPseudo();
+    const bool IsJumpTable = LastInstr && BC.MIA->getJumpTable(*LastInstr);
     
     auto BI = BB->branch_info_begin();
     for (auto *Succ : BB->successors()) {
@@ -2551,18 +2656,92 @@ BinaryFunction::~BinaryFunction() {
 void BinaryFunction::emitJumpTables(MCStreamer *Streamer) {
   if (JumpTables.empty())
     return;
-
-  Streamer->SwitchSection(BC.MOFI->getReadOnlySection());
-  for (auto &JumpTable : JumpTables) {
-    DEBUG(dbgs() << "BOLT-DEBUG: emitting jump table "
-                 << JumpTable.StartLabel->getName() << '\n');
-    Streamer->EmitLabel(JumpTable.StartLabel);
-    // TODO (#9806207): based on jump table type (PIC vs non-PIC etc.)
-    // we would need to emit different references.
-    for (auto *Entry : JumpTable.Entries) {
-      Streamer->EmitSymbolValue(Entry, BC.AsmInfo->getPointerSize());
-    }
+  if (opts::PrintJumpTables) {
+    outs() << "BOLT-INFO: jump tables for function " << *this << ":\n";
   }
+  for (auto &JTI : JumpTables) {
+    auto &JT = JTI.second;
+    if (opts::PrintJumpTables)
+      JT.print(outs());
+    JT.emit(Streamer,
+            BC.MOFI->getReadOnlySection(),
+            BC.MOFI->getReadOnlyColdSection());
+  }
+}
+
+// TODO (#9806207): based on jump table type (PIC vs non-PIC etc.) we will
+//                  need to emit different references.
+uint64_t BinaryFunction::JumpTable::emit(MCStreamer *Streamer,
+                                         MCSection *HotSection,
+                                         MCSection *ColdSection) {
+  // Pre-process entries for aggressive splitting.
+  // Each label represents a separate switch table and gets its own count
+  // determining its destination.
+  std::map<MCSymbol *, uint64_t> LabelCounts;
+  if (opts::JumpTables > JTS_SPLIT && !Counts.empty()) {
+    MCSymbol *CurrentLabel = Labels[0];
+    uint64_t CurrentLabelCount = 0;
+    for (unsigned Index = 0; Index < Entries.size(); ++Index) {
+      auto LI = Labels.find(Index * EntrySize);
+      if (LI != Labels.end()) {
+        LabelCounts[CurrentLabel] = CurrentLabelCount;
+        CurrentLabel = LI->second;
+        CurrentLabelCount = 0;
+      }
+      CurrentLabelCount += Counts[Index];
+    }
+    LabelCounts[CurrentLabel] = CurrentLabelCount;
+  } else {
+    Streamer->SwitchSection(Count > 0 ? HotSection : ColdSection);
+    Streamer->EmitValueToAlignment(EntrySize);
+  }
+  uint64_t Offset = 0;
+  for (auto *Entry : Entries) {
+    auto LI = Labels.find(Offset);
+    if (LI != Labels.end()) {
+      DEBUG(dbgs() << "BOLT-DEBUG: emitting jump table "
+                   << LI->second->getName() << " (originally was at address 0x"
+                   << Twine::utohexstr(Address + Offset)
+                   << (Offset ? "as part of larger jump table\n" : "\n"));
+      if (!LabelCounts.empty()) {
+        DEBUG(dbgs() << "BOLT-DEBUG: jump table count: "
+                     << LabelCounts[LI->second] << '\n');
+        if (LabelCounts[LI->second] > 0) {
+          Streamer->SwitchSection(HotSection);
+        } else {
+          Streamer->SwitchSection(ColdSection);
+        }
+        Streamer->EmitValueToAlignment(EntrySize);
+      }
+      Streamer->EmitLabel(LI->second);
+    }
+    Streamer->EmitSymbolValue(Entry, EntrySize);
+    Offset += EntrySize;
+  }
+
+  return Offset;
+}
+
+void BinaryFunction::JumpTable::print(raw_ostream &OS) const {
+  uint64_t Offset = 0;
+  for (const auto *Entry : Entries) {
+    auto LI = Labels.find(Offset);
+    if (LI != Labels.end()) {
+      OS << "Jump Table " << LI->second->getName() << " at @0x"
+         << Twine::utohexstr(Address+Offset);
+      if (Offset) {
+        OS << " (possibly part of larger jump table):\n";
+      } else {
+        OS << " with total count of " << Count << ":\n";
+      }
+    }
+    OS << format("  0x%04" PRIx64 " : ", Offset) << Entry->getName();
+    if (!Counts.empty())
+      OS << " : " << Counts[Offset / EntrySize];
+    OS << '\n';
+    Offset += EntrySize;
+  }
+  OS << "\n\n";
 }
 
 void BinaryFunction::calculateLoopInfo() {
@@ -2738,8 +2917,8 @@ DynoStats BinaryFunction::getDynoStats() const {
     Stats[DynoStats::INSTRUCTIONS] += BB->getNumNonPseudos() * BBExecutionCount;
 
     // Jump tables.
-    const auto *LastInstr = BB->findLastNonPseudoInstruction();
-    if (BC.MIA->getJumpTableIndex(*LastInstr) > 0) {
+    const auto *LastInstr = BB->getLastNonPseudo();
+    if (BC.MIA->getJumpTable(*LastInstr)) {
       Stats[DynoStats::JUMP_TABLE_BRANCHES] += BBExecutionCount;
       DEBUG(
         static uint64_t MostFrequentJT;

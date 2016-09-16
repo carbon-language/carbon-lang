@@ -185,6 +185,13 @@ public:
     LT_OPTIMIZE_SHUFFLE,
   };
 
+  enum JumpTableSupportLevel : char {
+    JTS_NONE = 0,       /// Disable jump tables support
+    JTS_BASIC = 1,      /// Enable basic jump tables support
+    JTS_SPLIT = 2,      /// Enable hot/cold splitting of jump tables
+    JTS_AGGRESSIVE = 3, /// Aggressive splitting of jump tables
+  };
+
   static constexpr uint64_t COUNT_NO_PROFILE =
     std::numeric_limits<uint64_t>::max();
   // Function size, in number of BBs, above which we fallback to a heuristic
@@ -429,11 +436,76 @@ private:
   CFIInstrMapType CIEFrameInstructions;
 
   /// Representation of a jump table.
+  ///
+  /// The jump table may include other jump tables that are referenced by
+  /// a different label at a different offset in this jump table.
   struct JumpTable {
-    MCSymbol *StartLabel;
+    /// Original address.
+    uint64_t Address;
+
+    /// Size of the entry used for storage.
+    std::size_t EntrySize;
+
+    /// All the entries as labels.
     std::vector<MCSymbol *> Entries;
+
+    /// All the entries as offsets into a function. Invalid after CFG is built.
+    std::vector<uint64_t> OffsetEntries;
+
+    /// Map <Offset> -> <Label> used for embedded jump tables. Label at 0 offset
+    /// is the main label for the jump table.
+    std::map<unsigned, MCSymbol *> Labels;
+
+    /// Return the size of the jump table.
+    uint64_t getSize() const {
+      return Entries.size() * EntrySize;
+    }
+
+    /// Constructor.
+    JumpTable(uint64_t Address,
+              std::size_t EntrySize,
+              decltype(Entries) &&Entries,
+              decltype(OffsetEntries) &&OffsetEntries,
+              decltype(Labels) &&Labels)
+      : Address(Address), EntrySize(EntrySize), Entries(Entries),
+        OffsetEntries(OffsetEntries), Labels(Labels)
+    {}
+
+    /// Dynamic number of times each entry in the table was referenced.
+    /// Identical entries will have a shared count (identical for every
+    /// entry in the set).
+    std::vector<uint64_t> Counts;
+
+    /// Total number of times this jump table was used.
+    uint64_t Count{0};
+
+    /// Emit jump table data. Callee supplies sections for the data.
+    /// Return the number of total bytes emitted.
+    uint64_t emit(MCStreamer *Streamer, MCSection *HotSection,
+                  MCSection *ColdSection);
+
+    /// Print for debugging purposes.
+    void print(raw_ostream &OS) const;
   };
-  std::vector<JumpTable> JumpTables;
+
+  /// All compound jump tables for this function.
+  /// <OriginalAddress> -> <JumpTable>
+  std::map<uint64_t, JumpTable> JumpTables;
+
+  /// Return jump table that covers a given \p Address in memory.
+  JumpTable *getJumpTableContainingAddress(uint64_t Address) {
+    auto JTI = JumpTables.upper_bound(Address);
+    if (JTI == JumpTables.begin())
+      return nullptr;
+    --JTI;
+    if (JTI->first + JTI->second.getSize() > Address) {
+      return &JTI->second;
+    }
+    return nullptr;
+  }
+
+  /// All jump table sites in the function.
+  std::vector<std::pair<uint64_t, uint64_t>> JTSites;
 
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),

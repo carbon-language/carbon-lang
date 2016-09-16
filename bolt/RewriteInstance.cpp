@@ -1547,33 +1547,27 @@ void RewriteInstance::emitFunctions() {
   }
 
   // Map special sections to their addresses in the output image.
-  //
-  // TODO: perhaps we should process all the allocated sections here?
   std::vector<std::string> Sections = { ".eh_frame", ".gcc_except_table",
-                                        ".rodata" };
+                                        ".rodata", ".rodata.cold" };
   for (auto &SectionName : Sections) {
     auto SMII = EFMM->SectionMapInfo.find(SectionName);
-    if (SMII != EFMM->SectionMapInfo.end()) {
-      SectionInfo &SI = SMII->second;
-      NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress,
-                                                SI.Alignment);
-      DEBUG(dbgs() << "BOLT: mapping 0x"
-                   << Twine::utohexstr(SI.AllocAddress)
-                   << " to 0x" << Twine::utohexstr(NextAvailableAddress)
-                   << '\n');
+    if (SMII == EFMM->SectionMapInfo.end())
+      continue;
+    SectionInfo &SI = SMII->second;
+    NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress,
+                                              SI.Alignment);
+    DEBUG(dbgs() << "BOLT: mapping section " << SectionName << " (0x"
+                 << Twine::utohexstr(SI.AllocAddress)
+                 << ") to 0x" << Twine::utohexstr(NextAvailableAddress)
+                 << '\n');
 
-      OLT.mapSectionAddress(ObjectsHandle,
-                            SI.SectionID,
-                            NextAvailableAddress);
-      SI.FileAddress = NextAvailableAddress;
-      SI.FileOffset = getFileOffsetFor(NextAvailableAddress);
+    OLT.mapSectionAddress(ObjectsHandle,
+                          SI.SectionID,
+                          NextAvailableAddress);
+    SI.FileAddress = NextAvailableAddress;
+    SI.FileOffset = getFileOffsetFor(NextAvailableAddress);
 
-      NextAvailableAddress += SI.Size;
-    } else {
-      if (opts::Verbosity >= 2) {
-        errs() << "BOLT-WARNING: cannot remap " << SectionName << '\n';
-      }
-    }
+    NextAvailableAddress += SI.Size;
   }
 
   if (opts::UpdateDebugSections) {
@@ -1702,6 +1696,13 @@ void RewriteInstance::patchELFPHDRTable() {
          "could not add program header for the new segment");
 }
 
+namespace {
+void writePadding(raw_pwrite_stream &OS, unsigned BytesToWrite) {
+  for (unsigned I = 0; I < BytesToWrite; ++I)
+    OS.write((unsigned char)0);
+}
+}
+
 void RewriteInstance::rewriteNoteSections() {
   auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
   if (!ELF64LEFile) {
@@ -1725,13 +1726,10 @@ void RewriteInstance::rewriteNoteSections() {
 
     // Insert padding as needed.
     if (Section.sh_addralign > 1) {
-      auto Padding = OffsetToAlignment(NextAvailableOffset,
-                                       Section.sh_addralign);
-      const unsigned char ZeroByte{0};
-      for (unsigned I = 0; I < Padding; ++I)
-        OS.write(ZeroByte);
-
-      NextAvailableOffset += Padding;
+      auto PaddingSize = OffsetToAlignment(NextAvailableOffset,
+                                           Section.sh_addralign);
+      writePadding(OS, PaddingSize);
+      NextAvailableOffset += PaddingSize;
 
       assert(Section.sh_size % Section.sh_addralign == 0 &&
              "section size does not match section alignment");
@@ -1821,18 +1819,18 @@ void RewriteInstance::rewriteNoteSections() {
 //    * There could be modifications done to non-allocatable sections, e.g.
 //      size could be increased.
 //    * New non-allocatable sections are added to the end of the file.
-void RewriteInstance::patchELFSectionHeaderTable() {
-  auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
-  if (!ELF64LEFile) {
-    errs() << "BOLT-ERROR: only 64-bit LE ELF binaries are supported\n";
-    exit(1);
-  }
-  auto Obj = ELF64LEFile->getELFFile();
-  using Elf_Shdr = std::remove_pointer<decltype(Obj)>::type::Elf_Shdr;
+template <typename ELFT>
+void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
 
+  using Elf_Shdr = typename ELFObjectFile<ELFT>::Elf_Shdr;
+
+  auto Obj = File->getELFFile();
   auto &OS = Out->os();
-
   auto SHTOffset = OS.tell();
+
+  auto PaddingSize = OffsetToAlignment(SHTOffset, sizeof(Elf_Shdr));
+  writePadding(OS, PaddingSize);
+  SHTOffset += PaddingSize;
 
   // Copy over entries for original allocatable sections with minor
   // modifications (e.g. name).
@@ -2067,12 +2065,10 @@ void RewriteInstance::rewriteFile() {
     if (opts::Verbosity >= 1) {
       outs() << "BOLT: writing a new .eh_frame_hdr\n";
     }
-    if (FrameHdrAlign > 1) {
-      auto PaddingSize = OffsetToAlignment(NextAvailableAddress, FrameHdrAlign);
-      for (unsigned I = 0; I < PaddingSize; ++I)
-        Out->os().write((unsigned char)0);
-      NextAvailableAddress += PaddingSize;
-    }
+
+    auto PaddingSize = OffsetToAlignment(NextAvailableAddress, FrameHdrAlign);
+    writePadding(Out->os(), PaddingSize);
+    NextAvailableAddress += PaddingSize;
 
     SectionInfo EHFrameHdrSecInfo;
     EHFrameHdrSecInfo.FileAddress = NextAvailableAddress;

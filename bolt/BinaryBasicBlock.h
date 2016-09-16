@@ -382,11 +382,11 @@ public:
 
   /// Return a pointer to the first non-pseudo instruction in this basic
   /// block.  Returns nullptr if none exists.
-  MCInst *findFirstNonPseudoInstruction();
+  MCInst *getFirstNonPseudo();
 
   /// Return a pointer to the last non-pseudo instruction in this basic
   /// block.  Returns nullptr if none exists.
-  MCInst *findLastNonPseudoInstruction();
+  MCInst *getLastNonPseudo();
 
   /// Set minimum alignment for the basic block.
   void setAlignment(uint64_t Align) {

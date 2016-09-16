@@ -189,7 +189,20 @@ private:
   /// Patch ELF book-keeping info.
   void patchELF();
   void patchELFPHDRTable();
-  void patchELFSectionHeaderTable();
+
+  template <typename ELFT>
+  void patchELFSectionHeaderTable(ELFObjectFile<ELFT> *Obj);
+
+  void patchELFSectionHeaderTable() {
+    if (auto *ELF32LE = dyn_cast<ELF32LEObjectFile>(InputFile))
+      return patchELFSectionHeaderTable(ELF32LE);
+    if (auto *ELF64LE = dyn_cast<ELF64LEObjectFile>(InputFile))
+      return patchELFSectionHeaderTable(ELF64LE);
+    if (auto *ELF32BE = dyn_cast<ELF32BEObjectFile>(InputFile))
+      return patchELFSectionHeaderTable(ELF32BE);
+    auto *ELF64BE = cast<ELF64BEObjectFile>(InputFile);
+    return patchELFSectionHeaderTable(ELF64BE);
+  }
 
   /// Computes output .debug_line line table offsets for each compile unit,
   /// and updates stmt_list for a corresponding compile unit.

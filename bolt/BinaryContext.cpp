@@ -314,9 +314,8 @@ void BinaryContext::printInstruction(raw_ostream &OS,
     }
   }
   if (MIA->isIndirectBranch(Instruction)) {
-    auto JTIndex = MIA->getJumpTableIndex(Instruction);
-    if (JTIndex != -1LL) {
-      OS << " # JUMPTABLE " << JTIndex;
+    if (auto JTAddress = MIA->getJumpTable(Instruction)) {
+      OS << " # JUMPTABLE @0x" << Twine::utohexstr(JTAddress);
     }
   }
 

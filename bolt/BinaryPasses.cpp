@@ -150,7 +150,7 @@ void OptimizeBodylessFunctions::analyze(
   if (BF.size() != 1 || BF.front().getNumNonPseudos() != 1)
     return;
 
-  const auto *FirstInstr = BF.front().findFirstNonPseudoInstruction();
+  const auto *FirstInstr = BF.front().getFirstNonPseudo();
   if (!FirstInstr)
     return;
   if (!BC.MIA->isTailCall(*FirstInstr))
@@ -917,7 +917,7 @@ bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
     if (BB->getNumNonPseudos() != 1)
       continue;
 
-    auto *Instr = BB->findFirstNonPseudoInstruction();
+    auto *Instr = BB->getFirstNonPseudo();
     if (!MIA->isTailCall(*Instr))
       continue;
     auto *CalleeSymbol = MIA->getTargetSymbol(*Instr);
@@ -1040,7 +1040,7 @@ void Peepholes::fixDoubleJumps(BinaryContext &BC,
       } else {
         // Succ will be null in the tail call case.  In this case we
         // need to explicitly add a tail call instruction.
-        auto *Branch = Pred->findLastNonPseudoInstruction();
+        auto *Branch = Pred->getLastNonPseudo();
         if (Branch && BC.MIA->isUnconditionalBranch(*Branch)) {
           Pred->removeSuccessor(&BB);
           Pred->eraseInstruction(Branch);
@@ -1060,7 +1060,7 @@ void Peepholes::fixDoubleJumps(BinaryContext &BC,
     if (BB.getNumNonPseudos() != 1 || BB.isLandingPad())
       continue;
       
-    auto *Inst = BB.findFirstNonPseudoInstruction();
+    auto *Inst = BB.getFirstNonPseudo();
     const bool IsTailCall = BC.MIA->isTailCall(*Inst);
 
     if (!BC.MIA->isUnconditionalBranch(*Inst) && !IsTailCall)
@@ -1090,7 +1090,7 @@ void Peepholes::fixDoubleJumps(BinaryContext &BC,
 void Peepholes::addTailcallTraps(BinaryContext &BC,
                                  BinaryFunction &Function) {
   for (auto &BB : Function) {
-    auto *Inst = BB.findLastNonPseudoInstruction();
+    auto *Inst = BB.getLastNonPseudo();
     if (Inst && BC.MIA->isTailCall(*Inst) && BC.MIA->isIndirectBranch(*Inst)) {
       MCInst Trap;
       if (BC.MIA->createTrap(Trap)) {

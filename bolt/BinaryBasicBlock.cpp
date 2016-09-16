@@ -30,7 +30,7 @@ bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS) {
   return LHS.Offset < RHS.Offset;
 }
 
-MCInst *BinaryBasicBlock::findFirstNonPseudoInstruction() {
+MCInst *BinaryBasicBlock::getFirstNonPseudo() {
   auto &BC = Function->getBinaryContext();
   for (auto &Inst : Instructions) {
     if (!BC.MII->get(Inst.getOpcode()).isPseudo())
@@ -39,7 +39,7 @@ MCInst *BinaryBasicBlock::findFirstNonPseudoInstruction() {
   return nullptr;
 }
 
-MCInst *BinaryBasicBlock::findLastNonPseudoInstruction() {
+MCInst *BinaryBasicBlock::getLastNonPseudo() {
   auto &BC = Function->getBinaryContext();
   for (auto Itr = Instructions.rbegin(); Itr != Instructions.rend(); ++Itr) {
     if (!BC.MII->get(Itr->getOpcode()).isPseudo())
