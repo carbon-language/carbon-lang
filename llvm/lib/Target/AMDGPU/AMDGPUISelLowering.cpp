@@ -660,7 +660,8 @@ void AMDGPUTargetLowering::analyzeFormalArgumentsCompute(CCState &State,
 
     unsigned NumRegs = getNumRegisters(State.getContext(), In.ArgVT);
 
-    if (In.ArgVT == MVT::i16 || In.ArgVT == MVT::i8 || In.ArgVT == MVT::f16) {
+    if (!Subtarget->isAmdHsaOS() &&
+        (In.ArgVT == MVT::i16 || In.ArgVT == MVT::i8 || In.ArgVT == MVT::f16)) {
       // The ABI says the caller will extend these values to 32-bits.
       MemVT = In.ArgVT.isInteger() ? MVT::i32 : MVT::f32;
     } else if (NumRegs == 1) {
