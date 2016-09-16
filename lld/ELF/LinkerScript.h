@@ -10,6 +10,7 @@
 #ifndef LLD_ELF_LINKER_SCRIPT_H
 #define LLD_ELF_LINKER_SCRIPT_H
 
+#include "Config.h"
 #include "Strings.h"
 #include "Writer.h"
 #include "lld/Core/LLVM.h"
@@ -97,16 +98,14 @@ struct OutputSectionCommand : BaseCommand {
   ConstraintKind Constraint = ConstraintKind::NoConstraint;
 };
 
-enum SortKind { SortNone, SortByPriority, SortByName, SortByAlignment };
-
 struct InputSectionDescription : BaseCommand {
   InputSectionDescription(StringRef FilePattern)
       : BaseCommand(InputSectionKind),
         FileRe(compileGlobPatterns({FilePattern})) {}
   static bool classof(const BaseCommand *C);
   llvm::Regex FileRe;
-  SortKind SortOuter = SortNone;
-  SortKind SortInner = SortNone;
+  SortSectionPolicy SortOuter = SortSectionPolicy::None;
+  SortSectionPolicy SortInner = SortSectionPolicy::None;
   // Pairs of section regex and files excluded.
   std::list<std::pair<llvm::Regex, llvm::Regex>> SectionsVec;
   std::vector<InputSectionData *> Sections;

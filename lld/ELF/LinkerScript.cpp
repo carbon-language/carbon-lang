@@ -131,12 +131,17 @@ static bool compareAlignment(InputSectionData *A, InputSectionData *B) {
 }
 
 static std::function<bool(InputSectionData *, InputSectionData *)>
-getComparator(SortKind K) {
-  if (K == SortByPriority)
-    return comparePriority;
-  if (K == SortByName)
+getComparator(SortSectionPolicy K) {
+  switch (K) {
+  case SortSectionPolicy::Alignment:
+    return compareAlignment;
+  case SortSectionPolicy::Name:
     return compareName;
-  return compareAlignment;
+  case SortSectionPolicy::Priority:
+    return comparePriority;
+  default:
+    llvm_unreachable("unknown sort policy");
+  }
 }
 
 static bool checkConstraint(uint64_t Flags, ConstraintKind Kind) {
@@ -180,10 +185,10 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I,
     return;
   }
 
-  if (I->SortInner)
+  if (I->SortInner != SortSectionPolicy::None)
     std::stable_sort(I->Sections.begin(), I->Sections.end(),
                      getComparator(I->SortInner));
-  if (I->SortOuter)
+  if (I->SortOuter != SortSectionPolicy::None)
     std::stable_sort(I->Sections.begin(), I->Sections.end(),
                      getComparator(I->SortOuter));
 
@@ -704,7 +709,7 @@ private:
   void readSectionExcludes(InputSectionDescription *Cmd);
   InputSectionDescription *readInputSectionRules(StringRef FilePattern);
   unsigned readPhdrType();
-  SortKind readSortKind();
+  SortSectionPolicy readSortKind();
   SymbolAssignment *readProvideHidden(bool Provide, bool Hidden);
   SymbolAssignment *readProvideOrAssignment(StringRef Tok, bool MakeAbsolute);
   void readSort();
@@ -985,14 +990,39 @@ Regex ScriptParser::readFilePatterns() {
   return compileGlobPatterns(V);
 }
 
-SortKind ScriptParser::readSortKind() {
+SortSectionPolicy ScriptParser::readSortKind() {
   if (skip("SORT") || skip("SORT_BY_NAME"))
-    return SortByName;
+    return SortSectionPolicy::Name;
   if (skip("SORT_BY_ALIGNMENT"))
-    return SortByAlignment;
+    return SortSectionPolicy::Alignment;
   if (skip("SORT_BY_INIT_PRIORITY"))
-    return SortByPriority;
-  return SortNone;
+    return SortSectionPolicy::Priority;
+  // `SORT_NONE' disables section sorting by ignoring the command line
+  // section sorting option.
+  if (skip("SORT_NONE"))
+    return SortSectionPolicy::IgnoreConfig;
+  return SortSectionPolicy::None;
+}
+
+static void selectSortKind(InputSectionDescription *Cmd) {
+  if (Cmd->SortOuter == SortSectionPolicy::IgnoreConfig) {
+    Cmd->SortOuter = SortSectionPolicy::None;
+    return;
+  }
+
+  if (Cmd->SortOuter != SortSectionPolicy::None) {
+    // If the section sorting command in linker script is nested, the command
+    // line option will be ignored.
+    if (Cmd->SortInner != SortSectionPolicy::None)
+      return;
+    // If the section sorting command in linker script isn't nested, the
+    // command line option will make the section sorting command to be treated
+    // as nested sorting command.
+    Cmd->SortInner = Config->SortSection;
+    return;
+  }
+  // If sorting rule not specified, use command line option.
+  Cmd->SortOuter = Config->SortSection;
 }
 
 // Method reads a list of sequence of excluded files and section globs given in
@@ -1031,10 +1061,12 @@ ScriptParser::readInputSectionRules(StringRef FilePattern) {
   expect("(");
 
   // Read SORT().
-  if (SortKind K1 = readSortKind()) {
+  SortSectionPolicy K1 = readSortKind();
+  if (K1 != SortSectionPolicy::None) {
     Cmd->SortOuter = K1;
     expect("(");
-    if (SortKind K2 = readSortKind()) {
+    SortSectionPolicy K2 = readSortKind();
+    if (K2 != SortSectionPolicy::None) {
       Cmd->SortInner = K2;
       expect("(");
       Cmd->SectionsVec.push_back({llvm::Regex(), readFilePatterns()});
@@ -1043,9 +1075,11 @@ ScriptParser::readInputSectionRules(StringRef FilePattern) {
       Cmd->SectionsVec.push_back({llvm::Regex(), readFilePatterns()});
     }
     expect(")");
+    selectSortKind(Cmd);
     return Cmd;
   }
 
+  selectSortKind(Cmd);
   readSectionExcludes(Cmd);
   return Cmd;
 }
