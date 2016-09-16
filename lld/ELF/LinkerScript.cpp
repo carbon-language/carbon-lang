@@ -208,22 +208,12 @@ LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &OutCmd) {
   std::vector<InputSectionBase<ELFT> *> Ret;
 
   for (const std::unique_ptr<BaseCommand> &Base : OutCmd.Commands) {
-    if (auto *OutCmd = dyn_cast<SymbolAssignment>(Base.get())) {
-      if (shouldDefine<ELFT>(OutCmd))
-        addSymbol<ELFT>(OutCmd);
+    auto *Cmd = dyn_cast<InputSectionDescription>(Base.get());
+    if (!Cmd)
       continue;
-    }
-
-    auto *Cmd = cast<InputSectionDescription>(Base.get());
     computeInputSections(Cmd);
     for (InputSectionData *S : Cmd->Sections)
       Ret.push_back(static_cast<InputSectionBase<ELFT> *>(S));
-  }
-
-  if (!matchConstraints<ELFT>(Ret, OutCmd.Constraint)) {
-    for (InputSectionBase<ELFT> *S : Ret)
-      S->OutSec = nullptr;
-    Ret.clear();
   }
 
   return Ret;
@@ -275,7 +265,9 @@ void LinkerScript<ELFT>::addSection(OutputSectionFactory<ELFT> &Factory,
 template <class ELFT>
 void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
 
-  for (const std::unique_ptr<BaseCommand> &Base1 : Opt.Commands) {
+  for (unsigned I = 0; I < Opt.Commands.size(); ++I) {
+    auto Iter = Opt.Commands.begin() + I;
+    const std::unique_ptr<BaseCommand> &Base1 = *Iter;
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base1.get())) {
       if (shouldDefine<ELFT>(Cmd))
         addRegular<ELFT>(Cmd);
@@ -297,6 +289,18 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
         discard(V);
         continue;
       }
+
+      if (!matchConstraints<ELFT>(V, Cmd->Constraint)) {
+        for (InputSectionBase<ELFT> *S : V)
+          S->OutSec = nullptr;
+        Opt.Commands.erase(Iter);
+        continue;
+      }
+
+      for (const std::unique_ptr<BaseCommand> &Base : Cmd->Commands)
+        if (auto *OutCmd = dyn_cast<SymbolAssignment>(Base.get()))
+          if (shouldDefine<ELFT>(OutCmd))
+            addSymbol<ELFT>(OutCmd);
 
       if (V.empty())
         continue;
@@ -410,8 +414,7 @@ findSections(OutputSectionCommand &Cmd,
              const std::vector<OutputSectionBase<ELFT> *> &Sections) {
   std::vector<OutputSectionBase<ELFT> *> Ret;
   for (OutputSectionBase<ELFT> *Sec : Sections)
-    if (Sec->getName() == Cmd.Name &&
-        checkConstraint(Sec->getFlags(), Cmd.Constraint))
+    if (Sec->getName() == Cmd.Name)
       Ret.push_back(Sec);
   return Ret;
 }
