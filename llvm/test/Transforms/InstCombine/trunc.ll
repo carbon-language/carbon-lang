@@ -437,9 +437,7 @@ define <8 x i16> @trunc_shl_v8i15_v8i32_15(<8 x i32> %a) {
 
 define <8 x i16> @trunc_shl_v8i16_v8i32_16(<8 x i32> %a) {
 ; CHECK-LABEL: @trunc_shl_v8i16_v8i32_16(
-; CHECK-NEXT:    [[SHL:%.*]] = shl <8 x i32> %a, <i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16>
-; CHECK-NEXT:    [[CONV:%.*]] = trunc <8 x i32> [[SHL]] to <8 x i16>
-; CHECK-NEXT:    ret <8 x i16> [[CONV]]
+; CHECK-NEXT:    ret <8 x i16> zeroinitializer
 ;
   %shl = shl <8 x i32> %a, <i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16>
   %conv = trunc <8 x i32> %shl to <8 x i16>
@@ -448,9 +446,7 @@ define <8 x i16> @trunc_shl_v8i16_v8i32_16(<8 x i32> %a) {
 
 define <8 x i16> @trunc_shl_v8i16_v8i32_17(<8 x i32> %a) {
 ; CHECK-LABEL: @trunc_shl_v8i16_v8i32_17(
-; CHECK-NEXT:    [[SHL:%.*]] = shl <8 x i32> %a, <i32 17, i32 17, i32 17, i32 17, i32 17, i32 17, i32 17, i32 17>
-; CHECK-NEXT:    [[CONV:%.*]] = trunc <8 x i32> [[SHL]] to <8 x i16>
-; CHECK-NEXT:    ret <8 x i16> [[CONV]]
+; CHECK-NEXT:    ret <8 x i16> zeroinitializer
 ;
   %shl = shl <8 x i32> %a, <i32 17, i32 17, i32 17, i32 17, i32 17, i32 17, i32 17, i32 17>
   %conv = trunc <8 x i32> %shl to <8 x i16>
