@@ -140,8 +140,6 @@ public:
 
 // ScriptConfiguration holds linker script parse results.
 struct ScriptConfiguration {
-  // Used to create symbol assignments outside SECTIONS command.
-  std::vector<std::unique_ptr<SymbolAssignment>> Assignments;
   // Used to assign addresses to sections.
   std::vector<std::unique_ptr<BaseCommand>> Commands;
 
@@ -166,7 +164,7 @@ template <class ELFT> class LinkerScript final : public LinkerScriptBase {
 public:
   LinkerScript();
   ~LinkerScript();
-  void createAssignments();
+  void processCommands(OutputSectionFactory<ELFT> &Factory);
   void createSections(OutputSectionFactory<ELFT> &Factory);
 
   std::vector<PhdrEntry<ELFT>> createPhdrs();
@@ -191,6 +189,8 @@ private:
   void computeInputSections(InputSectionDescription *,
                             ConstraintKind Constraint);
 
+  void addSection(OutputSectionFactory<ELFT> &Factory,
+                  InputSectionBase<ELFT> *Sec, StringRef Name);
   void discard(ArrayRef<InputSectionBase<ELFT> *> V);
 
   std::vector<InputSectionBase<ELFT> *>

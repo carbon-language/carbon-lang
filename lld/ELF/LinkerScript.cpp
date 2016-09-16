@@ -48,6 +48,11 @@ template <class ELFT> static void addRegular(SymbolAssignment *Cmd) {
   Symbol *Sym = Symtab<ELFT>::X->addRegular(Cmd->Name, STB_GLOBAL, STV_DEFAULT);
   Sym->Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
   Cmd->Sym = Sym->body();
+
+  // If we have no SECTIONS then we don't have '.' and don't call
+  // assignAddresses(). We calculate symbol value immediately in this case.
+  if (!ScriptConfig->HasSections)
+    cast<DefinedRegular<ELFT>>(Cmd->Sym)->Value = Cmd->Expression(0);
 }
 
 template <class ELFT> static void addSynthetic(SymbolAssignment *Cmd) {
@@ -215,15 +220,6 @@ LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &OutCmd) {
   return Ret;
 }
 
-template <class ELFT> void LinkerScript<ELFT>::createAssignments() {
-  for (const std::unique_ptr<SymbolAssignment> &Cmd : Opt.Assignments) {
-    if (shouldDefine<ELFT>(Cmd.get()))
-      addRegular<ELFT>(Cmd.get());
-    if (Cmd->Sym)
-      cast<DefinedRegular<ELFT>>(Cmd->Sym)->Value = Cmd->Expression(0);
-  }
-}
-
 template <class ELFT>
 static SectionKey<ELFT::Is64Bits> createKey(InputSectionBase<ELFT> *C,
                                             StringRef OutsecName) {
@@ -256,20 +252,32 @@ static SectionKey<ELFT::Is64Bits> createKey(InputSectionBase<ELFT> *C,
 }
 
 template <class ELFT>
-void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
-  auto AddSec = [&](InputSectionBase<ELFT> *Sec, StringRef Name) {
-    OutputSectionBase<ELFT> *OutSec;
-    bool IsNew;
-    std::tie(OutSec, IsNew) = Factory.create(createKey(Sec, Name), Sec);
-    if (IsNew)
-      OutputSections->push_back(OutSec);
-    return OutSec;
-  };
+void LinkerScript<ELFT>::addSection(OutputSectionFactory<ELFT> &Factory,
+                                    InputSectionBase<ELFT> *Sec,
+                                    StringRef Name) {
+  OutputSectionBase<ELFT> *OutSec;
+  bool IsNew;
+  std::tie(OutSec, IsNew) = Factory.create(createKey(Sec, Name), Sec);
+  if (IsNew)
+    OutputSections->push_back(OutSec);
+  OutSec->addSection(Sec);
+}
+
+template <class ELFT>
+void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
 
   for (const std::unique_ptr<BaseCommand> &Base1 : Opt.Commands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base1.get())) {
       if (shouldDefine<ELFT>(Cmd))
         addRegular<ELFT>(Cmd);
+      continue;
+    }
+    if (auto *Cmd = dyn_cast<AssertCommand>(Base1.get())) {
+      // If we don't have SECTIONS then output sections have already been
+      // created by Writer<EFLT>. The LinkerScript<ELFT>::assignAddresses
+      // will not be called, so ASSERT should be evaluated now.
+      if (!Opt.HasSections)
+        Cmd->Expression(0);
       continue;
     }
 
@@ -285,25 +293,22 @@ void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
         continue;
 
       for (InputSectionBase<ELFT> *Sec : V) {
-        OutputSectionBase<ELFT> *OutSec = AddSec(Sec, Cmd->Name);
-        uint32_t Subalign = Cmd->SubalignExpr ? Cmd->SubalignExpr(0) : 0;
-
-        if (Subalign)
+        addSection(Factory, Sec, Cmd->Name);
+        if (uint32_t Subalign = Cmd->SubalignExpr ? Cmd->SubalignExpr(0) : 0)
           Sec->Alignment = Subalign;
-        OutSec->addSection(Sec);
       }
     }
   }
+}
 
+template <class ELFT>
+void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
+  processCommands(Factory);
   // Add orphan sections.
-  for (ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles()) {
-    for (InputSectionBase<ELFT> *S : F->getSections()) {
-      if (isDiscarded(S) || S->OutSec)
-        continue;
-      OutputSectionBase<ELFT> *OutSec = AddSec(S, getOutputSectionName(S));
-      OutSec->addSection(S);
-    }
-  }
+  for (ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles())
+    for (InputSectionBase<ELFT> *S : F->getSections())
+      if (!isDiscarded(S) && !S->OutSec)
+        addSection(Factory, S, getOutputSectionName(S));
 }
 
 // Sets value of a section-defined symbol. Two kinds of
@@ -754,7 +759,9 @@ void ScriptParser::readLinkerScript() {
     if (Tok == ";")
       continue;
 
-    if (Tok == "ENTRY") {
+    if (Tok == "ASSERT") {
+      Opt.Commands.emplace_back(new AssertCommand(readAssert()));
+    } else if (Tok == "ENTRY") {
       readEntry();
     } else if (Tok == "EXTERN") {
       readExtern();
@@ -777,10 +784,7 @@ void ScriptParser::readLinkerScript() {
     } else if (Tok == "VERSION") {
       readVersion();
     } else if (SymbolAssignment *Cmd = readProvideOrAssignment(Tok, true)) {
-      if (Opt.HasSections)
-        Opt.Commands.emplace_back(Cmd);
-      else
-        Opt.Assignments.emplace_back(Cmd);
+      Opt.Commands.emplace_back(Cmd);
     } else {
       setError("unknown directive: " + Tok);
     }
