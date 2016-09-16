@@ -224,6 +224,16 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   // Some of the floating-point instructions have mixed GPR and FPR operands:
   // fine-tune the computed mapping.
   switch (Opc) {
+  case TargetOpcode::G_SITOFP:
+  case TargetOpcode::G_UITOFP: {
+    OpBanks = {AArch64::FPRRegBankID, AArch64::GPRRegBankID};
+    break;
+  }
+  case TargetOpcode::G_FPTOSI:
+  case TargetOpcode::G_FPTOUI: {
+    OpBanks = {AArch64::GPRRegBankID, AArch64::FPRRegBankID};
+    break;
+  }
   case TargetOpcode::G_FCMP: {
     OpBanks = {AArch64::GPRRegBankID, /* Predicate */ 0, AArch64::FPRRegBankID,
                AArch64::FPRRegBankID};
