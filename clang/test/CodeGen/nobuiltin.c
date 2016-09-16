@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -O1 -S -o - %s | FileCheck -check-prefix=STRCPY -check-prefix=MEMSET %s
-// RUN: %clang_cc1 -fno-builtin -O1 -S -o - %s | FileCheck -check-prefix=NOSTRCPY -check-prefix=NOMEMSET %s
-// RUN: %clang_cc1 -fno-builtin-memset -O1 -S -o - %s | FileCheck -check-prefix=STRCPY -check-prefix=NOMEMSET %s
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -O1 -S -o - %s | FileCheck -check-prefix=STRCPY -check-prefix=MEMSET %s
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -fno-builtin -O1 -S -o - %s | FileCheck -check-prefix=NOSTRCPY -check-prefix=NOMEMSET %s
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -fno-builtin-memset -O1 -S -o - %s | FileCheck -check-prefix=STRCPY -check-prefix=NOMEMSET %s
 
 void PR13497() {
   char content[2];
