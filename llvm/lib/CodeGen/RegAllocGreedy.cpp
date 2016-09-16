@@ -2524,7 +2524,7 @@ unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
       return PhysReg;
     }
 
-  assert(NewVRegs.empty() && "Cannot append to existing NewVRegs");
+  assert((NewVRegs.empty() || Depth) && "Cannot append to existing NewVRegs");
 
   // The first time we see a live range, don't try to split or spill.
   // Wait until the second time, when all smaller ranges have been allocated.
@@ -2543,8 +2543,9 @@ unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
                                    Depth);
 
   // Try splitting VirtReg or interferences.
+  unsigned NewVRegSizeBefore = NewVRegs.size();
   unsigned PhysReg = trySplit(VirtReg, Order, NewVRegs);
-  if (PhysReg || !NewVRegs.empty())
+  if (PhysReg || (NewVRegs.size() - NewVRegSizeBefore))
     return PhysReg;
 
   // Finally spill VirtReg itself.
