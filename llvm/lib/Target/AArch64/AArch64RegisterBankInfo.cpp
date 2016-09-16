@@ -169,6 +169,22 @@ void AArch64RegisterBankInfo::applyMappingImpl(
   }
 }
 
+/// Returns whether opcode \p Opc is a pre-isel generic floating-point opcode,
+/// having only floating-point operands.
+static bool isPreISelGenericFloatingPointOpcode(unsigned Opc) {
+  switch (Opc) {
+  case TargetOpcode::G_FADD:
+  case TargetOpcode::G_FSUB:
+  case TargetOpcode::G_FMUL:
+  case TargetOpcode::G_FDIV:
+  case TargetOpcode::G_FCONSTANT:
+  case TargetOpcode::G_FPEXT:
+  case TargetOpcode::G_FPTRUNC:
+    return true;
+  }
+  return false;
+}
+
 RegisterBankInfo::InstructionMapping
 AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   const unsigned Opc = MI.getOpcode();
@@ -198,7 +214,8 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     OpSizes[Idx] = Ty.getSizeInBits();
 
     // As a top-level guess, vectors go in FPRs, scalars and pointers in GPRs.
-    if (Ty.isVector())
+    // For floating-point instructions, scalars go in FPRs.
+    if (Ty.isVector() || isPreISelGenericFloatingPointOpcode(Opc))
       OpBanks[Idx] = AArch64::FPRRegBankID;
     else
       OpBanks[Idx] = AArch64::GPRRegBankID;

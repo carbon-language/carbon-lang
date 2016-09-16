@@ -48,6 +48,17 @@
 
   define void @test_load_s32_p0() { ret void }
   define void @test_store_s32_p0() { ret void }
+
+  define void @test_fadd_s32() { ret void }
+  define void @test_fsub_s32() { ret void }
+  define void @test_fmul_s32() { ret void }
+  define void @test_fdiv_s32() { ret void }
+
+  define void @test_fpext_s64_s32() { ret void }
+  define void @test_fptrunc_s32_s64() { ret void }
+
+  define void @test_fconstant_s32() { ret void }
+
 ...
 
 ---
@@ -626,4 +637,132 @@ body: |
     %0(p0) = COPY %x0
     %1(s32) = COPY %w1
     G_STORE %1, %0
+...
+
+---
+# CHECK-LABEL: name: test_fadd_s32
+name:            test_fadd_s32
+legalized:       true
+# CHECK: registers:
+# CHECK:   - { id: 0, class: fpr }
+# CHECK:   - { id: 1, class: fpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+body: |
+  bb.0:
+    liveins: %s0
+    ; CHECK:      %0(s32) = COPY %s0
+    ; CHECK:      %1(s32) = G_FADD %0, %0
+    %0(s32) = COPY %s0
+    %1(s32) = G_FADD %0, %0
+...
+
+---
+# CHECK-LABEL: name: test_fsub_s32
+name:            test_fsub_s32
+legalized:       true
+# CHECK: registers:
+# CHECK:   - { id: 0, class: fpr }
+# CHECK:   - { id: 1, class: fpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+body: |
+  bb.0:
+    liveins: %s0
+    ; CHECK:      %0(s32) = COPY %s0
+    ; CHECK:      %1(s32) = G_FSUB %0, %0
+    %0(s32) = COPY %s0
+    %1(s32) = G_FSUB %0, %0
+...
+
+---
+# CHECK-LABEL: name: test_fmul_s32
+name:            test_fmul_s32
+legalized:       true
+# CHECK: registers:
+# CHECK:   - { id: 0, class: fpr }
+# CHECK:   - { id: 1, class: fpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+body: |
+  bb.0:
+    liveins: %s0
+    ; CHECK:      %0(s32) = COPY %s0
+    ; CHECK:      %1(s32) = G_FMUL %0, %0
+    %0(s32) = COPY %s0
+    %1(s32) = G_FMUL %0, %0
+...
+
+---
+# CHECK-LABEL: name: test_fdiv_s32
+name:            test_fdiv_s32
+legalized:       true
+# CHECK: registers:
+# CHECK:   - { id: 0, class: fpr }
+# CHECK:   - { id: 1, class: fpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+body: |
+  bb.0:
+    liveins: %s0
+    ; CHECK:      %0(s32) = COPY %s0
+    ; CHECK:      %1(s32) = G_FDIV %0, %0
+    %0(s32) = COPY %s0
+    %1(s32) = G_FDIV %0, %0
+...
+
+---
+# CHECK-LABEL: name: test_fpext_s64_s32
+name:            test_fpext_s64_s32
+legalized:       true
+# CHECK: registers:
+# CHECK:   - { id: 0, class: fpr }
+# CHECK:   - { id: 1, class: fpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+body: |
+  bb.0:
+    liveins: %s0
+    ; CHECK:      %0(s32) = COPY %s0
+    ; CHECK:      %1(s64) = G_FPEXT %0
+    %0(s32) = COPY %s0
+    %1(s64) = G_FPEXT %0
+...
+
+---
+# CHECK-LABEL: name: test_fptrunc_s32_s64
+name:            test_fptrunc_s32_s64
+legalized:       true
+# CHECK: registers:
+# CHECK:   - { id: 0, class: fpr }
+# CHECK:   - { id: 1, class: fpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+body: |
+  bb.0:
+    liveins: %d0
+    ; CHECK:      %0(s64) = COPY %d0
+    ; CHECK:      %1(s32) = G_FPTRUNC %0
+    %0(s64) = COPY %d0
+    %1(s32) = G_FPTRUNC %0
+...
+
+---
+# CHECK-LABEL: name: test_fconstant_s32
+name:            test_fconstant_s32
+legalized:       true
+# CHECK: registers:
+# CHECK:   - { id: 0, class: fpr }
+registers:
+  - { id: 0, class: _ }
+body: |
+  bb.0:
+    ; CHECK:      %0(s32) = G_FCONSTANT float 1.0
+    %0(s32) = G_FCONSTANT float 1.0
 ...
