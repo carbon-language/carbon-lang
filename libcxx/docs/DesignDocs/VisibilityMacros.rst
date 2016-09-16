@@ -71,6 +71,16 @@ Visibility Macros
   However since `_LIBCPP_TYPE_VIS_ONLY` is the same as `_LIBCPP_TYPE_VIS` the
   visibility is already correct. The macro has an empty definition with GCC.
 
+**_LIBCPP_EXTERN_TEMPLATE_INLINE_VISIBILITY**
+  Mark a member function of a class template as hidden and inline except when
+  building the libc++ library where it marks the symbol as being exported by
+  the library.
+
+  This macro is used to maintain ABI compatibility for symbols that have been
+  historically exported by the libc++ library but are now marked inline. It
+  should only be applied to member functions of class templates that are
+  externally instantiated.
+
 **_LIBCPP_EXCEPTION_ABI**
   Mark the member functions, typeinfo, and vtable of the type as being exported
   by the libc++ library. This macro must be applied to all *exception types*.

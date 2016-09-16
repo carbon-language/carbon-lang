@@ -330,6 +330,8 @@ endif()
 # headers
 add_compile_flags_if_supported(-nostdinc++)
 
+add_definitions(-D_LIBCPP_BUILDING_LIBRARY)
+
 # Warning flags ===============================================================
 add_definitions(-D_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 add_compile_flags_if_supported(

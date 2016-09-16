@@ -562,6 +562,7 @@ namespace std {
 #define _LIBCPP_ENUM_VIS
 #define _LIBCPP_INLINE_VISIBILITY __forceinline
 #define _LIBCPP_ALWAYS_INLINE     __forceinline
+#define _LIBCPP_EXTERN_TEMPLATE_INLINE_VISIBILITY __forceinline
 #endif // _WIN32
 
 #ifndef _LIBCPP_HIDDEN
@@ -614,6 +615,14 @@ namespace std {
 
 #ifndef _LIBCPP_ALWAYS_INLINE
 #define _LIBCPP_ALWAYS_INLINE  __attribute__ ((__visibility__("hidden"), __always_inline__))
+#endif
+
+#ifndef _LIBCPP_EXTERN_TEMPLATE_INLINE_VISIBILITY
+# ifdef _LIBCPP_BUILDING_LIBRARY
+#   define _LIBCPP_EXTERN_TEMPLATE_INLINE_VISIBILITY __attribute__((__visibility__("default"), __always_inline__))
+# else
+#   define _LIBCPP_EXTERN_TEMPLATE_INLINE_VISIBILITY _LIBCPP_INLINE_VISIBILITY
+# endif
 #endif
 
 #ifndef _LIBCPP_PREFERRED_OVERLOAD
