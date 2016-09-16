@@ -171,25 +171,43 @@ void AArch64RegisterBankInfo::applyMappingImpl(
 
 RegisterBankInfo::InstructionMapping
 AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
-  RegisterBankInfo::InstructionMapping Mapping = getInstrMappingImpl(MI);
-  if (Mapping.isValid())
-    return Mapping;
+  const unsigned Opc = MI.getOpcode();
+  const MachineFunction &MF = *MI.getParent()->getParent();
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
 
-  // As a top-level guess, vectors go in FPRs, scalars in GPRs. Obviously this
-  // won't work for normal floating-point types (or NZCV). When such
-  // instructions exist we'll need to look at the MI's opcode.
-  auto &MRI = MI.getParent()->getParent()->getRegInfo();
-  LLT Ty = MRI.getType(MI.getOperand(0).getReg());
-  unsigned BankID;
-  if (Ty.isVector())
-    BankID = AArch64::FPRRegBankID;
-  else
-    BankID = AArch64::GPRRegBankID;
+  // Try the default logic for non-generic instructions that are either copies
+  // or already have some operands assigned to banks.
+  if (!isPreISelGenericOpcode(Opc)) {
+    RegisterBankInfo::InstructionMapping Mapping = getInstrMappingImpl(MI);
+    if (Mapping.isValid())
+      return Mapping;
+  }
 
-  Mapping = InstructionMapping{DefaultMappingID, 1, MI.getNumOperands()};
-  int Size = Ty.isValid() ? Ty.getSizeInBits() : 0;
+  RegisterBankInfo::InstructionMapping Mapping =
+      InstructionMapping{DefaultMappingID, 1, MI.getNumOperands()};
+
+  // Track the size and bank of each register.  We don't do partial mappings.
+  SmallVector<unsigned, 4> OpSizes(MI.getNumOperands());
+  SmallVector<unsigned, 4> OpBanks(MI.getNumOperands());
+  for (unsigned Idx = 0; Idx < MI.getNumOperands(); ++Idx) {
+    auto &MO = MI.getOperand(Idx);
+    if (!MO.isReg())
+      continue;
+
+    LLT Ty = MRI.getType(MO.getReg());
+    OpSizes[Idx] = Ty.getSizeInBits();
+
+    // As a top-level guess, vectors go in FPRs, scalars and pointers in GPRs.
+    if (Ty.isVector())
+      OpBanks[Idx] = AArch64::FPRRegBankID;
+    else
+      OpBanks[Idx] = AArch64::GPRRegBankID;
+  }
+
+  // Finally construct the computed mapping.
   for (unsigned Idx = 0; Idx < MI.getNumOperands(); ++Idx)
-    Mapping.setOperandMapping(Idx, Size, getRegBank(BankID));
+    if (MI.getOperand(Idx).isReg())
+      Mapping.setOperandMapping(Idx, OpSizes[Idx], getRegBank(OpBanks[Idx]));
 
   return Mapping;
 }
