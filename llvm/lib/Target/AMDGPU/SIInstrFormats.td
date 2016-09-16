@@ -128,6 +128,9 @@ class CFPseudoInstSI<dag outs, dag ins, list<dag> pattern = [],
 
   let Uses = !if(UseExec, [EXEC], []);
   let Defs = !if(DefExec, [EXEC, SCC], [SCC]);
+  let mayLoad = 0;
+  let mayStore = 0;
+  let hasSideEffects = 0;
 }
 
 class Enc32 {
