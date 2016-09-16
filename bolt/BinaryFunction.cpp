@@ -2660,7 +2660,7 @@ DynoStats BinaryFunction::getDynoStats() const {
   DynoStats Stats;
 
   // Return empty-stats about the function we don't completely understand.
-  if (!isSimple())
+  if (!isSimple() || !hasValidProfile())
     return Stats;
 
   // Update enumeration of basic blocks for correct detection of branch'
