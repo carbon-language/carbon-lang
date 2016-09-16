@@ -104,8 +104,8 @@ struct InputSectionDescription : BaseCommand {
         FileRe(compileGlobPatterns({FilePattern})) {}
   static bool classof(const BaseCommand *C);
   llvm::Regex FileRe;
-  SortSectionPolicy SortOuter = SortSectionPolicy::None;
-  SortSectionPolicy SortInner = SortSectionPolicy::None;
+  SortSectionPolicy SortOuter = SortSectionPolicy::Default;
+  SortSectionPolicy SortInner = SortSectionPolicy::Default;
   // Pairs of section regex and files excluded.
   std::list<std::pair<llvm::Regex, llvm::Regex>> SectionsVec;
   std::vector<InputSectionData *> Sections;

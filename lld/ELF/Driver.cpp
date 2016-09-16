@@ -415,7 +415,7 @@ static SortSectionPolicy getSortKind(opt::InputArgList &Args) {
     return SortSectionPolicy::Name;
   if (!S.empty())
     error("unknown --sort-section rule: " + S);
-  return SortSectionPolicy::None;
+  return SortSectionPolicy::Default;
 }
 
 // Initializes Config members by the command line options.

@@ -179,10 +179,10 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
     }
   }
 
-  if (I->SortInner != SortSectionPolicy::None)
+  if (I->SortInner != SortSectionPolicy::Default)
     std::stable_sort(I->Sections.begin(), I->Sections.end(),
                      getComparator(I->SortInner));
-  if (I->SortOuter != SortSectionPolicy::None)
+  if (I->SortOuter != SortSectionPolicy::Default)
     std::stable_sort(I->Sections.begin(), I->Sections.end(),
                      getComparator(I->SortOuter));
 
@@ -1001,23 +1001,21 @@ SortSectionPolicy ScriptParser::readSortKind() {
     return SortSectionPolicy::Alignment;
   if (skip("SORT_BY_INIT_PRIORITY"))
     return SortSectionPolicy::Priority;
-  // `SORT_NONE' disables section sorting by ignoring the command line
-  // section sorting option.
   if (skip("SORT_NONE"))
-    return SortSectionPolicy::IgnoreConfig;
-  return SortSectionPolicy::None;
+    return SortSectionPolicy::None;
+  return SortSectionPolicy::Default;
 }
 
 static void selectSortKind(InputSectionDescription *Cmd) {
-  if (Cmd->SortOuter == SortSectionPolicy::IgnoreConfig) {
-    Cmd->SortOuter = SortSectionPolicy::None;
+  if (Cmd->SortOuter == SortSectionPolicy::None) {
+    Cmd->SortOuter = SortSectionPolicy::Default;
     return;
   }
 
-  if (Cmd->SortOuter != SortSectionPolicy::None) {
+  if (Cmd->SortOuter != SortSectionPolicy::Default) {
     // If the section sorting command in linker script is nested, the command
     // line option will be ignored.
-    if (Cmd->SortInner != SortSectionPolicy::None)
+    if (Cmd->SortInner != SortSectionPolicy::Default)
       return;
     // If the section sorting command in linker script isn't nested, the
     // command line option will make the section sorting command to be treated
@@ -1066,11 +1064,11 @@ ScriptParser::readInputSectionRules(StringRef FilePattern) {
 
   // Read SORT().
   SortSectionPolicy K1 = readSortKind();
-  if (K1 != SortSectionPolicy::None) {
+  if (K1 != SortSectionPolicy::Default) {
     Cmd->SortOuter = K1;
     expect("(");
     SortSectionPolicy K2 = readSortKind();
-    if (K2 != SortSectionPolicy::None) {
+    if (K2 != SortSectionPolicy::Default) {
       Cmd->SortInner = K2;
       expect("(");
       Cmd->SectionsVec.push_back({llvm::Regex(), readFilePatterns()});

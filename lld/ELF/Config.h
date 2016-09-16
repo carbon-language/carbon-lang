@@ -43,7 +43,7 @@ enum class StripPolicy { None, All, Debug };
 enum class UnresolvedPolicy { NoUndef, ReportError, Warn, Ignore };
 
 // For --sort-section and linkerscript sorting rules.
-enum class SortSectionPolicy { None, IgnoreConfig, Alignment, Name, Priority };
+enum class SortSectionPolicy { Default, None, Alignment, Name, Priority };
 
 struct SymbolVersion {
   llvm::StringRef Name;
