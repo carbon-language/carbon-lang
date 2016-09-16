@@ -453,15 +453,42 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
   // We place orphan sections at end of file.
   // Other linkers places them using some heuristics as described in
   // https://sourceware.org/binutils/docs/ld/Orphan-Sections.html#Orphan-Sections.
+
+  // The OutputSections are already in the correct order.
+  // This loops creates or moves commands as needed so that they are in the
+  // correct order.
+  int CmdIndex = 0;
   for (OutputSectionBase<ELFT> *Sec : *OutputSections) {
     StringRef Name = Sec->getName();
-    if (getSectionIndex(Name) == INT_MAX)
-      Opt.Commands.push_back(llvm::make_unique<OutputSectionCommand>(Name));
+
+    // Find the last spot where we can insert a command and still get the
+    // correct order.
+    auto CmdIter = Opt.Commands.begin() + CmdIndex;
+    auto E = Opt.Commands.end();
+    while (CmdIter != E && !isa<OutputSectionCommand>(**CmdIter)) {
+      ++CmdIter;
+      ++CmdIndex;
+    }
+
+    auto Pos =
+        std::find_if(CmdIter, E, [&](const std::unique_ptr<BaseCommand> &Base) {
+          auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
+          return Cmd && Cmd->Name == Name;
+        });
+    if (Pos == E) {
+      Opt.Commands.insert(CmdIter,
+                          llvm::make_unique<OutputSectionCommand>(Name));
+    } else {
+      // If linker script lists alloc/non-alloc sections is the wrong order,
+      // this does a right rotate to bring the desired command in place.
+      auto RPos = make_reverse_iterator(Pos + 1);
+      std::rotate(RPos, RPos + 1, make_reverse_iterator(CmdIter));
+    }
+    ++CmdIndex;
   }
 
   // Assign addresses as instructed by linker script SECTIONS sub-commands.
   Dot = getHeaderSize();
-  uintX_t MinVA = std::numeric_limits<uintX_t>::max();
 
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get())) {
@@ -483,13 +510,17 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
     if (Cmd->AddrExpr)
       Dot = Cmd->AddrExpr(Dot);
 
-    MinVA = std::min(MinVA, Dot);
     assignOffsets(Cmd);
   }
 
-  for (OutputSectionBase<ELFT> *Sec : *OutputSections)
-    if (!(Sec->getFlags() & SHF_ALLOC))
+  uintX_t MinVA = std::numeric_limits<uintX_t>::max();
+  for (OutputSectionBase<ELFT> *Sec : *OutputSections) {
+    if (Sec->getFlags() & SHF_ALLOC)
+      MinVA = std::min(MinVA, Sec->getVA());
+    else
       Sec->setVA(0);
+  }
+
   uintX_t HeaderSize =
       Out<ELFT>::ElfHeader->getSize() + Out<ELFT>::ProgramHeaders->getSize();
   if (HeaderSize > MinVA)
