@@ -1582,6 +1582,11 @@ def : Pat <
 >;
 
 def : Pat <
+ (i32 frameindex:$fi),
+ (V_MOV_B32_e32 (i32 (frameindex_to_targetframeindex $fi)))
+>;
+
+def : Pat <
   (i64 InlineImm<i64>:$imm),
   (S_MOV_B64 InlineImm<i64>:$imm)
 >;
