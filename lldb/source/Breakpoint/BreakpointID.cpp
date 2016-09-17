@@ -113,7 +113,7 @@ bool BreakpointID::StringIsBreakpointName(llvm::StringRef str, Error &error) {
     return false;
 
   // First character must be a letter or _
-  if (!isalpha(str[0]) || str[0] != '_')
+  if (!isalpha(str[0]) && str[0] != '_')
     return false;
 
   // Cannot contain ., -, or space.
