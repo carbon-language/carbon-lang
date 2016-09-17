@@ -828,6 +828,14 @@ std::unique_ptr<MIRParser> llvm::createMIRParserFromFile(StringRef Filename,
 std::unique_ptr<MIRParser>
 llvm::createMIRParser(std::unique_ptr<MemoryBuffer> Contents,
                       LLVMContext &Context) {
+  if (Context.shouldDiscardValueNames()) {
+    Context.diagnose(DiagnosticInfoMIRParser(
+        DS_Error,
+        SMDiagnostic(
+            Filename, SourceMgr::DK_Error,
+            "Can't read MIR with a Context that discards named Values")));
+    return nullptr;
+  }
   auto Filename = Contents->getBufferIdentifier();
   return llvm::make_unique<MIRParser>(
       llvm::make_unique<MIRParserImpl>(std::move(Contents), Filename, Context));
