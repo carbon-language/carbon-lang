@@ -1065,6 +1065,10 @@ static void selectSortKind(InputSectionDescription *Cmd) {
 // Method reads a list of sequence of excluded files and section globs given in
 // a following form: ((EXCLUDE_FILE(file_pattern+))? section_pattern+)+
 // Example: *(.foo.1 EXCLUDE_FILE (*a.o) .foo.2 EXCLUDE_FILE (*b.o) .foo.3)
+// The semantics of that is next:
+// * Include .foo.1 from every file.
+// * Include .foo.2 from every file but a.o
+// * Include .foo.3 from every file but b.o
 void ScriptParser::readSectionExcludes(InputSectionDescription *Cmd) {
   Regex ExcludeFileRe;
   std::vector<StringRef> V;
