@@ -114,8 +114,11 @@ struct InputSectionDescription : BaseCommand {
   SortSectionPolicy SortOuter = SortSectionPolicy::Default;
   SortSectionPolicy SortInner = SortSectionPolicy::Default;
 
-  // Pairs of section regex and files excluded.
-  std::vector<SectionPattern> SectionPatterns;
+  // Input sections that matches at lesat one of SectionPatterns
+  // will be associated with this InputSectionDescription.
+  // We use std::list instead of std::vector because SectionPattern
+  // do not support move assignment.
+  std::list<SectionPattern> SectionPatterns;
 
   std::vector<InputSectionData *> Sections;
 };
