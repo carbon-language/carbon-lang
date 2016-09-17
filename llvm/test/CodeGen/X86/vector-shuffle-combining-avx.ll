@@ -240,3 +240,40 @@ define <4 x float> @combine_vpermilvar_4f32_as_insertps(<4 x float> %a0) {
   %2 = shufflevector <4 x float> %1, <4 x float> zeroinitializer, <4 x i32> <i32 2, i32 4, i32 1, i32 4>
   ret <4 x float> %2
 }
+
+define <2 x double> @constant_fold_vpermilvar_pd() {
+; ALL-LABEL: constant_fold_vpermilvar_pd:
+; ALL:       # BB#0:
+; ALL-NEXT:    vpermilpd {{.*#+}} xmm0 = mem[1,0]
+; ALL-NEXT:    retq
+  %1 = call <2 x double> @llvm.x86.avx.vpermilvar.pd(<2 x double> <double 1.0, double 2.0>, <2 x i64> <i64 2, i64 0>)
+  ret <2 x double> %1
+}
+
+define <4 x double> @constant_fold_vpermilvar_pd_256() {
+; ALL-LABEL: constant_fold_vpermilvar_pd_256:
+; ALL:       # BB#0:
+; ALL-NEXT:    vpermilpd {{.*#+}} ymm0 = mem[1,0,2,3]
+; ALL-NEXT:    retq
+  %1 = call <4 x double> @llvm.x86.avx.vpermilvar.pd.256(<4 x double> <double 1.0, double 2.0, double 3.0, double 4.0>, <4 x i64> <i64 2, i64 0, i64 0, i64 2>)
+  ret <4 x double> %1
+}
+
+define <4 x float> @constant_fold_vpermilvar_ps() {
+; ALL-LABEL: constant_fold_vpermilvar_ps:
+; ALL:       # BB#0:
+; ALL-NEXT:    vpermilps {{.*#+}} xmm0 = mem[3,0,2,1]
+; ALL-NEXT:    retq
+  %1 = call <4 x float> @llvm.x86.avx.vpermilvar.ps(<4 x float> <float 1.0, float 2.0, float 3.0, float 4.0>, <4 x i32> <i32 3, i32 0, i32 2, i32 1>)
+  ret <4 x float> %1
+}
+
+define <8 x float> @constant_fold_vpermilvar_ps_256() {
+; ALL-LABEL: constant_fold_vpermilvar_ps_256:
+; ALL:       # BB#0:
+; ALL-NEXT:    vmovaps {{.*#+}} ymm0 = [1.000000e+00,2.000000e+00,3.000000e+00,4.000000e+00,5.000000e+00,6.000000e+00,7.000000e+00,8.000000e+00]
+; ALL-NEXT:    vpermilps {{.*#+}} ymm0 = ymm0[0,0,2,1,4,5,5,5]
+; ALL-NEXT:    retq
+  %1 = call <8 x float> @llvm.x86.avx.vpermilvar.ps.256(<8 x float> <float 1.0, float 2.0, float 3.0, float 4.0, float 5.0, float 6.0, float 7.0, float 8.0>, <8 x i32> <i32 4, i32 0, i32 2, i32 1, i32 0, i32 1, i32 1, i32 1>)
+  ret <8 x float> %1
+}
