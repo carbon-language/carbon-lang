@@ -109,8 +109,8 @@ bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
   return false;
 }
 
-static bool fileMatches(const llvm::Regex &FileRe,
-                        const llvm::Regex &ExcludedFileRe, StringRef Filename) {
+static bool fileMatches(const Regex &FileRe, const Regex &ExcludedFileRe,
+                        StringRef Filename) {
   return const_cast<Regex &>(FileRe).match(Filename) &&
          !const_cast<Regex &>(ExcludedFileRe).match(Filename);
 }
@@ -165,7 +165,7 @@ static bool matchConstraints(ArrayRef<InputSectionBase<ELFT> *> Sections,
 // Compute and remember which sections the InputSectionDescription matches.
 template <class ELFT>
 void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
-  for (const std::pair<llvm::Regex, llvm::Regex> &V : I->SectionsVec) {
+  for (const std::pair<Regex, Regex> &V : I->SectionsVec) {
     for (ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles()) {
       if (fileMatches(I->FileRe, V.first, sys::path::filename(F->getName()))) {
         Regex &Re = const_cast<Regex &>(V.second);
@@ -1062,7 +1062,7 @@ static void selectSortKind(InputSectionDescription *Cmd) {
 // a following form: ((EXCLUDE_FILE(file_pattern+))? section_pattern+)+
 // Example: *(.foo.1 EXCLUDE_FILE (*a.o) .foo.2 EXCLUDE_FILE (*b.o) .foo.3)
 void ScriptParser::readSectionExcludes(InputSectionDescription *Cmd) {
-  llvm::Regex ExcludeFileRe;
+  Regex ExcludeFileRe;
   std::vector<StringRef> V;
 
   while (!Error) {
@@ -1102,10 +1102,10 @@ ScriptParser::readInputSectionRules(StringRef FilePattern) {
     if (K2 != SortSectionPolicy::Default) {
       Cmd->SortInner = K2;
       expect("(");
-      Cmd->SectionsVec.push_back({llvm::Regex(), readFilePatterns()});
+      Cmd->SectionsVec.push_back({Regex(), readFilePatterns()});
       expect(")");
     } else {
-      Cmd->SectionsVec.push_back({llvm::Regex(), readFilePatterns()});
+      Cmd->SectionsVec.push_back({Regex(), readFilePatterns()});
     }
     expect(")");
     selectSortKind(Cmd);
@@ -1126,7 +1126,7 @@ ScriptParser::readInputSectionDescription(StringRef Tok) {
     StringRef FilePattern = next();
     InputSectionDescription *Cmd = readInputSectionRules(FilePattern);
     expect(")");
-    for (std::pair<llvm::Regex, llvm::Regex> &Regex : Cmd->SectionsVec)
+    for (std::pair<Regex, Regex> &Regex : Cmd->SectionsVec)
       Opt.KeptSections.push_back(&Regex.second);
     return Cmd;
   }
