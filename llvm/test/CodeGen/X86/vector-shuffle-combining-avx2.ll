@@ -346,3 +346,33 @@ define <32 x i8> @combine_pshufb_not_as_pshufw(<32 x i8> %a0) {
   %res1 = call <32 x i8> @llvm.x86.avx2.pshuf.b(<32 x i8> %res0, <32 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 10, i8 11, i8 8, i8 9, i8 14, i8 15, i8 12, i8 13, i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 10, i8 11, i8 8, i8 9, i8 14, i8 15, i8 12, i8 13>)
   ret <32 x i8> %res1
 }
+
+define <8 x i32> @constant_fold_permd() {
+; CHECK-LABEL: constant_fold_permd:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovdqa {{.*#+}} ymm0 = [4,6,2,1,7,1,5,0]
+; CHECK-NEXT:    vpermd {{.*}}(%rip), %ymm0, %ymm0
+; CHECK-NEXT:    retq
+  %1 = call <8 x i32> @llvm.x86.avx2.permd(<8 x i32> <i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8>, <8 x i32> <i32 4, i32 6, i32 2, i32 1, i32 7, i32 1, i32 5, i32 0>)
+  ret <8 x i32> %1
+}
+
+define <8 x float> @constant_fold_permps() {
+; CHECK-LABEL: constant_fold_permps:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovaps {{.*#+}} ymm0 = [4,6,2,1,7,1,5,0]
+; CHECK-NEXT:    vpermps {{.*}}(%rip), %ymm0, %ymm0
+; CHECK-NEXT:    retq
+  %1 = call <8 x float> @llvm.x86.avx2.permps(<8 x float> <float 1.0, float 2.0, float 3.0, float 4.0, float 5.0, float 6.0, float 7.0, float 8.0>, <8 x i32> <i32 4, i32 6, i32 2, i32 1, i32 7, i32 1, i32 5, i32 0>)
+  ret <8 x float> %1
+}
+
+define <32 x i8> @constant_fold_pshufb_256() {
+; CHECK-LABEL: constant_fold_pshufb_256:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    vmovdqa {{.*#+}} ymm0 = [15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0,0,255,254,253,252,251,250,249,248,247,246,245,244,243,242,241]
+; CHECK-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[1],zero,zero,zero,ymm0[u,u],zero,zero,ymm0[15],zero,zero,zero,zero,zero,ymm0[7,6,17],zero,zero,zero,ymm0[u,u],zero,zero,ymm0[31],zero,zero,zero,zero,zero,ymm0[23,22]
+; CHECK-NEXT:    retq
+  %1 = tail call <32 x i8> @llvm.x86.avx2.pshuf.b(<32 x i8> <i8 15, i8 14, i8 13, i8 12, i8 11, i8 10, i8 9, i8 8, i8 7, i8 6, i8 5, i8 4, i8 3, i8 2, i8 1, i8 0, i8 0, i8 -1, i8 -2, i8 -3, i8 -4, i8 -5, i8 -6, i8 -7, i8 -8, i8 -9, i8 -10, i8 -11, i8 -12, i8 -13, i8 -14, i8 -15>, <32 x i8> <i8 1, i8 -1, i8 -1, i8 -1, i8 undef, i8 undef, i8 -1, i8 -1, i8 15, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 7, i8 6, i8 1, i8 -1, i8 -1, i8 -1, i8 undef, i8 undef, i8 -1, i8 -1, i8 15, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 7, i8 6>)
+  ret <32 x i8> %1
+}
