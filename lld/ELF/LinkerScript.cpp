@@ -109,10 +109,10 @@ bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
   return false;
 }
 
-static bool fileMatches(const Regex &FileRe, const Regex &ExcludedFileRe,
-                        StringRef Filename) {
-  return const_cast<Regex &>(FileRe).match(Filename) &&
-         !const_cast<Regex &>(ExcludedFileRe).match(Filename);
+// We need to use const_cast because match() is not a const function.
+// This function encapsulates that ugliness.
+static bool match(const Regex &Re, StringRef S) {
+  return const_cast<Regex &>(Re).match(S);
 }
 
 static bool comparePriority(InputSectionData *A, InputSectionData *B) {
@@ -167,15 +167,14 @@ template <class ELFT>
 void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
   for (const std::pair<Regex, Regex> &V : I->SectionsVec) {
     for (ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles()) {
-      if (fileMatches(I->FileRe, V.first, sys::path::filename(F->getName()))) {
-        Regex &Re = const_cast<Regex &>(V.second);
-        for (InputSectionBase<ELFT> *S : F->getSections())
-          if (!isDiscarded(S) && !S->OutSec && Re.match(S->Name))
-            I->Sections.push_back(S);
-
-        if (Re.match("COMMON"))
-          I->Sections.push_back(CommonInputSection<ELFT>::X);
-      }
+      StringRef Filename = sys::path::filename(F->getName());
+      if (!match(I->FileRe, Filename) || match(V.first, Filename))
+        continue;
+      for (InputSectionBase<ELFT> *S : F->getSections())
+        if (!isDiscarded(S) && !S->OutSec && match(V.second, S->Name))
+          I->Sections.push_back(S);
+      if (match(V.second, "COMMON"))
+        I->Sections.push_back(CommonInputSection<ELFT>::X);
     }
   }
 
