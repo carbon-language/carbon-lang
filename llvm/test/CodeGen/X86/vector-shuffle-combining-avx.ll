@@ -258,10 +258,6 @@ define <8 x float> @combine_vpermilvar_8f32_movsldup(<8 x float> %a0) {
 define <2 x double> @combine_vpermilvar_2f64_identity(<2 x double> %a0) {
 ; X32-LABEL: combine_vpermilvar_2f64_identity:
 ; X32:       # BB#0:
-; X32-NEXT:    movl $2, %eax
-; X32-NEXT:    vmovd %eax, %xmm1
-; X32-NEXT:    vpermilpd %xmm1, %xmm0, %xmm0
-; X32-NEXT:    vpermilpd %xmm1, %xmm0, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: combine_vpermilvar_2f64_identity:
@@ -365,10 +361,7 @@ define <4 x float> @combine_vpermilvar_4f32_as_insertps(<4 x float> %a0) {
 define <2 x double> @constant_fold_vpermilvar_pd() {
 ; X32-LABEL: constant_fold_vpermilvar_pd:
 ; X32:       # BB#0:
-; X32-NEXT:    movl $2, %eax
-; X32-NEXT:    vmovd %eax, %xmm0
-; X32-NEXT:    vmovapd {{.*#+}} xmm1 = [1.000000e+00,2.000000e+00]
-; X32-NEXT:    vpermilpd %xmm0, %xmm1, %xmm0
+; X32-NEXT:    vpermilpd {{.*#+}} xmm0 = mem[1,0]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: constant_fold_vpermilvar_pd:

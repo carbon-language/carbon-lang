@@ -15,10 +15,7 @@ declare <16 x i8> @llvm.x86.xop.vpperm(<16 x i8>, <16 x i8>, <16 x i8>) nounwind
 define <2 x double> @combine_vpermil2pd_identity(<2 x double> %a0, <2 x double> %a1) {
 ; X32-LABEL: combine_vpermil2pd_identity:
 ; X32:       # BB#0:
-; X32-NEXT:    movl $2, %eax
-; X32-NEXT:    vmovd %eax, %xmm2
-; X32-NEXT:    vpermil2pd $0, %xmm2, %xmm0, %xmm1, %xmm0
-; X32-NEXT:    vpermil2pd $0, %xmm2, %xmm0, %xmm0, %xmm0
+; X32-NEXT:    vmovaps %xmm1, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: combine_vpermil2pd_identity:
