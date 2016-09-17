@@ -165,19 +165,23 @@ static bool matchConstraints(ArrayRef<InputSectionBase<ELFT> *> Sections,
 // Compute and remember which sections the InputSectionDescription matches.
 template <class ELFT>
 void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
-  for (const std::pair<Regex, Regex> &V : I->SectionsVec) {
+  // Collects all sections that satisfy constraints of I
+  // and attach them to I.
+  for (SectionPattern &Pat : I->SectionPatterns) {
     for (ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles()) {
       StringRef Filename = sys::path::filename(F->getName());
-      if (!match(I->FileRe, Filename) || match(V.first, Filename))
+      if (!match(I->FileRe, Filename) || match(Pat.ExcludedFileRe, Filename))
         continue;
+
       for (InputSectionBase<ELFT> *S : F->getSections())
-        if (!isDiscarded(S) && !S->OutSec && match(V.second, S->Name))
+        if (!isDiscarded(S) && !S->OutSec && match(Pat.SectionRe, S->Name))
           I->Sections.push_back(S);
-      if (match(V.second, "COMMON"))
+      if (match(Pat.SectionRe, "COMMON"))
         I->Sections.push_back(CommonInputSection<ELFT>::X);
     }
   }
 
+  // Sort for SORT() commands.
   if (I->SortInner != SortSectionPolicy::Default)
     std::stable_sort(I->Sections.begin(), I->Sections.end(),
                      getComparator(I->SortInner));
@@ -1066,14 +1070,14 @@ void ScriptParser::readSectionExcludes(InputSectionDescription *Cmd) {
 
   while (!Error) {
     if (skip(")")) {
-      Cmd->SectionsVec.push_back(
+      Cmd->SectionPatterns.push_back(
           {std::move(ExcludeFileRe), compileGlobPatterns(V)});
       return;
     }
 
     if (skip("EXCLUDE_FILE")) {
       if (!V.empty()) {
-        Cmd->SectionsVec.push_back(
+        Cmd->SectionPatterns.push_back(
             {std::move(ExcludeFileRe), compileGlobPatterns(V)});
         V.clear();
       }
@@ -1101,10 +1105,10 @@ ScriptParser::readInputSectionRules(StringRef FilePattern) {
     if (K2 != SortSectionPolicy::Default) {
       Cmd->SortInner = K2;
       expect("(");
-      Cmd->SectionsVec.push_back({Regex(), readFilePatterns()});
+      Cmd->SectionPatterns.push_back({Regex(), readFilePatterns()});
       expect(")");
     } else {
-      Cmd->SectionsVec.push_back({Regex(), readFilePatterns()});
+      Cmd->SectionPatterns.push_back({Regex(), readFilePatterns()});
     }
     expect(")");
     selectSortKind(Cmd);
@@ -1125,8 +1129,8 @@ ScriptParser::readInputSectionDescription(StringRef Tok) {
     StringRef FilePattern = next();
     InputSectionDescription *Cmd = readInputSectionRules(FilePattern);
     expect(")");
-    for (std::pair<Regex, Regex> &Regex : Cmd->SectionsVec)
-      Opt.KeptSections.push_back(&Regex.second);
+    for (SectionPattern &Pat : Cmd->SectionPatterns)
+      Opt.KeptSections.push_back(&Pat.SectionRe);
     return Cmd;
   }
   return readInputSectionRules(Tok);
