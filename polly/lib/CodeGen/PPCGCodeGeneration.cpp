@@ -1085,16 +1085,23 @@ GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
       DevArray = Builder.CreateGEP(DevArray, Builder.CreateNeg(Offset));
       DevArray = Builder.CreatePointerCast(DevArray, Builder.getInt8PtrTy());
     }
-
-    Instruction *Param = new AllocaInst(
-        Builder.getInt8PtrTy(), Launch + "_param_" + std::to_string(Index),
-        EntryBlock->getTerminator());
-    Builder.CreateStore(DevArray, Param);
     Value *Slot = Builder.CreateGEP(
         Parameters, {Builder.getInt64(0), Builder.getInt64(Index)});
-    Value *ParamTyped =
-        Builder.CreatePointerCast(Param, Builder.getInt8PtrTy());
-    Builder.CreateStore(ParamTyped, Slot);
+
+    if (gpu_array_is_read_only_scalar(&Prog->array[i])) {
+      Value *ValPtr = BlockGen.getOrCreateAlloca(SAI);
+      Value *ValPtrCast =
+          Builder.CreatePointerCast(ValPtr, Builder.getInt8PtrTy());
+      Builder.CreateStore(ValPtrCast, Slot);
+    } else {
+      Instruction *Param = new AllocaInst(
+          Builder.getInt8PtrTy(), Launch + "_param_" + std::to_string(Index),
+          EntryBlock->getTerminator());
+      Builder.CreateStore(DevArray, Param);
+      Value *ParamTyped =
+          Builder.CreatePointerCast(Param, Builder.getInt8PtrTy());
+      Builder.CreateStore(ParamTyped, Slot);
+    }
     Index++;
   }
 
@@ -1255,7 +1262,13 @@ GPUNodeBuilder::createKernelFunctionDecl(ppcg_kernel *Kernel,
     if (!ppcg_kernel_requires_array_argument(Kernel, i))
       continue;
 
-    Args.push_back(Builder.getInt8PtrTy());
+    if (gpu_array_is_read_only_scalar(&Prog->array[i])) {
+      isl_id *Id = isl_space_get_tuple_id(Prog->array[i].space, isl_dim_set);
+      const ScopArrayInfo *SAI = ScopArrayInfo::getFromId(Id);
+      Args.push_back(SAI->getElementType());
+    } else {
+      Args.push_back(Builder.getInt8PtrTy());
+    }
   }
 
   int NumHostIters = isl_space_dim(Kernel->space, isl_dim_set);
@@ -1382,11 +1395,15 @@ void GPUNodeBuilder::prepareKernelArguments(ppcg_kernel *Kernel, Function *FN) {
       continue;
     }
 
+    Value *Val = &*Arg;
+
+    if (!gpu_array_is_read_only_scalar(&Prog->array[i])) {
+      Type *TypePtr = SAI->getElementType()->getPointerTo();
+      Value *TypedArgPtr = Builder.CreatePointerCast(Val, TypePtr);
+      Val = Builder.CreateLoad(TypedArgPtr);
+    }
+
     Value *Alloca = BlockGen.getOrCreateAlloca(SAI);
-    Value *ArgPtr = &*Arg;
-    Type *TypePtr = SAI->getElementType()->getPointerTo();
-    Value *TypedArgPtr = Builder.CreatePointerCast(ArgPtr, TypePtr);
-    Value *Val = Builder.CreateLoad(TypedArgPtr);
     Builder.CreateStore(Val, Alloca);
 
     Arg++;
@@ -1938,7 +1955,8 @@ public:
       PPCGArray.n_ref = 0;
       PPCGArray.refs = nullptr;
       PPCGArray.accessed = true;
-      PPCGArray.read_only_scalar = false;
+      PPCGArray.read_only_scalar =
+          Array->isReadOnly() && Array->getNumberOfDimensions() == 0;
       PPCGArray.has_compound_element = false;
       PPCGArray.local = false;
       PPCGArray.declare_local = false;
