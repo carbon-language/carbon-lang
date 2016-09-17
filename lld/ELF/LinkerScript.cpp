@@ -278,7 +278,7 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
     }
     if (auto *Cmd = dyn_cast<AssertCommand>(Base1.get())) {
       // If we don't have SECTIONS then output sections have already been
-      // created by Writer<EFLT>. The LinkerScript<ELFT>::assignAddresses
+      // created by Writer<ELFT>. The LinkerScript<ELFT>::assignAddresses
       // will not be called, so ASSERT should be evaluated now.
       if (!Opt.HasSections)
         Cmd->Expression(0);
