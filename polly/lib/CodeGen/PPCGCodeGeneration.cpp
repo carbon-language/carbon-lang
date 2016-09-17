@@ -379,6 +379,15 @@ private:
   /// @returns The Assembly string of the kernel.
   std::string finalizeKernelFunction();
 
+  /// Finalize the generation of the kernel arguments.
+  ///
+  /// This function ensures that not-read-only scalars used in a kernel are
+  /// stored back to the global memory location they ared backed up with before
+  /// the kernel terminates.
+  ///
+  /// @params Kernel The kernel to finalize kernel arguments for.
+  void finalizeKernelArguments(ppcg_kernel *Kernel);
+
   /// Create code that allocates memory to store arrays on device.
   void allocateDeviceArrays();
 
@@ -1198,13 +1207,13 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
 
   create(isl_ast_node_copy(Kernel->tree));
 
+  finalizeKernelArguments(Kernel);
   Function *F = Builder.GetInsertBlock()->getParent();
   addCUDAAnnotations(F->getParent(), BlockDimX, BlockDimY, BlockDimZ);
   clearDominators(F);
   clearScalarEvolution(F);
   clearLoops(F);
 
-  Builder.SetInsertPoint(&HostInsertPoint);
   IDToValue = HostIDs;
 
   ValueMap = std::move(HostValueMap);
@@ -1217,9 +1226,10 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
     S.invalidateScopArrayInfo(BasePtr, ScopArrayInfo::MK_Array);
   LocalArrays.clear();
 
+  std::string ASMString = finalizeKernelFunction();
+  Builder.SetInsertPoint(&HostInsertPoint);
   Value *Parameters = createLaunchParameters(Kernel, F, SubtreeValues);
 
-  std::string ASMString = finalizeKernelFunction();
   std::string Name = "kernel_" + std::to_string(Kernel->id);
   Value *KernelString = Builder.CreateGlobalStringPtr(ASMString, Name);
   Value *NameString = Builder.CreateGlobalStringPtr(Name, Name + "_name");
@@ -1408,6 +1418,49 @@ void GPUNodeBuilder::prepareKernelArguments(ppcg_kernel *Kernel, Function *FN) {
 
     Arg++;
   }
+}
+
+void GPUNodeBuilder::finalizeKernelArguments(ppcg_kernel *Kernel) {
+  auto *FN = Builder.GetInsertBlock()->getParent();
+  auto Arg = FN->arg_begin();
+
+  bool StoredScalar = false;
+  for (long i = 0; i < Kernel->n_array; i++) {
+    if (!ppcg_kernel_requires_array_argument(Kernel, i))
+      continue;
+
+    isl_id *Id = isl_space_get_tuple_id(Prog->array[i].space, isl_dim_set);
+    const ScopArrayInfo *SAI = ScopArrayInfo::getFromId(isl_id_copy(Id));
+    isl_id_free(Id);
+
+    if (SAI->getNumberOfDimensions() > 0) {
+      Arg++;
+      continue;
+    }
+
+    if (gpu_array_is_read_only_scalar(&Prog->array[i])) {
+      Arg++;
+      continue;
+    }
+
+    Value *Alloca = BlockGen.getOrCreateAlloca(SAI);
+    Value *ArgPtr = &*Arg;
+    Type *TypePtr = SAI->getElementType()->getPointerTo();
+    Value *TypedArgPtr = Builder.CreatePointerCast(ArgPtr, TypePtr);
+    Value *Val = Builder.CreateLoad(Alloca);
+    Builder.CreateStore(Val, TypedArgPtr);
+    StoredScalar = true;
+
+    Arg++;
+  }
+
+  if (StoredScalar)
+    /// In case more than one thread contains scalar stores, the generated
+    /// code might be incorrect, if we only store at the end of the kernel.
+    /// To support this case we need to store these scalars back at each
+    /// memory store or at least before each kernel barrier.
+    if (Kernel->n_block != 0 || Kernel->n_grid != 0)
+      BuildSuccessful = 0;
 }
 
 void GPUNodeBuilder::createKernelVariables(ppcg_kernel *Kernel, Function *FN) {
