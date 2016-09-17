@@ -50,7 +50,8 @@ private:
   // Important things that make up a function!
   BasicBlockListType  BasicBlocks;        ///< The basic blocks
   mutable ArgumentListType ArgumentList;  ///< The formal arguments
-  ValueSymbolTable *SymTab;               ///< Symbol table of args/instructions
+  std::unique_ptr<ValueSymbolTable>
+      SymTab;                             ///< Symbol table of args/instructions
   AttributeSet AttributeSets;             ///< Parameter attributes
 
   /*
