@@ -34,6 +34,8 @@ void TracePC::HandleTrace(uint64_t *Guard, uintptr_t PC) {
     }
     if (Counter < 255)
       Value++;
+    else
+      Value |= kBit63;
   } else {
     Value |= kBit63;
     TotalCoverage++;
@@ -58,6 +60,12 @@ void TracePC::PrintModuleInfo() {
   for (size_t i = 0; i < NumModules; i++)
     Printf("[%p, %p), ", Modules[i].Start, Modules[i].Stop);
   Printf("\n");
+}
+
+void TracePC::ResetGuards() {
+  for (size_t M = 0; M < NumModules; M++)
+    for (uint64_t *X = Modules[M].Start; X < Modules[M].Stop; X++)
+      *X = (*X >> 32) << 32;
 }
 
 void TracePC::FinalizeTrace() {

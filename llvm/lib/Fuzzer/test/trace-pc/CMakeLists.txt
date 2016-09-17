@@ -36,4 +36,4 @@ set_target_properties(LLVMFuzzer-DSO1 PROPERTIES LIBRARY_OUTPUT_DIRECTORY
 set_target_properties(LLVMFuzzer-DSO2 PROPERTIES LIBRARY_OUTPUT_DIRECTORY
   "${CMAKE_BINARY_DIR}/lib/Fuzzer/lib")
 
-set(TestBinaries ${TestBinaries} LLVMFuzzer-DSOTest)
+set(TestBinaries ${TestBinaries} LLVMFuzzer-DSOTest PARENT_SCOPE)

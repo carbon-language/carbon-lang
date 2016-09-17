@@ -380,6 +380,7 @@ class TracePC {
     NumNewPCs = 0;
     CounterMap.Reset();
     TotalCoverageMap.Reset();
+    ResetGuards();
   }
 
   void PrintModuleInfo();
@@ -393,6 +394,8 @@ private:
   uintptr_t NewPCs[kMaxNewPCs];
   size_t NumNewPCs = 0;
   void AddNewPC(uintptr_t PC) { NewPCs[(NumNewPCs++) % kMaxNewPCs] = PC; }
+
+  void ResetGuards();
 
   struct Module {
     uint64_t *Start, *Stop;
