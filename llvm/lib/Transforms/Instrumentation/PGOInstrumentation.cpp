@@ -988,7 +988,7 @@ void SelectInstVisitor::visitSelectInst(SelectInst &SI) {
     annotateOneSelectInst(SI);
     break;
   default:
-    assert(false && "Unknown visiting mode");
+    llvm_unreachable("Unknown visiting mode");
     break;
   }
 }
