@@ -983,14 +983,13 @@ void SelectInstVisitor::visitSelectInst(SelectInst &SI) {
     return;
   case VM_instrument:
     instrumentOneSelectInst(SI);
-    break;
+    return;
   case VM_annotate:
     annotateOneSelectInst(SI);
-    break;
-  default:
-    llvm_unreachable("Unknown visiting mode");
-    break;
+    return;
   }
+
+  llvm_unreachable("Unknown visiting mode");
 }
 
 // Traverse all the indirect callsites and annotate the instructions.
