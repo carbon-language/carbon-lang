@@ -3694,7 +3694,9 @@ CGObjCCommonMac::CreateCStringLiteral(StringRef Name, ObjCLabelType Type) {
       new llvm::GlobalVariable(CGM.getModule(), Value->getType(),
                                /*isConstant=*/true,
                                llvm::GlobalValue::PrivateLinkage, Value, Label);
-  GV->setSection(Section);
+  if (CGM.getTriple().isOSBinFormatMachO())
+    GV->setSection(Section);
+  GV->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
   GV->setAlignment(CharUnits::One().getQuantity());
   CGM.addCompilerUsedGlobal(GV);
 
