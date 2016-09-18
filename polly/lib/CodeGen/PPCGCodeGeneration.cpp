@@ -163,6 +163,12 @@ public:
   /// occurred which prevents us from generating valid GPU code.
   bool BuildSuccessful = true;
 
+  /// The maximal number of loops surrounding a sequential kernel.
+  unsigned DeepestSequential = 0;
+
+  /// The maximal number of loops surrounding a parallel kernel.
+  unsigned DeepestParallel = 0;
+
 private:
   /// A vector of array base pointers for which a new ScopArrayInfo was created.
   ///
@@ -1178,6 +1184,13 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
   ppcg_kernel *Kernel = (ppcg_kernel *)isl_id_get_user(Id);
   isl_id_free(Id);
   isl_ast_node_free(KernelStmt);
+
+  if (Kernel->n_grid > 1)
+    DeepestParallel =
+        std::max(DeepestParallel, isl_space_dim(Kernel->space, isl_dim_set));
+  else
+    DeepestSequential =
+        std::max(DeepestSequential, isl_space_dim(Kernel->space, isl_dim_set));
 
   Value *BlockDimX, *BlockDimY, *BlockDimZ;
   std::tie(BlockDimX, BlockDimY, BlockDimZ) = getBlockSizes(Kernel);
@@ -2416,6 +2429,12 @@ public:
     NodeBuilder.initializeAfterRTH();
     NodeBuilder.create(Root);
     NodeBuilder.finalize();
+
+    /// In case a sequential kernel has more surrounding loops as any parallel
+    /// kernel, the SCoP is probably mostly sequential. Hence, there is no
+    /// point in running it on a CPU.
+    if (NodeBuilder.DeepestSequential > NodeBuilder.DeepestParallel)
+      SplitBlock->getTerminator()->setOperand(0, Builder.getFalse());
 
     if (!NodeBuilder.BuildSuccessful)
       SplitBlock->getTerminator()->setOperand(0, Builder.getFalse());
