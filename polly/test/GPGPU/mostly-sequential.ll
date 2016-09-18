@@ -4,8 +4,9 @@
 
 ; RUN: opt %loadPolly -polly-codegen-ppcg -S < %s | \
 ; RUN: FileCheck %s -check-prefix=IR
-;
-;
+
+; REQUIRES: pollyacc
+
 ;    void foo(float A[]) {
 ;      for (long i = 0; i < 128; i++)
 ;        A[i] += i;
