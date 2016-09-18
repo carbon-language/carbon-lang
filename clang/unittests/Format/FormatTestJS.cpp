@@ -1444,5 +1444,11 @@ TEST_F(FormatTestJS, Conditional) {
                "}");
 }
 
+TEST_F(FormatTestJS, ImportComments) {
+  verifyFormat("import {x} from 'x';  // from some location",
+               getGoogleJSStyleWithColumns(25));
+  verifyFormat("// taze: x from 'location'", getGoogleJSStyleWithColumns(10));
+}
+
 } // end namespace tooling
 } // end namespace clang
