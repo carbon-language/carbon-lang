@@ -5590,12 +5590,20 @@ defm VCVTSD2USI64Z: avx512_cvt_s_int_round<0x79, f64x_info, i64x_info,
 let Predicates = [HasAVX512] in {
   def : Pat<(i32 (int_x86_sse_cvtss2si (v4f32 VR128X:$src))),
             (VCVTSS2SIZrr VR128X:$src)>;
+  def : Pat<(i32 (int_x86_sse_cvtss2si (sse_load_f32 addr:$src))),
+            (VCVTSS2SIZrm addr:$src)>;
   def : Pat<(i64 (int_x86_sse_cvtss2si64 (v4f32 VR128X:$src))),
             (VCVTSS2SI64Zrr VR128X:$src)>;
+  def : Pat<(i64 (int_x86_sse_cvtss2si64 (sse_load_f32 addr:$src))),
+            (VCVTSS2SI64Zrm addr:$src)>;
   def : Pat<(i32 (int_x86_sse2_cvtsd2si (v2f64 VR128X:$src))),
             (VCVTSD2SIZrr VR128X:$src)>;
+  def : Pat<(i32 (int_x86_sse2_cvtsd2si (sse_load_f64 addr:$src))),
+            (VCVTSD2SIZrm addr:$src)>;
   def : Pat<(i64 (int_x86_sse2_cvtsd2si64 (v2f64 VR128X:$src))),
             (VCVTSD2SI64Zrr VR128X:$src)>;
+  def : Pat<(i64 (int_x86_sse2_cvtsd2si64 (sse_load_f64 addr:$src))),
+            (VCVTSD2SI64Zrm addr:$src)>;
 } // HasAVX512
 
 let isCodeGenOnly = 1 , Predicates = [HasAVX512] in {
@@ -5691,13 +5699,20 @@ defm VCVTTSD2USI64Z: avx512_cvt_s_all<0x78, "vcvttsd2usi", f64x_info, i64x_info,
 let Predicates = [HasAVX512] in {
   def : Pat<(i32 (int_x86_sse_cvttss2si (v4f32 VR128X:$src))),
             (VCVTTSS2SIZrr_Int VR128X:$src)>;
+  def : Pat<(i32 (int_x86_sse_cvttss2si (sse_load_f32 addr:$src))),
+            (VCVTTSS2SIZrm_Int addr:$src)>;
   def : Pat<(i64 (int_x86_sse_cvttss2si64 (v4f32 VR128X:$src))),
             (VCVTTSS2SI64Zrr_Int VR128X:$src)>;
+  def : Pat<(i64 (int_x86_sse_cvttss2si64 (sse_load_f32 addr:$src))),
+            (VCVTTSS2SI64Zrm_Int addr:$src)>;
   def : Pat<(i32 (int_x86_sse2_cvttsd2si (v2f64 VR128X:$src))),
             (VCVTTSD2SIZrr_Int VR128X:$src)>;
+  def : Pat<(i32 (int_x86_sse2_cvttsd2si (sse_load_f64 addr:$src))),
+            (VCVTTSD2SIZrm_Int addr:$src)>;
   def : Pat<(i64 (int_x86_sse2_cvttsd2si64 (v2f64 VR128X:$src))),
             (VCVTTSD2SI64Zrr_Int VR128X:$src)>;
-
+  def : Pat<(i64 (int_x86_sse2_cvttsd2si64 (sse_load_f64 addr:$src))),
+            (VCVTTSD2SI64Zrm_Int addr:$src)>;
 } // HasAVX512
 //===----------------------------------------------------------------------===//
 // AVX-512  Convert form float to double and back
