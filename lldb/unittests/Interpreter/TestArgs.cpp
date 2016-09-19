@@ -57,7 +57,7 @@ TEST(ArgsTest, TestAppendArg) {
   Args args;
   args.SetCommandString("first_arg");
   EXPECT_EQ(1u, args.GetArgumentCount());
-  args.AppendArgument("second_arg");
+  args.AppendArgument(llvm::StringRef("second_arg"));
   EXPECT_EQ(2u, args.GetArgumentCount());
   EXPECT_STREQ(args.GetArgumentAtIndex(0), "first_arg");
   EXPECT_STREQ(args.GetArgumentAtIndex(1), "second_arg");
