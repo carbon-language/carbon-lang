@@ -480,7 +480,9 @@ SampleProfileLoader::getInstWeight(const Instruction &Inst) const {
 
   uint32_t LineOffset = getOffset(Lineno, HeaderLineno);
   uint32_t Discriminator = DIL->getDiscriminator();
-  ErrorOr<uint64_t> R = FS->findSamplesAt(LineOffset, Discriminator);
+  ErrorOr<uint64_t> R = IsCall
+                            ? FS->findCallSamplesAt(LineOffset, Discriminator)
+                            : FS->findSamplesAt(LineOffset, Discriminator);
   if (R) {
     bool FirstMark =
         CoverageTracker.markSamplesUsed(FS, LineOffset, Discriminator, R.get());
@@ -1272,10 +1274,10 @@ bool SampleProfileLoader::emitAnnotations(Function &F) {
 
 char SampleProfileLoaderLegacyPass::ID = 0;
 INITIALIZE_PASS_BEGIN(SampleProfileLoaderLegacyPass, "sample-profile",
-                "Sample Profile loader", false, false)
+                      "Sample Profile loader", false, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_END(SampleProfileLoaderLegacyPass, "sample-profile",
-                "Sample Profile loader", false, false)
+                    "Sample Profile loader", false, false)
 
 bool SampleProfileLoader::doInitialization(Module &M) {
   auto &Ctx = M.getContext();
