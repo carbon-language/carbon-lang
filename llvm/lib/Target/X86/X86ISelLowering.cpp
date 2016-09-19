@@ -14669,7 +14669,7 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
 
   // First, clear all bits but the sign bit from the second operand (sign).
   CV[0] = ConstantFP::get(*Context,
-                          APFloat(Sem, APInt::getHighBitsSet(SizeInBits, 1)));
+                          APFloat(Sem, APInt::getSignBit(SizeInBits)));
   Constant *C = ConstantVector::get(CV);
   auto PtrVT = TLI.getPointerTy(DAG.getDataLayout());
   SDValue CPIdx = DAG.getConstantPool(C, PtrVT, 16);
@@ -14698,9 +14698,8 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
     APF.clearSign();
     CV[0] = ConstantFP::get(*Context, APF);
   } else {
-    CV[0] = ConstantFP::get(
-        *Context,
-        APFloat(Sem, APInt::getLowBitsSet(SizeInBits, SizeInBits - 1)));
+    CV[0] = ConstantFP::get(*Context,
+                            APFloat(Sem, ~APInt::getSignBit(SizeInBits)));
   }
   C = ConstantVector::get(CV);
   CPIdx = DAG.getConstantPool(C, PtrVT, 16);
