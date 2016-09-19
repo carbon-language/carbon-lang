@@ -8,8 +8,10 @@ half half_disabled(half *p, // expected-error{{declaring function return value o
 {
   half a[2]; // expected-error{{declaring variable of type 'half [2]' is not allowed}}
   half b;    // expected-error{{declaring variable of type 'half' is not allowed}}
-  *p; // expected-error{{loading directly from pointer to type 'half' is not allowed}}
-  p[1]; // expected-error{{loading directly from pointer to type 'half' is not allowed}}
+  *p; // expected-error{{loading directly from pointer to type 'half' requires cl_khr_fp16. Use vector data load builtin functions instead}}
+  *p = 0; // expected-error{{assigning directly to pointer to type 'half' requires cl_khr_fp16. Use vector data store builtin functions instead}}
+  p[1]; // expected-error{{loading directly from pointer to type 'half' requires cl_khr_fp16. Use vector data load builtin functions instead}}
+  p[1] = 0; // expected-error{{assigning directly to pointer to type 'half' requires cl_khr_fp16. Use vector data store builtin functions instead}}
 
   float c = 1.0f;
   b = (half) c;  // expected-error{{casting to type 'half' is not allowed}}
@@ -31,7 +33,9 @@ half half_enabled(half *p, half h)
   half a[2];
   half b;
   *p;
+  *p = 0;
   p[1];
+  p[1] = 0;
 
   float c = 1.0f;
   b = (half) c;
