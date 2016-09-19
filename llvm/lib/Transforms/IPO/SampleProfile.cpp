@@ -1120,17 +1120,21 @@ void SampleProfileLoader::propagateWeights(Function &F) {
 
     // Only set weights if there is at least one non-zero weight.
     // In any other case, let the analyzer set weights.
-    DEBUG(dbgs() << "SUCCESS. Found non-zero weights.\n");
-    TI->setMetadata(llvm::LLVMContext::MD_prof,
-                    MDB.createBranchWeights(Weights));
-    DebugLoc BranchLoc = TI->getDebugLoc();
-    emitOptimizationRemark(
-        Ctx, DEBUG_TYPE, F, MaxDestLoc,
-        Twine("most popular destination for conditional branches at ") +
-            ((BranchLoc) ? Twine(BranchLoc->getFilename() + ":" +
-                                 Twine(BranchLoc.getLine()) + ":" +
-                                 Twine(BranchLoc.getCol()))
-                         : Twine("<UNKNOWN LOCATION>")));
+    if (MaxWeight > 0) {
+      DEBUG(dbgs() << "SUCCESS. Found non-zero weights.\n");
+      TI->setMetadata(llvm::LLVMContext::MD_prof,
+                      MDB.createBranchWeights(Weights));
+      DebugLoc BranchLoc = TI->getDebugLoc();
+      emitOptimizationRemark(
+          Ctx, DEBUG_TYPE, F, MaxDestLoc,
+          Twine("most popular destination for conditional branches at ") +
+              ((BranchLoc) ? Twine(BranchLoc->getFilename() + ":" +
+                                   Twine(BranchLoc.getLine()) + ":" +
+                                   Twine(BranchLoc.getCol()))
+                           : Twine("<UNKNOWN LOCATION>")));
+    } else {
+      DEBUG(dbgs() << "SKIPPED. All branch weights are zero.\n");
+    }
   }
 }
 
