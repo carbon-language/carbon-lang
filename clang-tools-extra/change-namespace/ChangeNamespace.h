@@ -84,8 +84,8 @@ private:
     // original code.
     unsigned InsertionOffset;
     // The file in which the namespace is declared.
-    FileID FileID;
-    SourceManager *SourceManager;
+    FileID FID;
+    SourceManager *SourceMgr;
   };
 
   // Information about inserting a class forward declaration.

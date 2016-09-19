@@ -327,8 +327,8 @@ void ChangeNamespaceTool::moveOldNamespace(
   MoveNs.InsertionOffset = Result.SourceManager->getFileOffset(
       Result.SourceManager->getSpellingLoc(LocAfterNs));
 
-  MoveNs.FileID = Result.SourceManager->getFileID(Start);
-  MoveNs.SourceManager = Result.SourceManager;
+  MoveNs.FID = Result.SourceManager->getFileID(Start);
+  MoveNs.SourceMgr = Result.SourceManager;
   MoveNamespaces[R.getFilePath()].push_back(MoveNs);
 }
 
@@ -447,8 +447,8 @@ void ChangeNamespaceTool::onEndOfTranslationUnit() {
       continue;
     const std::string &FilePath = FileAndNsMoves.first;
     auto &Replaces = FileToReplacements[FilePath];
-    auto &SM = *NsMoves.begin()->SourceManager;
-    llvm::StringRef Code = SM.getBufferData(NsMoves.begin()->FileID);
+    auto &SM = *NsMoves.begin()->SourceMgr;
+    llvm::StringRef Code = SM.getBufferData(NsMoves.begin()->FID);
     auto ChangedCode = tooling::applyAllReplacements(Code, Replaces);
     if (!ChangedCode) {
       llvm::errs() << llvm::toString(ChangedCode.takeError()) << "\n";
