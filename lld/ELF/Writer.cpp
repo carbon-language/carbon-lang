@@ -90,11 +90,14 @@ private:
 template <class ELFT>
 StringRef elf::getOutputSectionName(InputSectionBase<ELFT> *S) {
   StringRef Name = S->Name;
-  for (StringRef V : {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.",
-                      ".init_array.", ".fini_array.", ".ctors.", ".dtors.",
-                      ".tbss.", ".gcc_except_table.", ".tdata.", ".ARM.exidx."})
-    if (Name.startswith(V))
-      return V.drop_back();
+  for (StringRef V :
+       {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.",
+        ".init_array.", ".fini_array.", ".ctors.", ".dtors.", ".tbss.",
+        ".gcc_except_table.", ".tdata.", ".ARM.exidx."}) {
+    StringRef Prefix = V.drop_back();
+    if (Name.startswith(V) || Name == Prefix)
+      return Prefix;
+  }
   return Name;
 }
 
