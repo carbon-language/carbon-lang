@@ -28,7 +28,7 @@
 #include "__sso_allocator"
 #if defined(_LIBCPP_MSVCRT) || defined(__MINGW32__)
 #include "support/win32/locale_win32.h"
-#elif !defined(__ANDROID__)
+#elif !defined(__BIONIC__)
 #include <langinfo.h>
 #endif
 #include <stdlib.h>
