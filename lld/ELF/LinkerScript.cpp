@@ -447,8 +447,8 @@ void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
     switchTo(Base);
     Dot += CurOutSec->getSize();
   }
-  for (auto I = E, E = Cmd->Commands.end(); I != E; ++I)
-    process(**I);
+  std::for_each(E, Cmd->Commands.end(),
+                [this](std::unique_ptr<BaseCommand> &B) { process(*B.get()); });
 }
 
 template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
