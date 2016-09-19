@@ -8227,7 +8227,7 @@ let Predicates = [HasF16C] in {
 }
 
 // Patterns for  matching conversions from float to half-float and vice versa.
-let Predicates = [HasF16C] in {
+let Predicates = [HasF16C, NoVLX] in {
   // Use MXCSR.RC for rounding instead of explicitly specifying the default
   // rounding mode (Nearest-Even, encoded as 0). Both are equivalent in the
   // configurations we support (the default). However, falling back to MXCSR is
