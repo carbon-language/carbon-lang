@@ -990,7 +990,7 @@ std::vector<PhdrEntry<ELFT>> Writer<ELFT>::createPhdrs() {
       break;
 
     // If we meet TLS section then we create TLS header
-    // and put all TLS sections inside for futher use when
+    // and put all TLS sections inside for further use when
     // assign addresses.
     if (Sec->getFlags() & SHF_TLS)
       TlsHdr.add(Sec);
