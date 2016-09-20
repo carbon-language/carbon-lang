@@ -200,14 +200,7 @@ TargetIRAnalysis TargetMachine::getTargetIRAnalysis() {
 
 void TargetMachine::getNameWithPrefix(SmallVectorImpl<char> &Name,
                                       const GlobalValue *GV, Mangler &Mang) const {
-  if (!GV->hasPrivateLinkage()) {
-    // Simple case: If GV is not private, it is not important to find out if
-    // private labels are legal in this case or not.
-    Mang.getNameWithPrefix(Name, GV, false);
-    return;
-  }
-  const TargetLoweringObjectFile *TLOF = getObjFileLowering();
-  TLOF->getNameWithPrefix(Name, GV, *this);
+  getObjFileLowering()->getNameWithPrefix(Name, GV, *this);
 }
 
 MCSymbol *TargetMachine::getSymbol(const GlobalValue *GV, Mangler &Mang) const {

@@ -812,6 +812,13 @@ static bool canUsePrivateLabel(const MCAsmInfo &AsmInfo,
 void TargetLoweringObjectFileMachO::getNameWithPrefix(
     SmallVectorImpl<char> &OutName, const GlobalValue *GV,
     const TargetMachine &TM) const {
+  if (!GV->hasPrivateLinkage()) {
+    // Simple case: If GV is not private, it is not important to find out if
+    // private labels are legal in this case or not.
+    getMangler().getNameWithPrefix(OutName, GV, false);
+    return;
+  }
+
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GV, TM);
   const MCSection *TheSection = SectionForGlobal(GV, GVKind, TM);
   bool CannotUsePrivateLabel =
