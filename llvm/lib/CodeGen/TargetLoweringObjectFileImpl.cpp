@@ -296,7 +296,7 @@ selectELFSectionForGlobal(MCContext &Ctx, const GlobalValue *GV,
 
   if (EmitUniqueSection && UniqueSectionNames) {
     Name.push_back('.');
-    TM.getNameWithPrefix(Name, GV, Mang, true);
+    Mang.getNameWithPrefix(Name, GV, false);
   }
   unsigned UniqueID = MCContext::GenericSectionID;
   if (EmitUniqueSection && !UniqueSectionNames) {
