@@ -5,4 +5,4 @@
 
 // Check that -isysroot warns on nonexistent paths.
 // RUN: %clang -### -c -target i386-apple-darwin10 -isysroot %T/warning-options %s 2>&1 | FileCheck --check-prefix=CHECK-ISYSROOT %s
-// CHECK-ISYSROOT: warning: no such sysroot directory: '{{([A-Za-z]:.*)?}}/warning-options'
+// CHECK-ISYSROOT: warning: no such sysroot directory: '{{.*}}/warning-options'
