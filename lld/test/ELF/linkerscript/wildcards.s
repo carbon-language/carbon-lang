@@ -8,15 +8,15 @@
 # RUN: llvm-objdump -section-headers %t.out | \
 # RUN:   FileCheck -check-prefix=SEC-DEFAULT %s
 # SEC-DEFAULT:      Sections:
-# SEC-DEFAULT-NEXT: Idx Name          Size      Address          Type
-# SEC-DEFAULT-NEXT:   0               00000000 0000000000000000
-# SEC-DEFAULT-NEXT:   1 .text         00000008 0000000000000120 TEXT DATA
-# SEC-DEFAULT-NEXT:   2 .abcd         00000004 0000000000000128 TEXT DATA
-# SEC-DEFAULT-NEXT:   3 .ad           00000004 000000000000012c TEXT DATA
-# SEC-DEFAULT-NEXT:   4 .ag           00000004 0000000000000130 TEXT DATA
-# SEC-DEFAULT-NEXT:   5 .symtab       00000030 0000000000000000
-# SEC-DEFAULT-NEXT:   6 .shstrtab     0000002f 0000000000000000
-# SEC-DEFAULT-NEXT:   7 .strtab       00000008 0000000000000000
+# SEC-DEFAULT-NEXT: Idx Name          Size
+# SEC-DEFAULT-NEXT:   0               00000000
+# SEC-DEFAULT-NEXT:   1 .text         00000008
+# SEC-DEFAULT-NEXT:   2 .abcd         00000004
+# SEC-DEFAULT-NEXT:   3 .ad           00000004
+# SEC-DEFAULT-NEXT:   4 .ag           00000004
+# SEC-DEFAULT-NEXT:   5 .symtab       00000030
+# SEC-DEFAULT-NEXT:   6 .shstrtab     0000002f
+# SEC-DEFAULT-NEXT:   7 .strtab       00000008
 
 ## Now replace the symbol with '?' and check that results are the same.
 # RUN: echo "SECTIONS { \
@@ -32,14 +32,14 @@
 # RUN: llvm-objdump -section-headers %t.out | \
 # RUN:   FileCheck -check-prefix=SEC-ALL %s
 # SEC-ALL:      Sections:
-# SEC-ALL-NEXT: Idx Name          Size      Address          Type
-# SEC-ALL-NEXT:   0               00000000 0000000000000000
-# SEC-ALL-NEXT:   1 .text         0000000c 0000000000000120 TEXT DATA
-# SEC-ALL-NEXT:   2 .ad           00000004 000000000000012c TEXT DATA
-# SEC-ALL-NEXT:   3 .ag           00000004 0000000000000130 TEXT DATA
-# SEC-ALL-NEXT:   4 .symtab       00000030 0000000000000000
-# SEC-ALL-NEXT:   5 .shstrtab     00000029 0000000000000000
-# SEC-ALL-NEXT:   6 .strtab       00000008 0000000000000000
+# SEC-ALL-NEXT: Idx Name          Size
+# SEC-ALL-NEXT:   0               00000000
+# SEC-ALL-NEXT:   1 .text         0000000c
+# SEC-ALL-NEXT:   2 .ad           00000004
+# SEC-ALL-NEXT:   3 .ag           00000004
+# SEC-ALL-NEXT:   4 .symtab       00000030
+# SEC-ALL-NEXT:   5 .shstrtab     00000029
+# SEC-ALL-NEXT:   6 .strtab       00000008
 
 ## All sections started with .a are merged.
 # RUN: echo "SECTIONS { \
@@ -48,12 +48,12 @@
 # RUN: llvm-objdump -section-headers %t.out | \
 # RUN:   FileCheck -check-prefix=SEC-NO %s
 # SEC-NO: Sections:
-# SEC-NO-NEXT: Idx Name          Size      Address          Type
-# SEC-NO-NEXT:   0               00000000 0000000000000000
-# SEC-NO-NEXT:   1 .text         00000014 0000000000000120 TEXT DATA
-# SEC-NO-NEXT:   2 .symtab       00000030 0000000000000000
-# SEC-NO-NEXT:   3 .shstrtab     00000021 0000000000000000
-# SEC-NO-NEXT:   4 .strtab       00000008 0000000000000000
+# SEC-NO-NEXT: Idx Name          Size
+# SEC-NO-NEXT:   0               00000000
+# SEC-NO-NEXT:   1 .text         00000014
+# SEC-NO-NEXT:   2 .symtab       00000030
+# SEC-NO-NEXT:   3 .shstrtab     00000021
+# SEC-NO-NEXT:   4 .strtab       00000008
 
 .text
 .section .abc,"ax",@progbits
