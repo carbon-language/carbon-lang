@@ -664,12 +664,12 @@ template <class ELFT> int LinkerScript<ELFT>::getSectionIndex(StringRef Name) {
 }
 
 // A compartor to sort output sections. Returns -1 or 1 if
-// A and B are mentioned in linker script. Otherwise, returns 0.
+// A or B are mentioned in linker script. Otherwise, returns 0.
 template <class ELFT>
 int LinkerScript<ELFT>::compareSections(StringRef A, StringRef B) {
   int I = getSectionIndex(A);
   int J = getSectionIndex(B);
-  if (I == INT_MAX || J == INT_MAX)
+  if (I == INT_MAX && J == INT_MAX)
     return 0;
   return I < J ? -1 : 1;
 }
