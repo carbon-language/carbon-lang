@@ -227,18 +227,6 @@ macro(construct_compiler_rt_default_triple)
     set(COMPILER_RT_DEFAULT_TARGET_TRIPLE ${COMPILER_RT_TEST_TARGET_TRIPLE})
   endif()
 
-  if(NOT APPLE)
-    # Much of the non-darwin compiler-rt build assumes that
-    # COMPILER_RT_DEFAULT_TARGET_TRIPLE is the default target of the compiler
-    # being used. That isn't always a safe assumption, but adding this here
-    # makes it all work.
-    # This doesn't prevent needing to set CMAKE_<LANG>_COMPILER_TARGET in some
-    # situations, so YMMV.
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --target=${COMPILER_RT_DEFAULT_TARGET_TRIPLE}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --target=${COMPILER_RT_DEFAULT_TARGET_TRIPLE}")
-    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --target=${COMPILER_RT_DEFAULT_TARGET_TRIPLE}")
-  endif()
-
   string(REPLACE "-" ";" TARGET_TRIPLE_LIST ${COMPILER_RT_DEFAULT_TARGET_TRIPLE})
   list(GET TARGET_TRIPLE_LIST 0 COMPILER_RT_DEFAULT_TARGET_ARCH)
   list(GET TARGET_TRIPLE_LIST 1 COMPILER_RT_DEFAULT_TARGET_OS)
