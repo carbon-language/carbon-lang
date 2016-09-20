@@ -2482,10 +2482,8 @@ private:
     }
     V = convertValue(DL, IRB, V, NewAllocaTy);
     StoreInst *Store = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
-    auto LoopParMD =
-      makeArrayRef((unsigned)LLVMContext::MD_mem_parallel_loop_access);
-    Store->copyMetadata(SI, LoopParMD);
     Pass.DeadInsts.insert(&SI);
+    (void)Store;
     DEBUG(dbgs() << "          to: " << *Store << "\n");
     return true;
   }
@@ -2547,9 +2545,6 @@ private:
       NewSI = IRB.CreateAlignedStore(V, NewPtr, getSliceAlign(V->getType()),
                                      SI.isVolatile());
     }
-    auto LoopParMD =
-      makeArrayRef((unsigned)LLVMContext::MD_mem_parallel_loop_access);
-    NewSI->copyMetadata(SI, LoopParMD);
     if (SI.isVolatile())
       NewSI->setAtomic(SI.getOrdering(), SI.getSynchScope());
     Pass.DeadInsts.insert(&SI);
@@ -3565,8 +3560,6 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
 
     uint64_t PartOffset = 0, PartSize = Offsets.Splits.front();
     int Idx = 0, Size = Offsets.Splits.size();
-    auto LoopParMD =
-      makeArrayRef((unsigned)LLVMContext::MD_mem_parallel_loop_access);
     for (;;) {
       auto *PartTy = Type::getIntNTy(Ty->getContext(), PartSize * 8);
       auto *PartPtrTy = PartTy->getPointerTo(LI->getPointerAddressSpace());
@@ -3576,7 +3569,6 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
                          PartPtrTy, BasePtr->getName() + "."),
           getAdjustedAlignment(LI, PartOffset, DL), /*IsVolatile*/ false,
           LI->getName());
-      PLoad->copyMetadata(*LI, LoopParMD); 
 
       // Append this load onto the list of split loads so we can find it later
       // to rewrite the stores.
@@ -3629,7 +3621,7 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
                                   APInt(DL.getPointerSizeInBits(), PartOffset),
                                   PartPtrTy, StoreBasePtr->getName() + "."),
             getAdjustedAlignment(SI, PartOffset, DL), /*IsVolatile*/ false);
-        PStore->copyMetadata(*LI, LoopParMD);
+        (void)PStore;
         DEBUG(dbgs() << "      +" << PartOffset << ":" << *PStore << "\n");
       }
 
