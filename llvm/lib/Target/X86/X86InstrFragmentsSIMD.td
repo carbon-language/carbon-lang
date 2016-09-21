@@ -558,12 +558,12 @@ def X86cvtp2UIntRnd     : SDNode<"X86ISD::FP_TO_UINT_RND",  SDTFloatToIntRnd>;
 def X86cvtp2Int      : SDNode<"X86ISD::FP_TO_SINT_RND",  SDTFloatToInt>;
 def X86cvtp2UInt     : SDNode<"X86ISD::FP_TO_UINT_RND",  SDTFloatToInt>;
 
-def X86cvtph2ps     : SDNode<"ISD::FP16_TO_FP",
+def X86cvtph2ps     : SDNode<"X86ISD::CVTPH2PS",
                               SDTypeProfile<1, 2, [SDTCVecEltisVT<0, f32>,
                                                    SDTCVecEltisVT<1, i16>,
                                                    SDTCisVT<2, i32>]> >;
 
-def X86cvtps2ph   : SDNode<"ISD::FP_TO_FP16",
+def X86cvtps2ph   : SDNode<"X86ISD::CVTPS2PH",
                         SDTypeProfile<1, 3, [SDTCVecEltisVT<0, i16>,
                                              SDTCVecEltisVT<1, f32>,
                                              SDTCisVT<2, i32>,

@@ -539,6 +539,9 @@ namespace llvm {
       // ERI instructions.
       RSQRT28, RCP28, EXP2,
 
+      // Conversions between float and half-float.
+      CVTPS2PH, CVTPH2PS,
+
       // Compare and swap.
       LCMPXCHG_DAG = ISD::FIRST_TARGET_MEMORY_OPCODE,
       LCMPXCHG8_DAG,
