@@ -453,10 +453,11 @@ void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
     process(**I);
   flush();
   for (OutputSectionBase<ELFT> *Base : Sections) {
-    if (!AlreadyOutputOS.insert(Base).second)
+    if (AlreadyOutputOS.count(Base))
       continue;
     switchTo(Base);
     Dot += CurOutSec->getSize();
+    flush();
   }
   std::for_each(E, Cmd->Commands.end(),
                 [this](std::unique_ptr<BaseCommand> &B) { process(*B.get()); });
