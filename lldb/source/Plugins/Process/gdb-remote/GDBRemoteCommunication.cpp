@@ -1109,7 +1109,6 @@ Error GDBRemoteCommunication::StartDebugserverProcess(
 // Create a temporary file to get the stdout/stderr and redirect the
 // output of the command into this file. We will later read this file
 // if all goes well and fill the data into "command_output_ptr"
-
 #if defined(__APPLE__)
         // Binding to port zero, we need to figure out what port it ends up
         // using using a named pipe...
@@ -1123,8 +1122,7 @@ Error GDBRemoteCommunication::StartDebugserverProcess(
           return error;
         }
         debugserver_args.AppendArgument(llvm::StringRef("--named-pipe"));
-        debugserver_args.AppendArgument(
-            llvm::StringRef(named_pipe_path.c_str()));
+        debugserver_args.AppendArgument(named_pipe_path);
 #else
         // Binding to port zero, we need to figure out what port it ends up
         // using using an unnamed pipe...
