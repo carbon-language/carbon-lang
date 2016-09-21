@@ -10,9 +10,13 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstring>
+#include <unordered_set>
 
-#include "FuzzerInternal.h"
+#include "FuzzerCorpus.h"
+#include "FuzzerDefs.h"
+#include "FuzzerExtFunctions.h"
 #include "FuzzerMutate.h"
+#include "FuzzerOptions.h"
 
 namespace fuzzer {
 

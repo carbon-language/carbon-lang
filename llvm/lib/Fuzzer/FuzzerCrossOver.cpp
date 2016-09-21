@@ -11,7 +11,7 @@
 
 #include <cstring>
 
-#include "FuzzerInternal.h"
+#include "FuzzerDefs.h"
 #include "FuzzerMutate.h"
 #include "FuzzerRandom.h"
 

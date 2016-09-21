@@ -14,7 +14,6 @@
 
 #include <algorithm>
 #include <atomic>
-#include <cassert>
 #include <chrono>
 #include <climits>
 #include <cstdlib>
@@ -24,6 +23,7 @@
 #include "FuzzerDefs.h"
 #include "FuzzerExtFunctions.h"
 #include "FuzzerInterface.h"
+#include "FuzzerOptions.h"
 #include "FuzzerValueBitMap.h"
 #include "FuzzerCorpus.h"  // TODO(kcc): remove this from here.
 
@@ -34,40 +34,6 @@ using namespace std::chrono;
 // See FuzzerTraceState.cpp
 void EnableValueProfile();
 size_t VPMapMergeFromCurrent(ValueBitMap &M);
-
-struct FuzzingOptions {
-  int Verbosity = 1;
-  size_t MaxLen = 0;
-  int UnitTimeoutSec = 300;
-  int TimeoutExitCode = 77;
-  int ErrorExitCode = 77;
-  int MaxTotalTimeSec = 0;
-  int RssLimitMb = 0;
-  bool DoCrossOver = true;
-  int MutateDepth = 5;
-  bool UseCounters = false;
-  bool UseIndirCalls = true;
-  bool UseMemcmp = true;
-  bool UseMemmem = true;
-  bool UseFullCoverageSet = false;
-  bool Reload = true;
-  bool ShuffleAtStartUp = true;
-  bool PreferSmall = true;
-  size_t MaxNumberOfRuns = ULONG_MAX;
-  int ReportSlowUnits = 10;
-  bool OnlyASCII = false;
-  std::string OutputCorpus;
-  std::string ArtifactPrefix = "./";
-  std::string ExactArtifactPath;
-  bool SaveArtifacts = true;
-  bool PrintNEW = true; // Print a status line when new units are found;
-  bool OutputCSV = false;
-  bool PrintNewCovPcs = false;
-  bool PrintFinalStats = false;
-  bool PrintCoverage = false;
-  bool DetectLeaks = true;
-  bool PruneCorpus = true;
-};
 
 class Fuzzer {
 public:
@@ -225,9 +191,6 @@ private:
 
   bool InMergeMode = false;
 };
-
-// Global interface to functions that may or may not be available.
-extern ExternalFunctions *EF;
 
 }; // namespace fuzzer
 

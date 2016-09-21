@@ -106,7 +106,7 @@ private:
                     size_t ToSize);
 
   Random &Rand;
-  const FuzzingOptions Options;
+  const FuzzingOptions &Options;
 
   // Dictionary provided by the user via -dict=DICT_FILE.
   Dictionary ManualDictionary;

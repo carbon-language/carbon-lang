@@ -11,6 +11,7 @@
 #ifndef LLVM_FUZZER_DEFS_H
 #define LLVM_FUZZER_DEFS_H
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -39,6 +40,12 @@ class Random;
 class Dictionary;
 class DictionaryEntry;
 class MutationDispatcher;
+struct FuzzingOptions;
+class InputCorpus;
+struct ExternalFunctions;
+
+// Global interface to functions that may or may not be available.
+extern ExternalFunctions *EF;
 
 typedef std::vector<uint8_t> Unit;
 typedef std::vector<Unit> UnitVector;

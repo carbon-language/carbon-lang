@@ -12,6 +12,9 @@
 #ifndef LLVM_FUZZER_DICTIONARY_H
 #define LLVM_FUZZER_DICTIONARY_H
 
+#include <algorithm>
+#include <limits>
+
 #include "FuzzerDefs.h"
 
 namespace fuzzer {
