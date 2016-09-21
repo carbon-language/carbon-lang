@@ -564,10 +564,9 @@ def X86cvtph2ps     : SDNode<"X86ISD::CVTPH2PS",
                                                    SDTCisVT<2, i32>]> >;
 
 def X86cvtps2ph   : SDNode<"X86ISD::CVTPS2PH",
-                        SDTypeProfile<1, 3, [SDTCVecEltisVT<0, i16>,
+                        SDTypeProfile<1, 2, [SDTCVecEltisVT<0, i16>,
                                              SDTCVecEltisVT<1, f32>,
-                                             SDTCisVT<2, i32>,
-                                             SDTCisVT<3, i32>]> >;
+                                             SDTCisVT<2, i32>]> >;
 def X86vfpextRnd  : SDNode<"X86ISD::VFPEXT",
                         SDTypeProfile<1, 2, [SDTCVecEltisVT<0, f64>,
                                              SDTCVecEltisVT<1, f32>,
