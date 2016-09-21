@@ -577,19 +577,16 @@ TEST(FuzzerUtil, Base64) {
 }
 
 TEST(Corpus, Distribution) {
-  std::unique_ptr<ExternalFunctions> t(new ExternalFunctions());
-  fuzzer::EF = t.get();
   Random Rand(0);
-  MutationDispatcher MD(Rand, {});
-  Fuzzer Fuzz(LLVMFuzzerTestOneInput, MD, {});
+  InputCorpus C;
   size_t N = 10;
   size_t TriesPerUnit = 1<<20;
-  for (size_t i = 0; i < N; i++) {
-    Fuzz.AddToCorpus(Unit{ static_cast<uint8_t>(i) });
-  }
+  for (size_t i = 0; i < N; i++)
+    C.push_back(Unit{ static_cast<uint8_t>(i) });
+
   std::vector<size_t> Hist(N);
   for (size_t i = 0; i < N * TriesPerUnit; i++) {
-    Hist[Fuzz.ChooseUnitIdxToMutate()]++;
+    Hist[C.ChooseUnitIdxToMutate(Rand)]++;
   }
   for (size_t i = 0; i < N; i++) {
     // A weak sanity check that every unit gets invoked.

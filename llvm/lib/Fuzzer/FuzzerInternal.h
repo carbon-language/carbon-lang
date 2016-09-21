@@ -17,7 +17,6 @@
 #include <chrono>
 #include <climits>
 #include <cstdlib>
-#include <random>
 #include <string.h>
 #include <unordered_set>
 
@@ -26,7 +25,7 @@
 #include "FuzzerInterface.h"
 #include "FuzzerOptions.h"
 #include "FuzzerValueBitMap.h"
-#include "FuzzerCorpus.h"  // TODO(kcc): remove this from here.
+#include "FuzzerCorpus.h"
 
 namespace fuzzer {
 
@@ -67,12 +66,7 @@ public:
 
   Fuzzer(UserCallback CB, MutationDispatcher &MD, FuzzingOptions Options);
   ~Fuzzer();
-  void AddToCorpus(const Unit &U) {
-    Corpus.push_back(U);
-    UpdateCorpusDistribution();
-  }
-  size_t ChooseUnitIdxToMutate();
-  const Unit &ChooseUnitToMutate() { return Corpus[ChooseUnitIdxToMutate()]; };
+  void AddToCorpus(const Unit &U) { Corpus.push_back(U); }
   void Loop();
   void ShuffleAndMinimize(UnitVector *V);
   void InitializeTraceState();
@@ -132,10 +126,6 @@ private:
   void TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size,
                                bool DuringInitialCorpusExecution);
 
-  // Updates the probability distribution for the units in the corpus.
-  // Must be called whenever the corpus or unit weights are changed.
-  void UpdateCorpusDistribution();
-
   bool UpdateMaxCoverage();
 
   // Trace-based fuzzing: we run a unit with some kind of tracing
@@ -170,7 +160,6 @@ private:
 
   InputCorpus Corpus;
 
-  std::piecewise_constant_distribution<double> CorpusDistribution;
   UserCallback CB;
   MutationDispatcher &MD;
   FuzzingOptions Options;
