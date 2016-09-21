@@ -152,13 +152,13 @@ bool AArch64CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
   return true;
 }
 
-bool AArch64CallLowering::lowerFormalArguments(
-    MachineIRBuilder &MIRBuilder, const Function::ArgumentListType &Args,
-    ArrayRef<unsigned> VRegs) const {
+bool AArch64CallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
+                                               const Function &F,
+                                               ArrayRef<unsigned> VRegs) const {
+  auto &Args = F.getArgumentList();
   MachineFunction &MF = MIRBuilder.getMF();
   MachineBasicBlock &MBB = MIRBuilder.getMBB();
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  const Function &F = *MF.getFunction();
   auto &DL = F.getParent()->getDataLayout();
 
   SmallVector<MachineInstr *, 8> Seqs;

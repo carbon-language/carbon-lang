@@ -62,10 +62,9 @@ class CallLowering {
   /// lowering.
   ///
   /// \return True if the lowering succeeded, false otherwise.
-  virtual bool
-  lowerFormalArguments(MachineIRBuilder &MIRBuilder,
-                       const Function::ArgumentListType &Args,
-                       ArrayRef<unsigned> VRegs) const {
+  virtual bool lowerFormalArguments(MachineIRBuilder &MIRBuilder,
+                                    const Function &F,
+                                    ArrayRef<unsigned> VRegs) const {
     return false;
   }
 
