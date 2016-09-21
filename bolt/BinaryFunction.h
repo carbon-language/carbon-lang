@@ -81,7 +81,7 @@ class DynoStats {
 
 public:
 #define D(name, ...) name,
-  enum : uint8_t { DYNO_STATS };
+  enum Category : uint8_t { DYNO_STATS };
 #undef D
 
 
@@ -127,6 +127,12 @@ public:
   void print(raw_ostream &OS, const DynoStats *Other = nullptr) const;
 
   void operator+=(const DynoStats &Other);
+  bool operator<(const DynoStats &Other) const;
+  bool lessThan(const DynoStats &Other, ArrayRef<Category> Keys) const;
+
+  static const char* Description(const Category C) {
+    return Desc[C];
+  }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const DynoStats &Stats) {

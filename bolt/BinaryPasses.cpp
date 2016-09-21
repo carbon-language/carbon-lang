@@ -17,6 +17,34 @@
 
 using namespace llvm;
 
+namespace {
+
+const char* dynoStatsOptName(const bolt::DynoStats::Category C) {
+  if (C == bolt::DynoStats::FIRST_DYNO_STAT)
+    return "none";
+  else if (C == bolt::DynoStats::LAST_DYNO_STAT)
+    return "all";
+
+  static std::string OptNames[bolt::DynoStats::LAST_DYNO_STAT+1];
+
+  OptNames[C] = bolt::DynoStats::Description(C);
+
+  std::replace(OptNames[C].begin(), OptNames[C].end(), ' ', '-');
+
+  return OptNames[C].c_str();
+}
+
+const char* dynoStatsOptDesc(const bolt::DynoStats::Category C) {
+  if (C == bolt::DynoStats::FIRST_DYNO_STAT)
+    return "unsorted";
+  else if (C == bolt::DynoStats::LAST_DYNO_STAT)
+    return "sorted by all stats";
+
+  return bolt::DynoStats::Description(C);
+}
+
+}
+
 namespace opts {
 
 extern cl::opt<unsigned> Verbosity;
@@ -72,6 +100,35 @@ MinBranchClusters(
              "minimizing branches"),
     cl::ZeroOrMore,
     cl::Hidden);
+
+static cl::list<bolt::DynoStats::Category>
+PrintSortedBy(
+    "print-sorted-by",
+    cl::CommaSeparated,
+    cl::desc("print functions sorted by order of dyno stats"),
+    cl::value_desc("key1,key2,key3,..."),
+    cl::values(
+#define D(name, ...)                                      \
+    clEnumValN(bolt::DynoStats::name,                     \
+               dynoStatsOptName(bolt::DynoStats::name),   \
+               dynoStatsOptDesc(bolt::DynoStats::name)),
+    DYNO_STATS
+#undef D
+    clEnumValEnd),
+    cl::ZeroOrMore);
+
+enum DynoStatsSortOrder : char {
+  Ascending,
+  Descending
+};
+
+static cl::opt<DynoStatsSortOrder>
+DynoStatsSortOrderOpt(
+    "print-sorted-by-order",
+    cl::desc("use ascending or descending order when printing "
+             "functions ordered by dyno stats"),
+    cl::ZeroOrMore,
+    cl::init(DynoStatsSortOrder::Descending));
 
 } // namespace opts
 
@@ -1353,6 +1410,92 @@ void IdenticalCodeFolding::runOnFunctions(
          << "BOLT-INFO: Removing all identical functions could save "
          << format("%.2lf", (double) BytesSavedEstimate / 1024)
          << " KB of code space.\n";
+}
+
+void PrintSortedBy::runOnFunctions(
+  BinaryContext &,
+  std::map<uint64_t, BinaryFunction> &BFs,
+  std::set<uint64_t> &
+) {
+  if (!opts::PrintSortedBy.empty() &&
+      std::find(opts::PrintSortedBy.begin(),
+                opts::PrintSortedBy.end(),
+                DynoStats::FIRST_DYNO_STAT) == opts::PrintSortedBy.end()) {
+
+    std::vector<const BinaryFunction *> Functions;
+    std::map<const BinaryFunction *, DynoStats> Stats;
+
+    for (const auto &BFI : BFs) {
+      const auto &BF = BFI.second;
+      if (shouldOptimize(BF) && BF.hasValidProfile()) {
+        Functions.push_back(&BF);
+        Stats.emplace(&BF, BF.getDynoStats());
+      }
+    }
+
+    const bool SortAll =
+      std::find(opts::PrintSortedBy.begin(),
+                opts::PrintSortedBy.end(),
+                DynoStats::LAST_DYNO_STAT) != opts::PrintSortedBy.end();
+
+    const bool Ascending =
+      opts::DynoStatsSortOrderOpt == opts::DynoStatsSortOrder::Ascending;
+
+    if (SortAll) {
+      std::stable_sort(
+        Functions.begin(),
+        Functions.end(),
+        [Ascending,&Stats](const BinaryFunction *A, const BinaryFunction *B) {
+          return Ascending ?
+            Stats.at(A) < Stats.at(B) : Stats.at(B) < Stats.at(A);
+        }
+      );
+    } else {
+      std::stable_sort(
+        Functions.begin(),
+        Functions.end(),
+        [Ascending,&Stats](const BinaryFunction *A, const BinaryFunction *B) {
+          const auto &StatsA = Stats.at(A);
+          const auto &StatsB = Stats.at(B);
+          return Ascending
+            ? StatsA.lessThan(StatsB, opts::PrintSortedBy)
+            : StatsB.lessThan(StatsA, opts::PrintSortedBy);
+        }
+      );
+    }
+
+    outs() << "BOLT-INFO: top functions sorted by ";
+    if (SortAll) {
+      outs() << "dyno stats";
+    } else {
+      outs() << "(";
+      bool PrintComma = false;
+      for (const auto Category : opts::PrintSortedBy) {
+        if (PrintComma) outs() << ", ";
+        outs() << DynoStats::Description(Category);
+        PrintComma = true;
+      }
+      outs() << ")";
+    }
+      
+    outs() << " are:\n";
+    auto SFI = Functions.begin();
+    for (unsigned i = 0; i < 100 && SFI != Functions.end(); ++SFI, ++i) {
+      const auto Stats = (*SFI)->getDynoStats();
+      outs() << "  " << **SFI;
+      if (!SortAll) {
+        outs() << " (";
+        bool PrintComma = false;
+        for (const auto Category : opts::PrintSortedBy) {
+          if (PrintComma) outs() << ", ";
+          outs() << dynoStatsOptName(Category) << "=" << Stats[Category];
+          PrintComma = true;
+        }
+        outs() << ")";
+      }
+      outs() << "\n";
+    }
+  }
 }
 
 } // namespace bolt

@@ -120,6 +120,13 @@ PrintInline("print-inline",
             cl::ZeroOrMore,
             cl::Hidden);
 
+static cl::opt<bool>
+NeverPrint("never-print",
+           cl::desc("never print"),
+           cl::init(false),
+           cl::ZeroOrMore,
+           cl::ReallyHidden);
+
 } // namespace opts
 
 namespace llvm {
@@ -179,6 +186,9 @@ void BinaryFunctionPassManager::runAllPasses(
 
   // Here we manage dependencies/order manually, since passes are ran in the
   // order they're registered.
+
+  // Run this pass first to use stats for the original functions.
+  Manager.registerPass(llvm::make_unique<PrintSortedBy>(NeverPrint));
 
   Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF),
                        opts::IdenticalCodeFolding);

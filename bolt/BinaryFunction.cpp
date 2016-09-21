@@ -119,6 +119,24 @@ SMLoc findDebugLineInformationForInstructionAt(
 
 } // namespace
 
+bool DynoStats::operator<(const DynoStats &Other) const {
+  return std::lexicographical_compare(
+    &Stats[FIRST_DYNO_STAT], &Stats[LAST_DYNO_STAT],
+    &Other.Stats[FIRST_DYNO_STAT], &Other.Stats[LAST_DYNO_STAT]
+  );
+}
+
+bool DynoStats::lessThan(const DynoStats &Other,
+                         ArrayRef<Category> Keys) const {
+  return std::lexicographical_compare(
+    Keys.begin(), Keys.end(),
+    Keys.begin(), Keys.end(),
+    [this,&Other](const Category A, const Category) {
+      return Stats[A] < Other.Stats[A];
+    }
+  );
+}
+
 uint64_t BinaryFunction::Count = 0;
 
 BinaryBasicBlock *
