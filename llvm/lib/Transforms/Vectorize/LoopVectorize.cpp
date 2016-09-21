@@ -2355,9 +2355,9 @@ InnerLoopVectorizer::getVectorValue(Value *V) {
     // in VectorLoopValueMap, we will only generate the insertelements once.
     for (unsigned Part = 0; Part < UF; ++Part) {
       Value *Insert = UndefValue::get(VectorType::get(V->getType(), VF));
-      for (unsigned Width = 0; Width < VF; ++Width)
+      for (unsigned Lane = 0; Lane < VF; ++Lane)
         Insert = Builder.CreateInsertElement(
-            Insert, getScalarValue(V, Part, Width), Builder.getInt32(Width));
+            Insert, getScalarValue(V, Part, Lane), Builder.getInt32(Lane));
       Entry[Part] = Insert;
     }
     Builder.restoreIP(OldIP);
@@ -2888,12 +2888,12 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
   for (unsigned Part = 0; Part < UF; ++Part) {
     Entry[Part].resize(VF);
     // For each scalar that we create:
-    for (unsigned Width = 0; Width < VF; ++Width) {
+    for (unsigned Lane = 0; Lane < VF; ++Lane) {
 
       // Start if-block.
       Value *Cmp = nullptr;
       if (IfPredicateInstr) {
-        Cmp = Builder.CreateExtractElement(Cond[Part], Builder.getInt32(Width));
+        Cmp = Builder.CreateExtractElement(Cond[Part], Builder.getInt32(Lane));
         Cmp = Builder.CreateICmp(ICmpInst::ICMP_EQ, Cmp,
                                  ConstantInt::get(Cmp->getType(), 1));
       }
@@ -2905,7 +2905,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
       // Replace the operands of the cloned instructions with their scalar
       // equivalents in the new loop.
       for (unsigned op = 0, e = Instr->getNumOperands(); op != e; ++op) {
-        auto *NewOp = getScalarValue(Instr->getOperand(op), Part, Width);
+        auto *NewOp = getScalarValue(Instr->getOperand(op), Part, Lane);
         Cloned->setOperand(op, NewOp);
       }
       addNewMetadata(Cloned, Instr);
@@ -2914,7 +2914,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
       Builder.Insert(Cloned);
 
       // Add the cloned scalar to the scalar map entry.
-      Entry[Part][Width] = Cloned;
+      Entry[Part][Lane] = Cloned;
 
       // If we just cloned a new assumption, add it the assumption cache.
       if (auto *II = dyn_cast<IntrinsicInst>(Cloned))
