@@ -13,6 +13,7 @@
 #define LLVM_FUZZER_CORPUS
 
 #include <random>
+#include <unordered_set>
 
 #include "FuzzerDefs.h"
 #include "FuzzerRandom.h"
@@ -22,6 +23,9 @@ namespace fuzzer {
 struct InputInfo {
   Unit U;  // The actual input data.
   uint8_t Sha1[kSHA1NumBytes];  // Checksum.
+  // Stats.
+  uintptr_t NumExecutedMutations = 0;
+  uintptr_t NumSuccessfullMutations = 0;
 };
 
 class InputCorpus {
@@ -32,11 +36,7 @@ class InputCorpus {
   size_t size() const { return Inputs.size(); }
   bool empty() const { return Inputs.empty(); }
   const Unit &operator[] (size_t Idx) const { return Inputs[Idx].U; }
-  void Append(const std::vector<Unit> &V) {
-    for (auto &U : V)
-      push_back(U);
-  }
-  void push_back(const Unit &U) {
+  void AddToCorpus(const Unit &U) {
     auto H = Hash(U);
     if (!Hashes.insert(H).second) return;
     InputInfo II;
@@ -51,7 +51,7 @@ class InputCorpus {
   ConstIter end() const { return Inputs.end(); }
 
   bool HasUnit(const Unit &U) { return Hashes.count(Hash(U)); }
-  const InputInfo &ChooseUnitToMutate(Random &Rand) {
+  InputInfo &ChooseUnitToMutate(Random &Rand) {
     return Inputs[ChooseUnitIdxToMutate(Rand)];
   };
 
@@ -59,10 +59,18 @@ class InputCorpus {
   // Hypothesis: units added to the corpus last are more likely to be
   // interesting. This function gives more weight to the more recent units.
   size_t ChooseUnitIdxToMutate(Random &Rand) {
-    size_t Idx =
-        static_cast<size_t>(CorpusDistribution(Rand.Get_mt19937()));
+    size_t Idx = static_cast<size_t>(CorpusDistribution(Rand.Get_mt19937()));
     assert(Idx < Inputs.size());
     return Idx;
+  }
+
+  void PrintStats() {
+    for (size_t i = 0; i < Inputs.size(); i++) {
+      const auto &II = Inputs[i];
+      Printf("  [%zd %s]\tsz: %zd\truns: %zd\tsucc: %zd\n", i,
+             Sha1ToString(II.Sha1).c_str(), II.U.size(),
+             II.NumExecutedMutations, II.NumSuccessfullMutations);
+    }
   }
 
 private:
