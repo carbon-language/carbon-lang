@@ -12,11 +12,15 @@
 #include <cstring>
 
 #include "FuzzerInternal.h"
-
+#include "FuzzerMutate.h"
 
 namespace fuzzer {
 
 const size_t Dictionary::kMaxDictSize;
+
+static void PrintASCII(const Word &W, const char *PrintAfter) {
+  PrintASCII(W.data(), W.size(), PrintAfter);
+}
 
 MutationDispatcher::MutationDispatcher(Random &Rand,
                                        const FuzzingOptions &Options)
