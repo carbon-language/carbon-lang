@@ -17645,13 +17645,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget &Subtarget
           DAG.getConstant(X86::STATIC_ROUNDING::CUR_DIRECTION, dl, MVT::i32);
       else
         RoundingMode = Op.getOperand(4);
-      unsigned IntrWithRoundingModeOpcode = IntrData->Opc1;
-      if (IntrWithRoundingModeOpcode != 0)
-        if (cast<ConstantSDNode>(RoundingMode)->getZExtValue() !=
-            X86::STATIC_ROUNDING::CUR_DIRECTION)
-          return getVectorMaskingNode(DAG.getNode(IntrWithRoundingModeOpcode,
-                                      dl, Op.getValueType(), Src, RoundingMode),
-                                      Mask, PassThru, Subtarget, DAG);
+      assert(IntrData->Opc1 == 0 && "Unexpected second opcode!");
       return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src,
                                               RoundingMode),
                                   Mask, PassThru, Subtarget, DAG);
