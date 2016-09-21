@@ -404,11 +404,11 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock(
             std::string regex_str = "^";
             regex_str += echo_packet;
             regex_str += "$";
-            response_regex.Compile(regex_str.c_str());
+            response_regex.Compile(regex_str);
           } else {
             echo_packet_len =
                 ::snprintf(echo_packet, sizeof(echo_packet), "qC");
-            response_regex.Compile("^QC[0-9A-Fa-f]+$");
+            response_regex.Compile(llvm::StringRef("^QC[0-9A-Fa-f]+$"));
           }
 
           PacketResult echo_packet_result =
@@ -422,8 +422,7 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock(
                   echo_response, timeout_usec, false);
               if (echo_packet_result == PacketResult::Success) {
                 ++successful_responses;
-                if (response_regex.Execute(
-                        echo_response.GetStringRef().c_str())) {
+                if (response_regex.Execute(echo_response.GetStringRef())) {
                   sync_success = true;
                   break;
                 } else if (successful_responses == 1) {
