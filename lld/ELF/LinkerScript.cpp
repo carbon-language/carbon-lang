@@ -587,8 +587,7 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
       Sec->setVA(0);
   }
 
-  uintX_t HeaderSize =
-      Out<ELFT>::ElfHeader->getSize() + Out<ELFT>::ProgramHeaders->getSize();
+  uintX_t HeaderSize = getHeaderSize();
   if (HeaderSize > MinVA)
     fatal("Not enough space for ELF and program headers");
 
@@ -723,7 +722,7 @@ uint64_t LinkerScript<ELFT>::getOutputSectionAlign(StringRef Name) {
 }
 
 template <class ELFT> uint64_t LinkerScript<ELFT>::getHeaderSize() {
-  return Out<ELFT>::ElfHeader->getSize() + Out<ELFT>::ProgramHeaders->getSize();
+  return elf::getHeaderSize<ELFT>();
 }
 
 template <class ELFT> uint64_t LinkerScript<ELFT>::getSymbolValue(StringRef S) {
