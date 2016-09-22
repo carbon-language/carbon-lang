@@ -546,9 +546,7 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
       Opt.Commands.insert(CmdIter,
                           llvm::make_unique<OutputSectionCommand>(Name));
     } else {
-      // If linker script lists alloc/non-alloc sections is the wrong order,
-      // this does a rotate to bring the desired command in place.
-      std::rotate(CmdIter, Pos, Pos + 1);
+      assert(Pos == CmdIter && "Section order doesn't match the linker script");
     }
     ++CmdIndex;
   }
