@@ -892,7 +892,7 @@ private:
           break;
 
         // Do not value number terminator instructions.
-        if (!isa<TerminatorInst>(&I1))
+        if (isa<TerminatorInst>(&I1))
           break;
 
         if (auto *Load = dyn_cast<LoadInst>(&I1))
