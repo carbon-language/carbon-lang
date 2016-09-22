@@ -589,10 +589,6 @@ private:
   /// instruction.
   bool CheckPending;
 
-  // For heuristics, keep a list of the nodes that immediately depend on the
-  // most recently scheduled node.
-  SmallPtrSet<const SUnit*, 8> NextSUs;
-
   /// Number of cycles it takes to issue the instructions scheduled in this
   /// zone. It is defined as: scheduled-micro-ops / issue-width + stalls.
   /// See getStalls().
@@ -668,10 +664,6 @@ public:
 
   /// Micro-ops issued in the current cycle
   unsigned getCurrMOps() const { return CurrMOps; }
-
-  /// Return true if the given SU is used by the most recently scheduled
-  /// instruction.
-  bool isNextSU(const SUnit *SU) const { return NextSUs.count(SU); }
 
   // The latency of dependence chains leading into this zone.
   unsigned getDependentLatency() const { return DependentLatency; }
