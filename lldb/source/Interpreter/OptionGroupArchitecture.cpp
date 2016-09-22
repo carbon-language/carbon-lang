@@ -28,11 +28,7 @@ static OptionDefinition g_option_table[] = {
      "Specify the architecture for the target."},
 };
 
-uint32_t OptionGroupArchitecture::GetNumDefinitions() {
-  return llvm::array_lengthof(g_option_table);
-}
-
-const OptionDefinition *OptionGroupArchitecture::GetDefinitions() {
+llvm::ArrayRef<OptionDefinition> OptionGroupArchitecture::GetDefinitions() {
   return g_option_table;
 }
 

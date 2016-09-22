@@ -34,11 +34,7 @@ static OptionDefinition g_option_table[] = {
      "Append to the file specified with '--outfile <path>'."},
 };
 
-uint32_t OptionGroupOutputFile::GetNumDefinitions() {
-  return llvm::array_lengthof(g_option_table);
-}
-
-const OptionDefinition *OptionGroupOutputFile::GetDefinitions() {
+llvm::ArrayRef<OptionDefinition> OptionGroupOutputFile::GetDefinitions() {
   return g_option_table;
 }
 
