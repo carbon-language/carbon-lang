@@ -611,7 +611,11 @@ if (CLANG_ENABLE_BOOTSTRAP)
   # Populate the passthrough variables
   foreach(variableName ${CLANG_BOOTSTRAP_PASSTHROUGH} ${_BOOTSTRAP_DEFAULT_PASSTHROUGH})
     if(DEFINED ${variableName})
-      string(REPLACE ";" "\;" value ${${variableName}})
+      if("${${variableName}}" STREQUAL "")
+        set(value "")
+      else()
+        string(REPLACE ";" "\;" value ${${variableName}})
+      endif()
       list(APPEND PASSTHROUGH_VARIABLES
         -D${variableName}=${value})
     endif()
