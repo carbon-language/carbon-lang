@@ -3780,7 +3780,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_renderscript_kernel_bp_set_options;
+      return llvm::makeArrayRef(g_renderscript_kernel_bp_set_options);
     }
 
     std::array<int, 3> m_coord;
@@ -4039,7 +4039,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_renderscript_runtime_alloc_dump_options;
+      return llvm::makeArrayRef(g_renderscript_runtime_alloc_dump_options);
     }
 
     FileSpec m_outfile;
@@ -4161,7 +4161,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_renderscript_runtime_alloc_list_options;
+      return llvm::makeArrayRef(g_renderscript_runtime_alloc_list_options);
     }
 
     uint32_t m_id;

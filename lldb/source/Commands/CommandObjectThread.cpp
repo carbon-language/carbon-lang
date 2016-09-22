@@ -210,7 +210,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_thread_backtrace_options;
+      return llvm::makeArrayRef(g_thread_backtrace_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -437,7 +437,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_thread_step_scope_options;
+      return llvm::makeArrayRef(g_thread_step_scope_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -982,7 +982,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_thread_until_options;
+      return llvm::makeArrayRef(g_thread_until_options);
     }
 
     uint32_t m_step_thread_idx;
@@ -1363,7 +1363,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_thread_info_options;
+      return llvm::makeArrayRef(g_thread_info_options);
     }
 
     bool m_json_thread;
@@ -1465,7 +1465,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_thread_return_options;
+      return llvm::makeArrayRef(g_thread_return_options);
     }
 
     bool m_from_expression;
@@ -1655,7 +1655,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_thread_jump_options;
+      return llvm::makeArrayRef(g_thread_jump_options);
     }
 
     FileSpecList m_filenames;
@@ -1793,7 +1793,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_thread_plan_list_options;
+      return llvm::makeArrayRef(g_thread_plan_list_options);
     }
 
     // Instance variables to hold the values for command options.

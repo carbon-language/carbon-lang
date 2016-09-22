@@ -48,7 +48,7 @@ static OptionDefinition g_option_table[] = {
 };
 
 llvm::ArrayRef<OptionDefinition> OptionGroupFormat::GetDefinitions() {
-  llvm::ArrayRef<OptionDefinition> result = g_option_table;
+  auto result = llvm::makeArrayRef(g_option_table);
   if (m_byte_size.GetDefaultValue() < UINT64_MAX) {
     if (m_count.GetDefaultValue() < UINT64_MAX)
       return result;

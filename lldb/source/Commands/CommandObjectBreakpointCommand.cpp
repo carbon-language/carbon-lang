@@ -349,7 +349,7 @@ are no syntax errors may indicate that a function was declared but never called.
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_breakpoint_add_options;
+      return llvm::makeArrayRef(g_breakpoint_add_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -541,7 +541,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_breakpoint_delete_options;
+      return llvm::makeArrayRef(g_breakpoint_delete_options);
     }
 
     // Instance variables to hold the values for command options.

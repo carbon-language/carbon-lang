@@ -236,7 +236,7 @@ Error CommandObjectDisassemble::CommandOptions::OptionParsingFinished(
 
 llvm::ArrayRef<OptionDefinition>
 CommandObjectDisassemble::CommandOptions::GetDefinitions() {
-  return g_disassemble_options;
+  return llvm::makeArrayRef(g_disassemble_options);
 }
 
 //-------------------------------------------------------------------------

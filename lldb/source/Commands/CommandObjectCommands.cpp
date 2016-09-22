@@ -108,7 +108,7 @@ protected:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_history_options;
+      return llvm::makeArrayRef(g_history_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -290,7 +290,7 @@ protected:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_source_options;
+      return llvm::makeArrayRef(g_source_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -368,7 +368,7 @@ protected:
     ~CommandOptions() override = default;
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_alias_options;
+      return llvm::makeArrayRef(g_alias_options);
     }
 
     Error SetOptionValue(uint32_t option_idx, const char *option_value,
@@ -1244,7 +1244,7 @@ private:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_regex_options;
+      return llvm::makeArrayRef(g_regex_options);
     }
 
     const char *GetHelp() {
@@ -1508,7 +1508,7 @@ protected:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_script_import_options;
+      return llvm::makeArrayRef(g_script_import_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -1667,7 +1667,7 @@ protected:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_script_add_options;
+      return llvm::makeArrayRef(g_script_add_options);
     }
 
     // Instance variables to hold the values for command options.

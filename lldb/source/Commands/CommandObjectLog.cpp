@@ -167,7 +167,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_log_options;
+      return llvm::makeArrayRef(g_log_options);
     }
 
     // Instance variables to hold the values for command options.

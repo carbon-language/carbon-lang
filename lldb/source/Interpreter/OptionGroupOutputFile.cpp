@@ -35,7 +35,7 @@ static OptionDefinition g_option_table[] = {
 };
 
 llvm::ArrayRef<OptionDefinition> OptionGroupOutputFile::GetDefinitions() {
-  return g_option_table;
+  return llvm::makeArrayRef(g_option_table);
 }
 
 Error OptionGroupOutputFile::SetOptionValue(

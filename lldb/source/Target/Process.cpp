@@ -579,7 +579,7 @@ static OptionDefinition g_process_launch_options[] = {
 };
 
 llvm::ArrayRef<OptionDefinition> ProcessLaunchCommandOptions::GetDefinitions() {
-  return g_process_launch_options;
+  return llvm::makeArrayRef(g_process_launch_options);
 }
 
 bool ProcessInstanceInfoMatch::NameMatches(const char *process_name) const {

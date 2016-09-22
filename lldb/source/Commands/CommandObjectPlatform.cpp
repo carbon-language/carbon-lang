@@ -145,7 +145,7 @@ public:
   }
 
   llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-    return g_permissions_options;
+    return llvm::makeArrayRef(g_permissions_options);
   }
 
   // Instance variables to hold the values for command options.
@@ -698,7 +698,7 @@ protected:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_platform_fread_options;
+      return llvm::makeArrayRef(g_platform_fread_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -791,7 +791,7 @@ protected:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_platform_fwrite_options;
+      return llvm::makeArrayRef(g_platform_fwrite_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -1108,7 +1108,7 @@ protected:
 // "platform process list"
 //----------------------------------------------------------------------
 
-OptionDefinition g_platform_process_list_option_array[] = {
+OptionDefinition g_platform_process_list_options[] = {
     // clang-format off
   { LLDB_OPT_SET_1,             false, "pid",         'p', OptionParser::eRequiredArgument, nullptr, nullptr, 0, eArgTypePid,               "List the process info for a specific process ID." },
   { LLDB_OPT_SET_2,             true,  "name",        'n', OptionParser::eRequiredArgument, nullptr, nullptr, 0, eArgTypeProcessName,       "Find processes with executable basenames that match a string." },
@@ -1126,8 +1126,6 @@ OptionDefinition g_platform_process_list_option_array[] = {
   { LLDB_OPT_SET_FROM_TO(1, 6), false, "verbose",     'v', OptionParser::eNoArgument,       nullptr, nullptr, 0, eArgTypeNone,              "Enable verbose output." },
     // clang-format on
 };
-llvm::MutableArrayRef<OptionDefinition>
-    g_platform_process_list_options(g_platform_process_list_option_array);
 
 class CommandObjectPlatformProcessList : public CommandObjectParsed {
 public:
@@ -1395,7 +1393,7 @@ protected:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_platform_process_list_options;
+      return llvm::makeArrayRef(g_platform_process_list_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -1560,7 +1558,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_platform_process_attach_options;
+      return llvm::makeArrayRef(g_platform_process_attach_options);
     }
 
     bool HandleOptionArgumentCompletion(
@@ -1702,7 +1700,7 @@ public:
     ~CommandOptions() override = default;
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_platform_shell_options;
+      return llvm::makeArrayRef(g_platform_shell_options);
     }
 
     Error SetOptionValue(uint32_t option_idx, const char *option_value,

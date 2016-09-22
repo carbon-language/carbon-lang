@@ -76,7 +76,7 @@ static OptionDefinition g_help_options[] = {
 
 llvm::ArrayRef<OptionDefinition>
 CommandObjectHelp::CommandOptions::GetDefinitions() {
-  return g_help_options;
+  return llvm::makeArrayRef(g_help_options);
 }
 
 bool CommandObjectHelp::DoExecute(Args &command, CommandReturnObject &result) {

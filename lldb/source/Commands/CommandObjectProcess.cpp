@@ -386,7 +386,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_process_attach_options;
+      return llvm::makeArrayRef(g_process_attach_options);
     }
 
     bool HandleOptionArgumentCompletion(
@@ -631,7 +631,7 @@ protected:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_process_continue_options;
+      return llvm::makeArrayRef(g_process_continue_options);
     }
 
     uint32_t m_ignore;
@@ -789,7 +789,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_process_detach_options;
+      return llvm::makeArrayRef(g_process_detach_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -882,7 +882,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_process_connect_options;
+      return llvm::makeArrayRef(g_process_connect_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -1012,7 +1012,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_process_load_options;
+      return llvm::makeArrayRef(g_process_load_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -1414,7 +1414,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_process_handle_options;
+      return llvm::makeArrayRef(g_process_handle_options);
     }
 
     // Instance variables to hold the values for command options.

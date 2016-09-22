@@ -208,7 +208,7 @@ void CommandObjectExpression::CommandOptions::OptionParsingStarting(
 
 llvm::ArrayRef<OptionDefinition>
 CommandObjectExpression::CommandOptions::GetDefinitions() {
-  return g_expression_options;
+  return llvm::makeArrayRef(g_expression_options);
 }
 
 CommandObjectExpression::CommandObjectExpression(

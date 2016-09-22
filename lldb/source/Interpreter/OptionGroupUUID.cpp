@@ -28,7 +28,7 @@ static OptionDefinition g_option_table[] = {
 };
 
 llvm::ArrayRef<OptionDefinition> OptionGroupUUID::GetDefinitions() {
-  return g_option_table;
+  return llvm::makeArrayRef(g_option_table);
 }
 
 Error OptionGroupUUID::SetOptionValue(uint32_t option_idx,

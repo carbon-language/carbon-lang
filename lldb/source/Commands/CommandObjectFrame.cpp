@@ -124,7 +124,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_frame_diag_options;
+      return llvm::makeArrayRef(g_frame_diag_options);
     }
 
     // Options.
@@ -296,7 +296,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_frame_select_options;
+      return llvm::makeArrayRef(g_frame_select_options);
     }
 
     int32_t relative_frame_offset;

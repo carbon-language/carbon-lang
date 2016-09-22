@@ -251,7 +251,7 @@ protected:
     ~CommandOptions() override = default;
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_register_read_options;
+      return llvm::makeArrayRef(g_register_read_options);
     }
 
     void OptionParsingStarting(ExecutionContext *execution_context) override {

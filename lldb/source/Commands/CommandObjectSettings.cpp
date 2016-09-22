@@ -125,7 +125,7 @@ insert-before or insert-after.");
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_settings_set_options;
+      return llvm::makeArrayRef(g_settings_set_options);
     }
 
     // Instance variables to hold the values for command options.

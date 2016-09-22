@@ -69,7 +69,7 @@ void CommandObjectArgs::CommandOptions::OptionParsingStarting(
 
 llvm::ArrayRef<OptionDefinition>
 CommandObjectArgs::CommandOptions::GetDefinitions() {
-  return g_arg_options;
+  return llvm::makeArrayRef(g_arg_options);
 }
 
 CommandObjectArgs::CommandObjectArgs(CommandInterpreter &interpreter)

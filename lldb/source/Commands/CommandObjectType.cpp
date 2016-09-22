@@ -132,7 +132,7 @@ private:
     void OptionParsingStarting(ExecutionContext *execution_context) override;
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_type_summary_add_options;
+      return llvm::makeArrayRef(g_type_summary_add_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -374,7 +374,7 @@ private:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_type_synth_add_options;
+      return llvm::makeArrayRef(g_type_synth_add_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -550,7 +550,7 @@ private:
     ~CommandOptions() override = default;
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_type_format_add_options;
+      return llvm::makeArrayRef(g_type_format_add_options);
     }
 
     void OptionParsingStarting(ExecutionContext *execution_context) override {
@@ -802,7 +802,7 @@ protected:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_type_formatter_delete_options;
+      return llvm::makeArrayRef(g_type_formatter_delete_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -934,7 +934,7 @@ private:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_type_formatter_clear_options;
+      return llvm::makeArrayRef(g_type_formatter_clear_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -1834,7 +1834,7 @@ class CommandObjectTypeCategoryDefine : public CommandObjectParsed {
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_type_category_define_options;
+      return llvm::makeArrayRef(g_type_category_define_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -1940,7 +1940,7 @@ class CommandObjectTypeCategoryEnable : public CommandObjectParsed {
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_type_category_enable_options;
+      return llvm::makeArrayRef(g_type_category_enable_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -2117,7 +2117,7 @@ class CommandObjectTypeCategoryDisable : public CommandObjectParsed {
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_type_category_disable_options;
+      return llvm::makeArrayRef(g_type_category_disable_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -2575,7 +2575,7 @@ private:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_type_filter_add_options;
+      return llvm::makeArrayRef(g_type_filter_add_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -2799,7 +2799,7 @@ protected:
     ~CommandOptions() override = default;
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_type_lookup_options;
+      return llvm::makeArrayRef(g_type_lookup_options);
     }
 
     Error SetOptionValue(uint32_t option_idx, const char *option_value,

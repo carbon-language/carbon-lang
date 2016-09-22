@@ -70,7 +70,7 @@ public:
   ~OptionGroupReadMemory() override = default;
 
   llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-    return g_read_memory_options;
+    return llvm::makeArrayRef(g_read_memory_options);
   }
 
   Error SetOptionValue(uint32_t option_idx, const char *option_arg,
@@ -905,7 +905,7 @@ public:
     ~OptionGroupFindMemory() override = default;
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_memory_find_option_table;
+      return llvm::makeArrayRef(g_memory_find_option_table);
     }
 
     Error SetOptionValue(uint32_t option_idx, const char *option_arg,
@@ -1201,7 +1201,7 @@ public:
     ~OptionGroupWriteMemory() override = default;
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return g_memory_write_option_table;
+      return llvm::makeArrayRef(g_memory_write_option_table);
     }
 
     Error SetOptionValue(uint32_t option_idx, const char *option_arg,

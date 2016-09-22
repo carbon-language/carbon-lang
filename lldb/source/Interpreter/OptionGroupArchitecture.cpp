@@ -29,7 +29,7 @@ static OptionDefinition g_option_table[] = {
 };
 
 llvm::ArrayRef<OptionDefinition> OptionGroupArchitecture::GetDefinitions() {
-  return g_option_table;
+  return llvm::makeArrayRef(g_option_table);
 }
 
 bool OptionGroupArchitecture::GetArchitecture(Platform *platform,
