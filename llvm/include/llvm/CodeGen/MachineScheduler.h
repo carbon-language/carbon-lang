@@ -718,10 +718,6 @@ public:
 
   void releaseNode(SUnit *SU, unsigned ReadyCycle);
 
-  void releaseTopNode(SUnit *SU);
-
-  void releaseBottomNode(SUnit *SU);
-
   void bumpCycle(unsigned NextCycle);
 
   void incExecutedResources(unsigned PIdx, unsigned Count);
@@ -892,12 +888,18 @@ public:
   void schedNode(SUnit *SU, bool IsTopNode) override;
 
   void releaseTopNode(SUnit *SU) override {
-    Top.releaseTopNode(SU);
+    if (SU->isScheduled)
+      return;
+
+    Top.releaseNode(SU, SU->TopReadyCycle);
     TopCand.SU = nullptr;
   }
 
   void releaseBottomNode(SUnit *SU) override {
-    Bot.releaseBottomNode(SU);
+    if (SU->isScheduled)
+      return;
+
+    Bot.releaseNode(SU, SU->BotReadyCycle);
     BotCand.SU = nullptr;
   }
 
@@ -975,7 +977,9 @@ public:
   void schedNode(SUnit *SU, bool IsTopNode) override;
 
   void releaseTopNode(SUnit *SU) override {
-    Top.releaseTopNode(SU);
+    if (SU->isScheduled)
+      return;
+    Top.releaseNode(SU, SU->TopReadyCycle);
   }
 
   // Only called for roots.

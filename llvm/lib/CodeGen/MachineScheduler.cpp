@@ -1995,20 +1995,6 @@ void SchedBoundary::releaseNode(SUnit *SU, unsigned ReadyCycle) {
     Available.push(SU);
 }
 
-void SchedBoundary::releaseTopNode(SUnit *SU) {
-  if (SU->isScheduled)
-    return;
-
-  releaseNode(SU, SU->TopReadyCycle);
-}
-
-void SchedBoundary::releaseBottomNode(SUnit *SU) {
-  if (SU->isScheduled)
-    return;
-
-  releaseNode(SU, SU->BotReadyCycle);
-}
-
 /// Move the boundary of scheduled code by one cycle.
 void SchedBoundary::bumpCycle(unsigned NextCycle) {
   if (SchedModel->getMicroOpBufferSize() == 0) {
