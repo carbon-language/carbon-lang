@@ -4,7 +4,7 @@
 # RUN:         .text : { *(.text) } \
 # RUN:         . = ALIGN(0x1000); \
 # RUN:         .data.rel.ro : { *(.data.rel.ro) } \
-# RUN:       }" \ > %t.script
+# RUN:       }" > %t.script
 # RUN: ld.lld -o %t -T %t.script %t.o -shared
 # RUN: llvm-readobj -l %t | FileCheck %s
 
