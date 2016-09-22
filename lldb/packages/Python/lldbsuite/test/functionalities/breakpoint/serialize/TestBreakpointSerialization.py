@@ -37,6 +37,12 @@ class BreakpointSerialization(TestBase):
         self.setup_targets_and_cleanup()
         self.do_check_options()
 
+    def test_name_filters(self):
+        """Use python APIs to test that reading in by name works correctly."""
+        self.build()
+        self.setup_targets_and_cleanup()
+        self.do_check_names()
+
     def setup_targets_and_cleanup(self):
         def cleanup ():
             self.RemoveTempFile(self.bkpts_file_path)
@@ -50,7 +56,7 @@ class BreakpointSerialization(TestBase):
 
         exe = os.path.join(os.getcwd(), "a.out")
 
-        # Create a targets we are making breakpoint in and copying to:
+        # Create the targets we are making breakpoints in and copying them to:
         self.orig_target = self.dbg.CreateTarget(exe)
         self.assertTrue(self.orig_target, VALID_TARGET)
         
@@ -169,6 +175,7 @@ class BreakpointSerialization(TestBase):
         bkpt = self.orig_target.BreakpointCreateByLocation("blubby.c", 666)
         bkpt.SetEnabled(False)
         bkpt.SetOneShot(True)
+        bkpt.SetThreadID(10)
         source_bps.Append(bkpt)
         
         # Make sure we get one right:
@@ -177,10 +184,12 @@ class BreakpointSerialization(TestBase):
 
         bkpt = self.orig_target.BreakpointCreateByName("blubby", lldb.eFunctionNameTypeAuto, empty_module_list, empty_cu_list)
         bkpt.SetIgnoreCount(10)
+        bkpt.SetThreadName("grubby")
         source_bps.Append(bkpt)
 
         bkpt = self.orig_target.BreakpointCreateByName("blubby", lldb.eFunctionNameTypeFull, empty_module_list,empty_cu_list)
         bkpt.SetCondition("something != something_else")
+        bkpt.SetQueueName("grubby")
         bkpt.AddName("FirstName")
         bkpt.AddName("SecondName")
 
@@ -196,6 +205,30 @@ class BreakpointSerialization(TestBase):
 
         self.check_equivalence(source_bps)
 
+    def do_check_names(self):
+        bkpt = self.orig_target.BreakpointCreateByLocation("blubby.c", 666)
+        good_bkpt_name = "GoodBreakpoint"
+        write_bps = lldb.SBBreakpointList(self.orig_target)
+        bkpt.AddName(good_bkpt_name)
+        write_bps.Append(bkpt)
+        
+        error = lldb.SBError()
+        error = self.orig_target.BreakpointsWriteToFile(self.bkpts_file_spec, write_bps)
+        self.assertTrue(error.Success(), "Failed writing breakpoints to file: %s."%(error.GetCString()))
 
+        copy_bps = lldb.SBBreakpointList(self.copy_target)
+        names_list = lldb.SBStringList()
+        names_list.AppendString("NoSuchName")
 
+        error = self.copy_target.BreakpointsCreateFromFile(self.bkpts_file_spec, names_list, copy_bps)
+        self.assertTrue(error.Success(), "Failed reading breakpoints from file: %s"%(error.GetCString()))
+        self.assertTrue(copy_bps.GetSize() == 0, "Found breakpoints with a nonexistent name.")
+
+        names_list.AppendString(good_bkpt_name)
+        error = self.copy_target.BreakpointsCreateFromFile(self.bkpts_file_spec, names_list, copy_bps)
+        self.assertTrue(error.Success(), "Failed reading breakpoints from file: %s"%(error.GetCString()))
+        self.assertTrue(copy_bps.GetSize() == 1, "Found the matching breakpoint.")
+        
+        
+        
         

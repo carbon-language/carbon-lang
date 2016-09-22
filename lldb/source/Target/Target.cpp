@@ -869,6 +869,13 @@ Error Target::SerializeBreakpointsToFile(const FileSpec &file,
 
 Error Target::CreateBreakpointsFromFile(const FileSpec &file,
                                         BreakpointIDList &new_bps) {
+  std::vector<std::string> no_names;
+  return CreateBreakpointsFromFile(file, no_names, new_bps);
+}
+
+Error Target::CreateBreakpointsFromFile(const FileSpec &file,
+                                        std::vector<std::string> &names,
+                                        BreakpointIDList &new_bps) {
   std::unique_lock<std::recursive_mutex> lock;
   GetBreakpointList().GetListMutex(lock);
 
@@ -891,6 +898,8 @@ Error Target::CreateBreakpointsFromFile(const FileSpec &file,
   }
 
   size_t num_bkpts = bkpt_array->GetSize();
+  size_t num_names = names.size();
+
   for (size_t i = 0; i < num_bkpts; i++) {
     StructuredData::ObjectSP bkpt_object_sp = bkpt_array->GetItemAtIndex(i);
     // Peel off the breakpoint key, and feed the rest to the Breakpoint:
@@ -903,6 +912,10 @@ Error Target::CreateBreakpointsFromFile(const FileSpec &file,
     }
     StructuredData::ObjectSP bkpt_data_sp =
         bkpt_dict->GetValueForKey(Breakpoint::GetSerializationKey());
+    if (num_names &&
+        !Breakpoint::SerializedBreakpointMatchesNames(bkpt_data_sp, names))
+      continue;
+
     BreakpointSP bkpt_sp =
         Breakpoint::CreateFromStructuredData(*this, bkpt_data_sp, error);
     if (!error.Success()) {

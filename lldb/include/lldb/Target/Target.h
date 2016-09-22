@@ -684,6 +684,10 @@ public:
   Error CreateBreakpointsFromFile(const FileSpec &file,
                                   BreakpointIDList &new_bps);
 
+  Error CreateBreakpointsFromFile(const FileSpec &file,
+                                  std::vector<std::string> &names,
+                                  BreakpointIDList &new_bps);
+
   //------------------------------------------------------------------
   /// Get \a load_addr as a callable code load address for this target
   ///
