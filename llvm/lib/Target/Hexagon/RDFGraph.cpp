@@ -210,9 +210,24 @@ raw_ostream &operator<< (raw_ostream &OS, const Print<NodeAddr<PhiNode*>> &P) {
 template<>
 raw_ostream &operator<< (raw_ostream &OS,
       const Print<NodeAddr<StmtNode*>> &P) {
-  unsigned Opc = P.Obj.Addr->getCode()->getOpcode();
-  OS << Print<NodeId>(P.Obj.Id, P.G) << ": " << P.G.getTII().getName(Opc)
-     << " [" << PrintListV<RefNode*>(P.Obj.Addr->members(P.G), P.G) << ']';
+  const MachineInstr &MI = *P.Obj.Addr->getCode();
+  unsigned Opc = MI.getOpcode();
+  OS << Print<NodeId>(P.Obj.Id, P.G) << ": " << P.G.getTII().getName(Opc);
+  // Print the target for calls (for readability).
+  if (MI.getDesc().isCall()) {
+    MachineInstr::const_mop_iterator Fn =
+          find_if(MI.operands(),
+                  [] (const MachineOperand &Op) -> bool {
+                    return Op.isGlobal() || Op.isSymbol();
+                  });
+    if (Fn != MI.operands_end()) {
+      if (Fn->isGlobal())
+        OS << ' ' << Fn->getGlobal()->getName();
+      else if (Fn->isSymbol())
+        OS << ' ' << Fn->getSymbolName();
+    }
+  }
+  OS << " [" << PrintListV<RefNode*>(P.Obj.Addr->members(P.G), P.G) << ']';
   return OS;
 }
 
