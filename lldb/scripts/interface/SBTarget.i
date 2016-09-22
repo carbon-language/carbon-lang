@@ -786,12 +786,19 @@ public:
     /// @param[in] bkpt_list
     ///    Only write breakpoints from this list.
     ///
+    /// @param[in] append
+    ///    If \btrue, append the breakpoints in bkpt_list to the others
+    ///    serialized in dest_file.  If dest_file doesn't exist, then a new
+    ///    file will be created and the breakpoints in bkpt_list written to it.
+    ///
     /// @return
     ///     An SBError detailing any errors in writing in the breakpoints.
     //------------------------------------------------------------------
     ") BreakpointsCreateFromFile;
     lldb::SBError
-    BreakpointsWriteToFile(SBFileSpec &dest_file, SBBreakpointList &bkpt_list);
+    BreakpointsWriteToFile(SBFileSpec &dest_file, 
+                           SBBreakpointList &bkpt_list,
+                           bool append = false);
 
     uint32_t
     GetNumWatchpoints () const;

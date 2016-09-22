@@ -37,6 +37,12 @@ class BreakpointSerialization(TestBase):
         self.setup_targets_and_cleanup()
         self.do_check_options()
 
+    def test_appending(self):
+        """Use Python APIs to test that we serialize breakpoint options correctly."""
+        self.build()
+        self.setup_targets_and_cleanup()
+        self.do_check_appending()
+
     def test_name_filters(self):
         """Use python APIs to test that reading in by name works correctly."""
         self.build()
@@ -70,11 +76,13 @@ class BreakpointSerialization(TestBase):
         self.bkpts_file_path = os.path.join(os.getcwd(), "breakpoints.json")
         self.bkpts_file_spec = lldb.SBFileSpec(self.bkpts_file_path)
 
-    def check_equivalence(self, source_bps):
+    def check_equivalence(self, source_bps, do_write = True):
 
         error = lldb.SBError()
-        error = self.orig_target.BreakpointsWriteToFile(self.bkpts_file_spec, source_bps)
-        self.assertTrue(error.Success(), "Failed writing breakpoints to file: %s."%(error.GetCString()))
+
+        if (do_write):
+            error = self.orig_target.BreakpointsWriteToFile(self.bkpts_file_spec, source_bps)
+            self.assertTrue(error.Success(), "Failed writing breakpoints to file: %s."%(error.GetCString()))
 
         copy_bps = lldb.SBBreakpointList(self.copy_target)
         error = self.copy_target.BreakpointsCreateFromFile(self.bkpts_file_spec, copy_bps)
@@ -204,6 +212,52 @@ class BreakpointSerialization(TestBase):
         source_bps.Append(bkpt)
 
         self.check_equivalence(source_bps)
+
+    def do_check_appending(self):
+        """Use Python APIs to check appending to already serialized options."""
+
+        empty_module_list = lldb.SBFileSpecList()
+        empty_cu_list = lldb.SBFileSpecList()
+        blubby_file_spec = lldb.SBFileSpec(os.path.join(os.getcwd(), "blubby.c"))
+
+        # It isn't actually important for these purposes that these breakpoint
+        # actually have locations.
+
+        all_bps = lldb.SBBreakpointList(self.orig_target)
+        source_bps = lldb.SBBreakpointList(self.orig_target)
+
+        bkpt = self.orig_target.BreakpointCreateByLocation("blubby.c", 666)
+        bkpt.SetEnabled(False)
+        bkpt.SetOneShot(True)
+        bkpt.SetThreadID(10)
+        source_bps.Append(bkpt)
+        all_bps.Append(bkpt)
+        
+        error = lldb.SBError()
+        error = self.orig_target.BreakpointsWriteToFile(self.bkpts_file_spec, source_bps)
+        self.assertTrue(error.Success(), "Failed writing breakpoints to file: %s."%(error.GetCString()))
+
+        source_bps.Clear()
+
+        bkpt = self.orig_target.BreakpointCreateByName("blubby", lldb.eFunctionNameTypeAuto, empty_module_list, empty_cu_list)
+        bkpt.SetIgnoreCount(10)
+        bkpt.SetThreadName("grubby")
+        source_bps.Append(bkpt)
+        all_bps.Append(bkpt)
+
+        bkpt = self.orig_target.BreakpointCreateByName("blubby", lldb.eFunctionNameTypeFull, empty_module_list,empty_cu_list)
+        bkpt.SetCondition("something != something_else")
+        bkpt.SetQueueName("grubby")
+        bkpt.AddName("FirstName")
+        bkpt.AddName("SecondName")
+
+        source_bps.Append(bkpt)
+        all_bps.Append(bkpt)
+
+        error = self.orig_target.BreakpointsWriteToFile(self.bkpts_file_spec, source_bps, True)
+        self.assertTrue(error.Success(), "Failed appending breakpoints to file: %s."%(error.GetCString()))
+
+        self.check_equivalence(all_bps)
 
     def do_check_names(self):
         bkpt = self.orig_target.BreakpointCreateByLocation("blubby.c", 666)

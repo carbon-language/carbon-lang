@@ -2210,7 +2210,8 @@ private:
 #pragma mark Write::CommandOptions
 static OptionDefinition g_breakpoint_write_options[] = {
     // clang-format off
-  { LLDB_OPT_SET_ALL, true, "file", 'f', OptionParser::eRequiredArgument, nullptr, nullptr, CommandCompletions::eDiskFileCompletion, eArgTypeFilename,    "The file into which to write the breakpoints." },
+  { LLDB_OPT_SET_ALL, true,  "file",  'f', OptionParser::eRequiredArgument, nullptr, nullptr, CommandCompletions::eDiskFileCompletion, eArgTypeFilename,    "The file into which to write the breakpoints." },
+  { LLDB_OPT_SET_ALL, false, "append",'a', OptionParser::eNoArgument,       nullptr, nullptr, 0,                                       eArgTypeNone,        "Append to saved breakpoints file if it exists."},
     // clang-format on
 };
 
@@ -2251,6 +2252,9 @@ public:
       case 'f':
         m_filename.assign(option_arg);
         break;
+      case 'a':
+        m_append = true;
+        break;
       default:
         error.SetErrorStringWithFormat("unrecognized option '%c'",
                                        short_option);
@@ -2262,6 +2266,7 @@ public:
 
     void OptionParsingStarting(ExecutionContext *execution_context) override {
       m_filename.clear();
+      m_append = false;
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
@@ -2271,6 +2276,7 @@ public:
     // Instance variables to hold the values for command options.
 
     std::string m_filename;
+    bool m_append = false;
   };
 
 protected:
@@ -2296,7 +2302,8 @@ protected:
       }
     }
     Error error = target->SerializeBreakpointsToFile(
-        FileSpec(m_options.m_filename.c_str(), true), valid_bp_ids);
+        FileSpec(m_options.m_filename.c_str(), true), valid_bp_ids,
+        m_options.m_append);
     if (!error.Success()) {
       result.AppendErrorWithFormat("error serializing breakpoints: %s.",
                                    error.AsCString());

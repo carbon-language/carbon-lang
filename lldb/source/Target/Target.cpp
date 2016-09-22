@@ -796,7 +796,8 @@ bool Target::EnableBreakpointByID(break_id_t break_id) {
 }
 
 Error Target::SerializeBreakpointsToFile(const FileSpec &file,
-                                         const BreakpointIDList &bp_ids) {
+                                         const BreakpointIDList &bp_ids,
+                                         bool append) {
   Error error;
 
   if (!file) {
@@ -805,6 +806,28 @@ Error Target::SerializeBreakpointsToFile(const FileSpec &file,
   }
 
   std::string path(file.GetPath());
+  StructuredData::ObjectSP input_data_sp;
+
+  StructuredData::ArraySP break_store_sp;
+  StructuredData::Array *break_store_ptr = nullptr;
+
+  if (append) {
+    input_data_sp = StructuredData::ParseJSONFromFile(file, error);
+    if (error.Success()) {
+      break_store_ptr = input_data_sp->GetAsArray();
+      if (!break_store_ptr) {
+        error.SetErrorStringWithFormat(
+            "Tried to append to invalid input file %s", path.c_str());
+        return error;
+      }
+    }
+  }
+
+  if (!break_store_ptr) {
+    break_store_sp.reset(new StructuredData::Array());
+    break_store_ptr = break_store_sp.get();
+  }
+
   StreamFile out_file(path.c_str(),
                       File::OpenOptions::eOpenOptionTruncate |
                           File::OpenOptions::eOpenOptionWrite |
@@ -820,7 +843,6 @@ Error Target::SerializeBreakpointsToFile(const FileSpec &file,
   std::unique_lock<std::recursive_mutex> lock;
   GetBreakpointList().GetListMutex(lock);
 
-  StructuredData::ArraySP break_store_sp(new StructuredData::Array());
   if (bp_ids.GetSize() == 0) {
     const BreakpointList &breakpoints = GetBreakpointList();
 
@@ -830,7 +852,7 @@ Error Target::SerializeBreakpointsToFile(const FileSpec &file,
       StructuredData::ObjectSP bkpt_save_sp = bp->SerializeToStructuredData();
       // If a breakpoint can't serialize it, just ignore it for now:
       if (bkpt_save_sp)
-        break_store_sp->AddItem(bkpt_save_sp);
+        break_store_ptr->AddItem(bkpt_save_sp);
     }
   } else {
 
@@ -857,12 +879,12 @@ Error Target::SerializeBreakpointsToFile(const FileSpec &file,
                                          bp_id);
           return error;
         }
-        break_store_sp->AddItem(bkpt_save_sp);
+        break_store_ptr->AddItem(bkpt_save_sp);
       }
     }
   }
 
-  break_store_sp->Dump(out_file, false);
+  break_store_ptr->Dump(out_file, false);
   out_file.PutChar('\n');
   return error;
 }

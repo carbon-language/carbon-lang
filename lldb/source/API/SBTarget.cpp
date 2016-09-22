@@ -1176,7 +1176,8 @@ lldb::SBError SBTarget::BreakpointsWriteToFile(SBFileSpec &dest_file) {
 }
 
 lldb::SBError SBTarget::BreakpointsWriteToFile(SBFileSpec &dest_file,
-                                               SBBreakpointList &bkpt_list) {
+                                               SBBreakpointList &bkpt_list,
+                                               bool append) {
   SBError sberr;
   TargetSP target_sp(GetSP());
   if (!target_sp) {
@@ -1187,8 +1188,8 @@ lldb::SBError SBTarget::BreakpointsWriteToFile(SBFileSpec &dest_file,
   std::lock_guard<std::recursive_mutex> guard(target_sp->GetAPIMutex());
   BreakpointIDList bp_id_list;
   bkpt_list.CopyToBreakpointIDList(bp_id_list);
-  sberr.ref() =
-      target_sp->SerializeBreakpointsToFile(dest_file.ref(), bp_id_list);
+  sberr.ref() = target_sp->SerializeBreakpointsToFile(dest_file.ref(),
+                                                      bp_id_list, append);
   return sberr;
 }
 
