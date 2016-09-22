@@ -466,7 +466,7 @@ void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
                 [this](std::unique_ptr<BaseCommand> &B) { process(*B.get()); });
 }
 
-template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
+template <class ELFT> void LinkerScript<ELFT>::adjustSectionsBeforeSorting() {
   // It is common practice to use very generic linker scripts. So for any
   // given run some of the output sections in the script will be empty.
   // We could create corresponding empty output sections, but that would
@@ -490,6 +490,31 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
       });
   Opt.Commands.erase(Pos, Opt.Commands.end());
 
+  // If the output section contains only symbol assignments, create a
+  // corresponding output section. The bfd linker seems to only create them if
+  // '.' is assigned to, but creating these section should not have any bad
+  // consequeces and gives us a section to put the symbol in.
+  uintX_t Flags = SHF_ALLOC;
+  uint32_t Type = 0;
+  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
+    auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
+    if (!Cmd)
+      continue;
+    std::vector<OutputSectionBase<ELFT> *> Secs =
+        findSections(*Cmd, *OutputSections);
+    if (!Secs.empty()) {
+      Flags = Secs[0]->getFlags();
+      Type = Secs[0]->getType();
+      continue;
+    }
+
+    auto *OutSec = new OutputSection<ELFT>(Cmd->Name, Type, Flags);
+    Out<ELFT>::Pool.emplace_back(OutSec);
+    OutputSections->push_back(OutSec);
+  }
+}
+
+template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
   // Orphan sections are sections present in the input files which
   // are not explicitly placed into the output file by the linker script.
   // We place orphan sections at end of file.
