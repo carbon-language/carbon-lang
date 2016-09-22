@@ -342,13 +342,9 @@ int MinimizeCrashInputInternalStep(Fuzzer *F, InputCorpus *Corpus) {
   Unit U = FileToVector(InputFilePath);
   assert(U.size() > 2);
   Printf("INFO: Starting MinimizeCrashInputInternalStep: %zd\n", U.size());
-  Unit X(U.size() - 1);
-  for (size_t I = 0; I < U.size(); I++) {
-    std::copy(U.begin(), U.begin() + I, X.begin());
-    std::copy(U.begin() + I + 1, U.end(), X.begin() + I);
-    Corpus->AddToCorpus(X, nullptr, 0);
-  }
-  F->SetMaxLen(U.size() - 1);
+  Corpus->AddToCorpus(U, nullptr, 0);
+  F->SetMaxInputLen(U.size());
+  F->SetMaxMutationLen(U.size() - 1);
   F->Loop();
   Printf("INFO: Done MinimizeCrashInputInternalStep, no crashes found\n");
   exit(0);
@@ -492,7 +488,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
 
   if (Flags.merge) {
     if (Options.MaxLen == 0)
-      F.SetMaxLen(kMaxSaneLen);
+      F.SetMaxInputLen(kMaxSaneLen);
     F.Merge(*Inputs);
     exit(0);
   }
@@ -509,7 +505,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
     size_t MaxLen = 0;
     for (auto &U : InitialCorpus)
       MaxLen = std::max(U.size(), MaxLen);
-    F.SetMaxLen(std::min(std::max(kMinDefaultLen, MaxLen), kMaxSaneLen));
+    F.SetMaxInputLen(std::min(std::max(kMinDefaultLen, MaxLen), kMaxSaneLen));
   }
 
   if (InitialCorpus.empty()) {

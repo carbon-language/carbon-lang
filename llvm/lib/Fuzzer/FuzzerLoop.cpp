@@ -179,13 +179,15 @@ Fuzzer::Fuzzer(UserCallback CB, InputCorpus &Corpus, MutationDispatcher &MD,
     TPC.PrintModuleInfo();
   if (!Options.OutputCorpus.empty() && Options.Reload)
     EpochOfLastReadOfOutputCorpus = GetEpoch(Options.OutputCorpus);
+  MaxInputLen = MaxMutationLen = Options.MaxLen;
+  AllocateCurrentUnitData();
 }
 
 Fuzzer::~Fuzzer() { }
 
-void Fuzzer::LazyAllocateCurrentUnitData() {
-  if (CurrentUnitData || Options.MaxLen == 0) return;
-  CurrentUnitData = new uint8_t[Options.MaxLen];
+void Fuzzer::AllocateCurrentUnitData() {
+  if (CurrentUnitData || MaxInputLen == 0) return;
+  CurrentUnitData = new uint8_t[MaxInputLen];
 }
 
 void Fuzzer::SetDeathCallback() {
@@ -349,11 +351,18 @@ void Fuzzer::PrintFinalStats() {
   Printf("stat::peak_rss_mb:              %zd\n", GetPeakRSSMb());
 }
 
-void Fuzzer::SetMaxLen(size_t MaxLen) {
-  assert(Options.MaxLen == 0); // Can only reset MaxLen from 0 to non-0.
-  assert(MaxLen);
-  Options.MaxLen = MaxLen;
-  Printf("INFO: -max_len is not provided, using %zd\n", Options.MaxLen);
+void Fuzzer::SetMaxInputLen(size_t MaxInputLen) {
+  assert(this->MaxInputLen == 0); // Can only reset MaxInputLen from 0 to non-0.
+  assert(MaxInputLen);
+  this->MaxInputLen = MaxInputLen;
+  this->MaxMutationLen = MaxInputLen;
+  AllocateCurrentUnitData();
+  Printf("INFO: -max_len is not provided, using %zd\n", MaxInputLen);
+}
+
+void Fuzzer::SetMaxMutationLen(size_t MaxMutationLen) {
+  assert(MaxMutationLen && MaxMutationLen <= MaxInputLen);
+  this->MaxMutationLen = MaxMutationLen;
 }
 
 void Fuzzer::RereadOutputCorpus(size_t MaxSize) {
@@ -445,7 +454,6 @@ size_t Fuzzer::GetCurrentUnitInFuzzingThead(const uint8_t **Data) const {
 
 void Fuzzer::ExecuteCallback(const uint8_t *Data, size_t Size) {
   assert(InFuzzingThread());
-  LazyAllocateCurrentUnitData();
   // We copy the contents of Unit into a separate heap buffer
   // so that we reliably find buffer overflows in it.
   uint8_t *DataCopy = new uint8_t[Size];
@@ -587,11 +595,11 @@ void Fuzzer::Merge(const std::vector<std::string> &Corpora) {
   InMergeMode = true;
   std::vector<std::string> ExtraCorpora(Corpora.begin() + 1, Corpora.end());
 
-  assert(Options.MaxLen > 0);
+  assert(MaxInputLen > 0);
   UnitVector Initial, Extra;
-  ReadDirToVectorOfUnits(Corpora[0].c_str(), &Initial, nullptr, Options.MaxLen);
+  ReadDirToVectorOfUnits(Corpora[0].c_str(), &Initial, nullptr, MaxInputLen);
   for (auto &C : ExtraCorpora)
-    ReadDirToVectorOfUnits(C.c_str(), &Extra, nullptr, Options.MaxLen);
+    ReadDirToVectorOfUnits(C.c_str(), &Extra, nullptr, MaxInputLen);
 
   if (!Initial.empty()) {
     Printf("=== Minimizing the initial corpus of %zd units\n", Initial.size());
@@ -645,7 +653,6 @@ void Fuzzer::TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size,
 }
 
 void Fuzzer::MutateAndTestOne() {
-  LazyAllocateCurrentUnitData();
   MD.StartMutationSequence();
 
   auto &II = Corpus.ChooseUnitToMutate(MD.GetRand());
@@ -653,18 +660,18 @@ void Fuzzer::MutateAndTestOne() {
   memcpy(BaseSha1, II.Sha1, sizeof(BaseSha1));
   assert(CurrentUnitData);
   size_t Size = U.size();
-  assert(Size <= Options.MaxLen && "Oversized Unit");
+  assert(Size <= MaxInputLen && "Oversized Unit");
   memcpy(CurrentUnitData, U.data(), Size);
 
-  size_t MaxLen = Options.MaxLen;
+  assert(MaxMutationLen > 0);
 
   for (int i = 0; i < Options.MutateDepth; i++) {
     if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
       break;
     size_t NewSize = 0;
-    NewSize = MD.Mutate(CurrentUnitData, Size, MaxLen);
+    NewSize = MD.Mutate(CurrentUnitData, Size, MaxMutationLen);
     assert(NewSize > 0 && "Mutator returned empty unit");
-    assert(NewSize <= MaxLen && "Mutator return overisized unit");
+    assert(NewSize <= MaxMutationLen && "Mutator return overisized unit");
     Size = NewSize;
     if (i == 0)
       StartTraceRecording();
@@ -691,7 +698,7 @@ void Fuzzer::Loop() {
   while (true) {
     auto Now = system_clock::now();
     if (duration_cast<seconds>(Now - LastCorpusReload).count()) {
-      RereadOutputCorpus(Options.MaxLen);
+      RereadOutputCorpus(MaxInputLen);
       LastCorpusReload = Now;
     }
     if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
