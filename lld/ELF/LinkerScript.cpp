@@ -547,9 +547,8 @@ template <class ELFT> void LinkerScript<ELFT>::assignAddresses() {
                           llvm::make_unique<OutputSectionCommand>(Name));
     } else {
       // If linker script lists alloc/non-alloc sections is the wrong order,
-      // this does a right rotate to bring the desired command in place.
-      auto RPos = llvm::make_reverse_iterator(Pos + 1);
-      std::rotate(RPos, RPos + 1, llvm::make_reverse_iterator(CmdIter));
+      // this does a rotate to bring the desired command in place.
+      std::rotate(CmdIter, Pos, Pos + 1);
     }
     ++CmdIndex;
   }
