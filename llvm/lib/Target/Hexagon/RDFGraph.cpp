@@ -586,8 +586,8 @@ bool RegisterAliasInfo::covers(RegisterRef RA, RegisterRef RB) const {
 
   assert(TargetRegisterInfo::isPhysicalRegister(RA.Reg) &&
          TargetRegisterInfo::isPhysicalRegister(RB.Reg));
-  unsigned A = RA.Sub != 0 ? TRI.getSubReg(RA.Reg, RA.Sub) : RA.Reg;
-  unsigned B = RB.Sub != 0 ? TRI.getSubReg(RB.Reg, RB.Sub) : RB.Reg;
+  uint32_t A = RA.Sub != 0 ? TRI.getSubReg(RA.Reg, RA.Sub) : RA.Reg;
+  uint32_t B = RB.Sub != 0 ? TRI.getSubReg(RB.Reg, RB.Sub) : RB.Reg;
   return TRI.isSubRegister(A, B);
 }
 
@@ -607,7 +607,7 @@ bool RegisterAliasInfo::covers(const RegisterSet &RRs, RegisterRef RR) const {
   }
 
   // If any super-register of RR is present, then RR is covered.
-  unsigned Reg = RR.Sub == 0 ? RR.Reg : TRI.getSubReg(RR.Reg, RR.Sub);
+  uint32_t Reg = RR.Sub == 0 ? RR.Reg : TRI.getSubReg(RR.Reg, RR.Sub);
   for (MCSuperRegIterator SR(Reg, &TRI); SR.isValid(); ++SR)
     if (RRs.count({*SR, 0}))
       return true;
@@ -623,7 +623,7 @@ std::vector<RegisterRef> RegisterAliasInfo::getAliasSet(RegisterRef RR) const {
   if (TargetRegisterInfo::isVirtualRegister(RR.Reg))
     return AS;
   assert(TargetRegisterInfo::isPhysicalRegister(RR.Reg));
-  unsigned R = RR.Reg;
+  uint32_t R = RR.Reg;
   if (RR.Sub)
     R = TRI.getSubReg(RR.Reg, RR.Sub);
 
@@ -662,8 +662,8 @@ bool RegisterAliasInfo::alias(RegisterRef RA, RegisterRef RB) const {
 
   assert(PhysA && PhysB);
   (void)PhysA, (void)PhysB;
-  unsigned A = RA.Sub ? TRI.getSubReg(RA.Reg, RA.Sub) : RA.Reg;
-  unsigned B = RB.Sub ? TRI.getSubReg(RB.Reg, RB.Sub) : RB.Reg;
+  uint32_t A = RA.Sub ? TRI.getSubReg(RA.Reg, RA.Sub) : RA.Reg;
+  uint32_t B = RB.Sub ? TRI.getSubReg(RB.Reg, RB.Sub) : RB.Reg;
   for (MCRegAliasIterator I(A, &TRI, true); I.isValid(); ++I)
     if (B == *I)
       return true;
@@ -710,7 +710,7 @@ bool TargetOperandInfo::isFixedReg(const MachineInstr &In, unsigned OpNum)
   // uses or defs, and those lists do not allow sub-registers.
   if (Op.getSubReg() != 0)
     return false;
-  unsigned Reg = Op.getReg();
+  uint32_t Reg = Op.getReg();
   const MCPhysReg *ImpR = Op.isDef() ? D.getImplicitDefs()
                                      : D.getImplicitUses();
   if (!ImpR)

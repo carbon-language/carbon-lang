@@ -384,7 +384,7 @@ namespace rdf {
   };
 
   struct RegisterRef {
-    unsigned Reg, Sub;
+    uint32_t Reg, Sub;
 
     // No non-trivial constructors, since this will be a member of a union.
     RegisterRef() = default;
