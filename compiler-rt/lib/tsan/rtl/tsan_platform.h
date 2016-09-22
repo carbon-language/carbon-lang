@@ -703,13 +703,13 @@ uptr ShadowToMemImpl(uptr s) {
   // range consecutively and see if shadow->app->shadow mapping gives us the
   // same address.
   uptr p = (s / kShadowCnt) ^ Mapping::kAppMemXor;
-  if (MemToShadow(p) == s &&
-      p >= Mapping::kLoAppMemBeg && p < Mapping::kLoAppMemEnd)
+  if (p >= Mapping::kLoAppMemBeg && p < Mapping::kLoAppMemEnd &&
+      MemToShadow(p) == s)
     return p;
 # ifdef TSAN_MID_APP_RANGE
   p = ((s / kShadowCnt) ^ Mapping::kAppMemXor) + Mapping::kMidShadowOff;
-  if (MemToShadow(p) == s &&
-      p >= Mapping::kMidAppMemBeg && p < Mapping::kMidAppMemEnd)
+  if (p >= Mapping::kMidAppMemBeg && p < Mapping::kMidAppMemEnd &&
+      MemToShadow(p) == s)
     return p;
 # endif
   return ((s / kShadowCnt) ^ Mapping::kAppMemXor) | Mapping::kAppMemMsk;
