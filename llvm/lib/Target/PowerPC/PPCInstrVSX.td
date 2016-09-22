@@ -131,10 +131,12 @@ let Uses = [RM] in {
                         [(store f64:$XT, xoaddr:$dst)]>;
 
     let Predicates = [HasVSX, HasOnlySwappingMemOps] in {
+    // The behaviour of this instruction is endianness-specific so we provide no
+    // pattern to match it without considering endianness.
     def STXVD2X : XX1Form<31, 972,
                          (outs), (ins vsrc:$XT, memrr:$dst),
                          "stxvd2x $XT, $dst", IIC_LdStSTFD,
-                         [(store v2f64:$XT, xoaddr:$dst)]>;
+                         []>;
 
     def STXVW4X : XX1Form<31, 908,
                          (outs), (ins vsrc:$XT, memrr:$dst),
@@ -953,18 +955,21 @@ def : Pat<(v2f64 (PPCuvec2fp v4i32:$C, 1)),
 
 // Loads.
 let Predicates = [HasVSX, HasOnlySwappingMemOps] in {
-  def : Pat<(v2f64 (load xoaddr:$src)), (LXVD2X xoaddr:$src)>;
-  def : Pat<(v2i64 (load xoaddr:$src)), (LXVD2X xoaddr:$src)>;
-  def : Pat<(v4i32 (load xoaddr:$src)), (LXVW4X xoaddr:$src)>;
   def : Pat<(v2f64 (PPClxvd2x xoaddr:$src)), (LXVD2X xoaddr:$src)>;
 
   // Stores.
   def : Pat<(int_ppc_vsx_stxvd2x v2f64:$rS, xoaddr:$dst),
             (STXVD2X $rS, xoaddr:$dst)>;
-  def : Pat<(store v2i64:$rS, xoaddr:$dst), (STXVD2X $rS, xoaddr:$dst)>;
   def : Pat<(int_ppc_vsx_stxvw4x v4i32:$rS, xoaddr:$dst),
             (STXVW4X $rS, xoaddr:$dst)>;
   def : Pat<(PPCstxvd2x v2f64:$rS, xoaddr:$dst), (STXVD2X $rS, xoaddr:$dst)>;
+}
+let Predicates = [IsBigEndian, HasVSX, HasOnlySwappingMemOps] in {
+  def : Pat<(v2f64 (load xoaddr:$src)), (LXVD2X xoaddr:$src)>;
+  def : Pat<(v2i64 (load xoaddr:$src)), (LXVD2X xoaddr:$src)>;
+  def : Pat<(v4i32 (load xoaddr:$src)), (LXVW4X xoaddr:$src)>;
+  def : Pat<(store v2f64:$rS, xoaddr:$dst), (STXVD2X $rS, xoaddr:$dst)>;
+  def : Pat<(store v2i64:$rS, xoaddr:$dst), (STXVD2X $rS, xoaddr:$dst)>;
 }
 
 // Permutes.
