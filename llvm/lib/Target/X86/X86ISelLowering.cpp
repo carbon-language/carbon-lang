@@ -22514,7 +22514,11 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VTRUNCUS:           return "X86ISD::VTRUNCUS";
   case X86ISD::VINSERT:            return "X86ISD::VINSERT";
   case X86ISD::VFPEXT:             return "X86ISD::VFPEXT";
+  case X86ISD::VFPEXT_RND:         return "X86ISD::VFPEXT_RND";
+  case X86ISD::VFPEXTS_RND:        return "X86ISD::VFPEXTS_RND";
   case X86ISD::VFPROUND:           return "X86ISD::VFPROUND";
+  case X86ISD::VFPROUND_RND:       return "X86ISD::VFPROUND_RND";
+  case X86ISD::VFPROUNDS_RND:      return "X86ISD::VFPROUNDS_RND";
   case X86ISD::CVTDQ2PD:           return "X86ISD::CVTDQ2PD";
   case X86ISD::CVTUDQ2PD:          return "X86ISD::CVTUDQ2PD";
   case X86ISD::CVT2MASK:           return "X86ISD::CVT2MASK";

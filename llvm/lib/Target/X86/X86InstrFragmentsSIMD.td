@@ -143,25 +143,14 @@ def X86vfpround: SDNode<"X86ISD::VFPROUND",
                                              SDTCVecEltisVT<1, f64>,
                                              SDTCisSameSizeAs<0, 1>]>>;
 
-def X86fround: SDNode<"X86ISD::VFPROUND",
-                        SDTypeProfile<1, 2, [SDTCVecEltisVT<0, f32>,
-                                             SDTCisSameAs<0, 1>,
-                                             SDTCVecEltisVT<2, f64>,
-                                             SDTCisSameSizeAs<0, 2>]>>;
-def X86froundRnd: SDNode<"X86ISD::VFPROUND",
+def X86froundRnd: SDNode<"X86ISD::VFPROUNDS_RND",
                         SDTypeProfile<1, 3, [SDTCVecEltisVT<0, f32>,
                                              SDTCisSameAs<0, 1>,
                                              SDTCVecEltisVT<2, f64>,
                                              SDTCisSameSizeAs<0, 2>,
                                              SDTCisVT<3, i32>]>>;
 
-def X86fpext  : SDNode<"X86ISD::VFPEXT",
-                        SDTypeProfile<1, 2, [SDTCVecEltisVT<0, f64>,
-                                             SDTCisSameAs<0, 1>,
-                                             SDTCVecEltisVT<2, f32>,
-                                             SDTCisSameSizeAs<0, 2>]>>;
-
-def X86fpextRnd  : SDNode<"X86ISD::VFPEXT",
+def X86fpextRnd  : SDNode<"X86ISD::VFPEXTS_RND",
                         SDTypeProfile<1, 3, [SDTCVecEltisVT<0, f64>,
                                              SDTCisSameAs<0, 1>,
                                              SDTCVecEltisVT<2, f32>,
@@ -567,12 +556,12 @@ def X86cvtps2ph   : SDNode<"X86ISD::CVTPS2PH",
                         SDTypeProfile<1, 2, [SDTCVecEltisVT<0, i16>,
                                              SDTCVecEltisVT<1, f32>,
                                              SDTCisVT<2, i32>]> >;
-def X86vfpextRnd  : SDNode<"X86ISD::VFPEXT",
+def X86vfpextRnd  : SDNode<"X86ISD::VFPEXT_RND",
                         SDTypeProfile<1, 2, [SDTCVecEltisVT<0, f64>,
                                              SDTCVecEltisVT<1, f32>,
                                              SDTCisOpSmallerThanOp<1, 0>,
                                              SDTCisVT<2, i32>]>>;
-def X86vfproundRnd: SDNode<"X86ISD::VFPROUND",
+def X86vfproundRnd: SDNode<"X86ISD::VFPROUND_RND",
                         SDTypeProfile<1, 2, [SDTCVecEltisVT<0, f32>,
                                              SDTCVecEltisVT<1, f64>,
                                              SDTCisOpSmallerThanOp<0, 1>,

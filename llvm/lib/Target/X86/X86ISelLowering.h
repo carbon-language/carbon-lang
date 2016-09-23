@@ -297,10 +297,10 @@ namespace llvm {
       VTRUNCUS, VTRUNCS,
 
       // Vector FP extend.
-      VFPEXT,
+      VFPEXT, VFPEXT_RND, VFPEXTS_RND,
 
       // Vector FP round.
-      VFPROUND,
+      VFPROUND, VFPROUND_RND, VFPROUNDS_RND,
 
       // Vector signed/unsigned integer to double.
       CVTDQ2PD, CVTUDQ2PD,

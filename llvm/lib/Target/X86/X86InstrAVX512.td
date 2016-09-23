@@ -5725,14 +5725,16 @@ multiclass avx512_cvt_fp_scalar<bits<8> opc, string OpcodeStr, X86VectorVTInfo _
                          (ins _.RC:$src1, _Src.RC:$src2), OpcodeStr,
                          "$src2, $src1", "$src1, $src2",
                          (_.VT (OpNode (_.VT _.RC:$src1),
-                                       (_Src.VT _Src.RC:$src2)))>,
+                                       (_Src.VT _Src.RC:$src2),
+                                       (i32 FROUND_CURRENT)))>,
                          EVEX_4V, VEX_LIG, Sched<[WriteCvtF2F]>;
   defm rm : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
                          (ins _Src.RC:$src1, _Src.ScalarMemOp:$src2), OpcodeStr,
                          "$src2, $src1", "$src1, $src2",
                          (_.VT (OpNode (_.VT _.RC:$src1),
                                   (_Src.VT (scalar_to_vector
-                                            (_Src.ScalarLdFrag addr:$src2)))))>,
+                                            (_Src.ScalarLdFrag addr:$src2))),
+                                  (i32 FROUND_CURRENT)))>,
                          EVEX_4V, VEX_LIG, Sched<[WriteCvtF2FLd, ReadAfterLd]>;
 }
 
@@ -5759,29 +5761,29 @@ multiclass avx512_cvt_fp_rc_scalar<bits<8> opc, string OpcodeStr, X86VectorVTInf
                         EVEX_4V, VEX_LIG, Sched<[WriteCvtF2FLd, ReadAfterLd]>,
                         EVEX_B, EVEX_RC;
 }
-multiclass avx512_cvt_fp_scalar_sd2ss<bits<8> opc, string OpcodeStr, SDNode OpNode,
+multiclass avx512_cvt_fp_scalar_sd2ss<bits<8> opc, string OpcodeStr,
                                   SDNode OpNodeRnd, X86VectorVTInfo _src,
                                                         X86VectorVTInfo _dst> {
   let Predicates = [HasAVX512] in {
-    defm Z : avx512_cvt_fp_scalar<opc, OpcodeStr, _dst, _src, OpNode>,
+    defm Z : avx512_cvt_fp_scalar<opc, OpcodeStr, _dst, _src, OpNodeRnd>,
              avx512_cvt_fp_rc_scalar<opc, OpcodeStr, _dst, _src,
                                OpNodeRnd>, VEX_W, EVEX_CD8<64, CD8VT1>,
                                EVEX_V512, XD;
   }
 }
 
-multiclass avx512_cvt_fp_scalar_ss2sd<bits<8> opc, string OpcodeStr, SDNode OpNode,
+multiclass avx512_cvt_fp_scalar_ss2sd<bits<8> opc, string OpcodeStr,
                                     SDNode OpNodeRnd, X86VectorVTInfo _src,
                                                           X86VectorVTInfo _dst> {
   let Predicates = [HasAVX512] in {
-    defm Z : avx512_cvt_fp_scalar<opc, OpcodeStr, _dst, _src, OpNode>,
+    defm Z : avx512_cvt_fp_scalar<opc, OpcodeStr, _dst, _src, OpNodeRnd>,
              avx512_cvt_fp_sae_scalar<opc, OpcodeStr, _dst, _src, OpNodeRnd>,
              EVEX_CD8<32, CD8VT1>, XS, EVEX_V512;
   }
 }
-defm VCVTSD2SS : avx512_cvt_fp_scalar_sd2ss<0x5A, "vcvtsd2ss", X86fround,
+defm VCVTSD2SS : avx512_cvt_fp_scalar_sd2ss<0x5A, "vcvtsd2ss",
                                          X86froundRnd, f64x_info, f32x_info>;
-defm VCVTSS2SD : avx512_cvt_fp_scalar_ss2sd<0x5A, "vcvtss2sd", X86fpext,
+defm VCVTSS2SD : avx512_cvt_fp_scalar_ss2sd<0x5A, "vcvtss2sd",
                                           X86fpextRnd,f32x_info, f64x_info >;
 
 def : Pat<(f64 (fpextend FR32X:$src)),
