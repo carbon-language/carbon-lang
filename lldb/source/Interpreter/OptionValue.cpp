@@ -422,7 +422,7 @@ const char *OptionValue::GetStringValue(const char *fail_value) const {
 bool OptionValue::SetStringValue(const char *new_value) {
   OptionValueString *option_value = GetAsString();
   if (option_value) {
-    option_value->SetCurrentValue(new_value);
+    option_value->SetCurrentValue(llvm::StringRef::withNullAsEmpty(new_value));
     return true;
   }
   return false;
@@ -548,7 +548,8 @@ lldb::OptionValueSP OptionValue::CreateValueFromCStringForTypeMask(
   }
 
   if (value_sp)
-    error = value_sp->SetValueFromString(value_cstr, eVarSetOperationAssign);
+    error = value_sp->SetValueFromString(
+        llvm::StringRef::withNullAsEmpty(value_cstr), eVarSetOperationAssign);
   else
     error.SetErrorString("unsupported type mask");
   return value_sp;
