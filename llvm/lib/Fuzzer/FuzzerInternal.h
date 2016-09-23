@@ -31,7 +31,7 @@ using namespace std::chrono;
 
 // See FuzzerTraceState.cpp
 void EnableValueProfile();
-size_t VPMapMergeFromCurrent(ValueBitMap &M);
+bool VPMapMergeFromCurrent(ValueBitMap &M);
 
 class Fuzzer {
 public:
@@ -47,7 +47,6 @@ public:
       CounterBitmap.clear();
       VPMap.Reset();
       TPCMap.Reset();
-      VPMapBits = 0;
     }
 
     std::string DebugString() const;
@@ -59,7 +58,6 @@ public:
     std::vector<uint8_t> CounterBitmap;
     ValueBitMap TPCMap;
     ValueBitMap VPMap;
-    size_t VPMapBits;
   };
 
   Fuzzer(UserCallback CB, InputCorpus &Corpus, MutationDispatcher &MD,

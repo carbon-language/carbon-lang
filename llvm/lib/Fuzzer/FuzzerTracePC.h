@@ -24,12 +24,14 @@ class TracePC {
   void HandleCallerCallee(uintptr_t Caller, uintptr_t Callee);
   size_t GetTotalCoverage() { return TotalCoverage; }
   void SetUseCounters(bool UC) { UseCounters = UC; }
-  size_t UpdateCounterMap(ValueBitMap *Map);
+  bool UpdateCounterMap(ValueBitMap *MaxCounterMap) {
+    return UseCounters && MaxCounterMap->MergeFrom(CounterMap);
+  }
   void FinalizeTrace();
 
   size_t GetNewPCIDs(uintptr_t **NewPCIDsPtr) {
     *NewPCIDsPtr = NewPCIDs;
-    return NumNewPCIDs;
+    return Min(kMaxNewPCIDs, NumNewPCIDs);
   }
 
   void ResetNewPCIDs() { NumNewPCIDs = 0; }
@@ -37,7 +39,6 @@ class TracePC {
 
   void Reset() {
     TotalCoverage = 0;
-    TotalCounterBits = 0;
     NumNewPCIDs = 0;
     CounterMap.Reset();
     TotalCoverageMap.Reset();
@@ -51,7 +52,6 @@ class TracePC {
 private:
   bool UseCounters = false;
   size_t TotalCoverage = 0;
-  size_t TotalCounterBits = 0;
 
   static const size_t kMaxNewPCIDs = 64;
   uintptr_t NewPCIDs[kMaxNewPCIDs];

@@ -543,7 +543,7 @@ static ValueBitMap VP;
 
 void EnableValueProfile() { RecordingValueProfile = true; }
 
-size_t VPMapMergeFromCurrent(ValueBitMap &M) {
+bool VPMapMergeFromCurrent(ValueBitMap &M) {
   if (!RecordingValueProfile) return 0;
   return M.MergeFrom(VP);
 }

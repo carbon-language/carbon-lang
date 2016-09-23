@@ -91,14 +91,6 @@ void TracePC::FinalizeTrace() {
   }
 }
 
-size_t TracePC::UpdateCounterMap(ValueBitMap *Map) {
-  if (!TotalCoverage) return 0;
-  size_t NewTotalCounterBits = Map->MergeFrom(CounterMap);
-  size_t Delta = NewTotalCounterBits - TotalCounterBits;
-  TotalCounterBits = NewTotalCounterBits;
-  return Delta;
-}
-
 void TracePC::HandleCallerCallee(uintptr_t Caller, uintptr_t Callee) {
   const uintptr_t kBits = 12;
   const uintptr_t kMask = (1 << kBits) - 1;

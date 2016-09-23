@@ -105,19 +105,18 @@ bool Fuzzer::RecordMaxCoverage(Fuzzer::Coverage *C) {
   if (Options.UseCounters) {
     uint64_t CounterDelta =
         EF->__sanitizer_update_counter_bitset_and_clear_counters(
-            C->CounterBitmap.data()) +
-        TPC.UpdateCounterMap(&C->TPCMap);
+            C->CounterBitmap.data());
     if (CounterDelta > 0) {
       Res = true;
       C->CounterBitmapBits += CounterDelta;
     }
   }
 
-  size_t NewVPMapBits = VPMapMergeFromCurrent(C->VPMap);
-  if (NewVPMapBits > C->VPMapBits) {
+  if (TPC.UpdateCounterMap(&C->TPCMap))
     Res = true;
-    C->VPMapBits = NewVPMapBits;
-  }
+
+  if (VPMapMergeFromCurrent(C->VPMap))
+    Res = true;
 
   if (EF->__sanitizer_get_coverage_pc_buffer_pos) {
     uint64_t NewPcBufferPos = EF->__sanitizer_get_coverage_pc_buffer_pos();
@@ -327,10 +326,12 @@ void Fuzzer::PrintStats(const char *Where, const char *End) {
   Printf("#%zd\t%s", TotalNumberOfRuns, Where);
   if (MaxCoverage.BlockCoverage)
     Printf(" cov: %zd", MaxCoverage.BlockCoverage);
-  if (MaxCoverage.VPMapBits)
-    Printf(" vp: %zd", MaxCoverage.VPMapBits);
+  if (MaxCoverage.VPMap.GetNumBitsSinceLastMerge())
+    Printf(" vp: %zd", MaxCoverage.VPMap.GetNumBitsSinceLastMerge());
   if (auto TB = MaxCoverage.CounterBitmapBits)
     Printf(" bits: %zd", TB);
+  if (auto TB = MaxCoverage.TPCMap.GetNumBitsSinceLastMerge())
+    Printf(" bits: %zd", MaxCoverage.TPCMap.GetNumBitsSinceLastMerge());
   if (MaxCoverage.CallerCalleeCoverage)
     Printf(" indir: %zd", MaxCoverage.CallerCalleeCoverage);
   Printf(" units: %zd exec/s: %zd", Corpus.size(), ExecPerSec);
@@ -479,8 +480,8 @@ std::string Fuzzer::Coverage::DebugString() const {
       std::string("Coverage{") + "BlockCoverage=" +
       std::to_string(BlockCoverage) + " CallerCalleeCoverage=" +
       std::to_string(CallerCalleeCoverage) + " CounterBitmapBits=" +
-      std::to_string(CounterBitmapBits) +
-      " VPMapBits " + std::to_string(VPMapBits) + "}";
+      std::to_string(CounterBitmapBits) + " VPMapBits " +
+      std::to_string(VPMap.GetNumBitsSinceLastMerge()) + "}";
   return Result;
 }
 
