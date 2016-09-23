@@ -209,12 +209,12 @@ namespace llvm {
       FDIV_RND,
       FMAX_RND,
       FMIN_RND,
-      FSQRT_RND,
+      FSQRT_RND, FSQRTS_RND,
 
       // FP vector get exponent.
-      FGETEXP_RND,
+      FGETEXP_RND, FGETEXPS_RND,
       // Extract Normalized Mantissas.
-      VGETMANT,
+      VGETMANT, VGETMANTS,
       // FP Scale.
       SCALEF,
       SCALEFS,
@@ -430,9 +430,9 @@ namespace llvm {
       // Range Restriction Calculation For Packed Pairs of Float32/64 values.
       VRANGE,
       // Reduce - Perform Reduction Transformation on scalar\packed FP.
-      VREDUCE,
+      VREDUCE, VREDUCES,
       // RndScale - Round FP Values To Include A Given Number Of Fraction Bits.
-      VRNDSCALE,
+      VRNDSCALE, VRNDSCALES,
       // Tests Types Of a FP Values for packed types.
       VFPCLASS,
       // Tests Types Of a FP Values for scalar types.
@@ -541,7 +541,7 @@ namespace llvm {
       XTEST,
 
       // ERI instructions.
-      RSQRT28, RCP28, EXP2,
+      RSQRT28, RSQRT28S, RCP28, RCP28S, EXP2,
 
       // Conversions between float and half-float.
       CVTPS2PH, CVTPH2PS,
