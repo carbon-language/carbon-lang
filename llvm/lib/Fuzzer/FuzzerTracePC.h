@@ -47,6 +47,7 @@ class TracePC {
     NumNewPCIDs = 0;
     CounterMap.Reset();
     ValueProfileMap.Reset();
+    memset(Counters, 0, sizeof(Counters));
   }
 
   void ResetGuards();
@@ -66,7 +67,6 @@ private:
   void AddNewPCID(uintptr_t PCID) {
     NewPCIDs[(NumNewPCIDs++) % kMaxNewPCIDs] = PCID;
   }
-
 
   struct Module {
     uintptr_t *Start, *Stop;
