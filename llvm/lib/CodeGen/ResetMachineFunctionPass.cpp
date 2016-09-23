@@ -1,4 +1,4 @@
-//===-- ResetMachineFunctionPass.cpp - Machine Loop Invariant Code Motion Pass ---------===//
+//===-- ResetMachineFunctionPass.cpp - Reset Machine Function ----*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,8 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//
+/// \file
+/// This file implements a pass that will conditionally reset a machine
+/// function as if it was just created. This is used to provide a fallback
+/// mechanism when GlobalISel fails, thus the condition for the reset to
+/// happen is that the MachineFunction has the FailedISel property.
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/Statistic.h"
