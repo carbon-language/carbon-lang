@@ -482,8 +482,8 @@ void CommandObjectExpression::GetMultilineExpression() {
   IOHandlerSP io_handler_sp(
       new IOHandlerEditline(debugger, IOHandler::Type::Expression,
                             "lldb-expr", // Name of input reader for history
-                            nullptr,     // No prompt
-                            nullptr,     // Continuation prompt
+                            llvm::StringRef(), // No prompt
+                            llvm::StringRef(), // Continuation prompt
                             multiple_lines, color_prompt,
                             1, // Show line numbers starting at 1
                             *this));

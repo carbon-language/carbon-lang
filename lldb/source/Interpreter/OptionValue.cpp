@@ -419,10 +419,10 @@ const char *OptionValue::GetStringValue(const char *fail_value) const {
   return fail_value;
 }
 
-bool OptionValue::SetStringValue(const char *new_value) {
+bool OptionValue::SetStringValue(llvm::StringRef new_value) {
   OptionValueString *option_value = GetAsString();
   if (option_value) {
-    option_value->SetCurrentValue(llvm::StringRef::withNullAsEmpty(new_value));
+    option_value->SetCurrentValue(new_value);
     return true;
   }
   return false;

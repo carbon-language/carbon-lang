@@ -1077,9 +1077,9 @@ protected:
         const bool multiple_lines = true; // Get multiple lines
         IOHandlerSP io_handler_sp(new IOHandlerEditline(
             debugger, IOHandler::Type::Other,
-            "lldb-regex", // Name of input reader for history
-            "> ",         // Prompt
-            nullptr,      // Continuation prompt
+            "lldb-regex",          // Name of input reader for history
+            llvm::StringRef("> "), // Prompt
+            llvm::StringRef(),     // Continuation prompt
             multiple_lines, color_prompt,
             0, // Don't show line numbers
             *this));

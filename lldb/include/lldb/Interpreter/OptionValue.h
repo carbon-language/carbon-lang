@@ -301,7 +301,7 @@ public:
 
   const char *GetStringValue(const char *fail_value = nullptr) const;
 
-  bool SetStringValue(const char *new_value);
+  bool SetStringValue(llvm::StringRef new_value);
 
   uint64_t GetUInt64Value(uint64_t fail_value = 0) const;
 

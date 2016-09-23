@@ -3701,7 +3701,8 @@ const char *TargetProperties::GetArg0() const {
 
 void TargetProperties::SetArg0(const char *arg) {
   const uint32_t idx = ePropertyArg0;
-  m_collection_sp->SetPropertyAtIndexAsString(nullptr, idx, arg);
+  m_collection_sp->SetPropertyAtIndexAsString(
+      nullptr, idx, llvm::StringRef::withNullAsEmpty(arg));
   m_launch_info.SetArg0(arg);
 }
 
@@ -3818,7 +3819,8 @@ FileSpec TargetProperties::GetStandardInputPath() const {
 
 void TargetProperties::SetStandardInputPath(const char *p) {
   const uint32_t idx = ePropertyInputPath;
-  m_collection_sp->SetPropertyAtIndexAsString(nullptr, idx, p);
+  m_collection_sp->SetPropertyAtIndexAsString(
+      nullptr, idx, llvm::StringRef::withNullAsEmpty(p));
 }
 
 FileSpec TargetProperties::GetStandardOutputPath() const {
@@ -3828,7 +3830,8 @@ FileSpec TargetProperties::GetStandardOutputPath() const {
 
 void TargetProperties::SetStandardOutputPath(const char *p) {
   const uint32_t idx = ePropertyOutputPath;
-  m_collection_sp->SetPropertyAtIndexAsString(nullptr, idx, p);
+  m_collection_sp->SetPropertyAtIndexAsString(
+      nullptr, idx, llvm::StringRef::withNullAsEmpty(p));
 }
 
 FileSpec TargetProperties::GetStandardErrorPath() const {
@@ -3861,7 +3864,8 @@ const char *TargetProperties::GetExpressionPrefixContentsAsCString() {
 
 void TargetProperties::SetStandardErrorPath(const char *p) {
   const uint32_t idx = ePropertyErrorPath;
-  m_collection_sp->SetPropertyAtIndexAsString(nullptr, idx, p);
+  m_collection_sp->SetPropertyAtIndexAsString(
+      nullptr, idx, llvm::StringRef::withNullAsEmpty(p));
 }
 
 bool TargetProperties::GetBreakpointsConsultPlatformAvoidList() {
