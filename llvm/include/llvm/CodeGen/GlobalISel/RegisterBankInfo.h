@@ -95,11 +95,12 @@ public:
     const PartialMapping *begin() const { return BreakDown; }
     const PartialMapping *end() const { return BreakDown + NumBreakDowns; }
 
-    /// Verify that this mapping makes sense for a value of \p ExpectedBitWidth.
+    /// Verify that this mapping makes sense for a value of
+    /// \p MeaningFulBitWidth.
     /// \note This method does not check anything when assertions are disabled.
     ///
     /// \return True is the check was successful.
-    bool verify(unsigned ExpectedBitWidth) const;
+    bool verify(unsigned MeaningFulBitWidth) const;
 
     /// Print this on dbgs() stream.
     void dump() const;
