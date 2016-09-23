@@ -1275,8 +1275,12 @@ ScriptParser::readOutputSectionDescription(StringRef OutSec) {
       setError("unknown command " + Tok);
   }
   Cmd->Phdrs = readOutputSectionPhdrs();
-  if (peek().startswith("="))
+
+  if (skip("="))
+    Cmd->Filler = readOutputSectionFiller(next());
+  else if (peek().startswith("="))
     Cmd->Filler = readOutputSectionFiller(next().drop_front());
+
   return Cmd;
 }
 
