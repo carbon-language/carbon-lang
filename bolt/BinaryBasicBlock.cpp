@@ -184,6 +184,32 @@ uint32_t BinaryBasicBlock::getNumPseudos() const {
   return NumPseudos;
 }
 
+ErrorOr<std::pair<double, double>>
+BinaryBasicBlock::getBranchStats(const BinaryBasicBlock *Succ) const {
+  if (Function->hasValidProfile()) {
+    uint64_t TotalCount = 0;
+    uint64_t TotalMispreds = 0;
+    for (const auto &BI : BranchInfo) {
+      if (BI.Count != COUNT_FALLTHROUGH_EDGE) {
+        TotalCount += BI.Count;
+        TotalMispreds += BI.MispredictedCount;
+      }
+    }
+
+    if (TotalCount > 0) {
+      auto Itr = std::find(Successors.begin(), Successors.end(), Succ);
+      assert(Itr != Successors.end());
+      const auto &BI = BranchInfo[Itr - Successors.begin()];
+      if (BI.Count && BI.Count != COUNT_FALLTHROUGH_EDGE) {
+        if (TotalMispreds == 0) TotalMispreds = 1;
+        return std::make_pair(double(BI.Count) / TotalCount,
+                              double(BI.MispredictedCount) / TotalMispreds);
+      }
+    }
+  }
+  return make_error_code(llvm::errc::result_out_of_range);
+}
+
 void BinaryBasicBlock::dump() const {
   auto &BC = Function->getBinaryContext();
   if (Label) outs() << Label->getName() << ":\n";

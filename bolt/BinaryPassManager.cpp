@@ -236,6 +236,13 @@ void BinaryFunctionPassManager::runAllPasses(
     llvm::make_unique<SimplifyConditionalTailCalls>(PrintSCTC),
     opts::SimplifyConditionalTailCalls);
 
+  Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes),
+                       opts::Peepholes);
+
+  Manager.registerPass(
+    llvm::make_unique<EliminateUnreachableBlocks>(PrintUCE),
+    opts::EliminateUnreachable);
+
   Manager.registerPass(llvm::make_unique<FixupFunctions>(PrintAfterFixup));
 
   Manager.runPasses();

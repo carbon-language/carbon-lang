@@ -1041,11 +1041,16 @@ public:
   /// Callee is responsible of updating basic block indices prior to using
   /// this function (e.g. by calling BinaryFunction::updateLayoutIndices()).
   static bool isForwardBranch(const BinaryBasicBlock *From,
-                       const BinaryBasicBlock *To) {
+                              const BinaryBasicBlock *To) {
     assert(From->getFunction() == To->getFunction() &&
            "basic blocks should be in the same function");
     return To->getLayoutIndex() > From->getLayoutIndex();
   }
+
+  /// Determine direction of the call to callee symbol relative to the start
+  /// of this function.
+  /// Note: this doesn't take function splitting into account.
+  bool isForwardCall(const MCSymbol *CalleeSymbol) const;
 
   /// Dump function information to debug output. If \p PrintInstructions
   /// is true - include instruction disassembly.

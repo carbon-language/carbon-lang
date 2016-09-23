@@ -230,24 +230,56 @@ class FixupFunctions : public BinaryFunctionPass {
 /// An optimization to simplify conditional tail calls by removing
 /// unnecessary branches.
 ///
-/// Convert the sequence:
+/// This optimization considers both of the following cases:
 ///
-///     j<cc> L1
-///     ...
-/// L1: jmp foo # tail call
+/// foo: ...
+///      jcc L1   original
+///      ...
+/// L1:  jmp bar  # TAILJMP
 ///
-/// into:
-///     j<cc> foo
+/// ->
 ///
-/// but only if 'j<cc> foo' turns out to be a forward branch.
+/// foo: ...
+///      jcc bar  iff jcc L1 is expected
+///      ...
 ///
+/// L1 is unreachable
+///
+/// OR
+///
+/// foo: ...
+///      jcc  L2
+/// L1:  jmp  dest  # TAILJMP
+/// L2:  ...
+///
+/// ->
+///
+/// foo: jncc dest  # TAILJMP
+/// L2:  ...
+///
+/// L1 is unreachable
+///
+/// For this particular case, the first basic block ends with
+/// a conditional branch and has two successors, one fall-through
+/// and one for when the condition is true.
+/// The target of the conditional is a basic block with a single
+/// unconditional branch (i.e. tail call) to another function.
+/// We don't care about the contents of the fall-through block.
+/// We assume that the target of the conditional branch is the
+/// first successor.
 class SimplifyConditionalTailCalls : public BinaryFunctionPass {
-  uint64_t NumTailCallCandidates{0};
+  uint64_t NumCandidateTailCalls{0};
   uint64_t NumTailCallsPatched{0};
   uint64_t NumOrigForwardBranches{0};
+  uint64_t NumOrigBackwardBranches{0};
   std::unordered_set<const BinaryFunction *> Modified;
 
-  bool fixTailCalls(BinaryContext &BC, BinaryFunction &BF);
+  bool shouldRewriteBranch(const BinaryBasicBlock *PredBB,
+                           const MCInst &CondBranch,
+                           const BinaryBasicBlock *BB,
+                           const bool DirectionFlag);
+
+  uint64_t fixTailCalls(BinaryContext &BC, BinaryFunction &BF);
  public:
   explicit SimplifyConditionalTailCalls(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }

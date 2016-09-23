@@ -329,6 +329,11 @@ public:
     return BranchInfo[Condition == true ? 0 : 1];
   };
 
+  /// Try to compute the taken and misprediction frequencies for the given
+  /// successor.  The result is an error if no information can be found.
+  ErrorOr<std::pair<double, double>>
+  getBranchStats(const BinaryBasicBlock *Succ) const;
+
   /// If the basic block ends with a conditional branch (possibly followed by
   /// an unconditional branch) and thus has 2 successor, reverse the order of
   /// its successors in CFG, update branch info, and return true. If the basic

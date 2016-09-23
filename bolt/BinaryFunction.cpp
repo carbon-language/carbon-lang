@@ -258,6 +258,19 @@ std::pair<unsigned, uint64_t> BinaryFunction::eraseInvalidBBs() {
   return std::make_pair(Count, Bytes);
 }
 
+bool BinaryFunction::isForwardCall(const MCSymbol *CalleeSymbol) const {
+  // TODO: Once we start reordering functions this has to change.  #15031238
+  const auto *CalleeBF = BC.getFunctionForSymbol(CalleeSymbol);
+  if (CalleeBF) {
+    return CalleeBF->getAddress() > getAddress();
+  } else {
+    // Absolute symbol.
+    auto const CalleeSI = BC.GlobalSymbols.find(CalleeSymbol->getName());
+    assert(CalleeSI != BC.GlobalSymbols.end() && "unregistered symbol found");
+    return CalleeSI->second > getAddress();
+  }
+}
+
 void BinaryFunction::dump(std::string Annotation,
                           bool PrintInstructions) const {
   print(dbgs(), Annotation, PrintInstructions);
@@ -3338,17 +3351,33 @@ DynoStats BinaryFunction::getDynoStats() const {
     }
 
     // Conditional branch that could be followed by an unconditional branch.
-    uint64_t TakenCount = BB->getBranchInfo(true).Count;
+    uint64_t TakenCount;
+    uint64_t NonTakenCount;
+    bool IsForwardBranch;
+    if (BB->succ_size() == 2) {
+      TakenCount = BB->getBranchInfo(true).Count;
+      NonTakenCount = BB->getBranchInfo(false).Count;
+      IsForwardBranch = isForwardBranch(BB, BB->getConditionalSuccessor(true));
+    } else {
+      // SCTC breaks the CFG invariant so we have to make some affordances
+      // here if we want dyno stats after running it.
+      TakenCount = BB->branch_info_begin()->Count;
+      if (TakenCount != COUNT_NO_PROFILE)
+        NonTakenCount = BBExecutionCount - TakenCount;
+      else
+        NonTakenCount = 0;
+      IsForwardBranch = isForwardBranch(BB, BB->getFallthrough());
+    }
+
     if (TakenCount == COUNT_NO_PROFILE)
       TakenCount = 0;
-    uint64_t NonTakenCount = BB->getBranchInfo(false).Count;
     if (NonTakenCount == COUNT_NO_PROFILE)
       NonTakenCount = 0;
 
     assert(TakenCount + NonTakenCount == BBExecutionCount &&
            "internal calculation error");
 
-    if (isForwardBranch(BB, BB->getConditionalSuccessor(true))) {
+    if (IsForwardBranch) {
       Stats[DynoStats::FORWARD_COND_BRANCHES] += BBExecutionCount;
       Stats[DynoStats::FORWARD_COND_BRANCHES_TAKEN] += TakenCount;
     } else {

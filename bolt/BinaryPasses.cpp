@@ -130,6 +130,27 @@ DynoStatsSortOrderOpt(
     cl::ZeroOrMore,
     cl::init(DynoStatsSortOrder::Descending));
 
+enum SctcModes : char {
+  SctcAlways,
+  SctcPreserveDirection,
+  SctcHeuristic
+};
+  
+static cl::opt<SctcModes>
+SctcMode(
+    "sctc-mode",
+    cl::desc("mode for simplify conditional tail calls"),
+    cl::init(SctcHeuristic),
+    cl::values(clEnumValN(SctcAlways, "always", "always perform sctc"),
+               clEnumValN(SctcPreserveDirection,
+                          "preserve",
+                          "only perform sctc when branch direction is preserved"),
+               clEnumValN(SctcHeuristic,
+                          "heuristic",
+                          "use branch prediction data to control sctc"),
+               clEnumValEnd),
+    cl::ZeroOrMore);
+
 } // namespace opts
 
 namespace llvm {
@@ -799,6 +820,15 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
     unsigned Count;
     uint64_t Bytes;
     Function.markUnreachable();
+    DEBUG({
+      for (auto *BB : Function.layout()) {
+        if (!BB->isValid()) {
+          dbgs() << "BOLT-INFO: UCE found unreachable block " << BB->getName()
+                 << " in function " << Function << "\n";
+          BB->dump();
+        }
+      }
+    });
     std::tie(Count, Bytes) = Function.eraseInvalidBBs();
     DeletedBlocks += Count;
     DeletedBytes += Bytes;
@@ -893,13 +923,47 @@ void FixupFunctions::runOnFunctions(
   }
 }
 
-bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
-                                                BinaryFunction &BF) {
-  if (BF.layout_size() < 2)
-    return false;
+bool
+SimplifyConditionalTailCalls::shouldRewriteBranch(const BinaryBasicBlock *PredBB,
+                                                  const MCInst &CondBranch,
+                                                  const BinaryBasicBlock *BB,
+                                                  const bool DirectionFlag) {
+  const bool IsForward = BinaryFunction::isForwardBranch(PredBB, BB);
 
+  if (IsForward)
+    ++NumOrigForwardBranches;
+  else 
+    ++NumOrigBackwardBranches;
+
+  if (opts::SctcMode == opts::SctcAlways)
+    return true;
+
+  if (opts::SctcMode == opts::SctcPreserveDirection)
+    return IsForward == DirectionFlag;
+
+  const auto Frequency = PredBB->getBranchStats(BB);
+
+  // It's ok to rewrite the conditional branch if the new target will be
+  // a backward branch.
+
+  // If no data available for these branches, then it should be ok to
+  // do the optimization since it will reduce code size.
+  if (Frequency.getError())
+    return true;
+
+  // TODO: should this use misprediction frequency instead?
+  const bool Result =
+    (IsForward && Frequency.get().first >= 0.5) ||
+    (!IsForward && Frequency.get().first <= 0.5);
+
+  return Result == DirectionFlag;
+}
+
+uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
+                                                    BinaryFunction &BF) {
   // Need updated indices to correctly detect branch' direction.
   BF.updateLayoutIndices();
+  BF.markUnreachable();
 
   auto &MIA = BC.MIA;
   uint64_t NumLocalCTCCandidates = 0;
@@ -913,36 +977,22 @@ bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
     auto *Instr = BB->getFirstNonPseudo();
     if (!MIA->isTailCall(*Instr))
       continue;
+
     auto *CalleeSymbol = MIA->getTargetSymbol(*Instr);
     if (!CalleeSymbol)
       continue;
 
     // Detect direction of the possible conditional tail call.
-    // XXX: Once we start reordering functions this has to change.
-    bool IsForwardCTC;
-    const auto *CalleeBF = BC.getFunctionForSymbol(CalleeSymbol);
-    if (CalleeBF) {
-      IsForwardCTC = CalleeBF->getAddress() > BF.getAddress();
-    } else {
-      // Absolute symbol.
-      auto const CalleeSI = BC.GlobalSymbols.find(CalleeSymbol->getName());
-      assert(CalleeSI != BC.GlobalSymbols.end() && "unregistered symbol found");
-      IsForwardCTC = CalleeSI->second > BF.getAddress();
-    }
+    const bool IsForwardCTC = BF.isForwardCall(CalleeSymbol);
 
     // Iterate through all predecessors.
     for (auto *PredBB : BB->predecessors()) {
-      if (PredBB->getConditionalSuccessor(true) != BB)
+      auto *CondSucc = PredBB->getConditionalSuccessor(true);
+      if (!CondSucc)
         continue;
 
       ++NumLocalCTCCandidates;
 
-      // We don't want to reverse direction of the branch in new order
-      // without further profile analysis.
-      if (BF.isForwardBranch(PredBB, BB) != IsForwardCTC)
-        continue;
-
-      // Change destination of the unconditional branch.
       const MCSymbol *TBB = nullptr;
       const MCSymbol *FBB = nullptr;
       MCInst *CondBranch = nullptr;
@@ -951,24 +1001,63 @@ bool SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       assert(Result && "internal error analyzing conditional branch");
       assert(CondBranch && "conditional branch expected");
 
-      MIA->replaceBranchTarget(*CondBranch, CalleeSymbol, BC.Ctx.get());
+      // We don't want to reverse direction of the branch in new order
+      // without further profile analysis.
+      const bool DirectionFlag = CondSucc == BB ? IsForwardCTC : !IsForwardCTC;
+      if (!shouldRewriteBranch(PredBB, *CondBranch, BB, DirectionFlag))
+        continue;
+
+      if (CondSucc != BB) {
+        // Patch the new target address into the conditional branch.
+        MIA->reverseBranchCondition(*CondBranch, CalleeSymbol, BC.Ctx.get());
+        // Since we reversed the condition on the branch we need to change
+        // the target for the unconditional branch or add a unconditional
+        // branch to the old target.  This has to be done manually since
+        // fixupBranches is not called after SCTC.
+        if (UncondBranch) {
+          MIA->replaceBranchTarget(*UncondBranch,
+                                   CondSucc->getLabel(),
+                                   BC.Ctx.get());
+        } else {
+          MCInst Branch;
+          auto Result = MIA->createUncondBranch(Branch,
+                                                CondSucc->getLabel(),
+                                                BC.Ctx.get());
+          assert(Result);
+          PredBB->addInstruction(Branch);
+        }
+        // Swap branch statistics after swapping the branch targets.
+        auto BI = PredBB->branch_info_begin();
+        std::swap(*BI, *(BI + 1));
+      } else {
+        // Change destination of the unconditional branch.
+        MIA->replaceBranchTarget(*CondBranch, CalleeSymbol, BC.Ctx.get());
+      }
+
+      // Remove the unused successor which may be eliminated later
+      // if there are no other users.
       PredBB->removeSuccessor(BB);
+
       ++NumLocalCTCs;
     }
 
     // Remove the block from CFG if all predecessors were removed.
-    BB->markValid(BB->pred_size() != 0 || BB->isLandingPad());
+    BB->markValid(BB->pred_size() != 0 ||
+                  BB->isLandingPad() ||
+                  BB->isEntryPoint());
   }
 
-  // Clean-up unreachable tail-call blocks.
-  BF.eraseInvalidBBs();
+  if (NumLocalCTCs > 0) {
+    // Clean-up unreachable tail-call blocks.
+    BF.eraseInvalidBBs();
+  }
 
   DEBUG(dbgs() << "BOLT: created " << NumLocalCTCs
           << " conditional tail calls from a total of " << NumLocalCTCCandidates
           << " candidates in function " << BF << "\n";);
 
   NumTailCallsPatched += NumLocalCTCs;
-  NumTailCallCandidates += NumLocalCTCCandidates;
+  NumCandidateTailCalls += NumLocalCTCCandidates;
 
   return NumLocalCTCs > 0;
 }
@@ -990,9 +1079,10 @@ void SimplifyConditionalTailCalls::runOnFunctions(
     }
   }
 
-  outs() << "BOLT-INFO: patched " << NumTailCallsPatched
+  outs() << "BOLT-INFO: SCTC: patched " << NumTailCallsPatched
          << " tail calls (" << NumOrigForwardBranches << " forward)"
-         << " from a total of " << NumTailCallCandidates << "\n";
+         << " tail calls (" << NumOrigBackwardBranches << " backward)"
+         << " from a total of " << NumCandidateTailCalls << "\n";
 }
 
 void Peepholes::shortenInstructions(BinaryContext &BC,
