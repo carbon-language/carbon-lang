@@ -537,12 +537,6 @@ void EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
       .Case("posix", llvm::ThreadModel::POSIX)
       .Case("single", llvm::ThreadModel::Single);
 
-  Options.FPDenormalType =
-    llvm::StringSwitch<llvm::FPDenormal::DenormalType>(CodeGenOpts.FPDenormalMode)
-      .Case("ieee", llvm::FPDenormal::IEEE)
-      .Case("preserve-sign", llvm::FPDenormal::PreserveSign)
-      .Case("positive-zero", llvm::FPDenormal::PositiveZero);
-
   // Set float ABI type.
   assert((CodeGenOpts.FloatABI == "soft" || CodeGenOpts.FloatABI == "softfp" ||
           CodeGenOpts.FloatABI == "hard" || CodeGenOpts.FloatABI.empty()) &&
@@ -585,7 +579,6 @@ void EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   Options.LessPreciseFPMADOption = CodeGenOpts.LessPreciseFPMAD;
   Options.NoInfsFPMath = CodeGenOpts.NoInfsFPMath;
   Options.NoNaNsFPMath = CodeGenOpts.NoNaNsFPMath;
-  Options.NoTrappingFPMath = CodeGenOpts.NoTrappingMath;
   Options.NoZerosInBSS = CodeGenOpts.NoZeroInitializedInBSS;
   Options.UnsafeFPMath = CodeGenOpts.UnsafeFPMath;
   Options.StackAlignmentOverride = CodeGenOpts.StackAlignment;
