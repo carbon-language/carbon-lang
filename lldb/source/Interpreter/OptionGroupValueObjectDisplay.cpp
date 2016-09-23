@@ -138,7 +138,7 @@ Error OptionGroupValueObjectDisplay::SetOptionValue(
     if (option_arg.empty())
       no_summary_depth = 1;
     else if (option_arg.getAsInteger(0, no_summary_depth)) {
-      no_summary_depth = 1;
+      no_summary_depth = 0;
       error.SetErrorStringWithFormat("invalid pointer depth '%s'",
                                      option_arg.str().c_str());
     }
