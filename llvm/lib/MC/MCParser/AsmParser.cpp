@@ -389,6 +389,7 @@ private:
     DK_VALUE, DK_2BYTE, DK_LONG, DK_INT, DK_4BYTE, DK_QUAD, DK_8BYTE, DK_OCTA,
     DK_DC, DK_DC_A, DK_DC_B, DK_DC_D, DK_DC_L, DK_DC_S, DK_DC_W, DK_DC_X,
     DK_DCB, DK_DCB_B, DK_DCB_D, DK_DCB_L, DK_DCB_S, DK_DCB_W, DK_DCB_X,
+    DK_DS, DK_DS_B, DK_DS_D, DK_DS_L, DK_DS_P, DK_DS_S, DK_DS_W, DK_DS_X,
     DK_SINGLE, DK_FLOAT, DK_DOUBLE, DK_ALIGN, DK_ALIGN32, DK_BALIGN, DK_BALIGNW,
     DK_BALIGNL, DK_P2ALIGN, DK_P2ALIGNW, DK_P2ALIGNL, DK_ORG, DK_FILL, DK_ENDR,
     DK_BUNDLE_ALIGN_MODE, DK_BUNDLE_LOCK, DK_BUNDLE_UNLOCK,
@@ -494,6 +495,8 @@ private:
   // ".dcb"
   bool parseDirectiveDCB(StringRef IDVal, unsigned Size);
   bool parseDirectiveRealDCB(StringRef IDVal, const fltSemantics &);
+  // ".ds"
+  bool parseDirectiveDS(StringRef IDVal, unsigned Size);
 
   // .sleb128 (Signed=true) and .uleb128 (Signed=false)
   bool parseDirectiveLEB128(bool Signed);
@@ -1945,6 +1948,19 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
     case DK_DCB_X:
       return TokError(Twine(IDVal) +
                       " not currently supported for this target");
+    case DK_DS:
+    case DK_DS_W:
+      return parseDirectiveDS(IDVal, 2);
+    case DK_DS_B:
+      return parseDirectiveDS(IDVal, 1);
+    case DK_DS_D:
+      return parseDirectiveDS(IDVal, 8);
+    case DK_DS_L:
+    case DK_DS_S:
+      return parseDirectiveDS(IDVal, 4);
+    case DK_DS_P:
+    case DK_DS_X:
+      return parseDirectiveDS(IDVal, 12);
     }
 
     return Error(IDLoc, "unknown directive");
@@ -4333,6 +4349,31 @@ bool AsmParser::parseDirectiveRealDCB(StringRef IDVal, const fltSemantics &Seman
   return false;
 }
 
+/// parseDirectiveDS
+/// ::= .ds.{b, d, l, p, s, w, x} expression
+bool AsmParser::parseDirectiveDS(StringRef IDVal, unsigned Size) {
+  checkForValidSection();
+
+  SMLoc NumValuesLoc = Lexer.getLoc();
+  int64_t NumValues;
+  if (parseAbsoluteExpression(NumValues))
+    return true;
+
+  if (NumValues < 0) {
+    Warning(NumValuesLoc, "'" + Twine(IDVal) + "' directive with negative repeat count has no effect");
+    return false;
+  }
+
+  if (parseToken(AsmToken::EndOfStatement,
+                 "unexpected token in '" + Twine(IDVal) + "' directive"))
+    return true;
+
+  for (uint64_t i = 0, e = NumValues; i != e; ++i)
+    getStreamer().emitFill(Size, 0);
+
+  return false;
+}
+
 /// parseDirectiveLEB128
 /// ::= (.sleb128 | .uleb128) [ expression (, expression)* ]
 bool AsmParser::parseDirectiveLEB128(bool Signed) {
@@ -4983,6 +5024,14 @@ void AsmParser::initializeDirectiveKindMap() {
   DirectiveKindMap[".dcb.s"] = DK_DCB_S;
   DirectiveKindMap[".dcb.w"] = DK_DCB_W;
   DirectiveKindMap[".dcb.x"] = DK_DCB_X;
+  DirectiveKindMap[".ds"] = DK_DS;
+  DirectiveKindMap[".ds.b"] = DK_DS_B;
+  DirectiveKindMap[".ds.d"] = DK_DS_D;
+  DirectiveKindMap[".ds.l"] = DK_DS_L;
+  DirectiveKindMap[".ds.p"] = DK_DS_P;
+  DirectiveKindMap[".ds.s"] = DK_DS_S;
+  DirectiveKindMap[".ds.w"] = DK_DS_W;
+  DirectiveKindMap[".ds.x"] = DK_DS_X;
 }
 
 MCAsmMacro *AsmParser::parseMacroLikeBody(SMLoc DirectiveLoc) {
