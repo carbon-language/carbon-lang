@@ -29,10 +29,6 @@ namespace fuzzer {
 
 using namespace std::chrono;
 
-// See FuzzerTraceState.cpp
-void EnableValueProfile();
-bool VPMapMergeFromCurrent(ValueBitMap &M);
-
 class Fuzzer {
 public:
 

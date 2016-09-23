@@ -115,7 +115,7 @@ bool Fuzzer::RecordMaxCoverage(Fuzzer::Coverage *C) {
   if (TPC.UpdateCounterMap(&C->TPCMap))
     Res = true;
 
-  if (VPMapMergeFromCurrent(C->VPMap))
+  if (TPC.UpdateValueProfileMap(&C->VPMap))
     Res = true;
 
   if (EF->__sanitizer_get_coverage_pc_buffer_pos) {
@@ -168,6 +168,7 @@ Fuzzer::Fuzzer(UserCallback CB, InputCorpus &Corpus, MutationDispatcher &MD,
   if (Options.DetectLeaks && EF->__sanitizer_install_malloc_and_free_hooks)
     EF->__sanitizer_install_malloc_and_free_hooks(MallocHook, FreeHook);
   TPC.SetUseCounters(Options.UseCounters);
+  TPC.SetUseValueProfile(Options.UseValueProfile);
 
   if (Options.PrintNewCovPcs) {
     PcBufferLen = 1 << 24;

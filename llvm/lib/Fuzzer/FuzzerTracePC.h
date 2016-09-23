@@ -22,10 +22,15 @@ class TracePC {
   void HandleTrace(uintptr_t *guard, uintptr_t PC);
   void HandleInit(uintptr_t *start, uintptr_t *stop);
   void HandleCallerCallee(uintptr_t Caller, uintptr_t Callee);
+  void HandleValueProfile(size_t Value) { ValueProfileMap.AddValue(Value); }
   size_t GetTotalCoverage() { return TotalCoverage; }
   void SetUseCounters(bool UC) { UseCounters = UC; }
+  void SetUseValueProfile(bool VP) { UseValueProfile = VP; }
   bool UpdateCounterMap(ValueBitMap *MaxCounterMap) {
     return UseCounters && MaxCounterMap->MergeFrom(CounterMap);
+  }
+  bool UpdateValueProfileMap(ValueBitMap *MaxValueProfileMap) {
+    return UseValueProfile && MaxValueProfileMap->MergeFrom(ValueProfileMap);
   }
   void FinalizeTrace();
 
@@ -51,6 +56,7 @@ class TracePC {
 
 private:
   bool UseCounters = false;
+  bool UseValueProfile = false;
   size_t TotalCoverage = 0;
 
   static const size_t kMaxNewPCIDs = 64;
@@ -77,6 +83,7 @@ private:
   uintptr_t PCs[kNumPCs];
 
   ValueBitMap CounterMap;
+  ValueBitMap ValueProfileMap;
   ValueBitMap TotalCoverageMap;
 };
 
