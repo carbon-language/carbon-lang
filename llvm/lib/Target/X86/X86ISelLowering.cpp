@@ -22665,15 +22665,23 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::MULHRS:             return "X86ISD::MULHRS";
   case X86ISD::SINT_TO_FP_RND:     return "X86ISD::SINT_TO_FP_RND";
   case X86ISD::UINT_TO_FP_RND:     return "X86ISD::UINT_TO_FP_RND";
-  case X86ISD::FP_TO_SINT_RND:     return "X86ISD::FP_TO_SINT_RND";
-  case X86ISD::FP_TO_UINT_RND:     return "X86ISD::FP_TO_UINT_RND";
+  case X86ISD::CVTTP2SI_RND:       return "X86ISD::CVTTP2SI_RND";
+  case X86ISD::CVTTP2UI_RND:       return "X86ISD::CVTTP2UI_RND";
+  case X86ISD::CVTTS2SI_RND:       return "X86ISD::CVTTS2SI_RND";
+  case X86ISD::CVTTS2UI_RND:       return "X86ISD::CVTTS2UI_RND";
   case X86ISD::VFPCLASS:           return "X86ISD::VFPCLASS";
   case X86ISD::VFPCLASSS:          return "X86ISD::VFPCLASSS";
   case X86ISD::MULTISHIFT:         return "X86ISD::MULTISHIFT";
-  case X86ISD::SCALAR_FP_TO_SINT_RND: return "X86ISD::SCALAR_FP_TO_SINT_RND";
-  case X86ISD::SCALAR_FP_TO_UINT_RND: return "X86ISD::SCALAR_FP_TO_UINT_RND";
+  case X86ISD::SCALAR_SINT_TO_FP_RND: return "X86ISD::SCALAR_SINT_TO_FP_RND";
+  case X86ISD::SCALAR_UINT_TO_FP_RND: return "X86ISD::SCALAR_UINT_TO_FP_RND";
   case X86ISD::CVTPS2PH:           return "X86ISD::CVTPS2PH";
   case X86ISD::CVTPH2PS:           return "X86ISD::CVTPH2PS";
+  case X86ISD::CVTP2SI:            return "X86ISD::CVTP2SI";
+  case X86ISD::CVTP2UI:            return "X86ISD::CVTP2UI";
+  case X86ISD::CVTP2SI_RND:        return "X86ISD::CVTP2SI_RND";
+  case X86ISD::CVTP2UI_RND:        return "X86ISD::CVTP2UI_RND";
+  case X86ISD::CVTS2SI_RND:        return "X86ISD::CVTS2SI_RND";
+  case X86ISD::CVTS2UI_RND:        return "X86ISD::CVTS2UI_RND";
   }
   return nullptr;
 }

@@ -532,31 +532,31 @@ def SDTVintToFPRound: SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
                                            SDTCisVT<2, i32>]>;
 
 // Scalar
-def X86SintToFpRnd  : SDNode<"X86ISD::SINT_TO_FP_RND",  SDTintToFPRound>;
-def X86UintToFpRnd  : SDNode<"X86ISD::UINT_TO_FP_RND",  SDTintToFPRound>;
+def X86SintToFpRnd  : SDNode<"X86ISD::SCALAR_SINT_TO_FP_RND",  SDTintToFPRound>;
+def X86UintToFpRnd  : SDNode<"X86ISD::SCALAR_UINT_TO_FP_RND",  SDTintToFPRound>;
 
-def X86cvtts2IntRnd      : SDNode<"X86ISD::FP_TO_SINT_RND",  SDTSFloatToIntRnd>;
-def X86cvtts2UIntRnd     : SDNode<"X86ISD::FP_TO_UINT_RND",  SDTSFloatToIntRnd>;
+def X86cvtts2IntRnd  : SDNode<"X86ISD::CVTTS2SI_RND",  SDTSFloatToIntRnd>;
+def X86cvtts2UIntRnd : SDNode<"X86ISD::CVTTS2UI_RND",  SDTSFloatToIntRnd>;
 
-def  X86cvts2si  : SDNode<"X86ISD::SCALAR_FP_TO_SINT_RND", SDTSFloatToIntRnd>;
-def  X86cvts2usi : SDNode<"X86ISD::SCALAR_FP_TO_UINT_RND", SDTSFloatToIntRnd>;
+def  X86cvts2si  : SDNode<"X86ISD::CVTS2SI_RND", SDTSFloatToIntRnd>;
+def  X86cvts2usi : SDNode<"X86ISD::CVTS2UI_RND", SDTSFloatToIntRnd>;
 
 // Vector with rounding mode
 
 // cvtt fp-to-int staff
-def X86VFpToSintRnd   : SDNode<"ISD::FP_TO_SINT",  SDTFloatToIntRnd>;
-def X86VFpToUintRnd   : SDNode<"ISD::FP_TO_UINT",  SDTFloatToIntRnd>;
+def X86cvttp2siRnd    : SDNode<"X86ISD::CVTTP2SI_RND", SDTFloatToIntRnd>;
+def X86cvttp2uiRnd    : SDNode<"X86ISD::CVTTP2UI_RND", SDTFloatToIntRnd>;
 
-def X86VSintToFpRnd   : SDNode<"ISD::SINT_TO_FP",  SDTVintToFPRound>;
-def X86VUintToFpRnd   : SDNode<"ISD::UINT_TO_FP",  SDTVintToFPRound>;
+def X86VSintToFpRnd   : SDNode<"X86ISD::SINT_TO_FP_RND",  SDTVintToFPRound>;
+def X86VUintToFpRnd   : SDNode<"X86ISD::UINT_TO_FP_RND",  SDTVintToFPRound>;
 
 // cvt fp-to-int staff
-def X86cvtp2IntRnd      : SDNode<"X86ISD::FP_TO_SINT_RND",  SDTFloatToIntRnd>;
-def X86cvtp2UIntRnd     : SDNode<"X86ISD::FP_TO_UINT_RND",  SDTFloatToIntRnd>;
+def X86cvtp2IntRnd      : SDNode<"X86ISD::CVTP2SI_RND",  SDTFloatToIntRnd>;
+def X86cvtp2UIntRnd     : SDNode<"X86ISD::CVTP2UI_RND",  SDTFloatToIntRnd>;
 
 // Vector without rounding mode
-def X86cvtp2Int      : SDNode<"X86ISD::FP_TO_SINT_RND",  SDTFloatToInt>;
-def X86cvtp2UInt     : SDNode<"X86ISD::FP_TO_UINT_RND",  SDTFloatToInt>;
+def X86cvtp2Int      : SDNode<"X86ISD::CVTP2SI",  SDTFloatToInt>;
+def X86cvtp2UInt     : SDNode<"X86ISD::CVTP2UI",  SDTFloatToInt>;
 
 def X86cvtph2ps     : SDNode<"X86ISD::CVTPH2PS",
                               SDTypeProfile<1, 2, [SDTCVecEltisVT<0, f32>,

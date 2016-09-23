@@ -494,15 +494,19 @@ namespace llvm {
       COMPRESS,
       EXPAND,
 
-      // Convert Unsigned/Integer to Scalar Floating-Point Value
-      // with rounding mode.
-      SINT_TO_FP_RND,
-      UINT_TO_FP_RND,
+      // Convert Unsigned/Integer to Floating-Point Value with rounding mode.
+      SINT_TO_FP_RND, UINT_TO_FP_RND,
+      SCALAR_SINT_TO_FP_RND, SCALAR_UINT_TO_FP_RND,
 
       // Vector float/double to signed/unsigned integer.
-      FP_TO_SINT_RND, FP_TO_UINT_RND,
+      CVTP2SI, CVTP2UI, CVTP2SI_RND, CVTP2UI_RND,
       // Scalar float/double to signed/unsigned integer.
-      SCALAR_FP_TO_SINT_RND, SCALAR_FP_TO_UINT_RND,
+      CVTS2SI_RND, CVTS2UI_RND,
+
+      // Vector float/double to signed/unsigned integer with truncation.
+      CVTTP2SI_RND, CVTTP2UI_RND,
+      // Scalar float/double to signed/unsigned integer with truncation.
+      CVTTS2SI_RND, CVTTS2UI_RND,
 
       // Save xmm argument registers to the stack, according to %al. An operator
       // is needed so that this can be expanded with control flow.
