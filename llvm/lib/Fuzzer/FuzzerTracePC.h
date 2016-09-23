@@ -50,6 +50,9 @@ class TracePC {
     memset(Counters, 0, sizeof(Counters));
   }
 
+  void UpdateFeatureSet(size_t CurrentElementIdx, size_t CurrentElementSize);
+  void PrintFeatureSet();
+
   void ResetGuards();
 
   void PrintModuleInfo();
@@ -84,6 +87,15 @@ private:
 
   ValueBitMap CounterMap;
   ValueBitMap ValueProfileMap;
+
+  struct Feature {
+    size_t Count;
+    size_t SmallestElementIdx;
+    size_t SmallestElementSize;
+  };
+
+  static const size_t kFeatureSetSize = ValueBitMap::kNumberOfItems;
+  Feature FeatureSet[kFeatureSetSize];
 };
 
 extern TracePC TPC;

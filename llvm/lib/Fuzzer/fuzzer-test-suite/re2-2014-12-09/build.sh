@@ -2,6 +2,7 @@
 
 [ -e $(basename $0) ] && echo "PLEASE USE THIS SCRIPT FROM ANOTHER DIR" && exit 1
 SCRIPT_DIR=$(dirname $0)
+EXECUTABLE_NAME_BASE=$(basename $SCRIPT_DIR)
 LIBFUZZER_SRC=$(dirname $(dirname $SCRIPT_DIR))
 
 FUZZ_CXXFLAGS="-O2 -g -fsanitize=address -fsanitize-coverage=trace-pc-guard,trace-cmp,trace-gep,trace-div"
@@ -18,4 +19,4 @@ build_lib() {
 get
 build_lib
 $LIBFUZZER_SRC/build.sh
-clang++ -g $SCRIPT_DIR/target.cc -I  BUILD BUILD/obj/libre2.a libFuzzer.a  $FUZZ_CXXFLAGS
+clang++ -g $SCRIPT_DIR/target.cc -I  BUILD BUILD/obj/libre2.a libFuzzer.a  $FUZZ_CXXFLAGS -o $EXECUTABLE_NAME_BASE
