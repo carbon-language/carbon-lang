@@ -158,13 +158,15 @@ AArch64RegisterBankInfo::getInstrAlternativeMappings(
     InstructionMapping FPRMapping(/*ID*/ 2, /*Cost*/ 1, /*NumOperands*/ 3);
     for (unsigned Idx = 0; Idx != 3; ++Idx) {
       GPRMapping.setOperandMapping(
-          Idx, ValueMapping{&getPartialMapping(
-                                0, Size, getRegBank(AArch64::GPRRegBankID)),
-                            1});
+          Idx,
+          ValueMapping{&AArch64::PartMappings[AArch64::getRegBankBaseIdx(Size) +
+                                              AArch64::FirstGPR],
+                       1});
       FPRMapping.setOperandMapping(
-          Idx, ValueMapping{&getPartialMapping(
-                                0, Size, getRegBank(AArch64::FPRRegBankID)),
-                            1});
+          Idx,
+          ValueMapping{&AArch64::PartMappings[AArch64::getRegBankBaseIdx(Size) +
+                                              AArch64::FirstFPR],
+                       1});
     }
     AltMappings.emplace_back(std::move(GPRMapping));
     AltMappings.emplace_back(std::move(FPRMapping));
@@ -225,22 +227,28 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       InstructionMapping{DefaultMappingID, 1, MI.getNumOperands()};
 
   // Track the size and bank of each register.  We don't do partial mappings.
-  SmallVector<unsigned, 4> OpSizes(MI.getNumOperands());
-  SmallVector<unsigned, 4> OpBanks(MI.getNumOperands());
+  SmallVector<unsigned, 4> OpBaseIdx(MI.getNumOperands());
+  SmallVector<unsigned, 4> OpFinalIdx(MI.getNumOperands());
   for (unsigned Idx = 0; Idx < MI.getNumOperands(); ++Idx) {
     auto &MO = MI.getOperand(Idx);
     if (!MO.isReg())
       continue;
 
     LLT Ty = MRI.getType(MO.getReg());
-    OpSizes[Idx] = Ty.getSizeInBits();
+    unsigned RBIdx = AArch64::getRegBankBaseIdx(Ty.getSizeInBits());
+    OpBaseIdx[Idx] = RBIdx;
 
     // As a top-level guess, vectors go in FPRs, scalars and pointers in GPRs.
     // For floating-point instructions, scalars go in FPRs.
-    if (Ty.isVector() || isPreISelGenericFloatingPointOpcode(Opc))
-      OpBanks[Idx] = AArch64::FPRRegBankID;
-    else
-      OpBanks[Idx] = AArch64::GPRRegBankID;
+    if (Ty.isVector() || isPreISelGenericFloatingPointOpcode(Opc)) {
+      assert(RBIdx < (AArch64::LastFPR - AArch64::FirstFPR) + 1 &&
+             "Index out of bound");
+      OpFinalIdx[Idx] = AArch64::FirstFPR + RBIdx;
+    } else {
+      assert(RBIdx < (AArch64::LastGPR - AArch64::FirstGPR) + 1 &&
+             "Index out of bound");
+      OpFinalIdx[Idx] = AArch64::FirstGPR + RBIdx;
+    }
   }
 
   // Some of the floating-point instructions have mixed GPR and FPR operands:
@@ -248,17 +256,20 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   switch (Opc) {
   case TargetOpcode::G_SITOFP:
   case TargetOpcode::G_UITOFP: {
-    OpBanks = {AArch64::FPRRegBankID, AArch64::GPRRegBankID};
+    OpFinalIdx = {OpBaseIdx[0] + AArch64::FirstFPR,
+                  OpBaseIdx[1] + AArch64::FirstGPR};
     break;
   }
   case TargetOpcode::G_FPTOSI:
   case TargetOpcode::G_FPTOUI: {
-    OpBanks = {AArch64::GPRRegBankID, AArch64::FPRRegBankID};
+    OpFinalIdx = {OpBaseIdx[0] + AArch64::FirstGPR,
+                  OpBaseIdx[1] + AArch64::FirstFPR};
     break;
   }
   case TargetOpcode::G_FCMP: {
-    OpBanks = {AArch64::GPRRegBankID, /* Predicate */ 0, AArch64::FPRRegBankID,
-               AArch64::FPRRegBankID};
+    OpFinalIdx = {OpBaseIdx[0] + AArch64::FirstGPR, /* Predicate */ 0,
+                  OpBaseIdx[2] + AArch64::FirstFPR,
+                  OpBaseIdx[3] + AArch64::FirstFPR};
     break;
   }
   }
@@ -267,9 +278,7 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   for (unsigned Idx = 0; Idx < MI.getNumOperands(); ++Idx)
     if (MI.getOperand(Idx).isReg())
       Mapping.setOperandMapping(
-          Idx, ValueMapping{&getPartialMapping(0, OpSizes[Idx],
-                                               getRegBank(OpBanks[Idx])),
-                            1});
+          Idx, ValueMapping{&AArch64::PartMappings[OpFinalIdx[Idx]], 1});
 
   return Mapping;
 }
