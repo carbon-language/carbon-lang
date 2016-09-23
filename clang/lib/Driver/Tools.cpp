@@ -41,6 +41,7 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Support/TargetParser.h"
 
 #ifdef LLVM_ON_UNIX
@@ -2045,7 +2046,7 @@ static void AddGoldPlugin(const ToolChain &ToolChain, const ArgList &Args,
 
   if (unsigned Parallelism = getLTOParallelism(Args, D))
     CmdArgs.push_back(Args.MakeArgString(Twine("-plugin-opt=jobs=") +
-                                         std::to_string(Parallelism)));
+                                         llvm::to_string(Parallelism)));
 
   // If an explicit debugger tuning argument appeared, pass it along.
   if (Arg *A = Args.getLastArg(options::OPT_gTune_Group,
@@ -8079,7 +8080,7 @@ void darwin::Linker::ConstructJob(Compilation &C, const JobAction &JA,
           getLTOParallelism(Args, getToolChain().getDriver())) {
     CmdArgs.push_back("-mllvm");
     CmdArgs.push_back(
-        Args.MakeArgString(Twine("-threads=") + std::to_string(Parallelism)));
+        Args.MakeArgString(Twine("-threads=") + llvm::to_string(Parallelism)));
   }
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
