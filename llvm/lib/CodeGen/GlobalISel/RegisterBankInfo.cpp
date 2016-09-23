@@ -13,6 +13,7 @@
 #include "llvm/CodeGen/GlobalISel/RegisterBankInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -31,6 +32,11 @@
 #define DEBUG_TYPE "registerbankinfo"
 
 using namespace llvm;
+
+STATISTIC(NumPartialMappingsCreated,
+          "Number of partial mappings dynamically created");
+STATISTIC(NumPartialMappingsAccessed,
+          "Number of partial mappings dynamically accessed");
 
 const unsigned RegisterBankInfo::DefaultMappingID = UINT_MAX;
 const unsigned RegisterBankInfo::InvalidMappingID = UINT_MAX - 1;
@@ -309,10 +315,15 @@ RegisterBankInfo::getInstrMappingImpl(const MachineInstr &MI) const {
 const RegisterBankInfo::PartialMapping &
 RegisterBankInfo::getPartialMapping(unsigned StartIdx, unsigned Length,
                                     const RegisterBank &RegBank) const {
+  ++NumPartialMappingsAccessed;
+
   hash_code Hash = hash_combine(StartIdx, Length, RegBank.getID());
   const auto &It = MapOfPartialMappings.find(Hash);
   if (It != MapOfPartialMappings.end())
     return It->second;
+
+  ++NumPartialMappingsCreated;
+
   PartialMapping &PartMapping = MapOfPartialMappings[Hash];
   PartMapping = PartialMapping{StartIdx, Length, RegBank};
   return PartMapping;
