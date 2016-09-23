@@ -81,6 +81,53 @@ AArch64RegisterBankInfo::AArch64RegisterBankInfo(const TargetRegisterInfo &TRI)
          "Class not added?");
   assert(RBCCR.getSize() == 32 && "CCR should hold up to 32-bit");
 
+  // Check that the TableGen'ed like file is in sync we our expectations.
+  // First, the Idx.
+  assert(AArch64::PartialMappingIdx::GPR32 ==
+             AArch64::PartialMappingIdx::FirstGPR &&
+         "GPR32 index not first in the GPR list");
+  assert(AArch64::PartialMappingIdx::GPR64 ==
+             AArch64::PartialMappingIdx::LastGPR &&
+         "GPR64 index not last in the GPR list");
+  assert(AArch64::PartialMappingIdx::FirstGPR <=
+             AArch64::PartialMappingIdx::LastGPR &&
+         "GPR list is backward");
+  assert(AArch64::PartialMappingIdx::FPR32 ==
+             AArch64::PartialMappingIdx::FirstFPR &&
+         "FPR32 index not first in the FPR list");
+  assert(AArch64::PartialMappingIdx::FPR512 ==
+             AArch64::PartialMappingIdx::LastFPR &&
+         "FPR512 index not last in the FPR list");
+  assert(AArch64::PartialMappingIdx::FirstFPR <=
+             AArch64::PartialMappingIdx::LastFPR &&
+         "FPR list is backward");
+  assert(AArch64::PartialMappingIdx::FPR32 + 1 ==
+             AArch64::PartialMappingIdx::FPR64 &&
+         AArch64::PartialMappingIdx::FPR64 + 1 ==
+             AArch64::PartialMappingIdx::FPR128 &&
+         AArch64::PartialMappingIdx::FPR128 + 1 ==
+             AArch64::PartialMappingIdx::FPR256 &&
+         AArch64::PartialMappingIdx::FPR256 + 1 ==
+             AArch64::PartialMappingIdx::FPR512 &&
+         "FPR indices not properly ordered");
+// Now, the content.
+#define CHECK_PARTIALMAP(Idx, ValStartIdx, ValLength, RB)                      \
+  do {                                                                         \
+    const PartialMapping &Map =                                                \
+        AArch64::PartMappings[AArch64::PartialMappingIdx::Idx];                \
+    (void) Map;                                                                \
+    assert(Map.StartIdx == ValStartIdx && Map.Length == ValLength &&           \
+           Map.RegBank == &RB && #Idx " is incorrectly initialized");          \
+  } while (0)
+
+  CHECK_PARTIALMAP(GPR32, 0, 32, RBGPR);
+  CHECK_PARTIALMAP(GPR64, 0, 64, RBGPR);
+  CHECK_PARTIALMAP(FPR32, 0, 32, RBFPR);
+  CHECK_PARTIALMAP(FPR64, 0, 64, RBFPR);
+  CHECK_PARTIALMAP(FPR128, 0, 128, RBFPR);
+  CHECK_PARTIALMAP(FPR256, 0, 256, RBFPR);
+  CHECK_PARTIALMAP(FPR512, 0, 512, RBFPR);
+
   assert(verify(TRI) && "Invalid register bank information");
 }
 
