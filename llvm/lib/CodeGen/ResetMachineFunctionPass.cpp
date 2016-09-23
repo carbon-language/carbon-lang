@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -18,6 +19,8 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "reset-machine-function"
+
+STATISTIC(NumFunctionsReset, "Number of functions reset");
 
 namespace {
   class ResetMachineFunction : public MachineFunctionPass {
@@ -38,6 +41,7 @@ namespace {
       if (MF.getProperties().hasProperty(
               MachineFunctionProperties::Property::FailedISel)) {
         DEBUG(dbgs() << "Reseting: " << MF.getName() << '\n');
+        ++NumFunctionsReset;
         MF.reset();
         if (EmitFallbackDiag) {
           const Function &F = *MF.getFunction();
