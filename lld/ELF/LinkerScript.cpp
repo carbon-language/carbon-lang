@@ -1086,8 +1086,7 @@ static int precedence(StringRef Op) {
       .Cases("*", "/", 5)
       .Cases("+", "-", 4)
       .Cases("<<", ">>", 3)
-      .Cases("<", "<=", ">", ">=", 2) // Cases takes up to four cases.
-      .Cases("==", "!=", 2)
+      .Cases("<", "<=", ">", ">=", "==", "!=", 2)
       .Cases("&", "|", 1)
       .Default(-1);
 }
