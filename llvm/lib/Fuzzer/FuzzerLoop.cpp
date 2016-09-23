@@ -68,7 +68,6 @@ void Fuzzer::ResetCounters() {
   }
   if (EF->__sanitizer_get_coverage_pc_buffer_pos)
     PcBufferPos = EF->__sanitizer_get_coverage_pc_buffer_pos();
-  TPC.ResetNewPCIDs();
 }
 
 void Fuzzer::PrepareCounters(Fuzzer::Coverage *C) {
@@ -163,7 +162,8 @@ Fuzzer::Fuzzer(UserCallback CB, InputCorpus &Corpus, MutationDispatcher &MD,
   assert(!F);
   F = this;
   TPC.ResetTotalPCCoverage();
-  TPC.Reset();
+  TPC.ResetMaps();
+  TPC.ResetGuards();
   ResetCoverage();
   IsMyThread = true;
   if (Options.DetectLeaks && EF->__sanitizer_install_malloc_and_free_hooks)
@@ -470,6 +470,7 @@ void Fuzzer::ExecuteCallback(const uint8_t *Data, size_t Size) {
   AllocTracer.Start();
   UnitStartTime = system_clock::now();
   ResetCounters();  // Reset coverage right before the callback.
+  TPC.ResetMaps();
   int Res = CB(DataCopy, Size);
   UnitStopTime = system_clock::now();
   (void)Res;
@@ -565,7 +566,8 @@ UnitVector Fuzzer::FindExtraUnits(const UnitVector &Initial,
   size_t OldSize = Res.size();
   for (int Iter = 0; Iter < 10; Iter++) {
     ShuffleCorpus(&Res);
-    TPC.Reset();
+    TPC.ResetMaps();
+    TPC.ResetGuards();
     ResetCoverage();
 
     for (auto &U : Initial)

@@ -43,12 +43,13 @@ class TracePC {
   void ResetNewPCIDs() { NumNewPCIDs = 0; }
   uintptr_t GetPCbyPCID(uintptr_t PCID) { return PCs[PCID]; }
 
-  void Reset() {
+  void ResetMaps() {
     NumNewPCIDs = 0;
     CounterMap.Reset();
     ValueProfileMap.Reset();
-    ResetGuards();
   }
+
+  void ResetGuards();
 
   void PrintModuleInfo();
 
@@ -66,7 +67,6 @@ private:
     NewPCIDs[(NumNewPCIDs++) % kMaxNewPCIDs] = PCID;
   }
 
-  void ResetGuards();
 
   struct Module {
     uintptr_t *Start, *Stop;
