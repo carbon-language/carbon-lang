@@ -400,7 +400,7 @@ unsigned RegisterBankInfo::getSizeInBits(unsigned Reg,
 //------------------------------------------------------------------------------
 // Helper classes implementation.
 //------------------------------------------------------------------------------
-void RegisterBankInfo::PartialMapping::dump() const {
+LLVM_DUMP_METHOD void RegisterBankInfo::PartialMapping::dump() const {
   print(dbgs());
   dbgs() << '\n';
 }
@@ -451,7 +451,7 @@ bool RegisterBankInfo::ValueMapping::verify(unsigned MeaningFulBitWidth) const {
   return true;
 }
 
-void RegisterBankInfo::ValueMapping::dump() const {
+LLVM_DUMP_METHOD void RegisterBankInfo::ValueMapping::dump() const {
   print(dbgs());
   dbgs() << '\n';
 }
@@ -499,7 +499,7 @@ bool RegisterBankInfo::InstructionMapping::verify(
   return true;
 }
 
-void RegisterBankInfo::InstructionMapping::dump() const {
+LLVM_DUMP_METHOD void RegisterBankInfo::InstructionMapping::dump() const {
   print(dbgs());
   dbgs() << '\n';
 }
@@ -615,7 +615,7 @@ RegisterBankInfo::OperandsMapper::getVRegs(unsigned OpIdx,
   return Res;
 }
 
-void RegisterBankInfo::OperandsMapper::dump() const {
+LLVM_DUMP_METHOD void RegisterBankInfo::OperandsMapper::dump() const {
   print(dbgs(), true);
   dbgs() << '\n';
 }
