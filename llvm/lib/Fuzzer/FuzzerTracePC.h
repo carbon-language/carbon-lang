@@ -23,11 +23,12 @@ class TracePC {
   void HandleInit(uintptr_t *start, uintptr_t *stop);
   void HandleCallerCallee(uintptr_t Caller, uintptr_t Callee);
   void HandleValueProfile(size_t Value) { ValueProfileMap.AddValue(Value); }
-  size_t GetTotalCoverage() { return TotalCoverage; }
+  size_t GetTotalPCCoverage() { return TotalPCCoverage; }
+  void ResetTotalPCCoverage() { TotalPCCoverage = 0; }
   void SetUseCounters(bool UC) { UseCounters = UC; }
   void SetUseValueProfile(bool VP) { UseValueProfile = VP; }
   bool UpdateCounterMap(ValueBitMap *MaxCounterMap) {
-    return UseCounters && MaxCounterMap->MergeFrom(CounterMap);
+    return MaxCounterMap->MergeFrom(CounterMap);
   }
   bool UpdateValueProfileMap(ValueBitMap *MaxValueProfileMap) {
     return UseValueProfile && MaxValueProfileMap->MergeFrom(ValueProfileMap);
@@ -43,10 +44,8 @@ class TracePC {
   uintptr_t GetPCbyPCID(uintptr_t PCID) { return PCs[PCID]; }
 
   void Reset() {
-    TotalCoverage = 0;
     NumNewPCIDs = 0;
     CounterMap.Reset();
-    TotalCoverageMap.Reset();
     ResetGuards();
   }
 
@@ -57,7 +56,7 @@ class TracePC {
 private:
   bool UseCounters = false;
   bool UseValueProfile = false;
-  size_t TotalCoverage = 0;
+  size_t TotalPCCoverage = 0;
 
   static const size_t kMaxNewPCIDs = 64;
   uintptr_t NewPCIDs[kMaxNewPCIDs];
@@ -84,7 +83,6 @@ private:
 
   ValueBitMap CounterMap;
   ValueBitMap ValueProfileMap;
-  ValueBitMap TotalCoverageMap;
 };
 
 extern TracePC TPC;

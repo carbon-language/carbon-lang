@@ -85,8 +85,7 @@ bool Fuzzer::RecordMaxCoverage(Fuzzer::Coverage *C) {
 
   TPC.FinalizeTrace();
 
-  uint64_t NewBlockCoverage =
-      EF->__sanitizer_get_total_unique_coverage() + TPC.GetTotalCoverage();
+  uint64_t NewBlockCoverage = EF->__sanitizer_get_total_unique_coverage();
   if (NewBlockCoverage > C->BlockCoverage) {
     Res = true;
     C->BlockCoverage = NewBlockCoverage;
@@ -163,6 +162,7 @@ Fuzzer::Fuzzer(UserCallback CB, InputCorpus &Corpus, MutationDispatcher &MD,
   InitializeTraceState();
   assert(!F);
   F = this;
+  TPC.ResetTotalPCCoverage();
   ResetCoverage();
   IsMyThread = true;
   if (Options.DetectLeaks && EF->__sanitizer_install_malloc_and_free_hooks)
@@ -327,6 +327,8 @@ void Fuzzer::PrintStats(const char *Where, const char *End) {
   Printf("#%zd\t%s", TotalNumberOfRuns, Where);
   if (MaxCoverage.BlockCoverage)
     Printf(" cov: %zd", MaxCoverage.BlockCoverage);
+  if (size_t N = TPC.GetTotalPCCoverage())
+    Printf(" cov: %zd", N);
   if (MaxCoverage.VPMap.GetNumBitsSinceLastMerge())
     Printf(" vp: %zd", MaxCoverage.VPMap.GetNumBitsSinceLastMerge());
   if (auto TB = MaxCoverage.CounterBitmapBits)
