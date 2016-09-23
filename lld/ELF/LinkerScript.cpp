@@ -1085,20 +1085,12 @@ void ScriptParser::readSections() {
 
 static int precedence(StringRef Op) {
   return StringSwitch<int>(Op)
-      .Case("*", 5)
-      .Case("/", 5)
-      .Case("+", 4)
-      .Case("-", 4)
-      .Case("<<", 3)
-      .Case(">>", 3)
-      .Case("<", 2)
-      .Case(">", 2)
-      .Case(">=", 2)
-      .Case("<=", 2)
-      .Case("==", 2)
-      .Case("!=", 2)
-      .Case("&", 1)
-      .Case("|", 1)
+      .Cases("*", "/", 5)
+      .Cases("+", "-", 4)
+      .Cases("<<", ">>", 3)
+      .Cases("<", "<=", ">", ">=", 2) // Cases takes up to four cases.
+      .Cases("==", "!=", 2)
+      .Cases("&", "|", 1)
       .Default(-1);
 }
 
