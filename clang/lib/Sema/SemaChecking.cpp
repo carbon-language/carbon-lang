@@ -1590,15 +1590,9 @@ static bool SemaBuiltinCpuSupports(Sema &S, CallExpr *TheCall) {
   return false;
 }
 
-bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
-  int i = 0, l = 0, u = 0;
+static bool isX86_64Builtin(unsigned BuiltinID) {
+  // These builtins only work on x86-64 targets.
   switch (BuiltinID) {
-  default:
-    return false;
-  case X86::BI__builtin_cpu_supports:
-    return SemaBuiltinCpuSupports(*this, TheCall);
-  case X86::BI__builtin_ms_va_start:
-    return SemaBuiltinMSVAStart(TheCall);
   case X86::BI__builtin_ia32_addcarryx_u64:
   case X86::BI__builtin_ia32_addcarry_u64:
   case X86::BI__builtin_ia32_subborrow_u64:
@@ -1641,14 +1635,32 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case X86::BI__builtin_ia32_cvtsi2ss64:
   case X86::BI__builtin_ia32_cvtusi2sd64:
   case X86::BI__builtin_ia32_cvtusi2ss64:
-  case X86::BI__builtin_ia32_rdseed64_step: {
-    // These builtins only work on x86-64 targets.
-    const llvm::Triple &TT = Context.getTargetInfo().getTriple();
-    if (TT.getArch() != llvm::Triple::x86_64)
-      return Diag(TheCall->getCallee()->getLocStart(),
-                  diag::err_x86_builtin_32_bit_tgt);
-    return false;
+  case X86::BI__builtin_ia32_rdseed64_step:
+    return true;
   }
+
+  return false;
+}
+
+bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
+  if (BuiltinID == X86::BI__builtin_cpu_supports)
+    return SemaBuiltinCpuSupports(*this, TheCall);
+
+  if (BuiltinID == X86::BI__builtin_ms_va_start)
+    return SemaBuiltinMSVAStart(TheCall);
+
+  // Check for 64-bit only builtins on a 32-bit target.
+  const llvm::Triple &TT = Context.getTargetInfo().getTriple();
+  if (TT.getArch() != llvm::Triple::x86_64 && isX86_64Builtin(BuiltinID))
+    return Diag(TheCall->getCallee()->getLocStart(),
+                diag::err_x86_builtin_32_bit_tgt);
+
+  // For intrinsics which take an immediate value as part of the instruction,
+  // range check them here.
+  int i = 0, l = 0, u = 0;
+  switch (BuiltinID) {
+  default:
+    return false;
   case X86::BI__builtin_ia32_extractf64x4_mask:
   case X86::BI__builtin_ia32_extracti64x4_mask:
   case X86::BI__builtin_ia32_extractf32x8_mask:
