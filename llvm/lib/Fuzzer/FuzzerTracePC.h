@@ -46,6 +46,7 @@ class TracePC {
   void Reset() {
     NumNewPCIDs = 0;
     CounterMap.Reset();
+    ValueProfileMap.Reset();
     ResetGuards();
   }
 
