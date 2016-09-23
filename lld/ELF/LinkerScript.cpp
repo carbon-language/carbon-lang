@@ -1081,10 +1081,12 @@ void ScriptParser::readSections() {
 
 static int precedence(StringRef Op) {
   return StringSwitch<int>(Op)
-      .Case("*", 4)
-      .Case("/", 4)
-      .Case("+", 3)
-      .Case("-", 3)
+      .Case("*", 5)
+      .Case("/", 5)
+      .Case("+", 4)
+      .Case("-", 4)
+      .Case("<<", 3)
+      .Case(">>", 3)
       .Case("<", 2)
       .Case(">", 2)
       .Case(">=", 2)
@@ -1361,6 +1363,10 @@ static Expr combine(StringRef Op, Expr L, Expr R) {
     return [=](uint64_t Dot) { return L(Dot) + R(Dot); };
   if (Op == "-")
     return [=](uint64_t Dot) { return L(Dot) - R(Dot); };
+  if (Op == "<<")
+    return [=](uint64_t Dot) { return L(Dot) << R(Dot); };
+  if (Op == ">>")
+    return [=](uint64_t Dot) { return L(Dot) >> R(Dot); };
   if (Op == "<")
     return [=](uint64_t Dot) { return L(Dot) < R(Dot); };
   if (Op == ">")
