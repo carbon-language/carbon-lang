@@ -27,7 +27,7 @@ void
 test(S s, typename S::size_type pos1, SV sv, typename S::size_type pos2,
      typename S::size_type n, S expected)
 {
-    static_assert(!std::is_same<S, SV>::value, "");
+    static_assert((!std::is_same<S, SV>::value), "");
     typename S::size_type old_size = s.size();
     S s0 = s;
     try
@@ -48,7 +48,7 @@ template <class S, class SV>
 void
 test_npos(S s, typename S::size_type pos1, SV sv, typename S::size_type pos2, S expected)
 {
-    static_assert(!std::is_same<S, SV>::value, "");
+    static_assert((!std::is_same<S, SV>::value), "");
     typename S::size_type old_size = s.size();
     S s0 = s;
     try

@@ -30,7 +30,7 @@ test(S s, typename S::size_type pos1, typename S::size_type n1,
      SV sv, typename S::size_type pos2, typename S::size_type n2,
      S expected)
 {
-    static_assert(!std::is_same<S, SV>::value, "");
+    static_assert((!std::is_same<S, SV>::value), "");
     typename S::size_type old_size = s.size();
     S s0 = s;
     try
@@ -56,7 +56,7 @@ test_npos(S s, typename S::size_type pos1, typename S::size_type n1,
           SV sv, typename S::size_type pos2,
           S expected)
 {
-    static_assert(!std::is_same<S, SV>::value, "");
+    static_assert((!std::is_same<S, SV>::value), "");
     typename S::size_type old_size = s.size();
     S s0 = s;
     try

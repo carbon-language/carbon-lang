@@ -36,7 +36,7 @@ void
 test(const S& s, typename S::size_type pos1, typename S::size_type n1,
      SV sv,      typename S::size_type pos2, typename S::size_type n2, int x)
 {
-    static_assert(!std::is_same<S, SV>::value, "");
+    static_assert((!std::is_same<S, SV>::value), "");
     try
     {
         assert(sign(s.compare(pos1, n1, sv, pos2, n2)) == sign(x));
@@ -54,7 +54,7 @@ void
 test_npos(const S& s, typename S::size_type pos1, typename S::size_type n1,
           SV sv,      typename S::size_type pos2, int x)
 {
-    static_assert(!std::is_same<S, SV>::value, "");
+    static_assert((!std::is_same<S, SV>::value), "");
     try
     {
         assert(sign(s.compare(pos1, n1, sv, pos2)) == sign(x));
