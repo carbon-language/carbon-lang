@@ -26424,13 +26424,18 @@ static SDValue combineShuffle(SDNode *N, SelectionDAG &DAG,
       bool CanFold = false;
       switch (Opcode) {
       default : break;
-      case ISD::ADD :
-      case ISD::FADD :
-      case ISD::SUB :
-      case ISD::FSUB :
-      case ISD::MUL :
-      case ISD::FMUL :
-        CanFold = true;
+      case ISD::ADD:
+      case ISD::SUB:
+      case ISD::MUL:
+        // isOperationLegal lies for integer ops on floating point types.
+        CanFold = VT.isInteger();
+        break;
+      case ISD::FADD:
+      case ISD::FSUB:
+      case ISD::FMUL:
+        // isOperationLegal lies for floating point ops on integer types.
+        CanFold = VT.isFloatingPoint();
+        break;
       }
 
       unsigned SVTNumElts = SVT.getVectorNumElements();
