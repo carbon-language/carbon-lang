@@ -3297,6 +3297,7 @@ static bool isKnownNonNullFromDominatingCondition(const Value *V,
                                                   const Instruction *CtxI,
                                                   const DominatorTree *DT) {
   assert(V->getType()->isPointerTy() && "V must be pointer type");
+  assert(!isa<ConstantData>(V) && "Did not expect ConstantPointerNull");
 
   unsigned NumUsesExplored = 0;
   for (auto *U : V->users()) {
@@ -3333,6 +3334,9 @@ static bool isKnownNonNullFromDominatingCondition(const Value *V,
 
 bool llvm::isKnownNonNullAt(const Value *V, const Instruction *CtxI,
                             const DominatorTree *DT) {
+  if (isa<ConstantPointerNull>(V) || isa<UndefValue>(V))
+    return false;
+
   if (isKnownNonNull(V))
     return true;
 
