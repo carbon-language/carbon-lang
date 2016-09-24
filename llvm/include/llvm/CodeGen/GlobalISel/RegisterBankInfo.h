@@ -298,7 +298,7 @@ protected:
 
   /// Keep dynamically allocated PartialMapping in a separate map.
   /// This shouldn't be needed when everything gets TableGen'ed.
-  mutable DenseMap<unsigned, PartialMapping> MapOfPartialMappings;
+  mutable DenseMap<unsigned, PartialMapping *> MapOfPartialMappings;
 
   /// Create a RegisterBankInfo that can accomodate up to \p NumRegBanks
   /// RegisterBank instances.
@@ -401,7 +401,7 @@ protected:
   }
 
 public:
-  virtual ~RegisterBankInfo() {}
+  virtual ~RegisterBankInfo();
 
   /// Get the register bank identified by \p ID.
   const RegisterBank &getRegBank(unsigned ID) const {

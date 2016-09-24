@@ -54,6 +54,11 @@ RegisterBankInfo::RegisterBankInfo(RegisterBank **RegBanks,
   });
 }
 
+RegisterBankInfo::~RegisterBankInfo() {
+  for (auto It : MapOfPartialMappings)
+    delete It.second;
+}
+
 bool RegisterBankInfo::verify(const TargetRegisterInfo &TRI) const {
   DEBUG(for (unsigned Idx = 0, End = getNumRegBanks(); Idx != End; ++Idx) {
     const RegisterBank &RegBank = getRegBank(Idx);
@@ -320,13 +325,13 @@ RegisterBankInfo::getPartialMapping(unsigned StartIdx, unsigned Length,
   hash_code Hash = hash_combine(StartIdx, Length, RegBank.getID());
   const auto &It = MapOfPartialMappings.find(Hash);
   if (It != MapOfPartialMappings.end())
-    return It->second;
+    return *It->second;
 
   ++NumPartialMappingsCreated;
 
-  PartialMapping &PartMapping = MapOfPartialMappings[Hash];
-  PartMapping = PartialMapping{StartIdx, Length, RegBank};
-  return PartMapping;
+  PartialMapping *&PartMapping = MapOfPartialMappings[Hash];
+  PartMapping = new PartialMapping{StartIdx, Length, RegBank};
+  return *PartMapping;
 }
 
 RegisterBankInfo::InstructionMapping
