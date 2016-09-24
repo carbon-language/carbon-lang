@@ -31064,9 +31064,10 @@ static SDValue combineSetCC(SDNode *N, SelectionDAG &DAG,
     }
   }
 
-  // For an SSE1-only target, lower to X86ISD::CMPP early to avoid scalarization
-  // via legalization because v4i32 is not a legal type.
-  if (Subtarget.hasSSE1() && !Subtarget.hasSSE2() && VT == MVT::v4i32)
+  // For an SSE1-only target, lower a comparison of v4f32 to X86ISD::CMPP early
+  // to avoid scalarization via legalization because v4i32 is not a legal type.
+  if (Subtarget.hasSSE1() && !Subtarget.hasSSE2() && VT == MVT::v4i32 &&
+      LHS.getValueType() == MVT::v4f32)
     return LowerVSETCC(SDValue(N, 0), Subtarget, DAG);
 
   return SDValue();
