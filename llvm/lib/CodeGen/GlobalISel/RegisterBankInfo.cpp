@@ -344,7 +344,7 @@ RegisterBankInfo::getPartialMapping(unsigned StartIdx, unsigned Length,
 
   ++NumPartialMappingsCreated;
 
-  PartialMapping *&PartMapping = MapOfPartialMappings[Hash];
+  const PartialMapping *&PartMapping = MapOfPartialMappings[Hash];
   PartMapping = new PartialMapping{StartIdx, Length, RegBank};
   return *PartMapping;
 }
@@ -376,7 +376,7 @@ RegisterBankInfo::getValueMapping(const PartialMapping *BreakDown,
 
   ++NumValueMappingsCreated;
 
-  ValueMapping *&ValMapping = MapOfValueMappings[Hash];
+  const ValueMapping *&ValMapping = MapOfValueMappings[Hash];
   ValMapping = new ValueMapping{BreakDown, NumBreakDowns};
   return *ValMapping;
 }

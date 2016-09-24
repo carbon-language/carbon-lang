@@ -361,11 +361,11 @@ protected:
 
   /// Keep dynamically allocated PartialMapping in a separate map.
   /// This shouldn't be needed when everything gets TableGen'ed.
-  mutable DenseMap<unsigned, PartialMapping *> MapOfPartialMappings;
+  mutable DenseMap<unsigned, const PartialMapping *> MapOfPartialMappings;
 
   /// Keep dynamically allocated ValueMapping in a separate map.
   /// This shouldn't be needed when everything gets TableGen'ed.
-  mutable DenseMap<unsigned, ValueMapping *> MapOfValueMappings;
+  mutable DenseMap<unsigned, const ValueMapping *> MapOfValueMappings;
 
   /// Create a RegisterBankInfo that can accomodate up to \p NumRegBanks
   /// RegisterBank instances.
