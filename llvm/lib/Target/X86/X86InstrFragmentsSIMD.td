@@ -272,7 +272,7 @@ def X86select  : SDNode<"X86ISD::SELECT",
                                              SDTCisSameAs<2, 3>,
                                              SDTCisSameNumEltsAs<0, 1>]>>;
 
-def X86selects : SDNode<"X86ISD::SELECT",
+def X86selects : SDNode<"X86ISD::SELECTS",
                         SDTypeProfile<1, 3, [SDTCisVT<1, i1>,
                                              SDTCisSameAs<0, 2>,
                                              SDTCisSameAs<2, 3>]>>;
