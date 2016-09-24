@@ -3615,12 +3615,12 @@ namespace {
   /// interface all the categories for it.
   class ObjCCategoriesVisitor {
     ASTReader &Reader;
-    serialization::GlobalDeclID InterfaceID;
     ObjCInterfaceDecl *Interface;
     llvm::SmallPtrSetImpl<ObjCCategoryDecl *> &Deserialized;
-    unsigned PreviousGeneration;
     ObjCCategoryDecl *Tail;
     llvm::DenseMap<DeclarationName, ObjCCategoryDecl *> NameCategoryMap;
+    serialization::GlobalDeclID InterfaceID;
+    unsigned PreviousGeneration;
     
     void add(ObjCCategoryDecl *Cat) {
       // Only process each category once.
@@ -3663,13 +3663,13 @@ namespace {
     
   public:
     ObjCCategoriesVisitor(ASTReader &Reader,
-                          serialization::GlobalDeclID InterfaceID,
                           ObjCInterfaceDecl *Interface,
-                        llvm::SmallPtrSetImpl<ObjCCategoryDecl *> &Deserialized,
+                          llvm::SmallPtrSetImpl<ObjCCategoryDecl *> &Deserialized,
+                          serialization::GlobalDeclID InterfaceID,
                           unsigned PreviousGeneration)
-      : Reader(Reader), InterfaceID(InterfaceID), Interface(Interface),
-        Deserialized(Deserialized), PreviousGeneration(PreviousGeneration),
-        Tail(nullptr)
+      : Reader(Reader), Interface(Interface), Deserialized(Deserialized),
+        Tail(nullptr), InterfaceID(InterfaceID),
+        PreviousGeneration(PreviousGeneration)
     {
       // Populate the name -> category map with the set of known categories.
       for (auto *Cat : Interface->known_categories()) {
@@ -3724,7 +3724,7 @@ namespace {
 void ASTReader::loadObjCCategories(serialization::GlobalDeclID ID,
                                    ObjCInterfaceDecl *D,
                                    unsigned PreviousGeneration) {
-  ObjCCategoriesVisitor Visitor(*this, ID, D, CategoriesDeserialized,
+  ObjCCategoriesVisitor Visitor(*this, D, CategoriesDeserialized, ID,
                                 PreviousGeneration);
   ModuleMgr.visit(Visitor);
 }
