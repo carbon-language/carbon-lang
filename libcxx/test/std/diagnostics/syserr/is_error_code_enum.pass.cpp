@@ -9,11 +9,11 @@
 //
 // UNSUPPORTED: c++03
 
-// <future>
+// <system_error>
 
 // template <> struct is_error_code_enum<> : public false_type {};
 
-#include <future>
+#include <system_error>
 #include <string>
 #include "test_macros.h"
 
