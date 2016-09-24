@@ -146,13 +146,13 @@ namespace clang {
 
     /// Results from loading a RedeclarableDecl.
     class RedeclarableResult {
-      GlobalDeclID FirstID;
       Decl *MergeWith;
+      GlobalDeclID FirstID;
       bool IsKeyDecl;
 
     public:
-      RedeclarableResult(GlobalDeclID FirstID, Decl *MergeWith, bool IsKeyDecl)
-          : FirstID(FirstID), MergeWith(MergeWith), IsKeyDecl(IsKeyDecl) {}
+      RedeclarableResult(Decl *MergeWith, GlobalDeclID FirstID, bool IsKeyDecl)
+        : MergeWith(MergeWith), FirstID(FirstID), IsKeyDecl(IsKeyDecl) {}
 
       /// \brief Retrieve the first ID.
       GlobalDeclID getFirstID() const { return FirstID; }
@@ -2311,7 +2311,7 @@ ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   if (IsFirstLocalDecl)
     Reader.PendingDeclChains.push_back(std::make_pair(DAsT, RedeclOffset));
 
-  return RedeclarableResult(FirstDeclID, MergeWith, IsKeyDecl);
+  return RedeclarableResult(MergeWith, FirstDeclID, IsKeyDecl);
 }
 
 /// \brief Attempts to merge the given declaration (D) with another declaration
@@ -2353,9 +2353,10 @@ void ASTDeclReader::mergeTemplatePattern(RedeclarableTemplateDecl *D,
                                          DeclID DsID, bool IsKeyDecl) {
   auto *DPattern = D->getTemplatedDecl();
   auto *ExistingPattern = Existing->getTemplatedDecl();
-  RedeclarableResult Result(DPattern->getCanonicalDecl()->getGlobalID(),
-                            /*MergeWith*/ ExistingPattern, IsKeyDecl);
-
+  RedeclarableResult Result(/*MergeWith*/ ExistingPattern,  
+                            DPattern->getCanonicalDecl()->getGlobalID(), 
+                            IsKeyDecl);
+  
   if (auto *DClass = dyn_cast<CXXRecordDecl>(DPattern)) {
     // Merge with any existing definition.
     // FIXME: This is duplicated in several places. Refactor.
