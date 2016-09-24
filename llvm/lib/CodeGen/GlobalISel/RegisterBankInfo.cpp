@@ -37,6 +37,10 @@ STATISTIC(NumPartialMappingsCreated,
           "Number of partial mappings dynamically created");
 STATISTIC(NumPartialMappingsAccessed,
           "Number of partial mappings dynamically accessed");
+STATISTIC(NumValueMappingsCreated,
+          "Number of value mappings dynamically created");
+STATISTIC(NumValueMappingsAccessed,
+          "Number of value mappings dynamically accessed");
 
 const unsigned RegisterBankInfo::DefaultMappingID = UINT_MAX;
 const unsigned RegisterBankInfo::InvalidMappingID = UINT_MAX - 1;
@@ -364,9 +368,13 @@ RegisterBankInfo::getValueMapping(const PartialMapping *BreakDown,
     Hash = hash_combine_range(Hashes.begin(), Hashes.end());
   }
 
+  ++NumValueMappingsAccessed;
+
   const auto &It = MapOfValueMappings.find(Hash);
   if (It != MapOfValueMappings.end())
     return *It->second;
+
+  ++NumValueMappingsCreated;
 
   ValueMapping *&ValMapping = MapOfValueMappings[Hash];
   ValMapping = new ValueMapping{BreakDown, NumBreakDowns};
