@@ -1502,6 +1502,14 @@ void computeKnownBits(const Value *V, APInt &KnownZero, APInt &KnownOne,
   // Start out not knowing anything.
   KnownZero.clearAllBits(); KnownOne.clearAllBits();
 
+  // We can't imply anything about undefs.
+  if (isa<UndefValue>(V))
+    return;
+
+  // There's no point in looking through other users of ConstantData for
+  // assumptions.  Confirm that we've handled them all.
+  assert(!isa<ConstantData>(V) && "Unhandled constant data!");
+
   // Limit search depth.
   // All recursive calls that increase depth must come after this.
   if (Depth == MaxDepth)
