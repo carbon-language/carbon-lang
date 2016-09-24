@@ -57,6 +57,8 @@ RegisterBankInfo::RegisterBankInfo(RegisterBank **RegBanks,
 RegisterBankInfo::~RegisterBankInfo() {
   for (auto It : MapOfPartialMappings)
     delete It.second;
+  for (auto It : MapOfValueMappings)
+    delete It.second;
 }
 
 bool RegisterBankInfo::verify(const TargetRegisterInfo &TRI) const {
@@ -283,8 +285,7 @@ RegisterBankInfo::getInstrMappingImpl(const MachineInstr &MI) const {
     }
     RegBank = CurRegBank;
     RegSize = getSizeInBits(Reg, MRI, TRI);
-    Mapping.setOperandMapping(
-        OpIdx, ValueMapping{&getPartialMapping(0, RegSize, *CurRegBank), 1});
+    Mapping.setOperandMapping(OpIdx, getValueMapping(0, RegSize, *CurRegBank));
   }
 
   if (CompleteMapping)
@@ -306,15 +307,25 @@ RegisterBankInfo::getInstrMappingImpl(const MachineInstr &MI) const {
       continue;
 
     // If a mapping already exists, do not touch it.
-    if (static_cast<const InstructionMapping *>(&Mapping)
-            ->getOperandMapping(OpIdx)
-            .NumBreakDowns)
+    if (Mapping.isOperandMappingSet(OpIdx))
       continue;
 
-    Mapping.setOperandMapping(
-        OpIdx, ValueMapping{&getPartialMapping(0, RegSize, *RegBank), 1});
+    Mapping.setOperandMapping(OpIdx, getValueMapping(0, RegSize, *RegBank));
   }
   return Mapping;
+}
+
+/// Hashing function for PartialMapping.
+static hash_code hashPartialMapping(unsigned StartIdx, unsigned Length,
+                                    const RegisterBank *RegBank) {
+  return hash_combine(StartIdx, Length, RegBank ? RegBank->getID() : 0);
+}
+
+/// Overloaded version of hash_value for a PartialMapping.
+hash_code
+llvm::hash_value(const RegisterBankInfo::PartialMapping &PartMapping) {
+  return hashPartialMapping(PartMapping.StartIdx, PartMapping.Length,
+                            PartMapping.RegBank);
 }
 
 const RegisterBankInfo::PartialMapping &
@@ -322,7 +333,7 @@ RegisterBankInfo::getPartialMapping(unsigned StartIdx, unsigned Length,
                                     const RegisterBank &RegBank) const {
   ++NumPartialMappingsAccessed;
 
-  hash_code Hash = hash_combine(StartIdx, Length, RegBank.getID());
+  hash_code Hash = hashPartialMapping(StartIdx, Length, &RegBank);
   const auto &It = MapOfPartialMappings.find(Hash);
   if (It != MapOfPartialMappings.end())
     return *It->second;
@@ -332,6 +343,34 @@ RegisterBankInfo::getPartialMapping(unsigned StartIdx, unsigned Length,
   PartialMapping *&PartMapping = MapOfPartialMappings[Hash];
   PartMapping = new PartialMapping{StartIdx, Length, RegBank};
   return *PartMapping;
+}
+
+const RegisterBankInfo::ValueMapping &
+RegisterBankInfo::getValueMapping(unsigned StartIdx, unsigned Length,
+                                  const RegisterBank &RegBank) const {
+  return getValueMapping(&getPartialMapping(StartIdx, Length, RegBank), 1);
+}
+
+const RegisterBankInfo::ValueMapping &
+RegisterBankInfo::getValueMapping(const PartialMapping *BreakDown,
+                                  unsigned NumBreakDowns) const {
+  hash_code Hash;
+  if (LLVM_LIKELY(NumBreakDowns == 1))
+    Hash = hash_value(*BreakDown);
+  else {
+    SmallVector<size_t, 8> Hashes;
+    for (unsigned Idx = 0; Idx != NumBreakDowns; ++Idx)
+      Hashes.push_back(hash_value(BreakDown[Idx]));
+    Hash = hash_combine_range(Hashes.begin(), Hashes.end());
+  }
+
+  const auto &It = MapOfValueMappings.find(Hash);
+  if (It != MapOfValueMappings.end())
+    return *It->second;
+
+  ValueMapping *&ValMapping = MapOfValueMappings[Hash];
+  ValMapping = new ValueMapping{BreakDown, NumBreakDowns};
+  return *ValMapping;
 }
 
 RegisterBankInfo::InstructionMapping
@@ -496,16 +535,18 @@ bool RegisterBankInfo::InstructionMapping::verify(
 
   for (unsigned Idx = 0; Idx < NumOperands; ++Idx) {
     const MachineOperand &MO = MI.getOperand(Idx);
-    const RegisterBankInfo::ValueMapping &MOMapping = getOperandMapping(Idx);
-    (void)MOMapping;
     if (!MO.isReg()) {
-      assert(!MOMapping.NumBreakDowns &&
+      assert(!isOperandMappingSet(Idx) &&
              "We should not care about non-reg mapping");
       continue;
     }
     unsigned Reg = MO.getReg();
     if (!Reg)
       continue;
+    assert(isOperandMappingSet(Idx) &&
+           "We must have a mapping for reg operands");
+    const RegisterBankInfo::ValueMapping &MOMapping = getOperandMapping(Idx);
+    (void)MOMapping;
     // Register size in bits.
     // This size must match what the mapping expects.
     assert(MOMapping.verify(getSizeInBits(
