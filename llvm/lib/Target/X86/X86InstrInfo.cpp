@@ -4816,8 +4816,11 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       // If this an extended register and we don't have VLX we need to use a
       // 512-bit move.
       Opc = X86::VMOVAPSZrr;
-      DestReg = get512BitSuperRegister(DestReg);
-      SrcReg = get512BitSuperRegister(SrcReg);
+      const TargetRegisterInfo *TRI = &getRegisterInfo();
+      DestReg = TRI->getMatchingSuperReg(DestReg, X86::sub_xmm,
+                                         &X86::VR512RegClass);
+      SrcReg = TRI->getMatchingSuperReg(SrcReg, X86::sub_xmm,
+                                        &X86::VR512RegClass);
     }
   } else if (X86::VR256XRegClass.contains(DestReg, SrcReg)) {
     if (HasVLX)
@@ -4828,8 +4831,11 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       // If this an extended register and we don't have VLX we need to use a
       // 512-bit move.
       Opc = X86::VMOVAPSZrr;
-      DestReg = get512BitSuperRegister(DestReg);
-      SrcReg = get512BitSuperRegister(SrcReg);
+      const TargetRegisterInfo *TRI = &getRegisterInfo();
+      DestReg = TRI->getMatchingSuperReg(DestReg, X86::sub_ymm,
+                                         &X86::VR512RegClass);
+      SrcReg = TRI->getMatchingSuperReg(SrcReg, X86::sub_ymm,
+                                        &X86::VR512RegClass);
     }
   } else if (X86::VR512RegClass.contains(DestReg, SrcReg))
     Opc = X86::VMOVAPSZrr;
