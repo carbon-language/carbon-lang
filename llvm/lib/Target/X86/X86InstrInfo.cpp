@@ -6397,6 +6397,22 @@ static bool hasUndefRegUpdate(unsigned Opcode) {
   case X86::VCVTSI642SDZrm:
   case X86::VCVTSI642SDZrr_Int:
   case X86::VCVTSI642SDZrm_Int:
+  case X86::VCVTUSI2SSZrr:
+  case X86::VCVTUSI2SSZrm:
+  case X86::VCVTUSI2SSZrr_Int:
+  case X86::VCVTUSI2SSZrm_Int:
+  case X86::VCVTUSI642SSZrr:
+  case X86::VCVTUSI642SSZrm:
+  case X86::VCVTUSI642SSZrr_Int:
+  case X86::VCVTUSI642SSZrm_Int:
+  case X86::VCVTUSI2SDZrr:
+  case X86::VCVTUSI2SDZrm:
+  case X86::VCVTUSI2SDZrr_Int:
+  case X86::VCVTUSI2SDZrm_Int:
+  case X86::VCVTUSI642SDZrr:
+  case X86::VCVTUSI642SDZrm:
+  case X86::VCVTUSI642SDZrr_Int:
+  case X86::VCVTUSI642SDZrm_Int:
   case X86::VCVTSD2SSZrr:
   case X86::VCVTSD2SSZrm:
   case X86::VCVTSS2SDZrr:
