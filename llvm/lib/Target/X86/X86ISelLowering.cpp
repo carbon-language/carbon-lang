@@ -17670,8 +17670,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget &Subtarget
       // (2) With rounding mode and sae - 7 operands.
       if (Op.getNumOperands() == 6) {
         SDValue Sae  = Op.getOperand(5);
-        unsigned Opc = IntrData->Opc1 ? IntrData->Opc1 : IntrData->Opc0;
-        return getScalarMaskingNode(DAG.getNode(Opc, dl, VT, Src1, Src2,
+        return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src1, Src2,
                                                 Sae),
                                     Mask, Src0, Subtarget, DAG);
       }
