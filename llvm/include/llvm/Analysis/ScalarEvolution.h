@@ -368,6 +368,9 @@ public:
 /// This class represents a composition of other SCEV predicates, and is the
 /// class that most clients will interact with.  This is equivalent to a
 /// logical "AND" of all the predicates in the union.
+///
+/// NB! Unlike other SCEVPredicate sub-classes this class does not live in the
+/// ScalarEvolution::Preds folding set.  This is why the \c add function is sound.
 class SCEVUnionPredicate final : public SCEVPredicate {
 private:
   typedef DenseMap<const SCEV *, SmallVector<const SCEVPredicate *, 4>>
