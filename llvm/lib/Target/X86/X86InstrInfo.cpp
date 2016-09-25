@@ -6384,26 +6384,32 @@ static bool hasUndefRegUpdate(unsigned Opcode) {
   case X86::VCVTSI2SSZrr:
   case X86::VCVTSI2SSZrm:
   case X86::VCVTSI2SSZrr_Int:
+  case X86::VCVTSI2SSZrrb_Int:
   case X86::VCVTSI2SSZrm_Int:
   case X86::VCVTSI642SSZrr:
   case X86::VCVTSI642SSZrm:
   case X86::VCVTSI642SSZrr_Int:
+  case X86::VCVTSI642SSZrrb_Int:
   case X86::VCVTSI642SSZrm_Int:
   case X86::VCVTSI2SDZrr:
   case X86::VCVTSI2SDZrm:
   case X86::VCVTSI2SDZrr_Int:
+  case X86::VCVTSI2SDZrrb_Int:
   case X86::VCVTSI2SDZrm_Int:
   case X86::VCVTSI642SDZrr:
   case X86::VCVTSI642SDZrm:
   case X86::VCVTSI642SDZrr_Int:
+  case X86::VCVTSI642SDZrrb_Int:
   case X86::VCVTSI642SDZrm_Int:
   case X86::VCVTUSI2SSZrr:
   case X86::VCVTUSI2SSZrm:
   case X86::VCVTUSI2SSZrr_Int:
+  case X86::VCVTUSI2SSZrrb_Int:
   case X86::VCVTUSI2SSZrm_Int:
   case X86::VCVTUSI642SSZrr:
   case X86::VCVTUSI642SSZrm:
   case X86::VCVTUSI642SSZrr_Int:
+  case X86::VCVTUSI642SSZrrb_Int:
   case X86::VCVTUSI642SSZrm_Int:
   case X86::VCVTUSI2SDZrr:
   case X86::VCVTUSI2SDZrm:
@@ -6412,14 +6418,19 @@ static bool hasUndefRegUpdate(unsigned Opcode) {
   case X86::VCVTUSI642SDZrr:
   case X86::VCVTUSI642SDZrm:
   case X86::VCVTUSI642SDZrr_Int:
+  case X86::VCVTUSI642SDZrrb_Int:
   case X86::VCVTUSI642SDZrm_Int:
   case X86::VCVTSD2SSZrr:
+  case X86::VCVTSD2SSZrrb:
   case X86::VCVTSD2SSZrm:
   case X86::VCVTSS2SDZrr:
+  case X86::VCVTSS2SDZrrb:
   case X86::VCVTSS2SDZrm:
   case X86::VRNDSCALESDr:
+  case X86::VRNDSCALESDrb:
   case X86::VRNDSCALESDm:
   case X86::VRNDSCALESSr:
+  case X86::VRNDSCALESSrb:
   case X86::VRNDSCALESSm:
   case X86::VRCP14SSrr:
   case X86::VRCP14SSrm:
@@ -6427,10 +6438,12 @@ static bool hasUndefRegUpdate(unsigned Opcode) {
   case X86::VRSQRT14SSrm:
   case X86::VSQRTSSZr:
   case X86::VSQRTSSZr_Int:
+  case X86::VSQRTSSZrb_Int:
   case X86::VSQRTSSZm:
   case X86::VSQRTSSZm_Int:
   case X86::VSQRTSDZr:
   case X86::VSQRTSDZr_Int:
+  case X86::VSQRTSDZrb_Int:
   case X86::VSQRTSDZm:
   case X86::VSQRTSDZm_Int:
     return true;
