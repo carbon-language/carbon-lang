@@ -5681,18 +5681,18 @@ ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
     return;
 
   ExitNotTaken.ExitingBlock = ExitCounts[0].first;
-  ExitNotTaken.ExactNotTaken = ExitCounts[0].second.Exact;
+  ExitNotTaken.ExactNotTaken = ExitCounts[0].second.ExactNotTaken;
 
   // Determine the number of ExitNotTakenExtras structures that we need.
   unsigned ExtraInfoSize = 0;
   if (NumExits > 1) {
     auto HasNonTrivialPredicate =
         [](const ScalarEvolution::EdgeExitInfo &Entry) {
-          return !Entry.second.Pred.isAlwaysTrue();
+          return !Entry.second.Predicate.isAlwaysTrue();
         };
     ExtraInfoSize = 1 + std::count_if(std::next(ExitCounts.begin()),
                                       ExitCounts.end(), HasNonTrivialPredicate);
-  } else if (!ExitCounts[0].second.Pred.isAlwaysTrue())
+  } else if (!ExitCounts[0].second.Predicate.isAlwaysTrue())
     ExtraInfoSize = 1;
 
   ExitNotTakenExtras *ENT = nullptr;
@@ -5702,7 +5702,7 @@ ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
   if (ExtraInfoSize > 0) {
     ENT = new ExitNotTakenExtras[ExtraInfoSize];
     ExitNotTaken.ExtraInfo = &ENT[0];
-    *ExitNotTaken.getPred() = std::move(ExitCounts[0].second.Pred);
+    *ExitNotTaken.getPred() = std::move(ExitCounts[0].second.Predicate);
   }
 
   if (NumExits == 1)
@@ -5715,12 +5715,13 @@ ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
   // Handle the rare case of multiple computable exits.
   for (unsigned i = 1, PredPos = 1; i < NumExits; ++i) {
     ExitNotTakenExtras *Ptr = nullptr;
-    if (!ExitCounts[i].second.Pred.isAlwaysTrue()) {
+    if (!ExitCounts[i].second.Predicate.isAlwaysTrue()) {
       Ptr = &ENT[PredPos++];
-      Ptr->Pred = std::move(ExitCounts[i].second.Pred);
+      Ptr->Pred = std::move(ExitCounts[i].second.Predicate);
     }
 
-    Exits.emplace_back(ExitCounts[i].first, ExitCounts[i].second.Exact, Ptr);
+    Exits.emplace_back(ExitCounts[i].first, ExitCounts[i].second.ExactNotTaken,
+                       Ptr);
   }
 }
 
@@ -5751,12 +5752,12 @@ ScalarEvolution::computeBackedgeTakenCount(const Loop *L,
     BasicBlock *ExitBB = ExitingBlocks[i];
     ExitLimit EL = computeExitLimit(L, ExitBB, AllowPredicates);
 
-    assert((AllowPredicates || EL.Pred.isAlwaysTrue()) &&
+    assert((AllowPredicates || EL.Predicate.isAlwaysTrue()) &&
            "Predicated exit limit when predicates are not allowed!");
 
     // 1. For each exit that can be computed, add an entry to ExitCounts.
     // CouldComputeBECount is true only if all exits can be computed.
-    if (EL.Exact == getCouldNotCompute())
+    if (EL.ExactNotTaken == getCouldNotCompute())
       // We couldn't compute an exact value for this exit, so
       // we won't be able to compute an exact value for the loop.
       CouldComputeBECount = false;
@@ -5769,23 +5770,24 @@ ScalarEvolution::computeBackedgeTakenCount(const Loop *L,
     //
     // If the exit dominates the loop latch, it is a LoopMustExit otherwise it
     // is a LoopMayExit.  If any computable LoopMustExit is found, then
-    // MaxBECount is the minimum EL.Max of computable LoopMustExits. Otherwise,
-    // MaxBECount is conservatively the maximum EL.Max, where CouldNotCompute is
-    // considered greater than any computable EL.Max.
-    if (EL.Max != getCouldNotCompute() && Latch &&
+    // MaxBECount is the minimum EL.MaxNotTaken of computable
+    // LoopMustExits. Otherwise, MaxBECount is conservatively the maximum
+    // EL.MaxNotTaken, where CouldNotCompute is considered greater than any
+    // computable EL.MaxNotTaken.
+    if (EL.MaxNotTaken != getCouldNotCompute() && Latch &&
         DT.dominates(ExitBB, Latch)) {
       if (!MustExitMaxBECount)
-        MustExitMaxBECount = EL.Max;
+        MustExitMaxBECount = EL.MaxNotTaken;
       else {
         MustExitMaxBECount =
-          getUMinFromMismatchedTypes(MustExitMaxBECount, EL.Max);
+            getUMinFromMismatchedTypes(MustExitMaxBECount, EL.MaxNotTaken);
       }
     } else if (MayExitMaxBECount != getCouldNotCompute()) {
-      if (!MayExitMaxBECount || EL.Max == getCouldNotCompute())
-        MayExitMaxBECount = EL.Max;
+      if (!MayExitMaxBECount || EL.MaxNotTaken == getCouldNotCompute())
+        MayExitMaxBECount = EL.MaxNotTaken;
       else {
         MayExitMaxBECount =
-          getUMaxFromMismatchedTypes(MayExitMaxBECount, EL.Max);
+            getUMaxFromMismatchedTypes(MayExitMaxBECount, EL.MaxNotTaken);
       }
     }
   }
@@ -5896,34 +5898,37 @@ ScalarEvolution::computeExitLimitFromCond(const Loop *L,
       if (EitherMayExit) {
         // Both conditions must be true for the loop to continue executing.
         // Choose the less conservative count.
-        if (EL0.Exact == getCouldNotCompute() ||
-            EL1.Exact == getCouldNotCompute())
+        if (EL0.ExactNotTaken == getCouldNotCompute() ||
+            EL1.ExactNotTaken == getCouldNotCompute())
           BECount = getCouldNotCompute();
         else
-          BECount = getUMinFromMismatchedTypes(EL0.Exact, EL1.Exact);
-        if (EL0.Max == getCouldNotCompute())
-          MaxBECount = EL1.Max;
-        else if (EL1.Max == getCouldNotCompute())
-          MaxBECount = EL0.Max;
+          BECount =
+              getUMinFromMismatchedTypes(EL0.ExactNotTaken, EL1.ExactNotTaken);
+        if (EL0.MaxNotTaken == getCouldNotCompute())
+          MaxBECount = EL1.MaxNotTaken;
+        else if (EL1.MaxNotTaken == getCouldNotCompute())
+          MaxBECount = EL0.MaxNotTaken;
         else
-          MaxBECount = getUMinFromMismatchedTypes(EL0.Max, EL1.Max);
+          MaxBECount =
+              getUMinFromMismatchedTypes(EL0.MaxNotTaken, EL1.MaxNotTaken);
       } else {
         // Both conditions must be true at the same time for the loop to exit.
         // For now, be conservative.
         assert(L->contains(FBB) && "Loop block has no successor in loop!");
-        if (EL0.Max == EL1.Max)
-          MaxBECount = EL0.Max;
-        if (EL0.Exact == EL1.Exact)
-          BECount = EL0.Exact;
+        if (EL0.MaxNotTaken == EL1.MaxNotTaken)
+          MaxBECount = EL0.MaxNotTaken;
+        if (EL0.ExactNotTaken == EL1.ExactNotTaken)
+          BECount = EL0.ExactNotTaken;
       }
 
       SCEVUnionPredicate NP;
-      NP.add(&EL0.Pred);
-      NP.add(&EL1.Pred);
+      NP.add(&EL0.Predicate);
+      NP.add(&EL1.Predicate);
       // There are cases (e.g. PR26207) where computeExitLimitFromCond is able
       // to be more aggressive when computing BECount than when computing
-      // MaxBECount.  In these cases it is possible for EL0.Exact and EL1.Exact
-      // to match, but for EL0.Max and EL1.Max to not.
+      // MaxBECount.  In these cases it is possible for EL0.ExactNotTaken and
+      // EL1.ExactNotTaken to match, but for EL0.MaxNotTaken and EL1.MaxNotTaken
+      // to not.
       if (isa<SCEVCouldNotCompute>(MaxBECount) &&
           !isa<SCEVCouldNotCompute>(BECount))
         MaxBECount = BECount;
@@ -5944,30 +5949,32 @@ ScalarEvolution::computeExitLimitFromCond(const Loop *L,
       if (EitherMayExit) {
         // Both conditions must be false for the loop to continue executing.
         // Choose the less conservative count.
-        if (EL0.Exact == getCouldNotCompute() ||
-            EL1.Exact == getCouldNotCompute())
+        if (EL0.ExactNotTaken == getCouldNotCompute() ||
+            EL1.ExactNotTaken == getCouldNotCompute())
           BECount = getCouldNotCompute();
         else
-          BECount = getUMinFromMismatchedTypes(EL0.Exact, EL1.Exact);
-        if (EL0.Max == getCouldNotCompute())
-          MaxBECount = EL1.Max;
-        else if (EL1.Max == getCouldNotCompute())
-          MaxBECount = EL0.Max;
+          BECount =
+              getUMinFromMismatchedTypes(EL0.ExactNotTaken, EL1.ExactNotTaken);
+        if (EL0.MaxNotTaken == getCouldNotCompute())
+          MaxBECount = EL1.MaxNotTaken;
+        else if (EL1.MaxNotTaken == getCouldNotCompute())
+          MaxBECount = EL0.MaxNotTaken;
         else
-          MaxBECount = getUMinFromMismatchedTypes(EL0.Max, EL1.Max);
+          MaxBECount =
+              getUMinFromMismatchedTypes(EL0.MaxNotTaken, EL1.MaxNotTaken);
       } else {
         // Both conditions must be false at the same time for the loop to exit.
         // For now, be conservative.
         assert(L->contains(TBB) && "Loop block has no successor in loop!");
-        if (EL0.Max == EL1.Max)
-          MaxBECount = EL0.Max;
-        if (EL0.Exact == EL1.Exact)
-          BECount = EL0.Exact;
+        if (EL0.MaxNotTaken == EL1.MaxNotTaken)
+          MaxBECount = EL0.MaxNotTaken;
+        if (EL0.ExactNotTaken == EL1.ExactNotTaken)
+          BECount = EL0.ExactNotTaken;
       }
 
       SCEVUnionPredicate NP;
-      NP.add(&EL0.Pred);
-      NP.add(&EL1.Pred);
+      NP.add(&EL0.Predicate);
+      NP.add(&EL1.Predicate);
       return ExitLimit(BECount, MaxBECount, NP);
     }
   }

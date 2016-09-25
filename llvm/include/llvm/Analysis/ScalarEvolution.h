@@ -545,30 +545,33 @@ private:
   /// pair of exact and max expressions that are eventually summarized in
   /// ExitNotTakenInfo and BackedgeTakenInfo.
   struct ExitLimit {
-    const SCEV *Exact;
-    const SCEV *Max;
+    const SCEV *ExactNotTaken;
+    const SCEV *MaxNotTaken;
 
     /// A predicate union guard for this ExitLimit. The result is only
     /// valid if this predicate evaluates to 'true' at run-time.
-    SCEVUnionPredicate Pred;
+    SCEVUnionPredicate Predicate;
 
-    /*implicit*/ ExitLimit(const SCEV *E) : Exact(E), Max(E) {}
+    /*implicit*/ ExitLimit(const SCEV *E) : ExactNotTaken(E), MaxNotTaken(E) {}
 
     ExitLimit(const SCEV *E, const SCEV *M, SCEVUnionPredicate &P)
-        : Exact(E), Max(M), Pred(P) {
-      assert(
-          (isa<SCEVCouldNotCompute>(Exact) || !isa<SCEVCouldNotCompute>(Max)) &&
-          "Exact is not allowed to be less precise than Max");
+        : ExactNotTaken(E), MaxNotTaken(M), Predicate(P) {
+      assert((isa<SCEVCouldNotCompute>(ExactNotTaken) ||
+              !isa<SCEVCouldNotCompute>(MaxNotTaken)) &&
+             "Exact is not allowed to be less precise than Max");
     }
 
     /// Test whether this ExitLimit contains any computed information, or
     /// whether it's all SCEVCouldNotCompute values.
     bool hasAnyInfo() const {
-      return !isa<SCEVCouldNotCompute>(Exact) || !isa<SCEVCouldNotCompute>(Max);
+      return !isa<SCEVCouldNotCompute>(ExactNotTaken) ||
+             !isa<SCEVCouldNotCompute>(MaxNotTaken);
     }
 
     /// Test whether this ExitLimit contains all information.
-    bool hasFullInfo() const { return !isa<SCEVCouldNotCompute>(Exact); }
+    bool hasFullInfo() const {
+      return !isa<SCEVCouldNotCompute>(ExactNotTaken);
+    }
   };
 
   /// Forward declaration of ExitNotTakenExtras
