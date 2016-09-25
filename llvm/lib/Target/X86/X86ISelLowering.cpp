@@ -12863,10 +12863,6 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
     return insert128BitVector(DAG.getUNDEF(OpVT), Op, 0, DAG, dl);
   }
 
-  if (OpVT == MVT::v1i64 &&
-      Op.getOperand(0).getValueType() == MVT::i64)
-    return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v1i64, Op.getOperand(0));
-
   SDValue AnyExt = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i32, Op.getOperand(0));
   assert(OpVT.is128BitVector() && "Expected an SSE type!");
   return DAG.getBitcast(
