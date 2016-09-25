@@ -372,12 +372,8 @@ def : Pat<(insert_subvector undef, (v16i8 VR128:$src), (iPTR 0)),
 // Implicitly promote a 32-bit scalar to a vector.
 def : Pat<(v4f32 (scalar_to_vector FR32:$src)),
           (COPY_TO_REGCLASS FR32:$src, VR128)>;
-def : Pat<(v8f32 (scalar_to_vector FR32:$src)),
-          (COPY_TO_REGCLASS FR32:$src, VR128)>;
 // Implicitly promote a 64-bit scalar to a vector.
 def : Pat<(v2f64 (scalar_to_vector FR64:$src)),
-          (COPY_TO_REGCLASS FR64:$src, VR128)>;
-def : Pat<(v4f64 (scalar_to_vector FR64:$src)),
           (COPY_TO_REGCLASS FR64:$src, VR128)>;
 
 // Bitcasts between 128-bit vector types. Return the original type since
