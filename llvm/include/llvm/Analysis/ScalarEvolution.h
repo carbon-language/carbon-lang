@@ -574,127 +574,18 @@ private:
     }
   };
 
-  /// Forward declaration of ExitNotTakenExtras
-  struct ExitNotTakenExtras;
+  typedef std::pair<BasicBlock *, ExitLimit> EdgeExitInfo;
 
   /// Information about the number of times a particular loop exit may be
   /// reached before exiting the loop.
   struct ExitNotTakenInfo {
     AssertingVH<BasicBlock> ExitingBlock;
     const SCEV *ExactNotTaken;
-
-    ExitNotTakenExtras *ExtraInfo;
-    bool Complete;
-
-    ExitNotTakenInfo()
-        : ExitingBlock(nullptr), ExactNotTaken(nullptr), ExtraInfo(nullptr),
-          Complete(true) {}
-
-    ExitNotTakenInfo(BasicBlock *ExitBlock, const SCEV *Expr,
-                     ExitNotTakenExtras *Ptr)
-        : ExitingBlock(ExitBlock), ExactNotTaken(Expr), ExtraInfo(Ptr),
-          Complete(true) {}
-
-    /// Return true if all loop exits are computable.
-    bool isCompleteList() const { return Complete; }
-
-    /// Sets the incomplete property, indicating that one of the loop exits
-    /// doesn't have a corresponding ExitNotTakenInfo entry.
-    void setIncomplete() { Complete = false; }
-
-    /// Returns a pointer to the predicate associated with this information,
-    /// or nullptr if this doesn't exist (meaning always true).
-    SCEVUnionPredicate *getPred() const {
-      if (ExtraInfo)
-        return &ExtraInfo->Pred;
-
-      return nullptr;
-    }
-
-    /// Return true if the SCEV predicate associated with this information
-    /// is always true.
-    bool hasAlwaysTruePred() const {
-      return !getPred() || getPred()->isAlwaysTrue();
-    }
-
-    /// Defines a simple forward iterator for ExitNotTakenInfo.
-    class ExitNotTakenInfoIterator
-        : public std::iterator<std::forward_iterator_tag, ExitNotTakenInfo> {
-      const ExitNotTakenInfo *Start;
-      unsigned Position;
-
-    public:
-      ExitNotTakenInfoIterator(const ExitNotTakenInfo *Start, unsigned Position)
-          : Start(Start), Position(Position) {}
-
-      const ExitNotTakenInfo &operator*() const {
-        if (Position == 0)
-          return *Start;
-
-        return Start->ExtraInfo->Exits[Position - 1];
-      }
-
-      const ExitNotTakenInfo *operator->() const {
-        if (Position == 0)
-          return Start;
-
-        return &Start->ExtraInfo->Exits[Position - 1];
-      }
-
-      bool operator==(const ExitNotTakenInfoIterator &RHS) const {
-        return Start == RHS.Start && Position == RHS.Position;
-      }
-
-      bool operator!=(const ExitNotTakenInfoIterator &RHS) const {
-        return Start != RHS.Start || Position != RHS.Position;
-      }
-
-      ExitNotTakenInfoIterator &operator++() { // Preincrement
-        if (!Start)
-          return *this;
-
-        unsigned Elements =
-            Start->ExtraInfo ? Start->ExtraInfo->Exits.size() + 1 : 1;
-
-        ++Position;
-
-        // We've run out of elements.
-        if (Position == Elements) {
-          Start = nullptr;
-          Position = 0;
-        }
-
-        return *this;
-      }
-      ExitNotTakenInfoIterator operator++(int) { // Postincrement
-        ExitNotTakenInfoIterator Tmp = *this;
-        ++*this;
-        return Tmp;
-      }
-    };
-
-    /// Iterators
-    ExitNotTakenInfoIterator begin() const {
-      return ExitNotTakenInfoIterator(this, 0);
-    }
-    ExitNotTakenInfoIterator end() const {
-      return ExitNotTakenInfoIterator(nullptr, 0);
+    SCEVUnionPredicate Predicate;
+    bool hasAlwaysTruePredicate() const {
+      return Predicate.isAlwaysTrue();
     }
   };
-
-  /// Describes the extra information that a ExitNotTakenInfo can have.
-  struct ExitNotTakenExtras {
-    /// The predicate associated with the ExitNotTakenInfo struct.
-    SCEVUnionPredicate Pred;
-
-    /// The extra exits in the loop. Only the ExitNotTakenExtras structure
-    /// pointed to by the first ExitNotTakenInfo struct (associated with the
-    /// first loop exit) will populate this vector to prevent having
-    /// redundant information.
-    SmallVector<ExitNotTakenInfo, 4> Exits;
-  };
-
-  typedef std::pair<BasicBlock *, ExitLimit> EdgeExitInfo;
 
   /// Information about the backedge-taken count of a loop. This currently
   /// includes an exact count and a maximum count.
@@ -702,15 +593,25 @@ private:
   class BackedgeTakenInfo {
     /// A list of computable exits and their not-taken counts.  Loops almost
     /// never have more than one computable exit.
-    ExitNotTakenInfo ExitNotTaken;
+    SmallVector<ExitNotTakenInfo, 1> ExitNotTaken;
 
-    /// An expression indicating the least maximum backedge-taken count of the
-    /// loop that is known, or a SCEVCouldNotCompute. This expression is only
-    /// valid if the predicates associated with all loop exits are true.
-    const SCEV *Max;
+    /// The pointer part of \c MaxAndComplete is an expression indicating the
+    /// least maximum backedge-taken count of the loop that is known, or a
+    /// SCEVCouldNotCompute. This expression is only valid if the predicates
+    /// associated with all loop exits are true.
+    ///
+    /// The integer part of \c MaxAndComplete is a boolean indicating if \c
+    /// ExitNotTaken has an element for every exiting block in the loop.
+    PointerIntPair<const SCEV *, 1> MaxAndComplete;
+
+    /// \name Helper projection functions on \c MaxAndComplete.
+    /// @{
+    bool isComplete() const { return MaxAndComplete.getInt(); }
+    const SCEV *getMax() const { return MaxAndComplete.getPointer(); }
+    /// @}
 
   public:
-    BackedgeTakenInfo() : Max(nullptr) {}
+    BackedgeTakenInfo() : MaxAndComplete(nullptr, 0) {}
 
     /// Initialize BackedgeTakenInfo from a list of exact exit counts.
     BackedgeTakenInfo(ArrayRef<EdgeExitInfo> ExitCounts, bool Complete,
@@ -719,11 +620,11 @@ private:
     /// Test whether this BackedgeTakenInfo contains any computed information,
     /// or whether it's all SCEVCouldNotCompute values.
     bool hasAnyInfo() const {
-      return ExitNotTaken.ExitingBlock || !isa<SCEVCouldNotCompute>(Max);
+      return !ExitNotTaken.empty() || !isa<SCEVCouldNotCompute>(getMax());
     }
 
     /// Test whether this BackedgeTakenInfo contains complete information.
-    bool hasFullInfo() const { return ExitNotTaken.isCompleteList(); }
+    bool hasFullInfo() const { return isComplete(); }
 
     /// Return an expression indicating the exact backedge-taken count of the
     /// loop if it is known or SCEVCouldNotCompute otherwise. This is the
