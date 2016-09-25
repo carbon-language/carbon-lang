@@ -5670,6 +5670,7 @@ ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
     ArrayRef<ScalarEvolution::EdgeExitInfo> ExitCounts, bool Complete,
     const SCEV *MaxCount)
     : MaxAndComplete(MaxCount, Complete) {
+  ExitNotTaken.reserve(ExitCounts.size());
   std::transform(
       ExitCounts.begin(), ExitCounts.end(), std::back_inserter(ExitNotTaken),
       [&](const ScalarEvolution::EdgeExitInfo &EEI) {
