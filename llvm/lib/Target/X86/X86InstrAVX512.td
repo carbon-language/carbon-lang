@@ -5608,24 +5608,28 @@ let Predicates = [HasAVX512] in {
             (VCVTSD2SI64Zrm addr:$src)>;
 } // HasAVX512
 
-let isCodeGenOnly = 1 , Predicates = [HasAVX512] in {
-  defm Int_VCVTSI2SSZ : sse12_cvt_sint_3addr<0x2A, GR32, VR128X,
-            int_x86_sse_cvtsi2ss, i32mem, loadi32, "cvtsi2ss{l}",
-            SSE_CVT_Scalar, 0>, XS, EVEX_4V;
-  defm Int_VCVTSI2SS64Z : sse12_cvt_sint_3addr<0x2A, GR64, VR128X,
-            int_x86_sse_cvtsi642ss, i64mem, loadi64, "cvtsi2ss{q}",
-            SSE_CVT_Scalar, 0>, XS, EVEX_4V, VEX_W;
-  defm Int_VCVTSI2SDZ : sse12_cvt_sint_3addr<0x2A, GR32, VR128X,
-            int_x86_sse2_cvtsi2sd, i32mem, loadi32, "cvtsi2sd{l}",
-            SSE_CVT_Scalar, 0>, XD, EVEX_4V;
-  defm Int_VCVTSI2SD64Z : sse12_cvt_sint_3addr<0x2A, GR64, VR128X,
-            int_x86_sse2_cvtsi642sd, i64mem, loadi64, "cvtsi2sd{q}",
-            SSE_CVT_Scalar, 0>, XD, EVEX_4V, VEX_W;
-
-  defm Int_VCVTUSI2SDZ : sse12_cvt_sint_3addr<0x7B, GR32, VR128X,
-            int_x86_avx512_cvtusi2sd, i32mem, loadi32, "cvtusi2sd{l}",
-            SSE_CVT_Scalar, 0>, XD, EVEX_4V;
-} // isCodeGenOnly = 1, Predicates = [HasAVX512]
+let Predicates = [HasAVX512] in {
+  def : Pat<(int_x86_sse_cvtsi2ss VR128X:$src1, GR32:$src2),
+            (VCVTSI2SSZrr_Int VR128X:$src1, GR32:$src2)>;
+  def : Pat<(int_x86_sse_cvtsi2ss VR128X:$src1, (loadi32 addr:$src2)),
+            (VCVTSI2SSZrm_Int VR128X:$src1, addr:$src2)>;
+  def : Pat<(int_x86_sse_cvtsi642ss VR128X:$src1, GR64:$src2),
+            (VCVTSI642SSZrr_Int VR128X:$src1, GR64:$src2)>;
+  def : Pat<(int_x86_sse_cvtsi642ss VR128X:$src1, (loadi64 addr:$src2)),
+            (VCVTSI642SSZrm_Int VR128X:$src1, addr:$src2)>;
+  def : Pat<(int_x86_sse2_cvtsi2sd VR128X:$src1, GR32:$src2),
+            (VCVTSI2SDZrr_Int VR128X:$src1, GR32:$src2)>;
+  def : Pat<(int_x86_sse2_cvtsi2sd VR128X:$src1, (loadi32 addr:$src2)),
+            (VCVTSI2SDZrm_Int VR128X:$src1, addr:$src2)>;
+  def : Pat<(int_x86_sse2_cvtsi642sd VR128X:$src1, GR64:$src2),
+            (VCVTSI642SDZrr_Int VR128X:$src1, GR64:$src2)>;
+  def : Pat<(int_x86_sse2_cvtsi642sd VR128X:$src1, (loadi64 addr:$src2)),
+            (VCVTSI642SDZrm_Int VR128X:$src1, addr:$src2)>;
+  def : Pat<(int_x86_avx512_cvtusi2sd VR128X:$src1, GR32:$src2),
+            (VCVTUSI2SDZrr_Int VR128X:$src1, GR32:$src2)>;
+  def : Pat<(int_x86_avx512_cvtusi2sd VR128X:$src1, (loadi32 addr:$src2)),
+            (VCVTUSI2SDZrm_Int VR128X:$src1, addr:$src2)>;
+} // Predicates = [HasAVX512]
 
 // Convert float/double to signed/unsigned int 32/64 with truncation
 multiclass avx512_cvt_s_all<bits<8> opc, string asm, X86VectorVTInfo _SrcRC,

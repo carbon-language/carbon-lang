@@ -6383,26 +6383,18 @@ static bool hasUndefRegUpdate(unsigned Opcode) {
   // AVX-512
   case X86::VCVTSI2SSZrr:
   case X86::VCVTSI2SSZrm:
-  case X86::Int_VCVTSI2SSZrr:
-  case X86::Int_VCVTSI2SSZrm:
   case X86::VCVTSI2SSZrr_Int:
   case X86::VCVTSI2SSZrm_Int:
   case X86::VCVTSI642SSZrr:
   case X86::VCVTSI642SSZrm:
-  case X86::Int_VCVTSI2SS64Zrr:
-  case X86::Int_VCVTSI2SS64Zrm:
   case X86::VCVTSI642SSZrr_Int:
   case X86::VCVTSI642SSZrm_Int:
   case X86::VCVTSI2SDZrr:
   case X86::VCVTSI2SDZrm:
-  case X86::Int_VCVTSI2SDZrr:
-  case X86::Int_VCVTSI2SDZrm:
   case X86::VCVTSI2SDZrr_Int:
   case X86::VCVTSI2SDZrm_Int:
   case X86::VCVTSI642SDZrr:
   case X86::VCVTSI642SDZrm:
-  case X86::Int_VCVTSI2SD64Zrr:
-  case X86::Int_VCVTSI2SD64Zrm:
   case X86::VCVTSI642SDZrr_Int:
   case X86::VCVTSI642SDZrm_Int:
   case X86::VCVTSD2SSZrr:
