@@ -581,10 +581,16 @@ private:
   struct ExitNotTakenInfo {
     AssertingVH<BasicBlock> ExitingBlock;
     const SCEV *ExactNotTaken;
-    SCEVUnionPredicate Predicate;
+    std::unique_ptr<SCEVUnionPredicate> Predicate;
     bool hasAlwaysTruePredicate() const {
-      return Predicate.isAlwaysTrue();
+      return !Predicate || Predicate->isAlwaysTrue();
     }
+
+    explicit ExitNotTakenInfo(AssertingVH<BasicBlock> ExitingBlock,
+                              const SCEV *ExactNotTaken,
+                              std::unique_ptr<SCEVUnionPredicate> Predicate)
+        : ExitingBlock(ExitingBlock), ExactNotTaken(ExactNotTaken),
+          Predicate(std::move(Predicate)) {}
   };
 
   /// Information about the backedge-taken count of a loop. This currently

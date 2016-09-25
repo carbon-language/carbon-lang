@@ -5442,7 +5442,7 @@ ScalarEvolution::getPredicatedBackedgeTakenInfo(const Loop *L) {
   BackedgeTakenInfo Result =
       computeBackedgeTakenCount(L, /*AllowPredicates=*/true);
 
-  return PredicatedBackedgeTakenCounts.find(L)->second = Result;
+  return PredicatedBackedgeTakenCounts.find(L)->second = std::move(Result);
 }
 
 const ScalarEvolution::BackedgeTakenInfo &
@@ -5517,7 +5517,7 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
   // recusive call to getBackedgeTakenInfo (on a different
   // loop), which would invalidate the iterator computed
   // earlier.
-  return BackedgeTakenCounts.find(L)->second = Result;
+  return BackedgeTakenCounts.find(L)->second = std::move(Result);
 }
 
 void ScalarEvolution::forgetLoop(const Loop *L) {
@@ -5615,8 +5615,8 @@ ScalarEvolution::BackedgeTakenInfo::getExact(ScalarEvolution *SE,
       BECount = ENT.ExactNotTaken;
     else if (BECount != ENT.ExactNotTaken)
       return SE->getCouldNotCompute();
-    if (Preds)
-      Preds->add(&ENT.Predicate);
+    if (Preds && !ENT.hasAlwaysTruePredicate())
+      Preds->add(ENT.Predicate.get());
 
     assert((Preds || ENT.hasAlwaysTruePredicate()) &&
            "Predicate should be always true!");
@@ -5670,13 +5670,17 @@ ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
     ArrayRef<ScalarEvolution::EdgeExitInfo> ExitCounts, bool Complete,
     const SCEV *MaxCount)
     : MaxAndComplete(MaxCount, Complete) {
-  std::transform(ExitCounts.begin(), ExitCounts.end(),
-                 std::back_inserter(ExitNotTaken),
-                 [&](const ScalarEvolution::EdgeExitInfo &EEI) {
-                   BasicBlock *ExitBB = EEI.first;
-                   const ExitLimit &EL = EEI.second;
-                   return ExitNotTakenInfo({ExitBB, EL.ExactNotTaken, EL.Predicate});
-                 });
+  std::transform(
+      ExitCounts.begin(), ExitCounts.end(), std::back_inserter(ExitNotTaken),
+      [&](const ScalarEvolution::EdgeExitInfo &EEI) {
+        BasicBlock *ExitBB = EEI.first;
+        const ExitLimit &EL = EEI.second;
+        if (EL.Predicate.isAlwaysTrue())
+          return ExitNotTakenInfo(ExitBB, EL.ExactNotTaken, nullptr);
+        return ExitNotTakenInfo(
+            ExitBB, EL.ExactNotTaken,
+            llvm::make_unique<SCEVUnionPredicate>(std::move(EL.Predicate)));
+      });
 }
 
 /// Invalidate this result and free the ExitNotTakenInfo array.
