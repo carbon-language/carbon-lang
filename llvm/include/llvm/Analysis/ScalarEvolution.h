@@ -691,22 +691,7 @@ private:
     SmallVector<ExitNotTakenInfo, 4> Exits;
   };
 
-  /// A struct containing the information attached to a backedge.
-  struct EdgeInfo {
-    EdgeInfo(BasicBlock *Block, const SCEV *Taken, SCEVUnionPredicate &P)
-        : ExitBlock(Block), Taken(Taken), Pred(std::move(P)) {}
-
-    /// The exit basic block.
-    BasicBlock *ExitBlock;
-
-    /// The (exact) number of time we take the edge back.
-    const SCEV *Taken;
-
-    /// The SCEV predicated associated with Taken. If Pred doesn't evaluate
-    /// to true, the information in Taken is not valid (or equivalent with
-    /// a CouldNotCompute.
-    SCEVUnionPredicate Pred;
-  };
+  typedef std::pair<BasicBlock *, ExitLimit> EdgeExitInfo;
 
   /// Information about the backedge-taken count of a loop. This currently
   /// includes an exact count and a maximum count.
@@ -725,7 +710,7 @@ private:
     BackedgeTakenInfo() : Max(nullptr) {}
 
     /// Initialize BackedgeTakenInfo from a list of exact exit counts.
-    BackedgeTakenInfo(SmallVectorImpl<EdgeInfo> &ExitCounts, bool Complete,
+    BackedgeTakenInfo(ArrayRef<EdgeExitInfo> ExitCounts, bool Complete,
                       const SCEV *MaxCount);
 
     /// Test whether this BackedgeTakenInfo contains any computed information,

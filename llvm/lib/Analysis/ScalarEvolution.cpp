@@ -5669,26 +5669,30 @@ bool ScalarEvolution::BackedgeTakenInfo::hasOperand(const SCEV *S,
 /// Allocate memory for BackedgeTakenInfo and copy the not-taken count of each
 /// computable exit into a persistent ExitNotTakenInfo array.
 ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
-    SmallVectorImpl<EdgeInfo> &ExitCounts, bool Complete, const SCEV *MaxCount)
+    ArrayRef<ScalarEvolution::EdgeExitInfo> ExitCounts, bool Complete,
+    const SCEV *MaxCount)
     : Max(MaxCount) {
 
   if (!Complete)
     ExitNotTaken.setIncomplete();
 
   unsigned NumExits = ExitCounts.size();
-  if (NumExits == 0) return;
+  if (NumExits == 0)
+    return;
 
-  ExitNotTaken.ExitingBlock = ExitCounts[0].ExitBlock;
-  ExitNotTaken.ExactNotTaken = ExitCounts[0].Taken;
+  ExitNotTaken.ExitingBlock = ExitCounts[0].first;
+  ExitNotTaken.ExactNotTaken = ExitCounts[0].second.Exact;
 
   // Determine the number of ExitNotTakenExtras structures that we need.
   unsigned ExtraInfoSize = 0;
-  if (NumExits > 1)
+  if (NumExits > 1) {
+    auto HasNonTrivialPredicate =
+        [](const ScalarEvolution::EdgeExitInfo &Entry) {
+          return !Entry.second.Pred.isAlwaysTrue();
+        };
     ExtraInfoSize = 1 + std::count_if(std::next(ExitCounts.begin()),
-                                      ExitCounts.end(), [](EdgeInfo &Entry) {
-                                        return !Entry.Pred.isAlwaysTrue();
-                                      });
-  else if (!ExitCounts[0].Pred.isAlwaysTrue())
+                                      ExitCounts.end(), HasNonTrivialPredicate);
+  } else if (!ExitCounts[0].second.Pred.isAlwaysTrue())
     ExtraInfoSize = 1;
 
   ExitNotTakenExtras *ENT = nullptr;
@@ -5698,7 +5702,7 @@ ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
   if (ExtraInfoSize > 0) {
     ENT = new ExitNotTakenExtras[ExtraInfoSize];
     ExitNotTaken.ExtraInfo = &ENT[0];
-    *ExitNotTaken.getPred() = std::move(ExitCounts[0].Pred);
+    *ExitNotTaken.getPred() = std::move(ExitCounts[0].second.Pred);
   }
 
   if (NumExits == 1)
@@ -5711,12 +5715,12 @@ ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
   // Handle the rare case of multiple computable exits.
   for (unsigned i = 1, PredPos = 1; i < NumExits; ++i) {
     ExitNotTakenExtras *Ptr = nullptr;
-    if (!ExitCounts[i].Pred.isAlwaysTrue()) {
+    if (!ExitCounts[i].second.Pred.isAlwaysTrue()) {
       Ptr = &ENT[PredPos++];
-      Ptr->Pred = std::move(ExitCounts[i].Pred);
+      Ptr->Pred = std::move(ExitCounts[i].second.Pred);
     }
 
-    Exits.emplace_back(ExitCounts[i].ExitBlock, ExitCounts[i].Taken, Ptr);
+    Exits.emplace_back(ExitCounts[i].first, ExitCounts[i].second.Exact, Ptr);
   }
 }
 
@@ -5734,7 +5738,7 @@ ScalarEvolution::computeBackedgeTakenCount(const Loop *L,
   SmallVector<BasicBlock *, 8> ExitingBlocks;
   L->getExitingBlocks(ExitingBlocks);
 
-  SmallVector<EdgeInfo, 4> ExitCounts;
+  SmallVector<ScalarEvolution::EdgeExitInfo, 4> ExitCounts;
   bool CouldComputeBECount = true;
   BasicBlock *Latch = L->getLoopLatch(); // may be NULL.
   const SCEV *MustExitMaxBECount = nullptr;
@@ -5757,7 +5761,7 @@ ScalarEvolution::computeBackedgeTakenCount(const Loop *L,
       // we won't be able to compute an exact value for the loop.
       CouldComputeBECount = false;
     else
-      ExitCounts.emplace_back(EdgeInfo(ExitBB, EL.Exact, EL.Pred));
+      ExitCounts.emplace_back(ExitBB, EL);
 
     // 2. Derive the loop's MaxBECount from each exit's max number of
     // non-exiting iterations. Partition the loop exits into two kinds:
