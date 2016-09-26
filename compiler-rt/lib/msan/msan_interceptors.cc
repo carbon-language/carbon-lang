@@ -940,7 +940,7 @@ INTERCEPTOR(void *, realloc, void *ptr, SIZE_T size) {
       new_ptr = AllocateFromLocalPool(copy_size);
     } else {
       copy_size = size;
-      new_ptr = MsanReallocate(&stack, ptr, copy_size, sizeof(u64), false);
+      new_ptr = MsanReallocate(&stack, nullptr, copy_size, sizeof(u64), false);
     }
     internal_memcpy(new_ptr, ptr, copy_size);
     return new_ptr;
