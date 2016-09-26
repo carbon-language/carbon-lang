@@ -295,8 +295,7 @@ static void CheckShadowMapping() {
     uptr prev = 0;
     for (uptr p0 = beg; p0 <= end; p0 += (end - beg) / 4) {
       for (int x = -(int)kShadowCell; x <= (int)kShadowCell; x += kShadowCell) {
-        const uptr p = p0 + x;
-        CHECK_EQ(p, RoundDown(p, kShadowCell));
+        const uptr p = RoundDown(p0 + x, kShadowCell);
         if (p < beg || p >= end)
           continue;
         const uptr s = MemToShadow(p);
