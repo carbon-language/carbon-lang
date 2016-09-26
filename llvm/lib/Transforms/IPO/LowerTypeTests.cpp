@@ -1055,7 +1055,6 @@ bool LowerTypeTestsModule::lower() {
 
 PreservedAnalyses LowerTypeTestsPass::run(Module &M,
                                           ModuleAnalysisManager &AM) {
-  LowerTypeTests Impl;
   bool Changed = LowerTypeTestsModule(M).lower();
   if (!Changed)
     return PreservedAnalyses::all();
