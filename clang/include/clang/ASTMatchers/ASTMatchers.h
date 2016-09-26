@@ -125,6 +125,7 @@ typedef internal::Matcher<QualType> TypeMatcher;
 typedef internal::Matcher<TypeLoc> TypeLocMatcher;
 typedef internal::Matcher<NestedNameSpecifier> NestedNameSpecifierMatcher;
 typedef internal::Matcher<NestedNameSpecifierLoc> NestedNameSpecifierLocMatcher;
+typedef internal::Matcher<CXXCtorInitializer> CXXCtorInitializerMatcher;
 /// @}
 
 /// \brief Matches any node.
