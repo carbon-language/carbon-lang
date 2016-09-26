@@ -7452,7 +7452,7 @@ defm VPMOVQ2M : avx512_convert_vector_to_mask<0x39, "vpmovq2m",
 // AVX-512 - COMPRESS and EXPAND
 //
 
-multiclass compress_by_vec_width<bits<8> opc, X86VectorVTInfo _,
+multiclass compress_by_vec_width_common<bits<8> opc, X86VectorVTInfo _,
                                  string OpcodeStr> {
   defm rr : AVX512_maskable<opc, MRMDestReg, _, (outs _.RC:$dst),
               (ins _.RC:$src1), OpcodeStr, "$src1", "$src1",
@@ -7467,19 +7467,28 @@ multiclass compress_by_vec_width<bits<8> opc, X86VectorVTInfo _,
   def mrk : AVX5128I<opc, MRMDestMem, (outs),
               (ins _.MemOp:$dst, _.KRCWM:$mask, _.RC:$src),
               OpcodeStr # "\t{$src, $dst {${mask}}|$dst {${mask}}, $src}",
-              [(store (_.VT (vselect _.KRCWM:$mask,
-                             (_.VT (X86compress  _.RC:$src)), _.ImmAllZerosV)),
-                addr:$dst)]>,
+              []>,
               EVEX_K, EVEX_CD8<_.EltSize, CD8VT1>;
+}
+
+multiclass compress_by_vec_width_lowering<X86VectorVTInfo _ > {
+
+  def : Pat<(X86mCompressingStore addr:$dst, _.KRCWM:$mask,
+                                               (_.VT _.RC:$src)),
+            (!cast<Instruction>(NAME#_.ZSuffix##mrk)
+                            addr:$dst, _.KRCWM:$mask, _.RC:$src)>;
 }
 
 multiclass compress_by_elt_width<bits<8> opc, string OpcodeStr,
                                  AVX512VLVectorVTInfo VTInfo> {
-  defm Z : compress_by_vec_width<opc, VTInfo.info512, OpcodeStr>, EVEX_V512;
+  defm Z : compress_by_vec_width_common<opc, VTInfo.info512, OpcodeStr>,
+           compress_by_vec_width_lowering<VTInfo.info512>, EVEX_V512;
 
   let Predicates = [HasVLX] in {
-    defm Z256 : compress_by_vec_width<opc, VTInfo.info256, OpcodeStr>, EVEX_V256;
-    defm Z128 : compress_by_vec_width<opc, VTInfo.info128, OpcodeStr>, EVEX_V128;
+    defm Z256 : compress_by_vec_width_common<opc, VTInfo.info256, OpcodeStr>,
+                compress_by_vec_width_lowering<VTInfo.info256>, EVEX_V256;
+    defm Z128 : compress_by_vec_width_common<opc, VTInfo.info128, OpcodeStr>,
+                compress_by_vec_width_lowering<VTInfo.info128>, EVEX_V128;
   }
 }
 
