@@ -125,35 +125,35 @@ void alloc_before_init() {
 // CHECK: }
 }
 
-#if 0
-// CHECKDISABLED-LABEL: define {{.*}}@{{.*}}dotstar_lhs_before_rhs{{.*}}(
+
+// CHECK-LABEL: define {{.*}}@{{.*}}dotstar_lhs_before_rhs{{.*}}(
 int dotstar_lhs_before_rhs() {
-  // CHECKDISABLED: call {{.*}}@{{.*}}make_a{{.*}}(
-  // CHECKDISABLED: call {{.*}}@{{.*}}make_mem_ptr_a{{.*}}(
+  // CHECK: call {{.*}}@{{.*}}make_a{{.*}}(
+  // CHECK: call {{.*}}@{{.*}}make_mem_ptr_a{{.*}}(
   int a = make_a().*make_mem_ptr_a();
 
-  // CHECKDISABLED: call {{.*}}@{{.*}}make_a_ptr{{.*}}(
-  // CHECKDISABLED: call {{.*}}@{{.*}}make_mem_ptr_a{{.*}}(
+  // CHECK: call {{.*}}@{{.*}}make_a_ptr{{.*}}(
+  // CHECK: call {{.*}}@{{.*}}make_mem_ptr_a{{.*}}(
   int b = make_a_ptr()->*make_mem_ptr_a();
 
-  // CHECKDISABLED: call {{.*}}@{{.*}}make_c{{.*}}(
-  // CHECKDISABLED: call {{.*}}@{{.*}}make_b{{.*}}(
+  // CHECK: call {{.*}}@{{.*}}make_c{{.*}}(
+  // CHECK: call {{.*}}@{{.*}}make_b{{.*}}(
   make_c()->*make_b();
 
-  // CHECKDISABLED: call {{.*}}@{{.*}}make_a{{.*}}(
-  // CHECKDISABLED: call {{.*}}@{{.*}}make_mem_fn_ptr_a{{.*}}(
-  // CHECKDISABLED: call
+  // CHECK: call {{.*}}@{{.*}}make_a{{.*}}(
+  // CHECK: call {{.*}}@{{.*}}make_mem_fn_ptr_a{{.*}}(
+  // CHECK: call
   (make_a().*make_mem_fn_ptr_a())();
 
-  // CHECKDISABLED: call {{.*}}@{{.*}}make_a_ptr{{.*}}(
-  // CHECKDISABLED: call {{.*}}@{{.*}}make_mem_fn_ptr_a{{.*}}(
-  // CHECKDISABLED: call
+  // CHECK: call {{.*}}@{{.*}}make_a_ptr{{.*}}(
+  // CHECK: call {{.*}}@{{.*}}make_mem_fn_ptr_a{{.*}}(
+  // CHECK: call
   (make_a_ptr()->*make_mem_fn_ptr_a())();
 
   return a + b;
-// CHECKDISABLED: }
+// CHECK: }
 }
-#endif
+
 #if 0
 // CHECKDISABLED-LABEL: define {{.*}}@{{.*}}assign_lhs_before_rhs{{.*}}(
 void assign_rhs_before_lhs() {
