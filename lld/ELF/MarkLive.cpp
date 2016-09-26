@@ -81,13 +81,6 @@ static ResolvedReloc<ELFT> resolveReloc(InputSectionBase<ELFT> &Sec,
 template <class ELFT>
 static void forEachSuccessor(InputSection<ELFT> &Sec,
                              std::function<void(ResolvedReloc<ELFT>)> Fn) {
-  // Skip over discarded sections. This in theory shouldn't happen, because
-  // the ELF spec doesn't allow a relocation to point to a deduplicated
-  // COMDAT section directly. Unfortunately this happens in practice (e.g.
-  // .eh_frame) so we need to add a check.
-  if (&Sec == &InputSection<ELFT>::Discarded)
-    return;
-
   ELFFile<ELFT> &Obj = Sec.getFile()->getObj();
   for (const typename ELFT::Shdr *RelSec : Sec.RelocSections) {
     if (RelSec->sh_type == SHT_RELA) {
@@ -198,7 +191,11 @@ template <class ELFT> void elf::markLive() {
   SmallVector<InputSection<ELFT> *, 256> Q;
 
   auto Enqueue = [&](ResolvedReloc<ELFT> R) {
-    if (!R.Sec)
+    // Skip over discarded sections. This in theory shouldn't happen, because
+    // the ELF spec doesn't allow a relocation to point to a deduplicated
+    // COMDAT section directly. Unfortunately this happens in practice (e.g.
+    // .eh_frame) so we need to add a check.
+    if (!R.Sec || R.Sec == &InputSection<ELFT>::Discarded)
       return;
 
     // Usually, a whole section is marked as live or dead, but in mergeable
