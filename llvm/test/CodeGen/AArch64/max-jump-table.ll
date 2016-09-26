@@ -1,7 +1,7 @@
-; RUN: llc %s -O2 -print-machineinstrs -march=aarch64 -jump-table-density=40                   -o - 2>%t; FileCheck %s --check-prefixes=CHECK,CHECK0  <%t
-; RUN: llc %s -O2 -print-machineinstrs -march=aarch64 -jump-table-density=40 -max-jump-table=4 -o - 2>%t; FileCheck %s --check-prefixes=CHECK,CHECK4  <%t
-; RUN: llc %s -O2 -print-machineinstrs -march=aarch64 -jump-table-density=40 -max-jump-table=8 -o - 2>%t; FileCheck %s --check-prefixes=CHECK,CHECK8  <%t
-; RUN: llc %s -O2 -print-machineinstrs -march=aarch64 -jump-table-density=40 -mcpu=exynos-m1   -o - 2>%t; FileCheck %s --check-prefixes=CHECK,CHECKM1 <%t
+; RUN: llc %s -O2 -print-machineinstrs -mtriple=aarch64-linux-gnu -jump-table-density=40                   -o - 2>%t; FileCheck %s --check-prefixes=CHECK,CHECK0  <%t
+; RUN: llc %s -O2 -print-machineinstrs -mtriple=aarch64-linux-gnu -jump-table-density=40 -max-jump-table=4 -o - 2>%t; FileCheck %s --check-prefixes=CHECK,CHECK4  <%t
+; RUN: llc %s -O2 -print-machineinstrs -mtriple=aarch64-linux-gnu -jump-table-density=40 -max-jump-table=8 -o - 2>%t; FileCheck %s --check-prefixes=CHECK,CHECK8  <%t
+; RUN: llc %s -O2 -print-machineinstrs -mtriple=aarch64-linux-gnu -jump-table-density=40 -mcpu=exynos-m1   -o - 2>%t; FileCheck %s --check-prefixes=CHECK,CHECKM1 <%t
 
 declare void @ext(i32)
 
