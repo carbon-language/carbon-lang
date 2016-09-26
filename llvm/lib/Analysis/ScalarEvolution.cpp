@@ -9586,6 +9586,7 @@ ScalarEvolution::ScalarEvolution(ScalarEvolution &&Arg)
       ValuesAtScopes(std::move(Arg.ValuesAtScopes)),
       LoopDispositions(std::move(Arg.LoopDispositions)),
       BlockDispositions(std::move(Arg.BlockDispositions)),
+      LoopPropertiesCache(std::move(Arg.LoopPropertiesCache)),
       UnsignedRanges(std::move(Arg.UnsignedRanges)),
       SignedRanges(std::move(Arg.SignedRanges)),
       UniqueSCEVs(std::move(Arg.UniqueSCEVs)),
