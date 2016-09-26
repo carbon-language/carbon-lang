@@ -5667,7 +5667,8 @@ bool ScalarEvolution::BackedgeTakenInfo::hasOperand(const SCEV *S,
 /// Allocate memory for BackedgeTakenInfo and copy the not-taken count of each
 /// computable exit into a persistent ExitNotTakenInfo array.
 ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
-    ArrayRef<ScalarEvolution::BackedgeTakenInfo::EdgeExitInfo> ExitCounts,
+    SmallVectorImpl<ScalarEvolution::BackedgeTakenInfo::EdgeExitInfo>
+        &&ExitCounts,
     bool Complete, const SCEV *MaxCount)
     : MaxAndComplete(MaxCount, Complete) {
   typedef ScalarEvolution::BackedgeTakenInfo::EdgeExitInfo EdgeExitInfo;
@@ -5753,7 +5754,8 @@ ScalarEvolution::computeBackedgeTakenCount(const Loop *L,
   }
   const SCEV *MaxBECount = MustExitMaxBECount ? MustExitMaxBECount :
     (MayExitMaxBECount ? MayExitMaxBECount : getCouldNotCompute());
-  return BackedgeTakenInfo(ExitCounts, CouldComputeBECount, MaxBECount);
+  return BackedgeTakenInfo(std::move(ExitCounts), CouldComputeBECount,
+                           MaxBECount);
 }
 
 ScalarEvolution::ExitLimit

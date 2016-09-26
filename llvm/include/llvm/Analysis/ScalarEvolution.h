@@ -652,7 +652,7 @@ private:
     typedef std::pair<BasicBlock *, ExitLimit> EdgeExitInfo;
 
     /// Initialize BackedgeTakenInfo from a list of exact exit counts.
-    BackedgeTakenInfo(ArrayRef<EdgeExitInfo> ExitCounts, bool Complete,
+    BackedgeTakenInfo(SmallVectorImpl<EdgeExitInfo> &&ExitCounts, bool Complete,
                       const SCEV *MaxCount);
 
     /// Test whether this BackedgeTakenInfo contains any computed information,
