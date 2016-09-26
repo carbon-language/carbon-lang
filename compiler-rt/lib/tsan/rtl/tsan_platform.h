@@ -56,7 +56,6 @@ struct Mapping {
   static const uptr kLoAppMemEnd   = 0x004000000000ull;
   static const uptr kMidAppMemBeg  = 0x554000000000ull;
   static const uptr kMidAppMemEnd  = 0x568000000000ull;
-  static const uptr kMidShadowOff  = 0x540000000000ull;
   static const uptr kHiAppMemBeg   = 0x7ec000000000ull;
   static const uptr kHiAppMemEnd   = 0x800000000000ull;
   static const uptr kAppMemMsk     = 0x7c0000000000ull;
@@ -93,7 +92,6 @@ struct Mapping {
   static const uptr kLoAppMemEnd   = 0x0200000000ull;
   static const uptr kMidAppMemBeg  = 0xaa00000000ull;
   static const uptr kMidAppMemEnd  = 0xab00000000ull;
-  static const uptr kMidShadowOff  = 0xa800000000ull;
   static const uptr kHiAppMemBeg   = 0xff80000000ull;
   static const uptr kHiAppMemEnd   = 0xffffffffffull;
   static const uptr kAppMemMsk     = 0xf800000000ull;
@@ -133,7 +131,6 @@ struct Mapping39 {
   static const uptr kMetaShadowEnd = 0x3400000000ull;
   static const uptr kMidAppMemBeg  = 0x5500000000ull;
   static const uptr kMidAppMemEnd  = 0x5600000000ull;
-  static const uptr kMidShadowOff  = 0x5000000000ull;
   static const uptr kTraceMemBeg   = 0x6000000000ull;
   static const uptr kTraceMemEnd   = 0x6200000000ull;
   static const uptr kHeapMemBeg    = 0x7c00000000ull;
@@ -169,7 +166,6 @@ struct Mapping42 {
   static const uptr kMetaShadowEnd = 0x28000000000ull;
   static const uptr kMidAppMemBeg  = 0x2aa00000000ull;
   static const uptr kMidAppMemEnd  = 0x2ab00000000ull;
-  static const uptr kMidShadowOff  = 0x28000000000ull;
   static const uptr kTraceMemBeg   = 0x36200000000ull;
   static const uptr kTraceMemEnd   = 0x36400000000ull;
   static const uptr kHeapMemBeg    = 0x3e000000000ull;
@@ -190,7 +186,6 @@ struct Mapping48 {
   static const uptr kMetaShadowEnd = 0x0006000000000ull;
   static const uptr kMidAppMemBeg  = 0x0aaaa00000000ull;
   static const uptr kMidAppMemEnd  = 0x0aaaf00000000ull;
-  static const uptr kMidShadowOff  = 0x0aaa800000000ull;
   static const uptr kTraceMemBeg   = 0x0f06000000000ull;
   static const uptr kTraceMemEnd   = 0x0f06200000000ull;
   static const uptr kHeapMemBeg    = 0x0ffff00000000ull;
@@ -706,7 +701,8 @@ uptr ShadowToMemImpl(uptr s) {
       MemToShadow(p) == s)
     return p;
 # ifdef TSAN_MID_APP_RANGE
-  p = ((s / kShadowCnt) ^ Mapping::kAppMemXor) + Mapping::kMidShadowOff;
+  p = ((s / kShadowCnt) ^ Mapping::kAppMemXor) +
+      (Mapping::kMidAppMemBeg & Mapping::kAppMemMsk);
   if (p >= Mapping::kMidAppMemBeg && p < Mapping::kMidAppMemEnd &&
       MemToShadow(p) == s)
     return p;
