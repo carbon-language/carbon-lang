@@ -594,6 +594,11 @@ private:
                               std::unique_ptr<SCEVUnionPredicate> Predicate)
         : ExitingBlock(ExitingBlock), ExactNotTaken(ExactNotTaken),
           Predicate(std::move(Predicate)) {}
+
+    // Clang builds fine without this, but MSVC does not.
+    ExitNotTakenInfo(const ExitNotTakenInfo &) = delete;
+    ExitNotTakenInfo(ExitNotTakenInfo &&) = default;
+    ExitNotTakenInfo &operator=(ExitNotTakenInfo &&) = default;
   };
 
   /// Information about the backedge-taken count of a loop. This currently
@@ -621,6 +626,10 @@ private:
 
   public:
     BackedgeTakenInfo() : MaxAndComplete(nullptr, 0) {}
+
+    BackedgeTakenInfo(const BackedgeTakenInfo &) = delete;
+    BackedgeTakenInfo(BackedgeTakenInfo &&) = default;
+    BackedgeTakenInfo &operator=(BackedgeTakenInfo &&) = default;
 
     /// Initialize BackedgeTakenInfo from a list of exact exit counts.
     BackedgeTakenInfo(ArrayRef<EdgeExitInfo> ExitCounts, bool Complete,
