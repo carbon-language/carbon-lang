@@ -4802,6 +4802,7 @@ TEST_F(FormatTest, DeclarationsOfMultipleVariables) {
   verifyFormat("aaaaaaaaa *a = aaaaaaaaaaaaaaaaaaa, *b = bbbbbbbbbbbbbbbbbbb,\n"
                "          *b = bbbbbbbbbbbbbbbbbbb, *d = ddddddddddddddddddd;",
                Style);
+  verifyFormat("vector<int*> a, b;", Style);
 }
 
 TEST_F(FormatTest, ConditionalExpressionsInBrackets) {
