@@ -1228,6 +1228,18 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     std::sort(DataMappingSymsAddr.begin(), DataMappingSymsAddr.end());
     std::sort(TextMappingSymsAddr.begin(), TextMappingSymsAddr.end());
 
+    if (Obj->isELF() && Obj->getArch() == Triple::amdgcn) {
+      // AMDGPU disassembler uses symbolizer for printing labels
+      std::unique_ptr<MCRelocationInfo> RelInfo(
+        TheTarget->createMCRelocationInfo(TripleName, Ctx));
+      if (RelInfo) {
+        std::unique_ptr<MCSymbolizer> Symbolizer(
+          TheTarget->createMCSymbolizer(
+            TripleName, nullptr, nullptr, &Symbols, &Ctx, std::move(RelInfo)));
+        DisAsm->setSymbolizer(std::move(Symbolizer));
+      }
+    }
+
     // Make a list of all the relocations for this section.
     std::vector<RelocationRef> Rels;
     if (InlineRelocs) {
