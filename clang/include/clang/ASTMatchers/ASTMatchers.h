@@ -3387,6 +3387,24 @@ AST_POLYMORPHIC_MATCHER(isExternC, AST_POLYMORPHIC_SUPPORTED_TYPES(FunctionDecl,
   return Node.isExternC();
 }
 
+/// \brief Matches variable/function declarations that have static storage class
+/// (with "static" key word) written in the source.
+///
+/// Given:
+/// \code
+///   static void f() {}
+///   static int i = 0;
+/// \endcode
+/// functionDecl(isStaticStorageClass())
+///   matches the function declaration f.
+/// varDecl(isStaticStorageClass())
+///   matches the variable declaration i.
+AST_POLYMORPHIC_MATCHER(isStaticStorageClass,
+                        AST_POLYMORPHIC_SUPPORTED_TYPES(FunctionDecl,
+                                                        VarDecl)) {
+  return Node.getStorageClass() == SC_Static;
+}
+
 /// \brief Matches deleted function declarations.
 ///
 /// Given:

@@ -848,6 +848,14 @@ TEST(IsExternC, MatchesExternCVariableDeclarations) {
   EXPECT_TRUE(notMatches("int i;", varDecl(isExternC())));
 }
 
+TEST(IsStaticStorageClass, MatchesStaticDeclarations) {
+  EXPECT_TRUE(
+      matches("static void f() {}", functionDecl(isStaticStorageClass())));
+  EXPECT_TRUE(matches("static int i = 1;", varDecl(isStaticStorageClass())));
+  EXPECT_TRUE(notMatches("int i = 1;", varDecl(isStaticStorageClass())));
+  EXPECT_TRUE(notMatches("void f() {}", functionDecl(isStaticStorageClass())));
+}
+
 TEST(IsDefaulted, MatchesDefaultedFunctionDeclarations) {
   EXPECT_TRUE(notMatches("class A { ~A(); };",
                          functionDecl(hasName("~A"), isDefaulted())));
