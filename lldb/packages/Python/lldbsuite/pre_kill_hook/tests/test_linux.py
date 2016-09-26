@@ -1,14 +1,23 @@
-"""Test the pre-kill hook on Darwin."""
+"""Test the pre-kill hook on Linux."""
 from __future__ import print_function
 
 # system imports
 from multiprocessing import Process, Queue
 import platform
 import re
+import subprocess
 from unittest import main, TestCase
 
 # third party
 from six import StringIO
+
+
+def do_child_thread():
+    import os
+    x = 0
+    while True:
+        x = x + 42 * os.getpid()
+    return x
 
 
 def do_child_process(child_work_queue, parent_work_queue, verbose):
@@ -18,6 +27,14 @@ def do_child_process(child_work_queue, parent_work_queue, verbose):
     if verbose:
         print("child: pid {} started, sending to parent".format(pid))
     parent_work_queue.put(pid)
+
+    # Spin up a daemon thread to do some "work", which will show
+    # up in a sample of this process.
+    import threading
+    worker = threading.Thread(target=do_child_thread)
+    worker.daemon = True
+    worker.start()
+
     if verbose:
         print("child: waiting for shut-down request from parent")
     child_work_queue.get()
@@ -25,13 +42,14 @@ def do_child_process(child_work_queue, parent_work_queue, verbose):
         print("child: received shut-down request.  Child exiting.")
 
 
-class DarwinPreKillTestCase(TestCase):
+class LinuxPreKillTestCase(TestCase):
 
     def __init__(self, methodName):
-        super(DarwinPreKillTestCase, self).__init__(methodName)
+        super(LinuxPreKillTestCase, self).__init__(methodName)
         self.process = None
         self.child_work_queue = None
         self.verbose = False
+        # self.verbose = True
 
     def tearDown(self):
         if self.verbose:
@@ -44,8 +62,18 @@ class DarwinPreKillTestCase(TestCase):
 
     def test_sample(self):
         # Ensure we're Darwin.
-        if platform.system() != 'Darwin':
-            self.skipTest("requires a Darwin-based OS")
+        if platform.system() != 'Linux':
+            self.skipTest("requires a Linux-based OS")
+
+        # Ensure we have the 'perf' tool.  If not, skip the test.
+        try:
+            perf_version = subprocess.check_output(["perf", "version"])
+            if perf_version is None or not (
+                    perf_version.startswith("perf version")):
+                raise Exception("The perf executable doesn't appear"
+                                " to be the Linux perf tools perf")
+        except Exception:
+            self.skipTest("requires the Linux perf tools 'perf' command")
 
         # Start the child process.
         self.child_work_queue = Queue()
@@ -63,7 +91,7 @@ class DarwinPreKillTestCase(TestCase):
         child_pid = parent_work_queue.get()
 
         # Sample the child process.
-        from darwin import do_pre_kill
+        from linux import do_pre_kill
         context_dict = {
             "archs": [platform.machine()],
             "platform_name": None,
@@ -81,26 +109,24 @@ class DarwinPreKillTestCase(TestCase):
             print("parent: do_pre_kill() wrote the following output:", output)
         self.assertIsNotNone(output)
 
-        # We should have a line with:
-        # Process:  .* [{pid}]
-        process_re = re.compile(r"Process:[^[]+\[([^]]+)\]")
-        match = process_re.search(output)
-        self.assertIsNotNone(match, "should have found process id for "
-                             "sampled process")
-        self.assertEqual(1, len(match.groups()))
-        self.assertEqual(child_pid, int(match.group(1)))
+        # We should have a samples count entry.
+        # Samples:
+        self.assertTrue("Samples:" in output, "should have found a 'Samples:' "
+                        "field in the sampled process output")
 
-        # We should see a Call graph: section.
-        callgraph_re = re.compile(r"Call graph:")
-        match = callgraph_re.search(output)
-        self.assertIsNotNone(match, "should have found the Call graph section"
+        # We should see an event count entry
+        event_count_re = re.compile(r"Event count[^:]+:\s+(\d+)")
+        match = event_count_re.search(output)
+        self.assertIsNotNone(match, "should have found the event count entry "
                              "in sample output")
+        if self.verbose:
+            print("cpu-clock events:", match.group(1))
 
-        # We should see a Binary Images: section.
-        binary_images_re = re.compile(r"Binary Images:")
-        match = binary_images_re.search(output)
-        self.assertIsNotNone(match, "should have found the Binary Images "
-                             "section in sample output")
+        # We should see some percentages in the file.
+        percentage_re = re.compile(r"\d+\.\d+%")
+        match = percentage_re.search(output)
+        self.assertIsNotNone(match, "should have found at least one percentage "
+                             "in the sample output")
 
 
 if __name__ == "__main__":
