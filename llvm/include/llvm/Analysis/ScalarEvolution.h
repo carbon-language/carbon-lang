@@ -597,8 +597,19 @@ private:
 
     // Clang builds fine without this, but MSVC does not.
     ExitNotTakenInfo(const ExitNotTakenInfo &) = delete;
-    ExitNotTakenInfo(ExitNotTakenInfo &&) = default;
-    ExitNotTakenInfo &operator=(ExitNotTakenInfo &&) = default;
+
+    ExitNotTakenInfo(ExitNotTakenInfo &&Other) {
+      ExitingBlock = std::move(Other.ExitingBlock);
+      ExactNotTaken = std::move(Other.ExactNotTaken);
+      Predicate = std::move(Other.Predicate);
+    }
+
+    ExitNotTakenInfo &operator=(ExitNotTakenInfo &&Other) {
+      ExitingBlock = std::move(Other.ExitingBlock);
+      ExactNotTaken = std::move(Other.ExactNotTaken);
+      Predicate = std::move(Other.Predicate);
+      return *this;
+    }
   };
 
   /// Information about the backedge-taken count of a loop. This currently
@@ -628,8 +639,17 @@ private:
     BackedgeTakenInfo() : MaxAndComplete(nullptr, 0) {}
 
     BackedgeTakenInfo(const BackedgeTakenInfo &) = delete;
-    BackedgeTakenInfo(BackedgeTakenInfo &&) = default;
-    BackedgeTakenInfo &operator=(BackedgeTakenInfo &&) = default;
+
+    BackedgeTakenInfo(BackedgeTakenInfo &&Other) {
+      ExitNotTaken = std::move(Other.ExitNotTaken);
+      MaxAndComplete = std::move(Other.MaxAndComplete);
+    }
+
+    BackedgeTakenInfo &operator=(BackedgeTakenInfo &&Other) {
+      ExitNotTaken = std::move(Other.ExitNotTaken);
+      MaxAndComplete = std::move(Other.MaxAndComplete);
+      return *this;
+    }
 
     /// Initialize BackedgeTakenInfo from a list of exact exit counts.
     BackedgeTakenInfo(ArrayRef<EdgeExitInfo> ExitCounts, bool Complete,
