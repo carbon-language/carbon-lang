@@ -5640,14 +5640,14 @@ ScalarEvolution::BackedgeTakenInfo::getExact(BasicBlock *ExitingBlock,
 /// getMax - Get the max backedge taken count for the loop.
 const SCEV *
 ScalarEvolution::BackedgeTakenInfo::getMax(ScalarEvolution *SE) const {
-  // TODO: use any_of
-  for (auto &ENT : ExitNotTaken)
-    if (!ENT.hasAlwaysTruePredicate())
-      return SE->getCouldNotCompute();
+  auto PredicateNotAlwaysTrue = [](const ExitNotTakenInfo &ENT) {
+    return !ENT.hasAlwaysTruePredicate();
+  };
 
-  if (auto *Max = getMax())
-    return Max;
-  return SE->getCouldNotCompute();
+  if (any_of(ExitNotTaken, PredicateNotAlwaysTrue) || !getMax())
+    return SE->getCouldNotCompute();
+
+  return getMax();
 }
 
 bool ScalarEvolution::BackedgeTakenInfo::hasOperand(const SCEV *S,
