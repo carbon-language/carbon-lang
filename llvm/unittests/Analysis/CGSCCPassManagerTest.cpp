@@ -296,4 +296,93 @@ TEST_F(CGSCCPassManagerTest, Basic) {
   EXPECT_EQ(4 * 6, AnalyzedModuleFunctionCount1);
 }
 
+// Test that an SCC pass which fails to preserve a module analysis does in fact
+// invalidate that module analysis.
+TEST_F(CGSCCPassManagerTest, TestSCCPassInvalidatesModuleAnalysis) {
+  FunctionAnalysisManager FAM(/*DebugLogging*/ true);
+  CGSCCAnalysisManager CGAM(/*DebugLogging*/ true);
+  ModuleAnalysisManager MAM(/*DebugLogging*/ true);
+  MAM.registerPass([&] { return FunctionAnalysisManagerModuleProxy(FAM); });
+  MAM.registerPass([&] { return CGSCCAnalysisManagerModuleProxy(CGAM); });
+  CGAM.registerPass([&] { return FunctionAnalysisManagerCGSCCProxy(FAM); });
+  CGAM.registerPass([&] { return ModuleAnalysisManagerCGSCCProxy(MAM); });
+  FAM.registerPass([&] { return CGSCCAnalysisManagerFunctionProxy(CGAM); });
+  FAM.registerPass([&] { return ModuleAnalysisManagerFunctionProxy(MAM); });
+  MAM.registerPass([&] { return LazyCallGraphAnalysis(); });
+
+  int ModuleAnalysisRuns = 0;
+  MAM.registerPass([&] { return TestModuleAnalysis(ModuleAnalysisRuns); });
+
+  ModulePassManager MPM(/*DebugLogging*/ true);
+  MPM.addPass(RequireAnalysisPass<TestModuleAnalysis, Module>());
+
+  // The first CGSCC run we preserve everything and make sure that works and
+  // the module analysis is available in the second CGSCC run from the one
+  // required module pass above.
+  CGSCCPassManager CGPM1(/*DebugLogging*/ true);
+  int CountFoundModuleAnalysis1 = 0;
+  CGPM1.addPass(
+      LambdaSCCPass([&](LazyCallGraph::SCC &C, CGSCCAnalysisManager &AM,
+                        LazyCallGraph &CG, CGSCCUpdateResult &UR) {
+        const auto &MAM =
+            AM.getResult<ModuleAnalysisManagerCGSCCProxy>(C, CG).getManager();
+        auto *TMA = MAM.getCachedResult<TestModuleAnalysis>(
+            *C.begin()->getFunction().getParent());
+
+        if (TMA)
+          ++CountFoundModuleAnalysis1;
+
+        return PreservedAnalyses::all();
+      }));
+  MPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(std::move(CGPM1)));
+
+  // The second CGSCC run checks that the module analysis got preserved the
+  // previous time and in one SCC fails to preserve it.
+  CGSCCPassManager CGPM2(/*DebugLogging*/ true);
+  int CountFoundModuleAnalysis2 = 0;
+  CGPM2.addPass(
+      LambdaSCCPass([&](LazyCallGraph::SCC &C, CGSCCAnalysisManager &AM,
+                        LazyCallGraph &CG, CGSCCUpdateResult &UR) {
+        const auto &MAM =
+            AM.getResult<ModuleAnalysisManagerCGSCCProxy>(C, CG).getManager();
+        auto *TMA = MAM.getCachedResult<TestModuleAnalysis>(
+            *C.begin()->getFunction().getParent());
+
+        if (TMA)
+          ++CountFoundModuleAnalysis2;
+
+        // Only fail to preserve analyses on one SCC and make sure that gets
+        // propagated.
+        return C.getName() == "(g)" ? PreservedAnalyses::none()
+                                  : PreservedAnalyses::all();
+      }));
+  MPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(std::move(CGPM2)));
+
+  // The third CGSCC run should fail to find a cached module analysis as it
+  // should have been invalidated by the above CGSCC run.
+  CGSCCPassManager CGPM3(/*DebugLogging*/ true);
+  int CountFoundModuleAnalysis3 = 0;
+  CGPM3.addPass(
+      LambdaSCCPass([&](LazyCallGraph::SCC &C, CGSCCAnalysisManager &AM,
+                        LazyCallGraph &CG, CGSCCUpdateResult &UR) {
+        const auto &MAM =
+            AM.getResult<ModuleAnalysisManagerCGSCCProxy>(C, CG).getManager();
+        auto *TMA = MAM.getCachedResult<TestModuleAnalysis>(
+            *C.begin()->getFunction().getParent());
+
+        if (TMA)
+          ++CountFoundModuleAnalysis3;
+
+        return PreservedAnalyses::none();
+      }));
+  MPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(std::move(CGPM3)));
+
+  MPM.run(*M, MAM);
+
+  EXPECT_EQ(1, ModuleAnalysisRuns);
+  EXPECT_EQ(4, CountFoundModuleAnalysis1);
+  EXPECT_EQ(4, CountFoundModuleAnalysis2);
+  EXPECT_EQ(0, CountFoundModuleAnalysis3);
+}
+
 }
