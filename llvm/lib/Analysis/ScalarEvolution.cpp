@@ -5667,13 +5667,14 @@ bool ScalarEvolution::BackedgeTakenInfo::hasOperand(const SCEV *S,
 /// Allocate memory for BackedgeTakenInfo and copy the not-taken count of each
 /// computable exit into a persistent ExitNotTakenInfo array.
 ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
-    ArrayRef<ScalarEvolution::EdgeExitInfo> ExitCounts, bool Complete,
-    const SCEV *MaxCount)
+    ArrayRef<ScalarEvolution::BackedgeTakenInfo::EdgeExitInfo> ExitCounts,
+    bool Complete, const SCEV *MaxCount)
     : MaxAndComplete(MaxCount, Complete) {
+  typedef ScalarEvolution::BackedgeTakenInfo::EdgeExitInfo EdgeExitInfo;
   ExitNotTaken.reserve(ExitCounts.size());
   std::transform(
       ExitCounts.begin(), ExitCounts.end(), std::back_inserter(ExitNotTaken),
-      [&](const ScalarEvolution::EdgeExitInfo &EEI) {
+      [&](const EdgeExitInfo &EEI) {
         BasicBlock *ExitBB = EEI.first;
         const ExitLimit &EL = EEI.second;
         if (EL.Predicate.isAlwaysTrue())
@@ -5696,7 +5697,9 @@ ScalarEvolution::computeBackedgeTakenCount(const Loop *L,
   SmallVector<BasicBlock *, 8> ExitingBlocks;
   L->getExitingBlocks(ExitingBlocks);
 
-  SmallVector<ScalarEvolution::EdgeExitInfo, 4> ExitCounts;
+  typedef ScalarEvolution::BackedgeTakenInfo::EdgeExitInfo EdgeExitInfo;
+
+  SmallVector<EdgeExitInfo, 4> ExitCounts;
   bool CouldComputeBECount = true;
   BasicBlock *Latch = L->getLoopLatch(); // may be NULL.
   const SCEV *MustExitMaxBECount = nullptr;

@@ -577,8 +577,6 @@ private:
     }
   };
 
-  typedef std::pair<BasicBlock *, ExitLimit> EdgeExitInfo;
-
   /// Information about the number of times a particular loop exit may be
   /// reached before exiting the loop.
   struct ExitNotTakenInfo {
@@ -650,6 +648,8 @@ private:
       MaxAndComplete = std::move(Other.MaxAndComplete);
       return *this;
     }
+
+    typedef std::pair<BasicBlock *, ExitLimit> EdgeExitInfo;
 
     /// Initialize BackedgeTakenInfo from a list of exact exit counts.
     BackedgeTakenInfo(ArrayRef<EdgeExitInfo> ExitCounts, bool Complete,
