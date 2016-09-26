@@ -662,9 +662,8 @@ template<typename Mapping>
 u32 *MemToMetaImpl(uptr x) {
   DCHECK(IsAppMem(x));
 #ifndef SANITIZER_GO
-  return (u32*)(((((x) & ~(Mapping::kAppMemMsk | (kMetaShadowCell - 1)))
-        ^ Mapping::kAppMemXor) / kMetaShadowCell * kMetaShadowSize)
-          | Mapping::kMetaShadowBeg);
+  return (u32*)(((((x) & ~(Mapping::kAppMemMsk | (kMetaShadowCell - 1)))) /
+      kMetaShadowCell * kMetaShadowSize) | Mapping::kMetaShadowBeg);
 #else
   return (u32*)(((x & ~(kMetaShadowCell - 1)) / \
       kMetaShadowCell * kMetaShadowSize) | Mapping::kMetaShadowBeg);
