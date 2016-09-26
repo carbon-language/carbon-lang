@@ -725,22 +725,32 @@ private:
            SmallVector<PointerIntPair<const Loop *, 2, LoopDisposition>, 2>>
       LoopDispositions;
 
-  /// Cache for \c loopHasNoAbnormalExits.
-  DenseMap<const Loop *, bool> LoopHasNoAbnormalExits;
+  struct LoopProperties {
+    /// Set to true if the loop contains no instruction that can have side
+    /// effects (i.e. via throwing an exception, volatile or atomic access).
+    bool HasNoAbnormalExits;
 
-  /// Cache for \c loopHasNoSideEffects.
-  DenseMap<const Loop *, bool> LoopHasNoSideEffects;
+    /// Set to true if the loop contains no instruction that can abnormally exit
+    /// the loop (i.e. via throwing an exception, by terminating the thread
+    /// cleanly or by infinite looping in a called function).  Strictly
+    /// speaking, the last one is not leaving the loop, but is identical to
+    /// leaving the loop for reasoning about undefined behavior.
+    bool HasNoSideEffects;
+  };
 
-  /// Returns true if \p L contains no instruction that can have side effects
-  /// (i.e. via throwing an exception, volatile or atomic access).
-  bool loopHasNoSideEffects(const Loop *L);
+  /// Cache for \c getLoopProperties.
+  DenseMap<const Loop *, LoopProperties> LoopPropertiesCache;
 
-  /// Returns true if \p L contains no instruction that can abnormally exit
-  /// the loop (i.e. via throwing an exception, by terminating the thread
-  /// cleanly or by infinite looping in a called function).  Strictly
-  /// speaking, the last one is not leaving the loop, but is identical to
-  /// leaving the loop for reasoning about undefined behavior.
-  bool loopHasNoAbnormalExits(const Loop *L);
+  /// Return a \c LoopProperties instance for \p L, creating one if necessary.
+  LoopProperties getLoopProperties(const Loop *L);
+
+  bool loopHasNoSideEffects(const Loop *L) {
+    return getLoopProperties(L).HasNoSideEffects;
+  }
+
+  bool loopHasNoAbnormalExits(const Loop *L) {
+    return getLoopProperties(L).HasNoAbnormalExits;
+  }
 
   /// Compute a LoopDisposition value.
   LoopDisposition computeLoopDisposition(const SCEV *S, const Loop *L);

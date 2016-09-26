@@ -4953,39 +4953,33 @@ bool ScalarEvolution::isAddRecNeverPoison(const Instruction *I, const Loop *L) {
   return LatchControlDependentOnPoison && loopHasNoAbnormalExits(L);
 }
 
-bool ScalarEvolution::loopHasNoSideEffects(const Loop *L) {
-  auto Itr = LoopHasNoSideEffects.find(L);
-  if (Itr == LoopHasNoSideEffects.end()) {
-    auto NoSideEffectsInBB = [&](BasicBlock *BB) {
-      return all_of(*BB, [](Instruction &I) {
-        // Non-atomic, non-volatile stores are ok.
-        if (auto *SI = dyn_cast<StoreInst>(&I))
-          return SI->isSimple();
+ScalarEvolution::LoopProperties
+ScalarEvolution::getLoopProperties(const Loop *L) {
+  typedef ScalarEvolution::LoopProperties LoopProperties;
 
-        return !I.mayHaveSideEffects();
-      });
+  auto Itr = LoopPropertiesCache.find(L);
+  if (Itr == LoopPropertiesCache.end()) {
+    auto HasSideEffects = [](Instruction *I) {
+      if (auto *SI = dyn_cast<StoreInst>(I))
+        return !SI->isSimple();
+
+      return I->mayHaveSideEffects();
     };
 
-    auto InsertPair = LoopHasNoSideEffects.insert(
-        {L, all_of(L->getBlocks(), NoSideEffectsInBB)});
-    assert(InsertPair.second && "We just checked!");
-    Itr = InsertPair.first;
-  }
+    LoopProperties LP = {/* HasNoAbnormalExits */ true,
+                         /*HasNoSideEffects*/ true};
 
-  return Itr->second;
-}
+    for (auto *BB : L->getBlocks())
+      for (auto &I : *BB) {
+        if (!isGuaranteedToTransferExecutionToSuccessor(&I))
+          LP.HasNoAbnormalExits = false;
+        if (HasSideEffects(&I))
+          LP.HasNoSideEffects = false;
+        if (!LP.HasNoAbnormalExits && !LP.HasNoSideEffects)
+          break; // We're already as pessimistic as we can get.
+      }
 
-bool ScalarEvolution::loopHasNoAbnormalExits(const Loop *L) {
-  auto Itr = LoopHasNoAbnormalExits.find(L);
-  if (Itr == LoopHasNoAbnormalExits.end()) {
-    auto NoAbnormalExitInBB = [&](BasicBlock *BB) {
-      return all_of(*BB, [](Instruction &I) {
-        return isGuaranteedToTransferExecutionToSuccessor(&I);
-      });
-    };
-
-    auto InsertPair = LoopHasNoAbnormalExits.insert(
-        {L, all_of(L->getBlocks(), NoAbnormalExitInBB)});
+    auto InsertPair = LoopPropertiesCache.insert({L, LP});
     assert(InsertPair.second && "We just checked!");
     Itr = InsertPair.first;
   }
@@ -5561,8 +5555,7 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
   for (Loop *I : *L)
     forgetLoop(I);
 
-  LoopHasNoAbnormalExits.erase(L);
-  LoopHasNoSideEffects.erase(L);
+  LoopPropertiesCache.erase(L);
 }
 
 void ScalarEvolution::forgetValue(Value *V) {
