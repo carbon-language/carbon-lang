@@ -166,8 +166,9 @@ scanEhFrameSection(EhInputSection<ELFT> &EH,
     scanEhFrameSection(EH, EObj.rels(EH.RelocSection), Enqueue);
 }
 
-// Sections listed below are special because they are used by the loader
-// just by being in an ELF file. They should not be garbage-collected.
+// We do not garbage-collect two types of sections:
+// 1) Sections used by the loader (.init, .fini, .ctors, .dtors, .jcr)
+// 2) Not allocatable sections which typically contain debugging information
 template <class ELFT> static bool isReserved(InputSectionBase<ELFT> *Sec) {
   switch (Sec->getSectionHdr()->sh_type) {
   case SHT_FINI_ARRAY:
@@ -183,7 +184,8 @@ template <class ELFT> static bool isReserved(InputSectionBase<ELFT> *Sec) {
     if (isValidCIdentifier(S))
       return true;
 
-    return S.startswith(".ctors") || S.startswith(".dtors") ||
+    bool IsAllocSec = Sec->getSectionHdr()->sh_flags & SHF_ALLOC;
+    return !IsAllocSec || S.startswith(".ctors") || S.startswith(".dtors") ||
            S.startswith(".init") || S.startswith(".fini") ||
            S.startswith(".jcr");
   }
