@@ -11156,6 +11156,8 @@ TEST_F(FormatTest, FormatsBlocks) {
                "  }\n"
                "});");
   verifyFormat("Block b = ^int *(A *a, B *b) {}");
+  verifyFormat("BOOL (^aaa)(void) = ^BOOL {\n"
+               "};");
 
   FormatStyle FourIndent = getLLVMStyle();
   FourIndent.ObjCBlockIndentWidth = 4;
