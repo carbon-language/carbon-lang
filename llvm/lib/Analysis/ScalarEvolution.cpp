@@ -61,6 +61,7 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AssumptionCache.h"
@@ -8058,33 +8059,15 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
   return false;
 }
 
-namespace {
-/// RAII wrapper to prevent recursive application of isImpliedCond.
-/// ScalarEvolution's PendingLoopPredicates set must be empty unless we are
-/// currently evaluating isImpliedCond.
-struct MarkPendingLoopPredicate {
-  Value *Cond;
-  SmallPtrSetImpl<Value *> &LoopPreds;
-  bool Pending;
-
-  MarkPendingLoopPredicate(Value *C, SmallPtrSetImpl<Value *> &LP)
-      : Cond(C), LoopPreds(LP) {
-    Pending = !LoopPreds.insert(Cond).second;
-  }
-  ~MarkPendingLoopPredicate() {
-    if (!Pending)
-      LoopPreds.erase(Cond);
-  }
-};
-} // end anonymous namespace
-
 bool ScalarEvolution::isImpliedCond(ICmpInst::Predicate Pred,
                                     const SCEV *LHS, const SCEV *RHS,
                                     Value *FoundCondValue,
                                     bool Inverse) {
-  MarkPendingLoopPredicate Mark(FoundCondValue, PendingLoopPredicates);
-  if (Mark.Pending)
+  if (!PendingLoopPredicates.insert(FoundCondValue).second)
     return false;
+
+  auto ClearOnExit =
+      make_scope_exit([&]() { PendingLoopPredicates.erase(FoundCondValue); });
 
   // Recursively handle And and Or conditions.
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(FoundCondValue)) {
