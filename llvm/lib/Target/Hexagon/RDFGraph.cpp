@@ -65,6 +65,8 @@ raw_ostream &operator<< (raw_ostream &OS, const Print<NodeId> &P) {
     case NodeAttrs::Ref:
       if (Flags & NodeAttrs::Undef)
         OS << '/';
+      if (Flags & NodeAttrs::Dead)
+        OS << '\\';
       if (Flags & NodeAttrs::Preserving)
         OS << '+';
       if (Flags & NodeAttrs::Clobbering)
@@ -1316,7 +1318,8 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
     while (uint16_t R = *ImpU++)
       ImpUses.insert({R, 0});
 
-  bool NeedsImplicit = isCall(In) || In.isInlineAsm() || In.isReturn();
+  bool IsCall = isCall(In);
+  bool NeedsImplicit = IsCall || In.isInlineAsm() || In.isReturn();
   bool IsPredicated = TII.isPredicated(In);
   unsigned NumOps = In.getNumOperands();
 
@@ -1342,6 +1345,8 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
       Flags |= NodeAttrs::Clobbering;
     if (TOI.isFixedReg(In, OpN))
       Flags |= NodeAttrs::Fixed;
+    if (IsCall && Op.isDead())
+      Flags |= NodeAttrs::Dead;
     NodeAddr<DefNode*> DA = newDef(SA, Op, Flags);
     SA.Addr->addMember(DA, *this);
     DoneDefs.insert(RR);
@@ -1369,6 +1374,8 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
       Flags |= NodeAttrs::Clobbering;
     if (TOI.isFixedReg(In, OpN))
       Flags |= NodeAttrs::Fixed;
+    if (IsCall && Op.isDead())
+      Flags |= NodeAttrs::Dead;
     NodeAddr<DefNode*> DA = newDef(SA, Op, Flags);
     SA.Addr->addMember(DA, *this);
     DoneDefs.insert(RR);
