@@ -2879,7 +2879,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
   // in lexical order (this complexity is, sadly, required by C++17).
   llvm::Value *IdxPre =
       (E->getLHS() == E->getIdx()) ? EmitScalarExpr(E->getIdx()) : nullptr;
-  auto EmitIdxAfterBase = [&, IdxPre](bool Promote = true) -> llvm::Value * {
+  auto EmitIdxAfterBase = [&, IdxPre](bool Promote) -> llvm::Value * {
     auto *Idx = IdxPre;
     if (E->getLHS() != E->getIdx()) {
       assert(E->getRHS() == E->getIdx() && "index was neither LHS nor RHS");
