@@ -514,6 +514,8 @@ list(REMOVE_DUPLICATES LLVM_TARGETS_TO_BUILD)
 set(LLVM_DEFAULT_TARGET_TRIPLE "${LLVM_HOST_TRIPLE}" CACHE STRING
   "Default target for which LLVM will generate code." )
 set(TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}")
+message(STATUS "LLVM host triple: ${LLVM_HOST_TRIPLE}")
+message(STATUS "LLVM default target triple: ${LLVM_DEFAULT_TARGET_TRIPLE}")
 
 include(HandleLLVMOptions)
 
