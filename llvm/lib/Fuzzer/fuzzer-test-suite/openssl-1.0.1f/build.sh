@@ -7,7 +7,7 @@ LIBFUZZER_SRC=$(dirname $(dirname $SCRIPT_DIR))
 JOBS=20
 
 # FUZZ_CXXFLAGS=" -g -fsanitize=address -fsanitize-coverage=edge"
-FUZZ_CXXFLAGS=" -g -fsanitize=address -fsanitize-coverage=trace-pc-guard,trace-cmp,trace-div"
+FUZZ_CXXFLAGS=" -g -fsanitize=address -fsanitize-coverage=trace-pc-guard,trace-cmp,trace-div,trace-gep"
 
 get() {
   [ ! -e SRC ] && git clone https://github.com/openssl/openssl.git SRC && (cd SRC && git checkout OpenSSL_1_0_1f)

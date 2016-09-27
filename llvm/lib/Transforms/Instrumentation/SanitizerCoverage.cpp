@@ -599,7 +599,7 @@ void SanitizerCoverageModule::InjectTraceForGep(
   for (auto GEP : GepTraceTargets) {
     IRBuilder<> IRB(GEP);
     for (auto I = GEP->idx_begin(); I != GEP->idx_end(); ++I)
-      if (!isa<ConstantInt>(*I))
+      if (!isa<ConstantInt>(*I) && (*I)->getType()->isIntegerTy())
         IRB.CreateCall(SanCovTraceGepFunction,
                        {IRB.CreateIntCast(*I, IntptrTy, true)});
   }
