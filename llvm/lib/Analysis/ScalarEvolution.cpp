@@ -3366,7 +3366,7 @@ bool ScalarEvolution::containsAddRecurrence(const SCEV *S) {
     bool isDone() const { return FoundOne; }
   };
 
-  HasRecMapType::iterator I = HasRecMap.find_as(S);
+  HasRecMapType::iterator I = HasRecMap.find(S);
   if (I != HasRecMap.end())
     return I->second;
 
