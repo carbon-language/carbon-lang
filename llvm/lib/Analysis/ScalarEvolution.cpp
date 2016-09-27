@@ -8064,11 +8064,11 @@ namespace {
 /// currently evaluating isImpliedCond.
 struct MarkPendingLoopPredicate {
   Value *Cond;
-  DenseSet<Value*> &LoopPreds;
+  SmallPtrSetImpl<Value *> &LoopPreds;
   bool Pending;
 
-  MarkPendingLoopPredicate(Value *C, DenseSet<Value*> &LP)
-    : Cond(C), LoopPreds(LP) {
+  MarkPendingLoopPredicate(Value *C, SmallPtrSetImpl<Value *> &LP)
+      : Cond(C), LoopPreds(LP) {
     Pending = !LoopPreds.insert(Cond).second;
   }
   ~MarkPendingLoopPredicate() {
@@ -9577,6 +9577,7 @@ ScalarEvolution::ScalarEvolution(ScalarEvolution &&Arg)
     : F(Arg.F), HasGuards(Arg.HasGuards), TLI(Arg.TLI), AC(Arg.AC), DT(Arg.DT),
       LI(Arg.LI), CouldNotCompute(std::move(Arg.CouldNotCompute)),
       ValueExprMap(std::move(Arg.ValueExprMap)),
+      PendingLoopPredicates(std::move(Arg.PendingLoopPredicates)),
       WalkingBEDominatingConds(false), ProvingSplitPredicate(false),
       BackedgeTakenCounts(std::move(Arg.BackedgeTakenCounts)),
       PredicatedBackedgeTakenCounts(
