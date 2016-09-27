@@ -2611,12 +2611,14 @@ functionDecl(isNoThrow()) and functionProtoType(isNoThrow())
 
 
 <tr><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1FunctionDecl.html">FunctionDecl</a>&gt;</td><td class="name" onclick="toggle('isStaticStorageClass0')"><a name="isStaticStorageClass0Anchor">isStaticStorageClass</a></td><td></td></tr>
-<tr><td colspan="4" class="doc" id="isStaticStorageClass0"><pre>Matches variablefunction declarations that have static storage class
-(with "static" key word) written in the source.
+<tr><td colspan="4" class="doc" id="isStaticStorageClass0"><pre>Matches variablefunction declarations that have "static" storage
+class specifier ("static" keyword) written in the source.
 
 Given:
   static void f() {}
   static int i = 0;
+  extern int j;
+  int k;
 functionDecl(isStaticStorageClass())
   matches the function declaration f.
 varDecl(isStaticStorageClass())
@@ -3394,15 +3396,19 @@ int z;
 
 <tr><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1VarDecl.html">VarDecl</a>&gt;</td><td class="name" onclick="toggle('hasStaticStorageDuration0')"><a name="hasStaticStorageDuration0Anchor">hasStaticStorageDuration</a></td><td></td></tr>
 <tr><td colspan="4" class="doc" id="hasStaticStorageDuration0"><pre>Matches a variable declaration that has static storage duration.
+It includes the variable declared at namespace scope and those declared
+with "static" and "extern" storage class specifiers.
 
-Example matches y and a, but not x or z.
-(matcher = varDecl(hasStaticStorageDuration())
 void f() {
   int x;
   static int y;
   thread_local int z;
 }
 int a;
+static int b;
+extern int c;
+varDecl(hasStaticStorageDuration())
+  matches the function declaration y, a, b and c.
 </pre></td></tr>
 
 
@@ -3488,12 +3494,14 @@ functionDecl(isExternC())
 
 
 <tr><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1VarDecl.html">VarDecl</a>&gt;</td><td class="name" onclick="toggle('isStaticStorageClass1')"><a name="isStaticStorageClass1Anchor">isStaticStorageClass</a></td><td></td></tr>
-<tr><td colspan="4" class="doc" id="isStaticStorageClass1"><pre>Matches variablefunction declarations that have static storage class
-(with "static" key word) written in the source.
+<tr><td colspan="4" class="doc" id="isStaticStorageClass1"><pre>Matches variablefunction declarations that have "static" storage
+class specifier ("static" keyword) written in the source.
 
 Given:
   static void f() {}
   static int i = 0;
+  extern int j;
+  int k;
 functionDecl(isStaticStorageClass())
   matches the function declaration f.
 varDecl(isStaticStorageClass())

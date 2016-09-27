@@ -2943,9 +2943,9 @@ AST_MATCHER(VarDecl, hasAutomaticStorageDuration) {
 }
 
 /// \brief Matches a variable declaration that has static storage duration.
+/// It includes the variable declared at namespace scope and those declared
+/// with "static" and "extern" storage class specifiers.
 ///
-/// Example matches y and a, but not x or z.
-/// (matcher = varDecl(hasStaticStorageDuration())
 /// \code
 /// void f() {
 ///   int x;
@@ -2953,6 +2953,10 @@ AST_MATCHER(VarDecl, hasAutomaticStorageDuration) {
 ///   thread_local int z;
 /// }
 /// int a;
+/// static int b;
+/// extern int c;
+/// varDecl(hasStaticStorageDuration())
+///   matches the function declaration y, a, b and c.
 /// \endcode
 AST_MATCHER(VarDecl, hasStaticStorageDuration) {
   return Node.getStorageDuration() == SD_Static;
@@ -3388,13 +3392,15 @@ AST_POLYMORPHIC_MATCHER(isExternC, AST_POLYMORPHIC_SUPPORTED_TYPES(FunctionDecl,
   return Node.isExternC();
 }
 
-/// \brief Matches variable/function declarations that have static storage class
-/// (with "static" key word) written in the source.
+/// \brief Matches variable/function declarations that have "static" storage
+/// class specifier ("static" keyword) written in the source.
 ///
 /// Given:
 /// \code
 ///   static void f() {}
 ///   static int i = 0;
+///   extern int j;
+///   int k;
 /// \endcode
 /// functionDecl(isStaticStorageClass())
 ///   matches the function declaration f.
