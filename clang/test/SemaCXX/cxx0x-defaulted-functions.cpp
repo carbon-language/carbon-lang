@@ -208,3 +208,31 @@ int fn() {
   t = true;
 }
 }
+
+namespace templated_class {
+template <typename T>
+class X {
+    X() = default;
+    X(const X&) = default;
+    X(X&&) = default;
+    X &operator=(const X&) = default;
+    X &operator=(X&&) = default;
+    ~X() = default;
+
+    X(T) = default;  // expected-error {{only special member functions may be defaulted}}
+    void Run() = default;  // expected-error {{only special member functions may be defaulted}}
+
+  };
+  template <typename T>
+  X<T>::X() = default; // expected-error {{definition of explicitly defaulted}}
+  template <typename T>
+  X<T>::X(const X<T>&) = default; // expected-error {{definition of explicitly defaulted}}
+  template <typename T>
+  X<T>::X(X<T>&&) = default; // expected-error {{definition of explicitly defaulted}}
+  template <typename T>
+  X<T> &X<T>::operator=(const X<T>&) = default; // expected-error {{definition of explicitly defaulted}}
+  template <typename T>
+  X<T> &X<T>::operator=(X<T>&&) = default; // expected-error {{definition of explicitly defaulted}}
+  template <typename T>
+  X<T>::~X() = default; // expected-error {{definition of explicitly defaulted}}
+}

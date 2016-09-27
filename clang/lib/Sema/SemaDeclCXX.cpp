@@ -13850,12 +13850,6 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
   CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(Dcl);
 
   if (MD) {
-    if (MD->getParent()->isDependentType()) {
-      MD->setDefaulted();
-      MD->setExplicitlyDefaulted();
-      return;
-    }
-
     CXXSpecialMember Member = getSpecialMember(MD);
     if (Member == CXXInvalid) {
       if (!MD->isInvalidDecl())
@@ -13865,6 +13859,8 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
 
     MD->setDefaulted();
     MD->setExplicitlyDefaulted();
+
+    if (MD->getParent()->isDependentType()) return;
 
     // If this definition appears within the record, do the checking when
     // the record is complete.
