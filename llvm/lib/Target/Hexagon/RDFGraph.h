@@ -821,6 +821,8 @@ namespace rdf {
   private:
     void reset();
 
+    std::vector<uint32_t> getLandingPadLiveIns() const;
+
     NodeAddr<NodeBase*> newNode(uint16_t Attrs);
     NodeAddr<NodeBase*> cloneNode(const NodeAddr<NodeBase*> B);
     NodeAddr<UseNode*> newUse(NodeAddr<InstrNode*> Owner,
