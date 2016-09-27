@@ -57,11 +57,11 @@ RegisterBankInfo::PartialMapping PartMappings[] {
   {0, 32, FPRRegBank},
   // 3: FPR 64-bit value.
   {0, 64, FPRRegBank},
-  // 4: FPR 64-bit value.
+  // 4: FPR 128-bit value.
   {0, 128, FPRRegBank},
-  // 5: FPR 64-bit value.
+  // 5: FPR 256-bit value.
   {0, 256, FPRRegBank},
-  // 6: FPR 64-bit value.
+  // 6: FPR 512-bit value.
   {0, 512, FPRRegBank}
 };
 
