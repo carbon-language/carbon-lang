@@ -209,30 +209,29 @@ int fn() {
 }
 }
 
-namespace templated_class {
-template <typename T>
-class X {
-    X() = default;
-    X(const X&) = default;
-    X(X&&) = default;
-    X &operator=(const X&) = default;
-    X &operator=(X&&) = default;
-    ~X() = default;
+namespace dependent_classes {
+template <bool B, typename X, typename Y>
+struct conditional;
 
-    X(T) = default;  // expected-error {{only special member functions may be defaulted}}
-    void Run() = default;  // expected-error {{only special member functions may be defaulted}}
+template <typename X, typename Y>
+struct conditional<true, X, Y> { typedef X type; };
 
-  };
-  template <typename T>
-  X<T>::X() = default; // expected-error {{definition of explicitly defaulted}}
-  template <typename T>
-  X<T>::X(const X<T>&) = default; // expected-error {{definition of explicitly defaulted}}
-  template <typename T>
-  X<T>::X(X<T>&&) = default; // expected-error {{definition of explicitly defaulted}}
-  template <typename T>
-  X<T> &X<T>::operator=(const X<T>&) = default; // expected-error {{definition of explicitly defaulted}}
-  template <typename T>
-  X<T> &X<T>::operator=(X<T>&&) = default; // expected-error {{definition of explicitly defaulted}}
-  template <typename T>
-  X<T>::~X() = default; // expected-error {{definition of explicitly defaulted}}
+template <typename X, typename Y>
+struct conditional<false, X, Y> { typedef Y type; };
+
+template<bool B> struct X {
+  X();
+
+  // B == false triggers error for = default.
+  using T = typename conditional<B, const X &, int>::type;
+  X(T) = default;  // expected-error {{only special member functions}}
+
+  // Either value of B creates a constructor that can be default
+  using U = typename conditional<B, X&&, const X&>::type;
+  X(U) = default;
+};
+
+X<true> x1;
+X<false> x2; // expected-note {{in instantiation}}
+
 }
