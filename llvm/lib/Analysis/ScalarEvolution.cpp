@@ -3343,31 +3343,29 @@ bool ScalarEvolution::checkValidity(const SCEV *S) const {
   return !F.FindOne;
 }
 
-namespace {
-// Helper class working with SCEVTraversal to figure out if a SCEV contains
-// a sub SCEV of scAddRecExpr type.  FindInvalidSCEVUnknown::FoundOne is set
-// iff if such sub scAddRecExpr type SCEV is found.
-struct FindAddRecurrence {
-  bool FoundOne;
-  FindAddRecurrence() : FoundOne(false) {}
-
-  bool follow(const SCEV *S) {
-    switch (static_cast<SCEVTypes>(S->getSCEVType())) {
-    case scAddRecExpr:
-      FoundOne = true;
-    case scConstant:
-    case scUnknown:
-    case scCouldNotCompute:
-      return false;
-    default:
-      return true;
-    }
-  }
-  bool isDone() const { return FoundOne; }
-};
-}
-
 bool ScalarEvolution::containsAddRecurrence(const SCEV *S) {
+  // Helper class working with SCEVTraversal to figure out if a SCEV contains a
+  // sub SCEV of scAddRecExpr type.  FindInvalidSCEVUnknown::FoundOne is set iff
+  // if such sub scAddRecExpr type SCEV is found.
+  struct FindAddRecurrence {
+    bool FoundOne;
+    FindAddRecurrence() : FoundOne(false) {}
+
+    bool follow(const SCEV *S) {
+      switch (static_cast<SCEVTypes>(S->getSCEVType())) {
+      case scAddRecExpr:
+        FoundOne = true;
+      case scConstant:
+      case scUnknown:
+      case scCouldNotCompute:
+        return false;
+      default:
+        return true;
+      }
+    }
+    bool isDone() const { return FoundOne; }
+  };
+
   HasRecMapType::iterator I = HasRecMap.find_as(S);
   if (I != HasRecMap.end())
     return I->second;
