@@ -181,6 +181,13 @@ bool DiagnosticInfoOptimizationRemark::isEnabled() const {
          PassRemarksOptLoc.Pattern->match(getPassName());
 }
 
+DiagnosticInfoOptimizationRemarkMissed::DiagnosticInfoOptimizationRemarkMissed(
+    const char *PassName, StringRef RemarkName, Instruction *Inst)
+    : DiagnosticInfoOptimizationBase(DK_OptimizationRemarkMissed, DS_Remark,
+                                     PassName, RemarkName,
+                                     *Inst->getParent()->getParent(),
+                                     Inst->getDebugLoc(), Inst->getParent()) {}
+
 bool DiagnosticInfoOptimizationRemarkMissed::isEnabled() const {
   return PassRemarksMissedOptLoc.Pattern &&
          PassRemarksMissedOptLoc.Pattern->match(getPassName());
@@ -265,4 +272,30 @@ void llvm::emitLoopInterleaveWarning(LLVMContext &Ctx, const Function &Fn,
 
 void DiagnosticInfoISelFallback::print(DiagnosticPrinter &DP) const {
   DP << "Instruction selection used fallback path for " << getFunction();
+}
+
+DiagnosticInfoOptimizationBase &DiagnosticInfoOptimizationBase::
+operator<<(StringRef S) {
+  Args.emplace_back(S);
+  return *this;
+}
+
+DiagnosticInfoOptimizationBase &DiagnosticInfoOptimizationBase::
+operator<<(Argument A) {
+  Args.push_back(std::move(A));
+  return *this;
+}
+
+DiagnosticInfoOptimizationBase &DiagnosticInfoOptimizationBase::
+operator<<(setIsVerbose V) {
+  IsVerbose = true;
+  return *this;
+}
+
+std::string DiagnosticInfoOptimizationBase::getMsg() const {
+  std::string Str;
+  raw_string_ostream OS(Str);
+  for (const DiagnosticInfoOptimizationBase::Argument &Arg : Args)
+    OS << Arg.Val;
+  return OS.str();
 }
