@@ -45,13 +45,13 @@ void (*get_f())(A);
 void postfix_before_args() {
   // CHECK: call {{.*}}@{{.*}}get_f{{.*}}(
   // CHECK-ITANIUM: call {{.*}}@_ZN1AC1Ev(
-  // CHECK-WINDOWS: call {{.*}}@"\01??0A@@QEAA@XZ"(
+  // CHECK-WINDOWS: call {{.*}}@"\01??0A@@Q{{AE|EAA}}@XZ"(
   // CHECK: call {{.*}}%{{.*}}(
   get_f()(A{});
 
   // CHECK: call {{.*}}@{{.*}}side_effect{{.*}}(
   // CHECK-ITANIUM: call {{.*}}@_ZN1AC1Ev(
-  // CHECK-WINDOWS: call {{.*}}@"\01??0A@@QEAA@XZ"(
+  // CHECK-WINDOWS: call {{.*}}@"\01??0A@@Q{{AE|EAA}}@XZ"(
   // CHECK: call {{.*}}@{{.*}}callee{{.*}}(
   (side_effect(), callee)(A{});
 // CHECK: }
@@ -115,7 +115,7 @@ void *operator new(decltype(sizeof(0)), C);
 void alloc_before_init() {
   struct Q { Q(A) {} };
   // CHECK-ITANIUM: call {{.*}}@_Znw{{.*}}(
-  // CHECK-WINDOWS: call {{.*}}@"\01??2@YAPEAX_K@Z"(
+  // CHECK-WINDOWS: call {{.*}}@"\01??2@YAP{{EAX_K|AXI}}@Z"(
   // CHECK: call {{.*}}@{{.*}}make_a{{.*}}(
   delete new Q(make_a());
 
