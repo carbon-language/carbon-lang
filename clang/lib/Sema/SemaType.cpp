@@ -1582,7 +1582,14 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
       // template type parameter.
       Result = QualType(CorrespondingTemplateParam->getTypeForDecl(), 0);
     } else {
-      Result = Context.getAutoType(QualType(), AutoTypeKeyword::Auto, false);
+      // If auto appears in the declaration of a template parameter, treat
+      // the parameter as type-dependent.
+      bool IsDependent =
+        S.getLangOpts().CPlusPlus1z &&
+        declarator.getContext() == Declarator::TemplateParamContext;
+      Result = Context.getAutoType(QualType(),
+                                   AutoTypeKeyword::Auto,
+                                   IsDependent);
     }
     break;
 
@@ -2858,7 +2865,8 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
       Error = 7; // Exception declaration
       break;
     case Declarator::TemplateParamContext:
-      Error = 8; // Template parameter
+      if (!SemaRef.getLangOpts().CPlusPlus1z)
+        Error = 8; // Template parameter
       break;
     case Declarator::BlockLiteralContext:
       Error = 9; // Block literal
@@ -5540,7 +5548,7 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
         if (Class->isArcWeakrefUnavailable()) {
           S.Diag(AttrLoc, diag::err_arc_unsupported_weak_class);
           S.Diag(ObjT->getInterfaceDecl()->getLocation(),
-                  diag::note_class_declared);
+                 diag::note_class_declared);
         }
       }
     }

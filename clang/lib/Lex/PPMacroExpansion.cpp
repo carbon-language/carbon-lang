@@ -1202,6 +1202,8 @@ static bool HasFeature(const Preprocessor &PP, StringRef Feature) {
       .Case("cxx_relaxed_constexpr", LangOpts.CPlusPlus14)
       .Case("cxx_return_type_deduction", LangOpts.CPlusPlus14)
       .Case("cxx_variable_templates", LangOpts.CPlusPlus14)
+      // C++1z features
+      .Case("cxx_template_auto", LangOpts.CPlusPlus1z)
       // C++ TSes
       //.Case("cxx_runtime_arrays", LangOpts.CPlusPlusTSArrays)
       //.Case("cxx_concepts", LangOpts.CPlusPlusTSConcepts)

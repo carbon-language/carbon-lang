@@ -100,7 +100,8 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
                                    SmallVectorImpl<DeducedTemplateArgument> &
                                                       Deduced,
                                    unsigned TDF,
-                                   bool PartialOrdering = false);
+                                   bool PartialOrdering = false,
+                                   bool DeducedFromArrayBound = false);
 
 static Sema::TemplateDeductionResult
 DeduceTemplateArguments(Sema &S, TemplateParameterList *TemplateParams,
@@ -167,6 +168,12 @@ checkDeducedTemplateArguments(ASTContext &Context,
         Context.hasSameType(X.getAsType(), Y.getAsType()))
       return X;
 
+    // If one of the two arguments was deduced from an array bound, the other
+    // supersedes it.
+    if (X.wasDeducedFromArrayBound() != Y.wasDeducedFromArrayBound())
+      return X.wasDeducedFromArrayBound() ? Y : X;
+
+    // The arguments are not compatible.
     return DeducedTemplateArgument();
 
   case TemplateArgument::Integral:
@@ -287,7 +294,8 @@ checkDeducedTemplateArguments(ASTContext &Context,
 /// \brief Deduce the value of the given non-type template parameter
 /// from the given integral constant.
 static Sema::TemplateDeductionResult DeduceNonTypeTemplateArgument(
-    Sema &S, NonTypeTemplateParmDecl *NTTP, const llvm::APSInt &Value,
+    Sema &S, TemplateParameterList *TemplateParams,
+    NonTypeTemplateParmDecl *NTTP, const llvm::APSInt &Value,
     QualType ValueType, bool DeducedFromArrayBound, TemplateDeductionInfo &Info,
     SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
   assert(NTTP->getDepth() == 0 &&
@@ -306,13 +314,20 @@ static Sema::TemplateDeductionResult DeduceNonTypeTemplateArgument(
   }
 
   Deduced[NTTP->getIndex()] = Result;
-  return Sema::TDK_Success;
+  return S.getLangOpts().CPlusPlus1z
+             ? DeduceTemplateArgumentsByTypeMatch(
+                   S, TemplateParams, NTTP->getType(), ValueType, Info, Deduced,
+                   TDF_ParamWithReferenceType | TDF_SkipNonDependent,
+                   /*PartialOrdering=*/false,
+                   /*ArrayBound=*/DeducedFromArrayBound)
+             : Sema::TDK_Success;
 }
 
 /// \brief Deduce the value of the given non-type template parameter
 /// from the given null pointer template argument type.
 static Sema::TemplateDeductionResult DeduceNullPtrTemplateArgument(
-    Sema &S, NonTypeTemplateParmDecl *NTTP, QualType NullPtrType,
+    Sema &S, TemplateParameterList *TemplateParams,
+    NonTypeTemplateParmDecl *NTTP, QualType NullPtrType,
     TemplateDeductionInfo &Info,
     SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
   Expr *Value =
@@ -332,7 +347,11 @@ static Sema::TemplateDeductionResult DeduceNullPtrTemplateArgument(
   }
 
   Deduced[NTTP->getIndex()] = Result;
-  return Sema::TDK_Success;
+  return S.getLangOpts().CPlusPlus1z
+             ? DeduceTemplateArgumentsByTypeMatch(
+                   S, TemplateParams, NTTP->getType(), Value->getType(), Info,
+                   Deduced, TDF_ParamWithReferenceType | TDF_SkipNonDependent)
+             : Sema::TDK_Success;
 }
 
 /// \brief Deduce the value of the given non-type template parameter
@@ -341,6 +360,7 @@ static Sema::TemplateDeductionResult DeduceNullPtrTemplateArgument(
 /// \returns true if deduction succeeded, false otherwise.
 static Sema::TemplateDeductionResult
 DeduceNonTypeTemplateArgument(Sema &S,
+                              TemplateParameterList *TemplateParams,
                               NonTypeTemplateParmDecl *NTTP,
                               Expr *Value,
                               TemplateDeductionInfo &Info,
@@ -363,7 +383,11 @@ DeduceNonTypeTemplateArgument(Sema &S,
   }
 
   Deduced[NTTP->getIndex()] = Result;
-  return Sema::TDK_Success;
+  return S.getLangOpts().CPlusPlus1z
+             ? DeduceTemplateArgumentsByTypeMatch(
+                   S, TemplateParams, NTTP->getType(), Value->getType(), Info,
+                   Deduced, TDF_ParamWithReferenceType | TDF_SkipNonDependent)
+             : Sema::TDK_Success;
 }
 
 /// \brief Deduce the value of the given non-type template parameter
@@ -372,8 +396,9 @@ DeduceNonTypeTemplateArgument(Sema &S,
 /// \returns true if deduction succeeded, false otherwise.
 static Sema::TemplateDeductionResult
 DeduceNonTypeTemplateArgument(Sema &S,
+                            TemplateParameterList *TemplateParams,
                             NonTypeTemplateParmDecl *NTTP,
-                            ValueDecl *D,
+                            ValueDecl *D, QualType T,
                             TemplateDeductionInfo &Info,
                             SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
   assert(NTTP->getDepth() == 0 &&
@@ -393,7 +418,11 @@ DeduceNonTypeTemplateArgument(Sema &S,
   }
 
   Deduced[NTTP->getIndex()] = Result;
-  return Sema::TDK_Success;
+  return S.getLangOpts().CPlusPlus1z
+             ? DeduceTemplateArgumentsByTypeMatch(
+                   S, TemplateParams, NTTP->getType(), T, Info, Deduced,
+                   TDF_ParamWithReferenceType | TDF_SkipNonDependent)
+             : Sema::TDK_Success;
 }
 
 static Sema::TemplateDeductionResult
@@ -968,7 +997,8 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
                                    TemplateDeductionInfo &Info,
                             SmallVectorImpl<DeducedTemplateArgument> &Deduced,
                                    unsigned TDF,
-                                   bool PartialOrdering) {
+                                   bool PartialOrdering,
+                                   bool DeducedFromArrayBound) {
   // We only want to look at the canonical types, since typedefs and
   // sugar are not part of template argument deduction.
   QualType Param = S.Context.getCanonicalType(ParamIn);
@@ -1152,7 +1182,7 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
     if (RecanonicalizeArg)
       DeducedType = S.Context.getCanonicalType(DeducedType);
 
-    DeducedTemplateArgument NewDeduced(DeducedType);
+    DeducedTemplateArgument NewDeduced(DeducedType, DeducedFromArrayBound);
     DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context,
                                                                  Deduced[Index],
                                                                    NewDeduced);
@@ -1374,7 +1404,7 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
       if (const ConstantArrayType *ConstantArrayArg
             = dyn_cast<ConstantArrayType>(ArrayArg)) {
         llvm::APSInt Size(ConstantArrayArg->getSize());
-        return DeduceNonTypeTemplateArgument(S, NTTP, Size,
+        return DeduceNonTypeTemplateArgument(S, TemplateParams, NTTP, Size,
                                              S.Context.getSizeType(),
                                              /*ArrayBound=*/true,
                                              Info, Deduced);
@@ -1382,7 +1412,7 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
       if (const DependentSizedArrayType *DependentArrayArg
             = dyn_cast<DependentSizedArrayType>(ArrayArg))
         if (DependentArrayArg->getSizeExpr())
-          return DeduceNonTypeTemplateArgument(S, NTTP,
+          return DeduceNonTypeTemplateArgument(S, TemplateParams, NTTP,
                                                DependentArrayArg->getSizeExpr(),
                                                Info, Deduced);
 
@@ -1654,8 +1684,8 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
 
         llvm::APSInt ArgSize(S.Context.getTypeSize(S.Context.IntTy), false);
         ArgSize = VectorArg->getNumElements();
-        return DeduceNonTypeTemplateArgument(S, NTTP, ArgSize, S.Context.IntTy,
-                                             false, Info, Deduced);
+        return DeduceNonTypeTemplateArgument(S, TemplateParams, NTTP, ArgSize,
+                                             S.Context.IntTy, false, Info, Deduced);
       }
 
       if (const DependentSizedExtVectorType *VectorArg
@@ -1674,7 +1704,8 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
         if (!NTTP)
           return Sema::TDK_Success;
 
-        return DeduceNonTypeTemplateArgument(S, NTTP, VectorArg->getSizeExpr(),
+        return DeduceNonTypeTemplateArgument(S, TemplateParams, NTTP,
+                                             VectorArg->getSizeExpr(),
                                              Info, Deduced);
       }
 
@@ -1779,19 +1810,22 @@ DeduceTemplateArguments(Sema &S,
     if (NonTypeTemplateParmDecl *NTTP
           = getDeducedParameterFromExpr(Param.getAsExpr())) {
       if (Arg.getKind() == TemplateArgument::Integral)
-        return DeduceNonTypeTemplateArgument(S, NTTP,
+        return DeduceNonTypeTemplateArgument(S, TemplateParams, NTTP,
                                              Arg.getAsIntegral(),
                                              Arg.getIntegralType(),
                                              /*ArrayBound=*/false,
                                              Info, Deduced);
       if (Arg.getKind() == TemplateArgument::NullPtr)
-        return DeduceNullPtrTemplateArgument(S, NTTP, Arg.getNullPtrType(),
+        return DeduceNullPtrTemplateArgument(S, TemplateParams, NTTP,
+                                             Arg.getNullPtrType(),
                                              Info, Deduced);
       if (Arg.getKind() == TemplateArgument::Expression)
-        return DeduceNonTypeTemplateArgument(S, NTTP, Arg.getAsExpr(),
-                                             Info, Deduced);
+        return DeduceNonTypeTemplateArgument(S, TemplateParams, NTTP,
+                                             Arg.getAsExpr(), Info, Deduced);
       if (Arg.getKind() == TemplateArgument::Declaration)
-        return DeduceNonTypeTemplateArgument(S, NTTP, Arg.getAsDecl(),
+        return DeduceNonTypeTemplateArgument(S, TemplateParams, NTTP,
+                                             Arg.getAsDecl(),
+                                             Arg.getParamTypeForDecl(),
                                              Info, Deduced);
 
       Info.FirstArg = Param;
@@ -3280,7 +3314,7 @@ DeduceFromInitializerList(Sema &S, TemplateParameterList *TemplateParams,
                        ILE->getNumInits());
 
       Result = DeduceNonTypeTemplateArgument(
-          S, NTTP, llvm::APSInt(Size), NTTP->getType(),
+          S, TemplateParams, NTTP, llvm::APSInt(Size), NTTP->getType(),
           /*ArrayBound=*/true, Info, Deduced);
     }
   }
@@ -4700,6 +4734,11 @@ MarkUsedTemplateParameters(ASTContext &Ctx,
 
   if (NTTP->getDepth() == Depth)
     Used[NTTP->getIndex()] = true;
+
+  // In C++1z mode, additional arguments may be deduced from the type of a
+  // non-type argument.
+  if (Ctx.getLangOpts().CPlusPlus1z)
+    MarkUsedTemplateParameters(Ctx, NTTP->getType(), OnlyDeduced, Depth, Used);
 }
 
 /// \brief Mark the template parameters that are used by the given
@@ -4946,7 +4985,7 @@ MarkUsedTemplateParameters(ASTContext &Ctx, QualType T,
   case Type::UnaryTransform:
     if (!OnlyDeduced)
       MarkUsedTemplateParameters(Ctx,
-                               cast<UnaryTransformType>(T)->getUnderlyingType(),
+                                 cast<UnaryTransformType>(T)->getUnderlyingType(),
                                  OnlyDeduced, Depth, Used);
     break;
 
