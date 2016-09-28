@@ -654,6 +654,21 @@ static Error checkDyldCommand(const MachOObjectFile *Obj,
   return Error::success();
 }
 
+static Error checkVersCommand(const MachOObjectFile *Obj,
+                              const MachOObjectFile::LoadCommandInfo &Load,
+                              uint32_t LoadCommandIndex,
+                              const char **LoadCmd, const char *CmdName) {
+  if (Load.C.cmdsize != sizeof(MachO::version_min_command))
+    return malformedError("load command " + Twine(LoadCommandIndex) + " " +
+                          CmdName + " has incorrect cmdsize");
+  if (*LoadCmd != nullptr)
+    return malformedError("more than one LC_VERSION_MIN_MACOSX, "
+                          "LC_VERSION_MIN_IPHONEOS, LC_VERSION_MIN_TVOS or "
+                          "LC_VERSION_MIN_WATCHOS command");
+  *LoadCmd = Load.Ptr;
+  return Error::success();
+}
+
 Expected<std::unique_ptr<MachOObjectFile>>
 MachOObjectFile::create(MemoryBufferRef Object, bool IsLittleEndian,
                         bool Is64Bits) {
@@ -705,6 +720,7 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
   const char *FuncStartsLoadCmd = nullptr;
   const char *SplitInfoLoadCmd = nullptr;
   const char *CodeSignDrsLoadCmd = nullptr;
+  const char *VersLoadCmd = nullptr;
   for (unsigned I = 0; I < LoadCommandCount; ++I) {
     if (is64Bit()) {
       if (Load.C.cmdsize % 8 != 0) {
@@ -814,6 +830,22 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
         return;
     } else if (Load.C.cmd == MachO::LC_DYLD_ENVIRONMENT) {
       if ((Err = checkDyldCommand(this, Load, I, "LC_DYLD_ENVIRONMENT")))
+        return;
+    } else if (Load.C.cmd == MachO::LC_VERSION_MIN_MACOSX) {
+      if ((Err = checkVersCommand(this, Load, I, &VersLoadCmd,
+                                  "LC_VERSION_MIN_MACOSX")))
+        return;
+    } else if (Load.C.cmd == MachO::LC_VERSION_MIN_IPHONEOS) {
+      if ((Err = checkVersCommand(this, Load, I, &VersLoadCmd,
+                                  "LC_VERSION_MIN_IPHONEOS")))
+        return;
+    } else if (Load.C.cmd == MachO::LC_VERSION_MIN_TVOS) {
+      if ((Err = checkVersCommand(this, Load, I, &VersLoadCmd,
+                                  "LC_VERSION_MIN_TVOS")))
+        return;
+    } else if (Load.C.cmd == MachO::LC_VERSION_MIN_WATCHOS) {
+      if ((Err = checkVersCommand(this, Load, I, &VersLoadCmd,
+                                  "LC_VERSION_MIN_WATCHOS")))
         return;
     }
     if (I < LoadCommandCount - 1) {
