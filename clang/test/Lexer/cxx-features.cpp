@@ -22,14 +22,26 @@
 
 // --- C++17 features ---
 
+#if check(hex_float, 0, 0, 0, 201603)
+#error "wrong value for __cpp_hex_float"
+#endif
+
 #if check(noexcept_function_type, 0, 0, 0, 0)
-// FIXME
+// FIXME: value shuld be 201510 for cxx1z once implemented
 #error "wrong value for __cpp_noexcept_function_type"
 #endif
 
-#if check(fold_expressions, 0, 0, 0, 201411)
+#if check(fold_expressions, 0, 0, 0, 201603)
 #error "wrong value for __cpp_fold_expressions"
 #endif
+
+#if check(capture_star_this, 0, 0, 0, 201603)
+#error "wrong value for __cpp_capture_star_this"
+#endif
+
+// FIXME: bump __cpp_constexpr to 201603 for constexpr lambda support
+
+// range_based_for checked below
 
 // static_assert checked below
 
@@ -45,6 +57,10 @@
 
 #if check(nested_namespace_definitions, 0, 0, 0, 201411)
 #error "wrong value for __cpp_nested_namespace_definitions"
+#endif
+
+#if check(aggregate_bases, 0, 0, 0, 201603)
+#error "wrong value for __cpp_aggregate_bases"
 #endif
 
 #if check(nontype_template_args, 0, 0, 0, 201411)
@@ -122,7 +138,7 @@
 #error "wrong value for __cpp_constexpr"
 #endif
 
-#if check(range_based_for, 0, 200907, 200907, 200907)
+#if check(range_based_for, 0, 200907, 200907, 201603)
 #error "wrong value for __cpp_range_based_for"
 #endif
 

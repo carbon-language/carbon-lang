@@ -467,7 +467,8 @@ static void InitializeCPlusPlusFeatureTestMacros(const LangOptions &LangOpts,
     Builder.defineMacro("__cpp_lambdas", "200907");
     Builder.defineMacro("__cpp_constexpr",
                         LangOpts.CPlusPlus14 ? "201304" : "200704");
-    Builder.defineMacro("__cpp_range_based_for", "200907");
+    Builder.defineMacro("__cpp_range_based_for",
+                        LangOpts.CPlusPlus1z ? "201603" : "200907");
     Builder.defineMacro("__cpp_static_assert",
                         LangOpts.CPlusPlus1z ? "201411" : "200410");
     Builder.defineMacro("__cpp_decltype", "200707");
@@ -498,12 +499,15 @@ static void InitializeCPlusPlusFeatureTestMacros(const LangOptions &LangOpts,
 
   // C++17 features.
   if (LangOpts.CPlusPlus1z) {
+    Builder.defineMacro("__cpp_hex_float", "201603");
     //Builder.defineMacro("__cpp_noexcept_function_type", "201510");
-    Builder.defineMacro("__cpp_fold_expressions", "201411");
+    Builder.defineMacro("__cpp_capture_star_this", "201603");
     Builder.defineMacro("__cpp_namespace_attributes", "201411");
     Builder.defineMacro("__cpp_enumerator_attributes", "201411");
     Builder.defineMacro("__cpp_nested_namespace_definitions", "201411");
+    Builder.defineMacro("__cpp_aggregate_bases", "201603");
     Builder.defineMacro("__cpp_nontype_template_args", "201411");
+    Builder.defineMacro("__cpp_fold_expressions", "201603");
   }
 
   // TS features.
