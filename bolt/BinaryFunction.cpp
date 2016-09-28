@@ -467,6 +467,390 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   OS << "End of Function \"" << *this << "\"\n\n";
 }
 
+BinaryFunction::IndirectBranchType
+BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
+                                      unsigned Size,
+                                      uint64_t Offset) {
+  auto &MIA = BC.MIA;
+
+  IndirectBranchType Type = IndirectBranchType::UNKNOWN;
+
+  // An instruction referencing memory used by jump instruction (directly or
+  // via register). This location could be an array of function pointers
+  // in case of indirect tail call, or a jump table.
+  MCInst *MemLocInstr = nullptr;
+
+  // Address of the table referenced by MemLocInstr. Could be either an
+  // array of function pointers, or a jump table.
+  uint64_t ArrayStart = 0;
+
+  auto analyzePICJumpTable =
+      [&](InstrMapType::reverse_iterator II,
+          InstrMapType::reverse_iterator IE,
+          unsigned R1,
+          unsigned R2) {
+    // Analyze PIC-style jump table code template:
+    //
+    //    lea PIC_JUMP_TABLE(%rip), {%r1|%r2}     <- MemLocInstr
+    //    mov ({%r1|%r2}, %index, 4), {%r2|%r1}
+    //    add %r2, %r1
+    //    jmp *%r1
+    //
+    // (with any irrelevant instructions in-between)
+    //
+    // When we call this helper we've already determined %r1 and %r2, and reverse
+    // instruction iterator \p II is pointing to the ADD instruction.
+    //
+    // PIC jump table looks like following:
+    //
+    //   JT:  ----------
+    //    E1:| L1 - JT  |
+    //       |----------|
+    //    E2:| L2 - JT  |
+    //       |----------|
+    //       |          |
+    //          ......
+    //    En:| Ln - JT  |
+    //        ----------
+    //
+    // Where L1, L2, ..., Ln represent labels in the function.
+    //
+    // The actual relocations in the table will be of the form:
+    //
+    //   Ln - JT
+    //    = (Ln - En) + (En - JT)
+    //    = R_X86_64_PC32(Ln) + En - JT
+    //    = R_X86_64_PC32(Ln + offsetof(En))
+    //
+    DEBUG(dbgs() << "BOLT-DEBUG: checking for PIC jump table\n");
+    MCInst *MovInstr = nullptr;
+    while (++II != IE) {
+      auto &Instr = II->second;
+      const auto &InstrDesc = BC.MII->get(Instr.getOpcode());
+      if (!InstrDesc.hasDefOfPhysReg(Instr, R1, *BC.MRI) &&
+          !InstrDesc.hasDefOfPhysReg(Instr, R2, *BC.MRI)) {
+        // Ignore instructions that don't affect R1, R2 registers.
+        continue;
+      } else if (!MovInstr) {
+        // Expect to see MOV instruction.
+        if (!MIA->isMOVSX64rm32(Instr)) {
+          DEBUG(dbgs() << "BOLT-DEBUG: MOV instruction expected.\n");
+          break;
+        }
+
+        // Check if it's setting %r1 or %r2. In canonical form it sets %r2.
+        // If it sets %r1 - rename the registers so we have to only check
+        // a single form.
+        auto MovDestReg = Instr.getOperand(0).getReg();
+        if (MovDestReg != R2)
+          std::swap(R1, R2);
+        if (MovDestReg != R2) {
+          DEBUG(dbgs() << "BOLT-DEBUG: MOV instruction expected to set %r2\n");
+          break;
+        }
+
+        // Verify operands for MOV.
+        unsigned  BaseRegNum;
+        int64_t   ScaleValue;
+        unsigned  IndexRegNum;
+        int64_t   DispValue;
+        unsigned  SegRegNum;
+        if (!MIA->evaluateX86MemoryOperand(Instr, &BaseRegNum,
+                                           &ScaleValue, &IndexRegNum,
+                                           &DispValue, &SegRegNum))
+          break;
+        if (BaseRegNum != R1 ||
+            ScaleValue != 4 ||
+            IndexRegNum == bolt::NoRegister ||
+            DispValue != 0 ||
+            SegRegNum != bolt::NoRegister)
+          break;
+        MovInstr = &Instr;
+      } else {
+        assert(MovInstr && "MOV instruction expected to be set");
+        if (!MIA->isLEA64r(Instr)) {
+          DEBUG(dbgs() << "BOLT-DEBUG: LEA instruction expected\n");
+          break;
+        }
+        if (Instr.getOperand(0).getReg() != R1) {
+          DEBUG(dbgs() << "BOLT-DEBUG: LEA instruction expected to set %r1\n");
+          break;
+        }
+
+        // Verify operands for LEA.
+        unsigned      BaseRegNum;
+        int64_t       ScaleValue;
+        unsigned      IndexRegNum;
+        const MCExpr *DispExpr = nullptr;
+        unsigned      SegRegNum;
+        if (!MIA->evaluateX86MemoryOperand(Instr, &BaseRegNum,
+                                           &ScaleValue, &IndexRegNum,
+                                           nullptr, &SegRegNum, &DispExpr))
+          break;
+        if (BaseRegNum != BC.MRI->getProgramCounter() ||
+            IndexRegNum != bolt::NoRegister ||
+            SegRegNum != bolt::NoRegister ||
+            DispExpr == nullptr)
+          break;
+        MemLocInstr = &Instr;
+        break;
+      }
+    }
+
+    if (!MemLocInstr)
+      return IndirectBranchType::UNKNOWN;
+
+    DEBUG(dbgs() << "BOLT-DEBUG: checking potential PIC jump table\n");
+    return IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE;
+  };
+
+  // Try to find a (base) memory location from where the address for
+  // the indirect branch is loaded. For X86-64 the memory will be specified
+  // in the following format:
+  //
+  //   {%rip}/{%basereg} + Imm + IndexReg * Scale
+  //
+  // We are interested in the cases where Scale == sizeof(uintptr_t) and
+  // the contents of the memory are presumably a function array.
+  //
+  // Normal jump table:
+  //
+  //    jmp *(JUMP_TABLE, %index, Scale)
+  //
+  //    or
+  //
+  //    mov (JUMP_TABLE, %index, Scale), %r1
+  //    ...
+  //    jmp %r1
+  //
+  // We handle PIC-style jump tables separately.
+  //
+  if (Instruction.getNumOperands() == 1) {
+    // If the indirect jump is on register - try to detect if the
+    // register value is loaded from a memory location.
+    assert(Instruction.getOperand(0).isReg() && "register operand expected");
+    const auto R1 = Instruction.getOperand(0).getReg();
+    // Check if one of the previous instructions defines the jump-on register.
+    // We will check that this instruction belongs to the same basic block
+    // in postProcessIndirectBranches().
+    for (auto PrevII = Instructions.rbegin(); PrevII != Instructions.rend();
+         ++PrevII) {
+      auto &PrevInstr = PrevII->second;
+      const auto &PrevInstrDesc = BC.MII->get(PrevInstr.getOpcode());
+
+      if (!PrevInstrDesc.hasDefOfPhysReg(PrevInstr, R1, *BC.MRI))
+        continue;
+
+      if (MIA->isMoveMem2Reg(PrevInstr)) {
+        MemLocInstr = &PrevInstr;
+        break;
+      } else if (MIA->isADD64rr(PrevInstr)) {
+        auto R2 = PrevInstr.getOperand(2).getReg();
+        if (R1 == R2)
+          return IndirectBranchType::UNKNOWN;
+        Type = analyzePICJumpTable(PrevII, Instructions.rend(), R1, R2);
+        break;
+      }  else {
+        return IndirectBranchType::UNKNOWN;
+      }
+    }
+    if (!MemLocInstr) {
+      // No definition seen for the register in this function so far. Could be
+      // an input parameter - which means it is an external code reference.
+      // It also could be that the definition happens to be in the code that
+      // we haven't processed yet. Since we have to be conservative, return
+      // as UNKNOWN case.
+      return IndirectBranchType::UNKNOWN;
+    }
+  } else {
+    MemLocInstr = &Instruction;
+  }
+
+  const auto RIPRegister = BC.MRI->getProgramCounter();
+  auto PtrSize = BC.AsmInfo->getPointerSize();
+
+  // Analyze the memory location.
+  unsigned      BaseRegNum;
+  int64_t       ScaleValue;
+  unsigned      IndexRegNum;
+  int64_t       DispValue;
+  unsigned      SegRegNum;
+  const MCExpr *DispExpr;
+  if (!MIA->evaluateX86MemoryOperand(*MemLocInstr, &BaseRegNum,
+                                     &ScaleValue, &IndexRegNum,
+                                     &DispValue, &SegRegNum,
+                                     &DispExpr))
+    return IndirectBranchType::UNKNOWN;
+
+  if ((BaseRegNum != bolt::NoRegister && BaseRegNum != RIPRegister) ||
+      SegRegNum != bolt::NoRegister)
+    return IndirectBranchType::UNKNOWN;
+
+  if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE &&
+      (ScaleValue != 1 || BaseRegNum != RIPRegister))
+    return IndirectBranchType::UNKNOWN;
+
+  if (Type != IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE &&
+      ScaleValue != PtrSize)
+    return IndirectBranchType::UNKNOWN;
+
+  // RIP-relative addressing should be converted to symbol form by now
+  // in processed instructions (but not in jump).
+  if (DispExpr) {
+    auto SI = BC.GlobalSymbols.find(DispExpr->getSymbol().getName());
+    assert(SI != BC.GlobalSymbols.end() && "global symbol needs a value");
+    ArrayStart = SI->second;
+  } else {
+    ArrayStart = static_cast<uint64_t>(DispValue);
+    if (BaseRegNum == RIPRegister)
+      ArrayStart += getAddress() + Offset + Size;
+  }
+
+  DEBUG(dbgs() << "BOLT-DEBUG: addressed memory is 0x"
+               << Twine::utohexstr(ArrayStart) << '\n');
+
+  // Check if there's already a jump table registered at this address.
+  if (auto *JT = getJumpTableContainingAddress(ArrayStart)) {
+      auto JTOffset = ArrayStart - JT->Address;
+    if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE && JTOffset != 0) {
+        // Adjust the size of this jump table and create a new one if necessary.
+        // We cannot re-use the entries since the offsets are relative to the
+        // table start.
+        DEBUG(dbgs() << "BOLT-DEBUG: adjusting size of jump table at 0x"
+                     << Twine::utohexstr(JT->Address) << '\n');
+        JT->OffsetEntries.resize(JTOffset / JT->EntrySize);
+    } else {
+      // Re-use an existing jump table. Perhaps parts of it.
+      if (Type != IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
+        assert(JT->Type == JumpTable::JTT_NORMAL && "normal jump table expected");
+        Type = IndirectBranchType::POSSIBLE_JUMP_TABLE;
+      } else {
+        assert(JT->Type == JumpTable::JTT_PIC && "PIC jump table expected");
+      }
+
+      // Get or create a new label for the table.
+      auto LI = JT->Labels.find(JTOffset);
+      if (LI == JT->Labels.end()) {
+        auto *JTStartLabel = BC.Ctx->createTempSymbol("JUMP_TABLE", true);
+        auto Result = JT->Labels.emplace(JTOffset, JTStartLabel);
+        assert(Result.second && "error adding jump table label");
+        LI = Result.first;
+      }
+
+      BC.MIA->replaceMemOperandDisp(*MemLocInstr, LI->second, BC.Ctx.get());
+      BC.MIA->setJumpTable(Instruction, ArrayStart);
+
+      JTSites.emplace_back(Offset, ArrayStart);
+
+      return Type;
+    }
+  }
+
+  auto SectionOrError = BC.getSectionForAddress(ArrayStart);
+  if (!SectionOrError) {
+    // No section - possibly an absolute address. Since we don't allow
+    // internal function addresses to escape the function scope - we
+    // consider it a tail call.
+    if (opts::Verbosity >= 1) {
+      errs() << "BOLT-WARNING: no section for address 0x"
+             << Twine::utohexstr(ArrayStart) << " referenced from function "
+             << *this << '\n';
+    }
+    return IndirectBranchType::POSSIBLE_TAIL_CALL;
+  }
+  auto &Section = *SectionOrError;
+  if (Section.isVirtual()) {
+    // The contents are filled at runtime.
+    return IndirectBranchType::POSSIBLE_TAIL_CALL;
+  }
+  // Extract the value at the start of the array.
+  StringRef SectionContents;
+  Section.getContents(SectionContents);
+  auto EntrySize =
+    Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE ? 4 : PtrSize;
+  DataExtractor DE(SectionContents, BC.AsmInfo->isLittleEndian(), EntrySize);
+  auto ValueOffset = static_cast<uint32_t>(ArrayStart - Section.getAddress());
+  uint64_t Value = 0;
+  std::vector<uint64_t> JTOffsetCandidates;
+  while (ValueOffset <= Section.getSize() - EntrySize) {
+    DEBUG(dbgs() << "BOLT-DEBUG: indirect jmp at 0x"
+                 << Twine::utohexstr(getAddress() + Offset)
+                 << " is referencing address 0x"
+                 << Twine::utohexstr(Section.getAddress() + ValueOffset));
+    // Extract the value and increment the offset.
+    if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
+      Value = ArrayStart + DE.getSigned(&ValueOffset, 4);
+    } else {
+      Value = DE.getAddress(&ValueOffset);
+    }
+    DEBUG(dbgs() << ", which contains value "
+                 << Twine::utohexstr(Value) << '\n');
+    if (containsAddress(Value) && Value != getAddress()) {
+      // Is it possible to have a jump table with function start as an entry?
+      JTOffsetCandidates.push_back(Value - getAddress());
+      if (Type == IndirectBranchType::UNKNOWN)
+        Type = IndirectBranchType::POSSIBLE_JUMP_TABLE;
+      continue;
+    }
+    // Potentially a switch table can contain  __builtin_unreachable() entry
+    // pointing just right after the function. In this case we have to check
+    // another entry. Otherwise the entry is outside of this function scope
+    // and it's not a switch table.
+    if (Value == getAddress() + getSize()) {
+      JTOffsetCandidates.push_back(Value - getAddress());
+    } else {
+      break;
+    }
+  }
+  if (Type == IndirectBranchType::POSSIBLE_JUMP_TABLE ||
+      Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
+    assert(JTOffsetCandidates.size() > 2 &&
+           "expected more than 2 jump table entries");
+    auto *JTStartLabel = BC.Ctx->createTempSymbol("JUMP_TABLE", true);
+    DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
+                 << JTStartLabel->getName()
+                 << " in function " << *this << " with "
+                 << JTOffsetCandidates.size() << " entries.\n");
+    auto JumpTableType =
+      Type == IndirectBranchType::POSSIBLE_JUMP_TABLE
+        ? JumpTable::JTT_NORMAL
+        : JumpTable::JTT_PIC;
+    JumpTables.emplace(ArrayStart, JumpTable{ArrayStart,
+                                             EntrySize,
+                                             JumpTableType,
+                                             std::move(JTOffsetCandidates),
+                                             {{0, JTStartLabel}}});
+    BC.MIA->replaceMemOperandDisp(*MemLocInstr, JTStartLabel, BC.Ctx.get());
+    BC.MIA->setJumpTable(Instruction, ArrayStart);
+
+    JTSites.emplace_back(Offset, ArrayStart);
+
+    return Type;
+  }
+  BC.InterproceduralReferences.insert(Value);
+  return IndirectBranchType::POSSIBLE_TAIL_CALL;
+}
+
+MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
+                                                bool CreatePastEnd) {
+  MCSymbol *Result;
+  // Check if there's already a registered label.
+  auto Offset = Address - getAddress();
+
+  if ((Offset == getSize()) && CreatePastEnd)
+    return getFunctionEndLabel();
+
+  assert(Offset < getSize() && "address outside of function bounds");
+  auto LI = Labels.find(Offset);
+  if (LI == Labels.end()) {
+    Result = BC.Ctx->createTempSymbol();
+    Labels[Offset] = Result;
+  } else {
+    Result = LI->second;
+  }
+  return Result;
+}
+
 bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   assert(FunctionData.size() == getSize() &&
          "function size does not match raw data size");
@@ -480,27 +864,12 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   // basic block.
   Labels[0] = Ctx->createTempSymbol("BB0", false);
 
-  auto getOrCreateLocalLabel = [&](uint64_t Address) {
-    MCSymbol *Result;
-    // Check if there's already a registered label.
-    auto Offset = Address - getAddress();
-    assert(Offset < getSize() && "address outside of function bounds");
-    auto LI = Labels.find(Offset);
-    if (LI == Labels.end()) {
-      Result = Ctx->createTempSymbol();
-      Labels[Offset] = Result;
-    } else {
-      Result = LI->second;
-    }
-    return Result;
-  };
-
   auto handleRIPOperand =
       [&](MCInst &Instruction, uint64_t Address, uint64_t Size) {
     uint64_t TargetAddress{0};
     MCSymbol *TargetSymbol{nullptr};
-    if (!BC.MIA->evaluateMemOperandTarget(Instruction, TargetAddress, Address,
-                                          Size)) {
+    if (!MIA->evaluateMemOperandTarget(Instruction, TargetAddress, Address,
+                                       Size)) {
       DEBUG(dbgs() << "BOLT: rip-relative operand can't be evaluated:\n";
             BC.InstPrinter->printInst(&Instruction, dbgs(), "", *BC.STI);
             dbgs() << '\n';
@@ -528,176 +897,10 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     }
     if (!TargetSymbol)
       TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
-    BC.MIA->replaceMemOperandDisp(
+    MIA->replaceMemOperandDisp(
         Instruction, MCOperand::createExpr(MCSymbolRefExpr::create(
                          TargetSymbol, MCSymbolRefExpr::VK_None, *BC.Ctx)));
     return true;
-  };
-
-  enum class IndirectBranchType : char {
-    UNKNOWN = 0,            /// Unable to determine type.
-    POSSIBLE_TAIL_CALL,     /// Possibly a tail call.
-    POSSIBLE_JUMP_TABLE,    /// Possibly a switch/jump table
-    POSSIBLE_GOTO           /// Possibly a gcc's computed goto.
-  };
-
-  auto analyzeIndirectBranch =
-      [&](MCInst &Instruction, unsigned Size, uint64_t Offset) {
-    // Try to find a (base) memory location from where the address for
-    // the indirect branch is loaded. For X86-64 the memory will be specified
-    // in the following format:
-    //
-    //   {%rip}/{%basereg} + Imm + IndexReg * Scale
-    //
-    // We are interested in the cases where Scale == sizeof(uintptr_t) and
-    // the contents of the memory are presumably a function array.
-    auto *MemLocInstr = &Instruction;
-    if (Instruction.getNumOperands() == 1) {
-      // If the indirect jump is on register - try to detect if the
-      // register value is loaded from a memory location.
-      assert(Instruction.getOperand(0).isReg() && "register operand expected");
-      const auto JmpRegNum = Instruction.getOperand(0).getReg();
-      // Check if one of the previous instructions defines the jump-on register.
-      // We will check that this instruction belongs to the same basic block
-      // in postProcessIndirectBranches().
-      for (auto PrevII = Instructions.rbegin(); PrevII != Instructions.rend();
-           ++PrevII) {
-        auto &PrevInstr = PrevII->second;
-        const auto &PrevInstrDesc = BC.MII->get(PrevInstr.getOpcode());
-        if (!PrevInstrDesc.hasDefOfPhysReg(PrevInstr, JmpRegNum, *BC.MRI))
-          continue;
-        if (!MIA->isMoveMem2Reg(PrevInstr))
-          return IndirectBranchType::UNKNOWN;
-        MemLocInstr = &PrevInstr;
-        break;
-      }
-      if (MemLocInstr == &Instruction) {
-        // No definition seen for the register in this function so far. Could be
-        // an input parameter - which means it is an external code reference.
-        // It also could be that the definition happens to be in the code that
-        // we haven't processed yet. Since we have to be conservative, return
-        // as UNKNOWN case.
-        return IndirectBranchType::UNKNOWN;
-      }
-    }
-
-    const auto RIPRegister = BC.MRI->getProgramCounter();
-    auto PtrSize = BC.AsmInfo->getPointerSize();
-
-    // Analyze contents of the memory if possible.
-    unsigned  BaseRegNum;
-    int64_t   ScaleValue;
-    unsigned  IndexRegNum;
-    int64_t   DispValue;
-    unsigned  SegRegNum;
-    if (!MIA->evaluateX86MemoryOperand(*MemLocInstr, BaseRegNum,
-                                       ScaleValue, IndexRegNum,
-                                       DispValue, SegRegNum))
-      return IndirectBranchType::UNKNOWN;
-
-    if ((BaseRegNum != bolt::NoRegister && BaseRegNum != RIPRegister) ||
-        SegRegNum != bolt::NoRegister || ScaleValue != PtrSize)
-      return IndirectBranchType::UNKNOWN;
-
-    auto ArrayStart = static_cast<uint64_t>(DispValue);
-    if (BaseRegNum == RIPRegister)
-      ArrayStart += getAddress() + Offset + Size;
-
-    // Check if there's already a jump table registered at this address.
-    if (auto *JT = getJumpTableContainingAddress(ArrayStart)) {
-      auto JTOffset = ArrayStart - JT->Address;
-      // Get or create a label.
-      auto LI = JT->Labels.find(JTOffset);
-      if (LI == JT->Labels.end()) {
-        auto *JTStartLabel = BC.Ctx->createTempSymbol("JUMP_TABLE", true);
-        auto Result = JT->Labels.emplace(JTOffset, JTStartLabel);
-        assert(Result.second && "error adding jump table label");
-        LI = Result.first;
-      }
-
-      BC.MIA->replaceMemOperandDisp(*MemLocInstr, LI->second, BC.Ctx.get());
-      BC.MIA->setJumpTable(Instruction, ArrayStart);
-
-      JTSites.emplace_back(Offset, ArrayStart);
-
-      return IndirectBranchType::POSSIBLE_JUMP_TABLE;
-    }
-
-    auto SectionOrError = BC.getSectionForAddress(ArrayStart);
-    if (!SectionOrError) {
-      // No section - possibly an absolute address. Since we don't allow
-      // internal function addresses to escape the function scope - we
-      // consider it a tail call.
-      if (opts::Verbosity >= 1) {
-        errs() << "BOLT-WARNING: no section for address 0x"
-               << Twine::utohexstr(ArrayStart) << " referenced from function "
-               << *this << '\n';
-      }
-      return IndirectBranchType::POSSIBLE_TAIL_CALL;
-    }
-    auto &Section = *SectionOrError;
-    if (Section.isVirtual()) {
-      // The contents are filled at runtime.
-      return IndirectBranchType::POSSIBLE_TAIL_CALL;
-    }
-    // Extract the value at the start of the array.
-    StringRef SectionContents;
-    Section.getContents(SectionContents);
-    DataExtractor DE(SectionContents, BC.AsmInfo->isLittleEndian(), PtrSize);
-    auto ValueOffset = static_cast<uint32_t>(ArrayStart - Section.getAddress());
-    uint64_t Value = 0;
-    auto Result = IndirectBranchType::UNKNOWN;
-    std::vector<MCSymbol *> JTLabelCandidates;
-    std::vector<uint64_t> JTOffsetCandidates;
-    while (ValueOffset <= Section.getSize() - PtrSize) {
-      DEBUG(dbgs() << "BOLT-DEBUG: indirect jmp at 0x"
-                   << Twine::utohexstr(getAddress() + Offset)
-                   << " is referencing address 0x"
-                   << Twine::utohexstr(Section.getAddress() + ValueOffset));
-      // Extract the value and increment the offset.
-      Value = DE.getAddress(&ValueOffset);
-      DEBUG(dbgs() << ", which contains value "
-                   << Twine::utohexstr(Value) << '\n');
-      if (containsAddress(Value) && Value != getAddress()) {
-        // Is it possible to have a jump table with function start as an entry?
-        auto *JTEntry = getOrCreateLocalLabel(Value);
-        JTLabelCandidates.push_back(JTEntry);
-        JTOffsetCandidates.push_back(Value - getAddress());
-        Result = IndirectBranchType::POSSIBLE_JUMP_TABLE;
-        continue;
-      }
-      // Potentially a switch table can contain  __builtin_unreachable() entry
-      // pointing just right after the function. In this case we have to check
-      // another entry. Otherwise the entry is outside of this function scope
-      // and it's not a switch table.
-      if (Value != getAddress() + getSize()) {
-        break;
-      }
-      JTLabelCandidates.push_back(getFunctionEndLabel());
-      JTOffsetCandidates.push_back(Value - getAddress());
-    }
-    if (Result == IndirectBranchType::POSSIBLE_JUMP_TABLE) {
-      assert(JTLabelCandidates.size() > 2 &&
-             "expected more than 2 jump table entries");
-      auto *JTStartLabel = BC.Ctx->createTempSymbol("JUMP_TABLE", true);
-      DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
-                   << JTStartLabel->getName()
-                   << " in function " << *this << " with "
-                   << JTLabelCandidates.size() << " entries.\n");
-      JumpTables.emplace(ArrayStart, JumpTable{ArrayStart,
-                                               PtrSize,
-                                               std::move(JTLabelCandidates),
-                                               std::move(JTOffsetCandidates),
-                                               {{0, JTStartLabel}}});
-      BC.MIA->replaceMemOperandDisp(*MemLocInstr, JTStartLabel, BC.Ctx.get());
-      BC.MIA->setJumpTable(Instruction, ArrayStart);
-
-      JTSites.emplace_back(Offset, ArrayStart);
-
-      return Result;
-    }
-    BC.InterproceduralReferences.insert(Value);
-    return IndirectBranchType::POSSIBLE_TAIL_CALL;
   };
 
   for (uint64_t Offset = 0; Offset < getSize(); ) {
@@ -831,6 +1034,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             MIA->convertJmpToTailCall(Instruction);
             break;
           case IndirectBranchType::POSSIBLE_JUMP_TABLE:
+          case IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE:
             if (opts::JumpTables == JTS_NONE)
               IsSimple = false;
             break;
@@ -875,23 +1079,44 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     Offset += Size;
   }
 
-  // Update TakenBranches from JumpTables.
+  postProcessJumpTables();
+
+  // TODO: clear memory if not simple function?
+
+  // Update state.
+  updateState(State::Disassembled);
+
+  return true;
+}
+
+void BinaryFunction::postProcessJumpTables() {
+  // Create labels for all entries.
+  for (auto &JTI : JumpTables) {
+    auto &JT = JTI.second;
+    for (auto Offset : JT.OffsetEntries) {
+      auto *Label = getOrCreateLocalLabel(getAddress() + Offset,
+                                          /*CreatePastEnd*/ true);
+      JT.Entries.push_back(Label);
+    }
+  }
+
+  // Add TakenBranches from JumpTables.
   //
-  // We want to do it after initial processing since we don't know jump tables
+  // We want to do it after initial processing since we don't know jump tables'
   // boundaries until we process them all.
   for (auto &JTSite : JTSites) {
     auto JTSiteOffset = JTSite.first;
     auto JTAddress = JTSite.second;
     auto *JT = getJumpTableContainingAddress(JTAddress);
     assert(JT && "cannot find jump table for address");
-    uint32_t EI = (JTAddress - JT->Address) / JT->EntrySize;
-    while (EI < JT->Entries.size()) {
-      auto TargetOffset = JT->OffsetEntries[EI];
+    auto EntryOffset = JTAddress - JT->Address;
+    while (EntryOffset < JT->getSize()) {
+      auto TargetOffset = JT->OffsetEntries[EntryOffset / JT->EntrySize];
       if (TargetOffset < getSize())
         TakenBranches.emplace_back(JTSiteOffset, TargetOffset);
-      ++EI;
+      EntryOffset += JT->EntrySize;
       // A label at the next entry means the end of this jump table.
-      if (JT->Labels.count(EI * JT->EntrySize))
+      if (JT->Labels.count(EntryOffset))
         break;
     }
   }
@@ -908,13 +1133,6 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   std::sort(TakenBranches.begin(), TakenBranches.end());
   auto NewEnd = std::unique(TakenBranches.begin(), TakenBranches.end());
   TakenBranches.erase(NewEnd, TakenBranches.end());
-
-  // TODO: clear memory if not simple function?
-
-  // Update state.
-  updateState(State::Disassembled);
-
-  return true;
 }
 
 bool BinaryFunction::postProcessIndirectBranches() {
@@ -930,7 +1148,7 @@ bool BinaryFunction::postProcessIndirectBranches() {
         return true;
       }
 
-      // Validate the tail call assumptions.
+      // Validate the tail call or jump table assumptions.
       if (BC.MIA->isTailCall(Instr) || BC.MIA->getJumpTable(Instr)) {
         if (BC.MIA->getMemoryOperandNo(Instr) != -1) {
           // We have validated memory contents addressed by the jump
@@ -941,28 +1159,48 @@ bool BinaryFunction::postProcessIndirectBranches() {
         // in the containing basic block. Other assumptions were checked
         // earlier.
         assert(Instr.getOperand(0).isReg() && "register operand expected");
-        const auto JmpRegNum = Instr.getOperand(0).getReg();
-        bool IsJmpRegSetInBB = false;
-        for (const auto &OtherInstr : *BB) {
-          const auto &OtherInstrDesc = BC.MII->get(OtherInstr.getOpcode());
-          if (OtherInstrDesc.hasDefOfPhysReg(OtherInstr, JmpRegNum, *BC.MRI)) {
-            IsJmpRegSetInBB = true;
+        const auto R1 = Instr.getOperand(0).getReg();
+        auto PrevInstr = BB->rbegin();
+        while (PrevInstr != BB->rend()) {
+          const auto &PrevInstrDesc = BC.MII->get(PrevInstr->getOpcode());
+          if (PrevInstrDesc.hasDefOfPhysReg(*PrevInstr, R1, *BC.MRI)) {
             break;
           }
+          ++PrevInstr;
         }
-        if (IsJmpRegSetInBB)
+        if (PrevInstr == BB->rend()) {
+          if (opts::Verbosity >= 2) {
+            outs() << "BOLT-INFO: rejected potential "
+                       << (BC.MIA->isTailCall(Instr) ? "indirect tail call"
+                                                     : "jump table")
+                       << " in function " << *this
+                       << " because the jump-on register was not defined in "
+                       << " basic block " << BB->getName() << ".\n";
+            DEBUG(dbgs() << BC.printInstructions(dbgs(), BB->begin(), BB->end(),
+                                                 BB->getOffset(), this, true));
+          }
+          return false;
+        }
+        // In case of PIC jump table we need to do more checks.
+        if (BC.MIA->isMoveMem2Reg(*PrevInstr))
           continue;
-        if (opts::Verbosity >= 2) {
-          outs() << "BOLT-INFO: rejected potential "
-                     << (BC.MIA->isTailCall(Instr) ? "indirect tail call"
-                                                   : "jump table")
-                     << " in function " << *this
-                     << " because the jump-on register was not defined in "
-                     << " basic block " << BB->getName() << ".\n";
-          DEBUG(dbgs() << BC.printInstructions(dbgs(), BB->begin(), BB->end(),
-                                               BB->getOffset(), this));
+        assert(BC.MIA->isADD64rr(*PrevInstr) && "add instruction expected");
+        auto R2 = PrevInstr->getOperand(2).getReg();
+        // Make sure both regs are set in the same basic block prior to ADD.
+        bool IsR1Set = false;
+        bool IsR2Set = false;
+        while ((++PrevInstr != BB->rend()) && !(IsR1Set && IsR2Set)) {
+          const auto &PrevInstrDesc = BC.MII->get(PrevInstr->getOpcode());
+          if (PrevInstrDesc.hasDefOfPhysReg(*PrevInstr, R1, *BC.MRI))
+            IsR1Set = true;
+          else if (PrevInstrDesc.hasDefOfPhysReg(*PrevInstr, R2, *BC.MRI))
+            IsR2Set = true;
         }
-        return false;
+
+        if (!IsR1Set || !IsR2Set)
+          return false;
+
+        continue;
       }
 
       // If this block contains an epilogue code and has an indirect branch,
@@ -981,7 +1219,7 @@ bool BinaryFunction::postProcessIndirectBranches() {
                  << "function " << *this << " in basic block "
                  << BB->getName() << ".\n";
           DEBUG(BC.printInstructions(dbgs(), BB->begin(), BB->end(),
-                                     BB->getOffset(), this));
+                                     BB->getOffset(), this, true));
         }
         return false;
       }
@@ -2051,7 +2289,7 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
 
     const auto *LastInstr = BB->getLastNonPseudo();
     const bool IsJumpTable = LastInstr && BC.MIA->getJumpTable(*LastInstr);
-    
+
     auto BI = BB->branch_info_begin();
     for (auto *Succ : BB->successors()) {
       std::string Branch;
@@ -2157,7 +2395,7 @@ void BinaryFunction::fixBranches() {
     if (BB->succ_size() == 1) {
       // __builtin_unreachable() could create a conditional branch that
       // falls-through into the next function - hence the block will have only
-      // one valid successor. Since behaviour is undefined - we replace 
+      // one valid successor. Since behaviour is undefined - we replace
       // the conditional branch with an unconditional if required.
       if (CondBranch)
         BB->eraseInstruction(CondBranch);
@@ -2787,6 +3025,7 @@ uint64_t BinaryFunction::JumpTable::emit(MCStreamer *Streamer,
     Streamer->SwitchSection(Count > 0 ? HotSection : ColdSection);
     Streamer->EmitValueToAlignment(EntrySize);
   }
+  MCSymbol *LastLabel = nullptr;
   uint64_t Offset = 0;
   for (auto *Entry : Entries) {
     auto LI = Labels.find(Offset);
@@ -2806,8 +3045,16 @@ uint64_t BinaryFunction::JumpTable::emit(MCStreamer *Streamer,
         Streamer->EmitValueToAlignment(EntrySize);
       }
       Streamer->EmitLabel(LI->second);
+      LastLabel = LI->second;
     }
-    Streamer->EmitSymbolValue(Entry, EntrySize);
+    if (Type == JTT_NORMAL) {
+      Streamer->EmitSymbolValue(Entry, EntrySize);
+    } else {
+      auto JT = MCSymbolRefExpr::create(LastLabel, Streamer->getContext());
+      auto E = MCSymbolRefExpr::create(Entry, Streamer->getContext());
+      auto Value = MCBinaryExpr::createSub(E, JT, Streamer->getContext());
+      Streamer->EmitValue(Value, EntrySize);
+    }
     Offset += EntrySize;
   }
 

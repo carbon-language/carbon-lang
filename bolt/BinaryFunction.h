@@ -443,11 +443,19 @@ private:
   /// The jump table may include other jump tables that are referenced by
   /// a different label at a different offset in this jump table.
   struct JumpTable {
+    enum JumpTableType : char {
+      JTT_NORMAL,
+      JTT_PIC,
+    };
+
     /// Original address.
     uint64_t Address;
 
     /// Size of the entry used for storage.
     std::size_t EntrySize;
+
+    /// The type of this jump table.
+    JumpTableType Type;
 
     /// All the entries as labels.
     std::vector<MCSymbol *> Entries;
@@ -461,16 +469,16 @@ private:
 
     /// Return the size of the jump table.
     uint64_t getSize() const {
-      return Entries.size() * EntrySize;
+      return std::max(OffsetEntries.size(), Entries.size()) * EntrySize;
     }
 
     /// Constructor.
     JumpTable(uint64_t Address,
               std::size_t EntrySize,
-              decltype(Entries) &&Entries,
+              JumpTableType Type,
               decltype(OffsetEntries) &&OffsetEntries,
               decltype(Labels) &&Labels)
-      : Address(Address), EntrySize(EntrySize), Entries(Entries),
+      : Address(Address), EntrySize(EntrySize), Type(Type),
         OffsetEntries(OffsetEntries), Labels(Labels)
     {}
 
@@ -563,6 +571,28 @@ private:
    private:
     Itr itr;
   };
+
+  /// Return label at a given \p Address in the function. If the label does
+  /// not exist - create it. Assert if the \p Address does not belong to
+  /// the function. If \p CreatePastEnd is true, then return the function
+  /// end label when the \p Address points immediately past the last byte
+  /// of the function.
+  MCSymbol *getOrCreateLocalLabel(uint64_t Address, bool CreatePastEnd = false);
+
+  /// Different types of indirect branches encountered during disassembly.
+  enum class IndirectBranchType : char {
+    UNKNOWN = 0,              /// Unable to determine type.
+    POSSIBLE_TAIL_CALL,       /// Possibly a tail call.
+    POSSIBLE_JUMP_TABLE,      /// Possibly a switch/jump table.
+    POSSIBLE_PIC_JUMP_TABLE,  /// Possibly a jump table for PIC.
+    POSSIBLE_GOTO             /// Possibly a gcc's computed goto.
+  };
+
+  /// Analyze indirect branch \p Instruction before it is added to
+  /// Instructions list.
+  IndirectBranchType analyzeIndirectBranch(MCInst &Instruction,
+                                           unsigned Size,
+                                           uint64_t Offset);
 
   BinaryFunction& operator=(const BinaryFunction &) = delete;
   BinaryFunction(const BinaryFunction &) = delete;
@@ -1202,6 +1232,11 @@ public:
   ///
   /// Returns false if disassembly failed.
   bool disassemble(ArrayRef<uint8_t> FunctionData);
+
+  /// Post-processing for jump tables after disassembly. Since their
+  /// boundaries are not known until all call sites are seen, we need this
+  /// extra pass to perform any final adjustments.
+  void postProcessJumpTables();
 
   /// Builds a list of basic blocks with successor and predecessor info.
   ///
