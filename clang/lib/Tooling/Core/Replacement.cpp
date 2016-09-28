@@ -287,8 +287,13 @@ llvm::Error Replacements::add(const Replacement &R) {
     // with them and replace them with the merged replacements.
     auto MergeBegin = I;
     auto MergeEnd = std::next(I);
-    while (I-- != Replaces.begin() && Overlap(R, *I))
+    while (I != Replaces.begin()) {
+      --I;
+      // If `I` doesn't overlap with `R`, don't merge it.
+      if (!Overlap(R, *I))
+        break;
       MergeBegin = I;
+    }
     Replacements OverlapReplaces(MergeBegin, MergeEnd);
     llvm::Expected<Replacements> Merged =
         OverlapReplaces.mergeIfOrderIndependent(R);
