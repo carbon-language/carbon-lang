@@ -515,3 +515,27 @@ bool Sema::CheckCUDACall(SourceLocation Loc, FunctionDecl *Callee) {
   }
   return true;
 }
+
+bool Sema::CheckCUDAExceptionExpr(SourceLocation Loc, StringRef ExprTy) {
+  assert(getLangOpts().CUDA && "Should only be called during CUDA compilation");
+  FunctionDecl *CurFn = dyn_cast<FunctionDecl>(CurContext);
+  if (!CurFn)
+    return true;
+  CUDAFunctionTarget Target = IdentifyCUDATarget(CurFn);
+
+  // Raise an error immediately if this is a __global__ or __device__ function.
+  // If it's a __host__ __device__ function, enqueue a deferred error which will
+  // be emitted if the function is codegen'ed for device.
+  if (Target == CFT_Global || Target == CFT_Device) {
+    Diag(Loc, diag::err_cuda_device_exceptions) << ExprTy << Target << CurFn;
+    return false;
+  }
+  if (Target == CFT_HostDevice && getLangOpts().CUDAIsDevice) {
+    PartialDiagnostic ErrPD{PartialDiagnostic::NullDiagnostic()};
+    ErrPD.Reset(diag::err_cuda_device_exceptions);
+    ErrPD << ExprTy << Target << CurFn;
+    CurFn->addDeferredDiag({Loc, std::move(ErrPD)});
+    return false;
+  }
+  return true;
+}
