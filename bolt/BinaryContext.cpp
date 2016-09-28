@@ -367,5 +367,17 @@ ErrorOr<SectionRef> BinaryContext::getSectionForAddress(uint64_t Address) const{
   return std::make_error_code(std::errc::bad_address);
 }
 
+void BinaryContext::addSectionRelocation(SectionRef Section, uint64_t Address,
+                                         MCSymbol *Symbol, uint64_t Type,
+                                         uint64_t Addend) {
+  auto RI = SectionRelocations.find(Section);
+  if (RI == SectionRelocations.end()) {
+    auto Result =
+      SectionRelocations.emplace(Section, std::vector<Relocation>());
+    RI = Result.first;
+  }
+  RI->second.emplace_back(Relocation{Address, Symbol, Type, Addend});
+}
+
 } // namespace bolt
 } // namespace llvm

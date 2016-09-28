@@ -87,7 +87,7 @@ public:
 
 
 private:
-  uint64_t Stats[LAST_DYNO_STAT];
+  uint64_t Stats[LAST_DYNO_STAT+1];
 
 #define D(name, desc, ...) desc,
   static constexpr const char *Desc[] = { DYNO_STATS };
@@ -142,26 +142,6 @@ inline raw_ostream &operator<<(raw_ostream &OS, const DynoStats &Stats) {
 }
 
 DynoStats operator+(const DynoStats &A, const DynoStats &B);
-
-/// Relocation class.
-struct Relocation {
-  uint64_t Offset;
-  MCSymbol *Symbol;
-  uint64_t Type;
-  uint64_t Addend;
-
-  /// Return size of the given relocation \p Type.
-  static size_t getSizeForType(uint64_t Type);
-
-  /// Emit relocation at a current \p Streamer' position. The caller is
-  /// responsible for setting the position correctly.
-  size_t emitTo(MCStreamer *Streamer);
-};
-
-/// Relocation ordering by offset.
-inline bool operator<(const Relocation &A, const Relocation &B) {
-  return A.Offset < B.Offset;
-}
 
 /// BinaryFunction is a representation of machine-level function.
 ///
@@ -236,15 +216,19 @@ private:
   /// base address for position independent binaries.
   uint64_t Address;
 
-  /// Address of an identical function that can replace this one. By default
-  /// this is the same as the address of this functions, and the icf pass can
-  /// potentially set it to some other function's address.
+  /// List of functions that are identical to this one. We only maintain
+  /// the list for the function that should be emitted, for the rest we
+  /// set IdenticalFunction. When we emit this function we have
+  /// to emit symbols for all its twins.
+  std::set<BinaryFunction *> Twins;
+
+  /// Address of an identical function that can replace this one.
   ///
   /// In case multiple functions are identical to each other, one of the
-  /// functions (the representative) will point to its own address, while the
+  /// functions (the representative) will have it set to nullptr, while the
   /// rest of the functions will point to the representative through one or
   /// more steps.
-  uint64_t IdenticalFunctionAddress;
+  BinaryFunction *IdenticalFunction{nullptr};
 
   /// Original size of the function.
   uint64_t Size;
@@ -256,7 +240,7 @@ private:
   uint64_t MaxSize{std::numeric_limits<uint64_t>::max()};
 
   /// Alignment requirements for the function.
-  uint64_t Alignment{1};
+  uint64_t Alignment{2};
 
   const MCSymbol *PersonalityFunction{nullptr};
   uint8_t PersonalityEncoding{dwarf::DW_EH_PE_sdata4 | dwarf::DW_EH_PE_pcrel};
@@ -266,7 +250,8 @@ private:
   std::unique_ptr<BinaryLoopInfo> BLI;
 
   /// False if the function is too complex to reconstruct its control
-  /// flow graph and re-assemble.
+  /// flow graph.
+  /// In relocation mode we still disassemble and re-assemble such functions.
   bool IsSimple{true};
 
   /// True if this function needs to be emitted in two separate parts, one for
@@ -395,7 +380,10 @@ private:
   using LandingPadsMapType = std::map<const MCSymbol *, std::vector<unsigned> >;
   LandingPadsMapType LPToBBIndex;
 
-  /// Map offset in the function to a local label.
+  /// Map offset in the function to a label.
+  /// Labels are used for building CFG for simple functions. For non-simple
+  /// function in relocation mode we need to emit them for relocations
+  /// referencing function internals to work (e.g. jump tables).
   using LabelsMapType = std::map<uint32_t, MCSymbol *>;
   LabelsMapType Labels;
 
@@ -444,6 +432,7 @@ private:
     uint64_t Action;
   };
   std::vector<CallSite> CallSites;
+  std::vector<CallSite> ColdCallSites;
 
   /// Binary blobs reprsenting action, type, and type index tables for this
   /// function' LSDA (exception handling).
@@ -452,6 +441,7 @@ private:
 
   /// Marking for the beginning of language-specific data area for the function.
   MCSymbol *LSDASymbol{nullptr};
+  MCSymbol *ColdLSDASymbol{nullptr};
 
   /// Map to discover which CFIs are attached to a given instruction offset.
   /// Maps an instruction offset into a FrameInstructions offset.
@@ -514,6 +504,9 @@ private:
     /// Total number of times this jump table was used.
     uint64_t Count{0};
 
+    /// Update jump table at its original location.
+    void updateOriginal(BinaryContext &BC);
+
     /// Emit jump table data. Callee supplies sections for the data.
     /// Return the number of total bytes emitted.
     uint64_t emit(MCStreamer *Streamer, MCSection *HotSection,
@@ -541,6 +534,15 @@ private:
 
   /// All jump table sites in the function.
   std::vector<std::pair<uint64_t, uint64_t>> JTSites;
+
+  /// List of relocations in this function.
+  std::map<uint64_t, Relocation> Relocations;
+
+  /// Map of relocations used for moving the function body as it is.
+  std::map<uint64_t, Relocation> MoveRelocations;
+
+  /// Offsets in function that should have PC-relative relocation.
+  std::set<uint64_t> PCRelativeRelocationOffsets;
 
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
@@ -572,8 +574,13 @@ private:
   /// Symbol in the output.
   MCSymbol *OutputSymbol;
 
+  MCSymbol *ColdSymbol{nullptr};
+
   /// Symbol at the end of the function.
   MCSymbol *FunctionEndLabel{nullptr};
+
+  /// Symbol at the end of the cold part of split function.
+  MCSymbol *FunctionColdEndLabel{nullptr};
 
   /// Unique number associated with the function.
   uint64_t  FunctionNumber;
@@ -603,6 +610,22 @@ private:
   /// of the function.
   MCSymbol *getOrCreateLocalLabel(uint64_t Address, bool CreatePastEnd = false);
 
+  /// Register an entry point at a given \p Offset into the function.
+  MCSymbol *addEntryPointAtOffset(uint64_t Offset) {
+    EntryOffsets.emplace(Offset);
+    return getOrCreateLocalLabel(getAddress() + Offset);
+  }
+
+  /// This is called in disassembled state.
+  void addEntryPoint(uint64_t Address);
+
+  /// Return true if there is a registered entry point at a given offset
+  /// into the function.
+  bool hasEntryPointAtOffset(uint64_t Offset) {
+    assert(!EntryOffsets.empty() && "entry points uninitialized or destroyed");
+    return EntryOffsets.count(Offset);
+  }
+
   /// Different types of indirect branches encountered during disassembly.
   enum class IndirectBranchType : char {
     UNKNOWN = 0,              /// Unable to determine type.
@@ -627,7 +650,7 @@ private:
   BinaryFunction(const std::string &Name, SectionRef Section, uint64_t Address,
                  uint64_t Size, BinaryContext &BC, bool IsSimple) :
       Names({Name}), Section(Section), Address(Address),
-      IdenticalFunctionAddress(Address), Size(Size), BC(BC), IsSimple(IsSimple),
+      Size(Size), BC(BC), IsSimple(IsSimple),
       CodeSectionName(".text." + Name), FunctionNumber(++Count) {
     OutputSymbol = BC.Ctx->getOrCreateSymbol(Name);
   }
@@ -848,6 +871,16 @@ public:
     return OutputSymbol;
   }
 
+  MCSymbol *getColdSymbol() {
+    if (ColdSymbol)
+      return ColdSymbol;
+
+    ColdSymbol = BC.Ctx->getOrCreateSymbol(
+        Twine(getSymbol()->getName()).concat(".cold"));
+
+    return ColdSymbol;
+  }
+
   /// Return MC symbol associated with the end of the function.
   MCSymbol *getFunctionEndLabel() {
     assert(BC.Ctx && "cannot be called with empty context");
@@ -855,6 +888,55 @@ public:
       FunctionEndLabel = BC.Ctx->createTempSymbol("func_end", true);
     }
     return FunctionEndLabel;
+  }
+
+  /// Return MC symbol associated with the end of the cold part of the function.
+  MCSymbol *getFunctionColdEndLabel() {
+    if (!FunctionColdEndLabel) {
+      FunctionColdEndLabel = BC.Ctx->createTempSymbol("func_cold_end", true);
+    }
+    return FunctionColdEndLabel;
+  }
+
+  /// Register relocation type \p RelType at a given \p Address in the function
+  /// against \p Symbol.
+  /// Assert if the \p Address is not inside this function.
+  void addRelocation(uint64_t Address, MCSymbol *Symbol, uint64_t RelType,
+                     uint64_t Addend, uint64_t Value) {
+    assert(Address >= getAddress() && Address < getAddress() + getSize() &&
+           "address is outside of the function");
+    auto Offset = Address - getAddress();
+    switch (RelType) {
+    case ELF::R_X86_64_32:
+    case ELF::R_X86_64_32S:
+    case ELF::R_X86_64_64:
+      Relocations.emplace(Offset,
+                          Relocation{Offset, Symbol, RelType, Addend, Value});
+      break;
+    case ELF::R_X86_64_PC32:
+    case ELF::R_X86_64_PC8:
+    case ELF::R_X86_64_PLT32:
+      break;
+
+    // The following relocations are ignored.
+    case ELF::R_X86_64_GOTPCREL:
+    case ELF::R_X86_64_TPOFF32:
+    case ELF::R_X86_64_GOTTPOFF:
+      return;
+    default:
+      llvm_unreachable("unexpected relocation type in code");
+    }
+    MoveRelocations[Offset] =
+      Relocation{Offset, Symbol, RelType, Addend, Value};
+  }
+
+  /// Register a fact that we should have a PC-relative relocation at a given
+  /// address in a function. During disassembly we have to make sure we create
+  /// relocation at that location.
+  void addPCRelativeRelocationAddress(uint64_t Address) {
+    assert(Address >= getAddress() && Address < getAddress() + getSize() &&
+           "address is outside of the function");
+    PCRelativeRelocationOffsets.emplace(Address - getAddress());
   }
 
   /// Return internal section name for this function.
@@ -909,20 +991,6 @@ public:
   /// Register alternative function name.
   void addAlternativeName(std::string NewName) {
     Names.emplace_back(NewName);
-  }
-
-  /// Register an entry point at a given \p Offset into the function.
-  /// Return symbol associated with the entry.
-  MCSymbol *addEntryPointAtOffset(uint64_t Offset) {
-    EntryOffsets.emplace(Offset);
-    return getOrCreateLocalLabel(getAddress() + Offset);
-  }
-
-  /// Return true if there is a registered entry point at a given offset
-  /// into the function.
-  bool hasEntryPointAtOffset(uint64_t Offset) {
-    assert(!EntryOffsets.empty() && "entry points uninitialized or destroyed");
-    return EntryOffsets.count(Offset);
   }
 
   /// Create a basic block at a given \p Offset in the
@@ -1000,7 +1068,8 @@ public:
   /// from the function start to the function end.
   iterator_range<iterator> getBasicBlockRangeFromOffsetToEnd(uint64_t Offset) {
     auto *BB = getBasicBlockContainingOffset(Offset);
-    return BB ? iterator_range<iterator>(BasicBlocks.begin() + getIndex(BB), end())
+    return BB
+      ? iterator_range<iterator>(BasicBlocks.begin() + getIndex(BB), end())
       : iterator_range<iterator>(end(), end());
   }
 
@@ -1235,14 +1304,37 @@ public:
   }
 
   /// Return the address of an identical function. If none is found this will
-  /// return this function's address.
-  uint64_t getIdenticalFunctionAddress() const {
-    return IdenticalFunctionAddress;
+  /// return NULL.
+  BinaryFunction *getIdenticalFunction() const {
+    return IdenticalFunction;
   }
 
   /// Set the address of an identical function.
-  void setIdenticalFunctionAddress(uint64_t Address) {
-    IdenticalFunctionAddress = Address;
+  void setIdenticalFunction(BinaryFunction *BF) {
+    IdenticalFunction = BF;
+    // Copy over the list of twins.
+    if (!Twins.empty()) {
+      BF->getTwins().insert(Twins.begin(), Twins.end());
+      Twins.clear();
+    }
+  }
+
+  /// Return functions that are duplicates of this one.
+  std::set<BinaryFunction *> &getTwins() {
+    return Twins;
+  }
+
+  /// Register function that is identical to this one.
+  void addIdenticalFunction(BinaryFunction *BF) {
+    Twins.emplace(BF);
+  }
+
+  /// Return true if this function is a duplicate of another function.
+  bool isDuplicate() const {
+    bool IsDuplicate = getIdenticalFunction();
+    assert((Twins.empty() || !IsDuplicate) &&
+           "function with twins cannot be a duplicate of another function");
+    return IsDuplicate;
   }
 
   /// Return symbol pointing to function's LSDA.
@@ -1257,6 +1349,20 @@ public:
                                 Twine::utohexstr(getFunctionNumber()));
 
     return LSDASymbol;
+  }
+
+  /// Return symbol pointing to function's LSDA for the cold part.
+  MCSymbol *getColdLSDASymbol() {
+    if (ColdLSDASymbol)
+      return ColdLSDASymbol;
+    if (ColdCallSites.empty())
+      return nullptr;
+
+    ColdLSDASymbol =
+      BC.Ctx->getOrCreateSymbol(Twine("GCC_cold_except_table") +
+                                Twine::utohexstr(getFunctionNumber()));
+
+    return ColdLSDASymbol;
   }
 
   /// Return true iff the symbol could be seen inside this function otherwise
@@ -1278,7 +1384,7 @@ public:
   /// state to State:Disassembled.
   ///
   /// Returns false if disassembly failed.
-  bool disassemble(ArrayRef<uint8_t> FunctionData);
+  void disassemble(ArrayRef<uint8_t> FunctionData);
 
   /// Post-processing for jump tables after disassembly. Since their
   /// boundaries are not known until all call sites are seen, we need this
@@ -1374,10 +1480,17 @@ public:
   void updateEHRanges();
 
   /// Emit exception handling ranges for the function.
-  void emitLSDA(MCStreamer *Streamer);
+  void emitLSDA(MCStreamer *Streamer, bool EmitColdPart);
 
   /// Emit jump tables for the function.
   void emitJumpTables(MCStreamer *Streamer);
+
+  /// Emit function code. The caller is responsible for emitting function
+  /// symbol(s) and setting the section to emit the code to.
+  void emitBody(MCStreamer &Streamer, bool EmitColdPart);
+
+  /// Emit function as a blob with relocations and labels for relocations.
+  void emitBodyRaw(MCStreamer *Streamer);
 
   /// Merge profile data of this function into those of the given
   /// function. The functions should have been proven identical with

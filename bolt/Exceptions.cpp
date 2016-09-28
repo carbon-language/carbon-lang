@@ -13,11 +13,13 @@
 
 #include "Exceptions.h"
 #include "BinaryFunction.h"
+#include "RewriteInstance.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/DebugInfo/DWARF/DWARFFrame.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
@@ -26,6 +28,7 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include <map>
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt-exceptions"
@@ -168,6 +171,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
              << ", 0x" << Twine::utohexstr(RangeBase + Start + Length)
              << "); landing pad: 0x" << Twine::utohexstr(LPStart + LandingPad)
              << "; action entry: 0x" << Twine::utohexstr(ActionEntry) << "\n";
+      outs() << "  current offset is " << (CallSitePtr - CallSiteTableStart)
+             << '\n';
     }
 
     // Create a handler entry if necessary.
@@ -294,6 +299,9 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
 }
 
 void BinaryFunction::updateEHRanges() {
+  if (getSize() == 0)
+    return;
+
   assert(CurrentState == State::CFG && "unexpected state");
 
   // Build call sites table.
@@ -302,14 +310,38 @@ void BinaryFunction::updateEHRanges() {
     uint64_t Action;
   };
 
-  // Markers for begining and the end of exceptions range.
-  const MCSymbol *StartRange{nullptr};
-  const MCSymbol *EndRange{nullptr};
-
   // If previous call can throw, this is its exception handler.
   EHInfo PreviousEH = {nullptr, 0};
 
+  // Marker for the beginning of exceptions range.
+  const MCSymbol *StartRange = nullptr;
+
+  // Indicates whether the start range is located in a cold part.
+  bool IsStartInCold = false;
+
+  // Have we crossed hot/cold border for split functions?
+  bool SeenCold = false;
+
+  // Sites to update - either regular or cold.
+  auto *Sites = &CallSites;
+
   for (auto &BB : BasicBlocksLayout) {
+
+    if (BB->isCold() && !SeenCold) {
+      SeenCold = true;
+
+      // Close the range (if any) and change the target call sites.
+      if (StartRange) {
+        Sites->emplace_back(CallSite{StartRange, getFunctionEndLabel(),
+                                     PreviousEH.LP, PreviousEH.Action});
+      }
+      Sites = &ColdCallSites;
+
+      // Reset the range.
+      StartRange = nullptr;
+      PreviousEH = {nullptr, 0};
+    }
+
     for (auto II = BB->begin(); II != BB->end(); ++II) {
       auto Instr = *II;
 
@@ -317,7 +349,7 @@ void BinaryFunction::updateEHRanges() {
         continue;
 
       // Instruction can throw an exception that should be handled.
-      bool Throws = BC.MIA->isInvoke(Instr);
+      const bool Throws = BC.MIA->isInvoke(Instr);
 
       // Ignore the call if it's a continuation of a no-throw gap.
       if (!Throws && !StartRange)
@@ -336,48 +368,40 @@ void BinaryFunction::updateEHRanges() {
         continue;
 
       // Same symbol is used for the beginning and the end of the range.
-      const MCSymbol *EHSymbol{nullptr};
-      if (BB->isCold()) {
-        // If we see a label in the cold block, it means we have to close
-        // the range using function end symbol.
-        EHSymbol = getFunctionEndLabel();
-      } else {
-        EHSymbol = BC.Ctx->createTempSymbol("EH", true);
-        MCInst EHLabel;
-        BC.MIA->createEHLabel(EHLabel, EHSymbol, BC.Ctx.get());
-        II = BB->insertPseudoInstr(II, EHLabel);
-        ++II;
-      }
+      const MCSymbol *EHSymbol = BC.Ctx->createTempSymbol("EH", true);
+      MCInst EHLabel;
+      BC.MIA->createEHLabel(EHLabel, EHSymbol, BC.Ctx.get());
+      II = std::next(BB->insertPseudoInstr(II, EHLabel));
 
-      // At this point we could be in the one of the following states:
+      // At this point we could be in one of the following states:
       //
-      // I. Exception handler has changed and we need to close the prev range
-      //    and start the new one.
+      // I. Exception handler has changed and we need to close previous range
+      //    and start a new one.
       //
-      // II. Start the new exception range after the gap.
+      // II. Start a new exception range after the gap.
       //
-      // III. Close exception range and start the new gap.
-
+      // III. Close current exception range and start a new gap.
+      const MCSymbol *EndRange;
       if (StartRange) {
         // I, III:
         EndRange = EHSymbol;
       } else {
         // II:
         StartRange = EHSymbol;
+        IsStartInCold = SeenCold;
         EndRange = nullptr;
       }
 
       // Close the previous range.
       if (EndRange) {
-        assert(StartRange && "beginning of the range expected");
-        CallSites.emplace_back(CallSite{StartRange, EndRange,
-                                        PreviousEH.LP, PreviousEH.Action});
-        EndRange = nullptr;
+        Sites->emplace_back(CallSite{StartRange, EndRange,
+                                     PreviousEH.LP, PreviousEH.Action});
       }
 
       if (Throws) {
         // I, II:
         StartRange = EHSymbol;
+        IsStartInCold = SeenCold;
         PreviousEH = EHInfo{LP, Action};
       } else {
         StartRange = nullptr;
@@ -387,16 +411,21 @@ void BinaryFunction::updateEHRanges() {
 
   // Check if we need to close the range.
   if (StartRange) {
-    assert(!EndRange && "unexpected end of range");
-    EndRange = getFunctionEndLabel();
-    CallSites.emplace_back(CallSite{StartRange, EndRange,
-                                    PreviousEH.LP, PreviousEH.Action});
+    assert((!isSplit() || Sites == &ColdCallSites) && "sites mismatch");
+    const auto *EndRange = IsStartInCold ? getFunctionColdEndLabel()
+                                         : getFunctionEndLabel();
+    Sites->emplace_back(CallSite{StartRange, EndRange,
+                                 PreviousEH.LP, PreviousEH.Action});
   }
 }
 
 // The code is based on EHStreamer::emitExceptionTable().
-void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
-  if (CallSites.empty()) {
+void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
+  const auto *Sites = EmitColdPart ? &ColdCallSites : &CallSites;
+
+  auto *StartSymbol = EmitColdPart ? getColdSymbol() : getSymbol();
+
+  if (Sites->empty()) {
     return;
   }
 
@@ -406,10 +435,10 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
   //
   // or
   //
-  //  sizeof(dwarf::DW_EH_PE_udata4) * 3 + sizeof(uleb128(action))
-  uint64_t CallSiteTableLength = CallSites.size() * 4 * 3;
-  for (const auto &CallSite : CallSites) {
-    CallSiteTableLength+= getULEB128Size(CallSite.Action);
+  //  sizeof(dwarf::DW_EH_PE_data4) * 3 + sizeof(uleb128(action))
+  uint64_t CallSiteTableLength = Sites->size() * 4 * 3;
+  for (const auto &CallSite : *Sites) {
+    CallSiteTableLength += getULEB128Size(CallSite.Action);
   }
 
   Streamer->SwitchSection(BC.MOFI->getLSDASection());
@@ -421,7 +450,7 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
   Streamer->EmitValueToAlignment(4);
 
   // Emit the LSDA label.
-  auto LSDASymbol = getLSDASymbol();
+  auto LSDASymbol = EmitColdPart ? getColdLSDASymbol() : getLSDASymbol();
   assert(LSDASymbol && "no LSDA symbol set");
   Streamer->EmitLabel(LSDASymbol);
 
@@ -429,10 +458,10 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
   Streamer->EmitIntValue(dwarf::DW_EH_PE_omit, 1); // LPStart format
   Streamer->EmitIntValue(TTypeEncoding, 1);        // TType format
 
-  // See the comment in EHStreamer::emitExceptionTable() on how we use
+  // See the comment in EHStreamer::emitExceptionTable() on to use
   // uleb128 encoding (which can use variable number of bytes to encode the same
   // value) to ensure type info table is properly aligned at 4 bytes without
-  // iteratively messing with sizes of the tables.
+  // iteratively fixing sizes of the tables.
   unsigned CallSiteTableLengthSize = getULEB128Size(CallSiteTableLength);
   unsigned TTypeBaseOffset =
     sizeof(int8_t) +                            // Call site format
@@ -451,11 +480,13 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
   // length.
   Streamer->EmitULEB128IntValue(TTypeBaseOffset, SizeAlign);
 
-  // Emit the landing pad call site table.
-  Streamer->EmitIntValue(dwarf::DW_EH_PE_udata4, 1);
+  // Emit the landing pad call site table. We use signed data4 since we can emit
+  // a landing pad in a different part of the split function that could appear
+  // earlier in the address space than LPStart.
+  Streamer->EmitIntValue(dwarf::DW_EH_PE_sdata4, 1);
   Streamer->EmitULEB128IntValue(CallSiteTableLength);
 
-  for (const auto &CallSite : CallSites) {
+  for (const auto &CallSite : *Sites) {
 
     const MCSymbol *BeginLabel = CallSite.Start;
     const MCSymbol *EndLabel = CallSite.End;
@@ -463,13 +494,16 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
     assert(BeginLabel && "start EH label expected");
     assert(EndLabel && "end EH label expected");
 
-    Streamer->emitAbsoluteSymbolDiff(BeginLabel, getSymbol(), 4);
+    // Start of the range is emitted relative to the start of current
+    // function split part.
+    Streamer->emitAbsoluteSymbolDiff(BeginLabel, StartSymbol, 4);
     Streamer->emitAbsoluteSymbolDiff(EndLabel, BeginLabel, 4);
 
     if (!CallSite.LP) {
       Streamer->EmitIntValue(0, 4);
     } else {
-      Streamer->emitAbsoluteSymbolDiff(CallSite.LP, getSymbol(), 4);
+      // Difference can get negative if the handler is in hot part.
+      Streamer->emitAbsoluteSymbolDiff(CallSite.LP, StartSymbol, 4);
     }
 
     Streamer->EmitULEB128IntValue(CallSite.Action);

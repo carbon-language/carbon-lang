@@ -367,6 +367,7 @@ class IdenticalCodeFolding : public BinaryFunctionPass {
   uint64_t NumFunctionsFolded{0};
   uint64_t NumDynamicCallsFolded{0};
   uint64_t BytesSavedEstimate{0};
+  BinaryFunction *MaxTwinFunction{nullptr};
 
   /// Map from a binary function to its callers.
   struct CallSite {

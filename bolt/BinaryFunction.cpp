@@ -21,6 +21,8 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/CommandLine.h"
@@ -40,13 +42,39 @@ using namespace bolt;
 
 namespace opts {
 
-extern cl::opt<unsigned> Verbosity;
-extern cl::opt<bool> PrintDynoStats;
+extern bool shouldProcess(const BinaryFunction &);
 
-static cl::opt<BinaryFunction::JumpTableSupportLevel>
+extern cl::opt<bool> PrintDynoStats;
+extern cl::opt<bool> Relocs;
+extern cl::opt<bool> UpdateDebugSections;
+extern cl::opt<unsigned> Verbosity;
+
+static cl::opt<bool>
+AggressiveSplitting("split-all-cold",
+                   cl::desc("outline as many cold basic blocks as possible"),
+                   cl::ZeroOrMore);
+
+static cl::opt<bool>
+AlignBlocks("align-blocks",
+            cl::desc("try to align BBs inserting nops"),
+            cl::ZeroOrMore);
+
+static cl::opt<bool>
+DotToolTipCode("dot-tooltip-code",
+               cl::desc("add basic block instructions as tool tips on nodes"),
+               cl::ZeroOrMore,
+               cl::Hidden);
+
+static cl::opt<uint32_t>
+DynoStatsScale("dyno-stats-scale",
+               cl::desc("scale to be applied while reporting dyno stats"),
+               cl::Optional,
+               cl::init(1));
+
+cl::opt<BinaryFunction::JumpTableSupportLevel>
 JumpTables("jump-tables",
            cl::desc("jump tables support"),
-           cl::init(BinaryFunction::JTS_NONE),
+           cl::init(BinaryFunction::JTS_BASIC),
            cl::values(clEnumValN(BinaryFunction::JTS_NONE, "0",
                                  "do not optimize functions with jump tables"),
                       clEnumValN(BinaryFunction::JTS_BASIC, "1",
@@ -65,21 +93,10 @@ PrintJumpTables("print-jump-tables",
                 cl::Hidden);
 
 static cl::opt<bool>
-AgressiveSplitting("split-all-cold",
-                   cl::desc("outline as many cold basic blocks as possible"),
-                   cl::ZeroOrMore);
-
-static cl::opt<bool>
-DotToolTipCode("dot-tooltip-code",
-               cl::desc("add basic block instructions as tool tips on nodes"),
-               cl::ZeroOrMore,
-               cl::Hidden);
-
-static cl::opt<uint32_t>
-DynoStatsScale("dyno-stats-scale",
-               cl::desc("scale to be applied while reporting dyno stats"),
-               cl::Optional,
-               cl::init(1));
+SplitEH("split-eh",
+        cl::desc("split C++ exception handling code (experimental)"),
+        cl::ZeroOrMore,
+        cl::Hidden);
 
 } // namespace opts
 
@@ -278,6 +295,10 @@ void BinaryFunction::dump(std::string Annotation,
 
 void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
                            bool PrintInstructions) const {
+  // FIXME: remove after #15075512 is done.
+  if (!opts::shouldProcess(*this))
+    return;
+
   StringRef SectionName;
   Section.getName(SectionName);
   OS << "Binary Function \"" << *this << "\" " << Annotation << " {";
@@ -318,8 +339,18 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     OS << "\n  Exec Count  : " << ExecutionCount;
     OS << "\n  Profile Acc : " << format("%.1f%%", ProfileMatchRatio * 100.0f);
   }
-  if (IdenticalFunctionAddress != Address)
-    OS << "\n  Id Fun Addr : 0x" << Twine::utohexstr(IdenticalFunctionAddress);
+  if (getIdenticalFunction()) {
+    OS << "\n  Copy Of     : " << *getIdenticalFunction();
+  }
+
+  if (!Twins.empty()) {
+    OS << "\n  Twins       : ";
+    auto Sep = "";
+    for (auto *TwinFunction : Twins) {
+      OS << Sep << *TwinFunction;
+      Sep = ", ";
+    }
+  }
 
   if (opts::PrintDynoStats && !BasicBlocksLayout.empty()) {
     OS << '\n';
@@ -578,6 +609,8 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
         MovInstr = &Instr;
       } else {
         assert(MovInstr && "MOV instruction expected to be set");
+        if (!InstrDesc.hasDefOfPhysReg(Instr, R1, *BC.MRI))
+          continue;
         if (!MIA->isLEA64r(Instr)) {
           DEBUG(dbgs() << "BOLT-DEBUG: LEA instruction expected\n");
           break;
@@ -742,7 +775,8 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
       // Get or create a new label for the table.
       auto LI = JT->Labels.find(JTOffset);
       if (LI == JT->Labels.end()) {
-        auto *JTStartLabel = BC.Ctx->createTempSymbol("JUMP_TABLE", true);
+        auto *JTStartLabel = BC.getOrCreateGlobalSymbol(ArrayStart,
+                                                        "JUMP_TABLEat");
         auto Result = JT->Labels.emplace(JTOffset, JTStartLabel);
         assert(Result.second && "error adding jump table label");
         LI = Result.first;
@@ -817,7 +851,7 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
       Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
     assert(JTOffsetCandidates.size() > 2 &&
            "expected more than 2 jump table entries");
-    auto *JTStartLabel = BC.Ctx->createTempSymbol("JUMP_TABLE", true);
+    auto *JTStartLabel = BC.getOrCreateGlobalSymbol(ArrayStart, "JUMP_TABLEat");
     DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
                  << JTStartLabel->getName()
                  << " in function " << *this << " with "
@@ -870,7 +904,7 @@ MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
   return Result;
 }
 
-bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
+void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   assert(FunctionData.size() == getSize() &&
          "function size does not match raw data size");
 
@@ -890,19 +924,18 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     MCSymbol *TargetSymbol{nullptr};
     if (!MIA->evaluateMemOperandTarget(Instruction, TargetAddress, Address,
                                        Size)) {
-      DEBUG(dbgs() << "BOLT: rip-relative operand can't be evaluated:\n";
-            BC.InstPrinter->printInst(&Instruction, dbgs(), "", *BC.STI);
-            dbgs() << '\n';
-            Instruction.dump_pretty(dbgs(), BC.InstPrinter.get());
-            dbgs() << '\n';);
+      errs() << "BOLT-ERROR: rip-relative operand can't be evaluated:\n";
+      BC.InstPrinter->printInst(&Instruction, errs(), "", *BC.STI);
+      errs() << '\n';
+      Instruction.dump_pretty(errs(), BC.InstPrinter.get());
+      errs() << '\n';;
       return false;
     }
     if (TargetAddress == 0) {
       if (opts::Verbosity >= 1) {
-        errs() << "BOLT-WARNING: rip-relative operand is zero in function "
-               << *this << ". Ignoring function.\n";
+        outs() << "BOLT-INFO: rip-relative operand is zero in function "
+               << *this << ".\n";
       }
-      return false;
     }
 
     // Note that the address does not necessarily have to reside inside
@@ -916,7 +949,8 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           DEBUG(dbgs() << "BOLT-DEBUG: potentially escaped address 0x"
                        << Twine::utohexstr(TargetAddress) << " in function "
                        << *this << '\n');
-          TargetSymbol = addEntryPointAtOffset(TargetAddress - getAddress());
+          TargetSymbol = getOrCreateLocalLabel(TargetAddress);
+          addEntryPointAtOffset(TargetAddress - getAddress());
         }
       } else {
         BC.InterproceduralReferences.insert(TargetAddress);
@@ -933,7 +967,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   for (uint64_t Offset = 0; Offset < getSize(); ) {
     MCInst Instruction;
     uint64_t Size;
-    uint64_t AbsoluteInstrAddr = getAddress() + Offset;
+    const uint64_t AbsoluteInstrAddr = getAddress() + Offset;
 
     if (!BC.DisAsm->getInstruction(Instruction,
                                    Size,
@@ -941,17 +975,16 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                                    AbsoluteInstrAddr,
                                    nulls(),
                                    nulls())) {
-      // Ignore this function. Skip to the next one.
-      if (opts::Verbosity >= 1) {
-        errs() << "BOLT-WARNING: unable to disassemble instruction at offset 0x"
-               << Twine::utohexstr(Offset) << " (address 0x"
-               << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
-               << *this << '\n';
-      }
+      // Ignore this function. Skip to the next one in non-relocs mode.
+      errs() << "BOLT-ERROR: unable to disassemble instruction at offset 0x"
+             << Twine::utohexstr(Offset) << " (address 0x"
+             << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
+             << *this << '\n';
       IsSimple = false;
       break;
     }
 
+    // Cannot process functions with AVX-512 instructions.
     if (MIA->hasEVEXEncoding(Instruction)) {
       if (opts::Verbosity >= 1) {
         errs() << "BOLT-WARNING: function " << *this << " uses instruction"
@@ -961,6 +994,29 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       }
       IsSimple = false;
       break;
+    }
+
+    // Check if there's a relocation associated with this instruction.
+    if (!Relocations.empty()) {
+      auto RI = Relocations.lower_bound(Offset);
+      if (RI != Relocations.end() && RI->first < Offset + Size) {
+        const auto &Relocation = RI->second;
+        DEBUG(dbgs() << "BOLT-DEBUG: replacing immediate with relocation"
+                     " against " << Relocation.Symbol->getName()
+                     << " in function " << *this
+                     << " for instruction at offset 0x"
+                     << Twine::utohexstr(Offset) << '\n');
+        int64_t Value;
+        const auto Result =
+          BC.MIA->replaceImmWithSymbol(Instruction, Relocation.Symbol,
+                                       Relocation.Addend, BC.Ctx.get(), Value);
+        assert(Result && "cannot replace immediate with relocation");
+
+        // Make sure we replaced the correct immediate (instruction
+        // can have multiple immediate operands).
+        assert(static_cast<uint64_t>(Value) == Relocation.Value &&
+               "immediate value mismatch in function");
+      }
     }
 
     // Convert instruction to a shorter version that could be relaxed if needed.
@@ -978,7 +1034,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // If the target *is* the function address it could be either a branch
         // or a recursive call.
         bool IsCall = MIA->isCall(Instruction);
-        bool IsCondBranch = MIA->isConditionalBranch(Instruction);
+        const bool IsCondBranch = MIA->isConditionalBranch(Instruction);
         MCSymbol *TargetSymbol{nullptr};
 
         if (IsCall && containsAddress(TargetAddress)) {
@@ -987,11 +1043,9 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             TargetSymbol = getSymbol();
           } else {
             // Possibly an old-style PIC code
-            if (opts::Verbosity >= 1) {
-              errs() << "BOLT-WARNING: internal call detected at 0x"
-                     << Twine::utohexstr(AbsoluteInstrAddr)
-                     << " in function " << *this << ". Skipping.\n";
-            }
+            errs() << "BOLT-ERROR: internal call detected at 0x"
+                   << Twine::utohexstr(AbsoluteInstrAddr)
+                   << " in function " << *this << ". Skipping.\n";
             IsSimple = false;
           }
         }
@@ -1002,7 +1056,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             TargetSymbol = getOrCreateLocalLabel(TargetAddress);
           } else {
             BC.InterproceduralReferences.insert(TargetAddress);
-            if (opts::Verbosity >= 2 && !IsCall && Size == 2) {
+            if (opts::Verbosity >= 2 && !IsCall && Size == 2 && !opts::Relocs) {
               errs() << "BOLT-WARNING: relaxed tail call detected at 0x"
                      << Twine::utohexstr(AbsoluteInstrAddr)
                      << " in function " << *this
@@ -1033,15 +1087,37 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress,
                                                       "FUNCat");
             if (TargetAddress == 0) {
-              // We actually see calls to address 0 because of the weak symbols
-              // from the libraries. In reality more often than not it is
-              // unreachable code, but we don't know it and have to emit calls
-              // to 0 which make LLVM JIT unhappy.
-              if (opts::Verbosity >= 1) {
-                errs() << "BOLT-WARNING: Function " << *this
-                       << " has a call to address zero. Ignoring function.\n";
+              // We actually see calls to address 0 in presence of weak symbols
+              // originating from libraries. This code is never meant to be
+              // executed.
+              if (opts::Verbosity >= 2) {
+                outs() << "BOLT-INFO: Function " << *this
+                       << " has a call to address zero.\n";
               }
-              IsSimple = false;
+            }
+
+            if (opts::Relocs) {
+              // Check if we need to create relocation to move this function's
+              // code without re-assembly.
+              size_t RelSize = (Size < 5) ? 1 : 4;
+              auto RelOffset = Offset + Size - RelSize;
+              auto RI = MoveRelocations.find(RelOffset);
+              if (RI == MoveRelocations.end()) {
+                uint64_t RelType = (RelSize == 1) ? ELF::R_X86_64_PC8
+                                                  : ELF::R_X86_64_PC32;
+                DEBUG(dbgs() << "BOLT-DEBUG: creating relocation for static"
+                             << " function call to " << TargetSymbol->getName()
+                             << " at offset 0x"
+                             << Twine::utohexstr(RelOffset)
+                             << " with size " << RelSize
+                             << " for function " << *this << '\n');
+                addRelocation(getAddress() + RelOffset, TargetSymbol, RelType,
+                              -RelSize, 0);
+              }
+              auto OI = PCRelativeRelocationOffsets.find(RelOffset);
+              if (OI != PCRelativeRelocationOffsets.end()) {
+                PCRelativeRelocationOffsets.erase(OI);
+              }
             }
           }
         }
@@ -1085,11 +1161,9 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // Indirect call. We only need to fix it if the operand is RIP-relative
         if (IsSimple && MIA->hasRIPOperand(Instruction)) {
           if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
-            if (opts::Verbosity >= 1) {
-              errs() << "BOLT-WARNING: cannot handle RIP operand at 0x"
-                     << Twine::utohexstr(AbsoluteInstrAddr)
-                     << ". Skipping function " << *this << ".\n";
-            }
+            errs() << "BOLT-ERROR: cannot handle RIP operand at 0x"
+                   << Twine::utohexstr(AbsoluteInstrAddr)
+                   << ". Skipping function " << *this << ".\n";
             IsSimple = false;
           }
         }
@@ -1097,11 +1171,9 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     } else {
       if (MIA->hasRIPOperand(Instruction)) {
         if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
-          if (opts::Verbosity >= 1) {
-            errs() << "BOLT-WARNING: cannot handle RIP operand at 0x"
-                   << Twine::utohexstr(AbsoluteInstrAddr)
-                   << ". Skipping function " << *this << ".\n";
-          }
+          errs() << "BOLT-ERROR: cannot handle RIP operand at 0x"
+                 << Twine::utohexstr(AbsoluteInstrAddr)
+                 << ". Skipping function " << *this << ".\n";
           IsSimple = false;
         }
       }
@@ -1119,12 +1191,8 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
 
   postProcessJumpTables();
 
-  // TODO: clear memory if not simple function?
-
   // Update state.
   updateState(State::Disassembled);
-
-  return true;
 }
 
 void BinaryFunction::postProcessJumpTables() {
@@ -1143,16 +1211,25 @@ void BinaryFunction::postProcessJumpTables() {
   // We want to do it after initial processing since we don't know jump tables'
   // boundaries until we process them all.
   for (auto &JTSite : JTSites) {
-    auto JTSiteOffset = JTSite.first;
-    auto JTAddress = JTSite.second;
-    auto *JT = getJumpTableContainingAddress(JTAddress);
+    const auto JTSiteOffset = JTSite.first;
+    const auto JTAddress = JTSite.second;
+    const auto *JT = getJumpTableContainingAddress(JTAddress);
     assert(JT && "cannot find jump table for address");
     auto EntryOffset = JTAddress - JT->Address;
     while (EntryOffset < JT->getSize()) {
       auto TargetOffset = JT->OffsetEntries[EntryOffset / JT->EntrySize];
       if (TargetOffset < getSize())
         TakenBranches.emplace_back(JTSiteOffset, TargetOffset);
+
+      // The relocations for PIC-style jump table have to be ignored.
+      //
+      // We can ignore the rest too if we output jump table to a different
+      // section.
+      if (JT->Type == JumpTable::JTT_PIC)
+        BC.IgnoredRelocations.emplace(JT->Address + EntryOffset);
+
       EntryOffset += JT->EntrySize;
+
       // A label at the next entry means the end of this jump table.
       if (JT->Labels.count(EntryOffset))
         break;
@@ -1327,8 +1404,11 @@ bool BinaryFunction::buildCFG() {
     ExecutionCount = BranchDataOrErr->ExecutionCount;
   }
 
-  if (!isSimple())
+  if (!isSimple()) {
+    assert(!opts::Relocs &&
+           "cannot process file with non-simple function in relocs mode");
     return false;
+  }
 
   if (!(CurrentState == State::Disassembled))
     return false;
@@ -1642,19 +1722,28 @@ bool BinaryFunction::buildCFG() {
   }
 
   // Make any necessary adjustments for indirect branches.
-  if (!postProcessIndirectBranches())
+  if (!postProcessIndirectBranches()) {
+    if (opts::Verbosity) {
+      errs() << "BOLT-WARNING: failed to post-process indirect branches for "
+             << *this << '\n';
+    }
+    // In relocation mode we want to keep processing the function but avoid
+    // optimizing it.
     setSimple(false);
+  }
 
   // Fix the possibly corrupted CFI state. CFI state may have been corrupted
   // because of the CFG modifications while removing conditional tail calls.
   fixCFIState();
 
   // Clean-up memory taken by instructions and labels.
+  //
+  // NB: don't clear Labels list as we may need them if we mark the function
+  //     as non-simple later in the process of discovering extra entry points.
   clearList(Instructions);
   clearList(TailCallOffsets);
   clearList(TailCallTerminatedBlocks);
   clearList(OffsetToCFI);
-  clearList(Labels);
   clearList(TakenBranches);
   clearList(FTBranches);
   clearList(LPToBBIndex);
@@ -1667,6 +1756,59 @@ bool BinaryFunction::buildCFG() {
   propagateGnuArgsSizeInfo();
 
   return true;
+}
+
+void BinaryFunction::addEntryPoint(uint64_t Address) {
+  assert(containsAddress(Address) && "address does not belong to the function");
+
+  auto Offset = Address - getAddress();
+
+  DEBUG(dbgs() << "BOLT-INFO: adding external entry point to function " << *this
+               << " at offset 0x" << Twine::utohexstr(Address - getAddress())
+               << '\n');
+
+  auto *EntrySymbol = BC.getGlobalSymbolAtAddress(Address);
+
+  // If we haven't disassembled the function yet we can add a new entry point
+  // even if it doesn't have an associated entry in the symbol table.
+  if (CurrentState == State::Empty) {
+    if (!EntrySymbol) {
+      DEBUG(dbgs() << "creating local label\n");
+      EntrySymbol = getOrCreateLocalLabel(Address);
+    } else {
+      DEBUG(dbgs() << "using global symbol " << EntrySymbol->getName() << '\n');
+    }
+    addEntryPointAtOffset(Address - getAddress());
+    Labels.emplace(Offset, EntrySymbol);
+    return;
+  }
+
+  assert(EntrySymbol && "expected symbol at address");
+
+  if (isSimple()) {
+    // Find basic block corresponding to the address and substitute label.
+    auto *BB = getBasicBlockAtOffset(Offset);
+    if (!BB) {
+      // TODO #14762450: split basic block and process function.
+      if (opts::Verbosity || opts::Relocs) {
+        errs() << "BOLT-WARNING: no basic block at offset 0x"
+               << Twine::utohexstr(Offset) << " in function " << *this
+               << ". Marking non-simple.\n";
+      }
+      setSimple(false);
+    } else {
+      BB->setLabel(EntrySymbol);
+      BB->setEntryPoint(true);
+    }
+  }
+
+  // Fix/append labels list.
+  auto LI = Labels.find(Offset);
+  if (LI != Labels.end()) {
+    LI->second = EntrySymbol;
+  } else {
+    Labels.emplace(Offset, EntrySymbol);
+  }
 }
 
 void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
@@ -2246,6 +2388,170 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool MinBranchClusters,
     splitFunction();
 }
 
+void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
+  auto ULT = getDWARFUnitLineTable();
+  int64_t CurrentGnuArgsSize = 0;
+  for (auto BB : layout()) {
+    if (EmitColdPart != BB->isCold())
+      continue;
+
+    if (opts::AlignBlocks && BB->getAlignment() > 1)
+      Streamer.EmitCodeAlignment(BB->getAlignment());
+    Streamer.EmitLabel(BB->getLabel());
+
+    // Remember last .debug_line entry emitted so that we don't repeat them in
+    // subsequent instructions, as gdb can figure it out by looking at the
+    // previous instruction with available line number info.
+    SMLoc LastLocSeen;
+
+    // Remember if last instruction emitted was a prefix
+    bool LastIsPrefix = false;
+
+    for (auto I = BB->begin(), E = BB->end(); I != E; ++I) {
+      auto &Instr = *I;
+      // Handle pseudo instructions.
+      if (BC.MIA->isEHLabel(Instr)) {
+        const auto *Label = BC.MIA->getTargetSymbol(Instr);
+        assert(Instr.getNumOperands() == 1 && Label &&
+               "bad EH_LABEL instruction");
+        Streamer.EmitLabel(const_cast<MCSymbol *>(Label));
+        continue;
+      }
+      if (BC.MIA->isCFI(Instr)) {
+        Streamer.EmitCFIInstruction(*getCFIFor(Instr));
+        continue;
+      }
+      if (opts::UpdateDebugSections) {
+        auto RowReference = DebugLineTableRowRef::fromSMLoc(Instr.getLoc());
+        if (RowReference != DebugLineTableRowRef::NULL_ROW &&
+            Instr.getLoc().getPointer() != LastLocSeen.getPointer()) {
+          auto Unit = ULT.first;
+          auto OriginalLineTable = ULT.second;
+          const auto OrigUnitID = Unit->getOffset();
+          unsigned NewFilenum = 0;
+
+          // If the CU id from the current instruction location does not
+          // match the CU id from the current function, it means that we
+          // have come across some inlined code.  We must look up the CU
+          // for the instruction's original function and get the line table
+          // from that.  We also update the current CU debug info with the
+          // filename of the inlined function.
+          if (RowReference.DwCompileUnitIndex != OrigUnitID) {
+            Unit = BC.DwCtx->
+                getCompileUnitForOffset(RowReference.DwCompileUnitIndex);
+            OriginalLineTable = BC.DwCtx->getLineTableForUnit(Unit);
+            const auto Filenum =
+              OriginalLineTable->Rows[RowReference.RowIndex - 1].File;
+            NewFilenum =
+              BC.addDebugFilenameToUnit(OrigUnitID,
+                                        RowReference.DwCompileUnitIndex,
+                                        Filenum);
+          }
+
+          assert(Unit && OriginalLineTable &&
+                 "Invalid CU offset set in instruction debug info.");
+
+          const auto &OriginalRow =
+            OriginalLineTable->Rows[RowReference.RowIndex - 1];
+
+          BC.Ctx->setCurrentDwarfLoc(
+            NewFilenum == 0 ? OriginalRow.File : NewFilenum,
+            OriginalRow.Line,
+            OriginalRow.Column,
+            (DWARF2_FLAG_IS_STMT * OriginalRow.IsStmt) |
+            (DWARF2_FLAG_BASIC_BLOCK * OriginalRow.BasicBlock) |
+            (DWARF2_FLAG_PROLOGUE_END * OriginalRow.PrologueEnd) |
+            (DWARF2_FLAG_EPILOGUE_BEGIN * OriginalRow.EpilogueBegin),
+            OriginalRow.Isa,
+            OriginalRow.Discriminator);
+          BC.Ctx->setDwarfCompileUnitID(OrigUnitID);
+          LastLocSeen = Instr.getLoc();
+        }
+      }
+
+      // Emit GNU_args_size CFIs as necessary.
+      if (usesGnuArgsSize() && BC.MIA->isInvoke(Instr)) {
+        auto NewGnuArgsSize = BC.MIA->getGnuArgsSize(Instr);
+        if (NewGnuArgsSize < 0) {
+          errs() << "XXX: in function " << *this << '\n';
+        }
+        assert(NewGnuArgsSize >= 0 && "expected non-negative GNU_args_size");
+        if (NewGnuArgsSize != CurrentGnuArgsSize) {
+          CurrentGnuArgsSize = NewGnuArgsSize;
+          Streamer.EmitCFIGnuArgsSize(CurrentGnuArgsSize);
+        }
+      }
+
+      Streamer.EmitInstruction(Instr, *BC.STI);
+      LastIsPrefix = BC.MIA->isPrefix(Instr);
+    }
+
+    if (opts::UpdateDebugSections) {
+      MCSymbol *BBEndLabel = BC.Ctx->createTempSymbol();
+      BB->setEndLabel(BBEndLabel);
+      Streamer.EmitLabel(BBEndLabel);
+    }
+  }
+}
+
+void BinaryFunction::emitBodyRaw(MCStreamer *Streamer) {
+
+  // #14998851: Fix gold linker's '--emit-relocs'.
+  assert(false &&
+         "cannot emit raw body unless relocation accuracy is guaranteed");
+
+  // Raw contents of the function.
+  StringRef SectionContents;
+  Section.getContents(SectionContents);
+
+  // Raw contents of the function.
+  StringRef FunctionContents =
+      SectionContents.substr(getAddress() - Section.getAddress(),
+                             getSize());
+
+  if (opts::Verbosity)
+    outs() << "BOLT-INFO: emitting function " << *this << " in raw ("
+           << getSize() << " bytes).\n";
+
+  // We split the function blob into smaller blocks and output relocations
+  // and/or labels between them.
+  uint64_t FunctionOffset = 0;
+  auto LI = Labels.begin();
+  auto RI = MoveRelocations.begin();
+  while (LI != Labels.end() ||
+         RI != MoveRelocations.end()) {
+    uint64_t NextLabelOffset = (LI == Labels.end() ? getSize() : LI->first);
+    uint64_t NextRelocationOffset =
+      (RI == MoveRelocations.end() ? getSize() : RI->first);
+    auto NextStop = std::min(NextLabelOffset, NextRelocationOffset);
+    assert(NextStop <= getSize() && "internal overflow error");
+    if (FunctionOffset < NextStop) {
+      Streamer->EmitBytes(
+          FunctionContents.slice(FunctionOffset, NextStop));
+      FunctionOffset = NextStop;
+    }
+    if (LI != Labels.end() && FunctionOffset == LI->first) {
+      Streamer->EmitLabel(LI->second);
+      DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << LI->second->getName()
+                   << " at offset 0x" << Twine::utohexstr(LI->first) << '\n');
+      ++LI;
+    }
+    if (RI != MoveRelocations.end() && FunctionOffset == RI->first) {
+      auto RelocationSize = RI->second.emit(Streamer);
+      DEBUG(dbgs() << "BOLT-DEBUG: emitted relocation for symbol "
+                   << RI->second.Symbol->getName() << " at offset 0x"
+                   << Twine::utohexstr(RI->first)
+                   << " with size " << RelocationSize << '\n');
+      FunctionOffset += RelocationSize;
+      ++RI;
+    }
+  }
+  assert(FunctionOffset <= getSize() && "overflow error");
+  if (FunctionOffset < getSize()) {
+    Streamer->EmitBytes(FunctionContents.substr(FunctionOffset));
+  }
+}
+
 namespace {
 
 #ifndef MAX_PATH
@@ -2488,7 +2794,7 @@ void BinaryFunction::splitFunction() {
       BB->setCanOutline(false);
       continue;
     }
-    if (hasEHRanges()) {
+    if (hasEHRanges() && !opts::SplitEH) {
       // We cannot move landing pads (or rather entry points for landing
       // pads).
       if (BB->isLandingPad()) {
@@ -2508,16 +2814,18 @@ void BinaryFunction::splitFunction() {
     }
   }
 
-  if (opts::AgressiveSplitting) {
+  if (opts::AggressiveSplitting) {
     // All blocks with 0 count that we can move go to the end of the function.
+    // Even if they were natural to cluster formation and were seen in-between
+    // hot basic blocks.
     std::stable_sort(BasicBlocksLayout.begin(), BasicBlocksLayout.end(),
         [&] (BinaryBasicBlock *A, BinaryBasicBlock *B) {
           return A->canOutline() < B->canOutline();
         });
-  } else if (hasEHRanges()) {
+  } else if (hasEHRanges() && !opts::SplitEH) {
     // Typically functions with exception handling have landing pads at the end.
     // We cannot move beginning of landing pads, but we can move 0-count blocks
-    // comprising landing pads to the end and thus facilitating splitting.
+    // comprising landing pads to the end and thus facilitate splitting.
     auto FirstLP = BasicBlocksLayout.begin();
     while ((*FirstLP)->isLandingPad())
       ++FirstLP;
@@ -2528,7 +2836,7 @@ void BinaryFunction::splitFunction() {
         });
   }
 
-  // Separate hot from cold
+  // Separate hot from cold starting from the bottom.
   for (auto I = BasicBlocksLayout.rbegin(), E = BasicBlocksLayout.rend();
        I != E; ++I) {
     BinaryBasicBlock *BB = *I;
@@ -2561,15 +2869,12 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
           // during the final code emission. The information is embedded
           // inside call instructions.
           II = BB->erasePseudoInstruction(II);
-        } else {
-          ++II;
+          continue;
         }
-        continue;
+      } else if (BC.MIA->isInvoke(Instr)) {
+        // Add the value of GNU_args_size as an extra operand to invokes.
+        BC.MIA->addGnuArgsSize(Instr, CurrentGnuArgsSize);
       }
-
-      // Add the value of GNU_args_size as an extra operand if landing pad
-      // is non-empty.
-      BC.MIA->addGnuArgsSize(Instr, CurrentGnuArgsSize);
       ++II;
     }
   }
@@ -2807,9 +3112,9 @@ bool BinaryFunction::isInstrEquivalentWith(
   return true;
 }
 
-bool BinaryFunction::isIdenticalWith(const BinaryFunction &BF) const {
+bool BinaryFunction::isIdenticalWith(const BinaryFunction &OtherBF) const {
 
-  assert(CurrentState == State::CFG && BF.CurrentState == State::CFG);
+  assert(CurrentState == State::CFG && OtherBF.CurrentState == State::CFG);
 
   // Compare the two functions, one basic block at a time.
   // Currently we require two identical basic blocks to have identical
@@ -2817,47 +3122,47 @@ bool BinaryFunction::isIdenticalWith(const BinaryFunction &BF) const {
   // functions. The latter is important for CFG equality.
 
   // We do not consider functions with just different pseudo instruction
-  // sequences non-identical by default. However we print a wanring
+  // sequences non-identical by default. However we print a warning
   // in case two instructions that are identical have different pseudo
   // instruction sequences.
   bool PseudosDiffer = false;
 
-  if (size() != BF.size())
+  if (size() != OtherBF.size())
     return false;
 
-  auto BBI = BF.begin();
-  for (const BinaryBasicBlock *BB : BasicBlocks) {
-    const BinaryBasicBlock *BBOther = &*BBI;
-    if (getIndex(BB) != BF.getIndex(BBOther))
-      return false;
+  // Make sure indices are up to date for both functions.
+  updateLayoutIndices();
+  OtherBF.updateLayoutIndices();
+
+  auto BBI = OtherBF.layout_begin();
+  for (const auto *BB : layout()) {
+    const auto *OtherBB = *BBI;
 
     // Compare successor basic blocks.
-    if (BB->succ_size() != BBOther->succ_size())
+    if (BB->succ_size() != OtherBB->succ_size())
       return false;
-
-    auto SuccBBI = BBOther->succ_begin();
-    for (const BinaryBasicBlock *SuccBB : BB->successors()) {
-      const BinaryBasicBlock *SuccBBOther = *SuccBBI;
-      if (getIndex(SuccBB) != BF.getIndex(SuccBBOther))
+    auto SuccBBI = OtherBB->succ_begin();
+    for (const auto *SuccBB : BB->successors()) {
+      const auto *SuccOtherBB = *SuccBBI;
+      if (SuccBB->getLayoutIndex() != SuccOtherBB->getLayoutIndex())
         return false;
       ++SuccBBI;
     }
 
     // Compare landing pads.
-    if (BB->lp_size() != BBOther->lp_size())
+    if (BB->lp_size() != OtherBB->lp_size())
       return false;
-
-    auto LPI = BBOther->lp_begin();
-    for (const BinaryBasicBlock *LP : BB->landing_pads()) {
-      const BinaryBasicBlock *LPOther = *LPI;
-      if (getIndex(LP) != BF.getIndex(LPOther))
+    auto LPI = OtherBB->lp_begin();
+    for (const auto *LP : BB->landing_pads()) {
+      const auto *LPOther = *LPI;
+      if (LP->getLayoutIndex() != LPOther->getLayoutIndex())
         return false;
       ++LPI;
     }
 
     // Compare instructions.
     auto I = BB->begin(), E = BB->end();
-    auto OtherI = BBOther->begin(), OtherE = BBOther->end();
+    auto OtherI = OtherBB->begin(), OtherE = OtherBB->end();
     while (I != E && OtherI != OtherE) {
       const MCInst &Inst = *I;
       const MCInst &InstOther = *OtherI;
@@ -2868,7 +3173,7 @@ bool BinaryFunction::isIdenticalWith(const BinaryFunction &BF) const {
       if (IsInstPseudo == IsInstOtherPseudo) {
         // Either both are pseudos or none is.
         bool areEqual =
-          isInstrEquivalentWith(Inst, *BB, InstOther, *BBOther, BF);
+          isInstrEquivalentWith(Inst, *BB, InstOther, *OtherBB, OtherBF);
 
         if (!areEqual && IsInstPseudo) {
           // Different pseudo instructions.
@@ -2909,7 +3214,7 @@ bool BinaryFunction::isIdenticalWith(const BinaryFunction &BF) const {
 
   if (opts::Verbosity >= 1 && PseudosDiffer) {
     errs() << "BOLT-WARNING: functions " << *this << " and "
-           << BF << " are identical, but have different"
+           << OtherBF << " are identical, but have different"
            << " pseudo instruction sequences.\n";
   }
 
@@ -2922,11 +3227,16 @@ std::size_t BinaryFunction::hash() const {
   // The hash is computed by creating a string of all the opcodes
   // in the function and hashing that string with std::hash.
   std::string Opcodes;
-  for (const BinaryBasicBlock *BB : BasicBlocks) {
-    for (const MCInst &Inst : *BB) {
+  for (const auto *BB : layout()) {
+    for (const auto &Inst : *BB) {
       unsigned Opcode = Inst.getOpcode();
 
       if (BC.MII->get(Opcode).isPseudo())
+        continue;
+
+      // Ignore conditional jumps because the conditional code is not
+      // always up to date.
+      if (BC.MIA->isConditionalBranch(Inst))
         continue;
 
       if (Opcode == 0) {
@@ -3059,8 +3369,22 @@ void BinaryFunction::emitJumpTables(MCStreamer *Streamer) {
   }
 }
 
-// TODO (#9806207): based on jump table type (PIC vs non-PIC etc.) we will
-//                  need to emit different references.
+void BinaryFunction::JumpTable::updateOriginal(BinaryContext &BC) {
+  if (opts::Relocs && (Type == JTT_NORMAL))
+    return;
+  auto SectionOrError = BC.getSectionForAddress(Address);
+  assert(SectionOrError && "section not found for jump table");
+  auto Section = SectionOrError.get();
+  uint64_t Offset = Address - Section.getAddress();
+  for (auto *Entry : Entries) {
+    const auto RelType = (Type == JTT_NORMAL) ? ELF::R_X86_64_64
+                                              : ELF::R_X86_64_PC32;
+    const uint64_t RelAddend = (Type == JTT_NORMAL) ? 0 : Offset - Address;
+    BC.addSectionRelocation(Section, Offset, Entry, RelType, RelAddend);
+    Offset += EntrySize;
+  }
+}
+
 uint64_t BinaryFunction::JumpTable::emit(MCStreamer *Streamer,
                                          MCSection *HotSection,
                                          MCSection *ColdSection) {
@@ -3109,7 +3433,7 @@ uint64_t BinaryFunction::JumpTable::emit(MCStreamer *Streamer,
     }
     if (Type == JTT_NORMAL) {
       Streamer->EmitSymbolValue(Entry, EntrySize);
-    } else {
+    } else { // JTT_PIC
       auto JT = MCSymbolRefExpr::create(LastLabel, Streamer->getContext());
       auto E = MCSymbolRefExpr::create(Entry, Streamer->getContext());
       auto Value = MCBinaryExpr::createSub(E, JT, Streamer->getContext());
@@ -3440,14 +3764,30 @@ size_t Relocation::getSizeForType(uint64_t Type) {
   }
 }
 
-size_t Relocation::emitTo(MCStreamer *Streamer) {
-  const auto Size = getSizeForType(Type);
-  auto &Ctx = Streamer->getContext();
+bool Relocation::isPCRelative(uint64_t Type) {
   switch (Type) {
   default:
-    llvm_unreachable("unsupported relocation type");
+    llvm_unreachable("Unknown relocation type");
+
+  case ELF::R_X86_64_64:
+  case ELF::R_X86_64_32:
+  case ELF::R_X86_64_32S:
+  case ELF::R_X86_64_TPOFF32:
+    return false;
+
   case ELF::R_X86_64_PC8:
-  case ELF::R_X86_64_PC32: {
+  case ELF::R_X86_64_PC32:
+  case ELF::R_X86_64_GOTPCREL:
+  case ELF::R_X86_64_PLT32:
+  case ELF::R_X86_64_GOTTPOFF:
+    return true;
+  }
+}
+
+size_t Relocation::emit(MCStreamer *Streamer) {
+  const auto Size = getSizeForType(Type);
+  auto &Ctx = Streamer->getContext();
+  if (isPCRelative(Type)) {
     auto *TempLabel = Ctx.createTempSymbol();
     Streamer->EmitLabel(TempLabel);
     auto Value =
@@ -3460,13 +3800,8 @@ size_t Relocation::emitTo(MCStreamer *Streamer) {
                                       Ctx);
     }
     Streamer->EmitValue(Value, Size);
-    break;
-  }
-  case ELF::R_X86_64_64:
-  case ELF::R_X86_64_32:
-  case ELF::R_X86_64_32S:
+  } else {
     Streamer->EmitSymbolValue(Symbol, Size);
-    break;
   }
   return Size;
 }

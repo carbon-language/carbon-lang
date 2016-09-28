@@ -53,6 +53,30 @@ namespace bolt {
 class BinaryFunction;
 class DataReader;
 
+/// Relocation class.
+struct Relocation {
+  uint64_t Offset;
+  MCSymbol *Symbol;
+  uint64_t Type;
+  uint64_t Addend;
+  uint64_t Value;
+
+  /// Return size of the given relocation \p Type.
+  static size_t getSizeForType(uint64_t Type);
+
+  /// Return true if relocation type is PC-relative. Return false otherwise.
+  static bool isPCRelative(uint64_t Type);
+
+  /// Emit relocation at a current \p Streamer' position. The caller is
+  /// responsible for setting the position correctly.
+  size_t emit(MCStreamer *Streamer);
+};
+
+/// Relocation ordering by offset.
+inline bool operator<(const Relocation &A, const Relocation &B) {
+  return A.Offset < B.Offset;
+}
+
 class BinaryContext {
 
   BinaryContext() = delete;
@@ -80,6 +104,15 @@ public:
 
   /// List of DWARF location lists in .debug_loc.
   std::vector<LocationList> LocationLists;
+
+  /// List of relocation offsets where relocations should be ignored.
+  std::set<uint64_t> IgnoredRelocations;
+
+  /// List of PC-relative relocations from data to code.
+  std::set<uint64_t> PCRelativeDataRelocations;
+
+  /// Section relocations.
+  std::map<SectionRef, std::vector<Relocation>> SectionRelocations;
 
   /// List of DWARF entries in .debug_info that have address ranges to be
   /// updated. These include lexical blocks (DW_TAG_lexical_block) and concrete
@@ -176,7 +209,7 @@ public:
   ErrorOr<SectionRef> getSectionForAddress(uint64_t Address) const;
 
   /// Register a symbol with \p Name at a given \p Address.
-  void registerNameAtAddress(const std::string &Name, uint64_t Address) {
+  MCSymbol *registerNameAtAddress(const std::string &Name, uint64_t Address) {
     // Add the name to global symbols map.
     GlobalSymbols[Name] = Address;
 
@@ -184,8 +217,13 @@ public:
     GlobalAddresses.emplace(std::make_pair(Address, Name));
 
     // Register the name with MCContext.
-    Ctx->getOrCreateSymbol(Name);
+    return Ctx->getOrCreateSymbol(Name);
   }
+
+  /// Add section relocation.
+  void addSectionRelocation(SectionRef Section, uint64_t Address,
+                            MCSymbol *Symbol, uint64_t Type,
+                            uint64_t Addend = 0);
 
   const BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) const {
     auto BFI = SymbolToFunctionMap.find(Symbol);

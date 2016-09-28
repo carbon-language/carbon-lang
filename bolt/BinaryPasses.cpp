@@ -47,6 +47,7 @@ const char* dynoStatsOptDesc(const bolt::DynoStats::Category C) {
 namespace opts {
 
 extern cl::opt<unsigned> Verbosity;
+extern cl::opt<bool> Relocs;
 extern cl::opt<llvm::bolt::BinaryFunction::SplittingType> SplitFunctions;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
 
@@ -156,7 +157,9 @@ namespace llvm {
 namespace bolt {
 
 bool BinaryFunctionPass::shouldOptimize(const BinaryFunction &BF) const {
-  return BF.isSimple() && opts::shouldProcess(BF);
+  return BF.isSimple() &&
+         opts::shouldProcess(BF) &&
+         (BF.getSize() > 0);
 }
 
 bool BinaryFunctionPass::shouldPrint(const BinaryFunction &BF) const {
@@ -833,11 +836,9 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
     DeletedBytes += Bytes;
     if (Count) {
       Modified.insert(&Function);
-      if (opts::Verbosity >= 1) {
-        outs() << "BOLT-INFO: Removed " << Count
-               << " dead basic block(s) accounting for " << Bytes
-               << " bytes in function " << Function << '\n';
-      }
+      outs() << "BOLT-INFO: Removed " << Count
+             << " dead basic block(s) accounting for " << Bytes
+             << " bytes in function " << Function << '\n';
     }
   }
 }
@@ -904,11 +905,17 @@ void FixupFunctions::runOnFunctions(
   for (auto &It : BFs) {
     auto &Function = It.second;
 
-    if (!shouldOptimize(Function))
+    // Always fix functions in relocation mode.
+    if (!opts::Relocs && !shouldOptimize(Function))
       continue;
 
     // Fix the CFI state.
-    if (!Function.fixCFIState()) {
+    if (shouldOptimize(Function) && !Function.fixCFIState()) {
+      if (opts::Relocs) {
+        errs() << "BOLT-ERROR: unable to fix CFI state for function "
+               << Function << ". Aborting.\n";
+        abort();
+      }
       if (opts::Verbosity >= 1) {
         errs() << "BOLT-WARNING: unable to fix CFI state for function "
                << Function << ". Skipping.\n";
@@ -1343,7 +1350,7 @@ void IdenticalCodeFolding::foldFunction(
   std::set<BinaryFunction *> &Modified) {
 
   // Mark BFToFold as identical with BFTOreplaceWith.
-  BFToFold->setIdenticalFunctionAddress(BFToReplaceWith->getAddress());
+  BFToFold->setIdenticalFunction(BFToReplaceWith);
 
   // Add the size of BFToFold to the total size savings estimate.
   BytesSavedEstimate += BFToFold->getSize();
@@ -1441,7 +1448,7 @@ void IdenticalCodeFolding::runOnFunctions(
     uint64_t NumIdenticalFunctions = 0;
 
     // Compare candidate functions using the Buckets hash table. Identical
-    // functions are effiently discovered and added to the same bucket.
+    // functions are efficiently discovered and added to the same bucket.
     for (BinaryFunction *BF : Cands) {
       Buckets[BF].emplace_back(BF);
     }
@@ -1478,7 +1485,12 @@ void IdenticalCodeFolding::runOnFunctions(
       NumIdenticalFunctions += IFs.size() - 1;
       for (unsigned i = 1; i < IFs.size(); ++i) {
         BinaryFunction *BF = IFs[i];
+        Hottest->addIdenticalFunction(BF);
         foldFunction(BC, BFs, BF, Hottest, Mod);
+        if (!MaxTwinFunction ||
+            MaxTwinFunction->getTwins().size() < Hottest->getTwins().size()) {
+          MaxTwinFunction = Hottest;
+        }
       }
     }
 
@@ -1502,6 +1514,11 @@ void IdenticalCodeFolding::runOnFunctions(
          << "BOLT-INFO: Removing all identical functions could save "
          << format("%.2lf", (double) BytesSavedEstimate / 1024)
          << " KB of code space.\n";
+  if (MaxTwinFunction) {
+    outs() << "BOLT-INFO: Function with maximum number of twins ("
+           << MaxTwinFunction->getTwins().size() << ") is " << *MaxTwinFunction
+           << '\n';
+  }
 }
 
 void PrintSortedBy::runOnFunctions(

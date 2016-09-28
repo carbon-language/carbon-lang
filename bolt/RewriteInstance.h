@@ -17,6 +17,7 @@
 #include "BinaryFunction.h"
 #include "DebugData.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/ObjectFile.h"
@@ -132,9 +133,12 @@ public:
   /// from meta data in the file.
   void discoverFileObjects();
 
-  /// Read .eh_frame, .eh_frame_hdr and .gcc_except_table sections for exception
-  /// and stack unwinding information.
+  /// Read info from special sections. E.g. eh_frame and .gcc_except_table
+  /// for exception and stack unwinding information.
   void readSpecialSections();
+
+  /// Read relocations from a given section.
+  void readRelocations(const object::SectionRef &Section);
 
   /// Read information from debug sections.
   void readDebugInfo();
@@ -161,8 +165,14 @@ public:
   void emitDataSection(MCStreamer *Streamer, SectionRef Section,
                        std::string Name = "");
 
+  /// Emit data sections that have code references in them.
+  void emitDataSections(MCStreamer *Streamer);
+
   /// Update debug information in the file for re-written code.
   void updateDebugInfo();
+
+  /// Map all sections to their final addresses.
+  void mapFileSections(orc::ObjectLinkingLayer<>::ObjSetHandleT &ObjectsHandle);
 
   /// Check which functions became larger than their original version and
   /// annotate function splitting information.
@@ -175,25 +185,31 @@ public:
   /// rewritten.
   void updateDebugLineInfoForNonSimpleFunctions();
 
-  /// Add section relocation.
-  void addSectionRelocation(SectionRef Section, uint64_t Address,
-                            MCSymbol *Symbol, uint64_t Type,
-                            uint64_t Addend = 0) {
-    auto RI = SectionRelocations.find(Section);
-    if (RI == SectionRelocations.end()) {
-      auto Result =
-        SectionRelocations.emplace(Section, std::vector<Relocation>());
-      RI = Result.first;
-    }
-    RI->second.emplace_back(Relocation{Address, Symbol, Type, Addend});
-  }
-
   /// Rewrite back all functions (hopefully optimized) that fit in the original
   /// memory footprint for that function. If the function is now larger and does
   /// not fit in the binary, reject it and preserve the original version of the
   /// function. If we couldn't understand the function for some reason in
   /// disassembleFunctions(), also preserve the original version.
   void rewriteFile();
+
+  /// Return address of the function in the new binary.
+  uint64_t getNewFunctionAddress(uint64_t OldAddress);
+
+  /// Return value for the symbol \p Name in the output.
+  uint64_t getNewValueForSymbol(const StringRef Name) {
+    return OLT.findSymbol(Name, false).getAddress();
+  }
+
+  /// Return BinaryFunction containing the given \p Address or nullptr if
+  /// no registered function has it.
+  ///
+  /// If \p CheckPastEnd is true and the \p Address falls on a byte
+  /// immediately following the last byte of some function and there's no other
+  /// function that starts there, then return the function as the one containing
+  /// the \p Address. This is useful when we need to locate functions for
+  /// references pointing immediately past a function body.
+  BinaryFunction *getBinaryFunctionContainingAddress(uint64_t Address,
+                                                     bool CheckPastEnd = false);
 
 private:
 
@@ -214,23 +230,42 @@ private:
   /// Write .eh_frame_hdr.
   void writeEHFrameHeader(SectionInfo &EHFrameSecInfo);
 
+  // Run ObjectLinkingLayer() with custom memory manager and symbol resolver.
+  orc::ObjectLinkingLayer<> OLT;
+
+  /// ELF-specific part. TODO: refactor into new class.
+  #define ELF_FUNCTION(FUNC) \
+    template <typename ELFT> \
+    void FUNC(ELFObjectFile<ELFT> *Obj); \
+    void FUNC() { \
+      if (auto *ELF32LE = dyn_cast<ELF32LEObjectFile>(InputFile)) \
+        return FUNC(ELF32LE); \
+      if (auto *ELF64LE = dyn_cast<ELF64LEObjectFile>(InputFile)) \
+        return FUNC(ELF64LE); \
+      if (auto *ELF32BE = dyn_cast<ELF32BEObjectFile>(InputFile)) \
+        return FUNC(ELF32BE); \
+      auto *ELF64BE = cast<ELF64BEObjectFile>(InputFile); \
+      return FUNC(ELF64BE); \
+    }
+
   /// Patch ELF book-keeping info.
   void patchELF();
   void patchELFPHDRTable();
 
-  template <typename ELFT>
-  void patchELFSectionHeaderTable(ELFObjectFile<ELFT> *Obj);
+  /// Patch section header table.
+  ELF_FUNCTION(patchELFSectionHeaderTable);
 
-  void patchELFSectionHeaderTable() {
-    if (auto *ELF32LE = dyn_cast<ELF32LEObjectFile>(InputFile))
-      return patchELFSectionHeaderTable(ELF32LE);
-    if (auto *ELF64LE = dyn_cast<ELF64LEObjectFile>(InputFile))
-      return patchELFSectionHeaderTable(ELF64LE);
-    if (auto *ELF32BE = dyn_cast<ELF32BEObjectFile>(InputFile))
-      return patchELFSectionHeaderTable(ELF32BE);
-    auto *ELF64BE = cast<ELF64BEObjectFile>(InputFile);
-    return patchELFSectionHeaderTable(ELF64BE);
-  }
+  /// Patch symbol tables.
+  ELF_FUNCTION(patchELFSymTabs);
+
+  /// Patch dynamic section/segment of ELF.
+  ELF_FUNCTION(patchELFDynamic);
+
+  /// Patch .got
+  ELF_FUNCTION(patchELFGOT);
+
+  /// Patch .rela.plt section.
+  ELF_FUNCTION(patchELFRelaPLT);
 
   /// Computes output .debug_line line table offsets for each compile unit,
   /// and updates stmt_list for a corresponding compile unit.
@@ -290,10 +325,6 @@ private:
     return Address - NewTextSegmentAddress + NewTextSegmentOffset;
   }
 
-  /// Return BinaryFunction containing the given \p Address or nullptr if
-  /// no registered function has it.
-  BinaryFunction *getBinaryFunctionContainingAddress(uint64_t Address) ;
-
   /// Return true if we should overwrite contents of the section instead
   /// of appending contents to it.
   bool shouldOverwriteSection(StringRef SectionName);
@@ -332,6 +363,11 @@ private:
   uint64_t PHDRTableOffset{0};
   unsigned Phnum{0};
 
+  /// Old .text info.
+  uint64_t OldTextSectionAddress{0};
+  uint64_t OldTextSectionOffset{0};
+  uint64_t OldTextSectionSize{0};
+
   /// New code segment info.
   uint64_t NewTextSegmentAddress{0};
   uint64_t NewTextSegmentOffset{0};
@@ -339,6 +375,9 @@ private:
 
   /// Track next available address for new allocatable sections.
   uint64_t NextAvailableAddress{0};
+
+  /// Entry point in the file (first instructions to be executed).
+  uint64_t EntryPoint{0};
 
   /// Store all non-zero symbols in this map for a quick address lookup.
   std::map<uint64_t, llvm::object::SymbolRef> FileSymRefs;
@@ -354,11 +393,19 @@ private:
   /// Maps section name -> patcher.
   std::map<std::string, std::unique_ptr<BinaryPatcher>> SectionPatchers;
 
+  std::vector<uint64_t> NewSectionIndex;
+
+  uint64_t NewTextSectionStartAddress{0};
+
+  uint64_t NewTextSectionIndex{0};
+
   /// Exception handling and stack unwinding information in this binary.
   ArrayRef<uint8_t> LSDAData;
   uint64_t LSDAAddress{0};
   const llvm::DWARFFrame *EHFrame{nullptr};
   SectionRef EHFrameSection;
+
+  uint64_t NewSymTabOffset{0};
 
   /// Keep track of functions we fail to write in the binary. We need to avoid
   /// rewriting CFI info for these functions.
@@ -373,9 +420,6 @@ private:
 
   /// Total hotness score according to profiling data for this binary.
   uint64_t TotalScore{0};
-
-  /// Section relocations.
-  std::map<SectionRef, std::vector<Relocation>> SectionRelocations;
 
   /// Construct BinaryFunction object and add it to internal maps.
   BinaryFunction *createBinaryFunction(const std::string &Name,

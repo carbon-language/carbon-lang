@@ -115,6 +115,11 @@ private:
   friend bool operator<(const BinaryBasicBlock &LHS,
                         const BinaryBasicBlock &RHS);
 
+  /// Assign new label to the basic block.
+  void setLabel(MCSymbol *Symbol) {
+    Label = Symbol;
+  }
+
 public:
   static constexpr uint64_t COUNT_FALLTHROUGH_EDGE =
       std::numeric_limits<uint64_t>::max();
