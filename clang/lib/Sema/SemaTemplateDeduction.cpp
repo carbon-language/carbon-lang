@@ -285,7 +285,7 @@ checkDeducedTemplateArguments(ASTContext &Context,
 }
 
 /// \brief Deduce the value of the given non-type template parameter
-/// from the given constant.
+/// from the given integral constant.
 static Sema::TemplateDeductionResult DeduceNonTypeTemplateArgument(
     Sema &S, NonTypeTemplateParmDecl *NTTP, const llvm::APSInt &Value,
     QualType ValueType, bool DeducedFromArrayBound, TemplateDeductionInfo &Info,
@@ -298,6 +298,32 @@ static Sema::TemplateDeductionResult DeduceNonTypeTemplateArgument(
   DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context,
                                                      Deduced[NTTP->getIndex()],
                                                                  NewDeduced);
+  if (Result.isNull()) {
+    Info.Param = NTTP;
+    Info.FirstArg = Deduced[NTTP->getIndex()];
+    Info.SecondArg = NewDeduced;
+    return Sema::TDK_Inconsistent;
+  }
+
+  Deduced[NTTP->getIndex()] = Result;
+  return Sema::TDK_Success;
+}
+
+/// \brief Deduce the value of the given non-type template parameter
+/// from the given null pointer template argument type.
+static Sema::TemplateDeductionResult DeduceNullPtrTemplateArgument(
+    Sema &S, NonTypeTemplateParmDecl *NTTP, QualType NullPtrType,
+    TemplateDeductionInfo &Info,
+    SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
+  Expr *Value =
+      S.ImpCastExprToType(new (S.Context) CXXNullPtrLiteralExpr(
+                              S.Context.NullPtrTy, NTTP->getLocation()),
+                          NullPtrType, CK_NullToPointer)
+          .get();
+  DeducedTemplateArgument NewDeduced(Value);
+  DeducedTemplateArgument Result = checkDeducedTemplateArguments(
+      S.Context, Deduced[NTTP->getIndex()], NewDeduced);
+
   if (Result.isNull()) {
     Info.Param = NTTP;
     Info.FirstArg = Deduced[NTTP->getIndex()];
@@ -1757,6 +1783,9 @@ DeduceTemplateArguments(Sema &S,
                                              Arg.getAsIntegral(),
                                              Arg.getIntegralType(),
                                              /*ArrayBound=*/false,
+                                             Info, Deduced);
+      if (Arg.getKind() == TemplateArgument::NullPtr)
+        return DeduceNullPtrTemplateArgument(S, NTTP, Arg.getNullPtrType(),
                                              Info, Deduced);
       if (Arg.getKind() == TemplateArgument::Expression)
         return DeduceNonTypeTemplateArgument(S, NTTP, Arg.getAsExpr(),

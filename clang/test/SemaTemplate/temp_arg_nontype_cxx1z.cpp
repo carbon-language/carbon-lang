@@ -122,7 +122,7 @@ namespace DeduceDifferentType {
   int a_exp = a<3>(A<3>());
 
   template<decltype(nullptr)> struct B {};
-  template<int *P> int b(B<P>); // expected-note {{could not match}} expected-note {{not implicitly convertible}}
+  template<int *P> int b(B<P>); // expected-note {{does not have the same type}} expected-note {{not implicitly convertible}}
   int b_imp = b(B<nullptr>()); // expected-error {{no matching function}}
   int b_exp = b<nullptr>(B<nullptr>()); // expected-error {{no matching function}}
 
