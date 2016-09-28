@@ -3,9 +3,15 @@
 define void @t1(i8* nocapture %c) nounwind optsize {
 entry:
 ; CHECK-LABEL: t1:
+
+;; FIXME: like with arm64-memset-inline.ll, learning how to merge
+;; stores made this code worse, since it now uses a vector move,
+;; instead of just using an strd instruction taking two registers.
+
+; CHECK: vmov.i32 d16, #0x0
+; CHECK: vst1.32 {d16}, [r0:64]!
 ; CHECK: movs r1, #0
-; CHECK: strd r1, r1, [r0]
-; CHECK: str r1, [r0, #8]
+; CHECK: str r1, [r0]
   call void @llvm.memset.p0i8.i64(i8* %c, i8 0, i64 12, i32 8, i1 false)
   ret void
 }
