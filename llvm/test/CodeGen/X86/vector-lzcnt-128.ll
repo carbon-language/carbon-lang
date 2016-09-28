@@ -1186,6 +1186,8 @@ define <8 x i16> @testv8i16u(<8 x i16> %in) nounwind {
 define <16 x i8> @testv16i8(<16 x i8> %in) nounwind {
 ; SSE2-LABEL: testv16i8:
 ; SSE2:       # BB#0:
+; SSE2-NEXT:    pushq %rbp
+; SSE2-NEXT:    pushq %rbx
 ; SSE2-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
 ; SSE2-NEXT:    bsrl %eax, %ecx
@@ -1193,40 +1195,47 @@ define <16 x i8> @testv16i8(<16 x i8> %in) nounwind {
 ; SSE2-NEXT:    cmovel %eax, %ecx
 ; SSE2-NEXT:    xorl $7, %ecx
 ; SSE2-NEXT:    movd %ecx, %xmm0
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ebx
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edi
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r9d
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r11d
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %esi
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r8d
 ; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
 ; SSE2-NEXT:    bsrl %ecx, %ecx
 ; SSE2-NEXT:    cmovel %eax, %ecx
 ; SSE2-NEXT:    xorl $7, %ecx
 ; SSE2-NEXT:    movd %ecx, %xmm1
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE2-NEXT:    bsrl %ecx, %ecx
+; SSE2-NEXT:    bsrl %edx, %ecx
 ; SSE2-NEXT:    cmovel %eax, %ecx
 ; SSE2-NEXT:    xorl $7, %ecx
 ; SSE2-NEXT:    movd %ecx, %xmm2
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
 ; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE2-NEXT:    bsrl %ecx, %ecx
-; SSE2-NEXT:    cmovel %eax, %ecx
-; SSE2-NEXT:    xorl $7, %ecx
-; SSE2-NEXT:    movd %ecx, %xmm0
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r10d
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ebp
+; SSE2-NEXT:    bsrl %ebp, %ebp
+; SSE2-NEXT:    cmovel %eax, %ebp
+; SSE2-NEXT:    xorl $7, %ebp
+; SSE2-NEXT:    movd %ebp, %xmm0
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3],xmm0[4],xmm2[4],xmm0[5],xmm2[5],xmm0[6],xmm2[6],xmm0[7],xmm2[7]
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE2-NEXT:    bsrl %ecx, %ecx
-; SSE2-NEXT:    cmovel %eax, %ecx
-; SSE2-NEXT:    xorl $7, %ecx
-; SSE2-NEXT:    movd %ecx, %xmm1
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE2-NEXT:    bsrl %edi, %edi
+; SSE2-NEXT:    cmovel %eax, %edi
+; SSE2-NEXT:    xorl $7, %edi
+; SSE2-NEXT:    movd %edi, %xmm1
 ; SSE2-NEXT:    bsrl %ecx, %ecx
 ; SSE2-NEXT:    cmovel %eax, %ecx
 ; SSE2-NEXT:    xorl $7, %ecx
 ; SSE2-NEXT:    movd %ecx, %xmm2
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm1[0],xmm2[1],xmm1[1],xmm2[2],xmm1[2],xmm2[3],xmm1[3],xmm2[4],xmm1[4],xmm2[5],xmm1[5],xmm2[6],xmm1[6],xmm2[7],xmm1[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE2-NEXT:    bsrl %ecx, %ecx
+; SSE2-NEXT:    bsrl %esi, %ecx
 ; SSE2-NEXT:    cmovel %eax, %ecx
 ; SSE2-NEXT:    xorl $7, %ecx
 ; SSE2-NEXT:    movd %ecx, %xmm3
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %esi
 ; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
 ; SSE2-NEXT:    bsrl %ecx, %ecx
 ; SSE2-NEXT:    cmovel %eax, %ecx
@@ -1235,42 +1244,35 @@ define <16 x i8> @testv16i8(<16 x i8> %in) nounwind {
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm3[0],xmm1[1],xmm3[1],xmm1[2],xmm3[2],xmm1[3],xmm3[3],xmm1[4],xmm3[4],xmm1[5],xmm3[5],xmm1[6],xmm3[6],xmm1[7],xmm3[7]
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1],xmm1[2],xmm2[2],xmm1[3],xmm2[3],xmm1[4],xmm2[4],xmm1[5],xmm2[5],xmm1[6],xmm2[6],xmm1[7],xmm2[7]
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE2-NEXT:    bsrl %ecx, %ecx
+; SSE2-NEXT:    bsrl %ebx, %ecx
 ; SSE2-NEXT:    cmovel %eax, %ecx
 ; SSE2-NEXT:    xorl $7, %ecx
 ; SSE2-NEXT:    movd %ecx, %xmm0
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE2-NEXT:    bsrl %ecx, %ecx
+; SSE2-NEXT:    bsrl %edx, %ecx
 ; SSE2-NEXT:    cmovel %eax, %ecx
 ; SSE2-NEXT:    xorl $7, %ecx
 ; SSE2-NEXT:    movd %ecx, %xmm3
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm0[0],xmm3[1],xmm0[1],xmm3[2],xmm0[2],xmm3[3],xmm0[3],xmm3[4],xmm0[4],xmm3[5],xmm0[5],xmm3[6],xmm0[6],xmm3[7],xmm0[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE2-NEXT:    bsrl %ecx, %ecx
+; SSE2-NEXT:    bsrl %r11d, %ecx
 ; SSE2-NEXT:    cmovel %eax, %ecx
 ; SSE2-NEXT:    xorl $7, %ecx
 ; SSE2-NEXT:    movd %ecx, %xmm0
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE2-NEXT:    bsrl %ecx, %ecx
+; SSE2-NEXT:    bsrl %esi, %ecx
 ; SSE2-NEXT:    cmovel %eax, %ecx
 ; SSE2-NEXT:    xorl $7, %ecx
 ; SSE2-NEXT:    movd %ecx, %xmm2
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1],xmm2[2],xmm0[2],xmm2[3],xmm0[3],xmm2[4],xmm0[4],xmm2[5],xmm0[5],xmm2[6],xmm0[6],xmm2[7],xmm0[7]
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm3[0],xmm2[1],xmm3[1],xmm2[2],xmm3[2],xmm2[3],xmm3[3],xmm2[4],xmm3[4],xmm2[5],xmm3[5],xmm2[6],xmm3[6],xmm2[7],xmm3[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE2-NEXT:    bsrl %ecx, %ecx
+; SSE2-NEXT:    bsrl %r9d, %ecx
 ; SSE2-NEXT:    cmovel %eax, %ecx
 ; SSE2-NEXT:    xorl $7, %ecx
 ; SSE2-NEXT:    movd %ecx, %xmm0
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE2-NEXT:    bsrl %ecx, %ecx
+; SSE2-NEXT:    bsrl %r10d, %ecx
 ; SSE2-NEXT:    cmovel %eax, %ecx
 ; SSE2-NEXT:    xorl $7, %ecx
 ; SSE2-NEXT:    movd %ecx, %xmm3
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm0[0],xmm3[1],xmm0[1],xmm3[2],xmm0[2],xmm3[3],xmm0[3],xmm3[4],xmm0[4],xmm3[5],xmm0[5],xmm3[6],xmm0[6],xmm3[7],xmm0[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE2-NEXT:    bsrl %ecx, %ecx
+; SSE2-NEXT:    bsrl %r8d, %ecx
 ; SSE2-NEXT:    cmovel %eax, %ecx
 ; SSE2-NEXT:    xorl $7, %ecx
 ; SSE2-NEXT:    movd %ecx, %xmm4
@@ -1283,10 +1285,14 @@ define <16 x i8> @testv16i8(<16 x i8> %in) nounwind {
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm3[0],xmm0[1],xmm3[1],xmm0[2],xmm3[2],xmm0[3],xmm3[3],xmm0[4],xmm3[4],xmm0[5],xmm3[5],xmm0[6],xmm3[6],xmm0[7],xmm3[7]
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3],xmm0[4],xmm2[4],xmm0[5],xmm2[5],xmm0[6],xmm2[6],xmm0[7],xmm2[7]
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
+; SSE2-NEXT:    popq %rbx
+; SSE2-NEXT:    popq %rbp
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: testv16i8:
 ; SSE3:       # BB#0:
+; SSE3-NEXT:    pushq %rbp
+; SSE3-NEXT:    pushq %rbx
 ; SSE3-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
 ; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
 ; SSE3-NEXT:    bsrl %eax, %ecx
@@ -1294,40 +1300,47 @@ define <16 x i8> @testv16i8(<16 x i8> %in) nounwind {
 ; SSE3-NEXT:    cmovel %eax, %ecx
 ; SSE3-NEXT:    xorl $7, %ecx
 ; SSE3-NEXT:    movd %ecx, %xmm0
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ebx
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edi
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r9d
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r11d
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %esi
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r8d
 ; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
 ; SSE3-NEXT:    bsrl %ecx, %ecx
 ; SSE3-NEXT:    cmovel %eax, %ecx
 ; SSE3-NEXT:    xorl $7, %ecx
 ; SSE3-NEXT:    movd %ecx, %xmm1
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE3-NEXT:    bsrl %ecx, %ecx
+; SSE3-NEXT:    bsrl %edx, %ecx
 ; SSE3-NEXT:    cmovel %eax, %ecx
 ; SSE3-NEXT:    xorl $7, %ecx
 ; SSE3-NEXT:    movd %ecx, %xmm2
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
 ; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE3-NEXT:    bsrl %ecx, %ecx
-; SSE3-NEXT:    cmovel %eax, %ecx
-; SSE3-NEXT:    xorl $7, %ecx
-; SSE3-NEXT:    movd %ecx, %xmm0
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r10d
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ebp
+; SSE3-NEXT:    bsrl %ebp, %ebp
+; SSE3-NEXT:    cmovel %eax, %ebp
+; SSE3-NEXT:    xorl $7, %ebp
+; SSE3-NEXT:    movd %ebp, %xmm0
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3],xmm0[4],xmm2[4],xmm0[5],xmm2[5],xmm0[6],xmm2[6],xmm0[7],xmm2[7]
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE3-NEXT:    bsrl %ecx, %ecx
-; SSE3-NEXT:    cmovel %eax, %ecx
-; SSE3-NEXT:    xorl $7, %ecx
-; SSE3-NEXT:    movd %ecx, %xmm1
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE3-NEXT:    bsrl %edi, %edi
+; SSE3-NEXT:    cmovel %eax, %edi
+; SSE3-NEXT:    xorl $7, %edi
+; SSE3-NEXT:    movd %edi, %xmm1
 ; SSE3-NEXT:    bsrl %ecx, %ecx
 ; SSE3-NEXT:    cmovel %eax, %ecx
 ; SSE3-NEXT:    xorl $7, %ecx
 ; SSE3-NEXT:    movd %ecx, %xmm2
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm1[0],xmm2[1],xmm1[1],xmm2[2],xmm1[2],xmm2[3],xmm1[3],xmm2[4],xmm1[4],xmm2[5],xmm1[5],xmm2[6],xmm1[6],xmm2[7],xmm1[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE3-NEXT:    bsrl %ecx, %ecx
+; SSE3-NEXT:    bsrl %esi, %ecx
 ; SSE3-NEXT:    cmovel %eax, %ecx
 ; SSE3-NEXT:    xorl $7, %ecx
 ; SSE3-NEXT:    movd %ecx, %xmm3
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %esi
 ; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
 ; SSE3-NEXT:    bsrl %ecx, %ecx
 ; SSE3-NEXT:    cmovel %eax, %ecx
@@ -1336,42 +1349,35 @@ define <16 x i8> @testv16i8(<16 x i8> %in) nounwind {
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm3[0],xmm1[1],xmm3[1],xmm1[2],xmm3[2],xmm1[3],xmm3[3],xmm1[4],xmm3[4],xmm1[5],xmm3[5],xmm1[6],xmm3[6],xmm1[7],xmm3[7]
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1],xmm1[2],xmm2[2],xmm1[3],xmm2[3],xmm1[4],xmm2[4],xmm1[5],xmm2[5],xmm1[6],xmm2[6],xmm1[7],xmm2[7]
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE3-NEXT:    bsrl %ecx, %ecx
+; SSE3-NEXT:    bsrl %ebx, %ecx
 ; SSE3-NEXT:    cmovel %eax, %ecx
 ; SSE3-NEXT:    xorl $7, %ecx
 ; SSE3-NEXT:    movd %ecx, %xmm0
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE3-NEXT:    bsrl %ecx, %ecx
+; SSE3-NEXT:    bsrl %edx, %ecx
 ; SSE3-NEXT:    cmovel %eax, %ecx
 ; SSE3-NEXT:    xorl $7, %ecx
 ; SSE3-NEXT:    movd %ecx, %xmm3
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm0[0],xmm3[1],xmm0[1],xmm3[2],xmm0[2],xmm3[3],xmm0[3],xmm3[4],xmm0[4],xmm3[5],xmm0[5],xmm3[6],xmm0[6],xmm3[7],xmm0[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE3-NEXT:    bsrl %ecx, %ecx
+; SSE3-NEXT:    bsrl %r11d, %ecx
 ; SSE3-NEXT:    cmovel %eax, %ecx
 ; SSE3-NEXT:    xorl $7, %ecx
 ; SSE3-NEXT:    movd %ecx, %xmm0
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE3-NEXT:    bsrl %ecx, %ecx
+; SSE3-NEXT:    bsrl %esi, %ecx
 ; SSE3-NEXT:    cmovel %eax, %ecx
 ; SSE3-NEXT:    xorl $7, %ecx
 ; SSE3-NEXT:    movd %ecx, %xmm2
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1],xmm2[2],xmm0[2],xmm2[3],xmm0[3],xmm2[4],xmm0[4],xmm2[5],xmm0[5],xmm2[6],xmm0[6],xmm2[7],xmm0[7]
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm3[0],xmm2[1],xmm3[1],xmm2[2],xmm3[2],xmm2[3],xmm3[3],xmm2[4],xmm3[4],xmm2[5],xmm3[5],xmm2[6],xmm3[6],xmm2[7],xmm3[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE3-NEXT:    bsrl %ecx, %ecx
+; SSE3-NEXT:    bsrl %r9d, %ecx
 ; SSE3-NEXT:    cmovel %eax, %ecx
 ; SSE3-NEXT:    xorl $7, %ecx
 ; SSE3-NEXT:    movd %ecx, %xmm0
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE3-NEXT:    bsrl %ecx, %ecx
+; SSE3-NEXT:    bsrl %r10d, %ecx
 ; SSE3-NEXT:    cmovel %eax, %ecx
 ; SSE3-NEXT:    xorl $7, %ecx
 ; SSE3-NEXT:    movd %ecx, %xmm3
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm0[0],xmm3[1],xmm0[1],xmm3[2],xmm0[2],xmm3[3],xmm0[3],xmm3[4],xmm0[4],xmm3[5],xmm0[5],xmm3[6],xmm0[6],xmm3[7],xmm0[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
-; SSE3-NEXT:    bsrl %ecx, %ecx
+; SSE3-NEXT:    bsrl %r8d, %ecx
 ; SSE3-NEXT:    cmovel %eax, %ecx
 ; SSE3-NEXT:    xorl $7, %ecx
 ; SSE3-NEXT:    movd %ecx, %xmm4
@@ -1384,6 +1390,8 @@ define <16 x i8> @testv16i8(<16 x i8> %in) nounwind {
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm3[0],xmm0[1],xmm3[1],xmm0[2],xmm3[2],xmm0[3],xmm3[3],xmm0[4],xmm3[4],xmm0[5],xmm3[5],xmm0[6],xmm3[6],xmm0[7],xmm3[7]
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3],xmm0[4],xmm2[4],xmm0[5],xmm2[5],xmm0[6],xmm2[6],xmm0[7],xmm2[7]
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
+; SSE3-NEXT:    popq %rbx
+; SSE3-NEXT:    popq %rbp
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: testv16i8:
@@ -1469,76 +1477,77 @@ define <16 x i8> @testv16i8(<16 x i8> %in) nounwind {
 define <16 x i8> @testv16i8u(<16 x i8> %in) nounwind {
 ; SSE2-LABEL: testv16i8u:
 ; SSE2:       # BB#0:
+; SSE2-NEXT:    pushq %rbx
 ; SSE2-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
 ; SSE2-NEXT:    bsrl %eax, %eax
 ; SSE2-NEXT:    xorl $7, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edi
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r9d
 ; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE2-NEXT:    bsrl %eax, %eax
-; SSE2-NEXT:    xorl $7, %eax
-; SSE2-NEXT:    movd %eax, %xmm1
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r10d
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r8d
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %esi
+; SSE2-NEXT:    bsrl %esi, %esi
+; SSE2-NEXT:    xorl $7, %esi
+; SSE2-NEXT:    movd %esi, %xmm1
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
 ; SSE2-NEXT:    bsrl %eax, %eax
 ; SSE2-NEXT:    xorl $7, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
 ; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE2-NEXT:    bsrl %eax, %eax
-; SSE2-NEXT:    xorl $7, %eax
-; SSE2-NEXT:    movd %eax, %xmm2
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %esi
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r11d
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ebx
+; SSE2-NEXT:    bsrl %ebx, %ebx
+; SSE2-NEXT:    xorl $7, %ebx
+; SSE2-NEXT:    movd %ebx, %xmm2
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1],xmm2[2],xmm0[2],xmm2[3],xmm0[3],xmm2[4],xmm0[4],xmm2[5],xmm0[5],xmm2[6],xmm0[6],xmm2[7],xmm0[7]
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm1[0],xmm2[1],xmm1[1],xmm2[2],xmm1[2],xmm2[3],xmm1[3],xmm2[4],xmm1[4],xmm2[5],xmm1[5],xmm2[6],xmm1[6],xmm2[7],xmm1[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE2-NEXT:    bsrl %eax, %eax
-; SSE2-NEXT:    xorl $7, %eax
-; SSE2-NEXT:    movd %eax, %xmm0
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE2-NEXT:    bsrl %eax, %eax
-; SSE2-NEXT:    xorl $7, %eax
-; SSE2-NEXT:    movd %eax, %xmm3
+; SSE2-NEXT:    bsrl %edx, %edx
+; SSE2-NEXT:    xorl $7, %edx
+; SSE2-NEXT:    movd %edx, %xmm0
+; SSE2-NEXT:    bsrl %esi, %edx
+; SSE2-NEXT:    xorl $7, %edx
+; SSE2-NEXT:    movd %edx, %xmm3
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm0[0],xmm3[1],xmm0[1],xmm3[2],xmm0[2],xmm3[3],xmm0[3],xmm3[4],xmm0[4],xmm3[5],xmm0[5],xmm3[6],xmm0[6],xmm3[7],xmm0[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE2-NEXT:    bsrl %eax, %eax
-; SSE2-NEXT:    xorl $7, %eax
-; SSE2-NEXT:    movd %eax, %xmm0
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE2-NEXT:    bsrl %eax, %eax
-; SSE2-NEXT:    xorl $7, %eax
-; SSE2-NEXT:    movd %eax, %xmm1
+; SSE2-NEXT:    bsrl %ecx, %ecx
+; SSE2-NEXT:    xorl $7, %ecx
+; SSE2-NEXT:    movd %ecx, %xmm0
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
+; SSE2-NEXT:    bsrl %edx, %edx
+; SSE2-NEXT:    xorl $7, %edx
+; SSE2-NEXT:    movd %edx, %xmm1
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm3[0],xmm1[1],xmm3[1],xmm1[2],xmm3[2],xmm1[3],xmm3[3],xmm1[4],xmm3[4],xmm1[5],xmm3[5],xmm1[6],xmm3[6],xmm1[7],xmm3[7]
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1],xmm1[2],xmm2[2],xmm1[3],xmm2[3],xmm1[4],xmm2[4],xmm1[5],xmm2[5],xmm1[6],xmm2[6],xmm1[7],xmm2[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE2-NEXT:    bsrl %eax, %eax
-; SSE2-NEXT:    xorl $7, %eax
-; SSE2-NEXT:    movd %eax, %xmm0
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
+; SSE2-NEXT:    bsrl %edi, %edx
+; SSE2-NEXT:    xorl $7, %edx
+; SSE2-NEXT:    movd %edx, %xmm0
 ; SSE2-NEXT:    bsrl %eax, %eax
 ; SSE2-NEXT:    xorl $7, %eax
 ; SSE2-NEXT:    movd %eax, %xmm2
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1],xmm2[2],xmm0[2],xmm2[3],xmm0[3],xmm2[4],xmm0[4],xmm2[5],xmm0[5],xmm2[6],xmm0[6],xmm2[7],xmm0[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE2-NEXT:    bsrl %eax, %eax
+; SSE2-NEXT:    bsrl %r10d, %eax
 ; SSE2-NEXT:    xorl $7, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE2-NEXT:    bsrl %eax, %eax
+; SSE2-NEXT:    bsrl %ecx, %eax
 ; SSE2-NEXT:    xorl $7, %eax
 ; SSE2-NEXT:    movd %eax, %xmm3
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm0[0],xmm3[1],xmm0[1],xmm3[2],xmm0[2],xmm3[3],xmm0[3],xmm3[4],xmm0[4],xmm3[5],xmm0[5],xmm3[6],xmm0[6],xmm3[7],xmm0[7]
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm2[0],xmm3[1],xmm2[1],xmm3[2],xmm2[2],xmm3[3],xmm2[3],xmm3[4],xmm2[4],xmm3[5],xmm2[5],xmm3[6],xmm2[6],xmm3[7],xmm2[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE2-NEXT:    bsrl %eax, %eax
+; SSE2-NEXT:    bsrl %r9d, %eax
 ; SSE2-NEXT:    xorl $7, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE2-NEXT:    bsrl %eax, %eax
+; SSE2-NEXT:    bsrl %r11d, %eax
 ; SSE2-NEXT:    xorl $7, %eax
 ; SSE2-NEXT:    movd %eax, %xmm2
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1],xmm2[2],xmm0[2],xmm2[3],xmm0[3],xmm2[4],xmm0[4],xmm2[5],xmm0[5],xmm2[6],xmm0[6],xmm2[7],xmm0[7]
-; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE2-NEXT:    bsrl %eax, %eax
+; SSE2-NEXT:    bsrl %r8d, %eax
 ; SSE2-NEXT:    xorl $7, %eax
 ; SSE2-NEXT:    movd %eax, %xmm4
 ; SSE2-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
@@ -1549,80 +1558,82 @@ define <16 x i8> @testv16i8u(<16 x i8> %in) nounwind {
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3],xmm0[4],xmm2[4],xmm0[5],xmm2[5],xmm0[6],xmm2[6],xmm0[7],xmm2[7]
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm3[0],xmm0[1],xmm3[1],xmm0[2],xmm3[2],xmm0[3],xmm3[3],xmm0[4],xmm3[4],xmm0[5],xmm3[5],xmm0[6],xmm3[6],xmm0[7],xmm3[7]
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
+; SSE2-NEXT:    popq %rbx
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: testv16i8u:
 ; SSE3:       # BB#0:
+; SSE3-NEXT:    pushq %rbx
 ; SSE3-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
 ; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
 ; SSE3-NEXT:    bsrl %eax, %eax
 ; SSE3-NEXT:    xorl $7, %eax
 ; SSE3-NEXT:    movd %eax, %xmm0
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edi
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r9d
 ; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE3-NEXT:    bsrl %eax, %eax
-; SSE3-NEXT:    xorl $7, %eax
-; SSE3-NEXT:    movd %eax, %xmm1
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r10d
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r8d
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %esi
+; SSE3-NEXT:    bsrl %esi, %esi
+; SSE3-NEXT:    xorl $7, %esi
+; SSE3-NEXT:    movd %esi, %xmm1
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
 ; SSE3-NEXT:    bsrl %eax, %eax
 ; SSE3-NEXT:    xorl $7, %eax
 ; SSE3-NEXT:    movd %eax, %xmm0
 ; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE3-NEXT:    bsrl %eax, %eax
-; SSE3-NEXT:    xorl $7, %eax
-; SSE3-NEXT:    movd %eax, %xmm2
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %esi
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %r11d
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ebx
+; SSE3-NEXT:    bsrl %ebx, %ebx
+; SSE3-NEXT:    xorl $7, %ebx
+; SSE3-NEXT:    movd %ebx, %xmm2
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1],xmm2[2],xmm0[2],xmm2[3],xmm0[3],xmm2[4],xmm0[4],xmm2[5],xmm0[5],xmm2[6],xmm0[6],xmm2[7],xmm0[7]
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm1[0],xmm2[1],xmm1[1],xmm2[2],xmm1[2],xmm2[3],xmm1[3],xmm2[4],xmm1[4],xmm2[5],xmm1[5],xmm2[6],xmm1[6],xmm2[7],xmm1[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE3-NEXT:    bsrl %eax, %eax
-; SSE3-NEXT:    xorl $7, %eax
-; SSE3-NEXT:    movd %eax, %xmm0
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE3-NEXT:    bsrl %eax, %eax
-; SSE3-NEXT:    xorl $7, %eax
-; SSE3-NEXT:    movd %eax, %xmm3
+; SSE3-NEXT:    bsrl %edx, %edx
+; SSE3-NEXT:    xorl $7, %edx
+; SSE3-NEXT:    movd %edx, %xmm0
+; SSE3-NEXT:    bsrl %esi, %edx
+; SSE3-NEXT:    xorl $7, %edx
+; SSE3-NEXT:    movd %edx, %xmm3
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm0[0],xmm3[1],xmm0[1],xmm3[2],xmm0[2],xmm3[3],xmm0[3],xmm3[4],xmm0[4],xmm3[5],xmm0[5],xmm3[6],xmm0[6],xmm3[7],xmm0[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE3-NEXT:    bsrl %eax, %eax
-; SSE3-NEXT:    xorl $7, %eax
-; SSE3-NEXT:    movd %eax, %xmm0
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE3-NEXT:    bsrl %eax, %eax
-; SSE3-NEXT:    xorl $7, %eax
-; SSE3-NEXT:    movd %eax, %xmm1
+; SSE3-NEXT:    bsrl %ecx, %ecx
+; SSE3-NEXT:    xorl $7, %ecx
+; SSE3-NEXT:    movd %ecx, %xmm0
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
+; SSE3-NEXT:    bsrl %edx, %edx
+; SSE3-NEXT:    xorl $7, %edx
+; SSE3-NEXT:    movd %edx, %xmm1
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm3[0],xmm1[1],xmm3[1],xmm1[2],xmm3[2],xmm1[3],xmm3[3],xmm1[4],xmm3[4],xmm1[5],xmm3[5],xmm1[6],xmm3[6],xmm1[7],xmm3[7]
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1],xmm1[2],xmm2[2],xmm1[3],xmm2[3],xmm1[4],xmm2[4],xmm1[5],xmm2[5],xmm1[6],xmm2[6],xmm1[7],xmm2[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE3-NEXT:    bsrl %eax, %eax
-; SSE3-NEXT:    xorl $7, %eax
-; SSE3-NEXT:    movd %eax, %xmm0
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
+; SSE3-NEXT:    bsrl %edi, %edx
+; SSE3-NEXT:    xorl $7, %edx
+; SSE3-NEXT:    movd %edx, %xmm0
 ; SSE3-NEXT:    bsrl %eax, %eax
 ; SSE3-NEXT:    xorl $7, %eax
 ; SSE3-NEXT:    movd %eax, %xmm2
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1],xmm2[2],xmm0[2],xmm2[3],xmm0[3],xmm2[4],xmm0[4],xmm2[5],xmm0[5],xmm2[6],xmm0[6],xmm2[7],xmm0[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE3-NEXT:    bsrl %eax, %eax
+; SSE3-NEXT:    bsrl %r10d, %eax
 ; SSE3-NEXT:    xorl $7, %eax
 ; SSE3-NEXT:    movd %eax, %xmm0
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE3-NEXT:    bsrl %eax, %eax
+; SSE3-NEXT:    bsrl %ecx, %eax
 ; SSE3-NEXT:    xorl $7, %eax
 ; SSE3-NEXT:    movd %eax, %xmm3
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm0[0],xmm3[1],xmm0[1],xmm3[2],xmm0[2],xmm3[3],xmm0[3],xmm3[4],xmm0[4],xmm3[5],xmm0[5],xmm3[6],xmm0[6],xmm3[7],xmm0[7]
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm2[0],xmm3[1],xmm2[1],xmm3[2],xmm2[2],xmm3[3],xmm2[3],xmm3[4],xmm2[4],xmm3[5],xmm2[5],xmm3[6],xmm2[6],xmm3[7],xmm2[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE3-NEXT:    bsrl %eax, %eax
+; SSE3-NEXT:    bsrl %r9d, %eax
 ; SSE3-NEXT:    xorl $7, %eax
 ; SSE3-NEXT:    movd %eax, %xmm0
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE3-NEXT:    bsrl %eax, %eax
+; SSE3-NEXT:    bsrl %r11d, %eax
 ; SSE3-NEXT:    xorl $7, %eax
 ; SSE3-NEXT:    movd %eax, %xmm2
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1],xmm2[2],xmm0[2],xmm2[3],xmm0[3],xmm2[4],xmm0[4],xmm2[5],xmm0[5],xmm2[6],xmm0[6],xmm2[7],xmm0[7]
-; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
-; SSE3-NEXT:    bsrl %eax, %eax
+; SSE3-NEXT:    bsrl %r8d, %eax
 ; SSE3-NEXT:    xorl $7, %eax
 ; SSE3-NEXT:    movd %eax, %xmm4
 ; SSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
@@ -1633,6 +1644,7 @@ define <16 x i8> @testv16i8u(<16 x i8> %in) nounwind {
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3],xmm0[4],xmm2[4],xmm0[5],xmm2[5],xmm0[6],xmm2[6],xmm0[7],xmm2[7]
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm3[0],xmm0[1],xmm3[1],xmm0[2],xmm3[2],xmm0[3],xmm3[3],xmm0[4],xmm3[4],xmm0[5],xmm3[5],xmm0[6],xmm3[6],xmm0[7],xmm3[7]
 ; SSE3-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
+; SSE3-NEXT:    popq %rbx
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: testv16i8u:

@@ -9,15 +9,11 @@ entry:
   ret void
 }
 
-; FIXME: This shouldn't need to load in a zero value to store
-;        (e.g. stp xzr,xzr [sp, #16])
-
 define void @t2() nounwind ssp {
 entry:
 ; CHECK-LABEL: t2:
-; CHECK: movi v0.2d, #0000000000000000
-; CHECK: stur q0, [sp, #16]
 ; CHECK: strh wzr, [sp, #32]
+; CHECK: stp xzr, xzr, [sp, #16]
 ; CHECK: str xzr, [sp, #8]
   %buf = alloca [26 x i8], align 1
   %0 = getelementptr inbounds [26 x i8], [26 x i8]* %buf, i32 0, i32 0
