@@ -28,11 +28,11 @@
 <!--*************************************************************************-->
 <p>Last updated: $Date$</p>
 
-<p>Clang fully implements all published ISO C++ standards including <a
-href="#cxx11">C++11</a>, as well as the upcoming <a
-href="#cxx14">C++14</a> standard, and some parts of the fledgling <a
-href="#cxx17">C++1z</a> standard,
-and is considered a production-quality C++ compiler.
+<p>Clang fully implements all published ISO C++ standards (<a
+href="#cxx98">C++98 / C++03</a>, <a
+href="#cxx11">C++11</a>, and <a
+href="#cxx14">C++14</a>), and most of the upcoming <a
+href="#cxx17">C++1z</a> standard.
 
 <p>The Clang community is continually striving to improve C++ standards
 compliance between releases by submitting and tracking <a
@@ -56,19 +56,14 @@ each language mode.</p>
 <h2 id="cxx11">C++11 implementation status</h2>
 
   <p>Clang 3.3 and later implement all of the <a
-    href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=50372">ISO
+    href="http://www.iso.org/iso/catalogue_detail.htm?csnumber=50372">ISO
     C++ 2011 standard</a>. The following table describes the Clang version
   in which each feature became available.</p>
 
 <p>By default, Clang builds C++ code according to the C++98 standard, with many
 C++11 features accepted as extensions. You can use Clang in C++11 mode with the
 <code>-std=c++11</code> option. Clang's C++11 mode can be used
-with <a href="http://libcxx.llvm.org/">libc++</a> or with gcc's libstdc++, but
-patches are needed to make <a href="libstdc++4.4-clang0x.patch">libstdc++-4.4</a>
-work with Clang in C++11 mode. Patches are also needed to make
-<a href="libstdc++4.6-clang11.patch">libstdc++-4.6</a>
-and <a href="libstdc++4.7-clang11.patch">libstdc++-4.7</a> work with Clang
-releases prior to version 3.2 in C++11 mode.
+with <a href="http://libcxx.llvm.org/">libc++</a> or with gcc's libstdc++.
 
 <table width="689" border="1" cellspacing="0">
  <tr>
@@ -428,10 +423,9 @@ change.</span>
 
 <h2 id="cxx14">C++14 implementation status</h2>
 
-<p>Clang 3.4 and later implement all of the Draft International Standard (see <a
-href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3797.pdf">most
-recent publicly available draft</a>)
-of the upcoming C++14 language standard. The following table describes the
+<p>Clang 3.4 and later implement all of the <a
+    href="http://www.iso.org/iso/catalogue_detail.htm?csnumber=64029">ISO
+    C++ 2014 standard</a>. The following table describes the
 Clang version in which each feature became available.</p>
 
 <p>You can use Clang in C++14 mode with the <code>-std=c++14</code> option
