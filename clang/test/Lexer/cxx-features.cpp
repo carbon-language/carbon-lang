@@ -26,6 +26,15 @@
 #error "wrong value for __cpp_hex_float"
 #endif
 
+#if check(inline_variables, 0, 0, 0, 201606) // FIXME: provisional name
+#error "wrong value for __cpp_inline_variables"
+#endif
+
+#if check(aligned_new, 0, 0, 0, 0) // FIXME: provisional name
+// FIXME: value shuld be 201606 for cxx1z once implemented
+#error "wrong value for __cpp_aligned_new"
+#endif
+
 #if check(noexcept_function_type, 0, 0, 0, 0)
 // FIXME: value shuld be 201510 for cxx1z once implemented
 #error "wrong value for __cpp_noexcept_function_type"
@@ -41,9 +50,18 @@
 
 // FIXME: bump __cpp_constexpr to 201603 for constexpr lambda support
 
+#if check(if_constexpr, 0, 0, 0, 201606) // FIXME: provisional name
+#error "wrong value for __cpp_if_constexpr"
+#endif
+
 // range_based_for checked below
 
 // static_assert checked below
+
+#if check(template_auto, 0, 0, 0, 0) // FIXME: provisional name
+// FIXME: value shuld be 201606 for cxx1z once implemented
+#error "wrong value for __cpp_template_auto"
+#endif
 
 #if check(namespace_attributes, 0, 0, 0, 201411)
 // FIXME: allowed without warning in C++14 and C++11
@@ -62,6 +80,9 @@
 #if check(aggregate_bases, 0, 0, 0, 201603)
 #error "wrong value for __cpp_aggregate_bases"
 #endif
+
+// FIXME: structured_bindings / decomposition_decl name not yet settled, and
+// Clang implementation is incomplete.
 
 #if check(nontype_template_args, 0, 0, 0, 201411)
 #error "wrong value for __cpp_nontype_template_args"
