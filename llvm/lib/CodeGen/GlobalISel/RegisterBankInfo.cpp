@@ -355,21 +355,23 @@ RegisterBankInfo::getValueMapping(unsigned StartIdx, unsigned Length,
   return getValueMapping(&getPartialMapping(StartIdx, Length, RegBank), 1);
 }
 
+static hash_code
+hashValueMapping(const RegisterBankInfo::PartialMapping *BreakDown,
+                 unsigned NumBreakDowns) {
+  if (LLVM_LIKELY(NumBreakDowns == 1))
+    return hash_value(*BreakDown);
+  SmallVector<size_t, 8> Hashes(NumBreakDowns);
+  for (unsigned Idx = 0; Idx != NumBreakDowns; ++Idx)
+    Hashes.push_back(hash_value(BreakDown[Idx]));
+  return hash_combine_range(Hashes.begin(), Hashes.end());
+}
+
 const RegisterBankInfo::ValueMapping &
 RegisterBankInfo::getValueMapping(const PartialMapping *BreakDown,
                                   unsigned NumBreakDowns) const {
-  hash_code Hash;
-  if (LLVM_LIKELY(NumBreakDowns == 1))
-    Hash = hash_value(*BreakDown);
-  else {
-    SmallVector<size_t, 8> Hashes;
-    for (unsigned Idx = 0; Idx != NumBreakDowns; ++Idx)
-      Hashes.push_back(hash_value(BreakDown[Idx]));
-    Hash = hash_combine_range(Hashes.begin(), Hashes.end());
-  }
-
   ++NumValueMappingsAccessed;
 
+  hash_code Hash = hashValueMapping(BreakDown, NumBreakDowns);
   const auto &It = MapOfValueMappings.find(Hash);
   if (It != MapOfValueMappings.end())
     return *It->second;

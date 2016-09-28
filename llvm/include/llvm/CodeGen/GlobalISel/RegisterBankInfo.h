@@ -143,9 +143,22 @@ public:
     /// Number of partial mapping to break down this value.
     unsigned NumBreakDowns;
 
+    /// The default constructor creates an invalid (isValid() == false)
+    /// instance.
+    ValueMapping() : ValueMapping(nullptr, 0) {}
+
+    /// Initialize a ValueMapping with the given parameter.
+    /// \p BreakDown needs to have a life time at least as long
+    /// as this instance.
+    ValueMapping(const PartialMapping *BreakDown, unsigned NumBreakDowns)
+        : BreakDown(BreakDown), NumBreakDowns(NumBreakDowns) {}
+
     /// Iterators through the PartialMappings.
     const PartialMapping *begin() const { return BreakDown; }
     const PartialMapping *end() const { return BreakDown + NumBreakDowns; }
+
+    /// Check if this ValueMapping is valid.
+    bool isValid() const { return BreakDown && NumBreakDowns; }
 
     /// Verify that this mapping makes sense for a value of
     /// \p MeaningFulBitWidth.
