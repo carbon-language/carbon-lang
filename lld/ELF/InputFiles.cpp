@@ -427,8 +427,17 @@ template <class ELFT> void ArchiveFile::parse() {
   File = check(Archive::create(MB), "failed to parse archive");
 
   // Read the symbol table to construct Lazy objects.
-  for (const Archive::Symbol &Sym : File->symbols())
+  bool IsEmpty = true;
+  for (const Archive::Symbol &Sym : File->symbols()) {
     Symtab<ELFT>::X->addLazyArchive(this, Sym);
+    IsEmpty = false;
+  }
+
+  if (IsEmpty)
+    warning(getName() + " has no symbol. Chances are you are doing "
+            "an LTO build and forgot to use an ar command that can create "
+            "a symbol table for LLVM bitcode files. If so, use llvm-ar or "
+            "GNU ar + plugin.");
 }
 
 // Returns a buffer pointing to a member file containing a given symbol.
