@@ -170,6 +170,8 @@ define <2 x i1> @and_of_icmps5_vec(<2 x i32> %b) {
   ret <2 x i1> %cmp
 }
 
+; FIXME: Vector splats should fold the same way as scalars in the next 6 pairs of tests.
+
 define i1 @or_of_icmps0(i32 %b) {
 ; CHECK-LABEL: @or_of_icmps0(
 ; CHECK-NEXT:    ret i1 true
@@ -179,6 +181,21 @@ define i1 @or_of_icmps0(i32 %b) {
   %cmp3 = icmp sle i32 %b, 2
   %cmp = or i1 %2, %cmp3
   ret i1 %cmp
+}
+
+define <2 x i1> @or_of_icmps0_vec(<2 x i32> %b) {
+; CHECK-LABEL: @or_of_icmps0_vec(
+; CHECK-NEXT:    [[TMP1:%.*]] = add <2 x i32> %b, <i32 2, i32 2>
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp uge <2 x i32> [[TMP1]], <i32 4, i32 4>
+; CHECK-NEXT:    [[CMP3:%.*]] = icmp sle <2 x i32> %b, <i32 2, i32 2>
+; CHECK-NEXT:    [[CMP:%.*]] = or <2 x i1> [[TMP2]], [[CMP:%.*]]3
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %1 = add <2 x i32> %b, <i32 2, i32 2>
+  %2 = icmp uge <2 x i32> %1, <i32 4, i32 4>
+  %cmp3 = icmp sle <2 x i32> %b, <i32 2, i32 2>
+  %cmp = or <2 x i1> %2, %cmp3
+  ret <2 x i1> %cmp
 }
 
 define i1 @or_of_icmps1(i32 %b) {
@@ -192,6 +209,21 @@ define i1 @or_of_icmps1(i32 %b) {
   ret i1 %cmp
 }
 
+define <2 x i1> @or_of_icmps1_vec(<2 x i32> %b) {
+; CHECK-LABEL: @or_of_icmps1_vec(
+; CHECK-NEXT:    [[TMP1:%.*]] = add nsw <2 x i32> %b, <i32 2, i32 2>
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp sge <2 x i32> [[TMP1]], <i32 4, i32 4>
+; CHECK-NEXT:    [[CMP3:%.*]] = icmp sle <2 x i32> %b, <i32 2, i32 2>
+; CHECK-NEXT:    [[CMP:%.*]] = or <2 x i1> [[TMP2]], [[CMP:%.*]]3
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %1 = add nsw <2 x i32> %b, <i32 2, i32 2>
+  %2 = icmp sge <2 x i32> %1, <i32 4, i32 4>
+  %cmp3 = icmp sle <2 x i32> %b, <i32 2, i32 2>
+  %cmp = or <2 x i1> %2, %cmp3
+  ret <2 x i1> %cmp
+}
+
 define i1 @or_of_icmps2(i32 %b) {
 ; CHECK-LABEL: @or_of_icmps2(
 ; CHECK-NEXT:    ret i1 true
@@ -201,6 +233,21 @@ define i1 @or_of_icmps2(i32 %b) {
   %cmp3 = icmp sle i32 %b, 2
   %cmp = or i1 %2, %cmp3
   ret i1 %cmp
+}
+
+define <2 x i1> @or_of_icmps2_vec(<2 x i32> %b) {
+; CHECK-LABEL: @or_of_icmps2_vec(
+; CHECK-NEXT:    [[TMP1:%.*]] = add <2 x i32> %b, <i32 2, i32 2>
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ugt <2 x i32> [[TMP1]], <i32 3, i32 3>
+; CHECK-NEXT:    [[CMP3:%.*]] = icmp sle <2 x i32> %b, <i32 2, i32 2>
+; CHECK-NEXT:    [[CMP:%.*]] = or <2 x i1> [[TMP2]], [[CMP:%.*]]3
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %1 = add <2 x i32> %b, <i32 2, i32 2>
+  %2 = icmp ugt <2 x i32> %1, <i32 3, i32 3>
+  %cmp3 = icmp sle <2 x i32> %b, <i32 2, i32 2>
+  %cmp = or <2 x i1> %2, %cmp3
+  ret <2 x i1> %cmp
 }
 
 define i1 @or_of_icmps3(i32 %b) {
@@ -214,6 +261,21 @@ define i1 @or_of_icmps3(i32 %b) {
   ret i1 %cmp
 }
 
+define <2 x i1> @or_of_icmps3_vec(<2 x i32> %b) {
+; CHECK-LABEL: @or_of_icmps3_vec(
+; CHECK-NEXT:    [[TMP1:%.*]] = add nsw <2 x i32> %b, <i32 2, i32 2>
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp sgt <2 x i32> [[TMP1]], <i32 3, i32 3>
+; CHECK-NEXT:    [[CMP3:%.*]] = icmp sle <2 x i32> %b, <i32 2, i32 2>
+; CHECK-NEXT:    [[CMP:%.*]] = or <2 x i1> [[TMP2]], [[CMP:%.*]]3
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %1 = add nsw <2 x i32> %b, <i32 2, i32 2>
+  %2 = icmp sgt <2 x i32> %1, <i32 3, i32 3>
+  %cmp3 = icmp sle <2 x i32> %b, <i32 2, i32 2>
+  %cmp = or <2 x i1> %2, %cmp3
+  ret <2 x i1> %cmp
+}
+
 define i1 @or_of_icmps4(i32 %b) {
 ; CHECK-LABEL: @or_of_icmps4(
 ; CHECK-NEXT:    ret i1 true
@@ -225,6 +287,21 @@ define i1 @or_of_icmps4(i32 %b) {
   ret i1 %cmp
 }
 
+define <2 x i1> @or_of_icmps4_vec(<2 x i32> %b) {
+; CHECK-LABEL: @or_of_icmps4_vec(
+; CHECK-NEXT:    [[TMP1:%.*]] = add nuw <2 x i32> %b, <i32 2, i32 2>
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp uge <2 x i32> [[TMP1]], <i32 4, i32 4>
+; CHECK-NEXT:    [[CMP3:%.*]] = icmp ule <2 x i32> %b, <i32 2, i32 2>
+; CHECK-NEXT:    [[CMP:%.*]] = or <2 x i1> [[TMP2]], [[CMP:%.*]]3
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %1 = add nuw <2 x i32> %b, <i32 2, i32 2>
+  %2 = icmp uge <2 x i32> %1, <i32 4, i32 4>
+  %cmp3 = icmp ule <2 x i32> %b, <i32 2, i32 2>
+  %cmp = or <2 x i1> %2, %cmp3
+  ret <2 x i1> %cmp
+}
+
 define i1 @or_of_icmps5(i32 %b) {
 ; CHECK-LABEL: @or_of_icmps5(
 ; CHECK-NEXT:    ret i1 true
@@ -234,6 +311,21 @@ define i1 @or_of_icmps5(i32 %b) {
   %cmp3 = icmp ule i32 %b, 2
   %cmp = or i1 %2, %cmp3
   ret i1 %cmp
+}
+
+define <2 x i1> @or_of_icmps5_vec(<2 x i32> %b) {
+; CHECK-LABEL: @or_of_icmps5_vec(
+; CHECK-NEXT:    [[TMP1:%.*]] = add nuw <2 x i32> %b, <i32 2, i32 2>
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ugt <2 x i32> [[TMP1]], <i32 3, i32 3>
+; CHECK-NEXT:    [[CMP3:%.*]] = icmp ule <2 x i32> %b, <i32 2, i32 2>
+; CHECK-NEXT:    [[CMP:%.*]] = or <2 x i1> [[TMP2]], [[CMP:%.*]]3
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %1 = add nuw <2 x i32> %b, <i32 2, i32 2>
+  %2 = icmp ugt <2 x i32> %1, <i32 3, i32 3>
+  %cmp3 = icmp ule <2 x i32> %b, <i32 2, i32 2>
+  %cmp = or <2 x i1> %2, %cmp3
+  ret <2 x i1> %cmp
 }
 
 define i32 @neg_nuw(i32 %x) {
