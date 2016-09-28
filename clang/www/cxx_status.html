@@ -1,8 +1,7 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
-          "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
   <title>Clang - C++1z, C++14, C++11 and C++98 Status</title>
   <link type="text/css" rel="stylesheet" href="menu.css">
   <link type="text/css" rel="stylesheet" href="content.css">
@@ -55,15 +54,17 @@ each language mode.</p>
 
 <h2 id="cxx11">C++11 implementation status</h2>
 
-  <p>Clang 3.3 and later implement all of the <a
-    href="http://www.iso.org/iso/catalogue_detail.htm?csnumber=50372">ISO
-    C++ 2011 standard</a>. The following table describes the Clang version
-  in which each feature became available.</p>
+<p>Clang 3.3 and later implement all of the <a
+  href="http://www.iso.org/iso/catalogue_detail.htm?csnumber=50372">ISO
+  C++ 2011 standard</a>.
 
 <p>By default, Clang builds C++ code according to the C++98 standard, with many
 C++11 features accepted as extensions. You can use Clang in C++11 mode with the
 <code>-std=c++11</code> option. Clang's C++11 mode can be used
 with <a href="http://libcxx.llvm.org/">libc++</a> or with gcc's libstdc++.
+
+<details>
+<summary>List of features and minimum Clang version with support</summary>
 
 <table width="689" border="1" cellspacing="0">
  <tr>
@@ -420,16 +421,19 @@ such as Clang that does not provide any extended integer types.
 because changing <code>intmax_t</code> would be an ABI-incompatible
 change.</span>
 </p>
+</details>
 
 <h2 id="cxx14">C++14 implementation status</h2>
 
 <p>Clang 3.4 and later implement all of the <a
     href="http://www.iso.org/iso/catalogue_detail.htm?csnumber=64029">ISO
-    C++ 2014 standard</a>. The following table describes the
-Clang version in which each feature became available.</p>
+    C++ 2014 standard</a>.
 
 <p>You can use Clang in C++14 mode with the <code>-std=c++14</code> option
 (use <code>-std=c++1y</code> in Clang 3.4 and earlier).</p>
+
+<details>
+<summary>List of features and minimum Clang version with support</summary>
 
 <table width="689" border="1" cellspacing="0">
  <tr>
@@ -512,19 +516,19 @@ added these functions in version 5.0, and <code>libc++</code> added them in
 version 3.7.
 </span>
 </p>
+</details>
 
 <h2 id="cxx17">C++1z implementation status</h2>
 
 <p>Clang has <b>experimental</b> support for some proposed features of
 the C++ standard following C++14, provisionally named C++1z.
-The following table describes which C++1z features
-have been implemented in Clang and in which Clang version they became
-available.</p>
-
-<p>Note that support for these features may change or be removed without notice,
-as the draft C++1z standard evolves.</p>
+Note that support for these features may change or be removed without notice,
+as the draft C++1z standard evolves.
 
 <p>You can use Clang in C++1z mode with the <code>-std=c++1z</code> option.</p>
+
+<details open>
+<summary>List of features and minimum Clang version with support</summary>
 
 <table width="689" border="1" cellspacing="0">
  <tr>
@@ -746,23 +750,27 @@ functions are evaluated right-to-left under the MS ABI when called using operato
 syntax, not left-to-right as P0145R3 requires.
 </span>
 </p>
+</details>
 
 <h2 id="ts">Technical specifications and standing documents</h2>
 
 <p>ISO C++ also publishes a number of documents describing additional language
-and library features that are not part of standard C++. The following table
-describes which language features have been implemented in Clang and in which
-Clang version they became available:</p>
+and library features that are not part of standard C++.</p>
+
+<details open>
+<summary>List of features and minimum Clang version with support</summary>
 
 <table width="689" border="1" cellspacing="0">
  <tr>
     <th>Document</th>
     <th>Latest draft</th>
+    <th>Compiler flag</th>
     <th>Available in Clang?</th>
  </tr>
     <tr>
       <td rowspan="3">SD-6: SG10 feature test recommendations</td>
       <td rowspan="3"><a href="http://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations">SD-6</a></td>
+      <td rowspan="3">N/A</td>
       <td class="full" align="center">
         Clang 3.4 (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3745">N3745</a>)</br>
       </td>
@@ -794,29 +802,41 @@ Clang version they became available:</p>
     <tr>
       <td>[TS] Concepts</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0121r0.pdf">P0121R0</a></td>
-      <td class="none" align="center">No</td>
+      <td></td>
+      <td class="none" align="center">WIP</td>
+    </tr>
+    <tr>
+      <td>[DRAFT TS] Coroutines</td>
+      <td><a href="http://wg21.link/p0057r5">P0057R5</a></td>
+      <td></td>
+      <td class="none" align="center">WIP</td>
     </tr>
     <tr>
       <td>[TS] Library Fundamentals, Version 1 (invocation type traits)</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4480.html">N4480</a></td>
+      <td>N/A</td>
       <td class="none" align="center">No</td>
     </tr>
     <tr>
       <td>[DRAFT TS] Library Fundamentals, Version 2 (<tt>source_location</tt>)</td>
-      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4529.html">N4529</a></td>
+     <td><a href="http://wg21.link/n4600">N4600</a></td>
+      <td>N/A</td>
       <td class="none" align="center">No</td>
     </tr>
     <tr>
-      <td>[TS] Modules</td>
-      <td><a href="http://wg21.link/p0143r2">P0143R2</a></td>
-      <td class="none" align="center">No</td>
+      <td>[DRAFT TS] Modules</td>
+      <td><a href="http://wg21.link/n4592">N4592</a></td>
+      <td><tt>-fmodules-ts</tt></td>
+      <td class="none" align="center">WIP</td>
     </tr>
     <tr>
       <td>[TS] Transactional Memory</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4514.pdf">N4514</a></td>
+      <td></td>
       <td class="none" align="center">No</td>
     </tr>
 </table>
+</details>
 
 </div>
 </body>
