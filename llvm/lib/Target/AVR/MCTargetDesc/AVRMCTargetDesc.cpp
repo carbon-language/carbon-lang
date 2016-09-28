@@ -31,6 +31,8 @@
 #define GET_REGINFO_MC_DESC
 #include "AVRGenRegisterInfo.inc"
 
+using namespace llvm;
+
 static MCInstrInfo *createAVRMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitAVRMCInstrInfo(X);
