@@ -539,3 +539,23 @@ bool Sema::CheckCUDAExceptionExpr(SourceLocation Loc, StringRef ExprTy) {
   }
   return true;
 }
+
+bool Sema::CheckCUDAVLA(SourceLocation Loc) {
+  assert(getLangOpts().CUDA && "Should only be called during CUDA compilation");
+  FunctionDecl *CurFn = dyn_cast<FunctionDecl>(CurContext);
+  if (!CurFn)
+    return true;
+  CUDAFunctionTarget Target = IdentifyCUDATarget(CurFn);
+  if (Target == CFT_Global || Target == CFT_Device) {
+    Diag(Loc, diag::err_cuda_vla) << Target;
+    return false;
+  }
+  if (Target == CFT_HostDevice && getLangOpts().CUDAIsDevice) {
+    PartialDiagnostic ErrPD{PartialDiagnostic::NullDiagnostic()};
+    ErrPD.Reset(diag::err_cuda_vla);
+    ErrPD << Target;
+    CurFn->addDeferredDiag({Loc, std::move(ErrPD)});
+    return false;
+  }
+  return true;
+}

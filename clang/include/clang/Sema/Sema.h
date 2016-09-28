@@ -9255,6 +9255,8 @@ public:
   /// ExprTy should be the string "try" or "throw", as appropriate.
   bool CheckCUDAExceptionExpr(SourceLocation Loc, StringRef ExprTy);
 
+  bool CheckCUDAVLA(SourceLocation Loc);
+
   /// Finds a function in \p Matches with highest calling priority
   /// from \p Caller context and erases all functions with lower
   /// calling priority.

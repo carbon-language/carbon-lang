@@ -6713,6 +6713,10 @@ def err_shared_var_init : Error<
 def err_device_static_local_var : Error<
     "Within a __device__/__global__ function, "
     "only __shared__ variables may be marked \"static\"">;
+def err_cuda_vla : Error<
+    "cannot use variable-length arrays in "
+    "%select{__device__|__global__|__host__|__host__ __device__}0 functions">;
+
 def warn_non_pod_vararg_with_format_string : Warning<
   "cannot pass %select{non-POD|non-trivial}0 object of type %1 to variadic "
   "%select{function|block|method|constructor}2; expected type from format "
