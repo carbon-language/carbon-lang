@@ -669,6 +669,35 @@ static Error checkVersCommand(const MachOObjectFile *Obj,
   return Error::success();
 }
 
+static Error checkRpathCommand(const MachOObjectFile *Obj,
+                               const MachOObjectFile::LoadCommandInfo &Load,
+                               uint32_t LoadCommandIndex) {
+  if (Load.C.cmdsize < sizeof(MachO::rpath_command))
+    return malformedError("load command " + Twine(LoadCommandIndex) +
+                          " LC_RPATH cmdsize too small");
+  MachO::rpath_command R = getStruct<MachO::rpath_command>(Obj, Load.Ptr);
+  if (R.path < sizeof(MachO::rpath_command))
+    return malformedError("load command " + Twine(LoadCommandIndex) +
+                          " LC_RPATH path.offset field too small, not past "
+                          "the end of the rpath_command struct");
+  if (R.path >= R.cmdsize)
+    return malformedError("load command " + Twine(LoadCommandIndex) +
+                          " LC_RPATH path.offset field extends past the end "
+                          "of the load command");
+  // Make sure there is a null between the starting offset of the path and
+  // the end of the load command.
+  uint32_t i;
+  const char *P = (const char *)Load.Ptr;
+  for (i = R.path; i < R.cmdsize; i++)
+    if (P[i] == '\0')
+      break;
+  if (i >= R.cmdsize)
+    return malformedError("load command " + Twine(LoadCommandIndex) +
+                          " LC_RPATH library name extends past the end of the "
+                          "load command");
+  return Error::success();
+}
+
 Expected<std::unique_ptr<MachOObjectFile>>
 MachOObjectFile::create(MemoryBufferRef Object, bool IsLittleEndian,
                         bool Is64Bits) {
@@ -846,6 +875,9 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
     } else if (Load.C.cmd == MachO::LC_VERSION_MIN_WATCHOS) {
       if ((Err = checkVersCommand(this, Load, I, &VersLoadCmd,
                                   "LC_VERSION_MIN_WATCHOS")))
+        return;
+    } else if (Load.C.cmd == MachO::LC_RPATH) {
+      if ((Err = checkRpathCommand(this, Load, I)))
         return;
     }
     if (I < LoadCommandCount - 1) {
