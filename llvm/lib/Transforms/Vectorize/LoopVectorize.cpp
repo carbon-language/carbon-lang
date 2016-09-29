@@ -5505,12 +5505,9 @@ void LoopVectorizationLegality::collectLoopUniforms() {
 bool LoopVectorizationLegality::canVectorizeMemory() {
   LAI = &(*GetLAA)(*TheLoop);
   InterleaveInfo.setLAI(LAI);
-  const OptimizationRemarkAnalysis *LAR = LAI->getReport();
-  if (LAR) {
-    OptimizationRemarkAnalysis VR(Hints->vectorizeAnalysisPassName(),
-                                  "loop not vectorized: ", *LAR);
-    ORE->emit(VR);
-  }
+  auto &OptionalReport = LAI->getReport();
+  if (OptionalReport)
+    emitAnalysis(VectorizationReport(*OptionalReport));
   if (!LAI->canVectorizeMemory())
     return false;
 
