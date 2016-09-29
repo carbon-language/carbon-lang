@@ -47,13 +47,6 @@ template <typename T> void error(const ErrorOr<T> &V, const Twine &Prefix) {
 LLVM_ATTRIBUTE_NORETURN void fatal(const Twine &Msg);
 LLVM_ATTRIBUTE_NORETURN void fatal(const Twine &Msg, const Twine &Prefix);
 
-inline void check(Error E) {
-  handleAllErrors(std::move(E), [&](llvm::ErrorInfoBase &EIB) {
-    error(EIB.message());
-    return Error::success();
-  });
-}
-
 template <class T> T check(ErrorOr<T> E) {
   if (auto EC = E.getError())
     fatal(EC.message());
