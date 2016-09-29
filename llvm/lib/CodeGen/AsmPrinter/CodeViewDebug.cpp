@@ -614,11 +614,12 @@ void CodeViewDebug::emitCompilerInformation() {
   // Some Microsoft tools, like Binscope, expect a backend version number of at
   // least 8.something, so we'll coerce the LLVM version into a form that
   // guarantees it'll be big enough without really lying about the version.
-  Version BackVer = {{
-      1000 * LLVM_VERSION_MAJOR +
-      10 * LLVM_VERSION_MINOR +
-      LLVM_VERSION_PATCH,
-      0, 0, 0 }};
+  int Major = 1000 * LLVM_VERSION_MAJOR +
+              10 * LLVM_VERSION_MINOR +
+              LLVM_VERSION_PATCH;
+  // Clamp it for builds that use unusually large version numbers.
+  Major = std::min<int>(Major, std::numeric_limits<uint16_t>::max());
+  Version BackVer = {{ Major, 0, 0, 0 }};
   OS.AddComment("Backend version");
   for (int N = 0; N < 4; ++N)
     OS.EmitIntValue(BackVer.Part[N], 2);
