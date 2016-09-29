@@ -380,7 +380,7 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
   if (!Out<ELFT>::SymTab)
     return;
   for (elf::ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles()) {
-    const char *StrTab = F->getStringTable().data();
+    StringRef StrTab = F->getStringTable();
     for (SymbolBody *B : F->getLocalSymbols()) {
       auto *DR = dyn_cast<DefinedRegular<ELFT>>(B);
       // No reason to keep local undefined symbol in symtab.
@@ -388,7 +388,9 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
         continue;
       if (!includeInSymtab<ELFT>(*B))
         continue;
-      StringRef SymName(StrTab + B->getNameOffset());
+      if (B->getNameOffset() >= StrTab.size())
+        fatal(getFilename(F) + ": invalid symbol name offset");
+      StringRef SymName(StrTab.data() + B->getNameOffset());
       InputSectionBase<ELFT> *Sec = DR->Section;
       if (!shouldKeepInSymtab<ELFT>(Sec, SymName, *B))
         continue;
