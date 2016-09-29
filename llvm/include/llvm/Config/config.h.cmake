@@ -22,9 +22,6 @@
 /* Define to 1 if you have the `bcopy' function. */
 #undef HAVE_BCOPY
 
-/* Define to 1 if you have the `closedir' function. */
-#cmakedefine HAVE_CLOSEDIR ${HAVE_CLOSEDIR}
-
 /* Define to 1 if you have the <CrashReporterClient.h> header file. */
 #undef HAVE_CRASHREPORTERCLIENT_H
 
@@ -194,9 +191,6 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #cmakedefine HAVE_NDIR_H ${HAVE_NDIR_H}
 
-/* Define to 1 if you have the `opendir' function. */
-#cmakedefine HAVE_OPENDIR ${HAVE_OPENDIR}
-
 /* Define to 1 if you have the `posix_spawn' function. */
 #cmakedefine HAVE_POSIX_SPAWN ${HAVE_POSIX_SPAWN}
 
@@ -223,9 +217,6 @@
 
 /* Define to 1 if srand48/lrand48/drand48 exist in <stdlib.h> */
 #cmakedefine HAVE_RAND48 ${HAVE_RAND48}
-
-/* Define to 1 if you have the `readdir' function. */
-#cmakedefine HAVE_READDIR ${HAVE_READDIR}
 
 /* Define to 1 if you have the `realpath' function. */
 #cmakedefine HAVE_REALPATH ${HAVE_REALPATH}
