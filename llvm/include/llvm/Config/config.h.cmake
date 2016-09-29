@@ -212,9 +212,6 @@
 /* Have pthread_rwlock_init */
 #cmakedefine HAVE_PTHREAD_RWLOCK_INIT ${HAVE_PTHREAD_RWLOCK_INIT}
 
-/* Define to 1 if srand48/lrand48/drand48 exist in <stdlib.h> */
-#cmakedefine HAVE_RAND48 ${HAVE_RAND48}
-
 /* Define to 1 if you have the `realpath' function. */
 #cmakedefine HAVE_REALPATH ${HAVE_REALPATH}
 
