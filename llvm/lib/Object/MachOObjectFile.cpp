@@ -750,6 +750,7 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
   const char *SplitInfoLoadCmd = nullptr;
   const char *CodeSignDrsLoadCmd = nullptr;
   const char *VersLoadCmd = nullptr;
+  const char *SourceLoadCmd = nullptr;
   for (unsigned I = 0; I < LoadCommandCount; ++I) {
     if (is64Bit()) {
       if (Load.C.cmdsize % 8 != 0) {
@@ -879,6 +880,17 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
     } else if (Load.C.cmd == MachO::LC_RPATH) {
       if ((Err = checkRpathCommand(this, Load, I)))
         return;
+    } else if (Load.C.cmd == MachO::LC_SOURCE_VERSION) {
+      if (Load.C.cmdsize != sizeof(MachO::source_version_command)) {
+        Err = malformedError("LC_SOURCE_VERSION command " + Twine(I) +
+                             " has incorrect cmdsize");
+        return;
+      }
+      if (SourceLoadCmd) {
+        Err = malformedError("more than one LC_SOURCE_VERSION command");
+        return;
+      }
+      SourceLoadCmd = Load.Ptr;
     }
     if (I < LoadCommandCount - 1) {
       if (auto LoadOrErr = getNextLoadCommandInfo(this, I, Load))
