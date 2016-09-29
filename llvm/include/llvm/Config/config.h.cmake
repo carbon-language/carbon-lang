@@ -340,9 +340,6 @@
 /* Define to 1 if you have the `_Unwind_Backtrace' function. */
 #cmakedefine HAVE__UNWIND_BACKTRACE ${HAVE__UNWIND_BACKTRACE}
 
-/* Define to 1 if you have the <utime.h> header file. */
-#cmakedefine HAVE_UTIME_H ${HAVE_UTIME_H}
-
 /* Define to 1 if the system has the type `u_int64_t'. */
 #cmakedefine HAVE_U_INT64_T ${HAVE_U_INT64_T}
 
