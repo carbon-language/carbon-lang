@@ -295,9 +295,6 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #cmakedefine HAVE_UNISTD_H ${HAVE_UNISTD_H}
 
-/* Define to 1 if you have the `_Unwind_Backtrace' function. */
-#cmakedefine HAVE__UNWIND_BACKTRACE ${HAVE__UNWIND_BACKTRACE}
-
 /* Define to 1 if the system has the type `u_int64_t'. */
 #cmakedefine HAVE_U_INT64_T ${HAVE_U_INT64_T}
 
@@ -312,6 +309,12 @@
 
 /* Have host's _alloca */
 #cmakedefine HAVE__ALLOCA ${HAVE__ALLOCA}
+
+/* Define to 1 if you have the `_chsize_s' function. */
+#cmakedefine HAVE__CHSIZE_S ${HAVE__CHSIZE_S}
+
+/* Define to 1 if you have the `_Unwind_Backtrace' function. */
+#cmakedefine HAVE__UNWIND_BACKTRACE ${HAVE__UNWIND_BACKTRACE}
 
 /* Have host's __alloca */
 #cmakedefine HAVE___ALLOCA ${HAVE___ALLOCA}
@@ -536,8 +539,5 @@
 
 /* Define to a function implementing strdup */
 #cmakedefine strdup ${strdup}
-
-/* Define to 1 if you have the `_chsize_s' function. */
-#cmakedefine HAVE__CHSIZE_S ${HAVE__CHSIZE_S}
 
 #endif
