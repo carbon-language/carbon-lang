@@ -48,9 +48,6 @@
    */
 #cmakedefine HAVE_DIRENT_H ${HAVE_DIRENT_H}
 
-/* Define if you have the GNU dld library. */
-#undef HAVE_DLD
-
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #cmakedefine HAVE_DLFCN_H ${HAVE_DLFCN_H}
 
