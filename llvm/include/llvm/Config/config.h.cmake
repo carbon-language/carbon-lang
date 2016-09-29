@@ -90,11 +90,11 @@
 /* Define to 1 if you have the <ffi.h> header file. */
 #cmakedefine HAVE_FFI_H ${HAVE_FFI_H}
 
-/* Define to 1 if you have the `futimes' function. */
-#cmakedefine HAVE_FUTIMES ${HAVE_FUTIMES}
-
 /* Define to 1 if you have the `futimens' function */
 #cmakedefine HAVE_FUTIMENS ${HAVE_FUTIMENS}
+
+/* Define to 1 if you have the `futimes' function. */
+#cmakedefine HAVE_FUTIMES ${HAVE_FUTIMES}
 
 /* Define to 1 if you have the `getcwd' function. */
 #cmakedefine HAVE_GETCWD ${HAVE_GETCWD}
