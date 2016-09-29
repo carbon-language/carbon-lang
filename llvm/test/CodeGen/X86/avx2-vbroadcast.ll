@@ -1605,9 +1605,6 @@ eintry:
   ret void
 }
 
-; X64-LABEL: isel_crash_2q
-; X64: vpbroadcastq {{[^,]+}}, %xmm{{[0-9]+}}
-; X64: ret
 define void @isel_crash_2q(i64* %cV_R.addr) {
 ; X32-AVX2-LABEL: isel_crash_2q:
 ; X32-AVX2:       ## BB#0: ## %entry
@@ -1681,9 +1678,6 @@ entry:
   ret void
 }
 
-; X64-LABEL: isel_crash_4q
-; X64: vbroadcastsd {{[^,]+}}, %ymm{{[0-9]+}}
-; X64: ret
 define void @isel_crash_4q(i64* %cV_R.addr) {
 ; X32-AVX2-LABEL: isel_crash_4q:
 ; X32-AVX2:       ## BB#0: ## %eintry
