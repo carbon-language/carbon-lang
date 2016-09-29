@@ -542,6 +542,8 @@ void PhdrEntry<ELFT>::add(OutputSectionBase<ELFT> *Sec) {
   if (!First)
     First = Sec;
   H.p_align = std::max<typename ELFT::uint>(H.p_align, Sec->getAlignment());
+  if (H.p_type == PT_LOAD && !Config->OFormatBinary)
+    Sec->FirstInPtLoad = First;
 }
 
 template <class ELFT>
@@ -1190,7 +1192,13 @@ static uintX_t getFileAlignment(uintX_t Off, OutputSectionBase<ELFT> *Sec) {
   // and does not need any other offset adjusting.
   if (Config->Relocatable || !(Sec->getFlags() & SHF_ALLOC))
     return Off;
-  return alignTo(Off, Config->MaxPageSize, Sec->getVA());
+
+  OutputSectionBase<ELFT> *First = Sec->FirstInPtLoad;
+  // If two sections share the same PT_LOAD the file offset is calculated using
+  // this formula: Off2 = Off1 + (VA2 - VA1).
+  if (!First || Sec == First)
+    return alignTo(Off, Target->MaxPageSize, Sec->getVA());
+  return First->getFileOffset() + Sec->getVA() - First->getVA();
 }
 
 template <class ELFT, class uintX_t>
