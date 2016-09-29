@@ -544,7 +544,7 @@ void PhdrEntry<ELFT>::add(OutputSectionBase<ELFT> *Sec) {
   if (!First)
     First = Sec;
   H.p_align = std::max<typename ELFT::uint>(H.p_align, Sec->getAlignment());
-  if (H.p_type == PT_LOAD && !Config->OFormatBinary)
+  if (H.p_type == PT_LOAD)
     Sec->FirstInPtLoad = First;
 }
 
