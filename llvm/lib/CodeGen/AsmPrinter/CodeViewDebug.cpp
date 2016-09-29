@@ -1222,20 +1222,20 @@ TypeIndex CodeViewDebug::lowerTypeBasic(const DIBasicType *Ty) {
     break;
   case dwarf::DW_ATE_signed:
     switch (ByteSize) {
-    case 1:  STK = SimpleTypeKind::SByte;      break;
-    case 2:  STK = SimpleTypeKind::Int16Short; break;
-    case 4:  STK = SimpleTypeKind::Int32;      break;
-    case 8:  STK = SimpleTypeKind::Int64Quad;  break;
-    case 16: STK = SimpleTypeKind::Int128Oct;  break;
+    case 1:  STK = SimpleTypeKind::SignedCharacter; break;
+    case 2:  STK = SimpleTypeKind::Int16Short;      break;
+    case 4:  STK = SimpleTypeKind::Int32;           break;
+    case 8:  STK = SimpleTypeKind::Int64Quad;       break;
+    case 16: STK = SimpleTypeKind::Int128Oct;       break;
     }
     break;
   case dwarf::DW_ATE_unsigned:
     switch (ByteSize) {
-    case 1:  STK = SimpleTypeKind::Byte;        break;
-    case 2:  STK = SimpleTypeKind::UInt16Short; break;
-    case 4:  STK = SimpleTypeKind::UInt32;      break;
-    case 8:  STK = SimpleTypeKind::UInt64Quad;  break;
-    case 16: STK = SimpleTypeKind::UInt128Oct;  break;
+    case 1:  STK = SimpleTypeKind::UnsignedCharacter; break;
+    case 2:  STK = SimpleTypeKind::UInt16Short;       break;
+    case 4:  STK = SimpleTypeKind::UInt32;            break;
+    case 8:  STK = SimpleTypeKind::UInt64Quad;        break;
+    case 16: STK = SimpleTypeKind::UInt128Oct;        break;
     }
     break;
   case dwarf::DW_ATE_UTF:
