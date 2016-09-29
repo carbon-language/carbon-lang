@@ -285,7 +285,7 @@
 #cmakedefine HAVE_STRTOQ ${HAVE_STRTOQ}
 
 /* Define to 1 if you have the `sysconf' function. */
-#undef HAVE_SYSCONF
+#cmakedefine HAVE_SYSCONF ${HAVE_SYSCONF}
 
 /* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
    */
