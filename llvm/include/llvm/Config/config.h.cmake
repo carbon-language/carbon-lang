@@ -160,9 +160,6 @@
 /* Define to 1 if you have the <mach/mach.h> header file. */
 #cmakedefine HAVE_MACH_MACH_H ${HAVE_MACH_MACH_H}
 
-/* Define to 1 if you have the <mach-o/dyld.h> header file. */
-#cmakedefine HAVE_MACH_O_DYLD_H ${HAVE_MACH_O_DYLD_H}
-
 /* Define if mallinfo() is available on this platform. */
 #cmakedefine HAVE_MALLINFO ${HAVE_MALLINFO}
 
