@@ -342,7 +342,7 @@ The compler will also insert a module constructor that will call
 
    // The guards are [start, stop).
    // This function may be called multiple times with the same values of start/stop.
-   __sanitizer_cov_trace_pc_guard_init(uint32_t_t *start, uint32_t *stop);
+   __sanitizer_cov_trace_pc_guard_init(uint32_t *start, uint32_t *stop);
 
 Similarly to `trace-pc,indirect-calls`, with `trace-pc-guards,indirect-calls`
 ``__sanitizer_cov_trace_pc_indirect(void *callee)`` will be inserted on every indirect call.
