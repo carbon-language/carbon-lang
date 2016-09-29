@@ -43,7 +43,7 @@ Here are the steps you can follow to do so:
 #. Create a buildslave in context of that buildslave account.  Point it to
    the **lab.llvm.org** port **9990** (see `Buildbot documentation,
    Creating a slave
-   <http://buildbot.net/buildbot/docs/current/full.html#creating-a-slave>`_
+   <http://docs.buildbot.net/current/tutorial/firstrun.html#creating-a-slave>`_
    for more details) by running the following command:
 
     .. code-block:: bash
