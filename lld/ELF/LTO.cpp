@@ -37,7 +37,7 @@ static void diagnosticHandler(const DiagnosticInfo &DI) {
   raw_svector_ostream OS(ErrStorage);
   DiagnosticPrinterRawOStream DP(OS);
   DI.print(DP);
-  warning(ErrStorage);
+  warn(ErrStorage);
 }
 
 static std::unique_ptr<lto::LTO> createLTO() {

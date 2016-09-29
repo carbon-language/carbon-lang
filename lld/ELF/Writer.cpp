@@ -320,7 +320,7 @@ template <class ELFT> static void reportUndefined(SymbolBody *Sym) {
   if (Sym->File)
     Msg += " in " + getFilename(Sym->File);
   if (Config->UnresolvedSymbols == UnresolvedPolicy::Warn)
-    warning(Msg);
+    warn(Msg);
   else
     error(Msg);
 }
