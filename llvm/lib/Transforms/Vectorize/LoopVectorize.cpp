@@ -213,32 +213,6 @@ static cl::opt<unsigned> PragmaVectorizeSCEVCheckThreshold(
     cl::desc("The maximum number of SCEV checks allowed with a "
              "vectorize(enable) pragma"));
 
-namespace {
-
-// Forward declarations.
-class LoopVectorizeHints;
-class LoopVectorizationLegality;
-class LoopVectorizationCostModel;
-class LoopVectorizationRequirements;
-
-/// Returns true if the given loop body has a cycle, excluding the loop
-/// itself.
-static bool hasCyclesInLoopBody(const Loop &L) {
-  if (!L.empty())
-    return true;
-
-  for (const auto &SCC :
-       make_range(scc_iterator<Loop, LoopBodyTraits>::begin(L),
-                  scc_iterator<Loop, LoopBodyTraits>::end(L))) {
-    if (SCC.size() > 1) {
-      DEBUG(dbgs() << "LVL: Detected a cycle in the loop body:\n");
-      DEBUG(L.dump());
-      return true;
-    }
-  }
-  return false;
-}
-
 /// Create an analysis remark that explains why vectorization failed
 ///
 /// \p PassName is the name of the pass (e.g. can be AlwaysPrint).  \p
@@ -263,6 +237,32 @@ createMissedAnalysis(const char *PassName, StringRef RemarkName, Loop *TheLoop,
   OptimizationRemarkAnalysis R(PassName, RemarkName, DL, CodeRegion);
   R << "loop not vectorized: ";
   return R;
+}
+
+namespace {
+
+// Forward declarations.
+class LoopVectorizeHints;
+class LoopVectorizationLegality;
+class LoopVectorizationCostModel;
+class LoopVectorizationRequirements;
+
+/// Returns true if the given loop body has a cycle, excluding the loop
+/// itself.
+static bool hasCyclesInLoopBody(const Loop &L) {
+  if (!L.empty())
+    return true;
+
+  for (const auto &SCC :
+       make_range(scc_iterator<Loop, LoopBodyTraits>::begin(L),
+                  scc_iterator<Loop, LoopBodyTraits>::end(L))) {
+    if (SCC.size() > 1) {
+      DEBUG(dbgs() << "LVL: Detected a cycle in the loop body:\n");
+      DEBUG(L.dump());
+      return true;
+    }
+  }
+  return false;
 }
 
 /// \brief This modifies LoopAccessReport to initialize message with
