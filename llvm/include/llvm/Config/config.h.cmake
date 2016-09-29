@@ -148,7 +148,10 @@
 /* Define to 1 if you have the <mach/mach.h> header file. */
 #cmakedefine HAVE_MACH_MACH_H ${HAVE_MACH_MACH_H}
 
-/* Define if mallinfo() is available on this platform. */
+/* Define to 1 if you have the `mallctl` function. */
+#cmakedefine HAVE_MALLCTL ${HAVE_MALLCTL}
+
+/* Define to 1 if you have the `mallinfo' function. */
 #cmakedefine HAVE_MALLINFO ${HAVE_MALLINFO}
 
 /* Define to 1 if you have the <malloc.h> header file. */
@@ -159,9 +162,6 @@
 
 /* Define to 1 if you have the `malloc_zone_statistics' function. */
 #cmakedefine HAVE_MALLOC_ZONE_STATISTICS ${HAVE_MALLOC_ZONE_STATISTICS}
-
-/* Define to 1 if you have the `mallctl` function. */
-#cmakedefine HAVE_MALLCTL ${HAVE_MALLCTL}
 
 /* Define to 1 if you have the `mkdtemp' function. */
 #cmakedefine HAVE_MKDTEMP ${HAVE_MKDTEMP}
