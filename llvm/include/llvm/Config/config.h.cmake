@@ -16,9 +16,6 @@
 /* Define if position independent code is enabled */
 #cmakedefine ENABLE_PIC
 
-/* Define to 1 if you have the `arc4random' function. */
-#cmakedefine HAVE_DECL_ARC4RANDOM ${HAVE_DECL_ARC4RANDOM}
-
 /* Define to 1 if you have the `backtrace' function. */
 #cmakedefine HAVE_BACKTRACE ${HAVE_BACKTRACE}
 
@@ -33,6 +30,10 @@
 
 /* can use __crashreporter_info__ */
 #undef HAVE_CRASHREPORTER_INFO
+
+/* Define to 1 if you have the declaration of `arc4random', and to 0 if you
+   don't. */
+#cmakedefine01 HAVE_DECL_ARC4RANDOM
 
 /* Define to 1 if you have the declaration of `FE_ALL_EXCEPT', and to 0 if you
    don't. */
