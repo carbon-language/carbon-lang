@@ -120,8 +120,7 @@ std::vector<InputFile *> BitcodeCompiler::compile() {
   unsigned MaxTasks = LtoObj->getMaxTasks();
   Buff.resize(MaxTasks);
 
-  auto AddStream =
-      [&](size_t Task) -> std::unique_ptr<lto::NativeObjectStream> {
+  auto AddStream = [&](size_t Task) {
     return llvm::make_unique<lto::NativeObjectStream>(
         llvm::make_unique<llvm::raw_svector_ostream>(Buff[Task]));
   };
