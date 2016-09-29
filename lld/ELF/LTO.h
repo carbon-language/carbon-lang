@@ -23,6 +23,8 @@
 
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/SmallString.h"
+#include <memory>
+#include <vector>
 
 namespace llvm {
 namespace lto {
