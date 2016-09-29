@@ -169,7 +169,7 @@ arch() {
 
 SYMBOLIZER_FORMAT=$(arch symbolizer.o)
 echo "Injecting $SYMBOLIZER_FORMAT symbolizer..."
-for A in $TARGE_DIR/*.a; do
+for A in $TARGE_DIR/libclang_rt.*san*.a; do
   A_FORMAT=$(arch $A)
   if [[ "$A_FORMAT" != "$SYMBOLIZER_FORMAT" ]] ; then
     continue
