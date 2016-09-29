@@ -5,7 +5,7 @@ declare <4 x float> @foo(<4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 
 ; In AVX512 without VLX we can't spill XMM16-31 with vmovaps as its not available. Instead we need to use vextractf32x4 to spill since it can encode the ZMM super register and can store the lower 128-bits.
 
 define <4 x float> @bar(<4 x float>* %a1p, <4 x float>* %a2p, <4 x float> %a3, <4 x float> %a4, <16 x float>%c1, <16 x float>%c2) {
-; CHECK: vextractf32x4	$0, %zmm16, {{[0-9]+}}(%rsp) ## 16-byte Folded Spill
+; CHECK: vextractf32x4	$0, %zmm16, {{[0-9]+}}(%rsp) # 16-byte Folded Spill
   %a1 = shufflevector <16 x float>%c1, <16 x float>%c2, <4 x i32> <i32 4, i32 20, i32 1, i32 17>
 
   %a2 = shufflevector <16 x float>%c1, <16 x float>%c2, <4 x i32> <i32 4, i32 21, i32 1, i32 17>
