@@ -98,6 +98,7 @@ static bool extractConstantMask(const Constant *C, unsigned MaskEltSizeInBits,
 void DecodePSHUFBMask(const Constant *C, SmallVectorImpl<int> &ShuffleMask) {
   Type *MaskTy = C->getType();
   unsigned MaskTySize = MaskTy->getPrimitiveSizeInBits();
+  (void)MaskTySize;
   assert(MaskTySize == 128 || MaskTySize == 256 || MaskTySize == 512);
 
   // The shuffle mask requires a byte vector.
@@ -136,6 +137,7 @@ void DecodeVPERMILPMask(const Constant *C, unsigned ElSize,
                         SmallVectorImpl<int> &ShuffleMask) {
   Type *MaskTy = C->getType();
   unsigned MaskTySize = MaskTy->getPrimitiveSizeInBits();
+  (void)MaskTySize;
   assert(MaskTySize == 128 || MaskTySize == 256 || MaskTySize == 512);
   assert(ElSize == 32 || ElSize == 64);
 
@@ -171,6 +173,7 @@ void DecodeVPERMIL2PMask(const Constant *C, unsigned M2Z, unsigned ElSize,
                          SmallVectorImpl<int> &ShuffleMask) {
   Type *MaskTy = C->getType();
   unsigned MaskTySize = MaskTy->getPrimitiveSizeInBits();
+  (void)MaskTySize;
   assert(MaskTySize == 128 || MaskTySize == 256);
 
   // The shuffle mask requires elements the same size as the target.
@@ -221,8 +224,7 @@ void DecodeVPERMIL2PMask(const Constant *C, unsigned M2Z, unsigned ElSize,
 }
 
 void DecodeVPPERMMask(const Constant *C, SmallVectorImpl<int> &ShuffleMask) {
-  Type *MaskTy = C->getType();
-  assert(MaskTy->getPrimitiveSizeInBits() == 128);
+  assert(C->getType()->getPrimitiveSizeInBits() == 128);
 
   // The shuffle mask requires a byte vector.
   SmallBitVector UndefElts;
