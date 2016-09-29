@@ -1,3 +1,4 @@
+_GLOBAL_OFFSET_TABLE_ U
 _ZN11__sanitizer13internal_mmapEPvmiiiy U
 _ZN11__sanitizer13internal_openEPKcij U
 _ZN11__sanitizer13internal_statEPKcPv U
@@ -20,6 +21,8 @@ __sanitizer_symbolize_data T
 __sanitizer_symbolize_demangle T
 __sanitizer_symbolize_flush T
 __strdup U
+__udivdi3 U
+__umoddi3 U
 _exit U
 abort U
 access U
