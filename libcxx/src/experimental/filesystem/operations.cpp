@@ -544,16 +544,14 @@ file_time_type __last_write_time(const path& p, std::error_code *ec)
         set_or_throw(m_ec, ec, "last_write_time", p);
         return file_time_type::min();
     }
+    if (ec) ec->clear();
+    auto ts = detail::extract_mtime(st);
 #ifndef _LIBCPP_HAS_NO_INT128
     using IntMax = __int128_t;
-#else
-    using IntMax = intmax_t;
-#endif
     // FIXME: The value may not be representable as file_time_type. Fix
     // file_time_type so it can represent all possible values returned by the
     // filesystem. For now we do the calculation with the largest possible types
     // and then truncate, this prevents signed integer overflow bugs.
-    auto ts = detail::extract_mtime(st);
     const auto NsDur = duration<IntMax, nano>(ts.tv_nsec) + seconds(ts.tv_sec);
     if (NsDur > file_time_type::max().time_since_epoch() ||
         NsDur < file_time_type::min().time_since_epoch()) {
@@ -561,8 +559,12 @@ file_time_type __last_write_time(const path& p, std::error_code *ec)
                      "last_write_time", p);
         return file_time_type::min();
     }
-     if (ec) ec->clear();
     return file_time_type(duration_cast<file_time_type::duration>(NsDur));
+#else
+    // FIXME the under/overflow check done above overflows if we don't have
+    // a 128 bit integer type.
+    return file_time_type::clock::from_time_t(ts.tv_sec);
+#endif
 }
 
 void __last_write_time(const path& p, file_time_type new_time,
