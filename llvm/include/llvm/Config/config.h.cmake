@@ -221,9 +221,6 @@
 /* Define to 1 if you have the <stdint.h> header file. */
 #cmakedefine HAVE_STDINT_H ${HAVE_STDINT_H}
 
-/* Define to 1 if you have the `strdup' function. */
-#cmakedefine HAVE_STRDUP ${HAVE_STRDUP}
-
 /* Define to 1 if you have the `strerror' function. */
 #cmakedefine HAVE_STRERROR ${HAVE_STRERROR}
 
