@@ -815,13 +815,11 @@ template <class ELFT> std::vector<StringRef> LazyObjectFile::getElfSymbols() {
 }
 
 std::vector<StringRef> LazyObjectFile::getBitcodeSymbols() {
-  std::vector<StringRef> V;
   std::unique_ptr<lto::InputFile> Obj = check(lto::InputFile::create(this->MB));
-  for (auto &ObjSym : Obj->symbols()) {
-    if (ObjSym.getFlags() & BasicSymbolRef::SF_Undefined)
-      continue;
-    V.push_back(Saver.save(ObjSym.getName()));
-  }
+  std::vector<StringRef> V;
+  for (const lto::InputFile::Symbol &Sym : Obj->symbols())
+    if (!(Sym.getFlags() & BasicSymbolRef::SF_Undefined))
+      V.push_back(Saver.save(Sym.getName()));
   return V;
 }
 
