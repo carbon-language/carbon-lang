@@ -1698,6 +1698,31 @@ private:
     emitAnalysisDiag(TheLoop, *Hints, *ORE, Message);
   }
 
+  /// Create an analysis remark that explains why vectorization failed
+  ///
+  /// \p RemarkName is the identifier for the remark.  If \p I is passed it is
+  /// an instruction that prevents vectorization.  Otherwise the loop is used
+  /// for the location of the remark.  \return the remark object that can be
+  /// streamed to.
+  OptimizationRemarkAnalysis
+  createMissedAnalysis(StringRef RemarkName, Instruction *I = nullptr) const {
+    Value *CodeRegion = TheLoop->getHeader();
+    DebugLoc DL = TheLoop->getStartLoc();
+
+    if (I) {
+      CodeRegion = I->getParent();
+      // If there is no debug location attached to the instruction, revert back
+      // to using the loop's.
+      if (I->getDebugLoc())
+        DL = I->getDebugLoc();
+    }
+
+    OptimizationRemarkAnalysis R(Hints->vectorizeAnalysisPassName(), RemarkName,
+                                 DL, CodeRegion);
+    R << "loop not vectorized: ";
+    return R;
+  }
+
   /// \brief If an access has a symbolic strides, this maps the pointer value to
   /// the stride symbol.
   const ValueToValueMap *getSymbolicStrides() {
@@ -4804,7 +4829,8 @@ static bool canIfConvertPHINodes(BasicBlock *BB) {
 
 bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
   if (!EnableIfConversion) {
-    emitAnalysis(VectorizationReport() << "if-conversion is disabled");
+    ORE->emit(createMissedAnalysis("IfConversionDisabled")
+              << "if-conversion is disabled");
     return false;
   }
 
@@ -4828,21 +4854,21 @@ bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
   for (BasicBlock *BB : TheLoop->blocks()) {
     // We don't support switch statements inside loops.
     if (!isa<BranchInst>(BB->getTerminator())) {
-      emitAnalysis(VectorizationReport(BB->getTerminator())
-                   << "loop contains a switch statement");
+      ORE->emit(createMissedAnalysis("LoopContainsSwitch", BB->getTerminator())
+                << "loop contains a switch statement");
       return false;
     }
 
     // We must be able to predicate all blocks that need to be predicated.
     if (blockNeedsPredication(BB)) {
       if (!blockCanBePredicated(BB, SafePointes)) {
-        emitAnalysis(VectorizationReport(BB->getTerminator())
-                     << "control flow cannot be substituted for a select");
+        ORE->emit(createMissedAnalysis("NoCFGForSelect", BB->getTerminator())
+                  << "control flow cannot be substituted for a select");
         return false;
       }
     } else if (BB != Header && !canIfConvertPHINodes(BB)) {
-      emitAnalysis(VectorizationReport(BB->getTerminator())
-                   << "control flow cannot be substituted for a select");
+      ORE->emit(createMissedAnalysis("NoCFGForSelect", BB->getTerminator())
+                << "control flow cannot be substituted for a select");
       return false;
     }
   }
@@ -4855,8 +4881,8 @@ bool LoopVectorizationLegality::canVectorize() {
   // We must have a loop in canonical form. Loops with indirectbr in them cannot
   // be canonicalized.
   if (!TheLoop->getLoopPreheader()) {
-    emitAnalysis(VectorizationReport()
-                 << "loop control flow is not understood by vectorizer");
+    ORE->emit(createMissedAnalysis("CFGNotUnderstood")
+              << "loop control flow is not understood by vectorizer");
     return false;
   }
 
@@ -4865,21 +4891,22 @@ bool LoopVectorizationLegality::canVectorize() {
   //
   // We can only vectorize innermost loops.
   if (!TheLoop->empty()) {
-    emitAnalysis(VectorizationReport() << "loop is not the innermost loop");
+    ORE->emit(createMissedAnalysis("NotInnermostLoop")
+              << "loop is not the innermost loop");
     return false;
   }
 
   // We must have a single backedge.
   if (TheLoop->getNumBackEdges() != 1) {
-    emitAnalysis(VectorizationReport()
-                 << "loop control flow is not understood by vectorizer");
+    ORE->emit(createMissedAnalysis("CFGNotUnderstood")
+              << "loop control flow is not understood by vectorizer");
     return false;
   }
 
   // We must have a single exiting block.
   if (!TheLoop->getExitingBlock()) {
-    emitAnalysis(VectorizationReport()
-                 << "loop control flow is not understood by vectorizer");
+    ORE->emit(createMissedAnalysis("CFGNotUnderstood")
+              << "loop control flow is not understood by vectorizer");
     return false;
   }
 
@@ -4887,8 +4914,8 @@ bool LoopVectorizationLegality::canVectorize() {
   // checked at the end of each iteration. With that we can assume that all
   // instructions in the loop are executed the same number of times.
   if (TheLoop->getExitingBlock() != TheLoop->getLoopLatch()) {
-    emitAnalysis(VectorizationReport()
-                 << "loop control flow is not understood by vectorizer");
+    ORE->emit(createMissedAnalysis("CFGNotUnderstood")
+              << "loop control flow is not understood by vectorizer");
     return false;
   }
 
@@ -4906,8 +4933,8 @@ bool LoopVectorizationLegality::canVectorize() {
   // ScalarEvolution needs to be able to find the exit count.
   const SCEV *ExitCount = PSE.getBackedgeTakenCount();
   if (ExitCount == PSE.getSE()->getCouldNotCompute()) {
-    emitAnalysis(VectorizationReport()
-                 << "could not determine number of loop iterations");
+    ORE->emit(createMissedAnalysis("CantComputeNumberOfIterations")
+              << "could not determine number of loop iterations");
     DEBUG(dbgs() << "LV: SCEV could not compute the loop exit count.\n");
     return false;
   }
@@ -4951,9 +4978,9 @@ bool LoopVectorizationLegality::canVectorize() {
     SCEVThreshold = PragmaVectorizeSCEVCheckThreshold;
 
   if (PSE.getUnionPredicate().getComplexity() > SCEVThreshold) {
-    emitAnalysis(VectorizationReport()
-                 << "Too many SCEV assumptions need to be made and checked "
-                 << "at runtime");
+    ORE->emit(createMissedAnalysis("TooManySCEVRunTimeChecks")
+              << "Too many SCEV assumptions need to be made and checked "
+              << "at runtime");
     DEBUG(dbgs() << "LV: Too many SCEV checks needed.\n");
     return false;
   }
@@ -5059,8 +5086,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
         // Check that this PHI type is allowed.
         if (!PhiTy->isIntegerTy() && !PhiTy->isFloatingPointTy() &&
             !PhiTy->isPointerTy()) {
-          emitAnalysis(VectorizationReport(Phi)
-                       << "loop control flow is not understood by vectorizer");
+          ORE->emit(createMissedAnalysis("CFGNotUnderstood", Phi)
+                    << "loop control flow is not understood by vectorizer");
           DEBUG(dbgs() << "LV: Found an non-int non-pointer PHI.\n");
           return false;
         }
@@ -5073,16 +5100,16 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
           // identified reduction value with an outside user.
           if (!hasOutsideLoopUser(TheLoop, Phi, AllowedExit))
             continue;
-          emitAnalysis(VectorizationReport(Phi)
-                       << "value could not be identified as "
-                          "an induction or reduction variable");
+          ORE->emit(createMissedAnalysis("NeitherInductionNorReduction", Phi)
+                    << "value could not be identified as "
+                       "an induction or reduction variable");
           return false;
         }
 
         // We only allow if-converted PHIs with exactly two incoming values.
         if (Phi->getNumIncomingValues() != 2) {
-          emitAnalysis(VectorizationReport(Phi)
-                       << "control flow not understood by vectorizer");
+          ORE->emit(createMissedAnalysis("CFGNotUnderstood", Phi)
+                    << "control flow not understood by vectorizer");
           DEBUG(dbgs() << "LV: Found an invalid PHI.\n");
           return false;
         }
@@ -5116,9 +5143,9 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
           continue;
         }
 
-        emitAnalysis(VectorizationReport(Phi)
-                     << "value that could not be identified as "
-                        "reduction is used outside the loop");
+        ORE->emit(createMissedAnalysis("NonReductionValueUsedOutsideLoop", Phi)
+                  << "value that could not be identified as "
+                     "reduction is used outside the loop");
         DEBUG(dbgs() << "LV: Found an unidentified PHI." << *Phi << "\n");
         return false;
       } // end of PHI handling
@@ -5132,8 +5159,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
           !isa<DbgInfoIntrinsic>(CI) &&
           !(CI->getCalledFunction() && TLI &&
             TLI->isFunctionVectorizable(CI->getCalledFunction()->getName()))) {
-        emitAnalysis(VectorizationReport(CI)
-                     << "call instruction cannot be vectorized");
+        ORE->emit(createMissedAnalysis("CantVectorizeCall", CI)
+                  << "call instruction cannot be vectorized");
         DEBUG(dbgs() << "LV: Found a non-intrinsic, non-libfunc callsite.\n");
         return false;
       }
@@ -5144,8 +5171,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
                     getVectorIntrinsicIDForCall(CI, TLI), 1)) {
         auto *SE = PSE.getSE();
         if (!SE->isLoopInvariant(PSE.getSCEV(CI->getOperand(1)), TheLoop)) {
-          emitAnalysis(VectorizationReport(CI)
-                       << "intrinsic instruction cannot be vectorized");
+          ORE->emit(createMissedAnalysis("CantVectorizeIntrinsic", CI)
+                    << "intrinsic instruction cannot be vectorized");
           DEBUG(dbgs() << "LV: Found unvectorizable intrinsic " << *CI << "\n");
           return false;
         }
@@ -5156,8 +5183,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
       if ((!VectorType::isValidElementType(I.getType()) &&
            !I.getType()->isVoidTy()) ||
           isa<ExtractElementInst>(I)) {
-        emitAnalysis(VectorizationReport(&I)
-                     << "instruction return type cannot be vectorized");
+        ORE->emit(createMissedAnalysis("CantVectorizeInstructionReturnType", &I)
+                  << "instruction return type cannot be vectorized");
         DEBUG(dbgs() << "LV: Found unvectorizable type.\n");
         return false;
       }
@@ -5166,8 +5193,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
       if (auto *ST = dyn_cast<StoreInst>(&I)) {
         Type *T = ST->getValueOperand()->getType();
         if (!VectorType::isValidElementType(T)) {
-          emitAnalysis(VectorizationReport(ST)
-                       << "store instruction cannot be vectorized");
+          ORE->emit(createMissedAnalysis("CantVectorizeStore", ST)
+                    << "store instruction cannot be vectorized");
           return false;
         }
 
@@ -5185,8 +5212,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
       // Reduction instructions are allowed to have exit users.
       // All other instructions must not have external users.
       if (hasOutsideLoopUser(TheLoop, &I, AllowedExit)) {
-        emitAnalysis(VectorizationReport(&I)
-                     << "value cannot be used outside the loop");
+        ORE->emit(createMissedAnalysis("ValueUsedOutsideLoop", &I)
+                  << "value cannot be used outside the loop");
         return false;
       }
 
@@ -5196,8 +5223,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
   if (!Induction) {
     DEBUG(dbgs() << "LV: Did not find one integer induction var.\n");
     if (Inductions.empty()) {
-      emitAnalysis(VectorizationReport()
-                   << "loop induction variable could not be identified");
+      ORE->emit(createMissedAnalysis("NoInductionVariable")
+                << "loop induction variable could not be identified");
       return false;
     }
   }
@@ -5469,9 +5496,8 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     return false;
 
   if (LAI->hasStoreToLoopInvariantAddress()) {
-    emitAnalysis(
-        VectorizationReport()
-        << "write to a loop invariant address could not be vectorized");
+    ORE->emit(createMissedAnalysis("CantVectorizeStoreToLoopInvariantAddress")
+              << "write to a loop invariant address could not be vectorized");
     DEBUG(dbgs() << "LV: We don't allow storing to uniform addresses\n");
     return false;
   }
