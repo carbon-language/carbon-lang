@@ -21,9 +21,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SRC_DIR=$(readlink -f $SCRIPT_DIR/..)
-BUILD_DIR=$(readlink -f ./symbolizer)
 TARGE_DIR=$(readlink -f $1)
-mkdir -p $BUILD_DIR
 
 LLVM_SRC=$(readlink -f $SCRIPT_DIR/../../../../../..)
 
@@ -48,6 +46,10 @@ J="${J:-50}"
 CLANG="${CLANG:-`which clang`}"
 CLANG_DIR=$(readlink -f $(dirname "$CLANG"))
 
+BUILD_DIR=$(readlink -f ./symbolizer)
+mkdir -p $BUILD_DIR
+cd $BUILD_DIR
+
 CC=$CLANG_DIR/clang
 CXX=$CLANG_DIR/clang++
 TBLGEN=$CLANG_DIR/llvm-tblgen
@@ -55,15 +57,12 @@ LINK=$CLANG_DIR/llvm-link
 OPT=$CLANG_DIR/opt
 AR=$CLANG_DIR/llvm-ar
 
-if [[ ! -x "$CC" ||
-      ! -x "$CXX" ||
-      ! -x "$TBLGEN" ||
-      ! -x "$LINK" ||
-      ! -x "$OPT" ||
-      ! -x "$AR" ]]; then
- echo "Missing or incomplete CLANG_DIR"
- exit 1
-fi
+for F in $CC $CXX $TBLGEN $LINK $OPT $AR; do
+  if [[ ! -x "$F" ]]; then
+    echo "Missing $F"
+     exit 1
+  fi
+done
 
 ZLIB_BUILD=${BUILD_DIR}/zlib
 LIBCXX_BUILD=${BUILD_DIR}/libcxx
@@ -175,7 +174,7 @@ for A in $TARGE_DIR/*.a; do
   if [[ "$A_FORMAT" != "$SYMBOLIZER_FORMAT" ]] ; then
     continue
   fi
-  (nm -u $A | grep -E "__sanitizer_symbolize_code" >/dev/null) || continue
+  (nm -u $A 2>/dev/null | grep -E "__sanitizer_symbolize_code" >/dev/null) || continue
   echo "$A"
   $AR rcs $A symbolizer.o
 done
