@@ -34,6 +34,14 @@
 /* can use __crashreporter_info__ */
 #undef HAVE_CRASHREPORTER_INFO
 
+/* Define to 1 if you have the declaration of `FE_ALL_EXCEPT', and to 0 if you
+   don't. */
+#cmakedefine01 HAVE_DECL_FE_ALL_EXCEPT
+
+/* Define to 1 if you have the declaration of `FE_INEXACT', and to 0 if you
+   don't. */
+#cmakedefine01 HAVE_DECL_FE_INEXACT
+
 /* Define to 1 if you have the declaration of `strerror_s', and to 0 if you
    don't. */
 #cmakedefine01 HAVE_DECL_STRERROR_S
