@@ -75,7 +75,7 @@
 /* Define to 1 if you have the <ffi.h> header file. */
 #cmakedefine HAVE_FFI_H ${HAVE_FFI_H}
 
-/* Define to 1 if you have the `futimens' function */
+/* Define to 1 if you have the `futimens' function. */
 #cmakedefine HAVE_FUTIMENS ${HAVE_FUTIMENS}
 
 /* Define to 1 if you have the `futimes' function. */
@@ -123,7 +123,7 @@
 /* Define to 1 if you have the `shell32' library (-lshell32). */
 #cmakedefine HAVE_LIBSHELL32 ${HAVE_LIBSHELL32}
 
-/* Define to 1 if you have the 'z' library (-lz). */
+/* Define to 1 if you have the `z' library (-lz). */
 #cmakedefine HAVE_LIBZ ${HAVE_LIBZ}
 
 /* Define to 1 if you have the 'edit' library (-ledit). */
@@ -142,7 +142,7 @@
 /* Define to 1 if you have the <mach/mach.h> header file. */
 #cmakedefine HAVE_MACH_MACH_H ${HAVE_MACH_MACH_H}
 
-/* Define to 1 if you have the `mallctl` function. */
+/* Define to 1 if you have the `mallctl' function. */
 #cmakedefine HAVE_MALLCTL ${HAVE_MALLCTL}
 
 /* Define to 1 if you have the `mallinfo' function. */
