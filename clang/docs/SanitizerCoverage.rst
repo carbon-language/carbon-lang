@@ -385,7 +385,7 @@ Example:
     // Now you can get the PC and do whatever you want: 
     //   store it somewhere or symbolize it and print right away.
     // The values of `*guard` are as you set them in
-    // __sanitizer_cov_trace_pc_guard_init and so you can make the consecutive
+    // __sanitizer_cov_trace_pc_guard_init and so you can make them consecutive
     // and use them to dereference an array or a bit vector.
     void *PC = __builtin_return_address(0);
     char PcDescr[1024];
@@ -414,6 +414,18 @@ Example:
   INIT: 0x71bcd0 0x71bce0
   guard: 0x71bcd4 2 PC 0x4ecd5b in main trace-pc-guard-example.cc:2
   guard: 0x71bcd8 3 PC 0x4ecd9e in main trace-pc-guard-example.cc:3:7
+
+.. code-block:: console
+
+  ASAN_OPTIONS=strip_path_prefix=`pwd`/ ./a.out with-foo
+
+
+.. code-block:: console
+
+  INIT: 0x71bcd0 0x71bce0
+  guard: 0x71bcd4 2 PC 0x4ecd5b in main trace-pc-guard-example.cc:3
+  guard: 0x71bcdc 4 PC 0x4ecdc7 in main trace-pc-guard-example.cc:4:17
+  guard: 0x71bcd0 1 PC 0x4ecd20 in foo() trace-pc-guard-example.cc:2:14
 
 
 Tracing data flow
