@@ -38,6 +38,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 using namespace llvm::object;
@@ -362,6 +363,9 @@ private:
   /// range of [StartIndex to StartIndex + NumBlocks).
   void recomputeLandingPads(const unsigned StartIndex,
                             const unsigned NumBlocks);
+
+  /// Temporary holder of offsets that are potentially entry points.
+  std::unordered_set<uint64_t> EntryOffsets;
 
   using BranchListType = std::vector<std::pair<uint32_t, uint32_t>>;
   BranchListType TakenBranches; /// All local taken branches.
@@ -887,6 +891,20 @@ public:
     Names.emplace_back(NewName);
   }
 
+  /// Register an entry point at a given \p Offset into the function.
+  /// Return symbol associated with the entry.
+  MCSymbol *addEntryPointAtOffset(uint64_t Offset) {
+    EntryOffsets.emplace(Offset);
+    return getOrCreateLocalLabel(getAddress() + Offset);
+  }
+
+  /// Return true if there is a registered entry point at a given offset
+  /// into the function.
+  bool hasEntryPointAtOffset(uint64_t Offset) {
+    assert(!EntryOffsets.empty() && "entry points uninitialized or destroyed");
+    return EntryOffsets.count(Offset);
+  }
+
   /// Create a basic block at a given \p Offset in the
   /// function.
   /// If \p DeriveAlignment is true, set the alignment of the block based
@@ -1215,6 +1233,10 @@ public:
 
     return LSDASymbol;
   }
+
+  /// Return true iff the symbol could be seen inside this function otherwise
+  /// it is probably another function.
+  bool isSymbolValidInScope(const SymbolRef &Symbol, uint64_t SymbolSize) const;
 
   /// Disassemble function from raw data \p FunctionData.
   /// If successful, this function will populate the list of instructions

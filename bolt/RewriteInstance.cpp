@@ -41,6 +41,7 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Object/SymbolicFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Errc.h"
@@ -641,29 +642,61 @@ void RewriteInstance::run() {
 }
 
 void RewriteInstance::discoverFileObjects() {
-  std::string FileSymbolName;
-  bool SeenFileName = false;
-
   FileSymRefs.clear();
   BinaryFunctions.clear();
   BC->GlobalAddresses.clear();
 
-  // For local symbols we want to keep track of associated FILE symbol for
-  // disambiguation by name.
-  for (const SymbolRef &Symbol : InputFile->symbols()) {
-    // Keep undefined symbols for pretty printing?
+  // For local symbols we want to keep track of associated FILE symbol name for
+  // disambiguation by combined name.
+  StringRef  FileSymbolName;
+  bool SeenFileName = false;
+  struct SymbolRefHash {
+    std::size_t operator()(SymbolRef const &S) const {
+      return std::hash<decltype(DataRefImpl::p)>{}(S.getRawDataRefImpl().p);
+    }
+  };
+  std::unordered_map<SymbolRef, StringRef, SymbolRefHash> SymbolToFileName;
+  for (const auto &Symbol : InputFile->symbols()) {
     if (Symbol.getFlags() & SymbolRef::SF_Undefined)
       continue;
 
-    ErrorOr<StringRef> NameOrError = Symbol.getName();
-    check_error(NameOrError.getError(), "cannot get symbol name");
-
     if (Symbol.getType() == SymbolRef::ST_File) {
-      // Could be used for local symbol disambiguation.
+      ErrorOr<StringRef> NameOrError = Symbol.getName();
+      check_error(NameOrError.getError(), "cannot get symbol name for file");
       FileSymbolName = *NameOrError;
       SeenFileName = true;
       continue;
     }
+    if (!FileSymbolName.empty() &&
+        !(Symbol.getFlags() & SymbolRef::SF_Global)) {
+      SymbolToFileName[Symbol] = FileSymbolName;
+    }
+  }
+
+  // Sort symbols in the file by value.
+  std::vector<SymbolRef> SortedFileSymbols(InputFile->symbol_begin(),
+                                           InputFile->symbol_end());
+  std::stable_sort(SortedFileSymbols.begin(), SortedFileSymbols.end(),
+                   [](const SymbolRef &A, const SymbolRef &B) {
+                     // NOTYPE symbols have lower precedence.
+                     if (*(A.getAddress()) == *(B.getAddress())) {
+                       return A.getType() != SymbolRef::ST_Unknown &&
+                              B.getType() == SymbolRef::ST_Unknown;
+                     }
+                     return *(A.getAddress()) < *(B.getAddress());
+                   });
+
+  const BinaryFunction *PreviousFunction = nullptr;
+  for (const auto &Symbol : SortedFileSymbols) {
+    // Keep undefined symbols for pretty printing?
+    if (Symbol.getFlags() & SymbolRef::SF_Undefined)
+      continue;
+
+    if (Symbol.getType() == SymbolRef::ST_File)
+      continue;
+
+    ErrorOr<StringRef> NameOrError = Symbol.getName();
+    check_error(NameOrError.getError(), "cannot get symbol name");
 
     ErrorOr<uint64_t> AddressOrErr = Symbol.getAddress();
     check_error(AddressOrErr.getError(), "cannot get symbol address");
@@ -715,8 +748,10 @@ void RewriteInstance::discoverFileObjects() {
       // (e.g. from different directories).
       std::string Prefix = Name + "/";
       std::string AltPrefix;
-      if (!FileSymbolName.empty())
-        AltPrefix = Prefix + FileSymbolName + "/";
+      auto SFI = SymbolToFileName.find(Symbol);
+      if (SFI != SymbolToFileName.end()) {
+        AltPrefix = Prefix + std::string(SFI->second) + "/";
+      }
 
       auto uniquifyName = [&] (std::string NamePrefix) {
         unsigned LocalID = 1;
@@ -734,15 +769,6 @@ void RewriteInstance::discoverFileObjects() {
     if (!AlternativeName.empty())
       BC->registerNameAtAddress(AlternativeName, Address);
 
-    // Only consider ST_Function symbols for functions. Although this
-    // assumption  could be broken by assembly functions for which the type
-    // could be wrong, we skip such entries till the support for
-    // assembly is implemented.
-    if (Symbol.getType() != SymbolRef::ST_Function)
-      continue;
-
-    // TODO: populate address map with PLT entries for better readability.
-
     ErrorOr<section_iterator> SectionOrErr = Symbol.getSection();
     check_error(SectionOrErr.getError(), "cannot get symbol section");
     section_iterator Section = *SectionOrErr;
@@ -751,7 +777,68 @@ void RewriteInstance::discoverFileObjects() {
       continue;
     }
 
+    DEBUG(dbgs() << "BOLT-DEBUG: considering symbol " << UniqueName
+                 << " for function\n");
+
+    if (!Section->isText()) {
+      assert(Symbol.getType() != SymbolRef::ST_Function &&
+             "unexpected function inside non-code section");
+      DEBUG(dbgs() << "BOLT-DEBUG: rejecting as symbol is not in code\n");
+      continue;
+    }
+
     auto SymbolSize = ELFSymbolRef(Symbol).getSize();
+
+    // Assembly functions could be ST_NONE with 0 size. Check that the
+    // corresponding section is a code section and they are not inside any
+    // other known function to consider them.
+    //
+    // Sometimes assembly functions are not marked as functions and neither are
+    // their local labels. The only way to tell them apart is to look at
+    // symbol scope - global vs local.
+    if (Symbol.getType() != SymbolRef::ST_Function) {
+      if (Symbol.getType() != SymbolRef::ST_Unknown) {
+        DEBUG(dbgs() << "BOLT-DEBUG: rejecting as symbol is an object\n");
+        continue;
+      }
+      if (PreviousFunction) {
+        if (PreviousFunction->getSize() == 0) {
+          if (PreviousFunction->isSymbolValidInScope(Symbol, SymbolSize)) {
+            DEBUG(dbgs() << "BOLT-DEBUG: symbol is a function local symbol\n");
+            continue;
+          }
+        } else if (PreviousFunction->containsAddress(Address)) {
+          if (PreviousFunction->isSymbolValidInScope(Symbol, SymbolSize)) {
+            DEBUG(dbgs() << "BOLT-DEBUG: symbol is a function local symbol\n");
+            continue;
+          } else {
+            if (Address == PreviousFunction->getAddress() && SymbolSize == 0) {
+              DEBUG(dbgs() << "BOLT-DEBUG: ignoring symbol as a marker\n");
+              continue;
+            }
+            if (opts::Verbosity > 1) {
+              errs() << "BOLT-WARNING: symbol " << UniqueName
+                     << " seen in the middle of function "
+                     << *PreviousFunction << ". Could be a new entry.\n";
+            }
+            continue;
+          }
+        }
+      }
+    }
+
+    if (PreviousFunction &&
+        PreviousFunction->containsAddress(Address) &&
+        PreviousFunction->getAddress() != Address &&
+        SymbolSize == 0) {
+      if (opts::Verbosity >= 1) {
+        outs() << "BOLT-DEBUG: possibly another entry for function "
+               << *PreviousFunction << " : " << UniqueName << '\n';
+      }
+      continue;
+    }
+
+    // TODO: populate address map with PLT entries for better readability.
 
     // Checkout for conflicts with function data from FDEs.
     bool IsSimple = true;
@@ -821,6 +908,8 @@ void RewriteInstance::discoverFileObjects() {
     }
     if (!AlternativeName.empty())
       BF->addAlternativeName(AlternativeName);
+
+    PreviousFunction = BF;
   }
 
   if (!SeenFileName && BC->DR.hasLocalsWithFileName() && !opts::AllowStripped) {
@@ -830,6 +919,78 @@ void RewriteInstance::discoverFileObjects() {
               "profiled binary was not. If you know what you are doing and "
               "wish to proceed, use -allow-stripped option.\n";
     exit(1);
+  }
+
+  // Now that all the functions were created - adjust their boundaries.
+  adjustFunctionBoundaries();
+}
+
+void RewriteInstance::adjustFunctionBoundaries() {
+  for (auto &BFI : BinaryFunctions) {
+    auto &Function = BFI.second;
+
+    // Check if there's a symbol with a larger address in the same section.
+    // If there is - it determines the maximum size for the current function,
+    // otherwise, it is the size of containing section the defines it.
+    //
+    // NOTE: ignore some symbols that could be tolerated inside the body
+    //       of a function.
+    auto NextSymRefI = FileSymRefs.upper_bound(Function.getAddress());
+    while (NextSymRefI != FileSymRefs.end()) {
+      auto &Symbol = NextSymRefI->second;
+      auto SymbolSize = ELFSymbolRef(Symbol).getSize();
+
+      if (!Function.isSymbolValidInScope(Symbol, SymbolSize))
+        break;
+
+      // This is potentially another entry point into the function.
+      auto EntryOffset = NextSymRefI->first - Function.getAddress();
+      DEBUG(dbgs() << "BOLT-DEBUG: adding entry point to function "
+                   << Function << " at offset 0x"
+                   << Twine::utohexstr(EntryOffset) << '\n');
+      Function.addEntryPointAtOffset(EntryOffset);
+      Function.setSimple(false);
+
+      ++NextSymRefI;
+    }
+    auto NextSymRefSectionI = (NextSymRefI == FileSymRefs.end())
+      ? InputFile->section_end()
+      : NextSymRefI->second.getSection();
+
+    uint64_t MaxSize;
+    if (NextSymRefI != FileSymRefs.end() &&
+        NextSymRefI->second.getSection() &&
+        *NextSymRefI->second.getSection() != InputFile->section_end() &&
+        **NextSymRefI->second.getSection() == Function.getSection()) {
+      MaxSize = NextSymRefI->first - Function.getAddress();
+    } else {
+      // Function runs till the end of the containing section.
+      uint64_t SectionEnd = Function.getSection().getAddress() +
+                            Function.getSection().getSize();
+      assert((NextSymRefI == FileSymRefs.end() ||
+              NextSymRefI->first >= SectionEnd) &&
+             "different sections should not overlap");
+      MaxSize = SectionEnd - Function.getAddress();
+    }
+
+    if (MaxSize < Function.getSize()) {
+      if (opts::Verbosity > 1) {
+        errs() << "BOLT-WARNING: symbol seen in the middle of the function "
+               << Function << ". Skipping.\n";
+      }
+      Function.setSimple(false);
+      continue;
+    }
+    Function.setMaxSize(MaxSize);
+    if (!Function.getSize()) {
+      // Some assembly functions have their size set to 0, use the max
+      // size as their real size.
+      if (opts::Verbosity >= 1) {
+        outs() << "BOLT-INFO: setting size of function " << Function
+               << " to " << Function.getMaxSize() << " (was 0)\n";
+      }
+      Function.setSize(Function.getMaxSize());
+    }
   }
 }
 
@@ -929,51 +1090,6 @@ void RewriteInstance::disassembleFunctions() {
                << "empty for function " << Function << '\n';
       }
       continue;
-    }
-
-    // Set the proper maximum size value after the whole symbol table
-    // has been processed.
-    auto SymRefI = FileSymRefs.upper_bound(Function.getAddress());
-    if (SymRefI != FileSymRefs.end()) {
-      uint64_t MaxSize;
-      auto SectionIter = *SymRefI->second.getSection();
-      if (SectionIter != InputFile->section_end() &&
-          *SectionIter == Function.getSection()) {
-        MaxSize = SymRefI->first - Function.getAddress();
-      } else {
-        // Function runs till the end of the containing section assuming
-        // the section does not run over the next symbol.
-        uint64_t SectionEnd = Function.getSection().getAddress() +
-                              Function.getSection().getSize();
-        if (SectionEnd > SymRefI->first) {
-          if (opts::Verbosity >= 1) {
-            errs() << "BOLT-WARNING: symbol after " << Function
-                   << " should not be in the same section.\n";
-          }
-          MaxSize = 0;
-        } else {
-          MaxSize = SectionEnd - Function.getAddress();
-        }
-      }
-
-      if (MaxSize < Function.getSize()) {
-        if (opts::Verbosity >= 1) {
-          errs() << "BOLT-WARNING: symbol seen in the middle of the function "
-                 << Function << ". Skipping.\n";
-        }
-        Function.setSimple(false);
-        continue;
-      }
-      Function.setMaxSize(MaxSize);
-      if (!Function.getSize() && Function.getMaxSize()) {
-        // Some assembly functions have their size set to 0, use the max
-        // size as their real size.
-        if (opts::Verbosity >= 1) {
-          outs() << "BOLT-INFO: setting size of function " << Function
-                 << " to " << Function.getMaxSize() << " (was 0)\n";
-        }
-        Function.setSize(Function.getMaxSize());
-      }
     }
 
     // Treat zero-sized functions as non-simple ones.

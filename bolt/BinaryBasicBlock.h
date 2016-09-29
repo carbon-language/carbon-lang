@@ -84,6 +84,10 @@ private:
   /// Number of pseudo instructions in this block.
   uint32_t NumPseudos{0};
 
+  /// True if this basic block is (potentially) an external entry point into
+  /// the function.
+  bool IsEntryPoint{false};
+
   /// In cases where the parent function has been split, IsCold == true means
   /// this BB will be allocated outside its parent function.
   bool IsCold{false};
@@ -469,6 +473,14 @@ public:
     ExecutionCount = Count;
   }
 
+  bool isEntryPoint() const {
+    return IsEntryPoint;
+  }
+
+  void setEntryPoint(bool Value = true) {
+    IsEntryPoint = Value;
+  }
+
   bool isValid() const {
     return IsValid;
   }
@@ -476,7 +488,7 @@ public:
   void markValid(const bool Valid) {
     IsValid = Valid;
   }
-  
+
   bool isCold() const {
     return IsCold;
   }

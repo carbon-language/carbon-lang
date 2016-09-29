@@ -789,9 +789,11 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
     DeletedBytes += Bytes;
     if (Count) {
       Modified.insert(&Function);
-      DEBUG(dbgs() << "BOLT-INFO: Removed " << Count
-                   << " dead basic block(s) accounting for " << Bytes
-                   << " bytes in function " << Function << '\n');
+      if (opts::Verbosity >= 1) {
+        outs() << "BOLT-INFO: Removed " << Count
+               << " dead basic block(s) accounting for " << Bytes
+               << " bytes in function " << Function << '\n';
+      }
     }
   }
 }
@@ -1034,7 +1036,7 @@ void Peepholes::fixDoubleJumps(BinaryContext &BC,
 
     if (BB.getNumNonPseudos() != 1 || BB.isLandingPad())
       continue;
-      
+
     auto *Inst = BB.getFirstNonPseudo();
     const bool IsTailCall = BC.MIA->isTailCall(*Inst);
 
@@ -1463,7 +1465,7 @@ void PrintSortedBy::runOnFunctions(
       }
       outs() << ")";
     }
-      
+
     outs() << " are:\n";
     auto SFI = Functions.begin();
     for (unsigned i = 0; i < 100 && SFI != Functions.end(); ++SFI, ++i) {

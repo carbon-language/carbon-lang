@@ -183,6 +183,10 @@ private:
   /// new sections.
   void discoverStorage();
 
+  /// Adjust function sizes and set proper maximum size values after the whole
+  /// symbol table has been processed.
+  void adjustFunctionBoundaries();
+
   /// Rewrite non-allocatable sections with modifications.
   void rewriteNoteSections();
 

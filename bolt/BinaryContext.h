@@ -164,6 +164,10 @@ public:
   /// return the first one.
   MCSymbol *getOrCreateGlobalSymbol(uint64_t Address, Twine Prefix);
 
+  /// Return MCSymbol registered at a given \p Address or nullptr if no
+  /// global symbol was registered at the location.
+  MCSymbol *getGlobalSymbolAtAddress(uint64_t Address) const;
+
   /// Print the global symbol table.
   void printGlobalSymbols(raw_ostream& OS) const;
 
@@ -177,6 +181,9 @@ public:
 
     // Add to the reverse map. There could multiple names at the same address.
     GlobalAddresses.emplace(std::make_pair(Address, Name));
+
+    // Register the name with MCContext.
+    Ctx->getOrCreateSymbol(Name);
   }
 
   const BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) const {

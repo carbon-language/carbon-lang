@@ -191,18 +191,14 @@ BinaryFunction::getBasicBlockOriginalSize(const BinaryBasicBlock *BB) const {
 
 void BinaryFunction::markUnreachable() {
   std::stack<BinaryBasicBlock *> Stack;
-  BinaryBasicBlock *Entry = *layout_begin();
 
   for (auto *BB : layout()) {
     BB->markValid(false);
   }
 
-  Stack.push(Entry);
-  Entry->markValid(true);
-
-  // Treat landing pads as roots.
+  // Add all entries and landing pads as roots.
   for (auto *BB : BasicBlocks) {
-    if (BB->isLandingPad()) {
+    if (BB->isEntryPoint() || BB->isLandingPad()) {
       Stack.push(BB);
       BB->markValid(true);
     }
@@ -227,15 +223,14 @@ std::pair<unsigned, uint64_t> BinaryFunction::eraseInvalidBBs() {
   BasicBlockOrderType NewLayout;
   unsigned Count = 0;
   uint64_t Bytes = 0;
-  assert(BasicBlocksLayout.front()->isValid() &&
-         "unable to remove an entry basic block");
-  for (auto I = BasicBlocksLayout.begin(), E = BasicBlocksLayout.end(); I != E;
-       ++I) {
-    if ((*I)->isValid()) {
-      NewLayout.push_back(*I);
+  for (auto *BB : layout()) {
+    assert((!BB->isEntryPoint() || BB->isValid()) &&
+           "all entry blocks must be valid");
+    if (BB->isValid()) {
+      NewLayout.push_back(BB);
     } else {
       ++Count;
-      Bytes += BC.computeCodeSize((*I)->begin(), (*I)->end());
+      Bytes += BC.computeCodeSize(BB->begin(), BB->end());
     }
   }
   BasicBlocksLayout = std::move(NewLayout);
@@ -351,9 +346,11 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
        << BB->size() << " instructions, align : "
        << BB->getAlignment() << ")\n";
 
-    if (BB->isLandingPad()) {
+    if (BB->isEntryPoint())
+      OS << "  Entry Point\n";
+
+    if (BB->isLandingPad())
       OS << "  Landing Pad\n";
-    }
 
     uint64_t BBExecCount = BB->getExecutionCount();
     if (BBExecCount != BinaryBasicBlock::COUNT_NO_PROFILE) {
@@ -498,8 +495,8 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
     //
     // (with any irrelevant instructions in-between)
     //
-    // When we call this helper we've already determined %r1 and %r2, and reverse
-    // instruction iterator \p II is pointing to the ADD instruction.
+    // When we call this helper we've already determined %r1 and %r2, and
+    // reverse instruction iterator \p II is pointing to the ADD instruction.
     //
     // PIC jump table looks like following:
     //
@@ -722,7 +719,8 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
     } else {
       // Re-use an existing jump table. Perhaps parts of it.
       if (Type != IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
-        assert(JT->Type == JumpTable::JTT_NORMAL && "normal jump table expected");
+        assert(JT->Type == JumpTable::JTT_NORMAL &&
+               "normal jump table expected");
         Type = IndirectBranchType::POSSIBLE_JUMP_TABLE;
       } else {
         assert(JT->Type == JumpTable::JTT_PIC && "PIC jump table expected");
@@ -840,7 +838,15 @@ MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
   if ((Offset == getSize()) && CreatePastEnd)
     return getFunctionEndLabel();
 
-  assert(Offset < getSize() && "address outside of function bounds");
+  // Check if there's a global symbol registered at given address.
+  // If so - reuse it since we want to keep the symbol value updated.
+  if (Offset != 0) {
+    if (auto *Symbol = BC.getGlobalSymbolAtAddress(Address)) {
+      Labels[Offset] = Symbol;
+      return Symbol;
+    }
+  }
+
   auto LI = Labels.find(Offset);
   if (LI == Labels.end()) {
     Result = BC.Ctx->createTempSymbol();
@@ -863,6 +869,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   // Insert a label at the beginning of the function. This will be our first
   // basic block.
   Labels[0] = Ctx->createTempSymbol("BB0", false);
+  addEntryPointAtOffset(0);
 
   auto handleRIPOperand =
       [&](MCInst &Instruction, uint64_t Address, uint64_t Size) {
@@ -890,7 +897,14 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     auto Section = BC.getSectionForAddress(TargetAddress);
     if (Section && Section->isText()) {
       if (containsAddress(TargetAddress)) {
-        TargetSymbol = getOrCreateLocalLabel(TargetAddress);
+        if (TargetAddress != getAddress()) {
+          // The address could potentially escape. Mark it as another entry
+          // point into the function.
+          DEBUG(dbgs() << "BOLT-DEBUG: potentially escaped address 0x"
+                       << Twine::utohexstr(TargetAddress) << " in function "
+                       << *this << '\n');
+          TargetSymbol = addEntryPointAtOffset(TargetAddress - getAddress());
+        }
       } else {
         BC.InterproceduralReferences.insert(TargetAddress);
       }
@@ -1338,6 +1352,8 @@ bool BinaryFunction::buildCFG() {
       PrevBB = InsertBB;
       InsertBB = addBasicBlock(LI->first, LI->second,
                                /* DeriveAlignment = */ IsLastInstrNop);
+      if (hasEntryPointAtOffset(Offset))
+        InsertBB->setEntryPoint();
     }
     // Ignore nops. We use nops to derive alignment of the next basic block.
     // It will not always work, as some blocks are naturally aligned, but
@@ -1618,6 +1634,7 @@ bool BinaryFunction::buildCFG() {
   clearList(TakenBranches);
   clearList(FTBranches);
   clearList(LPToBBIndex);
+  clearList(EntryOffsets);
 
   // Update the state.
   CurrentState = State::CFG;
@@ -2972,6 +2989,25 @@ void BinaryFunction::updateLayout(LayoutType Type,
   // Recompute layout with original parameters.
   BasicBlocksLayout = BasicBlocks;
   modifyLayout(Type, MinBranchClusters, Split);
+}
+
+bool BinaryFunction::isSymbolValidInScope(const SymbolRef &Symbol,
+                                          uint64_t SymbolSize) const {
+  // Some symbols are tolerated inside function bodies, others are not.
+  // The real function boundaries may not be known at this point.
+
+  // It's okay to have a zero-sized symbol in the middle of non-zero-sized
+  // function.
+  if (SymbolSize == 0 && containsAddress(*Symbol.getAddress()))
+    return true;
+
+  if (Symbol.getType() != SymbolRef::ST_Unknown)
+    return false;
+
+  if (Symbol.getFlags() & SymbolRef::SF_Global)
+    return false;
+
+  return true;
 }
 
 BinaryFunction::~BinaryFunction() {

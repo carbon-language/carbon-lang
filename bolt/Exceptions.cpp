@@ -394,7 +394,7 @@ void BinaryFunction::updateEHRanges() {
   }
 }
 
-// The code is based on EHStreamer::emitExceptionTable(). 
+// The code is based on EHStreamer::emitExceptionTable().
 void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
   if (CallSites.empty()) {
     return;

@@ -57,6 +57,17 @@ MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
   return Symbol;
 }
 
+MCSymbol *BinaryContext::getGlobalSymbolAtAddress(uint64_t Address) const {
+  auto NI = GlobalAddresses.find(Address);
+  if (NI == GlobalAddresses.end())
+    return nullptr;
+
+  auto *Symbol = Ctx->lookupSymbol(NI->second);
+  assert(Symbol && "symbol cannot be NULL at this point");
+
+  return Symbol;
+}
+
 void BinaryContext::printGlobalSymbols(raw_ostream& OS) const {
   for (auto &entry : GlobalSymbols) {
     OS << "(" << entry.first << " -> " << entry.second << ")\n";
