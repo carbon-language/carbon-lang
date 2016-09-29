@@ -1740,7 +1740,10 @@ MipsReginfoOutputSection<ELFT>::MipsReginfoOutputSection()
 template <class ELFT>
 void MipsReginfoOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   auto *R = reinterpret_cast<Elf_Mips_RegInfo *>(Buf);
-  R->ri_gp_value = Out<ELFT>::Got->getVA() + MipsGPOffset;
+  if (Config->Relocatable)
+    R->ri_gp_value = 0;
+  else
+    R->ri_gp_value = Out<ELFT>::Got->getVA() + MipsGPOffset;
   R->ri_gprmask = GprMask;
 }
 
@@ -1769,7 +1772,10 @@ void MipsOptionsOutputSection<ELFT>::writeTo(uint8_t *Buf) {
   Opt->section = 0;
   Opt->info = 0;
   auto *Reg = reinterpret_cast<Elf_Mips_RegInfo *>(Buf + sizeof(*Opt));
-  Reg->ri_gp_value = Out<ELFT>::Got->getVA() + MipsGPOffset;
+  if (Config->Relocatable)
+    Reg->ri_gp_value = 0;
+  else
+    Reg->ri_gp_value = Out<ELFT>::Got->getVA() + MipsGPOffset;
   Reg->ri_gprmask = GprMask;
 }
 
