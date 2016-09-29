@@ -460,18 +460,8 @@
 /* Define if we link Polly to the tools */
 #cmakedefine LINK_POLLY_INTO_TOOLS
 
-/* Define if the OS needs help to load dependent libraries for dlopen(). */
-#cmakedefine LTDL_DLOPEN_DEPLIBS ${LTDL_DLOPEN_DEPLIBS}
-
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#undef LTDL_OBJDIR
-
 /* Define to the extension used for shared libraries, say, ".so". */
 #cmakedefine LTDL_SHLIB_EXT "${LTDL_SHLIB_EXT}"
-
-/* Define to the system default library search path. */
-#cmakedefine LTDL_SYSSEARCHPATH "${LTDL_SYSSEARCHPATH}"
 
 /* Define if /dev/zero should be used when mapping RWX memory, or undefine if
    its not necessary */
