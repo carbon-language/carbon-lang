@@ -23,9 +23,6 @@
 
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringSet.h"
-#include "llvm/IR/Module.h"
-#include "llvm/Linker/IRMover.h"
 
 namespace llvm {
 namespace lto {
