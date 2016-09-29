@@ -188,9 +188,6 @@
 /* Define to 1 if you have the `pread' function. */
 #cmakedefine HAVE_PREAD ${HAVE_PREAD}
 
-/* Define to have the %a format string */
-#undef HAVE_PRINTF_A
-
 /* Have pthread_getspecific */
 #cmakedefine HAVE_PTHREAD_GETSPECIFIC ${HAVE_PTHREAD_GETSPECIFIC}
 
@@ -223,12 +220,6 @@
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #cmakedefine HAVE_STDINT_H ${HAVE_STDINT_H}
-
-/* Set to 1 if the std::isinf function is found in <cmath> */
-#undef HAVE_STD_ISINF_IN_CMATH
-
-/* Set to 1 if the std::isnan function is found in <cmath> */
-#undef HAVE_STD_ISNAN_IN_CMATH
 
 /* Define to 1 if you have the `strdup' function. */
 #cmakedefine HAVE_STRDUP ${HAVE_STRDUP}
