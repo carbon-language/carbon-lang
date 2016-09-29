@@ -82,7 +82,7 @@ static std::unique_ptr<lto::LTO> createLTO() {
     check(Conf.addSaveTemps(std::string(Config->OutputFile) + ".",
                             /*UseInputModulePath*/ true));
 
-  return make_unique<lto::LTO>(std::move(Conf), Backend, Config->LtoJobs);
+  return llvm::make_unique<lto::LTO>(std::move(Conf), Backend, Config->LtoJobs);
 }
 
 BitcodeCompiler::BitcodeCompiler() : LtoObj(createLTO()) {}
