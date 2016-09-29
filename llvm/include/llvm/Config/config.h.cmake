@@ -154,9 +154,6 @@
    the current directory to the dynamic linker search path. */
 #undef HAVE_LINK_R
 
-/* Define to 1 if you have the `longjmp' function. */
-#cmakedefine HAVE_LONGJMP ${HAVE_LONGJMP}
-
 /* Define to 1 if you have the <mach/mach.h> header file. */
 #cmakedefine HAVE_MACH_MACH_H ${HAVE_MACH_MACH_H}
 
@@ -239,9 +236,6 @@
 /* Define to 1 if you have the `setenv' function. */
 #cmakedefine HAVE_SETENV ${HAVE_SETENV}
 
-/* Define to 1 if you have the `setjmp' function. */
-#cmakedefine HAVE_SETJMP ${HAVE_SETJMP}
-
 /* Define to 1 if you have the `setrlimit' function. */
 #cmakedefine HAVE_SETRLIMIT ${HAVE_SETRLIMIT}
 
@@ -251,14 +245,8 @@
 /* Define to 1 if you have the `sigaltstack' function. */
 #cmakedefine HAVE_SIGALTSTACK ${HAVE_SIGALTSTACK}
 
-/* Define to 1 if you have the `siglongjmp' function. */
-#cmakedefine HAVE_SIGLONGJMP ${HAVE_SIGLONGJMP}
-
 /* Define to 1 if you have the <signal.h> header file. */
 #cmakedefine HAVE_SIGNAL_H ${HAVE_SIGNAL_H}
-
-/* Define to 1 if you have the `sigsetjmp' function. */
-#cmakedefine HAVE_SIGSETJMP ${HAVE_SIGSETJMP}
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #cmakedefine HAVE_STDINT_H ${HAVE_STDINT_H}
