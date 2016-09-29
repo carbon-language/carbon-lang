@@ -1333,7 +1333,7 @@ define <4 x i64> @splat128_mem_v4i64_from_v2i64(<2 x i64>* %ptr) {
 ;
 ; AVX2-LABEL: splat128_mem_v4i64_from_v2i64:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vbroadcasti128 {{.*#+}} ymm0 = mem[0,1,0,1]
+; AVX2-NEXT:    vbroadcastf128 {{.*#+}} ymm0 = mem[0,1,0,1]
 ; AVX2-NEXT:    retq
 ;
 ; AVX512VL-LABEL: splat128_mem_v4i64_from_v2i64:
