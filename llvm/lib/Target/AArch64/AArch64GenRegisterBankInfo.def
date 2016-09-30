@@ -26,7 +26,8 @@ RegisterBank *RegBanks[] = {&GPRRegBank, &FPRRegBank, &CCRRegBank};
 
 // PartialMappings.
 enum PartialMappingIdx {
-  GPR32,
+  None = -1,
+  GPR32 = 0,
   GPR64,
   FPR32,
   FPR64,
@@ -104,6 +105,14 @@ RegisterBankInfo::ValueMapping ValMappings[] {
   // 25: FPR 512-bit value. <-- This must match Last3OpsIdx.
   {&PartMappings[6], 1}, {&PartMappings[6], 1}, {&PartMappings[6], 1}
 };
+
+/// Get the pointer to the ValueMapping representing the RegisterBank
+/// at \p RBIdx with a size of \p Size.
+/// \pre \p RBIdx != PartialMappingIdx::None
+const RegisterBankInfo::ValueMapping *getValueMappingIdx(PartialMappingIdx RBIdx, unsigned Size) {
+  assert(RBIdx != PartialMappingIdx::None && "No mapping needed for that");
+  return &ValMappings[(RBIdx + getRegBankBaseIdxOffset(Size))];
+}
 
 } // End AArch64 namespace.
 } // End llvm namespace.

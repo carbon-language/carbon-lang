@@ -368,30 +368,22 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       InstructionMapping{DefaultMappingID, 1, nullptr, NumOperands};
 
   // Track the size and bank of each register.  We don't do partial mappings.
-  SmallVector<unsigned, 4> OpBaseIdx(NumOperands);
-  SmallVector<unsigned, 4> OpFinalIdx(NumOperands);
+  SmallVector<unsigned, 4> OpSize(NumOperands);
+  SmallVector<AArch64::PartialMappingIdx, 4> OpRegBankIdx(NumOperands);
   for (unsigned Idx = 0; Idx < NumOperands; ++Idx) {
     auto &MO = MI.getOperand(Idx);
     if (!MO.isReg())
       continue;
 
     LLT Ty = MRI.getType(MO.getReg());
-    unsigned RBIdxOffset = AArch64::getRegBankBaseIdxOffset(Ty.getSizeInBits());
-    OpBaseIdx[Idx] = RBIdxOffset;
+    OpSize[Idx] = Ty.getSizeInBits();
 
     // As a top-level guess, vectors go in FPRs, scalars and pointers in GPRs.
     // For floating-point instructions, scalars go in FPRs.
-    if (Ty.isVector() || isPreISelGenericFloatingPointOpcode(Opc)) {
-      assert(AArch64::FirstFPR + RBIdxOffset <
-                 (AArch64::LastFPR - AArch64::FirstFPR) + 1 &&
-             "Index out of bound");
-      OpFinalIdx[Idx] = AArch64::FirstFPR + RBIdxOffset;
-    } else {
-      assert(AArch64::FirstGPR + RBIdxOffset <
-                 (AArch64::LastGPR - AArch64::FirstGPR) + 1 &&
-             "Index out of bound");
-      OpFinalIdx[Idx] = AArch64::FirstGPR + RBIdxOffset;
-    }
+    if (Ty.isVector() || isPreISelGenericFloatingPointOpcode(Opc))
+      OpRegBankIdx[Idx] = AArch64::FirstFPR;
+    else
+      OpRegBankIdx[Idx] = AArch64::FirstGPR;
   }
 
   // Some of the floating-point instructions have mixed GPR and FPR operands:
@@ -399,20 +391,18 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   switch (Opc) {
   case TargetOpcode::G_SITOFP:
   case TargetOpcode::G_UITOFP: {
-    OpFinalIdx = {OpBaseIdx[0] + AArch64::FirstFPR,
-                  OpBaseIdx[1] + AArch64::FirstGPR};
+    OpRegBankIdx = {AArch64::FirstFPR, AArch64::FirstGPR};
     break;
   }
   case TargetOpcode::G_FPTOSI:
   case TargetOpcode::G_FPTOUI: {
-    OpFinalIdx = {OpBaseIdx[0] + AArch64::FirstGPR,
-                  OpBaseIdx[1] + AArch64::FirstFPR};
+    OpRegBankIdx = {AArch64::FirstGPR, AArch64::FirstFPR};
     break;
   }
   case TargetOpcode::G_FCMP: {
-    OpFinalIdx = {OpBaseIdx[0] + AArch64::FirstGPR, /* Predicate */ 0,
-                  OpBaseIdx[2] + AArch64::FirstFPR,
-                  OpBaseIdx[3] + AArch64::FirstFPR};
+    OpRegBankIdx = {AArch64::FirstGPR,
+                    /* Predicate */ AArch64::PartialMappingIdx::None,
+                    AArch64::FirstFPR, AArch64::FirstFPR};
     break;
   }
   }
@@ -421,7 +411,7 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   SmallVector<const ValueMapping *, 8> OpdsMapping(NumOperands);
   for (unsigned Idx = 0; Idx < NumOperands; ++Idx)
     if (MI.getOperand(Idx).isReg())
-      OpdsMapping[Idx] = &AArch64::ValMappings[OpFinalIdx[Idx]];
+      OpdsMapping[Idx] = getValueMappingIdx(OpRegBankIdx[Idx], OpSize[Idx]);
 
   Mapping.setOperandsMapping(getOperandsMapping(OpdsMapping));
   return Mapping;
