@@ -1,5 +1,5 @@
-; RUN: opt < %s -loop-unroll -pragma-unroll-threshold=1024 -S | FileCheck %s
-; RUN: opt < %s -loop-unroll -loop-unroll -pragma-unroll-threshold=1024 -S | FileCheck %s
+; RUN: opt < %s -loop-unroll -pragma-unroll-threshold=1024 -unroll-max-iteration-count-to-analyze=40 -S | FileCheck %s
+; RUN: opt < %s -loop-unroll -loop-unroll -pragma-unroll-threshold=1024 -unroll-max-iteration-count-to-analyze=40 -S | FileCheck %s
 ;
 ; Run loop unrolling twice to verify that loop unrolling metadata is properly
 ; removed and further unrolling is disabled after the pass is run once.
@@ -25,6 +25,31 @@ for.body:                                         ; preds = %for.body, %entry
   store i32 %inc, i32* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 4
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
+; loop4_with_dbg contains a small loop which should be completely unrolled by
+; the default unrolling heuristics. There is DbgInfoIntrinsic inside the loop
+; body, which should not block unrolling.
+;
+; CHECK-LABEL: @loop4_dbg(
+; CHECK-NOT: br i1
+define void @loop4_dbg(i32* nocapture %a) {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
+  %0 = load i32, i32* %arrayidx, align 4
+  call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !22, metadata !DIExpression()), !dbg !24
+  %inc = add nsw i32 %0, 1
+  store i32 %inc, i32* %arrayidx, align 4
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %exitcond = icmp eq i64 %indvars.iv.next, 40
   br i1 %exitcond, label %for.end, label %for.body
 
 for.end:                                          ; preds = %for.body
@@ -357,5 +382,18 @@ for.body:                                         ; preds = %entry, %for.body
 for.end:                                          ; preds = %for.body, %entry
   ret void
 }
+
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
+
+!llvm.module.flags = !{!18, !19}
+!llvm.dbg.cu = !{!20}
+
 !16 = !{!16, !17}
 !17 = !{!"llvm.loop.unroll.count", i32 3}
+!18 = !{i32 2, !"Dwarf Version", i32 4}
+!19 = !{i32 2, !"Debug Info Version", i32 3}
+!20 = distinct !DICompileUnit(language: DW_LANG_C99, file: !23)
+!21 = distinct !DISubprogram(name: "foo", unit: !20)
+!22 = !DILocalVariable(name: "b", line: 1, arg: 2, scope: !21)
+!23 = !DIFile(filename: "a.c", directory: "a/b")
+!24 = !DILocation(line: 1, column: 14, scope: !21)
