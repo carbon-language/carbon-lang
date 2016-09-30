@@ -32,18 +32,11 @@ using namespace llvm::support;
 PDBFileBuilder::PDBFileBuilder(BumpPtrAllocator &Allocator)
     : Allocator(Allocator) {}
 
-Error PDBFileBuilder::initialize(const msf::SuperBlock &Super) {
-  auto ExpectedMsf =
-      MSFBuilder::create(Allocator, Super.BlockSize, Super.NumBlocks);
+Error PDBFileBuilder::initialize(uint32_t BlockSize) {
+  auto ExpectedMsf = MSFBuilder::create(Allocator, BlockSize);
   if (!ExpectedMsf)
     return ExpectedMsf.takeError();
-
-  auto &MsfResult = *ExpectedMsf;
-  if (auto EC = MsfResult.setBlockMapAddr(Super.BlockMapAddr))
-    return EC;
-  Msf = llvm::make_unique<MSFBuilder>(std::move(MsfResult));
-  Msf->setFreePageMap(Super.FreeBlockMapBlock);
-  Msf->setUnknown1(Super.Unknown1);
+  Msf = llvm::make_unique<MSFBuilder>(std::move(*ExpectedMsf));
   return Error::success();
 }
 

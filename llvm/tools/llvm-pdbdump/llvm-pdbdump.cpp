@@ -323,7 +323,7 @@ static void yamlToPdb(StringRef Path) {
 
   PDBFileBuilder Builder(Allocator);
 
-  ExitOnErr(Builder.initialize(YamlObj.Headers->SuperBlock));
+  ExitOnErr(Builder.initialize(YamlObj.Headers->SuperBlock.BlockSize));
   // Add each of the reserved streams.  We ignore stream metadata in the
   // yaml, because we will reconstruct our own view of the streams.  For
   // example, the YAML may say that there were 20 streams in the original

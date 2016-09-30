@@ -36,7 +36,7 @@ public:
   PDBFileBuilder(const PDBFileBuilder &) = delete;
   PDBFileBuilder &operator=(const PDBFileBuilder &) = delete;
 
-  Error initialize(const msf::SuperBlock &Super);
+  Error initialize(uint32_t BlockSize);
 
   msf::MSFBuilder &getMsfBuilder();
   InfoStreamBuilder &getInfoBuilder();
