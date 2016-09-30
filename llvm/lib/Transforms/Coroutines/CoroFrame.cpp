@@ -27,6 +27,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/circular_raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 
 using namespace llvm;
 
@@ -637,6 +638,10 @@ static void splitAround(Instruction *I, const Twine &Name) {
 }
 
 void coro::buildCoroutineFrame(Function &F, Shape &Shape) {
+  // Lower coro.dbg.declare to coro.dbg.value, since we are going to rewrite
+  // access to local variables.
+  LowerDbgDeclare(F);
+
   Shape.PromiseAlloca = Shape.CoroBegin->getId()->getPromise();
   if (Shape.PromiseAlloca) {
     Shape.CoroBegin->getId()->clearPromise();
