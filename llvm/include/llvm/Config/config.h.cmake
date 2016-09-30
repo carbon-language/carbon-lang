@@ -433,7 +433,7 @@
 #cmakedefine LLVM_PREFIX "${LLVM_PREFIX}"
 
 /* Define if we have the Intel JIT API runtime support library */
-#cmakedefine LLVM_USE_INTEL_JITEVENTS 1
+#cmakedefine01 LLVM_USE_INTEL_JITEVENTS
 
 /* Define if we have the oprofile JIT-support library */
 #cmakedefine LLVM_USE_OPROFILE 1
