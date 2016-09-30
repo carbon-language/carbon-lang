@@ -369,17 +369,6 @@ void Fuzzer::CheckExitOnSrcPos() {
   }
 }
 
-void Fuzzer::AddToCorpusAndMaybeRerun(const Unit &U) {
-  CheckExitOnSrcPos();
-  if (TPC.GetTotalPCCoverage()) {
-    TPC.ResetMaps();
-    TPC.ResetGuards();
-    ExecuteCallback(U.data(), U.size());
-    TPC.FinalizeTrace();
-  }
-  Corpus.AddToCorpus(U);
-}
-
 void Fuzzer::RereadOutputCorpus(size_t MaxSize) {
   if (Options.OutputCorpus.empty() || !Options.Reload) return;
   std::vector<Unit> AdditionalCorpus;
@@ -387,12 +376,12 @@ void Fuzzer::RereadOutputCorpus(size_t MaxSize) {
                          &EpochOfLastReadOfOutputCorpus, MaxSize);
   if (Options.Verbosity >= 2)
     Printf("Reload: read %zd new units.\n", AdditionalCorpus.size());
-  for (auto &X : AdditionalCorpus) {
-    if (X.size() > MaxSize)
-      X.resize(MaxSize);
-    if (!Corpus.HasUnit(X)) {
-      if (RunOne(X)) {
-        AddToCorpusAndMaybeRerun(X);
+  for (auto &U : AdditionalCorpus) {
+    if (U.size() > MaxSize)
+      U.resize(MaxSize);
+    if (!Corpus.HasUnit(U)) {
+      if (RunOne(U)) {
+        Corpus.AddToCorpus(U);
         PrintStats("RELOAD");
       }
     }
@@ -414,7 +403,7 @@ void Fuzzer::ShuffleAndMinimize(UnitVector *InitialCorpus) {
 
   for (const auto &U : *InitialCorpus) {
     if (RunOne(U)) {
-      AddToCorpusAndMaybeRerun(U);
+      Corpus.AddToCorpus(U);
       if (Options.Verbosity >= 2)
         Printf("NEW0: %zd L %zd\n", MaxCoverage.BlockCoverage, U.size());
     }
@@ -435,6 +424,7 @@ bool Fuzzer::RunOne(const uint8_t *Data, size_t Size) {
   ExecuteCallback(Data, Size);
   bool Res = RecordMaxCoverage(&MaxCoverage);
 
+  CheckExitOnSrcPos();
   auto TimeOfUnit =
       duration_cast<seconds>(UnitStopTime - UnitStartTime).count();
   if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1)) &&
@@ -545,7 +535,6 @@ void Fuzzer::ReportNewCoverage(InputInfo *II, const Unit &U) {
   WriteToOutputCorpus(U);
   NumberOfNewUnitsAdded++;
   PrintNewPCs();
-  AddToCorpusAndMaybeRerun(U);
 }
 
 // Finds minimal number of units in 'Extra' that add coverage to 'Initial'.
@@ -675,8 +664,10 @@ void Fuzzer::MutateAndTestOne() {
     if (i == 0)
       StartTraceRecording();
     II.NumExecutedMutations++;
-    if (RunOne(CurrentUnitData, Size))
+    if (RunOne(CurrentUnitData, Size)) {
+      Corpus.AddToCorpus({CurrentUnitData, CurrentUnitData + Size});
       ReportNewCoverage(&II, {CurrentUnitData, CurrentUnitData + Size});
+    }
     StopTraceRecording();
     TryDetectingAMemoryLeak(CurrentUnitData, Size,
                             /*DuringInitialCorpusExecution*/ false);
