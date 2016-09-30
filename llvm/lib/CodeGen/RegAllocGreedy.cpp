@@ -2556,19 +2556,17 @@ unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
     return 0;
   }
 
-  if (Stage == RS_Split || Stage == RS_Split2) {
-    // Try splitting VirtReg or interferences.
-    unsigned NewVRegSizeBefore = NewVRegs.size();
-    unsigned PhysReg = trySplit(VirtReg, Order, NewVRegs);
-    if (PhysReg || (NewVRegs.size() - NewVRegSizeBefore))
-      return PhysReg;
-  }
-
   // If we couldn't allocate a register from spilling, there is probably some
   // invalid inline assembly. The base class wil report it.
   if (Stage >= RS_Done || !VirtReg.isSpillable())
     return tryLastChanceRecoloring(VirtReg, Order, NewVRegs, FixedRegisters,
                                    Depth);
+
+  // Try splitting VirtReg or interferences.
+  unsigned NewVRegSizeBefore = NewVRegs.size();
+  unsigned PhysReg = trySplit(VirtReg, Order, NewVRegs);
+  if (PhysReg || (NewVRegs.size() - NewVRegSizeBefore))
+    return PhysReg;
 
   // Finally spill VirtReg itself.
   if (EnableDeferredSpilling && getStage(VirtReg) < RS_Memory) {
