@@ -1134,6 +1134,18 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
     MaybeParseGNUAttributes(D);
   }
 
+  // Helper to emit a warning if we see a CUDA host/device/global attribute
+  // after '(...)'. nvcc doesn't accept this.
+  auto WarnIfHasCUDATargetAttr = [&] {
+    if (getLangOpts().CUDA)
+      for (auto *A = Attr.getList(); A != nullptr; A = A->getNext())
+        if (A->getKind() == AttributeList::AT_CUDADevice ||
+            A->getKind() == AttributeList::AT_CUDAHost ||
+            A->getKind() == AttributeList::AT_CUDAGlobal)
+          Diag(A->getLoc(), diag::warn_cuda_attr_lambda_position)
+              << A->getName()->getName();
+  };
+
   TypeResult TrailingReturnType;
   if (Tok.is(tok::l_paren)) {
     ParseScope PrototypeScope(this,
@@ -1210,6 +1222,8 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
 
     PrototypeScope.Exit();
 
+    WarnIfHasCUDATargetAttr();
+
     SourceLocation NoLoc;
     D.AddTypeInfo(DeclaratorChunk::getFunction(/*hasProto=*/true,
                                            /*isAmbiguous=*/false,
@@ -1274,6 +1288,8 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
       if (Range.getEnd().isValid())
         DeclEndLoc = Range.getEnd();
     }
+
+    WarnIfHasCUDATargetAttr();
 
     SourceLocation NoLoc;
     D.AddTypeInfo(DeclaratorChunk::getFunction(/*hasProto=*/true,
