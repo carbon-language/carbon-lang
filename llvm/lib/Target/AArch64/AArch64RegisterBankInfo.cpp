@@ -111,6 +111,7 @@ AArch64RegisterBankInfo::AArch64RegisterBankInfo(const TargetRegisterInfo &TRI)
              AArch64::PartialMappingIdx::FPR512 &&
          "FPR indices not properly ordered");
 // Now, the content.
+// Check partial mapping.
 #define CHECK_PARTIALMAP(Idx, ValStartIdx, ValLength, RB)                      \
   do {                                                                         \
     const PartialMapping &Map =                                                \
@@ -127,6 +128,23 @@ AArch64RegisterBankInfo::AArch64RegisterBankInfo(const TargetRegisterInfo &TRI)
   CHECK_PARTIALMAP(FPR128, 0, 128, RBFPR);
   CHECK_PARTIALMAP(FPR256, 0, 256, RBFPR);
   CHECK_PARTIALMAP(FPR512, 0, 512, RBFPR);
+
+// Check value mapping.
+#define CHECK_VALUEMAP(Idx)                                                    \
+  do {                                                                         \
+    const ValueMapping &Map = AArch64::ValMappings[Idx];                       \
+    (void) Map;                                                                \
+    assert(Map.BreakDown == &AArch64::PartMappings[Idx] &&                     \
+           Map.NumBreakDowns == 1 && #Idx " is incorrectly initialized");      \
+  } while (0)
+
+  CHECK_VALUEMAP(AArch64::PartialMappingIdx::GPR32);
+  CHECK_VALUEMAP(AArch64::PartialMappingIdx::GPR64);
+  CHECK_VALUEMAP(AArch64::PartialMappingIdx::FPR32);
+  CHECK_VALUEMAP(AArch64::PartialMappingIdx::FPR64);
+  CHECK_VALUEMAP(AArch64::PartialMappingIdx::FPR128);
+  CHECK_VALUEMAP(AArch64::PartialMappingIdx::FPR256);
+  CHECK_VALUEMAP(AArch64::PartialMappingIdx::FPR512);
 
   assert(verify(TRI) && "Invalid register bank information");
 }
