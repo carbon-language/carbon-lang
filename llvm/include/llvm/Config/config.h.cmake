@@ -10,8 +10,8 @@
 /* Define to 1 to enable backtraces, and to 0 otherwise. */
 #cmakedefine01 ENABLE_BACKTRACES
 
-/* Define to enable crash overrides */
-#cmakedefine ENABLE_CRASH_OVERRIDES
+/* Define to 1 to enable crash overrides, and to 0 otherwise. */
+#cmakedefine01 ENABLE_CRASH_OVERRIDES
 
 /* Define if position independent code is enabled */
 #cmakedefine ENABLE_PIC
