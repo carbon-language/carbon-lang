@@ -47,7 +47,7 @@ public:
   Expected<std::unique_ptr<PDBFile>>
   build(std::unique_ptr<msf::WritableStream> PdbFileBuffer);
 
-  Error commit(const msf::WritableStream &Buffer);
+  Error commit(StringRef Filename);
 
 private:
   Expected<msf::MSFLayout> finalizeMsfLayout() const;

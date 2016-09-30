@@ -14,6 +14,7 @@
 #include "llvm/DebugInfo/MSF/MSFBuilder.h"
 #include "llvm/DebugInfo/MSF/StreamInterface.h"
 #include "llvm/DebugInfo/MSF/StreamWriter.h"
+#include "llvm/DebugInfo/PDB/GenericError.h"
 #include "llvm/DebugInfo/PDB/Raw/DbiStream.h"
 #include "llvm/DebugInfo/PDB/Raw/DbiStreamBuilder.h"
 #include "llvm/DebugInfo/PDB/Raw/InfoStream.h"
@@ -138,12 +139,19 @@ PDBFileBuilder::build(std::unique_ptr<msf::WritableStream> PdbFileBuffer) {
   return std::move(File);
 }
 
-Error PDBFileBuilder::commit(const msf::WritableStream &Buffer) {
-  StreamWriter Writer(Buffer);
+Error PDBFileBuilder::commit(StringRef Filename) {
   auto ExpectedLayout = finalizeMsfLayout();
   if (!ExpectedLayout)
     return ExpectedLayout.takeError();
   auto &Layout = *ExpectedLayout;
+
+  uint64_t Filesize = Layout.SB->BlockSize * Layout.SB->NumBlocks;
+  auto OutFileOrError = FileOutputBuffer::create(Filename, Filesize);
+  if (OutFileOrError.getError())
+    return llvm::make_error<pdb::GenericError>(generic_error_code::invalid_path,
+                                               Filename);
+  FileBufferByteStream Buffer(std::move(*OutFileOrError));
+  StreamWriter Writer(Buffer);
 
   if (auto EC = Writer.writeObject(*Layout.SB))
     return EC;
