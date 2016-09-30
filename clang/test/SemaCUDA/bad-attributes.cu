@@ -61,3 +61,11 @@ __global__ static inline void foobar() {};
 #ifdef EXPECT_INLINE_WARNING
 // expected-warning@-2 {{ignored 'inline' attribute on kernel function 'foobar'}}
 #endif
+
+__constant__ int global_constant;
+void host_fn() {
+  __constant__ int c; // expected-error {{__constant__ variables must be global}}
+}
+__device__ void device_fn() {
+  __constant__ int c; // expected-error {{__constant__ variables must be global}}
+}
