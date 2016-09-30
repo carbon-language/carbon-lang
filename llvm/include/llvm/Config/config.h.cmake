@@ -413,6 +413,9 @@
 /* Define if we have the oprofile JIT-support library */
 #cmakedefine01 LLVM_USE_OPROFILE
 
+/* LLVM version information */
+#cmakedefine LLVM_VERSION_INFO "${LLVM_VERSION_INFO}"
+
 /* Major version of the LLVM API */
 #define LLVM_VERSION_MAJOR ${LLVM_VERSION_MAJOR}
 
@@ -424,9 +427,6 @@
 
 /* LLVM version string */
 #define LLVM_VERSION_STRING "${PACKAGE_VERSION}"
-
-/* LLVM version information */
-#cmakedefine LLVM_VERSION_INFO "${LLVM_VERSION_INFO}"
 
 /* Define to the extension used for shared libraries, say, ".so". */
 #cmakedefine LTDL_SHLIB_EXT "${LTDL_SHLIB_EXT}"
