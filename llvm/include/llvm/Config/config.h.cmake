@@ -7,8 +7,8 @@
 /* Bug report URL. */
 #define BUG_REPORT_URL "${BUG_REPORT_URL}"
 
-/* Define if you want backtraces on crash */
-#cmakedefine ENABLE_BACKTRACES
+/* Define to 1 to enable backtraces, and to 0 otherwise. */
+#cmakedefine01 ENABLE_BACKTRACES
 
 /* Define to enable crash overrides */
 #cmakedefine ENABLE_CRASH_OVERRIDES
