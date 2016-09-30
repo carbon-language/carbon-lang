@@ -413,8 +413,7 @@ void Fuzzer::ShuffleAndMinimize(UnitVector *InitialCorpus) {
     ShuffleCorpus(InitialCorpus);
 
   for (const auto &U : *InitialCorpus) {
-    bool NewCoverage = RunOne(U);
-    if (!Options.PruneCorpus || NewCoverage) {
+    if (RunOne(U)) {
       AddToCorpusAndMaybeRerun(U);
       if (Options.Verbosity >= 2)
         Printf("NEW0: %zd L %zd\n", MaxCoverage.BlockCoverage, U.size());

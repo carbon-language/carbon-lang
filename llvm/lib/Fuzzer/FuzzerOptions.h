@@ -49,7 +49,6 @@ struct FuzzingOptions {
   bool PrintCorpusStats = false;
   bool PrintCoverage = false;
   bool DetectLeaks = true;
-  bool PruneCorpus = true;
 };
 
 }  // namespace fuzzer
