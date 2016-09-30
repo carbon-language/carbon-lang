@@ -108,6 +108,9 @@
 /* Define if you have the libdl library or equivalent. */
 #cmakedefine HAVE_LIBDL ${HAVE_LIBDL}
 
+/* Define to 1 if you have the 'edit' library (-ledit). */
+#cmakedefine HAVE_LIBEDIT ${HAVE_LIBEDIT}
+
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
@@ -125,9 +128,6 @@
 
 /* Define to 1 if you have the `z' library (-lz). */
 #cmakedefine HAVE_LIBZ ${HAVE_LIBZ}
-
-/* Define to 1 if you have the 'edit' library (-ledit). */
-#cmakedefine HAVE_LIBEDIT ${HAVE_LIBEDIT}
 
 /* Define to 1 if you have the <link.h> header file. */
 #cmakedefine HAVE_LINK_H ${HAVE_LINK_H}
