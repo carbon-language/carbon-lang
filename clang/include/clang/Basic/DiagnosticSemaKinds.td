@@ -8562,6 +8562,8 @@ def err_coroutine_ctor_dtor : Error<
   "'%1' cannot be used in a %select{constructor|destructor}0">;
 def err_coroutine_constexpr : Error<
   "'%0' cannot be used in a constexpr function">;
+def err_coroutine_main : Error<
+  "'main' cannot be a coroutine">;
 def err_coroutine_varargs : Error<
   "'%0' cannot be used in a varargs function">;
 def ext_coroutine_without_co_await_co_yield : ExtWarn<
