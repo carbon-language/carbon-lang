@@ -130,48 +130,45 @@ AArch64RegisterBankInfo::AArch64RegisterBankInfo(const TargetRegisterInfo &TRI)
   CHECK_PARTIALMAP(FPR512, 0, 512, RBFPR);
 
 // Check value mapping.
-#define CHECK_VALUEMAP_IMPL(ValIdx, PartIdx)                                   \
+#define CHECK_VALUEMAP_IMPL(RBName, Size, Offset)                              \
   do {                                                                         \
-    unsigned PartialMapBaseIdx = AArch64::PartialMappingIdx::PartIdx;          \
+    AArch64::PartialMappingIdx PartialMapBaseIdx =                             \
+        AArch64::PartialMappingIdx::RBName##Size;                              \
     (void) PartialMapBaseIdx;                                                  \
-    const ValueMapping &Map = AArch64::ValMappings[ValIdx];                    \
+    const ValueMapping &Map =                                                  \
+        AArch64::getValueMapping(AArch64::First##RBName, Size)[Offset];        \
     (void) Map;                                                                \
     assert(Map.BreakDown == &AArch64::PartMappings[PartialMapBaseIdx] &&       \
-           Map.NumBreakDowns == 1 && #ValIdx " " #PartIdx                      \
-                                             " is incorrectly initialized");   \
+           Map.NumBreakDowns == 1 && #RBName #Size                             \
+           " " #Offset " is incorrectly initialized");                         \
   } while (0)
 
-#define CHECK_VALUEMAP(Idx)                                                    \
-  CHECK_VALUEMAP_IMPL((AArch64::PartialMappingIdx::Idx *                       \
-                       AArch64::ValueMappingIdx::DistanceBetweenRegBanks),     \
-                      Idx)
+#define CHECK_VALUEMAP(RBName, Size) CHECK_VALUEMAP_IMPL(RBName, Size, 0)
 
-  CHECK_VALUEMAP(GPR32);
-  CHECK_VALUEMAP(GPR64);
-  CHECK_VALUEMAP(FPR32);
-  CHECK_VALUEMAP(FPR64);
-  CHECK_VALUEMAP(FPR128);
-  CHECK_VALUEMAP(FPR256);
-  CHECK_VALUEMAP(FPR512);
+  CHECK_VALUEMAP(GPR, 32);
+  CHECK_VALUEMAP(GPR, 64);
+  CHECK_VALUEMAP(FPR, 32);
+  CHECK_VALUEMAP(FPR, 64);
+  CHECK_VALUEMAP(FPR, 128);
+  CHECK_VALUEMAP(FPR, 256);
+  CHECK_VALUEMAP(FPR, 512);
 
 // Check the value mapping for 3-operands instructions where all the operands
 // map to the same value mapping.
-#define CHECK_VALUEMAP_3OPS(Idx)                                               \
+#define CHECK_VALUEMAP_3OPS(RBName, Size)                                      \
   do {                                                                         \
-    unsigned BaseIdx =                                                         \
-        AArch64::First3OpsIdx + AArch64::PartialMappingIdx::Idx * 3;           \
-    CHECK_VALUEMAP_IMPL(BaseIdx, Idx);                                         \
-    CHECK_VALUEMAP_IMPL(BaseIdx + 1, Idx);                                     \
-    CHECK_VALUEMAP_IMPL(BaseIdx + 2, Idx);                                     \
+    CHECK_VALUEMAP_IMPL(RBName, Size, 0);                                      \
+    CHECK_VALUEMAP_IMPL(RBName, Size, 1);                                      \
+    CHECK_VALUEMAP_IMPL(RBName, Size, 2);                                      \
   } while (0)
 
-  CHECK_VALUEMAP_3OPS(GPR32);
-  CHECK_VALUEMAP_3OPS(GPR64);
-  CHECK_VALUEMAP_3OPS(FPR32);
-  CHECK_VALUEMAP_3OPS(FPR64);
-  CHECK_VALUEMAP_3OPS(FPR128);
-  CHECK_VALUEMAP_3OPS(FPR256);
-  CHECK_VALUEMAP_3OPS(FPR512);
+  CHECK_VALUEMAP_3OPS(GPR, 32);
+  CHECK_VALUEMAP_3OPS(GPR, 64);
+  CHECK_VALUEMAP_3OPS(FPR, 32);
+  CHECK_VALUEMAP_3OPS(FPR, 64);
+  CHECK_VALUEMAP_3OPS(FPR, 128);
+  CHECK_VALUEMAP_3OPS(FPR, 256);
+  CHECK_VALUEMAP_3OPS(FPR, 512);
 
   assert(verify(TRI) && "Invalid register bank information");
 }
