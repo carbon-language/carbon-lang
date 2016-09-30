@@ -9259,6 +9259,9 @@ public:
   /// ExprTy should be the string "try" or "throw", as appropriate.
   bool CheckCUDAExceptionExpr(SourceLocation Loc, StringRef ExprTy);
 
+  /// Check whether it's legal for us to create a variable-length array in the
+  /// current context.  Returns true if the VLA is OK; returns false and emits
+  /// an error otherwise.
   bool CheckCUDAVLA(SourceLocation Loc);
 
   /// Finds a function in \p Matches with highest calling priority
