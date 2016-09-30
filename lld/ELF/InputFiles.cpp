@@ -425,13 +425,6 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
 template <class ELFT> void ArchiveFile::parse() {
   File = check(Archive::create(MB), "failed to parse archive");
 
-  // Checks for a common usage error of an ar command.
-  if (File->getNumberOfSymbols() == 0 && !File->isEmpty())
-    warn(getName() + " has no symbol."
-         " Chances are you are doing an LTO build and forgot to use an ar"
-         " command that can create a symbol table for LLVM bitcode files."
-         " If so, use llvm-ar or GNU ar + plugin.");
-
   // Read the symbol table to construct Lazy objects.
   for (const Archive::Symbol &Sym : File->symbols())
     Symtab<ELFT>::X->addLazyArchive(this, Sym);
