@@ -590,8 +590,9 @@ bool SIInsertWaits::runOnMachineFunction(MachineFunction &MF) {
       // S_SENDMSG implicitly waits for all outstanding LGKM transfers to finish,
       // but we also want to wait for any other outstanding transfers before
       // signalling other hardware blocks
-      if (I->getOpcode() == AMDGPU::S_BARRIER ||
-          I->getOpcode() == AMDGPU::S_SENDMSG)
+      if ((I->getOpcode() == AMDGPU::S_BARRIER &&
+               ST->needWaitcntBeforeBarrier()) ||
+           I->getOpcode() == AMDGPU::S_SENDMSG)
         Required = LastIssued;
       else
         Required = handleOperands(*I);
