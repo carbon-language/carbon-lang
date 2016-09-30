@@ -463,9 +463,6 @@
    its not necessary */
 #undef NEED_DEV_ZERO_FOR_MMAP
 
-/* Define if dlsym() requires a leading underscore in symbol names. */
-#undef NEED_USCORE
-
 /* Define to the address where bug reports for this package should be sent. */
 #cmakedefine PACKAGE_BUGREPORT "${PACKAGE_BUGREPORT}"
 
