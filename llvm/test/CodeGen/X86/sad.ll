@@ -155,12 +155,12 @@ define i32 @sad_32i8() nounwind {
 ; SSE2-NEXT:    pxor %xmm1, %xmm1
 ; SSE2-NEXT:    pxor %xmm13, %xmm13
 ; SSE2-NEXT:    pxor %xmm15, %xmm15
+; SSE2-NEXT:    pxor %xmm5, %xmm5
 ; SSE2-NEXT:    pxor %xmm14, %xmm14
-; SSE2-NEXT:    pxor %xmm6, %xmm6
 ; SSE2-NEXT:    .p2align 4, 0x90
 ; SSE2-NEXT:  .LBB1_1: # %vector.body
 ; SSE2-NEXT:    # =>This Inner Loop Header: Depth=1
-; SSE2-NEXT:    movdqa %xmm6, -{{[0-9]+}}(%rsp) # 16-byte Spill
+; SSE2-NEXT:    movdqa %xmm5, -{{[0-9]+}}(%rsp) # 16-byte Spill
 ; SSE2-NEXT:    movdqa %xmm2, -{{[0-9]+}}(%rsp) # 16-byte Spill
 ; SSE2-NEXT:    movdqa %xmm1, -{{[0-9]+}}(%rsp) # 16-byte Spill
 ; SSE2-NEXT:    movdqa %xmm0, -{{[0-9]+}}(%rsp) # 16-byte Spill
@@ -252,9 +252,11 @@ define i32 @sad_32i8() nounwind {
 ; SSE2-NEXT:    movdqa -{{[0-9]+}}(%rsp), %xmm0 # 16-byte Reload
 ; SSE2-NEXT:    paddd %xmm3, %xmm4
 ; SSE2-NEXT:    paddd %xmm6, %xmm0
-; SSE2-NEXT:    movdqa -{{[0-9]+}}(%rsp), %xmm6 # 16-byte Reload
-; SSE2-NEXT:    paddd %xmm7, %xmm6
-; SSE2-NEXT:    paddd %xmm5, %xmm14
+; SSE2-NEXT:    paddd %xmm7, %xmm14
+; SSE2-NEXT:    movdqa -{{[0-9]+}}(%rsp), %xmm3 # 16-byte Reload
+; SSE2-NEXT:    paddd %xmm5, %xmm3
+; SSE2-NEXT:    movdqa %xmm3, -{{[0-9]+}}(%rsp) # 16-byte Spill
+; SSE2-NEXT:    movdqa -{{[0-9]+}}(%rsp), %xmm5 # 16-byte Reload
 ; SSE2-NEXT:    paddd %xmm8, %xmm1
 ; SSE2-NEXT:    movdqa -{{[0-9]+}}(%rsp), %xmm3 # 16-byte Reload
 ; SSE2-NEXT:    paddd %xmm2, %xmm3
@@ -264,9 +266,9 @@ define i32 @sad_32i8() nounwind {
 ; SSE2-NEXT:    jne .LBB1_1
 ; SSE2-NEXT:  # BB#2: # %middle.block
 ; SSE2-NEXT:    paddd %xmm15, %xmm4
-; SSE2-NEXT:    paddd %xmm6, %xmm1
+; SSE2-NEXT:    paddd %xmm14, %xmm1
 ; SSE2-NEXT:    paddd %xmm13, %xmm0
-; SSE2-NEXT:    paddd %xmm14, %xmm2
+; SSE2-NEXT:    paddd %xmm5, %xmm2
 ; SSE2-NEXT:    paddd %xmm4, %xmm1
 ; SSE2-NEXT:    paddd %xmm2, %xmm1
 ; SSE2-NEXT:    paddd %xmm0, %xmm1
