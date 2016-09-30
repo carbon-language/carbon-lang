@@ -105,17 +105,8 @@
 /* Define to 1 if you have the `isatty' function. */
 #cmakedefine HAVE_ISATTY 1
 
-/* Define if you have the libdl library or equivalent. */
-#cmakedefine HAVE_LIBDL ${HAVE_LIBDL}
-
 /* Define to 1 if you have the 'edit' library (-ledit). */
 #cmakedefine HAVE_LIBEDIT ${HAVE_LIBEDIT}
-
-/* Define to 1 if you have the `m' library (-lm). */
-#undef HAVE_LIBM
-
-/* Define to 1 if you have the `ole32' library (-lole32). */
-#undef HAVE_LIBOLE32
 
 /* Define to 1 if you have the `psapi' library (-lpsapi). */
 #cmakedefine HAVE_LIBPSAPI ${HAVE_LIBPSAPI}
