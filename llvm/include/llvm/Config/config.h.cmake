@@ -484,9 +484,6 @@
 /* Define as the return type of signal handlers (`int' or `void'). */
 #cmakedefine RETSIGTYPE ${RETSIGTYPE}
 
-/* Define to 1 if the `S_IS*' macros in <sys/stat.h> do not work properly. */
-#undef STAT_MACROS_BROKEN
-
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
