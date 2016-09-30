@@ -392,15 +392,13 @@ void Fuzzer::CheckExitOnSrcPos() {
 
 void Fuzzer::AddToCorpusAndMaybeRerun(const Unit &U) {
   CheckExitOnSrcPos();
-  Corpus.AddToCorpus(U);
   if (TPC.GetTotalPCCoverage()) {
     TPC.ResetMaps();
     TPC.ResetGuards();
     ExecuteCallback(U.data(), U.size());
     TPC.FinalizeTrace();
-    TPC.UpdateFeatureSet(Corpus.size() - 1, U.size());
-    // TPC.PrintFeatureSet();
   }
+  Corpus.AddToCorpus(U);
 }
 
 void Fuzzer::RereadOutputCorpus(size_t MaxSize) {
