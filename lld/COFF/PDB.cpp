@@ -31,20 +31,9 @@ using namespace llvm::support::endian;
 static ExitOnError ExitOnErr;
 
 void coff::createPDB(StringRef Path) {
-  // Create the superblock.
-  msf::SuperBlock SB;
-  memcpy(SB.MagicBytes, msf::Magic, sizeof(msf::Magic));
-  SB.BlockSize = 4096;
-  SB.FreeBlockMapBlock = 2;
-  SB.NumBlocks = 10;
-  SB.NumDirectoryBytes = 0;
-  SB.Unknown1 = 0;
-  SB.BlockMapAddr = 9;
-
   BumpPtrAllocator Alloc;
   pdb::PDBFileBuilder Builder(Alloc);
-  ExitOnErr(Builder.initialize(SB));
-  ExitOnErr(Builder.getMsfBuilder().setDirectoryBlocksHint({8}));
+  ExitOnErr(Builder.initialize(4096)); // 4096 is blocksize
 
   ExitOnErr(Builder.getMsfBuilder().addStream(1, {4}));
   ExitOnErr(Builder.getMsfBuilder().addStream(1, {5}));
