@@ -1128,12 +1128,10 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
 
   ParsedAttributes Attr(AttrFactory);
   SourceLocation DeclLoc = Tok.getLocation();
-  SourceLocation DeclEndLoc = DeclLoc;
   if (getLangOpts().CUDA) {
     // In CUDA code, GNU attributes are allowed to appear immediately after the
     // "[...]", even if there is no "(...)" before the lambda body.
-    MaybeParseGNUAttributes(Attr, &DeclEndLoc);
-    D.takeAttributes(Attr, DeclEndLoc);
+    MaybeParseGNUAttributes(D);
   }
 
   TypeResult TrailingReturnType;
@@ -1161,7 +1159,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
     }
     T.consumeClose();
     SourceLocation RParenLoc = T.getCloseLocation();
-    DeclEndLoc = RParenLoc;
+    SourceLocation DeclEndLoc = RParenLoc;
 
     // GNU-style attributes must be parsed before the mutable specifier to be
     // compatible with GCC.
@@ -1253,7 +1251,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
     Diag(Tok, diag::err_lambda_missing_parens)
       << TokKind
       << FixItHint::CreateInsertion(Tok.getLocation(), "() ");
-    DeclEndLoc = DeclLoc;
+    SourceLocation DeclEndLoc = DeclLoc;
 
     // GNU-style attributes must be parsed before the mutable specifier to be
     // compatible with GCC.
