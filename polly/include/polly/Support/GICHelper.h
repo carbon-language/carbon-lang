@@ -260,10 +260,14 @@ public:
     That.Obj = nullptr;
   }
   /* implicit */ IslPtr(NonowningIslPtr<T> That) : IslPtr(That.copy(), true) {}
-  ~IslPtr() { Traits::free(Obj); }
+  ~IslPtr() {
+    if (Obj)
+      Traits::free(Obj);
+  }
 
   ThisTy &operator=(const ThisTy &That) {
-    Traits::free(this->Obj);
+    if (Obj)
+      Traits::free(Obj);
     this->Obj = Traits::copy(That.Obj);
     return *this;
   }
