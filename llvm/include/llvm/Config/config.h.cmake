@@ -157,12 +157,6 @@
 /* Define to 1 if you have the `mktemp' function. */
 #cmakedefine HAVE_MKTEMP ${HAVE_MKTEMP}
 
-/* Define to 1 if you have a working `mmap' system call. */
-#undef HAVE_MMAP
-
-/* Define if mmap() can map files into memory */
-#undef HAVE_MMAP_FILE
-
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #cmakedefine HAVE_NDIR_H ${HAVE_NDIR_H}
 
