@@ -30,8 +30,6 @@ using namespace llvm::support::endian;
 
 static ExitOnError ExitOnErr;
 
-const int BlockSize = 4096;
-
 void coff::createPDB(StringRef Path) {
   // Create the superblock.
   msf::SuperBlock SB;
@@ -69,11 +67,5 @@ void coff::createPDB(StringRef Path) {
   TpiBuilder.setVersionHeader(pdb::PdbTpiV80);
 
   // Write to a file.
-  size_t FileSize = BlockSize * 10;
-  auto BufferOrErr = FileOutputBuffer::create(Path, FileSize);
-  if (auto EC = BufferOrErr.getError())
-    fatal(EC, "failed to open " + Path);
-  auto FileByteStream =
-      llvm::make_unique<msf::FileBufferByteStream>(std::move(*BufferOrErr));
-  ExitOnErr(Builder.commit(*FileByteStream));
+  ExitOnErr(Builder.commit(Path));
 }
