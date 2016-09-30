@@ -142,7 +142,9 @@ AArch64RegisterBankInfo::AArch64RegisterBankInfo(const TargetRegisterInfo &TRI)
   } while (0)
 
 #define CHECK_VALUEMAP(Idx)                                                    \
-  CHECK_VALUEMAP_IMPL(AArch64::PartialMappingIdx::Idx, Idx)
+  CHECK_VALUEMAP_IMPL((AArch64::PartialMappingIdx::Idx *                       \
+                       AArch64::ValueMappingIdx::DistanceBetweenRegBanks),     \
+                      Idx)
 
   CHECK_VALUEMAP(GPR32);
   CHECK_VALUEMAP(GPR64);
@@ -244,17 +246,13 @@ AArch64RegisterBankInfo::getInstrAlternativeMappings(
     if (MI.getNumOperands() != 3)
       break;
     InstructionMappings AltMappings;
-    InstructionMapping GPRMapping(/*ID*/ 1, /*Cost*/ 1, nullptr,
+    InstructionMapping GPRMapping(/*ID*/ 1, /*Cost*/ 1,
+                                  getValueMappingIdx(AArch64::FirstGPR, Size),
                                   /*NumOperands*/ 3);
-    InstructionMapping FPRMapping(/*ID*/ 2, /*Cost*/ 1, nullptr,
+    InstructionMapping FPRMapping(/*ID*/ 2, /*Cost*/ 1,
+                                  getValueMappingIdx(AArch64::FirstFPR, Size),
                                   /*NumOperands*/ 3);
-    unsigned RBIdxOffset = AArch64::getRegBankBaseIdxOffset(Size);
-    GPRMapping.setOperandsMapping(
-        &AArch64::ValMappings[AArch64::First3OpsIdx +
-                              (RBIdxOffset + AArch64::FirstGPR) * 3]);
-    FPRMapping.setOperandsMapping(
-        &AArch64::ValMappings[AArch64::First3OpsIdx +
-                              (RBIdxOffset + AArch64::FirstFPR) * 3]);
+
     AltMappings.emplace_back(std::move(GPRMapping));
     AltMappings.emplace_back(std::move(FPRMapping));
     return AltMappings;
@@ -336,29 +334,25 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     assert(NumOperands == 3 && "This code is for 3-operands instructions");
 
     LLT Ty = MRI.getType(MI.getOperand(0).getReg());
-    unsigned RBIdxOffset = AArch64::getRegBankBaseIdxOffset(Ty.getSizeInBits());
+    unsigned Size = Ty.getSizeInBits();
     // Make sure all the operands are using similar size.
     // Should probably be checked by the machine verifier.
     assert(AArch64::getRegBankBaseIdxOffset(
                MRI.getType(MI.getOperand(1).getReg()).getSizeInBits()) ==
-               RBIdxOffset &&
+               AArch64::getRegBankBaseIdxOffset(Size) &&
            "Operand 1 has incompatible size");
     assert(AArch64::getRegBankBaseIdxOffset(
                MRI.getType(MI.getOperand(2).getReg()).getSizeInBits()) ==
-               RBIdxOffset &&
+               AArch64::getRegBankBaseIdxOffset(Size) &&
            "Operand 2 has incompatible size");
 
     bool IsFPR = Ty.isVector() || isPreISelGenericFloatingPointOpcode(Opc);
 
-    unsigned RBIdx =
-        (IsFPR ? AArch64::FirstFPR : AArch64::FirstGPR) + RBIdxOffset;
-    unsigned ValMappingIdx = AArch64::First3OpsIdx + RBIdx * 3;
+    AArch64::PartialMappingIdx RBIdx =
+        IsFPR ? AArch64::FirstFPR : AArch64::FirstGPR;
 
-    assert(ValMappingIdx >= AArch64::First3OpsIdx &&
-           ValMappingIdx <= AArch64::Last3OpsIdx && "Mapping out of bound");
-
-    return InstructionMapping{
-        DefaultMappingID, 1, &AArch64::ValMappings[ValMappingIdx], NumOperands};
+    return InstructionMapping{DefaultMappingID, 1,
+                              getValueMappingIdx(RBIdx, Size), NumOperands};
   }
   default:
     break;
