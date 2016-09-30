@@ -452,6 +452,15 @@ void BlockGenerator::generateScalarLoads(
     if (MA->isOriginalArrayKind() || MA->isWrite())
       continue;
 
+#ifndef NDEBUG
+    auto *StmtDom = Stmt.getDomain();
+    auto *AccDom = isl_map_domain(MA->getAccessRelation());
+    assert(isl_set_is_subset(StmtDom, AccDom) &&
+           "Scalar must be loaded in all statement instances");
+    isl_set_free(StmtDom);
+    isl_set_free(AccDom);
+#endif
+
     auto *Address =
         getImplicitAddress(*MA, getLoopForStmt(Stmt), LTS, BBMap, NewAccesses);
     assert((!isa<Instruction>(Address) ||
@@ -475,6 +484,15 @@ void BlockGenerator::generateScalarStores(
   for (MemoryAccess *MA : Stmt) {
     if (MA->isOriginalArrayKind() || MA->isRead())
       continue;
+
+#ifndef NDEBUG
+    auto *StmtDom = Stmt.getDomain();
+    auto *AccDom = isl_map_domain(MA->getAccessRelation());
+    assert(isl_set_is_subset(StmtDom, AccDom) &&
+           "Scalar must be stored in all statement instances");
+    isl_set_free(StmtDom);
+    isl_set_free(AccDom);
+#endif
 
     Value *Val = MA->getAccessValue();
     if (MA->isAnyPHIKind()) {
