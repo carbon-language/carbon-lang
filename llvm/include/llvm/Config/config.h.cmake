@@ -337,7 +337,7 @@
 #cmakedefine HAVE____CHKSTK_MS ${HAVE____CHKSTK_MS}
 
 /* Linker version detected at compile time. */
-#undef HOST_LINK_VERSION
+#cmakedefine HOST_LINK_VERSION "${HOST_LINK_VERSION}"
 
 /* Define if we link Polly to the tools */
 #cmakedefine LINK_POLLY_INTO_TOOLS
