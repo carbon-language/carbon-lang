@@ -248,20 +248,13 @@ AArch64RegisterBankInfo::getInstrAlternativeMappings(
                                   /*NumOperands*/ 3);
     InstructionMapping FPRMapping(/*ID*/ 2, /*Cost*/ 1, nullptr,
                                   /*NumOperands*/ 3);
-    GPRMapping.setOperandsMapping(getOperandsMapping(
-        {&AArch64::ValMappings[AArch64::getRegBankBaseIdx(Size) +
-                               AArch64::FirstGPR],
-         &AArch64::ValMappings[AArch64::getRegBankBaseIdx(Size) +
-                               AArch64::FirstGPR],
-         &AArch64::ValMappings[AArch64::getRegBankBaseIdx(Size) +
-                               AArch64::FirstGPR]}));
-    FPRMapping.setOperandsMapping(getOperandsMapping(
-        {&AArch64::ValMappings[AArch64::getRegBankBaseIdx(Size) +
-                               AArch64::FirstFPR],
-         &AArch64::ValMappings[AArch64::getRegBankBaseIdx(Size) +
-                               AArch64::FirstFPR],
-         &AArch64::ValMappings[AArch64::getRegBankBaseIdx(Size) +
-                               AArch64::FirstFPR]}));
+    unsigned RBIdx = AArch64::getRegBankBaseIdx(Size);
+    GPRMapping.setOperandsMapping(
+        &AArch64::ValMappings[AArch64::First3OpsIdx +
+                              (RBIdx + AArch64::FirstGPR) * 3]);
+    FPRMapping.setOperandsMapping(
+        &AArch64::ValMappings[AArch64::First3OpsIdx +
+                              (RBIdx + AArch64::FirstFPR) * 3]);
     AltMappings.emplace_back(std::move(GPRMapping));
     AltMappings.emplace_back(std::move(FPRMapping));
     return AltMappings;
