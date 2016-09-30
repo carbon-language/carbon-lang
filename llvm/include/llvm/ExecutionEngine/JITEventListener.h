@@ -97,7 +97,7 @@ public:
   }
 #endif // USE_INTEL_JITEVENTS
 
-#if defined(LLVM_USE_OPROFILE) && LLVM_USE_OPROFILE
+#if LLVM_USE_OPROFILE
   // Construct an OProfileJITEventListener
   static JITEventListener *createOProfileJITEventListener();
 

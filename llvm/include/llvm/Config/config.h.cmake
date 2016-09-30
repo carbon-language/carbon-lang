@@ -436,7 +436,7 @@
 #cmakedefine01 LLVM_USE_INTEL_JITEVENTS
 
 /* Define if we have the oprofile JIT-support library */
-#cmakedefine LLVM_USE_OPROFILE 1
+#cmakedefine01 LLVM_USE_OPROFILE
 
 /* Major version of the LLVM API */
 #define LLVM_VERSION_MAJOR ${LLVM_VERSION_MAJOR}
