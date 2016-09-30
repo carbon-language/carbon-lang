@@ -105,7 +105,7 @@
 /* Define to 1 if you have the `isatty' function. */
 #cmakedefine HAVE_ISATTY 1
 
-/* Define to 1 if you have the 'edit' library (-ledit). */
+/* Define to 1 if you have the `edit' library (-ledit). */
 #cmakedefine HAVE_LIBEDIT ${HAVE_LIBEDIT}
 
 /* Define to 1 if you have the `psapi' library (-lpsapi). */
