@@ -246,12 +246,12 @@ AArch64RegisterBankInfo::getInstrAlternativeMappings(
     if (MI.getNumOperands() != 3)
       break;
     InstructionMappings AltMappings;
-    InstructionMapping GPRMapping(/*ID*/ 1, /*Cost*/ 1,
-                                  getValueMappingIdx(AArch64::FirstGPR, Size),
-                                  /*NumOperands*/ 3);
-    InstructionMapping FPRMapping(/*ID*/ 2, /*Cost*/ 1,
-                                  getValueMappingIdx(AArch64::FirstFPR, Size),
-                                  /*NumOperands*/ 3);
+    InstructionMapping GPRMapping(
+        /*ID*/ 1, /*Cost*/ 1, AArch64::getValueMapping(AArch64::FirstGPR, Size),
+        /*NumOperands*/ 3);
+    InstructionMapping FPRMapping(
+        /*ID*/ 2, /*Cost*/ 1, AArch64::getValueMapping(AArch64::FirstFPR, Size),
+        /*NumOperands*/ 3);
 
     AltMappings.emplace_back(std::move(GPRMapping));
     AltMappings.emplace_back(std::move(FPRMapping));
@@ -352,7 +352,8 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
         IsFPR ? AArch64::FirstFPR : AArch64::FirstGPR;
 
     return InstructionMapping{DefaultMappingID, 1,
-                              getValueMappingIdx(RBIdx, Size), NumOperands};
+                              AArch64::getValueMapping(RBIdx, Size),
+                              NumOperands};
   }
   default:
     break;
@@ -405,7 +406,8 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   SmallVector<const ValueMapping *, 8> OpdsMapping(NumOperands);
   for (unsigned Idx = 0; Idx < NumOperands; ++Idx)
     if (MI.getOperand(Idx).isReg())
-      OpdsMapping[Idx] = getValueMappingIdx(OpRegBankIdx[Idx], OpSize[Idx]);
+      OpdsMapping[Idx] =
+          AArch64::getValueMapping(OpRegBankIdx[Idx], OpSize[Idx]);
 
   Mapping.setOperandsMapping(getOperandsMapping(OpdsMapping));
   return Mapping;

@@ -101,7 +101,7 @@ RegisterBankInfo::ValueMapping ValMappings[] {
 ///
 /// \pre \p RBIdx != PartialMappingIdx::None
 const RegisterBankInfo::ValueMapping *
-getValueMappingIdx(PartialMappingIdx RBIdx, unsigned Size) {
+getValueMapping(PartialMappingIdx RBIdx, unsigned Size) {
   assert(RBIdx != PartialMappingIdx::None && "No mapping needed for that");
   unsigned ValMappingIdx = First3OpsIdx +
                       (RBIdx + getRegBankBaseIdxOffset(Size)) *
