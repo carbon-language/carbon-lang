@@ -9264,6 +9264,14 @@ public:
   /// an error otherwise.
   bool CheckCUDAVLA(SourceLocation Loc);
 
+  /// Set __device__ or __host__ __device__ attributes on the given lambda
+  /// operator() method.
+  ///
+  /// CUDA lambdas declared inside __device__ or __global__ functions inherit
+  /// the __device__ attribute.  Similarly, lambdas inside __host__ __device__
+  /// functions become __host__ __device__ themselves.
+  void CUDASetLambdaAttrs(CXXMethodDecl *Method);
+
   /// Finds a function in \p Matches with highest calling priority
   /// from \p Caller context and erases all functions with lower
   /// calling priority.
