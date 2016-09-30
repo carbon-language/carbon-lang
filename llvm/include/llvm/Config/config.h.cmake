@@ -375,9 +375,8 @@
 /* Installation directory for documentation */
 #cmakedefine LLVM_DOCSDIR "${LLVM_DOCSDIR}"
 
-/* Define if LLVM is built with asserts and checks that change the layout of
-   client-visible data structures.  */
-#cmakedefine LLVM_ENABLE_ABI_BREAKING_CHECKS
+/* Define to enable checks that alter the LLVM C++ ABI */
+#cmakedefine01 LLVM_ENABLE_ABI_BREAKING_CHECKS
 
 /* Define if threads enabled */
 #cmakedefine01 LLVM_ENABLE_THREADS
