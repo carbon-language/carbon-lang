@@ -123,9 +123,6 @@
 /* Define to 1 if you have the <link.h> header file. */
 #cmakedefine HAVE_LINK_H ${HAVE_LINK_H}
 
-/* Define if you can use -rdynamic. */
-#define HAVE_LINK_EXPORT_DYNAMIC 1
-
 /* Define if you can use -Wl,-R. to pass -R. to the linker, in order to add
    the current directory to the dynamic linker search path. */
 #undef HAVE_LINK_R
