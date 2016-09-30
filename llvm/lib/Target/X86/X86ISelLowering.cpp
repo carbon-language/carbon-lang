@@ -485,10 +485,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   if (!Subtarget.useSoftFloat() && X86ScalarSSEf64) {
     // f32 and f64 use SSE.
     // Set up the FP register classes.
-    addRegisterClass(MVT::f32, Subtarget.hasAVX512() ? &X86::FR32XRegClass
-                                                     : &X86::FR32RegClass);
-    addRegisterClass(MVT::f64, Subtarget.hasAVX512() ? &X86::FR64XRegClass
-                                                     : &X86::FR64RegClass);
+    addRegisterClass(MVT::f32, &X86::FR32XRegClass);
+    addRegisterClass(MVT::f64, &X86::FR64XRegClass);
 
     for (auto VT : { MVT::f32, MVT::f64 }) {
       // Use ANDPD to simulate FABS.
@@ -517,8 +515,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   } else if (UseX87 && X86ScalarSSEf32) {
     // Use SSE for f32, x87 for f64.
     // Set up the FP register classes.
-    addRegisterClass(MVT::f32, Subtarget.hasAVX512() ? &X86::FR32XRegClass
-                                                     : &X86::FR32RegClass);
+    addRegisterClass(MVT::f32, &X86::FR32XRegClass);
     addRegisterClass(MVT::f64, &X86::RFP64RegClass);
 
     // Use ANDPS to simulate FABS.
@@ -721,8 +718,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   }
 
   if (!Subtarget.useSoftFloat() && Subtarget.hasSSE1()) {
-    addRegisterClass(MVT::v4f32, Subtarget.hasVLX() ? &X86::VR128XRegClass
-                                                    : &X86::VR128RegClass);
+    addRegisterClass(MVT::v4f32, &X86::VR128XRegClass);
 
     setOperationAction(ISD::FNEG,               MVT::v4f32, Custom);
     setOperationAction(ISD::FABS,               MVT::v4f32, Custom);
@@ -735,19 +731,14 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   }
 
   if (!Subtarget.useSoftFloat() && Subtarget.hasSSE2()) {
-    addRegisterClass(MVT::v2f64, Subtarget.hasVLX() ? &X86::VR128XRegClass
-                                                    : &X86::VR128RegClass);
+    addRegisterClass(MVT::v2f64, &X86::VR128XRegClass);
 
     // FIXME: Unfortunately, -soft-float and -no-implicit-float mean XMM
     // registers cannot be used even for integer operations.
-    addRegisterClass(MVT::v16i8, Subtarget.hasVLX() ? &X86::VR128XRegClass
-                                                    : &X86::VR128RegClass);
-    addRegisterClass(MVT::v8i16, Subtarget.hasVLX() ? &X86::VR128XRegClass
-                                                    : &X86::VR128RegClass);
-    addRegisterClass(MVT::v4i32, Subtarget.hasVLX() ? &X86::VR128XRegClass
-                                                    : &X86::VR128RegClass);
-    addRegisterClass(MVT::v2i64, Subtarget.hasVLX() ? &X86::VR128XRegClass
-                                                    : &X86::VR128RegClass);
+    addRegisterClass(MVT::v16i8, &X86::VR128XRegClass);
+    addRegisterClass(MVT::v8i16, &X86::VR128XRegClass);
+    addRegisterClass(MVT::v4i32, &X86::VR128XRegClass);
+    addRegisterClass(MVT::v2i64, &X86::VR128XRegClass);
 
     setOperationAction(ISD::MUL,                MVT::v16i8, Custom);
     setOperationAction(ISD::MUL,                MVT::v4i32, Custom);
@@ -955,18 +946,12 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   if (!Subtarget.useSoftFloat() && Subtarget.hasFp256()) {
     bool HasInt256 = Subtarget.hasInt256();
 
-    addRegisterClass(MVT::v32i8,  Subtarget.hasVLX() ? &X86::VR256XRegClass
-                                                     : &X86::VR256RegClass);
-    addRegisterClass(MVT::v16i16, Subtarget.hasVLX() ? &X86::VR256XRegClass
-                                                     : &X86::VR256RegClass);
-    addRegisterClass(MVT::v8i32,  Subtarget.hasVLX() ? &X86::VR256XRegClass
-                                                     : &X86::VR256RegClass);
-    addRegisterClass(MVT::v8f32,  Subtarget.hasVLX() ? &X86::VR256XRegClass
-                                                     : &X86::VR256RegClass);
-    addRegisterClass(MVT::v4i64,  Subtarget.hasVLX() ? &X86::VR256XRegClass
-                                                     : &X86::VR256RegClass);
-    addRegisterClass(MVT::v4f64,  Subtarget.hasVLX() ? &X86::VR256XRegClass
-                                                     : &X86::VR256RegClass);
+    addRegisterClass(MVT::v32i8,  &X86::VR256XRegClass);
+    addRegisterClass(MVT::v16i16, &X86::VR256XRegClass);
+    addRegisterClass(MVT::v8i32,  &X86::VR256XRegClass);
+    addRegisterClass(MVT::v8f32,  &X86::VR256XRegClass);
+    addRegisterClass(MVT::v4i64,  &X86::VR256XRegClass);
+    addRegisterClass(MVT::v4f64,  &X86::VR256XRegClass);
 
     for (auto VT : { MVT::v8f32, MVT::v4f64 }) {
       setOperationAction(ISD::FFLOOR,     VT, Legal);
