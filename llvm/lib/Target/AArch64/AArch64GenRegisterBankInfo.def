@@ -39,7 +39,7 @@ enum PartialMappingIdx {
   LastFPR = FPR512
 };
 
-static unsigned getRegBankBaseIdx(unsigned Size) {
+static unsigned getRegBankBaseIdxOffset(unsigned Size) {
   assert(Size && "0-sized type!!");
   // Make anything smaller than 32 gets 32
   Size = ((Size + 31) / 32) * 32;

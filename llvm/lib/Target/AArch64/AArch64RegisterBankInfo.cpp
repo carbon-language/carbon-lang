@@ -248,13 +248,13 @@ AArch64RegisterBankInfo::getInstrAlternativeMappings(
                                   /*NumOperands*/ 3);
     InstructionMapping FPRMapping(/*ID*/ 2, /*Cost*/ 1, nullptr,
                                   /*NumOperands*/ 3);
-    unsigned RBIdx = AArch64::getRegBankBaseIdx(Size);
+    unsigned RBIdxOffset = AArch64::getRegBankBaseIdxOffset(Size);
     GPRMapping.setOperandsMapping(
         &AArch64::ValMappings[AArch64::First3OpsIdx +
-                              (RBIdx + AArch64::FirstGPR) * 3]);
+                              (RBIdxOffset + AArch64::FirstGPR) * 3]);
     FPRMapping.setOperandsMapping(
         &AArch64::ValMappings[AArch64::First3OpsIdx +
-                              (RBIdx + AArch64::FirstFPR) * 3]);
+                              (RBIdxOffset + AArch64::FirstFPR) * 3]);
     AltMappings.emplace_back(std::move(GPRMapping));
     AltMappings.emplace_back(std::move(FPRMapping));
     return AltMappings;
@@ -336,20 +336,23 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     assert(NumOperands == 3 && "This code is for 3-operands instructions");
 
     LLT Ty = MRI.getType(MI.getOperand(0).getReg());
-    unsigned RBIdx = AArch64::getRegBankBaseIdx(Ty.getSizeInBits());
+    unsigned RBIdxOffset = AArch64::getRegBankBaseIdxOffset(Ty.getSizeInBits());
     // Make sure all the operands are using similar size.
     // Should probably be checked by the machine verifier.
-    assert(AArch64::getRegBankBaseIdx(MRI.getType(MI.getOperand(1).getReg())
-                                          .getSizeInBits()) == RBIdx &&
+    assert(AArch64::getRegBankBaseIdxOffset(
+               MRI.getType(MI.getOperand(1).getReg()).getSizeInBits()) ==
+               RBIdxOffset &&
            "Operand 1 has incompatible size");
-    assert(AArch64::getRegBankBaseIdx(MRI.getType(MI.getOperand(2).getReg())
-                                          .getSizeInBits()) == RBIdx &&
+    assert(AArch64::getRegBankBaseIdxOffset(
+               MRI.getType(MI.getOperand(2).getReg()).getSizeInBits()) ==
+               RBIdxOffset &&
            "Operand 2 has incompatible size");
 
     bool IsFPR = Ty.isVector() || isPreISelGenericFloatingPointOpcode(Opc);
 
-    unsigned Offset = (IsFPR ? AArch64::FirstFPR : AArch64::FirstGPR) + RBIdx;
-    unsigned ValMappingIdx = AArch64::First3OpsIdx + Offset * 3;
+    unsigned RBIdx =
+        (IsFPR ? AArch64::FirstFPR : AArch64::FirstGPR) + RBIdxOffset;
+    unsigned ValMappingIdx = AArch64::First3OpsIdx + RBIdx * 3;
 
     assert(ValMappingIdx >= AArch64::First3OpsIdx &&
            ValMappingIdx <= AArch64::Last3OpsIdx && "Mapping out of bound");
@@ -373,19 +376,21 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       continue;
 
     LLT Ty = MRI.getType(MO.getReg());
-    unsigned RBIdx = AArch64::getRegBankBaseIdx(Ty.getSizeInBits());
-    OpBaseIdx[Idx] = RBIdx;
+    unsigned RBIdxOffset = AArch64::getRegBankBaseIdxOffset(Ty.getSizeInBits());
+    OpBaseIdx[Idx] = RBIdxOffset;
 
     // As a top-level guess, vectors go in FPRs, scalars and pointers in GPRs.
     // For floating-point instructions, scalars go in FPRs.
     if (Ty.isVector() || isPreISelGenericFloatingPointOpcode(Opc)) {
-      assert(RBIdx < (AArch64::LastFPR - AArch64::FirstFPR) + 1 &&
+      assert(AArch64::FirstFPR + RBIdxOffset <
+                 (AArch64::LastFPR - AArch64::FirstFPR) + 1 &&
              "Index out of bound");
-      OpFinalIdx[Idx] = AArch64::FirstFPR + RBIdx;
+      OpFinalIdx[Idx] = AArch64::FirstFPR + RBIdxOffset;
     } else {
-      assert(RBIdx < (AArch64::LastGPR - AArch64::FirstGPR) + 1 &&
+      assert(AArch64::FirstGPR + RBIdxOffset <
+                 (AArch64::LastGPR - AArch64::FirstGPR) + 1 &&
              "Index out of bound");
-      OpFinalIdx[Idx] = AArch64::FirstGPR + RBIdx;
+      OpFinalIdx[Idx] = AArch64::FirstGPR + RBIdxOffset;
     }
   }
 
