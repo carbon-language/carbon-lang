@@ -93,7 +93,7 @@ Memory::allocateMappedMemory(size_t NumBytes,
   int fd = -1;
 
   int MMFlags = MAP_PRIVATE |
-#ifdef HAVE_MMAP_ANONYMOUS
+#ifdef MAP_ANONYMOUS
   MAP_ANONYMOUS
 #else
   MAP_ANON
@@ -179,7 +179,7 @@ Memory::AllocateRWX(size_t NumBytes, const MemoryBlock* NearBlock,
   int fd = -1;
 
   int flags = MAP_PRIVATE |
-#ifdef HAVE_MMAP_ANONYMOUS
+#ifdef MAP_ANONYMOUS
   MAP_ANONYMOUS
 #else
   MAP_ANON

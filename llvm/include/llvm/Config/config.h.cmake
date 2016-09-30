@@ -160,10 +160,6 @@
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
 
-/* Define if mmap() uses MAP_ANONYMOUS to map anonymous pages, or undefine if
-   it uses MAP_ANON */
-#undef HAVE_MMAP_ANONYMOUS
-
 /* Define if mmap() can map files into memory */
 #undef HAVE_MMAP_FILE
 
