@@ -348,6 +348,9 @@
 /* Linker version detected at compile time. */
 #undef HOST_LINK_VERSION
 
+/* Define if we link Polly to the tools */
+#cmakedefine LINK_POLLY_INTO_TOOLS
+
 /* Installation directory for binary executables */
 #cmakedefine LLVM_BINDIR "${LLVM_BINDIR}"
 
@@ -439,9 +442,6 @@
 
 /* LLVM version information */
 #cmakedefine LLVM_VERSION_INFO "${LLVM_VERSION_INFO}"
-
-/* Define if we link Polly to the tools */
-#cmakedefine LINK_POLLY_INTO_TOOLS
 
 /* Define to the extension used for shared libraries, say, ".so". */
 #cmakedefine LTDL_SHLIB_EXT "${LTDL_SHLIB_EXT}"
