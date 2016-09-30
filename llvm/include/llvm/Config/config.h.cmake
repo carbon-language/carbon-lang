@@ -452,12 +452,6 @@
 /* Define as the return type of signal handlers (`int' or `void'). */
 #cmakedefine RETSIGTYPE ${RETSIGTYPE}
 
-/* Define to `int' if <sys/types.h> does not define. */
-#undef pid_t
-
-/* Define to `unsigned int' if <sys/types.h> does not define. */
-#undef size_t
-
 /* Define to a function replacing strtoll */
 #cmakedefine strtoll ${strtoll}
 
