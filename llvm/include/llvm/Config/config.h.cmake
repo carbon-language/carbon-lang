@@ -450,10 +450,6 @@
 /* Define to the extension used for shared libraries, say, ".so". */
 #cmakedefine LTDL_SHLIB_EXT "${LTDL_SHLIB_EXT}"
 
-/* Define if /dev/zero should be used when mapping RWX memory, or undefine if
-   its not necessary */
-#undef NEED_DEV_ZERO_FOR_MMAP
-
 /* Define to the address where bug reports for this package should be sent. */
 #cmakedefine PACKAGE_BUGREPORT "${PACKAGE_BUGREPORT}"
 
