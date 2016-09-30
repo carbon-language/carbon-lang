@@ -318,6 +318,56 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   }
 
   unsigned NumOperands = MI.getNumOperands();
+  switch (Opc) {
+    // G_{F|S|U}REM are not listed because they are not legal.
+    // Arithmetic ops.
+  case TargetOpcode::G_ADD:
+  case TargetOpcode::G_SUB:
+  case TargetOpcode::G_GEP:
+  case TargetOpcode::G_MUL:
+  case TargetOpcode::G_SDIV:
+  case TargetOpcode::G_UDIV:
+    // Bitwise ops.
+  case TargetOpcode::G_AND:
+  case TargetOpcode::G_OR:
+  case TargetOpcode::G_XOR:
+    // Shifts.
+  case TargetOpcode::G_SHL:
+  case TargetOpcode::G_LSHR:
+  case TargetOpcode::G_ASHR:
+    // Floating point ops.
+  case TargetOpcode::G_FADD:
+  case TargetOpcode::G_FSUB:
+  case TargetOpcode::G_FMUL:
+  case TargetOpcode::G_FDIV:{
+    assert(NumOperands == 3 && "This code is for 3-operands instructions");
+
+    LLT Ty = MRI.getType(MI.getOperand(0).getReg());
+    unsigned RBIdx = AArch64::getRegBankBaseIdx(Ty.getSizeInBits());
+    // Make sure all the operands are using similar size.
+    // Should probably be checked by the machine verifier.
+    assert(AArch64::getRegBankBaseIdx(MRI.getType(MI.getOperand(1).getReg())
+                                          .getSizeInBits()) == RBIdx &&
+           "Operand 1 has incompatible size");
+    assert(AArch64::getRegBankBaseIdx(MRI.getType(MI.getOperand(2).getReg())
+                                          .getSizeInBits()) == RBIdx &&
+           "Operand 2 has incompatible size");
+
+    bool IsFPR = Ty.isVector() || isPreISelGenericFloatingPointOpcode(Opc);
+
+    unsigned Offset = (IsFPR ? AArch64::FirstFPR : AArch64::FirstGPR) + RBIdx;
+    unsigned ValMappingIdx = AArch64::First3OpsIdx + Offset * 3;
+
+    assert(ValMappingIdx >= AArch64::First3OpsIdx &&
+           ValMappingIdx <= AArch64::Last3OpsIdx && "Mapping out of bound");
+
+    return InstructionMapping{
+        DefaultMappingID, 1, &AArch64::ValMappings[ValMappingIdx], NumOperands};
+  }
+  default:
+    break;
+  }
+
   RegisterBankInfo::InstructionMapping Mapping =
       InstructionMapping{DefaultMappingID, 1, nullptr, NumOperands};
 
