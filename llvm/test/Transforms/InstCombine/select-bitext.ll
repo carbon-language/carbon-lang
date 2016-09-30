@@ -166,6 +166,17 @@ define <2 x i32> @test_vectors_sext(<2 x i1> %cca, <2 x i1> %ccb) {
   ret <2 x i32> %r
 }
 
+define <2 x i32> @test_vectors_sext_nonsplat(<2 x i1> %cca, <2 x i1> %ccb) {
+; CHECK-LABEL: @test_vectors_sext_nonsplat(
+; CHECK-NEXT:    [[CCAX:%.*]] = sext <2 x i1> %cca to <2 x i32>
+; CHECK-NEXT:    [[R:%.*]] = select <2 x i1> %ccb, <2 x i32> [[CCAX]], <2 x i32> <i32 0, i32 -1>
+; CHECK-NEXT:    ret <2 x i32> [[R]]
+;
+  %ccax = sext <2 x i1> %cca to <2 x i32>
+  %r = select <2 x i1> %ccb, <2 x i32> %ccax, <2 x i32> <i32 0, i32 -1>
+  ret <2 x i32> %r
+}
+
 define <2 x i32> @test_vectors_zext(<2 x i1> %cca, <2 x i1> %ccb) {
 ; CHECK-LABEL: @test_vectors_zext(
 ; CHECK-NEXT:    [[FOLD_R:%.*]] = and <2 x i1> %ccb, %cca
@@ -174,6 +185,17 @@ define <2 x i32> @test_vectors_zext(<2 x i1> %cca, <2 x i1> %ccb) {
 ;
   %ccax = zext <2 x i1> %cca to <2 x i32>
   %r = select <2 x i1> %ccb, <2 x i32> %ccax, <2 x i32> <i32 0, i32 0>
+  ret <2 x i32> %r
+}
+
+define <2 x i32> @test_vectors_zext_nonsplat(<2 x i1> %cca, <2 x i1> %ccb) {
+; CHECK-LABEL: @test_vectors_zext_nonsplat(
+; CHECK-NEXT:    [[CCAX:%.*]] = zext <2 x i1> %cca to <2 x i32>
+; CHECK-NEXT:    [[R:%.*]] = select <2 x i1> %ccb, <2 x i32> [[CCAX]], <2 x i32> <i32 1, i32 0>
+; CHECK-NEXT:    ret <2 x i32> [[R]]
+;
+  %ccax = zext <2 x i1> %cca to <2 x i32>
+  %r = select <2 x i1> %ccb, <2 x i32> %ccax, <2 x i32> <i32 1, i32 0>
   ret <2 x i32> %r
 }
 
