@@ -222,7 +222,7 @@
 #cmakedefine HAVE_SYS_IOCTL_H ${HAVE_SYS_IOCTL_H}
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
-#cmakedefine HAVE_SYS_MMAN_H ${}
+#cmakedefine HAVE_SYS_MMAN_H ${HAVE_SYS_MMAN_H}
 
 /* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
    */
