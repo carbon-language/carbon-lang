@@ -2366,11 +2366,14 @@ void Sema::DeclareGlobalNewDelete() {
     bool HasSizedVariant = getLangOpts().SizedDeallocation &&
                            (Kind == OO_Delete || Kind == OO_Array_Delete);
     bool HasAlignedVariant = getLangOpts().CPlusPlus1z;
-    for (int Sized = 0; Sized <= HasSizedVariant; ++Sized) {
+
+    int NumSizeVariants = (HasSizedVariant ? 2 : 1);
+    int NumAlignVariants = (HasAlignedVariant ? 2 : 1);
+    for (int Sized = 0; Sized < NumSizeVariants; ++Sized) {
       if (Sized)
         Params.push_back(SizeT);
 
-      for (int Aligned = 0; Aligned <= HasAlignedVariant; ++Aligned) {
+      for (int Aligned = 0; Aligned < NumAlignVariants; ++Aligned) {
         if (Aligned)
           Params.push_back(Context.getTypeDeclType(getStdAlignValT()));
 
