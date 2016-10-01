@@ -511,16 +511,16 @@ size_t AsmLexer::peekTokens(MutableArrayRef<AsmToken> Buf,
 }
 
 bool AsmLexer::isAtStartOfComment(const char *Ptr) {
-  const char *CommentString = MAI.getCommentString();
+  StringRef CommentString = MAI.getCommentString();
 
-  if (CommentString[1] == '\0')
+  if (CommentString.size() == 1)
     return CommentString[0] == Ptr[0];
 
   // Allow # preprocessor commments also be counted as comments for "##" cases
   if (CommentString[1] == '#')
     return CommentString[0] == Ptr[0];
 
-  return strncmp(Ptr, CommentString, strlen(CommentString)) == 0;
+  return strncmp(Ptr, CommentString.data(), CommentString.size()) == 0;
 }
 
 bool AsmLexer::isAtStatementSeparator(const char *Ptr) {
