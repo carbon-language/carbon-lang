@@ -201,9 +201,6 @@
 /* Define to 1 if you have the `strtoll' function. */
 #cmakedefine HAVE_STRTOLL ${HAVE_STRTOLL}
 
-/* Define to 1 if you have the `strtoq' function. */
-#cmakedefine HAVE_STRTOQ ${HAVE_STRTOQ}
-
 /* Define to 1 if you have the `sysconf' function. */
 #cmakedefine HAVE_SYSCONF ${HAVE_SYSCONF}
 
