@@ -159,7 +159,7 @@ static cl::opt<RunPassOption, true, cl::parser<std::string>> RunPass(
 static int compileModule(char **, LLVMContext &);
 
 static std::unique_ptr<tool_output_file>
-GetOutputStream(const char *TargetName, Triple::OSType OS,
+GetOutputStream(StringRef TargetName, Triple::OSType OS,
                 const char *ProgName) {
   // If we don't yet have an output filename, make one.
   if (OutputFilename.empty()) {

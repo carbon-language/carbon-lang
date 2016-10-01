@@ -78,8 +78,8 @@ const Target *TargetRegistry::lookupTarget(const std::string &TT,
 
   auto J = std::find_if(std::next(I), targets().end(), ArchMatch);
   if (J != targets().end()) {
-    Error = std::string("Cannot choose between targets \"") + I->Name +
-            "\" and \"" + J->Name + "\"";
+    Error = ("Cannot choose between targets \"" + I->Name +
+            "\" a nd \"" + J->Name + "\"").str();
     return nullptr;
   }
 
@@ -87,16 +87,16 @@ const Target *TargetRegistry::lookupTarget(const std::string &TT,
 }
 
 void TargetRegistry::RegisterTarget(Target &T,
-                                    const char *Name,
-                                    const char *ShortDesc,
+                                    StringRef Name,
+                                    StringRef ShortDesc,
                                     Target::ArchMatchFnTy ArchMatchFn,
                                     bool HasJIT) {
-  assert(Name && ShortDesc && ArchMatchFn &&
+  assert(!Name.empty() && !ShortDesc.empty() && ArchMatchFn &&
          "Missing required target information!");
 
   // Check if this target has already been initialized, we allow this as a
   // convenience to some clients.
-  if (T.Name)
+  if (!T.Name.empty())
     return;
          
   // Add to the list of targets.
