@@ -56,9 +56,7 @@ public:
       : AsmPrinter(TM, std::move(Streamer)), MCInstLowering(OutContext, *this),
         SM(*this), AArch64FI(nullptr) {}
 
-  const char *getPassName() const override {
-    return "AArch64 Assembly Printer";
-  }
+  StringRef getPassName() const override { return "AArch64 Assembly Printer"; }
 
   /// \brief Wrapper for MCInstLowering.lowerOperand() for the
   /// tblgen'erated pseudo lowering.

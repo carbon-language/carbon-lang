@@ -8713,7 +8713,7 @@ namespace {
       return true;
     }
 
-    const char *getPassName() const override {
+    StringRef getPassName() const override {
       return "X86 PIC Global Base Reg Initialization";
     }
 
@@ -8827,7 +8827,7 @@ namespace {
       return Copy;
     }
 
-    const char *getPassName() const override {
+    StringRef getPassName() const override {
       return "Local Dynamic TLS Access Clean-up";
     }
 

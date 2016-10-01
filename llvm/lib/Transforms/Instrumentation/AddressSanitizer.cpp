@@ -482,7 +482,7 @@ struct AddressSanitizer : public FunctionPass {
         LocalDynamicShadow(nullptr) {
     initializeAddressSanitizerPass(*PassRegistry::getPassRegistry());
   }
-  const char *getPassName() const override {
+  StringRef getPassName() const override {
     return "AddressSanitizerFunctionPass";
   }
   void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -593,9 +593,9 @@ class AddressSanitizerModule : public ModulePass {
         Recover(Recover || ClRecover) {}
   bool runOnModule(Module &M) override;
   static char ID;  // Pass identification, replacement for typeid
-  const char *getPassName() const override { return "AddressSanitizerModule"; }
+  StringRef getPassName() const override { return "AddressSanitizerModule"; }
 
- private:
+private:
   void initializeCallbacks(Module &M);
 
   bool InstrumentGlobals(IRBuilder<> &IRB, Module &M);
