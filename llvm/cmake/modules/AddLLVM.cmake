@@ -1084,7 +1084,7 @@ function(add_lit_target target comment)
     list(APPEND LIT_ARGS --param build_mode=${CMAKE_CFG_INTDIR})
   endif ()
   if (EXISTS ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
-    set (LIT_COMMAND "${PYTHON_EXECUTABLE} ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py"
+    set (LIT_COMMAND "${PYTHON_EXECUTABLE};${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py"
          CACHE STRING "Command used to spawn llvm-lit")
   else()
     find_program(LIT_COMMAND NAMES llvm-lit lit.py lit)
