@@ -544,7 +544,7 @@ MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx,
   assert(JumpTableInfo && "No jump tables");
   assert(JTI < JumpTableInfo->getJumpTables().size() && "Invalid JTI!");
 
-  const char *Prefix = isLinkerPrivate ? DL.getLinkerPrivateGlobalPrefix()
+  StringRef Prefix = isLinkerPrivate ? DL.getLinkerPrivateGlobalPrefix()
                                        : DL.getPrivateGlobalPrefix();
   SmallString<60> Name;
   raw_svector_ostream(Name)
