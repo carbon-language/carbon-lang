@@ -120,10 +120,6 @@
 /* Define to 1 if you have the <link.h> header file. */
 #cmakedefine HAVE_LINK_H ${HAVE_LINK_H}
 
-/* Define if you can use -Wl,-R. to pass -R. to the linker, in order to add
-   the current directory to the dynamic linker search path. */
-#undef HAVE_LINK_R
-
 /* Define to 1 if you have the <mach/mach.h> header file. */
 #cmakedefine HAVE_MACH_MACH_H ${HAVE_MACH_MACH_H}
 
