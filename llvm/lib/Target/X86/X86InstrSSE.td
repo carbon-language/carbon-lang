@@ -5162,12 +5162,12 @@ let Predicates = [HasAVX] in {
             (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
 }
 
-let Predicates = [UseAVX, OptForSize] in {
-  def : Pat<(v2f64 (X86VBroadcast (loadf64 addr:$src))),
-            (VMOVDDUPrm addr:$src)>;
-  def : Pat<(v2i64 (X86VBroadcast (loadi64 addr:$src))),
-            (VMOVDDUPrm addr:$src)>;
-}
+let Predicates = [HasAVX, NoVLX] in
+def : Pat<(v2f64 (X86VBroadcast (loadf64 addr:$src))),
+          (VMOVDDUPrm addr:$src)>;
+let Predicates = [HasAVX1Only] in
+def : Pat<(v2i64 (X86VBroadcast (loadi64 addr:$src))),
+          (VMOVDDUPrm addr:$src)>;
 
 let Predicates = [UseSSE3] in {
   def : Pat<(X86Movddup (memopv2f64 addr:$src)),
