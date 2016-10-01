@@ -329,9 +329,8 @@
 /* Define if we link Polly to the tools */
 #cmakedefine LINK_POLLY_INTO_TOOLS
 
-/* Target triple LLVM will generate code for by default
- * Doesn't use `cmakedefine` because it is allowed to be empty.
- */
+/* Target triple LLVM will generate code for by default */
+/* Doesn't use `cmakedefine` because it is allowed to be empty. */
 #define LLVM_DEFAULT_TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}"
 
 /* Define to enable checks that alter the LLVM C++ ABI */
