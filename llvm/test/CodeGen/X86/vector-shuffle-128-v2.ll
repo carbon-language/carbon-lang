@@ -1159,16 +1159,43 @@ define <2 x i64> @insert_mem_hi_v2i64(i64* %ptr, <2 x i64> %b) {
 }
 
 define <2 x double> @insert_reg_lo_v2f64(double %a, <2 x double> %b) {
-; SSE-LABEL: insert_reg_lo_v2f64:
-; SSE:       # BB#0:
-; SSE-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
-; SSE-NEXT:    movapd %xmm1, %xmm0
-; SSE-NEXT:    retq
+; SSE2-LABEL: insert_reg_lo_v2f64:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
+; SSE2-NEXT:    movapd %xmm1, %xmm0
+; SSE2-NEXT:    retq
 ;
-; AVX-LABEL: insert_reg_lo_v2f64:
-; AVX:       # BB#0:
-; AVX-NEXT:    vmovsd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
-; AVX-NEXT:    retq
+; SSE3-LABEL: insert_reg_lo_v2f64:
+; SSE3:       # BB#0:
+; SSE3-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
+; SSE3-NEXT:    movapd %xmm1, %xmm0
+; SSE3-NEXT:    retq
+;
+; SSSE3-LABEL: insert_reg_lo_v2f64:
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
+; SSSE3-NEXT:    movapd %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: insert_reg_lo_v2f64:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    blendpd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: insert_reg_lo_v2f64:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vblendpd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: insert_reg_lo_v2f64:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vblendpd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
+; AVX2-NEXT:    retq
+;
+; AVX512VL-LABEL: insert_reg_lo_v2f64:
+; AVX512VL:       # BB#0:
+; AVX512VL-NEXT:    vmovsd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
+; AVX512VL-NEXT:    retq
   %v = insertelement <2 x double> undef, double %a, i32 0
   %shuffle = shufflevector <2 x double> %v, <2 x double> %b, <2 x i32> <i32 0, i32 3>
   ret <2 x double> %shuffle
