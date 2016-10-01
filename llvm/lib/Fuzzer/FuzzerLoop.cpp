@@ -79,8 +79,6 @@ void Fuzzer::PrepareCounters(Fuzzer::Coverage *C) {
 bool Fuzzer::RecordMaxCoverage(Fuzzer::Coverage *C) {
   bool Res = false;
 
-  TPC.FinalizeTrace();
-
   uint64_t NewBlockCoverage = EF->__sanitizer_get_total_unique_coverage();
   if (NewBlockCoverage > C->BlockCoverage) {
     Res = true;
@@ -106,12 +104,6 @@ bool Fuzzer::RecordMaxCoverage(Fuzzer::Coverage *C) {
       C->CounterBitmapBits += CounterDelta;
     }
   }
-
-  if (TPC.UpdateCounterMap(&C->TPCMap))
-    Res = true;
-
-  if (TPC.UpdateValueProfileMap(&C->VPMap))
-    Res = true;
 
   return Res;
 }
@@ -353,6 +345,16 @@ void Fuzzer::SetMaxMutationLen(size_t MaxMutationLen) {
   this->MaxMutationLen = MaxMutationLen;
 }
 
+void Fuzzer::CheckExitOnItem() {
+  if (!Options.ExitOnItem.empty()) {
+    if (Corpus.HasUnit(Options.ExitOnItem)) {
+      Printf("INFO: found item with checksum '%s', exiting.\n",
+             Options.ExitOnItem.c_str());
+      _Exit(0);
+    }
+  }
+}
+
 void Fuzzer::CheckExitOnSrcPos() {
   if (!Options.ExitOnSrcPos.empty()) {
     uintptr_t *PCIDs;
@@ -422,7 +424,22 @@ bool Fuzzer::RunOne(const uint8_t *Data, size_t Size) {
   TotalNumberOfRuns++;
 
   ExecuteCallback(Data, Size);
-  bool Res = RecordMaxCoverage(&MaxCoverage);
+  bool Res = false;
+
+  if (TPC.FinalizeTrace(Size))
+    if (Options.Shrink)
+      Res = true;
+
+  if (!Res) {
+    if (TPC.UpdateCounterMap(&MaxCoverage.TPCMap))
+      Res = true;
+
+    if (TPC.UpdateValueProfileMap(&MaxCoverage.VPMap))
+      Res = true;
+  }
+
+  if (RecordMaxCoverage(&MaxCoverage))
+    Res = true;
 
   CheckExitOnSrcPos();
   auto TimeOfUnit =
@@ -667,6 +684,7 @@ void Fuzzer::MutateAndTestOne() {
     if (RunOne(CurrentUnitData, Size)) {
       Corpus.AddToCorpus({CurrentUnitData, CurrentUnitData + Size});
       ReportNewCoverage(&II, {CurrentUnitData, CurrentUnitData + Size});
+      CheckExitOnItem();
     }
     StopTraceRecording();
     TryDetectingAMemoryLeak(CurrentUnitData, Size,

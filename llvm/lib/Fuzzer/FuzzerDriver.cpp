@@ -398,6 +398,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
   Options.UseMemcmp = Flags.use_memcmp;
   Options.UseMemmem = Flags.use_memmem;
   Options.UseValueProfile = Flags.use_value_profile;
+  Options.Shrink = Flags.shrink;
   Options.ShuffleAtStartUp = Flags.shuffle;
   Options.PreferSmall = Flags.prefer_small;
   Options.Reload = Flags.reload;
@@ -429,6 +430,8 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
   Options.PrintCoverage = Flags.print_coverage;
   if (Flags.exit_on_src_pos)
     Options.ExitOnSrcPos = Flags.exit_on_src_pos;
+  if (Flags.exit_on_item)
+    Options.ExitOnItem = Flags.exit_on_item;
 
   unsigned Seed = Flags.seed;
   // Initialize Seed.
