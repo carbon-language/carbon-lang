@@ -218,7 +218,7 @@ Pass *Pass::createPass(AnalysisID ID) {
 
 // RegisterAGBase implementation
 //
-RegisterAGBase::RegisterAGBase(const char *Name, const void *InterfaceID,
+RegisterAGBase::RegisterAGBase(StringRef Name, const void *InterfaceID,
                                const void *PassID, bool isDefault)
     : PassInfo(Name, InterfaceID) {
   PassRegistry::getPassRegistry()->registerAnalysisGroup(InterfaceID, PassID,

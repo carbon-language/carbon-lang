@@ -15,6 +15,8 @@
 
 #include "llvm/ADT/StringRef.h"
 
+#include "llvm/ADT/StringRef.h"
+
 #include <cassert>
 #include <vector>
 
@@ -58,7 +60,7 @@ public:
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass. This version is for use by analysis groups; it
   /// does not auto-register the pass.
-  PassInfo(const char *name, const void *pi)
+  PassInfo(StringRef name, const void *pi)
       : PassName(name), PassArgument(""), PassID(pi), IsCFGOnlyPass(false),
         IsAnalysis(false), IsAnalysisGroup(true), NormalCtor(nullptr),
         TargetMachineCtor(nullptr) {}
