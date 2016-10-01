@@ -37,8 +37,8 @@ class MachinePassRegistryListener {
 public:
   MachinePassRegistryListener() {}
   virtual ~MachinePassRegistryListener() {}
-  virtual void NotifyAdd(const char *N, MachinePassCtor C, const char *D) = 0;
-  virtual void NotifyRemove(const char *N) = 0;
+  virtual void NotifyAdd(StringRef N, MachinePassCtor C, StringRef D) = 0;
+  virtual void NotifyRemove(StringRef N) = 0;
 };
 
 
@@ -52,8 +52,8 @@ class MachinePassRegistryNode {
 private:
 
   MachinePassRegistryNode *Next;        // Next function pass in list.
-  const char *Name;                     // Name of function pass.
-  const char *Description;              // Description string.
+  StringRef Name;                       // Name of function pass.
+  StringRef Description;                // Description string.
   MachinePassCtor Ctor;                 // Function pass creator.
 
 public:
@@ -68,8 +68,8 @@ public:
   // Accessors
   MachinePassRegistryNode *getNext()      const { return Next; }
   MachinePassRegistryNode **getNextAddress()    { return &Next; }
-  const char *getName()                   const { return Name; }
-  const char *getDescription()            const { return Description; }
+  StringRef getName()                   const { return Name; }
+  StringRef getDescription()            const { return Description; }
   MachinePassCtor getCtor()               const { return Ctor; }
   void setNext(MachinePassRegistryNode *N)      { Next = N; }
 
@@ -132,9 +132,9 @@ public:
     // Add existing passes to option.
     for (RegistryClass *Node = RegistryClass::getList();
          Node; Node = Node->getNext()) {
-      this->addLiteralOption(Node->getName(),
+      this->addLiteralOption(Node->getName().data(),
                       (typename RegistryClass::FunctionPassCtor)Node->getCtor(),
-                             Node->getDescription());
+                             Node->getDescription().data());
     }
 
     // Make sure we listen for list changes.
@@ -143,11 +143,13 @@ public:
 
   // Implement the MachinePassRegistryListener callbacks.
   //
-  void NotifyAdd(const char *N, MachinePassCtor C, const char *D) override {
-    this->addLiteralOption(N, (typename RegistryClass::FunctionPassCtor)C, D);
+  void NotifyAdd(StringRef N, MachinePassCtor C, StringRef D) override {
+    this->addLiteralOption(N.data(),
+                           (typename RegistryClass::FunctionPassCtor)C,
+                           D.data());
   }
-  void NotifyRemove(const char *N) override {
-    this->removeLiteralOption(N);
+  void NotifyRemove(StringRef N) override {
+    this->removeLiteralOption(N.data());
   }
 };
 
