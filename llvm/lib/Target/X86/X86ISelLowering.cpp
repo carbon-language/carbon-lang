@@ -25201,13 +25201,13 @@ static bool matchBinaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
     // Attempt to match as a binary blend.
     if (NumMaskElts <= BlendVT.getVectorNumElements()) {
       bool MatchBlend = true;
-      for (int i = 0; i != NumMaskElts; ++i) {
+      for (int i = 0; i != (int)NumMaskElts; ++i) {
         int M = Mask[i];
         if (M == SM_SentinelUndef)
           continue;
         else if (M == SM_SentinelZero)
           MatchBlend = false;
-        else if ((M != i) && (M != (i + NumMaskElts)))
+        else if ((M != i) && (M != (i + (int)NumMaskElts)))
           MatchBlend = false;
       }
 
