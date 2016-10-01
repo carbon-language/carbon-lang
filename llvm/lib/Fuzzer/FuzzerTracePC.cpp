@@ -92,7 +92,7 @@ bool TracePC::FinalizeTrace(size_t InputSize) {
         else if (Counter >= 2) Bit = 1;
         size_t Feature = i * 8 + Bit;
         CounterMap.AddValue(Feature);
-        uint32_t *SizePtr = &InputSizesPerFeature[Feature];
+        uint32_t *SizePtr = &InputSizesPerFeature[Feature % kFeatureSetSize];
         if (!*SizePtr || *SizePtr > InputSize) {
           *SizePtr = InputSize;
           Res = true;
