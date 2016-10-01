@@ -81,11 +81,11 @@ LLVMBool LLVMGetTargetFromTriple(const char* TripleStr, LLVMTargetRef *T,
 }
 
 const char * LLVMGetTargetName(LLVMTargetRef T) {
-  return unwrap(T)->getName().data();
+  return unwrap(T)->getName();
 }
 
 const char * LLVMGetTargetDescription(LLVMTargetRef T) {
-  return unwrap(T)->getShortDescription().data();
+  return unwrap(T)->getShortDescription();
 }
 
 LLVMBool LLVMTargetHasJIT(LLVMTargetRef T) {

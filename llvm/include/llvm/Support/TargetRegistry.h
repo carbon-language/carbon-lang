@@ -165,10 +165,10 @@ private:
   ArchMatchFnTy ArchMatchFn;
 
   /// Name - The target name.
-  StringRef Name;
+  const char *Name;
 
   /// ShortDesc - A short description of the target.
-  StringRef ShortDesc;
+  const char *ShortDesc;
 
   /// HasJIT - Whether this target supports the JIT.
   bool HasJIT;
@@ -262,10 +262,10 @@ public:
   const Target *getNext() const { return Next; }
 
   /// getName - Get the target name.
-  StringRef getName() const { return Name; }
+  const char *getName() const { return Name; }
 
   /// getShortDescription - Get a short description of the target.
-  StringRef getShortDescription() const { return ShortDesc; }
+  const char *getShortDescription() const { return ShortDesc; }
 
   /// @}
   /// @name Feature Predicates
@@ -624,7 +624,7 @@ struct TargetRegistry {
   /// @param ArchMatchFn - The arch match checking function for this target.
   /// @param HasJIT - Whether the target supports JIT code
   /// generation.
-  static void RegisterTarget(Target &T, StringRef Name, StringRef ShortDesc,
+  static void RegisterTarget(Target &T, const char *Name, const char *ShortDesc,
                              Target::ArchMatchFnTy ArchMatchFn,
                              bool HasJIT = false);
 
@@ -857,7 +857,7 @@ struct TargetRegistry {
 template <Triple::ArchType TargetArchType = Triple::UnknownArch,
           bool HasJIT = false>
 struct RegisterTarget {
-  RegisterTarget(Target &T, StringRef Name, StringRef Desc) {
+  RegisterTarget(Target &T, const char *Name, const char *Desc) {
     TargetRegistry::RegisterTarget(T, Name, Desc, &getArchMatch, HasJIT);
   }
 
