@@ -91,11 +91,17 @@ define <4 x float> @test_sqrt_ss(<4 x float> %a) {
 ; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
 ; SSE41-NEXT:    retq
 ;
-; AVX-LABEL: test_sqrt_ss:
-; AVX:       # BB#0:
-; AVX-NEXT:    vsqrtss %xmm0, %xmm0, %xmm1
-; AVX-NEXT:    vblendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
-; AVX-NEXT:    retq
+; AVX1-LABEL: test_sqrt_ss:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vsqrtss %xmm0, %xmm0, %xmm1
+; AVX1-NEXT:    vblendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
+; AVX1-NEXT:    retq
+;
+; AVX512-LABEL: test_sqrt_ss:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vsqrtss %xmm0, %xmm0, %xmm1
+; AVX512-NEXT:    vmovss {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
+; AVX512-NEXT:    retq
   %1 = extractelement <4 x float> %a, i32 0
   %2 = call float @llvm.sqrt.f32(float %1)
   %3 = insertelement <4 x float> %a, float %2, i32 0

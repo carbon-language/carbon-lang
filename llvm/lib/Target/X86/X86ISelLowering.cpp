@@ -25094,8 +25094,7 @@ static bool matchBinaryVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
       return true;
     }
     if (isTargetShuffleEquivalent(Mask, {0, 3}) && FloatDomain) {
-      // On SSE41 targets use BLENDPD (its commutable).
-      if (Subtarget.hasSSE2() && !Subtarget.hasSSE41()) {
+      if (Subtarget.hasSSE2()) {
         std::swap(V1, V2);
         Shuffle = X86ISD::MOVSD;
         ShuffleVT = MVT::v2f64;
@@ -25103,12 +25102,9 @@ static bool matchBinaryVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
       }
     }
     if (isTargetShuffleEquivalent(Mask, {4, 1, 2, 3}) && FloatDomain) {
-      // On SSE41 targets use BLENDPS (its commutable).
-      if (!Subtarget.hasSSE41()) {
-        Shuffle = X86ISD::MOVSS;
-        ShuffleVT = MVT::v4f32;
-        return true;
-      }
+      Shuffle = X86ISD::MOVSS;
+      ShuffleVT = MVT::v4f32;
+      return true;
     }
     if (isTargetShuffleEquivalent(Mask, {0, 0, 1, 1}) && FloatDomain) {
       V2 = V1;

@@ -246,10 +246,20 @@ define <2 x double> @shuffle_v2f64_03(<2 x double> %a, <2 x double> %b) {
 ; SSE41-NEXT:    blendpd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
 ; SSE41-NEXT:    retq
 ;
-; AVX-LABEL: shuffle_v2f64_03:
-; AVX:       # BB#0:
-; AVX-NEXT:    vblendpd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
-; AVX-NEXT:    retq
+; AVX1-LABEL: shuffle_v2f64_03:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vblendpd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v2f64_03:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vblendpd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
+; AVX2-NEXT:    retq
+;
+; AVX512VL-LABEL: shuffle_v2f64_03:
+; AVX512VL:       # BB#0:
+; AVX512VL-NEXT:    vmovsd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
+; AVX512VL-NEXT:    retq
   %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 0, i32 3>
   ret <2 x double> %shuffle
 }
@@ -274,10 +284,20 @@ define <2 x double> @shuffle_v2f64_21(<2 x double> %a, <2 x double> %b) {
 ; SSE41-NEXT:    blendpd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE41-NEXT:    retq
 ;
-; AVX-LABEL: shuffle_v2f64_21:
-; AVX:       # BB#0:
-; AVX-NEXT:    vblendpd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
-; AVX-NEXT:    retq
+; AVX1-LABEL: shuffle_v2f64_21:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vblendpd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v2f64_21:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vblendpd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; AVX2-NEXT:    retq
+;
+; AVX512VL-LABEL: shuffle_v2f64_21:
+; AVX512VL:       # BB#0:
+; AVX512VL-NEXT:    vmovsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; AVX512VL-NEXT:    retq
   %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 2, i32 1>
   ret <2 x double> %shuffle
 }
