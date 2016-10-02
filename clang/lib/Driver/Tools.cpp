@@ -1591,15 +1591,8 @@ static void getPPCTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   handleTargetFeaturesGroup(Args, Features, options::OPT_m_ppc_Features_Group);
 
   ppc::FloatABI FloatABI = ppc::getPPCFloatABI(D, Args);
-  if (FloatABI == ppc::FloatABI::Soft &&
-      !(Triple.getArch() == llvm::Triple::ppc64 ||
-        Triple.getArch() == llvm::Triple::ppc64le))
-    Features.push_back("+soft-float");
-  else if (FloatABI == ppc::FloatABI::Soft &&
-           (Triple.getArch() == llvm::Triple::ppc64 ||
-            Triple.getArch() == llvm::Triple::ppc64le))
-    D.Diag(diag::err_drv_invalid_mfloat_abi)
-        << "soft float is not supported for ppc64";
+  if (FloatABI == ppc::FloatABI::Soft)
+    Features.push_back("-hard-float");
 
   // Altivec is a bit weird, allow overriding of the Altivec feature here.
   AddTargetFeature(Args, Features, options::OPT_faltivec,
