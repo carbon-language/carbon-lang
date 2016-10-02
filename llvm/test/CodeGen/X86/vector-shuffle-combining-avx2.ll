@@ -264,14 +264,14 @@ define <4 x float> @combine_pshufb_as_vpbroadcastss128(<4 x float> %a) {
   ret <4 x float> %3
 }
 
-define <8 x float> @combine_permd_as_vpbroadcastss256(<4 x float> %a) {
-; X32-LABEL: combine_permd_as_vpbroadcastss256:
+define <8 x float> @combine_permps_as_vpbroadcastss256(<4 x float> %a) {
+; X32-LABEL: combine_permps_as_vpbroadcastss256:
 ; X32:       # BB#0:
 ; X32-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<def>
 ; X32-NEXT:    vbroadcastss %xmm0, %ymm0
 ; X32-NEXT:    retl
 ;
-; X64-LABEL: combine_permd_as_vpbroadcastss256:
+; X64-LABEL: combine_permps_as_vpbroadcastss256:
 ; X64:       # BB#0:
 ; X64-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<def>
 ; X64-NEXT:    vbroadcastss %xmm0, %ymm0
@@ -281,14 +281,14 @@ define <8 x float> @combine_permd_as_vpbroadcastss256(<4 x float> %a) {
   ret <8 x float> %2
 }
 
-define <4 x double> @combine_permd_as_vpbroadcastsd256(<2 x double> %a) {
-; X32-LABEL: combine_permd_as_vpbroadcastsd256:
+define <4 x double> @combine_permps_as_vpbroadcastsd256(<2 x double> %a) {
+; X32-LABEL: combine_permps_as_vpbroadcastsd256:
 ; X32:       # BB#0:
 ; X32-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<def>
 ; X32-NEXT:    vbroadcastsd %xmm0, %ymm0
 ; X32-NEXT:    retl
 ;
-; X64-LABEL: combine_permd_as_vpbroadcastsd256:
+; X64-LABEL: combine_permps_as_vpbroadcastsd256:
 ; X64:       # BB#0:
 ; X64-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<def>
 ; X64-NEXT:    vbroadcastsd %xmm0, %ymm0
