@@ -92,18 +92,14 @@ define <4 x i64> @combine_permq_pshufb_as_vperm2i128(<4 x i64> %a0) {
 define <8 x i32> @combine_as_vpermd(<8 x i32> %a0) {
 ; X32-LABEL: combine_as_vpermd:
 ; X32:       # BB#0:
-; X32-NEXT:    vmovdqa {{.*#+}} ymm1 = <4,u,u,5,u,u,0,7>
-; X32-NEXT:    vpermd %ymm0, %ymm1, %ymm1
-; X32-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[2,2,3,3]
-; X32-NEXT:    vpblendd {{.*#+}} ymm0 = ymm1[0],ymm0[1,2],ymm1[3],ymm0[4,5],ymm1[6,7]
+; X32-NEXT:    vmovdqa {{.*#+}} ymm1 = [4,5,4,5,6,7,0,7]
+; X32-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: combine_as_vpermd:
 ; X64:       # BB#0:
-; X64-NEXT:    vmovdqa {{.*#+}} ymm1 = <4,u,u,5,u,u,0,7>
-; X64-NEXT:    vpermd %ymm0, %ymm1, %ymm1
-; X64-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[2,2,3,3]
-; X64-NEXT:    vpblendd {{.*#+}} ymm0 = ymm1[0],ymm0[1,2],ymm1[3],ymm0[4,5],ymm1[6,7]
+; X64-NEXT:    vmovdqa {{.*#+}} ymm1 = [4,5,4,5,6,7,0,7]
+; X64-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; X64-NEXT:    retq
   %1 = shufflevector <8 x i32> %a0, <8 x i32> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
   %2 = tail call <8 x i32> @llvm.x86.avx2.permd(<8 x i32> %a0, <8 x i32> <i32 5, i32 4, i32 3, i32 2, i32 1, i32 0, i32 7, i32 6>)
@@ -114,25 +110,17 @@ define <8 x i32> @combine_as_vpermd(<8 x i32> %a0) {
 define <8 x float> @combine_as_vpermps(<8 x float> %a0) {
 ; X32-LABEL: combine_as_vpermps:
 ; X32:       # BB#0:
-; X32-NEXT:    vpermilps {{.*#+}} ymm1 = ymm0[1,0,3,2,5,4,7,6]
-; X32-NEXT:    vmovaps {{.*#+}} ymm2 = <u,4,u,5,u,u,4,7>
-; X32-NEXT:    vpermps %ymm0, %ymm2, %ymm0
-; X32-NEXT:    vmovaps {{.*#+}} ymm2 = <7,u,6,u,0,1,u,u>
-; X32-NEXT:    vpermps %ymm1, %ymm2, %ymm1
-; X32-NEXT:    vblendps {{.*#+}} ymm0 = ymm1[0],ymm0[1],ymm1[2],ymm0[3],ymm1[4,5],ymm0[6,7]
+; X32-NEXT:    vmovaps {{.*#+}} ymm1 = <6,4,7,5,1,u,4,7>
+; X32-NEXT:    vpermps %ymm0, %ymm1, %ymm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: combine_as_vpermps:
 ; X64:       # BB#0:
-; X64-NEXT:    vpermilps {{.*#+}} ymm1 = ymm0[1,0,3,2,5,4,7,6]
-; X64-NEXT:    vmovaps {{.*#+}} ymm2 = <u,4,u,5,u,u,4,7>
-; X64-NEXT:    vpermps %ymm0, %ymm2, %ymm0
-; X64-NEXT:    vmovaps {{.*#+}} ymm2 = <7,u,6,u,0,1,u,u>
-; X64-NEXT:    vpermps %ymm1, %ymm2, %ymm1
-; X64-NEXT:    vblendps {{.*#+}} ymm0 = ymm1[0],ymm0[1],ymm1[2],ymm0[3],ymm1[4,5],ymm0[6,7]
+; X64-NEXT:    vmovaps {{.*#+}} ymm1 = <6,4,7,5,1,u,4,7>
+; X64-NEXT:    vpermps %ymm0, %ymm1, %ymm0
 ; X64-NEXT:    retq
   %1 = shufflevector <8 x float> %a0, <8 x float> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7>
-  %2 = tail call <8 x float> @llvm.x86.avx2.permps(<8 x float> %a0, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>)
+  %2 = tail call <8 x float> @llvm.x86.avx2.permps(<8 x float> %a0, <8 x i32> <i32 1, i32 undef, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>)
   %3 = shufflevector <8 x float> %1, <8 x float> %2, <8 x i32> <i32 15, i32 0, i32 14, i32 1, i32 8, i32 9, i32 4, i32 3>
   ret <8 x float> %3
 }
