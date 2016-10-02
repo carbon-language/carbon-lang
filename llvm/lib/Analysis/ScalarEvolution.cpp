@@ -5994,8 +5994,8 @@ ScalarEvolution::computeExitLimitFromICmp(const Loop *L,
     if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(LHS))
       if (AddRec->getLoop() == L) {
         // Form the constant range.
-        ConstantRange CompRange(
-            ICmpInst::makeConstantRange(Cond, RHSC->getAPInt()));
+        ConstantRange CompRange =
+            ConstantRange::makeExactICmpRegion(Cond, RHSC->getAPInt());
 
         const SCEV *Ret = AddRec->getNumIterationsInRange(CompRange, *this);
         if (!isa<SCEVCouldNotCompute>(Ret)) return Ret;
