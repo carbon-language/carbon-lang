@@ -22094,7 +22094,7 @@ void X86TargetLowering::LowerOperationWrapper(SDNode *N,
   // In some cases (LowerSINT_TO_FP for example) Res has more result values
   // than original node, chain should be dropped(last value).
   for (unsigned I = 0, E = N->getNumValues(); I != E; ++I)
-      Results.push_back(Res.getValue(I));
+    Results.push_back(Res.getValue(I));
 }
 
 /// Replace a node with an illegal result type with a new node built out of
