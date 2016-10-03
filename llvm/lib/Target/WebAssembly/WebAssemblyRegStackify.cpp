@@ -747,8 +747,7 @@ bool WebAssemblyRegStackify::runOnMachineFunction(MachineFunction &MF) {
         if (TargetRegisterInfo::isPhysicalRegister(Reg))
           continue;
 
-        // Identify the definition for this register at this point. Most
-        // registers are in SSA form here so we try a quick MRI query first.
+        // Identify the definition for this register at this point.
         MachineInstr *Def = GetVRegDef(Reg, Insert, MRI, LIS);
         if (!Def)
           continue;
