@@ -882,7 +882,7 @@ void MachObjectWriter::writeObject(MCAssembler &Asm,
                                               sizeof(MachO::nlist_64) :
                                               sizeof(MachO::nlist));
     writeSymtabLoadCommand(SymbolTableOffset, NumSymTabSymbols,
-                           StringTableOffset, StringTable.getSize());
+                           StringTableOffset, StringTable.data().size());
 
     writeDysymtabLoadCommand(FirstLocalSymbol, NumLocalSymbols,
                              FirstExternalSymbol, NumExternalSymbols,
