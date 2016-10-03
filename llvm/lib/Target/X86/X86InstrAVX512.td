@@ -2812,7 +2812,7 @@ defm VMOVDQU64 : avx512_load_vl<0x6F, "vmovdqu64", avx512vl_i64_info, HasAVX512,
 // Special instructions to help with spilling when we don't have VLX. We need
 // to load or store from a ZMM register instead. These are converted in
 // expandPostRAPseudos.
-let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
+let isReMaterializable = 1, canFoldAsLoad = 1,
     isPseudo = 1, SchedRW = [WriteLoad], mayLoad = 1, hasSideEffects = 0 in {
 def VMOVAPSZ128rm_NOVLX : I<0, Pseudo, (outs VR128X:$dst), (ins f128mem:$src),
                             "", []>;
