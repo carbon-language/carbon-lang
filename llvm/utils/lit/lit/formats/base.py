@@ -80,7 +80,7 @@ class OneCommandPerFileTest(TestFormat):
                 yield test
 
     def createTempInput(self, tmp, test):
-        abstract
+        raise NotImplementedError('This is an abstract method.')
 
     def execute(self, test, litConfig):
         if test.config.unsupported:
