@@ -1015,6 +1015,7 @@ void Args::ParseAliasOptions(Options &options, CommandReturnObject &result,
 
   std::unique_lock<std::mutex> lock;
   OptionParser::Prepare(lock);
+  result.SetStatus(eReturnStatusSuccessFinishNoResult);
   int val;
   while (1) {
     int long_options_index = -1;
@@ -1049,95 +1050,73 @@ void Args::ParseAliasOptions(Options &options, CommandReturnObject &result,
     }
 
     // See if the option takes an argument, and see if one was supplied.
-    if (long_options_index >= 0) {
-      StreamString option_str;
-      option_str.Printf("-%c", val);
-      const OptionDefinition *def = long_options[long_options_index].definition;
-      int has_arg =
-          (def == nullptr) ? OptionParser::eNoArgument : def->option_has_arg;
-
-      switch (has_arg) {
-      case OptionParser::eNoArgument:
-        option_arg_vector->push_back(OptionArgPair(
-            std::string(option_str.GetData()),
-            OptionArgValue(OptionParser::eNoArgument, "<no-argument>")));
-        result.SetStatus(eReturnStatusSuccessFinishNoResult);
-        break;
-      case OptionParser::eRequiredArgument:
-        if (OptionParser::GetOptionArgument() != nullptr) {
-          option_arg_vector->push_back(OptionArgPair(
-              std::string(option_str.GetData()),
-              OptionArgValue(OptionParser::eRequiredArgument,
-                             std::string(OptionParser::GetOptionArgument()))));
-          result.SetStatus(eReturnStatusSuccessFinishNoResult);
-        } else {
-          result.AppendErrorWithFormat(
-              "Option '%s' is missing argument specifier.\n",
-              option_str.GetData());
-          result.SetStatus(eReturnStatusFailed);
-        }
-        break;
-      case OptionParser::eOptionalArgument:
-        if (OptionParser::GetOptionArgument() != nullptr) {
-          option_arg_vector->push_back(OptionArgPair(
-              std::string(option_str.GetData()),
-              OptionArgValue(OptionParser::eOptionalArgument,
-                             std::string(OptionParser::GetOptionArgument()))));
-          result.SetStatus(eReturnStatusSuccessFinishNoResult);
-        } else {
-          option_arg_vector->push_back(
-              OptionArgPair(std::string(option_str.GetData()),
-                            OptionArgValue(OptionParser::eOptionalArgument,
-                                           "<no-argument>")));
-          result.SetStatus(eReturnStatusSuccessFinishNoResult);
-        }
-        break;
-      default:
-        result.AppendErrorWithFormat("error with options table; invalid value "
-                                     "in has_arg field for option '%c'.\n",
-                                     val);
-        result.SetStatus(eReturnStatusFailed);
-        break;
-      }
-    } else {
+    if (long_options_index == -1) {
       result.AppendErrorWithFormat("Invalid option with value '%c'.\n", val);
       result.SetStatus(eReturnStatusFailed);
+      return;
     }
 
-    if (long_options_index >= 0) {
-      // Find option in the argument list; also see if it was supposed to take
-      // an argument and if one was
-      // supplied.  Remove option (and argument, if given) from the argument
-      // list.  Also remove them from
-      // the raw_input_string, if one was passed in.
-      size_t idx = FindArgumentIndexForOption(long_options, long_options_index);
-      if (idx < GetArgumentCount()) {
+    StreamString option_str;
+    option_str.Printf("-%c", val);
+    const OptionDefinition *def = long_options[long_options_index].definition;
+    int has_arg =
+        (def == nullptr) ? OptionParser::eNoArgument : def->option_has_arg;
+
+    const char *option_arg = nullptr;
+    switch (has_arg) {
+    case OptionParser::eRequiredArgument:
+      if (OptionParser::GetOptionArgument() == nullptr) {
+        result.AppendErrorWithFormat(
+            "Option '%s' is missing argument specifier.\n",
+            option_str.GetData());
+        result.SetStatus(eReturnStatusFailed);
+        return;
+      }
+      LLVM_FALLTHROUGH;
+    case OptionParser::eOptionalArgument:
+      option_arg = OptionParser::GetOptionArgument();
+      LLVM_FALLTHROUGH;
+    case OptionParser::eNoArgument:
+      break;
+    default:
+      result.AppendErrorWithFormat("error with options table; invalid value "
+                                   "in has_arg field for option '%c'.\n",
+                                   val);
+      result.SetStatus(eReturnStatusFailed);
+      return;
+    }
+    if (!option_arg)
+      option_arg = "<no-argument>";
+    option_arg_vector->emplace_back(option_str.GetData(), has_arg, option_arg);
+
+    // Find option in the argument list; also see if it was supposed to take
+    // an argument and if one was supplied.  Remove option (and argument, if
+    // given) from the argument list.  Also remove them from the
+    // raw_input_string, if one was passed in.
+    size_t idx = FindArgumentIndexForOption(long_options, long_options_index);
+    if (idx < GetArgumentCount()) {
+      if (raw_input_string.size() > 0) {
+        const char *tmp_arg = GetArgumentAtIndex(idx);
+        size_t pos = raw_input_string.find(tmp_arg);
+        if (pos != std::string::npos)
+          raw_input_string.erase(pos, strlen(tmp_arg));
+      }
+      ReplaceArgumentAtIndex(idx, llvm::StringRef());
+      if ((long_options[long_options_index].definition->option_has_arg !=
+           OptionParser::eNoArgument) &&
+          (OptionParser::GetOptionArgument() != nullptr) &&
+          (idx + 1 < GetArgumentCount()) &&
+          (strcmp(OptionParser::GetOptionArgument(),
+                  GetArgumentAtIndex(idx + 1)) == 0)) {
         if (raw_input_string.size() > 0) {
-          const char *tmp_arg = GetArgumentAtIndex(idx);
+          const char *tmp_arg = GetArgumentAtIndex(idx + 1);
           size_t pos = raw_input_string.find(tmp_arg);
           if (pos != std::string::npos)
             raw_input_string.erase(pos, strlen(tmp_arg));
         }
-        ReplaceArgumentAtIndex(idx, llvm::StringRef());
-        if ((long_options[long_options_index].definition->option_has_arg !=
-             OptionParser::eNoArgument) &&
-            (OptionParser::GetOptionArgument() != nullptr) &&
-            (idx + 1 < GetArgumentCount()) &&
-            (strcmp(OptionParser::GetOptionArgument(),
-                    GetArgumentAtIndex(idx + 1)) == 0)) {
-          if (raw_input_string.size() > 0) {
-            const char *tmp_arg = GetArgumentAtIndex(idx + 1);
-            size_t pos = raw_input_string.find(tmp_arg);
-            if (pos != std::string::npos)
-              raw_input_string.erase(pos, strlen(tmp_arg));
-          }
-          ReplaceArgumentAtIndex(idx + 1, llvm::StringRef());
-        }
+        ReplaceArgumentAtIndex(idx + 1, llvm::StringRef());
       }
     }
-
-    if (!result.Succeeded())
-      break;
   }
 }
 
