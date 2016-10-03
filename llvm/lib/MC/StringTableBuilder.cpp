@@ -34,6 +34,11 @@ StringTableBuilder::StringTableBuilder(Kind K, unsigned Alignment)
   }
 }
 
+size_t StringTableBuilder::getSize() const {
+  assert(isFinalized());
+  return Size;
+}
+
 typedef std::pair<CachedHash<StringRef>, size_t> StringPair;
 
 // Returns the character at Pos from end of a string.

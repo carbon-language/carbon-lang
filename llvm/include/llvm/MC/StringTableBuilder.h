@@ -61,7 +61,7 @@ public:
     return StringIndexMap;
   }
 
-  size_t getSize() const { return Size; }
+  size_t getSize() const;
   void clear();
 
 private:
