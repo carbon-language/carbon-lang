@@ -1129,6 +1129,11 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
   }
 
   if (getLangOpts().CUDA && ConsiderCudaAttrs) {
+    // Don't allow overloading of destructors.  (In theory we could, but it
+    // would be a giant change to clang.)
+    if (isa<CXXDestructorDecl>(New))
+      return false;
+
     CUDAFunctionTarget NewTarget = IdentifyCUDATarget(New),
                        OldTarget = IdentifyCUDATarget(Old);
     if (NewTarget == CFT_InvalidTarget || NewTarget == CFT_Global)
