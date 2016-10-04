@@ -4777,20 +4777,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (Args.hasFlag(options::OPT_fxray_instrument,
                    options::OPT_fnoxray_instrument, false)) {
-    const char *const XRayInstrumentOption = "-fxray-instrument";
-    switch (getToolChain().getArch()) {
-    case llvm::Triple::arm:
-    case llvm::Triple::x86_64:
-      break;
-    default: {
-      std::string Feature(XRayInstrumentOption);
-      Feature += " on ";
-      Feature += Triple.getArchName().data();
-      D.Diag(diag::err_drv_clang_unsupported) << Feature;
-      break;
-    }
-    }
-    CmdArgs.push_back(XRayInstrumentOption);
+    CmdArgs.push_back("-fxray-instrument");
     if (const Arg *A =
             Args.getLastArg(options::OPT_fxray_instruction_threshold_,
                             options::OPT_fxray_instruction_threshold_EQ)) {
