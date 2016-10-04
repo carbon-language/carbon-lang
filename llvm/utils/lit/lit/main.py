@@ -289,14 +289,7 @@ def main_with_tmp(builtinParameters):
         parser.error('No inputs specified')
 
     if opts.numThreads is None:
-# Python <2.5 has a race condition causing lit to always fail with numThreads>1
-# http://bugs.python.org/issue1731717
-# I haven't seen this bug occur with 2.5.2 and later, so only enable multiple
-# threads by default there.
-       if sys.hexversion >= 0x2050200:
-               opts.numThreads = lit.util.detectCPUs()
-       else:
-               opts.numThreads = 1
+        opts.numThreads = lit.util.detectCPUs()
 
     if opts.maxFailures == 0:
         parser.error("Setting --max-failures to 0 does not have any effect.")
