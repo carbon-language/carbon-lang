@@ -358,8 +358,9 @@ bool SafeStack::IsSafeStackAlloca(const Value *AllocaPtr, uint64_t AllocaSize) {
 
 Value *SafeStack::getOrCreateUnsafeStackPtr(IRBuilder<> &IRB, Function &F) {
   // Check if there is a target-specific location for the unsafe stack pointer.
-  if (Value *V = TL->getSafeStackPointerLocation(IRB))
-    return V;
+  if (TL)
+    if (Value *V = TL->getSafeStackPointerLocation(IRB))
+      return V;
 
   // Otherwise, assume the target links with compiler-rt, which provides a
   // thread-local variable with a magic name.
@@ -392,7 +393,9 @@ Value *SafeStack::getOrCreateUnsafeStackPtr(IRBuilder<> &IRB, Function &F) {
 }
 
 Value *SafeStack::getStackGuard(IRBuilder<> &IRB, Function &F) {
-  Value *StackGuardVar = TL->getIRStackGuard(IRB);
+  Value *StackGuardVar = nullptr;
+  if (TL)
+    StackGuardVar = TL->getIRStackGuard(IRB);
   if (!StackGuardVar)
     StackGuardVar =
         F.getParent()->getOrInsertGlobal("__stack_chk_guard", StackPtrTy);
@@ -749,9 +752,7 @@ bool SafeStack::runOnFunction(Function &F) {
     return false;
   }
 
-  if (!TM)
-    report_fatal_error("Target machine is required");
-  TL = TM->getSubtargetImpl(F)->getTargetLowering();
+  TL = TM ? TM->getSubtargetImpl(F)->getTargetLowering() : nullptr;
   SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
 
   ++NumFunctions;
