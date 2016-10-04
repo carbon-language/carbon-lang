@@ -1,7 +1,7 @@
-; RUN: llc < %s -march=ppc64 -mattr=+vsx -verify-machineinstrs | \
-; RUN:   FileCheck %s --check-prefix=VSX
-; RUN: llc < %s -march=ppc64 -mattr=-vsx -verify-machineinstrs | \
-; RUN:   FileCheck %s --check-prefix=NOVSX
+; RUN: llc < %s -mtriple=ppc64-unknown-linux-gnu -mattr=+vsx \
+; RUN:   -verify-machineinstrs | FileCheck %s --check-prefix=VSX
+; RUN: llc < %s -mtriple=ppc64-unknown-linux-gnu -mattr=-vsx \
+; RUN:   -verify-machineinstrs | FileCheck %s --check-prefix=NOVSX
 
 define <2 x double> @interleaving_VSX_VMX(
   <2 x double> %a, <2 x double> %b, <2 x double> %c,
