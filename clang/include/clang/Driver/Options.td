@@ -815,7 +815,7 @@ def flax_vector_conversions : Flag<["-"], "flax-vector-conversions">, Group<f_Gr
 def flimited_precision_EQ : Joined<["-"], "flimited-precision=">, Group<f_Group>;
 def flto_EQ : Joined<["-"], "flto=">, Flags<[CC1Option]>, Group<f_Group>,
   HelpText<"Set LTO mode to either 'full' or 'thin'">;
-def flto : Flag<["-"], "flto">, Flags<[CC1Option]>, Group<f_Group>,
+def flto : Flag<["-"], "flto">, Flags<[CoreOption, CC1Option]>, Group<f_Group>,
   HelpText<"Enable LTO in 'full' mode">;
 def fno_lto : Flag<["-"], "fno-lto">, Group<f_Group>,
   HelpText<"Disable LTO mode (default)">;
