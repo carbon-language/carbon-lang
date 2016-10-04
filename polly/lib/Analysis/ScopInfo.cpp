@@ -179,7 +179,7 @@ ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
 
   updateSizes(Sizes);
 
-  if (!BasePtr) {
+  if (!BasePtr || Kind != MK_Array) {
     BasePtrOriginSAI = nullptr;
     return;
   }
