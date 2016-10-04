@@ -66,7 +66,7 @@ public:
   typedef SmallVector<std::unique_ptr<BugReporterVisitor>, 8> VisitorList;
   typedef VisitorList::iterator visitor_iterator;
   typedef SmallVector<StringRef, 2> ExtraTextList;
-  typedef std::vector<llvm::IntrusiveRefCntPtr<PathDiagnosticNotePiece>>
+  typedef SmallVector<llvm::IntrusiveRefCntPtr<PathDiagnosticNotePiece>, 4>
       NoteList;
 
 protected:
