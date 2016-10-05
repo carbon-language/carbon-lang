@@ -119,6 +119,24 @@ TEST_F(CleanupTest, EmptyNamespaceWithCommentsBreakBeforeBrace) {
   EXPECT_EQ(Expected, Result);
 }
 
+TEST_F(CleanupTest, EmptyNamespaceAroundConditionalCompilation) {
+  std::string Code = "#ifdef A\n"
+                     "int a;\n"
+                     "int b;\n"
+                     "#else\n"
+                     "#endif\n"
+                     "namespace {}";
+  std::string Expected = "#ifdef A\n"
+                         "int a;\n"
+                         "int b;\n"
+                         "#else\n"
+                         "#endif\n";
+  std::vector<tooling::Range> Ranges(1, tooling::Range(0, Code.size()));
+  FormatStyle Style = getLLVMStyle();
+  std::string Result = cleanup(Code, Ranges, Style);
+  EXPECT_EQ(Expected, Result);
+}
+
 TEST_F(CleanupTest, CtorInitializationSimpleRedundantComma) {
   std::string Code = "class A {\nA() : , {} };";
   std::string Expected = "class A {\nA()  {} };";
