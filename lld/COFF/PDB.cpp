@@ -38,6 +38,8 @@ void coff::createPDB(StringRef Path) {
   ExitOnErr(Builder.getMsfBuilder().addStream(1));
   ExitOnErr(Builder.getMsfBuilder().addStream(1));
   ExitOnErr(Builder.getMsfBuilder().addStream(1));
+  ExitOnErr(Builder.getMsfBuilder().addStream(1));
+  ExitOnErr(Builder.getMsfBuilder().addStream(1));
 
   // Add an Info stream.
   auto &InfoBuilder = Builder.getInfoBuilder();
@@ -54,6 +56,10 @@ void coff::createPDB(StringRef Path) {
   // Add an empty TPI stream.
   auto &TpiBuilder = Builder.getTpiBuilder();
   TpiBuilder.setVersionHeader(pdb::PdbTpiV80);
+
+  // Add an empty IPI stream.
+  auto &IpiBuilder = Builder.getIpiBuilder();
+  IpiBuilder.setVersionHeader(pdb::PdbTpiV80);
 
   // Write to a file.
   ExitOnErr(Builder.commit(Path));
