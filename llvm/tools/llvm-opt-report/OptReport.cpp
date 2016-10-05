@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Demangle/Demangle.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
@@ -27,6 +28,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/YAMLTraits.h"
+#include <cstdlib>
+#include <map>
+#include <set>
 
 using namespace llvm;
 using namespace llvm::yaml;
@@ -54,6 +58,10 @@ static cl::opt<bool>
   Succinct("s", cl::desc("Don't include vectorization factors, etc."),
            cl::init(false), cl::cat(OptReportCategory));
 
+static cl::opt<bool>
+  Demangle("demangle", cl::desc("Demangle function names"), cl::init(true),
+           cl::cat(OptReportCategory));
+
 namespace {
 // For each location in the source file, the common per-transformation state
 // collected.
@@ -67,6 +75,16 @@ struct OptReportLocationItemInfo {
     Transformed |= RHS.Transformed;
 
     return *this;
+  }
+
+  bool operator < (const OptReportLocationItemInfo &RHS) const {
+    if (Analyzed < RHS.Analyzed)
+      return true;
+    else if (Analyzed > RHS.Analyzed)
+      return false;
+    else if (Transformed < RHS.Transformed)
+      return true;
+    return false;
   }
 };
 
@@ -92,10 +110,36 @@ struct OptReportLocationInfo {
 
     return *this;
   }
+
+  bool operator < (const OptReportLocationInfo &RHS) const {
+    if (Inlined < RHS.Inlined)
+      return true;
+    else if (RHS.Inlined < Inlined)
+      return false;
+    else if (Unrolled < RHS.Unrolled)
+      return true;
+    else if (RHS.Unrolled < Unrolled)
+      return false;
+    else if (Vectorized < RHS.Vectorized)
+      return true;
+    else if (RHS.Vectorized < Vectorized || Succinct)
+      return false;
+    else if (VectorizationFactor < RHS.VectorizationFactor)
+      return true;
+    else if (VectorizationFactor > RHS.VectorizationFactor)
+      return false;
+    else if (InterleaveCount < RHS.InterleaveCount)
+      return true;
+    else if (InterleaveCount > RHS.InterleaveCount)
+      return false;
+    else if (InterleaveCount < RHS.InterleaveCount)
+      return true;
+    return false;
+  }
 };
 
-typedef std::map<std::string, std::map<int, std::map<int,
-          OptReportLocationInfo>>> LocationInfoTy;
+typedef std::map<std::string, std::map<int, std::map<std::string, std::map<int,
+          OptReportLocationInfo>>>> LocationInfoTy;
 } // anonymous namespace
 
 static void collectLocationInfo(yaml::Stream &Stream,
@@ -115,7 +159,7 @@ static void collectLocationInfo(yaml::Stream &Stream,
       continue;
 
     bool Transformed = Root->getRawTag() == "!Passed";
-    std::string Pass, File;
+    std::string Pass, File, Function;
     int Line = 0, Column = 1;
 
     int VectorizationFactor = 1;
@@ -132,6 +176,11 @@ static void collectLocationInfo(yaml::Stream &Stream,
         if (!Value)
           continue;
         Pass = Value->getValue(Tmp);
+      } else if (KeyName == "Function") {
+        auto *Value = dyn_cast<yaml::ScalarNode>(RootChild.getValue());
+        if (!Value)
+          continue;
+        Function = Value->getValue(Tmp);
       } else if (KeyName == "DebugLoc") {
         auto *DebugLoc = dyn_cast<yaml::MappingNode>(RootChild.getValue());
         if (!DebugLoc)
@@ -214,13 +263,13 @@ static void collectLocationInfo(yaml::Stream &Stream,
     };
 
     if (Pass == "inline") {
-      auto &LI = LocationInfo[File][Line][Column];
+      auto &LI = LocationInfo[File][Line][Function][Column];
       UpdateLLII(LI, LI.Inlined);
     } else if (Pass == "loop-unroll") {
-      auto &LI = LocationInfo[File][Line][Column];
+      auto &LI = LocationInfo[File][Line][Function][Column];
       UpdateLLII(LI, LI.Unrolled);
     } else if (Pass == "loop-vectorize") {
-      auto &LI = LocationInfo[File][Line][Column];
+      auto &LI = LocationInfo[File][Line][Function][Column];
       UpdateLLII(LI, LI.Vectorized);
     }
   }
@@ -283,9 +332,10 @@ static bool writeReport(LocationInfoTy &LocationInfo) {
     // Figure out how many characters we need for the vectorization factors
     // and similar.
     OptReportLocationInfo MaxLI;
-    for (auto &FI : FileInfo)
-      for (auto &LI : FI.second)
-        MaxLI |= LI.second;
+    for (auto &FLI : FileInfo)
+      for (auto &FI : FLI.second)
+        for (auto &LI : FI.second)
+          MaxLI |= LI.second;
 
     unsigned VFDigits = llvm::utostr(MaxLI.VectorizationFactor).size();
     unsigned ICDigits = llvm::utostr(MaxLI.InterleaveCount).size();
@@ -300,77 +350,137 @@ static bool writeReport(LocationInfoTy &LocationInfo) {
 
     for (line_iterator LI(*Buf.get(), false); LI != line_iterator(); ++LI) {
       int64_t L = LI.line_number();
-      OptReportLocationInfo LLI;
-
-      std::map<int, OptReportLocationInfo> ColsInfo;
-      unsigned InlinedCols = 0, UnrolledCols = 0, VectorizedCols = 0;
-
       auto LII = FileInfo.find(L);
-      if (LII != FileInfo.end()) {
-        const auto &LineInfo = LII->second;
 
-        for (auto &CI : LineInfo) {
-          int Col = CI.first;
-          ColsInfo[Col] = CI.second;
-          InlinedCols += CI.second.Inlined.Analyzed;
-          UnrolledCols += CI.second.Unrolled.Analyzed;
-          VectorizedCols += CI.second.Vectorized.Analyzed;
-          LLI |= CI.second;
+      auto PrintLine = [&](bool PrintFuncName,
+                           const std::set<std::string> &FuncNameSet) {
+        OptReportLocationInfo LLI;
+
+        std::map<int, OptReportLocationInfo> ColsInfo;
+        unsigned InlinedCols = 0, UnrolledCols = 0, VectorizedCols = 0;
+
+        if (LII != FileInfo.end()) {
+          const auto &LineInfo = LII->second;
+
+          for (auto &CI : LineInfo.find(*FuncNameSet.begin())->second) {
+            int Col = CI.first;
+            ColsInfo[Col] = CI.second;
+            InlinedCols += CI.second.Inlined.Analyzed;
+            UnrolledCols += CI.second.Unrolled.Analyzed;
+            VectorizedCols += CI.second.Vectorized.Analyzed;
+            LLI |= CI.second;
+          }
         }
+
+        if (PrintFuncName) {
+          OS << "  > ";
+
+          bool FirstFunc = true;
+          for (const auto &FuncName : FuncNameSet) {
+            if (FirstFunc)
+              FirstFunc = false;
+            else
+              OS << ", ";
+
+            bool Printed = false;
+            if (Demangle) {
+              int Status = 0;
+              char *Demangled =
+                itaniumDemangle(FuncName.c_str(), nullptr, nullptr, &Status);
+              if (Demangled && Status == 0) {
+                OS << Demangled;
+                Printed = true;
+              }
+
+              if (Demangled)
+                std::free(Demangled);
+            }
+
+            if (!Printed)
+              OS << FuncName;
+          } 
+
+          OS << ":\n";
+        }
+
+        // We try to keep the output as concise as possible. If only one thing on
+        // a given line could have been inlined, vectorized, etc. then we can put
+        // the marker on the source line itself. If there are multiple options
+        // then we want to distinguish them by placing the marker for each
+        // transformation on a separate line following the source line. When we
+        // do this, we use a '^' character to point to the appropriate column in
+        // the source line.
+
+        std::string USpaces(Succinct ? 0 : UCDigits, ' ');
+        std::string VSpaces(Succinct ? 0 : VFDigits + ICDigits + 1, ' ');
+
+        auto UStr = [UCDigits](OptReportLocationInfo &LLI) {
+          std::string R;
+          raw_string_ostream RS(R);
+          if (!Succinct)
+            RS << llvm::format_decimal(LLI.UnrollCount, UCDigits);
+          return RS.str();
+        };
+
+        auto VStr = [VFDigits,
+                     ICDigits](OptReportLocationInfo &LLI) -> std::string {
+          std::string R;
+          raw_string_ostream RS(R);
+          if (!Succinct)
+           RS << llvm::format_decimal(LLI.VectorizationFactor, VFDigits) <<
+                   "," << llvm::format_decimal(LLI.InterleaveCount, ICDigits);
+          return RS.str();
+        };
+
+        OS << llvm::format_decimal(L + 1, LNDigits) << " ";
+        OS << (LLI.Inlined.Transformed && InlinedCols < 2 ? "I" : " ");
+        OS << (LLI.Unrolled.Transformed && UnrolledCols < 2 ?
+                "U" + UStr(LLI) : " " + USpaces);
+        OS << (LLI.Vectorized.Transformed && VectorizedCols < 2 ?
+                "V" + VStr(LLI) : " " + VSpaces);
+
+        OS << " | " << *LI << "\n";
+
+        for (auto &J : ColsInfo) {
+          if ((J.second.Inlined.Transformed && InlinedCols > 1) ||
+              (J.second.Unrolled.Transformed && UnrolledCols > 1) ||
+              (J.second.Vectorized.Transformed && VectorizedCols > 1)) {
+            OS << std::string(LNDigits + 1, ' ');
+            OS << (J.second.Inlined.Transformed &&
+                   InlinedCols > 1 ? "I" : " ");
+            OS << (J.second.Unrolled.Transformed &&
+                   UnrolledCols > 1 ? "U" + UStr(J.second) : " " + USpaces);
+            OS << (J.second.Vectorized.Transformed &&
+                   VectorizedCols > 1 ? "V" + VStr(J.second) : " " + VSpaces);
+
+            OS << " | " << std::string(J.first - 1, ' ') << "^\n";
+          }
+        }
+      };
+
+      // We need to figure out if the optimizations for this line were the same
+      // in each function context. If not, then we want to group the similar
+      // function contexts together and display each group separately. If
+      // they're all the same, then we only display the line once without any
+      // additional markings.
+      std::map<std::map<int, OptReportLocationInfo>,
+               std::set<std::string>> UniqueLIs;
+
+      if (LII != FileInfo.end()) {
+        const auto &FuncLineInfo = LII->second;
+        for (const auto &FLII : FuncLineInfo)
+          UniqueLIs[FLII.second].insert(FLII.first);
       }
 
-      // We try to keep the output as concise as possible. If only one thing on
-      // a given line could have been inlined, vectorized, etc. then we can put
-      // the marker on the source line itself. If there are multiple options
-      // then we want to distinguish them by placing the marker for each
-      // transformation on a separate line following the source line. When we
-      // do this, we use a '^' character to point to the appropriate column in
-      // the source line.
-
-      std::string USpaces(Succinct ? 0 : UCDigits, ' ');
-      std::string VSpaces(Succinct ? 0 : VFDigits + ICDigits + 1, ' ');
-
-      auto UStr = [UCDigits](OptReportLocationInfo &LLI) {
-        std::string R;
-        raw_string_ostream RS(R);
-        if (!Succinct)
-          RS << llvm::format_decimal(LLI.UnrollCount, UCDigits);
-        return RS.str();
-      };
-
-      auto VStr = [VFDigits,
-                   ICDigits](OptReportLocationInfo &LLI) -> std::string {
-        std::string R;
-        raw_string_ostream RS(R);
-        if (!Succinct)
-         RS << llvm::format_decimal(LLI.VectorizationFactor, VFDigits) <<
-                 "," << llvm::format_decimal(LLI.InterleaveCount, ICDigits);
-        return RS.str();
-      };
-
-      OS << llvm::format_decimal(L + 1, LNDigits) << " ";
-      OS << (LLI.Inlined.Transformed && InlinedCols < 2 ? "I" : " ");
-      OS << (LLI.Unrolled.Transformed && UnrolledCols < 2 ?
-              "U" + UStr(LLI) : " " + USpaces);
-      OS << (LLI.Vectorized.Transformed && VectorizedCols < 2 ?
-              "V" + VStr(LLI) : " " + VSpaces);
-
-      OS << " | " << *LI << "\n";
-
-      for (auto &J : ColsInfo) {
-        if ((J.second.Inlined.Transformed && InlinedCols > 1) ||
-            (J.second.Unrolled.Transformed && UnrolledCols > 1) ||
-            (J.second.Vectorized.Transformed && VectorizedCols > 1)) {
-          OS << std::string(LNDigits + 1, ' ');
-          OS << (J.second.Inlined.Transformed &&
-                 InlinedCols > 1 ? "I" : " ");
-          OS << (J.second.Unrolled.Transformed &&
-                 UnrolledCols > 1 ? "U" + UStr(J.second) : " " + USpaces);
-          OS << (J.second.Vectorized.Transformed &&
-                 VectorizedCols > 1 ? "V" + VStr(J.second) : " " + VSpaces);
-
-          OS << " | " << std::string(J.first - 1, ' ') << "^\n";
-        }
+      if (UniqueLIs.size() > 1) {
+        OS << " [[\n";
+        for (const auto &FSLI : UniqueLIs)
+          PrintLine(true, FSLI.second);
+        OS << " ]]\n";
+      } else if (UniqueLIs.size() == 1) {
+        PrintLine(false, UniqueLIs.begin()->second);
+      } else {
+        PrintLine(false, std::set<std::string>());
       }
     }
   }
