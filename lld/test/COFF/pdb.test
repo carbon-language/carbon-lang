@@ -7,21 +7,21 @@
 # CHECK-NEXT:   SuperBlock:
 # CHECK-NEXT:     BlockSize:       4096
 # CHECK-NEXT:     FreeBlockMap:
-# CHECK-NEXT:     NumBlocks:       10
-# CHECK-NEXT:     NumDirectoryBytes: 44
+# CHECK-NEXT:     NumBlocks:       8
+# CHECK-NEXT:     NumDirectoryBytes: 36
 # CHECK-NEXT:     Unknown1:        0
 # CHECK-NEXT:     BlockMapAddr:    3
 # CHECK-NEXT:     NumDirectoryBlocks: 1
-# CHECK-NEXT:     DirectoryBlocks: [ 9 ]
+# CHECK-NEXT:     DirectoryBlocks: [ 7 ]
 # CHECK-NEXT:     NumStreams:      5
-# CHECK-NEXT:     FileSize:        40960
-# CHECK-NEXT:   StreamSizes:     [ 1, 48, 56, 1, 56 ]
+# CHECK-NEXT:     FileSize:        32768
+# CHECK-NEXT:   StreamSizes:     [ 0, 48, 56, 0, 56 ]
 # CHECK-NEXT:   StreamMap:
+# CHECK-NEXT:     - Stream:          [ ]
 # CHECK-NEXT:     - Stream:          [ 4 ]
 # CHECK-NEXT:     - Stream:          [ 5 ]
+# CHECK-NEXT:     - Stream:          [ ]
 # CHECK-NEXT:     - Stream:          [ 6 ]
-# CHECK-NEXT:     - Stream:          [ 7 ]
-# CHECK-NEXT:     - Stream:          [ 8 ]
 # CHECK-NEXT:   PdbStream:
 # CHECK-NEXT:     Age:             1
 # CHECK-NEXT:     Guid:            '{00000000-0000-0000-0000-000000000000}'

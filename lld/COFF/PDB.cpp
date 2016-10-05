@@ -35,11 +35,10 @@ void coff::createPDB(StringRef Path) {
   pdb::PDBFileBuilder Builder(Alloc);
   ExitOnErr(Builder.initialize(4096)); // 4096 is blocksize
 
-  ExitOnErr(Builder.getMsfBuilder().addStream(1));
-  ExitOnErr(Builder.getMsfBuilder().addStream(1));
-  ExitOnErr(Builder.getMsfBuilder().addStream(1));
-  ExitOnErr(Builder.getMsfBuilder().addStream(1));
-  ExitOnErr(Builder.getMsfBuilder().addStream(1));
+  // Create streams in MSF for predefined streams, namely
+  // PDB, TPI, DBI and IPI.
+  for (int I = 0; I < (int)pdb::kSpecialStreamCount; ++I)
+    ExitOnErr(Builder.getMsfBuilder().addStream(0));
 
   // Add an Info stream.
   auto &InfoBuilder = Builder.getInfoBuilder();
