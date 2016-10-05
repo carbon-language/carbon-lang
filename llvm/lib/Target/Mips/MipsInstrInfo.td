@@ -467,6 +467,16 @@ class UImmAsmOperandClass<int Bits, list<AsmOperandClass> Supers = []>
   let DiagnosticType = "UImm" # Bits;
 }
 
+// Generic case - only to support certain assembly pseudo instructions.
+class UImmAnyAsmOperandClass<int Bits, list<AsmOperandClass> Supers = []>
+    : AsmOperandClass {
+  let Name = "ImmAny";
+  let RenderMethod = "addConstantUImmOperands<32>";
+  let PredicateMethod = "isSImm<" # Bits # ">";
+  let SuperClasses = Supers;
+  let DiagnosticType = "ImmAny";
+}
+
 // AsmOperandClasses require a strict ordering which is difficult to manage
 // as a hierarchy. Instead, we use a linear ordering and impose an order that
 // is in some places arbitrary.
@@ -490,8 +500,13 @@ class UImmAsmOperandClass<int Bits, list<AsmOperandClass> Supers = []>
 //     uimm5 < uimm5_64, and uimm5 < vsplat_uimm5
 //   This is entirely arbitrary. We need an ordering and what we pick is
 //   unimportant since only one is possible for a given mnemonic.
+
+def UImm32CoercedAsmOperandClass : UImmAnyAsmOperandClass<33, []> {
+  let Name = "UImm32_Coerced";
+  let DiagnosticType = "UImm32_Coerced";
+}
 def SImm32RelaxedAsmOperandClass
-    : SImmAsmOperandClass<32, []> {
+    : SImmAsmOperandClass<32, [UImm32CoercedAsmOperandClass]> {
   let Name = "SImm32_Relaxed";
   let PredicateMethod = "isAnyImm<32>";
   let DiagnosticType = "SImm32_Relaxed";
@@ -515,6 +530,8 @@ def UImm16RelaxedAsmOperandClass
   let PredicateMethod = "isAnyImm<16>";
   let DiagnosticType = "UImm16_Relaxed";
 }
+// FIXME: One of these should probably have UImm16AsmOperandClass as the
+//        superclass instead of UImm16RelaxedasmOPerandClass.
 def UImm16AsmOperandClass
     : UImmAsmOperandClass<16, [UImm16RelaxedAsmOperandClass]>;
 def SImm16RelaxedAsmOperandClass
@@ -872,6 +889,10 @@ def simm16_64 : Operand<i64> {
   let ParserMatchClass = !cast<AsmOperandClass>("SImm16AsmOperandClass");
 }
 
+// like simm32 but coerces simm32 to uimm32.
+def uimm32_coerced : Operand<i32> {
+  let ParserMatchClass = !cast<AsmOperandClass>("UImm32CoercedAsmOperandClass");
+}
 // Like simm32 but coerces uimm32 to simm32.
 def simm32_relaxed : Operand<i32> {
   let DecoderMethod = "DecodeSImmWithOffsetAndScale<32>";
@@ -2387,11 +2408,12 @@ def : MipsInstAlias<"sync",
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//
 
-// We use i32imm on li/la to defer range checking to the assembler.
+// We use uimm32_coerced to accept a 33 bit signed number that is rendered into
+// a 32 bit number.
 class LoadImmediate32<string instr_asm, Operand Od, RegisterOperand RO> :
   MipsAsmPseudoInst<(outs RO:$rt), (ins Od:$imm32),
                      !strconcat(instr_asm, "\t$rt, $imm32")> ;
-def LoadImm32 : LoadImmediate32<"li", i32imm, GPR32Opnd>;
+def LoadImm32 : LoadImmediate32<"li", uimm32_coerced, GPR32Opnd>;
 
 class LoadAddressFromReg32<string instr_asm, Operand MemOpnd,
                            RegisterOperand RO> :
