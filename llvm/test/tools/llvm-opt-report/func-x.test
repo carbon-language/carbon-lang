@@ -1,7 +1,7 @@
 RUN: llvm-opt-report -r %p %p/Inputs/qx.yaml | FileCheck -strict-whitespace %s
 RUN: llvm-opt-report -s -r %p %p/Inputs/qx.yaml | FileCheck -strict-whitespace -check-prefix=CHECK-SUCCINCT %s
 
-; CHECK: < {{.*}}/Inputs/q.cpp
+; CHECK: < {{.*[/\]}}q.cpp
 ; CHECK-NEXT:  2         | void bar();
 ; CHECK-NEXT:  3         | void foo(int n) {
 ; CHECK-NEXT: {{\[\[}}
@@ -22,7 +22,7 @@ RUN: llvm-opt-report -s -r %p %p/Inputs/qx.yaml | FileCheck -strict-whitespace -
 ; CHECK-NEXT: 14         | }
 ; CHECK-NEXT: 15         | 
 
-; CHECK-SUCCINCT: < {{.*}}/Inputs/q.cpp
+; CHECK-SUCCINCT: < {{.*[/\]}}q.cpp
 ; CHECK-SUCCINCT-NEXT:  2     | void bar();
 ; CHECK-SUCCINCT-NEXT:  3     | void foo(int n) {
 ; CHECK-SUCCINCT-NEXT: {{\[\[}}

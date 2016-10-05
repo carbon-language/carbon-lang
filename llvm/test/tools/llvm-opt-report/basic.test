@@ -1,7 +1,7 @@
 RUN: llvm-opt-report -r %p %p/Inputs/or.yaml | FileCheck -strict-whitespace %s
 RUN: llvm-opt-report -s -r %p %p/Inputs/or.yaml | FileCheck -strict-whitespace -check-prefix=CHECK-SUCCINCT %s
 
-; CHECK: < {{.*}}/Inputs/or.c
+; CHECK: < {{.*[/\]}}or.c
 ; CHECK-NEXT:  2          | void bar();
 ; CHECK-NEXT:  3          | void foo() { bar(); }
 ; CHECK-NEXT:  4          | 
@@ -27,7 +27,7 @@ RUN: llvm-opt-report -s -r %p %p/Inputs/or.yaml | FileCheck -strict-whitespace -
 ; CHECK-NEXT: 22          | }
 ; CHECK-NEXT: 23          | 
 
-; CHECK: < {{.*}}/Inputs/or.h
+; CHECK: < {{.*[/\]}}or.h
 ; CHECK-NEXT:  2          | void TestH(int *res, int *c, int *d, int *p, int n) {
 ; CHECK-NEXT:  3          |   int i;
 ; CHECK-NEXT:  4          | 
@@ -48,7 +48,7 @@ RUN: llvm-opt-report -s -r %p %p/Inputs/or.yaml | FileCheck -strict-whitespace -
 ; CHECK-NEXT: 17          | }
 ; CHECK-NEXT: 18          | 
 
-; CHECK-SUCCINCT: < {{.*}}/Inputs/or.c
+; CHECK-SUCCINCT: < {{.*[/\]}}or.c
 CHECK-SUCCINCT-NEXT:  2     | void bar();
 CHECK-SUCCINCT-NEXT:  3     | void foo() { bar(); }
 CHECK-SUCCINCT-NEXT:  4     | 
@@ -74,7 +74,7 @@ CHECK-SUCCINCT-NEXT:    I   |                 ^
 CHECK-SUCCINCT-NEXT: 22     | }
 CHECK-SUCCINCT-NEXT: 23     | 
 
-CHECK-SUCCINCT: < {{.*}}/Inputs/or.h
+CHECK-SUCCINCT: < {{.*[/\]}}or.h
 CHECK-SUCCINCT-NEXT:  2     | void TestH(int *res, int *c, int *d, int *p, int n) {
 CHECK-SUCCINCT-NEXT:  3     |   int i;
 CHECK-SUCCINCT-NEXT:  4     | 
