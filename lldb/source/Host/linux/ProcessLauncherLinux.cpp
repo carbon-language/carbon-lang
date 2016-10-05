@@ -31,7 +31,7 @@ static void FixupEnvironment(Args &env) {
   // path to /system/bin. It is required because the default path used by
   // execve() is wrong on android.
   static const char *path = "PATH=";
-  for (auto &entry : entries) {
+  for (auto &entry : env.entries()) {
     if (entry.ref.startswith(path))
       return;
   }
