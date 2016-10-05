@@ -287,7 +287,7 @@ public:
                               CommandInterpreterRunOptions &options,
                               CommandReturnObject &result);
 
-  CommandObject *GetCommandObjectForCommand(std::string &command_line);
+  CommandObject *GetCommandObjectForCommand(llvm::StringRef &command_line);
 
   // This handles command line completion.  You are given a pointer to the
   // command string buffer, to the current cursor,

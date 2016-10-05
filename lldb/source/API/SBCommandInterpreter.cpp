@@ -481,7 +481,7 @@ bool SBCommandInterpreter::SetCommandOverrideCallback(
     const char *command_name, lldb::CommandOverrideCallback callback,
     void *baton) {
   if (command_name && command_name[0] && IsValid()) {
-    std::string command_name_str(command_name);
+    llvm::StringRef command_name_str = command_name;
     CommandObject *cmd_obj =
         m_opaque_ptr->GetCommandObjectForCommand(command_name_str);
     if (cmd_obj) {

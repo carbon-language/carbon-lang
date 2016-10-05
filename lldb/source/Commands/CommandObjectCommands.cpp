@@ -595,8 +595,8 @@ protected:
     if (nullptr == remainder)
       remainder = raw_command_line;
 
-    std::string raw_command_string(remainder);
-    Args args(raw_command_string.c_str());
+    llvm::StringRef raw_command_string(remainder);
+    Args args(raw_command_string);
 
     if (args.GetArgumentCount() < 2) {
       result.AppendError("'command alias' requires at least two arguments");
@@ -644,10 +644,9 @@ protected:
     }
 
     // Get CommandObject that is being aliased. The command name is read from
-    // the front of raw_command_string.
-    // raw_command_string is returned with the name of the command object
-    // stripped off the front.
-    std::string original_raw_command_string(raw_command_string);
+    // the front of raw_command_string. raw_command_string is returned with the
+    // name of the command object stripped off the front.
+    llvm::StringRef original_raw_command_string = raw_command_string;
     CommandObject *cmd_obj =
         m_interpreter.GetCommandObjectForCommand(raw_command_string);
 
@@ -655,7 +654,7 @@ protected:
       result.AppendErrorWithFormat("invalid command given to 'command alias'. "
                                    "'%s' does not begin with a valid command."
                                    "  No alias created.",
-                                   original_raw_command_string.c_str());
+                                   original_raw_command_string.str().c_str());
       result.SetStatus(eReturnStatusFailed);
       return false;
     } else if (!cmd_obj->WantsRawCommandString()) {
@@ -671,8 +670,8 @@ protected:
     return result.Succeeded();
   }
 
-  bool HandleAliasingRawCommand(const std::string &alias_command,
-                                std::string &raw_command_string,
+  bool HandleAliasingRawCommand(llvm::StringRef alias_command,
+                                llvm::StringRef raw_command_string,
                                 CommandObject &cmd_obj,
                                 CommandReturnObject &result) {
     // Verify & handle any options/arguments passed to the alias command
@@ -682,14 +681,14 @@ protected:
 
     if (CommandObjectSP cmd_obj_sp =
             m_interpreter.GetCommandSPExact(cmd_obj.GetCommandName(), false)) {
-      if (m_interpreter.AliasExists(alias_command.c_str()) ||
-          m_interpreter.UserCommandExists(alias_command.c_str())) {
+      if (m_interpreter.AliasExists(alias_command) ||
+          m_interpreter.UserCommandExists(alias_command)) {
         result.AppendWarningWithFormat(
             "Overwriting existing definition for '%s'.\n",
-            alias_command.c_str());
+            alias_command.str().c_str());
       }
       if (CommandAlias *alias = m_interpreter.AddAlias(
-              alias_command.c_str(), cmd_obj_sp, raw_command_string.c_str())) {
+              alias_command, cmd_obj_sp, raw_command_string)) {
         if (m_command_options.m_help.OptionWasSet())
           alias->SetHelp(m_command_options.m_help.GetCurrentValue());
         if (m_command_options.m_long_help.OptionWasSet())

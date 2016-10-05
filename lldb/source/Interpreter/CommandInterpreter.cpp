@@ -1162,8 +1162,8 @@ void CommandInterpreter::GetHelp(CommandReturnObject &result,
       GetCommandPrefix());
 }
 
-CommandObject *
-CommandInterpreter::GetCommandObjectForCommand(std::string &command_string) {
+CommandObject *CommandInterpreter::GetCommandObjectForCommand(
+    llvm::StringRef &command_string) {
   // This function finds the final, lowest-level, alias-resolved command object
   // whose 'Execute' function will
   // eventually be invoked by the given command line.
@@ -1182,8 +1182,7 @@ CommandInterpreter::GetCommandObjectForCommand(std::string &command_string) {
 
       if (cmd_obj == nullptr)
         // Since cmd_obj is NULL we are on our first time through this loop.
-        // Check to see if cmd_word is a valid
-        // command or alias.
+        // Check to see if cmd_word is a valid command or alias.
         cmd_obj = GetCommandObject(cmd_word);
       else if (cmd_obj->IsMultiwordObject()) {
         // Our current object is a multi-word object; see if the cmd_word is a
@@ -1199,10 +1198,8 @@ CommandInterpreter::GetCommandObjectForCommand(std::string &command_string) {
         done = true;
 
       // If we didn't find a valid command object, or our command object is not
-      // a multi-word object, or
-      // we are at the end of the command_string, then we are done.  Otherwise,
-      // find the start of the
-      // next word.
+      // a multi-word object, or we are at the end of the command_string, then
+      // we are done.  Otherwise, find the start of the next word.
 
       if (!cmd_obj || !cmd_obj->IsMultiwordObject() ||
           end >= command_string.size())
@@ -1214,11 +1211,7 @@ CommandInterpreter::GetCommandObjectForCommand(std::string &command_string) {
       done = true;
   }
 
-  if (end == command_string.size())
-    command_string.clear();
-  else
-    command_string = command_string.substr(end);
-
+  command_string = command_string.substr(end);
   return cmd_obj;
 }
 
