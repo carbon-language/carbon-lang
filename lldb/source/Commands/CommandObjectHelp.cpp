@@ -166,7 +166,7 @@ bool CommandObjectHelp::DoExecute(Args &command, CommandReturnObject &result) {
               m_interpreter.GetCommandPrefix(), sub_command.c_str());
           result.GetOutputStream().Printf(
               "\nThe closest match is '%s'. Help on it follows.\n\n",
-              sub_cmd_obj->GetCommandName());
+              sub_cmd_obj->GetCommandName().str().c_str());
         }
       }
 

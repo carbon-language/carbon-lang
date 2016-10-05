@@ -40,17 +40,14 @@ using namespace lldb_private;
 // CommandObject
 //-------------------------------------------------------------------------
 
-CommandObject::CommandObject(CommandInterpreter &interpreter, const char *name,
-                             const char *help, const char *syntax,
-                             uint32_t flags)
-    : m_interpreter(interpreter), m_cmd_name(name ? name : ""),
+CommandObject::CommandObject(CommandInterpreter &interpreter, llvm::StringRef name,
+  llvm::StringRef help, llvm::StringRef syntax, uint32_t flags)
+    : m_interpreter(interpreter), m_cmd_name(name),
       m_cmd_help_short(), m_cmd_help_long(), m_cmd_syntax(), m_flags(flags),
       m_arguments(), m_deprecated_command_override_callback(nullptr),
       m_command_override_callback(nullptr), m_command_override_baton(nullptr) {
-  if (help && help[0])
-    m_cmd_help_short = help;
-  if (syntax && syntax[0])
-    m_cmd_syntax = syntax;
+  m_cmd_help_short = help;
+  m_cmd_syntax = syntax;
 }
 
 CommandObject::~CommandObject() {}
@@ -62,7 +59,7 @@ const char *CommandObject::GetHelpLong() { return m_cmd_help_long.c_str(); }
 const char *CommandObject::GetSyntax() {
   if (m_cmd_syntax.length() == 0) {
     StreamString syntax_str;
-    syntax_str.Printf("%s", GetCommandName());
+    syntax_str.Printf("%s", GetCommandName().str().c_str());
     if (!IsDashDashCommand() && GetOptions() != nullptr)
       syntax_str.Printf(" <cmd-options>");
     if (m_arguments.size() > 0) {
@@ -78,7 +75,7 @@ const char *CommandObject::GetSyntax() {
   return m_cmd_syntax.c_str();
 }
 
-const char *CommandObject::GetCommandName() { return m_cmd_name.c_str(); }
+llvm::StringRef CommandObject::GetCommandName() const { return m_cmd_name; }
 
 void CommandObject::SetCommandName(const char *name) { m_cmd_name = name; }
 

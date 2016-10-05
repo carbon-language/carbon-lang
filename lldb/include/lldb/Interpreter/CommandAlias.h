@@ -26,9 +26,9 @@ public:
   typedef std::unique_ptr<CommandAlias> UniquePointer;
 
   CommandAlias(CommandInterpreter &interpreter, lldb::CommandObjectSP cmd_sp,
-               const char *options_args, const char *name,
-               const char *help = nullptr, const char *syntax = nullptr,
-               uint32_t flags = 0);
+               llvm::StringRef options_args, llvm::StringRef name,
+               llvm::StringRef help = llvm::StringRef(),
+               llvm::StringRef syntax = llvm::StringRef(), uint32_t flags = 0);
 
   void GetAliasExpansion(StreamString &help_string);
 

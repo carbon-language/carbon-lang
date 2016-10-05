@@ -37,8 +37,7 @@ class CommandObjectSettingsSet : public CommandObjectRaw {
 public:
   CommandObjectSettingsSet(CommandInterpreter &interpreter)
       : CommandObjectRaw(interpreter, "settings set",
-                         "Set the value of the specified debugger setting.",
-                         nullptr),
+                         "Set the value of the specified debugger setting."),
         m_options() {
     CommandArgumentEntry arg1;
     CommandArgumentEntry arg2;
@@ -409,8 +408,7 @@ public:
   CommandObjectSettingsRemove(CommandInterpreter &interpreter)
       : CommandObjectRaw(interpreter, "settings remove",
                          "Remove a value from a setting, specified by array "
-                         "index or dictionary key.",
-                         nullptr) {
+                         "index or dictionary key.") {
     CommandArgumentEntry arg1;
     CommandArgumentEntry arg2;
     CommandArgumentData var_name_arg;
@@ -517,8 +515,7 @@ public:
   CommandObjectSettingsReplace(CommandInterpreter &interpreter)
       : CommandObjectRaw(interpreter, "settings replace",
                          "Replace the debugger setting value specified by "
-                         "array index or dictionary key.",
-                         nullptr) {
+                         "array index or dictionary key.") {
     CommandArgumentEntry arg1;
     CommandArgumentEntry arg2;
     CommandArgumentEntry arg3;
@@ -629,8 +626,7 @@ public:
       : CommandObjectRaw(interpreter, "settings insert-before",
                          "Insert one or more values into an debugger array "
                          "setting immediately before the specified element "
-                         "index.",
-                         nullptr) {
+                         "index.") {
     CommandArgumentEntry arg1;
     CommandArgumentEntry arg2;
     CommandArgumentEntry arg3;
@@ -741,8 +737,7 @@ public:
   CommandObjectSettingsInsertAfter(CommandInterpreter &interpreter)
       : CommandObjectRaw(interpreter, "settings insert-after",
                          "Insert one or more values into a debugger array "
-                         "settings after the specified element index.",
-                         nullptr) {
+                         "settings after the specified element index.") {
     CommandArgumentEntry arg1;
     CommandArgumentEntry arg2;
     CommandArgumentEntry arg3;
@@ -853,8 +848,7 @@ public:
   CommandObjectSettingsAppend(CommandInterpreter &interpreter)
       : CommandObjectRaw(interpreter, "settings append",
                          "Append one or more values to a debugger array, "
-                         "dictionary, or string setting.",
-                         nullptr) {
+                         "dictionary, or string setting.") {
     CommandArgumentEntry arg1;
     CommandArgumentEntry arg2;
     CommandArgumentData var_name_arg;

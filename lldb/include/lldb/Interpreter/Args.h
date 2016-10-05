@@ -322,12 +322,12 @@ public:
   bool IsPositionalArgument(const char *arg);
 
   // The following works almost identically to ParseOptions, except that no
-  // option is required to have arguments,
-  // and it builds up the option_arg_vector as it parses the options.
+  // option is required to have arguments, and it builds up the
+  // option_arg_vector as it parses the options.
 
-  void ParseAliasOptions(Options &options, CommandReturnObject &result,
-                         OptionArgVector *option_arg_vector,
-                         std::string &raw_input_line);
+  std::string ParseAliasOptions(Options &options, CommandReturnObject &result,
+                                OptionArgVector *option_arg_vector,
+                                llvm::StringRef raw_input_line);
 
   void ParseArgsForCompletion(Options &options,
                               OptionElementVector &option_element_vector,

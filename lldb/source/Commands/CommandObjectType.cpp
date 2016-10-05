@@ -3026,7 +3026,7 @@ public:
   CommandObjectFormatterInfo(CommandInterpreter &interpreter,
                              const char *formatter_name,
                              DiscoveryFunction discovery_func)
-      : CommandObjectRaw(interpreter, nullptr, nullptr, nullptr,
+      : CommandObjectRaw(interpreter, "", "", "",
                          eCommandRequiresFrame),
         m_formatter_name(formatter_name ? formatter_name : ""),
         m_discovery_function(discovery_func) {

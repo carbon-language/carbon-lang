@@ -784,17 +784,16 @@ int CommandInterpreter::GetCommandNamesMatchingPartialString(
   return matches.GetSize();
 }
 
-CommandObjectSP CommandInterpreter::GetCommandSP(const char *cmd_cstr,
+CommandObjectSP CommandInterpreter::GetCommandSP(llvm::StringRef cmd_str,
                                                  bool include_aliases,
                                                  bool exact,
-                                                 StringList *matches) {
-  CommandObject::CommandMap::iterator pos;
+                                                 StringList *matches) const {
   CommandObjectSP command_sp;
 
-  std::string cmd(cmd_cstr);
+  std::string cmd = cmd_str;
 
   if (HasCommands()) {
-    pos = m_command_dict.find(cmd);
+    auto pos = m_command_dict.find(cmd);
     if (pos != m_command_dict.end())
       command_sp = pos->second;
   }
@@ -806,7 +805,7 @@ CommandObjectSP CommandInterpreter::GetCommandSP(const char *cmd_cstr,
   }
 
   if (HasUserCommands()) {
-    pos = m_user_dict.find(cmd);
+    auto pos = m_user_dict.find(cmd);
     if (pos != m_user_dict.end())
       command_sp = pos->second;
   }
@@ -831,19 +830,19 @@ CommandObjectSP CommandInterpreter::GetCommandSP(const char *cmd_cstr,
 
     if (HasCommands()) {
       num_cmd_matches =
-          AddNamesMatchingPartialString(m_command_dict, cmd_cstr, *matches);
+          AddNamesMatchingPartialString(m_command_dict, cmd_str, *matches);
     }
 
     if (num_cmd_matches == 1) {
       cmd.assign(matches->GetStringAtIndex(0));
-      pos = m_command_dict.find(cmd);
+      auto pos = m_command_dict.find(cmd);
       if (pos != m_command_dict.end())
         real_match_sp = pos->second;
     }
 
     if (include_aliases && HasAliases()) {
       num_alias_matches =
-          AddNamesMatchingPartialString(m_alias_dict, cmd_cstr, *matches);
+          AddNamesMatchingPartialString(m_alias_dict, cmd_str, *matches);
     }
 
     if (num_alias_matches == 1) {
@@ -855,14 +854,14 @@ CommandObjectSP CommandInterpreter::GetCommandSP(const char *cmd_cstr,
 
     if (HasUserCommands()) {
       num_user_matches =
-          AddNamesMatchingPartialString(m_user_dict, cmd_cstr, *matches);
+          AddNamesMatchingPartialString(m_user_dict, cmd_str, *matches);
     }
 
     if (num_user_matches == 1) {
       cmd.assign(
           matches->GetStringAtIndex(num_cmd_matches + num_alias_matches));
 
-      pos = m_user_dict.find(cmd);
+      auto pos = m_user_dict.find(cmd);
       if (pos != m_user_dict.end())
         user_match_sp = pos->second;
     }
@@ -879,30 +878,32 @@ CommandObjectSP CommandInterpreter::GetCommandSP(const char *cmd_cstr,
         return user_match_sp;
     }
   } else if (matches && command_sp) {
-    matches->AppendString(cmd_cstr);
+    matches->AppendString(cmd_str);
   }
 
   return command_sp;
 }
 
-bool CommandInterpreter::AddCommand(const char *name,
+bool CommandInterpreter::AddCommand(llvm::StringRef name,
                                     const lldb::CommandObjectSP &cmd_sp,
                                     bool can_replace) {
   if (cmd_sp.get())
     assert((this == &cmd_sp->GetCommandInterpreter()) &&
            "tried to add a CommandObject from a different interpreter");
 
-  if (name && name[0]) {
-    std::string name_sstr(name);
-    bool found = (m_command_dict.find(name_sstr) != m_command_dict.end());
-    if (found && !can_replace)
+  if (name.empty())
+    return false;
+
+  std::string name_sstr(name);
+  auto name_iter = m_command_dict.find(name_sstr);
+  if (name_iter != m_command_dict.end()) {
+    if (!can_replace || !name_iter->second->IsRemovable())
       return false;
-    if (found && m_command_dict[name_sstr]->IsRemovable() == false)
-      return false;
+    name_iter->second = cmd_sp;
+  } else {
     m_command_dict[name_sstr] = cmd_sp;
-    return true;
   }
-  return false;
+  return true;
 }
 
 bool CommandInterpreter::AddUserCommand(std::string name,
@@ -936,21 +937,21 @@ bool CommandInterpreter::AddUserCommand(std::string name,
   return false;
 }
 
-CommandObjectSP CommandInterpreter::GetCommandSPExact(const char *cmd_cstr,
-                                                      bool include_aliases) {
-  Args cmd_words(cmd_cstr); // Break up the command string into words, in case
+CommandObjectSP CommandInterpreter::GetCommandSPExact(llvm::StringRef cmd_str,
+                                                      bool include_aliases) const {
+  Args cmd_words(cmd_str);  // Break up the command string into words, in case
                             // it's a multi-word command.
   CommandObjectSP ret_val;  // Possibly empty return value.
 
-  if (cmd_cstr == nullptr)
+  if (cmd_str.empty())
     return ret_val;
 
   if (cmd_words.GetArgumentCount() == 1)
-    return GetCommandSP(cmd_cstr, include_aliases, true, nullptr);
+    return GetCommandSP(cmd_str, include_aliases, true, nullptr);
   else {
     // We have a multi-word command (seemingly), so we need to do more work.
     // First, get the cmd_obj_sp for the first word in the command.
-    CommandObjectSP cmd_obj_sp = GetCommandSP(cmd_words.GetArgumentAtIndex(0),
+    CommandObjectSP cmd_obj_sp = GetCommandSP(llvm::StringRef(cmd_words.GetArgumentAtIndex(0)),
                                               include_aliases, true, nullptr);
     if (cmd_obj_sp.get() != nullptr) {
       // Loop through the rest of the words in the command (everything passed in
@@ -968,28 +969,22 @@ CommandObjectSP CommandInterpreter::GetCommandSPExact(const char *cmd_cstr,
             return ret_val;
         } else
           // We have more words in the command name, but we don't have a
-          // multiword object. Fail and return
-          // empty 'ret_val'.
+          // multiword object. Fail and return empty 'ret_val'.
           return ret_val;
       }
       // We successfully looped through all the command words and got valid
-      // command objects for them.  Assign the
-      // last object retrieved to 'ret_val'.
+      // command objects for them.  Assign the last object retrieved to
+      // 'ret_val'.
       ret_val = cmd_obj_sp;
     }
   }
   return ret_val;
 }
 
-CommandObject *CommandInterpreter::GetCommandObjectExact(const char *cmd_cstr,
-                                                         bool include_aliases) {
-  return GetCommandSPExact(cmd_cstr, include_aliases).get();
-}
-
-CommandObject *CommandInterpreter::GetCommandObject(const char *cmd_cstr,
-                                                    StringList *matches) {
+CommandObject *CommandInterpreter::GetCommandObject(llvm::StringRef cmd_str,
+                                                    StringList *matches) const {
   CommandObject *command_obj =
-      GetCommandSP(cmd_cstr, false, true, matches).get();
+      GetCommandSP(cmd_str, false, true, matches).get();
 
   // If we didn't find an exact match to the command string in the commands,
   // look in
@@ -998,14 +993,14 @@ CommandObject *CommandInterpreter::GetCommandObject(const char *cmd_cstr,
   if (command_obj)
     return command_obj;
 
-  command_obj = GetCommandSP(cmd_cstr, true, true, matches).get();
+  command_obj = GetCommandSP(cmd_str, true, true, matches).get();
 
   if (command_obj)
     return command_obj;
 
   // If there wasn't an exact match then look for an inexact one in just the
   // commands
-  command_obj = GetCommandSP(cmd_cstr, false, false, nullptr).get();
+  command_obj = GetCommandSP(cmd_str, false, false, nullptr).get();
 
   // Finally, if there wasn't an inexact match among the commands, look for an
   // inexact
@@ -1017,7 +1012,7 @@ CommandObject *CommandInterpreter::GetCommandObject(const char *cmd_cstr,
     return command_obj;
   }
 
-  return GetCommandSP(cmd_cstr, true, false, matches).get();
+  return GetCommandSP(cmd_str, true, false, matches).get();
 }
 
 bool CommandInterpreter::CommandExists(const char *cmd) {
@@ -1191,7 +1186,7 @@ CommandInterpreter::GetCommandObjectForCommand(std::string &command_string) {
         // Since cmd_obj is NULL we are on our first time through this loop.
         // Check to see if cmd_word is a valid
         // command or alias.
-        cmd_obj = GetCommandObject(cmd_word.c_str());
+        cmd_obj = GetCommandObject(cmd_word);
       else if (cmd_obj->IsMultiwordObject()) {
         // Our current object is a multi-word object; see if the cmd_word is a
         // valid sub-command for our object.
@@ -1338,7 +1333,7 @@ CommandObject *CommandInterpreter::BuildAliasResult(
       (alias_name_str.compare(cmd_args.GetArgumentAtIndex(0)) != 0))
     cmd_args.Unshift(alias_name_str);
 
-  result_str.Printf("%s", alias_cmd_obj->GetCommandName());
+  result_str.Printf("%s", alias_cmd_obj->GetCommandName().str().c_str());
 
   if (!option_arg_vector_sp.get()) {
     alias_result = result_str.GetData();
@@ -1647,10 +1642,9 @@ bool CommandInterpreter::HandleCommand(const char *command_line,
   // Although the user may have abbreviated the command, the command_string now
   // has the command expanded to the full name.  For example, if the input
   // was "br s -n main", command_string is now "breakpoint set -n main".
-
   if (log) {
-    log->Printf("HandleCommand, cmd_obj : '%s'",
-                cmd_obj ? cmd_obj->GetCommandName() : "<not found>");
+    llvm::StringRef command_name = cmd_obj ? cmd_obj->GetCommandName() : "<not found>";
+    log->Printf("HandleCommand, cmd_obj : '%s'", command_name.str().c_str());
     log->Printf("HandleCommand, (revised) command_string: '%s'",
                 command_string.c_str());
     const bool wants_raw_input =
@@ -1677,7 +1671,7 @@ bool CommandInterpreter::HandleCommand(const char *command_line,
     }
 
     std::string remainder;
-    const std::size_t actual_cmd_name_len = strlen(cmd_obj->GetCommandName());
+    const std::size_t actual_cmd_name_len = cmd_obj->GetCommandName().size();
     if (actual_cmd_name_len < command_string.length())
       remainder = command_string.substr(actual_cmd_name_len);
 
@@ -1935,13 +1929,13 @@ CommandAlias *CommandInterpreter::GetAlias(const char *alias_name) {
   return nullptr;
 }
 
-bool CommandInterpreter::HasCommands() { return (!m_command_dict.empty()); }
+bool CommandInterpreter::HasCommands() const { return (!m_command_dict.empty()); }
 
-bool CommandInterpreter::HasAliases() { return (!m_alias_dict.empty()); }
+bool CommandInterpreter::HasAliases() const { return (!m_alias_dict.empty()); }
 
-bool CommandInterpreter::HasUserCommands() { return (!m_user_dict.empty()); }
+bool CommandInterpreter::HasUserCommands() const { return (!m_user_dict.empty()); }
 
-bool CommandInterpreter::HasAliasOptions() { return HasAliases(); }
+bool CommandInterpreter::HasAliasOptions() const { return HasAliases(); }
 
 void CommandInterpreter::BuildAliasCommandArgs(CommandObject *alias_cmd_obj,
                                                const char *alias_name,
@@ -2949,7 +2943,7 @@ CommandInterpreter::ResolveCommandImpl(std::string &command_line,
     if (cmd_obj == nullptr) {
       std::string full_name;
       bool is_alias = GetAliasFullName(next_word.c_str(), full_name);
-      cmd_obj = GetCommandObject(next_word.c_str(), &matches);
+      cmd_obj = GetCommandObject(next_word, &matches);
       bool is_real_command =
           (is_alias == false) ||
           (cmd_obj != nullptr && cmd_obj->IsAlias() == false);
@@ -2961,14 +2955,15 @@ CommandInterpreter::ResolveCommandImpl(std::string &command_line,
         revised_command_line.Printf("%s", alias_result.c_str());
         if (cmd_obj) {
           wants_raw_input = cmd_obj->WantsRawCommandString();
-          actual_cmd_name_len = strlen(cmd_obj->GetCommandName());
+          actual_cmd_name_len = cmd_obj->GetCommandName().size();
         }
       } else {
         if (!cmd_obj)
-          cmd_obj = GetCommandObject(next_word.c_str(), &matches);
+          cmd_obj = GetCommandObject(next_word, &matches);
         if (cmd_obj) {
-          actual_cmd_name_len += strlen(cmd_obj->GetCommandName());
-          revised_command_line.Printf("%s", cmd_obj->GetCommandName());
+          llvm::StringRef cmd_name = cmd_obj->GetCommandName();
+          actual_cmd_name_len += cmd_name.size();
+          revised_command_line.Printf("%s", cmd_name.str().c_str());
           wants_raw_input = cmd_obj->WantsRawCommandString();
         } else {
           revised_command_line.Printf("%s", next_word.c_str());
@@ -2981,9 +2976,10 @@ CommandInterpreter::ResolveCommandImpl(std::string &command_line,
         if (sub_cmd_obj) {
           // The subcommand's name includes the parent command's name,
           // so restart rather than append to the revised_command_line.
-          actual_cmd_name_len = strlen(sub_cmd_obj->GetCommandName()) + 1;
+          llvm::StringRef sub_cmd_name = sub_cmd_obj->GetCommandName();
+          actual_cmd_name_len = sub_cmd_name.size() + 1;
           revised_command_line.Clear();
-          revised_command_line.Printf("%s", sub_cmd_obj->GetCommandName());
+          revised_command_line.Printf("%s", sub_cmd_name.str().c_str());
           cmd_obj = sub_cmd_obj;
           wants_raw_input = cmd_obj->WantsRawCommandString();
         } else {
@@ -3034,7 +3030,7 @@ CommandInterpreter::ResolveCommandImpl(std::string &command_line,
         result.AppendErrorWithFormat(
             "command '%s' did not recognize '%s%s%s' as valid (subcommand "
             "might be invalid).\n",
-            cmd_obj->GetCommandName(),
+            cmd_obj->GetCommandName().str().c_str(),
             next_word.empty() ? "" : next_word.c_str(),
             next_word.empty() ? " -- " : " ", suffix.c_str());
         result.SetStatus(eReturnStatusFailed);
@@ -3074,7 +3070,7 @@ CommandInterpreter::ResolveCommandImpl(std::string &command_line,
             } else {
               result.AppendErrorWithFormat(
                   "the '%s' command doesn't support the --gdb-format option\n",
-                  cmd_obj->GetCommandName());
+                  cmd_obj->GetCommandName().str().c_str());
               result.SetStatus(eReturnStatusFailed);
               return nullptr;
             }

@@ -337,7 +337,7 @@ protected:
     } else {
       result.AppendErrorWithFormat(
           "'%s' takes exactly one executable filename argument.\n",
-          GetCommandName());
+          GetCommandName().str().c_str());
       result.SetStatus(eReturnStatusFailed);
     }
     return result.Succeeded();
@@ -421,8 +421,7 @@ public:
   CommandObjectCommandsAlias(CommandInterpreter &interpreter)
       : CommandObjectRaw(
             interpreter, "command alias",
-            "Define a custom command in terms of an existing command.",
-            nullptr),
+            "Define a custom command in terms of an existing command."),
         m_option_group(), m_command_options() {
     m_option_group.Append(&m_command_options);
     m_option_group.Finalize();
@@ -737,7 +736,7 @@ protected:
       result.SetStatus(eReturnStatusFailed);
     } else {
       CommandObjectSP command_obj_sp(
-          m_interpreter.GetCommandSPExact(actual_command.c_str(), true));
+          m_interpreter.GetCommandSPExact(actual_command, true));
       CommandObjectSP subcommand_obj_sp;
       bool use_subcommand = false;
       if (command_obj_sp) {
@@ -748,7 +747,7 @@ protected:
 
         while (cmd_obj->IsMultiwordObject() && !args.empty()) {
           if (argc >= 3) {
-            llvm::StringRef sub_command = args.GetArgumentAtIndex(0);
+            const std::string sub_command = args.GetArgumentAtIndex(0);
             assert(!sub_command.empty());
             subcommand_obj_sp = cmd_obj->GetSubcommandSP(sub_command.data());
             if (subcommand_obj_sp) {
@@ -761,7 +760,7 @@ protected:
               result.AppendErrorWithFormat(
                   "'%s' is not a valid sub-command of '%s'.  "
                   "Unable to create alias.\n",
-                  sub_command.data(), actual_command.c_str());
+                  sub_command.c_str(), actual_command.c_str());
               result.SetStatus(eReturnStatusFailed);
               return false;
             }
@@ -934,7 +933,7 @@ protected:
     if (args.empty()) {
       result.AppendErrorWithFormat("must call '%s' with one or more valid user "
                                    "defined regular expression command names",
-                                   GetCommandName());
+                                   GetCommandName().str().c_str());
       result.SetStatus(eReturnStatusFailed);
     }
 
@@ -1288,7 +1287,7 @@ public:
   CommandObjectPythonFunction(CommandInterpreter &interpreter, std::string name,
                               std::string funct, std::string help,
                               ScriptedCommandSynchronicity synch)
-      : CommandObjectRaw(interpreter, name.c_str(), nullptr, nullptr),
+      : CommandObjectRaw(interpreter, name),
         m_function_name(funct), m_synchro(synch), m_fetched_help_long(false) {
     if (!help.empty())
       SetHelp(help.c_str());
@@ -1362,7 +1361,7 @@ public:
                                std::string name,
                                StructuredData::GenericSP cmd_obj_sp,
                                ScriptedCommandSynchronicity synch)
-      : CommandObjectRaw(interpreter, name.c_str(), nullptr, nullptr),
+      : CommandObjectRaw(interpreter, name),
         m_cmd_obj_sp(cmd_obj_sp), m_synchro(synch), m_fetched_help_short(false),
         m_fetched_help_long(false) {
     StreamString stream;

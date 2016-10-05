@@ -538,7 +538,7 @@ SBCommand::SBCommand(lldb::CommandObjectSP cmd_sp) : m_opaque_sp(cmd_sp) {}
 bool SBCommand::IsValid() { return m_opaque_sp.get() != nullptr; }
 
 const char *SBCommand::GetName() {
-  return (IsValid() ? m_opaque_sp->GetCommandName() : nullptr);
+  return (IsValid() ? ConstString(m_opaque_sp->GetCommandName()).AsCString() : nullptr);
 }
 
 const char *SBCommand::GetHelp() {

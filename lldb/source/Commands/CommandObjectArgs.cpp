@@ -148,7 +148,6 @@ bool CommandObjectArgs::DoExecute(Args &args, CommandReturnObject &result) {
     value.SetValueType(Value::eValueTypeScalar);
     CompilerType compiler_type;
 
-    llvm::StringRef int_type = arg_type;
     std::size_t int_pos = arg_type.find("int");
     if (int_pos != llvm::StringRef::npos) {
       Encoding encoding = eEncodingSint;

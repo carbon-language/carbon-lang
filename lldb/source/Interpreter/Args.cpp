@@ -978,9 +978,11 @@ bool Args::IsPositionalArgument(const char *arg) {
   return is_positional;
 }
 
-void Args::ParseAliasOptions(Options &options, CommandReturnObject &result,
-                             OptionArgVector *option_arg_vector,
-                             std::string &raw_input_string) {
+std::string Args::ParseAliasOptions(Options &options,
+                                    CommandReturnObject &result,
+                                    OptionArgVector *option_arg_vector,
+                                    llvm::StringRef raw_input_string) {
+  std::string result_string(raw_input_string);
   StreamString sstr;
   int i;
   Option *long_options = options.GetLongOptions();
@@ -988,7 +990,7 @@ void Args::ParseAliasOptions(Options &options, CommandReturnObject &result,
   if (long_options == nullptr) {
     result.AppendError("invalid long options");
     result.SetStatus(eReturnStatusFailed);
-    return;
+    return result_string;
   }
 
   for (i = 0; long_options[i].definition != nullptr; ++i) {
@@ -1048,7 +1050,7 @@ void Args::ParseAliasOptions(Options &options, CommandReturnObject &result,
     if (long_options_index == -1) {
       result.AppendErrorWithFormat("Invalid option with value '%c'.\n", val);
       result.SetStatus(eReturnStatusFailed);
-      return;
+      return result_string;
     }
 
     StreamString option_str;
@@ -1065,7 +1067,7 @@ void Args::ParseAliasOptions(Options &options, CommandReturnObject &result,
             "Option '%s' is missing argument specifier.\n",
             option_str.GetData());
         result.SetStatus(eReturnStatusFailed);
-        return;
+        return result_string;
       }
       LLVM_FALLTHROUGH;
     case OptionParser::eOptionalArgument:
@@ -1078,7 +1080,7 @@ void Args::ParseAliasOptions(Options &options, CommandReturnObject &result,
                                    "in has_arg field for option '%c'.\n",
                                    val);
       result.SetStatus(eReturnStatusFailed);
-      return;
+      return result_string;
     }
     if (!option_arg)
       option_arg = "<no-argument>";
@@ -1092,11 +1094,11 @@ void Args::ParseAliasOptions(Options &options, CommandReturnObject &result,
     if (idx == size_t(-1))
       continue;
 
-    if (raw_input_string.size() > 0) {
+    if (!result_string.empty()) {
       const char *tmp_arg = GetArgumentAtIndex(idx);
-      size_t pos = raw_input_string.find(tmp_arg);
+      size_t pos = result_string.find(tmp_arg);
       if (pos != std::string::npos)
-        raw_input_string.erase(pos, strlen(tmp_arg));
+        result_string.erase(pos, strlen(tmp_arg));
     }
     ReplaceArgumentAtIndex(idx, llvm::StringRef());
     if ((long_options[long_options_index].definition->option_has_arg !=
@@ -1105,15 +1107,16 @@ void Args::ParseAliasOptions(Options &options, CommandReturnObject &result,
         (idx + 1 < GetArgumentCount()) &&
         (strcmp(OptionParser::GetOptionArgument(),
                 GetArgumentAtIndex(idx + 1)) == 0)) {
-      if (raw_input_string.size() > 0) {
+      if (result_string.size() > 0) {
         const char *tmp_arg = GetArgumentAtIndex(idx + 1);
-        size_t pos = raw_input_string.find(tmp_arg);
+        size_t pos = result_string.find(tmp_arg);
         if (pos != std::string::npos)
-          raw_input_string.erase(pos, strlen(tmp_arg));
+          result_string.erase(pos, strlen(tmp_arg));
       }
       ReplaceArgumentAtIndex(idx + 1, llvm::StringRef());
     }
   }
+  return result_string;
 }
 
 void Args::ParseArgsForCompletion(Options &options,

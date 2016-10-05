@@ -195,20 +195,18 @@ public:
 
   void SourceInitFile(bool in_cwd, CommandReturnObject &result);
 
-  bool AddCommand(const char *name, const lldb::CommandObjectSP &cmd_sp,
+  bool AddCommand(llvm::StringRef name, const lldb::CommandObjectSP &cmd_sp,
                   bool can_replace);
+  bool AddCommand(const char *, const lldb::CommandObjectSP &, bool) = delete;
 
   bool AddUserCommand(std::string name, const lldb::CommandObjectSP &cmd_sp,
                       bool can_replace);
 
-  lldb::CommandObjectSP GetCommandSPExact(const char *cmd,
-                                          bool include_aliases);
+  lldb::CommandObjectSP GetCommandSPExact(llvm::StringRef cmd,
+                                          bool include_aliases) const;
 
-  CommandObject *GetCommandObjectExact(const char *cmd_cstr,
-                                       bool include_aliases);
-
-  CommandObject *GetCommandObject(const char *cmd,
-                                  StringList *matches = nullptr);
+  CommandObject *GetCommandObject(llvm::StringRef cmd,
+                                  StringList *matches = nullptr) const;
 
   bool CommandExists(const char *cmd);
 
@@ -385,13 +383,13 @@ public:
 
   void SetScriptLanguage(lldb::ScriptLanguage lang);
 
-  bool HasCommands();
+  bool HasCommands() const;
 
-  bool HasAliases();
+  bool HasAliases() const;
 
-  bool HasUserCommands();
+  bool HasUserCommands() const;
 
-  bool HasAliasOptions();
+  bool HasAliasOptions() const;
 
   void BuildAliasCommandArgs(CommandObject *alias_cmd_obj,
                              const char *alias_name, Args &cmd_args,
@@ -510,10 +508,10 @@ protected:
 
   void SetSynchronous(bool value);
 
-  lldb::CommandObjectSP GetCommandSP(const char *cmd,
+  lldb::CommandObjectSP GetCommandSP(llvm::StringRef cmd,
                                      bool include_aliases = true,
                                      bool exact = true,
-                                     StringList *matches = nullptr);
+                                     StringList *matches = nullptr) const;
 
 private:
   Error PreprocessCommand(std::string &command);

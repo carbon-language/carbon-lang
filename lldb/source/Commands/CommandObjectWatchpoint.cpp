@@ -990,7 +990,7 @@ public:
             "If watchpoint setting fails, consider disable/delete existing "
             "ones "
             "to free up resources.",
-            nullptr,
+            "",
             eCommandRequiresFrame | eCommandTryTargetAPILock |
                 eCommandProcessMustBeLaunched | eCommandProcessMustBePaused),
         m_option_group(), m_option_watchpoint() {
