@@ -906,7 +906,7 @@ bool CommandInterpreter::AddCommand(llvm::StringRef name,
   return true;
 }
 
-bool CommandInterpreter::AddUserCommand(std::string name,
+bool CommandInterpreter::AddUserCommand(llvm::StringRef name,
                                         const lldb::CommandObjectSP &cmd_sp,
                                         bool can_replace) {
   if (cmd_sp.get())
@@ -914,17 +914,15 @@ bool CommandInterpreter::AddUserCommand(std::string name,
            "tried to add a CommandObject from a different interpreter");
 
   if (!name.empty()) {
-    const char *name_cstr = name.c_str();
-
     // do not allow replacement of internal commands
-    if (CommandExists(name_cstr)) {
+    if (CommandExists(name)) {
       if (can_replace == false)
         return false;
       if (m_command_dict[name]->IsRemovable() == false)
         return false;
     }
 
-    if (UserCommandExists(name_cstr)) {
+    if (UserCommandExists(name)) {
       if (can_replace == false)
         return false;
       if (m_user_dict[name]->IsRemovable() == false)
@@ -1015,12 +1013,12 @@ CommandObject *CommandInterpreter::GetCommandObject(llvm::StringRef cmd_str,
   return GetCommandSP(cmd_str, true, false, matches).get();
 }
 
-bool CommandInterpreter::CommandExists(const char *cmd) {
+bool CommandInterpreter::CommandExists(llvm::StringRef cmd) const {
   return m_command_dict.find(cmd) != m_command_dict.end();
 }
 
-bool CommandInterpreter::GetAliasFullName(const char *cmd,
-                                          std::string &full_name) {
+bool CommandInterpreter::GetAliasFullName(llvm::StringRef cmd,
+                                          std::string &full_name) const {
   bool exact_match = (m_alias_dict.find(cmd) != m_alias_dict.end());
   if (exact_match) {
     full_name.assign(cmd);
@@ -1048,18 +1046,18 @@ bool CommandInterpreter::GetAliasFullName(const char *cmd,
   }
 }
 
-bool CommandInterpreter::AliasExists(const char *cmd) {
+bool CommandInterpreter::AliasExists(llvm::StringRef cmd) const {
   return m_alias_dict.find(cmd) != m_alias_dict.end();
 }
 
-bool CommandInterpreter::UserCommandExists(const char *cmd) {
+bool CommandInterpreter::UserCommandExists(llvm::StringRef cmd) const {
   return m_user_dict.find(cmd) != m_user_dict.end();
 }
 
 CommandAlias *
-CommandInterpreter::AddAlias(const char *alias_name,
+CommandInterpreter::AddAlias(llvm::StringRef alias_name,
                              lldb::CommandObjectSP &command_obj_sp,
-                             const char *args_string) {
+                             llvm::StringRef args_string) {
   if (command_obj_sp.get())
     assert((this == &command_obj_sp->GetCommandInterpreter()) &&
            "tried to add a CommandObject from a different interpreter");
@@ -1075,7 +1073,7 @@ CommandInterpreter::AddAlias(const char *alias_name,
   return nullptr;
 }
 
-bool CommandInterpreter::RemoveAlias(const char *alias_name) {
+bool CommandInterpreter::RemoveAlias(llvm::StringRef alias_name) {
   auto pos = m_alias_dict.find(alias_name);
   if (pos != m_alias_dict.end()) {
     m_alias_dict.erase(pos);
@@ -1084,7 +1082,7 @@ bool CommandInterpreter::RemoveAlias(const char *alias_name) {
   return false;
 }
 
-bool CommandInterpreter::RemoveCommand(const char *cmd) {
+bool CommandInterpreter::RemoveCommand(llvm::StringRef cmd) {
   auto pos = m_command_dict.find(cmd);
   if (pos != m_command_dict.end()) {
     if (pos->second->IsRemovable()) {
@@ -1095,7 +1093,7 @@ bool CommandInterpreter::RemoveCommand(const char *cmd) {
   }
   return false;
 }
-bool CommandInterpreter::RemoveUser(const char *alias_name) {
+bool CommandInterpreter::RemoveUser(llvm::StringRef alias_name) {
   CommandObject::CommandMap::iterator pos = m_user_dict.find(alias_name);
   if (pos != m_user_dict.end()) {
     m_user_dict.erase(pos);
@@ -1313,7 +1311,7 @@ static bool ExtractCommand(std::string &command_string, std::string &command,
 }
 
 CommandObject *CommandInterpreter::BuildAliasResult(
-    const char *alias_name, std::string &raw_input_string,
+    llvm::StringRef alias_name, std::string &raw_input_string,
     std::string &alias_result, CommandReturnObject &result) {
   CommandObject *alias_cmd_obj = nullptr;
   Args cmd_args(raw_input_string);
@@ -1917,12 +1915,11 @@ bool CommandInterpreter::Confirm(const char *message, bool default_answer) {
   return confirm->GetResponse();
 }
 
-CommandAlias *CommandInterpreter::GetAlias(const char *alias_name) {
+const CommandAlias *
+CommandInterpreter::GetAlias(llvm::StringRef alias_name) const {
   OptionArgVectorSP ret_val;
 
-  std::string alias(alias_name);
-
-  auto pos = m_alias_dict.find(alias);
+  auto pos = m_alias_dict.find(alias_name);
   if (pos != m_alias_dict.end())
     return (CommandAlias *)pos->second.get();
 

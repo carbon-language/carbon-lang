@@ -143,7 +143,7 @@ bool CommandAlias::Execute(const char *args_string,
   llvm_unreachable("CommandAlias::Execute is not to be called");
 }
 
-void CommandAlias::GetAliasExpansion(StreamString &help_string) {
+void CommandAlias::GetAliasExpansion(StreamString &help_string) const {
   llvm::StringRef command_name = m_underlying_command_sp->GetCommandName();
   help_string.Printf("'%*s", (int)command_name.size(), command_name.data());
 

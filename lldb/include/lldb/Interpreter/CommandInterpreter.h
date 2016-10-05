@@ -197,9 +197,8 @@ public:
 
   bool AddCommand(llvm::StringRef name, const lldb::CommandObjectSP &cmd_sp,
                   bool can_replace);
-  bool AddCommand(const char *, const lldb::CommandObjectSP &, bool) = delete;
 
-  bool AddUserCommand(std::string name, const lldb::CommandObjectSP &cmd_sp,
+  bool AddUserCommand(llvm::StringRef name, const lldb::CommandObjectSP &cmd_sp,
                       bool can_replace);
 
   lldb::CommandObjectSP GetCommandSPExact(llvm::StringRef cmd,
@@ -208,30 +207,30 @@ public:
   CommandObject *GetCommandObject(llvm::StringRef cmd,
                                   StringList *matches = nullptr) const;
 
-  bool CommandExists(const char *cmd);
+  bool CommandExists(llvm::StringRef cmd) const;
 
-  bool AliasExists(const char *cmd);
+  bool AliasExists(llvm::StringRef cmd) const;
 
-  bool UserCommandExists(const char *cmd);
+  bool UserCommandExists(llvm::StringRef cmd) const;
 
-  CommandAlias *AddAlias(const char *alias_name,
+  CommandAlias *AddAlias(llvm::StringRef alias_name,
                          lldb::CommandObjectSP &command_obj_sp,
-                         const char *args_string = nullptr);
+                         llvm::StringRef args_string = llvm::StringRef());
 
   // Remove a command if it is removable (python or regex command)
-  bool RemoveCommand(const char *cmd);
+  bool RemoveCommand(llvm::StringRef cmd);
 
-  bool RemoveAlias(const char *alias_name);
+  bool RemoveAlias(llvm::StringRef alias_name);
 
-  bool GetAliasFullName(const char *cmd, std::string &full_name);
+  bool GetAliasFullName(llvm::StringRef cmd, std::string &full_name) const;
 
-  bool RemoveUser(const char *alias_name);
+  bool RemoveUser(llvm::StringRef alias_name);
 
   void RemoveAllUser() { m_user_dict.clear(); }
 
-  CommandAlias *GetAlias(const char *alias_name);
+  const CommandAlias *GetAlias(llvm::StringRef alias_name) const;
 
-  CommandObject *BuildAliasResult(const char *alias_name,
+  CommandObject *BuildAliasResult(llvm::StringRef alias_name,
                                   std::string &raw_input_string,
                                   std::string &alias_result,
                                   CommandReturnObject &result);
