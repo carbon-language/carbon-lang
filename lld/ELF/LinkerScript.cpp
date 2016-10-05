@@ -345,7 +345,7 @@ void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
   for (ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles())
     for (InputSectionBase<ELFT> *S : F->getSections())
       if (!isDiscarded(S) && !S->OutSec)
-        addSection(Factory, S, getOutputSectionName(S));
+        addSection(Factory, S, getOutputSectionName(S->Name));
 }
 
 // Sets value of a section-defined symbol. Two kinds of
