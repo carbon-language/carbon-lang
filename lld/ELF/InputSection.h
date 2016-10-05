@@ -122,9 +122,9 @@ template <class ELFT> InputSectionBase<ELFT> InputSectionBase<ELFT>::Discarded;
 
 // SectionPiece represents a piece of splittable section contents.
 struct SectionPiece {
-  SectionPiece(size_t Off, ArrayRef<uint8_t> Data)
+  SectionPiece(size_t Off, ArrayRef<uint8_t> Data, bool Live = false)
       : InputOff(Off), Data((const uint8_t *)Data.data()), Size(Data.size()),
-        Live(!Config->GcSections) {}
+        Live(Live || !Config->GcSections) {}
 
   ArrayRef<uint8_t> data() { return {Data, Size}; }
   size_t size() const { return Size; }

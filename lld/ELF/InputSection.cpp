@@ -533,12 +533,13 @@ std::vector<SectionPiece>
 MergeInputSection<ELFT>::splitStrings(ArrayRef<uint8_t> Data, size_t EntSize) {
   std::vector<SectionPiece> V;
   size_t Off = 0;
+  bool IsAlloca = this->getSectionHdr()->sh_flags & SHF_ALLOC;
   while (!Data.empty()) {
     size_t End = findNull(Data, EntSize);
     if (End == StringRef::npos)
       fatal(getName(this) + ": string is not null terminated");
     size_t Size = End + EntSize;
-    V.emplace_back(Off, Data.slice(0, Size));
+    V.emplace_back(Off, Data.slice(0, Size), !IsAlloca);
     Data = Data.slice(Size);
     Off += Size;
   }
@@ -573,16 +574,9 @@ template <class ELFT> void MergeInputSection<ELFT>::splitIntoPieces() {
   else
     this->Pieces = splitNonStrings(Data, EntSize);
 
-  if (Config->GcSections) {
-    if (this->getSectionHdr()->sh_flags & SHF_ALLOC) {
-      for (uintX_t Off : LiveOffsets)
-        this->getSectionPiece(Off)->Live = true;
-      return;
-    }
-
-    for (SectionPiece &Piece : this->Pieces)
-      Piece.Live = true;
-  }
+  if (Config->GcSections && this->getSectionHdr()->sh_flags & SHF_ALLOC)
+    for (uintX_t Off : LiveOffsets)
+      this->getSectionPiece(Off)->Live = true;
 }
 
 template <class ELFT>
