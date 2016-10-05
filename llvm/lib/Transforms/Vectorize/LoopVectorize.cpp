@@ -342,6 +342,14 @@ static bool hasIrregularType(Type *Ty, const DataLayout &DL, unsigned VF) {
   return DL.getTypeAllocSizeInBits(Ty) != DL.getTypeSizeInBits(Ty);
 }
 
+/// A helper function that returns the reciprocal of the block probability of
+/// predicated blocks. If we return X, we are assuming the predicated block
+/// will execute once for for every X iterations of the loop header.
+///
+/// TODO: We should use actual block probability here, if available. Currently,
+///       we always assume predicated blocks have a 50% chance of executing.
+static unsigned getReciprocalPredBlockProb() { return 2; }
+
 /// InnerLoopVectorizer vectorizes loops which contain only one basic
 /// block to a specified vectorization factor (VF).
 /// This class performs the widening of scalars into vectors, or multiple
@@ -3554,12 +3562,11 @@ static unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract,
     }
   }
 
-  // We assume that if-converted blocks have a 50% chance of being executed.
-  // Predicated scalarized instructions are avoided due to the CF that bypasses
-  // turned off lanes. The extracts and inserts will be sinked/hoisted to the
-  // predicated basic-block and are subjected to the same assumption.
+  // If we have a predicated instruction, it may not be executed for each
+  // vector lane. Scale the cost by the probability of executing the
+  // predicated block.
   if (Predicated)
-    Cost /= 2;
+    Cost /= getReciprocalPredBlockProb();
 
   return Cost;
 }
@@ -6397,11 +6404,14 @@ LoopVectorizationCostModel::expectedCost(unsigned VF) {
                    << VF << " For instruction: " << I << '\n');
     }
 
-    // We assume that if-converted blocks have a 50% chance of being executed.
-    // When the code is scalar then some of the blocks are avoided due to CF.
-    // When the code is vectorized we execute all code paths.
+    // If we are vectorizing a predicated block, it will have been
+    // if-converted. This means that the block's instructions (aside from
+    // stores and instructions that may divide by zero) will now be
+    // unconditionally executed. For the scalar case, we may not always execute
+    // the predicated block. Thus, scale the block's cost by the probability of
+    // executing it.
     if (VF == 1 && Legal->blockNeedsPredication(BB))
-      BlockCost.first /= 2;
+      BlockCost.first /= getReciprocalPredBlockProb();
 
     Cost.first += BlockCost.first;
     Cost.second |= BlockCost.second;
@@ -6518,11 +6528,13 @@ unsigned LoopVectorizationCostModel::getInstructionCost(Instruction *I,
   case Instruction::SDiv:
   case Instruction::URem:
   case Instruction::SRem:
-    // We assume that if-converted blocks have a 50% chance of being executed.
-    // Predicated scalarized instructions are avoided due to the CF that
-    // bypasses turned off lanes. If we are not predicating, fallthrough.
+    // If we have a predicated instruction, it may not be executed for each
+    // vector lane. Get the scalarization cost and scale this amount by the
+    // probability of executing the predicated block. If the instruction is not
+    // predicated, we fall through to the next case.
     if (VF > 1 && Legal->isScalarWithPredication(I))
-      return VF * TTI.getArithmeticInstrCost(I->getOpcode(), RetTy) / 2 +
+      return VF * TTI.getArithmeticInstrCost(I->getOpcode(), RetTy) /
+                 getReciprocalPredBlockProb() +
              getScalarizationOverhead(I, VF, true, TTI);
   case Instruction::Add:
   case Instruction::FAdd:
