@@ -382,9 +382,7 @@ public:
   // Perform the actual loop widening (vectorization).
   // MinimumBitWidths maps scalar integer values to the smallest bitwidth they
   // can be validly truncated to. The cost model has assumed this truncation
-  // will happen when vectorizing. VecValuesToIgnore contains scalar values
-  // that the cost model has chosen to ignore because they will not be
-  // vectorized.
+  // will happen when vectorizing.
   void vectorize(LoopVectorizationLegality *L,
                  const MapVector<Instruction *, uint64_t> &MinimumBitWidths) {
     MinBWs = &MinimumBitWidths;
