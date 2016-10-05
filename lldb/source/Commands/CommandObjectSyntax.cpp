@@ -57,6 +57,8 @@ bool CommandObjectSyntax::DoExecute(Args &command,
   if (argc > 0) {
     cmd_obj = m_interpreter.GetCommandObject(command.GetArgumentAtIndex(0));
     bool all_okay = true;
+    // TODO: Convert to entry-based iteration.  Requires converting
+    // GetSubcommandObject.
     for (size_t i = 1; i < argc; ++i) {
       std::string sub_command = command.GetArgumentAtIndex(i);
       if (!cmd_obj->IsMultiwordObject()) {

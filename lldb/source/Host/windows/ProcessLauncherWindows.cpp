@@ -26,9 +26,9 @@ void CreateEnvironmentBuffer(const Args &env, std::vector<char> &buffer) {
     return;
 
   // Environment buffer is a null terminated list of null terminated strings
-  for (size_t i = 0; i < env.GetArgumentCount(); ++i) {
+  for (auto &entry : env.entries()) {
     std::wstring warg;
-    if (llvm::ConvertUTF8toWide(env.GetArgumentAtIndex(i), warg)) {
+    if (llvm::ConvertUTF8toWide(entry.ref, warg)) {
       buffer.insert(buffer.end(), (char *)warg.c_str(),
                     (char *)(warg.c_str() + warg.size() + 1));
     }

@@ -294,7 +294,9 @@ protected:
     result.SetStatus(eReturnStatusSuccessFinishResult);
 
     const size_t argc = args.GetArgumentCount();
-    if (argc > 0) {
+    if (!args.empty()) {
+      // TODO: Convert this to StringRef based enumeration.  Requires converting
+      // DumpPropertyValue first.
       for (size_t i = 0; i < argc; ++i) {
         const char *property_path = args.GetArgumentAtIndex(i);
 
@@ -374,6 +376,8 @@ protected:
     if (argc > 0) {
       const bool dump_qualified_name = true;
 
+      // TODO: Convert to StringRef based enumeration.  Requires converting
+      // GetPropertyAtPath first.
       for (size_t i = 0; i < argc; ++i) {
         const char *property_path = args.GetArgumentAtIndex(i);
 

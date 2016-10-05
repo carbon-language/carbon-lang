@@ -114,26 +114,25 @@ bool CommandObjectHelp::DoExecute(Args &command, CommandReturnObject &result) {
       bool all_okay = true;
       CommandObject *sub_cmd_obj = cmd_obj;
       // Loop down through sub_command dictionaries until we find the command
-      // object that corresponds
-      // to the help command entered.
+      // object that corresponds to the help command entered.
       std::string sub_command;
-      for (size_t i = 1; i < argc && all_okay; ++i) {
-        sub_command = command.GetArgumentAtIndex(i);
+      for (auto &entry : command.entries().drop_front()) {
+        sub_command = entry.ref;
         matches.Clear();
         if (sub_cmd_obj->IsAlias())
           sub_cmd_obj =
               ((CommandAlias *)sub_cmd_obj)->GetUnderlyingCommand().get();
         if (!sub_cmd_obj->IsMultiwordObject()) {
           all_okay = false;
+          break;
         } else {
           CommandObject *found_cmd;
           found_cmd =
               sub_cmd_obj->GetSubcommandObject(sub_command.c_str(), &matches);
-          if (found_cmd == nullptr)
+          if (found_cmd == nullptr || matches.GetSize() > 1) {
             all_okay = false;
-          else if (matches.GetSize() > 1)
-            all_okay = false;
-          else
+            break;
+          } else
             sub_cmd_obj = found_cmd;
         }
       }

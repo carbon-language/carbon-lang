@@ -2023,9 +2023,9 @@ void CommandInterpreter::BuildAliasCommandArgs(CommandObject *alias_cmd_obj,
       }
     }
 
-    for (size_t j = 0; j < cmd_args.GetArgumentCount(); ++j) {
-      if (!used[j] && !wants_raw_input)
-        new_args.AppendArgument(cmd_args.GetArgumentAtIndex(j));
+    for (auto entry : llvm::enumerate(cmd_args.entries())) {
+      if (!used[entry.Index] && !wants_raw_input)
+        new_args.AppendArgument(entry.Value.ref);
     }
 
     cmd_args.Clear();

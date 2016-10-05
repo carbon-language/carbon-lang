@@ -1096,10 +1096,9 @@ protected:
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
       }
     } else {
-      for (size_t arg_idx = 1; arg_idx < argc; ++arg_idx) {
-        llvm::StringRef arg_strref(command.GetArgumentAtIndex(arg_idx));
+      for (auto &entry : command.entries().drop_front()) {
         bool check_only = false;
-        error = AppendRegexSubstitution(arg_strref, check_only);
+        error = AppendRegexSubstitution(entry.ref, check_only);
         if (error.Fail())
           break;
       }

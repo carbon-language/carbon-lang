@@ -57,11 +57,10 @@ static bool ProcessAliasOptionsArgs(lldb::CommandObjectSP &cmd_obj_sp,
     if (cmd_obj_sp->WantsRawCommandString())
       option_arg_vector->emplace_back("<argument>", -1, options_string);
     else {
-      const size_t argc = args.GetArgumentCount();
-      for (size_t i = 0; i < argc; ++i)
-        if (strcmp(args.GetArgumentAtIndex(i), "") != 0)
-          option_arg_vector->emplace_back("<argument>", -1,
-                                          args.GetArgumentAtIndex(i));
+      for (auto &entry : args.entries()) {
+        if (!entry.ref.empty())
+          option_arg_vector->emplace_back("<argument>", -1, entry.ref);
+      }
     }
   }
 

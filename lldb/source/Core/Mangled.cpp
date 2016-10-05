@@ -124,9 +124,19 @@ Mangled::Mangled(const ConstString &s, bool mangled)
     SetValue(s, mangled);
 }
 
+Mangled::Mangled(llvm::StringRef name, bool is_mangled) {
+  if (!name.empty())
+    SetValue(ConstString(name), is_mangled);
+}
+
 Mangled::Mangled(const ConstString &s) : m_mangled(), m_demangled() {
   if (s)
     SetValue(s);
+}
+
+Mangled::Mangled(llvm::StringRef name) {
+  if (!name.empty())
+    SetValue(ConstString(name));
 }
 
 //----------------------------------------------------------------------

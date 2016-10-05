@@ -993,12 +993,12 @@ bool CommandObjectParsed::Execute(const char *args_string,
         InvokeOverrideCallback(full_args.GetConstArgumentVector(), result);
   }
   if (!handled) {
-    for (size_t i = 0; i < cmd_args.GetArgumentCount(); ++i) {
-      const char *tmp_str = cmd_args.GetArgumentAtIndex(i);
-      if (tmp_str[0] == '`') // back-quote
+    for (auto entry : llvm::enumerate(cmd_args.entries())) {
+      if (entry.Value.ref.front() == '`') {
         cmd_args.ReplaceArgumentAtIndex(
-            i, llvm::StringRef::withNullAsEmpty(
-                   m_interpreter.ProcessEmbeddedScriptCommands(tmp_str)));
+            entry.Index,
+            m_interpreter.ProcessEmbeddedScriptCommands(entry.Value.c_str()));
+      }
     }
 
     if (CheckRequirements(result)) {
