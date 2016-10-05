@@ -50,13 +50,13 @@ struct RSCoordinate {
   }
 };
 
-// Breakpoint Resolvers decide where a breakpoint is placed,
-// so having our own allows us to limit the search scope to RS kernel modules.
-// As well as check for .expand kernels as a fallback.
+// Breakpoint Resolvers decide where a breakpoint is placed, so having our own
+// allows us to limit the search scope to RS kernel modules. As well as check
+// for .expand kernels as a fallback.
 class RSBreakpointResolver : public BreakpointResolver {
 public:
-  RSBreakpointResolver(Breakpoint *bkpt, ConstString name)
-      : BreakpointResolver(bkpt, BreakpointResolver::NameResolver),
+  RSBreakpointResolver(Breakpoint *bp, ConstString name)
+      : BreakpointResolver(bp, BreakpointResolver::NameResolver),
         m_kernel_name(name) {}
 
   void GetDescription(Stream *strm) override {
@@ -224,7 +224,7 @@ public:
 
   bool CouldHaveDynamicValue(ValueObject &in_value) override;
 
-  lldb::BreakpointResolverSP CreateExceptionResolver(Breakpoint *bkpt,
+  lldb::BreakpointResolverSP CreateExceptionResolver(Breakpoint *bp,
                                                      bool catch_bp,
                                                      bool throw_bp) override;
 
@@ -287,7 +287,7 @@ protected:
 
   void LoadRuntimeHooks(lldb::ModuleSP module, ModuleKind kind);
 
-  bool RefreshAllocation(AllocationDetails *allocation, StackFrame *frame_ptr);
+  bool RefreshAllocation(AllocationDetails *alloc, StackFrame *frame_ptr);
 
   bool EvalRSExpression(const char *expression, StackFrame *frame_ptr,
                         uint64_t *result);
@@ -370,7 +370,7 @@ private:
 
   AllocationDetails *FindAllocByID(Stream &strm, const uint32_t alloc_id);
 
-  std::shared_ptr<uint8_t> GetAllocationData(AllocationDetails *allocation,
+  std::shared_ptr<uint8_t> GetAllocationData(AllocationDetails *alloc,
                                              StackFrame *frame_ptr);
 
   void SetElementSize(Element &elem);
@@ -391,23 +391,22 @@ private:
   // Helper functions for jitting the runtime
   //
 
-  bool JITDataPointer(AllocationDetails *allocation, StackFrame *frame_ptr,
+  bool JITDataPointer(AllocationDetails *alloc, StackFrame *frame_ptr,
                       uint32_t x = 0, uint32_t y = 0, uint32_t z = 0);
 
-  bool JITTypePointer(AllocationDetails *allocation, StackFrame *frame_ptr);
+  bool JITTypePointer(AllocationDetails *alloc, StackFrame *frame_ptr);
 
-  bool JITTypePacked(AllocationDetails *allocation, StackFrame *frame_ptr);
+  bool JITTypePacked(AllocationDetails *alloc, StackFrame *frame_ptr);
 
   bool JITElementPacked(Element &elem, const lldb::addr_t context,
                         StackFrame *frame_ptr);
 
-  bool JITAllocationSize(AllocationDetails *allocation, StackFrame *frame_ptr);
+  bool JITAllocationSize(AllocationDetails *alloc, StackFrame *frame_ptr);
 
   bool JITSubelements(Element &elem, const lldb::addr_t context,
                       StackFrame *frame_ptr);
 
-  bool JITAllocationStride(AllocationDetails *allocation,
-                           StackFrame *frame_ptr);
+  bool JITAllocationStride(AllocationDetails *alloc, StackFrame *frame_ptr);
 
   // Search for a script detail object using a target address.
   // If a script does not currently exist this function will return nullptr.
