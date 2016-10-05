@@ -11,7 +11,7 @@ class TestCppScopes(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @expectedFailureDarwin
+    @expectedFailureDarwin(bugnumber="<rdar://problem/28623427>")
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr24764")
     def test_with_run_command(self):
         self.build()
