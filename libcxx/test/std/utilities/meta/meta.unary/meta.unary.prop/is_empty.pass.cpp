@@ -95,7 +95,7 @@ int main()
     test_is_not_empty<VirtualBase>();
     test_is_not_empty<NotEmptyBase>();
     test_is_not_empty<NonStaticMember>();
-    test_is_empty<bit_one>();
+//    test_is_not_empty<bit_one>();
 
     test_is_empty<Empty>();
     test_is_empty<EmptyBase>();
