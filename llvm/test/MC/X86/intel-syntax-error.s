@@ -18,9 +18,9 @@ _test2:
 .global arr
 .global i
 .set FOO, 2
-//CHECK-STDERR: error: cannot use base register with variable reference
+//CHECK: error: cannot use base register with variable reference
 mov eax, DWORD PTR arr[ebp + 1 + (2 * 5) - 3 + 1<<1]
-//CHECK-STDERR: error: cannot use index register with variable reference
+//CHECK: error: cannot use index register with variable reference
 mov eax, DWORD PTR arr[esi*4]
-//CHECK-STDERR: error: cannot use more than one symbol in memory operand
+//CHECK: error: cannot use more than one symbol in memory operand
 mov eax, DWORD PTR arr[i]
