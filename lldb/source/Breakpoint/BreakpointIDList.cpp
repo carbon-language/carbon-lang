@@ -96,14 +96,8 @@ void BreakpointIDList::InsertStringArray(const char **string_array,
 
   for (uint32_t i = 0; i < array_size; ++i) {
     auto bp_id = BreakpointID::ParseCanonicalReference(string_array[i]);
-    if (bp_id.hasValue()) {
+    if (bp_id.hasValue())
       m_breakpoint_ids.push_back(*bp_id);
-    } else {
-      result.AppendErrorWithFormat("'%s' is not a valid breakpoint ID.\n",
-                                   string_array[i]);
-      result.SetStatus(eReturnStatusFailed);
-      return;
-    }
   }
   result.SetStatus(eReturnStatusSuccessFinishNoResult);
 }
@@ -230,8 +224,8 @@ void BreakpointIDList::FindAndReplaceIDRanges(Args &old_args, Target *target,
     break_id_t start_loc_id = start_bp->GetLocationID();
     break_id_t end_bp_id = end_bp->GetBreakpointID();
     break_id_t end_loc_id = end_bp->GetLocationID();
-    if (((start_bp_id == LLDB_INVALID_BREAK_ID) &&
-            (end_bp_id != LLDB_INVALID_BREAK_ID)) ||
+    if (((start_loc_id == LLDB_INVALID_BREAK_ID) &&
+            (end_loc_id != LLDB_INVALID_BREAK_ID)) ||
         ((start_loc_id != LLDB_INVALID_BREAK_ID) &&
          (end_loc_id == LLDB_INVALID_BREAK_ID))) {
       new_args.Clear();
