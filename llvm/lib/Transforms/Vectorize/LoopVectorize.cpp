@@ -371,26 +371,23 @@ public:
                       const TargetLibraryInfo *TLI,
                       const TargetTransformInfo *TTI, AssumptionCache *AC,
                       OptimizationRemarkEmitter *ORE, unsigned VecWidth,
-                      unsigned UnrollFactor)
+                      unsigned UnrollFactor, LoopVectorizationLegality *LVL)
       : OrigLoop(OrigLoop), PSE(PSE), LI(LI), DT(DT), TLI(TLI), TTI(TTI),
         AC(AC), ORE(ORE), VF(VecWidth), UF(UnrollFactor),
         Builder(PSE.getSE()->getContext()), Induction(nullptr),
         OldInduction(nullptr), VectorLoopValueMap(UnrollFactor, VecWidth),
-        TripCount(nullptr), VectorTripCount(nullptr), Legal(nullptr),
+        TripCount(nullptr), VectorTripCount(nullptr), Legal(LVL),
         AddedSafetyChecks(false) {}
 
   // Perform the actual loop widening (vectorization).
   // MinimumBitWidths maps scalar integer values to the smallest bitwidth they
   // can be validly truncated to. The cost model has assumed this truncation
   // will happen when vectorizing.
-  void vectorize(LoopVectorizationLegality *L,
-                 const MapVector<Instruction *, uint64_t> &MinimumBitWidths) {
+  void vectorize(const MapVector<Instruction *, uint64_t> &MinimumBitWidths) {
     MinBWs = &MinimumBitWidths;
-    Legal = L;
     // Create a new empty loop. Unlink the old loop and connect the new one.
     createEmptyLoop();
     // Widen each instruction in the old loop to a new one in the new loop.
-    // Use the Legality module to find the induction and reduction variables.
     vectorizeLoop();
   }
 
@@ -765,6 +762,7 @@ protected:
   /// to this type.
   const MapVector<Instruction *, uint64_t> *MinBWs;
 
+  /// The legality analysis.
   LoopVectorizationLegality *Legal;
 
   // Record whether runtime checks are added.
@@ -777,9 +775,10 @@ public:
                     LoopInfo *LI, DominatorTree *DT,
                     const TargetLibraryInfo *TLI,
                     const TargetTransformInfo *TTI, AssumptionCache *AC,
-                    OptimizationRemarkEmitter *ORE, unsigned UnrollFactor)
+                    OptimizationRemarkEmitter *ORE, unsigned UnrollFactor,
+                    LoopVectorizationLegality *LVL)
       : InnerLoopVectorizer(OrigLoop, PSE, LI, DT, TLI, TTI, AC, ORE, 1,
-                            UnrollFactor) {}
+                            UnrollFactor, LVL) {}
 
 private:
   void scalarizeInstruction(Instruction *Instr,
@@ -7163,8 +7162,8 @@ bool LoopVectorizePass::processLoop(Loop *L) {
     assert(IC > 1 && "interleave count should not be 1 or 0");
     // If we decided that it is not legal to vectorize the loop, then
     // interleave it.
-    InnerLoopUnroller Unroller(L, PSE, LI, DT, TLI, TTI, AC, ORE, IC);
-    Unroller.vectorize(&LVL, CM.MinBWs);
+    InnerLoopUnroller Unroller(L, PSE, LI, DT, TLI, TTI, AC, ORE, IC, &LVL);
+    Unroller.vectorize(CM.MinBWs);
 
     ORE->emit(OptimizationRemark(LV_NAME, "Interleaved", L->getStartLoc(),
                                  L->getHeader())
@@ -7172,8 +7171,9 @@ bool LoopVectorizePass::processLoop(Loop *L) {
               << NV("InterleaveCount", IC) << ")");
   } else {
     // If we decided that it is *legal* to vectorize the loop, then do it.
-    InnerLoopVectorizer LB(L, PSE, LI, DT, TLI, TTI, AC, ORE, VF.Width, IC);
-    LB.vectorize(&LVL, CM.MinBWs);
+    InnerLoopVectorizer LB(L, PSE, LI, DT, TLI, TTI, AC, ORE, VF.Width, IC,
+                           &LVL);
+    LB.vectorize(CM.MinBWs);
     ++LoopsVectorized;
 
     // Add metadata to disable runtime unrolling a scalar loop when there are
