@@ -24,3 +24,8 @@ mov eax, DWORD PTR arr[ebp + 1 + (2 * 5) - 3 + 1<<1]
 mov eax, DWORD PTR arr[esi*4]
 //CHECK: error: cannot use more than one symbol in memory operand
 mov eax, DWORD PTR arr[i]
+//CHECK: error: rip can only be used as a base register
+.code64
+mov rax, rip
+//CHECK: error: invalid base+index expression
+mov rbx, [rax+rip]
