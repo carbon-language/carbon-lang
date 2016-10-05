@@ -432,10 +432,13 @@ void CodeViewDebug::endModule() {
 }
 
 static void emitNullTerminatedSymbolName(MCStreamer &OS, StringRef S) {
-  // Microsoft's linker seems to have trouble with symbol names longer than
-  // 0xffd8 bytes.
-  S = S.substr(0, 0xffd8);
-  SmallString<32> NullTerminatedString(S);
+  // The maximum CV record length is 0xFF00. Most of the strings we emit appear
+  // after a fixed length portion of the record. The fixed length portion should
+  // always be less than 0xF00 (3840) bytes, so truncate the string so that the
+  // overall record size is less than the maximum allowed.
+  unsigned MaxFixedRecordLength = 0xF00;
+  SmallString<32> NullTerminatedString(
+      S.take_front(MaxRecordLength - MaxFixedRecordLength - 1));
   NullTerminatedString.push_back('\0');
   OS.EmitBytes(NullTerminatedString);
 }
