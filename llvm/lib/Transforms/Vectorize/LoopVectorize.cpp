@@ -6676,27 +6676,23 @@ unsigned LoopVectorizationCostModel::getInstructionCost(Instruction *I,
 
     // Check if the memory instruction will be scalarized.
     if (Legal->memoryInstructionMustBeScalarized(I, VF)) {
+      unsigned Cost = 0;
+      Type *PtrTy = ToVectorTy(Ptr->getType(), VF);
+
+      // True if the memory instruction's address computation is complex.
       bool IsComplexComputation =
           isLikelyComplexAddressComputation(Ptr, Legal, SE, TheLoop);
-      unsigned Cost = 0;
-      // The cost of extracting from the value vector and pointer vector.
-      Type *PtrTy = ToVectorTy(Ptr->getType(), VF);
-      for (unsigned i = 0; i < VF; ++i) {
-        //  The cost of extracting the pointer operand.
-        Cost += TTI.getVectorInstrCost(Instruction::ExtractElement, PtrTy, i);
-        // In case of STORE, the cost of ExtractElement from the vector.
-        // In case of LOAD, the cost of InsertElement into the returned
-        // vector.
-        Cost += TTI.getVectorInstrCost(SI ? Instruction::ExtractElement
-                                          : Instruction::InsertElement,
-                                       VectorTy, i);
-      }
 
-      // The cost of the scalar loads/stores.
+      // Get the cost of the scalar memory instruction and address computation.
       Cost += VF * TTI.getAddressComputationCost(PtrTy, IsComplexComputation);
       Cost += VF *
               TTI.getMemoryOpCost(I->getOpcode(), ValTy->getScalarType(),
                                   Alignment, AS);
+
+      // Get the overhead of the extractelement and insertelement instructions
+      // we might create due to scalarization.
+      Cost += getScalarizationOverhead(I, VF, false, TTI);
+
       return Cost;
     }
 
