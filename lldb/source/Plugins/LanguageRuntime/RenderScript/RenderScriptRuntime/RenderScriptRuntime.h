@@ -84,6 +84,58 @@ protected:
   ConstString m_kernel_name;
 };
 
+class RSReduceBreakpointResolver : public BreakpointResolver {
+public:
+  enum ReduceKernelTypeFlags {
+    eKernelTypeAll = ~(0),
+    eKernelTypeNone = 0,
+    eKernelTypeAccum = (1 << 0),
+    eKernelTypeInit = (1 << 1),
+    eKernelTypeComb = (1 << 2),
+    eKernelTypeOutC = (1 << 3),
+    eKernelTypeHalter = (1 << 4)
+  };
+
+  RSReduceBreakpointResolver(
+      Breakpoint *breakpoint, ConstString reduce_name,
+      std::vector<lldb_renderscript::RSModuleDescriptorSP> *rs_modules,
+      int kernel_types = eKernelTypeAll)
+      : BreakpointResolver(breakpoint, BreakpointResolver::NameResolver),
+        m_reduce_name(reduce_name), m_rsmodules(rs_modules),
+        m_kernel_types(kernel_types) {
+    // The reduce breakpoint resolver handles adding breakpoints for named
+    // reductions.
+    // Breakpoints will be resolved for all constituent kernels in the named
+    // reduction
+  }
+
+  void GetDescription(Stream *strm) override {
+    if (strm)
+      strm->Printf("RenderScript reduce breakpoint for '%s'",
+                   m_reduce_name.AsCString());
+  }
+
+  void Dump(Stream *s) const override {}
+
+  Searcher::CallbackReturn SearchCallback(SearchFilter &filter,
+                                          SymbolContext &context, Address *addr,
+                                          bool containing) override;
+
+  Searcher::Depth GetDepth() override { return Searcher::eDepthModule; }
+
+  lldb::BreakpointResolverSP
+  CopyForBreakpoint(Breakpoint &breakpoint) override {
+    lldb::BreakpointResolverSP ret_sp(new RSReduceBreakpointResolver(
+        &breakpoint, m_reduce_name, m_rsmodules, m_kernel_types));
+    return ret_sp;
+  }
+
+private:
+  ConstString m_reduce_name; // The name of the reduction
+  std::vector<lldb_renderscript::RSModuleDescriptorSP> *m_rsmodules;
+  int m_kernel_types;
+};
+
 struct RSKernelDescriptor {
 public:
   RSKernelDescriptor(const RSModuleDescriptor *module, llvm::StringRef name,
@@ -247,6 +299,11 @@ public:
       lldb::TargetSP target, Stream &messages, const char *name,
       const lldb_renderscript::RSCoordinate *coords = nullptr);
 
+  bool PlaceBreakpointOnReduction(
+      lldb::TargetSP target, Stream &messages, const char *reduce_name,
+      const lldb_renderscript::RSCoordinate *coords = nullptr,
+      int kernel_types = ~(0));
+
   void SetBreakAllKernels(bool do_break, lldb::TargetSP target);
 
   void Status(Stream &strm) const;
@@ -293,6 +350,9 @@ protected:
                         uint64_t *result);
 
   lldb::BreakpointSP CreateKernelBreakpoint(const ConstString &name);
+
+  lldb::BreakpointSP CreateReductionBreakpoint(const ConstString &name,
+                                               int kernel_types);
 
   void BreakOnModuleKernels(
       const lldb_renderscript::RSModuleDescriptorSP rsmodule_sp);

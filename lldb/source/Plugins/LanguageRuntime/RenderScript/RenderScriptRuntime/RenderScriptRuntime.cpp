@@ -10,7 +10,7 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
-#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringSwitch.h"
 
 // Project includes
 #include "RenderScriptRuntime.h"
@@ -432,6 +432,13 @@ bool GetArgs(ExecutionContext &exe_ctx, ArgItem *arg_list, size_t num_args) {
   }
 }
 
+bool IsRenderScriptScriptModule(ModuleSP module) {
+  if (!module)
+    return false;
+  return module->FindFirstSymbolWithNameAndType(ConstString(".rs.info"),
+                                                eSymbolTypeData) != nullptr;
+}
+
 bool ParseCoordinate(llvm::StringRef coord_s, RSCoordinate &coord) {
   // takes an argument of the form 'num[,num][,num]'.
   // Where 'coord_s' is a comma separated 1,2 or 3-dimensional coordinate
@@ -781,13 +788,7 @@ RSBreakpointResolver::SearchCallback(SearchFilter &filter,
                                      SymbolContext &context, Address *, bool) {
   ModuleSP module = context.module_sp;
 
-  if (!module)
-    return Searcher::eCallbackReturnContinue;
-
-  // Is this a module containing renderscript kernels?
-  if (nullptr ==
-      module->FindFirstSymbolWithNameAndType(ConstString(".rs.info"),
-                                             eSymbolTypeData))
+  if (!module || !IsRenderScriptScriptModule(module))
     return Searcher::eCallbackReturnContinue;
 
   // Attempt to set a breakpoint on the kernel name symbol within the module
@@ -811,6 +812,66 @@ RSBreakpointResolver::SearchCallback(SearchFilter &filter,
   return Searcher::eCallbackReturnContinue;
 }
 
+Searcher::CallbackReturn
+RSReduceBreakpointResolver::SearchCallback(lldb_private::SearchFilter &filter,
+                                           lldb_private::SymbolContext &context,
+                                           Address *, bool) {
+  // We need to have access to the list of reductions currently parsed, as
+  // reduce names don't actually exist as
+  // symbols in a module. They are only identifiable by parsing the .rs.info
+  // packet, or finding the expand symbol. We
+  // therefore need access to the list of parsed rs modules to properly resolve
+  // reduction names.
+  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_BREAKPOINTS));
+  ModuleSP module = context.module_sp;
+
+  if (!module || !IsRenderScriptScriptModule(module))
+    return Searcher::eCallbackReturnContinue;
+
+  if (!m_rsmodules)
+    return Searcher::eCallbackReturnContinue;
+
+  for (const auto &module_desc : *m_rsmodules) {
+    if (module_desc->m_module != module)
+      continue;
+
+    for (const auto &reduction : module_desc->m_reductions) {
+      if (reduction.m_reduce_name != m_reduce_name)
+        continue;
+
+      std::array<std::pair<ConstString, int>, 5> funcs{
+          {{reduction.m_init_name, eKernelTypeInit},
+           {reduction.m_accum_name, eKernelTypeAccum},
+           {reduction.m_comb_name, eKernelTypeComb},
+           {reduction.m_outc_name, eKernelTypeOutC},
+           {reduction.m_halter_name, eKernelTypeHalter}}};
+
+      for (const auto &kernel : funcs) {
+        // Skip constituent functions that don't match our spec
+        if (!(m_kernel_types & kernel.second))
+          continue;
+
+        const auto kernel_name = kernel.first;
+        const auto symbol = module->FindFirstSymbolWithNameAndType(
+            kernel_name, eSymbolTypeCode);
+        if (!symbol)
+          continue;
+
+        auto address = symbol->GetAddress();
+        if (filter.AddressPasses(address)) {
+          bool new_bp;
+          m_breakpoint->AddLocation(address, &new_bp);
+          if (log)
+            log->Printf("%s: %s reduction breakpoint on %s in %s", __FUNCTION__,
+                        new_bp ? "new" : "existing", kernel_name.GetCString(),
+                        address.GetModule()->GetFileSpec().GetCString());
+        }
+      }
+    }
+  }
+  return eCallbackReturnContinue;
+}
+
 void RenderScriptRuntime::Initialize() {
   PluginManager::RegisterPlugin(GetPluginNameStatic(),
                                 "RenderScript language support", CreateInstance,
@@ -829,12 +890,8 @@ lldb_private::ConstString RenderScriptRuntime::GetPluginNameStatic() {
 RenderScriptRuntime::ModuleKind
 RenderScriptRuntime::GetModuleKind(const lldb::ModuleSP &module_sp) {
   if (module_sp) {
-    // Is this a module containing renderscript kernels?
-    const Symbol *info_sym = module_sp->FindFirstSymbolWithNameAndType(
-        ConstString(".rs.info"), eSymbolTypeData);
-    if (info_sym) {
+    if (IsRenderScriptScriptModule(module_sp))
       return eModuleKindKernelObj;
-    }
 
     // Is this the main RS runtime library
     const ConstString rs_lib("libRS.so");
@@ -2722,17 +2779,21 @@ bool RSModuleDescriptor::ParseRSInfo() {
     eObjectSlot
   };
 
-  static const llvm::StringMap<int> rs_info_handlers{
-      {// The number of visible global variables in the script
-       {"exportVarCount", eExportVar},
-       // The number of RenderScrip `forEach` kernels __attribute__((kernel))
-       {"exportForEachCount", eExportForEach},
-       // The number of generalreductions: This marked in the script by `#pragma
-       // reduce()`
-       {"exportReduceCount", eExportReduce},
-       // Total count of all RenderScript specific `#pragmas` used in the script
-       {"pragmaCount", ePragma},
-       {"objectSlotCount", eObjectSlot}}};
+  const auto rs_info_handler = [](llvm::StringRef name) -> int {
+    return llvm::StringSwitch<int>(name)
+        // The number of visible global variables in the script
+        .Case("exportVarCount", eExportVar)
+        // The number of RenderScrip `forEach` kernels __attribute__((kernel))
+        .Case("exportForEachCount", eExportForEach)
+        // The number of generalreductions: This marked in the script by
+        // `#pragma reduce()`
+        .Case("exportReduceCount", eExportReduce)
+        // Total count of all RenderScript specific `#pragmas` used in the
+        // script
+        .Case("pragmaCount", ePragma)
+        .Case("objectSlotCount", eObjectSlot)
+        .Default(-1);
+  };
 
   // parse all text lines of .rs.info
   for (auto line = info_lines.begin(); line != info_lines.end(); ++line) {
@@ -2740,12 +2801,11 @@ bool RSModuleDescriptor::ParseRSInfo() {
     const auto key = kv_pair.first;
     const auto val = kv_pair.second.trim();
 
-    const auto handler = rs_info_handlers.find(key);
-    if (handler == rs_info_handlers.end())
+    const auto handler = rs_info_handler(key);
+    if (handler == -1)
       continue;
     // getAsInteger returns `true` on an error condition - we're only interested
-    // in
-    // numeric fields at the moment
+    // in numeric fields at the moment
     uint64_t n_lines;
     if (val.getAsInteger(10, n_lines)) {
       if (log)
@@ -2757,7 +2817,7 @@ bool RSModuleDescriptor::ParseRSInfo() {
       return false;
 
     bool success = false;
-    switch (handler->getValue()) {
+    switch (handler) {
     case eExportVar:
       success = ParseExportVarCount(line, n_lines);
       break;
@@ -3225,9 +3285,38 @@ RenderScriptRuntime::CreateKernelBreakpoint(const ConstString &name) {
   // Give RS breakpoints a specific name, so the user can manipulate them as a
   // group.
   Error err;
-  if (!bp->AddName("RenderScriptKernel", err) && log)
-    log->Printf("%s - error setting break name, '%s'.", __FUNCTION__,
-                err.AsCString());
+  if (!bp->AddName("RenderScriptKernel", err))
+    if (log)
+      log->Printf("%s - error setting break name, '%s'.", __FUNCTION__,
+                  err.AsCString());
+
+  return bp;
+}
+
+BreakpointSP
+RenderScriptRuntime::CreateReductionBreakpoint(const ConstString &name,
+                                               int kernel_types) {
+  Log *log(
+      GetLogIfAnyCategoriesSet(LIBLLDB_LOG_LANGUAGE | LIBLLDB_LOG_BREAKPOINTS));
+
+  if (!m_filtersp) {
+    if (log)
+      log->Printf("%s - error, no breakpoint search filter set.", __FUNCTION__);
+    return nullptr;
+  }
+
+  BreakpointResolverSP resolver_sp(new RSReduceBreakpointResolver(
+      nullptr, name, &m_rsmodules, kernel_types));
+  BreakpointSP bp = GetProcess()->GetTarget().CreateBreakpoint(
+      m_filtersp, resolver_sp, false, false, false);
+
+  // Give RS breakpoints a specific name, so the user can manipulate them as a
+  // group.
+  Error err;
+  if (!bp->AddName("RenderScriptReduction", err))
+    if (log)
+      log->Printf("%s - error setting break name, '%s'.", __FUNCTION__,
+                  err.AsCString());
 
   return bp;
 }
@@ -3438,6 +3527,28 @@ bool RenderScriptRuntime::PlaceBreakpointOnKernel(TargetSP target,
     return false;
 
   // We have a conditional breakpoint on a specific coordinate
+  if (coord)
+    SetConditional(bp, messages, *coord);
+
+  bp->GetDescription(&messages, lldb::eDescriptionLevelInitial, false);
+
+  return true;
+}
+
+bool RenderScriptRuntime::PlaceBreakpointOnReduction(TargetSP target,
+                                                     Stream &messages,
+                                                     const char *reduce_name,
+                                                     const RSCoordinate *coord,
+                                                     int kernel_types) {
+  if (!reduce_name)
+    return false;
+
+  InitSearchFilter(target);
+  BreakpointSP bp =
+      CreateReductionBreakpoint(ConstString(reduce_name), kernel_types);
+  if (!bp)
+    return false;
+
   if (coord)
     SetConditional(bp, messages, *coord);
 
@@ -3666,6 +3777,164 @@ public:
   }
 };
 
+static OptionDefinition g_renderscript_reduction_bp_set_options[] = {
+    {LLDB_OPT_SET_1, false, "function-role", 't',
+     OptionParser::eRequiredArgument, nullptr, nullptr, 0, eArgTypeOneLiner,
+     "Break on a comma separated set of reduction kernel types "
+     "(accumulator,outcoverter,combiner,initializer"},
+    {LLDB_OPT_SET_1, false, "coordinate", 'c', OptionParser::eRequiredArgument,
+     nullptr, nullptr, 0, eArgTypeValue,
+     "Set a breakpoint on a single invocation of the kernel with specified "
+     "coordinate.\n"
+     "Coordinate takes the form 'x[,y][,z] where x,y,z are positive "
+     "integers representing kernel dimensions. "
+     "Any unset dimensions will be defaulted to zero."}};
+
+class CommandObjectRenderScriptRuntimeReductionBreakpointSet
+    : public CommandObjectParsed {
+public:
+  CommandObjectRenderScriptRuntimeReductionBreakpointSet(
+      CommandInterpreter &interpreter)
+      : CommandObjectParsed(
+            interpreter, "renderscript reduction breakpoint set",
+            "Set a breakpoint on named RenderScript general reductions",
+            "renderscript reduction breakpoint set  <kernel_name> [-t "
+            "<reduction_kernel_type,...>]",
+            eCommandRequiresProcess | eCommandProcessMustBeLaunched |
+                eCommandProcessMustBePaused),
+        m_options(){};
+
+  class CommandOptions : public Options {
+  public:
+    CommandOptions()
+        : Options(),
+          m_kernel_types(RSReduceBreakpointResolver::eKernelTypeAll) {}
+
+    ~CommandOptions() override = default;
+
+    Error SetOptionValue(uint32_t option_idx, const char *option_val,
+                         ExecutionContext *exe_ctx) override {
+      Error err;
+      StreamString err_str;
+      const int short_option = m_getopt_table[option_idx].val;
+      switch (short_option) {
+      case 't':
+        if (!ParseReductionTypes(option_val, err_str))
+          err.SetErrorStringWithFormat(
+              "Unable to deduce reduction types for %s: %s", option_val,
+              err_str.GetData());
+        break;
+      case 'c': {
+        auto coord = RSCoordinate{};
+        if (!ParseCoordinate(option_val, coord))
+          err.SetErrorStringWithFormat("unable to parse coordinate for %s",
+                                       option_val);
+        else {
+          m_have_coord = true;
+          m_coord = coord;
+        }
+        break;
+      }
+      default:
+        err.SetErrorStringWithFormat("Invalid option '-%c'", short_option);
+      }
+      return err;
+    }
+
+    void OptionParsingStarting(ExecutionContext *exe_ctx) override {
+      m_have_coord = false;
+    }
+
+    llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
+      return llvm::makeArrayRef(g_renderscript_reduction_bp_set_options);
+    }
+
+    bool ParseReductionTypes(const char *option_val, StreamString &err_str) {
+      m_kernel_types = RSReduceBreakpointResolver::eKernelTypeNone;
+      const auto reduce_name_to_type = [](llvm::StringRef name) -> int {
+        return llvm::StringSwitch<int>(name)
+            .Case("accumulator", RSReduceBreakpointResolver::eKernelTypeAccum)
+            .Case("initializer", RSReduceBreakpointResolver::eKernelTypeInit)
+            .Case("outconverter", RSReduceBreakpointResolver::eKernelTypeOutC)
+            .Case("combiner", RSReduceBreakpointResolver::eKernelTypeComb)
+            .Case("all", RSReduceBreakpointResolver::eKernelTypeAll)
+            // Currently not exposed by the runtime
+            // .Case("halter", RSReduceBreakpointResolver::eKernelTypeHalter)
+            .Default(0);
+      };
+
+      // Matching a comma separated list of known words is fairly
+      // straightforward with PCRE, but we're
+      // using ERE, so we end up with a little ugliness...
+      RegularExpression::Match match(/* max_matches */ 5);
+      RegularExpression match_type_list(
+          llvm::StringRef("^([[:alpha:]]+)(,[[:alpha:]]+){0,4}$"));
+
+      assert(match_type_list.IsValid());
+
+      if (!match_type_list.Execute(llvm::StringRef(option_val), &match)) {
+        err_str.PutCString(
+            "a comma-separated list of kernel types is required");
+        return false;
+      }
+
+      // splitting on commas is much easier with llvm::StringRef than regex
+      llvm::SmallVector<llvm::StringRef, 5> type_names;
+      llvm::StringRef(option_val).split(type_names, ',');
+
+      for (const auto &name : type_names) {
+        const int type = reduce_name_to_type(name);
+        if (!type) {
+          err_str.Printf("unknown kernel type name %s", name.str().c_str());
+          return false;
+        }
+        m_kernel_types |= type;
+      }
+
+      return true;
+    }
+
+    int m_kernel_types;
+    llvm::StringRef m_reduce_name;
+    RSCoordinate m_coord;
+    bool m_have_coord;
+  };
+
+  Options *GetOptions() override { return &m_options; }
+
+  bool DoExecute(Args &command, CommandReturnObject &result) override {
+    const size_t argc = command.GetArgumentCount();
+    if (argc < 1) {
+      result.AppendErrorWithFormat("'%s' takes 1 argument of reduction name, "
+                                   "and an optional kernel type list",
+                                   m_cmd_name.c_str());
+      result.SetStatus(eReturnStatusFailed);
+      return false;
+    }
+
+    RenderScriptRuntime *runtime = static_cast<RenderScriptRuntime *>(
+        m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(
+            eLanguageTypeExtRenderScript));
+
+    auto &outstream = result.GetOutputStream();
+    auto name = command.GetArgumentAtIndex(0);
+    auto &target = m_exe_ctx.GetTargetSP();
+    auto coord = m_options.m_have_coord ? &m_options.m_coord : nullptr;
+    if (!runtime->PlaceBreakpointOnReduction(target, outstream, name, coord,
+                                             m_options.m_kernel_types)) {
+      result.SetStatus(eReturnStatusFailed);
+      result.AppendError("Error: unable to place breakpoint on reduction");
+      return false;
+    }
+    result.AppendMessage("Breakpoint(s) created");
+    result.SetStatus(eReturnStatusSuccessFinishResult);
+    return true;
+  }
+
+private:
+  CommandOptions m_options;
+};
+
 static OptionDefinition g_renderscript_kernel_bp_set_options[] = {
     {LLDB_OPT_SET_1, false, "coordinate", 'c', OptionParser::eRequiredArgument,
      nullptr, nullptr, 0, eArgTypeValue,
@@ -3699,7 +3968,7 @@ public:
     ~CommandOptions() override = default;
 
     Error SetOptionValue(uint32_t option_idx, const char *option_arg,
-                         ExecutionContext *execution_context) override {
+                         ExecutionContext *exe_ctx) override {
       Error err;
       const int short_option = m_getopt_table[option_idx].val;
 
@@ -3723,7 +3992,7 @@ public:
       return err;
     }
 
-    void OptionParsingStarting(ExecutionContext *execution_context) override {
+    void OptionParsingStarting(ExecutionContext *exe_ctx) override {
       m_have_coord = false;
     }
 
@@ -3820,6 +4089,24 @@ public:
     result.SetStatus(eReturnStatusSuccessFinishResult);
     return true;
   }
+};
+
+class CommandObjectRenderScriptRuntimeReductionBreakpoint
+    : public CommandObjectMultiword {
+public:
+  CommandObjectRenderScriptRuntimeReductionBreakpoint(
+      CommandInterpreter &interpreter)
+      : CommandObjectMultiword(interpreter, "renderscript reduction breakpoint",
+                               "Commands that manipulate breakpoints on "
+                               "renderscript general reductions.",
+                               nullptr) {
+    LoadSubCommand(
+        "set", CommandObjectSP(
+                   new CommandObjectRenderScriptRuntimeReductionBreakpointSet(
+                       interpreter)));
+  }
+
+  ~CommandObjectRenderScriptRuntimeReductionBreakpoint() override = default;
 };
 
 class CommandObjectRenderScriptRuntimeKernelCoordinate
@@ -3962,7 +4249,7 @@ public:
     ~CommandOptions() override = default;
 
     Error SetOptionValue(uint32_t option_idx, const char *option_arg,
-                         ExecutionContext *execution_context) override {
+                         ExecutionContext *exe_ctx) override {
       Error err;
       const int short_option = m_getopt_table[option_idx].val;
 
@@ -3981,7 +4268,7 @@ public:
       return err;
     }
 
-    void OptionParsingStarting(ExecutionContext *execution_context) override {
+    void OptionParsingStarting(ExecutionContext *exe_ctx) override {
       m_outfile.Clear();
     }
 
@@ -4083,7 +4370,7 @@ public:
     ~CommandOptions() override = default;
 
     Error SetOptionValue(uint32_t option_idx, const char *option_arg,
-                         ExecutionContext *execution_context) override {
+                         ExecutionContext *exe_ctx) override {
       Error err;
       const int short_option = m_getopt_table[option_idx].val;
 
@@ -4102,9 +4389,7 @@ public:
       return err;
     }
 
-    void OptionParsingStarting(ExecutionContext *execution_context) override {
-      m_id = 0;
-    }
+    void OptionParsingStarting(ExecutionContext *exe_ctx) override { m_id = 0; }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
       return llvm::makeArrayRef(g_renderscript_runtime_alloc_list_options);
@@ -4313,6 +4598,21 @@ public:
   }
 };
 
+class CommandObjectRenderScriptRuntimeReduction
+    : public CommandObjectMultiword {
+public:
+  CommandObjectRenderScriptRuntimeReduction(CommandInterpreter &interpreter)
+      : CommandObjectMultiword(interpreter, "renderscript reduction",
+                               "Commands that handle general reduction kernels",
+                               nullptr) {
+    LoadSubCommand(
+        "breakpoint",
+        CommandObjectSP(new CommandObjectRenderScriptRuntimeReductionBreakpoint(
+            interpreter)));
+  }
+  ~CommandObjectRenderScriptRuntimeReduction() override = default;
+};
+
 class CommandObjectRenderScriptRuntime : public CommandObjectMultiword {
 public:
   CommandObjectRenderScriptRuntime(CommandInterpreter &interpreter)
@@ -4336,6 +4636,10 @@ public:
         "allocation",
         CommandObjectSP(
             new CommandObjectRenderScriptRuntimeAllocation(interpreter)));
+    LoadSubCommand(
+        "reduction",
+        CommandObjectSP(
+            new CommandObjectRenderScriptRuntimeReduction(interpreter)));
   }
 
   ~CommandObjectRenderScriptRuntime() override = default;
