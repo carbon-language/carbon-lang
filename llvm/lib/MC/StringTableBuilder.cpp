@@ -79,7 +79,8 @@ void StringTableBuilder::write(uint8_t *Buf) const {
   assert(isFinalized());
   for (const StringPair &P : StringIndexMap) {
     StringRef Data = P.first.val();
-    memcpy(Buf + P.second, Data.data(), Data.size());
+    if (!Data.empty())
+      memcpy(Buf + P.second, Data.data(), Data.size());
   }
   if (K != WinCOFF)
     return;
