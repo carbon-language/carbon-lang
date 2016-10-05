@@ -61,14 +61,12 @@ void DWARFAcceleratorTable::dump(raw_ostream &OS) const {
   SmallVector<DWARFFormValue, 3> AtomForms;
   for (const auto &Atom: HdrData.Atoms) {
     OS << format("Atom[%d] Type: ", i++);
-    auto TypeString = dwarf::AtomTypeString(Atom.first);
-    if (!TypeString.empty())
+    if (const char *TypeString = dwarf::AtomTypeString(Atom.first))
       OS << TypeString;
     else
       OS << format("DW_ATOM_Unknown_0x%x", Atom.first);
     OS << " Form: ";
-    auto FormString = dwarf::FormEncodingString(Atom.second);
-    if (!FormString.empty())
+    if (const char *FormString = dwarf::FormEncodingString(Atom.second))
       OS << FormString;
     else
       OS << format("DW_FORM_Unknown_0x%x", Atom.second);

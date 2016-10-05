@@ -63,10 +63,10 @@ void DIEAbbrev::Profile(FoldingSetNodeID &ID) const {
 ///
 void DIEAbbrev::Emit(const AsmPrinter *AP) const {
   // Emit its Dwarf tag type.
-  AP->EmitULEB128(Tag, dwarf::TagString(Tag).data());
+  AP->EmitULEB128(Tag, dwarf::TagString(Tag));
 
   // Emit whether it has children DIEs.
-  AP->EmitULEB128((unsigned)Children, dwarf::ChildrenString(Children).data());
+  AP->EmitULEB128((unsigned)Children, dwarf::ChildrenString(Children));
 
   // For each attribute description.
   for (unsigned i = 0, N = Data.size(); i < N; ++i) {
@@ -74,11 +74,11 @@ void DIEAbbrev::Emit(const AsmPrinter *AP) const {
 
     // Emit attribute type.
     AP->EmitULEB128(AttrData.getAttribute(),
-                    dwarf::AttributeString(AttrData.getAttribute()).data());
+                    dwarf::AttributeString(AttrData.getAttribute()));
 
     // Emit form type.
     AP->EmitULEB128(AttrData.getForm(),
-                    dwarf::FormEncodingString(AttrData.getForm()).data());
+                    dwarf::FormEncodingString(AttrData.getForm()));
   }
 
   // Mark end of abbreviation.

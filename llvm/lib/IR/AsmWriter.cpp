@@ -1418,8 +1418,7 @@ struct MDFieldPrinter {
 
 void MDFieldPrinter::printTag(const DINode *N) {
   Out << FS << "tag: ";
-  auto Tag = dwarf::TagString(N->getTag());
-  if (!Tag.empty())
+  if (const char *Tag = dwarf::TagString(N->getTag()))
     Out << Tag;
   else
     Out << N->getTag();
@@ -1427,8 +1426,7 @@ void MDFieldPrinter::printTag(const DINode *N) {
 
 void MDFieldPrinter::printMacinfoType(const DIMacroNode *N) {
   Out << FS << "type: ";
-  auto Type = dwarf::MacinfoString(N->getMacinfoType());
-  if (!Type.empty())
+  if (const char *Type = dwarf::MacinfoString(N->getMacinfoType()))
     Out << Type;
   else
     Out << N->getMacinfoType();
@@ -1511,8 +1509,7 @@ void MDFieldPrinter::printDwarfEnum(StringRef Name, IntTy Value,
     return;
 
   Out << FS << Name << ": ";
-  auto S = toString(Value);
-  if (!S.empty())
+  if (const char *S = toString(Value))
     Out << S;
   else
     Out << Value;
@@ -1846,8 +1843,8 @@ static void writeDIExpression(raw_ostream &Out, const DIExpression *N,
   FieldSeparator FS;
   if (N->isValid()) {
     for (auto I = N->expr_op_begin(), E = N->expr_op_end(); I != E; ++I) {
-      auto OpStr = dwarf::OperationEncodingString(I->getOp());
-      assert(!OpStr.empty() && "Expected valid opcode");
+      const char *OpStr = dwarf::OperationEncodingString(I->getOp());
+      assert(OpStr && "Expected valid opcode");
 
       Out << FS << OpStr;
       for (unsigned A = 0, AE = I->getNumArgs(); A != AE; ++A)
