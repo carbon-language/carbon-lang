@@ -5,7 +5,7 @@
 # CHECK:      .text
 # CHECK-NEXT: .text._init
 # CHECK-NEXT: .text._fini
-# CHECK-NEXT: .rela.text     
+# CHECK-NEXT: .rela.text
 # CHECK-NEXT: .rela.text._init
 # CHECK-NEXT: .rela.text._fini
 

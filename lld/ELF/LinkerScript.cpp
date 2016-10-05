@@ -112,8 +112,8 @@ bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
     StringRef Filename = S->getFile()->getName();
     if (!ID->FileRe.match(sys::path::filename(Filename)))
       continue;
-  
-    for (SectionPattern &P : ID->SectionPatterns) 
+
+    for (SectionPattern &P : ID->SectionPatterns)
       if (P.SectionRe.match(S->Name))
         return true;
   }
