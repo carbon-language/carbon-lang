@@ -40,7 +40,15 @@ struct RSReductionDescriptor;
 typedef std::shared_ptr<RSModuleDescriptor> RSModuleDescriptorSP;
 typedef std::shared_ptr<RSGlobalDescriptor> RSGlobalDescriptorSP;
 typedef std::shared_ptr<RSKernelDescriptor> RSKernelDescriptorSP;
-typedef std::array<uint32_t, 3> RSCoordinate;
+struct RSCoordinate {
+  uint32_t x, y, z;
+
+  RSCoordinate() : x(), y(), z(){};
+
+  bool operator==(const lldb_renderscript::RSCoordinate &rhs) {
+    return x == rhs.x && y == rhs.y && z == rhs.z;
+  }
+};
 
 // Breakpoint Resolvers decide where a breakpoint is placed,
 // so having our own allows us to limit the search scope to RS kernel modules.
@@ -235,9 +243,9 @@ public:
 
   bool RecomputeAllAllocations(Stream &strm, StackFrame *frame_ptr);
 
-  void PlaceBreakpointOnKernel(Stream &strm, const char *name,
-                               const std::array<int, 3> coords, Error &error,
-                               lldb::TargetSP target);
+  bool PlaceBreakpointOnKernel(
+      lldb::TargetSP target, Stream &messages, const char *name,
+      const lldb_renderscript::RSCoordinate *coords = nullptr);
 
   void SetBreakAllKernels(bool do_break, lldb::TargetSP target);
 
@@ -322,7 +330,8 @@ protected:
   std::map<lldb::addr_t, lldb_renderscript::RSModuleDescriptorSP>
       m_scriptMappings;
   std::map<lldb::addr_t, RuntimeHookSP> m_runtimeHooks;
-  std::map<lldb::user_id_t, std::shared_ptr<uint32_t>> m_conditional_breaks;
+  std::map<lldb::user_id_t, std::unique_ptr<lldb_renderscript::RSCoordinate>>
+      m_conditional_breaks;
 
   lldb::SearchFilterSP
       m_filtersp; // Needed to create breakpoints through Target API
@@ -376,6 +385,8 @@ private:
 
   size_t CalculateElementHeaderSize(const Element &elem);
 
+  void SetConditional(lldb::BreakpointSP bp, lldb_private::Stream &messages,
+                      const lldb_renderscript::RSCoordinate &coord);
   //
   // Helper functions for jitting the runtime
   //

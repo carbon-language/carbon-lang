@@ -43,6 +43,8 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_renderscript;
 
+#define FMT_COORD "(%" PRIu32 ", %" PRIu32 ", %" PRIu32 ")"
+
 namespace {
 
 // The empirical_type adds a basic level of validation to arbitrary data
@@ -428,6 +430,43 @@ bool GetArgs(ExecutionContext &context, ArgItem *arg_list, size_t num_args) {
     }
     return false;
   }
+}
+
+bool ParseCoordinate(llvm::StringRef coord_s, RSCoordinate &coord) {
+  // takes an argument of the form 'num[,num][,num]'.
+  // Where 'coord_s' is a comma separated 1,2 or 3-dimensional coordinate
+  // with the whitespace trimmed.
+  // Missing coordinates are defaulted to zero.
+  // If parsing of any elements fails the contents of &coord are undefined
+  // and `false` is returned, `true` otherwise
+
+  RegularExpression regex;
+  RegularExpression::Match regex_match(3);
+
+  bool matched = false;
+  if (regex.Compile(llvm::StringRef("^([0-9]+),([0-9]+),([0-9]+)$")) &&
+      regex.Execute(coord_s, &regex_match))
+    matched = true;
+  else if (regex.Compile(llvm::StringRef("^([0-9]+),([0-9]+)$")) &&
+           regex.Execute(coord_s, &regex_match))
+    matched = true;
+  else if (regex.Compile(llvm::StringRef("^([0-9]+)$")) &&
+           regex.Execute(coord_s, &regex_match))
+    matched = true;
+
+  if (!matched)
+    return false;
+
+  auto get_index = [&](int idx, uint32_t &i) -> bool {
+    std::string group;
+    errno = 0;
+    if (regex_match.GetMatchAtIndex(coord_s.str().c_str(), idx + 1, group))
+      return !llvm::StringRef(group).getAsInteger<uint32_t>(10, i);
+    return true;
+  };
+
+  return get_index(0, coord.x) && get_index(1, coord.y) &&
+         get_index(2, coord.z);
 }
 } // anonymous namespace
 
@@ -3285,9 +3324,9 @@ bool RenderScriptRuntime::GetFrameVarAsUnsigned(const StackFrameSP frame_sp,
 // and false otherwise.
 bool RenderScriptRuntime::GetKernelCoordinate(RSCoordinate &coord,
                                               Thread *thread_ptr) {
-  static const std::string s_runtimeExpandSuffix(".expand");
-  static const std::array<const char *, 3> s_runtimeCoordVars{
-      {"rsIndex", "p->current.y", "p->current.z"}};
+  static const char *const x_expr = "rsIndex";
+  static const char *const y_expr = "p->current.y";
+  static const char *const z_expr = "p->current.z";
 
   Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_LANGUAGE));
 
@@ -3311,48 +3350,38 @@ bool RenderScriptRuntime::GetKernelCoordinate(RSCoordinate &coord,
 
     // Find the function name
     const SymbolContext sym_ctx = frame_sp->GetSymbolContext(false);
-    const char *func_name_cstr = sym_ctx.GetFunctionName().AsCString();
-    if (!func_name_cstr)
+    const ConstString func_name = sym_ctx.GetFunctionName();
+    if (!func_name)
       continue;
 
     if (log)
       log->Printf("%s - Inspecting function '%s'", __FUNCTION__,
-                  func_name_cstr);
+                  func_name.GetCString());
 
     // Check if function name has .expand suffix
-    std::string func_name(func_name_cstr);
-    const int length_difference =
-        func_name.length() - s_runtimeExpandSuffix.length();
-    if (length_difference <= 0)
-      continue;
-
-    const int32_t has_expand_suffix =
-        func_name.compare(length_difference, s_runtimeExpandSuffix.length(),
-                          s_runtimeExpandSuffix);
-
-    if (has_expand_suffix != 0)
+    if (!func_name.GetStringRef().endswith(".expand"))
       continue;
 
     if (log)
       log->Printf("%s - Found .expand function '%s'", __FUNCTION__,
-                  func_name_cstr);
+                  func_name.GetCString());
 
     // Get values for variables in .expand frame that tell us the current kernel
     // invocation
-    bool found_coord_variables = true;
-    assert(s_runtimeCoordVars.size() == coord.size());
+    uint64_t x, y, z;
+    bool found = GetFrameVarAsUnsigned(frame_sp, x_expr, x) &&
+                 GetFrameVarAsUnsigned(frame_sp, y_expr, y) &&
+                 GetFrameVarAsUnsigned(frame_sp, z_expr, z);
 
-    for (uint32_t i = 0; i < coord.size(); ++i) {
-      uint64_t value = 0;
-      if (!GetFrameVarAsUnsigned(frame_sp, s_runtimeCoordVars[i], value)) {
-        found_coord_variables = false;
-        break;
-      }
-      coord[i] = value;
-    }
-
-    if (found_coord_variables)
+    if (found) {
+      // The RenderScript runtime uses uint32_t for these vars. If they're not
+      // within bounds, our frame parsing is garbage
+      assert(x <= UINT32_MAX && y <= UINT32_MAX && z <= UINT32_MAX);
+      coord.x = (uint32_t)x;
+      coord.y = (uint32_t)y;
+      coord.z = (uint32_t)z;
       return true;
+    }
   }
   return false;
 }
@@ -3377,13 +3406,11 @@ bool RenderScriptRuntime::KernelBreakpointHit(void *baton,
          "Error: null baton in conditional kernel breakpoint callback");
 
   // Coordinate we want to stop on
-  const uint32_t *target_coord = static_cast<const uint32_t *>(baton);
+  RSCoordinate target_coord = *static_cast<RSCoordinate *>(baton);
 
   if (log)
-    log->Printf("%s - Break ID %" PRIu64 ", (%" PRIu32 ", %" PRIu32 ", %" PRIu32
-                ")",
-                __FUNCTION__, break_id, target_coord[0], target_coord[1],
-                target_coord[2]);
+    log->Printf("%s - Break ID %" PRIu64 ", " FMT_COORD, __FUNCTION__, break_id,
+                target_coord.x, target_coord.y, target_coord.z);
 
   // Select current thread
   ExecutionContext context(ctx->exe_ctx_ref);
@@ -3391,7 +3418,7 @@ bool RenderScriptRuntime::KernelBreakpointHit(void *baton,
   assert(thread_ptr && "Null thread pointer");
 
   // Find current kernel invocation from .expand frame variables
-  RSCoordinate current_coord{}; // Zero initialise array
+  RSCoordinate current_coord{};
   if (!GetKernelCoordinate(current_coord, thread_ptr)) {
     if (log)
       log->Printf("%s - Error, couldn't select .expand stack frame",
@@ -3400,18 +3427,15 @@ bool RenderScriptRuntime::KernelBreakpointHit(void *baton,
   }
 
   if (log)
-    log->Printf("%s - (%" PRIu32 ",%" PRIu32 ",%" PRIu32 ")", __FUNCTION__,
-                current_coord[0], current_coord[1], current_coord[2]);
+    log->Printf("%s - " FMT_COORD, __FUNCTION__, current_coord.x,
+                current_coord.y, current_coord.z);
 
   // Check if the current kernel invocation coordinate matches our target
   // coordinate
-  if (current_coord[0] == target_coord[0] &&
-      current_coord[1] == target_coord[1] &&
-      current_coord[2] == target_coord[2]) {
+  if (target_coord == current_coord) {
     if (log)
-      log->Printf("%s, BREAKING (%" PRIu32 ",%" PRIu32 ",%" PRIu32 ")",
-                  __FUNCTION__, current_coord[0], current_coord[1],
-                  current_coord[2]);
+      log->Printf("%s, BREAKING " FMT_COORD, __FUNCTION__, current_coord.x,
+                  current_coord.y, current_coord.z);
 
     BreakpointSP breakpoint_sp =
         context.GetTargetPtr()->GetBreakpointByID(break_id);
@@ -3426,50 +3450,52 @@ bool RenderScriptRuntime::KernelBreakpointHit(void *baton,
   return false;
 }
 
+void RenderScriptRuntime::SetConditional(BreakpointSP bp, Stream &messages,
+                                         const RSCoordinate &coord) {
+  messages.Printf("Conditional kernel breakpoint on coordinate " FMT_COORD,
+                  coord.x, coord.y, coord.z);
+  messages.EOL();
+
+  // Allocate memory for the baton, and copy over coordinate
+  RSCoordinate *baton = new RSCoordinate(coord);
+
+  // Create a callback that will be invoked every time the breakpoint is hit.
+  // The baton object passed to the handler is the target coordinate we want to
+  // break on.
+  bp->SetCallback(KernelBreakpointHit, baton, true);
+
+  // Store a shared pointer to the baton, so the memory will eventually be
+  // cleaned up after destruction
+  m_conditional_breaks[bp->GetID()] = std::unique_ptr<RSCoordinate>(baton);
+}
+
 // Tries to set a breakpoint on the start of a kernel, resolved using the kernel
 // name.
 // Argument 'coords', represents a three dimensional coordinate which can be
 // used to specify
 // a single kernel instance to break on. If this is set then we add a callback
 // to the breakpoint.
-void RenderScriptRuntime::PlaceBreakpointOnKernel(
-    Stream &strm, const char *name, const std::array<int, 3> coords,
-    Error &error, TargetSP target) {
-  if (!name) {
-    error.SetErrorString("invalid kernel name");
-    return;
-  }
+bool RenderScriptRuntime::PlaceBreakpointOnKernel(TargetSP target,
+                                                  Stream &messages,
+                                                  const char *name,
+                                                  const RSCoordinate *coord) {
+  if (!name)
+    return false;
 
   InitSearchFilter(target);
 
   ConstString kernel_name(name);
   BreakpointSP bp = CreateKernelBreakpoint(kernel_name);
+  if (!bp)
+    return false;
 
   // We have a conditional breakpoint on a specific coordinate
-  if (coords[0] != -1) {
-    strm.Printf("Conditional kernel breakpoint on coordinate %" PRId32
-                ", %" PRId32 ", %" PRId32,
-                coords[0], coords[1], coords[2]);
-    strm.EOL();
+  if (coord)
+    SetConditional(bp, messages, *coord);
 
-    // Allocate memory for the baton, and copy over coordinate
-    uint32_t *baton = new uint32_t[coords.size()];
-    baton[0] = coords[0];
-    baton[1] = coords[1];
-    baton[2] = coords[2];
+  bp->GetDescription(&messages, lldb::eDescriptionLevelInitial, false);
 
-    // Create a callback that will be invoked every time the breakpoint is hit.
-    // The baton object passed to the handler is the target coordinate we want
-    // to break on.
-    bp->SetCallback(KernelBreakpointHit, baton, true);
-
-    // Store a shared pointer to the baton, so the memory will eventually be
-    // cleaned up after destruction
-    m_conditional_breaks[bp->GetID()] = std::shared_ptr<uint32_t>(baton);
-  }
-
-  if (bp)
-    bp->GetDescription(&strm, lldb::eDescriptionLevelInitial, false);
+  return true;
 }
 
 void RenderScriptRuntime::DumpModules(Stream &strm) const {
@@ -3730,12 +3756,18 @@ public:
       const int short_option = m_getopt_table[option_idx].val;
 
       switch (short_option) {
-      case 'c':
-        if (!ParseCoordinate(option_arg))
+      case 'c': {
+        auto coord = RSCoordinate{};
+        if (!ParseCoordinate(option_arg, coord))
           error.SetErrorStringWithFormat(
               "Couldn't parse coordinate '%s', should be in format 'x,y,z'.",
               option_arg);
+        else {
+          m_have_coord = true;
+          m_coord = coord;
+        }
         break;
+      }
       default:
         error.SetErrorStringWithFormat("unrecognized option '%c'",
                                        short_option);
@@ -3744,46 +3776,16 @@ public:
       return error;
     }
 
-    // -c takes an argument of the form 'num[,num][,num]'.
-    // Where 'id_cstr' is this argument with the whitespace trimmed.
-    // Missing coordinates are defaulted to zero.
-    bool ParseCoordinate(const char *id_cstr) {
-      RegularExpression regex;
-      RegularExpression::Match regex_match(3);
-
-      llvm::StringRef id_ref = llvm::StringRef::withNullAsEmpty(id_cstr);
-      bool matched = false;
-      if (regex.Compile(llvm::StringRef("^([0-9]+),([0-9]+),([0-9]+)$")) &&
-          regex.Execute(id_ref, &regex_match))
-        matched = true;
-      else if (regex.Compile(llvm::StringRef("^([0-9]+),([0-9]+)$")) &&
-               regex.Execute(id_ref, &regex_match))
-        matched = true;
-      else if (regex.Compile(llvm::StringRef("^([0-9]+)$")) &&
-               regex.Execute(id_ref, &regex_match))
-        matched = true;
-      for (uint32_t i = 0; i < 3; i++) {
-        std::string group;
-        if (regex_match.GetMatchAtIndex(id_cstr, i + 1, group))
-          m_coord[i] = (uint32_t)strtoul(group.c_str(), nullptr, 0);
-        else
-          m_coord[i] = 0;
-      }
-      return matched;
-    }
-
     void OptionParsingStarting(ExecutionContext *execution_context) override {
-      // -1 means the -c option hasn't been set
-      m_coord[0] = -1;
-      m_coord[1] = -1;
-      m_coord[2] = -1;
+      m_have_coord = false;
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
       return llvm::makeArrayRef(g_renderscript_kernel_bp_set_options);
     }
 
-    std::array<int, 3> m_coord;
+    RSCoordinate m_coord;
+    bool m_have_coord;
   };
 
   bool DoExecute(Args &command, CommandReturnObject &result) override {
@@ -3800,19 +3802,20 @@ public:
         (RenderScriptRuntime *)m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(
             eLanguageTypeExtRenderScript);
 
-    Error error;
-    runtime->PlaceBreakpointOnKernel(
-        result.GetOutputStream(), command.GetArgumentAtIndex(0),
-        m_options.m_coord, error, m_exe_ctx.GetTargetSP());
-
-    if (error.Success()) {
-      result.AppendMessage("Breakpoint(s) created");
-      result.SetStatus(eReturnStatusSuccessFinishResult);
-      return true;
+    auto &outstream = result.GetOutputStream();
+    auto &target = m_exe_ctx.GetTargetSP();
+    auto name = command.GetArgumentAtIndex(0);
+    auto coord = m_options.m_have_coord ? &m_options.m_coord : nullptr;
+    if (!runtime->PlaceBreakpointOnKernel(target, outstream, name, coord)) {
+      result.SetStatus(eReturnStatusFailed);
+      result.AppendErrorWithFormat(
+          "Error: unable to set breakpoint on kernel '%s'", name);
+      return false;
     }
-    result.SetStatus(eReturnStatusFailed);
-    result.AppendErrorWithFormat("Error: %s", error.AsCString());
-    return false;
+
+    result.AppendMessage("Breakpoint(s) created");
+    result.SetStatus(eReturnStatusSuccessFinishResult);
+    return true;
   }
 
 private:
@@ -3887,14 +3890,13 @@ public:
   ~CommandObjectRenderScriptRuntimeKernelCoordinate() override = default;
 
   bool DoExecute(Args &command, CommandReturnObject &result) override {
-    RSCoordinate coord{}; // Zero initialize array
+    RSCoordinate coord{};
     bool success = RenderScriptRuntime::GetKernelCoordinate(
         coord, m_exe_ctx.GetThreadPtr());
     Stream &stream = result.GetOutputStream();
 
     if (success) {
-      stream.Printf("Coordinate: (%" PRIu32 ", %" PRIu32 ", %" PRIu32 ")",
-                    coord[0], coord[1], coord[2]);
+      stream.Printf("Coordinate: " FMT_COORD, coord.x, coord.y, coord.z);
       stream.EOL();
       result.SetStatus(eReturnStatusSuccessFinishResult);
     } else {
