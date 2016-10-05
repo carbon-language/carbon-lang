@@ -2597,7 +2597,8 @@ void CommandInterpreter::OutputHelpText(Stream &strm, const char *word_text,
 
   for (uint32_t i = 0; i < len; i++) {
     if ((text[i] == ' ' && ::strchr((text + i + 1), ' ') &&
-         chars_left < ::strchr((text + i + 1), ' ') - (text + i)) ||
+         chars_left < static_cast<uint32_t>(::strchr((text + i + 1), ' ') -
+                                            (text + i))) ||
         text[i] == '\n') {
       chars_left = max_columns - indent_size;
       strm.EOL();

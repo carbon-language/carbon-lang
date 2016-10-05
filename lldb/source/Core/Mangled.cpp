@@ -259,7 +259,7 @@ Mangled::GetDemangledName(lldb::LanguageType language) const {
             log->Printf("demangled msvc: %s -> \"%s\"", mangled_name,
                         demangled_name);
           else
-            log->Printf("demangled msvc: %s -> error: 0x%" PRIx64, mangled_name,
+            log->Printf("demangled msvc: %s -> error: 0x%lu", mangled_name,
                         result);
         }
 

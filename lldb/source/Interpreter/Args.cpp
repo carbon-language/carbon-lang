@@ -275,7 +275,7 @@ void Args::UpdateArgsAfterOptionParsing() {
   // This happens because getopt_long_only may permute the order of the
   // arguments in argv, so we need to re-order the quotes and the refs array
   // to match.
-  for (int i = 0; i < m_argv.size() - 1; ++i) {
+  for (size_t i = 0; i < m_argv.size() - 1; ++i) {
     const char *argv = m_argv[i];
     auto pos =
         std::find_if(m_entries.begin() + i, m_entries.end(),
@@ -352,8 +352,8 @@ void Args::AppendArguments(const char **argv) {
   assert(m_argv.size() == m_entries.size() + 1);
   assert(m_argv.back() == nullptr);
   m_argv.pop_back();
-  for (int i = 0; i < argc; ++i) {
-    m_entries.emplace_back(argv[i], '\0');
+  for (auto arg : llvm::makeArrayRef(argv, argc)) {
+    m_entries.emplace_back(arg, '\0');
     m_argv.push_back(m_entries.back().data());
   }
 
@@ -412,7 +412,7 @@ void Args::SetArguments(size_t argc, const char **argv) {
   auto args = llvm::makeArrayRef(argv, argc);
   m_entries.resize(argc);
   m_argv.resize(argc + 1);
-  for (int i = 0; i < args.size(); ++i) {
+  for (size_t i = 0; i < args.size(); ++i) {
     char quote =
         ((args[i][0] == '\'') || (args[i][0] == '"') || (args[i][0] == '`'))
             ? args[i][0]
