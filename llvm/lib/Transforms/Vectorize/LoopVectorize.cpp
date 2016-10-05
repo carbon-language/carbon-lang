@@ -371,20 +371,17 @@ public:
                       const TargetLibraryInfo *TLI,
                       const TargetTransformInfo *TTI, AssumptionCache *AC,
                       OptimizationRemarkEmitter *ORE, unsigned VecWidth,
-                      unsigned UnrollFactor, LoopVectorizationLegality *LVL)
+                      unsigned UnrollFactor, LoopVectorizationLegality *LVL,
+                      LoopVectorizationCostModel *CM)
       : OrigLoop(OrigLoop), PSE(PSE), LI(LI), DT(DT), TLI(TLI), TTI(TTI),
         AC(AC), ORE(ORE), VF(VecWidth), UF(UnrollFactor),
         Builder(PSE.getSE()->getContext()), Induction(nullptr),
         OldInduction(nullptr), VectorLoopValueMap(UnrollFactor, VecWidth),
-        TripCount(nullptr), VectorTripCount(nullptr), Legal(LVL),
+        TripCount(nullptr), VectorTripCount(nullptr), Legal(LVL), Cost(CM),
         AddedSafetyChecks(false) {}
 
   // Perform the actual loop widening (vectorization).
-  // MinimumBitWidths maps scalar integer values to the smallest bitwidth they
-  // can be validly truncated to. The cost model has assumed this truncation
-  // will happen when vectorizing.
-  void vectorize(const MapVector<Instruction *, uint64_t> &MinimumBitWidths) {
-    MinBWs = &MinimumBitWidths;
+  void vectorize() {
     // Create a new empty loop. Unlink the old loop and connect the new one.
     createEmptyLoop();
     // Widen each instruction in the old loop to a new one in the new loop.
@@ -443,8 +440,9 @@ protected:
   /// Predicate conditional instructions that require predication on their
   /// respective conditions.
   void predicateInstructions();
- 
-  /// Shrinks vector element sizes based on information in "MinBWs".
+
+  /// Shrinks vector element sizes to the smallest bitwidth they can be legally
+  /// represented as.
   void truncateToMinimalBitwidths();
 
   /// A helper function that computes the predicate of the block BB, assuming
@@ -757,13 +755,11 @@ protected:
   /// Trip count of the widened loop (TripCount - TripCount % (VF*UF))
   Value *VectorTripCount;
 
-  /// Map of scalar integer values to the smallest bitwidth they can be legally
-  /// represented as. The vector equivalents of these values should be truncated
-  /// to this type.
-  const MapVector<Instruction *, uint64_t> *MinBWs;
-
   /// The legality analysis.
   LoopVectorizationLegality *Legal;
+
+  /// The profitablity analysis.
+  LoopVectorizationCostModel *Cost;
 
   // Record whether runtime checks are added.
   bool AddedSafetyChecks;
@@ -776,9 +772,10 @@ public:
                     const TargetLibraryInfo *TLI,
                     const TargetTransformInfo *TTI, AssumptionCache *AC,
                     OptimizationRemarkEmitter *ORE, unsigned UnrollFactor,
-                    LoopVectorizationLegality *LVL)
+                    LoopVectorizationLegality *LVL,
+                    LoopVectorizationCostModel *CM)
       : InnerLoopVectorizer(OrigLoop, PSE, LI, DT, TLI, TTI, AC, ORE, 1,
-                            UnrollFactor, LVL) {}
+                            UnrollFactor, LVL, CM) {}
 
 private:
   void scalarizeInstruction(Instruction *Instr,
@@ -1888,6 +1885,13 @@ public:
   /// Collect values we want to ignore in the cost model.
   void collectValuesToIgnore();
 
+  /// \returns The smallest bitwidth each instruction can be represented with.
+  /// The vector equivalents of these instructions should be truncated to this
+  /// type.
+  const MapVector<Instruction *, uint64_t> &getMinimalBitwidths() const {
+    return MinBWs;
+  }
+
 private:
   /// The vectorization cost is a combination of the cost itself and a boolean
   /// indicating whether any of the contributing operations will actually
@@ -1925,12 +1929,12 @@ private:
                                   RemarkName, TheLoop);
   }
 
-public:
   /// Map of scalar integer values to the smallest bitwidth they can be legally
   /// represented as. The vector equivalents of these values should be truncated
   /// to this type.
   MapVector<Instruction *, uint64_t> MinBWs;
 
+public:
   /// The loop that we evaluate.
   Loop *TheLoop;
   /// Predicated scalar evolution analysis.
@@ -3688,7 +3692,7 @@ void InnerLoopVectorizer::truncateToMinimalBitwidths() {
   // later and will remove any ext/trunc pairs.
   //
   SmallPtrSet<Value *, 4> Erased;
-  for (const auto &KV : *MinBWs) {
+  for (const auto &KV : Cost->getMinimalBitwidths()) {
     VectorParts &Parts = VectorLoopValueMap.getVector(KV.first);
     for (Value *&I : Parts) {
       if (Erased.count(I) || I->use_empty() || !isa<Instruction>(I))
@@ -3780,7 +3784,7 @@ void InnerLoopVectorizer::truncateToMinimalBitwidths() {
   }
 
   // We'll have created a bunch of ZExts that are now parentless. Clean up.
-  for (const auto &KV : *MinBWs) {
+  for (const auto &KV : Cost->getMinimalBitwidths()) {
     VectorParts &Parts = VectorLoopValueMap.getVector(KV.first);
     for (Value *&I : Parts) {
       ZExtInst *Inst = dyn_cast<ZExtInst>(I);
@@ -7162,8 +7166,9 @@ bool LoopVectorizePass::processLoop(Loop *L) {
     assert(IC > 1 && "interleave count should not be 1 or 0");
     // If we decided that it is not legal to vectorize the loop, then
     // interleave it.
-    InnerLoopUnroller Unroller(L, PSE, LI, DT, TLI, TTI, AC, ORE, IC, &LVL);
-    Unroller.vectorize(CM.MinBWs);
+    InnerLoopUnroller Unroller(L, PSE, LI, DT, TLI, TTI, AC, ORE, IC, &LVL,
+                               &CM);
+    Unroller.vectorize();
 
     ORE->emit(OptimizationRemark(LV_NAME, "Interleaved", L->getStartLoc(),
                                  L->getHeader())
@@ -7172,8 +7177,8 @@ bool LoopVectorizePass::processLoop(Loop *L) {
   } else {
     // If we decided that it is *legal* to vectorize the loop, then do it.
     InnerLoopVectorizer LB(L, PSE, LI, DT, TLI, TTI, AC, ORE, VF.Width, IC,
-                           &LVL);
-    LB.vectorize(CM.MinBWs);
+                           &LVL, &CM);
+    LB.vectorize();
     ++LoopsVectorized;
 
     // Add metadata to disable runtime unrolling a scalar loop when there are
