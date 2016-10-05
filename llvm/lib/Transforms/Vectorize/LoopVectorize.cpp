@@ -1658,9 +1658,10 @@ public:
   unsigned getNumLoads() const { return LAI->getNumLoads(); }
   unsigned getNumPredStores() const { return NumPredStores; }
 
-  /// Returns true if \p I is a store instruction in a predicated block that
-  /// will be scalarized during vectorization.
-  bool isPredicatedStore(Instruction *I);
+  /// Returns true if \p I is an instruction that will be scalarized with
+  /// predication. Such instructions include conditional stores and
+  /// instructions that may divide by zero.
+  bool isScalarWithPredication(Instruction *I);
 
   /// Returns true if \p I is a memory instruction that has a consecutive or
   /// consecutive-like pointer operand. Consecutive-like pointers are pointers
@@ -2762,7 +2763,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
 
   // Scalarize the memory instruction if necessary.
   if (Legal->memoryInstructionMustBeScalarized(Instr, VF))
-    return scalarizeInstruction(Instr, Legal->isPredicatedStore(Instr));
+    return scalarizeInstruction(Instr, Legal->isScalarWithPredication(Instr));
 
   // Determine if the pointer operand of the access is either consecutive or
   // reverse consecutive.
@@ -4566,7 +4567,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
     case Instruction::URem:
       // Scalarize with predication if this instruction may divide by zero and
       // block execution is conditional, otherwise fallthrough.
-      if (mayDivideByZero(I) && Legal->blockNeedsPredication(I.getParent())) {
+      if (Legal->isScalarWithPredication(&I)) {
         scalarizeInstruction(&I, true);
         continue;
       }
@@ -5305,9 +5306,21 @@ bool LoopVectorizationLegality::hasConsecutiveLikePtrOperand(Instruction *I) {
   return false;
 }
 
-bool LoopVectorizationLegality::isPredicatedStore(Instruction *I) {
-  auto *SI = dyn_cast<StoreInst>(I);
-  return SI && blockNeedsPredication(SI->getParent()) && !isMaskRequired(SI);
+bool LoopVectorizationLegality::isScalarWithPredication(Instruction *I) {
+  if (!blockNeedsPredication(I->getParent()))
+    return false;
+  switch(I->getOpcode()) {
+  default:
+    break;
+  case Instruction::Store:
+    return !isMaskRequired(I);
+  case Instruction::UDiv:
+  case Instruction::SDiv:
+  case Instruction::SRem:
+  case Instruction::URem:
+    return mayDivideByZero(*I);
+  }
+  return false;
 }
 
 bool LoopVectorizationLegality::memoryInstructionMustBeScalarized(
@@ -5336,7 +5349,7 @@ bool LoopVectorizationLegality::memoryInstructionMustBeScalarized(
 
   // If the instruction is a store located in a predicated block, it will be
   // scalarized.
-  if (isPredicatedStore(I))
+  if (isScalarWithPredication(I))
     return true;
 
   // If the instruction's allocated size doesn't equal it's type size, it
@@ -6508,8 +6521,7 @@ unsigned LoopVectorizationCostModel::getInstructionCost(Instruction *I,
     // We assume that if-converted blocks have a 50% chance of being executed.
     // Predicated scalarized instructions are avoided due to the CF that
     // bypasses turned off lanes. If we are not predicating, fallthrough.
-    if (VF > 1 && mayDivideByZero(*I) &&
-        Legal->blockNeedsPredication(I->getParent()))
+    if (VF > 1 && Legal->isScalarWithPredication(I))
       return VF * TTI.getArithmeticInstrCost(I->getOpcode(), RetTy) / 2 +
              getScalarizationOverhead(I, VF, true, TTI);
   case Instruction::Add:
