@@ -1244,14 +1244,16 @@ void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   for (SectionPiece &Piece : Sec->Pieces) {
     if (!Piece.Live)
       continue;
-    uintX_t OutputOffset = Builder.add(toStringRef(Sec->getData(Piece)));
+    StringRef Data = toStringRef(Sec->getData(Piece));
+    CachedHashString V(Data, Piece.Hash);
+    uintX_t OutputOffset = Builder.add(V);
     if (!shouldTailMerge())
       Piece.OutputOff = OutputOffset;
   }
 }
 
 template <class ELFT>
-unsigned MergeOutputSection<ELFT>::getOffset(StringRef Val) {
+unsigned MergeOutputSection<ELFT>::getOffset(CachedHashString Val) {
   return Builder.getOffset(Val);
 }
 

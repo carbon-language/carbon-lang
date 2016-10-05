@@ -124,13 +124,18 @@ template <class ELFT> InputSectionBase<ELFT> InputSectionBase<ELFT>::Discarded;
 
 // SectionPiece represents a piece of splittable section contents.
 struct SectionPiece {
+  SectionPiece(size_t Off, ArrayRef<uint8_t> Data, uint32_t Hash, bool Live)
+      : InputOff(Off), Hash(Hash), Size(Data.size()),
+        Live(Live || !Config->GcSections) {}
   SectionPiece(size_t Off, ArrayRef<uint8_t> Data, bool Live = false)
-      : InputOff(Off), Size(Data.size()), Live(Live || !Config->GcSections) {}
+      : SectionPiece(Off, Data, hash_value(Data), Live) {}
 
   size_t size() const { return Size; }
 
   size_t InputOff;
   size_t OutputOff = -1;
+
+  uint32_t Hash;
 
 private:
   // We use bitfields because SplitInputSection is accessed by
@@ -181,7 +186,7 @@ private:
 
 struct EhSectionPiece : public SectionPiece {
   EhSectionPiece(size_t Off, ArrayRef<uint8_t> Data, unsigned FirstRelocation)
-      : SectionPiece(Off, Data), Data(Data.data()),
+      : SectionPiece(Off, Data, 0, false), Data(Data.data()),
         FirstRelocation(FirstRelocation) {}
   const uint8_t *Data;
   ArrayRef<uint8_t> data() { return {Data, size()}; }
