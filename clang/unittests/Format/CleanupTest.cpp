@@ -709,13 +709,21 @@ TEST_F(CleanUpReplacementsTest, EmptyCode) {
   EXPECT_EQ(Expected, apply(Code, Replaces));
 }
 
-// FIXME: although this case does not crash, the insertion is wrong. A '\n'
-// should be inserted between the two #includes.
 TEST_F(CleanUpReplacementsTest, NoNewLineAtTheEndOfCode) {
   std::string Code = "#include <map>";
-  std::string Expected = "#include <map>#include <vector>\n";
+  std::string Expected = "#include <map>\n#include <vector>\n";
   tooling::Replacements Replaces =
       toReplacements({createInsertion("#include <vector>")});
+  EXPECT_EQ(Expected, apply(Code, Replaces));
+}
+
+TEST_F(CleanUpReplacementsTest, NoNewLineAtTheEndOfCodeMultipleInsertions) {
+  std::string Code = "#include <map>";
+  std::string Expected =
+      "#include <map>\n#include <string>\n#include <vector>\n";
+  tooling::Replacements Replaces =
+      toReplacements({createInsertion("#include <string>"),
+                      createInsertion("#include <vector>")});
   EXPECT_EQ(Expected, apply(Code, Replaces));
 }
 
