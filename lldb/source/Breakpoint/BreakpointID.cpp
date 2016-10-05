@@ -48,7 +48,7 @@ bool BreakpointID::IsValidIDExpression(llvm::StringRef str) {
 }
 
 llvm::ArrayRef<llvm::StringRef> BreakpointID::GetRangeSpecifiers() {
-  return g_range_specifiers;
+  return llvm::makeArrayRef(g_range_specifiers);
 }
 
 void BreakpointID::GetDescription(Stream *s, lldb::DescriptionLevel level) {
