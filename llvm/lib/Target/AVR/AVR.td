@@ -503,6 +503,8 @@ def : Device<"attiny9",            FamilyAVRTiny, ELFArchAVRTiny>;
 def : Device<"attiny10",           FamilyAVRTiny, ELFArchAVRTiny>;
 def : Device<"attiny20",           FamilyAVRTiny, ELFArchAVRTiny>;
 def : Device<"attiny40",           FamilyAVRTiny, ELFArchAVRTiny>;
+def : Device<"attiny102",          FamilyAVRTiny, ELFArchAVRTiny>;
+def : Device<"attiny104",          FamilyAVRTiny, ELFArchAVRTiny>;
 
 //===---------------------------------------------------------------------===//
 // Register File Description
