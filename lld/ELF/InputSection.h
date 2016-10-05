@@ -23,6 +23,7 @@ namespace elf {
 
 class DefinedCommon;
 class SymbolBody;
+struct SectionPiece;
 
 template <class ELFT> class ICF;
 template <class ELFT> class DefinedRegular;
@@ -63,6 +64,7 @@ public:
   StringRef Name;
 
   ArrayRef<uint8_t> Data;
+  ArrayRef<uint8_t> getData(const SectionPiece &P) const;
 
   // If a section is compressed, this has the uncompressed section data.
   std::unique_ptr<char[]> UncompressedData;
@@ -123,10 +125,8 @@ template <class ELFT> InputSectionBase<ELFT> InputSectionBase<ELFT>::Discarded;
 // SectionPiece represents a piece of splittable section contents.
 struct SectionPiece {
   SectionPiece(size_t Off, ArrayRef<uint8_t> Data, bool Live = false)
-      : InputOff(Off), Data((const uint8_t *)Data.data()), Size(Data.size()),
-        Live(Live || !Config->GcSections) {}
+      : InputOff(Off), Size(Data.size()), Live(Live || !Config->GcSections) {}
 
-  ArrayRef<uint8_t> data() { return {Data, Size}; }
   size_t size() const { return Size; }
 
   size_t InputOff;
@@ -136,7 +136,6 @@ private:
   // We use bitfields because SplitInputSection is accessed by
   // std::upper_bound very often.
   // We want to save bits to make it cache friendly.
-  const uint8_t *Data;
   uint32_t Size : 31;
 
 public:
@@ -182,7 +181,10 @@ private:
 
 struct EhSectionPiece : public SectionPiece {
   EhSectionPiece(size_t Off, ArrayRef<uint8_t> Data, unsigned FirstRelocation)
-      : SectionPiece(Off, Data), FirstRelocation(FirstRelocation) {}
+      : SectionPiece(Off, Data), Data(Data.data()),
+        FirstRelocation(FirstRelocation) {}
+  const uint8_t *Data;
+  ArrayRef<uint8_t> data() { return {Data, size()}; }
   unsigned FirstRelocation;
 };
 

@@ -1191,7 +1191,7 @@ template <class ELFT> void EhOutputSection<ELFT>::writeTo(uint8_t *Buf) {
     size_t CieOffset = Cie->Piece->OutputOff;
     writeCieFde<ELFT>(Buf + CieOffset, Cie->Piece->data());
 
-    for (SectionPiece *Fde : Cie->FdePieces) {
+    for (EhSectionPiece *Fde : Cie->FdePieces) {
       size_t Off = Fde->OutputOff;
       writeCieFde<ELFT>(Buf + Off, Fde->data());
 
@@ -1244,7 +1244,7 @@ void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   for (SectionPiece &Piece : Sec->Pieces) {
     if (!Piece.Live)
       continue;
-    uintX_t OutputOffset = Builder.add(toStringRef(Piece.data()));
+    uintX_t OutputOffset = Builder.add(toStringRef(Sec->getData(Piece)));
     if (!shouldTailMerge())
       Piece.OutputOff = OutputOffset;
   }

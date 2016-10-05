@@ -28,6 +28,10 @@ using namespace llvm::support::endian;
 using namespace lld;
 using namespace lld::elf;
 
+ArrayRef<uint8_t> InputSectionData::getData(const SectionPiece &P) const {
+  return Data.slice(P.InputOff, P.size());
+}
+
 template <class ELFT>
 static ArrayRef<uint8_t> getSectionContents(elf::ObjectFile<ELFT> *File,
                                             const typename ELFT::Shdr *Hdr) {
@@ -638,7 +642,7 @@ template <class ELFT> void  MergeInputSection<ELFT>::finalizePieces() {
     if (Piece.OutputOff == size_t(-1)) {
       // Offsets of tail-merged strings are computed lazily.
       auto *OutSec = static_cast<MergeOutputSection<ELFT> *>(this->OutSec);
-      ArrayRef<uint8_t> D = Piece.data();
+      ArrayRef<uint8_t> D = this->getData(Piece);
       StringRef S((const char *)D.data(), D.size());
       Piece.OutputOff = OutSec->getOffset(S);
     }
