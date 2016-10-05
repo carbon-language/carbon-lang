@@ -300,6 +300,9 @@ class INSN_MIPS3_32_NOT_32R6_64R6 {
 // The portions of MIPS-III that were also added to MIPS32
 class INSN_MIPS3_32R2 { list<Predicate> InsnPredicates = [HasMips3_32r2]; }
 
+// The portions of MIPS-IV that were also added to MIPS32.
+class INSN_MIPS4_32 { list <Predicate> InsnPredicates = [HasMips4_32]; }
+
 // The portions of MIPS-IV that were also added to MIPS32 but were removed in
 // MIPS32r6 and MIPS64r6.
 class INSN_MIPS4_32_NOT_32R6_64R6 {
@@ -310,6 +313,11 @@ class INSN_MIPS4_32_NOT_32R6_64R6 {
 // MIPS32r6 and MIPS64r6.
 class INSN_MIPS4_32R2_NOT_32R6_64R6 {
   list<Predicate> InsnPredicates = [HasMips4_32r2, NotMips32r6, NotMips64r6];
+}
+
+// The portions of MIPS-IV that were also added to MIPS32r2.
+class INSN_MIPS4_32R2 {
+  list<Predicate> InsnPredicates = [HasMips4_32r2];
 }
 
 // The portions of MIPS-V that were also added to MIPS32r2 but were removed in
