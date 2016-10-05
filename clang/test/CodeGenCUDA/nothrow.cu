@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -std=c++11 -fcxx-exceptions -fexceptions -fcuda-is-device \
 // RUN:   -triple nvptx-nvidia-cuda -emit-llvm -disable-llvm-passes -o - %s | \
-// RUN  FileCheck -check-prefix DEVICE %s
+// RUN: FileCheck -check-prefix DEVICE %s
 
 // RUN: %clang_cc1 -std=c++11 -fcxx-exceptions -fexceptions \
 // RUN:   -triple x86_64-unknown-linux-gnu -emit-llvm -disable-llvm-passes -o - %s | \
