@@ -27,6 +27,7 @@ namespace lldb_private {
 
 class CommandObjectRegexCommand : public CommandObjectRaw {
 public:
+  // TODO: Convert this class to use StringRefs.
   CommandObjectRegexCommand(CommandInterpreter &interpreter, const char *name,
                             const char *help, const char *syntax,
                             uint32_t max_matches, uint32_t completion_type_mask,

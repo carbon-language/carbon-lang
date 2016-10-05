@@ -108,6 +108,7 @@ public:
 
   typedef std::map<std::string, lldb::CommandObjectSP> CommandMap;
 
+  // TODO: Change arguments and all derived classes to use StringRef.
   CommandObject(CommandInterpreter &interpreter, const char *name,
                 const char *help = nullptr, const char *syntax = nullptr,
                 uint32_t flags = 0);
