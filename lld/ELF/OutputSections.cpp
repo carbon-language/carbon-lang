@@ -1241,13 +1241,11 @@ void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   this->Header.sh_entsize = Sec->getSectionHdr()->sh_entsize;
   Sections.push_back(Sec);
 
-  bool IsString = this->Header.sh_flags & SHF_STRINGS;
-
   for (SectionPiece &Piece : Sec->Pieces) {
     if (!Piece.Live)
       continue;
     uintX_t OutputOffset = Builder.add(toStringRef(Piece.data()));
-    if (!IsString || !shouldTailMerge())
+    if (!shouldTailMerge())
       Piece.OutputOff = OutputOffset;
   }
 }
