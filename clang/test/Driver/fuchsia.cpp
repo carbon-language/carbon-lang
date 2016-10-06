@@ -1,4 +1,4 @@
-// RUN: %clangxx %s -### --target=x86_64-unknown-fuchsia \
+// RUN: %clangxx %s -### -no-canonical-prefixes --target=x86_64-unknown-fuchsia \
 // RUN:     --sysroot=%S/platform 2>&1 | FileCheck %s
 // CHECK: {{.*}}clang{{.*}}" "-cc1"
 // CHECK: "-fuse-init-array"
