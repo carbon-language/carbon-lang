@@ -3075,6 +3075,9 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
     case llvm::Triple::NaCl:
       TC = new toolchains::NaClToolChain(*this, Target, Args);
       break;
+    case llvm::Triple::Fuchsia:
+      TC = new toolchains::Fuchsia(*this, Target, Args);
+      break;
     case llvm::Triple::Solaris:
       TC = new toolchains::Solaris(*this, Target, Args);
       break;
