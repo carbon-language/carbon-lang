@@ -307,25 +307,6 @@ template <class ELFT> void Writer<ELFT>::run() {
     error(EC, "failed to write to the output file");
 }
 
-template <class ELFT> static void reportUndefined(SymbolBody *Sym) {
-  if (Config->UnresolvedSymbols == UnresolvedPolicy::Ignore)
-    return;
-
-  if (Config->Shared && Sym->symbol()->Visibility == STV_DEFAULT &&
-      Config->UnresolvedSymbols != UnresolvedPolicy::NoUndef)
-    return;
-
-  std::string Msg = "undefined symbol: ";
-  Msg += Config->Demangle ? demangle(Sym->getName()) : Sym->getName().str();
-
-  if (Sym->File)
-    Msg += " in " + getFilename(Sym->File);
-  if (Config->UnresolvedSymbols == UnresolvedPolicy::Warn)
-    warn(Msg);
-  else
-    error(Msg);
-}
-
 template <class ELFT>
 static bool shouldKeepInSymtab(InputSectionBase<ELFT> *Sec, StringRef SymName,
                                const SymbolBody &B) {
@@ -818,11 +799,6 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // synthesized ones. Visit all symbols to give the finishing touches.
   for (Symbol *S : Symtab<ELFT>::X->getSymbols()) {
     SymbolBody *Body = S->body();
-
-    // We only report undefined symbols in regular objects. This means that we
-    // will accept an undefined reference in bitcode if it can be optimized out.
-    if (S->IsUsedInRegularObj && Body->isUndefined() && !S->isWeak())
-      reportUndefined<ELFT>(Body);
 
     if (!includeInSymtab<ELFT>(*Body))
       continue;
