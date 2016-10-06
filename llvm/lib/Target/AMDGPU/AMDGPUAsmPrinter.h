@@ -15,10 +15,13 @@
 #ifndef LLVM_LIB_TARGET_AMDGPU_AMDGPUASMPRINTER_H
 #define LLVM_LIB_TARGET_AMDGPU_AMDGPUASMPRINTER_H
 
+#include "AMDGPUMCInstLower.h"
+
 #include "llvm/CodeGen/AsmPrinter.h"
 #include <vector>
 
 namespace llvm {
+class MCOperand;
 
 class AMDGPUAsmPrinter final : public AsmPrinter {
 private:
@@ -119,6 +122,15 @@ public:
   bool runOnMachineFunction(MachineFunction &MF) override;
 
   StringRef getPassName() const override;
+
+  /// \brief Wrapper for MCInstLowering.lowerOperand() for the tblgen'erated
+  /// pseudo lowering.
+  bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp) const;
+
+  /// \brief tblgen'erated driver function for lowering simple MI->MC pseudo
+  /// instructions.
+  bool emitPseudoExpansionLowering(MCStreamer &OutStreamer,
+                                   const MachineInstr *MI);
 
   /// Implemented in AMDGPUMCInstLower.cpp
   void EmitInstruction(const MachineInstr *MI) override;

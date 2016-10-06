@@ -36,6 +36,9 @@
 
 using namespace llvm;
 
+#include "AMDGPUGenMCPseudoLowering.inc"
+
+
 AMDGPUMCInstLower::AMDGPUMCInstLower(MCContext &ctx, const AMDGPUSubtarget &st,
                                      const AsmPrinter &ap):
   Ctx(ctx), ST(st), AP(ap) { }
@@ -68,6 +71,43 @@ const MCExpr *AMDGPUMCInstLower::getLongBranchBlockExpr(
   return MCBinaryExpr::createSub(SrcBBSym, DestBBSym, Ctx);
 }
 
+bool AMDGPUMCInstLower::lowerOperand(const MachineOperand &MO,
+                                     MCOperand &MCOp) const {
+  switch (MO.getType()) {
+  default:
+    llvm_unreachable("unknown operand type");
+  case MachineOperand::MO_Immediate:
+    MCOp = MCOperand::createImm(MO.getImm());
+    return true;
+  case MachineOperand::MO_Register:
+    MCOp = MCOperand::createReg(AMDGPU::getMCReg(MO.getReg(), ST));
+    return true;
+  case MachineOperand::MO_MachineBasicBlock:
+    MCOp = MCOperand::createExpr(MCSymbolRefExpr::create(
+                                   MO.getMBB()->getSymbol(), Ctx));
+    return true;
+  case MachineOperand::MO_GlobalAddress: {
+    const GlobalValue *GV = MO.getGlobal();
+    SmallString<128> SymbolName;
+    AP.getNameWithPrefix(SymbolName, GV);
+    MCSymbol *Sym = Ctx.getOrCreateSymbol(SymbolName);
+    const MCExpr *SymExpr =
+      MCSymbolRefExpr::create(Sym, getVariantKind(MO.getTargetFlags()),Ctx);
+    const MCExpr *Expr = MCBinaryExpr::createAdd(SymExpr,
+      MCConstantExpr::create(MO.getOffset(), Ctx), Ctx);
+    MCOp = MCOperand::createExpr(Expr);
+    return true;
+  }
+  case MachineOperand::MO_ExternalSymbol: {
+    MCSymbol *Sym = Ctx.getOrCreateSymbol(StringRef(MO.getSymbolName()));
+    Sym->setExternal(true);
+    const MCSymbolRefExpr *Expr = MCSymbolRefExpr::create(Sym, Ctx);
+    MCOp = MCOperand::createExpr(Expr);
+    return true;
+  }
+  }
+}
+
 void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
 
   int MCOpcode = ST.getInstrInfo()->pseudoToMCOpcode(MI->getOpcode());
@@ -82,54 +122,22 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
 
   for (const MachineOperand &MO : MI->explicit_operands()) {
     MCOperand MCOp;
-    switch (MO.getType()) {
-    default:
-      llvm_unreachable("unknown operand type");
-    case MachineOperand::MO_Immediate:
-      MCOp = MCOperand::createImm(MO.getImm());
-      break;
-    case MachineOperand::MO_Register:
-      MCOp = MCOperand::createReg(AMDGPU::getMCReg(MO.getReg(), ST));
-      break;
-    case MachineOperand::MO_MachineBasicBlock:
-      if (MO.getTargetFlags() != 0) {
-        MCOp = MCOperand::createExpr(
-          getLongBranchBlockExpr(*MI->getParent(), MO));
-      } else {
-        MCOp = MCOperand::createExpr(
-          MCSymbolRefExpr::create(MO.getMBB()->getSymbol(), Ctx));
-      }
-
-      break;
-    case MachineOperand::MO_GlobalAddress: {
-      const GlobalValue *GV = MO.getGlobal();
-      SmallString<128> SymbolName;
-      AP.getNameWithPrefix(SymbolName, GV);
-      MCSymbol *Sym = Ctx.getOrCreateSymbol(SymbolName);
-      const MCExpr *SymExpr =
-          MCSymbolRefExpr::create(Sym, getVariantKind(MO.getTargetFlags()),Ctx);
-      const MCExpr *Expr = MCBinaryExpr::createAdd(SymExpr,
-          MCConstantExpr::create(MO.getOffset(), Ctx), Ctx);
-      MCOp = MCOperand::createExpr(Expr);
-      break;
-    }
-    case MachineOperand::MO_ExternalSymbol: {
-      MCSymbol *Sym = Ctx.getOrCreateSymbol(StringRef(MO.getSymbolName()));
-      Sym->setExternal(true);
-      const MCSymbolRefExpr *Expr = MCSymbolRefExpr::create(Sym, Ctx);
-      MCOp = MCOperand::createExpr(Expr);
-      break;
-    }
-    case MachineOperand::MO_MCSymbol:
-      MCOp = MCOperand::createExpr(
-        MCSymbolRefExpr::create(MO.getMCSymbol(), Ctx));
-      break;
-    }
+    lowerOperand(MO, MCOp);
     OutMI.addOperand(MCOp);
   }
 }
 
+bool AMDGPUAsmPrinter::lowerOperand(const MachineOperand &MO,
+                                    MCOperand &MCOp) const {
+  const AMDGPUSubtarget &STI = MF->getSubtarget<AMDGPUSubtarget>();
+  AMDGPUMCInstLower MCInstLowering(OutContext, STI, *this);
+  return MCInstLowering.lowerOperand(MO, MCOp);
+}
+
 void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+  if (emitPseudoExpansionLowering(*OutStreamer, MI))
+    return;
+
   const AMDGPUSubtarget &STI = MF->getSubtarget<AMDGPUSubtarget>();
   AMDGPUMCInstLower MCInstLowering(OutContext, STI, *this);
 
