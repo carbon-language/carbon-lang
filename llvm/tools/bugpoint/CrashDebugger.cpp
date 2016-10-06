@@ -19,7 +19,6 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LegacyPassManager.h"
@@ -55,12 +54,6 @@ cl::opt<bool> DontReducePassList("disable-pass-list-reduction",
 cl::opt<bool> NoNamedMDRM("disable-namedmd-remove",
                           cl::desc("Do not remove global named metadata"),
                           cl::init(false));
-cl::opt<bool> NoStripDebugInfo("disable-strip-debuginfo",
-                               cl::desc("Do not strip debug info metadata"),
-                               cl::init(false));
-cl::opt<bool> NoStripDebugTypeInfo("disable-strip-debug-types",
-                               cl::desc("Do not strip debug type info metadata"),
-                               cl::init(false));
 cl::opt<bool> VerboseErrors("verbose-errors",
                             cl::desc("Print the output of crashing program"),
                             cl::init(false));
@@ -1129,30 +1122,6 @@ static Error DebugACrash(BugDriver &BD,
   if (!BugpointIsInterrupted)
     if (Error E = ReduceInsts(BD, TestFn))
       return E;
-
-  if (!NoStripDebugInfo) {
-    if (!BugpointIsInterrupted) {
-      outs() << "\n*** Attempting to strip the debug info: ";
-      Module *M = CloneModule(BD.getProgram()).release();
-      StripDebugInfo(*M);
-      if (TestFn(BD, M))
-        BD.setNewProgram(M);
-      else
-        delete M;
-    }
-  }
-
-  if (!NoStripDebugTypeInfo) {
-    if (!BugpointIsInterrupted) {
-      outs() << "\n*** Attempting to strip the debug type info: ";
-      Module *M = CloneModule(BD.getProgram()).release();
-      stripNonLineTableDebugInfo(*M);
-      if (TestFn(BD, M))
-        BD.setNewProgram(M);
-      else
-        delete M;
-    }
-  }
 
   if (!NoNamedMDRM) {
     if (!BugpointIsInterrupted) {
