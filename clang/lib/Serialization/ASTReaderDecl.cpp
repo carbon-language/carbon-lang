@@ -2320,8 +2320,6 @@ template<typename T>
 void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *DBase,
                                       RedeclarableResult &Redecl,
                                       DeclID TemplatePatternID) {
-  T *D = static_cast<T*>(DBase);
-
   // If modules are not available, there is no reason to perform this merge.
   if (!Reader.getContext().getLangOpts().Modules)
     return;
@@ -2329,6 +2327,8 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *DBase,
   // If we're not the canonical declaration, we don't need to merge.
   if (!DBase->isFirstDecl())
     return;
+
+  T *D = static_cast<T*>(DBase);
 
   if (auto *Existing = Redecl.getKnownMergeTarget())
     // We already know of an existing declaration we should merge with.
