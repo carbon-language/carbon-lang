@@ -248,29 +248,24 @@ static void collectLocationInfo(yaml::Stream &Stream,
     // We track information on both actual and potential transformations. This
     // way, if there are multiple possible things on a line that are, or could
     // have been transformed, we can indicate that explicitly in the output.
-    auto UpdateLLII = [Transformed, VectorizationFactor,
-                       InterleaveCount,
-                       UnrollCount](OptReportLocationInfo &LI,
-                                    OptReportLocationItemInfo &LLII) {
+    auto UpdateLLII = [Transformed](OptReportLocationItemInfo &LLII) {
       LLII.Analyzed = true;
-      if (Transformed) {
+      if (Transformed)
         LLII.Transformed = true;
-
-        LI.VectorizationFactor = VectorizationFactor;
-        LI.InterleaveCount = InterleaveCount;
-        LI.UnrollCount = UnrollCount;
-      }
     };
 
     if (Pass == "inline") {
       auto &LI = LocationInfo[File][Line][Function][Column];
-      UpdateLLII(LI, LI.Inlined);
+      UpdateLLII(LI.Inlined);
     } else if (Pass == "loop-unroll") {
       auto &LI = LocationInfo[File][Line][Function][Column];
-      UpdateLLII(LI, LI.Unrolled);
+      LI.UnrollCount = UnrollCount;
+      UpdateLLII(LI.Unrolled);
     } else if (Pass == "loop-vectorize") {
       auto &LI = LocationInfo[File][Line][Function][Column];
-      UpdateLLII(LI, LI.Vectorized);
+      LI.VectorizationFactor = VectorizationFactor;
+      LI.InterleaveCount = InterleaveCount;
+      UpdateLLII(LI.Vectorized);
     }
   }
 }
