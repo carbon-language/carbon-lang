@@ -306,12 +306,14 @@ static bool IsChild(const MachineInstr &MI,
 }
 
 /// Insert a BLOCK marker for branches to MBB (if needed).
-static void PlaceBlockMarker(MachineBasicBlock &MBB, MachineFunction &MF,
-                             SmallVectorImpl<MachineBasicBlock *> &ScopeTops,
-                             const WebAssemblyInstrInfo &TII,
-                             const MachineLoopInfo &MLI,
-                             MachineDominatorTree &MDT,
-                             WebAssemblyFunctionInfo &MFI) {
+static void PlaceBlockMarker(
+    MachineBasicBlock &MBB, MachineFunction &MF,
+    SmallVectorImpl<MachineBasicBlock *> &ScopeTops,
+    DenseMap<const MachineInstr *, const MachineBasicBlock *> &LoopTops,
+    const WebAssemblyInstrInfo &TII,
+    const MachineLoopInfo &MLI,
+    MachineDominatorTree &MDT,
+    WebAssemblyFunctionInfo &MFI) {
   // First compute the nearest common dominator of all forward non-fallthrough
   // predecessors so that we minimize the time that the BLOCK is on the stack,
   // which reduces overall stack height.
@@ -347,13 +349,6 @@ static void PlaceBlockMarker(MachineBasicBlock &MBB, MachineFunction &MF,
     }
   }
 
-  // If there's a loop which ends just before MBB which contains Header, we can
-  // reuse its label instead of inserting a new BLOCK.
-  for (MachineLoop *Loop = MLI.getLoopFor(LayoutPred);
-       Loop && Loop->contains(LayoutPred); Loop = Loop->getParentLoop())
-    if (Loop && LoopBottom(Loop) == LayoutPred && Loop->contains(Header))
-      return;
-
   // Decide where in Header to put the BLOCK.
   MachineBasicBlock::iterator InsertPos;
   MachineLoop *HeaderLoop = MLI.getLoopFor(Header);
@@ -361,7 +356,8 @@ static void PlaceBlockMarker(MachineBasicBlock &MBB, MachineFunction &MF,
     // Header is the header of a loop that does not lexically contain MBB, so
     // the BLOCK needs to be above the LOOP, after any END constructs.
     InsertPos = Header->begin();
-    while (InsertPos->getOpcode() != WebAssembly::LOOP)
+    while (InsertPos->getOpcode() == WebAssembly::END_BLOCK ||
+           InsertPos->getOpcode() == WebAssembly::END_LOOP)
       ++InsertPos;
   } else {
     // Otherwise, insert the BLOCK as late in Header as we can, but before the
@@ -381,7 +377,8 @@ static void PlaceBlockMarker(MachineBasicBlock &MBB, MachineFunction &MF,
   // Mark the end of the block.
   InsertPos = MBB.begin();
   while (InsertPos != MBB.end() &&
-         InsertPos->getOpcode() == WebAssembly::END_LOOP)
+         InsertPos->getOpcode() == WebAssembly::END_LOOP &&
+         LoopTops[&*InsertPos]->getNumber() >= Header->getNumber())
     ++InsertPos;
   BuildMI(MBB, InsertPos, DebugLoc(), TII.get(WebAssembly::END_BLOCK));
 
@@ -468,7 +465,7 @@ static void PlaceMarkers(MachineFunction &MF, const MachineLoopInfo &MLI,
     PlaceLoopMarker(MBB, MF, ScopeTops, LoopTops, TII, MLI);
 
     // Place the BLOCK for MBB if MBB is branched to from above.
-    PlaceBlockMarker(MBB, MF, ScopeTops, TII, MLI, MDT, MFI);
+    PlaceBlockMarker(MBB, MF, ScopeTops, LoopTops, TII, MLI, MDT, MFI);
   }
 
   // Now rewrite references to basic blocks to be depth immediates.
@@ -477,20 +474,18 @@ static void PlaceMarkers(MachineFunction &MF, const MachineLoopInfo &MLI,
     for (auto &MI : reverse(MBB)) {
       switch (MI.getOpcode()) {
       case WebAssembly::BLOCK:
-        assert(ScopeTops[Stack.back()->getNumber()] == &MBB &&
+        assert(ScopeTops[Stack.back()->getNumber()]->getNumber() <= MBB.getNumber() &&
                "Block should be balanced");
         Stack.pop_back();
         break;
       case WebAssembly::LOOP:
         assert(Stack.back() == &MBB && "Loop top should be balanced");
         Stack.pop_back();
-        Stack.pop_back();
         break;
       case WebAssembly::END_BLOCK:
         Stack.push_back(&MBB);
         break;
       case WebAssembly::END_LOOP:
-        Stack.push_back(&MBB);
         Stack.push_back(LoopTops[&MI]);
         break;
       default:

@@ -69,11 +69,8 @@ void WebAssemblyInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
     default:
       break;
     case WebAssembly::LOOP: {
-      // Grab the TopLabel value first so that labels print in numeric order.
-      uint64_t TopLabel = ControlFlowCounter++;
-      ControlFlowStack.push_back(std::make_pair(ControlFlowCounter++, false));
-      printAnnotation(OS, "label" + utostr(TopLabel) + ':');
-      ControlFlowStack.push_back(std::make_pair(TopLabel, true));
+      printAnnotation(OS, "label" + utostr(ControlFlowCounter) + ':');
+      ControlFlowStack.push_back(std::make_pair(ControlFlowCounter++, true));
       break;
     }
     case WebAssembly::BLOCK:
@@ -81,8 +78,6 @@ void WebAssemblyInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
       break;
     case WebAssembly::END_LOOP:
       ControlFlowStack.pop_back();
-      printAnnotation(
-          OS, "label" + utostr(ControlFlowStack.pop_back_val().first) + ':');
       break;
     case WebAssembly::END_BLOCK:
       printAnnotation(
