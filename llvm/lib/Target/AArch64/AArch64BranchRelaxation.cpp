@@ -14,8 +14,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
@@ -229,41 +227,21 @@ AArch64BranchRelaxation::splitBlockBeforeInstr(MachineInstr &MI) {
 /// specific BB can fit in MI's displacement field.
 bool AArch64BranchRelaxation::isBlockInRange(
   const MachineInstr &MI, const MachineBasicBlock &DestBB) const {
-  unsigned BrOffset = getInstrOffset(MI);
-  unsigned DestOffset = BlockInfo[DestBB.getNumber()].Offset;
+  int64_t BrOffset = getInstrOffset(MI);
+  int64_t DestOffset = BlockInfo[DestBB.getNumber()].Offset;
 
-  if (TII->isBranchInRange(MI.getOpcode(), BrOffset, DestOffset))
+  if (TII->isBranchOffsetInRange(MI.getOpcode(), DestOffset - BrOffset))
     return true;
 
   DEBUG(
     dbgs() << "Out of range branch to destination BB#" << DestBB.getNumber()
            << " from BB#" << MI.getParent()->getNumber()
            << " to " << DestOffset
-           << " offset " << static_cast<int>(DestOffset - BrOffset)
+           << " offset " << DestOffset - BrOffset
            << '\t' << MI
   );
 
   return false;
-}
-
-static MachineBasicBlock *getDestBlock(const MachineInstr &MI) {
-  switch (MI.getOpcode()) {
-  default:
-    llvm_unreachable("unexpected opcode!");
-  case AArch64::B:
-    return MI.getOperand(0).getMBB();
-  case AArch64::TBZW:
-  case AArch64::TBNZW:
-  case AArch64::TBZX:
-  case AArch64::TBNZX:
-    return MI.getOperand(2).getMBB();
-  case AArch64::CBZW:
-  case AArch64::CBNZW:
-  case AArch64::CBZX:
-  case AArch64::CBNZX:
-  case AArch64::Bcc:
-    return MI.getOperand(1).getMBB();
-  }
 }
 
 /// fixupConditionalBranch - Fix up a conditional branch whose destination is
@@ -368,7 +346,7 @@ bool AArch64BranchRelaxation::relaxBranchInstructions() {
       MachineInstr &MI = *J;
 
       if (MI.isConditionalBranch()) {
-        MachineBasicBlock *DestBB = getDestBlock(MI);
+        MachineBasicBlock *DestBB = TII->getBranchDestBlock(MI);
         if (!isBlockInRange(MI, *DestBB)) {
           if (Next != MBB.end() && Next->isConditionalBranch()) {
             // If there are multiple conditional branches, this isn't an
