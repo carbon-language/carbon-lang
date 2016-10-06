@@ -161,7 +161,7 @@ runClangMoveOnCode(const move::ClangMoveTool::MoveDefinitionSpec &Spec) {
   assert(!EC);
   (void)EC;
   auto Factory = llvm::make_unique<clang::move::ClangMoveActionFactory>(
-      Spec, FileToReplacements, InitialDirectory.str());
+      Spec, FileToReplacements, InitialDirectory.str(), "LLVM");
 
   tooling::runToolOnCodeWithArgs(
       Factory->create(), TestCC, {"-std=c++11"}, TestCCName, "clang-move",

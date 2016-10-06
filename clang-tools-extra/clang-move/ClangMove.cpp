@@ -240,11 +240,12 @@ ClangMoveAction::CreateASTConsumer(clang::CompilerInstance &Compiler,
 }
 
 ClangMoveTool::ClangMoveTool(
-      const MoveDefinitionSpec &MoveSpec,
-      std::map<std::string, tooling::Replacements> &FileToReplacements,
-      llvm::StringRef OriginalRunningDirectory)
-      : Spec(MoveSpec), FileToReplacements(FileToReplacements),
-        OriginalRunningDirectory(OriginalRunningDirectory) {
+    const MoveDefinitionSpec &MoveSpec,
+    std::map<std::string, tooling::Replacements> &FileToReplacements,
+    llvm::StringRef OriginalRunningDirectory, llvm::StringRef FallbackStyle)
+    : Spec(MoveSpec), FileToReplacements(FileToReplacements),
+      OriginalRunningDirectory(OriginalRunningDirectory),
+      FallbackStyle(FallbackStyle) {
   Spec.Name = llvm::StringRef(Spec.Name).ltrim(':');
   if (!Spec.NewHeader.empty())
     CCIncludes.push_back("#include \"" + Spec.NewHeader + "\"\n");
@@ -364,13 +365,27 @@ void ClangMoveTool::addIncludes(llvm::StringRef IncludeHeader,
 
 void ClangMoveTool::removeClassDefinitionInOldFiles() {
   for (const auto &MovedDecl : RemovedDecls) {
-    auto EndLoc = getLocForEndOfDecl(MovedDecl.Decl, MovedDecl.SM);
+    const auto &SM = *MovedDecl.SM;
+    auto EndLoc = getLocForEndOfDecl(MovedDecl.Decl, &SM);
     clang::tooling::Replacement RemoveReplacement(
-        *MovedDecl.SM, clang::CharSourceRange::getTokenRange(
-                           MovedDecl.Decl->getLocStart(), EndLoc),
+        SM, clang::CharSourceRange::getTokenRange(MovedDecl.Decl->getLocStart(),
+                                                  EndLoc),
         "");
     std::string FilePath = RemoveReplacement.getFilePath().str();
     addOrMergeReplacement(RemoveReplacement, &FileToReplacements[FilePath]);
+
+    llvm::StringRef Code =
+        SM.getBufferData(SM.getFileID(MovedDecl.Decl->getLocation()));
+    format::FormatStyle Style =
+        format::getStyle("file", FilePath, FallbackStyle);
+    auto CleanReplacements = format::cleanupAroundReplacements(
+        Code, FileToReplacements[FilePath], Style);
+
+    if (!CleanReplacements) {
+      llvm::errs() << llvm::toString(CleanReplacements.takeError()) << "\n";
+      continue;
+    }
+    FileToReplacements[FilePath] = *CleanReplacements;
   }
 }
 

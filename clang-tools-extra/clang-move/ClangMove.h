@@ -50,7 +50,7 @@ public:
   ClangMoveTool(
       const MoveDefinitionSpec &MoveSpec,
       std::map<std::string, tooling::Replacements> &FileToReplacements,
-      llvm::StringRef OriginalRunningDirectory);
+      llvm::StringRef OriginalRunningDirectory, llvm::StringRef Style);
 
   void registerMatchers(ast_matchers::MatchFinder *Finder);
 
@@ -95,6 +95,8 @@ private:
   // directory when analyzing the source file. We save the original working
   // directory in order to get the absolute file path for the fields in Spec.
   std::string OriginalRunningDirectory;
+  // The name of a predefined code style.
+  std::string FallbackStyle;
 };
 
 class ClangMoveAction : public clang::ASTFrontendAction {
@@ -102,8 +104,9 @@ public:
   ClangMoveAction(
       const ClangMoveTool::MoveDefinitionSpec &spec,
       std::map<std::string, tooling::Replacements> &FileToReplacements,
-      llvm::StringRef OriginalRunningDirectory)
-      : MoveTool(spec, FileToReplacements, OriginalRunningDirectory) {
+      llvm::StringRef OriginalRunningDirectory, llvm::StringRef FallbackStyle)
+      : MoveTool(spec, FileToReplacements, OriginalRunningDirectory,
+                 FallbackStyle) {
     MoveTool.registerMatchers(&MatchFinder);
   }
 
@@ -123,18 +126,21 @@ public:
   ClangMoveActionFactory(
       const ClangMoveTool::MoveDefinitionSpec &Spec,
       std::map<std::string, tooling::Replacements> &FileToReplacements,
-      llvm::StringRef OriginalRunningDirectory)
+      llvm::StringRef OriginalRunningDirectory, llvm::StringRef FallbackStyle)
       : Spec(Spec), FileToReplacements(FileToReplacements),
-        OriginalRunningDirectory(OriginalRunningDirectory) {}
+        OriginalRunningDirectory(OriginalRunningDirectory),
+        FallbackStyle(FallbackStyle) {}
 
   clang::FrontendAction *create() override {
-    return new ClangMoveAction(Spec, FileToReplacements, OriginalRunningDirectory);
+    return new ClangMoveAction(Spec, FileToReplacements,
+                               OriginalRunningDirectory, FallbackStyle);
   }
 
 private:
   const ClangMoveTool::MoveDefinitionSpec &Spec;
   std::map<std::string, tooling::Replacements> &FileToReplacements;
   std::string OriginalRunningDirectory;
+  std::string FallbackStyle;
 };
 
 } // namespace move

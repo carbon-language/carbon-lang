@@ -86,7 +86,7 @@ int main(int argc, const char **argv) {
                              Twine(EC.message()));
 
   auto Factory = llvm::make_unique<clang::move::ClangMoveActionFactory>(
-      Spec, Tool.getReplacements(), InitialDirectory.str());
+      Spec, Tool.getReplacements(), InitialDirectory.str(), Style);
 
   int CodeStatus = Tool.run(Factory.get());
   if (CodeStatus)
