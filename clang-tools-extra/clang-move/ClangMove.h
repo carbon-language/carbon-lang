@@ -27,6 +27,8 @@ class ClangMoveTool : public ast_matchers::MatchFinder::MatchCallback {
 public:
   // Information about the declaration being moved.
   struct MovedDecl {
+    // FIXME: Replace Decl with SourceRange to get rid of calculating range for
+    // the Decl duplicately.
     const clang::NamedDecl *Decl = nullptr;
     clang::SourceManager *SM = nullptr;
     MovedDecl() = default;
