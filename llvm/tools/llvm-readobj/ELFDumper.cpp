@@ -3493,7 +3493,7 @@ template <class ELFT> void LLVMStyle<ELFT>::printSections(const ELFO *Obj) {
         const Elf_Shdr *SymSec = unwrapOrError(
             Obj->getSection(&Sym, Symtab, this->dumper()->getShndxTable()));
         if (SymSec == &Sec)
-          printSymbol(Obj, &Sym, Obj->symbol_begin(Symtab), StrTable, false);
+          printSymbol(Obj, &Sym, Obj->symbols(Symtab).begin(), StrTable, false);
       }
     }
 
