@@ -432,7 +432,7 @@ static bool writeReport(LocationInfoTy &LocationInfo) {
           return RS.str();
         };
 
-        OS << llvm::format_decimal(L + 1, LNDigits) << " ";
+        OS << llvm::format_decimal(L, LNDigits) << " ";
         OS << (LLI.Inlined.Transformed && InlinedCols < 2 ? "I" : " ");
         OS << (LLI.Unrolled.Transformed && UnrolledCols < 2 ?
                 "U" + UStr(LLI) : " " + USpaces);
