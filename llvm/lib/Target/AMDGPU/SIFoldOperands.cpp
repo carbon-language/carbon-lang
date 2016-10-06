@@ -92,11 +92,18 @@ FunctionPass *llvm::createSIFoldOperandsPass() {
   return new SIFoldOperands();
 }
 
-static bool isSafeToFold(unsigned Opcode) {
-  switch(Opcode) {
+static bool isSafeToFold(const MachineInstr &MI) {
+  switch (MI.getOpcode()) {
   case AMDGPU::V_MOV_B32_e32:
   case AMDGPU::V_MOV_B32_e64:
-  case AMDGPU::V_MOV_B64_PSEUDO:
+  case AMDGPU::V_MOV_B64_PSEUDO: {
+    // If there are additional implicit register operands, this may be used for
+    // register indexing so the source register operand isn't simply copied.
+    unsigned NumOps = MI.getDesc().getNumOperands() +
+      MI.getDesc().getNumImplicitUses();
+
+    return MI.getNumOperands() == NumOps;
+  }
   case AMDGPU::S_MOV_B32:
   case AMDGPU::S_MOV_B64:
   case AMDGPU::COPY:
@@ -203,6 +210,14 @@ static bool tryAddToFoldList(std::vector<FoldCandidate> &FoldList,
   return true;
 }
 
+// If the use operand doesn't care about the value, this may be an operand only
+// used for register indexing, in which case it is unsafe to fold.
+static bool isUseSafeToFold(const MachineInstr &MI,
+                            const MachineOperand &UseMO) {
+  return !UseMO.isUndef();
+  //return !MI.hasRegisterImplicitUseOperand(UseMO.getReg());
+}
+
 static void foldOperand(MachineOperand &OpToFold, MachineInstr *UseMI,
                         unsigned UseOpIdx,
                         std::vector<FoldCandidate> &FoldList,
@@ -210,6 +225,9 @@ static void foldOperand(MachineOperand &OpToFold, MachineInstr *UseMI,
                         const SIInstrInfo *TII, const SIRegisterInfo &TRI,
                         MachineRegisterInfo &MRI) {
   const MachineOperand &UseOp = UseMI->getOperand(UseOpIdx);
+
+  if (!isUseSafeToFold(*UseMI, UseOp))
+    return;
 
   // FIXME: Fold operands with subregs.
   if (UseOp.isReg() && OpToFold.isReg()) {
@@ -477,7 +495,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
       Next = std::next(I);
       MachineInstr &MI = *I;
 
-      if (!isSafeToFold(MI.getOpcode()))
+      if (!isSafeToFold(MI))
         continue;
 
       unsigned OpSize = TII->getOpSize(MI, 1);
