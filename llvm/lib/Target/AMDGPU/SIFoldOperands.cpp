@@ -343,6 +343,24 @@ static unsigned getMovOpc(bool IsScalar) {
   return IsScalar ? AMDGPU::S_MOV_B32 : AMDGPU::V_MOV_B32_e32;
 }
 
+/// Remove any leftover implicit operands from mutating the instruction. e.g.
+/// if we replace an s_and_b32 with a copy, we don't need the implicit scc def
+/// anymore.
+static void stripExtraCopyOperands(MachineInstr &MI) {
+  const MCInstrDesc &Desc = MI.getDesc();
+  unsigned NumOps = Desc.getNumOperands() +
+                    Desc.getNumImplicitUses() +
+                    Desc.getNumImplicitDefs();
+
+  for (unsigned I = MI.getNumOperands() - 1; I >= NumOps; --I)
+    MI.RemoveOperand(I);
+}
+
+static void mutateCopyOp(MachineInstr &MI, const MCInstrDesc &NewDesc) {
+  MI.setDesc(NewDesc);
+  stripExtraCopyOperands(MI);
+}
+
 // Try to simplify operations with a constant that may appear after instruction
 // selection.
 static bool tryConstantFoldOp(MachineRegisterInfo &MRI,
@@ -355,7 +373,7 @@ static bool tryConstantFoldOp(MachineRegisterInfo &MRI,
     MachineOperand &Src0 = MI->getOperand(1);
     if (Src0.isImm()) {
       Src0.setImm(~Src0.getImm());
-      MI->setDesc(TII->get(getMovOpc(Opc == AMDGPU::S_NOT_B32)));
+      mutateCopyOp(*MI, TII->get(getMovOpc(Opc == AMDGPU::S_NOT_B32)));
       return true;
     }
 
@@ -386,7 +404,7 @@ static bool tryConstantFoldOp(MachineRegisterInfo &MRI,
 
     Src0->setImm(NewImm);
     MI->RemoveOperand(Src1Idx);
-    MI->setDesc(TII->get(getMovOpc(IsSGPR)));
+    mutateCopyOp(*MI, TII->get(getMovOpc(IsSGPR)));
     return true;
   }
 
@@ -400,11 +418,11 @@ static bool tryConstantFoldOp(MachineRegisterInfo &MRI,
     if (Src1Val == 0) {
       // y = or x, 0 => y = copy x
       MI->RemoveOperand(Src1Idx);
-      MI->setDesc(TII->get(AMDGPU::COPY));
+      mutateCopyOp(*MI, TII->get(AMDGPU::COPY));
     } else if (Src1Val == -1) {
       // y = or x, -1 => y = v_mov_b32 -1
       MI->RemoveOperand(Src1Idx);
-      MI->setDesc(TII->get(getMovOpc(Opc == AMDGPU::S_OR_B32)));
+      mutateCopyOp(*MI, TII->get(getMovOpc(Opc == AMDGPU::S_OR_B32)));
     } else
       return false;
 
@@ -416,11 +434,12 @@ static bool tryConstantFoldOp(MachineRegisterInfo &MRI,
     if (Src1Val == 0) {
       // y = and x, 0 => y = v_mov_b32 0
       MI->RemoveOperand(Src0Idx);
-      MI->setDesc(TII->get(getMovOpc(Opc == AMDGPU::S_AND_B32)));
+      mutateCopyOp(*MI, TII->get(getMovOpc(Opc == AMDGPU::S_AND_B32)));
     } else if (Src1Val == -1) {
       // y = and x, -1 => y = copy x
       MI->RemoveOperand(Src1Idx);
-      MI->setDesc(TII->get(AMDGPU::COPY));
+      mutateCopyOp(*MI, TII->get(AMDGPU::COPY));
+      stripExtraCopyOperands(*MI);
     } else
       return false;
 
@@ -432,7 +451,7 @@ static bool tryConstantFoldOp(MachineRegisterInfo &MRI,
     if (Src1Val == 0) {
       // y = xor x, 0 => y = copy x
       MI->RemoveOperand(Src1Idx);
-      MI->setDesc(TII->get(AMDGPU::COPY));
+      mutateCopyOp(*MI, TII->get(AMDGPU::COPY));
     }
   }
 
