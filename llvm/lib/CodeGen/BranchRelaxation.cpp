@@ -46,13 +46,22 @@ class BranchRelaxation : public MachineFunctionPass {
 
     BasicBlockInfo() : Offset(0), Size(0) {}
 
-    /// Compute the offset immediately following this block.  If LogAlign is
-    /// specified, return the offset the successor block will get if it has
-    /// this alignment.
-    unsigned postOffset(unsigned LogAlign = 0) const {
+    /// Compute the offset immediately following this block. \p MBB is the next
+    /// block.
+    unsigned postOffset(const MachineBasicBlock &MBB) const {
       unsigned PO = Offset + Size;
-      unsigned Align = 1 << LogAlign;
-      return (PO + Align - 1) / Align * Align;
+      unsigned Align = MBB.getAlignment();
+      if (Align == 0)
+        return PO;
+
+      unsigned AlignAmt = 1 << Align;
+      unsigned ParentAlign = MBB.getParent()->getAlignment();
+      if (Align <= ParentAlign)
+        return PO + OffsetToAlignment(PO, AlignAmt);
+
+      // The alignment of this MBB is larger than the function's alignment, so we
+      // can't tell whether or not it will insert nops. Assume that it will.
+      return PO + AlignAmt + OffsetToAlignment(PO, AlignAmt);
     }
   };
 
@@ -99,7 +108,7 @@ void BranchRelaxation::verify() {
     unsigned Align = MBB.getAlignment();
     unsigned Num = MBB.getNumber();
     assert(BlockInfo[Num].Offset % (1u << Align) == 0);
-    assert(!Num || BlockInfo[PrevNum].postOffset() <= BlockInfo[Num].Offset);
+    assert(!Num || BlockInfo[PrevNum].postOffset(MBB) <= BlockInfo[Num].Offset);
     PrevNum = Num;
   }
 #endif
@@ -167,8 +176,8 @@ void BranchRelaxation::adjustBlockOffsets(MachineBasicBlock &Start) {
       continue;
     // Get the offset and known bits at the end of the layout predecessor.
     // Include the alignment of the current block.
-    unsigned LogAlign = MBB.getAlignment();
-    BlockInfo[Num].Offset = BlockInfo[PrevNum].postOffset(LogAlign);
+    BlockInfo[Num].Offset = BlockInfo[PrevNum].postOffset(MBB);
+
     PrevNum = Num;
   }
 }
