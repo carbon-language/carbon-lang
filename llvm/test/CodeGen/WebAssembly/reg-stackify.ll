@@ -84,7 +84,7 @@ define i32 @no_sink_readonly_call(i32 %x, i32 %y, i32* %p) {
 ; CHECK-LABEL: stack_uses:
 ; CHECK: .param i32, i32, i32, i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
-; CHECK-NEXT: block{{$}}
+; CHECK-NEXT: block   {{$}}
 ; CHECK-NEXT: i32.const   $push[[L13:[0-9]+]]=, 1{{$}}
 ; CHECK-NEXT: i32.lt_s    $push[[L0:[0-9]+]]=, $0, $pop[[L13]]{{$}}
 ; CHECK-NEXT: i32.const   $push[[L1:[0-9]+]]=, 2{{$}}
@@ -127,7 +127,7 @@ false:
 ; CHECK-LABEL: multiple_uses:
 ; CHECK: .param       i32, i32, i32{{$}}
 ; CHECK-NEXT: .local       i32{{$}}
-; CHECK-NEXT: block{{$}}
+; CHECK-NEXT: block   {{$}}
 ; CHECK-NEXT: i32.load    $push[[NUM0:[0-9]+]]=, 0($2){{$}}
 ; CHECK-NEXT: tee_local   $push[[NUM1:[0-9]+]]=, $3=, $pop[[NUM0]]{{$}}
 ; CHECK-NEXT: i32.ge_u    $push[[NUM2:[0-9]+]]=, $pop[[NUM1]], $1{{$}}

@@ -195,6 +195,26 @@ WebAssemblyInstPrinter::printWebAssemblyP2AlignOperand(const MCInst *MI,
   O << ":p2align=" << Imm;
 }
 
+void
+WebAssemblyInstPrinter::printWebAssemblySignatureOperand(const MCInst *MI,
+                                                         unsigned OpNo,
+                                                         raw_ostream &O) {
+  int64_t Imm = MI->getOperand(OpNo).getImm();
+  switch (Imm) {
+  case WebAssembly::Void: break;
+  case WebAssembly::I32: O << "i32"; break;
+  case WebAssembly::I64: O << "i64"; break;
+  case WebAssembly::F32: O << "f32"; break;
+  case WebAssembly::F64: O << "f64"; break;
+  case WebAssembly::I8x16: O << "i8x16"; break;
+  case WebAssembly::I16x8: O << "i16x8"; break;
+  case WebAssembly::I32x4: O << "i32x4"; break;
+  case WebAssembly::I64x2: O << "i32x4"; break;
+  case WebAssembly::F32x4: O << "f32x4"; break;
+  case WebAssembly::F64x2: O << "f64x2"; break;
+  }
+}
+
 const char *llvm::WebAssembly::TypeToString(MVT Ty) {
   switch (Ty.SimpleTy) {
   case MVT::i32:
