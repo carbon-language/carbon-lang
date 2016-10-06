@@ -131,6 +131,9 @@ public:
 
   void EmitStartOfAsmFile(Module &M) override;
 
+  bool isBlockOnlyReachableByFallthrough(
+    const MachineBasicBlock *MBB) const override;
+
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                        unsigned AsmVariant, const char *ExtraCode,
                        raw_ostream &O) override;

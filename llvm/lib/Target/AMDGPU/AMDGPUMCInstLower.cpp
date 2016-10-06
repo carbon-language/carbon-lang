@@ -47,6 +47,27 @@ static MCSymbolRefExpr::VariantKind getVariantKind(unsigned MOFlags) {
   }
 }
 
+const MCExpr *AMDGPUMCInstLower::getLongBranchBlockExpr(
+  const MachineBasicBlock &SrcBB,
+  const MachineOperand &MO) const {
+  const MCExpr *DestBBSym
+    = MCSymbolRefExpr::create(MO.getMBB()->getSymbol(), Ctx);
+  const MCExpr *SrcBBSym = MCSymbolRefExpr::create(SrcBB.getSymbol(), Ctx);
+
+  assert(SrcBB.front().getOpcode() == AMDGPU::S_GETPC_B64 &&
+         ST.getInstrInfo()->get(AMDGPU::S_GETPC_B64).Size == 4);
+
+  // s_getpc_b64 returns the address of next instruction.
+  const MCConstantExpr *One = MCConstantExpr::create(4, Ctx);
+  SrcBBSym = MCBinaryExpr::createAdd(SrcBBSym, One, Ctx);
+
+  if (MO.getTargetFlags() == AMDGPU::TF_LONG_BRANCH_FORWARD)
+    return MCBinaryExpr::createSub(DestBBSym, SrcBBSym, Ctx);
+
+  assert(MO.getTargetFlags() == AMDGPU::TF_LONG_BRANCH_BACKWARD);
+  return MCBinaryExpr::createSub(SrcBBSym, DestBBSym, Ctx);
+}
+
 void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
 
   int MCOpcode = ST.getInstrInfo()->pseudoToMCOpcode(MI->getOpcode());
@@ -71,8 +92,14 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
       MCOp = MCOperand::createReg(AMDGPU::getMCReg(MO.getReg(), ST));
       break;
     case MachineOperand::MO_MachineBasicBlock:
-      MCOp = MCOperand::createExpr(MCSymbolRefExpr::create(
-                                   MO.getMBB()->getSymbol(), Ctx));
+      if (MO.getTargetFlags() != 0) {
+        MCOp = MCOperand::createExpr(
+          getLongBranchBlockExpr(*MI->getParent(), MO));
+      } else {
+        MCOp = MCOperand::createExpr(
+          MCSymbolRefExpr::create(MO.getMBB()->getSymbol(), Ctx));
+      }
+
       break;
     case MachineOperand::MO_GlobalAddress: {
       const GlobalValue *GV = MO.getGlobal();
@@ -93,6 +120,10 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
       MCOp = MCOperand::createExpr(Expr);
       break;
     }
+    case MachineOperand::MO_MCSymbol:
+      MCOp = MCOperand::createExpr(
+        MCSymbolRefExpr::create(MO.getMCSymbol(), Ctx));
+      break;
     }
     OutMI.addOperand(MCOp);
   }

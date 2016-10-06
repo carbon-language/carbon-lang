@@ -14,14 +14,20 @@ namespace llvm {
 
 class AMDGPUSubtarget;
 class AsmPrinter;
+class MachineBasicBlock;
 class MachineInstr;
+class MachineOperand;
 class MCContext;
+class MCExpr;
 class MCInst;
 
 class AMDGPUMCInstLower {
   MCContext &Ctx;
   const AMDGPUSubtarget &ST;
   const AsmPrinter &AP;
+
+  const MCExpr *getLongBranchBlockExpr(const MachineBasicBlock &SrcBB,
+                                       const MachineOperand &MO) const;
 
 public:
   AMDGPUMCInstLower(MCContext &ctx, const AMDGPUSubtarget &ST,
