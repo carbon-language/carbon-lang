@@ -20,7 +20,6 @@ class MachineOperand;
 class MCContext;
 class MCExpr;
 class MCInst;
-class MCOperand;
 
 class AMDGPUMCInstLower {
   MCContext &Ctx;
@@ -33,8 +32,6 @@ class AMDGPUMCInstLower {
 public:
   AMDGPUMCInstLower(MCContext &ctx, const AMDGPUSubtarget &ST,
                     const AsmPrinter &AP);
-
-  bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp) const;
 
   /// \brief Lower a MachineInstr to an MCInst
   void lower(const MachineInstr *MI, MCInst &OutMI) const;
