@@ -41,7 +41,7 @@ namespace rdf {
   template<>
   raw_ostream &operator<< (raw_ostream &OS, const Print<Liveness::RefMap> &P) {
     OS << '{';
-    for (auto I : P.Obj) {
+    for (auto &I : P.Obj) {
       OS << ' ' << Print<RegisterRef>(I.first, P.G) << '{';
       for (auto J = I.second.begin(), E = I.second.end(); J != E; ) {
         OS << Print<NodeId>(*J, P.G);
@@ -614,13 +614,13 @@ void Liveness::computeLiveIns() {
     MachineBasicBlock *MB = BA.Addr->getCode();
     RefMap &LON = PhiLON[MB];
     for (auto P : BA.Addr->members_if(DFG.IsCode<NodeAttrs::Phi>, DFG))
-      for (RefMap::value_type S : RealUseMap[P.Id])
+      for (const RefMap::value_type &S : RealUseMap[P.Id])
         LON[S.first].insert(S.second.begin(), S.second.end());
   }
 
   if (Trace) {
     dbgs() << "Phi live-on-entry map:\n";
-    for (auto I : PhiLON)
+    for (auto &I : PhiLON)
       dbgs() << "block #" << I.first->getNumber() << " -> "
              << Print<RefMap>(I.second, DFG) << '\n';
   }
@@ -645,7 +645,7 @@ void Liveness::computeLiveIns() {
         // Remap all the RUs so that they have a correct reaching def.
         auto PrA = DFG.addr<BlockNode*>(UA.Addr->getPredecessor());
         RefMap &LOX = PhiLOX[PrA.Addr->getCode()];
-        for (RefMap::value_type R : RUs) {
+        for (const RefMap::value_type &R : RUs) {
           RegisterRef RR = R.first;
           if (UA.Addr->getFlags() & NodeAttrs::Shadow)
             RR = getRestrictedRegRef(UA);
@@ -663,7 +663,7 @@ void Liveness::computeLiveIns() {
 
   if (Trace) {
     dbgs() << "Phi live-on-exit map:\n";
-    for (auto I : PhiLOX)
+    for (auto &I : PhiLOX)
       dbgs() << "block #" << I.first->getNumber() << " -> "
              << Print<RefMap>(I.second, DFG) << '\n';
   }
@@ -837,7 +837,7 @@ void Liveness::traverse(MachineBasicBlock *B, RefMap &LiveIn) {
 
   // Add reaching defs of phi uses that are live on exit from this block.
   RefMap &PUs = PhiLOX[B];
-  for (auto S : PUs)
+  for (auto &S : PUs)
     LiveIn[S.first].insert(S.second.begin(), S.second.end());
 
   if (Trace) {
@@ -954,7 +954,7 @@ void Liveness::traverse(MachineBasicBlock *B, RefMap &LiveIn) {
   // are not dominated by their corresponding reaching defs.
   RegisterSet &Local = LiveMap[B];
   RefMap &LON = PhiLON[B];
-  for (auto R : LON)
+  for (auto &R : LON)
     Local.insert(R.first);
 
   if (Trace) {
