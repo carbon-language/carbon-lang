@@ -118,8 +118,6 @@ public:
   Elf_Sym_Range symbols(const Elf_Shdr *Sec) const {
     if (!Sec)
       return makeArrayRef<Elf_Sym>(nullptr, nullptr);
-    if (Sec->sh_entsize != sizeof(Elf_Sym))
-      report_fatal_error("Invalid symbol size");
     auto V = getSectionContentsAsArray<Elf_Sym>(Sec);
     if (!V)
       report_fatal_error(V.getError().message());
@@ -127,8 +125,6 @@ public:
   }
 
   Elf_Rela_Range relas(const Elf_Shdr *Sec) const {
-    if (Sec->sh_entsize != sizeof(Elf_Rela))
-      report_fatal_error("Invalid relocation entry size");
     auto V = getSectionContentsAsArray<Elf_Rela>(Sec);
     if (!V)
       report_fatal_error(V.getError().message());
@@ -136,8 +132,6 @@ public:
   }
 
   Elf_Rel_Range rels(const Elf_Shdr *Sec) const {
-    if (Sec->sh_entsize != sizeof(Elf_Rel))
-      report_fatal_error("Invalid relocation entry size");
     auto V = getSectionContentsAsArray<Elf_Rel>(Sec);
     if (!V)
       report_fatal_error(V.getError().message());
@@ -224,6 +218,9 @@ template <class ELFT>
 template <typename T>
 ErrorOr<ArrayRef<T>>
 ELFFile<ELFT>::getSectionContentsAsArray(const Elf_Shdr *Sec) const {
+  if (Sec->sh_entsize != sizeof(T) && sizeof(T) != 1)
+    return object_error::parse_failed;
+
   uintX_t Offset = Sec->sh_offset;
   uintX_t Size = Sec->sh_size;
 
