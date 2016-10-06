@@ -516,6 +516,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
       Printf("INFO: A corpus is not provided, starting from an empty corpus\n");
   }
   F.ShuffleAndMinimize(&InitialCorpus);
+  InitialCorpus.clear();  // Don't need this memory any more.
   F.Loop();
 
   if (Flags.verbosity)

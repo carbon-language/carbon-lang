@@ -123,7 +123,7 @@ class InputCorpus {
         assert(II.NumFeatures > 0);
         II.NumFeatures--;
         if (II.NumFeatures == 0) {
-          II.U.clear();
+          Unit().swap(II.U);
           if (FeatureDebug)
             Printf("EVICTED %zd\n", SmallestElementPerFeature[Idx]);
         }
