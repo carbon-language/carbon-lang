@@ -1593,29 +1593,23 @@ void RewriteInstance::emitFunctions() {
   uint64_t NewTextSectionStartAddress = NextAvailableAddress;
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
-    if (!Function.isSimple())
+    if (!Function.isSimple() || !opts::shouldProcess(Function))
       continue;
 
     auto TooLarge = false;
     auto SMII = EFMM->SectionMapInfo.find(Function.getCodeSectionName());
-    if (SMII != EFMM->SectionMapInfo.end()) {
-      DEBUG(dbgs() << "BOLT: mapping 0x"
-                   << Twine::utohexstr(SMII->second.AllocAddress)
-                   << " to 0x" << Twine::utohexstr(Function.getAddress())
-                   << '\n');
-      OLT.mapSectionAddress(ObjectsHandle,
-                            SMII->second.SectionID,
-                            Function.getAddress());
-      Function.setImageAddress(SMII->second.AllocAddress);
-      Function.setImageSize(SMII->second.Size);
-      if (Function.getImageSize() > Function.getMaxSize()) {
-        TooLarge = true;
-        FailedAddresses.emplace_back(Function.getAddress());
-      }
-    } else {
-      if (opts::Verbosity >= 2) {
-        errs() << "BOLT-WARNING: cannot remap function " << Function << "\n";
-      }
+    assert(SMII != EFMM->SectionMapInfo.end() &&
+           "cannot find section for function");
+    DEBUG(dbgs() << "BOLT: mapping 0x"
+                 << Twine::utohexstr(SMII->second.AllocAddress) << " to 0x"
+                 << Twine::utohexstr(Function.getAddress()) << '\n');
+    OLT.mapSectionAddress(ObjectsHandle,
+                          SMII->second.SectionID,
+                          Function.getAddress());
+    Function.setImageAddress(SMII->second.AllocAddress);
+    Function.setImageSize(SMII->second.Size);
+    if (Function.getImageSize() > Function.getMaxSize()) {
+      TooLarge = true;
       FailedAddresses.emplace_back(Function.getAddress());
     }
 
@@ -1624,28 +1618,26 @@ void RewriteInstance::emitFunctions() {
 
     SMII = EFMM->SectionMapInfo.find(
         Function.getCodeSectionName().str().append(".cold"));
-    if (SMII != EFMM->SectionMapInfo.end()) {
-      // Cold fragments are aligned at 16 bytes.
-      NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress, 16);
-      DEBUG(dbgs() << "BOLT: mapping 0x"
-                   << Twine::utohexstr(SMII->second.AllocAddress)
-                   << " to 0x" << Twine::utohexstr(NextAvailableAddress)
-                   << " with size " << Twine::utohexstr(SMII->second.Size)
-                   << '\n');
-      OLT.mapSectionAddress(ObjectsHandle,
-                            SMII->second.SectionID,
-                            NextAvailableAddress);
-      Function.cold().setAddress(NextAvailableAddress);
-      Function.cold().setImageAddress(SMII->second.AllocAddress);
-      Function.cold().setImageSize(TooLarge ? 0 : SMII->second.Size);
-      Function.cold().setFileOffset(getFileOffsetFor(NextAvailableAddress));
+    assert(SMII != EFMM->SectionMapInfo.end() &&
+           "cannot find section for cold part");
+    // Cold fragments are aligned at 16 bytes.
+    NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress, 16);
+    DEBUG(dbgs() << "BOLT: mapping 0x"
+                 << Twine::utohexstr(SMII->second.AllocAddress) << " to 0x"
+                 << Twine::utohexstr(NextAvailableAddress) << " with size "
+                 << Twine::utohexstr(SMII->second.Size) << '\n');
+    OLT.mapSectionAddress(ObjectsHandle,
+                          SMII->second.SectionID,
+                          NextAvailableAddress);
+    Function.cold().setAddress(NextAvailableAddress);
+    Function.cold().setImageAddress(SMII->second.AllocAddress);
+    Function.cold().setImageSize(TooLarge ? 0 : SMII->second.Size);
+    Function.cold().setFileOffset(getFileOffsetFor(NextAvailableAddress));
 
-      NextAvailableAddress += Function.cold().getImageSize();
-    } else {
-      if (opts::Verbosity >= 2) {
-        errs() << "BOLT-WARNING: cannot remap function " << Function << "\n";
-      }
-      FailedAddresses.emplace_back(Function.getAddress());
+    NextAvailableAddress += Function.cold().getImageSize();
+
+    if (TooLarge) {
+      FailedAddresses.emplace_back(Function.cold().getAddress());
     }
   }
 
