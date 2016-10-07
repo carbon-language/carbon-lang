@@ -523,11 +523,11 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
 
   if (!DynamicSec)
     return;
-  auto *Begin =
-      reinterpret_cast<const Elf_Dyn *>(Obj.base() + DynamicSec->sh_offset);
-  const Elf_Dyn *End = Begin + DynamicSec->sh_size / sizeof(Elf_Dyn);
 
-  for (const Elf_Dyn &Dyn : make_range(Begin, End)) {
+  ArrayRef<Elf_Dyn> Arr =
+      check(Obj.template getSectionContentsAsArray<Elf_Dyn>(DynamicSec),
+            getFilename(this) + ": getSectionContentsAsArray failed");
+  for (const Elf_Dyn &Dyn : Arr) {
     if (Dyn.d_tag == DT_SONAME) {
       uintX_t Val = Dyn.getVal();
       if (Val >= this->StringTable.size())
