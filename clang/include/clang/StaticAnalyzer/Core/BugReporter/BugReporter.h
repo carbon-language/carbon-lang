@@ -67,6 +67,11 @@ public:
   typedef VisitorList::iterator visitor_iterator;
   typedef SmallVector<StringRef, 2> ExtraTextList;
 
+  // FIXME: We could have used a
+  // SmallVector<llvm::IntrusiveRefCntPtr<PathDiagnosticNotePiece, 4>>
+  // as NoteList, however MSVC 2013 crashes on reading this.
+  typedef SmallVector<const PathDiagnosticNotePiece *, 4> NoteList;
+
 protected:
   friend class BugReporter;
   friend class BugReportEquivClass;
@@ -82,7 +87,8 @@ protected:
   const ExplodedNode *ErrorNode;
   SmallVector<SourceRange, 4> Ranges;
   ExtraTextList ExtraText;
-  
+  NoteList Notes;
+
   typedef llvm::DenseSet<SymbolRef> Symbols;
   typedef llvm::DenseSet<const MemRegion *> Regions;
 
@@ -177,6 +183,18 @@ public:
   const BugType& getBugType() const { return BT; }
   BugType& getBugType() { return BT; }
 
+  /// \brief True when the report has an execution path associated with it.
+  ///
+  /// A report is said to be path-sensitive if it was thrown against a
+  /// particular exploded node in the path-sensitive analysis graph.
+  /// Path-sensitive reports have their intermediate path diagnostics
+  /// auto-generated, perhaps with the help of checker-defined visitors,
+  /// and may contain extra notes.
+  /// Path-insensitive reports consist only of a single warning message
+  /// in a specific location, and perhaps extra notes.
+  /// Path-sensitive checkers are allowed to throw path-insensitive reports.
+  bool isPathSensitive() const { return ErrorNode != nullptr; }
+
   const ExplodedNode *getErrorNode() const { return ErrorNode; }
 
   StringRef getDescription() const { return Description; }
@@ -245,7 +263,26 @@ public:
   void setDeclWithIssue(const Decl *declWithIssue) {
     DeclWithIssue = declWithIssue;
   }
-  
+
+  /// Add new item to the list of additional notes that need to be attached to
+  /// this path-insensitive report. If you want to add extra notes to a
+  /// path-sensitive report, you need to use a BugReporterVisitor because it
+  /// allows you to specify where exactly in the auto-generated path diagnostic
+  /// the extra note should appear.
+  void addNote(StringRef Msg, const PathDiagnosticLocation &Pos,
+                    ArrayRef<SourceRange> Ranges = {}) {
+    auto *P = new PathDiagnosticNotePiece(Pos, Msg);
+
+    for (const auto &R : Ranges)
+      P->addRange(R);
+
+    Notes.push_back(P);
+  }
+
+  virtual const NoteList &getNotes() {
+    return Notes;
+  }
+
   /// \brief This allows for addition of meta data to the diagnostic.
   ///
   /// Currently, only the HTMLDiagnosticClient knows how to display it. 
