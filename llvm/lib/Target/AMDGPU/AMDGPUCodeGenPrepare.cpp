@@ -294,7 +294,7 @@ bool AMDGPUCodeGenPrepare::promoteUniformBitreverseToI32(
 
   Type *I32Ty = getI32Ty(Builder, I.getType());
   Function *I32 =
-      Intrinsic::getDeclaration(Mod, Intrinsic::bitreverse, { I32Ty });;
+      Intrinsic::getDeclaration(Mod, Intrinsic::bitreverse, { I32Ty });
   Value *ExtOp = Builder.CreateZExt(I.getOperand(0), I32Ty);
   Value *ExtRes = Builder.CreateCall(I32, { ExtOp });
   Value *LShrOp =
