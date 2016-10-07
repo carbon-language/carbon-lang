@@ -288,8 +288,10 @@ typedef enum kmp_sched {
     kmp_sched_upper_std         = 5,     // upper bound for standard schedules
     kmp_sched_lower_ext         = 100,   // lower bound of Intel extension schedules
     kmp_sched_trapezoidal       = 101,   // mapped to kmp_sch_trapezoidal              (39)
-//  kmp_sched_static_steal      = 102,   // mapped to kmp_sch_static_steal             (44)
-    kmp_sched_upper             = 102,
+#if KMP_STATIC_STEAL_ENABLED
+    kmp_sched_static_steal      = 102,   // mapped to kmp_sch_static_steal             (44)
+#endif
+    kmp_sched_upper,
     kmp_sched_default = kmp_sched_static // default scheduling
 } kmp_sched_t;
 #endif
