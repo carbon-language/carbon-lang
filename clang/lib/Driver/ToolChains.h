@@ -312,7 +312,7 @@ public:
   /// @name ToolChain Implementation
   /// {
 
-  types::ID LookupTypeForExtension(const char *Ext) const override;
+  types::ID LookupTypeForExtension(StringRef Ext) const override;
 
   bool HasNativeLLVMSupport() const override;
 

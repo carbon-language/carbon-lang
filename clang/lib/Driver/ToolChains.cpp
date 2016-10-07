@@ -54,7 +54,7 @@ MachO::MachO(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
 Darwin::Darwin(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     : MachO(D, Triple, Args), TargetInitialized(false) {}
 
-types::ID MachO::LookupTypeForExtension(const char *Ext) const {
+types::ID MachO::LookupTypeForExtension(StringRef Ext) const {
   types::ID Ty = types::lookupTypeForExtension(Ext);
 
   // Darwin always preprocesses assembly files (unless -x is used explicitly).
