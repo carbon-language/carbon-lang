@@ -264,6 +264,7 @@ add_polly_library(PollyISL
 add_executable(polly-isl-test
   isl/isl_test.c
 )
+set_target_properties(polly-isl-test PROPERTIES FOLDER "Polly")
 
 target_link_libraries(polly-isl-test
   PollyISL
