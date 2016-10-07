@@ -13,6 +13,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/DebugInfo/CodeView/SymbolVisitorCallbacks.h"
+#include "llvm/DebugInfo/CodeView/SymbolVisitorDelegate.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm {
