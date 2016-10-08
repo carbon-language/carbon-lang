@@ -401,7 +401,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
   Options.Shrink = Flags.shrink;
   Options.ShuffleAtStartUp = Flags.shuffle;
   Options.PreferSmall = Flags.prefer_small;
-  Options.Reload = Flags.reload;
+  Options.ReloadIntervalSec = Flags.reload;
   Options.OnlyASCII = Flags.only_ascii;
   Options.OutputCSV = Flags.output_csv;
   Options.DetectLeaks = Flags.detect_leaks;

@@ -149,7 +149,7 @@ Fuzzer::Fuzzer(UserCallback CB, InputCorpus &Corpus, MutationDispatcher &MD,
 
   if (Options.Verbosity)
     TPC.PrintModuleInfo();
-  if (!Options.OutputCorpus.empty() && Options.Reload)
+  if (!Options.OutputCorpus.empty() && Options.ReloadIntervalSec)
     EpochOfLastReadOfOutputCorpus = GetEpoch(Options.OutputCorpus);
   MaxInputLen = MaxMutationLen = Options.MaxLen;
   AllocateCurrentUnitData();
@@ -383,22 +383,25 @@ void Fuzzer::CheckExitOnSrcPos() {
 }
 
 void Fuzzer::RereadOutputCorpus(size_t MaxSize) {
-  if (Options.OutputCorpus.empty() || !Options.Reload) return;
+  if (Options.OutputCorpus.empty() || !Options.ReloadIntervalSec) return;
   std::vector<Unit> AdditionalCorpus;
   ReadDirToVectorOfUnits(Options.OutputCorpus.c_str(), &AdditionalCorpus,
                          &EpochOfLastReadOfOutputCorpus, MaxSize);
   if (Options.Verbosity >= 2)
     Printf("Reload: read %zd new units.\n", AdditionalCorpus.size());
+  bool Reloaded = false;
   for (auto &U : AdditionalCorpus) {
     if (U.size() > MaxSize)
       U.resize(MaxSize);
     if (!Corpus.HasUnit(U)) {
       if (size_t NumFeatures = RunOne(U)) {
         Corpus.AddToCorpus(U, NumFeatures);
-        PrintStats("RELOAD");
+        Reloaded = true;
       }
     }
   }
+  if (Reloaded)
+    PrintStats("RELOAD");
 }
 
 void Fuzzer::ShuffleCorpus(UnitVector *V) {
@@ -705,7 +708,8 @@ void Fuzzer::Loop() {
     MD.SetCorpus(&Corpus);
   while (true) {
     auto Now = system_clock::now();
-    if (duration_cast<seconds>(Now - LastCorpusReload).count()) {
+    if (duration_cast<seconds>(Now - LastCorpusReload).count() >=
+        Options.ReloadIntervalSec) {
       RereadOutputCorpus(MaxInputLen);
       LastCorpusReload = Now;
     }
