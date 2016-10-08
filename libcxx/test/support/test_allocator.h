@@ -10,10 +10,11 @@
 #ifndef TEST_ALLOCATOR_H
 #define TEST_ALLOCATOR_H
 
-#include <cstddef>
 #include <type_traits>
-#include <cstdlib>
 #include <new>
+#include <memory>
+#include <cstddef>
+#include <cstdlib>
 #include <climits>
 #include <cassert>
 
