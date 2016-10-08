@@ -154,8 +154,8 @@ private:
                           SmallVectorImpl<SDValue> &InVals) const;
 
 private:
-  MachineBasicBlock *insertShift(MachineInstr *MI, MachineBasicBlock *BB) const;
-  MachineBasicBlock *insertMul(MachineInstr *MI, MachineBasicBlock *BB) const;
+  MachineBasicBlock *insertShift(MachineInstr &MI, MachineBasicBlock *BB) const;
+  MachineBasicBlock *insertMul(MachineInstr &MI, MachineBasicBlock *BB) const;
 };
 
 } // end namespace llvm
