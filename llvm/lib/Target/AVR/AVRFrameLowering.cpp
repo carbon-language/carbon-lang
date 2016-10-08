@@ -45,10 +45,9 @@ bool AVRFrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
   // conditions:
   // - Y pointer is reserved to be the frame pointer.
   // - The function does not contain variable sized objects.
-  // - MaxCallFrameSize doesn't fit into 6-bits (when it's greater than 63).
+
   const MachineFrameInfo &MFI = MF.getFrameInfo();
-  return (hasFP(MF) && !MFI.hasVarSizedObjects() &&
-          !isUInt<6>(MFI.getMaxCallFrameSize()));
+  return hasFP(MF) && !MFI.hasVarSizedObjects();
 }
 
 void AVRFrameLowering::emitPrologue(MachineFunction &MF,
