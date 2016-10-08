@@ -443,7 +443,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
 
   Random Rand(Seed);
   MutationDispatcher MD(Rand, Options);
-  InputCorpus Corpus;
+  InputCorpus Corpus(Options.OutputCorpus);
   Fuzzer F(Callback, Corpus, MD, Options);
 
   for (auto &U: Dictionary)
@@ -500,7 +500,8 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
   UnitVector InitialCorpus;
   for (auto &Inp : *Inputs) {
     Printf("Loading corpus dir: %s\n", Inp.c_str());
-    ReadDirToVectorOfUnits(Inp.c_str(), &InitialCorpus, nullptr, TemporaryMaxLen);
+    ReadDirToVectorOfUnits(Inp.c_str(), &InitialCorpus, nullptr,
+                           TemporaryMaxLen, /*ExitOnError=*/false);
   }
 
   if (Options.MaxLen == 0) {

@@ -30,12 +30,13 @@ struct InputInfo {
   // Stats.
   size_t NumExecutedMutations = 0;
   size_t NumSuccessfullMutations = 0;
+  bool MayDeleteFile = false;
 };
 
 class InputCorpus {
  public:
   static const size_t kFeatureSetSize = 1 << 16;
-  InputCorpus() {
+  InputCorpus(const std::string &OutputCorpus) : OutputCorpus(OutputCorpus) {
     memset(InputSizesPerFeature, 0, sizeof(InputSizesPerFeature));
     memset(SmallestElementPerFeature, 0, sizeof(SmallestElementPerFeature));
   }
@@ -58,7 +59,7 @@ class InputCorpus {
   }
   bool empty() const { return Inputs.empty(); }
   const Unit &operator[] (size_t Idx) const { return Inputs[Idx]->U; }
-  void AddToCorpus(const Unit &U, size_t NumFeatures) {
+  void AddToCorpus(const Unit &U, size_t NumFeatures, bool MayDeleteFile = false) {
     assert(!U.empty());
     uint8_t Hash[kSHA1NumBytes];
     if (FeatureDebug)
@@ -69,6 +70,7 @@ class InputCorpus {
     InputInfo &II = *Inputs.back();
     II.U = U;
     II.NumFeatures = NumFeatures;
+    II.MayDeleteFile = MayDeleteFile;
     memcpy(II.Sha1, Hash, kSHA1NumBytes);
     UpdateCorpusDistribution();
     ValidateFeatureSet();
@@ -112,20 +114,27 @@ class InputCorpus {
     Printf("\n");
   }
 
+  void DeleteInput(size_t Idx) {
+    InputInfo &II = *Inputs[Idx];
+    if (!OutputCorpus.empty() && II.MayDeleteFile)
+      DeleteFile(DirPlusFile(OutputCorpus, Sha1ToString(II.Sha1)));
+    Unit().swap(II.U);
+    if (FeatureDebug)
+      Printf("EVICTED %zd\n", Idx);
+  }
+
   bool AddFeature(size_t Idx, uint32_t NewSize, bool Shrink) {
     assert(NewSize);
     Idx = Idx % kFeatureSetSize;
     uint32_t OldSize = GetFeature(Idx);
     if (OldSize == 0 || (Shrink && OldSize > NewSize)) {
       if (OldSize > 0) {
-        InputInfo &II = *Inputs[SmallestElementPerFeature[Idx]];
+        size_t OldIdx = SmallestElementPerFeature[Idx];
+        InputInfo &II = *Inputs[OldIdx];
         assert(II.NumFeatures > 0);
         II.NumFeatures--;
-        if (II.NumFeatures == 0) {
-          Unit().swap(II.U);
-          if (FeatureDebug)
-            Printf("EVICTED %zd\n", SmallestElementPerFeature[Idx]);
-        }
+        if (II.NumFeatures == 0)
+          DeleteInput(OldIdx);
       }
       if (FeatureDebug)
         Printf("ADD FEATURE %zd sz %d\n", Idx, NewSize);
@@ -191,6 +200,8 @@ private:
   bool CountingFeatures = false;
   uint32_t InputSizesPerFeature[kFeatureSetSize];
   uint32_t SmallestElementPerFeature[kFeatureSetSize];
+
+  std::string OutputCorpus;
 };
 
 }  // namespace fuzzer

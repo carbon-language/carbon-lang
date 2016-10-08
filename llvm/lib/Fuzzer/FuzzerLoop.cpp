@@ -386,7 +386,8 @@ void Fuzzer::RereadOutputCorpus(size_t MaxSize) {
   if (Options.OutputCorpus.empty() || !Options.ReloadIntervalSec) return;
   std::vector<Unit> AdditionalCorpus;
   ReadDirToVectorOfUnits(Options.OutputCorpus.c_str(), &AdditionalCorpus,
-                         &EpochOfLastReadOfOutputCorpus, MaxSize);
+                         &EpochOfLastReadOfOutputCorpus, MaxSize,
+                         /*ExitOnError*/ false);
   if (Options.Verbosity >= 2)
     Printf("Reload: read %zd new units.\n", AdditionalCorpus.size());
   bool Reloaded = false;
@@ -605,9 +606,9 @@ void Fuzzer::Merge(const std::vector<std::string> &Corpora) {
 
   assert(MaxInputLen > 0);
   UnitVector Initial, Extra;
-  ReadDirToVectorOfUnits(Corpora[0].c_str(), &Initial, nullptr, MaxInputLen);
+  ReadDirToVectorOfUnits(Corpora[0].c_str(), &Initial, nullptr, MaxInputLen, true);
   for (auto &C : ExtraCorpora)
-    ReadDirToVectorOfUnits(C.c_str(), &Extra, nullptr, MaxInputLen);
+    ReadDirToVectorOfUnits(C.c_str(), &Extra, nullptr, MaxInputLen, true);
 
   if (!Initial.empty()) {
     Printf("=== Minimizing the initial corpus of %zd units\n", Initial.size());
@@ -685,8 +686,8 @@ void Fuzzer::MutateAndTestOne() {
       StartTraceRecording();
     II.NumExecutedMutations++;
     if (size_t NumFeatures = RunOne(CurrentUnitData, Size)) {
-      Corpus.AddToCorpus({CurrentUnitData, CurrentUnitData + Size},
-                         NumFeatures);
+      Corpus.AddToCorpus({CurrentUnitData, CurrentUnitData + Size}, NumFeatures,
+                         /*MayDeleteFile=*/true);
       ReportNewCoverage(&II, {CurrentUnitData, CurrentUnitData + Size});
       CheckExitOnItem();
     }
@@ -711,7 +712,7 @@ void Fuzzer::Loop() {
     if (duration_cast<seconds>(Now - LastCorpusReload).count() >=
         Options.ReloadIntervalSec) {
       RereadOutputCorpus(MaxInputLen);
-      LastCorpusReload = Now;
+      LastCorpusReload = system_clock::now();
     }
     if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
       break;
