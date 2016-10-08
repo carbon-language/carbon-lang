@@ -7,12 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-// <ctgmath>
+// <tgmath.h>
 
-#include <ctgmath>
+#include <tgmath.h>
+
+#ifndef _LIBCPP_VERSION
+#error _LIBCPP_VERSION not defined
+#endif
 
 int main()
 {
     std::complex<double> cd;
-    double x = std::sin(0);
+    double x = sin(1.0);
+    (void)x; // to placate scan-build
 }

@@ -7,12 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-// <ctgmath>
+// <ccomplex>
 
-#include <ctgmath>
+#include <ccomplex>
+
+#ifndef _LIBCPP_VERSION
+#error _LIBCPP_VERSION not defined
+#endif
 
 int main()
 {
-    std::complex<double> cd;
-    double x = std::sin(0);
+    std::complex<double> d;
 }

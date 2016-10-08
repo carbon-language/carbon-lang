@@ -7,12 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-// <ctgmath>
+// <ciso646>
 
-#include <ctgmath>
+#include <ciso646>
+
+#ifndef _LIBCPP_VERSION
+#error _LIBCPP_VERSION not defined
+#endif
 
 int main()
 {
-    std::complex<double> cd;
-    double x = std::sin(0);
 }
