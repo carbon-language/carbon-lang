@@ -145,8 +145,9 @@ void AVRFrameLowering::emitEpilogue(MachineFunction &MF,
   }
 
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
-  assert(MBBI == MBB.end() &&
+  assert(MBBI->getDesc().isReturn() &&
          "Can only insert epilog into returning blocks");
+
   DebugLoc DL = MBBI->getDebugLoc();
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   const AVRMachineFunctionInfo *AFI = MF.getInfo<AVRMachineFunctionInfo>();
