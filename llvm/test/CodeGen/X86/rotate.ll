@@ -2,24 +2,12 @@
 ; RUN: llc < %s -mtriple=i686-unknown-linux | FileCheck %s --check-prefix=32
 ; RUN: llc < %s -mtriple=x86_64-unknown-linux | FileCheck %s --check-prefix=64
 
-define i64 @rotl64(i64 %A, i8 %Amt) {
+define i64 @rotl64(i64 %A, i8 %Amt) nounwind {
 ; 32-LABEL: rotl64:
 ; 32:       # BB#0:
 ; 32-NEXT:    pushl %ebx
-; 32-NEXT:  .Ltmp0:
-; 32-NEXT:    .cfi_def_cfa_offset 8
 ; 32-NEXT:    pushl %edi
-; 32-NEXT:  .Ltmp1:
-; 32-NEXT:    .cfi_def_cfa_offset 12
 ; 32-NEXT:    pushl %esi
-; 32-NEXT:  .Ltmp2:
-; 32-NEXT:    .cfi_def_cfa_offset 16
-; 32-NEXT:  .Ltmp3:
-; 32-NEXT:    .cfi_offset %esi, -16
-; 32-NEXT:  .Ltmp4:
-; 32-NEXT:    .cfi_offset %edi, -12
-; 32-NEXT:  .Ltmp5:
-; 32-NEXT:    .cfi_offset %ebx, -8
 ; 32-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; 32-NEXT:    movl {{[0-9]+}}(%esp), %esi
 ; 32-NEXT:    movl {{[0-9]+}}(%esp), %edi
@@ -67,24 +55,12 @@ define i64 @rotl64(i64 %A, i8 %Amt) {
 	ret i64 %D
 }
 
-define i64 @rotr64(i64 %A, i8 %Amt) {
+define i64 @rotr64(i64 %A, i8 %Amt) nounwind {
 ; 32-LABEL: rotr64:
 ; 32:       # BB#0:
 ; 32-NEXT:    pushl %ebx
-; 32-NEXT:  .Ltmp6:
-; 32-NEXT:    .cfi_def_cfa_offset 8
 ; 32-NEXT:    pushl %edi
-; 32-NEXT:  .Ltmp7:
-; 32-NEXT:    .cfi_def_cfa_offset 12
 ; 32-NEXT:    pushl %esi
-; 32-NEXT:  .Ltmp8:
-; 32-NEXT:    .cfi_def_cfa_offset 16
-; 32-NEXT:  .Ltmp9:
-; 32-NEXT:    .cfi_offset %esi, -16
-; 32-NEXT:  .Ltmp10:
-; 32-NEXT:    .cfi_offset %edi, -12
-; 32-NEXT:  .Ltmp11:
-; 32-NEXT:    .cfi_offset %ebx, -8
 ; 32-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; 32-NEXT:    movl {{[0-9]+}}(%esp), %edi
 ; 32-NEXT:    movl {{[0-9]+}}(%esp), %esi
@@ -132,7 +108,7 @@ define i64 @rotr64(i64 %A, i8 %Amt) {
 	ret i64 %D
 }
 
-define i64 @rotli64(i64 %A) {
+define i64 @rotli64(i64 %A) nounwind {
 ; 32-LABEL: rotli64:
 ; 32:       # BB#0:
 ; 32-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -153,7 +129,7 @@ define i64 @rotli64(i64 %A) {
 	ret i64 %D
 }
 
-define i64 @rotri64(i64 %A) {
+define i64 @rotri64(i64 %A) nounwind {
 ; 32-LABEL: rotri64:
 ; 32:       # BB#0:
 ; 32-NEXT:    movl {{[0-9]+}}(%esp), %edx
@@ -174,7 +150,7 @@ define i64 @rotri64(i64 %A) {
 	ret i64 %D
 }
 
-define i64 @rotl1_64(i64 %A) {
+define i64 @rotl1_64(i64 %A) nounwind {
 ; 32-LABEL: rotl1_64:
 ; 32:       # BB#0:
 ; 32-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -195,7 +171,7 @@ define i64 @rotl1_64(i64 %A) {
 	ret i64 %D
 }
 
-define i64 @rotr1_64(i64 %A) {
+define i64 @rotr1_64(i64 %A) nounwind {
 ; 32-LABEL: rotr1_64:
 ; 32:       # BB#0:
 ; 32-NEXT:    movl {{[0-9]+}}(%esp), %edx
@@ -216,7 +192,7 @@ define i64 @rotr1_64(i64 %A) {
 	ret i64 %D
 }
 
-define i32 @rotl32(i32 %A, i8 %Amt) {
+define i32 @rotl32(i32 %A, i8 %Amt) nounwind {
 ; 32-LABEL: rotl32:
 ; 32:       # BB#0:
 ; 32-NEXT:    movb {{[0-9]+}}(%esp), %cl
@@ -239,7 +215,7 @@ define i32 @rotl32(i32 %A, i8 %Amt) {
 	ret i32 %D
 }
 
-define i32 @rotr32(i32 %A, i8 %Amt) {
+define i32 @rotr32(i32 %A, i8 %Amt) nounwind {
 ; 32-LABEL: rotr32:
 ; 32:       # BB#0:
 ; 32-NEXT:    movb {{[0-9]+}}(%esp), %cl
@@ -262,7 +238,7 @@ define i32 @rotr32(i32 %A, i8 %Amt) {
 	ret i32 %D
 }
 
-define i32 @rotli32(i32 %A) {
+define i32 @rotli32(i32 %A) nounwind {
 ; 32-LABEL: rotli32:
 ; 32:       # BB#0:
 ; 32-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -280,7 +256,7 @@ define i32 @rotli32(i32 %A) {
 	ret i32 %D
 }
 
-define i32 @rotri32(i32 %A) {
+define i32 @rotri32(i32 %A) nounwind {
 ; 32-LABEL: rotri32:
 ; 32:       # BB#0:
 ; 32-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -298,7 +274,7 @@ define i32 @rotri32(i32 %A) {
 	ret i32 %D
 }
 
-define i32 @rotl1_32(i32 %A) {
+define i32 @rotl1_32(i32 %A) nounwind {
 ; 32-LABEL: rotl1_32:
 ; 32:       # BB#0:
 ; 32-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -316,7 +292,7 @@ define i32 @rotl1_32(i32 %A) {
 	ret i32 %D
 }
 
-define i32 @rotr1_32(i32 %A) {
+define i32 @rotr1_32(i32 %A) nounwind {
 ; 32-LABEL: rotr1_32:
 ; 32:       # BB#0:
 ; 32-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -334,7 +310,7 @@ define i32 @rotr1_32(i32 %A) {
 	ret i32 %D
 }
 
-define i16 @rotl16(i16 %A, i8 %Amt) {
+define i16 @rotl16(i16 %A, i8 %Amt) nounwind {
 ; 32-LABEL: rotl16:
 ; 32:       # BB#0:
 ; 32-NEXT:    movb {{[0-9]+}}(%esp), %cl
@@ -357,7 +333,7 @@ define i16 @rotl16(i16 %A, i8 %Amt) {
 	ret i16 %D
 }
 
-define i16 @rotr16(i16 %A, i8 %Amt) {
+define i16 @rotr16(i16 %A, i8 %Amt) nounwind {
 ; 32-LABEL: rotr16:
 ; 32:       # BB#0:
 ; 32-NEXT:    movb {{[0-9]+}}(%esp), %cl
@@ -380,7 +356,7 @@ define i16 @rotr16(i16 %A, i8 %Amt) {
 	ret i16 %D
 }
 
-define i16 @rotli16(i16 %A) {
+define i16 @rotli16(i16 %A) nounwind {
 ; 32-LABEL: rotli16:
 ; 32:       # BB#0:
 ; 32-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
@@ -398,7 +374,7 @@ define i16 @rotli16(i16 %A) {
 	ret i16 %D
 }
 
-define i16 @rotri16(i16 %A) {
+define i16 @rotri16(i16 %A) nounwind {
 ; 32-LABEL: rotri16:
 ; 32:       # BB#0:
 ; 32-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
@@ -416,7 +392,7 @@ define i16 @rotri16(i16 %A) {
 	ret i16 %D
 }
 
-define i16 @rotl1_16(i16 %A) {
+define i16 @rotl1_16(i16 %A) nounwind {
 ; 32-LABEL: rotl1_16:
 ; 32:       # BB#0:
 ; 32-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
@@ -434,7 +410,7 @@ define i16 @rotl1_16(i16 %A) {
 	ret i16 %D
 }
 
-define i16 @rotr1_16(i16 %A) {
+define i16 @rotr1_16(i16 %A) nounwind {
 ; 32-LABEL: rotr1_16:
 ; 32:       # BB#0:
 ; 32-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
@@ -452,7 +428,7 @@ define i16 @rotr1_16(i16 %A) {
 	ret i16 %D
 }
 
-define i8 @rotl8(i8 %A, i8 %Amt) {
+define i8 @rotl8(i8 %A, i8 %Amt) nounwind {
 ; 32-LABEL: rotl8:
 ; 32:       # BB#0:
 ; 32-NEXT:    movb {{[0-9]+}}(%esp), %cl
@@ -473,7 +449,7 @@ define i8 @rotl8(i8 %A, i8 %Amt) {
 	ret i8 %D
 }
 
-define i8 @rotr8(i8 %A, i8 %Amt) {
+define i8 @rotr8(i8 %A, i8 %Amt) nounwind {
 ; 32-LABEL: rotr8:
 ; 32:       # BB#0:
 ; 32-NEXT:    movb {{[0-9]+}}(%esp), %cl
@@ -494,7 +470,7 @@ define i8 @rotr8(i8 %A, i8 %Amt) {
 	ret i8 %D
 }
 
-define i8 @rotli8(i8 %A) {
+define i8 @rotli8(i8 %A) nounwind {
 ; 32-LABEL: rotli8:
 ; 32:       # BB#0:
 ; 32-NEXT:    movb {{[0-9]+}}(%esp), %al
@@ -512,7 +488,7 @@ define i8 @rotli8(i8 %A) {
 	ret i8 %D
 }
 
-define i8 @rotri8(i8 %A) {
+define i8 @rotri8(i8 %A) nounwind {
 ; 32-LABEL: rotri8:
 ; 32:       # BB#0:
 ; 32-NEXT:    movb {{[0-9]+}}(%esp), %al
@@ -530,7 +506,7 @@ define i8 @rotri8(i8 %A) {
 	ret i8 %D
 }
 
-define i8 @rotl1_8(i8 %A) {
+define i8 @rotl1_8(i8 %A) nounwind {
 ; 32-LABEL: rotl1_8:
 ; 32:       # BB#0:
 ; 32-NEXT:    movb {{[0-9]+}}(%esp), %al
@@ -548,7 +524,7 @@ define i8 @rotl1_8(i8 %A) {
 	ret i8 %D
 }
 
-define i8 @rotr1_8(i8 %A) {
+define i8 @rotr1_8(i8 %A) nounwind {
 ; 32-LABEL: rotr1_8:
 ; 32:       # BB#0:
 ; 32-NEXT:    movb {{[0-9]+}}(%esp), %al
