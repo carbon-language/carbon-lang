@@ -52,9 +52,7 @@ def parse_args():
     if len(args) < 2:
         usage_and_exit()
     symlink_file = args[0]
-    del args[0]
-    public_libs = list(args)
-    print('%r' % public_libs)
+    public_libs = args[1:]
     return dryrun, symlink_file, public_libs
 
 def main():
