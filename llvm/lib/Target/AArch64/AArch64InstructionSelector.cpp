@@ -130,6 +130,7 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
       case TargetOpcode::G_AND:
         return AArch64::ANDXrr;
       case TargetOpcode::G_ADD:
+      case TargetOpcode::G_GEP:
         return AArch64::ADDXrr;
       case TargetOpcode::G_SUB:
         return AArch64::SUBXrr;
@@ -340,7 +341,8 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
   case TargetOpcode::G_SDIV:
   case TargetOpcode::G_UDIV:
   case TargetOpcode::G_ADD:
-  case TargetOpcode::G_SUB: {
+  case TargetOpcode::G_SUB:
+  case TargetOpcode::G_GEP: {
     // Reject the various things we don't support yet.
     if (unsupportedBinOp(I, RBI, MRI, TRI))
       return false;
