@@ -256,10 +256,12 @@ static __inline__
 unsigned long __cdecl _lrotl(unsigned long, int);
 static __inline__
 unsigned long __cdecl _lrotr(unsigned long, int);
-static __inline__
-void _ReadBarrier(void);
-static __inline__
-void _ReadWriteBarrier(void);
+static __inline__ void
+__attribute__((__deprecated__("use other intrinsics or C++11 atomics instead")))
+_ReadBarrier(void);
+static __inline__ void
+__attribute__((__deprecated__("use other intrinsics or C++11 atomics instead")))
+_ReadWriteBarrier(void);
 static __inline__
 void *_ReturnAddress(void);
 unsigned int _rorx_u32(unsigned int, const unsigned int);
@@ -288,8 +290,9 @@ unsigned int _shrx_u32(unsigned int, unsigned int);
 void _Store_HLERelease(long volatile *, long);
 void _Store64_HLERelease(__int64 volatile *, __int64);
 void _StorePointer_HLERelease(void *volatile *, void *);
-static __inline__
-void _WriteBarrier(void);
+static __inline__ void
+__attribute__((__deprecated__("use other intrinsics or C++11 atomics instead")))
+_WriteBarrier(void);
 unsigned __int32 xbegin(void);
 void _xend(void);
 static __inline__
@@ -1042,30 +1045,6 @@ _InterlockedCompareExchange64_rel(__int64 volatile *_Destination,
   __atomic_compare_exchange(_Destination, &_Comparand, &_Exchange, 0,
                             __ATOMIC_SEQ_CST, __ATOMIC_RELEASE);
   return _Comparand;
-}
-#endif
-/*----------------------------------------------------------------------------*\
-|* Barriers
-\*----------------------------------------------------------------------------*/
-static __inline__ void __DEFAULT_FN_ATTRS
-__attribute__((__deprecated__("use other intrinsics or C++11 atomics instead")))
-_ReadWriteBarrier(void) {
-  __atomic_signal_fence(__ATOMIC_SEQ_CST);
-}
-static __inline__ void __DEFAULT_FN_ATTRS
-__attribute__((__deprecated__("use other intrinsics or C++11 atomics instead")))
-_ReadBarrier(void) {
-  __atomic_signal_fence(__ATOMIC_SEQ_CST);
-}
-static __inline__ void __DEFAULT_FN_ATTRS
-__attribute__((__deprecated__("use other intrinsics or C++11 atomics instead")))
-_WriteBarrier(void) {
-  __atomic_signal_fence(__ATOMIC_SEQ_CST);
-}
-#ifdef __x86_64__
-static __inline__ void __DEFAULT_FN_ATTRS
-__faststorefence(void) {
-  __atomic_thread_fence(__ATOMIC_SEQ_CST);
 }
 #endif
 /*----------------------------------------------------------------------------*\
