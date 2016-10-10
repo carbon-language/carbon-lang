@@ -313,8 +313,9 @@ private:
   typedef llvm::DenseMap<GlobalDecl, int64_t> MethodVTableIndicesTy;
   MethodVTableIndicesTy MethodVTableIndices;
 
-  typedef llvm::DenseMap<const CXXRecordDecl *, const VTableLayout *>
-    VTableLayoutMapTy;
+  typedef llvm::DenseMap<const CXXRecordDecl *,
+                         std::unique_ptr<const VTableLayout>>
+      VTableLayoutMapTy;
   VTableLayoutMapTy VTableLayouts;
 
   typedef std::pair<const CXXRecordDecl *,
@@ -341,11 +342,9 @@ public:
     return *VTableLayouts[RD];
   }
 
-  VTableLayout *
-  createConstructionVTableLayout(const CXXRecordDecl *MostDerivedClass,
-                                 CharUnits MostDerivedClassOffset,
-                                 bool MostDerivedClassIsVirtual,
-                                 const CXXRecordDecl *LayoutClass);
+  std::unique_ptr<VTableLayout> createConstructionVTableLayout(
+      const CXXRecordDecl *MostDerivedClass, CharUnits MostDerivedClassOffset,
+      bool MostDerivedClassIsVirtual, const CXXRecordDecl *LayoutClass);
 
   /// \brief Locate a virtual function in the vtable.
   ///

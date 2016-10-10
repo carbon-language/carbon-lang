@@ -2234,9 +2234,7 @@ VTableLayout::~VTableLayout() { }
 ItaniumVTableContext::ItaniumVTableContext(ASTContext &Context)
     : VTableContextBase(/*MS=*/false) {}
 
-ItaniumVTableContext::~ItaniumVTableContext() {
-  llvm::DeleteContainerSeconds(VTableLayouts);
-}
+ItaniumVTableContext::~ItaniumVTableContext() {}
 
 uint64_t ItaniumVTableContext::getMethodVTableIndex(GlobalDecl GD) {
   MethodVTableIndicesTy::iterator I = MethodVTableIndices.find(GD);
@@ -2280,21 +2278,20 @@ ItaniumVTableContext::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   return I->second;
 }
 
-static VTableLayout *CreateVTableLayout(const ItaniumVTableBuilder &Builder) {
+static std::unique_ptr<VTableLayout>
+CreateVTableLayout(const ItaniumVTableBuilder &Builder) {
   SmallVector<VTableLayout::VTableThunkTy, 1>
     VTableThunks(Builder.vtable_thunks_begin(), Builder.vtable_thunks_end());
 
-  return new VTableLayout(Builder.getNumVTableComponents(),
-                          Builder.vtable_component_begin(),
-                          VTableThunks.size(),
-                          VTableThunks.data(),
-                          Builder.getAddressPoints(),
-                          /*IsMicrosoftABI=*/false);
+  return llvm::make_unique<VTableLayout>(
+      Builder.getNumVTableComponents(), Builder.vtable_component_begin(),
+      VTableThunks.size(), VTableThunks.data(), Builder.getAddressPoints(),
+      /*IsMicrosoftABI=*/false);
 }
 
 void
 ItaniumVTableContext::computeVTableRelatedInformation(const CXXRecordDecl *RD) {
-  const VTableLayout *&Entry = VTableLayouts[RD];
+  std::unique_ptr<const VTableLayout> &Entry = VTableLayouts[RD];
 
   // Check if we've computed this information before.
   if (Entry)
@@ -2330,7 +2327,8 @@ ItaniumVTableContext::computeVTableRelatedInformation(const CXXRecordDecl *RD) {
   }
 }
 
-VTableLayout *ItaniumVTableContext::createConstructionVTableLayout(
+std::unique_ptr<VTableLayout>
+ItaniumVTableContext::createConstructionVTableLayout(
     const CXXRecordDecl *MostDerivedClass, CharUnits MostDerivedClassOffset,
     bool MostDerivedClassIsVirtual, const CXXRecordDecl *LayoutClass) {
   ItaniumVTableBuilder Builder(*this, MostDerivedClass, MostDerivedClassOffset,
