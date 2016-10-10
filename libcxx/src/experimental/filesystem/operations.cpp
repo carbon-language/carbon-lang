@@ -536,7 +536,8 @@ constexpr auto min_time_t = numeric_limits<time_t>::min();
 #pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
 #endif
 
-constexpr bool is_representable(TimeSpec const& tm) {
+_LIBCPP_CONSTEXPR_AFTER_CXX11
+bool is_representable(TimeSpec const& tm) {
   if (tm.tv_sec >= 0) {
     return (tm.tv_sec < max_seconds) ||
         (tm.tv_sec == max_seconds && tm.tv_nsec <= max_nsec);
@@ -546,7 +547,7 @@ constexpr bool is_representable(TimeSpec const& tm) {
     return (tm.tv_sec >= min_seconds);
   }
 }
-
+#ifndef _LIBCPP_HAS_NO_CXX14_CONSTEXPR
 #if defined(__LP64__)
 static_assert(is_representable({max_seconds, max_nsec}), "");
 static_assert(!is_representable({max_seconds + 1, 0}), "");
@@ -562,8 +563,10 @@ static_assert(is_representable({max_time_t, 999999999}), "");
 static_assert(is_representable({max_time_t, 1000000000}), "");
 static_assert(is_representable({min_time_t, 0}), "");
 #endif
+#endif
 
-constexpr bool is_representable(file_time_type const& tm) {
+_LIBCPP_CONSTEXPR_AFTER_CXX11
+bool is_representable(file_time_type const& tm) {
   auto secs = duration_cast<seconds>(tm.time_since_epoch());
   auto nsecs = duration_cast<nanoseconds>(tm.time_since_epoch() - secs);
   if (nsecs.count() < 0) {
@@ -575,6 +578,7 @@ constexpr bool is_representable(file_time_type const& tm) {
     return secs.count() <= TLim::max();
   return secs.count() >= TLim::min();
 }
+#ifndef _LIBCPP_HAS_NO_CXX14_CONSTEXPR
 #if defined(__LP64__)
 static_assert(is_representable(file_time_type::max()), "");
 static_assert(is_representable(file_time_type::min()), "");
@@ -584,9 +588,10 @@ static_assert(!is_representable(file_time_type::min()), "");
 static_assert(is_representable(file_time_type(seconds(max_time_t))), "");
 static_assert(is_representable(file_time_type(seconds(min_time_t))), "");
 #endif
+#endif
 
-template <long long V> struct Dummy;
-constexpr file_time_type convert_timespec(TimeSpec const& tm) {
+_LIBCPP_CONSTEXPR_AFTER_CXX11
+file_time_type convert_timespec(TimeSpec const& tm) {
   auto adj_msec = duration_cast<microseconds>(nanoseconds(tm.tv_nsec));
   if (tm.tv_sec >= 0) {
     auto Dur = seconds(tm.tv_sec) + microseconds(adj_msec);
@@ -599,6 +604,7 @@ constexpr file_time_type convert_timespec(TimeSpec const& tm) {
     return file_time_type(Dur);
   }
 }
+#ifndef _LIBCPP_HAS_NO_CXX14_CONSTEXPR
 #if defined(__LP64__)
 static_assert(convert_timespec({max_seconds, max_nsec}) == file_time_type::max(), "");
 static_assert(convert_timespec({max_seconds, max_nsec - 1}) < file_time_type::max(), "");
@@ -608,6 +614,7 @@ static_assert(convert_timespec({min_seconds - 1, min_nsec_timespec + 1}) > file_
 static_assert(convert_timespec({min_seconds , 0}) > file_time_type::min(), "");
 #else
 // FIXME add tests for 32 bit builds
+#endif
 #endif
 
 #if !defined(__LP64__) && defined(__clang__)
