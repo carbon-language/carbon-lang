@@ -3388,9 +3388,7 @@ static bool rebucketPaths(VPtrInfoVector &Paths) {
   return Changed;
 }
 
-MicrosoftVTableContext::~MicrosoftVTableContext() {
-  llvm::DeleteContainerSeconds(VBaseInfo);
-}
+MicrosoftVTableContext::~MicrosoftVTableContext() {}
 
 namespace {
 typedef llvm::SetVector<BaseSubobject, std::vector<BaseSubobject>,
@@ -3670,17 +3668,18 @@ void MicrosoftVTableContext::dumpMethodLocations(
   Out.flush();
 }
 
-const VirtualBaseInfo *MicrosoftVTableContext::computeVBTableRelatedInformation(
+const VirtualBaseInfo &MicrosoftVTableContext::computeVBTableRelatedInformation(
     const CXXRecordDecl *RD) {
   VirtualBaseInfo *VBI;
 
   {
     // Get or create a VBI for RD.  Don't hold a reference to the DenseMap cell,
     // as it may be modified and rehashed under us.
-    VirtualBaseInfo *&Entry = VBaseInfo[RD];
+    std::unique_ptr<VirtualBaseInfo> &Entry = VBaseInfo[RD];
     if (Entry)
-      return Entry;
-    Entry = VBI = new VirtualBaseInfo();
+      return *Entry;
+    Entry = llvm::make_unique<VirtualBaseInfo>();
+    VBI = Entry.get();
   }
 
   computeVTablePaths(/*ForVBTables=*/true, RD, VBI->VBPtrPaths);
@@ -3690,10 +3689,10 @@ const VirtualBaseInfo *MicrosoftVTableContext::computeVBTableRelatedInformation(
   if (const CXXRecordDecl *VBPtrBase = Layout.getBaseSharingVBPtr()) {
     // If the Derived class shares the vbptr with a non-virtual base, the shared
     // virtual bases come first so that the layout is the same.
-    const VirtualBaseInfo *BaseInfo =
+    const VirtualBaseInfo &BaseInfo =
         computeVBTableRelatedInformation(VBPtrBase);
-    VBI->VBTableIndices.insert(BaseInfo->VBTableIndices.begin(),
-                               BaseInfo->VBTableIndices.end());
+    VBI->VBTableIndices.insert(BaseInfo.VBTableIndices.begin(),
+                               BaseInfo.VBTableIndices.end());
   }
 
   // New vbases are added to the end of the vbtable.
@@ -3705,19 +3704,19 @@ const VirtualBaseInfo *MicrosoftVTableContext::computeVBTableRelatedInformation(
       VBI->VBTableIndices[CurVBase] = VBTableIndex++;
   }
 
-  return VBI;
+  return *VBI;
 }
 
 unsigned MicrosoftVTableContext::getVBTableIndex(const CXXRecordDecl *Derived,
                                                  const CXXRecordDecl *VBase) {
-  const VirtualBaseInfo *VBInfo = computeVBTableRelatedInformation(Derived);
-  assert(VBInfo->VBTableIndices.count(VBase));
-  return VBInfo->VBTableIndices.find(VBase)->second;
+  const VirtualBaseInfo &VBInfo = computeVBTableRelatedInformation(Derived);
+  assert(VBInfo.VBTableIndices.count(VBase));
+  return VBInfo.VBTableIndices.find(VBase)->second;
 }
 
 const VPtrInfoVector &
 MicrosoftVTableContext::enumerateVBTables(const CXXRecordDecl *RD) {
-  return computeVBTableRelatedInformation(RD)->VBPtrPaths;
+  return computeVBTableRelatedInformation(RD).VBPtrPaths;
 }
 
 const VPtrInfoVector &

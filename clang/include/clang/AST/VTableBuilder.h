@@ -484,7 +484,8 @@ private:
       VFTableLayoutMapTy;
   VFTableLayoutMapTy VFTableLayouts;
 
-  llvm::DenseMap<const CXXRecordDecl *, VirtualBaseInfo *> VBaseInfo;
+  llvm::DenseMap<const CXXRecordDecl *, std::unique_ptr<VirtualBaseInfo>>
+      VBaseInfo;
 
   void enumerateVFPtrs(const CXXRecordDecl *ForClass, VPtrInfoVector &Result);
 
@@ -494,7 +495,7 @@ private:
                            const MethodVFTableLocationsTy &NewMethods,
                            raw_ostream &);
 
-  const VirtualBaseInfo *
+  const VirtualBaseInfo &
   computeVBTableRelatedInformation(const CXXRecordDecl *RD);
 
   void computeVTablePaths(bool ForVBTables, const CXXRecordDecl *RD,
