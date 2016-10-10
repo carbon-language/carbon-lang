@@ -229,6 +229,16 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
     return true;
   }
 
+  case TargetOpcode::G_CONSTANT: {
+    if (Ty.getSizeInBits() <= 32)
+      I.setDesc(TII.get(AArch64::MOVi32imm));
+    else if (Ty.getSizeInBits() <= 64)
+      I.setDesc(TII.get(AArch64::MOVi64imm));
+    else
+      return false;
+    return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
+  }
+
   case TargetOpcode::G_FRAME_INDEX: {
     // allocas and G_FRAME_INDEX are only supported in addrspace(0).
     if (Ty != LLT::pointer(0, 64)) {
