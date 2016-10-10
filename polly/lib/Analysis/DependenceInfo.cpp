@@ -370,13 +370,13 @@ void Dependences::calculateDependences(Scop &S) {
     }
   }
 
+  DEBUG(dbgs() << "Read: " << Read << "\n";
+        dbgs() << "Write: " << Write << "\n";
+        dbgs() << "MayWrite: " << MayWrite << "\n";
+        dbgs() << "Schedule: " << Schedule << "\n");
+
   {
     IslMaxOperationsGuard MaxOpGuard(IslCtx.get(), OptComputeOut);
-
-    DEBUG(dbgs() << "Read: " << Read << "\n";
-          dbgs() << "Write: " << Write << "\n";
-          dbgs() << "MayWrite: " << MayWrite << "\n";
-          dbgs() << "Schedule: " << Schedule << "\n");
 
     RAW = WAW = WAR = RED = nullptr;
 
