@@ -17,6 +17,7 @@
 #include "AArch64RegisterBankInfo.h"
 #include "AArch64RegisterInfo.h"
 #include "AArch64Subtarget.h"
+#include "AArch64TargetMachine.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -35,8 +36,9 @@ using namespace llvm;
 #endif
 
 AArch64InstructionSelector::AArch64InstructionSelector(
-    const AArch64Subtarget &STI, const AArch64RegisterBankInfo &RBI)
-    : InstructionSelector(), TII(*STI.getInstrInfo()),
+    const AArch64TargetMachine &TM, const AArch64Subtarget &STI,
+    const AArch64RegisterBankInfo &RBI)
+  : InstructionSelector(), TM(TM), STI(STI), TII(*STI.getInstrInfo()),
       TRI(*STI.getRegisterInfo()), RBI(RBI) {}
 
 /// Check whether \p I is a currently unsupported binary operation:
@@ -256,6 +258,26 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
 
     return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
   }
+
+  case TargetOpcode::G_GLOBAL_VALUE: {
+    auto GV = I.getOperand(1).getGlobal();
+    if (GV->isThreadLocal()) {
+      // FIXME: we don't support TLS yet.
+      return false;
+    }
+    unsigned char OpFlags = STI.ClassifyGlobalReference(GV, TM);
+    if (OpFlags & AArch64II::MO_GOT)
+      I.setDesc(TII.get(AArch64::LOADgot));
+    else {
+      I.setDesc(TII.get(AArch64::MOVaddr));
+      I.getOperand(1).setTargetFlags(OpFlags | AArch64II::MO_PAGE);
+      MachineInstrBuilder MIB(MF, I);
+      MIB.addGlobalAddress(GV, I.getOperand(1).getOffset(),
+                           OpFlags | AArch64II::MO_PAGEOFF | AArch64II::MO_NC);
+    }
+    return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
+  }
+
   case TargetOpcode::G_LOAD:
   case TargetOpcode::G_STORE: {
     LLT MemTy = Ty;
