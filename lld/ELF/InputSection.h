@@ -235,6 +235,9 @@ public:
   // to. The writer sets a value.
   uint64_t OutSecOff = 0;
 
+  // InputSection that is dependent on us (reverse dependency for GC)
+  InputSectionBase<ELFT> *DependentSection = nullptr;
+
   static bool classof(const InputSectionBase<ELFT> *S);
 
   InputSectionBase<ELFT> *getRelocatedSection();
