@@ -3,14 +3,14 @@
 ; RUN: llvm-as %p/Inputs/thinlto.ll -o %t2.o
 
 ; First force single-threaded mode
-; RUN: ld.lld -save-temps --lto-jobs=1 -shared %t.o %t2.o -o %t
+; RUN: ld.lld -save-temps --thinlto-jobs=1 -shared %t.o %t2.o -o %t
 ; RUN: llvm-nm %t.lto.o | FileCheck %s --check-prefix=NM
 
 ; NM: T f
 ; NM: T g
 
 ; Next force multi-threaded mode
-; RUN: ld.lld -save-temps --lto-jobs=2 -shared %t.o %t2.o -o %t2
+; RUN: ld.lld -save-temps --thinlto-jobs=2 -shared %t.o %t2.o -o %t2
 ; RUN: llvm-nm %t20.lto.o | FileCheck %s --check-prefix=NM1
 ; RUN: llvm-nm %t21.lto.o | FileCheck %s --check-prefix=NM2
 
