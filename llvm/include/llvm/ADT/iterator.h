@@ -257,8 +257,10 @@ struct pointee_iterator
 };
 
 template <typename WrappedIteratorT>
-pointee_iterator<WrappedIteratorT> make_pointee_iterator(WrappedIteratorT &&I) {
-  return pointee_iterator<WrappedIteratorT>(std::forward<WrappedIteratorT>(I));
+pointee_iterator<typename std::decay<WrappedIteratorT>::type>
+make_pointee_iterator(WrappedIteratorT &&I) {
+  return pointee_iterator<typename std::decay<WrappedIteratorT>::type>(
+      std::forward<WrappedIteratorT>(I));
 }
 
 template <typename WrappedIteratorT,
@@ -279,8 +281,10 @@ public:
 };
 
 template <typename WrappedIteratorT>
-pointer_iterator<WrappedIteratorT> make_pointer_iterator(WrappedIteratorT &&I) {
-  return pointer_iterator<WrappedIteratorT>(std::forward<WrappedIteratorT>(I));
+pointer_iterator<typename std::decay<WrappedIteratorT>::type>
+make_pointer_iterator(WrappedIteratorT &&I) {
+  return pointer_iterator<typename std::decay<WrappedIteratorT>::type>(
+      std::forward<WrappedIteratorT>(I));
 }
 
 } // namespace llvm
