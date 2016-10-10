@@ -794,8 +794,6 @@ ASTContext::~ASTContext() {
 
   for (const auto &Value : ModuleInitializers)
     Value.second->~PerModuleInitializers();
-
-  llvm::DeleteContainerSeconds(MangleNumberingContexts);
 }
 
 void ASTContext::ReleaseParentMapEntries() {
@@ -8982,13 +8980,14 @@ unsigned ASTContext::getStaticLocalNumber(const VarDecl *VD) const {
 MangleNumberingContext &
 ASTContext::getManglingNumberContext(const DeclContext *DC) {
   assert(LangOpts.CPlusPlus);  // We don't need mangling numbers for plain C.
-  MangleNumberingContext *&MCtx = MangleNumberingContexts[DC];
+  std::unique_ptr<MangleNumberingContext> &MCtx = MangleNumberingContexts[DC];
   if (!MCtx)
     MCtx = createMangleNumberingContext();
   return *MCtx;
 }
 
-MangleNumberingContext *ASTContext::createMangleNumberingContext() const {
+std::unique_ptr<MangleNumberingContext>
+ASTContext::createMangleNumberingContext() const {
   return ABI->createMangleNumberingContext();
 }
 
