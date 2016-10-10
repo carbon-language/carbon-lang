@@ -101,7 +101,8 @@ private:
   msf::WritableStreamRef NamesBuffer;
   msf::MutableByteStream ModInfoBuffer;
   msf::MutableByteStream FileInfoBuffer;
-  llvm::SmallVector<DebugStream, (int)DbgHeaderType::Max> DbgStreams;
+  llvm::SmallVector<DebugStream, (int)DbgHeaderType::Max> DbgStreams{
+      (int)DbgHeaderType::Max};
 };
 }
 }

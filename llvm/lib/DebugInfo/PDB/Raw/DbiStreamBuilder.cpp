@@ -46,7 +46,7 @@ void DbiStreamBuilder::setMachineType(PDB_Machine M) { MachineType = M; }
 
 Error DbiStreamBuilder::addDbgStream(pdb::DbgHeaderType Type,
                                      ArrayRef<uint8_t> Data) {
-  if (DbgStreams[(int)Type].StreamNumber == kInvalidStreamIndex)
+  if (DbgStreams[(int)Type].StreamNumber != kInvalidStreamIndex)
     return make_error<RawError>(raw_error_code::duplicate_entry,
                                 "The specified stream type already exists");
   auto ExpectedIndex = Msf.addStream(Data.size());
