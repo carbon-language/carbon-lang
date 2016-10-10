@@ -110,7 +110,7 @@ public:
   const Elf_Shdr *getSectionHdr() const { return Header; }
   ObjectFile<ELFT> *getFile() const { return File; }
   uintX_t getOffset(const DefinedRegular<ELFT> &Sym) const;
-
+  InputSectionBase *getLinkOrderDep() const;
   // Translate an offset in the input section to an offset in the output
   // section.
   uintX_t getOffset(uintX_t Offset) const;
