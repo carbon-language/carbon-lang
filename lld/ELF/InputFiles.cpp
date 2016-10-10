@@ -145,7 +145,7 @@ void elf::ObjectFile<ELFT>::parse(DenseSet<StringRef> &ComdatGroups) {
   // Read section and symbol tables.
   initializeSections(ComdatGroups);
   initializeSymbols();
-  if (Config->GcSections && Config->EMachine == EM_ARM )
+  if (Config->GcSections && Config->EMachine == EM_ARM)
     initializeReverseDependencies();
 }
 
