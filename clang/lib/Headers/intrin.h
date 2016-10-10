@@ -66,7 +66,9 @@ void __cpuid(int[4], int);
 static __inline__
 void __cpuidex(int[4], int, int);
 void __debugbreak(void);
+static __inline__
 __int64 __emul(int, int);
+static __inline__
 unsigned __int64 __emulu(unsigned int, unsigned int);
 void __cdecl __fastfail(unsigned int);
 unsigned int __getcallerseflags(void);
@@ -313,8 +315,6 @@ unsigned __int64 __lzcnt64(unsigned __int64);
 static __inline__
 void __movsq(unsigned long long *, unsigned long long const *, size_t);
 static __inline__
-__int64 __mulh(__int64, __int64);
-static __inline__
 unsigned __int64 __popcnt64(unsigned __int64);
 static __inline__
 unsigned char __readgsbyte(unsigned long);
@@ -405,9 +405,6 @@ static __inline__
 __int64 _InterlockedXor64(__int64 volatile *_Value, __int64 _Mask);
 __int64 _InterlockedXor64_np(__int64 volatile *_Value, __int64 _Mask);
 char _InterlockedXor8_np(char volatile *_Value, char _Mask);
-static __inline__
-__int64 _mul128(__int64 _Multiplier, __int64 _Multiplicand,
-                __int64 *_HighProduct);
 unsigned __int64 _rorx_u64(unsigned __int64, const unsigned int);
 __int64 _sarx_i64(__int64, unsigned int);
 #if __STDC_HOSTED__
@@ -415,34 +412,19 @@ int __cdecl _setjmpex(jmp_buf);
 #endif
 unsigned __int64 _shlx_u64(unsigned __int64, unsigned int);
 unsigned __int64 _shrx_u64(unsigned __int64, unsigned int);
-/*
- * Multiply two 64-bit integers and obtain a 64-bit result.
- * The low-half is returned directly and the high half is in an out parameter.
- */
-static __inline__ unsigned __int64 __DEFAULT_FN_ATTRS
-_umul128(unsigned __int64 _Multiplier, unsigned __int64 _Multiplicand,
-         unsigned __int64 *_HighProduct) {
-  unsigned __int128 _FullProduct =
-      (unsigned __int128)_Multiplier * (unsigned __int128)_Multiplicand;
-  *_HighProduct = _FullProduct >> 64;
-  return _FullProduct;
-}
+static __inline__
+__int64 __mulh(__int64, __int64);
 static __inline__
 unsigned __int64 __umulh(unsigned __int64, unsigned __int64);
+static __inline__
+__int64 _mul128(__int64, __int64, __int64*);
+static __inline__
+unsigned __int64 _umul128(unsigned __int64,
+                          unsigned __int64,
+                          unsigned __int64*);
 
 #endif /* __x86_64__ */
 
-/*----------------------------------------------------------------------------*\
-|* Multiplication
-\*----------------------------------------------------------------------------*/
-static __inline__ __int64 __DEFAULT_FN_ATTRS
-__emul(int __in1, int __in2) {
-  return (__int64)__in1 * (__int64)__in2;
-}
-static __inline__ unsigned __int64 __DEFAULT_FN_ATTRS
-__emulu(unsigned int __in1, unsigned int __in2) {
-  return (unsigned __int64)__in1 * (unsigned __int64)__in2;
-}
 /*----------------------------------------------------------------------------*\
 |* Bit Counting and Testing
 \*----------------------------------------------------------------------------*/
