@@ -706,12 +706,12 @@ template <typename F, typename Tuple>
 auto apply(F &&f, Tuple &&t) -> decltype(detail::apply_impl(
     std::forward<F>(f), std::forward<Tuple>(t),
     build_index_impl<
-        std::tuple_size<typename std::decay<Tuple>::type>::value>{})) {
+        std::tuple_size<typename std::decay<Tuple>::type>::value>())) {
   using Indices = build_index_impl<
       std::tuple_size<typename std::decay<Tuple>::type>::value>;
 
   return detail::apply_impl(std::forward<F>(f), std::forward<Tuple>(t),
-                            Indices{});
+                            Indices());
 }
 } // End llvm namespace
 
