@@ -168,6 +168,7 @@ AArch64MachineLegalizer::AArch64MachineLegalizer() {
 
   // Pointer-handling
   setAction({G_FRAME_INDEX, p0}, Legal);
+  setAction({G_GLOBAL_VALUE, p0}, Legal);
 
   setAction({G_PTRTOINT, 0, s64}, Legal);
   setAction({G_PTRTOINT, 1, p0}, Legal);
