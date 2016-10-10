@@ -317,7 +317,7 @@ public:
 
 class PTHFileLookupCommonTrait {
 public:
-  typedef std::pair<unsigned char, const char*> internal_key_type;
+  typedef std::pair<unsigned char, StringRef> internal_key_type;
   typedef unsigned hash_value_type;
   typedef unsigned offset_type;
 
@@ -352,7 +352,7 @@ public:
   }
 
   static bool EqualKey(internal_key_type a, internal_key_type b) {
-    return a.first == b.first && strcmp(a.second, b.second) == 0;
+    return a.first == b.first && a.second == b.second;
   }
 
   static PTHFileData ReadData(const internal_key_type& k,
@@ -655,7 +655,7 @@ public:
   static bool EqualKey(internal_key_type a, internal_key_type b) {
     // When doing 'stat' lookups we don't care about the kind of 'a' and 'b',
     // just the paths.
-    return strcmp(a.second, b.second) == 0;
+    return a.second == b.second;
   }
 
   static data_type ReadData(const internal_key_type& k, const unsigned char* d,

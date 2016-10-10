@@ -423,7 +423,7 @@ FileManager::getBufferForFile(const FileEntry *Entry, bool isVolatile,
   if (isVolatile)
     FileSize = -1;
 
-  const char *Filename = Entry->getName();
+  StringRef Filename = Entry->getName();
   // If the file is already open, use the open file descriptor.
   if (Entry->File) {
     auto Result =

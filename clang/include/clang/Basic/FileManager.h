@@ -51,7 +51,7 @@ public:
 /// If the 'File' member is valid, then this FileEntry has an open file
 /// descriptor for the file.
 class FileEntry {
-  const char *Name;           // Name of the file.
+  StringRef Name;             // Name of the file.
   std::string RealPathName;   // Real path to the file; could be empty.
   off_t Size;                 // File size in bytes.
   time_t ModTime;             // Modification time of file.
@@ -82,7 +82,7 @@ public:
     assert(!isValid() && "Cannot copy an initialized FileEntry");
   }
 
-  const char *getName() const { return Name; }
+  StringRef getName() const { return Name; }
   StringRef tryGetRealPathName() const { return RealPathName; }
   bool isValid() const { return IsValid; }
   off_t getSize() const { return Size; }

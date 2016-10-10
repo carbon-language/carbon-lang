@@ -140,7 +140,7 @@ TEST_F(FileManagerTest, getFileReturnsValidFileEntryForExistingRealFile) {
 
   const FileEntry *file = manager.getFile("/tmp/test");
   ASSERT_TRUE(file != nullptr);
-  EXPECT_STREQ("/tmp/test", file->getName());
+  EXPECT_EQ("/tmp/test", file->getName());
 
   const DirectoryEntry *dir = file->getDir();
   ASSERT_TRUE(dir != nullptr);
@@ -164,7 +164,7 @@ TEST_F(FileManagerTest, getFileReturnsValidFileEntryForExistingVirtualFile) {
   manager.getVirtualFile("virtual/dir/bar.h", 100, 0);
   const FileEntry *file = manager.getFile("virtual/dir/bar.h");
   ASSERT_TRUE(file != nullptr);
-  EXPECT_STREQ("virtual/dir/bar.h", file->getName());
+  EXPECT_EQ("virtual/dir/bar.h", file->getName());
 
   const DirectoryEntry *dir = file->getDir();
   ASSERT_TRUE(dir != nullptr);
