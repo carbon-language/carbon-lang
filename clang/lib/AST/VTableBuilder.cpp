@@ -3389,7 +3389,6 @@ static bool rebucketPaths(VPtrInfoVector &Paths) {
 }
 
 MicrosoftVTableContext::~MicrosoftVTableContext() {
-  llvm::DeleteContainerSeconds(VFTableLayouts);
   llvm::DeleteContainerSeconds(VBaseInfo);
 }
 
@@ -3592,7 +3591,7 @@ void MicrosoftVTableContext::computeVTableRelatedInformation(
     assert(VFTableLayouts.count(id) == 0);
     SmallVector<VTableLayout::VTableThunkTy, 1> VTableThunks(
         Builder.vtable_thunks_begin(), Builder.vtable_thunks_end());
-    VFTableLayouts[id] = new VTableLayout(
+    VFTableLayouts[id] = llvm::make_unique<VTableLayout>(
         Builder.getNumVTableComponents(), Builder.vtable_component_begin(),
         VTableThunks.size(), VTableThunks.data(), EmptyAddressPointsMap, true);
     Thunks.insert(Builder.thunks_begin(), Builder.thunks_end());

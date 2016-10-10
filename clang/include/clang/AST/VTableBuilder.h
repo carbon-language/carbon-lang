@@ -480,7 +480,8 @@ private:
   VFPtrLocationsMapTy VFPtrLocations;
 
   typedef std::pair<const CXXRecordDecl *, CharUnits> VFTableIdTy;
-  typedef llvm::DenseMap<VFTableIdTy, const VTableLayout *> VFTableLayoutMapTy;
+  typedef llvm::DenseMap<VFTableIdTy, std::unique_ptr<const VTableLayout>>
+      VFTableLayoutMapTy;
   VFTableLayoutMapTy VFTableLayouts;
 
   llvm::DenseMap<const CXXRecordDecl *, VirtualBaseInfo *> VBaseInfo;
