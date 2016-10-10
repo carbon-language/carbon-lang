@@ -417,14 +417,12 @@ struct VPtrInfo {
   }
 };
 
-typedef SmallVector<VPtrInfo *, 2> VPtrInfoVector;
+typedef SmallVector<std::unique_ptr<VPtrInfo>, 2> VPtrInfoVector;
 
 /// All virtual base related information about a given record decl.  Includes
 /// information on all virtual base tables and the path components that are used
 /// to mangle them.
 struct VirtualBaseInfo {
-  ~VirtualBaseInfo() { llvm::DeleteContainerPointers(VBPtrPaths); }
-
   /// A map from virtual base to vbtable index for doing a conversion from the
   /// the derived class to the a base.
   llvm::DenseMap<const CXXRecordDecl *, unsigned> VBTableIndices;
@@ -477,8 +475,8 @@ private:
     MethodVFTableLocationsTy;
   MethodVFTableLocationsTy MethodVFTableLocations;
 
-  typedef llvm::DenseMap<const CXXRecordDecl *, VPtrInfoVector *>
-    VFPtrLocationsMapTy;
+  typedef llvm::DenseMap<const CXXRecordDecl *, VPtrInfoVector>
+      VFPtrLocationsMapTy;
   VFPtrLocationsMapTy VFPtrLocations;
 
   typedef std::pair<const CXXRecordDecl *, CharUnits> VFTableIdTy;
