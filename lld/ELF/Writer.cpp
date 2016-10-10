@@ -337,7 +337,7 @@ static bool shouldKeepInSymtab(InputSectionBase<ELFT> *Sec, StringRef SymName,
   if (Config->Discard == DiscardPolicy::Locals)
     return false;
 
-  return !(Sec->getSectionHdr()->sh_flags & SHF_MERGE);
+  return !Sec || !(Sec->getSectionHdr()->sh_flags & SHF_MERGE);
 }
 
 template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
