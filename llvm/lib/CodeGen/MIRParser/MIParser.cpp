@@ -990,7 +990,7 @@ bool MIParser::parseRegisterOperand(MachineOperand &Dest,
     // Virtual registers may have a size with GlobalISel.
     if (!TargetRegisterInfo::isVirtualRegister(Reg))
       return error("unexpected size on physical register");
-    if (MRI.getRegClassOrRegBank(Reg).is<const TargetRegisterClass *>())
+    if (RegInfo->Kind != VRegInfo::GENERIC)
       return error("unexpected size on non-generic virtual register");
 
     LLT Ty;

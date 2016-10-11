@@ -124,7 +124,8 @@ LLT MachineRegisterInfo::getType(unsigned VReg) const {
 
 void MachineRegisterInfo::setType(unsigned VReg, LLT Ty) {
   // Check that VReg doesn't have a class.
-  assert(!getRegClassOrRegBank(VReg).is<const TargetRegisterClass *>() &&
+  assert(getRegClassOrRegBank(VReg).isNull() ||
+         !getRegClassOrRegBank(VReg).is<const TargetRegisterClass *>() &&
          "Can't set the size of a non-generic virtual register");
   getVRegToType()[VReg] = Ty;
 }
