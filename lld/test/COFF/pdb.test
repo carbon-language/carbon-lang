@@ -46,10 +46,10 @@
 # RAW:      Section Headers [
 # RAW-NEXT:   {
 # RAW-NEXT:     Name: .text
-# RAW-NEXT:     Virtual Size: 3
-# RAW-NEXT:     Virtual Address: 4096
-# RAW-NEXT:     Size of Raw Data: 512
-# RAW-NEXT:     File Pointer to Raw Data: 512
+# RAW-NEXT:     Virtual Size:
+# RAW-NEXT:     Virtual Address:
+# RAW-NEXT:     Size of Raw Data:
+# RAW-NEXT:     File Pointer to Raw Data:
 # RAW-NEXT:     File Pointer to Relocations: 0
 # RAW-NEXT:     File Pointer to Linenumbers: 0
 # RAW-NEXT:     Number of Relocations: 0
@@ -62,10 +62,10 @@
 # RAW-NEXT:   }
 # RAW-NEXT:   {
 # RAW-NEXT:     Name: .rdata
-# RAW-NEXT:     Virtual Size: 107
-# RAW-NEXT:     Virtual Address: 8192
-# RAW-NEXT:     Size of Raw Data: 512
-# RAW-NEXT:     File Pointer to Raw Data: 1024
+# RAW-NEXT:     Virtual Size:
+# RAW-NEXT:     Virtual Address:
+# RAW-NEXT:     Size of Raw Data:
+# RAW-NEXT:     File Pointer to Raw Data:
 # RAW-NEXT:     File Pointer to Relocations: 0
 # RAW-NEXT:     File Pointer to Linenumbers: 0
 # RAW-NEXT:     Number of Relocations: 0
