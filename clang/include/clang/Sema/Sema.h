@@ -9329,14 +9329,9 @@ public:
   /// Finds a function in \p Matches with highest calling priority
   /// from \p Caller context and erases all functions with lower
   /// calling priority.
-  void EraseUnwantedCUDAMatches(const FunctionDecl *Caller,
-                                SmallVectorImpl<FunctionDecl *> &Matches);
-  void EraseUnwantedCUDAMatches(const FunctionDecl *Caller,
-                                SmallVectorImpl<DeclAccessPair> &Matches);
   void EraseUnwantedCUDAMatches(
       const FunctionDecl *Caller,
       SmallVectorImpl<std::pair<DeclAccessPair, FunctionDecl *>> &Matches);
-  void EraseUnwantedCUDAMatches(const FunctionDecl *Caller, LookupResult &R);
 
   /// Given a implicit special member, infer its CUDA target from the
   /// calls it needs to make to underlying base/field special members.
