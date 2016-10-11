@@ -74,9 +74,7 @@ bool ProfileSummaryInfo::isFunctionEntryHot(const Function *F) {
   // FIXME: The heuristic used below for determining hotness is based on
   // preliminary SPEC tuning for inliner. This will eventually be a
   // convenience method that calls isHotCount.
-  return (FunctionCount &&
-          FunctionCount.getValue() >=
-              (uint64_t)(0.3 * (double)Summary->getMaxFunctionCount()));
+  return FunctionCount && isHotCount(FunctionCount.getValue());
 }
 
 /// Returns true if the function's entry is a cold. If it returns false, it
@@ -95,9 +93,7 @@ bool ProfileSummaryInfo::isFunctionEntryCold(const Function *F) {
   // FIXME: The heuristic used below for determining coldness is based on
   // preliminary SPEC tuning for inliner. This will eventually be a
   // convenience method that calls isHotCount.
-  return (FunctionCount &&
-          FunctionCount.getValue() <=
-              (uint64_t)(0.01 * (double)Summary->getMaxFunctionCount()));
+  return FunctionCount && isColdCount(FunctionCount.getValue());
 }
 
 /// Compute the hot and cold thresholds.
