@@ -103,7 +103,8 @@ void llvm::write_hex(raw_ostream &S, unsigned long long N, std::size_t MinWidth,
                      bool Upper, bool Prefix) {
   unsigned Nibbles = (64 - countLeadingZeros(N) + 3) / 4;
   unsigned PrefixChars = Prefix ? 2 : 0;
-  unsigned Width = std::max(MinWidth, std::max(1u, Nibbles) + PrefixChars);
+  unsigned Width = std::max(static_cast<unsigned>(MinWidth),
+                            std::max(1u, Nibbles) + PrefixChars);
 
   char NumberBuffer[20] = "0x0000000000000000";
   if (!Prefix)
