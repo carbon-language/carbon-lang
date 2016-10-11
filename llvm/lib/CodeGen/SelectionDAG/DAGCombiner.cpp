@@ -3314,18 +3314,24 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     if (SDValue Tmp = SimplifyBinOpWithSameOpcodeHands(N))
       return Tmp;
 
-  // Masking the negated extension of a boolean is just the extended boolean:
+  // Masking the negated extension of a boolean is just the zero-extended
+  // boolean:
   // and (sub 0, zext(bool X)), 1 --> zext(bool X)
+  // and (sub 0, sext(bool X)), 1 --> zext(bool X)
   //
   // Note: the SimplifyDemandedBits fold below can make an information-losing
   // transform, and then we have no way to find this better fold.
   if (N1C && N1C->isOne() && N0.getOpcode() == ISD::SUB) {
     ConstantSDNode *SubLHS = isConstOrConstSplat(N0.getOperand(0));
     SDValue SubRHS = N0.getOperand(1);
-    if (SubLHS && SubLHS->isNullValue() &&
-        SubRHS.getOpcode() == ISD::ZERO_EXTEND &&
-        SubRHS.getOperand(0).getScalarValueSizeInBits() == 1)
-      return SubRHS;
+    if (SubLHS && SubLHS->isNullValue()) {
+      if (SubRHS.getOpcode() == ISD::ZERO_EXTEND &&
+          SubRHS.getOperand(0).getScalarValueSizeInBits() == 1)
+        return SubRHS;
+      if (SubRHS.getOpcode() == ISD::SIGN_EXTEND &&
+          SubRHS.getOperand(0).getScalarValueSizeInBits() == 1)
+        return DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N), VT, SubRHS.getOperand(0));
+    }
   }
 
   // fold (and (sign_extend_inreg x, i16 to i32), 1) -> (and x, 1)
