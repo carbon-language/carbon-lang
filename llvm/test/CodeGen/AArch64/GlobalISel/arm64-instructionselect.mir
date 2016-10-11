@@ -15,6 +15,7 @@
 
   define void @or_s32_gpr() { ret void }
   define void @or_s64_gpr() { ret void }
+  define void @or_v2s32_fpr() { ret void }
 
   define void @xor_s32_gpr() { ret void }
   define void @xor_s64_gpr() { ret void }
@@ -252,6 +253,37 @@ body:             |
     %0(s64) = COPY %x0
     %1(s64) = COPY %x1
     %2(s64) = G_OR %0, %1
+...
+
+---
+# 64-bit G_OR on vector registers.
+# CHECK-LABEL: name: or_v2s32_fpr
+name:            or_v2s32_fpr
+legalized:       true
+regBankSelected: true
+#
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: fpr64 }
+# CHECK-NEXT:  - { id: 1, class: fpr64 }
+# CHECK-NEXT:  - { id: 2, class: fpr64 }
+registers:
+  - { id: 0, class: fpr }
+  - { id: 1, class: fpr }
+  - { id: 2, class: fpr }
+
+# CHECK:  body:
+# CHECK:    %0 = COPY %d0
+# CHECK:    %1 = COPY %d1
+# The actual OR does not matter as long as it is operating
+# on 64-bit width vector.
+# CHECK:    %2 = ORRv8i8 %0, %1
+body:             |
+  bb.0:
+    liveins: %d0, %d1
+
+      %0(<2 x s32>) = COPY %d0
+      %1(<2 x s32>) = COPY %d1
+      %2(<2 x s32>) = G_OR %0, %1
 ...
 
 ---

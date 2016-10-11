@@ -175,6 +175,8 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
         return AArch64::FMULDrr;
       case TargetOpcode::G_FDIV:
         return AArch64::FDIVDrr;
+      case TargetOpcode::G_OR:
+        return AArch64::ORRv8i8;
       default:
         return GenericOpc;
       }
