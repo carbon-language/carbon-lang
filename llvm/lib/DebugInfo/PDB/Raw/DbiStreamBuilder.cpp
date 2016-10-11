@@ -28,7 +28,7 @@ class ModiSubstreamBuilder {};
 DbiStreamBuilder::DbiStreamBuilder(msf::MSFBuilder &Msf)
     : Msf(Msf), Allocator(Msf.getAllocator()), Age(1), BuildNumber(0),
       PdbDllVersion(0), PdbDllRbld(0), Flags(0), MachineType(PDB_Machine::x86),
-      Header(nullptr) {}
+      Header(nullptr), DbgStreams((int)DbgHeaderType::Max) {}
 
 void DbiStreamBuilder::setVersionHeader(PdbRaw_DbiVer V) { VerHeader = V; }
 
