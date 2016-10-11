@@ -1461,7 +1461,7 @@ std::string HeaderSearch::suggestPathToFileForDiagnostics(const FileEntry *File,
     if (!SearchDirs[I].isNormalDir())
       continue;
 
-    const char *Dir = SearchDirs[I].getDir()->getName();
+    StringRef Dir = SearchDirs[I].getDir()->getName();
     for (auto NI = llvm::sys::path::begin(Name),
               NE = llvm::sys::path::end(Name),
               DI = llvm::sys::path::begin(Dir),

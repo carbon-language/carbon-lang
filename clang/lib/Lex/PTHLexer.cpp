@@ -644,10 +644,10 @@ public:
 
 class PTHStatLookupTrait : public PTHFileLookupCommonTrait {
 public:
-  typedef const char* external_key_type;  // const char*
+  typedef StringRef external_key_type; // const char*
   typedef PTHStatData data_type;
 
-  static internal_key_type GetInternalKey(const char *path) {
+  static internal_key_type GetInternalKey(StringRef path) {
     // The key 'kind' doesn't matter here because it is ignored in EqualKey.
     return std::make_pair((unsigned char) 0x0, path);
   }
@@ -694,7 +694,7 @@ public:
       : Cache(FL.getNumBuckets(), FL.getNumEntries(), FL.getBuckets(),
               FL.getBase()) {}
 
-  LookupResult getStat(const char *Path, FileData &Data, bool isFile,
+  LookupResult getStat(StringRef Path, FileData &Data, bool isFile,
                        std::unique_ptr<vfs::File> *F,
                        vfs::FileSystem &FS) override {
     // Do the lookup for the file's data in the PTH file.

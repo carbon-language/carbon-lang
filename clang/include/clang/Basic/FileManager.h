@@ -38,11 +38,10 @@ class FileSystemStatCache;
 /// \brief Cached information about one directory (either on disk or in
 /// the virtual file system).
 class DirectoryEntry {
-  const char *Name;   // Name of the directory.
+  StringRef Name; // Name of the directory.
   friend class FileManager;
 public:
-  DirectoryEntry() : Name(nullptr) {}
-  const char *getName() const { return Name; }
+  StringRef getName() const { return Name; }
 };
 
 /// \brief Cached information about one file (either on disk
@@ -165,7 +164,7 @@ class FileManager : public RefCountedBase<FileManager> {
   // Caching.
   std::unique_ptr<FileSystemStatCache> StatCache;
 
-  bool getStatValue(const char *Path, FileData &Data, bool isFile,
+  bool getStatValue(StringRef Path, FileData &Data, bool isFile,
                     std::unique_ptr<vfs::File> *F);
 
   /// Add all ancestors of the given path (pointing to either a file
