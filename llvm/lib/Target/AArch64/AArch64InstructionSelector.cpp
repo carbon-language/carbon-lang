@@ -201,6 +201,13 @@ static unsigned selectLoadStoreUIOp(unsigned GenericOpc, unsigned RegBankID,
     case 64:
       return isStore ? AArch64::STRXui : AArch64::LDRXui;
     }
+  case AArch64::FPRRegBankID:
+    switch (OpSize) {
+    case 32:
+      return isStore ? AArch64::STRSui : AArch64::LDRSui;
+    case 64:
+      return isStore ? AArch64::STRDui : AArch64::LDRDui;
+    }
   };
   return GenericOpc;
 }
