@@ -43,8 +43,8 @@ public:
 
   /// Returns a random number in the range [0, Max).
   result_type operator()();
-  static constexpr result_type min() { return generator_type::min(); }
-  static constexpr result_type max() { return generator_type::max(); }
+  static LLVM_CONSTEXPR result_type min() { return generator_type::min(); }
+  static LLVM_CONSTEXPR result_type max() { return generator_type::max(); }
 
 private:
   /// Seeds and salts the underlying RNG engine.
