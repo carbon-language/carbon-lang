@@ -1912,14 +1912,12 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     return N0.getOperand(0);
 
   // fold C2-(A+C1) -> (C2-C1)-A
-  ConstantSDNode *N1C1 =
-      N1.getOpcode() != ISD::ADD
-          ? nullptr
-          : dyn_cast<ConstantSDNode>(N1.getOperand(1).getNode());
-  if (N1.getOpcode() == ISD::ADD && N0C && N1C1) {
-    SDValue NewC =
-        DAG.getConstant(N0C->getAPIntValue() - N1C1->getAPIntValue(), DL, VT);
-    return DAG.getNode(ISD::SUB, DL, VT, NewC, N1.getOperand(0));
+  if (N1.getOpcode() == ISD::ADD && N0C) {
+    if (auto *N1C1 = dyn_cast<ConstantSDNode>(N1.getOperand(1).getNode())) {
+      SDValue NewC =
+          DAG.getConstant(N0C->getAPIntValue() - N1C1->getAPIntValue(), DL, VT);
+      return DAG.getNode(ISD::SUB, DL, VT, NewC, N1.getOperand(0));
+    }
   }
 
   // fold ((A+(B+or-C))-B) -> A+or-C
