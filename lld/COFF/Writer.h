@@ -14,7 +14,9 @@
 
 namespace lld {
 namespace coff {
-class SymbolTable;
+
+class Chunk;
+class OutputSection;
 
 void writeResult(SymbolTable *T);
 

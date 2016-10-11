@@ -30,7 +30,7 @@ using namespace llvm::support::endian;
 
 static ExitOnError ExitOnErr;
 
-void coff::createPDB(StringRef Path, ArrayRef<uint8_t> SectionTable) {
+void coff::createPDB(StringRef Path) {
   BumpPtrAllocator Alloc;
   pdb::PDBFileBuilder Builder(Alloc);
   ExitOnErr(Builder.initialize(4096)); // 4096 is blocksize
@@ -62,10 +62,6 @@ void coff::createPDB(StringRef Path, ArrayRef<uint8_t> SectionTable) {
   // Add an empty IPI stream.
   auto &IpiBuilder = Builder.getIpiBuilder();
   IpiBuilder.setVersionHeader(pdb::PdbTpiV80);
-
-  // Add COFF section header stream.
-  ExitOnErr(
-      DbiBuilder.addDbgStream(pdb::DbgHeaderType::SectionHdr, SectionTable));
 
   // Write to a file.
   ExitOnErr(Builder.commit(Path));
