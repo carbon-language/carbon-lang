@@ -13,7 +13,14 @@ namespace ArchetypeBases {
 template <bool, class T>
 struct DepType : T {};
 
-struct NullBase {};
+struct NullBase {
+protected:
+  NullBase() = default;
+  NullBase(NullBase const&) = default;
+  NullBase& operator=(NullBase const&) = default;
+  NullBase(NullBase &&) = default;
+  NullBase& operator=(NullBase &&) = default;
+};
 
 template <class Derived, bool Explicit = false>
 struct TestBase {
@@ -66,7 +73,7 @@ struct TestBase {
         ++alive; ++constructed; ++value_constructed;
     }
     template <bool Dummy = true, typename std::enable_if<Dummy && !Explicit, bool>::type = true>
-    TestBase(std::initializer_list<int>& il, int y = 0) noexcept : value(il.size()) {
+    explicit TestBase(std::initializer_list<int>& il, int y = 0) noexcept : value(il.size()) {
         ++alive; ++constructed; ++value_constructed;
     }
     TestBase& operator=(int xvalue) noexcept {
@@ -79,11 +86,11 @@ protected:
       assert(value != -999); assert(alive > 0);
       --alive; ++destroyed; value = -999;
     }
-    TestBase(TestBase const& o) noexcept : value(o.value) {
+    explicit TestBase(TestBase const& o) noexcept : value(o.value) {
         assert(o.value != -1); assert(o.value != -999);
         ++alive; ++constructed; ++copy_constructed;
     }
-    TestBase(TestBase && o) noexcept : value(o.value) {
+    explicit TestBase(TestBase && o) noexcept : value(o.value) {
         assert(o.value != -1); assert(o.value != -999);
         ++alive; ++constructed; ++move_constructed;
         o.value = -1;
