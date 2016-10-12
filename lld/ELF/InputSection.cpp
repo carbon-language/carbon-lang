@@ -128,14 +128,14 @@ InputSectionBase<ELFT>::getRawCompressedData(ArrayRef<uint8_t> Data) {
   // Compressed sections without Elf_Chdr header contain this header
   // instead. This is a GNU extension.
   struct ZlibHeader {
-    char magic[4]; // should be "ZLIB"
+    char Magic[4]; // Should be "ZLIB"
     char Size[8];  // Uncompressed size in big-endian
   };
 
   if (Data.size() < sizeof(ZlibHeader))
     fatal(getName(this) + ": corrupted compressed section");
   auto *Hdr = reinterpret_cast<const ZlibHeader *>(Data.data());
-  if (memcmp(Hdr->magic, "ZLIB", 4))
+  if (memcmp(Hdr->Magic, "ZLIB", 4))
     fatal(getName(this) + ": broken ZLIB-compressed section");
   return {Data.slice(sizeof(*Hdr)), read64be(Hdr->Size)};
 }
