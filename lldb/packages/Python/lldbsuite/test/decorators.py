@@ -512,13 +512,15 @@ def skipIfNoSBHeaders(func):
                 'Current',
                 'Headers',
                 'LLDB.h')
-        else:
-            header = os.path.join(
-                os.environ["LLDB_SRC"],
-                "include",
-                "lldb",
-                "API",
-                "LLDB.h")
+            if os.path.exists(header):
+                return None
+        
+        header = os.path.join(
+            os.environ["LLDB_SRC"],
+            "include",
+            "lldb",
+            "API",
+            "LLDB.h")
         if not os.path.exists(header):
             return "skip because LLDB.h header not found"
         return None
