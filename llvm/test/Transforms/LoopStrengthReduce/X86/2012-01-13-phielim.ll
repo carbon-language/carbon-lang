@@ -100,6 +100,7 @@ while.end:                                        ; preds = %entry
 ; CHECK-NEXT: in Loop: Header
 ; CHECK-NEXT: incq
 ; CHECK-NEXT: %for.body3.us.i
+; CHECK-NEXT: Parent Loop
 ; CHECK-NEXT: Inner Loop
 ; CHECK: testb
 ; CHECK: je
