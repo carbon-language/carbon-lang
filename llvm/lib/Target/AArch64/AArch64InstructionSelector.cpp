@@ -301,6 +301,60 @@ static AArch64CC::CondCode changeICMPPredToAArch64CC(CmpInst::Predicate P) {
   }
 }
 
+static void changeFCMPPredToAArch64CC(CmpInst::Predicate P,
+                                      AArch64CC::CondCode &CondCode,
+                                      AArch64CC::CondCode &CondCode2) {
+  CondCode2 = AArch64CC::AL;
+  switch (P) {
+  default:
+    llvm_unreachable("Unknown FP condition!");
+  case CmpInst::FCMP_OEQ:
+    CondCode = AArch64CC::EQ;
+    break;
+  case CmpInst::FCMP_OGT:
+    CondCode = AArch64CC::GT;
+    break;
+  case CmpInst::FCMP_OGE:
+    CondCode = AArch64CC::GE;
+    break;
+  case CmpInst::FCMP_OLT:
+    CondCode = AArch64CC::MI;
+    break;
+  case CmpInst::FCMP_OLE:
+    CondCode = AArch64CC::LS;
+    break;
+  case CmpInst::FCMP_ONE:
+    CondCode = AArch64CC::MI;
+    CondCode2 = AArch64CC::GT;
+    break;
+  case CmpInst::FCMP_ORD:
+    CondCode = AArch64CC::VC;
+    break;
+  case CmpInst::FCMP_UNO:
+    CondCode = AArch64CC::VS;
+    break;
+  case CmpInst::FCMP_UEQ:
+    CondCode = AArch64CC::EQ;
+    CondCode2 = AArch64CC::VS;
+    break;
+  case CmpInst::FCMP_UGT:
+    CondCode = AArch64CC::HI;
+    break;
+  case CmpInst::FCMP_UGE:
+    CondCode = AArch64CC::PL;
+    break;
+  case CmpInst::FCMP_ULT:
+    CondCode = AArch64CC::LT;
+    break;
+  case CmpInst::FCMP_ULE:
+    CondCode = AArch64CC::LE;
+    break;
+  case CmpInst::FCMP_UNE:
+    CondCode = AArch64CC::NE;
+    break;
+  }
+}
+
 bool AArch64InstructionSelector::select(MachineInstr &I) const {
   assert(I.getParent() && "Instruction should be in a basic block!");
   assert(I.getParent()->getParent() && "Instruction should be in a function!");
@@ -648,6 +702,68 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
     return true;
   }
 
+  case TargetOpcode::G_FCMP: {
+    if (Ty != LLT::scalar(1)) {
+      DEBUG(dbgs() << "G_FCMP result has type: " << Ty
+                   << ", expected: " << LLT::scalar(1) << '\n');
+      return false;
+    }
+
+    unsigned CmpOpc = 0;
+    LLT CmpTy = MRI.getType(I.getOperand(2).getReg());
+    if (CmpTy == LLT::scalar(32)) {
+      CmpOpc = AArch64::FCMPSrr;
+    } else if (CmpTy == LLT::scalar(64)) {
+      CmpOpc = AArch64::FCMPDrr;
+    } else {
+      return false;
+    }
+
+    // FIXME: regbank
+
+    AArch64CC::CondCode CC1, CC2;
+    changeFCMPPredToAArch64CC(
+        (CmpInst::Predicate)I.getOperand(1).getPredicate(), CC1, CC2);
+
+    MachineInstr &CmpMI = *BuildMI(MBB, I, I.getDebugLoc(), TII.get(CmpOpc))
+                               .addUse(I.getOperand(2).getReg())
+                               .addUse(I.getOperand(3).getReg());
+
+    const unsigned DefReg = I.getOperand(0).getReg();
+    unsigned Def1Reg = DefReg;
+    if (CC2 != AArch64CC::AL)
+      Def1Reg = MRI.createVirtualRegister(&AArch64::GPR32RegClass);
+
+    MachineInstr &CSetMI =
+        *BuildMI(MBB, I, I.getDebugLoc(), TII.get(AArch64::CSINCWr))
+             .addDef(Def1Reg)
+             .addUse(AArch64::WZR)
+             .addUse(AArch64::WZR)
+             .addImm(CC1);
+
+    if (CC2 != AArch64CC::AL) {
+      unsigned Def2Reg = MRI.createVirtualRegister(&AArch64::GPR32RegClass);
+      MachineInstr &CSet2MI =
+          *BuildMI(MBB, I, I.getDebugLoc(), TII.get(AArch64::CSINCWr))
+               .addDef(Def2Reg)
+               .addUse(AArch64::WZR)
+               .addUse(AArch64::WZR)
+               .addImm(CC2);
+      MachineInstr &OrMI =
+          *BuildMI(MBB, I, I.getDebugLoc(), TII.get(AArch64::ORRWrr))
+               .addDef(DefReg)
+               .addUse(Def1Reg)
+               .addUse(Def2Reg);
+      constrainSelectedInstRegOperands(OrMI, TII, TRI, RBI);
+      constrainSelectedInstRegOperands(CSet2MI, TII, TRI, RBI);
+    }
+
+    constrainSelectedInstRegOperands(CmpMI, TII, TRI, RBI);
+    constrainSelectedInstRegOperands(CSetMI, TII, TRI, RBI);
+
+    I.eraseFromParent();
+    return true;
+  }
   }
 
   return false;
