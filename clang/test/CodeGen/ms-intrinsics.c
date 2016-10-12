@@ -19,9 +19,9 @@ unsigned char test_BitScanForward(unsigned long *Index, unsigned long Mask) {
 }
 // CHECK: define{{.*}}i8 @test_BitScanForward(i32* {{[a-z_ ]*}}%Index, i32 {{[a-z_ ]*}}%Mask){{.*}}{
 // CHECK:   [[ISNOTZERO:%[a-z0-9._]+]] = icmp eq i32 %Mask, 0
-// CHECK:   br i1 [[ISNOTZERO]], label %[[END_LABEL:[a-z0-9.]+]], label %[[ISNOTZERO_LABEL:[0-9]+]]
+// CHECK:   br i1 [[ISNOTZERO]], label %[[END_LABEL:[a-z0-9._]+]], label %[[ISNOTZERO_LABEL:[a-z0-9._]+]]
 // CHECK: ; <label>:[[END_LABEL]]:
-// CHECK:   [[RESULT:%[a-z0-9._]+]] = phi i8 [ 0, %[[ISZERO_LABEL:[0-9]+]] ], [ 1, %[[ISNOTZERO_LABEL]] ]
+// CHECK:   [[RESULT:%[a-z0-9._]+]] = phi i8 [ 0, %[[ISZERO_LABEL:[a-z0-9._]+]] ], [ 1, %[[ISNOTZERO_LABEL]] ]
 // CHECK:   ret i8 [[RESULT]]
 // CHECK: ; <label>:[[ISNOTZERO_LABEL]]:
 // CHECK:   [[INDEX:%[0-9]+]] = tail call i32 @llvm.cttz.i32(i32 %Mask, i1 true)
@@ -33,9 +33,9 @@ unsigned char test_BitScanReverse(unsigned long *Index, unsigned long Mask) {
 }
 // CHECK: define{{.*}}i8 @test_BitScanReverse(i32* {{[a-z_ ]*}}%Index, i32 {{[a-z_ ]*}}%Mask){{.*}}{
 // CHECK:   [[ISNOTZERO:%[0-9]+]] = icmp eq i32 %Mask, 0
-// CHECK:   br i1 [[ISNOTZERO]], label %[[END_LABEL:[a-z0-9.]+]], label %[[ISNOTZERO_LABEL:[0-9]+]]
+// CHECK:   br i1 [[ISNOTZERO]], label %[[END_LABEL:[a-z0-9._]+]], label %[[ISNOTZERO_LABEL:[a-z0-9._]+]]
 // CHECK: ; <label>:[[END_LABEL]]:
-// CHECK:   [[RESULT:%[a-z0-9._]+]] = phi i8 [ 0, %[[ISZERO_LABEL:[0-9]+]] ], [ 1, %[[ISNOTZERO_LABEL]] ]
+// CHECK:   [[RESULT:%[a-z0-9._]+]] = phi i8 [ 0, %[[ISZERO_LABEL:[a-z0-9._]+]] ], [ 1, %[[ISNOTZERO_LABEL]] ]
 // CHECK:   ret i8 [[RESULT]]
 // CHECK: ; <label>:[[ISNOTZERO_LABEL]]:
 // CHECK:   [[REVINDEX:%[0-9]+]] = tail call i32 @llvm.ctlz.i32(i32 %Mask, i1 true)
@@ -49,9 +49,9 @@ unsigned char test_BitScanForward64(unsigned long *Index, unsigned __int64 Mask)
 }
 // CHECK-ARM-X64: define{{.*}}i8 @test_BitScanForward64(i32* {{[a-z_ ]*}}%Index, i64 {{[a-z_ ]*}}%Mask){{.*}}{
 // CHECK-ARM-X64:   [[ISNOTZERO:%[a-z0-9._]+]] = icmp eq i64 %Mask, 0
-// CHECK-ARM-X64:   br i1 [[ISNOTZERO]], label %[[END_LABEL:[a-z0-9.]+]], label %[[ISNOTZERO_LABEL:[0-9]+]]
+// CHECK-ARM-X64:   br i1 [[ISNOTZERO]], label %[[END_LABEL:[a-z0-9._]+]], label %[[ISNOTZERO_LABEL:[a-z0-9._]+]]
 // CHECK-ARM-X64: ; <label>:[[END_LABEL]]:
-// CHECK-ARM-X64:   [[RESULT:%[a-z0-9._]+]] = phi i8 [ 0, %[[ISZERO_LABEL:[0-9]+]] ], [ 1, %[[ISNOTZERO_LABEL]] ]
+// CHECK-ARM-X64:   [[RESULT:%[a-z0-9._]+]] = phi i8 [ 0, %[[ISZERO_LABEL:[a-z0-9._]+]] ], [ 1, %[[ISNOTZERO_LABEL]] ]
 // CHECK-ARM-X64:   ret i8 [[RESULT]]
 // CHECK-ARM-X64: ; <label>:[[ISNOTZERO_LABEL]]:
 // CHECK-ARM-X64:   [[INDEX:%[0-9]+]] = tail call i64 @llvm.cttz.i64(i64 %Mask, i1 true)
@@ -64,9 +64,9 @@ unsigned char test_BitScanReverse64(unsigned long *Index, unsigned __int64 Mask)
 }
 // CHECK-ARM-X64: define{{.*}}i8 @test_BitScanReverse64(i32* {{[a-z_ ]*}}%Index, i64 {{[a-z_ ]*}}%Mask){{.*}}{
 // CHECK-ARM-X64:   [[ISNOTZERO:%[0-9]+]] = icmp eq i64 %Mask, 0
-// CHECK-ARM-X64:   br i1 [[ISNOTZERO]], label %[[END_LABEL:[a-z0-9.]+]], label %[[ISNOTZERO_LABEL:[0-9]+]]
+// CHECK-ARM-X64:   br i1 [[ISNOTZERO]], label %[[END_LABEL:[a-z0-9._]+]], label %[[ISNOTZERO_LABEL:[a-z0-9._]+]]
 // CHECK-ARM-X64: ; <label>:[[END_LABEL]]:
-// CHECK-ARM-X64:   [[RESULT:%[a-z0-9._]+]] = phi i8 [ 0, %[[ISZERO_LABEL:[0-9]+]] ], [ 1, %[[ISNOTZERO_LABEL]] ]
+// CHECK-ARM-X64:   [[RESULT:%[a-z0-9._]+]] = phi i8 [ 0, %[[ISZERO_LABEL:[a-z0-9._]+]] ], [ 1, %[[ISNOTZERO_LABEL]] ]
 // CHECK-ARM-X64:   ret i8 [[RESULT]]
 // CHECK-ARM-X64: ; <label>:[[ISNOTZERO_LABEL]]:
 // CHECK-ARM-X64:   [[REVINDEX:%[0-9]+]] = tail call i64 @llvm.ctlz.i64(i64 %Mask, i1 true)
