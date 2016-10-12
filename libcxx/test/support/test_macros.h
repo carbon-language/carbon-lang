@@ -99,7 +99,7 @@
 #else
 #define TEST_CONSTEXPR
 #define TEST_CONSTEXPR_CXX14
-#define TEST_NOEXCEPT
+#define TEST_NOEXCEPT throw()
 #define TEST_NOEXCEPT_COND(...)
 #define TEST_ALIGNOF(...) __alignof(__VA_ARGS__)
 #define TEST_ALIGNAS(...) __attribute__((__aligned__(__VA_ARGS__)))
