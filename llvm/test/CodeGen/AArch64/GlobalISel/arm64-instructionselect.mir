@@ -1334,10 +1334,11 @@ legalized:       true
 regBankSelected: true
 
 # CHECK:      registers:
-# CHECK-NEXT:  - { id: 0, class: gpr64 }
-# CHECK-NEXT:  - { id: 1, class: gpr64 }
-# CHECK-NEXT:  - { id: 2, class: gpr32 }
-# CHECK-NEXT:  - { id: 3, class: gpr32 }
+# CHECK-NEXT:  - { id: 0, class: gpr32all }
+# CHECK-NEXT:  - { id: 1, class: gpr64all }
+# CHECK-NEXT:  - { id: 2, class: gpr32all }
+# CHECK-NEXT:  - { id: 3, class: gpr32all }
+# CHECK-NEXT:  - { id: 4, class: gpr64all }
 registers:
   - { id: 0, class: gpr }
   - { id: 1, class: gpr }
@@ -1346,7 +1347,8 @@ registers:
 
 # CHECK:  body:
 # CHECK:    %0 = COPY %w0
-# CHECK:    %1 = COPY %0
+# CHECK:    %4 = SUBREG_TO_REG 0, %0, 15
+# CHECK:    %1 = COPY %4
 # CHECK:    %2 = COPY %w0
 # CHECK:    %3 = COPY %2
 body:             |
