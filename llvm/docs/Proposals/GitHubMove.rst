@@ -371,7 +371,7 @@ As an example, it could look like the following::
 .. _git-svn-mirror:
 
 Read/write sub-project mirrors
-------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 With the Monorepo, the existing single-subproject mirrors (e.g.
 http://llvm.org/git/compiler-rt.git) with git-svn read-write access would
