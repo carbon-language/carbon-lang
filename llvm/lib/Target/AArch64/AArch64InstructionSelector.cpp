@@ -41,6 +41,32 @@ AArch64InstructionSelector::AArch64InstructionSelector(
   : InstructionSelector(), TM(TM), STI(STI), TII(*STI.getInstrInfo()),
       TRI(*STI.getRegisterInfo()), RBI(RBI) {}
 
+// FIXME: This should be target-independent, inferred from the types declared
+// for each class in the bank.
+static const TargetRegisterClass *
+getRegClassForTypeOnBank(LLT Ty, const RegisterBank &RB,
+                         const RegisterBankInfo &RBI) {
+  if (RB.getID() == AArch64::GPRRegBankID) {
+    if (Ty.getSizeInBits() <= 32)
+      return &AArch64::GPR32RegClass;
+    if (Ty.getSizeInBits() == 64)
+      return &AArch64::GPR64RegClass;
+    return nullptr;
+  }
+
+  if (RB.getID() == AArch64::FPRRegBankID) {
+    if (Ty.getSizeInBits() == 32)
+      return &AArch64::FPR32RegClass;
+    if (Ty.getSizeInBits() == 64)
+      return &AArch64::FPR64RegClass;
+    if (Ty.getSizeInBits() == 128)
+      return &AArch64::FPR128RegClass;
+    return nullptr;
+  }
+
+  return nullptr;
+}
+
 /// Check whether \p I is a currently unsupported binary operation:
 /// - it has an unsized type
 /// - an operand is not a vreg
@@ -631,6 +657,60 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
     // Now that we selected an opcode, we need to constrain the register
     // operands to use appropriate classes.
     return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
+  }
+
+  case TargetOpcode::G_TRUNC: {
+    const LLT DstTy = MRI.getType(I.getOperand(0).getReg());
+    const LLT SrcTy = MRI.getType(I.getOperand(1).getReg());
+
+    const unsigned DstReg = I.getOperand(0).getReg();
+    const unsigned SrcReg = I.getOperand(1).getReg();
+
+    const RegisterBank &DstRB = *RBI.getRegBank(DstReg, MRI, TRI);
+    const RegisterBank &SrcRB = *RBI.getRegBank(SrcReg, MRI, TRI);
+
+    if (DstRB.getID() != SrcRB.getID()) {
+      DEBUG(dbgs() << "G_TRUNC input/output on different banks\n");
+      return false;
+    }
+
+    if (DstRB.getID() == AArch64::GPRRegBankID) {
+      const TargetRegisterClass *DstRC =
+          getRegClassForTypeOnBank(DstTy, DstRB, RBI);
+      if (!DstRC)
+        return false;
+
+      const TargetRegisterClass *SrcRC =
+          getRegClassForTypeOnBank(SrcTy, SrcRB, RBI);
+      if (!SrcRC)
+        return false;
+
+      if (!RBI.constrainGenericRegister(SrcReg, *SrcRC, MRI) ||
+          !RBI.constrainGenericRegister(DstReg, *DstRC, MRI)) {
+        DEBUG(dbgs() << "Failed to constrain G_TRUNC\n");
+        return false;
+      }
+
+      if (DstRC == SrcRC) {
+        // Nothing to be done
+      } else if (DstRC == &AArch64::GPR32RegClass &&
+                 SrcRC == &AArch64::GPR64RegClass) {
+        I.getOperand(1).setSubReg(AArch64::sub_32);
+      } else {
+        return false;
+      }
+
+      I.setDesc(TII.get(TargetOpcode::COPY));
+      return true;
+    } else if (DstRB.getID() == AArch64::FPRRegBankID) {
+      if (DstTy == LLT::vector(4, 16) && SrcTy == LLT::vector(4, 32)) {
+        I.setDesc(TII.get(AArch64::XTNv4i16));
+        constrainSelectedInstRegOperands(I, TII, TRI, RBI);
+        return true;
+      }
+    }
+
+    return false;
   }
 
   case TargetOpcode::G_ANYEXT: {

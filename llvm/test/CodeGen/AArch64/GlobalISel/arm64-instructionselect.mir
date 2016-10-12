@@ -104,6 +104,8 @@
   @var_got = external global i8
   define i8* @global_got() { ret i8* undef }
 
+  define void @trunc() { ret void }
+
   define void @anyext_gpr() { ret void }
   define void @zext_gpr() { ret void }
   define void @sext_gpr() { ret void }
@@ -1765,6 +1767,41 @@ registers:
 body:             |
   bb.0:
     %0(p0) = G_GLOBAL_VALUE @var_got
+...
+
+---
+# CHECK-LABEL: name: trunc
+name:            trunc
+legalized:       true
+regBankSelected: true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr32 }
+# CHECK-NEXT:  - { id: 1, class: gpr32 }
+# CHECK-NEXT:  - { id: 2, class: gpr64 }
+# CHECK-NEXT:  - { id: 3, class: gpr32 }
+# CHECK-NEXT:  - { id: 4, class: gpr32 }
+registers:
+  - { id: 0, class: gpr }
+  - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
+  - { id: 3, class: gpr }
+  - { id: 4, class: gpr }
+
+# CHECK:  body:
+# CHECK:    %1 = COPY %0
+# CHECK:    %3 = COPY %2.sub_32
+# CHECK:    %4 = COPY %2.sub_32
+body:             |
+  bb.0:
+    liveins: %w0, %x0
+
+    %0(s32) = COPY %w0
+    %1(s1) = G_TRUNC %0
+
+    %2(s64) = COPY %x0
+    %3(s32) = G_TRUNC %2
+    %4(s8) = G_TRUNC %2
 ...
 
 ---
