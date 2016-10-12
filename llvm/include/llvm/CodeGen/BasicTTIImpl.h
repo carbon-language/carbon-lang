@@ -284,8 +284,7 @@ public:
     }
 
     // Enable runtime and partial unrolling up to the specified size.
-    // Enable using trip count upper bound to unroll loops.
-    UP.Partial = UP.Runtime = UP.UpperBound = true;
+    UP.Partial = UP.Runtime = true;
     UP.PartialThreshold = MaxOps;
 
     // Avoid unrolling when optimizing for size.
