@@ -167,10 +167,8 @@ void OptimizeBodylessFunctions::analyze(
 
 void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
                                               BinaryContext &BC) {
-  for (auto BBIt = BF.begin(), BBEnd = BF.end(); BBIt != BBEnd; ++BBIt) {
-    for (auto InstIt = (*BBIt).begin(), InstEnd = (*BBIt).end();
-        InstIt != InstEnd; ++InstIt) {
-      auto &Inst = *InstIt;
+  for (auto *BB : BF.layout()) {
+    for (auto &Inst : *BB) {
       if (!BC.MIA->isCall(Inst))
         continue;
       const auto *OriginalTarget = BC.MIA->getTargetSymbol(Inst);
@@ -180,16 +178,27 @@ void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
       // Iteratively update target since we could have f1() calling f2()
       // calling f3() calling f4() and we want to output f1() directly
       // calling f4().
+      unsigned CallSites = 0;
       while (EquivalentCallTarget.count(Target)) {
         Target = EquivalentCallTarget.find(Target)->second->getSymbol();
+        ++CallSites;
       }
       if (Target == OriginalTarget)
         continue;
-      DEBUG(dbgs() << "BOLT-DEBUG: Optimizing " << (*BBIt).getName()
-                   << " in " << BF
+      DEBUG(dbgs() << "BOLT-DEBUG: Optimizing " << BB->getName()
+                   << " (executed " << (BB->getExecutionCount() ==
+                       BinaryFunction::COUNT_NO_PROFILE ?
+                        0 : BB->getExecutionCount())
+                   << " times) in " << BF
                    << ": replacing call to " << OriginalTarget->getName()
-                   << " by call to " << Target->getName() << "\n");
+                   << " by call to " << Target->getName()
+                   << " while folding " << CallSites << " call sites\n");
       BC.MIA->replaceCallTargetOperand(Inst, Target, BC.Ctx.get());
+
+      NumOptimizedCallSites += CallSites;
+      if (BB->getExecutionCount() != BinaryFunction::COUNT_NO_PROFILE) {
+        NumEliminatedCalls += CallSites * BB->getExecutionCount();
+      }
     }
   }
 }
@@ -209,6 +218,12 @@ void OptimizeBodylessFunctions::runOnFunctions(
     if (shouldOptimize(Function)) {
       optimizeCalls(Function, BC);
     }
+  }
+
+  if (NumEliminatedCalls || NumOptimizedCallSites) {
+    outs() << "BOLT-INFO: optimized " << NumOptimizedCallSites
+           << " redirect call sites to eliminate " << NumEliminatedCalls
+           << " dynamic calls.\n";
   }
 }
 

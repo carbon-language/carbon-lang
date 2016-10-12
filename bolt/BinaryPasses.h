@@ -71,6 +71,10 @@ private:
   void optimizeCalls(BinaryFunction &BF,
                      BinaryContext &BC);
 
+  /// Stats for eliminated calls.
+  uint64_t NumEliminatedCalls{0};
+  uint64_t NumOptimizedCallSites{0};
+
 public:
   explicit OptimizeBodylessFunctions(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }
