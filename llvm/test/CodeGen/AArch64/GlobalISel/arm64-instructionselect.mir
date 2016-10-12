@@ -99,6 +99,7 @@
   define void @bitcast_s64_gpr_fpr() { ret void }
   define void @bitcast_s64_fpr_gpr() { ret void }
 
+  define void @icmp() { ret void }
 ...
 
 ---
@@ -1681,4 +1682,49 @@ body:             |
 
     %0(s64) = COPY %d0
     %1(s64) = G_BITCAST %0
+...
+
+---
+# CHECK-LABEL: name: icmp
+name:            icmp
+legalized:       true
+regBankSelected: true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr32 }
+# CHECK-NEXT:  - { id: 1, class: gpr32 }
+# CHECK-NEXT:  - { id: 2, class: gpr64 }
+# CHECK-NEXT:  - { id: 3, class: gpr32 }
+# CHECK-NEXT:  - { id: 4, class: gpr64 }
+# CHECK-NEXT:  - { id: 5, class: gpr32 }
+registers:
+  - { id: 0, class: gpr }
+  - { id: 1, class: gpr }
+  - { id: 2, class: gpr }
+  - { id: 3, class: gpr }
+  - { id: 4, class: gpr }
+  - { id: 5, class: gpr }
+
+# CHECK:  body:
+# CHECK:    %wzr = SUBSWrr %0, %0, implicit-def %nzcv
+# CHECK:    %1 = CSINCWr %wzr, %wzr, 0, implicit %nzcv
+
+# CHECK:    %xzr = SUBSXrr %2, %2, implicit-def %nzcv
+# CHECK:    %3 = CSINCWr %wzr, %wzr, 2, implicit %nzcv
+
+# CHECK:    %xzr = SUBSXrr %4, %4, implicit-def %nzcv
+# CHECK:    %5 = CSINCWr %wzr, %wzr, 1, implicit %nzcv
+
+body:             |
+  bb.0:
+    liveins: %w0, %x0
+
+    %0(s32) = COPY %w0
+    %1(s1) = G_ICMP intpred(eq), %0, %0
+
+    %2(s64) = COPY %x0
+    %3(s1) = G_ICMP intpred(uge), %2, %2
+
+    %4(p0) = COPY %x0
+    %5(s1) = G_ICMP intpred(ne), %4, %4
 ...

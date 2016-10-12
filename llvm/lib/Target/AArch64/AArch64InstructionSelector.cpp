@@ -274,6 +274,33 @@ static bool selectCopy(MachineInstr &I, const TargetInstrInfo &TII,
   return true;
 }
 
+static AArch64CC::CondCode changeICMPPredToAArch64CC(CmpInst::Predicate P) {
+  switch (P) {
+  default:
+    llvm_unreachable("Unknown condition code!");
+  case CmpInst::ICMP_NE:
+    return AArch64CC::NE;
+  case CmpInst::ICMP_EQ:
+    return AArch64CC::EQ;
+  case CmpInst::ICMP_SGT:
+    return AArch64CC::GT;
+  case CmpInst::ICMP_SGE:
+    return AArch64CC::GE;
+  case CmpInst::ICMP_SLT:
+    return AArch64CC::LT;
+  case CmpInst::ICMP_SLE:
+    return AArch64CC::LE;
+  case CmpInst::ICMP_UGT:
+    return AArch64CC::HI;
+  case CmpInst::ICMP_UGE:
+    return AArch64CC::HS;
+  case CmpInst::ICMP_ULT:
+    return AArch64CC::LO;
+  case CmpInst::ICMP_ULE:
+    return AArch64CC::LS;
+  }
+}
+
 bool AArch64InstructionSelector::select(MachineInstr &I) const {
   assert(I.getParent() && "Instruction should be in a basic block!");
   assert(I.getParent()->getParent() && "Instruction should be in a function!");
@@ -577,6 +604,50 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
   case TargetOpcode::G_PTRTOINT:
   case TargetOpcode::G_BITCAST:
     return selectCopy(I, TII, MRI, TRI, RBI);
+
+  case TargetOpcode::G_ICMP: {
+    if (Ty != LLT::scalar(1)) {
+      DEBUG(dbgs() << "G_ICMP result has type: " << Ty
+                   << ", expected: " << LLT::scalar(1) << '\n');
+      return false;
+    }
+
+    unsigned CmpOpc = 0;
+    unsigned ZReg = 0;
+
+    LLT CmpTy = MRI.getType(I.getOperand(2).getReg());
+    if (CmpTy == LLT::scalar(32)) {
+      CmpOpc = AArch64::SUBSWrr;
+      ZReg = AArch64::WZR;
+    } else if (CmpTy == LLT::scalar(64) || CmpTy.isPointer()) {
+      CmpOpc = AArch64::SUBSXrr;
+      ZReg = AArch64::XZR;
+    } else {
+      return false;
+    }
+
+    const AArch64CC::CondCode CC = changeICMPPredToAArch64CC(
+        (CmpInst::Predicate)I.getOperand(1).getPredicate());
+
+    MachineInstr &CmpMI = *BuildMI(MBB, I, I.getDebugLoc(), TII.get(CmpOpc))
+                               .addDef(ZReg)
+                               .addUse(I.getOperand(2).getReg())
+                               .addUse(I.getOperand(3).getReg());
+
+    MachineInstr &CSetMI =
+        *BuildMI(MBB, I, I.getDebugLoc(), TII.get(AArch64::CSINCWr))
+             .addDef(I.getOperand(0).getReg())
+             .addUse(AArch64::WZR)
+             .addUse(AArch64::WZR)
+             .addImm(CC);
+
+    constrainSelectedInstRegOperands(CmpMI, TII, TRI, RBI);
+    constrainSelectedInstRegOperands(CSetMI, TII, TRI, RBI);
+
+    I.eraseFromParent();
+    return true;
+  }
+
   }
 
   return false;
