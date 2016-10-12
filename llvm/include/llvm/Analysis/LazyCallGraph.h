@@ -543,7 +543,7 @@ public:
       return make_range(parent_begin(), parent_end());
     }
 
-    /// Test if this SCC is a parent of \a C.
+    /// Test if this RefSCC is a parent of \a C.
     bool isParentOf(const RefSCC &C) const { return C.isChildOf(*this); }
 
     /// Test if this RefSCC is an ancestor of \a C.
@@ -557,9 +557,9 @@ public:
     /// Test if this RefSCC is a descendant of \a C.
     bool isDescendantOf(const RefSCC &C) const;
 
-    /// Provide a short name by printing this SCC to a std::string.
+    /// Provide a short name by printing this RefSCC to a std::string.
     ///
-    /// This copes with the fact that we don't have a name per-se for an SCC
+    /// This copes with the fact that we don't have a name per-se for an RefSCC
     /// while still making the use of this in debugging and logging useful.
     std::string getName() const {
       std::string Name;
@@ -573,7 +573,7 @@ public:
     /// \name Mutation API
     ///
     /// These methods provide the core API for updating the call graph in the
-    /// presence of a (potentially still in-flight) DFS-found SCCs.
+    /// presence of (potentially still in-flight) DFS-found RefSCCs and SCCs.
     ///
     /// Note that these methods sometimes have complex runtimes, so be careful
     /// how you call them.
@@ -753,12 +753,16 @@ public:
     ///@}
   };
 
-  /// A post-order depth-first SCC iterator over the call graph.
+  /// A post-order depth-first RefSCC iterator over the call graph.
   ///
-  /// This iterator triggers the Tarjan DFS-based formation of the SCC DAG for
-  /// the call graph, walking it lazily in depth-first post-order. That is, it
-  /// always visits SCCs for a callee prior to visiting the SCC for a caller
-  /// (when they are in different SCCs).
+  /// This iterator triggers the Tarjan DFS-based formation of the RefSCC (and
+  /// SCC) DAG for the call graph, walking it lazily in depth-first post-order.
+  /// That is, it always visits RefSCCs for the target of a reference edge
+  /// prior to visiting the RefSCC for a source of the edge (when they are in
+  /// different RefSCCs).
+  ///
+  /// When forming each RefSCC, the call edges within it are used to form SCCs
+  /// within it, so iterating this also controls the lazy formation of SCCs.
   class postorder_ref_scc_iterator
       : public iterator_facade_base<postorder_ref_scc_iterator,
                                     std::forward_iterator_tag, RefSCC> {
@@ -840,7 +844,7 @@ public:
 
   /// Lookup a function's SCC in the graph.
   ///
-  /// \returns null if the function hasn't been assigned an SCC via the SCC
+  /// \returns null if the function hasn't been assigned an SCC via the RefSCC
   /// iterator walk.
   SCC *lookupSCC(Node &N) const { return SCCMap.lookup(&N); }
 
@@ -991,7 +995,7 @@ private:
   /// Set of entry nodes not-yet-processed into RefSCCs.
   SmallVector<Function *, 4> RefSCCEntryNodes;
 
-  /// Stack of nodes the DFS has walked but not yet put into a SCC.
+  /// Stack of nodes the DFS has walked but not yet put into a RefSCC.
   SmallVector<Node *, 4> PendingRefSCCStack;
 
   /// Counter for the next DFS number to assign.
