@@ -290,6 +290,14 @@ struct FunctionRecord {
   FunctionRecord(StringRef Name, ArrayRef<StringRef> Filenames)
       : Name(Name), Filenames(Filenames.begin(), Filenames.end()) {}
 
+  FunctionRecord(FunctionRecord &&FR)
+      : Name(FR.Name), Filenames(std::move(FR.Filenames)),
+        CountedRegions(std::move(FR.CountedRegions)),
+        ExecutionCount(FR.ExecutionCount) {}
+
+  FunctionRecord(const FunctionRecord &) = delete;
+  const FunctionRecord &operator=(const FunctionRecord &) = delete;
+
   void pushRegion(CounterMappingRegion Region, uint64_t Count) {
     if (CountedRegions.empty())
       ExecutionCount = Count;
@@ -424,6 +432,9 @@ class CoverageMapping {
   unsigned MismatchedFunctionCount;
 
   CoverageMapping() : MismatchedFunctionCount(0) {}
+
+  CoverageMapping(const CoverageMapping &) = delete;
+  const CoverageMapping &operator=(const CoverageMapping &) = delete;
 
   /// \brief Add a function record corresponding to \p Record.
   Error loadFunctionRecord(const CoverageMappingRecord &Record,
