@@ -299,6 +299,28 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
     return true;
   }
 
+  case TargetOpcode::G_BRCOND: {
+    if (Ty.getSizeInBits() > 32) {
+      // We shouldn't need this on AArch64, but it would be implemented as an
+      // EXTRACT_SUBREG followed by a TBNZW because TBNZX has no encoding if the
+      // bit being tested is < 32.
+      DEBUG(dbgs() << "G_BRCOND has type: " << Ty
+                   << ", expected at most 32-bits");
+      return false;
+    }
+
+    const unsigned CondReg = I.getOperand(0).getReg();
+    MachineBasicBlock *DestMBB = I.getOperand(1).getMBB();
+
+    auto MIB = BuildMI(MBB, I, I.getDebugLoc(), TII.get(AArch64::TBNZW))
+                   .addUse(CondReg)
+                   .addImm(/*bit offset=*/0)
+                   .addMBB(DestMBB);
+
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*MIB.getInstr(), TII, TRI, RBI);
+  }
+
   case TargetOpcode::G_CONSTANT: {
     if (Ty.getSizeInBits() <= 32)
       I.setDesc(TII.get(AArch64::MOVi32imm));
