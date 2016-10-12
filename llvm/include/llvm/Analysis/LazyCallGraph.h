@@ -180,6 +180,7 @@ public:
 
   private:
     friend class LazyCallGraph::Node;
+    friend class LazyCallGraph::RefSCC;
 
     PointerIntPair<PointerUnion<Function *, Node *>, 1, Kind> Value;
 
@@ -197,6 +198,7 @@ public:
   class Node {
     friend class LazyCallGraph;
     friend class LazyCallGraph::SCC;
+    friend class LazyCallGraph::RefSCC;
 
     LazyCallGraph *G;
     Function &F;
@@ -225,6 +227,11 @@ public:
 
     /// Internal helper to remove the edge to the given function.
     void removeEdgeInternal(Function &ChildF);
+
+    void clear() {
+      Edges.clear();
+      EdgeIndexMap.clear();
+    }
 
     /// Print the name of this node's function.
     friend raw_ostream &operator<<(raw_ostream &OS, const Node &N) {
@@ -461,6 +468,12 @@ public:
     /// formRefSCCFast on the graph itself.
     RefSCC(LazyCallGraph &G);
 
+    void clear() {
+      Parents.clear();
+      SCCs.clear();
+      SCCIndices.clear();
+    }
+
     /// Print a short description useful for debugging or logging.
     ///
     /// We print the SCCs wrapped in '[]'s and skipping the middle SCCs if
@@ -501,6 +514,10 @@ public:
     /// - The SCCs list is in fact in post-order.
     void verify();
 #endif
+
+    /// Handle any necessary parent set updates after inserting a trivial ref
+    /// or call edge.
+    void handleTrivialEdgeInsertion(Node &SourceN, Node &TargetN);
 
   public:
     typedef pointee_iterator<SmallVectorImpl<SCC *>::const_iterator> iterator;
@@ -711,6 +728,28 @@ public:
     SmallVector<RefSCC *, 1> removeInternalRefEdge(Node &SourceN,
                                                    Node &TargetN);
 
+    /// A convenience wrapper around the above to handle trivial cases of
+    /// inserting a new call edge.
+    ///
+    /// This is trivial whenever the target is in the same SCC as the source or
+    /// the edge is an outgoing edge to some descendant SCC. In these cases
+    /// there is no change to the cyclic structure of SCCs or RefSCCs.
+    ///
+    /// To further make calling this convenient, it also handles inserting
+    /// already existing edges.
+    void insertTrivialCallEdge(Node &SourceN, Node &TargetN);
+
+    /// A convenience wrapper around the above to handle trivial cases of
+    /// inserting a new ref edge.
+    ///
+    /// This is trivial whenever the target is in the same RefSCC as the source
+    /// or the edge is an outgoing edge to some descendant RefSCC. In these
+    /// cases there is no change to the cyclic structure of the RefSCCs.
+    ///
+    /// To further make calling this convenient, it also handles inserting
+    /// already existing edges.
+    void insertTrivialRefEdge(Node &SourceN, Node &TargetN);
+
     ///@}
   };
 
@@ -833,8 +872,9 @@ public:
   /// call graph. They can be used to update the core node-graph during
   /// a node-based inorder traversal that precedes any SCC-based traversal.
   ///
-  /// Once you begin manipulating a call graph's SCCs, you must perform all
-  /// mutation of the graph via the SCC methods.
+  /// Once you begin manipulating a call graph's SCCs, most mutation of the
+  /// graph must be performed via a RefSCC method. There are some exceptions
+  /// below.
 
   /// Update the call graph after inserting a new edge.
   void insertEdge(Node &Caller, Function &Callee, Edge::Kind EK);
@@ -851,6 +891,28 @@ public:
   void removeEdge(Function &Caller, Function &Callee) {
     return removeEdge(get(Caller), Callee);
   }
+
+  ///@}
+
+  ///@{
+  /// \name General Mutation API
+  ///
+  /// There are a very limited set of mutations allowed on the graph as a whole
+  /// once SCCs have started to be formed. These routines have strict contracts
+  /// but may be called at any point.
+
+  /// Remove a dead function from the call graph (typically to delete it).
+  ///
+  /// Note that the function must have an empty use list, and the call graph
+  /// must be up-to-date prior to calling this. That means it is by itself in
+  /// a maximal SCC which is by itself in a maximal RefSCC, etc. No structural
+  /// changes result from calling this routine other than potentially removing
+  /// entry points into the call graph.
+  ///
+  /// If SCC formation has begun, this function must not be part of the current
+  /// DFS in order to call this safely. Typically, the function will have been
+  /// fully visited by the DFS prior to calling this routine.
+  void removeDeadFunction(Function &F);
 
   ///@}
 
