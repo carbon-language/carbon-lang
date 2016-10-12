@@ -225,6 +225,14 @@ class Configuration(object):
             self.lit_config.fatal(
                 'unsupported value for "cxx_stdlib_under_test": %s'
                 % self.cxx_stdlib_under_test)
+        if self.cxx_stdlib_under_test == 'libstdc++':
+            # Manually enable the experimental and filesystem tests for libstdc++
+            # if the options aren't present.
+            # FIXME this is a hack.
+            if self.get_lit_conf('enable_experimental') is None:
+                self.config.enable_experimental = 'true'
+            if self.get_lit_conf('enable_filesystem') is None:
+                self.config.enable_filesystem = 'true'
 
     def configure_use_clang_verify(self):
         '''If set, run clang with -verify on failing tests.'''
@@ -467,7 +475,7 @@ class Configuration(object):
         assert os.path.isdir(static_env)
         self.cxx.compile_flags += ['-DLIBCXX_FILESYSTEM_STATIC_TEST_ROOT="%s"' % static_env]
 
-        dynamic_env = os.path.join(self.libcxx_obj_root, 'test',
+        dynamic_env = os.path.join(self.config.test_exec_root,
                                    'filesystem', 'Output', 'dynamic_env')
         dynamic_env = os.path.realpath(dynamic_env)
         if not os.path.isdir(dynamic_env):
