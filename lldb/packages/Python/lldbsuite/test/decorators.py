@@ -649,13 +649,21 @@ def skipUnlessCompilerRt(func):
     """Decorate the item to skip tests if testing remotely."""
     def is_compiler_rt_missing():
         compilerRtPath = os.path.join(
-            os.path.dirname(__file__),
-            "..",
+            os.environ["LLDB_SRC"],
             "..",
             "..",
             "..",
             "llvm",
             "projects",
+            "compiler-rt")
+        if not os.path.exists(compilerRtPath):
+            compilerRtPath = os.path.join(
+            os.environ["LLDB_SRC"],
+            "..",
+            "..",
+            "..",
+            "llvm",
+            "runtimes",
             "compiler-rt")
         return "compiler-rt not found" if not os.path.exists(
             compilerRtPath) else None
