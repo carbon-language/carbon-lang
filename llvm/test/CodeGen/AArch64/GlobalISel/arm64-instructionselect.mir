@@ -1290,6 +1290,7 @@ registers:
 # CHECK: %2 = ADDXrr %0, %1
 body:             |
   bb.0:
+      liveins: %x0
     %0(p0) = COPY %x0
     %1(s64) = G_CONSTANT 42
     %2(p0) = G_GEP %0, %1(s64)
@@ -1350,7 +1351,7 @@ registers:
 # CHECK:    %3 = COPY %2
 body:             |
   bb.0:
-    liveins: %x0
+    liveins: %w0
 
     %0(s32) = COPY %w0
     %1(s64) = G_ANYEXT %0
@@ -1384,7 +1385,7 @@ registers:
 # CHECK:    %3 = UBFMWri %2, 0, 7
 body:             |
   bb.0:
-    liveins: %x0
+    liveins: %w0
 
     %0(s32) = COPY %w0
     %1(s64) = G_ZEXT %0
@@ -1418,7 +1419,7 @@ registers:
 # CHECK:    %3 = SBFMWri %2, 0, 7
 body:             |
   bb.0:
-    liveins: %x0
+    liveins: %w0
 
     %0(s32) = COPY %w0
     %1(s64) = G_SEXT %0
