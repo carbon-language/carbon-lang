@@ -1447,15 +1447,18 @@ regBankSelected: true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr64all }
-# CHECK-NEXT:  - { id: 1, class: gpr64all }
+# CHECK-NEXT:  - { id: 1, class: fpr64 }
 # CHECK-NEXT:  - { id: 2, class: gpr64all }
 # CHECK-NEXT:  - { id: 3, class: gpr64all }
 registers:
   - { id: 0, class: gpr }
-  - { id: 1, class: gpr }
+  - { id: 1, class: fpr }
   - { id: 2, class: gpr }
   - { id: 3, class: gpr }
-  # CHECK:    %2 = COPY %0
+# CHECK:  body:
+# CHECK:    %0 = COPY %x0
+# CHECK:    %1 = COPY %0
+# CHECK:    %2 = COPY %0
 # CHECK:    %3 = COPY %2
 body:             |
   bb.0:
