@@ -7,6 +7,10 @@
 ; RUN: ld.lld %t.o %t1.a %t2.a -o %t
 ; RUN: llvm-nm %t | FileCheck %s
 
+; Check we handle this case correctly even in presence of --whole-archive.
+; RUN: ld.lld %t.o --whole-archive %t1.a %t2.a -o %t
+; RUN: llvm-nm %t | FileCheck %s
+
 ; CHECK: T _start
 ; CHECK: T blah
 ; CHECK: T foo
