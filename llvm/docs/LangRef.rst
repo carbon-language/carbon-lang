@@ -9295,7 +9295,7 @@ other aggressive transformations, so the value returned may not be that
 of the obvious source-language caller.
 
 '``llvm.addressofreturnaddress``' Intrinsic
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
