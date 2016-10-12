@@ -974,10 +974,10 @@ inline upward_defs_iterator upward_defs_begin(const MemoryAccessPair &Pair) {
 
 inline upward_defs_iterator upward_defs_end() { return upward_defs_iterator(); }
 
-bool instructionClobbersQuery(MemoryDef *MD,
-                              const MemoryLocation &UseLoc,
-                              const Instruction *UseInst,
-                              AliasAnalysis &AA);
+// Return true when MD may alias MU, return false otherwise.
+bool defClobbersUseOrDef(MemoryDef *MD, const MemoryUseOrDef *MU,
+                         AliasAnalysis &AA);
+
 } // end namespace llvm
 
 #endif // LLVM_TRANSFORMS_UTILS_MEMORYSSA_H

@@ -19,12 +19,12 @@
 // 2. geps when corresponding load/store cannot be hoisted.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/MemorySSA.h"
 
@@ -55,10 +55,10 @@ static cl::opt<int> MaxDepthInBB(
     cl::desc("Hoist instructions from the beginning of the BB up to the "
              "maximum specified depth (default = 100, unlimited = -1)"));
 
-static cl::opt<int> MaxChainLength(
-    "gvn-hoist-max-chain-length", cl::Hidden, cl::init(10),
-    cl::desc("Maximum length of dependent chains to hoist "
-             "(default = 10, unlimited = -1)"));
+static cl::opt<int>
+    MaxChainLength("gvn-hoist-max-chain-length", cl::Hidden, cl::init(10),
+                   cl::desc("Maximum length of dependent chains to hoist "
+                            "(default = 10, unlimited = -1)"));
 
 namespace {
 
@@ -89,7 +89,7 @@ public:
       ADFS = DFSNumber.lookup(BA);
       BDFS = DFSNumber.lookup(BB);
     }
-    assert (ADFS && BDFS);
+    assert(ADFS && BDFS);
     return ADFS < BDFS;
   }
 };
@@ -213,7 +213,7 @@ public:
     for (const BasicBlock *BB : depth_first(&F.getEntryBlock())) {
       DFSNumber[BB] = ++BBI;
       unsigned I = 0;
-      for (auto &Inst: *BB)
+      for (auto &Inst : *BB)
         DFSNumber[&Inst] = ++I;
     }
 
@@ -239,6 +239,7 @@ public:
 
     return Res;
   }
+
 private:
   GVN::ValueTable VN;
   DominatorTree *DT;
@@ -322,10 +323,10 @@ private:
 
   /* Return true when I1 appears before I2 in the instructions of BB.  */
   bool firstInBB(const Instruction *I1, const Instruction *I2) {
-    assert (I1->getParent() == I2->getParent());
+    assert(I1->getParent() == I2->getParent());
     unsigned I1DFS = DFSNumber.lookup(I1);
     unsigned I2DFS = DFSNumber.lookup(I2);
-    assert (I1DFS && I2DFS);
+    assert(I1DFS && I2DFS);
     return I1DFS < I2DFS;
   }
 
@@ -357,8 +358,7 @@ private:
             ReachedNewPt = true;
           }
         }
-        if (instructionClobbersQuery(Def, MemoryLocation::get(Insn), Insn,
-                                     *AA))
+        if (defClobbersUseOrDef(Def, MU, *AA))
           return true;
       }
 
@@ -653,7 +653,8 @@ private:
     for (const Use &Op : I->operands())
       if (const auto *Inst = dyn_cast<Instruction>(&Op))
         if (!DT->dominates(Inst->getParent(), HoistPt)) {
-          if (const GetElementPtrInst *GepOp = dyn_cast<GetElementPtrInst>(Inst)) {
+          if (const GetElementPtrInst *GepOp =
+                  dyn_cast<GetElementPtrInst>(Inst)) {
             if (!allGepOperandsAvailable(GepOp, HoistPt))
               return false;
             // Gep is available if all operands of GepOp are available.
@@ -670,7 +671,8 @@ private:
   void makeGepsAvailable(Instruction *Repl, BasicBlock *HoistPt,
                          const SmallVecInsn &InstructionsToHoist,
                          Instruction *Gep) const {
-    assert(allGepOperandsAvailable(Gep, HoistPt) && "GEP operands not available");
+    assert(allGepOperandsAvailable(Gep, HoistPt) &&
+           "GEP operands not available");
 
     Instruction *ClonedGep = Gep->clone();
     for (unsigned i = 0, e = Gep->getNumOperands(); i != e; ++i)
@@ -974,8 +976,7 @@ public:
 };
 } // namespace
 
-PreservedAnalyses GVNHoistPass::run(Function &F,
-                                    FunctionAnalysisManager &AM) {
+PreservedAnalyses GVNHoistPass::run(Function &F, FunctionAnalysisManager &AM) {
   DominatorTree &DT = AM.getResult<DominatorTreeAnalysis>(F);
   AliasAnalysis &AA = AM.getResult<AAManager>(F);
   MemoryDependenceResults &MD = AM.getResult<MemoryDependenceAnalysis>(F);

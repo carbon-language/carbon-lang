@@ -210,10 +210,10 @@ static Reorderability getLoadReorderability(const LoadInst *Use,
   return Result;
 }
 
-bool instructionClobbersQuery(MemoryDef *MD,
-                              const MemoryLocation &UseLoc,
-                              const Instruction *UseInst,
-                              AliasAnalysis &AA) {
+static bool instructionClobbersQuery(MemoryDef *MD,
+                                     const MemoryLocation &UseLoc,
+                                     const Instruction *UseInst,
+                                     AliasAnalysis &AA) {
   Instruction *DefInst = MD->getMemoryInst();
   assert(DefInst && "Defining instruction not actually an instruction");
 
@@ -254,6 +254,12 @@ bool instructionClobbersQuery(MemoryDef *MD,
   return AA.getModRefInfo(DefInst, UseLoc) & MRI_Mod;
 }
 
+// Return true when MD may alias MU, return false otherwise.
+bool defClobbersUseOrDef(MemoryDef *MD, const MemoryUseOrDef *MU,
+                         AliasAnalysis &AA) {
+  Instruction *Insn = MU->getMemoryInst();
+  return instructionClobbersQuery(MD, MemoryLocation::get(Insn), Insn, AA);
+}
 }
 
 namespace {
