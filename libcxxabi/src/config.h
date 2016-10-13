@@ -16,6 +16,10 @@
 
 #include <unistd.h>
 
+#ifndef __has_attribute
+  #define __has_attribute(x) 0
+#endif
+
 // Configure inline visibility attributes
 #if defined(_WIN32)
  #if defined(_MSC_VER) && !defined(__clang__)
