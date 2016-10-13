@@ -1939,7 +1939,6 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
                                       N1.getNode());
   }
 
-  ConstantSDNode *N0C = getAsNonOpaqueConstant(N0);
   ConstantSDNode *N1C = getAsNonOpaqueConstant(N1);
 
   // fold (sub x, c) -> (add x, -c)
@@ -1965,10 +1964,11 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     return N0.getOperand(0);
 
   // fold C2-(A+C1) -> (C2-C1)-A
-  if (N1.getOpcode() == ISD::ADD && N0C) {
-    if (auto *N1C1 = dyn_cast<ConstantSDNode>(N1.getOperand(1).getNode())) {
-      SDValue NewC =
-          DAG.getConstant(N0C->getAPIntValue() - N1C1->getAPIntValue(), DL, VT);
+  if (N1.getOpcode() == ISD::ADD) {
+    SDValue N11 = N1.getOperand(1);
+    if (isConstantOrConstantVector(N0, /* NoOpaques */ true) &&
+        isConstantOrConstantVector(N11, /* NoOpaques */ true)) {
+      SDValue NewC = DAG.getNode(ISD::SUB, DL, VT, N0, N11);
       return DAG.getNode(ISD::SUB, DL, VT, NewC, N1.getOperand(0));
     }
   }
