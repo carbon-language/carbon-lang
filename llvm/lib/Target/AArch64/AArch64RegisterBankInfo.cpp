@@ -378,6 +378,14 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case TargetOpcode::G_FMUL:
   case TargetOpcode::G_FDIV:
     return getSameKindOfOperandsMapping(MI);
+  case TargetOpcode::G_BITCAST: {
+    LLT DstTy = MRI.getType(MI.getOperand(0).getReg());
+    LLT SrcTy = MRI.getType(MI.getOperand(1).getReg());
+    // If we are on the same bank, we can use the "same kind" mapping.
+    if (DstTy.isVector() == SrcTy.isVector())
+      return getSameKindOfOperandsMapping(MI);
+    break;
+  }
   default:
     break;
   }

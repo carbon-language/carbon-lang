@@ -57,6 +57,15 @@
   define void @ignoreTargetSpecificInst() { ret void }
 
   define void @regBankSelected_property() { ret void }
+
+  define void @bitcast_s32_gpr() { ret void }
+  define void @bitcast_s32_fpr() { ret void }
+  define void @bitcast_s32_gpr_fpr() { ret void }
+  define void @bitcast_s32_fpr_gpr() { ret void }
+  define void @bitcast_s64_gpr() { ret void }
+  define void @bitcast_s64_fpr() { ret void }
+  define void @bitcast_s64_gpr_fpr() { ret void }
+  define void @bitcast_s64_fpr_gpr() { ret void }
 ...
 
 ---
@@ -394,4 +403,187 @@ legalized:       true
 regBankSelected: false
 body:             |
   bb.0:
+...
+
+---
+# CHECK-LABEL: name: bitcast_s32_gpr
+name:            bitcast_s32_gpr
+legalized:       true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr }
+# CHECK-NEXT:  - { id: 1, class: gpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+
+# CHECK:  body:
+# CHECK:    %0(s32) = COPY %w0
+# CHECK:    %1(s32) = G_BITCAST %0
+body:             |
+  bb.0:
+    liveins: %w0
+
+    %0(s32) = COPY %w0
+    %1(s32) = G_BITCAST %0
+...
+
+---
+# CHECK-LABEL: name: bitcast_s32_fpr
+name:            bitcast_s32_fpr
+legalized:       true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: fpr }
+# CHECK-NEXT:  - { id: 1, class: fpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+
+# CHECK:  body:
+# CHECK:    %0(<2 x s16>) = COPY %s0
+# CHECK:    %1(<2 x s16>) = G_BITCAST %0
+body:             |
+  bb.0:
+    liveins: %s0
+
+    %0(<2 x s16>) = COPY %s0
+    %1(<2 x s16>) = G_BITCAST %0
+...
+
+---
+# CHECK-LABEL: name: bitcast_s32_gpr_fpr
+name:            bitcast_s32_gpr_fpr
+legalized:       true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr }
+# CHECK-NEXT:  - { id: 1, class: fpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+
+# CHECK:  body:
+# CHECK:    %0(s32) = COPY %w0
+# CHECK:    %1(<2 x s16>) = G_BITCAST %0
+body:             |
+  bb.0:
+    liveins: %w0
+
+    %0(s32) = COPY %w0
+    %1(<2 x s16>) = G_BITCAST %0
+...
+
+---
+# CHECK-LABEL: name: bitcast_s32_fpr_gpr
+name:            bitcast_s32_fpr_gpr
+legalized:       true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: fpr }
+# CHECK-NEXT:  - { id: 1, class: gpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+
+# CHECK:  body:
+# CHECK:    %0(<2 x s16>) = COPY %s0
+# CHECK:    %1(s32) = G_BITCAST %0
+body:             |
+  bb.0:
+    liveins: %s0
+
+    %0(<2 x s16>) = COPY %s0
+    %1(s32) = G_BITCAST %0
+...
+
+---
+# CHECK-LABEL: name: bitcast_s64_gpr
+name:            bitcast_s64_gpr
+legalized:       true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr }
+# CHECK-NEXT:  - { id: 1, class: gpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+
+# CHECK:  body:
+# CHECK:    %0(s64) = COPY %x0
+# CHECK:    %1(s64) = G_BITCAST %0
+body:             |
+  bb.0:
+    liveins: %x0
+
+    %0(s64) = COPY %x0
+    %1(s64) = G_BITCAST %0
+...
+
+---
+# CHECK-LABEL: name: bitcast_s64_fpr
+name:            bitcast_s64_fpr
+legalized:       true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: fpr }
+# CHECK-NEXT:  - { id: 1, class: fpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+
+# CHECK:  body:
+# CHECK:    %0(<2 x s32>) = COPY %d0
+# CHECK:    %1(<2 x s32>) = G_BITCAST %0
+body:             |
+  bb.0:
+    liveins: %d0
+
+    %0(<2 x s32>) = COPY %d0
+    %1(<2 x s32>) = G_BITCAST %0
+...
+
+---
+# CHECK-LABEL: name: bitcast_s64_gpr_fpr
+name:            bitcast_s64_gpr_fpr
+legalized:       true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: gpr }
+# CHECK-NEXT:  - { id: 1, class: fpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+# CHECK:  body:
+# CHECK:    %0(s64) = COPY %x0
+# CHECK:    %1(<2 x s32>) = G_BITCAST %0
+body:             |
+  bb.0:
+    liveins: %x0
+
+    %0(s64) = COPY %x0
+    %1(<2 x s32>) = G_BITCAST %0
+...
+
+---
+# CHECK-LABEL: name: bitcast_s64_fpr_gpr
+name:            bitcast_s64_fpr_gpr
+legalized:       true
+
+# CHECK:      registers:
+# CHECK-NEXT:  - { id: 0, class: fpr }
+# CHECK-NEXT:  - { id: 1, class: gpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+
+# CHECK:  body:
+# CHECK:    %0(<2 x s32>) = COPY %d0
+# CHECK:    %1(s64) = G_BITCAST %0
+body:             |
+  bb.0:
+    liveins: %d0
+
+    %0(<2 x s32>) = COPY %d0
+    %1(s64) = G_BITCAST %0
 ...
