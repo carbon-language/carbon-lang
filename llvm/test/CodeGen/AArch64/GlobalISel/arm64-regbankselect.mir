@@ -66,6 +66,14 @@
   define void @bitcast_s64_fpr() { ret void }
   define void @bitcast_s64_gpr_fpr() { ret void }
   define void @bitcast_s64_fpr_gpr() { ret void }
+
+  define i64 @greedyWithChainOfComputation(i64 %arg1, <2 x i32>* %addr) {
+    %varg1 = bitcast i64 %arg1 to <2 x i32>
+    %varg2 = load <2 x i32>, <2 x i32>* %addr
+    %vres = or <2 x i32> %varg1, %varg2
+    %res = bitcast <2 x i32> %vres to i64
+    ret i64 %res
+  }
 ...
 
 ---
@@ -590,4 +598,55 @@ body:             |
 
     %0(<2 x s32>) = COPY %d0
     %1(s64) = G_BITCAST %0
+...
+
+---
+# Make sure the greedy mode is able to take advantage of the
+# alternative mappings of G_LOAD to coalesce the whole chain
+# of computation on GPR.
+# CHECK-LABEL: name: greedyWithChainOfComputation
+name:            greedyWithChainOfComputation
+legalized:       true
+
+# CHECK: registers:
+# CHECK-NEXT:  - { id: 0, class: gpr }
+# CHECK-NEXT:  - { id: 1, class: gpr }
+# FAST-NEXT:   - { id: 2, class: fpr }
+# FAST-NEXT:   - { id: 3, class: fpr }
+# FAST-NEXT:   - { id: 4, class: fpr }
+# GREEDY-NEXT: - { id: 2, class: gpr }
+# GREEDY-NEXT: - { id: 3, class: gpr }
+# GREEDY-NEXT: - { id: 4, class: gpr }
+# CHECK-NEXT:  - { id: 5, class: gpr }
+registers:
+  - { id: 0, class: _ }
+  - { id: 1, class: _ }
+  - { id: 2, class: _ }
+  - { id: 3, class: _ }
+  - { id: 4, class: _ }
+  - { id: 5, class: _ }
+
+# No repairing should be necessary for both modes.
+# CHECK:         %0(s64) = COPY %x0
+# CHECK-NEXT:    %1(p0) = COPY %x1
+# CHECK-NEXT:    %2(<2 x s32>) = G_BITCAST %0(s64)
+# CHECK-NEXT:    %3(<2 x s32>) = G_LOAD %1(p0) :: (load 8 from %ir.addr)
+# CHECK-NEXT:    %4(<2 x s32>) = G_OR %2, %3
+# CHECK-NEXT:    %5(s64) = G_BITCAST %4(<2 x s32>)
+# CHECK-NEXT:    %x0 = COPY %5(s64)
+# CHECK-NEXT:    RET_ReallyLR implicit %x0
+
+body:             |
+  bb.0:
+    liveins: %x0, %x1
+
+    %0(s64) = COPY %x0
+    %1(p0) = COPY %x1
+    %2(<2 x s32>) = G_BITCAST %0(s64)
+    %3(<2 x s32>) = G_LOAD %1(p0) :: (load 8 from %ir.addr)
+    %4(<2 x s32>) = G_OR %2, %3
+    %5(s64) = G_BITCAST %4(<2 x s32>)
+    %x0 = COPY %5(s64)
+    RET_ReallyLR implicit %x0
+
 ...

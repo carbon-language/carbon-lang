@@ -329,6 +329,34 @@ AArch64RegisterBankInfo::getInstrAlternativeMappings(
     AltMappings.emplace_back(std::move(FPRToGPRMapping));
     return AltMappings;
   }
+  case TargetOpcode::G_LOAD: {
+    unsigned Size = getSizeInBits(MI.getOperand(0).getReg(), MRI, TRI);
+    if (Size != 64)
+      break;
+
+    // If the instruction has any implicit-defs or uses,
+    // do not mess with it.
+    if (MI.getNumOperands() != 2)
+      break;
+
+    InstructionMappings AltMappings;
+    InstructionMapping GPRMapping(
+        /*ID*/ 1, /*Cost*/ 1,
+        getOperandsMapping({AArch64::getValueMapping(AArch64::FirstGPR, Size),
+                            // Addresses are GPR 64-bit.
+                            AArch64::getValueMapping(AArch64::FirstGPR, 64)}),
+        /*NumOperands*/ 2);
+    InstructionMapping FPRMapping(
+        /*ID*/ 2, /*Cost*/ 1,
+        getOperandsMapping({AArch64::getValueMapping(AArch64::FirstFPR, Size),
+                            // Addresses are GPR 64-bit.
+                            AArch64::getValueMapping(AArch64::FirstGPR, 64)}),
+        /*NumOperands*/ 2);
+
+    AltMappings.emplace_back(std::move(GPRMapping));
+    AltMappings.emplace_back(std::move(FPRMapping));
+    return AltMappings;
+  }
   default:
     break;
   }
@@ -339,7 +367,8 @@ void AArch64RegisterBankInfo::applyMappingImpl(
     const OperandsMapper &OpdMapper) const {
   switch (OpdMapper.getMI().getOpcode()) {
   case TargetOpcode::G_OR:
-  case TargetOpcode::G_BITCAST: {
+  case TargetOpcode::G_BITCAST:
+  case TargetOpcode::G_LOAD: {
     // Those ID must match getInstrAlternativeMappings.
     assert((OpdMapper.getInstrMapping().getID() >= 1 ||
             OpdMapper.getInstrMapping().getID() <= 4) &&
