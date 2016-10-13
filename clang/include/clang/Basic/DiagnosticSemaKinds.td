@@ -6734,7 +6734,7 @@ def note_cuda_conflicting_device_function_declared_here : Note<
   "conflicting __device__ function declared here">;
 def err_cuda_device_exceptions : Error<
   "cannot use '%0' in "
-  "%select{__device__|__global__|__host__|__host__ __device__}1 function %2">;
+  "%select{__device__|__global__|__host__|__host__ __device__}1 function">;
 def err_dynamic_var_init : Error<
     "dynamic initialization is not supported for "
     "__device__, __constant__, and __shared__ variables.">;

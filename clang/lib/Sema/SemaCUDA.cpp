@@ -18,6 +18,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Template.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
@@ -55,6 +56,10 @@ ExprResult Sema::ActOnCUDAExecConfigExpr(Scope *S, SourceLocation LLLLoc,
 
 /// IdentifyCUDATarget - Determine the CUDA compilation target for this function
 Sema::CUDAFunctionTarget Sema::IdentifyCUDATarget(const FunctionDecl *D) {
+  // Code that lives outside a function is run on the host.
+  if (D == nullptr)
+    return CFT_Host;
+
   if (D->hasAttr<CUDAInvalidTargetAttr>())
     return CFT_InvalidTarget;
 
@@ -108,9 +113,8 @@ Sema::CUDAFunctionPreference
 Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
                              const FunctionDecl *Callee) {
   assert(Callee && "Callee must be valid.");
+  CUDAFunctionTarget CallerTarget = IdentifyCUDATarget(Caller);
   CUDAFunctionTarget CalleeTarget = IdentifyCUDATarget(Callee);
-  CUDAFunctionTarget CallerTarget =
-      (Caller != nullptr) ? IdentifyCUDATarget(Caller) : Sema::CFT_Host;
 
   // If one of the targets is invalid, the check always fails, no matter what
   // the other target is.
@@ -484,6 +488,61 @@ void Sema::maybeAddCUDAHostDeviceAttrs(Scope *S, FunctionDecl *NewD,
   NewD->addAttr(CUDADeviceAttr::CreateImplicit(Context));
 }
 
+Sema::CUDADiagBuilder::CUDADiagBuilder(Kind K, SourceLocation Loc,
+                                       unsigned DiagID, FunctionDecl *Fn,
+                                       Sema &S) {
+  switch (K) {
+  case K_Nop:
+    break;
+  case K_Immediate:
+    ImmediateDiagBuilder.emplace(S.Diag(Loc, DiagID));
+    break;
+  case K_Deferred:
+    assert(Fn && "Must have a function to attach the deferred diag to.");
+    PartialDiagInfo.emplace(Loc, S.PDiag(DiagID), Fn);
+    break;
+  }
+}
+
+Sema::CUDADiagBuilder Sema::CUDADiagIfDeviceCode(SourceLocation Loc,
+                                                 unsigned DiagID) {
+  assert(getLangOpts().CUDA && "Should only be called during CUDA compilation");
+  CUDADiagBuilder::Kind DiagKind;
+  switch (CurrentCUDATarget()) {
+  case CFT_Global:
+  case CFT_Device:
+    DiagKind = CUDADiagBuilder::K_Immediate;
+    break;
+  case CFT_HostDevice:
+    DiagKind = getLangOpts().CUDAIsDevice ? CUDADiagBuilder::K_Deferred
+                                          : CUDADiagBuilder::K_Nop;
+    break;
+  default:
+    DiagKind = CUDADiagBuilder::K_Nop;
+  }
+  return CUDADiagBuilder(DiagKind, Loc, DiagID,
+                         dyn_cast<FunctionDecl>(CurContext), *this);
+}
+
+Sema::CUDADiagBuilder Sema::CUDADiagIfHostCode(SourceLocation Loc,
+                                               unsigned DiagID) {
+  assert(getLangOpts().CUDA && "Should only be called during CUDA compilation");
+  CUDADiagBuilder::Kind DiagKind;
+  switch (CurrentCUDATarget()) {
+  case CFT_Host:
+    DiagKind = CUDADiagBuilder::K_Immediate;
+    break;
+  case CFT_HostDevice:
+    DiagKind = getLangOpts().CUDAIsDevice ? CUDADiagBuilder::K_Nop
+                                          : CUDADiagBuilder::K_Deferred;
+    break;
+  default:
+    DiagKind = CUDADiagBuilder::K_Nop;
+  }
+  return CUDADiagBuilder(DiagKind, Loc, DiagID,
+                         dyn_cast<FunctionDecl>(CurContext), *this);
+}
+
 bool Sema::CheckCUDACall(SourceLocation Loc, FunctionDecl *Callee) {
   assert(getLangOpts().CUDA && "Should only be called during CUDA compilation");
   assert(Callee && "Callee may not be null.");
@@ -491,81 +550,33 @@ bool Sema::CheckCUDACall(SourceLocation Loc, FunctionDecl *Callee) {
   if (!Caller)
     return true;
 
-  Sema::CUDAFunctionPreference Pref = IdentifyCUDAPreference(Caller, Callee);
-  if (Pref == Sema::CFP_Never) {
-    Diag(Loc, diag::err_ref_bad_target) << IdentifyCUDATarget(Callee) << Callee
-                                        << IdentifyCUDATarget(Caller);
-    Diag(Callee->getLocation(), diag::note_previous_decl) << Callee;
-    return false;
+  CUDADiagBuilder::Kind DiagKind;
+  switch (IdentifyCUDAPreference(Caller, Callee)) {
+  case CFP_Never:
+    DiagKind = CUDADiagBuilder::K_Immediate;
+    break;
+  case CFP_WrongSide:
+    assert(Caller && "WrongSide calls require a non-null caller");
+    DiagKind = CUDADiagBuilder::K_Deferred;
+    break;
+  default:
+    DiagKind = CUDADiagBuilder::K_Nop;
   }
 
-  // Insert into LocsWithCUDADeferredDiags to avoid emitting duplicate deferred
-  // diagnostics for the same location.  Duplicate deferred diags are otherwise
-  // tricky to avoid, because, unlike with regular errors, sema checking
-  // proceeds unhindered when we omit a deferred diagnostic.
-  if (Pref == Sema::CFP_WrongSide &&
-      LocsWithCUDACallDeferredDiags.insert(Loc.getRawEncoding()).second) {
-    // We have to do this odd dance to create our PartialDiagnostic because we
-    // want its storage to be allocated with operator new, not in an arena.
-    PartialDiagnostic ErrPD{PartialDiagnostic::NullDiagnostic()};
-    ErrPD.Reset(diag::err_ref_bad_target);
-    ErrPD << IdentifyCUDATarget(Callee) << Callee << IdentifyCUDATarget(Caller);
-    Caller->addDeferredDiag({Loc, std::move(ErrPD)});
-
-    PartialDiagnostic NotePD{PartialDiagnostic::NullDiagnostic()};
-    NotePD.Reset(diag::note_previous_decl);
-    NotePD << Callee;
-    Caller->addDeferredDiag({Callee->getLocation(), std::move(NotePD)});
-
-    // This is not immediately an error, so return true.  The deferred errors
-    // will be emitted if and when Caller is codegen'ed.
+  // Avoid emitting this error twice for the same location.  Using a hashtable
+  // like this is unfortunate, but because we must continue parsing as normal
+  // after encountering a deferred error, it's otherwise very tricky for us to
+  // ensure that we only emit this deferred error once.
+  if (!LocsWithCUDACallDiags.insert(Loc.getRawEncoding()).second)
     return true;
-  }
-  return true;
-}
 
-bool Sema::CheckCUDAExceptionExpr(SourceLocation Loc, StringRef ExprTy) {
-  assert(getLangOpts().CUDA && "Should only be called during CUDA compilation");
-  FunctionDecl *CurFn = dyn_cast<FunctionDecl>(CurContext);
-  if (!CurFn)
-    return true;
-  CUDAFunctionTarget Target = IdentifyCUDATarget(CurFn);
-
-  // Raise an error immediately if this is a __global__ or __device__ function.
-  // If it's a __host__ __device__ function, enqueue a deferred error which will
-  // be emitted if the function is codegen'ed for device.
-  if (Target == CFT_Global || Target == CFT_Device) {
-    Diag(Loc, diag::err_cuda_device_exceptions) << ExprTy << Target << CurFn;
-    return false;
-  }
-  if (Target == CFT_HostDevice && getLangOpts().CUDAIsDevice) {
-    PartialDiagnostic ErrPD{PartialDiagnostic::NullDiagnostic()};
-    ErrPD.Reset(diag::err_cuda_device_exceptions);
-    ErrPD << ExprTy << Target << CurFn;
-    CurFn->addDeferredDiag({Loc, std::move(ErrPD)});
-    return false;
-  }
-  return true;
-}
-
-bool Sema::CheckCUDAVLA(SourceLocation Loc) {
-  assert(getLangOpts().CUDA && "Should only be called during CUDA compilation");
-  FunctionDecl *CurFn = dyn_cast<FunctionDecl>(CurContext);
-  if (!CurFn)
-    return true;
-  CUDAFunctionTarget Target = IdentifyCUDATarget(CurFn);
-  if (Target == CFT_Global || Target == CFT_Device) {
-    Diag(Loc, diag::err_cuda_vla) << Target;
-    return false;
-  }
-  if (Target == CFT_HostDevice && getLangOpts().CUDAIsDevice) {
-    PartialDiagnostic ErrPD{PartialDiagnostic::NullDiagnostic()};
-    ErrPD.Reset(diag::err_cuda_vla);
-    ErrPD << Target;
-    CurFn->addDeferredDiag({Loc, std::move(ErrPD)});
-    return false;
-  }
-  return true;
+  bool IsImmediateErr =
+      CUDADiagBuilder(DiagKind, Loc, diag::err_ref_bad_target, Caller, *this)
+      << IdentifyCUDATarget(Callee) << Callee << IdentifyCUDATarget(Caller);
+  CUDADiagBuilder(DiagKind, Callee->getLocation(), diag::note_previous_decl,
+                  Caller, *this)
+      << Callee;
+  return !IsImmediateErr;
 }
 
 void Sema::CUDASetLambdaAttrs(CXXMethodDecl *Method) {
