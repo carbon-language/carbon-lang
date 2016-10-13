@@ -47,11 +47,14 @@ define void @foo5(i8* %p, i32 %val) nounwind {
   ret void
 }
 
+;; FIXME: Again, with the writing of a quadword zero...
+
 define void @foo(%struct.X* nocapture %p) nounwind optsize ssp {
 ; CHECK-LABEL: foo:
 ; CHECK-NOT: str
-; CHECK: stur    xzr, [x0, #12]
-; CHECK-NEXT: stur    xzr, [x0, #4]
+; CHECK: stur    q0, [x0, #4]
+; CHECK-FIXME: stur    xzr, [x0, #12]
+; CHECK-FIXME-NEXT: stur    xzr, [x0, #4]
 ; CHECK-NEXT: ret
   %B = getelementptr inbounds %struct.X, %struct.X* %p, i64 0, i32 1
   %val = bitcast i64* %B to i8*
