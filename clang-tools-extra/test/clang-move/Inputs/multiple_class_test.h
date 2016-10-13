@@ -23,6 +23,15 @@ public:
   int f();
 };
 
+class EnclosingMove5 {
+public:
+  class Nested {
+    int f();
+    static int b;
+  };
+  static int a;
+};
+
 class NoMove {
 public:
   int f();

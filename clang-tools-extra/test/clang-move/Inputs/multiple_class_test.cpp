@@ -21,6 +21,14 @@ int Move4::f() {
   return 0;
 }
 
+int EnclosingMove5::a = 1;
+
+int EnclosingMove5::Nested::f() {
+  return 0;
+}
+
+int EnclosingMove5::Nested::b = 1;
+
 int NoMove::f() {
   return 0;
 }

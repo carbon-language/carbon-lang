@@ -24,6 +24,32 @@ namespace clang {
 namespace move {
 namespace {
 
+AST_MATCHER_P(Decl, hasOutermostEnclosingClass,
+              ast_matchers::internal::Matcher<Decl>, InnerMatcher) {
+  const auto* Context = Node.getDeclContext();
+  if (!Context) return false;
+  while (const auto *NextContext = Context->getParent()) {
+    if (isa<NamespaceDecl>(NextContext) ||
+        isa<TranslationUnitDecl>(NextContext))
+      break;
+    Context = NextContext;
+  }
+  return InnerMatcher.matches(*Decl::castFromDeclContext(Context), Finder,
+                              Builder);
+}
+
+AST_MATCHER_P(CXXMethodDecl, ofOutermostEnclosingClass,
+              ast_matchers::internal::Matcher<CXXRecordDecl>, InnerMatcher) {
+  const CXXRecordDecl *Parent = Node.getParent();
+  if (!Parent) return false;
+  while (const auto *NextParent =
+             dyn_cast<CXXRecordDecl>(Parent->getParent())) {
+    Parent = NextParent;
+  }
+
+  return InnerMatcher.matches(*Parent, Finder, Builder);
+}
+
 // Make the Path absolute using the CurrentDir if the Path is not an absolute
 // path. An empty Path will result in an empty string.
 std::string MakeAbsolutePath(StringRef CurrentDir, StringRef Path) {
@@ -322,7 +348,7 @@ void ClangMoveTool::registerMatchers(ast_matchers::MatchFinder *Finder) {
       MakeAbsolutePath(OriginalRunningDirectory, Spec.OldCC));
   auto InOldFiles = anyOf(InOldHeader, InOldCC);
   auto InMovedClass =
-      hasDeclContext(cxxRecordDecl(*InMovedClassNames));
+      hasOutermostEnclosingClass(cxxRecordDecl(*InMovedClassNames));
 
   // Match moved class declarations.
   auto MovedClass = cxxRecordDecl(
@@ -332,11 +358,11 @@ void ClangMoveTool::registerMatchers(ast_matchers::MatchFinder *Finder) {
 
   // Match moved class methods (static methods included) which are defined
   // outside moved class declaration.
-  Finder->addMatcher(cxxMethodDecl(InOldFiles,
-                                   ofClass(*InMovedClassNames),
-                                   isDefinition())
-                         .bind("class_method"),
-                     this);
+  Finder->addMatcher(
+      cxxMethodDecl(InOldFiles, ofOutermostEnclosingClass(*InMovedClassNames),
+                    isDefinition())
+          .bind("class_method"),
+      this);
 
   // Match static member variable definition of the moved class.
   Finder->addMatcher(varDecl(InMovedClass, InOldCC, isDefinition())
