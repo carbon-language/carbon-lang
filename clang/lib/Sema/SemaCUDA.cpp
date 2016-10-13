@@ -546,7 +546,7 @@ static bool IsKnownEmitted(Sema &S, FunctionDecl *FD) {
     return false;
 
   // Externally-visible and similar functions are always emitted.
-  if (S.getASTContext().GetGVALinkageForFunction(FD) > GVA_DiscardableODR)
+  if (!isDiscardableGVALinkage(S.getASTContext().GetGVALinkageForFunction(FD)))
     return true;
 
   // Otherwise, the function is known-emitted if it's in our set of
