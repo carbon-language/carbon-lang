@@ -881,8 +881,12 @@ SDValue SITargetLowering::LowerFormalArguments(
   if (HasStackObjects)
     Info->setHasNonSpillStackObjects(true);
 
+  // Everything live out of a block is spilled with fast regalloc, so it's
+  // almost certain that spilling will be required.
+  if (getTargetMachine().getOptLevel() == CodeGenOpt::None)
+    HasStackObjects = true;
+
   if (ST.isAmdCodeObjectV2()) {
-    // TODO: Assume we will spill without optimizations.
     if (HasStackObjects) {
       // If we have stack objects, we unquestionably need the private buffer
       // resource. For the Code Object V2 ABI, this will be the first 4 user
