@@ -108,10 +108,22 @@ int main(int argc, const char **argv) {
   if (CodeStatus)
     return CodeStatus;
 
-  if (!NewCC.empty())
-    CreateNewFile(NewCC);
-  if (!NewHeader.empty())
-    CreateNewFile(NewHeader);
+  if (!NewCC.empty()) {
+    std::error_code EC = CreateNewFile(NewCC);
+    if (EC) {
+      llvm::errs() << "Failed to create " << NewCC << ": " << EC.message()
+                   << "\n";
+      return EC.value();
+    }
+  }
+  if (!NewHeader.empty()) {
+    std::error_code EC = CreateNewFile(NewHeader);
+    if (EC) {
+      llvm::errs() << "Failed to create " << NewHeader << ": " << EC.message()
+                   << "\n";
+      return EC.value();
+    }
+  }
 
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts(new DiagnosticOptions());
   clang::TextDiagnosticPrinter DiagnosticPrinter(errs(), &*DiagOpts);
