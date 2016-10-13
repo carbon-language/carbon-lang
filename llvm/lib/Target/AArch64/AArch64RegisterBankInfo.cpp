@@ -383,8 +383,6 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   }
 
   unsigned NumOperands = MI.getNumOperands();
-  RegisterBankInfo::InstructionMapping Mapping =
-      InstructionMapping{DefaultMappingID, 1, nullptr, NumOperands};
 
   // Track the size and bank of each register.  We don't do partial mappings.
   SmallVector<unsigned, 4> OpSize(NumOperands);
@@ -405,6 +403,7 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       OpRegBankIdx[Idx] = AArch64::FirstGPR;
   }
 
+  unsigned Cost = 1;
   // Some of the floating-point instructions have mixed GPR and FPR operands:
   // fine-tune the computed mapping.
   switch (Opc) {
@@ -424,9 +423,19 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
                     AArch64::FirstFPR, AArch64::FirstFPR};
     break;
   }
+  case TargetOpcode::G_BITCAST: {
+    // This is going to be a cross register bank copy and this is expensive.
+    if (OpRegBankIdx[0] != OpRegBankIdx[1])
+      Cost =
+          copyCost(*AArch64::PartMappings[OpRegBankIdx[0]].RegBank,
+                   *AArch64::PartMappings[OpRegBankIdx[1]].RegBank, OpSize[0]);
+    break;
+  }
   }
 
   // Finally construct the computed mapping.
+  RegisterBankInfo::InstructionMapping Mapping =
+      InstructionMapping{DefaultMappingID, Cost, nullptr, NumOperands};
   SmallVector<const ValueMapping *, 8> OpdsMapping(NumOperands);
   for (unsigned Idx = 0; Idx < NumOperands; ++Idx)
     if (MI.getOperand(Idx).isReg())
