@@ -50,14 +50,13 @@ define <4 x i32> @combine_vec_sub_negone(<4 x i32> %x) {
 ; SSE-LABEL: combine_vec_sub_negone:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    pcmpeqd %xmm1, %xmm1
-; SSE-NEXT:    psubd %xmm0, %xmm1
-; SSE-NEXT:    movdqa %xmm1, %xmm0
+; SSE-NEXT:    pxor %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_vec_sub_negone:
 ; AVX:       # BB#0:
 ; AVX-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
-; AVX-NEXT:    vpsubd %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    vpxor %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %1 = sub <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, %x
   ret <4 x i32> %1
