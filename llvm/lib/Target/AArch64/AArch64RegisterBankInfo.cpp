@@ -170,6 +170,36 @@ AArch64RegisterBankInfo::AArch64RegisterBankInfo(const TargetRegisterInfo &TRI)
   CHECK_VALUEMAP_3OPS(FPR, 256);
   CHECK_VALUEMAP_3OPS(FPR, 512);
 
+#define CHECK_VALUEMAP_CROSSREGCPY(RBNameDst, RBNameSrc, Size)                 \
+  do {                                                                         \
+    AArch64::PartialMappingIdx PartialMapDstIdx =                              \
+        AArch64::PartialMappingIdx::RBNameDst##Size;                           \
+    AArch64::PartialMappingIdx PartialMapSrcIdx =                              \
+        AArch64::PartialMappingIdx::RBNameSrc##Size;                           \
+    (void) PartialMapDstIdx;                                                   \
+    (void) PartialMapSrcIdx;                                                   \
+    const ValueMapping *Map = AArch64::getCopyMapping(                         \
+        AArch64::First##RBNameDst == AArch64::FirstGPR,                        \
+        AArch64::First##RBNameSrc == AArch64::FirstGPR, Size);                 \
+    (void) Map;                                                                \
+    assert(Map[0].BreakDown == &AArch64::PartMappings[PartialMapDstIdx] &&     \
+           Map[0].NumBreakDowns == 1 && #RBNameDst #Size                       \
+           " Dst is incorrectly initialized");                                 \
+    assert(Map[1].BreakDown == &AArch64::PartMappings[PartialMapSrcIdx] &&     \
+           Map[1].NumBreakDowns == 1 && #RBNameSrc #Size                       \
+           " Src is incorrectly initialized");                                 \
+                                                                               \
+  } while (0)
+
+  CHECK_VALUEMAP_CROSSREGCPY(GPR, GPR, 32);
+  CHECK_VALUEMAP_CROSSREGCPY(GPR, FPR, 32);
+  CHECK_VALUEMAP_CROSSREGCPY(GPR, GPR, 64);
+  CHECK_VALUEMAP_CROSSREGCPY(GPR, FPR, 64);
+  CHECK_VALUEMAP_CROSSREGCPY(FPR, FPR, 32);
+  CHECK_VALUEMAP_CROSSREGCPY(FPR, GPR, 32);
+  CHECK_VALUEMAP_CROSSREGCPY(FPR, FPR, 64);
+  CHECK_VALUEMAP_CROSSREGCPY(FPR, GPR, 64);
+
   assert(verify(TRI) && "Invalid register bank information");
 }
 
