@@ -9245,6 +9245,30 @@ public:
   /// before incrementing, so you can emit an error.
   bool PopForceCUDAHostDevice();
 
+  /// Diagnostics that are emitted only if we discover that the given function
+  /// must be codegen'ed.  Because handling these correctly adds overhead to
+  /// compilation, this is currently only enabled for CUDA compilations.
+  llvm::DenseMap<const FunctionDecl *, std::vector<PartialDiagnosticAt>>
+      CUDADeferredDiags;
+
+  /// Raw encodings of SourceLocations for which CheckCUDACall has emitted a
+  /// (maybe deferred) "bad call" diagnostic.  We use this to avoid emitting the
+  /// same deferred diag twice.
+  llvm::DenseSet<unsigned> LocsWithCUDACallDiags;
+
+  /// The set of CUDA functions that we've discovered must be emitted by tracing
+  /// the call graph.  Functions that we can tell a priori must be emitted
+  /// aren't added to this set.
+  llvm::DenseSet<FunctionDecl *> CUDAKnownEmittedFns;
+
+  /// A partial call graph maintained during CUDA compilation to support
+  /// deferred diagnostics.  Specifically, functions are only added here if, at
+  /// the time they're added, they are not known-emitted.  As soon as we
+  /// discover that a function is known-emitted, we remove it and everything it
+  /// transitively calls from this set and add those functions to
+  /// CUDAKnownEmittedFns.
+  llvm::DenseMap<FunctionDecl *, llvm::SetVector<FunctionDecl *>> CUDACallGraph;
+
   /// Diagnostic builder for CUDA errors which may or may not be deferred.
   ///
   /// In CUDA, there exist constructs (e.g. variable-length arrays, try/catch)
@@ -9298,12 +9322,15 @@ public:
 
   private:
     struct PartialDiagnosticInfo {
-      PartialDiagnosticInfo(SourceLocation Loc, PartialDiagnostic PD,
+      PartialDiagnosticInfo(Sema &S, SourceLocation Loc, PartialDiagnostic PD,
                             FunctionDecl *Fn)
-          : Loc(Loc), PD(std::move(PD)), Fn(Fn) {}
+          : S(S), Loc(Loc), PD(std::move(PD)), Fn(Fn) {}
 
-      ~PartialDiagnosticInfo() { Fn->addDeferredDiag({Loc, std::move(PD)}); }
+      ~PartialDiagnosticInfo() {
+        S.CUDADeferredDiags[Fn].push_back({Loc, std::move(PD)});
+      }
 
+      Sema &S;
       SourceLocation Loc;
       PartialDiagnostic PD;
       FunctionDecl *Fn;
@@ -9322,8 +9349,8 @@ public:
   /// - If CurContext is a __device__ or __global__ function, emits the
   ///   diagnostics immediately.
   /// - If CurContext is a __host__ __device__ function and we are compiling for
-  ///   the device, creates a deferred diagnostic which is emitted if and when
-  ///   the function is codegen'ed.
+  ///   the device, creates a diagnostic which is emitted if and when we realize
+  ///   that the function will be codegen'ed.
   ///
   /// Example usage:
   ///
@@ -9396,12 +9423,6 @@ public:
   /// depending on FD and the current compilation settings.
   void maybeAddCUDAHostDeviceAttrs(Scope *S, FunctionDecl *FD,
                                    const LookupResult &Previous);
-
-private:
-  /// Raw encodings of SourceLocations for which CheckCUDACall has emitted a
-  /// (maybe deferred) "bad call" diagnostic.  We use this to avoid emitting the
-  /// same deferred diag twice.
-  llvm::DenseSet<unsigned> LocsWithCUDACallDiags;
 
 public:
   /// Check whether we're allowed to call Callee from the current context.
