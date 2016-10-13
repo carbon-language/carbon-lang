@@ -15,9 +15,10 @@
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Process.h"
-#include "llvm/Support/YAMLTraits.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Process.h"
+#include "llvm/Support/Signals.h"
+#include "llvm/Support/YAMLTraits.h"
 #include <set>
 #include <string>
 
@@ -72,6 +73,7 @@ cl::opt<bool> Dump("dump_result",
 } // namespace
 
 int main(int argc, const char **argv) {
+  llvm::sys::PrintStackTraceOnErrorSignal(argv[0]);
   // Add "-fparse-all-comments" compile option to make clang parse all comments,
   // otherwise, ordinary comments like "//" and "/*" won't get parsed (This is
   // a bit of hacky).
