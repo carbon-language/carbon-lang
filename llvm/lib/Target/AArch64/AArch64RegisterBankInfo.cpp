@@ -431,6 +431,16 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
                    *AArch64::PartMappings[OpRegBankIdx[1]].RegBank, OpSize[0]);
     break;
   }
+  case TargetOpcode::G_LOAD: {
+    // Loading in vector unit is slightly more expensive.
+    // This is actually only true for the LD1R and co instructions,
+    // but anyway for the fast mode this number does not matter and
+    // for the greedy mode the cost of the cross bank copy will
+    // offset this number.
+    // FIXME: Should be derived from the scheduling model.
+    if (OpRegBankIdx[0] >= AArch64::FirstFPR)
+      Cost = 2;
+  }
   }
 
   // Finally construct the computed mapping.
