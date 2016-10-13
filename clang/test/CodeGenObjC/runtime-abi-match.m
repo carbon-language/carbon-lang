@@ -1,4 +1,5 @@
 // RUN: %clang -target armv7-windows -fobjc-runtime=ios -O1 -fexceptions -S -emit-llvm %s -o - | FileCheck %s
+// REQUIRES: arm-registered-target
 
 void (*f)(id);
 void (*g)(void);
