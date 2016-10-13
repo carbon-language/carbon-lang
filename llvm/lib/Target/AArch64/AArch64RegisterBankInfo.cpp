@@ -181,7 +181,16 @@ unsigned AArch64RegisterBankInfo::copyCost(const RegisterBank &A,
   // Will introduce other hooks for different size:
   // * extract cost.
   // * build_sequence cost.
-  // TODO: Add more accurate cost for FPR to/from GPR.
+
+  // Copy from (resp. to) GPR to (resp. from) FPR involves FMOV.
+  // FIXME: This should be deduced from the scheduling model.
+  if (&A == &AArch64::GPRRegBank && &B == &AArch64::FPRRegBank)
+    // FMOVXDr or FMOVWSr.
+    return 5;
+  if (&A == &AArch64::FPRRegBank && &B == &AArch64::GPRRegBank)
+    // FMOVDXr or FMOVSWr.
+    return 4;
+
   return RegisterBankInfo::copyCost(A, B, Size);
 }
 
