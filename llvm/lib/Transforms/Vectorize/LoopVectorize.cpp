@@ -6700,6 +6700,12 @@ unsigned LoopVectorizationCostModel::getInstructionCost(Instruction *I,
       // we might create due to scalarization.
       Cost += getScalarizationOverhead(I, VF, TTI);
 
+      // If we have a predicated store, it may not be executed for each vector
+      // lane. Scale the cost by the probability of executing the predicated
+      // block.
+      if (Legal->isScalarWithPredication(I))
+        Cost /= getReciprocalPredBlockProb();
+
       return Cost;
     }
 
