@@ -458,7 +458,8 @@ legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr }
-# CHECK-NEXT:  - { id: 1, class: fpr }
+# FAST-NEXT:  - { id: 1, class: fpr }
+# GREEDY-NEXT:  - { id: 1, class: gpr }
 registers:
   - { id: 0, class: _ }
   - { id: 1, class: _ }
@@ -481,7 +482,8 @@ legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: fpr }
-# CHECK-NEXT:  - { id: 1, class: gpr }
+# FAST-NEXT:  - { id: 1, class: gpr }
+# GREEDY-NEXT:  - { id: 1, class: fpr }
 registers:
   - { id: 0, class: _ }
   - { id: 1, class: _ }
@@ -550,7 +552,8 @@ legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: gpr }
-# CHECK-NEXT:  - { id: 1, class: fpr }
+# FAST-NEXT:  - { id: 1, class: fpr }
+# GREEDY-NEXT:  - { id: 1, class: gpr }
 registers:
   - { id: 0, class: _ }
   - { id: 1, class: _ }
@@ -572,7 +575,8 @@ legalized:       true
 
 # CHECK:      registers:
 # CHECK-NEXT:  - { id: 0, class: fpr }
-# CHECK-NEXT:  - { id: 1, class: gpr }
+# FAST-NEXT:  - { id: 1, class: gpr }
+# GREEDY-NEXT:  - { id: 1, class: fpr }
 registers:
   - { id: 0, class: _ }
   - { id: 1, class: _ }

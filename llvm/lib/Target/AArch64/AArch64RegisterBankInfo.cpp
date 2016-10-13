@@ -264,15 +264,15 @@ const RegisterBank &AArch64RegisterBankInfo::getRegBankFromRegClass(
 RegisterBankInfo::InstructionMappings
 AArch64RegisterBankInfo::getInstrAlternativeMappings(
     const MachineInstr &MI) const {
+  const MachineFunction &MF = *MI.getParent()->getParent();
+  const TargetSubtargetInfo &STI = MF.getSubtarget();
+  const TargetRegisterInfo &TRI = *STI.getRegisterInfo();
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+
   switch (MI.getOpcode()) {
   case TargetOpcode::G_OR: {
     // 32 and 64-bit or can be mapped on either FPR or
     // GPR for the same cost.
-    const MachineFunction &MF = *MI.getParent()->getParent();
-    const TargetSubtargetInfo &STI = MF.getSubtarget();
-    const TargetRegisterInfo &TRI = *STI.getRegisterInfo();
-    const MachineRegisterInfo &MRI = MF.getRegInfo();
-
     unsigned Size = getSizeInBits(MI.getOperand(0).getReg(), MRI, TRI);
     if (Size != 32 && Size != 64)
       break;
@@ -293,6 +293,42 @@ AArch64RegisterBankInfo::getInstrAlternativeMappings(
     AltMappings.emplace_back(std::move(FPRMapping));
     return AltMappings;
   }
+  case TargetOpcode::G_BITCAST: {
+    unsigned Size = getSizeInBits(MI.getOperand(0).getReg(), MRI, TRI);
+    if (Size != 32 && Size != 64)
+      break;
+
+    // If the instruction has any implicit-defs or uses,
+    // do not mess with it.
+    if (MI.getNumOperands() != 2)
+      break;
+
+    InstructionMappings AltMappings;
+    InstructionMapping GPRMapping(
+        /*ID*/ 1, /*Cost*/ 1,
+        AArch64::getCopyMapping(/*DstIsGPR*/ true, /*SrcIsGPR*/ true, Size),
+        /*NumOperands*/ 2);
+    InstructionMapping FPRMapping(
+        /*ID*/ 2, /*Cost*/ 1,
+        AArch64::getCopyMapping(/*DstIsFPR*/ false, /*SrcIsFPR*/ false, Size),
+        /*NumOperands*/ 2);
+    InstructionMapping GPRToFPRMapping(
+        /*ID*/ 3,
+        /*Cost*/ copyCost(AArch64::GPRRegBank, AArch64::FPRRegBank, Size),
+        AArch64::getCopyMapping(/*DstIsFPR*/ false, /*SrcIsFPR*/ true, Size),
+        /*NumOperands*/ 2);
+    InstructionMapping FPRToGPRMapping(
+        /*ID*/ 3,
+        /*Cost*/ copyCost(AArch64::GPRRegBank, AArch64::FPRRegBank, Size),
+        AArch64::getCopyMapping(/*DstIsFPR*/ true, /*SrcIsFPR*/ false, Size),
+        /*NumOperands*/ 2);
+
+    AltMappings.emplace_back(std::move(GPRMapping));
+    AltMappings.emplace_back(std::move(FPRMapping));
+    AltMappings.emplace_back(std::move(GPRToFPRMapping));
+    AltMappings.emplace_back(std::move(FPRToGPRMapping));
+    return AltMappings;
+  }
   default:
     break;
   }
@@ -302,10 +338,11 @@ AArch64RegisterBankInfo::getInstrAlternativeMappings(
 void AArch64RegisterBankInfo::applyMappingImpl(
     const OperandsMapper &OpdMapper) const {
   switch (OpdMapper.getMI().getOpcode()) {
-  case TargetOpcode::G_OR: {
+  case TargetOpcode::G_OR:
+  case TargetOpcode::G_BITCAST: {
     // Those ID must match getInstrAlternativeMappings.
-    assert((OpdMapper.getInstrMapping().getID() == 1 ||
-            OpdMapper.getInstrMapping().getID() == 2) &&
+    assert((OpdMapper.getInstrMapping().getID() >= 1 ||
+            OpdMapper.getInstrMapping().getID() <= 4) &&
            "Don't know how to handle that ID");
     return applyDefaultMapping(OpdMapper);
   }
