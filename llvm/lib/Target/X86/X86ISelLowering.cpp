@@ -12904,6 +12904,8 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
 // upper bits of a vector.
 static SDValue LowerEXTRACT_SUBVECTOR(SDValue Op, const X86Subtarget &Subtarget,
                                       SelectionDAG &DAG) {
+  assert(Subtarget.hasAVX() && "EXTRACT_SUBVECTOR requires AVX");
+
   SDLoc dl(Op);
   SDValue In =  Op.getOperand(0);
   SDValue Idx = Op.getOperand(1);
@@ -12911,18 +12913,15 @@ static SDValue LowerEXTRACT_SUBVECTOR(SDValue Op, const X86Subtarget &Subtarget,
   MVT ResVT   = Op.getSimpleValueType();
   MVT InVT    = In.getSimpleValueType();
 
-  if (Subtarget.hasFp256()) {
-    if (ResVT.is128BitVector() &&
-        (InVT.is256BitVector() || InVT.is512BitVector()) &&
-        isa<ConstantSDNode>(Idx)) {
-      return extract128BitVector(In, IdxVal, DAG, dl);
-    }
-    if (ResVT.is256BitVector() && InVT.is512BitVector() &&
-        isa<ConstantSDNode>(Idx)) {
-      return extract256BitVector(In, IdxVal, DAG, dl);
-    }
-  }
-  return SDValue();
+  assert((InVT.is256BitVector() || InVT.is512BitVector()) &&
+         "Can only extract from 256-bit or 512-bit vectors");
+
+  if (ResVT.is128BitVector())
+    return extract128BitVector(In, IdxVal, DAG, dl);
+  if (ResVT.is256BitVector())
+    return extract256BitVector(In, IdxVal, DAG, dl);
+
+  llvm_unreachable("Unimplemented!");
 }
 
 static bool areOnlyUsersOf(SDNode *N, ArrayRef<SDValue> ValidUsers) {
@@ -12938,16 +12937,12 @@ static bool areOnlyUsersOf(SDNode *N, ArrayRef<SDValue> ValidUsers) {
 // the upper bits of a vector.
 static SDValue LowerINSERT_SUBVECTOR(SDValue Op, const X86Subtarget &Subtarget,
                                      SelectionDAG &DAG) {
-  if (!Subtarget.hasAVX())
-    return SDValue();
+  assert(Subtarget.hasAVX() && "INSERT_SUBVECTOR requires AVX");
 
   SDLoc dl(Op);
   SDValue Vec = Op.getOperand(0);
   SDValue SubVec = Op.getOperand(1);
   SDValue Idx = Op.getOperand(2);
-
-  if (!isa<ConstantSDNode>(Idx))
-    return SDValue();
 
   unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
   MVT OpVT = Op.getSimpleValueType();
@@ -12991,17 +12986,19 @@ static SDValue LowerINSERT_SUBVECTOR(SDValue Op, const X86Subtarget &Subtarget,
     }
   }
 
-  if ((OpVT.is256BitVector() || OpVT.is512BitVector()) &&
-      SubVecVT.is128BitVector())
-    return insert128BitVector(Vec, SubVec, IdxVal, DAG, dl);
-
-  if (OpVT.is512BitVector() && SubVecVT.is256BitVector())
-    return insert256BitVector(Vec, SubVec, IdxVal, DAG, dl);
-
   if (OpVT.getVectorElementType() == MVT::i1)
     return insert1BitVector(Op, DAG, Subtarget);
 
-  return SDValue();
+  assert((OpVT.is256BitVector() || OpVT.is512BitVector()) &&
+         "Can only insert into 256-bit or 512-bit vectors");
+
+  if (SubVecVT.is128BitVector())
+    return insert128BitVector(Vec, SubVec, IdxVal, DAG, dl);
+
+  if (SubVecVT.is256BitVector())
+    return insert256BitVector(Vec, SubVec, IdxVal, DAG, dl);
+
+  llvm_unreachable("Unimplemented!");
 }
 
 // ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as
