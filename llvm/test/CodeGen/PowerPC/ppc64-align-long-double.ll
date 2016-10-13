@@ -1,6 +1,6 @@
 ; RUN: llc -verify-machineinstrs -mcpu=pwr7 -O0 -fast-isel=false -mattr=-vsx < %s | FileCheck %s
 ; RUN: llc -verify-machineinstrs -mcpu=pwr7 -O0 -fast-isel=false -mattr=+vsx < %s | FileCheck -check-prefix=CHECK-VSX %s
-; RUN: llc -verify-machineinstrs -mcpu=pwr9 -O0 -fast-isel=false -mattr=+vsx < %s | FileCheck -check-prefix=CHECK-P9 %s
+; RUN: llc -verify-machineinstrs -mcpu=pwr9 -O0 -fast-isel=false -mattr=+vsx < %s | FileCheck %s
 
 ; Verify internal alignment of long double in a struct.  The double
 ; argument comes in in GPR3; GPR4 is skipped; GPRs 5 and 6 contain
@@ -19,42 +19,19 @@ entry:
   ret ppc_fp128 %0
 }
 
-;; FIXME: Sadly, we now have an extra store to a temp variable here,
-;; which comes from (roughly):
-;;  store i64 <val> to i64* <frame>
-;;  bitcast (load i64* <frame>) to f64
-;; The code now can elide the load, making:
-;;  store i64 <val> -> <frame>
-;;  bitcast i64 <val> to f64
-;; Finally, the bitcast itself turns into a store/load pair.
-;;
-;; This behavior is new, because previously, llvm was accidentally
-;; unable to detect that the load came directly from the store, and
-;; elide it.
+; CHECK-DAG: std 6, 72(1)
+; CHECK-DAG: std 5, 64(1)
+; CHECK-DAG: std 4, 56(1)
+; CHECK-DAG: std 3, 48(1)
+; CHECK: lfd 1, 64(1)
+; CHECK: lfd 2, 72(1)
 
-; CHECK: std 6, 72(1)
-; CHECK: std 5, 64(1)
-; CHECK: std 4, 56(1)
-; CHECK: std 3, 48(1)
-; CHECK: std 5, -16(1)
-; CHECK: std 6, -8(1)
-; CHECK: lfd 1, -16(1)
-; CHECK: lfd 2, -8(1)
-
-; CHECK-VSX: std 6, 72(1)
-; CHECK-VSX: std 5, 64(1)
-; CHECK-VSX: std 4, 56(1)
-; CHECK-VSX: std 3, 48(1)
-; CHECK-VSX: std 5, -16(1)
-; CHECK-VSX: std 6, -8(1)
-; CHECK-VSX: addi 3, 1, -16
-; CHECK-VSX: lxsdx 1, 0, 3
-; CHECK-VSX: addi 3, 1, -8
-; CHECK-VSX: lxsdx 2, 0, 3
-
-; CHECK-P9: std 6, 72(1)
-; CHECK-P9: std 5, 64(1)
-; CHECK-P9: std 4, 56(1)
-; CHECK-P9: std 3, 48(1)
-; CHECK-P9: mtvsrd 1, 5
-; CHECK-P9: mtvsrd 2, 6
+; CHECK-VSX-DAG: std 6, 72(1)
+; CHECK-VSX-DAG: std 5, 64(1)
+; CHECK-VSX-DAG: std 4, 56(1)
+; CHECK-VSX-DAG: std 3, 48(1)
+; CHECK-VSX: li 3, 16
+; CHECK-VSX: addi 4, 1, 48
+; CHECK-VSX: lxsdx 1, 4, 3
+; CHECK-VSX: li 3, 24
+; CHECK-VSX: lxsdx 2, 4, 3

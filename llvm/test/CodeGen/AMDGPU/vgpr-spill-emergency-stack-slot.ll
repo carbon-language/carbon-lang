@@ -1,12 +1,6 @@
 ; RUN: llc -march=amdgcn -mcpu=tahiti -mattr=+vgpr-spilling -verify-machineinstrs < %s | FileCheck -check-prefix=GCN -check-prefix=SI %s
 ; RUN: llc -march=amdgcn -mcpu=fiji -mattr=+vgpr-spilling -verify-machineinstrs < %s | FileCheck -check-prefix=GCN -check-prefix=VI %s
 
-;; FIXME: this fails because the load generated from extractelement is
-;; now properly recognized as forwardable to the value stored in
-;; insertelement, and thus the loads/stores drop away entirely. This
-;; makes the intended test, of running out of registers, not occur.
-;; XFAIL: *
-
 ; This ends up using all 255 registers and requires register
 ; scavenging which will fail to find an unsued register.
 
