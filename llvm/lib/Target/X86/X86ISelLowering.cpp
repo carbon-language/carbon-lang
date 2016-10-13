@@ -114,7 +114,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       addBypassSlowDiv(64, 16);
   }
 
-  if (Subtarget.isTargetKnownWindowsMSVC()) {
+  if (Subtarget.isTargetKnownWindowsMSVC() ||
+      Subtarget.isTargetWindowsItanium()) {
     // Setup Windows compiler runtime calls.
     setLibcallName(RTLIB::SDIV_I64, "_alldiv");
     setLibcallName(RTLIB::UDIV_I64, "_aulldiv");
