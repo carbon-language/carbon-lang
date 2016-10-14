@@ -249,8 +249,22 @@ std::vector<std::string> GetNamespaces(const clang::Decl *D) {
 clang::tooling::Replacements
 createInsertedReplacements(const std::vector<std::string> &Includes,
                            const std::vector<ClangMoveTool::MovedDecl> &Decls,
-                           llvm::StringRef FileName) {
+                           llvm::StringRef FileName,
+                           bool IsHeader = false) {
   clang::tooling::Replacements InsertedReplacements;
+  std::string GuardName(FileName);
+  if (IsHeader) {
+    std::replace(GuardName.begin(), GuardName.end(), '/', '_');
+    std::replace(GuardName.begin(), GuardName.end(), '.', '_');
+    std::replace(GuardName.begin(), GuardName.end(), '-', '_');
+
+    GuardName = StringRef(GuardName).upper();
+    std::string HeaderGuard = "#ifndef " + GuardName + "\n";
+    HeaderGuard += "#define " + GuardName + "\n";
+    clang::tooling::Replacement HeaderGuardInclude(FileName, 0, 0,
+                                                   HeaderGuard);
+    addOrMergeReplacement(HeaderGuardInclude, &InsertedReplacements);
+  }
 
   // Add #Includes.
   std::string AllIncludesString;
@@ -307,6 +321,12 @@ createInsertedReplacements(const std::vector<std::string> &Includes,
     clang::tooling::Replacement InsertedReplacement(
         FileName, 0, 0, "} // namespace " + NS + "\n");
     addOrMergeReplacement(InsertedReplacement, &InsertedReplacements);
+  }
+
+  if (IsHeader) {
+    clang::tooling::Replacement HeaderGuardEnd(FileName, 0, 0,
+                                               "#endif // " + GuardName + "\n");
+    addOrMergeReplacement(HeaderGuardEnd, &InsertedReplacements);
   }
   return InsertedReplacements;
 }
@@ -500,7 +520,7 @@ void ClangMoveTool::moveClassDefinitionToNewFiles() {
 
   if (!Spec.NewHeader.empty())
     FileToReplacements[Spec.NewHeader] = createInsertedReplacements(
-        HeaderIncludes, NewHeaderDecls, Spec.NewHeader);
+        HeaderIncludes, NewHeaderDecls, Spec.NewHeader, /*IsHeader=*/true);
   if (!Spec.NewCC.empty())
     FileToReplacements[Spec.NewCC] =
         createInsertedReplacements(CCIncludes, NewCCDecls, Spec.NewCC);
