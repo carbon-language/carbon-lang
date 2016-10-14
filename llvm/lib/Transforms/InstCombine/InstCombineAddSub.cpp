@@ -1642,6 +1642,17 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       if (Value *XNeg = dyn_castNegVal(X))
         return BinaryOperator::CreateShl(XNeg, Y);
 
+    // Subtracting -1/0 is the same as adding 1/0:
+    // sub [nsw] Op0, sext(bool Y) -> add [nsw] Op0, zext(bool Y)
+    // 'nuw' is dropped in favor of the canonical form.
+    if (match(Op1, m_SExt(m_Value(Y))) &&
+        Y->getType()->getScalarSizeInBits() == 1) {
+      Value *Zext = Builder->CreateZExt(Y, I.getType());
+      BinaryOperator *Add = BinaryOperator::CreateAdd(Op0, Zext);
+      Add->setHasNoSignedWrap(I.hasNoSignedWrap());
+      return Add;
+    }
+
     // X - A*-B -> X + A*B
     // X - -A*B -> X + A*B
     Value *A, *B;

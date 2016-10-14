@@ -639,3 +639,56 @@ define i32 @test48(i1 %A, i32 %B, i32 %C, i32 %D) {
   %sub = sub i32 %sel0, %sel1
   ret i32 %sub
 }
+
+; Zext+add is more canonical than sext+sub.
+
+define i8 @bool_sext_sub(i8 %x, i1 %y) {
+; CHECK-LABEL: @bool_sext_sub(
+; CHECK-NEXT:    [[TMP1:%.*]] = zext i1 %y to i8
+; CHECK-NEXT:    [[SUB:%.*]] = add i8 [[TMP1]], %x
+; CHECK-NEXT:    ret i8 [[SUB]]
+;
+  %sext = sext i1 %y to i8
+  %sub = sub i8 %x, %sext
+  ret i8 %sub
+}
+
+; Vectors get the same transform.
+
+define <2 x i8> @bool_sext_sub_vec(<2 x i8> %x, <2 x i1> %y) {
+; CHECK-LABEL: @bool_sext_sub_vec(
+; CHECK-NEXT:    [[TMP1:%.*]] = zext <2 x i1> %y to <2 x i8>
+; CHECK-NEXT:    [[SUB:%.*]] = add <2 x i8> [[TMP1]], %x
+; CHECK-NEXT:    ret <2 x i8> [[SUB]]
+;
+  %sext = sext <2 x i1> %y to <2 x i8>
+  %sub = sub <2 x i8> %x, %sext
+  ret <2 x i8> %sub
+}
+
+; NSW is preserved.
+
+define <2 x i8> @bool_sext_sub_vec_nsw(<2 x i8> %x, <2 x i1> %y) {
+; CHECK-LABEL: @bool_sext_sub_vec_nsw(
+; CHECK-NEXT:    [[TMP1:%.*]] = zext <2 x i1> %y to <2 x i8>
+; CHECK-NEXT:    [[SUB:%.*]] = add nsw <2 x i8> [[TMP1]], %x
+; CHECK-NEXT:    ret <2 x i8> [[SUB]]
+;
+  %sext = sext <2 x i1> %y to <2 x i8>
+  %sub = sub nsw <2 x i8> %x, %sext
+  ret <2 x i8> %sub
+}
+
+; We favor the canonical zext+add over keeping the NUW.
+
+define i8 @bool_sext_sub_nuw(i8 %x, i1 %y) {
+; CHECK-LABEL: @bool_sext_sub_nuw(
+; CHECK-NEXT:    [[TMP1:%.*]] = zext i1 %y to i8
+; CHECK-NEXT:    [[SUB:%.*]] = add i8 [[TMP1]], %x
+; CHECK-NEXT:    ret i8 [[SUB]]
+;
+  %sext = sext i1 %y to i8
+  %sub = sub nuw i8 %x, %sext
+  ret i8 %sub
+}
+
