@@ -62,6 +62,7 @@ syn keyword llvmKeyword
       \ ccc
       \ cleanup
       \ coldcc
+      \ comdat
       \ common
       \ constant
       \ datalayout
