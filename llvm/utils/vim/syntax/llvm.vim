@@ -109,6 +109,7 @@ syn keyword llvmKeyword
       \ noimplicitfloat
       \ noinline
       \ nonlazybind
+      \ norecurse
       \ noredzone
       \ noreturn
       \ nounwind
