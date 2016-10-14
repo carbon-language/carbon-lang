@@ -8,10 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 // UNSUPPORTED: c++98, c++03, c++11, c++14
+// UNSUPPORTED: sanitizer-new-delete
+
+// XFAIL: no-aligned-allocation
 
 // test operator new replacement
-
-// UNSUPPORTED: sanitizer-new-delete
 
 #include <new>
 #include <cstddef>

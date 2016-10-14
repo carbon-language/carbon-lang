@@ -8,17 +8,17 @@
 //===----------------------------------------------------------------------===//
 
 // UNSUPPORTED: c++98, c++03, c++11, c++14
+// UNSUPPORTED: sanitizer-new-delete
+
+// XFAIL: no-aligned-allocation
 
 // test operator new nothrow by replacing only operator new
-
-// UNSUPPORTED: sanitizer-new-delete
 
 #include <new>
 #include <cstddef>
 #include <cstdlib>
 #include <cassert>
 #include <limits>
-
 
 constexpr auto OverAligned = alignof(std::max_align_t) * 2;
 

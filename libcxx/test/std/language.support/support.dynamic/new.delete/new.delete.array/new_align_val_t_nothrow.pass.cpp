@@ -9,10 +9,12 @@
 
 // UNSUPPORTED: c++98, c++03, c++11, c++14
 
-// test operator new (nothrow)
-
 // asan and msan will not call the new handler.
 // UNSUPPORTED: sanitizer-new-delete
+
+// XFAIL: no-aligned-allocation
+
+// test operator new (nothrow)
 
 #include <new>
 #include <cstddef>
