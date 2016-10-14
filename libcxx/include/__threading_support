@@ -25,17 +25,16 @@
 #if defined(_LIBCPP_HAS_THREAD_API_EXTERNAL)
 #if !defined(__clang__) && (_GNUC_VER < 500)
 #include <__external_threading>
-#define _LIBCPP_EXTERNAL_THREADING
+#define _LIBCPP_HAS_EXTERNAL_THREADING_HEADER
 #elif !defined(__has_include) || __has_include(<__external_threading>)
 #include <__external_threading>
-#define _LIBCPP_EXTERNAL_THREADING
+#define _LIBCPP_HAS_EXTERNAL_THREADING_HEADER
 #endif
 #endif
 
-#if !defined(_LIBCPP_EXTERNAL_THREADING)
+#if !defined(_LIBCPP_HAS_EXTERNAL_THREADING_HEADER)
 #include <pthread.h>
 #include <sched.h>
-#endif
 
 #if defined(_LIBCPP_HAS_THREAD_API_EXTERNAL)
 #define _LIBCPP_THREAD_ABI_VISIBILITY _LIBCPP_FUNC_VIS
@@ -241,6 +240,8 @@ void __libcpp_tls_set(__libcpp_tls_key __key, void* __p)
 #endif // _LIBCPP_HAS_THREAD_API_PTHREAD || _LIBCPP_BUILDING_EXTERNAL_THREADS
 
 _LIBCPP_END_NAMESPACE_STD
+
+#endif // !_LIBCPP_HAS_EXTERNAL_THREADING_HEADER
 
 #endif // _LIBCPP_HAS_NO_THREADS
 
