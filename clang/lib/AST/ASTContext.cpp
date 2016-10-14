@@ -907,11 +907,13 @@ void ASTContext::mergeDefinitionIntoModulesOf(NamedDecl *Def,
   assert(Other->isFromASTFile() && "merge of non-imported decl not supported");
   assert(Def != Other && "merging definition into itself");
 
-  if (!getLangOpts().ModulesLocalVisibility && !Other->isHidden())
+  if (!Other->isHidden()) {
     Def->setHidden(false);
-  else
-    assert(Other->getImportedOwningModule() &&
-           "hidden, imported declaration has no owning module");
+    return;
+  }
+
+  assert(Other->getImportedOwningModule() &&
+         "hidden, imported declaration has no owning module");
 
   // Mark Def as the canonical definition of merged definition Other.
   {
