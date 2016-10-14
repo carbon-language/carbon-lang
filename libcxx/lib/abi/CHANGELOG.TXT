@@ -16,7 +16,7 @@ New entries should be added directly below the "Version" header.
 Version 4.0
 -----------
 
-* rTBD - Implement C++17 aligned allocation in <new>
+* r284206 - Implement C++17 aligned allocation in <new>
 
   x86_64-linux-gnu
   ----------------
