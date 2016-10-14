@@ -1109,6 +1109,13 @@ std::vector<PhdrEntry<ELFT>> Writer<ELFT>::createPhdrs() {
       Hdr.H.p_memsz = Config->ZStackSize;
   }
 
+  // PT_OPENBSD_WXNEEDED is a OpenBSD-specific header to mark the executable
+  // is expected to perform W^X violations, such as calling mprotect(2) or
+  // mmap(2) with PROT_WRITE | PROT_EXEC, which is prohibited by default on
+  // OpenBSD.
+  if (Config->ZWxneeded)
+    AddHdr(PT_OPENBSD_WXNEEDED, PF_X);
+
   if (Note.First)
     Ret.push_back(std::move(Note));
   return Ret;
