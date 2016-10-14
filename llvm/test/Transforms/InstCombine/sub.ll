@@ -152,17 +152,6 @@ define i32 @test13(i32 %A) {
   ret i32 %C
 }
 
-define i32 @test14(i32 %A) {
-; CHECK-LABEL: @test14(
-; CHECK-NEXT:    [[D:%.*]] = ashr i32 %A, 31
-; CHECK-NEXT:    ret i32 [[D]]
-;
-  %B = lshr i32 %A, 31
-  %C = bitcast i32 %B to i32
-  %D = sub i32 0, %C
-  ret i32 %D
-}
-
 define i32 @test15(i32 %A, i32 %B) {
 ; CHECK-LABEL: @test15(
 ; CHECK-NEXT:    [[C:%.*]] = sub i32 0, %A
