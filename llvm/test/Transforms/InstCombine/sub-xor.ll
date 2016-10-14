@@ -12,6 +12,17 @@ define i32 @test1(i32 %x) {
   ret i32 %sub
 }
 
+define <2 x i32> @test1vec(<2 x i32> %x) {
+; CHECK-LABEL: @test1vec(
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> %x, <i32 31, i32 31>
+; CHECK-NEXT:    [[SUB:%.*]] = sub nsw <2 x i32> <i32 63, i32 63>, [[AND]]
+; CHECK-NEXT:    ret <2 x i32> [[SUB]]
+;
+  %and = and <2 x i32> %x, <i32 31, i32 31>
+  %sub = sub <2 x i32> <i32 63, i32 63>, %and
+  ret <2 x i32> %sub
+}
+
 declare i32 @llvm.ctlz.i32(i32, i1) nounwind readnone
 
 define i32 @test2(i32 %x) nounwind {
