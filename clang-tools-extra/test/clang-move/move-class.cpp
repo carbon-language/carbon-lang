@@ -25,6 +25,7 @@
 // CHECK-NEW-TEST-H: class Foo {
 // CHECK-NEW-TEST-H: public:
 // CHECK-NEW-TEST-H:   int f();
+// CHECK-NEW-TEST-H:   int f2(int a, int b);
 // CHECK-NEW-TEST-H: };
 // CHECK-NEW-TEST-H: } // namespace a
 //
@@ -32,6 +33,7 @@
 // CHECK-NEW-TEST-CPP: #include "test2.h"
 // CHECK-NEW-TEST-CPP: namespace a {
 // CHECK-NEW-TEST-CPP: int Foo::f() { return 0; }
+// CHECK-NEW-TEST-CPP: int Foo::f2(int a, int b) { return a + b; }
 // CHECK-NEW-TEST-CPP: } // namespace a
 //
 // CHECK-OLD-TEST-CPP: #include "test.h"

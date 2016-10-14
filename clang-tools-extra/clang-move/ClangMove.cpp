@@ -24,6 +24,11 @@ namespace clang {
 namespace move {
 namespace {
 
+// FIXME: Move to ASTMatchers.
+AST_MATCHER(VarDecl, isStaticDataMember) {
+  return Node.isStaticDataMember();
+}
+
 AST_MATCHER_P(Decl, hasOutermostEnclosingClass,
               ast_matchers::internal::Matcher<Decl>, InnerMatcher) {
   const auto* Context = Node.getDeclContext();
@@ -365,7 +370,8 @@ void ClangMoveTool::registerMatchers(ast_matchers::MatchFinder *Finder) {
       this);
 
   // Match static member variable definition of the moved class.
-  Finder->addMatcher(varDecl(InMovedClass, InOldCC, isDefinition())
+  Finder->addMatcher(varDecl(InMovedClass, InOldCC, isDefinition(),
+                             isStaticDataMember())
                          .bind("class_static_var_decl"),
                      this);
 
