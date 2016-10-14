@@ -102,7 +102,6 @@ bool HexagonCP::interpretAsCopy(const MachineInstr *MI, EqualityMap &EM) {
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
     case Hexagon::A2_combinew: {
-      break; // FIXME
       const MachineOperand &DstOp = MI->getOperand(0);
       const MachineOperand &HiOp = MI->getOperand(1);
       const MachineOperand &LoOp = MI->getOperand(2);

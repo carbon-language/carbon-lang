@@ -1046,8 +1046,8 @@ void DataFlowGraph::build(unsigned Options) {
 
 RegisterRef DataFlowGraph::makeRegRef(unsigned Reg, unsigned Sub) const {
   assert(TargetRegisterInfo::isPhysicalRegister(Reg));
-  assert(Sub == 0 && "Not expecting subregisters");
-  // TODO handle subregisters just to see if LMI would work with it.
+  if (Sub != 0)
+    Reg = TRI.getSubReg(Reg, Sub);
   return RegisterRef(Reg);
 }
 
