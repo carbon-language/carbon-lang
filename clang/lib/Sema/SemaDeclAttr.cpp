@@ -5313,9 +5313,15 @@ static void handleDeprecatedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
         !(Attr.hasScope() && Attr.getScopeName()->isStr("gnu")))
       S.Diag(Attr.getLoc(), diag::ext_cxx14_attr) << Attr.getName();
 
-  D->addAttr(::new (S.Context) DeprecatedAttr(Attr.getRange(), S.Context, Str,
-                                   Replacement,
-                                   Attr.getAttributeSpellingListIndex()));
+  D->addAttr(::new (S.Context)
+                 DeprecatedAttr(Attr.getRange(), S.Context, Str, Replacement,
+                                Attr.getAttributeSpellingListIndex()));
+}
+
+static bool isGlobalVar(const Decl *D) {
+  if (const auto *S = dyn_cast<VarDecl>(D))
+    return S->hasGlobalStorage();
+  return false;
 }
 
 static void handleNoSanitizeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -5333,7 +5339,9 @@ static void handleNoSanitizeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
     if (parseSanitizerValue(SanitizerName, /*AllowGroups=*/true) == 0)
       S.Diag(LiteralLoc, diag::warn_unknown_sanitizer_ignored) << SanitizerName;
-
+    else if (isGlobalVar(D) && SanitizerName != "address")
+      S.Diag(D->getLocation(), diag::err_attribute_wrong_decl_type)
+          << Attr.getName() << ExpectedFunctionOrMethod;
     Sanitizers.push_back(SanitizerName);
   }
 
@@ -5346,12 +5354,14 @@ static void handleNoSanitizeSpecificAttr(Sema &S, Decl *D,
                                          const AttributeList &Attr) {
   StringRef AttrName = Attr.getName()->getName();
   normalizeName(AttrName);
-  StringRef SanitizerName =
-      llvm::StringSwitch<StringRef>(AttrName)
-          .Case("no_address_safety_analysis", "address")
-          .Case("no_sanitize_address", "address")
-          .Case("no_sanitize_thread", "thread")
-          .Case("no_sanitize_memory", "memory");
+  StringRef SanitizerName = llvm::StringSwitch<StringRef>(AttrName)
+                                .Case("no_address_safety_analysis", "address")
+                                .Case("no_sanitize_address", "address")
+                                .Case("no_sanitize_thread", "thread")
+                                .Case("no_sanitize_memory", "memory");
+  if (isGlobalVar(D) && SanitizerName != "address")
+    S.Diag(D->getLocation(), diag::err_attribute_wrong_decl_type)
+        << Attr.getName() << ExpectedFunction;
   D->addAttr(::new (S.Context)
                  NoSanitizeAttr(Attr.getRange(), S.Context, &SanitizerName, 1,
                                 Attr.getAttributeSpellingListIndex()));
