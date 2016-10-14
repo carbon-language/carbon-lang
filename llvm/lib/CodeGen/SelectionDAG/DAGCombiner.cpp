@@ -1954,6 +1954,19 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
                        DAG.getConstant(-N1C->getAPIntValue(), DL, VT));
   }
 
+  // Right-shifting everything out but the sign bit followed by negation is the
+  // same as flipping arithmetic/logical shift type without the negation:
+  // -(X >>u 31) -> (X >>s 31)
+  // -(X >>s 31) -> (X >>u 31)
+  if (isNullConstantOrNullSplatConstant(N0) &&
+      (N1->getOpcode() == ISD::SRA || N1->getOpcode() == ISD::SRL)) {
+    ConstantSDNode *ShiftAmt = isConstOrConstSplat(N1.getOperand(1));
+    if (ShiftAmt && ShiftAmt->getZExtValue() == VT.getScalarSizeInBits() - 1) {
+      auto NewOpcode = N1->getOpcode() == ISD::SRA ? ISD::SRL :ISD::SRA;
+      return DAG.getNode(NewOpcode, DL, VT, N1.getOperand(0), N1.getOperand(1));
+    }
+  }
+
   // Canonicalize (sub -1, x) -> ~x, i.e. (xor x, -1)
   if (isAllOnesConstantOrAllOnesSplatConstant(N0))
     return DAG.getNode(ISD::XOR, DL, VT, N1, N0);

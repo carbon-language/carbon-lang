@@ -4,8 +4,7 @@
 define i32 @neg_lshr_signbit(i32 %x) {
 ; X64-LABEL: neg_lshr_signbit:
 ; X64:       # BB#0:
-; X64-NEXT:    shrl $31, %edi
-; X64-NEXT:    negl %edi
+; X64-NEXT:    sarl $31, %edi
 ; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
 ;
@@ -17,8 +16,7 @@ define i32 @neg_lshr_signbit(i32 %x) {
 define i64 @neg_ashr_signbit(i64 %x) {
 ; X64-LABEL: neg_ashr_signbit:
 ; X64:       # BB#0:
-; X64-NEXT:    sarq $63, %rdi
-; X64-NEXT:    negq %rdi
+; X64-NEXT:    shrq $63, %rdi
 ; X64-NEXT:    movq %rdi, %rax
 ; X64-NEXT:    retq
 ;
@@ -30,10 +28,7 @@ define i64 @neg_ashr_signbit(i64 %x) {
 define <4 x i32> @neg_ashr_signbit_vec(<4 x i32> %x) {
 ; X64-LABEL: neg_ashr_signbit_vec:
 ; X64:       # BB#0:
-; X64-NEXT:    psrad $31, %xmm0
-; X64-NEXT:    pxor %xmm1, %xmm1
-; X64-NEXT:    psubd %xmm0, %xmm1
-; X64-NEXT:    movdqa %xmm1, %xmm0
+; X64-NEXT:    psrld $31, %xmm0
 ; X64-NEXT:    retq
 ;
   %sh = ashr <4 x i32> %x, <i32 31, i32 31, i32 31, i32 31>
@@ -44,10 +39,7 @@ define <4 x i32> @neg_ashr_signbit_vec(<4 x i32> %x) {
 define <8 x i16> @neg_lshr_signbit_vec(<8 x i16> %x) {
 ; X64-LABEL: neg_lshr_signbit_vec:
 ; X64:       # BB#0:
-; X64-NEXT:    psrlw $15, %xmm0
-; X64-NEXT:    pxor %xmm1, %xmm1
-; X64-NEXT:    psubw %xmm0, %xmm1
-; X64-NEXT:    movdqa %xmm1, %xmm0
+; X64-NEXT:    psraw $15, %xmm0
 ; X64-NEXT:    retq
 ;
   %sh = lshr <8 x i16> %x, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
