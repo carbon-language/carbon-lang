@@ -2171,6 +2171,8 @@ class TargetLowering : public TargetLoweringBase {
   void operator=(const TargetLowering&) = delete;
 
 public:
+  struct DAGCombinerInfo;
+
   /// NOTE: The TargetMachine owns TLOF.
   explicit TargetLowering(const TargetMachine &TM);
 
@@ -2283,6 +2285,16 @@ public:
     /// generalized for targets with other types of implicit widening casts.
     bool ShrinkDemandedOp(SDValue Op, unsigned BitWidth, const APInt &Demanded,
                           const SDLoc &dl);
+
+    /// Helper for SimplifyDemandedBits that can simplify an operation with
+    /// multiple uses.  This function uses TLI.SimplifyDemandedBits to
+    /// simplify Operand \p OpIdx of \p User and then updated \p User with
+    /// the simplified version.  No other uses of \p OpIdx are updated.
+    /// If \p User is the only user of \p OpIdx, this function behaves exactly
+    /// like TLI.SimplifyDemandedBits except that it also updates the DAG by
+    /// calling DCI.CommitTargetLoweringOpt.
+    bool SimplifyDemandedBits(SDNode *User, unsigned OpIdx,
+                              const APInt &Demanded, DAGCombinerInfo &DCI);
   };
 
   /// Look at Op.  At this point, we know that only the DemandedMask bits of the
@@ -2292,9 +2304,17 @@ public:
   /// expression and return a mask of KnownOne and KnownZero bits for the
   /// expression (used to simplify the caller).  The KnownZero/One bits may only
   /// be accurate for those bits in the DemandedMask.
+  /// \p AssumeSingleUse When this paramater is true, this function will
+  ///    attempt to simplify \p Op even if there are multiple uses.
+  ///    Callers are responsible for correctly updating the DAG based on the
+  ///    results of this function, because simply replacing replacing TLO.Old
+  ///    with TLO.New will be incorrect when this paramater is true and TLO.Old
+  ///    has multiple uses.
   bool SimplifyDemandedBits(SDValue Op, const APInt &DemandedMask,
                             APInt &KnownZero, APInt &KnownOne,
-                            TargetLoweringOpt &TLO, unsigned Depth = 0) const;
+                            TargetLoweringOpt &TLO,
+                            unsigned Depth = 0,
+                            bool AssumeSingleUse = false) const;
 
   /// Determine which of the bits specified in Mask are known to be either zero
   /// or one and return them in the KnownZero/KnownOne bitsets.
