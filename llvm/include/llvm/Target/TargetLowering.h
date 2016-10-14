@@ -1114,8 +1114,12 @@ public:
   /// Should be used only when getIRStackGuard returns nullptr.
   virtual Value *getSSPStackGuardCheck(const Module &M) const;
 
-  /// If the target has a standard location for the unsafe stack pointer,
-  /// returns the address of that location. Otherwise, returns nullptr.
+protected:
+  Value *getDefaultSafeStackPointerLocation(IRBuilder<> &IRB,
+                                            bool UseTLS) const;
+
+public:
+  /// Returns the target-specific address of the unsafe stack pointer.
   virtual Value *getSafeStackPointerLocation(IRBuilder<> &IRB) const;
 
   /// Returns true if a cast between SrcAS and DestAS is a noop.
