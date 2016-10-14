@@ -13,9 +13,6 @@
 
 // UNSUPPORTED: sanitizer-new-delete
 
-// TODO Investigate why UBSAN prevents nothrow new from calling our replacement.
-// XFAIL: ubsan
-
 #include <new>
 #include <cstddef>
 #include <cstdlib>

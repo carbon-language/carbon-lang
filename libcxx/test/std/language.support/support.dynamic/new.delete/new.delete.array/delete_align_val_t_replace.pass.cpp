@@ -17,6 +17,9 @@
 // None of the current GCC compilers support this.
 // XFAIL: gcc-4, gcc-5, gcc-6
 
+// UBSAN replaces certain new/delete functions which makes this test fail
+// XFAIL: ubsan
+
 #include <new>
 #include <cstddef>
 #include <cstdlib>
@@ -58,24 +61,24 @@ struct alignas(std::max_align_t) B {};
 int main()
 {
     {
-        B *x = new B;
+        B *x = new B[2];
         assert(0 == unsized_delete_called);
         assert(0 == unsized_delete_nothrow_called);
         assert(0 == aligned_delete_called);
 
-        delete x;
+        delete [] x;
         assert(1 == unsized_delete_called);
         assert(0 == unsized_delete_nothrow_called);
         assert(0 == aligned_delete_called);
     }
     reset();
     {
-        A *x = new A;
+        A *x = new A[2];
         assert(0 == unsized_delete_called);
         assert(0 == unsized_delete_nothrow_called);
         assert(0 == aligned_delete_called);
 
-        delete x;
+        delete [] x;
         assert(0 == unsized_delete_called);
         assert(0 == unsized_delete_nothrow_called);
         assert(1 == aligned_delete_called);

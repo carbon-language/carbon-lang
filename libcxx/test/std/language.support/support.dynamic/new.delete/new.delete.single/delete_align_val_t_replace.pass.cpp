@@ -17,6 +17,9 @@
 // None of the current GCC compilers support this.
 // XFAIL: gcc-4, gcc-5, gcc-6
 
+// UBSAN replaces certain new/delete functions which makes this test fail
+// XFAIL: ubsan
+
 #include <new>
 #include <cstddef>
 #include <cstdlib>
