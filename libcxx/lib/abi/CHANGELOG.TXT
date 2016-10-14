@@ -16,6 +16,22 @@ New entries should be added directly below the "Version" header.
 Version 4.0
 -----------
 
+* rTBD - Implement C++17 aligned allocation in <new>
+
+  x86_64-linux-gnu
+  ----------------
+  Symbol added: posix_memalign@GLIBC_2.2.5
+  Symbol added: _ZdaPvSt11align_val_t
+  Symbol added: _ZdlPvSt11align_val_t
+  Symbol added: _ZnamSt11align_val_t
+  Symbol added: _ZdaPvmSt11align_val_t
+  Symbol added: _ZdlPvmSt11align_val_t
+  Symbol added: _ZdlPvSt11align_val_tRKSt9nothrow_t
+  Symbol added: _ZnwmSt11align_val_tRKSt9nothrow_t
+  Symbol added: _ZnamSt11align_val_tRKSt9nothrow_t
+  Symbol added: _ZdaPvSt11align_val_tRKSt9nothrow_t
+  Symbol added: _ZnwmSt11align_val_t
+
 * r283980 - Implement C++17 <optional>
 
   x86_64-linux-gnu

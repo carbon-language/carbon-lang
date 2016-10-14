@@ -313,6 +313,9 @@ class Configuration(object):
         if self.cxx.hasCompileFlag('-fsized-deallocation'):
             self.config.available_features.add('fsized-deallocation')
 
+        if self.cxx.hasCompileFlag('-faligned-allocation'):
+            self.config.available_features.add('-faligned-allocation')
+
         if self.get_lit_bool('has_libatomic', False):
             self.config.available_features.add('libatomic')
 
