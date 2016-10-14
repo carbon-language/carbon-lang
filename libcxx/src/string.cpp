@@ -25,9 +25,6 @@ template class _LIBCPP_CLASS_TEMPLATE_INSTANTIATION_VIS __basic_string_common<tr
 template class _LIBCPP_CLASS_TEMPLATE_INSTANTIATION_VIS basic_string<char>;
 template class _LIBCPP_CLASS_TEMPLATE_INSTANTIATION_VIS basic_string<wchar_t>;
 
-template void string::__init(const char*, const char*);
-template void wstring::__init(const wchar_t*, const wchar_t*);
-
 template
     string
     operator+<char, char_traits<char>, allocator<char> >(char const*, string const&);
