@@ -154,8 +154,7 @@ define i32 @test13(i32 %A) {
 
 define <2 x i32> @test12vec(<2 x i32> %A) {
 ; CHECK-LABEL: @test12vec(
-; CHECK-NEXT:    [[B:%.*]] = ashr <2 x i32> %A, <i32 31, i32 31>
-; CHECK-NEXT:    [[C:%.*]] = sub nsw <2 x i32> zeroinitializer, [[B]]
+; CHECK-NEXT:    [[C:%.*]] = lshr <2 x i32> %A, <i32 31, i32 31>
 ; CHECK-NEXT:    ret <2 x i32> [[C]]
 ;
   %B = ashr <2 x i32> %A, <i32 31, i32 31>
@@ -165,8 +164,7 @@ define <2 x i32> @test12vec(<2 x i32> %A) {
 
 define <2 x i32> @test13vec(<2 x i32> %A) {
 ; CHECK-LABEL: @test13vec(
-; CHECK-NEXT:    [[B:%.*]] = lshr <2 x i32> %A, <i32 31, i32 31>
-; CHECK-NEXT:    [[C:%.*]] = sub nsw <2 x i32> zeroinitializer, [[B]]
+; CHECK-NEXT:    [[C:%.*]] = ashr <2 x i32> %A, <i32 31, i32 31>
 ; CHECK-NEXT:    ret <2 x i32> [[C]]
 ;
   %B = lshr <2 x i32> %A, <i32 31, i32 31>
