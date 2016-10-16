@@ -579,7 +579,8 @@ _ValueType any_cast(any const & __v)
 {
     using _RawValueType = __uncvref_t<_ValueType>;
     static_assert(is_constructible<_ValueType, _RawValueType const &>::value,
-                  "ValueType is required to be a reference or a CopyConstructible type");
+                  "ValueType is required to be a const lvalue reference "
+                  "or a CopyConstructible type");
     auto __tmp = _VSTD::any_cast<add_const_t<_RawValueType>>(&__v);
     if (__tmp == nullptr)
         __throw_bad_any_cast();
@@ -592,7 +593,8 @@ _ValueType any_cast(any & __v)
 {
     using _RawValueType = __uncvref_t<_ValueType>;
     static_assert(is_constructible<_ValueType, _RawValueType &>::value,
-                  "ValueType is required to be a reference or a CopyConstructible type");
+                  "ValueType is required to be an lvalue reference "
+                  "or a CopyConstructible type");
     auto __tmp = _VSTD::any_cast<_RawValueType>(&__v);
     if (__tmp == nullptr)
         __throw_bad_any_cast();
@@ -605,7 +607,8 @@ _ValueType any_cast(any && __v)
 {
     using _RawValueType = __uncvref_t<_ValueType>;
     static_assert(is_constructible<_ValueType, _RawValueType>::value,
-                  "ValueType is required to be an rvalue reference or a CopyConstructible type");
+                  "ValueType is required to be an rvalue reference "
+                  "or a CopyConstructible type");
     auto __tmp = _VSTD::any_cast<_RawValueType>(&__v);
     if (__tmp == nullptr)
         __throw_bad_any_cast();
