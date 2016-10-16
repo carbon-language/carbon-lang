@@ -488,7 +488,7 @@ public:
     {
         _LIBCPP_ASSERT(this->__engaged_, "optional operator-> called for disengaged value");
 #ifndef _LIBCPP_HAS_NO_BUILTIN_ADDRESSOF
-        return _VSTD::addressof(this->__val_);
+        return __builtin_addressof(this->__val_);
 #else
         return __operator_arrow(__has_operator_addressof<value_type>{});
 #endif
