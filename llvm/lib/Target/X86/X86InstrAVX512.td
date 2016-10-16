@@ -1183,7 +1183,7 @@ defm VPBROADCASTMB2Q : avx512_mask_broadcast<0x2A, "vpbroadcastmb2q",
 //===----------------------------------------------------------------------===//
 // -- VPERMI2 - 3 source operands form --
 multiclass avx512_perm_i<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
-let Constraints = "$src1 = $dst" in {
+let Constraints = "$src1 = $dst", ExeDomain = _.ExeDomain in {
   // The index operand in the pattern should really be an integer type. However,
   // if we do that and it happens to come from a bitcast, then it becomes
   // difficult to find the bitcast needed to convert the index to the
@@ -1205,7 +1205,7 @@ let Constraints = "$src1 = $dst" in {
 }
 multiclass avx512_perm_i_mb<bits<8> opc, string OpcodeStr,
                             X86VectorVTInfo _> {
-  let Constraints = "$src1 = $dst" in
+  let Constraints = "$src1 = $dst", ExeDomain = _.ExeDomain in
   defm rmb: AVX512_maskable_3src<opc, MRMSrcMem, _, (outs _.RC:$dst),
               (ins _.RC:$src2, _.ScalarMemOp:$src3),
               OpcodeStr,   !strconcat("${src3}", _.BroadcastStr,", $src2"),
@@ -1256,7 +1256,7 @@ defm VPERMI2PD : avx512_perm_i_sizes<0x77, "vpermi2pd",
 // VPERMT2
 multiclass avx512_perm_t<bits<8> opc, string OpcodeStr,
                          X86VectorVTInfo _, X86VectorVTInfo IdxVT> {
-let Constraints = "$src1 = $dst" in {
+let Constraints = "$src1 = $dst", ExeDomain = _.ExeDomain in {
   defm rr: AVX512_maskable_3src<opc, MRMSrcReg, _, (outs _.RC:$dst),
           (ins IdxVT.RC:$src2, _.RC:$src3),
           OpcodeStr, "$src3, $src2", "$src2, $src3",
@@ -1273,7 +1273,7 @@ let Constraints = "$src1 = $dst" in {
 }
 multiclass avx512_perm_t_mb<bits<8> opc, string OpcodeStr,
                             X86VectorVTInfo _, X86VectorVTInfo IdxVT> {
-  let Constraints = "$src1 = $dst" in
+  let Constraints = "$src1 = $dst", ExeDomain = _.ExeDomain in
   defm rmb: AVX512_maskable_3src<opc, MRMSrcMem, _, (outs _.RC:$dst),
               (ins IdxVT.RC:$src2, _.ScalarMemOp:$src3),
               OpcodeStr,   !strconcat("${src3}", _.BroadcastStr,", $src2"),
