@@ -126,7 +126,7 @@
 	 <tr><td><a href="http://wg21.link/LWG2759">2759</a></td><td>gcd / lcm and bool for the WP</td><td>Issaquah</td><td>Patch ready</td></tr>
 	 <tr><td><a href="http://wg21.link/LWG2760">2760</a></td><td>non-const basic_string::data should not invalidate iterators</td><td>Issaquah</td><td>Nothing to do</td></tr>
 	 <tr><td><a href="http://wg21.link/LWG2765">2765</a></td><td>Did LWG 1123 go too far?</td><td>Issaquah</td><td></td></tr>
-	 <tr><td><a href="http://wg21.link/LWG2767">2767</a></td><td>not_fn call_wrapper can form invalid types</td><td>Issaquah</td><td></td></tr>
+	 <tr><td><a href="http://wg21.link/LWG2767">2767</a></td><td>not_fn call_wrapper can form invalid types</td><td>Issaquah</td><td>We already do this</td></tr>
 	 <tr><td><a href="http://wg21.link/LWG2768">2768</a></td><td>any_cast and move semantics</td><td>Issaquah</td><td>Resolved by LWG 2769</td></tr>
      <tr><td><a href="http://wg21.link/LWG2769">2769</a></td><td>Redundant const in the return type of any_cast(const any&)</td><td>Issaquah</td><td>Implemented in trunk</td></tr>
 	 <tr><td><a href="http://wg21.link/LWG2771">2771</a></td><td>Broken Effects of some basic_string::compare functions in terms of basic_string_view</td><td>Issaquah</td><td>We already do this</td></tr>
@@ -204,7 +204,7 @@
 <li>2759 - Patch and tests ready</li>
 <li>2760 - This is just wording cleanup; no code or test changes needed.</li>
 <li>2765 - is this just wording cleanup????? I don't think this actually requires code changes. </li>
-<li>2767 - </li>
+<li>2767 - The test case on the issue is incorrect. See not_fn.pass.cpp for the correct test case. </li>
 <li>2768 - <i>std::any</i>: There is no PR for this issue. It is resolved by LWG 2769. </li>
 <li>2769 - <i>std::any</i>: The PR looks good except that
 	<code>remove_reference_t&lt;remove_cv_t&lt;T&gt;&gt;</code> should read
