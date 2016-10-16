@@ -111,7 +111,7 @@
 	 <tr><td><a href="http://wg21.link/LWG2739">2739</a></td><td>Issue with time_point non-member subtraction with an unsigned duration</td><td>Issaquah</td><td>Patch Ready</td></tr>
 	 <tr><td><a href="http://wg21.link/LWG2740">2740</a></td><td>constexpr optional<T>::operator-></td><td>Issaquah</td><td></td></tr>
 	 <tr><td><a href="http://wg21.link/LWG2742">2742</a></td><td>Inconsistent string interface taking string_view</td><td>Issaquah</td><td>Patch Ready</td></tr>
-	 <tr><td><a href="http://wg21.link/LWG2744">2744</a></td><td>any's in_place constructors</td><td>Issaquah</td><td></td></tr>
+	 <tr><td><a href="http://wg21.link/LWG2744">2744</a></td><td>any's in_place constructors</td><td>Issaquah</td><td>Implemented in trunk</td></tr>
 	 <tr><td><a href="http://wg21.link/LWG2745">2745</a></td><td>[fund.ts.v2] Implementability of LWG 2451</td><td>Issaquah</td><td></td></tr>
 	 <tr><td><a href="http://wg21.link/LWG2747">2747</a></td><td>Possibly redundant std::move in [alg.foreach]</td><td>Issaquah</td><td>Patch ready</td></tr>
 	 <tr><td><a href="http://wg21.link/LWG2748">2748</a></td><td>swappable traits for optionals</td><td>Issaquah</td><td></td></tr>
@@ -189,7 +189,7 @@
 <li>2739 - Patch and tests ready</li>
 <li>2740 - <i>std::optional</i></li>
 <li>2742 - Patch and tests ready</li>
-<li>2744 - <i>std::any</i></li>
+<li>2744 - <i>std::any</i>: We already do this. We also check for a decayed in_place_type_t. </li>
 <li>2745 - <i>std::optional</i> for LFTS -- should be considered for C++17</li>
 <li>2747 - Patch ready, but I can't think of any way to test it.</li>
 <li>2748 - <i>std::optional</i></li>

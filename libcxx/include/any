@@ -200,7 +200,7 @@ public:
     , class _Tp = decay_t<_ValueType>
     , class = enable_if_t<
         !is_same<_Tp, any>::value &&
-        !__is_inplace_type<_ValueType>::value &&
+        !__is_inplace_type_tag<_ValueType>::value &&
         is_copy_constructible<_Tp>::value>
     >
   _LIBCPP_INLINE_VISIBILITY
@@ -241,15 +241,12 @@ public:
     return *this;
   }
 
-  // TODO: Should this be constrained to disallow in_place types like the
-  // ValueType constructor?
   template <
       class _ValueType
     , class _Tp = decay_t<_ValueType>
     , class = enable_if_t<
           !is_same<_Tp, any>::value
-          && is_copy_constructible<_Tp>::value
-          && !__is_inplace_type<_ValueType>::value>
+          && is_copy_constructible<_Tp>::value>
     >
   _LIBCPP_INLINE_VISIBILITY
   any & operator=(_ValueType && __rhs);
