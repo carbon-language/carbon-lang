@@ -71,8 +71,6 @@ define i8 @all_sign_bit_ashr(i8 %x) {
   ret i8 %sar
 }
 
-; FIXME
-
 define <4 x i32> @all_sign_bit_ashr_vec(<4 x i32> %x) {
 ; CHECK-LABEL: all_sign_bit_ashr_vec:
 ; CHECK:       # BB#0:
