@@ -586,7 +586,7 @@ SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
                                          const SDLoc &SL, SDValue Chain,
                                          unsigned Offset, bool Signed) const {
   const DataLayout &DL = DAG.getDataLayout();
-  Type *Ty = VT.getTypeForEVT(*DAG.getContext());
+  Type *Ty = MemVT.getTypeForEVT(*DAG.getContext());
   PointerType *PtrTy = PointerType::get(Ty, AMDGPUAS::CONSTANT_ADDRESS);
   MachinePointerInfo PtrInfo(UndefValue::get(PtrTy));
 
