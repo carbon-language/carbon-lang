@@ -56,7 +56,11 @@ private:
 
 // Register these types for testing.
 typedef ::testing::Types<DenseSet<unsigned, TestDenseSetInfo>,
-                         const DenseSet<unsigned, TestDenseSetInfo>>
+                         const DenseSet<unsigned, TestDenseSetInfo>,
+                         SmallDenseSet<unsigned, 1, TestDenseSetInfo>,
+                         SmallDenseSet<unsigned, 4, TestDenseSetInfo>,
+                         const SmallDenseSet<unsigned, 4, TestDenseSetInfo>,
+                         SmallDenseSet<unsigned, 64, TestDenseSetInfo>>
     DenseSetTestTypes;
 TYPED_TEST_CASE(DenseSetTest, DenseSetTestTypes);
 
