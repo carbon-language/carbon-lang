@@ -693,7 +693,7 @@ static uint8_t mapVisibility(GlobalValue::VisibilityTypes GvVisibility) {
 }
 
 template <class ELFT>
-static Symbol *createBitcodeSymbol(const DenseSet<const Comdat *> &KeptComdats,
+static Symbol *createBitcodeSymbol(const DenseSet<StringRef> &KeptComdats,
                                    const lto::InputFile::Symbol &ObjSym,
                                    StringSaver &Saver, BitcodeFile *F) {
   StringRef NameRef = Saver.save(ObjSym.getName());
@@ -704,10 +704,10 @@ static Symbol *createBitcodeSymbol(const DenseSet<const Comdat *> &KeptComdats,
   uint8_t Visibility = mapVisibility(ObjSym.getVisibility());
   bool CanOmitFromDynSym = ObjSym.canBeOmittedFromSymbolTable();
 
-  if (const Comdat *C = check(ObjSym.getComdat()))
-    if (!KeptComdats.count(C))
-      return Symtab<ELFT>::X->addUndefined(NameRef, Binding, Visibility, Type,
-                                           CanOmitFromDynSym, F);
+  StringRef C = check(ObjSym.getComdat());
+  if (!C.empty() && !KeptComdats.count(C))
+    return Symtab<ELFT>::X->addUndefined(NameRef, Binding, Visibility, Type,
+                                         CanOmitFromDynSym, F);
 
   if (Flags & BasicSymbolRef::SF_Undefined)
     return Symtab<ELFT>::X->addUndefined(NameRef, Binding, Visibility, Type,
@@ -736,11 +736,11 @@ void BitcodeFile::parse(DenseSet<StringRef> &ComdatGroups) {
   Obj = check(lto::InputFile::create(MemoryBufferRef(
       MB.getBuffer(), Saver.save(ArchiveName + MB.getBufferIdentifier() +
                                  utostr(OffsetInArchive)))));
-  DenseSet<const Comdat *> KeptComdats;
+  DenseSet<StringRef> KeptComdats;
   for (const auto &P : Obj->getComdatSymbolTable()) {
     StringRef N = Saver.save(P.first());
     if (ComdatGroups.insert(N).second)
-      KeptComdats.insert(&P.second);
+      KeptComdats.insert(N);
   }
 
   for (const lto::InputFile::Symbol &ObjSym : Obj->symbols())
