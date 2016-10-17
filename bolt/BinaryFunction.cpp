@@ -939,6 +939,17 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       break;
     }
 
+    if (MIA->hasEVEXEncoding(Instruction)) {
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: function " << *this << " uses instruction"
+               " encoded with EVEX (AVX-512) at offset 0x"
+               << Twine::utohexstr(Offset) << ". Disassembly could be wrong."
+               " Skipping further processing.\n";
+      }
+      IsSimple = false;
+      break;
+    }
+
     // Convert instruction to a shorter version that could be relaxed if needed.
     MIA->shortenInstruction(Instruction);
 
