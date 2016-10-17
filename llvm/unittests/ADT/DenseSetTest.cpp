@@ -64,6 +64,21 @@ typedef ::testing::Types<DenseSet<unsigned, TestDenseSetInfo>,
     DenseSetTestTypes;
 TYPED_TEST_CASE(DenseSetTest, DenseSetTestTypes);
 
+TYPED_TEST(DenseSetTest, InitializerList) {
+  TypeParam set({1, 2, 1, 4});
+  EXPECT_EQ(3u, set.size());
+  EXPECT_EQ(1u, set.count(1));
+  EXPECT_EQ(1u, set.count(2));
+  EXPECT_EQ(1u, set.count(4));
+  EXPECT_EQ(0u, set.count(3));
+}
+
+TYPED_TEST(DenseSetTest, EmptyInitializerList) {
+  TypeParam set({});
+  EXPECT_EQ(0u, set.size());
+  EXPECT_EQ(0u, set.count(0));
+}
+
 TYPED_TEST(DenseSetTest, FindAsTest) {
   auto &set = this->Set;
   // Size tests

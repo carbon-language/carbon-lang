@@ -15,6 +15,7 @@
 #define LLVM_ADT_DENSESET_H
 
 #include "llvm/ADT/DenseMap.h"
+#include <initializer_list>
 
 namespace llvm {
 
@@ -54,6 +55,11 @@ public:
   typedef unsigned size_type;
 
   explicit DenseSetImpl(unsigned InitialReserve = 0) : TheMap(InitialReserve) {}
+
+  DenseSetImpl(std::initializer_list<ValueT> Elems)
+      : DenseSetImpl(Elems.size()) {
+    insert(Elems.begin(), Elems.end());
+  }
 
   bool empty() const { return TheMap.empty(); }
   size_type size() const { return TheMap.size(); }
