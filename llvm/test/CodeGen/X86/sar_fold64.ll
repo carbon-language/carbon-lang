@@ -57,14 +57,11 @@ define i32 @shl56sar57(i64 %a) #0 {
   ret i32 %3
 }
 
-; FIXME
-
 define i8 @all_sign_bit_ashr(i8 %x) {
 ; CHECK-LABEL: all_sign_bit_ashr:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    andb $1, %dil
 ; CHECK-NEXT:    negb %dil
-; CHECK-NEXT:    sarb $6, %dil
 ; CHECK-NEXT:    movl %edi, %eax
 ; CHECK-NEXT:    retq
 ;
