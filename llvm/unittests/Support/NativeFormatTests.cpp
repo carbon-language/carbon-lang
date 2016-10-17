@@ -36,8 +36,8 @@ template <typename T>
 typename std::enable_if<std::is_pointer<T>::value, std::string>::type
 format_number(T N, HexStyle Style, Optional<size_t> Precision = None,
               Optional<int> Width = None) {
-
-  return format_number(reinterpret_cast<uintptr_t>(N), Style, Precision, Width);
+  IntegerStyle IS = hexStyleToIntHexStyle(Style);
+  return format_number(reinterpret_cast<uintptr_t>(N), IS, Precision, Width);
 }
 
 std::string format_number(unsigned long N, IntegerStyle Style,

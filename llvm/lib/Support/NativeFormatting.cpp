@@ -353,6 +353,20 @@ void llvm::write_double(raw_ostream &S, double N, FloatStyle Style,
     S << '%';
 }
 
+IntegerStyle llvm::hexStyleToIntHexStyle(HexStyle S) {
+  switch (S) {
+  case HexStyle::Upper:
+    return IntegerStyle::HexUpperNoPrefix;
+  case HexStyle::Lower:
+    return IntegerStyle::HexLowerNoPrefix;
+  case HexStyle::PrefixUpper:
+    return IntegerStyle::HexUpperPrefix;
+  case HexStyle::PrefixLower:
+    return IntegerStyle::HexLowerPrefix;
+  }
+  LLVM_BUILTIN_UNREACHABLE;
+}
+
 size_t llvm::getDefaultPrecision(FloatStyle Style) {
   switch (Style) {
   case FloatStyle::Exponent:

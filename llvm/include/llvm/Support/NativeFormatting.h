@@ -31,6 +31,8 @@ enum class IntegerStyle {
 };
 enum class HexStyle { Upper, Lower, PrefixUpper, PrefixLower };
 
+IntegerStyle hexStyleToIntHexStyle(HexStyle S);
+
 size_t getDefaultPrecision(FloatStyle Style);
 size_t getDefaultPrecision(IntegerStyle Style);
 size_t getDefaultPrecision(HexStyle Style);
