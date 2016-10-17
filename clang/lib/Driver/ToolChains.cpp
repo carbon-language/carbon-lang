@@ -2970,7 +2970,7 @@ std::string HexagonToolChain::getHexagonTargetDir(
   if (getVFS().exists(InstallRelDir = InstalledDir + "/../target"))
     return InstallRelDir;
 
-  return InstalledDir;
+  return InstallRelDir;
 }
 
 Optional<unsigned> HexagonToolChain::getSmallDataThreshold(
