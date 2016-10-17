@@ -31,13 +31,13 @@ std::string format_number(T N, IntegerStyle Style,
 
 template <typename T>
 typename std::enable_if<std::is_pointer<T>::value, std::string>::type
-format_number(T N, HexStyle Style, Optional<size_t> Precision = None,
+format_number(T N, HexPrintStyle Style, Optional<size_t> Precision = None,
               Optional<int> Width = None) {
   IntegerStyle IS = hexStyleToIntHexStyle(Style);
   return format_number(reinterpret_cast<uintptr_t>(N), IS, Precision, Width);
 }
 
-std::string format_number(uint64_t N, HexStyle Style,
+std::string format_number(uint64_t N, HexPrintStyle Style,
                           Optional<size_t> Precision = None,
                           Optional<int> Width = None) {
   std::string S;
@@ -104,24 +104,26 @@ TEST(NativeFormatTest, BasicIntegerTests) {
 
   // Hex formatting.  Default precision is 0.
   // lower case, prefix.
-  EXPECT_EQ("0x0", format_number(0, HexStyle::PrefixLower));
-  EXPECT_EQ("0xbeef", format_number(0xbeefLL, HexStyle::PrefixLower));
-  EXPECT_EQ("0xdeadbeef", format_number(0xdeadbeefLL, HexStyle::PrefixLower));
+  EXPECT_EQ("0x0", format_number(0, HexPrintStyle::PrefixLower));
+  EXPECT_EQ("0xbeef", format_number(0xbeefLL, HexPrintStyle::PrefixLower));
+  EXPECT_EQ("0xdeadbeef",
+            format_number(0xdeadbeefLL, HexPrintStyle::PrefixLower));
 
   // upper-case, prefix.
-  EXPECT_EQ("0x0", format_number(0, HexStyle::PrefixUpper));
-  EXPECT_EQ("0xBEEF", format_number(0xbeefLL, HexStyle::PrefixUpper));
-  EXPECT_EQ("0xDEADBEEF", format_number(0xdeadbeefLL, HexStyle::PrefixUpper));
+  EXPECT_EQ("0x0", format_number(0, HexPrintStyle::PrefixUpper));
+  EXPECT_EQ("0xBEEF", format_number(0xbeefLL, HexPrintStyle::PrefixUpper));
+  EXPECT_EQ("0xDEADBEEF",
+            format_number(0xdeadbeefLL, HexPrintStyle::PrefixUpper));
 
   // lower-case, no prefix
-  EXPECT_EQ("0", format_number(0, HexStyle::Lower));
-  EXPECT_EQ("beef", format_number(0xbeefLL, HexStyle::Lower));
-  EXPECT_EQ("deadbeef", format_number(0xdeadbeefLL, HexStyle::Lower));
+  EXPECT_EQ("0", format_number(0, HexPrintStyle::Lower));
+  EXPECT_EQ("beef", format_number(0xbeefLL, HexPrintStyle::Lower));
+  EXPECT_EQ("deadbeef", format_number(0xdeadbeefLL, HexPrintStyle::Lower));
 
   // upper-case, no prefix.
-  EXPECT_EQ("0", format_number(0, HexStyle::Upper));
-  EXPECT_EQ("BEEF", format_number(0xbeef, HexStyle::Upper));
-  EXPECT_EQ("DEADBEEF", format_number(0xdeadbeef, HexStyle::Upper));
+  EXPECT_EQ("0", format_number(0, HexPrintStyle::Upper));
+  EXPECT_EQ("BEEF", format_number(0xbeef, HexPrintStyle::Upper));
+  EXPECT_EQ("DEADBEEF", format_number(0xdeadbeef, HexPrintStyle::Upper));
 
   EXPECT_EQ("0xFFFFFFFF", format_number(-1, IntegerStyle::HexUpperPrefix));
 }
@@ -130,26 +132,30 @@ TEST(NativeFormatTest, BasicIntegerTests) {
 // precision.
 TEST(NativeFormatTest, BasicPointerTests) {
   // lower-case, prefix
-  EXPECT_EQ("0x0", format_number((void *)nullptr, HexStyle::PrefixLower));
-  EXPECT_EQ("0xbeef", format_number((void *)0xbeefLL, HexStyle::PrefixLower));
+  EXPECT_EQ("0x0", format_number((void *)nullptr, HexPrintStyle::PrefixLower));
+  EXPECT_EQ("0xbeef",
+            format_number((void *)0xbeefLL, HexPrintStyle::PrefixLower));
   EXPECT_EQ("0xdeadbeef",
-            format_number((void *)0xdeadbeefLL, HexStyle::PrefixLower));
+            format_number((void *)0xdeadbeefLL, HexPrintStyle::PrefixLower));
 
   // upper-case, prefix.
-  EXPECT_EQ("0x0", format_number((void *)nullptr, HexStyle::PrefixUpper));
-  EXPECT_EQ("0xBEEF", format_number((void *)0xbeefLL, HexStyle::PrefixUpper));
+  EXPECT_EQ("0x0", format_number((void *)nullptr, HexPrintStyle::PrefixUpper));
+  EXPECT_EQ("0xBEEF",
+            format_number((void *)0xbeefLL, HexPrintStyle::PrefixUpper));
   EXPECT_EQ("0xDEADBEEF",
-            format_number((void *)0xdeadbeefLL, HexStyle::PrefixUpper));
+            format_number((void *)0xdeadbeefLL, HexPrintStyle::PrefixUpper));
 
   // lower-case, no prefix
-  EXPECT_EQ("0", format_number((void *)nullptr, HexStyle::Lower));
-  EXPECT_EQ("beef", format_number((void *)0xbeefLL, HexStyle::Lower));
-  EXPECT_EQ("deadbeef", format_number((void *)0xdeadbeefLL, HexStyle::Lower));
+  EXPECT_EQ("0", format_number((void *)nullptr, HexPrintStyle::Lower));
+  EXPECT_EQ("beef", format_number((void *)0xbeefLL, HexPrintStyle::Lower));
+  EXPECT_EQ("deadbeef",
+            format_number((void *)0xdeadbeefLL, HexPrintStyle::Lower));
 
   // upper-case, no prefix.
-  EXPECT_EQ("0", format_number((void *)nullptr, HexStyle::Upper));
-  EXPECT_EQ("BEEF", format_number((void *)0xbeefLL, HexStyle::Upper));
-  EXPECT_EQ("DEADBEEF", format_number((void *)0xdeadbeefLL, HexStyle::Upper));
+  EXPECT_EQ("0", format_number((void *)nullptr, HexPrintStyle::Upper));
+  EXPECT_EQ("BEEF", format_number((void *)0xbeefLL, HexPrintStyle::Upper));
+  EXPECT_EQ("DEADBEEF",
+            format_number((void *)0xdeadbeefLL, HexPrintStyle::Upper));
 }
 
 // Test basic floating point formatting with various styles and default width
@@ -229,7 +235,7 @@ TEST(NativeFormatTest, HexTests) {
 
   // And with pointers.
   EXPECT_EQ("  0x000",
-            format_number((void *)nullptr, HexStyle::PrefixLower, 5, 7));
+            format_number((void *)nullptr, HexPrintStyle::PrefixLower, 5, 7));
 
   // Try printing more digits than can fit in a uint64.
   EXPECT_EQ("     0x000abcde",

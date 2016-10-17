@@ -134,7 +134,7 @@ raw_ostream &raw_ostream::operator<<(long long N) {
 }
 
 raw_ostream &raw_ostream::write_hex(unsigned long long N) {
-  llvm::write_hex(*this, N, HexStyle::Lower);
+  llvm::write_hex(*this, N, HexPrintStyle::Lower);
   return *this;
 }
 
@@ -179,7 +179,7 @@ raw_ostream &raw_ostream::write_escaped(StringRef Str,
 }
 
 raw_ostream &raw_ostream::operator<<(const void *P) {
-  llvm::write_hex(*this, (uintptr_t)P, HexStyle::PrefixLower);
+  llvm::write_hex(*this, (uintptr_t)P, HexPrintStyle::PrefixLower);
   return *this;
 }
 
@@ -331,15 +331,15 @@ raw_ostream &raw_ostream::operator<<(const FormattedString &FS) {
 
 raw_ostream &raw_ostream::operator<<(const FormattedNumber &FN) {
   if (FN.Hex) {
-    HexStyle Style;
+    HexPrintStyle Style;
     if (FN.Upper && FN.HexPrefix)
-      Style = HexStyle::PrefixUpper;
+      Style = HexPrintStyle::PrefixUpper;
     else if (FN.Upper && !FN.HexPrefix)
-      Style = HexStyle::Upper;
+      Style = HexPrintStyle::Upper;
     else if (!FN.Upper && FN.HexPrefix)
-      Style = HexStyle::PrefixLower;
+      Style = HexPrintStyle::PrefixLower;
     else
-      Style = HexStyle::Lower;
+      Style = HexPrintStyle::Lower;
     llvm::write_hex(*this, FN.HexValue, Style, FN.Width, None);
   } else {
     llvm::write_integer(*this, FN.DecValue, IntegerStyle::Integer, None,

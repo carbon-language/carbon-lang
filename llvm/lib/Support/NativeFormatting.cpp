@@ -29,17 +29,17 @@ static bool isHexStyle(IntegerStyle S) {
   LLVM_BUILTIN_UNREACHABLE;
 }
 
-static HexStyle intHexStyleToHexStyle(IntegerStyle S) {
+static HexPrintStyle intHexStyleToHexStyle(IntegerStyle S) {
   assert(isHexStyle(S));
   switch (S) {
   case IntegerStyle::HexLowerNoPrefix:
-    return HexStyle::Lower;
+    return HexPrintStyle::Lower;
   case IntegerStyle::HexLowerPrefix:
-    return HexStyle::PrefixLower;
+    return HexPrintStyle::PrefixLower;
   case IntegerStyle::HexUpperNoPrefix:
-    return HexStyle::Upper;
+    return HexPrintStyle::Upper;
   case IntegerStyle::HexUpperPrefix:
-    return HexStyle::PrefixUpper;
+    return HexPrintStyle::PrefixUpper;
   default:
     break;
   }
@@ -234,17 +234,18 @@ void llvm::write_integer(raw_ostream &S, long long N, IntegerStyle Style,
   write_signed(S, N, Style, Precision, Width);
 }
 
-void llvm::write_hex(raw_ostream &S, uint64_t N, HexStyle Style,
+void llvm::write_hex(raw_ostream &S, uint64_t N, HexPrintStyle Style,
                      Optional<size_t> Precision, Optional<int> Width) {
-  constexpr size_t kMaxWidth = 128u;
+  const size_t kMaxWidth = 128u;
 
   size_t Prec =
       std::min(kMaxWidth, Precision.getValueOr(getDefaultPrecision(Style)));
 
   unsigned Nibbles = (64 - countLeadingZeros(N) + 3) / 4;
-  bool Prefix =
-      (Style == HexStyle::PrefixLower || Style == HexStyle::PrefixUpper);
-  bool Upper = (Style == HexStyle::Upper || Style == HexStyle::PrefixUpper);
+  bool Prefix = (Style == HexPrintStyle::PrefixLower ||
+                 Style == HexPrintStyle::PrefixUpper);
+  bool Upper =
+      (Style == HexPrintStyle::Upper || Style == HexPrintStyle::PrefixUpper);
   unsigned PrefixChars = Prefix ? 2 : 0;
   unsigned NumChars = std::max(static_cast<unsigned>(Prec),
                                std::max(1u, Nibbles) + PrefixChars);
@@ -356,15 +357,15 @@ void llvm::write_double(raw_ostream &S, double N, FloatStyle Style,
     S << '%';
 }
 
-IntegerStyle llvm::hexStyleToIntHexStyle(HexStyle S) {
+IntegerStyle llvm::hexStyleToIntHexStyle(HexPrintStyle S) {
   switch (S) {
-  case HexStyle::Upper:
+  case HexPrintStyle::Upper:
     return IntegerStyle::HexUpperNoPrefix;
-  case HexStyle::Lower:
+  case HexPrintStyle::Lower:
     return IntegerStyle::HexLowerNoPrefix;
-  case HexStyle::PrefixUpper:
+  case HexPrintStyle::PrefixUpper:
     return IntegerStyle::HexUpperPrefix;
-  case HexStyle::PrefixLower:
+  case HexPrintStyle::PrefixLower:
     return IntegerStyle::HexLowerPrefix;
   }
   LLVM_BUILTIN_UNREACHABLE;
@@ -403,7 +404,7 @@ size_t llvm::getDefaultPrecision(IntegerStyle Style) {
   LLVM_BUILTIN_UNREACHABLE;
 }
 
-size_t llvm::getDefaultPrecision(HexStyle) {
+size_t llvm::getDefaultPrecision(HexPrintStyle) {
   // Number of digits in the resulting string.
   return 0;
 }
