@@ -3844,7 +3844,7 @@ static bool IsUbuntu(enum Distro Distro) {
 
 static Distro DetectDistro(const Driver &D, llvm::Triple::ArchType Arch) {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> File =
-      llvm::MemoryBuffer::getFile("/etc/lsb-release");
+      D.getVFS().getBufferForFile("/etc/lsb-release");
   if (File) {
     StringRef Data = File.get()->getBuffer();
     SmallVector<StringRef, 16> Lines;
@@ -3876,7 +3876,7 @@ static Distro DetectDistro(const Driver &D, llvm::Triple::ArchType Arch) {
       return Version;
   }
 
-  File = llvm::MemoryBuffer::getFile("/etc/redhat-release");
+  File = D.getVFS().getBufferForFile("/etc/redhat-release");
   if (File) {
     StringRef Data = File.get()->getBuffer();
     if (Data.startswith("Fedora release"))
@@ -3894,7 +3894,7 @@ static Distro DetectDistro(const Driver &D, llvm::Triple::ArchType Arch) {
     return UnknownDistro;
   }
 
-  File = llvm::MemoryBuffer::getFile("/etc/debian_version");
+  File = D.getVFS().getBufferForFile("/etc/debian_version");
   if (File) {
     StringRef Data = File.get()->getBuffer();
     if (Data[0] == '5')
