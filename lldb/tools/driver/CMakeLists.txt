@@ -20,9 +20,10 @@ if ( LLDB_CAN_USE_DEBUGSERVER )
 endif()
 
 target_link_libraries(lldb liblldb)
-if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
-  # Windows does not have getopt support, so it relies on the one provided by
-  # liblldb. However, getopt is not a part of the liblldb interfact, so we have
+if ((CMAKE_SYSTEM_NAME MATCHES "Windows") OR
+    (CMAKE_SYSTEM_NAME MATCHES "NetBSD" ))
+  # These targets do not have getopt support, so they rely on the one provided by
+  # liblldb. However, getopt is not a part of the liblldb interface, so we have
   # to link against the constituent libraries manually. Note that this is
   # extremely scary as it introduces ODR violations, and it should go away as
   # soon as possible.
