@@ -449,7 +449,10 @@ bool SCEVUnknown::isOffsetOf(Type *&CTy, Constant *&FieldNo) const {
 //===----------------------------------------------------------------------===//
 
 static int CompareValueComplexity(const LoopInfo *const LI, Value *LV,
-                                  Value *RV) {
+                                  Value *RV, unsigned DepthLeft = 2) {
+  if (DepthLeft == 0)
+    return 0;
+
   // Order pointer values after integer values. This helps SCEVExpander form
   // GEPs.
   bool LIsPointer = LV->getType()->isPointerTy(),
@@ -487,7 +490,14 @@ static int CompareValueComplexity(const LoopInfo *const LI, Value *LV,
     // Compare the number of operands.
     unsigned LNumOps = LInst->getNumOperands(),
              RNumOps = RInst->getNumOperands();
-    return (int)LNumOps - (int)RNumOps;
+    if (LNumOps != RNumOps || LNumOps != 1)
+      return (int)LNumOps - (int)RNumOps;
+
+    // We only bother "recursing" if we have one operand to look at (so we don't
+    // really recurse as much as we iterate).  We can consider expanding this
+    // logic in the future.
+    return CompareValueComplexity(LI, LInst->getOperand(0),
+                                  RInst->getOperand(0), DepthLeft - 1);
   }
 
   return 0;
