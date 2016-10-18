@@ -3170,17 +3170,6 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
                             const FunctionProtoType::ExtProtoInfo &EPI) const {
   size_t NumArgs = ArgArray.size();
 
-  // Unique functions, to guarantee there is only one function of a particular
-  // structure.
-  llvm::FoldingSetNodeID ID;
-  FunctionProtoType::Profile(ID, ResultTy, ArgArray.begin(), NumArgs, EPI,
-                             *this);
-
-  void *InsertPos = nullptr;
-  if (FunctionProtoType *FTP =
-        FunctionProtoTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return QualType(FTP, 0);
-
   bool NoexceptInType = getLangOpts().CPlusPlus1z;
 
   bool IsCanonicalExceptionSpec =
@@ -3192,6 +3181,17 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
   for (unsigned i = 0; i != NumArgs && isCanonical; ++i)
     if (!ArgArray[i].isCanonicalAsParam())
       isCanonical = false;
+
+  // Unique functions, to guarantee there is only one function of a particular
+  // structure.
+  llvm::FoldingSetNodeID ID;
+  FunctionProtoType::Profile(ID, ResultTy, ArgArray.begin(), NumArgs, EPI,
+                             *this, isCanonical);
+
+  void *InsertPos = nullptr;
+  if (FunctionProtoType *FTP =
+        FunctionProtoTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(FTP, 0);
 
   // If this type isn't canonical, get the canonical version of it.
   // The exception spec is not part of the canonical type.
