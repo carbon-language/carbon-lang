@@ -1,6 +1,6 @@
 ; Check that 0.0 is not materialized for CSEL when comparing against it.
 
-; RUN: llc -mtriple=aarch64 -o - < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-linux-gnu -o - < %s | FileCheck %s
 
 define float @foeq(float %a, float %b) #0 {
   %t = fcmp oeq float %a, 0.0
