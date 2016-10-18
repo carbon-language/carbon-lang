@@ -881,3 +881,20 @@ define void @test_memcpy(i8* %dst, i8* %src, i64 %size) {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %dst, i8* %src, i64 %size, i32 1, i1 0)
   ret void
 }
+
+declare i64 @llvm.objectsize.i64(i8*, i1)
+declare i32 @llvm.objectsize.i32(i8*, i1)
+define void @test_objectsize(i8* %addr0, i8* %addr1) {
+; CHECK-LABEL: name: test_objectsize
+; CHECK: [[ADDR0:%[0-9]+]](p0) = COPY %x0
+; CHECK: [[ADDR1:%[0-9]+]](p0) = COPY %x1
+; CHECK: {{%[0-9]+}}(s64) = G_CONSTANT -1
+; CHECK: {{%[0-9]+}}(s64) = G_CONSTANT 0
+; CHECK: {{%[0-9]+}}(s32) = G_CONSTANT -1
+; CHECK: {{%[0-9]+}}(s32) = G_CONSTANT 0
+  %size64.0 = call i64 @llvm.objectsize.i64(i8* %addr0, i1 0)
+  %size64.intmin = call i64 @llvm.objectsize.i64(i8* %addr0, i1 1)
+  %size32.0 = call i32 @llvm.objectsize.i32(i8* %addr0, i1 0)
+  %size32.intmin = call i32 @llvm.objectsize.i32(i8* %addr0, i1 1)
+  ret void
+}

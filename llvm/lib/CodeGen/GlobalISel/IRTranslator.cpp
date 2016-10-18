@@ -392,6 +392,13 @@ bool IRTranslator::translateKnownIntrinsic(const CallInst &CI,
   case Intrinsic::smul_with_overflow: Op = TargetOpcode::G_SMULO; break;
   case Intrinsic::memcpy:
     return translateMemcpy(CI);
+  case Intrinsic::objectsize: {
+    // If we don't know by now, we're never going to know.
+    const ConstantInt *Min = cast<ConstantInt>(CI.getArgOperand(1));
+
+    MIRBuilder.buildConstant(getOrCreateVReg(CI), Min->isZero() ? -1ULL : 0);
+    return true;
+  }
   }
 
   LLT Ty{*CI.getOperand(0)->getType(), *DL};
