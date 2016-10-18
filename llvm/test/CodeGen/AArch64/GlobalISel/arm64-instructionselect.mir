@@ -103,6 +103,9 @@
   define i32 @const_s32() { ret i32 42 }
   define i64 @const_s64() { ret i64 1234567890123 }
 
+  define i32 @fconst_s32() { ret i32 42 }
+  define i64 @fconst_s64() { ret i64 1234567890123 }
+
   define i8* @gep(i8* %in) { ret i8* undef }
 
   @var_local = global i8 0
@@ -1876,6 +1879,38 @@ registers:
 body:             |
   bb.0:
     %0(s64) = G_CONSTANT 1234567890123
+...
+
+---
+# CHECK-LABEL: name: fconst_s32
+name:            fconst_s32
+legalized:       true
+regBankSelected: true
+registers:
+  - { id: 0, class: fpr }
+
+# CHECK:  body:
+# CHECK: [[TMP:%[0-9]+]] = MOVi32imm 1080033280
+# CHECK: %0 = COPY [[TMP]]
+body:             |
+  bb.0:
+    %0(s32) = G_FCONSTANT float 3.5
+...
+
+---
+# CHECK-LABEL: name: fconst_s64
+name:            fconst_s64
+legalized:       true
+regBankSelected: true
+registers:
+  - { id: 0, class: fpr }
+
+# CHECK:  body:
+# CHECK: [[TMP:%[0-9]+]] = MOVi64imm 4607182418800017408
+# CHECK: %0 = COPY [[TMP]]
+body:             |
+  bb.0:
+    %0(s64) = G_FCONSTANT double 1.0
 ...
 
 ---
