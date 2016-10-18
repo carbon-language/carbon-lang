@@ -44,7 +44,7 @@ void DecodeVPERMVMask(const Constant *C, MVT VT,
                       SmallVectorImpl<int> &ShuffleMask);
 
 /// Decode a VPERMT2 W/D/Q/PS/PD mask from an IR-level vector constant.
-void DecodeVPERMV3Mask(const Constant *C, MVT VT,
+void DecodeVPERMV3Mask(const Constant *C, unsigned ElSize,
                        SmallVectorImpl<int> &ShuffleMask);
 
 } // llvm namespace
