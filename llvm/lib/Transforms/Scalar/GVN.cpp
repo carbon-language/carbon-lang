@@ -864,8 +864,8 @@ static int AnalyzeLoadFromClobberingWrite(Type *LoadTy, Value *LoadPtr,
 
   if ((WriteSizeInBits & 7) | (LoadSize & 7))
     return -1;
-  uint64_t StoreSize = WriteSizeInBits >> 3;  // Convert to bytes.
-  LoadSize >>= 3;
+  uint64_t StoreSize = WriteSizeInBits / 8;  // Convert to bytes.
+  LoadSize /= 8;
 
 
   bool isAAFailure = false;
