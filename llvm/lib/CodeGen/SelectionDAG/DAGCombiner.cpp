@@ -13177,7 +13177,7 @@ SDValue DAGCombiner::reduceBuildVecToShuffle(SDNode *N) {
   // t10: v8i32 = vector_shuffle<0,8,u,u,u,u,u,u> t1, t2
   // t11: v8i32 = vector_shuffle<u,u,0,8,u,u,u,u> t3, t4
   // t12: v8i32 = vector_shuffle<u,u,u,u,0,8,u,u> t5, t6
-  // t13: v8i32 = vector_shuffle<u,u,u,u,u,u,0,8> t7, t8  
+  // t13: v8i32 = vector_shuffle<u,u,u,u,u,u,0,8> t7, t8
   // t20: v8i32 = vector_shuffle<0,1,10,11,u,u,u,u> t10, t11
   // t21: v8i32 = vector_shuffle<u,u,u,u,4,5,14,15> t12, t13
   // t30: v8i32 = vector_shuffle<0,1,2,3,12,13,14,15> t20, t21
