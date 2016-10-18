@@ -1,11 +1,8 @@
-; Test check the following function parts: ENTRY, LIFE (lifetime), FAKE (fake stack) and EXIT.
-; Test each part can have prefix: no prefix (regular), UAS (use-after-scope)
-
 ; Regular stack poisoning.
-; RUN: opt < %s -asan -asan-module -asan-use-after-scope=0 -S | FileCheck --check-prefixes=CHECK,ENTRY,LIFE,FAKE-EXP,EXIT %s
+; RUN: opt < %s -asan -asan-module -asan-use-after-scope=0 -S | FileCheck --check-prefixes=CHECK,ENTRY,EXIT %s
 
 ; Stack poisoning with stack-use-after-scope.
-; RUN: opt < %s -asan -asan-module -asan-use-after-scope=1 -S | FileCheck --check-prefixes=CHECK,ENTRY-UAS-EXP,LIFE-UAS-EXP,FAKE-EXP,EXIT-EXP %s
+; RUN: opt < %s -asan -asan-module -asan-use-after-scope=1 -S | FileCheck --check-prefixes=CHECK,ENTRY-UAS,EXIT-UAS %s
 
 target datalayout = "E-m:e-i64:64-n32:64"
 target triple = "powerpc64-unknown-linux-gnu"
@@ -56,38 +53,38 @@ entry:
   ; ENTRY-NEXT: store [[TYPE]] -13, [[TYPE]]* [[PTR]], align 1
 
   ; F1F1F1F1
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 0
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i32]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] -235802127, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 0
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i32]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] -235802127, [[TYPE]]* [[PTR]], align 1
 
   ; F8F8F8...
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 4
-  ; ENTRY-UAS-EXP-NEXT: call void @__asan_set_shadow_f8(i64 [[OFFSET]], i64 82)
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 4
+  ; ENTRY-UAS-NEXT: call void @__asan_set_shadow_f8(i64 [[OFFSET]], i64 82)
 
   ; F2F2F2F2F2F2F2F2
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 86
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i64]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] -940422246894996750, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 86
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i64]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] -940422246894996750, [[TYPE]]* [[PTR]], align 1
 
   ; F2F2F2F2F2F2F2F2
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 94
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i64]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] -940422246894996750, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 94
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i64]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] -940422246894996750, [[TYPE]]* [[PTR]], align 1
 
   ; F8F8F2F2F8F8F8F8
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 102
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i64]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] -506387832706107144, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 102
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i64]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] -506387832706107144, [[TYPE]]* [[PTR]], align 1
 
   ; F8F3F3F3
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 110
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i32]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] -118230029, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 110
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i32]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] -118230029, [[TYPE]]* [[PTR]], align 1
 
   ; F3F3
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 114
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i16]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] -3085, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 114
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i16]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] -3085, [[TYPE]]* [[PTR]], align 1
 
   ; CHECK-LABEL: %xx = getelementptr inbounds
   ; CHECK-NEXT: %yy = getelementptr inbounds
@@ -96,12 +93,12 @@ entry:
 
   call void @llvm.lifetime.start(i64 650, i8* %xx)
   ; 0000...
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 4
-  ; ENTRY-UAS-EXP-NEXT: call void @__asan_set_shadow_00(i64 [[OFFSET]], i64 81)
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 4
+  ; ENTRY-UAS-NEXT: call void @__asan_set_shadow_00(i64 [[OFFSET]], i64 81)
   ; 02
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 85
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i8]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] 2, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 85
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i8]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] 2, [[TYPE]]* [[PTR]], align 1
 
   ; CHECK-NEXT: call void @llvm.lifetime.start(i64 650, i8* %xx)
 
@@ -109,17 +106,17 @@ entry:
   ; CHECK-NEXT: call void @Foo(i8* %xx)
 
   call void @llvm.lifetime.end(i64 650, i8* %xx)
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 4
-  ; ENTRY-UAS-EXP-NEXT: call void @__asan_set_shadow_f8(i64 [[OFFSET]], i64 82)
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 4
+  ; ENTRY-UAS-NEXT: call void @__asan_set_shadow_f8(i64 [[OFFSET]], i64 82)
 
   ; CHECK-NEXT: call void @llvm.lifetime.end(i64 650, i8* %xx)
 
 
   call void @llvm.lifetime.start(i64 13, i8* %yy)
   ; 0005
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 102
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i16]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] 5, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 102
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i16]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] 5, [[TYPE]]* [[PTR]], align 1
 
   ; CHECK-NEXT: call void @llvm.lifetime.start(i64 13, i8* %yy)
 
@@ -128,22 +125,22 @@ entry:
 
   call void @llvm.lifetime.end(i64 13, i8* %yy)
   ; F8F8
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 102
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i16]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] -1800, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 102
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i16]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] -1800, [[TYPE]]* [[PTR]], align 1
 
   ; CHECK-NEXT: call void @llvm.lifetime.end(i64 13, i8* %yy)
 
 
   call void @llvm.lifetime.start(i64 40, i8* %zz)
   ; 00000000
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 106
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i32]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] 0, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 106
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i32]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] 0, [[TYPE]]* [[PTR]], align 1
   ; 00
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 110
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i8]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] 0, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 110
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i8]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] 0, [[TYPE]]* [[PTR]], align 1
 
   ; CHECK-NEXT: call void @llvm.lifetime.start(i64 40, i8* %zz)
 
@@ -152,20 +149,20 @@ entry:
 
   call void @llvm.lifetime.end(i64 40, i8* %zz)
   ; F8F8F8F8
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 106
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i32]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] -117901064, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 106
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i32]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] -117901064, [[TYPE]]* [[PTR]], align 1
   ; F8
-  ; ENTRY-UAS-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 110
-  ; ENTRY-UAS-EXP-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i8]]*
-  ; ENTRY-UAS-EXP-NEXT: store [[TYPE]] -8, [[TYPE]]* [[PTR]], align 1
+  ; ENTRY-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 110
+  ; ENTRY-UAS-NEXT: [[PTR:%[0-9]+]] = inttoptr i64 [[OFFSET]] to [[TYPE:i8]]*
+  ; ENTRY-UAS-NEXT: store [[TYPE]] -8, [[TYPE]]* [[PTR]], align 1
 
   ; CHECK-NEXT: call void @llvm.lifetime.end(i64 40, i8* %zz)
 
   ; CHECK-LABEL: <label>
 
-  ; FAKE-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 0
-  ; FAKE-EXP-NEXT: call void @__asan_set_shadow_f5(i64 [[OFFSET]], i64 128)
+  ; CHECK-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 0
+  ; CHECK-NEXT: call void @__asan_set_shadow_f5(i64 [[OFFSET]], i64 128)
 
   ; CHECK-NOT: add i64 [[SHADOW_BASE]]
 
@@ -202,8 +199,8 @@ entry:
   ; EXIT-NEXT: store [[TYPE]] 0, [[TYPE]]* [[PTR]], align 1
 
   ; 0000...
-  ; EXIT-EXP-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 0
-  ; EXIT-EXP-NEXT: call void @__asan_set_shadow_00(i64 [[OFFSET]], i64 116)
+  ; EXIT-UAS-NEXT: [[OFFSET:%[0-9]+]] = add i64 [[SHADOW_BASE]], 0
+  ; EXIT-UAS-NEXT: call void @__asan_set_shadow_00(i64 [[OFFSET]], i64 116)
 
   ; CHECK-NOT: add i64 [[SHADOW_BASE]]
 
