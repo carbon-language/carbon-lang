@@ -404,6 +404,7 @@ public:
     Match_RequiresDifferentOperands,
     Match_RequiresNoZeroRegister,
     Match_RequiresSameSrcAndDst,
+    Match_NonZeroOperandForSync,
 #define GET_OPERAND_DIAGNOSTIC_TYPES
 #include "MipsGenAsmMatcher.inc"
 #undef GET_OPERAND_DIAGNOSTIC_TYPES
@@ -3955,6 +3956,10 @@ unsigned MipsAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
     if (Inst.getOperand(0).getReg() == Inst.getOperand(2).getReg())
       return Match_RequiresDifferentSrcAndDst;
     return Match_Success;
+  case Mips::SYNC:
+    if (Inst.getOperand(0).getImm() != 0 && !hasMips32())
+      return Match_NonZeroOperandForSync;
+    return Match_Success;
   // As described the MIPSR6 spec, the compact branches that compare registers
   // must:
   // a) Not use the zero register.
@@ -4052,6 +4057,8 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
     return Error(ErrorLoc, "invalid operand for instruction");
   }
+  case Match_NonZeroOperandForSync:
+    return Error(IDLoc, "s-type must be zero or unspecified for pre-MIPS32 ISAs");
   case Match_MnemonicFail:
     return Error(IDLoc, "invalid instruction");
   case Match_RequiresDifferentSrcAndDst:
