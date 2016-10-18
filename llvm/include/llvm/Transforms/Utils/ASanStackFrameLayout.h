@@ -38,6 +38,7 @@ struct ASanStackVariableDescription {
   AllocaInst *AI;      // The actual AllocaInst.
   size_t Offset;       // Offset from the beginning of the frame;
                        // set by ComputeASanStackFrameLayout.
+  unsigned Line;       // Line number.
 };
 
 // Output data struct for ComputeASanStackFrameLayout.

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "llvm/Transforms/Utils/ASanStackFrameLayout.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -75,13 +76,17 @@ ComputeASanStackFrameLayout(SmallVectorImpl<ASanStackVariableDescription> &Vars,
     size_t Alignment = std::max(Granularity, Vars[i].Alignment);
     (void)Alignment;  // Used only in asserts.
     size_t Size = Vars[i].Size;
-    const char *Name = Vars[i].Name;
+    std::string Name = Vars[i].Name;
     assert((Alignment & (Alignment - 1)) == 0);
     assert(Layout.FrameAlignment >= Alignment);
     assert((Offset % Alignment) == 0);
     assert(Size > 0);
     assert(Vars[i].LifetimeSize <= Size);
-    StackDescription << " " << Offset << " " << Size << " " << strlen(Name)
+    if (Vars[i].Line) {
+      Name += ":";
+      Name += std::to_string(Vars[i].Line);
+    }
+    StackDescription << " " << Offset << " " << Size << " " << Name.size()
                      << " " << Name;
     size_t NextAlignment = IsLast ? Granularity
                    : std::max(Granularity, Vars[i + 1].Alignment);

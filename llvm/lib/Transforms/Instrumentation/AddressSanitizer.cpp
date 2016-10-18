@@ -2247,7 +2247,8 @@ void FunctionStackPoisoner::processStaticAllocas() {
   if (LocalEscapeCall) LocalEscapeCall->moveBefore(InsBefore);
 
   // Find static allocas with lifetime analysis.
-  DenseMap<const AllocaInst *, const ASanStackVariableDescription *>
+  DenseMap<const AllocaInst *,
+           std::pair<const ASanStackVariableDescription *, unsigned>>
       AllocaToSVDMap;
   for (const auto &APC : StaticAllocaPoisonCallVec) {
     assert(APC.InsBefore);
@@ -2255,22 +2256,31 @@ void FunctionStackPoisoner::processStaticAllocas() {
     assert(ASan.isInterestingAlloca(*APC.AI));
     assert(APC.AI->isStaticAlloca());
 
-    AllocaToSVDMap[APC.AI] = nullptr;
+    auto &Pair = AllocaToSVDMap[APC.AI];
+    if (const DILocation *FnLoc = EntryDebugLocation.get()) {
+      if (const DILocation *LifetimeLoc = APC.InsBefore->getDebugLoc().get()) {
+        if (LifetimeLoc->getFile() == FnLoc->getFile())
+          if (unsigned Line = LifetimeLoc->getLine())
+            Pair.second = std::min(Pair.second ? Pair.second : Line, Line);
+      }
+    }
   }
 
   SmallVector<ASanStackVariableDescription, 16> SVD;
   SVD.reserve(AllocaVec.size());
   for (AllocaInst *AI : AllocaVec) {
-    size_t UseAfterScopePoisonSize =
-        AllocaToSVDMap.find(AI) != AllocaToSVDMap.end()
-            ? ASan.getAllocaSizeInBytes(*AI)
-            : 0;
     ASanStackVariableDescription D = {AI->getName().data(),
                                       ASan.getAllocaSizeInBytes(*AI),
-                                      UseAfterScopePoisonSize,
+                                      0,
                                       AI->getAlignment(),
                                       AI,
+                                      0,
                                       0};
+    auto It = AllocaToSVDMap.find(AI);
+    if (It != AllocaToSVDMap.end()) {
+      D.LifetimeSize = D.Size;
+      D.Line = It->second.second;
+    }
     SVD.push_back(D);
   }
   // Minimal header size (left redzone) is 4 pointers,
@@ -2386,7 +2396,7 @@ void FunctionStackPoisoner::processStaticAllocas() {
     for (const auto &Desc : SVD) {
       auto It = AllocaToSVDMap.find(Desc.AI);
       if (It != AllocaToSVDMap.end()) {
-        It->second = &Desc;
+        It->second.first = &Desc;
       }
     }
 
@@ -2395,8 +2405,8 @@ void FunctionStackPoisoner::processStaticAllocas() {
     // Poison static allocas near lifetime intrinsics.
     for (const auto &APC : StaticAllocaPoisonCallVec) {
       // Must be already set.
-      assert(AllocaToSVDMap[APC.AI]);
-      const auto &Desc = *AllocaToSVDMap[APC.AI];
+      assert(AllocaToSVDMap[APC.AI].first);
+      const auto &Desc = *AllocaToSVDMap[APC.AI].first;
       assert(Desc.Offset % L.Granularity == 0);
       size_t Begin = Desc.Offset / L.Granularity;
       size_t End = Begin + (APC.Size + L.Granularity - 1) / L.Granularity;
