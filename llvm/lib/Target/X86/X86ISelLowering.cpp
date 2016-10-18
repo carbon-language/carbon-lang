@@ -5091,7 +5091,7 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
       break;
     }
     if (auto *C = getTargetConstantFromNode(MaskNode)) {
-      DecodeVPERMVMask(C, VT, Mask);
+      DecodeVPERMVMask(C, MaskEltSize, Mask);
       break;
     }
     return false;

@@ -28,10 +28,6 @@ declare <32 x i16> @llvm.x86.avx512.mask.vpermi2var.hi.512(<32 x i16>, <32 x i16
 define <8 x double> @combine_permvar_8f64_identity(<8 x double> %x0, <8 x double> %x1) {
 ; X32-LABEL: combine_permvar_8f64_identity:
 ; X32:       # BB#0:
-; X32-NEXT:    vmovapd {{.*#+}} zmm1 = [7,0,6,0,5,0,4,0,3,0,2,0,1,0,0,0]
-; X32-NEXT:    vpermpd %zmm0, %zmm1, %zmm0
-; X32-NEXT:    vmovapd {{.*#+}} zmm1 = [7,0,14,0,5,0,12,0,3,0,10,0,1,0,8,0]
-; X32-NEXT:    vpermpd %zmm0, %zmm1, %zmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: combine_permvar_8f64_identity:
@@ -703,8 +699,7 @@ define <8 x i64> @combine_permvar_8i64_as_permq_mask(<8 x i64> %x0, <8 x i64> %x
 define <8 x double> @combine_permvar_8f64_as_permpd(<8 x double> %x0, <8 x double> %x1) {
 ; X32-LABEL: combine_permvar_8f64_as_permpd:
 ; X32:       # BB#0:
-; X32-NEXT:    vmovapd {{.*#+}} zmm1 = <3,0,2,0,1,0,u,u,u,u,6,0,5,0,4,0>
-; X32-NEXT:    vpermpd %zmm0, %zmm1, %zmm0
+; X32-NEXT:    vpermpd {{.*#+}} zmm0 = zmm0[3,2,1,0,7,6,5,4]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: combine_permvar_8f64_as_permpd:
@@ -719,8 +714,7 @@ define <8 x double> @combine_permvar_8f64_as_permpd_mask(<8 x double> %x0, <8 x 
 ; X32:       # BB#0:
 ; X32-NEXT:    movzbl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    kmovd %eax, %k1
-; X32-NEXT:    vmovapd {{.*#+}} zmm2 = <3,0,2,0,1,0,u,u,u,u,6,0,5,0,4,0>
-; X32-NEXT:    vpermpd %zmm0, %zmm2, %zmm1 {%k1}
+; X32-NEXT:    vpermpd {{.*#+}} zmm1 {%k1} = zmm0[3,2,1,0,7,6,5,4]
 ; X32-NEXT:    vmovapd %zmm1, %zmm0
 ; X32-NEXT:    retl
 ;
