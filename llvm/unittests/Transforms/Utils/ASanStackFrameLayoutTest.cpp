@@ -37,7 +37,8 @@ ShadowBytesToString(ArrayRef<uint8_t> ShadowBytes) {
     SmallVector<ASanStackVariableDescription, 10> Vars = V;                    \
     ASanStackFrameLayout L =                                                   \
         ComputeASanStackFrameLayout(Vars, Granularity, MinHeaderSize);         \
-    EXPECT_STREQ(ExpectedDescr, L.DescriptionString.c_str());                  \
+    EXPECT_STREQ(ExpectedDescr,                                                \
+                 ComputeASanStackFrameDescription(Vars).c_str());              \
     EXPECT_EQ(ExpectedShadow, ShadowBytesToString(GetShadowBytes(Vars, L)));   \
     EXPECT_EQ(ExpectedShadowAfterScope,                                        \
               ShadowBytesToString(GetShadowBytesAfterScope(Vars, L)));         \
