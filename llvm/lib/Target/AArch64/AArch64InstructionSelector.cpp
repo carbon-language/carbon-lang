@@ -123,8 +123,13 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
                                unsigned OpSize) {
   switch (RegBankID) {
   case AArch64::GPRRegBankID:
-    switch (OpSize) {
-    case 32:
+    if (OpSize <= 32) {
+      assert((OpSize == 32 || (GenericOpc != TargetOpcode::G_SDIV &&
+                               GenericOpc != TargetOpcode::G_UDIV &&
+                               GenericOpc != TargetOpcode::G_LSHR &&
+                               GenericOpc != TargetOpcode::G_ASHR)) &&
+             "operation should have been legalized before now");
+
       switch (GenericOpc) {
       case TargetOpcode::G_OR:
         return AArch64::ORRWrr;
@@ -149,7 +154,7 @@ static unsigned selectBinaryOp(unsigned GenericOpc, unsigned RegBankID,
       default:
         return GenericOpc;
       }
-    case 64:
+    } else if (OpSize == 64) {
       switch (GenericOpc) {
       case TargetOpcode::G_OR:
         return AArch64::ORRXrr;
@@ -676,7 +681,7 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
 
     unsigned ZeroReg;
     unsigned NewOpc;
-    if (Ty == LLT::scalar(32)) {
+    if (Ty.isScalar() && Ty.getSizeInBits() <= 32) {
       NewOpc = AArch64::MADDWrrr;
       ZeroReg = AArch64::WZR;
     } else if (Ty == LLT::scalar(64)) {
