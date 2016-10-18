@@ -3167,9 +3167,9 @@ static bool isCanonicalExceptionSpecification(
   return false;
 }
 
-QualType
-ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
-                            const FunctionProtoType::ExtProtoInfo &EPI) const {
+QualType ASTContext::getFunctionTypeInternal(
+    QualType ResultTy, ArrayRef<QualType> ArgArray,
+    const FunctionProtoType::ExtProtoInfo &EPI, bool OnlyWantCanonical) const {
   size_t NumArgs = ArgArray.size();
 
   // Unique functions, to guarantee there is only one function of a particular
@@ -3188,9 +3188,10 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
 
     // If we find a pre-existing equivalent FunctionProtoType, we can just reuse
     // it so long as our exception specification doesn't contain a dependent
-    // noexcept expression. If it /does/, we're going to need to create a type
+    // noexcept expression, or we're just looking for a canonical type.
+    // Otherwise, we're going to need to create a type
     // sugar node to hold the concrete expression.
-    if (EPI.ExceptionSpec.Type != EST_ComputedNoexcept ||
+    if (OnlyWantCanonical || EPI.ExceptionSpec.Type != EST_ComputedNoexcept ||
         EPI.ExceptionSpec.NoexceptExpr == FPT->getNoexceptExpr())
       return Existing;
 
@@ -3211,6 +3212,10 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
   for (unsigned i = 0; i != NumArgs && isCanonical; ++i)
     if (!ArgArray[i].isCanonicalAsParam())
       isCanonical = false;
+
+  if (OnlyWantCanonical)
+    assert(isCanonical &&
+           "given non-canonical parameters constructing canonical type");
 
   // If this type isn't canonical, get the canonical version of it if we don't
   // already have it. The exception spec is only partially part of the
@@ -3274,15 +3279,14 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
             Value.getBoolValue() ? EST_BasicNoexcept : EST_None;
         break;
       }
-      assert(isCanonicalExceptionSpecification(CanonicalEPI.ExceptionSpec,
-                                               NoexceptInType));
     } else {
       CanonicalEPI.ExceptionSpec = FunctionProtoType::ExceptionSpecInfo();
     }
 
     // Adjust the canonical function result type.
     CanQualType CanResultTy = getCanonicalFunctionResultType(ResultTy);
-    Canonical = getFunctionType(CanResultTy, CanonicalArgs, CanonicalEPI);
+    Canonical =
+        getFunctionTypeInternal(CanResultTy, CanonicalArgs, CanonicalEPI, true);
 
     // Get the new insert position for the node we care about.
     FunctionProtoType *NewIP =

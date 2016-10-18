@@ -12,6 +12,10 @@ template<bool A, bool B> void redecl2() noexcept(B); // expected-error {{conflic
 template<typename A, typename B> void redecl3() throw(A);
 template<typename A, typename B> void redecl3() throw(B);
 
+typedef int I;
+template<bool B> void redecl4(I) noexcept(B);
+template<bool B> void redecl4(I) noexcept(B);
+
 namespace DependentDefaultCtorExceptionSpec {
   template<typename> struct T { static const bool value = true; };
 
