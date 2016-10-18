@@ -19,7 +19,7 @@ int isxdigit_l(int __c, locale_t __l) {
     return isxdigit(__c);
 }
 
-int iswxdigit_l(wchar_t __c, locale_t __l) {
+int iswxdigit_l(wint_t __c, locale_t __l) {
     return isxdigit(__c);
 }
 
