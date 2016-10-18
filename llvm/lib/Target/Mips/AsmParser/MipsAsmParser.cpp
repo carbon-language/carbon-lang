@@ -4553,8 +4553,60 @@ MipsAsmParser::parseMemOperand(OperandVector &Operands) {
             MipsOperand::CreateMem(std::move(Base), IdVal, S, E, *this));
         return MatchOperand_Success;
       }
-      Error(Parser.getTok().getLoc(), "'(' expected");
-      return MatchOperand_ParseFail;
+      MCBinaryExpr::Opcode Opcode;
+      // GAS and LLVM treat comparison operators different. GAS will generate -1
+      // or 0, while LLVM will generate 0 or 1. Since a comparsion operator is
+      // highly unlikely to be found in a memory offset expression, we don't
+      // handle them.
+      switch (Tok.getKind()) {
+      case AsmToken::Plus:
+        Opcode = MCBinaryExpr::Add;
+        Parser.Lex();
+        break;
+      case AsmToken::Minus:
+        Opcode = MCBinaryExpr::Sub;
+        Parser.Lex();
+        break;
+      case AsmToken::Star:
+        Opcode = MCBinaryExpr::Mul;
+        Parser.Lex();
+        break;
+      case AsmToken::Pipe:
+        Opcode = MCBinaryExpr::Or;
+        Parser.Lex();
+        break;
+      case AsmToken::Amp:
+        Opcode = MCBinaryExpr::And;
+        Parser.Lex();
+        break;
+      case AsmToken::LessLess:
+        Opcode = MCBinaryExpr::Shl;
+        Parser.Lex();
+        break;
+      case AsmToken::GreaterGreater:
+        Opcode = MCBinaryExpr::LShr;
+        Parser.Lex();
+        break;
+      case AsmToken::Caret:
+        Opcode = MCBinaryExpr::Xor;
+        Parser.Lex();
+        break;
+      case AsmToken::Slash:
+        Opcode = MCBinaryExpr::Div;
+        Parser.Lex();
+        break;
+      case AsmToken::Percent:
+        Opcode = MCBinaryExpr::Mod;
+        Parser.Lex();
+        break;
+      default:
+        Error(Parser.getTok().getLoc(), "'(' or expression expected");
+        return MatchOperand_ParseFail;
+      }
+      const MCExpr * NextExpr;
+      if (getParser().parseExpression(NextExpr))
+        return MatchOperand_ParseFail;
+      IdVal = MCBinaryExpr::create(Opcode, IdVal, NextExpr, getContext());
     }
 
     Parser.Lex(); // Eat the '(' token.
