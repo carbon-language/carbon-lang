@@ -651,6 +651,19 @@ SectionPiece *MergeInputSection<ELFT>::getSectionPiece(uintX_t Offset) {
   return const_cast<SectionPiece *>(This->getSectionPiece(Offset));
 }
 
+template <class It, class T, class Compare>
+static It fastUpperBound(It First, It Last, const T &Value, Compare Comp) {
+  size_t Size = std::distance(First, Last);
+  assert(Size != 0);
+  while (Size != 1) {
+    size_t H = Size / 2;
+    const It MI = First + H;
+    Size -= H;
+    First = Comp(Value, *MI) ? First : First + H;
+  }
+  return Comp(Value, *First) ? First : First + 1;
+}
+
 template <class ELFT>
 const SectionPiece *
 MergeInputSection<ELFT>::getSectionPiece(uintX_t Offset) const {
@@ -659,7 +672,7 @@ MergeInputSection<ELFT>::getSectionPiece(uintX_t Offset) const {
     fatal(getName(this) + ": entry is past the end of the section");
 
   // Find the element this offset points to.
-  auto I = std::upper_bound(
+  auto I = fastUpperBound(
       Pieces.begin(), Pieces.end(), Offset,
       [](const uintX_t &A, const SectionPiece &B) { return A < B.InputOff; });
   --I;
