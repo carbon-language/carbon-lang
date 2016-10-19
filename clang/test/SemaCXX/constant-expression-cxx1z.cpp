@@ -33,7 +33,9 @@ namespace NoexceptFunctionTypes {
   template<typename T> struct A {
     constexpr bool f() noexcept(true) { return true; }
     constexpr bool g() { return f(); }
+    constexpr bool operator()() const noexcept(true) { return true; }
   };
   static_assert(A<int>().f());
   static_assert(A<int>().g());
+  static_assert(A<int>()());
 }
