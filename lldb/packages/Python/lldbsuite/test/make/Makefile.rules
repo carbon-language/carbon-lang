@@ -354,7 +354,9 @@ ifneq "$(strip $(DYLIB_CXX_SOURCES))" ""
     DYLIB_OBJECTS +=$(strip $(DYLIB_CXX_SOURCES:.cpp=.o))
     CXX = $(call cxx_compiler,$(CC))
     LD = $(call cxx_linker,$(CC))
-    LDFLAGS += --driver-mode=g++
+    ifeq ($(findstring clang, $(cxx_linker)), clang)
+      LDFLAGS += --driver-mode=g++
+    endif
 endif
 
 #----------------------------------------------------------------------
@@ -378,7 +380,9 @@ endif
 ifneq "$(strip $(CXX_SOURCES))" ""
 	OBJECTS +=$(strip $(CXX_SOURCES:.cpp=.o))
 	CXX = $(call cxx_compiler,$(CC))
-  LDFLAGS += --driver-mode=g++
+  ifeq ($(findstring clang, $(cxx_linker)), clang)
+    LDFLAGS += --driver-mode=g++
+  endif
 	LD = $(call cxx_linker,$(CC))
 endif
 
@@ -397,7 +401,9 @@ ifneq "$(strip $(OBJCXX_SOURCES))" ""
 	OBJECTS +=$(strip $(OBJCXX_SOURCES:.mm=.o))
 	CXX = $(call cxx_compiler,$(CC))
 	LD = $(call cxx_linker,$(CC))
-  LDFLAGS += --driver-mode=g++
+  ifeq ($(findstring clang, $(cxx_linker)), clang)
+    LDFLAGS += --driver-mode=g++
+  endif
 	ifeq "$(findstring lobjc,$(LDFLAGS))" ""
 		LDFLAGS +=-lobjc
 	endif
