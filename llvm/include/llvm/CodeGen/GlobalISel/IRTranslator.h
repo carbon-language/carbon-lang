@@ -120,8 +120,6 @@ private:
 
   bool translateMemcpy(const CallInst &CI);
 
-  void getStackGuard(unsigned DstReg);
-
   bool translateKnownIntrinsic(const CallInst &CI, Intrinsic::ID ID);
 
   /// Translate call instruction.
