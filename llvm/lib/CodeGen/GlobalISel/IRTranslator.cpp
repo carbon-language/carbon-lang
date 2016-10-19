@@ -382,6 +382,26 @@ bool IRTranslator::translateMemcpy(const CallInst &CI) {
                         CallLowering::ArgInfo(0, CI.getType()), Args);
 }
 
+void IRTranslator::getStackGuard(unsigned DstReg) {
+  auto MIB = MIRBuilder.buildInstr(TargetOpcode::LOAD_STACK_GUARD);
+  MIB.addDef(DstReg);
+
+  auto &MF = MIRBuilder.getMF();
+  auto &TLI = *MF.getSubtarget().getTargetLowering();
+  Value *Global = TLI.getSDagStackGuard(*MF.getFunction()->getParent());
+  if (!Global)
+    return;
+
+  MachinePointerInfo MPInfo(Global);
+  MachineInstr::mmo_iterator MemRefs = MF.allocateMemRefsArray(1);
+  auto Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOInvariant |
+               MachineMemOperand::MODereferenceable;
+  *MemRefs =
+      MF.getMachineMemOperand(MPInfo, Flags, DL->getPointerSizeInBits() / 8,
+                              DL->getPointerABIAlignment() / 8);
+  MIB.setMemRefs(MemRefs, MemRefs + 1);
+}
+
 bool IRTranslator::translateKnownIntrinsic(const CallInst &CI,
                                            Intrinsic::ID ID) {
   unsigned Op = 0;
@@ -400,6 +420,19 @@ bool IRTranslator::translateKnownIntrinsic(const CallInst &CI,
     const ConstantInt *Min = cast<ConstantInt>(CI.getArgOperand(1));
 
     MIRBuilder.buildConstant(getOrCreateVReg(CI), Min->isZero() ? -1ULL : 0);
+    return true;
+  }
+  case Intrinsic::stackguard:
+    getStackGuard(getOrCreateVReg(CI));
+    return true;
+  case Intrinsic::stackprotector: {
+    // LLT PtrTy{*CI.getArgOperand(0).getType(), *DL};
+    // unsigned GuardVal = MRI->createGenericVirtualRegister(PtrTy);
+    // getStackGuard(GuardVal);
+
+    // AllocaInst *Slot = cast<AllocaInst>(I.getArgOperand(1));
+    // unsigned StackSlot = MIRBuilder.buildFrameIndex(FrameReg, FI);
+    // MIRBuilder.buildStore(GuardVal, StackSlot);
     return true;
   }
   }
