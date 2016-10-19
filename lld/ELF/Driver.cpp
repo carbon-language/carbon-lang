@@ -41,6 +41,7 @@ LinkerDriver *elf::Driver;
 bool elf::link(ArrayRef<const char *> Args, raw_ostream &Error) {
   HasError = false;
   ErrorOS = &Error;
+  Argv0 = Args[0];
 
   Configuration C;
   LinkerDriver D;
