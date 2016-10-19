@@ -389,6 +389,27 @@ void AliasSetTracker::add(MemSetInst *MSI) {
     AS.setVolatile();
 }
 
+void AliasSetTracker::add(MemTransferInst *MTI) {
+  AAMDNodes AAInfo;
+  MTI->getAAMetadata(AAInfo);
+
+  uint64_t Len;
+  if (ConstantInt *C = dyn_cast<ConstantInt>(MTI->getLength()))
+    Len = C->getZExtValue();
+  else
+    Len = MemoryLocation::UnknownSize;
+
+  AliasSet &ASSrc =
+      addPointer(MTI->getRawSource(), Len, AAInfo, AliasSet::RefAccess);
+  if (MTI->isVolatile())
+    ASSrc.setVolatile();
+
+  AliasSet &ASDst =
+      addPointer(MTI->getRawDest(), Len, AAInfo, AliasSet::ModAccess);
+  if (MTI->isVolatile())
+    ASDst.setVolatile();
+}
+
 void AliasSetTracker::addUnknown(Instruction *Inst) {
   if (isa<DbgInfoIntrinsic>(Inst))
     return; // Ignore DbgInfo Intrinsics.
@@ -415,8 +436,9 @@ void AliasSetTracker::add(Instruction *I) {
     return add(VAAI);
   if (MemSetInst *MSI = dyn_cast<MemSetInst>(I))
     return add(MSI);
+  if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(I))
+    return add(MTI);
   return addUnknown(I);
-  // FIXME: add support of memcpy and memmove.
 }
 
 void AliasSetTracker::add(BasicBlock &BB) {

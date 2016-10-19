@@ -349,6 +349,7 @@ public:
   void add(StoreInst *SI);
   void add(VAArgInst *VAAI);
   void add(MemSetInst *MSI);
+  void add(MemTransferInst *MTI);
   void add(Instruction *I);       // Dispatch to one of the other add methods...
   void add(BasicBlock &BB);       // Add all instructions in basic block
   void add(const AliasSetTracker &AST); // Add alias relations from another AST
