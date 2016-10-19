@@ -2180,9 +2180,11 @@ llvm::DIType *CGDebugInfo::CreateType(const ArrayType *Ty, llvm::DIFile *Unit) {
     if (const auto *CAT = dyn_cast<ConstantArrayType>(Ty))
       Count = CAT->getSize().getZExtValue();
     else if (const auto *VAT = dyn_cast<VariableArrayType>(Ty)) {
-      llvm::APSInt V;
-      if (VAT->getSizeExpr()->EvaluateAsInt(V, CGM.getContext()))
-        Count = V.getExtValue();
+      if (Expr *Size = VAT->getSizeExpr()) {
+        llvm::APSInt V;
+        if (Size->EvaluateAsInt(V, CGM.getContext()))
+          Count = V.getExtValue();
+      }
     }
 
     // FIXME: Verify this is right for VLAs.
