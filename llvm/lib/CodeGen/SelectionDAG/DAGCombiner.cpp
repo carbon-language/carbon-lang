@@ -4704,13 +4704,11 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
     return N0;
 
   // fold vector ops
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
-  if (VT.isVector()) {
+  if (VT.isVector())
     if (SDValue FoldedVOp = SimplifyVBinOp(N))
       return FoldedVOp;
 
-    N1C = isConstOrConstSplat(N1);
-  }
+  ConstantSDNode *N1C = isConstOrConstSplat(N1);
 
   // fold (sra c1, c2) -> (sra c1, c2)
   ConstantSDNode *N0C = getAsNonOpaqueConstant(N0);
@@ -4856,13 +4854,11 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   unsigned OpSizeInBits = VT.getScalarSizeInBits();
 
   // fold vector ops
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
-  if (VT.isVector()) {
+  if (VT.isVector())
     if (SDValue FoldedVOp = SimplifyVBinOp(N))
       return FoldedVOp;
 
-    N1C = isConstOrConstSplat(N1);
-  }
+  ConstantSDNode *N1C = isConstOrConstSplat(N1);
 
   // fold (srl c1, c2) -> c1 >>u c2
   ConstantSDNode *N0C = getAsNonOpaqueConstant(N0);
