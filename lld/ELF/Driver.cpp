@@ -630,7 +630,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   }
 
   if (Files.empty() && !HasError)
-    error("no input files.");
+    error("no input files");
 
   // If -m <machine_type> was not given, infer it from object files.
   if (Config->EKind == ELFNoneKind) {
