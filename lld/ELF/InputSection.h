@@ -167,7 +167,10 @@ public:
   void splitIntoPieces();
 
   // Mark the piece at a given offset live. Used by GC.
-  void markLiveAt(uintX_t Offset) { LiveOffsets.insert(Offset); }
+  void markLiveAt(uintX_t Offset) {
+    assert(this->getSectionHdr()->sh_flags & llvm::ELF::SHF_ALLOC);
+    LiveOffsets.insert(Offset);
+  }
 
   // Translate an offset in the input section to an offset
   // in the output section.
