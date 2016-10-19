@@ -173,3 +173,117 @@ for.end:
 exit:
   ret void
 }
+
+declare void @llvm.experimental.guard(i1, ...)
+
+define void @test_guard_one_bb(i32* %base, i32 %limit, i32 %start) {
+; CHECK-LABEL: @test_guard_one_bb(
+; CHECK-NOT: trunc
+; CHECK-NOT: icmp slt i32
+
+for.body.lr.ph:
+  br label %for.body
+
+for.body:
+  %i = phi i32 [ %start, %for.body.lr.ph ], [ %i.inc, %for.body ]
+  %within_limits = icmp ult i32 %i, 64
+  %i.i64 = zext i32 %i to i64
+  %arrayidx = getelementptr inbounds i32, i32* %base, i64 %i.i64
+  %val = load i32, i32* %arrayidx, align 4
+  call void(i1, ...) @llvm.experimental.guard(i1 %within_limits) [ "deopt"() ]
+  %i.inc = add nsw nuw i32 %i, 1
+  %cmp = icmp slt i32 %i.inc, %limit
+  br i1 %cmp, label %for.body, label %for.end
+
+for.end:
+  br label %exit
+
+exit:
+  ret void
+}
+
+define void @test_guard_in_the_same_bb(i32* %base, i32 %limit, i32 %start) {
+; CHECK-LABEL: @test_guard_in_the_same_bb(
+; CHECK-NOT: trunc
+; CHECK-NOT: icmp slt i32
+
+for.body.lr.ph:
+  br label %for.body
+
+for.body:
+  %i = phi i32 [ %start, %for.body.lr.ph ], [ %i.inc, %for.inc ]
+  %within_limits = icmp ult i32 %i, 64
+  %i.i64 = zext i32 %i to i64
+  %arrayidx = getelementptr inbounds i32, i32* %base, i64 %i.i64
+  %val = load i32, i32* %arrayidx, align 4
+  br label %for.inc
+
+for.inc:
+  call void(i1, ...) @llvm.experimental.guard(i1 %within_limits) [ "deopt"() ]
+  %i.inc = add nsw nuw i32 %i, 1
+  %cmp = icmp slt i32 %i.inc, %limit
+  br i1 %cmp, label %for.body, label %for.end
+
+for.end:
+  br label %exit
+
+exit:
+  ret void
+}
+
+define void @test_guard_in_idom(i32* %base, i32 %limit, i32 %start) {
+; CHECK-LABEL: @test_guard_in_idom(
+; CHECK-NOT: trunc
+; CHECK-NOT: icmp slt i32
+
+for.body.lr.ph:
+  br label %for.body
+
+for.body:
+  %i = phi i32 [ %start, %for.body.lr.ph ], [ %i.inc, %for.inc ]
+  %within_limits = icmp ult i32 %i, 64
+  call void(i1, ...) @llvm.experimental.guard(i1 %within_limits) [ "deopt"() ]
+  %i.i64 = zext i32 %i to i64
+  %arrayidx = getelementptr inbounds i32, i32* %base, i64 %i.i64
+  %val = load i32, i32* %arrayidx, align 4
+  br label %for.inc
+
+for.inc:
+  %i.inc = add nsw nuw i32 %i, 1
+  %cmp = icmp slt i32 %i.inc, %limit
+  br i1 %cmp, label %for.body, label %for.end
+
+for.end:
+  br label %exit
+
+exit:
+  ret void
+}
+
+define void @test_guard_merge_ranges(i32* %base, i32 %limit, i32 %start) {
+; CHECK-LABEL: @test_guard_merge_ranges(
+; CHECK-NOT: trunc
+; CHECK-NOT: icmp slt i32
+
+for.body.lr.ph:
+  br label %for.body
+
+for.body:
+  %i = phi i32 [ %start, %for.body.lr.ph ], [ %i.inc, %for.body ]
+  %within_limits.1 = icmp ult i32 %i, 64
+  call void(i1, ...) @llvm.experimental.guard(i1 %within_limits.1) [ "deopt"() ]
+  %within_limits.2 = icmp ult i32 %i, 2147483647
+  call void(i1, ...) @llvm.experimental.guard(i1 %within_limits.2) [ "deopt"() ]
+  %i.i64 = zext i32 %i to i64
+  %arrayidx = getelementptr inbounds i32, i32* %base, i64 %i.i64
+  %val = load i32, i32* %arrayidx, align 4
+  %i.inc = add nsw nuw i32 %i, 1
+  %cmp = icmp slt i32 %i.inc, %limit
+  br i1 %cmp, label %for.body, label %for.end
+
+for.end:
+  br label %exit
+
+exit:
+  ret void
+}

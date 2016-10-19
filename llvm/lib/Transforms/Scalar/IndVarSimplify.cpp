@@ -892,6 +892,10 @@ class WidenIV {
   ScalarEvolution *SE;
   DominatorTree   *DT;
 
+  // Does the module have any calls to the llvm.experimental.guard intrinsic
+  // at all? If not we can avoid scanning instructions looking for guards.
+  bool HasGuards;
+
   // Result
   PHINode *WidePhi;
   Instruction *WideInc;
@@ -938,13 +942,14 @@ class WidenIV {
 public:
   WidenIV(const WideIVInfo &WI, LoopInfo *LInfo,
           ScalarEvolution *SEv, DominatorTree *DTree,
-          SmallVectorImpl<WeakVH> &DI) :
+          SmallVectorImpl<WeakVH> &DI, bool HasGuards) :
     OrigPhi(WI.NarrowIV),
     WideType(WI.WidestNativeType),
     LI(LInfo),
     L(LI->getLoopFor(OrigPhi->getParent())),
     SE(SEv),
     DT(DTree),
+    HasGuards(HasGuards),
     WidePhi(nullptr),
     WideInc(nullptr),
     WideIncExpr(nullptr),
@@ -1609,6 +1614,20 @@ void WidenIV::calculatePostIncRange(Instruction *NarrowDef,
     updatePostIncRangeInfo(NarrowDef, NarrowUser, NarrowDefRange);
   };
 
+  auto UpdateRangeFromGuards = [&](Instruction *Ctx) {
+    if (!HasGuards)
+      return;
+
+    for (Instruction &I : make_range(Ctx->getIterator().getReverse(),
+                                     Ctx->getParent()->rend())) {
+      Value *C = nullptr;
+      if (match(&I, m_Intrinsic<Intrinsic::experimental_guard>(m_Value(C))))
+        UpdateRangeFromCondition(C, /*TrueDest=*/true);
+    }
+  };
+
+  UpdateRangeFromGuards(NarrowUser);
+
   BasicBlock *NarrowUserBB = NarrowUser->getParent();
   // If NarrowUserBB is statically unreachable asking dominator queries may 
   // yield suprising results. (e.g. the block may not have a dom tree node)
@@ -1620,6 +1639,7 @@ void WidenIV::calculatePostIncRange(Instruction *NarrowDef,
        DTB = DTB->getIDom()) {
     auto *BB = DTB->getBlock();
     auto *TI = BB->getTerminator();
+    UpdateRangeFromGuards(TI);
 
     auto *BI = dyn_cast<BranchInst>(TI);
     if (!BI || !BI->isConditional())
@@ -1711,6 +1731,10 @@ void IndVarSimplify::simplifyAndExtend(Loop *L,
                                        LoopInfo *LI) {
   SmallVector<WideIVInfo, 8> WideIVs;
 
+  auto *GuardDecl = L->getBlocks()[0]->getModule()->getFunction(
+          Intrinsic::getName(Intrinsic::experimental_guard));
+  bool HasGuards = GuardDecl && !GuardDecl->use_empty();
+
   SmallVector<PHINode*, 8> LoopPhis;
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I) {
     LoopPhis.push_back(cast<PHINode>(I));
@@ -1740,7 +1764,7 @@ void IndVarSimplify::simplifyAndExtend(Loop *L,
     } while(!LoopPhis.empty());
 
     for (; !WideIVs.empty(); WideIVs.pop_back()) {
-      WidenIV Widener(WideIVs.back(), LI, SE, DT, DeadInsts);
+      WidenIV Widener(WideIVs.back(), LI, SE, DT, DeadInsts, HasGuards);
       if (PHINode *WidePhi = Widener.createWideIV(Rewriter)) {
         Changed = true;
         LoopPhis.push_back(WidePhi);
