@@ -4653,16 +4653,15 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
       }
     }
   }
+
   // fold (shl (sra x, c1), c1) -> (and x, (shl -1, c1))
-  if (N1C && N0.getOpcode() == ISD::SRA && N1 == N0.getOperand(1)) {
+  if (N0.getOpcode() == ISD::SRA && N1 == N0.getOperand(1) &&
+      isConstantOrConstantVector(N1, /* No Opaques */ true)) {
     unsigned BitSize = VT.getScalarSizeInBits();
     SDLoc DL(N);
-    SDValue HiBitsMask =
-      DAG.getConstant(APInt::getHighBitsSet(BitSize,
-                                            BitSize - N1C->getZExtValue()),
-                      DL, VT);
-    return DAG.getNode(ISD::AND, DL, VT, N0.getOperand(0),
-                       HiBitsMask);
+    SDValue AllBits = DAG.getConstant(APInt::getAllOnesValue(BitSize), DL, VT);
+    SDValue HiBitsMask = DAG.getNode(ISD::SHL, DL, VT, AllBits, N1);
+    return DAG.getNode(ISD::AND, DL, VT, N0.getOperand(0), HiBitsMask);
   }
 
   // fold (shl (add x, c1), c2) -> (add (shl x, c2), c1 << c2)
