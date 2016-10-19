@@ -714,20 +714,22 @@ bool Sema::CheckCUDACall(SourceLocation Loc, FunctionDecl *Callee) {
     }
   }();
 
+  if (DiagKind == CUDADiagBuilder::K_Nop)
+    return true;
+
   // Avoid emitting this error twice for the same location.  Using a hashtable
   // like this is unfortunate, but because we must continue parsing as normal
   // after encountering a deferred error, it's otherwise very tricky for us to
   // ensure that we only emit this deferred error once.
-  if (!LocsWithCUDACallDiags.insert(Loc.getRawEncoding()).second)
+  if (!LocsWithCUDACallDiags.insert({Caller, Loc.getRawEncoding()}).second)
     return true;
 
-  bool IsImmediateErr =
-      CUDADiagBuilder(DiagKind, Loc, diag::err_ref_bad_target, Caller, *this)
+  CUDADiagBuilder(DiagKind, Loc, diag::err_ref_bad_target, Caller, *this)
       << IdentifyCUDATarget(Callee) << Callee << IdentifyCUDATarget(Caller);
   CUDADiagBuilder(DiagKind, Callee->getLocation(), diag::note_previous_decl,
                   Caller, *this)
       << Callee;
-  return !IsImmediateErr;
+  return DiagKind != CUDADiagBuilder::K_Immediate;
 }
 
 void Sema::CUDASetLambdaAttrs(CXXMethodDecl *Method) {

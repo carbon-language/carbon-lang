@@ -9252,10 +9252,10 @@ public:
   llvm::DenseMap<const FunctionDecl *, std::vector<PartialDiagnosticAt>>
       CUDADeferredDiags;
 
-  /// Raw encodings of SourceLocations for which CheckCUDACall has emitted a
-  /// (maybe deferred) "bad call" diagnostic.  We use this to avoid emitting the
-  /// same deferred diag twice.
-  llvm::DenseSet<unsigned> LocsWithCUDACallDiags;
+  /// FunctionDecls plus raw encodings of SourceLocations for which
+  /// CheckCUDACall has emitted a (maybe deferred) "bad call" diagnostic.  We
+  /// use this to avoid emitting the same deferred diag twice.
+  llvm::DenseSet<std::pair<FunctionDecl *, unsigned>> LocsWithCUDACallDiags;
 
   /// The set of CUDA functions that we've discovered must be emitted by tracing
   /// the call graph.  Functions that we can tell a priori must be emitted
