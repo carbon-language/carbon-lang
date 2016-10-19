@@ -423,6 +423,9 @@ ifneq "$(strip $(ARCHIVE_CXX_SOURCES))" ""
 	ARCHIVE_OBJECTS +=$(strip $(ARCHIVE_CXX_SOURCES:.cpp=.o))
 	CXX = $(call cxx_compiler,$(CC))
 	LD = $(call cxx_linker,$(CC))
+  ifeq ($(findstring clang, $(cxx_linker)), clang)
+    LDFLAGS += --driver-mode=g++
+  endif
 endif
 
 #----------------------------------------------------------------------
@@ -440,6 +443,9 @@ ifneq "$(strip $(ARCHIVE_OBJCXX_SOURCES))" ""
 	ARCHIVE_OBJECTS +=$(strip $(ARCHIVE_OBJCXX_SOURCES:.mm=.o))
 	CXX = $(call cxx_compiler,$(CC))
 	LD = $(call cxx_linker,$(CC))
+  ifeq ($(findstring clang, $(cxx_linker)), clang)
+    LDFLAGS += --driver-mode=g++
+  endif
 	ifeq "$(findstring lobjc,$(LDFLAGS))" ""
 		LDFLAGS +=-lobjc
 	endif
