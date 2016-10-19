@@ -4678,13 +4678,12 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   }
 
   // fold (shl (mul x, c1), c2) -> (mul x, c1 << c2)
-  if (N0.getOpcode() == ISD::MUL && N0.getNode()->hasOneUse()) {
-    if (isConstantOrConstantVector(N1, /* No Opaques */ true) &&
-        isConstantOrConstantVector(N0.getOperand(1), /* No Opaques */ true)) {
-      SDValue Shl = DAG.getNode(ISD::SHL, SDLoc(N1), VT, N0.getOperand(1), N1);
-      AddToWorklist(Shl.getNode());
-      return DAG.getNode(ISD::MUL, SDLoc(N), VT, N0.getOperand(0), Shl);
-    }
+  if (N0.getOpcode() == ISD::MUL && N0.getNode()->hasOneUse() &&
+      isConstantOrConstantVector(N1, /* No Opaques */ true) &&
+      isConstantOrConstantVector(N0.getOperand(1), /* No Opaques */ true)) {
+    SDValue Shl = DAG.getNode(ISD::SHL, SDLoc(N1), VT, N0.getOperand(1), N1);
+    AddToWorklist(Shl.getNode());
+    return DAG.getNode(ISD::MUL, SDLoc(N), VT, N0.getOperand(0), Shl);
   }
 
   if (N1C && !N1C->isOpaque())
