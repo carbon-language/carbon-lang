@@ -615,8 +615,9 @@ MergeInputSection<ELFT>::splitNonStrings(ArrayRef<uint8_t> Data,
   std::vector<SectionPiece> V;
   size_t Size = Data.size();
   assert((Size % EntSize) == 0);
+  bool IsAlloca = this->getSectionHdr()->sh_flags & SHF_ALLOC;
   for (unsigned I = 0, N = Size; I != N; I += EntSize)
-    V.emplace_back(I, Data.slice(I, EntSize));
+    V.emplace_back(I, Data.slice(I, EntSize), !IsAlloca);
   return V;
 }
 
