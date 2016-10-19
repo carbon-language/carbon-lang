@@ -73,12 +73,6 @@
 #define LLVM_MSC_PREREQ(version) 0
 #endif
 
-#if !defined(_MSC_VER) || defined(__clang__) || LLVM_MSC_PREREQ(1900)
-#define LLVM_NOEXCEPT noexcept
-#else
-#define LLVM_NOEXCEPT throw()
-#endif
-
 /// \brief Does the compiler support ref-qualifiers for *this?
 ///
 /// Sadly, this is separate from just rvalue reference support because GCC

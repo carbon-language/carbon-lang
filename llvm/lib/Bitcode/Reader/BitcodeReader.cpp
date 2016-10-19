@@ -6581,7 +6581,7 @@ namespace {
 // will be removed once this transition is complete. Clients should prefer to
 // deal with the Error value directly, rather than converting to error_code.
 class BitcodeErrorCategoryType : public std::error_category {
-  const char *name() const LLVM_NOEXCEPT override {
+  const char *name() const noexcept override {
     return "llvm.bitcode";
   }
   std::string message(int IE) const override {
