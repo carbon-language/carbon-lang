@@ -526,8 +526,8 @@ define <4 x i32> @combine_vec_shl_add1(<4 x i32> %x) {
 ;
 ; AVX-LABEL: combine_vec_shl_add1:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpaddd {{.*}}(%rip), %xmm0, %xmm0
 ; AVX-NEXT:    vpsllvd {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vpaddd {{.*}}(%rip), %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %1 = add <4 x i32> %x, <i32 5, i32 6, i32 7, i32 8>
   %2 = shl <4 x i32> %1, <i32 1, i32 2, i32 3, i32 4>
