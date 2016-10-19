@@ -1770,15 +1770,25 @@ class UnaryVRRa<string mnemonic, bits<16> opcode, SDPatternOperator operator,
   let M5 = m5;
 }
 
-multiclass UnaryVRRaSPair<string mnemonic, bits<16> opcode,
-                          SDPatternOperator operator,
-                          SDPatternOperator operator_cc, TypedReg tr1,
-                          TypedReg tr2, bits<4> type, bits<4> modifier = 0,
-                          bits<4> modifier_cc = 1> {
-  def "" : UnaryVRRa<mnemonic, opcode, operator, tr1, tr2, type, 0, modifier>;
+// Declare a pair of instructions, one which sets CC and one which doesn't.
+// The CC-setting form ends with "S" and sets the low bit of M5.
+// The form that does not set CC has an extra operand to optionally allow
+// specifying arbitrary M5 values in assembler.
+multiclass UnaryExtraVRRaSPair<string mnemonic, bits<16> opcode,
+                               SDPatternOperator operator,
+                               SDPatternOperator operator_cc,
+                               TypedReg tr1, TypedReg tr2, bits<4> type> {
+  let M3 = type, M4 = 0 in
+    def "" : InstVRRa<opcode, (outs tr1.op:$V1),
+                      (ins tr2.op:$V2, imm32zx4:$M5),
+                      mnemonic#"\t$V1, $V2, $M5", []>;
+  def : Pat<(tr1.vt (operator (tr2.vt tr2.op:$V2))),
+            (!cast<Instruction>(NAME) tr2.op:$V2, 0)>;
+  def : InstAlias<mnemonic#"\t$V1, $V2",
+                  (!cast<Instruction>(NAME) tr1.op:$V1, tr2.op:$V2, 0)>;
   let Defs = [CC] in
-    def S : UnaryVRRa<mnemonic##"s", opcode, operator_cc, tr1, tr2, type, 0,
-                      modifier_cc>;
+    def S : UnaryVRRa<mnemonic##"s", opcode, operator_cc, tr1, tr2,
+                      type, 0, 1>;
 }
 
 class UnaryVRX<string mnemonic, bits<16> opcode, SDPatternOperator operator,
@@ -2053,12 +2063,33 @@ class BinaryVRRb<string mnemonic, bits<16> opcode, SDPatternOperator operator,
 multiclass BinaryVRRbSPair<string mnemonic, bits<16> opcode,
                            SDPatternOperator operator,
                            SDPatternOperator operator_cc, TypedReg tr1,
-                           TypedReg tr2, bits<4> type,
-                           bits<4> modifier = 0, bits<4> modifier_cc = 1> {
-  def "" : BinaryVRRb<mnemonic, opcode, operator, tr1, tr2, type, modifier>;
+                           TypedReg tr2, bits<4> type, bits<4> modifier = 0> {
+  def "" : BinaryVRRb<mnemonic, opcode, operator, tr1, tr2, type,
+                      !and (modifier, 14)>;
   let Defs = [CC] in
     def S : BinaryVRRb<mnemonic##"s", opcode, operator_cc, tr1, tr2, type,
-                       modifier_cc>;
+                       !add (!and (modifier, 14), 1)>;
+}
+
+// Declare a pair of instructions, one which sets CC and one which doesn't.
+// The CC-setting form ends with "S" and sets the low bit of M5.
+// The form that does not set CC has an extra operand to optionally allow
+// specifying arbitrary M5 values in assembler.
+multiclass BinaryExtraVRRbSPair<string mnemonic, bits<16> opcode,
+                                SDPatternOperator operator,
+                                SDPatternOperator operator_cc,
+                                TypedReg tr1, TypedReg tr2, bits<4> type> {
+  let M4 = type in
+    def "" : InstVRRb<opcode, (outs tr1.op:$V1),
+                      (ins tr2.op:$V2, tr2.op:$V3, imm32zx4:$M5),
+                      mnemonic#"\t$V1, $V2, $V3, $M5", []>;
+  def : Pat<(tr1.vt (operator (tr2.vt tr2.op:$V2), (tr2.vt tr2.op:$V3))),
+            (!cast<Instruction>(NAME) tr2.op:$V2, tr2.op:$V3, 0)>;
+  def : InstAlias<mnemonic#"\t$V1, $V2, $V3",
+                  (!cast<Instruction>(NAME) tr1.op:$V1, tr2.op:$V2,
+                                            tr2.op:$V3, 0)>;
+  let Defs = [CC] in
+    def S : BinaryVRRb<mnemonic##"s", opcode, operator_cc, tr1, tr2, type, 1>;
 }
 
 class BinaryVRRc<string mnemonic, bits<16> opcode, SDPatternOperator operator,
@@ -2073,15 +2104,18 @@ class BinaryVRRc<string mnemonic, bits<16> opcode, SDPatternOperator operator,
   let M6 = m6;
 }
 
+// Declare a pair of instructions, one which sets CC and one which doesn't.
+// The CC-setting form ends with "S" and sets the low bit of M5.
 multiclass BinaryVRRcSPair<string mnemonic, bits<16> opcode,
                            SDPatternOperator operator,
                            SDPatternOperator operator_cc, TypedReg tr1,
                            TypedReg tr2, bits<4> type, bits<4> m5,
-                           bits<4> modifier = 0, bits<4> modifier_cc = 1> {
-  def "" : BinaryVRRc<mnemonic, opcode, operator, tr1, tr2, type, m5, modifier>;
+                           bits<4> modifier = 0> {
+  def "" : BinaryVRRc<mnemonic, opcode, operator, tr1, tr2, type,
+                      m5, !and (modifier, 14)>;
   let Defs = [CC] in
     def S : BinaryVRRc<mnemonic##"s", opcode, operator_cc, tr1, tr2, type,
-                       m5, modifier_cc>;
+                       m5, !add (!and (modifier, 14), 1)>;
 }
 
 class BinaryVRRf<string mnemonic, bits<16> opcode, SDPatternOperator operator,
@@ -2412,18 +2446,22 @@ class TernaryVRRb<string mnemonic, bits<16> opcode, SDPatternOperator operator,
   let M4 = type;
 }
 
-multiclass TernaryVRRbSPair<string mnemonic, bits<16> opcode,
-                            SDPatternOperator operator,
-                            SDPatternOperator operator_cc, TypedReg tr1,
-                            TypedReg tr2, bits<4> type, bits<4> m5or> {
+// Declare a pair of instructions, one which sets CC and one which doesn't.
+// The CC-setting form ends with "S" and sets the low bit of M5.
+// Also create aliases to make use of M5 operand optional in assembler.
+multiclass TernaryOptVRRbSPair<string mnemonic, bits<16> opcode,
+                               SDPatternOperator operator,
+                               SDPatternOperator operator_cc,
+                               TypedReg tr1, TypedReg tr2, bits<4> type,
+                               bits<4> modifier = 0> {
   def "" : TernaryVRRb<mnemonic, opcode, operator, tr1, tr2, type,
-                       imm32zx4even, !and (m5or, 14)>;
+                       imm32zx4even, !and (modifier, 14)>;
   def : InstAlias<mnemonic#"\t$V1, $V2, $V3",
                   (!cast<Instruction>(NAME) tr1.op:$V1, tr2.op:$V2,
                                             tr2.op:$V3, 0)>;
   let Defs = [CC] in
     def S : TernaryVRRb<mnemonic##"s", opcode, operator_cc, tr1, tr2, type,
-                        imm32zx4even, !add(!and (m5or, 14), 1)>;
+                        imm32zx4even, !add(!and (modifier, 14), 1)>;
   def : InstAlias<mnemonic#"s\t$V1, $V2, $V3",
                   (!cast<Instruction>(NAME#"S") tr1.op:$V1, tr2.op:$V2,
                                                 tr2.op:$V3, 0)>;
@@ -2531,18 +2569,22 @@ class QuaternaryVRRd<string mnemonic, bits<16> opcode,
   let M5 = type;
 }
 
-multiclass QuaternaryVRRdSPair<string mnemonic, bits<16> opcode,
-                               SDPatternOperator operator,
-                               SDPatternOperator operator_cc, TypedReg tr1,
-                               TypedReg tr2, bits<4> type, bits<4> m6or> {
+// Declare a pair of instructions, one which sets CC and one which doesn't.
+// The CC-setting form ends with "S" and sets the low bit of M6.
+// Also create aliases to make use of M6 operand optional in assembler.
+multiclass QuaternaryOptVRRdSPair<string mnemonic, bits<16> opcode,
+                                  SDPatternOperator operator,
+                                SDPatternOperator operator_cc,
+                                TypedReg tr1, TypedReg tr2, bits<4> type,
+                                bits<4> modifier = 0> {
   def "" : QuaternaryVRRd<mnemonic, opcode, operator, tr1, tr2, type,
-                          imm32zx4even, !and (m6or, 14)>;
+                          imm32zx4even, !and (modifier, 14)>;
   def : InstAlias<mnemonic#"\t$V1, $V2, $V3, $V4",
                   (!cast<Instruction>(NAME) tr1.op:$V1, tr2.op:$V2,
                                             tr2.op:$V3, tr2.op:$V4, 0)>;
   let Defs = [CC] in
     def S : QuaternaryVRRd<mnemonic##"s", opcode, operator_cc, tr1, tr2, type,
-                           imm32zx4even, !add (!and (m6or, 14), 1)>;
+                           imm32zx4even, !add (!and (modifier, 14), 1)>;
   def : InstAlias<mnemonic#"s\t$V1, $V2, $V3, $V4",
                   (!cast<Instruction>(NAME#"S") tr1.op:$V1, tr2.op:$V2,
                                                 tr2.op:$V3, tr2.op:$V4, 0)>;

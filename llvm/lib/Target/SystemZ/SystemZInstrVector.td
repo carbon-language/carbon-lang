@@ -1036,62 +1036,62 @@ let AddedComplexity = 4 in {
 //===----------------------------------------------------------------------===//
 
 let Predicates = [FeatureVector] in {
-  defm VFAEB : TernaryVRRbSPair<"vfaeb", 0xE782, int_s390_vfaeb, z_vfae_cc,
-                                v128b, v128b, 0, 0>;
-  defm VFAEH : TernaryVRRbSPair<"vfaeh", 0xE782, int_s390_vfaeh, z_vfae_cc,
-                                v128h, v128h, 1, 0>;
-  defm VFAEF : TernaryVRRbSPair<"vfaef", 0xE782, int_s390_vfaef, z_vfae_cc,
-                                v128f, v128f, 2, 0>;
-  defm VFAEZB : TernaryVRRbSPair<"vfaezb", 0xE782, int_s390_vfaezb, z_vfaez_cc,
-                                 v128b, v128b, 0, 2>;
-  defm VFAEZH : TernaryVRRbSPair<"vfaezh", 0xE782, int_s390_vfaezh, z_vfaez_cc,
-                                 v128h, v128h, 1, 2>;
-  defm VFAEZF : TernaryVRRbSPair<"vfaezf", 0xE782, int_s390_vfaezf, z_vfaez_cc,
-                                 v128f, v128f, 2, 2>;
+  defm VFAEB : TernaryOptVRRbSPair<"vfaeb", 0xE782, int_s390_vfaeb,
+                                   z_vfae_cc, v128b, v128b, 0>;
+  defm VFAEH : TernaryOptVRRbSPair<"vfaeh", 0xE782, int_s390_vfaeh,
+                                   z_vfae_cc, v128h, v128h, 1>;
+  defm VFAEF : TernaryOptVRRbSPair<"vfaef", 0xE782, int_s390_vfaef,
+                                   z_vfae_cc, v128f, v128f, 2>;
+  defm VFAEZB : TernaryOptVRRbSPair<"vfaezb", 0xE782, int_s390_vfaezb,
+                                    z_vfaez_cc, v128b, v128b, 0, 2>;
+  defm VFAEZH : TernaryOptVRRbSPair<"vfaezh", 0xE782, int_s390_vfaezh,
+                                    z_vfaez_cc, v128h, v128h, 1, 2>;
+  defm VFAEZF : TernaryOptVRRbSPair<"vfaezf", 0xE782, int_s390_vfaezf,
+                                    z_vfaez_cc, v128f, v128f, 2, 2>;
 
-  defm VFEEB : BinaryVRRbSPair<"vfeeb", 0xE780, int_s390_vfeeb, z_vfee_cc,
-                               v128b, v128b, 0, 0, 1>;
-  defm VFEEH : BinaryVRRbSPair<"vfeeh", 0xE780, int_s390_vfeeh, z_vfee_cc,
-                               v128h, v128h, 1, 0, 1>;
-  defm VFEEF : BinaryVRRbSPair<"vfeef", 0xE780, int_s390_vfeef, z_vfee_cc,
-                               v128f, v128f, 2, 0, 1>;
-  defm VFEEZB : BinaryVRRbSPair<"vfeezb", 0xE780, int_s390_vfeezb, z_vfeez_cc,
-                                v128b, v128b, 0, 2, 3>;
-  defm VFEEZH : BinaryVRRbSPair<"vfeezh", 0xE780, int_s390_vfeezh, z_vfeez_cc,
-                                v128h, v128h, 1, 2, 3>;
-  defm VFEEZF : BinaryVRRbSPair<"vfeezf", 0xE780, int_s390_vfeezf, z_vfeez_cc,
-                                v128f, v128f, 2, 2, 3>;
+  defm VFEEB : BinaryExtraVRRbSPair<"vfeeb", 0xE780, int_s390_vfeeb,
+                                    z_vfee_cc, v128b, v128b, 0>;
+  defm VFEEH : BinaryExtraVRRbSPair<"vfeeh", 0xE780, int_s390_vfeeh,
+                                    z_vfee_cc, v128h, v128h, 1>;
+  defm VFEEF : BinaryExtraVRRbSPair<"vfeef", 0xE780, int_s390_vfeef,
+                                    z_vfee_cc, v128f, v128f, 2>;
+  defm VFEEZB : BinaryVRRbSPair<"vfeezb", 0xE780, int_s390_vfeezb,
+                                z_vfeez_cc, v128b, v128b, 0, 2>;
+  defm VFEEZH : BinaryVRRbSPair<"vfeezh", 0xE780, int_s390_vfeezh,
+                                z_vfeez_cc, v128h, v128h, 1, 2>;
+  defm VFEEZF : BinaryVRRbSPair<"vfeezf", 0xE780, int_s390_vfeezf,
+                                z_vfeez_cc, v128f, v128f, 2, 2>;
 
-  defm VFENEB : BinaryVRRbSPair<"vfeneb", 0xE781, int_s390_vfeneb, z_vfene_cc,
-                                v128b, v128b, 0, 0, 1>;
-  defm VFENEH : BinaryVRRbSPair<"vfeneh", 0xE781, int_s390_vfeneh, z_vfene_cc,
-                                v128h, v128h, 1, 0, 1>;
-  defm VFENEF : BinaryVRRbSPair<"vfenef", 0xE781, int_s390_vfenef, z_vfene_cc,
-                                v128f, v128f, 2, 0, 1>;
+  defm VFENEB : BinaryExtraVRRbSPair<"vfeneb", 0xE781, int_s390_vfeneb,
+                                     z_vfene_cc, v128b, v128b, 0>;
+  defm VFENEH : BinaryExtraVRRbSPair<"vfeneh", 0xE781, int_s390_vfeneh,
+                                     z_vfene_cc, v128h, v128h, 1>;
+  defm VFENEF : BinaryExtraVRRbSPair<"vfenef", 0xE781, int_s390_vfenef,
+                                     z_vfene_cc, v128f, v128f, 2>;
   defm VFENEZB : BinaryVRRbSPair<"vfenezb", 0xE781, int_s390_vfenezb,
-                                 z_vfenez_cc, v128b, v128b, 0, 2, 3>;
+                                 z_vfenez_cc, v128b, v128b, 0, 2>;
   defm VFENEZH : BinaryVRRbSPair<"vfenezh", 0xE781, int_s390_vfenezh,
-                                 z_vfenez_cc, v128h, v128h, 1, 2, 3>;
+                                 z_vfenez_cc, v128h, v128h, 1, 2>;
   defm VFENEZF : BinaryVRRbSPair<"vfenezf", 0xE781, int_s390_vfenezf,
-                                 z_vfenez_cc, v128f, v128f, 2, 2, 3>;
+                                 z_vfenez_cc, v128f, v128f, 2, 2>;
 
-  defm VISTRB : UnaryVRRaSPair<"vistrb", 0xE75C, int_s390_vistrb, z_vistr_cc,
-                               v128b, v128b, 0>;
-  defm VISTRH : UnaryVRRaSPair<"vistrh", 0xE75C, int_s390_vistrh, z_vistr_cc,
-                               v128h, v128h, 1>;
-  defm VISTRF : UnaryVRRaSPair<"vistrf", 0xE75C, int_s390_vistrf, z_vistr_cc,
-                               v128f, v128f, 2>;
+  defm VISTRB : UnaryExtraVRRaSPair<"vistrb", 0xE75C, int_s390_vistrb,
+                                    z_vistr_cc, v128b, v128b, 0>;
+  defm VISTRH : UnaryExtraVRRaSPair<"vistrh", 0xE75C, int_s390_vistrh,
+                                    z_vistr_cc, v128h, v128h, 1>;
+  defm VISTRF : UnaryExtraVRRaSPair<"vistrf", 0xE75C, int_s390_vistrf,
+                                    z_vistr_cc, v128f, v128f, 2>;
 
-  defm VSTRCB : QuaternaryVRRdSPair<"vstrcb", 0xE78A, int_s390_vstrcb,
-                                    z_vstrc_cc, v128b, v128b, 0, 0>;
-  defm VSTRCH : QuaternaryVRRdSPair<"vstrch", 0xE78A, int_s390_vstrch,
-                                    z_vstrc_cc, v128h, v128h, 1, 0>;
-  defm VSTRCF : QuaternaryVRRdSPair<"vstrcf", 0xE78A, int_s390_vstrcf,
-                                    z_vstrc_cc, v128f, v128f, 2, 0>;
-  defm VSTRCZB : QuaternaryVRRdSPair<"vstrczb", 0xE78A, int_s390_vstrczb,
-                                     z_vstrcz_cc, v128b, v128b, 0, 2>;
-  defm VSTRCZH : QuaternaryVRRdSPair<"vstrczh", 0xE78A, int_s390_vstrczh,
-                                     z_vstrcz_cc, v128h, v128h, 1, 2>;
-  defm VSTRCZF : QuaternaryVRRdSPair<"vstrczf", 0xE78A, int_s390_vstrczf,
-                                     z_vstrcz_cc, v128f, v128f, 2, 2>;
+  defm VSTRCB : QuaternaryOptVRRdSPair<"vstrcb", 0xE78A, int_s390_vstrcb,
+                                       z_vstrc_cc, v128b, v128b, 0>;
+  defm VSTRCH : QuaternaryOptVRRdSPair<"vstrch", 0xE78A, int_s390_vstrch,
+                                       z_vstrc_cc, v128h, v128h, 1>;
+  defm VSTRCF : QuaternaryOptVRRdSPair<"vstrcf", 0xE78A, int_s390_vstrcf,
+                                       z_vstrc_cc, v128f, v128f, 2>;
+  defm VSTRCZB : QuaternaryOptVRRdSPair<"vstrczb", 0xE78A, int_s390_vstrczb,
+                                        z_vstrcz_cc, v128b, v128b, 0, 2>;
+  defm VSTRCZH : QuaternaryOptVRRdSPair<"vstrczh", 0xE78A, int_s390_vstrczh,
+                                        z_vstrcz_cc, v128h, v128h, 1, 2>;
+  defm VSTRCZF : QuaternaryOptVRRdSPair<"vstrczf", 0xE78A, int_s390_vstrczf,
+                                        z_vstrcz_cc, v128f, v128f, 2, 2>;
 }
