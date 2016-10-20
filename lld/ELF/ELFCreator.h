@@ -39,13 +39,13 @@ public:
   Section addSection(StringRef Name);
   Symbol addSymbol(StringRef Name);
   size_t layout();
-  void write(uint8_t *Out);
+  void writeTo(uint8_t *Out);
 
 private:
-  Elf_Ehdr Header;
+  Elf_Ehdr Header = {};
   std::vector<Elf_Shdr *> Sections;
-  std::vector<Elf_Sym *> StaticSymbols;
-  llvm::StringTableBuilder SecHdrStrTabBuilder{llvm::StringTableBuilder::ELF};
+  std::vector<Elf_Sym *> Symbols;
+  llvm::StringTableBuilder ShStrTabBuilder{llvm::StringTableBuilder::ELF};
   llvm::StringTableBuilder StrTabBuilder{llvm::StringTableBuilder::ELF};
   llvm::BumpPtrAllocator Alloc;
   Elf_Shdr *ShStrTab;

@@ -782,8 +782,8 @@ static InputFile *createELFFile(MemoryBufferRef MB) {
 // so that we can link it as a regular ELF file.
 template <class ELFT> InputFile *BinaryFile::createELF() {
   // Fill the ELF file header.
-  ELFCreator<ELFT> ELF(ET_REL, Config->EMachine);
-  auto DataSec = ELF.addSection(".data");
+  ELFCreator<ELFT> File(ET_REL, Config->EMachine);
+  auto DataSec = File.addSection(".data");
   DataSec.Header->sh_flags = SHF_ALLOC;
   DataSec.Header->sh_size = MB.getBufferSize();
   DataSec.Header->sh_type = SHT_PROGBITS;
@@ -796,26 +796,26 @@ template <class ELFT> InputFile *BinaryFile::createELF() {
 
   // Add _start, _end and _size symbols.
   std::string StartSym = "_binary_" + Filepath + "_start";
-  auto SSym = ELF.addSymbol(StartSym);
+  auto SSym = File.addSymbol(StartSym);
   SSym.Sym->setBindingAndType(STB_GLOBAL, STT_OBJECT);
   SSym.Sym->st_shndx = DataSec.Index;
 
   std::string EndSym = "_binary_" + Filepath + "_end";
-  auto ESym = ELF.addSymbol(EndSym);
+  auto ESym = File.addSymbol(EndSym);
   ESym.Sym->setBindingAndType(STB_GLOBAL, STT_OBJECT);
   ESym.Sym->st_shndx = DataSec.Index;
   ESym.Sym->st_value = MB.getBufferSize();
 
   std::string SizeSym = "_binary_" + Filepath + "_size";
-  auto SZSym = ELF.addSymbol(SizeSym);
+  auto SZSym = File.addSymbol(SizeSym);
   SZSym.Sym->setBindingAndType(STB_GLOBAL, STT_OBJECT);
   SZSym.Sym->st_shndx = SHN_ABS;
   SZSym.Sym->st_value = MB.getBufferSize();
 
   // Fix the ELF file layout and write it down to ELFData uint8_t vector.
-  size_t Size = ELF.layout();
+  size_t Size = File.layout();
   ELFData.resize(Size);
-  ELF.write(ELFData.data());
+  File.writeTo(ELFData.data());
 
   // Fill .data section with actual data.
   std::copy(MB.getBufferStart(), MB.getBufferEnd(),
