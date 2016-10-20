@@ -23,11 +23,84 @@ namespace llvm {
 /// \brief Helper for building an aligned character array type.
 ///
 /// This template is used to explicitly build up a collection of aligned
-/// character array types.
+/// character array types. We have to build these up using a macro and explicit
+/// specialization to cope with old versions of MSVC where only an
+/// integer literal can be used to specify an alignment constraint. Once built
+/// up here, we can then begin to indirect between these using normal C++
+/// template parameters.
+
+// MSVC requires special handling here.
+#ifndef _MSC_VER
+
 template<std::size_t Alignment, std::size_t Size>
 struct AlignedCharArray {
   LLVM_ALIGNAS(Alignment) char buffer[Size];
 };
+
+#else // _MSC_VER
+
+/// \brief Create a type with an aligned char buffer.
+template<std::size_t Alignment, std::size_t Size>
+struct AlignedCharArray;
+
+// We provide special variations of this template for the most common
+// alignments because __declspec(align(...)) doesn't actually work when it is
+// a member of a by-value function argument in MSVC, even if the alignment
+// request is something reasonably like 8-byte or 16-byte. Note that we can't
+// even include the declspec with the union that forces the alignment because
+// MSVC warns on the existence of the declspec despite the union member forcing
+// proper alignment.
+
+template<std::size_t Size>
+struct AlignedCharArray<1, Size> {
+  union {
+    char aligned;
+    char buffer[Size];
+  };
+};
+
+template<std::size_t Size>
+struct AlignedCharArray<2, Size> {
+  union {
+    short aligned;
+    char buffer[Size];
+  };
+};
+
+template<std::size_t Size>
+struct AlignedCharArray<4, Size> {
+  union {
+    int aligned;
+    char buffer[Size];
+  };
+};
+
+template<std::size_t Size>
+struct AlignedCharArray<8, Size> {
+  union {
+    double aligned;
+    char buffer[Size];
+  };
+};
+
+
+// The rest of these are provided with a __declspec(align(...)) and we simply
+// can't pass them by-value as function arguments on MSVC.
+
+#define LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(x) \
+  template<std::size_t Size> \
+  struct AlignedCharArray<x, Size> { \
+    __declspec(align(x)) char buffer[Size]; \
+  };
+
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(16)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(32)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(64)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(128)
+
+#undef LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT
+
+#endif // _MSC_VER
 
 namespace detail {
 template <typename T1,
