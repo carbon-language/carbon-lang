@@ -1188,7 +1188,7 @@ template <class ELFT> void EhOutputSection<ELFT>::finalize() {
     Cie->Piece->OutputOff = Off;
     Off += alignTo(Cie->Piece->size(), sizeof(uintX_t));
 
-    for (SectionPiece *Fde : Cie->FdePieces) {
+    for (EhSectionPiece *Fde : Cie->FdePieces) {
       Fde->OutputOff = Off;
       Off += alignTo(Fde->size(), sizeof(uintX_t));
     }
@@ -1281,11 +1281,15 @@ void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
   this->Header.sh_entsize = Sec->getSectionHdr()->sh_entsize;
   Sections.push_back(Sec);
 
-  for (SectionPiece &Piece : Sec->Pieces) {
+  auto HashI = Sec->Hashes.begin();
+  for (auto I = Sec->Pieces.begin(), E = Sec->Pieces.end(); I != E; ++I) {
+    SectionPiece &Piece = *I;
+    uint32_t Hash = *HashI;
+    ++HashI;
     if (!Piece.Live)
       continue;
-    StringRef Data = toStringRef(Sec->getData(Piece));
-    CachedHashStringRef V(Data, Piece.Hash);
+    StringRef Data = toStringRef(Sec->getData(I));
+    CachedHashStringRef V(Data, Hash);
     uintX_t OutputOffset = Builder.add(V);
     if (!shouldTailMerge())
       Piece.OutputOff = OutputOffset;
