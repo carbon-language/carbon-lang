@@ -248,6 +248,7 @@ static typename ELFT::uint getSymVA(uint32_t Type, typename ELFT::uint A,
                                     const SymbolBody &Body, RelExpr Expr) {
   switch (Expr) {
   case R_HINT:
+  case R_TLSDESC_CALL:
     llvm_unreachable("cannot relocate hint relocs");
   case R_TLSLD:
     return Out<ELFT>::Got->getTlsIndexOff() + A - Out<ELFT>::Got->getSize();
