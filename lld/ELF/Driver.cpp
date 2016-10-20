@@ -450,8 +450,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   if (!RPaths.empty())
     Config->RPath = llvm::join(RPaths.begin(), RPaths.end(), ":");
 
-  Config->SectionStartMap = getSectionStartMap(Args);
-
   if (auto *Arg = Args.getLastArg(OPT_m)) {
     // Parse ELF{32,64}{LE,BE} and CPU type.
     StringRef S = Arg->getValue();
@@ -512,12 +510,17 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->ZNow = hasZOption(Args, "now");
   Config->ZOrigin = hasZOption(Args, "origin");
   Config->ZRelro = !hasZOption(Args, "norelro");
+  Config->ZStackSize = getZOptionValue(Args, "stack-size", -1);
   Config->ZWxneeded = hasZOption(Args, "wxneeded");
+
+  Config->OFormatBinary = isOutputFormatBinary(Args);
+  Config->SectionStartMap = getSectionStartMap(Args);
+  Config->SortSection = getSortKind(Args);
+  Config->Target2 = getTarget2Option(Args);
+  Config->UnresolvedSymbols = getUnresolvedSymbolOption(Args);
 
   if (!Config->Relocatable)
     Config->Strip = getStripOption(Args);
-
-  Config->ZStackSize = getZOptionValue(Args, "stack-size", -1);
 
   // Config->Pic is true if we are generating position-independent code.
   Config->Pic = Config->Pie || Config->Shared;
@@ -554,8 +557,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
     }
   }
 
-  Config->OFormatBinary = isOutputFormatBinary(Args);
-
   for (auto *Arg : Args.filtered(OPT_auxiliary))
     Config->AuxiliaryList.push_back(Arg->getValue());
   if (!Config->Shared && !Config->AuxiliaryList.empty())
@@ -563,12 +564,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
 
   for (auto *Arg : Args.filtered(OPT_undefined))
     Config->Undefined.push_back(Arg->getValue());
-
-  Config->SortSection = getSortKind(Args);
-
-  Config->UnresolvedSymbols = getUnresolvedSymbolOption(Args);
-
-  Config->Target2 = getTarget2Option(Args);
 
   if (auto *Arg = Args.getLastArg(OPT_dynamic_list))
     if (Optional<MemoryBufferRef> Buffer = readFile(Arg->getValue()))
