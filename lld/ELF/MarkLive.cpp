@@ -225,8 +225,7 @@ template <class ELFT> void elf::markLive() {
   };
 
   // Add GC root symbols.
-  if (Config->EntrySym)
-    MarkSymbol(Config->EntrySym->body());
+  MarkSymbol(Symtab<ELFT>::X->find(Config->Entry));
   MarkSymbol(Symtab<ELFT>::X->find(Config->Init));
   MarkSymbol(Symtab<ELFT>::X->find(Config->Fini));
   for (StringRef S : Config->Undefined)
