@@ -3905,17 +3905,30 @@ static Distro DetectDistro(const Driver &D, llvm::Triple::ArchType Arch) {
   File = D.getVFS().getBufferForFile("/etc/debian_version");
   if (File) {
     StringRef Data = File.get()->getBuffer();
-    if (Data[0] == '5')
-      return DebianLenny;
-    else if (Data.startswith("squeeze/sid") || Data[0] == '6')
-      return DebianSqueeze;
-    else if (Data.startswith("wheezy/sid") || Data[0] == '7')
-      return DebianWheezy;
-    else if (Data.startswith("jessie/sid") || Data[0] == '8')
-      return DebianJessie;
-    else if (Data.startswith("stretch/sid") || Data[0] == '9')
-      return DebianStretch;
-    return UnknownDistro;
+    // Contents: < major.minor > or < codename/sid >
+    int MajorVersion;
+    if (!Data.split('.').first.getAsInteger(10, MajorVersion)) {
+      switch (MajorVersion) {
+      case 5:
+        return DebianLenny;
+      case 6:
+        return DebianSqueeze;
+      case 7:
+        return DebianWheezy;
+      case 8:
+        return DebianJessie;
+      case 9:
+        return DebianStretch;
+      default:
+        return UnknownDistro;
+      }
+    }
+    return llvm::StringSwitch<Distro>(Data.split("\n").first)
+        .Case("squeeze/sid", DebianSqueeze)
+        .Case("wheezy/sid", DebianWheezy)
+        .Case("jessie/sid", DebianJessie)
+        .Case("stretch/sid", DebianStretch)
+        .Default(UnknownDistro);
   }
 
   if (D.getVFS().exists("/etc/SuSE-release"))
