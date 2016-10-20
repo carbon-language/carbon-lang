@@ -38,6 +38,7 @@ private:
   llvm::Optional<MemoryBufferRef> readFile(StringRef Path);
   void readConfigs(llvm::opt::InputArgList &Args);
   void createFiles(llvm::opt::InputArgList &Args);
+  void inferMachineType();
   template <class ELFT> void link(llvm::opt::InputArgList &Args);
 
   // True if we are in --whole-archive and --no-whole-archive.

@@ -306,6 +306,7 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   readConfigs(Args);
   initLLVM(Args);
   createFiles(Args);
+  inferMachineType();
   checkOptions(Args);
   if (HasError)
     return;
@@ -324,7 +325,7 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
     link<ELF64BE>(Args);
     return;
   default:
-    error("target emulation unknown: -m or at least one .o file required");
+    llvm_unreachable("unknown Config->EKind");
   }
 }
 
@@ -636,17 +637,21 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
 
   if (Files.empty() && !HasError)
     error("no input files");
+}
 
-  // If -m <machine_type> was not given, infer it from object files.
-  if (Config->EKind == ELFNoneKind) {
-    for (InputFile *F : Files) {
-      if (F->EKind == ELFNoneKind)
-        continue;
-      Config->EKind = F->EKind;
-      Config->EMachine = F->EMachine;
-      break;
-    }
+// If -m <machine_type> was not given, infer it from object files.
+void LinkerDriver::inferMachineType() {
+  if (Config->EKind != ELFNoneKind)
+    return;
+
+  for (InputFile *F : Files) {
+    if (F->EKind == ELFNoneKind)
+      continue;
+    Config->EKind = F->EKind;
+    Config->EMachine = F->EMachine;
+    return;
   }
+  error("target emulation unknown: -m or at least one .o file required");
 }
 
 // Do actual linking. Note that when this function is called,
