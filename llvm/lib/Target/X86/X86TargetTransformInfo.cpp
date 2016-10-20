@@ -1767,3 +1767,10 @@ bool X86TTIImpl::areInlineCompatible(const Function *Caller,
   // correct.
   return (CallerBits & CalleeBits) == CalleeBits;
 }
+
+bool X86TTIImpl::enableInterleavedAccessVectorization() {
+  // TODO: We expect this to be beneficial regardless of arch,
+  // but there are currently some unexplained performance artifacts on Atom.
+  // As a temporary solution, disable on Atom.
+  return !(ST->isAtom() || ST->isSLM());
+}
