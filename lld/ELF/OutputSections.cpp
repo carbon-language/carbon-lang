@@ -266,8 +266,7 @@ GotSection<ELFT>::getMipsGotOffset(const SymbolBody &B, uintX_t Addend) const {
 
 template <class ELFT>
 typename GotSection<ELFT>::uintX_t GotSection<ELFT>::getMipsTlsOffset() const {
-  return (MipsPageEntries + MipsLocal.size() + MipsGlobal.size()) *
-         sizeof(uintX_t);
+  return (getMipsLocalEntriesNum() + MipsGlobal.size()) * sizeof(uintX_t);
 }
 
 template <class ELFT>
@@ -306,7 +305,7 @@ template <class ELFT> void GotSection<ELFT>::finalize() {
       // in the GOT entry is calculated as (value + 0x8000) & ~0xffff.
       MipsPageEntries += (OutSec->getSize() + 0x8000 + 0xfffe) / 0xffff;
     }
-    EntriesNum += MipsPageEntries + MipsLocal.size() + MipsGlobal.size();
+    EntriesNum += getMipsLocalEntriesNum() + MipsGlobal.size();
   }
   this->Header.sh_size = EntriesNum * sizeof(uintX_t);
 }
