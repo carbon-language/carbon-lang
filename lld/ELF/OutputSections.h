@@ -266,7 +266,7 @@ private:
 
 struct SymbolTableEntry {
   SymbolBody *Symbol;
-  std::size_t StrTabOffset;
+  size_t StrTabOffset;
 };
 
 template <class ELFT>

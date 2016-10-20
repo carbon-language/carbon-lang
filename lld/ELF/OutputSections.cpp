@@ -633,7 +633,7 @@ void GnuHashTableSection<ELFT>::addSymbols(std::vector<SymbolTableEntry> &V) {
     return;
   for (auto I = Mid, E = V.end(); I != E; ++I) {
     SymbolBody *B = I->Symbol;
-    typename ELFT::uint StrOff = I->StrTabOffset;
+    size_t StrOff = I->StrTabOffset;
     Symbols.push_back({B, StrOff, hashGnu(B->getName())});
   }
 
