@@ -56,7 +56,7 @@ namespace clang {
 
 /// Stmt - This represents one statement.
 ///
-class LLVM_ALIGNAS(LLVM_PTR_SIZE) Stmt {
+class alignas(void *) Stmt {
 public:
   enum StmtClass {
     NoStmtClass = 0,
