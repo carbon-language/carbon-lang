@@ -3850,9 +3850,9 @@ static bool IsUbuntu(enum Distro Distro) {
   return Distro >= UbuntuHardy && Distro <= UbuntuYakkety;
 }
 
-static Distro DetectDistro(const Driver &D, llvm::Triple::ArchType Arch) {
+static Distro DetectDistro(vfs::FileSystem &VFS) {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> File =
-      D.getVFS().getBufferForFile("/etc/lsb-release");
+      VFS.getBufferForFile("/etc/lsb-release");
   if (File) {
     StringRef Data = File.get()->getBuffer();
     SmallVector<StringRef, 16> Lines;
@@ -3884,7 +3884,7 @@ static Distro DetectDistro(const Driver &D, llvm::Triple::ArchType Arch) {
       return Version;
   }
 
-  File = D.getVFS().getBufferForFile("/etc/redhat-release");
+  File = VFS.getBufferForFile("/etc/redhat-release");
   if (File) {
     StringRef Data = File.get()->getBuffer();
     if (Data.startswith("Fedora release"))
@@ -3902,7 +3902,7 @@ static Distro DetectDistro(const Driver &D, llvm::Triple::ArchType Arch) {
     return UnknownDistro;
   }
 
-  File = D.getVFS().getBufferForFile("/etc/debian_version");
+  File = VFS.getBufferForFile("/etc/debian_version");
   if (File) {
     StringRef Data = File.get()->getBuffer();
     // Contents: < major.minor > or < codename/sid >
@@ -3931,13 +3931,13 @@ static Distro DetectDistro(const Driver &D, llvm::Triple::ArchType Arch) {
         .Default(UnknownDistro);
   }
 
-  if (D.getVFS().exists("/etc/SuSE-release"))
+  if (VFS.exists("/etc/SuSE-release"))
     return OpenSUSE;
 
-  if (D.getVFS().exists("/etc/exherbo-release"))
+  if (VFS.exists("/etc/exherbo-release"))
     return Exherbo;
 
-  if (D.getVFS().exists("/etc/arch-release"))
+  if (VFS.exists("/etc/arch-release"))
     return ArchLinux;
 
   return UnknownDistro;
@@ -4122,7 +4122,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
                          GCCInstallation.getTriple().str() + "/bin")
                        .str());
 
-  Distro Distro = DetectDistro(D, Arch);
+  Distro Distro = DetectDistro(D.getVFS());
 
   if (IsOpenSUSE(Distro) || IsUbuntu(Distro)) {
     ExtraOpts.push_back("-z");
@@ -4326,7 +4326,7 @@ std::string Linux::getDynamicLinker(const ArgList &Args) const {
   const llvm::Triple::ArchType Arch = getArch();
   const llvm::Triple &Triple = getTriple();
 
-  const enum Distro Distro = DetectDistro(getDriver(), Arch);
+  const enum Distro Distro = DetectDistro(getDriver().getVFS());
 
   if (Triple.isAndroid())
     return Triple.isArch64Bit() ? "/system/bin/linker64" : "/system/bin/linker";
