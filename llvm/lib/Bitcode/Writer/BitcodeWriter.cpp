@@ -1735,7 +1735,7 @@ void ModuleBitcodeWriter::writeDILocalVariable(
   // 4) Record has neither artificial tag, nor inlignedAt field, but
   //   HasAlignment flag is true and Record[8] contains alignment value.
   const uint64_t HasAlignmentFlag = 1 << 1;
-  Record.push_back(N->isDistinct() | HasAlignmentFlag);
+  Record.push_back((uint64_t)N->isDistinct() | HasAlignmentFlag);
   Record.push_back(VE.getMetadataOrNullID(N->getScope()));
   Record.push_back(VE.getMetadataOrNullID(N->getRawName()));
   Record.push_back(VE.getMetadataOrNullID(N->getFile()));
