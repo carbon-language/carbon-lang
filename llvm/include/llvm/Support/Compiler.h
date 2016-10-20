@@ -383,15 +383,6 @@
 # define LLVM_PTR_SIZE sizeof(void *)
 #endif
 
-/// \macro LLVM_FUNCTION_NAME
-/// \brief Expands to __func__ on compilers which support it.  Otherwise,
-/// expands to a compiler-dependent replacement.
-#if defined(_MSC_VER)
-# define LLVM_FUNCTION_NAME __FUNCTION__
-#else
-# define LLVM_FUNCTION_NAME __func__
-#endif
-
 /// \macro LLVM_MEMORY_SANITIZER_BUILD
 /// \brief Whether LLVM itself is built with MemorySanitizer instrumentation.
 #if __has_feature(memory_sanitizer)
