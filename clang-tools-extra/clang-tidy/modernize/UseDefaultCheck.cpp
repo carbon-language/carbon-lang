@@ -263,7 +263,7 @@ void UseDefaultCheck::check(const MatchFinder::MatchResult &Result) {
         return;
       SpecialFunctionName = "copy constructor";
       // If there are constructor initializers, they must be removed.
-      for (const CXXCtorInitializer *Init : Ctor->inits()) {
+      for (const auto *Init : Ctor->inits()) {
         RemoveInitializers.emplace_back(
             FixItHint::CreateRemoval(Init->getSourceRange()));
       }
