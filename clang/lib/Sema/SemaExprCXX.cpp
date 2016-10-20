@@ -5696,21 +5696,20 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
 
   struct Conversion {
     Sema &S;
-    SourceLocation Loc;
     Expr *&E1, *&E2;
     QualType Composite;
-    InitializedEntity Entity =
-        InitializedEntity::InitializeTemporary(Composite);
-    InitializationKind Kind =
-        InitializationKind::CreateCopy(Loc, SourceLocation());
+    InitializedEntity Entity;
+    InitializationKind Kind;
     InitializationSequence E1ToC, E2ToC;
-    bool Viable = E1ToC && E2ToC;
+    bool Viable;
 
     Conversion(Sema &S, SourceLocation Loc, Expr *&E1, Expr *&E2,
                QualType Composite)
-        : S(S), Loc(Loc), E1(E1), E2(E2), Composite(Composite),
-          E1ToC(S, Entity, Kind, E1), E2ToC(S, Entity, Kind, E2) {
-    }
+        : S(S), E1(E1), E2(E2), Composite(Composite),
+          Entity(InitializedEntity::InitializeTemporary(Composite)),
+          Kind(InitializationKind::CreateCopy(Loc, SourceLocation())),
+          E1ToC(S, Entity, Kind, E1), E2ToC(S, Entity, Kind, E2),
+          Viable(E1ToC && E2ToC) {}
 
     QualType perform() {
       ExprResult E1Result = E1ToC.Perform(S, Entity, Kind, E1);
