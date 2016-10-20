@@ -580,6 +580,18 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
       readVersionScript(*Buffer);
 }
 
+// Returns a value of "-format" option.
+static bool getBinaryOption(opt::Arg *Arg) {
+  StringRef S = Arg->getValue();
+  if (S == "binary")
+    return true;
+  if (S == "elf" || S == "default")
+    return false;
+  error("unknown " + Arg->getSpelling() + " format: " + S +
+        " (supported formats: elf, default, binary)");
+  return false;
+}
+
 void LinkerDriver::createFiles(opt::InputArgList &Args) {
   for (auto *Arg : Args) {
     switch (Arg->getOption().getID()) {
@@ -596,17 +608,9 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
     case OPT_as_needed:
       Config->AsNeeded = true;
       break;
-    case OPT_format: {
-      StringRef Val = Arg->getValue();
-      if (Val == "elf" || Val == "default")
-        Config->Binary = false;
-      else if (Val == "binary")
-        Config->Binary = true;
-      else
-        error("unknown " + Arg->getSpelling() + " format: " + Arg->getValue() +
-              " (supported formats: elf, default, binary)");
+    case OPT_format:
+      Config->Binary = getBinaryOption(Arg);
       break;
-    }
     case OPT_no_as_needed:
       Config->AsNeeded = false;
       break;
