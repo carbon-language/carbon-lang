@@ -11,8 +11,8 @@
 #define LLVM_DEBUGINFO_CODEVIEW_TYPEDESERIALIZER_H
 
 #include "llvm/DebugInfo/CodeView/TypeVisitorCallbacks.h"
-#include "llvm/DebugInfo/Msf/ByteStream.h"
-#include "llvm/DebugInfo/Msf/StreamReader.h"
+#include "llvm/DebugInfo/MSF/ByteStream.h"
+#include "llvm/DebugInfo/MSF/StreamReader.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm {
