@@ -28,7 +28,7 @@ extern class LinkerDriver *Driver;
 class LinkerDriver {
 public:
   void main(ArrayRef<const char *> Args);
-  void addFile(StringRef Path, bool KnownScript = false);
+  void addFile(StringRef Path);
   void addLibrary(StringRef Name);
   llvm::LLVMContext Context;      // to parse bitcode files
   std::unique_ptr<CpioFile> Cpio; // for reproduce

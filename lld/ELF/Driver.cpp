@@ -117,17 +117,15 @@ LinkerDriver::getArchiveMembers(MemoryBufferRef MB) {
 
 // Opens and parses a file. Path has to be resolved already.
 // Newly created memory buffers are owned by this driver.
-void LinkerDriver::addFile(StringRef Path, bool KnownScript) {
+void LinkerDriver::addFile(StringRef Path) {
   using namespace sys::fs;
-  if (Config->Verbose)
-    outs() << Path << "\n";
 
   Optional<MemoryBufferRef> Buffer = readFile(Path);
   if (!Buffer.hasValue())
     return;
   MemoryBufferRef MBRef = *Buffer;
 
-  if (Config->Binary && !KnownScript) {
+  if (Config->Binary) {
     Files.push_back(new BinaryFile(MBRef));
     return;
   }
@@ -160,6 +158,9 @@ void LinkerDriver::addFile(StringRef Path, bool KnownScript) {
 }
 
 Optional<MemoryBufferRef> LinkerDriver::readFile(StringRef Path) {
+  if (Config->Verbose)
+    outs() << Path << "\n";
+
   auto MBOrErr = MemoryBuffer::getFile(Path);
   if (auto EC = MBOrErr.getError()) {
     error(EC, "cannot open " + Path);
@@ -603,7 +604,8 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
       break;
     case OPT_alias_script_T:
     case OPT_script:
-      addFile(Arg->getValue(), true);
+      if (Optional<MemoryBufferRef> MB = readFile(Arg->getValue()))
+        readLinkerScript(*MB);
       break;
     case OPT_as_needed:
       Config->AsNeeded = true;
