@@ -47,6 +47,9 @@ private:
   // True if we are in --start-lib and --end-lib.
   bool InLib = false;
 
+  // True if we are in -format=binary and -format=elf.
+  bool InBinary = false;
+
   llvm::BumpPtrAllocator Alloc;
   std::vector<InputFile *> Files;
   std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;

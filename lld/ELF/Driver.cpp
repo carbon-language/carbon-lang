@@ -125,7 +125,7 @@ void LinkerDriver::addFile(StringRef Path) {
     return;
   MemoryBufferRef MBRef = *Buffer;
 
-  if (Config->Binary) {
+  if (InBinary) {
     Files.push_back(new BinaryFile(MBRef));
     return;
   }
@@ -611,7 +611,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
       Config->AsNeeded = true;
       break;
     case OPT_format:
-      Config->Binary = getBinaryOption(Arg->getValue());
+      InBinary = getBinaryOption(Arg->getValue());
       break;
     case OPT_no_as_needed:
       Config->AsNeeded = false;
