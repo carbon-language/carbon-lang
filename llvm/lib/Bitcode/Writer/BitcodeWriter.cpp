@@ -1722,7 +1722,7 @@ void ModuleBitcodeWriter::writeDILocalVariable(
     const DILocalVariable *N, SmallVectorImpl<uint64_t> &Record,
     unsigned Abbrev) {
   // In order to support all possible bitcode formats in BitcodeReader we need
-  // to distiguish the following cases:
+  // to distinguish the following cases:
   // 1) Record has no artificial tag (Record[1]),
   //   has no obsolete inlinedAt field (Record[9]).
   //   In this case Record size will be 8, HasAlignment flag is false.
