@@ -9,7 +9,6 @@ int (*fp)(int[][*]) = nullptr;
 
 // CHECK: !DICompositeType(tag: DW_TAG_array_type,
 // CHECK-NOT:                               size:
-// CHECK-SAME:                              align: 32
 // CHECK-SAME:                              elements: [[ELEM_TYPE:![0-9]+]]
 // CHECK: [[ELEM_TYPE]] = !{[[NOCOUNT:.*]]}
 // CHECK: [[NOCOUNT]] = !DISubrange(count: -1)
