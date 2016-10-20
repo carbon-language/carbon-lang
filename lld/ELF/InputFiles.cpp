@@ -813,7 +813,7 @@ template <class ELFT> InputFile *BinaryFile::createELF() {
   SZSym.Sym->st_value = MB.getBufferSize();
 
   // Fix the ELF file layout and write it down to ELFData uint8_t vector.
-  std::size_t Size = ELF.layout();
+  size_t Size = ELF.layout();
   ELFData.resize(Size);
   ELF.write(ELFData.data());
 

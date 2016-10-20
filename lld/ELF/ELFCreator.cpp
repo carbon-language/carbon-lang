@@ -74,7 +74,7 @@ typename ELFCreator<ELFT>::Symbol ELFCreator<ELFT>::addSymbol(StringRef Name) {
   return {Sym, StaticSymbols.size()};
 }
 
-template <class ELFT> std::size_t ELFCreator<ELFT>::layout() {
+template <class ELFT> size_t ELFCreator<ELFT>::layout() {
   SecHdrStrTabBuilder.finalizeInOrder();
   ShStrTab->sh_size = SecHdrStrTabBuilder.getSize();
 

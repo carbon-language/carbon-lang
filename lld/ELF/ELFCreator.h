@@ -27,18 +27,18 @@ template <class ELFT> class ELFCreator {
 public:
   struct Section {
     Elf_Shdr *Header;
-    std::size_t Index;
+    size_t Index;
   };
 
   struct Symbol {
     Elf_Sym *Sym;
-    std::size_t Index;
+    size_t Index;
   };
 
   ELFCreator(std::uint16_t Type, std::uint16_t Machine);
   Section addSection(StringRef Name);
   Symbol addSymbol(StringRef Name);
-  std::size_t layout();
+  size_t layout();
   void write(uint8_t *Out);
 
 private:
