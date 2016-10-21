@@ -119,9 +119,8 @@ public:
     return *this;
   }
 
-  CachedHashString(CachedHashString &&Other) LLVM_NOEXCEPT : P(Other.P),
-                                                             Size(Other.Size),
-                                                             Hash(Other.Hash) {
+  CachedHashString(CachedHashString &&Other) noexcept
+      : P(Other.P), Size(Other.Size), Hash(Other.Hash) {
     Other.P = getEmptyKeyPtr();
   }
 
