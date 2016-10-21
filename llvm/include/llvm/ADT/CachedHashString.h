@@ -61,7 +61,8 @@ template <> struct DenseMapInfo<CachedHashStringRef> {
   }
   static bool isEqual(const CachedHashStringRef &LHS,
                       const CachedHashStringRef &RHS) {
-    return DenseMapInfo<StringRef>::isEqual(LHS.val(), RHS.val());
+    return LHS.hash() == RHS.hash() &&
+           DenseMapInfo<StringRef>::isEqual(LHS.val(), RHS.val());
   }
 };
 
