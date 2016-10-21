@@ -3861,6 +3861,9 @@ static bool isTargetShuffleVariableMask(unsigned Opcode) {
   case X86ISD::VPERMILPV:
   case X86ISD::VPERMIL2:
   case X86ISD::VPPERM:
+  case X86ISD::VPERMV:
+  case X86ISD::VPERMV3:
+  case X86ISD::VPERMIV3:
     return true;
   }
 }
@@ -25529,16 +25532,17 @@ static bool combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
 
   if (is128BitLaneCrossingShuffleMask(MaskVT, Mask)) {
     // If we have a single input lane-crossing shuffle then lower to VPERMV.
+    // FIXME: Add AVX512BWVL support for v16i16.
     if (UnaryShuffle && (Depth >= 3 || HasVariableMask) && !MaskContainsZeros &&
-        Subtarget.hasAVX2() && (MaskVT == MVT::v8f32 || MaskVT == MVT::v8i32)) {
+        ((Subtarget.hasAVX2() &&
+          (MaskVT == MVT::v8f32 || MaskVT == MVT::v8i32)) ||
+         (Subtarget.hasAVX512() &&
+          (MaskVT == MVT::v8f64 || MaskVT == MVT::v8i64 ||
+           MaskVT == MVT::v16f32 || MaskVT == MVT::v16i32)) ||
+         (Subtarget.hasBWI() && MaskVT == MVT::v32i16))) {
       MVT VPermMaskSVT = MVT::getIntegerVT(MaskEltSizeInBits);
-      SmallVector<SDValue, 8> VPermIdx;
-      for (int M : Mask)
-        VPermIdx.push_back(M < 0 ? DAG.getUNDEF(VPermMaskSVT)
-                                 : DAG.getConstant(M, DL, VPermMaskSVT));
-
       MVT VPermMaskVT = MVT::getVectorVT(VPermMaskSVT, NumMaskElts);
-      SDValue VPermMask = DAG.getBuildVector(VPermMaskVT, DL, VPermIdx);
+      SDValue VPermMask = getConstVector(Mask, VPermMaskVT, DAG, DL, true);
       DCI.AddToWorklist(VPermMask.getNode());
       Res = DAG.getBitcast(MaskVT, V1);
       DCI.AddToWorklist(Res.getNode());
