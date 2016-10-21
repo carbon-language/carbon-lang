@@ -12,4 +12,5 @@ add_lldb_library(lldbPluginCPlusPlusLanguage
   LibStdcpp.cpp
   LibStdcppSmartPointer.cpp
   LibStdcppTuple.cpp
+  LibStdcppUniquePointer.cpp
 )
