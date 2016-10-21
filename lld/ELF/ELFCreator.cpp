@@ -40,7 +40,7 @@ public:
 
   ELFCreator(std::uint16_t Type, std::uint16_t Machine);
   Section addSection(StringRef Name);
-  Elf_Sym *addSymbol(StringRef Name);
+  void addSymbol(StringRef Name, uintX_t SecIdx, uintX_t Value);
   size_t layout();
   void writeTo(uint8_t *Out);
 
@@ -92,11 +92,14 @@ ELFCreator<ELFT>::addSection(StringRef Name) {
 }
 
 template <class ELFT>
-typename ELFT::Sym *ELFCreator<ELFT>::addSymbol(StringRef Name) {
+void ELFCreator<ELFT>::addSymbol(StringRef Name, uintX_t SecIdx,
+                                 uintX_t Value) {
   auto *Sym = new (Alloc) Elf_Sym{};
   Sym->st_name = StrTabBuilder.add(Saver.save(Name));
+  Sym->setBindingAndType(STB_GLOBAL, STT_OBJECT);
+  Sym->st_shndx = SecIdx;
+  Sym->st_value = Value;
   Symbols.push_back(Sym);
-  return Sym;
 }
 
 template <class ELFT> size_t ELFCreator<ELFT>::layout() {
@@ -138,12 +141,9 @@ template <class ELFT> void ELFCreator<ELFT>::writeTo(uint8_t *Out) {
 template <class ELFT>
 std::vector<uint8_t> elf::wrapBinaryWithElfHeader(ArrayRef<uint8_t> Blob,
                                                   std::string Filename) {
-  typedef typename ELFT::uint uintX_t;
-  typedef typename ELFT::Sym Elf_Sym;
-
   // Fill the ELF file header.
   ELFCreator<ELFT> File(ET_REL, Config->EMachine);
-  auto Sec = File.addSection(".data");
+  typename ELFCreator<ELFT>::Section Sec = File.addSection(".data");
   Sec.Header->sh_flags = SHF_ALLOC;
   Sec.Header->sh_size = Blob.size();
   Sec.Header->sh_type = SHT_PROGBITS;
@@ -154,15 +154,9 @@ std::vector<uint8_t> elf::wrapBinaryWithElfHeader(ArrayRef<uint8_t> Blob,
                  [](char C) { return isalnum(C) ? C : '_'; });
 
   // Add _start, _end and _size symbols.
-  auto AddSym = [&](std::string Suffix, uintX_t SecIdx, uintX_t Value) {
-    Elf_Sym *Sym = File.addSymbol("_binary_" + Filename + Suffix);
-    Sym->setBindingAndType(STB_GLOBAL, STT_OBJECT);
-    Sym->st_shndx = SecIdx;
-    Sym->st_value = Value;
-  };
-  AddSym("_start", Sec.Index, 0);
-  AddSym("_end", Sec.Index, Blob.size());
-  AddSym("_size", SHN_ABS, Blob.size());
+  File.addSymbol("_binary_" + Filename + "_start", Sec.Index, 0);
+  File.addSymbol("_binary_" + Filename + "_end", Sec.Index, Blob.size());
+  File.addSymbol("_binary_" + Filename + "_size", SHN_ABS, Blob.size());
 
   // Fix the ELF file layout and write it down to a uint8_t vector.
   size_t Size = File.layout();
