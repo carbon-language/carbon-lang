@@ -9,13 +9,13 @@
 
 #include "LibStdcpp.h"
 
-#include <memory>
-#include <vector>
-
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/DataFormatters/FormattersHelpers.h"
 #include "lldb/DataFormatters/TypeSynthetic.h"
+
+#include <memory>
+#include <vector>
 
 using namespace lldb;
 using namespace lldb_private;
