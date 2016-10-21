@@ -11293,6 +11293,22 @@ static SDValue lowerVectorShuffleWithSHUFPD(const SDLoc &DL, MVT VT,
   return SDValue();
 }
 
+static SDValue lowerVectorShuffleWithPERMV(const SDLoc &DL, MVT VT,
+                                           ArrayRef<int> Mask, SDValue V1,
+                                           SDValue V2, SelectionDAG &DAG) {
+
+  assert(VT.getScalarSizeInBits() >= 16 && "Unexpected data type for PERMV");
+
+  MVT MaskEltVT = MVT::getIntegerVT(VT.getScalarSizeInBits());
+  MVT MaskVecVT = MVT::getVectorVT(MaskEltVT, VT.getVectorNumElements());
+
+  SDValue MaskNode = getConstVector(Mask, MaskVecVT, DAG, DL, true);
+  if (V2.isUndef())
+    return DAG.getNode(X86ISD::VPERMV, DL, VT, MaskNode, V1);
+
+  return DAG.getNode(X86ISD::VPERMV3, DL, VT, V1, MaskNode, V2);
+}
+
 /// \brief Handle lowering of 4-lane 64-bit floating point shuffles.
 ///
 /// Also ends up handling lowering of 4-lane 64-bit integer shuffles when AVX2
@@ -11703,6 +11719,10 @@ static SDValue lowerV16I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
                                                     V2, Subtarget, DAG))
     return PSHUFB;
 
+  // AVX512BWVL can lower to VPERMW.
+  if (Subtarget.hasBWI() && Subtarget.hasVLX())
+    return lowerVectorShuffleWithPERMV(DL, MVT::v16i16, Mask, V1, V2, DAG);
+
   // Try to simplify this by merging 128-bit lanes to enable a lane-based
   // shuffle.
   if (SDValue Result = lowerVectorShuffleByMerging128BitLanes(
@@ -11897,22 +11917,6 @@ static SDValue lowerV4X128VectorShuffle(const SDLoc &DL, MVT VT,
 
   return DAG.getNode(X86ISD::SHUF128, DL, VT, Ops[0], Ops[1],
                      DAG.getConstant(PermMask, DL, MVT::i8));
-}
-
-static SDValue lowerVectorShuffleWithPERMV(const SDLoc &DL, MVT VT,
-                                           ArrayRef<int> Mask, SDValue V1,
-                                           SDValue V2, SelectionDAG &DAG) {
-
-  assert(VT.getScalarSizeInBits() >= 16 && "Unexpected data type for PERMV");
-
-  MVT MaskEltVT = MVT::getIntegerVT(VT.getScalarSizeInBits());
-  MVT MaskVecVT = MVT::getVectorVT(MaskEltVT, VT.getVectorNumElements());
-
-  SDValue MaskNode = getConstVector(Mask, MaskVecVT, DAG, DL, true);
-  if (V2.isUndef())
-    return DAG.getNode(X86ISD::VPERMV, DL, VT, MaskNode, V1);
-
-  return DAG.getNode(X86ISD::VPERMV3, DL, VT, V1, MaskNode, V2);
 }
 
 /// \brief Handle lowering of 8-lane 64-bit floating point shuffles.
