@@ -25528,16 +25528,17 @@ static bool combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
       any_of(Mask, [](int M) { return M == SM_SentinelZero; });
 
   if (is128BitLaneCrossingShuffleMask(MaskVT, Mask)) {
-    // If we have a single input lane-crossing shuffle with 32-bit scalars then
-    // lower to VPERMD/VPERMPS.
+    // If we have a single input lane-crossing shuffle then lower to VPERMV.
     if (UnaryShuffle && (Depth >= 3 || HasVariableMask) && !MaskContainsZeros &&
         Subtarget.hasAVX2() && (MaskVT == MVT::v8f32 || MaskVT == MVT::v8i32)) {
-      SDValue VPermIdx[8];
-      for (int i = 0; i < 8; ++i)
-        VPermIdx[i] = Mask[i] < 0 ? DAG.getUNDEF(MVT::i32)
-                                  : DAG.getConstant(Mask[i], DL, MVT::i32);
+      MVT VPermMaskSVT = MVT::getIntegerVT(MaskEltSizeInBits);
+      SmallVector<SDValue, 8> VPermIdx;
+      for (int M : Mask)
+        VPermIdx.push_back(M < 0 ? DAG.getUNDEF(VPermMaskSVT)
+                                 : DAG.getConstant(M, DL, VPermMaskSVT));
 
-      SDValue VPermMask = DAG.getBuildVector(MVT::v8i32, DL, VPermIdx);
+      MVT VPermMaskVT = MVT::getVectorVT(VPermMaskSVT, NumMaskElts);
+      SDValue VPermMask = DAG.getBuildVector(VPermMaskVT, DL, VPermIdx);
       DCI.AddToWorklist(VPermMask.getNode());
       Res = DAG.getBitcast(MaskVT, V1);
       DCI.AddToWorklist(Res.getNode());
