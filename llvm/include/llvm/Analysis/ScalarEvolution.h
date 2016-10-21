@@ -548,9 +548,9 @@ private:
   /// pair of exact and max expressions that are eventually summarized in
   /// ExitNotTakenInfo and BackedgeTakenInfo.
   struct ExitLimit {
-    const SCEV *ExactNotTaken; //< The exit is not taken exactly this many times
-    const SCEV *MaxNotTaken; //< The exit is not taken at most this many times
-    bool MaxOrZero; //< Not taken either exactly MaxNotTaken or zero times
+    const SCEV *ExactNotTaken; // The exit is not taken exactly this many times
+    const SCEV *MaxNotTaken; // The exit is not taken at most this many times
+    bool MaxOrZero; // Not taken either exactly MaxNotTaken or zero times
 
     /// A set of predicate guards for this ExitLimit. The result is only valid
     /// if all of the predicates in \c Predicates evaluate to 'true' at
