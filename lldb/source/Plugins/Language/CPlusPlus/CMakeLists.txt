@@ -11,4 +11,5 @@ add_lldb_library(lldbPluginCPlusPlusLanguage
   LibCxxVector.cpp
   LibStdcpp.cpp
   LibStdcppSmartPointer.cpp
+  LibStdcppTuple.cpp
 )

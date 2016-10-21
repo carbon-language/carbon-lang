@@ -811,6 +811,11 @@ static void LoadLibStdcppFormatters(lldb::TypeCategoryImplSP cpp_category_sp) {
       lldb_private::formatters::LibStdcppSharedPtrSyntheticFrontEndCreator,
       "std::weak_ptr synthetic children",
       ConstString("^std::weak_ptr<.+>(( )?&)?$"), stl_synth_flags, true);
+  AddCXXSynthetic(
+      cpp_category_sp,
+      lldb_private::formatters::LibStdcppTupleSyntheticFrontEndCreator,
+      "std::tuple synthetic children", ConstString("^std::tuple<.+>(( )?&)?$"),
+      stl_synth_flags, true);
 
   AddCXXSummary(cpp_category_sp,
                 lldb_private::formatters::LibStdcppSmartPointerSummaryProvider,
