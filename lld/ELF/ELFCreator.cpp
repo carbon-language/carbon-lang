@@ -48,11 +48,9 @@ private:
   Elf_Ehdr Header = {};
   std::vector<Elf_Shdr *> Sections;
   std::vector<Elf_Sym *> Symbols;
-  StringTableBuilder ShStrTabBuilder{StringTableBuilder::ELF};
   StringTableBuilder StrTabBuilder{StringTableBuilder::ELF};
   BumpPtrAllocator Alloc;
   StringSaver Saver{Alloc};
-  Elf_Shdr *ShStrTab;
   Elf_Shdr *StrTab;
   Elf_Shdr *SymTab;
 };
@@ -72,17 +70,13 @@ ELFCreator<ELFT>::ELFCreator(std::uint16_t Type, std::uint16_t Machine) {
   Header.e_shentsize = sizeof(Elf_Shdr);
   Header.e_shstrndx = 1;
 
-  ShStrTab = addSection(".shstrtab").Header;
-  ShStrTab->sh_type = SHT_STRTAB;
-  ShStrTab->sh_addralign = 1;
-
   StrTab = addSection(".strtab").Header;
   StrTab->sh_type = SHT_STRTAB;
   StrTab->sh_addralign = 1;
 
   SymTab = addSection(".symtab").Header;
   SymTab->sh_type = SHT_SYMTAB;
-  SymTab->sh_link = 2;
+  SymTab->sh_link = 1;
   SymTab->sh_info = 1;
   SymTab->sh_addralign = sizeof(uintX_t);
   SymTab->sh_entsize = sizeof(Elf_Sym);
@@ -92,7 +86,7 @@ template <class ELFT>
 typename ELFCreator<ELFT>::Section
 ELFCreator<ELFT>::addSection(StringRef Name) {
   auto *Shdr = new (Alloc) Elf_Shdr{};
-  Shdr->sh_name = ShStrTabBuilder.add(Saver.save(Name));
+  Shdr->sh_name = StrTabBuilder.add(Saver.save(Name));
   Sections.push_back(Shdr);
   return {Shdr, Sections.size()};
 }
@@ -106,12 +100,8 @@ typename ELFT::Sym *ELFCreator<ELFT>::addSymbol(StringRef Name) {
 }
 
 template <class ELFT> size_t ELFCreator<ELFT>::layout() {
-  ShStrTabBuilder.finalizeInOrder();
-  ShStrTab->sh_size = ShStrTabBuilder.getSize();
-
   StrTabBuilder.finalizeInOrder();
   StrTab->sh_size = StrTabBuilder.getSize();
-
   SymTab->sh_size = (Symbols.size() + 1) * sizeof(Elf_Sym);
 
   uintX_t Offset = sizeof(Elf_Ehdr);
@@ -125,13 +115,11 @@ template <class ELFT> size_t ELFCreator<ELFT>::layout() {
   Header.e_shoff = Offset;
   Offset += (Sections.size() + 1) * sizeof(Elf_Shdr);
   Header.e_shnum = Sections.size() + 1;
-
   return Offset;
 }
 
 template <class ELFT> void ELFCreator<ELFT>::writeTo(uint8_t *Out) {
   std::memcpy(Out, &Header, sizeof(Elf_Ehdr));
-  ShStrTabBuilder.write(Out + ShStrTab->sh_offset);
   StrTabBuilder.write(Out + StrTab->sh_offset);
 
   Elf_Sym *Sym = reinterpret_cast<Elf_Sym *>(Out + SymTab->sh_offset);
@@ -166,8 +154,8 @@ std::vector<uint8_t> elf::wrapBinaryWithElfHeader(ArrayRef<uint8_t> Blob,
                  [](char C) { return isalnum(C) ? C : '_'; });
 
   // Add _start, _end and _size symbols.
-  auto AddSym = [&](std::string Name, uintX_t SecIdx, uintX_t Value) {
-    Elf_Sym *Sym = File.addSymbol("_binary_" + Filename + Name);
+  auto AddSym = [&](std::string Suffix, uintX_t SecIdx, uintX_t Value) {
+    Elf_Sym *Sym = File.addSymbol("_binary_" + Filename + Suffix);
     Sym->setBindingAndType(STB_GLOBAL, STT_OBJECT);
     Sym->st_shndx = SecIdx;
     Sym->st_value = Value;
