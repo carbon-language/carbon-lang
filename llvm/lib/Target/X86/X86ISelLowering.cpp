@@ -4463,8 +4463,8 @@ static SDValue extractSubVector(SDValue Vec, unsigned IdxVal, SelectionDAG &DAG,
 
   // If the input is a buildvector just emit a smaller one.
   if (Vec.getOpcode() == ISD::BUILD_VECTOR)
-    return DAG.getNode(ISD::BUILD_VECTOR,
-         dl, ResultVT, makeArrayRef(Vec->op_begin() + IdxVal, ElemsPerChunk));
+    return DAG.getNode(ISD::BUILD_VECTOR, dl, ResultVT,
+                       makeArrayRef(Vec->op_begin() + IdxVal, ElemsPerChunk));
 
   SDValue VecIdx = DAG.getIntPtrConstant(IdxVal, dl);
   return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ResultVT, Vec, VecIdx);
@@ -19419,7 +19419,7 @@ static SDValue LowerVectorCTLZInRegLUT(SDValue Op, const SDLoc &DL,
   SmallVector<SDValue, 64> LUTVec;
   for (int i = 0; i < NumBytes; ++i)
     LUTVec.push_back(DAG.getConstant(LUT[i % 16], DL, MVT::i8));
-  SDValue InRegLUT = DAG.getNode(ISD::BUILD_VECTOR, DL, CurrVT, LUTVec);
+  SDValue InRegLUT = DAG.getBuildVector(CurrVT, DL, LUTVec);
 
   // Begin by bitcasting the input to byte vector, then split those bytes
   // into lo/hi nibbles and use the PSHUFB LUT to perform CLTZ on each of them.
@@ -31779,7 +31779,7 @@ static SDValue combineVZext(SDNode *N, SelectionDAG &DAG,
       Cst = Cst.zextOrTrunc(SVT.getSizeInBits());
       Vals.push_back(DAG.getConstant(Cst, DL, SVT));
     }
-    return DAG.getNode(ISD::BUILD_VECTOR, DL, VT, Vals);
+    return DAG.getBuildVector(VT, DL, Vals);
   }
 
   // (vzext (bitcast (vzext (x)) -> (vzext x)
