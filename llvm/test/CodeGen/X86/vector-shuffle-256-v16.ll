@@ -4218,16 +4218,13 @@ define <16 x i16> @PR24935(<16 x i16> %a, <16 x i16> %b) {
 ;
 ; AVX512VL-LABEL: PR24935:
 ; AVX512VL:       # BB#0:
-; AVX512VL-NEXT:    vperm2i128 {{.*#+}} ymm2 = ymm1[2,3,0,1]
-; AVX512VL-NEXT:    vpshufb {{.*#+}} ymm2 = ymm2[6,7,4,5,0,1,10,11,4,5,10,11,4,5,6,7,22,23,20,21,16,17,26,27,20,21,26,27,20,21,22,23]
+; AVX512VL-NEXT:    vmovdqu16 {{.*#+}} ymm2 = [11,10,8,13,10,13,10,11,3,2,0,5,2,5,2,3]
+; AVX512VL-NEXT:    vpermw %ymm1, %ymm2, %ymm2
 ; AVX512VL-NEXT:    vpshufb {{.*#+}} ymm1 = ymm1[8,9,10,11,4,5,8,9,0,1,14,15,12,13,0,1,24,25,26,27,20,21,24,25,16,17,30,31,28,29,16,17]
 ; AVX512VL-NEXT:    vmovdqu8 {{.*#+}} ymm3 = <255,255,255,255,u,u,255,255,255,255,0,0,u,u,0,0,u,u,u,u,255,255,0,0,u,u,u,u,u,u,0,0>
 ; AVX512VL-NEXT:    vpblendvb %ymm3, %ymm2, %ymm1, %ymm1
-; AVX512VL-NEXT:    vperm2i128 {{.*#+}} ymm2 = ymm0[2,3,0,1]
-; AVX512VL-NEXT:    vpshufb {{.*#+}} ymm2 = ymm2[u,u,u,u,u,u,u,u,u,u,u,u,6,7,u,u,18,19,u,u,u,u,u,u,u,u,24,25,16,17,u,u]
-; AVX512VL-NEXT:    vpshuflw {{.*#+}} ymm0 = ymm0[0,1,1,3,4,5,6,7,8,9,9,11,12,13,14,15]
-; AVX512VL-NEXT:    vpshufhw {{.*#+}} ymm0 = ymm0[0,1,2,3,5,5,6,7,8,9,10,11,13,13,14,15]
-; AVX512VL-NEXT:    vpblendw {{.*#+}} ymm0 = ymm2[0],ymm0[1,2],ymm2[3],ymm0[4],ymm2[5,6,7,8],ymm0[9,10],ymm2[11],ymm0[12],ymm2[13,14,15]
+; AVX512VL-NEXT:    vmovdqu16 {{.*#+}} ymm2 = <u,1,1,u,5,u,11,u,1,9,9,u,13,4,0,u>
+; AVX512VL-NEXT:    vpermw %ymm0, %ymm2, %ymm0
 ; AVX512VL-NEXT:    vmovdqu8 {{.*#+}} ymm2 = [255,255,255,255,0,0,255,255,255,255,255,255,0,0,255,255,0,0,0,0,255,255,255,255,0,0,0,0,0,0,255,255]
 ; AVX512VL-NEXT:    vpblendvb %ymm2, %ymm1, %ymm0, %ymm0
 ; AVX512VL-NEXT:    retq
