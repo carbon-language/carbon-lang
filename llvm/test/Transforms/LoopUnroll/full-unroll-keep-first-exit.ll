@@ -1,5 +1,15 @@
-; RUN: opt -S -analyze -scalar-evolution < %s | FileCheck %s
+; RUN: opt -S -loop-unroll < %s | FileCheck %s
 
+; Unroll twice, with first loop exit kept
+; CHECK-LABEL: @s32_max1
+; CHECK: do.body:
+; CHECK:  store
+; CHECK:  br i1 %cmp, label %do.body.1, label %do.end
+; CHECK: do.end:
+; CHECK:  ret void
+; CHECK: do.body.1:
+; CHECK:  store
+; CHECK:  br label %do.end
 define void @s32_max1(i32 %n, i32* %p) {
 entry:
   %add = add i32 %n, 1
@@ -13,14 +23,21 @@ do.body:
   %cmp = icmp slt i32 %i.0, %add
   br i1 %cmp, label %do.body, label %do.end ; taken either 0 or 1 times
 
-; CHECK-LABEL: Determining loop execution counts for: @s32_max1
-; CHECK-NEXT: Loop %do.body: backedge-taken count is ((-1 * %n) + ((1 + %n) smax %n))
-; CHECK-NEXT: Loop %do.body: max backedge-taken count is 1, actual taken count either this or zero.
-
 do.end:
   ret void
 }
 
+; Unroll thrice, with first loop exit kept
+; CHECK-LABEL: @s32_max2
+; CHECK: do.body:
+; CHECK:  store
+; CHECK:  br i1 %cmp, label %do.body.1, label %do.end
+; CHECK: do.end:
+; CHECK:  ret void
+; CHECK: do.body.1:
+; CHECK:  store
+; CHECK:  store
+; CHECK:  br label %do.end
 define void @s32_max2(i32 %n, i32* %p) {
 entry:
   %add = add i32 %n, 2
@@ -34,14 +51,15 @@ do.body:
   %cmp = icmp slt i32 %i.0, %add
   br i1 %cmp, label %do.body, label %do.end ; taken either 0 or 2 times
 
-; CHECK-LABEL: Determining loop execution counts for: @s32_max2
-; CHECK-NEXT: Loop %do.body: backedge-taken count is ((-1 * %n) + ((2 + %n) smax %n))
-; CHECK-NEXT: Loop %do.body: max backedge-taken count is 2, actual taken count either this or zero.
-
 do.end:
   ret void
 }
 
+; Should not be unrolled
+; CHECK-LABEL: @s32_maxx
+; CHECK: do.body:
+; CHECK: do.end:
+; CHECK-NOT: do.body.1:
 define void @s32_maxx(i32 %n, i32 %x, i32* %p) {
 entry:
   %add = add i32 %x, %n
@@ -55,14 +73,15 @@ do.body:
   %cmp = icmp slt i32 %i.0, %add
   br i1 %cmp, label %do.body, label %do.end ; taken either 0 or x times
 
-; CHECK-LABEL: Determining loop execution counts for: @s32_maxx
-; CHECK-NEXT: Loop %do.body: backedge-taken count is ((-1 * %n) + ((%n + %x) smax %n))
-; CHECK-NEXT: Loop %do.body: max backedge-taken count is -1{{$}}
-
 do.end:
   ret void
 }
 
+; Should not be unrolled
+; CHECK-LABEL: @s32_max2_unpredictable_exit
+; CHECK: do.body:
+; CHECK: do.end:
+; CHECK-NOT: do.body.1:
 define void @s32_max2_unpredictable_exit(i32 %n, i32 %x, i32* %p) {
 entry:
   %add = add i32 %n, 2
@@ -80,14 +99,20 @@ if.end:
   %cmp1 = icmp slt i32 %i.0, %add
   br i1 %cmp1, label %do.body, label %do.end ; taken either 0 or 2 times
 
-; CHECK-LABEL: Determining loop execution counts for: @s32_max2_unpredictable_exit
-; CHECK-NEXT: Loop %do.body: <multiple exits> Unpredictable backedge-taken count.
-; CHECK-NEXT: Loop %do.body: max backedge-taken count is 2{{$}}
-
 do.end:
   ret void
 }
 
+; Unroll twice, with first loop exit kept
+; CHECK-LABEL: @u32_max1
+; CHECK: do.body:
+; CHECK:  store
+; CHECK:  br i1 %cmp, label %do.body.1, label %do.end
+; CHECK: do.end:
+; CHECK:  ret void
+; CHECK: do.body.1:
+; CHECK:  store
+; CHECK:  br label %do.end
 define void @u32_max1(i32 %n, i32* %p) {
 entry:
   %add = add i32 %n, 1
@@ -101,14 +126,21 @@ do.body:
   %cmp = icmp ult i32 %i.0, %add
   br i1 %cmp, label %do.body, label %do.end ; taken either 0 or 1 times
 
-; CHECK-LABEL: Determining loop execution counts for: @u32_max1
-; CHECK-NEXT: Loop %do.body: backedge-taken count is ((-1 * %n) + ((1 + %n) umax %n))
-; CHECK-NEXT: Loop %do.body: max backedge-taken count is 1, actual taken count either this or zero.
-
 do.end:
   ret void
 }
 
+; Unroll thrice, with first loop exit kept
+; CHECK-LABEL: @u32_max2
+; CHECK: do.body:
+; CHECK:  store
+; CHECK:  br i1 %cmp, label %do.body.1, label %do.end
+; CHECK: do.end:
+; CHECK:  ret void
+; CHECK: do.body.1:
+; CHECK:  store
+; CHECK:  store
+; CHECK:  br label %do.end
 define void @u32_max2(i32 %n, i32* %p) {
 entry:
   %add = add i32 %n, 2
@@ -122,14 +154,15 @@ do.body:
   %cmp = icmp ult i32 %i.0, %add
   br i1 %cmp, label %do.body, label %do.end ; taken either 0 or 2 times
 
-; CHECK-LABEL: Determining loop execution counts for: @u32_max2
-; CHECK-NEXT: Loop %do.body: backedge-taken count is ((-1 * %n) + ((2 + %n) umax %n))
-; CHECK-NEXT: Loop %do.body: max backedge-taken count is 2, actual taken count either this or zero.
-
 do.end:
   ret void
 }
 
+; Should not be unrolled
+; CHECK-LABEL: @u32_maxx
+; CHECK: do.body:
+; CHECK: do.end:
+; CHECK-NOT: do.body.1:
 define void @u32_maxx(i32 %n, i32 %x, i32* %p) {
 entry:
   %add = add i32 %x, %n
@@ -143,14 +176,15 @@ do.body:
   %cmp = icmp ult i32 %i.0, %add
   br i1 %cmp, label %do.body, label %do.end ; taken either 0 or x times
 
-; CHECK-LABEL: Determining loop execution counts for: @u32_maxx
-; CHECK-NEXT: Loop %do.body: backedge-taken count is ((-1 * %n) + ((%n + %x) umax %n))
-; CHECK-NEXT: Loop %do.body: max backedge-taken count is -1{{$}}
-
 do.end:
   ret void
 }
 
+; Should not be unrolled
+; CHECK-LABEL: @u32_max2_unpredictable_exit
+; CHECK: do.body:
+; CHECK: do.end:
+; CHECK-NOT: do.body.1:
 define void @u32_max2_unpredictable_exit(i32 %n, i32 %x, i32* %p) {
 entry:
   %add = add i32 %n, 2
@@ -167,10 +201,6 @@ if.end:
   %inc = add i32 %i.0, 1
   %cmp1 = icmp ult i32 %i.0, %add
   br i1 %cmp1, label %do.body, label %do.end ; taken either 0 or 2 times
-
-; CHECK-LABEL: Determining loop execution counts for: @u32_max2_unpredictable_exit
-; CHECK-NEXT: Loop %do.body: <multiple exits> Unpredictable backedge-taken count.
-; CHECK-NEXT: Loop %do.body: max backedge-taken count is 2{{$}}
 
 do.end:
   ret void
