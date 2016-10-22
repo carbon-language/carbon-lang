@@ -1323,22 +1323,26 @@ __m256i test_mm256_mask_min_epu16(__m256i __W, __mmask16 __M, __m256i __A,      
 }
 __m128i test_mm_mask_shuffle_epi8(__m128i __W, __mmask16 __U, __m128i __A,           __m128i __B) {
   // CHECK-LABEL: @test_mm_mask_shuffle_epi8
-  // CHECK: @llvm.x86.avx512.mask.pshuf.b.128
+  // CHECK: @llvm.x86.ssse3.pshuf.b
+  // CHECK: select <16 x i1> %{{.*}}, <16 x i8> %{{.*}}, <16 x i8> %{{.*}}
   return _mm_mask_shuffle_epi8(__W,__U,__A,__B); 
 }
 __m128i test_mm_maskz_shuffle_epi8(__mmask16 __U, __m128i __A, __m128i __B) {
   // CHECK-LABEL: @test_mm_maskz_shuffle_epi8
-  // CHECK: @llvm.x86.avx512.mask.pshuf.b.128
+  // CHECK: @llvm.x86.ssse3.pshuf.b
+  // CHECK: select <16 x i1> %{{.*}}, <16 x i8> %{{.*}}, <16 x i8> %{{.*}}
   return _mm_maskz_shuffle_epi8(__U,__A,__B); 
 }
 __m256i test_mm256_mask_shuffle_epi8(__m256i __W, __mmask32 __U, __m256i __A,        __m256i __B) {
   // CHECK-LABEL: @test_mm256_mask_shuffle_epi8
-  // CHECK: @llvm.x86.avx512.mask.pshuf.b.256
+  // CHECK: @llvm.x86.avx2.pshuf.b
+  // CHECK: select <32 x i1> %{{.*}}, <32 x i8> %{{.*}}, <32 x i8> %{{.*}}
   return _mm256_mask_shuffle_epi8(__W,__U,__A,__B); 
 }
 __m256i test_mm256_maskz_shuffle_epi8(__mmask32 __U, __m256i __A, __m256i __B) {
   // CHECK-LABEL: @test_mm256_maskz_shuffle_epi8
-  // CHECK: @llvm.x86.avx512.mask.pshuf.b.256
+  // CHECK: @llvm.x86.avx2.pshuf.b
+  // CHECK: select <32 x i1> %{{.*}}, <32 x i8> %{{.*}}, <32 x i8> %{{.*}}
   return _mm256_maskz_shuffle_epi8(__U,__A,__B); 
 }
 __m128i test_mm_mask_subs_epi8(__m128i __W, __mmask16 __U, __m128i __A,        __m128i __B) {
