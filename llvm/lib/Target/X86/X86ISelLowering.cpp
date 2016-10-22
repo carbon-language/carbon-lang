@@ -7126,6 +7126,7 @@ static bool isRepeatedShuffleMask(unsigned LaneSizeInBits, MVT VT,
   RepeatedMask.assign(LaneSize, -1);
   int Size = Mask.size();
   for (int i = 0; i < Size; ++i) {
+    assert(Mask[i] == SM_SentinelUndef || Mask[i] >= 0);
     if (Mask[i] < 0)
       continue;
     if ((Mask[i] % Size) / LaneSize != i / LaneSize)
@@ -7760,9 +7761,16 @@ static SDValue lowerVectorShuffleAsDecomposedShuffleBlend(const SDLoc &DL,
 /// rotate* of the vector lanes.
 static int matchVectorShuffleAsByteRotate(MVT VT, SDValue &V1, SDValue &V2,
                                           ArrayRef<int> Mask) {
-  int NumElts = Mask.size();
-  int NumLanes = VT.getSizeInBits() / 128;
-  int NumLaneElts = NumElts / NumLanes;
+  // Don't accept any shuffles with zero elements.
+  if (any_of(Mask, [](int M) { return M == SM_SentinelZero; }))
+    return -1;
+
+  // PALIGNR works on 128-bit lanes.
+  SmallVector<int, 16> RepeatedMask;
+  if (!is128BitLaneRepeatedShuffleMask(VT, Mask, RepeatedMask))
+    return -1;
+
+  int NumElts = RepeatedMask.size();
 
   // We need to detect various ways of spelling a rotation:
   //   [11, 12, 13, 14, 15,  0,  1,  2]
@@ -7773,59 +7781,46 @@ static int matchVectorShuffleAsByteRotate(MVT VT, SDValue &V1, SDValue &V2,
   //   [-1,  4,  5,  6, -1, -1, -1, -1]
   int Rotation = 0;
   SDValue Lo, Hi;
-  for (int l = 0; l < NumElts; l += NumLaneElts) {
-    for (int i = 0; i < NumLaneElts; ++i) {
-      int M = Mask[l + i];
+  for (int i = 0; i < NumElts; ++i) {
+    int M = RepeatedMask[i];
+    assert((M == SM_SentinelUndef || (0 <= M && M < (2*NumElts))) &&
+           "Unexpected mask index.");
+    if (M < 0)
+      continue;
 
-      if (M == SM_SentinelUndef)
-        continue;
+    // Determine where a rotated vector would have started.
+    int StartIdx = i - (M % NumElts);
+    if (StartIdx == 0)
+      // The identity rotation isn't interesting, stop.
+      return -1;
 
-      if (M == SM_SentinelZero)
-        return -1;
+    // If we found the tail of a vector the rotation must be the missing
+    // front. If we found the head of a vector, it must be how much of the
+    // head.
+    int CandidateRotation = StartIdx < 0 ? -StartIdx : NumElts - StartIdx;
 
-      assert(0 <= M && M < (2*NumElts) && "Unexpected mask index.");
+    if (Rotation == 0)
+      Rotation = CandidateRotation;
+    else if (Rotation != CandidateRotation)
+      // The rotations don't match, so we can't match this mask.
+      return -1;
 
-      // Get the mod-Size index and lane correct it.
-      int LaneIdx = (M % NumElts) - l;
+    // Compute which value this mask is pointing at.
+    SDValue MaskV = M < NumElts ? V1 : V2;
 
-      // Make sure it was in this lane.
-      if (LaneIdx < 0 || LaneIdx >= NumLaneElts)
-        return -1;
+    // Compute which of the two target values this index should be assigned
+    // to. This reflects whether the high elements are remaining or the low
+    // elements are remaining.
+    SDValue &TargetV = StartIdx < 0 ? Hi : Lo;
 
-      // Determine where a rotated vector would have started.
-      int StartIdx = i - LaneIdx;
-      if (StartIdx == 0)
-        // The identity rotation isn't interesting, stop.
-        return -1;
-
-      // If we found the tail of a vector the rotation must be the missing
-      // front. If we found the head of a vector, it must be how much of the
-      // head.
-      int CandidateRotation = StartIdx < 0 ? -StartIdx : NumLaneElts - StartIdx;
-
-      if (Rotation == 0)
-        Rotation = CandidateRotation;
-      else if (Rotation != CandidateRotation)
-        // The rotations don't match, so we can't match this mask.
-        return -1;
-
-      // Compute which value this mask is pointing at.
-      SDValue MaskV = M < NumElts ? V1 : V2;
-
-      // Compute which of the two target values this index should be assigned
-      // to. This reflects whether the high elements are remaining or the low
-      // elements are remaining.
-      SDValue &TargetV = StartIdx < 0 ? Hi : Lo;
-
-      // Either set up this value if we've not encountered it before, or check
-      // that it remains consistent.
-      if (!TargetV)
-        TargetV = MaskV;
-      else if (TargetV != MaskV)
-        // This may be a rotation, but it pulls from the inputs in some
-        // unsupported interleaving.
-        return -1;
-    }
+    // Either set up this value if we've not encountered it before, or check
+    // that it remains consistent.
+    if (!TargetV)
+      TargetV = MaskV;
+    else if (TargetV != MaskV)
+      // This may be a rotation, but it pulls from the inputs in some
+      // unsupported interleaving.
+      return -1;
   }
 
   // Check that we successfully analyzed the mask, and normalize the results.
@@ -7839,9 +7834,9 @@ static int matchVectorShuffleAsByteRotate(MVT VT, SDValue &V1, SDValue &V2,
   V1 = Lo;
   V2 = Hi;
 
-  // The actual rotate instruction rotates bytes, so we need to scale the
+  // PALIGNR rotates bytes, so we need to scale the
   // rotation based on how many bytes are in the vector lane.
-  int Scale = 16 / NumLaneElts;
+  int Scale = 16 / NumElts;
   return Rotation * Scale;
 }
 
