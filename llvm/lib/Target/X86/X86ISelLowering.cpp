@@ -11532,17 +11532,12 @@ static SDValue lowerV8F32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // If we have a single input shuffle with different shuffle patterns in the
   // two 128-bit lanes use the variable mask to VPERMILPS.
   if (V2.isUndef()) {
-    SDValue VPermMask[8];
-    for (int i = 0; i < 8; ++i)
-      VPermMask[i] = Mask[i] < 0 ? DAG.getUNDEF(MVT::i32)
-                                 : DAG.getConstant(Mask[i], DL, MVT::i32);
+    SDValue VPermMask = getConstVector(Mask, MVT::v8i32, DAG, DL, true);
     if (!is128BitLaneCrossingShuffleMask(MVT::v8f32, Mask))
-      return DAG.getNode(X86ISD::VPERMILPV, DL, MVT::v8f32, V1,
-                         DAG.getBuildVector(MVT::v8i32, DL, VPermMask));
+      return DAG.getNode(X86ISD::VPERMILPV, DL, MVT::v8f32, V1, VPermMask);
 
     if (Subtarget.hasAVX2())
-      return DAG.getNode(X86ISD::VPERMV, DL, MVT::v8f32,
-                         DAG.getBuildVector(MVT::v8i32, DL, VPermMask), V1);
+      return DAG.getNode(X86ISD::VPERMV, DL, MVT::v8f32, VPermMask, V1);
 
     // Otherwise, fall back.
     return lowerVectorShuffleAsLanePermuteAndBlend(DL, MVT::v8f32, V1, V2, Mask,
@@ -11629,12 +11624,8 @@ static SDValue lowerV8I32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // If the shuffle patterns aren't repeated but it is a single input, directly
   // generate a cross-lane VPERMD instruction.
   if (V2.isUndef()) {
-    SDValue VPermMask[8];
-    for (int i = 0; i < 8; ++i)
-      VPermMask[i] = Mask[i] < 0 ? DAG.getUNDEF(MVT::i32)
-                                 : DAG.getConstant(Mask[i], DL, MVT::i32);
-    return DAG.getNode(X86ISD::VPERMV, DL, MVT::v8i32,
-                       DAG.getBuildVector(MVT::v8i32, DL, VPermMask), V1);
+    SDValue VPermMask = getConstVector(Mask, MVT::v8i32, DAG, DL, true);
+    return DAG.getNode(X86ISD::VPERMV, DL, MVT::v8i32, VPermMask, V1);
   }
 
   // Try to simplify this by merging 128-bit lanes to enable a lane-based
