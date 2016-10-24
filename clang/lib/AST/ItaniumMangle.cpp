@@ -3735,7 +3735,10 @@ recurse:
   case Expr::CXXOperatorCallExprClass: {
     const CXXOperatorCallExpr *CE = cast<CXXOperatorCallExpr>(E);
     unsigned NumArgs = CE->getNumArgs();
-    mangleOperatorName(CE->getOperator(), /*Arity=*/NumArgs);
+    // A CXXOperatorCallExpr for OO_Arrow models only semantics, not syntax
+    // (the enclosing MemberExpr covers the syntactic portion).
+    if (CE->getOperator() != OO_Arrow)
+      mangleOperatorName(CE->getOperator(), /*Arity=*/NumArgs);
     // Mangle the arguments.
     for (unsigned i = 0; i != NumArgs; ++i)
       mangleExpression(CE->getArg(i));
