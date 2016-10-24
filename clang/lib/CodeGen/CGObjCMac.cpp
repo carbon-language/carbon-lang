@@ -6282,8 +6282,8 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
 
   Values[1] = ClassGV;
   std::vector<llvm::Constant*> Methods;
-  Twine ListName =
-      Interface->getObjCRuntimeNameAsString() + "_$_" + OCD->getName();
+  std::string ListName =
+      (Interface->getObjCRuntimeNameAsString() + "_$_" + OCD->getName()).str();
 
   for (const auto *I : OCD->instance_methods())
     // Instance methods should always be defined.
