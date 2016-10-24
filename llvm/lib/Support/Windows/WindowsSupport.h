@@ -44,8 +44,8 @@
 #include <cassert>
 #include <string>
 #include <system_error>
-#include <wincrypt.h>
 #include <windows.h>
+#include <wincrypt.h> // FIXME: must be included after windows.h
 
 /// Determines if the program is running on Windows 8 or newer. This
 /// reimplements one of the helpers in the Windows 8.1 SDK, which are intended
