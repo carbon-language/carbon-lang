@@ -63,8 +63,10 @@ def BR_TABLE_I64 : I<(outs), (ins I64:$index, variable_ops),
 let Uses = [VALUE_STACK], Defs = [VALUE_STACK] in {
 def BLOCK     : I<(outs), (ins Signature:$sig), [], "block   \t$sig", 0x02>;
 def LOOP      : I<(outs), (ins Signature:$sig), [], "loop    \t$sig", 0x03>;
-def END_BLOCK : I<(outs), (ins), [], "end_block">;
-def END_LOOP  : I<(outs), (ins), [], "end_loop">;
+
+// END_BLOCK and END_LOOP are represented with the same opcode in wasm.
+def END_BLOCK : I<(outs), (ins), [], "end_block", 0x0f>;
+def END_LOOP  : I<(outs), (ins), [], "end_loop", 0x0f>;
 } // Uses = [VALUE_STACK], Defs = [VALUE_STACK]
 
 multiclass RETURN<WebAssemblyRegClass vt> {
