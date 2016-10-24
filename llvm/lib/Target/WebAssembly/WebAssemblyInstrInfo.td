@@ -156,21 +156,21 @@ let hasSideEffects = 0 in {
   // local, which is a side effect not otherwise modeled in LLVM.
   let mayLoad = 1, isAsCheapAsAMove = 1 in
   def GET_LOCAL_#vt : I<(outs vt:$res), (ins local_op:$local), [],
-                        "get_local\t$res, $local", 0x14>;
+                        "get_local\t$res, $local", 0x20>;
 
   // This is the actual set_local instruction in wasm. These are made explicit
   // by the ExplicitLocals pass. It has mayStore because it writes to a wasm
   // local, which is a side effect not otherwise modeled in LLVM.
   let mayStore = 1, isAsCheapAsAMove = 1 in
   def SET_LOCAL_#vt : I<(outs), (ins local_op:$local, vt:$src), [],
-                        "set_local\t$local, $src", 0x15>;
+                        "set_local\t$local, $src", 0x21>;
 
   // This is the actual tee_local instruction in wasm. TEEs are turned into
   // TEE_LOCALs by the ExplicitLocals pass. It has mayStore for the same reason
   // as SET_LOCAL.
   let mayStore = 1, isAsCheapAsAMove = 1 in
   def TEE_LOCAL_#vt : I<(outs vt:$res), (ins local_op:$local, vt:$src), [],
-                         "tee_local\t$res, $local, $src", 0x19>;
+                         "tee_local\t$res, $local, $src", 0x22>;
 
 } // hasSideEffects = 0
 }
@@ -190,16 +190,16 @@ def DECLARE_LOCALS : I<(outs), (ins variable_ops), [], ".local  \t"> {
 let isMoveImm = 1, isAsCheapAsAMove = 1, isReMaterializable = 1 in {
 def CONST_I32 : I<(outs I32:$res), (ins i32imm_op:$imm),
                   [(set I32:$res, imm:$imm)],
-                  "i32.const\t$res, $imm", 0x10>;
+                  "i32.const\t$res, $imm", 0x41>;
 def CONST_I64 : I<(outs I64:$res), (ins i64imm_op:$imm),
                   [(set I64:$res, imm:$imm)],
-                  "i64.const\t$res, $imm", 0x11>;
+                  "i64.const\t$res, $imm", 0x42>;
 def CONST_F32 : I<(outs F32:$res), (ins f32imm_op:$imm),
                   [(set F32:$res, fpimm:$imm)],
-                  "f32.const\t$res, $imm", 0x13>;
+                  "f32.const\t$res, $imm", 0x43>;
 def CONST_F64 : I<(outs F64:$res), (ins f64imm_op:$imm),
                   [(set F64:$res, fpimm:$imm)],
-                  "f64.const\t$res, $imm", 0x12>;
+                  "f64.const\t$res, $imm", 0x44>;
 } // isMoveImm = 1, isAsCheapAsAMove = 1, isReMaterializable = 1
 
 } // Defs = [ARGUMENTS]
