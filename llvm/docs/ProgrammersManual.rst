@@ -614,14 +614,16 @@ preceded by a string “banner” that can be set by calling the setBanner metho
 mapping can also be supplied from ``Error`` values to exit codes using the
 ``setExitCodeMapper`` method:
 
-int main(int argc, char *argv[]) {
-  ExitOnErr.setBanner(std::string(argv[0]) + “ error:”);
-  ExitOnErr.setExitCodeMapper(
-    [](const Error &Err) {
-      if (Err.isA<BadFileFormat>())
-        return 2;
-      return 1;
-    });
+.. code-block:: c++
+
+  int main(int argc, char *argv[]) {
+    ExitOnErr.setBanner(std::string(argv[0]) + “ error:”);
+    ExitOnErr.setExitCodeMapper(
+      [](const Error &Err) {
+        if (Err.isA<BadFileFormat>())
+          return 2;
+        return 1;
+      });
 
 Use ``ExitOnError`` in your tool code where possible as it can greatly improve
 readability.
