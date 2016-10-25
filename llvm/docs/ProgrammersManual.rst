@@ -504,7 +504,7 @@ StringError
 Many kinds of errors have no recovery strategy, the only action that can be
 taken is to report them to the user so that the user can attempt to fix the
 environment. In this case representing the error as a string makes perfect
-sense. LLVM provides the ``StringError class for this purpose. It takes two
+sense. LLVM provides the ``StringError`` class for this purpose. It takes two
 arguments: A string error message, and an equivalent ``std::error_code`` for
 interoperability:
 
@@ -582,7 +582,7 @@ Using ExitOnError to simplify tool code
 """""""""""""""""""""""""""""""""""""""
 
 Library code should never call ``exit`` for a recoverable error, however in tool
-code (especially comamnd line tools) this can be a reasonable approach. Calling
+code (especially command line tools) this can be a reasonable approach. Calling
 ``exit`` upon encountering an error dramatically simplifies control flow as the
 error no longer needs to be propagated up the stack. This allows code to be
 written in straight-line style, as long as each fallible call is wrapped in a
