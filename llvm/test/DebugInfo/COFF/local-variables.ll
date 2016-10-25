@@ -63,9 +63,11 @@
 ; ASM:         .cv_loc 2 1 5 3                 # t.cpp:5:3
 ; ASM:         callq   capture
 ; ASM:         leaq    36(%rsp), %rcx
-; ASM: [[else_end:\.Ltmp.*]]:
+; ASM: [[inline_site2_end:\.Ltmp.*]]:
 ; ASM: .LBB0_3:                                # %if.end
+; ASM:         .cv_loc 0 1 15 5                # t.cpp:15:5
 ; ASM:         callq   capture
+; ASM: [[else_end:\.Ltmp.*]]:
 ; ASM:         .cv_loc 0 1 17 1                # t.cpp:17:1
 ; ASM:         nop
 ; ASM:         addq    $56, %rsp
@@ -99,7 +101,7 @@
 ; ASM: .long   116                     # TypeIndex
 ; ASM: .short  0                       # Flags
 ; ASM: .asciz  "v"
-; ASM: .cv_def_range    [[inline_site2]] [[else_end]], "E\021O\001\000\0000\000\000\000"
+; ASM: .cv_def_range    [[inline_site2]] [[inline_site2_end]], "E\021O\001\000\0000\000\000\000"
 ; ASM: .short  4430                    # Record kind: S_INLINESITE_END
 
 ; OBJ:  Subsection [
@@ -157,7 +159,7 @@
 ; OBJ:      LocalVariableAddrRange {
 ; OBJ:        OffsetStart: .text+0x2D
 ; OBJ:        ISectStart: 0x0
-; OBJ:        Range: 0x1F
+; OBJ:        Range: 0x24
 ; OBJ:      }
 ; OBJ:    }
 ; OBJ:    InlineSite {
@@ -198,7 +200,7 @@
 ; OBJ:        ChangeLineOffset: 1
 ; OBJ:        ChangeCodeOffset: 0x35
 ; OBJ:        ChangeCodeOffsetAndLineOffset: {CodeOffset: 0xD, LineOffset: 1}
-; OBJ:        ChangeCodeLength: 0xF
+; OBJ:        ChangeCodeLength: 0xA
 ; OBJ:      ]
 ; OBJ:    }
 ; OBJ:    Local {
