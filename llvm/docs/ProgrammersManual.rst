@@ -586,7 +586,7 @@ code (especially command line tools) this can be a reasonable approach. Calling
 ``exit`` upon encountering an error dramatically simplifies control flow as the
 error no longer needs to be propagated up the stack. This allows code to be
 written in straight-line style, as long as each fallible call is wrapped in a
-check and call to exit. The ``ExitOnError``` class supports this pattern by
+check and call to exit. The ``ExitOnError`` class supports this pattern by
 providing call operators that inspect ``Error`` values, stripping the error away
 in the success case and logging to ``stderr`` then exiting in the failure case.
 
@@ -642,7 +642,7 @@ this, use the named constructor idiom and return an ``Expected<T>``:
   class Foo {
   public:
 
-    static Expected<Foo> Create(Resource R1, Resource R2) {
+    static Expected<Foo> Create(Resource R1, Resource R2) {
       Error Err;
       Foo F(R1, R2, Err);
       if (Err)
@@ -678,7 +678,7 @@ Propagating and consuming errors based on types
 In some contexts, certain types of error are known to be benign. For example,
 when walking an archive, some clients may be happy to skip over badly formatted
 object files rather than terminating the walk immediately. Skipping badly
-formatted objects could be achieved using an elaborate handler method, But the
+formatted objects could be achieved using an elaborate handler method, but the
 Error.h header provides two utilities that make this idiom much cleaner: the
 type inspection method, ``isA``, and the ``consumeError`` function:
 
@@ -687,12 +687,13 @@ type inspection method, ``isA``, and the ``consumeError`` function:
   Error walkArchive(Archive A) {
     for (unsigned I = 0; I != A.numMembers(); ++I) {
       auto ChildOrErr = A.getMember(I);
-      if (auto Err = ChildOrErr.takeError())
+      if (auto Err = ChildOrErr.takeError()) {
         if (Err.isA<BadFileFormat>())
           consumeError(std::move(Err))
         else
           return Err;
-        auto &Child = *ChildOrErr;
+      }
+      auto &Child = *ChildOrErr;
       // do work
     }
     return Error::success();
