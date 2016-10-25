@@ -160,7 +160,6 @@ Fuzzer::Fuzzer(UserCallback CB, InputCorpus &Corpus, MutationDispatcher &MD,
   InitializeTraceState();
   assert(!F);
   F = this;
-  TPC.ResetTotalPCCoverage();
   TPC.ResetMaps();
   TPC.ResetGuards();
   ResetCoverage();

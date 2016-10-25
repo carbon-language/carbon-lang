@@ -35,7 +35,6 @@ void TracePC::HandleTrace(uint32_t *Guard, uintptr_t PC) {
   if (Counter == 0) {
     if (!PCs[Idx % kNumPCs]) {
       AddNewPCID(Idx);
-      TotalPCCoverage++;
       PCs[Idx % kNumPCs] = PC;
     }
   }
@@ -48,6 +47,14 @@ void TracePC::HandleTrace(uint32_t *Guard, uintptr_t PC) {
     *CounterPtr = 1;
     *Guard = 0;
   }
+}
+
+size_t TracePC::GetTotalPCCoverage() {
+  size_t Res = 0;
+  for (size_t i = 0; i < Min(NumGuards+1, kNumPCs); i++)
+    if (PCs[i])
+      Res++;
+  return Res;
 }
 
 void TracePC::HandleInit(uint32_t *Start, uint32_t *Stop) {
