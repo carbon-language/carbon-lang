@@ -17,7 +17,7 @@ Version 4.0
 -----------
 
 
-* rTBD - Add -fvisibility-inlines-hidden when building libc++.
+* r285101 - Add -fvisibility-inlines-hidden when building libc++.
 
   Although this change removes symbols, it should still be non-ABI breaking
   since all of the definitions removed are inline functions. For this reason
