@@ -82,52 +82,28 @@ define <4 x i32> @combine_vec_sdiv_by_pos1(<4 x i32> %x) {
 ; SSE:       # BB#0:
 ; SSE-NEXT:    pand {{.*}}(%rip), %xmm0
 ; SSE-NEXT:    pextrd $1, %xmm0, %eax
-; SSE-NEXT:    movl %eax, %ecx
-; SSE-NEXT:    sarl $31, %ecx
-; SSE-NEXT:    shrl $30, %ecx
-; SSE-NEXT:    addl %eax, %ecx
-; SSE-NEXT:    sarl $2, %ecx
-; SSE-NEXT:    pextrd $2, %xmm0, %eax
+; SSE-NEXT:    shrl $2, %eax
+; SSE-NEXT:    pextrd $2, %xmm0, %ecx
 ; SSE-NEXT:    pextrd $3, %xmm0, %edx
-; SSE-NEXT:    pinsrd $1, %ecx, %xmm0
-; SSE-NEXT:    movl %eax, %ecx
-; SSE-NEXT:    sarl $31, %ecx
-; SSE-NEXT:    shrl $29, %ecx
-; SSE-NEXT:    addl %eax, %ecx
-; SSE-NEXT:    sarl $3, %ecx
+; SSE-NEXT:    pinsrd $1, %eax, %xmm0
+; SSE-NEXT:    shrl $3, %ecx
 ; SSE-NEXT:    pinsrd $2, %ecx, %xmm0
-; SSE-NEXT:    movl %edx, %eax
-; SSE-NEXT:    sarl $31, %eax
-; SSE-NEXT:    shrl $28, %eax
-; SSE-NEXT:    addl %edx, %eax
-; SSE-NEXT:    sarl $4, %eax
-; SSE-NEXT:    pinsrd $3, %eax, %xmm0
+; SSE-NEXT:    shrl $4, %edx
+; SSE-NEXT:    pinsrd $3, %edx, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_vec_sdiv_by_pos1:
 ; AVX:       # BB#0:
 ; AVX-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
 ; AVX-NEXT:    vpextrd $1, %xmm0, %eax
-; AVX-NEXT:    movl %eax, %ecx
-; AVX-NEXT:    sarl $31, %ecx
-; AVX-NEXT:    shrl $30, %ecx
-; AVX-NEXT:    addl %eax, %ecx
-; AVX-NEXT:    sarl $2, %ecx
-; AVX-NEXT:    vpinsrd $1, %ecx, %xmm0, %xmm1
+; AVX-NEXT:    shrl $2, %eax
+; AVX-NEXT:    vpinsrd $1, %eax, %xmm0, %xmm1
 ; AVX-NEXT:    vpextrd $2, %xmm0, %eax
-; AVX-NEXT:    movl %eax, %ecx
-; AVX-NEXT:    sarl $31, %ecx
-; AVX-NEXT:    shrl $29, %ecx
-; AVX-NEXT:    addl %eax, %ecx
-; AVX-NEXT:    sarl $3, %ecx
-; AVX-NEXT:    vpinsrd $2, %ecx, %xmm1, %xmm1
+; AVX-NEXT:    shrl $3, %eax
+; AVX-NEXT:    vpinsrd $2, %eax, %xmm1, %xmm1
 ; AVX-NEXT:    vpextrd $3, %xmm0, %eax
-; AVX-NEXT:    movl %eax, %ecx
-; AVX-NEXT:    sarl $31, %ecx
-; AVX-NEXT:    shrl $28, %ecx
-; AVX-NEXT:    addl %eax, %ecx
-; AVX-NEXT:    sarl $4, %ecx
-; AVX-NEXT:    vpinsrd $3, %ecx, %xmm1, %xmm0
+; AVX-NEXT:    shrl $4, %eax
+; AVX-NEXT:    vpinsrd $3, %eax, %xmm1, %xmm0
 ; AVX-NEXT:    retq
   %1 = and <4 x i32> %x, <i32 255, i32 255, i32 255, i32 255>
   %2 = sdiv <4 x i32> %1, <i32 1, i32 4, i32 8, i32 16>
