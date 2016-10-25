@@ -399,7 +399,8 @@ operator. If failure, the ``Error`` value can be extracted using the
       // On success, grab a reference to the file and continue.
       auto &File = *FileOrErr;
       // ...
-    } else     // On error, extract the Error value and return it.
+    } else
+      // On error, extract the Error value and return it.
       return FileOrErr.takeError();
   }
 
