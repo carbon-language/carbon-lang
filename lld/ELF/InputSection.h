@@ -105,6 +105,7 @@ public:
   uint32_t getType() const { return Header->sh_type; }
   uintX_t getEntsize() const { return Header->sh_entsize; }
   uint32_t getLink() const { return Header->sh_link; }
+  uint32_t getInfo() const { return Header->sh_info; }
   ObjectFile<ELFT> *getFile() const { return File; }
   uintX_t getOffset(const DefinedRegular<ELFT> &Sym) const;
   InputSectionBase *getLinkOrderDep() const;
