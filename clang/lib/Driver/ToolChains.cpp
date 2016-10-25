@@ -1438,6 +1438,43 @@ void Generic_GCC::GCCInstallationDetector::init(
     }
   }
 
+  // Try to respect gcc-config on Gentoo. However, do that only
+  // if --gcc-toolchain is not provided or equal to the Gentoo install
+  // in /usr. This avoids accidentally enforcing the system GCC version
+  // when using a custom toolchain.
+  if (GCCToolchainDir == "" || GCCToolchainDir == D.SysRoot + "/usr") {
+    for (StringRef CandidateTriple : CandidateTripleAliases) {
+      llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> File =
+          D.getVFS().getBufferForFile(D.SysRoot + "/etc/env.d/gcc/config-" +
+                                      CandidateTriple.str());
+      if (File) {
+        SmallVector<StringRef, 2> Lines;
+        File.get()->getBuffer().split(Lines, "\n");
+        for (StringRef Line : Lines) {
+          // CURRENT=triple-version
+          if (Line.consume_front("CURRENT=")) {
+            const std::pair<StringRef, StringRef> ActiveVersion =
+              Line.rsplit('-');
+            // Note: Strictly speaking, we should be reading
+            // /etc/env.d/gcc/${CURRENT} now. However, the file doesn't
+            // contain anything new or especially useful to us.
+            const std::string GentooPath = D.SysRoot + "/usr/lib/gcc/" +
+                                           ActiveVersion.first.str() + "/" +
+                                           ActiveVersion.second.str();
+            if (D.getVFS().exists(GentooPath + "/crtbegin.o")) {
+              Version = GCCVersion::Parse(ActiveVersion.second);
+              GCCInstallPath = GentooPath;
+              GCCParentLibPath = GentooPath + "/../../..";
+              GCCTriple.setTriple(ActiveVersion.first);
+              IsValid = true;
+              return;
+            }
+          }
+        }
+      }
+    }
+  }
+
   // Loop over the various components which exist and select the best GCC
   // installation available. GCC installs are ranked by version number.
   Version = GCCVersion::Parse("0.0.0");
