@@ -738,16 +738,16 @@ Building fallible iterators and iterator ranges
 
 The archive walking examples above retrieve archive members by index, however
 this requires considerable boiler-plate for iteration and error checking. We can
-clean this up considerably by using ``Error`` with the "fallible iterator"
-pattern. The usual C++ iterator patterns do not allow for failure on increment,
-but we can incorporate support for it by having iterators hold an Error
-reference through which they can report failure. In this pattern, if an
-increment operation fails the failure is recorded via the Error reference and
-the iterator value is set to the end of the range in order to terminate the
-loop. This ensures that the dereference operation is safe anywhere that an
-ordinary iterator dereference would be safe (i.e. when the iterator is not equal
-to end). Where this pattern is followed (as in the ``llvm::object::Archive``
-class) the result is much cleaner iteration idiom:
+clean this up by using ``Error`` with the "fallible iterator" pattern. The usual
+C++ iterator patterns do not allow for failure on increment, but we can
+incorporate support for it by having iterators hold an Error reference through
+which they can report failure. In this pattern, if an increment operation fails
+the failure is recorded via the Error reference and the iterator value is set to
+the end of the range in order to terminate the loop. This ensures that the
+dereference operation is safe anywhere that an ordinary iterator dereference
+would be safe (i.e. when the iterator is not equal to end). Where this pattern
+is followed (as in the ``llvm::object::Archive`` class) the result is much
+cleaner iteration idiom:
 
 .. code-block:: c++
 
