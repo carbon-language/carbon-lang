@@ -398,7 +398,7 @@ operator. If failure, the ``Error`` value can be extracted using the
     if (auto FileOrErr = openFormattedFile(Path)) {
       // On success, grab a reference to the file and continue.
       auto &File = *FileOrErr;
-      // ...
+      ...
     } else
       // On error, extract the Error value and return it.
       return FileOrErr.takeError();
@@ -418,7 +418,7 @@ rewritten as:
       return Err;
     // On success, grab a reference to the file and continue.
     auto &File = *FileOrErr;
-    // ...
+    ...
   }
 
 This second form is often more readable for functions that involve multiple
@@ -695,7 +695,8 @@ type inspection method, ``isA``, and the ``consumeError`` function:
           return Err;
       }
       auto &Child = *ChildOrErr;
-      // do work
+      // Use Child
+      ...
     }
     return Error::success();
   }
@@ -719,7 +720,8 @@ completing the walk over the archive they could use the ``joinErrors`` utility:
         else
           return Err;
       auto &Child = *ChildOrErr;
-      // do work
+      // Use Child
+      ...
     }
     return DeferredErrs;
   }
@@ -751,7 +753,8 @@ class) the result is much cleaner iteration idiom:
 
   Error Err;
   for (auto &Child : Ar->children(Err)) {
-    // Use Child - we only enter the loop when it’s valid.
+    // Use Child - we only enter the loop when it’s valid
+    ...
   }
   // Check Err after the loop to ensure it didn’t break due to an error.
   if (Err)
