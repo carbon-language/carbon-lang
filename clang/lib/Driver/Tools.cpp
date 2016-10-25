@@ -9712,6 +9712,14 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   if (Arch == llvm::Triple::armeb || Arch == llvm::Triple::thumbeb)
     arm::appendEBLinkFlags(Args, CmdArgs, Triple);
 
+  // Most Android ARM64 targets should enable the linker fix for erratum
+  // 843419. Only non-Cortex-A53 devices are allowed to skip this flag.
+  if (Arch == llvm::Triple::aarch64 && isAndroid) {
+    std::string CPU = getCPUName(Args, Triple);
+    if (CPU.empty() || CPU == "generic" || CPU == "cortex-a53")
+      CmdArgs.push_back("--fix-cortex-a53-843419");
+  }
+
   for (const auto &Opt : ToolChain.ExtraOpts)
     CmdArgs.push_back(Opt.c_str());
 
