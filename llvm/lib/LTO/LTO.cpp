@@ -222,6 +222,7 @@ Expected<std::unique_ptr<InputFile>> InputFile::create(MemoryBufferRef Object) {
     auto P =
         File->ComdatMap.insert(std::make_pair(&C.second, File->Comdats.size()));
     assert(P.second);
+    (void)P;
     File->Comdats.push_back(C.first());
   }
 
