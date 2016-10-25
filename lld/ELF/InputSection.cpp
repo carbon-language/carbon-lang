@@ -171,9 +171,8 @@ InputSectionBase<ELFT>::getOffset(const DefinedRegular<ELFT> &Sym) const {
 
 template <class ELFT>
 InputSectionBase<ELFT> *InputSectionBase<ELFT>::getLinkOrderDep() const {
-  const Elf_Shdr *Hdr = getSectionHdr();
-  if ((Hdr->sh_flags & SHF_LINK_ORDER) && Hdr->sh_link != 0)
-    return getFile()->getSections()[Hdr->sh_link];
+  if ((getFlags() & SHF_LINK_ORDER) && getLink() != 0)
+    return getFile()->getSections()[getLink()];
   return nullptr;
 }
 
@@ -589,7 +588,7 @@ std::vector<SectionPiece>
 MergeInputSection<ELFT>::splitStrings(ArrayRef<uint8_t> Data, size_t EntSize) {
   std::vector<SectionPiece> V;
   size_t Off = 0;
-  bool IsAlloca = this->getSectionHdr()->sh_flags & SHF_ALLOC;
+  bool IsAlloca = this->getFlags() & SHF_ALLOC;
   while (!Data.empty()) {
     size_t End = findNull(Data, EntSize);
     if (End == StringRef::npos)
@@ -620,7 +619,7 @@ MergeInputSection<ELFT>::splitNonStrings(ArrayRef<uint8_t> Data,
   std::vector<SectionPiece> V;
   size_t Size = Data.size();
   assert((Size % EntSize) == 0);
-  bool IsAlloca = this->getSectionHdr()->sh_flags & SHF_ALLOC;
+  bool IsAlloca = this->getFlags() & SHF_ALLOC;
   for (unsigned I = 0, N = Size; I != N; I += EntSize) {
     Hashes.push_back(hash_value(toStringRef(Data.slice(I, EntSize))));
     V.emplace_back(I, !IsAlloca);
@@ -642,7 +641,7 @@ template <class ELFT> void MergeInputSection<ELFT>::splitIntoPieces() {
   else
     this->Pieces = splitNonStrings(Data, EntSize);
 
-  if (Config->GcSections && (this->getSectionHdr()->sh_flags & SHF_ALLOC))
+  if (Config->GcSections && (this->getFlags() & SHF_ALLOC))
     for (uintX_t Off : LiveOffsets)
       this->getSectionPiece(Off)->Live = true;
 }
