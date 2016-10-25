@@ -182,6 +182,7 @@ PreservedAnalyses GlobalDCEPass::run(Module &M, ModuleAnalysisManager &) {
   for (GlobalAlias *GA : DeadAliases)
     EraseUnusedGlobalValue(GA);
 
+  NumIFuncs += DeadIFuncs.size();
   for (GlobalIFunc *GIF : DeadIFuncs)
     EraseUnusedGlobalValue(GIF);
 
