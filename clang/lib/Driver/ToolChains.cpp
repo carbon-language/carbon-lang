@@ -3968,8 +3968,25 @@ static Distro DetectDistro(vfs::FileSystem &VFS) {
         .Default(UnknownDistro);
   }
 
-  if (VFS.exists("/etc/SuSE-release"))
-    return OpenSUSE;
+  File = VFS.getBufferForFile("/etc/SuSE-release");
+  if (File) {
+    StringRef Data = File.get()->getBuffer();
+    SmallVector<StringRef, 8> Lines;
+    Data.split(Lines, "\n");
+    for (const StringRef& Line : Lines) {
+      if (!Line.trim().startswith("VERSION"))
+        continue;
+      std::pair<StringRef, StringRef> SplitLine = Line.split('=');
+      int Version;
+      // OpenSUSE/SLES 10 and older are not supported and not compatible
+      // with our rules, so just treat them as UnknownDistro.
+      if (!SplitLine.second.trim().getAsInteger(10, Version) &&
+          Version > 10)
+        return OpenSUSE;
+      return UnknownDistro;
+    }
+    return UnknownDistro;
+  }
 
   if (VFS.exists("/etc/exherbo-release"))
     return Exherbo;
