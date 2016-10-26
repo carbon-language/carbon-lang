@@ -298,7 +298,7 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
     if (F) {
       Cpio.reset(*F);
       Cpio->append("response.txt", createResponseFile(Args));
-      Cpio->append("version.txt", (getLLDVersion() + "\n").str());
+      Cpio->append("version.txt", getLLDVersion() + "\n");
     } else
       error(F.getError(),
             Twine("--reproduce: failed to open ") + Path + ".cpio");
