@@ -102,7 +102,7 @@ define i64 @test9(i64 %x) {
 ; "a == 1 ? a : -1" to avoid materializing a constant.
 ; CHECK-LABEL: test10:
 ; CHECK: cmp w[[REG:[0-9]]], #1
-; CHECK: cneg w0, w[[REG]], ne
+; CHECK: csinv w0, w[[REG]], wzr, eq
 define i32 @test10(i32 %x) {
   %cmp = icmp eq i32 %x, 1
   %res = select i1 %cmp, i32 1, i32 -1
