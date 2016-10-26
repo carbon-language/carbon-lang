@@ -2497,6 +2497,26 @@ vec_first_mismatch_or_eos_index(vector unsigned int __a,
   return __res[0] >> 5;
 }
 
+static __inline__ vector double  __ATTRS_o_ai
+vec_insert_exp(vector double __a, vector unsigned long long __b) {
+  return __builtin_vsx_xviexpdp((vector unsigned long long)__a,__b);
+}
+
+static __inline__ vector double  __ATTRS_o_ai
+vec_insert_exp(vector unsigned long long __a, vector unsigned long long __b) {
+  return __builtin_vsx_xviexpdp(__a,__b);
+}
+
+static __inline__ vector float  __ATTRS_o_ai
+vec_insert_exp(vector float __a, vector unsigned int __b) {
+  return __builtin_vsx_xviexpsp((vector unsigned int)__a,__b);
+}
+
+static __inline__ vector float  __ATTRS_o_ai
+vec_insert_exp(vector unsigned int __a, vector unsigned int __b) {
+  return __builtin_vsx_xviexpsp(__a,__b);
+}
+
 #endif
 
 /* vec_cpsgn */
