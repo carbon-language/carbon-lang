@@ -12,6 +12,8 @@
 #ifndef LLVM_FUZZER_TRACE_PC
 #define LLVM_FUZZER_TRACE_PC
 
+#include <set>
+
 #include "FuzzerDefs.h"
 #include "FuzzerValueBitMap.h"
 
@@ -53,6 +55,7 @@ class TracePC {
   size_t GetTotalPCCoverage();
   void SetUseCounters(bool UC) { UseCounters = UC; }
   void SetUseValueProfile(bool VP) { UseValueProfile = VP; }
+  void SetPrintNewPCs(bool P) { DoPrintNewPCs = P; }
   size_t FinalizeTrace(InputCorpus *C, size_t InputSize, bool Shrink);
   bool UpdateValueProfileMap(ValueBitMap *MaxValueProfileMap) {
     return UseValueProfile && MaxValueProfileMap->MergeFrom(ValueProfileMap);
@@ -91,9 +94,12 @@ class TracePC {
   TableOfRecentCompares<uint32_t, kTORCSize> TORC4;
   TableOfRecentCompares<uint64_t, kTORCSize> TORC8;
 
+  void PrintNewPCs();
+
 private:
   bool UseCounters = false;
   bool UseValueProfile = false;
+  bool DoPrintNewPCs = false;
 
   static const size_t kMaxNewPCIDs = 1024;
   uintptr_t NewPCIDs[kMaxNewPCIDs];
@@ -128,6 +134,8 @@ private:
 
   static const size_t kNumPCs = 1 << 24;
   uintptr_t PCs[kNumPCs];
+
+  std::set<uintptr_t> *PrintedPCs;
 
   ValueBitMap ValueProfileMap;
 };
