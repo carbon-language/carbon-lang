@@ -553,8 +553,7 @@ static std::string getLocation(SymbolBody &Sym, InputSectionBase<ELFT> &S,
   DefinedRegular<ELFT> *Encl = getSymbolAt(&S, Offset);
   if (Encl && Encl->Type == STT_FUNC) {
     StringRef Func = getSymbolName(*File, *Encl);
-    return SrcFile + " (function " +
-           (Config->Demangle ? demangle(Func) : Func.str()) + ")";
+    return SrcFile + " (function " + maybeDemangle(Func) + ")";
   }
 
   return (SrcFile + " (" + S.Name + "+0x" + Twine::utohexstr(Offset) + ")")
@@ -571,9 +570,8 @@ static void reportUndefined(SymbolBody &Sym, InputSectionBase<ELFT> &S,
       Config->UnresolvedSymbols != UnresolvedPolicy::NoUndef)
     return;
 
-  std::string Msg =
-      getLocation(Sym, S, Offset) + ": undefined symbol '" +
-      (Config->Demangle ? demangle(Sym.getName()) : Sym.getName().str()) + "'";
+  std::string Msg = getLocation(Sym, S, Offset) + ": undefined symbol '" +
+                    maybeDemangle(Sym.getName()) + "'";
 
   if (Config->UnresolvedSymbols == UnresolvedPolicy::Warn)
     warn(Msg);
