@@ -14,7 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <type_traits>
-#include <unistd.h>
 #include <utility>
 
 #include "xray-extract.h"
@@ -80,7 +79,6 @@ template <> struct MappingTraits<YAMLXRaySledEntry> {
 
   static constexpr bool flow = true;
 };
-
 }
 }
 
