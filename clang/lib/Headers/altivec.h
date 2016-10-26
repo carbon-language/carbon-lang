@@ -15034,6 +15034,77 @@ vec_bperm(vector unsigned __int128 __a, vector unsigned char __b) {
 #endif
 #endif
 
+
+/* vec_reve */
+
+static inline __ATTRS_o_ai vector bool char vec_reve(vector bool char __a) {
+  return __builtin_shufflevector(__a, __a, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6,
+                                 5, 4, 3, 2, 1, 0);
+}
+
+static inline __ATTRS_o_ai vector signed char vec_reve(vector signed char __a) {
+  return __builtin_shufflevector(__a, __a, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6,
+                                 5, 4, 3, 2, 1, 0);
+}
+
+static inline __ATTRS_o_ai vector unsigned char
+vec_reve(vector unsigned char __a) {
+  return __builtin_shufflevector(__a, __a, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6,
+                                 5, 4, 3, 2, 1, 0);
+}
+
+static inline __ATTRS_o_ai vector bool int vec_reve(vector bool int __a) {
+  return __builtin_shufflevector(__a, __a, 3, 2, 1, 0);
+}
+
+static inline __ATTRS_o_ai vector signed int vec_reve(vector signed int __a) {
+  return __builtin_shufflevector(__a, __a, 3, 2, 1, 0);
+}
+
+static inline __ATTRS_o_ai vector unsigned int
+vec_reve(vector unsigned int __a) {
+  return __builtin_shufflevector(__a, __a, 3, 2, 1, 0);
+}
+
+static inline __ATTRS_o_ai vector bool short vec_reve(vector bool short __a) {
+  return __builtin_shufflevector(__a, __a, 7, 6, 5, 4, 3, 2, 1, 0);
+}
+
+static inline __ATTRS_o_ai vector signed short
+vec_reve(vector signed short __a) {
+  return __builtin_shufflevector(__a, __a, 7, 6, 5, 4, 3, 2, 1, 0);
+}
+
+static inline __ATTRS_o_ai vector unsigned short
+vec_reve(vector unsigned short __a) {
+  return __builtin_shufflevector(__a, __a, 7, 6, 5, 4, 3, 2, 1, 0);
+}
+
+static inline __ATTRS_o_ai vector float vec_reve(vector float __a) {
+  return __builtin_shufflevector(__a, __a, 3, 2, 1, 0);
+}
+
+#ifdef __VSX__
+static inline __ATTRS_o_ai vector bool long long
+vec_reve(vector bool long long __a) {
+  return __builtin_shufflevector(__a, __a, 1, 0);
+}
+
+static inline __ATTRS_o_ai vector signed long long
+vec_reve(vector signed long long __a) {
+  return __builtin_shufflevector(__a, __a, 1, 0);
+}
+
+static inline __ATTRS_o_ai vector unsigned long long
+vec_reve(vector unsigned long long __a) {
+  return __builtin_shufflevector(__a, __a, 1, 0);
+}
+
+static inline __ATTRS_o_ai vector double vec_reve(vector double __a) {
+  return __builtin_shufflevector(__a, __a, 1, 0);
+}
+#endif
+
 #undef __ATTRS_o_ai
 
 #endif /* __ALTIVEC_H */
