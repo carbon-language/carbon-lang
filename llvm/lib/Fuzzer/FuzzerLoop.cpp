@@ -381,15 +381,14 @@ void Fuzzer::SetMaxMutationLen(size_t MaxMutationLen) {
 
 void Fuzzer::CheckExitOnSrcPosOrItem() {
   if (!Options.ExitOnSrcPos.empty()) {
-    uintptr_t *PCIDs;
-    if (size_t NumNewPCIDs = TPC.GetNewPCIDs(&PCIDs)) {
-      for (size_t i = 0; i < NumNewPCIDs; i++) {
-        std::string Descr = DescribePC("%L", TPC.GetPCbyPCID(PCIDs[i]));
-        if (Descr.find(Options.ExitOnSrcPos) != std::string::npos) {
-          Printf("INFO: found line matching '%s', exiting.\n",
-                 Options.ExitOnSrcPos.c_str());
-          _Exit(0);
-        }
+    for (size_t i = 1, N = TPC.GetNumPCs(); i < N; i++) {
+      uintptr_t PC = TPC.GetPC(i);
+      if (!PC) continue;
+      std::string Descr = DescribePC("%L", PC);
+      if (Descr.find(Options.ExitOnSrcPos) != std::string::npos) {
+        Printf("INFO: found line matching '%s', exiting.\n",
+               Options.ExitOnSrcPos.c_str());
+        _Exit(0);
       }
     }
   }

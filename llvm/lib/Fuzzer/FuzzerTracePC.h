@@ -61,15 +61,7 @@ class TracePC {
     return UseValueProfile && MaxValueProfileMap->MergeFrom(ValueProfileMap);
   }
 
-  size_t GetNewPCIDs(uintptr_t **NewPCIDsPtr) {
-    *NewPCIDsPtr = NewPCIDs;
-    return Min(kMaxNewPCIDs, NumNewPCIDs);
-  }
-
-  uintptr_t GetPCbyPCID(uintptr_t PCID) { return PCs[PCID]; }
-
   void ResetMaps() {
-    NumNewPCIDs = 0;
     ValueProfileMap.Reset();
     memset(Counters, 0, sizeof(Counters));
   }
@@ -95,18 +87,16 @@ class TracePC {
   TableOfRecentCompares<uint64_t, kTORCSize> TORC8;
 
   void PrintNewPCs();
+  size_t GetNumPCs() const { return Min(kNumPCs, NumGuards + 1); }
+  uintptr_t GetPC(size_t Idx) {
+    assert(Idx < GetNumPCs());
+    return PCs[Idx];
+  }
 
 private:
   bool UseCounters = false;
   bool UseValueProfile = false;
   bool DoPrintNewPCs = false;
-
-  static const size_t kMaxNewPCIDs = 1024;
-  uintptr_t NewPCIDs[kMaxNewPCIDs];
-  size_t NumNewPCIDs = 0;
-  void AddNewPCID(uintptr_t PCID) {
-    NewPCIDs[(NumNewPCIDs++) % kMaxNewPCIDs] = PCID;
-  }
 
   struct Module {
     uint32_t *Start, *Stop;
