@@ -550,12 +550,14 @@ static std::string getLocation(SymbolBody &Sym, InputSectionBase<ELFT> &S,
   if (SrcFile.empty())
     SrcFile = Sym.File ? getFilename(Sym.File) : getFilename(File);
 
-  DefinedRegular<ELFT> *Encl = getSymbolAt(&S, Offset);
-  if (Encl && Encl->Type == STT_FUNC) {
-    StringRef Func = getSymbolName(*File, *Encl);
+  // Find a symbol at a given location.
+  DefinedRegular<ELFT> *Sym = getSymbolAt(&S, Offset);
+  if (Sym && Sym->Type == STT_FUNC) {
+    StringRef Func = getSymbolName(*File, *Sym);
     return SrcFile + " (function " + maybeDemangle(Func) + ")";
   }
 
+  // If there's no symbol, print out the offset instead of a symbol name.
   return (SrcFile + " (" + S.Name + "+0x" + Twine::utohexstr(Offset) + ")")
       .str();
 }

@@ -323,7 +323,7 @@ template <class ELFT> void Writer<ELFT>::run() {
   if (Config->ExitEarly) {
     // Flush the output streams and exit immediately.  A full shutdown is a good
     // test that we are keeping track of all allocated memory, but actually
-    // freeing it is a wast of time in a regular linker run.
+    // freeing it is a waste of time in a regular linker run.
     outs().flush();
     errs().flush();
     _exit(0);
