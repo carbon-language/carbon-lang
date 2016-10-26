@@ -58,6 +58,9 @@ struct YAMLXRaySledEntry {
   bool AlwaysInstrument;
 };
 
+namespace llvm {
+namespace yaml {
+
 template <> struct ScalarEnumerationTraits<SledEntry::FunctionKinds> {
   static void enumeration(IO &IO, SledEntry::FunctionKinds &Kind) {
     IO.enumCase(Kind, "function-enter", SledEntry::FunctionKinds::ENTRY);
@@ -77,6 +80,9 @@ template <> struct MappingTraits<YAMLXRaySledEntry> {
 
   static constexpr bool flow = true;
 };
+
+}
+}
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(YAMLXRaySledEntry)
 
