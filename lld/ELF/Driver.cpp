@@ -652,6 +652,26 @@ void LinkerDriver::inferMachineType() {
   error("target emulation unknown: -m or at least one .o file required");
 }
 
+// Parses -image-base option.
+static uint64_t getImageBase(opt::InputArgList &Args) {
+  // Use default if no -image-base option is given.
+  // Because we are using "Target" here, this function
+  // has to be called after the variable is initialized.
+  auto *Arg = Args.getLastArg(OPT_image_base);
+  if (!Arg)
+    return Config->Pic ? 0 : Target->DefaultImageBase;
+
+  StringRef S = Arg->getValue();
+  uint64_t V;
+  if (S.getAsInteger(0, V)) {
+    error("-image-base: number expected, but got " + S);
+    return 0;
+  }
+  if ((V % Target->MaxPageSize) != 0)
+    warn("-image-base: address isn't multiple of page size: " + S);
+  return V;
+}
+
 // Do actual linking. Note that when this function is called,
 // all linker scripts have already been parsed.
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
@@ -666,6 +686,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   Config->Rela = ELFT::Is64Bits || Config->EMachine == EM_X86_64;
   Config->Mips64EL =
       (Config->EMachine == EM_MIPS && Config->EKind == ELF64LEKind);
+  Config->ImageBase = getImageBase(Args);
 
   // Default output filename is "a.out" by the Unix tradition.
   if (Config->OutputFile.empty())
@@ -674,17 +695,6 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   // Handle --trace-symbol.
   for (auto *Arg : Args.filtered(OPT_trace_symbol))
     Symtab.trace(Arg->getValue());
-
-  // Initialize Config->ImageBase.
-  if (auto *Arg = Args.getLastArg(OPT_image_base)) {
-    StringRef S = Arg->getValue();
-    if (S.getAsInteger(0, Config->ImageBase))
-      error(Arg->getSpelling() + ": number expected, but got " + S);
-    else if ((Config->ImageBase % Target->MaxPageSize) != 0)
-      warn(Arg->getSpelling() + ": address isn't multiple of page size");
-  } else {
-    Config->ImageBase = Config->Pic ? 0 : Target->DefaultImageBase;
-  }
 
   // Initialize Config->MaxPageSize. The default value is defined by
   // the target, but it can be overriden using the option.
