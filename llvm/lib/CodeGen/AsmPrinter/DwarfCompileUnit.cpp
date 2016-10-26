@@ -118,6 +118,10 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(
   else
     addGlobalName(GV->getName(), *VariableDIE, DeclContext);
 
+  if (DIAlignment AlignInBytes = GV->getAlignInBytes())
+    addUInt(*VariableDIE, dwarf::DW_AT_alignment, dwarf::DW_FORM_udata,
+            AlignInBytes);
+
   // Add location.
   bool addToAccelTable = false;
 
@@ -771,7 +775,13 @@ void DwarfCompileUnit::applyVariableAttributes(const DbgVariable &Var,
   StringRef Name = Var.getName();
   if (!Name.empty())
     addString(VariableDie, dwarf::DW_AT_name, Name);
-  addSourceLine(VariableDie, Var.getVariable());
+  const auto *DIVar = Var.getVariable();
+  if (DIVar)
+    if (DIAlignment AlignInBytes = DIVar->getAlignInBytes())
+      addUInt(VariableDie, dwarf::DW_AT_alignment, dwarf::DW_FORM_udata,
+              AlignInBytes);
+
+  addSourceLine(VariableDie, DIVar);
   addType(VariableDie, Var.getType());
   if (Var.isArtificial())
     addFlag(VariableDie, dwarf::DW_AT_artificial);
