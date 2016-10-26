@@ -551,9 +551,9 @@ static std::string getLocation(SymbolBody &Sym, InputSectionBase<ELFT> &S,
     SrcFile = Sym.File ? getFilename(Sym.File) : getFilename(File);
 
   // Find a symbol at a given location.
-  DefinedRegular<ELFT> *Sym = getSymbolAt(&S, Offset);
-  if (Sym && Sym->Type == STT_FUNC) {
-    StringRef Func = getSymbolName(*File, *Sym);
+  DefinedRegular<ELFT> *Encl = getSymbolAt(&S, Offset);
+  if (Encl && Encl->Type == STT_FUNC) {
+    StringRef Func = getSymbolName(*File, *Encl);
     return SrcFile + " (function " + maybeDemangle(Func) + ")";
   }
 
