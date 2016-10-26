@@ -78,7 +78,7 @@ template <> struct MappingTraits<YAMLXRaySledEntry> {
   static constexpr bool flow = true;
 };
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(YAMLXRaySledEntry);
+LLVM_YAML_IS_SEQUENCE_VECTOR(YAMLXRaySledEntry)
 
 namespace {
 
