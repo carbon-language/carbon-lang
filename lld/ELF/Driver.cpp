@@ -135,7 +135,7 @@ void LinkerDriver::addFile(StringRef Path) {
     readLinkerScript(MBRef);
     return;
   case file_magic::archive:
-    if (WholeArchive) {
+    if (InWholeArchive) {
       for (MemoryBufferRef MB : getArchiveMembers(MBRef))
         Files.push_back(createObjectFile(MB, Path));
       return;
@@ -619,10 +619,10 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
       Config->Static = false;
       break;
     case OPT_whole_archive:
-      WholeArchive = true;
+      InWholeArchive = true;
       break;
     case OPT_no_whole_archive:
-      WholeArchive = false;
+      InWholeArchive = false;
       break;
     case OPT_start_lib:
       InLib = true;
