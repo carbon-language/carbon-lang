@@ -78,7 +78,7 @@ static QualType lookupPromiseType(Sema &S, const FunctionProtoType *FnType,
   auto *Promise = R.getAsSingle<TypeDecl>();
   if (!Promise) {
     S.Diag(Loc, diag::err_implied_std_coroutine_traits_promise_type_not_found)
-      << RD;
+        << RD;
     return QualType();
   }
 
@@ -92,7 +92,7 @@ static QualType lookupPromiseType(Sema &S, const FunctionProtoType *FnType,
     PromiseType = S.Context.getElaboratedType(ETK_None, NNS, PromiseType);
 
     S.Diag(Loc, diag::err_implied_std_coroutine_traits_promise_type_not_class)
-      << PromiseType;
+        << PromiseType;
     return QualType();
   }
 
@@ -121,7 +121,7 @@ checkCoroutineContext(Sema &S, SourceLocation Loc, StringRef Keyword) {
     //
     // FIXME: We assume that this really means that a coroutine cannot
     //        be a constructor or destructor.
-    S.Diag(Loc, diag::err_coroutine_ctor_dtor)
+    S.Diag(Loc, diag::err_coroutine_ctor_dtor) 
       << isa<CXXDestructorDecl>(FD) << Keyword;
   } else if (FD->isConstexpr()) {
     S.Diag(Loc, diag::err_coroutine_constexpr) << Keyword;
@@ -130,8 +130,8 @@ checkCoroutineContext(Sema &S, SourceLocation Loc, StringRef Keyword) {
   } else if (FD->isMain()) {
     S.Diag(FD->getLocStart(), diag::err_coroutine_main);
     S.Diag(Loc, diag::note_declared_coroutine_here)
-      << (Keyword == "co_await" ? 0 :
-          Keyword == "co_yield" ? 1 : 2);
+        << (Keyword == "co_await" ? 0 : 
+            Keyword == "co_yield" ? 1 : 2);
   } else {
     auto *ScopeInfo = S.getCurFunction();
     assert(ScopeInfo && "missing function scope for function");
@@ -160,6 +160,26 @@ checkCoroutineContext(Sema &S, SourceLocation Loc, StringRef Keyword) {
   }
 
   return nullptr;
+}
+
+static Expr *buildBuiltinCall(Sema &S, SourceLocation Loc, Builtin::ID Id,
+                              MutableArrayRef<Expr *> CallArgs) {
+  StringRef Name = S.Context.BuiltinInfo.getName(Id);
+  LookupResult R(S, &S.Context.Idents.get(Name), Loc, Sema::LookupOrdinaryName);
+  S.LookupName(R, S.TUScope, /*AllowBuiltinCreation=*/true);
+
+  auto *BuiltInDecl = R.getAsSingle<FunctionDecl>();
+  assert(BuiltInDecl && "failed to find builtin declaration");
+
+  ExprResult DeclRef =
+      S.BuildDeclRefExpr(BuiltInDecl, BuiltInDecl->getType(), VK_LValue, Loc);
+  assert(DeclRef.isUsable() && "Builtin reference cannot fail");
+
+  ExprResult Call =
+      S.ActOnCallExpr(/*Scope=*/nullptr, DeclRef.get(), Loc, CallArgs, Loc);
+
+  assert(!Call.isInvalid() && "Call to builtin cannot fail!");
+  return Call.get();
 }
 
 /// Build a call to 'operator co_await' if there is a suitable operator for
@@ -204,7 +224,7 @@ static ReadySuspendResumeResult buildCoawaitCalls(Sema &S, SourceLocation Loc,
   const StringRef Funcs[] = {"await_ready", "await_suspend", "await_resume"};
   for (size_t I = 0, N = llvm::array_lengthof(Funcs); I != N; ++I) {
     Expr *Operand = new (S.Context) OpaqueValueExpr(
-        Loc, E->getType(), VK_LValue, E->getObjectKind(), E);
+      Loc, E->getType(), VK_LValue, E->getObjectKind(), E);
 
     // FIXME: Pass coroutine handle to await_suspend.
     ExprResult Result = buildMemberCall(S, Operand, Loc, Funcs[I], None);
@@ -406,6 +426,113 @@ static ExprResult buildStdCurrentExceptionCall(Sema &S, SourceLocation Loc) {
   return Res;
 }
 
+// Find an appropriate delete for the promise.
+static FunctionDecl *findDeleteForPromise(Sema &S, SourceLocation Loc,
+                                          QualType PromiseType) {
+  FunctionDecl *OperatorDelete = nullptr;
+
+  DeclarationName DeleteName =
+      S.Context.DeclarationNames.getCXXOperatorName(OO_Delete);
+
+  auto *PointeeRD = PromiseType->getAsCXXRecordDecl();
+  assert(PointeeRD && "PromiseType must be a CxxRecordDecl type");
+
+  if (S.FindDeallocationFunction(Loc, PointeeRD, DeleteName, OperatorDelete))
+    return nullptr;
+
+  if (!OperatorDelete) {
+    // Look for a global declaration.
+    const bool CanProvideSize = S.isCompleteType(Loc, PromiseType);
+    const bool Overaligned = false;
+    OperatorDelete = S.FindUsualDeallocationFunction(Loc, CanProvideSize,
+                                                     Overaligned, DeleteName);
+  }
+  S.MarkFunctionReferenced(Loc, OperatorDelete);
+  return OperatorDelete;
+}
+
+// Builds allocation and deallocation for the coroutine. Returns false on
+// failure.
+static bool buildAllocationAndDeallocation(Sema &S, SourceLocation Loc,
+                                           FunctionScopeInfo *Fn,
+                                           Expr *&Allocation,
+                                           Stmt *&Deallocation) {
+  TypeSourceInfo *TInfo = Fn->CoroutinePromise->getTypeSourceInfo();
+  QualType PromiseType = TInfo->getType();
+  if (PromiseType->isDependentType())
+    return true;
+
+  if (S.RequireCompleteType(Loc, PromiseType, diag::err_incomplete_type))
+    return false;
+
+  // FIXME: Add support for get_return_object_on_allocation failure.
+  // FIXME: Add support for stateful allocators.
+
+  FunctionDecl *OperatorNew = nullptr;
+  FunctionDecl *OperatorDelete = nullptr;
+  FunctionDecl *UnusedResult = nullptr;
+  bool PassAlignment = false;
+
+  S.FindAllocationFunctions(Loc, SourceRange(),
+                            /*UseGlobal*/ false, PromiseType,
+                            /*isArray*/ false, PassAlignment,
+                            /*PlacementArgs*/ None, OperatorNew, UnusedResult);
+
+  OperatorDelete = findDeleteForPromise(S, Loc, PromiseType);
+
+  if (!OperatorDelete || !OperatorNew)
+    return false;
+
+  Expr *FramePtr =
+      buildBuiltinCall(S, Loc, Builtin::BI__builtin_coro_frame, {});
+
+  Expr *FrameSize =
+      buildBuiltinCall(S, Loc, Builtin::BI__builtin_coro_size, {});
+
+  // Make new call.
+
+  ExprResult NewRef =
+      S.BuildDeclRefExpr(OperatorNew, OperatorNew->getType(), VK_LValue, Loc);
+  if (NewRef.isInvalid())
+    return false;
+
+  ExprResult NewExpr =
+      S.ActOnCallExpr(S.getCurScope(), NewRef.get(), Loc, FrameSize, Loc);
+  if (NewExpr.isInvalid())
+    return false;
+
+  Allocation = NewExpr.get();
+
+  // Make delete call.
+
+  QualType OpDeleteQualType = OperatorDelete->getType();
+
+  ExprResult DeleteRef =
+      S.BuildDeclRefExpr(OperatorDelete, OpDeleteQualType, VK_LValue, Loc);
+  if (DeleteRef.isInvalid())
+    return false;
+
+  Expr *CoroFree =
+      buildBuiltinCall(S, Loc, Builtin::BI__builtin_coro_free, {FramePtr});
+
+  SmallVector<Expr *, 2> DeleteArgs{CoroFree};
+
+  // Check if we need to pass the size.
+  const auto *OpDeleteType =
+      OpDeleteQualType.getTypePtr()->getAs<FunctionProtoType>();
+  if (OpDeleteType->getNumParams() > 1)
+    DeleteArgs.push_back(FrameSize);
+
+  ExprResult DeleteExpr =
+      S.ActOnCallExpr(S.getCurScope(), DeleteRef.get(), Loc, DeleteArgs, Loc);
+  if (DeleteExpr.isInvalid())
+    return false;
+
+  Deallocation = DeleteExpr.get();
+
+  return true;
+}
+
 void Sema::CheckCompletedCoroutineBody(FunctionDecl *FD, Stmt *&Body) {
   FunctionScopeInfo *Fn = getCurFunction();
   assert(Fn && !Fn->CoroutineStmts.empty() && "not a coroutine");
@@ -416,8 +543,8 @@ void Sema::CheckCompletedCoroutineBody(FunctionDecl *FD, Stmt *&Body) {
     Diag(Fn->FirstReturnLoc, diag::err_return_in_coroutine);
     auto *First = Fn->CoroutineStmts[0];
     Diag(First->getLocStart(), diag::note_declared_coroutine_here)
-      << (isa<CoawaitExpr>(First) ? 0 :
-          isa<CoyieldExpr>(First) ? 1 : 2);
+        << (isa<CoawaitExpr>(First) ? 0 :
+            isa<CoyieldExpr>(First) ? 1 : 2);
   }
 
   bool AnyCoawaits = false;
@@ -460,7 +587,12 @@ void Sema::CheckCompletedCoroutineBody(FunctionDecl *FD, Stmt *&Body) {
   if (FinalSuspend.isInvalid())
     return FD->setInvalidDecl();
 
-  // Try to form 'p.return_void();' expression statement to handle
+  // Form and check allocation and deallocation calls.
+  Expr *Allocation = nullptr;
+  Stmt *Deallocation = nullptr;
+  if (!buildAllocationAndDeallocation(*this, Loc, Fn, Allocation, Deallocation))
+    return FD->setInvalidDecl();
+
   // control flowing off the end of the coroutine.
   // Also try to form 'p.set_exception(std::current_exception());' to handle
   // uncaught exceptions.
@@ -517,7 +649,7 @@ void Sema::CheckCompletedCoroutineBody(FunctionDecl *FD, Stmt *&Body) {
   // Build implicit 'p.get_return_object()' expression and form initialization
   // of return type from it.
   ExprResult ReturnObject =
-    buildPromiseCall(*this, Fn, Loc, "get_return_object", None);
+      buildPromiseCall(*this, Fn, Loc, "get_return_object", None);
   if (ReturnObject.isInvalid())
     return FD->setInvalidDecl();
   QualType RetType = FD->getReturnType();
@@ -539,5 +671,6 @@ void Sema::CheckCompletedCoroutineBody(FunctionDecl *FD, Stmt *&Body) {
   // Build body for the coroutine wrapper statement.
   Body = new (Context) CoroutineBodyStmt(
       Body, PromiseStmt.get(), InitialSuspend.get(), FinalSuspend.get(),
-      SetException.get(), Fallthrough.get(), ReturnObject.get(), ParamMoves);
+      SetException.get(), Fallthrough.get(), Allocation, Deallocation,
+      ReturnObject.get(), ParamMoves);
 }
