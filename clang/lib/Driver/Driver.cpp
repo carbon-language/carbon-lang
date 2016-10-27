@@ -1918,7 +1918,7 @@ public:
 
     // Create the offload action with all dependences. When an offload action
     // is created the kinds are propagated to the host action, so we don't have
-    // to do that explicitely here.
+    // to do that explicitly here.
     OffloadAction::HostDependence HDep(
         *HostAction, *C.getSingleOffloadToolChain<Action::OFK_Host>(),
         /*BoundArch*/ nullptr, ActiveOffloadKinds);
@@ -2356,142 +2356,288 @@ void Driver::BuildJobs(Compilation &C) const {
     }
   }
 }
-/// Collapse an offloading action looking for a job of the given type. The input
-/// action is changed to the input of the collapsed sequence. If we effectively
-/// had a collapse return the corresponding offloading action, otherwise return
-/// null.
-template <typename T>
-static OffloadAction *collapseOffloadingAction(Action *&CurAction) {
-  if (!CurAction)
-    return nullptr;
-  if (auto *OA = dyn_cast<OffloadAction>(CurAction)) {
-    if (OA->hasHostDependence())
-      if (auto *HDep = dyn_cast<T>(OA->getHostDependence())) {
-        CurAction = HDep;
-        return OA;
-      }
-    if (OA->hasSingleDeviceDependence())
-      if (auto *DDep = dyn_cast<T>(OA->getSingleDeviceDependence())) {
-        CurAction = DDep;
-        return OA;
-      }
-  }
-  return nullptr;
-}
-// Returns a Tool for a given JobAction.  In case the action and its
-// predecessors can be combined, updates Inputs with the inputs of the
-// first combined action. If one of the collapsed actions is a
-// CudaHostAction, updates CollapsedCHA with the pointer to it so the
-// caller can deal with extra handling such action requires.
-static const Tool *selectToolForJob(Compilation &C, bool SaveTemps,
-                                    bool EmbedBitcode, const ToolChain *TC,
-                                    const JobAction *JA,
-                                    const ActionList *&Inputs,
-                                    ActionList &CollapsedOffloadAction) {
-  const Tool *ToolForJob = nullptr;
-  CollapsedOffloadAction.clear();
 
-  // See if we should look for a compiler with an integrated assembler. We match
-  // bottom up, so what we are actually looking for is an assembler job with a
-  // compiler input.
+namespace {
+/// Utility class to control the collapse of dependent actions and select the
+/// tools accordingly.
+class ToolSelector final {
+  /// The tool chain this selector refers to.
+  const ToolChain &TC;
 
-  // Look through offload actions between assembler and backend actions.
-  Action *BackendJA = (isa<AssembleJobAction>(JA) && Inputs->size() == 1)
-                          ? *Inputs->begin()
-                          : nullptr;
-  auto *BackendOA = collapseOffloadingAction<BackendJobAction>(BackendJA);
+  /// The compilation this selector refers to.
+  const Compilation &C;
 
-  if (TC->useIntegratedAs() && !SaveTemps &&
-      !C.getArgs().hasArg(options::OPT_via_file_asm) &&
-      !C.getArgs().hasArg(options::OPT__SLASH_FA) &&
-      !C.getArgs().hasArg(options::OPT__SLASH_Fa) && BackendJA &&
-      isa<BackendJobAction>(BackendJA)) {
-    // A BackendJob is always preceded by a CompileJob, and without -save-temps
-    // or -fembed-bitcode, they will always get combined together, so instead of
-    // checking the backend tool, check if the tool for the CompileJob has an
-    // integrated assembler. For -fembed-bitcode, CompileJob is still used to
-    // look up tools for BackendJob, but they need to match before we can split
-    // them.
+  /// The base action this selector refers to.
+  const JobAction *BaseAction;
 
-    // Look through offload actions between backend and compile actions.
-    Action *CompileJA = *BackendJA->getInputs().begin();
-    auto *CompileOA = collapseOffloadingAction<CompileJobAction>(CompileJA);
+  /// Set to true if the current toolchain refers to host actions.
+  bool IsHostSelector;
 
-    assert(CompileJA && isa<CompileJobAction>(CompileJA) &&
-           "Backend job is not preceeded by compile job.");
-    const Tool *Compiler = TC->SelectTool(*cast<CompileJobAction>(CompileJA));
-    if (!Compiler)
+  /// Set to true if save-temps and embed-bitcode functionalities are active.
+  bool SaveTemps;
+  bool EmbedBitcode;
+
+  /// Get previous dependent action or null if that does not exist. If
+  /// \a CanBeCollapsed is false, that action must be legal to collapse or
+  /// null will be returned.
+  const JobAction *getPrevDependentAction(const ActionList &Inputs,
+                                          ActionList &SavedOffloadAction,
+                                          bool CanBeCollapsed = true) {
+    // An option can be collapsed only if it has a single input.
+    if (Inputs.size() != 1)
       return nullptr;
+
+    Action *CurAction = *Inputs.begin();
+    if (CanBeCollapsed &&
+        !CurAction->isCollapsingWithNextDependentActionLegal())
+      return nullptr;
+
+    // If the input action is an offload action. Look through it and save any
+    // offload action that can be dropped in the event of a collapse.
+    if (auto *OA = dyn_cast<OffloadAction>(CurAction)) {
+      // If the dependent action is a device action, we will attempt to collapse
+      // only with other device actions. Otherwise, we would do the same but
+      // with host actions only.
+      if (!IsHostSelector) {
+        if (OA->hasSingleDeviceDependence(/*DoNotConsiderHostActions=*/true)) {
+          CurAction =
+              OA->getSingleDeviceDependence(/*DoNotConsiderHostActions=*/true);
+          if (CanBeCollapsed &&
+              !CurAction->isCollapsingWithNextDependentActionLegal())
+            return nullptr;
+          SavedOffloadAction.push_back(OA);
+          return dyn_cast<JobAction>(CurAction);
+        }
+      } else if (OA->hasHostDependence()) {
+        CurAction = OA->getHostDependence();
+        if (CanBeCollapsed &&
+            !CurAction->isCollapsingWithNextDependentActionLegal())
+          return nullptr;
+        SavedOffloadAction.push_back(OA);
+        return dyn_cast<JobAction>(CurAction);
+      }
+      return nullptr;
+    }
+
+    return dyn_cast<JobAction>(CurAction);
+  }
+
+  /// Return true if an assemble action can be collapsed.
+  bool canCollapseAssembleAction() const {
+    return TC.useIntegratedAs() && !SaveTemps &&
+           !C.getArgs().hasArg(options::OPT_via_file_asm) &&
+           !C.getArgs().hasArg(options::OPT__SLASH_FA) &&
+           !C.getArgs().hasArg(options::OPT__SLASH_Fa);
+  }
+
+  /// Return true if a preprocessor action can be collapsed.
+  bool canCollapsePreprocessorAction() const {
+    return !C.getArgs().hasArg(options::OPT_no_integrated_cpp) &&
+           !C.getArgs().hasArg(options::OPT_traditional_cpp) && !SaveTemps &&
+           !C.getArgs().hasArg(options::OPT_rewrite_objc);
+  }
+
+  /// Struct that relates an action with the offload actions that would be
+  /// collapsed with it.
+  struct JobActionInfo final {
+    /// The action this info refers to.
+    const JobAction *JA = nullptr;
+    /// The offload actions we need to take care off if this action is
+    /// collapsed.
+    ActionList SavedOffloadAction;
+  };
+
+  /// Append collapsed offload actions from the give nnumber of elements in the
+  /// action info array.
+  static void AppendCollapsedOffloadAction(ActionList &CollapsedOffloadAction,
+                                           ArrayRef<JobActionInfo> &ActionInfo,
+                                           unsigned ElementNum) {
+    assert(ElementNum <= ActionInfo.size() && "Invalid number of elements.");
+    for (unsigned I = 0; I < ElementNum; ++I)
+      CollapsedOffloadAction.append(ActionInfo[I].SavedOffloadAction.begin(),
+                                    ActionInfo[I].SavedOffloadAction.end());
+  }
+
+  /// Functions that attempt to perform the combining. They detect if that is
+  /// legal, and if so they update the inputs \a Inputs and the offload action
+  /// that were collapsed in \a CollapsedOffloadAction. A tool that deals with
+  /// the combined action is returned. If the combining is not legal or if the
+  /// tool does not exist, null is returned.
+  /// Currently three kinds of collapsing are supported:
+  ///  - Assemble + Backend + Compile;
+  ///  - Assemble + Backend ;
+  ///  - Backend + Compile.
+  const Tool *
+  combineAssembleBackendCompile(ArrayRef<JobActionInfo> ActionInfo,
+                                const ActionList *&Inputs,
+                                ActionList &CollapsedOffloadAction) {
+    if (ActionInfo.size() < 3 || !canCollapseAssembleAction())
+      return nullptr;
+    auto *AJ = dyn_cast<AssembleJobAction>(ActionInfo[0].JA);
+    auto *BJ = dyn_cast<BackendJobAction>(ActionInfo[1].JA);
+    auto *CJ = dyn_cast<CompileJobAction>(ActionInfo[2].JA);
+    if (!AJ || !BJ || !CJ)
+      return nullptr;
+
+    // Get compiler tool.
+    const Tool *T = TC.SelectTool(*CJ);
+    if (!T)
+      return nullptr;
+
     // When using -fembed-bitcode, it is required to have the same tool (clang)
     // for both CompilerJA and BackendJA. Otherwise, combine two stages.
     if (EmbedBitcode) {
-      JobAction *InputJA = cast<JobAction>(*Inputs->begin());
-      const Tool *BackendTool = TC->SelectTool(*InputJA);
-      if (BackendTool == Compiler)
-        CompileJA = InputJA;
+      const Tool *BT = TC.SelectTool(*BJ);
+      if (BT == T)
+        return nullptr;
     }
-    if (Compiler->hasIntegratedAssembler()) {
-      Inputs = &CompileJA->getInputs();
-      ToolForJob = Compiler;
-      // Save the collapsed offload actions because they may still contain
-      // device actions.
-      if (CompileOA)
-        CollapsedOffloadAction.push_back(CompileOA);
-      if (BackendOA)
-        CollapsedOffloadAction.push_back(BackendOA);
-    }
-  }
 
-  // A backend job should always be combined with the preceding compile job
-  // unless OPT_save_temps or OPT_fembed_bitcode is enabled and the compiler is
-  // capable of emitting LLVM IR as an intermediate output.
-  if (isa<BackendJobAction>(JA)) {
-    // Check if the compiler supports emitting LLVM IR.
-    assert(Inputs->size() == 1);
-
-    // Look through offload actions between backend and compile actions.
-    Action *CompileJA = *JA->getInputs().begin();
-    auto *CompileOA = collapseOffloadingAction<CompileJobAction>(CompileJA);
-
-    assert(CompileJA && isa<CompileJobAction>(CompileJA) &&
-           "Backend job is not preceeded by compile job.");
-    const Tool *Compiler = TC->SelectTool(*cast<CompileJobAction>(CompileJA));
-    if (!Compiler)
+    if (!T->hasIntegratedAssembler())
       return nullptr;
-    if (!Compiler->canEmitIR() ||
-        (!SaveTemps && !EmbedBitcode)) {
-      Inputs = &CompileJA->getInputs();
-      ToolForJob = Compiler;
 
-      if (CompileOA)
-        CollapsedOffloadAction.push_back(CompileOA);
+    Inputs = &CJ->getInputs();
+    AppendCollapsedOffloadAction(CollapsedOffloadAction, ActionInfo,
+                                 /*NumElements=*/3);
+    return T;
+  }
+  const Tool *combineAssembleBackend(ArrayRef<JobActionInfo> ActionInfo,
+                                     const ActionList *&Inputs,
+                                     ActionList &CollapsedOffloadAction) {
+    if (ActionInfo.size() < 2 || !canCollapseAssembleAction())
+      return nullptr;
+    auto *AJ = dyn_cast<AssembleJobAction>(ActionInfo[0].JA);
+    auto *BJ = dyn_cast<BackendJobAction>(ActionInfo[1].JA);
+    if (!AJ || !BJ)
+      return nullptr;
+
+    // Retrieve the compile job, backend action must always be preceded by one.
+    ActionList CompileJobOffloadActions;
+    auto *CJ = getPrevDependentAction(BJ->getInputs(), CompileJobOffloadActions,
+                                      /*CanBeCollapsed=*/false);
+    if (!AJ || !BJ || !CJ)
+      return nullptr;
+
+    assert(isa<CompileJobAction>(CJ) &&
+           "Expecting compile job preceding backend job.");
+
+    // Get compiler tool.
+    const Tool *T = TC.SelectTool(*CJ);
+    if (!T)
+      return nullptr;
+
+    if (!T->hasIntegratedAssembler())
+      return nullptr;
+
+    Inputs = &BJ->getInputs();
+    AppendCollapsedOffloadAction(CollapsedOffloadAction, ActionInfo,
+                                 /*NumElements=*/2);
+    return T;
+  }
+  const Tool *combineBackendCompile(ArrayRef<JobActionInfo> ActionInfo,
+                                    const ActionList *&Inputs,
+                                    ActionList &CollapsedOffloadAction) {
+    if (ActionInfo.size() < 2 || !canCollapsePreprocessorAction())
+      return nullptr;
+    auto *BJ = dyn_cast<BackendJobAction>(ActionInfo[0].JA);
+    auto *CJ = dyn_cast<CompileJobAction>(ActionInfo[1].JA);
+    if (!BJ || !CJ)
+      return nullptr;
+
+    // Get compiler tool.
+    const Tool *T = TC.SelectTool(*CJ);
+    if (!T)
+      return nullptr;
+
+    if (T->canEmitIR() && (SaveTemps || EmbedBitcode))
+      return nullptr;
+
+    Inputs = &CJ->getInputs();
+    AppendCollapsedOffloadAction(CollapsedOffloadAction, ActionInfo,
+                                 /*NumElements=*/2);
+    return T;
+  }
+
+  /// Updates the inputs if the obtained tool supports combining with
+  /// preprocessor action, and the current input is indeed a preprocessor
+  /// action. If combining results in the collapse of offloading actions, those
+  /// are appended to \a CollapsedOffloadAction.
+  void combineWithPreprocessor(const Tool *T, const ActionList *&Inputs,
+                               ActionList &CollapsedOffloadAction) {
+    if (!T || !canCollapsePreprocessorAction() || !T->hasIntegratedCPP())
+      return;
+
+    // Attempt to get a preprocessor action dependence.
+    ActionList PreprocessJobOffloadActions;
+    auto *PJ = getPrevDependentAction(*Inputs, PreprocessJobOffloadActions);
+    if (!PJ || !isa<PreprocessJobAction>(PJ))
+      return;
+
+    // This is legal to combine. Append any offload action we found and set the
+    // current inputs to preprocessor inputs.
+    CollapsedOffloadAction.append(PreprocessJobOffloadActions.begin(),
+                                  PreprocessJobOffloadActions.end());
+    Inputs = &PJ->getInputs();
+  }
+
+public:
+  ToolSelector(const JobAction *BaseAction, const ToolChain &TC,
+               const Compilation &C, bool SaveTemps, bool EmbedBitcode)
+      : TC(TC), C(C), BaseAction(BaseAction), SaveTemps(SaveTemps),
+        EmbedBitcode(EmbedBitcode) {
+    assert(BaseAction && "Invalid base action.");
+    IsHostSelector = BaseAction->getOffloadingDeviceKind() == Action::OFK_None;
+  }
+
+  /// Check if a chain of actions can be combined and return the tool that can
+  /// handle the combination of actions. The pointer to the current inputs \a
+  /// Inputs and the list of offload actions \a CollapsedOffloadActions
+  /// connected to collapsed actions are updated accordingly. The latter enables
+  /// the caller of the selector to process them afterwards instead of just
+  /// dropping them. If no suitable tool is found, null will be returned.
+  const Tool *getTool(const ActionList *&Inputs,
+                      ActionList &CollapsedOffloadAction) {
+    //
+    // Get the largest chain of actions that we could combine.
+    //
+
+    SmallVector<JobActionInfo, 5> ActionChain(1);
+    ActionChain.back().JA = BaseAction;
+    while (ActionChain.back().JA) {
+      const Action *CurAction = ActionChain.back().JA;
+
+      // Grow the chain by one element.
+      ActionChain.resize(ActionChain.size() + 1);
+      JobActionInfo &AI = ActionChain.back();
+
+      // Attempt to fill it with the
+      AI.JA =
+          getPrevDependentAction(CurAction->getInputs(), AI.SavedOffloadAction);
     }
+
+    // Pop the last action info as it could not be filled.
+    ActionChain.pop_back();
+
+    //
+    // Attempt to combine actions. If all combining attempts failed, just return
+    // the tool of the provided action. At the end we attempt to combine the
+    // action with any preprocessor action it may depend on.
+    //
+
+    const Tool *T = combineAssembleBackendCompile(ActionChain, Inputs,
+                                                  CollapsedOffloadAction);
+    if (!T)
+      T = combineAssembleBackend(ActionChain, Inputs, CollapsedOffloadAction);
+    if (!T)
+      T = combineBackendCompile(ActionChain, Inputs, CollapsedOffloadAction);
+    if (!T) {
+      Inputs = &BaseAction->getInputs();
+      T = TC.SelectTool(*BaseAction);
+    }
+
+    combineWithPreprocessor(T, Inputs, CollapsedOffloadAction);
+    return T;
   }
-
-  // Otherwise use the tool for the current job.
-  if (!ToolForJob)
-    ToolForJob = TC->SelectTool(*JA);
-
-  // See if we should use an integrated preprocessor. We do so when we have
-  // exactly one input, since this is the only use case we care about
-  // (irrelevant since we don't support combine yet).
-
-  // Look through offload actions after preprocessing.
-  Action *PreprocessJA = (Inputs->size() == 1) ? *Inputs->begin() : nullptr;
-  auto *PreprocessOA =
-      collapseOffloadingAction<PreprocessJobAction>(PreprocessJA);
-
-  if (PreprocessJA && isa<PreprocessJobAction>(PreprocessJA) &&
-      !C.getArgs().hasArg(options::OPT_no_integrated_cpp) &&
-      !C.getArgs().hasArg(options::OPT_traditional_cpp) && !SaveTemps &&
-      !C.getArgs().hasArg(options::OPT_rewrite_objc) &&
-      ToolForJob->hasIntegratedCPP()) {
-    Inputs = &PreprocessJA->getInputs();
-    if (PreprocessOA)
-      CollapsedOffloadAction.push_back(PreprocessOA);
-  }
-
-  return ToolForJob;
+};
 }
 
 InputInfo Driver::BuildJobsForAction(
@@ -2536,7 +2682,7 @@ InputInfo Driver::BuildJobsForActionNoCache(
     // b) Set a toolchain/architecture/kind for a device action;
     //    Device Action 1 -> OffloadAction -> Device Action 2
     //
-    // c) Specify a device dependences to a host action;
+    // c) Specify a device dependence to a host action;
     //    Device Action 1  _
     //                      \
     //      Host Action 1  ---> OffloadAction -> Host Action 2
@@ -2617,9 +2763,9 @@ InputInfo Driver::BuildJobsForActionNoCache(
   const JobAction *JA = cast<JobAction>(A);
   ActionList CollapsedOffloadActions;
 
-  const Tool *T =
-      selectToolForJob(C, isSaveTempsEnabled(), embedBitcodeEnabled(), TC, JA,
-                       Inputs, CollapsedOffloadActions);
+  ToolSelector TS(JA, *TC, C, isSaveTempsEnabled(), embedBitcodeEnabled());
+  const Tool *T = TS.getTool(Inputs, CollapsedOffloadActions);
+
   if (!T)
     return InputInfo();
 

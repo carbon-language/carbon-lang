@@ -92,6 +92,12 @@ private:
 
   ActionList Inputs;
 
+  /// Flag that is set to true if this action can be collapsed with others
+  /// actions that depend on it. This is true by default and set to false when
+  /// the action is used by two different tool chains, which is enabled by the
+  /// offloading support implementation.
+  bool CanBeCollapsedWithNextDependentAction = true;
+
 protected:
   ///
   /// Offload information.
@@ -134,6 +140,15 @@ public:
   input_const_iterator input_end() const { return Inputs.end(); }
   input_const_range inputs() const {
     return input_const_range(input_begin(), input_end());
+  }
+
+  /// Mark this action as not legal to collapse.
+  void setCannotBeCollapsedWithNextDependentAction() {
+    CanBeCollapsedWithNextDependentAction = false;
+  }
+  /// Return true if this function can be collapsed with others.
+  bool isCollapsingWithNextDependentActionLegal() const {
+    return CanBeCollapsedWithNextDependentAction;
   }
 
   /// Return a string containing the offload kind of the action.
