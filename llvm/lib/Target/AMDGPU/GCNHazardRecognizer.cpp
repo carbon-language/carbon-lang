@@ -399,6 +399,7 @@ int GCNHazardRecognizer::createsVALUHazard(const MachineInstr &MI) {
     int SRsrcIdx = AMDGPU::getNamedOperandIdx(Opcode, AMDGPU::OpName::srsrc);
     assert(SRsrcIdx != -1 &&
            AMDGPU::getRegBitWidth(Desc.OpInfo[SRsrcIdx].RegClass) == 256);
+    (void)SRsrcIdx;
   }
 
   if (TII->isFLAT(MI)) {
