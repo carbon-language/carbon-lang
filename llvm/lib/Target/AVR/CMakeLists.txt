@@ -25,6 +25,7 @@ add_llvm_target(AVRCodeGen
 add_dependencies(LLVMAVRCodeGen intrinsics_gen)
 
 add_subdirectory(AsmParser)
+add_subdirectory(Disassembler)
 add_subdirectory(InstPrinter)
 add_subdirectory(MCTargetDesc)
 add_subdirectory(TargetInfo)

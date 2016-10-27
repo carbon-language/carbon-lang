@@ -102,7 +102,7 @@ extern "C" void LLVMInitializeAVRTargetMC() {
                                         createAVRMCInstPrinter);
 
   // Register the MC Code Emitter
-  TargetRegistry::RegisterMCCodeEmitter(TheAVRTarget, createAVRMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(getTheAVRTarget(), createAVRMCCodeEmitter);
 
   // Register the ELF streamer
   TargetRegistry::RegisterELFStreamer(getTheAVRTarget(), createMCStreamer);
