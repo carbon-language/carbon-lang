@@ -3,6 +3,7 @@ set(LLVM_TARGET_DEFINITIONS AVR.td)
 tablegen(LLVM AVRGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AVRGenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM AVRGenCallingConv.inc -gen-callingconv)
+tablegen(LLVM AVRGenDAGISel.inc -gen-dag-isel)
 tablegen(LLVM AVRGenDisassemblerTables.inc -gen-disassembler)
 tablegen(LLVM AVRGenInstrInfo.inc -gen-instr-info)
 tablegen(LLVM AVRGenRegisterInfo.inc -gen-register-info)
@@ -13,6 +14,7 @@ add_llvm_target(AVRCodeGen
   AVRAsmPrinter.cpp
   AVRFrameLowering.cpp
   AVRInstrInfo.cpp
+  AVRISelDAGToDAG.cpp
   AVRMCInstLower.cpp
   AVRRegisterInfo.cpp
   AVRSubtarget.cpp
