@@ -446,8 +446,8 @@ define i32 @mul(i32 %arg) {
   ; SSE42: cost of 36 {{.*}} %C = mul
   ; AVX: cost of 36 {{.*}} %C = mul
   ; AVX2: cost of 18 {{.*}} %C = mul
-  ; AVX512F: cost of 2 {{.*}} %C = mul
-  ; AVX512BW: cost of 2 {{.*}} %C = mul
+  ; AVX512F: cost of 9 {{.*}} %C = mul
+  ; AVX512BW: cost of 9 {{.*}} %C = mul
   ; AVX512DQ: cost of 1 {{.*}} %C = mul
   %C = mul <8 x i64> undef, undef
 

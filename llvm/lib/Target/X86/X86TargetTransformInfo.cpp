@@ -522,6 +522,7 @@ int X86TTIImpl::getArithmeticInstrCost(
     // multiplies(3), shifts(4) and adds(2).
     { ISD::MUL,     MVT::v2i64,    9 },
     { ISD::MUL,     MVT::v4i64,    9 },
+    { ISD::MUL,     MVT::v8i64,    9 }
   };
   if (const auto *Entry = CostTableLookup(CustomLowered, ISD, LT.second))
     return LT.first * Entry->Cost;
