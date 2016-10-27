@@ -263,6 +263,10 @@ Tool *ToolChain::getTool(Action::ActionClass AC) const {
   case Action::VerifyPCHJobClass:
   case Action::BackendJobClass:
     return getClang();
+
+  case Action::OffloadBundlingJobClass:
+    // FIXME: Add a tool for the bundling actions.
+    return nullptr;
   }
 
   llvm_unreachable("Invalid tool kind.");

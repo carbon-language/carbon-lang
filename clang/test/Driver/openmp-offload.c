@@ -274,3 +274,31 @@
 // CHK-COMMANDS-ST: clang{{.*}}" "-cc1" "-triple" "powerpc64le--linux" "-S" {{.*}}"-fopenmp" {{.*}}"-o" "[[HOSTASM:.+\.s]]" "-x" "ir" "[[HOSTBC]]"
 // CHK-COMMANDS-ST: clang{{.*}}" "-cc1as" "-triple" "powerpc64le--linux" "-filetype" "obj" {{.*}}"-o" [[HOSTOBJ:.+\.o]]" [[HOSTASM:.+\.s]]
 // CHK-COMMANDS-ST: ld" {{.*}}"-o" "[[HOSTBIN:.+\.out]]"  {{.*}}"-lomptarget" {{.*}}"-T" "[[HOSTLK:.+\.lk]]"
+
+
+/// ###########################################################################
+
+/// Check separate compilation with offloading - bundling actions
+// RUN:   %clang -### -ccc-print-phases -fopenmp -c -o %t.o -lsomelib -target powerpc64le-linux -fopenmp-targets=powerpc64le-ibm-linux-gnu,x86_64-pc-linux-gnu %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHK-BUACTIONS %s
+
+// CHK-BUACTIONS: 0: input, "[[INPUT:.+\.c]]", c, (host-openmp)
+// CHK-BUACTIONS: 1: preprocessor, {0}, cpp-output, (host-openmp)
+// CHK-BUACTIONS: 2: compiler, {1}, ir, (host-openmp)
+// CHK-BUACTIONS: 3: input, "[[INPUT]]", c, (device-openmp)
+// CHK-BUACTIONS: 4: preprocessor, {3}, cpp-output, (device-openmp)
+// CHK-BUACTIONS: 5: compiler, {4}, ir, (device-openmp)
+// CHK-BUACTIONS: 6: offload, "host-openmp (powerpc64le--linux)" {2}, "device-openmp (powerpc64le-ibm-linux-gnu)" {5}, ir
+// CHK-BUACTIONS: 7: backend, {6}, assembler, (device-openmp)
+// CHK-BUACTIONS: 8: assembler, {7}, object, (device-openmp)
+// CHK-BUACTIONS: 9: offload, "device-openmp (powerpc64le-ibm-linux-gnu)" {8}, object
+// CHK-BUACTIONS: 10: input, "[[INPUT]]", c, (device-openmp)
+// CHK-BUACTIONS: 11: preprocessor, {10}, cpp-output, (device-openmp)
+// CHK-BUACTIONS: 12: compiler, {11}, ir, (device-openmp)
+// CHK-BUACTIONS: 13: offload, "host-openmp (powerpc64le--linux)" {2}, "device-openmp (x86_64-pc-linux-gnu)" {12}, ir
+// CHK-BUACTIONS: 14: backend, {13}, assembler, (device-openmp)
+// CHK-BUACTIONS: 15: assembler, {14}, object, (device-openmp)
+// CHK-BUACTIONS: 16: offload, "device-openmp (x86_64-pc-linux-gnu)" {15}, object
+// CHK-BUACTIONS: 17: backend, {2}, assembler, (host-openmp)
+// CHK-BUACTIONS: 18: assembler, {17}, object, (host-openmp)
+// CHK-BUACTIONS: 19: clang-offload-bundler, {9, 16, 18}, object, (host-openmp)

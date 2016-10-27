@@ -36,6 +36,8 @@ const char *Action::getClassName(ActionClass AC) {
   case DsymutilJobClass: return "dsymutil";
   case VerifyDebugInfoJobClass: return "verify-debug-info";
   case VerifyPCHJobClass: return "verify-pch";
+  case OffloadBundlingJobClass:
+    return "clang-offload-bundler";
   }
 
   llvm_unreachable("invalid class");
@@ -346,3 +348,8 @@ void VerifyPCHJobAction::anchor() {}
 
 VerifyPCHJobAction::VerifyPCHJobAction(Action *Input, types::ID Type)
     : VerifyJobAction(VerifyPCHJobClass, Input, Type) {}
+
+void OffloadBundlingJobAction::anchor() {}
+
+OffloadBundlingJobAction::OffloadBundlingJobAction(ActionList &Inputs)
+    : JobAction(OffloadBundlingJobClass, Inputs, Inputs.front()->getType()) {}

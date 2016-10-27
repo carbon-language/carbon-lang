@@ -66,9 +66,10 @@ public:
     DsymutilJobClass,
     VerifyDebugInfoJobClass,
     VerifyPCHJobClass,
+    OffloadBundlingJobClass,
 
     JobClassFirst = PreprocessJobClass,
-    JobClassLast = VerifyPCHJobClass
+    JobClassLast = OffloadBundlingJobClass
   };
 
   // The offloading kind determines if this action is binded to a particular
@@ -478,6 +479,18 @@ public:
   VerifyPCHJobAction(Action *Input, types::ID Type);
   static bool classof(const Action *A) {
     return A->getKind() == VerifyPCHJobClass;
+  }
+};
+
+class OffloadBundlingJobAction : public JobAction {
+  void anchor() override;
+
+public:
+  // Offloading bundling doesn't change the type of output.
+  OffloadBundlingJobAction(ActionList &Inputs);
+
+  static bool classof(const Action *A) {
+    return A->getKind() == OffloadBundlingJobClass;
   }
 };
 
