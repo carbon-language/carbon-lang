@@ -29,3 +29,5 @@
 // RUN: %clang -### -emit-llvm -c -target x86_64-linux-gnu -o foo.s %s 2>&1 \
 // RUN:   | FileCheck -check-prefix MULTIPLE-OUTPUT-FILES %s
 // MULTIPLE-OUTPUT-FILES: error: cannot specify -o when generating multiple output files
+// Make sure we do not get duplicate diagnostics.
+// MULTIPLE-OUTPUT-FILES-NOT: error: cannot specify -o when generating multiple output files
