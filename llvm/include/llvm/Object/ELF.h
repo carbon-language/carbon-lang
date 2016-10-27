@@ -229,7 +229,8 @@ ELFFile<ELFT>::getSectionContentsAsArray(const Elf_Shdr *Sec) const {
 
   if (Size % sizeof(T))
     return object_error::parse_failed;
-  if (Offset + Size > Buf.size())
+  if ((std::numeric_limits<uintX_t>::max() - Offset < Size) ||
+      Offset + Size > Buf.size())
     return object_error::parse_failed;
 
   const T *Start = reinterpret_cast<const T *>(base() + Offset);
