@@ -50,7 +50,11 @@ static bool isSSetReg(unsigned Opcode) {
   return Opcode == AMDGPU::S_SETREG_B32 || Opcode == AMDGPU::S_SETREG_IMM32_B32;
 }
 
-static unsigned getHWReg(const SIInstrInfo *TII, const MachineInstr &RegInstr) {
+static bool isRWLane(unsigned Opcode) {
+  return Opcode == AMDGPU::V_READLANE_B32 || Opcode == AMDGPU::V_WRITELANE_B32;
+}
+
+static bool getHWReg(const SIInstrInfo *TII, const MachineInstr &RegInstr) {
 
   const MachineOperand *RegOp = TII->getNamedOperand(RegInstr,
                                                      AMDGPU::OpName::simm16);
@@ -74,6 +78,9 @@ GCNHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
     return NoopHazard;
 
   if (isDivFMas(MI->getOpcode()) && checkDivFMasHazards(MI) > 0)
+    return NoopHazard;
+
+  if (isRWLane(MI->getOpcode()) && checkRWLaneHazards(MI) > 0)
     return NoopHazard;
 
   if (isSGetReg(MI->getOpcode()) && checkGetRegHazards(MI) > 0)
@@ -104,6 +111,9 @@ unsigned GCNHazardRecognizer::PreEmitNoops(MachineInstr *MI) {
 
     if (isDivFMas(MI->getOpcode()))
       WaitStates = std::max(WaitStates, checkDivFMasHazards(MI));
+
+    if (isRWLane(MI->getOpcode()))
+      WaitStates = std::max(WaitStates, checkRWLaneHazards(MI));
 
     return WaitStates;
   }
@@ -437,4 +447,26 @@ int GCNHazardRecognizer::checkVALUHazards(MachineInstr *VALU) {
     WaitStatesNeeded = std::max(WaitStatesNeeded, WaitStatesNeededForDef);
   }
   return WaitStatesNeeded;
+}
+
+int GCNHazardRecognizer::checkRWLaneHazards(MachineInstr *RWLane) {
+  const SIInstrInfo *TII = ST.getInstrInfo();
+  const SIRegisterInfo *TRI = ST.getRegisterInfo();
+  const MachineRegisterInfo &MRI =
+      RWLane->getParent()->getParent()->getRegInfo();
+
+  const MachineOperand *LaneSelectOp =
+      TII->getNamedOperand(*RWLane, AMDGPU::OpName::src1);
+
+  if (!LaneSelectOp->isReg() || !TRI->isSGPRReg(MRI, LaneSelectOp->getReg()))
+    return 0;
+
+  unsigned LaneSelectReg = LaneSelectOp->getReg();
+  auto IsHazardFn = [TII] (MachineInstr *MI) {
+    return TII->isVALU(*MI);
+  };
+
+  const int RWLaneWaitStates = 4;
+  int WaitStatesSince = getWaitStatesSinceDef(LaneSelectReg, IsHazardFn);
+  return RWLaneWaitStates - WaitStatesSince;
 }
