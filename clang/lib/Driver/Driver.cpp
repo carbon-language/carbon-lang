@@ -1611,6 +1611,11 @@ class OffloadingActionBuilder final {
 
         // We avoid creating host action in device-only mode.
         return CompileDeviceOnly ? ABRT_Ignore_Host : ABRT_Success;
+      } else if (CurPhase > phases::Backend) {
+        // If we are past the backend phase and still have a device action, we
+        // don't have to do anything as this action is already a device
+        // top-level action.
+        return ABRT_Success;
       }
 
       assert(CurPhase < phases::Backend && "Generating single CUDA "
