@@ -55,11 +55,13 @@ Getting Started
    :local:
    :depth: 1
 
-Building
---------
+Fuzz Target
+-----------
 
-The first step for using libFuzzer on a library is to implement a fuzzing
-target function that accepts a sequence of bytes, like this:
+The first step in using libFuzzer on a library is to implement a
+*fuzz target* -- a function that accepts an array of bytes and
+does something interesting with these bytes using the API under test.
+Like this:
 
 .. code-block:: c++
 
@@ -68,6 +70,22 @@ target function that accepts a sequence of bytes, like this:
     DoSomethingInterestingWithMyAPI(Data, Size);
     return 0;  // Non-zero return values are reserved for future use.
   }
+
+Note that this fuzz target does not depend on libFuzzer in any way
+ans so it is possible and even desirable to use it with other fuzzing engines
+e.g. AFL_ and/or Radamsa_.
+
+Some important things to remember about fuzz targets:
+
+* The fuzzing engine will execute the fuzz target many times with different inputs in the same process.
+* It must tolerate any kind of input (empty, huge, malformed, etc).
+* It must not `exit()` on any input.
+* It may use multiple threads but ideally all threads should be joined at the end of the function.
+* Ideally, it should not modify any global state (although that's not strict).
+
+
+Building
+--------
 
 Next, build the libFuzzer library as a static archive, without any sanitizer
 options. Note that the libFuzzer library contains the ``main()`` function:
@@ -743,6 +761,7 @@ Trophies
 
 .. _pcre2: http://www.pcre.org/
 .. _AFL: http://lcamtuf.coredump.cx/afl/
+.. _Radamsa: https://github.com/aoh/radamsa
 .. _SanitizerCoverage: http://clang.llvm.org/docs/SanitizerCoverage.html
 .. _SanitizerCoverageTraceDataFlow: http://clang.llvm.org/docs/SanitizerCoverage.html#tracing-data-flow
 .. _AddressSanitizer: http://clang.llvm.org/docs/AddressSanitizer.html
