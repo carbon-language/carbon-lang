@@ -51,7 +51,7 @@ if vim.eval('exists("g:clang_format_fallback_style")') == "1":
 def main():
   # Get the current text.
   encoding = vim.eval("&encoding")
-  buf = [ unicode(line, encoding) for line in vim.current.buffer ]
+  buf = [ line.decode(encoding) for line in vim.current.buffer ]
   text = '\n'.join(buf)
 
   # Determine range to format.
