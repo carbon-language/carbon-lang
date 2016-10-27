@@ -428,6 +428,8 @@ ELFFile<ELFT>::getStringTable(const Elf_Shdr *Section) const {
   if (std::error_code EC = V.getError())
     return EC;
   ArrayRef<char> Data = *V;
+  if (Data.empty())
+    return object_error::parse_failed;
   if (Data.back() != '\0')
     return object_error::string_table_non_null_end;
   return StringRef(Data.begin(), Data.size());
