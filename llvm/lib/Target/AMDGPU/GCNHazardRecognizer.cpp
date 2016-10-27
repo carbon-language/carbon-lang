@@ -54,7 +54,11 @@ static bool isRWLane(unsigned Opcode) {
   return Opcode == AMDGPU::V_READLANE_B32 || Opcode == AMDGPU::V_WRITELANE_B32;
 }
 
-static bool getHWReg(const SIInstrInfo *TII, const MachineInstr &RegInstr) {
+static bool isRFE(unsigned Opcode) {
+  return Opcode == AMDGPU::S_RFE_B64;
+}
+
+static unsigned getHWReg(const SIInstrInfo *TII, const MachineInstr &RegInstr) {
 
   const MachineOperand *RegOp = TII->getNamedOperand(RegInstr,
                                                      AMDGPU::OpName::simm16);
@@ -87,6 +91,9 @@ GCNHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
     return NoopHazard;
 
   if (isSSetReg(MI->getOpcode()) && checkSetRegHazards(MI) > 0)
+    return NoopHazard;
+
+  if (isRFE(MI->getOpcode()) && checkRFEHazards(MI) > 0)
     return NoopHazard;
 
   return NoHazard;
@@ -123,6 +130,9 @@ unsigned GCNHazardRecognizer::PreEmitNoops(MachineInstr *MI) {
 
   if (isSSetReg(MI->getOpcode()))
     return std::max(0, checkSetRegHazards(MI));
+
+  if (isRFE(MI->getOpcode()))
+    return std::max(0, checkRFEHazards(MI));
 
   return 0;
 }
@@ -469,4 +479,20 @@ int GCNHazardRecognizer::checkRWLaneHazards(MachineInstr *RWLane) {
   const int RWLaneWaitStates = 4;
   int WaitStatesSince = getWaitStatesSinceDef(LaneSelectReg, IsHazardFn);
   return RWLaneWaitStates - WaitStatesSince;
+}
+
+int GCNHazardRecognizer::checkRFEHazards(MachineInstr *RFE) {
+
+  if (ST.getGeneration() < AMDGPUSubtarget::VOLCANIC_ISLANDS)
+    return 0;
+
+  const SIInstrInfo *TII = ST.getInstrInfo();
+
+  const int RFEWaitStates = 1;
+
+  auto IsHazardFn = [TII] (MachineInstr *MI) {
+    return getHWReg(TII, *MI) == AMDGPU::Hwreg::ID_TRAPSTS;
+  };
+  int WaitStatesNeeded = getWaitStatesSinceSetReg(IsHazardFn);
+  return RFEWaitStates - WaitStatesNeeded;
 }
