@@ -698,21 +698,27 @@ void Writer<ELFT>::forEachRelSec(
 }
 
 template <class ELFT> void Writer<ELFT>::createSections() {
-  for (elf::ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles()) {
-    for (InputSectionBase<ELFT> *IS : F->getSections()) {
-      if (isDiscarded(IS)) {
-        reportDiscarded(IS);
-        continue;
-      }
-      OutputSectionBase<ELFT> *Sec;
-      bool IsNew;
-      StringRef OutsecName = getOutputSectionName(IS->Name, Alloc);
-      std::tie(Sec, IsNew) = Factory.create(IS, OutsecName);
-      if (IsNew)
-        OutputSections.push_back(Sec);
-      Sec->addSection(IS);
+  auto Add = [&](InputSectionBase<ELFT> *IS) {
+    if (isDiscarded(IS)) {
+      reportDiscarded(IS);
+      return;
     }
-  }
+    OutputSectionBase<ELFT> *Sec;
+    bool IsNew;
+    StringRef OutsecName = getOutputSectionName(IS->Name, Alloc);
+    std::tie(Sec, IsNew) = Factory.create(IS, OutsecName);
+    if (IsNew)
+      OutputSections.push_back(Sec);
+    Sec->addSection(IS);
+  };
+
+  for (elf::ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles())
+    for (InputSectionBase<ELFT> *IS : F->getSections())
+      Add(IS);
+
+  for (BinaryFile *F : Symtab<ELFT>::X->getBinaryFiles())
+    for (InputSectionData *ID : F->getSections())
+      Add(cast<InputSection<ELFT>>(ID));
 
   sortInitFini(findSection(".init_array"));
   sortInitFini(findSection(".fini_array"));

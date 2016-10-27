@@ -361,11 +361,13 @@ class BinaryFile : public InputFile {
 public:
   explicit BinaryFile(MemoryBufferRef M) : InputFile(BinaryKind, M) {}
   static bool classof(const InputFile *F) { return F->kind() == BinaryKind; }
-  template <class ELFT> InputFile *createELF();
+  template <class ELFT> void parse();
+  ArrayRef<InputSectionData *> getSections() const { return Sections; }
 
 private:
-  std::vector<uint8_t> Buffer;
   llvm::BumpPtrAllocator Alloc;
+  llvm::StringSaver Saver{Alloc};
+  std::vector<InputSectionData *> Sections;
 };
 
 InputFile *createObjectFile(llvm::BumpPtrAllocator &Alloc, MemoryBufferRef MB,

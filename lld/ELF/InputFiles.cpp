@@ -9,7 +9,6 @@
 
 #include "InputFiles.h"
 #include "Driver.h"
-#include "ELFCreator.h"
 #include "Error.h"
 #include "InputSection.h"
 #include "LinkerScript.h"
@@ -822,15 +821,29 @@ static InputFile *createELFFile(BumpPtrAllocator &Alloc, MemoryBufferRef MB) {
   return Obj;
 }
 
-// Wraps a binary blob with an ELF header and footer
-// so that we can link it as a regular ELF file.
-template <class ELFT> InputFile *BinaryFile::createELF() {
-  ArrayRef<uint8_t> Blob((uint8_t *)MB.getBufferStart(), MB.getBufferSize());
-  StringRef Filename = MB.getBufferIdentifier();
-  Buffer = wrapBinaryWithElfHeader<ELFT>(Blob, Filename);
+template <class ELFT> void BinaryFile::parse() {
+  StringRef Buf = MB.getBuffer();
+  ArrayRef<uint8_t> Data =
+      makeArrayRef<uint8_t>((const uint8_t *)Buf.data(), Buf.size());
 
-  return createELFFile<ObjectFile>(
-      Alloc, MemoryBufferRef(toStringRef(Buffer), Filename));
+  std::string Filename = MB.getBufferIdentifier();
+  std::transform(Filename.begin(), Filename.end(), Filename.begin(),
+                 [](char C) { return isalnum(C) ? C : '_'; });
+  Filename = "_binary_" + Filename;
+  StringRef StartName = Saver.save(Twine(Filename) + "_start");
+  StringRef EndName = Saver.save(Twine(Filename) + "_end");
+  StringRef SizeName = Saver.save(Twine(Filename) + "_size");
+
+  auto *Section =
+      new InputSection<ELFT>(SHF_ALLOC, SHT_PROGBITS, 8, Data, ".data");
+  Sections.push_back(Section);
+
+  elf::Symtab<ELFT>::X->addRegular(StartName, STV_DEFAULT, Section, STB_GLOBAL,
+                                   STT_OBJECT, 0);
+  elf::Symtab<ELFT>::X->addRegular(EndName, STV_DEFAULT, Section, STB_GLOBAL,
+                                   STT_OBJECT, Data.size());
+  elf::Symtab<ELFT>::X->addRegular(SizeName, STV_DEFAULT, nullptr, STB_GLOBAL,
+                                   STT_OBJECT, Data.size());
 }
 
 static bool isBitcode(MemoryBufferRef MB) {
@@ -942,10 +955,10 @@ template class elf::SharedFile<ELF32BE>;
 template class elf::SharedFile<ELF64LE>;
 template class elf::SharedFile<ELF64BE>;
 
-template InputFile *BinaryFile::createELF<ELF32LE>();
-template InputFile *BinaryFile::createELF<ELF32BE>();
-template InputFile *BinaryFile::createELF<ELF64LE>();
-template InputFile *BinaryFile::createELF<ELF64BE>();
+template void BinaryFile::parse<ELF32LE>();
+template void BinaryFile::parse<ELF32BE>();
+template void BinaryFile::parse<ELF64LE>();
+template void BinaryFile::parse<ELF64BE>();
 
 template class elf::DIHelper<ELF32LE>;
 template class elf::DIHelper<ELF32BE>;
