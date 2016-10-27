@@ -23,10 +23,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <climits>
 
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
-#include <unistd.h>
-#endif
-
 using namespace llvm;
 using namespace llvm::ELF;
 using namespace llvm::object;
@@ -324,9 +320,7 @@ template <class ELFT> void Writer<ELFT>::run() {
     // Flush the output streams and exit immediately.  A full shutdown is a good
     // test that we are keeping track of all allocated memory, but actually
     // freeing it is a waste of time in a regular linker run.
-    outs().flush();
-    errs().flush();
-    _exit(0);
+    exitLld(0);
   }
 }
 

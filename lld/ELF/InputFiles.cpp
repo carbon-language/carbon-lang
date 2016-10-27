@@ -386,7 +386,8 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
     // If -r is given, we do not interpret or apply relocation
     // but just copy relocation sections to output.
     if (Config->Relocatable)
-      return new (IAlloc.Allocate()) InputSection<ELFT>(this, &Sec, Name);
+      return new (GAlloc<ELFT>::IAlloc.Allocate())
+          InputSection<ELFT>(this, &Sec, Name);
 
     // Find the relocation target section and associate this
     // section with it.
@@ -428,11 +429,14 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
   // .eh_frame_hdr section for runtime. So we handle them with a special
   // class. For relocatable outputs, they are just passed through.
   if (Name == ".eh_frame" && !Config->Relocatable)
-    return new (EHAlloc.Allocate()) EhInputSection<ELFT>(this, &Sec, Name);
+    return new (GAlloc<ELFT>::EHAlloc.Allocate())
+        EhInputSection<ELFT>(this, &Sec, Name);
 
   if (shouldMerge(Sec))
-    return new (MAlloc.Allocate()) MergeInputSection<ELFT>(this, &Sec, Name);
-  return new (IAlloc.Allocate()) InputSection<ELFT>(this, &Sec, Name);
+    return new (GAlloc<ELFT>::MAlloc.Allocate())
+        MergeInputSection<ELFT>(this, &Sec, Name);
+  return new (GAlloc<ELFT>::IAlloc.Allocate())
+      InputSection<ELFT>(this, &Sec, Name);
 }
 
 template <class ELFT> void elf::ObjectFile<ELFT>::initializeSymbols() {

@@ -38,6 +38,21 @@ class InputFile;
 namespace lld {
 namespace elf {
 
+template <class ELFT> struct GAlloc {
+  static llvm::SpecificBumpPtrAllocator<InputSection<ELFT>> IAlloc;
+  static llvm::SpecificBumpPtrAllocator<MergeInputSection<ELFT>> MAlloc;
+  static llvm::SpecificBumpPtrAllocator<EhInputSection<ELFT>> EHAlloc;
+};
+
+template <class ELFT>
+llvm::SpecificBumpPtrAllocator<InputSection<ELFT>> GAlloc<ELFT>::IAlloc;
+
+template <class ELFT>
+llvm::SpecificBumpPtrAllocator<MergeInputSection<ELFT>> GAlloc<ELFT>::MAlloc;
+
+template <class ELFT>
+llvm::SpecificBumpPtrAllocator<EhInputSection<ELFT>> GAlloc<ELFT>::EHAlloc;
+
 using llvm::object::Archive;
 
 class InputFile;
@@ -233,9 +248,6 @@ private:
   // MIPS .MIPS.abiflags section defined by this file.
   std::unique_ptr<MipsAbiFlagsInputSection<ELFT>> MipsAbiFlags;
 
-  llvm::SpecificBumpPtrAllocator<InputSection<ELFT>> IAlloc;
-  llvm::SpecificBumpPtrAllocator<MergeInputSection<ELFT>> MAlloc;
-  llvm::SpecificBumpPtrAllocator<EhInputSection<ELFT>> EHAlloc;
   std::unique_ptr<DIHelper<ELFT>> DIH;
 };
 
