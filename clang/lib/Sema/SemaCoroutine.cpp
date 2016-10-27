@@ -99,67 +99,98 @@ static QualType lookupPromiseType(Sema &S, const FunctionProtoType *FnType,
   return PromiseType;
 }
 
-/// Check that this is a context in which a coroutine suspension can appear.
-static FunctionScopeInfo *
-checkCoroutineContext(Sema &S, SourceLocation Loc, StringRef Keyword) {
+static bool isValidCoroutineContext(Sema &S, SourceLocation Loc,
+                                    StringRef Keyword) {
   // 'co_await' and 'co_yield' are not permitted in unevaluated operands.
   if (S.isUnevaluatedContext()) {
     S.Diag(Loc, diag::err_coroutine_unevaluated_context) << Keyword;
-    return nullptr;
+    return false;
   }
 
   // Any other usage must be within a function.
-  // FIXME: Reject a coroutine with a deduced return type.
   auto *FD = dyn_cast<FunctionDecl>(S.CurContext);
   if (!FD) {
     S.Diag(Loc, isa<ObjCMethodDecl>(S.CurContext)
                     ? diag::err_coroutine_objc_method
                     : diag::err_coroutine_outside_function) << Keyword;
-  } else if (isa<CXXConstructorDecl>(FD) || isa<CXXDestructorDecl>(FD)) {
-    // Coroutines TS [special]/6:
-    //   A special member function shall not be a coroutine.
-    //
-    // FIXME: We assume that this really means that a coroutine cannot
-    //        be a constructor or destructor.
-    S.Diag(Loc, diag::err_coroutine_ctor_dtor) 
-      << isa<CXXDestructorDecl>(FD) << Keyword;
-  } else if (FD->isConstexpr()) {
-    S.Diag(Loc, diag::err_coroutine_constexpr) << Keyword;
-  } else if (FD->isVariadic()) {
-    S.Diag(Loc, diag::err_coroutine_varargs) << Keyword;
-  } else if (FD->isMain()) {
-    S.Diag(FD->getLocStart(), diag::err_coroutine_main);
-    S.Diag(Loc, diag::note_declared_coroutine_here)
-        << (Keyword == "co_await" ? 0 : 
-            Keyword == "co_yield" ? 1 : 2);
-  } else {
-    auto *ScopeInfo = S.getCurFunction();
-    assert(ScopeInfo && "missing function scope for function");
-
-    // If we don't have a promise variable, build one now.
-    if (!ScopeInfo->CoroutinePromise) {
-      QualType T =
-          FD->getType()->isDependentType()
-              ? S.Context.DependentTy
-              : lookupPromiseType(S, FD->getType()->castAs<FunctionProtoType>(),
-                                  Loc);
-      if (T.isNull())
-        return nullptr;
-
-      // Create and default-initialize the promise.
-      ScopeInfo->CoroutinePromise =
-          VarDecl::Create(S.Context, FD, FD->getLocation(), FD->getLocation(),
-                          &S.PP.getIdentifierTable().get("__promise"), T,
-                          S.Context.getTrivialTypeSourceInfo(T, Loc), SC_None);
-      S.CheckVariableDeclarationType(ScopeInfo->CoroutinePromise);
-      if (!ScopeInfo->CoroutinePromise->isInvalidDecl())
-        S.ActOnUninitializedDecl(ScopeInfo->CoroutinePromise, false);
-    }
-
-    return ScopeInfo;
+    return false;
   }
 
-  return nullptr;
+  // An enumeration for mapping the diagnostic type to the correct diagnostic
+  // selection index.
+  enum InvalidFuncDiag {
+    DiagCtor = 0,
+    DiagDtor,
+    DiagCopyAssign,
+    DiagMoveAssign,
+    DiagMain,
+    DiagConstexpr,
+    DiagAutoRet,
+    DiagVarargs,
+  };
+  bool Diagnosed = false;
+  auto DiagInvalid = [&](InvalidFuncDiag ID) {
+    S.Diag(Loc, diag::err_coroutine_invalid_func_context) << ID << Keyword;
+    Diagnosed = true;
+    return false;
+  };
+
+  // Diagnose when a constructor, destructor, copy/move assignment operator,
+  // or the function 'main' are declared as a coroutine.
+  auto *MD = dyn_cast<CXXMethodDecl>(FD);
+  if (MD && isa<CXXConstructorDecl>(MD))
+    return DiagInvalid(DiagCtor);
+  else if (MD && isa<CXXDestructorDecl>(MD))
+    return DiagInvalid(DiagDtor);
+  else if (MD && MD->isCopyAssignmentOperator())
+    return DiagInvalid(DiagCopyAssign);
+  else if (MD && MD->isMoveAssignmentOperator())
+    return DiagInvalid(DiagMoveAssign);
+  else if (FD->isMain())
+    return DiagInvalid(DiagMain);
+
+  // Emit a diagnostics for each of the following conditions which is not met.
+  if (FD->isConstexpr())
+    DiagInvalid(DiagConstexpr);
+  if (FD->getReturnType()->isUndeducedType())
+    DiagInvalid(DiagAutoRet);
+  if (FD->isVariadic())
+    DiagInvalid(DiagVarargs);
+
+  return !Diagnosed;
+}
+
+/// Check that this is a context in which a coroutine suspension can appear.
+static FunctionScopeInfo *checkCoroutineContext(Sema &S, SourceLocation Loc,
+                                                StringRef Keyword) {
+  if (!isValidCoroutineContext(S, Loc, Keyword))
+    return nullptr;
+
+  assert(isa<FunctionDecl>(S.CurContext) && "not in a function scope");
+  auto *FD = cast<FunctionDecl>(S.CurContext);
+  auto *ScopeInfo = S.getCurFunction();
+  assert(ScopeInfo && "missing function scope for function");
+
+  // If we don't have a promise variable, build one now.
+  if (!ScopeInfo->CoroutinePromise) {
+    QualType T = FD->getType()->isDependentType()
+                     ? S.Context.DependentTy
+                     : lookupPromiseType(
+                           S, FD->getType()->castAs<FunctionProtoType>(), Loc);
+    if (T.isNull())
+      return nullptr;
+
+    // Create and default-initialize the promise.
+    ScopeInfo->CoroutinePromise =
+        VarDecl::Create(S.Context, FD, FD->getLocation(), FD->getLocation(),
+                        &S.PP.getIdentifierTable().get("__promise"), T,
+                        S.Context.getTrivialTypeSourceInfo(T, Loc), SC_None);
+    S.CheckVariableDeclarationType(ScopeInfo->CoroutinePromise);
+    if (!ScopeInfo->CoroutinePromise->isInvalidDecl())
+      S.ActOnUninitializedDecl(ScopeInfo->CoroutinePromise, false);
+  }
+
+  return ScopeInfo;
 }
 
 static Expr *buildBuiltinCall(Sema &S, SourceLocation Loc, Builtin::ID Id,
