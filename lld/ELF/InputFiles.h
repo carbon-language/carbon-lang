@@ -108,6 +108,7 @@ public:
   // have ELF type (i.e. ELF{32,64}{LE,BE}) and target machine type.
   ELFKind EKind = ELFNoneKind;
   uint16_t EMachine = llvm::ELF::EM_NONE;
+  uint8_t OSABI = 0;
 
   static void freePool();
 
@@ -142,10 +143,6 @@ public:
 
   const llvm::object::ELFFile<ELFT> &getObj() const { return ELFObj; }
   llvm::object::ELFFile<ELFT> &getObj() { return ELFObj; }
-
-  uint8_t getOSABI() const {
-    return getObj().getHeader()->e_ident[llvm::ELF::EI_OSABI];
-  }
 
   StringRef getStringTable() const { return StringTable; }
 

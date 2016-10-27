@@ -1339,16 +1339,14 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   uint8_t *Buf = Buffer->getBufferStart();
   memcpy(Buf, "\177ELF", 4);
 
-  auto &FirstObj = cast<ELFFileBase<ELFT>>(*Config->FirstElf);
-
   // Write the ELF header.
   auto *EHdr = reinterpret_cast<Elf_Ehdr *>(Buf);
   EHdr->e_ident[EI_CLASS] = ELFT::Is64Bits ? ELFCLASS64 : ELFCLASS32;
   EHdr->e_ident[EI_DATA] = getELFEncoding<ELFT>();
   EHdr->e_ident[EI_VERSION] = EV_CURRENT;
-  EHdr->e_ident[EI_OSABI] = FirstObj.getOSABI();
+  EHdr->e_ident[EI_OSABI] = Config->OSABI;
   EHdr->e_type = getELFType();
-  EHdr->e_machine = FirstObj.EMachine;
+  EHdr->e_machine = Config->EMachine;
   EHdr->e_version = EV_CURRENT;
   EHdr->e_entry = getEntryAddr<ELFT>();
   EHdr->e_shoff = SectionHeaderOff;
