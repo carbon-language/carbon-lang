@@ -2843,12 +2843,16 @@ InputInfo Driver::BuildJobsForAction(
     bool BuildForOffloadDevice) const {
   // The bound arch is not necessarily represented in the toolchain's triple --
   // for example, armv7 and armv7s both map to the same triple -- so we need
-  // both in our map.
+  // both in our map. Also, we need to add the offloading device kind, as the
+  // same tool chain can be used for host and device for some programming
+  // models, e.g. OpenMP.
   std::string TriplePlusArch = TC->getTriple().normalize();
   if (!BoundArch.empty()) {
     TriplePlusArch += "-";
     TriplePlusArch += BoundArch;
   }
+  TriplePlusArch += "-";
+  TriplePlusArch += A->getOffloadingKindPrefix();
   std::pair<const Action *, std::string> ActionTC = {A, TriplePlusArch};
   auto CachedResult = CachedResults.find(ActionTC);
   if (CachedResult != CachedResults.end()) {
@@ -3169,14 +3173,14 @@ const char *Driver::GetNamedOutputPath(Compilation &C, const JobAction &JA,
       // clang-cl uses BaseName for the executable name.
       NamedOutput =
           MakeCLOutputFilename(C.getArgs(), "", BaseName, types::TY_Image);
-    } else if (MultipleArchs && !BoundArch.empty()) {
+    } else {
       SmallString<128> Output(getDefaultImageName());
       Output += JA.getOffloadingFileNamePrefix(NormalizedTriple);
-      Output += "-";
-      Output.append(BoundArch);
+      if (MultipleArchs && !BoundArch.empty()) {
+        Output += "-";
+        Output.append(BoundArch);
+      }
       NamedOutput = C.getArgs().MakeArgString(Output.c_str());
-    } else {
-      NamedOutput = getDefaultImageName();
     }
   } else if (JA.getType() == types::TY_PCH && IsCLMode()) {
     NamedOutput = C.getArgs().MakeArgString(GetClPchPath(C, BaseName).c_str());
