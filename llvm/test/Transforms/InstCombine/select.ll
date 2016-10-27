@@ -1711,10 +1711,11 @@ define i32 @test_select_select1(i32 %a, i32 %r0, i32 %r1, i32 %v1, i32 %v2) {
   ret i32 %s1
 }
 
-define i32 @test_max_of_min(i32 %a) {
 ; MAX(MIN(%a, -1), -1) == -1
+define i32 @test_max_of_min(i32 %a) {
 ; CHECK-LABEL: @test_max_of_min(
-; CHECK: ret i32 -1
+; CHECK-NEXT:    ret i32 -1
+;
   %not_a = xor i32 %a, -1
   %c0 = icmp sgt i32 %a, 0
   %s0 = select i1 %c0, i32 %not_a, i32 -1
@@ -1723,6 +1724,23 @@ define i32 @test_max_of_min(i32 %a) {
   ret i32 %s1
 }
 
+; FIXME - vectors should get the same folds
+define <2 x i32> @test_max_of_min_vec(<2 x i32> %a) {
+; CHECK-LABEL: @test_max_of_min_vec(
+; CHECK-NEXT:    [[NOT_A:%.*]] = xor <2 x i32> %a, <i32 -1, i32 -1>
+; CHECK-NEXT:    [[C0:%.*]] = icmp sgt <2 x i32> %a, zeroinitializer
+; CHECK-NEXT:    [[S0:%.*]] = select <2 x i1> [[C0]], <2 x i32> [[NOT_A]], <2 x i32> <i32 -1, i32 -1>
+; CHECK-NEXT:    [[C1:%.*]] = icmp sgt <2 x i32> [[S0]], <i32 -1, i32 -1>
+; CHECK-NEXT:    [[S1:%.*]] = select <2 x i1> [[C1]], <2 x i32> [[S0]], <2 x i32> <i32 -1, i32 -1>
+; CHECK-NEXT:    ret <2 x i32> [[S1]]
+;
+  %not_a = xor <2 x i32> %a, <i32 -1, i32 -1>
+  %c0 = icmp sgt <2 x i32> %a, zeroinitializer
+  %s0 = select <2 x i1> %c0, <2 x i32> %not_a, <2 x i32> <i32 -1, i32 -1>
+  %c1 = icmp sgt <2 x i32> %s0, <i32 -1, i32 -1>
+  %s1 = select <2 x i1> %c1, <2 x i32> %s0, <2 x i32> <i32 -1, i32 -1>
+  ret <2 x i32> %s1
+}
 
 define i32 @PR23757(i32 %x) {
 ; CHECK-LABEL: @PR23757
@@ -1735,7 +1753,6 @@ define i32 @PR23757(i32 %x) {
   %sel = select i1 %cmp, i32 -2147483648, i32 %add
   ret i32 %sel
 }
-
 
 define i32 @PR27137(i32 %a) {
 ; CHECK-LABEL: @PR27137(
