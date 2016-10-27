@@ -19854,6 +19854,25 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
   assert((VT == MVT::v2i64 || VT == MVT::v4i64 || VT == MVT::v8i64) &&
          "Only know how to lower V2I64/V4I64/V8I64 multiply");
 
+  // AVX512DQ - extend to 512 bit vector.
+  // FIXME: This can possibly be converted to a tablegen pattern.
+  if (Subtarget.hasDQI()) {
+    assert(!Subtarget.hasVLX() && "AVX512DQVL vXi64 multiply is legal");
+    assert((VT == MVT::v2i64 || VT == MVT::v4i64) &&
+           "AVX512DQ v8i64 multiply is legal");
+
+    MVT NewVT = MVT::getVectorVT(MVT::i64, 512 / VT.getScalarSizeInBits());
+    SDValue A512 =
+        DAG.getNode(ISD::INSERT_SUBVECTOR, dl, NewVT, DAG.getUNDEF(NewVT), A,
+                    DAG.getIntPtrConstant(0, dl));
+    SDValue B512 =
+        DAG.getNode(ISD::INSERT_SUBVECTOR, dl, NewVT, DAG.getUNDEF(NewVT), B,
+                    DAG.getIntPtrConstant(0, dl));
+    SDValue MulNode = DAG.getNode(ISD::MUL, dl, NewVT, A512, B512);
+    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, MulNode,
+                       DAG.getIntPtrConstant(0, dl));
+  }
+
   //  Ahi = psrlqi(a, 32);
   //  Bhi = psrlqi(b, 32);
   //
