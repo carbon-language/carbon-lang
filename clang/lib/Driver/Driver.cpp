@@ -434,6 +434,32 @@ void Driver::setLTOMode(const llvm::opt::ArgList &Args) {
   }
 }
 
+/// Compute the desired OpenMP runtime from the flags provided.
+Driver::OpenMPRuntimeKind Driver::getOpenMPRuntime(const ArgList &Args) const {
+  StringRef RuntimeName(CLANG_DEFAULT_OPENMP_RUNTIME);
+
+  const Arg *A = Args.getLastArg(options::OPT_fopenmp_EQ);
+  if (A)
+    RuntimeName = A->getValue();
+
+  auto RT = llvm::StringSwitch<OpenMPRuntimeKind>(RuntimeName)
+                .Case("libomp", OMPRT_OMP)
+                .Case("libgomp", OMPRT_GOMP)
+                .Case("libiomp5", OMPRT_IOMP5)
+                .Default(OMPRT_Unknown);
+
+  if (RT == OMPRT_Unknown) {
+    if (A)
+      Diag(diag::err_drv_unsupported_option_argument)
+          << A->getOption().getName() << A->getValue();
+    else
+      // FIXME: We could use a nicer diagnostic here.
+      Diag(diag::err_drv_unsupported_opt) << "-fopenmp";
+  }
+
+  return RT;
+}
+
 void Driver::CreateOffloadingDeviceToolChains(Compilation &C,
                                               InputList &Inputs) {
 
@@ -452,6 +478,59 @@ void Driver::CreateOffloadingDeviceToolChains(Compilation &C,
                          ? "nvptx64-nvidia-cuda"
                          : "nvptx-nvidia-cuda"));
     C.addOffloadDeviceToolChain(&TC, Action::OFK_Cuda);
+  }
+
+  //
+  // OpenMP
+  //
+  // We need to generate an OpenMP toolchain if the user specified targets with
+  // the -fopenmp-targets option.
+  if (Arg *OpenMPTargets =
+          C.getInputArgs().getLastArg(options::OPT_fopenmp_targets_EQ)) {
+    if (OpenMPTargets->getNumValues()) {
+      // We expect that -fopenmp-targets is always used in conjunction with the
+      // option -fopenmp specifying a valid runtime with offloading support,
+      // i.e. libomp or libiomp.
+      bool HasValidOpenMPRuntime = C.getInputArgs().hasFlag(
+          options::OPT_fopenmp, options::OPT_fopenmp_EQ,
+          options::OPT_fno_openmp, false);
+      if (HasValidOpenMPRuntime) {
+        OpenMPRuntimeKind OpenMPKind = getOpenMPRuntime(C.getInputArgs());
+        HasValidOpenMPRuntime =
+            OpenMPKind == OMPRT_OMP || OpenMPKind == OMPRT_IOMP5;
+      }
+
+      if (HasValidOpenMPRuntime) {
+        llvm::StringMap<const char *> FoundNormalizedTriples;
+        for (const char *Val : OpenMPTargets->getValues()) {
+          llvm::Triple TT(Val);
+          std::string NormalizedName = TT.normalize();
+
+          // Make sure we don't have a duplicate triple.
+          auto Duplicate = FoundNormalizedTriples.find(NormalizedName);
+          if (Duplicate != FoundNormalizedTriples.end()) {
+            Diag(clang::diag::warn_drv_omp_offload_target_duplicate)
+                << Val << Duplicate->second;
+            continue;
+          }
+
+          // Store the current triple so that we can check for duplicates in the
+          // following iterations.
+          FoundNormalizedTriples[NormalizedName] = Val;
+
+          // If the specified target is invalid, emit a diagnostic.
+          if (TT.getArch() == llvm::Triple::UnknownArch)
+            Diag(clang::diag::err_drv_invalid_omp_target) << Val;
+          else {
+            const ToolChain &TC = getToolChain(C.getInputArgs(), TT);
+            C.addOffloadDeviceToolChain(&TC, Action::OFK_OpenMP);
+          }
+        }
+      } else
+        Diag(clang::diag::err_drv_expecting_fopenmp_with_fopenmp_targets);
+    } else
+      Diag(clang::diag::warn_drv_empty_joined_argument)
+          << OpenMPTargets->getAsString(C.getInputArgs());
   }
 
   //

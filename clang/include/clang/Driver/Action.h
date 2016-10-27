@@ -80,6 +80,7 @@ public:
     OFK_Host = 0x01,
     // The device offloading tool chains - one bit for each programming model.
     OFK_Cuda = 0x02,
+    OFK_OpenMP = 0x04,
   };
 
   static const char *getClassName(ActionClass AC);

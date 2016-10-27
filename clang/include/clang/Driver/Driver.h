@@ -91,6 +91,26 @@ class Driver {
   LTOKind LTOMode;
 
 public:
+  enum OpenMPRuntimeKind {
+    /// An unknown OpenMP runtime. We can't generate effective OpenMP code
+    /// without knowing what runtime to target.
+    OMPRT_Unknown,
+
+    /// The LLVM OpenMP runtime. When completed and integrated, this will become
+    /// the default for Clang.
+    OMPRT_OMP,
+
+    /// The GNU OpenMP runtime. Clang doesn't support generating OpenMP code for
+    /// this runtime but can swallow the pragmas, and find and link against the
+    /// runtime library itself.
+    OMPRT_GOMP,
+
+    /// The legacy name for the LLVM OpenMP runtime from when it was the Intel
+    /// OpenMP runtime. We support this mode for users with existing
+    /// dependencies on this runtime library name.
+    OMPRT_IOMP5
+  };
+
   // Diag - Forwarding function for diagnostics.
   DiagnosticBuilder Diag(unsigned DiagID) const {
     return Diags.Report(DiagID);
@@ -271,6 +291,9 @@ public:
 
   bool embedBitcodeEnabled() const { return BitcodeEmbed == EmbedBitcode; }
   bool embedBitcodeMarkerOnly() const { return BitcodeEmbed == EmbedMarker; }
+
+  /// Compute the desired OpenMP runtime from the flags provided.
+  OpenMPRuntimeKind getOpenMPRuntime(const llvm::opt::ArgList &Args) const;
 
   /// @}
   /// @name Primary Functionality
