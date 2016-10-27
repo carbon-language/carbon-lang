@@ -265,6 +265,7 @@ Tool *ToolChain::getTool(Action::ActionClass AC) const {
     return getClang();
 
   case Action::OffloadBundlingJobClass:
+  case Action::OffloadUnbundlingJobClass:
     // FIXME: Add a tool for the bundling actions.
     return nullptr;
   }

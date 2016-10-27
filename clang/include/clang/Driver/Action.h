@@ -67,9 +67,10 @@ public:
     VerifyDebugInfoJobClass,
     VerifyPCHJobClass,
     OffloadBundlingJobClass,
+    OffloadUnbundlingJobClass,
 
     JobClassFirst = PreprocessJobClass,
-    JobClassLast = OffloadBundlingJobClass
+    JobClassLast = OffloadUnbundlingJobClass
   };
 
   // The offloading kind determines if this action is binded to a particular
@@ -491,6 +492,52 @@ public:
 
   static bool classof(const Action *A) {
     return A->getKind() == OffloadBundlingJobClass;
+  }
+};
+
+class OffloadUnbundlingJobAction final : public JobAction {
+  void anchor() override;
+
+public:
+  /// Type that provides information about the actions that depend on this
+  /// unbundling action.
+  struct DependentActionInfo final {
+    /// \brief The tool chain of the dependent action.
+    const ToolChain *DependentToolChain = nullptr;
+    /// \brief The bound architecture of the dependent action.
+    StringRef DependentBoundArch;
+    /// \brief The offload kind of the dependent action.
+    const OffloadKind DependentOffloadKind = OFK_None;
+    DependentActionInfo(const ToolChain *DependentToolChain,
+                        StringRef DependentBoundArch,
+                        const OffloadKind DependentOffloadKind)
+        : DependentToolChain(DependentToolChain),
+          DependentBoundArch(DependentBoundArch),
+          DependentOffloadKind(DependentOffloadKind){};
+  };
+
+private:
+  /// Container that keeps information about each dependence of this unbundling
+  /// action.
+  SmallVector<DependentActionInfo, 6> DependentActionInfoArray;
+
+public:
+  // Offloading unbundling doesn't change the type of output.
+  OffloadUnbundlingJobAction(Action *Input);
+
+  /// Register information about a dependent action.
+  void registerDependentActionInfo(const ToolChain *TC, StringRef BoundArch,
+                                   OffloadKind Kind) {
+    DependentActionInfoArray.push_back({TC, BoundArch, Kind});
+  }
+
+  /// Return the information about all depending actions.
+  ArrayRef<DependentActionInfo> getDependentActionsInfo() const {
+    return DependentActionInfoArray;
+  }
+
+  static bool classof(const Action *A) {
+    return A->getKind() == OffloadUnbundlingJobClass;
   }
 };
 

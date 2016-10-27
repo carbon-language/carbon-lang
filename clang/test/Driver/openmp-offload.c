@@ -302,3 +302,56 @@
 // CHK-BUACTIONS: 17: backend, {2}, assembler, (host-openmp)
 // CHK-BUACTIONS: 18: assembler, {17}, object, (host-openmp)
 // CHK-BUACTIONS: 19: clang-offload-bundler, {9, 16, 18}, object, (host-openmp)
+
+/// ###########################################################################
+
+/// Check separate compilation with offloading - unbundling actions
+// RUN:   touch %t.i
+// RUN:   %clang -### -ccc-print-phases -fopenmp -o %t.out -lsomelib -target powerpc64le-linux -fopenmp-targets=powerpc64le-ibm-linux-gnu,x86_64-pc-linux-gnu %t.i 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHK-UBACTIONS %s
+
+// CHK-UBACTIONS: 0: input, "somelib", object, (host-openmp)
+// CHK-UBACTIONS: 1: input, "[[INPUT:.+\.i]]", cpp-output, (host-openmp)
+// CHK-UBACTIONS: 2: clang-offload-unbundler, {1}, cpp-output, (host-openmp)
+// CHK-UBACTIONS: 3: compiler, {2}, ir, (host-openmp)
+// CHK-UBACTIONS: 4: backend, {3}, assembler, (host-openmp)
+// CHK-UBACTIONS: 5: assembler, {4}, object, (host-openmp)
+// CHK-UBACTIONS: 6: linker, {0, 5}, image, (host-openmp)
+// CHK-UBACTIONS: 7: input, "somelib", object, (device-openmp)
+// CHK-UBACTIONS: 8: compiler, {2}, ir, (device-openmp)
+// CHK-UBACTIONS: 9: offload, "host-openmp (powerpc64le--linux)" {3}, "device-openmp (powerpc64le-ibm-linux-gnu)" {8}, ir
+// CHK-UBACTIONS: 10: backend, {9}, assembler, (device-openmp)
+// CHK-UBACTIONS: 11: assembler, {10}, object, (device-openmp)
+// CHK-UBACTIONS: 12: linker, {7, 11}, image, (device-openmp)
+// CHK-UBACTIONS: 13: input, "somelib", object, (device-openmp)
+// CHK-UBACTIONS: 14: compiler, {2}, ir, (device-openmp)
+// CHK-UBACTIONS: 15: offload, "host-openmp (powerpc64le--linux)" {3}, "device-openmp (x86_64-pc-linux-gnu)" {14}, ir
+// CHK-UBACTIONS: 16: backend, {15}, assembler, (device-openmp)
+// CHK-UBACTIONS: 17: assembler, {16}, object, (device-openmp)
+// CHK-UBACTIONS: 18: linker, {13, 17}, image, (device-openmp)
+// CHK-UBACTIONS: 19: offload, "host-openmp (powerpc64le--linux)" {6}, "device-openmp (powerpc64le-ibm-linux-gnu)" {12}, "device-openmp (x86_64-pc-linux-gnu)" {18}, image
+
+/// ###########################################################################
+
+/// Check separate compilation with offloading - unbundling/bundling actions
+// RUN:   touch %t.i
+// RUN:   %clang -### -ccc-print-phases -fopenmp -c -o %t.o -lsomelib -target powerpc64le-linux -fopenmp-targets=powerpc64le-ibm-linux-gnu,x86_64-pc-linux-gnu %t.i 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHK-UBUACTIONS %s
+
+// CHK-UBUACTIONS: 0: input, "[[INPUT:.+\.i]]", cpp-output, (host-openmp)
+// CHK-UBUACTIONS: 1: clang-offload-unbundler, {0}, cpp-output, (host-openmp)
+// CHK-UBUACTIONS: 2: compiler, {1}, ir, (host-openmp)
+// CHK-UBUACTIONS: 3: compiler, {1}, ir, (device-openmp)
+// CHK-UBUACTIONS: 4: offload, "host-openmp (powerpc64le--linux)" {2}, "device-openmp (powerpc64le-ibm-linux-gnu)" {3}, ir
+// CHK-UBUACTIONS: 5: backend, {4}, assembler, (device-openmp)
+// CHK-UBUACTIONS: 6: assembler, {5}, object, (device-openmp)
+// CHK-UBUACTIONS: 7: offload, "device-openmp (powerpc64le-ibm-linux-gnu)" {6}, object
+// CHK-UBUACTIONS: 8: compiler, {1}, ir, (device-openmp)
+// CHK-UBUACTIONS: 9: offload, "host-openmp (powerpc64le--linux)" {2}, "device-openmp (x86_64-pc-linux-gnu)" {8}, ir
+// CHK-UBUACTIONS: 10: backend, {9}, assembler, (device-openmp)
+// CHK-UBUACTIONS: 11: assembler, {10}, object, (device-openmp)
+// CHK-UBUACTIONS: 12: offload, "device-openmp (x86_64-pc-linux-gnu)" {11}, object
+// CHK-UBUACTIONS: 13: backend, {2}, assembler, (host-openmp)
+// CHK-UBUACTIONS: 14: assembler, {13}, object, (host-openmp)
+// CHK-UBUACTIONS: 15: clang-offload-bundler, {7, 12, 14}, object, (host-openmp)
+
