@@ -7053,6 +7053,72 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
                    SplitDebugName(Args, Input));
 }
 
+void OffloadBundler::ConstructJob(Compilation &C, const JobAction &JA,
+                                  const InputInfo &Output,
+                                  const InputInfoList &Inputs,
+                                  const llvm::opt::ArgList &TCArgs,
+                                  const char *LinkingOutput) const {
+  assert(isa<OffloadBundlingJobAction>(JA) && "Expecting bundling job!");
+
+  // The bundling command looks like this:
+  // clang-offload-bundler -type=bc
+  //   -targets=host-triple,openmp-triple1,openmp-triple2
+  //   -outputs=input_file
+  //   -inputs=unbundle_file_host,unbundle_file_tgt1,unbundle_file_tgt2"
+
+  ArgStringList CmdArgs;
+
+  // Get the type.
+  CmdArgs.push_back(TCArgs.MakeArgString(
+      Twine("-type=") + types::getTypeTempSuffix(Output.getType())));
+
+  assert(JA.getInputs().size() == Inputs.size() &&
+         "Not have inputs for all dependence actions??");
+
+  // Get the targets.
+  SmallString<128> Triples;
+  Triples += "-targets=";
+  for (unsigned I = 0; I < Inputs.size(); ++I) {
+    if (I)
+      Triples += ',';
+
+    Action::OffloadKind CurKind = Action::OFK_Host;
+    const ToolChain *CurTC = &getToolChain();
+    const Action *CurDep = JA.getInputs()[I];
+
+    if (const auto *OA = dyn_cast<OffloadAction>(CurDep)) {
+      OA->doOnEachDependence([&](Action *A, const ToolChain *TC, const char *) {
+        CurKind = A->getOffloadingDeviceKind();
+        CurTC = TC;
+      });
+    }
+    Triples += Action::GetOffloadKindName(CurKind);
+    Triples += '-';
+    Triples += CurTC->getTriple().normalize();
+  }
+  CmdArgs.push_back(TCArgs.MakeArgString(Triples));
+
+  // Get bundled file command.
+  CmdArgs.push_back(
+      TCArgs.MakeArgString(Twine("-outputs=") + Output.getFilename()));
+
+  // Get unbundled files command.
+  SmallString<128> UB;
+  UB += "-inputs=";
+  for (unsigned I = 0; I < Inputs.size(); ++I) {
+    if (I)
+      UB += ',';
+    UB += Inputs[I].getFilename();
+  }
+  CmdArgs.push_back(TCArgs.MakeArgString(UB));
+
+  // All the inputs are encoded as commands.
+  C.addCommand(llvm::make_unique<Command>(
+      JA, *this,
+      TCArgs.MakeArgString(getToolChain().GetProgramPath(getShortName())),
+      CmdArgs, None));
+}
+
 void GnuTool::anchor() {}
 
 void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,

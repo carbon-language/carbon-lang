@@ -9,6 +9,7 @@
 
 #include "clang/Driver/Action.h"
 #include "clang/Driver/ToolChain.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Regex.h"
@@ -126,6 +127,22 @@ Action::getOffloadingFileNamePrefix(llvm::StringRef NormalizedTriple) const {
   Res += "-";
   Res += NormalizedTriple;
   return Res;
+}
+
+/// Return a string with the offload kind name. If that is not defined, we
+/// assume 'host'.
+llvm::StringRef Action::GetOffloadKindName(OffloadKind Kind) {
+  switch (Kind) {
+  case OFK_None:
+  case OFK_Host:
+    return "host";
+  case OFK_Cuda:
+    return "cuda";
+  case OFK_OpenMP:
+    return "openmp";
+
+    // TODO: Add other programming models here.
+  }
 }
 
 void InputAction::anchor() {}

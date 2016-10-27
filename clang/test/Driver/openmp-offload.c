@@ -355,3 +355,37 @@
 // CHK-UBUACTIONS: 14: assembler, {13}, object, (host-openmp)
 // CHK-UBUACTIONS: 15: clang-offload-bundler, {7, 12, 14}, object, (host-openmp)
 
+/// ###########################################################################
+
+/// Check separate compilation with offloading - bundling jobs construct
+// RUN:   %clang -### -fopenmp -c -o %t.o -lsomelib -target powerpc64le-linux -fopenmp-targets=powerpc64le-ibm-linux-gnu,x86_64-pc-linux-gnu %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHK-BUJOBS %s
+// RUN:   %clang -### -fopenmp -c -o %t.o -lsomelib -target powerpc64le-linux -fopenmp-targets=powerpc64le-ibm-linux-gnu,x86_64-pc-linux-gnu %s -save-temps 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHK-BUJOBS-ST %s
+
+// Create host BC.
+// CHK-BUJOBS: clang{{.*}}" "-cc1" "-triple" "powerpc64le--linux" "-emit-llvm-bc"  {{.*}}"-fopenmp" {{.*}}"-o" "[[HOSTBC:.+\.bc]]" "-x" "c" "[[INPUT:.+\.c]]" "-fopenmp-targets=powerpc64le-ibm-linux-gnu,x86_64-pc-linux-gnu"
+
+// CHK-BUJOBS-ST: clang{{.*}}" "-cc1" "-triple" "powerpc64le--linux" "-E"  {{.*}}"-fopenmp" {{.*}}"-o" "[[HOSTPP:.+\.i]]" "-x" "c" "[[INPUT:.+\.c]]"
+// CHK-BUJOBS-ST: clang{{.*}}" "-cc1" "-triple" "powerpc64le--linux" "-emit-llvm-bc"  {{.*}}"-fopenmp" {{.*}}"-o" "[[HOSTBC:.+\.bc]]" "-x" "cpp-output" "[[HOSTPP]]" "-fopenmp-targets=powerpc64le-ibm-linux-gnu,x86_64-pc-linux-gnu"
+
+// Create target 1 object.
+// CHK-BUJOBS: clang{{.*}}" "-cc1" "-triple" "powerpc64le-ibm-linux-gnu" "-emit-obj" {{.*}}"-fopenmp" {{.*}}"-o" "[[T1OBJ:.+\.o]]" "-x" "c" "[[INPUT]]" "-fopenmp-is-device" "-fopenmp-host-ir-file-path" "[[HOSTBC]]"
+// CHK-BUJOBS-ST: clang{{.*}}" "-cc1" "-triple" "powerpc64le-ibm-linux-gnu" "-E" {{.*}}"-fopenmp" {{.*}}"-o" "[[T1PP:.+\.i]]" "-x" "c" "[[INPUT]]"
+// CHK-BUJOBS-ST: clang{{.*}}" "-cc1" "-triple" "powerpc64le-ibm-linux-gnu" "-emit-llvm-bc" {{.*}}"-fopenmp" {{.*}}"-o" "[[T1BC:.+\.bc]]" "-x" "cpp-output" "[[T1PP]]" "-fopenmp-is-device" "-fopenmp-host-ir-file-path" "[[HOSTBC]]"
+// CHK-BUJOBS-ST: clang{{.*}}" "-cc1" "-triple" "powerpc64le-ibm-linux-gnu" "-S" {{.*}}"-fopenmp" {{.*}}"-o" "[[T1ASM:.+\.s]]" "-x" "ir" "[[T1BC]]"
+// CHK-BUJOBS-ST: clang{{.*}}" "-cc1as" "-triple" "powerpc64le-ibm-linux-gnu" "-filetype" "obj" {{.*}}"-o" "[[T1OBJ:.+\.o]]" "[[T1ASM]]"
+
+// Create target 2 object.
+// CHK-BUJOBS: clang{{.*}}" "-cc1" "-triple" "x86_64-pc-linux-gnu" "-emit-obj" {{.*}}"-fopenmp" {{.*}}"-o" "[[T2OBJ:.+\.o]]" "-x" "c" "[[INPUT]]" "-fopenmp-is-device" "-fopenmp-host-ir-file-path" "[[HOSTBC]]"
+// CHK-BUJOBS-ST: clang{{.*}}" "-cc1" "-triple" "x86_64-pc-linux-gnu" "-E" {{.*}}"-fopenmp" {{.*}}"-o" "[[T2PP:.+\.i]]" "-x" "c" "[[INPUT]]"
+// CHK-BUJOBS-ST: clang{{.*}}" "-cc1" "-triple" "x86_64-pc-linux-gnu" "-emit-llvm-bc" {{.*}}"-fopenmp" {{.*}}"-o" "[[T2BC:.+\.bc]]" "-x" "cpp-output" "[[T2PP]]" "-fopenmp-is-device" "-fopenmp-host-ir-file-path" "[[HOSTBC]]"
+// CHK-BUJOBS-ST: clang{{.*}}" "-cc1" "-triple" "x86_64-pc-linux-gnu" "-S" {{.*}}"-fopenmp" {{.*}}"-o" "[[T2ASM:.+\.s]]" "-x" "ir" "[[T2BC]]"
+// CHK-BUJOBS-ST: clang{{.*}}" "-cc1as" "-triple" "x86_64-pc-linux-gnu" "-filetype" "obj" {{.*}}"-o" "[[T2OBJ:.+\.o]]" "[[T2ASM]]"
+
+// Create host object and bundle.
+// CHK-BUJOBS: clang{{.*}}" "-cc1" "-triple" "powerpc64le--linux" "-emit-obj" {{.*}}"-fopenmp" {{.*}}"-o" "[[HOSTOBJ:.+\.o]]" "-x" "ir" "[[HOSTBC]]"
+// CHK-BUJOBS: clang-offload-bundler" "-type=o" "-targets=openmp-powerpc64le-ibm-linux-gnu,openmp-x86_64-pc-linux-gnu,host-powerpc64le--linux" "-outputs=[[RES:.+\.o]]" "-inputs=[[T1OBJ]],[[T2OBJ]],[[HOSTOBJ]]"
+// CHK-BUJOBS-ST: clang{{.*}}" "-cc1" "-triple" "powerpc64le--linux" "-S" {{.*}}"-fopenmp" {{.*}}"-o" "[[HOSTASM:.+\.s]]" "-x" "ir" "[[HOSTBC]]"
+// CHK-BUJOBS-ST: clang{{.*}}" "-cc1as" "-triple" "powerpc64le--linux" "-filetype" "obj" {{.*}}"-o" "[[HOSTOBJ:.+\.o]]" "[[HOSTASM]]"
+// CHK-BUJOBS-ST: clang-offload-bundler" "-type=o" "-targets=openmp-powerpc64le-ibm-linux-gnu,openmp-x86_64-pc-linux-gnu,host-powerpc64le--linux" "-outputs=[[RES:.+\.o]]" "-inputs=[[T1OBJ]],[[T2OBJ]],[[HOSTOBJ]]"
