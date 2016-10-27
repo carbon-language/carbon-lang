@@ -3011,7 +3011,8 @@ InputInfo Driver::BuildJobsForActionNoCache(
   // Set the effective triple of the toolchain for the duration of this job.
   llvm::Triple EffectiveTriple;
   const ToolChain &ToolTC = T->getToolChain();
-  const ArgList &Args = C.getArgsForToolChain(TC, BoundArch);
+  const ArgList &Args =
+      C.getArgsForToolChain(TC, BoundArch, A->getOffloadingDeviceKind());
   if (InputInfos.size() != 1) {
     EffectiveTriple = llvm::Triple(ToolTC.ComputeEffectiveClangTriple(Args));
   } else {
@@ -3041,8 +3042,10 @@ InputInfo Driver::BuildJobsForActionNoCache(
     }
     llvm::errs() << "], output: " << Result.getAsString() << "\n";
   } else {
-    T->ConstructJob(C, *JA, Result, InputInfos,
-                    C.getArgsForToolChain(TC, BoundArch), LinkingOutput);
+    T->ConstructJob(
+        C, *JA, Result, InputInfos,
+        C.getArgsForToolChain(TC, BoundArch, JA->getOffloadingDeviceKind()),
+        LinkingOutput);
   }
   return Result;
 }
