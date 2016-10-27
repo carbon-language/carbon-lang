@@ -6222,7 +6222,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         if (!JA.isDeviceOffloading(Action::OFK_None) &&
             !JA.isDeviceOffloading(Action::OFK_Host)) {
           llvm::sys::path::replace_extension(F, "");
-          F += JA.getOffloadingFileNamePrefix(Triple.normalize());
+          F += Action::GetOffloadingFileNamePrefix(JA.getOffloadingDeviceKind(),
+                                                   Triple.normalize());
           F += "-";
           F += JA.getOffloadingArch();
         }
@@ -7058,6 +7059,7 @@ void OffloadBundler::ConstructJob(Compilation &C, const JobAction &JA,
                                   const InputInfoList &Inputs,
                                   const llvm::opt::ArgList &TCArgs,
                                   const char *LinkingOutput) const {
+  // The version with only one output is expected to refer to a bundling job.
   assert(isa<OffloadBundlingJobAction>(JA) && "Expecting bundling job!");
 
   // The bundling command looks like this:
@@ -7111,6 +7113,68 @@ void OffloadBundler::ConstructJob(Compilation &C, const JobAction &JA,
     UB += Inputs[I].getFilename();
   }
   CmdArgs.push_back(TCArgs.MakeArgString(UB));
+
+  // All the inputs are encoded as commands.
+  C.addCommand(llvm::make_unique<Command>(
+      JA, *this,
+      TCArgs.MakeArgString(getToolChain().GetProgramPath(getShortName())),
+      CmdArgs, None));
+}
+
+void OffloadBundler::ConstructJob(Compilation &C, const JobAction &JA,
+                                  const InputInfoList &Outputs,
+                                  const InputInfoList &Inputs,
+                                  const llvm::opt::ArgList &TCArgs,
+                                  const char *LinkingOutput) const {
+  // The version with multiple outputs is expected to refer to a unbundling job.
+  auto &UA = cast<OffloadUnbundlingJobAction>(JA);
+
+  // The unbundling command looks like this:
+  // clang-offload-bundler -type=bc
+  //   -targets=host-triple,openmp-triple1,openmp-triple2
+  //   -inputs=input_file
+  //   -outputs=unbundle_file_host,unbundle_file_tgt1,unbundle_file_tgt2"
+  //   -unbundle
+
+  ArgStringList CmdArgs;
+
+  assert(Inputs.size() == 1 && "Expecting to unbundle a single file!");
+  InputInfo Input = Inputs.front();
+
+  // Get the type.
+  CmdArgs.push_back(TCArgs.MakeArgString(
+      Twine("-type=") + types::getTypeTempSuffix(Input.getType())));
+
+  // Get the targets.
+  SmallString<128> Triples;
+  Triples += "-targets=";
+  auto DepInfo = UA.getDependentActionsInfo();
+  for (unsigned I = 0; I < DepInfo.size(); ++I) {
+    if (I)
+      Triples += ',';
+
+    auto &Dep = DepInfo[I];
+    Triples += Action::GetOffloadKindName(Dep.DependentOffloadKind);
+    Triples += '-';
+    Triples += Dep.DependentToolChain->getTriple().normalize();
+  }
+
+  CmdArgs.push_back(TCArgs.MakeArgString(Triples));
+
+  // Get bundled file command.
+  CmdArgs.push_back(
+      TCArgs.MakeArgString(Twine("-inputs=") + Input.getFilename()));
+
+  // Get unbundled files command.
+  SmallString<128> UB;
+  UB += "-outputs=";
+  for (unsigned I = 0; I < Outputs.size(); ++I) {
+    if (I)
+      UB += ',';
+    UB += Outputs[I].getFilename();
+  }
+  CmdArgs.push_back(TCArgs.MakeArgString(UB));
+  CmdArgs.push_back("-unbundle");
 
   // All the inputs are encoded as commands.
   C.addCommand(llvm::make_unique<Command>(

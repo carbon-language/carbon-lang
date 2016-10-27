@@ -148,6 +148,10 @@ public:
                     const InputInfo &Output, const InputInfoList &Inputs,
                     const llvm::opt::ArgList &TCArgs,
                     const char *LinkingOutput) const override;
+  void ConstructJob(Compilation &C, const JobAction &JA,
+                    const InputInfoList &Outputs, const InputInfoList &Inputs,
+                    const llvm::opt::ArgList &TCArgs,
+                    const char *LinkingOutput) const override;
 };
 
 /// \brief Base class for all GNU tools that provide the same behavior when
