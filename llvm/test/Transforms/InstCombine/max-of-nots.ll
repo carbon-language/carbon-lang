@@ -88,16 +88,14 @@ define i32 @max_of_nots(i32 %x, i32 %y) {
   ret i32 %smax96
 }
 
-; FIXME - vectors should get the same folds
 define <2 x i32> @max_of_nots_vec(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @max_of_nots_vec(
-; CHECK-NEXT:    [[C0:%.*]] = icmp sgt <2 x i32> %y, zeroinitializer
-; CHECK-NEXT:    [[XOR_Y:%.*]] = xor <2 x i32> %y, <i32 -1, i32 -1>
-; CHECK-NEXT:    [[S0:%.*]] = select <2 x i1> [[C0]], <2 x i32> [[XOR_Y]], <2 x i32> <i32 -1, i32 -1>
-; CHECK-NEXT:    [[XOR_X:%.*]] = xor <2 x i32> %x, <i32 -1, i32 -1>
-; CHECK-NEXT:    [[C1:%.*]] = icmp slt <2 x i32> [[S0]], [[XOR_X]]
-; CHECK-NEXT:    [[SMAX96:%.*]] = select <2 x i1> [[C1]], <2 x i32> [[XOR_X]], <2 x i32> [[S0]]
-; CHECK-NEXT:    ret <2 x i32> [[SMAX96]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt <2 x i32> %y, zeroinitializer
+; CHECK-NEXT:    [[TMP2:%.*]] = select <2 x i1> [[TMP1]], <2 x i32> %y, <2 x i32> zeroinitializer
+; CHECK-NEXT:    [[TMP3:%.*]] = icmp slt <2 x i32> [[TMP2]], %x
+; CHECK-NEXT:    [[TMP4:%.*]] = select <2 x i1> [[TMP3]], <2 x i32> [[TMP2]], <2 x i32> %x
+; CHECK-NEXT:    [[TMP5:%.*]] = xor <2 x i32> [[TMP4]], <i32 -1, i32 -1>
+; CHECK-NEXT:    ret <2 x i32> [[TMP5]]
 ;
   %c0 = icmp sgt <2 x i32> %y, zeroinitializer
   %xor_y = xor <2 x i32> %y, <i32 -1, i32 -1>
@@ -106,5 +104,23 @@ define <2 x i32> @max_of_nots_vec(<2 x i32> %x, <2 x i32> %y) {
   %c1 = icmp slt <2 x i32> %s0, %xor_x
   %smax96 = select <2 x i1> %c1, <2 x i32> %xor_x, <2 x i32> %s0
   ret <2 x i32> %smax96
+}
+
+define <2 x i37> @max_of_nots_weird_type_vec(<2 x i37> %x, <2 x i37> %y) {
+; CHECK-LABEL: @max_of_nots_weird_type_vec(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt <2 x i37> %y, zeroinitializer
+; CHECK-NEXT:    [[TMP2:%.*]] = select <2 x i1> [[TMP1]], <2 x i37> %y, <2 x i37> zeroinitializer
+; CHECK-NEXT:    [[TMP3:%.*]] = icmp slt <2 x i37> [[TMP2]], %x
+; CHECK-NEXT:    [[TMP4:%.*]] = select <2 x i1> [[TMP3]], <2 x i37> [[TMP2]], <2 x i37> %x
+; CHECK-NEXT:    [[TMP5:%.*]] = xor <2 x i37> [[TMP4]], <i37 -1, i37 -1>
+; CHECK-NEXT:    ret <2 x i37> [[TMP5]]
+;
+  %c0 = icmp sgt <2 x i37> %y, zeroinitializer
+  %xor_y = xor <2 x i37> %y, <i37 -1, i37 -1>
+  %s0 = select <2 x i1> %c0, <2 x i37> %xor_y, <2 x i37> <i37 -1, i37 -1>
+  %xor_x = xor <2 x i37> %x, <i37 -1, i37 -1>
+  %c1 = icmp slt <2 x i37> %s0, %xor_x
+  %smax96 = select <2 x i1> %c1, <2 x i37> %xor_x, <2 x i37> %s0
+  ret <2 x i37> %smax96
 }
 
