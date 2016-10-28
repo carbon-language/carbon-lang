@@ -617,6 +617,8 @@ public:
 
   unsigned getInstSizeInBytes(const MachineInstr &MI) const override;
 
+  bool mayAccessFlatAddressSpace(const MachineInstr &MI) const;
+
   ArrayRef<std::pair<int, const char *>>
   getSerializableTargetIndices() const override;
 

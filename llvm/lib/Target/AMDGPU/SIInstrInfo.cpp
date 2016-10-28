@@ -3540,6 +3540,20 @@ unsigned SIInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   }
 }
 
+bool SIInstrInfo::mayAccessFlatAddressSpace(const MachineInstr &MI) const {
+  if (!isFLAT(MI))
+    return false;
+
+  if (MI.memoperands_empty())
+    return true;
+
+  for (const MachineMemOperand *MMO : MI.memoperands()) {
+    if (MMO->getAddrSpace() == AMDGPUAS::FLAT_ADDRESS)
+      return true;
+  }
+  return false;
+}
+
 ArrayRef<std::pair<int, const char *>>
 SIInstrInfo::getSerializableTargetIndices() const {
   static const std::pair<int, const char *> TargetIndices[] = {
