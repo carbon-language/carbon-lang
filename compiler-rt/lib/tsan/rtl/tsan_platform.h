@@ -660,8 +660,13 @@ u32 *MemToMetaImpl(uptr x) {
   return (u32*)(((((x) & ~(Mapping::kAppMemMsk | (kMetaShadowCell - 1)))) /
       kMetaShadowCell * kMetaShadowSize) | Mapping::kMetaShadowBeg);
 #else
+# ifndef SANITIZER_WINDOWS
   return (u32*)(((x & ~(kMetaShadowCell - 1)) / \
       kMetaShadowCell * kMetaShadowSize) | Mapping::kMetaShadowBeg);
+# else
+  return (u32*)(((x & ~(kMetaShadowCell - 1)) / \
+      kMetaShadowCell * kMetaShadowSize) + Mapping::kMetaShadowBeg);
+# endif
 #endif
 }
 
