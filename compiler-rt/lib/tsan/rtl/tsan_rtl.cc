@@ -289,7 +289,7 @@ static void CheckShadowMapping() {
   for (int i = 0; GetUserRegion(i, &beg, &end); i++) {
     // Skip cases for empty regions (heap definition for architectures that
     // do not use 64-bit allocator).
-    if (beg ==end)
+    if (beg == end)
       continue;
     VPrintf(3, "checking shadow region %p-%p\n", beg, end);
     uptr prev = 0;
