@@ -20,6 +20,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/Transforms/Utils/Local.h"
 
 using namespace llvm;
 
@@ -245,6 +246,13 @@ bool llvm::bypassSlowDivision(
 
     MadeChange |= reuseOrInsertFastDiv(I, BT, UseDivOp, UseSignedOp, DivCache);
   }
+
+  // Above we eagerly create divs and rems, as pairs, so that we can efficiently
+  // create divrem machine instructions.  Now erase any unused divs / rems so we
+  // don't leave extra instructions sitting around.
+  for (auto &KV : DivCache)
+    for (Instruction *Phi : {KV.second.Quotient, KV.second.Remainder})
+      RecursivelyDeleteTriviallyDeadInstructions(Phi);
 
   return MadeChange;
 }
