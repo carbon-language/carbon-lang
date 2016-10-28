@@ -120,8 +120,7 @@ static bool insertFastDiv(Instruction *I, IntegerType *BypassType,
                                                  BypassType);
 
   // udiv/urem because optimization only handles positive numbers
-  Value *ShortQuotientV = FastBuilder.CreateExactUDiv(ShortDividendV,
-                                                      ShortDivisorV);
+  Value *ShortQuotientV = FastBuilder.CreateUDiv(ShortDividendV, ShortDivisorV);
   Value *ShortRemainderV = FastBuilder.CreateURem(ShortDividendV,
                                                   ShortDivisorV);
   Value *FastQuotientV = FastBuilder.CreateCast(Instruction::ZExt,
