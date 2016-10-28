@@ -236,20 +236,13 @@ StringRef llvm::dwarf::DiscriminantString(unsigned Discriminant) {
 
 StringRef llvm::dwarf::LNStandardString(unsigned Standard) {
   switch (Standard) {
-  case DW_LNS_copy:                      return "DW_LNS_copy";
-  case DW_LNS_advance_pc:                return "DW_LNS_advance_pc";
-  case DW_LNS_advance_line:              return "DW_LNS_advance_line";
-  case DW_LNS_set_file:                  return "DW_LNS_set_file";
-  case DW_LNS_set_column:                return "DW_LNS_set_column";
-  case DW_LNS_negate_stmt:               return "DW_LNS_negate_stmt";
-  case DW_LNS_set_basic_block:           return "DW_LNS_set_basic_block";
-  case DW_LNS_const_add_pc:              return "DW_LNS_const_add_pc";
-  case DW_LNS_fixed_advance_pc:          return "DW_LNS_fixed_advance_pc";
-  case DW_LNS_set_prologue_end:          return "DW_LNS_set_prologue_end";
-  case DW_LNS_set_epilogue_begin:        return "DW_LNS_set_epilogue_begin";
-  case DW_LNS_set_isa:                   return "DW_LNS_set_isa";
+  default:
+    return StringRef();
+#define HANDLE_DW_LNS(ID, NAME)                                               \
+  case DW_LNS_##NAME:                                                         \
+    return "DW_LNS_" #NAME;
+#include "llvm/Support/Dwarf.def"
   }
-  return StringRef();
 }
 
 StringRef llvm::dwarf::LNExtendedString(unsigned Encoding) {
