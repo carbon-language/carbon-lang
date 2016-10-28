@@ -573,6 +573,8 @@ public:
   bool needWaitcntBeforeBarrier() const {
     return true;
   }
+
+  unsigned getMaxNumSGPRs() const;
 };
 
 } // End namespace llvm

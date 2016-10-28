@@ -353,3 +353,13 @@ unsigned SISubtarget::getOccupancyWithNumVGPRs(unsigned VGPRs) const {
     return 2;
   return 1;
 }
+
+unsigned SISubtarget::getMaxNumSGPRs() const {
+  if (hasSGPRInitBug())
+    return SISubtarget::FIXED_SGPR_COUNT_FOR_INIT_BUG;
+
+  if (getGeneration() >= VOLCANIC_ISLANDS)
+    return 102;
+
+  return 104;
+}
