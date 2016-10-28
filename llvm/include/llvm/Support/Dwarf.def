@@ -12,12 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 // TODO: Add other DW-based macros.
-#if !(defined HANDLE_DW_TAG || defined HANDLE_DW_AT ||                         \
-      defined HANDLE_DW_FORM || defined HANDLE_DW_OP ||                        \
-      defined HANDLE_DW_LANG || defined HANDLE_DW_ATE ||                       \
-      defined HANDLE_DW_VIRTUALITY || defined HANDLE_DW_DEFAULTED ||           \
-      defined HANDLE_DW_CC || defined HANDLE_DW_LNCT ||                        \
-      defined HANDLE_DW_MACRO || defined HANDLE_DW_RLE)
+#if !(                                                                         \
+    defined HANDLE_DW_TAG || defined HANDLE_DW_AT || defined HANDLE_DW_FORM || \
+    defined HANDLE_DW_OP || defined HANDLE_DW_LANG || defined HANDLE_DW_ATE || \
+    defined HANDLE_DW_VIRTUALITY || defined HANDLE_DW_DEFAULTED ||             \
+    defined HANDLE_DW_CC || defined HANDLE_DW_LNCT ||                          \
+    defined HANDLE_DW_MACRO || defined HANDLE_DW_RLE || defined HANDLE_DW_CFA)
 #error "Missing macro definition of HANDLE_DW*"
 #endif
 
@@ -67,6 +67,10 @@
 
 #ifndef HANDLE_DW_RLE
 #define HANDLE_DW_RLE(ID, NAME)
+#endif
+
+#ifndef HANDLE_DW_CFA
+#define HANDLE_DW_CFA(ID, NAME)
 #endif
 
 HANDLE_DW_TAG(0x0000, null)
@@ -704,6 +708,37 @@ HANDLE_DW_RLE(0x05, base_address)
 HANDLE_DW_RLE(0x06, start_end)
 HANDLE_DW_RLE(0x07, start_length)
 
+// Call frame instruction encodings.
+HANDLE_DW_CFA(0x00, nop)
+HANDLE_DW_CFA(0x40, advance_loc)
+HANDLE_DW_CFA(0x80, offset)
+HANDLE_DW_CFA(0xc0, restore)
+HANDLE_DW_CFA(0x01, set_loc)
+HANDLE_DW_CFA(0x02, advance_loc1)
+HANDLE_DW_CFA(0x03, advance_loc2)
+HANDLE_DW_CFA(0x04, advance_loc4)
+HANDLE_DW_CFA(0x05, offset_extended)
+HANDLE_DW_CFA(0x06, restore_extended)
+HANDLE_DW_CFA(0x07, undefined)
+HANDLE_DW_CFA(0x08, same_value)
+HANDLE_DW_CFA(0x09, register)
+HANDLE_DW_CFA(0x0a, remember_state)
+HANDLE_DW_CFA(0x0b, restore_state)
+HANDLE_DW_CFA(0x0c, def_cfa)
+HANDLE_DW_CFA(0x0d, def_cfa_register)
+HANDLE_DW_CFA(0x0e, def_cfa_offset)
+HANDLE_DW_CFA(0x0f, def_cfa_expression)
+HANDLE_DW_CFA(0x10, expression)
+HANDLE_DW_CFA(0x11, offset_extended_sf)
+HANDLE_DW_CFA(0x12, def_cfa_sf)
+HANDLE_DW_CFA(0x13, def_cfa_offset_sf)
+HANDLE_DW_CFA(0x14, val_offset)
+HANDLE_DW_CFA(0x15, val_offset_sf)
+HANDLE_DW_CFA(0x16, val_expression)
+HANDLE_DW_CFA(0x1d, MIPS_advance_loc8)
+HANDLE_DW_CFA(0x2d, GNU_window_save)
+HANDLE_DW_CFA(0x2e, GNU_args_size)
+
 #undef HANDLE_DW_TAG
 #undef HANDLE_DW_AT
 #undef HANDLE_DW_FORM
@@ -716,3 +751,4 @@ HANDLE_DW_RLE(0x07, start_length)
 #undef HANDLE_DW_LNCT
 #undef HANDLE_DW_MACRO
 #undef HANDLE_DW_RLE
+#undef HANDLE_DW_CFA

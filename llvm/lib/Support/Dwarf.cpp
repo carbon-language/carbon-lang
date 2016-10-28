@@ -290,39 +290,13 @@ unsigned llvm::dwarf::getMacinfo(StringRef MacinfoString) {
 
 StringRef llvm::dwarf::CallFrameString(unsigned Encoding) {
   switch (Encoding) {
-  case DW_CFA_nop:                       return "DW_CFA_nop";
-  case DW_CFA_advance_loc:               return "DW_CFA_advance_loc";
-  case DW_CFA_offset:                    return "DW_CFA_offset";
-  case DW_CFA_restore:                   return "DW_CFA_restore";
-  case DW_CFA_set_loc:                   return "DW_CFA_set_loc";
-  case DW_CFA_advance_loc1:              return "DW_CFA_advance_loc1";
-  case DW_CFA_advance_loc2:              return "DW_CFA_advance_loc2";
-  case DW_CFA_advance_loc4:              return "DW_CFA_advance_loc4";
-  case DW_CFA_offset_extended:           return "DW_CFA_offset_extended";
-  case DW_CFA_restore_extended:          return "DW_CFA_restore_extended";
-  case DW_CFA_undefined:                 return "DW_CFA_undefined";
-  case DW_CFA_same_value:                return "DW_CFA_same_value";
-  case DW_CFA_register:                  return "DW_CFA_register";
-  case DW_CFA_remember_state:            return "DW_CFA_remember_state";
-  case DW_CFA_restore_state:             return "DW_CFA_restore_state";
-  case DW_CFA_def_cfa:                   return "DW_CFA_def_cfa";
-  case DW_CFA_def_cfa_register:          return "DW_CFA_def_cfa_register";
-  case DW_CFA_def_cfa_offset:            return "DW_CFA_def_cfa_offset";
-  case DW_CFA_def_cfa_expression:        return "DW_CFA_def_cfa_expression";
-  case DW_CFA_expression:                return "DW_CFA_expression";
-  case DW_CFA_offset_extended_sf:        return "DW_CFA_offset_extended_sf";
-  case DW_CFA_def_cfa_sf:                return "DW_CFA_def_cfa_sf";
-  case DW_CFA_def_cfa_offset_sf:         return "DW_CFA_def_cfa_offset_sf";
-  case DW_CFA_val_offset:                return "DW_CFA_val_offset";
-  case DW_CFA_val_offset_sf:             return "DW_CFA_val_offset_sf";
-  case DW_CFA_val_expression:            return "DW_CFA_val_expression";
-  case DW_CFA_MIPS_advance_loc8:         return "DW_CFA_MIPS_advance_loc8";
-  case DW_CFA_GNU_window_save:           return "DW_CFA_GNU_window_save";
-  case DW_CFA_GNU_args_size:             return "DW_CFA_GNU_args_size";
-  case DW_CFA_lo_user:                   return "DW_CFA_lo_user";
-  case DW_CFA_hi_user:                   return "DW_CFA_hi_user";
+  default:
+    return StringRef();
+#define HANDLE_DW_CFA(ID, NAME)                                               \
+  case DW_CFA_##NAME:                                                         \
+    return "DW_CFA_" #NAME;
+#include "llvm/Support/Dwarf.def"
   }
-  return StringRef();
 }
 
 StringRef llvm::dwarf::ApplePropertyString(unsigned Prop) {
