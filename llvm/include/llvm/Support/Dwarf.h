@@ -293,7 +293,7 @@ enum MacinfoRecordType {
 
 /// DWARF v5 macro information entry type encodings.
 enum MacroEntryType {
-#define HANDLE_DW_MACRO(ID, NAME) DW_DEFAULTED_##NAME = ID,
+#define HANDLE_DW_MACRO(ID, NAME) DW_MACRO_##NAME = ID,
 #include "llvm/Support/Dwarf.def"
   DW_MACRO_lo_user = 0xe0,
   DW_MACRO_hi_user = 0xff
@@ -301,7 +301,7 @@ enum MacroEntryType {
 
 /// DWARF v5 range list entry encoding values.
 enum RangeListEntries {
-#define HANDLE_DW_RLE(ID, NAME) DW_DEFAULTED_##NAME = ID,
+#define HANDLE_DW_RLE(ID, NAME) DW_RLE_##NAME = ID,
 #include "llvm/Support/Dwarf.def"
 };
 
