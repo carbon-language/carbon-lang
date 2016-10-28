@@ -614,7 +614,12 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, DL, OpDesc)
       .addReg(SrcReg, getKillRegState(isKill)) // data
       .addFrameIndex(FrameIndex)               // addr
-      .addMemOperand(MMO);
+      .addMemOperand(MMO)
+      .addReg(MFI->getScratchRSrcReg(), RegState::Implicit)
+      .addReg(MFI->getScratchWaveOffsetReg(), RegState::Implicit);
+    // Add the scratch resource registers as implicit uses because we may end up
+    // needing them, and need to ensure that the reserved registers are
+    // correctly handled.
 
     return;
   }
@@ -707,7 +712,9 @@ void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 
     BuildMI(MBB, MI, DL, OpDesc, DestReg)
       .addFrameIndex(FrameIndex) // addr
-      .addMemOperand(MMO);
+      .addMemOperand(MMO)
+      .addReg(MFI->getScratchRSrcReg(), RegState::Implicit)
+      .addReg(MFI->getScratchWaveOffsetReg(), RegState::Implicit);
 
     return;
   }
