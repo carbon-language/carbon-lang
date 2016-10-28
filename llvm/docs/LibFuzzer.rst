@@ -80,7 +80,9 @@ Some important things to remember about fuzz targets:
 * The fuzzing engine will execute the fuzz target many times with different inputs in the same process.
 * It must tolerate any kind of input (empty, huge, malformed, etc).
 * It must not `exit()` on any input.
-* It may use multiple threads but ideally all threads should be joined at the end of the function.
+* It may use threads but ideally all threads should be joined at the end of the function.
+* It must be as deterministic as possible. Non-determinism (e.g. random decisions not based on the input byte) will make fuzzing inefficient.
+* It must be fast. Try avoiding cubic or greater complexity.
 * Ideally, it should not modify any global state (although that's not strict).
 
 
