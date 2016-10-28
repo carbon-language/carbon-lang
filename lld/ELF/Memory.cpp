@@ -12,4 +12,4 @@
 llvm::BumpPtrAllocator lld::elf::BAlloc;
 llvm::StringSaver lld::elf::Saver{BAlloc};
 
-void lld::elf::freeArena() { BAlloc.Reset(); }
+void lld::elf::freeArena() { lld::elf::BAlloc.Reset(); }
