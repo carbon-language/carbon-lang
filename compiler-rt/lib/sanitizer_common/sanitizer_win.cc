@@ -915,6 +915,7 @@ void GetMemoryProfile(fill_profile_f cb, uptr *stats, uptr stats_size) { }
 
 }  // namespace __sanitizer
 
+#if !SANITIZER_GO
 // Workaround to implement weak hooks on Windows. COFF doesn't directly support
 // weak symbols, but it does support /alternatename, which is similar. If the
 // user does not override the hook, we will use this default definition instead
@@ -925,6 +926,7 @@ extern "C" void __sanitizer_print_memory_profile(int top_percent) {}
 #pragma comment(linker, "/alternatename:__sanitizer_print_memory_profile=__sanitizer_default_print_memory_profile") // NOLINT
 #else
 #pragma comment(linker, "/alternatename:___sanitizer_print_memory_profile=___sanitizer_default_print_memory_profile") // NOLINT
+#endif
 #endif
 
 #endif  // _WIN32
