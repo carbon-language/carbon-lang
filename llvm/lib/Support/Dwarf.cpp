@@ -247,15 +247,13 @@ StringRef llvm::dwarf::LNStandardString(unsigned Standard) {
 
 StringRef llvm::dwarf::LNExtendedString(unsigned Encoding) {
   switch (Encoding) {
-  // Line Number Extended Opcode Encodings
-  case DW_LNE_end_sequence:              return "DW_LNE_end_sequence";
-  case DW_LNE_set_address:               return "DW_LNE_set_address";
-  case DW_LNE_define_file:               return "DW_LNE_define_file";
-  case DW_LNE_set_discriminator:         return "DW_LNE_set_discriminator";
-  case DW_LNE_lo_user:                   return "DW_LNE_lo_user";
-  case DW_LNE_hi_user:                   return "DW_LNE_hi_user";
+  default:
+    return StringRef();
+#define HANDLE_DW_LNE(ID, NAME)                                               \
+  case DW_LNE_##NAME:                                                         \
+    return "DW_LNE_" #NAME;
+#include "llvm/Support/Dwarf.def"
   }
-  return StringRef();
 }
 
 StringRef llvm::dwarf::MacinfoString(unsigned Encoding) {

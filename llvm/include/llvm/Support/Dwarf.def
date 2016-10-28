@@ -12,13 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 // TODO: Add other DW-based macros.
-#if !(                                                                         \
-    defined HANDLE_DW_TAG || defined HANDLE_DW_AT || defined HANDLE_DW_FORM || \
-    defined HANDLE_DW_OP || defined HANDLE_DW_LANG || defined HANDLE_DW_ATE || \
-    defined HANDLE_DW_VIRTUALITY || defined HANDLE_DW_DEFAULTED ||             \
-    defined HANDLE_DW_CC || defined HANDLE_DW_LNS || defined HANDLE_DW_LNCT || \
-    defined HANDLE_DW_MACRO || defined HANDLE_DW_RLE ||                        \
-    defined HANDLE_DW_CFA || defined HANDLE_DW_APPLE_PROPERTY)
+#if !(defined HANDLE_DW_TAG || defined HANDLE_DW_AT ||                         \
+      defined HANDLE_DW_FORM || defined HANDLE_DW_OP ||                        \
+      defined HANDLE_DW_LANG || defined HANDLE_DW_ATE ||                       \
+      defined HANDLE_DW_VIRTUALITY || defined HANDLE_DW_DEFAULTED ||           \
+      defined HANDLE_DW_CC || defined HANDLE_DW_LNS ||                         \
+      defined HANDLE_DW_LNE || defined HANDLE_DW_LNCT ||                       \
+      defined HANDLE_DW_MACRO || defined HANDLE_DW_RLE ||                      \
+      defined HANDLE_DW_CFA || defined HANDLE_DW_APPLE_PROPERTY)
 #error "Missing macro definition of HANDLE_DW*"
 #endif
 
@@ -60,6 +61,10 @@
 
 #ifndef HANDLE_DW_LNS
 #define HANDLE_DW_LNS(ID, NAME)
+#endif
+
+#ifndef HANDLE_DW_LNE
+#define HANDLE_DW_LNE(ID, NAME)
 #endif
 
 #ifndef HANDLE_DW_LNCT
@@ -687,7 +692,13 @@ HANDLE_DW_CC(0xb5, BORLAND_thiscall)
 HANDLE_DW_CC(0xb6, BORLAND_fastcall)
 HANDLE_DW_CC(0xc0, LLVM_vectorcall)
 
-/// Line Number Standard Opcode Encodings.
+// Line Number Extended Opcode Encodings
+HANDLE_DW_LNE(0x01, end_sequence)
+HANDLE_DW_LNE(0x02, set_address)
+HANDLE_DW_LNE(0x03, define_file)
+HANDLE_DW_LNE(0x04, set_discriminator)
+
+// Line Number Standard Opcode Encodings.
 HANDLE_DW_LNS(0x00, extended_op)
 HANDLE_DW_LNS(0x01, copy)
 HANDLE_DW_LNS(0x02, advance_pc)
@@ -701,7 +712,6 @@ HANDLE_DW_LNS(0x09, fixed_advance_pc)
 HANDLE_DW_LNS(0x0a, set_prologue_end)
 HANDLE_DW_LNS(0x0b, set_epilogue_begin)
 HANDLE_DW_LNS(0x0c, set_isa)
-
 
 // DWARF v5 Line number header entry format.
 HANDLE_DW_LNCT(0x01, path)
@@ -793,6 +803,7 @@ HANDLE_DW_APPLE_PROPERTY(0x4000, class)
 #undef HANDLE_DW_DEFAULTED
 #undef HANDLE_DW_CC
 #undef HANDLE_DW_LNS
+#undef HANDLE_DW_LNE
 #undef HANDLE_DW_LNCT
 #undef HANDLE_DW_MACRO
 #undef HANDLE_DW_RLE
