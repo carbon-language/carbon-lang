@@ -5356,6 +5356,12 @@ static __inline__ vector bool int __ATTRS_o_ai vec_nand(vector bool int __a,
   return ~(__a & __b);
 }
 
+static __inline__ vector float __ATTRS_o_ai
+vec_nand(vector float __a, vector float __b) {
+  return (vector float)(~((vector unsigned int)__a &
+                          (vector unsigned int)__b));
+}
+
 static __inline__ vector signed long long __ATTRS_o_ai
 vec_nand(vector signed long long __a, vector signed long long __b) {
   return ~(__a & __b);
@@ -5389,6 +5395,12 @@ vec_nand(vector bool long long __a, vector unsigned long long __b) {
 static __inline__ vector bool long long __ATTRS_o_ai
 vec_nand(vector bool long long __a, vector bool long long __b) {
   return ~(__a & __b);
+}
+
+static __inline__ vector double __ATTRS_o_ai
+vec_nand(vector double __a, vector double __b) {
+  return (vector double)(~((vector unsigned long long)__a &
+                           (vector unsigned long long)__b));
 }
 
 #endif
@@ -5862,6 +5874,16 @@ static __inline__ vector bool int __ATTRS_o_ai vec_orc(vector bool int __a,
   return __a | ~__b;
 }
 
+static __inline__ vector float __ATTRS_o_ai
+vec_orc(vector bool int __a, vector float __b) {
+ return (vector float)(__a | ~(vector unsigned int)__b);
+}
+
+static __inline__ vector float __ATTRS_o_ai
+vec_orc(vector float __a, vector bool int __b) {
+  return (vector float)((vector unsigned int)__a | ~__b);
+}
+
 static __inline__ vector signed long long __ATTRS_o_ai
 vec_orc(vector signed long long __a, vector signed long long __b) {
   return __a | ~__b;
@@ -5895,6 +5917,16 @@ vec_orc(vector bool long long __a, vector unsigned long long __b) {
 static __inline__ vector bool long long __ATTRS_o_ai
 vec_orc(vector bool long long __a, vector bool long long __b) {
   return __a | ~__b;
+}
+
+static __inline__ vector double __ATTRS_o_ai
+vec_orc(vector double __a, vector bool long long __b) {
+  return (vector double)((vector unsigned long long)__a | ~__b);
+}
+
+static __inline__ vector double __ATTRS_o_ai
+vec_orc(vector bool long long __a, vector double __b) {
+  return (vector double)(__a | ~(vector unsigned long long)__b);
 }
 #endif
 
