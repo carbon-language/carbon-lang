@@ -16,7 +16,7 @@ New entries should be added directly below the "Version" header.
 Version 4.0
 -----------
 
-* rTBD - Add __libcpp_library_version
+* r285382 - Add __libcpp_library_version
 
   all platforms
   -------------
