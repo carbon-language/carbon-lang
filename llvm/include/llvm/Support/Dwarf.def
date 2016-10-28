@@ -12,12 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 // TODO: Add other DW-based macros.
-#if !(                                                                         \
-    defined HANDLE_DW_TAG || defined HANDLE_DW_AT || defined HANDLE_DW_FORM || \
-    defined HANDLE_DW_OP || defined HANDLE_DW_LANG || defined HANDLE_DW_ATE || \
-    defined HANDLE_DW_VIRTUALITY || defined HANDLE_DW_DEFAULTED ||             \
-    defined HANDLE_DW_CC || defined HANDLE_DW_LNCT ||                          \
-    defined HANDLE_DW_MACRO || defined HANDLE_DW_RLE || defined HANDLE_DW_CFA)
+#if !(defined HANDLE_DW_TAG || defined HANDLE_DW_AT ||                         \
+      defined HANDLE_DW_FORM || defined HANDLE_DW_OP ||                        \
+      defined HANDLE_DW_LANG || defined HANDLE_DW_ATE ||                       \
+      defined HANDLE_DW_VIRTUALITY || defined HANDLE_DW_DEFAULTED ||           \
+      defined HANDLE_DW_CC || defined HANDLE_DW_LNCT ||                        \
+      defined HANDLE_DW_MACRO || defined HANDLE_DW_RLE ||                      \
+      defined HANDLE_DW_CFA || defined HANDLE_DW_APPLE_PROPERTY)
 #error "Missing macro definition of HANDLE_DW*"
 #endif
 
@@ -71,6 +72,10 @@
 
 #ifndef HANDLE_DW_CFA
 #define HANDLE_DW_CFA(ID, NAME)
+#endif
+
+#ifndef HANDLE_DW_APPLE_PROPERTY
+#define HANDLE_DW_APPLE_PROPERTY(ID, NAME)
 #endif
 
 HANDLE_DW_TAG(0x0000, null)
@@ -739,6 +744,25 @@ HANDLE_DW_CFA(0x1d, MIPS_advance_loc8)
 HANDLE_DW_CFA(0x2d, GNU_window_save)
 HANDLE_DW_CFA(0x2e, GNU_args_size)
 
+// Apple Objective-C Property Attributes.
+// Keep this list in sync with clang's DeclSpec.h ObjCPropertyAttributeKind!
+HANDLE_DW_APPLE_PROPERTY(0x01, readonly)
+HANDLE_DW_APPLE_PROPERTY(0x02, getter)
+HANDLE_DW_APPLE_PROPERTY(0x04, assign)
+HANDLE_DW_APPLE_PROPERTY(0x08, readwrite)
+HANDLE_DW_APPLE_PROPERTY(0x10, retain)
+HANDLE_DW_APPLE_PROPERTY(0x20, copy)
+HANDLE_DW_APPLE_PROPERTY(0x40, nonatomic)
+HANDLE_DW_APPLE_PROPERTY(0x80, setter)
+HANDLE_DW_APPLE_PROPERTY(0x100, atomic)
+HANDLE_DW_APPLE_PROPERTY(0x200, weak)
+HANDLE_DW_APPLE_PROPERTY(0x400, strong)
+HANDLE_DW_APPLE_PROPERTY(0x800, unsafe_unretained)
+HANDLE_DW_APPLE_PROPERTY(0x1000, nullability)
+HANDLE_DW_APPLE_PROPERTY(0x2000, null_resettable)
+HANDLE_DW_APPLE_PROPERTY(0x4000, class)
+
+
 #undef HANDLE_DW_TAG
 #undef HANDLE_DW_AT
 #undef HANDLE_DW_FORM
@@ -752,3 +776,4 @@ HANDLE_DW_CFA(0x2e, GNU_args_size)
 #undef HANDLE_DW_MACRO
 #undef HANDLE_DW_RLE
 #undef HANDLE_DW_CFA
+#undef HANDLE_DW_APPLE_PROPERTY

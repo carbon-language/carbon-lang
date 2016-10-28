@@ -311,24 +311,10 @@ enum LocationListEntry : unsigned char {
 };
 
 /// Constants for the DW_APPLE_PROPERTY_attributes attribute.
-/// Keep this list in sync with clang's DeclSpec.h ObjCPropertyAttributeKind.
+/// Keep this list in sync with clang's DeclSpec.h ObjCPropertyAttributeKind!
 enum ApplePropertyAttributes {
-  // Apple Objective-C Property Attributes
-  DW_APPLE_PROPERTY_readonly = 0x01,
-  DW_APPLE_PROPERTY_getter = 0x02,
-  DW_APPLE_PROPERTY_assign = 0x04,
-  DW_APPLE_PROPERTY_readwrite = 0x08,
-  DW_APPLE_PROPERTY_retain = 0x10,
-  DW_APPLE_PROPERTY_copy = 0x20,
-  DW_APPLE_PROPERTY_nonatomic = 0x40,
-  DW_APPLE_PROPERTY_setter = 0x80,
-  DW_APPLE_PROPERTY_atomic = 0x100,
-  DW_APPLE_PROPERTY_weak =   0x200,
-  DW_APPLE_PROPERTY_strong = 0x400,
-  DW_APPLE_PROPERTY_unsafe_unretained = 0x800,
-  DW_APPLE_PROPERTY_nullability = 0x1000,
-  DW_APPLE_PROPERTY_null_resettable = 0x2000,
-  DW_APPLE_PROPERTY_class = 0x4000
+#define HANDLE_DW_APPLE_PROPERTY(ID, NAME) DW_APPLE_PROPERTY_##NAME = ID,
+#include "llvm/Support/Dwarf.def"
 };
 
 // Constants for the DWARF5 Accelerator Table Proposal

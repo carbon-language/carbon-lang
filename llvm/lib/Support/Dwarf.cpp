@@ -301,38 +301,13 @@ StringRef llvm::dwarf::CallFrameString(unsigned Encoding) {
 
 StringRef llvm::dwarf::ApplePropertyString(unsigned Prop) {
   switch (Prop) {
-  case DW_APPLE_PROPERTY_readonly:
-    return "DW_APPLE_PROPERTY_readonly";
-  case DW_APPLE_PROPERTY_getter:
-    return "DW_APPLE_PROPERTY_getter";
-  case DW_APPLE_PROPERTY_assign:
-    return "DW_APPLE_PROPERTY_assign";
-  case DW_APPLE_PROPERTY_readwrite:
-    return "DW_APPLE_PROPERTY_readwrite";
-  case DW_APPLE_PROPERTY_retain:
-    return "DW_APPLE_PROPERTY_retain";
-  case DW_APPLE_PROPERTY_copy:
-    return "DW_APPLE_PROPERTY_copy";
-  case DW_APPLE_PROPERTY_nonatomic:
-    return "DW_APPLE_PROPERTY_nonatomic";
-  case DW_APPLE_PROPERTY_setter:
-    return "DW_APPLE_PROPERTY_setter";
-  case DW_APPLE_PROPERTY_atomic:
-    return "DW_APPLE_PROPERTY_atomic";
-  case DW_APPLE_PROPERTY_weak:
-    return "DW_APPLE_PROPERTY_weak";
-  case DW_APPLE_PROPERTY_strong:
-    return "DW_APPLE_PROPERTY_strong";
-  case DW_APPLE_PROPERTY_unsafe_unretained:
-    return "DW_APPLE_PROPERTY_unsafe_unretained";
-  case DW_APPLE_PROPERTY_nullability:
-    return "DW_APPLE_PROPERTY_nullability";
-  case DW_APPLE_PROPERTY_null_resettable:
-    return "DW_APPLE_PROPERTY_null_resettable";
-  case DW_APPLE_PROPERTY_class:
-    return "DW_APPLE_PROPERTY_class";
+  default:
+    return StringRef();
+#define HANDLE_DW_APPLE_PROPERTY(ID, NAME)                                               \
+  case DW_APPLE_PROPERTY_##NAME:                                                         \
+    return "DW_APPLE_PROPERTY_" #NAME;
+#include "llvm/Support/Dwarf.def"
   }
-  return StringRef();
 }
 
 StringRef llvm::dwarf::AtomTypeString(unsigned AT) {
