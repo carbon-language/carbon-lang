@@ -250,7 +250,8 @@
 //
 // CHK-COMMANDS: clang{{.*}}" "-cc1" "-triple" "powerpc64le-ibm-linux-gnu" "-emit-obj" {{.*}}"-pic-level" "2" {{.*}}"-fopenmp" {{.*}}"-o" "
 // CHK-COMMANDS-SAME: [[T1OBJ:[^\\/]+\.o]]" "-x" "c" "{{.*}}[[INPUT]]" "-fopenmp-is-device" "-fopenmp-host-ir-file-path" "{{.*}}[[HOSTBC]]"
-// CHK-COMMANDS: ld" {{.*}}"-o" "{{.*}}[[T1BIN]]" {{.*}}"{{.*}}[[T1OBJ]]"
+// CHK-COMMANDS: ld" {{.*}}"-o" "
+// CHK-COMMANDS-SAME: [[T1BIN:[^\\/]+\.out]]" {{.*}}"{{.*}}[[T1OBJ]]"
 // CHK-COMMANDS-ST: clang{{.*}}" "-cc1" "-triple" "powerpc64le-ibm-linux-gnu" "-E" {{.*}}"-fopenmp" {{.*}}"-o" "
 // CHK-COMMANDS-ST-SAME: [[T1PP:[^\\/]+\.i]]" "-x" "c" "{{.*}}[[INPUT]]"
 // CHK-COMMANDS-ST: clang{{.*}}" "-cc1" "-triple" "powerpc64le-ibm-linux-gnu" "-emit-llvm-bc" {{.*}}"-pic-level" "2" {{.*}}"-fopenmp" {{.*}}"-o" "
@@ -259,14 +260,15 @@
 // CHK-COMMANDS-ST-SAME: [[T1ASM:[^\\/]+\.s]]" "-x" "ir" "{{.*}}[[T1BC]]"
 // CHK-COMMANDS-ST: clang{{.*}}" "-cc1as" "-triple" "powerpc64le-ibm-linux-gnu" "-filetype" "obj" {{.*}}"-o" "
 // CHK-COMMANDS-ST-SAME: [[T1OBJ:[^\\/]+\.o]]" "{{.*}}[[T1ASM]]"
-// CHK-COMMANDS-ST: ld" {{.*}}"-shared" {{.*}}"-o" "{{.*}}[[T1BIN]]" {{.*}}[[T1OBJ]]
-
+// CHK-COMMANDS-ST: ld" {{.*}}"-shared" {{.*}}"-o" "
+// CHK-COMMANDS-ST-SAME: [[T1BIN:[^\\/]+\.out-openmp-powerpc64le-ibm-linux-gnu]]" {{.*}}"{{.*}}[[T1OBJ]]"
 //
 // Compile for the x86 device.
 //
 // CHK-COMMANDS: clang{{.*}}" "-cc1" "-triple" "x86_64-pc-linux-gnu" "-emit-obj" {{.*}}"-pic-level" "2" {{.*}}"-fopenmp"  {{.*}}"-o" "
 // CHK-COMMANDS-SAME: [[T2OBJ:[^\\/]+\.o]]" "-x" "c" "{{.*}}[[INPUT]]" "-fopenmp-is-device" "-fopenmp-host-ir-file-path" "{{.*}}[[HOSTBC]]"
-// CHK-COMMANDS: ld" {{.*}}"-o" "{{.*}}[[T2BIN]]" {{.*}}"{{.*}}[[T2OBJ]]"
+// CHK-COMMANDS: ld" {{.*}}"-o" "
+// CHK-COMMANDS-SAME: [[T2BIN:[^\\/]+\.out]]" {{.*}}"{{.*}}[[T2OBJ]]"
 // CHK-COMMANDS-ST: clang{{.*}}" "-cc1" "-triple" "x86_64-pc-linux-gnu" "-E" {{.*}}"-fopenmp" {{.*}}"-o" "
 // CHK-COMMANDS-ST-SAME: [[T2PP:[^\\/]+\.i]]" "-x" "c" "{{.*}}[[INPUT]]"
 // CHK-COMMANDS-ST: clang{{.*}}" "-cc1" "-triple" "x86_64-pc-linux-gnu" "-emit-llvm-bc" {{.*}}"-pic-level" "2" {{.*}}"-fopenmp" {{.*}}"-o" "
@@ -275,7 +277,8 @@
 // CHK-COMMANDS-ST-SAME: [[T2ASM:[^\\/]+\.s]]" "-x" "ir" "{{.*}}[[T2BC]]"
 // CHK-COMMANDS-ST: clang{{.*}}" "-cc1as" "-triple" "x86_64-pc-linux-gnu" "-filetype" "obj" {{.*}}"-o" "
 // CHK-COMMANDS-ST-SAME: [[T2OBJ:[^\\/]+\.o]]" "{{.*}}[[T2ASM]]"
-// CHK-COMMANDS-ST: ld" {{.*}}"-shared" {{.*}}"-o" "{{.*}}[[T2BIN]]" {{.*}}[[T2OBJ]]
+// CHK-COMMANDS-ST: ld" {{.*}}"-shared" {{.*}}"-o" "
+// CHK-COMMANDS-ST-SAME: [[T2BIN:[^\\/]+\.out-openmp-x86_64-pc-linux-gnu]]" {{.*}}"{{.*}}[[T2OBJ]]"
 
 //
 // Generate host object from the BC file and link using the linker script.
