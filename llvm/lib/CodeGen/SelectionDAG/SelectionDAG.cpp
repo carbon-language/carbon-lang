@@ -2042,6 +2042,10 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
       // TODO: support per-element known bits.
       KnownOne &= KnownOne2;
       KnownZero &= KnownZero2;
+
+      // If we don't know any bits, early out.
+      if (!KnownOne && !KnownZero)
+        break;
     }
     break;
   case ISD::AND:
