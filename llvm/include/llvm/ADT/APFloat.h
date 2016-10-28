@@ -712,7 +712,7 @@ class APFloat : public APFloatBase {
         Double = std::move(RHS.Double);
       } else if (this != &RHS) {
         this->~Storage();
-        new (this) Storage(RHS);
+        new (this) Storage(std::move(RHS));
       }
       return *this;
     }
