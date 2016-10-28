@@ -781,6 +781,9 @@ def note_suppressed_class_declare : Note<
   "class with specified objc_requires_property_definitions attribute is declared here">;
 def err_objc_root_class_subclass : Error<
   "objc_root_class attribute may only be specified on a root class declaration">;
+def err_restricted_superclass_mismatch : Error<
+  "cannot subclass a class that was declared with the "
+  "'objc_subclassing_restricted' attribute">;
 def warn_objc_root_class_missing : Warning<
   "class %0 defined without specifying a base class">,
   InGroup<ObjCRootClass>;
