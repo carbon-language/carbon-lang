@@ -14,7 +14,9 @@
 // TODO: Add other DW-based macros.
 #if !(defined HANDLE_DW_TAG || defined HANDLE_DW_OP ||                         \
       defined HANDLE_DW_LANG || defined HANDLE_DW_ATE ||                       \
-      defined HANDLE_DW_VIRTUALITY || defined HANDLE_DW_CC)
+      defined HANDLE_DW_VIRTUALITY || defined HANDLE_DW_DEFAULTED ||           \
+      defined HANDLE_DW_CC || defined HANDLE_DW_LNCT ||                        \
+      defined HANDLE_DW_MACRO || defined HANDLE_DW_RLE)
 #error "Missing macro definition of HANDLE_DW*"
 #endif
 
@@ -38,8 +40,24 @@
 #define HANDLE_DW_VIRTUALITY(ID, NAME)
 #endif
 
+#ifndef HANDLE_DW_DEFAULTED
+#define HANDLE_DW_DEFAULTED(ID, NAME)
+#endif
+
 #ifndef HANDLE_DW_CC
 #define HANDLE_DW_CC(ID, NAME)
+#endif
+
+#ifndef HANDLE_DW_LNCT
+#define HANDLE_DW_LNCT(ID, NAME)
+#endif
+
+#ifndef HANDLE_DW_MACRO
+#define HANDLE_DW_MACRO(ID, NAME)
+#endif
+
+#ifndef HANDLE_DW_RLE
+#define HANDLE_DW_RLE(ID, NAME)
 #endif
 
 HANDLE_DW_TAG(0x0000, null)
@@ -108,6 +126,11 @@ HANDLE_DW_TAG(0x0043, template_alias)
 HANDLE_DW_TAG(0x0044, coarray_type)
 HANDLE_DW_TAG(0x0045, generic_subrange)
 HANDLE_DW_TAG(0x0046, dynamic_type)
+HANDLE_DW_TAG(0x0047, atomic_type)
+HANDLE_DW_TAG(0x0048, call_site)
+HANDLE_DW_TAG(0x0049, call_site_parameter)
+HANDLE_DW_TAG(0x004a, skeleton_unit)
+HANDLE_DW_TAG(0x004b, immutable_type)
 
 // User-defined tags.
 HANDLE_DW_TAG(0x4081, MIPS_loop)
@@ -278,7 +301,18 @@ HANDLE_DW_OP(0x9c, call_frame_cfa)
 HANDLE_DW_OP(0x9d, bit_piece)
 HANDLE_DW_OP(0x9e, implicit_value)
 HANDLE_DW_OP(0x9f, stack_value)
+HANDLE_DW_OP(0xa0, implicit_pointer)
+HANDLE_DW_OP(0xa1, addrx)
+HANDLE_DW_OP(0xa2, constx)
+HANDLE_DW_OP(0xa3, entry_value)
+HANDLE_DW_OP(0xa4, const_type)
+HANDLE_DW_OP(0xa5, regval_type)
+HANDLE_DW_OP(0xa6, deref_type)
+HANDLE_DW_OP(0xa7, xderef_type)
+HANDLE_DW_OP(0xa8, convert)
+HANDLE_DW_OP(0xa9, reinterpret)
 
+// Vendor extensions.
 // Extensions for GNU-style thread-local storage.
 HANDLE_DW_OP(0xe0, GNU_push_tls_address)
 
@@ -324,6 +358,9 @@ HANDLE_DW_LANG(0x0020, Dylan)
 HANDLE_DW_LANG(0x0021, C_plus_plus_14)
 HANDLE_DW_LANG(0x0022, Fortran03)
 HANDLE_DW_LANG(0x0023, Fortran08)
+HANDLE_DW_LANG(0x0024, RenderScript)
+
+// Vendor extensions.
 HANDLE_DW_LANG(0x8001, Mips_Assembler)
 HANDLE_DW_LANG(0x8e57, GOOGLE_RenderScript)
 HANDLE_DW_LANG(0xb000, BORLAND_Delphi)
@@ -345,16 +382,25 @@ HANDLE_DW_ATE(0x0d, signed_fixed)
 HANDLE_DW_ATE(0x0e, unsigned_fixed)
 HANDLE_DW_ATE(0x0f, decimal_float)
 HANDLE_DW_ATE(0x10, UTF)
+HANDLE_DW_ATE(0x11, UCS)
+HANDLE_DW_ATE(0x12, ASCII)
 
 // DWARF virtuality codes.
 HANDLE_DW_VIRTUALITY(0x00, none)
 HANDLE_DW_VIRTUALITY(0x01, virtual)
 HANDLE_DW_VIRTUALITY(0x02, pure_virtual)
 
+// DWARF v5 Defaulted Member Encodings.
+HANDLE_DW_DEFAULTED(0x00, DW_DEFAULTED_no)
+HANDLE_DW_DEFAULTED(0x01, DW_DEFAULTED_in_class)
+HANDLE_DW_DEFAULTED(0x02, DW_DEFAULTED_out_of_class)
+
 // DWARF calling convention codes.
 HANDLE_DW_CC(0x01, normal)
 HANDLE_DW_CC(0x02, program)
 HANDLE_DW_CC(0x03, nocall)
+HANDLE_DW_CC(0x04, pass_by_reference)
+HANDLE_DW_CC(0x05, pass_by_value)
 HANDLE_DW_CC(0x41, GNU_borland_fastcall_i386)
 HANDLE_DW_CC(0xb0, BORLAND_safecall)
 HANDLE_DW_CC(0xb1, BORLAND_stdcall)
@@ -365,9 +411,43 @@ HANDLE_DW_CC(0xb5, BORLAND_thiscall)
 HANDLE_DW_CC(0xb6, BORLAND_fastcall)
 HANDLE_DW_CC(0xc0, LLVM_vectorcall)
 
+// DWARF v5 Line number header entry format.
+HANDLE_DW_LNCT(0x01, DW_LNCT_path)
+HANDLE_DW_LNCT(0x02, DW_LNCT_directory_index)
+HANDLE_DW_LNCT(0x03, DW_LNCT_timestamp)
+HANDLE_DW_LNCT(0x04, DW_LNCT_size)
+HANDLE_DW_LNCT(0x05, DW_LNCT_MD5)
+
+HANDLE_DW_MACRO(0x01, DW_MACRO_define)
+HANDLE_DW_MACRO(0x02, DW_MACRO_undef)
+HANDLE_DW_MACRO(0x03, DW_MACRO_start_file)
+HANDLE_DW_MACRO(0x04, DW_MACRO_end_file)
+HANDLE_DW_MACRO(0x05, DW_MACRO_define_strp)
+HANDLE_DW_MACRO(0x06, DW_MACRO_undef_strp)
+HANDLE_DW_MACRO(0x07, DW_MACRO_import)
+HANDLE_DW_MACRO(0x08, DW_MACRO_define_sup)
+HANDLE_DW_MACRO(0x09, DW_MACRO_undef_sup)
+HANDLE_DW_MACRO(0x0a, DW_MACRO_import_sup)
+HANDLE_DW_MACRO(0x0b, DW_MACRO_define_strx)
+HANDLE_DW_MACRO(0x0c, DW_MACRO_undef_strx)
+
+// Range list entry encoding values.
+HANDLE_DW_RLE(0x00, DW_RLE_end_of_list)
+HANDLE_DW_RLE(0x01, DW_RLE_base_addressx)
+HANDLE_DW_RLE(0x02, DW_RLE_startx_endx)
+HANDLE_DW_RLE(0x03, DW_RLE_startx_length)
+HANDLE_DW_RLE(0x04, DW_RLE_offset_pair)
+HANDLE_DW_RLE(0x05, DW_RLE_base_address)
+HANDLE_DW_RLE(0x06, DW_RLE_start_end)
+HANDLE_DW_RLE(0x07, DW_RLE_start_length)
+
 #undef HANDLE_DW_TAG
 #undef HANDLE_DW_OP
 #undef HANDLE_DW_LANG
 #undef HANDLE_DW_ATE
 #undef HANDLE_DW_VIRTUALITY
+#undef HANDLE_DW_DEFAULTED
 #undef HANDLE_DW_CC
+#undef HANDLE_DW_LNCT
+#undef HANDLE_DW_MACRO
+#undef HANDLE_DW_RLE

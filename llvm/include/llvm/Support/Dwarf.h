@@ -191,14 +191,31 @@ enum Attribute : uint16_t {
   DW_AT_rank = 0x71,
   DW_AT_str_offsets_base = 0x72,
   DW_AT_addr_base = 0x73,
-  DW_AT_ranges_base = 0x74,
-  DW_AT_dwo_id = 0x75,
+  DW_AT_rnglists_base = 0x74,
+  DW_AT_dwo_id = 0x75, ///< Retracted from DWARF 5.
   DW_AT_dwo_name = 0x76,
   DW_AT_reference = 0x77,
   DW_AT_rvalue_reference = 0x78,
   DW_AT_macros = 0x79,
+  DW_AT_call_all_calls = 0x7a,
+  DW_AT_call_all_source_calls = 0x7b,
+  DW_AT_call_all_tail_calls = 0x7c,
+  DW_AT_call_return_pc = 0x7d,
+  DW_AT_call_value = 0x7e,
+  DW_AT_call_origin = 0x7f,
+  DW_AT_call_parameter = 0x80,
+  DW_AT_call_pc = 0x81,
+  DW_AT_call_tail_call = 0x82,
+  DW_AT_call_target = 0x83,
+  DW_AT_call_target_clobbered = 0x84,
+  DW_AT_call_data_location = 0x85,
+  DW_AT_call_data_value = 0x86,
   DW_AT_noreturn = 0x87,
   DW_AT_alignment = 0x88,
+  DW_AT_export_symbols = 0x89,
+  DW_AT_deleted = 0x8a,
+  DW_AT_defaulted = 0x8b,
+  DW_AT_loclists_base = 0x8c,
 
   DW_AT_lo_user = 0x2000,
   DW_AT_hi_user = 0x3fff,
@@ -311,7 +328,18 @@ enum Form : uint16_t {
   DW_FORM_sec_offset = 0x17,
   DW_FORM_exprloc = 0x18,
   DW_FORM_flag_present = 0x19,
+
+  // New in DWARF v5.
+  DW_FORM_strx = 0x1a,
+  DW_FORM_addrx = 0x1b,
+  DW_FORM_ref_sup = 0x1c,
+  DW_FORM_strp_sup = 0x1d,
+  DW_FORM_data16 = 0x1e,
+  DW_FORM_line_strp = 0x1f,
   DW_FORM_ref_sig8 = 0x20,
+  DW_FORM_implicit_const = 0x21,
+  DW_FORM_loclistx = 0x22,
+  DW_FORM_rnglistx = 0x23,
   
   DW_FORM_lo_user = 0x1f00,
   // Extensions for Fission proposal
@@ -373,6 +401,12 @@ enum VirtualityAttribute {
 #define HANDLE_DW_VIRTUALITY(ID, NAME) DW_VIRTUALITY_##NAME = ID,
 #include "llvm/Support/Dwarf.def"
   DW_VIRTUALITY_max = 0x02
+};
+
+enum DefaultedMemberAttribute {
+#define HANDLE_DW_DEFAULTED(ID, NAME) DW_DEFAULTED_##NAME = ID,
+#include "llvm/Support/Dwarf.def"
+  DW_DEFAULTED_max = 0x02
 };
 
 enum SourceLanguage {
@@ -445,6 +479,13 @@ enum LineNumberExtendedOps {
   DW_LNE_hi_user = 0xff
 };
 
+enum LinerNumberEntryFormat {
+#define HANDLE_DW_LNCT(ID, NAME) DW_DEFAULTED_##NAME = ID,
+#include "llvm/Support/Dwarf.def"
+  DW_LNCT_lo_user = 0x2000,
+  DW_LNCT_hi_user = 0x3fff,
+};
+
 enum MacinfoRecordType {
   // Macinfo Type Encodings
   DW_MACINFO_define = 0x01,
@@ -454,23 +495,20 @@ enum MacinfoRecordType {
   DW_MACINFO_vendor_ext = 0xff
 };
 
+/// DWARF v5 macro information entry type encodings.
 enum MacroEntryType {
-  // Macro Information Entry Type Encodings
-  DW_MACRO_define = 0x01,
-  DW_MACRO_undef = 0x02,
-  DW_MACRO_start_file = 0x03,
-  DW_MACRO_end_file = 0x04,
-  DW_MACRO_define_indirect = 0x05,
-  DW_MACRO_undef_indirect = 0x06,
-  DW_MACRO_transparent_include = 0x07,
-  DW_MACRO_define_indirect_sup = 0x08,
-  DW_MACRO_undef_indirect_sup = 0x09,
-  DW_MACRO_transparent_include_sup = 0x0a,
-  DW_MACRO_define_indirectx = 0x0b,
-  DW_MACRO_undef_indirectx = 0x0c,
+#define HANDLE_DW_MACRO(ID, NAME) DW_DEFAULTED_##NAME = ID,
+#include "llvm/Support/Dwarf.def"
   DW_MACRO_lo_user = 0xe0,
   DW_MACRO_hi_user = 0xff
 };
+
+/// DWARF v5 range list entry encoding values.
+enum RangeListEntries {
+#define HANDLE_DW_RLE(ID, NAME) DW_DEFAULTED_##NAME = ID,
+#include "llvm/Support/Dwarf.def"
+};
+
 
 enum CallFrameInfo {
   // Call frame instruction encodings
@@ -532,13 +570,17 @@ enum Constants {
   DW_EH_PE_indirect = 0x80
 };
 
-// Constants for debug_loc.dwo in the DWARF5 Split Debug Info Proposal
+/// Constants for location lists in DWARF v5.
 enum LocationListEntry : unsigned char {
-  DW_LLE_end_of_list_entry,
-  DW_LLE_base_address_selection_entry,
-  DW_LLE_start_end_entry,
-  DW_LLE_start_length_entry,
-  DW_LLE_offset_pair_entry
+  DW_LLE_end_of_list = 0x00,
+  DW_LLE_base_addressx = 0x01,
+  DW_LLE_startx_endx = 0x02,
+  DW_LLE_startx_length = 0x03,
+  DW_LLE_offset_pair = 0x04,
+  DW_LLE_default_location = 0x05,
+  DW_LLE_base_address = 0x06,
+  DW_LLE_start_end = 0x07,
+  DW_LLE_start_length = 0x08
 };
 
 /// Constants for the DW_APPLE_PROPERTY_attributes attribute.
