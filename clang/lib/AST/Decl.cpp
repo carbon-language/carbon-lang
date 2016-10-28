@@ -2933,7 +2933,7 @@ static bool RedeclForcesDefC99(const FunctionDecl *Redecl) {
 /// of redeclarations of the given functions causes
 /// isInlineDefinitionExternallyVisible to change from false to true.
 bool FunctionDecl::doesDeclarationForceExternallyVisibleDefinition() const {
-  assert(!doesThisDeclarationHaveABody() && !willHaveBody() &&
+  assert(!doesThisDeclarationHaveABody() &&
          "Must have a declaration without a body.");
 
   ASTContext &Context = getASTContext();
