@@ -22,7 +22,6 @@ public:
   unsigned UseLineDirectives : 1;   ///< Use \#line instead of GCC-style \# N.
   unsigned ShowMacroComments : 1;  ///< Show comments, even in macros.
   unsigned ShowMacros : 1;         ///< Print macro definitions.
-  unsigned ShowIncludeDirectives : 1;  ///< Print includes, imports etc. within preprocessed output.
   unsigned RewriteIncludes : 1;    ///< Preprocess include directives only.
 
 public:
@@ -33,7 +32,6 @@ public:
     UseLineDirectives = 0;
     ShowMacroComments = 0;
     ShowMacros = 0;
-    ShowIncludeDirectives = 0;
     RewriteIncludes = 0;
   }
 };
