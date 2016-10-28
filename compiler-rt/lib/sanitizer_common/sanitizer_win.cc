@@ -334,7 +334,7 @@ struct ModuleInfo {
   uptr end_address;
 };
 
-#ifndef SANITIZER_GO
+#if !SANITIZER_GO
 int CompareModulesBase(const void *pl, const void *pr) {
   const ModuleInfo *l = (ModuleInfo *)pl, *r = (ModuleInfo *)pr;
   if (l->base_address < r->base_address)
@@ -344,7 +344,7 @@ int CompareModulesBase(const void *pl, const void *pr) {
 #endif
 }  // namespace
 
-#ifndef SANITIZER_GO
+#if !SANITIZER_GO
 void DumpProcessMap() {
   Report("Dumping process modules:\n");
   ListOfModules modules;
@@ -430,7 +430,7 @@ void Abort() {
   internal__exit(3);
 }
 
-#ifndef SANITIZER_GO
+#if !SANITIZER_GO
 // Read the file to extract the ImageBase field from the PE header. If ASLR is
 // disabled and this virtual address is available, the loader will typically
 // load the image at this address. Therefore, we call it the preferred base. Any
@@ -723,7 +723,7 @@ void InitTlsSize() {
 
 void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
                           uptr *tls_addr, uptr *tls_size) {
-#ifdef SANITIZER_GO
+#if SANITIZER_GO
   *stk_addr = 0;
   *stk_size = 0;
   *tls_addr = 0;
