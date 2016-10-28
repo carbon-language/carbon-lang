@@ -12,7 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 // TODO: Add other DW-based macros.
-#if !(defined HANDLE_DW_TAG || defined HANDLE_DW_AT || defined HANDLE_DW_OP || \
+#if !(defined HANDLE_DW_TAG || defined HANDLE_DW_AT ||                         \
+      defined HANDLE_DW_FORM || defined HANDLE_DW_OP ||                        \
       defined HANDLE_DW_LANG || defined HANDLE_DW_ATE ||                       \
       defined HANDLE_DW_VIRTUALITY || defined HANDLE_DW_DEFAULTED ||           \
       defined HANDLE_DW_CC || defined HANDLE_DW_LNCT ||                        \
@@ -26,6 +27,10 @@
 
 #ifndef HANDLE_DW_AT
 #define HANDLE_DW_AT(ID, NAME)
+#endif
+
+#ifndef HANDLE_DW_FORM
+#define HANDLE_DW_FORM(ID, NAME)
 #endif
 
 #ifndef HANDLE_DW_OP
@@ -358,6 +363,51 @@ HANDLE_DW_AT(0x3feb, APPLE_property_attribute)
 HANDLE_DW_AT(0x3fec, APPLE_objc_complete_type)
 HANDLE_DW_AT(0x3fed, APPLE_property)
 
+// Attribute form encodings.
+HANDLE_DW_FORM(0x01, addr)
+HANDLE_DW_FORM(0x03, block2)
+HANDLE_DW_FORM(0x04, block4)
+HANDLE_DW_FORM(0x05, data2)
+HANDLE_DW_FORM(0x06, data4)
+HANDLE_DW_FORM(0x07, data8)
+HANDLE_DW_FORM(0x08, string)
+HANDLE_DW_FORM(0x09, block)
+HANDLE_DW_FORM(0x0a, block1)
+HANDLE_DW_FORM(0x0b, data1)
+HANDLE_DW_FORM(0x0c, flag)
+HANDLE_DW_FORM(0x0d, sdata)
+HANDLE_DW_FORM(0x0e, strp)
+HANDLE_DW_FORM(0x0f, udata)
+HANDLE_DW_FORM(0x10, ref_addr)
+HANDLE_DW_FORM(0x11, ref1)
+HANDLE_DW_FORM(0x12, ref2)
+HANDLE_DW_FORM(0x13, ref4)
+HANDLE_DW_FORM(0x14, ref8)
+HANDLE_DW_FORM(0x15, ref_udata)
+HANDLE_DW_FORM(0x16, indirect)
+HANDLE_DW_FORM(0x17, sec_offset)
+HANDLE_DW_FORM(0x18, exprloc)
+HANDLE_DW_FORM(0x19, flag_present)
+
+// New in DWARF v5.
+HANDLE_DW_FORM(0x1a, strx)
+HANDLE_DW_FORM(0x1b, addrx)
+HANDLE_DW_FORM(0x1c, ref_sup)
+HANDLE_DW_FORM(0x1d, strp_sup)
+HANDLE_DW_FORM(0x1e, data16)
+HANDLE_DW_FORM(0x1f, line_strp)
+HANDLE_DW_FORM(0x20, ref_sig8)
+HANDLE_DW_FORM(0x21, implicit_const)
+HANDLE_DW_FORM(0x22, loclistx)
+HANDLE_DW_FORM(0x23, rnglistx)
+
+// Extensions for Fission proposal
+HANDLE_DW_FORM(0x1f01, GNU_addr_index)
+HANDLE_DW_FORM(0x1f02, GNU_str_index)
+
+// Alternate debug sections proposal (output of "dwz" tool).
+HANDLE_DW_FORM(0x1f20, GNU_ref_alt)
+HANDLE_DW_FORM(0x1f21, GNU_strp_alt)
 
 // DWARF Expression operators.
 HANDLE_DW_OP(0x03, addr)
@@ -656,6 +706,7 @@ HANDLE_DW_RLE(0x07, start_length)
 
 #undef HANDLE_DW_TAG
 #undef HANDLE_DW_AT
+#undef HANDLE_DW_FORM
 #undef HANDLE_DW_OP
 #undef HANDLE_DW_LANG
 #undef HANDLE_DW_ATE

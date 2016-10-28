@@ -57,41 +57,13 @@ StringRef llvm::dwarf::AttributeString(unsigned Attribute) {
 
 StringRef llvm::dwarf::FormEncodingString(unsigned Encoding) {
   switch (Encoding) {
-  case DW_FORM_addr:                     return "DW_FORM_addr";
-  case DW_FORM_block2:                   return "DW_FORM_block2";
-  case DW_FORM_block4:                   return "DW_FORM_block4";
-  case DW_FORM_data2:                    return "DW_FORM_data2";
-  case DW_FORM_data4:                    return "DW_FORM_data4";
-  case DW_FORM_data8:                    return "DW_FORM_data8";
-  case DW_FORM_string:                   return "DW_FORM_string";
-  case DW_FORM_block:                    return "DW_FORM_block";
-  case DW_FORM_block1:                   return "DW_FORM_block1";
-  case DW_FORM_data1:                    return "DW_FORM_data1";
-  case DW_FORM_flag:                     return "DW_FORM_flag";
-  case DW_FORM_sdata:                    return "DW_FORM_sdata";
-  case DW_FORM_strp:                     return "DW_FORM_strp";
-  case DW_FORM_udata:                    return "DW_FORM_udata";
-  case DW_FORM_ref_addr:                 return "DW_FORM_ref_addr";
-  case DW_FORM_ref1:                     return "DW_FORM_ref1";
-  case DW_FORM_ref2:                     return "DW_FORM_ref2";
-  case DW_FORM_ref4:                     return "DW_FORM_ref4";
-  case DW_FORM_ref8:                     return "DW_FORM_ref8";
-  case DW_FORM_ref_udata:                return "DW_FORM_ref_udata";
-  case DW_FORM_indirect:                 return "DW_FORM_indirect";
-  case DW_FORM_sec_offset:               return "DW_FORM_sec_offset";
-  case DW_FORM_exprloc:                  return "DW_FORM_exprloc";
-  case DW_FORM_flag_present:             return "DW_FORM_flag_present";
-  case DW_FORM_ref_sig8:                 return "DW_FORM_ref_sig8";
-
-    // DWARF5 Fission Extension Forms
-  case DW_FORM_GNU_addr_index:           return "DW_FORM_GNU_addr_index";
-  case DW_FORM_GNU_str_index:            return "DW_FORM_GNU_str_index";
-
-  // Alternate debug sections proposal (output of "dwz" tool).
-  case DW_FORM_GNU_ref_alt:              return "DW_FORM_GNU_ref_alt";
-  case DW_FORM_GNU_strp_alt:             return "DW_FORM_GNU_strp_alt";
+  default:
+    return StringRef();
+#define HANDLE_DW_FORM(ID, NAME)                                                \
+  case DW_FORM_##NAME:                                                          \
+    return "DW_FORM_" #NAME;
+#include "llvm/Support/Dwarf.def"
   }
-  return StringRef();
 }
 
 StringRef llvm::dwarf::OperationEncodingString(unsigned Encoding) {
