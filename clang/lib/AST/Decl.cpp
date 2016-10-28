@@ -2933,7 +2933,7 @@ static bool RedeclForcesDefC99(const FunctionDecl *Redecl) {
 /// of redeclarations of the given functions causes
 /// isInlineDefinitionExternallyVisible to change from false to true.
 bool FunctionDecl::doesDeclarationForceExternallyVisibleDefinition() const {
-  assert(!doesThisDeclarationHaveABody() &&
+  assert(!doesThisDeclarationHaveABody() && !willHaveBody() &&
          "Must have a declaration without a body.");
 
   ASTContext &Context = getASTContext();
@@ -3048,7 +3048,8 @@ const Attr *FunctionDecl::getUnusedResultAttr() const {
 /// an externally visible symbol, but "extern inline" will not create an 
 /// externally visible symbol.
 bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
-  assert(doesThisDeclarationHaveABody() && "Must have the function definition");
+  assert(doesThisDeclarationHaveABody() ||
+         willHaveBody() && "Must be a function definition");
   assert(isInlined() && "Function must be inline");
   ASTContext &Context = getASTContext();
   
