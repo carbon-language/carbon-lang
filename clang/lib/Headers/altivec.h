@@ -1720,6 +1720,72 @@ vec_cmpnez(vector unsigned int __a, vector unsigned int __b) {
                                                      (vector int)__b);
 }
 
+static __inline__ signed int __ATTRS_o_ai
+vec_cntlz_lsbb(vector signed char __a) {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vctzlsbb(__a);
+#else
+  return __builtin_altivec_vclzlsbb(__a);
+#endif
+}
+
+static __inline__ signed int __ATTRS_o_ai
+vec_cntlz_lsbb(vector unsigned char __a) {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vctzlsbb(__a);
+#else
+  return __builtin_altivec_vclzlsbb(__a);
+#endif
+}
+
+static __inline__ signed int __ATTRS_o_ai
+vec_cnttz_lsbb(vector signed char __a) {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vclzlsbb(__a);
+#else
+  return __builtin_altivec_vctzlsbb(__a);
+#endif
+}
+
+static __inline__ signed int __ATTRS_o_ai
+vec_cnttz_lsbb(vector unsigned char __a) {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vclzlsbb(__a);
+#else
+  return __builtin_altivec_vctzlsbb(__a);
+#endif
+}
+
+static __inline__ vector unsigned int __ATTRS_o_ai
+vec_parity_lsbb(vector unsigned int __a) {
+  return __builtin_altivec_vprtybw(__a);
+}
+
+static __inline__ vector unsigned int __ATTRS_o_ai
+vec_parity_lsbb(vector signed int __a) {
+  return __builtin_altivec_vprtybw(__a);
+}
+
+static __inline__ vector unsigned __int128 __ATTRS_o_ai
+vec_parity_lsbb(vector unsigned __int128 __a) {
+  return __builtin_altivec_vprtybq(__a);
+}
+
+static __inline__ vector unsigned __int128 __ATTRS_o_ai
+vec_parity_lsbb(vector signed __int128 __a) {
+  return __builtin_altivec_vprtybq(__a);
+}
+
+static __inline__ vector unsigned long long __ATTRS_o_ai
+vec_parity_lsbb(vector unsigned long long __a) {
+  return __builtin_altivec_vprtybd(__a);
+}
+
+static __inline__ vector unsigned long long __ATTRS_o_ai
+vec_parity_lsbb(vector signed long long __a) {
+  return __builtin_altivec_vprtybd(__a);
+}
+
 #endif
 
 /* vec_cmpgt */
