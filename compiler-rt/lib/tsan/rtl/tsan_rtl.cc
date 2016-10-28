@@ -242,7 +242,10 @@ void MapShadow(uptr addr, uptr size) {
   // Global data is not 64K aligned, but there are no adjacent mappings,
   // so we can get away with unaligned mapping.
   // CHECK_EQ(addr, addr & ~((64 << 10) - 1));  // windows wants 64K alignment
-  MmapFixedNoReserve(MemToShadow(addr), size * kShadowMultiplier, "shadow");
+  const uptr kPageSize = GetPageSizeCached();
+  uptr shadow_begin = RoundDownTo((uptr)MemToShadow(addr), kPageSize);
+  uptr shadow_end = RoundUpTo((uptr)MemToShadow(addr + size), kPageSize);
+  MmapFixedNoReserve(shadow_begin, shadow_end - shadow_begin, "shadow");
 
   // Meta shadow is 2:1, so tread carefully.
   static bool data_mapped = false;
