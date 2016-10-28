@@ -105,6 +105,7 @@ protected:
   bool Has16BitInsts;
   bool HasMovrel;
   bool HasVGPRIndexMode;
+  bool HasScalarStores;
   bool FlatAddressSpace;
   bool R600ALUInst;
   bool CaymanISA;
@@ -525,6 +526,10 @@ public:
 
   bool hasScalarCompareEq64() const {
     return getGeneration() >= VOLCANIC_ISLANDS;
+  }
+
+  bool hasScalarStores() const {
+    return HasScalarStores;
   }
 
   bool enableSIScheduler() const {

@@ -171,6 +171,12 @@ def FeatureVGPRIndexMode : SubtargetFeature<"vgpr-index-mode",
   "Has VGPR mode register indexing"
 >;
 
+def FeatureScalarStores : SubtargetFeature<"scalar-stores",
+  "HasScalarStores",
+  "true",
+  "Has store scalar memory instructions"
+>;
+
 //===------------------------------------------------------------===//
 // Subtarget Features (options and debugging)
 //===------------------------------------------------------------===//
@@ -311,7 +317,8 @@ def FeatureVolcanicIslands : SubtargetFeatureGeneration<"VOLCANIC_ISLANDS",
   [FeatureFP64, FeatureLocalMemorySize65536,
    FeatureWavefrontSize64, FeatureFlatAddressSpace, FeatureGCN,
    FeatureGCN3Encoding, FeatureCIInsts, Feature16BitInsts,
-   FeatureSMemRealTime, FeatureVGPRIndexMode, FeatureMovrel
+   FeatureSMemRealTime, FeatureVGPRIndexMode, FeatureMovrel,
+   FeatureScalarStores
   ]
 >;
 

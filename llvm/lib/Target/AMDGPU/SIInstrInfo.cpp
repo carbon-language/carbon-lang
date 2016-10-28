@@ -2116,6 +2116,18 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr &MI,
     }
   }
 
+  if (isSMRD(MI)) {
+    if (MI.mayStore()) {
+      // The register offset form of scalar stores may only use m0 as the
+      // soffset register.
+      const MachineOperand *Soff = getNamedOperand(MI, AMDGPU::OpName::soff);
+      if (Soff && Soff->getReg() != AMDGPU::M0) {
+        ErrInfo = "scalar stores must use m0 as offset register";
+        return false;
+      }
+    }
+  }
+
   return true;
 }
 
