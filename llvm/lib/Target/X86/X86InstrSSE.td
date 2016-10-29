@@ -5597,6 +5597,9 @@ let isCommutable = 0 in {
                                   loadv2i64, i128mem,
                                   SSE_PSHUFB, 0>, VEX_4V;
 }
+defm VPMULHRSW    : SS3I_binop_rm<0x0B, "vpmulhrsw", X86mulhrs, v8i16, VR128,
+                                  loadv2i64, i128mem,
+                                  SSE_PMULHRSW, 0>, VEX_4V;
 }
 
 let ImmT = NoImm, Predicates = [HasAVX] in {
@@ -5632,9 +5635,6 @@ let isCommutable = 0 in {
                                       int_x86_ssse3_pmadd_ub_sw_128,
                                       SSE_PMADD, loadv2i64, 0>, VEX_4V;
 }
-defm VPMULHRSW    : SS3I_binop_rm_int<0x0B, "vpmulhrsw",
-                                      int_x86_ssse3_pmul_hr_sw_128,
-                                      SSE_PMULHRSW, loadv2i64, 0>, VEX_4V;
 }
 
 let ImmT = NoImm, Predicates = [HasAVX2, NoVLX_Or_NoBWI] in {
@@ -5643,6 +5643,9 @@ let isCommutable = 0 in {
                                   loadv4i64, i256mem,
                                   SSE_PSHUFB, 0>, VEX_4V, VEX_L;
 }
+defm VPMULHRSWY   : SS3I_binop_rm<0x0B, "vpmulhrsw", X86mulhrs, v16i16, VR256,
+                                  loadv4i64, i256mem,
+                                  SSE_PMULHRSW, 0>, VEX_4V, VEX_L;
 }
 
 let ImmT = NoImm, Predicates = [HasAVX2] in {
@@ -5675,9 +5678,6 @@ let isCommutable = 0 in {
                                        int_x86_avx2_pmadd_ub_sw,
                                         WriteVecIMul>, VEX_4V, VEX_L;
 }
-defm VPMULHRSW    : SS3I_binop_rm_int_y<0x0B, "vpmulhrsw",
-                                        int_x86_avx2_pmul_hr_sw,
-                                        WriteVecIMul>, VEX_4V, VEX_L;
 }
 
 // None of these have i8 immediate fields.
@@ -5709,9 +5709,8 @@ let isCommutable = 0 in {
                                      int_x86_ssse3_pmadd_ub_sw_128,
                                      SSE_PMADD, memopv2i64>;
 }
-defm PMULHRSW    : SS3I_binop_rm_int<0x0B, "pmulhrsw",
-                                     int_x86_ssse3_pmul_hr_sw_128,
-                                     SSE_PMULHRSW, memopv2i64>;
+defm PMULHRSW    : SS3I_binop_rm<0x0B, "pmulhrsw", X86mulhrs, v8i16, VR128,
+                                 loadv2i64, i128mem, SSE_PMULHRSW>;
 }
 
 //===---------------------------------------------------------------------===//
