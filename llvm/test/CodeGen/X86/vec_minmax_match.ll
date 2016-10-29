@@ -18,16 +18,12 @@ define <4 x i32> @smin_vec1(<4 x i32> %x) {
   ret <4 x i32> %sel
 }
 
-; FIXME: These are signed min/max ops.
-
 define <4 x i32> @smin_vec2(<4 x i32> %x) {
 ; CHECK-LABEL: smin_vec2:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vpxor %xmm1, %xmm0, %xmm1
-; CHECK-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; CHECK-NEXT:    vpcmpgtd %xmm0, %xmm2, %xmm0
-; CHECK-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpxor %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpminsd %xmm1, %xmm0, %xmm0
 ; CHECK-NEXT:    retq
 ;
   %not_x = xor <4 x i32> %x, <i32 -1, i32 -1, i32 -1, i32 -1>
@@ -40,11 +36,8 @@ define <4 x i32> @smax_vec1(<4 x i32> %x) {
 ; CHECK-LABEL: smax_vec1:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vpxor %xmm1, %xmm0, %xmm2
-; CHECK-NEXT:    vpxor %xmm3, %xmm3, %xmm3
-; CHECK-NEXT:    vpcmpgtd %xmm0, %xmm3, %xmm0
 ; CHECK-NEXT:    vpxor %xmm1, %xmm0, %xmm0
-; CHECK-NEXT:    vpor %xmm2, %xmm0, %xmm0
+; CHECK-NEXT:    vpmaxsd %xmm1, %xmm0, %xmm0
 ; CHECK-NEXT:    retq
 ;
   %not_x = xor <4 x i32> %x, <i32 -1, i32 -1, i32 -1, i32 -1>
@@ -57,10 +50,8 @@ define <4 x i32> @smax_vec2(<4 x i32> %x) {
 ; CHECK-LABEL: smax_vec2:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vpxor %xmm1, %xmm0, %xmm1
-; CHECK-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; CHECK-NEXT:    vpcmpgtd %xmm2, %xmm0, %xmm0
-; CHECK-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpxor %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpmaxsd %xmm1, %xmm0, %xmm0
 ; CHECK-NEXT:    retq
 ;
   %not_x = xor <4 x i32> %x, <i32 -1, i32 -1, i32 -1, i32 -1>
