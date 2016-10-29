@@ -106,6 +106,7 @@ protected:
   bool HasMovrel;
   bool HasVGPRIndexMode;
   bool HasScalarStores;
+  bool HasInv2PiInlineImm;
   bool FlatAddressSpace;
   bool R600ALUInst;
   bool CaymanISA;
@@ -530,6 +531,10 @@ public:
 
   bool hasScalarStores() const {
     return HasScalarStores;
+  }
+
+  bool hasInv2PiInlineImm() const {
+    return HasInv2PiInlineImm;
   }
 
   bool enableSIScheduler() const {

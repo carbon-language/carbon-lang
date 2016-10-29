@@ -153,6 +153,12 @@ def FeatureSMemRealTime : SubtargetFeature<"s-memrealtime",
   "Has s_memrealtime instruction"
 >;
 
+def FeatureInv2PiInlineImm : SubtargetFeature<"inv-2pi-inline-imm",
+  "HasInv2PiInlineImm",
+  "true",
+  "Has 1 / (2 * pi) as inline immediate"
+>;
+
 def Feature16BitInsts : SubtargetFeature<"16-bit-insts",
   "Has16BitInsts",
   "true",
@@ -318,7 +324,7 @@ def FeatureVolcanicIslands : SubtargetFeatureGeneration<"VOLCANIC_ISLANDS",
    FeatureWavefrontSize64, FeatureFlatAddressSpace, FeatureGCN,
    FeatureGCN3Encoding, FeatureCIInsts, Feature16BitInsts,
    FeatureSMemRealTime, FeatureVGPRIndexMode, FeatureMovrel,
-   FeatureScalarStores
+   FeatureScalarStores, FeatureInv2PiInlineImm
   ]
 >;
 

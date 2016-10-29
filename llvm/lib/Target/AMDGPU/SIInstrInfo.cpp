@@ -1725,7 +1725,8 @@ bool SIInstrInfo::isInlineConstant(const APInt &Imm) const {
            (DoubleToBits(2.0) == Val) ||
            (DoubleToBits(-2.0) == Val) ||
            (DoubleToBits(4.0) == Val) ||
-           (DoubleToBits(-4.0) == Val);
+           (DoubleToBits(-4.0) == Val) ||
+           (ST.hasInv2PiInlineImm() && Val == 0x3fc45f306dc9c882);
   }
 
   // The actual type of the operand does not seem to matter as long
@@ -1746,7 +1747,8 @@ bool SIInstrInfo::isInlineConstant(const APInt &Imm) const {
          (FloatToBits(2.0f) == Val) ||
          (FloatToBits(-2.0f) == Val) ||
          (FloatToBits(4.0f) == Val) ||
-         (FloatToBits(-4.0f) == Val);
+         (FloatToBits(-4.0f) == Val) ||
+         (ST.hasInv2PiInlineImm() && Val == 0x3e22f983);
 }
 
 bool SIInstrInfo::isInlineConstant(const MachineOperand &MO,

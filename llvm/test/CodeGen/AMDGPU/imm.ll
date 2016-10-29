@@ -118,6 +118,24 @@ define void @store_inline_imm_m_4.0_f32(float addrspace(1)* %out) {
   ret void
 }
 
+
+; GCN-LABEL: {{^}}store_inline_imm_inv_2pi_f32:
+; SI: v_mov_b32_e32 [[REG:v[0-9]+]], 0x3e22f983{{$}}
+; VI: v_mov_b32_e32 [[REG:v[0-9]+]], 1/2pi{{$}}
+; GCN: buffer_store_dword [[REG]]
+define void @store_inline_imm_inv_2pi_f32(float addrspace(1)* %out) {
+  store float 0x3FC45F3060000000, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}store_inline_imm_m_inv_2pi_f32:
+; SI: v_mov_b32_e32 [[REG:v[0-9]+]], 0xbe22f983{{$}}
+; GCN: buffer_store_dword [[REG]]
+define void @store_inline_imm_m_inv_2pi_f32(float addrspace(1)* %out) {
+  store float 0xBFC45F3060000000, float addrspace(1)* %out
+  ret void
+}
+
 ; GCN-LABEL: {{^}}store_literal_imm_f32:
 ; GCN: v_mov_b32_e32 [[REG:v[0-9]+]], 0x45800000
 ; GCN: buffer_store_dword [[REG]]
@@ -418,6 +436,30 @@ define void @add_inline_imm_neg_4.0_f64(double addrspace(1)* %out, double %x) {
   ret void
 }
 
+; GCN-LABEL: {{^}}add_inline_imm_inv_2pi_f64:
+; SI: s_load_dwordx2 [[VAL:s\[[0-9]+:[0-9]+\]]], {{s\[[0-9]+:[0-9]+\]}}, 0xb
+; SI-DAG: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], 0x6dc9c882
+; SI-DAG: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], 0x3fc45f30
+; SI: v_add_f64 v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}
+
+; VI: s_load_dwordx2 [[VAL:s\[[0-9]+:[0-9]+\]]], {{s\[[0-9]+:[0-9]+\]}}, 0x2c
+; VI: v_add_f64 [[REG:v\[[0-9]+:[0-9]+\]]], [[VAL]], 1/2pi
+; VI: buffer_store_dwordx2 [[REG]]
+define void @add_inline_imm_inv_2pi_f64(double addrspace(1)* %out, double %x) {
+  %y = fadd double %x, 0x3fc45f306dc9c882
+  store double %y, double addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}add_m_inv_2pi_f64:
+; GCN-DAG: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], 0x6dc9c882
+; GCN-DAG: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], 0xbfc45f30
+; GCN: v_add_f64 v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}
+define void @add_m_inv_2pi_f64(double addrspace(1)* %out, double %x) {
+  %y = fadd double %x, 0xbfc45f306dc9c882
+  store double %y, double addrspace(1)* %out
+  ret void
+}
 
 ; GCN-LABEL: {{^}}add_inline_imm_1_f64:
 ; SI: s_load_dwordx2 [[VAL:s\[[0-9]+:[0-9]+\]]], {{s\[[0-9]+:[0-9]+\]}}, 0xb
@@ -596,6 +638,24 @@ define void @store_inline_imm_4.0_f64(double addrspace(1)* %out) {
 ; GCN: buffer_store_dwordx2 v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}
 define void @store_inline_imm_m_4.0_f64(double addrspace(1)* %out) {
   store double -4.0, double addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}store_inv_2pi_f64:
+; GCN-DAG: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], 0x6dc9c882
+; GCN-DAG: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], 0x3fc45f30
+; GCN: buffer_store_dwordx2 v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}
+define void @store_inv_2pi_f64(double addrspace(1)* %out) {
+  store double 0x3fc45f306dc9c882, double addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}store_inline_imm_m_inv_2pi_f64:
+; GCN-DAG: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], 0x6dc9c882
+; GCN-DAG: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], 0xbfc45f30
+; GCN: buffer_store_dwordx2 v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}
+define void @store_inline_imm_m_inv_2pi_f64(double addrspace(1)* %out) {
+  store double 0xbfc45f306dc9c882, double addrspace(1)* %out
   ret void
 }
 
