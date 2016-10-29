@@ -821,10 +821,7 @@ IEEEFloat::IEEEFloat(const fltSemantics &ourSemantics) {
 // Delegate to the previous constructor, because later copy constructor may
 // actually inspects category, which can't be garbage.
 IEEEFloat::IEEEFloat(const fltSemantics &ourSemantics, uninitializedTag tag)
-    : IEEEFloat(ourSemantics) {
-  // Allocates storage if necessary but does not initialize it.
-  initialize(&ourSemantics);
-}
+    : IEEEFloat(ourSemantics) {}
 
 IEEEFloat::IEEEFloat(const IEEEFloat &rhs) {
   initialize(rhs.semantics);
