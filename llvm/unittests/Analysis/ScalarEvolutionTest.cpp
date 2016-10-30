@@ -333,11 +333,10 @@ TEST_F(ScalarEvolutionsTest, ExpandPtrTypeSCEV) {
   EXPECT_TRUE(isa<BitCastInst>(Gep->getPrevNode()));
 }
 
-static Instruction *getInstructionByName(Module &M, StringRef Name) {
-  for (auto &F : M)
-    for (auto &I : instructions(F))
-      if (I.getName() == Name)
-        return &I;
+static Instruction *getInstructionByName(Function &F, StringRef Name) {
+  for (auto &I : instructions(F))
+    if (I.getName() == Name)
+      return &I;
   llvm_unreachable("Expected to find instruction!");
 }
 
@@ -346,7 +345,8 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
   SMDiagnostic Err;
   std::unique_ptr<Module> M = parseAssemblyString(
       "target datalayout = \"e-m:e-p:32:32-f64:32:64-f80:32-n8:16:32-S128\" "
-      "define void @foo(i8* nocapture %arr, i32 %n, i32* %A, i32* %B) "
+      " "
+      "define void @f_1(i8* nocapture %arr, i32 %n, i32* %A, i32* %B) "
       "    local_unnamed_addr { "
       "entry: "
       "  %entrycond = icmp sgt i32 %n, 0 "
@@ -376,7 +376,7 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
       "  ret void "
       "} "
       " "
-      "define void @bar(i32* %X, i32* %Y, i32* %Z) { "
+      "define void @f_2(i32* %X, i32* %Y, i32* %Z) { "
       "  %x = load i32, i32* %X "
       "  %y = load i32, i32* %Y "
       "  %z = load i32, i32* %Z "
@@ -388,11 +388,11 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
   assert(!verifyModule(*M) && "Must have been well formed!");
 
   {
-    auto *IV0 = getInstructionByName(*M, "iv0");
-    auto *IV0Inc = getInstructionByName(*M, "iv0.inc");
+    auto *F = M->getFunction("f_1");
+    ASSERT_NE(F, nullptr);
 
-    auto *F = M->getFunction("foo");
-    assert(F && "Expected!");
+    auto *IV0 = getInstructionByName(*F, "iv0");
+    auto *IV0Inc = getInstructionByName(*F, "iv0.inc");
 
     ScalarEvolution SE = buildSE(*F);
     auto *FirstExprForIV0 = SE.getSCEV(IV0);
@@ -405,14 +405,14 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
   }
 
   {
-    auto *F = M->getFunction("bar");
-    assert(F && "Expected!");
+    auto *F = M->getFunction("f_2");
+    ASSERT_NE(F, nullptr);
 
     ScalarEvolution SE = buildSE(*F);
 
-    auto *LoadArg0 = SE.getSCEV(getInstructionByName(*M, "x"));
-    auto *LoadArg1 = SE.getSCEV(getInstructionByName(*M, "y"));
-    auto *LoadArg2 = SE.getSCEV(getInstructionByName(*M, "z"));
+    auto *LoadArg0 = SE.getSCEV(getInstructionByName(*F, "x"));
+    auto *LoadArg1 = SE.getSCEV(getInstructionByName(*F, "y"));
+    auto *LoadArg2 = SE.getSCEV(getInstructionByName(*F, "z"));
 
     auto *MulA = SE.getMulExpr(LoadArg0, LoadArg1);
     auto *MulB = SE.getMulExpr(LoadArg1, LoadArg0);
