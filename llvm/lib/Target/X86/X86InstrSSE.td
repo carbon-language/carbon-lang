@@ -5710,7 +5710,7 @@ let isCommutable = 0 in {
                                      SSE_PMADD, memopv2i64>;
 }
 defm PMULHRSW    : SS3I_binop_rm<0x0B, "pmulhrsw", X86mulhrs, v8i16, VR128,
-                                 loadv2i64, i128mem, SSE_PMULHRSW>;
+                                 memopv2i64, i128mem, SSE_PMULHRSW>;
 }
 
 //===---------------------------------------------------------------------===//
