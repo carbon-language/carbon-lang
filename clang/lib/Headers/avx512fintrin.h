@@ -9784,43 +9784,43 @@ _mm512_mask_reduce_mul_pd(__mmask8 __M, __m512d __W) {
 
 #define _mm512_reduce_operator_32bit(Vec512, Operator, T2, T1) __extension__({ \
     __m256##T1 Vec256 =                                                        \
-            (__m256##T1)__builtin_shufflevector(                               \
+            (__m256##T1)(__builtin_shufflevector(                              \
                                     (__v16s##T2)Vec512,                        \
                                     (__v16s##T2)Vec512,                        \
                                     0, 1, 2, 3, 4, 5, 6, 7)                    \
                                 Operator                                       \
-            (__m256##T1)__builtin_shufflevector(                               \
+                         __builtin_shufflevector(                              \
                                     (__v16s##T2)Vec512,                        \
                                     (__v16s##T2)Vec512,                        \
-                                    8, 9, 10, 11, 12, 13, 14, 15);             \
+                                    8, 9, 10, 11, 12, 13, 14, 15));            \
     __m128##T1 Vec128 =                                                        \
-             (__m128##T1)__builtin_shufflevector(                              \
+             (__m128##T1)(__builtin_shufflevector(                             \
                                     (__v8s##T2)Vec256,                         \
                                     (__v8s##T2)Vec256,                         \
                                     0, 1, 2, 3)                                \
                                 Operator                                       \
-             (__m128##T1)__builtin_shufflevector(                              \
+                          __builtin_shufflevector(                             \
                                     (__v8s##T2)Vec256,                         \
                                     (__v8s##T2)Vec256,                         \
-                                    4, 5, 6, 7);                               \
-    Vec128 = (__m128##T1)__builtin_shufflevector(                              \
+                                    4, 5, 6, 7));                              \
+    Vec128 = (__m128##T1)(__builtin_shufflevector(                             \
                                     (__v4s##T2)Vec128,                         \
                                     (__v4s##T2)Vec128,                         \
                                     0, 1, -1, -1)                              \
                                 Operator                                       \
-             (__m128##T1)__builtin_shufflevector(                              \
+                          __builtin_shufflevector(                             \
                                     (__v4s##T2)Vec128,                         \
                                     (__v4s##T2)Vec128,                         \
-                                    2, 3, -1, -1);                             \
-    Vec128 = (__m128##T1)__builtin_shufflevector(                              \
+                                    2, 3, -1, -1));                            \
+    Vec128 = (__m128##T1)(__builtin_shufflevector(                             \
                                     (__v4s##T2)Vec128,                         \
                                     (__v4s##T2)Vec128,                         \
                                     0, -1, -1, -1)                             \
                                 Operator                                       \
-             (__m128##T1)__builtin_shufflevector(                              \
+                          __builtin_shufflevector(                             \
                                     (__v4s##T2)Vec128,                         \
                                     (__v4s##T2)Vec128,                         \
-                                    1, -1, -1, -1);                            \
+                                    1, -1, -1, -1));                           \
     return Vec128[0];                                                          \
   })
 
@@ -10019,7 +10019,7 @@ _mm512_mask_reduce_max_epu64(__mmask8 __M, __m512i __V) {
 
 static __inline__ double __DEFAULT_FN_ATTRS
 _mm512_mask_reduce_max_pd(__mmask8 __M, __m512d __V) {
-  _mm512_mask_reduce_maxMin_64bit(__V, _mm512_set1_pd(0xFFF0000000000000),
+  _mm512_mask_reduce_maxMin_64bit(__V, -_mm512_set1_pd(__builtin_inf()),
                                   max_pd, d, f, pd, __M);
 }
 
@@ -10037,7 +10037,7 @@ _mm512_mask_reduce_min_epu64(__mmask8 __M, __m512i __V) {
 
 static __inline__ double __DEFAULT_FN_ATTRS
 _mm512_mask_reduce_min_pd(__mmask8 __M, __m512d __V) {
-  _mm512_mask_reduce_maxMin_64bit(__V, _mm512_set1_pd(0x7FF0000000000000),
+  _mm512_mask_reduce_maxMin_64bit(__V, _mm512_set1_pd(__builtin_inf()),
                                   min_pd, d, f, pd, __M);
 }
 
@@ -10162,7 +10162,7 @@ _mm512_mask_reduce_max_epu32(__mmask16 __M, __m512i __V) {
 
 static __inline__ float __DEFAULT_FN_ATTRS
 _mm512_mask_reduce_max_ps(__mmask16 __M, __m512 __V) {
-  _mm512_mask_reduce_maxMin_32bit(__V, _mm512_set1_ps(0xFF800000), max_ps, , f,
+  _mm512_mask_reduce_maxMin_32bit(__V,-_mm512_set1_ps(__builtin_inff()), max_ps, , f,
                                   ps, __M);
 }
 
@@ -10180,7 +10180,7 @@ _mm512_mask_reduce_min_epu32(__mmask16 __M, __m512i __V) {
 
 static __inline__ float __DEFAULT_FN_ATTRS
 _mm512_mask_reduce_min_ps(__mmask16 __M, __m512 __V) {
-  _mm512_mask_reduce_maxMin_32bit(__V, _mm512_set1_ps(0x7F800000), min_ps, , f,
+  _mm512_mask_reduce_maxMin_32bit(__V, _mm512_set1_ps(__builtin_inff()), min_ps, , f,
                                   ps, __M);
 }
 
