@@ -4,7 +4,6 @@
 define i32 @and_self(i32 %x) {
 ; CHECK-LABEL: and_self:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    andl %edi, %edi
 ; CHECK-NEXT:    movl %edi, %eax
 ; CHECK-NEXT:    retq
   %and = and i32 %x, %x
@@ -14,7 +13,6 @@ define i32 @and_self(i32 %x) {
 define <4 x i32> @and_self_vec(<4 x i32> %x) {
 ; CHECK-LABEL: and_self_vec:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    andps %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %and = and <4 x i32> %x, %x
   ret <4 x i32> %and
