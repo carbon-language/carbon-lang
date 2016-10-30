@@ -623,10 +623,10 @@ struct _PathCVT {
 
 template <>
 struct _PathCVT<char> {
+
     template <class _Iter>
     static void __append_range(string& __dest, _Iter __b, _Iter __e) {
-        for (; __b != __e; ++__b)
-            __dest.push_back(*__b);
+        __dest.append(__b, __e);
     }
 
     template <class _Iter>
@@ -640,7 +640,8 @@ struct _PathCVT<char> {
     static void __append_source(string& __dest, _Source const& __s)
     {
         using _Traits = __is_pathable<_Source>;
-        __append_range(__dest, _Traits::__range_begin(__s), _Traits::__range_end(__s));
+        __append_range(__dest, _Traits::__range_begin(__s),
+                               _Traits::__range_end(__s));
     }
 };
 

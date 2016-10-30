@@ -42,8 +42,7 @@ private:
 public:
   PathParser(string_view_t P, string_view_t E, unsigned char S)
       : Path(P), RawEntry(E), State(static_cast<ParserState>(S)) {
-    assert(S != 0);
-    assert(S != PS_BeforeBegin);
+    // S cannot be '0' or PS_BeforeBegin.
   }
 
   static PathParser CreateBegin(string_view_t P) noexcept {
@@ -94,7 +93,6 @@ public:
 
     case PS_InFilenames: {
       PosPtr SepEnd = consumeSeparator(Start, End);
-      assert(SepEnd);
       if (SepEnd != End) {
         PosPtr TkEnd = consumeName(SepEnd, End);
         if (TkEnd)
@@ -131,7 +129,6 @@ public:
                          SepEnd + 1, RStart + 1);
       } else {
         PosPtr TkStart = consumeName(RStart, REnd);
-        assert(TkStart);
         if (TkStart == REnd + 2 && consumeSeparator(TkStart, REnd) == REnd)
           return makeState(PS_InRootName, Path.data(), RStart + 1);
         else
@@ -192,14 +189,10 @@ public:
 
 private:
   void makeState(ParserState NewState, PosPtr Start, PosPtr End) noexcept {
-    assert(NewState != PS_BeforeBegin && NewState != PS_AtEnd);
     State = NewState;
-    assert(Start < End);
-    assert(Start >= &Path.front() && End <= &Path.back() + 1);
     RawEntry = string_view_t(Start, End - Start);
   }
   void makeState(ParserState NewState) noexcept {
-    assert(NewState == PS_BeforeBegin || NewState == PS_AtEnd);
     State = NewState;
     RawEntry = {};
   }
