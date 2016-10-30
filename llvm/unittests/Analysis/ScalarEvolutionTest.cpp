@@ -346,6 +346,9 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
   std::unique_ptr<Module> M = parseAssemblyString(
       "target datalayout = \"e-m:e-p:32:32-f64:32:64-f80:32-n8:16:32-S128\" "
       " "
+      "@var_0 = external global i32, align 4"
+      "@var_1 = external global i32, align 4"
+      " "
       "define void @f_1(i8* nocapture %arr, i32 %n, i32* %A, i32* %B) "
       "    local_unnamed_addr { "
       "entry: "
@@ -381,7 +384,15 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
       "  %y = load i32, i32* %Y "
       "  %z = load i32, i32* %Z "
       "  ret void "
-      "} ",
+      "} "
+      " "
+      " "
+      "define void @f_3() { "
+      "  %x = load i32, i32* @var_0"
+      "  %y = load i32, i32* @var_1"
+      "  ret void"
+      "} "
+      ,
       Err, C);
 
   assert(M && "Could not parse module?");
@@ -438,6 +449,20 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
     EXPECT_EQ(Mul2, Mul3);
     EXPECT_EQ(Mul3, Mul4);
     EXPECT_EQ(Mul4, Mul5);
+  }
+
+  {
+    auto *F = M->getFunction("f_3");
+    ASSERT_NE(F, nullptr);
+
+    ScalarEvolution SE = buildSE(*F);
+    auto *LoadArg0 = SE.getSCEV(getInstructionByName(*F, "x"));
+    auto *LoadArg1 = SE.getSCEV(getInstructionByName(*F, "y"));
+
+    auto *MulA = SE.getMulExpr(LoadArg0, LoadArg1);
+    auto *MulB = SE.getMulExpr(LoadArg1, LoadArg0);
+
+    EXPECT_EQ(MulA, MulB) << "MulA = " << *MulA << ", MulB = " << *MulB;
   }
 }
 

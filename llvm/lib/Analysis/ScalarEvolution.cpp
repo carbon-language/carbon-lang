@@ -477,6 +477,21 @@ static int CompareValueComplexity(const LoopInfo *const LI, Value *LV,
     return (int)LArgNo - (int)RArgNo;
   }
 
+  if (const auto *LGV = dyn_cast<GlobalValue>(LV)) {
+    const auto *RGV = cast<GlobalValue>(RV);
+
+    const auto IsGVNameSemantic = [&](const GlobalValue *GV) {
+      auto LT = GV->getLinkage();
+      return !(GlobalValue::isPrivateLinkage(LT) ||
+               GlobalValue::isInternalLinkage(LT));
+    };
+
+    // Use the names to distinguish the two values, but only if the
+    // names are semantically important.
+    if (IsGVNameSemantic(LGV) && IsGVNameSemantic(RGV))
+      return LGV->getName().compare(RGV->getName());
+  }
+
   // For instructions, compare their loop depth, and their operand count.  This
   // is pretty loose.
   if (const auto *LInst = dyn_cast<Instruction>(LV)) {
