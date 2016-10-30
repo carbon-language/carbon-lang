@@ -471,16 +471,16 @@ static int CompareValueComplexity(const LoopInfo *const LI, Value *LV,
     return (int)LID - (int)RID;
 
   // Sort arguments by their position.
-  if (const Argument *LA = dyn_cast<Argument>(LV)) {
-    const Argument *RA = cast<Argument>(RV);
+  if (const auto *LA = dyn_cast<Argument>(LV)) {
+    const auto *RA = cast<Argument>(RV);
     unsigned LArgNo = LA->getArgNo(), RArgNo = RA->getArgNo();
     return (int)LArgNo - (int)RArgNo;
   }
 
   // For instructions, compare their loop depth, and their operand count.  This
   // is pretty loose.
-  if (const Instruction *LInst = dyn_cast<Instruction>(LV)) {
-    const Instruction *RInst = cast<Instruction>(RV);
+  if (const auto *LInst = dyn_cast<Instruction>(LV)) {
+    const auto *RInst = cast<Instruction>(RV);
 
     // Compare loop depths.
     const BasicBlock *LParent = LInst->getParent(),
