@@ -4,7 +4,6 @@
 define i32 @or_self(i32 %x) {
 ; CHECK-LABEL: or_self:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    orl %edi, %edi
 ; CHECK-NEXT:    movl %edi, %eax
 ; CHECK-NEXT:    retq
   %or = or i32 %x, %x
@@ -14,7 +13,6 @@ define i32 @or_self(i32 %x) {
 define <4 x i32> @or_self_vec(<4 x i32> %x) {
 ; CHECK-LABEL: or_self_vec:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    orps %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %or = or <4 x i32> %x, %x
   ret <4 x i32> %or
