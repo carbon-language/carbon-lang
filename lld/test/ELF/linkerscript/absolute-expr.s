@@ -6,6 +6,7 @@
 # RUN:                    bar2 = CONSTANT (MAXPAGESIZE); \
 # RUN:                    bar3 = SIZEOF (.text); \
 # RUN:                    bar4 = SIZEOF_HEADERS; \
+# RUN:                    bar5 = 0x42; \
 # RUN:                    *(.text) \
 # RUN:                  } \
 # RUN:                };" > %t.script
@@ -42,6 +43,15 @@
 # CHECK-NEXT: Symbol {
 # CHECK-NEXT:   Name: bar4
 # CHECK-NEXT:   Value: 0x190
+# CHECK-NEXT:   Size: 0
+# CHECK-NEXT:   Binding: Global
+# CHECK-NEXT:   Type: None
+# CHECK-NEXT:   Other: 0
+# CHECK-NEXT:   Section: Absolute
+# CHECK-NEXT: }
+# CHECK-NEXT: Symbol {
+# CHECK-NEXT:   Name: bar5
+# CHECK-NEXT:   Value: 0x42
 # CHECK-NEXT:   Size: 0
 # CHECK-NEXT:   Binding: Global
 # CHECK-NEXT:   Type: None

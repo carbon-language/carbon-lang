@@ -1682,7 +1682,7 @@ Expr ScriptParser::readPrimary() {
   // Tok is a literal number.
   uint64_t V;
   if (readInteger(Tok, V))
-    return [=](uint64_t Dot) { return V; };
+    return {[=](uint64_t Dot) { return V; }, true};
 
   // Tok is a symbol name.
   if (Tok != "." && !isValidCIdentifier(Tok))
