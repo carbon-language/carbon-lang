@@ -46,9 +46,9 @@ LinkerScriptBase *elf::ScriptBase;
 ScriptConfiguration *elf::ScriptConfig;
 
 template <class ELFT> static void addRegular(SymbolAssignment *Cmd) {
-  Symbol *Sym = Symtab<ELFT>::X->addRegular(Cmd->Name, STV_DEFAULT, nullptr,
+  uint8_t Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
+  Symbol *Sym = Symtab<ELFT>::X->addRegular(Cmd->Name, Visibility, nullptr,
                                             STB_GLOBAL, STT_NOTYPE, 0);
-  Sym->Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
   Cmd->Sym = Sym->body();
 
   // If we have no SECTIONS then we don't have '.' and don't call
