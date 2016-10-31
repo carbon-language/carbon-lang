@@ -806,7 +806,7 @@ public:
     basic_string(initializer_list<value_type> __il, const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
-    ~basic_string();
+    inline ~basic_string();
 
     _LIBCPP_INLINE_VISIBILITY
     operator __self_view() const _NOEXCEPT { return __self_view(data(), size()); }
