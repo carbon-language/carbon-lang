@@ -348,6 +348,7 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
       " "
       "@var_0 = external global i32, align 4"
       "@var_1 = external global i32, align 4"
+      "@var_2 = external global i32, align 4"
       " "
       "declare i32 @unknown(i32, i32, i32)"
       " "
@@ -391,6 +392,7 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
       "define void @f_3() { "
       "  %x = load i32, i32* @var_0"
       "  %y = load i32, i32* @var_1"
+      "  %z = load i32, i32* @var_2"
       "  ret void"
       "} "
       " "
@@ -455,27 +457,12 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
     EXPECT_EQ(Mul4, Mul5) << "Expected " << *Mul4 << " == " << *Mul5;
   };
 
-  RunWithFunctionAndSE("f_2", [&](Function &F, ScalarEvolution &SE) {
-    CheckCommutativeMulExprs(SE, SE.getSCEV(getInstructionByName(F, "x")),
-                             SE.getSCEV(getInstructionByName(F, "y")),
-                             SE.getSCEV(getInstructionByName(F, "z")));
-  });
-
-  RunWithFunctionAndSE("f_3", [&](Function &F, ScalarEvolution &SE) {
-    auto *LoadArg0 = SE.getSCEV(getInstructionByName(F, "x"));
-    auto *LoadArg1 = SE.getSCEV(getInstructionByName(F, "y"));
-
-    auto *MulA = SE.getMulExpr(LoadArg0, LoadArg1);
-    auto *MulB = SE.getMulExpr(LoadArg1, LoadArg0);
-
-    EXPECT_EQ(MulA, MulB) << "MulA = " << *MulA << ", MulB = " << *MulB;
-  });
-
-  RunWithFunctionAndSE("f_4", [&](Function &F, ScalarEvolution &SE) {
-    CheckCommutativeMulExprs(SE, SE.getSCEV(getInstructionByName(F, "x")),
-                             SE.getSCEV(getInstructionByName(F, "y")),
-                             SE.getSCEV(getInstructionByName(F, "z")));
-  });
+  for (StringRef FuncName : {"f_2", "f_3", "f_4"})
+    RunWithFunctionAndSE(FuncName, [&](Function &F, ScalarEvolution &SE) {
+      CheckCommutativeMulExprs(SE, SE.getSCEV(getInstructionByName(F, "x")),
+                               SE.getSCEV(getInstructionByName(F, "y")),
+                               SE.getSCEV(getInstructionByName(F, "z")));
+    });
 }
 
 }  // end anonymous namespace
