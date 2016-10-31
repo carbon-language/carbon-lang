@@ -927,7 +927,7 @@ public:
     basic_string& append(const value_type* __s);
     basic_string& append(size_type __n, value_type __c);
     template <class _ForwardIterator>
-    basic_string& __append_forward_unsafe(_ForwardIterator, _ForwardIterator);
+    inline basic_string& __append_forward_unsafe(_ForwardIterator, _ForwardIterator);
     template<class _InputIterator>
         typename enable_if
         <
