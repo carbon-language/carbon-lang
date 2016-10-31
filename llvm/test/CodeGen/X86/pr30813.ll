@@ -1,4 +1,4 @@
-; RUN: llc -O0 %s -o - | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux-gnu -O0 %s -o - | FileCheck %s
 ; CHECK: patatino:
 ; CHECK:         .cfi_startproc
 ; CHECK:         movzwl  (%rax), %ecx
