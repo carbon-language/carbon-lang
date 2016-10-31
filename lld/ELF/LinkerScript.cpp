@@ -361,17 +361,17 @@ void LinkerScript<ELFT>::createSections(OutputSectionFactory<ELFT> &Factory) {
 template <class ELFT>
 static void assignSectionSymbol(SymbolAssignment *Cmd,
                                 OutputSectionBase<ELFT> *Sec,
-                                typename ELFT::uint Off) {
+                                typename ELFT::uint Value) {
   if (!Cmd->Sym)
     return;
 
   if (auto *Body = dyn_cast<DefinedSynthetic<ELFT>>(Cmd->Sym)) {
     Body->Section = Sec;
-    Body->Value = Cmd->Expression(Sec->getVA() + Off) - Sec->getVA();
+    Body->Value = Cmd->Expression(Value) - Sec->getVA();
     return;
   }
   auto *Body = cast<DefinedRegular<ELFT>>(Cmd->Sym);
-  Body->Value = Cmd->Expression(Sec->getVA() + Off);
+  Body->Value = Cmd->Expression(Value);
 }
 
 template <class ELFT> static bool isTbss(OutputSectionBase<ELFT> *Sec) {
@@ -439,7 +439,7 @@ template <class ELFT> void LinkerScript<ELFT>::process(BaseCommand &Base) {
       CurOutSec->setSize(Dot - CurOutSec->getVA());
       return;
     }
-    assignSectionSymbol<ELFT>(AssignCmd, CurOutSec, Dot - CurOutSec->getVA());
+    assignSectionSymbol<ELFT>(AssignCmd, CurOutSec, Dot);
     return;
   }
 
