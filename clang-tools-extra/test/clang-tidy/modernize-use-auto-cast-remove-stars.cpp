@@ -96,6 +96,17 @@ void f_const_cast() {
   // CHECK-FIXES: auto  &a3 = const_cast<A &>(*a1);
 }
 
+typedef unsigned char xmlChar;
+#define BAD_CAST (xmlChar *)
+
+#define XMLCHAR_CAST(x) (xmlChar *)(x)
+
+#define CAST_IN_MACRO(x)         \
+  do {                           \
+    xmlChar *s = (xmlChar *)(x); \
+  } while (false);
+// CHECK-FIXES: xmlChar *s = (xmlChar *)(x);
+
 void f_cstyle_cast() {
   auto *a = new A();
   C *c1 = (C *)a;
@@ -105,6 +116,15 @@ void f_cstyle_cast() {
   C &c2 = (C &)*a;
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use auto when initializing with a cast to avoid duplicating the type name
   // CHECK-FIXES: auto  &c2 = (C &)*a;
+
+  xmlChar  *s = BAD_CAST "xml";
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use auto when initializing with a cast to avoid duplicating the type name
+  // CHECK-FIXES: auto s = BAD_CAST "xml";
+  xmlChar  *t = XMLCHAR_CAST("xml");
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use auto when initializing with a cast to avoid duplicating the type name
+  // CHECK-FIXES: auto t = XMLCHAR_CAST("xml");
+  CAST_IN_MACRO("xml");
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use auto when initializing with a cast to avoid duplicating the type name
 }
 
 void f_functional_cast() {
