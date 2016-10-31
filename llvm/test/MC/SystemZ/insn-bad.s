@@ -2418,8 +2418,6 @@
 
 #CHECK: error: invalid use of length addressing
 #CHECK: mvck	0(%r1,%r1), 0(2,%r1), %r3
-#CHECK: error: %r0 used in an address
-#CHECK: mvck	0(%r0,%r1), 0(%r1), %r3
 #CHECK: error: invalid operand
 #CHECK: mvck	-1(%r1,%r1), 0(%r1), %r3
 #CHECK: error: invalid operand
@@ -2438,7 +2436,6 @@
 #CHECK: mvck	0(-), 0, %r3
 
 	mvck	0(%r1,%r1), 0(2,%r1), %r3
-	mvck	0(%r0,%r1), 0(%r1), %r3
 	mvck	-1(%r1,%r1), 0(%r1), %r3
 	mvck	4096(%r1,%r1), 0(%r1), %r3
 	mvck	0(%r1,%r1), -1(%r1), %r3
