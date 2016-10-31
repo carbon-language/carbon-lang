@@ -81,6 +81,10 @@ Improvements to clang-tidy
   Warns if an object is used after it has been moved, without an intervening
   reinitialization.
 
+- The `modernize-use-auto
+  <http://clang.llvm.org/extra/clang-tidy/checks/modernize.html>`_ check
+  now warns about variable declarations that are initialized with a cast.
+
 - New `mpi-buffer-deref
   <http://clang.llvm.org/extra/clang-tidy/checks/mpi-buffer-deref.html>`_ check
 
