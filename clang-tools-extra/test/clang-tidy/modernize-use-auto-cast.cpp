@@ -1,5 +1,5 @@
 // RUN: %check_clang_tidy %s modernize-use-auto %t -- -- \
-// RUN:   -std=c++11 -I %S/Inputs/modernize-use-auto
+// RUN:   -std=c++11 -I %S/Inputs/modernize-use-auto -frtti
 
 struct A {
   virtual ~A() {}
