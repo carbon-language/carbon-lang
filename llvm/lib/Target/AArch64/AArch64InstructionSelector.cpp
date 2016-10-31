@@ -478,15 +478,24 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
   MachineFunction &MF = *MBB.getParent();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
-  if (!isPreISelGenericOpcode(I.getOpcode()))
-    return !I.isCopy() || selectCopy(I, TII, MRI, TRI, RBI);
+  unsigned Opcode = I.getOpcode();
+  if (!isPreISelGenericOpcode(I.getOpcode())) {
+    // Certain non-generic instructions also need some special handling.
+
+    if (Opcode ==  TargetOpcode::LOAD_STACK_GUARD)
+      return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
+    else if (I.isCopy())
+      return selectCopy(I, TII, MRI, TRI, RBI);
+    else
+      return true;
+  }
+
 
   if (I.getNumOperands() != I.getNumExplicitOperands()) {
     DEBUG(dbgs() << "Generic instruction has unexpected implicit operands\n");
     return false;
   }
 
-  unsigned Opcode = I.getOpcode();
   LLT Ty =
       I.getOperand(0).isReg() ? MRI.getType(I.getOperand(0).getReg()) : LLT{};
 
