@@ -1971,21 +1971,7 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   switch (BuiltinID) {
   default:
     return false;
-  case X86::BI__builtin_ia32_extractf64x4_mask:
-  case X86::BI__builtin_ia32_extracti64x4_mask:
-  case X86::BI__builtin_ia32_extractf32x8_mask:
-  case X86::BI__builtin_ia32_extracti32x8_mask:
-  case X86::BI__builtin_ia32_extractf64x2_256_mask:
-  case X86::BI__builtin_ia32_extracti64x2_256_mask:
-  case X86::BI__builtin_ia32_extractf32x4_256_mask:
-  case X86::BI__builtin_ia32_extracti32x4_256_mask:
-    i = 1; l = 0; u = 1;
-    break;
   case X86::BI_mm_prefetch:
-  case X86::BI__builtin_ia32_extractf32x4_mask:
-  case X86::BI__builtin_ia32_extracti32x4_mask:
-  case X86::BI__builtin_ia32_extractf64x2_512_mask:
-  case X86::BI__builtin_ia32_extracti64x2_512_mask:
     i = 1; l = 0; u = 3;
     break;
   case X86::BI__builtin_ia32_insertf32x8_mask:

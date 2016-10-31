@@ -8273,40 +8273,40 @@ _mm256_mask_cvtepi64_storeu_epi16 (void * __P, __mmask8 __M, __m256i __A)
 }
 
 #define _mm256_extractf32x4_ps(A, imm) __extension__ ({ \
-  (__m128)__builtin_ia32_extractf32x4_256_mask((__v8sf)(__m256)(A), \
-                                               (int)(imm), \
-                                               (__v4sf)_mm_setzero_ps(), \
-                                               (__mmask8)-1); })
+  (__m128)__builtin_shufflevector((__v8sf)(__m256)(A),           \
+                                  (__v8sf)_mm256_undefined_ps(), \
+                                  ((imm) & 1) ? 4 : 0,           \
+                                  ((imm) & 1) ? 5 : 1,           \
+                                  ((imm) & 1) ? 6 : 2,           \
+                                  ((imm) & 1) ? 7 : 3); })
 
 #define _mm256_mask_extractf32x4_ps(W, U, A, imm) __extension__ ({ \
-  (__m128)__builtin_ia32_extractf32x4_256_mask((__v8sf)(__m256)(A), \
-                                               (int)(imm), \
-                                               (__v4sf)(__m128)(W), \
-                                               (__mmask8)(U)); })
+  (__m128)__builtin_ia32_selectps_128((__mmask8)(U), \
+                                   (__v4sf)_mm256_extractf32x4_ps((A), (imm)), \
+                                   (__v4sf)(W)); })
 
 #define _mm256_maskz_extractf32x4_ps(U, A, imm) __extension__ ({ \
-  (__m128)__builtin_ia32_extractf32x4_256_mask((__v8sf)(__m256)(A), \
-                                               (int)(imm), \
-                                               (__v4sf)_mm_setzero_ps(), \
-                                               (__mmask8)(U)); })
+  (__m128)__builtin_ia32_selectps_128((__mmask8)(U), \
+                                   (__v4sf)_mm256_extractf32x4_ps((A), (imm)), \
+                                   (__v4sf)_mm_setzero_ps()); })
 
 #define _mm256_extracti32x4_epi32(A, imm) __extension__ ({ \
-  (__m128i)__builtin_ia32_extracti32x4_256_mask((__v8si)(__m256i)(A), \
-                                                (int)(imm), \
-                                                (__v4si)_mm_setzero_si128(), \
-                                                (__mmask8)-1); })
+  (__m128i)__builtin_shufflevector((__v8si)(__m256)(A),              \
+                                   (__v8si)_mm256_undefined_si256(), \
+                                   ((imm) & 1) ? 4 : 0,              \
+                                   ((imm) & 1) ? 5 : 1,              \
+                                   ((imm) & 1) ? 6 : 2,              \
+                                   ((imm) & 1) ? 7 : 3); })
 
 #define _mm256_mask_extracti32x4_epi32(W, U, A, imm) __extension__ ({ \
-  (__m128i)__builtin_ia32_extracti32x4_256_mask((__v8si)(__m256i)(A), \
-                                                (int)(imm), \
-                                                (__v4si)(__m128i)(W), \
-                                                (__mmask8)(U)); })
+  (__m128i)__builtin_ia32_selectps_128((__mmask8)(U), \
+                                (__v4si)_mm256_extracti32x4_epi32((A), (imm)), \
+                                (__v4si)(W)); })
 
 #define _mm256_maskz_extracti32x4_epi32(U, A, imm) __extension__ ({ \
-  (__m128i)__builtin_ia32_extracti32x4_256_mask((__v8si)(__m256i)(A), \
-                                                (int)(imm), \
-                                                (__v4si)_mm_setzero_si128(), \
-                                                (__mmask8)(U)); })
+  (__m128i)__builtin_ia32_selectps_128((__mmask8)(U), \
+                                (__v4si)_mm256_extracti32x4_epi32((A), (imm)), \
+                                (__v4si)_mm_setzero_si128()); })
 
 #define _mm256_insertf32x4(A, B, imm) __extension__ ({ \
   (__m256)__builtin_ia32_insertf32x4_256_mask((__v8sf)(__m256)(A), \
