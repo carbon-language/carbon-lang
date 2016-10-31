@@ -7,14 +7,27 @@
 # RUN:                    bar3 = SIZEOF (.text); \
 # RUN:                    bar4 = SIZEOF_HEADERS; \
 # RUN:                    bar5 = 0x42; \
+# RUN:                    bar6 = foo + 1; \
 # RUN:                    *(.text) \
 # RUN:                  } \
 # RUN:                };" > %t.script
 # RUN: ld.lld -o %t.so --script %t.script %t.o -shared
 # RUN: llvm-readobj -t %t.so | FileCheck %s
 
+.global foo
+foo = 0x123
+
 # CHECK:      Symbol {
-# CHECK:        Name: bar1
+# CHECK:        Name: foo
+# CHECK-NEXT:   Value: 0x123
+# CHECK-NEXT:   Size: 0
+# CHECK-NEXT:   Binding: Global
+# CHECK-NEXT:   Type: None
+# CHECK-NEXT:   Other: 0
+# CHECK-NEXT:   Section: Absolute (0xFFF1)
+# CHECK-NEXT: }
+# CHECK-NEXT: Symbol {
+# CHECK-NEXT:   Name: bar1
 # CHECK-NEXT:   Value: 0x4
 # CHECK-NEXT:   Size: 0
 # CHECK-NEXT:   Binding: Global
@@ -57,4 +70,13 @@
 # CHECK-NEXT:   Type: None
 # CHECK-NEXT:   Other: 0
 # CHECK-NEXT:   Section: Absolute
+# CHECK-NEXT: }
+# CHECK-NEXT: Symbol {
+# CHECK-NEXT:   Name: bar6 (30)
+# CHECK-NEXT:   Value: 0x124
+# CHECK-NEXT:   Size: 0
+# CHECK-NEXT:   Binding: Global (0x1)
+# CHECK-NEXT:   Type: None (0x0)
+# CHECK-NEXT:   Other: 0
+# CHECK-NEXT:   Section: Absolute (0xFFF1)
 # CHECK-NEXT: }

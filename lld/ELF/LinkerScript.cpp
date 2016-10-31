@@ -64,7 +64,7 @@ template <class ELFT> static void addSynthetic(SymbolAssignment *Cmd) {
 }
 
 template <class ELFT> static void addSymbol(SymbolAssignment *Cmd) {
-  if (Cmd->Expression.IsAbsolute)
+  if (Cmd->Expression.IsAbsolute())
     addRegular<ELFT>(Cmd);
   else
     addSynthetic<ELFT>(Cmd);
@@ -867,6 +867,12 @@ template <class ELFT> bool LinkerScript<ELFT>::isDefined(StringRef S) {
   return Symtab<ELFT>::X->find(S) != nullptr;
 }
 
+template <class ELFT> bool LinkerScript<ELFT>::isAbsolute(StringRef S) {
+  SymbolBody *Sym = Symtab<ELFT>::X->find(S);
+  auto *DR = dyn_cast_or_null<DefinedRegular<ELFT>>(Sym);
+  return DR && !DR->Section;
+}
+
 // Returns indices of ELF headers containing specific section, identified
 // by Name. Each index is a zero based number of ELF header listed within
 // PHDRS {} script block.
@@ -1424,7 +1430,7 @@ SymbolAssignment *ScriptParser::readProvideOrAssignment(StringRef Tok,
     Cmd = readProvideHidden(true, true);
   }
   if (Cmd && MakeAbsolute)
-    Cmd->Expression.IsAbsolute = true;
+    Cmd->Expression.IsAbsolute = []() { return true; };
   return Cmd;
 }
 
@@ -1432,6 +1438,12 @@ static uint64_t getSymbolValue(StringRef S, uint64_t Dot) {
   if (S == ".")
     return Dot;
   return ScriptBase->getSymbolValue(S);
+}
+
+static bool isAbsolute(StringRef S) {
+  if (S == ".")
+    return false;
+  return ScriptBase->isAbsolute(S);
 }
 
 SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
@@ -1442,7 +1454,7 @@ SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
     // The RHS may be something like "ABSOLUTE(.) & 0xff".
     // Call readExpr1 to read the whole expression.
     E = readExpr1(readParenExpr(), 0);
-    E.IsAbsolute = true;
+    E.IsAbsolute = []() { return true; };
   } else {
     E = readExpr();
   }
@@ -1469,7 +1481,8 @@ static Expr combine(StringRef Op, Expr L, Expr R) {
     };
   }
   if (Op == "+")
-    return [=](uint64_t Dot) { return L(Dot) + R(Dot); };
+    return {[=](uint64_t Dot) { return L(Dot) + R(Dot); },
+            [=]() { return L.IsAbsolute() && R.IsAbsolute(); }};
   if (Op == "-")
     return [=](uint64_t Dot) { return L(Dot) - R(Dot); };
   if (Op == "<<")
@@ -1687,7 +1700,8 @@ Expr ScriptParser::readPrimary() {
   // Tok is a symbol name.
   if (Tok != "." && !isValidCIdentifier(Tok))
     setError("malformed number: " + Tok);
-  return [=](uint64_t Dot) { return getSymbolValue(Tok, Dot); };
+  return {[=](uint64_t Dot) { return getSymbolValue(Tok, Dot); },
+          [=]() { return isAbsolute(Tok); }};
 }
 
 Expr ScriptParser::readTernary(Expr Cond) {
