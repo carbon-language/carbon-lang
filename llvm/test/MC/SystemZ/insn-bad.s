@@ -1,6 +1,8 @@
 # For z10 only.
 # RUN: not llvm-mc -triple s390x-linux-gnu -mcpu=z10 < %s 2> %t
 # RUN: FileCheck < %t %s
+# RUN: not llvm-mc -triple s390x-linux-gnu -mcpu=arch8 < %s 2> %t
+# RUN: FileCheck < %t %s
 
 #CHECK: error: invalid operand
 #CHECK: a	%r0, -1

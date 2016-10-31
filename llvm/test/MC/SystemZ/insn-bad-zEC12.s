@@ -1,6 +1,8 @@
 # For zEC12 only.
 # RUN: not llvm-mc -triple s390x-linux-gnu -mcpu=zEC12 < %s 2> %t
 # RUN: FileCheck < %t %s
+# RUN: not llvm-mc -triple s390x-linux-gnu -mcpu=arch10 < %s 2> %t
+# RUN: FileCheck < %t %s
 
 #CHECK: error: instruction requires: vector
 #CHECK: lcbb	%r0, 0, 0

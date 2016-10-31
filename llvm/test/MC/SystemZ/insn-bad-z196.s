@@ -1,6 +1,8 @@
 # For z196 only.
 # RUN: not llvm-mc -triple s390x-linux-gnu -mcpu=z196 < %s 2> %t
 # RUN: FileCheck < %t %s
+# RUN: not llvm-mc -triple s390x-linux-gnu -mcpu=arch9 < %s 2> %t
+# RUN: FileCheck < %t %s
 
 #CHECK: error: invalid operand
 #CHECK: aghik	%r0, %r1, -32769
