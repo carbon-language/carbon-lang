@@ -1075,8 +1075,14 @@ bool SystemZAsmParser::ParseInstruction(ParseInstructionInfo &Info,
 bool SystemZAsmParser::parseOperand(OperandVector &Operands,
                                     StringRef Mnemonic) {
   // Check if the current operand has a custom associated parser, if so, try to
-  // custom parse the operand, or fallback to the general approach.
+  // custom parse the operand, or fallback to the general approach.  Force all
+  // features to be available during the operand check, or else we will fail to
+  // find the custom parser, and then we will later get an InvalidOperand error
+  // instead of a MissingFeature errror.
+  uint64_t AvailableFeatures = getAvailableFeatures();
+  setAvailableFeatures(~(uint64_t)0);
   OperandMatchResultTy ResTy = MatchOperandParserImpl(Operands, Mnemonic);
+  setAvailableFeatures(AvailableFeatures);
   if (ResTy == MatchOperand_Success)
     return false;
 
