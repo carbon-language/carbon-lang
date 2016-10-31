@@ -82,7 +82,7 @@ Improvements to clang-tidy
   reinitialization.
 
 - The `modernize-use-auto
-  <http://clang.llvm.org/extra/clang-tidy/checks/modernize.html>`_ check
+  <http://clang.llvm.org/extra/clang-tidy/checks/modernize-use-auto.html>`_ check
   now warns about variable declarations that are initialized with a cast.
 
 - New `mpi-buffer-deref
