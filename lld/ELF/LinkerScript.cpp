@@ -64,7 +64,7 @@ template <class ELFT> static void addSynthetic(SymbolAssignment *Cmd) {
 }
 
 template <class ELFT> static void addSymbol(SymbolAssignment *Cmd) {
-  if (Cmd->IsAbsolute)
+  if (Cmd->Expression.IsAbsolute)
     addRegular<ELFT>(Cmd);
   else
     addSynthetic<ELFT>(Cmd);
@@ -1424,7 +1424,7 @@ SymbolAssignment *ScriptParser::readProvideOrAssignment(StringRef Tok,
     Cmd = readProvideHidden(true, true);
   }
   if (Cmd && MakeAbsolute)
-    Cmd->IsAbsolute = true;
+    Cmd->Expression.IsAbsolute = true;
   return Cmd;
 }
 
@@ -1436,20 +1436,19 @@ static uint64_t getSymbolValue(StringRef S, uint64_t Dot) {
 
 SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
   StringRef Op = next();
-  bool IsAbsolute = false;
   Expr E;
   assert(Op == "=" || Op == "+=");
   if (consume("ABSOLUTE")) {
     // The RHS may be something like "ABSOLUTE(.) & 0xff".
     // Call readExpr1 to read the whole expression.
     E = readExpr1(readParenExpr(), 0);
-    IsAbsolute = true;
+    E.IsAbsolute = true;
   } else {
     E = readExpr();
   }
   if (Op == "+=")
     E = [=](uint64_t Dot) { return getSymbolValue(Name, Dot) + E(Dot); };
-  return new SymbolAssignment(Name, E, IsAbsolute);
+  return new SymbolAssignment(Name, E);
 }
 
 // This is an operator-precedence parser to parse a linker
@@ -1671,8 +1670,9 @@ Expr ScriptParser::readPrimary() {
   }
   if (Tok == "ALIGNOF") {
     StringRef Name = readParenLiteral();
-    return
-        [=](uint64_t Dot) { return ScriptBase->getOutputSectionAlign(Name); };
+    return {
+        [=](uint64_t Dot) { return ScriptBase->getOutputSectionAlign(Name); },
+        true};
   }
   if (Tok == "SIZEOF_HEADERS")
     return [=](uint64_t Dot) { return ScriptBase->getHeaderSize(); };
