@@ -349,6 +349,8 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
       "@var_0 = external global i32, align 4"
       "@var_1 = external global i32, align 4"
       " "
+      "declare i32 @unknown(i32, i32, i32)"
+      " "
       "define void @f_1(i8* nocapture %arr, i32 %n, i32* %A, i32* %B) "
       "    local_unnamed_addr { "
       "entry: "
@@ -391,6 +393,13 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
       "  %y = load i32, i32* @var_1"
       "  ret void"
       "} "
+      " "
+      "define void @f_4(i32 %a, i32 %b, i32 %c) { "
+      "  %x = call i32 @unknown(i32 %a, i32 %b, i32 %c)"
+      "  %y = call i32 @unknown(i32 %b, i32 %c, i32 %a)"
+      "  %z = call i32 @unknown(i32 %c, i32 %a, i32 %b)"
+      "  ret void"
+      "} "
       ,
       Err, C);
 
@@ -419,22 +428,18 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
     EXPECT_TRUE(isa<SCEVAddRecExpr>(SecondExprForIV0));
   });
 
-  RunWithFunctionAndSE("f_2", [&](Function &F, ScalarEvolution &SE) {
-    auto *LoadArg0 = SE.getSCEV(getInstructionByName(F, "x"));
-    auto *LoadArg1 = SE.getSCEV(getInstructionByName(F, "y"));
-    auto *LoadArg2 = SE.getSCEV(getInstructionByName(F, "z"));
+  auto CheckCommutativeMulExprs = [&](ScalarEvolution &SE, const SCEV *A,
+                                      const SCEV *B, const SCEV *C) {
+    EXPECT_EQ(SE.getMulExpr(A, B), SE.getMulExpr(B, A));
+    EXPECT_EQ(SE.getMulExpr(B, C), SE.getMulExpr(C, B));
+    EXPECT_EQ(SE.getMulExpr(A, C), SE.getMulExpr(C, A));
 
-    auto *MulA = SE.getMulExpr(LoadArg0, LoadArg1);
-    auto *MulB = SE.getMulExpr(LoadArg1, LoadArg0);
-
-    EXPECT_EQ(MulA, MulB);
-
-    SmallVector<const SCEV *, 3> Ops0 = {LoadArg0, LoadArg1, LoadArg2};
-    SmallVector<const SCEV *, 3> Ops1 = {LoadArg0, LoadArg2, LoadArg1};
-    SmallVector<const SCEV *, 3> Ops2 = {LoadArg1, LoadArg0, LoadArg2};
-    SmallVector<const SCEV *, 3> Ops3 = {LoadArg1, LoadArg2, LoadArg0};
-    SmallVector<const SCEV *, 3> Ops4 = {LoadArg2, LoadArg1, LoadArg0};
-    SmallVector<const SCEV *, 3> Ops5 = {LoadArg2, LoadArg0, LoadArg1};
+    SmallVector<const SCEV *, 3> Ops0 = {A, B, C};
+    SmallVector<const SCEV *, 3> Ops1 = {A, C, B};
+    SmallVector<const SCEV *, 3> Ops2 = {B, A, C};
+    SmallVector<const SCEV *, 3> Ops3 = {B, C, A};
+    SmallVector<const SCEV *, 3> Ops4 = {C, B, A};
+    SmallVector<const SCEV *, 3> Ops5 = {C, A, B};
 
     auto *Mul0 = SE.getMulExpr(Ops0);
     auto *Mul1 = SE.getMulExpr(Ops1);
@@ -443,11 +448,17 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
     auto *Mul4 = SE.getMulExpr(Ops4);
     auto *Mul5 = SE.getMulExpr(Ops5);
 
-    EXPECT_EQ(Mul0, Mul1);
-    EXPECT_EQ(Mul1, Mul2);
-    EXPECT_EQ(Mul2, Mul3);
-    EXPECT_EQ(Mul3, Mul4);
-    EXPECT_EQ(Mul4, Mul5);
+    EXPECT_EQ(Mul0, Mul1) << "Expected " << *Mul0 << " == " << *Mul1;
+    EXPECT_EQ(Mul1, Mul2) << "Expected " << *Mul1 << " == " << *Mul2;
+    EXPECT_EQ(Mul2, Mul3) << "Expected " << *Mul2 << " == " << *Mul3;
+    EXPECT_EQ(Mul3, Mul4) << "Expected " << *Mul3 << " == " << *Mul4;
+    EXPECT_EQ(Mul4, Mul5) << "Expected " << *Mul4 << " == " << *Mul5;
+  };
+
+  RunWithFunctionAndSE("f_2", [&](Function &F, ScalarEvolution &SE) {
+    CheckCommutativeMulExprs(SE, SE.getSCEV(getInstructionByName(F, "x")),
+                             SE.getSCEV(getInstructionByName(F, "y")),
+                             SE.getSCEV(getInstructionByName(F, "z")));
   });
 
   RunWithFunctionAndSE("f_3", [&](Function &F, ScalarEvolution &SE) {
@@ -458,6 +469,12 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
     auto *MulB = SE.getMulExpr(LoadArg1, LoadArg0);
 
     EXPECT_EQ(MulA, MulB) << "MulA = " << *MulA << ", MulB = " << *MulB;
+  });
+
+  RunWithFunctionAndSE("f_4", [&](Function &F, ScalarEvolution &SE) {
+    CheckCommutativeMulExprs(SE, SE.getSCEV(getInstructionByName(F, "x")),
+                             SE.getSCEV(getInstructionByName(F, "y")),
+                             SE.getSCEV(getInstructionByName(F, "z")));
   });
 }
 

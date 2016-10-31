@@ -62,6 +62,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AssumptionCache.h"
@@ -453,9 +454,29 @@ bool SCEVUnknown::isOffsetOf(Type *&CTy, Constant *&FieldNo) const {
 //                               SCEV Utilities
 //===----------------------------------------------------------------------===//
 
-static int CompareValueComplexity(const LoopInfo *const LI, Value *LV,
-                                  Value *RV, unsigned DepthLeft = 2) {
-  if (DepthLeft == 0)
+/// Compare the two values \p LV and \p RV in terms of their "complexity" where
+/// "complexity" is a partial (and somewhat ad-hoc) relation used to order
+/// operands in SCEV expressions.  \p EqCache is a set of pairs of values that
+/// have been previously deemed to be "equally complex" by this routine.  It is
+/// intended to avoid exponential time complexity in cases like:
+///
+///   %a = f(%x, %y)
+///   %b = f(%a, %a)
+///   %c = f(%b, %b)
+///
+///   %d = f(%x, %y)
+///   %e = f(%d, %d)
+///   %f = f(%e, %e)
+///
+///   CompareValueComplexity(%f, %c)
+///
+/// Since we do not continue running this routine on expression trees once we
+/// have seen unequal values, there is no need to track them in the cache.
+static int
+CompareValueComplexity(SmallSet<std::pair<Value *, Value *>, 8> &EqCache,
+                       const LoopInfo *const LI, Value *LV, Value *RV,
+                       unsigned DepthLeft = 2) {
+  if (DepthLeft == 0 || EqCache.count({LV, RV}))
     return 0;
 
   // Order pointer values after integer values. This helps SCEVExpander form
@@ -510,14 +531,17 @@ static int CompareValueComplexity(const LoopInfo *const LI, Value *LV,
     // Compare the number of operands.
     unsigned LNumOps = LInst->getNumOperands(),
              RNumOps = RInst->getNumOperands();
-    if (LNumOps != RNumOps || LNumOps != 1)
+    if (LNumOps != RNumOps)
       return (int)LNumOps - (int)RNumOps;
 
-    // We only bother "recursing" if we have one operand to look at (so we don't
-    // really recurse as much as we iterate).  We can consider expanding this
-    // logic in the future.
-    return CompareValueComplexity(LI, LInst->getOperand(0),
-                                  RInst->getOperand(0), DepthLeft - 1);
+    for (unsigned Idx : seq(0u, LNumOps)) {
+      int Result =
+          CompareValueComplexity(EqCache, LI, LInst->getOperand(Idx),
+                                 RInst->getOperand(Idx), DepthLeft - 1);
+      if (Result != 0)
+	return Result;
+      EqCache.insert({LV, RV});
+    }
   }
 
   return 0;
@@ -545,7 +569,8 @@ static int CompareSCEVComplexity(const LoopInfo *const LI, const SCEV *LHS,
     const SCEVUnknown *LU = cast<SCEVUnknown>(LHS);
     const SCEVUnknown *RU = cast<SCEVUnknown>(RHS);
 
-    return CompareValueComplexity(LI, LU->getValue(), RU->getValue());
+    SmallSet<std::pair<Value *, Value *>, 8> EqCache;
+    return CompareValueComplexity(EqCache, LI, LU->getValue(), RU->getValue());
   }
 
   case scConstant: {
