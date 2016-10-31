@@ -748,6 +748,7 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
     return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
   }
 
+  case TargetOpcode::G_PTRTOINT:
   case TargetOpcode::G_TRUNC: {
     const LLT DstTy = MRI.getType(I.getOperand(0).getReg());
     const LLT SrcTy = MRI.getType(I.getOperand(1).getReg());
@@ -918,7 +919,6 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
 
 
   case TargetOpcode::G_INTTOPTR:
-  case TargetOpcode::G_PTRTOINT:
   case TargetOpcode::G_BITCAST:
     return selectCopy(I, TII, MRI, TRI, RBI);
 
