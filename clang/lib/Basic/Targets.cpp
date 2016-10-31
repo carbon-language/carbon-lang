@@ -6941,9 +6941,13 @@ public:
     CPU = Name;
     bool CPUKnown = llvm::StringSwitch<bool>(Name)
       .Case("z10", true)
+      .Case("arch8", true)
       .Case("z196", true)
+      .Case("arch9", true)
       .Case("zEC12", true)
+      .Case("arch10", true)
       .Case("z13", true)
+      .Case("arch11", true)
       .Default(false);
 
     return CPUKnown;
@@ -6952,9 +6956,9 @@ public:
   initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
                  StringRef CPU,
                  const std::vector<std::string> &FeaturesVec) const override {
-    if (CPU == "zEC12")
+    if (CPU == "zEC12" || CPU == "arch10")
       Features["transactional-execution"] = true;
-    if (CPU == "z13") {
+    if (CPU == "z13" || CPU == "arch11") {
       Features["transactional-execution"] = true;
       Features["vector"] = true;
     }
