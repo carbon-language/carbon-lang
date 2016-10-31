@@ -1623,7 +1623,7 @@ Expr ScriptParser::readPrimary() {
   }
   if (Tok == "CONSTANT") {
     StringRef Name = readParenLiteral();
-    return [=](uint64_t Dot) { return getConstant(Name); };
+    return {[=](uint64_t Dot) { return getConstant(Name); }, true};
   }
   if (Tok == "DEFINED") {
     expect("(");
@@ -1666,7 +1666,9 @@ Expr ScriptParser::readPrimary() {
   }
   if (Tok == "SIZEOF") {
     StringRef Name = readParenLiteral();
-    return [=](uint64_t Dot) { return ScriptBase->getOutputSectionSize(Name); };
+    return {
+        [=](uint64_t Dot) { return ScriptBase->getOutputSectionSize(Name); },
+        true};
   }
   if (Tok == "ALIGNOF") {
     StringRef Name = readParenLiteral();
@@ -1675,7 +1677,7 @@ Expr ScriptParser::readPrimary() {
         true};
   }
   if (Tok == "SIZEOF_HEADERS")
-    return [=](uint64_t Dot) { return ScriptBase->getHeaderSize(); };
+    return {[=](uint64_t Dot) { return ScriptBase->getHeaderSize(); }, true};
 
   // Tok is a literal number.
   uint64_t V;
