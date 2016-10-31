@@ -1074,7 +1074,7 @@ __m256 test_mm512_maskz_extractf32x8_ps(__mmask8 __U, __m512 __A) {
 
 __m128d test_mm512_extractf64x2_pd(__m512d __A) {
   // CHECK-LABEL: @test_mm512_extractf64x2_pd
-  // CHECK: shufflevector <8 x double> %0, <8 x double> undef, <2 x i32> <i32 6, i32 7>
+  // CHECK: shufflevector <8 x double> %{{.*}}, <8 x double> undef, <2 x i32> <i32 6, i32 7>
   return _mm512_extractf64x2_pd(__A, 3); 
 }
 
