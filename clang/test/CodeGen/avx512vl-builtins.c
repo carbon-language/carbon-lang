@@ -6582,14 +6582,14 @@ __m128i test_mm256_extracti32x4_epi32(__m256i __A) {
 __m128i test_mm256_mask_extracti32x4_epi32(__m128i __W, __mmask8 __U, __m256i __A) {
   // CHECK-LABEL: @test_mm256_mask_extracti32x4_epi32
   // CHECK: shufflevector <8 x i32> %{{.*}}, <8 x i32> %{{.*}}, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-  // CHECK: select <4 x i1> %{{.*}}, <4 x float> %{{.*}}, <4 x float> %{{.*}}
+  // CHECK: select <4 x i1> %{{.*}}, <4 x i32> %{{.*}}, <4 x i32> %{{.*}}
   return _mm256_mask_extracti32x4_epi32(__W, __U, __A, 1); 
 }
 
 __m128i test_mm256_maskz_extracti32x4_epi32(__mmask8 __U, __m256i __A) {
   // CHECK-LABEL: @test_mm256_maskz_extracti32x4_epi32
   // CHECK: shufflevector <8 x i32> %{{.*}}, <8 x i32> %{{.*}}, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-  // CHECK: select <4 x i1> %{{.*}}, <4 x float> %{{.*}}, <4 x float> %{{.*}}
+  // CHECK: select <4 x i1> %{{.*}}, <4 x i32> %{{.*}}, <4 x i32> %{{.*}}
   return _mm256_maskz_extracti32x4_epi32(__U, __A, 1); 
 }
 

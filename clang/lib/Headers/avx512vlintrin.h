@@ -8299,12 +8299,12 @@ _mm256_mask_cvtepi64_storeu_epi16 (void * __P, __mmask8 __M, __m256i __A)
                                    ((imm) & 1) ? 7 : 3); })
 
 #define _mm256_mask_extracti32x4_epi32(W, U, A, imm) __extension__ ({ \
-  (__m128i)__builtin_ia32_selectps_128((__mmask8)(U), \
+  (__m128i)__builtin_ia32_selectd_128((__mmask8)(U), \
                                 (__v4si)_mm256_extracti32x4_epi32((A), (imm)), \
                                 (__v4si)(W)); })
 
 #define _mm256_maskz_extracti32x4_epi32(U, A, imm) __extension__ ({ \
-  (__m128i)__builtin_ia32_selectps_128((__mmask8)(U), \
+  (__m128i)__builtin_ia32_selectd_128((__mmask8)(U), \
                                 (__v4si)_mm256_extracti32x4_epi32((A), (imm)), \
                                 (__v4si)_mm_setzero_si128()); })
 
