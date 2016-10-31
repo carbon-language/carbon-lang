@@ -625,8 +625,18 @@ template <>
 struct _PathCVT<char> {
 
     template <class _Iter>
-    static void __append_range(string& __dest, _Iter __b, _Iter __e) {
-        __dest.append(__b, __e);
+    static typename enable_if<
+        __is_exactly_input_iterator<_Iter>::value
+    >::type __append_range(string& __dest, _Iter __b, _Iter __e) {
+        for (; __b != __e; ++__b)
+            __dest.push_back(*__b);
+    }
+
+    template <class _Iter>
+    static typename enable_if<
+        __is_forward_iterator<_Iter>::value
+    >::type __append_range(string& __dest, _Iter __b, _Iter __e) {
+        __dest.__append_forward_unsafe(__b, __e);
     }
 
     template <class _Iter>
