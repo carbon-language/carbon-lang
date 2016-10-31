@@ -5636,6 +5636,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // definitions.
   Args.AddAllArgs(CmdArgs, options::OPT_fmodule_map_file);
 
+  // -fbuiltin-module-map can be used to load the clang
+  // builtin headers modulemap file.
+  if (Args.hasArg(options::OPT_fbuiltin_module_map)) {
+    SmallString<128> BuiltinModuleMap(getToolChain().getDriver().ResourceDir);
+    llvm::sys::path::append(BuiltinModuleMap, "include");
+    llvm::sys::path::append(BuiltinModuleMap, "module.modulemap");
+    if (llvm::sys::fs::exists(BuiltinModuleMap)) {
+      CmdArgs.push_back(Args.MakeArgString("-fmodule-map-file=" +
+                                           BuiltinModuleMap));
+    }
+  }
+
   // -fmodule-file can be used to specify files containing precompiled modules.
   if (HaveAnyModules)
     Args.AddAllArgs(CmdArgs, options::OPT_fmodule_file);
