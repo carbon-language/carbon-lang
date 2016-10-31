@@ -386,7 +386,6 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
       "  ret void "
       "} "
       " "
-      " "
       "define void @f_3() { "
       "  %x = load i32, i32* @var_0"
       "  %y = load i32, i32* @var_1"
@@ -398,14 +397,19 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
   assert(M && "Could not parse module?");
   assert(!verifyModule(*M) && "Must have been well formed!");
 
-  {
-    auto *F = M->getFunction("f_1");
-    ASSERT_NE(F, nullptr);
+  auto RunWithFunctionAndSE =
+      [&](StringRef FuncName,
+          function_ref<void(Function &F, ScalarEvolution& SE)> Test) {
+        auto *F = M->getFunction(FuncName);
+        ASSERT_NE(F, nullptr) << "Could not find " << FuncName;
+        ScalarEvolution SE = buildSE(*F);
+        Test(*F, SE);
+      };
 
-    auto *IV0 = getInstructionByName(*F, "iv0");
-    auto *IV0Inc = getInstructionByName(*F, "iv0.inc");
+  RunWithFunctionAndSE("f_1", [&](Function &F, ScalarEvolution &SE) {
+    auto *IV0 = getInstructionByName(F, "iv0");
+    auto *IV0Inc = getInstructionByName(F, "iv0.inc");
 
-    ScalarEvolution SE = buildSE(*F);
     auto *FirstExprForIV0 = SE.getSCEV(IV0);
     auto *FirstExprForIV0Inc = SE.getSCEV(IV0Inc);
     auto *SecondExprForIV0 = SE.getSCEV(IV0);
@@ -413,29 +417,24 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
     EXPECT_TRUE(isa<SCEVAddRecExpr>(FirstExprForIV0));
     EXPECT_TRUE(isa<SCEVAddRecExpr>(FirstExprForIV0Inc));
     EXPECT_TRUE(isa<SCEVAddRecExpr>(SecondExprForIV0));
-  }
+  });
 
-  {
-    auto *F = M->getFunction("f_2");
-    ASSERT_NE(F, nullptr);
-
-    ScalarEvolution SE = buildSE(*F);
-
-    auto *LoadArg0 = SE.getSCEV(getInstructionByName(*F, "x"));
-    auto *LoadArg1 = SE.getSCEV(getInstructionByName(*F, "y"));
-    auto *LoadArg2 = SE.getSCEV(getInstructionByName(*F, "z"));
+  RunWithFunctionAndSE("f_2", [&](Function &F, ScalarEvolution &SE) {
+    auto *LoadArg0 = SE.getSCEV(getInstructionByName(F, "x"));
+    auto *LoadArg1 = SE.getSCEV(getInstructionByName(F, "y"));
+    auto *LoadArg2 = SE.getSCEV(getInstructionByName(F, "z"));
 
     auto *MulA = SE.getMulExpr(LoadArg0, LoadArg1);
     auto *MulB = SE.getMulExpr(LoadArg1, LoadArg0);
 
     EXPECT_EQ(MulA, MulB);
 
-    SmallVector<const SCEV *, 3> Ops0 = { LoadArg0, LoadArg1, LoadArg2 };
-    SmallVector<const SCEV *, 3> Ops1 = { LoadArg0, LoadArg2, LoadArg1 };
-    SmallVector<const SCEV *, 3> Ops2 = { LoadArg1, LoadArg0, LoadArg2 };
-    SmallVector<const SCEV *, 3> Ops3 = { LoadArg1, LoadArg2, LoadArg0 };
-    SmallVector<const SCEV *, 3> Ops4 = { LoadArg2, LoadArg1, LoadArg0 };
-    SmallVector<const SCEV *, 3> Ops5 = { LoadArg2, LoadArg0, LoadArg1 };
+    SmallVector<const SCEV *, 3> Ops0 = {LoadArg0, LoadArg1, LoadArg2};
+    SmallVector<const SCEV *, 3> Ops1 = {LoadArg0, LoadArg2, LoadArg1};
+    SmallVector<const SCEV *, 3> Ops2 = {LoadArg1, LoadArg0, LoadArg2};
+    SmallVector<const SCEV *, 3> Ops3 = {LoadArg1, LoadArg2, LoadArg0};
+    SmallVector<const SCEV *, 3> Ops4 = {LoadArg2, LoadArg1, LoadArg0};
+    SmallVector<const SCEV *, 3> Ops5 = {LoadArg2, LoadArg0, LoadArg1};
 
     auto *Mul0 = SE.getMulExpr(Ops0);
     auto *Mul1 = SE.getMulExpr(Ops1);
@@ -449,21 +448,17 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
     EXPECT_EQ(Mul2, Mul3);
     EXPECT_EQ(Mul3, Mul4);
     EXPECT_EQ(Mul4, Mul5);
-  }
+  });
 
-  {
-    auto *F = M->getFunction("f_3");
-    ASSERT_NE(F, nullptr);
-
-    ScalarEvolution SE = buildSE(*F);
-    auto *LoadArg0 = SE.getSCEV(getInstructionByName(*F, "x"));
-    auto *LoadArg1 = SE.getSCEV(getInstructionByName(*F, "y"));
+  RunWithFunctionAndSE("f_3", [&](Function &F, ScalarEvolution &SE) {
+    auto *LoadArg0 = SE.getSCEV(getInstructionByName(F, "x"));
+    auto *LoadArg1 = SE.getSCEV(getInstructionByName(F, "y"));
 
     auto *MulA = SE.getMulExpr(LoadArg0, LoadArg1);
     auto *MulB = SE.getMulExpr(LoadArg1, LoadArg0);
 
     EXPECT_EQ(MulA, MulB) << "MulA = " << *MulA << ", MulB = " << *MulB;
-  }
+  });
 }
 
 }  // end anonymous namespace
