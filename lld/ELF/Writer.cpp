@@ -49,6 +49,7 @@ public:
 private:
   typedef PhdrEntry<ELFT> Phdr;
 
+  void createSyntheticSections();
   void copyLocalSymbols();
   void addReservedSymbols();
   void addInputSec(InputSectionBase<ELFT> *S);
@@ -126,10 +127,92 @@ template <class ELFT> static bool needsInterpSection() {
 }
 
 template <class ELFT> void elf::writeResult() {
-  typedef typename ELFT::uint uintX_t;
-  typedef typename ELFT::Ehdr Elf_Ehdr;
+  Writer<ELFT>().run();
+}
 
-  // Initialize all pointers with NULL.
+template <class ELFT> static std::vector<DefinedCommon *> getCommonSymbols() {
+  std::vector<DefinedCommon *> V;
+  for (Symbol *S : Symtab<ELFT>::X->getSymbols())
+    if (auto *B = dyn_cast<DefinedCommon>(S->body()))
+      V.push_back(B);
+  return V;
+}
+
+// The main function of the writer.
+template <class ELFT> void Writer<ELFT>::run() {
+  createSyntheticSections();
+  addReservedSymbols();
+
+  if (Target->NeedsThunks)
+    forEachRelSec(createThunks<ELFT>);
+
+  InputSection<ELFT> Common =
+      InputSection<ELFT>::createCommonInputSection(getCommonSymbols<ELFT>());
+  InputSection<ELFT>::CommonInputSection = &Common;
+
+  Script<ELFT>::X->OutputSections = &OutputSections;
+  if (ScriptConfig->HasSections) {
+    Script<ELFT>::X->createSections(Factory);
+  } else {
+    createSections();
+    Script<ELFT>::X->processCommands(Factory);
+  }
+
+  if (Config->Discard != DiscardPolicy::All)
+    copyLocalSymbols();
+
+  finalizeSections();
+  if (HasError)
+    return;
+
+  if (Config->Relocatable) {
+    assignFileOffsets();
+  } else {
+    Phdrs = Script<ELFT>::X->hasPhdrsCommands() ? Script<ELFT>::X->createPhdrs()
+                                                : createPhdrs();
+    fixHeaders();
+    if (ScriptConfig->HasSections) {
+      Script<ELFT>::X->assignAddresses(Phdrs);
+    } else {
+      fixSectionAlignments();
+      assignAddresses();
+    }
+
+    if (!Config->OFormatBinary)
+      assignFileOffsets();
+    else
+      assignFileOffsetsBinary();
+
+    setPhdrs();
+    fixAbsoluteSymbols();
+  }
+
+  openFile();
+  if (HasError)
+    return;
+  if (!Config->OFormatBinary) {
+    writeHeader();
+    writeSections();
+  } else {
+    writeSectionsBinary();
+  }
+  writeBuildId();
+  if (HasError)
+    return;
+  if (auto EC = Buffer->commit())
+    error(EC, "failed to write to the output file");
+  if (Config->ExitEarly) {
+    // Flush the output streams and exit immediately.  A full shutdown is a good
+    // test that we are keeping track of all allocated memory, but actually
+    // freeing it is a waste of time in a regular linker run.
+    exitLld(0);
+  }
+}
+
+// Initialize Out<ELFT> members.
+template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
+  // Initialize all pointers with NULL. This is needed because
+  // you can call lld::elf::main more than once as a library.
   memset(&Out<ELFT>::First, 0, sizeof(Out<ELFT>));
 
   // Create singleton output sections.
@@ -202,86 +285,6 @@ template <class ELFT> void elf::writeResult() {
   else if (Config->BuildId == BuildIdKind::Hexstring)
     In<ELFT>::BuildId = make<BuildIdHexstring<ELFT>>();
   In<ELFT>::Sections = {In<ELFT>::BuildId};
-
-  Writer<ELFT>().run();
-}
-
-template <class ELFT> static std::vector<DefinedCommon *> getCommonSymbols() {
-  std::vector<DefinedCommon *> V;
-  for (Symbol *S : Symtab<ELFT>::X->getSymbols())
-    if (auto *B = dyn_cast<DefinedCommon>(S->body()))
-      V.push_back(B);
-  return V;
-}
-
-// The main function of the writer.
-template <class ELFT> void Writer<ELFT>::run() {
-  addReservedSymbols();
-
-  if (Target->NeedsThunks)
-    forEachRelSec(createThunks<ELFT>);
-
-  InputSection<ELFT> Common =
-      InputSection<ELFT>::createCommonInputSection(getCommonSymbols<ELFT>());
-  InputSection<ELFT>::CommonInputSection = &Common;
-
-  Script<ELFT>::X->OutputSections = &OutputSections;
-  if (ScriptConfig->HasSections) {
-    Script<ELFT>::X->createSections(Factory);
-  } else {
-    createSections();
-    Script<ELFT>::X->processCommands(Factory);
-  }
-
-  if (Config->Discard != DiscardPolicy::All)
-    copyLocalSymbols();
-
-  finalizeSections();
-  if (HasError)
-    return;
-
-  if (Config->Relocatable) {
-    assignFileOffsets();
-  } else {
-    Phdrs = Script<ELFT>::X->hasPhdrsCommands() ? Script<ELFT>::X->createPhdrs()
-                                                : createPhdrs();
-    fixHeaders();
-    if (ScriptConfig->HasSections) {
-      Script<ELFT>::X->assignAddresses(Phdrs);
-    } else {
-      fixSectionAlignments();
-      assignAddresses();
-    }
-
-    if (!Config->OFormatBinary)
-      assignFileOffsets();
-    else
-      assignFileOffsetsBinary();
-
-    setPhdrs();
-    fixAbsoluteSymbols();
-  }
-
-  openFile();
-  if (HasError)
-    return;
-  if (!Config->OFormatBinary) {
-    writeHeader();
-    writeSections();
-  } else {
-    writeSectionsBinary();
-  }
-  writeBuildId();
-  if (HasError)
-    return;
-  if (auto EC = Buffer->commit())
-    error(EC, "failed to write to the output file");
-  if (Config->ExitEarly) {
-    // Flush the output streams and exit immediately.  A full shutdown is a good
-    // test that we are keeping track of all allocated memory, but actually
-    // freeing it is a waste of time in a regular linker run.
-    exitLld(0);
-  }
 }
 
 template <class ELFT>
