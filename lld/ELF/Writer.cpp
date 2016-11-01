@@ -247,7 +247,6 @@ template <class ELFT> void elf::writeResult() {
   In<ELFT>::Sections = {BuildId.get()};
 
   Writer<ELFT>().run();
-  Out<ELFT>::Pool.clear();
 }
 
 template <class ELFT> static std::vector<DefinedCommon *> getCommonSymbols() {
