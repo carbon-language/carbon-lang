@@ -1310,7 +1310,7 @@ private:
 
   TokenType determinePlusMinusCaretUsage(const FormatToken &Tok) {
     const FormatToken *PrevToken = Tok.getPreviousNonComment();
-    if (!PrevToken || PrevToken->is(TT_CastRParen))
+    if (!PrevToken || PrevToken->isOneOf(TT_CastRParen, TT_UnaryOperator))
       return TT_UnaryOperator;
 
     // Use heuristics to recognize unary operators.
