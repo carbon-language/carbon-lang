@@ -966,11 +966,12 @@ void PPCTargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_PPC_ADDR16_LO:
     write16be(Loc, applyPPCLo(Val));
     break;
-  case R_PPC_REL24:
-    or32be(Loc, Val & 0x3FFFFFC);
-    break;
+  case R_PPC_ADDR32:
   case R_PPC_REL32:
     write32be(Loc, Val);
+    break;
+  case R_PPC_REL24:
+    or32be(Loc, Val & 0x3FFFFFC);
     break;
   default:
     fatal("unrecognized reloc " + Twine(Type));

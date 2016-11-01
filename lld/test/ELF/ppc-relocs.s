@@ -51,3 +51,14 @@ mystr:
 # CHECK: Disassembly of section .R_PPC_REL32:
 # CHECK: .FR_PPC_REL32:
 # CHECK:    11018:       00 00 00 04
+
+.section .R_PPC_ADDR32,"ax",@progbits
+.globl .FR_PPC_ADDR32
+.FR_PPC_ADDR32:
+  .long .Lfoox2
+.section .R_PPC_ADDR32_2,"ax",@progbits
+.Lfoox2:
+
+# CHECK: Disassembly of section .R_PPC_ADDR32:
+# CHECK: .FR_PPC_ADDR32:
+# CHECK:    1101c:       00 01 10 20
