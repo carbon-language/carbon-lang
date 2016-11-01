@@ -413,9 +413,10 @@ static Value *foldSelectCttzCtlz(ICmpInst *ICI, Value *TrueVal, Value *FalseVal,
   return nullptr;
 }
 
-/// Visit a SelectInst that has an ICmpInst as its first operand.
-Instruction *InstCombiner::foldSelectInstWithICmp(SelectInst &SI,
-                                                  ICmpInst *ICI) {
+/// Return true if we find and adjust an icmp+select pattern where the compare
+/// is with a constant that can be incremented or decremented to match the
+/// minimum or maximum idiom.
+static bool adjustMinMax(SelectInst &SI, ICmpInst *ICI) {
   bool Changed = false;
   ICmpInst::Predicate Pred = ICI->getPredicate();
   Value *CmpLHS = ICI->getOperand(0);
@@ -423,9 +424,7 @@ Instruction *InstCombiner::foldSelectInstWithICmp(SelectInst &SI,
   Value *TrueVal = SI.getTrueValue();
   Value *FalseVal = SI.getFalseValue();
 
-  // Check cases where the comparison is with a constant that
-  // can be adjusted to fit the min/max idiom. We may move or edit ICI
-  // here, so make sure the select is the only user.
+  // We may move or edit ICI here, so make sure the select is the only user.
   if (ICI->hasOneUse())
     if (ConstantInt *CI = dyn_cast<ConstantInt>(CmpRHS)) {
       switch (Pred) {
@@ -510,6 +509,20 @@ Instruction *InstCombiner::foldSelectInstWithICmp(SelectInst &SI,
       }
       }
     }
+
+  return Changed;
+}
+
+/// Visit a SelectInst that has an ICmpInst as its first operand.
+Instruction *InstCombiner::foldSelectInstWithICmp(SelectInst &SI,
+                                                  ICmpInst *ICI) {
+  bool Changed = adjustMinMax(SI, ICI);
+
+  ICmpInst::Predicate Pred = ICI->getPredicate();
+  Value *CmpLHS = ICI->getOperand(0);
+  Value *CmpRHS = ICI->getOperand(1);
+  Value *TrueVal = SI.getTrueValue();
+  Value *FalseVal = SI.getFalseValue();
 
   // Transform (X >s -1) ? C1 : C2 --> ((X >>s 31) & (C2 - C1)) + C1
   // and       (X <s  0) ? C2 : C1 --> ((X >>s 31) & (C2 - C1)) + C1
