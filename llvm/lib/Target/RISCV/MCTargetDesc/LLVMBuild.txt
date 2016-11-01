@@ -1,4 +1,4 @@
-;===- ./lib/Target/RISCV/LLVMBuild.txt -------------------------*- Conf -*--===;
+;===- ./lib/Target/RISCV/MCTargetDesc/LLVMBuild.txt ------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,17 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = TargetInfo MCTargetDesc
-
 [component_0]
-type = TargetGroup
-name = RISCV
-parent = Target
-
-[component_1]
 type = Library
-name = RISCVCodeGen
+name = RISCVDesc
 parent = RISCV
-required_libraries = Core CodeGen RISCVInfo Support Target
+required_libraries = MC RISCVInfo Support
 add_to_library_groups = RISCV
