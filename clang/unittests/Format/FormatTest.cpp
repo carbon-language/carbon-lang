@@ -5637,6 +5637,9 @@ TEST_F(FormatTest, UnderstandsFunctionRefQualification) {
   verifyFormat("SomeType MemberFunction(const Deleted &) && final {}");
   verifyFormat("SomeType MemberFunction(const Deleted &) && override {}");
   verifyFormat("SomeType MemberFunction(const Deleted &) const &;");
+  verifyFormat("template <typename T>\n"
+               "void F(T) && = delete;",
+               getGoogleStyle());
 
   FormatStyle AlignLeft = getLLVMStyle();
   AlignLeft.PointerAlignment = FormatStyle::PAS_Left;
@@ -5789,7 +5792,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   FormatStyle Left = getLLVMStyle();
   Left.PointerAlignment = FormatStyle::PAS_Left;
   verifyFormat("x = *a(x) = *a(y);", Left);
-  verifyFormat("for (;; * = b) {\n}", Left);
+  verifyFormat("for (;; *a = b) {\n}", Left);
   verifyFormat("return *this += 1;", Left);
 
   verifyIndependentOfContext("a = *(x + y);");

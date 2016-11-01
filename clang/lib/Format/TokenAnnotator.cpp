@@ -1251,7 +1251,7 @@ private:
 
     const FormatToken *NextToken = Tok.getNextNonComment();
     if (!NextToken ||
-        NextToken->isOneOf(tok::arrow, Keywords.kw_final,
+        NextToken->isOneOf(tok::arrow, Keywords.kw_final, tok::equal,
                            Keywords.kw_override) ||
         (NextToken->is(tok::l_brace) && !NextToken->getNextNonComment()))
       return TT_PointerOrReference;
