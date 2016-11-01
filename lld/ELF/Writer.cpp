@@ -252,9 +252,9 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   if (Config->GdbIndex)
     Out<ELFT>::GdbIndex = make<GdbIndexSection<ELFT>>();
 
-  StringRef S = Config->Rela ? ".rela.plt" : ".rel.plt";
   Out<ELFT>::GotPlt = make<GotPltSection<ELFT>>();
-  Out<ELFT>::RelaPlt = make<RelocationSection<ELFT>>(S, false /*Sort*/);
+  Out<ELFT>::RelaPlt = make<RelocationSection<ELFT>>(
+      Config->Rela ? ".rela.plt" : ".rel.plt", false /*Sort*/);
   if (Config->Strip != StripPolicy::All) {
     Out<ELFT>::StrTab = make<StringTableSection<ELFT>>(".strtab", false);
     Out<ELFT>::SymTab = make<SymbolTableSection<ELFT>>(*Out<ELFT>::StrTab);
