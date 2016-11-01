@@ -2160,7 +2160,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
                      Keywords.kw_of, tok::kw_const) &&
         (!Left.Previous || !Left.Previous->is(tok::period)))
       return true;
-    if (Left.is(tok::kw_for) && Left.Previous &&
+    if (Left.isOneOf(tok::kw_for, Keywords.kw_as) && Left.Previous &&
         Left.Previous->is(tok::period) && Right.is(tok::l_paren))
       return false;
     if (Left.is(Keywords.kw_as) &&

@@ -136,6 +136,7 @@ TEST_F(FormatTestJS, ReservedWords) {
   verifyFormat("x.let() = 1;");
   verifyFormat("x.var() = 1;");
   verifyFormat("x.for() = 1;");
+  verifyFormat("x.as() = 1;");
   verifyFormat("x = {\n"
                "  a: 12,\n"
                "  interface: 1,\n"
