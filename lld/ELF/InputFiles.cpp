@@ -292,6 +292,7 @@ void elf::ObjectFile<ELFT>::initializeSections(
   Sections.resize(Size);
   unsigned I = -1;
   const ELFFile<ELFT> &Obj = this->ELFObj;
+  StringRef SectionStringTable = check(Obj.getSectionStringTable());
   for (const Elf_Shdr &Sec : Obj.sections()) {
     ++I;
     if (Sections[I] == &InputSection<ELFT>::Discarded)
@@ -328,7 +329,7 @@ void elf::ObjectFile<ELFT>::initializeSections(
     case SHT_NULL:
       break;
     default:
-      Sections[I] = createInputSection(Sec);
+      Sections[I] = createInputSection(Sec, SectionStringTable);
     }
   }
 }
@@ -373,8 +374,9 @@ elf::ObjectFile<ELFT>::getRelocTarget(const Elf_Shdr &Sec) {
 
 template <class ELFT>
 InputSectionBase<ELFT> *
-elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
-  StringRef Name = check(this->ELFObj.getSectionName(&Sec));
+elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec,
+                                          StringRef SectionStringTable) {
+  StringRef Name = check(this->ELFObj.getSectionName(&Sec, SectionStringTable));
 
   switch (Sec.sh_type) {
   case SHT_ARM_ATTRIBUTES:
