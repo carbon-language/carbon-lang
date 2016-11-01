@@ -1,3 +1,10 @@
+set(LLVM_TARGET_DEFINITIONS RISCV.td)
+
+tablegen(LLVM RISCVGenRegisterInfo.inc -gen-register-info)
+tablegen(LLVM RISCVGenInstrInfo.inc -gen-instr-info)
+
+add_public_tablegen_target(RISCVCommonTableGen)
+
 add_llvm_target(RISCVCodeGen
   RISCVTargetMachine.cpp
   )
