@@ -284,6 +284,20 @@ define i64 @smax_sext(i32 %a) {
   ret i64 %max
 }
 
+; FIXME
+define <2 x i64> @smax_sext_vec(<2 x i32> %a) {
+; CHECK-LABEL: @smax_sext_vec(
+; CHECK-NEXT:    [[A_EXT:%.*]] = sext <2 x i32> %a to <2 x i64>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt <2 x i32> %a, <i32 -1, i32 -1>
+; CHECK-NEXT:    [[MAX:%.*]] = select <2 x i1> [[CMP]], <2 x i64> [[A_EXT]], <2 x i64> zeroinitializer
+; CHECK-NEXT:    ret <2 x i64> [[MAX]]
+;
+  %a_ext = sext <2 x i32> %a to <2 x i64>
+  %cmp = icmp sgt <2 x i32> %a, <i32 -1, i32 -1>
+  %max = select <2 x i1> %cmp, <2 x i64> %a_ext, <2 x i64> zeroinitializer
+  ret <2 x i64> %max
+}
+
 define i64 @smin_sext(i32 %a) {
 ; CHECK-LABEL: @smin_sext(
 ; CHECK-NEXT:    [[A_EXT:%.*]] = sext i32 %a to i64
@@ -295,6 +309,20 @@ define i64 @smin_sext(i32 %a) {
   %cmp = icmp slt i32 %a, 1
   %min = select i1 %cmp, i64 %a_ext, i64 0
   ret i64 %min
+}
+
+; FIXME
+define <2 x i64>@smin_sext_vec(<2 x i32> %a) {
+; CHECK-LABEL: @smin_sext_vec(
+; CHECK-NEXT:    [[A_EXT:%.*]] = sext <2 x i32> %a to <2 x i64>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt <2 x i32> %a, <i32 1, i32 1>
+; CHECK-NEXT:    [[MIN:%.*]] = select <2 x i1> [[CMP]], <2 x i64> [[A_EXT]], <2 x i64> zeroinitializer
+; CHECK-NEXT:    ret <2 x i64> [[MIN]]
+;
+  %a_ext = sext <2 x i32> %a to <2 x i64>
+  %cmp = icmp slt <2 x i32> %a, <i32 1, i32 1>
+  %min = select <2 x i1> %cmp, <2 x i64> %a_ext, <2 x i64> zeroinitializer
+  ret <2 x i64> %min
 }
 
 define i64 @umax_sext(i32 %a) {
@@ -310,6 +338,20 @@ define i64 @umax_sext(i32 %a) {
   ret i64 %max
 }
 
+; FIXME
+define <2 x i64> @umax_sext_vec(<2 x i32> %a) {
+; CHECK-LABEL: @umax_sext_vec(
+; CHECK-NEXT:    [[A_EXT:%.*]] = sext <2 x i32> %a to <2 x i64>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt <2 x i32> %a, <i32 2, i32 2>
+; CHECK-NEXT:    [[MAX:%.*]] = select <2 x i1> [[CMP]], <2 x i64> [[A_EXT]], <2 x i64> <i64 3, i64 3>
+; CHECK-NEXT:    ret <2 x i64> [[MAX]]
+;
+  %a_ext = sext <2 x i32> %a to <2 x i64>
+  %cmp = icmp ugt <2 x i32> %a, <i32 2, i32 2>
+  %max = select <2 x i1> %cmp, <2 x i64> %a_ext, <2 x i64> <i64 3, i64 3>
+  ret <2 x i64> %max
+}
+
 define i64 @umin_sext(i32 %a) {
 ; CHECK-LABEL: @umin_sext(
 ; CHECK-NEXT:    [[A_EXT:%.*]] = sext i32 %a to i64
@@ -321,6 +363,20 @@ define i64 @umin_sext(i32 %a) {
   %cmp = icmp ult i32 %a, 3
   %min = select i1 %cmp, i64 %a_ext, i64 2
   ret i64 %min
+}
+
+; FIXME
+define <2 x i64> @umin_sext_vec(<2 x i32> %a) {
+; CHECK-LABEL: @umin_sext_vec(
+; CHECK-NEXT:    [[A_EXT:%.*]] = sext <2 x i32> %a to <2 x i64>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult <2 x i32> %a, <i32 3, i32 3>
+; CHECK-NEXT:    [[MIN:%.*]] = select <2 x i1> [[CMP]], <2 x i64> [[A_EXT]], <2 x i64> <i64 2, i64 2>
+; CHECK-NEXT:    ret <2 x i64> [[MIN]]
+;
+  %a_ext = sext <2 x i32> %a to <2 x i64>
+  %cmp = icmp ult <2 x i32> %a, <i32 3, i32 3>
+  %min = select <2 x i1> %cmp, <2 x i64> %a_ext, <2 x i64> <i64 2, i64 2>
+  ret <2 x i64> %min
 }
 
 define i64 @umax_sext2(i32 %a) {
@@ -336,17 +392,45 @@ define i64 @umax_sext2(i32 %a) {
   ret i64 %min
 }
 
+; FIXME
+define <2 x i64> @umax_sext2_vec(<2 x i32> %a) {
+; CHECK-LABEL: @umax_sext2_vec(
+; CHECK-NEXT:    [[A_EXT:%.*]] = sext <2 x i32> %a to <2 x i64>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult <2 x i32> %a, <i32 3, i32 3>
+; CHECK-NEXT:    [[MIN:%.*]] = select <2 x i1> [[CMP]], <2 x i64> <i64 2, i64 2>, <2 x i64> [[A_EXT]]
+; CHECK-NEXT:    ret <2 x i64> [[MIN]]
+;
+  %a_ext = sext <2 x i32> %a to <2 x i64>
+  %cmp = icmp ult <2 x i32> %a, <i32 3, i32 3>
+  %min = select <2 x i1> %cmp, <2 x i64> <i64 2, i64 2>, <2 x i64> %a_ext
+  ret <2 x i64> %min
+}
+
 define i64 @umin_sext2(i32 %a) {
 ; CHECK-LABEL: @umin_sext2(
 ; CHECK-NEXT:    [[A_EXT:%.*]] = sext i32 %a to i64
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt i32 %a, 3
-; CHECK-NEXT:    [[MIN:%.*]] = select i1 [[CMP]], i64 2, i64 [[A_EXT]]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i64 [[A_EXT]], 3
+; CHECK-NEXT:    [[MIN:%.*]] = select i1 [[CMP]], i64 [[A_EXT]], i64 3
 ; CHECK-NEXT:    ret i64 [[MIN]]
 ;
   %a_ext = sext i32 %a to i64
-  %cmp = icmp ugt i32 %a, 3
-  %min = select i1 %cmp, i64 2, i64 %a_ext
+  %cmp = icmp ugt i32 %a, 2
+  %min = select i1 %cmp, i64 3, i64 %a_ext
   ret i64 %min
+}
+
+; FIXME
+define <2 x i64> @umin_sext2_vec(<2 x i32> %a) {
+; CHECK-LABEL: @umin_sext2_vec(
+; CHECK-NEXT:    [[A_EXT:%.*]] = sext <2 x i32> %a to <2 x i64>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt <2 x i32> %a, <i32 2, i32 2>
+; CHECK-NEXT:    [[MIN:%.*]] = select <2 x i1> [[CMP]], <2 x i64> <i64 3, i64 3>, <2 x i64> [[A_EXT]]
+; CHECK-NEXT:    ret <2 x i64> [[MIN]]
+;
+  %a_ext = sext <2 x i32> %a to <2 x i64>
+  %cmp = icmp ugt <2 x i32> %a, <i32 2, i32 2>
+  %min = select <2 x i1> %cmp, <2 x i64> <i64 3, i64 3>, <2 x i64> %a_ext
+  ret <2 x i64> %min
 }
 
 define i64 @umax_zext(i32 %a) {
@@ -362,6 +446,20 @@ define i64 @umax_zext(i32 %a) {
   ret i64 %max
 }
 
+; FIXME
+define <2 x i64> @umax_zext_vec(<2 x i32> %a) {
+; CHECK-LABEL: @umax_zext_vec(
+; CHECK-NEXT:    [[A_EXT:%.*]] = zext <2 x i32> %a to <2 x i64>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt <2 x i32> %a, <i32 2, i32 2>
+; CHECK-NEXT:    [[MAX:%.*]] = select <2 x i1> [[CMP]], <2 x i64> [[A_EXT]], <2 x i64> <i64 3, i64 3>
+; CHECK-NEXT:    ret <2 x i64> [[MAX]]
+;
+  %a_ext = zext <2 x i32> %a to <2 x i64>
+  %cmp = icmp ugt <2 x i32> %a, <i32 2, i32 2>
+  %max = select <2 x i1> %cmp, <2 x i64> %a_ext, <2 x i64> <i64 3, i64 3>
+  ret <2 x i64> %max
+}
+
 define i64 @umin_zext(i32 %a) {
 ; CHECK-LABEL: @umin_zext(
 ; CHECK-NEXT:    [[A_EXT:%.*]] = zext i32 %a to i64
@@ -373,5 +471,19 @@ define i64 @umin_zext(i32 %a) {
   %cmp = icmp ult i32 %a, 3
   %min = select i1 %cmp, i64 %a_ext, i64 2
   ret i64 %min
+}
+
+; FIXME
+define <2 x i64> @umin_zext_vec(<2 x i32> %a) {
+; CHECK-LABEL: @umin_zext_vec(
+; CHECK-NEXT:    [[A_EXT:%.*]] = zext <2 x i32> %a to <2 x i64>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult <2 x i32> %a, <i32 3, i32 3>
+; CHECK-NEXT:    [[MIN:%.*]] = select <2 x i1> [[CMP]], <2 x i64> [[A_EXT]], <2 x i64> <i64 2, i64 2>
+; CHECK-NEXT:    ret <2 x i64> [[MIN]]
+;
+  %a_ext = zext <2 x i32> %a to <2 x i64>
+  %cmp = icmp ult <2 x i32> %a, <i32 3, i32 3>
+  %min = select <2 x i1> %cmp, <2 x i64> %a_ext, <2 x i64> <i64 2, i64 2>
+  ret <2 x i64> %min
 }
 
