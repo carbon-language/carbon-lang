@@ -95,6 +95,34 @@ public:
                    ResultSet &results) override;
   };
 
+  template <typename TypeScavenger1, typename TypeScavenger2>
+  class EitherTypeScavenger : public TypeScavenger {
+    bool Find_Impl(ExecutionContextScope *exe_scope, const char *key,
+                   ResultSet &results) override {
+      const bool append = false;
+      auto ts1 = TypeScavenger1();
+      if (ts1.Find(exe_scope, key, results, append))
+        return true;
+      auto ts2 = TypeScavenger2();
+      if (ts2.Find(exe_scope, key, results, append))
+        return true;
+      return false;
+    }
+  };
+
+  template <typename TypeScavenger1, typename TypeScavenger2>
+  class BothTypeScavenger : public TypeScavenger {
+    bool Find_Impl(ExecutionContextScope *exe_scope, const char *key,
+                   ResultSet &results) override {
+      const bool append = true;
+      auto ts1 = TypeScavenger1();
+      bool success = ts1.Find(exe_scope, key, results, append);
+      auto ts2 = TypeScavenger2();
+      success = ts2.Find(exe_scope, key, results, append) || success;
+      return success;
+    }
+  };
+
   enum class FunctionNameRepresentation {
     eName,
     eNameWithArgs,
