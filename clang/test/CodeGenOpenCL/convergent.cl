@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple spir-unknown-unknown -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple spir-unknown-unknown -emit-llvm %s -o - | opt -instnamer -S | FileCheck %s
 
 void convfun(void) __attribute__((convergent));
 void non_convfun(void);
