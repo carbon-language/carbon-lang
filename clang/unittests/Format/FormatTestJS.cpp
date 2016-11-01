@@ -384,6 +384,11 @@ TEST_F(FormatTestJS, GeneratorFunctions) {
                "    yield x;\n"
                "  }\n"
                "}");
+  verifyFormat("var x = {\n"
+               "  a: function*() {\n"
+               "    //\n"
+               "  }\n"
+               "}\n");
 }
 
 TEST_F(FormatTestJS, AsyncFunctions) {
