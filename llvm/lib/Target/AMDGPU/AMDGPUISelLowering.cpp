@@ -1970,8 +1970,7 @@ SDValue AMDGPUTargetLowering::LowerFP_TO_FP16(SDValue Op, SelectionDAG &DAG) con
 
   SDLoc DL(Op);
   SDValue N0 = Op.getOperand(0);
-  MVT SVT = N0.getSimpleValueType();
-  assert(SVT == MVT::f64);
+  assert (N0.getSimpleValueType() == MVT::f64);
 
   // f64 -> f16 conversion using round-to-nearest-even rounding mode.
   const unsigned ExpMask = 0x7ff;
