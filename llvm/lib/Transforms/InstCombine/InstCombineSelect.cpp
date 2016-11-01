@@ -424,24 +424,20 @@ static bool adjustMinMax(SelectInst &Sel, ICmpInst &Cmp) {
   Value *FalseVal = Sel.getFalseValue();
 
   // We may move or edit the compare, so make sure the select is the only user.
-  if (!Cmp.hasOneUse())
+  const APInt *CmpC;
+  if (!Cmp.hasOneUse() || !match(CmpRHS, m_APInt(CmpC)))
     return false;
 
-  // FIXME: Use m_APInt to allow vector folds.
-  auto *CI = dyn_cast<ConstantInt>(CmpRHS);
-  if (!CI)
-    return false;
-
-  // These transformations only work for selects over integers.
-  IntegerType *SelectTy = dyn_cast<IntegerType>(Sel.getType());
-  if (!SelectTy)
+  // These transforms only work for selects of integers or vector integers.
+  auto *SelEltTy = dyn_cast<IntegerType>(Sel.getType()->getScalarType());
+  if (!SelEltTy)
     return false;
 
   Constant *AdjustedRHS;
   if (Pred == ICmpInst::ICMP_UGT || Pred == ICmpInst::ICMP_SGT)
-    AdjustedRHS = ConstantInt::get(CI->getContext(), CI->getValue() + 1);
+    AdjustedRHS = ConstantInt::get(CmpRHS->getType(), *CmpC + 1);
   else if (Pred == ICmpInst::ICMP_ULT || Pred == ICmpInst::ICMP_SLT)
-    AdjustedRHS = ConstantInt::get(CI->getContext(), CI->getValue() - 1);
+    AdjustedRHS = ConstantInt::get(CmpRHS->getType(), *CmpC - 1);
   else
     return false;
 
@@ -454,8 +450,8 @@ static bool adjustMinMax(SelectInst &Sel, ICmpInst &Cmp) {
   // Types do not match. Instead of calculating this with mixed types, promote
   // all to the larger type. This enables scalar evolution to analyze this
   // expression.
-  else if (CmpRHS->getType()->getScalarSizeInBits() < SelectTy->getBitWidth()) {
-    Constant *SextRHS = ConstantExpr::getSExt(AdjustedRHS, SelectTy);
+  else if (CmpRHS->getType()->getScalarSizeInBits() < SelEltTy->getBitWidth()) {
+    Constant *SextRHS = ConstantExpr::getSExt(AdjustedRHS, Sel.getType());
 
     // X = sext x; x >s c ? X : C+1 --> X = sext x; X <s C+1 ? C+1 : X
     // X = sext x; x <s c ? X : C-1 --> X = sext x; X >s C-1 ? C-1 : X
@@ -469,7 +465,7 @@ static bool adjustMinMax(SelectInst &Sel, ICmpInst &Cmp) {
       CmpLHS = FalseVal;
       AdjustedRHS = SextRHS;
     } else if (Cmp.isUnsigned()) {
-      Constant *ZextRHS = ConstantExpr::getZExt(AdjustedRHS, SelectTy);
+      Constant *ZextRHS = ConstantExpr::getZExt(AdjustedRHS, Sel.getType());
       // X = zext x; x >u c ? X : C+1 --> X = zext x; X <u C+1 ? C+1 : X
       // X = zext x; x <u c ? X : C-1 --> X = zext x; X >u C-1 ? C-1 : X
       // zext + signed compare cannot be changed:
