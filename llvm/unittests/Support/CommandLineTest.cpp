@@ -553,7 +553,7 @@ TEST(CommandLineTest, ResponseFiles) {
   bool Res = llvm::cl::ExpandResponseFiles(
                     Saver, llvm::cl::TokenizeGNUCommandLine, Argv, false, true);
   EXPECT_TRUE(Res);
-  EXPECT_EQ(Argv.size(), 9);
+  EXPECT_EQ(Argv.size(), 9U);
   EXPECT_STREQ(Argv[0], "test/test");
   EXPECT_STREQ(Argv[1], "-flag_1");
   EXPECT_STREQ(Argv[2], "-option_1");
