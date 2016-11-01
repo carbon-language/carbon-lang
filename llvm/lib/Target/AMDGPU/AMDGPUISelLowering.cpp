@@ -2551,23 +2551,21 @@ static bool isCtlzOpc(unsigned Opc) {
   return Opc == ISD::CTLZ || Opc == ISD::CTLZ_ZERO_UNDEF;
 }
 
-// Get FFBH node if the incoming op may have been type legalized from a smaller
-// type VT.
-// Need to match pre-legalized type because the generic legalization inserts the
-// add/sub between the select and compare.
-static SDValue getFFBH_U32(const TargetLowering &TLI, SelectionDAG &DAG,
-                           const SDLoc &SL, SDValue Op) {
+SDValue AMDGPUTargetLowering::getFFBH_U32(SelectionDAG &DAG,
+                                          SDValue Op,
+                                          const SDLoc &DL) const {
   EVT VT = Op.getValueType();
-  EVT LegalVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
-  if (LegalVT != MVT::i32)
+  EVT LegalVT = getTypeToTransformTo(*DAG.getContext(), VT);
+  if (LegalVT != MVT::i32 && (Subtarget->has16BitInsts() &&
+                              LegalVT != MVT::i16))
     return SDValue();
 
   if (VT != MVT::i32)
-    Op = DAG.getNode(ISD::ZERO_EXTEND, SL, MVT::i32, Op);
+    Op = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, Op);
 
-  SDValue FFBH = DAG.getNode(AMDGPUISD::FFBH_U32, SL, MVT::i32, Op);
+  SDValue FFBH = DAG.getNode(AMDGPUISD::FFBH_U32, DL, MVT::i32, Op);
   if (VT != MVT::i32)
-    FFBH = DAG.getNode(ISD::TRUNCATE, SL, VT, FFBH);
+    FFBH = DAG.getNode(ISD::TRUNCATE, DL, VT, FFBH);
 
   return FFBH;
 }
@@ -2595,7 +2593,7 @@ SDValue AMDGPUTargetLowering::performCtlzCombine(const SDLoc &SL, SDValue Cond,
       isCtlzOpc(RHS.getOpcode()) &&
       RHS.getOperand(0) == CmpLHS &&
       isNegativeOne(LHS)) {
-    return getFFBH_U32(*this, DAG, SL, CmpLHS);
+    return getFFBH_U32(DAG, CmpLHS, SL);
   }
 
   // select (setcc x, 0, ne), (ctlz_zero_undef x), -1 -> ffbh_u32 x
@@ -2603,7 +2601,7 @@ SDValue AMDGPUTargetLowering::performCtlzCombine(const SDLoc &SL, SDValue Cond,
       isCtlzOpc(LHS.getOpcode()) &&
       LHS.getOperand(0) == CmpLHS &&
       isNegativeOne(RHS)) {
-    return getFFBH_U32(*this, DAG, SL, CmpLHS);
+    return getFFBH_U32(DAG, CmpLHS, SL);
   }
 
   return SDValue();

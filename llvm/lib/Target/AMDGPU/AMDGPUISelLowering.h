@@ -25,6 +25,13 @@ class AMDGPUSubtarget;
 class MachineRegisterInfo;
 
 class AMDGPUTargetLowering : public TargetLowering {
+private:
+  /// \returns AMDGPUISD::FFBH_U32 node if the incoming \p Op may have been
+  /// legalized from a smaller type VT. Need to match pre-legalized type because
+  /// the generic legalization inserts the add/sub between the select and
+  /// compare.
+  SDValue getFFBH_U32(SelectionDAG &DAG, SDValue Op, const SDLoc &DL) const;
+
 protected:
   const AMDGPUSubtarget *Subtarget;
 
