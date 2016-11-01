@@ -343,8 +343,6 @@ public:
 };
 
 template <class ELFT> class BuildIdSection : public InputSection<ELFT> {
-  typedef OutputSectionBase<ELFT> Base;
-
 public:
   virtual void writeBuildId(ArrayRef<uint8_t> Buf) = 0;
   virtual ~BuildIdSection() = default;
