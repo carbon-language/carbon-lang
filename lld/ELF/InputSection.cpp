@@ -482,9 +482,6 @@ template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
   if (this->Type == SHT_NOBITS)
     return;
 
-  // Set output location.
-  this->OutputLoc = Buf + OutSecOff;
-
   // If -r is given, then an InputSection may be a relocation section.
   if (this->Type == SHT_RELA) {
     copyRelocations(Buf + OutSecOff, this->template getDataAs<Elf_Rela>());
@@ -867,33 +864,38 @@ BuildIdSection<ELFT>::BuildIdSection(size_t HashSize)
 }
 
 template <class ELFT>
-void BuildIdFastHash<ELFT>::writeBuildId(ArrayRef<uint8_t> Buf) {
+uint8_t *BuildIdSection<ELFT>::getOutputLoc(uint8_t *Start) const {
+  return Start + this->OutSec->getFileOffset() + this->OutSecOff;
+}
+
+template <class ELFT>
+void BuildIdFastHash<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
   const endianness E = ELFT::TargetEndianness;
 
   // 64-bit xxhash
   uint64_t Hash = xxHash64(toStringRef(Buf));
-  write64<E>(this->OutputLoc + 16, Hash);
+  write64<E>(this->getOutputLoc(Buf.begin()) + 16, Hash);
 }
 
 template <class ELFT>
-void BuildIdMd5<ELFT>::writeBuildId(ArrayRef<uint8_t> Buf) {
+void BuildIdMd5<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
   MD5 Hash;
   Hash.update(Buf);
   MD5::MD5Result Res;
   Hash.final(Res);
-  memcpy(this->OutputLoc + 16, Res, 16);
+  memcpy(this->getOutputLoc(Buf.begin()) + 16, Res, 16);
 }
 
 template <class ELFT>
-void BuildIdSha1<ELFT>::writeBuildId(ArrayRef<uint8_t> Buf) {
+void BuildIdSha1<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
   SHA1 Hash;
   Hash.update(Buf);
-  memcpy(this->OutputLoc + 16, Hash.final().data(), 20);
+  memcpy(this->getOutputLoc(Buf.begin()) + 16, Hash.final().data(), 20);
 }
 
 template <class ELFT>
-void BuildIdUuid<ELFT>::writeBuildId(ArrayRef<uint8_t> Buf) {
-  if (getRandomBytes(this->OutputLoc + 16, 16))
+void BuildIdUuid<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
+  if (getRandomBytes(this->getOutputLoc(Buf.begin()) + 16, 16))
     error("entropy source failure");
 }
 
@@ -902,8 +904,8 @@ BuildIdHexstring<ELFT>::BuildIdHexstring()
     : BuildIdSection<ELFT>(Config->BuildIdVector.size()) {}
 
 template <class ELFT>
-void BuildIdHexstring<ELFT>::writeBuildId(ArrayRef<uint8_t> Buf) {
-  memcpy(this->OutputLoc + 16, Config->BuildIdVector.data(),
+void BuildIdHexstring<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
+  memcpy(this->getOutputLoc(Buf.begin()) + 16, Config->BuildIdVector.data(),
          Config->BuildIdVector.size());
 }
 
