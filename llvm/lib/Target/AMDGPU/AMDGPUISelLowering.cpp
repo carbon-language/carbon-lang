@@ -279,6 +279,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(const TargetMachine &TM,
   }
 
   setOperationAction(ISD::FP16_TO_FP, MVT::f64, Expand);
+  setOperationAction(ISD::FP_TO_FP16, MVT::f64, Custom);
 
   const MVT ScalarIntVTs[] = { MVT::i32, MVT::i64 };
   for (MVT VT : ScalarIntVTs) {
@@ -806,6 +807,7 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
   case ISD::FFLOOR: return LowerFFLOOR(Op, DAG);
   case ISD::SINT_TO_FP: return LowerSINT_TO_FP(Op, DAG);
   case ISD::UINT_TO_FP: return LowerUINT_TO_FP(Op, DAG);
+  case ISD::FP_TO_FP16: return LowerFP_TO_FP16(Op, DAG);
   case ISD::FP_TO_SINT: return LowerFP_TO_SINT(Op, DAG);
   case ISD::FP_TO_UINT: return LowerFP_TO_UINT(Op, DAG);
   case ISD::CTLZ:
@@ -1957,6 +1959,102 @@ SDValue AMDGPUTargetLowering::LowerFP64_TO_INT(SDValue Op, SelectionDAG &DAG,
   SDValue Result = DAG.getBuildVector(MVT::v2i32, SL, {Lo, Hi});
 
   return DAG.getNode(ISD::BITCAST, SL, MVT::i64, Result);
+}
+
+SDValue AMDGPUTargetLowering::LowerFP_TO_FP16(SDValue Op, SelectionDAG &DAG) const {
+
+  if (getTargetMachine().Options.UnsafeFPMath) {
+    // There is a generic expand for FP_TO_FP16 with unsafe fast math.
+    return SDValue();
+  }
+
+  SDLoc DL(Op);
+  SDValue N0 = Op.getOperand(0);
+  MVT SVT = N0.getSimpleValueType();
+  assert(SVT == MVT::f64);
+
+  // f64 -> f16 conversion using round-to-nearest-even rounding mode.
+  const unsigned ExpMask = 0x7ff;
+  const unsigned ExpBiasf64 = 1023;
+  const unsigned ExpBiasf16 = 15;
+  SDValue Zero = DAG.getConstant(0, DL, MVT::i32);
+  SDValue One = DAG.getConstant(1, DL, MVT::i32);
+  SDValue U = DAG.getNode(ISD::BITCAST, DL, MVT::i64, N0);
+  SDValue UH = DAG.getNode(ISD::SRL, DL, MVT::i64, U,
+                           DAG.getConstant(32, DL, MVT::i64));
+  UH = DAG.getZExtOrTrunc(UH, DL, MVT::i32);
+  U = DAG.getZExtOrTrunc(U, DL, MVT::i32);
+  SDValue E = DAG.getNode(ISD::SRL, DL, MVT::i32, UH,
+                          DAG.getConstant(20, DL, MVT::i64));
+  E = DAG.getNode(ISD::AND, DL, MVT::i32, E,
+                  DAG.getConstant(ExpMask, DL, MVT::i32));
+  // Subtract the fp64 exponent bias (1023) to get the real exponent and
+  // add the f16 bias (15) to get the biased exponent for the f16 format.
+  E = DAG.getNode(ISD::ADD, DL, MVT::i32, E,
+                  DAG.getConstant(-ExpBiasf64 + ExpBiasf16, DL, MVT::i32));
+
+  SDValue M = DAG.getNode(ISD::SRL, DL, MVT::i32, UH,
+                          DAG.getConstant(8, DL, MVT::i32));
+  M = DAG.getNode(ISD::AND, DL, MVT::i32, M,
+                  DAG.getConstant(0xffe, DL, MVT::i32));
+
+  SDValue MaskedSig = DAG.getNode(ISD::AND, DL, MVT::i32, UH,
+                                  DAG.getConstant(0x1ff, DL, MVT::i32));
+  MaskedSig = DAG.getNode(ISD::OR, DL, MVT::i32, MaskedSig, U);
+
+  SDValue Lo40Set = DAG.getSelectCC(DL, MaskedSig, Zero, Zero, One, ISD::SETEQ);
+  M = DAG.getNode(ISD::OR, DL, MVT::i32, M, Lo40Set);
+
+  // (M != 0 ? 0x0200 : 0) | 0x7c00;
+  SDValue I = DAG.getNode(ISD::OR, DL, MVT::i32,
+      DAG.getSelectCC(DL, M, Zero, DAG.getConstant(0x0200, DL, MVT::i32),
+                      Zero, ISD::SETNE), DAG.getConstant(0x7c00, DL, MVT::i32));
+
+  // N = M | (E << 12);
+  SDValue N = DAG.getNode(ISD::OR, DL, MVT::i32, M,
+      DAG.getNode(ISD::SHL, DL, MVT::i32, E,
+                  DAG.getConstant(12, DL, MVT::i32)));
+
+  // B = clamp(1-E, 0, 13);
+  SDValue OneSubExp = DAG.getNode(ISD::SUB, DL, MVT::i32,
+                                  One, E);
+  SDValue B = DAG.getNode(ISD::SMAX, DL, MVT::i32, OneSubExp, Zero);
+  B = DAG.getNode(ISD::SMIN, DL, MVT::i32, B,
+                  DAG.getConstant(13, DL, MVT::i32));
+
+  SDValue SigSetHigh = DAG.getNode(ISD::OR, DL, MVT::i32, M,
+                                   DAG.getConstant(0x1000, DL, MVT::i32));
+
+  SDValue D = DAG.getNode(ISD::SRL, DL, MVT::i32, SigSetHigh, B);
+  SDValue D0 = DAG.getNode(ISD::SHL, DL, MVT::i32, D, B);
+  SDValue D1 = DAG.getSelectCC(DL, D0, SigSetHigh, One, Zero, ISD::SETNE);
+  D = DAG.getNode(ISD::OR, DL, MVT::i32, D, D1);
+
+  SDValue V = DAG.getSelectCC(DL, E, One, D, N, ISD::SETLT);
+  SDValue VLow3 = DAG.getNode(ISD::AND, DL, MVT::i32, V,
+                              DAG.getConstant(0x7, DL, MVT::i32));
+  V = DAG.getNode(ISD::SRL, DL, MVT::i32, V,
+                  DAG.getConstant(2, DL, MVT::i32));
+  SDValue V0 = DAG.getSelectCC(DL, VLow3, DAG.getConstant(3, DL, MVT::i32),
+                               One, Zero, ISD::SETEQ);
+  SDValue V1 = DAG.getSelectCC(DL, VLow3, DAG.getConstant(5, DL, MVT::i32),
+                               One, Zero, ISD::SETGT);
+  V1 = DAG.getNode(ISD::OR, DL, MVT::i32, V0, V1);
+  V = DAG.getNode(ISD::ADD, DL, MVT::i32, V, V1);
+
+  V = DAG.getSelectCC(DL, E, DAG.getConstant(30, DL, MVT::i32),
+                      DAG.getConstant(0x7c00, DL, MVT::i32), V, ISD::SETGT);
+  V = DAG.getSelectCC(DL, E, DAG.getConstant(1039, DL, MVT::i32),
+                      I, V, ISD::SETEQ);
+
+  // Extract the sign bit.
+  SDValue Sign = DAG.getNode(ISD::SRL, DL, MVT::i32, UH,
+                            DAG.getConstant(16, DL, MVT::i32));
+  Sign = DAG.getNode(ISD::AND, DL, MVT::i32, Sign,
+                     DAG.getConstant(0x8000, DL, MVT::i32));
+
+  V = DAG.getNode(ISD::OR, DL, MVT::i32, Sign, V);
+  return DAG.getZExtOrTrunc(V, DL, Op.getValueType());
 }
 
 SDValue AMDGPUTargetLowering::LowerFP_TO_SINT(SDValue Op,
