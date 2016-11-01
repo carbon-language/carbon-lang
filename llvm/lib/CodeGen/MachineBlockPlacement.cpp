@@ -1599,6 +1599,7 @@ void MachineBlockPlacement::buildCFGChains() {
   collectMustExecuteBBs();
 
   // Build any loop-based chains.
+  PreferredLoopExit = nullptr;
   for (MachineLoop *L : *MLI)
     buildLoopChains(*L);
 
