@@ -154,7 +154,7 @@ public:
   }
 
   uint64_t getNumSections() const;
-  uintX_t getStringTableIndex() const;
+  uint32_t getStringTableIndex() const;
   uint32_t getExtendedSymbolTableIndex(const Elf_Sym *Sym,
                                        const Elf_Shdr *SymTab,
                                        ArrayRef<Elf_Word> ShndxTable) const;
@@ -299,14 +299,9 @@ uint64_t ELFFile<ELFT>::getNumSections() const {
   return Header->e_shnum;
 }
 
-template <class ELFT>
-typename ELFFile<ELFT>::uintX_t ELFFile<ELFT>::getStringTableIndex() const {
-  if (Header->e_shnum == ELF::SHN_UNDEF) {
-    if (Header->e_shstrndx == ELF::SHN_HIRESERVE)
-      return SectionHeaderTable->sh_link;
-    if (Header->e_shstrndx >= getNumSections())
-      return 0;
-  }
+template <class ELFT> uint32_t ELFFile<ELFT>::getStringTableIndex() const {
+  if (Header->e_shstrndx == ELF::SHN_XINDEX)
+    return SectionHeaderTable->sh_link;
   return Header->e_shstrndx;
 }
 
@@ -363,7 +358,7 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
   }
 
   // Get string table sections.
-  uintX_t StringTableIndex = getStringTableIndex();
+  uint32_t StringTableIndex = getStringTableIndex();
   if (StringTableIndex) {
     ErrorOr<const Elf_Shdr *> StrTabSecOrErr = getSection(StringTableIndex);
     if ((EC = StrTabSecOrErr.getError()))
