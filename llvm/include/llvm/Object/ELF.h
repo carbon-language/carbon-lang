@@ -37,8 +37,7 @@ template <class ELFT>
 class ELFFile {
 public:
   LLVM_ELF_IMPORT_TYPES_ELFT(ELFT)
-  typedef typename std::conditional<ELFT::Is64Bits,
-                                    uint64_t, uint32_t>::type uintX_t;
+  typedef typename ELFT::uint uintX_t;
 
   typedef Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
   typedef Elf_Shdr_Impl<ELFT> Elf_Shdr;
@@ -152,7 +151,7 @@ public:
     return makeArrayRef(program_header_begin(), program_header_end());
   }
 
-  uint64_t getNumSections() const;
+  uintX_t getNumSections() const;
   ErrorOr<StringRef> getSectionStringTable() const;
   uint32_t getSectionStringTableIndex() const;
   uint32_t getExtendedSymbolTableIndex(const Elf_Sym *Sym,
@@ -292,7 +291,7 @@ ELFFile<ELFT>::getRelocationSymbol(const Elf_Rel *Rel,
 }
 
 template <class ELFT>
-uint64_t ELFFile<ELFT>::getNumSections() const {
+typename ELFT::uint ELFFile<ELFT>::getNumSections() const {
   assert(Header && "Header not initialized!");
   if (Header->e_shnum == ELF::SHN_UNDEF && Header->e_shoff > 0) {
     assert(SectionHeaderTable && "SectionHeaderTable not initialized!");
