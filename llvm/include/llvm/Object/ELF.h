@@ -146,7 +146,6 @@ public:
     return makeArrayRef(program_header_begin(), program_header_end());
   }
 
-  ErrorOr<StringRef> getSectionStringTable() const;
   ErrorOr<StringRef> getSectionStringTable(Elf_Shdr_Range Sections) const;
   uint32_t getExtendedSymbolTableIndex(const Elf_Sym *Sym,
                                        const Elf_Shdr *SymTab,
@@ -282,14 +281,6 @@ ELFFile<ELFT>::getRelocationSymbol(const Elf_Rel *Rel,
   if (Index == 0)
     return nullptr;
   return getEntry<Elf_Sym>(SymTab, Index);
-}
-
-template <class ELFT>
-ErrorOr<StringRef> ELFFile<ELFT>::getSectionStringTable() const {
-  auto SectionsOrErr = sections();
-  if (std::error_code EC = SectionsOrErr.getError())
-    return EC;
-  return getSectionStringTable(*SectionsOrErr);
 }
 
 template <class ELFT>
@@ -453,7 +444,10 @@ ELFFile<ELFT>::getStringTableForSymtab(const Elf_Shdr &Sec) const {
 template <class ELFT>
 ErrorOr<StringRef>
 ELFFile<ELFT>::getSectionName(const Elf_Shdr *Section) const {
-  ErrorOr<StringRef> Table = getSectionStringTable();
+  auto SectionsOrErr = sections();
+  if (std::error_code EC = SectionsOrErr.getError())
+    return EC;
+  ErrorOr<StringRef> Table = getSectionStringTable(*SectionsOrErr);
   if (std::error_code EC = Table.getError())
     return EC;
   return getSectionName(Section, *Table);
