@@ -7457,7 +7457,7 @@ class FieldEncoding {
   std::string Enc;
 public:
   FieldEncoding(bool b, SmallStringEnc &e) : HasName(b), Enc(e.c_str()) {}
-  StringRef str() {return Enc.c_str();}
+  StringRef str() { return Enc; }
   bool operator<(const FieldEncoding &rhs) const {
     if (HasName != rhs.HasName) return HasName;
     return Enc < rhs.Enc;
@@ -7623,7 +7623,7 @@ StringRef TypeStringCache::lookupStr(const IdentifierInfo *ID) {
     E.State = IncompleteUsed;
     ++IncompleteUsedCount;
   }
-  return E.Str.c_str();
+  return E.Str;
 }
 
 /// The XCore ABI includes a type information section that communicates symbol

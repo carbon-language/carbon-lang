@@ -10753,14 +10753,14 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
         std::string UniversalCRTLibPath;
         if (MSVC.getUniversalCRTLibraryPath(UniversalCRTLibPath))
           CmdArgs.push_back(Args.MakeArgString(std::string("-libpath:") +
-                                               UniversalCRTLibPath.c_str()));
+                                               UniversalCRTLibPath));
       }
     }
 
     std::string WindowsSdkLibPath;
     if (MSVC.getWindowsSDKLibraryPath(WindowsSdkLibPath))
-      CmdArgs.push_back(Args.MakeArgString(std::string("-libpath:") +
-                                           WindowsSdkLibPath.c_str()));
+      CmdArgs.push_back(
+          Args.MakeArgString(std::string("-libpath:") + WindowsSdkLibPath));
   }
 
   if (!C.getDriver().IsCLMode() && Args.hasArg(options::OPT_L))
