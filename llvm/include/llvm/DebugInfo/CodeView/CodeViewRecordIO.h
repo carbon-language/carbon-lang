@@ -107,7 +107,7 @@ public:
     } else {
       typename T::value_type Field;
       // Stop when we run out of bytes or we hit record padding bytes.
-      while (!Reader->empty() && Reader->peek() < LF_PAD0) {
+      while (!Reader->empty() && Reader->peek() < 0xf0 /* LF_PAD0 */) {
         if (auto EC = Mapper(*this, Field))
           return EC;
         Items.push_back(Field);
