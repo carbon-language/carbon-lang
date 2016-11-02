@@ -198,7 +198,7 @@ uint32_t ELFFile<ELFT>::getExtendedSymbolTableIndex(
 }
 
 template <class ELFT>
-ErrorOr<const typename ELFFile<ELFT>::Elf_Shdr *>
+ErrorOr<const typename ELFT::Shdr *>
 ELFFile<ELFT>::getSection(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
                           ArrayRef<Elf_Word> ShndxTable) const {
   uint32_t Index = Sym->st_shndx;
@@ -273,7 +273,7 @@ void ELFFile<ELFT>::getRelocationTypeName(uint32_t Type,
 }
 
 template <class ELFT>
-const typename ELFFile<ELFT>::Elf_Sym *
+const typename ELFT::Sym *
 ELFFile<ELFT>::getRelocationSymbol(const Elf_Rel *Rel,
                                    const Elf_Shdr *SymTab) const {
   uint32_t Index = Rel->getSymbol(isMips64EL());
@@ -382,7 +382,7 @@ const T *ELFFile<ELFT>::getEntry(const Elf_Shdr *Section,
 }
 
 template <class ELFT>
-ErrorOr<const typename ELFFile<ELFT>::Elf_Shdr *>
+ErrorOr<const typename ELFT::Shdr *>
 ELFFile<ELFT>::getSection(uint32_t Index) const {
   auto TableOrErr = sections();
   if (std::error_code EC = TableOrErr.getError())
@@ -410,7 +410,7 @@ ELFFile<ELFT>::getStringTable(const Elf_Shdr *Section) const {
 }
 
 template <class ELFT>
-ErrorOr<ArrayRef<typename ELFFile<ELFT>::Elf_Word>>
+ErrorOr<ArrayRef<typename ELFT::Word>>
 ELFFile<ELFT>::getSHNDXTable(const Elf_Shdr &Section) const {
   assert(Section.sh_type == ELF::SHT_SYMTAB_SHNDX);
   auto VOrErr = getSectionContentsAsArray<Elf_Word>(&Section);
