@@ -40,7 +40,7 @@ int main()
     std::set_new_handler(new_handler);
 #ifndef TEST_HAS_NO_EXCEPTIONS
     try
-#endif TEST_HAS_NO_EXCEPTIONS
+#endif
     {
         void*volatile vp = operator new [] (std::numeric_limits<std::size_t>::max(), std::nothrow);
         assert(new_handler_called == 1);
