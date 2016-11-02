@@ -38,21 +38,20 @@ class ELFFile {
 public:
   LLVM_ELF_IMPORT_TYPES_ELFT(ELFT)
   typedef typename ELFT::uint uintX_t;
-
-  typedef Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
-  typedef Elf_Shdr_Impl<ELFT> Elf_Shdr;
-  typedef Elf_Sym_Impl<ELFT> Elf_Sym;
-  typedef Elf_Dyn_Impl<ELFT> Elf_Dyn;
-  typedef Elf_Phdr_Impl<ELFT> Elf_Phdr;
-  typedef Elf_Rel_Impl<ELFT, false> Elf_Rel;
-  typedef Elf_Rel_Impl<ELFT, true> Elf_Rela;
-  typedef Elf_Verdef_Impl<ELFT> Elf_Verdef;
-  typedef Elf_Verdaux_Impl<ELFT> Elf_Verdaux;
-  typedef Elf_Verneed_Impl<ELFT> Elf_Verneed;
-  typedef Elf_Vernaux_Impl<ELFT> Elf_Vernaux;
-  typedef Elf_Versym_Impl<ELFT> Elf_Versym;
-  typedef Elf_Hash_Impl<ELFT> Elf_Hash;
-  typedef Elf_GnuHash_Impl<ELFT> Elf_GnuHash;
+  typedef typename ELFT::Ehdr Elf_Ehdr;
+  typedef typename ELFT::Shdr Elf_Shdr;
+  typedef typename ELFT::Sym Elf_Sym;
+  typedef typename ELFT::Dyn Elf_Dyn;
+  typedef typename ELFT::Phdr Elf_Phdr;
+  typedef typename ELFT::Rel Elf_Rel;
+  typedef typename ELFT::Rela Elf_Rela;
+  typedef typename ELFT::Verdef Elf_Verdef;
+  typedef typename ELFT::Verdaux Elf_Verdaux;
+  typedef typename ELFT::Verneed Elf_Verneed;
+  typedef typename ELFT::Vernaux Elf_Vernaux;
+  typedef typename ELFT::Versym Elf_Versym;
+  typedef typename ELFT::Hash Elf_Hash;
+  typedef typename ELFT::GnuHash Elf_GnuHash;
   typedef typename ELFT::DynRange Elf_Dyn_Range;
   typedef typename ELFT::ShdrRange Elf_Shdr_Range;
   typedef typename ELFT::SymRange Elf_Sym_Range;
