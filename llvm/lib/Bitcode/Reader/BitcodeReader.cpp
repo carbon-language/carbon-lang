@@ -4144,7 +4144,8 @@ std::error_code BitcodeReader::parseModule(uint64_t ResumeBit,
 /// Helper to read the header common to all bitcode files.
 static bool hasValidBitcodeHeader(BitstreamCursor &Stream) {
   // Sniff for the signature.
-  if (Stream.Read(8) != 'B' ||
+  if (!Stream.canSkipToPos(4) ||
+      Stream.Read(8) != 'B' ||
       Stream.Read(8) != 'C' ||
       Stream.Read(4) != 0x0 ||
       Stream.Read(4) != 0xC ||
