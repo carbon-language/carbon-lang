@@ -52,7 +52,7 @@ public:
 };
 }
 
-template <class ELFT> void ObjectFile<ELFT>::initializeDwarfLine() {
+template <class ELFT> void elf::ObjectFile<ELFT>::initializeDwarfLine() {
   std::unique_ptr<object::ObjectFile> Obj =
       check(object::ObjectFile::createObjectFile(this->MB),
             "createObjectFile failed");
@@ -73,8 +73,8 @@ template <class ELFT> void ObjectFile<ELFT>::initializeDwarfLine() {
 // Returns source line information for a given offset
 // using DWARF debug info.
 template <class ELFT>
-std::string ObjectFile<ELFT>::getLineInfo(InputSectionBase<ELFT> *S,
-                                          uintX_t Offset) {
+std::string elf::ObjectFile<ELFT>::getLineInfo(InputSectionBase<ELFT> *S,
+                                               uintX_t Offset) {
   if (!DwarfLine)
     initializeDwarfLine();
 
