@@ -291,7 +291,7 @@ void elf::ObjectFile<ELFT>::initializeSections(
   uint64_t Size = ObjSections.size();
   Sections.resize(Size);
   unsigned I = -1;
-  StringRef SectionStringTable = check(Obj.getSectionStringTable());
+  StringRef SectionStringTable = check(Obj.getSectionStringTable(ObjSections));
   for (const Elf_Shdr &Sec : ObjSections) {
     ++I;
     if (Sections[I] == &InputSection<ELFT>::Discarded)
