@@ -291,7 +291,7 @@ void elf::ObjectFile<ELFT>::initializeSections(
   unsigned I = -1;
   const ELFFile<ELFT> &Obj = this->ELFObj;
   StringRef SectionStringTable = check(Obj.getSectionStringTable());
-  for (const Elf_Shdr &Sec : Obj.sections()) {
+  for (const Elf_Shdr &Sec : check(Obj.sections())) {
     ++I;
     if (Sections[I] == &InputSection<ELFT>::Discarded)
       continue;
@@ -578,7 +578,7 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
   const Elf_Shdr *DynamicSec = nullptr;
 
   const ELFFile<ELFT> Obj = this->ELFObj;
-  for (const Elf_Shdr &Sec : Obj.sections()) {
+  for (const Elf_Shdr &Sec : check(Obj.sections())) {
     switch (Sec.sh_type) {
     default:
       continue;
@@ -891,7 +891,7 @@ template <class ELFT> std::vector<StringRef> LazyObjectFile::getElfSymbols() {
   typedef typename ELFT::SymRange Elf_Sym_Range;
 
   const ELFFile<ELFT> Obj = createELFObj<ELFT>(this->MB);
-  for (const Elf_Shdr &Sec : Obj.sections()) {
+  for (const Elf_Shdr &Sec : check(Obj.sections())) {
     if (Sec.sh_type != SHT_SYMTAB)
       continue;
     Elf_Sym_Range Syms = Obj.symbols(&Sec);
