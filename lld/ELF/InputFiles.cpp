@@ -610,6 +610,9 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
     }
   }
 
+  if (this->VersymSec && !this->Symtab)
+    error("SHT_GNU_versym should be associated with symbol table");
+
   this->initStringTable();
 
   // DSOs are identified by soname, and they usually contain
