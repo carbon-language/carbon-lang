@@ -71,7 +71,6 @@ private:
   StringRef Buf;
 
   const Elf_Ehdr *Header;
-  const Elf_Shdr *SectionHeaderTable = nullptr;
 
 public:
   template<typename T>
@@ -147,8 +146,8 @@ public:
     return makeArrayRef(program_header_begin(), program_header_end());
   }
 
-  uintX_t getNumSections() const;
   ErrorOr<StringRef> getSectionStringTable() const;
+  ErrorOr<StringRef> getSectionStringTable(Elf_Shdr_Range Sections) const;
   uint32_t getExtendedSymbolTableIndex(const Elf_Sym *Sym,
                                        const Elf_Shdr *SymTab,
                                        ArrayRef<Elf_Word> ShndxTable) const;
@@ -286,26 +285,25 @@ ELFFile<ELFT>::getRelocationSymbol(const Elf_Rel *Rel,
 }
 
 template <class ELFT>
-typename ELFT::uint ELFFile<ELFT>::getNumSections() const {
-  assert(Header && "Header not initialized!");
-  if (Header->e_shnum == ELF::SHN_UNDEF && Header->e_shoff > 0) {
-    assert(SectionHeaderTable && "SectionHeaderTable not initialized!");
-    return SectionHeaderTable->sh_size;
-  }
-  return Header->e_shnum;
+ErrorOr<StringRef> ELFFile<ELFT>::getSectionStringTable() const {
+  auto SectionsOrErr = sections();
+  if (std::error_code EC = SectionsOrErr.getError())
+    return EC;
+  return getSectionStringTable(*SectionsOrErr);
 }
 
 template <class ELFT>
-ErrorOr<StringRef> ELFFile<ELFT>::getSectionStringTable() const {
+ErrorOr<StringRef>
+ELFFile<ELFT>::getSectionStringTable(Elf_Shdr_Range Sections) const {
   uint32_t Index = Header->e_shstrndx;
   if (Index == ELF::SHN_XINDEX)
-    Index = SectionHeaderTable->sh_link;
+    Index = Sections[0].sh_link;
+
   if (!Index) // no section string table.
     return "";
-  ErrorOr<const Elf_Shdr *> StrTabSecOrErr = getSection(Index);
-  if (std::error_code EC = StrTabSecOrErr.getError())
-    return EC;
-  return getStringTable(*StrTabSecOrErr);
+  if (Index >= Sections.size())
+    return object_error::parse_failed;
+  return getStringTable(&Sections[Index]);
 }
 
 template <class ELFT>
@@ -328,37 +326,6 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC) : Buf(Object) {
     return;
   }
 
-  const uint64_t SectionTableOffset = Header->e_shoff;
-
-  if (SectionTableOffset + sizeof(Elf_Shdr) > FileSize) {
-    // Section header table goes past end of file!
-    EC = object_error::parse_failed;
-    return;
-  }
-
-  if (SectionTableOffset & (alignof(Elf_Shdr) - 1)) {
-    // Invalid address alignment of section headers
-    EC = object_error::parse_failed;
-    return;
-  }
-
-  // The getNumSections() call below depends on SectionHeaderTable being set.
-  SectionHeaderTable =
-    reinterpret_cast<const Elf_Shdr *>(base() + SectionTableOffset);
-  if (getNumSections() > UINT64_MAX / Header->e_shentsize) {
-    // Section table goes past end of file!
-    EC = object_error::parse_failed;
-    return;
-  }
-
-  const uint64_t SectionTableSize = getNumSections() * Header->e_shentsize;
-
-  if (SectionTableOffset + SectionTableSize > FileSize) {
-    // Section table goes past end of file!
-    EC = object_error::parse_failed;
-    return;
-  }
-
   EC = std::error_code();
 }
 
@@ -369,11 +336,42 @@ static bool compareAddr(uint64_t VAddr, const Elf_Phdr_Impl<ELFT> *Phdr) {
 
 template <class ELFT>
 ErrorOr<typename ELFT::ShdrRange> ELFFile<ELFT>::sections() const {
+  const uintX_t SectionTableOffset = Header->e_shoff;
+  if (SectionTableOffset == 0)
+    return ArrayRef<Elf_Shdr>();
+
   // Invalid section header entry size (e_shentsize) in ELF header
   if (Header->e_shentsize != sizeof(Elf_Shdr))
     return object_error::parse_failed;
-  auto *Begin = reinterpret_cast<const Elf_Shdr *>(base() + Header->e_shoff);
-  return makeArrayRef(Begin, Begin + getNumSections());
+
+  const uint64_t FileSize = Buf.size();
+
+  // Section header table goes past end of file!
+  if (SectionTableOffset + sizeof(Elf_Shdr) > FileSize)
+    return object_error::parse_failed;
+
+  // Invalid address alignment of section headers
+  if (SectionTableOffset & (alignof(Elf_Shdr) - 1))
+    return object_error::parse_failed;
+
+  const Elf_Shdr *First =
+      reinterpret_cast<const Elf_Shdr *>(base() + SectionTableOffset);
+
+  uintX_t NumSections = Header->e_shnum;
+  if (NumSections == 0)
+    NumSections = First->sh_size;
+
+  // Section table goes past end of file!
+  if (NumSections > UINT64_MAX / sizeof(Elf_Shdr))
+    return object_error::parse_failed;
+
+  const uint64_t SectionTableSize = NumSections * sizeof(Elf_Shdr);
+
+  // Section table goes past end of file!
+  if (SectionTableOffset + SectionTableSize > FileSize)
+    return object_error::parse_failed;
+
+  return makeArrayRef(First, NumSections);
 }
 
 template <class ELFT>
@@ -396,14 +394,13 @@ const T *ELFFile<ELFT>::getEntry(const Elf_Shdr *Section,
 template <class ELFT>
 ErrorOr<const typename ELFFile<ELFT>::Elf_Shdr *>
 ELFFile<ELFT>::getSection(uint32_t Index) const {
-  assert(SectionHeaderTable && "SectionHeaderTable not initialized!");
-  if (Index >= getNumSections())
+  auto TableOrErr = sections();
+  if (std::error_code EC = TableOrErr.getError())
+    return EC;
+  ArrayRef<Elf_Shdr> Table = *TableOrErr;
+  if (Index >= Table.size())
     return object_error::invalid_section_index;
-
-  const Elf_Shdr *Addr = SectionHeaderTable + Index;
-  if (reinterpret_cast<const uint8_t *>(Addr) >= base() + getBufSize())
-    return object_error::invalid_section_index;
-  return Addr;
+  return &Table[Index];
 }
 
 template <class ELFT>
