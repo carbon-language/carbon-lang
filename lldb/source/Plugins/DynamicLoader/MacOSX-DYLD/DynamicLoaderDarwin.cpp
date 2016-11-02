@@ -378,8 +378,7 @@ bool DynamicLoaderDarwin::JSONImageInformationIntoImageInfo(
     image_infos[i].mod_date =
         image->GetValueForKey("mod_date")->GetAsInteger()->GetValue();
     image_infos[i].file_spec.SetFile(
-        image->GetValueForKey("pathname")->GetAsString()->GetValue().c_str(),
-        false);
+        image->GetValueForKey("pathname")->GetAsString()->GetValue(), false);
 
     StructuredData::Dictionary *mh =
         image->GetValueForKey("mach_header")->GetAsDictionary();
