@@ -149,7 +149,6 @@ public:
 
   uintX_t getNumSections() const;
   ErrorOr<StringRef> getSectionStringTable() const;
-  uint32_t getSectionStringTableIndex() const;
   uint32_t getExtendedSymbolTableIndex(const Elf_Sym *Sym,
                                        const Elf_Shdr *SymTab,
                                        ArrayRef<Elf_Word> ShndxTable) const;
@@ -297,15 +296,10 @@ typename ELFT::uint ELFFile<ELFT>::getNumSections() const {
 }
 
 template <class ELFT>
-uint32_t ELFFile<ELFT>::getSectionStringTableIndex() const {
-  if (Header->e_shstrndx == ELF::SHN_XINDEX)
-    return SectionHeaderTable->sh_link;
-  return Header->e_shstrndx;
-}
-
-template <class ELFT>
 ErrorOr<StringRef> ELFFile<ELFT>::getSectionStringTable() const {
-  uint32_t Index = getSectionStringTableIndex();
+  uint32_t Index = Header->e_shstrndx;
+  if (Index == ELF::SHN_XINDEX)
+    Index = SectionHeaderTable->sh_link;
   if (!Index) // no section string table.
     return "";
   ErrorOr<const Elf_Shdr *> StrTabSecOrErr = getSection(Index);
