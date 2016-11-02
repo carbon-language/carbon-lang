@@ -107,11 +107,7 @@ public:
       Header->getDataEncoding() == ELF::ELFDATA2LSB;
   }
 
-  const Elf_Shdr *section_begin() const;
-  const Elf_Shdr *section_end() const;
-  Elf_Shdr_Range sections() const {
-    return makeArrayRef(section_begin(), section_end());
-  }
+  ErrorOr<Elf_Shdr_Range> sections() const;
 
   Elf_Sym_Range symbols(const Elf_Shdr *Sec) const {
     if (!Sec)
@@ -378,16 +374,12 @@ static bool compareAddr(uint64_t VAddr, const Elf_Phdr_Impl<ELFT> *Phdr) {
 }
 
 template <class ELFT>
-const typename ELFFile<ELFT>::Elf_Shdr *ELFFile<ELFT>::section_begin() const {
+ErrorOr<typename ELFT::ShdrRange> ELFFile<ELFT>::sections() const {
+  // Invalid section header entry size (e_shentsize) in ELF header
   if (Header->e_shentsize != sizeof(Elf_Shdr))
-    report_fatal_error(
-        "Invalid section header entry size (e_shentsize) in ELF header");
-  return reinterpret_cast<const Elf_Shdr *>(base() + Header->e_shoff);
-}
-
-template <class ELFT>
-const typename ELFFile<ELFT>::Elf_Shdr *ELFFile<ELFT>::section_end() const {
-  return section_begin() + getNumSections();
+    return object_error::parse_failed;
+  auto *Begin = reinterpret_cast<const Elf_Shdr *>(base() + Header->e_shoff);
+  return makeArrayRef(Begin, Begin + getNumSections());
 }
 
 template <class ELFT>
