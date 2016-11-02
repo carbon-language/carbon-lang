@@ -286,12 +286,13 @@ bool elf::ObjectFile<ELFT>::shouldMerge(const Elf_Shdr &Sec) {
 template <class ELFT>
 void elf::ObjectFile<ELFT>::initializeSections(
     DenseSet<CachedHashStringRef> &ComdatGroups) {
-  uint64_t Size = this->ELFObj.getNumSections();
+  const ELFFile<ELFT> &Obj = this->ELFObj;
+  ArrayRef<Elf_Shdr> ObjSections = check(Obj.sections());
+  uint64_t Size = ObjSections.size();
   Sections.resize(Size);
   unsigned I = -1;
-  const ELFFile<ELFT> &Obj = this->ELFObj;
   StringRef SectionStringTable = check(Obj.getSectionStringTable());
-  for (const Elf_Shdr &Sec : check(Obj.sections())) {
+  for (const Elf_Shdr &Sec : ObjSections) {
     ++I;
     if (Sections[I] == &InputSection<ELFT>::Discarded)
       continue;
