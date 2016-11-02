@@ -1174,12 +1174,13 @@ bool HexagonExpandCondsets::coalesceSegments(
     if (!Done && S2.isReg()) {
       RegisterRef RS = S2;
       MachineInstr *RDef = getReachingDefForPred(RS, CI, RP.Reg, false);
-      if (!RDef || !HII->isPredicable(*RDef))
+      if (!RDef || !HII->isPredicable(*RDef)) {
         Done = coalesceRegisters(RD, RegisterRef(S2));
         if (Done) {
           UpdRegs.insert(RD.Reg);
           UpdRegs.insert(S2.getReg());
         }
+      }
     }
     Changed |= Done;
   }
