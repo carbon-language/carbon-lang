@@ -179,6 +179,14 @@ typedef ELFFile<ELFType<support::big, false>> ELF32BEFile;
 typedef ELFFile<ELFType<support::big, true>> ELF64BEFile;
 
 template <class ELFT>
+inline ErrorOr<const typename ELFT::Shdr *>
+getSection(typename ELFT::ShdrRange Sections, uint32_t Index) {
+  if (Index >= Sections.size())
+    return object_error::invalid_section_index;
+  return &Sections[Index];
+}
+
+template <class ELFT>
 uint32_t ELFFile<ELFT>::getExtendedSymbolTableIndex(
     const Elf_Sym *Sym, const Elf_Shdr *SymTab,
     ArrayRef<Elf_Word> ShndxTable) const {
@@ -202,12 +210,17 @@ ErrorOr<const typename ELFT::Shdr *>
 ELFFile<ELFT>::getSection(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
                           ArrayRef<Elf_Word> ShndxTable) const {
   uint32_t Index = Sym->st_shndx;
-  if (Index == ELF::SHN_XINDEX)
-    return getSection(getExtendedSymbolTableIndex(Sym, SymTab, ShndxTable));
-
-  if (Index == ELF::SHN_UNDEF || Index >= ELF::SHN_LORESERVE)
+  if (Index == ELF::SHN_UNDEF ||
+      (Index >= ELF::SHN_LORESERVE && Index != ELF::SHN_XINDEX))
     return nullptr;
-  return getSection(Sym->st_shndx);
+
+  if (Index == ELF::SHN_XINDEX)
+    Index = getExtendedSymbolTableIndex(Sym, SymTab, ShndxTable);
+
+  auto SectionsOrErr = sections();
+  if (std::error_code EC = SectionsOrErr.getError())
+    return EC;
+  return object::getSection<ELFT>(*SectionsOrErr, Index);
 }
 
 template <class ELFT>
@@ -387,10 +400,7 @@ ELFFile<ELFT>::getSection(uint32_t Index) const {
   auto TableOrErr = sections();
   if (std::error_code EC = TableOrErr.getError())
     return EC;
-  ArrayRef<Elf_Shdr> Table = *TableOrErr;
-  if (Index >= Table.size())
-    return object_error::invalid_section_index;
-  return &Table[Index];
+  return object::getSection<ELFT>(*TableOrErr, Index);
 }
 
 template <class ELFT>
