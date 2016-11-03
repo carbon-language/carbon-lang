@@ -1305,7 +1305,7 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, ScopedPrinter &Writer)
     : ObjDumper(Writer), Obj(Obj) {
 
   SmallVector<const Elf_Phdr *, 4> LoadSegments;
-  for (const Elf_Phdr &Phdr : Obj->program_headers()) {
+  for (const Elf_Phdr &Phdr : unwrapOrError(Obj->program_headers())) {
     if (Phdr.p_type == ELF::PT_DYNAMIC) {
       DynamicTable = createDRIFrom(&Phdr, sizeof(Elf_Dyn));
       continue;
@@ -2910,7 +2910,7 @@ void GNUStyle<ELFT>::printProgramHeaders(const ELFO *Obj) {
   else
     OS << "  Type           Offset   VirtAddr   PhysAddr   FileSiz "
        << "MemSiz  Flg Align\n";
-  for (const auto &Phdr : Obj->program_headers()) {
+  for (const auto &Phdr : unwrapOrError(Obj->program_headers())) {
     Type = getElfPtType(Header->e_machine, Phdr.p_type);
     Offset = to_string(format_hex(Phdr.p_offset, 8));
     VMA = to_string(format_hex(Phdr.p_vaddr, Width));
@@ -2937,7 +2937,7 @@ void GNUStyle<ELFT>::printProgramHeaders(const ELFO *Obj) {
   }
   OS << "\n Section to Segment mapping:\n  Segment Sections...\n";
   int Phnum = 0;
-  for (const Elf_Phdr &Phdr : Obj->program_headers()) {
+  for (const Elf_Phdr &Phdr : unwrapOrError(Obj->program_headers())) {
     std::string Sections;
     OS << format("   %2.2d     ", Phnum++);
     for (const Elf_Shdr &Sec : unwrapOrError(Obj->sections())) {
@@ -3268,7 +3268,7 @@ void GNUStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
   };
 
   if (IsCore) {
-    for (const auto &P : Obj->program_headers())
+    for (const auto &P : unwrapOrError(Obj->program_headers()))
       if (P.p_type == PT_NOTE)
         process(P.p_offset, P.p_filesz);
   } else {
@@ -3630,7 +3630,7 @@ template <class ELFT>
 void LLVMStyle<ELFT>::printProgramHeaders(const ELFO *Obj) {
   ListScope L(W, "ProgramHeaders");
 
-  for (const Elf_Phdr &Phdr : Obj->program_headers()) {
+  for (const Elf_Phdr &Phdr : unwrapOrError(Obj->program_headers())) {
     DictScope P(W, "ProgramHeader");
     W.printHex("Type",
                getElfSegmentType(Obj->getHeader()->e_machine, Phdr.p_type),

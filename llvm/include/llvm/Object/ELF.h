@@ -132,9 +132,9 @@ public:
   }
 
   /// \brief Iterate over program header table.
-  const Elf_Phdr_Range program_headers() const {
+  ErrorOr<Elf_Phdr_Range> program_headers() const {
     if (Header->e_phnum && Header->e_phentsize != sizeof(Elf_Phdr))
-      report_fatal_error("Invalid program header size");
+      return object_error::parse_failed;
     auto *Begin = reinterpret_cast<const Elf_Phdr *>(base() + Header->e_phoff);
     return makeArrayRef(Begin, Begin+Header->e_phnum);
   }
