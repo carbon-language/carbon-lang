@@ -154,6 +154,8 @@ public:
   getExtendedSymbolTableIndex(const Elf_Sym *Sym, const Elf_Sym *FirstSym,
                               ArrayRef<Elf_Word> ShndxTable) const;
   const Elf_Ehdr *getHeader() const { return Header; }
+  ErrorOr<uint32_t> getSectionIndex(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
+                                    ArrayRef<Elf_Word> ShndxTable) const;
   ErrorOr<const Elf_Shdr *> getSection(const Elf_Sym *Sym,
                                        const Elf_Shdr *SymTab,
                                        ArrayRef<Elf_Word> ShndxTable) const;
@@ -214,21 +216,31 @@ ErrorOr<uint32_t> ELFFile<ELFT>::getExtendedSymbolTableIndex(
 }
 
 template <class ELFT>
-ErrorOr<const typename ELFT::Shdr *>
-ELFFile<ELFT>::getSection(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
-                          ArrayRef<Elf_Word> ShndxTable) const {
+ErrorOr<uint32_t>
+ELFFile<ELFT>::getSectionIndex(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
+                               ArrayRef<Elf_Word> ShndxTable) const {
   uint32_t Index = Sym->st_shndx;
-  if (Index == ELF::SHN_UNDEF ||
-      (Index >= ELF::SHN_LORESERVE && Index != ELF::SHN_XINDEX))
-    return nullptr;
-
   if (Index == ELF::SHN_XINDEX) {
     auto ErrorOrIndex = getExtendedSymbolTableIndex(Sym, SymTab, ShndxTable);
     if (std::error_code EC = ErrorOrIndex.getError())
       return EC;
-    Index = *ErrorOrIndex;
+    return *ErrorOrIndex;
   }
+  if (Index == ELF::SHN_UNDEF || Index >= ELF::SHN_LORESERVE)
+    return 0;
+  return Index;
+}
 
+template <class ELFT>
+ErrorOr<const typename ELFT::Shdr *>
+ELFFile<ELFT>::getSection(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
+                          ArrayRef<Elf_Word> ShndxTable) const {
+  ErrorOr<uint32_t> IndexOrErr = getSectionIndex(Sym, SymTab, ShndxTable);
+  if (std::error_code EC = IndexOrErr.getError())
+    return EC;
+  uint32_t Index = *IndexOrErr;
+  if (Index == 0)
+    return nullptr;
   auto SectionsOrErr = sections();
   if (std::error_code EC = SectionsOrErr.getError())
     return EC;
