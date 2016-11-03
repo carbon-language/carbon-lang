@@ -111,13 +111,10 @@ public:
 
   ErrorOr<Elf_Shdr_Range> sections() const;
 
-  Elf_Sym_Range symbols(const Elf_Shdr *Sec) const {
+  ErrorOr<Elf_Sym_Range> symbols(const Elf_Shdr *Sec) const {
     if (!Sec)
       return makeArrayRef<Elf_Sym>(nullptr, nullptr);
-    auto V = getSectionContentsAsArray<Elf_Sym>(Sec);
-    if (!V)
-      report_fatal_error(V.getError().message());
-    return *V;
+    return getSectionContentsAsArray<Elf_Sym>(Sec);
   }
 
   Elf_Rela_Range relas(const Elf_Shdr *Sec) const {
@@ -164,7 +161,10 @@ public:
 
   ErrorOr<const Elf_Sym *> getSymbol(const Elf_Shdr *Sec,
                                      uint32_t Index) const {
-    Elf_Sym_Range Symbols = symbols(Sec);
+    auto SymtabOrErr = symbols(Sec);
+    if (std::error_code EC = SymtabOrErr.getError())
+      return object_error::parse_failed;
+    Elf_Sym_Range Symbols = *SymtabOrErr;
     if (Index >= Symbols.size())
       return object_error::invalid_symbol_index;
     return &Symbols[Index];
@@ -195,7 +195,10 @@ template <class ELFT>
 uint32_t ELFFile<ELFT>::getExtendedSymbolTableIndex(
     const Elf_Sym *Sym, const Elf_Shdr *SymTab,
     ArrayRef<Elf_Word> ShndxTable) const {
-  return getExtendedSymbolTableIndex(Sym, symbols(SymTab).begin(), ShndxTable);
+  auto SymsOrErr = symbols(SymTab);
+  if (std::error_code EC = SymsOrErr.getError())
+    report_fatal_error(EC.message());
+  return getExtendedSymbolTableIndex(Sym, SymsOrErr->begin(), ShndxTable);
 }
 
 template <class ELFT>
