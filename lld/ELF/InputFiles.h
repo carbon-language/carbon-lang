@@ -157,8 +157,6 @@ public:
     return getSymbolBody(SymIndex);
   }
 
-  const Elf_Shdr *getSymbolTable() const { return this->Symtab; };
-
   // Returns source line information for a given offset.
   // If no information is available, returns "".
   std::string getLineInfo(InputSectionBase<ELFT> *S, uintX_t Offset);
