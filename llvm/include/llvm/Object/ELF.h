@@ -156,15 +156,7 @@ public:
   ErrorOr<const Elf_Shdr *> getSection(uint32_t Index) const;
 
   ErrorOr<const Elf_Sym *> getSymbol(const Elf_Shdr *Sec,
-                                     uint32_t Index) const {
-    auto SymtabOrErr = symbols(Sec);
-    if (std::error_code EC = SymtabOrErr.getError())
-      return EC;
-    Elf_Sym_Range Symbols = *SymtabOrErr;
-    if (Index >= Symbols.size())
-      return object_error::invalid_symbol_index;
-    return &Symbols[Index];
-  }
+                                     uint32_t Index) const;
 
   ErrorOr<StringRef> getSectionName(const Elf_Shdr *Section) const;
   ErrorOr<StringRef> getSectionName(const Elf_Shdr *Section,
@@ -235,6 +227,18 @@ ELFFile<ELFT>::getSection(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
   if (std::error_code EC = SectionsOrErr.getError())
     return EC;
   return object::getSection<ELFT>(*SectionsOrErr, Index);
+}
+
+template <class ELFT>
+ErrorOr<const typename ELFT::Sym *>
+ELFFile<ELFT>::getSymbol(const Elf_Shdr *Sec, uint32_t Index) const {
+  auto SymtabOrErr = symbols(Sec);
+  if (std::error_code EC = SymtabOrErr.getError())
+    return EC;
+  Elf_Sym_Range Symbols = *SymtabOrErr;
+  if (Index >= Symbols.size())
+    return object_error::invalid_symbol_index;
+  return &Symbols[Index];
 }
 
 template <class ELFT>
