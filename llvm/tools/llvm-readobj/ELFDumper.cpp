@@ -647,8 +647,8 @@ StringRef ELFDumper<ELFT>::getSymbolVersion(StringRef StrTab,
                        sizeof(Elf_Sym);
 
   // Get the corresponding version index entry
-  const Elf_Versym *vs =
-      Obj->template getEntry<Elf_Versym>(dot_gnu_version_sec, entry_index);
+  const Elf_Versym *vs = unwrapOrError(
+      Obj->template getEntry<Elf_Versym>(dot_gnu_version_sec, entry_index));
   size_t version_index = vs->vs_index & ELF::VERSYM_VERSION;
 
   // Special markers for unversioned symbols.
@@ -2068,7 +2068,8 @@ template <class ELFT> void MipsGOTParser<ELFT>::parsePLT() {
     switch (PLTRelShdr->sh_type) {
     case ELF::SHT_REL:
       for (const Elf_Rel &Rel : Obj->rels(PLTRelShdr)) {
-        const Elf_Sym *Sym = Obj->getRelocationSymbol(&Rel, SymTable);
+        const Elf_Sym *Sym =
+            unwrapOrError(Obj->getRelocationSymbol(&Rel, SymTable));
         printPLTEntry(PLTShdr->sh_addr, PLTBegin, It, StrTable, Sym);
         if (++It == PLTEnd)
           break;
@@ -2076,7 +2077,8 @@ template <class ELFT> void MipsGOTParser<ELFT>::parsePLT() {
       break;
     case ELF::SHT_RELA:
       for (const Elf_Rela &Rel : Obj->relas(PLTRelShdr)) {
-        const Elf_Sym *Sym = Obj->getRelocationSymbol(&Rel, SymTable);
+        const Elf_Sym *Sym =
+            unwrapOrError(Obj->getRelocationSymbol(&Rel, SymTable));
         printPLTEntry(PLTShdr->sh_addr, PLTBegin, It, StrTable, Sym);
         if (++It == PLTEnd)
           break;
@@ -2428,7 +2430,7 @@ template <class ELFT> void GNUStyle<ELFT>::printGroupSections(const ELFO *Obj) {
       const Elf_Shdr *Symtab = unwrapOrError(Obj->getSection(Sec.sh_link));
       StringRef StrTable = unwrapOrError(Obj->getStringTableForSymtab(*Symtab));
       const Elf_Sym *Signature =
-          Obj->template getEntry<Elf_Sym>(Symtab, Sec.sh_info);
+          unwrapOrError(Obj->template getEntry<Elf_Sym>(Symtab, Sec.sh_info));
       ArrayRef<Elf_Word> Data = unwrapOrError(
           Obj->template getSectionContentsAsArray<Elf_Word>(&Sec));
       StringRef Name = unwrapOrError(Obj->getSectionName(&Sec));
@@ -2465,7 +2467,7 @@ void GNUStyle<ELFT>::printRelocation(const ELFO *Obj, const Elf_Shdr *SymTab,
   // fixed width.
   Field Fields[5] = {0, 10 + Bias, 19 + 2 * Bias, 42 + 2 * Bias, 53 + 2 * Bias};
   Obj->getRelocationTypeName(R.getType(Obj->isMips64EL()), RelocName);
-  Sym = Obj->getRelocationSymbol(&R, SymTab);
+  Sym = unwrapOrError(Obj->getRelocationSymbol(&R, SymTab));
   if (Sym && Sym->getType() == ELF::STT_SECTION) {
     const Elf_Shdr *Sec = unwrapOrError(
         Obj->getSection(Sym, SymTab, this->dumper()->getShndxTable()));
@@ -3332,7 +3334,8 @@ void LLVMStyle<ELFT>::printGroupSections(const ELFO *Obj) {
       HasGroups = true;
       const Elf_Shdr *Symtab = unwrapOrError(Obj->getSection(Sec.sh_link));
       StringRef StrTable = unwrapOrError(Obj->getStringTableForSymtab(*Symtab));
-      const Elf_Sym *Sym = Obj->template getEntry<Elf_Sym>(Symtab, Sec.sh_info);
+      const Elf_Sym *Sym =
+          unwrapOrError(Obj->template getEntry<Elf_Sym>(Symtab, Sec.sh_info));
       auto Data = unwrapOrError(
           Obj->template getSectionContentsAsArray<Elf_Word>(&Sec));
       DictScope D(W, "Group");
@@ -3406,7 +3409,7 @@ void LLVMStyle<ELFT>::printRelocation(const ELFO *Obj, Elf_Rela Rel,
   SmallString<32> RelocName;
   Obj->getRelocationTypeName(Rel.getType(Obj->isMips64EL()), RelocName);
   StringRef TargetName;
-  const Elf_Sym *Sym = Obj->getRelocationSymbol(&Rel, SymTab);
+  const Elf_Sym *Sym = unwrapOrError(Obj->getRelocationSymbol(&Rel, SymTab));
   if (Sym && Sym->getType() == ELF::STT_SECTION) {
     const Elf_Shdr *Sec = unwrapOrError(
         Obj->getSection(Sym, SymTab, this->dumper()->getShndxTable()));

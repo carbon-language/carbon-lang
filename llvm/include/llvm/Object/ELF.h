@@ -75,7 +75,7 @@ public:
   template <typename T>
   ErrorOr<const T *> getEntry(uint32_t Section, uint32_t Entry) const;
   template <typename T>
-  const T *getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
+  ErrorOr<const T *> getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
 
   ErrorOr<StringRef> getStringTable(const Elf_Shdr *Section) const;
   ErrorOr<StringRef> getStringTableForSymtab(const Elf_Shdr &Section) const;
@@ -93,8 +93,8 @@ public:
                              SmallVectorImpl<char> &Result) const;
 
   /// \brief Get the symbol for a given relocation.
-  const Elf_Sym *getRelocationSymbol(const Elf_Rel *Rel,
-                                     const Elf_Shdr *SymTab) const;
+  ErrorOr<const Elf_Sym *> getRelocationSymbol(const Elf_Rel *Rel,
+                                               const Elf_Shdr *SymTab) const;
 
   ELFFile(StringRef Object, std::error_code &EC);
 
@@ -310,7 +310,7 @@ void ELFFile<ELFT>::getRelocationTypeName(uint32_t Type,
 }
 
 template <class ELFT>
-const typename ELFT::Sym *
+ErrorOr<const typename ELFT::Sym *>
 ELFFile<ELFT>::getRelocationSymbol(const Elf_Rel *Rel,
                                    const Elf_Shdr *SymTab) const {
   uint32_t Index = Rel->getSymbol(isMips64EL());
@@ -413,10 +413,14 @@ ErrorOr<const T *> ELFFile<ELFT>::getEntry(uint32_t Section,
 
 template <class ELFT>
 template <typename T>
-const T *ELFFile<ELFT>::getEntry(const Elf_Shdr *Section,
-                                 uint32_t Entry) const {
-  return reinterpret_cast<const T *>(base() + Section->sh_offset +
-                                     (Entry * Section->sh_entsize));
+ErrorOr<const T *> ELFFile<ELFT>::getEntry(const Elf_Shdr *Section,
+                                           uint32_t Entry) const {
+  if (sizeof(T) != Section->sh_entsize)
+    return object_error::parse_failed;
+  size_t Pos = Section->sh_offset + Entry * sizeof(T);
+  if (Pos + sizeof(T) > Buf.size())
+    return object_error::parse_failed;
+  return reinterpret_cast<const T *>(base() + Pos);
 }
 
 template <class ELFT>
