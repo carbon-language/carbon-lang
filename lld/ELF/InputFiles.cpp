@@ -103,14 +103,6 @@ std::string elf::getFilename(const InputFile *F) {
   return F->getName();
 }
 
-template <class ELFT> static ELFFile<ELFT> createELFObj(MemoryBufferRef MB) {
-  std::error_code EC;
-  ELFFile<ELFT> F(MB.getBuffer(), EC);
-  if (EC)
-    fatal(EC, "failed to read " + MB.getBufferIdentifier());
-  return F;
-}
-
 template <class ELFT> static ELFKind getELFKind() {
   if (ELFT::TargetEndianness == support::little)
     return ELFT::Is64Bits ? ELF64LEKind : ELF32LEKind;
@@ -119,7 +111,7 @@ template <class ELFT> static ELFKind getELFKind() {
 
 template <class ELFT>
 ELFFileBase<ELFT>::ELFFileBase(Kind K, MemoryBufferRef MB)
-    : InputFile(K, MB), ELFObj(createELFObj<ELFT>(MB)) {
+    : InputFile(K, MB), ELFObj(MB.getBuffer()) {
   EKind = getELFKind<ELFT>();
   EMachine = ELFObj.getHeader()->e_machine;
   OSABI = ELFObj.getHeader()->e_ident[llvm::ELF::EI_OSABI];
@@ -793,6 +785,11 @@ static InputFile *createELFFile(MemoryBufferRef MB) {
   if (Endian != ELFDATA2LSB && Endian != ELFDATA2MSB)
     fatal("invalid data encoding: " + MB.getBufferIdentifier());
 
+  size_t BufSize = MB.getBuffer().size();
+  if ((Size == ELFCLASS32 && BufSize < sizeof(Elf32_Ehdr)) ||
+      (Size == ELFCLASS64 && BufSize < sizeof(Elf64_Ehdr)))
+    fatal("file is too short");
+
   InputFile *Obj;
   if (Size == ELFCLASS32 && Endian == ELFDATA2LSB)
     Obj = make<T<ELF32LE>>(MB);
@@ -870,7 +867,7 @@ template <class ELFT> std::vector<StringRef> LazyObjectFile::getElfSymbols() {
   typedef typename ELFT::Sym Elf_Sym;
   typedef typename ELFT::SymRange Elf_Sym_Range;
 
-  const ELFFile<ELFT> Obj = createELFObj<ELFT>(this->MB);
+  const ELFFile<ELFT> Obj(this->MB.getBuffer());
   ArrayRef<Elf_Shdr> Sections = check(Obj.sections());
   for (const Elf_Shdr &Sec : Sections) {
     if (Sec.sh_type != SHT_SYMTAB)
