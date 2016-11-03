@@ -295,7 +295,10 @@ ELFDumper<ELFT>::dumpRelSection(const Elf_Shdr *Shdr) {
     return EC;
   const Elf_Shdr *SymTab = *SymTabOrErr;
 
-  for (const Elf_Rel &Rel : Obj.rels(Shdr)) {
+  auto Rels = Obj.rels(Shdr);
+  if (std::error_code EC = Rels.getError())
+    return EC;
+  for (const Elf_Rel &Rel : *Rels) {
     ELFYAML::Relocation R;
     if (std::error_code EC = dumpRelocation(&Rel, SymTab, R))
       return EC;
@@ -319,7 +322,10 @@ ELFDumper<ELFT>::dumpRelaSection(const Elf_Shdr *Shdr) {
     return EC;
   const Elf_Shdr *SymTab = *SymTabOrErr;
 
-  for (const Elf_Rela &Rel : Obj.relas(Shdr)) {
+  auto Rels = Obj.relas(Shdr);
+  if (std::error_code EC = Rels.getError())
+    return EC;
+  for (const Elf_Rela &Rel : *Rels) {
     ELFYAML::Relocation R;
     if (std::error_code EC = dumpRelocation(&Rel, SymTab, R))
       return EC;

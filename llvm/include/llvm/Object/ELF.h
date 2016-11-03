@@ -117,18 +117,12 @@ public:
     return getSectionContentsAsArray<Elf_Sym>(Sec);
   }
 
-  Elf_Rela_Range relas(const Elf_Shdr *Sec) const {
-    auto V = getSectionContentsAsArray<Elf_Rela>(Sec);
-    if (!V)
-      report_fatal_error(V.getError().message());
-    return *V;
+  ErrorOr<Elf_Rela_Range> relas(const Elf_Shdr *Sec) const {
+    return getSectionContentsAsArray<Elf_Rela>(Sec);
   }
 
-  Elf_Rel_Range rels(const Elf_Shdr *Sec) const {
-    auto V = getSectionContentsAsArray<Elf_Rel>(Sec);
-    if (!V)
-      report_fatal_error(V.getError().message());
-    return *V;
+  ErrorOr<Elf_Rel_Range> rels(const Elf_Shdr *Sec) const {
+    return getSectionContentsAsArray<Elf_Rel>(Sec);
   }
 
   /// \brief Iterate over program header table.

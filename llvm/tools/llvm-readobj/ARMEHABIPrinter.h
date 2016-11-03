@@ -387,7 +387,7 @@ PrinterContext<ET>::FindExceptionTable(unsigned IndexSectionIndex,
     error(SymTabOrErr.getError());
     const Elf_Shdr *SymTab = *SymTabOrErr;
 
-    for (const Elf_Rel &R : ELF->rels(&Sec)) {
+    for (const Elf_Rel &R : unwrapOrError(ELF->rels(&Sec))) {
       if (R.r_offset != static_cast<unsigned>(IndexTableOffset))
         continue;
 
