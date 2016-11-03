@@ -129,7 +129,7 @@ template <class ELFT>
 typename ELFT::SymRange ELFFileBase<ELFT>::getElfSymbols(bool OnlyGlobals) {
   if (!Symtab)
     return Elf_Sym_Range(nullptr, nullptr);
-  Elf_Sym_Range Syms = ELFObj.symbols(Symtab);
+  Elf_Sym_Range Syms = check(ELFObj.symbols(Symtab));
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   uint32_t FirstNonLocal = Symtab->sh_info;
   if (FirstNonLocal == 0 || FirstNonLocal > NumSymbols)
@@ -896,7 +896,7 @@ template <class ELFT> std::vector<StringRef> LazyObjectFile::getElfSymbols() {
   for (const Elf_Shdr &Sec : Sections) {
     if (Sec.sh_type != SHT_SYMTAB)
       continue;
-    Elf_Sym_Range Syms = Obj.symbols(&Sec);
+    Elf_Sym_Range Syms = check(Obj.symbols(&Sec));
     uint32_t FirstNonLocal = Sec.sh_info;
     StringRef StringTable = check(Obj.getStringTableForSymtab(Sec, Sections));
     std::vector<StringRef> V;
