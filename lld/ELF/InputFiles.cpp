@@ -146,9 +146,9 @@ uint32_t ELFFileBase<ELFT>::getSectionIndex(const Elf_Sym &Sym) const {
 }
 
 template <class ELFT>
-void ELFFileBase<ELFT>::initStringTable(ArrayRef<Elf_Shdr> Sections) {
-  if (!Symtab)
-    return;
+void ELFFileBase<ELFT>::initSymtab(ArrayRef<Elf_Shdr> Sections,
+                                   const Elf_Shdr *Symtab) {
+  this->Symtab = Symtab;
   StringTable = check(ELFObj.getStringTableForSymtab(*Symtab, Sections));
 }
 
@@ -203,11 +203,11 @@ StringRef
 elf::ObjectFile<ELFT>::getShtGroupSignature(ArrayRef<Elf_Shdr> Sections,
                                             const Elf_Shdr &Sec) {
   const ELFFile<ELFT> &Obj = this->ELFObj;
-  const Elf_Shdr *Symtab =
-      check(object::getSection<ELFT>(Sections, Sec.sh_link));
-  const Elf_Sym *Sym = check(Obj.getSymbol(Symtab, Sec.sh_info));
-  StringRef Strtab = check(Obj.getStringTableForSymtab(*Symtab, Sections));
-  return check(Sym->getName(Strtab));
+  if (!this->Symtab)
+    this->initSymtab(Sections,
+                     check(object::getSection<ELFT>(Sections, Sec.sh_link)));
+  const Elf_Sym *Sym = check(Obj.getSymbol(this->Symtab, Sec.sh_info));
+  return check(Sym->getName(this->StringTable));
 }
 
 template <class ELFT>
@@ -312,7 +312,7 @@ void elf::ObjectFile<ELFT>::initializeSections(
       }
       break;
     case SHT_SYMTAB:
-      this->Symtab = &Sec;
+      this->initSymtab(ObjSections, &Sec);
       break;
     case SHT_SYMTAB_SHNDX:
       this->SymtabSHNDX = check(Obj.getSHNDXTable(Sec, ObjSections));
@@ -442,7 +442,6 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec,
 
 template <class ELFT>
 void elf::ObjectFile<ELFT>::initializeSymbols(ArrayRef<Elf_Shdr> Sections) {
-  this->initStringTable(Sections);
   Elf_Sym_Range Syms = this->getElfSymbols(false);
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   SymbolBodies.reserve(NumSymbols);
@@ -576,7 +575,7 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
     default:
       continue;
     case SHT_DYNSYM:
-      this->Symtab = &Sec;
+      this->initSymtab(Sections, &Sec);
       break;
     case SHT_DYNAMIC:
       DynamicSec = &Sec;
@@ -595,8 +594,6 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
 
   if (this->VersymSec && !this->Symtab)
     error("SHT_GNU_versym should be associated with symbol table");
-
-  this->initStringTable(Sections);
 
   // DSOs are identified by soname, and they usually contain
   // DT_SONAME tag in their header. But if they are missing,

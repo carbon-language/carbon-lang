@@ -114,7 +114,7 @@ protected:
   const Elf_Shdr *Symtab = nullptr;
   ArrayRef<Elf_Word> SymtabSHNDX;
   StringRef StringTable;
-  void initStringTable(ArrayRef<Elf_Shdr> Sections);
+  void initSymtab(ArrayRef<Elf_Shdr> Sections, const Elf_Shdr *Symtab);
 };
 
 // .o file.
