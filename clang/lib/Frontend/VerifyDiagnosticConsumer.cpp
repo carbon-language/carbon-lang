@@ -43,7 +43,8 @@ VerifyDiagnosticConsumer::~VerifyDiagnosticConsumer() {
   assert(!CurrentPreprocessor && "CurrentPreprocessor should be invalid!");
   SrcManager = nullptr;
   CheckDiagnostics();
-  Diags.takeClient().reset();
+  assert(!Diags.ownsClient() &&
+         "The VerifyDiagnosticConsumer takes over ownership of the client!");
 }
 
 #ifndef NDEBUG
