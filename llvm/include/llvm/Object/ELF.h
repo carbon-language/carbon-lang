@@ -72,8 +72,8 @@ private:
   const Elf_Ehdr *Header;
 
 public:
-  template<typename T>
-  const T        *getEntry(uint32_t Section, uint32_t Entry) const;
+  template <typename T>
+  ErrorOr<const T *> getEntry(uint32_t Section, uint32_t Entry) const;
   template <typename T>
   const T *getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
 
@@ -403,10 +403,11 @@ ErrorOr<typename ELFT::ShdrRange> ELFFile<ELFT>::sections() const {
 
 template <class ELFT>
 template <typename T>
-const T *ELFFile<ELFT>::getEntry(uint32_t Section, uint32_t Entry) const {
+ErrorOr<const T *> ELFFile<ELFT>::getEntry(uint32_t Section,
+                                           uint32_t Entry) const {
   ErrorOr<const Elf_Shdr *> Sec = getSection(Section);
   if (std::error_code EC = Sec.getError())
-    report_fatal_error(EC.message());
+    return EC;
   return getEntry<T>(*Sec, Entry);
 }
 
