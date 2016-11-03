@@ -100,8 +100,9 @@ public:
     return K == ObjectKind || K == SharedKind;
   }
 
-  const llvm::object::ELFFile<ELFT> &getObj() const { return ELFObj; }
-  llvm::object::ELFFile<ELFT> &getObj() { return ELFObj; }
+  llvm::object::ELFFile<ELFT> getObj() const {
+    return llvm::object::ELFFile<ELFT>(MB.getBuffer());
+  }
 
   StringRef getStringTable() const { return StringTable; }
 
@@ -110,7 +111,6 @@ public:
   Elf_Sym_Range getElfSymbols(bool OnlyGlobals);
 
 protected:
-  llvm::object::ELFFile<ELFT> ELFObj;
   ArrayRef<Elf_Sym> Symbols;
   uint32_t FirstNonLocal = 0;
   ArrayRef<Elf_Word> SymtabSHNDX;

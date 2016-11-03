@@ -1177,7 +1177,7 @@ void EhOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
     return;
 
   if (const Elf_Shdr *RelSec = Sec->RelocSection) {
-    ELFFile<ELFT> &Obj = Sec->getFile()->getObj();
+    ELFFile<ELFT> Obj = Sec->getFile()->getObj();
     if (RelSec->sh_type == SHT_RELA)
       addSectionAux(Sec, check(Obj.relas(RelSec)));
     else

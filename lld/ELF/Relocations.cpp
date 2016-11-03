@@ -776,7 +776,7 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 template <class ELFT>
 void scanRelocations(InputSectionBase<ELFT> &S,
                      const typename ELFT::Shdr &RelSec) {
-  ELFFile<ELFT> &EObj = S.getFile()->getObj();
+  ELFFile<ELFT> EObj = S.getFile()->getObj();
   if (RelSec.sh_type == SHT_RELA)
     scanRelocs(S, check(EObj.relas(&RelSec)));
   else
@@ -806,7 +806,7 @@ static void createThunks(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 template <class ELFT>
 void createThunks(InputSectionBase<ELFT> &S,
                   const typename ELFT::Shdr &RelSec) {
-  ELFFile<ELFT> &EObj = S.getFile()->getObj();
+  ELFFile<ELFT> EObj = S.getFile()->getObj();
   if (RelSec.sh_type == SHT_RELA)
     createThunks(S, check(EObj.relas(&RelSec)));
   else
