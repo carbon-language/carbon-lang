@@ -150,9 +150,6 @@ public:
   ErrorOr<uint32_t>
   getExtendedSymbolTableIndex(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
                               ArrayRef<Elf_Word> ShndxTable) const;
-  ErrorOr<uint32_t>
-  getExtendedSymbolTableIndex(const Elf_Sym *Sym, const Elf_Sym *FirstSym,
-                              ArrayRef<Elf_Word> ShndxTable) const;
   const Elf_Ehdr *getHeader() const { return Header; }
   ErrorOr<uint32_t> getSectionIndex(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
                                     ArrayRef<Elf_Word> ShndxTable) const;
@@ -194,25 +191,27 @@ getSection(typename ELFT::ShdrRange Sections, uint32_t Index) {
 }
 
 template <class ELFT>
-ErrorOr<uint32_t> ELFFile<ELFT>::getExtendedSymbolTableIndex(
-    const Elf_Sym *Sym, const Elf_Shdr *SymTab,
-    ArrayRef<Elf_Word> ShndxTable) const {
-  auto SymsOrErr = symbols(SymTab);
-  if (std::error_code EC = SymsOrErr.getError())
-    return EC;
-  return getExtendedSymbolTableIndex(Sym, SymsOrErr->begin(), ShndxTable);
-}
-
-template <class ELFT>
-ErrorOr<uint32_t> ELFFile<ELFT>::getExtendedSymbolTableIndex(
-    const Elf_Sym *Sym, const Elf_Sym *FirstSym,
-    ArrayRef<Elf_Word> ShndxTable) const {
+inline ErrorOr<uint32_t>
+getExtendedSymbolTableIndex(const typename ELFT::Sym *Sym,
+                            const typename ELFT::Sym *FirstSym,
+                            ArrayRef<typename ELFT::Word> ShndxTable) {
   assert(Sym->st_shndx == ELF::SHN_XINDEX);
   unsigned Index = Sym - FirstSym;
   if (Index >= ShndxTable.size())
     return object_error::parse_failed;
   // The size of the table was checked in getSHNDXTable.
   return ShndxTable[Index];
+}
+
+template <class ELFT>
+ErrorOr<uint32_t> ELFFile<ELFT>::getExtendedSymbolTableIndex(
+    const Elf_Sym *Sym, const Elf_Shdr *SymTab,
+    ArrayRef<Elf_Word> ShndxTable) const {
+  auto SymsOrErr = symbols(SymTab);
+  if (std::error_code EC = SymsOrErr.getError())
+    return EC;
+  return object::getExtendedSymbolTableIndex<ELFT>(Sym, SymsOrErr->begin(),
+                                                   ShndxTable);
 }
 
 template <class ELFT>
