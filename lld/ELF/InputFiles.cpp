@@ -564,10 +564,7 @@ SharedFile<ELFT>::SharedFile(MemoryBufferRef M)
 template <class ELFT>
 const typename ELFT::Shdr *
 SharedFile<ELFT>::getSection(const Elf_Sym &Sym) const {
-  uint32_t Index = this->getSectionIndex(Sym);
-  if (Index == 0)
-    return nullptr;
-  return check(this->ELFObj.getSection(Index));
+  return check(this->ELFObj.getSection(&Sym, this->Symtab, this->SymtabSHNDX));
 }
 
 // Partially parse the shared object file so that we can call
