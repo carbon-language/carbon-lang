@@ -114,7 +114,7 @@ protected:
   const Elf_Shdr *Symtab = nullptr;
   ArrayRef<Elf_Word> SymtabSHNDX;
   StringRef StringTable;
-  void initStringTable();
+  void initStringTable(ArrayRef<Elf_Shdr> Sections);
 };
 
 // .o file.
@@ -179,8 +179,9 @@ public:
 
 private:
   void
-  initializeSections(llvm::DenseSet<llvm::CachedHashStringRef> &ComdatGroups);
-  void initializeSymbols();
+  initializeSections(llvm::DenseSet<llvm::CachedHashStringRef> &ComdatGroups,
+                     ArrayRef<Elf_Shdr> ObjSections);
+  void initializeSymbols(ArrayRef<Elf_Shdr> Sections);
   void initializeDwarfLine();
   InputSectionBase<ELFT> *getRelocTarget(const Elf_Shdr &Sec);
   InputSectionBase<ELFT> *createInputSection(const Elf_Shdr &Sec,
