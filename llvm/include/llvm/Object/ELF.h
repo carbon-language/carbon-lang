@@ -147,12 +147,12 @@ public:
   }
 
   ErrorOr<StringRef> getSectionStringTable(Elf_Shdr_Range Sections) const;
-  uint32_t getExtendedSymbolTableIndex(const Elf_Sym *Sym,
-                                       const Elf_Shdr *SymTab,
-                                       ArrayRef<Elf_Word> ShndxTable) const;
-  uint32_t getExtendedSymbolTableIndex(const Elf_Sym *Sym,
-                                       const Elf_Sym *FirstSym,
-                                       ArrayRef<Elf_Word> ShndxTable) const;
+  ErrorOr<uint32_t>
+  getExtendedSymbolTableIndex(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
+                              ArrayRef<Elf_Word> ShndxTable) const;
+  ErrorOr<uint32_t>
+  getExtendedSymbolTableIndex(const Elf_Sym *Sym, const Elf_Sym *FirstSym,
+                              ArrayRef<Elf_Word> ShndxTable) const;
   const Elf_Ehdr *getHeader() const { return Header; }
   ErrorOr<const Elf_Shdr *> getSection(const Elf_Sym *Sym,
                                        const Elf_Shdr *SymTab,
@@ -192,23 +192,23 @@ getSection(typename ELFT::ShdrRange Sections, uint32_t Index) {
 }
 
 template <class ELFT>
-uint32_t ELFFile<ELFT>::getExtendedSymbolTableIndex(
+ErrorOr<uint32_t> ELFFile<ELFT>::getExtendedSymbolTableIndex(
     const Elf_Sym *Sym, const Elf_Shdr *SymTab,
     ArrayRef<Elf_Word> ShndxTable) const {
   auto SymsOrErr = symbols(SymTab);
   if (std::error_code EC = SymsOrErr.getError())
-    report_fatal_error(EC.message());
+    return EC;
   return getExtendedSymbolTableIndex(Sym, SymsOrErr->begin(), ShndxTable);
 }
 
 template <class ELFT>
-uint32_t ELFFile<ELFT>::getExtendedSymbolTableIndex(
+ErrorOr<uint32_t> ELFFile<ELFT>::getExtendedSymbolTableIndex(
     const Elf_Sym *Sym, const Elf_Sym *FirstSym,
     ArrayRef<Elf_Word> ShndxTable) const {
   assert(Sym->st_shndx == ELF::SHN_XINDEX);
   unsigned Index = Sym - FirstSym;
   if (Index >= ShndxTable.size())
-    report_fatal_error("Invalid symbol table index");
+    return object_error::parse_failed;
   // The size of the table was checked in getSHNDXTable.
   return ShndxTable[Index];
 }
@@ -222,8 +222,12 @@ ELFFile<ELFT>::getSection(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
       (Index >= ELF::SHN_LORESERVE && Index != ELF::SHN_XINDEX))
     return nullptr;
 
-  if (Index == ELF::SHN_XINDEX)
-    Index = getExtendedSymbolTableIndex(Sym, SymTab, ShndxTable);
+  if (Index == ELF::SHN_XINDEX) {
+    auto ErrorOrIndex = getExtendedSymbolTableIndex(Sym, SymTab, ShndxTable);
+    if (std::error_code EC = ErrorOrIndex.getError())
+      return EC;
+    Index = *ErrorOrIndex;
+  }
 
   auto SectionsOrErr = sections();
   if (std::error_code EC = SectionsOrErr.getError())

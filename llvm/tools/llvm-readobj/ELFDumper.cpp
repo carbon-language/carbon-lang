@@ -717,8 +717,8 @@ getSectionNameIndex(const ELFO &Obj, const typename ELFO::Elf_Sym *Symbol,
     SectionName = "Reserved";
   else {
     if (SectionIndex == SHN_XINDEX)
-      SectionIndex =
-          Obj.getExtendedSymbolTableIndex(Symbol, FirstSym, ShndxTable);
+      SectionIndex = unwrapOrError(
+          Obj.getExtendedSymbolTableIndex(Symbol, FirstSym, ShndxTable));
     const typename ELFO::Elf_Shdr *Sec =
         unwrapOrError(Obj.getSection(SectionIndex));
     SectionName = unwrapOrError(Obj.getSectionName(Sec));
@@ -2737,8 +2737,8 @@ std::string GNUStyle<ELFT>::getSymbolSectionNdx(const ELFO *Obj,
   case ELF::SHN_COMMON:
     return "COM";
   case ELF::SHN_XINDEX:
-    SectionIndex = Obj->getExtendedSymbolTableIndex(
-        Symbol, FirstSym, this->dumper()->getShndxTable());
+    SectionIndex = unwrapOrError(Obj->getExtendedSymbolTableIndex(
+        Symbol, FirstSym, this->dumper()->getShndxTable()));
   default:
     // Find if:
     // Processor specific
