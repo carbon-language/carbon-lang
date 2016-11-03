@@ -127,28 +127,24 @@ ELFFileBase<ELFT>::ELFFileBase(Kind K, MemoryBufferRef MB)
 
 template <class ELFT>
 typename ELFT::SymRange ELFFileBase<ELFT>::getElfSymbols(bool OnlyGlobals) {
-  if (!Symtab)
-    return Elf_Sym_Range(nullptr, nullptr);
-  Elf_Sym_Range Syms = check(ELFObj.symbols(Symtab));
-  uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
-  uint32_t FirstNonLocal = Symtab->sh_info;
-  if (FirstNonLocal == 0 || FirstNonLocal > NumSymbols)
-    fatal(getFilename(this) + ": invalid sh_info in symbol table");
-
   if (OnlyGlobals)
-    return makeArrayRef(Syms.begin() + FirstNonLocal, Syms.end());
-  return makeArrayRef(Syms.begin(), Syms.end());
+    return makeArrayRef(Symbols.begin() + FirstNonLocal, Symbols.end());
+  return Symbols;
 }
 
 template <class ELFT>
 uint32_t ELFFileBase<ELFT>::getSectionIndex(const Elf_Sym &Sym) const {
-  return check(ELFObj.getSectionIndex(&Sym, Symtab, SymtabSHNDX));
+  return check(ELFObj.getSectionIndex(&Sym, Symbols, SymtabSHNDX));
 }
 
 template <class ELFT>
 void ELFFileBase<ELFT>::initSymtab(ArrayRef<Elf_Shdr> Sections,
                                    const Elf_Shdr *Symtab) {
-  this->Symtab = Symtab;
+  FirstNonLocal = Symtab->sh_info;
+  Symbols = check(ELFObj.symbols(Symtab));
+  if (FirstNonLocal == 0 || FirstNonLocal > Symbols.size())
+    fatal(getFilename(this) + ": invalid sh_info in symbol table");
+
   StringTable = check(ELFObj.getStringTableForSymtab(*Symtab, Sections));
 }
 
@@ -158,23 +154,19 @@ elf::ObjectFile<ELFT>::ObjectFile(MemoryBufferRef M)
 
 template <class ELFT>
 ArrayRef<SymbolBody *> elf::ObjectFile<ELFT>::getNonLocalSymbols() {
-  if (!this->Symtab)
-    return this->SymbolBodies;
-  uint32_t FirstNonLocal = this->Symtab->sh_info;
-  return makeArrayRef(this->SymbolBodies).slice(FirstNonLocal);
+  return makeArrayRef(this->SymbolBodies).slice(this->FirstNonLocal);
 }
 
 template <class ELFT>
 ArrayRef<SymbolBody *> elf::ObjectFile<ELFT>::getLocalSymbols() {
-  if (!this->Symtab)
+  if (this->SymbolBodies.empty())
     return this->SymbolBodies;
-  uint32_t FirstNonLocal = this->Symtab->sh_info;
-  return makeArrayRef(this->SymbolBodies).slice(1, FirstNonLocal - 1);
+  return makeArrayRef(this->SymbolBodies).slice(1, this->FirstNonLocal - 1);
 }
 
 template <class ELFT>
 ArrayRef<SymbolBody *> elf::ObjectFile<ELFT>::getSymbols() {
-  if (!this->Symtab)
+  if (this->SymbolBodies.empty())
     return this->SymbolBodies;
   return makeArrayRef(this->SymbolBodies).slice(1);
 }
@@ -202,11 +194,11 @@ template <class ELFT>
 StringRef
 elf::ObjectFile<ELFT>::getShtGroupSignature(ArrayRef<Elf_Shdr> Sections,
                                             const Elf_Shdr &Sec) {
-  const ELFFile<ELFT> &Obj = this->ELFObj;
-  if (!this->Symtab)
+  if (this->Symbols.empty())
     this->initSymtab(Sections,
                      check(object::getSection<ELFT>(Sections, Sec.sh_link)));
-  const Elf_Sym *Sym = check(Obj.getSymbol(this->Symtab, Sec.sh_info));
+  const Elf_Sym *Sym =
+      check(object::getSymbol<ELFT>(this->Symbols, Sec.sh_info));
   return check(Sym->getName(this->StringTable));
 }
 
@@ -558,7 +550,7 @@ SharedFile<ELFT>::SharedFile(MemoryBufferRef M)
 template <class ELFT>
 const typename ELFT::Shdr *
 SharedFile<ELFT>::getSection(const Elf_Sym &Sym) const {
-  return check(this->ELFObj.getSection(&Sym, this->Symtab, this->SymtabSHNDX));
+  return check(this->ELFObj.getSection(&Sym, this->Symbols, this->SymtabSHNDX));
 }
 
 // Partially parse the shared object file so that we can call
@@ -592,7 +584,7 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
     }
   }
 
-  if (this->VersymSec && !this->Symtab)
+  if (this->VersymSec && this->Symbols.empty())
     error("SHT_GNU_versym should be associated with symbol table");
 
   // DSOs are identified by soname, and they usually contain
@@ -634,7 +626,7 @@ SharedFile<ELFT>::parseVerdefs(const Elf_Versym *&Versym) {
   // The location of the first global versym entry.
   Versym = reinterpret_cast<const Elf_Versym *>(this->ELFObj.base() +
                                                 VersymSec->sh_offset) +
-           this->Symtab->sh_info;
+           this->FirstNonLocal;
 
   // We cannot determine the largest verdef identifier without inspecting
   // every Elf_Verdef, but both bfd and gold assign verdef identifiers

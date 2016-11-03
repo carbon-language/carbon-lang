@@ -111,7 +111,8 @@ public:
 
 protected:
   llvm::object::ELFFile<ELFT> ELFObj;
-  const Elf_Shdr *Symtab = nullptr;
+  ArrayRef<Elf_Sym> Symbols;
+  uint32_t FirstNonLocal = 0;
   ArrayRef<Elf_Word> SymtabSHNDX;
   StringRef StringTable;
   void initSymtab(ArrayRef<Elf_Shdr> Sections, const Elf_Shdr *Symtab);
