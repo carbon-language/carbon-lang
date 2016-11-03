@@ -132,18 +132,11 @@ public:
   }
 
   /// \brief Iterate over program header table.
-  const Elf_Phdr *program_header_begin() const {
+  const Elf_Phdr_Range program_headers() const {
     if (Header->e_phnum && Header->e_phentsize != sizeof(Elf_Phdr))
       report_fatal_error("Invalid program header size");
-    return reinterpret_cast<const Elf_Phdr *>(base() + Header->e_phoff);
-  }
-
-  const Elf_Phdr *program_header_end() const {
-    return program_header_begin() + Header->e_phnum;
-  }
-
-  const Elf_Phdr_Range program_headers() const {
-    return makeArrayRef(program_header_begin(), program_header_end());
+    auto *Begin = reinterpret_cast<const Elf_Phdr *>(base() + Header->e_phoff);
+    return makeArrayRef(Begin, Begin+Header->e_phnum);
   }
 
   ErrorOr<StringRef> getSectionStringTable(Elf_Shdr_Range Sections) const;
