@@ -117,10 +117,8 @@ ELFFileBase<ELFT>::ELFFileBase(Kind K, MemoryBufferRef MB) : InputFile(K, MB) {
 }
 
 template <class ELFT>
-typename ELFT::SymRange ELFFileBase<ELFT>::getElfSymbols(bool OnlyGlobals) {
-  if (OnlyGlobals)
+typename ELFT::SymRange ELFFileBase<ELFT>::getGlobalSymbols() {
     return makeArrayRef(Symbols.begin() + FirstNonLocal, Symbols.end());
-  return Symbols;
 }
 
 template <class ELFT>
@@ -647,7 +645,7 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
   const Elf_Versym *Versym = nullptr;
   std::vector<const Elf_Verdef *> Verdefs = parseVerdefs(Versym);
 
-  Elf_Sym_Range Syms = this->getElfSymbols(true);
+  Elf_Sym_Range Syms = this->getGlobalSymbols();
   for (const Elf_Sym &Sym : Syms) {
     unsigned VersymIndex = 0;
     if (Versym) {
