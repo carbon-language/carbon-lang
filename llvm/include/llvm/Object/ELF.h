@@ -162,7 +162,7 @@ public:
                                      uint32_t Index) const {
     auto SymtabOrErr = symbols(Sec);
     if (std::error_code EC = SymtabOrErr.getError())
-      return object_error::parse_failed;
+      return EC;
     Elf_Sym_Range Symbols = *SymtabOrErr;
     if (Index >= Symbols.size())
       return object_error::invalid_symbol_index;
