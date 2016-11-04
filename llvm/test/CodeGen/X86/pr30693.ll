@@ -1,5 +1,4 @@
 ; PR30693
-; XFAIL: *
 ; RUN: llc < %s | FileCheck %s
 
 ; CHECK:      .p2align	2
