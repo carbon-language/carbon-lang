@@ -6034,7 +6034,7 @@ void Sema::CodeCompleteObjCProtocolReferences(
                         CodeCompleter->getCodeCompletionTUInfo(),
                         CodeCompletionContext::CCC_ObjCProtocolName);
   
-  if (CodeCompleter && CodeCompleter->includeGlobals()) {
+  if (CodeCompleter->includeGlobals()) {
     Results.EnterNewScope();
     
     // Tell the result set to ignore all of the protocols we have
@@ -6062,7 +6062,7 @@ void Sema::CodeCompleteObjCProtocolDecl(Scope *) {
                         CodeCompleter->getCodeCompletionTUInfo(),
                         CodeCompletionContext::CCC_ObjCProtocolName);
   
-  if (CodeCompleter && CodeCompleter->includeGlobals()) {
+  if (CodeCompleter->includeGlobals()) {
     Results.EnterNewScope();
     
     // Add all protocols.
