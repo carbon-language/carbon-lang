@@ -8025,13 +8025,12 @@ static SDValue lowerVectorShuffleAsShift(const SDLoc &DL, MVT VT, SDValue V1,
 /// \brief Try to lower a vector shuffle using SSE4a EXTRQ/INSERTQ.
 static SDValue lowerVectorShuffleWithSSE4A(const SDLoc &DL, MVT VT, SDValue V1,
                                            SDValue V2, ArrayRef<int> Mask,
+                                           const SmallBitVector &Zeroable,
                                            SelectionDAG &DAG) {
-  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
-  assert(!Zeroable.all() && "Fully zeroable shuffle mask");
-
   int Size = Mask.size();
   int HalfSize = Size / 2;
   assert(Size == (int)VT.getVectorNumElements() && "Unexpected mask size");
+  assert(!Zeroable.all() && "Fully zeroable shuffle mask");
 
   // Upper half must be undefined.
   if (!isUndefInRange(Mask, HalfSize, HalfSize))
@@ -10112,7 +10111,8 @@ static SDValue lowerV8I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
 
   // See if we can use SSE4A Extraction / Insertion.
   if (Subtarget.hasSSE4A())
-    if (SDValue V = lowerVectorShuffleWithSSE4A(DL, MVT::v8i16, V1, V2, Mask, DAG))
+    if (SDValue V = lowerVectorShuffleWithSSE4A(DL, MVT::v8i16, V1, V2, Mask,
+                                                Zeroable, DAG))
       return V;
 
   // There are special ways we can lower some single-element blends.
@@ -10265,7 +10265,8 @@ static SDValue lowerV16I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
 
   // See if we can use SSE4A Extraction / Insertion.
   if (Subtarget.hasSSE4A())
-    if (SDValue V = lowerVectorShuffleWithSSE4A(DL, MVT::v16i8, V1, V2, Mask, DAG))
+    if (SDValue V = lowerVectorShuffleWithSSE4A(DL, MVT::v16i8, V1, V2, Mask,
+                                                Zeroable, DAG))
       return V;
 
   int NumV2Elements = count_if(Mask, [](int M) { return M >= 16; });
