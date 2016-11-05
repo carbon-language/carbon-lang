@@ -403,12 +403,6 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       NewFn = Intrinsic::getDeclaration(F->getParent(), ShiftID);
       return true;
     }
-    // Fix the FMA4 intrinsics to remove the 4
-    if (IsX86 && Name.startswith("fma4.")) {
-      rename(F);
-      NewFn = F;
-      return true;
-    }
     // Upgrade any XOP PERMIL2 index operand still using a float/double vector.
     if (IsX86 && Name.startswith("xop.vpermil2")) {
       auto Params = F->getFunctionType()->params();
