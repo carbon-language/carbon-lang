@@ -8915,10 +8915,10 @@ static bool matchVectorShuffleAsInsertPS(SDValue &V1, SDValue &V2,
 
 static SDValue lowerVectorShuffleAsInsertPS(const SDLoc &DL, SDValue V1,
                                             SDValue V2, ArrayRef<int> Mask,
+                                            const SmallBitVector &Zeroable,
                                             SelectionDAG &DAG) {
   assert(V1.getSimpleValueType() == MVT::v4f32 && "Bad operand type!");
   assert(V2.getSimpleValueType() == MVT::v4f32 && "Bad operand type!");
-  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
 
   // Attempt to match the insertps pattern.
   unsigned InsertPSMask;
@@ -9350,6 +9350,7 @@ static SDValue lowerVectorShuffleWithSHUFPS(const SDLoc &DL, MVT VT,
 /// domain crossing penalties, as these are sufficient to implement all v4f32
 /// shuffles.
 static SDValue lowerV4F32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
+                                       const SmallBitVector &Zeroable,
                                        SDValue V1, SDValue V2,
                                        const X86Subtarget &Subtarget,
                                        SelectionDAG &DAG) {
@@ -9402,7 +9403,8 @@ static SDValue lowerV4F32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
       return Blend;
 
     // Use INSERTPS if we can complete the shuffle efficiently.
-    if (SDValue V = lowerVectorShuffleAsInsertPS(DL, V1, V2, Mask, DAG))
+    if (SDValue V =
+            lowerVectorShuffleAsInsertPS(DL, V1, V2, Mask, Zeroable, DAG))
       return V;
 
     if (!isSingleSHUFPSMask(Mask))
@@ -10539,7 +10541,7 @@ static SDValue lower128BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   case MVT::v4i32:
     return lowerV4I32VectorShuffle(DL, Mask, Zeroable, V1, V2, Subtarget, DAG);
   case MVT::v4f32:
-    return lowerV4F32VectorShuffle(DL, Mask, V1, V2, Subtarget, DAG);
+    return lowerV4F32VectorShuffle(DL, Mask, Zeroable, V1, V2, Subtarget, DAG);
   case MVT::v8i16:
     return lowerV8I16VectorShuffle(DL, Mask, Zeroable, V1, V2, Subtarget, DAG);
   case MVT::v16i8:
