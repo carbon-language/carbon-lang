@@ -19,6 +19,26 @@ def HiReg: OutPatFrag<(ops node:$Rs),
 def orisadd: PatFrag<(ops node:$Addr, node:$off),
     (or node:$Addr, node:$off), [{ return orIsAdd(N); }]>;
 
+def Set5ImmPred : PatLeaf<(i32 imm), [{
+  // Set5ImmPred predicate - True if the number is in the series of values.
+  // [ 2^0, 2^1, ... 2^31 ]
+  // For use in setbit immediate.
+  uint32_t v = N->getZExtValue();
+  // Constrain to 32 bits, and then check for single bit.
+  return isPowerOf2_32(v);
+}]>;
+
+def Clr5ImmPred : PatLeaf<(i32 imm), [{
+  // Clr5ImmPred predicate - True if the number is in the series of
+  // bit negated values.
+  // [ 2^0, 2^1, ... 2^31 ]
+  // For use in clrbit immediate.
+  // Note: we are bit NOTing the value.
+  uint32_t v = ~N->getZExtValue();
+  // Constrain to 32 bits, and then check for single bit.
+  return isPowerOf2_32(v);
+}]>;
+
 // SDNode for converting immediate C to C-1.
 def DEC_CONST_SIGNED : SDNodeXForm<imm, [{
    // Return the byte immediate const-1 as an SDNode.
@@ -175,6 +195,9 @@ multiclass T_MinMax_pats <PatFrag Op, RegisterClass RC, ValueType VT,
            (SwapInst RC:$src1, RC:$src2)>;
 }
 
+def PositiveHalfWord : PatLeaf<(i32 IntRegs:$a), [{
+  return isPositiveHalfWord(N);
+}]>;
 
 multiclass MinMax_pats <PatFrag Op, InstHexagon Inst, InstHexagon SwapInst> {
   defm: T_MinMax_pats<Op, IntRegs, i32, Inst, SwapInst>;
@@ -336,16 +359,24 @@ def: T_MType_acc_pat3 <M4_or_andn, and, or>;
 def: T_MType_acc_pat3 <M4_and_andn, and, and>;
 def: T_MType_acc_pat3 <M4_xor_andn, and, xor>;
 
-def: Pat<(i64 (mul (i64 (anyext (i32 IntRegs:$src1))),
-                   (i64 (anyext (i32 IntRegs:$src2))))),
+// Return true if for a 32 to 64-bit sign-extended load.
+def Sext64Ld : PatLeaf<(i64 DoubleRegs:$src1), [{
+  LoadSDNode *LD = dyn_cast<LoadSDNode>(N);
+  if (!LD)
+    return false;
+  return LD->getExtensionType() == ISD::SEXTLOAD &&
+         LD->getMemoryVT().getScalarType() == MVT::i32;
+}]>;
+
+def: Pat<(i64 (mul (i64 (anyext I32:$src1)),
+		   (i64 (anyext I32:$src2)))),
          (M2_dpmpyuu_s0 IntRegs:$src1, IntRegs:$src2)>;
 
-def: Pat<(i64 (mul (i64 (sext (i32 IntRegs:$src1))),
-                   (i64 (sext (i32 IntRegs:$src2))))),
+def: Pat<(i64 (mul (i64 (sext I32:$src1)),
+                   (i64 (sext I32:$src2)))),
          (M2_dpmpyss_s0 IntRegs:$src1, IntRegs:$src2)>;
 
-def: Pat<(i64 (mul (is_sext_i32:$src1),
-                   (is_sext_i32:$src2))),
+def: Pat<(i64 (mul Sext64Ld:$src1, Sext64Ld:$src2)),
          (M2_dpmpyss_s0 (LoReg DoubleRegs:$src1), (LoReg DoubleRegs:$src2))>;
 
 // Multiply and accumulate, use full result.
