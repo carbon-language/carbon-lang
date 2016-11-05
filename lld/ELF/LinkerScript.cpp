@@ -202,13 +202,9 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
       if (elf::ObjectFile<ELFT> *F = S->getFile())
         Filename = sys::path::filename(F->getName());
 
-      if (!I->FilePat.match(Filename) || Pat.ExcludedFilePat.match(Filename))
-        continue;
-
-      if (Pat.SectionPat.match(S->Name))
+      if (I->FilePat.match(Filename) && !Pat.ExcludedFilePat.match(Filename) &&
+          Pat.SectionPat.match(S->Name))
         I->Sections.push_back(S);
-      if (Pat.SectionPat.match("COMMON"))
-        I->Sections.push_back(InputSection<ELFT>::CommonInputSection);
     }
 
     // Sort sections as instructed by SORT-family commands and --sort-section
