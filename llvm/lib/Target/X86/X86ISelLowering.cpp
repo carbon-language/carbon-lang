@@ -8328,9 +8328,8 @@ static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
 /// are both incredibly common and often quite performance sensitive.
 static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
     const SDLoc &DL, MVT VT, SDValue V1, SDValue V2, ArrayRef<int> Mask,
-    const X86Subtarget &Subtarget, SelectionDAG &DAG) {
-  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
-
+    const SmallBitVector &Zeroable, const X86Subtarget &Subtarget,
+    SelectionDAG &DAG) {
   int Bits = VT.getSizeInBits();
   int NumLanes = Bits / 128;
   int NumElements = VT.getVectorNumElements();
@@ -9442,8 +9441,8 @@ static SDValue lowerV4I32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // Whenever we can lower this as a zext, that instruction is strictly faster
   // than any alternative. It also allows us to fold memory operands into the
   // shuffle in many cases.
-  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v4i32, V1, V2,
-                                                         Mask, Subtarget, DAG))
+  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
+          DL, MVT::v4i32, V1, V2, Mask, Zeroable, Subtarget, DAG))
     return ZExt;
 
   int NumV2Elements = count_if(Mask, [](int M) { return M >= 4; });
@@ -10067,7 +10066,7 @@ static SDValue lowerV8I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // Whenever we can lower this as a zext, that instruction is strictly faster
   // than any alternative.
   if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
-          DL, MVT::v8i16, V1, V2, Mask, Subtarget, DAG))
+          DL, MVT::v8i16, V1, V2, Mask, Zeroable, Subtarget, DAG))
     return ZExt;
 
   int NumV2Inputs = count_if(Mask, [](int M) { return M >= 8; });
@@ -10260,7 +10259,7 @@ static SDValue lowerV16I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
 
   // Try to use a zext lowering.
   if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
-          DL, MVT::v16i8, V1, V2, Mask, Subtarget, DAG))
+          DL, MVT::v16i8, V1, V2, Mask, Zeroable, Subtarget, DAG))
     return ZExt;
 
   // See if we can use SSE4A Extraction / Insertion.
@@ -11628,8 +11627,8 @@ static SDValue lowerV8I32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // Whenever we can lower this as a zext, that instruction is strictly faster
   // than any alternative. It also allows us to fold memory operands into the
   // shuffle in many cases.
-  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v8i32, V1, V2,
-                                                         Mask, Subtarget, DAG))
+  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
+          DL, MVT::v8i32, V1, V2, Mask, Zeroable, Subtarget, DAG))
     return ZExt;
 
   if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v8i32, V1, V2, Mask,
@@ -11708,8 +11707,8 @@ static SDValue lowerV16I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // Whenever we can lower this as a zext, that instruction is strictly faster
   // than any alternative. It also allows us to fold memory operands into the
   // shuffle in many cases.
-  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v16i16, V1, V2,
-                                                         Mask, Subtarget, DAG))
+  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
+          DL, MVT::v16i16, V1, V2, Mask, Zeroable, Subtarget, DAG))
     return ZExt;
 
   // Check for being able to broadcast a single element.
@@ -11794,8 +11793,8 @@ static SDValue lowerV32I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // Whenever we can lower this as a zext, that instruction is strictly faster
   // than any alternative. It also allows us to fold memory operands into the
   // shuffle in many cases.
-  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v32i8, V1, V2,
-                                                         Mask, Subtarget, DAG))
+  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
+          DL, MVT::v32i8, V1, V2, Mask, Zeroable, Subtarget, DAG))
     return ZExt;
 
   // Check for being able to broadcast a single element.
@@ -12114,9 +12113,8 @@ static SDValue lowerV16I32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // Whenever we can lower this as a zext, that instruction is strictly faster
   // than any alternative. It also allows us to fold memory operands into the
   // shuffle in many cases.
-  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v16i32, V1,
-                                                         V2, Mask, Subtarget,
-                                                         DAG))
+  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
+          DL, MVT::v16i32, V1, V2, Mask, Zeroable, Subtarget, DAG))
     return ZExt;
 
   // If the shuffle mask is repeated in each 128-bit lane we can use more
@@ -12163,9 +12161,8 @@ static SDValue lowerV32I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // Whenever we can lower this as a zext, that instruction is strictly faster
   // than any alternative. It also allows us to fold memory operands into the
   // shuffle in many cases.
-  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v32i16, V1,
-                                                         V2, Mask, Subtarget,
-                                                         DAG))
+  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
+          DL, MVT::v32i16, V1, V2, Mask, Zeroable, Subtarget, DAG))
     return ZExt;
 
   // Use dedicated unpack instructions for masks that match their pattern.
@@ -12211,8 +12208,8 @@ static SDValue lowerV64I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // Whenever we can lower this as a zext, that instruction is strictly faster
   // than any alternative. It also allows us to fold memory operands into the
   // shuffle in many cases.
-  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v64i8, V1, V2,
-                                                         Mask, Subtarget, DAG))
+  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
+          DL, MVT::v64i8, V1, V2, Mask, Zeroable, Subtarget, DAG))
     return ZExt;
 
   // Use dedicated unpack instructions for masks that match their pattern.
