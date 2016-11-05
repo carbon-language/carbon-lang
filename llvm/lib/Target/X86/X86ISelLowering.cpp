@@ -21945,7 +21945,7 @@ static SDValue LowerMLOAD(SDValue Op, const X86Subtarget &Subtarget,
   SDValue Src0 = N->getSrc0();
   Src0 = ExtendToType(Src0, WideDataVT, DAG);
 
-  // Mask element has to be i1 
+  // Mask element has to be i1.
   MVT MaskEltTy = Mask.getSimpleValueType().getScalarType();
   assert((MaskEltTy == MVT::i1 || VT.getVectorNumElements() <= 4) &&
          "We handle 4x32, 4x64 and 2x64 vectors only in this casse");
@@ -22001,7 +22001,7 @@ static SDValue LowerMSTORE(SDValue Op, const X86Subtarget &Subtarget,
   unsigned NumEltsInWideVec = 512/VT.getScalarSizeInBits();
   MVT WideDataVT = MVT::getVectorVT(ScalarVT, NumEltsInWideVec);
 
-  // Mask element has to be i1 
+  // Mask element has to be i1.
   MVT MaskEltTy = Mask.getSimpleValueType().getScalarType();
   assert((MaskEltTy == MVT::i1 || VT.getVectorNumElements() <= 4) &&
          "We handle 4x32, 4x64 and 2x64 vectors only in this casse");
@@ -30020,7 +30020,7 @@ static SDValue combineMaskedStore(SDNode *N, SelectionDAG &DAG,
 
   if (Mst->isCompressingStore())
     return SDValue();
-    
+
   if (!Mst->isTruncatingStore())
     return reduceMaskedStoreToScalarStore(Mst, DAG);
 
@@ -32858,7 +32858,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
           return std::make_pair(0U, &X86::VK1WMRegClass);
         case MVT::i64:
           return std::make_pair(0U, &X86::VK64WMRegClass);
-        } 
+        }
       }
       break;
     }
