@@ -7397,6 +7397,7 @@ static SmallBitVector computeZeroableShuffleElements(ArrayRef<int> Mask,
 static SDValue lowerVectorShuffleWithPSHUFB(const SDLoc &DL, MVT VT,
                                             ArrayRef<int> Mask, SDValue V1,
                                             SDValue V2,
+                                            const SmallBitVector &Zeroable,
                                             const X86Subtarget &Subtarget,
                                             SelectionDAG &DAG) {
   int Size = Mask.size();
@@ -7407,8 +7408,6 @@ static SDValue lowerVectorShuffleWithPSHUFB(const SDLoc &DL, MVT VT,
   assert((Subtarget.hasSSSE3() && VT.is128BitVector()) ||
          (Subtarget.hasAVX2() && VT.is256BitVector()) ||
          (Subtarget.hasBWI() && VT.is512BitVector()));
-
-  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
 
   SmallVector<SDValue, 64> PSHUFBMask(NumBytes);
   // Sign bit set in i8 mask means zero element.
@@ -9997,8 +9996,8 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
 /// blend if only one input is used.
 static SDValue lowerVectorShuffleAsBlendOfPSHUFBs(
     const SDLoc &DL, MVT VT, SDValue V1, SDValue V2, ArrayRef<int> Mask,
-    SelectionDAG &DAG, bool &V1InUse, bool &V2InUse) {
-  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
+    const SmallBitVector &Zeroable, SelectionDAG &DAG, bool &V1InUse,
+    bool &V2InUse) {
   SDValue V1Mask[16];
   SDValue V2Mask[16];
   V1InUse = false;
@@ -10157,14 +10156,14 @@ static SDValue lowerV8I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // can both shuffle and set up the inefficient blend.
   if (!IsBlendSupported && Subtarget.hasSSSE3()) {
     bool V1InUse, V2InUse;
-    return lowerVectorShuffleAsBlendOfPSHUFBs(DL, MVT::v8i16, V1, V2, Mask, DAG,
-                                              V1InUse, V2InUse);
+    return lowerVectorShuffleAsBlendOfPSHUFBs(DL, MVT::v8i16, V1, V2, Mask,
+                                              Zeroable, DAG, V1InUse, V2InUse);
   }
 
   // We can always bit-blend if we have to so the fallback strategy is to
   // decompose into single-input permutes and blends.
   return lowerVectorShuffleAsDecomposedShuffleBlend(DL, MVT::v8i16, V1, V2,
-                                                      Mask, DAG);
+                                                    Mask, DAG);
 }
 
 /// \brief Check whether a compaction lowering can be done by dropping even
@@ -10396,7 +10395,7 @@ static SDValue lowerV16I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
     bool V2InUse = false;
 
     SDValue PSHUFB = lowerVectorShuffleAsBlendOfPSHUFBs(
-        DL, MVT::v16i8, V1, V2, Mask, DAG, V1InUse, V2InUse);
+        DL, MVT::v16i8, V1, V2, Mask, Zeroable, DAG, V1InUse, V2InUse);
 
     // If both V1 and V2 are in use and we can use a direct blend or an unpack,
     // do so. This avoids using them to handle blends-with-zero which is
@@ -11759,8 +11758,8 @@ static SDValue lowerV16I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
     }
   }
 
-  if (SDValue PSHUFB = lowerVectorShuffleWithPSHUFB(DL, MVT::v16i16, Mask, V1,
-                                                    V2, Subtarget, DAG))
+  if (SDValue PSHUFB = lowerVectorShuffleWithPSHUFB(
+          DL, MVT::v16i16, Mask, V1, V2, Zeroable, Subtarget, DAG))
     return PSHUFB;
 
   // AVX512BWVL can lower to VPERMW.
@@ -11834,8 +11833,8 @@ static SDValue lowerV32I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
     return lowerVectorShuffleAsLanePermuteAndBlend(DL, MVT::v32i8, V1, V2, Mask,
                                                    DAG);
 
-  if (SDValue PSHUFB = lowerVectorShuffleWithPSHUFB(DL, MVT::v32i8, Mask, V1,
-                                                    V2, Subtarget, DAG))
+  if (SDValue PSHUFB = lowerVectorShuffleWithPSHUFB(
+          DL, MVT::v32i8, Mask, V1, V2, Zeroable, Subtarget, DAG))
     return PSHUFB;
 
   // Try to simplify this by merging 128-bit lanes to enable a lane-based
@@ -12230,8 +12229,8 @@ static SDValue lowerV64I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
           DL, MVT::v64i8, V1, V2, Mask, Subtarget, DAG))
     return Rotate;
 
-  if (SDValue PSHUFB = lowerVectorShuffleWithPSHUFB(DL, MVT::v64i8, Mask, V1,
-                                                    V2, Subtarget, DAG))
+  if (SDValue PSHUFB = lowerVectorShuffleWithPSHUFB(
+          DL, MVT::v64i8, Mask, V1, V2, Zeroable, Subtarget, DAG))
     return PSHUFB;
 
   // FIXME: Implement direct support for this type!
