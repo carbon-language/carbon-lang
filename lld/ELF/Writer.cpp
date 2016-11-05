@@ -646,26 +646,24 @@ template <class ELFT>
 void Writer<ELFT>::forEachRelSec(
     std::function<void(InputSectionBase<ELFT> &, const typename ELFT::Shdr &)>
         Fn) {
-  for (elf::ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles()) {
-    for (InputSectionBase<ELFT> *IS : F->getSections()) {
-      if (isDiscarded(IS))
-        continue;
-      // Scan all relocations. Each relocation goes through a series
-      // of tests to determine if it needs special treatment, such as
-      // creating GOT, PLT, copy relocations, etc.
-      // Note that relocations for non-alloc sections are directly
-      // processed by InputSection::relocateNonAlloc.
-      if (!(IS->Flags & SHF_ALLOC))
-        continue;
-      if (auto *S = dyn_cast<InputSection<ELFT>>(IS)) {
-        for (const Elf_Shdr *RelSec : S->RelocSections)
-          Fn(*S, *RelSec);
-        continue;
-      }
-      if (auto *S = dyn_cast<EhInputSection<ELFT>>(IS))
-        if (S->RelocSection)
-          Fn(*S, *S->RelocSection);
+  for (InputSectionBase<ELFT> *IS : Symtab<ELFT>::X->Sections) {
+    if (isDiscarded(IS))
+      continue;
+    // Scan all relocations. Each relocation goes through a series
+    // of tests to determine if it needs special treatment, such as
+    // creating GOT, PLT, copy relocations, etc.
+    // Note that relocations for non-alloc sections are directly
+    // processed by InputSection::relocateNonAlloc.
+    if (!(IS->Flags & SHF_ALLOC))
+      continue;
+    if (auto *S = dyn_cast<InputSection<ELFT>>(IS)) {
+      for (const Elf_Shdr *RelSec : S->RelocSections)
+        Fn(*S, *RelSec);
+      continue;
     }
+    if (auto *S = dyn_cast<EhInputSection<ELFT>>(IS))
+      if (S->RelocSection)
+        Fn(*S, *S->RelocSection);
   }
 }
 
@@ -685,13 +683,8 @@ void Writer<ELFT>::addInputSec(InputSectionBase<ELFT> *IS) {
 }
 
 template <class ELFT> void Writer<ELFT>::createSections() {
-  for (elf::ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles())
-    for (InputSectionBase<ELFT> *IS : F->getSections())
-      addInputSec(IS);
-
-  for (BinaryFile *F : Symtab<ELFT>::X->getBinaryFiles())
-    for (InputSectionData *ID : F->getSections())
-      addInputSec(cast<InputSection<ELFT>>(ID));
+  for (InputSectionBase<ELFT> *IS : Symtab<ELFT>::X->Sections)
+    addInputSec(IS);
 
   sortInitFini(findSection(".init_array"));
   sortInitFini(findSection(".fini_array"));

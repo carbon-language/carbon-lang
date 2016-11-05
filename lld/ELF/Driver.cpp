@@ -750,6 +750,16 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   for (auto *Arg : Args.filtered(OPT_wrap))
     Symtab.wrap(Arg->getValue());
 
+  // Now that we have a complete list of input files.
+  // Beyond this point, no new files are added.
+  // Aggregate all input sections into one place.
+  for (elf::ObjectFile<ELFT> *F : Symtab.getObjectFiles())
+    for (InputSectionBase<ELFT> *S : F->getSections())
+      Symtab.Sections.push_back(S);
+  for (BinaryFile *F : Symtab.getBinaryFiles())
+    for (InputSectionData *S : F->getSections())
+      Symtab.Sections.push_back(cast<InputSection<ELFT>>(S));
+
   // Do size optimizations: garbage collection and identical code folding.
   if (Config->GcSections)
     markLive<ELFT>();
@@ -758,15 +768,13 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
 
   // MergeInputSection::splitIntoPieces needs to be called before
   // any call of MergeInputSection::getOffset. Do that.
-  for (elf::ObjectFile<ELFT> *F : Symtab.getObjectFiles()) {
-    for (InputSectionBase<ELFT> *S : F->getSections()) {
-      if (!S || S == &InputSection<ELFT>::Discarded || !S->Live)
-        continue;
-      if (S->Compressed)
-        S->uncompress();
-      if (auto *MS = dyn_cast<MergeInputSection<ELFT>>(S))
-        MS->splitIntoPieces();
-    }
+  for (InputSectionBase<ELFT> *S : Symtab.Sections) {
+    if (!S || S == &InputSection<ELFT>::Discarded || !S->Live)
+      continue;
+    if (S->Compressed)
+      S->uncompress();
+    if (auto *MS = dyn_cast<MergeInputSection<ELFT>>(S))
+      MS->splitIntoPieces();
   }
 
   // Write the result to the file.
