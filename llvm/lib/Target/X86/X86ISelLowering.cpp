@@ -7484,6 +7484,7 @@ static SDValue lowerVectorShuffleWithUNPCK(const SDLoc &DL, MVT VT,
 /// one of the inputs being zeroable.
 static SDValue lowerVectorShuffleAsBitMask(const SDLoc &DL, MVT VT, SDValue V1,
                                            SDValue V2, ArrayRef<int> Mask,
+                                           const SmallBitVector &Zeroable,
                                            SelectionDAG &DAG) {
   MVT EltVT = VT.getVectorElementType();
   int NumEltBits = EltVT.getSizeInBits();
@@ -7496,7 +7497,6 @@ static SDValue lowerVectorShuffleAsBitMask(const SDLoc &DL, MVT VT, SDValue V1,
     AllOnes = DAG.getBitcast(EltVT, AllOnes);
   }
   SmallVector<SDValue, 16> VMaskOps(Mask.size(), Zero);
-  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
   SDValue V;
   for (int i = 0, Size = Mask.size(); i < Size; ++i) {
     if (Zeroable[i])
@@ -7673,7 +7673,8 @@ static SDValue lowerVectorShuffleAsBlend(const SDLoc &DL, MVT VT, SDValue V1,
            "256-bit byte-blends require AVX2 support!");
 
     // Attempt to lower to a bitmask if we can. VPAND is faster than VPBLENDVB.
-    if (SDValue Masked = lowerVectorShuffleAsBitMask(DL, VT, V1, V2, Mask, DAG))
+    if (SDValue Masked =
+            lowerVectorShuffleAsBitMask(DL, VT, V1, V2, Mask, Zeroable, DAG))
       return Masked;
 
     // Scale the blend by the number of bytes per element.
@@ -9488,8 +9489,8 @@ static SDValue lowerV4I32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
                                                   Subtarget, DAG))
       return Blend;
 
-  if (SDValue Masked =
-          lowerVectorShuffleAsBitMask(DL, MVT::v4i32, V1, V2, Mask, DAG))
+  if (SDValue Masked = lowerVectorShuffleAsBitMask(DL, MVT::v4i32, V1, V2, Mask,
+                                                   Zeroable, DAG))
     return Masked;
 
   // Use dedicated unpack instructions for masks that match their pattern.
@@ -10127,8 +10128,8 @@ static SDValue lowerV8I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
                                                   Subtarget, DAG))
       return Blend;
 
-  if (SDValue Masked =
-          lowerVectorShuffleAsBitMask(DL, MVT::v8i16, V1, V2, Mask, DAG))
+  if (SDValue Masked = lowerVectorShuffleAsBitMask(DL, MVT::v8i16, V1, V2, Mask,
+                                                   Zeroable, DAG))
     return Masked;
 
   // Use dedicated unpack instructions for masks that match their pattern.
@@ -10366,8 +10367,8 @@ static SDValue lowerV16I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
       return V;
   }
 
-  if (SDValue Masked =
-          lowerVectorShuffleAsBitMask(DL, MVT::v16i8, V1, V2, Mask, DAG))
+  if (SDValue Masked = lowerVectorShuffleAsBitMask(DL, MVT::v16i8, V1, V2, Mask,
+                                                   Zeroable, DAG))
     return Masked;
 
   // Use dedicated unpack instructions for masks that match their pattern.
@@ -11881,7 +11882,8 @@ static SDValue lower256BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
     if (ElementBits < 32) {
       // No floating point type available, if we can't use the bit operations
       // for masking/blending then decompose into 128-bit vectors.
-      if (SDValue V = lowerVectorShuffleAsBitMask(DL, VT, V1, V2, Mask, DAG))
+      if (SDValue V =
+              lowerVectorShuffleAsBitMask(DL, VT, V1, V2, Mask, Zeroable, DAG))
         return V;
       if (SDValue V = lowerVectorShuffleAsBitBlend(DL, VT, V1, V2, Mask, DAG))
         return V;
