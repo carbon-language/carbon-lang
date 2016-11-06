@@ -33,8 +33,6 @@ typedef struct LLVMOpaqueMetadata *LLVMMetadataRef;
 // values, and the Go bindings expose all of the LLVM attributes, some of which
 // have values >= 1<<32.
 
-uint64_t LLVMGetFunctionAttr2(LLVMValueRef Fn);
-
 LLVMMetadataRef LLVMConstantAsMetadata(LLVMValueRef Val);
 
 LLVMMetadataRef LLVMMDString2(LLVMContextRef C, const char *Str, unsigned SLen);

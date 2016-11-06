@@ -21,12 +21,6 @@
 
 using namespace llvm;
 
-uint64_t LLVMGetFunctionAttr2(LLVMValueRef Fn) {
-  Function *Func = unwrap<Function>(Fn);
-  const AttributeSet PAL = Func->getAttributes();
-  return PAL.Raw(AttributeSet::FunctionIndex);
-}
-
 LLVMMetadataRef LLVMConstantAsMetadata(LLVMValueRef C) {
   return wrap(ConstantAsMetadata::get(unwrap<Constant>(C)));
 }
