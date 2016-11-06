@@ -18062,7 +18062,12 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget &Subtarget
                                               Src1, Src2, Src3, Src4),
                                   Mask, PassThru, Subtarget, DAG);
     }
-    case CVTPD2PS: {
+    case CVTPD2PS:
+      // ISD::FP_ROUND has a second argument that indicates if the truncation
+      // does not change the value. Set it to 0 since it can change.
+      return DAG.getNode(IntrData->Opc0, dl, VT, Op.getOperand(1),
+                         DAG.getIntPtrConstant(0, dl));
+    case CVTPD2PS_MASK: {
       SDValue Src = Op.getOperand(1);
       SDValue PassThru = Op.getOperand(2);
       SDValue Mask = Op.getOperand(3);

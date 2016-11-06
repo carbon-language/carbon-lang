@@ -2824,7 +2824,7 @@ define <4 x float> @test_x86_avx_cvt_pd2_ps_256(<4 x double> %a0) {
 ;
 ; AVX512VL-LABEL: test_x86_avx_cvt_pd2_ps_256:
 ; AVX512VL:       ## BB#0:
-; AVX512VL-NEXT:    vcvtpd2psy %ymm0, %xmm0 ## encoding: [0xc5,0xfd,0x5a,0xc0]
+; AVX512VL-NEXT:    vcvtpd2ps %ymm0, %xmm0 ## encoding: [0x62,0xf1,0xfd,0x28,0x5a,0xc0]
 ; AVX512VL-NEXT:    retl ## encoding: [0xc3]
   %res = call <4 x float> @llvm.x86.avx.cvt.pd2.ps.256(<4 x double> %a0) ; <<4 x float>> [#uses=1]
   ret <4 x float> %res
