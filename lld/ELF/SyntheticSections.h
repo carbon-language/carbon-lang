@@ -38,6 +38,12 @@ public:
 protected:
   BuildIdSection(size_t HashSize);
   std::vector<uint8_t> Buf;
+
+  void
+  computeHash(llvm::ArrayRef<uint8_t> Buf,
+              std::function<void(ArrayRef<uint8_t> Arr, uint8_t *Hash)> Hash);
+
+  size_t HashSize;
 };
 
 template <class ELFT>
