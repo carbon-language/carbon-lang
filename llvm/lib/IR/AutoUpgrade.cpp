@@ -327,6 +327,16 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name == "avx512.mask.psrl.qi.256" ||
          Name == "avx512.mask.psrl.wi.128" ||
          Name == "avx512.mask.psrl.wi.256" ||
+         Name == "avx512.mask.psllv2.di" ||
+         Name == "avx512.mask.psllv4.di" ||
+         Name == "avx512.mask.psllv4.si" ||
+         Name == "avx512.mask.psllv8.si" ||
+         Name == "avx512.mask.psrav4.si" ||
+         Name == "avx512.mask.psrav8.si" ||
+         Name == "avx512.mask.psrlv2.di" ||
+         Name == "avx512.mask.psrlv4.di" ||
+         Name == "avx512.mask.psrlv4.si" ||
+         Name == "avx512.mask.psrlv8.si" ||
          Name.startswith("sse41.pmovsx") ||
          Name.startswith("sse41.pmovzx") ||
          Name.startswith("avx2.pmovsx") ||
@@ -1430,6 +1440,26 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_sse2_psrli_w);
     } else if (IsX86 && Name == "avx512.mask.psrl.wi.256") {
       Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_psrli_w);
+    } else if (IsX86 && Name == "avx512.mask.psllv2.di") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_psllv_q);
+    } else if (IsX86 && Name == "avx512.mask.psllv4.di") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI,Intrinsic::x86_avx2_psllv_q_256);
+    } else if (IsX86 && Name == "avx512.mask.psllv4.si") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_psllv_d);
+    } else if (IsX86 && Name == "avx512.mask.psllv8.si") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI,Intrinsic::x86_avx2_psllv_d_256);
+    } else if (IsX86 && Name == "avx512.mask.psrav4.si") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_psrav_d);
+    } else if (IsX86 && Name == "avx512.mask.psrav8.si") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI,Intrinsic::x86_avx2_psrav_d_256);
+    } else if (IsX86 && Name == "avx512.mask.psrlv2.di") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_psrlv_q);
+    } else if (IsX86 && Name == "avx512.mask.psrlv4.di") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI,Intrinsic::x86_avx2_psrlv_q_256);
+    } else if (IsX86 && Name == "avx512.mask.psrlv4.si") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_psrlv_d);
+    } else if (IsX86 && Name == "avx512.mask.psrlv8.si") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI,Intrinsic::x86_avx2_psrlv_d_256);
     } else {
       llvm_unreachable("Unknown function for CallInst upgrade.");
     }
