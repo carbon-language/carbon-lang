@@ -359,6 +359,10 @@ def: T_MType_acc_pat3 <M4_or_andn, and, or>;
 def: T_MType_acc_pat3 <M4_and_andn, and, and>;
 def: T_MType_acc_pat3 <M4_xor_andn, and, xor>;
 
+def Aext64: PatFrag<(ops node:$Rs), (i64 (anyext node:$Rs))>;
+def Sext64: PatFrag<(ops node:$Rs), (i64 (sext node:$Rs))>;
+def Zext64: PatFrag<(ops node:$Rs), (i64 (zext node:$Rs))>;
+
 // Return true if for a 32 to 64-bit sign-extended load.
 def Sext64Ld : PatLeaf<(i64 DoubleRegs:$src1), [{
   LoadSDNode *LD = dyn_cast<LoadSDNode>(N);
@@ -368,12 +372,10 @@ def Sext64Ld : PatLeaf<(i64 DoubleRegs:$src1), [{
          LD->getMemoryVT().getScalarType() == MVT::i32;
 }]>;
 
-def: Pat<(i64 (mul (i64 (anyext I32:$src1)),
-		   (i64 (anyext I32:$src2)))),
+def: Pat<(i64 (mul (Aext64 I32:$src1), (Aext64 I32:$src2))),
          (M2_dpmpyuu_s0 IntRegs:$src1, IntRegs:$src2)>;
 
-def: Pat<(i64 (mul (i64 (sext I32:$src1)),
-                   (i64 (sext I32:$src2)))),
+def: Pat<(i64 (mul (Sext64 I32:$src1), (Sext64 I32:$src2))),
          (M2_dpmpyss_s0 IntRegs:$src1, IntRegs:$src2)>;
 
 def: Pat<(i64 (mul Sext64Ld:$src1, Sext64Ld:$src2)),
@@ -382,34 +384,34 @@ def: Pat<(i64 (mul Sext64Ld:$src1, Sext64Ld:$src2)),
 // Multiply and accumulate, use full result.
 // Rxx[+-]=mpy(Rs,Rt)
 
-def: Pat<(i64 (add (i64 DoubleRegs:$src1),
-                   (mul (i64 (sext (i32 IntRegs:$src2))),
-                        (i64 (sext (i32 IntRegs:$src3)))))),
+def: Pat<(i64 (add I64:$src1,
+                   (mul (Sext64 I32:$src2),
+                        (Sext64 I32:$src3)))),
          (M2_dpmpyss_acc_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
 
-def: Pat<(i64 (sub (i64 DoubleRegs:$src1),
-                   (mul (i64 (sext (i32 IntRegs:$src2))),
-                        (i64 (sext (i32 IntRegs:$src3)))))),
+def: Pat<(i64 (sub I64:$src1,
+                   (mul (Sext64 I32:$src2),
+                        (Sext64 I32:$src3)))),
          (M2_dpmpyss_nac_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
 
-def: Pat<(i64 (add (i64 DoubleRegs:$src1),
-                   (mul (i64 (anyext (i32 IntRegs:$src2))),
-                        (i64 (anyext (i32 IntRegs:$src3)))))),
+def: Pat<(i64 (add I64:$src1,
+                   (mul (Aext64 I32:$src2),
+                        (Aext64 I32:$src3)))),
          (M2_dpmpyuu_acc_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
 
-def: Pat<(i64 (add (i64 DoubleRegs:$src1),
-                   (mul (i64 (zext (i32 IntRegs:$src2))),
-                        (i64 (zext (i32 IntRegs:$src3)))))),
+def: Pat<(i64 (add I64:$src1,
+                   (mul (Zext64 I32:$src2),
+                        (Zext64 I32:$src3)))),
          (M2_dpmpyuu_acc_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
 
-def: Pat<(i64 (sub (i64 DoubleRegs:$src1),
-                   (mul (i64 (anyext (i32 IntRegs:$src2))),
-                        (i64 (anyext (i32 IntRegs:$src3)))))),
+def: Pat<(i64 (sub I64:$src1,
+                   (mul (Aext64 I32:$src2),
+                        (Aext64 I32:$src3)))),
          (M2_dpmpyuu_nac_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
 
-def: Pat<(i64 (sub (i64 DoubleRegs:$src1),
-                   (mul (i64 (zext (i32 IntRegs:$src2))),
-                        (i64 (zext (i32 IntRegs:$src3)))))),
+def: Pat<(i64 (sub I64:$src1,
+                   (mul (Zext64 I32:$src2),
+                        (Zext64 I32:$src3)))),
          (M2_dpmpyuu_nac_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
 
 class Storepi_pat<PatFrag Store, PatFrag Value, PatFrag Offset,
@@ -532,7 +534,7 @@ def: Storexm_simple_pat<truncstorei8,  I64, LoReg, S2_storerb_io>;
 def: Storexm_simple_pat<truncstorei16, I64, LoReg, S2_storerh_io>;
 def: Storexm_simple_pat<truncstorei32, I64, LoReg, S2_storeri_io>;
 
-def: Pat <(i64 (sext I32:$src)), (A2_sxtw I32:$src)>;
+def: Pat <(Sext64 I32:$src), (A2_sxtw I32:$src)>;
 
 def: Pat<(i32 (select (i1 (setlt I32:$src, 0)),
                       (i32 (sub 0, I32:$src)),
@@ -1100,7 +1102,7 @@ multiclass MinMax_pats_p<PatFrag Op, InstHexagon Inst, InstHexagon SwapInst> {
   defm: T_MinMax_pats<Op, DoubleRegs, i64, Inst, SwapInst>;
 }
 
-def: Pat<(add (i64 (sext I32:$Rs)), I64:$Rt),
+def: Pat<(add (Sext64 I32:$Rs), I64:$Rt),
          (A2_addsp IntRegs:$Rs, DoubleRegs:$Rt)>;
 
 let AddedComplexity = 200 in {
@@ -1244,7 +1246,7 @@ defm: Loadxm_pat<sextloadi8,  i64, ToSext64, s32_0ImmPred, L2_loadrb_io>;
 defm: Loadxm_pat<sextloadi16, i64, ToSext64, s31_1ImmPred, L2_loadrh_io>;
 
 // Map Rdd = anyext(Rs) -> Rdd = combine(#0, Rs).
-def: Pat<(i64 (anyext I32:$src1)), (ToZext64 IntRegs:$src1)>;
+def: Pat<(Aext64 I32:$src1), (ToZext64 IntRegs:$src1)>;
 
 multiclass T_LoadAbsReg_Pat <PatFrag ldOp, InstHexagon MI, ValueType VT = i32> {
   def  : Pat <(VT (ldOp (add (shl IntRegs:$src1, u2_0ImmPred:$src2),
@@ -1323,7 +1325,7 @@ def: Pat<(i64 (zext I1:$src1)),
          (ToZext64 (C2_muxii PredRegs:$src1, 1, 0))>;
 
 // zext i32->i64
-def: Pat<(i64 (zext I32:$src1)),
+def: Pat<(Zext64 I32:$src1),
          (ToZext64 IntRegs:$src1)>;
 
 let AddedComplexity = 40 in
@@ -2183,7 +2185,7 @@ def: Pat<(or (or (or (shl (i64 (zext (i32 (and I32:$b, (i32 65535))))),
                      (i64 (zext (i32 (and I32:$a, (i32 65535)))))),
                  (shl (i64 (anyext (i32 (and I32:$c, (i32 65535))))),
                       (i32 32))),
-             (shl (i64 (anyext I32:$d)), (i32 48))),
+             (shl (Aext64 I32:$d), (i32 48))),
          (Insert4 IntRegs:$a, IntRegs:$b, IntRegs:$c, IntRegs:$d)>;
 
 // We need custom lowering of ISD::PREFETCH into HexagonISD::DCFETCH
