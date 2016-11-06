@@ -311,6 +311,22 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name == "avx512.mask.psrl.q.256" ||
          Name == "avx512.mask.psrl.w.128" ||
          Name == "avx512.mask.psrl.w.256" ||
+         Name == "avx512.mask.psll.di.128" ||
+         Name == "avx512.mask.psll.di.256" ||
+         Name == "avx512.mask.psll.qi.128" ||
+         Name == "avx512.mask.psll.qi.256" ||
+         Name == "avx512.mask.psll.wi.128" ||
+         Name == "avx512.mask.psll.wi.256" ||
+         Name == "avx512.mask.psra.di.128" ||
+         Name == "avx512.mask.psra.di.256" ||
+         Name == "avx512.mask.psra.wi.128" ||
+         Name == "avx512.mask.psra.wi.256" ||
+         Name == "avx512.mask.psrl.di.128" ||
+         Name == "avx512.mask.psrl.di.256" ||
+         Name == "avx512.mask.psrl.qi.128" ||
+         Name == "avx512.mask.psrl.qi.256" ||
+         Name == "avx512.mask.psrl.wi.128" ||
+         Name == "avx512.mask.psrl.wi.256" ||
          Name.startswith("sse41.pmovsx") ||
          Name.startswith("sse41.pmovzx") ||
          Name.startswith("avx2.pmovsx") ||
@@ -1382,6 +1398,38 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_sse2_psrl_w);
     } else if (IsX86 && Name == "avx512.mask.psrl.w.256") {
       Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_psrl_w);
+    } else if (IsX86 && Name == "avx512.mask.psll.di.128") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_sse2_pslli_d);
+    } else if (IsX86 && Name == "avx512.mask.psll.di.256") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_pslli_d);
+    } else if (IsX86 && Name == "avx512.mask.psll.qi.128") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_sse2_pslli_q);
+    } else if (IsX86 && Name == "avx512.mask.psll.qi.256") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_pslli_q);
+    } else if (IsX86 && Name == "avx512.mask.psll.wi.128") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_sse2_pslli_w);
+    } else if (IsX86 && Name == "avx512.mask.psll.wi.256") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_pslli_w);
+    } else if (IsX86 && Name == "avx512.mask.psra.di.128") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_sse2_psrai_d);
+    } else if (IsX86 && Name == "avx512.mask.psra.di.256") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_psrai_d);
+    } else if (IsX86 && Name == "avx512.mask.psra.wi.128") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_sse2_psrai_w);
+    } else if (IsX86 && Name == "avx512.mask.psra.wi.256") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_psrai_w);
+    } else if (IsX86 && Name == "avx512.mask.psrl.di.128") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_sse2_psrli_d);
+    } else if (IsX86 && Name == "avx512.mask.psrl.di.256") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_psrli_d);
+    } else if (IsX86 && Name == "avx512.mask.psrl.qi.128") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_sse2_psrli_q);
+    } else if (IsX86 && Name == "avx512.mask.psrl.qi.256") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_psrli_q);
+    } else if (IsX86 && Name == "avx512.mask.psrl.wi.128") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_sse2_psrli_w);
+    } else if (IsX86 && Name == "avx512.mask.psrl.wi.256") {
+      Rep = UpgradeX86MaskedShift(Builder, *CI, Intrinsic::x86_avx2_psrli_w);
     } else {
       llvm_unreachable("Unknown function for CallInst upgrade.");
     }
