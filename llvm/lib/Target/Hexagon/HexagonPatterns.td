@@ -19,38 +19,28 @@ def HiReg: OutPatFrag<(ops node:$Rs),
 def orisadd: PatFrag<(ops node:$Addr, node:$off),
     (or node:$Addr, node:$off), [{ return orIsAdd(N); }]>;
 
-def Set5ImmPred : PatLeaf<(i32 imm), [{
-  // Set5ImmPred predicate - True if the number is in the series of values.
-  // [ 2^0, 2^1, ... 2^31 ]
-  // For use in setbit immediate.
-  uint32_t v = N->getZExtValue();
-  // Constrain to 32 bits, and then check for single bit.
-  return isPowerOf2_32(v);
+def IsPow2_32 : PatLeaf<(i32 imm), [{
+  uint32_t V = N->getZExtValue();
+  return isPowerOf2_32(V);
 }]>;
 
-def Clr5ImmPred : PatLeaf<(i32 imm), [{
-  // Clr5ImmPred predicate - True if the number is in the series of
-  // bit negated values.
-  // [ 2^0, 2^1, ... 2^31 ]
-  // For use in clrbit immediate.
-  // Note: we are bit NOTing the value.
-  uint32_t v = ~N->getZExtValue();
-  // Constrain to 32 bits, and then check for single bit.
-  return isPowerOf2_32(v);
+def IsNPow2_32 : PatLeaf<(i32 imm), [{
+  uint32_t V = N->getZExtValue();
+  return isPowerOf2_32(~V);
 }]>;
 
-def DEC_CONST_SIGNED : SDNodeXForm<imm, [{
+def SDEC1 : SDNodeXForm<imm, [{
   int32_t V = N->getSExtValue();
   return CurDAG->getTargetConstant(V-1, SDLoc(N), MVT::i32);
 }]>;
 
-def DEC_CONST_UNSIGNED : SDNodeXForm<imm, [{
+def UDEC1 : SDNodeXForm<imm, [{
   uint32_t V = N->getZExtValue();
   assert(V > 0);
   return CurDAG->getTargetConstant(V-1, SDLoc(N), MVT::i32);
 }]>;
 
-def BITPOS32 : SDNodeXForm<imm, [{
+def Log2_32 : SDNodeXForm<imm, [{
   uint32_t V = N->getZExtValue();
   return CurDAG->getTargetConstant(Log2_32(V), SDLoc(N), MVT::i32);
 }]>;
@@ -755,7 +745,7 @@ def: Pat<(brcond (i1 (setne I1:$src1, (i1 0))), bb:$offset),
 
 // cmp.lt(Rs, Imm) -> !cmp.ge(Rs, Imm) -> !cmp.gt(Rs, Imm-1)
 def: Pat<(brcond (i1 (setlt I32:$src1, s8_0ImmPred:$src2)), bb:$offset),
-        (J2_jumpf (C2_cmpgti IntRegs:$src1, (DEC_CONST_SIGNED s8_0ImmPred:$src2)),
+        (J2_jumpf (C2_cmpgti IntRegs:$src1, (SDEC1 s8_0ImmPred:$src2)),
                   bb:$offset)>;
 
 // Map from a 64-bit select to an emulated 64-bit mux.
@@ -818,7 +808,7 @@ def : Pat <(i1 (setge I32:$src1, I32:$src2)),
 // cmpge(Rs, Imm) -> cmpgt(Rs, Imm-1)
 let AddedComplexity = 30 in
 def: Pat<(i1 (setge I32:$src1, s32_0ImmPred:$src2)),
-         (C2_cmpgti IntRegs:$src1, (DEC_CONST_SIGNED s32_0ImmPred:$src2))>;
+         (C2_cmpgti IntRegs:$src1, (SDEC1 s32_0ImmPred:$src2))>;
 
 // Map cmpge(Rss, Rtt) -> !cmpgt(Rtt, Rss).
 // rss >= rtt -> !(rtt > rss).
@@ -830,8 +820,7 @@ def: Pat<(i1 (setge I64:$src1, I64:$src2)),
 // rs < rt -> !(rs >= rt).
 let AddedComplexity = 30 in
 def: Pat<(i1 (setlt I32:$src1, s32_0ImmPred:$src2)),
-         (C2_not (C2_cmpgti IntRegs:$src1,
-                            (DEC_CONST_SIGNED s32_0ImmPred:$src2)))>;
+         (C2_not (C2_cmpgti IntRegs:$src1, (SDEC1 s32_0ImmPred:$src2)))>;
 
 // Generate cmpgeu(Rs, #0) -> cmpeq(Rs, Rs)
 def: Pat<(i1 (setuge I32:$src1, 0)),
@@ -839,7 +828,7 @@ def: Pat<(i1 (setuge I32:$src1, 0)),
 
 // Generate cmpgeu(Rs, #u8) -> cmpgtu(Rs, #u8 -1)
 def: Pat<(i1 (setuge I32:$src1, u32_0ImmPred:$src2)),
-         (C2_cmpgtui IntRegs:$src1, (DEC_CONST_UNSIGNED u32_0ImmPred:$src2))>;
+         (C2_cmpgtui IntRegs:$src1, (UDEC1 u32_0ImmPred:$src2))>;
 
 // Generate cmpgtu(Rs, #u9)
 def: Pat<(i1 (setugt I32:$src1, u32_0ImmPred:$src2)),
@@ -1557,12 +1546,12 @@ let AddedComplexity = 20 in {   // Complexity greater than cmp reg-imm.
 // The reason is that tstbit/ntstbit can be folded into a compound instruction:
 //   if ([!]tstbit(...)) jump ...
 let AddedComplexity = 100 in
-def: Pat<(i1 (setne (and I32:$Rs, (i32 Set5ImmPred:$u5)), (i32 0))),
-         (S2_tstbit_i I32:$Rs, (BITPOS32 Set5ImmPred:$u5))>;
+def: Pat<(i1 (setne (and I32:$Rs, (i32 IsPow2_32:$u5)), (i32 0))),
+         (S2_tstbit_i I32:$Rs, (Log2_32 imm:$u5))>;
 
 let AddedComplexity = 100 in
-def: Pat<(i1 (seteq (and I32:$Rs, (i32 Set5ImmPred:$u5)), (i32 0))),
-         (S4_ntstbit_i I32:$Rs, (BITPOS32 Set5ImmPred:$u5))>;
+def: Pat<(i1 (seteq (and I32:$Rs, (i32 IsPow2_32:$u5)), (i32 0))),
+         (S4_ntstbit_i I32:$Rs, (Log2_32 imm:$u5))>;
 
 // Do not increase complexity of these patterns. In the DAG, "cmp i8" may be
 // represented as a compare against "value & 0xFF", which is an exact match
@@ -1637,74 +1626,67 @@ def: Pat<(shl s6_0ImmPred:$s6, I32:$Rt),
 
 def m5_0Imm8Pred : PatLeaf<(i32 imm), [{
   int8_t V = N->getSExtValue();
-  return V > -32 && V <= -1;
+  return -32 < V && V <= -1;
 }]>;
 
 def m5_0Imm16Pred : PatLeaf<(i32 imm), [{
   int16_t V = N->getSExtValue();
-  return V > -32 && V <= -1;
+  return -32 < V && V <= -1;
 }]>;
 
 def m5_0ImmPred  : PatLeaf<(i32 imm), [{
-  // m5_0ImmPred predicate - True if the number is in range -1 .. -31
-  // and will fit in a 5 bit field when made positive, for use in memops.
-  int64_t v = (int64_t)N->getSExtValue();
-  return (-31 <= v && v <= -1);
+  int64_t V = N->getSExtValue();
+  return -31 <= V && V <= -1;
 }]>;
 
-def Clr5Imm8Pred : PatLeaf<(i32 imm), [{
-  uint8_t V = ~N->getZExtValue();
-  return isPowerOf2_32(V);
+def IsNPow2_8 : PatLeaf<(i32 imm), [{
+  uint8_t NV = ~N->getZExtValue();
+  return isPowerOf2_32(NV);
 }]>;
 
-def Clr5Imm16Pred : PatLeaf<(i32 imm), [{
-  uint16_t V = ~N->getZExtValue();
-  return isPowerOf2_32(V);
+def IsNPow2_16 : PatLeaf<(i32 imm), [{
+  uint16_t NV = ~N->getZExtValue();
+  return isPowerOf2_32(NV);
 }]>;
 
-def Set5Imm8 : SDNodeXForm<imm, [{
+def Log2_8 : SDNodeXForm<imm, [{
   uint8_t V = N->getZExtValue();
   return CurDAG->getTargetConstant(Log2_32(V), SDLoc(N), MVT::i32);
 }]>;
 
-def Set5Imm16 : SDNodeXForm<imm, [{
+def Log2_16 : SDNodeXForm<imm, [{
   uint16_t V = N->getZExtValue();
   return CurDAG->getTargetConstant(Log2_32(V), SDLoc(N), MVT::i32);
 }]>;
 
-def Set5Imm32 : SDNodeXForm<imm, [{
-  uint32_t V = N->getZExtValue();
-  return CurDAG->getTargetConstant(Log2_32(V), SDLoc(N), MVT::i32);
+def LogN2_8 : SDNodeXForm<imm, [{
+  uint8_t NV = ~N->getZExtValue();
+  return CurDAG->getTargetConstant(Log2_32(NV), SDLoc(N), MVT::i32);
 }]>;
 
-def Clr5Imm8 : SDNodeXForm<imm, [{
-  uint8_t V = ~N->getZExtValue();
-  return CurDAG->getTargetConstant(Log2_32(V), SDLoc(N), MVT::i32);
+def LogN2_16 : SDNodeXForm<imm, [{
+  uint16_t NV = ~N->getZExtValue();
+  return CurDAG->getTargetConstant(Log2_32(NV), SDLoc(N), MVT::i32);
 }]>;
 
-def Clr5Imm16 : SDNodeXForm<imm, [{
-  uint16_t V = ~N->getZExtValue();
-  return CurDAG->getTargetConstant(Log2_32(V), SDLoc(N), MVT::i32);
-}]>;
-
-def Clr5Imm32 : SDNodeXForm<imm, [{
-  uint32_t V = ~N->getZExtValue();
-  return CurDAG->getTargetConstant(Log2_32(V), SDLoc(N), MVT::i32);
+def LogN2_32 : SDNodeXForm<imm, [{
+  uint32_t NV = ~N->getZExtValue();
+  return CurDAG->getTargetConstant(Log2_32(NV), SDLoc(N), MVT::i32);
 }]>;
 
 def NegImm8 : SDNodeXForm<imm, [{
-  int8_t V = N->getSExtValue();
-  return CurDAG->getTargetConstant(-V, SDLoc(N), MVT::i32);
+  int8_t NV = -N->getSExtValue();
+  return CurDAG->getTargetConstant(NV, SDLoc(N), MVT::i32);
 }]>;
 
 def NegImm16 : SDNodeXForm<imm, [{
-  int16_t V = N->getSExtValue();
-  return CurDAG->getTargetConstant(-V, SDLoc(N), MVT::i32);
+  int16_t NV = -N->getSExtValue();
+  return CurDAG->getTargetConstant(NV, SDLoc(N), MVT::i32);
 }]>;
 
 def NegImm32 : SDNodeXForm<imm, [{
-  int32_t V = N->getSExtValue();
-  return CurDAG->getTargetConstant(-V, SDLoc(N), MVT::i32);
+  int32_t NV = -N->getSExtValue();
+  return CurDAG->getTargetConstant(NV, SDLoc(N), MVT::i32);
 }]>;
 
 def IdImm : SDNodeXForm<imm, [{ return SDValue(N, 0); }]>;
@@ -1906,36 +1888,36 @@ let AddedComplexity = 200 in {
                     L4_isub_memopw_io>;
 
   // clrbit imm
-  defm: Memopxi_pat<extloadi8, truncstorei8, u6_0ImmPred, and, Clr5Imm8Pred,
-        /*anyext*/  Clr5Imm8, L4_iand_memopb_io>;
-  defm: Memopxi_pat<sextloadi8, truncstorei8, u6_0ImmPred, and, Clr5Imm8Pred,
-        /*sext*/    Clr5Imm8, L4_iand_memopb_io>;
-  defm: Memopxi_pat<zextloadi8, truncstorei8, u6_0ImmPred, and, Clr5Imm8Pred,
-        /*zext*/    Clr5Imm8, L4_iand_memopb_io>;
-  defm: Memopxi_pat<extloadi16, truncstorei16, u6_1ImmPred, and, Clr5Imm16Pred,
-        /*anyext*/  Clr5Imm16, L4_iand_memoph_io>;
-  defm: Memopxi_pat<sextloadi16, truncstorei16, u6_1ImmPred, and, Clr5Imm16Pred,
-        /*sext*/    Clr5Imm16, L4_iand_memoph_io>;
-  defm: Memopxi_pat<zextloadi16, truncstorei16, u6_1ImmPred, and, Clr5Imm16Pred,
-        /*zext*/    Clr5Imm16, L4_iand_memoph_io>;
-  defm: Memopxi_pat<load, store, u6_2ImmPred, and, Clr5ImmPred, Clr5Imm32,
-                    L4_iand_memopw_io>;
+  defm: Memopxi_pat<extloadi8, truncstorei8, u6_0ImmPred, and, IsNPow2_8,
+        /*anyext*/  LogN2_8, L4_iand_memopb_io>;
+  defm: Memopxi_pat<sextloadi8, truncstorei8, u6_0ImmPred, and, IsNPow2_8,
+        /*sext*/    LogN2_8, L4_iand_memopb_io>;
+  defm: Memopxi_pat<zextloadi8, truncstorei8, u6_0ImmPred, and, IsNPow2_8,
+        /*zext*/    LogN2_8, L4_iand_memopb_io>;
+  defm: Memopxi_pat<extloadi16, truncstorei16, u6_1ImmPred, and, IsNPow2_16,
+        /*anyext*/  LogN2_16, L4_iand_memoph_io>;
+  defm: Memopxi_pat<sextloadi16, truncstorei16, u6_1ImmPred, and, IsNPow2_16,
+        /*sext*/    LogN2_16, L4_iand_memoph_io>;
+  defm: Memopxi_pat<zextloadi16, truncstorei16, u6_1ImmPred, and, IsNPow2_16,
+        /*zext*/    LogN2_16, L4_iand_memoph_io>;
+  defm: Memopxi_pat<load, store, u6_2ImmPred, and, IsNPow2_32,
+		    LogN2_32, L4_iand_memopw_io>;
 
   // setbit imm
-  defm: Memopxi_pat<extloadi8, truncstorei8, u6_0ImmPred, or, Set5ImmPred,
-        /*anyext*/  Set5Imm8, L4_ior_memopb_io>;
-  defm: Memopxi_pat<sextloadi8, truncstorei8, u6_0ImmPred, or, Set5ImmPred,
-        /*sext*/    Set5Imm8, L4_ior_memopb_io>;
-  defm: Memopxi_pat<zextloadi8, truncstorei8, u6_0ImmPred, or, Set5ImmPred,
-        /*zext*/    Set5Imm8, L4_ior_memopb_io>;
-  defm: Memopxi_pat<extloadi16, truncstorei16, u6_1ImmPred, or, Set5ImmPred,
-        /*anyext*/  Set5Imm16, L4_ior_memoph_io>;
-  defm: Memopxi_pat<sextloadi16, truncstorei16, u6_1ImmPred, or, Set5ImmPred,
-        /*sext*/    Set5Imm16, L4_ior_memoph_io>;
-  defm: Memopxi_pat<zextloadi16, truncstorei16, u6_1ImmPred, or, Set5ImmPred,
-        /*zext*/    Set5Imm16, L4_ior_memoph_io>;
-  defm: Memopxi_pat<load, store, u6_2ImmPred, or, Set5ImmPred, Set5Imm32,
-                    L4_ior_memopw_io>;
+  defm: Memopxi_pat<extloadi8, truncstorei8, u6_0ImmPred, or, IsPow2_32,
+        /*anyext*/  Log2_8, L4_ior_memopb_io>;
+  defm: Memopxi_pat<sextloadi8, truncstorei8, u6_0ImmPred, or, IsPow2_32,
+        /*sext*/    Log2_8, L4_ior_memopb_io>;
+  defm: Memopxi_pat<zextloadi8, truncstorei8, u6_0ImmPred, or, IsPow2_32,
+        /*zext*/    Log2_8, L4_ior_memopb_io>;
+  defm: Memopxi_pat<extloadi16, truncstorei16, u6_1ImmPred, or, IsPow2_32,
+        /*anyext*/  Log2_16, L4_ior_memoph_io>;
+  defm: Memopxi_pat<sextloadi16, truncstorei16, u6_1ImmPred, or, IsPow2_32,
+        /*sext*/    Log2_16, L4_ior_memoph_io>;
+  defm: Memopxi_pat<zextloadi16, truncstorei16, u6_1ImmPred, or, IsPow2_32,
+        /*zext*/    Log2_16, L4_ior_memoph_io>;
+  defm: Memopxi_pat<load, store, u6_2ImmPred, or, IsPow2_32,
+		    Log2_32, L4_ior_memopw_io>;
 }
 
 def : T_CMP_pat <C4_cmpneqi,  setne,  s32_0ImmPred>;
@@ -1944,7 +1926,7 @@ def : T_CMP_pat <C4_cmplteui, setule, u9_0ImmPred>;
 
 // Map cmplt(Rs, Imm) -> !cmpgt(Rs, Imm-1).
 def: Pat<(i1 (setlt I32:$src1, s32_0ImmPred:$src2)),
-         (C4_cmpltei IntRegs:$src1, (DEC_CONST_SIGNED s32_0ImmPred:$src2))>;
+         (C4_cmpltei IntRegs:$src1, (SDEC1 s32_0ImmPred:$src2))>;
 
 // rs != rt -> !(rs == rt).
 def: Pat<(i1 (setne I32:$src1, s32_0ImmPred:$src2)),
@@ -1978,7 +1960,7 @@ def u7_0PosImmPred : ImmLeaf<i32, [{
 let AddedComplexity = 139 in
 def: Pat<(i32 (zext (i1 (setult (i32 (and I32:$src1, 255)),
                          u7_0PosImmPred:$src2)))),
-         (C2_muxii (A4_cmpbgtui IntRegs:$src1, (DEC_CONST_UNSIGNED imm:$src2)), 0, 1)>;
+         (C2_muxii (A4_cmpbgtui IntRegs:$src1, (UDEC1 imm:$src2)), 0, 1)>;
 
 class Loada_pat<PatFrag Load, ValueType VT, PatFrag Addr, InstHexagon MI>
   : Pat<(VT (Load Addr:$addr)), (MI Addr:$addr)>;
