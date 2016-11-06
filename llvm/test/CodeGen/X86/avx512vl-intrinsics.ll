@@ -4580,26 +4580,6 @@ define <8 x i32>@test_int_x86_avx512_mask_psrl_di_256(<8 x i32> %x0, i32 %x1, <8
   ret <8 x i32> %res4
 }
 
-declare <16 x i32> @llvm.x86.avx512.mask.psrl.di.512(<16 x i32>, i32, <16 x i32>, i16)
-
-define <16 x i32>@test_int_x86_avx512_mask_psrl_di_512(<16 x i32> %x0, i32 %x1, <16 x i32> %x2, i16 %x3) {
-; CHECK-LABEL: test_int_x86_avx512_mask_psrl_di_512:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    kmovw %esi, %k1 ## encoding: [0xc5,0xf8,0x92,0xce]
-; CHECK-NEXT:    vpsrld $255, %zmm0, %zmm1 {%k1} ## encoding: [0x62,0xf1,0x75,0x49,0x72,0xd0,0xff]
-; CHECK-NEXT:    vpsrld $255, %zmm0, %zmm2 {%k1} {z} ## encoding: [0x62,0xf1,0x6d,0xc9,0x72,0xd0,0xff]
-; CHECK-NEXT:    vpsrld $255, %zmm0, %zmm0 ## encoding: [0x62,0xf1,0x7d,0x48,0x72,0xd0,0xff]
-; CHECK-NEXT:    vpaddd %zmm0, %zmm1, %zmm0 ## encoding: [0x62,0xf1,0x75,0x48,0xfe,0xc0]
-; CHECK-NEXT:    vpaddd %zmm0, %zmm2, %zmm0 ## encoding: [0x62,0xf1,0x6d,0x48,0xfe,0xc0]
-; CHECK-NEXT:    retq ## encoding: [0xc3]
-  %res = call <16 x i32> @llvm.x86.avx512.mask.psrl.di.512(<16 x i32> %x0, i32 255, <16 x i32> %x2, i16 %x3)
-  %res1 = call <16 x i32> @llvm.x86.avx512.mask.psrl.di.512(<16 x i32> %x0, i32 255, <16 x i32> %x2, i16 -1)
-  %res2 = call <16 x i32> @llvm.x86.avx512.mask.psrl.di.512(<16 x i32> %x0, i32 255, <16 x i32> zeroinitializer, i16 %x3)
-  %res3 = add <16 x i32> %res, %res1
-  %res4 = add <16 x i32> %res2, %res3
-  ret <16 x i32> %res4
-}
-
 declare <2 x i64> @llvm.x86.avx512.mask.psrlv2.di(<2 x i64>, <2 x i64>, <2 x i64>, i8)
 
 define <2 x i64>@test_int_x86_avx512_mask_psrlv2_di(<2 x i64> %x0, <2 x i64> %x1, <2 x i64> %x2, i8 %x3) {
