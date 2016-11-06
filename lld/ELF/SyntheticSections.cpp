@@ -146,7 +146,7 @@ void BuildIdSection<ELFT>::computeHash(
 
 template <class ELFT>
 void BuildIdFastHash<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
-  computeHash(Buf, [](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
+  this->computeHash(Buf, [](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
     uint64_t Hash = xxHash64(toStringRef(Arr));
     write64<ELFT::TargetEndianness>(Dest, Hash);
   });
@@ -154,21 +154,21 @@ void BuildIdFastHash<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
 
 template <class ELFT>
 void BuildIdMd5<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
-  computeHash(Buf, [&](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
+  this->computeHash(Buf, [&](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
     MD5 Hash;
     Hash.update(Arr);
     MD5::MD5Result Res;
     Hash.final(Res);
-    memcpy(Dest, Res, HashSize);
+    memcpy(Dest, Res, this->HashSize);
   });
 }
 
 template <class ELFT>
 void BuildIdSha1<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
-  computeHash(Buf, [&](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
+  this->computeHash(Buf, [&](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
     SHA1 Hash;
     Hash.update(Arr);
-    memcpy(Dest, Hash.final().data(), HashSize);
+    memcpy(Dest, Hash.final().data(), this->HashSize);
   });
 }
 
