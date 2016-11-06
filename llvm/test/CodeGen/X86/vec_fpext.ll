@@ -28,7 +28,7 @@ define void @fpext_frommem(<2 x float>* %in, <2 x double>* %out) {
 ; X32-AVX512VL:       # BB#0: # %entry
 ; X32-AVX512VL-NEXT:    movl {{[0-9]+}}(%esp), %eax # encoding: [0x8b,0x44,0x24,0x08]
 ; X32-AVX512VL-NEXT:    movl {{[0-9]+}}(%esp), %ecx # encoding: [0x8b,0x4c,0x24,0x04]
-; X32-AVX512VL-NEXT:    vcvtps2pd (%ecx), %xmm0 # encoding: [0xc5,0xf8,0x5a,0x01]
+; X32-AVX512VL-NEXT:    vcvtps2pd (%ecx), %xmm0 # encoding: [0x62,0xf1,0x7c,0x08,0x5a,0x01]
 ; X32-AVX512VL-NEXT:    vmovups %xmm0, (%eax) # encoding: [0x62,0xf1,0x7c,0x08,0x11,0x00]
 ; X32-AVX512VL-NEXT:    retl # encoding: [0xc3]
 ;
@@ -46,7 +46,7 @@ define void @fpext_frommem(<2 x float>* %in, <2 x double>* %out) {
 ;
 ; X64-AVX512VL-LABEL: fpext_frommem:
 ; X64-AVX512VL:       # BB#0: # %entry
-; X64-AVX512VL-NEXT:    vcvtps2pd (%rdi), %xmm0 # encoding: [0xc5,0xf8,0x5a,0x07]
+; X64-AVX512VL-NEXT:    vcvtps2pd (%rdi), %xmm0 # encoding: [0x62,0xf1,0x7c,0x08,0x5a,0x07]
 ; X64-AVX512VL-NEXT:    vmovups %xmm0, (%rsi) # encoding: [0x62,0xf1,0x7c,0x08,0x11,0x06]
 ; X64-AVX512VL-NEXT:    retq # encoding: [0xc3]
 entry:

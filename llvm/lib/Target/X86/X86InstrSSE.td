@@ -2135,7 +2135,7 @@ let Predicates = [UseSSE2] in {
 } // Predicates = [UseSSE2]
 
 // Convert packed single to packed double
-let Predicates = [HasAVX] in {
+let Predicates = [HasAVX, NoVLX] in {
                   // SSE2 instructions without OpSize prefix
 def VCVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                     "vcvtps2pd\t{$src, $dst|$dst, $src}",
