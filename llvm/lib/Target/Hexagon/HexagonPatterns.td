@@ -24,34 +24,9 @@ def IsPow2_32 : PatLeaf<(i32 imm), [{
   return isPowerOf2_32(V);
 }]>;
 
-def IsPow2_64 : PatLeaf<(i64 imm), [{
-  uint64_t V = N->getZExtValue();
-  return isPowerOf2_64(V);
-}]>;
-
 def IsNPow2_32 : PatLeaf<(i32 imm), [{
-  uint32_t NV = ~N->getZExtValue();
-  return isPowerOf2_32(NV);
-}]>;
-
-def IsPow2_64L : PatLeaf<(i64 imm), [{
-  uint64_t V = N->getZExtValue();
-  return isPowerOf2_64(V) && Log2_64(V) < 32;
-}]>;
-
-def IsPow2_64H : PatLeaf<(i64 imm), [{
-  uint64_t V = N->getZExtValue();
-  return isPowerOf2_64(V) && Log2_64(V) >= 32;
-}]>;
-
-def IsNPow2_64L : PatLeaf<(i64 imm), [{
-  uint64_t NV = ~N->getZExtValue();
-  return isPowerOf2_64(NV) && Log2_64(NV) < 32;
-}]>;
-
-def IsNPow2_64H : PatLeaf<(i64 imm), [{
-  uint64_t NV = ~N->getZExtValue();
-  return isPowerOf2_64(NV) && Log2_64(NV) >= 32;
+  uint32_t V = N->getZExtValue();
+  return isPowerOf2_32(~V);
 }]>;
 
 def SDEC1 : SDNodeXForm<imm, [{
@@ -61,34 +36,13 @@ def SDEC1 : SDNodeXForm<imm, [{
 
 def UDEC1 : SDNodeXForm<imm, [{
   uint32_t V = N->getZExtValue();
-  assert(V >= 1);
+  assert(V > 0);
   return CurDAG->getTargetConstant(V-1, SDLoc(N), MVT::i32);
-}]>;
-
-def UDEC32 : SDNodeXForm<imm, [{
-  uint32_t V = N->getZExtValue();
-  assert(V >= 32);
-  return CurDAG->getTargetConstant(V-32, SDLoc(N), MVT::i32);
 }]>;
 
 def Log2_32 : SDNodeXForm<imm, [{
   uint32_t V = N->getZExtValue();
   return CurDAG->getTargetConstant(Log2_32(V), SDLoc(N), MVT::i32);
-}]>;
-
-def Log2_64 : SDNodeXForm<imm, [{
-  uint64_t V = N->getZExtValue();
-  return CurDAG->getTargetConstant(Log2_64(V), SDLoc(N), MVT::i32);
-}]>;
-
-def LogN2_32 : SDNodeXForm<imm, [{
-  uint32_t NV = ~N->getZExtValue();
-  return CurDAG->getTargetConstant(Log2_32(NV), SDLoc(N), MVT::i32);
-}]>;
-
-def LogN2_64 : SDNodeXForm<imm, [{
-  uint64_t NV = ~N->getZExtValue();
-  return CurDAG->getTargetConstant(Log2_64(NV), SDLoc(N), MVT::i32);
 }]>;
 
 
@@ -574,54 +528,18 @@ def: Pat<(i32 (trunc (ctlz (not I64:$Rss)))), (S2_cl1p I64:$Rss)>;
 // Count trailing ones: 32-bit.
 def: Pat<(cttz (not I32:$Rs)), (S2_ct1 I32:$Rs)>;
 
-let AddedComplexity = 20 in { // Complexity greater than and/or/xor
-  def: Pat<(and I32:$Rs, IsNPow2_32:$V),
-           (S2_clrbit_i IntRegs:$Rs, (LogN2_32 $V))>;
-  def: Pat<(or I32:$Rs, IsPow2_32:$V),
-           (S2_setbit_i IntRegs:$Rs, (Log2_32 $V))>;
-  def: Pat<(xor I32:$Rs, IsPow2_32:$V),
-           (S2_togglebit_i IntRegs:$Rs, (Log2_32 $V))>;
-
-  def: Pat<(and I32:$Rs, (not (shl 1, I32:$Rt))),
-           (S2_clrbit_r IntRegs:$Rs, IntRegs:$Rt)>;
-  def: Pat<(or I32:$Rs, (shl 1, I32:$Rt)),
-           (S2_setbit_r IntRegs:$Rs, IntRegs:$Rt)>;
-  def: Pat<(xor I32:$Rs, (shl 1, I32:$Rt)),
-           (S2_togglebit_r IntRegs:$Rs, IntRegs:$Rt)>;
-}
-
-// Clr/set/toggle bit for 64-bit values with immediate bit index.
-let AddedComplexity = 20 in { // Complexity greater than and/or/xor
-  def: Pat<(and I64:$Rss, IsNPow2_64L:$V),
-           (REG_SEQUENCE DoubleRegs,
-                (i32 (HiReg $Rss)), subreg_hireg,
-                (S2_clrbit_i (LoReg $Rss), (LogN2_64 $V)), subreg_loreg)>;
-  def: Pat<(and I64:$Rss, IsNPow2_64H:$V),
-           (REG_SEQUENCE DoubleRegs,
-                (S2_clrbit_i (HiReg $Rss), (UDEC32 (i32 (LogN2_64 $V)))),
-                subreg_hireg,
-                (i32 (LoReg $Rss)), subreg_loreg)>;
-
-  def: Pat<(or I64:$Rss, IsPow2_64L:$V),
-           (REG_SEQUENCE DoubleRegs,
-                (i32 (HiReg $Rss)), subreg_hireg,
-                (S2_setbit_i (LoReg $Rss), (Log2_64 $V)), subreg_loreg)>;
-  def: Pat<(or I64:$Rss, IsPow2_64H:$V),
-           (REG_SEQUENCE DoubleRegs,
-                (S2_setbit_i (HiReg $Rss), (UDEC32 (i32 (Log2_64 $V)))),
-                subreg_hireg,
-                (i32 (LoReg $Rss)), subreg_loreg)>;
-
-  def: Pat<(xor I64:$Rss, IsPow2_64L:$V),
-           (REG_SEQUENCE DoubleRegs,
-                (i32 (HiReg $Rss)), subreg_hireg,
-                (S2_togglebit_i (LoReg $Rss), (Log2_64 $V)), subreg_loreg)>;
-  def: Pat<(xor I64:$Rss, IsPow2_64H:$V),
-           (REG_SEQUENCE DoubleRegs,
-                (S2_togglebit_i (HiReg $Rss), (UDEC32 (i32 (Log2_64 $V)))),
-                subreg_hireg,
-                (i32 (LoReg $Rss)), subreg_loreg)>;
-}
+def: Pat<(i32 (and I32:$Rs, (not (shl 1, u5_0ImmPred:$u5)))),
+         (S2_clrbit_i IntRegs:$Rs, u5_0ImmPred:$u5)>;
+def: Pat<(i32 (or I32:$Rs, (shl 1, u5_0ImmPred:$u5))),
+         (S2_setbit_i IntRegs:$Rs, u5_0ImmPred:$u5)>;
+def: Pat<(i32 (xor I32:$Rs, (shl 1, u5_0ImmPred:$u5))),
+         (S2_togglebit_i IntRegs:$Rs, u5_0ImmPred:$u5)>;
+def: Pat<(i32 (and I32:$Rs, (not (shl 1, I32:$Rt)))),
+         (S2_clrbit_r IntRegs:$Rs, IntRegs:$Rt)>;
+def: Pat<(i32 (or I32:$Rs, (shl 1, I32:$Rt))),
+         (S2_setbit_r IntRegs:$Rs, IntRegs:$Rt)>;
+def: Pat<(i32 (xor I32:$Rs, (shl 1, I32:$Rt))),
+         (S2_togglebit_r IntRegs:$Rs, IntRegs:$Rt)>;
 
 let AddedComplexity = 20 in { // Complexity greater than cmp reg-imm.
   def: Pat<(i1 (setne (and (shl 1, u5_0ImmPred:$u5), I32:$Rs), 0)),
@@ -1721,6 +1639,11 @@ def LogN2_8 : SDNodeXForm<imm, [{
 
 def LogN2_16 : SDNodeXForm<imm, [{
   uint16_t NV = ~N->getZExtValue();
+  return CurDAG->getTargetConstant(Log2_32(NV), SDLoc(N), MVT::i32);
+}]>;
+
+def LogN2_32 : SDNodeXForm<imm, [{
+  uint32_t NV = ~N->getZExtValue();
   return CurDAG->getTargetConstant(Log2_32(NV), SDLoc(N), MVT::i32);
 }]>;
 
