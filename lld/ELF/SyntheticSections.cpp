@@ -124,7 +124,7 @@ static std::vector<ArrayRef<uint8_t>> split(ArrayRef<uint8_t> Arr,
 
 template <class ELFT>
 void BuildIdSection<ELFT>::computeHash(
-    llvm::ArrayRef<uint8_t> Data,
+    llvm::MutableArrayRef<uint8_t> Data,
     std::function<void(ArrayRef<uint8_t> Arr, uint8_t *Hash)> Hash) {
   std::vector<ArrayRef<uint8_t>> Chunks = split(Data, 1024 * 1024);
   std::vector<uint8_t> HashList(Chunks.size() * HashSize);
@@ -141,7 +141,7 @@ void BuildIdSection<ELFT>::computeHash(
       Hash(Chunk, HashList.data() + Id * HashSize);
     });
 
-  Hash(HashList, this->getOutputLoc((uint8_t *)Data.begin()) + 16);
+  Hash(HashList, this->getOutputLoc(Data.begin()) + 16);
 }
 
 template <class ELFT>
