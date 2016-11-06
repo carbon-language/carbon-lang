@@ -230,10 +230,15 @@ declare i32 @llvm.x86.sse2.comineq.sd(<2 x double>, <2 x double>) nounwind readn
 
 
 define <4 x float> @test_x86_sse2_cvtdq2ps(<4 x i32> %a0) {
-; CHECK-LABEL: test_x86_sse2_cvtdq2ps:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vcvtdq2ps %xmm0, %xmm0 ## encoding: [0xc5,0xf8,0x5b,0xc0]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
+; AVX-LABEL: test_x86_sse2_cvtdq2ps:
+; AVX:       ## BB#0:
+; AVX-NEXT:    vcvtdq2ps %xmm0, %xmm0 ## encoding: [0xc5,0xf8,0x5b,0xc0]
+; AVX-NEXT:    retl ## encoding: [0xc3]
+;
+; AVX512VL-LABEL: test_x86_sse2_cvtdq2ps:
+; AVX512VL:       ## BB#0:
+; AVX512VL-NEXT:    vcvtdq2ps %xmm0, %xmm0 ## encoding: [0x62,0xf1,0x7c,0x08,0x5b,0xc0]
+; AVX512VL-NEXT:    retl ## encoding: [0xc3]
   %res = call <4 x float> @llvm.x86.sse2.cvtdq2ps(<4 x i32> %a0) ; <<4 x float>> [#uses=1]
   ret <4 x float> %res
 }
@@ -2856,10 +2861,15 @@ declare <8 x i32> @llvm.x86.avx.cvt.ps2dq.256(<8 x float>) nounwind readnone
 
 
 define <8 x float> @test_x86_avx_cvtdq2_ps_256(<8 x i32> %a0) {
-; CHECK-LABEL: test_x86_avx_cvtdq2_ps_256:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vcvtdq2ps %ymm0, %ymm0 ## encoding: [0xc5,0xfc,0x5b,0xc0]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
+; AVX-LABEL: test_x86_avx_cvtdq2_ps_256:
+; AVX:       ## BB#0:
+; AVX-NEXT:    vcvtdq2ps %ymm0, %ymm0 ## encoding: [0xc5,0xfc,0x5b,0xc0]
+; AVX-NEXT:    retl ## encoding: [0xc3]
+;
+; AVX512VL-LABEL: test_x86_avx_cvtdq2_ps_256:
+; AVX512VL:       ## BB#0:
+; AVX512VL-NEXT:    vcvtdq2ps %ymm0, %ymm0 ## encoding: [0x62,0xf1,0x7c,0x28,0x5b,0xc0]
+; AVX512VL-NEXT:    retl ## encoding: [0xc3]
   %res = call <8 x float> @llvm.x86.avx.cvtdq2.ps.256(<8 x i32> %a0) ; <<8 x float>> [#uses=1]
   ret <8 x float> %res
 }
