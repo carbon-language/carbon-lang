@@ -221,7 +221,8 @@ def cmd_push(args):
     os.chdir(git_root)
 
     # We need a staging area for SVN, let's hide it in the .git directory.
-    svn_root = os.path.join(git_root, '.git', 'llvm-upstream-svn')
+    dot_git_dir = git('rev-parse', '--git-common-dir')
+    svn_root = os.path.join(dot_git_dir, 'llvm-upstream-svn')
     svn_init(svn_root)
 
     rev_range = args.rev_range
