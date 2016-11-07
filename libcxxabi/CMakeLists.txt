@@ -144,6 +144,7 @@ find_path(
         ${LIBCXXABI_LIBCXX_PATH}/include
         ${CMAKE_BINARY_DIR}/${LIBCXXABI_LIBCXX_INCLUDES}
         ${LLVM_MAIN_SRC_DIR}/projects/libcxx/include
+        ${LLVM_MAIN_SRC_DIR}/../libcxx/include
         ${LLVM_INCLUDE_DIR}/c++/v1
   )
 
@@ -156,6 +157,7 @@ find_path(
   PATHS ${LIBCXXABI_LIBCXX_PATH}
         ${LIBCXXABI_LIBCXX_INCLUDES}/../
         ${LLVM_MAIN_SRC_DIR}/projects/libcxx/
+        ${LLVM_MAIN_SRC_DIR}/../libcxx/
   NO_DEFAULT_PATH
   )
 
