@@ -53,7 +53,7 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG:       ret i32
 // CHECK-DEBUG-NEXT:  }
 
-// CHECK:       define internal {{.*}}void [[OMP_OUTLINED]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i{{[0-9]+}} [[VLA_SIZE:%.+]], i32* [[VLA_ADDR:%[^)]+]])
+// CHECK:       define internal {{.*}}void [[OMP_OUTLINED]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i{{[0-9]+}}{{.*}} [[VLA_SIZE:%.+]], i32* [[VLA_ADDR:%[^)]+]])
 // CHECK-SAME:       #[[FN_ATTRS:[0-9]+]]
 // CHECK:       store i32* [[VLA_ADDR]], i32** [[VLA_PTR_ADDR:%.+]],
 // CHECK:       [[VLA_REF:%.+]] = load i32*, i32** [[VLA_PTR_ADDR]]
