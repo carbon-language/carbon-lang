@@ -158,6 +158,7 @@ lldb::ExpressionResults UserExpression::Evaluate(
     if (log)
       log->Printf("== [UserExpression::Evaluate] Passed a NULL target, can't "
                   "run expressions.");
+    error.SetErrorString("expression passed a null target");
     return lldb::eExpressionSetupError;
   }
 
