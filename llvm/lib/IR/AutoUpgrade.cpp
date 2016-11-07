@@ -1357,24 +1357,15 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep = Builder.CreateFAdd(CI->getArgOperand(0), CI->getArgOperand(1));
       Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
                           CI->getArgOperand(2));
-    } else if (IsX86 && (Name == "avx512.mask.div.pd.128" ||
-                         Name == "avx512.mask.div.pd.256" ||
-                         Name == "avx512.mask.div.ps.128" ||
-                         Name == "avx512.mask.div.ps.256")) {
+    } else if (IsX86 && Name.startswith("avx512.mask.div.p")) {
       Rep = Builder.CreateFDiv(CI->getArgOperand(0), CI->getArgOperand(1));
       Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
                           CI->getArgOperand(2));
-    } else if (IsX86 && (Name == "avx512.mask.mul.pd.128" ||
-                         Name == "avx512.mask.mul.pd.256" ||
-                         Name == "avx512.mask.mul.ps.128" ||
-                         Name == "avx512.mask.mul.ps.256")) {
+    } else if (IsX86 && Name.startswith("avx512.mask.mul.p")) {
       Rep = Builder.CreateFMul(CI->getArgOperand(0), CI->getArgOperand(1));
       Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
                           CI->getArgOperand(2));
-    } else if (IsX86 && (Name == "avx512.mask.sub.pd.128" ||
-                         Name == "avx512.mask.sub.pd.256" ||
-                         Name == "avx512.mask.sub.ps.128" ||
-                         Name == "avx512.mask.sub.ps.256")) {
+    } else if (IsX86 && Name.startswith("avx512.mask.sub.p")) {
       Rep = Builder.CreateFSub(CI->getArgOperand(0), CI->getArgOperand(1));
       Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
                           CI->getArgOperand(2));
