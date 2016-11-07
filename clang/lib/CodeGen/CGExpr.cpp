@@ -2127,11 +2127,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       if (auto *FD = LambdaCaptureFields.lookup(VD))
         return EmitCapturedFieldLValue(*this, FD, CXXABIThisValue);
       else if (CapturedStmtInfo) {
-        auto I = LocalDeclMap.find(VD);
-        if (I != LocalDeclMap.end()) {
-          if (auto RefTy = VD->getType()->getAs<ReferenceType>())
-            return EmitLoadOfReferenceLValue(I->second, RefTy);
-          return MakeAddrLValue(I->second, T);
+        auto it = LocalDeclMap.find(VD);
+        if (it != LocalDeclMap.end()) {
+          if (auto RefTy = VD->getType()->getAs<ReferenceType>()) {
+            return EmitLoadOfReferenceLValue(it->second, RefTy);
+          }
+          return MakeAddrLValue(it->second, T);
         }
         LValue CapLVal =
             EmitCapturedFieldLValue(*this, CapturedStmtInfo->lookup(VD),

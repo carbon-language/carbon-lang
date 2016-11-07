@@ -307,7 +307,7 @@ CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S) {
         if (ArgLVal.getType()->isLValueReferenceType()) {
           ArgAddr = EmitLoadOfReference(
               ArgAddr, ArgLVal.getType()->castAs<ReferenceType>());
-        } else if (!VarTy->isVariablyModifiedType() || !VarTy->isPointerType()) {
+        } else {
           assert(ArgLVal.getType()->isPointerType());
           ArgAddr = EmitLoadOfPointer(
               ArgAddr, ArgLVal.getType()->castAs<PointerType>());
