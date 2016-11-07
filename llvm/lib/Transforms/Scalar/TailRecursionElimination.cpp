@@ -236,7 +236,7 @@ static bool markTails(Function &F, bool &AllCallsAreTailCalls) {
       if (!CI || CI->isTailCall())
         continue;
 
-      bool IsNoTail = CI->isNoTailCall();
+      bool IsNoTail = CI->isNoTailCall() || CI->hasOperandBundles();
 
       if (!IsNoTail && CI->doesNotAccessMemory()) {
         // A call to a readnone function whose arguments are all things computed
@@ -256,6 +256,7 @@ static bool markTails(Function &F, bool &AllCallsAreTailCalls) {
           SafeToTail = false;
           break;
         }
+        SafeToTail &= CI->hasOperandBundles();
         if (SafeToTail) {
           emitOptimizationRemark(
               F.getContext(), "tailcallelim", F, CI->getDebugLoc(),
