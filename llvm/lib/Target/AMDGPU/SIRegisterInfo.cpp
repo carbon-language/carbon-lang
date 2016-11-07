@@ -1200,15 +1200,15 @@ ArrayRef<int16_t> SIRegisterInfo::getRegSplitParts(const TargetRegisterClass *RC
     case 32:
       return {};
     case 64:
-      return Sub0_1;
+      return makeArrayRef(Sub0_1);
     case 96:
-      return Sub0_2;
+      return makeArrayRef(Sub0_2);
     case 128:
-      return Sub0_3;
+      return makeArrayRef(Sub0_3);
     case 256:
-      return Sub0_7;
+      return makeArrayRef(Sub0_7);
     case 512:
-      return Sub0_15;
+      return makeArrayRef(Sub0_15);
     default:
       llvm_unreachable("unhandled register size");
     }
@@ -1236,11 +1236,11 @@ ArrayRef<int16_t> SIRegisterInfo::getRegSplitParts(const TargetRegisterClass *RC
     case 64:
       return {};
     case 128:
-      return Sub0_3_64;
+      return makeArrayRef(Sub0_3_64);
     case 256:
-      return Sub0_7_64;
+      return makeArrayRef(Sub0_7_64);
     case 512:
-      return Sub0_15_64;
+      return makeArrayRef(Sub0_15_64);
     default:
       llvm_unreachable("unhandled register size");
     }
@@ -1264,9 +1264,9 @@ ArrayRef<int16_t> SIRegisterInfo::getRegSplitParts(const TargetRegisterClass *RC
   case 128:
     return {};
   case 256:
-    return Sub0_7_128;
+    return makeArrayRef(Sub0_7_128);
   case 512:
-    return Sub0_15_128;
+    return makeArrayRef(Sub0_15_128);
   default:
     llvm_unreachable("unhandled register size");
   }
