@@ -140,7 +140,7 @@ endif()
 if (LLVM_EXTERNAL_LIBCXX_SOURCE_DIR)
   set(LIBCXXABI_LIBCXX_SRC_DIR ${LLVM_EXTERNAL_LIBCXX_SOURCE_DIR})
 else()
-  set(LIBCXXABI_LIBCXX_SRC_DIR ${LLVM_MAIN_SRC_DIR}/projects/libcxx/include)
+  set(LIBCXXABI_LIBCXX_SRC_DIR ${LLVM_MAIN_SRC_DIR}/projects/libcxx)
 endif()
 
 find_path(
