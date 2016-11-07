@@ -16,7 +16,7 @@ def ZEC12Model : SchedMachineModel {
 
     let UnsupportedFeatures = Arch10UnsupportedFeatures.List;
     
-    let IssueWidth = 3;             // 3 instructions decoded per cycle.
+    let IssueWidth = 5;
     let MicroOpBufferSize = 40;     // Issue queues
     let LoadLatency = 1;            // Optimistic load latency.
 
@@ -56,10 +56,10 @@ def : WriteRes<Lat20, []> { let Latency = 20; let NumMicroOps = 0;}
 def : WriteRes<Lat30, []> { let Latency = 30; let NumMicroOps = 0;}
 
 // Execution units.
-def ZEC12_VBUnit : ProcResource<1>;
-def ZEC12_FXUnit : ProcResource<1>;
-def ZEC12_LSUnit : ProcResource<1>;
+def ZEC12_FXUnit : ProcResource<2>;
+def ZEC12_LSUnit : ProcResource<2>;
 def ZEC12_FPUnit : ProcResource<1>;
+def ZEC12_VBUnit : ProcResource<1>;
 
 // Subtarget specific definitions of scheduling resources.
 def : WriteRes<FXU,      [ZEC12_FXUnit]> { let Latency = 1; }

@@ -16,7 +16,7 @@ def Z196Model : SchedMachineModel {
 
     let UnsupportedFeatures = Arch9UnsupportedFeatures.List;
     
-    let IssueWidth = 3;             // 3 instructions decoded per cycle.
+    let IssueWidth = 5;
     let MicroOpBufferSize = 40;     // Issue queues
     let LoadLatency = 1;            // Optimistic load latency.
 
@@ -56,8 +56,8 @@ def : WriteRes<Lat20, []> { let Latency = 20; let NumMicroOps = 0;}
 def : WriteRes<Lat30, []> { let Latency = 30; let NumMicroOps = 0;}
 
 // Execution units.
-def Z196_FXUnit : ProcResource<1>;
-def Z196_LSUnit : ProcResource<1>;
+def Z196_FXUnit : ProcResource<2>;
+def Z196_LSUnit : ProcResource<2>;
 def Z196_FPUnit : ProcResource<1>;
 
 // Subtarget specific definitions of scheduling resources.

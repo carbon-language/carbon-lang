@@ -16,7 +16,7 @@ def Z13Model : SchedMachineModel {
 
     let UnsupportedFeatures = Arch11UnsupportedFeatures.List;
     
-    let IssueWidth = 6;             // 2 * 3 instructions decoded per cycle.
+    let IssueWidth = 8;
     let MicroOpBufferSize = 60;     // Issue queues
     let LoadLatency = 1;            // Optimistic load latency.
 
