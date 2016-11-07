@@ -343,6 +343,8 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name.startswith("sse41.pmovzx") ||
          Name.startswith("avx2.pmovsx") ||
          Name.startswith("avx2.pmovzx") ||
+         Name.startswith("avx512.mask.pmovsx") ||
+         Name.startswith("avx512.mask.pmovzx") ||
          Name == "sse2.cvtdq2pd" ||
          Name == "sse2.cvtps2pd" ||
          Name == "avx.cvtdq2.pd.256" ||
@@ -985,7 +987,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     } else if (IsX86 && (Name.startswith("sse41.pmovsx") ||
                          Name.startswith("sse41.pmovzx") ||
                          Name.startswith("avx2.pmovsx") ||
-                         Name.startswith("avx2.pmovzx"))) {
+                         Name.startswith("avx2.pmovzx") ||
+                         Name.startswith("avx512.mask.pmovsx") ||
+                         Name.startswith("avx512.mask.pmovzx"))) {
       VectorType *SrcTy = cast<VectorType>(CI->getArgOperand(0)->getType());
       VectorType *DstTy = cast<VectorType>(CI->getType());
       unsigned NumDstElts = DstTy->getNumElements();
@@ -1001,6 +1005,10 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       bool DoSext = (StringRef::npos != Name.find("pmovsx"));
       Rep = DoSext ? Builder.CreateSExt(SV, DstTy)
                    : Builder.CreateZExt(SV, DstTy);
+      // If there are 3 arguments, it's a masked intrinsic so we need a select.
+      if (CI->getNumArgOperands() == 3)
+        Rep = EmitX86Select(Builder, CI->getArgOperand(2), Rep,
+                            CI->getArgOperand(1));
     } else if (IsX86 && (Name.startswith("avx.vbroadcastf128") ||
                          Name == "avx2.vbroadcasti128")) {
       // Replace vbroadcastf128/vbroadcasti128 with a vector load+shuffle.
