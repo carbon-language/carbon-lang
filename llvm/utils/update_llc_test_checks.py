@@ -164,7 +164,11 @@ def main():
 
     prefix_list = []
     for l in run_lines:
-      (llc_cmd, filecheck_cmd) = tuple([cmd.strip() for cmd in l.split('|', 1)])
+      commands = [cmd.strip() for cmd in l.split('|', 1)]
+      llc_cmd = commands[0]
+      filecheck_cmd = ''
+      if len(commands) > 1:
+        filecheck_cmd = commands[1]
       if not llc_cmd.startswith('llc '):
         print >>sys.stderr, 'WARNING: Skipping non-llc RUN line: ' + l
         continue
