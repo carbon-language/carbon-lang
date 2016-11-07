@@ -575,15 +575,12 @@ AArch64LoadStoreOpt::mergeNarrowZeroStores(MachineBasicBlock::iterator I,
       MergeForward ? getLdStBaseOp(*MergeMI) : getLdStBaseOp(*I);
 
   // Which register is Rt and which is Rt2 depends on the offset order.
-  MachineInstr *RtMI, *Rt2MI;
+  MachineInstr *RtMI;
   if (getLdStOffsetOp(*I).getImm() ==
-      getLdStOffsetOp(*MergeMI).getImm() + OffsetStride) {
+      getLdStOffsetOp(*MergeMI).getImm() + OffsetStride)
     RtMI = &*MergeMI;
-    Rt2MI = &*I;
-  } else {
+  else
     RtMI = &*I;
-    Rt2MI = &*MergeMI;
-  }
 
   int OffsetImm = getLdStOffsetOp(*RtMI).getImm();
   // Change the scaled offset from small to large type.
