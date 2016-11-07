@@ -256,7 +256,6 @@ static bool markTails(Function &F, bool &AllCallsAreTailCalls) {
           SafeToTail = false;
           break;
         }
-        SafeToTail &= CI->hasOperandBundles();
         if (SafeToTail) {
           emitOptimizationRemark(
               F.getContext(), "tailcallelim", F, CI->getDebugLoc(),
