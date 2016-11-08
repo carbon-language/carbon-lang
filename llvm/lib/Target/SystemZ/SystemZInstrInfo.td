@@ -1462,6 +1462,41 @@ defm LAM : LoadMultipleRSPair<"lam", 0x9A, 0xEB9A, AR32>;
 defm STAM : StoreMultipleRSPair<"stam", 0x9B, 0xEB9B, AR32>;
 
 //===----------------------------------------------------------------------===//
+// Program mask and addressing mode
+//===----------------------------------------------------------------------===//
+
+// Extract CC and program mask into a register.  CC ends up in bits 29 and 28.
+let Uses = [CC] in
+  def IPM : InherentRRE<"ipm", 0xB222, GR32, z_ipm>;
+
+// Set CC and program mask from a register.
+let Defs = [CC] in
+  def SPM : SideEffectUnaryRR<"spm", 0x04, GR32>;
+
+// Branch and link - like BAS, but also extracts CC and program mask.
+let isCall = 1, Uses = [CC], Defs = [CC] in {
+  def BAL  : CallRX<"bal", 0x45>;
+  def BALR : CallRR<"balr", 0x05>;
+}
+
+// Test addressing mode.
+let Defs = [CC] in
+  def TAM : SideEffectInherentE<"tam", 0x010B>;
+
+// Set addressing mode.
+def SAM24 : SideEffectInherentE<"sam24", 0x010C>;
+def SAM31 : SideEffectInherentE<"sam31", 0x010D>;
+def SAM64 : SideEffectInherentE<"sam64", 0x010E>;
+
+// Branch and set mode.  Not really a call, but also sets an output register.
+let isBranch = 1, isTerminator = 1, isBarrier = 1 in
+  def BSM : CallRR<"bsm", 0x0B>;
+
+// Branch and save and set mode.
+let isCall = 1, Defs = [CC] in
+  def BASSM : CallRR<"bassm", 0x0C>;
+
+//===----------------------------------------------------------------------===//
 // Transactional execution
 //===----------------------------------------------------------------------===//
 
@@ -1506,10 +1541,6 @@ let Predicates = [FeatureProcessorAssist] in {
 //===----------------------------------------------------------------------===//
 // Miscellaneous Instructions.
 //===----------------------------------------------------------------------===//
-
-// Extract CC into bits 29 and 28 of a register.
-let Uses = [CC] in
-  def IPM : InherentRRE<"ipm", 0xB222, GR32, z_ipm>;
 
 // Find leftmost one, AKA count leading zeros.  The instruction actually
 // returns a pair of GR64s, the first giving the number of leading zeros

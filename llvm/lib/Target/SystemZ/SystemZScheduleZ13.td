@@ -533,6 +533,29 @@ def : InstRW<[LSU, FXa], (instregex "LAE(Y)?$")>;
 def : InstRW<[LSU, Lat30, GroupAlone], (instregex "(L|ST)AM(Y)?$")>;
 
 //===----------------------------------------------------------------------===//
+// Program mask and addressing mode
+//===----------------------------------------------------------------------===//
+
+// Insert Program Mask
+def : InstRW<[FXa, Lat3, EndGroup], (instregex "IPM$")>;
+
+// Set Program Mask
+def : InstRW<[LSU, EndGroup], (instregex "SPM$")>;
+
+// Branch and link
+def : InstRW<[FXa, FXa, FXb, Lat5, GroupAlone], (instregex "BAL(R)?$")>;
+
+// Test addressing mode
+def : InstRW<[FXb, EndGroup], (instregex "TAM$")>;
+
+// Set addressing mode
+def : InstRW<[FXb, FXb, Lat2, EndGroup], (instregex "SAM(24|31|64)$")>;
+
+// Branch (and save) and set mode.
+def : InstRW<[FXa, FXb, Lat2, GroupAlone], (instregex "BSM$")>;
+def : InstRW<[FXa, FXa, FXb, Lat3, GroupAlone], (instregex "BASSM$")>;
+
+//===----------------------------------------------------------------------===//
 // Transactional execution
 //===----------------------------------------------------------------------===//
 
@@ -561,9 +584,6 @@ def : InstRW<[FXb], (instregex "PPA$")>;
 //===----------------------------------------------------------------------===//
 // Miscellaneous Instructions.
 //===----------------------------------------------------------------------===//
-
-// Insert Program Mask
-def : InstRW<[FXa, Lat3, EndGroup], (instregex "IPM$")>;
 
 // Find leftmost one
 def : InstRW<[FXa, Lat6, GroupAlone], (instregex "FLOGR$")>;

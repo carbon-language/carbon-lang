@@ -2116,6 +2116,13 @@ class SideEffectUnaryI<string mnemonic, bits<8> opcode, Immediate imm>
   let hasSideEffects = 1;
 }
 
+class SideEffectUnaryRR<string mnemonic, bits<8>opcode, RegisterOperand cls>
+  : InstRR<opcode, (outs), (ins cls:$R1),
+           mnemonic#"\t$R1", []> {
+  let hasSideEffects = 1;
+  let R2 = 0;
+}
+
 class SideEffectUnaryS<string mnemonic, bits<16> opcode,
                        SDPatternOperator operator>
   : InstS<opcode, (outs), (ins bdaddr12only:$BD2),
