@@ -374,8 +374,8 @@ static bool AllCallersPassInValidPointerForArgument(Argument *Arg) {
 
   unsigned ArgNo = Arg->getArgNo();
 
-  // Look at all call sites of the function.  At this pointer we know we only
-  // have direct callees.
+  // Look at all call sites of the function.  At this point we know we only have
+  // direct callees.
   for (User *U : Callee->users()) {
     CallSite CS(U);
     assert(CS && "Should only have direct calls!");
