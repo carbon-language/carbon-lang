@@ -386,8 +386,8 @@ static void reportDuplicate(SymbolBody *Existing,
     return;
   }
 
-  std::string OldLoc = getLocation(Existing, *D->Section, D->Value);
-  std::string NewLoc = getLocation(nullptr, *ErrSec, ErrOffset);
+  std::string OldLoc = getLocation(*D->Section, D->Value);
+  std::string NewLoc = getLocation(*ErrSec, ErrOffset);
 
   print(NewLoc + ": duplicate symbol '" + maybeDemangle(Existing->getName()) +
         "'");

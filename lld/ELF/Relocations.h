@@ -88,8 +88,7 @@ template <class ELFT>
 void createThunks(InputSectionBase<ELFT> &, const typename ELFT::Shdr &);
 
 template <class ELFT>
-std::string getLocation(SymbolBody *Sym, InputSectionBase<ELFT> &S,
-                        typename ELFT::uint Offset);
+std::string getLocation(InputSectionBase<ELFT> &S, typename ELFT::uint Offset);
 
 template <class ELFT>
 static inline typename ELFT::uint getAddend(const typename ELFT::Rel &Rel) {
