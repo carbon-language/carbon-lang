@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 extern "C" long strtol(const char *nptr, char **endptr, int base) {
   fprintf(stderr, "my_strtol_interceptor\n");
