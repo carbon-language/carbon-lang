@@ -484,10 +484,40 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
 
     if (Opcode ==  TargetOpcode::LOAD_STACK_GUARD)
       return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
-    else if (I.isCopy())
+
+    if (Opcode == TargetOpcode::PHI) {
+      const unsigned DefReg = I.getOperand(0).getReg();
+      const LLT DefTy = MRI.getType(DefReg);
+
+      const TargetRegisterClass *DefRC = nullptr;
+      if (TargetRegisterInfo::isPhysicalRegister(DefReg)) {
+        DefRC = TRI.getRegClass(DefReg);
+      } else {
+        const RegClassOrRegBank &RegClassOrBank =
+            MRI.getRegClassOrRegBank(DefReg);
+
+        DefRC = RegClassOrBank.dyn_cast<const TargetRegisterClass *>();
+        if (!DefRC) {
+          if (!DefTy.isValid()) {
+            DEBUG(dbgs() << "PHI operand has no type, not a gvreg?\n");
+            return false;
+          }
+          const RegisterBank &RB = *RegClassOrBank.get<const RegisterBank *>();
+          DefRC = getRegClassForTypeOnBank(DefTy, RB, RBI);
+          if (!DefRC) {
+            DEBUG(dbgs() << "PHI operand has unexpected size/bank\n");
+            return false;
+          }
+        }
+      }
+
+      return RBI.constrainGenericRegister(DefReg, *DefRC, MRI);
+    }
+
+    if (I.isCopy())
       return selectCopy(I, TII, MRI, TRI, RBI);
-    else
-      return true;
+
+    return true;
   }
 
 
