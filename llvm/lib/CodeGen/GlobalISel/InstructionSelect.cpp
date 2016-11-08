@@ -44,11 +44,13 @@ void InstructionSelect::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-static void reportSelectionError(const MachineInstr &MI, const Twine &Message) {
-  const MachineFunction &MF = *MI.getParent()->getParent();
+static void reportSelectionError(const MachineInstr *MI, const Twine &Message) {
+  const MachineFunction &MF = *MI->getParent()->getParent();
   std::string ErrStorage;
   raw_string_ostream Err(ErrStorage);
-  Err << Message << ":\nIn function: " << MF.getName() << '\n' << MI << '\n';
+  Err << Message << ":\nIn function: " << MF.getName() << '\n';
+  if (MI)
+    Err << *MI << '\n';
   report_fatal_error(Err.str());
 }
 
@@ -80,7 +82,7 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
     for (const MachineBasicBlock &MBB : MF)
       for (const MachineInstr &MI : MBB)
         if (isPreISelGenericOpcode(MI.getOpcode()) && !MLI->isLegal(MI, MRI))
-          reportSelectionError(MI, "Instruction is not legal");
+          reportSelectionError(&MI, "Instruction is not legal");
 
 #endif
   // FIXME: We could introduce new blocks and will need to fix the outer loop.
@@ -113,7 +115,10 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
 
       if (!ISel->select(MI)) {
         if (TPC.isGlobalISelAbortEnabled())
-          reportSelectionError(MI, "Cannot select");
+          // FIXME: It would be nice to dump all inserted instructions.  It's
+          // not
+          // obvious how, esp. considering select() can insert after MI.
+          reportSelectionError(&MI, "Cannot select");
         Failed = true;
         break;
       }
@@ -129,20 +134,39 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
+  // Now that selection is complete, there are no more generic vregs.  Verify
+  // that the size of the now-constrained vreg is unchanged and that it has a
+  // register class.
+  for (auto &VRegToType : MRI.getVRegToType()) {
+    unsigned VReg = VRegToType.first;
+    auto *RC = MRI.getRegClassOrNull(VReg);
+    auto *MI = MRI.def_instr_begin(VReg) == MRI.def_instr_end()
+                   ? nullptr
+                   : &*MRI.def_instr_begin(VReg);
+    if (!RC) {
+      if (TPC.isGlobalISelAbortEnabled())
+        reportSelectionError(MI, "VReg as no regclass after selection");
+      Failed = true;
+      break;
+    }
+
+    if (VRegToType.second.isValid() &&
+        VRegToType.second.getSizeInBits() > (RC->getSize() * 8)) {
+      if (TPC.isGlobalISelAbortEnabled())
+        reportSelectionError(
+            MI, "VReg has explicit size different from class size");
+      Failed = true;
+      break;
+    }
+  }
+
+  MRI.getVRegToType().clear();
+
   if (!TPC.isGlobalISelAbortEnabled() && (Failed || MF.size() == NumBlocks)) {
     MF.getProperties().set(MachineFunctionProperties::Property::FailedISel);
     return false;
   }
   assert(MF.size() == NumBlocks && "Inserting blocks is not supported yet");
-
-  // Now that selection is complete, there are no more generic vregs.
-  // FIXME: We're still discussing what to do with the vreg->size map:
-  // it's somewhat redundant (with the def MIs type size), but having to
-  // examine MIs is also awkward.  Another alternative is to track the type on
-  // the vreg instead, but that's not ideal either, because it's saying that
-  // vregs have types, which they really don't. But then again, LLT is just
-  // a size and a "shape": it's probably the same information as regbank info.
-  MF.getRegInfo().clearVirtRegTypes();
 
   // FIXME: Should we accurately track changes?
   return true;
