@@ -18,6 +18,7 @@
 #include "AArch64RegisterInfo.h"
 #include "AArch64Subtarget.h"
 #include "AArch64TargetMachine.h"
+#include "MCTargetDesc/AArch64AddressingModes.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -952,6 +953,45 @@ bool AArch64InstructionSelector::select(MachineInstr &I) const {
   case TargetOpcode::G_BITCAST:
     return selectCopy(I, TII, MRI, TRI, RBI);
 
+  case TargetOpcode::G_SELECT: {
+    if (MRI.getType(I.getOperand(1).getReg()) != LLT::scalar(1)) {
+      DEBUG(dbgs() << "G_SELECT cond has type: " << Ty
+                   << ", expected: " << LLT::scalar(1) << '\n');
+      return false;
+    }
+
+    const unsigned CondReg = I.getOperand(1).getReg();
+    const unsigned TReg = I.getOperand(2).getReg();
+    const unsigned FReg = I.getOperand(3).getReg();
+
+    unsigned CSelOpc = 0;
+
+    if (Ty == LLT::scalar(32)) {
+      CSelOpc = AArch64::CSELWr;
+    } else if (Ty == LLT::scalar(64)) {
+      CSelOpc = AArch64::CSELXr;
+    } else {
+      return false;
+    }
+
+    MachineInstr &TstMI =
+        *BuildMI(MBB, I, I.getDebugLoc(), TII.get(AArch64::ANDSWri))
+             .addDef(AArch64::WZR)
+             .addUse(CondReg)
+             .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
+
+    MachineInstr &CSelMI = *BuildMI(MBB, I, I.getDebugLoc(), TII.get(CSelOpc))
+                                .addDef(I.getOperand(0).getReg())
+                                .addUse(TReg)
+                                .addUse(FReg)
+                                .addImm(AArch64CC::NE);
+
+    constrainSelectedInstRegOperands(TstMI, TII, TRI, RBI);
+    constrainSelectedInstRegOperands(CSelMI, TII, TRI, RBI);
+
+    I.eraseFromParent();
+    return true;
+  }
   case TargetOpcode::G_ICMP: {
     if (Ty != LLT::scalar(1)) {
       DEBUG(dbgs() << "G_ICMP result has type: " << Ty
