@@ -328,14 +328,14 @@ defm CondStore64 : CondStores<GR64, nonvolatile_store,
 // Register moves.
 let hasSideEffects = 0 in {
   // Expands to LR, RISBHG or RISBLG, depending on the choice of registers.
-  def LRMux : UnaryRRPseudo<"l", null_frag, GRX32, GRX32>,
+  def LRMux : UnaryRRPseudo<"lr", null_frag, GRX32, GRX32>,
               Requires<[FeatureHighWord]>;
-  def LR  : UnaryRR <"l",  0x18,   null_frag, GR32, GR32>;
-  def LGR : UnaryRRE<"lg", 0xB904, null_frag, GR64, GR64>;
+  def LR  : UnaryRR <"lr",  0x18,   null_frag, GR32, GR32>;
+  def LGR : UnaryRRE<"lgr", 0xB904, null_frag, GR64, GR64>;
 }
 let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in {
-  def LTR  : UnaryRR <"lt",  0x12,   null_frag, GR32, GR32>;
-  def LTGR : UnaryRRE<"ltg", 0xB902, null_frag, GR64, GR64>;
+  def LTR  : UnaryRR <"ltr",  0x12,   null_frag, GR32, GR32>;
+  def LTGR : UnaryRRE<"ltgr", 0xB902, null_frag, GR64, GR64>;
 }
 
 // Immediate moves.
@@ -479,18 +479,18 @@ let Predicates = [FeatureLoadStoreOnCond], Uses = [CC] in {
 
 // 32-bit extensions from registers.
 let hasSideEffects = 0 in {
-  def LBR : UnaryRRE<"lb", 0xB926, sext8,  GR32, GR32>;
-  def LHR : UnaryRRE<"lh", 0xB927, sext16, GR32, GR32>;
+  def LBR : UnaryRRE<"lbr", 0xB926, sext8,  GR32, GR32>;
+  def LHR : UnaryRRE<"lhr", 0xB927, sext16, GR32, GR32>;
 }
 
 // 64-bit extensions from registers.
 let hasSideEffects = 0 in {
-  def LGBR : UnaryRRE<"lgb", 0xB906, sext8,  GR64, GR64>;
-  def LGHR : UnaryRRE<"lgh", 0xB907, sext16, GR64, GR64>;
-  def LGFR : UnaryRRE<"lgf", 0xB914, sext32, GR64, GR32>;
+  def LGBR : UnaryRRE<"lgbr", 0xB906, sext8,  GR64, GR64>;
+  def LGHR : UnaryRRE<"lghr", 0xB907, sext16, GR64, GR64>;
+  def LGFR : UnaryRRE<"lgfr", 0xB914, sext32, GR64, GR32>;
 }
 let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in
-  def LTGFR : UnaryRRE<"ltgf", 0xB912, null_frag, GR64, GR32>;
+  def LTGFR : UnaryRRE<"ltgfr", 0xB912, null_frag, GR64, GR32>;
 
 // Match 32-to-64-bit sign extensions in which the source is already
 // in a 64-bit register.
@@ -530,20 +530,20 @@ let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in
 // 32-bit extensions from registers.
 let hasSideEffects = 0 in {
   // Expands to LLCR or RISB[LH]G, depending on the choice of registers.
-  def LLCRMux : UnaryRRPseudo<"llc", zext8, GRX32, GRX32>,
+  def LLCRMux : UnaryRRPseudo<"llcr", zext8, GRX32, GRX32>,
                 Requires<[FeatureHighWord]>;
-  def LLCR    : UnaryRRE<"llc", 0xB994, zext8,  GR32, GR32>;
+  def LLCR    : UnaryRRE<"llcr", 0xB994, zext8,  GR32, GR32>;
   // Expands to LLHR or RISB[LH]G, depending on the choice of registers.
-  def LLHRMux : UnaryRRPseudo<"llh", zext16, GRX32, GRX32>,
+  def LLHRMux : UnaryRRPseudo<"llhr", zext16, GRX32, GRX32>,
                 Requires<[FeatureHighWord]>;
-  def LLHR    : UnaryRRE<"llh", 0xB995, zext16, GR32, GR32>;
+  def LLHR    : UnaryRRE<"llhr", 0xB995, zext16, GR32, GR32>;
 }
 
 // 64-bit extensions from registers.
 let hasSideEffects = 0 in {
-  def LLGCR : UnaryRRE<"llgc", 0xB984, zext8,  GR64, GR64>;
-  def LLGHR : UnaryRRE<"llgh", 0xB985, zext16, GR64, GR64>;
-  def LLGFR : UnaryRRE<"llgf", 0xB916, zext32, GR64, GR32>;
+  def LLGCR : UnaryRRE<"llgcr", 0xB984, zext8,  GR64, GR64>;
+  def LLGHR : UnaryRRE<"llghr", 0xB985, zext16, GR64, GR64>;
+  def LLGFR : UnaryRRE<"llgfr", 0xB916, zext32, GR64, GR32>;
 }
 
 // Match 32-to-64-bit zero extensions in which the source is already
@@ -627,8 +627,8 @@ def STMH : StoreMultipleRSY<"stmh", 0xEB26, GRH32>;
 
 // Byte-swapping register moves.
 let hasSideEffects = 0 in {
-  def LRVR  : UnaryRRE<"lrv",  0xB91F, bswap, GR32, GR32>;
-  def LRVGR : UnaryRRE<"lrvg", 0xB90F, bswap, GR64, GR64>;
+  def LRVR  : UnaryRRE<"lrvr",  0xB91F, bswap, GR32, GR32>;
+  def LRVGR : UnaryRRE<"lrvgr", 0xB90F, bswap, GR64, GR64>;
 }
 
 // Byte-swapping loads.  Unlike normal loads, these instructions are
@@ -680,11 +680,11 @@ def GOT : Alias<6, (outs GR64:$R1), (ins),
 
 let Defs = [CC] in {
   let CCValues = 0xF, CompareZeroCCMask = 0x8 in {
-    def LPR  : UnaryRR <"lp",  0x10,   z_iabs, GR32, GR32>;
-    def LPGR : UnaryRRE<"lpg", 0xB900, z_iabs, GR64, GR64>;
+    def LPR  : UnaryRR <"lpr",  0x10,   z_iabs, GR32, GR32>;
+    def LPGR : UnaryRRE<"lpgr", 0xB900, z_iabs, GR64, GR64>;
   }
   let CCValues = 0xE, CompareZeroCCMask = 0xE in
-    def LPGFR : UnaryRRE<"lpgf", 0xB910, null_frag, GR64, GR32>;
+    def LPGFR : UnaryRRE<"lpgfr", 0xB910, null_frag, GR64, GR32>;
 }
 def : Pat<(z_iabs32 GR32:$src), (LPR  GR32:$src)>;
 def : Pat<(z_iabs64 GR64:$src), (LPGR GR64:$src)>;
@@ -693,11 +693,11 @@ defm : SXU<z_iabs64, LPGFR>;
 
 let Defs = [CC] in {
   let CCValues = 0xF, CompareZeroCCMask = 0x8 in {
-    def LNR  : UnaryRR <"ln",  0x11,   z_inegabs, GR32, GR32>;
-    def LNGR : UnaryRRE<"lng", 0xB901, z_inegabs, GR64, GR64>;
+    def LNR  : UnaryRR <"lnr",  0x11,   z_inegabs, GR32, GR32>;
+    def LNGR : UnaryRRE<"lngr", 0xB901, z_inegabs, GR64, GR64>;
   }
   let CCValues = 0xE, CompareZeroCCMask = 0xE in
-    def LNGFR : UnaryRRE<"lngf", 0xB911, null_frag, GR64, GR32>;
+    def LNGFR : UnaryRRE<"lngfr", 0xB911, null_frag, GR64, GR32>;
 }
 def : Pat<(z_inegabs32 GR32:$src), (LNR  GR32:$src)>;
 def : Pat<(z_inegabs64 GR64:$src), (LNGR GR64:$src)>;
@@ -706,11 +706,11 @@ defm : SXU<z_inegabs64, LNGFR>;
 
 let Defs = [CC] in {
   let CCValues = 0xF, CompareZeroCCMask = 0x8 in {
-    def LCR  : UnaryRR <"lc",  0x13,   ineg, GR32, GR32>;
-    def LCGR : UnaryRRE<"lcg", 0xB903, ineg, GR64, GR64>;
+    def LCR  : UnaryRR <"lcr",  0x13,   ineg, GR32, GR32>;
+    def LCGR : UnaryRRE<"lcgr", 0xB903, ineg, GR64, GR64>;
   }
   let CCValues = 0xE, CompareZeroCCMask = 0xE in
-    def LCGFR : UnaryRRE<"lcgf", 0xB913, null_frag, GR64, GR32>;
+    def LCGFR : UnaryRRE<"lcgfr", 0xB913, null_frag, GR64, GR32>;
 }
 defm : SXU<ineg, LCGFR>;
 
@@ -778,10 +778,10 @@ def : Pat<(or (zext32 GR32:$src), imm64hf32:$imm),
 let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0x8 in {
   // Addition of a register.
   let isCommutable = 1 in {
-    defm AR : BinaryRRAndK<"a", 0x1A, 0xB9F8, add, GR32, GR32>;
-    defm AGR : BinaryRREAndK<"ag", 0xB908, 0xB9E8, add, GR64, GR64>;
+    defm AR : BinaryRRAndK<"ar", 0x1A, 0xB9F8, add, GR32, GR32>;
+    defm AGR : BinaryRREAndK<"agr", 0xB908, 0xB9E8, add, GR64, GR64>;
   }
-  def AGFR : BinaryRRE<"agf", 0xB918, null_frag, GR64, GR32>;
+  def AGFR : BinaryRRE<"agfr", 0xB918, null_frag, GR64, GR32>;
 
   // Addition of signed 16-bit immediates.
   defm AHIMux : BinaryRIAndKPseudo<"ahimux", add, GRX32, imm32sx16>;
@@ -812,10 +812,10 @@ defm : SXB<add, GR64, AGFR>;
 let Defs = [CC] in {
   // Addition of a register.
   let isCommutable = 1 in {
-    defm ALR : BinaryRRAndK<"al", 0x1E, 0xB9FA, addc, GR32, GR32>;
-    defm ALGR : BinaryRREAndK<"alg", 0xB90A, 0xB9EA, addc, GR64, GR64>;
+    defm ALR : BinaryRRAndK<"alr", 0x1E, 0xB9FA, addc, GR32, GR32>;
+    defm ALGR : BinaryRREAndK<"algr", 0xB90A, 0xB9EA, addc, GR64, GR64>;
   }
-  def ALGFR : BinaryRRE<"algf", 0xB91A, null_frag, GR64, GR32>;
+  def ALGFR : BinaryRRE<"algfr", 0xB91A, null_frag, GR64, GR32>;
 
   // Addition of signed 16-bit immediates.
   def ALHSIK  : BinaryRIE<"alhsik",  0xECDA, addc, GR32, imm32sx16>,
@@ -837,8 +837,8 @@ defm : ZXB<addc, GR64, ALGFR>;
 // Addition producing and using a carry.
 let Defs = [CC], Uses = [CC] in {
   // Addition of a register.
-  def ALCR  : BinaryRRE<"alc",  0xB998, adde, GR32, GR32>;
-  def ALCGR : BinaryRRE<"alcg", 0xB988, adde, GR64, GR64>;
+  def ALCR  : BinaryRRE<"alcr",  0xB998, adde, GR32, GR32>;
+  def ALCGR : BinaryRRE<"alcgr", 0xB988, adde, GR64, GR64>;
 
   // Addition of memory.
   def ALC  : BinaryRXY<"alc",  0xE398, adde, GR32, load, 4>;
@@ -853,9 +853,9 @@ let Defs = [CC], Uses = [CC] in {
 // add-immediate instruction instead.
 let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0x8 in {
   // Subtraction of a register.
-  defm SR : BinaryRRAndK<"s", 0x1B, 0xB9F9, sub, GR32, GR32>;
-  def SGFR : BinaryRRE<"sgf", 0xB919, null_frag, GR64, GR32>;
-  defm SGR : BinaryRREAndK<"sg", 0xB909, 0xB9E9, sub, GR64, GR64>;
+  defm SR : BinaryRRAndK<"sr", 0x1B, 0xB9F9, sub, GR32, GR32>;
+  def SGFR : BinaryRRE<"sgfr", 0xB919, null_frag, GR64, GR32>;
+  defm SGR : BinaryRREAndK<"sgr", 0xB909, 0xB9E9, sub, GR64, GR64>;
 
   // Subtraction of memory.
   defm SH  : BinaryRXPair<"sh", 0x4B, 0xE37B, sub, GR32, asextloadi16, 2>;
@@ -868,9 +868,9 @@ defm : SXB<sub, GR64, SGFR>;
 // Subtraction producing a carry.
 let Defs = [CC] in {
   // Subtraction of a register.
-  defm SLR : BinaryRRAndK<"sl", 0x1F, 0xB9FB, subc, GR32, GR32>;
-  def SLGFR : BinaryRRE<"slgf", 0xB91B, null_frag, GR64, GR32>;
-  defm SLGR : BinaryRREAndK<"slg", 0xB90B, 0xB9EB, subc, GR64, GR64>;
+  defm SLR : BinaryRRAndK<"slr", 0x1F, 0xB9FB, subc, GR32, GR32>;
+  def SLGFR : BinaryRRE<"slgfr", 0xB91B, null_frag, GR64, GR32>;
+  defm SLGR : BinaryRREAndK<"slgr", 0xB90B, 0xB9EB, subc, GR64, GR64>;
 
   // Subtraction of unsigned 32-bit immediates.  These don't match
   // subc because we prefer addc for constants.
@@ -887,8 +887,8 @@ defm : ZXB<subc, GR64, SLGFR>;
 // Subtraction producing and using a carry.
 let Defs = [CC], Uses = [CC] in {
   // Subtraction of a register.
-  def SLBR  : BinaryRRE<"slb",  0xB999, sube, GR32, GR32>;
-  def SLBGR : BinaryRRE<"slbg", 0xB989, sube, GR64, GR64>;
+  def SLBR  : BinaryRRE<"slbr",  0xB999, sube, GR32, GR32>;
+  def SLBGR : BinaryRRE<"slbgr", 0xB989, sube, GR64, GR64>;
 
   // Subtraction of memory.
   def SLB  : BinaryRXY<"slb",  0xE399, sube, GR32, load, 4>;
@@ -902,8 +902,8 @@ let Defs = [CC], Uses = [CC] in {
 let Defs = [CC] in {
   // ANDs of a register.
   let isCommutable = 1, CCValues = 0xC, CompareZeroCCMask = 0x8 in {
-    defm NR : BinaryRRAndK<"n", 0x14, 0xB9F4, and, GR32, GR32>;
-    defm NGR : BinaryRREAndK<"ng", 0xB980, 0xB9E4, and, GR64, GR64>;
+    defm NR : BinaryRRAndK<"nr", 0x14, 0xB9F4, and, GR32, GR32>;
+    defm NGR : BinaryRREAndK<"ngr", 0xB980, 0xB9E4, and, GR64, GR64>;
   }
 
   let isConvertibleToThreeAddress = 1 in {
@@ -961,8 +961,8 @@ defm : RMWIByte<and, bdaddr20pair, NIY>;
 let Defs = [CC] in {
   // ORs of a register.
   let isCommutable = 1, CCValues = 0xC, CompareZeroCCMask = 0x8 in {
-    defm OR : BinaryRRAndK<"o", 0x16, 0xB9F6, or, GR32, GR32>;
-    defm OGR : BinaryRREAndK<"og", 0xB981, 0xB9E6, or, GR64, GR64>;
+    defm OR : BinaryRRAndK<"or", 0x16, 0xB9F6, or, GR32, GR32>;
+    defm OGR : BinaryRREAndK<"ogr", 0xB981, 0xB9E6, or, GR64, GR64>;
   }
 
   // ORs of a 16-bit immediate, leaving other bits unaffected.
@@ -1018,8 +1018,8 @@ defm : RMWIByte<or, bdaddr20pair, OIY>;
 let Defs = [CC] in {
   // XORs of a register.
   let isCommutable = 1, CCValues = 0xC, CompareZeroCCMask = 0x8 in {
-    defm XR : BinaryRRAndK<"x", 0x17, 0xB9F7, xor, GR32, GR32>;
-    defm XGR : BinaryRREAndK<"xg", 0xB982, 0xB9E7, xor, GR64, GR64>;
+    defm XR : BinaryRRAndK<"xr", 0x17, 0xB9F7, xor, GR32, GR32>;
+    defm XGR : BinaryRREAndK<"xgr", 0xB982, 0xB9E7, xor, GR64, GR64>;
   }
 
   // XORs of a 32-bit immediate, leaving other bits unaffected.
@@ -1057,10 +1057,10 @@ defm : RMWIByte<xor, bdaddr20pair, XIY>;
 
 // Multiplication of a register.
 let isCommutable = 1 in {
-  def MSR  : BinaryRRE<"ms",  0xB252, mul, GR32, GR32>;
-  def MSGR : BinaryRRE<"msg", 0xB90C, mul, GR64, GR64>;
+  def MSR  : BinaryRRE<"msr",  0xB252, mul, GR32, GR32>;
+  def MSGR : BinaryRRE<"msgr", 0xB90C, mul, GR64, GR64>;
 }
-def MSGFR : BinaryRRE<"msgf", 0xB91C, null_frag, GR64, GR32>;
+def MSGFR : BinaryRRE<"msgfr", 0xB91C, null_frag, GR64, GR32>;
 defm : SXB<mul, GR64, MSGFR>;
 
 // Multiplication of a signed 16-bit immediate.
@@ -1078,7 +1078,7 @@ def  MSGF : BinaryRXY<"msgf", 0xE31C, mul, GR64, asextloadi32, 4>;
 def  MSG  : BinaryRXY<"msg",  0xE30C, mul, GR64, load, 8>;
 
 // Multiplication of a register, producing two results.
-def MLGR : BinaryRRE<"mlg", 0xB986, z_umul_lohi64, GR128, GR64>;
+def MLGR : BinaryRRE<"mlgr", 0xB986, z_umul_lohi64, GR128, GR64>;
 
 // Multiplication of memory, producing two results.
 def MLG : BinaryRXY<"mlg", 0xE386, z_umul_lohi64, GR128, load, 8>;
@@ -1088,10 +1088,10 @@ def MLG : BinaryRXY<"mlg", 0xE386, z_umul_lohi64, GR128, load, 8>;
 //===----------------------------------------------------------------------===//
 
 // Division and remainder, from registers.
-def DSGFR : BinaryRRE<"dsgf", 0xB91D, z_sdivrem32, GR128, GR32>;
-def DSGR  : BinaryRRE<"dsg",  0xB90D, z_sdivrem64, GR128, GR64>;
-def DLR   : BinaryRRE<"dl",   0xB997, z_udivrem32, GR128, GR32>;
-def DLGR  : BinaryRRE<"dlg",  0xB987, z_udivrem64, GR128, GR64>;
+def DSGFR : BinaryRRE<"dsgfr", 0xB91D, z_sdivrem32, GR128, GR32>;
+def DSGR  : BinaryRRE<"dsgr",  0xB90D, z_sdivrem64, GR128, GR64>;
+def DLR   : BinaryRRE<"dlr",   0xB997, z_udivrem32, GR128, GR32>;
+def DLGR  : BinaryRRE<"dlgr",  0xB987, z_udivrem64, GR128, GR64>;
 
 // Division and remainder, from memory.
 def DSGF : BinaryRXY<"dsgf", 0xE31D, z_sdivrem32, GR128, load, 4>;
@@ -1172,9 +1172,9 @@ let Defs = [CC] in {
 // of the unsigned forms do.
 let Defs = [CC], CCValues = 0xE in {
   // Comparison with a register.
-  def CR   : CompareRR <"c",   0x19,   z_scmp,    GR32, GR32>;
-  def CGFR : CompareRRE<"cgf", 0xB930, null_frag, GR64, GR32>;
-  def CGR  : CompareRRE<"cg",  0xB920, z_scmp,    GR64, GR64>;
+  def CR   : CompareRR <"cr",   0x19,   z_scmp,    GR32, GR32>;
+  def CGFR : CompareRRE<"cgfr", 0xB930, null_frag, GR64, GR32>;
+  def CGR  : CompareRRE<"cgr",  0xB920, z_scmp,    GR64, GR64>;
 
   // Comparison with a signed 16-bit immediate.
   def CHI  : CompareRI<"chi",  0xA7E, z_scmp, GR32, imm32sx16>;
@@ -1215,9 +1215,9 @@ defm : SXB<z_scmp, GR64, CGFR>;
 // Unsigned comparisons.
 let Defs = [CC], CCValues = 0xE, IsLogical = 1 in {
   // Comparison with a register.
-  def CLR   : CompareRR <"cl",   0x15,   z_ucmp,    GR32, GR32>;
-  def CLGFR : CompareRRE<"clgf", 0xB931, null_frag, GR64, GR32>;
-  def CLGR  : CompareRRE<"clg",  0xB921, z_ucmp,    GR64, GR64>;
+  def CLR   : CompareRR <"clr",   0x15,   z_ucmp,    GR32, GR32>;
+  def CLGFR : CompareRRE<"clgfr", 0xB931, null_frag, GR64, GR32>;
+  def CLGR  : CompareRRE<"clgr",  0xB921, z_ucmp,    GR64, GR64>;
 
   // Comparison with an unsigned 32-bit immediate.  CLFIMux expands to CLFI
   // or CLIH, depending on the choice of register.
@@ -1495,9 +1495,9 @@ let Predicates = [FeatureTransactionalExecution] in {
 //===----------------------------------------------------------------------===//
 
 let Predicates = [FeatureProcessorAssist] in {
-  let hasSideEffects = 1, R4 = 0 in
-    def PPA : InstRRF<0xB2E8, (outs), (ins GR64:$R1, GR64:$R2, imm32zx4:$R3),
-                      "ppa\t$R1, $R2, $R3", []>;
+  let hasSideEffects = 1 in
+    def PPA : InstRRFc<0xB2E8, (outs), (ins GR64:$R1, GR64:$R2, imm32zx4:$M3),
+                       "ppa\t$R1, $R2, $M3", []>;
   def : Pat<(int_s390_ppa_txassist GR32:$src),
             (PPA (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR32:$src, subreg_l32),
                  0, 1)>;
@@ -1523,7 +1523,7 @@ def EAR : InstRRE<0xB24F, (outs GR32:$R1), (ins access_reg:$R2),
 // and the second giving a copy of the source with the leftmost one bit
 // cleared.  We only use the first result here.
 let Defs = [CC] in {
-  def FLOGR : UnaryRRE<"flog", 0xB983, null_frag, GR128, GR64>;
+  def FLOGR : UnaryRRE<"flogr", 0xB983, null_frag, GR128, GR64>;
 }
 def : Pat<(ctlz GR64:$src),
           (EXTRACT_SUBREG (FLOGR GR64:$src), subreg_h64)>;
@@ -1630,8 +1630,8 @@ let isCodeGenOnly = 1 in {
                                  ".insn rre,$enc,$R1,$R2", []>;
   def InsnRRF : DirectiveInsnRRF<(outs),
                                  (ins imm64zx32:$enc, AnyReg:$R1, AnyReg:$R2,
-                                      AnyReg:$R3, imm32zx4:$R4),
-                                 ".insn rrf,$enc,$R1,$R2,$R3,$R4", []>;
+                                      AnyReg:$R3, imm32zx4:$M4),
+                                 ".insn rrf,$enc,$R1,$R2,$R3,$M4", []>;
   def InsnRRS : DirectiveInsnRRS<(outs),
                                  (ins imm64zx48:$enc, AnyReg:$R1,
                                       AnyReg:$R2, imm32zx4:$M3,
