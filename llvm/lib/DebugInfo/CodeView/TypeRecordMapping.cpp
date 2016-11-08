@@ -50,15 +50,15 @@ static Error mapNameAndUniqueName(CodeViewRecordIO &IO, StringRef &Name,
     // Try to be smart about what we write here.  We can't write anything too
     // large, so if we're going to go over the limit, truncate both the name
     // and unique name by the same amount.
-    uint32_t BytesLeft = IO.maxFieldLength();
+    size_t BytesLeft = IO.maxFieldLength();
     if (HasUniqueName) {
-      uint32_t BytesNeeded = Name.size() + UniqueName.size() + 2;
+      size_t BytesNeeded = Name.size() + UniqueName.size() + 2;
       StringRef N = Name;
       StringRef U = UniqueName;
       if (BytesNeeded > BytesLeft) {
-        uint32_t BytesToDrop = (BytesNeeded - BytesLeft);
-        uint32_t DropN = std::min(N.size(), BytesToDrop / 2);
-        uint32_t DropU = std::min(U.size(), BytesToDrop - DropN);
+        size_t BytesToDrop = (BytesNeeded - BytesLeft);
+        size_t DropN = std::min(N.size(), BytesToDrop / 2);
+        size_t DropU = std::min(U.size(), BytesToDrop - DropN);
 
         N = N.drop_back(DropN);
         U = U.drop_back(DropU);
@@ -67,10 +67,10 @@ static Error mapNameAndUniqueName(CodeViewRecordIO &IO, StringRef &Name,
       error(IO.mapStringZ(N));
       error(IO.mapStringZ(U));
     } else {
-      uint32_t BytesNeeded = Name.size() + 1;
+      size_t BytesNeeded = Name.size() + 1;
       StringRef N = Name;
       if (BytesNeeded > BytesLeft) {
-        uint32_t BytesToDrop = std::min(N.size(), BytesToDrop);
+        size_t BytesToDrop = std::min(N.size(), BytesToDrop);
         N = N.drop_back(BytesToDrop);
       }
       error(IO.mapStringZ(N));
