@@ -233,7 +233,7 @@ protected:
   BitcodeReaderBase(MemoryBuffer *Buffer) : Buffer(Buffer) {}
 
   std::unique_ptr<MemoryBuffer> Buffer;
-  std::unique_ptr<BitstreamReader> StreamFile;
+  BitstreamBlockInfo BlockInfo;
   BitstreamCursor Stream;
 
   std::error_code initStream();
@@ -256,8 +256,8 @@ std::error_code BitcodeReaderBase::initStream() {
     if (SkipBitcodeWrapperHeader(BufPtr, BufEnd, true))
       return error("Invalid bitcode wrapper header");
 
-  StreamFile.reset(new BitstreamReader(ArrayRef<uint8_t>(BufPtr, BufEnd)));
-  Stream.init(&*StreamFile);
+  Stream = BitstreamCursor(ArrayRef<uint8_t>(BufPtr, BufEnd));
+  Stream.setBlockInfo(&BlockInfo);
 
   return std::error_code();
 }
@@ -2211,8 +2211,7 @@ std::error_code BitcodeReader::parseMetadataStrings(ArrayRef<uint64_t> Record,
     return error("Invalid record: metadata strings corrupt offset");
 
   StringRef Lengths = Blob.slice(0, StringsOffset);
-  SimpleBitstreamCursor R(*StreamFile);
-  R.jumpToPointer(Lengths.begin());
+  SimpleBitstreamCursor R(Lengths);
 
   StringRef Strings = Blob.drop_front(StringsOffset);
   do {
@@ -3759,9 +3758,12 @@ std::error_code BitcodeReader::parseBitcodeVersion() {
   }
 }
 
-
 bool BitcodeReaderBase::readBlockInfo() {
-  return Stream.ReadBlockInfoBlock();
+  Optional<BitstreamBlockInfo> NewBlockInfo = Stream.ReadBlockInfoBlock();
+  if (!NewBlockInfo)
+    return true;
+  BlockInfo = std::move(*NewBlockInfo);
+  return false;
 }
 
 std::error_code BitcodeReader::parseModule(uint64_t ResumeBit,
