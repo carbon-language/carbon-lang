@@ -118,8 +118,7 @@ StringRef elf::getOutputSectionName(StringRef Name) {
 }
 
 template <class ELFT> void elf::reportDiscarded(InputSectionBase<ELFT> *IS) {
-  if (!Config->PrintGcSections || !IS || IS == &InputSection<ELFT>::Discarded ||
-      IS->Live)
+  if (!Config->PrintGcSections)
     return;
   errs() << "removing unused section from '" << IS->Name << "' in file '"
          << IS->getFile()->getName() << "'\n";
@@ -512,10 +511,6 @@ static bool compareSections(const OutputSectionBase<ELFT> *A,
   return compareSectionsNonScript(A, B);
 }
 
-template <class ELFT> static bool isDiscarded(InputSectionBase<ELFT> *S) {
-  return !S || S == &InputSection<ELFT>::Discarded || !S->Live;
-}
-
 // Program header entry
 template <class ELFT>
 PhdrEntry<ELFT>::PhdrEntry(unsigned Type, unsigned Flags) {
@@ -653,7 +648,7 @@ void Writer<ELFT>::forEachRelSec(
     std::function<void(InputSectionBase<ELFT> &, const typename ELFT::Shdr &)>
         Fn) {
   for (InputSectionBase<ELFT> *IS : Symtab<ELFT>::X->Sections) {
-    if (isDiscarded(IS))
+    if (!IS->Live)
       continue;
     // Scan all relocations. Each relocation goes through a series
     // of tests to determine if it needs special treatment, such as
@@ -675,7 +670,7 @@ void Writer<ELFT>::forEachRelSec(
 
 template <class ELFT>
 void Writer<ELFT>::addInputSec(InputSectionBase<ELFT> *IS) {
-  if (isDiscarded(IS)) {
+  if (!IS->Live) {
     reportDiscarded(IS);
     return;
   }
