@@ -597,20 +597,21 @@ void CommentASTToXMLConverter::formatTextOfDeclaration(
 
   // Formatter specific code.
   // Form a unique in memory buffer name.
-  SmallString<128> filename;
-  filename += "xmldecl";
-  filename += llvm::utostr(FormatInMemoryUniqueId);
-  filename += ".xd";
-  FileID ID = FormatRewriterContext.createInMemoryFile(filename, StringDecl);
-  SourceLocation Start = FormatRewriterContext.Sources.getLocForStartOfFile(ID)
-      .getLocWithOffset(0);
+  SmallString<128> Filename;
+  Filename += "xmldecl";
+  Filename += llvm::utostr(FormatInMemoryUniqueId);
+  Filename += ".xd";
+  unsigned Offset = 0;
   unsigned Length = Declaration.size();
 
-  tooling::Replacements Replace = reformat(
-      format::getLLVMStyle(), FormatRewriterContext.Sources, ID,
-      CharSourceRange::getCharRange(Start, Start.getLocWithOffset(Length)));
-  applyAllReplacements(Replace, FormatRewriterContext.Rewrite);
-  Declaration = FormatRewriterContext.getRewrittenText(ID);
+  bool IncompleteFormat = false;
+  tooling::Replacements Replaces =
+      reformat(format::getLLVMStyle(), StringDecl,
+               tooling::Range(Offset, Length), Filename, &IncompleteFormat);
+  auto FormattedStringDecl = applyAllReplacements(StringDecl, Replaces);
+  if (static_cast<bool>(FormattedStringDecl)) {
+    Declaration = *FormattedStringDecl;
+  }
 }
 
 } // end unnamed namespace
@@ -1159,4 +1160,3 @@ void CommentToXMLConverter::convertCommentToXML(const FullComment *FC,
                                      FormatInMemoryUniqueId++);
   Converter.visit(FC);
 }
-
