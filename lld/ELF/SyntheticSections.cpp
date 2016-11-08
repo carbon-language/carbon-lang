@@ -82,11 +82,11 @@ static ArrayRef<uint8_t> createInterp() {
   return {(const uint8_t *)S.data(), S.size() + 1};
 }
 
-template <class ELFT>
-InterpSection<ELFT>::InterpSection()
-    : InputSection<ELFT>(SHF_ALLOC, SHT_PROGBITS, 1, createInterp(),
-                         ".interp") {
-  this->Live = true;
+template <class ELFT> InputSection<ELFT> *elf::createInterpSection() {
+  auto *Ret = make<InputSection<ELFT>>(SHF_ALLOC, SHT_PROGBITS, 1,
+                                       createInterp(), ".interp");
+  Ret->Live = true;
+  return Ret;
 }
 
 template <class ELFT>
@@ -193,10 +193,10 @@ template InputSection<ELF32BE> *elf::createCommonSection();
 template InputSection<ELF64LE> *elf::createCommonSection();
 template InputSection<ELF64BE> *elf::createCommonSection();
 
-template class elf::InterpSection<ELF32LE>;
-template class elf::InterpSection<ELF32BE>;
-template class elf::InterpSection<ELF64LE>;
-template class elf::InterpSection<ELF64BE>;
+template InputSection<ELF32LE> *elf::createInterpSection();
+template InputSection<ELF32BE> *elf::createInterpSection();
+template InputSection<ELF64LE> *elf::createInterpSection();
+template InputSection<ELF64BE> *elf::createInterpSection();
 
 template class elf::BuildIdSection<ELF32LE>;
 template class elf::BuildIdSection<ELF32BE>;

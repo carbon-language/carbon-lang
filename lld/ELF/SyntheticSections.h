@@ -15,12 +15,6 @@
 namespace lld {
 namespace elf {
 
-// .interp section.
-template <class ELFT> class InterpSection final : public InputSection<ELFT> {
-public:
-  InterpSection();
-};
-
 // .note.gnu.build-id section.
 template <class ELFT> class BuildIdSection : public InputSection<ELFT> {
 public:
@@ -73,17 +67,18 @@ public:
 };
 
 template <class ELFT> InputSection<ELFT> *createCommonSection();
+template <class ELFT> InputSection<ELFT> *createInterpSection();
 
 // Linker generated sections which can be used as inputs.
 template <class ELFT> struct In {
   static BuildIdSection<ELFT> *BuildId;
   static InputSection<ELFT> *Common;
-  static InterpSection<ELFT> *Interp;
+  static InputSection<ELFT> *Interp;
 };
 
 template <class ELFT> BuildIdSection<ELFT> *In<ELFT>::BuildId;
 template <class ELFT> InputSection<ELFT> *In<ELFT>::Common;
-template <class ELFT> InterpSection<ELFT> *In<ELFT>::Interp;
+template <class ELFT> InputSection<ELFT> *In<ELFT>::Interp;
 
 } // namespace elf
 } // namespace lld

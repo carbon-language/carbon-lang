@@ -228,7 +228,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   Out<ELFT>::ProgramHeaders->updateAlignment(sizeof(uintX_t));
 
   if (needsInterpSection<ELFT>()) {
-    In<ELFT>::Interp = make<InterpSection<ELFT>>();
+    In<ELFT>::Interp = createInterpSection<ELFT>();
     Symtab<ELFT>::X->Sections.push_back(In<ELFT>::Interp);
   } else {
     In<ELFT>::Interp = nullptr;
