@@ -365,7 +365,7 @@ Symbol *SymbolTable<ELFT>::addCommon(StringRef N, uint64_t Size,
   return S;
 }
 
-static void reportDuplicate(const std::string &Msg) {
+static void print(const Twine &Msg) {
   if (Config->AllowMultipleDefinition)
     warn(Msg);
   else
@@ -373,7 +373,7 @@ static void reportDuplicate(const std::string &Msg) {
 }
 
 static void reportDuplicate(SymbolBody *Existing, InputFile *NewFile) {
-  reportDuplicate("duplicate symbol " + conflictMsg(Existing, NewFile));
+  print("duplicate symbol " + conflictMsg(Existing, NewFile));
 }
 
 template <class ELFT>
@@ -389,9 +389,9 @@ static void reportDuplicate(SymbolBody *Existing,
   std::string OldLoc = getLocation(Existing, *D->Section, D->Value);
   std::string NewLoc = getLocation(nullptr, *ErrSec, ErrOffset);
 
-  reportDuplicate(NewLoc + ": duplicate symbol '" +
-                  maybeDemangle(Existing->getName()) + "'");
-  reportDuplicate(OldLoc + ": previous definition was here");
+  print(NewLoc + ": duplicate symbol '" + maybeDemangle(Existing->getName()) +
+        "'");
+  print(OldLoc + ": previous definition was here");
 }
 
 template <typename ELFT>
