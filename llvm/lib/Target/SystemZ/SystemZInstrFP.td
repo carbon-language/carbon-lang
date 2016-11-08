@@ -27,9 +27,9 @@ defm CondStoreF64 : CondStores<FP64, nonvolatile_store,
 
 // Load zero.
 let hasSideEffects = 0, isAsCheapAsAMove = 1, isMoveImm = 1 in {
-  def LZER : InherentRRE<"lzer", 0xB374, FP32,  (fpimm0)>;
-  def LZDR : InherentRRE<"lzdr", 0xB375, FP64,  (fpimm0)>;
-  def LZXR : InherentRRE<"lzxr", 0xB376, FP128, (fpimm0)>;
+  def LZER : InherentRRE<"lzer", 0xB374, FP32,  fpimm0>;
+  def LZDR : InherentRRE<"lzdr", 0xB375, FP64,  fpimm0>;
+  def LZXR : InherentRRE<"lzxr", 0xB376, FP128, fpimm0>;
 }
 
 // Moves between two floating-point registers.

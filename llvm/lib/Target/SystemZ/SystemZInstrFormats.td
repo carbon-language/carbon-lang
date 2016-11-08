@@ -1488,6 +1488,12 @@ class ICV<string name>
 //   Inherent:
 //     One register output operand and no input operands.
 //
+//   StoreInherent:
+//     One address operand.  The instruction stores to the address.
+//
+//   SideEffectInherent:
+//     No input or output operands, but causes some side effect.
+//
 //   Branch:
 //     One branch target.  The instruction branches to the target.
 //
@@ -1528,6 +1534,9 @@ class ICV<string name>
 //     doesn't write more than the number of bytes specified by the
 //     length operand.
 //
+//   LoadAddress:
+//     One register output operand and one address operand.
+//
 //   Unary:
 //     One register output operand and one input operand.
 //
@@ -1535,12 +1544,18 @@ class ICV<string name>
 //     One address operand and one other input operand.  The instruction
 //     stores to the address.
 //
+//   SideEffectUnary:
+//     One input operand.  No output operands, but causes some side effect.
+//
 //   Binary:
 //     One register output operand and two input operands.
 //
 //   StoreBinary:
 //     One address operand and two other input operands.  The instruction
 //     stores to the address.
+//
+//   SideEffectBinary:
+//     Two input operands.  No output operands, but causes some side effect.
 //
 //   Compare:
 //     Two input operands and an implicit CC output operand.
@@ -1551,6 +1566,9 @@ class ICV<string name>
 //
 //   Ternary:
 //     One register output operand and three input operands.
+//
+//   SideEffectTernary:
+//     Three input operands.  No output operands, but causes some side effect.
 //
 //   Quaternary:
 //     One register output operand and four input operands.
@@ -1582,10 +1600,10 @@ class ICV<string name>
 //===----------------------------------------------------------------------===//
 
 class InherentRRE<string mnemonic, bits<16> opcode, RegisterOperand cls,
-                  dag src>
+                  SDPatternOperator operator>
   : InstRRE<opcode, (outs cls:$R1), (ins),
             mnemonic#"\t$R1",
-            [(set cls:$R1, src)]> {
+            [(set cls:$R1, (operator))]> {
   let R2 = 0;
 }
 
@@ -1593,6 +1611,24 @@ class InherentVRIa<string mnemonic, bits<16> opcode, bits<16> value>
   : InstVRIa<opcode, (outs VR128:$V1), (ins), mnemonic#"\t$V1", []> {
   let I2 = value;
   let M3 = 0;
+}
+
+class StoreInherentS<string mnemonic, bits<16> opcode>
+  : InstS<opcode, (outs), (ins bdaddr12only:$BD2),
+          mnemonic#"\t$BD2", []> {
+  let mayStore = 1;
+}
+
+class SideEffectInherentE<string mnemonic, bits<16>opcode>
+  : InstE<opcode, (outs), (ins), mnemonic, []> {
+  let hasSideEffects = 1;
+}
+
+class SideEffectInherentS<string mnemonic, bits<16> opcode,
+                          SDPatternOperator operator>
+  : InstS<opcode, (outs), (ins), mnemonic, [(operator)]> {
+  let hasSideEffects = 1;
+  let BD2 = 0;
 }
 
 // Allow an optional TLS marker symbol to generate TLS call relocations.
@@ -2027,6 +2063,12 @@ multiclass StoreSIPair<string mnemonic, bits<8> siOpcode, bits<16> siyOpcode,
   }
 }
 
+class StoreSSE<string mnemonic, bits<16> opcode>
+  : InstSSE<opcode, (outs), (ins bdaddr12only:$BD1, bdaddr12only:$BD2),
+            mnemonic#"\t$BD1, $BD2", []> {
+  let mayStore = 1;
+}
+
 class CondStoreRSY<string mnemonic, bits<16> opcode,
                    RegisterOperand cls, bits<5> bytes,
                    AddressingMode mode = bdaddr20only>
@@ -2067,6 +2109,47 @@ multiclass CondStoreRSYPair<string mnemonic, bits<16> opcode,
     def "" : CondStoreRSY<mnemonic, opcode, cls, bytes, mode>;
   def Asm : AsmCondStoreRSY<mnemonic, opcode, cls, bytes, mode>;
 }
+
+class SideEffectUnaryI<string mnemonic, bits<8> opcode, Immediate imm>
+  : InstI<opcode, (outs), (ins imm:$I1),
+          mnemonic#"\t$I1", []> {
+  let hasSideEffects = 1;
+}
+
+class SideEffectUnaryS<string mnemonic, bits<16> opcode,
+                       SDPatternOperator operator>
+  : InstS<opcode, (outs), (ins bdaddr12only:$BD2),
+          mnemonic#"\t$BD2", [(operator bdaddr12only:$BD2)]> {
+  let hasSideEffects = 1;
+}
+
+class LoadAddressRX<string mnemonic, bits<8> opcode,
+                    SDPatternOperator operator, AddressingMode mode>
+  : InstRXa<opcode, (outs GR64:$R1), (ins mode:$XBD2),
+            mnemonic#"\t$R1, $XBD2",
+            [(set GR64:$R1, (operator mode:$XBD2))]>;
+
+class LoadAddressRXY<string mnemonic, bits<16> opcode,
+                     SDPatternOperator operator, AddressingMode mode>
+  : InstRXYa<opcode, (outs GR64:$R1), (ins mode:$XBD2),
+             mnemonic#"\t$R1, $XBD2",
+             [(set GR64:$R1, (operator mode:$XBD2))]>;
+
+multiclass LoadAddressRXPair<string mnemonic, bits<8> rxOpcode,
+                             bits<16> rxyOpcode, SDPatternOperator operator> {
+  let DispKey = mnemonic in {
+    let DispSize = "12" in
+      def "" : LoadAddressRX<mnemonic, rxOpcode, operator, laaddr12pair>;
+    let DispSize = "20" in
+      def Y  : LoadAddressRXY<mnemonic#"y", rxyOpcode, operator, laaddr20pair>;
+  }
+}
+
+class LoadAddressRIL<string mnemonic, bits<12> opcode,
+                     SDPatternOperator operator>
+  : InstRILb<opcode, (outs GR64:$R1), (ins pcrel32:$RI2),
+             mnemonic#"\t$R1, $RI2",
+             [(set GR64:$R1, (operator pcrel32:$RI2))]>;
 
 class UnaryRR<string mnemonic, bits<8> opcode, SDPatternOperator operator,
               RegisterOperand cls1, RegisterOperand cls2>
@@ -2365,6 +2448,31 @@ class UnaryVRXGeneric<string mnemonic, bits<16> opcode>
   : InstVRX<opcode, (outs VR128:$V1), (ins bdxaddr12only:$XBD2, imm32zx4:$M3),
             mnemonic#"\t$V1, $XBD2, $M3", []> {
   let mayLoad = 1;
+}
+
+class SideEffectBinaryRX<string mnemonic, bits<8> opcode,
+                         RegisterOperand cls>
+  : InstRXa<opcode, (outs), (ins cls:$R1, bdxaddr12only:$XBD2),
+            mnemonic##"\t$R1, $XBD2", []> {
+  let hasSideEffects = 1;
+}
+
+class SideEffectBinaryRILPC<string mnemonic, bits<12> opcode,
+                            RegisterOperand cls>
+  : InstRILb<opcode, (outs), (ins cls:$R1, pcrel32:$RI2),
+             mnemonic##"\t$R1, $RI2", []> {
+  let hasSideEffects = 1;
+  // We want PC-relative addresses to be tried ahead of BD and BDX addresses.
+  // However, BDXs have two extra operands and are therefore 6 units more
+  // complex.
+  let AddedComplexity = 7;
+}
+
+class SideEffectBinarySIL<string mnemonic, bits<16> opcode,
+                          SDPatternOperator operator, Immediate imm>
+  : InstSIL<opcode, (outs), (ins bdaddr12only:$BD1, imm:$I2),
+            mnemonic#"\t$BD1, $I2", [(operator bdaddr12only:$BD1, imm:$I2)]> {
+  let hasSideEffects = 1;
 }
 
 class BinaryRR<string mnemonic, bits<8> opcode, SDPatternOperator operator,
@@ -2821,6 +2929,12 @@ class StoreBinaryVRX<string mnemonic, bits<16> opcode,
   let AccessBytes = bytes;
 }
 
+class MemoryBinarySSd<string mnemonic, bits<8> opcode,
+                      RegisterOperand cls>
+  : InstSSd<opcode, (outs),
+            (ins bdraddr12only:$RBD1, bdaddr12only:$BD2, cls:$R3),
+            mnemonic#"\t$RBD1, $BD2, $R3", []>;
+
 class CompareRR<string mnemonic, bits<8> opcode, SDPatternOperator operator,
                 RegisterOperand cls1, RegisterOperand cls2>
   : InstRR<opcode, (outs), (ins cls1:$R1, cls2:$R2),
@@ -2996,6 +3110,22 @@ class TestRXE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
             mnemonic#"\t$R1, $XBD2",
             [(operator cls:$R1, bdxaddr12only:$XBD2)]> {
   let M3 = 0;
+}
+
+class SideEffectTernaryRRFc<string mnemonic, bits<16> opcode,
+                            RegisterOperand cls1, RegisterOperand cls2,
+                            Immediate imm>
+  : InstRRFc<opcode, (outs), (ins cls1:$R1, cls2:$R2, imm:$M3),
+             mnemonic#"\t$R1, $R2, $M3", []> {
+  let hasSideEffects = 1;
+}
+
+class SideEffectTernarySSF<string mnemonic, bits<12> opcode,
+                           RegisterOperand cls>
+  : InstSSF<opcode, (outs),
+            (ins bdaddr12only:$BD1, bdaddr12only:$BD2, cls:$R3),
+            mnemonic#"\t$BD1, $BD2, $R3", []> {
+  let hasSideEffects = 1;
 }
 
 class TernaryRRFe<string mnemonic, bits<16> opcode, RegisterOperand cls1,
@@ -3400,6 +3530,13 @@ class Pseudo<dag outs, dag ins, list<dag> pattern>
   : InstSystemZ<0, outs, ins, "", pattern> {
   let isPseudo = 1;
   let isCodeGenOnly = 1;
+}
+
+// Like SideEffectBinarySIL, but expanded later.
+class SideEffectBinarySILPseudo<SDPatternOperator operator, Immediate imm>
+  : Pseudo<(outs), (ins bdaddr12only:$BD1, imm:$I2),
+           [(operator bdaddr12only:$BD1, imm:$I2)]> {
+  let hasSideEffects = 1;
 }
 
 // Like UnaryRI, but expanded after RA depending on the choice of register.

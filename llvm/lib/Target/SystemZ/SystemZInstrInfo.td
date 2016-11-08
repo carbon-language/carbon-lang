@@ -647,26 +647,14 @@ def STRVG : StoreRXY<"strvg", 0xE32F, z_strvg, GR64, 8>;
 //===----------------------------------------------------------------------===//
 
 // Load BDX-style addresses.
-let hasSideEffects = 0, isAsCheapAsAMove = 1, isReMaterializable = 1,
-    DispKey = "la" in {
-  let DispSize = "12" in
-    def LA : InstRXa<0x41, (outs GR64:$R1), (ins laaddr12pair:$XBD2),
-                     "la\t$R1, $XBD2",
-                     [(set GR64:$R1, laaddr12pair:$XBD2)]>;
-  let DispSize = "20" in
-    def LAY : InstRXYa<0xE371, (outs GR64:$R1), (ins laaddr20pair:$XBD2),
-                       "lay\t$R1, $XBD2",
-                       [(set GR64:$R1, laaddr20pair:$XBD2)]>;
-}
+let hasSideEffects = 0, isAsCheapAsAMove = 1, isReMaterializable = 1 in
+  defm LA : LoadAddressRXPair<"la", 0x41, 0xE371, bitconvert>;
 
 // Load a PC-relative address.  There's no version of this instruction
 // with a 16-bit offset, so there's no relaxation.
 let hasSideEffects = 0, isAsCheapAsAMove = 1, isMoveImm = 1,
-    isReMaterializable = 1 in {
-  def LARL : InstRILb<0xC00, (outs GR64:$R1), (ins pcrel32:$RI2),
-                      "larl\t$R1, $RI2",
-                      [(set GR64:$R1, pcrel32:$RI2)]>;
-}
+    isReMaterializable = 1 in
+  def LARL : LoadAddressRIL<"larl", 0xC00, bitconvert>;
 
 // Load the Global Offset Table address.  This will be lowered into a
 //     larl $R1, _GLOBAL_OFFSET_TABLE_
@@ -1455,31 +1443,21 @@ let Defs = [CC] in {
 
 let Predicates = [FeatureTransactionalExecution] in {
   // Transaction Begin
-  let hasSideEffects = 1, mayStore = 1,
-      usesCustomInserter = 1, Defs = [CC] in {
-    def TBEGIN : InstSIL<0xE560,
-                         (outs), (ins bdaddr12only:$BD1, imm32zx16:$I2),
-                         "tbegin\t$BD1, $I2",
-                         [(z_tbegin bdaddr12only:$BD1, imm32zx16:$I2)]>;
-    def TBEGIN_nofloat : Pseudo<(outs), (ins bdaddr12only:$BD1, imm32zx16:$I2),
-                                [(z_tbegin_nofloat bdaddr12only:$BD1,
-                                                   imm32zx16:$I2)]>;
-    def TBEGINC : InstSIL<0xE561,
-                          (outs), (ins bdaddr12only:$BD1, imm32zx16:$I2),
-                          "tbeginc\t$BD1, $I2",
-                          [(int_s390_tbeginc bdaddr12only:$BD1,
-                                             imm32zx16:$I2)]>;
+  let mayStore = 1, usesCustomInserter = 1, Defs = [CC] in {
+    def TBEGIN : SideEffectBinarySIL<"tbegin", 0xE560, z_tbegin, imm32zx16>;
+    def TBEGIN_nofloat : SideEffectBinarySILPseudo<z_tbegin_nofloat, imm32zx16>;
+
+    def TBEGINC : SideEffectBinarySIL<"tbeginc", 0xE561,
+                                      int_s390_tbeginc, imm32zx16>;
   }
 
   // Transaction End
-  let hasSideEffects = 1, Defs = [CC], BD2 = 0 in
-    def TEND : InstS<0xB2F8, (outs), (ins), "tend", [(z_tend)]>;
+  let Defs = [CC] in
+    def TEND : SideEffectInherentS<"tend", 0xB2F8, z_tend>;
 
   // Transaction Abort
-  let hasSideEffects = 1, isTerminator = 1, isBarrier = 1 in
-    def TABORT : InstS<0xB2FC, (outs), (ins bdaddr12only:$BD2),
-                       "tabort\t$BD2",
-                       [(int_s390_tabort bdaddr12only:$BD2)]>;
+  let isTerminator = 1, isBarrier = 1 in
+    def TABORT : SideEffectUnaryS<"tabort", 0xB2FC, int_s390_tabort>;
 
   // Nontransactional Store
   let hasSideEffects = 1 in
@@ -1487,7 +1465,7 @@ let Predicates = [FeatureTransactionalExecution] in {
 
   // Extract Transaction Nesting Depth
   let hasSideEffects = 1 in
-    def ETND : InherentRRE<"etnd", 0xB2EC, GR32, (int_s390_etnd)>;
+    def ETND : InherentRRE<"etnd", 0xB2EC, GR32, int_s390_etnd>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1495,9 +1473,7 @@ let Predicates = [FeatureTransactionalExecution] in {
 //===----------------------------------------------------------------------===//
 
 let Predicates = [FeatureProcessorAssist] in {
-  let hasSideEffects = 1 in
-    def PPA : InstRRFc<0xB2E8, (outs), (ins GR64:$R1, GR64:$R2, imm32zx4:$M3),
-                       "ppa\t$R1, $R2, $M3", []>;
+  def PPA : SideEffectTernaryRRFc<"ppa", 0xB2E8, GR64, GR64, imm32zx4>;
   def : Pat<(int_s390_ppa_txassist GR32:$src),
             (PPA (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR32:$src, subreg_l32),
                  0, 1)>;
@@ -1509,7 +1485,7 @@ let Predicates = [FeatureProcessorAssist] in {
 
 // Extract CC into bits 29 and 28 of a register.
 let Uses = [CC] in
-  def IPM : InherentRRE<"ipm", 0xB222, GR32, (z_ipm)>;
+  def IPM : InherentRRE<"ipm", 0xB222, GR32, z_ipm>;
 
 // Read a 32-bit access register into a GR32.  As with all GR32 operations,
 // the upper 32 bits of the enclosing GR64 remain unchanged, which is useful
@@ -1522,18 +1498,14 @@ def EAR : InstRRE<0xB24F, (outs GR32:$R1), (ins access_reg:$R2),
 // returns a pair of GR64s, the first giving the number of leading zeros
 // and the second giving a copy of the source with the leftmost one bit
 // cleared.  We only use the first result here.
-let Defs = [CC] in {
+let Defs = [CC] in
   def FLOGR : UnaryRRE<"flogr", 0xB983, null_frag, GR128, GR64>;
-}
 def : Pat<(ctlz GR64:$src),
           (EXTRACT_SUBREG (FLOGR GR64:$src), subreg_h64)>;
 
 // Population count.  Counts bits set per byte.
-let Predicates = [FeaturePopulationCount], Defs = [CC] in {
-  def POPCNT : InstRRE<0xB9E1, (outs GR64:$R1), (ins GR64:$R2),
-                       "popcnt\t$R1, $R2",
-                       [(set GR64:$R1, (z_popcnt GR64:$R2))]>;
-}
+let Predicates = [FeaturePopulationCount], Defs = [CC] in
+  def POPCNT : UnaryRRE<"popcnt", 0xB9E1, z_popcnt, GR64, GR64>;
 
 // Use subregs to populate the "don't care" bits in a 32-bit to 64-bit anyext.
 def : Pat<(i64 (anyext GR32:$src)),
@@ -1550,54 +1522,39 @@ let usesCustomInserter = 1 in {
 let mayLoad = 1, Defs = [CC] in
   defm SRST : StringRRE<"srst", 0xb25e, z_search_string>;
 
-// Other instructions for inline assembly
-let hasSideEffects = 1, Defs = [CC], isCall = 1 in
-  def SVC : InstI<0x0A, (outs), (ins imm32zx8:$I1),
-                  "svc\t$I1",
-                  []>;
-let hasSideEffects = 1, Defs = [CC], mayStore = 1 in
-  def STCK : InstS<0xB205, (outs), (ins bdaddr12only:$BD2),
-                       "stck\t$BD2",
-                       []>;
-let hasSideEffects = 1, Defs = [CC], mayStore = 1 in
-  def STCKF : InstS<0xB27C, (outs), (ins bdaddr12only:$BD2),
-                       "stckf\t$BD2",
-                       []>;
-let hasSideEffects = 1, Defs = [CC], mayStore = 1 in
-  def STCKE : InstS<0xB278, (outs), (ins bdaddr12only:$BD2),
-                       "stcke\t$BD2",
-                       []>;
-let hasSideEffects = 1, Defs = [CC], mayStore = 1 in
-  def STFLE : InstS<0xB2B0, (outs), (ins bdaddr12only:$BD2),
-                       "stfle\t$BD2",
-                       []>;
+// Supervisor call.
+let isCall = 1, Defs = [CC] in
+  def SVC : SideEffectUnaryI<"svc", 0x0A, imm32zx8>;
 
-let hasSideEffects = 1 in {
-  def EX   : InstRXa<0x44, (outs), (ins GR64:$R1, bdxaddr12only:$XBD2),
-                  "ex\t$R1, $XBD2", []>;
-  def EXRL : InstRILb<0xC60, (outs), (ins GR64:$R1, pcrel32:$RI2),
-                      "exrl\t$R1, $RI2", []>;
+// Store clock.
+let hasSideEffects = 1, Defs = [CC] in {
+  def STCK  : StoreInherentS<"stck",  0xB205>;
+  def STCKF : StoreInherentS<"stckf", 0xB27C>;
+  def STCKE : StoreInherentS<"stcke", 0xB278>;
 }
 
-let Defs = [CC] in {
-  let hasSideEffects = 1 in
-    def PR : InstE<0x0101, (outs), (ins), "pr", []>;
+// Store facility list.
+let hasSideEffects = 1, Defs = [CC] in
+  def STFLE : StoreInherentS<"stfle", 0xB2B0>;
 
-  let mayLoad = 1, mayStore = 1 in
-    def MVCK : InstSSd<0xD9, (outs),
-                             (ins bdraddr12only:$RBD1, bdaddr12only:$BD2,
-                                  GR64:$R3),
-                       "mvck\t$RBD1, $BD2, $R3", []>;
-}
-
-let mayStore = 1 in
-  def STRAG : InstSSE<0xE502, (outs), (ins bdaddr12only:$BD1, bdaddr12only:$BD2),
-                      "strag\t$BD1, $BD2", []>;
-
+// Extract CPU time.
 let Defs = [R0D, R1D], mayLoad = 1 in
-  def ECTG : InstSSF<0xC81, (outs),
-                            (ins bdaddr12only:$BD1, bdaddr12only:$BD2, GR64:$R3),
-                     "ectg\t$BD1, $BD2, $R3", []>;
+  def ECTG : SideEffectTernarySSF<"ectg", 0xC81, GR64>;
+
+// Execute.
+def EX   : SideEffectBinaryRX<"ex", 0x44, GR64>;
+def EXRL : SideEffectBinaryRILPC<"exrl", 0xC60, GR64>;
+
+// Program return.
+let Defs = [CC] in
+  def PR : SideEffectInherentE<"pr", 0x0101>;
+
+// Move with key.
+let mayLoad = 1, mayStore = 1, Defs = [CC] in
+  def MVCK : MemoryBinarySSd<"mvck", 0xD9, GR64>;
+
+// Store real address.
+def STRAG : StoreSSE<"strag", 0xE502>;
 
 //===----------------------------------------------------------------------===//
 // .insn directive instructions
