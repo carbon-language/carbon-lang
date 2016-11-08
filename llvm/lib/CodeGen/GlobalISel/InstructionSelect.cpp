@@ -113,13 +113,19 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
 
       if (!ISel->select(MI)) {
         if (TPC.isGlobalISelAbortEnabled())
-          // FIXME: It would be nice to dump all inserted instructions.  It's
-          // not
-          // obvious how, esp. considering select() can insert after MI.
           reportSelectionError(MI, "Cannot select");
         Failed = true;
         break;
       }
+
+      // Dump the range of instructions that MI expanded into.
+      DEBUG({
+        auto InsertedBegin = ReachedBegin ? MBB->begin() : std::next(MII);
+        dbgs() << "Into:\n";
+        for (auto &InsertedMI : make_range(InsertedBegin, AfterIt))
+          dbgs() << "  " << InsertedMI;
+        dbgs() << '\n';
+      });
     }
   }
 
