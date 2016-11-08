@@ -89,11 +89,28 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
 
   bool Failed = false;
   for (MachineBasicBlock *MBB : post_order(&MF)) {
-    for (MachineBasicBlock::reverse_iterator MII = MBB->rbegin(),
-                                             End = MBB->rend();
-         MII != End;) {
-      MachineInstr &MI = *MII++;
-      DEBUG(dbgs() << "Selecting: " << MI << '\n');
+    if (MBB->empty())
+      continue;
+
+    // Select instructions in reverse block order. We permit erasing so have
+    // to resort to manually iterating and recognizing the begin (rend) case.
+    bool ReachedBegin = false;
+    for (auto MII = std::prev(MBB->end()), Begin = MBB->begin();
+         !ReachedBegin;) {
+      // Keep track of the insertion range for debug printing.
+      const auto AfterIt = std::next(MII);
+
+      // Select this instruction.
+      MachineInstr &MI = *MII;
+
+      // And have our iterator point to the next instruction, if there is one.
+      if (MII == Begin)
+        ReachedBegin = true;
+      else
+        --MII;
+
+      DEBUG(dbgs() << "Selecting: \n  " << MI);
+
       if (!ISel->select(MI)) {
         if (TPC.isGlobalISelAbortEnabled())
           // FIXME: It would be nice to dump all inserted instructions.  It's
