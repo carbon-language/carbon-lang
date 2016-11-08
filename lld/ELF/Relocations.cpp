@@ -539,8 +539,8 @@ static DefinedRegular<ELFT> *getSymbolAt(InputSectionBase<ELFT> *S,
 }
 
 template <class ELFT>
-static std::string getLocation(SymbolBody &Sym, InputSectionBase<ELFT> &S,
-                               typename ELFT::uint Offset) {
+std::string getLocation(SymbolBody *Sym, InputSectionBase<ELFT> &S,
+                        typename ELFT::uint Offset) {
   ObjectFile<ELFT> *File = S.getFile();
 
   // First check if we can get desired values from debugging information.
@@ -552,7 +552,7 @@ static std::string getLocation(SymbolBody &Sym, InputSectionBase<ELFT> &S,
   // use object file name.
   std::string SrcFile = File->SourceFile;
   if (SrcFile.empty())
-    SrcFile = Sym.File ? getFilename(Sym.File) : getFilename(File);
+    SrcFile = Sym && Sym->File ? getFilename(Sym->File) : getFilename(File);
 
   // Find a symbol at a given location.
   DefinedRegular<ELFT> *Encl = getSymbolAt(&S, Offset);
@@ -576,7 +576,7 @@ static void reportUndefined(SymbolBody &Sym, InputSectionBase<ELFT> &S,
       Config->UnresolvedSymbols != UnresolvedPolicy::NoUndef)
     return;
 
-  std::string Msg = getLocation(Sym, S, Offset) + ": undefined symbol '" +
+  std::string Msg = getLocation(&Sym, S, Offset) + ": undefined symbol '" +
                     maybeDemangle(Sym.getName()) + "'";
 
   if (Config->UnresolvedSymbols == UnresolvedPolicy::Warn)
@@ -853,5 +853,18 @@ template void createThunks<ELF64LE>(InputSectionBase<ELF64LE> &,
                                     const ELF64LE::Shdr &);
 template void createThunks<ELF64BE>(InputSectionBase<ELF64BE> &,
                                     const ELF64BE::Shdr &);
+
+template std::string getLocation<ELF32LE>(SymbolBody *Sym,
+                                          InputSectionBase<ELF32LE> &S,
+                                          uint32_t Offset);
+template std::string getLocation<ELF32BE>(SymbolBody *Sym,
+                                          InputSectionBase<ELF32BE> &S,
+                                          uint32_t Offset);
+template std::string getLocation<ELF64LE>(SymbolBody *Sym,
+                                          InputSectionBase<ELF64LE> &S,
+                                          uint64_t Offset);
+template std::string getLocation<ELF64BE>(SymbolBody *Sym,
+                                          InputSectionBase<ELF64BE> &S,
+                                          uint64_t Offset);
 }
 }
