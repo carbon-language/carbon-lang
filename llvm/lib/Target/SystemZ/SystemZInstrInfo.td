@@ -31,8 +31,243 @@ let hasSideEffects = 0 in {
 }
 
 //===----------------------------------------------------------------------===//
-// Control flow instructions
+// Branch instructions
 //===----------------------------------------------------------------------===//
+
+// Conditional branches.
+let isBranch = 1, isTerminator = 1, Uses = [CC] in {
+  // It's easier for LLVM to handle these branches in their raw BRC/BRCL form
+  // with the condition-code mask being the first operand.  It seems friendlier
+  // to use mnemonic forms like JE and JLH when writing out the assembly though.
+  let isCodeGenOnly = 1 in {
+    // An assembler extended mnemonic for BRC.
+    def BRC  : CondBranchRI <"j#",  0xA74, z_br_ccmask>;
+    // An assembler extended mnemonic for BRCL.  (The extension is "G"
+    // rather than "L" because "JL" is "Jump if Less".)
+    def BRCL : CondBranchRIL<"jg#", 0xC04>;
+    let isIndirectBranch = 1 in {
+      def BC  : CondBranchRX<"b#",  0x47>;
+      def BCR : CondBranchRR<"b#r", 0x07>;
+    }
+  }
+
+  // Allow using the raw forms directly from the assembler (and occasional
+  // special code generation needs) as well.
+  def BRCAsm  : AsmCondBranchRI <"brc",  0xA74>;
+  def BRCLAsm : AsmCondBranchRIL<"brcl", 0xC04>;
+  let isIndirectBranch = 1 in {
+    def BCAsm  : AsmCondBranchRX<"bc",  0x47>;
+    def BCRAsm : AsmCondBranchRR<"bcr", 0x07>;
+  }
+
+  // Define AsmParser extended mnemonics for each general condition-code mask
+  // (integer or floating-point)
+  foreach V = [ "E", "NE", "H", "NH", "L", "NL", "HE", "NHE", "LE", "NLE",
+                "Z", "NZ", "P", "NP", "M", "NM", "LH", "NLH", "O", "NO" ] in {
+    def JAsm#V  : FixedCondBranchRI <CV<V>, "j#",  0xA74>;
+    def JGAsm#V : FixedCondBranchRIL<CV<V>, "jg#", 0xC04>;
+    let isIndirectBranch = 1 in {
+      def BAsm#V  : FixedCondBranchRX <CV<V>, "b#",  0x47>;
+      def BRAsm#V : FixedCondBranchRR <CV<V>, "b#r", 0x07>;
+    }
+  }
+}
+
+// Unconditional branches.  These are in fact simply variants of the
+// conditional branches with the condition mask set to "always".
+let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
+  def J  : FixedCondBranchRI <CondAlways, "j",  0xA74, br>;
+  def JG : FixedCondBranchRIL<CondAlways, "jg", 0xC04>;
+  let isIndirectBranch = 1 in {
+    def B  : FixedCondBranchRX<CondAlways, "b",  0x47>;
+    def BR : FixedCondBranchRR<CondAlways, "br", 0x07, brind>;
+  }
+}
+
+// NOPs.  These are again variants of the conditional branches,
+// with the condition mask set to "never".
+def NOP  : InstAlias<"nop\t$XBD", (BCAsm 0, bdxaddr12only:$XBD), 0>;
+def NOPR : InstAlias<"nopr\t$R", (BCRAsm 0, GR64:$R), 0>;
+
+// Fused compare-and-branch instructions.
+//
+// These instructions do not use or clobber the condition codes.
+// We nevertheless pretend that the relative compare-and-branch
+// instructions clobber CC, so that we can lower them to separate
+// comparisons and BRCLs if the branch ends up being out of range.
+let isBranch = 1, isTerminator = 1 in {
+  // As for normal branches, we handle these instructions internally in
+  // their raw CRJ-like form, but use assembly macros like CRJE when writing
+  // them out.  Using the *Pair multiclasses, we also create the raw forms.
+  let Defs = [CC] in {
+    defm CRJ   : CmpBranchRIEbPair<"crj",   0xEC76, GR32>;
+    defm CGRJ  : CmpBranchRIEbPair<"cgrj",  0xEC64, GR64>;
+    defm CIJ   : CmpBranchRIEcPair<"cij",   0xEC7E, GR32, imm32sx8>;
+    defm CGIJ  : CmpBranchRIEcPair<"cgij",  0xEC7C, GR64, imm64sx8>;
+    defm CLRJ  : CmpBranchRIEbPair<"clrj",  0xEC77, GR32>;
+    defm CLGRJ : CmpBranchRIEbPair<"clgrj", 0xEC65, GR64>;
+    defm CLIJ  : CmpBranchRIEcPair<"clij",  0xEC7F, GR32, imm32zx8>;
+    defm CLGIJ : CmpBranchRIEcPair<"clgij", 0xEC7D, GR64, imm64zx8>;
+  }
+  let isIndirectBranch = 1 in {
+    defm CRB   : CmpBranchRRSPair<"crb",   0xECF6, GR32>;
+    defm CGRB  : CmpBranchRRSPair<"cgrb",  0xECE4, GR64>;
+    defm CIB   : CmpBranchRISPair<"cib",   0xECFE, GR32, imm32sx8>;
+    defm CGIB  : CmpBranchRISPair<"cgib",  0xECFC, GR64, imm64sx8>;
+    defm CLRB  : CmpBranchRRSPair<"clrb",  0xECF7, GR32>;
+    defm CLGRB : CmpBranchRRSPair<"clgrb", 0xECE5, GR64>;
+    defm CLIB  : CmpBranchRISPair<"clib",  0xECFF, GR32, imm32zx8>;
+    defm CLGIB : CmpBranchRISPair<"clgib", 0xECFD, GR64, imm64zx8>;
+  }
+
+  // Define AsmParser mnemonics for each integer condition-code mask.
+  foreach V = [ "E", "H", "L", "HE", "LE", "LH",
+                "NE", "NH", "NL", "NHE", "NLE", "NLH" ] in {
+    let Defs = [CC] in {
+      def CRJAsm#V   : FixedCmpBranchRIEb<ICV<V>, "crj",   0xEC76, GR32>;
+      def CGRJAsm#V  : FixedCmpBranchRIEb<ICV<V>, "cgrj",  0xEC64, GR64>;
+      def CIJAsm#V   : FixedCmpBranchRIEc<ICV<V>, "cij",   0xEC7E, GR32,
+                                          imm32sx8>;
+      def CGIJAsm#V  : FixedCmpBranchRIEc<ICV<V>, "cgij",  0xEC7C, GR64,
+                                          imm64sx8>;
+      def CLRJAsm#V  : FixedCmpBranchRIEb<ICV<V>, "clrj",  0xEC77, GR32>;
+      def CLGRJAsm#V : FixedCmpBranchRIEb<ICV<V>, "clgrj", 0xEC65, GR64>;
+      def CLIJAsm#V  : FixedCmpBranchRIEc<ICV<V>, "clij",  0xEC7F, GR32,
+                                          imm32zx8>;
+      def CLGIJAsm#V : FixedCmpBranchRIEc<ICV<V>, "clgij", 0xEC7D, GR64,
+                                          imm64zx8>;
+    }
+    let isIndirectBranch = 1 in {
+      def CRBAsm#V   : FixedCmpBranchRRS<ICV<V>, "crb",   0xECF6, GR32>;
+      def CGRBAsm#V  : FixedCmpBranchRRS<ICV<V>, "cgrb",  0xECE4, GR64>;
+      def CIBAsm#V   : FixedCmpBranchRIS<ICV<V>, "cib",   0xECFE, GR32,
+                                         imm32sx8>;
+      def CGIBAsm#V  : FixedCmpBranchRIS<ICV<V>, "cgib",  0xECFC, GR64,
+                                         imm64sx8>;
+      def CLRBAsm#V  : FixedCmpBranchRRS<ICV<V>, "clrb",  0xECF7, GR32>;
+      def CLGRBAsm#V : FixedCmpBranchRRS<ICV<V>, "clgrb", 0xECE5, GR64>;
+      def CLIBAsm#V  : FixedCmpBranchRIS<ICV<V>, "clib",  0xECFF, GR32,
+                                         imm32zx8>;
+      def CLGIBAsm#V : FixedCmpBranchRIS<ICV<V>, "clgib", 0xECFD, GR64,
+                                         imm64zx8>;
+    }
+  }
+}
+
+// Decrement a register and branch if it is nonzero.  These don't clobber CC,
+// but we might need to split long branches into sequences that do.
+let isBranch = 1, isTerminator = 1, Defs = [CC] in {
+  def BRCT  : BranchUnaryRI<"brct",  0xA76, GR32>;
+  def BRCTG : BranchUnaryRI<"brctg", 0xA77, GR64>;
+}
+
+let isBranch = 1, isTerminator = 1, Defs = [CC] in {
+  def BRXH  : BranchBinaryRSI<"brxh",  0x84, GR32>;
+  def BRXLE : BranchBinaryRSI<"brxle", 0x85, GR32>;
+}
+
+//===----------------------------------------------------------------------===//
+// Trap instructions
+//===----------------------------------------------------------------------===//
+
+// Unconditional trap.
+// FIXME: This trap instruction should be marked as isTerminator, but there is
+// currently a general bug that allows non-terminators to be placed between
+// terminators. Temporarily leave this unmarked until the bug is fixed.
+let isBarrier = 1, hasCtrlDep = 1 in
+  def Trap : Alias<4, (outs), (ins), [(trap)]>;
+
+// Conditional trap.
+let isTerminator = 1, hasCtrlDep = 1, Uses = [CC] in
+  def CondTrap : Alias<4, (outs), (ins cond4:$valid, cond4:$R1), []>;
+
+// Fused compare-and-trap instructions.
+let isTerminator = 1, hasCtrlDep = 1 in {
+  // These patterns work the same way as for compare-and-branch.
+  defm CRT   : CmpBranchRRFcPair<"crt",   0xB972, GR32>;
+  defm CGRT  : CmpBranchRRFcPair<"cgrt",  0xB960, GR64>;
+  defm CLRT  : CmpBranchRRFcPair<"clrt",  0xB973, GR32>;
+  defm CLGRT : CmpBranchRRFcPair<"clgrt", 0xB961, GR64>;
+  defm CIT   : CmpBranchRIEaPair<"cit",   0xEC72, GR32, imm32sx16>;
+  defm CGIT  : CmpBranchRIEaPair<"cgit",  0xEC70, GR64, imm64sx16>;
+  defm CLFIT : CmpBranchRIEaPair<"clfit", 0xEC73, GR32, imm32zx16>;
+  defm CLGIT : CmpBranchRIEaPair<"clgit", 0xEC71, GR64, imm64zx16>;
+
+  foreach V = [ "E", "H", "L", "HE", "LE", "LH",
+                "NE", "NH", "NL", "NHE", "NLE", "NLH" ] in {
+    def CRTAsm#V   : FixedCmpBranchRRFc<ICV<V>, "crt",   0xB972, GR32>;
+    def CGRTAsm#V  : FixedCmpBranchRRFc<ICV<V>, "cgrt",  0xB960, GR64>;
+    def CLRTAsm#V  : FixedCmpBranchRRFc<ICV<V>, "clrt",  0xB973, GR32>;
+    def CLGRTAsm#V : FixedCmpBranchRRFc<ICV<V>, "clgrt", 0xB961, GR64>;
+    def CITAsm#V   : FixedCmpBranchRIEa<ICV<V>, "cit",   0xEC72, GR32,
+                                         imm32sx16>;
+    def CGITAsm#V  : FixedCmpBranchRIEa<ICV<V>, "cgit",  0xEC70, GR64,
+                                         imm64sx16>;
+    def CLFITAsm#V : FixedCmpBranchRIEa<ICV<V>, "clfit", 0xEC73, GR32,
+                                         imm32zx16>;
+    def CLGITAsm#V : FixedCmpBranchRIEa<ICV<V>, "clgit", 0xEC71, GR64,
+                                         imm64zx16>;
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// Call and return instructions
+//===----------------------------------------------------------------------===//
+
+// Define the general form of the call instructions for the asm parser.
+// These instructions don't hard-code %r14 as the return address register.
+let isCall = 1, Defs = [CC] in {
+  def BRAS  : CallRI <"bras", 0xA75>;
+  def BRASL : CallRIL<"brasl", 0xC05>;
+  def BAS   : CallRX <"bas", 0x4D>;
+  def BASR  : CallRR <"basr", 0x0D>;
+}
+
+// Regular calls.
+let isCall = 1, Defs = [R14D, CC] in {
+  def CallBRASL : Alias<6, (outs), (ins pcrel32:$I2, variable_ops),
+                        [(z_call pcrel32:$I2)]>;
+  def CallBASR  : Alias<2, (outs), (ins ADDR64:$R2, variable_ops),
+                        [(z_call ADDR64:$R2)]>;
+}
+
+// TLS calls.  These will be lowered into a call to __tls_get_offset,
+// with an extra relocation specifying the TLS symbol.
+let isCall = 1, Defs = [R14D, CC] in {
+  def TLS_GDCALL : Alias<6, (outs), (ins tlssym:$I2, variable_ops),
+                         [(z_tls_gdcall tglobaltlsaddr:$I2)]>;
+  def TLS_LDCALL : Alias<6, (outs), (ins tlssym:$I2, variable_ops),
+                         [(z_tls_ldcall tglobaltlsaddr:$I2)]>;
+}
+
+// Sibling calls.  Indirect sibling calls must be via R1, since R2 upwards
+// are argument registers and since branching to R0 is a no-op.
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
+  def CallJG : Alias<6, (outs), (ins pcrel32:$I2),
+                     [(z_sibcall pcrel32:$I2)]>;
+  let Uses = [R1D] in
+    def CallBR : Alias<2, (outs), (ins), [(z_sibcall R1D)]>;
+}
+
+// Conditional sibling calls.
+let CCMaskFirst = 1, isCall = 1, isTerminator = 1, isReturn = 1 in {
+  def CallBRCL : Alias<6, (outs), (ins cond4:$valid, cond4:$R1,
+                                   pcrel32:$I2), []>;
+  let Uses = [R1D] in
+    def CallBCR : Alias<2, (outs), (ins cond4:$valid, cond4:$R1), []>;
+}
+
+// Fused compare and conditional sibling calls.
+let isCall = 1, isTerminator = 1, isReturn = 1, Uses = [R1D] in {
+  def CRBCall : Alias<6, (outs), (ins GR32:$R1, GR32:$R2, cond4:$M3), []>;
+  def CGRBCall : Alias<6, (outs), (ins GR64:$R1, GR64:$R2, cond4:$M3), []>;
+  def CIBCall : Alias<6, (outs), (ins GR32:$R1, imm32sx8:$I2, cond4:$M3), []>;
+  def CGIBCall : Alias<6, (outs), (ins GR64:$R1, imm64sx8:$I2, cond4:$M3), []>;
+  def CLRBCall : Alias<6, (outs), (ins GR32:$R1, GR32:$R2, cond4:$M3), []>;
+  def CLGRBCall : Alias<6, (outs), (ins GR64:$R1, GR64:$R2, cond4:$M3), []>;
+  def CLIBCall : Alias<6, (outs), (ins GR32:$R1, imm32zx8:$I2, cond4:$M3), []>;
+  def CLGIBCall : Alias<6, (outs), (ins GR64:$R1, imm64zx8:$I2, cond4:$M3), []>;
+}
 
 // A return instruction (br %r14).
 let isReturn = 1, isTerminator = 1, isBarrier = 1, hasCtrlDep = 1 in
@@ -53,292 +288,6 @@ let isReturn = 1, isTerminator = 1, hasCtrlDep = 1 in {
   def CLIBReturn : Alias<6, (outs), (ins GR32:$R1, imm32zx8:$I2, cond4:$M3), []>;
   def CLGIBReturn : Alias<6, (outs), (ins GR64:$R1, imm64zx8:$I2, cond4:$M3), []>;
 }
-
-// Unconditional branches.  R1 is the condition-code mask (all 1s).
-let isBranch = 1, isTerminator = 1, isBarrier = 1, R1 = 15 in {
-  let isIndirectBranch = 1 in
-    def BR : InstRR<0x07, (outs), (ins ADDR64:$R2),
-                    "br\t$R2", [(brind ADDR64:$R2)]>;
-
-  // An assembler extended mnemonic for BRC.
-  def J : InstRI<0xA74, (outs), (ins brtarget16:$I2), "j\t$I2",
-                 [(br bb:$I2)]>;
-
-  // An assembler extended mnemonic for BRCL.  (The extension is "G"
-  // rather than "L" because "JL" is "Jump if Less".)
-  def JG : InstRIL<0xC04, (outs), (ins brtarget32:$I2), "jg\t$I2", []>;
-}
-
-// FIXME: This trap instruction should be marked as isTerminator, but there is
-// currently a general bug that allows non-terminators to be placed between
-// terminators. Temporarily leave this unmarked until the bug is fixed.
-let isBarrier = 1, hasCtrlDep = 1 in {
-  def Trap : Alias<4, (outs), (ins), [(trap)]>;
-}
-
-let isTerminator = 1, hasCtrlDep = 1, Uses = [CC] in {
-  def CondTrap : Alias<4, (outs), (ins cond4:$valid, cond4:$R1), []>;
-}
-
-// Conditional branches.  It's easier for LLVM to handle these branches
-// in their raw BRC/BRCL form, with the 4-bit condition-code mask being
-// the first operand.  It seems friendlier to use mnemonic forms like
-// JE and JLH when writing out the assembly though.
-let isBranch = 1, isTerminator = 1, Uses = [CC] in {
-  let isCodeGenOnly = 1, CCMaskFirst = 1 in {
-    def BRC : InstRI<0xA74, (outs), (ins cond4:$valid, cond4:$R1,
-                                         brtarget16:$I2), "j$R1\t$I2",
-                     [(z_br_ccmask cond4:$valid, cond4:$R1, bb:$I2)]>;
-    def BRCL : InstRIL<0xC04, (outs), (ins cond4:$valid, cond4:$R1,
-                                           brtarget32:$I2), "jg$R1\t$I2", []>;
-    let isIndirectBranch = 1 in
-      def BCR : InstRR<0x07, (outs), (ins cond4:$valid, cond4:$R1, GR64:$R2),
-                       "b${R1}r\t$R2", []>;
-  }
-  def AsmBRC : InstRI<0xA74, (outs), (ins imm32zx4:$R1, brtarget16:$I2),
-                      "brc\t$R1, $I2", []>;
-  def AsmBRCL : InstRIL<0xC04, (outs), (ins imm32zx4:$R1, brtarget32:$I2),
-                        "brcl\t$R1, $I2", []>;
-  let isIndirectBranch = 1 in {
-    def AsmBC : InstRX<0x47, (outs), (ins imm32zx4:$R1, bdxaddr12only:$XBD2),
-                       "bc\t$R1, $XBD2", []>;
-    def AsmBCR : InstRR<0x07, (outs), (ins imm32zx4:$R1, GR64:$R2),
-                        "bcr\t$R1, $R2", []>;
-  }
-}
-
-def AsmNop  : InstAlias<"nop\t$XBD", (AsmBC 0, bdxaddr12only:$XBD), 0>;
-def AsmNopR : InstAlias<"nopr\t$R", (AsmBCR 0, GR64:$R), 0>;
-
-// Fused compare-and-branch instructions.  As for normal branches,
-// we handle these instructions internally in their raw CRJ-like form,
-// but use assembly macros like CRJE when writing them out.
-//
-// These instructions do not use or clobber the condition codes.
-// We nevertheless pretend that they clobber CC, so that we can lower
-// them to separate comparisons and BRCLs if the branch ends up being
-// out of range.
-multiclass CompareBranches<Operand ccmask, string pos1, string pos2> {
-  let isBranch = 1, isTerminator = 1, Defs = [CC] in {
-    def RJ  : InstRIEb<0xEC76, (outs), (ins GR32:$R1, GR32:$R2, ccmask:$M3,
-                                            brtarget16:$RI4),
-                       "crj"##pos1##"\t$R1, $R2"##pos2##", $RI4", []>;
-    def GRJ : InstRIEb<0xEC64, (outs), (ins GR64:$R1, GR64:$R2, ccmask:$M3,
-                                            brtarget16:$RI4),
-                       "cgrj"##pos1##"\t$R1, $R2"##pos2##", $RI4", []>;
-    def IJ  : InstRIEc<0xEC7E, (outs), (ins GR32:$R1, imm32sx8:$I2, ccmask:$M3,
-                                            brtarget16:$RI4),
-                       "cij"##pos1##"\t$R1, $I2"##pos2##", $RI4", []>;
-    def GIJ : InstRIEc<0xEC7C, (outs), (ins GR64:$R1, imm64sx8:$I2, ccmask:$M3,
-                                            brtarget16:$RI4),
-                       "cgij"##pos1##"\t$R1, $I2"##pos2##", $RI4", []>;
-    def LRJ  : InstRIEb<0xEC77, (outs), (ins GR32:$R1, GR32:$R2, ccmask:$M3,
-                                             brtarget16:$RI4),
-                        "clrj"##pos1##"\t$R1, $R2"##pos2##", $RI4", []>;
-    def LGRJ : InstRIEb<0xEC65, (outs), (ins GR64:$R1, GR64:$R2, ccmask:$M3,
-                                             brtarget16:$RI4),
-                        "clgrj"##pos1##"\t$R1, $R2"##pos2##", $RI4", []>;
-    def LIJ  : InstRIEc<0xEC7F, (outs), (ins GR32:$R1, imm32zx8:$I2, ccmask:$M3,
-                                             brtarget16:$RI4),
-                        "clij"##pos1##"\t$R1, $I2"##pos2##", $RI4", []>;
-    def LGIJ : InstRIEc<0xEC7D, (outs), (ins GR64:$R1, imm64zx8:$I2, ccmask:$M3,
-                                             brtarget16:$RI4),
-                        "clgij"##pos1##"\t$R1, $I2"##pos2##", $RI4", []>;
-    let isIndirectBranch = 1 in {
-      def RB  : InstRRS<0xECF6, (outs), (ins GR32:$R1, GR32:$R2, ccmask:$M3,
-                                             bdaddr12only:$BD4),
-                        "crb"##pos1##"\t$R1, $R2"##pos2##", $BD4", []>;
-      def GRB : InstRRS<0xECE4, (outs), (ins GR64:$R1, GR64:$R2, ccmask:$M3,
-                                             bdaddr12only:$BD4),
-                        "cgrb"##pos1##"\t$R1, $R2"##pos2##", $BD4", []>;
-      def IB  : InstRIS<0xECFE, (outs), (ins GR32:$R1, imm32sx8:$I2, ccmask:$M3,
-                                             bdaddr12only:$BD4),
-                        "cib"##pos1##"\t$R1, $I2"##pos2##", $BD4", []>;
-      def GIB : InstRIS<0xECFC, (outs), (ins GR64:$R1, imm64sx8:$I2, ccmask:$M3,
-                                             bdaddr12only:$BD4),
-                        "cgib"##pos1##"\t$R1, $I2"##pos2##", $BD4", []>;
-      def LRB  : InstRRS<0xECF7, (outs), (ins GR32:$R1, GR32:$R2, ccmask:$M3,
-                                              bdaddr12only:$BD4),
-                         "clrb"##pos1##"\t$R1, $R2"##pos2##", $BD4", []>;
-      def LGRB : InstRRS<0xECE5, (outs), (ins GR64:$R1, GR64:$R2, ccmask:$M3,
-                                              bdaddr12only:$BD4),
-                         "clgrb"##pos1##"\t$R1, $R2"##pos2##", $BD4", []>;
-      def LIB  : InstRIS<0xECFF, (outs), (ins GR32:$R1, imm32zx8:$I2, ccmask:$M3,
-                                              bdaddr12only:$BD4),
-                         "clib"##pos1##"\t$R1, $I2"##pos2##", $BD4", []>;
-      def LGIB : InstRIS<0xECFD, (outs), (ins GR64:$R1, imm64zx8:$I2, ccmask:$M3,
-                                              bdaddr12only:$BD4),
-                         "clgib"##pos1##"\t$R1, $I2"##pos2##", $BD4", []>;
-    }
-  }
-
-  let isTerminator = 1, hasCtrlDep = 1 in {
-    def RT   : InstRRFc<0xB972, (outs), (ins GR32:$R1, GR32:$R2, ccmask:$M3),
-                        "crt"##pos1##"\t$R1, $R2"##pos2, []>;
-    def GRT  : InstRRFc<0xB960, (outs), (ins GR64:$R1, GR64:$R2, ccmask:$M3),
-                        "cgrt"##pos1##"\t$R1, $R2"##pos2, []>;
-    def LRT  : InstRRFc<0xB973, (outs), (ins GR32:$R1, GR32:$R2, ccmask:$M3),
-                        "clrt"##pos1##"\t$R1, $R2"##pos2, []>;
-    def LGRT : InstRRFc<0xB961, (outs), (ins GR64:$R1, GR64:$R2, ccmask:$M3),
-                        "clgrt"##pos1##"\t$R1, $R2"##pos2, []>;
-    def IT   : InstRIEa<0xEC72, (outs), (ins GR32:$R1, imm32sx16:$I2, ccmask:$M3),
-                         "cit"##pos1##"\t$R1, $I2"##pos2, []>;
-    def GIT  : InstRIEa<0xEC70, (outs), (ins GR64:$R1, imm32sx16:$I2, ccmask:$M3),
-                         "cgit"##pos1##"\t$R1, $I2"##pos2, []>;
-    def LFIT : InstRIEa<0xEC73, (outs), (ins GR32:$R1, imm32zx16:$I2, ccmask:$M3),
-                         "clfit"##pos1##"\t$R1, $I2"##pos2, []>;
-    def LGIT : InstRIEa<0xEC71, (outs), (ins GR64:$R1, imm32zx16:$I2, ccmask:$M3),
-                         "clgit"##pos1##"\t$R1, $I2"##pos2, []>;
-  }
-}
-let isCodeGenOnly = 1 in
-  defm C : CompareBranches<cond4, "$M3", "">;
-defm AsmC : CompareBranches<imm32zx4, "", ", $M3">;
-
-// Define AsmParser mnemonics for each general condition-code mask
-// (integer or floating-point)
-multiclass CondExtendedMnemonicA<bits<4> ccmask, string name> {
-  let isBranch = 1, isTerminator = 1, R1 = ccmask in {
-    def J : InstRI<0xA74, (outs), (ins brtarget16:$I2),
-                   "j"##name##"\t$I2", []>;
-    def JG : InstRIL<0xC04, (outs), (ins brtarget32:$I2),
-                     "jg"##name##"\t$I2", []>;
-    def BR : InstRR<0x07, (outs), (ins ADDR64:$R2), "b"##name##"r\t$R2", []>;
-  }
-  def LOCR  : FixedCondUnaryRRF<"locr"##name,  0xB9F2, GR32, GR32, ccmask>;
-  def LOCGR : FixedCondUnaryRRF<"locgr"##name, 0xB9E2, GR64, GR64, ccmask>;
-  def LOCHI : FixedCondUnaryRIE<"lochi"##name,  0xEC42, GR64, imm32sx16,
-                                ccmask>;
-  def LOCGHI: FixedCondUnaryRIE<"locghi"##name, 0xEC46, GR64, imm64sx16,
-                                ccmask>;
-  def LOC   : FixedCondUnaryRSY<"loc"##name,   0xEBF2, GR32, ccmask, 4>;
-  def LOCG  : FixedCondUnaryRSY<"locg"##name,  0xEBE2, GR64, ccmask, 8>;
-  def STOC  : FixedCondStoreRSY<"stoc"##name,  0xEBF3, GR32, ccmask, 4>;
-  def STOCG : FixedCondStoreRSY<"stocg"##name, 0xEBE3, GR64, ccmask, 8>;
-}
-
-multiclass CondExtendedMnemonic<bits<4> ccmask, string name1, string name2>
-  : CondExtendedMnemonicA<ccmask, name1> {
-  let isAsmParserOnly = 1 in
-    defm Alt : CondExtendedMnemonicA<ccmask, name2>;
-}
-
-defm AsmO   : CondExtendedMnemonicA<1,  "o">;
-defm AsmH   : CondExtendedMnemonic<2,  "h", "p">;
-defm AsmNLE : CondExtendedMnemonicA<3,  "nle">;
-defm AsmL   : CondExtendedMnemonic<4,  "l", "m">;
-defm AsmNHE : CondExtendedMnemonicA<5,  "nhe">;
-defm AsmLH  : CondExtendedMnemonicA<6,  "lh">;
-defm AsmNE  : CondExtendedMnemonic<7,  "ne", "nz">;
-defm AsmE   : CondExtendedMnemonic<8,  "e", "z">;
-defm AsmNLH : CondExtendedMnemonicA<9,  "nlh">;
-defm AsmHE  : CondExtendedMnemonicA<10, "he">;
-defm AsmNL  : CondExtendedMnemonic<11, "nl", "nm">;
-defm AsmLE  : CondExtendedMnemonicA<12, "le">;
-defm AsmNH  : CondExtendedMnemonic<13, "nh", "np">;
-defm AsmNO  : CondExtendedMnemonicA<14, "no">;
-
-// Define AsmParser mnemonics for each integer condition-code mask.
-// This is like the list above, except that condition 3 is not possible
-// and that the low bit of the mask is therefore always 0.  This means
-// that each condition has two names.  Conditions "o" and "no" are not used.
-//
-// We don't make one of the two names an alias of the other because
-// we need the custom parsing routines to select the correct register class.
-multiclass IntCondExtendedMnemonicA<bits<4> ccmask, string name> {
-  let isBranch = 1, isTerminator = 1, M3 = ccmask in {
-    def CRJ  : InstRIEb<0xEC76, (outs), (ins GR32:$R1, GR32:$R2,
-                                             brtarget16:$RI4),
-                        "crj"##name##"\t$R1, $R2, $RI4", []>;
-    def CGRJ : InstRIEb<0xEC64, (outs), (ins GR64:$R1, GR64:$R2,
-                                             brtarget16:$RI4),
-                        "cgrj"##name##"\t$R1, $R2, $RI4", []>;
-    def CIJ  : InstRIEc<0xEC7E, (outs), (ins GR32:$R1, imm32sx8:$I2,
-                                             brtarget16:$RI4),
-                        "cij"##name##"\t$R1, $I2, $RI4", []>;
-    def CGIJ : InstRIEc<0xEC7C, (outs), (ins GR64:$R1, imm64sx8:$I2,
-                                             brtarget16:$RI4),
-                        "cgij"##name##"\t$R1, $I2, $RI4", []>;
-    def CLRJ  : InstRIEb<0xEC77, (outs), (ins GR32:$R1, GR32:$R2,
-                                             brtarget16:$RI4),
-                         "clrj"##name##"\t$R1, $R2, $RI4", []>;
-    def CLGRJ : InstRIEb<0xEC65, (outs), (ins GR64:$R1, GR64:$R2,
-                                              brtarget16:$RI4),
-                         "clgrj"##name##"\t$R1, $R2, $RI4", []>;
-    def CLIJ  : InstRIEc<0xEC7F, (outs), (ins GR32:$R1, imm32zx8:$I2,
-                                              brtarget16:$RI4),
-                         "clij"##name##"\t$R1, $I2, $RI4", []>;
-    def CLGIJ : InstRIEc<0xEC7D, (outs), (ins GR64:$R1, imm64zx8:$I2,
-                                              brtarget16:$RI4),
-                         "clgij"##name##"\t$R1, $I2, $RI4", []>;
-    let isIndirectBranch = 1 in {
-      def CRB  : InstRRS<0xECF6, (outs), (ins GR32:$R1, GR32:$R2,
-                                              bdaddr12only:$BD4),
-                         "crb"##name##"\t$R1, $R2, $BD4", []>;
-      def CGRB : InstRRS<0xECE4, (outs), (ins GR64:$R1, GR64:$R2,
-                                              bdaddr12only:$BD4),
-                         "cgrb"##name##"\t$R1, $R2, $BD4", []>;
-      def CIB  : InstRIS<0xECFE, (outs), (ins GR32:$R1, imm32sx8:$I2,
-                                              bdaddr12only:$BD4),
-                         "cib"##name##"\t$R1, $I2, $BD4", []>;
-      def CGIB : InstRIS<0xECFC, (outs), (ins GR64:$R1, imm64sx8:$I2,
-                                              bdaddr12only:$BD4),
-                         "cgib"##name##"\t$R1, $I2, $BD4", []>;
-      def CLRB  : InstRRS<0xECF7, (outs), (ins GR32:$R1, GR32:$R2,
-                                              bdaddr12only:$BD4),
-                          "clrb"##name##"\t$R1, $R2, $BD4", []>;
-      def CLGRB : InstRRS<0xECE5, (outs), (ins GR64:$R1, GR64:$R2,
-                                               bdaddr12only:$BD4),
-                          "clgrb"##name##"\t$R1, $R2, $BD4", []>;
-      def CLIB  : InstRIS<0xECFF, (outs), (ins GR32:$R1, imm32zx8:$I2,
-                                               bdaddr12only:$BD4),
-                          "clib"##name##"\t$R1, $I2, $BD4", []>;
-      def CLGIB : InstRIS<0xECFD, (outs), (ins GR64:$R1, imm64zx8:$I2,
-                                               bdaddr12only:$BD4),
-                          "clgib"##name##"\t$R1, $I2, $BD4", []>;
-    }
-  }
-
-  let hasCtrlDep = 1, isTerminator = 1, M3 = ccmask in {
-      def CRT   : InstRRFc<0xB972, (outs), (ins GR32:$R1, GR32:$R2),
-                          "crt"##name##"\t$R1, $R2", []>;
-      def CGRT  : InstRRFc<0xB960, (outs), (ins GR64:$R1, GR64:$R2),
-                          "cgrt"##name##"\t$R1, $R2", []>;
-      def CLRT  : InstRRFc<0xB973, (outs), (ins GR32:$R1, GR32:$R2),
-                          "clrt"##name##"\t$R1, $R2", []>;
-      def CLGRT : InstRRFc<0xB961, (outs), (ins GR64:$R1, GR64:$R2),
-                          "clgrt"##name##"\t$R1, $R2", []>;
-      def CIT   : InstRIEa<0xEC72, (outs), (ins GR32:$R1, imm32sx16:$I2),
-                           "cit"##name##"\t$R1, $I2", []>;
-      def CGIT  : InstRIEa<0xEC70, (outs), (ins GR64:$R1, imm32sx16:$I2),
-                           "cgit"##name##"\t$R1, $I2", []>;
-      def CLFIT : InstRIEa<0xEC73, (outs), (ins GR32:$R1, imm32zx16:$I2),
-                           "clfit"##name##"\t$R1, $I2", []>;
-      def CLGIT : InstRIEa<0xEC71, (outs), (ins GR64:$R1, imm32zx16:$I2),
-                           "clgit"##name##"\t$R1, $I2", []>;
-  }
-}
-multiclass IntCondExtendedMnemonic<bits<4> ccmask, string name1, string name2>
-  : IntCondExtendedMnemonicA<ccmask, name1> {
-  let isAsmParserOnly = 1 in
-    defm Alt : IntCondExtendedMnemonicA<ccmask, name2>;
-}
-defm AsmJH   : IntCondExtendedMnemonic<2,  "h",  "nle">;
-defm AsmJL   : IntCondExtendedMnemonic<4,  "l",  "nhe">;
-defm AsmJLH  : IntCondExtendedMnemonic<6,  "lh", "ne">;
-defm AsmJE   : IntCondExtendedMnemonic<8,  "e",  "nlh">;
-defm AsmJHE  : IntCondExtendedMnemonic<10, "he", "nl">;
-defm AsmJLE  : IntCondExtendedMnemonic<12, "le", "nh">;
-
-// Decrement a register and branch if it is nonzero.  These don't clobber CC,
-// but we might need to split long branches into sequences that do.
-let Defs = [CC] in {
-  def BRCT  : BranchUnaryRI<"brct",  0xA76, GR32>;
-  def BRCTG : BranchUnaryRI<"brctg", 0xA77, GR64>;
-}
-
-def BRXH : BranchBinaryRSI<"brxh", 0x84, GR64>;
-def BRXLE : BranchBinaryRSI<"brxle", 0x85, GR64>;
 
 //===----------------------------------------------------------------------===//
 // Select instructions
@@ -373,67 +322,6 @@ defm CondStore64 : CondStores<GR64, nonvolatile_store,
                               nonvolatile_load, bdxaddr20only>;
 
 //===----------------------------------------------------------------------===//
-// Call instructions
-//===----------------------------------------------------------------------===//
-
-let isCall = 1, Defs = [R14D, CC] in {
-  def CallBRASL : Alias<6, (outs), (ins pcrel32:$I2, variable_ops),
-                        [(z_call pcrel32:$I2)]>;
-  def CallBASR  : Alias<2, (outs), (ins ADDR64:$R2, variable_ops),
-                        [(z_call ADDR64:$R2)]>;
-}
-
-// Sibling calls.  Indirect sibling calls must be via R1, since R2 upwards
-// are argument registers and since branching to R0 is a no-op.
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
-  def CallJG : Alias<6, (outs), (ins pcrel32:$I2),
-                     [(z_sibcall pcrel32:$I2)]>;
-  let Uses = [R1D] in
-    def CallBR : Alias<2, (outs), (ins), [(z_sibcall R1D)]>;
-}
-
-let CCMaskFirst = 1, isCall = 1, isTerminator = 1, isReturn = 1 in {
-  def CallBRCL : Alias<6, (outs), (ins cond4:$valid, cond4:$R1,
-                                   pcrel32:$I2), []>;
-
-  let Uses = [R1D] in
-    def CallBCR : Alias<2, (outs), (ins cond4:$valid, cond4:$R1), []>;
-}
-
-// Fused compare and conditional sibling calls.
-let isCall = 1, isTerminator = 1, isReturn = 1, Uses = [R1D] in {
-  def CRBCall : Alias<6, (outs), (ins GR32:$R1, GR32:$R2, cond4:$M3), []>;
-  def CGRBCall : Alias<6, (outs), (ins GR64:$R1, GR64:$R2, cond4:$M3), []>;
-  def CIBCall : Alias<6, (outs), (ins GR32:$R1, imm32sx8:$I2, cond4:$M3), []>;
-  def CGIBCall : Alias<6, (outs), (ins GR64:$R1, imm64sx8:$I2, cond4:$M3), []>;
-  def CLRBCall : Alias<6, (outs), (ins GR32:$R1, GR32:$R2, cond4:$M3), []>;
-  def CLGRBCall : Alias<6, (outs), (ins GR64:$R1, GR64:$R2, cond4:$M3), []>;
-  def CLIBCall : Alias<6, (outs), (ins GR32:$R1, imm32zx8:$I2, cond4:$M3), []>;
-  def CLGIBCall : Alias<6, (outs), (ins GR64:$R1, imm64zx8:$I2, cond4:$M3), []>;
-}
-
-// TLS calls.  These will be lowered into a call to __tls_get_offset,
-// with an extra relocation specifying the TLS symbol.
-let isCall = 1, Defs = [R14D, CC] in {
-  def TLS_GDCALL : Alias<6, (outs), (ins tlssym:$I2, variable_ops),
-                         [(z_tls_gdcall tglobaltlsaddr:$I2)]>;
-  def TLS_LDCALL : Alias<6, (outs), (ins tlssym:$I2, variable_ops),
-                         [(z_tls_ldcall tglobaltlsaddr:$I2)]>;
-}
-
-// Define the general form of the call instructions for the asm parser.
-// These instructions don't hard-code %r14 as the return address register.
-// Allow an optional TLS marker symbol to generate TLS call relocations.
-let isCall = 1, Defs = [CC] in {
-  def BRAS  : InstRI<0xA75, (outs), (ins GR64:$R1, brtarget16tls:$I2),
-                     "bras\t$R1, $I2", []>;
-  def BRASL : InstRIL<0xC05, (outs), (ins GR64:$R1, brtarget32tls:$I2),
-                      "brasl\t$R1, $I2", []>;
-  def BASR  : InstRR<0x0D, (outs), (ins GR64:$R1, ADDR64:$R2),
-                     "basr\t$R1, $R2", []>;
-}
-
-//===----------------------------------------------------------------------===//
 // Move instructions
 //===----------------------------------------------------------------------===//
 
@@ -448,24 +336,6 @@ let hasSideEffects = 0 in {
 let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in {
   def LTR  : UnaryRR <"lt",  0x12,   null_frag, GR32, GR32>;
   def LTGR : UnaryRRE<"ltg", 0xB902, null_frag, GR64, GR64>;
-}
-
-// Move on condition.
-let isCodeGenOnly = 1, Uses = [CC] in {
-  def LOCR  : CondUnaryRRF<"loc",  0xB9F2, GR32, GR32>;
-  def LOCGR : CondUnaryRRF<"locg", 0xB9E2, GR64, GR64>;
-}
-let Uses = [CC] in {
-  def AsmLOCR  : AsmCondUnaryRRF<"loc",  0xB9F2, GR32, GR32>;
-  def AsmLOCGR : AsmCondUnaryRRF<"locg", 0xB9E2, GR64, GR64>;
-}
-let isCodeGenOnly = 1, Uses = [CC] in {
-  def LOCHI  : CondUnaryRIE<"lochi",  0xEC42, GR32, imm32sx16>;
-  def LOCGHI : CondUnaryRIE<"locghi", 0xEC46, GR64, imm64sx16>;
-}
-let Uses = [CC] in {
-  def AsmLOCHI  : AsmCondUnaryRIE<"lochi",  0xEC42, GR32, imm32sx16>;
-  def AsmLOCGHI : AsmCondUnaryRIE<"locghi", 0xEC46, GR64, imm64sx16>;
 }
 
 // Immediate moves.
@@ -517,16 +387,6 @@ let canFoldAsLoad = 1 in {
   def LGRL : UnaryRILPC<"lgrl", 0xC48, aligned_load, GR64>;
 }
 
-// Load on condition.
-let isCodeGenOnly = 1, Uses = [CC] in {
-  def LOC  : CondUnaryRSY<"loc",  0xEBF2, nonvolatile_load, GR32, 4>;
-  def LOCG : CondUnaryRSY<"locg", 0xEBE2, nonvolatile_load, GR64, 8>;
-}
-let Uses = [CC] in {
-  def AsmLOC  : AsmCondUnaryRSY<"loc",  0xEBF2, GR32, 4>;
-  def AsmLOCG : AsmCondUnaryRSY<"locg", 0xEBE2, GR64, 8>;
-}
-
 // Register stores.
 let SimpleBDXStore = 1 in {
   // Expands to ST, STY or STFH, depending on the choice of register.
@@ -547,16 +407,6 @@ let SimpleBDXStore = 1 in {
 def STRL  : StoreRILPC<"strl", 0xC4F, aligned_store, GR32>;
 def STGRL : StoreRILPC<"stgrl", 0xC4B, aligned_store, GR64>;
 
-// Store on condition.
-let isCodeGenOnly = 1, Uses = [CC] in {
-  def STOC  : CondStoreRSY<"stoc",  0xEBF3, GR32, 4>;
-  def STOCG : CondStoreRSY<"stocg", 0xEBE3, GR64, 8>;
-}
-let Uses = [CC] in {
-  def AsmSTOC  : AsmCondStoreRSY<"stoc",  0xEBF3, GR32, 4>;
-  def AsmSTOCG : AsmCondStoreRSY<"stocg", 0xEBE3, GR64, 8>;
-}
-
 // 8-bit immediate stores to 8-bit fields.
 defm MVI : StoreSIPair<"mvi", 0x92, 0xEB52, truncstorei8, imm32zx8trunc>;
 
@@ -573,6 +423,49 @@ let mayLoad = 1, mayStore = 1 in
 let mayLoad = 1, mayStore = 1, Defs = [CC] in
   defm MVST : StringRRE<"mvst", 0xB255, z_stpcpy>;
 
+//===----------------------------------------------------------------------===//
+// Conditional move instructions
+//===----------------------------------------------------------------------===//
+
+let Predicates = [FeatureLoadStoreOnCond2], Uses = [CC] in {
+  // Load immediate on condition.  Created by if-conversion.
+  defm LOCHI  : CondUnaryRIEPair<"lochi",  0xEC42, GR32, imm32sx16>;
+  defm LOCGHI : CondUnaryRIEPair<"locghi", 0xEC46, GR64, imm64sx16>;
+
+  // Define AsmParser extended mnemonics for each general condition-code mask.
+  foreach V = [ "E", "NE", "H", "NH", "L", "NL", "HE", "NHE", "LE", "NLE",
+                "Z", "NZ", "P", "NP", "M", "NM", "LH", "NLH", "O", "NO" ] in {
+    def LOCHIAsm#V  : FixedCondUnaryRIE<CV<V>, "lochi",  0xEC42, GR32,
+                                        imm32sx16>;
+    def LOCGHIAsm#V : FixedCondUnaryRIE<CV<V>, "locghi", 0xEC46, GR64,
+                                        imm64sx16>;
+  }
+}
+
+let Predicates = [FeatureLoadStoreOnCond], Uses = [CC] in {
+  // Move register on condition.  Created by if-conversion.
+  defm LOCR  : CondUnaryRRFPair<"locr",  0xB9F2, GR32, GR32>;
+  defm LOCGR : CondUnaryRRFPair<"locgr", 0xB9E2, GR64, GR64>;
+
+  // Load on condition.  Matched via DAG pattern.
+  defm LOC  : CondUnaryRSYPair<"loc",  0xEBF2, nonvolatile_load, GR32, 4>;
+  defm LOCG : CondUnaryRSYPair<"locg", 0xEBE2, nonvolatile_load, GR64, 8>;
+
+  // Store on condition.  Expanded from CondStore* pseudos.
+  defm STOC  : CondStoreRSYPair<"stoc",  0xEBF3, GR32, 4>;
+  defm STOCG : CondStoreRSYPair<"stocg", 0xEBE3, GR64, 8>;
+
+  // Define AsmParser extended mnemonics for each general condition-code mask.
+  foreach V = [ "E", "NE", "H", "NH", "L", "NL", "HE", "NHE", "LE", "NLE",
+                "Z", "NZ", "P", "NP", "M", "NM", "LH", "NLH", "O", "NO" ] in {
+    def LOCRAsm#V   : FixedCondUnaryRRF<CV<V>, "locr",  0xB9F2, GR32, GR32>;
+    def LOCGRAsm#V  : FixedCondUnaryRRF<CV<V>, "locgr", 0xB9E2, GR64, GR64>;
+    def LOCAsm#V    : FixedCondUnaryRSY<CV<V>, "loc",   0xEBF2, GR32, 4>;
+    def LOCGAsm#V   : FixedCondUnaryRSY<CV<V>, "locg",  0xEBE2, GR64, 8>;
+    def STOCAsm#V   : FixedCondStoreRSY<CV<V>, "stoc",  0xEBF3, GR32, 4>;
+    def STOCGAsm#V  : FixedCondStoreRSY<CV<V>, "stocg", 0xEBE3, GR64, 8>;
+  }
+}
 //===----------------------------------------------------------------------===//
 // Sign extensions
 //===----------------------------------------------------------------------===//

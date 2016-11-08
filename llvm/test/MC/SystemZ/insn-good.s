@@ -517,6 +517,20 @@
 	ay	%r0, 524287(%r15,%r1)
 	ay	%r15, 0
 
+#CHECK: bas	%r0, 0                  # encoding: [0x4d,0x00,0x00,0x00]
+#CHECK: bas	%r1, 4095               # encoding: [0x4d,0x10,0x0f,0xff]
+#CHECK: bas	%r2, 0(%r1)             # encoding: [0x4d,0x20,0x10,0x00]
+#CHECK: bas	%r3, 0(%r15)            # encoding: [0x4d,0x30,0xf0,0x00]
+#CHECK: bas	%r14, 4095(%r1,%r15)    # encoding: [0x4d,0xe1,0xff,0xff]
+#CHECK: bas	%r15, 4095(%r15,%r1)    # encoding: [0x4d,0xff,0x1f,0xff]
+
+	bas	%r0, 0
+	bas	%r1, 4095
+	bas	%r2, 0(%r1)
+	bas	%r3, 0(%r15)
+	bas	%r14, 4095(%r1,%r15)
+	bas	%r15, 4095(%r15,%r1)
+
 #CHECK: basr	%r0, %r1                # encoding: [0x0d,0x01]
 #CHECK: basr	%r0, %r15               # encoding: [0x0d,0x0f]
 #CHECK: basr	%r14, %r9               # encoding: [0x0d,0xe9]
@@ -526,6 +540,120 @@
 	basr	%r0,%r15
 	basr	%r14,%r9
 	basr	%r15,%r1
+
+#CHECK: b	0                       # encoding: [0x47,0xf0,0x00,0x00]
+#CHECK: b	4095                    # encoding: [0x47,0xf0,0x0f,0xff]
+#CHECK: b	0(%r1)                  # encoding: [0x47,0xf0,0x10,0x00]
+#CHECK: b	0(%r15)                 # encoding: [0x47,0xf0,0xf0,0x00]
+#CHECK: b	4095(%r1,%r15)          # encoding: [0x47,0xf1,0xff,0xff]
+#CHECK: b	4095(%r15,%r1)          # encoding: [0x47,0xff,0x1f,0xff]
+
+	b	0
+	b	4095
+	b	0(%r1)
+	b	0(%r15)
+	b	4095(%r1,%r15)
+	b	4095(%r15,%r1)
+
+#CHECK: bc	0, 0                    # encoding: [0x47,0x00,0x00,0x00]
+#CHECK: bc	0, 4095                 # encoding: [0x47,0x00,0x0f,0xff]
+#CHECK: bc	0, 0(%r1)               # encoding: [0x47,0x00,0x10,0x00]
+#CHECK: bc	0, 0(%r15)              # encoding: [0x47,0x00,0xf0,0x00]
+#CHECK: bc	0, 4095(%r1,%r15)       # encoding: [0x47,0x01,0xff,0xff]
+#CHECK: bc	0, 4095(%r15,%r1)       # encoding: [0x47,0x0f,0x1f,0xff]
+#CHECK: bc	15, 0                   # encoding: [0x47,0xf0,0x00,0x00]
+
+	bc	0, 0
+	bc	0, 4095
+	bc	0, 0(%r1)
+	bc	0, 0(%r15)
+	bc	0, 4095(%r1,%r15)
+	bc	0, 4095(%r15,%r1)
+	bc	15, 0
+
+#CHECK:	bc	1, 0(%r7)		# encoding: [0x47,0x10,0x70,0x00]
+#CHECK:	bo	0(%r15)			# encoding: [0x47,0x10,0xf0,0x00]
+
+	bc	1, 0(%r7)
+	bo	0(%r15)
+
+#CHECK:	bc	2, 0(%r7)		# encoding: [0x47,0x20,0x70,0x00]
+#CHECK:	bh	0(%r15)			# encoding: [0x47,0x20,0xf0,0x00]
+
+	bc	2, 0(%r7)
+	bh	0(%r15)
+
+#CHECK:	bc	3, 0(%r7)		# encoding: [0x47,0x30,0x70,0x00]
+#CHECK:	bnle	0(%r15)			# encoding: [0x47,0x30,0xf0,0x00]
+
+	bc	3, 0(%r7)
+	bnle	0(%r15)
+
+#CHECK:	bc	4, 0(%r7)		# encoding: [0x47,0x40,0x70,0x00]
+#CHECK:	bl	0(%r15)			# encoding: [0x47,0x40,0xf0,0x00]
+
+	bc	4, 0(%r7)
+	bl	0(%r15)
+
+#CHECK:	bc	5, 0(%r7)		# encoding: [0x47,0x50,0x70,0x00]
+#CHECK:	bnhe	0(%r15)			# encoding: [0x47,0x50,0xf0,0x00]
+
+	bc	5, 0(%r7)
+	bnhe	0(%r15)
+
+#CHECK:	bc	6, 0(%r7)		# encoding: [0x47,0x60,0x70,0x00]
+#CHECK:	blh	0(%r15)			# encoding: [0x47,0x60,0xf0,0x00]
+
+	bc	6, 0(%r7)
+	blh	0(%r15)
+
+#CHECK:	bc	7, 0(%r7)		# encoding: [0x47,0x70,0x70,0x00]
+#CHECK:	bne	0(%r15)			# encoding: [0x47,0x70,0xf0,0x00]
+
+	bc	7, 0(%r7)
+	bne	0(%r15)
+
+#CHECK:	bc	8, 0(%r7)		# encoding: [0x47,0x80,0x70,0x00]
+#CHECK:	be	0(%r15)			# encoding: [0x47,0x80,0xf0,0x00]
+
+	bc	8, 0(%r7)
+	be	0(%r15)
+
+#CHECK:	bc	9, 0(%r7)		# encoding: [0x47,0x90,0x70,0x00]
+#CHECK:	bnlh	0(%r15)			# encoding: [0x47,0x90,0xf0,0x00]
+
+	bc	9, 0(%r7)
+	bnlh	0(%r15)
+
+#CHECK:	bc	10, 0(%r7)		# encoding: [0x47,0xa0,0x70,0x00]
+#CHECK:	bhe	0(%r15)			# encoding: [0x47,0xa0,0xf0,0x00]
+
+	bc	10, 0(%r7)
+	bhe	0(%r15)
+
+#CHECK:	bc	11, 0(%r7)		# encoding: [0x47,0xb0,0x70,0x00]
+#CHECK:	bnl	0(%r15)			# encoding: [0x47,0xb0,0xf0,0x00]
+
+	bc	11, 0(%r7)
+	bnl	0(%r15)
+
+#CHECK:	bc	12, 0(%r7)		# encoding: [0x47,0xc0,0x70,0x00]
+#CHECK:	ble	0(%r15)			# encoding: [0x47,0xc0,0xf0,0x00]
+
+	bc	12, 0(%r7)
+	ble	0(%r15)
+
+#CHECK:	bc	13, 0(%r7)		# encoding: [0x47,0xd0,0x70,0x00]
+#CHECK:	bnh	0(%r15)			# encoding: [0x47,0xd0,0xf0,0x00]
+
+	bc	13, 0(%r7)
+	bnh	0(%r15)
+
+#CHECK:	bc	14, 0(%r7)		# encoding: [0x47,0xe0,0x70,0x00]
+#CHECK:	bno	0(%r15)			# encoding: [0x47,0xe0,0xf0,0x00]
+
+	bc	14, 0(%r7)
+	bno	0(%r15)
 
 #CHECK: bcr	0, %r0			# encoding: [0x07,0x00]
 #CHECK:	bcr	0, %r15			# encoding: [0x07,0x0f]

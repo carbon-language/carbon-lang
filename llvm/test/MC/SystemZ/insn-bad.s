@@ -259,6 +259,28 @@
 	ay	%r0, 524288
 
 #CHECK: error: invalid operand
+#CHECK: bas	%r0, -1
+#CHECK: error: invalid operand
+#CHECK: bas	%r0, 4096
+
+	bas	%r0, -1
+	bas	%r0, 4096
+
+#CHECK: error: invalid operand
+#CHECK: bc	-1, 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: bc	16, 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: bc	0, -1
+#CHECK: error: invalid operand
+#CHECK: bc	0, 4096
+
+	bc	-1, 0(%r1)
+	bc	16, 0(%r1)
+	bc	0, -1
+	bc	0, 4096
+
+#CHECK: error: invalid operand
 #CHECK: bcr	-1, %r1
 #CHECK: error: invalid operand
 #CHECK: bcr	16, %r1
