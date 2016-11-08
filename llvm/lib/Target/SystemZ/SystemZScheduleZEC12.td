@@ -676,17 +676,17 @@ def : InstRW<[FPU2, FPU2, LSU, Lat15, GroupAlone], (instregex "LX(D|E)B$")>;
 def : InstRW<[FPU2, FPU2, Lat10, GroupAlone], (instregex "LX(D|E)BR$")>;
 
 // Convert from fixed / logical
-def : InstRW<[FXU, FPU, Lat9, GroupAlone], (instregex "CE(F|G)BR$")>;
-def : InstRW<[FXU, FPU, Lat9, GroupAlone], (instregex "CD(F|G)BR$")>;
-def : InstRW<[FXU, FPU2, FPU2, Lat11, GroupAlone], (instregex "CX(F|G)BR$")>;
+def : InstRW<[FXU, FPU, Lat9, GroupAlone], (instregex "CE(F|G)BR(A?)$")>;
+def : InstRW<[FXU, FPU, Lat9, GroupAlone], (instregex "CD(F|G)BR(A?)$")>;
+def : InstRW<[FXU, FPU2, FPU2, Lat11, GroupAlone], (instregex "CX(F|G)BR(A?)$")>;
 def : InstRW<[FXU, FPU, Lat9, GroupAlone], (instregex "CEL(F|G)BR$")>;
 def : InstRW<[FXU, FPU, Lat9, GroupAlone], (instregex "CDL(F|G)BR$")>;
 def : InstRW<[FXU, FPU2, FPU2, Lat11, GroupAlone], (instregex "CXL(F|G)BR$")>;
 
 // Convert to fixed / logical
-def : InstRW<[FXU, FPU, Lat12, GroupAlone], (instregex "CF(E|D)BR$")>;
-def : InstRW<[FXU, FPU, Lat12, GroupAlone], (instregex "CG(E|D)BR$")>;
-def : InstRW<[FXU, FPU, FPU, Lat20, GroupAlone], (instregex "C(F|G)XBR$")>;
+def : InstRW<[FXU, FPU, Lat12, GroupAlone], (instregex "CF(E|D)BR(A?)$")>;
+def : InstRW<[FXU, FPU, Lat12, GroupAlone], (instregex "CG(E|D)BR(A?)$")>;
+def : InstRW<[FXU, FPU, FPU, Lat20, GroupAlone], (instregex "C(F|G)XBR(A?)$")>;
 def : InstRW<[FXU, FPU, Lat11, GroupAlone], (instregex "CLF(E|D)BR$")>;
 def : InstRW<[FXU, FPU, Lat11, GroupAlone], (instregex "CLG(E|D)BR$")>;
 def : InstRW<[FXU, FPU, FPU, Lat20, GroupAlone], (instregex "CL(F|G)XBR$")>;

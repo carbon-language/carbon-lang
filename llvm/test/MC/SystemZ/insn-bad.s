@@ -447,6 +447,16 @@
 	cdb	%f0, 4096
 
 #CHECK: error: instruction requires: fp-extension
+#CHECK: cdfbra	%f0, 0, %r0, 0
+
+	cdfbra	%f0, 0, %r0, 0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cdgbra	%f0, 0, %r0, 0
+
+	cdgbra	%f0, 0, %r0, 0
+
+#CHECK: error: instruction requires: fp-extension
 #CHECK: cdlfbr	%f0, 0, %r0, 0
 
 	cdlfbr	%f0, 0, %r0, 0
@@ -463,6 +473,16 @@
 
 	ceb	%f0, -1
 	ceb	%f0, 4096
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cefbra	%f0, 0, %r0, 0
+
+	cefbra	%f0, 0, %r0, 0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cegbra	%f0, 0, %r0, 0
+
+	cegbra	%f0, 0, %r0, 0
 
 #CHECK: error: instruction requires: fp-extension
 #CHECK: celfbr	%f0, 0, %r0, 0
@@ -482,6 +502,11 @@
 	cfdbr	%r0, -1, %f0
 	cfdbr	%r0, 16, %f0
 
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cfdbra	%r0, 0, %f0, 0
+
+	cfdbra	%r0, 0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: cfebr	%r0, -1, %f0
 #CHECK: error: invalid operand
@@ -489,6 +514,11 @@
 
 	cfebr	%r0, -1, %f0
 	cfebr	%r0, 16, %f0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cfebra	%r0, 0, %f0, 0
+
+	cfebra	%r0, 0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: cfi	%r0, (-1 << 31) - 1
@@ -509,6 +539,10 @@
 	cfxbr	%r0, 16, %f0
 	cfxbr	%r0, 0, %f2
 
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cfxbra	%r0, 0, %f0, 0
+
+	cfxbra	%r0, 0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: cg	%r0, -524289
@@ -526,6 +560,11 @@
 	cgdbr	%r0, -1, %f0
 	cgdbr	%r0, 16, %f0
 
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cgdbra	%r0, 0, %f0, 0
+
+	cgdbra	%r0, 0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: cgebr	%r0, -1, %f0
 #CHECK: error: invalid operand
@@ -533,6 +572,11 @@
 
 	cgebr	%r0, -1, %f0
 	cgebr	%r0, 16, %f0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cgebra	%r0, 0, %f0, 0
+
+	cgebra	%r0, 0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: cgf	%r0, -524289
@@ -713,6 +757,10 @@
 	cgxbr	%r0, 16, %f0
 	cgxbr	%r0, 0, %f2
 
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cgxbra	%r0, 0, %f0, 0
+
+	cgxbra	%r0, 0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: ch	%r0, -1
@@ -1360,10 +1408,20 @@
 
 	cxfbr	%f2, %r0
 
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cxfbra	%f0, 0, %r0, 0
+
+	cxfbra	%f0, 0, %r0, 0
+
 #CHECK: error: invalid register pair
 #CHECK: cxgbr	%f2, %r0
 
 	cxgbr	%f2, %r0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cxgbra	%f0, 0, %r0, 0
+
+	cxgbra	%f0, 0, %r0, 0
 
 #CHECK: error: instruction requires: fp-extension
 #CHECK: cxlfbr	%f0, 0, %r0, 0

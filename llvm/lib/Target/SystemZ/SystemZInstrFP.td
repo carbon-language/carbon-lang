@@ -189,6 +189,18 @@ def CEGBR : UnaryRRE<"cegbr", 0xB3A4, sint_to_fp, FP32,  GR64>;
 def CDGBR : UnaryRRE<"cdgbr", 0xB3A5, sint_to_fp, FP64,  GR64>;
 def CXGBR : UnaryRRE<"cxgbr", 0xB3A6, sint_to_fp, FP128, GR64>;
 
+// The FP extension feature provides versions of the above that allow
+// specifying rounding mode and inexact-exception suppression flags.
+let Predicates = [FeatureFPExtension] in {
+  def CEFBRA : TernaryRRFe<"cefbra", 0xB394, FP32,  GR32>;
+  def CDFBRA : TernaryRRFe<"cdfbra", 0xB395, FP64,  GR32>;
+  def CXFBRA : TernaryRRFe<"cxfbra", 0xB396, FP128, GR32>;
+
+  def CEGBRA : TernaryRRFe<"cegbra", 0xB3A4, FP32,  GR64>;
+  def CDGBRA : TernaryRRFe<"cdgbra", 0xB3A5, FP64,  GR64>;
+  def CXGBRA : TernaryRRFe<"cxgbra", 0xB3A6, FP128, GR64>;
+}
+
 // Convert am unsigned integer register value to a floating-point one.
 let Predicates = [FeatureFPExtension] in {
   def CELFBR : TernaryRRFe<"celfbr", 0xB390, FP32,  GR32>;
@@ -228,6 +240,18 @@ def : Pat<(i32 (fp_to_sint FP128:$src)), (CFXBR 5, FP128:$src)>;
 def : Pat<(i64 (fp_to_sint FP32:$src)),  (CGEBR 5, FP32:$src)>;
 def : Pat<(i64 (fp_to_sint FP64:$src)),  (CGDBR 5, FP64:$src)>;
 def : Pat<(i64 (fp_to_sint FP128:$src)), (CGXBR 5, FP128:$src)>;
+
+// The FP extension feature provides versions of the above that allow
+// also specifying the inexact-exception suppression flag.
+let Predicates = [FeatureFPExtension], Defs = [CC] in {
+  def CFEBRA : TernaryRRFe<"cfebra", 0xB398, GR32, FP32>;
+  def CFDBRA : TernaryRRFe<"cfdbra", 0xB399, GR32, FP64>;
+  def CFXBRA : TernaryRRFe<"cfxbra", 0xB39A, GR32, FP128>;
+
+  def CGEBRA : TernaryRRFe<"cgebra", 0xB3A8, GR64, FP32>;
+  def CGDBRA : TernaryRRFe<"cgdbra", 0xB3A9, GR64, FP64>;
+  def CGXBRA : TernaryRRFe<"cgxbra", 0xB3AA, GR64, FP128>;
+}
 
 // Convert a floating-point register value to an unsigned integer value.
 let Predicates = [FeatureFPExtension] in {

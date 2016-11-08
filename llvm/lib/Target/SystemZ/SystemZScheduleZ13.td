@@ -698,17 +698,17 @@ def : InstRW<[VecBF2, VecBF2, LSU, Lat12 , GroupAlone], (instregex "LX(D|E)B$")>
 def : InstRW<[VecBF2, VecBF2, GroupAlone], (instregex "LX(D|E)BR$")>;
 
 // Convert from fixed / logical
-def : InstRW<[FXb, VecBF, Lat9, BeginGroup], (instregex "CE(F|G)BR$")>;
-def : InstRW<[FXb, VecBF, Lat9, BeginGroup], (instregex "CD(F|G)BR$")>;
-def : InstRW<[FXb, VecDF2, VecDF2, Lat12, GroupAlone], (instregex "CX(F|G)BR$")>;
+def : InstRW<[FXb, VecBF, Lat9, BeginGroup], (instregex "CE(F|G)BR(A)?$")>;
+def : InstRW<[FXb, VecBF, Lat9, BeginGroup], (instregex "CD(F|G)BR(A)?$")>;
+def : InstRW<[FXb, VecDF2, VecDF2, Lat12, GroupAlone], (instregex "CX(F|G)BR(A)?$")>;
 def : InstRW<[FXb, VecBF, Lat9, BeginGroup], (instregex "CEL(F|G)BR$")>;
 def : InstRW<[FXb, VecBF, Lat9, BeginGroup], (instregex "CDL(F|G)BR$")>;
 def : InstRW<[FXb, VecDF2, VecDF2, Lat12, GroupAlone], (instregex "CXL(F|G)BR$")>;
 
 // Convert to fixed / logical
-def : InstRW<[FXb, VecBF, Lat11, BeginGroup], (instregex "CF(E|D)BR$")>;
-def : InstRW<[FXb, VecBF, Lat11, BeginGroup], (instregex "CG(E|D)BR$")>;
-def : InstRW<[FXb, VecDF, VecDF, Lat20, BeginGroup], (instregex "C(F|G)XBR$")>;
+def : InstRW<[FXb, VecBF, Lat11, BeginGroup], (instregex "CF(E|D)BR(A)?$")>;
+def : InstRW<[FXb, VecBF, Lat11, BeginGroup], (instregex "CG(E|D)BR(A)?$")>;
+def : InstRW<[FXb, VecDF, VecDF, Lat20, BeginGroup], (instregex "C(F|G)XBR(A)?$")>;
 def : InstRW<[FXb, VecBF, Lat11, GroupAlone], (instregex "CLFEBR$")>;
 def : InstRW<[FXb, VecBF, Lat11, BeginGroup], (instregex "CLFDBR$")>;
 def : InstRW<[FXb, VecBF, Lat11, BeginGroup], (instregex "CLG(E|D)BR$")>;
