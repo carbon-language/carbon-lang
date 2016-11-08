@@ -839,7 +839,7 @@ static bool isBitcode(MemoryBufferRef MB) {
 InputFile *elf::createObjectFile(MemoryBufferRef MB, StringRef ArchiveName,
                                  uint64_t OffsetInArchive) {
   InputFile *F =
-      isBitcode(MB) ? new BitcodeFile(MB) : createELFFile<ObjectFile>(MB);
+      isBitcode(MB) ? make<BitcodeFile>(MB) : createELFFile<ObjectFile>(MB);
   F->ArchiveName = ArchiveName;
   F->OffsetInArchive = OffsetInArchive;
   return F;
