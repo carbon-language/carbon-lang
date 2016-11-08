@@ -535,7 +535,6 @@ public:
                            SimpleFormatContext &SFC,
                            unsigned FUID) :
       FC(FC), Result(Str), Traits(Traits), SM(SM),
-      FormatRewriterContext(SFC),
       FormatInMemoryUniqueId(FUID) { }
 
   // Inline content.
@@ -574,7 +573,6 @@ private:
 
   const CommandTraits &Traits;
   const SourceManager &SM;
-  SimpleFormatContext &FormatRewriterContext;
   unsigned FormatInMemoryUniqueId;
 };
 
