@@ -49,10 +49,9 @@ Configuration files:
 
 )");
 
-const char DefaultChecks[] =  // Enable these checks:
+const char DefaultChecks[] =  // Enable these checks by default:
     "clang-diagnostic-*,"     //   * compiler diagnostics
-    "clang-analyzer-*,"       //   * Static Analyzer checks
-    "-clang-analyzer-alpha*"; //   * but not alpha checks: many false positives
+    "clang-analyzer-*";       //   * Static Analyzer checks
 
 static cl::opt<std::string> Checks("checks", cl::desc(R"(
 Comma-separated list of globs with optional '-'
