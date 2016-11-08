@@ -287,7 +287,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   if (In<ELFT>::BuildId)
     Symtab<ELFT>::X->Sections.push_back(In<ELFT>::BuildId);
 
-  CommonSection<ELFT> *Common = make<CommonSection<ELFT>>();
+  InputSection<ELFT> *Common = createCommonSection<ELFT>();
   if (!Common->Data.empty()) {
     In<ELFT>::Common = Common;
     Symtab<ELFT>::X->Sections.push_back(Common);
