@@ -650,22 +650,22 @@ def STRVG : StoreRXY<"strvg", 0xE32F, z_strvg, GR64, 8>;
 let hasSideEffects = 0, isAsCheapAsAMove = 1, isReMaterializable = 1,
     DispKey = "la" in {
   let DispSize = "12" in
-    def LA : InstRX<0x41, (outs GR64:$R1), (ins laaddr12pair:$XBD2),
-                    "la\t$R1, $XBD2",
-                    [(set GR64:$R1, laaddr12pair:$XBD2)]>;
+    def LA : InstRXa<0x41, (outs GR64:$R1), (ins laaddr12pair:$XBD2),
+                     "la\t$R1, $XBD2",
+                     [(set GR64:$R1, laaddr12pair:$XBD2)]>;
   let DispSize = "20" in
-    def LAY : InstRXY<0xE371, (outs GR64:$R1), (ins laaddr20pair:$XBD2),
-                      "lay\t$R1, $XBD2",
-                      [(set GR64:$R1, laaddr20pair:$XBD2)]>;
+    def LAY : InstRXYa<0xE371, (outs GR64:$R1), (ins laaddr20pair:$XBD2),
+                       "lay\t$R1, $XBD2",
+                       [(set GR64:$R1, laaddr20pair:$XBD2)]>;
 }
 
 // Load a PC-relative address.  There's no version of this instruction
 // with a 16-bit offset, so there's no relaxation.
 let hasSideEffects = 0, isAsCheapAsAMove = 1, isMoveImm = 1,
     isReMaterializable = 1 in {
-  def LARL : InstRIL<0xC00, (outs GR64:$R1), (ins pcrel32:$I2),
-                     "larl\t$R1, $I2",
-                     [(set GR64:$R1, pcrel32:$I2)]>;
+  def LARL : InstRILb<0xC00, (outs GR64:$R1), (ins pcrel32:$RI2),
+                      "larl\t$R1, $RI2",
+                      [(set GR64:$R1, pcrel32:$RI2)]>;
 }
 
 // Load the Global Offset Table address.  This will be lowered into a
@@ -1573,10 +1573,10 @@ let hasSideEffects = 1, Defs = [CC], mayStore = 1 in
                        []>;
 
 let hasSideEffects = 1 in {
-  def EX   : InstRX<0x44, (outs), (ins GR64:$R1, bdxaddr12only:$XBD2),
+  def EX   : InstRXa<0x44, (outs), (ins GR64:$R1, bdxaddr12only:$XBD2),
                   "ex\t$R1, $XBD2", []>;
-  def EXRL : InstRIL<0xC60, (outs), (ins GR64:$R1, pcrel32:$I2),
-                     "exrl\t$R1, $I2", []>;
+  def EXRL : InstRILb<0xC60, (outs), (ins GR64:$R1, pcrel32:$RI2),
+                      "exrl\t$R1, $RI2", []>;
 }
 
 let Defs = [CC] in {
