@@ -499,6 +499,19 @@ def : InstRW<[FXU, LSU, Lat5], (instregex "LAX(G)?$")>;
 def : InstRW<[FXU, FXU, LSU, Lat6, GroupAlone], (instregex "CS(G|Y)?$")>;
 
 //===----------------------------------------------------------------------===//
+// Access registers
+//===----------------------------------------------------------------------===//
+
+// Extract/set/copy access register
+def : InstRW<[LSU], (instregex "(EAR|SAR|CPYA)$")>;
+
+// Load address extended
+def : InstRW<[LSU, FXU], (instregex "LAE(Y)?$")>;
+
+// Load/store access multiple (not modeled precisely)
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "(L|ST)AM(Y)?$")>;
+
+//===----------------------------------------------------------------------===//
 // Transactional execution
 //===----------------------------------------------------------------------===//
 
@@ -530,9 +543,6 @@ def : InstRW<[FXU], (instregex "PPA$")>;
 
 // Insert Program Mask
 def : InstRW<[FXU, Lat3, EndGroup], (instregex "IPM$")>;
-
-// Extract access register
-def : InstRW<[LSU], (instregex "EAR$")>;
 
 // Find leftmost one
 def : InstRW<[FXU, Lat7, GroupAlone], (instregex "FLOGR$")>;

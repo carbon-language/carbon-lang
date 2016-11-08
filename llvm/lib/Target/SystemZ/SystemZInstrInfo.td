@@ -1438,6 +1438,30 @@ let Defs = [CC] in {
 }
 
 //===----------------------------------------------------------------------===//
+// Access registers
+//===----------------------------------------------------------------------===//
+
+// Read a 32-bit access register into a GR32.  As with all GR32 operations,
+// the upper 32 bits of the enclosing GR64 remain unchanged, which is useful
+// when a 64-bit address is stored in a pair of access registers.
+def EAR : UnaryRRE<"ear", 0xB24F, null_frag, GR32, AR32>;
+
+// Set access register.
+def SAR : UnaryRRE<"sar", 0xB24E, null_frag, AR32, GR32>;
+
+// Copy access register.
+def CPYA : UnaryRRE<"cpya", 0xB24D, null_frag, AR32, AR32>;
+
+// Load address extended.
+defm LAE : LoadAddressRXPair<"lae", 0x51, 0xE375, null_frag>;
+
+// Load access multiple.
+defm LAM : LoadMultipleRSPair<"lam", 0x9A, 0xEB9A, AR32>;
+
+// Load access multiple.
+defm STAM : StoreMultipleRSPair<"stam", 0x9B, 0xEB9B, AR32>;
+
+//===----------------------------------------------------------------------===//
 // Transactional execution
 //===----------------------------------------------------------------------===//
 
@@ -1486,13 +1510,6 @@ let Predicates = [FeatureProcessorAssist] in {
 // Extract CC into bits 29 and 28 of a register.
 let Uses = [CC] in
   def IPM : InherentRRE<"ipm", 0xB222, GR32, z_ipm>;
-
-// Read a 32-bit access register into a GR32.  As with all GR32 operations,
-// the upper 32 bits of the enclosing GR64 remain unchanged, which is useful
-// when a 64-bit address is stored in a pair of access registers.
-def EAR : InstRRE<0xB24F, (outs GR32:$R1), (ins access_reg:$R2),
-                  "ear\t$R1, $R2",
-                  [(set GR32:$R1, (z_extract_access access_reg:$R2))]>;
 
 // Find leftmost one, AKA count leading zeros.  The instruction actually
 // returns a pair of GR64s, the first giving the number of leading zeros

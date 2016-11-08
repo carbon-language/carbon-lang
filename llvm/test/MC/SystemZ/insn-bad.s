@@ -1660,6 +1660,14 @@
 	la	%r0, -1
 	la	%r0, 4096
 
+#CHECK: error: invalid operand
+#CHECK: lae	%r0, -1
+#CHECK: error: invalid operand
+#CHECK: lae	%r0, 4096
+
+	lae	%r0, -1
+	lae	%r0, 4096
+
 #CHECK: error: instruction requires: interlocked-access1
 #CHECK: laa	%r1, %r2, 100(%r3)
 	laa	%r1, %r2, 100(%r3)
@@ -1675,6 +1683,33 @@
 #CHECK: error: instruction requires: interlocked-access1
 #CHECK: laalg	%r1, %r2, 100(%r3)
 	laalg	%r1, %r2, 100(%r3)
+
+#CHECK: error: invalid operand
+#CHECK: laey	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: laey	%r0, 524288
+
+	laey	%r0, -524289
+	laey	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: lam	%a0, %a0, 4096
+#CHECK: error: invalid use of indexed addressing
+#CHECK: lam	%a0, %a0, 0(%r1,%r2)
+
+	lam	%a0, %a0, 4096
+	lam	%a0, %a0, 0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: lamy	%a0, %a0, -524289
+#CHECK: error: invalid operand
+#CHECK: lamy	%a0, %a0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: lamy	%a0, %a0, 0(%r1,%r2)
+
+	lamy	%a0, %a0, -524289
+	lamy	%a0, %a0, 524288
+	lamy	%a0, %a0, 0(%r1,%r2)
 
 #CHECK: error: instruction requires: interlocked-access1
 #CHECK: lan	%r1, %r2, 100(%r3)
@@ -3348,6 +3383,25 @@
 
 	st	%r0, -1
 	st	%r0, 4096
+
+#CHECK: error: invalid operand
+#CHECK: stam	%a0, %a0, 4096
+#CHECK: error: invalid use of indexed addressing
+#CHECK: stam	%a0, %a0, 0(%r1,%r2)
+
+	stam	%a0, %a0, 4096
+	stam	%a0, %a0, 0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: stamy	%a0, %a0, -524289
+#CHECK: error: invalid operand
+#CHECK: stamy	%a0, %a0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: stamy	%a0, %a0, 0(%r1,%r2)
+
+	stamy	%a0, %a0, -524289
+	stamy	%a0, %a0, 524288
+	stamy	%a0, %a0, 0(%r1,%r2)
 
 #CHECK: error: invalid operand
 #CHECK: stc	%r0, -1
