@@ -69,6 +69,8 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
   // FIXME: freezeReservedRegs is now done in IRTranslator, but there are many
   // other MF/MFI fields we need to initialize.
 
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+
 #ifndef NDEBUG
   // Check that our input is fully legal: we require the function to have the
   // Legalized property, so it should be.
@@ -77,7 +79,6 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
   // The RegBankSelected property is already checked in the verifier. Note
   // that it has the same layering problem, but we only use inline methods so
   // end up not needing to link against the GlobalISel library.
-  const MachineRegisterInfo &MRI = MF.getRegInfo();
   if (const LegalizerInfo *MLI = MF.getSubtarget().getLegalizerInfo())
     for (const MachineBasicBlock &MBB : MF)
       for (const MachineInstr &MI : MBB)
@@ -99,9 +100,10 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
     bool ReachedBegin = false;
     for (auto MII = std::prev(MBB->end()), Begin = MBB->begin();
          !ReachedBegin;) {
+#ifndef NDEBUG
       // Keep track of the insertion range for debug printing.
       const auto AfterIt = std::next(MII);
-
+#endif
       // Select this instruction.
       MachineInstr &MI = *MII;
 
