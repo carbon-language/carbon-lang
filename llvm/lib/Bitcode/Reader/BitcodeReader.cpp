@@ -237,6 +237,7 @@ protected:
   BitstreamCursor Stream;
 
   std::error_code initStream();
+  bool readBlockInfo();
 
   virtual std::error_code error(const Twine &Message) = 0;
   virtual ~BitcodeReaderBase() = default;
@@ -3758,6 +3759,11 @@ std::error_code BitcodeReader::parseBitcodeVersion() {
   }
 }
 
+
+bool BitcodeReaderBase::readBlockInfo() {
+  return Stream.ReadBlockInfoBlock();
+}
+
 std::error_code BitcodeReader::parseModule(uint64_t ResumeBit,
                                            bool ShouldLazyLoadMetadata) {
   if (ResumeBit)
@@ -3786,7 +3792,7 @@ std::error_code BitcodeReader::parseModule(uint64_t ResumeBit,
           return error("Invalid record");
         break;
       case bitc::BLOCKINFO_BLOCK_ID:
-        if (Stream.ReadBlockInfoBlock())
+        if (readBlockInfo())
           return error("Malformed block");
         break;
       case bitc::PARAMATTR_BLOCK_ID:
@@ -6153,7 +6159,7 @@ std::error_code ModuleSummaryIndexBitcodeReader::parseModule() {
         break;
       case bitc::BLOCKINFO_BLOCK_ID:
         // Need to parse these to get abbrev ids (e.g. for VST)
-        if (Stream.ReadBlockInfoBlock())
+        if (readBlockInfo())
           return error("Malformed block");
         break;
       case bitc::VALUE_SYMTAB_BLOCK_ID:
