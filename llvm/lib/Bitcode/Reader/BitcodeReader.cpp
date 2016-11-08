@@ -230,9 +230,9 @@ private:
 
 class BitcodeReaderBase {
 protected:
-  BitcodeReaderBase(MemoryBuffer *Buffer) : Buffer(Buffer) {}
+  BitcodeReaderBase(MemoryBufferRef Buffer) : Buffer(Buffer) {}
 
-  std::unique_ptr<MemoryBuffer> Buffer;
+  MemoryBufferRef Buffer;
   BitstreamBlockInfo BlockInfo;
   BitstreamCursor Stream;
 
@@ -244,10 +244,10 @@ protected:
 };
 
 std::error_code BitcodeReaderBase::initStream() {
-  const unsigned char *BufPtr = (const unsigned char*)Buffer->getBufferStart();
-  const unsigned char *BufEnd = BufPtr+Buffer->getBufferSize();
+  const unsigned char *BufPtr = (const unsigned char*)Buffer.getBufferStart();
+  const unsigned char *BufEnd = BufPtr+Buffer.getBufferSize();
 
-  if (Buffer->getBufferSize() & 3)
+  if (Buffer.getBufferSize() & 3)
     return error("Invalid bitcode signature");
 
   // If we have a wrapper header, parse it and ignore the non-bc file contents.
@@ -360,14 +360,9 @@ public:
   std::error_code error(BitcodeError E, const Twine &Message);
   std::error_code error(const Twine &Message) override;
 
-  BitcodeReader(MemoryBuffer *Buffer, LLVMContext &Context);
-  ~BitcodeReader() override { freeState(); }
+  BitcodeReader(MemoryBufferRef Buffer, LLVMContext &Context);
 
   std::error_code materializeForwardReferencedFunctions();
-
-  void freeState();
-
-  void releaseBuffer();
 
   std::error_code materialize(GlobalValue *GV) override;
   std::error_code materializeModule() override;
@@ -585,13 +580,8 @@ public:
   std::error_code error(const Twine &Message);
 
   ModuleSummaryIndexBitcodeReader(
-      MemoryBuffer *Buffer, DiagnosticHandlerFunction DiagnosticHandler,
+      MemoryBufferRef Buffer, DiagnosticHandlerFunction DiagnosticHandler,
       bool CheckGlobalValSummaryPresenceOnly = false);
-  ~ModuleSummaryIndexBitcodeReader() { freeState(); }
-
-  void freeState();
-
-  void releaseBuffer();
 
   /// Check if the parser has encountered a summary section.
   bool foundGlobalValSummary() { return SeenGlobalValSummary; }
@@ -661,7 +651,7 @@ std::error_code BitcodeReader::error(const Twine &Message) {
                  Message);
 }
 
-BitcodeReader::BitcodeReader(MemoryBuffer *Buffer, LLVMContext &Context)
+BitcodeReader::BitcodeReader(MemoryBufferRef Buffer, LLVMContext &Context)
     : BitcodeReaderBase(Buffer), Context(Context), ValueList(Context),
       MetadataList(Context) {}
 
@@ -696,24 +686,6 @@ std::error_code BitcodeReader::materializeForwardReferencedFunctions() {
   // Reset state.
   WillMaterializeAllForwardRefs = false;
   return std::error_code();
-}
-
-void BitcodeReader::freeState() {
-  Buffer = nullptr;
-  std::vector<Type*>().swap(TypeList);
-  ValueList.clear();
-  MetadataList.clear();
-  std::vector<Comdat *>().swap(ComdatList);
-
-  std::vector<AttributeSet>().swap(MAttributes);
-  std::vector<BasicBlock*>().swap(FunctionBBs);
-  std::vector<Function*>().swap(FunctionsWithBodies);
-  DeferredFunctionInfo.clear();
-  DeferredMetadataInfo.clear();
-  MDKindMap.clear();
-
-  assert(BasicBlockFwdRefs.empty() && "Unresolved blockaddress fwd references");
-  BasicBlockFwdRefQueue.clear();
 }
 
 //===----------------------------------------------------------------------===//
@@ -5887,8 +5859,6 @@ std::error_code BitcodeReader::findFunctionInStream(
 // GVMaterializer implementation
 //===----------------------------------------------------------------------===//
 
-void BitcodeReader::releaseBuffer() { Buffer.release(); }
-
 std::error_code BitcodeReader::materialize(GlobalValue *GV) {
   Function *F = dyn_cast<Function>(GV);
   // If it's not a function or is already material, ignore the request.
@@ -6006,15 +5976,11 @@ std::error_code ModuleSummaryIndexBitcodeReader::error(const Twine &Message) {
 }
 
 ModuleSummaryIndexBitcodeReader::ModuleSummaryIndexBitcodeReader(
-    MemoryBuffer *Buffer, DiagnosticHandlerFunction DiagnosticHandler,
+    MemoryBufferRef Buffer, DiagnosticHandlerFunction DiagnosticHandler,
     bool CheckGlobalValSummaryPresenceOnly)
     : BitcodeReaderBase(Buffer),
       DiagnosticHandler(std::move(DiagnosticHandler)),
       CheckGlobalValSummaryPresenceOnly(CheckGlobalValSummaryPresenceOnly) {}
-
-void ModuleSummaryIndexBitcodeReader::freeState() { Buffer = nullptr; }
-
-void ModuleSummaryIndexBitcodeReader::releaseBuffer() { Buffer.release(); }
 
 std::pair<GlobalValue::GUID, GlobalValue::GUID>
 ModuleSummaryIndexBitcodeReader::getGUIDFromValueId(unsigned ValueId) {
@@ -6219,7 +6185,7 @@ std::error_code ModuleSummaryIndexBitcodeReader::parseModule() {
             break;
           if (TheIndex->modulePaths().empty())
             // We always seed the index with the module.
-            TheIndex->addModulePath(Buffer->getBufferIdentifier(), 0);
+            TheIndex->addModulePath(Buffer.getBufferIdentifier(), 0);
           if (TheIndex->modulePaths().size() != 1)
             return error("Don't expect multiple modules defined?");
           auto &Hash = TheIndex->modulePaths().begin()->second.second;
@@ -6359,7 +6325,7 @@ std::error_code ModuleSummaryIndexBitcodeReader::parseEntireSummary() {
       // module path string table entry with an empty (0) ID to take
       // ownership.
       FS->setModulePath(
-          TheIndex->addModulePath(Buffer->getBufferIdentifier(), 0)->first());
+          TheIndex->addModulePath(Buffer.getBufferIdentifier(), 0)->first());
       static int RefListStartIndex = 4;
       int CallGraphEdgeStartIndex = RefListStartIndex + NumRefs;
       assert(Record.size() >= RefListStartIndex + NumRefs &&
@@ -6398,7 +6364,7 @@ std::error_code ModuleSummaryIndexBitcodeReader::parseEntireSummary() {
       // module path string table entry with an empty (0) ID to take
       // ownership.
       AS->setModulePath(
-          TheIndex->addModulePath(Buffer->getBufferIdentifier(), 0)->first());
+          TheIndex->addModulePath(Buffer.getBufferIdentifier(), 0)->first());
 
       GlobalValue::GUID AliaseeGUID = getGUIDFromValueId(AliaseeID).first;
       auto *AliaseeSummary = TheIndex->getGlobalValueSummary(AliaseeGUID);
@@ -6419,7 +6385,7 @@ std::error_code ModuleSummaryIndexBitcodeReader::parseEntireSummary() {
       std::unique_ptr<GlobalVarSummary> FS =
           llvm::make_unique<GlobalVarSummary>(Flags);
       FS->setModulePath(
-          TheIndex->addModulePath(Buffer->getBufferIdentifier(), 0)->first());
+          TheIndex->addModulePath(Buffer.getBufferIdentifier(), 0)->first());
       for (unsigned I = 2, E = Record.size(); I != E; ++I) {
         unsigned RefValueId = Record[I];
         GlobalValue::GUID RefGUID = getGUIDFromValueId(RefValueId).first;
@@ -6677,33 +6643,6 @@ const std::error_category &llvm::BitcodeErrorCategory() {
 // External interface
 //===----------------------------------------------------------------------===//
 
-static ErrorOr<std::unique_ptr<Module>>
-getBitcodeModuleImpl(StringRef Name, BitcodeReader *R, LLVMContext &Context,
-                     bool MaterializeAll, bool ShouldLazyLoadMetadata) {
-  std::unique_ptr<Module> M = llvm::make_unique<Module>(Name, Context);
-  M->setMaterializer(R);
-
-  auto cleanupOnError = [&](std::error_code EC) {
-    R->releaseBuffer(); // Never take ownership on error.
-    return EC;
-  };
-
-  // Delay parsing Metadata if ShouldLazyLoadMetadata is true.
-  if (std::error_code EC = R->parseBitcodeInto(M.get(), ShouldLazyLoadMetadata))
-    return cleanupOnError(EC);
-
-  if (MaterializeAll) {
-    // Read in the entire module, and destroy the BitcodeReader.
-    if (std::error_code EC = M->materializeAll())
-      return cleanupOnError(EC);
-  } else {
-    // Resolve forward references from blockaddresses.
-    if (std::error_code EC = R->materializeForwardReferencedFunctions())
-      return cleanupOnError(EC);
-  }
-  return std::move(M);
-}
-
 /// \brief Get a lazy one-at-time loading module from bitcode.
 ///
 /// This isn't always used in a lazy context.  In particular, it's also used by
@@ -6713,41 +6652,59 @@ getBitcodeModuleImpl(StringRef Name, BitcodeReader *R, LLVMContext &Context,
 /// \param[in] MaterializeAll Set to \c true if we should materialize
 /// everything.
 static ErrorOr<std::unique_ptr<Module>>
-getLazyBitcodeModuleImpl(std::unique_ptr<MemoryBuffer> &&Buffer,
-                         LLVMContext &Context, bool MaterializeAll,
+getLazyBitcodeModuleImpl(MemoryBufferRef Buffer, LLVMContext &Context,
+                         bool MaterializeAll,
                          bool ShouldLazyLoadMetadata = false) {
-  BitcodeReader *R = new BitcodeReader(Buffer.get(), Context);
+  BitcodeReader *R = new BitcodeReader(Buffer, Context);
 
-  ErrorOr<std::unique_ptr<Module>> Ret =
-      getBitcodeModuleImpl(Buffer->getBufferIdentifier(), R, Context,
-                           MaterializeAll, ShouldLazyLoadMetadata);
-  if (!Ret)
-    return Ret;
+  std::unique_ptr<Module> M =
+      llvm::make_unique<Module>(Buffer.getBufferIdentifier(), Context);
+  M->setMaterializer(R);
 
-  Buffer.release(); // The BitcodeReader owns it now.
-  return Ret;
+  // Delay parsing Metadata if ShouldLazyLoadMetadata is true.
+  if (std::error_code EC = R->parseBitcodeInto(M.get(), ShouldLazyLoadMetadata))
+    return EC;
+
+  if (MaterializeAll) {
+    // Read in the entire module, and destroy the BitcodeReader.
+    if (std::error_code EC = M->materializeAll())
+      return EC;
+  } else {
+    // Resolve forward references from blockaddresses.
+    if (std::error_code EC = R->materializeForwardReferencedFunctions())
+      return EC;
+  }
+  return std::move(M);
 }
 
 ErrorOr<std::unique_ptr<Module>>
-llvm::getLazyBitcodeModule(std::unique_ptr<MemoryBuffer> &&Buffer,
+llvm::getLazyBitcodeModule(MemoryBufferRef Buffer,
                            LLVMContext &Context, bool ShouldLazyLoadMetadata) {
-  return getLazyBitcodeModuleImpl(std::move(Buffer), Context, false,
+  return getLazyBitcodeModuleImpl(Buffer, Context, false,
                                   ShouldLazyLoadMetadata);
+}
+
+ErrorOr<std::unique_ptr<Module>>
+llvm::getOwningLazyBitcodeModule(std::unique_ptr<MemoryBuffer> &&Buffer,
+                                 LLVMContext &Context,
+                                 bool ShouldLazyLoadMetadata) {
+  auto MOrErr = getLazyBitcodeModule(*Buffer, Context, ShouldLazyLoadMetadata);
+  if (MOrErr)
+    (*MOrErr)->setOwnedMemoryBuffer(std::move(Buffer));
+  return MOrErr;
 }
 
 ErrorOr<std::unique_ptr<Module>> llvm::parseBitcodeFile(MemoryBufferRef Buffer,
                                                         LLVMContext &Context) {
-  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
-  return getLazyBitcodeModuleImpl(std::move(Buf), Context, true);
+  return getLazyBitcodeModuleImpl(Buffer, Context, true);
   // TODO: Restore the use-lists to the in-memory state when the bitcode was
   // written.  We must defer until the Module has been fully materialized.
 }
 
 std::string llvm::getBitcodeTargetTriple(MemoryBufferRef Buffer,
                                          LLVMContext &Context) {
-  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
-  auto R = llvm::make_unique<BitcodeReader>(Buf.release(), Context);
-  ErrorOr<std::string> Triple = R->parseTriple();
+  BitcodeReader R(Buffer, Context);
+  ErrorOr<std::string> Triple = R.parseTriple();
   if (Triple.getError())
     return "";
   return Triple.get();
@@ -6755,9 +6712,8 @@ std::string llvm::getBitcodeTargetTriple(MemoryBufferRef Buffer,
 
 bool llvm::isBitcodeContainingObjCCategory(MemoryBufferRef Buffer,
                                            LLVMContext &Context) {
-  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
-  auto R = llvm::make_unique<BitcodeReader>(Buf.release(), Context);
-  ErrorOr<bool> hasObjCCategory = R->hasObjCCategory();
+  BitcodeReader R(Buffer, Context);
+  ErrorOr<bool> hasObjCCategory = R.hasObjCCategory();
   if (hasObjCCategory.getError())
     return false;
   return hasObjCCategory.get();
@@ -6765,8 +6721,7 @@ bool llvm::isBitcodeContainingObjCCategory(MemoryBufferRef Buffer,
 
 std::string llvm::getBitcodeProducerString(MemoryBufferRef Buffer,
                                            LLVMContext &Context) {
-  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
-  BitcodeReader R(Buf.release(), Context);
+  BitcodeReader R(Buffer, Context);
   ErrorOr<std::string> ProducerString = R.parseIdentificationBlock();
   if (ProducerString.getError())
     return "";
@@ -6777,20 +6732,13 @@ std::string llvm::getBitcodeProducerString(MemoryBufferRef Buffer,
 ErrorOr<std::unique_ptr<ModuleSummaryIndex>> llvm::getModuleSummaryIndex(
     MemoryBufferRef Buffer,
     const DiagnosticHandlerFunction &DiagnosticHandler) {
-  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
-  ModuleSummaryIndexBitcodeReader R(Buf.get(), DiagnosticHandler);
+  ModuleSummaryIndexBitcodeReader R(Buffer, DiagnosticHandler);
 
   auto Index = llvm::make_unique<ModuleSummaryIndex>();
 
-  auto cleanupOnError = [&](std::error_code EC) {
-    R.releaseBuffer(); // Never take ownership on error.
-    return EC;
-  };
-
   if (std::error_code EC = R.parseSummaryIndexInto(Index.get()))
-    return cleanupOnError(EC);
+    return EC;
 
-  Buf.release(); // The ModuleSummaryIndexBitcodeReader owns it now.
   return std::move(Index);
 }
 
@@ -6798,17 +6746,10 @@ ErrorOr<std::unique_ptr<ModuleSummaryIndex>> llvm::getModuleSummaryIndex(
 bool llvm::hasGlobalValueSummary(
     MemoryBufferRef Buffer,
     const DiagnosticHandlerFunction &DiagnosticHandler) {
-  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
-  ModuleSummaryIndexBitcodeReader R(Buf.get(), DiagnosticHandler, true);
+  ModuleSummaryIndexBitcodeReader R(Buffer, DiagnosticHandler, true);
 
-  auto cleanupOnError = [&](std::error_code EC) {
-    R.releaseBuffer(); // Never take ownership on error.
+  if (R.parseSummaryIndexInto(nullptr))
     return false;
-  };
 
-  if (std::error_code EC = R.parseSummaryIndexInto(nullptr))
-    return cleanupOnError(EC);
-
-  Buf.release(); // The ModuleSummaryIndexBitcodeReader owns it now.
   return R.foundGlobalValSummary();
 }
