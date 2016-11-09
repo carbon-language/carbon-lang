@@ -31,7 +31,6 @@ template <class ELFT> class EhInputSection;
 template <class ELFT> class InputSection;
 template <class ELFT> class InputSectionBase;
 template <class ELFT> class MergeInputSection;
-template <class ELFT> class MipsReginfoInputSection;
 template <class ELFT> class OutputSection;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class SharedFile;
@@ -57,8 +56,6 @@ public:
     GotPlt,
     HashTable,
     Merge,
-    MipsReginfo,
-    MipsOptions,
     MipsAbiFlags,
     Plt,
     Regular,
@@ -631,43 +628,6 @@ public:
 private:
   void addEntries();
   void Add(Entry E) { Entries.push_back(E); }
-};
-
-template <class ELFT>
-class MipsReginfoOutputSection final : public OutputSectionBase<ELFT> {
-  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
-  typedef OutputSectionBase<ELFT> Base;
-
-public:
-  MipsReginfoOutputSection();
-  void writeTo(uint8_t *Buf) override;
-  void addSection(InputSectionBase<ELFT> *S) override;
-  typename Base::Kind getKind() const override { return Base::MipsReginfo; }
-  static bool classof(const Base *B) {
-    return B->getKind() == Base::MipsReginfo;
-  }
-
-private:
-  uint32_t GprMask = 0;
-};
-
-template <class ELFT>
-class MipsOptionsOutputSection final : public OutputSectionBase<ELFT> {
-  typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
-  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
-  typedef OutputSectionBase<ELFT> Base;
-
-public:
-  MipsOptionsOutputSection();
-  void writeTo(uint8_t *Buf) override;
-  void addSection(InputSectionBase<ELFT> *S) override;
-  typename Base::Kind getKind() const override { return Base::MipsOptions; }
-  static bool classof(const Base *B) {
-    return B->getKind() == Base::MipsOptions;
-  }
-
-private:
-  uint32_t GprMask = 0;
 };
 
 template <class ELFT>

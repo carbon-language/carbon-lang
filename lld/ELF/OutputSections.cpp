@@ -913,6 +913,11 @@ OutputSection<ELFT>::OutputSection(StringRef Name, uint32_t Type, uintX_t Flags)
     this->Entsize = sizeof(Elf_Rela);
   else if (Type == SHT_REL)
     this->Entsize = sizeof(Elf_Rel);
+  else if (Type == SHT_MIPS_REGINFO)
+    this->Entsize = sizeof(Elf_Mips_RegInfo<ELFT>);
+  else if (Type == SHT_MIPS_OPTIONS)
+    this->Entsize =
+        sizeof(Elf_Mips_Options<ELFT>) + sizeof(Elf_Mips_RegInfo<ELFT>);
 }
 
 template <class ELFT> void OutputSection<ELFT>::finalize() {
@@ -1725,64 +1730,6 @@ template <class ELFT> void VersionNeedSection<ELFT>::finalize() {
 }
 
 template <class ELFT>
-MipsReginfoOutputSection<ELFT>::MipsReginfoOutputSection()
-    : OutputSectionBase<ELFT>(".reginfo", SHT_MIPS_REGINFO, SHF_ALLOC) {
-  this->Addralign = 4;
-  this->Entsize = sizeof(Elf_Mips_RegInfo);
-  this->Size = sizeof(Elf_Mips_RegInfo);
-}
-
-template <class ELFT>
-void MipsReginfoOutputSection<ELFT>::writeTo(uint8_t *Buf) {
-  auto *R = reinterpret_cast<Elf_Mips_RegInfo *>(Buf);
-  if (Config->Relocatable)
-    R->ri_gp_value = 0;
-  else
-    R->ri_gp_value = Out<ELFT>::Got->Addr + MipsGPOffset;
-  R->ri_gprmask = GprMask;
-}
-
-template <class ELFT>
-void MipsReginfoOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
-  // Copy input object file's .reginfo gprmask to output.
-  auto *S = cast<MipsReginfoInputSection<ELFT>>(C);
-  GprMask |= S->Reginfo->ri_gprmask;
-  S->OutSec = this;
-}
-
-template <class ELFT>
-MipsOptionsOutputSection<ELFT>::MipsOptionsOutputSection()
-    : OutputSectionBase<ELFT>(".MIPS.options", SHT_MIPS_OPTIONS,
-                              SHF_ALLOC | SHF_MIPS_NOSTRIP) {
-  this->Addralign = 8;
-  this->Entsize = 1;
-  this->Size = sizeof(Elf_Mips_Options) + sizeof(Elf_Mips_RegInfo);
-}
-
-template <class ELFT>
-void MipsOptionsOutputSection<ELFT>::writeTo(uint8_t *Buf) {
-  auto *Opt = reinterpret_cast<Elf_Mips_Options *>(Buf);
-  Opt->kind = ODK_REGINFO;
-  Opt->size = this->Size;
-  Opt->section = 0;
-  Opt->info = 0;
-  auto *Reg = reinterpret_cast<Elf_Mips_RegInfo *>(Buf + sizeof(*Opt));
-  if (Config->Relocatable)
-    Reg->ri_gp_value = 0;
-  else
-    Reg->ri_gp_value = Out<ELFT>::Got->Addr + MipsGPOffset;
-  Reg->ri_gprmask = GprMask;
-}
-
-template <class ELFT>
-void MipsOptionsOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
-  auto *S = cast<MipsOptionsInputSection<ELFT>>(C);
-  if (S->Reginfo)
-    GprMask |= S->Reginfo->ri_gprmask;
-  S->OutSec = this;
-}
-
-template <class ELFT>
 MipsAbiFlagsOutputSection<ELFT>::MipsAbiFlagsOutputSection()
     : OutputSectionBase<ELFT>(".MIPS.abiflags", SHT_MIPS_ABIFLAGS, SHF_ALLOC) {
   this->Addralign = 8;
@@ -1875,12 +1822,6 @@ OutputSectionFactory<ELFT>::create(const SectionKey<ELFT::Is64Bits> &Key,
     return {Out<ELFT>::EhFrame, false};
   case InputSectionBase<ELFT>::Merge:
     Sec = make<MergeOutputSection<ELFT>>(Key.Name, Type, Flags, Key.Alignment);
-    break;
-  case InputSectionBase<ELFT>::MipsReginfo:
-    Sec = make<MipsReginfoOutputSection<ELFT>>();
-    break;
-  case InputSectionBase<ELFT>::MipsOptions:
-    Sec = make<MipsOptionsOutputSection<ELFT>>();
     break;
   case InputSectionBase<ELFT>::MipsAbiFlags:
     Sec = make<MipsAbiFlagsOutputSection<ELFT>>();
@@ -1977,16 +1918,6 @@ template class EhOutputSection<ELF32LE>;
 template class EhOutputSection<ELF32BE>;
 template class EhOutputSection<ELF64LE>;
 template class EhOutputSection<ELF64BE>;
-
-template class MipsReginfoOutputSection<ELF32LE>;
-template class MipsReginfoOutputSection<ELF32BE>;
-template class MipsReginfoOutputSection<ELF64LE>;
-template class MipsReginfoOutputSection<ELF64BE>;
-
-template class MipsOptionsOutputSection<ELF32LE>;
-template class MipsOptionsOutputSection<ELF32BE>;
-template class MipsOptionsOutputSection<ELF64LE>;
-template class MipsOptionsOutputSection<ELF64BE>;
 
 template class MipsAbiFlagsOutputSection<ELF32LE>;
 template class MipsAbiFlagsOutputSection<ELF32BE>;

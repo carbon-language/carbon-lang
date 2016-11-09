@@ -39,7 +39,7 @@ template <class ELFT> class OutputSectionBase;
 // section
 class InputSectionData {
 public:
-  enum Kind { Regular, EHFrame, Merge, MipsReginfo, MipsOptions, MipsAbiFlags };
+  enum Kind { Regular, EHFrame, Merge, MipsAbiFlags };
 
   // The garbage collector sets sections' Live bits.
   // If GC is disabled, all sections are considered live by default.
@@ -287,36 +287,6 @@ private:
 };
 
 template <class ELFT> InputSection<ELFT> InputSection<ELFT>::Discarded;
-
-// MIPS .reginfo section provides information on the registers used by the code
-// in the object file. Linker should collect this information and write a single
-// .reginfo section in the output file. The output section contains a union of
-// used registers masks taken from input .reginfo sections and final value
-// of the `_gp` symbol.  For details: Chapter 4 / "Register Information" at
-// ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-template <class ELFT>
-class MipsReginfoInputSection : public InputSectionBase<ELFT> {
-  typedef typename ELFT::Shdr Elf_Shdr;
-
-public:
-  MipsReginfoInputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Hdr,
-                          StringRef Name);
-  static bool classof(const InputSectionData *S);
-
-  const llvm::object::Elf_Mips_RegInfo<ELFT> *Reginfo = nullptr;
-};
-
-template <class ELFT>
-class MipsOptionsInputSection : public InputSectionBase<ELFT> {
-  typedef typename ELFT::Shdr Elf_Shdr;
-
-public:
-  MipsOptionsInputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Hdr,
-                          StringRef Name);
-  static bool classof(const InputSectionData *S);
-
-  const llvm::object::Elf_Mips_RegInfo<ELFT> *Reginfo = nullptr;
-};
 
 template <class ELFT>
 class MipsAbiFlagsInputSection : public InputSectionBase<ELFT> {
