@@ -1,4 +1,5 @@
-# REQUIRES: x86, cpio
+# Extracting the cpio archive can get over the path limit on windows.
+# REQUIRES: shell
 
 # RUN: rm -rf %t.dir
 # RUN: mkdir -p %t.dir
@@ -9,6 +10,6 @@
 
 # RUN: grep TRAILER repro.cpio
 # RUN: cpio -id < repro.cpio
-# RUN: FileCheck %s --check-prefix=RSP < repro/response.txt
+# RUN: FileCheck --check-prefix=RSP %s < repro/response.txt
 # RSP: abc
 # RSP: -o t
