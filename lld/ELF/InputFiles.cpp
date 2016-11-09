@@ -795,12 +795,12 @@ template <class ELFT> void BinaryFile::parse() {
       make<InputSection<ELFT>>(SHF_ALLOC, SHT_PROGBITS, 8, Data, ".data");
   Sections.push_back(Section);
 
-  elf::Symtab<ELFT>::X->addRegular(StartName, STV_DEFAULT, Section, STB_GLOBAL,
-                                   STT_OBJECT, 0);
-  elf::Symtab<ELFT>::X->addRegular(EndName, STV_DEFAULT, Section, STB_GLOBAL,
-                                   STT_OBJECT, Data.size());
-  elf::Symtab<ELFT>::X->addRegular(SizeName, STV_DEFAULT, nullptr, STB_GLOBAL,
-                                   STT_OBJECT, Data.size());
+  elf::Symtab<ELFT>::X->addRegular(StartName, STV_DEFAULT, STT_OBJECT, 0, 0,
+                                   STB_GLOBAL, Section);
+  elf::Symtab<ELFT>::X->addRegular(EndName, STV_DEFAULT, STT_OBJECT,
+                                   Data.size(), 0, STB_GLOBAL, Section);
+  elf::Symtab<ELFT>::X->addRegular(SizeName, STV_DEFAULT, STT_OBJECT,
+                                   Data.size(), 0, STB_GLOBAL, nullptr);
 }
 
 static bool isBitcode(MemoryBufferRef MB) {
