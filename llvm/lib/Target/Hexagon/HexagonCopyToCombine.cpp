@@ -593,7 +593,9 @@ void HexagonCopyToCombine::combine(MachineInstr &I1, MachineInstr &I2,
     else
       SuperRC = &Hexagon::VecDblRegs128BRegClass;
     SubLo = Hexagon::vsub_lo;
-  }
+  } else
+    llvm_unreachable("Unexpected register class");
+
   // Get the double word register.
   unsigned DoubleRegDest = TRI->getMatchingSuperReg(LoRegDef, SubLo, SuperRC);
   assert(DoubleRegDest != 0 && "Expect a valid register");
