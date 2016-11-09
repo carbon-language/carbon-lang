@@ -29,7 +29,7 @@ template <class ELFT> class ICF;
 template <class ELFT> class DefinedRegular;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class OutputSection;
-template <class ELFT> class OutputSectionBase;
+class OutputSectionBase;
 
 // We need non-template input section class to store symbol layout
 // in linker script parser structures, where we do not have ELFT
@@ -104,7 +104,7 @@ public:
                    uintX_t Entsize, uint32_t Link, uint32_t Info,
                    uintX_t Addralign, ArrayRef<uint8_t> Data, StringRef Name,
                    Kind SectionKind);
-  OutputSectionBase<ELFT> *OutSec = nullptr;
+  OutputSectionBase *OutSec = nullptr;
 
   // This pointer points to the "real" instance of this instance.
   // Usually Repl == this. However, if ICF merges two sections,

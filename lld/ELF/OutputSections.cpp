@@ -32,16 +32,15 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf;
 
-template <class ELFT>
-OutputSectionBase<ELFT>::OutputSectionBase(StringRef Name, uint32_t Type,
-                                           uintX_t Flags)
+OutputSectionBase::OutputSectionBase(StringRef Name, uint32_t Type,
+                                     uint64_t Flags)
     : Name(Name) {
   this->Type = Type;
   this->Flags = Flags;
   this->Addralign = 1;
 }
 
-template <class ELFT> uint32_t OutputSectionBase<ELFT>::getPhdrFlags() const {
+uint32_t OutputSectionBase::getPhdrFlags() const {
   uint32_t Ret = PF_R;
   if (Flags & SHF_WRITE)
     Ret |= PF_W;
@@ -51,7 +50,7 @@ template <class ELFT> uint32_t OutputSectionBase<ELFT>::getPhdrFlags() const {
 }
 
 template <class ELFT>
-void OutputSectionBase<ELFT>::writeHeaderTo(Elf_Shdr *Shdr) {
+void OutputSectionBase::writeHeaderTo(typename ELFT::Shdr *Shdr) {
   Shdr->sh_entsize = Entsize;
   Shdr->sh_addralign = Addralign;
   Shdr->sh_type = Type;
@@ -66,7 +65,7 @@ void OutputSectionBase<ELFT>::writeHeaderTo(Elf_Shdr *Shdr) {
 
 template <class ELFT>
 GdbIndexSection<ELFT>::GdbIndexSection()
-    : OutputSectionBase<ELFT>(".gdb_index", SHT_PROGBITS, 0) {}
+    : OutputSectionBase(".gdb_index", SHT_PROGBITS, 0) {}
 
 template <class ELFT> void GdbIndexSection<ELFT>::parseDebugSections() {
   std::vector<InputSection<ELFT> *> &IS =
@@ -110,7 +109,7 @@ template <class ELFT> void GdbIndexSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 GotPltSection<ELFT>::GotPltSection()
-    : OutputSectionBase<ELFT>(".got.plt", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE) {
+    : OutputSectionBase(".got.plt", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE) {
   this->Addralign = Target->GotPltEntrySize;
 }
 
@@ -139,7 +138,7 @@ template <class ELFT> void GotPltSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 GotSection<ELFT>::GotSection()
-    : OutputSectionBase<ELFT>(".got", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE) {
+    : OutputSectionBase(".got", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE) {
   if (Config->EMachine == EM_MIPS)
     this->Flags |= SHF_MIPS_GPREL;
   this->Addralign = Target->GotEntrySize;
@@ -313,7 +312,7 @@ template <class ELFT> void GotSection<ELFT>::finalize() {
     // Take into account MIPS GOT header.
     // See comment in the GotSection::writeTo.
     MipsPageEntries += 2;
-    for (const OutputSectionBase<ELFT> *OutSec : MipsOutSections) {
+    for (const OutputSectionBase *OutSec : MipsOutSections) {
       // Calculate an upper bound of MIPS GOT entries required to store page
       // addresses of local symbols. We assume the worst case - each 64kb
       // page of the output section has at least one GOT relocation against it.
@@ -408,7 +407,7 @@ template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 PltSection<ELFT>::PltSection()
-    : OutputSectionBase<ELFT>(".plt", SHT_PROGBITS, SHF_ALLOC | SHF_EXECINSTR) {
+    : OutputSectionBase(".plt", SHT_PROGBITS, SHF_ALLOC | SHF_EXECINSTR) {
   this->Addralign = 16;
 }
 
@@ -440,8 +439,7 @@ template <class ELFT> void PltSection<ELFT>::finalize() {
 
 template <class ELFT>
 RelocationSection<ELFT>::RelocationSection(StringRef Name, bool Sort)
-    : OutputSectionBase<ELFT>(Name, Config->Rela ? SHT_RELA : SHT_REL,
-                              SHF_ALLOC),
+    : OutputSectionBase(Name, Config->Rela ? SHT_RELA : SHT_REL, SHF_ALLOC),
       Sort(Sort) {
   this->Entsize = Config->Rela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
   this->Addralign = sizeof(uintX_t);
@@ -504,7 +502,7 @@ template <class ELFT> void RelocationSection<ELFT>::finalize() {
 
 template <class ELFT>
 HashTableSection<ELFT>::HashTableSection()
-    : OutputSectionBase<ELFT>(".hash", SHT_HASH, SHF_ALLOC) {
+    : OutputSectionBase(".hash", SHT_HASH, SHF_ALLOC) {
   this->Entsize = sizeof(Elf_Word);
   this->Addralign = sizeof(Elf_Word);
 }
@@ -550,7 +548,7 @@ static uint32_t hashGnu(StringRef Name) {
 
 template <class ELFT>
 GnuHashTableSection<ELFT>::GnuHashTableSection()
-    : OutputSectionBase<ELFT>(".gnu.hash", SHT_GNU_HASH, SHF_ALLOC) {
+    : OutputSectionBase(".gnu.hash", SHT_GNU_HASH, SHF_ALLOC) {
   this->Entsize = ELFT::Is64Bits ? 0 : 4;
   this->Addralign = sizeof(uintX_t);
 }
@@ -695,7 +693,7 @@ static unsigned getVerDefNum() { return Config->VersionDefinitions.size() + 1; }
 
 template <class ELFT>
 DynamicSection<ELFT>::DynamicSection()
-    : OutputSectionBase<ELFT>(".dynamic", SHT_DYNAMIC, SHF_ALLOC | SHF_WRITE) {
+    : OutputSectionBase(".dynamic", SHT_DYNAMIC, SHF_ALLOC | SHF_WRITE) {
   this->Addralign = sizeof(uintX_t);
   this->Entsize = ELFT::Is64Bits ? 16 : 8;
 
@@ -863,7 +861,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 EhFrameHeader<ELFT>::EhFrameHeader()
-    : OutputSectionBase<ELFT>(".eh_frame_hdr", SHT_PROGBITS, SHF_ALLOC) {}
+    : OutputSectionBase(".eh_frame_hdr", SHT_PROGBITS, SHF_ALLOC) {}
 
 // .eh_frame_hdr contains a binary search table of pointers to FDEs.
 // Each entry of the search table consists of two values,
@@ -925,7 +923,7 @@ template <class ELFT> static uint64_t getEntsize(uint32_t Type) {
 
 template <class ELFT>
 OutputSection<ELFT>::OutputSection(StringRef Name, uint32_t Type, uintX_t Flags)
-    : OutputSectionBase<ELFT>(Name, Type, Flags) {
+    : OutputSectionBase(Name, Type, Flags) {
   this->Entsize = getEntsize<ELFT>(Type);
 }
 
@@ -956,7 +954,7 @@ template <class ELFT> void OutputSection<ELFT>::finalize() {
 }
 
 template <class ELFT>
-void OutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
+void OutputSection<ELFT>::addSection(InputSectionData *C) {
   assert(C->Live);
   auto *S = cast<InputSection<ELFT>>(C);
   Sections.push_back(S);
@@ -1085,7 +1083,7 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 EhOutputSection<ELFT>::EhOutputSection()
-    : OutputSectionBase<ELFT>(".eh_frame", SHT_PROGBITS, SHF_ALLOC) {}
+    : OutputSectionBase(".eh_frame", SHT_PROGBITS, SHF_ALLOC) {}
 
 // Search for an existing CIE record or create a new one.
 // CIE records from input object files are uniquified by their contents
@@ -1170,7 +1168,7 @@ void EhOutputSection<ELFT>::addSectionAux(EhInputSection<ELFT> *Sec,
 }
 
 template <class ELFT>
-void EhOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
+void EhOutputSection<ELFT>::addSection(InputSectionData *C) {
   auto *Sec = cast<EhInputSection<ELFT>>(C);
   Sec->OutSec = this;
   this->updateAlignment(Sec->Alignment);
@@ -1290,7 +1288,7 @@ template <class ELFT> void EhOutputSection<ELFT>::writeTo(uint8_t *Buf) {
 template <class ELFT>
 MergeOutputSection<ELFT>::MergeOutputSection(StringRef Name, uint32_t Type,
                                              uintX_t Flags, uintX_t Alignment)
-    : OutputSectionBase<ELFT>(Name, Type, Flags),
+    : OutputSectionBase(Name, Type, Flags),
       Builder(StringTableBuilder::RAW, Alignment) {}
 
 template <class ELFT> void MergeOutputSection<ELFT>::writeTo(uint8_t *Buf) {
@@ -1298,7 +1296,7 @@ template <class ELFT> void MergeOutputSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
-void MergeOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
+void MergeOutputSection<ELFT>::addSection(InputSectionData *C) {
   auto *Sec = cast<MergeInputSection<ELFT>>(C);
   Sec->OutSec = this;
   this->updateAlignment(Sec->Alignment);
@@ -1344,8 +1342,7 @@ template <class ELFT> void MergeOutputSection<ELFT>::finalizePieces() {
 
 template <class ELFT>
 StringTableSection<ELFT>::StringTableSection(StringRef Name, bool Dynamic)
-    : OutputSectionBase<ELFT>(Name, SHT_STRTAB,
-                              Dynamic ? (uintX_t)SHF_ALLOC : 0),
+    : OutputSectionBase(Name, SHT_STRTAB, Dynamic ? (uintX_t)SHF_ALLOC : 0),
       Dynamic(Dynamic) {
   // ELF string tables start with a NUL byte, so 1.
   this->Size = 1;
@@ -1400,9 +1397,9 @@ template <class ELFT> uint32_t DynamicReloc<ELFT>::getSymIndex() const {
 template <class ELFT>
 SymbolTableSection<ELFT>::SymbolTableSection(
     StringTableSection<ELFT> &StrTabSec)
-    : OutputSectionBase<ELFT>(StrTabSec.isDynamic() ? ".dynsym" : ".symtab",
-                              StrTabSec.isDynamic() ? SHT_DYNSYM : SHT_SYMTAB,
-                              StrTabSec.isDynamic() ? (uintX_t)SHF_ALLOC : 0),
+    : OutputSectionBase(StrTabSec.isDynamic() ? ".dynsym" : ".symtab",
+                        StrTabSec.isDynamic() ? SHT_DYNSYM : SHT_SYMTAB,
+                        StrTabSec.isDynamic() ? (uintX_t)SHF_ALLOC : 0),
       StrTabSec(StrTabSec) {
   this->Entsize = sizeof(Elf_Sym);
   this->Addralign = sizeof(uintX_t);
@@ -1501,7 +1498,7 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
         ESym->st_shndx = SHN_ABS;
         ESym->st_value = Body.Value;
       } else {
-        const OutputSectionBase<ELFT> *OutSec = Section->OutSec;
+        const OutputSectionBase *OutSec = Section->OutSec;
         ESym->st_shndx = OutSec->SectionIndex;
         ESym->st_value = OutSec->Addr + Section->getOffset(Body);
       }
@@ -1531,7 +1528,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     ESym->setVisibility(Body->symbol()->Visibility);
     ESym->st_value = Body->getVA<ELFT>();
 
-    if (const OutputSectionBase<ELFT> *OutSec = getOutputSection(Body))
+    if (const OutputSectionBase *OutSec = getOutputSection(Body))
       ESym->st_shndx = OutSec->SectionIndex;
     else if (isa<DefinedRegular<ELFT>>(Body))
       ESym->st_shndx = SHN_ABS;
@@ -1554,7 +1551,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
 }
 
 template <class ELFT>
-const OutputSectionBase<ELFT> *
+const OutputSectionBase *
 SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
   switch (Sym->kind()) {
   case SymbolBody::DefinedSyntheticKind:
@@ -1581,7 +1578,7 @@ SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
 
 template <class ELFT>
 VersionDefinitionSection<ELFT>::VersionDefinitionSection()
-    : OutputSectionBase<ELFT>(".gnu.version_d", SHT_GNU_verdef, SHF_ALLOC) {
+    : OutputSectionBase(".gnu.version_d", SHT_GNU_verdef, SHF_ALLOC) {
   this->Addralign = sizeof(uint32_t);
 }
 
@@ -1638,7 +1635,7 @@ void VersionDefinitionSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 VersionTableSection<ELFT>::VersionTableSection()
-    : OutputSectionBase<ELFT>(".gnu.version", SHT_GNU_versym, SHF_ALLOC) {
+    : OutputSectionBase(".gnu.version", SHT_GNU_versym, SHF_ALLOC) {
   this->Addralign = sizeof(uint16_t);
 }
 
@@ -1661,7 +1658,7 @@ template <class ELFT> void VersionTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 VersionNeedSection<ELFT>::VersionNeedSection()
-    : OutputSectionBase<ELFT>(".gnu.version_r", SHT_GNU_verneed, SHF_ALLOC) {
+    : OutputSectionBase(".gnu.version_r", SHT_GNU_verneed, SHF_ALLOC) {
   this->Addralign = sizeof(uint32_t);
 
   // Identifiers in verneed section start at 2 because 0 and 1 are reserved
@@ -1764,7 +1761,7 @@ static SectionKey<ELFT::Is64Bits> createKey(InputSectionBase<ELFT> *C,
 }
 
 template <class ELFT>
-std::pair<OutputSectionBase<ELFT> *, bool>
+std::pair<OutputSectionBase *, bool>
 OutputSectionFactory<ELFT>::create(InputSectionBase<ELFT> *C,
                                    StringRef OutsecName) {
   SectionKey<ELFT::Is64Bits> Key = createKey(C, OutsecName);
@@ -1772,11 +1769,11 @@ OutputSectionFactory<ELFT>::create(InputSectionBase<ELFT> *C,
 }
 
 template <class ELFT>
-std::pair<OutputSectionBase<ELFT> *, bool>
+std::pair<OutputSectionBase *, bool>
 OutputSectionFactory<ELFT>::create(const SectionKey<ELFT::Is64Bits> &Key,
                                    InputSectionBase<ELFT> *C) {
   uintX_t Flags = getOutFlags(C);
-  OutputSectionBase<ELFT> *&Sec = Map[Key];
+  OutputSectionBase *&Sec = Map[Key];
   if (Sec) {
     Sec->Flags |= Flags;
     return {Sec, false};
@@ -1830,10 +1827,11 @@ template struct DenseMapInfo<SectionKey<false>>;
 
 namespace lld {
 namespace elf {
-template class OutputSectionBase<ELF32LE>;
-template class OutputSectionBase<ELF32BE>;
-template class OutputSectionBase<ELF64LE>;
-template class OutputSectionBase<ELF64BE>;
+
+template void OutputSectionBase::writeHeaderTo<ELF32LE>(ELF32LE::Shdr *Shdr);
+template void OutputSectionBase::writeHeaderTo<ELF32BE>(ELF32BE::Shdr *Shdr);
+template void OutputSectionBase::writeHeaderTo<ELF64LE>(ELF64LE::Shdr *Shdr);
+template void OutputSectionBase::writeHeaderTo<ELF64BE>(ELF64BE::Shdr *Shdr);
 
 template class EhFrameHeader<ELF32LE>;
 template class EhFrameHeader<ELF32BE>;
