@@ -6314,8 +6314,8 @@ defm VCVTTPS2UDQ : avx512_cvttps2dq<0x78, "vcvttps2udq", fp_to_uint,
                                  X86cvttp2uiRnd>, PS,
                                  EVEX_CD8<32, CD8VF>;
 
-defm VCVTTPD2UDQ : avx512_cvttpd2dq<0x78, "vcvttpd2udq", fp_to_uint, fp_to_uint,
-                                 X86cvttp2uiRnd>, PS, VEX_W,
+defm VCVTTPD2UDQ : avx512_cvttpd2dq<0x78, "vcvttpd2udq", fp_to_uint,
+                                 X86cvttpd2udq, X86cvttp2uiRnd>, PS, VEX_W,
                                  EVEX_CD8<64, CD8VF>;
 
 defm VCVTUDQ2PD : avx512_cvtdq2pd<0x7A, "vcvtudq2pd", uint_to_fp, X86cvtudq2pd>,
@@ -6395,6 +6395,11 @@ def : Pat<(v4i32 (fp_to_uint (v4f64 VR256X:$src1))),
            (v8f64 (INSERT_SUBREG (IMPLICIT_DEF),
                                  VR256X:$src1, sub_ymm)))), sub_xmm)>;
 
+def : Pat<(v4i32 (X86cvttpd2udq (v2f64 VR128X:$src))),
+          (EXTRACT_SUBREG (v8i32 (VCVTTPD2UDQZrr
+           (v8f64 (INSERT_SUBREG (IMPLICIT_DEF),
+                                 VR128X:$src, sub_xmm)))), sub_xmm)>;
+
 def : Pat<(v8f32 (uint_to_fp (v8i32 VR256X:$src1))),
           (EXTRACT_SUBREG (v16f32 (VCVTUDQ2PSZrr
            (v16i32 (INSERT_SUBREG (IMPLICIT_DEF),
@@ -6416,6 +6421,9 @@ let Predicates = [HasAVX512, HasVLX] in {
   def : Pat<(X86vzmovl (v2i64 (bitconvert
                                (v4i32 (X86cvttpd2dq (v2f64 VR128X:$src)))))),
             (VCVTTPD2DQZ128rr VR128:$src)>;
+  def : Pat<(v4i32 (bitconvert (X86vzmovl (v2i64 (bitconvert
+                               (v4i32 (X86cvttpd2udq (v2f64 VR128X:$src)))))))),
+            (VCVTTPD2UDQZ128rr VR128:$src)>;
 }
 
 let Predicates = [HasAVX512] in {
