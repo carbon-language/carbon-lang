@@ -370,10 +370,8 @@ public:
 
   Error materializeForwardReferencedFunctions();
 
-  std::error_code materialize(GlobalValue *GV) override;
-  Error materializeImpl(GlobalValue *GV);
-  std::error_code materializeModule() override;
-  Error materializeModuleImpl();
+  Error materialize(GlobalValue *GV) override;
+  Error materializeModule() override;
   std::vector<StructType *> getIdentifiedStructTypes() const override;
 
   /// \brief Main interface to parsing a bitcode buffer.
@@ -394,8 +392,7 @@ public:
   static uint64_t decodeSignRotatedValue(uint64_t V);
 
   /// Materialize any deferred Metadata block.
-  std::error_code materializeMetadata() override;
-  Error materializeMetadataImpl();
+  Error materializeMetadata() override;
 
   void setStripDebugInfo() override;
 
@@ -677,7 +674,7 @@ Error BitcodeReader::materializeForwardReferencedFunctions() {
       return error("Never resolved function from blockaddress");
 
     // Try to materialize F.
-    if (Error Err = materializeImpl(F))
+    if (Error Err = materialize(F))
       return Err;
   }
   assert(BasicBlockFwdRefs.empty() && "Function missing from queue");
@@ -3580,11 +3577,7 @@ Error BitcodeReader::rememberAndSkipMetadata() {
   return Error::success();
 }
 
-std::error_code BitcodeReader::materializeMetadata() {
-  return errorToErrorCodeAndEmitErrors(Context, materializeMetadataImpl());
-}
-
-Error BitcodeReader::materializeMetadataImpl() {
+Error BitcodeReader::materializeMetadata() {
   for (uint64_t BitPos : DeferredMetadataInfo) {
     // Move the bit stream to the saved position.
     Stream.JumpToBit(BitPos);
@@ -5856,11 +5849,7 @@ Error BitcodeReader::findFunctionInStream(
 // GVMaterializer implementation
 //===----------------------------------------------------------------------===//
 
-std::error_code BitcodeReader::materialize(GlobalValue *GV) {
-  return errorToErrorCodeAndEmitErrors(Context, materializeImpl(GV));
-}
-
-Error BitcodeReader::materializeImpl(GlobalValue *GV) {
+Error BitcodeReader::materialize(GlobalValue *GV) {
   Function *F = dyn_cast<Function>(GV);
   // If it's not a function or is already material, ignore the request.
   if (!F || !F->isMaterializable())
@@ -5875,7 +5864,7 @@ Error BitcodeReader::materializeImpl(GlobalValue *GV) {
       return Err;
 
   // Materialize metadata before parsing any function bodies.
-  if (Error Err = materializeMetadataImpl())
+  if (Error Err = materializeMetadata())
     return Err;
 
   // Move the bit stream to the saved position of the deferred function body.
@@ -5915,12 +5904,8 @@ Error BitcodeReader::materializeImpl(GlobalValue *GV) {
   return materializeForwardReferencedFunctions();
 }
 
-std::error_code BitcodeReader::materializeModule() {
-  return errorToErrorCodeAndEmitErrors(Context, materializeModuleImpl());
-}
-
-Error BitcodeReader::materializeModuleImpl() {
-  if (Error Err = materializeMetadataImpl())
+Error BitcodeReader::materializeModule() {
+  if (Error Err = materializeMetadata())
     return Err;
 
   // Promise to materialize all forward references.
@@ -5929,7 +5914,7 @@ Error BitcodeReader::materializeModuleImpl() {
   // Iterate over the module, deserializing any functions that are still on
   // disk.
   for (Function &F : *TheModule) {
-    if (Error Err = materializeImpl(&F))
+    if (Error Err = materialize(&F))
       return Err;
   }
   // At this point, if there are any function bodies, parse the rest of
@@ -6664,8 +6649,8 @@ getLazyBitcodeModuleImpl(MemoryBufferRef Buffer, LLVMContext &Context,
 
   if (MaterializeAll) {
     // Read in the entire module, and destroy the BitcodeReader.
-    if (std::error_code EC = M->materializeAll())
-      return EC;
+    if (Error Err = M->materializeAll())
+      return errorToErrorCodeAndEmitErrors(Context, std::move(Err));
   } else {
     // Resolve forward references from blockaddresses.
     if (Error Err = R->materializeForwardReferencedFunctions())
