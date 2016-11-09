@@ -13,7 +13,7 @@ struct C : A, B {
 };
 
 void C::f() { }
-// CHECK: define {{.*}} void @_ZThn{{[48]}}_N1C1fEv
+// CHECK: define {{.*}}void @_ZThn{{[48]}}_N1C1fEv
 // CHECK-SAME: !dbg ![[SP:[0-9]+]]
 // CHECK-NOT: {{ret }}
 // CHECK: = load{{.*}} !dbg ![[DBG:[0-9]+]]
