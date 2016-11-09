@@ -140,10 +140,7 @@ endif()
 if (LLVM_EXTERNAL_LIBCXX_SOURCE_DIR)
   set(LIBCXXABI_LIBCXX_SRC_DIR ${LLVM_EXTERNAL_LIBCXX_SOURCE_DIR})
 else()
-  set(LIBCXXABI_LIBCXX_SRC_DIR
-    "${LLVM_MAIN_SRC_DIR}/projects/libcxx"
-    "${LLVM_MAIN_SRC_DIR}/runtimes/libcxx"
-    )
+  set(LIBCXXABI_LIBCXX_SRC_DIR ${LLVM_MAIN_SRC_DIR}/projects/libcxx)
 endif()
 
 find_path(
@@ -383,7 +380,6 @@ if (LIBCXXABI_USE_LLVM_UNWINDER OR LLVM_NATIVE_ARCH MATCHES ARM)
           ${LIBCXXABI_LIBUNWIND_PATH}/include
           ${CMAKE_BINARY_DIR}/${LIBCXXABI_LIBUNWIND_INCLUDES}
           ${LLVM_MAIN_SRC_DIR}/projects/libunwind/include
-          ${LLVM_MAIN_SRC_DIR}/runtimes/libunwind/include
     NO_DEFAULT_PATH
   )
 
@@ -393,7 +389,6 @@ if (LIBCXXABI_USE_LLVM_UNWINDER OR LLVM_NATIVE_ARCH MATCHES ARM)
     PATHS ${LIBCXXABI_LIBUNWIND_PATH}/src/
           ${LIBCXXABI_LIBUNWIND_INCLUDES}/../src/
           ${LLVM_MAIN_SRC_DIR}/projects/libunwind/src/
-          ${LLVM_MAIN_SRC_DIR}/runtimes/libunwind/src/
     NO_DEFAULT_PATH
   )
 
