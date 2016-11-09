@@ -906,20 +906,27 @@ void EhFrameHeader<ELFT>::addFde(uint32_t Pc, uint32_t FdeVA) {
   Fdes.push_back({Pc, FdeVA});
 }
 
+template <class ELFT> static uint64_t getEntsize(uint32_t Type) {
+  switch (Type) {
+  case SHT_RELA:
+    return sizeof(typename ELFT::Rela);
+  case SHT_REL:
+    return sizeof(typename ELFT::Rel);
+  case SHT_MIPS_REGINFO:
+    return sizeof(Elf_Mips_RegInfo<ELFT>);
+  case SHT_MIPS_OPTIONS:
+    return sizeof(Elf_Mips_Options<ELFT>) + sizeof(Elf_Mips_RegInfo<ELFT>);
+  case SHT_MIPS_ABIFLAGS:
+    return sizeof(Elf_Mips_ABIFlags<ELFT>);
+  default:
+    return 0;
+  }
+}
+
 template <class ELFT>
 OutputSection<ELFT>::OutputSection(StringRef Name, uint32_t Type, uintX_t Flags)
     : OutputSectionBase<ELFT>(Name, Type, Flags) {
-  if (Type == SHT_RELA)
-    this->Entsize = sizeof(Elf_Rela);
-  else if (Type == SHT_REL)
-    this->Entsize = sizeof(Elf_Rel);
-  else if (Type == SHT_MIPS_REGINFO)
-    this->Entsize = sizeof(Elf_Mips_RegInfo<ELFT>);
-  else if (Type == SHT_MIPS_OPTIONS)
-    this->Entsize =
-        sizeof(Elf_Mips_Options<ELFT>) + sizeof(Elf_Mips_RegInfo<ELFT>);
-  else if (Type == SHT_MIPS_ABIFLAGS)
-    this->Entsize = sizeof(Elf_Mips_ABIFlags<ELFT>);
+  this->Entsize = getEntsize<ELFT>(Type);
 }
 
 template <class ELFT> void OutputSection<ELFT>::finalize() {
