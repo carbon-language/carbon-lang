@@ -580,22 +580,23 @@ void HexagonCopyToCombine::combine(MachineInstr &I1, MachineInstr &I2,
   unsigned I2DestReg = I2.getOperand(0).getReg();
   bool IsI1Loreg = (I2DestReg - I1DestReg) == 1;
   unsigned LoRegDef = IsI1Loreg ? I1DestReg : I2DestReg;
+  unsigned SubLo;
 
   const TargetRegisterClass *SuperRC = nullptr;
   if (Hexagon::IntRegsRegClass.contains(LoRegDef)) {
     SuperRC = &Hexagon::DoubleRegsRegClass;
+    SubLo = Hexagon::isub_lo;
   } else if (Hexagon::VectorRegsRegClass.contains(LoRegDef)) {
     assert(ST->useHVXOps());
     if (ST->useHVXSglOps())
       SuperRC = &Hexagon::VecDblRegsRegClass;
     else
       SuperRC = &Hexagon::VecDblRegs128BRegClass;
+    SubLo = Hexagon::vsub_lo;
   }
   // Get the double word register.
-  unsigned DoubleRegDest =
-    TRI->getMatchingSuperReg(LoRegDef, Hexagon::subreg_loreg, SuperRC);
+  unsigned DoubleRegDest = TRI->getMatchingSuperReg(LoRegDef, SubLo, SuperRC);
   assert(DoubleRegDest != 0 && "Expect a valid register");
-
 
   // Setup source operands.
   MachineOperand &LoOperand = IsI1Loreg ? I1.getOperand(1) : I2.getOperand(1);
