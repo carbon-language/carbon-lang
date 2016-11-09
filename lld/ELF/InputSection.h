@@ -39,7 +39,7 @@ template <class ELFT> class OutputSectionBase;
 // section
 class InputSectionData {
 public:
-  enum Kind { Regular, EHFrame, Merge, MipsAbiFlags };
+  enum Kind { Regular, EHFrame, Merge };
 
   // The garbage collector sets sections' Live bits.
   // If GC is disabled, all sections are considered live by default.
@@ -287,18 +287,6 @@ private:
 };
 
 template <class ELFT> InputSection<ELFT> InputSection<ELFT>::Discarded;
-
-template <class ELFT>
-class MipsAbiFlagsInputSection : public InputSectionBase<ELFT> {
-  typedef typename ELFT::Shdr Elf_Shdr;
-
-public:
-  MipsAbiFlagsInputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Hdr,
-                           StringRef Name);
-  static bool classof(const InputSectionData *S);
-
-  const llvm::object::Elf_Mips_ABIFlags<ELFT> *Flags = nullptr;
-};
 
 } // namespace elf
 } // namespace lld

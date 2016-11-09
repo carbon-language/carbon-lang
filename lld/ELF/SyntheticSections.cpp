@@ -23,6 +23,7 @@
 #include "Strings.h"
 #include "SymbolTable.h"
 #include "Target.h"
+#include "Writer.h"
 
 #include "lld/Core/Parallel.h"
 #include "llvm/Support/Endian.h"
@@ -90,6 +91,42 @@ static void iterateSectionContents(
       F(Sec->getFile(), Sec->Data);
     }
   }
+}
+
+// .MIPS.abiflags section.
+template <class ELFT>
+MipsAbiFlagsSection<ELFT>::MipsAbiFlagsSection()
+    : InputSection<ELFT>(SHF_ALLOC, SHT_MIPS_ABIFLAGS, 8, ArrayRef<uint8_t>(),
+                         ".MIPS.abiflags") {
+  auto Func = [this](ObjectFile<ELFT> *F, ArrayRef<uint8_t> D) {
+    if (D.size() != sizeof(Elf_Mips_ABIFlags)) {
+      error(getFilename(F) + ": invalid size of .MIPS.abiflags section");
+      return;
+    }
+    auto *S = reinterpret_cast<const Elf_Mips_ABIFlags *>(D.data());
+    if (S->version != 0) {
+      error(getFilename(F) + ": unexpected .MIPS.abiflags version " +
+            Twine(S->version));
+      return;
+    }
+    // LLD checks ISA compatibility in getMipsEFlags(). Here we just
+    // select the highest number of ISA/Rev/Ext.
+    Flags.isa_level = std::max(Flags.isa_level, S->isa_level);
+    Flags.isa_rev = std::max(Flags.isa_rev, S->isa_rev);
+    Flags.isa_ext = std::max(Flags.isa_ext, S->isa_ext);
+    Flags.gpr_size = std::max(Flags.gpr_size, S->gpr_size);
+    Flags.cpr1_size = std::max(Flags.cpr1_size, S->cpr1_size);
+    Flags.cpr2_size = std::max(Flags.cpr2_size, S->cpr2_size);
+    Flags.ases |= S->ases;
+    Flags.flags1 |= S->flags1;
+    Flags.flags2 |= S->flags2;
+    Flags.fp_abi =
+        elf::getMipsFpAbiFlag(Flags.fp_abi, S->fp_abi, getFilename(F));
+  };
+  iterateSectionContents<ELFT>(SHT_MIPS_ABIFLAGS, Func);
+
+  this->Data = ArrayRef<uint8_t>((const uint8_t *)&Flags, sizeof(Flags));
+  this->Live = true;
 }
 
 // .MIPS.options section.
@@ -281,6 +318,11 @@ template InputSection<ELF32LE> *elf::createInterpSection();
 template InputSection<ELF32BE> *elf::createInterpSection();
 template InputSection<ELF64LE> *elf::createInterpSection();
 template InputSection<ELF64BE> *elf::createInterpSection();
+
+template class elf::MipsAbiFlagsSection<ELF32LE>;
+template class elf::MipsAbiFlagsSection<ELF32BE>;
+template class elf::MipsAbiFlagsSection<ELF64LE>;
+template class elf::MipsAbiFlagsSection<ELF64BE>;
 
 template class elf::MipsOptionsSection<ELF32LE>;
 template class elf::MipsOptionsSection<ELF32BE>;

@@ -918,6 +918,8 @@ OutputSection<ELFT>::OutputSection(StringRef Name, uint32_t Type, uintX_t Flags)
   else if (Type == SHT_MIPS_OPTIONS)
     this->Entsize =
         sizeof(Elf_Mips_Options<ELFT>) + sizeof(Elf_Mips_RegInfo<ELFT>);
+  else if (Type == SHT_MIPS_ABIFLAGS)
+    this->Entsize = sizeof(Elf_Mips_ABIFlags<ELFT>);
 }
 
 template <class ELFT> void OutputSection<ELFT>::finalize() {
@@ -1730,46 +1732,6 @@ template <class ELFT> void VersionNeedSection<ELFT>::finalize() {
 }
 
 template <class ELFT>
-MipsAbiFlagsOutputSection<ELFT>::MipsAbiFlagsOutputSection()
-    : OutputSectionBase<ELFT>(".MIPS.abiflags", SHT_MIPS_ABIFLAGS, SHF_ALLOC) {
-  this->Addralign = 8;
-  this->Entsize = sizeof(Elf_Mips_ABIFlags);
-  this->Size = sizeof(Elf_Mips_ABIFlags);
-  memset(&Flags, 0, sizeof(Flags));
-}
-
-template <class ELFT>
-void MipsAbiFlagsOutputSection<ELFT>::writeTo(uint8_t *Buf) {
-  memcpy(Buf, &Flags, sizeof(Flags));
-}
-
-template <class ELFT>
-void MipsAbiFlagsOutputSection<ELFT>::addSection(InputSectionBase<ELFT> *C) {
-  // Check compatibility and merge fields from input .MIPS.abiflags
-  // to the output one.
-  auto *S = cast<MipsAbiFlagsInputSection<ELFT>>(C);
-  S->OutSec = this;
-  if (S->Flags->version != 0) {
-    error(getFilename(S->getFile()) + ": unexpected .MIPS.abiflags version " +
-          Twine(S->Flags->version));
-    return;
-  }
-  // LLD checks ISA compatibility in getMipsEFlags(). Here we just
-  // select the highest number of ISA/Rev/Ext.
-  Flags.isa_level = std::max(Flags.isa_level, S->Flags->isa_level);
-  Flags.isa_rev = std::max(Flags.isa_rev, S->Flags->isa_rev);
-  Flags.isa_ext = std::max(Flags.isa_ext, S->Flags->isa_ext);
-  Flags.gpr_size = std::max(Flags.gpr_size, S->Flags->gpr_size);
-  Flags.cpr1_size = std::max(Flags.cpr1_size, S->Flags->cpr1_size);
-  Flags.cpr2_size = std::max(Flags.cpr2_size, S->Flags->cpr2_size);
-  Flags.ases |= S->Flags->ases;
-  Flags.flags1 |= S->Flags->flags1;
-  Flags.flags2 |= S->Flags->flags2;
-  Flags.fp_abi = elf::getMipsFpAbiFlag(Flags.fp_abi, S->Flags->fp_abi,
-                                       getFilename(S->getFile()));
-}
-
-template <class ELFT>
 static typename ELFT::uint getOutFlags(InputSectionBase<ELFT> *S) {
   return S->Flags & ~SHF_GROUP & ~SHF_COMPRESSED;
 }
@@ -1822,9 +1784,6 @@ OutputSectionFactory<ELFT>::create(const SectionKey<ELFT::Is64Bits> &Key,
     return {Out<ELFT>::EhFrame, false};
   case InputSectionBase<ELFT>::Merge:
     Sec = make<MergeOutputSection<ELFT>>(Key.Name, Type, Flags, Key.Alignment);
-    break;
-  case InputSectionBase<ELFT>::MipsAbiFlags:
-    Sec = make<MipsAbiFlagsOutputSection<ELFT>>();
     break;
   }
   return {Sec, true};
@@ -1918,11 +1877,6 @@ template class EhOutputSection<ELF32LE>;
 template class EhOutputSection<ELF32BE>;
 template class EhOutputSection<ELF64LE>;
 template class EhOutputSection<ELF64BE>;
-
-template class MipsAbiFlagsOutputSection<ELF32LE>;
-template class MipsAbiFlagsOutputSection<ELF32BE>;
-template class MipsAbiFlagsOutputSection<ELF64LE>;
-template class MipsAbiFlagsOutputSection<ELF64BE>;
 
 template class MergeOutputSection<ELF32LE>;
 template class MergeOutputSection<ELF32BE>;

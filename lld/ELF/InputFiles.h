@@ -194,9 +194,6 @@ private:
   // List of all symbols referenced or defined by this file.
   std::vector<SymbolBody *> SymbolBodies;
 
-  // MIPS .MIPS.abiflags section defined by this file.
-  std::unique_ptr<MipsAbiFlagsInputSection<ELFT>> MipsAbiFlags;
-
   // Debugging information to retrieve source file and line for error
   // reporting. Linker may find reasonable number of errors in a
   // single object file, so we cache debugging information in order to

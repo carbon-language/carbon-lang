@@ -103,15 +103,6 @@ typename ELFT::uint InputSectionBase<ELFT>::getOffset(uintX_t Offset) const {
     return Offset;
   case Merge:
     return cast<MergeInputSection<ELFT>>(this)->getOffset(Offset);
-  case MipsAbiFlags:
-    // .MIPS.abiflags sections is consumed
-    // by the linker, and the linker produces a single output section. It is
-    // possible that input files contain section symbol points to the
-    // corresponding input section. Redirect it to the produced output section.
-    if (Offset != 0)
-      fatal(getName(this) + ": unsupported reference to the middle of '" +
-            Name + "' section");
-    return this->OutSec->Addr;
   }
   llvm_unreachable("invalid section kind");
 }
@@ -798,25 +789,6 @@ template <class ELFT> void MergeInputSection<ELFT>::finalizePieces() {
   }
 }
 
-template <class ELFT>
-MipsAbiFlagsInputSection<ELFT>::MipsAbiFlagsInputSection(
-    elf::ObjectFile<ELFT> *F, const Elf_Shdr *Hdr, StringRef Name)
-    : InputSectionBase<ELFT>(F, Hdr, Name,
-                             InputSectionBase<ELFT>::MipsAbiFlags) {
-  // Initialize this->Flags.
-  ArrayRef<uint8_t> Data = this->Data;
-  if (Data.size() != sizeof(Elf_Mips_ABIFlags<ELFT>)) {
-    error("invalid size of .MIPS.abiflags section");
-    return;
-  }
-  Flags = reinterpret_cast<const Elf_Mips_ABIFlags<ELFT> *>(Data.data());
-}
-
-template <class ELFT>
-bool MipsAbiFlagsInputSection<ELFT>::classof(const InputSectionData *S) {
-  return S->kind() == InputSectionBase<ELFT>::MipsAbiFlags;
-}
-
 template class elf::InputSectionBase<ELF32LE>;
 template class elf::InputSectionBase<ELF32BE>;
 template class elf::InputSectionBase<ELF64LE>;
@@ -836,8 +808,3 @@ template class elf::MergeInputSection<ELF32LE>;
 template class elf::MergeInputSection<ELF32BE>;
 template class elf::MergeInputSection<ELF64LE>;
 template class elf::MergeInputSection<ELF64BE>;
-
-template class elf::MipsAbiFlagsInputSection<ELF32LE>;
-template class elf::MipsAbiFlagsInputSection<ELF32BE>;
-template class elf::MipsAbiFlagsInputSection<ELF64LE>;
-template class elf::MipsAbiFlagsInputSection<ELF64BE>;

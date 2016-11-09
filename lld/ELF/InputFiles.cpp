@@ -340,12 +340,6 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec,
     // FIXME: ARM meta-data section. At present attributes are ignored,
     // they can be used to reason about object compatibility.
     return &InputSection<ELFT>::Discarded;
-  case SHT_MIPS_ABIFLAGS:
-    if (MipsAbiFlags)
-      fatal(getFilename(this) +
-            ": multiple SHT_MIPS_ABIFLAGS sections are not allowed");
-    MipsAbiFlags.reset(new MipsAbiFlagsInputSection<ELFT>(this, &Sec, Name));
-    return MipsAbiFlags.get();
   case SHT_RELA:
   case SHT_REL: {
     // This section contains relocation information.
