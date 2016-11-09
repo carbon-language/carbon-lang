@@ -723,23 +723,24 @@ void CFIReaderWriter::rewriteHeaderFor(StringRef EHFrame,
       continue;
     }
 
-    const uint8_t *DataStart =
+    const uint8_t *DataEnd =
         reinterpret_cast<const uint8_t *>(Data.getData().substr(Offset).data());
-    const uint8_t *DataEnd = DataStart;
     uint64_t FuncAddress =
         readEncodedPointer(DataEnd, DW_EH_PE_sdata4 | DW_EH_PE_pcrel,
                            NewEHFrameAddress + Offset - (uintptr_t)DataEnd);
-    Offset += DataEnd - DataStart;
+
+    Offset = EndStructureOffset;
+
+    // Ignore FDEs pointing to zero.
+    if (FuncAddress == 0)
+      continue;
 
     auto I = std::lower_bound(FailedAddresses.begin(), FailedAddresses.end(),
                               FuncAddress);
-    if (I != FailedAddresses.end() && *I == FuncAddress) {
-      Offset = EndStructureOffset;
+    if (I != FailedAddresses.end() && *I == FuncAddress)
       continue;
-    }
 
     PCToFDE[FuncAddress] = NewEHFrameAddress + StartOffset;
-    Offset = EndStructureOffset;
   }
 
   //Updates the EHFrameHdr

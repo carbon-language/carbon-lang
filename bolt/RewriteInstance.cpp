@@ -1574,23 +1574,30 @@ void RewriteInstance::emitFunctions() {
            "cannot find section for cold part");
     // Cold fragments are aligned at 16 bytes.
     NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress, 16);
-    DEBUG(dbgs() << "BOLT: mapping 0x"
-                 << Twine::utohexstr(SMII->second.AllocAddress) << " to 0x"
-                 << Twine::utohexstr(NextAvailableAddress) << " with size "
-                 << Twine::utohexstr(SMII->second.Size) << '\n');
+    if (TooLarge) {
+      // The corresponding FDE will refer to address 0.
+      Function.cold().setAddress(0);
+      Function.cold().setImageAddress(0);
+      Function.cold().setImageSize(0);
+      Function.cold().setFileOffset(0);
+    } else {
+      Function.cold().setAddress(NextAvailableAddress);
+      Function.cold().setImageAddress(SMII->second.AllocAddress);
+      Function.cold().setImageSize(SMII->second.Size);
+      Function.cold().setFileOffset(getFileOffsetFor(NextAvailableAddress));
+    }
+
+    DEBUG(dbgs() << "BOLT: mapping cold fragment 0x"
+                 << Twine::utohexstr(Function.cold().getImageAddress())
+                 << " to 0x"
+                 << Twine::utohexstr(Function.cold().getAddress())
+                 << " with size "
+                 << Twine::utohexstr(Function.cold().getImageSize()) << '\n');
     OLT.mapSectionAddress(ObjectsHandle,
                           SMII->second.SectionID,
-                          NextAvailableAddress);
-    Function.cold().setAddress(NextAvailableAddress);
-    Function.cold().setImageAddress(SMII->second.AllocAddress);
-    Function.cold().setImageSize(TooLarge ? 0 : SMII->second.Size);
-    Function.cold().setFileOffset(getFileOffsetFor(NextAvailableAddress));
+                          Function.cold().getAddress());
 
     NextAvailableAddress += Function.cold().getImageSize();
-
-    if (TooLarge) {
-      FailedAddresses.emplace_back(Function.cold().getAddress());
-    }
   }
 
   // Add the new text section aggregating all existing code sections.
