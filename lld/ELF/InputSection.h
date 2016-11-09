@@ -119,6 +119,7 @@ public:
   static InputSectionBase<ELFT> Discarded;
 
   ObjectFile<ELFT> *getFile() const { return File; }
+  llvm::object::ELFFile<ELFT> getObj() const { return File->getObj(); }
   uintX_t getOffset(const DefinedRegular<ELFT> &Sym) const;
   InputSectionBase *getLinkOrderDep() const;
   // Translate an offset in the input section to an offset in the output
