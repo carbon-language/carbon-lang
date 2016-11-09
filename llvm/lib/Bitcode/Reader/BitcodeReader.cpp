@@ -4347,6 +4347,12 @@ Expected<std::string> BitcodeReader::parseIdentificationBlock() {
   // We expect a number of well-defined blocks, though we don't necessarily
   // need to understand them all.
   while (true) {
+    // This loop iterates at the top-level: since there is no enclosing block
+    // we need to make sure we aren't at the end of the stream before calling
+    // advance, otherwise we'll get an error.
+    if (Stream.AtEndOfStream())
+      return Error::success();
+
     BitstreamEntry Entry = Stream.advance();
     switch (Entry.Kind) {
     case BitstreamEntry::Error:
