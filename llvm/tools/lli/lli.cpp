@@ -418,7 +418,8 @@ int main(int argc, char **argv, char * const *envp) {
 
   // If not jitting lazily, load the whole bitcode file eagerly too.
   if (NoLazyCompilation) {
-    ExitOnError ExitOnErr(std::string(argv[0]) +
+    // Use *argv instead of argv[0] to work around a wrong GCC warning.
+    ExitOnError ExitOnErr(std::string(*argv) +
                           ": bitcode didn't read correctly: ");
     ExitOnErr(Mod->materializeAll());
   }

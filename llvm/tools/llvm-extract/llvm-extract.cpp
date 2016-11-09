@@ -223,7 +223,8 @@ int main(int argc, char **argv) {
     }
   }
 
-  ExitOnError ExitOnErr(std::string(argv[0]) + ": error reading input: ");
+  // Use *argv instead of argv[0] to work around a wrong GCC warning.
+  ExitOnError ExitOnErr(std::string(*argv) + ": error reading input: ");
 
   auto Materialize = [&](GlobalValue &GV) { ExitOnErr(GV.materialize()); };
 
