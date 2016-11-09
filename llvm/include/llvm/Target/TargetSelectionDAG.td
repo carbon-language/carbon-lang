@@ -1165,12 +1165,10 @@ class Pat<dag pattern, dag result> : Pattern<pattern, [result]>;
 // e.g. X86 addressing mode - def addr : ComplexPattern<4, "SelectAddr", [add]>;
 //
 class ComplexPattern<ValueType ty, int numops, string fn,
-                     list<SDNode> roots = [], list<SDNodeProperty> props = [],
-                     int complexity = -1> {
+                     list<SDNode> roots = [], list<SDNodeProperty> props = []> {
   ValueType Ty = ty;
   int NumOperands = numops;
   string SelectFunc = fn;
   list<SDNode> RootNodes = roots;
   list<SDNodeProperty> Properties = props;
-  int Complexity = complexity;
 }
