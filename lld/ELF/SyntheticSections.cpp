@@ -84,7 +84,7 @@ template <class ELFT> InputSection<ELFT> *elf::createCommonSection() {
 template <class ELFT>
 static void iterateSectionContents(
     uint32_t Type,
-    std::function<void(ObjectFile<ELFT> *, ArrayRef<uint8_t>)> F) {
+    std::function<void(elf::ObjectFile<ELFT> *, ArrayRef<uint8_t>)> F) {
   for (InputSectionBase<ELFT> *Sec : Symtab<ELFT>::X->Sections) {
     if (Sec && Sec->Live && Sec->Type == Type) {
       Sec->Live = false;
