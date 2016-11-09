@@ -288,7 +288,7 @@ entry:
 define void @extract_subvector512_v4f64_store_lo_align_16(double* nocapture %addr, <8 x double> %a) nounwind uwtable ssp {
 ; SKX-LABEL: extract_subvector512_v4f64_store_lo_align_16:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vmovaps %ymm0, (%rdi)
+; SKX-NEXT:    vmovups %ymm0, (%rdi)
 ; SKX-NEXT:    retq
 entry:
   %0 = shufflevector <8 x double> %a, <8 x double> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
@@ -360,7 +360,7 @@ entry:
 define void @extract_subvector512_v4i64_store_lo_align_16(i64* nocapture %addr, <8 x i64> %a) nounwind uwtable ssp {
 ; SKX-LABEL: extract_subvector512_v4i64_store_lo_align_16:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vmovaps %ymm0, (%rdi)
+; SKX-NEXT:    vmovups %ymm0, (%rdi)
 ; SKX-NEXT:    retq
 entry:
   %0 = shufflevector <8 x i64> %a, <8 x i64> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
@@ -396,7 +396,7 @@ entry:
 define void @extract_subvector512_v8i32_store_lo_align_16(i32* nocapture %addr, <16 x i32> %a) nounwind uwtable ssp {
 ; SKX-LABEL: extract_subvector512_v8i32_store_lo_align_16:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vmovaps %ymm0, (%rdi)
+; SKX-NEXT:    vmovups %ymm0, (%rdi)
 ; SKX-NEXT:    retq
 entry:
   %0 = shufflevector <16 x i32> %a, <16 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
@@ -432,7 +432,7 @@ entry:
 define void @extract_subvector512_v16i16_store_lo_align_16(i16* nocapture %addr, <32 x i16> %a) nounwind uwtable ssp {
 ; SKX-LABEL: extract_subvector512_v16i16_store_lo_align_16:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vmovaps %ymm0, (%rdi)
+; SKX-NEXT:    vmovups %ymm0, (%rdi)
 ; SKX-NEXT:    retq
 entry:
   %0 = shufflevector <32 x i16> %a, <32 x i16> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
@@ -468,7 +468,7 @@ entry:
 define void @extract_subvector512_v32i8_store_lo_align_16(i8* nocapture %addr, <64 x i8> %a) nounwind uwtable ssp {
 ; SKX-LABEL: extract_subvector512_v32i8_store_lo_align_16:
 ; SKX:       ## BB#0: ## %entry
-; SKX-NEXT:    vmovaps %ymm0, (%rdi)
+; SKX-NEXT:    vmovups %ymm0, (%rdi)
 ; SKX-NEXT:    retq
 entry:
   %0 = shufflevector <64 x i8> %a, <64 x i8> undef, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
