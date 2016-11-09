@@ -8,8 +8,7 @@
 # CHECK: cannot open abc: {{N|n}}o such file or directory
 
 # RUN: grep TRAILER repro.cpio
-# RUN: echo "*response.txt" > list.txt
-# RUN: cpio -i --to-stdout --pattern-file=list.txt < repro.cpio \
-# RUN:   | FileCheck %s --check-prefix=RSP
+# RUN: cpio -id < repro.cpio
+# RUN: FileCheck %s --check-prefix=RSP < repro/response.txt
 # RSP: abc
 # RSP: -o t
