@@ -1308,15 +1308,14 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     if ((SPF == SPF_SMAX || SPF == SPF_UMAX) &&
         IsFreeToInvert(LHS, LHS->hasNUses(2)) &&
         IsFreeToInvert(RHS, RHS->hasNUses(2))) {
-      // This transform adds a not operation, and that extra cost needs to be
-      // justified. We look for simplifications that will result from applying
-      // this rule:
-      bool Profitable =
-          (LHS->hasNUses(2) && match(LHS, m_Not(m_Value()))) ||
-          (RHS->hasNUses(2) && match(RHS, m_Not(m_Value()))) ||
+      // For this transform to be profitable, we need to eliminate at least two
+      // 'not' instructions if we're going to add one 'not' instruction.
+      int NumberOfNots =
+          (LHS->hasNUses(2) && match(LHS, m_Not(m_Value()))) +
+          (RHS->hasNUses(2) && match(RHS, m_Not(m_Value()))) +
           (SI.hasOneUse() && match(*SI.user_begin(), m_Not(m_Value())));
 
-      if (Profitable) {
+      if (NumberOfNots >= 2) {
         Value *NewLHS = Builder->CreateNot(LHS);
         Value *NewRHS = Builder->CreateNot(RHS);
         Value *NewCmp = SPF == SPF_SMAX
