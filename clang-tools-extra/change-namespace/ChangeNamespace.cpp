@@ -404,7 +404,7 @@ void ChangeNamespaceTool::run(
     clang::SourceRange VarRefRange = VarRef->getSourceRange();
     replaceQualifiedSymbolInDeclContext(
         Result, Context->getDeclContext(), VarRefRange.getBegin(),
-        VarRefRange.getEnd(), llvm::dyn_cast<NamedDecl>(Var));
+        VarRefRange.getEnd(), llvm::cast<NamedDecl>(Var));
   } else {
     const auto *Call = Result.Nodes.getNodeAs<clang::CallExpr>("call");
     assert(Call != nullptr && "Expecting callback for CallExpr.");
@@ -421,7 +421,7 @@ void ChangeNamespaceTool::run(
     clang::SourceRange CalleeRange = Call->getCallee()->getSourceRange();
     replaceQualifiedSymbolInDeclContext(
         Result, Context->getDeclContext(), CalleeRange.getBegin(),
-        CalleeRange.getEnd(), llvm::dyn_cast<NamedDecl>(Func));
+        CalleeRange.getEnd(), llvm::cast<NamedDecl>(Func));
   }
 }
 
@@ -543,7 +543,7 @@ void ChangeNamespaceTool::replaceQualifiedSymbolInDeclContext(
     const DeclContext *DeclCtx, SourceLocation Start, SourceLocation End,
     const NamedDecl *FromDecl) {
   const auto *NsDeclContext = DeclCtx->getEnclosingNamespaceContext();
-  const auto *NsDecl = llvm::dyn_cast<NamespaceDecl>(NsDeclContext);
+  const auto *NsDecl = llvm::cast<NamespaceDecl>(NsDeclContext);
   // Calculate the name of the `NsDecl` after it is moved to new namespace.
   std::string OldNs = NsDecl->getQualifiedNameAsString();
   llvm::StringRef Postfix = OldNs;
