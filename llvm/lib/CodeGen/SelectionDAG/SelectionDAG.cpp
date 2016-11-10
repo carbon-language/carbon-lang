@@ -2394,7 +2394,8 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     unsigned InBits = InVT.getScalarSizeInBits();
     KnownZero = KnownZero.zext(InBits);
     KnownOne = KnownOne.zext(InBits);
-    computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, DemandedElts,
+                     Depth + 1);
     KnownZero = KnownZero.trunc(BitWidth);
     KnownOne = KnownOne.trunc(BitWidth);
     break;
