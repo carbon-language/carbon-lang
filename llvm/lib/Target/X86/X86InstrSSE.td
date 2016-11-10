@@ -2087,16 +2087,18 @@ def VCVTTPD2DQXrm : VPDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                          IIC_SSE_CVT_PD_RM>, VEX, Sched<[WriteCvtF2ILd]>;
 
 // YMM only
+let Predicates = [HasAVX, NoVLX] in {
 def VCVTTPD2DQYrr : VPDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR256:$src),
                          "cvttpd2dq{y}\t{$src, $dst|$dst, $src}",
                          [(set VR128:$dst,
-                           (int_x86_avx_cvtt_pd2dq_256 VR256:$src))],
+                           (v4i32 (fp_to_sint (v4f64 VR256:$src))))],
                          IIC_SSE_CVT_PD_RR>, VEX, VEX_L, Sched<[WriteCvtF2I]>;
 def VCVTTPD2DQYrm : VPDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f256mem:$src),
                          "cvttpd2dq{y}\t{$src, $dst|$dst, $src}",
                          [(set VR128:$dst,
-                          (int_x86_avx_cvtt_pd2dq_256 (loadv4f64 addr:$src)))],
+                           (v4i32 (fp_to_sint (loadv4f64 addr:$src))))],
                          IIC_SSE_CVT_PD_RM>, VEX, VEX_L, Sched<[WriteCvtF2ILd]>;
+}
 def : InstAlias<"vcvttpd2dq\t{$src, $dst|$dst, $src}",
                 (VCVTTPD2DQYrr VR128:$dst, VR256:$src), 0>;
 
@@ -2105,11 +2107,6 @@ let Predicates = [HasAVX, NoVLX] in {
   def : Pat<(X86vzmovl (v2i64 (bitconvert
                                (v4i32 (X86cvttpd2dq (v2f64 VR128:$src)))))),
             (VCVTTPD2DQrr VR128:$src)>;
-
-  def : Pat<(v4i32 (fp_to_sint (v4f64 VR256:$src))),
-            (VCVTTPD2DQYrr VR256:$src)>;
-  def : Pat<(v4i32 (fp_to_sint (loadv4f64 addr:$src))),
-            (VCVTTPD2DQYrm addr:$src)>;
 } // Predicates = [HasAVX]
 
 def CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),

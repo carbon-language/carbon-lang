@@ -2890,7 +2890,7 @@ define <4 x i32> @test_x86_avx_cvtt_pd2dq_256(<4 x double> %a0) {
 ;
 ; AVX512VL-LABEL: test_x86_avx_cvtt_pd2dq_256:
 ; AVX512VL:       ## BB#0:
-; AVX512VL-NEXT:    vcvttpd2dqy %ymm0, %xmm0 ## encoding: [0xc5,0xfd,0xe6,0xc0]
+; AVX512VL-NEXT:    vcvttpd2dq %ymm0, %xmm0 ## encoding: [0x62,0xf1,0xfd,0x28,0xe6,0xc0]
 ; AVX512VL-NEXT:    retl ## encoding: [0xc3]
   %res = call <4 x i32> @llvm.x86.avx.cvtt.pd2dq.256(<4 x double> %a0) ; <<4 x i32>> [#uses=1]
   ret <4 x i32> %res

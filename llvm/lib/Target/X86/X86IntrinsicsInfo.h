@@ -254,6 +254,7 @@ static const IntrinsicData* getIntrinsicWithChain(uint16_t IntNo) {
 static const IntrinsicData  IntrinsicsWithoutChain[] = {
   X86_INTRINSIC_DATA(avx_cvt_pd2_ps_256,CVTPD2PS, ISD::FP_ROUND, 0),
   X86_INTRINSIC_DATA(avx_cvtdq2_ps_256, INTR_TYPE_1OP, ISD::SINT_TO_FP, 0),
+  X86_INTRINSIC_DATA(avx_cvtt_pd2dq_256,INTR_TYPE_1OP, ISD::FP_TO_SINT, 0),
   X86_INTRINSIC_DATA(avx_hadd_pd_256,   INTR_TYPE_2OP, X86ISD::FHADD, 0),
   X86_INTRINSIC_DATA(avx_hadd_ps_256,   INTR_TYPE_2OP, X86ISD::FHADD, 0),
   X86_INTRINSIC_DATA(avx_hsub_pd_256,   INTR_TYPE_2OP, X86ISD::FHSUB, 0),
