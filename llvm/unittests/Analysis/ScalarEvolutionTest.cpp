@@ -538,6 +538,19 @@ TEST_F(ScalarEvolutionsTest, BadHoistingSCEVExpander_PR30942) {
       ASSERT_NE(DivFromScratchExpansionInst, nullptr);
       EXPECT_EQ(DivInst->getParent(), DivFromScratchExpansionInst->getParent());
     }
+
+    {
+      auto *ArgY = getArgByName(F, "y");
+      auto *SafeDivSCEV =
+          SE.getUDivExpr(SE.getSCEV(ArgY), SE.getConstant(APInt(32, 19)));
+
+      auto *SafeDivExpansion =
+          Expander.expandCodeFor(SafeDivSCEV, SafeDivSCEV->getType(),
+                                 DivInst->getParent()->getTerminator());
+      auto *SafeDivExpansionInst = dyn_cast<Instruction>(SafeDivExpansion);
+      ASSERT_NE(SafeDivExpansionInst, nullptr);
+      EXPECT_EQ("loop.ph", SafeDivExpansionInst->getParent()->getName());
+    }
   });
 }
 

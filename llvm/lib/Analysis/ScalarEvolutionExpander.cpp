@@ -198,7 +198,9 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode,
   DebugLoc Loc = Builder.GetInsertPoint()->getDebugLoc();
   SCEVInsertPointGuard Guard(Builder, this);
 
-  if (Opcode != Instruction::UDiv) {
+  auto *RHSConst = dyn_cast<ConstantInt>(RHS);
+
+  if (Opcode != Instruction::UDiv || (RHSConst && !RHSConst->isZero())) {
     // FIXME: There is alredy similar logic in expandCodeFor, we should see if
     // this is actually needed here.
 
