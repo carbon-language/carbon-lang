@@ -6777,15 +6777,15 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
       N0.getOperand(1).getOpcode() == ISD::Constant &&
       !TLI.isTruncateFree(N0.getOperand(0).getOperand(0).getValueType(),
                           N0.getValueType())) {
+    SDLoc DL(N);
     SDValue X = N0.getOperand(0).getOperand(0);
     if (X.getValueType().bitsLT(VT)) {
-      X = DAG.getNode(ISD::ANY_EXTEND, SDLoc(N), VT, X);
+      X = DAG.getNode(ISD::ANY_EXTEND, DL, VT, X);
     } else if (X.getValueType().bitsGT(VT)) {
-      X = DAG.getNode(ISD::TRUNCATE, SDLoc(N), VT, X);
+      X = DAG.getNode(ISD::TRUNCATE, DL, VT, X);
     }
     APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
     Mask = Mask.zext(VT.getSizeInBits());
-    SDLoc DL(N);
     return DAG.getNode(ISD::AND, DL, VT,
                        X, DAG.getConstant(Mask, DL, VT));
   }
