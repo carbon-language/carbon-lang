@@ -323,6 +323,9 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
   MachineInstr *MI = SU->getInstr();
   MachineOperand &MO = MI->getOperand(OperIdx);
   unsigned Reg = MO.getReg();
+  // We do not need to track any dependencies for constant registers.
+  if (MRI.isConstantPhysReg(Reg))
+    return;
 
   // Optionally add output and anti dependencies. For anti
   // dependencies we use a latency of 0 because for a multi-issue
