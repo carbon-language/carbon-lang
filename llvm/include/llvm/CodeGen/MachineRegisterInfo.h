@@ -542,9 +542,8 @@ public:
   void dumpUses(unsigned RegNo) const;
 #endif
 
-  /// isConstantPhysReg - Returns true if PhysReg is unallocatable and constant
-  /// throughout the function.  It is safe to move instructions that read such
-  /// a physreg.
+  /// Returns true if PhysReg is unallocatable and constant throughout the
+  /// function. Writing to a constant register has no effect.
   bool isConstantPhysReg(unsigned PhysReg) const;
 
   /// Get an iterator over the pressure sets affected by the given physical or
