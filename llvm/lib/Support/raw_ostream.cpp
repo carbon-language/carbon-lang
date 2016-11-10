@@ -370,7 +370,7 @@ raw_ostream &raw_ostream::operator<<(const FormattedBytes &FB) {
     unsigned Power = 0;
     if (MaxOffset > 0)
       Power = llvm::Log2_64_Ceil(MaxOffset);
-    OffsetWidth = std::max(4ULL, llvm::alignTo(Power, 4) / 4);
+    OffsetWidth = std::max<uint64_t>(4, llvm::alignTo(Power, 4) / 4);
   }
 
   // The width of a block of data including all spaces for group separators.
