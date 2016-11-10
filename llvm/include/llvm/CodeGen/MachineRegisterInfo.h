@@ -653,8 +653,7 @@ public:
   unsigned createGenericVirtualRegister(LLT Ty);
 
   /// Remove all types associated to virtual registers (after instruction
-  /// selection and constraining of all generic virtual registers). Returns true
-  /// if the VReg mapping was consistent.
+  /// selection and constraining of all generic virtual registers).
   void clearVirtRegTypes();
 
   /// Creates a new virtual register that has no register class, register bank
