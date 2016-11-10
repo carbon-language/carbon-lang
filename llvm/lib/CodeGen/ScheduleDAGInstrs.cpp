@@ -255,12 +255,11 @@ void ScheduleDAGInstrs::addSchedBarrierDeps() {
     for (const MachineOperand &MO : ExitMI->operands()) {
       if (!MO.isReg() || MO.isDef()) continue;
       unsigned Reg = MO.getReg();
-      if (Reg == 0) continue;
-
-      if (TRI->isPhysicalRegister(Reg))
+      if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
         Uses.insert(PhysRegSUOper(&ExitSU, -1, Reg));
-      else if (MO.readsReg()) // ignore undef operands
+      } else if (TargetRegisterInfo::isVirtualRegister(Reg) && MO.readsReg()) {
         addVRegUseDeps(&ExitSU, ExitMI->getOperandNo(&MO));
+      }
     }
   } else {
     // For others, e.g. fallthrough, conditional branch, assume the exit
@@ -323,6 +322,7 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
 void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
   MachineInstr *MI = SU->getInstr();
   MachineOperand &MO = MI->getOperand(OperIdx);
+  unsigned Reg = MO.getReg();
 
   // Optionally add output and anti dependencies. For anti
   // dependencies we use a latency of 0 because for a multi-issue
@@ -331,8 +331,7 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
   // TODO: Using a latency of 1 here for output dependencies assumes
   //       there's no cost for reusing registers.
   SDep::Kind Kind = MO.isUse() ? SDep::Anti : SDep::Output;
-  for (MCRegAliasIterator Alias(MO.getReg(), TRI, true);
-       Alias.isValid(); ++Alias) {
+  for (MCRegAliasIterator Alias(Reg, TRI, true); Alias.isValid(); ++Alias) {
     if (!Defs.contains(*Alias))
       continue;
     for (Reg2SUnitsMap::iterator I = Defs.find(*Alias); I != Defs.end(); ++I) {
@@ -359,13 +358,11 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
     // Either insert a new Reg2SUnits entry with an empty SUnits list, or
     // retrieve the existing SUnits list for this register's uses.
     // Push this SUnit on the use list.
-    Uses.insert(PhysRegSUOper(SU, OperIdx, MO.getReg()));
+    Uses.insert(PhysRegSUOper(SU, OperIdx, Reg));
     if (RemoveKillFlags)
       MO.setIsKill(false);
-  }
-  else {
+  } else {
     addPhysRegDataDeps(SU, OperIdx);
-    unsigned Reg = MO.getReg();
 
     // clear this register's use list
     if (Uses.contains(Reg))
@@ -954,12 +951,9 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       if (!MO.isReg() || !MO.isDef())
         continue;
       unsigned Reg = MO.getReg();
-      if (Reg == 0)
-        continue;
-
-      if (TRI->isPhysicalRegister(Reg))
+      if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
         addPhysRegDeps(SU, j);
-      else {
+      } else if (TargetRegisterInfo::isVirtualRegister(Reg)) {
         HasVRegDef = true;
         addVRegDefDeps(SU, j);
       }
@@ -974,13 +968,11 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       if (!MO.isReg() || !MO.isUse())
         continue;
       unsigned Reg = MO.getReg();
-      if (Reg == 0)
-        continue;
-
-      if (TRI->isPhysicalRegister(Reg))
+      if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
         addPhysRegDeps(SU, j);
-      else if (MO.readsReg()) // ignore undef operands
+      } else if (TargetRegisterInfo::isVirtualRegister(Reg) && MO.readsReg()) {
         addVRegUseDeps(SU, j);
+      }
     }
 
     // If we haven't seen any uses in this scheduling region, create a
