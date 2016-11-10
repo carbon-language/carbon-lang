@@ -2265,7 +2265,8 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     break;
   case ISD::SRA:
     if (const APInt *ShAmt = getValidShiftAmountConstant(Op)) {
-      computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth + 1);
+      computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, DemandedElts,
+                       Depth + 1);
       KnownZero = KnownZero.lshr(*ShAmt);
       KnownOne  = KnownOne.lshr(*ShAmt);
       // If we know the value of the sign bit, then we know it is copied across
