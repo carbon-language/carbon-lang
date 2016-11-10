@@ -50,6 +50,15 @@ protected:
     LI.reset(new LoopInfo(*DT));
     return ScalarEvolution(F, TLI, *AC, *DT, *LI);
   }
+
+  void runWithFunctionAndSE(
+      Module &M, StringRef FuncName,
+      function_ref<void(Function &F, ScalarEvolution &SE)> Test) {
+    auto *F = M.getFunction(FuncName);
+    ASSERT_NE(F, nullptr) << "Could not find " << FuncName;
+    ScalarEvolution SE = buildSE(*F);
+    Test(*F, SE);
+  }
 };
 
 TEST_F(ScalarEvolutionsTest, SCEVUnknownRAUW) {
@@ -408,16 +417,7 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
   assert(M && "Could not parse module?");
   assert(!verifyModule(*M) && "Must have been well formed!");
 
-  auto RunWithFunctionAndSE =
-      [&](StringRef FuncName,
-          function_ref<void(Function &F, ScalarEvolution& SE)> Test) {
-        auto *F = M->getFunction(FuncName);
-        ASSERT_NE(F, nullptr) << "Could not find " << FuncName;
-        ScalarEvolution SE = buildSE(*F);
-        Test(*F, SE);
-      };
-
-  RunWithFunctionAndSE("f_1", [&](Function &F, ScalarEvolution &SE) {
+  runWithFunctionAndSE(*M, "f_1", [&](Function &F, ScalarEvolution &SE) {
     auto *IV0 = getInstructionByName(F, "iv0");
     auto *IV0Inc = getInstructionByName(F, "iv0.inc");
 
@@ -458,7 +458,7 @@ TEST_F(ScalarEvolutionsTest, CommutativeExprOperandOrder) {
   };
 
   for (StringRef FuncName : {"f_2", "f_3", "f_4"})
-    RunWithFunctionAndSE(FuncName, [&](Function &F, ScalarEvolution &SE) {
+    runWithFunctionAndSE(*M, FuncName, [&](Function &F, ScalarEvolution &SE) {
       CheckCommutativeMulExprs(SE, SE.getSCEV(getInstructionByName(F, "x")),
                                SE.getSCEV(getInstructionByName(F, "y")),
                                SE.getSCEV(getInstructionByName(F, "z")));
