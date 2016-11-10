@@ -218,7 +218,7 @@ class FormattedBytes {
 public:
   FormattedBytes(ArrayRef<uint8_t> B, uint32_t IL, Optional<uint64_t> O,
                  uint32_t NPL, uint8_t BGS, bool U, bool A)
-      : Bytes(B), IndentLevel(IL), FirstByteOffset(O), NumPerLine(NPL),
+      : Bytes(B), FirstByteOffset(O), IndentLevel(IL), NumPerLine(NPL),
         ByteGroupSize(BGS), Upper(U), ASCII(A) {
 
     if (ByteGroupSize > NumPerLine)
