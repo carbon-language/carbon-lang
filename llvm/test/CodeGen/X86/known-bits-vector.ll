@@ -139,18 +139,12 @@ define <4 x float> @knownbits_mask_xor_shuffle_uitofp(<4 x i32> %a0) nounwind {
 define <4 x i32> @knownbits_mask_shl_shuffle_lshr(<4 x i32> %a0) nounwind {
 ; X32-LABEL: knownbits_mask_shl_shuffle_lshr:
 ; X32:       # BB#0:
-; X32-NEXT:    vpand {{\.LCPI.*}}, %xmm0, %xmm0
-; X32-NEXT:    vpslld $17, %xmm0, %xmm0
-; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,3,3]
-; X32-NEXT:    vpsrld $15, %xmm0, %xmm0
+; X32-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: knownbits_mask_shl_shuffle_lshr:
 ; X64:       # BB#0:
-; X64-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
-; X64-NEXT:    vpslld $17, %xmm0, %xmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,3,3]
-; X64-NEXT:    vpsrld $15, %xmm0, %xmm0
+; X64-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; X64-NEXT:    retq
   %1 = and <4 x i32> %a0, <i32 -65536, i32 -7, i32 -7, i32 -65536>
   %2 = shl <4 x i32> %1, <i32 17, i32 17, i32 17, i32 17>
