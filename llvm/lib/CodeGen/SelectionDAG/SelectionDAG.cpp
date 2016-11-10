@@ -2422,7 +2422,8 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
         unsigned NLZ = (CLHS->getAPIntValue()+1).countLeadingZeros();
         // NLZ can't be BitWidth with no sign bit
         APInt MaskV = APInt::getHighBitsSet(BitWidth, NLZ+1);
-        computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
+        computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, DemandedElts,
+                         Depth + 1);
 
         // If all of the MaskV bits are known to be zero, then we know the
         // output top bits are zero, because we now know that the output is
@@ -2445,11 +2446,13 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     // known to be clear. For example, if one input has the top 10 bits clear
     // and the other has the top 8 bits clear, we know the top 7 bits of the
     // output must be clear.
-    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, DemandedElts,
+                     Depth + 1);
     unsigned KnownZeroHigh = KnownZero2.countLeadingOnes();
     unsigned KnownZeroLow = KnownZero2.countTrailingOnes();
 
-    computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, DemandedElts,
+                     Depth + 1);
     KnownZeroHigh = std::min(KnownZeroHigh,
                              KnownZero2.countLeadingOnes());
     KnownZeroLow = std::min(KnownZeroLow,
