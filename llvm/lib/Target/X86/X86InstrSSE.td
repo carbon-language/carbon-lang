@@ -2114,24 +2114,20 @@ let Predicates = [HasAVX, NoVLX] in {
 
 def CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                       "cvttpd2dq\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse2_cvttpd2dq VR128:$src))],
+                      [(set VR128:$dst,
+                        (v4i32 (X86cvttpd2dq (v2f64 VR128:$src))))],
                       IIC_SSE_CVT_PD_RR>, Sched<[WriteCvtF2I]>;
 def CVTTPD2DQrm : PDI<0xE6, MRMSrcMem, (outs VR128:$dst),(ins f128mem:$src),
                       "cvttpd2dq\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse2_cvttpd2dq
-                                        (memopv2f64 addr:$src)))],
-                                        IIC_SSE_CVT_PD_RM>,
-                      Sched<[WriteCvtF2ILd]>;
+                      [(set VR128:$dst,
+                        (v4i32 (X86cvttpd2dq (memopv2f64 addr:$src))))],
+                      IIC_SSE_CVT_PD_RM>, Sched<[WriteCvtF2ILd]>;
 
 let Predicates = [UseSSE2] in {
   let AddedComplexity = 15 in
   def : Pat<(X86vzmovl (v2i64 (bitconvert
                                (v4i32 (X86cvttpd2dq (v2f64 VR128:$src)))))),
             (CVTTPD2DQrr VR128:$src)>;
-  def : Pat<(v4i32 (X86cvttpd2dq (v2f64 VR128:$src))),
-            (CVTTPD2DQrr VR128:$src)>;
-  def : Pat<(v4i32 (X86cvttpd2dq (memopv2f64 addr:$src))),
-            (CVTTPD2DQrm addr:$src)>;
 } // Predicates = [UseSSE2]
 
 // Convert packed single to packed double
