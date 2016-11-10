@@ -659,6 +659,38 @@ template <class ELFT> static void sortCtorsDtors(OutputSectionBase *S) {
     reinterpret_cast<OutputSection<ELFT> *>(S)->sortCtorsDtors();
 }
 
+// Sort input sections using the list provided by --symbol-ordering-file.
+template <class ELFT>
+static void sortBySymbolsOrder(ArrayRef<OutputSectionBase *> V) {
+  if (Config->SymbolOrderingFile.empty())
+    return;
+
+  // Build sections order map from symbols list.
+  DenseMap<InputSectionBase<ELFT> *, unsigned> SectionsOrder;
+  for (elf::ObjectFile<ELFT> *File : Symtab<ELFT>::X->getObjectFiles()) {
+    for (SymbolBody *Body : File->getSymbols()) {
+      auto *D = dyn_cast<DefinedRegular<ELFT>>(Body);
+      if (!D || !D->Section)
+        continue;
+      StringRef SymName = getSymbolName(File->getStringTable(), *Body);
+      auto It = Config->SymbolOrderingFile.find(CachedHashString(SymName));
+      if (It == Config->SymbolOrderingFile.end())
+        continue;
+
+      auto It2 = SectionsOrder.insert({D->Section, It->second});
+      if (!It2.second)
+        It2.first->second = std::min(It->second, It2.first->second);
+    }
+  }
+
+  for (OutputSectionBase *Base : V)
+    if (OutputSection<ELFT> *Sec = dyn_cast<OutputSection<ELFT>>(Base))
+      Sec->sort([&](InputSection<ELFT> *S) {
+        auto It = SectionsOrder.find(S);
+        return It == SectionsOrder.end() ? UINT32_MAX : It->second;
+      });
+}
+
 template <class ELFT>
 void Writer<ELFT>::forEachRelSec(
     std::function<void(InputSectionBase<ELFT> &, const typename ELFT::Shdr &)>
@@ -703,6 +735,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   for (InputSectionBase<ELFT> *IS : Symtab<ELFT>::X->Sections)
     addInputSec(IS);
 
+  sortBySymbolsOrder<ELFT>(OutputSections);
   sortInitFini<ELFT>(findSection(".init_array"));
   sortInitFini<ELFT>(findSection(".fini_array"));
   sortCtorsDtors<ELFT>(findSection(".ctors"));

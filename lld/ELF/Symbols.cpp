@@ -282,6 +282,14 @@ void elf::printTraceSymbol(Symbol *Sym) {
   outs() << B->getName() << "\n";
 }
 
+StringRef elf::getSymbolName(StringRef SymTab, SymbolBody &Body) {
+  if (Body.isLocal() && Body.getNameOffset())
+    return SymTab.data() + Body.getNameOffset();
+  if (!Body.isLocal())
+    return Body.getName();
+  return "";
+}
+
 template bool SymbolBody::hasThunk<ELF32LE>() const;
 template bool SymbolBody::hasThunk<ELF32BE>() const;
 template bool SymbolBody::hasThunk<ELF64LE>() const;

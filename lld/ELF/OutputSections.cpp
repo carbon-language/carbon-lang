@@ -14,6 +14,7 @@
 #include "LinkerScript.h"
 #include "Memory.h"
 #include "Strings.h"
+#include "SymbolListFile.h"
 #include "SymbolTable.h"
 #include "SyntheticSections.h"
 #include "Target.h"
@@ -978,6 +979,21 @@ template <class ELFT> void OutputSection<ELFT>::assignOffsets() {
   this->Size = Off;
 }
 
+template <class ELFT>
+void OutputSection<ELFT>::sort(
+    std::function<unsigned(InputSection<ELFT> *S)> Order) {
+  typedef std::pair<unsigned, InputSection<ELFT> *> Pair;
+  auto Comp = [](const Pair &A, const Pair &B) { return A.first < B.first; };
+
+  std::vector<Pair> V;
+  for (InputSection<ELFT> *S : Sections)
+    V.push_back({Order(S), S});
+  std::stable_sort(V.begin(), V.end(), Comp);
+  Sections.clear();
+  for (Pair &P : V)
+    Sections.push_back(P.second);
+}
+
 // Sorts input sections by section name suffixes, so that .foo.N comes
 // before .foo.M if N < M. Used to sort .{init,fini}_array.N sections.
 // We want to keep the original order if the priorities are the same
@@ -986,16 +1002,7 @@ template <class ELFT> void OutputSection<ELFT>::assignOffsets() {
 // For more detail, read the section of the GCC's manual about init_priority.
 template <class ELFT> void OutputSection<ELFT>::sortInitFini() {
   // Sort sections by priority.
-  typedef std::pair<int, InputSection<ELFT> *> Pair;
-  auto Comp = [](const Pair &A, const Pair &B) { return A.first < B.first; };
-
-  std::vector<Pair> V;
-  for (InputSection<ELFT> *S : Sections)
-    V.push_back({getPriority(S->Name), S});
-  std::stable_sort(V.begin(), V.end(), Comp);
-  Sections.clear();
-  for (Pair &P : V)
-    Sections.push_back(P.second);
+  sort([](InputSection<ELFT> *S) { return getPriority(S->Name); });
 }
 
 // Returns true if S matches /Filename.?\.o$/.
