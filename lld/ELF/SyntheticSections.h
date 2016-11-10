@@ -67,7 +67,7 @@ public:
       : InputSection<ELFT>(Flags, Type, Addralign, ArrayRef<uint8_t>(), Name,
                            InputSectionData::Synthetic) {}
 
-  virtual void writeTo(uint8_t *Buf) {}
+  virtual void writeTo(uint8_t *Buf) = 0;
   virtual size_t getSize() const { return this->Data.size(); }
 
   static bool classof(const InputSectionData *D) {
