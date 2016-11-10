@@ -152,3 +152,26 @@ define <4 x i32> @knownbits_mask_shl_shuffle_lshr(<4 x i32> %a0) nounwind {
   %4 = lshr <4 x i32> %3, <i32 15, i32 15, i32 15, i32 15>
   ret <4 x i32> %4
 }
+
+define <4 x i32> @knownbits_mask_ashr_shuffle_lshr(<4 x i32> %a0) nounwind {
+; X32-LABEL: knownbits_mask_ashr_shuffle_lshr:
+; X32:       # BB#0:
+; X32-NEXT:    vpand {{\.LCPI.*}}, %xmm0, %xmm0
+; X32-NEXT:    vpsrad $15, %xmm0, %xmm0
+; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,3,3]
+; X32-NEXT:    vpsrld $30, %xmm0, %xmm0
+; X32-NEXT:    retl
+;
+; X64-LABEL: knownbits_mask_ashr_shuffle_lshr:
+; X64:       # BB#0:
+; X64-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
+; X64-NEXT:    vpsrad $15, %xmm0, %xmm0
+; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,3,3]
+; X64-NEXT:    vpsrld $30, %xmm0, %xmm0
+; X64-NEXT:    retq
+  %1 = and <4 x i32> %a0, <i32 131071, i32 -1, i32 -1, i32 131071>
+  %2 = ashr <4 x i32> %1, <i32 15, i32 15, i32 15, i32 15>
+  %3 = shufflevector <4 x i32> %2, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 3, i32 3>
+  %4 = lshr <4 x i32> %3, <i32 30, i32 30, i32 30, i32 30>
+  ret <4 x i32> %4
+}
