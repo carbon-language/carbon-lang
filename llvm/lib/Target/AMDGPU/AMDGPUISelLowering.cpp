@@ -2978,10 +2978,11 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   return nullptr;
 }
 
-SDValue AMDGPUTargetLowering::getRsqrtEstimate(SDValue Operand,
-                                               SelectionDAG &DAG, int Enabled,
-                                               int &RefinementSteps,
-                                               bool &UseOneConstNR) const {
+SDValue AMDGPUTargetLowering::getSqrtEstimate(SDValue Operand,
+                                              SelectionDAG &DAG, int Enabled,
+                                              int &RefinementSteps,
+                                              bool &UseOneConstNR,
+                                              bool Reciprocal) const {
   EVT VT = Operand.getValueType();
 
   if (VT == MVT::f32) {
