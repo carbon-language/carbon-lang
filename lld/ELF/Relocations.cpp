@@ -44,10 +44,11 @@
 #include "Relocations.h"
 #include "Config.h"
 #include "OutputSections.h"
+#include "Strings.h"
 #include "SymbolTable.h"
+#include "SyntheticSections.h"
 #include "Target.h"
 #include "Thunks.h"
-#include "Strings.h"
 
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/raw_ostream.h"
@@ -743,8 +744,8 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
       else
         Rel = Target->PltRel;
 
-      Out<ELFT>::GotPlt->addEntry(Body);
-      Out<ELFT>::RelaPlt->addReloc({Rel, Out<ELFT>::GotPlt,
+      In<ELFT>::GotPlt->addEntry(Body);
+      Out<ELFT>::RelaPlt->addReloc({Rel, In<ELFT>::GotPlt,
                                     Body.getGotPltOffset<ELFT>(), !Preemptible,
                                     &Body, 0});
       continue;

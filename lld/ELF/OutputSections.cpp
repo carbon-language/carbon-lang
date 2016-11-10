@@ -109,35 +109,6 @@ template <class ELFT> void GdbIndexSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
-GotPltSection<ELFT>::GotPltSection()
-    : OutputSectionBase(".got.plt", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE) {
-  this->Addralign = Target->GotPltEntrySize;
-}
-
-template <class ELFT> void GotPltSection<ELFT>::addEntry(SymbolBody &Sym) {
-  Sym.GotPltIndex = Target->GotPltHeaderEntriesNum + Entries.size();
-  Entries.push_back(&Sym);
-}
-
-template <class ELFT> bool GotPltSection<ELFT>::empty() const {
-  return Entries.empty();
-}
-
-template <class ELFT> void GotPltSection<ELFT>::finalize() {
-  this->Size = (Target->GotPltHeaderEntriesNum + Entries.size()) *
-               Target->GotPltEntrySize;
-}
-
-template <class ELFT> void GotPltSection<ELFT>::writeTo(uint8_t *Buf) {
-  Target->writeGotPltHeader(Buf);
-  Buf += Target->GotPltHeaderEntriesNum * Target->GotPltEntrySize;
-  for (const SymbolBody *B : Entries) {
-    Target->writeGotPlt(Buf, *B);
-    Buf += sizeof(uintX_t);
-  }
-}
-
-template <class ELFT>
 GotSection<ELFT>::GotSection()
     : OutputSectionBase(".got", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE) {
   if (Config->EMachine == EM_MIPS)
@@ -775,7 +746,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     Add({DT_JMPREL, Out<ELFT>::RelaPlt});
     Add({DT_PLTRELSZ, Out<ELFT>::RelaPlt->Size});
     Add({Config->EMachine == EM_MIPS ? DT_MIPS_PLTGOT : DT_PLTGOT,
-         Out<ELFT>::GotPlt});
+         In<ELFT>::GotPlt});
     Add({DT_PLTREL, uint64_t(Config->Rela ? DT_RELA : DT_REL)});
   }
 
@@ -845,6 +816,9 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
     switch (E.Kind) {
     case Entry::SecAddr:
       P->d_un.d_ptr = E.OutSec->Addr;
+      break;
+    case Entry::InSecAddr:
+      P->d_un.d_ptr = E.InSec->OutSec->Addr + E.InSec->OutSecOff;
       break;
     case Entry::SecSize:
       P->d_un.d_val = E.OutSec->Size;
@@ -1789,6 +1763,7 @@ OutputSectionFactory<ELFT>::create(const SectionKey<ELFT::Is64Bits> &Key,
   uint32_t Type = C->Type;
   switch (C->kind()) {
   case InputSectionBase<ELFT>::Regular:
+  case InputSectionBase<ELFT>::Synthetic:
     Sec = make<OutputSection<ELFT>>(Key.Name, Type, Flags);
     break;
   case InputSectionBase<ELFT>::EHFrame:
@@ -1844,11 +1819,6 @@ template class EhFrameHeader<ELF32LE>;
 template class EhFrameHeader<ELF32BE>;
 template class EhFrameHeader<ELF64LE>;
 template class EhFrameHeader<ELF64BE>;
-
-template class GotPltSection<ELF32LE>;
-template class GotPltSection<ELF32BE>;
-template class GotPltSection<ELF64LE>;
-template class GotPltSection<ELF64BE>;
 
 template class GotSection<ELF32LE>;
 template class GotSection<ELF32BE>;

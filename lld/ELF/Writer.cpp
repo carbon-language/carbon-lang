@@ -248,7 +248,6 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   if (Config->GdbIndex)
     Out<ELFT>::GdbIndex = make<GdbIndexSection<ELFT>>();
 
-  Out<ELFT>::GotPlt = make<GotPltSection<ELFT>>();
   Out<ELFT>::RelaPlt = make<RelocationSection<ELFT>>(
       Config->Rela ? ".rela.plt" : ".rel.plt", false /*Sort*/);
   if (Config->Strip != StripPolicy::All) {
@@ -312,6 +311,8 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
       Symtab<ELFT>::X->Sections.push_back(RegSec);
     }
   }
+
+  In<ELFT>::GotPlt = make<GotPltSection<ELFT>>();
 }
 
 template <class ELFT>
@@ -423,7 +424,7 @@ template <class ELFT> bool elf::isRelroSection(const OutputSectionBase *Sec) {
   if (Type == SHT_INIT_ARRAY || Type == SHT_FINI_ARRAY ||
       Type == SHT_PREINIT_ARRAY)
     return true;
-  if (Sec == Out<ELFT>::GotPlt)
+  if (Sec == In<ELFT>::GotPlt->OutSec)
     return Config->ZNow;
   if (Sec == Out<ELFT>::Dynamic || Sec == Out<ELFT>::Got)
     return true;
@@ -893,6 +894,13 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // This function adds linker-created Out<ELFT>::* sections.
   addPredefinedSections();
 
+  // We fill .got.plt section in scanRelocs(). This is the
+  // reason we don't add it earlier in createSections().
+  if (!In<ELFT>::GotPlt->empty()) {
+    addInputSec(In<ELFT>::GotPlt);
+    In<ELFT>::GotPlt->OutSec->assignOffsets();
+  }
+
   sortSections();
 
   unsigned I = 1;
@@ -976,8 +984,6 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
 
   if (needsGot())
     Add(Out<ELFT>::Got);
-  if (Out<ELFT>::GotPlt && !Out<ELFT>::GotPlt->empty())
-    Add(Out<ELFT>::GotPlt);
   if (!Out<ELFT>::Plt->empty())
     Add(Out<ELFT>::Plt);
   if (!Out<ELFT>::EhFrame->empty())
