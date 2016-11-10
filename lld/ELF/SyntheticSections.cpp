@@ -217,7 +217,7 @@ BuildIdSection<ELFT>::BuildIdSection(size_t HashSize)
       HashSize(HashSize) {
   this->Live = true;
 
-  Buf.resize(16 + HashSize);
+  Buf.resize(HeaderSize + HashSize);
   const endianness E = ELFT::TargetEndianness;
   write32<E>(Buf.data(), 4);                   // Name size
   write32<E>(Buf.data() + 4, HashSize);        // Content size
@@ -229,8 +229,7 @@ BuildIdSection<ELFT>::BuildIdSection(size_t HashSize)
 // Returns the location of the build-id hash value in the output.
 template <class ELFT>
 uint8_t *BuildIdSection<ELFT>::getOutputLoc(uint8_t *Start) const {
-  // First 16 bytes are a header.
-  return Start + this->OutSec->Offset + this->OutSecOff + 16;
+  return Start + this->OutSec->Offset + this->OutSecOff + HeaderSize;
 }
 
 // Split one uint8 array into small pieces of uint8 arrays.

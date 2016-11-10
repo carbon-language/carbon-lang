@@ -95,6 +95,8 @@ protected:
               std::function<void(ArrayRef<uint8_t> Arr, uint8_t *Hash)> Hash);
 
   size_t HashSize;
+  // First 16 bytes are a header.
+  static const unsigned HeaderSize = 16;
 };
 
 template <class ELFT>
