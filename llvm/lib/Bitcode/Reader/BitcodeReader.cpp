@@ -3268,12 +3268,25 @@ Error BitcodeReader::parseConstants() {
       }
       break;
     }
-    case bitc::CST_CODE_CE_INBOUNDS_GEP:
-    case bitc::CST_CODE_CE_GEP: {  // CE_GEP:        [n x operands]
+    case bitc::CST_CODE_CE_INBOUNDS_GEP: // [ty, n x operands]
+    case bitc::CST_CODE_CE_GEP: // [ty, n x operands]
+    case bitc::CST_CODE_CE_GEP_WITH_INRANGE_INDEX: { // [ty, flags, n x
+                                                     // operands]
       unsigned OpNum = 0;
       Type *PointeeType = nullptr;
-      if (Record.size() % 2)
+      if (BitCode == bitc::CST_CODE_CE_GEP_WITH_INRANGE_INDEX ||
+          Record.size() % 2)
         PointeeType = getTypeByID(Record[OpNum++]);
+
+      bool InBounds = false;
+      Optional<unsigned> InRangeIndex;
+      if (BitCode == bitc::CST_CODE_CE_GEP_WITH_INRANGE_INDEX) {
+        uint64_t Op = Record[OpNum++];
+        InBounds = Op & 1;
+        InRangeIndex = Op >> 1;
+      } else if (BitCode == bitc::CST_CODE_CE_INBOUNDS_GEP)
+        InBounds = true;
+
       SmallVector<Constant*, 16> Elts;
       while (OpNum != Record.size()) {
         Type *ElTy = getTypeByID(Record[OpNum++]);
@@ -3294,8 +3307,7 @@ Error BitcodeReader::parseConstants() {
 
       ArrayRef<Constant *> Indices(Elts.begin() + 1, Elts.end());
       V = ConstantExpr::getGetElementPtr(PointeeType, Elts[0], Indices,
-                                         BitCode ==
-                                             bitc::CST_CODE_CE_INBOUNDS_GEP);
+                                         InBounds, InRangeIndex);
       break;
     }
     case bitc::CST_CODE_CE_SELECT: {  // CE_SELECT: [opval#, opval#, opval#]
