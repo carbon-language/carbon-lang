@@ -2166,11 +2166,13 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     break;
   }
   case ISD::MUL: {
-    computeKnownBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
-    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(1), KnownZero, KnownOne, DemandedElts,
+                     Depth + 1);
+    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, DemandedElts,
+                     Depth + 1);
 
     // If low bits are zero in either operand, output low known-0 bits.
-    // Also compute a conserative estimate for high known-0 bits.
+    // Also compute a conservative estimate for high known-0 bits.
     // More trickiness is possible, but this is sufficient for the
     // interesting case of alignment computation.
     KnownOne.clearAllBits();
