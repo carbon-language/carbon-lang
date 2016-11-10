@@ -207,18 +207,12 @@ define <4 x i32> @knownbits_mask_trunc_shuffle_shl(<4 x i64> %a0) nounwind {
 define <4 x i32> @knownbits_sub_lshr(<4 x i32> %a0) nounwind {
 ; X32-LABEL: knownbits_sub_lshr:
 ; X32:       # BB#0:
-; X32-NEXT:    vpand {{\.LCPI.*}}, %xmm0, %xmm0
-; X32-NEXT:    vmovdqa {{.*#+}} xmm1 = [255,255,255,255]
-; X32-NEXT:    vpsubd %xmm0, %xmm1, %xmm0
-; X32-NEXT:    vpsrld $22, %xmm0, %xmm0
+; X32-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: knownbits_sub_lshr:
 ; X64:       # BB#0:
-; X64-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
-; X64-NEXT:    vmovdqa {{.*#+}} xmm1 = [255,255,255,255]
-; X64-NEXT:    vpsubd %xmm0, %xmm1, %xmm0
-; X64-NEXT:    vpsrld $22, %xmm0, %xmm0
+; X64-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; X64-NEXT:    retq
   %1 = and <4 x i32> %a0, <i32 15, i32 15, i32 15, i32 15>
   %2 = sub <4 x i32> <i32 255, i32 255, i32 255, i32 255>, %1
