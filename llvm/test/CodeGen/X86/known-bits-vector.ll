@@ -204,6 +204,23 @@ define <4 x i32> @knownbits_mask_trunc_shuffle_shl(<4 x i64> %a0) nounwind {
   ret <4 x i32> %4
 }
 
+define <4 x i32> @knownbits_add_lshr(<4 x i32> %a0, <4 x i32> %a1) nounwind {
+; X32-LABEL: knownbits_add_lshr:
+; X32:       # BB#0:
+; X32-NEXT:    vxorps %xmm0, %xmm0, %xmm0
+; X32-NEXT:    retl
+;
+; X64-LABEL: knownbits_add_lshr:
+; X64:       # BB#0:
+; X64-NEXT:    vxorps %xmm0, %xmm0, %xmm0
+; X64-NEXT:    retq
+  %1 = and <4 x i32> %a0, <i32 32767, i32 32767, i32 32767, i32 32767>
+  %2 = and <4 x i32> %a1, <i32 32767, i32 32767, i32 32767, i32 32767>
+  %3 = add <4 x i32> %1, %2
+  %4 = lshr <4 x i32> %3, <i32 17, i32 17, i32 17, i32 17>
+  ret <4 x i32> %4
+}
+
 define <4 x i32> @knownbits_sub_lshr(<4 x i32> %a0) nounwind {
 ; X32-LABEL: knownbits_sub_lshr:
 ; X32:       # BB#0:
