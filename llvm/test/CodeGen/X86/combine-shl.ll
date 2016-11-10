@@ -47,12 +47,10 @@ define <4 x i32> @combine_vec_shl_outofrange1(<4 x i32> %x) {
 define <4 x i32> @combine_vec_shl_outofrange2(<4 x i32> %a0) {
 ; SSE-LABEL: combine_vec_shl_outofrange2:
 ; SSE:       # BB#0:
-; SSE-NEXT:    xorps %xmm0, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_vec_shl_outofrange2:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %1 = and <4 x i32> %a0, <i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647>
   %2 = shl <4 x i32> %1, <i32 33, i32 33, i32 33, i32 33>
