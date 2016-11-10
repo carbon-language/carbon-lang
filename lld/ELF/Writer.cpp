@@ -54,8 +54,7 @@ private:
   void addReservedSymbols();
   void addInputSec(InputSectionBase<ELFT> *S);
   void createSections();
-  void forEachRelSec(std::function<void(InputSectionBase<ELFT> &,
-                                        const typename ELFT::Shdr &)> Fn);
+  void forEachRelSec(std::function<void(InputSectionBase<ELFT> &)> Fn);
   void sortSections();
   void finalizeSections();
   void addPredefinedSections();
@@ -694,8 +693,7 @@ static void sortBySymbolsOrder(ArrayRef<OutputSectionBase *> V) {
 
 template <class ELFT>
 void Writer<ELFT>::forEachRelSec(
-    std::function<void(InputSectionBase<ELFT> &, const typename ELFT::Shdr &)>
-        Fn) {
+    std::function<void(InputSectionBase<ELFT> &)> Fn) {
   for (InputSectionBase<ELFT> *IS : Symtab<ELFT>::X->Sections) {
     if (!IS->Live)
       continue;
@@ -706,14 +704,8 @@ void Writer<ELFT>::forEachRelSec(
     // processed by InputSection::relocateNonAlloc.
     if (!(IS->Flags & SHF_ALLOC))
       continue;
-    if (auto *S = dyn_cast<InputSection<ELFT>>(IS)) {
-      for (const Elf_Shdr *RelSec : S->RelocSections)
-        Fn(*S, *RelSec);
-      continue;
-    }
-    if (auto *S = dyn_cast<EhInputSection<ELFT>>(IS))
-      if (S->RelocSection)
-        Fn(*S, *S->RelocSection);
+    if (isa<InputSection<ELFT>>(IS) || isa<EhInputSection<ELFT>>(IS))
+      Fn(*IS);
   }
 }
 

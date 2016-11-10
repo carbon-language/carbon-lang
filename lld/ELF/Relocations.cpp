@@ -787,14 +787,11 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
   }
 }
 
-template <class ELFT>
-void scanRelocations(InputSectionBase<ELFT> &S,
-                     const typename ELFT::Shdr &RelSec) {
-  ELFFile<ELFT> EObj = S.getFile()->getObj();
-  if (RelSec.sh_type == SHT_RELA)
-    scanRelocs(S, check(EObj.relas(&RelSec)));
+template <class ELFT> void scanRelocations(InputSectionBase<ELFT> &S) {
+  if (S.AreRelocsRela)
+    scanRelocs(S, S.relas());
   else
-    scanRelocs(S, check(EObj.rels(&RelSec)));
+    scanRelocs(S, S.rels());
 }
 
 template <class ELFT, class RelTy>
@@ -817,33 +814,22 @@ static void createThunks(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
   }
 }
 
-template <class ELFT>
-void createThunks(InputSectionBase<ELFT> &S,
-                  const typename ELFT::Shdr &RelSec) {
-  ELFFile<ELFT> EObj = S.getFile()->getObj();
-  if (RelSec.sh_type == SHT_RELA)
-    createThunks(S, check(EObj.relas(&RelSec)));
+template <class ELFT> void createThunks(InputSectionBase<ELFT> &S) {
+  if (S.AreRelocsRela)
+    createThunks(S, S.relas());
   else
-    createThunks(S, check(EObj.rels(&RelSec)));
+    createThunks(S, S.rels());
 }
 
-template void scanRelocations<ELF32LE>(InputSectionBase<ELF32LE> &,
-                                       const ELF32LE::Shdr &);
-template void scanRelocations<ELF32BE>(InputSectionBase<ELF32BE> &,
-                                       const ELF32BE::Shdr &);
-template void scanRelocations<ELF64LE>(InputSectionBase<ELF64LE> &,
-                                       const ELF64LE::Shdr &);
-template void scanRelocations<ELF64BE>(InputSectionBase<ELF64BE> &,
-                                       const ELF64BE::Shdr &);
+template void scanRelocations<ELF32LE>(InputSectionBase<ELF32LE> &);
+template void scanRelocations<ELF32BE>(InputSectionBase<ELF32BE> &);
+template void scanRelocations<ELF64LE>(InputSectionBase<ELF64LE> &);
+template void scanRelocations<ELF64BE>(InputSectionBase<ELF64BE> &);
 
-template void createThunks<ELF32LE>(InputSectionBase<ELF32LE> &,
-                                    const ELF32LE::Shdr &);
-template void createThunks<ELF32BE>(InputSectionBase<ELF32BE> &,
-                                    const ELF32BE::Shdr &);
-template void createThunks<ELF64LE>(InputSectionBase<ELF64LE> &,
-                                    const ELF64LE::Shdr &);
-template void createThunks<ELF64BE>(InputSectionBase<ELF64BE> &,
-                                    const ELF64BE::Shdr &);
+template void createThunks<ELF32LE>(InputSectionBase<ELF32LE> &);
+template void createThunks<ELF32BE>(InputSectionBase<ELF32BE> &);
+template void createThunks<ELF64LE>(InputSectionBase<ELF64LE> &);
+template void createThunks<ELF64BE>(InputSectionBase<ELF64BE> &);
 
 template std::string getLocation<ELF32LE>(InputSectionBase<ELF32LE> &S,
                                           uint32_t Offset);
