@@ -543,10 +543,15 @@ define <4 x i32> @test_x86_sse2_cvttps2dq(<4 x float> %a0) {
 ; SSE-NEXT:    cvttps2dq %xmm0, %xmm0 ## encoding: [0xf3,0x0f,0x5b,0xc0]
 ; SSE-NEXT:    retl ## encoding: [0xc3]
 ;
-; VCHECK-LABEL: test_x86_sse2_cvttps2dq:
-; VCHECK:       ## BB#0:
-; VCHECK-NEXT:    vcvttps2dq %xmm0, %xmm0 ## encoding: [0xc5,0xfa,0x5b,0xc0]
-; VCHECK-NEXT:    retl ## encoding: [0xc3]
+; AVX2-LABEL: test_x86_sse2_cvttps2dq:
+; AVX2:       ## BB#0:
+; AVX2-NEXT:    vcvttps2dq %xmm0, %xmm0 ## encoding: [0xc5,0xfa,0x5b,0xc0]
+; AVX2-NEXT:    retl ## encoding: [0xc3]
+;
+; SKX-LABEL: test_x86_sse2_cvttps2dq:
+; SKX:       ## BB#0:
+; SKX-NEXT:    vcvttps2dq %xmm0, %xmm0 ## encoding: [0x62,0xf1,0x7e,0x08,0x5b,0xc0]
+; SKX-NEXT:    retl ## encoding: [0xc3]
   %res = call <4 x i32> @llvm.x86.sse2.cvttps2dq(<4 x float> %a0) ; <<4 x i32>> [#uses=1]
   ret <4 x i32> %res
 }
