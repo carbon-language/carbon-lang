@@ -186,3 +186,30 @@ define <4 x i32> @knownbits_mask_mul_shuffle_shl(<4 x i32> %a0, <4 x i32> %a1) n
   %4 = shl <4 x i32> %3, <i32 22, i32 22, i32 22, i32 22>
   ret <4 x i32> %4
 }
+
+define <4 x i32> @knownbits_mask_trunc_shuffle_shl(<4 x i64> %a0) nounwind {
+; X32-LABEL: knownbits_mask_trunc_shuffle_shl:
+; X32:       # BB#0:
+; X32-NEXT:    vandps {{\.LCPI.*}}, %ymm0, %ymm0
+; X32-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; X32-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5,6,7]
+; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,2,2]
+; X32-NEXT:    vpslld $22, %xmm0, %xmm0
+; X32-NEXT:    vzeroupper
+; X32-NEXT:    retl
+;
+; X64-LABEL: knownbits_mask_trunc_shuffle_shl:
+; X64:       # BB#0:
+; X64-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
+; X64-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; X64-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5,6,7]
+; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,2,2]
+; X64-NEXT:    vpslld $22, %xmm0, %xmm0
+; X64-NEXT:    vzeroupper
+; X64-NEXT:    retq
+  %1 = and <4 x i64> %a0, <i64 -65536, i64 -7, i64 7, i64 -65536>
+  %2 = trunc <4 x i64> %1 to <4 x i32>
+  %3 = shufflevector <4 x i32> %2, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 3, i32 3>
+  %4 = shl <4 x i32> %3, <i32 22, i32 22, i32 22, i32 22>
+  ret <4 x i32> %4
+}
