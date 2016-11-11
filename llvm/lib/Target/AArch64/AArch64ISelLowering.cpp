@@ -7613,54 +7613,54 @@ static SDValue performMulCombine(SDNode *N, SelectionDAG &DAG,
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
+  // The below optimizations require a constant RHS.
+  if (!isa<ConstantSDNode>(N->getOperand(1)))
+    return SDValue();
+
+  ConstantSDNode *C = cast<ConstantSDNode>(N->getOperand(1));
+  const APInt &ConstValue = C->getAPIntValue();
+
   // Multiplication of a power of two plus/minus one can be done more
   // cheaply as as shift+add/sub. For now, this is true unilaterally. If
   // future CPUs have a cheaper MADD instruction, this may need to be
   // gated on a subtarget feature. For Cyclone, 32-bit MADD is 4 cycles and
   // 64-bit is 5 cycles, so this is always a win.
-  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
-    const APInt &Value = C->getAPIntValue();
-    EVT VT = N->getValueType(0);
-    SDLoc DL(N);
-    if (Value.isNonNegative()) {
-      // (mul x, 2^N + 1) => (add (shl x, N), x)
-      APInt VM1 = Value - 1;
-      if (VM1.isPowerOf2()) {
-        SDValue ShiftedVal =
-            DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
-                        DAG.getConstant(VM1.logBase2(), DL, MVT::i64));
-        return DAG.getNode(ISD::ADD, DL, VT, ShiftedVal,
-                           N->getOperand(0));
-      }
-      // (mul x, 2^N - 1) => (sub (shl x, N), x)
-      APInt VP1 = Value + 1;
-      if (VP1.isPowerOf2()) {
-        SDValue ShiftedVal =
-            DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
-                        DAG.getConstant(VP1.logBase2(), DL, MVT::i64));
-        return DAG.getNode(ISD::SUB, DL, VT, ShiftedVal,
-                           N->getOperand(0));
-      }
-    } else {
-      // (mul x, -(2^N - 1)) => (sub x, (shl x, N))
-      APInt VNP1 = -Value + 1;
-      if (VNP1.isPowerOf2()) {
-        SDValue ShiftedVal =
-            DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
-                        DAG.getConstant(VNP1.logBase2(), DL, MVT::i64));
-        return DAG.getNode(ISD::SUB, DL, VT, N->getOperand(0),
-                           ShiftedVal);
-      }
-      // (mul x, -(2^N + 1)) => - (add (shl x, N), x)
-      APInt VNM1 = -Value - 1;
-      if (VNM1.isPowerOf2()) {
-        SDValue ShiftedVal =
-            DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
-                        DAG.getConstant(VNM1.logBase2(), DL, MVT::i64));
-        SDValue Add =
-            DAG.getNode(ISD::ADD, DL, VT, ShiftedVal, N->getOperand(0));
-        return DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT), Add);
-      }
+  SDLoc DL(N);
+  EVT VT = N->getValueType(0);
+  if (ConstValue.isNonNegative()) {
+    // (mul x, 2^N + 1) => (add (shl x, N), x)
+    APInt CVMinus1 = ConstValue - 1;
+    if (CVMinus1.isPowerOf2()) {
+      SDValue ShiftedVal =
+          DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
+                      DAG.getConstant(CVMinus1.logBase2(), DL, MVT::i64));
+      return DAG.getNode(ISD::ADD, DL, VT, ShiftedVal, N->getOperand(0));
+    }
+    // (mul x, 2^N - 1) => (sub (shl x, N), x)
+    APInt CVPlus1 = ConstValue + 1;
+    if (CVPlus1.isPowerOf2()) {
+      SDValue ShiftedVal =
+          DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
+                      DAG.getConstant(CVPlus1.logBase2(), DL, MVT::i64));
+      return DAG.getNode(ISD::SUB, DL, VT, ShiftedVal, N->getOperand(0));
+    }
+  } else {
+    // (mul x, -(2^N - 1)) => (sub x, (shl x, N))
+    APInt CVNegPlus1 = -ConstValue + 1;
+    if (CVNegPlus1.isPowerOf2()) {
+      SDValue ShiftedVal =
+          DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
+                      DAG.getConstant(CVNegPlus1.logBase2(), DL, MVT::i64));
+      return DAG.getNode(ISD::SUB, DL, VT, N->getOperand(0), ShiftedVal);
+    }
+    // (mul x, -(2^N + 1)) => - (add (shl x, N), x)
+    APInt CVNegMinus1 = -ConstValue - 1;
+    if (CVNegMinus1.isPowerOf2()) {
+      SDValue ShiftedVal =
+          DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
+                      DAG.getConstant(CVNegMinus1.logBase2(), DL, MVT::i64));
+      SDValue Add = DAG.getNode(ISD::ADD, DL, VT, ShiftedVal, N->getOperand(0));
+      return DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT), Add);
     }
   }
   return SDValue();
