@@ -214,12 +214,12 @@ def : InstRW<[FXU, LSU, Lat5], (instregex "LG(H|F)RL$")>;
 
 def : InstRW<[FXU], (instregex "LLCR(Mux)?$")>;
 def : InstRW<[FXU], (instregex "LLHR(Mux)?$")>;
-def : InstRW<[FXU], (instregex "LLG(C|H|F)R$")>;
+def : InstRW<[FXU], (instregex "LLG(C|H|F|T)R$")>;
 def : InstRW<[LSU], (instregex "LLC(Mux)?$")>;
 def : InstRW<[LSU], (instregex "LLH(Mux)?$")>;
 def : InstRW<[FXU, LSU, Lat5], (instregex "LL(C|H)H$")>;
 def : InstRW<[LSU], (instregex "LLHRL$")>;
-def : InstRW<[LSU], (instregex "LLG(C|H|F|HRL|FRL)$")>;
+def : InstRW<[LSU], (instregex "LLG(C|H|F|T|HRL|FRL)$")>;
 
 //===----------------------------------------------------------------------===//
 // Truncations

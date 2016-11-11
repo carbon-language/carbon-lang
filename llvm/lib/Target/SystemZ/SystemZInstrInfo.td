@@ -575,6 +575,14 @@ def LLGF   : UnaryRXY<"llgf", 0xE316, azextloadi32, GR64, 4>;
 def LLGHRL : UnaryRILPC<"llghrl", 0xC46, aligned_azextloadi16, GR64>;
 def LLGFRL : UnaryRILPC<"llgfrl", 0xC4E, aligned_azextloadi32, GR64>;
 
+// 31-to-64-bit zero extensions.
+def LLGTR : UnaryRRE<"llgtr", 0xB917, null_frag, GR64, GR64>;
+def LLGT  : UnaryRXY<"llgt",  0xE317, null_frag, GR64, 4>;
+def : Pat<(and GR64:$src, 0x7fffffff),
+          (LLGTR GR64:$src)>;
+def : Pat<(and (i64 (azextloadi32 bdxaddr20only:$src)), 0x7fffffff),
+          (LLGT bdxaddr20only:$src)>;
+
 //===----------------------------------------------------------------------===//
 // Truncations
 //===----------------------------------------------------------------------===//
