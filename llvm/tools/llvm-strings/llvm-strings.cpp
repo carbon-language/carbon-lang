@@ -60,7 +60,7 @@ class Strings {
   }
 
   void dump(const Archive *A) {
-    Error E;
+    Error E = Error::success();
     for (auto &Element : A->children(E)) {
       if (Expected<std::unique_ptr<Binary>> Child =
               Element.getAsBinary(&Context)) {
