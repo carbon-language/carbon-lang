@@ -11,12 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Bitcode/BitcodeWriter.h"
 #include "ValueEnumerator.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
-#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfoMetadata.h"
