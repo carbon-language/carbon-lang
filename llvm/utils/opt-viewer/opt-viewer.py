@@ -24,9 +24,12 @@ parser.add_argument('-source-dir', '-s', default='', help='set source directory'
 args = parser.parse_args()
 
 p = subprocess.Popen(['c++filt', '-n'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+
 def demangle(name):
     p.stdin.write(name + '\n')
     return p.stdout.readline().rstrip()
+
 
 class Remark(yaml.YAMLObject):
     max_hotness = 1
@@ -93,29 +96,38 @@ class Remark(yaml.YAMLObject):
     def key(self):
         return (self.__class__, self.Pass, self.Name, self.File, self.Line, self.Column, self.message)
 
+
 class Analysis(Remark):
     yaml_tag = '!Analysis'
 
     @property
-    def color(self): return "white"
+    def color(self):
+        return "white"
+
 
 class AnalysisFPCommute(Analysis):
     yaml_tag = '!AnalysisFPCommute'
 
+
 class AnalysisAliasing(Analysis):
     yaml_tag = '!AnalysisAliasing'
+
 
 class Passed(Remark):
     yaml_tag = '!Passed'
 
     @property
-    def color(self): return "green"
+    def color(self):
+        return "green"
+
 
 class Missed(Remark):
     yaml_tag = '!Missed'
 
     @property
-    def color(self): return "red"
+    def color(self):
+        return "red"
+
 
 class SourceFileRenderer:
     def __init__(self, filename):
@@ -203,6 +215,7 @@ class SourceFileRenderer:
     def html_file_name(cls, filename):
         return filename.replace('/', '_') + ".html"
 
+
 class IndexRenderer:
     def __init__(self):
         self.stream = open(os.path.join(args.output_dir, 'index.html'), 'w')
@@ -240,7 +253,7 @@ class IndexRenderer:
 
 
 all_remarks = dict()
-file_remarks  = dict()
+file_remarks = dict()
 
 for input_file in args.yaml_files:
     f = open(input_file)
@@ -252,7 +265,7 @@ for input_file in args.yaml_files:
                 continue
             all_remarks[remark.key] = remark
 
-            file_remarks.setdefault(remark.File, dict()).setdefault(remark.Line, []).append(remark);
+            file_remarks.setdefault(remark.File, dict()).setdefault(remark.Line, []).append(remark)
 
             Remark.max_hotness = max(Remark.max_hotness, remark.Hotness)
 
