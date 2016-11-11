@@ -128,9 +128,9 @@ static Optional<uint8_t> getFixedByteSize(dwarf::Form Form, const T *U) {
 
     case DW_FORM_data4:
     case DW_FORM_ref4:
-    case DW_FORM_strp:
       return 4;
 
+    case DW_FORM_strp:
     case DW_FORM_GNU_ref_alt:
     case DW_FORM_GNU_strp_alt:
     case DW_FORM_line_strp:
@@ -169,7 +169,7 @@ static bool skipFormValue(dwarf::Form Form, const DataExtractor &DebugInfoData,
   bool Indirect = false;
   do {
     switch (Form) {
-        // Blocks if inlined data that have a length field and the data bytes
+        // Blocks of inlined data that have a length field and the data bytes
         // inlined in the .debug_info.
       case DW_FORM_exprloc:
       case DW_FORM_block: {
@@ -211,8 +211,11 @@ static bool skipFormValue(dwarf::Form Form, const DataExtractor &DebugInfoData,
       case DW_FORM_ref4:
       case DW_FORM_ref8:
       case DW_FORM_ref_sig8:
+      case DW_FORM_ref_sup:
       case DW_FORM_sec_offset:
       case DW_FORM_strp:
+      case DW_FORM_strp_sup:
+      case DW_FORM_line_strp:
       case DW_FORM_GNU_ref_alt:
       case DW_FORM_GNU_strp_alt:
         if (Optional<uint8_t> FixedSize = ::getFixedByteSize(Form, U)) {
@@ -341,8 +344,7 @@ bool DWARFFormValue::extractValue(const DataExtractor &data,
       Value.uval = data.getU16(offset_ptr);
       break;
     case DW_FORM_data4:
-    case DW_FORM_ref4:
-    case DW_FORM_strp: {
+    case DW_FORM_ref4: {
       Value.uval = data.getU32(offset_ptr);
       if (!U)
         break;
@@ -369,6 +371,7 @@ bool DWARFFormValue::extractValue(const DataExtractor &data,
       Form = static_cast<dwarf::Form>(data.getULEB128(offset_ptr));
       indirect = true;
       break;
+    case DW_FORM_strp:
     case DW_FORM_sec_offset:
     case DW_FORM_GNU_ref_alt:
     case DW_FORM_GNU_strp_alt:
