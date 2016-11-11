@@ -166,7 +166,8 @@ Instruction *InstCombiner::foldSelectOpOp(SelectInst &SI, Instruction *TI,
   // above, it may be possible to relax the one-use constraint, but that needs
   // be examined carefully since it may not reduce the total number of
   // instructions.
-  if (!isa<BinaryOperator>(TI) || !TI->hasOneUse() || !FI->hasOneUse())
+  BinaryOperator *BO = dyn_cast<BinaryOperator>(TI);
+  if (!BO || !TI->hasOneUse() || !FI->hasOneUse())
     return nullptr;
 
   // Figure out if the operations have any operands in common.
@@ -201,7 +202,6 @@ Instruction *InstCombiner::foldSelectOpOp(SelectInst &SI, Instruction *TI,
   // If we reach here, they do have operations in common.
   Value *NewSI = Builder->CreateSelect(SI.getCondition(), OtherOpT, OtherOpF,
                                        SI.getName() + ".v", &SI);
-  BinaryOperator *BO = cast<BinaryOperator>(TI);
   Value *Op0 = MatchIsOpZero ? MatchOp : NewSI;
   Value *Op1 = MatchIsOpZero ? NewSI : MatchOp;
   return BinaryOperator::Create(BO->getOpcode(), Op0, Op1);
