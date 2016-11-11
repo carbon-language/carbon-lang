@@ -22,6 +22,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
+#include <cctype>
 #include <string>
 
 using namespace llvm;
@@ -74,7 +75,7 @@ class Strings {
         }
       }
     }
-    static_cast<bool>(E);
+    (void)static_cast<bool>(E);
   }
 
 public:
