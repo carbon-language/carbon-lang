@@ -527,7 +527,7 @@ public:
   using MethodT = RetT(ClassT::*)(ArgTs...);
   MemberFnWrapper(ClassT &Instance, MethodT Method)
       : Instance(Instance), Method(Method) {}
-  RetT operator()(ArgTs &&... Args) {
+  RetT operator()(ArgTs &&... Args) const {
     return (Instance.*Method)(std::move(Args)...);
   }
 private:
