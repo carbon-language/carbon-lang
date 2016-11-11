@@ -392,7 +392,7 @@ static void diagnosticHandler(const DiagnosticInfo &DI) {
 }
 
 static void check(Error E, std::string Msg = "LLVM gold plugin") {
-  handleAllErrors(std::move(E), [&](ErrorInfoBase &EIB) {
+  handleAllErrors(std::move(E), [&](ErrorInfoBase &EIB) -> Error {
     message(LDPL_FATAL, "%s: %s", Msg.c_str(), EIB.message().c_str());
     return Error::success();
   });
