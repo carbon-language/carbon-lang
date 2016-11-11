@@ -387,6 +387,16 @@ let canFoldAsLoad = 1 in {
   def LGRL : UnaryRILPC<"lgrl", 0xC48, aligned_load, GR64>;
 }
 
+// Load and zero rightmost byte.
+let Predicates = [FeatureLoadAndZeroRightmostByte] in {
+  def LZRF : UnaryRXY<"lzrf", 0xE33B, null_frag, GR32, 4>;
+  def LZRG : UnaryRXY<"lzrg", 0xE32A, null_frag, GR64, 8>;
+  def : Pat<(and (i32 (load bdxaddr20only:$src)), 0xffffff00),
+            (LZRF bdxaddr20only:$src)>;
+  def : Pat<(and (i64 (load bdxaddr20only:$src)), 0xffffffffffffff00),
+            (LZRG bdxaddr20only:$src)>;
+}
+
 // Register stores.
 let SimpleBDXStore = 1 in {
   // Expands to ST, STY or STFH, depending on the choice of register.
@@ -582,6 +592,13 @@ def : Pat<(and GR64:$src, 0x7fffffff),
           (LLGTR GR64:$src)>;
 def : Pat<(and (i64 (azextloadi32 bdxaddr20only:$src)), 0x7fffffff),
           (LLGT bdxaddr20only:$src)>;
+
+// Load and zero rightmost byte.
+let Predicates = [FeatureLoadAndZeroRightmostByte] in {
+  def LLZRGF : UnaryRXY<"llzrgf", 0xE33A, null_frag, GR64, 4>;
+  def : Pat<(and (i64 (azextloadi32 bdxaddr20only:$src)), 0xffffff00),
+            (LLZRGF bdxaddr20only:$src)>;
+}
 
 //===----------------------------------------------------------------------===//
 // Truncations

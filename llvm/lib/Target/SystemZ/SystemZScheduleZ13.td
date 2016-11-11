@@ -194,6 +194,9 @@ def : InstRW<[FXa], (instregex "LG(F|H)I$")>;
 def : InstRW<[FXa], (instregex "LHI(Mux)?$")>;
 def : InstRW<[FXa], (instregex "LR(Mux)?$")>;
 
+// Load and zero rightmost byte
+def : InstRW<[LSU], (instregex "LZR(F|G)$")>;
+
 // Load and test
 def : InstRW<[FXa, LSU, Lat5], (instregex "LT(G)?$")>;
 def : InstRW<[FXa], (instregex "LT(G)?R$")>;
@@ -243,6 +246,9 @@ def : InstRW<[LSU], (instregex "LLH(Mux)?$")>;
 def : InstRW<[FXa, LSU, Lat5], (instregex "LL(C|H)H$")>;
 def : InstRW<[LSU], (instregex "LLHRL$")>;
 def : InstRW<[LSU], (instregex "LLG(C|H|F|T|HRL|FRL)$")>;
+
+// Load and zero rightmost byte
+def : InstRW<[LSU], (instregex "LLZRGF$")>;
 
 //===----------------------------------------------------------------------===//
 // Truncations

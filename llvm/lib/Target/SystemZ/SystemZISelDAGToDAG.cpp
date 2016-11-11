@@ -957,6 +957,16 @@ bool SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
              SystemZ::isImmLF(~RISBG.Mask) ||
              SystemZ::isImmHF(~RISBG.Mask))
      PreferAnd = true;
+    // And likewise for the LLZRGF instruction, which doesn't have a register
+    // to register version.
+    else if (auto *Load = dyn_cast<LoadSDNode>(RISBG.Input)) {
+      if (Load->getMemoryVT() == MVT::i32 &&
+          (Load->getExtensionType() == ISD::EXTLOAD ||
+           Load->getExtensionType() == ISD::ZEXTLOAD) &&
+          RISBG.Mask == 0xffffff00 &&
+          Subtarget->hasLoadAndZeroRightmostByte())
+      PreferAnd = true;
+    }
     if (PreferAnd) {
       // Replace the current node with an AND.  Note that the current node
       // might already be that same AND, in which case it is already CSE'd
