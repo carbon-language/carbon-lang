@@ -1,6 +1,9 @@
 // RUN: %clangxx_asan -g %stdcxx11 -Wno-deprecated-declarations %s -o %t
 // RUN: %env_asan_opts=exitcode=42 %run %t | FileCheck %s
 
+// Android doesn't have spawn.h or posix_spawn.
+// UNSUPPORTED: android
+
 // CHECK: got expected 42 exit code
 
 #include <stdlib.h>
