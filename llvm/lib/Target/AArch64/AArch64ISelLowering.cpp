@@ -8783,26 +8783,42 @@ static SDValue replaceSplatVectorStore(SelectionDAG &DAG, StoreSDNode *St) {
   if (VT.isFloatingPoint())
     return SDValue();
 
-  // Check for insert vector elements.
-  if (StVal.getOpcode() != ISD::INSERT_VECTOR_ELT)
-    return SDValue();
-
   // We can express a splat as store pair(s) for 2 or 4 elements.
   unsigned NumVecElts = VT.getVectorNumElements();
   if (NumVecElts != 4 && NumVecElts != 2)
     return SDValue();
-  SDValue SplatVal = StVal.getOperand(1);
-  unsigned RemainInsertElts = NumVecElts - 1;
 
   // Check that this is a splat.
-  while (--RemainInsertElts) {
-    SDValue NextInsertElt = StVal.getOperand(0);
-    if (NextInsertElt.getOpcode() != ISD::INSERT_VECTOR_ELT)
+  // Make sure that each of the relevant vector element locations are inserted
+  // to, i.e. 0 and 1 for v2i64 and 0, 1, 2, 3 for v4i32.
+  std::bitset<4> IndexNotInserted((1 << NumVecElts) - 1);
+  SDValue SplatVal;
+  for (unsigned I = 0; I < NumVecElts; ++I) {
+    // Check for insert vector elements.
+    if (StVal.getOpcode() != ISD::INSERT_VECTOR_ELT)
       return SDValue();
-    if (NextInsertElt.getOperand(1) != SplatVal)
+
+    // Check that same value is inserted at each vector element.
+    if (I == 0)
+      SplatVal = StVal.getOperand(1);
+    else if (StVal.getOperand(1) != SplatVal)
       return SDValue();
-    StVal = NextInsertElt;
+
+    // Check insert element index.
+    ConstantSDNode *CIndex = dyn_cast<ConstantSDNode>(StVal.getOperand(2));
+    if (!CIndex)
+      return SDValue();
+    uint64_t IndexVal = CIndex->getZExtValue();
+    if (IndexVal >= NumVecElts)
+      return SDValue();
+    IndexNotInserted.reset(IndexVal);
+
+    StVal = StVal.getOperand(0);
   }
+  // Check that all vector element locations were inserted to.
+  if (IndexNotInserted.any())
+      return SDValue();
+
   unsigned OrigAlignment = St->getAlignment();
   unsigned EltOffset = NumVecElts == 4 ? 4 : 8;
   unsigned Alignment = std::min(OrigAlignment, EltOffset);
