@@ -210,15 +210,6 @@ void test1() {
 // CHECK-LE: call <2 x i64> @llvm.ppc.altivec.vcmpgtud(<2 x i64> %{{[0-9]*}}, <2 x i64> %{{[0-9]*}})
 // CHECK-PPC: error: call to 'vec_cmplt' is ambiguous
 
-  /* vec_double */
-  res_vd = vec_double(vsll);
-// CHECK: sitofp i64 {{.+}} to double
-// CHECK-BE: sitofp i64 {{.+}} to double
-
-  res_vd = vec_double(vull);
-// CHECK: uitofp i64 {{.+}} to double
-// CHECK-BE: uitofp i64 {{.+}} to double
-
   /* vec_eqv */
   res_vsc =  vec_eqv(vsc, vsc);
 // CHECK: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
