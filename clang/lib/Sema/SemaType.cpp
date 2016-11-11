@@ -3921,6 +3921,10 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     }
 
     auto isVaList = [&S](QualType T) -> bool {
+      // Handle array va_list parameters that decayed to pointers.
+      if (auto *decayedTy = T->getAs<DecayedType>())
+        T = decayedTy->getOriginalType();
+
       auto *typedefTy = T->getAs<TypedefType>();
       if (!typedefTy)
         return false;
