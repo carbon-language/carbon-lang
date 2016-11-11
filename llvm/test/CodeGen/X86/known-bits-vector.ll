@@ -274,64 +274,12 @@ define <4 x i32> @knownbits_urem_lshr(<4 x i32> %a0) nounwind {
 define <4 x i32> @knownbits_mask_urem_shuffle_lshr(<4 x i32> %a0, <4 x i32> %a1) nounwind {
 ; X32-LABEL: knownbits_mask_urem_shuffle_lshr:
 ; X32:       # BB#0:
-; X32-NEXT:    pushl %esi
-; X32-NEXT:    vmovdqa {{.*#+}} xmm2 = [32767,4294967295,4294967295,32767]
-; X32-NEXT:    vpand %xmm2, %xmm0, %xmm0
-; X32-NEXT:    vpand %xmm2, %xmm1, %xmm1
-; X32-NEXT:    vpextrd $1, %xmm0, %eax
-; X32-NEXT:    vpextrd $1, %xmm1, %ecx
-; X32-NEXT:    xorl %edx, %edx
-; X32-NEXT:    divl %ecx
-; X32-NEXT:    movl %edx, %ecx
-; X32-NEXT:    vmovd %xmm0, %eax
-; X32-NEXT:    vmovd %xmm1, %esi
-; X32-NEXT:    xorl %edx, %edx
-; X32-NEXT:    divl %esi
-; X32-NEXT:    vmovd %edx, %xmm2
-; X32-NEXT:    vpinsrd $1, %ecx, %xmm2, %xmm2
-; X32-NEXT:    vpextrd $2, %xmm0, %eax
-; X32-NEXT:    vpextrd $2, %xmm1, %ecx
-; X32-NEXT:    xorl %edx, %edx
-; X32-NEXT:    divl %ecx
-; X32-NEXT:    vpinsrd $2, %edx, %xmm2, %xmm2
-; X32-NEXT:    vpextrd $3, %xmm0, %eax
-; X32-NEXT:    vpextrd $3, %xmm1, %ecx
-; X32-NEXT:    xorl %edx, %edx
-; X32-NEXT:    divl %ecx
-; X32-NEXT:    vpinsrd $3, %edx, %xmm2, %xmm0
-; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,3,3]
-; X32-NEXT:    vpsrld $22, %xmm0, %xmm0
-; X32-NEXT:    popl %esi
+; X32-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: knownbits_mask_urem_shuffle_lshr:
 ; X64:       # BB#0:
-; X64-NEXT:    vmovdqa {{.*#+}} xmm2 = [32767,4294967295,4294967295,32767]
-; X64-NEXT:    vpand %xmm2, %xmm0, %xmm0
-; X64-NEXT:    vpand %xmm2, %xmm1, %xmm1
-; X64-NEXT:    vpextrd $1, %xmm0, %eax
-; X64-NEXT:    vpextrd $1, %xmm1, %ecx
-; X64-NEXT:    xorl %edx, %edx
-; X64-NEXT:    divl %ecx
-; X64-NEXT:    movl %edx, %ecx
-; X64-NEXT:    vmovd %xmm0, %eax
-; X64-NEXT:    vmovd %xmm1, %esi
-; X64-NEXT:    xorl %edx, %edx
-; X64-NEXT:    divl %esi
-; X64-NEXT:    vmovd %edx, %xmm2
-; X64-NEXT:    vpinsrd $1, %ecx, %xmm2, %xmm2
-; X64-NEXT:    vpextrd $2, %xmm0, %eax
-; X64-NEXT:    vpextrd $2, %xmm1, %ecx
-; X64-NEXT:    xorl %edx, %edx
-; X64-NEXT:    divl %ecx
-; X64-NEXT:    vpinsrd $2, %edx, %xmm2, %xmm2
-; X64-NEXT:    vpextrd $3, %xmm0, %eax
-; X64-NEXT:    vpextrd $3, %xmm1, %ecx
-; X64-NEXT:    xorl %edx, %edx
-; X64-NEXT:    divl %ecx
-; X64-NEXT:    vpinsrd $3, %edx, %xmm2, %xmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,3,3]
-; X64-NEXT:    vpsrld $22, %xmm0, %xmm0
+; X64-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; X64-NEXT:    retq
   %1 = and <4 x i32> %a0, <i32 32767, i32 -1, i32 -1, i32 32767>
   %2 = and <4 x i32> %a1, <i32 32767, i32 -1, i32 -1, i32 32767>
@@ -344,26 +292,12 @@ define <4 x i32> @knownbits_mask_urem_shuffle_lshr(<4 x i32> %a0, <4 x i32> %a1)
 define <4 x i32> @knownbits_mask_srem_shuffle_lshr(<4 x i32> %a0) nounwind {
 ; X32-LABEL: knownbits_mask_srem_shuffle_lshr:
 ; X32:       # BB#0:
-; X32-NEXT:    vpand {{\.LCPI.*}}, %xmm0, %xmm0
-; X32-NEXT:    vpsrad $31, %xmm0, %xmm1
-; X32-NEXT:    vpsrld $28, %xmm1, %xmm1
-; X32-NEXT:    vpaddd %xmm1, %xmm0, %xmm1
-; X32-NEXT:    vpand {{\.LCPI.*}}, %xmm1, %xmm1
-; X32-NEXT:    vpsubd %xmm1, %xmm0, %xmm0
-; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,3,3]
-; X32-NEXT:    vpsrld $22, %xmm0, %xmm0
+; X32-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: knownbits_mask_srem_shuffle_lshr:
 ; X64:       # BB#0:
-; X64-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
-; X64-NEXT:    vpsrad $31, %xmm0, %xmm1
-; X64-NEXT:    vpsrld $28, %xmm1, %xmm1
-; X64-NEXT:    vpaddd %xmm1, %xmm0, %xmm1
-; X64-NEXT:    vpand {{.*}}(%rip), %xmm1, %xmm1
-; X64-NEXT:    vpsubd %xmm1, %xmm0, %xmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,3,3]
-; X64-NEXT:    vpsrld $22, %xmm0, %xmm0
+; X64-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; X64-NEXT:    retq
   %1 = and <4 x i32> %a0, <i32 -32768, i32 -1, i32 -1, i32 -32768>
   %2 = srem <4 x i32> %1, <i32 16, i32 16, i32 16, i32 16>
