@@ -289,6 +289,7 @@ namespace llvm {
     bool isCloned         : 1;          // True if this node has been cloned.
     bool isUnbuffered     : 1;          // Uses an unbuffered resource.
     bool hasReservedResource : 1;       // Uses a reserved resource.
+    bool skip             : 1;          ///< Ignore/Skip this node.
     Sched::Preference SchedulingPref;   // Scheduling preference.
 
   private:
@@ -314,7 +315,7 @@ namespace llvm {
         hasPhysRegUses(false), hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isScheduleLow(false), isCloned(false),
-        isUnbuffered(false), hasReservedResource(false),
+        isUnbuffered(false), hasReservedResource(false), skip(false),
         SchedulingPref(Sched::None), isDepthCurrent(false),
         isHeightCurrent(false), Depth(0), Height(0), TopReadyCycle(0),
         BotReadyCycle(0), CopyDstRC(nullptr), CopySrcRC(nullptr) {}
@@ -330,7 +331,7 @@ namespace llvm {
         hasPhysRegUses(false), hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isScheduleLow(false), isCloned(false),
-        isUnbuffered(false), hasReservedResource(false),
+        isUnbuffered(false), hasReservedResource(false), skip(false),
         SchedulingPref(Sched::None), isDepthCurrent(false),
         isHeightCurrent(false), Depth(0), Height(0), TopReadyCycle(0),
         BotReadyCycle(0), CopyDstRC(nullptr), CopySrcRC(nullptr) {}
@@ -345,7 +346,7 @@ namespace llvm {
         hasPhysRegUses(false), hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isScheduleLow(false), isCloned(false),
-        isUnbuffered(false), hasReservedResource(false),
+        isUnbuffered(false), hasReservedResource(false), skip(false),
         SchedulingPref(Sched::None), isDepthCurrent(false),
         isHeightCurrent(false), Depth(0), Height(0), TopReadyCycle(0),
         BotReadyCycle(0), CopyDstRC(nullptr), CopySrcRC(nullptr) {}
