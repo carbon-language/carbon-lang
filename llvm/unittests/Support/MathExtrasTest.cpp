@@ -166,15 +166,15 @@ TEST(MathExtras, isPowerOf2_64) {
 }
 
 TEST(MathExtras, PowerOf2Ceil) {
-  EXPECT_EQ(0, PowerOf2Ceil(0));
-  EXPECT_EQ(8, PowerOf2Ceil(8));
-  EXPECT_EQ(8, PowerOf2Ceil(7));
+  EXPECT_EQ(0U, PowerOf2Ceil(0U));
+  EXPECT_EQ(8U, PowerOf2Ceil(8U));
+  EXPECT_EQ(8U, PowerOf2Ceil(7U));
 }
 
 TEST(MathExtras, PowerOf2Floor) {
-  EXPECT_EQ(0, PowerOf2Floor(0));
-  EXPECT_EQ(8, PowerOf2Floor(8));
-  EXPECT_EQ(4, PowerOf2Floor(7));
+  EXPECT_EQ(0U, PowerOf2Floor(0U));
+  EXPECT_EQ(8U, PowerOf2Floor(8U));
+  EXPECT_EQ(4U, PowerOf2Floor(7U));
 }
 
 TEST(MathExtras, ByteSwap_32) {
