@@ -53,12 +53,23 @@ int main(int argc, char *argv[]) {
     RTDyldMemoryManager::deregisterEHFramesInProcess(Addr, Size);
   };
 
-  FDRawChannel Channel(InFD, OutFD);
-  typedef remote::OrcRemoteTargetServer<FDRawChannel, HostOrcArch> JITServer;
+  FDRPCChannel Channel(InFD, OutFD);
+  typedef remote::OrcRemoteTargetServer<FDRPCChannel, HostOrcArch> JITServer;
   JITServer Server(Channel, SymbolLookup, RegisterEHFrames, DeregisterEHFrames);
 
-  while (!Server.receivedTerminate())
-    ExitOnErr(Server.handleOne());
+  while (1) {
+    uint32_t RawId;
+    ExitOnErr(Server.startReceivingFunction(Channel, RawId));
+    auto Id = static_cast<JITServer::JITFuncId>(RawId);
+    switch (Id) {
+    case JITServer::TerminateSessionId:
+      ExitOnErr(Server.handleTerminateSession());
+      return 0;
+    default:
+      ExitOnErr(Server.handleKnownFunction(Id));
+      break;
+    }
+  }
 
   close(InFD);
   close(OutFD);

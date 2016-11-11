@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the OrcRemoteTargetClient class and helpers. This class
-// can be used to communicate over an RawByteChannel with an
+// can be used to communicate over an RPCByteChannel with an
 // OrcRemoteTargetServer instance to support remote-JITing.
 //
 //===----------------------------------------------------------------------===//
@@ -36,6 +36,23 @@ namespace remote {
 template <typename ChannelT>
 class OrcRemoteTargetClient : public OrcRemoteTargetRPCAPI {
 public:
+  // FIXME: Remove move/copy ops once MSVC supports synthesizing move ops.
+
+  OrcRemoteTargetClient(const OrcRemoteTargetClient &) = delete;
+  OrcRemoteTargetClient &operator=(const OrcRemoteTargetClient &) = delete;
+
+  OrcRemoteTargetClient(OrcRemoteTargetClient &&Other)
+      : Channel(Other.Channel), ExistingError(std::move(Other.ExistingError)),
+        RemoteTargetTriple(std::move(Other.RemoteTargetTriple)),
+        RemotePointerSize(std::move(Other.RemotePointerSize)),
+        RemotePageSize(std::move(Other.RemotePageSize)),
+        RemoteTrampolineSize(std::move(Other.RemoteTrampolineSize)),
+        RemoteIndirectStubSize(std::move(Other.RemoteIndirectStubSize)),
+        AllocatorIds(std::move(Other.AllocatorIds)),
+        IndirectStubOwnerIds(std::move(Other.IndirectStubOwnerIds)),
+        CallbackManager(std::move(Other.CallbackManager)) {}
+
+  OrcRemoteTargetClient &operator=(OrcRemoteTargetClient &&) = delete;
 
   /// Remote memory manager.
   class RCMemoryManager : public RuntimeDyld::MemoryManager {
@@ -45,10 +62,18 @@ public:
       DEBUG(dbgs() << "Created remote allocator " << Id << "\n");
     }
 
-    RCMemoryManager(const RCMemoryManager&) = delete;
-    RCMemoryManager& operator=(const RCMemoryManager&) = delete;
-    RCMemoryManager(RCMemoryManager&&) = default;
-    RCMemoryManager& operator=(RCMemoryManager&&) = default;
+    RCMemoryManager(RCMemoryManager &&Other)
+        : Client(std::move(Other.Client)), Id(std::move(Other.Id)),
+          Unmapped(std::move(Other.Unmapped)),
+          Unfinalized(std::move(Other.Unfinalized)) {}
+
+    RCMemoryManager operator=(RCMemoryManager &&Other) {
+      Client = std::move(Other.Client);
+      Id = std::move(Other.Id);
+      Unmapped = std::move(Other.Unmapped);
+      Unfinalized = std::move(Other.Unfinalized);
+      return *this;
+    }
 
     ~RCMemoryManager() override {
       Client.destroyRemoteAllocator(Id);
@@ -342,10 +367,18 @@ public:
       Alloc(uint64_t Size, unsigned Align)
           : Size(Size), Align(Align), Contents(new char[Size + Align - 1]) {}
 
-      Alloc(const Alloc&) = delete;
-      Alloc& operator=(const Alloc&) = delete;
-      Alloc(Alloc&&) = default;
-      Alloc& operator=(Alloc&&) = default;
+      Alloc(Alloc &&Other)
+          : Size(std::move(Other.Size)), Align(std::move(Other.Align)),
+            Contents(std::move(Other.Contents)),
+            RemoteAddr(std::move(Other.RemoteAddr)) {}
+
+      Alloc &operator=(Alloc &&Other) {
+        Size = std::move(Other.Size);
+        Align = std::move(Other.Align);
+        Contents = std::move(Other.Contents);
+        RemoteAddr = std::move(Other.RemoteAddr);
+        return *this;
+      }
 
       uint64_t getSize() const { return Size; }
 
@@ -372,10 +405,24 @@ public:
 
     struct ObjectAllocs {
       ObjectAllocs() = default;
-      ObjectAllocs(const ObjectAllocs &) = delete;
-      ObjectAllocs& operator=(const ObjectAllocs &) = delete;
-      ObjectAllocs(ObjectAllocs&&) = default;
-      ObjectAllocs& operator=(ObjectAllocs&&) = default;
+
+      ObjectAllocs(ObjectAllocs &&Other)
+          : RemoteCodeAddr(std::move(Other.RemoteCodeAddr)),
+            RemoteRODataAddr(std::move(Other.RemoteRODataAddr)),
+            RemoteRWDataAddr(std::move(Other.RemoteRWDataAddr)),
+            CodeAllocs(std::move(Other.CodeAllocs)),
+            RODataAllocs(std::move(Other.RODataAllocs)),
+            RWDataAllocs(std::move(Other.RWDataAllocs)) {}
+
+      ObjectAllocs &operator=(ObjectAllocs &&Other) {
+        RemoteCodeAddr = std::move(Other.RemoteCodeAddr);
+        RemoteRODataAddr = std::move(Other.RemoteRODataAddr);
+        RemoteRWDataAddr = std::move(Other.RemoteRWDataAddr);
+        CodeAllocs = std::move(Other.CodeAllocs);
+        RODataAllocs = std::move(Other.RODataAllocs);
+        RWDataAllocs = std::move(Other.RWDataAllocs);
+        return *this;
+      }
 
       JITTargetAddress RemoteCodeAddr = 0;
       JITTargetAddress RemoteRODataAddr = 0;
@@ -541,21 +588,23 @@ public:
   /// Create an OrcRemoteTargetClient.
   /// Channel is the ChannelT instance to communicate on. It is assumed that
   /// the channel is ready to be read from and written to.
-  static Expected<std::unique_ptr<OrcRemoteTargetClient>>
-  Create(ChannelT &Channel) {
+  static Expected<OrcRemoteTargetClient> Create(ChannelT &Channel) {
     Error Err = Error::success();
-    std::unique_ptr<OrcRemoteTargetClient>
-      Client(new OrcRemoteTargetClient(Channel, Err));
+    OrcRemoteTargetClient H(Channel, Err);
     if (Err)
       return std::move(Err);
-    return std::move(Client);
+    return Expected<OrcRemoteTargetClient>(std::move(H));
   }
 
   /// Call the int(void) function at the given address in the target and return
   /// its result.
   Expected<int> callIntVoid(JITTargetAddress Addr) {
     DEBUG(dbgs() << "Calling int(*)(void) " << format("0x%016x", Addr) << "\n");
-    return callB<CallIntVoid>(Addr);
+
+    auto Listen = [&](RPCByteChannel &C, uint32_t Id) {
+      return listenForCompileRequests(C, Id);
+    };
+    return callSTHandling<CallIntVoid>(Channel, Listen, Addr);
   }
 
   /// Call the int(int, char*[]) function at the given address in the target and
@@ -564,7 +613,11 @@ public:
                          const std::vector<std::string> &Args) {
     DEBUG(dbgs() << "Calling int(*)(int, char*[]) " << format("0x%016x", Addr)
                  << "\n");
-    return callB<CallMain>(Addr, Args);
+
+    auto Listen = [&](RPCByteChannel &C, uint32_t Id) {
+      return listenForCompileRequests(C, Id);
+    };
+    return callSTHandling<CallMain>(Channel, Listen, Addr, Args);
   }
 
   /// Call the void() function at the given address in the target and wait for
@@ -572,7 +625,11 @@ public:
   Error callVoidVoid(JITTargetAddress Addr) {
     DEBUG(dbgs() << "Calling void(*)(void) " << format("0x%016x", Addr)
                  << "\n");
-    return callB<CallVoidVoid>(Addr);
+
+    auto Listen = [&](RPCByteChannel &C, uint32_t Id) {
+      return listenForCompileRequests(C, Id);
+    };
+    return callSTHandling<CallVoidVoid>(Channel, Listen, Addr);
   }
 
   /// Create an RCMemoryManager which will allocate its memory on the remote
@@ -581,7 +638,7 @@ public:
     assert(!MM && "MemoryManager should be null before creation.");
 
     auto Id = AllocatorIds.getNext();
-    if (auto Err = callB<CreateRemoteAllocator>(Id))
+    if (auto Err = callST<CreateRemoteAllocator>(Channel, Id))
       return Err;
     MM = llvm::make_unique<RCMemoryManager>(*this, Id);
     return Error::success();
@@ -592,7 +649,7 @@ public:
   Error createIndirectStubsManager(std::unique_ptr<RCIndirectStubsManager> &I) {
     assert(!I && "Indirect stubs manager should be null before creation.");
     auto Id = IndirectStubOwnerIds.getNext();
-    if (auto Err = callB<CreateIndirectStubsOwner>(Id))
+    if (auto Err = callST<CreateIndirectStubsOwner>(Channel, Id))
       return Err;
     I = llvm::make_unique<RCIndirectStubsManager>(*this, Id);
     return Error::success();
@@ -605,7 +662,7 @@ public:
       return std::move(ExistingError);
 
     // Emit the resolver block on the JIT server.
-    if (auto Err = callB<EmitResolverBlock>())
+    if (auto Err = callST<EmitResolverBlock>(Channel))
       return std::move(Err);
 
     // Create the callback manager.
@@ -622,28 +679,18 @@ public:
     if (ExistingError)
       return std::move(ExistingError);
 
-    return callB<GetSymbolAddress>(Name);
+    return callST<GetSymbolAddress>(Channel, Name);
   }
 
   /// Get the triple for the remote target.
   const std::string &getTargetTriple() const { return RemoteTargetTriple; }
 
-  Error terminateSession() { return callB<TerminateSession>(); }
+  Error terminateSession() { return callST<TerminateSession>(Channel); }
 
 private:
-
-  OrcRemoteTargetClient(ChannelT &Channel, Error &Err)
-      : OrcRemoteTargetRPCAPI(Channel) {
+  OrcRemoteTargetClient(ChannelT &Channel, Error &Err) : Channel(Channel) {
     ErrorAsOutParameter EAO(&Err);
-
-    addHandler<RequestCompile>(
-        [this](JITTargetAddress Addr) -> JITTargetAddress {
-          if (CallbackManager)
-            return CallbackManager->executeCompileCallback(Addr);
-          return 0;
-        });
-
-    if (auto RIOrErr = callB<GetRemoteInfo>()) {
+    if (auto RIOrErr = callST<GetRemoteInfo>(Channel)) {
       std::tie(RemoteTargetTriple, RemotePointerSize, RemotePageSize,
                RemoteTrampolineSize, RemoteIndirectStubSize) = *RIOrErr;
       Err = Error::success();
@@ -653,11 +700,11 @@ private:
   }
 
   Error deregisterEHFrames(JITTargetAddress Addr, uint32_t Size) {
-    return callB<RegisterEHFrames>(Addr, Size);
+    return callST<RegisterEHFrames>(Channel, Addr, Size);
   }
 
   void destroyRemoteAllocator(ResourceIdMgr::ResourceId Id) {
-    if (auto Err = callB<DestroyRemoteAllocator>(Id)) {
+    if (auto Err = callST<DestroyRemoteAllocator>(Channel, Id)) {
       // FIXME: This will be triggered by a removeModuleSet call: Propagate
       //        error return up through that.
       llvm_unreachable("Failed to destroy remote allocator.");
@@ -667,12 +714,12 @@ private:
 
   Error destroyIndirectStubsManager(ResourceIdMgr::ResourceId Id) {
     IndirectStubOwnerIds.release(Id);
-    return callB<DestroyIndirectStubsOwner>(Id);
+    return callST<DestroyIndirectStubsOwner>(Channel, Id);
   }
 
   Expected<std::tuple<JITTargetAddress, JITTargetAddress, uint32_t>>
   emitIndirectStubs(ResourceIdMgr::ResourceId Id, uint32_t NumStubsRequired) {
-    return callB<EmitIndirectStubs>(Id, NumStubsRequired);
+    return callST<EmitIndirectStubs>(Channel, Id, NumStubsRequired);
   }
 
   Expected<std::tuple<JITTargetAddress, uint32_t>> emitTrampolineBlock() {
@@ -680,7 +727,7 @@ private:
     if (ExistingError)
       return std::move(ExistingError);
 
-    return callB<EmitTrampolineBlock>();
+    return callST<EmitTrampolineBlock>(Channel);
   }
 
   uint32_t getIndirectStubSize() const { return RemoteIndirectStubSize; }
@@ -689,17 +736,42 @@ private:
 
   uint32_t getTrampolineSize() const { return RemoteTrampolineSize; }
 
+  Error listenForCompileRequests(RPCByteChannel &C, uint32_t &Id) {
+    assert(CallbackManager &&
+           "No calback manager. enableCompileCallbacks must be called first");
+
+    // Check for an 'out-of-band' error, e.g. from an MM destructor.
+    if (ExistingError)
+      return std::move(ExistingError);
+
+    // FIXME: CompileCallback could be an anonymous lambda defined at the use
+    //        site below, but that triggers a GCC 4.7 ICE. When we move off
+    //        GCC 4.7, tidy this up.
+    auto CompileCallback =
+      [this](JITTargetAddress Addr) -> Expected<JITTargetAddress> {
+        return this->CallbackManager->executeCompileCallback(Addr);
+      };
+
+    if (Id == RequestCompileId) {
+      if (auto Err = handle<RequestCompile>(C, CompileCallback))
+        return Err;
+      return Error::success();
+    }
+    // else
+    return orcError(OrcErrorCode::UnexpectedRPCCall);
+  }
+
   Expected<std::vector<char>> readMem(char *Dst, JITTargetAddress Src,
                                       uint64_t Size) {
     // Check for an 'out-of-band' error, e.g. from an MM destructor.
     if (ExistingError)
       return std::move(ExistingError);
 
-    return callB<ReadMem>(Src, Size);
+    return callST<ReadMem>(Channel, Src, Size);
   }
 
   Error registerEHFrames(JITTargetAddress &RAddr, uint32_t Size) {
-    return callB<RegisterEHFrames>(RAddr, Size);
+    return callST<RegisterEHFrames>(Channel, RAddr, Size);
   }
 
   Expected<JITTargetAddress> reserveMem(ResourceIdMgr::ResourceId Id,
@@ -709,12 +781,12 @@ private:
     if (ExistingError)
       return std::move(ExistingError);
 
-    return callB<ReserveMem>(Id, Size, Align);
+    return callST<ReserveMem>(Channel, Id, Size, Align);
   }
 
   Error setProtections(ResourceIdMgr::ResourceId Id,
                        JITTargetAddress RemoteSegAddr, unsigned ProtFlags) {
-    return callB<SetProtections>(Id, RemoteSegAddr, ProtFlags);
+    return callST<SetProtections>(Channel, Id, RemoteSegAddr, ProtFlags);
   }
 
   Error writeMem(JITTargetAddress Addr, const char *Src, uint64_t Size) {
@@ -722,7 +794,7 @@ private:
     if (ExistingError)
       return std::move(ExistingError);
 
-    return callB<WriteMem>(DirectBufferWriter(Src, Addr, Size));
+    return callST<WriteMem>(Channel, DirectBufferWriter(Src, Addr, Size));
   }
 
   Error writePointer(JITTargetAddress Addr, JITTargetAddress PtrVal) {
@@ -730,11 +802,12 @@ private:
     if (ExistingError)
       return std::move(ExistingError);
 
-    return callB<WritePtr>(Addr, PtrVal);
+    return callST<WritePtr>(Channel, Addr, PtrVal);
   }
 
   static Error doNothing() { return Error::success(); }
 
+  ChannelT &Channel;
   Error ExistingError = Error::success();
   std::string RemoteTargetTriple;
   uint32_t RemotePointerSize = 0;

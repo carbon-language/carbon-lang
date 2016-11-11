@@ -29,7 +29,6 @@ enum class OrcErrorCode : int {
   RemoteIndirectStubsOwnerIdAlreadyInUse,
   UnexpectedRPCCall,
   UnexpectedRPCResponse,
-  UnknownRPCFunction
 };
 
 Error orcError(OrcErrorCode ErrCode);

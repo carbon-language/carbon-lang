@@ -43,8 +43,6 @@ public:
       return "Unexpected RPC call";
     case OrcErrorCode::UnexpectedRPCResponse:
       return "Unexpected RPC response";
-    case OrcErrorCode::UnknownRPCFunction:
-      return "Unknown RPC function";
     }
     llvm_unreachable("Unhandled error code");
   }
