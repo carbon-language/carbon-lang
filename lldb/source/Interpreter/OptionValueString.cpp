@@ -133,7 +133,7 @@ Error OptionValueString::SetCurrentValue(llvm::StringRef value) {
       return error;
   }
   m_current_value.assign(value);
-  return Error::success();
+  return Error();
 }
 
 Error OptionValueString::AppendToCurrentValue(const char *value) {
@@ -148,5 +148,5 @@ Error OptionValueString::AppendToCurrentValue(const char *value) {
     } else
       m_current_value.append(value);
   }
-  return Error::success();
+  return Error();
 }

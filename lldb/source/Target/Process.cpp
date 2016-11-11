@@ -3359,7 +3359,7 @@ Error Process::Halt(bool clear_thread_plans, bool use_run_lock) {
     RestoreProcessEvents();
     SetExitStatus(SIGKILL, "Cancelled async attach.");
     Destroy(false);
-    return Error::success();
+    return Error();
   }
 
   // Wait for 10 second for the process to stop.
@@ -3375,7 +3375,7 @@ Error Process::Halt(bool clear_thread_plans, bool use_run_lock) {
 
   BroadcastEvent(event_sp);
 
-  return Error::success();
+  return Error();
 }
 
 Error Process::StopForDestroyOrDetach(lldb::EventSP &exit_event_sp) {

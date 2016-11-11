@@ -393,7 +393,7 @@ lldb_private::Error PlatformDarwin::GetSharedModuleWithLocalCache(
                                 module_spec.GetArchitecture());
           module_sp.reset(new Module(local_spec));
           module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
-          return Error::success();
+          return Error();
         }
       }
 
@@ -433,7 +433,7 @@ lldb_private::Error PlatformDarwin::GetSharedModuleWithLocalCache(
                       (IsHost() ? "host" : "remote"),
                       module_spec.GetFileSpec().GetDirectory().AsCString(),
                       module_spec.GetFileSpec().GetFilename().AsCString());
-        return Error::success();
+        return Error();
       }
 
       // bring in the remote module file
@@ -455,7 +455,7 @@ lldb_private::Error PlatformDarwin::GetSharedModuleWithLocalCache(
         ModuleSpec local_spec(module_cache_spec, module_spec.GetArchitecture());
         module_sp.reset(new Module(local_spec));
         module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
-        return Error::success();
+        return Error();
       } else
         return Error("unable to obtain valid module file");
     } else

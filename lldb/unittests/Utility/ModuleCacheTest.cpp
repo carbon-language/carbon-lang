@@ -114,7 +114,7 @@ void ModuleCacheTest::TryGetAndPut(const FileSpec &cache_dir,
         std::error_code ec = llvm::sys::fs::copy_file(
             s_test_executable, tmp_download_file_spec.GetCString());
         EXPECT_FALSE(ec);
-        return Error::success();
+        return Error();
       },
       [](const ModuleSP &module_sp, const FileSpec &tmp_download_file_spec) {
         return Error("Not supported.");

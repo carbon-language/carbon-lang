@@ -172,7 +172,7 @@ Error Platform::GetFileWithUUID(const FileSpec &platform_file,
                                 const UUID *uuid_ptr, FileSpec &local_file) {
   // Default to the local case
   local_file = platform_file;
-  return Error::success();
+  return Error();
 }
 
 FileSpecList
@@ -1089,7 +1089,7 @@ Error Platform::KillProcess(const lldb::pid_t pid) {
         "they are controlled by a process plugin");
   }
   Host::Kill(pid, SIGTERM);
-  return Error::success();
+  return Error();
 }
 
 lldb::ProcessSP
@@ -1597,7 +1597,7 @@ Error Platform::GetRemoteSharedModule(const ModuleSpec &module_spec,
   const auto error = module_resolver(resolved_module_spec);
   if (error.Fail()) {
     if (GetCachedSharedModule(resolved_module_spec, module_sp, did_create_ptr))
-      return Error::success();
+      return Error();
   }
 
   return error;

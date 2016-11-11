@@ -2672,7 +2672,7 @@ lldb_private::Error GDBRemoteCommunicationClient::RunShellCommand(
     response.GetEscapedBinaryData(output);
     if (command_output)
       command_output->assign(output);
-    return Error::success();
+    return Error();
   }
   return Error("unable to send packet");
 }

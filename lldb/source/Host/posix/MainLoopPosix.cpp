@@ -160,7 +160,7 @@ Error MainLoopPosix::Run() {
       it->second.callback(*this); // Do the work
 
       if (m_terminate_request)
-        return Error::success();
+        return Error();
     }
 
     for (int fd : read_fds) {
@@ -175,8 +175,8 @@ Error MainLoopPosix::Run() {
       it->second(*this); // Do the work
 
       if (m_terminate_request)
-        return Error::success();
+        return Error();
     }
   }
-  return Error::success();
+  return Error();
 }

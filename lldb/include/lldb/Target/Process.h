@@ -1082,9 +1082,7 @@ public:
   /// @return
   ///     Returns an error object.
   //------------------------------------------------------------------
-  virtual Error WillAttachToProcessWithID(lldb::pid_t pid) {
-    return Error::success();
-  }
+  virtual Error WillAttachToProcessWithID(lldb::pid_t pid) { return Error(); }
 
   //------------------------------------------------------------------
   /// Called before attaching to a process.
@@ -1097,7 +1095,7 @@ public:
   //------------------------------------------------------------------
   virtual Error WillAttachToProcessWithName(const char *process_name,
                                             bool wait_for_launch) {
-    return Error::success();
+    return Error();
   }
 
   //------------------------------------------------------------------
@@ -1206,7 +1204,7 @@ public:
   /// @return
   ///     Returns an error object.
   //------------------------------------------------------------------
-  virtual Error WillLaunch(Module *module) { return Error::success(); }
+  virtual Error WillLaunch(Module *module) { return Error(); }
 
   //------------------------------------------------------------------
   /// Launch a new process.
@@ -1252,7 +1250,7 @@ public:
   /// @return
   ///     Returns an error object.
   //------------------------------------------------------------------
-  virtual Error WillResume() { return Error::success(); }
+  virtual Error WillResume() { return Error(); }
 
   //------------------------------------------------------------------
   /// Resumes all of a process's threads as configured using the
@@ -1296,7 +1294,7 @@ public:
   /// @return
   ///     Returns an error object.
   //------------------------------------------------------------------
-  virtual Error WillHalt() { return Error::success(); }
+  virtual Error WillHalt() { return Error(); }
 
   //------------------------------------------------------------------
   /// Halts a running process.
@@ -1343,7 +1341,7 @@ public:
   /// @return
   ///     Returns an error object.
   //------------------------------------------------------------------
-  virtual Error WillDetach() { return Error::success(); }
+  virtual Error WillDetach() { return Error(); }
 
   //------------------------------------------------------------------
   /// Detaches from a running or stopped process.
@@ -1381,7 +1379,7 @@ public:
   ///     Process::DoSignal(int), otherwise an error describing what
   ///     prevents the signal from being sent.
   //------------------------------------------------------------------
-  virtual Error WillSignal() { return Error::success(); }
+  virtual Error WillSignal() { return Error(); }
 
   //------------------------------------------------------------------
   /// Sends a process a UNIX signal \a signal.
@@ -1397,7 +1395,7 @@ public:
     return error;
   }
 
-  virtual Error WillDestroy() { return Error::success(); }
+  virtual Error WillDestroy() { return Error(); }
 
   virtual Error DoDestroy() = 0;
 

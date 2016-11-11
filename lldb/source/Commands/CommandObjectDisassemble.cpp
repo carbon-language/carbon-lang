@@ -231,7 +231,7 @@ Error CommandObjectDisassemble::CommandOptions::OptionParsingFinished(
     ExecutionContext *execution_context) {
   if (!some_location_specified)
     current_function = true;
-  return Error::success();
+  return Error();
 }
 
 llvm::ArrayRef<OptionDefinition>

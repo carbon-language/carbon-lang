@@ -527,7 +527,7 @@ Error PlatformWindows::GetFileWithUUID(const FileSpec &platform_file,
 
   // Default to the local case
   local_file = platform_file;
-  return Error::success();
+  return Error();
 }
 
 Error PlatformWindows::GetSharedModule(

@@ -1252,7 +1252,7 @@ Error ProcessGDBRemote::WillResume() {
   m_continue_S_tids.clear();
   m_jstopinfo_sp.reset();
   m_jthreadsinfo_sp.reset();
-  return Error::success();
+  return Error();
 }
 
 Error ProcessGDBRemote::DoResume() {
@@ -3246,7 +3246,7 @@ Error ProcessGDBRemote::EstablishConnectionIfNeeded(
     const ProcessInfo &process_info) {
   // Make sure we aren't already connected?
   if (m_gdb_comm.IsConnected())
-    return Error::success();
+    return Error();
 
   PlatformSP platform_sp(GetTarget().GetPlatform());
   if (platform_sp && !platform_sp->IsHost())
@@ -4408,7 +4408,7 @@ Error ProcessGDBRemote::GetLoadedModuleList(LoadedModuleInfoList &list) {
 
     XMLNode root_element = doc.GetRootElement("library-list-svr4");
     if (!root_element)
-      return Error::success();
+      return Error();
 
     // main link map structure
     llvm::StringRef main_lm = root_element.GetAttributeValue("main-lm");
@@ -4494,7 +4494,7 @@ Error ProcessGDBRemote::GetLoadedModuleList(LoadedModuleInfoList &list) {
 
     XMLNode root_element = doc.GetRootElement("library-list");
     if (!root_element)
-      return Error::success();
+      return Error();
 
     root_element.ForEachChildElementWithName(
         "library", [log, &list](const XMLNode &library) -> bool {
@@ -4538,7 +4538,7 @@ Error ProcessGDBRemote::GetLoadedModuleList(LoadedModuleInfoList &list) {
     return Error(0, ErrorType::eErrorTypeGeneric);
   }
 
-  return Error::success();
+  return Error();
 }
 
 lldb::ModuleSP ProcessGDBRemote::LoadModuleAtAddress(const FileSpec &file,
@@ -4662,7 +4662,7 @@ Error ProcessGDBRemote::GetFileLoadAddress(const FileSpec &file,
       // The file is not loaded into the inferior
       is_loaded = false;
       load_addr = LLDB_INVALID_ADDRESS;
-      return Error::success();
+      return Error();
     }
 
     return Error(
@@ -4672,7 +4672,7 @@ Error ProcessGDBRemote::GetFileLoadAddress(const FileSpec &file,
   if (response.IsNormalResponse()) {
     is_loaded = true;
     load_addr = response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
-    return Error::success();
+    return Error();
   }
 
   return Error("Unknown error happened during sending the load address packet");

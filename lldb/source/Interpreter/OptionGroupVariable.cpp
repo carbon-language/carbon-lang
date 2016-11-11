@@ -59,13 +59,13 @@ static Error ValidateNamedSummary(const char *str, void *) {
   if (DataVisualization::NamedSummaryFormats::GetSummaryFormat(
           ConstString(str), summary_sp) == false)
     return Error("must specify a valid named summary");
-  return Error::success();
+  return Error();
 }
 
 static Error ValidateSummaryString(const char *str, void *) {
   if (!str || !str[0])
     return Error("must specify a non-empty summary string");
-  return Error::success();
+  return Error();
 }
 
 OptionGroupVariable::OptionGroupVariable(bool show_frame_options)

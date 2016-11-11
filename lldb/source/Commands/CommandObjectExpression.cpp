@@ -303,7 +303,7 @@ CanBeUsedForElementCountPrinting(ValueObject &valobj) {
     return Error("as it does not refer to a pointer");
   if (pointee.IsVoidType())
     return Error("as it refers to a pointer to void");
-  return Error::success();
+  return Error();
 }
 
 bool CommandObjectExpression::EvaluateExpression(const char *expr,

@@ -53,7 +53,7 @@ Error NativeBreakpoint::Enable() {
       log->Printf("NativeBreakpoint::%s addr = 0x%" PRIx64
                   " already enabled, ignoring.",
                   __FUNCTION__, m_addr);
-    return Error::success();
+    return Error();
   }
 
   // Log and enable.
@@ -85,7 +85,7 @@ Error NativeBreakpoint::Disable() {
       log->Printf("NativeBreakpoint::%s addr = 0x%" PRIx64
                   " already disabled, ignoring.",
                   __FUNCTION__, m_addr);
-    return Error::success();
+    return Error();
   }
 
   // Log and disable.

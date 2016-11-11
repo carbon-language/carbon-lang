@@ -4330,7 +4330,7 @@ Expected<std::string> BitcodeReader::parseTriple() {
     case BitstreamEntry::Error:
       return error("Malformed block");
     case BitstreamEntry::EndBlock:
-      return Error::success();
+      return "";
 
     case BitstreamEntry::SubBlock:
       if (Entry.ID == bitc::MODULE_BLOCK_ID)
@@ -4363,14 +4363,14 @@ Expected<std::string> BitcodeReader::parseIdentificationBlock() {
     // we need to make sure we aren't at the end of the stream before calling
     // advance, otherwise we'll get an error.
     if (Stream.AtEndOfStream())
-      return Error::success();
+      return "";
 
     BitstreamEntry Entry = Stream.advance();
     switch (Entry.Kind) {
     case BitstreamEntry::Error:
       return error("Malformed block");
     case BitstreamEntry::EndBlock:
-      return Error::success();
+      return "";
 
     case BitstreamEntry::SubBlock:
       if (Entry.ID == bitc::IDENTIFICATION_BLOCK_ID) {
@@ -4421,7 +4421,7 @@ Expected<bool> BitcodeReader::hasObjCCategory() {
     case BitstreamEntry::Error:
       return error("Malformed block");
     case BitstreamEntry::EndBlock:
-      return Error::success();
+      return false;
 
     case BitstreamEntry::SubBlock:
       if (Entry.ID == bitc::MODULE_BLOCK_ID)

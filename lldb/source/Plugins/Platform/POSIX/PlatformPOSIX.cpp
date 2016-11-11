@@ -207,7 +207,7 @@ PlatformPOSIX::PutFile(const lldb_private::FileSpec &source,
 
   if (IsHost()) {
     if (FileSpec::Equal(source, destination, true))
-      return Error::success();
+      return Error();
     // cp src dst
     // chown uid:gid dst
     std::string src_path(source.GetPath());
@@ -223,10 +223,10 @@ PlatformPOSIX::PutFile(const lldb_private::FileSpec &source,
     if (status != 0)
       return Error("unable to perform copy");
     if (uid == UINT32_MAX && gid == UINT32_MAX)
-      return Error::success();
+      return Error();
     if (chown_file(this, dst_path.c_str(), uid, gid) != 0)
       return Error("unable to perform chown");
-    return Error::success();
+    return Error();
   } else if (m_remote_platform_sp) {
     if (GetSupportsRSync()) {
       std::string src_path(source.GetPath());
@@ -254,7 +254,7 @@ PlatformPOSIX::PutFile(const lldb_private::FileSpec &source,
         // Don't chown a local file for a remote system
         //                if (chown_file(this,dst_path.c_str(),uid,gid) != 0)
         //                    return Error("unable to perform chown");
-        return Error::success();
+        return Error();
       }
       // if we are still here rsync has failed - let's try the slow way before
       // giving up
@@ -323,7 +323,7 @@ lldb_private::Error PlatformPOSIX::GetFile(
     RunShellCommand(cp_command.GetData(), NULL, &status, NULL, NULL, 10);
     if (status != 0)
       return Error("unable to perform copy");
-    return Error::success();
+    return Error();
   } else if (m_remote_platform_sp) {
     if (GetSupportsRSync()) {
       StreamString command;
@@ -343,7 +343,7 @@ lldb_private::Error PlatformPOSIX::GetFile(
       int retcode;
       Host::RunShellCommand(command.GetData(), NULL, &retcode, NULL, NULL, 60);
       if (retcode == 0)
-        return Error::success();
+        return Error();
       // If we are here, rsync has failed - let's try the slow way before giving
       // up
     }
@@ -745,7 +745,7 @@ Error PlatformPOSIX::EvaluateLibdlExpression(
 
   if (result_valobj_sp->GetError().Fail())
     return result_valobj_sp->GetError();
-  return Error::success();
+  return Error();
 }
 
 uint32_t PlatformPOSIX::DoLoadImage(lldb_private::Process *process,
@@ -833,7 +833,7 @@ Error PlatformPOSIX::UnloadImage(lldb_private::Process *process,
       return Error("expression failed: \"%s\"", expr.GetData());
     process->ResetImageToken(image_token);
   }
-  return Error::success();
+  return Error();
 }
 
 lldb::ProcessSP PlatformPOSIX::ConnectProcess(const char *connect_url,

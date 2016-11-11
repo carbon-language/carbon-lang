@@ -206,7 +206,7 @@ Error PipePosix::OpenAsWriterWithTimeout(
     }
   }
 
-  return Error::success();
+  return Error();
 }
 
 int PipePosix::GetReadFileDescriptor() const { return m_fds[READ]; }

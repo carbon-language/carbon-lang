@@ -179,7 +179,7 @@ Error PlatformKalimba::ResolveExecutable(
 Error PlatformKalimba::GetFileWithUUID(const FileSpec & /*platform_file*/,
                                        const UUID * /*uuid_ptr*/,
                                        FileSpec & /*local_file*/) {
-  return Error::success();
+  return Error();
 }
 
 //------------------------------------------------------------------

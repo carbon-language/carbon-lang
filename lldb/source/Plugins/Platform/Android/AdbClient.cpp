@@ -381,7 +381,7 @@ Error AdbClient::internalShell(const char *command, uint32_t timeout_ms,
                    std::string(output_buf.begin(), output_buf.end()).c_str());
   }
 
-  return Error::success();
+  return Error();
 }
 
 Error AdbClient::Shell(const char *command, uint32_t timeout_ms,
@@ -412,7 +412,7 @@ Error AdbClient::ShellToFile(const char *command, uint32_t timeout_ms,
   dst.close();
   if (!dst)
     return Error("Failed to write file %s", output_filename.c_str());
-  return Error::success();
+  return Error();
 }
 
 std::unique_ptr<AdbClient::SyncService>
@@ -536,7 +536,7 @@ Error AdbClient::SyncService::internalStat(const FileSpec &remote_file,
   mode = extractor.GetU32(&offset);
   size = extractor.GetU32(&offset);
   mtime = extractor.GetU32(&offset);
-  return Error::success();
+  return Error();
 }
 
 Error AdbClient::SyncService::PullFile(const FileSpec &remote_file,
@@ -641,7 +641,7 @@ Error AdbClient::SyncService::PullFileChunk(std::vector<char> &buffer,
   } else
     return Error("Pull failed with unknown response: %s", response_id.c_str());
 
-  return Error::success();
+  return Error();
 }
 
 Error AdbClient::SyncService::ReadAllBytes(void *buffer, size_t size) {
