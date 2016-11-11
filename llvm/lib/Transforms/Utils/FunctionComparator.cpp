@@ -355,7 +355,9 @@ int FunctionComparator::cmpConstants(const Constant *L,
 }
 
 int FunctionComparator::cmpGlobalValues(GlobalValue *L, GlobalValue *R) const {
-  return cmpNumbers(GlobalNumbers->getNumber(L), GlobalNumbers->getNumber(R));
+  uint64_t LNumber = GlobalNumbers->getNumber(L);
+  uint64_t RNumber = GlobalNumbers->getNumber(R);
+  return cmpNumbers(LNumber, RNumber);
 }
 
 /// cmpType - compares two types,
