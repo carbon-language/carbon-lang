@@ -149,7 +149,7 @@ rarely have to include this file directly).
 
   .. code-block:: c++
 
-    if (AllocationInst *AI = dyn_cast<AllocationInst>(Val)) {
+    if (auto *AI = dyn_cast<AllocationInst>(Val)) {
       // ...
     }
 
