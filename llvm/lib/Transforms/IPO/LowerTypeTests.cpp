@@ -14,6 +14,7 @@
 
 #include "llvm/Transforms/IPO/LowerTypeTests.h"
 #include "llvm/ADT/EquivalenceClasses.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/Constant.h"
@@ -228,6 +229,7 @@ class LowerTypeTestsModule {
   std::vector<ByteArrayInfo> ByteArrayInfos;
 
   Mangler Mang;
+  Function *WeakInitializerFn = nullptr;
 
   BitSetInfo
   buildBitSet(Metadata *TypeId,
@@ -259,6 +261,11 @@ class LowerTypeTestsModule {
                                      ArrayRef<Function *> Functions);
   void buildBitSetsFromDisjointSet(ArrayRef<Metadata *> TypeIds,
                                    ArrayRef<GlobalObject *> Globals);
+
+  void replaceWeakDeclarationWithJumpTablePtr(Function *F, Constant *JT);
+  void moveInitializerToModuleConstructor(GlobalVariable *GV);
+  void findGlobalVariableUsersOf(Constant *C,
+                                 SmallSetVector<GlobalVariable *, 8> &Out);
 
 public:
   LowerTypeTestsModule(Module &M);
@@ -733,6 +740,66 @@ void LowerTypeTestsModule::buildBitSetsFromFunctions(
     report_fatal_error("Unsupported architecture for jump tables");
 }
 
+void LowerTypeTestsModule::moveInitializerToModuleConstructor(
+    GlobalVariable *GV) {
+  if (WeakInitializerFn == nullptr) {
+    WeakInitializerFn = Function::Create(
+        FunctionType::get(Type::getVoidTy(M.getContext()),
+                          /* IsVarArg */ false),
+        GlobalValue::InternalLinkage, "__cfi_global_var_init", &M);
+    BasicBlock *BB =
+        BasicBlock::Create(M.getContext(), "entry", WeakInitializerFn);
+    ReturnInst::Create(M.getContext(), BB);
+    WeakInitializerFn->setSection(
+        ObjectFormat == Triple::MachO
+            ? "__TEXT,__StaticInit,regular,pure_instructions"
+            : ".text.startup");
+    // This code is equivalent to relocation application, and should run at the
+    // earliest possible time (i.e. with the highest priority).
+    appendToGlobalCtors(M, WeakInitializerFn, /* Priority */ 0);
+  }
+
+  IRBuilder<> IRB(WeakInitializerFn->getEntryBlock().getTerminator());
+  GV->setConstant(false);
+  IRB.CreateAlignedStore(GV->getInitializer(), GV, GV->getAlignment());
+  GV->setInitializer(Constant::getNullValue(GV->getValueType()));
+}
+
+void LowerTypeTestsModule::findGlobalVariableUsersOf(
+    Constant *C, SmallSetVector<GlobalVariable *, 8> &Out) {
+  for (auto *U : C->users()){
+    if (auto *GV = dyn_cast<GlobalVariable>(U))
+      Out.insert(GV);
+    else if (auto *C2 = dyn_cast<Constant>(U))
+      findGlobalVariableUsersOf(C2, Out);
+  }
+}
+
+// Replace all uses of F with (F ? JT : 0).
+void LowerTypeTestsModule::replaceWeakDeclarationWithJumpTablePtr(
+    Function *F, Constant *JT) {
+  // The target expression can not appear in a constant initializer on most
+  // (all?) targets. Switch to a runtime initializer.
+  SmallSetVector<GlobalVariable *, 8> GlobalVarUsers;
+  findGlobalVariableUsersOf(F, GlobalVarUsers);
+  for (auto GV : GlobalVarUsers)
+    moveInitializerToModuleConstructor(GV);
+
+  // Can not RAUW F with an expression that uses F. Replace with a temporary
+  // placeholder first.
+  Function *PlaceholderFn =
+      Function::Create(cast<FunctionType>(F->getValueType()),
+                       GlobalValue::ExternalWeakLinkage, "", &M);
+  F->replaceAllUsesWith(PlaceholderFn);
+
+  Constant *Target = ConstantExpr::getSelect(
+      ConstantExpr::getICmp(CmpInst::ICMP_NE, F,
+                            Constant::getNullValue(F->getType())),
+      JT, Constant::getNullValue(F->getType()));
+  PlaceholderFn->replaceAllUsesWith(Target);
+  PlaceholderFn->eraseFromParent();
+}
+
 /// Given a disjoint set of type identifiers and functions, build a jump table
 /// for the functions, build the bit sets and lower the llvm.type.test calls.
 void LowerTypeTestsModule::buildBitSetsFromFunctionsNative(
@@ -850,10 +917,15 @@ void LowerTypeTestsModule::buildBitSetsFromFunctionsNative(
               ArrayRef<Constant *>{ConstantInt::get(IntPtrTy, 0),
                                    ConstantInt::get(IntPtrTy, I)}),
           Functions[I]->getType());
-      Functions[I]->replaceAllUsesWith(CombinedGlobalElemPtr);
 
-      if (Functions[I]->isWeakForLinker())
+
+      if (Functions[I]->isWeakForLinker()) {
         AsmOS << ".weak " << Functions[I]->getName() << "\n";
+        replaceWeakDeclarationWithJumpTablePtr(Functions[I],
+                                               CombinedGlobalElemPtr);
+      } else {
+        Functions[I]->replaceAllUsesWith(CombinedGlobalElemPtr);
+      }
     } else {
       assert(Functions[I]->getType()->getAddressSpace() == 0);
 
