@@ -204,12 +204,9 @@ public:
     return getDwarfOffsetByteSize();
   }
   uint8_t getDwarfOffsetByteSize() const {
-    switch (getFormat()) {
-    case dwarf::DwarfFormat::DWARF32:
-      return 4;
-    case dwarf::DwarfFormat::DWARF64:
+    if (getFormat() == dwarf::DwarfFormat::DWARF64)
       return 8;
-    }
+    return 4;
   }
   uint64_t getBaseAddress() const { return BaseAddr; }
 
