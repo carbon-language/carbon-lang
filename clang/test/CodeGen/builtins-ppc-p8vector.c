@@ -136,6 +136,26 @@ void test1() {
 // CHECK-LE: @llvm.ppc.altivec.vperm
 // CHECK-PPC: warning: implicit declaration of function 'vec_mergee'
 
+  res_vbll = vec_mergee(vbll, vbll);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vsll = vec_mergee(vsll, vsll);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vull = vec_mergee(vull, vull);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vf = vec_mergee(vfa, vfa);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vd = vec_mergee(vda, vda);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
   /* vec_mergeo */
   res_vbi = vec_mergeo(vbi, vbi);
 // CHECK: @llvm.ppc.altivec.vperm
