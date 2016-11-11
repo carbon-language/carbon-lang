@@ -31,7 +31,7 @@ Error fileLock(HANDLE file_handle, DWORD flags, const uint64_t start,
   if (!::GetOverlappedResult(file_handle, &overlapped, &bytes, TRUE))
     return Error(::GetLastError(), eErrorTypeWin32);
 
-  return Error();
+  return Error::success();
 }
 
 } // namespace
@@ -74,5 +74,5 @@ Error LockFileWindows::DoUnlock() {
   if (!::GetOverlappedResult(m_file, &overlapped, &bytes, TRUE))
     return Error(::GetLastError(), eErrorTypeWin32);
 
-  return Error();
+  return Error::success();
 }

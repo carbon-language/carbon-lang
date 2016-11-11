@@ -40,7 +40,7 @@ Error NativeBreakpointList::AddRef(lldb::addr_t addr, size_t size_hint,
                   __FUNCTION__, addr);
 
     iter->second->AddRef();
-    return Error();
+    return Error::success();
   }
 
   // Create a new breakpoint using the given create func.
@@ -205,7 +205,7 @@ Error NativeBreakpointList::GetBreakpoint(lldb::addr_t addr,
 
   // Disable it.
   breakpoint_sp = iter->second;
-  return Error();
+  return Error::success();
 }
 
 Error NativeBreakpointList::RemoveTrapsFromBuffer(lldb::addr_t addr, void *buf,
@@ -225,5 +225,5 @@ Error NativeBreakpointList::RemoveTrapsFromBuffer(lldb::addr_t addr, void *buf,
     auto opcode_size = software_bp_sp->m_opcode_size;
     ::memcpy(opcode_addr, saved_opcodes, opcode_size);
   }
-  return Error();
+  return Error::success();
 }

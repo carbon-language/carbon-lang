@@ -258,7 +258,7 @@ bool ProcessElfCore::UpdateThreadList(ThreadList &old_thread_list,
 
 void ProcessElfCore::RefreshStateAfterStop() {}
 
-Error ProcessElfCore::DoDestroy() { return Error(); }
+Error ProcessElfCore::DoDestroy() { return Error::success(); }
 
 //------------------------------------------------------------------
 // Process Queries
@@ -304,7 +304,7 @@ Error ProcessElfCore::GetMemoryRegionInfo(lldb::addr_t load_addr,
       region_info.SetExecutable(MemoryRegionInfo::eNo);
       region_info.SetMapped(MemoryRegionInfo::eNo);
     }
-    return Error();
+    return Error::success();
   }
 
   region_info.GetRange().SetRangeBase(load_addr);
@@ -313,7 +313,7 @@ Error ProcessElfCore::GetMemoryRegionInfo(lldb::addr_t load_addr,
   region_info.SetWritable(MemoryRegionInfo::eNo);
   region_info.SetExecutable(MemoryRegionInfo::eNo);
   region_info.SetMapped(MemoryRegionInfo::eNo);
-  return Error();
+  return Error::success();
 }
 
 size_t ProcessElfCore::DoReadMemory(lldb::addr_t addr, void *buf, size_t size,

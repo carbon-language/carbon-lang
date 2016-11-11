@@ -70,7 +70,7 @@ Error MakeDirectory(const FileSpec &dir_path) {
     if (!dir_path.IsDirectory())
       return Error("Invalid existing path");
 
-    return Error();
+    return Error::success();
   }
 
   return FileSystem::MakeDirectory(dir_path, eFilePermissionsDirectoryDefault);
@@ -141,7 +141,7 @@ Error CreateHostSysRootModuleLink(const FileSpec &root_dir_spec,
                platform_module_spec.GetPath().c_str());
   if (sysroot_module_path_spec.Exists()) {
     if (!delete_existing)
-      return Error();
+      return Error::success();
 
     DecrementRefExistingModule(root_dir_spec, sysroot_module_path_spec);
   }
@@ -210,7 +210,7 @@ Error ModuleCache::Put(const FileSpec &root_dir_spec, const char *hostname,
   if (error.Fail())
     return Error("Failed to create link to %s: %s",
                  module_file_path.GetPath().c_str(), error.AsCString());
-  return Error();
+  return Error::success();
 }
 
 Error ModuleCache::Get(const FileSpec &root_dir_spec, const char *hostname,
@@ -221,7 +221,7 @@ Error ModuleCache::Get(const FileSpec &root_dir_spec, const char *hostname,
   if (find_it != m_loaded_modules.end()) {
     cached_module_sp = (*find_it).second.lock();
     if (cached_module_sp)
-      return Error();
+      return Error::success();
     m_loaded_modules.erase(find_it);
   }
 
@@ -263,7 +263,7 @@ Error ModuleCache::Get(const FileSpec &root_dir_spec, const char *hostname,
   m_loaded_modules.insert(
       std::make_pair(module_spec.GetUUID().GetAsString(), cached_module_sp));
 
-  return Error();
+  return Error::success();
 }
 
 Error ModuleCache::GetAndPut(const FileSpec &root_dir_spec,
@@ -320,7 +320,7 @@ Error ModuleCache::GetAndPut(const FileSpec &root_dir_spec,
     // module might
     // contain the necessary symbols and the debugging is also possible without
     // a symfile.
-    return Error();
+    return Error::success();
 
   error = Put(root_dir_spec, escaped_hostname.c_str(), module_spec,
               tmp_download_sym_file_spec,
@@ -332,5 +332,5 @@ Error ModuleCache::GetAndPut(const FileSpec &root_dir_spec,
 
   FileSpec symfile_spec = GetSymbolFileSpec(cached_module_sp->GetFileSpec());
   cached_module_sp->SetSymbolFileFileSpec(symfile_spec);
-  return Error();
+  return Error::success();
 }

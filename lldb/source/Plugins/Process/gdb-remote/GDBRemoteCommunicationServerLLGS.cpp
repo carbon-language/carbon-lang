@@ -197,13 +197,13 @@ Error GDBRemoteCommunicationServerLLGS::SetLaunchArguments(
                  __FUNCTION__);
 
   m_process_launch_info.SetArguments(const_cast<const char **>(args), true);
-  return Error();
+  return Error::success();
 }
 
 Error GDBRemoteCommunicationServerLLGS::SetLaunchFlags(
     unsigned int launch_flags) {
   m_process_launch_info.GetFlags().Set(launch_flags);
-  return Error();
+  return Error::success();
 }
 
 Error GDBRemoteCommunicationServerLLGS::LaunchProcess() {
@@ -988,7 +988,7 @@ Error GDBRemoteCommunicationServerLLGS::SetSTDIOFileDescriptor(int fd) {
     return error;
   }
 
-  return Error();
+  return Error::success();
 }
 
 void GDBRemoteCommunicationServerLLGS::StartSTDIOForwarding() {

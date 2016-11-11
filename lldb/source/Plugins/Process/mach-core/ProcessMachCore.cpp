@@ -461,7 +461,7 @@ void ProcessMachCore::RefreshStateAfterStop() {
   // SetThreadStopInfo (m_last_stop_packet);
 }
 
-Error ProcessMachCore::DoDestroy() { return Error(); }
+Error ProcessMachCore::DoDestroy() { return Error::success(); }
 
 //------------------------------------------------------------------
 // Process Queries
@@ -564,7 +564,7 @@ Error ProcessMachCore::GetMemoryRegionInfo(addr_t load_addr,
       region_info.SetExecutable(MemoryRegionInfo::eNo);
       region_info.SetMapped(MemoryRegionInfo::eNo);
     }
-    return Error();
+    return Error::success();
   }
 
   region_info.GetRange().SetRangeBase(load_addr);
@@ -573,7 +573,7 @@ Error ProcessMachCore::GetMemoryRegionInfo(addr_t load_addr,
   region_info.SetWritable(MemoryRegionInfo::eNo);
   region_info.SetExecutable(MemoryRegionInfo::eNo);
   region_info.SetMapped(MemoryRegionInfo::eNo);
-  return Error();
+  return Error::success();
 }
 
 void ProcessMachCore::Clear() { m_thread_list.Clear(); }

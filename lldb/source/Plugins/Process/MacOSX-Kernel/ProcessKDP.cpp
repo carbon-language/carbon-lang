@@ -414,7 +414,7 @@ lldb_private::DynamicLoader *ProcessKDP::GetDynamicLoader() {
   return m_dyld_ap.get();
 }
 
-Error ProcessKDP::WillResume() { return Error(); }
+Error ProcessKDP::WillResume() { return Error::success(); }
 
 Error ProcessKDP::DoResume() {
   Error error;

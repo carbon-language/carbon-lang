@@ -105,7 +105,7 @@ Error Config::addSaveTemps(std::string OutputFileName,
     return true;
   };
 
-  return Error();
+  return Error::success();
 }
 
 namespace {
@@ -302,7 +302,7 @@ Error lto::backend(Config &C, AddStreamFn AddStream,
 
   if (!C.CodeGenOnly)
     if (!opt(C, TM.get(), 0, *Mod, /*IsThinLto=*/false))
-      return Error();
+      return Error::success();
 
   if (ParallelCodeGenParallelismLevel == 1) {
     codegen(C, TM.get(), AddStream, 0, *Mod);
@@ -310,7 +310,7 @@ Error lto::backend(Config &C, AddStreamFn AddStream,
     splitCodeGen(C, TM.get(), AddStream, ParallelCodeGenParallelismLevel,
                  std::move(Mod));
   }
-  return Error();
+  return Error::success();
 }
 
 Error lto::thinBackend(Config &Conf, unsigned Task, AddStreamFn AddStream,
@@ -329,25 +329,25 @@ Error lto::thinBackend(Config &Conf, unsigned Task, AddStreamFn AddStream,
 
   if (Conf.CodeGenOnly) {
     codegen(Conf, TM.get(), AddStream, Task, Mod);
-    return Error();
+    return Error::success();
   }
 
   if (Conf.PreOptModuleHook && !Conf.PreOptModuleHook(Task, Mod))
-    return Error();
+    return Error::success();
 
   renameModuleForThinLTO(Mod, CombinedIndex);
 
   thinLTOResolveWeakForLinkerModule(Mod, DefinedGlobals);
 
   if (Conf.PostPromoteModuleHook && !Conf.PostPromoteModuleHook(Task, Mod))
-    return Error();
+    return Error::success();
 
   if (!DefinedGlobals.empty())
     thinLTOInternalizeModule(Mod, DefinedGlobals);
 
   if (Conf.PostInternalizeModuleHook &&
       !Conf.PostInternalizeModuleHook(Task, Mod))
-    return Error();
+    return Error::success();
 
   auto ModuleLoader = [&](StringRef Identifier) {
     assert(Mod.getContext().isODRUniquingDebugTypes() &&
@@ -363,11 +363,11 @@ Error lto::thinBackend(Config &Conf, unsigned Task, AddStreamFn AddStream,
     return Err;
 
   if (Conf.PostImportModuleHook && !Conf.PostImportModuleHook(Task, Mod))
-    return Error();
+    return Error::success();
 
   if (!opt(Conf, TM.get(), Task, Mod, /*IsThinLto=*/true))
-    return Error();
+    return Error::success();
 
   codegen(Conf, TM.get(), AddStream, Task, Mod);
-  return Error();
+  return Error::success();
 }

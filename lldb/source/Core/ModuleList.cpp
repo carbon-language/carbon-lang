@@ -788,7 +788,7 @@ Error ModuleList::GetSharedModule(const ModuleSpec &module_spec,
               *did_create_ptr = true;
 
             shared_module_list.ReplaceEquivalent(module_sp);
-            return Error();
+            return Error::success();
           }
         }
       } else {

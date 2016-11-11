@@ -626,7 +626,7 @@ Error NativeRegisterContextLinux_x86_64::WriteRegister(
       if (!CopyMPXtoXSTATE(reg_index))
         return Error("CopyMPXtoXSTATE() failed");
     }
-    return Error();
+    return Error::success();
   }
   return Error("failed - register wasn't recognized to be a GPR or an FPR, "
                "write strategy unknown");
@@ -1035,7 +1035,7 @@ Error NativeRegisterContextLinux_x86_64::GetWatchpointHitIndex(
     }
   }
   wp_index = LLDB_INVALID_INDEX32;
-  return Error();
+  return Error::success();
 }
 
 Error NativeRegisterContextLinux_x86_64::IsWatchpointVacant(uint32_t wp_index,

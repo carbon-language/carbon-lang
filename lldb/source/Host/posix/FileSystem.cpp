@@ -62,7 +62,7 @@ Error FileSystem::MakeDirectory(const FileSpec &file_spec,
       } break;
       case EEXIST: {
         if (file_spec.IsDirectory())
-          return Error(); // It is a directory and it already exists
+          return Error::success(); // It is a directory and it already exists
       } break;
       }
     }
@@ -210,7 +210,7 @@ Error FileSystem::ResolveSymbolicLink(const FileSpec &src, FileSpec &dst) {
 
   dst = FileSpec(real_path, false);
 
-  return Error();
+  return Error::success();
 }
 
 #if defined(__NetBSD__)

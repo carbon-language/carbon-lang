@@ -213,7 +213,7 @@ ModuleSP DynamicLoaderHexagonDYLD::GetTargetExecutable() {
 }
 
 // AD: Needs to be updated?
-Error DynamicLoaderHexagonDYLD::CanLoadImage() { return Error(); }
+Error DynamicLoaderHexagonDYLD::CanLoadImage() { return Error::success(); }
 
 void DynamicLoaderHexagonDYLD::UpdateLoadedSections(ModuleSP module,
                                                     addr_t link_map_addr,

@@ -247,7 +247,7 @@ Error PlatformMacOSX::GetSymbolFile(const FileSpec &platform_file,
 
   // Default to the local case
   local_file = platform_file;
-  return Error();
+  return Error::success();
 }
 
 lldb_private::Error
@@ -264,7 +264,7 @@ PlatformMacOSX::GetFileWithUUID(const lldb_private::FileSpec &platform_file,
     if (local_os_build.compare(remote_os_build) == 0) {
       // same OS version: the local file is good enough
       local_file = platform_file;
-      return Error();
+      return Error::success();
     } else {
       // try to find the file in the cache
       std::string cache_path(GetLocalCacheDirectory());
@@ -273,7 +273,7 @@ PlatformMacOSX::GetFileWithUUID(const lldb_private::FileSpec &platform_file,
       FileSpec module_cache_spec(cache_path, false);
       if (module_cache_spec.Exists()) {
         local_file = module_cache_spec;
-        return Error();
+        return Error::success();
       }
       // bring in the remote module file
       FileSpec module_cache_folder =
@@ -288,13 +288,13 @@ PlatformMacOSX::GetFileWithUUID(const lldb_private::FileSpec &platform_file,
         return err;
       if (module_cache_spec.Exists()) {
         local_file = module_cache_spec;
-        return Error();
+        return Error::success();
       } else
         return Error("unable to obtain valid module file");
     }
   }
   local_file = platform_file;
-  return Error();
+  return Error::success();
 }
 
 bool PlatformMacOSX::GetSupportedArchitectureAtIndex(uint32_t idx,

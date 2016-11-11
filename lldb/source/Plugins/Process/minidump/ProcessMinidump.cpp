@@ -133,7 +133,7 @@ ConstString ProcessMinidump::GetPluginName() { return GetPluginNameStatic(); }
 
 uint32_t ProcessMinidump::GetPluginVersion() { return 1; }
 
-Error ProcessMinidump::DoDestroy() { return Error(); }
+Error ProcessMinidump::DoDestroy() { return Error::success(); }
 
 void ProcessMinidump::RefreshStateAfterStop() {
   if (!m_active_exception)

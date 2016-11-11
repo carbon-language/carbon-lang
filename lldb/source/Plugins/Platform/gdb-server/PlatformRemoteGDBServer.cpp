@@ -196,7 +196,7 @@ Error PlatformRemoteGDBServer::GetFileWithUUID(const FileSpec &platform_file,
                                                FileSpec &local_file) {
   // Default to the local case
   local_file = platform_file;
-  return Error();
+  return Error::success();
 }
 
 //------------------------------------------------------------------
@@ -482,7 +482,7 @@ Error PlatformRemoteGDBServer::LaunchProcess(ProcessLaunchInfo &launch_info) {
 Error PlatformRemoteGDBServer::KillProcess(const lldb::pid_t pid) {
   if (!KillSpawnedProcess(pid))
     return Error("failed to kill remote spawned process");
-  return Error();
+  return Error::success();
 }
 
 lldb::ProcessSP PlatformRemoteGDBServer::DebugProcess(

@@ -1766,7 +1766,7 @@ Error Thread::JumpToLine(const FileSpec &file, uint32_t line,
   if (!reg_ctx->SetPC(dest))
     return Error("Cannot change PC to target address.");
 
-  return Error();
+  return Error::success();
 }
 
 void Thread::DumpUsingSettingsFormat(Stream &strm, uint32_t frame_idx,

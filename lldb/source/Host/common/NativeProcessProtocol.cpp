@@ -405,7 +405,7 @@ Error NativeProcessProtocol::ResolveProcessArchitecture(lldb::pid_t pid,
 
   arch = module_specs.GetModuleSpecRefAtIndex(0).GetArchitecture();
   if (arch.IsValid())
-    return Error();
+    return Error::success();
   else
     return Error("failed to retrieve a valid architecture from the exe module");
 }

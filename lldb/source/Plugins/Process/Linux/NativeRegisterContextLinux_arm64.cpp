@@ -276,7 +276,7 @@ Error NativeRegisterContextLinux_arm64::WriteRegister(
     if (error.Fail())
       return error;
 
-    return Error();
+    return Error::success();
   }
 
   return Error("failed - register wasn't recognized to be a GPR or an FPR, "
@@ -671,7 +671,7 @@ Error NativeRegisterContextLinux_arm64::ClearAllHardwareWatchpoints() {
     }
   }
 
-  return Error();
+  return Error::success();
 }
 
 uint32_t
@@ -722,12 +722,12 @@ Error NativeRegisterContextLinux_arm64::GetWatchpointHitIndex(
     if (WatchpointIsEnabled(wp_index) && trap_addr >= watch_addr &&
         trap_addr < watch_addr + watch_size) {
       m_hwp_regs[wp_index].hit_addr = trap_addr;
-      return Error();
+      return Error::success();
     }
   }
 
   wp_index = LLDB_INVALID_INDEX32;
-  return Error();
+  return Error::success();
 }
 
 lldb::addr_t
@@ -764,7 +764,7 @@ NativeRegisterContextLinux_arm64::GetWatchpointHitAddress(uint32_t wp_index) {
 
 Error NativeRegisterContextLinux_arm64::ReadHardwareDebugInfo() {
   if (!m_refresh_hwdebug_info) {
-    return Error();
+    return Error::success();
   }
 
   ::pid_t tid = m_thread.GetID();

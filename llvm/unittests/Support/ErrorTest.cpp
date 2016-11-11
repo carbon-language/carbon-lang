@@ -82,12 +82,14 @@ protected:
 
 char CustomSubError::ID = 0;
 
-static Error handleCustomError(const CustomError &CE) { return Error(); }
+static Error handleCustomError(const CustomError &CE) {
+  return Error::success();
+}
 
 static void handleCustomErrorVoid(const CustomError &CE) {}
 
 static Error handleCustomErrorUP(std::unique_ptr<CustomError> CE) {
-  return Error();
+  return Error::success();
 }
 
 static void handleCustomErrorUPVoid(std::unique_ptr<CustomError> CE) {}

@@ -102,7 +102,7 @@ LinkerDriver::getArchiveMembers(MemoryBufferRef MB) {
       check(Archive::create(MB), "failed to parse archive");
 
   std::vector<MemoryBufferRef> V;
-  Error Err;
+  Error Err = Error::success();
   for (const ErrorOr<Archive::Child> &COrErr : File->children(Err)) {
     Archive::Child C = check(COrErr, "could not get the child of the archive " +
                                          File->getFileName());

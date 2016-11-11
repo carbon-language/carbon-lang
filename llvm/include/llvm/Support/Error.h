@@ -149,14 +149,14 @@ class LLVM_NODISCARD Error {
   // error.
   template <typename T> friend class Expected;
 
-public:
+protected:
   /// Create a success value. Prefer using 'Error::success()' for readability
-  /// where possible.
   Error() : Payload(nullptr) {
     setPtr(nullptr);
     setChecked(false);
   }
 
+public:
   /// Create a success value. This is equivalent to calling the default
   /// constructor, but should be preferred for readability where possible.
   static Error success() { return Error(); }

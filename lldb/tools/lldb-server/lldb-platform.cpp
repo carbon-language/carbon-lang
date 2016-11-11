@@ -130,7 +130,7 @@ static Error save_socket_id_to_file(const std::string &socket_id,
                  file_spec.GetPath().c_str(), err_code.message().c_str());
 
   tmp_file_remover.releaseFile();
-  return Error();
+  return Error::success();
 }
 
 //----------------------------------------------------------------------

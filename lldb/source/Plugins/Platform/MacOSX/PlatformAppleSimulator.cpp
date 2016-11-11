@@ -71,7 +71,7 @@ lldb_private::Error PlatformAppleSimulator::LaunchProcess(
 
   if (spawned) {
     launch_info.SetProcessID(spawned.GetPID());
-    return Error();
+    return Error::success();
   } else
     return spawned.GetError();
 #else
@@ -164,7 +164,7 @@ Error PlatformAppleSimulator::ConnectRemote(Args &args) {
 Error PlatformAppleSimulator::DisconnectRemote() {
 #if defined(__APPLE__)
   m_device.reset();
-  return Error();
+  return Error::success();
 #else
   Error err;
   err.SetErrorString(UNSUPPORTED_ERROR);

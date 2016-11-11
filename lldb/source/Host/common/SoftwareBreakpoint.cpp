@@ -103,7 +103,7 @@ Error SoftwareBreakpoint::CreateSoftwareBreakpoint(
   // breakpoint.
   breakpoint_sp.reset(new SoftwareBreakpoint(process, addr, saved_opcode_bytes,
                                              bp_opcode_bytes, bp_opcode_size));
-  return Error();
+  return Error::success();
 }
 
 Error SoftwareBreakpoint::EnableSoftwareBreakpoint(
@@ -219,7 +219,7 @@ Error SoftwareBreakpoint::EnableSoftwareBreakpoint(
     log->Printf("SoftwareBreakpoint::%s addr = 0x%" PRIx64 " -- SUCCESS",
                 __FUNCTION__, addr);
 
-  return Error();
+  return Error::success();
 }
 
 // -------------------------------------------------------------------

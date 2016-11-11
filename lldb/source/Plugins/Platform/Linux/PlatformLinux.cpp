@@ -341,7 +341,7 @@ Error PlatformLinux::GetFileWithUUID(const FileSpec &platform_file,
 
   // Default to the local case
   local_file = platform_file;
-  return Error();
+  return Error::success();
 }
 
 //------------------------------------------------------------------
