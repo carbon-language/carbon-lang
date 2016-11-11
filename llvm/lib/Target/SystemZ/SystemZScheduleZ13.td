@@ -134,6 +134,7 @@ def : InstRW<[VBU], (instregex "(Cond)?Trap$")>;
 def : InstRW<[FXb], (instregex "C(G)?(I|R)T(Asm.*)?$")>;
 def : InstRW<[FXb], (instregex "CL(G)?RT(Asm.*)?$")>;
 def : InstRW<[FXb], (instregex "CL(F|G)IT(Asm.*)?$")>;
+def : InstRW<[FXb, LSU, Lat5], (instregex "CL(G)?T(Asm.*)?$")>;
 
 //===----------------------------------------------------------------------===//
 // Call and return instructions

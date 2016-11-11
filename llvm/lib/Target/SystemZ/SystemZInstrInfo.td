@@ -192,6 +192,10 @@ let isTerminator = 1, hasCtrlDep = 1 in {
   defm CGIT  : CmpBranchRIEaPair<"cgit",  0xEC70, GR64, imm64sx16>;
   defm CLFIT : CmpBranchRIEaPair<"clfit", 0xEC73, GR32, imm32zx16>;
   defm CLGIT : CmpBranchRIEaPair<"clgit", 0xEC71, GR64, imm64zx16>;
+  let Predicates = [FeatureMiscellaneousExtensions] in {
+    defm CLT  : CmpBranchRSYbPair<"clt",  0xEB23, GR32>;
+    defm CLGT : CmpBranchRSYbPair<"clgt", 0xEB2B, GR64>;
+  }
 
   foreach V = [ "E", "H", "L", "HE", "LE", "LH",
                 "NE", "NH", "NL", "NHE", "NLE", "NLH" ] in {
@@ -207,6 +211,10 @@ let isTerminator = 1, hasCtrlDep = 1 in {
                                          imm32zx16>;
     def CLGITAsm#V : FixedCmpBranchRIEa<ICV<V>, "clgit", 0xEC71, GR64,
                                          imm64zx16>;
+    let Predicates = [FeatureMiscellaneousExtensions] in {
+      def CLTAsm#V  : FixedCmpBranchRSYb<ICV<V>, "clt",  0xEB23, GR32>;
+      def CLGTAsm#V : FixedCmpBranchRSYb<ICV<V>, "clgt", 0xEB2B, GR64>;
+    }
   }
 }
 
