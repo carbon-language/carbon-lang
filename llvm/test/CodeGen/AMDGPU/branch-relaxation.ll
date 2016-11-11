@@ -90,7 +90,7 @@ bb3:
 ; GCN-LABEL: {{^}}uniform_conditional_min_long_forward_vcnd_branch:
 ; GCN: s_load_dword [[CND:s[0-9]+]]
 ; GCN-DAG: v_mov_b32_e32 [[V_CND:v[0-9]+]], [[CND]]
-; GCN-DAG: v_cmp_eq_f32_e64 {{vcc|(s\[[0-9]+:[0-9]+\])}}, [[CND]], 0
+; GCN-DAG: v_cmp_eq_f32_e64 vcc, [[CND]], 0
 ; GCN: s_cbranch_vccz [[LONGBB:BB[0-9]+_[0-9]+]]
 
 ; GCN-NEXT: [[LONG_JUMP:BB[0-9]+_[0-9]+]]: ; %bb0
@@ -492,8 +492,8 @@ ret:
 ; GCN: s_setpc_b64
 
 ; GCN: [[LONG_BR_DEST0]]
-; GCN: v_cmp_ne_u32_e32
-; GCN-NEXT: s_cbranch_vccz
+; GCN: s_cmp_eq_u32
+; GCN-NEXT: s_cbranch_scc0
 ; GCN: s_setpc_b64
 
 ; GCN: s_endpgm

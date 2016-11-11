@@ -440,7 +440,6 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(const TargetMachine &TM,
 
   setSchedulingPreference(Sched::RegPressure);
   setJumpIsExpensive(true);
-  setHasMultipleConditionRegisters(true);
 
   // SI at least has hardware support for floating point exceptions, but no way
   // of using or handling them is implemented. They are also optional in OpenCL
