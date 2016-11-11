@@ -237,5 +237,69 @@ define <4 x i32> @knownbits_mask_sub_shuffle_lshr(<4 x i32> %a0) nounwind {
   %3 = shufflevector <4 x i32> %2, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 3, i32 3>
   %4 = lshr <4 x i32> %3, <i32 22, i32 22, i32 22, i32 22>
   ret <4 x i32> %4
+}
 
+define <4 x i32> @knownbits_mask_udiv_shuffle_lshr(<4 x i32> %a0, <4 x i32> %a1) nounwind {
+; X32-LABEL: knownbits_mask_udiv_shuffle_lshr:
+; X32:       # BB#0:
+; X32-NEXT:    pushl %esi
+; X32-NEXT:    vpand {{\.LCPI.*}}, %xmm0, %xmm0
+; X32-NEXT:    vpextrd $1, %xmm1, %ecx
+; X32-NEXT:    vpextrd $1, %xmm0, %eax
+; X32-NEXT:    xorl %edx, %edx
+; X32-NEXT:    divl %ecx
+; X32-NEXT:    movl %eax, %ecx
+; X32-NEXT:    vmovd %xmm1, %esi
+; X32-NEXT:    vmovd %xmm0, %eax
+; X32-NEXT:    xorl %edx, %edx
+; X32-NEXT:    divl %esi
+; X32-NEXT:    vmovd %eax, %xmm2
+; X32-NEXT:    vpinsrd $1, %ecx, %xmm2, %xmm2
+; X32-NEXT:    vpextrd $2, %xmm1, %ecx
+; X32-NEXT:    vpextrd $2, %xmm0, %eax
+; X32-NEXT:    xorl %edx, %edx
+; X32-NEXT:    divl %ecx
+; X32-NEXT:    vpinsrd $2, %eax, %xmm2, %xmm2
+; X32-NEXT:    vpextrd $3, %xmm1, %ecx
+; X32-NEXT:    vpextrd $3, %xmm0, %eax
+; X32-NEXT:    xorl %edx, %edx
+; X32-NEXT:    divl %ecx
+; X32-NEXT:    vpinsrd $3, %eax, %xmm2, %xmm0
+; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,3,3]
+; X32-NEXT:    vpsrld $22, %xmm0, %xmm0
+; X32-NEXT:    popl %esi
+; X32-NEXT:    retl
+;
+; X64-LABEL: knownbits_mask_udiv_shuffle_lshr:
+; X64:       # BB#0:
+; X64-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
+; X64-NEXT:    vpextrd $1, %xmm1, %ecx
+; X64-NEXT:    vpextrd $1, %xmm0, %eax
+; X64-NEXT:    xorl %edx, %edx
+; X64-NEXT:    divl %ecx
+; X64-NEXT:    movl %eax, %ecx
+; X64-NEXT:    vmovd %xmm1, %esi
+; X64-NEXT:    vmovd %xmm0, %eax
+; X64-NEXT:    xorl %edx, %edx
+; X64-NEXT:    divl %esi
+; X64-NEXT:    vmovd %eax, %xmm2
+; X64-NEXT:    vpinsrd $1, %ecx, %xmm2, %xmm2
+; X64-NEXT:    vpextrd $2, %xmm1, %ecx
+; X64-NEXT:    vpextrd $2, %xmm0, %eax
+; X64-NEXT:    xorl %edx, %edx
+; X64-NEXT:    divl %ecx
+; X64-NEXT:    vpinsrd $2, %eax, %xmm2, %xmm2
+; X64-NEXT:    vpextrd $3, %xmm1, %ecx
+; X64-NEXT:    vpextrd $3, %xmm0, %eax
+; X64-NEXT:    xorl %edx, %edx
+; X64-NEXT:    divl %ecx
+; X64-NEXT:    vpinsrd $3, %eax, %xmm2, %xmm0
+; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,3,3]
+; X64-NEXT:    vpsrld $22, %xmm0, %xmm0
+; X64-NEXT:    retq
+  %1 = and <4 x i32> %a0, <i32 32767, i32 -1, i32 -1, i32 32767>
+  %2 = udiv <4 x i32> %1, %a1
+  %3 = shufflevector <4 x i32> %2, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 3, i32 3>
+  %4 = lshr <4 x i32> %3, <i32 22, i32 22, i32 22, i32 22>
+  ret <4 x i32> %4
 }
