@@ -171,6 +171,12 @@ TEST(MathExtras, PowerOf2Ceil) {
   EXPECT_EQ(8, PowerOf2Ceil(7));
 }
 
+TEST(MathExtras, PowerOf2Floor) {
+  EXPECT_EQ(0, PowerOf2Floor(0));
+  EXPECT_EQ(8, PowerOf2Floor(8));
+  EXPECT_EQ(4, PowerOf2Floor(7));
+}
+
 TEST(MathExtras, ByteSwap_32) {
   EXPECT_EQ(0x44332211u, ByteSwap_32(0x11223344));
   EXPECT_EQ(0xDDCCBBAAu, ByteSwap_32(0xAABBCCDD));
