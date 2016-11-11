@@ -587,7 +587,7 @@ void ProcessWinMiniDump::RefreshStateAfterStop() {
   return m_impl_up->RefreshStateAfterStop();
 }
 
-Error ProcessWinMiniDump::DoDestroy() { return Error::success(); }
+Error ProcessWinMiniDump::DoDestroy() { return Error(); }
 
 bool ProcessWinMiniDump::IsAlive() { return true; }
 

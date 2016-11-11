@@ -222,7 +222,7 @@ Error NativeRegisterContextLinux_s390x::ReadRegister(
       assert(false && "Unhandled data size.");
       return Error("unhandled byte size: %" PRIu32, reg_info->byte_size);
     }
-    return Error::success();
+    return Error();
   }
 
   if (IsFPR(reg)) {
@@ -245,7 +245,7 @@ Error NativeRegisterContextLinux_s390x::ReadRegister(
       assert(false && "Unhandled data size.");
       return Error("unhandled byte size: %" PRIu32, reg_info->byte_size);
     }
-    return Error::success();
+    return Error();
   }
 
   if (reg == lldb_last_break_s390x) {
@@ -255,7 +255,7 @@ Error NativeRegisterContextLinux_s390x::ReadRegister(
       return error;
 
     reg_value.SetUInt64(last_break);
-    return Error::success();
+    return Error();
   }
 
   if (reg == lldb_system_call_s390x) {
@@ -265,7 +265,7 @@ Error NativeRegisterContextLinux_s390x::ReadRegister(
       return error;
 
     reg_value.SetUInt32(system_call);
-    return Error::success();
+    return Error();
   }
 
   return Error("failed - register wasn't recognized");
@@ -511,7 +511,7 @@ Error NativeRegisterContextLinux_s390x::IsWatchpointHit(uint32_t wp_index,
 
   if (m_watchpoint_addr == LLDB_INVALID_ADDRESS) {
     is_hit = false;
-    return Error::success();
+    return Error();
   }
 
   Error error = PeekUserArea(offsetof(user_regs_struct, per_info.lowcore),
@@ -531,7 +531,7 @@ Error NativeRegisterContextLinux_s390x::IsWatchpointHit(uint32_t wp_index,
                  sizeof(per_lowcore));
   }
 
-  return Error::success();
+  return Error();
 }
 
 Error NativeRegisterContextLinux_s390x::GetWatchpointHitIndex(
@@ -548,7 +548,7 @@ Error NativeRegisterContextLinux_s390x::GetWatchpointHitIndex(
     }
   }
   wp_index = LLDB_INVALID_INDEX32;
-  return Error::success();
+  return Error();
 }
 
 Error NativeRegisterContextLinux_s390x::IsWatchpointVacant(uint32_t wp_index,
@@ -558,7 +558,7 @@ Error NativeRegisterContextLinux_s390x::IsWatchpointVacant(uint32_t wp_index,
 
   is_vacant = m_watchpoint_addr == LLDB_INVALID_ADDRESS;
 
-  return Error::success();
+  return Error();
 }
 
 bool NativeRegisterContextLinux_s390x::ClearHardwareWatchpoint(
@@ -589,7 +589,7 @@ bool NativeRegisterContextLinux_s390x::ClearHardwareWatchpoint(
 
 Error NativeRegisterContextLinux_s390x::ClearAllHardwareWatchpoints() {
   if (ClearHardwareWatchpoint(0))
-    return Error::success();
+    return Error();
   return Error("Clearing all hardware watchpoints failed.");
 }
 

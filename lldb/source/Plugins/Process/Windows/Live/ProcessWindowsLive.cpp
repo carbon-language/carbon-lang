@@ -427,7 +427,7 @@ Error ProcessWindowsLive::DoDetach(bool keep_stopped) {
           WINDOWS_LOG_PROCESS,
           "DoDetach called while state = %u, but there is no active session.",
           private_state);
-      return Error::success();
+      return Error();
     }
 
     debugger_thread = m_session_data->m_debugger;
@@ -477,7 +477,7 @@ Error ProcessWindowsLive::DoDestroy() {
           WINDOWS_LOG_PROCESS,
           "DoDestroy called while state = %u, but there is no active session.",
           private_state);
-      return Error::success();
+      return Error();
     }
 
     debugger_thread = m_session_data->m_debugger;

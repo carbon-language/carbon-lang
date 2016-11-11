@@ -1364,13 +1364,13 @@ Error NativeProcessLinux::SetupSoftwareSingleStepping(
   // If setting the breakpoint fails because next_pc is out of
   // the address space, ignore it and let the debugee segfault.
   if (error.GetError() == EIO || error.GetError() == EFAULT) {
-    return Error::success();
+    return Error();
   } else if (error.Fail())
     return error;
 
   m_threads_stepping_with_breakpoint.insert({thread.GetID(), next_pc});
 
-  return Error::success();
+  return Error();
 }
 
 bool NativeProcessLinux::SupportHardwareSingleStepping() const {
@@ -1453,7 +1453,7 @@ Error NativeProcessLinux::Resume(const ResumeActionList &resume_actions) {
     }
   }
 
-  return Error::success();
+  return Error();
 }
 
 Error NativeProcessLinux::Halt() {
@@ -1553,7 +1553,7 @@ Error NativeProcessLinux::Interrupt() {
 
   StopRunningThreads(deferred_signal_thread_sp->GetID());
 
-  return Error::success();
+  return Error();
 }
 
 Error NativeProcessLinux::Kill() {
@@ -1677,7 +1677,7 @@ ParseMemoryRegionInfoFromProcMapsLine(const std::string &maps_line,
   if (name)
     memory_region_info.SetName(name);
 
-  return Error::success();
+  return Error();
 }
 
 Error NativeProcessLinux::GetMemoryRegionInfo(lldb::addr_t load_addr,
@@ -1841,7 +1841,7 @@ Error NativeProcessLinux::AllocateMemory(size_t size, uint32_t permissions,
   if (InferiorCallMmap(this, addr, 0, size, prot,
                        eMmapFlagsAnon | eMmapFlagsPrivate, -1, 0)) {
     m_addr_to_mmap_size[addr] = size;
-    return Error::success();
+    return Error();
   } else {
     addr = LLDB_INVALID_ADDRESS;
     return Error("unable to allocate %" PRIu64
@@ -1886,11 +1886,11 @@ Error NativeProcessLinux::GetSoftwareBreakpointPCOffset(
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
     actual_opcode_size = static_cast<uint32_t>(sizeof(g_i386_opcode));
-    return Error::success();
+    return Error();
 
   case llvm::Triple::systemz:
     actual_opcode_size = static_cast<uint32_t>(sizeof(g_s390x_opcode));
-    return Error::success();
+    return Error();
 
   case llvm::Triple::arm:
   case llvm::Triple::aarch64:
@@ -1900,7 +1900,7 @@ Error NativeProcessLinux::GetSoftwareBreakpointPCOffset(
   case llvm::Triple::mipsel:
     // On these architectures the PC don't get updated for breakpoint hits
     actual_opcode_size = 0;
-    return Error::success();
+    return Error();
 
   default:
     assert(false && "CPU type not supported!");
@@ -1935,18 +1935,18 @@ Error NativeProcessLinux::GetSoftwareBreakpointTrapOpcode(
   case llvm::Triple::aarch64:
     trap_opcode_bytes = g_aarch64_opcode;
     actual_opcode_size = sizeof(g_aarch64_opcode);
-    return Error::success();
+    return Error();
 
   case llvm::Triple::arm:
     switch (trap_opcode_size_hint) {
     case 2:
       trap_opcode_bytes = g_thumb_breakpoint_opcode;
       actual_opcode_size = sizeof(g_thumb_breakpoint_opcode);
-      return Error::success();
+      return Error();
     case 4:
       trap_opcode_bytes = g_arm_breakpoint_opcode;
       actual_opcode_size = sizeof(g_arm_breakpoint_opcode);
-      return Error::success();
+      return Error();
     default:
       assert(false && "Unrecognised trap opcode size hint!");
       return Error("Unrecognised trap opcode size hint!");
@@ -1956,24 +1956,24 @@ Error NativeProcessLinux::GetSoftwareBreakpointTrapOpcode(
   case llvm::Triple::x86_64:
     trap_opcode_bytes = g_i386_opcode;
     actual_opcode_size = sizeof(g_i386_opcode);
-    return Error::success();
+    return Error();
 
   case llvm::Triple::mips:
   case llvm::Triple::mips64:
     trap_opcode_bytes = g_mips64_opcode;
     actual_opcode_size = sizeof(g_mips64_opcode);
-    return Error::success();
+    return Error();
 
   case llvm::Triple::mipsel:
   case llvm::Triple::mips64el:
     trap_opcode_bytes = g_mips64el_opcode;
     actual_opcode_size = sizeof(g_mips64el_opcode);
-    return Error::success();
+    return Error();
 
   case llvm::Triple::systemz:
     trap_opcode_bytes = g_s390x_opcode;
     actual_opcode_size = sizeof(g_s390x_opcode);
-    return Error::success();
+    return Error();
 
   default:
     assert(false && "CPU type not supported!");
@@ -2156,7 +2156,7 @@ Error NativeProcessLinux::ReadMemory(lldb::addr_t addr, void *buf, size_t size,
                   success ? "Success" : strerror(errno));
 
     if (success)
-      return Error::success();
+      return Error();
     // else
     //     the call failed for some reason, let's retry the read using ptrace
     //     api.
@@ -2207,7 +2207,7 @@ Error NativeProcessLinux::ReadMemory(lldb::addr_t addr, void *buf, size_t size,
 
   if (log)
     ProcessPOSIXLog::DecNestLevel();
-  return Error::success();
+  return Error();
 }
 
 Error NativeProcessLinux::ReadMemoryWithoutTrap(lldb::addr_t addr, void *buf,
@@ -2303,7 +2303,7 @@ Error NativeProcessLinux::GetEventMessage(lldb::tid_t tid,
 
 Error NativeProcessLinux::Detach(lldb::tid_t tid) {
   if (tid == LLDB_INVALID_THREAD_ID)
-    return Error::success();
+    return Error();
 
   return PtraceWrapper(PTRACE_DETACH, tid);
 }
@@ -2414,7 +2414,7 @@ Error NativeProcessLinux::FixupBreakpointPCAsNeeded(NativeThreadLinux &thread) {
           "NativeProcessLinux::%s pid %" PRIu64
           " no lldb breakpoint found at current pc with adjustment: 0x%" PRIx64,
           __FUNCTION__, GetID(), breakpoint_addr);
-    return Error::success();
+    return Error();
   }
 
   // If the breakpoint is not a software breakpoint, nothing to do.
@@ -2424,7 +2424,7 @@ Error NativeProcessLinux::FixupBreakpointPCAsNeeded(NativeThreadLinux &thread) {
                   " breakpoint found at 0x%" PRIx64
                   ", not software, nothing to adjust",
                   __FUNCTION__, GetID(), breakpoint_addr);
-    return Error::success();
+    return Error();
   }
 
   //
@@ -2440,7 +2440,7 @@ Error NativeProcessLinux::FixupBreakpointPCAsNeeded(NativeThreadLinux &thread) {
           " breakpoint found at 0x%" PRIx64
           ", it is software, but the size is zero, nothing to do (unexpected)",
           __FUNCTION__, GetID(), breakpoint_addr);
-    return Error::success();
+    return Error();
   }
 
   // Change the program counter.
@@ -2488,7 +2488,7 @@ Error NativeProcessLinux::GetLoadedModuleFileSpec(const char *module_path,
     return Error("Module file (%s) not found in /proc/%" PRIu64 "/maps file!",
                  module_file_spec.GetFilename().AsCString(), GetID());
 
-  return Error::success();
+  return Error();
 }
 
 Error NativeProcessLinux::GetFileLoadAddress(const llvm::StringRef &file_name,

@@ -167,7 +167,7 @@ Error NativeThreadLinux::SetWatchpoint(lldb::addr_t addr, size_t size,
   if (!hardware)
     return Error("not implemented");
   if (m_state == eStateLaunching)
-    return Error::success();
+    return Error();
   Error error = RemoveWatchpoint(addr);
   if (error.Fail())
     return error;
@@ -176,17 +176,17 @@ Error NativeThreadLinux::SetWatchpoint(lldb::addr_t addr, size_t size,
   if (wp_index == LLDB_INVALID_INDEX32)
     return Error("Setting hardware watchpoint failed.");
   m_watchpoint_index_map.insert({addr, wp_index});
-  return Error::success();
+  return Error();
 }
 
 Error NativeThreadLinux::RemoveWatchpoint(lldb::addr_t addr) {
   auto wp = m_watchpoint_index_map.find(addr);
   if (wp == m_watchpoint_index_map.end())
-    return Error::success();
+    return Error();
   uint32_t wp_index = wp->second;
   m_watchpoint_index_map.erase(wp);
   if (GetRegisterContext()->ClearHardwareWatchpoint(wp_index))
-    return Error::success();
+    return Error();
   return Error("Clearing hardware watchpoint failed.");
 }
 

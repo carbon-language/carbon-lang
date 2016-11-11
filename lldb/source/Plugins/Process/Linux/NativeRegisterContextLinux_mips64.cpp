@@ -932,7 +932,7 @@ Error NativeRegisterContextLinux_mips64::GetWatchpointHitIndex(
     }
   }
   wp_index = LLDB_INVALID_INDEX32;
-  return Error::success();
+  return Error();
 }
 
 Error NativeRegisterContextLinux_mips64::IsWatchpointVacant(uint32_t wp_index,

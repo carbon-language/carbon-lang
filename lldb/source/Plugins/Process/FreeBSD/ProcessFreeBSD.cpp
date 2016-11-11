@@ -150,7 +150,7 @@ Error ProcessFreeBSD::DoResume() {
   else
     m_monitor->Resume(GetID(), m_resume_signo);
 
-  return Error::success();
+  return Error();
 }
 
 bool ProcessFreeBSD::UpdateThreadList(ThreadList &old_thread_list,

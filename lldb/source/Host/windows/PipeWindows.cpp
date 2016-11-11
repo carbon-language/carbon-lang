@@ -161,7 +161,7 @@ Error PipeWindows::OpenNamedPipe(llvm::StringRef name,
     ZeroMemory(&m_write_overlapped, sizeof(m_write_overlapped));
   }
 
-  return Error::success();
+  return Error();
 }
 
 int PipeWindows::GetReadFileDescriptor() const { return m_read_fd; }
@@ -217,7 +217,7 @@ void PipeWindows::Close() {
   CloseWriteFileDescriptor();
 }
 
-Error PipeWindows::Delete(llvm::StringRef name) { return Error::success(); }
+Error PipeWindows::Delete(llvm::StringRef name) { return Error(); }
 
 bool PipeWindows::CanRead() const { return (m_read != INVALID_HANDLE_VALUE); }
 
@@ -273,7 +273,7 @@ Error PipeWindows::ReadWithTimeout(void *buf, size_t size,
     return Error(::GetLastError(), eErrorTypeWin32);
 
   bytes_read = sys_bytes_read;
-  return Error::success();
+  return Error();
 }
 
 Error PipeWindows::Write(const void *buf, size_t num_bytes,
@@ -291,5 +291,5 @@ Error PipeWindows::Write(const void *buf, size_t num_bytes,
                                     &sys_bytes_written, TRUE);
   if (!result)
     return Error(::GetLastError(), eErrorTypeWin32);
-  return Error::success();
+  return Error();
 }
