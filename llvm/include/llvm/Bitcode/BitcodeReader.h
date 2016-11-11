@@ -32,9 +32,6 @@ namespace llvm {
   // Remove these functions once no longer needed by the C and libLTO APIs.
 
   std::error_code errorToErrorCodeAndEmitErrors(LLVMContext &Ctx, Error Err);
-  std::error_code
-  errorToErrorCodeAndEmitErrors(const DiagnosticHandlerFunction &DiagHandler,
-                                Error Err);
 
   template <typename T>
   ErrorOr<T> expectedToErrorOrAndEmitErrors(LLVMContext &Ctx, Expected<T> Val) {
@@ -80,9 +77,8 @@ namespace llvm {
   Expected<bool> hasGlobalValueSummary(MemoryBufferRef Buffer);
 
   /// Parse the specified bitcode buffer, returning the module summary index.
-  ErrorOr<std::unique_ptr<ModuleSummaryIndex>>
-  getModuleSummaryIndex(MemoryBufferRef Buffer,
-                        const DiagnosticHandlerFunction &DiagnosticHandler);
+  Expected<std::unique_ptr<ModuleSummaryIndex>>
+  getModuleSummaryIndex(MemoryBufferRef Buffer);
 
   /// isBitcodeWrapper - Return true if the given bytes are the magic bytes
   /// for an LLVM IR bitcode wrapper.

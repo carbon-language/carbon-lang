@@ -841,19 +841,6 @@ std::error_code llvm::errorToErrorCodeAndEmitErrors(LLVMContext &Ctx,
   return std::error_code();
 }
 
-std::error_code llvm::errorToErrorCodeAndEmitErrors(
-    const DiagnosticHandlerFunction &DiagHandler, Error Err) {
-  if (Err) {
-    std::error_code EC;
-    handleAllErrors(std::move(Err), [&](ErrorInfoBase &EIB) {
-      EC = EIB.convertToErrorCode();
-      DiagHandler(DiagnosticInfoInlineAsm(EIB.message()));
-    });
-    return EC;
-  }
-  return std::error_code();
-}
-
 BitcodeReader::BitcodeReader(BitstreamCursor Stream, LLVMContext &Context)
     : BitcodeReaderBase(std::move(Stream)), Context(Context), ValueList(Context),
       MetadataList(Context) {}
@@ -6663,22 +6650,19 @@ Expected<std::string> llvm::getBitcodeProducerString(MemoryBufferRef Buffer) {
 }
 
 // Parse the specified bitcode buffer, returning the function info index.
-ErrorOr<std::unique_ptr<ModuleSummaryIndex>> llvm::getModuleSummaryIndex(
-    MemoryBufferRef Buffer,
-    const DiagnosticHandlerFunction &DiagnosticHandler) {
+Expected<std::unique_ptr<ModuleSummaryIndex>>
+llvm::getModuleSummaryIndex(MemoryBufferRef Buffer) {
   Expected<BitstreamCursor> StreamOrErr = initStream(Buffer);
   if (!StreamOrErr)
-    return errorToErrorCodeAndEmitErrors(DiagnosticHandler,
-                                         StreamOrErr.takeError());
+    return StreamOrErr.takeError();
 
   ModuleSummaryIndexBitcodeReader R(std::move(*StreamOrErr));
 
   auto Index = llvm::make_unique<ModuleSummaryIndex>();
 
-  if (std::error_code EC = errorToErrorCodeAndEmitErrors(
-          DiagnosticHandler,
-          R.parseSummaryIndexInto(Index.get(), Buffer.getBufferIdentifier())))
-    return EC;
+  if (Error Err =
+          R.parseSummaryIndexInto(Index.get(), Buffer.getBufferIdentifier()))
+    return std::move(Err);
 
   return std::move(Index);
 }

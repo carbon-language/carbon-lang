@@ -417,11 +417,10 @@ Error LTO::addThinLTO(std::unique_ptr<InputFile> Input,
   collectUsedGlobalVariables(M, Used, /*CompilerUsed*/ false);
 
   MemoryBufferRef MBRef = Input->Obj->getMemoryBufferRef();
-  ErrorOr<std::unique_ptr<object::ModuleSummaryIndexObjectFile>>
-      SummaryObjOrErr =
-          object::ModuleSummaryIndexObjectFile::create(MBRef, Conf.DiagHandler);
+  Expected<std::unique_ptr<object::ModuleSummaryIndexObjectFile>>
+      SummaryObjOrErr = object::ModuleSummaryIndexObjectFile::create(MBRef);
   if (!SummaryObjOrErr)
-    return errorCodeToError(SummaryObjOrErr.getError());
+    return SummaryObjOrErr.takeError();
   ThinLTO.CombinedIndex.mergeFrom((*SummaryObjOrErr)->takeIndex(),
                                   ThinLTO.ModuleMap.size());
 
