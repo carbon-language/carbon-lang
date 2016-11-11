@@ -79,12 +79,6 @@ public:
   static ErrorOr<MemoryBufferRef>
   findBitcodeInMemBuffer(MemoryBufferRef Object);
 
-  /// \brief Looks for summary sections in the given memory buffer,
-  /// returns true if found, else false.
-  static bool hasGlobalValueSummaryInMemBuffer(
-      MemoryBufferRef Object,
-      const DiagnosticHandlerFunction &DiagnosticHandler);
-
   /// \brief Parse module summary index in the given memory buffer.
   /// Return new ModuleSummaryIndexObjectFile instance containing parsed module
   /// summary/index.

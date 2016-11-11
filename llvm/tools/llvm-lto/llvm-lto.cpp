@@ -773,12 +773,12 @@ int main(int argc, char **argv) {
 
   if (CheckHasObjC) {
     for (auto &Filename : InputFilenames) {
-      ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
-          MemoryBuffer::getFile(Filename);
-      error(BufferOrErr, "error loading file '" + Filename + "'");
+      ExitOnError ExitOnErr(std::string(*argv) + ": error loading file '" +
+                            Filename + "': ");
+      std::unique_ptr<MemoryBuffer> BufferOrErr =
+          ExitOnErr(errorOrToExpected(MemoryBuffer::getFile(Filename)));
       auto Buffer = std::move(BufferOrErr.get());
-      LLVMContext Ctx;
-      if (llvm::isBitcodeContainingObjCCategory(*Buffer, Ctx))
+      if (ExitOnErr(llvm::isBitcodeContainingObjCCategory(*Buffer)))
         outs() << "Bitcode " << Filename << " contains ObjC\n";
       else
         outs() << "Bitcode " << Filename << " does not contain ObjC\n";

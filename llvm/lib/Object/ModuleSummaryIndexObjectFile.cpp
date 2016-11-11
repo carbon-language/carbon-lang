@@ -67,18 +67,6 @@ ModuleSummaryIndexObjectFile::findBitcodeInMemBuffer(MemoryBufferRef Object) {
   }
 }
 
-// Looks for module summary index in the given memory buffer.
-// returns true if found, else false.
-bool ModuleSummaryIndexObjectFile::hasGlobalValueSummaryInMemBuffer(
-    MemoryBufferRef Object,
-    const DiagnosticHandlerFunction &DiagnosticHandler) {
-  ErrorOr<MemoryBufferRef> BCOrErr = findBitcodeInMemBuffer(Object);
-  if (!BCOrErr)
-    return false;
-
-  return hasGlobalValueSummary(BCOrErr.get(), DiagnosticHandler);
-}
-
 // Parse module summary index in the given memory buffer.
 // Return new ModuleSummaryIndexObjectFile instance containing parsed
 // module summary/index.

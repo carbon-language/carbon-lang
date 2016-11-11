@@ -267,6 +267,228 @@ Expected<BitstreamCursor> initStream(MemoryBufferRef Buffer) {
   return std::move(Stream);
 }
 
+/// Convert a string from a record into an std::string, return true on failure.
+template <typename StrTy>
+static bool convertToString(ArrayRef<uint64_t> Record, unsigned Idx,
+                            StrTy &Result) {
+  if (Idx > Record.size())
+    return true;
+
+  for (unsigned i = Idx, e = Record.size(); i != e; ++i)
+    Result += (char)Record[i];
+  return false;
+}
+
+/// Read the "IDENTIFICATION_BLOCK_ID" block, do some basic enforcement on the
+/// "epoch" encoded in the bitcode, and return the producer name if any.
+Expected<std::string> readIdentificationBlock(BitstreamCursor &Stream) {
+  if (Stream.EnterSubBlock(bitc::IDENTIFICATION_BLOCK_ID))
+    return error("Invalid record");
+
+  // Read all the records.
+  SmallVector<uint64_t, 64> Record;
+
+  std::string ProducerIdentification;
+
+  while (true) {
+    BitstreamEntry Entry = Stream.advance();
+
+    switch (Entry.Kind) {
+    default:
+    case BitstreamEntry::Error:
+      return error("Malformed block");
+    case BitstreamEntry::EndBlock:
+      return ProducerIdentification;
+    case BitstreamEntry::Record:
+      // The interesting case.
+      break;
+    }
+
+    // Read a record.
+    Record.clear();
+    unsigned BitCode = Stream.readRecord(Entry.ID, Record);
+    switch (BitCode) {
+    default: // Default behavior: reject
+      return error("Invalid value");
+    case bitc::IDENTIFICATION_CODE_STRING: // IDENTIFICATION: [strchr x N]
+      convertToString(Record, 0, ProducerIdentification);
+      break;
+    case bitc::IDENTIFICATION_CODE_EPOCH: { // EPOCH: [epoch#]
+      unsigned epoch = (unsigned)Record[0];
+      if (epoch != bitc::BITCODE_CURRENT_EPOCH) {
+        return error(
+          Twine("Incompatible epoch: Bitcode '") + Twine(epoch) +
+          "' vs current: '" + Twine(bitc::BITCODE_CURRENT_EPOCH) + "'");
+      }
+    }
+    }
+  }
+}
+
+Expected<std::string> readIdentificationCode(BitstreamCursor &Stream) {
+  // We expect a number of well-defined blocks, though we don't necessarily
+  // need to understand them all.
+  while (true) {
+    if (Stream.AtEndOfStream())
+      return "";
+
+    BitstreamEntry Entry = Stream.advance();
+    switch (Entry.Kind) {
+    case BitstreamEntry::EndBlock:
+    case BitstreamEntry::Error:
+      return error("Malformed block");
+
+    case BitstreamEntry::SubBlock:
+      if (Entry.ID == bitc::IDENTIFICATION_BLOCK_ID)
+        return readIdentificationBlock(Stream);
+
+      // Ignore other sub-blocks.
+      if (Stream.SkipBlock())
+        return error("Malformed block");
+      continue;
+    case BitstreamEntry::Record:
+      Stream.skipRecord(Entry.ID);
+      continue;
+    }
+  }
+}
+
+Expected<bool> hasObjCCategoryInModule(BitstreamCursor &Stream) {
+  if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
+    return error("Invalid record");
+
+  SmallVector<uint64_t, 64> Record;
+  // Read all the records for this module.
+
+  while (true) {
+    BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
+
+    switch (Entry.Kind) {
+    case BitstreamEntry::SubBlock: // Handled for us already.
+    case BitstreamEntry::Error:
+      return error("Malformed block");
+    case BitstreamEntry::EndBlock:
+      return false;
+    case BitstreamEntry::Record:
+      // The interesting case.
+      break;
+    }
+
+    // Read a record.
+    switch (Stream.readRecord(Entry.ID, Record)) {
+    default:
+      break; // Default behavior, ignore unknown content.
+    case bitc::MODULE_CODE_SECTIONNAME: { // SECTIONNAME: [strchr x N]
+      std::string S;
+      if (convertToString(Record, 0, S))
+        return error("Invalid record");
+      // Check for the i386 and other (x86_64, ARM) conventions
+      if (S.find("__DATA, __objc_catlist") != std::string::npos ||
+          S.find("__OBJC,__category") != std::string::npos)
+        return true;
+      break;
+    }
+    }
+    Record.clear();
+  }
+  llvm_unreachable("Exit infinite loop");
+}
+
+Expected<bool> hasObjCCategory(BitstreamCursor &Stream) {
+  // We expect a number of well-defined blocks, though we don't necessarily
+  // need to understand them all.
+  while (true) {
+    BitstreamEntry Entry = Stream.advance();
+
+    switch (Entry.Kind) {
+    case BitstreamEntry::Error:
+      return error("Malformed block");
+    case BitstreamEntry::EndBlock:
+      return false;
+
+    case BitstreamEntry::SubBlock:
+      if (Entry.ID == bitc::MODULE_BLOCK_ID)
+        return hasObjCCategoryInModule(Stream);
+
+      // Ignore other sub-blocks.
+      if (Stream.SkipBlock())
+        return error("Malformed block");
+      continue;
+
+    case BitstreamEntry::Record:
+      Stream.skipRecord(Entry.ID);
+      continue;
+    }
+  }
+}
+
+Expected<std::string> readModuleTriple(BitstreamCursor &Stream) {
+  if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
+    return error("Invalid record");
+
+  SmallVector<uint64_t, 64> Record;
+
+  std::string Triple;
+
+  // Read all the records for this module.
+  while (true) {
+    BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
+
+    switch (Entry.Kind) {
+    case BitstreamEntry::SubBlock: // Handled for us already.
+    case BitstreamEntry::Error:
+      return error("Malformed block");
+    case BitstreamEntry::EndBlock:
+      return Triple;
+    case BitstreamEntry::Record:
+      // The interesting case.
+      break;
+    }
+
+    // Read a record.
+    switch (Stream.readRecord(Entry.ID, Record)) {
+    default: break;  // Default behavior, ignore unknown content.
+    case bitc::MODULE_CODE_TRIPLE: {  // TRIPLE: [strchr x N]
+      std::string S;
+      if (convertToString(Record, 0, S))
+        return error("Invalid record");
+      Triple = S;
+      break;
+    }
+    }
+    Record.clear();
+  }
+  llvm_unreachable("Exit infinite loop");
+}
+
+Expected<std::string> readTriple(BitstreamCursor &Stream) {
+  // We expect a number of well-defined blocks, though we don't necessarily
+  // need to understand them all.
+  while (true) {
+    BitstreamEntry Entry = Stream.advance();
+
+    switch (Entry.Kind) {
+    case BitstreamEntry::Error:
+      return error("Malformed block");
+    case BitstreamEntry::EndBlock:
+      return "";
+
+    case BitstreamEntry::SubBlock:
+      if (Entry.ID == bitc::MODULE_BLOCK_ID)
+        return readModuleTriple(Stream);
+
+      // Ignore other sub-blocks.
+      if (Stream.SkipBlock())
+        return error("Malformed block");
+      continue;
+
+    case BitstreamEntry::Record:
+      Stream.skipRecord(Entry.ID);
+      continue;
+    }
+  }
+}
+
 class BitcodeReaderBase {
 protected:
   BitcodeReaderBase(BitstreamCursor Stream) : Stream(std::move(Stream)) {
@@ -397,17 +619,6 @@ public:
   /// \returns true if an error occurred.
   Error parseBitcodeInto(Module *M, bool ShouldLazyLoadMetadata = false);
 
-  /// \brief Cheap mechanism to just extract module triple
-  /// \returns true if an error occurred.
-  Expected<std::string> parseTriple();
-
-  /// Cheap mechanism to just extract the identification block out of bitcode.
-  Expected<std::string> parseIdentificationBlock();
-
-  /// Peak at the module content and return true if any ObjC category or class
-  /// is found.
-  Expected<bool> hasObjCCategory();
-
   static uint64_t decodeSignRotatedValue(uint64_t V);
 
   /// Materialize any deferred Metadata block.
@@ -416,11 +627,6 @@ public:
   void setStripDebugInfo() override;
 
 private:
-  /// Parse the "IDENTIFICATION_BLOCK_ID" block, populate the
-  // ProducerIdentification data member, and do some basic enforcement on the
-  // "epoch" encoded in the bitcode.
-  Error parseBitcodeVersion();
-
   std::vector<StructType *> IdentifiedStructTypes;
   StructType *createIdentifiedStructType(LLVMContext &Context, StringRef Name);
   StructType *createIdentifiedStructType(LLVMContext &Context);
@@ -546,8 +752,6 @@ private:
   Error parseGlobalObjectAttachment(GlobalObject &GO,
                                     ArrayRef<uint64_t> Record);
   Error parseMetadataAttachment(Function &F);
-  Expected<std::string> parseModuleTriple();
-  Expected<bool> hasObjCCategoryInModule();
   Error parseUseLists();
   Error findFunctionInStream(
       Function *F,
@@ -622,7 +826,10 @@ private:
                     bool IsOldProfileFormat, bool HasProfile);
 };
 
-std::error_code errorToErrorCodeAndEmitErrors(LLVMContext &Ctx, Error Err) {
+} // end anonymous namespace
+
+std::error_code llvm::errorToErrorCodeAndEmitErrors(LLVMContext &Ctx,
+                                                    Error Err) {
   if (Err) {
     std::error_code EC;
     handleAllErrors(std::move(Err), [&](ErrorInfoBase &EIB) {
@@ -634,9 +841,8 @@ std::error_code errorToErrorCodeAndEmitErrors(LLVMContext &Ctx, Error Err) {
   return std::error_code();
 }
 
-std::error_code
-errorToErrorCodeAndEmitErrors(const DiagnosticHandlerFunction &DiagHandler,
-                              Error Err) {
+std::error_code llvm::errorToErrorCodeAndEmitErrors(
+    const DiagnosticHandlerFunction &DiagHandler, Error Err) {
   if (Err) {
     std::error_code EC;
     handleAllErrors(std::move(Err), [&](ErrorInfoBase &EIB) {
@@ -647,24 +853,6 @@ errorToErrorCodeAndEmitErrors(const DiagnosticHandlerFunction &DiagHandler,
   }
   return std::error_code();
 }
-
-template <typename T>
-ErrorOr<T> expectedToErrorOrAndEmitErrors(LLVMContext &Ctx, Expected<T> Val) {
-  if (!Val)
-    return errorToErrorCodeAndEmitErrors(Ctx, Val.takeError());
-  return std::move(*Val);
-}
-
-template <typename T>
-static ErrorOr<T>
-expectedToErrorOrAndEmitErrors(const DiagnosticHandlerFunction &DiagHandler,
-                               Expected<T> Val) {
-  if (!Val)
-    return errorToErrorCodeAndEmitErrors(DiagHandler, Val.takeError());
-  return std::move(*Val);
-}
-
-} // end anonymous namespace
 
 BitcodeReader::BitcodeReader(BitstreamCursor Stream, LLVMContext &Context)
     : BitcodeReaderBase(std::move(Stream)), Context(Context), ValueList(Context),
@@ -706,18 +894,6 @@ Error BitcodeReader::materializeForwardReferencedFunctions() {
 //===----------------------------------------------------------------------===//
 //  Helper functions to implement forward reference resolution, etc.
 //===----------------------------------------------------------------------===//
-
-/// Convert a string from a record into an std::string, return true on failure.
-template <typename StrTy>
-static bool convertToString(ArrayRef<uint64_t> Record, unsigned Idx,
-                            StrTy &Result) {
-  if (Idx > Record.size())
-    return true;
-
-  for (unsigned i = Idx, e = Record.size(); i != e; ++i)
-    Result += (char)Record[i];
-  return false;
-}
 
 static bool hasImplicitComdat(size_t Val) {
   switch (Val) {
@@ -3713,50 +3889,6 @@ Error BitcodeReader::rememberAndSkipFunctionBodies() {
   }
 }
 
-Error BitcodeReader::parseBitcodeVersion() {
-  if (Stream.EnterSubBlock(bitc::IDENTIFICATION_BLOCK_ID))
-    return error("Invalid record");
-
-  // Read all the records.
-  SmallVector<uint64_t, 64> Record;
-
-  while (true) {
-    BitstreamEntry Entry = Stream.advance();
-
-    switch (Entry.Kind) {
-    default:
-    case BitstreamEntry::Error:
-      return error("Malformed block");
-    case BitstreamEntry::EndBlock:
-      return Error::success();
-    case BitstreamEntry::Record:
-      // The interesting case.
-      break;
-    }
-
-    // Read a record.
-    Record.clear();
-    unsigned BitCode = Stream.readRecord(Entry.ID, Record);
-    switch (BitCode) {
-    default: // Default behavior: reject
-      return error("Invalid value");
-    case bitc::IDENTIFICATION_CODE_STRING: { // IDENTIFICATION:      [strchr x
-                                             // N]
-      convertToString(Record, 0, ProducerIdentification);
-      break;
-    }
-    case bitc::IDENTIFICATION_CODE_EPOCH: { // EPOCH:      [epoch#]
-      unsigned epoch = (unsigned)Record[0];
-      if (epoch != bitc::BITCODE_CURRENT_EPOCH) {
-        return error(
-          Twine("Incompatible epoch: Bitcode '") + Twine(epoch) +
-          "' vs current: '" + Twine(bitc::BITCODE_CURRENT_EPOCH) + "'");
-      }
-    }
-    }
-  }
-}
-
 bool BitcodeReaderBase::readBlockInfo() {
   Optional<BitstreamBlockInfo> NewBlockInfo = Stream.ReadBlockInfoBlock();
   if (!NewBlockInfo)
@@ -4259,8 +4391,11 @@ Error BitcodeReader::parseBitcodeInto(Module *M, bool ShouldLazyLoadMetadata) {
       return error("Malformed block");
 
     if (Entry.ID == bitc::IDENTIFICATION_BLOCK_ID) {
-      if (Error Err = parseBitcodeVersion())
-        return Err;
+      Expected<std::string> ProducerIdentificationOrErr =
+          readIdentificationBlock(Stream);
+      if (!ProducerIdentificationOrErr)
+        return ProducerIdentificationOrErr.takeError();
+      ProducerIdentification = *ProducerIdentificationOrErr;
       continue;
     }
 
@@ -4269,107 +4404,6 @@ Error BitcodeReader::parseBitcodeInto(Module *M, bool ShouldLazyLoadMetadata) {
 
     if (Stream.SkipBlock())
       return error("Invalid record");
-  }
-}
-
-Expected<std::string> BitcodeReader::parseModuleTriple() {
-  if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
-    return error("Invalid record");
-
-  SmallVector<uint64_t, 64> Record;
-
-  std::string Triple;
-
-  // Read all the records for this module.
-  while (true) {
-    BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
-
-    switch (Entry.Kind) {
-    case BitstreamEntry::SubBlock: // Handled for us already.
-    case BitstreamEntry::Error:
-      return error("Malformed block");
-    case BitstreamEntry::EndBlock:
-      return Triple;
-    case BitstreamEntry::Record:
-      // The interesting case.
-      break;
-    }
-
-    // Read a record.
-    switch (Stream.readRecord(Entry.ID, Record)) {
-    default: break;  // Default behavior, ignore unknown content.
-    case bitc::MODULE_CODE_TRIPLE: {  // TRIPLE: [strchr x N]
-      std::string S;
-      if (convertToString(Record, 0, S))
-        return error("Invalid record");
-      Triple = S;
-      break;
-    }
-    }
-    Record.clear();
-  }
-  llvm_unreachable("Exit infinite loop");
-}
-
-Expected<std::string> BitcodeReader::parseTriple() {
-  // We expect a number of well-defined blocks, though we don't necessarily
-  // need to understand them all.
-  while (true) {
-    BitstreamEntry Entry = Stream.advance();
-
-    switch (Entry.Kind) {
-    case BitstreamEntry::Error:
-      return error("Malformed block");
-    case BitstreamEntry::EndBlock:
-      return "";
-
-    case BitstreamEntry::SubBlock:
-      if (Entry.ID == bitc::MODULE_BLOCK_ID)
-        return parseModuleTriple();
-
-      // Ignore other sub-blocks.
-      if (Stream.SkipBlock())
-        return error("Malformed block");
-      continue;
-
-    case BitstreamEntry::Record:
-      Stream.skipRecord(Entry.ID);
-      continue;
-    }
-  }
-}
-
-Expected<std::string> BitcodeReader::parseIdentificationBlock() {
-  // We expect a number of well-defined blocks, though we don't necessarily
-  // need to understand them all.
-  while (true) {
-    // This loop iterates at the top-level: since there is no enclosing block
-    // we need to make sure we aren't at the end of the stream before calling
-    // advance, otherwise we'll get an error.
-    if (Stream.AtEndOfStream())
-      return "";
-
-    BitstreamEntry Entry = Stream.advance();
-    switch (Entry.Kind) {
-    case BitstreamEntry::Error:
-      return error("Malformed block");
-    case BitstreamEntry::EndBlock:
-      return "";
-
-    case BitstreamEntry::SubBlock:
-      if (Entry.ID == bitc::IDENTIFICATION_BLOCK_ID) {
-        if (Error Err = parseBitcodeVersion())
-          return std::move(Err);
-        return ProducerIdentification;
-      }
-      // Ignore other sub-blocks.
-      if (Stream.SkipBlock())
-        return error("Malformed block");
-      continue;
-    case BitstreamEntry::Record:
-      Stream.skipRecord(Entry.ID);
-      continue;
-    }
   }
 }
 
@@ -4386,75 +4420,6 @@ Error BitcodeReader::parseGlobalObjectAttachment(GlobalObject &GO,
     GO.addMetadata(K->second, *MD);
   }
   return Error::success();
-}
-
-Expected<bool> BitcodeReader::hasObjCCategory() {
-  // We expect a number of well-defined blocks, though we don't necessarily
-  // need to understand them all.
-  while (true) {
-    BitstreamEntry Entry = Stream.advance();
-
-    switch (Entry.Kind) {
-    case BitstreamEntry::Error:
-      return error("Malformed block");
-    case BitstreamEntry::EndBlock:
-      return false;
-
-    case BitstreamEntry::SubBlock:
-      if (Entry.ID == bitc::MODULE_BLOCK_ID)
-        return hasObjCCategoryInModule();
-
-      // Ignore other sub-blocks.
-      if (Stream.SkipBlock())
-        return error("Malformed block");
-      continue;
-
-    case BitstreamEntry::Record:
-      Stream.skipRecord(Entry.ID);
-      continue;
-    }
-  }
-}
-
-Expected<bool> BitcodeReader::hasObjCCategoryInModule() {
-  if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
-    return error("Invalid record");
-
-  SmallVector<uint64_t, 64> Record;
-  // Read all the records for this module.
-
-  while (true) {
-    BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
-
-    switch (Entry.Kind) {
-    case BitstreamEntry::SubBlock: // Handled for us already.
-    case BitstreamEntry::Error:
-      return error("Malformed block");
-    case BitstreamEntry::EndBlock:
-      return false;
-    case BitstreamEntry::Record:
-      // The interesting case.
-      break;
-    }
-
-    // Read a record.
-    switch (Stream.readRecord(Entry.ID, Record)) {
-    default:
-      break; // Default behavior, ignore unknown content.
-    case bitc::MODULE_CODE_SECTIONNAME: { // SECTIONNAME: [strchr x N]
-      std::string S;
-      if (convertToString(Record, 0, S))
-        return error("Invalid record");
-      // Check for the i386 and other (x86_64, ARM) conventions
-      if (S.find("__DATA, __objc_catlist") != std::string::npos ||
-          S.find("__OBJC,__category") != std::string::npos)
-        return true;
-      break;
-    }
-    }
-    Record.clear();
-  }
-  llvm_unreachable("Exit infinite loop");
 }
 
 /// Parse metadata attachments.
@@ -6673,49 +6638,28 @@ ErrorOr<std::unique_ptr<Module>> llvm::parseBitcodeFile(MemoryBufferRef Buffer,
   // written.  We must defer until the Module has been fully materialized.
 }
 
-std::string llvm::getBitcodeTargetTriple(MemoryBufferRef Buffer,
-                                         LLVMContext &Context) {
-  ErrorOr<BitstreamCursor> StreamOrErr =
-      expectedToErrorOrAndEmitErrors(Context, initStream(Buffer));
+Expected<std::string> llvm::getBitcodeTargetTriple(MemoryBufferRef Buffer) {
+  Expected<BitstreamCursor> StreamOrErr = initStream(Buffer);
   if (!StreamOrErr)
-    return "";
+    return StreamOrErr.takeError();
 
-  BitcodeReader R(std::move(*StreamOrErr), Context);
-  ErrorOr<std::string> Triple =
-      expectedToErrorOrAndEmitErrors(Context, R.parseTriple());
-  if (Triple.getError())
-    return "";
-  return Triple.get();
+  return readTriple(*StreamOrErr);
 }
 
-bool llvm::isBitcodeContainingObjCCategory(MemoryBufferRef Buffer,
-                                           LLVMContext &Context) {
-  ErrorOr<BitstreamCursor> StreamOrErr =
-      expectedToErrorOrAndEmitErrors(Context, initStream(Buffer));
+Expected<bool> llvm::isBitcodeContainingObjCCategory(MemoryBufferRef Buffer) {
+  Expected<BitstreamCursor> StreamOrErr = initStream(Buffer);
   if (!StreamOrErr)
-    return false;
+    return StreamOrErr.takeError();
 
-  BitcodeReader R(std::move(*StreamOrErr), Context);
-  ErrorOr<bool> hasObjCCategory =
-      expectedToErrorOrAndEmitErrors(Context, R.hasObjCCategory());
-  if (hasObjCCategory.getError())
-    return false;
-  return hasObjCCategory.get();
+  return hasObjCCategory(*StreamOrErr);
 }
 
-std::string llvm::getBitcodeProducerString(MemoryBufferRef Buffer,
-                                           LLVMContext &Context) {
-  ErrorOr<BitstreamCursor> StreamOrErr =
-      expectedToErrorOrAndEmitErrors(Context, initStream(Buffer));
+Expected<std::string> llvm::getBitcodeProducerString(MemoryBufferRef Buffer) {
+  Expected<BitstreamCursor> StreamOrErr = initStream(Buffer);
   if (!StreamOrErr)
-    return "";
-    
-  BitcodeReader R(std::move(*StreamOrErr), Context);
-  ErrorOr<std::string> ProducerString =
-      expectedToErrorOrAndEmitErrors(Context, R.parseIdentificationBlock());
-  if (ProducerString.getError())
-    return "";
-  return ProducerString.get();
+    return StreamOrErr.takeError();
+
+  return readIdentificationCode(*StreamOrErr);
 }
 
 // Parse the specified bitcode buffer, returning the function info index.
@@ -6740,19 +6684,16 @@ ErrorOr<std::unique_ptr<ModuleSummaryIndex>> llvm::getModuleSummaryIndex(
 }
 
 // Check if the given bitcode buffer contains a global value summary block.
-bool llvm::hasGlobalValueSummary(
-    MemoryBufferRef Buffer,
-    const DiagnosticHandlerFunction &DiagnosticHandler) {
-  ErrorOr<BitstreamCursor> StreamOrErr = expectedToErrorOrAndEmitErrors(
-      DiagnosticHandler, initStream(Buffer));
+Expected<bool> llvm::hasGlobalValueSummary(MemoryBufferRef Buffer) {
+  Expected<BitstreamCursor> StreamOrErr = initStream(Buffer);
   if (!StreamOrErr)
-    return false;
+    return StreamOrErr.takeError();
 
   ModuleSummaryIndexBitcodeReader R(std::move(*StreamOrErr), true);
-  if (errorToErrorCodeAndEmitErrors(
-          DiagnosticHandler,
-          R.parseSummaryIndexInto(nullptr, Buffer.getBufferIdentifier())))
-    return false;
+
+  if (Error Err =
+          R.parseSummaryIndexInto(nullptr, Buffer.getBufferIdentifier()))
+    return std::move(Err);
 
   return R.foundGlobalValSummary();
 }

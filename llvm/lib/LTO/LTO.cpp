@@ -328,9 +328,11 @@ Error LTO::add(std::unique_ptr<InputFile> Input,
     M.setTargetTriple(Conf.DefaultTriple);
 
   MemoryBufferRef MBRef = Input->Obj->getMemoryBufferRef();
-  bool HasThinLTOSummary = hasGlobalValueSummary(MBRef, Conf.DiagHandler);
+  Expected<bool> HasThinLTOSummary = hasGlobalValueSummary(MBRef);
+  if (!HasThinLTOSummary)
+    return HasThinLTOSummary.takeError();
 
-  if (HasThinLTOSummary)
+  if (*HasThinLTOSummary)
     return addThinLTO(std::move(Input), Res);
   else
     return addRegularLTO(std::move(Input), Res);

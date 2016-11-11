@@ -453,14 +453,23 @@ void ThinLTOCodeGenerator::addModule(StringRef Identifier, StringRef Data) {
   if (Modules.empty()) {
     // First module added, so initialize the triple and some options
     LLVMContext Context;
-    Triple TheTriple(getBitcodeTargetTriple(Buffer, Context));
+    StringRef TripleStr;
+    ErrorOr<std::string> TripleOrErr =
+        expectedToErrorOrAndEmitErrors(Context, getBitcodeTargetTriple(Buffer));
+    if (TripleOrErr)
+      TripleStr = *TripleOrErr;
+    Triple TheTriple(TripleStr);
     initTMBuilder(TMBuilder, Triple(TheTriple));
   }
 #ifndef NDEBUG
   else {
     LLVMContext Context;
-    assert(TMBuilder.TheTriple.str() ==
-               getBitcodeTargetTriple(Buffer, Context) &&
+    StringRef TripleStr;
+    ErrorOr<std::string> TripleOrErr =
+        expectedToErrorOrAndEmitErrors(Context, getBitcodeTargetTriple(Buffer));
+    if (TripleOrErr)
+      TripleStr = *TripleOrErr;
+    assert(TMBuilder.TheTriple.str() == TripleStr &&
            "ThinLTO modules with different triple not supported");
   }
 #endif
