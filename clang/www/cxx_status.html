@@ -732,12 +732,12 @@ as the draft C++1z standard evolves.
       <td class="full" align="center">Clang 3.9</td>
     </tr>
     <!-- Issaquah 2016 papers -->
-    <!--
     <tr>
       <td>Matching template template parameters to compatible arguments</td>
       <td><a href="http://wg21.link/p0522r0">P0522R0</a></td>
-      <td class="none" align="center">No (note: DR)</td>
+      <td class="none" align="center">No <a href="#p0522">(12)</a></td>
     </tr>
+    <!--
     <tr>
       <td>Removing deprecated dynamic exception specifications</td>
       <td><a href="http://wg21.link/p0003r5">P0003R5</a></td>
@@ -779,6 +779,9 @@ left to right in the callee. As a result, function parameters in calls to
 <tt>operator&amp;&amp;</tt>, <tt>operator||</tt>, and <tt>operator,</tt>
 functions using expression syntax are no longer guaranteed to be destroyed in
 reverse construction order in that ABI.
+</span><br>
+<span id="p0522">(12): This is the resolution to a Defect Report, so will be
+applied to all language versions.
 </span>
 </p>
 </details>
