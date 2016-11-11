@@ -191,13 +191,25 @@ public:
   uint32_t getNextUnitOffset() const { return Offset + Length + 4; }
   uint32_t getLength() const { return Length; }
   uint16_t getVersion() const { return Version; }
+  dwarf::DwarfFormat getFormat() const {
+    return dwarf::DwarfFormat::DWARF32; // FIXME: Support DWARF64.
+  }
   const DWARFAbbreviationDeclarationSet *getAbbreviations() const {
     return Abbrevs;
   }
   uint8_t getAddressByteSize() const { return AddrSize; }
   uint8_t getRefAddrByteSize() const {
-    // FIXME: Support DWARF64.
-    return (Version == 2) ? AddrSize : 4;
+    if (Version == 2)
+      return AddrSize;
+    return getDwarfOffsetByteSize();
+  }
+  uint8_t getDwarfOffsetByteSize() const {
+    switch (getFormat()) {
+    case dwarf::DwarfFormat::DWARF32:
+      return 4;
+    case dwarf::DwarfFormat::DWARF64:
+      return 8;
+    }
   }
   uint64_t getBaseAddress() const { return BaseAddr; }
 
