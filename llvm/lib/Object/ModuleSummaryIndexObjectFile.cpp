@@ -80,7 +80,7 @@ ModuleSummaryIndexObjectFile::create(MemoryBufferRef Object) {
       getModuleSummaryIndex(BCOrErr.get());
 
   if (!IOrErr)
-    return std::move(IOrErr.takeError());
+    return IOrErr.takeError();
 
   std::unique_ptr<ModuleSummaryIndex> Index = std::move(IOrErr.get());
   return llvm::make_unique<ModuleSummaryIndexObjectFile>(Object,
