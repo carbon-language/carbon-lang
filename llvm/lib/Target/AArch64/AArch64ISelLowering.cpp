@@ -7625,45 +7625,56 @@ static SDValue performMulCombine(SDNode *N, SelectionDAG &DAG,
   // future CPUs have a cheaper MADD instruction, this may need to be
   // gated on a subtarget feature. For Cyclone, 32-bit MADD is 4 cycles and
   // 64-bit is 5 cycles, so this is always a win.
-  SDLoc DL(N);
-  EVT VT = N->getValueType(0);
+  unsigned ShiftAmt, AddSubOpc;
+  // Is the shifted value the LHS operand of the add/sub?
+  bool ShiftValUseIsN0 = true;
+  // Do we need to negate the result?
+  bool NegateResult = false;
+
   if (ConstValue.isNonNegative()) {
     // (mul x, 2^N + 1) => (add (shl x, N), x)
-    APInt CVMinus1 = ConstValue - 1;
-    if (CVMinus1.isPowerOf2()) {
-      SDValue ShiftedVal =
-          DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
-                      DAG.getConstant(CVMinus1.logBase2(), DL, MVT::i64));
-      return DAG.getNode(ISD::ADD, DL, VT, ShiftedVal, N->getOperand(0));
-    }
     // (mul x, 2^N - 1) => (sub (shl x, N), x)
+    APInt CVMinus1 = ConstValue - 1;
     APInt CVPlus1 = ConstValue + 1;
-    if (CVPlus1.isPowerOf2()) {
-      SDValue ShiftedVal =
-          DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
-                      DAG.getConstant(CVPlus1.logBase2(), DL, MVT::i64));
-      return DAG.getNode(ISD::SUB, DL, VT, ShiftedVal, N->getOperand(0));
-    }
+    if (CVMinus1.isPowerOf2()) {
+      ShiftAmt = CVMinus1.logBase2();
+      AddSubOpc = ISD::ADD;
+    } else if (CVPlus1.isPowerOf2()) {
+      ShiftAmt = CVPlus1.logBase2();
+      AddSubOpc = ISD::SUB;
+    } else
+      return SDValue();
   } else {
     // (mul x, -(2^N - 1)) => (sub x, (shl x, N))
-    APInt CVNegPlus1 = -ConstValue + 1;
-    if (CVNegPlus1.isPowerOf2()) {
-      SDValue ShiftedVal =
-          DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
-                      DAG.getConstant(CVNegPlus1.logBase2(), DL, MVT::i64));
-      return DAG.getNode(ISD::SUB, DL, VT, N->getOperand(0), ShiftedVal);
-    }
     // (mul x, -(2^N + 1)) => - (add (shl x, N), x)
+    APInt CVNegPlus1 = -ConstValue + 1;
     APInt CVNegMinus1 = -ConstValue - 1;
-    if (CVNegMinus1.isPowerOf2()) {
-      SDValue ShiftedVal =
-          DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
-                      DAG.getConstant(CVNegMinus1.logBase2(), DL, MVT::i64));
-      SDValue Add = DAG.getNode(ISD::ADD, DL, VT, ShiftedVal, N->getOperand(0));
-      return DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT), Add);
-    }
+    if (CVNegPlus1.isPowerOf2()) {
+      ShiftAmt = CVNegPlus1.logBase2();
+      AddSubOpc = ISD::SUB;
+      ShiftValUseIsN0 = false;
+    } else if (CVNegMinus1.isPowerOf2()) {
+      ShiftAmt = CVNegMinus1.logBase2();
+      AddSubOpc = ISD::ADD;
+      NegateResult = true;
+    } else
+      return SDValue();
   }
-  return SDValue();
+
+  SDLoc DL(N);
+  EVT VT = N->getValueType(0);
+  SDValue N0 = N->getOperand(0);
+  SDValue ShiftedVal = DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
+                                   DAG.getConstant(ShiftAmt, DL, MVT::i64));
+
+  SDValue AddSubN0 = ShiftValUseIsN0 ? ShiftedVal : N0;
+  SDValue AddSubN1 = ShiftValUseIsN0 ? N0 : ShiftedVal;
+  SDValue Res = DAG.getNode(AddSubOpc, DL, VT, AddSubN0, AddSubN1);
+  if (!NegateResult)
+    return Res;
+
+  // Negate the result.
+  return DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT), Res);
 }
 
 static SDValue performVectorCompareAndMaskUnaryOpCombine(SDNode *N,
