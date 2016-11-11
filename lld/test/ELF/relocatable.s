@@ -42,7 +42,7 @@
 # CHECK-NEXT:  }
 
 # CHECK:       Relocations [
-# CHECK-NEXT:  Section (3) .rela.text {
+# CHECK-NEXT:  Section ({{.*}}) .rela.text {
 # CHECK-NEXT:    0x3 R_X86_64_32S x 0x0
 # CHECK-NEXT:    0xE R_X86_64_32S y 0x0
 # CHECK-NEXT:    0x23 R_X86_64_32S xx 0x0
