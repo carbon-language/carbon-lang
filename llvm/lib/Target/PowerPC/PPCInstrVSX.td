@@ -2144,7 +2144,9 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
 
   // Vector HP -> SP
   def XVCVHPSP : XX2_XT6_XO5_XB6<60, 24, 475, "xvcvhpsp", vsrc, []>;
-  def XVCVSPHP : XX2_XT6_XO5_XB6<60, 25, 475, "xvcvsphp", vsrc, []>;
+  def XVCVSPHP : XX2_XT6_XO5_XB6<60, 25, 475, "xvcvsphp", vsrc,
+                                 [(set v4f32:$XT,
+                                     (int_ppc_vsx_xvcvsphp v4f32:$XB))]>;
 
   class Z23_VT5_R1_VB5_RMC2_EX1<bits<6> opcode, bits<8> xo, bit ex, string opc,
                                 list<dag> pattern>

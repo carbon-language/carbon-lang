@@ -711,6 +711,22 @@ def int_ppc_altivec_vabsdub : PowerPC_Vec_BBB_Intrinsic<"vabsdub">;
 def int_ppc_altivec_vabsduh : PowerPC_Vec_HHH_Intrinsic<"vabsduh">;
 def int_ppc_altivec_vabsduw : PowerPC_Vec_WWW_Intrinsic<"vabsduw">;
 
+// Vector rotates
+def int_ppc_altivec_vrlwnm :
+      PowerPC_Vec_Intrinsic<"vrlwnm", [llvm_v4i32_ty],
+                            [llvm_v4i32_ty, llvm_v4i32_ty], [IntrNoMem]>;
+def int_ppc_altivec_vrlwmi :
+      PowerPC_Vec_Intrinsic<"vrlwmi", [llvm_v4i32_ty],
+                            [llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty],
+                            [IntrNoMem]>;
+def int_ppc_altivec_vrldnm :
+      PowerPC_Vec_Intrinsic<"vrldnm", [llvm_v2i64_ty],
+                            [llvm_v2i64_ty, llvm_v2i64_ty], [IntrNoMem]>;
+def int_ppc_altivec_vrldmi :
+      PowerPC_Vec_Intrinsic<"vrldmi", [llvm_v2i64_ty],
+                            [llvm_v2i64_ty, llvm_v2i64_ty, llvm_v2i64_ty],
+                            [IntrNoMem]>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC VSX Intrinsic Definitions.
 
@@ -830,6 +846,9 @@ def int_ppc_vsx_xvcvuxdsp :
 def int_ppc_vsx_xvcvdpsp :
       PowerPC_VSX_Intrinsic<"xvcvdpsp", [llvm_v4f32_ty],
                             [llvm_v2f64_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvcvsphp :
+      PowerPC_VSX_Intrinsic<"xvcvsphp", [llvm_v4f32_ty],
+                            [llvm_v4f32_ty], [IntrNoMem]>;
 }
 
 //===----------------------------------------------------------------------===//
