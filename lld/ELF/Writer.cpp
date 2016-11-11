@@ -267,7 +267,8 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     Out<ELFT>::VerDef = make<VersionDefinitionSection<ELFT>>();
 
   // Initialize linker generated sections
-  Symtab<ELFT>::X->Sections.push_back(createCommentSection<ELFT>());
+  if (!Config->Relocatable)
+    Symtab<ELFT>::X->Sections.push_back(createCommentSection<ELFT>());
 
   if (Config->BuildId == BuildIdKind::Fast)
     In<ELFT>::BuildId = make<BuildIdFastHash<ELFT>>();
