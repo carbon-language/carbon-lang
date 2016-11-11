@@ -165,6 +165,12 @@ TEST(MathExtras, isPowerOf2_64) {
   EXPECT_FALSE(isPowerOf2_64(0xABCDEF0ABCDEF0LL));
 }
 
+TEST(MathExtras, PowerOf2Ceil) {
+  EXPECT_EQ(0, PowerOf2Ceil(0));
+  EXPECT_EQ(8, PowerOf2Ceil(8));
+  EXPECT_EQ(8, PowerOf2Ceil(7));
+}
+
 TEST(MathExtras, ByteSwap_32) {
   EXPECT_EQ(0x44332211u, ByteSwap_32(0x11223344));
   EXPECT_EQ(0xDDCCBBAAu, ByteSwap_32(0xAABBCCDD));
