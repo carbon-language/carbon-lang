@@ -156,6 +156,11 @@ public:
   /// performing final relaxation.
   void emitFunctions();
 
+  /// Emit data \p Section, possibly with relocations. Use name \p Name if
+  /// non-empty.
+  void emitDataSection(MCStreamer *Streamer, SectionRef Section,
+                       std::string Name = "");
+
   /// Update debug information in the file for re-written code.
   void updateDebugInfo();
 
@@ -169,6 +174,19 @@ public:
   /// Updates debug line information for non-simple functions, which are not
   /// rewritten.
   void updateDebugLineInfoForNonSimpleFunctions();
+
+  /// Add section relocation.
+  void addSectionRelocation(SectionRef Section, uint64_t Address,
+                            MCSymbol *Symbol, uint64_t Type,
+                            uint64_t Addend = 0) {
+    auto RI = SectionRelocations.find(Section);
+    if (RI == SectionRelocations.end()) {
+      auto Result =
+        SectionRelocations.emplace(Section, std::vector<Relocation>());
+      RI = Result.first;
+    }
+    RI->second.emplace_back(Relocation{Address, Symbol, Type, Addend});
+  }
 
   /// Rewrite back all functions (hopefully optimized) that fit in the original
   /// memory footprint for that function. If the function is now larger and does
@@ -187,8 +205,14 @@ private:
   /// symbol table has been processed.
   void adjustFunctionBoundaries();
 
+  /// Make .eh_frame section relocatable.
+  void relocateEHFrameSection();
+
   /// Rewrite non-allocatable sections with modifications.
   void rewriteNoteSections();
+
+  /// Write .eh_frame_hdr.
+  void writeEHFrameHeader(SectionInfo &EHFrameSecInfo);
 
   /// Patch ELF book-keeping info.
   void patchELF();
@@ -313,11 +337,8 @@ private:
   uint64_t NewTextSegmentOffset{0};
   uint64_t NewTextSegmentSize{0};
 
-  /// Track next available address in the new text segment.
+  /// Track next available address for new allocatable sections.
   uint64_t NextAvailableAddress{0};
-
-  /// Information on sections to re-write in the binary.
-  std::map<std::string, SectionInfo> SectionsToRewrite;
 
   /// Store all non-zero symbols in this map for a quick address lookup.
   std::map<uint64_t, llvm::object::SymbolRef> FileSymRefs;
@@ -337,6 +358,7 @@ private:
   ArrayRef<uint8_t> LSDAData;
   uint64_t LSDAAddress{0};
   const llvm::DWARFFrame *EHFrame{nullptr};
+  SectionRef EHFrameSection;
 
   /// Keep track of functions we fail to write in the binary. We need to avoid
   /// rewriting CFI info for these functions.
@@ -351,6 +373,9 @@ private:
 
   /// Total hotness score according to profiling data for this binary.
   uint64_t TotalScore{0};
+
+  /// Section relocations.
+  std::map<SectionRef, std::vector<Relocation>> SectionRelocations;
 
   /// Construct BinaryFunction object and add it to internal maps.
   BinaryFunction *createBinaryFunction(const std::string &Name,

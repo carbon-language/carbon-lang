@@ -3391,5 +3391,56 @@ void DynoStats::operator+=(const DynoStats &Other) {
   }
 }
 
+size_t Relocation::getSizeForType(uint64_t Type) {
+  switch (Type) {
+  default:
+    llvm_unreachable("unsupported relocation type");
+  case ELF::R_X86_64_PC8:
+    return 1;
+  case ELF::R_X86_64_PLT32:
+  case ELF::R_X86_64_PC32:
+  case ELF::R_X86_64_32S:
+  case ELF::R_X86_64_32:
+  case ELF::R_X86_64_GOTPCREL:
+  case ELF::R_X86_64_GOTTPOFF:
+  case ELF::R_X86_64_TPOFF32:
+    return 4;
+  case ELF::R_X86_64_PC64:
+  case ELF::R_X86_64_64:
+    return 8;
+  }
+}
+
+size_t Relocation::emitTo(MCStreamer *Streamer) {
+  const auto Size = getSizeForType(Type);
+  auto &Ctx = Streamer->getContext();
+  switch (Type) {
+  default:
+    llvm_unreachable("unsupported relocation type");
+  case ELF::R_X86_64_PC8:
+  case ELF::R_X86_64_PC32: {
+    auto *TempLabel = Ctx.createTempSymbol();
+    Streamer->EmitLabel(TempLabel);
+    auto Value =
+      MCBinaryExpr::createSub(MCSymbolRefExpr::create(Symbol, Ctx),
+                              MCSymbolRefExpr::create(TempLabel, Ctx),
+                              Ctx);
+    if (Addend) {
+      Value = MCBinaryExpr::createAdd(Value,
+                                      MCConstantExpr::create(Addend, Ctx),
+                                      Ctx);
+    }
+    Streamer->EmitValue(Value, Size);
+    break;
+  }
+  case ELF::R_X86_64_64:
+  case ELF::R_X86_64_32:
+  case ELF::R_X86_64_32S:
+    Streamer->EmitSymbolValue(Symbol, Size);
+    break;
+  }
+  return Size;
+}
+
 } // namespace bolt
 } // namespace llvm

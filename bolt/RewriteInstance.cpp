@@ -44,6 +44,7 @@
 #include "llvm/Object/SymbolicFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TargetSelect.h"
@@ -481,6 +482,7 @@ void RewriteInstance::reset() {
   EHFrame = nullptr;
   FailedAddresses.clear();
   RangesSectionsWriter.reset();
+  SectionRelocations.clear();
   TotalScore = 0;
 }
 
@@ -994,6 +996,65 @@ void RewriteInstance::adjustFunctionBoundaries() {
   }
 }
 
+void RewriteInstance::relocateEHFrameSection() {
+  assert(EHFrameSection.getObject() != nullptr &&
+         "non-empty .eh_frame section expected");
+
+  DWARFFrame EHFrame(EHFrameSection.getAddress());
+  StringRef EHFrameSectionContents;
+  EHFrameSection.getContents(EHFrameSectionContents);
+  DataExtractor DE(EHFrameSectionContents,
+                   BC->AsmInfo->isLittleEndian(),
+                   BC->AsmInfo->getPointerSize());
+  auto createReloc = [&](uint64_t Value, uint64_t Offset, uint64_t DwarfType) {
+    if (DwarfType == dwarf::DW_EH_PE_omit)
+      return;
+
+    if (!(DwarfType & dwarf::DW_EH_PE_pcrel) &&
+        !(DwarfType & dwarf::DW_EH_PE_textrel) &&
+        !(DwarfType & dwarf::DW_EH_PE_funcrel) &&
+        !(DwarfType & dwarf::DW_EH_PE_datarel)) {
+      return;
+    }
+
+    if (!(DwarfType & dwarf::DW_EH_PE_sdata4))
+      return;
+
+    uint64_t RelType;
+    switch (DwarfType & 0x0f) {
+    default:
+      llvm_unreachable("unsupported DWARF encoding type");
+    case dwarf::DW_EH_PE_sdata4:
+    case dwarf::DW_EH_PE_udata4:
+      RelType = ELF::R_X86_64_PC32;
+      break;
+    case dwarf::DW_EH_PE_sdata8:
+    case dwarf::DW_EH_PE_udata8:
+      RelType = ELF::R_X86_64_PC64;
+      break;
+    }
+
+    DEBUG(dbgs() << "BOLT-DEBUG: adding DWARF reference\n");
+
+    auto *Symbol = BC->getGlobalSymbolAtAddress(Value);
+    if (!Symbol) {
+      DEBUG(dbgs() << "BOLT-DEBUG: creating symbol for DWARF reference at 0x"
+                   << Twine::utohexstr(Value) << '\n');
+      Symbol = BC->getOrCreateGlobalSymbol(Value, "FUNCat");
+    }
+
+    addSectionRelocation(EHFrameSection, Offset, Symbol, RelType);
+  };
+
+  EHFrame.parse(DE, createReloc);
+
+  if (!EHFrame.ParseError.empty()) {
+    errs() << "BOLT-ERROR: EHFrame reader failed with message \""
+           << EHFrame.ParseError << '\n';
+    exit(1);
+  }
+}
+
 BinaryFunction *RewriteInstance::createBinaryFunction(
     const std::string &Name, SectionRef Section, uint64_t Address,
     uint64_t Size, bool IsSimple) {
@@ -1022,6 +1083,8 @@ void RewriteInstance::readSpecialSections() {
       LSDAAddress = Section.getAddress();
     } else if (SectionName == ".debug_loc") {
       DebugLocSize = Section.getSize();
+    } else if (SectionName == ".eh_frame") {
+      EHFrameSection = Section;
     }
 
     // Ignore zero-size allocatable sections as they present no interest to us.
@@ -1353,8 +1416,8 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
           // from that.  We also update the current CU debug info with the
           // filename of the inlined function.
           if (RowReference.DwCompileUnitIndex != OrigUnitID) {
-            Unit =
-              BC.DwCtx->getCompileUnitForOffset(RowReference.DwCompileUnitIndex);
+            Unit = BC.DwCtx->
+                getCompileUnitForOffset(RowReference.DwCompileUnitIndex);
             OriginalLineTable = BC.DwCtx->getLineTableForUnit(Unit);
             const auto Filenum =
               OriginalLineTable->Rows[RowReference.RowIndex - 1].File;
@@ -1485,6 +1548,12 @@ void RewriteInstance::emitFunctions() {
   if (opts::UpdateDebugSections)
     updateDebugLineInfoForNonSimpleFunctions();
 
+  // Relocate .eh_frame to .eh_frame_old.
+  if (EHFrameSection.getObject() != nullptr) {
+    relocateEHFrameSection();
+    emitDataSection(Streamer.get(), EHFrameSection, ".eh_frame_old");
+  }
+
   Streamer->Finish();
 
   //////////////////////////////////////////////////////////////////////////////
@@ -1605,7 +1674,9 @@ void RewriteInstance::emitFunctions() {
   }
 
   // Map special sections to their addresses in the output image.
-  std::vector<std::string> Sections = { ".eh_frame", ".gcc_except_table",
+  // The order is important here.
+  std::vector<std::string> Sections = { ".eh_frame", ".eh_frame_old",
+                                        ".gcc_except_table",
                                         ".rodata", ".rodata.cold" };
   for (auto &SectionName : Sections) {
     auto SMII = EFMM->SectionMapInfo.find(SectionName);
@@ -1654,6 +1725,55 @@ void RewriteInstance::emitFunctions() {
 
   if (opts::KeepTmp)
     TempOut->keep();
+}
+
+void RewriteInstance::emitDataSection(MCStreamer *Streamer, SectionRef Section,
+                                      std::string Name) {
+  StringRef SectionName;
+  if (!Name.empty())
+    SectionName = Name;
+  else
+    Section.getName(SectionName);
+  auto *ELFSection = BC->Ctx->getELFSection(SectionName,
+                                            ELF::SHT_PROGBITS,
+                                            ELF::SHF_WRITE | ELF::SHF_ALLOC);
+  StringRef SectionContents;
+  Section.getContents(SectionContents);
+
+  Streamer->SwitchSection(ELFSection);
+  Streamer->EmitValueToAlignment(Section.getAlignment());
+
+  DEBUG(dbgs() << "BOLT-DEBUG: emitting section " << SectionName << '\n');
+
+  auto SRI = SectionRelocations.find(Section);
+  if (SRI == SectionRelocations.end()) {
+    Streamer->EmitBytes(SectionContents);
+    return;
+  }
+
+  auto &Relocations = SRI->second;
+  uint64_t SectionOffset = 0;
+  std::sort(Relocations.begin(), Relocations.end());
+  for (auto &Relocation : Relocations) {
+    assert(Relocation.Offset < Section.getSize() && "overflow detected");
+    if (SectionOffset < Relocation.Offset) {
+      Streamer->EmitBytes(
+          SectionContents.substr(SectionOffset,
+            Relocation.Offset - SectionOffset));
+      SectionOffset = Relocation.Offset;
+    }
+    DEBUG(dbgs() << "BOLT-DEBUG: emitting relocation for symbol "
+                 << Relocation.Symbol->getName() << " at offset 0x"
+                 << Twine::utohexstr(Relocation.Offset)
+                 << " with size "
+                 << Relocation::getSizeForType(Relocation.Type) << '\n');
+    auto RelocationSize = Relocation.emitTo(Streamer);
+    SectionOffset += RelocationSize;
+  }
+  assert(SectionOffset <= SectionContents.size() && "overflow error");
+  if (SectionOffset < SectionContents.size()) {
+    Streamer->EmitBytes(SectionContents.substr(SectionOffset));
+  }
 }
 
 bool RewriteInstance::checkLargeFunctions() {
@@ -1799,7 +1919,7 @@ void RewriteInstance::rewriteNoteSections() {
     // New section size.
     uint64_t Size = 0;
 
-    // Copy over section contents unless it's one of the sections we ovewrite.
+    // Copy over section contents unless it's one of the sections we overwrite.
     if (!shouldOverwriteSection(*SectionName)) {
       Size = Section.sh_size;
       std::string Data = InputFile->getData().substr(Section.sh_offset, Size);
@@ -1916,6 +2036,7 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
     if (SMII != SectionMM->SectionMapInfo.end()) {
       auto &SecInfo = SMII->second;
       SecInfo.ShName = Section.sh_name;
+      NewSection.sh_name = 0;
     }
 
     OS.write(reinterpret_cast<const char *>(&NewSection), sizeof(NewSection));
@@ -2116,47 +2237,10 @@ void RewriteInstance::rewriteFile() {
                      SI.FileOffset);
   }
 
-  // If .eh_frame is present it requires special handling.
+  // If .eh_frame is present create .eh_frame_hdr.
   auto SMII = SectionMM->SectionMapInfo.find(".eh_frame");
   if (SMII != SectionMM->SectionMapInfo.end()) {
-    auto &EHFrameSecInfo = SMII->second;
-    DEBUG(dbgs() << "BOLT: writing a new .eh_frame_hdr\n");
-
-    auto PaddingSize = OffsetToAlignment(NextAvailableAddress, EHFrameHdrAlign);
-    writePadding(Out->os(), PaddingSize);
-    NextAvailableAddress += PaddingSize;
-
-    SectionInfo EHFrameHdrSecInfo;
-    EHFrameHdrSecInfo.FileAddress = NextAvailableAddress;
-    EHFrameHdrSecInfo.FileOffset = getFileOffsetFor(NextAvailableAddress);
-
-    DWARFFrame NewEHFrame(EHFrameSecInfo.FileAddress);
-    NewEHFrame.parse(
-      DataExtractor(StringRef(reinterpret_cast<const char *>(
-                                                   EHFrameSecInfo.AllocAddress),
-                              EHFrameSecInfo.Size),
-                    BC->AsmInfo->isLittleEndian(),
-                    BC->AsmInfo->getPointerSize()));
-    if (!NewEHFrame.ParseError.empty()) {
-      errs() << "BOLT-ERROR: EHFrame reader failed with message \""
-             << NewEHFrame.ParseError << '\n';
-      exit(1);
-    }
-
-    auto NewEHFrameHdr =
-        CFIRdWrt->generateEHFrameHeader(NewEHFrame,
-                                        EHFrameHdrSecInfo.FileAddress,
-                                        FailedAddresses);
-
-    EHFrameHdrSecInfo.Size = NewEHFrameHdr.size();
-
-    assert(Out->os().tell() == EHFrameHdrSecInfo.FileOffset &&
-           "offset mismatch");
-    Out->os().write(NewEHFrameHdr.data(), EHFrameHdrSecInfo.Size);
-
-    SectionMM->SectionMapInfo[".eh_frame_hdr"] = EHFrameHdrSecInfo;
-
-    NextAvailableAddress += EHFrameHdrSecInfo.Size;
+    writeEHFrameHeader(SMII->second);
   }
 
   // Patch program header table.
@@ -2186,6 +2270,71 @@ void RewriteInstance::rewriteFile() {
       EHFrame->dump(outs());
     }
   }
+}
+
+void RewriteInstance::writeEHFrameHeader(SectionInfo &EHFrameSecInfo) {
+  DWARFFrame NewEHFrame(EHFrameSecInfo.FileAddress);
+  NewEHFrame.parse(
+    DataExtractor(StringRef(reinterpret_cast<const char *>(
+                                                 EHFrameSecInfo.AllocAddress),
+                            EHFrameSecInfo.Size),
+                  BC->AsmInfo->isLittleEndian(),
+                  BC->AsmInfo->getPointerSize()));
+  if (!NewEHFrame.ParseError.empty()) {
+    errs() << "BOLT-ERROR: EHFrame reader failed with message \""
+           << NewEHFrame.ParseError << '\n';
+    exit(1);
+  }
+
+  auto OldSMII = SectionMM->SectionMapInfo.find(".eh_frame_old");
+  assert(OldSMII != SectionMM->SectionMapInfo.end() &&
+         "expected .eh_frame_old to be present");
+  auto &OldEHFrameSecInfo = OldSMII->second;
+  DWARFFrame OldEHFrame(OldEHFrameSecInfo.FileAddress);
+  OldEHFrame.parse(
+    DataExtractor(StringRef(reinterpret_cast<const char *>(
+                                              OldEHFrameSecInfo.AllocAddress),
+                            OldEHFrameSecInfo.Size),
+                  BC->AsmInfo->isLittleEndian(),
+                  BC->AsmInfo->getPointerSize()));
+  if (!OldEHFrame.ParseError.empty()) {
+    errs() << "BOLT-ERROR: EHFrame reader failed with message \""
+           << OldEHFrame.ParseError << '\n';
+    exit(1);
+  }
+
+  DEBUG(dbgs() << "BOLT: writing a new .eh_frame_hdr\n");
+
+  auto PaddingSize = OffsetToAlignment(NextAvailableAddress, EHFrameHdrAlign);
+  writePadding(Out->os(), PaddingSize);
+  NextAvailableAddress += PaddingSize;
+
+  SectionInfo EHFrameHdrSecInfo;
+  EHFrameHdrSecInfo.FileAddress = NextAvailableAddress;
+  EHFrameHdrSecInfo.FileOffset = getFileOffsetFor(NextAvailableAddress);
+
+  auto NewEHFrameHdr =
+      CFIRdWrt->generateEHFrameHeader(OldEHFrame,
+                                      NewEHFrame,
+                                      EHFrameHdrSecInfo.FileAddress,
+                                      FailedAddresses);
+
+  EHFrameHdrSecInfo.Size = NewEHFrameHdr.size();
+
+  assert(Out->os().tell() == EHFrameHdrSecInfo.FileOffset &&
+         "offset mismatch");
+  Out->os().write(NewEHFrameHdr.data(), EHFrameHdrSecInfo.Size);
+
+  SectionMM->SectionMapInfo[".eh_frame_hdr"] = EHFrameHdrSecInfo;
+
+  NextAvailableAddress += EHFrameHdrSecInfo.Size;
+
+  // Merge .eh_frame and .eh_frame_old so that gdb can locate all FDEs.
+  EHFrameSecInfo.Size = OldEHFrameSecInfo.FileAddress + OldEHFrameSecInfo.Size
+                        - EHFrameSecInfo.FileAddress;
+  SectionMM->SectionMapInfo.erase(OldSMII);
+  DEBUG(dbgs() << "BOLT-DEBUG: size of .eh_frame after merge is "
+               << EHFrameSecInfo.Size << '\n');
 }
 
 bool RewriteInstance::shouldOverwriteSection(StringRef SectionName) {

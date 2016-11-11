@@ -44,11 +44,12 @@ public:
   ///
   /// Take FDEs from the \p NewEHFrame unless their initial_pc is listed
   /// in \p FailedAddresses. All other entries are taken from the
-  /// original .eh_frame.
+  /// \p OldEHFrame.
   ///
-  /// \p EHFrameHeaderAddress specifies location of the .eh_frame_hdr,
-  /// and is required to be set for relative addressing.
+  /// \p EHFrameHeaderAddress specifies location of .eh_frame_hdr,
+  /// and is required for relative addressing used in the section.
   std::vector<char> generateEHFrameHeader(
+      const DWARFFrame &OldEHFrame,
       const DWARFFrame &NewEHFrame,
       uint64_t EHFrameHeaderAddress,
       std::vector<uint64_t> &FailedAddresses) const;

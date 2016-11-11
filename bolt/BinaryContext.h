@@ -67,7 +67,8 @@ public:
   std::multimap<uint64_t, std::string> GlobalAddresses;
 
   /// [MCSymbol] -> [BinaryFunction]
-  std::unordered_map<const MCSymbol *, const BinaryFunction *> SymbolToFunctionMap;
+  std::unordered_map<const MCSymbol *,
+                     const BinaryFunction *> SymbolToFunctionMap;
 
   /// Map virtual address to a section.
   std::map<uint64_t, SectionRef> AllocatableSections;

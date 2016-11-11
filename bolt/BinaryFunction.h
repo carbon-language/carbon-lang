@@ -143,6 +143,26 @@ inline raw_ostream &operator<<(raw_ostream &OS, const DynoStats &Stats) {
 
 DynoStats operator+(const DynoStats &A, const DynoStats &B);
 
+/// Relocation class.
+struct Relocation {
+  uint64_t Offset;
+  MCSymbol *Symbol;
+  uint64_t Type;
+  uint64_t Addend;
+
+  /// Return size of the given relocation \p Type.
+  static size_t getSizeForType(uint64_t Type);
+
+  /// Emit relocation at a current \p Streamer' position. The caller is
+  /// responsible for setting the position correctly.
+  size_t emitTo(MCStreamer *Streamer);
+};
+
+/// Relocation ordering by offset.
+inline bool operator<(const Relocation &A, const Relocation &B) {
+  return A.Offset < B.Offset;
+}
+
 /// BinaryFunction is a representation of machine-level function.
 ///
 /// We use the term "Binary" as "Machine" was already taken.
