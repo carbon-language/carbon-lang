@@ -329,10 +329,6 @@ void SUnit::dump(const ScheduleDAG *G) const {
 
 void SUnit::dumpAll(const ScheduleDAG *G) const {
   dump(G);
-  if (skip) {
-    dbgs() << "  Skipped\n";
-    return;
-  }
 
   dbgs() << "  # preds left       : " << NumPredsLeft << "\n";
   dbgs() << "  # succs left       : " << NumSuccsLeft << "\n";
