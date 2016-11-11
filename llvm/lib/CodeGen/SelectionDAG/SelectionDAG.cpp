@@ -2192,10 +2192,12 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     // For the purposes of computing leading zeros we can conservatively
     // treat a udiv as a logical right shift by the power of 2 known to
     // be less than the denominator.
-    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, DemandedElts,
+                     Depth + 1);
     unsigned LeadZ = KnownZero2.countLeadingOnes();
 
-    computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, DemandedElts,
+                     Depth + 1);
     unsigned RHSUnknownLeadingOnes = KnownOne2.countLeadingZeros();
     if (RHSUnknownLeadingOnes != BitWidth)
       LeadZ = std::min(BitWidth,
