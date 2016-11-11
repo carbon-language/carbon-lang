@@ -247,11 +247,8 @@ void ScheduleDAGInstrs::exitRegion() {
 void ScheduleDAGInstrs::addSchedBarrierDeps() {
   MachineInstr *ExitMI = RegionEnd != BB->end() ? &*RegionEnd : nullptr;
   ExitSU.setInstr(ExitMI);
-  bool AllDepKnown = ExitMI &&
-    (ExitMI->isCall() || ExitMI->isBarrier());
-  if (ExitMI && AllDepKnown) {
-    // If it's a call or a barrier, add dependencies on the defs and uses of
-    // instruction.
+  // Add dependencies on the defs and uses of the instruction.
+  if (ExitMI) {
     for (const MachineOperand &MO : ExitMI->operands()) {
       if (!MO.isReg() || MO.isDef()) continue;
       unsigned Reg = MO.getReg();
@@ -261,10 +258,10 @@ void ScheduleDAGInstrs::addSchedBarrierDeps() {
         addVRegUseDeps(&ExitSU, ExitMI->getOperandNo(&MO));
       }
     }
-  } else {
+  }
+  if (!ExitMI || (!ExitMI->isCall() && !ExitMI->isBarrier())) {
     // For others, e.g. fallthrough, conditional branch, assume the exit
     // uses all the registers that are livein to the successor blocks.
-    assert(Uses.empty() && "Uses in set before adding deps?");
     for (const MachineBasicBlock *Succ : BB->successors()) {
       for (const auto &LI : Succ->liveins()) {
         if (!Uses.contains(LI.PhysReg))
