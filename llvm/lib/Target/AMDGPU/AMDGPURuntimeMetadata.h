@@ -37,8 +37,6 @@
 #ifndef LLVM_LIB_TARGET_AMDGPU_AMDGPURUNTIMEMETADATA_H
 #define LLVM_LIB_TARGET_AMDGPU_AMDGPURUNTIMEMETADATA_H
 
-#include <stdint.h>
-
 namespace AMDGPU {
 
 namespace RuntimeMD {
