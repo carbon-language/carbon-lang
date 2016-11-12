@@ -57,8 +57,12 @@ Improvements to Clang's diagnostics
 New Compiler Flags
 ------------------
 
-The option ....
+The option -Og has been added to optimize the debugging experience.
+For now, this option is exactly the same as -O1. However, in the future,
+some other optimizations might be enabled or disabled.
 
+
+The option ....
 
 New Pragmas in Clang
 -----------------------
