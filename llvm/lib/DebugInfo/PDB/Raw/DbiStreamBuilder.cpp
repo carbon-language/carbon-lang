@@ -115,7 +115,7 @@ uint32_t DbiStreamBuilder::calculateSectionContribsStreamSize() const {
     return 0;
   return sizeof(enum PdbRaw_DbiSecContribVer) +
          sizeof(SectionContribs[0]) * SectionContribs.size();
-};
+}
 
 uint32_t DbiStreamBuilder::calculateSectionMapStreamSize() const {
   if (SectionMap.empty())
