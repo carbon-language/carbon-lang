@@ -68,7 +68,7 @@ protected:
       Result = None;
     } else {
       assert(Prec < 100 && "Precision out of range");
-      Result = std::min(99u, Prec);
+      Result = std::min<size_t>(99u, Prec);
     }
     return Result;
   }

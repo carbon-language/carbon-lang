@@ -50,13 +50,7 @@ public:
   }
 };
 
-template <typename T> class missing_format_wrapper : public format_wrapper {
-public:
-  missing_format_wrapper() {
-    static_assert(false, "T does not have a format_provider");
-  }
-  void format(llvm::raw_ostream &S, StringRef Options) override {}
-};
+template <typename T> class missing_format_wrapper;
 
 // Test if T is a class that contains a member function with the signature:
 //

@@ -33,10 +33,10 @@ template <typename T> class AlignAdapter : public AdapterBase<T> {
 
 public:
   AlignAdapter(T &&Item, AlignStyle Where, size_t Amount)
-      : AdapterBase(std::forward<T>(Item)), Where(Where), Amount(Amount) {}
+      : AdapterBase<T>(std::forward<T>(Item)), Where(Where), Amount(Amount) {}
 
   void format(llvm::raw_ostream &Stream, StringRef Style) {
-    auto Wrapper = detail::build_format_wrapper(std::forward<T>(Item));
+    auto Wrapper = detail::build_format_wrapper(std::forward<T>(this->Item));
     FmtAlign(Wrapper, Where, Amount).format(Stream, Style);
   }
 };
@@ -47,10 +47,10 @@ template <typename T> class PadAdapter : public AdapterBase<T> {
 
 public:
   PadAdapter(T &&Item, size_t Left, size_t Right)
-      : AdapterBase(std::forward<T>(Item)), Left(Left), Right(Right) {}
+      : AdapterBase<T>(std::forward<T>(Item)), Left(Left), Right(Right) {}
 
   void format(llvm::raw_ostream &Stream, StringRef Style) {
-    auto Wrapper = detail::build_format_wrapper(std::forward<T>(Item));
+    auto Wrapper = detail::build_format_wrapper(std::forward<T>(this->Item));
     Stream.indent(Left);
     Wrapper.format(Stream, Style);
     Stream.indent(Right);
@@ -62,10 +62,10 @@ template <typename T> class RepeatAdapter : public AdapterBase<T> {
 
 public:
   RepeatAdapter(T &&Item, size_t Count)
-      : AdapterBase(std::forward<T>(Item)), Count(Count) {}
+      : AdapterBase<T>(std::forward<T>(Item)), Count(Count) {}
 
   void format(llvm::raw_ostream &Stream, StringRef Style) {
-    auto Wrapper = detail::build_format_wrapper(std::forward<T>(Item));
+    auto Wrapper = detail::build_format_wrapper(std::forward<T>(this->Item));
     for (size_t I = 0; I < Count; ++I) {
       Wrapper.format(Stream, Style);
     }
