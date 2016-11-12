@@ -22,7 +22,7 @@ namespace detail {
 
 class format_wrapper {
 protected:
-  ~format_wrapper() {}
+  virtual ~format_wrapper() {}
 
 public:
   virtual void format(llvm::raw_ostream &S, StringRef Options) = 0;

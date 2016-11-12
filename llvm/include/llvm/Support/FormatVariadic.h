@@ -124,14 +124,14 @@ public:
     return Result;
   }
 
-  template <size_t N> llvm::SmallString<N> sstr() const {
+  template <unsigned N> llvm::SmallString<N> sstr() const {
     SmallString<N> Result;
     raw_svector_ostream Stream(Result);
     Stream << *this;
     return Result;
   }
 
-  template <size_t N> operator SmallString<N>() const { return sstr<N>(); }
+  template <unsigned N> operator SmallString<N>() const { return sstr<N>(); }
 
   operator std::string() const { return str(); }
 };
