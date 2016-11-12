@@ -29,7 +29,8 @@ template <typename T>
 struct use_integral_formatter
     : public std::integral_constant<
           bool, is_one_of<T, uint8_t, int16_t, uint16_t, int32_t, uint32_t,
-                          int64_t, uint64_t>::value> {};
+                          int64_t, uint64_t, int, unsigned, long, unsigned long,
+                          long long, unsigned long long>::value> {};
 
 template <typename T>
 struct use_char_formatter
