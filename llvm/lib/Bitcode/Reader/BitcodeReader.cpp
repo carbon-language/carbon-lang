@@ -3479,7 +3479,7 @@ Error BitcodeReader::parseConstants() {
 
       if (PointeeType &&
           PointeeType !=
-              cast<SequentialType>(Elts[0]->getType()->getScalarType())
+              cast<PointerType>(Elts[0]->getType()->getScalarType())
                   ->getElementType())
         return error("Explicit gep operator type does not match pointee type "
                      "of pointer operand");
@@ -4733,10 +4733,10 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         return error("Invalid record");
 
       if (!Ty)
-        Ty = cast<SequentialType>(BasePtr->getType()->getScalarType())
+        Ty = cast<PointerType>(BasePtr->getType()->getScalarType())
                  ->getElementType();
       else if (Ty !=
-               cast<SequentialType>(BasePtr->getType()->getScalarType())
+               cast<PointerType>(BasePtr->getType()->getScalarType())
                    ->getElementType())
         return error(
             "Explicit gep type does not match pointee type of pointer operand");
