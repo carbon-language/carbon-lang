@@ -491,6 +491,8 @@ bool ScopDetection::isValidCallInst(CallInst &CI,
       Context.AST.add(&CI);
       return true;
     case FMRB_DoesNotReadMemory:
+    case FMRB_OnlyAccessesInaccessibleMem:
+    case FMRB_OnlyAccessesInaccessibleOrArgMem:
       return false;
     }
   }

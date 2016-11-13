@@ -322,6 +322,8 @@ bool ScopBuilder::buildAccessCallInst(MemAccInst Inst, Loop *L) {
   case llvm::FMRB_DoesNotAccessMemory:
     return true;
   case llvm::FMRB_DoesNotReadMemory:
+  case llvm::FMRB_OnlyAccessesInaccessibleMem:
+  case llvm::FMRB_OnlyAccessesInaccessibleOrArgMem:
     return false;
   case llvm::FMRB_OnlyReadsMemory:
     GlobalReads.push_back(CI);
