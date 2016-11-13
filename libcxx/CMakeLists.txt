@@ -312,6 +312,9 @@ add_target_flags_if(LIBCXX_BUILD_32_BITS "-m32")
 add_target_flags_if(LIBCXX_TARGET_TRIPLE "-target ${LIBCXX_TARGET_TRIPLE}")
 add_target_flags_if(LIBCXX_SYSROOT "--sysroot=${LIBCXX_SYSROOT}")
 add_target_flags_if(LIBCXX_GCC_TOOLCHAIN "-gcc-toolchain ${LIBCXX_GCC_TOOLCHAIN}")
+if (LIBCXX_TARGET_TRIPLE)
+  set(TARGET_TRIPLE "${LIBCXX_TARGET_TRIPLE}")
+endif()
 
 # Configure compiler.
 include(config-ix)
