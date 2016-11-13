@@ -66,13 +66,13 @@ size_t FindLongestCommandWord(std::map<std::string, ValueType> &dict) {
 
 class CommandObject {
 public:
-  typedef const char *(ArgumentHelpCallbackFunction)();
+  typedef llvm::StringRef(ArgumentHelpCallbackFunction)();
 
   struct ArgumentHelpCallback {
     ArgumentHelpCallbackFunction *help_callback;
     bool self_formatting;
 
-    const char *operator()() const { return (*help_callback)(); }
+    llvm::StringRef operator()() const { return (*help_callback)(); }
 
     explicit operator bool() const { return (help_callback != nullptr); }
   };
