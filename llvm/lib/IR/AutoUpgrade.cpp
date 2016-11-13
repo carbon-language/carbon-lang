@@ -365,6 +365,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name.startswith("avx2.pblendd.") ||
          Name.startswith("avx.vbroadcastf128") ||
          Name == "avx2.vbroadcasti128" ||
+         Name.startswith("avx512.mask.move.s") ||
          Name == "xop.vpcmov" ||
          (Name.startswith("xop.vpcom") && F->arg_size() == 2))) {
       NewFn = nullptr;
@@ -677,6 +678,20 @@ static Value *upgradeMaskedCompare(IRBuilder<> &Builder, CallInst &CI,
   }
   return Builder.CreateBitCast(Cmp, IntegerType::get(CI.getContext(),
                                                      std::max(NumElts, 8U)));
+}
+
+static Value* upgradeMaskedMove(IRBuilder<> &Builder, CallInst &CI) {
+  Value* A = CI.getArgOperand(0);
+  Value* B = CI.getArgOperand(1);
+  Value* Src = CI.getArgOperand(2);
+  Value* Mask = CI.getArgOperand(3);
+
+  Value* AndNode = Builder.CreateAnd(Mask, APInt(8, 1));
+  Value* Cmp = Builder.CreateIsNotNull(AndNode);
+  Value* Extract1 = Builder.CreateExtractElement(B, (uint64_t)0);
+  Value* Extract2 = Builder.CreateExtractElement(Src, (uint64_t)0);
+  Value* Select = Builder.CreateSelect(Cmp, Extract1, Extract2);
+  return Builder.CreateInsertElement(A, Select, (uint64_t)0);
 }
 
 // Replace a masked intrinsic with an older unmasked intrinsic.
@@ -1341,6 +1356,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep = Builder.CreateFSub(CI->getArgOperand(0), CI->getArgOperand(1));
       Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
                           CI->getArgOperand(2));
+    } else if (IsX86 && Name.startswith("avx512.mask.move.s")) { 
+      Rep = upgradeMaskedMove(Builder, *CI);
     } else if (IsX86 && Name.startswith("avx512.mask.pshuf.b.")) {
       VectorType *VecTy = cast<VectorType>(CI->getType());
       Intrinsic::ID IID;
