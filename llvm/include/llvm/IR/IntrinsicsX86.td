@@ -1668,6 +1668,20 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                   [IntrReadMem, IntrArgMemOnly]>;
 }
 
+// Conditional move ops
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_avx512_mask_move_ss :
+        GCCBuiltin<"__builtin_ia32_movss_mask">,
+          Intrinsic<[llvm_v4f32_ty],
+                    [llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty, llvm_i8_ty],
+                    [IntrNoMem]>;
+  def int_x86_avx512_mask_move_sd :
+        GCCBuiltin<"__builtin_ia32_movsd_mask">,
+          Intrinsic<[llvm_v2f64_ty],
+                    [llvm_v2f64_ty, llvm_v2f64_ty, llvm_v2f64_ty, llvm_i8_ty],
+                    [IntrNoMem]>;
+}
+
 // Conditional store ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_maskstore_pd : GCCBuiltin<"__builtin_ia32_maskstorepd">,
