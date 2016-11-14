@@ -227,8 +227,8 @@ getLocForEndOfDecl(const clang::Decl *D, const SourceManager *SM,
 clang::CharSourceRange
 GetFullRange(const clang::SourceManager *SM, const clang::Decl *D,
              const clang::LangOptions &options = clang::LangOptions()) {
-  clang::SourceRange Full = D->getSourceRange();
-  Full.setEnd(getLocForEndOfDecl(D, SM));
+  clang::SourceRange Full(SM->getExpansionLoc(D->getLocStart()),
+                          getLocForEndOfDecl(D, SM));
   // Expand to comments that are associated with the Decl.
   if (const auto *Comment = D->getASTContext().getRawCommentForDeclNoCache(D)) {
     if (SM->isBeforeInTranslationUnit(Full.getEnd(), Comment->getLocEnd()))
