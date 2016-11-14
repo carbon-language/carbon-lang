@@ -320,6 +320,9 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name == "avx512.mask.psrlv4.di" ||
          Name == "avx512.mask.psrlv4.si" ||
          Name == "avx512.mask.psrlv8.si" ||
+         Name.startswith("avx512.mask.psllv.") ||
+         Name.startswith("avx512.mask.psrav.") ||
+         Name.startswith("avx512.mask.psrlv.") ||
          Name.startswith("sse41.pmovsx") ||
          Name.startswith("sse41.pmovzx") ||
          Name.startswith("avx2.pmovsx") ||
@@ -1364,7 +1367,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                                     Name[19];
 
       Intrinsic::ID IID;
-      if (IsVariable) {
+      if (IsVariable && Name[17] != '.') {
         if (Size == 'd' && Name[17] == '2') // avx512.mask.psllv2.di
           IID = Intrinsic::x86_avx2_psllv_q;
         else if (Size == 'd' && Name[17] == '4') // avx512.mask.psllv4.di
@@ -1400,12 +1403,14 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         else
           llvm_unreachable("Unexpected size");
       } else {
-        if (Size == 'd') // psll.di.512, pslli.d, psll.d
-          IID = IsImmediate ? Intrinsic::x86_avx512_pslli_d_512
-                            : Intrinsic::x86_avx512_psll_d_512;
-        else if (Size == 'q') // psll.qi.512, pslli.q, psll.q
-          IID = IsImmediate ? Intrinsic::x86_avx512_pslli_q_512
-                            : Intrinsic::x86_avx512_psll_q_512;
+        if (Size == 'd') // psll.di.512, pslli.d, psll.d, psllv.d.512
+          IID = IsImmediate ? Intrinsic::x86_avx512_pslli_d_512 :
+                IsVariable  ? Intrinsic::x86_avx512_psllv_d_512 :
+                              Intrinsic::x86_avx512_psll_d_512;
+        else if (Size == 'q') // psll.qi.512, pslli.q, psll.q, psllv.q.512
+          IID = IsImmediate ? Intrinsic::x86_avx512_pslli_q_512 :
+                IsVariable  ? Intrinsic::x86_avx512_psllv_q_512 :
+                              Intrinsic::x86_avx512_psll_q_512;
         else if (Size == 'w') // psll.wi.512, pslli.w, psll.w
           IID = IsImmediate ? Intrinsic::x86_avx512_pslli_w_512
                             : Intrinsic::x86_avx512_psll_w_512;
@@ -1423,7 +1428,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                                     Name[19];
 
       Intrinsic::ID IID;
-      if (IsVariable) {
+      if (IsVariable && Name[17] != '.') {
         if (Size == 'd' && Name[17] == '2') // avx512.mask.psrlv2.di
           IID = Intrinsic::x86_avx2_psrlv_q;
         else if (Size == 'd' && Name[17] == '4') // avx512.mask.psrlv4.di
@@ -1459,12 +1464,14 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         else
           llvm_unreachable("Unexpected size");
       } else {
-        if (Size == 'd') // psrl.di.512, psrli.d, psrl.d
-          IID = IsImmediate ? Intrinsic::x86_avx512_psrli_d_512
-                            : Intrinsic::x86_avx512_psrl_d_512;
-        else if (Size == 'q') // psrl.qi.512, psrli.q, psrl.q
-          IID = IsImmediate ? Intrinsic::x86_avx512_psrli_q_512
-                            : Intrinsic::x86_avx512_psrl_q_512;
+        if (Size == 'd') // psrl.di.512, psrli.d, psrl.d, psrl.d.512
+          IID = IsImmediate ? Intrinsic::x86_avx512_psrli_d_512 :
+                IsVariable  ? Intrinsic::x86_avx512_psrlv_d_512 :
+                              Intrinsic::x86_avx512_psrl_d_512;
+        else if (Size == 'q') // psrl.qi.512, psrli.q, psrl.q, psrl.q.512
+          IID = IsImmediate ? Intrinsic::x86_avx512_psrli_q_512 :
+                IsVariable  ? Intrinsic::x86_avx512_psrlv_q_512 :
+                              Intrinsic::x86_avx512_psrl_q_512;
         else if (Size == 'w') // psrl.wi.512, psrli.w, psrl.w)
           IID = IsImmediate ? Intrinsic::x86_avx512_psrli_w_512
                             : Intrinsic::x86_avx512_psrl_w_512;
@@ -1482,7 +1489,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                                     Name[19];
 
       Intrinsic::ID IID;
-      if (IsVariable) {
+      if (IsVariable && Name[17] != '.') {
         if (Size == 's' && Name[17] == '4') // avx512.mask.psrav4.si
           IID = Intrinsic::x86_avx2_psrav_d;
         else if (Size == 's' && Name[17] == '8') // avx512.mask.psrav8.si
@@ -1494,8 +1501,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
           IID = IsImmediate ? Intrinsic::x86_sse2_psrai_d
                             : Intrinsic::x86_sse2_psra_d;
         else if (Size == 'q') // avx512.mask.psra.q.128, avx512.mask.psra.qi.128
-          IID = IsImmediate ? Intrinsic::x86_avx512_psrai_q_128
-                            : Intrinsic::x86_avx512_psra_q_128;
+          IID = IsImmediate ? Intrinsic::x86_avx512_psrai_q_128 :
+                IsVariable  ? Intrinsic::x86_avx512_psrav_q_128 :
+                              Intrinsic::x86_avx512_psra_q_128;
         else if (Size == 'w') // avx512.mask.psra.w.128, avx512.mask.psra.wi.128
           IID = IsImmediate ? Intrinsic::x86_sse2_psrai_w
                             : Intrinsic::x86_sse2_psra_w;
@@ -1506,20 +1514,23 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
           IID = IsImmediate ? Intrinsic::x86_avx2_psrai_d
                             : Intrinsic::x86_avx2_psra_d;
         else if (Size == 'q') // avx512.mask.psra.q.256, avx512.mask.psra.qi.256
-          IID = IsImmediate ? Intrinsic::x86_avx512_psrai_q_256
-                            : Intrinsic::x86_avx512_psra_q_256;
+          IID = IsImmediate ? Intrinsic::x86_avx512_psrai_q_256 :
+                IsVariable  ? Intrinsic::x86_avx512_psrav_q_256 :
+                              Intrinsic::x86_avx512_psra_q_256;
         else if (Size == 'w') // avx512.mask.psra.w.256, avx512.mask.psra.wi.256
           IID = IsImmediate ? Intrinsic::x86_avx2_psrai_w
                             : Intrinsic::x86_avx2_psra_w;
         else
           llvm_unreachable("Unexpected size");
       } else {
-        if (Size == 'd') // psra.di.512, psrai.d, psra.d
-          IID = IsImmediate ? Intrinsic::x86_avx512_psrai_d_512
-                            : Intrinsic::x86_avx512_psra_d_512;
+        if (Size == 'd') // psra.di.512, psrai.d, psra.d, psrav.d.512
+          IID = IsImmediate ? Intrinsic::x86_avx512_psrai_d_512 :
+                IsVariable  ? Intrinsic::x86_avx512_psrav_d_512 :
+                              Intrinsic::x86_avx512_psra_d_512;
         else if (Size == 'q') // psra.qi.512, psrai.q, psra.q
-          IID = IsImmediate ? Intrinsic::x86_avx512_psrai_q_512
-                            : Intrinsic::x86_avx512_psra_q_512;
+          IID = IsImmediate ? Intrinsic::x86_avx512_psrai_q_512 :
+                IsVariable  ? Intrinsic::x86_avx512_psrav_q_512 :
+                              Intrinsic::x86_avx512_psra_q_512;
         else if (Size == 'w') // psra.wi.512, psrai.w, psra.w
           IID = IsImmediate ? Intrinsic::x86_avx512_psrai_w_512
                             : Intrinsic::x86_avx512_psra_w_512;
