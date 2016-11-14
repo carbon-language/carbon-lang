@@ -129,9 +129,7 @@ template <class ELFT> static bool needsInterpSection() {
          !Script<ELFT>::X->ignoreInterpSection();
 }
 
-template <class ELFT> void elf::writeResult() {
-  Writer<ELFT>().run();
-}
+template <class ELFT> void elf::writeResult() { Writer<ELFT>().run(); }
 
 // The main function of the writer.
 template <class ELFT> void Writer<ELFT>::run() {

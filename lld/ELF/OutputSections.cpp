@@ -639,8 +639,7 @@ template <class ELFT> void OutputSection<ELFT>::finalize() {
     if (!Config->Relocatable) {
       // SHF_LINK_ORDER only has meaning in relocatable objects
       this->Flags &= ~SHF_LINK_ORDER;
-    }
-    else if (!this->Sections.empty()) {
+    } else if (!this->Sections.empty()) {
       // When doing a relocatable link we must preserve the link order
       // dependency of sections with the SHF_LINK_ORDER flag. The dependency
       // is indicated by the sh_link field. We need to translate the

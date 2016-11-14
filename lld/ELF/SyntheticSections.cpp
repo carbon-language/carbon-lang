@@ -616,8 +616,7 @@ template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
 template <class ELFT>
 GotPltSection<ELFT>::GotPltSection()
     : SyntheticSection<ELFT>(SHF_ALLOC | SHF_WRITE, SHT_PROGBITS,
-                             Target->GotPltEntrySize, ".got.plt") {
-}
+                             Target->GotPltEntrySize, ".got.plt") {}
 
 template <class ELFT> void GotPltSection<ELFT>::addEntry(SymbolBody &Sym) {
   Sym.GotPltIndex = Target->GotPltHeaderEntriesNum + Entries.size();
