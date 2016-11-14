@@ -19,16 +19,17 @@ set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
   )
 
-# Find the LLVM sources and simulate LLVM CMake options.
-include(HandleOutOfTreeLLVM)
 
-if (LIBCXX_STANDALONE_BUILD)
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   project(libcxx CXX C)
 
   set(PACKAGE_NAME libcxx)
   set(PACKAGE_VERSION 4.0.0svn)
   set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
   set(PACKAGE_BUGREPORT "llvm-bugs@lists.llvm.org")
+
+  # Find the LLVM sources and simulate LLVM CMake options.
+  include(HandleOutOfTreeLLVM)
 endif()
 
 if (LIBCXX_STANDALONE_BUILD AND NOT LLVM_FOUND)
@@ -58,7 +59,6 @@ option(LIBCXX_ENABLE_EXPERIMENTAL_LIBRARY "Build libc++experimental.a" ON)
 option(LIBCXX_ENABLE_FILESYSTEM
         "Build filesystem as part of libc++experimental.a" ${LIBCXX_ENABLE_EXPERIMENTAL_LIBRARY})
 option(LIBCXX_INCLUDE_TESTS "Build the libc++ tests." ${LLVM_INCLUDE_TESTS})
-
 
 # Benchmark options -----------------------------------------------------------
 option(LIBCXX_INCLUDE_BENCHMARKS "Build the libc++ benchmarks and their dependancies" ON)
@@ -535,11 +535,13 @@ include_directories(include)
 add_subdirectory(include)
 add_subdirectory(lib)
 
+
 if (LIBCXX_INCLUDE_BENCHMARKS)
   add_subdirectory(benchmarks)
 endif()
 if (LIBCXX_INCLUDE_TESTS)
   add_subdirectory(test)
+  add_subdirectory(lib/abi)
 endif()
 if (LIBCXX_INCLUDE_DOCS)
   add_subdirectory(docs)
