@@ -21,5 +21,5 @@
 
 int main()
 {
-    std::gcd(2.0, 4);
+    std::gcd<int, const bool>(2, true);
 }

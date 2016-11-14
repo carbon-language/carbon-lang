@@ -11,7 +11,7 @@
 // <numeric>
 
 // template<class _M, class _N>
-// constexpr common_type_t<_M,_N> gcd(_M __m, _N __n)
+// constexpr common_type_t<_M,_N> lcm(_M __m, _N __n)
 
 // Remarks: If either M or N is not an integer type, 
 // or if either is (a possibly cv-qualified) bool, the program is ill-formed.
@@ -21,5 +21,5 @@
 
 int main()
 {
-    std::gcd(2.0, 4);
+    std::lcm(false, 4);
 }

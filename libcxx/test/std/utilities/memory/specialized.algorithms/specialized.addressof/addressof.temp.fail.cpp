@@ -6,20 +6,15 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-// 
-// UNSUPPORTED: c++98, c++03, c++11, c++14
-// <numeric>
 
-// template<class _M, class _N>
-// constexpr common_type_t<_M,_N> gcd(_M __m, _N __n)
+// <memory>
 
-// Remarks: If either M or N is not an integer type, 
-// or if either is (a possibly cv-qualified) bool, the program is ill-formed.
+// template <ObjectType T> T* addressof(T&& r) = delete;
 
-#include <numeric>
-
+#include <memory>
+#include <cassert>
 
 int main()
 {
-    std::gcd(2.0, 4);
+	const int *p = std::addressof<const int>(0);
 }

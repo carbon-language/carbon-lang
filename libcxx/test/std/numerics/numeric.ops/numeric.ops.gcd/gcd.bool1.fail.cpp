@@ -21,5 +21,5 @@
 
 int main()
 {
-    std::gcd(2.0, 4);
+    std::gcd(false, 4);
 }
