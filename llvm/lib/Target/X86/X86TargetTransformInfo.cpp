@@ -526,6 +526,10 @@ int X86TTIImpl::getArithmeticInstrCost(
     // Two ops + 1 extract + 1 insert = 4.
     { ISD::MUL,     MVT::v16i16,   4 },
     { ISD::MUL,     MVT::v8i32,    4 },
+    { ISD::SUB,     MVT::v32i8,    4 },
+    { ISD::ADD,     MVT::v32i8,    4 },
+    { ISD::SUB,     MVT::v16i16,   4 },
+    { ISD::ADD,     MVT::v16i16,   4 },
     { ISD::SUB,     MVT::v8i32,    4 },
     { ISD::ADD,     MVT::v8i32,    4 },
     { ISD::SUB,     MVT::v4i64,    4 },
