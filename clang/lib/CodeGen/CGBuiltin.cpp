@@ -2538,16 +2538,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     // Any calls now have event arguments passed.
     if (NumArgs >= 7) {
       llvm::Type *EventTy = ConvertType(getContext().OCLClkEventTy);
-      unsigned AS4 =
-          E->getArg(4)->getType()->isArrayType()
-              ? E->getArg(4)->getType().getAddressSpace()
-              : E->getArg(4)->getType()->getPointeeType().getAddressSpace();
-      llvm::Type *EventPtrAS4Ty =
-          EventTy->getPointerTo(CGM.getContext().getTargetAddressSpace(AS4));
-      unsigned AS5 =
-          E->getArg(5)->getType()->getPointeeType().getAddressSpace();
-      llvm::Type *EventPtrAS5Ty =
-          EventTy->getPointerTo(CGM.getContext().getTargetAddressSpace(AS5));
+      llvm::Type *EventPtrTy = EventTy->getPointerTo(
+          CGM.getContext().getTargetAddressSpace(LangAS::opencl_generic));
 
       llvm::Value *NumEvents = EmitScalarExpr(E->getArg(3));
       llvm::Value *EventList =
@@ -2555,12 +2547,16 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
               ? EmitArrayToPointerDecay(E->getArg(4)).getPointer()
               : EmitScalarExpr(E->getArg(4));
       llvm::Value *ClkEvent = EmitScalarExpr(E->getArg(5));
+      // Convert to generic address space.
+      EventList = Builder.CreatePointerCast(EventList, EventPtrTy);
+      ClkEvent = Builder.CreatePointerCast(ClkEvent, EventPtrTy);
       llvm::Value *Block =
           Builder.CreateBitCast(EmitScalarExpr(E->getArg(6)), Int8PtrTy);
 
-      std::vector<llvm::Type *> ArgTys = {
-          QueueTy,       Int32Ty,       RangeTy,  Int32Ty,
-          EventPtrAS4Ty, EventPtrAS5Ty, Int8PtrTy};
+      std::vector<llvm::Type *> ArgTys = {QueueTy,  Int32Ty,    RangeTy,
+                                          Int32Ty,  EventPtrTy, EventPtrTy,
+                                          Int8PtrTy};
+
       std::vector<llvm::Value *> Args = {Queue,     Flags,    Range, NumEvents,
                                          EventList, ClkEvent, Block};
 

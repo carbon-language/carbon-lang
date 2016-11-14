@@ -36,8 +36,12 @@ kernel void enqueue_kernel_tests() {
 
   // Testing the second overload type
   enqueue_kernel(default_queue, flags, ndrange, 1, &event_wait_list, &evt, ^(void) {
-    return 0;
-  });
+                                                                             return 0;
+                                                                           });
+
+  enqueue_kernel(default_queue, flags, ndrange, 1, 0, 0, ^(void) {
+                                                           return 0;
+                                                         });
 
   enqueue_kernel(default_queue, flags, ndrange, 1, vptr, &evt, ^(void) // expected-error{{illegal call to enqueue_kernel, expected 'clk_event_t *' argument type}}
                                                                {
@@ -104,6 +108,12 @@ kernel void enqueue_kernel_tests() {
 
   // Testing the forth overload type
   enqueue_kernel(default_queue, flags, ndrange, 1, event_wait_list2, &evt,
+                 ^(local void *a, local void *b) {
+                   return 0;
+                 },
+                 1024, 1024);
+
+  enqueue_kernel(default_queue, flags, ndrange, 1, 0, 0,
                  ^(local void *a, local void *b) {
                    return 0;
                  },

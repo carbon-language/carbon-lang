@@ -451,16 +451,20 @@ static bool SemaOpenCLBuiltinEnqueueKernel(Sema &S, CallExpr *TheCall) {
     Expr *Arg4 = TheCall->getArg(4);
     Expr *Arg5 = TheCall->getArg(5);
 
-    // Fith argument is always passed as pointers to clk_event_t.
-    if (!Arg4->getType()->getPointeeOrArrayElementType()->isClkEventT()) {
+    // Fifth argument is always passed as a pointer to clk_event_t.
+    if (!Arg4->isNullPointerConstant(S.Context,
+                                     Expr::NPC_ValueDependentIsNotNull) &&
+        !Arg4->getType()->getPointeeOrArrayElementType()->isClkEventT()) {
       S.Diag(TheCall->getArg(4)->getLocStart(),
              diag::err_opencl_enqueue_kernel_expected_type)
           << S.Context.getPointerType(S.Context.OCLClkEventTy);
       return true;
     }
 
-    // Sixth argument is always passed as pointers to clk_event_t.
-    if (!(Arg5->getType()->isPointerType() &&
+    // Sixth argument is always passed as a pointer to clk_event_t.
+    if (!Arg5->isNullPointerConstant(S.Context,
+                                     Expr::NPC_ValueDependentIsNotNull) &&
+        !(Arg5->getType()->isPointerType() &&
           Arg5->getType()->getPointeeType()->isClkEventT())) {
       S.Diag(TheCall->getArg(5)->getLocStart(),
              diag::err_opencl_enqueue_kernel_expected_type)
