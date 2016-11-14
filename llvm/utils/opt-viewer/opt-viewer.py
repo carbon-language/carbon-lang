@@ -275,8 +275,8 @@ for input_file in args.yaml_files:
     f = open(input_file)
     docs = yaml.load_all(f)
     for remark in docs:
-        # Avoid duplicated remarks
-        if remark.key in all_remarks:
+        # Avoid remarks withoug debug location or if they are duplicated
+        if not hasattr(remark, 'DebugLoc') or remark.key in all_remarks:
             continue
         all_remarks[remark.key] = remark
 
