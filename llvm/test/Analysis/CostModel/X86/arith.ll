@@ -490,24 +490,26 @@ define i32 @mul(i32 %arg) {
   ; AVX512BW: cost of 1 {{.*}} %I = mul
   %I = mul <32 x i16> undef, undef
 
-  ; SSSE3: cost of 2 {{.*}} %J = mul
-  ; SSE42: cost of 2 {{.*}} %J = mul
-  ; AVX: cost of 2 {{.*}} %J = mul
-  ; AVX2: cost of 2 {{.*}} %J = mul
-  ; AVX512: cost of 2 {{.*}} %J = mul
+  ; SSSE3: cost of 12 {{.*}} %J = mul
+  ; SSE42: cost of 12 {{.*}} %J = mul
+  ; AVX: cost of 12 {{.*}} %J = mul
+  ; AVX2: cost of 7 {{.*}} %J = mul
+  ; AVX512F: cost of 5 {{.*}} %J = mul
+  ; AVX512BW: cost of 4 {{.*}} %J = mul
   %J = mul <16 x i8> undef, undef
-  ; SSSE3: cost of 4 {{.*}} %K = mul
-  ; SSE42: cost of 4 {{.*}} %K = mul
-  ; AVX: cost of 2 {{.*}} %K = mul
-  ; AVX2: cost of 2 {{.*}} %K = mul
-  ; AVX512: cost of 2 {{.*}} %K = mul
+  ; SSSE3: cost of 24 {{.*}} %K = mul
+  ; SSE42: cost of 24 {{.*}} %K = mul
+  ; AVX: cost of 26 {{.*}} %K = mul
+  ; AVX2: cost of 17 {{.*}} %K = mul
+  ; AVX512F: cost of 13 {{.*}} %K = mul
+  ; AVX512BW: cost of 4 {{.*}} %K = mul
   %K = mul <32 x i8> undef, undef
-  ; SSSE3: cost of 8 {{.*}} %L = mul
-  ; SSE42: cost of 8 {{.*}} %L = mul
-  ; AVX: cost of 4 {{.*}} %L = mul
-  ; AVX2: cost of 4 {{.*}} %L = mul
-  ; AVX512F: cost of 4 {{.*}} %L = mul
-  ; AVX512BW: cost of 2 {{.*}} %L = mul
+  ; SSSE3: cost of 48 {{.*}} %L = mul
+  ; SSE42: cost of 48 {{.*}} %L = mul
+  ; AVX: cost of 52 {{.*}} %L = mul
+  ; AVX2: cost of 34 {{.*}} %L = mul
+  ; AVX512F: cost of 26 {{.*}} %L = mul
+  ; AVX512BW: cost of 11 {{.*}} %L = mul
   %L = mul <64 x i8> undef, undef
 
   ret i32 undef
