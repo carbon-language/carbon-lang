@@ -4980,11 +4980,14 @@ __cxa_demangle(const char *mangled_name, char *buf, size_t *n, int *status) {
     }
 
     size_t len = std::strlen(mangled_name);
-    if (len < 2 || mangled_name[0] != '_' || mangled_name[1] != 'Z')
+    if (len < 2 || strncmp(mangled_name, "_Z", 2))
     {
-        if (status)
-            *status = invalid_mangled_name;
-        return nullptr;
+        if (len < 4 || strncmp(mangled_name, "___Z", 4))
+        {
+            if (status)
+                *status = invalid_mangled_name;
+            return nullptr;
+        }
     }
 
     size_t internal_size = buf != nullptr ? *n : 0;
