@@ -2132,6 +2132,7 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   def XSCVSDQP  : X_VT5_XO5_VB5_TyVB<63, 10, 836, "xscvsdqp", vfrc, []>;
   def XSCVUDQP  : X_VT5_XO5_VB5_TyVB<63,  2, 836, "xscvudqp", vfrc, []>;
 
+  let UseVSXReg = 1 in {
   //===--------------------------------------------------------------------===//
   // Round to Floating-Point Integer Instructions
 
@@ -2147,6 +2148,14 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   def XVCVSPHP : XX2_XT6_XO5_XB6<60, 25, 475, "xvcvsphp", vsrc,
                                  [(set v4f32:$XT,
                                      (int_ppc_vsx_xvcvsphp v4f32:$XB))]>;
+
+  } // UseVSXReg = 1
+
+  // Pattern for matching Vector HP -> Vector SP intrinsic. Defined as a
+  // seperate pattern so that it can convert the input register class from
+  // VRRC(v8i16) to VSRC.
+  def : Pat<(v4f32 (int_ppc_vsx_xvcvhpsp v8i16:$A)),
+            (v4f32 (XVCVHPSP (COPY_TO_REGCLASS $A, VSRC)))>;
 
   class Z23_VT5_R1_VB5_RMC2_EX1<bits<6> opcode, bits<8> xo, bit ex, string opc,
                                 list<dag> pattern>

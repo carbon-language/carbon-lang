@@ -331,4 +331,15 @@ entry:
 ; Function Attrs: nounwind readnone
 declare <2 x i64> @llvm.ppc.vsx.xvtstdcdp(<2 x double> %a, i32 %b)
 
+define <4 x float> @testXVCVHPSP(<8 x i16> %a) {
+entry:
+  %0 = tail call <4 x float>@llvm.ppc.vsx.xvcvhpsp(<8 x i16> %a)
+  ret <4 x float> %0
+; CHECK-LABEL: testXVCVHPSP
+; CHECK: xvcvhpsp 34, 34
+; CHECK: blr
+}
+; Function Attrs: nounwind readnone
+declare <4 x float>@llvm.ppc.vsx.xvcvhpsp(<8 x i16>)
+
 declare void @sink(...)
