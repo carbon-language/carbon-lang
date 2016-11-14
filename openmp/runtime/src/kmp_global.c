@@ -14,6 +14,7 @@
 
 
 #include "kmp.h"
+#include "kmp_affinity.h"
 
 kmp_key_t __kmp_gtid_threadprivate_key;
 
@@ -222,21 +223,22 @@ enum mic_type __kmp_mic_type = non_mic;
 
 #if KMP_AFFINITY_SUPPORTED
 
+KMPAffinity* __kmp_affinity_dispatch = NULL;
+
 # if KMP_USE_HWLOC
 int __kmp_hwloc_error = FALSE;
 hwloc_topology_t __kmp_hwloc_topology = NULL;
 # endif
 
-# if KMP_GROUP_AFFINITY
-
+# if KMP_OS_WINDOWS
+#  if KMP_GROUP_AFFINITY
 int __kmp_num_proc_groups = 1;
-
+#  endif /* KMP_GROUP_AFFINITY */
 kmp_GetActiveProcessorCount_t __kmp_GetActiveProcessorCount = NULL;
 kmp_GetActiveProcessorGroupCount_t __kmp_GetActiveProcessorGroupCount = NULL;
 kmp_GetThreadGroupAffinity_t __kmp_GetThreadGroupAffinity = NULL;
 kmp_SetThreadGroupAffinity_t __kmp_SetThreadGroupAffinity = NULL;
-
-# endif /* KMP_GROUP_AFFINITY */
+# endif /* KMP_OS_WINDOWS */
 
 size_t   __kmp_affin_mask_size = 0;
 enum affinity_type __kmp_affinity_type = affinity_default;

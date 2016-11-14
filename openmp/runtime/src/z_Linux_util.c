@@ -22,6 +22,7 @@
 #include "kmp_io.h"
 #include "kmp_stats.h"
 #include "kmp_wait_release.h"
+#include "kmp_affinity.h"
 
 #if !KMP_OS_FREEBSD && !KMP_OS_NETBSD
 # include <alloca.h>
@@ -112,118 +113,6 @@ __kmp_print_cond( char *buffer, kmp_cond_align_t *cond )
 /*
  * Affinity support
  */
-
-/*
- * On some of the older OS's that we build on, these constants aren't present
- * in <asm/unistd.h> #included from <sys.syscall.h>.  They must be the same on
- * all systems of the same arch where they are defined, and they cannot change.
- * stone forever.
- */
-
-#  if KMP_ARCH_X86 || KMP_ARCH_ARM
-#   ifndef __NR_sched_setaffinity
-#    define __NR_sched_setaffinity  241
-#   elif __NR_sched_setaffinity != 241
-#    error Wrong code for setaffinity system call.
-#   endif /* __NR_sched_setaffinity */
-#   ifndef __NR_sched_getaffinity
-#    define __NR_sched_getaffinity  242
-#   elif __NR_sched_getaffinity != 242
-#    error Wrong code for getaffinity system call.
-#   endif /* __NR_sched_getaffinity */
-
-#  elif KMP_ARCH_AARCH64
-#   ifndef __NR_sched_setaffinity
-#    define __NR_sched_setaffinity  122
-#   elif __NR_sched_setaffinity != 122
-#    error Wrong code for setaffinity system call.
-#   endif /* __NR_sched_setaffinity */
-#   ifndef __NR_sched_getaffinity
-#    define __NR_sched_getaffinity  123
-#   elif __NR_sched_getaffinity != 123
-#    error Wrong code for getaffinity system call.
-#   endif /* __NR_sched_getaffinity */
-
-#  elif KMP_ARCH_X86_64
-#   ifndef __NR_sched_setaffinity
-#    define __NR_sched_setaffinity  203
-#   elif __NR_sched_setaffinity != 203
-#    error Wrong code for setaffinity system call.
-#   endif /* __NR_sched_setaffinity */
-#   ifndef __NR_sched_getaffinity
-#    define __NR_sched_getaffinity  204
-#   elif __NR_sched_getaffinity != 204
-#    error Wrong code for getaffinity system call.
-#   endif /* __NR_sched_getaffinity */
-
-#  elif KMP_ARCH_PPC64
-#   ifndef __NR_sched_setaffinity
-#    define __NR_sched_setaffinity  222
-#   elif __NR_sched_setaffinity != 222
-#    error Wrong code for setaffinity system call.
-#   endif /* __NR_sched_setaffinity */
-#   ifndef __NR_sched_getaffinity
-#    define __NR_sched_getaffinity  223
-#   elif __NR_sched_getaffinity != 223
-#    error Wrong code for getaffinity system call.
-#   endif /* __NR_sched_getaffinity */
-
-
-#  else
-#   error Unknown or unsupported architecture
-
-#  endif /* KMP_ARCH_* */
-
-int
-__kmp_set_system_affinity( kmp_affin_mask_t const *mask, int abort_on_error )
-{
-    KMP_ASSERT2(KMP_AFFINITY_CAPABLE(),
-      "Illegal set affinity operation when not capable");
-#if KMP_USE_HWLOC
-    int retval = hwloc_set_cpubind(__kmp_hwloc_topology, (hwloc_cpuset_t)mask, HWLOC_CPUBIND_THREAD);
-#else
-    int retval = syscall( __NR_sched_setaffinity, 0, __kmp_affin_mask_size, mask );
-#endif
-    if (retval >= 0) {
-        return 0;
-    }
-    int error = errno;
-    if (abort_on_error) {
-        __kmp_msg(
-            kmp_ms_fatal,
-            KMP_MSG( FatalSysError ),
-            KMP_ERR( error ),
-            __kmp_msg_null
-        );
-    }
-    return error;
-}
-
-int
-__kmp_get_system_affinity( kmp_affin_mask_t *mask, int abort_on_error )
-{
-    KMP_ASSERT2(KMP_AFFINITY_CAPABLE(),
-      "Illegal get affinity operation when not capable");
-
-#if KMP_USE_HWLOC
-    int retval = hwloc_get_cpubind(__kmp_hwloc_topology, (hwloc_cpuset_t)mask, HWLOC_CPUBIND_THREAD);
-#else
-    int retval = syscall( __NR_sched_getaffinity, 0, __kmp_affin_mask_size, mask );
-#endif
-    if (retval >= 0) {
-        return 0;
-    }
-    int error = errno;
-    if (abort_on_error) {
-        __kmp_msg(
-            kmp_ms_fatal,
-            KMP_MSG( FatalSysError ),
-            KMP_ERR( error ),
-            __kmp_msg_null
-        );
-    }
-    return error;
-}
 
 void
 __kmp_affinity_bind_thread( int which )
