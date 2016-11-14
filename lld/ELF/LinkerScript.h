@@ -221,6 +221,7 @@ public:
   void createSections(OutputSectionFactory<ELFT> &Factory);
   void removeEmptyCommands();
   void adjustSectionsBeforeSorting();
+  void adjustSectionsAfterSorting();
 
   std::vector<PhdrEntry<ELFT>> createPhdrs();
   bool ignoreInterpSection();

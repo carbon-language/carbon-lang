@@ -563,6 +563,35 @@ template <class ELFT> void LinkerScript<ELFT>::adjustSectionsBeforeSorting() {
     auto *OutSec = make<OutputSection<ELFT>>(Cmd->Name, Type, Flags);
     OutputSections->push_back(OutSec);
   }
+}
+
+template <class ELFT> void LinkerScript<ELFT>::adjustSectionsAfterSorting() {
+  placeOrphanSections();
+
+  // If output section command doesn't specify any segments,
+  // and we haven't previously assigned any section to segment,
+  // then we simply assign section to the very first load segment.
+  // Below is an example of such linker script:
+  // PHDRS { seg PT_LOAD; }
+  // SECTIONS { .aaa : { *(.aaa) } }
+  std::vector<StringRef> DefPhdrs;
+  auto FirstPtLoad =
+      std::find_if(Opt.PhdrsCommands.begin(), Opt.PhdrsCommands.end(),
+                   [](const PhdrsCommand &Cmd) { return Cmd.Type == PT_LOAD; });
+  if (FirstPtLoad != Opt.PhdrsCommands.end())
+    DefPhdrs.push_back(FirstPtLoad->Name);
+
+  // Walk the commands and propagate the program headers to commands that don't
+  // explicitly specify them.
+  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
+    auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
+    if (!Cmd)
+      continue;
+    if (Cmd->Phdrs.empty())
+      Cmd->Phdrs = DefPhdrs;
+    else
+      DefPhdrs = Cmd->Phdrs;
+  }
 
   removeEmptyCommands();
 }
@@ -630,8 +659,6 @@ void LinkerScript<ELFT>::placeOrphanSections() {
 
 template <class ELFT>
 void LinkerScript<ELFT>::assignAddresses(std::vector<PhdrEntry<ELFT>> &Phdrs) {
-  placeOrphanSections();
-
   // Assign addresses as instructed by linker script SECTIONS sub-commands.
   Dot = 0;
 
@@ -711,7 +738,6 @@ std::vector<PhdrEntry<ELFT>> LinkerScript<ELFT>::createPhdrs() {
 
   // Process PHDRS and FILEHDR keywords because they are not
   // real output sections and cannot be added in the following loop.
-  std::vector<size_t> DefPhdrIds;
   for (const PhdrsCommand &Cmd : Opt.PhdrsCommands) {
     Ret.emplace_back(Cmd.Type, Cmd.Flags == UINT_MAX ? PF_R : Cmd.Flags);
     PhdrEntry<ELFT> &Phdr = Ret.back();
@@ -725,15 +751,6 @@ std::vector<PhdrEntry<ELFT>> LinkerScript<ELFT>::createPhdrs() {
       Phdr.H.p_paddr = Cmd.LMAExpr(0);
       Phdr.HasLMA = true;
     }
-
-    // If output section command doesn't specify any segments,
-    // and we haven't previously assigned any section to segment,
-    // then we simply assign section to the very first load segment.
-    // Below is an example of such linker script:
-    // PHDRS { seg PT_LOAD; }
-    // SECTIONS { .aaa : { *(.aaa) } }
-    if (DefPhdrIds.empty() && Phdr.H.p_type == PT_LOAD)
-      DefPhdrIds.push_back(Ret.size() - 1);
   }
 
   // Add output sections to program headers.
@@ -741,17 +758,12 @@ std::vector<PhdrEntry<ELFT>> LinkerScript<ELFT>::createPhdrs() {
     if (!(Sec->Flags & SHF_ALLOC))
       break;
 
-    std::vector<size_t> PhdrIds = getPhdrIndices(Sec->getName());
-    if (PhdrIds.empty())
-      PhdrIds = std::move(DefPhdrIds);
-
     // Assign headers specified by linker script
-    for (size_t Id : PhdrIds) {
+    for (size_t Id : getPhdrIndices(Sec->getName())) {
       Ret[Id].add(Sec);
       if (Opt.PhdrsCommands[Id].Flags == UINT_MAX)
         Ret[Id].H.p_flags |= Sec->getPhdrFlags();
     }
-    DefPhdrIds = std::move(PhdrIds);
   }
   return Ret;
 }
