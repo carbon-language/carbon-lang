@@ -526,21 +526,19 @@ template <class ELFT> void LinkerScript<ELFT>::removeEmptyCommands() {
         auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
         if (!Cmd)
           return false;
-        std::vector<OutputSectionBase *> Secs =
-            findSections<ELFT>(Cmd->Name, *OutputSections);
-        if (!Secs.empty())
-          return false;
-        for (const std::unique_ptr<BaseCommand> &I : Cmd->Commands)
-          if (!isa<InputSectionDescription>(I.get()))
-            return false;
-        return true;
+        return findSections<ELFT>(Cmd->Name, *OutputSections).empty();
       });
   Opt.Commands.erase(Pos, Opt.Commands.end());
 }
 
-template <class ELFT> void LinkerScript<ELFT>::adjustSectionsBeforeSorting() {
-  removeEmptyCommands();
+static bool isAllSectionDescription(const OutputSectionCommand &Cmd) {
+  for (const std::unique_ptr<BaseCommand> &I : Cmd.Commands)
+    if (!isa<InputSectionDescription>(*I))
+      return false;
+  return true;
+}
 
+template <class ELFT> void LinkerScript<ELFT>::adjustSectionsBeforeSorting() {
   // If the output section contains only symbol assignments, create a
   // corresponding output section. The bfd linker seems to only create them if
   // '.' is assigned to, but creating these section should not have any bad
@@ -559,9 +557,14 @@ template <class ELFT> void LinkerScript<ELFT>::adjustSectionsBeforeSorting() {
       continue;
     }
 
+    if (isAllSectionDescription(*Cmd))
+      continue;
+
     auto *OutSec = make<OutputSection<ELFT>>(Cmd->Name, Type, Flags);
     OutputSections->push_back(OutSec);
   }
+
+  removeEmptyCommands();
 }
 
 // When placing orphan sections, we want to place them after symbol assignments
