@@ -14,6 +14,8 @@
 // RUN: %env_asan_opts=strict_string_checks=false %run %t i 2>&1
 // RUN: %env_asan_opts=strict_string_checks=true not %run %t i 2>&1 | FileCheck %s
 
+// XFAIL: win32
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,30 +36,30 @@ int main(int argc, char **argv) {
       s1[size - 1] = 'z';
       s2[size - 1] = 'x';
       for (int i = 0; i <= size; ++i)
-        assert((strncmp(s1, s2, i) == 0) == (i < size));
+        assert((strncasecmp(s1, s2, i) == 0) == (i < size));
       s1[size - 1] = '\0';
       s2[size - 1] = '\0';
-      assert(strncmp(s1, s2, 2*size) == 0);
+      assert(strncasecmp(s1, s2, 2*size) == 0);
       break;
     case 'b':
-      return strncmp(s1-1, s2, 1);
+      return strncasecmp(s1-1, s2, 1);
     case 'c':
-      return strncmp(s1, s2-1, 1);
+      return strncasecmp(s1, s2-1, 1);
     case 'd':
-      return strncmp(s1+size, s2, 1);
+      return strncasecmp(s1+size, s2, 1);
     case 'e':
-      return strncmp(s1, s2+size, 1);
+      return strncasecmp(s1, s2+size, 1);
     case 'f':
-      return strncmp(s1+1, s2, size);
+      return strncasecmp(s1+1, s2, size);
     case 'g':
-      return strncmp(s1, s2+1, size);
+      return strncasecmp(s1, s2+1, size);
     case 'h':
       s1[size - 1] = '\0';
-      assert(strncmp(s1, s2, 2*size) != 0);
+      assert(strncasecmp(s1, s2, 2*size) != 0);
       break;
     case 'i':
       s2[size - 1] = '\0';
-      assert(strncmp(s1, s2, 2*size) != 0);
+      assert(strncasecmp(s1, s2, 2*size) != 0);
       break;
     // CHECK: {{.*}}ERROR: AddressSanitizer: stack-buffer-{{ov|und}}erflow on address
   }
