@@ -229,6 +229,7 @@ public:
   bool hasLMA(StringRef Name);
   bool shouldKeep(InputSectionBase<ELFT> *S);
   void assignOffsets(OutputSectionCommand *Cmd);
+  void placeOrphanSections();
   void assignAddresses(std::vector<PhdrEntry<ELFT>> &Phdrs);
   bool hasPhdrsCommands();
   uint64_t getOutputSectionAddress(StringRef Name) override;

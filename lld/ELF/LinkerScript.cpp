@@ -583,14 +583,11 @@ static bool shouldSkip(const BaseCommand &Cmd) {
   return Assign->Name != ".";
 }
 
+// Orphan sections are sections present in the input files which are not
+// explicitly placed into the output file by the linker script. This just
+// places them in the order already decided in OutputSections.
 template <class ELFT>
-void LinkerScript<ELFT>::assignAddresses(std::vector<PhdrEntry<ELFT>> &Phdrs) {
-  // Orphan sections are sections present in the input files which
-  // are not explicitly placed into the output file by the linker script.
-  // We place orphan sections at end of file.
-  // Other linkers places them using some heuristics as described in
-  // https://sourceware.org/binutils/docs/ld/Orphan-Sections.html#Orphan-Sections.
-
+void LinkerScript<ELFT>::placeOrphanSections() {
   // The OutputSections are already in the correct order.
   // This loops creates or moves commands as needed so that they are in the
   // correct order.
@@ -622,6 +619,11 @@ void LinkerScript<ELFT>::assignAddresses(std::vector<PhdrEntry<ELFT>> &Phdrs) {
     // Continue from where we found it.
     CmdIndex = (Pos - Opt.Commands.begin()) + 1;
   }
+}
+
+template <class ELFT>
+void LinkerScript<ELFT>::assignAddresses(std::vector<PhdrEntry<ELFT>> &Phdrs) {
+  placeOrphanSections();
 
   // Assign addresses as instructed by linker script SECTIONS sub-commands.
   Dot = 0;
