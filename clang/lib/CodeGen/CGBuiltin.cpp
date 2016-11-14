@@ -2517,17 +2517,11 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       std::vector<llvm::Type *> ArgTys = {QueueTy, IntTy, RangeTy, Int8PtrTy,
                                           IntTy};
 
-      // Add the variadics.
-      for (unsigned I = 4; I < NumArgs; ++I) {
-        llvm::Value *ArgSize = EmitScalarExpr(E->getArg(I));
-        unsigned TypeSizeInBytes =
-            getContext()
-                .getTypeSizeInChars(E->getArg(I)->getType())
-                .getQuantity();
-        Args.push_back(TypeSizeInBytes < 4
-                           ? Builder.CreateZExt(ArgSize, Int32Ty)
-                           : ArgSize);
-      }
+      // Each of the following arguments specifies the size of the corresponding
+      // argument passed to the enqueued block.
+      for (unsigned I = 4/*Position of the first size arg*/; I < NumArgs; ++I)
+        Args.push_back(
+            Builder.CreateZExtOrTrunc(EmitScalarExpr(E->getArg(I)), SizeTy));
 
       llvm::FunctionType *FTy = llvm::FunctionType::get(
           Int32Ty, llvm::ArrayRef<llvm::Type *>(ArgTys), true);
@@ -2541,7 +2535,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       llvm::Type *EventPtrTy = EventTy->getPointerTo(
           CGM.getContext().getTargetAddressSpace(LangAS::opencl_generic));
 
-      llvm::Value *NumEvents = EmitScalarExpr(E->getArg(3));
+      llvm::Value *NumEvents =
+          Builder.CreateZExtOrTrunc(EmitScalarExpr(E->getArg(3)), Int32Ty);
       llvm::Value *EventList =
           E->getArg(4)->getType()->isArrayType()
               ? EmitArrayToPointerDecay(E->getArg(4)).getPointer()
@@ -2575,17 +2570,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       ArgTys.push_back(Int32Ty);
       Name = "__enqueue_kernel_events_vaargs";
 
-      // Add the variadics.
-      for (unsigned I = 7; I < NumArgs; ++I) {
-        llvm::Value *ArgSize = EmitScalarExpr(E->getArg(I));
-        unsigned TypeSizeInBytes =
-            getContext()
-                .getTypeSizeInChars(E->getArg(I)->getType())
-                .getQuantity();
-        Args.push_back(TypeSizeInBytes < 4
-                           ? Builder.CreateZExt(ArgSize, Int32Ty)
-                           : ArgSize);
-      }
+      // Each of the following arguments specifies the size of the corresponding
+      // argument passed to the enqueued block.
+      for (unsigned I = 7/*Position of the first size arg*/; I < NumArgs; ++I)
+        Args.push_back(
+            Builder.CreateZExtOrTrunc(EmitScalarExpr(E->getArg(I)), SizeTy));
+
       llvm::FunctionType *FTy = llvm::FunctionType::get(
           Int32Ty, llvm::ArrayRef<llvm::Type *>(ArgTys), true);
       return RValue::get(
