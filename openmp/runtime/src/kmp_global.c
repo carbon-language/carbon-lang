@@ -28,10 +28,10 @@ kmp_cpuinfo_t   __kmp_cpuinfo = { 0 }; // Not initialized
 kmp_tas_lock_t __kmp_stats_lock;
 
 // global list of per thread stats, the head is a sentinel node which accumulates all stats produced before __kmp_create_worker is called.
-kmp_stats_list __kmp_stats_list;
+kmp_stats_list* __kmp_stats_list;
 
 // thread local pointer to stats node within list
-__thread kmp_stats_list* __kmp_stats_thread_ptr = &__kmp_stats_list;
+__thread kmp_stats_list* __kmp_stats_thread_ptr = NULL;
 
 // gives reference tick for all events (considered the 0 tick)
 tsc_tick_count __kmp_stats_start_time;
