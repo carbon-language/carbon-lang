@@ -219,6 +219,7 @@ public:
 
   void processCommands(OutputSectionFactory<ELFT> &Factory);
   void createSections(OutputSectionFactory<ELFT> &Factory);
+  void removeEmptyCommands();
   void adjustSectionsBeforeSorting();
 
   std::vector<PhdrEntry<ELFT>> createPhdrs();

@@ -513,7 +513,7 @@ void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
                 [this](std::unique_ptr<BaseCommand> &B) { process(*B.get()); });
 }
 
-template <class ELFT> void LinkerScript<ELFT>::adjustSectionsBeforeSorting() {
+template <class ELFT> void LinkerScript<ELFT>::removeEmptyCommands() {
   // It is common practice to use very generic linker scripts. So for any
   // given run some of the output sections in the script will be empty.
   // We could create corresponding empty output sections, but that would
@@ -536,6 +536,10 @@ template <class ELFT> void LinkerScript<ELFT>::adjustSectionsBeforeSorting() {
         return true;
       });
   Opt.Commands.erase(Pos, Opt.Commands.end());
+}
+
+template <class ELFT> void LinkerScript<ELFT>::adjustSectionsBeforeSorting() {
+  removeEmptyCommands();
 
   // If the output section contains only symbol assignments, create a
   // corresponding output section. The bfd linker seems to only create them if
