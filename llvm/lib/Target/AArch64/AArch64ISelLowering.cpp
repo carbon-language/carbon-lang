@@ -8799,6 +8799,61 @@ static SDValue split16BStoreSplat(SelectionDAG &DAG, StoreSDNode *St,
   return NewST1;
 }
 
+/// Replace a splat of zeros to a vector store by scalar stores of WZR/XZR.  The
+/// load store optimizer pass will merge them to store pair stores.  This should
+/// be better than a movi to create the vector zero followed by a vector store
+/// if the zero constant is not re-used, since one instructions and one register
+/// live range will be removed.
+///
+/// For example, the final generated code should be:
+///
+///   stp xzr, xzr, [x0]
+///
+/// instead of:
+///
+///   movi v0.2d, #0
+///   str q0, [x0]
+///
+static SDValue replaceZeroVectorStore(SelectionDAG &DAG, StoreSDNode *St) {
+  SDValue StVal = St->getValue();
+  EVT VT = StVal.getValueType();
+
+  // We can express a splat as store pair(s) for 2 or 4 elements.
+  int NumVecElts = VT.getVectorNumElements();
+  if (NumVecElts != 4 && NumVecElts != 2)
+    return SDValue();
+
+  if (StVal.getOpcode() != ISD::BUILD_VECTOR)
+    return SDValue();
+
+  // If the zero constant has more than one use then the vector store could be
+  // better since the constant mov will be amortized and stp q instructions
+  // should be able to be formed.
+  if (!StVal.hasOneUse())
+    return SDValue();
+
+  // If the immediate offset of the address operand is too large for the stp
+  // instruction, then bail out.
+  if (DAG.isBaseWithConstantOffset(St->getBasePtr())) {
+    int64_t Offset = St->getBasePtr()->getConstantOperandVal(1);
+    if (Offset < -512 || Offset > 504)
+      return SDValue();
+  }
+
+  for (int I = 0; I < NumVecElts; ++I) {
+    SDValue EltVal = StVal.getOperand(I);
+    if (!isa<ConstantSDNode>(EltVal) ||
+        !cast<ConstantSDNode>(EltVal)->isNullValue())
+      return SDValue();
+  }
+  // Use WZR/XZR here to prevent DAGCombiner::MergeConsecutiveStores from
+  // undoing this transformation.
+  return split16BStoreSplat(
+      DAG, St, NumVecElts == 4 ? DAG.getRegister(AArch64::WZR, MVT::i32)
+                               : DAG.getRegister(AArch64::XZR, MVT::i64),
+      NumVecElts);
+}
+
 /// Replace a splat of a scalar to a vector store by scalar stores of the scalar
 /// value. The load store optimizer pass will merge them to store pair stores.
 /// This has better performance than a splat of the scalar followed by a split
@@ -8862,6 +8917,17 @@ static SDValue split16BStores(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
   if (S->isVolatile())
     return SDValue();
 
+  SDValue StVal = S->getValue();
+  EVT VT = StVal.getValueType();
+  if (!VT.isVector())
+    return SDValue();
+
+  // If we get a splat of zeros, convert this vector store to a store of
+  // scalars. They will be merged into store pairs of xzr thereby removing one
+  // instruction and one register.
+  if (SDValue ReplacedZeroSplat = replaceZeroVectorStore(DAG, S))
+    return ReplacedZeroSplat;
+
   // FIXME: The logic for deciding if an unaligned store should be split should
   // be included in TLI.allowsMisalignedMemoryAccesses(), and there should be
   // a call to that function here.
@@ -8873,12 +8939,9 @@ static SDValue split16BStores(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
   if (DAG.getMachineFunction().getFunction()->optForMinSize())
     return SDValue();
 
-  SDValue StVal = S->getValue();
-  EVT VT = StVal.getValueType();
-
   // Don't split v2i64 vectors. Memcpy lowering produces those and splitting
   // those up regresses performance on micro-benchmarks and olden/bh.
-  if (!VT.isVector() || VT.getVectorNumElements() < 2 || VT == MVT::v2i64)
+  if (VT.getVectorNumElements() < 2 || VT == MVT::v2i64)
     return SDValue();
 
   // Split unaligned 16B stores. They are terrible for performance.
