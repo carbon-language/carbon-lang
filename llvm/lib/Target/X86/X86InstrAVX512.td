@@ -6152,6 +6152,15 @@ multiclass avx512_cvtpd2ps<bits<8> opc, string OpcodeStr> {
                                X86vfpround, "{1to2}", "{x}">, EVEX_V128;
     defm Z256 : avx512_vcvt_fp<opc, OpcodeStr, v4f32x_info, v4f64x_info, fpround,
                                "{1to4}", "{y}">, EVEX_V256;
+
+    def : InstAlias<OpcodeStr##"x\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z128rr") VR128X:$dst, VR128X:$src), 0>;
+    def : InstAlias<OpcodeStr##"x\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z128rm") VR128X:$dst, f128mem:$src), 0>;
+    def : InstAlias<OpcodeStr##"y\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z256rr") VR128X:$dst, VR256X:$src), 0>;
+    def : InstAlias<OpcodeStr##"y\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z256rm") VR128X:$dst, f256mem:$src), 0>;
   }
 }
 
@@ -6255,6 +6264,15 @@ multiclass avx512_cvttpd2dq<bits<8> opc, string OpcodeStr, SDNode OpNode,
                                OpNode128, "{1to2}", "{x}">, EVEX_V128;
     defm Z256 : avx512_vcvt_fp<opc, OpcodeStr, v4i32x_info, v4f64x_info, OpNode,
                                "{1to4}", "{y}">, EVEX_V256;
+
+    def : InstAlias<OpcodeStr##"x\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z128rr") VR128X:$dst, VR128X:$src), 0>;
+    def : InstAlias<OpcodeStr##"x\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z128rm") VR128X:$dst, i128mem:$src), 0>;
+    def : InstAlias<OpcodeStr##"y\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z256rr") VR128X:$dst, VR256X:$src), 0>;
+    def : InstAlias<OpcodeStr##"y\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z256rm") VR128X:$dst, i256mem:$src), 0>;
   }
 }
 
@@ -6275,6 +6293,15 @@ multiclass avx512_cvtpd2dq<bits<8> opc, string OpcodeStr,
                                "{1to2}", "{x}">, EVEX_V128;
     defm Z256 : avx512_vcvt_fp<opc, OpcodeStr, v4i32x_info, v4f64x_info, OpNode,
                                "{1to4}", "{y}">, EVEX_V256;
+
+    def : InstAlias<OpcodeStr##"x\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z128rr") VR128X:$dst, VR128X:$src), 0>;
+    def : InstAlias<OpcodeStr##"x\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z128rm") VR128X:$dst, f128mem:$src), 0>;
+    def : InstAlias<OpcodeStr##"y\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z256rr") VR128X:$dst, VR256X:$src), 0>;
+    def : InstAlias<OpcodeStr##"y\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z256rm") VR128X:$dst, f256mem:$src), 0>;
   }
 }
 
@@ -6379,6 +6406,15 @@ multiclass avx512_cvtqq2ps<bits<8> opc, string OpcodeStr,
                                "{1to2}", "{x}">, EVEX_V128;
     defm Z256 : avx512_vcvt_fp<opc, OpcodeStr, v4f32x_info, v4i64x_info, OpNode,
                                "{1to4}", "{y}">, EVEX_V256;
+
+    def : InstAlias<OpcodeStr##"x\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z128rr") VR128X:$dst, VR128X:$src), 0>;
+    def : InstAlias<OpcodeStr##"x\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z128rm") VR128X:$dst, i128mem:$src), 0>;
+    def : InstAlias<OpcodeStr##"y\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z256rr") VR128X:$dst, VR256X:$src), 0>;
+    def : InstAlias<OpcodeStr##"y\t{$src, $dst|$dst, $src}",
+                    (!cast<Instruction>(NAME # "Z256rm") VR128X:$dst, i256mem:$src), 0>;
   }
 }
 
