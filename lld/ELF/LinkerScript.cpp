@@ -1728,12 +1728,7 @@ std::vector<StringRef> ScriptParser::readOutputSectionPhdrs() {
   std::vector<StringRef> Phdrs;
   while (!Error && peek().startswith(":")) {
     StringRef Tok = next();
-    Tok = (Tok.size() == 1) ? next() : Tok.substr(1);
-    if (Tok.empty()) {
-      setError("section header name is empty");
-      break;
-    }
-    Phdrs.push_back(Tok);
+    Phdrs.push_back((Tok.size() == 1) ? next() : Tok.substr(1));
   }
   return Phdrs;
 }
