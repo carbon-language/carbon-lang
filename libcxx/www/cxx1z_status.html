@@ -3,7 +3,7 @@
 <!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
 <html>
 <head>
-  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
   <title>libc++ C++1Z Status</title>
   <link type="text/css" rel="stylesheet" href="menu.css">
   <link type="text/css" rel="stylesheet" href="content.css">
@@ -97,7 +97,7 @@
 	<tr><td><a href="http://wg21.link/p0032r3">p0032r3</a></td><td>LWG</td><td>Homogeneous interface for variant, any and optional</td><td>Oulu</td><td></td><td></td></tr>
 	<tr><td><a href="http://wg21.link/p0040r3">p0040r3</a></td><td>LWG</td><td>Extending memory management tools</td><td>Oulu</td><td>Complete</td><td>4.0</td></tr>
 	<tr><td><a href="http://wg21.link/p0063r3">p0063r3</a></td><td>LWG</td><td>C++17 should refer to C11 instead of C99</td><td>Oulu</td><td><i>Nothing to do</i></td><td>n/a</td></tr>
-	<tr><td><a href="http://wg21.link/p0067r3">p0067r3</a></td><td>LWG</td><td>Elementary string conversions</td><td>Oulu</td><td>Postponed to Issaquah</td><td></td></tr>
+	<tr><td><a href="http://wg21.link/p0067r3">p0067r3</a></td><td>LWG</td><td>Elementary string conversions</td><td>Oulu</td><td>Now <a href="http://wg21.link/P0067R5">P0067R5</a></td><td></td></tr>
 	<tr><td><a href="http://wg21.link/p0083r3">p0083r3</a></td><td>LWG</td><td>Splicing Maps and Sets</td><td>Oulu</td><td></td><td></td></tr>
 	<tr><td><a href="http://wg21.link/p0084r2">p0084r2</a></td><td>LWG</td><td>Emplace Return Type</td><td>Oulu</td><td>Complete</td><td>4.0</td></tr>
 	<tr><td><a href="http://wg21.link/p0088r3">p0088r3</a></td><td>LWG</td><td>Variant: a type-safe union for C++17</td><td>Oulu</td><td></td><td></td></tr>
@@ -121,6 +121,26 @@
 	<tr><td><a href="http://wg21.link/p0392r0">p0392r0</a></td><td>LWG</td><td>Adapting string_view by filesystem paths</td><td>Oulu</td><td>Complete</td><td>4.0</td></tr>
 	<tr><td><a href="http://wg21.link/p0393r3">p0393r3</a></td><td>LWG</td><td>Making Variant Greater Equal</td><td>Oulu</td><td></td><td></td></tr>
 	<tr><td><a href="http://wg21.link/P0394r4">P0394r4</a></td><td>LWG</td><td>Hotel Parallelifornia: terminate() for Parallel Algorithms Exception Handling</td><td>Oulu</td><td></td><td></td></tr>
+  	<tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0003R5">P0003R5</a></td><td>LWG</td><td>Removing Deprecated Exception Specifications from C++17</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0067R5">P0067R5</a></td><td>LWG</td><td>Elementary string conversions, revision 5</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0403R1">P0403R1</a></td><td>LWG</td><td>Literal suffixes for <tt>basic_string_view</tt></td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0414R2">P0414R2</a></td><td>LWG</td><td>Merging shared_ptr changes from Library Fundamentals to C++17</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0418R2">P0418R2</a></td><td>LWG</td><td>Fail or succeed: there is no atomic lattice</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0426R1">P0426R1</a></td><td>LWG</td><td>Constexpr for <tt>std::char_traits</tt></td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0435R1">P0435R1</a></td><td>LWG</td><td>Resolving LWG Issues re <tt>common_type</tt></td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0502R0">P0502R0</a></td><td>LWG</td><td>Throwing out of a parallel algorithm terminates - but how?</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0503R0">P0503R0</a></td><td>LWG</td><td>Correcting library usage of "literal type"</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0504R0">P0504R0</a></td><td>LWG</td><td>Revisiting in-place tag types for any/optional/variant</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0505R0">P0505R0</a></td><td>LWG</td><td>Wording for GB 50 - constexpr for chrono</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0508R0">P0508R0</a></td><td>LWG</td><td>Wording for GB 58 - structured bindings for node_handles</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0509R1">P0509R1</a></td><td>LWG</td><td>Updating “Restrictions on exception handling”</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0510R0">P0510R0</a></td><td>LWG</td><td>Disallowing references, incomplete types, arrays, and empty variants</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0513R0">P0513R0</a></td><td>LWG</td><td>Poisoning the Hash</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0516R0">P0516R0</a></td><td>LWG</td><td>Clarify That shared_future’s Copy Operations have Wide Contracts</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0517R0">P0517R0</a></td><td>LWG</td><td>Make future_error Constructible</td><td>Issaquah</td><td></td><td></td></tr>
+	<tr><td><a href="http://wg21.link/P0521R0">P0521R0</a></td><td>LWG</td><td>Proposed Resolution for CA 14 (shared_ptr use_count/unique)</td><td>Issaquah</td><td></td><td></td></tr>
+
 <!--  	<tr><td></td><td></td><td></td><td></td><td></td><td></td></tr> -->
   </table>
 
@@ -378,7 +398,7 @@
 	<tr><td><a href="http://wg21.link/LWG2749">2749</a></td><td>swappable traits for variants</td><td>Issaquah</td><td></td></tr>
 	<tr><td><a href="http://wg21.link/LWG2750">2750</a></td><td>[fund.ts.v2] LWG 2451 conversion constructor constraint</td><td>Issaquah</td><td></td></tr>
 	<tr><td><a href="http://wg21.link/LWG2752">2752</a></td><td>"Throws:" clauses of async and packaged_task are unimplementable</td><td>Issaquah</td><td></td></tr>
-	<tr><td><a href="http://wg21.link/LWG2755">2755</a></td><td>�[string.view.io] uses non-existent basic_string_view::to_string function</td><td>Issaquah</td><td>Complete</td></tr>
+	<tr><td><a href="http://wg21.link/LWG2755">2755</a></td><td>[string.view.io] uses non-existent basic_string_view::to_string function</td><td>Issaquah</td><td>Complete</td></tr>
 	<tr><td><a href="http://wg21.link/LWG2756">2756</a></td><td>C++ WP optional<T> should 'forward' T's implicit conversions</td><td>Issaquah</td><td>Complete</td></tr>
 	<tr><td><a href="http://wg21.link/LWG2758">2758</a></td><td>std::string{}.assign("ABCDE", 0, 1) is ambiguous</td><td>Complete</td><td></td></tr>
 	<tr><td><a href="http://wg21.link/LWG2759">2759</a></td><td>gcd / lcm and bool for the WP</td><td>Issaquah</td><td>Patch ready</td></tr>
