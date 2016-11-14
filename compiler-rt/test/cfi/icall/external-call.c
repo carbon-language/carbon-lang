@@ -4,7 +4,7 @@
 
 // This test uses jump tables containing PC-relative references to external
 // symbols, which the Mach-O object writer does not currently support.
-// REQUIRES: rdar://problem/29255437
+// XFAIL: darwin
 
 #include <stdlib.h>
 #include <stdio.h>
