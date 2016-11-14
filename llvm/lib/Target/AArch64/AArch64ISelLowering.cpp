@@ -8769,6 +8769,36 @@ static SDValue performExtendCombine(SDNode *N,
   return DAG.getNode(ISD::CONCAT_VECTORS, DL, ResVT, Lo, Hi);
 }
 
+static SDValue split16BStoreSplat(SelectionDAG &DAG, StoreSDNode *St,
+                                  SDValue SplatVal, unsigned NumVecElts) {
+  assert((NumVecElts == 4 || NumVecElts == 2) && "Unexpected NumVecElts");
+
+  unsigned OrigAlignment = St->getAlignment();
+  unsigned EltOffset = NumVecElts == 4 ? 4 : 8;
+  unsigned Alignment = std::min(OrigAlignment, EltOffset);
+
+  // Create scalar stores. This is at least as good as the code sequence for a
+  // split unaligned store which is a dup.s, ext.b, and two stores.
+  // Most of the time the three stores should be replaced by store pair
+  // instructions (stp).
+  SDLoc DL(St);
+  SDValue BasePtr = St->getBasePtr();
+  SDValue NewST1 =
+      DAG.getStore(St->getChain(), DL, SplatVal, BasePtr, St->getPointerInfo(),
+                   St->getAlignment(), St->getMemOperand()->getFlags());
+
+  unsigned Offset = EltOffset;
+  while (--NumVecElts) {
+    SDValue OffsetPtr = DAG.getNode(ISD::ADD, DL, MVT::i64, BasePtr,
+                                    DAG.getConstant(Offset, DL, MVT::i64));
+    NewST1 = DAG.getStore(NewST1.getValue(0), DL, SplatVal, OffsetPtr,
+                          St->getPointerInfo(), Alignment,
+                          St->getMemOperand()->getFlags());
+    Offset += EltOffset;
+  }
+  return NewST1;
+}
+
 /// Replace a splat of a scalar to a vector store by scalar stores of the scalar
 /// value. The load store optimizer pass will merge them to store pair stores.
 /// This has better performance than a splat of the scalar followed by a split
@@ -8819,30 +8849,7 @@ static SDValue replaceSplatVectorStore(SelectionDAG &DAG, StoreSDNode *St) {
   if (IndexNotInserted.any())
       return SDValue();
 
-  unsigned OrigAlignment = St->getAlignment();
-  unsigned EltOffset = NumVecElts == 4 ? 4 : 8;
-  unsigned Alignment = std::min(OrigAlignment, EltOffset);
-
-  // Create scalar stores. This is at least as good as the code sequence for a
-  // split unaligned store which is a dup.s, ext.b, and two stores.
-  // Most of the time the three stores should be replaced by store pair
-  // instructions (stp).
-  SDLoc DL(St);
-  SDValue BasePtr = St->getBasePtr();
-  SDValue NewST1 =
-      DAG.getStore(St->getChain(), DL, SplatVal, BasePtr, St->getPointerInfo(),
-                   St->getAlignment(), St->getMemOperand()->getFlags());
-
-  unsigned Offset = EltOffset;
-  while (--NumVecElts) {
-    SDValue OffsetPtr = DAG.getNode(ISD::ADD, DL, MVT::i64, BasePtr,
-                                    DAG.getConstant(Offset, DL, MVT::i64));
-    NewST1 = DAG.getStore(NewST1.getValue(0), DL, SplatVal, OffsetPtr,
-                          St->getPointerInfo(), Alignment,
-                          St->getMemOperand()->getFlags());
-    Offset += EltOffset;
-  }
-  return NewST1;
+  return split16BStoreSplat(DAG, St, SplatVal, NumVecElts);
 }
 
 static SDValue split16BStores(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
