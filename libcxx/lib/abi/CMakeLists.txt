@@ -7,12 +7,12 @@ if (DEFINED TARGET_TRIPLE
     AND "${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libcxxabi"
     AND NOT LIBCXX_ABI_UNSTABLE
     AND LIBCXX_ABI_VERSION EQUAL "1")
-    set(LIBCXX_HAS_ABILIST_CONFIGURATION 1 CACHE "")
+    set(LIBCXX_HAS_ABILIST_CONFIGURATION 1 CACHE INTERNAL "")
 else()
     if (NOT DEFINED LIBCXX_HAS_ABILIST_CONFIGURATION)
         message(STATUS "libc++ configuration differs from the abilist configuration. check-cxx-abilist target is not supported")
     endif()
-    set(LIBCXX_HAS_ABILIST_CONFIGURATION 0 CACHE "")
+    set(LIBCXX_HAS_ABILIST_CONFIGURATION 0 CACHE INTERNAL "")
 endif()
 
 
