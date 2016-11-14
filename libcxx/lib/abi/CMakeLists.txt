@@ -4,13 +4,15 @@
 if (DEFINED TARGET_TRIPLE
     AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/${TARGET_TRIPLE}.abilist"
     AND TARGET cxx_shared
-    AND "${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libcxxabi"
+    AND ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libcxxabi" OR
+         (APPLE AND "${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "none"))
     AND NOT LIBCXX_ABI_UNSTABLE
     AND LIBCXX_ABI_VERSION EQUAL "1")
     set(LIBCXX_HAS_ABILIST_CONFIGURATION 1 CACHE INTERNAL "")
 else()
     if (NOT DEFINED LIBCXX_HAS_ABILIST_CONFIGURATION)
-        message(STATUS "libc++ configuration differs from the abilist configuration. check-cxx-abilist target is not supported")
+        message(STATUS "libc++ configuration differs from the abilist configuration. "
+                "check-cxx-abilist target is not supported")
     endif()
     set(LIBCXX_HAS_ABILIST_CONFIGURATION 0 CACHE INTERNAL "")
 endif()
