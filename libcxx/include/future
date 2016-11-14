@@ -2374,7 +2374,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     shared_future() _NOEXCEPT : __state_(nullptr) {}
     _LIBCPP_INLINE_VISIBILITY
-    shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
+    shared_future(const shared_future& __rhs)  _NOEXCEPT : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
@@ -2385,7 +2385,7 @@ public:
         {__rhs.__state_ = nullptr;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~shared_future();
-    shared_future& operator=(const shared_future& __rhs);
+    shared_future& operator=(const shared_future& __rhs) _NOEXCEPT;
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     shared_future& operator=(shared_future&& __rhs) _NOEXCEPT
@@ -2429,7 +2429,7 @@ shared_future<_Rp>::~shared_future()
 
 template <class _Rp>
 shared_future<_Rp>&
-shared_future<_Rp>::operator=(const shared_future& __rhs)
+shared_future<_Rp>::operator=(const shared_future& __rhs) _NOEXCEPT
 {
     if (__rhs.__state_)
         __rhs.__state_->__add_shared();
