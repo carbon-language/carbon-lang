@@ -967,3 +967,21 @@ vector bool long long test87(void) {
 // CHECK-NEXT: ret <2 x i64>
   return vec_test_data_class(vda, __VEC_CLASS_FP_NOT_NORMAL);
 }
+vector float test88(void) {
+// CHECK-BE: shufflevector <8 x i16> {{.+}}, <8 x i16> {{.+}}, <8 x i32> <i32 undef, i32 0, i32 undef, i32 1, i32 undef, i32 2, i32 undef, i32 3>
+// CHECK-BE: @llvm.ppc.vsx.xvcvhpsp(<8 x i16> {{.+}})
+// CHECK-BE-NEXT: ret <4 x float>
+// CHECK-LE: shufflevector <8 x i16> {{.+}}, <8 x i16> {{.+}}, <8 x i32> <i32 0, i32 undef, i32 1, i32 undef, i32 2, i32 undef, i32 3, i32 undef>
+// CHECK-LE: @llvm.ppc.vsx.xvcvhpsp(<8 x i16> {{.+}})
+// CHECK-LE-NEXT: ret <4 x float>
+  return vec_extract_fp32_from_shorth(vusa);
+}
+vector float test89(void) {
+// CHECK-BE: shufflevector <8 x i16> {{.+}}, <8 x i16> {{.+}}, <8 x i32> <i32 undef, i32 4, i32 undef, i32 5, i32 undef, i32 6, i32 undef, i32 7>
+// CHECK-BE: @llvm.ppc.vsx.xvcvhpsp(<8 x i16> {{.+}})
+// CHECK-BE-NEXT: ret <4 x float>
+// CHECK-LE: shufflevector <8 x i16> {{.+}}, <8 x i16> {{.+}}, <8 x i32> <i32 4, i32 undef, i32 5, i32 undef, i32 6, i32 undef, i32 7, i32 undef>
+// CHECK-LE: @llvm.ppc.vsx.xvcvhpsp(<8 x i16> {{.+}})
+// CHECK-LE-NEXT: ret <4 x float>
+  return vec_extract_fp32_from_shortl(vusa);
+}

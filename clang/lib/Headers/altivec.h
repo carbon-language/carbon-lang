@@ -12322,6 +12322,27 @@ vec_extract_sig (vector double __a) {
   return __builtin_vsx_xvxsigdp(__a);
 }
 
+static __inline__ vector float __ATTRS_o_ai
+vec_extract_fp32_from_shorth(vector unsigned short __a) {
+  vector unsigned short __b =
+#ifdef __LITTLE_ENDIAN__
+            __builtin_shufflevector(__a, __a, 0, -1, 1, -1, 2, -1, 3, -1);
+#else
+            __builtin_shufflevector(__a, __a, -1, 0, -1, 1, -1, 2, -1, 3);
+#endif
+  return __builtin_vsx_xvcvhpsp(__b);
+}
+
+static __inline__ vector float __ATTRS_o_ai
+vec_extract_fp32_from_shortl(vector unsigned short __a) {
+  vector unsigned short __b =
+#ifdef __LITTLE_ENDIAN__
+            __builtin_shufflevector(__a, __a, 4, -1, 5, -1, 6, -1, 7, -1);
+#else
+            __builtin_shufflevector(__a, __a, -1, 4, -1, 5, -1, 6, -1, 7);
+#endif
+  return __builtin_vsx_xvcvhpsp(__b);
+}
 #endif /* __POWER9_VECTOR__ */
 
 /* vec_insert */

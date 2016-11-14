@@ -402,6 +402,7 @@ BUILTIN(__builtin_vsx_xvcvuxdsp, "V4fV2ULLi", "")
 BUILTIN(__builtin_vsx_xvcvdpsp, "V4fV2d", "")
 
 BUILTIN(__builtin_vsx_xvcvsphp, "V4fV4f", "")
+BUILTIN(__builtin_vsx_xvcvhpsp, "V4fV8Us", "")
 
 // Vector Test Data Class builtins
 BUILTIN(__builtin_vsx_xvtstdcdp, "V2ULLiV2dIi", "")
