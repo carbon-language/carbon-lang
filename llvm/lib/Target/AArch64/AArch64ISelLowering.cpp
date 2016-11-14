@@ -8769,11 +8769,11 @@ static SDValue performExtendCombine(SDNode *N,
   return DAG.getNode(ISD::CONCAT_VECTORS, DL, ResVT, Lo, Hi);
 }
 
-static SDValue split16BStoreSplat(SelectionDAG &DAG, StoreSDNode *St,
+static SDValue split16BStoreSplat(SelectionDAG &DAG, StoreSDNode &St,
                                   SDValue SplatVal, unsigned NumVecElts) {
   assert((NumVecElts == 4 || NumVecElts == 2) && "Unexpected NumVecElts");
 
-  unsigned OrigAlignment = St->getAlignment();
+  unsigned OrigAlignment = St.getAlignment();
   unsigned EltOffset = NumVecElts == 4 ? 4 : 8;
   unsigned Alignment = std::min(OrigAlignment, EltOffset);
 
@@ -8781,19 +8781,19 @@ static SDValue split16BStoreSplat(SelectionDAG &DAG, StoreSDNode *St,
   // split unaligned store which is a dup.s, ext.b, and two stores.
   // Most of the time the three stores should be replaced by store pair
   // instructions (stp).
-  SDLoc DL(St);
-  SDValue BasePtr = St->getBasePtr();
+  SDLoc DL(&St);
+  SDValue BasePtr = St.getBasePtr();
   SDValue NewST1 =
-      DAG.getStore(St->getChain(), DL, SplatVal, BasePtr, St->getPointerInfo(),
-                   St->getAlignment(), St->getMemOperand()->getFlags());
+      DAG.getStore(St.getChain(), DL, SplatVal, BasePtr, St.getPointerInfo(),
+                   St.getAlignment(), St.getMemOperand()->getFlags());
 
   unsigned Offset = EltOffset;
   while (--NumVecElts) {
     SDValue OffsetPtr = DAG.getNode(ISD::ADD, DL, MVT::i64, BasePtr,
                                     DAG.getConstant(Offset, DL, MVT::i64));
     NewST1 = DAG.getStore(NewST1.getValue(0), DL, SplatVal, OffsetPtr,
-                          St->getPointerInfo(), Alignment,
-                          St->getMemOperand()->getFlags());
+                          St.getPointerInfo(), Alignment,
+                          St.getMemOperand()->getFlags());
     Offset += EltOffset;
   }
   return NewST1;
@@ -8814,8 +8814,8 @@ static SDValue split16BStoreSplat(SelectionDAG &DAG, StoreSDNode *St,
 ///   movi v0.2d, #0
 ///   str q0, [x0]
 ///
-static SDValue replaceZeroVectorStore(SelectionDAG &DAG, StoreSDNode *St) {
-  SDValue StVal = St->getValue();
+static SDValue replaceZeroVectorStore(SelectionDAG &DAG, StoreSDNode &St) {
+  SDValue StVal = St.getValue();
   EVT VT = StVal.getValueType();
 
   // We can express a splat as store pair(s) for 2 or 4 elements.
@@ -8834,8 +8834,8 @@ static SDValue replaceZeroVectorStore(SelectionDAG &DAG, StoreSDNode *St) {
 
   // If the immediate offset of the address operand is too large for the stp
   // instruction, then bail out.
-  if (DAG.isBaseWithConstantOffset(St->getBasePtr())) {
-    int64_t Offset = St->getBasePtr()->getConstantOperandVal(1);
+  if (DAG.isBaseWithConstantOffset(St.getBasePtr())) {
+    int64_t Offset = St.getBasePtr()->getConstantOperandVal(1);
     if (Offset < -512 || Offset > 504)
       return SDValue();
   }
@@ -8859,8 +8859,8 @@ static SDValue replaceZeroVectorStore(SelectionDAG &DAG, StoreSDNode *St) {
 /// This has better performance than a splat of the scalar followed by a split
 /// vector store. Even if the stores are not merged it is four stores vs a dup,
 /// followed by an ext.b and two stores.
-static SDValue replaceSplatVectorStore(SelectionDAG &DAG, StoreSDNode *St) {
-  SDValue StVal = St->getValue();
+static SDValue replaceSplatVectorStore(SelectionDAG &DAG, StoreSDNode &St) {
+  SDValue StVal = St.getValue();
   EVT VT = StVal.getValueType();
 
   // Don't replace floating point stores, they possibly won't be transformed to
@@ -8925,7 +8925,7 @@ static SDValue split16BStores(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
   // If we get a splat of zeros, convert this vector store to a store of
   // scalars. They will be merged into store pairs of xzr thereby removing one
   // instruction and one register.
-  if (SDValue ReplacedZeroSplat = replaceZeroVectorStore(DAG, S))
+  if (SDValue ReplacedZeroSplat = replaceZeroVectorStore(DAG, *S))
     return ReplacedZeroSplat;
 
   // FIXME: The logic for deciding if an unaligned store should be split should
@@ -8956,7 +8956,7 @@ static SDValue split16BStores(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
   // If we get a splat of a scalar convert this vector store to a store of
   // scalars. They will be merged into store pairs thereby removing two
   // instructions.
-  if (SDValue ReplacedSplat = replaceSplatVectorStore(DAG, S))
+  if (SDValue ReplacedSplat = replaceSplatVectorStore(DAG, *S))
     return ReplacedSplat;
 
   SDLoc DL(S);
