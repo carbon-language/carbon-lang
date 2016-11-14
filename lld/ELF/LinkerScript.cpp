@@ -665,7 +665,7 @@ void LinkerScript<ELFT>::assignAddresses(std::vector<PhdrEntry<ELFT>> &Phdrs) {
       });
 
   if (HeaderSize <= MinVA && FirstPTLoad != Phdrs.end()) {
-    // If linker script specifies program headers and first PT_LOAD doesn't 
+    // If linker script specifies program headers and first PT_LOAD doesn't
     // have both PHDRS and FILEHDR attributes then do nothing
     if (!Opt.PhdrsCommands.empty()) {
       size_t SegNum = std::distance(Phdrs.begin(), FirstPTLoad);
