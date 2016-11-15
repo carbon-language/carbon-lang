@@ -2592,10 +2592,13 @@ static bool ConvertBoundCtrl(int64_t &BoundCtrl) {
   if (BoundCtrl == 0) {
     BoundCtrl = 1;
     return true;
-  } else if (BoundCtrl == -1) {
+  }
+
+  if (BoundCtrl == -1) {
     BoundCtrl = 0;
     return true;
   }
+
   return false;
 }
 
@@ -2651,16 +2654,19 @@ OperandMatchResultTy AMDGPUAsmParser::parseOptionalOperand(OperandVector &Operan
   return MatchOperand_NoMatch;
 }
 
-OperandMatchResultTy AMDGPUAsmParser::parseOModOperand(OperandVector &Operands)
-{
+OperandMatchResultTy AMDGPUAsmParser::parseOModOperand(OperandVector &Operands) {
   StringRef Name = Parser.getTok().getString();
   if (Name == "mul") {
-    return parseIntWithPrefix("mul", Operands, AMDGPUOperand::ImmTyOModSI, ConvertOmodMul);
-  } else if (Name == "div") {
-    return parseIntWithPrefix("div", Operands, AMDGPUOperand::ImmTyOModSI, ConvertOmodDiv);
-  } else {
-    return MatchOperand_NoMatch;
+    return parseIntWithPrefix("mul", Operands,
+                              AMDGPUOperand::ImmTyOModSI, ConvertOmodMul);
   }
+
+  if (Name == "div") {
+    return parseIntWithPrefix("div", Operands,
+                              AMDGPUOperand::ImmTyOModSI, ConvertOmodDiv);
+  }
+
+  return MatchOperand_NoMatch;
 }
 
 void AMDGPUAsmParser::cvtId(MCInst &Inst, const OperandVector &Operands) {
