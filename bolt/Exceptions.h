@@ -23,16 +23,12 @@ namespace bolt {
 
 class BinaryFunction;
 
-void readLSDA(ArrayRef<uint8_t> LSDAData, BinaryContext &BC);
-
 /// \brief Wraps up information to read all CFI instructions and feed them to a
 /// BinaryFunction, as well as rewriting CFI sections.
 class CFIReaderWriter {
 public:
-  explicit CFIReaderWriter(const DWARFFrame &EHFrame, uint64_t FrameHdrAddress,
-                           std::vector<char> &FrameHdrContents)
-      : EHFrame(EHFrame), FrameHdrAddress(FrameHdrAddress),
-        FrameHdrContents(FrameHdrContents) {
+  explicit CFIReaderWriter(const DWARFFrame &EHFrame)
+      : EHFrame(EHFrame) {
     // Prepare FDEs for fast lookup
     for (const auto &Entry : EHFrame.Entries) {
       const dwarf::FrameEntry *FE = Entry.get();
@@ -44,10 +40,18 @@ public:
 
   bool fillCFIInfoFor(BinaryFunction &Function) const;
 
-  // Include a new EHFrame, updating the .eh_frame_hdr
-  void rewriteHeaderFor(StringRef EHFrame, uint64_t EHFrameAddress,
-                        uint64_t NewFrameHdrAddress,
-                        ArrayRef<uint64_t> FailedAddresses);
+  /// Generate .eh_frame_hdr from old and new .eh_frame sections.
+  ///
+  /// Take FDEs from the \p NewEHFrame unless their initial_pc is listed
+  /// in \p FailedAddresses. All other entries are taken from the
+  /// original .eh_frame.
+  ///
+  /// \p EHFrameHeaderAddress specifies location of the .eh_frame_hdr,
+  /// and is required to be set for relative addressing.
+  std::vector<char> generateEHFrameHeader(
+      const DWARFFrame &NewEHFrame,
+      uint64_t EHFrameHeaderAddress,
+      std::vector<uint64_t> &FailedAddresses) const;
 
   using FDEsMap = std::map<uint64_t, const dwarf::FDE *>;
   using fde_iterator = FDEsMap::const_iterator;
@@ -63,8 +67,6 @@ public:
 
 private:
   const DWARFFrame &EHFrame;
-  uint64_t FrameHdrAddress;
-  std::vector<char> &FrameHdrContents;
   FDEsMap FDEs;
 };
 

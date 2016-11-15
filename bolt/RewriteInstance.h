@@ -285,6 +285,9 @@ private:
   /// Huge page size used for alignment.
   static constexpr unsigned PageAlign = 0x200000;
 
+  /// Alignment value used for .eh_frame_hdr.
+  static constexpr uint64_t EHFrameHdrAlign = 4;
+
   /// An instance of the input binary we are processing, externally owned.
   llvm::object::ELFObjectFileBase *InputFile;
 
@@ -333,11 +336,7 @@ private:
   /// Exception handling and stack unwinding information in this binary.
   ArrayRef<uint8_t> LSDAData;
   uint64_t LSDAAddress{0};
-  std::vector<char> FrameHdrCopy;
-  uint64_t FrameHdrAddress{0};
-  uint64_t FrameHdrAlign{1};
   const llvm::DWARFFrame *EHFrame{nullptr};
-  StringRef NewEhFrameContents;
 
   /// Keep track of functions we fail to write in the binary. We need to avoid
   /// rewriting CFI info for these functions.

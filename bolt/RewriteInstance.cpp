@@ -1007,7 +1007,6 @@ BinaryFunction *RewriteInstance::createBinaryFunction(
 
 void RewriteInstance::readSpecialSections() {
   // Process special sections.
-  StringRef FrameHdrContents;
   for (const auto &Section : InputFile->sections()) {
     StringRef SectionName;
     check_error(Section.getName(SectionName), "cannot get section name");
@@ -1021,10 +1020,6 @@ void RewriteInstance::readSpecialSections() {
     if (SectionName == ".gcc_except_table") {
       LSDAData = SectionData;
       LSDAAddress = Section.getAddress();
-    } else if (SectionName == ".eh_frame_hdr") {
-      FrameHdrAddress = Section.getAddress();
-      FrameHdrContents = SectionContents;
-      FrameHdrAlign = Section.getAlignment();
     } else if (SectionName == ".debug_loc") {
       DebugLocSize = Section.getSize();
     }
@@ -1037,18 +1032,16 @@ void RewriteInstance::readSpecialSections() {
     }
   }
 
-  FrameHdrCopy =
-      std::vector<char>(FrameHdrContents.begin(), FrameHdrContents.end());
   // Process debug sections.
   EHFrame = BC->DwCtx->getEHFrame();
   if (opts::DumpEHFrame) {
     outs() << "BOLT-INFO: Dumping original binary .eh_frame\n";
     EHFrame->dump(outs());
   }
-  CFIRdWrt.reset(new CFIReaderWriter(*EHFrame, FrameHdrAddress, FrameHdrCopy));
+  CFIRdWrt.reset(new CFIReaderWriter(*EHFrame));
   if (!EHFrame->ParseError.empty()) {
     errs() << "BOLT-ERROR: EHFrame reader failed with message \""
-           << EHFrame->ParseError << "\"\n";
+           << EHFrame->ParseError << '\n';
     exit(1);
   }
 }
@@ -1128,15 +1121,13 @@ void RewriteInstance::disassembleFunctions() {
       continue;
 
     // Fill in CFI information for this function
-    if (EHFrame->ParseError.empty()) {
-      if (!CFIRdWrt->fillCFIInfoFor(Function)) {
-        if (opts::Verbosity >= 1) {
-          errs() << "BOLT-WARNING: unable to fill CFI for function "
-                 << Function << '\n';
-        }
-        Function.setSimple(false);
-        continue;
+    if (!CFIRdWrt->fillCFIInfoFor(Function)) {
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: unable to fill CFI for function "
+               << Function << '\n';
       }
+      Function.setSimple(false);
+      continue;
     }
 
     // Parse LSDA.
@@ -2129,11 +2120,9 @@ void RewriteInstance::rewriteFile() {
   auto SMII = SectionMM->SectionMapInfo.find(".eh_frame");
   if (SMII != SectionMM->SectionMapInfo.end()) {
     auto &EHFrameSecInfo = SMII->second;
-    if (opts::Verbosity >= 1) {
-      outs() << "BOLT: writing a new .eh_frame_hdr\n";
-    }
+    DEBUG(dbgs() << "BOLT: writing a new .eh_frame_hdr\n");
 
-    auto PaddingSize = OffsetToAlignment(NextAvailableAddress, FrameHdrAlign);
+    auto PaddingSize = OffsetToAlignment(NextAvailableAddress, EHFrameHdrAlign);
     writePadding(Out->os(), PaddingSize);
     NextAvailableAddress += PaddingSize;
 
@@ -2141,19 +2130,29 @@ void RewriteInstance::rewriteFile() {
     EHFrameHdrSecInfo.FileAddress = NextAvailableAddress;
     EHFrameHdrSecInfo.FileOffset = getFileOffsetFor(NextAvailableAddress);
 
-    std::sort(FailedAddresses.begin(), FailedAddresses.end());
-    CFIRdWrt->rewriteHeaderFor(
-        StringRef(reinterpret_cast<const char *>(EHFrameSecInfo.AllocAddress),
-                  EHFrameSecInfo.Size),
-        EHFrameSecInfo.FileAddress,
-        EHFrameHdrSecInfo.FileAddress,
-        FailedAddresses);
+    DWARFFrame NewEHFrame(EHFrameSecInfo.FileAddress);
+    NewEHFrame.parse(
+      DataExtractor(StringRef(reinterpret_cast<const char *>(
+                                                   EHFrameSecInfo.AllocAddress),
+                              EHFrameSecInfo.Size),
+                    BC->AsmInfo->isLittleEndian(),
+                    BC->AsmInfo->getPointerSize()));
+    if (!NewEHFrame.ParseError.empty()) {
+      errs() << "BOLT-ERROR: EHFrame reader failed with message \""
+             << NewEHFrame.ParseError << '\n';
+      exit(1);
+    }
 
-    EHFrameHdrSecInfo.Size = FrameHdrCopy.size();
+    auto NewEHFrameHdr =
+        CFIRdWrt->generateEHFrameHeader(NewEHFrame,
+                                        EHFrameHdrSecInfo.FileAddress,
+                                        FailedAddresses);
+
+    EHFrameHdrSecInfo.Size = NewEHFrameHdr.size();
 
     assert(Out->os().tell() == EHFrameHdrSecInfo.FileOffset &&
            "offset mismatch");
-    Out->os().write(FrameHdrCopy.data(), EHFrameHdrSecInfo.Size);
+    Out->os().write(NewEHFrameHdr.data(), EHFrameHdrSecInfo.Size);
 
     SectionMM->SectionMapInfo[".eh_frame_hdr"] = EHFrameHdrSecInfo;
 

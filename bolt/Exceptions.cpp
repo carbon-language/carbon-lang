@@ -692,184 +692,97 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
   return true;
 }
 
-void CFIReaderWriter::rewriteHeaderFor(StringRef EHFrame,
-                                       uint64_t NewEHFrameAddress,
-                                       uint64_t NewFrameHdrAddress,
-                                       ArrayRef<uint64_t> FailedAddresses) {
-  DataExtractor Data(EHFrame,
-                     /*IsLittleEndian=*/true,
-                     /*PtrSize=*/4);
-  uint32_t Offset = 0;
+std::vector<char> CFIReaderWriter::generateEHFrameHeader(
+    const DWARFFrame &NewEHFrame,
+    uint64_t EHFrameHeaderAddress,
+    std::vector<uint64_t> &FailedAddresses) const {
+  // Common PC -> FDE map to be written into the new .eh_frame_hdr.
   std::map<uint64_t, uint64_t> PCToFDE;
 
-  DEBUG(dbgs() << format(
-            "CFIReaderWriter: Starting to patch .eh_frame_hdr.\n"
-            "New .eh_frame address = %08x\nNew .eh_frame_hdr address = %08x\n",
-            NewEHFrameAddress, NewFrameHdrAddress));
+  // Presort array for binary search.
+  std::sort(FailedAddresses.begin(), FailedAddresses.end());
 
-  // Scans the EHFrame, parsing start addresses for each function
-  while (Data.isValidOffset(Offset)) {
-    uint32_t StartOffset = Offset;
-
-    uint64_t Length = Data.getU32(&Offset);
-
-    if (Length == 0)
-      break;
-
-    uint32_t EndStructureOffset = Offset + static_cast<uint32_t>(Length);
-    uint64_t Id = Data.getUnsigned(&Offset, 4);
-    if (Id == 0) {
-      Offset = EndStructureOffset;
+  // Initialize PCToFDE using NewEHFrame.
+  for (const auto &NewEntry : NewEHFrame.Entries) {
+    const auto *NewFDE = dyn_cast<dwarf::FDE>(NewEntry.get());
+    // Ignore CIE entries.
+    if (!NewFDE) {
       continue;
     }
-
-    const uint8_t *DataEnd =
-        reinterpret_cast<const uint8_t *>(Data.getData().substr(Offset).data());
-    uint64_t FuncAddress =
-        readEncodedPointer(DataEnd, DW_EH_PE_sdata4 | DW_EH_PE_pcrel,
-                           NewEHFrameAddress + Offset - (uintptr_t)DataEnd);
-
-    Offset = EndStructureOffset;
+    const auto FuncAddress = NewFDE->getInitialLocation();
+    const auto FDEAddress = NewEHFrame.EHFrameAddress + NewFDE->getOffset();
 
     // Ignore FDEs pointing to zero.
     if (FuncAddress == 0)
       continue;
 
-    auto I = std::lower_bound(FailedAddresses.begin(), FailedAddresses.end(),
-                              FuncAddress);
-    if (I != FailedAddresses.end() && *I == FuncAddress)
-      continue;
-
-    PCToFDE[FuncAddress] = NewEHFrameAddress + StartOffset;
+    // Add the address to the map unless we failed to write it.
+    if (!std::binary_search(FailedAddresses.begin(), FailedAddresses.end(),
+                            FuncAddress)) {
+      DEBUG(dbgs() << "BOLT-DEBUG: FDE for function at 0x"
+                   << Twine::utohexstr(FuncAddress) << " is at 0x"
+                   << Twine::utohexstr(FDEAddress) << '\n');
+      PCToFDE[FuncAddress] = FDEAddress;
+    }
   }
 
-  //Updates the EHFrameHdr
-  DataExtractor HDRData(
-      StringRef(FrameHdrContents.data(), FrameHdrContents.size()),
-      /*IsLittleEndian=*/true,
-      /*PtrSize=*/4);
-  Offset = 0;
-  uint8_t Version = HDRData.getU8(&Offset);
-  assert(Version == 1 &&
-         "Don't know how to handle this version of .eh_frame_hdr");
+  DEBUG(dbgs() << "BOLT-DEBUG: new .eh_frame contains "
+               << NewEHFrame.Entries.size() << " entries\n");
 
-  uint8_t EhFrameAddrEncoding = HDRData.getU8(&Offset);
-  uint8_t FDECntEncoding = HDRData.getU8(&Offset);
-  uint8_t TableEncoding = HDRData.getU8(&Offset);
-  const uint8_t *DataStart = reinterpret_cast<const uint8_t *>(
-      HDRData.getData().substr(Offset).data());
-  const uint8_t *DataEnd = DataStart;
-
-  uint64_t EHFrameAddrOffset = Offset;
-  uint64_t EHFrameAddress = readEncodedPointer(
-      DataEnd, EhFrameAddrEncoding,
-      FrameHdrAddress + Offset - (uintptr_t)DataEnd, FrameHdrAddress);
-  Offset += DataEnd - DataStart;
-
-  DataStart = reinterpret_cast<const uint8_t *>(
-      HDRData.getData().substr(Offset).data());
-  DataEnd = DataStart;
-  uint64_t FDECountOffset = Offset;
-  uint64_t FDECount = readEncodedPointer(
-      DataEnd, FDECntEncoding, FrameHdrAddress + Offset - (uintptr_t)DataEnd,
-      FrameHdrAddress);
-  Offset += DataEnd - DataStart;
-
-  assert(FDECount > 0 && "Empty binary search table in .eh_frame_hdr!");
-  assert(EhFrameAddrEncoding == (DW_EH_PE_pcrel | DW_EH_PE_sdata4) &&
-         "Don't know how to handle other .eh_frame address encoding!");
-  assert(FDECntEncoding == DW_EH_PE_udata4 &&
-         "Don't know how to thandle other .eh_frame_hdr encoding!");
-  assert(TableEncoding == (DW_EH_PE_datarel | DW_EH_PE_sdata4) &&
-         "Don't know how to handle other .eh_frame_hdr encoding!");
-
-  // Update .eh_frame address
-  // Write address using signed 4-byte pc-relative encoding
-  DEBUG(dbgs() << format("CFIReaderWriter: Patching .eh_frame_hdr contents "
-                         "(.eh_frame pointer) with %08x\n",
-                         EHFrameAddress));
-  int64_t RealOffset = EHFrameAddress - EHFrameAddrOffset - NewFrameHdrAddress;
-  assert(isInt<32>(RealOffset));
-  support::ulittle32_t::ref(FrameHdrContents.data() + EHFrameAddrOffset) =
-    RealOffset;
-
-  // Offset now points to the binary search table. Update it.
-  uint64_t LastPC = 0;
-  for (uint64_t I = 0; I != FDECount; ++I) {
-    assert(HDRData.isValidOffset(Offset) &&
-           ".eh_frame_hdr table finished earlier than we expected");
-    DataStart = reinterpret_cast<const uint8_t *>(
-        HDRData.getData().substr(Offset).data());
-    DataEnd = DataStart;
-    uint64_t InitialPCOffset = Offset;
-    uint64_t InitialPC = readEncodedPointer(
-        DataEnd, TableEncoding, FrameHdrAddress + Offset - (uintptr_t)DataEnd,
-        FrameHdrAddress);
-    LastPC = InitialPC;
-    Offset += DataEnd - DataStart;
-
-    uint64_t FDEPtrOffset = Offset;
-    DataStart = reinterpret_cast<const uint8_t *>(
-        HDRData.getData().substr(Offset).data());
-    DataEnd = DataStart;
-    // Advance Offset past FDEPtr
-    uint64_t FDEPtr = readEncodedPointer(
-        DataEnd, TableEncoding, FrameHdrAddress + Offset - (uintptr_t)DataEnd,
-        FrameHdrAddress);
-    Offset += DataEnd - DataStart;
-
-    // Update InitialPC according to new eh_frame_hdr address
-    // Write using signed 4-byte "data relative" (relative to .eh_frame_addr)
-    // encoding
-    int64_t RealOffset = InitialPC - NewFrameHdrAddress;
-    assert(isInt<32>(RealOffset));
-    support::ulittle32_t::ref(FrameHdrContents.data() + InitialPCOffset) =
-        RealOffset;
-
-    if (uint64_t NewPtr = PCToFDE[InitialPC])
-      RealOffset = NewPtr - NewFrameHdrAddress;
-    else
-      RealOffset = FDEPtr - NewFrameHdrAddress;
-
-    assert(isInt<32>(RealOffset));
-    DEBUG(dbgs() << format("CFIReaderWriter: Patching .eh_frame_hdr contents "
-                           "@offset %08x with new FDE ptr %08x\n",
-                           FDEPtrOffset, RealOffset + NewFrameHdrAddress));
-    support::ulittle32_t::ref(FrameHdrContents.data() + FDEPtrOffset) =
-      RealOffset;
+  // Add entries from the original .eh_frame corresponding to the functions
+  // that we did not update.
+  for (const auto &FDEI : getFDEs()) {
+    const auto *OldFDE = FDEI.second;
+    const auto FuncAddress = OldFDE->getInitialLocation();
+    const auto FDEAddress = EHFrame.EHFrameAddress + OldFDE->getOffset();
+    // Add the address if we failed to write it.
+    if (PCToFDE.count(FuncAddress) == 0) {
+      DEBUG(dbgs() << "BOLT-DEBUG: old FDE for function at 0x"
+                   << Twine::utohexstr(FuncAddress) << " is at 0x"
+                   << Twine::utohexstr(FDEAddress) << '\n');
+      PCToFDE[FuncAddress] = FDEAddress;
+    }
   }
-  // Add new entries (for cold function parts)
-  uint64_t ExtraEntries = 0;
-  for (auto I = PCToFDE.upper_bound(LastPC), E = PCToFDE.end(); I != E; ++I) {
-    ++ExtraEntries;
-  }
-  if (ExtraEntries == 0)
-    return;
-  FrameHdrContents.resize(FrameHdrContents.size() + (ExtraEntries * 8));
-  // Update FDE count
-  DEBUG(dbgs() << "CFIReaderWriter: Updating .eh_frame_hdr FDE count from "
-               << FDECount << " to " << (FDECount + ExtraEntries) << "\n");
-  support::ulittle32_t::ref(FrameHdrContents.data() + FDECountOffset) =
-      FDECount + ExtraEntries;
 
-  for (auto I = PCToFDE.upper_bound(LastPC), E = PCToFDE.end(); I != E; ++I) {
-    // Write PC
-    DEBUG(dbgs() << format("CFIReaderWriter: Writing extra FDE entry for PC "
-                           "0x%x, FDE pointer 0x%x\n",
-                           I->first, I->second));
-    uint64_t InitialPC = I->first;
-    int64_t RealOffset = InitialPC - NewFrameHdrAddress;
-    assert(isInt<32>(RealOffset));
-    support::ulittle32_t::ref(FrameHdrContents.data() + Offset) = RealOffset;
+  DEBUG(dbgs() << "BOLT-DEBUG: old .eh_frame contains "
+               << EHFrame.Entries.size() << " entries\n");
+
+  // Generate a new .eh_frame_hdr based on the new map.
+
+  // Header plus table of entries of size 8 bytes.
+  std::vector<char> EHFrameHeader(12 + PCToFDE.size() * 8);
+
+  // Version is 1.
+  EHFrameHeader[0] = 1;
+  // Encoding of the eh_frame pointer.
+  EHFrameHeader[1] = DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+  // Encoding of the count field to follow.
+  EHFrameHeader[2] = DW_EH_PE_udata4;
+  // Encoding of the table entries - 4-byte offset from the start of the header.
+  EHFrameHeader[3] = DW_EH_PE_datarel | DW_EH_PE_sdata4;
+
+  // Address of eh_frame. Use the new one.
+  support::ulittle32_t::ref(EHFrameHeader.data() + 4) =
+    NewEHFrame.EHFrameAddress - (EHFrameHeaderAddress + 4);
+
+  // Number of entries in the table (FDE count).
+  support::ulittle32_t::ref(EHFrameHeader.data() + 8) = PCToFDE.size();
+
+  // Write the table at offset 12.
+  auto *Ptr = EHFrameHeader.data();
+  uint32_t Offset = 12;
+  for (const auto &PCI : PCToFDE) {
+    int64_t InitialPCOffset = PCI.first - EHFrameHeaderAddress;
+    assert(isInt<32>(InitialPCOffset) && "PC offset out of bounds");
+    support::ulittle32_t::ref(Ptr + Offset) = InitialPCOffset;
     Offset += 4;
-
-    // Write FDE pointer
-    uint64_t FDEPtr = I->second;
-    RealOffset = FDEPtr - NewFrameHdrAddress;
-    assert(isInt<32>(RealOffset));
-    support::ulittle32_t::ref(FrameHdrContents.data() + Offset) = RealOffset;
+    int64_t FDEOffset = PCI.second - EHFrameHeaderAddress;
+    assert(isInt<32>(FDEOffset) && "FDE offset out of bounds");
+    support::ulittle32_t::ref(Ptr + Offset) = FDEOffset;
     Offset += 4;
   }
+
+  return EHFrameHeader;
 }
 
 } // namespace bolt
