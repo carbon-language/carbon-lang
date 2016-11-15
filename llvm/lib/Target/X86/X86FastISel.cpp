@@ -2769,6 +2769,9 @@ bool X86FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
     const Function *Callee = II->getCalledFunction();
     auto *Ty = cast<StructType>(Callee->getReturnType());
     Type *RetTy = Ty->getTypeAtIndex(0U);
+    assert(Ty->getTypeAtIndex(1)->isIntegerTy() &&
+           Ty->getTypeAtIndex(1)->getScalarSizeInBits() == 1 &&
+           "Overflow value expected to be an i1");
 
     MVT VT;
     if (!isTypeLegal(RetTy, VT))
