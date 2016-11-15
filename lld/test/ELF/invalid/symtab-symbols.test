@@ -6,7 +6,6 @@
 # Verify that lld can handle STT_NOTYPE symbols associated
 # with SHT_SYMTAB section.
 
-
 !ELF
 FileHeader:
   Class:           ELFCLASS64
