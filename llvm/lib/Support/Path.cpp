@@ -986,22 +986,18 @@ file_magic identify_magic(StringRef Magic) {
     return file_magic::unknown;
   switch ((unsigned char)Magic[0]) {
     case 0x00: {
-      // COFF bigobj or short import library file
-      if (Magic[1] == (char)0x00 && Magic[2] == (char)0xff &&
-          Magic[3] == (char)0xff) {
+      // COFF bigobj, CL.exe's LTO object file, or short import library file
+      if (memcmp(Magic.data() + 1, "\0\xFF\xFF", 3) == 0) {
         size_t MinSize = offsetof(COFF::BigObjHeader, UUID) + sizeof(COFF::BigObjMagic);
         if (Magic.size() < MinSize)
           return file_magic::coff_import_library;
 
-        int BigObjVersion = read16le(
-            Magic.data() + offsetof(COFF::BigObjHeader, Version));
-        if (BigObjVersion < COFF::BigObjHeader::MinBigObjectVersion)
-          return file_magic::coff_import_library;
-
         const char *Start = Magic.data() + offsetof(COFF::BigObjHeader, UUID);
-        if (memcmp(Start, COFF::BigObjMagic, sizeof(COFF::BigObjMagic)) != 0)
-          return file_magic::coff_import_library;
-        return file_magic::coff_object;
+        if (memcmp(Start, COFF::BigObjMagic, sizeof(COFF::BigObjMagic)) == 0)
+          return file_magic::coff_object;
+        if (memcmp(Start, COFF::ClGlObjMagic, sizeof(COFF::BigObjMagic)) == 0)
+          return file_magic::coff_cl_gl_object;
+        return file_magic::coff_import_library;
       }
       // Windows resource file
       const char Expected[] = { 0, 0, 0, 0, '\x20', 0, 0, 0, '\xff' };
