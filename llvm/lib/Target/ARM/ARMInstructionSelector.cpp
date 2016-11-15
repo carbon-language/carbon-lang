@@ -25,10 +25,9 @@ using namespace llvm;
 #error "You shouldn't build this"
 #endif
 
-ARMInstructionSelector::ARMInstructionSelector(const ARMBaseTargetMachine &TM,
-                                               const ARMSubtarget &STI,
+ARMInstructionSelector::ARMInstructionSelector(const ARMSubtarget &STI,
                                                const ARMRegisterBankInfo &RBI)
-    : InstructionSelector(), TM(TM), STI(STI), TII(*STI.getInstrInfo()),
+    : InstructionSelector(), TII(*STI.getInstrInfo()),
       TRI(*STI.getRegisterInfo()), RBI(RBI) {}
 
 bool ARMInstructionSelector::select(llvm::MachineInstr &I) const {
