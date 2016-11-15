@@ -107,7 +107,7 @@ static void InterceptHooks();
 // ---------- Function wrapping helpers ----------------------------------- {{{1
 #define WRAP_V_V(name)                                                         \
   extern "C" void name() {                                                     \
-    typedef void (*fntype)();                                                  \
+    typedef decltype(name) *fntype;                                            \
     static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     fn();                                                                      \
   }                                                                            \
@@ -115,7 +115,7 @@ static void InterceptHooks();
 
 #define WRAP_V_W(name)                                                         \
   extern "C" void name(void *arg) {                                            \
-    typedef void (*fntype)(void *arg);                                         \
+    typedef decltype(name) *fntype;                                            \
     static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     fn(arg);                                                                   \
   }                                                                            \
@@ -123,7 +123,7 @@ static void InterceptHooks();
 
 #define WRAP_V_WW(name)                                                        \
   extern "C" void name(void *arg1, void *arg2) {                               \
-    typedef void (*fntype)(void *, void *);                                    \
+    typedef decltype(name) *fntype;                                            \
     static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     fn(arg1, arg2);                                                            \
   }                                                                            \
@@ -131,7 +131,7 @@ static void InterceptHooks();
 
 #define WRAP_V_WWW(name)                                                       \
   extern "C" void name(void *arg1, void *arg2, void *arg3) {                   \
-    typedef void *(*fntype)(void *, void *, void *);                           \
+    typedef decltype(name) *fntype;                                            \
     static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     fn(arg1, arg2, arg3);                                                      \
   }                                                                            \
@@ -139,7 +139,7 @@ static void InterceptHooks();
 
 #define WRAP_W_V(name)                                                         \
   extern "C" void *name() {                                                    \
-    typedef void *(*fntype)();                                                 \
+    typedef decltype(name) *fntype;                                            \
     static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn();                                                               \
   }                                                                            \
@@ -147,7 +147,7 @@ static void InterceptHooks();
 
 #define WRAP_W_W(name)                                                         \
   extern "C" void *name(void *arg) {                                           \
-    typedef void *(*fntype)(void *arg);                                        \
+    typedef decltype(name) *fntype;                                            \
     static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn(arg);                                                            \
   }                                                                            \
@@ -155,7 +155,7 @@ static void InterceptHooks();
 
 #define WRAP_W_WW(name)                                                        \
   extern "C" void *name(void *arg1, void *arg2) {                              \
-    typedef void *(*fntype)(void *, void *);                                   \
+    typedef decltype(name) *fntype;                                            \
     static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn(arg1, arg2);                                                     \
   }                                                                            \
@@ -163,7 +163,7 @@ static void InterceptHooks();
 
 #define WRAP_W_WWW(name)                                                       \
   extern "C" void *name(void *arg1, void *arg2, void *arg3) {                  \
-    typedef void *(*fntype)(void *, void *, void *);                           \
+    typedef decltype(name) *fntype;                                            \
     static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn(arg1, arg2, arg3);                                               \
   }                                                                            \
@@ -171,7 +171,7 @@ static void InterceptHooks();
 
 #define WRAP_W_WWWW(name)                                                      \
   extern "C" void *name(void *arg1, void *arg2, void *arg3, void *arg4) {      \
-    typedef void *(*fntype)(void *, void *, void *, void *);                   \
+    typedef decltype(name) *fntype;                                            \
     static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn(arg1, arg2, arg3, arg4);                                         \
   }                                                                            \
@@ -180,7 +180,7 @@ static void InterceptHooks();
 #define WRAP_W_WWWWW(name)                                                     \
   extern "C" void *name(void *arg1, void *arg2, void *arg3, void *arg4,        \
                         void *arg5) {                                          \
-    typedef void *(*fntype)(void *, void *, void *, void *, void *);           \
+    typedef decltype(name) *fntype;                                            \
     static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn(arg1, arg2, arg3, arg4, arg5);                                   \
   }                                                                            \
@@ -189,7 +189,7 @@ static void InterceptHooks();
 #define WRAP_W_WWWWWW(name)                                                    \
   extern "C" void *name(void *arg1, void *arg2, void *arg3, void *arg4,        \
                         void *arg5, void *arg6) {                              \
-    typedef void *(*fntype)(void *, void *, void *, void *, void *, void *);   \
+    typedef decltype(name) *fntype;                                            \
     static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn(arg1, arg2, arg3, arg4, arg5, arg6);                             \
   }                                                                            \
