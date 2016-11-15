@@ -518,21 +518,20 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     }
     return "";
   }
-  if (isa<BlockDecl>(CurrentDecl)) {
-    // For blocks we only emit something if it is enclosed in a function
-    // For top-level block we'd like to include the name of variable, but we
-    // don't have it at this point.
-    auto DC = CurrentDecl->getDeclContext();
-    if (DC->isFileContext())
-      return "";
-
+  if (auto *BD = dyn_cast<BlockDecl>(CurrentDecl)) {
+    std::unique_ptr<MangleContext> MC;
+    MC.reset(Context.createMangleContext());
     SmallString<256> Buffer;
     llvm::raw_svector_ostream Out(Buffer);
-    if (auto *DCFunc = dyn_cast<FunctionDecl>(DC))
-      Out << ComputeName(IT, DCFunc) << "_block_invoke";
+    auto DC = CurrentDecl->getDeclContext();
+    if (DC->isFileContext())
+      MC->mangleGlobalBlock(BD, /*ID*/ nullptr, Out);
+    else if (const auto *CD = dyn_cast<CXXConstructorDecl>(DC))
+      MC->mangleCtorBlock(CD, /*CT*/ Ctor_Complete, BD, Out);
+    else if (const auto *DD = dyn_cast<CXXDestructorDecl>(DC))
+      MC->mangleDtorBlock(DD, /*DT*/ Dtor_Complete, BD, Out);
     else
-      // For nested blocks, propagate up to the parent.
-      Out << ComputeName(IT, cast<BlockDecl>(DC));
+      MC->mangleBlock(DC, BD, Out);
     return Out.str();
   }
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurrentDecl)) {
