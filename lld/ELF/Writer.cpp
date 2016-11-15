@@ -134,7 +134,9 @@ template <class ELFT> void elf::writeResult() { Writer<ELFT>().run(); }
 // The main function of the writer.
 template <class ELFT> void Writer<ELFT>::run() {
   createSyntheticSections();
-  addReservedSymbols();
+
+  if (!Config->Relocatable)
+    addReservedSymbols();
 
   if (Target->NeedsThunks)
     forEachRelSec(createThunks<ELFT>);
@@ -604,7 +606,7 @@ template <class ELFT> void Writer<ELFT>::addRelIpltSymbols() {
 // The linker is expected to define some symbols depending on
 // the linking result. This function defines such symbols.
 template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
-  if (Config->EMachine == EM_MIPS && !Config->Relocatable) {
+  if (Config->EMachine == EM_MIPS) {
     // Define _gp for MIPS. st_value of _gp symbol will be updated by Writer
     // so that it points to an absolute address which is relative to GOT.
     // See "Global Data Symbols" in Chapter 6 in the following document:
@@ -636,8 +638,7 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
   // an undefined symbol in the .o files.
   // Given that the symbol is effectively unused, we just create a dummy
   // hidden one to avoid the undefined symbol error.
-  if (!Config->Relocatable)
-    Symtab<ELFT>::X->addIgnored("_GLOBAL_OFFSET_TABLE_");
+  Symtab<ELFT>::X->addIgnored("_GLOBAL_OFFSET_TABLE_");
 
   // __tls_get_addr is defined by the dynamic linker for dynamic ELFs. For
   // static linking the linker is required to optimize away any references to
