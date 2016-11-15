@@ -2042,18 +2042,19 @@ bool JumpThreadingPass::TryToUnfoldSelectInCurrBB(BasicBlock *BB) {
       // Look for scalar booleans used in selects as conditions. If there are
       // several selects that use the same boolean, they are candidates for jump
       // threading and therefore we should unfold them.
-      for (Use& U : I.uses()) {
-        auto *SI = dyn_cast<SelectInst>(U.getUser());
-        if (SI && U.getOperandNo() == 0)
+      for (Value *U : I.users())
+        if (auto *SI = dyn_cast<SelectInst>(U))
           Selects.push_back(SI);
-      }
-
       if (Selects.size() <= 1)
         continue;
 
+      // Remove duplicates
+      std::sort(Selects.begin(), Selects.end());
+      auto NewEnd = std::unique(Selects.begin(), Selects.end());
+
       Changed = true;
-      for (auto SI : Selects)
-        expandSelect(SI);
+      for (auto SI = Selects.begin(); SI != NewEnd; ++SI)
+        expandSelect(*SI);
     }
   }
 
