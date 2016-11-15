@@ -265,7 +265,8 @@ bool SIInstrInfo::getMemOpBaseRegImmOfs(MachineInstr &LdSt, unsigned &BaseReg,
   }
 
   if (isMUBUF(LdSt) || isMTBUF(LdSt)) {
-    if (AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::soffset) != -1)
+    const MachineOperand *SOffset = getNamedOperand(LdSt, AMDGPU::OpName::soffset);
+    if (SOffset && SOffset->isReg())
       return false;
 
     const MachineOperand *AddrReg =
@@ -277,6 +278,10 @@ bool SIInstrInfo::getMemOpBaseRegImmOfs(MachineInstr &LdSt, unsigned &BaseReg,
         getNamedOperand(LdSt, AMDGPU::OpName::offset);
     BaseReg = AddrReg->getReg();
     Offset = OffsetImm->getImm();
+
+    if (SOffset) // soffset can be an inline immediate.
+      Offset += SOffset->getImm();
+
     return true;
   }
 
