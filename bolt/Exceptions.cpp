@@ -585,13 +585,13 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
         case DW_CFA_def_cfa:
           Function.addCFIInstruction(
               Offset, MCCFIInstruction::createDefCfa(nullptr, Instr.Ops[1],
-                                                     -Instr.Ops[0]));
+                                                     Instr.Ops[0]));
           break;
         case DW_CFA_def_cfa_sf:
           Function.addCFIInstruction(
               Offset, MCCFIInstruction::createDefCfa(
                           nullptr, Instr.Ops[1],
-                          -(DataAlignment * int64_t(Instr.Ops[0]))));
+                          DataAlignment * int64_t(Instr.Ops[0])));
           break;
         case DW_CFA_def_cfa_register:
           Function.addCFIInstruction(
@@ -601,12 +601,12 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
         case DW_CFA_def_cfa_offset:
           Function.addCFIInstruction(
               Offset,
-              MCCFIInstruction::createDefCfaOffset(nullptr, -Instr.Ops[0]));
+              MCCFIInstruction::createDefCfaOffset(nullptr, Instr.Ops[0]));
           break;
         case DW_CFA_def_cfa_offset_sf:
           Function.addCFIInstruction(
               Offset, MCCFIInstruction::createDefCfaOffset(
-                          nullptr, -(DataAlignment * int64_t(Instr.Ops[0]))));
+                          nullptr, DataAlignment * int64_t(Instr.Ops[0])));
           break;
         case DW_CFA_GNU_args_size:
           Function.addCFIInstruction(
@@ -622,11 +622,40 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
           return false;
         case DW_CFA_expression:
         case DW_CFA_def_cfa_expression:
-        case DW_CFA_val_expression:
-          if (opts::Verbosity >= 1) {
-            errs() << "BOLT-WARNING: DWARF CFA expressions unimplemented\n";
+        case DW_CFA_val_expression: {
+          MCDwarfExprBuilder Builder;
+          for (const auto &Operation : Instr.ExprOps) {
+            switch (Operation.Ops.size()) {
+            case 0:
+              Builder.appendOperation(Operation.Opcode);
+              break;
+            case 1:
+              Builder.appendOperation(Operation.Opcode, Operation.Ops[0]);
+              break;
+            case 2:
+              Builder.appendOperation(Operation.Opcode, Operation.Ops[0],
+                                      Operation.Ops[1]);
+              break;
+            default:
+              llvm_unreachable("Unrecognized DWARF expression");
+            }
           }
-          return false;
+          if (Opcode == DW_CFA_expression) {
+            Function.addCFIInstruction(
+                Offset, MCCFIInstruction::createExpression(
+                            nullptr, Instr.Ops[0], Builder.take()));
+          } else if (Opcode == DW_CFA_def_cfa_expression) {
+            Function.addCFIInstruction(Offset,
+                                       MCCFIInstruction::createDefCfaExpression(
+                                           nullptr, Builder.take()));
+          } else {
+            assert(Opcode == DW_CFA_val_expression && "Unexpected opcode");
+            Function.addCFIInstruction(
+                Offset, MCCFIInstruction::createValExpression(
+                            nullptr, Instr.Ops[0], Builder.take()));
+          }
+          break;
+        }
         case DW_CFA_MIPS_advance_loc8:
           if (opts::Verbosity >= 1) {
             errs() << "BOLT-WARNING: DW_CFA_MIPS_advance_loc unimplemented\n";
@@ -636,8 +665,8 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
         case DW_CFA_lo_user:
         case DW_CFA_hi_user:
           if (opts::Verbosity >= 1) {
-            errs() <<
-              "BOLT-WARNING: DW_CFA_GNU_* and DW_CFA_*_user unimplemented\n";
+            errs() << "BOLT-WARNING: DW_CFA_GNU_* and DW_CFA_*_user "
+                      "unimplemented\n";
           }
           return false;
         default:

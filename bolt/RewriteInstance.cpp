@@ -1042,6 +1042,7 @@ void RewriteInstance::readSpecialSections() {
   // Process debug sections.
   EHFrame = BC->DwCtx->getEHFrame();
   if (opts::DumpEHFrame) {
+    outs() << "BOLT-INFO: Dumping original binary .eh_frame\n";
     EHFrame->dump(outs());
   }
   CFIRdWrt.reset(new CFIReaderWriter(*EHFrame, FrameHdrAddress, FrameHdrCopy));
@@ -1240,55 +1241,6 @@ namespace {
 // Helper function to emit the contents of a function via a MCStreamer object.
 void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
                   BinaryContext &BC, bool EmitColdPart) {
-  // Define a helper to decode and emit CFI instructions at a given point in a
-  // BB
-  auto emitCFIInstr = [&Streamer](const MCCFIInstruction &CFIInstr) {
-    switch (CFIInstr.getOperation()) {
-    default:
-      llvm_unreachable("Unexpected instruction");
-    case MCCFIInstruction::OpDefCfaOffset:
-      Streamer.EmitCFIDefCfaOffset(CFIInstr.getOffset());
-      break;
-    case MCCFIInstruction::OpAdjustCfaOffset:
-      Streamer.EmitCFIAdjustCfaOffset(CFIInstr.getOffset());
-      break;
-    case MCCFIInstruction::OpDefCfa:
-      Streamer.EmitCFIDefCfa(CFIInstr.getRegister(), CFIInstr.getOffset());
-      break;
-    case MCCFIInstruction::OpDefCfaRegister:
-      Streamer.EmitCFIDefCfaRegister(CFIInstr.getRegister());
-      break;
-    case MCCFIInstruction::OpOffset:
-      Streamer.EmitCFIOffset(CFIInstr.getRegister(), CFIInstr.getOffset());
-      break;
-    case MCCFIInstruction::OpRegister:
-      Streamer.EmitCFIRegister(CFIInstr.getRegister(),
-                                CFIInstr.getRegister2());
-      break;
-    case MCCFIInstruction::OpRelOffset:
-      Streamer.EmitCFIRelOffset(CFIInstr.getRegister(), CFIInstr.getOffset());
-      break;
-    case MCCFIInstruction::OpUndefined:
-      Streamer.EmitCFIUndefined(CFIInstr.getRegister());
-      break;
-    case MCCFIInstruction::OpRememberState:
-      Streamer.EmitCFIRememberState();
-      break;
-    case MCCFIInstruction::OpRestoreState:
-      Streamer.EmitCFIRestoreState();
-      break;
-    case MCCFIInstruction::OpRestore:
-      Streamer.EmitCFIRestore(CFIInstr.getRegister());
-      break;
-    case MCCFIInstruction::OpSameValue:
-      Streamer.EmitCFISameValue(CFIInstr.getRegister());
-      break;
-    case MCCFIInstruction::OpGnuArgsSize:
-      Streamer.EmitCFIGnuArgsSize(CFIInstr.getOffset());
-      break;
-    }
-  };
-
   // No need for human readability?
   // FIXME: what difference does it make in reality?
   // Ctx.setUseNamesOnTempLabels(false);
@@ -1350,7 +1302,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
           continue;
         break;
       }
-      emitCFIInstr(CFIInstr);
+      Streamer.EmitCFIInstruction(CFIInstr);
     }
   }
 
@@ -1391,7 +1343,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
         continue;
       }
       if (BC.MIA->isCFI(Instr)) {
-        emitCFIInstr(*Function.getCFIFor(Instr));
+        Streamer.EmitCFIInstruction(*Function.getCFIFor(Instr));
         continue;
       }
       if (opts::UpdateDebugSections) {
@@ -2212,6 +2164,22 @@ void RewriteInstance::rewriteFile() {
 
   // TODO: we should find a way to mark the binary as optimized by us.
   Out->keep();
+
+  // If requested, open again the binary we just wrote to dump its EH Frame
+  if (opts::DumpEHFrame) {
+    ErrorOr<OwningBinary<Binary>> BinaryOrErr =
+        createBinary(opts::OutputFilename);
+    if (std::error_code EC = BinaryOrErr.getError())
+      report_error(opts::OutputFilename, EC);
+    Binary &Binary = *BinaryOrErr.get().getBinary();
+
+    if (auto *E = dyn_cast<ELFObjectFileBase>(&Binary)) {
+      DWARFContextInMemory DwCtx(*E);
+      const auto &EHFrame = DwCtx.getEHFrame();
+      outs() << "BOLT-INFO: Dumping rewritten .eh_frame\n";
+      EHFrame->dump(outs());
+    }
+  }
 }
 
 bool RewriteInstance::shouldOverwriteSection(StringRef SectionName) {
