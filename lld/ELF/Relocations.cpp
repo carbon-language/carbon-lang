@@ -306,7 +306,9 @@ static bool isRelExpr(RelExpr Expr) {
 
 template <class ELFT>
 static bool isStaticLinkTimeConstant(RelExpr E, uint32_t Type,
-                                     const SymbolBody &Body) {
+                                     const SymbolBody &Body,
+                                     InputSectionBase<ELFT> &S,
+                                     typename ELFT::uint RelOff) {
   // These expressions always compute a constant
   if (E == R_SIZE || E == R_GOT_FROM_END || E == R_GOT_OFF ||
       E == R_MIPS_GOT_LOCAL_PAGE || E == R_MIPS_GOT_OFF ||
@@ -342,8 +344,9 @@ static bool isStaticLinkTimeConstant(RelExpr E, uint32_t Type,
   if (AbsVal && RelE) {
     if (Body.isUndefined() && !Body.isLocal() && Body.symbol()->isWeak())
       return true;
-    error("relocation " + getRelName(Type) +
-          " cannot refer to absolute symbol " + Body.getName());
+    error(getLocation(S, RelOff) + ": relocation " + getRelName(Type) +
+          " cannot refer to absolute symbol '" + Body.getName() +
+          "' defined in " + getFilename(Body.File));
     return true;
   }
 
@@ -421,7 +424,8 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
 template <class ELFT>
 static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
                           bool IsWrite, RelExpr Expr, uint32_t Type,
-                          const uint8_t *Data) {
+                          const uint8_t *Data, InputSectionBase<ELFT> &S,
+                          typename ELFT::uint RelOff) {
   bool Preemptible = isPreemptible(Body, Type);
   if (Body.isGnuIFunc()) {
     Expr = toPlt(Expr);
@@ -433,7 +437,7 @@ static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
   }
   Expr = Target->getThunkExpr(Expr, Type, File, Body);
 
-  if (IsWrite || isStaticLinkTimeConstant<ELFT>(Expr, Type, Body))
+  if (IsWrite || isStaticLinkTimeConstant<ELFT>(Expr, Type, Body, S, RelOff))
     return Expr;
 
   // This relocation would require the dynamic linker to write a value to read
@@ -645,7 +649,8 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 
     RelExpr Expr = Target->getRelExpr(Type, Body);
     bool Preemptible = isPreemptible(Body, Type);
-    Expr = adjustExpr(*File, Body, IsWrite, Expr, Type, Buf + RI.r_offset);
+    Expr = adjustExpr(*File, Body, IsWrite, Expr, Type, Buf + RI.r_offset, C,
+                      RI.r_offset);
     if (HasError)
       continue;
 
@@ -690,7 +695,8 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
         Expr == R_THUNK_PLT_PC || refersToGotEntry(Expr) ||
         !isPreemptible(Body, Type)) {
       // If the relocation points to something in the file, we can process it.
-      bool Constant = isStaticLinkTimeConstant<ELFT>(Expr, Type, Body);
+      bool Constant =
+          isStaticLinkTimeConstant<ELFT>(Expr, Type, Body, C, RI.r_offset);
 
       // If the output being produced is position independent, the final value
       // is still not known. In that case we still need some help from the

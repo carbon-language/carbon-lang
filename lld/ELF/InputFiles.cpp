@@ -477,7 +477,7 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
                                                 /*CanOmitFromDynSym*/ false,
                                                 this)
           ->body();
-    return elf::Symtab<ELFT>::X->addRegular(Name, *Sym, Sec)->body();
+    return elf::Symtab<ELFT>::X->addRegular(Name, *Sym, Sec, this)->body();
   }
 }
 
@@ -805,11 +805,13 @@ template <class ELFT> void BinaryFile::parse() {
   Sections.push_back(Section);
 
   elf::Symtab<ELFT>::X->addRegular(StartName, STV_DEFAULT, STT_OBJECT, 0, 0,
-                                   STB_GLOBAL, Section);
+                                   STB_GLOBAL, Section, nullptr);
   elf::Symtab<ELFT>::X->addRegular(EndName, STV_DEFAULT, STT_OBJECT,
-                                   Data.size(), 0, STB_GLOBAL, Section);
+                                   Data.size(), 0, STB_GLOBAL, Section,
+                                   nullptr);
   elf::Symtab<ELFT>::X->addRegular(SizeName, STV_DEFAULT, STT_OBJECT,
-                                   Data.size(), 0, STB_GLOBAL, nullptr);
+                                   Data.size(), 0, STB_GLOBAL, nullptr,
+                                   nullptr);
 }
 
 static bool isBitcode(MemoryBufferRef MB) {
