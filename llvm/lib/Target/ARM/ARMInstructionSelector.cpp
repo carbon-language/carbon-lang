@@ -28,7 +28,7 @@ using namespace llvm;
 ARMInstructionSelector::ARMInstructionSelector(const ARMSubtarget &STI,
                                                const ARMRegisterBankInfo &RBI)
     : InstructionSelector(), TII(*STI.getInstrInfo()),
-      TRI(*STI.getRegisterInfo()), RBI(RBI) {}
+      TRI(*STI.getRegisterInfo()) {}
 
 bool ARMInstructionSelector::select(llvm::MachineInstr &I) const {
   return !isPreISelGenericOpcode(I.getOpcode());
