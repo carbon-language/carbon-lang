@@ -550,6 +550,7 @@ TEST(TargetParserTest, AArch64parseCPUArch) {
                        "cyclone",
                        "exynos-m1",
                        "exynos-m2",
+                       "falkor",
                        "kryo",
                        "vulcan"};
 
