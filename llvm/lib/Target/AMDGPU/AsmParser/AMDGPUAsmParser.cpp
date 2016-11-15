@@ -1056,7 +1056,7 @@ bool AMDGPUAsmParser::AddNextRegisterToList(unsigned& Reg, unsigned& RegWidth, R
     RegWidth++;
     return true;
   default:
-    assert(false); return false;
+    llvm_unreachable("unexpected register kind");
   }
 }
 
@@ -1178,7 +1178,7 @@ bool AMDGPUAsmParser::ParseAMDGPURegister(RegisterKind& RegKind, unsigned& Reg, 
   }
 
   default:
-    assert(false); return false;
+    llvm_unreachable("unexpected register kind");
   }
 
   if (!subtargetHasRegister(*TRI, Reg))
@@ -2462,7 +2462,7 @@ void AMDGPUAsmParser::cvtMIMG(MCInst &Inst, const OperandVector &Operands) {
     } else if (Op.isImmModifier()) {
       OptionalIdx[Op.getImmTy()] = I;
     } else {
-      assert(false);
+      llvm_unreachable("unexpected operand type");
     }
   }
 
@@ -2498,7 +2498,7 @@ void AMDGPUAsmParser::cvtMIMGAtomic(MCInst &Inst, const OperandVector &Operands)
     } else if (Op.isImmModifier()) {
       OptionalIdx[Op.getImmTy()] = I;
     } else {
-      assert(false);
+      llvm_unreachable("unexpected operand type");
     }
   }
 
@@ -2708,7 +2708,7 @@ void AMDGPUAsmParser::cvtVOP3(MCInst &Inst, const OperandVector &Operands) {
     } else if (Op.isImm()) {
       OptionalIdx[Op.getImmTy()] = I;
     } else {
-      assert(false);
+      llvm_unreachable("unhandled operand type");
     }
   }
 
