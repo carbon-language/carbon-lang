@@ -1418,8 +1418,10 @@ void AsmMatcherInfo::buildInfo() {
       &SubtargetFeaturePairs = SubtargetFeatureInfo::getAll(Records);
   SubtargetFeatures.insert(SubtargetFeaturePairs.begin(),
                            SubtargetFeaturePairs.end());
+#ifndef NDEBUG
   for (const auto &Pair : SubtargetFeatures)
     DEBUG(Pair.second.dump());
+#endif // NDEBUG
   assert(SubtargetFeatures.size() <= 64 && "Too many subtarget features!");
 
   bool HasMnemonicFirst = AsmParser->getValueAsBit("HasMnemonicFirst");
