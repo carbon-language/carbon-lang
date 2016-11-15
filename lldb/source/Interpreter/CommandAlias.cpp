@@ -90,7 +90,7 @@ CommandAlias::CommandAlias(CommandInterpreter &interpreter,
       GetAliasExpansion(sstr);
 
       translation_and_help.Printf("(%s)  %s", sstr.GetData(),
-                                  GetUnderlyingCommand()->GetHelp());
+                                  GetUnderlyingCommand()->GetHelp().str().c_str());
       SetHelp(translation_and_help.GetData());
     }
   }
