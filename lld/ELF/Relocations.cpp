@@ -615,7 +615,7 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     Out<ELFT>::RelaDyn->addReloc(Reloc);
   };
 
-  const elf::ObjectFile<ELFT> &File = *C.getFile();
+  const elf::ObjectFile<ELFT> *File = C.getFile();
   ArrayRef<uint8_t> SectionData = C.Data;
   const uint8_t *Buf = SectionData.begin();
 
@@ -628,7 +628,7 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 
   for (auto I = Rels.begin(), E = Rels.end(); I != E; ++I) {
     const RelTy &RI = *I;
-    SymbolBody &Body = File.getRelocTargetSym(RI);
+    SymbolBody &Body = File->getRelocTargetSym(RI);
     uint32_t Type = RI.getType(Config->Mips64EL);
 
     if (Config->MipsN32Abi) {
@@ -645,7 +645,7 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 
     RelExpr Expr = Target->getRelExpr(Type, Body);
     bool Preemptible = isPreemptible(Body, Type);
-    Expr = adjustExpr(File, Body, IsWrite, Expr, Type, Buf + RI.r_offset);
+    Expr = adjustExpr(*File, Body, IsWrite, Expr, Type, Buf + RI.r_offset);
     if (HasError)
       continue;
 
@@ -673,7 +673,7 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
         Expr == R_GOTREL || Expr == R_GOTREL_FROM_END || Expr == R_PPC_TOC)
       In<ELFT>::Got->HasGotOffRel = true;
 
-    uintX_t Addend = computeAddend(File, Buf, E, RI, Expr, Body);
+    uintX_t Addend = computeAddend(*File, Buf, E, RI, Expr, Body);
 
     if (unsigned Processed =
             handleTlsRelocation<ELFT>(Type, Body, C, Offset, Addend, Expr)) {
@@ -796,14 +796,14 @@ template <class ELFT> void scanRelocations(InputSectionBase<ELFT> &S) {
 
 template <class ELFT, class RelTy>
 static void createThunks(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
-  const elf::ObjectFile<ELFT> &File = *C.getFile();
+  const elf::ObjectFile<ELFT> *File = C.getFile();
   for (const RelTy &Rel : Rels) {
-    SymbolBody &Body = File.getRelocTargetSym(Rel);
+    SymbolBody &Body = File->getRelocTargetSym(Rel);
     uint32_t Type = Rel.getType(Config->Mips64EL);
     RelExpr Expr = Target->getRelExpr(Type, Body);
     if (!isPreemptible(Body, Type) && needsPlt(Expr))
       Expr = fromPlt(Expr);
-    Expr = Target->getThunkExpr(Expr, Type, File, Body);
+    Expr = Target->getThunkExpr(Expr, Type, *File, Body);
     // Some targets might require creation of thunks for relocations.
     // Now we support only MIPS which requires LA25 thunk to call PIC
     // code from non-PIC one, and ARM which requires interworking.
