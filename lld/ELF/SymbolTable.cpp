@@ -586,7 +586,7 @@ static void setVersionId(SymbolBody *Body, StringRef VersionName,
                          StringRef Name, uint16_t Version) {
   if (!Body || Body->isUndefined()) {
     if (Config->NoUndefinedVersion)
-      error("version script assignment of " + VersionName + " to symbol " +
+      error("version script assignment of '" + VersionName + "' to symbol " +
             Name + " failed: symbol not defined");
     return;
   }
@@ -700,26 +700,26 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
   // Each version definition has a glob pattern, and all symbols that match
   // with the pattern get that version.
 
+  auto assignVersion = [&](SymbolVersion &Ver, size_t Version,
+                           StringRef VerName) {
+    if (Ver.HasWildcards)
+      return;
+
+    if (Ver.IsExternCpp) {
+      for (SymbolBody *B : findDemangled(Ver.Name))
+        setVersionId(B, VerName, Ver.Name, Version);
+      return;
+    }
+    setVersionId(find(Ver.Name), VerName, Ver.Name, Version);
+  };
+
   // First, we assign versions to exact matching symbols,
   // i.e. version definitions not containing any glob meta-characters.
   for (VersionDefinition &V : Config->VersionDefinitions) {
-    for (SymbolVersion Ver : V.Globals) {
-      if (Ver.HasWildcards)
-        continue;
-
-      StringRef N = Ver.Name;
-      if (Ver.IsExternCpp) {
-        for (SymbolBody *B : findDemangled(N))
-          setVersionId(B, V.Name, N, V.Id);
-        continue;
-      }
-      setVersionId(find(N), V.Name, N, V.Id);
-    }
-    for (SymbolVersion Ver : V.Locals) {
-      if (Ver.HasWildcards)
-        continue;
-      setVersionId(find(Ver.Name), V.Name, Ver.Name, VER_NDX_LOCAL);
-    }
+    for (SymbolVersion Sym : V.Globals)
+      assignVersion(Sym, V.Id, V.Name);
+    for (SymbolVersion Sym : V.Locals)
+      assignVersion(Sym, VER_NDX_LOCAL, "local");
   }
 
   // Next, we assign versions to fuzzy matching symbols,
