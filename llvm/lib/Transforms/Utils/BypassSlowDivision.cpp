@@ -83,10 +83,9 @@ static bool insertFastDiv(Instruction *I, IntegerType *BypassType,
   Value *Dividend = I->getOperand(0);
   Value *Divisor = I->getOperand(1);
 
-  if (isa<ConstantInt>(Divisor) ||
-      (isa<ConstantInt>(Dividend) && isa<ConstantInt>(Divisor))) {
-    // Operations with immediate values should have
-    // been solved and replaced during compile time.
+  if (isa<ConstantInt>(Divisor)) {
+    // Division by a constant should have been been solved and replaced earlier
+    // in the pipeline.
     return false;
   }
 
