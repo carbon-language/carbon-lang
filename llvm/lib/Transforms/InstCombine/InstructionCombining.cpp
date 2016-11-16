@@ -746,6 +746,8 @@ static Value *foldOperationIntoSelectOperand(Instruction &I, Value *SO,
   if (auto *Cast = dyn_cast<CastInst>(&I))
     return IC->Builder->CreateCast(Cast->getOpcode(), SO, I.getType());
 
+  assert(I.isBinaryOp() && "Unexpected opcode for select folding");
+
   // Figure out if the constant is the left or the right argument.
   bool ConstIsRHS = isa<Constant>(I.getOperand(1));
   Constant *ConstOperand = cast<Constant>(I.getOperand(ConstIsRHS));
@@ -760,26 +762,13 @@ static Value *foldOperationIntoSelectOperand(Instruction &I, Value *SO,
   if (!ConstIsRHS)
     std::swap(Op0, Op1);
 
-  if (auto *BO = dyn_cast<BinaryOperator>(&I)) {
-    Value *RI = IC->Builder->CreateBinOp(BO->getOpcode(), Op0, Op1,
-                                         SO->getName() + ".op");
-    Instruction *FPInst = dyn_cast<Instruction>(RI);
-    if (FPInst && isa<FPMathOperator>(FPInst))
-      FPInst->copyFastMathFlags(BO);
-    return RI;
-  }
-  if (ICmpInst *CI = dyn_cast<ICmpInst>(&I))
-    return IC->Builder->CreateICmp(CI->getPredicate(), Op0, Op1,
-                                   SO->getName() + ".cmp");
-  // FIXME: This must already be unreachable - we would assert trying to create
-  // an ICmp from an FCmp predicate. It's likely that the ICmp check above this
-  // is also unreachable.
-  if (FCmpInst *CI = dyn_cast<FCmpInst>(&I))
-    return IC->Builder->CreateICmp(CI->getPredicate(), Op0, Op1,
-                                   SO->getName() + ".cmp");
-
-  // FIXME: Change this to an assert above.
-  llvm_unreachable("Unknown binary instruction type!");
+  auto *BO = cast<BinaryOperator>(&I);
+  Value *RI = IC->Builder->CreateBinOp(BO->getOpcode(), Op0, Op1,
+                                       SO->getName() + ".op");
+  auto *FPInst = dyn_cast<Instruction>(RI);
+  if (FPInst && isa<FPMathOperator>(FPInst))
+    FPInst->copyFastMathFlags(BO);
+  return RI;
 }
 
 /// Given an instruction with a select as one operand and a constant as the
