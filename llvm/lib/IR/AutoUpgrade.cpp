@@ -238,6 +238,14 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name.startswith("avx2.pcmpgt.") || // Added in 3.1
          Name.startswith("avx512.mask.pcmpeq.") || // Added in 3.9
          Name.startswith("avx512.mask.pcmpgt.") || // Added in 3.9
+         Name == "sse.add.ss" || // Added in 4.0
+         Name == "sse2.add.sd" || // Added in 4.0
+         Name == "sse.sub.ss" || // Added in 4.0
+         Name == "sse2.sub.sd" || // Added in 4.0
+         Name == "sse.mul.ss" || // Added in 4.0
+         Name == "sse2.mul.sd" || // Added in 4.0
+         Name == "sse.div.ss" || // Added in 4.0
+         Name == "sse2.div.sd" || // Added in 4.0
          Name == "sse41.pmaxsb" || // Added in 3.9
          Name == "sse2.pmaxs.w" || // Added in 3.9
          Name == "sse41.pmaxsd" || // Added in 3.9
@@ -732,6 +740,42 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep = Builder.CreateICmpSGT(CI->getArgOperand(0), CI->getArgOperand(1),
                                   "pcmpgt");
       Rep = Builder.CreateSExt(Rep, CI->getType(), "");
+    } else if (IsX86 && (Name == "sse.add.ss" || Name == "sse2.add.sd")) {
+      Type *I32Ty = Type::getInt32Ty(C);
+      Value *Elt0 = Builder.CreateExtractElement(CI->getArgOperand(0),
+                                                 ConstantInt::get(I32Ty, 0));
+      Value *Elt1 = Builder.CreateExtractElement(CI->getArgOperand(1),
+                                                 ConstantInt::get(I32Ty, 0));
+      Rep = Builder.CreateInsertElement(CI->getArgOperand(0),
+                                        Builder.CreateFAdd(Elt0, Elt1),
+                                        ConstantInt::get(I32Ty, 0));
+    } else if (IsX86 && (Name == "sse.sub.ss" || Name == "sse2.sub.sd")) {
+      Type *I32Ty = Type::getInt32Ty(C);
+      Value *Elt0 = Builder.CreateExtractElement(CI->getArgOperand(0),
+                                                 ConstantInt::get(I32Ty, 0));
+      Value *Elt1 = Builder.CreateExtractElement(CI->getArgOperand(1),
+                                                 ConstantInt::get(I32Ty, 0));
+      Rep = Builder.CreateInsertElement(CI->getArgOperand(0),
+                                        Builder.CreateFSub(Elt0, Elt1),
+                                        ConstantInt::get(I32Ty, 0));
+    } else if (IsX86 && (Name == "sse.mul.ss" || Name == "sse2.mul.sd")) {
+      Type *I32Ty = Type::getInt32Ty(C);
+      Value *Elt0 = Builder.CreateExtractElement(CI->getArgOperand(0),
+                                                 ConstantInt::get(I32Ty, 0));
+      Value *Elt1 = Builder.CreateExtractElement(CI->getArgOperand(1),
+                                                 ConstantInt::get(I32Ty, 0));
+      Rep = Builder.CreateInsertElement(CI->getArgOperand(0),
+                                        Builder.CreateFMul(Elt0, Elt1),
+                                        ConstantInt::get(I32Ty, 0));
+    } else if (IsX86 && (Name == "sse.div.ss" || Name == "sse2.div.sd")) {
+      Type *I32Ty = Type::getInt32Ty(C);
+      Value *Elt0 = Builder.CreateExtractElement(CI->getArgOperand(0),
+                                                 ConstantInt::get(I32Ty, 0));
+      Value *Elt1 = Builder.CreateExtractElement(CI->getArgOperand(1),
+                                                 ConstantInt::get(I32Ty, 0));
+      Rep = Builder.CreateInsertElement(CI->getArgOperand(0),
+                                        Builder.CreateFDiv(Elt0, Elt1),
+                                        ConstantInt::get(I32Ty, 0));
     } else if (IsX86 && Name.startswith("avx512.mask.pcmpeq.")) {
       Rep = upgradeMaskedCompare(Builder, *CI, ICmpInst::ICMP_EQ);
     } else if (IsX86 && Name.startswith("avx512.mask.pcmpgt.")) {

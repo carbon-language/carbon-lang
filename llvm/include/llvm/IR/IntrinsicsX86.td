@@ -145,18 +145,6 @@ let TargetPrefix = "x86" in {
 
 // Arithmetic ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_sse_add_ss : // TODO: Remove this intrinsic.
-              Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty,
-                         llvm_v4f32_ty], [IntrNoMem]>;
-  def int_x86_sse_sub_ss : // TODO: Remove this intrinsic.
-              Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty,
-                         llvm_v4f32_ty], [IntrNoMem]>;
-  def int_x86_sse_mul_ss : // TODO: Remove this intrinsic.
-              Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty,
-                         llvm_v4f32_ty], [IntrNoMem]>;
-  def int_x86_sse_div_ss : // TODO: Remove this intrinsic.
-              Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty,
-                         llvm_v4f32_ty], [IntrNoMem]>;
   def int_x86_sse_sqrt_ss : GCCBuiltin<"__builtin_ia32_sqrtss">,
               Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty],
                         [IntrNoMem]>;
@@ -287,18 +275,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 
 // FP arithmetic ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_sse2_add_sd : // TODO: Remove this intrinsic.
-              Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty,
-                         llvm_v2f64_ty], [IntrNoMem]>;
-  def int_x86_sse2_sub_sd : // TODO: Remove this intrinsic.
-              Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty,
-                         llvm_v2f64_ty], [IntrNoMem]>;
-  def int_x86_sse2_mul_sd : // TODO: Remove this intrinsic.
-              Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty,
-                         llvm_v2f64_ty], [IntrNoMem]>;
-  def int_x86_sse2_div_sd : // TODO: Remove this intrinsic.
-              Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty,
-                         llvm_v2f64_ty], [IntrNoMem]>;
   def int_x86_sse2_sqrt_sd : GCCBuiltin<"__builtin_ia32_sqrtsd">,
               Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty],
                         [IntrNoMem]>;
