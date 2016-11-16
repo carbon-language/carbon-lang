@@ -48,14 +48,14 @@ namespace llvm {
 
 //===----------------------------------------------------------------------===//
 // Forward declarations.
+class BlockAddress;
 class Constant;
 class GlobalVariable;
-class BlockAddress;
 class MDNode;
 class MMIAddrLabelMap;
 class MachineBasicBlock;
-class MachineFunctionInitializer;
 class MachineFunction;
+class MachineFunctionInitializer;
 class Module;
 class PointerType;
 class StructType;
