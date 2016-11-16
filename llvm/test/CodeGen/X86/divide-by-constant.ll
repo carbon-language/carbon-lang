@@ -295,3 +295,44 @@ entry:
 	%div = udiv i32 %x, 33
 	ret i32 %div
 }
+
+define i64 @PR23590(i64 %x) nounwind {
+; X32-LABEL: PR23590:
+; X32:       # BB#0: # %entry
+; X32-NEXT:    subl $12, %esp
+; X32-NEXT:    pushl $0
+; X32-NEXT:    pushl $12345 # imm = 0x3039
+; X32-NEXT:    pushl {{[0-9]+}}(%esp)
+; X32-NEXT:    pushl {{[0-9]+}}(%esp)
+; X32-NEXT:    calll __umoddi3
+; X32-NEXT:    addl $16, %esp
+; X32-NEXT:    pushl $0
+; X32-NEXT:    pushl $7
+; X32-NEXT:    pushl %edx
+; X32-NEXT:    pushl %eax
+; X32-NEXT:    calll __udivdi3
+; X32-NEXT:    addl $28, %esp
+; X32-NEXT:    retl
+;
+; X64-LABEL: PR23590:
+; X64:       # BB#0: # %entry
+; X64-NEXT:    movq %rdi, %rcx
+; X64-NEXT:    movabsq $6120523590596543007, %rdx # imm = 0x54F077C718E7C21F
+; X64-NEXT:    movq %rcx, %rax
+; X64-NEXT:    mulq %rdx
+; X64-NEXT:    shrq $12, %rdx
+; X64-NEXT:    imulq $12345, %rdx, %rax # imm = 0x3039
+; X64-NEXT:    subq %rax, %rcx
+; X64-NEXT:    movabsq $2635249153387078803, %rdx # imm = 0x2492492492492493
+; X64-NEXT:    movq %rcx, %rax
+; X64-NEXT:    mulq %rdx
+; X64-NEXT:    subq %rdx, %rcx
+; X64-NEXT:    shrq %rcx
+; X64-NEXT:    leaq (%rcx,%rdx), %rax
+; X64-NEXT:    shrq $2, %rax
+; X64-NEXT:    retq
+entry:
+	%rem = urem i64 %x, 12345
+	%div = udiv i64 %rem, 7
+	ret i64 %div
+}
