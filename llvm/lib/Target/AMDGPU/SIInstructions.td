@@ -468,14 +468,21 @@ def : Pat <
 // VOP2 Patterns
 //===----------------------------------------------------------------------===//
 
+multiclass SelectPat<ValueType vt, Instruction inst> {
+  def : Pat <
+    (vt (select i1:$src0, vt:$src1, vt:$src2)),
+    (inst $src2, $src1, $src0)
+  >;
+}
+
+defm : SelectPat<i16, V_CNDMASK_B32_e64>;
+defm : SelectPat<i32, V_CNDMASK_B32_e64>;
+defm : SelectPat<f16, V_CNDMASK_B32_e64>;
+defm : SelectPat<f32, V_CNDMASK_B32_e64>;
+
 def : Pat <
   (i32 (add (i32 (ctpop i32:$popcnt)), i32:$val)),
   (V_BCNT_U32_B32_e64 $popcnt, $val)
->;
-
-def : Pat <
-  (i32 (select i1:$src0, i32:$src1, i32:$src2)),
-  (V_CNDMASK_B32_e64 $src2, $src1, $src0)
 >;
 
 // Pattern for V_MAC_F16
@@ -988,11 +995,6 @@ def : Pat <
   (V_BFI_B32 (S_MOV_B32 (i32 0x00ff00ff)),
              (V_ALIGNBIT_B32 $a, $a, (i32 24)),
              (V_ALIGNBIT_B32 $a, $a, (i32 8)))
->;
-
-def : Pat <
-  (f32 (select i1:$src2, f32:$src1, f32:$src0)),
-  (V_CNDMASK_B32_e64 $src0, $src1, $src2)
 >;
 
 multiclass BFMPatterns <ValueType vt, InstSI BFM, InstSI MOV> {
