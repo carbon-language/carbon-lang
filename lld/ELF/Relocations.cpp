@@ -454,7 +454,7 @@ static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
   }
   if (Body.getVisibility() != STV_DEFAULT) {
     error(getLocation(S, RelOff) + ": cannot preempt symbol '" +
-          Body.getName() + "' previously defined in " + getFilename(Body.File));
+          Body.getName() + "' defined in " + getFilename(Body.File));
     return Expr;
   }
   if (Body.isObject()) {
