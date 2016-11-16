@@ -716,24 +716,21 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
 
   // First, we assign versions to exact matching symbols,
   // i.e. version definitions not containing any glob meta-characters.
-  for (VersionDefinition &V : Config->VersionDefinitions) {
+  for (SymbolVersion Sym : Config->VersionScriptLocals)
+    assignVersion(Sym, VER_NDX_LOCAL, "local");
+  for (VersionDefinition &V : Config->VersionDefinitions)
     for (SymbolVersion Sym : V.Globals)
       assignVersion(Sym, V.Id, V.Name);
-    for (SymbolVersion Sym : V.Locals)
-      assignVersion(Sym, VER_NDX_LOCAL, "local");
-  }
 
   // Next, we assign versions to fuzzy matching symbols,
   // i.e. version definitions containing glob meta-characters.
   // Note that because the last match takes precedence over previous matches,
   // we iterate over the definitions in the reverse order.
-  for (size_t I = Config->VersionDefinitions.size() - 1; I != (size_t)-1; --I) {
-    VersionDefinition &V = Config->VersionDefinitions[I];
-    for (SymbolVersion &Ver : V.Locals)
-      assignWildcardVersion(Ver, VER_NDX_LOCAL);
-    for (SymbolVersion &Ver : V.Globals)
-      assignWildcardVersion(Ver, V.Id);
-  }
+  for (SymbolVersion &Ver : Config->VersionScriptLocals)
+    assignWildcardVersion(Ver, VER_NDX_LOCAL);
+  for (size_t I = Config->VersionDefinitions.size() - 1; I != (size_t)-1; --I)
+    for (SymbolVersion &Ver : Config->VersionDefinitions[I].Globals)
+      assignWildcardVersion(Ver, Config->VersionDefinitions[I].Id);
 }
 
 template class elf::SymbolTable<ELF32LE>;

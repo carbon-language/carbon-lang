@@ -1844,7 +1844,7 @@ void ScriptParser::readLocal(StringRef VerStr) {
   if (VerStr.empty())
     setError("locals list for anonymous version is not supported");
 
-  readSymbols(Config->VersionDefinitions.back().Locals);
+  readSymbols(Config->VersionScriptLocals);
 }
 
 void ScriptParser::readVersionExtern(std::vector<SymbolVersion> *V) {
