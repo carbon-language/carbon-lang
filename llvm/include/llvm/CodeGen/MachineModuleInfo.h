@@ -49,8 +49,10 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 // Forward declarations.
 class BlockAddress;
+class CallInst;
 class Constant;
 class GlobalVariable;
+class LandingPadInst;
 class MDNode;
 class MMIAddrLabelMap;
 class MachineBasicBlock;
@@ -420,6 +422,20 @@ public:
   VariableDbgInfoMapTy &getVariableDbgInfo() { return VariableDbgInfos; }
 
 }; // End class MachineModuleInfo
+
+//===- MMI building helpers -----------------------------------------------===//
+
+/// Determine if any floating-point values are being passed to this variadic
+/// function, and set the MachineModuleInfo's usesVAFloatArgument flag if so.
+/// This flag is used to emit an undefined reference to _fltused on Windows,
+/// which will link in MSVCRT's floating-point support.
+void ComputeUsesVAFloatArgument(const CallInst &I, MachineModuleInfo *MMI);
+
+/// Extract the exception handling information from the landingpad instruction
+/// and add them to the specified machine module info.
+void AddLandingPadInfo(const LandingPadInst &I, MachineModuleInfo &MMI,
+                       MachineBasicBlock *MBB);
+
 
 } // End llvm namespace
 

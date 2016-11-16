@@ -15,7 +15,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/Analysis.h"
-#include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
