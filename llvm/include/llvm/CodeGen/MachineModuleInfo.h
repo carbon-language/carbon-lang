@@ -429,12 +429,12 @@ public:
 /// function, and set the MachineModuleInfo's usesVAFloatArgument flag if so.
 /// This flag is used to emit an undefined reference to _fltused on Windows,
 /// which will link in MSVCRT's floating-point support.
-void ComputeUsesVAFloatArgument(const CallInst &I, MachineModuleInfo *MMI);
+void computeUsesVAFloatArgument(const CallInst &I, MachineModuleInfo &MMI);
 
 /// Extract the exception handling information from the landingpad instruction
 /// and add them to the specified machine module info.
-void AddLandingPadInfo(const LandingPadInst &I, MachineModuleInfo &MMI,
-                       MachineBasicBlock *MBB);
+void addLandingPadInfo(const LandingPadInst &I, MachineModuleInfo &MMI,
+                       MachineBasicBlock &MBB);
 
 
 } // End llvm namespace

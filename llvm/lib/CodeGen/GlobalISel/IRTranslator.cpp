@@ -597,7 +597,7 @@ bool IRTranslator::translateLandingPad(const User &U) {
   MachineBasicBlock &MBB = MIRBuilder.getMBB();
   MachineFunction &MF = MIRBuilder.getMF();
   MachineModuleInfo &MMI = MF.getMMI();
-  AddLandingPadInfo(LP, MMI, &MBB);
+  addLandingPadInfo(LP, MMI, MBB);
 
   MBB.setIsEHPad();
 
