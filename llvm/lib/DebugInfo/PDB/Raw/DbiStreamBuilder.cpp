@@ -185,8 +185,8 @@ Error DbiStreamBuilder::generateFileInfoSubstream() {
       WritableStreamRef(FileInfoBuffer).keep_front(NamesOffset);
   StreamWriter MetadataWriter(MetadataBuffer);
 
-  uint16_t ModiCount = std::min<uint16_t>(UINT16_MAX, ModuleInfos.size());
-  uint16_t FileCount = std::min<uint16_t>(UINT16_MAX, SourceFileNames.size());
+  uint16_t ModiCount = std::min<uint32_t>(UINT16_MAX, ModuleInfos.size());
+  uint16_t FileCount = std::min<uint32_t>(UINT16_MAX, SourceFileNames.size());
   if (auto EC = MetadataWriter.writeInteger(ModiCount)) // NumModules
     return EC;
   if (auto EC = MetadataWriter.writeInteger(FileCount)) // NumSourceFiles
