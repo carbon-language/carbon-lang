@@ -3023,7 +3023,7 @@ def warn_int_to_void_pointer_cast : Warning<
 def warn_no_underlying_type_specified_for_enum_bitfield : Warning<
   "enums in the Microsoft ABI are signed integers by default; consider giving "
   "the enum %0 an unsigned underlying type to make this code portable">,
-  InGroup<DiagGroup<"signed-enum-bitfield">>, DefaultIgnore;
+  InGroup<SignedEnumBitfield>, DefaultIgnore;
 def warn_attribute_packed_for_bitfield : Warning<
   "'packed' attribute was ignored on bit-fields with single-byte alignment "
   "in older versions of GCC and Clang">,

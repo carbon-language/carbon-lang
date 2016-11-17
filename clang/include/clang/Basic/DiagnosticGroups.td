@@ -662,7 +662,6 @@ def Most : DiagGroup<"most", [
     ReturnType,
     SelfAssignment,
     SelfMove,
-    SignedEnumBitfield,
     SizeofArrayArgument,
     SizeofArrayDecay,
     StringPlusInt,
