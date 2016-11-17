@@ -712,11 +712,11 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
 
   // First, we assign versions to exact matching symbols,
   // i.e. version definitions not containing any glob meta-characters.
-  for (SymbolVersion Sym : Config->VersionScriptLocals)
-    assignExactVersion(Sym, VER_NDX_LOCAL, "local");
+  for (SymbolVersion &Ver : Config->VersionScriptLocals)
+    assignExactVersion(Ver, VER_NDX_LOCAL, "local");
   for (VersionDefinition &V : Config->VersionDefinitions)
-    for (SymbolVersion Sym : V.Globals)
-      assignExactVersion(Sym, V.Id, V.Name);
+    for (SymbolVersion &Ver : V.Globals)
+      assignExactVersion(Ver, V.Id, V.Name);
 
   // Next, we assign versions to fuzzy matching symbols,
   // i.e. version definitions containing glob meta-characters.
