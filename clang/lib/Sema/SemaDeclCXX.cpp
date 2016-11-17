@@ -395,7 +395,8 @@ void Sema::CheckExtraCXXDefaultArguments(Declarator &D) {
            ++argIdx) {
         ParmVarDecl *Param = cast<ParmVarDecl>(chunk.Fun.Params[argIdx].Param);
         if (Param->hasUnparsedDefaultArg()) {
-          std::unique_ptr<CachedTokens> Toks = std::move(chunk.Fun.Params[argIdx].DefaultArgTokens);
+          std::unique_ptr<CachedTokens> Toks =
+              std::move(chunk.Fun.Params[argIdx].DefaultArgTokens);
           SourceRange SR;
           if (Toks->size() > 1)
             SR = SourceRange((*Toks)[1].getLocation(),

@@ -223,15 +223,11 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto,
     if (!TheDeclarator.InlineStorageUsed &&
         NumParams <= llvm::array_lengthof(TheDeclarator.InlineParams)) {
       I.Fun.Params = TheDeclarator.InlineParams;
-      // Zero the memory block so that unique pointers are initialized
-      // properly.
-      memset(I.Fun.Params, 0, sizeof(Params[0]) * NumParams);
+      new (I.Fun.Params) ParamInfo[NumParams];
       I.Fun.DeleteParams = false;
       TheDeclarator.InlineStorageUsed = true;
     } else {
-      // Call the version of new that zeroes memory so that unique pointers
-      // are initialized properly.
-      I.Fun.Params = new DeclaratorChunk::ParamInfo[NumParams]();
+      I.Fun.Params = new DeclaratorChunk::ParamInfo[NumParams];
       I.Fun.DeleteParams = true;
     }
     for (unsigned i = 0; i < NumParams; i++)
