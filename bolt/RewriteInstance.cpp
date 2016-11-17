@@ -1294,7 +1294,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
       default:
         break;
       case MCCFIInstruction::OpDefCfa:
-        if (CFIInstr.getRegister() == 7 && CFIInstr.getOffset() == 8)
+        if (CFIInstr.getRegister() == 7 && CFIInstr.getOffset() == -8)
           continue;
         break;
       case MCCFIInstruction::OpOffset:
