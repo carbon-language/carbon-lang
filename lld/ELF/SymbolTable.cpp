@@ -667,8 +667,8 @@ void SymbolTable<ELFT>::assignExactVersion(SymbolVersion Ver, uint16_t VersionId
   for (SymbolBody *B : Syms) {
     if (!B || B->isUndefined()) {
       if (Config->NoUndefinedVersion)
-        error("version script assignment of '" + VersionName + "' to symbol " +
-              Ver.Name + " failed: symbol not defined");
+        error("version script assignment of '" + VersionName + "' to symbol '" +
+              Ver.Name + "' failed: symbol not defined");
       continue;
     }
 
