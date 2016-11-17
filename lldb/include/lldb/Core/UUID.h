@@ -73,6 +73,7 @@ public:
   //------------------------------------------------------------------
   static llvm::StringRef
   DecodeUUIDBytesFromString(llvm::StringRef str, ValueType &uuid_bytes,
+                            uint32_t &bytes_decoded,
                             uint32_t num_uuid_bytes = 16);
 
 protected:

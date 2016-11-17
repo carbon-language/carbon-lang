@@ -128,6 +128,7 @@ static inline int xdigit_to_int(char ch) {
 
 llvm::StringRef UUID::DecodeUUIDBytesFromString(llvm::StringRef p,
                                                 ValueType &uuid_bytes,
+                                                uint32_t &bytes_decoded,
                                                 uint32_t num_uuid_bytes) {
   ::memset(uuid_bytes, 0, sizeof(uuid_bytes));
   size_t uuid_byte_idx = 0;
@@ -157,6 +158,7 @@ llvm::StringRef UUID::DecodeUUIDBytesFromString(llvm::StringRef p,
   // Clear trailing bytes to 0.
   for (uint32_t i = uuid_byte_idx; i < sizeof(ValueType); i++)
     uuid_bytes[i] = 0;
+  bytes_decoded = uuid_byte_idx;
   return p;
 }
 size_t UUID::SetFromCString(const char *cstr, uint32_t num_uuid_bytes) {
@@ -169,9 +171,9 @@ size_t UUID::SetFromCString(const char *cstr, uint32_t num_uuid_bytes) {
   // Skip leading whitespace characters
   p = p.ltrim();
 
+  uint32_t bytes_decoded = 0;
   llvm::StringRef rest =
-      UUID::DecodeUUIDBytesFromString(p, m_uuid, num_uuid_bytes);
-  size_t bytes_decoded = p.size() - rest.size();
+      UUID::DecodeUUIDBytesFromString(p, m_uuid, bytes_decoded, num_uuid_bytes);
 
   // If we successfully decoded a UUID, return the amount of characters that
   // were consumed
