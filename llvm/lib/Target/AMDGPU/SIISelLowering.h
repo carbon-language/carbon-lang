@@ -56,6 +56,9 @@ class SITargetLowering final : public AMDGPUTargetLowering {
   /// \brief Custom lowering for ISD::ConstantFP.
   SDValue lowerConstantFP(SDValue Op, SelectionDAG &DAG) const;
 
+  /// \brief Custom lowering for ISD::FP_ROUND for MVT::f16.
+  SDValue lowerFP_ROUND(SDValue Op, SelectionDAG &DAG) const;
+
   SDValue getSegmentAperture(unsigned AS, SelectionDAG &DAG) const;
   SDValue lowerADDRSPACECAST(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerTRAP(SDValue Op, SelectionDAG &DAG) const;

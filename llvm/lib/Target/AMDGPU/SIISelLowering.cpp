@@ -285,6 +285,7 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
     AddPromotedToType(ISD::STORE, MVT::f16, MVT::i16);
 
     // F16 - VOP1 Actions.
+    setOperationAction(ISD::FP_ROUND, MVT::f16, Custom);
     setOperationAction(ISD::FCOS, MVT::f16, Promote);
     setOperationAction(ISD::FSIN, MVT::f16, Promote);
     setOperationAction(ISD::FP_TO_SINT, MVT::f16, Promote);
@@ -1832,6 +1833,8 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 
   case ISD::ConstantFP:
     return lowerConstantFP(Op, DAG);
+  case ISD::FP_ROUND:
+    return lowerFP_ROUND(Op, DAG);
   }
   return SDValue();
 }
@@ -2041,6 +2044,23 @@ SDValue SITargetLowering::lowerConstantFP(SDValue Op, SelectionDAG &DAG) const {
   }
 
   return SDValue();
+}
+
+SDValue SITargetLowering::lowerFP_ROUND(SDValue Op, SelectionDAG &DAG) const {
+  EVT DstVT = Op.getValueType();
+  EVT SrcVT = Op.getOperand(0).getValueType();
+
+  assert(DstVT == MVT::f16 &&
+         "Do not know how to custom lower FP_ROUND for non-f16 type");
+
+  if (SrcVT != MVT::f64)
+    return Op;
+
+  SDLoc DL(Op);
+  SDValue Src = Op.getOperand(0);
+  SDValue FpToFp16 = DAG.getNode(ISD::FP_TO_FP16, DL, MVT::i32, Src);
+  SDValue Trunc = DAG.getNode(ISD::TRUNCATE, DL, MVT::i16, FpToFp16);
+  return DAG.getNode(ISD::BITCAST, DL, MVT::f16, Trunc);;
 }
 
 SDValue SITargetLowering::getSegmentAperture(unsigned AS,
