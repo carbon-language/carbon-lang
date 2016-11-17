@@ -268,7 +268,25 @@ bool HazardDetector::isSafeToHoist(MachineInstr *MI,
             return false;
           assert((!MO.isDef() || RegDefs.count(MO.getReg())) &&
                  "All defs must be tracked in RegDefs by now!");
-          return !MO.isDef() || RegDefs.find(MO.getReg())->second == MI;
+
+          if (!MO.isDef()) {
+            // FIXME: This is unnecessary, we should be able to
+            // assert(MO.isDef()) here.
+            return true;
+          }
+
+          for (unsigned Reg : RegUses)
+            if (TRI.regsOverlap(Reg, MO.getReg()))
+              return false; // We found a write-after-read
+
+          for (auto &OtherDef : RegDefs) {
+            unsigned OtherReg = OtherDef.first;
+            MachineInstr *OtherMI = OtherDef.second;
+            if (OtherMI != MI && TRI.regsOverlap(OtherReg, MO.getReg()))
+              return false;
+          }
+
+          return true;
         };
 
         if (!all_of(MI->operands(), IsMIOperandSafe))
