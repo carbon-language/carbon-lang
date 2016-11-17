@@ -670,7 +670,7 @@ void SymbolTable<ELFT>::assignExactVersion(SymbolVersion Ver, size_t VersionId,
     }
 
     if (B->symbol()->VersionId != Config->DefaultSymbolVersion)
-      warn("duplicate symbol " + Ver.Name + " in version script");
+      warn("duplicate symbol '" + Ver.Name + "' in version script");
     B->symbol()->VersionId = VersionId;
   }
 }
