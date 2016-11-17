@@ -270,10 +270,10 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FP_TO_FP16, MVT::i16, Promote);
     AddPromotedToType(ISD::FP_TO_FP16, MVT::i16, MVT::i32);
 
-    setOperationAction(ISD::FP_TO_SINT, MVT::i16, Custom);
-    setOperationAction(ISD::FP_TO_UINT, MVT::i16, Custom);
-    setOperationAction(ISD::SINT_TO_FP, MVT::i16, Custom);
-    setOperationAction(ISD::UINT_TO_FP, MVT::i16, Custom);
+    setOperationAction(ISD::FP_TO_SINT, MVT::i16, Promote);
+    setOperationAction(ISD::FP_TO_UINT, MVT::i16, Promote);
+    setOperationAction(ISD::SINT_TO_FP, MVT::i16, Promote);
+    setOperationAction(ISD::UINT_TO_FP, MVT::i16, Promote);
 
     // F16 - Constant Actions.
     setOperationAction(ISD::ConstantFP, MVT::f16, Custom);
@@ -287,6 +287,10 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
     // F16 - VOP1 Actions.
     setOperationAction(ISD::FCOS, MVT::f16, Promote);
     setOperationAction(ISD::FSIN, MVT::f16, Promote);
+    setOperationAction(ISD::FP_TO_SINT, MVT::f16, Promote);
+    setOperationAction(ISD::FP_TO_UINT, MVT::f16, Promote);
+    setOperationAction(ISD::SINT_TO_FP, MVT::f16, Promote);
+    setOperationAction(ISD::UINT_TO_FP, MVT::f16, Promote);
 
     // F16 - VOP2 Actions.
     setOperationAction(ISD::BR_CC, MVT::f16, Expand);
@@ -1828,12 +1832,6 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 
   case ISD::ConstantFP:
     return lowerConstantFP(Op, DAG);
-  case ISD::FP_TO_SINT:
-  case ISD::FP_TO_UINT:
-    return lowerFpToInt(Op, DAG);
-  case ISD::SINT_TO_FP:
-  case ISD::UINT_TO_FP:
-    return lowerIntToFp(Op, DAG);
   }
   return SDValue();
 }
@@ -2043,48 +2041,6 @@ SDValue SITargetLowering::lowerConstantFP(SDValue Op, SelectionDAG &DAG) const {
   }
 
   return SDValue();
-}
-
-SDValue SITargetLowering::lowerFpToInt(SDValue Op, SelectionDAG &DAG) const {
-  EVT DstVT = Op.getValueType();
-  EVT SrcVT = Op.getOperand(0).getValueType();
-  if (DstVT == MVT::i64) {
-    return Op.getOpcode() == ISD::FP_TO_SINT ?
-        AMDGPUTargetLowering::LowerFP_TO_SINT(Op, DAG) :
-        AMDGPUTargetLowering::LowerFP_TO_UINT(Op, DAG);
-  }
-
-  if (SrcVT == MVT::f16)
-    return Op;
-
-  SDLoc DL(Op);
-  SDValue OrigSrc = Op.getOperand(0);
-  SDValue FPRoundFlag = DAG.getIntPtrConstant(0, DL);
-  SDValue FPRoundSrc =
-      DAG.getNode(ISD::FP_ROUND, DL, MVT::f16, OrigSrc, FPRoundFlag);
-
-  return DAG.getNode(Op.getOpcode(), DL, DstVT, FPRoundSrc);
-}
-
-SDValue SITargetLowering::lowerIntToFp(SDValue Op, SelectionDAG &DAG) const {
-  EVT DstVT = Op.getValueType();
-  EVT SrcVT = Op.getOperand(0).getValueType();
-  if (SrcVT == MVT::i64) {
-    return Op.getOpcode() == ISD::SINT_TO_FP ?
-        AMDGPUTargetLowering::LowerSINT_TO_FP(Op, DAG) :
-        AMDGPUTargetLowering::LowerUINT_TO_FP(Op, DAG);
-  }
-
-  if (DstVT == MVT::f16)
-    return Op;
-
-  SDLoc DL(Op);
-  SDValue OrigSrc = Op.getOperand(0);
-  SDValue SExtOrZExtOrTruncSrc = Op.getOpcode() == ISD::SINT_TO_FP ?
-      DAG.getSExtOrTrunc(OrigSrc, DL, MVT::i32) :
-      DAG.getZExtOrTrunc(OrigSrc, DL, MVT::i32);
-
-  return DAG.getNode(Op.getOpcode(), DL, DstVT, SExtOrZExtOrTruncSrc);
 }
 
 SDValue SITargetLowering::getSegmentAperture(unsigned AS,
