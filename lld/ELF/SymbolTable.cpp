@@ -21,6 +21,7 @@
 #include "Memory.h"
 #include "SymbolListFile.h"
 #include "Symbols.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -723,9 +724,9 @@ template <class ELFT> void SymbolTable<ELFT>::scanVersionScript() {
   // we iterate over the definitions in the reverse order.
   for (SymbolVersion &Ver : Config->VersionScriptLocals)
     assignWildcardVersion(Ver, VER_NDX_LOCAL);
-  for (size_t I = Config->VersionDefinitions.size() - 1; I != (size_t)-1; --I)
-    for (SymbolVersion &Ver : Config->VersionDefinitions[I].Globals)
-      assignWildcardVersion(Ver, Config->VersionDefinitions[I].Id);
+  for (VersionDefinition &V : llvm::reverse(Config->VersionDefinitions))
+    for (SymbolVersion &Ver : V.Globals)
+      assignWildcardVersion(Ver, V.Id);
 }
 
 template class elf::SymbolTable<ELF32LE>;
