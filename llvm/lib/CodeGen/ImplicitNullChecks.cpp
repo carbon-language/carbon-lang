@@ -266,14 +266,10 @@ bool HazardDetector::isSafeToHoist(MachineInstr *MI,
             return true;
           if (MO.isUse())
             return false;
-          assert((!MO.isDef() || RegDefs.count(MO.getReg())) &&
+          assert(MO.isDef() &&
+                 "Register MachineOperands must either be uses or be defs.");
+          assert(RegDefs.count(MO.getReg()) &&
                  "All defs must be tracked in RegDefs by now!");
-
-          if (!MO.isDef()) {
-            // FIXME: This is unnecessary, we should be able to
-            // assert(MO.isDef()) here.
-            return true;
-          }
 
           for (unsigned Reg : RegUses)
             if (TRI.regsOverlap(Reg, MO.getReg()))
