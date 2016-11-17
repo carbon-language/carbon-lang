@@ -1320,6 +1320,9 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
 
   Streamer.EmitCodeAlignment(Function.getAlignment());
 
+  MCContext &Context = Streamer.getContext();
+  const MCAsmInfo *MAI = Context.getAsmInfo();
+
   // Emit all names the function is known under.
   for (const auto &Name : Function.getNames()) {
     Twine EmitName = EmitColdPart ? Twine(Name).concat(".cold") : Name;
@@ -1342,21 +1345,13 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
       Streamer.EmitCFILsda(0, dwarf::DW_EH_PE_omit);
     }
     // Emit CFI instructions relative to the CIE
-    for (auto &CFIInstr : Function.cie()) {
-      // Ignore these CIE CFI insns because LLVM will already emit this.
-      switch (CFIInstr.getOperation()) {
-      default:
-        break;
-      case MCCFIInstruction::OpDefCfa:
-        if (CFIInstr.getRegister() == 7 && CFIInstr.getOffset() == -8)
-          continue;
-        break;
-      case MCCFIInstruction::OpOffset:
-        if (CFIInstr.getRegister() == 16 && CFIInstr.getOffset() == -8)
-          continue;
-        break;
-      }
-      Streamer.EmitCFIInstruction(CFIInstr);
+    for (const auto &CFIInstr : Function.cie()) {
+      // Only write CIE CFI insns that LLVM will not already emit
+      const std::vector<MCCFIInstruction> &FrameInstrs =
+          MAI->getInitialFrameState();
+      if (std::find(FrameInstrs.begin(), FrameInstrs.end(), CFIInstr) ==
+          FrameInstrs.end())
+        Streamer.EmitCFIInstruction(CFIInstr);
     }
   }
 
