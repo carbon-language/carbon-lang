@@ -525,7 +525,7 @@ int main(int argc, char **argv, char * const *envp) {
       logAllUnhandledErrors(ArOrErr.takeError(), OS, "");
       OS.flush();
       errs() << Buf;
-      return 1;
+      exit(1);
     }
     std::unique_ptr<object::Archive> &Ar = ArOrErr.get();
 
