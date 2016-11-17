@@ -676,7 +676,7 @@ void MemoryAccess::assumeNoOutOfBound() {
 }
 
 void MemoryAccess::buildMemIntrinsicAccessRelation() {
-  assert(isa<MemIntrinsic>(getAccessInstruction()));
+  assert(isMemoryIntrinsic());
   assert(Subscripts.size() == 2 && Sizes.size() == 1);
 
   auto *SubscriptPWA = getPwAff(Subscripts[0]);
@@ -3487,7 +3487,8 @@ __isl_give isl_set *Scop::getNonHoistableCtx(MemoryAccess *Access,
   auto &Stmt = *Access->getStatement();
   BasicBlock *BB = Stmt.getEntryBlock();
 
-  if (Access->isScalarKind() || Access->isWrite() || !Access->isAffine())
+  if (Access->isScalarKind() || Access->isWrite() || !Access->isAffine() ||
+      Access->isMemoryIntrinsic())
     return nullptr;
 
   // Skip accesses that have an invariant base pointer which is defined but
