@@ -648,7 +648,7 @@ template <class ELFT> void SymbolTable<ELFT>::handleAnonymousVersion() {
 // Set symbol versions to symbols. This function handles patterns
 // containing no wildcard characters.
 template <class ELFT>
-void SymbolTable<ELFT>::assignExactVersion(SymbolVersion Ver, size_t VersionId,
+void SymbolTable<ELFT>::assignExactVersion(SymbolVersion Ver, uint16_t VersionId,
                                            StringRef VersionName) {
   if (Ver.HasWildcards)
     return;
@@ -677,7 +677,7 @@ void SymbolTable<ELFT>::assignExactVersion(SymbolVersion Ver, size_t VersionId,
 
 template <class ELFT>
 void SymbolTable<ELFT>::assignWildcardVersion(SymbolVersion Ver,
-                                              size_t VersionId) {
+                                              uint16_t VersionId) {
   if (!Ver.HasWildcards)
     return;
   StringMatcher M({Ver.Name});

@@ -1802,7 +1802,7 @@ unsigned ScriptParser::readPhdrType() {
 void ScriptParser::readVersionDeclaration(StringRef VerStr) {
   // Identifiers start at 2 because 0 and 1 are reserved
   // for VER_NDX_LOCAL and VER_NDX_GLOBAL constants.
-  size_t VersionId = Config->VersionDefinitions.size() + 2;
+  uint16_t VersionId = Config->VersionDefinitions.size() + 2;
   Config->VersionDefinitions.push_back({VerStr, VersionId});
 
   if (consume("global:") || peek() != "local:")
