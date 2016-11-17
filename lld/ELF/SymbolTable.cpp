@@ -634,18 +634,15 @@ SymbolTable<ELFT>::findAllDemangled(const StringMatcher &M) {
 // in the form of { global: foo; bar; local *; }. So, local is default.
 // In this function, we make specified symbols global.
 template <class ELFT> void SymbolTable<ELFT>::handleAnonymousVersion() {
-  std::vector<StringRef> Patterns;
   for (SymbolVersion &Ver : Config->VersionScriptGlobals) {
     if (hasWildcard(Ver.Name)) {
-      Patterns.push_back(Ver.Name);
+      for (SymbolBody *B : findAll(StringMatcher({Ver.Name})))
+        B->symbol()->VersionId = VER_NDX_GLOBAL;
       continue;
     }
     if (SymbolBody *B = find(Ver.Name))
       B->symbol()->VersionId = VER_NDX_GLOBAL;
   }
-  if (!Patterns.empty())
-    for (SymbolBody *B : findAll(StringMatcher(Patterns)))
-      B->symbol()->VersionId = VER_NDX_GLOBAL;
 }
 
 // Set symbol versions to symbols. This function handles patterns
