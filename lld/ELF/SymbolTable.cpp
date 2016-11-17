@@ -488,8 +488,9 @@ template <class ELFT> SymbolBody *SymbolTable<ELFT>::find(StringRef Name) {
 
 // Returns a list of defined symbols that match with a given pattern.
 template <class ELFT>
-std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(const StringMatcher &M) {
+std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(StringRef GlobPat) {
   std::vector<SymbolBody *> Res;
+  StringMatcher M({GlobPat});
   for (Symbol *Sym : SymVector) {
     SymbolBody *B = Sym->body();
     StringRef Name = B->getName();
@@ -617,9 +618,10 @@ ArrayRef<SymbolBody *> SymbolTable<ELFT>::findDemangled(StringRef Name) {
 
 template <class ELFT>
 std::vector<SymbolBody *>
-SymbolTable<ELFT>::findAllDemangled(const StringMatcher &M) {
+SymbolTable<ELFT>::findAllDemangled(StringRef GlobPat) {
   initDemangledSyms();
   std::vector<SymbolBody *> Res;
+  StringMatcher M({GlobPat});
   for (auto &P : *DemangledSyms)
     if (M.match(P.first()))
       for (SymbolBody *Body : P.second)
@@ -636,7 +638,7 @@ SymbolTable<ELFT>::findAllDemangled(const StringMatcher &M) {
 template <class ELFT> void SymbolTable<ELFT>::handleAnonymousVersion() {
   for (SymbolVersion &Ver : Config->VersionScriptGlobals) {
     if (hasWildcard(Ver.Name)) {
-      for (SymbolBody *B : findAll(StringMatcher({Ver.Name})))
+      for (SymbolBody *B : findAll(Ver.Name))
         B->symbol()->VersionId = VER_NDX_GLOBAL;
       continue;
     }
@@ -680,9 +682,8 @@ void SymbolTable<ELFT>::assignWildcardVersion(SymbolVersion Ver,
                                               uint16_t VersionId) {
   if (!Ver.HasWildcards)
     return;
-  StringMatcher M({Ver.Name});
   std::vector<SymbolBody *> Syms =
-      Ver.IsExternCpp ? findAllDemangled(M) : findAll(M);
+      Ver.IsExternCpp ? findAllDemangled(Ver.Name) : findAll(Ver.Name);
 
   // Exact matching takes precendence over fuzzy matching,
   // so we set a version to a symbol only if no version has been assigned
