@@ -436,13 +436,33 @@ Value *polly::getConditionFromTerminator(TerminatorInst *TI) {
 }
 
 bool polly::isHoistableLoad(LoadInst *LInst, Region &R, LoopInfo &LI,
-                            ScalarEvolution &SE) {
+                            ScalarEvolution &SE, const DominatorTree &DT) {
   Loop *L = LI.getLoopFor(LInst->getParent());
-  const SCEV *PtrSCEV = SE.getSCEVAtScope(LInst->getPointerOperand(), L);
+  auto *Ptr = LInst->getPointerOperand();
+  const SCEV *PtrSCEV = SE.getSCEVAtScope(Ptr, L);
   while (L && R.contains(L)) {
     if (!SE.isLoopInvariant(PtrSCEV, L))
       return false;
     L = L->getParentLoop();
+  }
+
+  for (auto *User : Ptr->users()) {
+    auto *UserI = dyn_cast<Instruction>(User);
+    if (!UserI || !R.contains(UserI))
+      continue;
+    if (!UserI->mayWriteToMemory())
+      continue;
+
+    auto &BB = *UserI->getParent();
+    bool DominatesAllPredecessors = true;
+    for (auto Pred : predecessors(R.getExit()))
+      if (R.contains(Pred) && !DT.dominates(&BB, Pred))
+        DominatesAllPredecessors = false;
+
+    if (!DominatesAllPredecessors)
+      continue;
+
+    return false;
   }
 
   return true;
