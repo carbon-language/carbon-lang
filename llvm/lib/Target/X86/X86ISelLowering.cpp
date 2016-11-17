@@ -2376,11 +2376,11 @@ EVT X86TargetLowering::getTypeForExtReturn(LLVMContext &Context, EVT VT,
 /// Reads two 32 bit registers and creates a 64 bit mask value.
 /// @param VA The current 32 bit value that need to be assigned.
 /// @param NextVA The next 32 bit value that need to be assigned.
-/// @param Root The parent DAG note
-/// @param [inout] InFlag Represents SDvalue in the parent DAG node for
-///                       glue purposes. In the case the DAG is already using
-///                       physical register instead of virtual, we should glue
-///                       our new SDValue to InFlag SDvalue.
+/// @param Root The parent DAG node.
+/// @param [in,out] InFlag Represents SDvalue in the parent DAG node for
+///                        glue purposes. In the case the DAG is already using
+///                        physical register instead of virtual, we should glue
+///                        our new SDValue to InFlag SDvalue.
 /// @return a new SDvalue of size 64bit.
 static SDValue getv64i1Argument(CCValAssign &VA, CCValAssign &NextVA,
                                 SDValue &Root, SelectionDAG &DAG,
