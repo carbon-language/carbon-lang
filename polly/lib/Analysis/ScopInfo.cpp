@@ -3758,6 +3758,20 @@ bool Scop::trackAssumption(AssumptionKind Kind, __isl_keep isl_set *Set,
   if (PollyRemarksMinimal && !isEffectiveAssumption(Set, Sign))
     return false;
 
+  // Do never emit trivial assumptions as they only clutter the output.
+  if (!PollyRemarksMinimal) {
+    isl_set *Univ = nullptr;
+    if (Sign == AS_ASSUMPTION)
+      Univ = isl_set_universe(isl_set_get_space(Set));
+
+    bool IsTrivial = (Sign == AS_RESTRICTION && isl_set_is_empty(Set)) ||
+                     (Sign == AS_ASSUMPTION && isl_set_is_equal(Univ, Set));
+    isl_set_free(Univ);
+
+    if (IsTrivial)
+      return false;
+  }
+
   switch (Kind) {
   case ALIASING:
     ASSUMPTION_ALIASING++;
