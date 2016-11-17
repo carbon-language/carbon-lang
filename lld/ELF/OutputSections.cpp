@@ -400,25 +400,19 @@ OutputSection<ELFT>::OutputSection(StringRef Name, uint32_t Type, uintX_t Flags)
 }
 
 template <class ELFT> void OutputSection<ELFT>::finalize() {
-  if (!Config->Relocatable) {
-    // SHF_LINK_ORDER only has meaning in relocatable objects
-    this->Flags &= ~SHF_LINK_ORDER;
-    return;
-  }
-
-  uint32_t Type = this->Type;
   if ((this->Flags & SHF_LINK_ORDER) && !this->Sections.empty()) {
-    // When doing a relocatable link we must preserve the link order
-    // dependency of sections with the SHF_LINK_ORDER flag. The dependency
-    // is indicated by the sh_link field. We need to translate the
-    // InputSection sh_link to the OutputSection sh_link, all InputSections
-    // in the OutputSection have the same dependency.
+    // We must preserve the link order dependency of sections with the
+    // SHF_LINK_ORDER flag. The dependency is indicated by the sh_link field. We
+    // need to translate the InputSection sh_link to the OutputSection sh_link,
+    // all InputSections in the OutputSection have the same dependency.
     if (auto *D = this->Sections.front()->getLinkOrderDep())
       this->Link = D->OutSec->SectionIndex;
   }
 
-  if (Type != SHT_RELA && Type != SHT_REL)
+  uint32_t Type = this->Type;
+  if (!Config->Relocatable || (Type != SHT_RELA && Type != SHT_REL))
     return;
+
   this->Link = In<ELFT>::SymTab->OutSec->SectionIndex;
   // sh_info for SHT_REL[A] sections should contain the section header index of
   // the section to which the relocation applies.
