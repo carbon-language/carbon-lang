@@ -50,6 +50,10 @@
 using namespace polly;
 using namespace llvm;
 
+#define DEBUG_TYPE "polly-codegen"
+
+STATISTIC(VERSIONED_SCOPS, "Number of SCoPs that required versioning.");
+
 // The maximal number of dimensions we allow during invariant load construction.
 // More complex access ranges will result in very high compile time and are also
 // unlikely to result in good code. This value is very high and should only
@@ -1338,5 +1342,9 @@ Value *IslNodeBuilder::createRTC(isl_ast_expr *Condition) {
 
   RTC = Builder.CreateAnd(RTC, OverflowHappened, "polly.rtc.result");
   ExprBuilder.setTrackOverflow(false);
+
+  if (!isa<ConstantInt>(RTC))
+    VERSIONED_SCOPS++;
+
   return RTC;
 }
