@@ -1679,10 +1679,8 @@ Expr ScriptParser::readPrimary() {
     return [=](uint64_t Dot) { return getConstant(Name); };
   }
   if (Tok == "DEFINED") {
-    expect("(");
-    StringRef Tok = next();
-    expect(")");
-    return [=](uint64_t Dot) { return ScriptBase->isDefined(Tok) ? 1 : 0; };
+    StringRef Name = readParenLiteral();
+    return [=](uint64_t Dot) { return ScriptBase->isDefined(Name) ? 1 : 0; };
   }
   if (Tok == "SEGMENT_START") {
     expect("(");
@@ -1825,11 +1823,10 @@ void ScriptParser::readSymbols(std::vector<SymbolVersion> &V) {
     if (consume("extern"))
       readVersionExtern(&V);
 
-    StringRef Cur = peek();
-    if (Cur == "}" || Cur == "local:" || Error)
+    if (peek() == "}" || peek() == "local:" || Error)
       return;
-    skip();
-    V.push_back({unquote(Cur), false, hasWildcard(Cur)});
+    StringRef Tok = next();
+    V.push_back({unquote(Tok), false, hasWildcard(Tok)});
     expect(";");
   }
 }
@@ -1851,11 +1848,10 @@ void ScriptParser::readVersionExtern(std::vector<SymbolVersion> *V) {
   expect("\"C++\"");
   expect("{");
 
-  for (;;) {
-    if (peek() == "}" || Error)
-      break;
-    bool HasWildcard = !peek().startswith("\"") && hasWildcard(peek());
-    V->push_back({unquote(next()), true, HasWildcard});
+  while (!Error && peek() != "}") {
+    StringRef Tok = next();
+    bool HasWildcard = !Tok.startswith("\"") && hasWildcard(Tok);
+    V->push_back({unquote(Tok), true, HasWildcard});
     expect(";");
   }
 
