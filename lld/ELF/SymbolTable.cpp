@@ -643,12 +643,9 @@ template <class ELFT> void SymbolTable<ELFT>::handleAnonymousVersion() {
     if (SymbolBody *B = find(Ver.Name))
       B->symbol()->VersionId = VER_NDX_GLOBAL;
   }
-  if (Patterns.empty())
-    return;
-  StringMatcher M(Patterns);
-  std::vector<SymbolBody *> Syms = findAll(M);
-  for (SymbolBody *B : Syms)
-    B->symbol()->VersionId = VER_NDX_GLOBAL;
+  if (!Patterns.empty())
+    for (SymbolBody *B : findAll(StringMatcher(Patterns)))
+      B->symbol()->VersionId = VER_NDX_GLOBAL;
 }
 
 // Set symbol versions to symbols. This function handles patterns
