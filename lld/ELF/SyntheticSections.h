@@ -476,6 +476,20 @@ private:
   uintX_t Size = 0;
 };
 
+template <class ELFT>
+class HashTableSection final : public SyntheticSection<ELFT> {
+  typedef typename ELFT::Word Elf_Word;
+
+public:
+  HashTableSection();
+  void finalize() override;
+  void writeTo(uint8_t *Buf) override;
+  size_t getSize() const override { return this->Size; }
+
+private:
+  size_t Size = 0;
+};
+
 template <class ELFT> InputSection<ELFT> *createCommonSection();
 template <class ELFT> InputSection<ELFT> *createInterpSection();
 template <class ELFT> MergeInputSection<ELFT> *createCommentSection();
@@ -491,6 +505,7 @@ template <class ELFT> struct In {
   static GotSection<ELFT> *Got;
   static MipsGotSection<ELFT> *MipsGot;
   static GotPltSection<ELFT> *GotPlt;
+  static HashTableSection<ELFT> *HashTab;
   static InputSection<ELFT> *Interp;
   static MipsAbiFlagsSection<ELFT> *MipsAbiFlags;
   static MipsOptionsSection<ELFT> *MipsOptions;
@@ -511,6 +526,7 @@ template <class ELFT> GnuHashTableSection<ELFT> *In<ELFT>::GnuHashTab;
 template <class ELFT> GotSection<ELFT> *In<ELFT>::Got;
 template <class ELFT> MipsGotSection<ELFT> *In<ELFT>::MipsGot;
 template <class ELFT> GotPltSection<ELFT> *In<ELFT>::GotPlt;
+template <class ELFT> HashTableSection<ELFT> *In<ELFT>::HashTab;
 template <class ELFT> InputSection<ELFT> *In<ELFT>::Interp;
 template <class ELFT> MipsAbiFlagsSection<ELFT> *In<ELFT>::MipsAbiFlags;
 template <class ELFT> MipsOptionsSection<ELFT> *In<ELFT>::MipsOptions;

@@ -241,7 +241,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   if (Config->GnuHash)
     In<ELFT>::GnuHashTab = make<GnuHashTableSection<ELFT>>();
   if (Config->SysvHash)
-    Out<ELFT>::HashTab = make<HashTableSection<ELFT>>();
+    In<ELFT>::HashTab = make<HashTableSection<ELFT>>();
   if (Config->GdbIndex)
     Out<ELFT>::GdbIndex = make<GdbIndexSection<ELFT>>();
 
@@ -952,10 +952,10 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // Dynamic section must be the last one in this list and dynamic
   // symbol table section (DynSymTab) must be the first one.
   finalizeSynthetic<ELFT>(
-      {In<ELFT>::DynSymTab, In<ELFT>::GnuHashTab, In<ELFT>::SymTab,
-       In<ELFT>::ShStrTab, In<ELFT>::StrTab, In<ELFT>::DynStrTab, In<ELFT>::Got,
-       In<ELFT>::MipsGot, In<ELFT>::GotPlt, In<ELFT>::RelaDyn,
-       In<ELFT>::RelaPlt, In<ELFT>::Dynamic});
+      {In<ELFT>::DynSymTab, In<ELFT>::GnuHashTab, In<ELFT>::HashTab,
+       In<ELFT>::SymTab, In<ELFT>::ShStrTab, In<ELFT>::StrTab,
+       In<ELFT>::DynStrTab, In<ELFT>::Got, In<ELFT>::MipsGot, In<ELFT>::GotPlt,
+       In<ELFT>::RelaDyn, In<ELFT>::RelaPlt, In<ELFT>::Dynamic});
 }
 
 template <class ELFT> bool Writer<ELFT>::needsGot() {
@@ -997,7 +997,7 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
       Add(Out<ELFT>::VerNeed);
 
     addInputSec(In<ELFT>::GnuHashTab);
-    Add(Out<ELFT>::HashTab);
+    addInputSec(In<ELFT>::HashTab);
     addInputSec(In<ELFT>::Dynamic);
     addInputSec(In<ELFT>::DynStrTab);
     if (In<ELFT>::RelaDyn->hasRelocs())

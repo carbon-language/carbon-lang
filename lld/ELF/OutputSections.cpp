@@ -140,45 +140,6 @@ template <class ELFT> void PltSection<ELFT>::finalize() {
   this->Size = Target->PltHeaderSize + Entries.size() * Target->PltEntrySize;
 }
 
-template <class ELFT>
-HashTableSection<ELFT>::HashTableSection()
-    : OutputSectionBase(".hash", SHT_HASH, SHF_ALLOC) {
-  this->Entsize = sizeof(Elf_Word);
-  this->Addralign = sizeof(Elf_Word);
-}
-
-template <class ELFT> void HashTableSection<ELFT>::finalize() {
-  this->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
-
-  unsigned NumEntries = 2;                             // nbucket and nchain.
-  NumEntries += In<ELFT>::DynSymTab->getNumSymbols();  // The chain entries.
-
-  // Create as many buckets as there are symbols.
-  // FIXME: This is simplistic. We can try to optimize it, but implementing
-  // support for SHT_GNU_HASH is probably even more profitable.
-  NumEntries += In<ELFT>::DynSymTab->getNumSymbols();
-  this->Size = NumEntries * sizeof(Elf_Word);
-}
-
-template <class ELFT> void HashTableSection<ELFT>::writeTo(uint8_t *Buf) {
-  unsigned NumSymbols = In<ELFT>::DynSymTab->getNumSymbols();
-  auto *P = reinterpret_cast<Elf_Word *>(Buf);
-  *P++ = NumSymbols; // nbucket
-  *P++ = NumSymbols; // nchain
-
-  Elf_Word *Buckets = P;
-  Elf_Word *Chains = P + NumSymbols;
-
-  for (const SymbolTableEntry &S : In<ELFT>::DynSymTab->getSymbols()) {
-    SymbolBody *Body = S.Symbol;
-    StringRef Name = Body->getName();
-    unsigned I = Body->DynsymIndex;
-    uint32_t Hash = hashSysV(Name) % NumSymbols;
-    Chains[I] = Buckets[Hash];
-    Buckets[Hash] = I;
-  }
-}
-
 // Returns the number of version definition entries. Because the first entry
 // is for the version definition itself, it is the number of versioned symbols
 // plus one. Note that we don't support multiple versions yet.
@@ -937,11 +898,6 @@ template class PltSection<ELF32LE>;
 template class PltSection<ELF32BE>;
 template class PltSection<ELF64LE>;
 template class PltSection<ELF64BE>;
-
-template class HashTableSection<ELF32LE>;
-template class HashTableSection<ELF32BE>;
-template class HashTableSection<ELF64LE>;
-template class HashTableSection<ELF64BE>;
 
 template class OutputSection<ELF32LE>;
 template class OutputSection<ELF32BE>;

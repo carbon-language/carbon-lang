@@ -44,7 +44,6 @@ public:
     Base,
     EHFrame,
     EHFrameHdr,
-    HashTable,
     Merge,
     Plt,
     Regular,
@@ -317,19 +316,6 @@ private:
   llvm::DenseMap<std::pair<ArrayRef<uint8_t>, SymbolBody *>, CieRecord> CieMap;
 };
 
-template <class ELFT> class HashTableSection final : public OutputSectionBase {
-  typedef typename ELFT::Word Elf_Word;
-
-public:
-  HashTableSection();
-  void finalize() override;
-  void writeTo(uint8_t *Buf) override;
-  Kind getKind() const override { return HashTable; }
-  static bool classof(const OutputSectionBase *B) {
-    return B->getKind() == HashTable;
-  }
-};
-
 // --eh-frame-hdr option tells linker to construct a header for all the
 // .eh_frame sections. This header is placed to a section named .eh_frame_hdr
 // and also to a PT_GNU_EH_FRAME segment.
@@ -372,7 +358,6 @@ template <class ELFT> struct Out {
   static EhFrameHeader<ELFT> *EhFrameHdr;
   static EhOutputSection<ELFT> *EhFrame;
   static GdbIndexSection<ELFT> *GdbIndex;
-  static HashTableSection<ELFT> *HashTab;
   static OutputSection<ELFT> *Bss;
   static OutputSection<ELFT> *MipsRldMap;
   static OutputSectionBase *Opd;
@@ -427,7 +412,6 @@ template <class ELFT> uint8_t Out<ELFT>::First;
 template <class ELFT> EhFrameHeader<ELFT> *Out<ELFT>::EhFrameHdr;
 template <class ELFT> EhOutputSection<ELFT> *Out<ELFT>::EhFrame;
 template <class ELFT> GdbIndexSection<ELFT> *Out<ELFT>::GdbIndex;
-template <class ELFT> HashTableSection<ELFT> *Out<ELFT>::HashTab;
 template <class ELFT> OutputSection<ELFT> *Out<ELFT>::Bss;
 template <class ELFT> OutputSection<ELFT> *Out<ELFT>::MipsRldMap;
 template <class ELFT> OutputSectionBase *Out<ELFT>::Opd;

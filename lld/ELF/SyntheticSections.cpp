@@ -796,8 +796,8 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   add({DT_STRSZ, In<ELFT>::DynStrTab->getSize()});
   if (In<ELFT>::GnuHashTab)
     add({DT_GNU_HASH, In<ELFT>::GnuHashTab});
-  if (Out<ELFT>::HashTab)
-    add({DT_HASH, Out<ELFT>::HashTab});
+  if (In<ELFT>::HashTab)
+    add({DT_HASH, In<ELFT>::HashTab});
 
   if (Out<ELFT>::PreinitArray) {
     add({DT_PREINIT_ARRAY, Out<ELFT>::PreinitArray});
@@ -1290,6 +1290,45 @@ void GnuHashTableSection<ELFT>::addSymbols(std::vector<SymbolTableEntry> &V) {
     V.push_back({Sym.Body, Sym.STName});
 }
 
+template <class ELFT>
+HashTableSection<ELFT>::HashTableSection()
+    : SyntheticSection<ELFT>(SHF_ALLOC, SHT_HASH, sizeof(Elf_Word), ".hash") {
+  this->Entsize = sizeof(Elf_Word);
+}
+
+template <class ELFT> void HashTableSection<ELFT>::finalize() {
+  this->OutSec->Link = this->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
+  this->OutSec->Entsize = this->Entsize;
+
+  unsigned NumEntries = 2;                            // nbucket and nchain.
+  NumEntries += In<ELFT>::DynSymTab->getNumSymbols(); // The chain entries.
+
+  // Create as many buckets as there are symbols.
+  // FIXME: This is simplistic. We can try to optimize it, but implementing
+  // support for SHT_GNU_HASH is probably even more profitable.
+  NumEntries += In<ELFT>::DynSymTab->getNumSymbols();
+  this->Size = NumEntries * sizeof(Elf_Word);
+}
+
+template <class ELFT> void HashTableSection<ELFT>::writeTo(uint8_t *Buf) {
+  unsigned NumSymbols = In<ELFT>::DynSymTab->getNumSymbols();
+  auto *P = reinterpret_cast<Elf_Word *>(Buf);
+  *P++ = NumSymbols; // nbucket
+  *P++ = NumSymbols; // nchain
+
+  Elf_Word *Buckets = P;
+  Elf_Word *Chains = P + NumSymbols;
+
+  for (const SymbolTableEntry &S : In<ELFT>::DynSymTab->getSymbols()) {
+    SymbolBody *Body = S.Symbol;
+    StringRef Name = Body->getName();
+    unsigned I = Body->DynsymIndex;
+    uint32_t Hash = hashSysV(Name) % NumSymbols;
+    Chains[I] = Buckets[Hash];
+    Buckets[Hash] = I;
+  }
+}
+
 template InputSection<ELF32LE> *elf::createCommonSection();
 template InputSection<ELF32BE> *elf::createCommonSection();
 template InputSection<ELF64LE> *elf::createCommonSection();
@@ -1389,3 +1428,8 @@ template class elf::GnuHashTableSection<ELF32LE>;
 template class elf::GnuHashTableSection<ELF32BE>;
 template class elf::GnuHashTableSection<ELF64LE>;
 template class elf::GnuHashTableSection<ELF64BE>;
+
+template class elf::HashTableSection<ELF32LE>;
+template class elf::HashTableSection<ELF32BE>;
+template class elf::HashTableSection<ELF64LE>;
+template class elf::HashTableSection<ELF64BE>;
