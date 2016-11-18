@@ -890,6 +890,17 @@ bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
     }
   }
 
+  // If the unconditional branch we replaced contains llvm.loop metadata, we
+  // add the metadata to the branch instructions in the predecessors.
+  unsigned LoopMDKind = BB->getContext().getMDKindID("llvm.loop");
+  Instruction *TI = BB->getTerminator();
+  if (TI)
+    if (MDNode *LoopMD = TI->getMetadata(LoopMDKind))
+      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+        BasicBlock *Pred = *PI;
+        Pred->getTerminator()->setMetadata(LoopMDKind, LoopMD);
+      }
+
   // Everything that jumped to BB now goes to Succ.
   BB->replaceAllUsesWith(Succ);
   if (!Succ->hasName()) Succ->takeName(BB);
