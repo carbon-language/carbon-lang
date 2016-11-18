@@ -212,7 +212,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   In<ELFT>::DynStrTab = make<StringTableSection<ELFT>>(".dynstr", true);
   In<ELFT>::Dynamic = make<DynamicSection<ELFT>>();
   Out<ELFT>::EhFrame = make<EhOutputSection<ELFT>>();
-  Out<ELFT>::Plt = make<PltSection<ELFT>>();
+  In<ELFT>::Plt = make<PltSection<ELFT>>();
   In<ELFT>::RelaDyn = make<RelocationSection<ELFT>>(
       Config->Rela ? ".rela.dyn" : ".rel.dyn", Config->ZCombreloc);
   In<ELFT>::ShStrTab = make<StringTableSection<ELFT>>(".shstrtab", false);
@@ -955,7 +955,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
       {In<ELFT>::DynSymTab, In<ELFT>::GnuHashTab, In<ELFT>::HashTab,
        In<ELFT>::SymTab, In<ELFT>::ShStrTab, In<ELFT>::StrTab,
        In<ELFT>::DynStrTab, In<ELFT>::Got, In<ELFT>::MipsGot, In<ELFT>::GotPlt,
-       In<ELFT>::RelaDyn, In<ELFT>::RelaPlt, In<ELFT>::Dynamic});
+       In<ELFT>::RelaDyn, In<ELFT>::RelaPlt, In<ELFT>::Plt, In<ELFT>::Dynamic});
 }
 
 template <class ELFT> bool Writer<ELFT>::needsGot() {
@@ -1022,8 +1022,8 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
   if (!In<ELFT>::GotPlt->empty())
     addInputSec(In<ELFT>::GotPlt);
 
-  if (!Out<ELFT>::Plt->empty())
-    Add(Out<ELFT>::Plt);
+  if (!In<ELFT>::Plt->empty())
+    addInputSec(In<ELFT>::Plt);
   if (!Out<ELFT>::EhFrame->empty())
     Add(Out<ELFT>::EhFrameHdr);
   if (Out<ELFT>::Bss->Size > 0)

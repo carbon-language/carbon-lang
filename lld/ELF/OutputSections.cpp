@@ -108,38 +108,6 @@ template <class ELFT> void GdbIndexSection<ELFT>::writeTo(uint8_t *Buf) {
   }
 }
 
-template <class ELFT>
-PltSection<ELFT>::PltSection()
-    : OutputSectionBase(".plt", SHT_PROGBITS, SHF_ALLOC | SHF_EXECINSTR) {
-  this->Addralign = 16;
-}
-
-template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
-  // At beginning of PLT, we have code to call the dynamic linker
-  // to resolve dynsyms at runtime. Write such code.
-  Target->writePltHeader(Buf);
-  size_t Off = Target->PltHeaderSize;
-
-  for (auto &I : Entries) {
-    const SymbolBody *B = I.first;
-    unsigned RelOff = I.second;
-    uint64_t Got = B->getGotPltVA<ELFT>();
-    uint64_t Plt = this->Addr + Off;
-    Target->writePlt(Buf + Off, Got, Plt, B->PltIndex, RelOff);
-    Off += Target->PltEntrySize;
-  }
-}
-
-template <class ELFT> void PltSection<ELFT>::addEntry(SymbolBody &Sym) {
-  Sym.PltIndex = Entries.size();
-  unsigned RelOff = In<ELFT>::RelaPlt->getRelocOffset();
-  Entries.push_back(std::make_pair(&Sym, RelOff));
-}
-
-template <class ELFT> void PltSection<ELFT>::finalize() {
-  this->Size = Target->PltHeaderSize + Entries.size() * Target->PltEntrySize;
-}
-
 // Returns the number of version definition entries. Because the first entry
 // is for the version definition itself, it is the number of versioned symbols
 // plus one. Note that we don't support multiple versions yet.
@@ -893,11 +861,6 @@ template class EhFrameHeader<ELF32LE>;
 template class EhFrameHeader<ELF32BE>;
 template class EhFrameHeader<ELF64LE>;
 template class EhFrameHeader<ELF64BE>;
-
-template class PltSection<ELF32LE>;
-template class PltSection<ELF32BE>;
-template class PltSection<ELF64LE>;
-template class PltSection<ELF64BE>;
 
 template class OutputSection<ELF32LE>;
 template class OutputSection<ELF32BE>;
