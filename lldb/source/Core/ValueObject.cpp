@@ -2607,38 +2607,21 @@ ValueObjectSP ValueObject::GetValueForExpressionPath_Impl(
         *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
         return ValueObjectSP();
       }
-      if (!separator_position ||
-          separator_position > close_bracket_position) // if no separator, this
-                                                       // is either [] or [N]
-      {
+
+      if (!separator_position || separator_position > close_bracket_position) {
+        // if no separator, this is of the form [N].  Note that this cannot
+        // be an unbounded range of the form [], because that case was handled
+        // above with an unconditional return.
         char *end = NULL;
         unsigned long index = ::strtoul(expression_cstr + 1, &end, 0);
-        if (!end || end != close_bracket_position) // if something weird is in
-                                                   // our way return an error
+        if (end != close_bracket_position) // if something weird is in
+                                           // our way return an error
         {
           *first_unparsed = expression_cstr;
           *reason_to_stop =
               ValueObject::eExpressionPathScanEndReasonUnexpectedSymbol;
           *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
           return ValueObjectSP();
-        }
-        if (end - expression_cstr ==
-            1) // if this is [], only return a valid value for arrays
-        {
-          if (root_compiler_type_info.Test(eTypeIsArray)) {
-            *first_unparsed = expression_cstr + 2;
-            *reason_to_stop =
-                ValueObject::eExpressionPathScanEndReasonArrayRangeOperatorMet;
-            *final_result =
-                ValueObject::eExpressionPathEndResultTypeUnboundedRange;
-            return root;
-          } else {
-            *first_unparsed = expression_cstr;
-            *reason_to_stop =
-                ValueObject::eExpressionPathScanEndReasonEmptyRangeNotAllowed;
-            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
-            return ValueObjectSP();
-          }
         }
         // from here on we do have a valid index
         if (root_compiler_type_info.Test(eTypeIsArray)) {
@@ -2791,8 +2774,8 @@ ValueObjectSP ValueObject::GetValueForExpressionPath_Impl(
       {
         char *end = NULL;
         unsigned long index_lower = ::strtoul(expression_cstr + 1, &end, 0);
-        if (!end || end != separator_position) // if something weird is in our
-                                               // way return an error
+        if (end != separator_position) // if something weird is in our
+                                       // way return an error
         {
           *first_unparsed = expression_cstr;
           *reason_to_stop =
@@ -2801,8 +2784,8 @@ ValueObjectSP ValueObject::GetValueForExpressionPath_Impl(
           return ValueObjectSP();
         }
         unsigned long index_higher = ::strtoul(separator_position + 1, &end, 0);
-        if (!end || end != close_bracket_position) // if something weird is in
-                                                   // our way return an error
+        if (end != close_bracket_position) // if something weird is in
+                                           // our way return an error
         {
           *first_unparsed = expression_cstr;
           *reason_to_stop =
@@ -2811,11 +2794,8 @@ ValueObjectSP ValueObject::GetValueForExpressionPath_Impl(
           return ValueObjectSP();
         }
         if (index_lower > index_higher) // swap indices if required
-        {
-          unsigned long temp = index_lower;
-          index_lower = index_higher;
-          index_higher = temp;
-        }
+          std::swap(index_lower, index_higher);
+
         if (root_compiler_type_info.Test(
                 eTypeIsScalar)) // expansion only works for scalars
         {
@@ -2975,8 +2955,8 @@ int ValueObject::ExpandArraySliceExpression(
       {
         char *end = NULL;
         unsigned long index = ::strtoul(expression_cstr + 1, &end, 0);
-        if (!end || end != close_bracket_position) // if something weird is in
-                                                   // our way return an error
+        if (end != close_bracket_position) // if something weird is in
+                                           // our way return an error
         {
           *first_unparsed = expression_cstr;
           *reason_to_stop =
@@ -3093,8 +3073,8 @@ int ValueObject::ExpandArraySliceExpression(
       {
         char *end = NULL;
         unsigned long index_lower = ::strtoul(expression_cstr + 1, &end, 0);
-        if (!end || end != separator_position) // if something weird is in our
-                                               // way return an error
+        if (end != separator_position) // if something weird is in our
+                                       // way return an error
         {
           *first_unparsed = expression_cstr;
           *reason_to_stop =
@@ -3103,8 +3083,8 @@ int ValueObject::ExpandArraySliceExpression(
           return 0;
         }
         unsigned long index_higher = ::strtoul(separator_position + 1, &end, 0);
-        if (!end || end != close_bracket_position) // if something weird is in
-                                                   // our way return an error
+        if (end != close_bracket_position) // if something weird is in
+                                           // our way return an error
         {
           *first_unparsed = expression_cstr;
           *reason_to_stop =
@@ -3113,11 +3093,8 @@ int ValueObject::ExpandArraySliceExpression(
           return 0;
         }
         if (index_lower > index_higher) // swap indices if required
-        {
-          unsigned long temp = index_lower;
-          index_lower = index_higher;
-          index_higher = temp;
-        }
+          std::swap(index_lower, index_higher);
+
         if (root_compiler_type_info.Test(
                 eTypeIsScalar)) // expansion only works for scalars
         {
