@@ -542,7 +542,7 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
   ArrayRef<uint8_t> Filler = Script<ELFT>::X->getFiller(this->Name);
   if (!Filler.empty())
     fill(Buf, this->Size, Filler);
-  auto Fn = [=](InputSection<ELFT> *C) { C->writeTo(Buf); };
+  auto Fn = [=](InputSection<ELFT> *IS) { IS->writeTo(Buf); };
   if (Config->Threads)
     parallel_for_each(Sections.begin(), Sections.end(), Fn);
   else
