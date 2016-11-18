@@ -8416,6 +8416,19 @@ void darwin::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   // we follow suite for ease of comparison.
   AddLinkArgs(C, Args, CmdArgs, Inputs);
 
+  // For LTO, pass the name of the optimization record file.
+  if (Args.hasFlag(options::OPT_fsave_optimization_record,
+                   options::OPT_fno_save_optimization_record, false)) {
+    CmdArgs.push_back("-mllvm");
+    CmdArgs.push_back("-pass-remarks-output");
+    CmdArgs.push_back("-mllvm");
+
+    SmallString<128> F;
+    F = Output.getFilename();
+    F += ".opt.yaml";
+    CmdArgs.push_back(Args.MakeArgString(F));
+  }
+
   // It seems that the 'e' option is completely ignored for dynamic executables
   // (the default), and with static executables, the last one wins, as expected.
   Args.AddAllArgs(CmdArgs, {options::OPT_d_Flag, options::OPT_s, options::OPT_t,
