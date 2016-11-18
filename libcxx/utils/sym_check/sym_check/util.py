@@ -150,15 +150,144 @@ new_delete_std_symbols = [
     '_ZdlPvm'
 ]
 
+cxxabi_symbols = [
+    '___dynamic_cast',
+    '___gxx_personality_v0',
+    '_ZTIDi',
+    '_ZTIDn',
+    '_ZTIDs',
+    '_ZTIPDi',
+    '_ZTIPDn',
+    '_ZTIPDs',
+    '_ZTIPKDi',
+    '_ZTIPKDn',
+    '_ZTIPKDs',
+    '_ZTIPKa',
+    '_ZTIPKb',
+    '_ZTIPKc',
+    '_ZTIPKd',
+    '_ZTIPKe',
+    '_ZTIPKf',
+    '_ZTIPKh',
+    '_ZTIPKi',
+    '_ZTIPKj',
+    '_ZTIPKl',
+    '_ZTIPKm',
+    '_ZTIPKs',
+    '_ZTIPKt',
+    '_ZTIPKv',
+    '_ZTIPKw',
+    '_ZTIPKx',
+    '_ZTIPKy',
+    '_ZTIPa',
+    '_ZTIPb',
+    '_ZTIPc',
+    '_ZTIPd',
+    '_ZTIPe',
+    '_ZTIPf',
+    '_ZTIPh',
+    '_ZTIPi',
+    '_ZTIPj',
+    '_ZTIPl',
+    '_ZTIPm',
+    '_ZTIPs',
+    '_ZTIPt',
+    '_ZTIPv',
+    '_ZTIPw',
+    '_ZTIPx',
+    '_ZTIPy',
+    '_ZTIa',
+    '_ZTIb',
+    '_ZTIc',
+    '_ZTId',
+    '_ZTIe',
+    '_ZTIf',
+    '_ZTIh',
+    '_ZTIi',
+    '_ZTIj',
+    '_ZTIl',
+    '_ZTIm',
+    '_ZTIs',
+    '_ZTIt',
+    '_ZTIv',
+    '_ZTIw',
+    '_ZTIx',
+    '_ZTIy',
+    '_ZTSDi',
+    '_ZTSDn',
+    '_ZTSDs',
+    '_ZTSPDi',
+    '_ZTSPDn',
+    '_ZTSPDs',
+    '_ZTSPKDi',
+    '_ZTSPKDn',
+    '_ZTSPKDs',
+    '_ZTSPKa',
+    '_ZTSPKb',
+    '_ZTSPKc',
+    '_ZTSPKd',
+    '_ZTSPKe',
+    '_ZTSPKf',
+    '_ZTSPKh',
+    '_ZTSPKi',
+    '_ZTSPKj',
+    '_ZTSPKl',
+    '_ZTSPKm',
+    '_ZTSPKs',
+    '_ZTSPKt',
+    '_ZTSPKv',
+    '_ZTSPKw',
+    '_ZTSPKx',
+    '_ZTSPKy',
+    '_ZTSPa',
+    '_ZTSPb',
+    '_ZTSPc',
+    '_ZTSPd',
+    '_ZTSPe',
+    '_ZTSPf',
+    '_ZTSPh',
+    '_ZTSPi',
+    '_ZTSPj',
+    '_ZTSPl',
+    '_ZTSPm',
+    '_ZTSPs',
+    '_ZTSPt',
+    '_ZTSPv',
+    '_ZTSPw',
+    '_ZTSPx',
+    '_ZTSPy',
+    '_ZTSa',
+    '_ZTSb',
+    '_ZTSc',
+    '_ZTSd',
+    '_ZTSe',
+    '_ZTSf',
+    '_ZTSh',
+    '_ZTSi',
+    '_ZTSj',
+    '_ZTSl',
+    '_ZTSm',
+    '_ZTSs',
+    '_ZTSt',
+    '_ZTSv',
+    '_ZTSw',
+    '_ZTSx',
+    '_ZTSy'
+]
+
 def is_stdlib_symbol_name(name):
     name = adjust_mangled_name(name)
-    if name in new_delete_std_symbols:
-        return True
     if re.search("@GLIBC|@GCC", name):
         return False
     if re.search('(St[0-9])|(__cxa)|(__cxxabi)', name):
         return True
-    return True
+    if name in new_delete_std_symbols:
+        return True
+    if name in cxxabi_symbols:
+        return True
+    if name.startswith('_Z'):
+        return True
+    return False
 
 def filter_stdlib_symbols(syms):
     stdlib_symbols = []
@@ -166,8 +295,7 @@ def filter_stdlib_symbols(syms):
     for s in syms:
         canon_name = adjust_mangled_name(s['name'])
         if not is_stdlib_symbol_name(canon_name):
-            assert not s['is_defined'] and \
-                   'have non-stdlib symbol defined in stdlib'
+            assert not s['is_defined'] and "found defined non-std symbol"
             other_symbols += [s]
         else:
             stdlib_symbols += [s]
