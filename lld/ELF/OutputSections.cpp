@@ -181,8 +181,24 @@ OutputSection<ELFT>::OutputSection(StringRef Name, uint32_t Type, uintX_t Flags)
   this->Entsize = getEntsize<ELFT>(Type);
 }
 
+template <typename ELFT>
+static bool compareByFilePosition(InputSection<ELFT> *A,
+                                  InputSection<ELFT> *B) {
+  auto *LA = cast<InputSection<ELFT>>(A->getLinkOrderDep());
+  auto *LB = cast<InputSection<ELFT>>(B->getLinkOrderDep());
+  OutputSectionBase *AOut = LA->OutSec;
+  OutputSectionBase *BOut = LB->OutSec;
+  if (AOut != BOut)
+    return AOut->SectionIndex < BOut->SectionIndex;
+  return LA->OutSecOff < LB->OutSecOff;
+}
+
 template <class ELFT> void OutputSection<ELFT>::finalize() {
   if ((this->Flags & SHF_LINK_ORDER) && !this->Sections.empty()) {
+    std::sort(Sections.begin(), Sections.end(), compareByFilePosition<ELFT>);
+    Size = 0;
+    assignOffsets();
+
     // We must preserve the link order dependency of sections with the
     // SHF_LINK_ORDER flag. The dependency is indicated by the sh_link field. We
     // need to translate the InputSection sh_link to the OutputSection sh_link,
