@@ -1501,7 +1501,7 @@ SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
     // The RHS may be something like "ABSOLUTE(.) & 0xff".
     // Call readExpr1 to read the whole expression.
     E = readExpr1(readParenExpr(), 0);
-    E.IsAbsolute = []() { return true; };
+    E.IsAbsolute = [] { return true; };
   } else {
     E = readExpr();
   }
@@ -1529,8 +1529,8 @@ static Expr combine(StringRef Op, Expr L, Expr R) {
   }
   if (Op == "+")
     return {[=](uint64_t Dot) { return L(Dot) + R(Dot); },
-            [=]() { return L.IsAbsolute() && R.IsAbsolute(); },
-            [=]() {
+            [=] { return L.IsAbsolute() && R.IsAbsolute(); },
+            [=] {
               const OutputSectionBase *S = L.Section();
               return S ? S : R.Section();
             }};
@@ -1678,8 +1678,8 @@ Expr ScriptParser::readPrimary() {
     StringRef Name = readParenLiteral();
     return {
         [=](uint64_t Dot) { return ScriptBase->getOutputSection(Name)->Addr; },
-        [=]() { return false; },
-        [=]() { return ScriptBase->getOutputSection(Name); }};
+        [=] { return false; },
+        [=] { return ScriptBase->getOutputSection(Name); }};
   }
   if (Tok == "LOADADDR") {
     StringRef Name = readParenLiteral();
@@ -1756,8 +1756,8 @@ Expr ScriptParser::readPrimary() {
   if (Tok != "." && !isValidCIdentifier(Tok))
     setError("malformed number: " + Tok);
   return {[=](uint64_t Dot) { return getSymbolValue(Tok, Dot); },
-          [=]() { return isAbsolute(Tok); },
-          [=]() { return ScriptBase->getSymbolSection(Tok); }};
+          [=] { return isAbsolute(Tok); },
+          [=] { return ScriptBase->getSymbolSection(Tok); }};
 }
 
 Expr ScriptParser::readTernary(Expr Cond) {
