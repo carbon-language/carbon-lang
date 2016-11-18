@@ -604,15 +604,11 @@ template <class ELFT> void MergeOutputSection<ELFT>::finalize() {
   // finalize() fixed tail-optimized strings, so we can now get
   // offsets of strings. Get an offset for each string and save it
   // to a corresponding StringPiece for easy access.
-  if (shouldTailMerge()) {
-    for (MergeInputSection<ELFT> *Sec : Sections) {
-      for (size_t I = 0, E = Sec->Pieces.size(); I != E; ++I) {
-        if (!Sec->Pieces[I].Live)
-          continue;
-        Sec->Pieces[I].OutputOff = Builder.getOffset(Sec->getData(I));
-      }
-    }
-  }
+  if (shouldTailMerge())
+    for (MergeInputSection<ELFT> *Sec : Sections)
+      for (size_t I = 0, E = Sec->Pieces.size(); I != E; ++I)
+        if (Sec->Pieces[I].Live)
+          Sec->Pieces[I].OutputOff = Builder.getOffset(Sec->getData(I));
 }
 
 template <class ELFT>
