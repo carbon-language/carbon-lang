@@ -331,15 +331,8 @@ define <8 x float> @knownbits_mask_concat_uitofp(<4 x i32> %a0, <4 x i32> %a1) n
 ; X32-NEXT:    vpand {{\.LCPI.*}}, %xmm1, %xmm1
 ; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,0,2]
 ; X32-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[1,3,1,3]
-; X32-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm2
-; X32-NEXT:    vandps {{\.LCPI.*}}, %ymm2, %ymm2
-; X32-NEXT:    vcvtdq2ps %ymm2, %ymm2
-; X32-NEXT:    vpsrld $16, %xmm0, %xmm0
-; X32-NEXT:    vpsrld $16, %xmm1, %xmm1
 ; X32-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; X32-NEXT:    vcvtdq2ps %ymm0, %ymm0
-; X32-NEXT:    vmulps {{\.LCPI.*}}, %ymm0, %ymm0
-; X32-NEXT:    vaddps %ymm2, %ymm0, %ymm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: knownbits_mask_concat_uitofp:
@@ -348,15 +341,8 @@ define <8 x float> @knownbits_mask_concat_uitofp(<4 x i32> %a0, <4 x i32> %a1) n
 ; X64-NEXT:    vpand {{.*}}(%rip), %xmm1, %xmm1
 ; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,0,2]
 ; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[1,3,1,3]
-; X64-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm2
-; X64-NEXT:    vandps {{.*}}(%rip), %ymm2, %ymm2
-; X64-NEXT:    vcvtdq2ps %ymm2, %ymm2
-; X64-NEXT:    vpsrld $16, %xmm0, %xmm0
-; X64-NEXT:    vpsrld $16, %xmm1, %xmm1
 ; X64-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; X64-NEXT:    vcvtdq2ps %ymm0, %ymm0
-; X64-NEXT:    vmulps {{.*}}(%rip), %ymm0, %ymm0
-; X64-NEXT:    vaddps %ymm2, %ymm0, %ymm0
 ; X64-NEXT:    retq
   %1 = and <4 x i32> %a0, <i32 131071, i32 -1, i32 131071, i32 -1>
   %2 = and <4 x i32> %a1, <i32 -1, i32 131071, i32 -1, i32 131071>
