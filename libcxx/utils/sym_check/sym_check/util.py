@@ -12,7 +12,7 @@ import distutils.spawn
 import signal
 import subprocess
 import sys
-
+import re
 
 def execute_command(cmd, input_str=None):
     """
@@ -135,3 +135,40 @@ def extract_or_load(filename):
     if is_library_file(filename):
         return sym_check.extract.extract_symbols(filename)
     return read_syms_from_file(filename)
+
+def adjust_mangled_name(name):
+    if not name.startswith('__Z'):
+        return name
+    return name[1:]
+
+new_delete_std_symbols = [
+    '_Znam',
+    '_Znwm',
+    '_ZdaPv',
+    '_ZdaPvm',
+    '_ZdlPv',
+    '_ZdlPvm'
+]
+
+def is_stdlib_symbol_name(name):
+    name = adjust_mangled_name(name)
+    if name in new_delete_std_symbols:
+        return True
+    if re.search("@GLIBC|@GCC", name):
+        return False
+    if re.search('(St[0-9])|(__cxa)|(__cxxabi)', name):
+        return True
+    return True
+
+def filter_stdlib_symbols(syms):
+    stdlib_symbols = []
+    other_symbols = []
+    for s in syms:
+        canon_name = adjust_mangled_name(s['name'])
+        if not is_stdlib_symbol_name(canon_name):
+            assert not s['is_defined'] and \
+                   'have non-stdlib symbol defined in stdlib'
+            other_symbols += [s]
+        else:
+            stdlib_symbols += [s]
+    return stdlib_symbols, other_symbols
