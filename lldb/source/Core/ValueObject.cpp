@@ -2166,7 +2166,7 @@ void ValueObject::GetExpressionPath(Stream &s, bool qualify_cxx_base_classes,
 }
 
 ValueObjectSP ValueObject::GetValueForExpressionPath(
-    const char *expression, ExpressionPathScanEndReason *reason_to_stop,
+    llvm::StringRef expression, ExpressionPathScanEndReason *reason_to_stop,
     ExpressionPathEndResultType *final_value_type,
     const GetValueForExpressionPathOptions &options,
     ExpressionPathAftermath *final_task_on_target) {
@@ -2234,16 +2234,16 @@ ValueObjectSP ValueObject::GetValueForExpressionPath(
 }
 
 ValueObjectSP ValueObject::GetValueForExpressionPath_Impl(
-    const char *expression_cstr2, ExpressionPathScanEndReason *reason_to_stop,
+    llvm::StringRef expression, ExpressionPathScanEndReason *reason_to_stop,
     ExpressionPathEndResultType *final_result,
     const GetValueForExpressionPathOptions &options,
     ExpressionPathAftermath *what_next) {
   ValueObjectSP root = GetSP();
 
-  if (!root.get())
-    return ValueObjectSP();
+  if (!root)
+    return nullptr;
 
-  llvm::StringRef remainder(expression_cstr2);
+  llvm::StringRef remainder = expression;
 
   while (true) {
     llvm::StringRef temp_expression = remainder;
@@ -2565,7 +2565,7 @@ ValueObjectSP ValueObject::GetValueForExpressionPath_Impl(
               pointee_compiler_type_info.Test(eTypeIsScalar)) {
             Error error;
             root = root->Dereference(error);
-            if (error.Fail() || !root.get()) {
+            if (error.Fail() || !root) {
               *reason_to_stop =
                   ValueObject::eExpressionPathScanEndReasonDereferencingFailed;
               *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
@@ -2588,7 +2588,7 @@ ValueObjectSP ValueObject::GetValueForExpressionPath_Impl(
               root = root->GetSyntheticValue()->GetChildAtIndex(index, true);
             } else
               root = root->GetSyntheticArrayMember(index, true);
-            if (!root.get()) {
+            if (!root) {
               *reason_to_stop =
                   ValueObject::eExpressionPathScanEndReasonNoSuchChild;
               *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
@@ -2602,7 +2602,7 @@ ValueObjectSP ValueObject::GetValueForExpressionPath_Impl(
           }
         } else if (root_compiler_type_info.Test(eTypeIsScalar)) {
           root = root->GetSyntheticBitFieldChild(index, index, true);
-          if (!root.get()) {
+          if (!root) {
             *reason_to_stop =
                 ValueObject::eExpressionPathScanEndReasonNoSuchChild;
             *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
@@ -2617,7 +2617,7 @@ ValueObjectSP ValueObject::GetValueForExpressionPath_Impl(
           }
         } else if (root_compiler_type_info.Test(eTypeIsVector)) {
           root = root->GetChildAtIndex(index, true);
-          if (!root.get()) {
+          if (!root) {
             *reason_to_stop =
                 ValueObject::eExpressionPathScanEndReasonNoSuchChild;
             *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
@@ -2645,14 +2645,14 @@ ValueObjectSP ValueObject::GetValueForExpressionPath_Impl(
           // if we are here, then root itself is a synthetic VO.. should be good
           // to go
 
-          if (!root.get()) {
+          if (!root) {
             *reason_to_stop =
                 ValueObject::eExpressionPathScanEndReasonSyntheticValueMissing;
             *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
             return nullptr;
           }
           root = root->GetChildAtIndex(index, true);
-          if (!root.get()) {
+          if (!root) {
             *reason_to_stop =
                 ValueObject::eExpressionPathScanEndReasonNoSuchChild;
             *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
@@ -2689,7 +2689,7 @@ ValueObjectSP ValueObject::GetValueForExpressionPath_Impl(
                 eTypeIsScalar)) // expansion only works for scalars
         {
           root = root->GetSyntheticBitFieldChild(low_index, high_index, true);
-          if (!root.get()) {
+          if (!root) {
             *reason_to_stop =
                 ValueObject::eExpressionPathScanEndReasonNoSuchChild;
             *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
@@ -2710,7 +2710,7 @@ ValueObjectSP ValueObject::GetValueForExpressionPath_Impl(
                    pointee_compiler_type_info.Test(eTypeIsScalar)) {
           Error error;
           root = root->Dereference(error);
-          if (error.Fail() || !root.get()) {
+          if (error.Fail() || !root) {
             *reason_to_stop =
                 ValueObject::eExpressionPathScanEndReasonDereferencingFailed;
             *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
