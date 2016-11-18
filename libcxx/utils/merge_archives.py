@@ -9,6 +9,7 @@
 #===----------------------------------------------------------------------===##
 
 from argparse import ArgumentParser
+from ctypes.util import find_library
 import distutils.spawn
 import glob
 import tempfile
@@ -28,9 +29,18 @@ def print_and_exit(msg):
     sys.stderr.write(msg + '\n')
     exit_with_cleanups(1)
 
-def diagnose_missing(file):
-    if not os.path.exists(file):
-        print_and_exit("input '%s' does not exist" % file)
+def find_and_diagnose_missing(lib, search_paths):
+    if os.path.exists(lib):
+        return os.path.abspath(lib)
+    if not lib.startswith('lib') or not lib.endswith('.a'):
+        print_and_exit(("input file '%s' not not name a static library. "
+                       "It should start with 'lib' and end with '.a") % lib)
+    for sp in search_paths:
+        assert type(sp) is list and len(sp) == 1
+        path = os.path.join(sp[0], lib)
+        if os.path.exists(path):
+            return os.path.abspath(path)
+    print_and_exit("input '%s' does not exist" % lib)
 
 
 def execute_command(cmd, cwd=None):
@@ -80,6 +90,10 @@ def main():
         help='The output file. stdout is used if not given',
         type=str, action='store')
     parser.add_argument(
+        '-L', dest='search_paths',
+        help='Paths to search for the libraries along', action='append',
+        nargs=1)
+    parser.add_argument(
         'archives', metavar='archives',  nargs='+',
         help='The archives to merge')
 
@@ -91,12 +105,9 @@ def main():
 
     if len(args.archives) < 2:
         print_and_exit('fewer than 2 inputs provided')
-    archives = []
-    for ar in args.archives:
-        diagnose_missing(ar)
-        # Make the path absolute so it isn't affected when we change the PWD.
-        archives += [os.path.abspath(ar)]
-
+    archives = [find_and_diagnose_missing(ar, args.search_paths)
+                for ar in args.archives]
+    print ('Merging archives: %s' % archives)
     if not os.path.exists(os.path.dirname(args.output)):
         print_and_exit("output path doesn't exist: '%s'" % args.output)
 
