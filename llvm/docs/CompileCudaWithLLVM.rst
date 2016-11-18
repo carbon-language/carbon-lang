@@ -35,6 +35,9 @@ by many Linux package managers; you probably need to install nvidia's package.
 
 You will need CUDA 7.0, 7.5, or 8.0 to compile with clang.
 
+CUDA compilation is supported on Linux, and on MacOS as of XXXX-XX-XX.  Windows
+support is planned but not yet in place.
+
 Invoking clang
 --------------
 
