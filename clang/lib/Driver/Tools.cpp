@@ -6225,7 +6225,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                   Args.hasArg(options::OPT_S))) {
         F = Output.getFilename();
       } else {
-        // Use the compilation directory.
+        // Use the input filename.
         F = llvm::sys::path::stem(Input.getBaseInput());
 
         // If we're compiling for an offload architecture (i.e. a CUDA device),
