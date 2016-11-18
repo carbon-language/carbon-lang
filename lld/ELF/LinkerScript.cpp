@@ -1564,9 +1564,9 @@ static Expr combine(StringRef Op, Expr L, Expr R) {
 Expr ScriptParser::readExpr1(Expr Lhs, int MinPrec) {
   while (!atEOF() && !Error) {
     // Read an operator and an expression.
-    StringRef Op1 = peek();
-    if (Op1 == "?")
+    if (consume("?"))
       return readTernary(Lhs);
+    StringRef Op1 = peek();
     if (precedence(Op1) < MinPrec)
       break;
     skip();
@@ -1602,17 +1602,21 @@ uint64_t static getConstant(StringRef S) {
 // and decimal numbers. Decimal numbers may have "K" (kilo) or
 // "M" (mega) prefixes.
 static bool readInteger(StringRef Tok, uint64_t &Result) {
+  // Negative number
   if (Tok.startswith("-")) {
     if (!readInteger(Tok.substr(1), Result))
       return false;
     Result = -Result;
     return true;
   }
+
+  // Hexadecimal
   if (Tok.startswith_lower("0x"))
     return !Tok.substr(2).getAsInteger(16, Result);
   if (Tok.endswith_lower("H"))
     return !Tok.drop_back().getAsInteger(16, Result);
 
+  // Decimal
   int Suffix = 1;
   if (Tok.endswith_lower("K")) {
     Suffix = 1024;
@@ -1757,7 +1761,6 @@ Expr ScriptParser::readPrimary() {
 }
 
 Expr ScriptParser::readTernary(Expr Cond) {
-  skip();
   Expr L = readExpr();
   expect(":");
   Expr R = readExpr();
