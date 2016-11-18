@@ -1304,12 +1304,17 @@ std::vector<SectionPattern> ScriptParser::readInputSectionsList() {
   return Ret;
 }
 
-// Section pattern grammar can have complex expressions, for example:
-// *(SORT(.foo.* EXCLUDE_FILE (*file1.o) .bar.*) .bar.* SORT(.zed.*))
-// Generally is a sequence of globs and excludes that may be wrapped in a SORT()
-// commands, like: SORT(glob0) glob1 glob2 SORT(glob4)
-// This methods handles wrapping sequences of excluded files and section globs
-// into SORT() if that needed and reads them all.
+// Reads contents of "SECTIONS" directive. That directive contains a
+// list of glob patterns for input sections. The grammar is as follows.
+//
+// <patterns> ::= <section-list>
+//              | <sort> "(" <section-list> ")"
+//              | <sort> "(" <sort> "(" <section-list> ")" ")"
+//
+// <sort>     ::= "SORT" | "SORT_BY_NAME" | "SORT_BY_ALIGNMENT"
+//              | "SORT_BY_INIT_PRIORITY" | "SORT_NONE"
+//
+// <section-list> is parsed by readInputSectionsList().
 InputSectionDescription *
 ScriptParser::readInputSectionRules(StringRef FilePattern) {
   auto *Cmd = new InputSectionDescription(FilePattern);
