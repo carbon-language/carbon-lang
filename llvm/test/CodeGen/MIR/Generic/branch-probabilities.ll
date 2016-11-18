@@ -2,6 +2,8 @@
 ; RUN: FileCheck %s < %t.mir
 ; RUN: llc %t.mir -run-pass machine-sink
 ; Check that branch probabilities are printed in a format that can then be parsed.
+; This test fails on powerpc because of an undefined physical register use in the MIR.  See PR31062.
+; XFAIL: powerpc
 
 declare void @foo()
 declare void @bar()
