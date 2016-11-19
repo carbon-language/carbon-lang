@@ -74,7 +74,6 @@ std::string createResponseFile(const llvm::opt::InputArgList &Args);
 
 std::string findFromSearchPaths(StringRef Path);
 std::string searchLibrary(StringRef Path);
-std::string buildSysrootedPath(llvm::StringRef Dir, llvm::StringRef File);
 
 } // namespace elf
 } // namespace lld
