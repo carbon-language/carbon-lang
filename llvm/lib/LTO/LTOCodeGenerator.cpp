@@ -511,7 +511,7 @@ bool LTOCodeGenerator::setupOptimizationRemarks() {
       return false;
     }
     Context.setDiagnosticsOutputFile(
-        new yaml::Output(DiagnosticOutputFile->os()));
+        llvm::make_unique<yaml::Output>(DiagnosticOutputFile->os()));
   }
   return true;
 }
