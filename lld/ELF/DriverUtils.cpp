@@ -145,11 +145,12 @@ Optional<std::string> elf::findFromSearchPaths(StringRef Path) {
   return None;
 }
 
-// Searches a given library from input search paths, which are filled
-// from -L command line switches. Returns a path to an existent library file.
+// This is for -lfoo. We'll look for libfoo.so or libfoo.a from
+// search paths.
 Optional<std::string> elf::searchLibrary(StringRef Name) {
   if (Name.startswith(":"))
     return findFromSearchPaths(Name.substr(1));
+
   for (StringRef Dir : Config->SearchPaths) {
     if (!Config->Static)
       if (Optional<std::string> S = findFile(Dir, "lib" + Name + ".so"))
