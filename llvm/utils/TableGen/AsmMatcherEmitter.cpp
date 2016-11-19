@@ -98,6 +98,7 @@
 
 #include "CodeGenTarget.h"
 #include "SubtargetFeatureInfo.h"
+#include "Types.h"
 #include "llvm/ADT/CachedHashString.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/STLExtras.h"
@@ -2361,17 +2362,6 @@ static void emitMatchRegisterAltName(CodeGenTarget &Target, Record *AsmParser,
 
   OS << "  return 0;\n";
   OS << "}\n\n";
-}
-
-static const char *getMinimalTypeForRange(uint64_t Range) {
-  assert(Range <= 0xFFFFFFFFFFFFFFFFULL && "Enum too large");
-  if (Range > 0xFFFFFFFFULL)
-    return "uint64_t";
-  if (Range > 0xFFFF)
-    return "uint32_t";
-  if (Range > 0xFF)
-    return "uint16_t";
-  return "uint8_t";
 }
 
 static const char *getMinimalRequiredFeaturesType(const AsmMatcherInfo &Info) {
