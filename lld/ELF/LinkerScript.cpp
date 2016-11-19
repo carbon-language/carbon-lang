@@ -787,12 +787,12 @@ template <class ELFT> bool LinkerScript<ELFT>::ignoreInterpSection() {
 }
 
 template <class ELFT>
-ArrayRef<uint8_t> LinkerScript<ELFT>::getFiller(StringRef Name) {
+uint32_t LinkerScript<ELFT>::getFiller(StringRef Name) {
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
       if (Cmd->Name == Name)
         return Cmd->Filler;
-  return {};
+  return 0;
 }
 
 template <class ELFT>
@@ -981,9 +981,9 @@ private:
 
   SymbolAssignment *readAssignment(StringRef Name);
   BytesDataCommand *readBytesDataCommand(StringRef Tok);
-  std::vector<uint8_t> readFill();
+  uint32_t readFill();
   OutputSectionCommand *readOutputSectionDescription(StringRef OutSec);
-  std::vector<uint8_t> readOutputSectionFiller(StringRef Tok);
+  uint32_t readOutputSectionFiller(StringRef Tok);
   std::vector<StringRef> readOutputSectionPhdrs();
   InputSectionDescription *readInputSectionDescription(StringRef Tok);
   StringMatcher readFilePatterns();
@@ -1387,9 +1387,9 @@ Expr ScriptParser::readAssert() {
 // alias for =fillexp section attribute, which is different from
 // what GNU linkers do.
 // https://sourceware.org/binutils/docs/ld/Output-Section-Data.html
-std::vector<uint8_t> ScriptParser::readFill() {
+uint32_t ScriptParser::readFill() {
   expect("(");
-  std::vector<uint8_t> V = readOutputSectionFiller(next());
+  uint32_t V = readOutputSectionFiller(next());
   expect(")");
   expect(";");
   return V;
@@ -1452,13 +1452,12 @@ ScriptParser::readOutputSectionDescription(StringRef OutSec) {
 // hexstrings as blobs of arbitrary sizes, while ld.gold handles them
 // as 32-bit big-endian values. We will do the same as ld.gold does
 // because it's simpler than what ld.bfd does.
-std::vector<uint8_t> ScriptParser::readOutputSectionFiller(StringRef Tok) {
+uint32_t ScriptParser::readOutputSectionFiller(StringRef Tok) {
   uint32_t V;
-  if (Tok.getAsInteger(0, V)) {
-    setError("invalid filler expression: " + Tok);
-    return {};
-  }
-  return {uint8_t(V >> 24), uint8_t(V >> 16), uint8_t(V >> 8), uint8_t(V)};
+  if (!Tok.getAsInteger(0, V))
+    return V;
+  setError("invalid filler expression: " + Tok);
+  return 0;
 }
 
 SymbolAssignment *ScriptParser::readProvideHidden(bool Provide, bool Hidden) {
