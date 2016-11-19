@@ -81,9 +81,7 @@ opt::InputArgList ELFOptTable::parse(ArrayRef<const char *> Argv) {
   // Parse options and then do error checking.
   Args = this->ParseArgs(Vec, MissingIndex, MissingCount);
   if (MissingCount)
-    error(Twine("missing arg value for \"") + Args.getArgString(MissingIndex) +
-          "\", expected " + Twine(MissingCount) +
-          (MissingCount == 1 ? " argument.\n" : " arguments"));
+    error(Twine(Args.getArgString(MissingIndex)) + ": missing argument");
 
   for (auto *Arg : Args.filtered(OPT_UNKNOWN))
     error("unknown argument: " + Arg->getSpelling());
