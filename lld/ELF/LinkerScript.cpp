@@ -823,11 +823,10 @@ void LinkerScript<ELFT>::writeDataBytes(StringRef Name, uint8_t *Buf) {
   if (I == INT_MAX)
     return;
 
-  OutputSectionCommand *Cmd =
-      dyn_cast<OutputSectionCommand>(Opt.Commands[I].get());
-  for (const std::unique_ptr<BaseCommand> &Base2 : Cmd->Commands)
-    if (auto *DataCmd = dyn_cast<BytesDataCommand>(Base2.get()))
-      writeInt<ELFT>(&Buf[DataCmd->Offset], DataCmd->Data, DataCmd->Size);
+  auto *Cmd = dyn_cast<OutputSectionCommand>(Opt.Commands[I].get());
+  for (const std::unique_ptr<BaseCommand> &Base : Cmd->Commands)
+    if (auto *Data = dyn_cast<BytesDataCommand>(Base.get()))
+      writeInt<ELFT>(Buf + Data->Offset, Data->Data, Data->Size);
 }
 
 template <class ELFT> bool LinkerScript<ELFT>::hasLMA(StringRef Name) {
@@ -843,13 +842,10 @@ template <class ELFT> bool LinkerScript<ELFT>::hasLMA(StringRef Name) {
 // were in the script. If a given name did not appear in the script,
 // it returns INT_MAX, so that it will be laid out at end of file.
 template <class ELFT> int LinkerScript<ELFT>::getSectionIndex(StringRef Name) {
-  int I = 0;
-  for (std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
-    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
+  for (int I = 0, E = Opt.Commands.size(); I != E; ++I)
+    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Opt.Commands[I].get()))
       if (Cmd->Name == Name)
         return I;
-    ++I;
-  }
   return INT_MAX;
 }
 
