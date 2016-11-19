@@ -95,10 +95,11 @@ private:
   static bool isEligible(InputSectionBase<ELFT> *Sec);
   static std::vector<InputSection<ELFT> *> getSections();
 
-  void segregate(InputSection<ELFT> **Begin, InputSection<ELFT> **End,
-                 Comparator Eq);
+  void segregate(MutableArrayRef<InputSection<ELFT> *> Arr, Comparator Eq);
 
-  void forEachGroup(std::vector<InputSection<ELFT> *> &V, Comparator Eq);
+  void
+  forEachGroup(std::vector<InputSection<ELFT> *> &V,
+               std::function<void(MutableArrayRef<InputSection<ELFT> *>)> Fn);
 
   template <class RelTy>
   static bool relocationEq(ArrayRef<RelTy> RA, ArrayRef<RelTy> RB);
@@ -153,18 +154,18 @@ std::vector<InputSection<ELFT> *> ICF<ELFT>::getSections() {
 // you call this function. This function compare sections between Begin
 // and End using Eq and assign new group IDs for new groups.
 template <class ELFT>
-void ICF<ELFT>::segregate(InputSection<ELFT> **Begin, InputSection<ELFT> **End,
+void ICF<ELFT>::segregate(MutableArrayRef<InputSection<ELFT> *> Arr,
                           Comparator Eq) {
   // This loop rearranges [Begin, End) so that all sections that are
   // equal in terms of Eq are contiguous. The algorithm is quadratic in
   // the worst case, but that is not an issue in practice because the
   // number of distinct sections in [Begin, End) is usually very small.
-  InputSection<ELFT> **I = Begin;
+  InputSection<ELFT> **I = Arr.begin();
   for (;;) {
     InputSection<ELFT> *Head = *I;
     auto Bound = std::stable_partition(
-        I + 1, End, [&](InputSection<ELFT> *S) { return Eq(Head, S); });
-    if (Bound == End)
+        I + 1, Arr.end(), [&](InputSection<ELFT> *S) { return Eq(Head, S); });
+    if (Bound == Arr.end())
       return;
     uint64_t Id = NextId++;
     for (; I != Bound; ++I)
@@ -173,14 +174,15 @@ void ICF<ELFT>::segregate(InputSection<ELFT> **Begin, InputSection<ELFT> **End,
 }
 
 template <class ELFT>
-void ICF<ELFT>::forEachGroup(std::vector<InputSection<ELFT> *> &V,
-                             Comparator Eq) {
+void ICF<ELFT>::forEachGroup(
+    std::vector<InputSection<ELFT> *> &V,
+    std::function<void(MutableArrayRef<InputSection<ELFT> *>)> Fn) {
   for (InputSection<ELFT> **I = V.data(), **E = I + V.size(); I != E;) {
     InputSection<ELFT> *Head = *I;
     auto Bound = std::find_if(I + 1, E, [&](InputSection<ELFT> *S) {
       return S->GroupId != Head->GroupId;
     });
-    segregate(I, Bound, Eq);
+    Fn({I, Bound});
     I = Bound;
   }
 }
@@ -259,14 +261,14 @@ template <class ELFT> void ICF<ELFT>::run() {
   // Initially, we use hash values as section group IDs. Therefore,
   // if two sections have the same ID, they are likely (but not
   // guaranteed) to have the same static contents in terms of ICF.
-  std::vector<InputSection<ELFT> *> V = getSections();
-  for (InputSection<ELFT> *S : V)
+  std::vector<InputSection<ELFT> *> Sections = getSections();
+  for (InputSection<ELFT> *S : Sections)
     // Set MSB on to avoid collisions with serial group IDs
     S->GroupId = getHash(S) | (uint64_t(1) << 63);
 
   // From now on, sections in V are ordered so that sections in
   // the same group are consecutive in the vector.
-  std::stable_sort(V.begin(), V.end(),
+  std::stable_sort(Sections.begin(), Sections.end(),
                    [](InputSection<ELFT> *A, InputSection<ELFT> *B) {
                      if (A->GroupId != B->GroupId)
                        return A->GroupId < B->GroupId;
@@ -276,34 +278,32 @@ template <class ELFT> void ICF<ELFT>::run() {
                    });
 
   // Compare static contents and assign unique IDs for each static content.
-  forEachGroup(V, equalsConstant);
+  forEachGroup(Sections, [&](MutableArrayRef<InputSection<ELFT> *> V) {
+    segregate(V, equalsConstant);
+  });
 
   // Split groups by comparing relocations until we get a convergence.
   int Cnt = 1;
   for (;;) {
     ++Cnt;
     uint64_t Id = NextId;
-    forEachGroup(V, equalsVariable);
+    forEachGroup(Sections, [&](MutableArrayRef<InputSection<ELFT> *> V) {
+      segregate(V, equalsVariable);
+    });
     if (Id == NextId)
       break;
   }
   log("ICF needed " + Twine(Cnt) + " iterations.");
 
   // Merge sections in the same group.
-  for (auto I = V.begin(), E = V.end(); I != E;) {
-    InputSection<ELFT> *Head = *I++;
-    auto Bound = std::find_if(I, E, [&](InputSection<ELFT> *S) {
-      return Head->GroupId != S->GroupId;
-    });
-    if (I == Bound)
-      continue;
+  forEachGroup(Sections, [&](MutableArrayRef<InputSection<ELFT> *> V) {
+    InputSection<ELFT> *Head = V[0];
     log("selected " + Head->Name);
-    while (I != Bound) {
-      InputSection<ELFT> *S = *I++;
+    for (InputSection<ELFT> *S : V.slice(1)) {
       log("  removed " + S->Name);
       Head->replace(S);
     }
-  }
+  });
 }
 
 // ICF entry point function.
