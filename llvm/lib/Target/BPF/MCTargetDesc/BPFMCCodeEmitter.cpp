@@ -20,7 +20,6 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -31,7 +30,7 @@ namespace {
 class BPFMCCodeEmitter : public MCCodeEmitter {
   BPFMCCodeEmitter(const BPFMCCodeEmitter &) = delete;
   void operator=(const BPFMCCodeEmitter &) = delete;
-  const MCInstrInfo &MCII LLVM_ATTRIBUTE_UNUSED; // Unused in NDEBUG builds.
+  const MCInstrInfo &MCII;
   const MCRegisterInfo &MRI;
   bool IsLittleEndian;
 

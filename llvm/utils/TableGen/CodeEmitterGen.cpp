@@ -356,7 +356,8 @@ void CodeEmitterGen::run(raw_ostream &o) {
     << "      RequiredFeatures[Inst.getOpcode()];\n"
     << "  if (MissingFeatures) {\n"
     << "    std::ostringstream Msg;\n"
-    << "    Msg << \"Attempting to emit \" << MCII.getName(Inst.getOpcode()).str()\n"
+    << "    Msg << \"Attempting to emit \" << "
+       "MCII.getName(Inst.getOpcode()).str()\n"
     << "        << \" instruction but the \";\n"
     << "    for (unsigned i = 0; i < 8 * sizeof(MissingFeatures); ++i)\n"
     << "      if (MissingFeatures & (1ULL << i))\n"
@@ -364,6 +365,10 @@ void CodeEmitterGen::run(raw_ostream &o) {
     << "    Msg << \"predicate(s) are not met\";\n"
     << "    report_fatal_error(Msg.str());\n"
     << "  }\n"
+    << "#else\n"
+    << "// Silence unused variable warning on targets that don't use MCII for "
+       "other purposes (e.g. BPF).\n"
+    << "(void)MCII;\n"
     << "#endif // NDEBUG\n";
   o << "}\n";
   o << "#endif\n";
