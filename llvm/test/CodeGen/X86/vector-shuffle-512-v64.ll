@@ -137,11 +137,10 @@ define <64 x i8> @shuffle_v64i8_0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz(<64 x i8> %a) {
 ;
 ; AVX512VBMI-LABEL: shuffle_v64i8_0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz:
 ; AVX512VBMI:       # BB#0:
-; AVX512VBMI-NEXT:    movl $255, %eax
-; AVX512VBMI-NEXT:    vmovd %eax, %xmm1
-; AVX512VBMI-NEXT:    vpand %ymm1, %ymm0, %ymm0
-; AVX512VBMI-NEXT:    vpxor %ymm1, %ymm1, %ymm1
-; AVX512VBMI-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
+; AVX512VBMI-NEXT:    vmovdqu8 {{.*#+}} zmm2 = [64,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63]
+; AVX512VBMI-NEXT:    vpxord %zmm1, %zmm1, %zmm1
+; AVX512VBMI-NEXT:    vpermt2b %zmm0, %zmm2, %zmm1
+; AVX512VBMI-NEXT:    vmovdqa64 %zmm1, %zmm0
 ; AVX512VBMI-NEXT:    retq
   %shuffle = shufflevector <64 x i8> %a, <64 x i8> zeroinitializer, <64 x i32> <i32 0, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64>
   ret <64 x i8> %shuffle
@@ -463,16 +462,9 @@ define <64 x i8> @shuffle_v64i8_63_zz_61_zz_59_zz_57_zz_55_zz_53_zz_51_zz_49_zz_
 ;
 ; AVX512VBMI-LABEL: shuffle_v64i8_63_zz_61_zz_59_zz_57_zz_55_zz_53_zz_51_zz_49_zz_47_zz_45_zz_43_zz_41_zz_39_zz_37_zz_35_zz_33_zz_31_zz_29_zz_27_zz_25_zz_23_zz_21_zz_19_zz_17_zz_15_zz_13_zz_11_zz_9_zz_7_zz_5_zz_3_zz_1_zz:
 ; AVX512VBMI:       # BB#0:
-; AVX512VBMI-NEXT:    vmovdqa {{.*#+}} ymm1 = <15,u,13,u,11,u,9,u,7,u,5,u,3,u,1,u,15,u,13,u,11,u,9,u,7,u,5,u,3,u,1,u>
-; AVX512VBMI-NEXT:    vpshufb %ymm1, %ymm0, %ymm2
-; AVX512VBMI-NEXT:    vperm2i128 {{.*#+}} ymm2 = ymm2[2,3,0,1]
-; AVX512VBMI-NEXT:    vmovdqa {{.*#+}} ymm3 = [255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0]
-; AVX512VBMI-NEXT:    vpand %ymm3, %ymm2, %ymm2
-; AVX512VBMI-NEXT:    vextracti64x4 $1, %zmm0, %ymm0
-; AVX512VBMI-NEXT:    vpshufb %ymm1, %ymm0, %ymm0
-; AVX512VBMI-NEXT:    vperm2i128 {{.*#+}} ymm0 = ymm0[2,3,0,1]
-; AVX512VBMI-NEXT:    vpand %ymm3, %ymm0, %ymm0
-; AVX512VBMI-NEXT:    vinserti64x4 $1, %ymm2, %zmm0, %zmm0
+; AVX512VBMI-NEXT:    vpxord %zmm1, %zmm1, %zmm1
+; AVX512VBMI-NEXT:    vmovdqu8 {{.*#+}} zmm2 = [63,65,61,67,59,69,57,71,55,73,53,75,51,77,49,79,47,81,45,83,43,85,41,87,39,89,37,91,35,93,33,95,31,97,29,99,27,101,25,103,23,105,21,107,19,109,17,111,15,113,13,115,11,117,9,119,7,121,5,123,3,125,1,127]
+; AVX512VBMI-NEXT:    vpermt2b %zmm1, %zmm2, %zmm0
 ; AVX512VBMI-NEXT:    retq
   %shuffle = shufflevector <64 x i8> %a, <64 x i8> zeroinitializer, <64 x i32> <i32 63, i32 64, i32 61, i32 64, i32 59, i32 64, i32 57, i32 64, i32 55, i32 64, i32 53, i32 64, i32 51, i32 64, i32 49, i32 64, i32 47, i32 64, i32 45, i32 64, i32 43, i32 64, i32 41, i32 64, i32 39, i32 64, i32 37, i32 64, i32 35, i32 64, i32 33, i32 64, i32 31, i32 64, i32 29, i32 64, i32 27, i32 64, i32 25, i32 64, i32 23, i32 64, i32 21, i32 64, i32 19, i32 64, i32 17, i32 64, i32 15, i32 64, i32 13, i32 64, i32 11, i32 64, i32 9, i32 64, i32 7, i32 64, i32 5, i32 64, i32 3, i32 64, i32 1, i32 64>
   ret <64 x i8> %shuffle
@@ -528,19 +520,8 @@ define <64 x i8> @shuffle_v64i8_63_64_61_66_59_68_57_70_55_72_53_74_51_76_49_78_
 ;
 ; AVX512VBMI-LABEL: shuffle_v64i8_63_64_61_66_59_68_57_70_55_72_53_74_51_76_49_78_47_80_45_82_43_84_41_86_39_88_37_90_35_92_33_94_31_96_29_98_27_100_25_102_23_104_21_106_19_108_17_110_15_112_13_114_11_116_9_118_7_120_5_122_3_124_1_126:
 ; AVX512VBMI:       # BB#0:
-; AVX512VBMI-NEXT:    vextracti64x4 $1, %zmm1, %ymm2
-; AVX512VBMI-NEXT:    vmovdqa {{.*#+}} ymm3 = [255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0]
-; AVX512VBMI-NEXT:    vpblendvb %ymm3, %ymm2, %ymm0, %ymm2
-; AVX512VBMI-NEXT:    vperm2i128 {{.*#+}} ymm4 = ymm2[2,3,0,1]
-; AVX512VBMI-NEXT:    vpblendvb %ymm3, %ymm2, %ymm4, %ymm2
-; AVX512VBMI-NEXT:    vmovdqa {{.*#+}} ymm4 = [15,0,13,2,11,4,9,6,7,8,5,10,3,12,1,14,15,0,13,2,11,4,9,6,7,8,5,10,3,12,1,14]
-; AVX512VBMI-NEXT:    vpshufb %ymm4, %ymm2, %ymm2
-; AVX512VBMI-NEXT:    vextracti64x4 $1, %zmm0, %ymm0
-; AVX512VBMI-NEXT:    vpblendvb %ymm3, %ymm1, %ymm0, %ymm0
-; AVX512VBMI-NEXT:    vperm2i128 {{.*#+}} ymm1 = ymm0[2,3,0,1]
-; AVX512VBMI-NEXT:    vpblendvb %ymm3, %ymm0, %ymm1, %ymm0
-; AVX512VBMI-NEXT:    vpshufb %ymm4, %ymm0, %ymm0
-; AVX512VBMI-NEXT:    vinserti64x4 $1, %ymm2, %zmm0, %zmm0
+; AVX512VBMI-NEXT:    vmovdqu8 {{.*#+}} zmm2 = [63,64,61,66,59,68,57,70,55,72,53,74,51,76,49,78,47,80,45,82,43,84,41,86,39,88,37,90,35,92,33,94,31,96,29,98,27,100,25,102,23,104,21,106,19,108,17,110,15,112,13,114,11,116,9,118,7,120,5,122,3,124,1,126]
+; AVX512VBMI-NEXT:    vpermt2b %zmm1, %zmm2, %zmm0
 ; AVX512VBMI-NEXT:    retq
   %shuffle = shufflevector <64 x i8> %a, <64 x i8> %b, <64 x i32> <i32 63, i32 64, i32 61, i32 66, i32 59, i32 68, i32 57, i32 70, i32 55, i32 72, i32 53, i32 74, i32 51, i32 76, i32 49, i32 78, i32 47, i32 80, i32 45, i32 82, i32 43, i32 84, i32 41, i32 86, i32 39, i32 88, i32 37, i32 90, i32 35, i32 92, i32 33, i32 94, i32 31, i32 96, i32 29, i32 98, i32 27, i32 100, i32 25, i32 102, i32 23, i32 104, i32 21, i32 106, i32 19, i32 108, i32 17, i32 110, i32 15, i32 112, i32 13, i32 114, i32 11, i32 116, i32 9, i32 118, i32 7, i32 120, i32 5, i32 122, i32 3, i32 124, i32 1, i32 126>
   ret <64 x i8> %shuffle
