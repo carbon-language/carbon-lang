@@ -1099,11 +1099,10 @@ void ScriptParser::addFile(StringRef S) {
   } else if (sys::fs::exists(S)) {
     Driver->addFile(S);
   } else {
-    std::string Path = findFromSearchPaths(S);
-    if (Path.empty())
-      setError("unable to find " + S);
+    if (Optional<std::string> Path = findFromSearchPaths(S))
+      Driver->addFile(Saver.save(*Path));
     else
-      Driver->addFile(Saver.save(Path));
+      setError("unable to find " + S);
   }
 }
 

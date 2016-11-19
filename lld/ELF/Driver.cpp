@@ -186,11 +186,10 @@ Optional<MemoryBufferRef> LinkerDriver::readFile(StringRef Path) {
 
 // Add a given library by searching it from input search paths.
 void LinkerDriver::addLibrary(StringRef Name) {
-  std::string Path = searchLibrary(Name);
-  if (Path.empty())
-    error("unable to find library -l" + Name);
+  if (Optional<std::string> Path = searchLibrary(Name))
+    addFile(*Path);
   else
-    addFile(Path);
+    error("unable to find library -l" + Name);
 }
 
 // This function is called on startup. We need this for LTO since

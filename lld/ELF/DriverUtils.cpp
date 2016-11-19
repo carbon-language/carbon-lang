@@ -138,24 +138,24 @@ static Optional<std::string> findFile(StringRef Path1, const Twine &Path2) {
   return None;
 }
 
-std::string elf::findFromSearchPaths(StringRef Path) {
+Optional<std::string> elf::findFromSearchPaths(StringRef Path) {
   for (StringRef Dir : Config->SearchPaths)
     if (Optional<std::string> S = findFile(Dir, Path))
-      return *S;
-  return "";
+      return S;
+  return None;
 }
 
-// This is for -lfoo. We'll look for libfoo.so or libfoo.a from
-// search paths.
-std::string elf::searchLibrary(StringRef Name) {
+// Searches a given library from input search paths, which are filled
+// from -L command line switches. Returns a path to an existent library file.
+Optional<std::string> elf::searchLibrary(StringRef Name) {
   if (Name.startswith(":"))
     return findFromSearchPaths(Name.substr(1));
   for (StringRef Dir : Config->SearchPaths) {
     if (!Config->Static)
       if (Optional<std::string> S = findFile(Dir, "lib" + Name + ".so"))
-        return *S;
+        return S;
     if (Optional<std::string> S = findFile(Dir, "lib" + Name + ".a"))
-      return *S;
+      return S;
   }
-  return "";
+  return None;
 }

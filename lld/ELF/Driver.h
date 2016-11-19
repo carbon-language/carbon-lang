@@ -72,8 +72,8 @@ std::vector<uint8_t> parseHexstring(StringRef S);
 
 std::string createResponseFile(const llvm::opt::InputArgList &Args);
 
-std::string findFromSearchPaths(StringRef Path);
-std::string searchLibrary(StringRef Path);
+llvm::Optional<std::string> findFromSearchPaths(StringRef Path);
+llvm::Optional<std::string> searchLibrary(StringRef Path);
 
 } // namespace elf
 } // namespace lld
