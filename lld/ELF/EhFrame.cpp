@@ -47,7 +47,7 @@ template <class ELFT> size_t readEhRecordSize(ArrayRef<uint8_t> D) {
     fatal("CIE/FDE too large");
   uint64_t Size = V + 4;
   if (Size > D.size())
-    fatal("CIE/FIE ends past the end of the section");
+    fatal("CIE/FDE ends past the end of the section");
   return Size;
 }
 
