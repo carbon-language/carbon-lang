@@ -7582,8 +7582,7 @@ static SmallBitVector computeZeroableShuffleElements(ArrayRef<int> Mask,
   return Zeroable;
 }
 
-/// Try to lower a shuffle with a single PSHUFB of V1.
-/// This is only possible if V2 is unused (at all, or only for zero elements).
+/// Try to lower a shuffle with a single PSHUFB of V1 or V2.
 static SDValue lowerVectorShuffleWithPSHUFB(const SDLoc &DL, MVT VT,
                                             ArrayRef<int> Mask, SDValue V1,
                                             SDValue V2,
@@ -7603,6 +7602,7 @@ static SDValue lowerVectorShuffleWithPSHUFB(const SDLoc &DL, MVT VT,
   // Sign bit set in i8 mask means zero element.
   SDValue ZeroMask = DAG.getConstant(0x80, DL, MVT::i8);
 
+  SDValue V;
   for (int i = 0; i < NumBytes; ++i) {
     int M = Mask[i / NumEltBytes];
     if (M < 0) {
@@ -7613,9 +7613,13 @@ static SDValue lowerVectorShuffleWithPSHUFB(const SDLoc &DL, MVT VT,
       PSHUFBMask[i] = ZeroMask;
       continue;
     }
-    // Only allow V1.
-    if (M >= Size)
+
+    // We can only use a single input of V1 or V2.
+    SDValue SrcV = (M >= Size ? V2 : V1);
+    if (V && V != SrcV)
       return SDValue();
+    V = SrcV;
+    M %= Size;
 
     // PSHUFB can't cross lanes, ensure this doesn't happen.
     if ((M / LaneSize) != ((i / NumEltBytes) / LaneSize))
@@ -7625,10 +7629,11 @@ static SDValue lowerVectorShuffleWithPSHUFB(const SDLoc &DL, MVT VT,
     M = M * NumEltBytes + (i % NumEltBytes);
     PSHUFBMask[i] = DAG.getConstant(M, DL, MVT::i8);
   }
+  assert(V && "Failed to find a source input");
 
   MVT I8VT = MVT::getVectorVT(MVT::i8, NumBytes);
   return DAG.getBitcast(
-      VT, DAG.getNode(X86ISD::PSHUFB, DL, I8VT, DAG.getBitcast(I8VT, V1),
+      VT, DAG.getNode(X86ISD::PSHUFB, DL, I8VT, DAG.getBitcast(I8VT, V),
                       DAG.getBuildVector(I8VT, DL, PSHUFBMask)));
 }
 

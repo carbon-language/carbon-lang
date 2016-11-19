@@ -120,11 +120,7 @@ define <64 x i8> @shuffle_v64i8_0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz(<64 x i8> %a) {
 ;
 ; AVX512BW-LABEL: shuffle_v64i8_0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz:
 ; AVX512BW:       # BB#0:
-; AVX512BW-NEXT:    movl $255, %eax
-; AVX512BW-NEXT:    vmovd %eax, %xmm1
-; AVX512BW-NEXT:    vpand %ymm1, %ymm0, %ymm0
-; AVX512BW-NEXT:    vpxor %ymm1, %ymm1, %ymm1
-; AVX512BW-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
+; AVX512BW-NEXT:    vpshufb {{.*#+}} zmm0 = zmm0[0],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero
 ; AVX512BW-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: shuffle_v64i8_0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz:
@@ -137,10 +133,7 @@ define <64 x i8> @shuffle_v64i8_0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz(<64 x i8> %a) {
 ;
 ; AVX512VBMI-LABEL: shuffle_v64i8_0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz:
 ; AVX512VBMI:       # BB#0:
-; AVX512VBMI-NEXT:    vmovdqu8 {{.*#+}} zmm2 = [64,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63]
-; AVX512VBMI-NEXT:    vpxord %zmm1, %zmm1, %zmm1
-; AVX512VBMI-NEXT:    vpermt2b %zmm0, %zmm2, %zmm1
-; AVX512VBMI-NEXT:    vmovdqa64 %zmm1, %zmm0
+; AVX512VBMI-NEXT:    vpshufb {{.*#+}} zmm0 = zmm0[0],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero
 ; AVX512VBMI-NEXT:    retq
   %shuffle = shufflevector <64 x i8> %a, <64 x i8> zeroinitializer, <64 x i32> <i32 0, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64, i32 64>
   ret <64 x i8> %shuffle
