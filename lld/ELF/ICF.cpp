@@ -57,13 +57,11 @@
 
 #include "ICF.h"
 #include "Config.h"
-#include "OutputSections.h"
 #include "SymbolTable.h"
 
 #include "llvm/ADT/Hashing.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
-#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
 using namespace lld;
@@ -72,81 +70,46 @@ using namespace llvm;
 using namespace llvm::ELF;
 using namespace llvm::object;
 
-namespace lld {
-namespace elf {
+namespace {
 template <class ELFT> class ICF {
-  typedef typename ELFT::Shdr Elf_Shdr;
-  typedef typename ELFT::Sym Elf_Sym;
-  typedef typename ELFT::uint uintX_t;
-  typedef Elf_Rel_Impl<ELFT, false> Elf_Rel;
-
-  using Comparator = std::function<bool(const InputSection<ELFT> *,
-                                        const InputSection<ELFT> *)>;
-
 public:
   void run();
 
 private:
   uint64_t NextId = 1;
 
-  static void setLive(SymbolTable<ELFT> *S);
-  static uint64_t relSize(InputSection<ELFT> *S);
-  static uint64_t getHash(InputSection<ELFT> *S);
-  static bool isEligible(InputSectionBase<ELFT> *Sec);
-  static std::vector<InputSection<ELFT> *> getSections();
+  using Comparator = std::function<bool(const InputSection<ELFT> *,
+                                        const InputSection<ELFT> *)>;
 
   void segregate(MutableArrayRef<InputSection<ELFT> *> Arr, Comparator Eq);
 
   void
   forEachGroup(std::vector<InputSection<ELFT> *> &V,
                std::function<void(MutableArrayRef<InputSection<ELFT> *>)> Fn);
-
-  template <class RelTy>
-  static bool relocationEq(ArrayRef<RelTy> RA, ArrayRef<RelTy> RB);
-
-  template <class RelTy>
-  static bool variableEq(const InputSection<ELFT> *A, ArrayRef<RelTy> RA,
-                         const InputSection<ELFT> *B, ArrayRef<RelTy> RB);
-
-  static bool equalsConstant(const InputSection<ELFT> *A,
-                             const InputSection<ELFT> *B);
-
-  static bool equalsVariable(const InputSection<ELFT> *A,
-                             const InputSection<ELFT> *B);
 };
-}
 }
 
 // Returns a hash value for S. Note that the information about
 // relocation targets is not included in the hash value.
-template <class ELFT> uint64_t ICF<ELFT>::getHash(InputSection<ELFT> *S) {
+template <class ELFT> static uint64_t getHash(InputSection<ELFT> *S) {
   return hash_combine(S->Flags, S->getSize(), S->NumRelocations);
 }
 
-// Returns true if Sec is subject of ICF.
-template <class ELFT> bool ICF<ELFT>::isEligible(InputSectionBase<ELFT> *Sec) {
-  if (!Sec->Live)
-    return false;
-  auto *S = dyn_cast<InputSection<ELFT>>(Sec);
-  if (!S)
-    return false;
-
+// Returns true if section S is subject of ICF.
+template <class ELFT> static bool isEligible(InputSection<ELFT> *S) {
   // .init and .fini contains instructions that must be executed to
   // initialize and finalize the process. They cannot and should not
   // be merged.
-  StringRef Name = S->Name;
-  if (Name == ".init" || Name == ".fini")
-    return false;
-
-  return (S->Flags & SHF_ALLOC) && !(S->Flags & SHF_WRITE);
+  return S->Live && (S->Flags & SHF_ALLOC) && !(S->Flags & SHF_WRITE) &&
+         S->Name != ".init" && S->Name != ".fini";
 }
 
-template <class ELFT>
-std::vector<InputSection<ELFT> *> ICF<ELFT>::getSections() {
+template <class ELFT> static std::vector<InputSection<ELFT> *> getSections() {
   std::vector<InputSection<ELFT> *> V;
-  for (InputSectionBase<ELFT> *S : Symtab<ELFT>::X->Sections)
-    if (isEligible(S))
-      V.push_back(cast<InputSection<ELFT>>(S));
+  for (InputSectionBase<ELFT> *Sec : Symtab<ELFT>::X->Sections)
+    if (auto *S = dyn_cast<InputSection<ELFT>>(Sec))
+      if (isEligible(S))
+        V.push_back(S);
   return V;
 }
 
@@ -188,9 +151,8 @@ void ICF<ELFT>::forEachGroup(
 }
 
 // Compare two lists of relocations.
-template <class ELFT>
-template <class RelTy>
-bool ICF<ELFT>::relocationEq(ArrayRef<RelTy> RelsA, ArrayRef<RelTy> RelsB) {
+template <class ELFT, class RelTy>
+static bool relocationEq(ArrayRef<RelTy> RelsA, ArrayRef<RelTy> RelsB) {
   auto Eq = [](const RelTy &A, const RelTy &B) {
     return A.r_offset == B.r_offset &&
            A.getType(Config->Mips64EL) == B.getType(Config->Mips64EL) &&
@@ -204,30 +166,23 @@ bool ICF<ELFT>::relocationEq(ArrayRef<RelTy> RelsA, ArrayRef<RelTy> RelsB) {
 // Compare "non-moving" part of two InputSections, namely everything
 // except relocation targets.
 template <class ELFT>
-bool ICF<ELFT>::equalsConstant(const InputSection<ELFT> *A,
-                               const InputSection<ELFT> *B) {
-  if (A->NumRelocations != B->NumRelocations)
+static bool equalsConstant(const InputSection<ELFT> *A,
+                           const InputSection<ELFT> *B) {
+  if (A->NumRelocations != B->NumRelocations || A->Flags != B->Flags ||
+      A->getSize() != B->getSize() || A->Data != B->Data)
     return false;
 
-  if (A->AreRelocsRela) {
-    if (!relocationEq(A->relas(), B->relas()))
-      return false;
-  } else {
-    if (!relocationEq(A->rels(), B->rels()))
-      return false;
-  }
-
-  return A->Flags == B->Flags && A->getSize() == B->getSize() &&
-         A->Data == B->Data;
+  if (A->AreRelocsRela)
+    return relocationEq<ELFT>(A->relas(), B->relas());
+  return relocationEq<ELFT>(A->rels(), B->rels());
 }
 
-template <class ELFT>
-template <class RelTy>
-bool ICF<ELFT>::variableEq(const InputSection<ELFT> *A, ArrayRef<RelTy> RelsA,
-                           const InputSection<ELFT> *B, ArrayRef<RelTy> RelsB) {
+template <class ELFT, class RelTy>
+static bool variableEq(const InputSection<ELFT> *A, ArrayRef<RelTy> RelsA,
+                       const InputSection<ELFT> *B, ArrayRef<RelTy> RelsB) {
   auto Eq = [&](const RelTy &RA, const RelTy &RB) {
-    SymbolBody &SA = A->File->getRelocTargetSym(RA);
-    SymbolBody &SB = B->File->getRelocTargetSym(RB);
+    SymbolBody &SA = A->getFile()->getRelocTargetSym(RA);
+    SymbolBody &SB = B->getFile()->getRelocTargetSym(RB);
     if (&SA == &SB)
       return true;
 
@@ -249,8 +204,8 @@ bool ICF<ELFT>::variableEq(const InputSection<ELFT> *A, ArrayRef<RelTy> RelsA,
 
 // Compare "moving" part of two InputSections, namely relocation targets.
 template <class ELFT>
-bool ICF<ELFT>::equalsVariable(const InputSection<ELFT> *A,
-                               const InputSection<ELFT> *B) {
+static bool equalsVariable(const InputSection<ELFT> *A,
+                           const InputSection<ELFT> *B) {
   if (A->AreRelocsRela)
     return variableEq(A, A->relas(), B, B->relas());
   return variableEq(A, A->rels(), B, B->rels());
@@ -261,7 +216,7 @@ template <class ELFT> void ICF<ELFT>::run() {
   // Initially, we use hash values as section group IDs. Therefore,
   // if two sections have the same ID, they are likely (but not
   // guaranteed) to have the same static contents in terms of ICF.
-  std::vector<InputSection<ELFT> *> Sections = getSections();
+  std::vector<InputSection<ELFT> *> Sections = getSections<ELFT>();
   for (InputSection<ELFT> *S : Sections)
     // Set MSB on to avoid collisions with serial group IDs
     S->GroupId = getHash(S) | (uint64_t(1) << 63);
@@ -279,7 +234,7 @@ template <class ELFT> void ICF<ELFT>::run() {
 
   // Compare static contents and assign unique IDs for each static content.
   forEachGroup(Sections, [&](MutableArrayRef<InputSection<ELFT> *> V) {
-    segregate(V, equalsConstant);
+    segregate(V, equalsConstant<ELFT>);
   });
 
   // Split groups by comparing relocations until we get a convergence.
@@ -288,7 +243,7 @@ template <class ELFT> void ICF<ELFT>::run() {
     ++Cnt;
     uint64_t Id = NextId;
     forEachGroup(Sections, [&](MutableArrayRef<InputSection<ELFT> *> V) {
-      segregate(V, equalsVariable);
+      segregate(V, equalsVariable<ELFT>);
     });
     if (Id == NextId)
       break;
@@ -296,12 +251,11 @@ template <class ELFT> void ICF<ELFT>::run() {
   log("ICF needed " + Twine(Cnt) + " iterations.");
 
   // Merge sections in the same group.
-  forEachGroup(Sections, [&](MutableArrayRef<InputSection<ELFT> *> V) {
-    InputSection<ELFT> *Head = V[0];
-    log("selected " + Head->Name);
+  forEachGroup(Sections, [](MutableArrayRef<InputSection<ELFT> *> V) {
+    log("selected " + V[0]->Name);
     for (InputSection<ELFT> *S : V.slice(1)) {
       log("  removed " + S->Name);
-      Head->replace(S);
+      V[0]->replace(S);
     }
   });
 }
