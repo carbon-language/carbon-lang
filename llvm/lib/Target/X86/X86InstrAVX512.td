@@ -3316,11 +3316,11 @@ multiclass avx512_move_scalar_lowering<string InstrStr, SDNode OpNode,
                                        PatLeaf ZeroFP, X86VectorVTInfo _> {
 
 def : Pat<(_.VT (OpNode _.RC:$src0,
-                        (_.VT (scalar_to_vector 
+                        (_.VT (scalar_to_vector
                                   (_.EltVT (X86selects (i1 (trunc GR32:$mask)),
                                                        (_.EltVT _.FRC:$src1),
                                                        (_.EltVT _.FRC:$src2))))))),
-          (COPY_TO_REGCLASS (!cast<Instruction>(InstrStr#rrk) 
+          (COPY_TO_REGCLASS (!cast<Instruction>(InstrStr#rrk)
                                           (COPY_TO_REGCLASS _.FRC:$src2, _.RC),
                                           (COPY_TO_REGCLASS GR32:$mask, VK1WM),
                                           (_.VT _.RC:$src0),
@@ -3328,11 +3328,11 @@ def : Pat<(_.VT (OpNode _.RC:$src0,
                             _.RC)>;
 
 def : Pat<(_.VT (OpNode _.RC:$src0,
-                        (_.VT (scalar_to_vector 
+                        (_.VT (scalar_to_vector
                                   (_.EltVT (X86selects (i1 (trunc GR32:$mask)),
                                                        (_.EltVT _.FRC:$src1),
                                                        (_.EltVT ZeroFP))))))),
-          (COPY_TO_REGCLASS (!cast<Instruction>(InstrStr#rrkz) 
+          (COPY_TO_REGCLASS (!cast<Instruction>(InstrStr#rrkz)
                                           (COPY_TO_REGCLASS GR32:$mask, VK1WM),
                                           (_.VT _.RC:$src0),
                                           (COPY_TO_REGCLASS _.FRC:$src1, _.RC)),
@@ -3344,14 +3344,14 @@ multiclass avx512_store_scalar_lowering<string InstrStr, AVX512VLVectorVTInfo _,
                                         dag Mask, RegisterClass MaskRC> {
 
 def : Pat<(masked_store addr:$dst, Mask,
-             (_.info512.VT (insert_subvector undef, 
+             (_.info512.VT (insert_subvector undef,
                                (_.info256.VT (insert_subvector undef,
                                                  (_.info128.VT _.info128.RC:$src),
                                                  (i64 0))),
                                (i64 0)))),
-          (!cast<Instruction>(InstrStr#mrk) addr:$dst, 
+          (!cast<Instruction>(InstrStr#mrk) addr:$dst,
                       (i1 (COPY_TO_REGCLASS MaskRC:$mask, VK1WM)),
-                      (COPY_TO_REGCLASS _.info128.RC:$src, _.info128.FRC))>; 
+                      (COPY_TO_REGCLASS _.info128.RC:$src, _.info128.FRC))>;
 
 }
 
@@ -3360,10 +3360,10 @@ multiclass avx512_load_scalar_lowering<string InstrStr, AVX512VLVectorVTInfo _,
 
 def : Pat<(_.info128.VT (extract_subvector
                          (_.info512.VT (masked_load addr:$srcAddr, Mask,
-                                        (_.info512.VT (bitconvert 
+                                        (_.info512.VT (bitconvert
                                                        (v16i32 immAllZerosV))))),
                            (i64 0))),
-          (!cast<Instruction>(InstrStr#rmkz) 
+          (!cast<Instruction>(InstrStr#rmkz)
                       (i1 (COPY_TO_REGCLASS MaskRC:$mask, VK1WM)),
                       addr:$srcAddr)>;
 
