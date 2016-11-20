@@ -199,7 +199,7 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
     size_t SizeBefore = I->Sections.size();
 
     for (InputSectionBase<ELFT> *S : Symtab<ELFT>::X->Sections) {
-      if (!S->Live || S->OutSec)
+      if (!S->Live || S->Assigned)
         continue;
 
       StringRef Filename;
@@ -207,8 +207,10 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
         Filename = sys::path::filename(F->getName());
 
       if (I->FilePat.match(Filename) && !Pat.ExcludedFilePat.match(Filename) &&
-          Pat.SectionPat.match(S->Name))
+          Pat.SectionPat.match(S->Name)) {
         I->Sections.push_back(S);
+        S->Assigned = true;
+      }
     }
 
     // Sort sections as instructed by SORT-family commands and --sort-section
@@ -231,13 +233,6 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
         sortSections(Begin, End, Pat.SortInner);
       sortSections(Begin, End, Pat.SortOuter);
     }
-  }
-
-  // We do not add duplicate input sections, so mark them with a dummy output
-  // section for now.
-  for (InputSectionData *S : I->Sections) {
-    auto *S2 = static_cast<InputSectionBase<ELFT> *>(S);
-    S2->OutSec = (OutputSectionBase *)-1;
   }
 }
 
@@ -262,12 +257,6 @@ LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &OutCmd) {
     for (InputSectionData *S : Cmd->Sections)
       Ret.push_back(static_cast<InputSectionBase<ELFT> *>(S));
   }
-
-  // After we created final list we should now set OutSec pointer to null,
-  // instead of -1. Otherwise we may get a crash when writing relocs, in
-  // case section is discarded by linker script
-  for (InputSectionBase<ELFT> *S : Ret)
-    S->OutSec = nullptr;
 
   return Ret;
 }
@@ -343,7 +332,7 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
 
       if (!matchConstraints<ELFT>(V, Cmd->Constraint)) {
         for (InputSectionBase<ELFT> *S : V)
-          S->OutSec = nullptr;
+          S->Assigned = false;
         Opt.Commands.erase(Iter);
         --I;
         continue;
