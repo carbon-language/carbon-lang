@@ -2816,6 +2816,8 @@ SDValue X86TargetLowering::LowerFormalArguments(
           RC = &X86::FR32RegClass;
         else if (RegVT == MVT::f64)
           RC = &X86::FR64RegClass;
+        else if (RegVT == MVT::f80)
+          RC = &X86::RFP80RegClass;
         else if (RegVT == MVT::f128)
           RC = &X86::FR128RegClass;
         else if (RegVT.is512BitVector())
