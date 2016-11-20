@@ -219,6 +219,16 @@ static llvm::AllocaInst *createEntryBlockAlloca(llvm::Function &function,
 // Runtime C Library functions
 //
 
+namespace {
+template <typename Type_>
+uintptr_t ReadType(const uint8_t *&p) {
+  Type_ value;
+  memcpy(&value, p, sizeof(Type_));
+  p += sizeof(Type_);
+  return static_cast<uintptr_t>(value);
+}
+}
+
 // Note: using an extern "C" block so that static functions can be used
 extern "C" {
 
@@ -409,8 +419,7 @@ static uintptr_t readEncodedPointer(const uint8_t **data, uint8_t encoding) {
   // first get value
   switch (encoding & 0x0F) {
     case llvm::dwarf::DW_EH_PE_absptr:
-      result = *((uintptr_t*)p);
-      p += sizeof(uintptr_t);
+      result = ReadType<uintptr_t>(p);
       break;
     case llvm::dwarf::DW_EH_PE_uleb128:
       result = readULEB128(&p);
@@ -420,28 +429,22 @@ static uintptr_t readEncodedPointer(const uint8_t **data, uint8_t encoding) {
       result = readSLEB128(&p);
       break;
     case llvm::dwarf::DW_EH_PE_udata2:
-      result = *((uint16_t*)p);
-      p += sizeof(uint16_t);
+      result = ReadType<uint16_t>(p);
       break;
     case llvm::dwarf::DW_EH_PE_udata4:
-      result = *((uint32_t*)p);
-      p += sizeof(uint32_t);
+      result = ReadType<uint32_t>(p);
       break;
     case llvm::dwarf::DW_EH_PE_udata8:
-      result = *((uint64_t*)p);
-      p += sizeof(uint64_t);
+      result = ReadType<uint64_t>(p);
       break;
     case llvm::dwarf::DW_EH_PE_sdata2:
-      result = *((int16_t*)p);
-      p += sizeof(int16_t);
+      result = ReadType<int16_t>(p);
       break;
     case llvm::dwarf::DW_EH_PE_sdata4:
-      result = *((int32_t*)p);
-      p += sizeof(int32_t);
+      result = ReadType<int32_t>(p);
       break;
     case llvm::dwarf::DW_EH_PE_sdata8:
-      result = *((int64_t*)p);
-      p += sizeof(int64_t);
+      result = ReadType<int64_t>(p);
       break;
     default:
       // not supported
