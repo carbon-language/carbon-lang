@@ -3942,10 +3942,10 @@ multiclass avx512_binop_rm2<bits<8> opc, string OpcodeStr, OpndItins itins,
                         AVX512BIBase, EVEX_4V;
 
   defm rmb : AVX512_maskable<opc, MRMSrcMem, _Dst, (outs _Dst.RC:$dst),
-                    (ins _Src.RC:$src1, _Dst.ScalarMemOp:$src2),
+                    (ins _Src.RC:$src1, _Brdct.ScalarMemOp:$src2),
                     OpcodeStr,
                     "${src2}"##_Brdct.BroadcastStr##", $src1",
-                     "$src1, ${src2}"##_Dst.BroadcastStr,
+                     "$src1, ${src2}"##_Brdct.BroadcastStr,
                     (_Dst.VT (OpNode (_Src.VT _Src.RC:$src1), (bitconvert
                                  (_Brdct.VT (X86VBroadcast
                                           (_Brdct.ScalarLdFrag addr:$src2)))))),
